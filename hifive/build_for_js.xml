@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="h5jsbuilder" basedir="." default="build">
+	<property name="webappdir" value="src/main/webapp" />
+	<property name="releaseDir" value="${webappdir}/release" />
+
+	<property name="webapp.root.dir" value="src/main/webapp" />
+	<property name="web-inf.dir" value="${webapp.root.dir}/WEB-INF" />
+	<property name="lib.tool.dir" value="${basedir}/jstool" />
+	<property name="lib.project.dir" value="." />
+
+	<path id="base.path">
+		<fileset dir="${lib.project.dir}" includes="**/*.jar" />
+	</path>
+
+	<property name="blank.project.path.h5" value="../hifive_blank/WebContent/lib/h5/" />
+	<property name="blank.project.path.ejs" value="../hifive_blank/WebContent/lib/ejs/" />
+	<property name="blank.project.index" value="../hifive_blank/WebContent/index.html" />
+	<property name="currentRelease.path" value="${webapp.root.dir}/currentRelease/" />
+
+	<condition property="isExistDir">
+		<and>
+			<available file="${blank.project.path.h5}" />
+		</and>
+	</condition>
+
+	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpathref="base.path"  />
+	<taskdef name="buildService" classname="jp.co.nssol.h5.dev.service.ant.BuilderServiceTask" classpathref="base.path" />
+
+
+	<target name="all" depends="build, copyToBlank, zipCurrentRelease, jsdoc, jscoverage" />
+
+	<target name="getVersion">
+			<input message="バージョン番号を入力してください。(ex. 1.0.1)" addproperty="versionNumber" />
+		<condition property="isCorrectNumber">
+			<matches pattern="[0-9]+\.[0-9]+\.[0-9]+" string="${versionNumber}" />
+		</condition>
+		<fail unless="isCorrectNumber" message="正しいバージョン番号を入力してください。" />
+		<echo file="./src/main/resources/conf/version.properties">version=${versionNumber}</echo>
+	</target>
+
+	<target name="copyToBlank" if="${isExistDir}" depends="getVersion">
+		<delete>
+			<fileset dir="${blank.project.path.h5}" includes="*" />
+		</delete>
+		<delete dir="${blank.project.path.ejs}" excludes="ejs-lint.js,ejs-helper.js" />
+
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.js" tofile="${blank.project.path.h5}h5-${versionNumber}.js" />
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.dev.js" tofile="${blank.project.path.h5}h5-${versionNumber}.dev.js" />
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.css" tofile="${blank.project.path.h5}h5-${versionNumber}.css" />
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/ejs.js" tofile="${blank.project.path.ejs}ejs-1.0.h5mod.js" />
+
+		<replaceregexp file="${blank.project.index}" match="lib/ejs/ejs(.*).js" replace="lib/ejs/ejs-1.0.h5mod.js" />
+		<replaceregexp file="${blank.project.index}" match="lib/h5/h5(.*).css" replace="lib/h5/h5-${versionNumber}.css" />
+		<replaceregexp file="${blank.project.index}" match="lib/h5/h5(.*).js" replace="lib/h5/h5-${versionNumber}.js" />
+	</target>
+
+	<target name="zipCurrentRelease" depends="getVersion">
+		<delete dir="${currentRelease.path}" excludes="readme*" />
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.js" tofile="${currentRelease.path}h5-${versionNumber}.js" />
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.dev.js" tofile="${currentRelease.path}h5-${versionNumber}.dev.js" />
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.css" tofile="${currentRelease.path}h5-${versionNumber}.css" />
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/ejs.js" tofile="${currentRelease.path}ejs-1.0.h5mod.js" />
+		<zip destfile="${webapp.root.dir}/currentRelease.zip" basedir="${currentRelease.path}">
+		</zip>
+	</target>
+
+	<target name="build">
+		<buildService deleteTmpFiles="true"
+		       ejsName="ejs.js"
+		       cssName="h5.css"
+		       releaseName="h5.js"
+		       devName="h5.dev.js"
+		       srcDir="src/main/webapp/src/"
+		       cssSrcDir="src/main/webapp/srcCss/"
+		       ejsSrcDir="src/main/webapp/src/ejs/"
+		       dstDir="src/main/webapp/release/"
+		       version="${versionNumber}"
+		       ejsVersion="1.0"
+		       moduleNames="util,async,view,controller,ui,api.geo,api.sqldb,api.storage,dev" />
+	</target>
+
+	<target name="jsdoc">
+		<delete dir="${webappdir}/doc" />
+		<exec executable="cmd" dir="jstool/jsdoc">
+			<arg line="/C jsdoc.bat" />
+		</exec>
+	</target>
+
+	<target name="jscoverage">
+		<delete dir="${webappdir}/coverage" />
+		<exec executable="cmd" dir="jstool/jscoverage">
+			<arg line="/C inst.bat" />
+		</exec>
+	</target>
+</project>
