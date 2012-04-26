@@ -4,7 +4,7 @@ hifiveのコア部分の開発用です。
 ここではhifiveのリリース版、開発版、CSS、EJSのビルド方法を記述します。
 
 1.リポジトリのクローン
-  $ git clone git@github.com:hifive-labs/hifivemain.git
+  $ git clone git@github.com:hifive/hifivemain.git
 
 2.Apache ivyを利用しhifiveビルドに必要なライブラリを追加
 　　hifive/ivy_build.xmlのresolveターゲットを実行します。

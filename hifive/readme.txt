@@ -4,7 +4,7 @@ This is for the development of "hifive".
 This file describes how to build CSS and EJS version and release and development for hifive.
 
 1.Clone of the repository
-  $ git clone git@github.com:hifive-labs/hifivemain.git
+  $ git clone git@github.com:hifive/hifivemain.git
 
 2.Add the libraries required to build using Apache ivy
 Å@Å@Run the resolve target of hifive / ivy_build.xml.
