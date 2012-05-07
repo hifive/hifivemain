@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -602,10 +602,11 @@
 		}
 
 		/**
-		 * ログカテゴリ。
+		 * ログカテゴリ
 		 *
 		 * @memberOf Log
 		 * @type String
+		 * @name category
 		 */
 		this.category = $.trim(category);
 	}
@@ -639,7 +640,7 @@
 		 * @see h5.u.str.format
 		 * @memberOf Log
 		 * @function
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		error: function(var_args) {
 			this._log(logLevel.ERROR, arguments, this.error);
@@ -655,7 +656,7 @@
 		 * @see h5.u.str.format
 		 * @memberOf Log
 		 * @function
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		warn: function(var_args) {
 			this._log(logLevel.WARN, arguments, this.warn);
@@ -671,7 +672,7 @@
 		 * @see h5.u.str.format
 		 * @memberOf Log
 		 * @function
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		info: function(var_args) {
 			this._log(logLevel.INFO, arguments, this.info);
@@ -687,7 +688,7 @@
 		 * @see h5.u.str.format
 		 * @function
 		 * @memberOf Log
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		debug: function(var_args) {
 			this._log(logLevel.DEBUG, arguments, this.debug);
@@ -703,7 +704,7 @@
 		 * @see h5.u.str.format
 		 * @memberOf Log
 		 * @function
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		trace: function(var_args) {
 			this._log(logLevel.TRACE, arguments, this.trace);

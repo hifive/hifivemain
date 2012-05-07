@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -115,10 +115,7 @@
 		aspects: null,
 
 		/**
-		 * ログの設定を行います。<br />
-		 * <ul>
-		 * <li></li>
-		 * </ul>
+		 * ログの設定を行います。
 		 *
 		 * @memberOf h5.settings
 		 * @type Object
@@ -130,6 +127,7 @@
 	/**
 	 * 実行時間の計測を行うインターセプタ。
 	 *
+	 * @function
 	 * @param {Function} invocation 次に実行する関数
 	 * @returns {Any} invocationの戻り値
 	 * @memberOf h5.core.interceptor
@@ -149,6 +147,7 @@
 	/**
 	 * イベントコンテキストに格納されているものをコンソールに出力するインターセプタ。
 	 *
+	 * @function
 	 * @param {Function} invocation 次に実行する関数
 	 * @returns {Any} invocationの戻り値
 	 * @memberOf h5.core.interceptor
