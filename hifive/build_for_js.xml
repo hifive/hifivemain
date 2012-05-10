@@ -65,8 +65,8 @@
 		</zip>
 	</target>
 
-	<target name="build">
-		<buildService deleteTmpFiles="true"
+	<target name="build" depends="getVersion">
+		<buildService tmpFiles="false"
 		       ejsName="ejs.js"
 		       cssName="h5.css"
 		       releaseName="h5.js"
@@ -77,7 +77,7 @@
 		       dstDir="src/main/webapp/release/"
 		       version="${versionNumber}"
 		       ejsVersion="1.0"
-		       moduleNames="util,async,view,controller,ui,api.geo,api.sqldb,api.storage,dev" />
+		       moduleNames="util,controller,view,ui,api.geo,api.sqldb,api.storage" />
 	</target>
 
 	<target name="jsdoc">

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,11 @@
 // =============================
 // Misc Variables
 // =============================
-/** { (エラーコード): (フォーマット文字列) } なマップ */
+/**
+ *  { (エラーコード): (フォーマット文字列) } なマップ
+ *
+ *  @private
+ */
 var errorCodeToMessageMap = {};
 
 // =============================
@@ -35,6 +39,7 @@ var errorCodeToMessageMap = {};
 /**
  * フレームワークエラーを発生させます。
  *
+ * @private
  * @param code {Number} エラーコード
  * @param msgParam {Any[]} フォーマットパラメータ
  * @param detail {Any} 追加のデータ(内容はAPIごとに異なる)
@@ -58,6 +63,7 @@ function throwFwError(code, msgParam, detail) {
 /**
  * エラーコードとエラーメッセージのマップを追加します。
  *
+ * @private
  * @param mapObj {Object} { (エラーコード): (フォーマット文字列) }という構造のオブジェクト
  */
 function addFwErrorCodeMap(mapObj) {
@@ -71,6 +77,7 @@ function addFwErrorCodeMap(mapObj) {
 /**
  * 非同期APIのReject時の理由オブジェクトを作成します。
  *
+ * @private
  * @param code {Number} エラーコード
  * @param msgParam {Any[]} フォーマットパラメータ
  * @param detail {Any} 追加のデータ(内容はAPIごとに異なる)
@@ -94,6 +101,7 @@ function createRejectReason(code, msgParam, detail) {
 /**
  * 引数を配列化します。既に配列だった場合はそれをそのまま返し、 配列以外だった場合は配列にして返します。 ただし、nullまたはundefinedの場合はそのまま返します。
  *
+ * @private
  * @param value 値
  * @returns 配列化された値、ただし引数がnullまたはundefinedの場合はそのまま
  */
@@ -107,9 +115,9 @@ function wrapInArray(value) {
 /**
  * 相対URLを絶対URLに変換します。
  *
+ * @private
  * @param {String} relativePath 相対URL
  * @returns {String} 絶対パス
- * @private
  */
 function toAbsoluteUrl(relativePath) {
 	var e = document.createElement('span');
@@ -124,6 +132,7 @@ function toAbsoluteUrl(relativePath) {
 /**
  * 文字列の正規表現記号をエスケープします。
  *
+ * @private
  * @param {String} str 文字列
  * @returns {String} エスケープ済文字列
  */
@@ -134,6 +143,7 @@ function escapeRegex(str) {
 /**
  * 引数がStringの場合、RegExpオブジェクトにして返します。 引数がRegExpオブジェクトの場合はそのまま返します。
  *
+ * @private
  * @param {String|RegExp} target 値
  * @returns {RegExp} オブジェクト
  */

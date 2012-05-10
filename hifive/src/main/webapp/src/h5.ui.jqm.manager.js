@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -82,7 +82,7 @@
 	/**
 	 * dispose対象から外すページの配列
 	 *
-	 * @type Object[]
+	 * @type Array
 	 */
 	var excludeDispose = [];
 
@@ -140,8 +140,6 @@
 
 	/**
 	 * JQMコントローラ
-	 *
-	 * @name JQMController
 	 */
 	var jqmController = {
 		/**
