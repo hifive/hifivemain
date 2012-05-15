@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 /* ------ h5.api.sqldb ------ */
@@ -59,6 +59,8 @@
 	var ERR_CODE_INVALID_TRANSACTION_TARGET = 3009;
 	/** エラーコード: トランザクション処理失敗 */
 	var ERR_CODE_TRANSACTION_PROCESSING_FAILURE = 3010;
+	/** エラーコード: where句に指定されたカラム名が不正 */
+	var ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE = 3011;
 
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_RETRY_SQL] = '同一オブジェクトによるSQLの再実行はできません。';
@@ -72,6 +74,7 @@
 	errMsgMap[ERR_CODE_TYPE_NOT_ARRAY] = '{0}: パラメータは配列で指定して下さい。';
 	errMsgMap[ERR_CODE_INVALID_TRANSACTION_TARGET] = '指定されたオブジェクトはトランザクションに追加できません。Insert/Update/Del/Select/Sqlクラスのインスタンスを指定して下さい。';
 	errMsgMap[ERR_CODE_TRANSACTION_PROCESSING_FAILURE] = 'トランザクション処理中にエラーが発生しました。{0} {1}';
+	errMsgMap[ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE] = 'where句に指定されたカラム名が空白または空文字です。';
 	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
@@ -116,10 +119,11 @@
 			return '取得結果の行が多すぎます。';
 		case e.UNKNOWN_ERR:
 			return 'トランザクション内で例外がスローされました。';
-		case e.VERSION_ERR:
-			return 'データベースのバージョンが一致しません。';
-		default:
-			return '';
+		// データベースのバージョン違いのエラーは同期で発生するためコメントアウト
+//		case e.VERSION_ERR:
+//			return 'データベースのバージョンが一致しません。';
+//		default:
+//			return '';
 		}
 	}
 
@@ -164,7 +168,7 @@
 	}
 
 	/**
-	 * DatabaseWrapper.select()/insert()/update()/del()/sql() のパラメータチェック
+	 * DatabaseWrapper.select()/insert()/update()/del() のパラメータチェック
 	 * <p>
 	 * tableNameが未指定またはString型以外の型の値が指定された場合、例外をスローします。
 	 */
@@ -180,7 +184,7 @@
 	 * txwがTransactionWrapper型ではない場合、例外をスローします。
 	 */
 	function checkTransaction(funcName, txw) {
-		if (txw && !(txw instanceof SQLTransactionWrapper)) {
+		if (txw !== undefined && !(txw instanceof SQLTransactionWrapper)) {
 			throw new throwFwError(ERR_CODE_INVALID_TRANSACTION_TYPE, funcName);
 		}
 	}
@@ -191,11 +195,11 @@
 	function createConditionAndParameters(whereObj, conditions, parameters) {
 		if ($.isPlainObject(whereObj)) {
 			for ( var prop in whereObj) {
-				var params = prop.replace(/ +/g, ' ').split(' ');
+				var params = $.trim(prop).replace(/ +/g, ' ').split(' ');
 				var param = [];
 
-				if (params.length === 0 || params[0] === "") {
-					continue;
+				if (params[0] === "") {
+					throw new throwFwError(ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE);
 				} else if (params.length === 1) {
 					param.push(params[0]);
 					param.push('=');
@@ -584,7 +588,7 @@
 						for ( var i = 0, len = valueObjs.length; i < len; i++) {
 							var valueObj = valueObjs[i];
 
-							if (!valueObj) {
+							if (valueObj == null) {
 								that._statement.push(h5.u.str.format(INSERT_SQL_EMPTY_VALUES,
 										that._tableName));
 								that._params.push([]);
@@ -594,9 +598,6 @@
 								var params = [];
 
 								for ( var prop in valueObj) {
-									if (!valueObj.hasOwnProperty(prop)) {
-										continue;
-									}
 									values.push('?');
 									columns.push(prop);
 									params.push(valueObj[prop]);
@@ -780,9 +781,6 @@
 				var columns = [];
 
 				for ( var prop in valueObj) {
-					if (!valueObj.hasOwnProperty(prop)) {
-						continue;
-					}
 					columns.push(prop + ' = ?');
 					that._params.push(valueObj[prop]);
 				}
@@ -1372,7 +1370,7 @@
 			checkTableName('insert', tableName);
 			checkTransaction('insert', txw);
 
-			if (values && !$.isArray(values) && !$.isPlainObject(values)) {
+			if (values != null && !$.isArray(values) && !$.isPlainObject(values)) {
 				throw new throwFwError(ERR_CODE_INVALID_VALUES, 'insert');
 			}
 
@@ -1453,7 +1451,7 @@
 				throw new throwFwError(ERR_CODE_INVALID_STATEMENT, 'sql');
 			}
 
-			if (parameters && !$.isArray(parameters)) {
+			if (parameters != null && !$.isArray(parameters)) {
 				throw new throwFwError(ERR_CODE_TYPE_NOT_ARRAY, 'sql');
 			}
 

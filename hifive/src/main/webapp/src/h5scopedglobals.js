@@ -152,7 +152,7 @@ function getRegex(target) {
 		return target;
 	}
 	var str = '';
-	if ($.inArray('*', target) !== -1) {
+	if (target.indexOf('*') !== -1) {
 		var array = $.map(target.split('*'), function(n) {
 			return escapeRegex(n);
 		});
