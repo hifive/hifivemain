@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 /* ------ h5.ui ------ */
@@ -237,10 +237,6 @@
 			this._run();
 		},
 		hide: function() {
-			if (!this.root) {
-				return;
-			}
-
 			this.root.innerHTML = "";
 
 			if (this._runId) {
@@ -281,9 +277,6 @@
 			this.highlightPos = highlightPos;
 			var perMills = Math.floor(roundTime / lineCount);
 
-			if (perMills < 50) {
-				perMills = 50;
-			}
 			var that = this;
 
 			this._runId = setTimeout(function() {
@@ -350,9 +343,6 @@
 			this._run();
 		},
 		hide: function() {
-			if (!this.root) {
-				return;
-			}
 
 			this.root.innerHTML = "";
 
@@ -400,9 +390,6 @@
 			this.highlightPos = highlightPos;
 			var perMills = Math.floor(roundTime / lineCount);
 
-			if (perMills < 50) {
-				perMills = 50;
-			}
 			var that = this;
 
 			this._runId = setTimeout(function() {

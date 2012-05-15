@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -225,10 +225,12 @@
 		};
 		var spaceSplit = function(target, ignoreCase) {
 			var v = getVersion(target, '[^;)]*', ignoreCase).split(' ');
+			if(v.length === 1) return '';
 			return v[v.length - 1];
 		};
 		var slashSplit = function(target, ignoreCase) {
 			var v = getVersion(target, '[^;) ]*', ignoreCase).split('/');
+			if(v.length === 1) return '';
 			return v[v.length - 1];
 		};
 		var getMainVersion = function(target) {
@@ -256,6 +258,11 @@
 			osVersion = getMainVersion(s);
 			osVersionFull = s;
 		}
+		// Operaのuaに'MSIE'が入っているとき用に、isIE && isOperaならisIEをfalseにする
+		if(isIE && isOpera){
+			isIE = false;
+		}
+
 		// デスクトップの場合。osVersion, osVersionFullはnull
 		/**
 		 * ブラウザのバージョンを表します。

@@ -1,4 +1,3 @@
-/* del begin */
 /*
  * Copyright (C) 2012 NS Solutions Corporation
  *
@@ -13,9 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
+/* del begin */
 /* ------ h5.dev.api.geo ------ */
 (function() {
 	if (!h5) {
@@ -164,21 +164,6 @@
 	// originalAPI に 元のgetCurrentPositionとwatchPositionをとっておく
 	originalAPI.getCurrentPosition = h5.api.geo.getCurrentPosition;
 	originalAPI.watchPosition = h5.api.geo.watchPosition;
-	/**
-	 * デバッグ用 PositionErrorクラス 以下のAPIが失敗時に返すオブジェクトと同様の構造を持つ。
-	 * <ul>
-	 * <li>navigator.geolocation.getWachPosition</li>
-	 * <li>navigator.geolocation.currentPosition</li>
-	 * </ul>
-	 */
-	function DummyPositionError() {
-		this.PERMISSION_DENIED = 1;
-		this.POSITION_UNAVALABLE = 2;
-		this.TIMEOUT = 3;
-	}
-
-	DummyPositionError.prototype.code = 1;
-	DummyPositionError.prototype.message = '';
 
 	function H5GeolocationSupport() {
 	// 空コンストラクタ
@@ -384,22 +369,15 @@
 			return dfd.promise();
 		}
 
-		var dummyPositions = h5.dev.api.geo.dummyPositions;
-		if (!dummyPositions || dummyPositions.length === 0) {
+		var positions = h5.dev.api.geo.dummyPositions;
+		if (!positions || positions.length === 0) {
 			return originalAPI.getCurrentPosition(option);
 		}
 		// dummyPositionsが配列でない場合も対応する
-		var dummyPositions = $.isArray(h5.dev.api.geo.dummyPositions) ? h5.dev.api.geo.dummyPositions
-				: [h5.dev.api.geo.dummyPositions];
+		var positionsAry = $.isArray(positions) ? positions: [positions];
 
 		setTimeout(function() {
-			if (dummyPositions.length > 0) {
-				dfd.resolve(createPosition(dummyPositions[0]));
-			} else {
-				dfd.reject({
-					code: new DummyPositionError().POSITION_UNAVALABLE
-				});
-			}
+			dfd.resolve(createPosition(positionsAry[0]));
 		}, 0);
 		return dfd.promise();
 	}
@@ -449,12 +427,7 @@
 		WatchPositionPromise.prototype = {
 			// unwatchを呼び出したdeferredを_dfds[]から削除
 			unwatch: function() {
-				if (!_dfds[watchID]) {
-					// deferredオブジェクトが_dfdsに登録されていないのにunwatchが呼ばれる場合は
-					// reject()済みであるため、resolve()する必要がない。
-					return;
-				}
-				_dfds[watchID].resolve();
+				_dfds[watchID] && _dfds[watchID].resolve();
 				delete _dfds[watchID];
 				setTimeout(function() {
 					// deferredオブジェクトがすべてなくなったらタイマーの停止
@@ -469,27 +442,21 @@
 		};
 
 		setTimeout(function() {
-			if (dummyPos.length > 0) {
-				_dfds[watchID] = dfd;
-				if (_timerID === null) {
-					var intervalFunc = function() {
-						var pos;
-						if (_watchPointer >= dummyPos.length) {
-							pos = dummyPos[dummyPos.length - 1];
-						} else {
-							pos = dummyPos[_watchPointer++];
-						}
-						for ( var id in _dfds) {
-							_dfds[id].notify(createPosition(pos));
-						}
-					};
-					intervalFunc();
-					_timerID = setInterval(intervalFunc, h5.dev.api.geo.watchIntervalTime);
-				}
-			} else {
-				dfd.reject({
-					code: new DummyPositionError().POSITION_UNAVALABLE
-				});
+			_dfds[watchID] = dfd;
+			if (_timerID === null) {
+				var intervalFunc = function() {
+					var pos;
+					if (_watchPointer >= dummyPos.length) {
+						pos = dummyPos[dummyPos.length - 1];
+					} else {
+						pos = dummyPos[_watchPointer++];
+					}
+					for ( var id in _dfds) {
+						_dfds[id].notify(createPosition(pos));
+					}
+				};
+				intervalFunc();
+				_timerID = setInterval(intervalFunc, h5.dev.api.geo.watchIntervalTime);
 			}
 		}, 0);
 		return dfd.promise(new WatchPositionPromise(watchID));
