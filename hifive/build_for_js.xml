@@ -36,7 +36,6 @@
 			<matches pattern="[0-9]+\.[0-9]+\.[0-9]+" string="${versionNumber}" />
 		</condition>
 		<fail unless="isCorrectNumber" message="正しいバージョン番号を入力してください。" />
-		<echo file="./src/main/resources/conf/version.properties">version=${versionNumber}</echo>
 	</target>
 
 	<target name="copyToBlank" if="${isExistDir}" depends="getVersion">
@@ -87,7 +86,7 @@
 		</exec>
 	</target>
 
-	<target name="jscoverage">
+	<target name="jscoverage" depends="build">
 		<delete dir="${webappdir}/coverage" />
 		<exec executable="cmd" dir="jstool/jscoverage">
 			<arg line="/C inst.bat" />

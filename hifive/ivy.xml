@@ -28,10 +28,9 @@
 			<conf name="javaee" />
 		-->
 		<conf name="log" />
+		<conf name="selenium" />
 		<conf name="spring" />
-		<!--
-			<conf name="test" />
-		-->
+		<conf name="test" />
 		<!--
 			<conf name="tiles" />
 		-->
@@ -98,7 +97,14 @@
 		<dependency org="log4j" name="log4j" rev="1.2.16" conf="log->*" transitive="false" />
 		<dependency org="org.slf4j" name="slf4j-api" rev="1.6.4" conf="log->*" transitive="false" />
 		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.4" conf="log->*" transitive="false" />
-
+		<!-- selenium -->
+		<dependency org="com.opera" name="operadriver" rev="0.13" conf="selenium->*" transitive="false" />
+		<dependency org="org.seleniumhq.selenium" name="selenium-server" rev="2.21.0" conf="selenium->*"
+			transitive="true">
+			<exclude name="junit" />
+			<exclude name="commons-codec" />
+			<exclude name="servlet-api-2.5" />
+		</dependency>
 		<!-- spring -->
 		<dependency org="org.springframework" name="spring-aop" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
 		<dependency org="org.springframework" name="spring-asm" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
@@ -116,17 +122,15 @@
 		<dependency org="org.springframework" name="spring-webmvc" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
 
 		<!-- test -->
-		<!--
-			<dependency org="junit" name="junit" rev="4.10" conf="test->*" transitive="false" />
-			<dependency org="org.dbunit" name="dbunit" rev="2.4.8" conf="test->*" transitive="false" />
-			<dependency org="org.springframework" name="spring-test" rev="3.1.1.RELEASE" conf="test->*" transitive="false" />
-			<dependency org="com.googlecode.jmockit" name="jmockit" rev="0.999.14" conf="test->*" transitive="true">
+		<dependency org="junit" name="junit" rev="4.10" conf="test->*" transitive="false" />
+		<dependency org="org.dbunit" name="dbunit" rev="2.4.8" conf="test->*" transitive="false" />
+		<dependency org="org.springframework" name="spring-test" rev="3.1.1.RELEASE" conf="test->*" transitive="false" />
+		<dependency org="com.googlecode.jmockit" name="jmockit" rev="0.999.14" conf="test->*" transitive="true">
 			<exclude name="log4j" />
 			<exclude name="slf4j-api" />
 			<exclude name="commons-logging" />
 			<exclude name="junit" />
-			</dependency>
-		-->
+		</dependency>
 		<!-- tiles -->
 		<!--
 			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
