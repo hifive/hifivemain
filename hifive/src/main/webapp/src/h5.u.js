@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -74,6 +74,17 @@
 	var ERR_CODE_INVALID_VALUE = 11006;
 
 	/**
+	 * loadScript()に渡されたパスが不正(文字列以外、空文字、空白文字)である時に発生するエラー
+	 */
+	var ERR_CODE_INVALID_SCRIPT_PATH = 11007;
+
+
+	/**
+	 * loadScript()に渡されたオプションが不正(プレーンオブジェクト、null、undefined)である時に発生するエラー
+	 */
+	var ERR_CODE_INVALID_OPTION = 11008;
+
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
@@ -84,6 +95,8 @@
 	errMsgMap[ERR_CODE_DESERIALIZE] = '型情報の判定に失敗したため、デシリアライズできませんでした。';
 	errMsgMap[ERR_CODE_REFERENCE_CYCLE] = '循環参照が含まれています。';
 	errMsgMap[ERR_CODE_INVALID_VALUE] = '不正な値が含まれるため、デシリアライズできませんでした。';
+	errMsgMap[ERR_CODE_INVALID_SCRIPT_PATH] = 'スクリプトのパスが不正です。空文字以外の文字列、またはその配列を指定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -167,8 +180,6 @@
 			return 'a';
 		case 'object':
 			return 'o';
-		case 'function':
-			return 'f';
 		case 'null':
 			return 'l';
 		case TYPE_OF_UNDEFINED:
@@ -252,8 +263,17 @@
 	 */
 	var loadScript = function(path, opt) {
 		var resource = wrapInArray(path);
-		if (resource.length === 0) {
-			return;
+		if (!resource || resource.length === 0) {
+			throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
+		}
+		for(var i = 0, l = resource.length; i < l; i++){
+			var path = resource[i];
+			if(typeof path !== 'string' || !$.trim(path)){
+				throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
+			}
+		}
+		if(opt != null && !$.isPlainObject(opt)){
+			throwFwError(ERR_CODE_INVALID_OPTION, 'h5.u.loadScript()');
 		}
 		var force = opt && opt.force === true;
 		var srcLen = resource.length;
@@ -588,7 +608,7 @@
 					}
 				}
 				if (hash) {
-					ret += ((val.length) ? ',' : '') + '"@{'
+					ret += ((val.length) ? ',' : '') + '"' + typeToCode('objElem') + '{'
 							+ hash.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 					ret = ret.replace(/,$/, '');
 					ret += '}"';
@@ -650,6 +670,7 @@
 		var ret = RegExp.$2;
 
 		function func(val) {
+			var originValue = val;
 			/**
 			 * 型情報のコードを文字列に変換します。
 			 *
@@ -684,8 +705,6 @@
 					return 'array';
 				case 'o':
 					return 'object';
-				case 'f':
-					return 'function';
 				case 'l':
 					return 'null';
 				case 'u':
@@ -741,13 +760,12 @@
 						var obj = $.parseJSON(ret);
 
 						for ( var i = 0; i < obj.length; i++) {
-							if (obj[i].match(new RegExp('^' + typeToCode('undefElem')))) {
+							switch (codeToType(obj[i].substring(0, 1))) {
+							case 'undefElem':
 								delete obj[i];
-								continue;
-							}
-							if (obj[i].match(new RegExp('^' + typeToCode('objElem')))) {
-								var extendObj = func(obj[i].replace(new RegExp('^'
-										+ typeToCode('objElem')), typeToCode('object')));
+								break;
+							case 'objElem':
+								var extendObj = func(typeToCode('object') + obj[i].substring(1));
 								var tempObj = [];
 								for ( var i = 0, l = obj.length - 1; i < l; i++) {
 									tempObj[i] = obj[i];
@@ -756,7 +774,8 @@
 								for ( var key in extendObj) {
 									obj[key] = extendObj[key];
 								}
-							} else {
+								break;
+							default:
 								obj[i] = func(obj[i]);
 							}
 						}
@@ -780,7 +799,6 @@
 						ret = new RegExp(regStr, flg);
 						break;
 					case 'null':
-					case 'function': // Function型はnullにする
 						ret = null;
 						break;
 					case TYPE_OF_UNDEFINED:
@@ -795,18 +813,17 @@
 					case '-infinity':
 						ret = -Infinity;
 						break;
+					default:
+						throwFwError(ERR_CODE_INVALID_VALUE);
 					}
 				}
-			}
-
-			catch (e) {
+			} catch (e) {
 				// 型情報の判定(復元)に失敗した場合、値をそのまま返すので何もしない
 				// throwFwError(ERR_CODE_DESERIALIZE);
+				ret = originValue;
 			}
-
 			return ret;
-		}
-		;
+		};
 
 		return func(ret);
 	};

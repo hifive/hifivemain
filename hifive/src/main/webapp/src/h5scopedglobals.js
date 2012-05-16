@@ -106,7 +106,7 @@ function createRejectReason(code, msgParam, detail) {
  * @returns 配列化された値、ただし引数がnullまたはundefinedの場合はそのまま
  */
 function wrapInArray(value) {
-	if (!value) {
+	if (value == null) {
 		return value;
 	}
 	return $.isArray(value) ? value : [value];

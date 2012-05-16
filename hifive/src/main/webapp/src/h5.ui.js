@@ -772,7 +772,7 @@
 	 * @function
 	 * @memberOf h5.ui
 	 */
-	var scrollToTop = function(wait) {
+	var scrollToTop = function() {
 		var waitCount = 3;
 		var waitMillis = 500;
 		function fnScroll() {
@@ -787,7 +787,7 @@
 		}
 
 		window.scrollTo(0, 1);
-		if (window.scrollY !== 1) {
+		if ($(window).scrollTop !== 1) {
 			setTimeout(fnScroll, waitMillis);
 		}
 	};
