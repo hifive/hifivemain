@@ -49,11 +49,6 @@
 	var ERR_CODE_LEVEL_INVALID = 10003;
 
 	/**
-	 * ログターゲットが複数回指定されたときのエラーコード
-	 */
-	var ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES = 10003;
-
-	/**
 	 * 存在しないログターゲットを指定されたときのエラーコード
 	 */
 	var ERR_CODE_LOG_TARGET_IS_NONE = 10004;
@@ -64,13 +59,18 @@
 	var ERR_CODE_CATEGORY_INVALID = 10005;
 
 	/**
+	 * ログターゲットが複数回指定されたときのエラーコード
+	 */
+	var ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES = 10007;
+
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_LOG_TARGET] = 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。';
 	errMsgMap[ERR_CODE_OUT_CATEGORY_IS_NONE] = 'out.categoryは必須項目です。';
 	errMsgMap[ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES] = 'category"{0}"が複数回指定されています。';
-	errMsgMap[ERR_CODE_LEVEL_INVALID] = 'level"{0}"の指定は不正です。Number、もしくはtrace, info, debug, warn, errorを指定してください。';
+	errMsgMap[ERR_CODE_LEVEL_INVALID] = 'level"{0}"の指定は不正です。Number、もしくはtrace, info, debug, warn, error, noneを指定してください。';
 	errMsgMap[ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES] = 'ログターゲット"{0}"が複数回指定されています。';
 	errMsgMap[ERR_CODE_LOG_TARGET_IS_NONE] = '"{0}"という名前のログターゲットはありません。';
 	errMsgMap[ERR_CODE_CATEGORY_INVALID] = 'categoryは必須項目です。1文字以上の文字列を指定してください。';
@@ -186,12 +186,6 @@
 			return 'DEBUG';
 		} else if (level === logLevel.TRACE) {
 			return 'TRACE';
-		} else if (level === logLevel.ALL) {
-			return 'ALL';
-		} else if (level === logLevel.NONE) {
-			return 'NONE';
-		} else {
-			return 'OTHER';
 		}
 	}
 
@@ -516,7 +510,7 @@
 				}
 				out.compiledCategory = getRegex(category);
 			}
-			var level = $.trim(out.level);
+			var level = typeof out.level == 'string'? $.trim(out.level): out.level;
 			if (level.length === 0) {
 				level = isDefault ? defaultOut.level : _dOut.level;
 			}
