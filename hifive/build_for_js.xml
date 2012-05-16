@@ -86,7 +86,7 @@
 		</exec>
 	</target>
 
-	<target name="jscoverage" depends="build">
+	<target name="jscoverage">
 		<delete dir="${webappdir}/coverage" />
 		<exec executable="cmd" dir="jstool/jscoverage">
 			<arg line="/C inst.bat" />

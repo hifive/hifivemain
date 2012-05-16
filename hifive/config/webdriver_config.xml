@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+  <comment>WebDriver Properties</comment>
+  <!-- 環境に合せて設定して下さい -->
+  <!-- ブラウザ起動時に表示するURL -->
+  <entry key="testPageUrl">http://localhost:8080/htmlhifiveWeb/</entry>
+  <!-- テストを実行するiPhoneのURL (iPhoneにインストールされたWebDriverアプリケーションを起動すると下部に表示されているURL) -->
+  <entry key="iPhoneServerPath">http://192.168.81.195:3001/wd/hub/</entry>
+  <!-- Android SDKの配置場所 -->
+  <entry key="androidSdkPath">C:\android-sdk</entry>
+  <!-- スクリーンショットの保存先(ここで指定したパスのディレクトリが存在しない場合は自動で生成される) -->
+  <entry key="screenShotPath">C:\snapshot</entry>
+
+  <!-- 以降、通常は変更不要 -->
+  <!-- FireFoxアドイン FireBugの配置場所 -->
+  <entry key="firebugPath">lib/selenium/firebug-1.9.1-fx.xpi</entry>
+  <!-- Chromium(chromedriver.exe)の配置場所 -->
+  <entry key="chromiumPath">lib/selenium/chromedriver.exe</entry>
+</properties>
