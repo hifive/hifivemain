@@ -103,6 +103,12 @@
 			transitive="true">
 			<exclude name="junit" />
 			<exclude name="commons-codec" />
+			<exclude name="commons-collections" />
+			<exclude name="commons-io" />
+			<exclude name="commons-lang" />
+			<exclude name="commons-logging" />
+			<exclude name="guava" />
+			<exclude name="jsr305" />
 			<exclude name="servlet-api-2.5" />
 		</dependency>
 		<!-- spring -->
