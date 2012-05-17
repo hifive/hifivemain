@@ -33,3 +33,34 @@ This file describes how to build CSS and EJS version and release and development
      h5.dev.js
      h5.js
    is generated!!!!
+------------------------------------------------------------
+Here's how the test run of hifive.
+
+1.Clone a repository, get the library.(1,2 item above)
+
+2.Download the jscoverage jscoverage.exe to place a "jsTool / jscoverage"
+  - http://siliconforks.com/jscoverage/
+  
+3.Run the "jscoverage" target of build_for_js.xml.
+
+4.Place the following files to the "lib / selenium".
+  - firebug-x.x.x-fx.xpi  http://getfirebug.com/
+  - chromedriver          http://code.google.com/p/selenium/
+  
+5.Add a library is shown below in "src / main / webapp / lib".
+  - ejs
+  - jqplugins
+  - jquery
+  - syntaxhighlighter
+  - modernizr.js
+
+6.To run the CoverageMargeTest.
+  - From IDE (eclipse)
+  1.Install the tomcat plug-in, make the settings.
+  - http://www.eclipsetotale.com/tomcatPlugin.html
+  
+  2.Tomcat update the definition.
+  
+  3.Tomcat startup.
+  
+  4.Junit run in "CoverageMargeTest".
