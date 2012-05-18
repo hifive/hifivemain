@@ -245,6 +245,36 @@ $(function() {
 		});
 	});
 
+	test('__name属性のないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
+		var errorCode = 6006;
+		var controller = {
+			name: 'TestController'
+		};
+		try {
+			h5.core.controller('#controllerTest', controller);
+			ok(false, 'エラーが発生していません。');
+		}
+		catch (e) {
+			same(e.code, errorCode, e.message);
+		}
+	});
+
+
+	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
+		var errorCode = 6017;
+		var controller = {
+			__name: 'TestController',
+			myLogic: {name:'MyLogic'}
+		};
+		try {
+			h5.core.controller('#controllerTest', controller);
+			ok(false, 'エラーが発生していません。');
+		}
+		catch (e) {
+			same(e.code, errorCode, e.message);
+		}
+	});
+
 	test('複数要素へのバインド', function() {
 
 		var controller = {
@@ -366,7 +396,28 @@ $(function() {
 		});
 	});
 
+	asyncTest('h5.core.controllerManager.getAllControllers() で現在バインドされているすべてのコントローラを取得できること', function() {
+		// 現在バインドされているコントローラを全てunbindする
+		for(var i = 0, controllers = h5.core.controllerManager.getAllControllers(), l = controllers.length; i < l; i++){
+			controllers[i].unbind();
+		}
+		var names = ['Test1Controller', 'Test2Controller', 'Test3Controller'];
+		var p;
+		for(var i = 0, l = names.length; i < l; i++){
+			p = h5.core.controller('#controllerTest', {__name: names[i]});
+		}
+		p.readyPromise.done(function(){
+			var controllers = h5.core.controllerManager.getAllControllers();
+			for(var i = 0, l = controllers.length; i < l; i++){
+				controllers[i] = controllers[i].__name;
+			}
+			deepEqual(controllers, names, '3つバインドしたコントローラが取得できること');
+			start();
+		});
+	});
+
 	asyncTest('h5.core.viewがない時のコントローラの動作', function() {
+		var index = h5.core.controllerManager.getAllControllers().length;
 		var view = h5.core.view;
 		h5.core.view = null;
 		var controller = {
@@ -375,12 +426,11 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise
 				.done(function() {
-					start();
-
-					ok(h5.core.controllerManager.controllers[0] === testController,
+					ok(h5.core.controllerManager.controllers[index] === testController,
 							'Viewがなくてもコントローラは動作するか');
 					ok(!h5.core.view, 'Viewは落ちているか');
 					h5.core.view = view;
+					start();
 				});
 	});
 
@@ -953,7 +1003,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'テンプレートを使用できるか2',
+			'テンプレートを使用できるか2 view.append()に指定されたDOM要素が{window*},{document*}である時にエラーが発生すること。',
 			function() {
 				var html = '';
 				var updateView = 0;
@@ -1044,14 +1094,50 @@ $(function() {
 						});
 			});
 
+	asyncTest('view操作', function() {
+		var controller = {
+			__name: 'TestController',
+
+			__templates: ['./template/test2.ejs'],
+
+			'{rootElement} click': function(context){
+				this.view.register('templateId1', '111');
+				same(this.view.get('templateId1'), '111', 'this.view.register(id, template)でテンプレートを登録できること。');
+				same(this.view.isValid('[%= data %]'), true, 'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
+				same(this.view.isValid('<div>[%= hoge fuga %]</div>'), false, 'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
+				same(this.view.isAvailable('templateId1'), true, 'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
+				same(this.view.isAvailable('templateId2'), false, 'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
+				this.view.clear();
+				same(this.view.isAvailable('templateId1'), false, 'this.view.clear()でテンプレートを削除できること');
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+			start();
+		});
+	});
+
+
 	asyncTest('テンプレートのカスケーディング1', function() {
-		var html = '';
+		var html = html2 = '';
+		var errorObj = {};
+		var expectErrorObj = {
+			code : 7005,
+			message : "テンプレートID:template4 テンプレートがありません。"
+		};
 
 		var childController = {
 			__name: 'ChildController',
 
 			'input[type=button] click': function(context) {
 				html = this.view.get('template2');
+				html2 = this.view.get('template3');
+				try{
+					this.view.get('template4');
+				} catch(e){
+					errorObj = e;
+				}
 			}
 		};
 
@@ -1063,11 +1149,16 @@ $(function() {
 			childController: childController
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
+		h5.core.view.register('template3', 'ok');
 		testController.readyPromise.done(function() {
-			start();
 			$('#controllerTest input[type=button]').click();
-			ok(html.length > 0, '指定されたテンプレートIDを自身のビューが扱っていない場合、親コントローラのビューへカスケードされるか');
+			ok(html.length > 0, '指定されたテンプレートIDを自身のビューが扱っていない場合、親コントローラのビューへカスケードされること');
+			ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
+			console.log(errorObj)
+			same(errorObj.code, expectErrorObj.code, '指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
+			same(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -1364,6 +1455,47 @@ $(function() {
 				strictEqual($(indicator.target)
 						.find('.blockUI.a.blockElement > .indicator-message').text(),
 						'BlockMessageTest');
+				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
+						'Indicator#show() インジケータが表示されること。');
+
+				strictEqual($(indicator.target).find('.blockUI.blockOverlay').css('display'),
+						'block', 'オーバーレイが表示されていること。');
+
+				setTimeout(function() {
+					indicator.hide();
+
+					setTimeout(function() {
+						start();
+						strictEqual($('.blockUI', indicator.target).length, 0,
+								'Indicator#hide() インジケータが除去されていること。');
+
+						testController.unbind();
+					}, 0);
+				}, 0);
+			}
+		};
+
+		testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
+
+	asyncTest('this.indicator() オプションにプレーンオブジェクト以外を渡した時は無視されること。', 4, function() {
+
+		var testController = null;
+		var controllerBase = {
+			__name: 'TestController',
+
+			'input[type=button] click': function() {
+				function NoPlain(){
+					this.message = 'Test';
+				}
+				var indicator = this.indicator(new NoPlain()).show();
+
+				same($(indicator.target)
+						.find('.blockUI.a.blockElement > .indicator-message').text(),
+						'', 'オプションは無視されて、メッセージは表示されていないこと。');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
 						'Indicator#show() インジケータが表示されること。');
 
