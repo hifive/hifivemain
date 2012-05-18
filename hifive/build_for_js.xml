@@ -17,7 +17,6 @@
 	<property name="blank.project.path.h5" value="../hifive_blank/WebContent/lib/h5/" />
 	<property name="blank.project.path.ejs" value="../hifive_blank/WebContent/lib/ejs/" />
 	<property name="blank.project.index" value="../hifive_blank/WebContent/index.html" />
-	<property name="currentRelease.path" value="${webapp.root.dir}/currentRelease/" />
 
 	<condition property="isExistDir">
 		<and>
