@@ -15,4 +15,4 @@
  *
  * hifive
  */
-window.sample4loaded = window.sample4loaded? 1 : window.sample4loaded + 1;
+window.sample4loaded = window.sample4loaded ? window.sample4loaded + 1: 1;
