@@ -7,7 +7,7 @@
     <updateXml>true</updateXml>
     <warLocation></warLocation>
     <extraInfo></extraInfo>
-    <webPath>/htmlhifiveWeb</webPath>
+    <webPath>/hifive</webPath>
     <webClassPathEntries>
         <webClassPathEntry>/hifive/lib/closurecompiler/args4j-2.0.12.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/closurecompiler/closure-compiler-r1810.jar</webClassPathEntry>
