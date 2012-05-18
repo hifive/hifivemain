@@ -2,7 +2,8 @@
 
 <project name="h5jsbuilder" basedir="." default="build">
 	<property name="webappdir" value="src/main/webapp" />
-	<property name="releaseDir" value="${webappdir}/archives/current" />
+	<property name="archivesDir" value="${webappdir}/archives" />
+	<property name="releaseDir" value="${archivesDir}/current" />
 
 	<property name="webapp.root.dir" value="src/main/webapp" />
 	<property name="web-inf.dir" value="${webapp.root.dir}/WEB-INF" />
@@ -28,7 +29,7 @@
 	<taskdef name="buildService" classname="jp.co.nssol.h5.dev.service.ant.BuilderServiceTask" classpathref="base.path" />
 
 
-	<target name="all" depends="build, copyToBlank, zipCurrentRelease, jsdoc, jscoverage" />
+	<target name="all" depends="build, copyToBlank, zipCurrentRelease, jscoverage" />
 
 	<target name="getVersion">
 			<input message="バージョン番号を入力してください。(ex. 1.0.1)" addproperty="versionNumber" />
@@ -54,13 +55,9 @@
 		<replaceregexp file="${blank.project.index}" match="lib/h5/h5(.*).js" replace="lib/h5/h5-${versionNumber}.js" />
 	</target>
 
-	<target name="zipCurrentRelease" depends="getVersion">
-		<delete dir="${currentRelease.path}" excludes="readme*" />
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.js" tofile="${currentRelease.path}h5-${versionNumber}.js" />
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.dev.js" tofile="${currentRelease.path}h5-${versionNumber}.dev.js" />
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.css" tofile="${currentRelease.path}h5-${versionNumber}.css" />
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/ejs.js" tofile="${currentRelease.path}ejs-1.0.h5mod.js" />
-		<zip destfile="${webapp.root.dir}/hifive-all-${versionNumber}.zip">
+	<target name="zipCurrentRelease" depends="build">
+		<delete file="${archivesDir}/current/hifive-all-${versionNumber}.zip"/>
+		<zip destfile="${archivesDir}/current/hifive-all-${versionNumber}.zip" basedir="${archivesDir}/current">
 		</zip>
 	</target>
 
