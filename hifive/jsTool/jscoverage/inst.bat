@@ -11,6 +11,7 @@ copy /-Y /V %base%\src\h5.dev.js %work%\qunitTestOrg\src\h5.dev.js
 xcopy /S /E /I %base%\src %work%\qunitTestOrg\src
 
 xcopy /S /E /I %base%\test %work%\qunitTestOrg\test
-xcopy /S /E /I %base%\lib %work%\qunitTestOrg\lib
+xcopy /S /E /I %base%\res %work%\qunitTestOrg\res
+xcopy /S /E /I %base%\archives %work%\qunitTestOrg\archives
 
-jscoverage.exe --no-instrument=\lib --no-instrument=test\runner.js --no-instrument=test --encoding=UTF-8 %work%\qunitTestOrg %work%\inst
+jscoverage.exe --no-instrument=\res --no-instrument=test\runner.js --no-instrument=test --encoding=UTF-8 %work%\qunitTestOrg %work%\inst
