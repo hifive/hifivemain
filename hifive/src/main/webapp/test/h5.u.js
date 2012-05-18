@@ -226,7 +226,10 @@ $(function() {
 	});
 
 	test('スクリプトのロード(h5.u.loadScript)', function() {
-		h5.u.loadScript('data/sample.js');
+		window.h5samplefunc = undefined;
+		h5.u.loadScript('data/sample.js', {
+			force: true
+		});
 
 		ok(window.h5samplefunc, 'スクリプトがロードできたか');
 		window.h5samplefunc = undefined;
@@ -238,6 +241,92 @@ $(function() {
 		ok(window.h5samplefunc(), 'forceオプションは有効か');
 		window.h5samplefunc = undefined;
 	});
+
+	test('スクリプトのロード(h5.u.loadScript) 引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。', 2, function() {
+		window.sample4loaded = undefined;
+		h5.u.loadScript(['data/sample4.js?1', 'data/sample.js','data/sample4.js?1']);
+		same(window.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
+
+		window.sample4loaded = undefined;
+		h5.u.loadScript(['data/sample4.js?1', 'data/sample.js','data/sample4.js?1'], {force: true});
+		same(window.sample4loaded, 2, 'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
+
+		window.sample4loaded = undefined;
+
+	});
+
+	test('スクリプトのロード(h5.u.loadScript) リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
+		window.sample4loaded = undefined;
+		h5.u.loadScript('data/sample4.js?s123');
+		same(window.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
+		h5.u.loadScript('data/sample4.js?s1234');
+		same(window.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
+		h5.u.loadScript(['data/sample4.js?s12345', 'data/sample4.js?s123',
+				'data/sample4.js?s123456']);
+		same(window.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
+	});
+	test(
+			'スクリプトのロード(h5.u.loadScript) 引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
+			10, function() {
+				try {
+					h5.u.loadScript();
+					ok(false, '引数なしでエラーが発生していません。');
+				} catch (e) {
+					ok(true, '引数なしでエラーが発生しました。');
+				}
+
+				var vals = [[], null, 0, 1, true, false, {}, '', ' '];
+				var valsStr = ['[]', null, 0, 1, true, false, {}, '""', '" "'];
+				for ( var i = 0, l = vals.length; i < l; i++) {
+					try {
+						h5.u.loadScript(vals[i], {
+							force: true
+						});
+						ok(false, 'エラーが発生していません。' + valsStr[i]);
+					} catch (e) {
+						ok(ok, 'エラーが発生しました。' + valsStr[i]);
+					}
+				}
+			});
+
+	test(
+			'スクリプトのロード(h5.u.loadScript) 配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
+			16, function() {
+				window.h5samplefunc = undefined
+				var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
+						['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
+						['data/sample.js', {}], ['data/sample.js', ' ']];
+				var valsStr = ["[['data/sample.js']]", "['data/sample.js', null]",
+						"['data/sample.js', 0]", "['data/sample.js', 1]",
+						"['data/sample.js', true]", "['data/sample.js', false]",
+						"['data/sample.js', {}]", "['data/sample.js', ' ']"];
+				for ( var i = 0, l = vals.length; i < l; i++) {
+					try {
+						h5.u.loadScript(vals[i], {
+							force: true
+						});
+						ok(false, 'エラーが発生していません。' + valsStr[i]);
+					} catch (e) {
+						ok(ok, 'エラーが発生しました。' + valsStr[i]);
+						ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
+					}
+					window.h5samplefunc = undefined;
+				}
+			});
+
+	test(
+			'スクリプトのロード(h5.u.loadScript) オプションに プレーンオブジェクト/undefined/null 以外を渡すと、エラーが出ること。',
+			8, function() {
+				var opts = [[],'','data/sample.js',new String(),0,1,true,false];
+				for(var i = 0, l = opts.length; i < l; i++){
+					try{
+						h5.u.loadScript('data/sample.js', opts[i]);
+						ok(false, 'エラーが発生していません。');
+					} catch(e){
+						ok(true, e.code + ': ' + e.message);
+					}
+				}
+			});
 
 	test('スクリプトの同期ロード(h5.u.loadScript)', function() {
 		h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
@@ -310,6 +399,137 @@ $(function() {
 		});
 
 	});
+
+	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
+		window.sample4loaded = undefined;
+		h5.u.loadScript('data/sample4.js?123', {
+			async: true
+		}).done(
+				function() {
+					same(window.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
+					h5.u.loadScript('data/sample4.js?1234', {
+						async: true
+					}).done(
+							function() {
+								same(window.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
+								h5.u.loadScript(['data/sample4.js?12345', 'data/sample4.js?123',
+										'data/sample4.js?123456'], {
+											async: true
+										}).done(function() {
+									same(window.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
+									start();
+								});
+							});
+				});
+	});
+
+	test(
+			'スクリプトのロード(h5.u.loadScript) 【非同期】引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
+			10, function() {
+				try {
+					h5.u.loadScript();
+					ok(false, '引数なしでエラーが発生していません。');
+				} catch (e) {
+					ok(true, '引数なしでエラーが発生しました。');
+				}
+
+				var vals = [[], null, 0, 1, true, false, {}, '', ' '];
+				var valsStr = ['[]', null, 0, 1, true, false, {}, '""', '" "'];
+				for ( var i = 0, l = vals.length; i < l; i++) {
+					try {
+						h5.u.loadScript(vals[i], {
+							force: true,
+							async: true
+						});
+						ok(false, 'エラーが発生していません。' + valsStr[i]);
+					} catch (e) {
+						ok(ok, 'エラーが同期で発生する。' + valsStr[i]);
+					}
+				}
+			});
+
+	test(
+			'スクリプトのロード(h5.u.loadScript) 【非同期】配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
+			16, function() {
+				window.h5samplefunc = undefined
+				var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
+						['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
+						['data/sample.js', {}], ['data/sample.js', ' ']];
+				var valsStr = ["[['data/sample.js']]", "['data/sample.js', null]",
+						"['data/sample.js', 0]", "['data/sample.js', 1]",
+						"['data/sample.js', true]", "['data/sample.js', false]",
+						"['data/sample.js', {}]", "['data/sample.js', ' ']"];
+				for ( var i = 0, l = vals.length; i < l; i++) {
+					try {
+						h5.u.loadScript(vals[i], {
+							force: true,
+							async: true
+						});
+						ok(false, 'エラーが発生していません。' + valsStr[i]);
+					} catch (e) {
+						ok(ok, 'エラーが同期で発生する。' + valsStr[i]);
+						ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
+					}
+					window.h5samplefunc = undefined;
+				}
+			});
+
+	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。', 2, function() {
+		window.sample4loaded = undefined;
+		h5.u.loadScript(['data/sample4.js?2', 'data/sample.js','data/sample4.js?2'], {
+					async: true
+				}).done(
+						function() {
+							same(window.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
+							window.sample4loaded = undefined;
+							h5.u.loadScript(
+									['data/sample4.js?2', 'data/sample.js', 'data/sample4.js?2'], {
+										async: true,
+										force: true
+									}).done(
+									function() {
+										same(window.sample4loaded, 2,
+												'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
+
+										window.sample4loaded = undefined;
+										start()
+									});
+		});
+			});
+
+	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】存在しないスクリプトを指定しても、ほかのスクリプトの読み込みが中断されないこと。', 2,
+			function() {
+				window.sample4loaded = undefined;
+				h5.u.loadScript(
+						['data/sample4.js?testWidthError1', 'data/noExistFile.js',
+								'data/sample4.js?testWidthError2',
+								'data/sample4.js?testWidthError3'], {
+							async: true,
+							force: true
+						}).done(
+						function() {
+							same(window.sample4loaded, 3, 'sample4.jsが3回読み込まれたこと。');
+							window.sample4loaded = undefined;
+							h5.u.loadScript(
+									['data/sample4.js?testWidthError1', 'data/noExistFile.js',
+											'data/sample4.js?testWidthError2',
+											'data/sample4.js?testWidthError3'], {
+										async: true,
+										parallel: true,
+										force: true
+									}).done(function() {
+								same(window.sample4loaded, 3, 'sample4.jsが3回読み込まれたこと。(パラレル)');
+								window.sample4loaded = undefined;
+								start();
+							}).fail(function(e) {
+								ok(false, e.code + ': ' + e.message);
+								start();
+							});
+						}).fail(function(e) {
+					ok(false, e.code + ': ' + e.message);
+					start();
+				});
+			});
 
 	test('文字列のフォーマット(h5.u.str.format)', function() {
 		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
@@ -824,6 +1044,22 @@ $(function() {
 				strictEqual(deserialized.hasOwnProperty(key), objNoFunction.hasOwnProperty(key),
 						"シリアライズしてデシリアライズした配列のhasOwnProperty()の値が各要素で同じ。key = " + key);
 			}
+		}
+	});
+
+	test('deserialize 不正な文字をデシリアライズしようとしたときにエラーが発生せず、渡した文字列がそのまま返ってくること。', 14, function() {
+		var strs = ['1|', '1| ', '1|_', '1|@{}', '1|"abc"', '1|b2', '1|B3'];
+		for ( var i = 0, len = strs.length; i < len; i++) {
+			var str = strs[i];
+			var deserialized = h5.u.obj.deserialize(str);
+			same(deserialized, strs[i].substring(2), "渡した文字列がそのまま返ってくること。");
+		}
+		var objStrs = ['1|a["f1"]', '1|a["n1","m2"]', '1|o{"key":"svalue","innerObj":"o{\\"key\\":\\"o{key:2}\\"}"}'];
+		var expects = [["f1"], [1,"m2"], {key:'value',innerObj:{key:'o{key:2}'}}];
+		for ( var i = 0, len = strs.length; i < len; i++) {
+			var str = objStrs[i];
+			var deserialized = h5.u.obj.deserialize(str);
+			same(deserialized, expects[i], "オブジェクトや配列の場合は中身が不正な文字の時に中身だけがそのまま文字列として返ってくること。");
 		}
 	});
 

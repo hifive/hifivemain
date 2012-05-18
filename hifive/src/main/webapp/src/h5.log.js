@@ -29,12 +29,12 @@
 	// =============================
 
 	/**
-	 * ログターゲットの指定が不正なときのエラーコード
+	 * ログターゲット(targets)の指定が不正なときのエラーコード
 	 */
-	var ERR_CODE_LOG_TARGET = 10000;
+	var ERR_CODE_LOG_TARGET_TYPE = 10000;
 
 	/**
-	 * out.categoryの指定が空文字のときのエラーコード
+	 * out.categoryのが指定されていないときのエラーコード
 	 */
 	var ERR_CODE_OUT_CATEGORY_IS_NONE = 10001;
 
@@ -51,7 +51,7 @@
 	/**
 	 * 存在しないログターゲットを指定されたときのエラーコード
 	 */
-	var ERR_CODE_LOG_TARGET_IS_NONE = 10004;
+	var ERR_CODE_LOG_TARGETS_IS_NONE = 10004;
 
 	/**
 	 * カテゴリに文字列以外または空文字を指定したときのエラーコード
@@ -59,21 +59,39 @@
 	var ERR_CODE_CATEGORY_INVALID = 10005;
 
 	/**
-	 * ログターゲットが複数回指定されたときのエラーコード
+	 * ログターゲット(targets)が複数回指定されたときのエラーコード
 	 */
-	var ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES = 10007;
+	var ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES = 10007;
+
+	/**
+	 * ログターゲット(targets)に文字列以外または空文字を指定されたときのエラーコード
+	 */
+	var ERR_CODE_LOG_TARGETS_INVALID = 10008;
+
+	/**
+	 * ログターゲット(target)にオブジェクト以外を指定されたときのエラーコード
+	 */
+	var ERR_CODE_LOG_TARGET_INVALID = 10009;
+
+	/**
+	 * out.categoryが指定されていないときのエラーコード
+	 */
+	var ERR_CODE_OUT_CATEGORY_INVALID = 10010;
 
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_LOG_TARGET] = 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。';
-	errMsgMap[ERR_CODE_OUT_CATEGORY_IS_NONE] = 'out.categoryは必須項目です。';
+	errMsgMap[ERR_CODE_LOG_TARGET_TYPE] = 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。';
+	errMsgMap[ERR_CODE_OUT_CATEGORY_IS_NONE] = 'outの各要素について、categoryは必須項目です。。';
 	errMsgMap[ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES] = 'category"{0}"が複数回指定されています。';
 	errMsgMap[ERR_CODE_LEVEL_INVALID] = 'level"{0}"の指定は不正です。Number、もしくはtrace, info, debug, warn, error, noneを指定してください。';
-	errMsgMap[ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES] = 'ログターゲット"{0}"が複数回指定されています。';
-	errMsgMap[ERR_CODE_LOG_TARGET_IS_NONE] = '"{0}"という名前のログターゲットはありません。';
+	errMsgMap[ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES] = 'ログターゲット"{0}"が複数回指定されています。';
+	errMsgMap[ERR_CODE_LOG_TARGETS_IS_NONE] = '"{0}"という名前のログターゲットはありません。';
 	errMsgMap[ERR_CODE_CATEGORY_INVALID] = 'categoryは必須項目です。1文字以上の文字列を指定してください。';
+	errMsgMap[ERR_CODE_LOG_TARGETS_INVALID] = 'ログターゲット(targets)の指定は1文字以上の文字列、または配列で指定してください。';
+	errMsgMap[ERR_CODE_LOG_TARGET_INVALID] = 'ログターゲット(target)の指定はプレーンオブジェクトで指定してください。';
+	errMsgMap[ERR_CODE_OUT_CATEGORY_INVALID] = 'outの各要素についてcategoryは文字列で指定する必要があります。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -433,17 +451,8 @@
 		},
 
 		_output: function(func, args) {
-			if (typeof func.apply !== 'undefined') {
-				func.apply(console, args);
-				return;
-			}
-			var msg = '';
-			if (!$.isArray(args)) {
-				msg += args.toString();
-			} else {
-				msg += args.join(' ');
-			}
-			func(msg);
+			func.apply(console, args);
+			return;
 		}
 	};
 
@@ -471,12 +480,15 @@
 		/* del end */
 
 		function compileLogTarget(targets) {
+			if(!$.isPlainObject(targets)){
+				throwFwError(ERR_CODE_LOG_TARGET_INVALID);
+			}
 			for ( var prop in targets) {
 				var obj = targets[prop];
 				var type = $.type(obj.type);
 				// 今は"remote"でもエラーとなる
-				if (type === 'object' || (type === 'string' && obj.type !== 'console')) {
-					throwFwError(ERR_CODE_LOG_TARGET);
+				if (type !== 'object' && obj.type !== 'console') {
+					throwFwError(ERR_CODE_LOG_TARGET_TYPE);
 				}
 				var compiledTarget = null;
 				if (obj.type === 'console') {
@@ -501,43 +513,53 @@
 		function compileOutput(_logTarget, out, _dOut) {
 			var isDefault = _dOut == null;
 			if (!isDefault) {
-				var category = $.trim(out.category);
-				if (category.length === 0 && !_dOut) {
-					throwFwError(ERR_CODE_OUT_CATEGORY_IS_NONE);
+				var category = out.category;
+				if (typeof category !== 'string' || $.trim(category).length === 0) {
+					throwFwError(ERR_CODE_OUT_CATEGORY_INVALID);
 				}
+				category = $.trim(category);
 				if ($.inArray(category, categoryCache) !== -1) {
 					throwFwError(ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES, out.category);
 				}
 				out.compiledCategory = getRegex(category);
+				categoryCache.push(category);
 			}
-			var level = typeof out.level == 'string'? $.trim(out.level): out.level;
-			if (level.length === 0) {
-				level = isDefault ? defaultOut.level : _dOut.level;
+			var compiledLevel;
+			if (out.level == null){
+				compiledLevel = stringToLevel(isDefault ? defaultOut.level : _dOut.level);
+			} else {
+				compiledLevel = typeof out.level === 'string'?  stringToLevel($.trim(out.level)): out.level;
 			}
-			var compiledLevel = $.type(level) === 'number' ? level : stringToLevel(level);
-			if (compiledLevel == null) {
-				throwFwError(ERR_CODE_LEVEL_INVALID, level);
+			if (typeof compiledLevel !== 'number') {
+				throwFwError(ERR_CODE_LEVEL_INVALID, out.level);
 			}
 			out.compiledLevel = compiledLevel;
 
 			var compiledTargets = [];
 			var targets = out.targets;
-			if (!isDefault && !targets) {
+			if (!isDefault && targets == null) {
 				compiledTargets = _dOut.compiledTargets;
-			} else if (!isDefault || targets) {
+			} else if (!isDefault || targets != null) {
 				var targetNames = [];
+				// targetsの指定は文字列または配列またはnull,undefinedのみ
+				if(!(targets == null || $.isArray(targets) || (typeof targets === 'string' && $.trim(targets).length))) {
+					throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
+				}
 				targets = wrapInArray(targets);
 				for ( var i = 0, len = targets.length; i < len; i++) {
+					if(!(targets[i] == null || (typeof targets[i] === 'string' && $.trim(targets[i]).length))) {
+						throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
+					}
 					var targetName = targets[i];
 					if (!targetName) {
 						continue;
 					}
 					if ($.inArray(targetName, targetNames) !== -1) {
-						throwFwError(ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES, targetName);
+						throwFwError(ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES, targetName);
 					}
 					var l = _logTarget[targetName];
 					if (!l) {
-						throwFwError(ERR_CODE_LOG_TARGET_IS_NONE, targetName);
+						throwFwError(ERR_CODE_LOG_TARGETS_IS_NONE, targetName);
 					}
 					targetNames.push(targetName);
 					compiledTargets.push(l.compiledTarget);
@@ -590,8 +612,8 @@
 	 * @name Log
 	 */
 	function Log(category) {
-		// 0は大丈夫なので category == null で判断する
-		if (category == null || $.trim(category).length === 0) {
+		// categoryの指定が文字列以外、または空文字、空白文字ならエラー。
+		if (typeof category !== 'string' ||  $.trim(category).length === 0) {
 			throwFwError(ERR_CODE_CATEGORY_INVALID);
 		}
 
@@ -867,7 +889,7 @@
 	 * @see Log
 	 */
 	var createLogger = function(category) {
-		return new Log($.trim(category));
+		return new Log(category);
 	};
 
 	// =============================

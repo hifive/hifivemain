@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -58,7 +58,7 @@
 	var ERR_CODE_CONTROLLER_ALREADY_CREATED = 6008;
 	/** エラーコード: コントローラの参照が循環している */
 	var ERR_CODE_CONTROLLER_CIRCULAR_REF = 6009;
-	/** エラーコード: コントローラの参照が循環している */
+	/** エラーコード: コントローラ内のロジックの参照が循環している */
 	var ERR_CODE_LOGIC_CIRCULAR_REF = 6010;
 	/** エラーコード: コントローラの参照が循環している */
 	var ERR_CODE_CONTROLLER_SAME_PROPERTY = 6011;
@@ -83,7 +83,7 @@
 
 	// エラーコードマップ
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "window.", "navigator", "navigator."で始まるセレクタは指定できません。';
+	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'バインド対象となる要素を指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
@@ -505,9 +505,6 @@
 			bindObj = getNormalBindObj(controller, selector, event, func);
 			break;
 		}
-		if (!bindObj) {
-			return;
-		}
 
 		if (!$.isArray(bindObj)) {
 			useBindObj(bindObj, bindRequested);
@@ -852,16 +849,10 @@
 	 * @returns {Boolean} テンプレートに渡すセレクタとして正しいかどうか(true=正しい)
 	 */
 	function isCorrectTemplatePrefix(selector) {
-		if (startsWith('window')) {
+		if (startsWith(selector, 'window')) {
 			return false;
 		}
-		if (startsWith('window.')) {
-			return false;
-		}
-		if (startsWith('navigator')) {
-			return false;
-		}
-		if (startsWith('navigator.')) {
+		if (startsWith(selector, 'navigator')) {
 			return false;
 		}
 		return true;
@@ -884,7 +875,7 @@
 		var selector = $.trim(element);
 		if (isGlobalSelector(selector)) {
 			var s = trimGlobalSelectorBracket(selector);
-			if (isTemplate && isCorrectTemplatePrefix(s)) {
+			if (isTemplate && !isCorrectTemplatePrefix(s)) {
 				throwFwError(ERR_CODE_INVALID_TEMPLATE_SELECTOR);
 			}
 			$targets = $(getGlobalSelectorTarget(s));
@@ -1010,8 +1001,6 @@
 			case 'touchend':
 			case 'mouseup':
 				return EVENT_NAME_H5_TRACKEND;
-			default:
-				return;
 			}
 		};
 
@@ -1062,34 +1051,30 @@
 						execute = true;
 					}
 					if (isStart && execute) {
-						if (!newEvent.isDefaultPrevented()) {
-							newEvent.h5DelegatingEvent.preventDefault();
-							var nt = newEvent.target;
+						newEvent.h5DelegatingEvent.preventDefault();
+						var nt = newEvent.target;
 
-							// 直前のh5track系イベントとの位置の差分を格納
-							var ox = newEvent.clientX;
-							var oy = newEvent.clientY;
-							var setupDPos = function(ev) {
-								var cx = ev.clientX;
-								var cy = ev.clientY;
-								ev.dx = cx - ox;
-								ev.dy = cy - oy;
-								ox = cx;
-								oy = cy;
-							};
-							var moveHandler = getHandler(move, nt, setupDPos);
-							var upHandler = getHandler(end, nt);
+						// 直前のh5track系イベントとの位置の差分を格納
+						var ox = newEvent.clientX;
+						var oy = newEvent.clientY;
+						var setupDPos = function(ev) {
+							var cx = ev.clientX;
+							var cy = ev.clientY;
+							ev.dx = cx - ox;
+							ev.dy = cy - oy;
+							ox = cx;
+							oy = cy;
+						};
+						var moveHandler = getHandler(move, nt, setupDPos);
+						var upHandler = getHandler(end, nt);
 
-							var $bindTarget = hasTouchEvent ? $(nt) : $document;
-							removeHandlers = function() {
-								$bindTarget.unbind(move, moveHandler);
-								$bindTarget.unbind(end, upHandler);
-							};
-							$bindTarget.bind(move, moveHandler);
-							$bindTarget.bind(end, upHandler);
-						} else {
-							execute = false;
-						}
+						var $bindTarget = hasTouchEvent ? $(nt) : $document;
+						removeHandlers = function() {
+							$bindTarget.unbind(move, moveHandler);
+							$bindTarget.unbind(end, upHandler);
+						};
+						$bindTarget.bind(move, moveHandler);
+						$bindTarget.bind(end, upHandler);
 					}
 					if (type === EVENT_NAME_H5_TRACKEND) {
 						removeHandlers();
@@ -1218,7 +1203,7 @@
 	}
 
 	/**
-	 * コントローラとｓの子孫コントローラのrootElementをセットします。
+	 * コントローラとその子孫コントローラのrootElementをセットします。
 	 *
 	 * @param {Controller} controller コントローラ
 	 */

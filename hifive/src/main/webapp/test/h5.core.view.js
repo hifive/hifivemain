@@ -40,6 +40,9 @@ var wrongView1 = '<script type="text/ejs">' + wrongTemplate1 + '</script>'; // w
 var wrongTemplate2 = '[%= for(var i = 0; i < 10; i++){} %]';
 var wrongTemplate3 = '<div>[% vaar hoge %]</div>';
 
+// #qunit-fixtureのバックアップ
+var backupFixture = $('#qunit-fixture').html();
+
 $('head').append(correctView1).append(correctView2).append(correctView3).append(correctView4)
 		.append(wrongView1);
 
@@ -110,7 +113,14 @@ function assertElement(base, actual) {
 	func($(actual), $(base));
 }
 
-module('View1');
+module('View1', {
+	setup: function() {
+		backupFixture = $('#qunit-fixture').html();
+	},
+	teardown: function() {
+		$('#qunit-fixture').html(backupFixture);
+	}
+});
 
 
 test('h5.core.view 初期状態', 1, function() {
@@ -193,8 +203,12 @@ test('load()に文字列または中身のある配列以外、空文字、空�
 });
 
 module('View2', {
+	setup: function() {
+		backupFixture = $('#qunit-fixture').html();
+	},
 	teardown: function() {
 		clearCachedTemplate();
+		$('#qunit-fixture').html(backupFixture);
 	}
 });
 
@@ -519,16 +533,16 @@ asyncTest('load() 構文エラーのテンプレートファイルを取得', 5,
 asyncTest('load() テンプレートIDが空文字または空白である場合エラーが発生すること。', 2, function() {
 	var errorCode = 7002;
 	var view = h5.core.view.createView();
-	view.load('template/test11.ejs').done(function(){
+	view.load('template/test11.ejs').done(function() {
 		ok(false, 'エラーが発生していません');
 		start();
-	}).fail(function(e){
+	}).fail(function(e) {
 		same(e.code, errorCode, e.message);
 
-		view.load('template/test12.ejs').done(function(){
+		view.load('template/test12.ejs').done(function() {
 			ok(false, 'エラーが発生していません');
 			start();
-		}).fail(function(error){
+		}).fail(function(error) {
 			same(error.code, errorCode, error.message);
 			start();
 		});
@@ -669,7 +683,7 @@ asyncTest('isAvailable() ロードしたテンプレートIDがキャッシュ�
 });
 
 asyncTest('clear() テンプレートをキャッシュから全て削除。', 8, function() {
-	var loadedIds = ['template2', 'template3','template4', 'template5'];
+	var loadedIds = ['template2', 'template3', 'template4', 'template5'];
 	var view = h5.core.view.createView();
 	var p = view.load(['./template/test2.ejs', './template/test3.ejs', './template/test4.ejs']);
 
@@ -795,7 +809,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	var view = h5.core.view;
 	view.register(templateId, 'ok');
 	try {
-		view.clear([templateId,'']);
+		view.clear([templateId, '']);
 		ok(false, 'エラーが発生していません');
 	}
 	catch (e) {
@@ -804,7 +818,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
-		view.clear([templateId,' ']);
+		view.clear([templateId, ' ']);
 		ok(false, 'エラーが発生していません');
 	}
 	catch (e) {
@@ -887,16 +901,18 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 });
 
 
-test('clear() 登録されていないテンプレートIDを指定した時に、WARNレベルでログが出力されること(要目視:id2とid3について合計2回ログ出力される)。'
-		, 1, function() {
-	var templateId = 'id1';
-	var view = h5.core.view;
-	view.register(templateId, 'ok');
-	view.clear('id2');
-	view.clear(['id3', templateId]);
-	ok(!view.isAvailable(templateId), '登録されていないIDを含む配列を指定しても、エラーが発生せず、その他のテンプレートは削除されること。');
+test(
+		'clear() 登録されていないテンプレートIDを指定した時に、WARNレベルでログが出力されること(要目視:id2とid3について合計2回ログ出力される)。',
+		1,
+		function() {
+			var templateId = 'id1';
+			var view = h5.core.view;
+			view.register(templateId, 'ok');
+			view.clear('id2');
+			view.clear(['id3', templateId]);
+			ok(!view.isAvailable(templateId), '登録されていないIDを含む配列を指定しても、エラーが発生せず、その他のテンプレートは削除されること。');
 
-});
+		});
 
 asyncTest('viewのインスタンスが違うなら利用可能なテンプレートも違うこと。', 4, function() {
 	var view1Id = 'template2';
@@ -1141,8 +1157,13 @@ asyncTest('getAvailableTemplates() viewインスタンスで利用可能なテ�
 
 module('View3', {
 	setup: function() {
+		backupFixture = $('#qunit-fixture').html();
 		h5.dev.core.view.cacheManager.cache = {};
 		h5.dev.core.view.cacheManager.cacheUrls = [];
+	},
+	teardown: function() {
+		clearCachedTemplate();
+		$('#qunit-fixture').html(backupFixture);
 	}
 });
 
