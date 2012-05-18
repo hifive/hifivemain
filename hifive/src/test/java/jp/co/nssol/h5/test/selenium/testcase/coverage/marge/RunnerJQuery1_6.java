@@ -32,7 +32,7 @@ import org.openqa.selenium.WebElement;
 public class RunnerJQuery1_6 extends H5TestCase {
 
 	public static final String QUNIT_PAGE =
-			"http://localhost:8080/htmlhifiveWeb/coverage/inst/test/runner.jquery1.6.html";
+			"http://localhost:8080/hifive/coverage/inst/test/runner.jquery1.6.html";
 
 	public RunnerJQuery1_6(WebDriver driver) throws InterruptedException {
 		super(driver);

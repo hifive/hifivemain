@@ -4,7 +4,7 @@
   <comment>WebDriver Properties</comment>
   <!-- 環境に合せて設定して下さい -->
   <!-- ブラウザ起動時に表示するURL -->
-  <entry key="testPageUrl">http://localhost:8080/htmlhifiveWeb/</entry>
+  <entry key="testPageUrl">http://localhost:8080/hifive</entry>
   <!-- テストを実行するiPhoneのURL (iPhoneにインストールされたWebDriverアプリケーションを起動すると下部に表示されているURL) -->
   <entry key="iPhoneServerPath">http://192.168.81.195:3001/wd/hub/</entry>
   <!-- Android SDKの配置場所 -->

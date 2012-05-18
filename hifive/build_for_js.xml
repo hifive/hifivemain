@@ -2,7 +2,7 @@
 
 <project name="h5jsbuilder" basedir="." default="build">
 	<property name="webappdir" value="src/main/webapp" />
-	<property name="releaseDir" value="${webappdir}/release" />
+	<property name="releaseDir" value="${webappdir}/archives/current" />
 
 	<property name="webapp.root.dir" value="src/main/webapp" />
 	<property name="web-inf.dir" value="${webapp.root.dir}/WEB-INF" />
@@ -60,7 +60,7 @@
 		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.dev.js" tofile="${currentRelease.path}h5-${versionNumber}.dev.js" />
 		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.css" tofile="${currentRelease.path}h5-${versionNumber}.css" />
 		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/ejs.js" tofile="${currentRelease.path}ejs-1.0.h5mod.js" />
-		<zip destfile="${webapp.root.dir}/currentRelease.zip" basedir="${currentRelease.path}">
+		<zip destfile="${webapp.root.dir}/hifive-all-${versionNumber}.zip">
 		</zip>
 	</target>
 
@@ -73,7 +73,7 @@
 		       srcDir="src/main/webapp/src/"
 		       cssSrcDir="src/main/webapp/srcCss/"
 		       ejsSrcDir="src/main/webapp/src/ejs/"
-		       dstDir="src/main/webapp/release/"
+		       dstDir="${releaseDir}/"
 		       version="${versionNumber}"
 		       ejsVersion="1.0"
 		       moduleNames="util,controller,view,ui,api.geo,api.sqldb,api.storage" />

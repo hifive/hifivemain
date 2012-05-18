@@ -30,6 +30,6 @@ public class ShowCoveragePage extends H5TestCase {
 
 	@Test
 	public void showCoveragePage() throws InterruptedException {
-		show("coverage/inst/jscoverage.html");
+		show("hifive/coverage/inst/jscoverage.html");
 	}
 }

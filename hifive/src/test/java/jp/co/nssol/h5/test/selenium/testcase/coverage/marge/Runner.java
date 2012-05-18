@@ -31,7 +31,7 @@ import org.openqa.selenium.WebElement;
  */
 public class Runner extends H5TestCase {
 
-	public static final String QUNIT_PAGE = "http://localhost:8080/htmlhifiveWeb/coverage/inst/test/runner.html";
+	public static final String QUNIT_PAGE = "http://localhost:8080/hifive/coverage/inst/test/runner.html";
 
 	public Runner(WebDriver driver) throws InterruptedException {
 		super(driver);
