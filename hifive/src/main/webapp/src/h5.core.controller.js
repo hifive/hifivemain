@@ -428,13 +428,7 @@
 	 * @param {Controller} controller コントローラ
 	 */
 	function bindDescendantHandlers(controller) {
-		var targets = [];
 		var execute = function(controllerInstance) {
-			if (controllerInstance.isReady || $.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-
 			var meta = controllerInstance.__meta;
 			var notBindControllers = {};
 			if (meta) {
@@ -952,7 +946,8 @@
 				var eventContext = createEventContext(controller, arguments);
 				var event = eventContext.event;
 				// Firefox
-				if (event.detail) {
+				console.log(event);
+				if (event.originalEvent && event.originalEvent.detail) {
 					event.wheelDelta = -event.detail * 40;
 				}
 				func.call(controller, eventContext);
@@ -2183,7 +2178,7 @@
 				// Viewモジュールがなければエラーログを出力する。
 				// この直後のloadでエラーになるはず。
 				if (!getByPath('h5.core.view')) {
-					fwLogger.error(errMsgMap[ERR_CODE_NOT_VIEW]);
+					throwFwError(ERR_CODE_NOT_VIEW);
 				}
 				var vp = controller.view.load(templates);
 				vp.then(function(result) {

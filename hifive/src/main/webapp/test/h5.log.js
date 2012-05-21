@@ -362,17 +362,23 @@ $(function() {
 			}
 	});
 
-	test('target.typeに、オブジェクトが指定できること。', 1, function() {
+	test('※要目視確認 target.typeに、オブジェクトが指定できること。', 1, function() {
 		h5.settings.log = {
 			target: {
 				myTarget: {
 					type: {log: function(obj){
-						console.log('■■上書きされたlog関数による出力■■', obj.args[0]);
+							if (window.console) {
+								console
+										.log('■■上書きされたlog関数による出力■■',
+												obj.args[0]);
+							}
 						}}
 				},
 				myTarget2: {
 					type: {log: function(obj){
-						console.log('■上書きされたlog関数による出力■', obj.args[0]);
+							if (window.console) {
+								console.log('■上書きされたlog関数による出力■', obj.args[0]);
+							}
 						}}
 				}
 			},

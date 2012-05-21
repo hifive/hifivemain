@@ -434,6 +434,24 @@ $(function() {
 				});
 	});
 
+	test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', function() {
+		var errorCode = 6029;
+		var view = h5.core.view;
+		h5.core.view = null;
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./template/test2.ejs'],
+		};
+		try{
+			h5.core.controller('#controllerTest', controller);
+			ok(false, 'エラーが起きていません');
+		} catch(e){
+			console.log(e);
+			same(e.code, errorCode, e.message);
+		}
+		h5.core.view = view;
+	});
+
 	asyncTest('コントローラのdispose1', function() {
 		var ret = [];
 		var childController = {
@@ -1154,7 +1172,6 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 			ok(html.length > 0, '指定されたテンプレートIDを自身のビューが扱っていない場合、親コントローラのビューへカスケードされること');
 			ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
-			console.log(errorObj)
 			same(errorObj.code, expectErrorObj.code, '指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
 			same(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
 			testController.unbind();
@@ -1480,6 +1497,54 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 		});
 	});
+
+
+//	asyncTest('this.triggerIndicator()', function() {
+//
+//		$('#controllerTest').append('<div id="childDiv"></div>');
+//		var childController = {
+//			__name: 'ChildController',
+//			'{rootElement} click':{}
+//
+//		};
+//		var controllerBase = {
+//			__name: 'TestController',
+//
+//			childController: h5.core.controller(),
+//
+//			'input[type=button] click': function() {
+//				var indicator = this.triggerIndicator({
+//					message: 'BlockMessageTest'
+//				}).show();
+//
+//				strictEqual($(indicator.target)
+//						.find('.blockUI.a.blockElement > .indicator-message').text(),
+//						'BlockMessageTest');
+//				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
+//						'Indicator#show() インジケータが表示されること。');
+//
+//				strictEqual($(indicator.target).find('.blockUI.blockOverlay').css('display'),
+//						'block', 'オーバーレイが表示されていること。');
+//
+//				setTimeout(function() {
+//					indicator.hide();
+//
+//					setTimeout(function() {
+//						start();
+//						strictEqual($('.blockUI', indicator.target).length, 0,
+//								'Indicator#hide() インジケータが除去されていること。');
+//
+//						testController.unbind();
+//					}, 0);
+//				}, 0);
+//			}
+//		};
+//
+//		testController = h5.core.controller('#controllerTest', controllerBase);
+//		testController.readyPromise.done(function() {
+//			$('#controllerTest input[type=button]').click();
+//		});
+//	});
 
 	asyncTest('this.indicator() オプションにプレーンオブジェクト以外を渡した時は無視されること。', 4, function() {
 

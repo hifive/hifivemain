@@ -47,7 +47,7 @@
 		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.js" tofile="${blank.project.path.h5}h5-${versionNumber}.js" />
 		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.dev.js" tofile="${blank.project.path.h5}h5-${versionNumber}.dev.js" />
 		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.css" tofile="${blank.project.path.h5}h5-${versionNumber}.css" />
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/ejs.js" tofile="${blank.project.path.ejs}ejs-1.0.h5mod.js" />
+		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/ejs-h5mod.js" tofile="${blank.project.path.ejs}ejs-1.0.h5mod.js" />
 
 		<replaceregexp file="${blank.project.index}" match="lib/ejs/ejs(.*).js" replace="lib/ejs/ejs-1.0.h5mod.js" />
 		<replaceregexp file="${blank.project.index}" match="lib/h5/h5(.*).css" replace="lib/h5/h5-${versionNumber}.css" />
@@ -62,7 +62,7 @@
 
 	<target name="build" depends="getVersion">
 		<buildService tmpFiles="false"
-		       ejsName="ejs.js"
+		       ejsName="ejs-h5mod.js"
 		       cssName="h5.css"
 		       releaseName="h5.js"
 		       devName="h5.dev.js"
