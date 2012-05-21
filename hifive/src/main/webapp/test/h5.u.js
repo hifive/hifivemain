@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -1061,6 +1061,25 @@ $(function() {
 			var deserialized = h5.u.obj.deserialize(str);
 			same(deserialized, expects[i], "オブジェクトや配列の場合は中身が不正な文字の時に中身だけがそのまま文字列として返ってくること。");
 		}
+	});
+
+	test('h5.u.createInterceptor() インターセプタを作成できること', 3, function(){
+		var count = 0;
+		var count2 = 0;
+		var ret = 0;
+		var testInterceptor = h5.u.createInterceptor(function(invocation, data) {
+			// invocationを実行
+			count++;
+			invocation();
+		}, function(invocation, data) {
+			count2++;
+		});
+		testInterceptor(function(){
+			ret = 100;
+		});
+		same(count, 1, '関数の初めに実行したい関数が実行されること');
+		same(count2, 1, '関数の終わりに実行したい関数が実行されること');
+		same(ret, 100, '関数そのものが実行されていること');
 	});
 
 });
