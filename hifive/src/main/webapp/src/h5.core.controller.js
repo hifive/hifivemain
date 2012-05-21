@@ -569,13 +569,7 @@
 	 * @param {Controller} controller コントローラ
 	 */
 	function unbindDescendantHandlers(controller) {
-		var targets = [];
 		var execute = function(controllerInstance) {
-			if ($.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-
 			var meta = controllerInstance.__meta;
 			var notBindControllers = {};
 			if (meta) {
@@ -694,8 +688,6 @@
 	 * @param {Booelan} isInitEvent __initイベントを実行するかどうか.
 	 */
 	function executeLifecycleEventChain(controller, isInitEvent) {
-		var targets = [];
-		var flagName = isInitEvent ? 'isInit' : 'isReady';
 		var funcName = isInitEvent ? '__init' : '__ready';
 
 		var leafDfd = getDeferred();
@@ -705,15 +697,6 @@
 		var leafPromise = leafDfd.promise();
 
 		var execInner = function(controllerInstance) {
-			if ($.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-			// 既にライフサイクルイベントを実行済みであれば何もしない
-			if (controllerInstance[flagName]) {
-				return;
-			}
-
 			var isLeafController = true;
 			for ( var prop in controllerInstance) {
 				// 子コントローラがあれば再帰的に処理
@@ -725,11 +708,6 @@
 
 			// 子孫コントローラの準備ができた時に実行させる関数を定義
 			var func = function() {
-				// 既にライフサイクルイベントを実行済みであれば何もしない
-				// 数行上で同じチェックを行っているが、非同期の場合ここでのチェックも必須となるはず
-				if (controllerInstance[flagName]) {
-					return;
-				}
 				var ret = null;
 				var lifecycleFunc = controllerInstance[funcName];
 				if (lifecycleFunc) {
@@ -792,9 +770,6 @@
 	 */
 	function createCallbackForInit(controller) {
 		return function() {
-			if (controller.isInit) {
-				return;
-			}
 			controller.isInit = true;
 			var initDfd = controller.__controllerContext.initDfd;
 			// FW、ユーザともに使用しないので削除
@@ -816,9 +791,6 @@
 	 */
 	function createCallbackForReady(controller) {
 		return function() {
-			if (controller.isReady) {
-				return;
-			}
 			controller.isReady = true;
 
 			var readyDfd = controller.__controllerContext.readyDfd;
@@ -946,7 +918,6 @@
 				var eventContext = createEventContext(controller, arguments);
 				var event = eventContext.event;
 				// Firefox
-				console.log(event);
 				if (event.originalEvent && event.originalEvent.detail) {
 					event.wheelDelta = -event.detail * 40;
 				}
@@ -979,7 +950,7 @@
 			// イベントオブジェクトの正規化
 			return getNormalBindObj(controller, selector, eventName, function(context) {
 				var event = context.event;
-				var offset = $(event.currentTarget).offset();
+				var offset = $(event.currentTarget).offset() || {left:0, top:0};
 				event.offsetX = event.pageX - offset.left;
 				event.offsetY = event.pageY - offset.top;
 				func.apply(this, arguments);
@@ -1231,7 +1202,7 @@
 	function getBindTarget(element, rootElement, controller) {
 		if (!element) {
 			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED);
-		} else if (!controller) {
+		} else if (!controller ||  !controller.__controllerContext) {
 			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
 		}
 		var $targets;
@@ -2034,6 +2005,9 @@
 		 * @private
 		 */
 		$(document).bind('triggerIndicator', function(event, opt) {
+			if(opt.target == null){
+				opt.target = document;
+			}
 			opt.indicator = callIndicator(this, opt).show();
 			event.stopPropagation();
 		});
@@ -2175,8 +2149,7 @@
 		if (templates && templates.length > 0) {
 			// テンプレートがあればロード
 			var viewLoad = function(count) {
-				// Viewモジュールがなければエラーログを出力する。
-				// この直後のloadでエラーになるはず。
+				// Viewモジュールがない場合、この直後のloadでエラーが発生してしまうためここでエラーを投げる。
 				if (!getByPath('h5.core.view')) {
 					throwFwError(ERR_CODE_NOT_VIEW);
 				}
@@ -2254,12 +2227,6 @@
 				controller[prop] = weavedFunc;
 			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
 					&& !$.isFunction(clonedControllerDef[prop])) {
-				// 子コントローラ
-				var controllerTarget = clonedControllerDef[prop];
-				if (!controllerTarget) {
-					controller[prop] = controllerTarget;
-					continue;
-				}
 				var c = createAndBindController(null,
 						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
 							isInternal: true
