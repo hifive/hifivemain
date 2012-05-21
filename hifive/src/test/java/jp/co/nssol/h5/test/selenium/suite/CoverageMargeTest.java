@@ -23,7 +23,7 @@ import jp.co.nssol.h5.test.selenium.testcase.coverage.ShowCoveragePage;
 import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.CoverageMarge;
 import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.CoverageMargeOut;
 import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.Runner;
-import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.RunnerJQuery1_6;
+import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.RunnerJQuery1_6_4;
 import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.WaitForQUnitTest;
 
 import org.junit.runner.RunWith;
@@ -40,7 +40,7 @@ import org.openqa.selenium.ie.InternetExplorerDriver;
 
 /* 実行したいテストクラスをここに記述 */
 	Runner.class, WaitForQUnitTest.class,
- RunnerJQuery1_6.class, WaitForQUnitTest.class,
+ RunnerJQuery1_6_4.class, WaitForQUnitTest.class,
 
 /* 以下はマージ結果を表示するためのクラス */
 	CoverageMarge.class, CoverageMargeOut.class })
