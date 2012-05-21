@@ -332,7 +332,7 @@
 		 * </pre>
 		 *
 		 * <p>
-		 * <a href="../sandbox/geolocation/index.html">座標データ生成ツール</a>を使うと地図から緯度と経度を求められます。
+		 * <a href="http://www.htmlhifive.com/ja/recipe/geolocation/index.html">座標データ生成ツール</a>を使うと地図から緯度と経度を求められます。
 		 * </p>
 		 *
 		 * @memberOf h5.dev.api.geo
