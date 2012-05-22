@@ -614,6 +614,6 @@ $(function() {
 			} catch (e) {
 				same(e.code, errorCode, e.message);
 			}
-		}
-	});
+				}
+			});
 });

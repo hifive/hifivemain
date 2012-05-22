@@ -83,8 +83,7 @@ $(function() {
 		var errMsg = null;
 		try {
 			h5.core.expose(c3);
-		}
-		catch (e) {
+		} catch (e) {
 			errMsg = e.message;
 		}
 		strictEqual(errMsg, 'コントローラ、もしくはロジックの __name が設定されていません。',
@@ -218,35 +217,36 @@ $(function() {
 
 	});
 
-	test('bind() 引数なし、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること。',function(){
-		$('#controllerTest').append('<div class="test">a</div>');
-		$('#controllerTest').append('<div class="test">b</div>');
-		var controller = {
-			__name: 'TestController'
-		};
-		var testController = h5.core.controller(null, controller);
-		try{
-			testController.bind();
-		} catch(e){
-			same(e.code, 6001, e.message);
-		}
-		try{
-			var bind = testController.bind
-			bind('#controllerTest');
-		} catch(e){
-			same(e.code, 6002, e.message);
-		}
-		try{
-			testController.bind('#noexist');
-		} catch(e){
-			same(e.code, 6003, e.message);
-		}
-		try{
-			testController.bind('.test');
-		} catch(e){
-			same(e.code, 6004, e.message);
-		}
-	});
+	test('bind() 引数なし、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること。',
+			function() {
+				$('#controllerTest').append('<div class="test">a</div>');
+				$('#controllerTest').append('<div class="test">b</div>');
+				var controller = {
+					__name: 'TestController'
+				};
+				var testController = h5.core.controller(null, controller);
+				try {
+					testController.bind();
+				} catch (e) {
+					same(e.code, 6001, e.message);
+				}
+				try {
+					var bind = testController.bind
+					bind('#controllerTest');
+				} catch (e) {
+					same(e.code, 6002, e.message);
+				}
+				try {
+					testController.bind('#noexist');
+				} catch (e) {
+					same(e.code, 6003, e.message);
+				}
+				try {
+					testController.bind('.test');
+				} catch (e) {
+					same(e.code, 6004, e.message);
+				}
+			});
 	asyncTest('イベントハンドラの{}記法でオブジェクトを指定する時に2階層以上下のオブジェクトを指定できるか', function() {
 
 
@@ -282,8 +282,7 @@ $(function() {
 		try {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
-		}
-		catch (e) {
+		} catch (e) {
 			same(e.code, errorCode, e.message);
 		}
 	});
@@ -293,13 +292,14 @@ $(function() {
 		var errorCode = 6017;
 		var controller = {
 			__name: 'TestController',
-			myLogic: {name:'MyLogic'}
+			myLogic: {
+				name: 'MyLogic'
+			}
 		};
 		try {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
-		}
-		catch (e) {
+		} catch (e) {
 			same(e.code, errorCode, e.message);
 		}
 	});
@@ -314,14 +314,12 @@ $(function() {
 
 		try {
 			h5.core.controller('div.noexistclass', controller);
-		}
-		catch (e) {
+		} catch (e) {
 			err1 = e;
 		}
 		try {
 			h5.core.controller('div', controller);
-		}
-		catch (e) {
+		} catch (e) {
 			err2 = e;
 		}
 
@@ -425,25 +423,29 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5.core.controllerManager.getAllControllers() で現在バインドされているすべてのコントローラを取得できること', function() {
-		// 現在バインドされているコントローラを全てunbindする
-		for(var i = 0, controllers = h5.core.controllerManager.getAllControllers(), l = controllers.length; i < l; i++){
-			controllers[i].unbind();
-		}
-		var names = ['Test1Controller', 'Test2Controller', 'Test3Controller'];
-		var p;
-		for(var i = 0, l = names.length; i < l; i++){
-			p = h5.core.controller('#controllerTest', {__name: names[i]});
-		}
-		p.readyPromise.done(function(){
-			var controllers = h5.core.controllerManager.getAllControllers();
-			for(var i = 0, l = controllers.length; i < l; i++){
-				controllers[i] = controllers[i].__name;
-			}
-			deepEqual(controllers, names, '3つバインドしたコントローラが取得できること');
-			start();
-		});
-	});
+	asyncTest(
+			'h5.core.controllerManager.getAllControllers() で現在バインドされているすべてのコントローラを取得できること',
+			function() {
+				// 現在バインドされているコントローラを全てunbindする
+				for ( var i = 0, controllers = h5.core.controllerManager.getAllControllers(), l = controllers.length; i < l; i++) {
+					controllers[i].unbind();
+				}
+				var names = ['Test1Controller', 'Test2Controller', 'Test3Controller'];
+				var p;
+				for ( var i = 0, l = names.length; i < l; i++) {
+					p = h5.core.controller('#controllerTest', {
+						__name: names[i]
+					});
+				}
+				p.readyPromise.done(function() {
+					var controllers = h5.core.controllerManager.getAllControllers();
+					for ( var i = 0, l = controllers.length; i < l; i++) {
+						controllers[i] = controllers[i].__name;
+					}
+					deepEqual(controllers, names, '3つバインドしたコントローラが取得できること');
+					start();
+				});
+			});
 
 	asyncTest('h5.core.viewがない時のコントローラの動作', function() {
 		var index = h5.core.controllerManager.getAllControllers().length;
@@ -453,15 +455,286 @@ $(function() {
 			__name: 'TestController'
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise
-				.done(function() {
-					ok(h5.core.controllerManager.controllers[index] === testController,
-							'Viewがなくてもコントローラは動作するか');
-					ok(!h5.core.view, 'Viewは落ちているか');
-					h5.core.view = view;
+		testController.readyPromise.done(function() {
+			ok(h5.core.controllerManager.controllers[index] === testController,
+					'Viewがなくてもコントローラは動作するか');
+			ok(!h5.core.view, 'Viewは落ちているか');
+			h5.core.view = view;
+			start();
+		});
+	});
+
+	asyncTest('テンプレートのロードが失敗する時のコントローラの動作', 5, function() {
+		var count = 0;
+		var errorCode = 7003;
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./noExistPath'],
+			__construct: function(context) {
+				same(++count, 1, '1. コンストラクタが実行される。');
+			},
+			__init: function(context) {
+				ok(false, 'テスト失敗。__initが実行されました。');
+			},
+			__ready: function(context) {
+				ok(false, 'テスト失敗。__readyが実行されました。');
+			},
+			__dispose: function(context) {
+				same(++count, 4, '4. __disposeが実行される。');
+				start();
+			},
+			__unbind: function(context) {
+				same(++count, 3, '3. __unbindが実行される。');
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.preinitPromise.done(function() {
+			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
+		}).fail(function(e) {
+			same(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+			same(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+		})
+		testController.initPromise.done(function(a) {
+			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
+		}).fail(function(e, opt) {
+			ok(false, 'テスト失敗。initPromiseがreject()されました。');
+		});
+	});
+
+	asyncTest('テンプレートのロードが失敗する時のコントローラの動作 2', 16, function() {
+		var errorCode = 7003;
+		var count = 0;
+		var disposedController = {};
+		var bController = {
+			__name: 'BController',
+
+			__construct: function(context) {
+				same(++count, 1, '孫コントローラのコンストラクタが実行される。');
+			},
+			__init: function(context) {
+				// 孫の__initは、その前にコントローラ群がdisposeされていれば実行されない
+			},
+			__ready: function(context) {
+				// 孫の__readyは、その前にコントローラ群がdisposeされていれば実行されない
+			},
+			__dispose: function(context) {
+				same(++count, 9, '孫コントローラの__disposeが実行される。');
+				disposedController.b = this;
+			},
+			__unbind: function(context) {
+				same(++count, 6, '孫コントローラの__unbindが実行される。');
+			}
+		};
+		var aController = {
+			__name: 'AController',
+			__templates: 'adsaaaa',
+			childController: bController,
+
+			__construct: function(context) {
+				this.childController.preinitPromise.done(function() {
+					// 孫コントローラのpreinitDfdはこの時点でresolveしてるはず
+					// (テンプレートファイルがないので、同期的にresolveする。)
+					// なので、即座に実行される。
+					same(++count, 2, '孫コントローラのpreinitPromiseのdoneハンドラが実行される。');
+					start();
+				}).fail(function(e) {
+					ok(false, 'テスト失敗。孫コントローラのpreinitPromiseのfailハンドラが実行されました。');
+					same(e.code, errorCode, e.message);
 					start();
 				});
+				same(++count, 3, '子コントローラのコンストラクタが実行される。');
+			},
+			__init: function(context) {
+				ok(false, 'テスト失敗。子コントローラの__initが実行されました。');
+			},
+			__ready: function(context) {
+				ok(false, 'テスト失敗。子コントローラの__readyが実行されました。');
+			},
+			__dispose: function(context) {
+				same(++count, 10, '子コントローラの__disposeが実行される。');
+				disposedController.a = this;
+			},
+			__unbind: function(context) {
+				same(++count, 7, '子コントローラの__unbindが実行される。');
+			}
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./template/test2.ejs'],
+			childController: aController,
+
+			__construct: function(context) {
+				same(++count, 4, '4. 親のコンストラクタが実行される。');
+
+				this.childController.preinitPromise.done(function() {
+					ok(false, 'テスト失敗。子コントローラのpreinitPromiseのdoneハンドラが呼ばれた。');
+					start();
+				}).fail(function(e) {
+					same(++count, 5, '子コントローラのpreinitPromiseのfailハンドラが実行される。');
+					same(e.code, errorCode, e.message);
+					start();
+				});
+			},
+			__init: function(context) {
+				ok(false, 'テスト失敗。親の__initが実行されました。');
+			},
+			__ready: function(context) {
+				ok(false, 'テスト失敗。親の__readyが実行されました。');
+			},
+			__dispose: function(context) {
+				same(++count, 11, '親の__disposeが実行される。');
+				disposedController.test = this;
+				setTimeout(function(){
+					for(var i = 0; i < 3; i++){
+						var prop = ['b', 'a', 'test'][i];
+						var str = ['孫', '子', '親'][i];
+						var flag = 0;
+						for(var p in disposedController[prop]){
+							if(disposedController[prop][p] !== null){
+								flag = 1;
+								break;
+							}
+						}
+						ok(!flag, str+'コントローラがdisposeされていること');
+						start();
+					}
+				},0);
+			},
+			__unbind: function(context) {
+				same(++count, 8, '親の__unbindが実行される。');
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.preinitPromise.done(function() {
+			ok(true, '親コントローラのpreinitPromiseのdoneハンドラが呼ばれる。');
+		}).fail(function() {
+			ok(false, 'テスト失敗。親コントローラのpreinitPromiseのfailハンドラが呼ばれた。');
+		});
 	});
+
+	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること。 3', 5, function() {
+		// view.load()をスタブに差し替え
+		var retryCount = 0;
+		var retryLimit = 3;
+		var load = function(){
+				var dfd = h5.async.deferred();
+				var e = {
+						detail:{
+							error: {
+								status: h5.env.ua.isIE? 0: 12029
+							}
+						}
+				};
+				if(retryCount++ == retryLimit){
+					dfd.resolve();
+				} else{
+					dfd.reject(e);
+				}
+				return dfd.promise();
+			};
+		var originalCreateView = h5.core.view.createView;
+		h5.core.view.createView = function(){
+			var view = originalCreateView();
+			view.load = load;
+			return view;
+		};
+		var count = 0;
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./noExistPath'],
+			__construct: function(context) {
+				same(++count, 1, '__constructが実行される。');
+			},
+			__init: function(context) {
+				same(++count, 2, '__initが実行される。');
+			},
+			__ready: function(context) {
+				same(++count, 4, '__readyが実行される。');
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.initPromise.done(function(a) {
+			same(++count, 3, 'initPromiseがresolve()されました。');
+		}).fail(function(e, opt) {
+			ok(false, 'テスト失敗。initPromiseがreject()されました。');
+		});
+		testController.readyPromise.done(function(a) {
+			same(++count, 5, 'readyPromiseがresolve()されました。');
+			h5.core.createView = originalCreateView;
+			start();
+		});
+	});
+
+
+	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreinitPromiseのfailが呼ばれること。', 5, function() {
+		// view.load()をスタブに差し替え
+		var retryCount = 0;
+		var retryLimit = 3;
+		var load = function(){
+				var dfd = h5.async.deferred();
+				var e = {
+						detail:{
+							error: {
+								status: h5.env.ua.isIE? 0: 12029
+							}
+						}
+				};
+				if(retryCount++ == retryLimit + 1){
+					dfd.resolve();
+				} else{
+					dfd.reject(e);
+				}
+				return dfd.promise();
+			};
+		var originalCreateView = h5.core.view.createView;
+		h5.core.view.createView = function(){
+			var view = originalCreateView();
+			view.load = load;
+			return view;
+		};
+		var count = 0;
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./noExistPath'],
+			__construct: function(context) {
+				same(++count, 1, 'コンストラクタが実行される。');
+			},
+			__init: function(context) {
+				ok(false, 'テスト失敗。__initが実行されました。');
+			},
+			__ready: function(context) {
+				ok(false, 'テスト失敗。__readyが実行されました。');
+			},
+			__dispose: function(context) {
+				same(++count, 4, '__disposeが実行される。');
+			},
+			__unbind: function(context) {
+				same(++count, 3, '__unbindが実行される。');
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.preinitPromise.done(function() {
+			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
+			h5.core.createView = originalCreateView;
+			start();
+		}).fail(function(e) {
+			same(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+			same(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+			h5.core.createView = originalCreateView;
+			start();
+		});
+		testController.initPromise.done(function(a) {
+			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
+		}).fail(function(e, opt) {
+			ok(false, 'テスト失敗。initPromiseがreject()されました。');
+		});
+	});
+
 
 	test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', function() {
 		var errorCode = 6029;
@@ -469,12 +742,12 @@ $(function() {
 		h5.core.view = null;
 		var controller = {
 			__name: 'TestController',
-			__templates: ['./template/test2.ejs'],
+			__templates: ['./template/test2.ejs']
 		};
-		try{
+		try {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが起きていません');
-		} catch(e){
+		} catch (e) {
 			same(e.code, errorCode, e.message);
 		}
 		h5.core.view = view;
@@ -927,8 +1200,7 @@ $(function() {
 		var errMsg = null;
 		try {
 			h5.core.controller('body', errorController);
-		}
-		catch (e) {
+		} catch (e) {
 			errMsg = e.message;
 		}
 
@@ -1087,26 +1359,22 @@ $(function() {
 						prepend = $(this.$find('#prependViewTest').children('span')[0]).text();
 						try {
 							this.view.append('{window}', 'template8', {});
-						}
-						catch (e) {
+						} catch (e) {
 							viewError1 = e;
 						}
 						try {
 							this.view.update('{window.a}', 'template8', {});
-						}
-						catch (e) {
+						} catch (e) {
 							viewError2 = e;
 						}
 						try {
 							this.view.prepend('{navigator}', 'template8', {});
-						}
-						catch (e) {
+						} catch (e) {
 							viewError3 = e;
 						}
 						try {
 							this.view.append('{navigator.userAgent}', 'template8', {});
-						}
-						catch (e) {
+						} catch (e) {
 							viewError4 = e;
 						}
 
@@ -1119,9 +1387,9 @@ $(function() {
 							ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
 							ok(updateView, 'this.view.updateでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
 							strictEqual(append, 'test',
-							'this.view.appendでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
+									'this.view.appendでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
 							strictEqual(append2, 'test',
-							'this.view.appendでテンプレートからHTML文字列を取得し、グローバルセレクタで指定した要素に出力できたか');
+									'this.view.appendでテンプレートからHTML文字列を取得し、グローバルセレクタで指定した要素に出力できたか');
 							strictEqual(prepend, 'test',
 									'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
 
@@ -1146,15 +1414,21 @@ $(function() {
 
 			__templates: ['./template/test2.ejs'],
 
-			'{rootElement} click': function(context){
+			'{rootElement} click': function(context) {
 				this.view.register('templateId1', '111');
-				same(this.view.get('templateId1'), '111', 'this.view.register(id, template)でテンプレートを登録できること。');
-				same(this.view.isValid('[%= data %]'), true, 'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
-				same(this.view.isValid('<div>[%= hoge fuga %]</div>'), false, 'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
-				same(this.view.isAvailable('templateId1'), true, 'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
-				same(this.view.isAvailable('templateId2'), false, 'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
+				same(this.view.get('templateId1'), '111',
+						'this.view.register(id, template)でテンプレートを登録できること。');
+				same(this.view.isValid('[%= data %]'), true,
+						'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
+				same(this.view.isValid('<div>[%= hoge fuga %]</div>'), false,
+						'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
+				same(this.view.isAvailable('templateId1'), true,
+						'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
+				same(this.view.isAvailable('templateId2'), false,
+						'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
 				this.view.clear();
-				same(this.view.isAvailable('templateId1'), false, 'this.view.clear()でテンプレートを削除できること');
+				same(this.view.isAvailable('templateId1'), false,
+						'this.view.clear()でテンプレートを削除できること');
 			}
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
@@ -1169,8 +1443,8 @@ $(function() {
 		var html = html2 = '';
 		var errorObj = {};
 		var expectErrorObj = {
-			code : 7005,
-			message : "テンプレートID:template4 テンプレートがありません。"
+			code: 7005,
+			message: "テンプレートID:template4 テンプレートがありません。"
 		};
 
 		var childController = {
@@ -1179,9 +1453,9 @@ $(function() {
 			'input[type=button] click': function(context) {
 				html = this.view.get('template2');
 				html2 = this.view.get('template3');
-				try{
+				try {
 					this.view.get('template4');
-				} catch(e){
+				} catch (e) {
 					errorObj = e;
 				}
 			}
@@ -1200,7 +1474,8 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 			ok(html.length > 0, '指定されたテンプレートIDを自身のビューが扱っていない場合、親コントローラのビューへカスケードされること');
 			ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
-			same(errorObj.code, expectErrorObj.code, '指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
+			same(errorObj.code, expectErrorObj.code,
+					'指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
 			same(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
 			testController.unbind();
 			start();
@@ -1535,7 +1810,7 @@ $(function() {
 				var indicator = this.triggerIndicator({
 					message: 'BlockMessageTest',
 					percent: 20,
-					block:true
+					block: true
 				}).show();
 
 				strictEqual($(indicator.target).find('.blockUI.a.blockPage > .indicator-message')
@@ -1560,7 +1835,7 @@ $(function() {
 
 						start();
 					}, 0);
-				},0);
+				}, 0);
 			}
 		};
 
@@ -1575,12 +1850,12 @@ $(function() {
 		var indicator = null;
 		var testController = {
 			__name: 'TestController',
-			'{rootElement} triggerIndicator': function(context){
+			'{rootElement} triggerIndicator': function(context) {
 				context.event.stopPropagation();
 				indicator = this.indicator({
 					target: this.rootElement,
 					percent: 30,
-					message:'indicator testController'
+					message: 'indicator testController'
 				}).show();
 			}
 		}
@@ -1590,8 +1865,9 @@ $(function() {
 			'{rootElement} click': function() {
 				this.triggerIndicator();
 
-				strictEqual($(indicator.target).find('.blockUI.a.blockElement > .indicator-message')
-						.text(), 'indicator testController');
+				strictEqual($(indicator.target)
+						.find('.blockUI.a.blockElement > .indicator-message').text(),
+						'indicator testController');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
 						'Indicator#show() インジケータが表示されること。');
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '30',
@@ -1608,7 +1884,7 @@ $(function() {
 								'Indicator#hide() インジケータが除去されていること。');
 						start();
 					}, 0);
-				},0);
+				}, 0);
 			}
 		};
 
@@ -1627,14 +1903,13 @@ $(function() {
 			__name: 'TestController',
 
 			'input[type=button] click': function() {
-				function NoPlain(){
+				function NoPlain() {
 					this.message = 'Test';
 				}
 				var indicator = this.indicator(new NoPlain()).show();
 
-				same($(indicator.target)
-						.find('.blockUI.a.blockElement > .indicator-message').text(),
-						'', 'オプションは無視されて、メッセージは表示されていないこと。');
+				same($(indicator.target).find('.blockUI.a.blockElement > .indicator-message')
+						.text(), '', 'オプションは無視されて、メッセージは表示されていないこと。');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
 						'Indicator#show() インジケータが表示されること。');
 
@@ -1885,8 +2160,8 @@ $(function() {
 					strictEqual($(indicator2.target).find('.throbber-percent').text(), '5',
 							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
 					indicator2.percent(33.3333333);
-					strictEqual($(indicator2.target).find('.throbber-percent').text(), '33.3333333',
-							'Indicator#show() インジケータの進捗率に小数を指定できること。');
+					strictEqual($(indicator2.target).find('.throbber-percent').text(),
+							'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること。');
 					indicator2.hide();
 					setTimeout(function() {
 						strictEqual($('.blockUI', indicator2.target).length, 0,
@@ -1989,8 +2264,8 @@ $(function() {
 							'block', 'オーバーレイが表示されていること。');
 
 					indicator2.message('changeMessage');
-					strictEqual($(indicator2.target).find('.indicator-message').text(), 'changeMessage',
-							'メッセージがに変更されたこと。');
+					strictEqual($(indicator2.target).find('.indicator-message').text(),
+							'changeMessage', 'メッセージがに変更されたこと。');
 					indicator2.message('  ');
 					strictEqual($(indicator2.target).find('.indicator-message').text(), '  ',
 							'メッセージが変更されたこと。');
@@ -2013,9 +2288,9 @@ $(function() {
 					strictEqual($(indicator2.target).find('.indicator-message').text(), 'abc',
 							'文字列以外ではメッセージは変更されないこと');
 					indicator2.hide();
-					setTimeout(function(){
+					setTimeout(function() {
 						strictEqual($('.blockUI', indicator.target).length, 0,
-						'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること。');
 
 						testController.unbind();
 						start();
@@ -2156,8 +2431,7 @@ $(function() {
 		var errMsg = null;
 		try {
 			h5.core.controller('#controllerTest', testController);
-		}
-		catch (e) {
+		} catch (e) {
 			errMsg = e.message;
 		}
 
@@ -3404,15 +3678,13 @@ $(function() {
 						var err1 = null;
 						try {
 							this.throwError();
-						}
-						catch (e) {
+						} catch (e) {
 							err1 = e;
 						}
 						ok(err1, '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
 						try {
 							this.throwError('コントローラ"{0}"における{1}のテスト', this.__name, 'throwError');
-						}
-						catch (e) {
+						} catch (e) {
 							strictEqual(e.message, 'コントローラ"TestController"におけるthrowErrorのテスト',
 									'throwErrorメソッドの第1引数が文字列の場合、可変長引数を取ってフォーマットされるか');
 						}
@@ -3421,14 +3693,12 @@ $(function() {
 						};
 						try {
 							this.throwError(obj, obj);
-						}
-						catch (e) {
+						} catch (e) {
 							ok(e.message, 'throwErrorメソッドの第1引数がオブジェクトの場合、そのまま出力されているか');
 						}
 						try {
 							this.throwCustomError();
-						}
-						catch (e) {
+						} catch (e) {
 							strictEqual(e.message, 'エラータイプを指定してください。',
 									'throwCustomErrorメソッドでエラータイプが指定されないとエラーが発生するか');
 						}
@@ -3436,8 +3706,7 @@ $(function() {
 						var err2Type = null;
 						try {
 							this.throwCustomError('customType');
-						}
-						catch (e) {
+						} catch (e) {
 							err2 = e;
 							err2Type = e.customType;
 
@@ -3449,16 +3718,14 @@ $(function() {
 						try {
 							this.throwCustomError('customType', 'コントローラ"{0}"における{1}のテスト',
 									this.__name, 'throwCustomError');
-						}
-						catch (e) {
+						} catch (e) {
 							strictEqual(e.message,
 									'コントローラ"TestController"におけるthrowCustomErrorのテスト',
 									'throwCustomErrorメソッドの第2引数が文字列の場合、可変長引数を取ってフォーマットされるか');
 						}
 						try {
 							this.throwCustomError('customType', obj, obj);
-						}
-						catch (e) {
+						} catch (e) {
 							ok(e.message, 'throwErrorメソッドの第2引数がオブジェクトの場合、そのまま出力されているか');
 						}
 					}
@@ -3487,8 +3754,7 @@ $(function() {
 		var errMsg = null;
 		try {
 			h5.core.controller('#controllerTest', test1Controller);
-		}
-		catch (e) {
+		} catch (e) {
 			errMsg = e.message;
 		}
 		strictEqual(errMsg, 'コントローラ"Test1Controller"で、参照が循環しているため、コントローラを生成できません。', 'エラーが発生したか');
@@ -3508,9 +3774,9 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', testController);
 		c.readyPromise.done(function() {
 			var event = new $.Event(eventName);
-			if(h5.env.ua.isFirefox) {
+			if (h5.env.ua.isFirefox) {
 				event.originalEvent = {
-						detail: 3
+					detail: 3
 				};
 			}
 			$('#controllerTest').trigger(event);
@@ -3528,8 +3794,7 @@ $(function() {
 		var errMsg = null;
 		try {
 			h5.core.controller('#controllerTest', testController);
-		}
-		catch (e) {
+		} catch (e) {
 			errMsg = e.message;
 		}
 
@@ -3545,8 +3810,7 @@ $(function() {
 		var errMsg = null;
 		try {
 			h5.core.controller('#controllerTest', testController, '初期化パラメータ');
-		}
-		catch (e) {
+		} catch (e) {
 			errMsg = e.message;
 		}
 
@@ -3566,8 +3830,7 @@ $(function() {
 			var errMsg = null;
 			try {
 				h5.core.controller('#controllerTest', c);
-			}
-			catch (e) {
+			} catch (e) {
 				errMsg = e.message;
 			}
 
@@ -3581,17 +3844,14 @@ $(function() {
 		var testController = {
 			__name: 'TestController',
 
-			' {rootElement}   click': function(context) {
-			},
+			' {rootElement}   click': function(context) {},
 
-			'{rootElement} click': function(context) {
-			}
+			'{rootElement} click': function(context) {}
 		};
 		var errMsg = null;
 		try {
 			h5.core.controller('#controllerTest', testController);
-		}
-		catch (e) {
+		} catch (e) {
 			errMsg = e.message;
 		}
 
@@ -3630,8 +3890,7 @@ $(function() {
 		var errMsg = null;
 		try {
 			h5.core.controller('#controllerTest', testController);
-		}
-		catch (e) {
+		} catch (e) {
 			errMsg = e.message;
 		}
 
@@ -3656,8 +3915,7 @@ $(function() {
 				var errMsg = null;
 				try {
 					h5.core.controller('#controllerTest', testController);
-				}
-				catch (e) {
+				} catch (e) {
 					errMsg = e.message;
 				}
 
@@ -3684,8 +3942,7 @@ $(function() {
 				var errMsg = null;
 				try {
 					h5.core.controller('#controllerTest', testController);
-				}
-				catch (e) {
+				} catch (e) {
 					errMsg = e.message;
 				}
 
@@ -3695,101 +3952,132 @@ $(function() {
 						'__metaに設定された名前と一致するプロパティの値がコントローラではないときにエラーが発生するか');
 			});
 
-	asyncTest('h5trackイベント(mousedown, mousemove, mouseup)', 26, function() {
-		var controller = {
+	asyncTest(
+			'h5trackイベント(mousedown, mousemove, mouseup)',
+			26,
+			function() {
+				var controller = {
 
-			__name: 'TestController',
+					__name: 'TestController',
 
-			'{rootElement} h5trackstart': function(context) {
-				context.evArg && ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 10, 'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 10, 'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 10, 'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 10, 'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
-			},
+					'{rootElement} h5trackstart': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 10,
+								'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 10,
+								'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
+					},
 
-			'{rootElement} h5trackmove': function(context) {
-				context.evArg && ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 15, 'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 15, 'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 15, 'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 15, 'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
-				strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
-				strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
-			},
+					'{rootElement} h5trackmove': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
+						strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
+						strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
+					},
 
-			'{rootElement} h5trackend': function(context) {
-				context.evArg && ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 20, 'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 20, 'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 20, 'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 20, 'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
-			}
-		};
+					'{rootElement} h5trackend': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 20,
+								'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 20,
+								'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 20,
+								'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 20,
+								'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
+					}
+				};
 
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var setPos = function(ev, pos) {
-				ev.pageX = pos;
-				ev.pageY = pos;
-				ev.screenX = pos;
-				ev.screenY = pos;
-				ev.clientX = pos;
-				ev.clientY = pos;
-				return ev;
-			};
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.readyPromise.done(function() {
+					var setPos = function(ev, pos) {
+						ev.pageX = pos;
+						ev.pageY = pos;
+						ev.screenX = pos;
+						ev.screenY = pos;
+						ev.clientX = pos;
+						ev.clientY = pos;
+						return ev;
+					};
 
 
-			var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
-			var startMouseEvent = setPos(new $.Event('mousedown'), 10);
-			var endMouseEvent = setPos(new $.Event('mouseup'), 20);
+					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
+					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
+					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
 
-			// ドラッグ中じゃないので実行されない
-			$('#controllerResult').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('#controllerResult').trigger(endMouseEvent, {aa:"実行されない"});
+					// ドラッグ中じゃないので実行されない
+					$('#controllerResult').trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$('#controllerResult').trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
 
-			// ドラッグ開始
-			$('#controllerResult').trigger(startMouseEvent);
+					// ドラッグ開始
+					$('#controllerResult').trigger(startMouseEvent);
 
-			// ドラッグ中なので実行されない
-			$('#controllerResult').trigger(startMouseEvent, {aa:"実行されない"});
+					// ドラッグ中なので実行されない
+					$('#controllerResult').trigger(startMouseEvent, {
+						aa: "実行されない"
+					});
 
-			// ドラッグ
-			$('#controllerResult').trigger(moveMouseEvent);
+					// ドラッグ
+					$('#controllerResult').trigger(moveMouseEvent);
 
-			// ドラッグ終了
-			$('#controllerResult').trigger(endMouseEvent);
+					// ドラッグ終了
+					$('#controllerResult').trigger(endMouseEvent);
 
-			// ドラッグ中じゃないので実行されない
-			$('#controllerResult').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('#controllerResult').trigger(endMouseEvent, {aa:"実行されない"});
+					// ドラッグ中じゃないので実行されない
+					$('#controllerResult').trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$('#controllerResult').trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
 
-			testController.unbind();
+					testController.unbind();
 
-			// ちゃんとアンバインドされているかどうかを確認。
-			// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
-			$('#controllerResult').trigger(startMouseEvent);
-			$('#controllerResult').trigger(moveMouseEvent);
-			$('#controllerResult').trigger(endMouseEvent);
+					// ちゃんとアンバインドされているかどうかを確認。
+					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+					$('#controllerResult').trigger(startMouseEvent);
+					$('#controllerResult').trigger(moveMouseEvent);
+					$('#controllerResult').trigger(endMouseEvent);
 
-			start();
-		});
-	});
+					start();
+				});
+			});
 
 	asyncTest('h5trackイベント(touchstart, touchmove, touchend)', 26, function() {
 		var controller = {
@@ -3797,7 +4085,8 @@ $(function() {
 			__name: 'TestController',
 
 			'{rootElement} h5trackstart': function(context) {
-				context.evArg && ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、実行されないこと。');
+				context.evArg
+						&& ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、実行されないこと。');
 				var event = context.event;
 				strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
 				strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
@@ -3810,7 +4099,8 @@ $(function() {
 			},
 
 			'{rootElement} h5trackmove': function(context) {
-				context.evArg && ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、実行されないこと。');
+				context.evArg
+						&& ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、実行されないこと。');
 				var event = context.event;
 				strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
 				strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
@@ -3825,7 +4115,8 @@ $(function() {
 			},
 
 			'{rootElement} h5trackend': function(context) {
-				context.evArg && ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、実行されないこと。');
+				context.evArg
+						&& ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、実行されないこと。');
 				var event = context.event;
 				strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
 				strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
@@ -3863,14 +4154,20 @@ $(function() {
 			var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
 
 			// ドラッグ中じゃないので実行されない
-			$('#controllerResult').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('#controllerResult').trigger(endMouseEvent, {aa:"実行されない"});
+			$('#controllerResult').trigger(moveMouseEvent, {
+				aa: "実行されない"
+			});
+			$('#controllerResult').trigger(endMouseEvent, {
+				aa: "実行されない"
+			});
 
 			// ドラッグ開始
 			$('#controllerResult').trigger(startMouseEvent);
 
 			// ドラッグ中なので実行されない
-			$('#controllerResult').trigger(startMouseEvent, {aa:"実行されない"});
+			$('#controllerResult').trigger(startMouseEvent, {
+				aa: "実行されない"
+			});
 
 			// ドラッグ
 			$('#controllerResult').trigger(moveMouseEvent);
@@ -3879,8 +4176,12 @@ $(function() {
 			$('#controllerResult').trigger(endMouseEvent);
 
 			// ドラッグ中じゃないので実行されない
-			$('#controllerResult').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('#controllerResult').trigger(endMouseEvent, {aa:"実行されない"});
+			$('#controllerResult').trigger(moveMouseEvent, {
+				aa: "実行されない"
+			});
+			$('#controllerResult').trigger(endMouseEvent, {
+				aa: "実行されない"
+			});
 
 			testController.unbind();
 
@@ -3893,425 +4194,549 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5trackイベント(mousedown, mousemove, mouseup) SVG', 26, function() {
-		var controller = {
-
-			__name: 'TestController',
-
-			'#svgElem rect h5trackstart': function(context) {
-				context.evArg && ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 10, 'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 10, 'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 10, 'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 10, 'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
-			},
-
-			'#svgElem rect h5trackmove': function(context) {
-				context.evArg && ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 15, 'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 15, 'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 15, 'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 15, 'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
-				strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
-				strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
-			},
-
-			'#svgElem rect h5trackend': function(context) {
-				context.evArg && ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 20, 'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 20, 'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 20, 'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 20, 'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
-			}
-		};
-
-		var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-		svg.setAttribute('id','svgElem');
-		svg.setAttribute('width','50');
-		svg.setAttribute('height','50');
-		var rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-		rect.setAttribute('x','50');
-		rect.setAttribute('y','50');
-		rect.setAttribute('width','50');
-		rect.setAttribute('height','50');
-		svg.appendChild(rect);
-		document.getElementById('controllerTest').appendChild(svg);
-
-		var testController = h5.core.controller('#controllerTest', controller);
-
-		testController.readyPromise.done(function() {
-			var setPos = function(ev, pos) {
-				ev.pageX = pos;
-				ev.pageY = pos;
-				ev.screenX = pos;
-				ev.screenY = pos;
-				ev.clientX = pos;
-				ev.clientY = pos;
-				return ev;
-			};
-
-
-			var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
-			var startMouseEvent = setPos(new $.Event('mousedown'), 10);
-			var endMouseEvent = setPos(new $.Event('mouseup'), 20);
-
-			// ドラッグ中じゃないので実行されない
-			$('#svgElem rect').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('#svgElem rect').trigger(endMouseEvent, {aa:"実行されない"});
-
-			// ドラッグ開始
-			$('#svgElem rect').trigger(startMouseEvent);
-
-			// ドラッグ中なので実行されない
-			$('#svgElem rect').trigger(startMouseEvent, {aa:"実行されない"});
-
-			// ドラッグ
-			$('#svgElem rect').trigger(moveMouseEvent);
-
-			// ドラッグ終了
-			$('#svgElem rect').trigger(endMouseEvent);
-
-			// ドラッグ中じゃないので実行されない
-			$('#svgElem rect').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('#svgElem rect').trigger(endMouseEvent, {aa:"実行されない"});
-
-			testController.unbind();
-
-			// ちゃんとアンバインドされているかどうかを確認。
-			// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
-			$('#svgElem rect').trigger(startMouseEvent);
-			$('#svgElem rect').trigger(moveMouseEvent);
-			$('#svgElem rect').trigger(endMouseEvent);
-
-			start();
-		});
-	});
-
-	asyncTest('h5trackイベント(touchstart, touchmove, touchend) SVG', 26, function() {
-		var controller = {
-			__name: 'TestController',
-
-			'#svgElem rect h5trackstart': function(context) {
-				context.evArg && ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 10, 'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 10, 'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 10, 'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 10, 'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
-			},
-
-			'#svgElem rect h5trackmove': function(context) {
-				context.evArg && ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 15, 'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 15, 'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 15, 'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 15, 'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
-				strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
-				strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
-			},
-
-			'#svgElem rect h5trackend': function(context) {
-				context.evArg && ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 20, 'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 20, 'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 20, 'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 20, 'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
-			}
-		};
-
-		var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-		svg.setAttribute('id','svgElem');
-		svg.setAttribute('width','50');
-		svg.setAttribute('height','50');
-		var rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-		rect.setAttribute('x','50');
-		rect.setAttribute('y','50');
-		rect.setAttribute('width','50');
-		rect.setAttribute('height','50');
-		svg.appendChild(rect);
-		document.getElementById('controllerTest').appendChild(svg);
-
-		// hifiveにtouchイベントがあると思わせるために設定
-		document.ontouchstart = 1;
-		var testController = h5.core.controller('#controllerTest', controller);
-
-		testController.readyPromise.done(function() {
-			var setPos = function(ev, pos, isEnd) {
-				var touch = {};
-				touch.pageX = pos;
-				touch.pageY = pos;
-				touch.screenX = pos;
-				touch.screenY = pos;
-				touch.clientX = pos;
-				touch.clientY = pos;
-				var originalEvent = {};
-				originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
-				ev.originalEvent = originalEvent;
-				return ev;
-			};
-			// hifiveにtouchイベントがあると思わせるために設定
-			document.ontouchstart = undefined;
-
-			var startMouseEvent = setPos(new $.Event('touchstart'), 10);
-			var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
-			var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
-
-			// ドラッグ中じゃないので実行されない
-			$('#svgElem rect').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('#svgElem rect').trigger(endMouseEvent, {aa:"実行されない"});
-
-			// ドラッグ開始
-			$('#svgElem rect').trigger(startMouseEvent);
-
-			// ドラッグ中なので実行されない
-			$('#svgElem rect').trigger(startMouseEvent, {aa:"実行されない"});
-
-			// ドラッグ
-			$('#svgElem rect').trigger(moveMouseEvent);
-
-			// ドラッグ終了
-			$('#svgElem rect').trigger(endMouseEvent);
-
-			// ドラッグ中じゃないので実行されない
-			$('#svgElem rect').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('#svgElem rect').trigger(endMouseEvent, {aa:"実行されない"});
-
-			testController.unbind();
-
-			// ちゃんとアンバインドされているかどうかを確認。
-			// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
-			$('#svgElem rect').trigger(startMouseEvent);
-			$('#svgElem rect').trigger(moveMouseEvent);
-			$('#svgElem rect').trigger(endMouseEvent);
-			start();
-		});
-	});
-
-	asyncTest('h5trackイベント(mousedown, mousemove, mouseup) window', 26, function() {
-		var controller = {
-
-			__name: 'TestController',
-
-			'{rootElement} h5trackstart': function(context) {
-				context.evArg && ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 10, 'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 10, 'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 10, 'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 10, 'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
-			},
-
-			'{rootElement} h5trackmove': function(context) {
-				context.evArg && ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 15, 'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 15, 'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 15, 'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 15, 'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
-				strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
-				strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
-			},
-
-			'{rootElement}  h5trackend': function(context) {
-				context.evArg && ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 20, 'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 20, 'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 20, 'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 20, 'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
-			}
-		};
-
-		var testController = h5.core.controller(window, controller);
-
-		testController.readyPromise.done(function() {
-			var setPos = function(ev, pos) {
-				ev.pageX = pos;
-				ev.pageY = pos;
-				ev.screenX = pos;
-				ev.screenY = pos;
-				ev.clientX = pos;
-				ev.clientY = pos;
-				return ev;
-			};
-
-
-			var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
-			var startMouseEvent = setPos(new $.Event('mousedown'), 10);
-			var endMouseEvent = setPos(new $.Event('mouseup'), 20);
-
-			// ドラッグ中じゃないので実行されない
-			$('body').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('body').trigger(endMouseEvent, {aa:"実行されない"});
-
-			// ドラッグ開始
-			$(window).trigger(startMouseEvent);
-
-			// ドラッグ中なので実行されない
-			$('body').trigger(startMouseEvent, {aa:"実行されない"});
-
-			// ドラッグ
-			$('body').trigger(moveMouseEvent);
-
-			// ドラッグ終了
-			$('body').trigger(endMouseEvent);
-
-			// ドラッグ中じゃないので実行されない
-			$('body').trigger(moveMouseEvent, {aa:"実行されない"});
-			$('body').trigger(endMouseEvent, {aa:"実行されない"});
-
-			testController.unbind();
-
-			// ちゃんとアンバインドされているかどうかを確認。
-			// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
-			$('body').trigger(startMouseEvent);
-			$('body').trigger(moveMouseEvent);
-			$('body').trigger(endMouseEvent);
-
-			start();
-		});
-	});
-
-	asyncTest('h5trackイベント(touchstart, touchmove, touchend) window', 26, function() {
-		var controller = {
-			__name: 'TestController',
-
-			'{rootElement} h5trackstart': function(context) {
-				context.evArg && ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 10, 'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 10, 'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 10, 'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 10, 'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
-			},
-
-			'{rootElement} h5trackmove': function(context) {
-				context.evArg && ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 15, 'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 15, 'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 15, 'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 15, 'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
-				strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
-				strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
-			},
-
-			'{rootElement} h5trackend': function(context) {
-				context.evArg && ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-				var event = context.event;
-				strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
-				strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
-				strictEqual(event.screenX, 20, 'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
-				strictEqual(event.screenY, 20, 'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
-				strictEqual(event.clientX, 20, 'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
-				strictEqual(event.clientY, 20, 'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
-				ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
-				ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
-			}
-		};
-
-		// hifiveにtouchイベントがあると思わせるために設定
-		document.ontouchstart = 1;
-		var testController = h5.core.controller(window, controller);
-
-		testController.readyPromise.done(function() {
-			var setPos = function(ev, pos, isEnd) {
-				var touch = {};
-				touch.pageX = pos;
-				touch.pageY = pos;
-				touch.screenX = pos;
-				touch.screenY = pos;
-				touch.clientX = pos;
-				touch.clientY = pos;
-				var originalEvent = {};
-				originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
-				ev.originalEvent = originalEvent;
-				return ev;
-			};
-			// hifiveにtouchイベントがあると思わせるために設定
-			document.ontouchstart = undefined;
-
-			var startMouseEvent = setPos(new $.Event('touchstart'), 10);
-			var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
-			var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
-
-			// ドラッグ中じゃないので実行されない
-			$(window).trigger(moveMouseEvent, {aa:"実行されない"});
-			$(window).trigger(endMouseEvent, {aa:"実行されない"});
-
-			// ドラッグ開始
-			$(window).trigger(startMouseEvent);
-
-			// ドラッグ中なので実行されない
-			$(window).trigger(startMouseEvent, {aa:"実行されない"});
-
-			// ドラッグ
-			$(window).trigger(moveMouseEvent);
-
-			// ドラッグ終了
-			$(window).trigger(endMouseEvent);
-
-			// ドラッグ中じゃないので実行されない
-			$(window).trigger(moveMouseEvent, {aa:"実行されない"});
-			$(window).trigger(endMouseEvent, {aa:"実行されない"});
-
-			testController.unbind();
-
-			// ちゃんとアンバインドされているかどうかを確認。
-			// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
-			$(window).trigger(startMouseEvent);
-			$(window).trigger(moveMouseEvent);
-			$(window).trigger(endMouseEvent);
-			start();
-		});
-	});
+	asyncTest(
+			'h5trackイベント(mousedown, mousemove, mouseup) SVG',
+			26,
+			function() {
+				var controller = {
+
+					__name: 'TestController',
+
+					'#svgElem rect h5trackstart': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 10,
+								'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 10,
+								'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
+					},
+
+					'#svgElem rect h5trackmove': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
+						strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
+						strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
+					},
+
+					'#svgElem rect h5trackend': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 20,
+								'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 20,
+								'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 20,
+								'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 20,
+								'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
+					}
+				};
+
+				var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				svg.setAttribute('id', 'svgElem');
+				svg.setAttribute('width', '50');
+				svg.setAttribute('height', '50');
+				var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				rect.setAttribute('x', '50');
+				rect.setAttribute('y', '50');
+				rect.setAttribute('width', '50');
+				rect.setAttribute('height', '50');
+				svg.appendChild(rect);
+				document.getElementById('controllerTest').appendChild(svg);
+
+				var testController = h5.core.controller('#controllerTest', controller);
+
+				testController.readyPromise.done(function() {
+					var setPos = function(ev, pos) {
+						ev.pageX = pos;
+						ev.pageY = pos;
+						ev.screenX = pos;
+						ev.screenY = pos;
+						ev.clientX = pos;
+						ev.clientY = pos;
+						return ev;
+					};
+
+
+					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
+					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
+					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
+
+					// ドラッグ中じゃないので実行されない
+					$('#svgElem rect').trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$('#svgElem rect').trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ開始
+					$('#svgElem rect').trigger(startMouseEvent);
+
+					// ドラッグ中なので実行されない
+					$('#svgElem rect').trigger(startMouseEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ
+					$('#svgElem rect').trigger(moveMouseEvent);
+
+					// ドラッグ終了
+					$('#svgElem rect').trigger(endMouseEvent);
+
+					// ドラッグ中じゃないので実行されない
+					$('#svgElem rect').trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$('#svgElem rect').trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
+
+					testController.unbind();
+
+					// ちゃんとアンバインドされているかどうかを確認。
+					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+					$('#svgElem rect').trigger(startMouseEvent);
+					$('#svgElem rect').trigger(moveMouseEvent);
+					$('#svgElem rect').trigger(endMouseEvent);
+
+					start();
+				});
+			});
+
+	asyncTest(
+			'h5trackイベント(touchstart, touchmove, touchend) SVG',
+			26,
+			function() {
+				var controller = {
+					__name: 'TestController',
+
+					'#svgElem rect h5trackstart': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 10,
+								'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 10,
+								'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
+					},
+
+					'#svgElem rect h5trackmove': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
+						strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
+						strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
+					},
+
+					'#svgElem rect h5trackend': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 20,
+								'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 20,
+								'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 20,
+								'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 20,
+								'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
+					}
+				};
+
+				var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				svg.setAttribute('id', 'svgElem');
+				svg.setAttribute('width', '50');
+				svg.setAttribute('height', '50');
+				var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				rect.setAttribute('x', '50');
+				rect.setAttribute('y', '50');
+				rect.setAttribute('width', '50');
+				rect.setAttribute('height', '50');
+				svg.appendChild(rect);
+				document.getElementById('controllerTest').appendChild(svg);
+
+				// hifiveにtouchイベントがあると思わせるために設定
+				document.ontouchstart = 1;
+				var testController = h5.core.controller('#controllerTest', controller);
+
+				testController.readyPromise.done(function() {
+					var setPos = function(ev, pos, isEnd) {
+						var touch = {};
+						touch.pageX = pos;
+						touch.pageY = pos;
+						touch.screenX = pos;
+						touch.screenY = pos;
+						touch.clientX = pos;
+						touch.clientY = pos;
+						var originalEvent = {};
+						originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
+						ev.originalEvent = originalEvent;
+						return ev;
+					};
+					// hifiveにtouchイベントがあると思わせるために設定
+					document.ontouchstart = undefined;
+
+					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
+					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
+					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
+
+					// ドラッグ中じゃないので実行されない
+					$('#svgElem rect').trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$('#svgElem rect').trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ開始
+					$('#svgElem rect').trigger(startMouseEvent);
+
+					// ドラッグ中なので実行されない
+					$('#svgElem rect').trigger(startMouseEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ
+					$('#svgElem rect').trigger(moveMouseEvent);
+
+					// ドラッグ終了
+					$('#svgElem rect').trigger(endMouseEvent);
+
+					// ドラッグ中じゃないので実行されない
+					$('#svgElem rect').trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$('#svgElem rect').trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
+
+					testController.unbind();
+
+					// ちゃんとアンバインドされているかどうかを確認。
+					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+					$('#svgElem rect').trigger(startMouseEvent);
+					$('#svgElem rect').trigger(moveMouseEvent);
+					$('#svgElem rect').trigger(endMouseEvent);
+					start();
+				});
+			});
+
+	asyncTest(
+			'h5trackイベント(mousedown, mousemove, mouseup) window',
+			26,
+			function() {
+				var controller = {
+
+					__name: 'TestController',
+
+					'{rootElement} h5trackstart': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 10,
+								'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 10,
+								'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
+					},
+
+					'{rootElement} h5trackmove': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
+						strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
+						strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
+					},
+
+					'{rootElement}  h5trackend': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 20,
+								'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 20,
+								'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 20,
+								'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 20,
+								'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
+					}
+				};
+
+				var testController = h5.core.controller(window, controller);
+
+				testController.readyPromise.done(function() {
+					var setPos = function(ev, pos) {
+						ev.pageX = pos;
+						ev.pageY = pos;
+						ev.screenX = pos;
+						ev.screenY = pos;
+						ev.clientX = pos;
+						ev.clientY = pos;
+						return ev;
+					};
+
+
+					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
+					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
+					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
+
+					// ドラッグ中じゃないので実行されない
+					$('body').trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$('body').trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ開始
+					$(window).trigger(startMouseEvent);
+
+					// ドラッグ中なので実行されない
+					$('body').trigger(startMouseEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ
+					$('body').trigger(moveMouseEvent);
+
+					// ドラッグ終了
+					$('body').trigger(endMouseEvent);
+
+					// ドラッグ中じゃないので実行されない
+					$('body').trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$('body').trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
+
+					testController.unbind();
+
+					// ちゃんとアンバインドされているかどうかを確認。
+					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+					$('body').trigger(startMouseEvent);
+					$('body').trigger(moveMouseEvent);
+					$('body').trigger(endMouseEvent);
+
+					start();
+				});
+			});
+
+	asyncTest(
+			'h5trackイベント(touchstart, touchmove, touchend) window',
+			26,
+			function() {
+				var controller = {
+					__name: 'TestController',
+
+					'{rootElement} h5trackstart': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 10,
+								'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 10,
+								'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
+					},
+
+					'{rootElement} h5trackmove': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
+						strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
+						strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
+					},
+
+					'{rootElement} h5trackend': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 20,
+								'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 20,
+								'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 20,
+								'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 20,
+								'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
+					}
+				};
+
+				// hifiveにtouchイベントがあると思わせるために設定
+				document.ontouchstart = 1;
+				var testController = h5.core.controller(window, controller);
+
+				testController.readyPromise.done(function() {
+					var setPos = function(ev, pos, isEnd) {
+						var touch = {};
+						touch.pageX = pos;
+						touch.pageY = pos;
+						touch.screenX = pos;
+						touch.screenY = pos;
+						touch.clientX = pos;
+						touch.clientY = pos;
+						var originalEvent = {};
+						originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
+						ev.originalEvent = originalEvent;
+						return ev;
+					};
+					// hifiveにtouchイベントがあると思わせるために設定
+					document.ontouchstart = undefined;
+
+					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
+					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
+					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
+
+					// ドラッグ中じゃないので実行されない
+					$(window).trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$(window).trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ開始
+					$(window).trigger(startMouseEvent);
+
+					// ドラッグ中なので実行されない
+					$(window).trigger(startMouseEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ
+					$(window).trigger(moveMouseEvent);
+
+					// ドラッグ終了
+					$(window).trigger(endMouseEvent);
+
+					// ドラッグ中じゃないので実行されない
+					$(window).trigger(moveMouseEvent, {
+						aa: "実行されない"
+					});
+					$(window).trigger(endMouseEvent, {
+						aa: "実行されない"
+					});
+
+					testController.unbind();
+
+					// ちゃんとアンバインドされているかどうかを確認。
+					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+					$(window).trigger(startMouseEvent);
+					$(window).trigger(moveMouseEvent);
+					$(window).trigger(endMouseEvent);
+					start();
+				});
+			});
 });

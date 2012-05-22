@@ -117,7 +117,6 @@
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	/* del end */
 
-
 	// =========================================================================
 	//
 	// Cache
@@ -142,7 +141,6 @@
 	// =============================
 	// Functions
 	// =============================
-
 
 	/**
 	 * コントローラのexecuteListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
@@ -748,7 +746,7 @@
 		// 子孫コントローラのinitPromiseオブジェクトを取得
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
 		// 自身のテンプレート用Promiseオブジェクトを取得
-		initPromises.push(controller.__controllerContext.templatePromise);
+		initPromises.push(controller.preinitPromise);
 		return initPromises;
 	}
 
@@ -770,6 +768,10 @@
 	 */
 	function createCallbackForInit(controller) {
 		return function() {
+			// disopseされていたら何もしない。
+			if (isDisposing(controller)) {
+				return;
+			}
 			controller.isInit = true;
 			var initDfd = controller.__controllerContext.initDfd;
 			// FW、ユーザともに使用しないので削除
@@ -791,6 +793,10 @@
 	 */
 	function createCallbackForReady(controller) {
 		return function() {
+			// disopseされていたら何もしない。
+			if (isDisposing(controller)) {
+				return;
+			}
 			controller.isReady = true;
 
 			var readyDfd = controller.__controllerContext.readyDfd;
@@ -950,7 +956,10 @@
 			// イベントオブジェクトの正規化
 			return getNormalBindObj(controller, selector, eventName, function(context) {
 				var event = context.event;
-				var offset = $(event.currentTarget).offset() || {left:0, top:0};
+				var offset = $(event.currentTarget).offset() || {
+					left: 0,
+					top: 0
+				};
 				event.offsetX = event.pageX - offset.left;
 				event.offsetY = event.pageY - offset.top;
 				func.apply(this, arguments);
@@ -1202,7 +1211,7 @@
 	function getBindTarget(element, rootElement, controller) {
 		if (!element) {
 			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED);
-		} else if (!controller ||  !controller.__controllerContext) {
+		} else if (!controller || !controller.__controllerContext) {
 			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
 		}
 		var $targets;
@@ -1373,6 +1382,15 @@
 			return getView(templateId, controller.parentController);
 		}
 		return h5.core.view;
+	}
+
+	/**
+	 * 指定されたコントローラがdispose済みかどうか、(非同期の場合はdispose中かどうか)を返します。
+	 *
+	 * @param {Controller} controller コントローラ
+	 */
+	function isDisposing(controller) {
+		return !controller.__controllerContext || controller.__controllerContext.isDisposing;
 	}
 
 	// =========================================================================
@@ -1809,6 +1827,11 @@
 		 * @memberOf Controller
 		 */
 		dispose: function() {
+			// disopseされていたら何もしない。
+			if (isDisposing(this)) {
+				return;
+			}
+			this.__controllerContext.isDisposing = 1;
 			var dfd = this.deferred();
 			this.unbind();
 			var that = this;
@@ -2005,7 +2028,7 @@
 		 * @private
 		 */
 		$(document).bind('triggerIndicator', function(event, opt) {
-			if(opt.target == null){
+			if (opt.target == null) {
 				opt.target = document;
 			}
 			opt.indicator = callIndicator(this, opt).show();
@@ -2101,7 +2124,6 @@
 			});
 		}
 
-
 		// バインド対象となる要素のチェック
 		if (targetElement) {
 			var $bindTargetElement = $(targetElement);
@@ -2139,8 +2161,11 @@
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
 		var templatePromise = templateDfd.promise();
+		var preinitDfd = getDeferred();
+		var preinitPromise = preinitDfd.promise();
 
 		controller.__controllerContext.templatePromise = templatePromise;
+		controller.preinitPromise = preinitPromise;
 		controller.__controllerContext.initDfd = getDeferred();
 		controller.initPromise = controller.__controllerContext.initDfd.promise();
 		controller.__controllerContext.readyDfd = getDeferred();
@@ -2167,13 +2192,14 @@
 					// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に"0"になっていること、
 					// IEの場合は、コネクションが繋がらない時のコードが"12029"であること。
 					// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
-					// WinInet のエラーコード(12001 - 12156): http://support.microsoft.com/kb/193625/ja
+					// WinInet のエラーコード(12001 - 12156):
+					// http://support.microsoft.com/kb/193625/ja
 					var jqXhrStatus = result.detail.error.status;
 					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
-							|| jqXhrStatus !== 12029) {
+							&& jqXhrStatus !== 12029) {
 						result.controllerDefObject = controllerDefObj;
-						templateDfd.reject(result);
-						// controller.__controllerContext.initDfd.reject();
+						setTimeout(function(){
+						templateDfd.reject(result);},0);
 						return;
 					}
 					setTimeout(function() {
@@ -2186,6 +2212,20 @@
 			// テンプレートがない場合は、resolve()しておく
 			templateDfd.resolve();
 		}
+
+		// テンプレートプロミスのハンドラ登録
+		templatePromise.done(function() {
+			preinitDfd.resolve();
+		}).fail(function(e) {
+			preinitDfd.reject(e);
+			if (controller.__controllerContext) {
+				if (controller.rootController) {
+					controller.rootController.dispose();
+				} else {
+					controller.dispose();
+				}
+			}
+		});
 
 		for ( var prop in clonedControllerDef) {
 			if (controllerPropertyMap[prop]) {
@@ -2321,7 +2361,6 @@
 	// =============================
 	// Expose to window
 	// =============================
-
 
 	/**
 	 * Core MVCの名前空間

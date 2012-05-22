@@ -149,7 +149,7 @@ $(function() {
 					}
 					setTimeout(function() {
 						waitForDom();
-					}, 100);
+					}, 0);
 				}
 				waitForDom();
 			});
@@ -334,7 +334,8 @@ $(function() {
 			$(window).scrollTop(originLeft);
 		}
 	});
-	test('h5.ui.scrollToTop', 1, function() {
+
+	asyncTest('h5.ui.scrollToTop', 1, function() {
 		// 100,100にスクロール
 		$(window).scrollTop(100);
 		$(window).scrollLeft(100);
@@ -344,9 +345,11 @@ $(function() {
 		function waitForScroll() {
 			if ($(window).scrollTop() === 1 && $(window).scrollLeft() === 0) {
 				ok(true, '(0,1)にスクロールされた');
+				start();
 				return;
 			} else if (count++ === 3) {
 				ok(false, 'スクロールされませんでした。');
+				start();
 				return;
 			}
 			setTimeout(waitForScroll, 300);

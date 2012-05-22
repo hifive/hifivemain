@@ -1063,7 +1063,7 @@ $(function() {
 		}
 	});
 
-	test('h5.u.createInterceptor() インターセプタを作成できること', 3, function(){
+	test('h5.u.createInterceptor() インターセプタを作成できること', 5, function(){
 		var count = 0;
 		var count2 = 0;
 		var ret = 0;
@@ -1080,6 +1080,20 @@ $(function() {
 		same(count, 1, '関数の初めに実行したい関数が実行されること');
 		same(count2, 1, '関数の終わりに実行したい関数が実行されること');
 		same(ret, 100, '関数そのものが実行されていること');
+
+		count = 0;
+		ret = 0;
+		testInterceptor = h5.u.createInterceptor(function(invocation, data) {
+			// invocationを実行
+			count++;
+			invocation();
+		});
+		testInterceptor(function(){
+			ret = 100;
+		});
+		same(count, 1, '第二引数省略 関数の初めに実行したい関数が実行されること');
+		same(ret, 100, '第二引数省略 関数そのものが実行されていること');
+
 	});
 
 });
