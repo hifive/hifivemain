@@ -4420,6 +4420,12 @@ $(function() {
 			'h5trackイベント(mousedown, mousemove, mouseup) SVG',
 			26,
 			function() {
+				if(!document.createElementNS){
+					expect(1);
+					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
+					start();
+					return;
+				}
 				var controller = {
 
 					__name: 'TestController',
@@ -4560,6 +4566,12 @@ $(function() {
 			'h5trackイベント(touchstart, touchmove, touchend) SVG',
 			26,
 			function() {
+				if(!document.createElementNS){
+					expect(1);
+					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
+					start();
+					return;
+				}
 				var controller = {
 					__name: 'TestController',
 
