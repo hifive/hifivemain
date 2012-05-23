@@ -2315,11 +2315,14 @@
 		if (controller.__construct) {
 			controller.__construct(createInitializationContext(controller));
 		}
-		// ルートコントローラではない場合、インスタンスを戻す
-		if (!controller.__controllerContext.isRoot) {
-			return controller;
+
+		if (isDisposing(controller)) {
+			return null;
 		}
-		setRootAndTriggerInit(controller);
+		// ルートコントローラなら、ルートをセット
+		if (controller.__controllerContext.isRoot) {
+			setRootAndTriggerInit(controller);
+		}
 		return controller;
 	}
 

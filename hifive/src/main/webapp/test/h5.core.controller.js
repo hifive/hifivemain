@@ -246,6 +246,7 @@ $(function() {
 					same(e.code, 6004, e.message);
 				}
 			});
+
 	asyncTest('イベントハンドラの{}記法でオブジェクトを指定する時に2階層以上下のオブジェクトを指定できるか', function() {
 
 
@@ -420,6 +421,37 @@ $(function() {
 				testController.unbind();
 			});
 		});
+	});
+
+	asyncTest('__constructでthis.disposeを呼んだらライフサイクルイベントは実行されない', 3, function() {
+		var flag = false;
+		var controller = {
+
+			__name: 'TestController',
+			__construct: function(){
+				this.dispose();
+				this.dispose();
+				ok(true,'コンストラクタは実行されること');
+			},
+			__init: function(){
+				ok(false, 'テスト失敗。__initが実行された');
+			},
+			__ready: function(){
+				ok(false, 'テスト失敗。__readyが実行された');
+			},
+			__dispose: function(){
+				ok(!flag, '__disposeが1度だけ実行されること。');
+				flag = true;
+				setTimeout(function(){
+					start();
+				},0);
+			},
+			__unbind: function(){
+				ok(true, '__unbindが実行されること。');
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
 	});
 
 	asyncTest(
