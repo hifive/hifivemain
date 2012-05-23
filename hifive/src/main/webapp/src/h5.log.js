@@ -451,7 +451,14 @@
 		},
 
 		_output: function(func, args) {
-			func.apply(console, args);
+			var f = func;
+			if (!func.call) {
+				// IEでは、console.log/error/info/warnにcallがないので、その対応をする
+				f = function(arg) {
+					func(arg);
+				};
+			}
+			f.call(console, args);
 			return;
 		}
 	};
@@ -480,7 +487,7 @@
 		/* del end */
 
 		function compileLogTarget(targets) {
-			if(!$.isPlainObject(targets)){
+			if (!$.isPlainObject(targets)) {
 				throwFwError(ERR_CODE_LOG_TARGET_INVALID);
 			}
 			for ( var prop in targets) {
@@ -525,10 +532,11 @@
 				categoryCache.push(category);
 			}
 			var compiledLevel;
-			if (out.level == null){
+			if (out.level == null) {
 				compiledLevel = stringToLevel(isDefault ? defaultOut.level : _dOut.level);
 			} else {
-				compiledLevel = typeof out.level === 'string'?  stringToLevel($.trim(out.level)): out.level;
+				compiledLevel = typeof out.level === 'string' ? stringToLevel($.trim(out.level))
+						: out.level;
 			}
 			if (typeof compiledLevel !== 'number') {
 				throwFwError(ERR_CODE_LEVEL_INVALID, out.level);
@@ -542,12 +550,14 @@
 			} else if (!isDefault || targets != null) {
 				var targetNames = [];
 				// targetsの指定は文字列または配列またはnull,undefinedのみ
-				if(!(targets == null || $.isArray(targets) || (typeof targets === 'string' && $.trim(targets).length))) {
+				if (!(targets == null || $.isArray(targets) || (typeof targets === 'string' && $
+						.trim(targets).length))) {
 					throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
 				}
 				targets = wrapInArray(targets);
 				for ( var i = 0, len = targets.length; i < len; i++) {
-					if(!(targets[i] == null || (typeof targets[i] === 'string' && $.trim(targets[i]).length))) {
+					if (!(targets[i] == null || (typeof targets[i] === 'string' && $
+							.trim(targets[i]).length))) {
 						throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
 					}
 					var targetName = targets[i];
@@ -613,7 +623,7 @@
 	 */
 	function Log(category) {
 		// categoryの指定が文字列以外、または空文字、空白文字ならエラー。
-		if (typeof category !== 'string' ||  $.trim(category).length === 0) {
+		if (typeof category !== 'string' || $.trim(category).length === 0) {
 			throwFwError(ERR_CODE_CATEGORY_INVALID);
 		}
 

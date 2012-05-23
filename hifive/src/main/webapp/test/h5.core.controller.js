@@ -95,7 +95,7 @@ $(function() {
 		strictEqual(undefined, window.jp, '（名前空間のクリーンアップ2）');
 	});
 
-	asyncTest('コントローラの作成と要素へのバインド(AOPなし)', function() {
+	asyncTest('コントローラの作成と要素へのバインド(AOPなし)', 4, function() {
 		var cc = null;
 		var controller = {
 
@@ -154,7 +154,7 @@ $(function() {
 
 	});
 
-	asyncTest('コントローラの作成と要素へのバインド(AOPあり)', function() {
+	asyncTest('コントローラの作成と要素へのバインド(AOPあり)', 3, function() {
 		if (!h5.core._compileAspects) {
 			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
@@ -248,8 +248,6 @@ $(function() {
 			});
 
 	asyncTest('イベントハンドラの{}記法でオブジェクトを指定する時に2階層以上下のオブジェクトを指定できるか', function() {
-
-
 		window.test1 = {
 			test2: $('#controllerResult')
 		};
@@ -265,12 +263,11 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerResult').click();
 			ok(ret, '{}記法で2階層以上下のオブジェクトを指定できたか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -304,7 +301,7 @@ $(function() {
 		}
 	});
 
-	test('複数要素へのバインド', function() {
+	test('存在しない要素・複数要素へのバインド', function() {
 
 		var controller = {
 			__name: 'TestController'
@@ -412,46 +409,15 @@ $(function() {
 				param1: 100
 			});
 			testController.readyPromise.done(function() {
-				start();
 
 				strictEqual(rebind, 100, '1度アンバインドしたコントローラを再びバインドして__initハンドラが動作するか');
 				$('#controllerTest input[type=button]').click();
 				strictEqual($('#controllerResult').text(), 'ok',
 						'1度アンバインドしたコントローラを再びバインドしてイベントハンドラが動作するか');
 				testController.unbind();
+				start();
 			});
 		});
-	});
-
-	asyncTest('__constructでthis.disposeを呼んだらライフサイクルイベントは実行されない', 3, function() {
-		var flag = false;
-		var controller = {
-
-			__name: 'TestController',
-			__construct: function(){
-				this.dispose();
-				this.dispose();
-				ok(true,'コンストラクタは実行されること');
-			},
-			__init: function(){
-				ok(false, 'テスト失敗。__initが実行された');
-			},
-			__ready: function(){
-				ok(false, 'テスト失敗。__readyが実行された');
-			},
-			__dispose: function(){
-				ok(!flag, '__disposeが1度だけ実行されること。');
-				flag = true;
-				setTimeout(function(){
-					start();
-				},0);
-			},
-			__unbind: function(){
-				ok(true, '__unbindが実行されること。');
-			}
-		};
-
-		h5.core.controller('#controllerTest', controller);
 	});
 
 	asyncTest(
@@ -462,19 +428,23 @@ $(function() {
 					controllers[i].unbind();
 				}
 				var names = ['Test1Controller', 'Test2Controller', 'Test3Controller'];
-				var p;
+				var p = [];
 				for ( var i = 0, l = names.length; i < l; i++) {
-					p = h5.core.controller('#controllerTest', {
+					p[i] = h5.core.controller('#controllerTest', {
 						__name: names[i]
 					});
 				}
-				p.readyPromise.done(function() {
-					var controllers = h5.core.controllerManager.getAllControllers();
-					for ( var i = 0, l = controllers.length; i < l; i++) {
-						controllers[i] = controllers[i].__name;
-					}
-					deepEqual(controllers, names, '3つバインドしたコントローラが取得できること');
-					start();
+				p[0].readyPromise.done(function() {
+					p[1].readyPromise.done(function() {
+						p[2].readyPromise.done(function() {
+							var controllers = h5.core.controllerManager.getAllControllers();
+							for ( var i = 0, l = controllers.length; i < l; i++) {
+								controllers[i] = controllers[i].__name;
+							}
+							deepEqual(controllers, names, '3つバインドしたコントローラが取得できること');
+							start();
+						});
+					});
 				});
 			});
 
@@ -543,10 +513,10 @@ $(function() {
 				same(++count, 1, '孫コントローラのコンストラクタが実行される。');
 			},
 			__init: function(context) {
-				// 孫の__initは、その前にコントローラ群がdisposeされていれば実行されない
+			// 孫の__initは、その前にコントローラ群がdisposeされていれば実行されない
 			},
 			__ready: function(context) {
-				// 孫の__readyは、その前にコントローラ群がdisposeされていれば実行されない
+			// 孫の__readyは、その前にコントローラ群がdisposeされていれば実行されない
 			},
 			__dispose: function(context) {
 				same(++count, 9, '孫コントローラの__disposeが実行される。');
@@ -558,7 +528,7 @@ $(function() {
 		};
 		var aController = {
 			__name: 'AController',
-			__templates: 'adsaaaa',
+			__templates: '/noExistPath',
 			childController: bController,
 
 			__construct: function(context) {
@@ -612,21 +582,21 @@ $(function() {
 			__dispose: function(context) {
 				same(++count, 11, '親の__disposeが実行される。');
 				disposedController.test = this;
-				setTimeout(function(){
-					for(var i = 0; i < 3; i++){
+				setTimeout(function() {
+					for ( var i = 0; i < 3; i++) {
 						var prop = ['b', 'a', 'test'][i];
 						var str = ['孫', '子', '親'][i];
 						var flag = 0;
-						for(var p in disposedController[prop]){
-							if(disposedController[prop][p] !== null){
+						for ( var p in disposedController[prop]) {
+							if (disposedController[prop][p] !== null) {
 								flag = 1;
 								break;
 							}
 						}
-						ok(!flag, str+'コントローラがdisposeされていること');
+						ok(!flag, str + 'コントローラがdisposeされていること');
 					}
 					start();
-				},0);
+				}, 0);
 			},
 			__unbind: function(context) {
 				same(++count, 8, '親の__unbindが実行される。');
@@ -645,24 +615,24 @@ $(function() {
 		// view.load()をスタブに差し替え
 		var retryCount = 0;
 		var retryLimit = 3;
-		var load = function(){
-				var dfd = h5.async.deferred();
-				var e = {
-						detail:{
-							error: {
-								status: h5.env.ua.isIE? 0: 12029
-							}
-						}
-				};
-				if(retryCount++ == retryLimit){
-					dfd.resolve();
-				} else{
-					dfd.reject(e);
+		var load = function() {
+			var dfd = h5.async.deferred();
+			var e = {
+				detail: {
+					error: {
+						status: h5.env.ua.isIE ? 0 : 12029
+					}
 				}
-				return dfd.promise();
 			};
+			if (retryCount++ == retryLimit) {
+				dfd.resolve();
+			} else {
+				dfd.reject(e);
+			}
+			return dfd.promise();
+		};
 		var originalCreateView = h5.core.view.createView;
-		h5.core.view.createView = function(){
+		h5.core.view.createView = function() {
 			var view = originalCreateView();
 			view.load = load;
 			return view;
@@ -700,24 +670,24 @@ $(function() {
 		// view.load()をスタブに差し替え
 		var retryCount = 0;
 		var retryLimit = 3;
-		var load = function(){
-				var dfd = h5.async.deferred();
-				var e = {
-						detail:{
-							error: {
-								status: h5.env.ua.isIE? 0: 12029
-							}
-						}
-				};
-				if(retryCount++ == retryLimit + 1){
-					dfd.resolve();
-				} else{
-					dfd.reject(e);
+		var load = function() {
+			var dfd = h5.async.deferred();
+			var e = {
+				detail: {
+					error: {
+						status: h5.env.ua.isIE ? 0 : 12029
+					}
 				}
-				return dfd.promise();
 			};
+			if (retryCount++ == retryLimit + 1) {
+				dfd.resolve();
+			} else {
+				dfd.reject(e);
+			}
+			return dfd.promise();
+		};
 		var originalCreateView = h5.core.view.createView;
-		h5.core.view.createView = function(){
+		h5.core.view.createView = function() {
 			var view = originalCreateView();
 			view.load = load;
 			return view;
@@ -803,7 +773,6 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				start();
 
 				var rootDispose = true;
 				var childDispose = true;
@@ -820,6 +789,7 @@ $(function() {
 				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
 				ok(rootDispose, 'ルートコントローラのリソースはすべて削除されたか');
 				ok(childDispose, '子コントローラのリソースはすべて削除されたか');
+				start();
 			});
 		});
 	});
@@ -863,7 +833,6 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				start();
 				var rootDispose = true;
 				var childDispose = true;
 				for ( var p in testController) {
@@ -880,7 +849,234 @@ $(function() {
 				ok(child, '__disposeイベントはPromiseオブジェクトを考慮しているか2');
 				ok(rootDispose, 'ルートコントローラのリソースはすべて削除されたか');
 				ok(childDispose, '子コントローラのリソースはすべて削除されたか');
+				start();
 			});
+		});
+	});
+
+	asyncTest('__constructでthis.disposeを呼んだらライフサイクルイベントは実行されない', 4, function() {
+		var flag = false;
+		var controller = {
+
+			__name: 'TestController',
+			__construct: function() {
+				// this.dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
+				// なので、バックアップを取ってdispose.apply(this)を使って2回呼ぶ
+				var dispose = this.dispose;
+				dispose.apply(this);
+				dispose.apply(this);
+				ok(true, 'コンストラクタは実行されること');
+			},
+			__init: function() {
+				ok(false, 'テスト失敗。__initが実行された');
+			},
+			__ready: function() {
+				ok(false, 'テスト失敗。__readyが実行された');
+				start();
+			},
+			__dispose: function() {
+				ok(!flag, '__disposeが1度だけ実行されること。');
+				flag = true;
+				setTimeout(function() {
+					start();
+				}, 0);
+			},
+			__unbind: function() {
+				ok(true, '__unbindが実行されること。');
+			}
+		};
+
+		ok(h5.core.controller('#controllerTest', controller) === null,
+				'h5.core.controller()がnullを返すこと');
+	});
+
+
+	asyncTest('controller.preinitProimseのdoneハンドラでthis.disposeを呼んだらライフサイクルイベントは実行されない', 4,
+			function() {
+				var flag = false;
+				var controller = {
+
+					__name: 'TestController',
+					__construct: function() {
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						ok(false, 'テスト失敗。__initが実行された');
+					},
+					__ready: function() {
+						ok(false, 'テスト失敗。__readyが実行された');
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること。');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること。');
+					}
+				};
+
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.initPromise.done(function() {
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+				}).fail(function() {
+					ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+				});
+				testController.readyPromise.done(function() {
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+				}).fail(function() {
+					ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+				});
+				testController.preinitPromise.done(function() {
+					ok(true, 'preinitPromiseのdoneハンドラが実行されること');
+					// dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
+					// なので、バックアップを取ってdispose.apply(testController)を使って2回呼ぶ
+					var dispose = testController.dispose;
+					dispose.apply(testController);
+					dispose.apply(testController);
+				});
+			});
+
+	asyncTest('__initでthis.disposeを呼んだらinitPromise以降は実行されない', 5, function() {
+		var flag = false;
+		var controller = {
+
+			__name: 'TestController',
+			__construct: function() {
+				ok(true, 'コンストラクタは実行されること');
+			},
+			__init: function() {
+				// this.dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
+				// なので、バックアップを取ってdispose.apply(this)を使って2回呼ぶ
+				var dispose = this.dispose;
+				dispose.apply(this);
+				dispose.apply(this);
+				ok(true, '__initが実行されること');
+			},
+			__ready: function() {
+				ok(false, 'テスト失敗。__readyが実行された。');
+				start();
+			},
+			__dispose: function() {
+				ok(!flag, '__disposeが1度だけ実行されること。');
+				flag = true;
+				setTimeout(function() {
+					start();
+				}, 0);
+			},
+			__unbind: function() {
+				ok(true, '__unbindが実行されること。');
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.preinitPromise.done(function() {
+			ok(true, 'preinitPromiseのdoneハンドラが実行されること');
+		});
+		testController.initPromise.done(function() {
+			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+		}).fail(function() {
+			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+		});
+		testController.readyPromise.done(function() {
+			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+		}).fail(function() {
+			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+		});
+	});
+
+
+	asyncTest('initPromiseのdoneハンドラでdisposeを呼んだら__ready以降は実行されない', 4, function() {
+		var flag = false;
+		var controller = {
+
+			__name: 'TestController',
+			__construct: function() {
+				ok(true, 'コンストラクタは実行されること');
+			},
+			__init: function() {
+				ok(true, '__initが実行されること');
+			},
+			__ready: function() {
+				ok(false, 'テスト失敗。__readyが実行された。');
+				start();
+			},
+			__dispose: function() {
+				ok(!flag, '__disposeが1度だけ実行されること。');
+				flag = true;
+				setTimeout(function() {
+					start();
+				}, 0);
+			},
+			__unbind: function() {
+				ok(true, '__unbindが実行されること。');
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+
+		testController.initPromise.done(function() {
+			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+		}).fail(function() {
+			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+		});
+		testController.readyPromise.done(function() {
+			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+		}).fail(function() {
+			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+		});		testController.preinitPromise.done(function() {
+			ok(true, 'preinitPromiseのdoneハンドラが実行されること');
+			// dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
+			// なので、バックアップを取ってdispose.apply(testController)を使って2回呼ぶ
+			var dispose = testController.dispose;
+			dispose.apply(testController);
+			dispose.apply(testController);
+		});
+	});
+
+	asyncTest('__readyでthis.disposeを呼んだらreadyPromiseは実行されない', 5, function() {
+		var flag = false;
+		var controller = {
+
+			__name: 'TestController',
+			__construct: function() {
+				ok(true, 'コンストラクタは実行されること');
+			},
+			__init: function() {
+				ok(true, '__initが実行されること');
+			},
+			__ready: function() {
+				// this.dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
+				// なので、バックアップを取ってdispose.apply(this)を使って2回呼ぶ
+				var dispose = this.dispose;
+				dispose.apply(this);
+				dispose.apply(this);
+				ok(true, '__readyが実行されること。');
+
+
+
+			},
+			__dispose: function() {
+				ok(!flag, '__disposeが1度だけ実行されること。');
+				flag = true;
+				setTimeout(function() {
+					start();
+				}, 0);
+			},
+			__unbind: function() {
+				ok(true, '__unbindが実行されること。');
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+		}).fail(function() {
+			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
 		});
 	});
 
@@ -900,7 +1096,6 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise
 				.done(function() {
-					start();
 
 					$('#controllerTest input[type=button]').click();
 
@@ -910,6 +1105,7 @@ $(function() {
 					testController.unbind();
 					window.controller = undefined;
 					strictEqual(window.controller, undefined, '（名前空間のクリーンアップ）');
+					start();
 				});
 	});
 
@@ -953,7 +1149,6 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise
 				.done(function() {
-					start();
 
 					$('#controllerTest input[type=button]').click();
 
@@ -964,6 +1159,7 @@ $(function() {
 					cleanAspects();
 					window.controller = undefined;
 					strictEqual(window.controller, undefined, '（名前空間のクリーンアップ）');
+					start();
 				});
 	});
 
@@ -1827,7 +2023,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()でグローバルインジケータを表示', function() {
+	asyncTest('this.triggerIndicator() triggerIndicator()でグローバルインジケータを表示', 5, function() {
 		var testController = null;
 		var controllerBase = {
 			__name: 'TestController',

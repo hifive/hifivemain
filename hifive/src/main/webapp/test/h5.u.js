@@ -83,7 +83,7 @@ $(function() {
 			ok(true, '[\'a\']:' + e.message);
 		}
 	});
-	test('名前空間作成-ドット区切りでネスト  (h5.u.obj.ns)', function() {
+	test('名前空間作成-ドット区切りでネスト  (h5.u.obj.ns)', 6, function() {
 		var ns = h5.u.obj.ns("jp.co.nssol.sysrdc");
 
 		strictEqual(ns, jp.co.nssol.sysrdc, 'ns()の戻り値は作成した名前空間オブジェクト。ネストしている場合は一番末尾のオブジェクトであること。');
@@ -110,7 +110,7 @@ $(function() {
 		strictEqual(window.dummy, undefined, 'ns()のパラメータにString型以外を指定した場合はエラーとして処理されること。');
 	});
 
-	test('jp.co.nssol.sysrdcにオブジェクトを公開する (h5.u.obj.ns)', function() {
+	test('jp.co.nssol.sysrdcにオブジェクトを公開する (h5.u.obj.ns)', 4, function() {
 		var jpStr = 'JP';
 		var coStr = 'CO';
 
@@ -192,7 +192,7 @@ $(function() {
 		window.h5test1 = undefined;
 	});
 
-	test('html文字列をエスケープする(h5.u.str.espaceHtml)', function() {
+	test('html文字列をエスケープする(h5.u.str.espaceHtml)', 4, function() {
 		var str = '<div>hogehoge<span>TEST</span>hoge.!</script>';
 		var escapeStr = h5.u.str.escapeHtml(str);
 		$('#qunit-fixture').append(escapeStr);
@@ -207,7 +207,7 @@ $(function() {
 		strictEqual(h5.u.str.escapeHtml(obj), obj, '文字列のみエスケープされること。');
 	});
 
-	test('文字列のプレフィックスを判定する (h5.u.str.startsWith)', function() {
+	test('文字列のプレフィックスを判定する (h5.u.str.startsWith)', 2, function() {
 		var str = "abcdefg";
 		var prefix1 = "abc";
 		var prefix2 = "abe";
@@ -216,7 +216,7 @@ $(function() {
 		notStrictEqual(h5.u.str.startsWith(str, prefix2), true, '文字列のプレフィックスが abe ではないこと。');
 	});
 
-	test('文字列のサフィックスをを判定する (h5.u.str.endsWith)', function() {
+	test('文字列のサフィックスをを判定する (h5.u.str.endsWith)', 2, function() {
 		var str = "abcdefg";
 		var suffix1 = "efg";
 		var suffix2 = "efa";
@@ -225,7 +225,7 @@ $(function() {
 		notStrictEqual(h5.u.str.endsWith(str, suffix2), true, '文字列のサフィックスが efg 指定したものではないこと。');
 	});
 
-	test('スクリプトのロード(h5.u.loadScript)', function() {
+	test('スクリプトのロード(h5.u.loadScript)', 3, function() {
 		window.h5samplefunc = undefined;
 		h5.u.loadScript('data/sample.js', {
 			force: true
@@ -328,7 +328,7 @@ $(function() {
 				}
 			});
 
-	test('スクリプトの同期ロード(h5.u.loadScript)', function() {
+	test('スクリプトの同期ロード(h5.u.loadScript)', 6, function() {
 		h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
 			force: true
 		});
@@ -346,7 +346,7 @@ $(function() {
 		window.test3 = undefined;
 	});
 
-	asyncTest('スクリプトの非同期(parallel=true)ロード(h5.u.loadScript)', function() {
+	asyncTest('スクリプトの非同期(parallel=true)ロード(h5.u.loadScript)', 6, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
 			async: true,
 			force: true,
@@ -358,8 +358,6 @@ $(function() {
 		ok(!window.test3, 'スクリプトが非同期にロードされたか3');
 
 		promise.done(function() {
-			start();
-
 			ok(window.test1.a, 'スクリプトが非同期にロードされたか4');
 			ok(window.test2.b, 'スクリプトが非同期にロードされたか5');
 			ok(window.test3.c, 'スクリプトが非同期にロードされたか6');
@@ -367,11 +365,12 @@ $(function() {
 			window.test1 = undefined;
 			window.test2 = undefined;
 			window.test3 = undefined;
+			start();
 		});
 
 	});
 
-	asyncTest('スクリプトの非同期(parallel=false)ロード(h5.u.loadScript)', function() {
+	asyncTest('スクリプトの非同期(parallel=false)ロード(h5.u.loadScript)', 9, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
 			async: true,
 			force: true,
@@ -383,8 +382,6 @@ $(function() {
 		ok(!window.test3, 'スクリプトが非同期にロードされたか3');
 
 		promise.done(function() {
-			start();
-
 			ok(window.test1.a, 'スクリプトが非同期にロードされたか4');
 			ok(window.test2.b, 'スクリプトが非同期にロードされたか5');
 			ok(window.test3.c, 'スクリプトが非同期にロードされたか6');
@@ -396,6 +393,7 @@ $(function() {
 			window.test1 = undefined;
 			window.test2 = undefined;
 			window.test3 = undefined;
+			start();
 		});
 
 	});
@@ -531,7 +529,7 @@ $(function() {
 				});
 			});
 
-	test('文字列のフォーマット(h5.u.str.format)', function() {
+	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
 		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
 		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
 				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
@@ -553,7 +551,7 @@ $(function() {
 		deepEqual(result, [1, 2, 3, 4], 'argumentsオブジェクトが配列に変換されていること。');
 	});
 
-	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', function() {
+	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', 7, function() {
 		window.hoge = {
 			hogehoge: {
 				test: 10
@@ -750,7 +748,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize オブジェクト：文字列、数値、日付、正規表現、null、undefined、配列、プリミティブ型各種', function() {
+	test('serialize/deserialize オブジェクト：文字列、数値、日付、正規表現、null、undefined、配列、プリミティブ型各種', 7, function() {
 		var obj = {
 			str: "string",
 			num: 456,
@@ -848,7 +846,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize オブジェクト/配列/連想配列：循環参照でエラーが出ること', function() {
+	test('serialize/deserialize オブジェクト/配列/連想配列：循環参照でエラーが出ること', 8, function() {
 		var a = {};
 		a.obj = a;
 
@@ -969,7 +967,7 @@ $(function() {
 				}
 			});
 
-	test('serialize/deserialize プロトタイプの中身はシリアライズ化されないこと', function() {
+	test('serialize/deserialize プロトタイプの中身はシリアライズ化されないこと', 1, function() {
 		var P = function() {};
 		P.prototype = {
 			b: 'b',
@@ -990,7 +988,7 @@ $(function() {
 		same(deserialized, hasOwnObj, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
 	});
 
-	test('serialize/deserialize 関数をserializeするとエラーが出ること。', function() {
+	test('serialize/deserialize 関数をserializeするとエラーが出ること。', 1, function() {
 		var func = function() {
 			return 'hoge';
 		};
@@ -1002,7 +1000,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize シリアライズしたバージョンの違う文字列をデシリアライズできないこと。', function() {
+	test('serialize/deserialize シリアライズしたバージョンの違う文字列をデシリアライズできないこと。', 1, function() {
 		var serialized = "2|shello";
 		try {
 			h5.u.obj.deserialize(serialized);
@@ -1012,7 +1010,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize 関数を含むオブジェクト、配列、連想配列で、関数を持つプロパティは無視されること。', function() {
+	test('serialize/deserialize 関数を含むオブジェクト、配列、連想配列で、関数を持つプロパティは無視されること。', 11, function() {
 		var hash = [1, 2];
 		hash['f'] = function() {};
 		hash['key'] = 'value';
