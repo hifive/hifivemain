@@ -545,9 +545,7 @@
 
 			var compiledTargets = [];
 			var targets = out.targets;
-			if (!isDefault && targets == null) {
-				compiledTargets = _dOut.compiledTargets;
-			} else if (!isDefault || targets != null) {
+			if (!isDefault || targets != null) {
 				var targetNames = [];
 				// targetsの指定は文字列または配列またはnull,undefinedのみ
 				if (!(targets == null || $.isArray(targets) || (typeof targets === 'string' && $
