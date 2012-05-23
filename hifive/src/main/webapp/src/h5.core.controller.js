@@ -2031,7 +2031,7 @@
 			if (opt.target == null) {
 				opt.target = document;
 			}
-			opt.indicator = callIndicator(this, opt).show();
+			opt.indicator = callIndicator(this, opt);
 			event.stopPropagation();
 		});
 
