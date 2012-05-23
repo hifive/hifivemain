@@ -538,8 +538,8 @@ $(function() {
 	});
 
 	test('ログターゲットの設定 (h5.log.createLogger)  文字列以外、空文字、空白文字、配列以外を指定したときはエラーが出ること。', 8, function() {
-		var categorys = [window.console, '',' ', {}, 0, 1, true, false];
-		var categorysStr = ["window.console", "''","' '", "{}", "0", "1", "true", "false"];
+		var categorys = [window.console || function(){}, '',' ', {}, 0, 1, true, false];
+		var categorysStr = [window.console? "window.console": 'function(){}', "''","' '", "{}", "0", "1", "true", "false"];
 		var errorCode = 10008;
 		for ( var i = 0, l = categorys.length; i < l; i++) {
 			try {
