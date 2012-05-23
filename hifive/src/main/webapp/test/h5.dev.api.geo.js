@@ -12,9 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
+
+// IE9でドキュメントモードを8以下にしている場合はisSupportedをfalseにして、テストを飛ばす。
+var isSupported = h5.api.geo.isSupported && navigator.geolocation;
+
 module('H5Api - Geo Location (Debug Mode)', {
 	setup: function() {
 		h5.dev.api.geo.watchIntervalTime = 1000;
@@ -24,7 +28,7 @@ module('H5Api - Geo Location (Debug Mode)', {
 });
 asyncTest('getCurrentPosition デバッグモード ダミー位置情報をセットしていないときは元のAPIを使うこと。エラーが起きるか位置が取得できる。', 1,
 		function() {
-			if (!h5.api.geo.isSupported) {
+			if (!isSupported) {
 				expect(1);
 				ok(false, 'お使いのブラウザはGeolocationをサポートしていません。');
 				start();
@@ -151,7 +155,7 @@ asyncTest('getCurrentPosition デバッグモード 失敗 強制エラー', 1, 
 	});
 });
 asyncTest('watchPosition デバッグモード ダミー位置情報をセットしていないときは元のAPIを使うこと。エラーが起きるか位置が取得できる。', 1, function() {
-	if (!h5.api.geo.isSupported) {
+	if (!isSupported) {
 		expect(1);
 		ok(false, 'お使いのブラウザはGeolocationをサポートしていません。');
 		start();

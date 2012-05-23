@@ -15,13 +15,17 @@
  *
  * hifive
  */
+
+// IE9でドキュメントモードを8以下にしている場合はisSupportedをfalseにして、テストを飛ばす。
+var isSupported = h5.api.geo.isSupported && navigator.geolocation;
+
 module('H5Api - Geo Location', {
 	setup: function() {
 	// 何もしない
 	}
 });
 asyncTest('getCurrentPosition 座標情報またはエラー情報が取得できること。', function() {
-	if (!h5.api.geo.isSupported) {
+	if (!isSupported) {
 		ok(false, 'このブラウザはGeolocation APIをサポートしていません。');
 		start();
 	} else {
@@ -37,7 +41,7 @@ asyncTest('getCurrentPosition 座標情報またはエラー情報が取得で�
 	}
 });
 asyncTest('watchPosition 座標情報またはエラー情報が取得できること。', function() {
-	if (!h5.api.geo.isSupported) {
+	if (!isSupported) {
 		ok(false, 'このブラウザはGeolocation APIをサポートしていません。');
 		start();
 		return;
@@ -58,7 +62,7 @@ asyncTest('watchPosition 座標情報またはエラー情報が取得できる�
 });
 asyncTest('watchPosition を3回呼び、unwatch()をして、すべてのwatchPosition()が終了すること。またはエラー情報が取得できること。',
 		function() {
-			if (!h5.api.geo.isSupported) {
+			if (!isSupported) {
 				ok(false, 'このブラウザはGeolocation APIをサポートしていません。');
 				start();
 				return;
@@ -166,42 +170,42 @@ test('getDistance - 100km以上 (1m以上誤差が出てしまうが、期待値
 			+ (result6 - 831305.990) + 'm');
 });
 test('getDistance - 位置情報に不正な値が含まれる時にエラーが発生すること', 4, function() {
-	try{
+	try {
 		h5.api.geo.getDistance(NaN, 139.766084, 35.170694, 136.881637, h5.api.geo.GS_GRS80);
 		ok(false, "エラーが発生しいていません");
-	} catch(e){
+	} catch (e) {
 		ok(true, e.code + ': ' + e.message);
 	}
-	try{
+	try {
 		h5.api.geo.getDistance(35.681382, Infinity, 35.170694, 136.881637, h5.api.geo.GS_GRS80);
 		ok(false, "エラーが発生しいていません");
-	} catch(e){
+	} catch (e) {
 		ok(true, e.code + ': ' + e.message);
 	}
-	try{
+	try {
 		h5.api.geo.getDistance(35.681382, 139.766084, -Infinity, 136.881637, h5.api.geo.GS_GRS80);
 		ok(false, "エラーが発生しいていません");
-	} catch(e){
+	} catch (e) {
 		ok(true, e.code + ': ' + e.message);
 	}
-	try{
+	try {
 		h5.api.geo.getDistance(35.681382, 139.766084, 35.170694, "abc", h5.api.geo.GS_GRS80);
 		ok(false, "エラーが発生しいていません");
-	} catch(e){
+	} catch (e) {
 		ok(true, e.code + ': ' + e.message);
 	}
 });
 test('getDistance - 計算モードが不正な値である時にエラーが発生すること。指定しない場合はエラーが発生しないこと。', 2, function() {
-	try{
+	try {
 		h5.api.geo.getDistance(35.681382, 139.766084, 35.170694, 136.881637, "GS_GRS80");
 		ok(false, "エラーが発生しいていません");
-	} catch(e){
+	} catch (e) {
 		ok(true, e.code + ': ' + e.message);
 	}
-	try{
+	try {
 		h5.api.geo.getDistance(35.681382, 139.766084, 35.170694, 136.881637);
 		ok(true, "エラーが発生しいていません");
-	} catch(e){
+	} catch (e) {
 		ok(false, e.code + ': ' + e.message);
 	}
 });
