@@ -7,7 +7,9 @@ src/main/webapp/res/lib/jquery
 
 jQuery
 URL:http://jquery.com/
-License:Dual licensed under the MIT and GPL licenses
+License:Dual licensed under the MIT and GPL licenses.
+	https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt
+	https://github.com/jquery/jquery/blob/master/GPL-LICENSE.txt
 Local Modifications: None.
 
 -----
@@ -16,7 +18,9 @@ src/main/webapp/res/lib/jqplugins/blockui
 
 jQuery blockUI plugin
 URL:http://jquery.malsup.com/block/
-License:Dual licensed under the MIT and GPL licenses
+License:Dual licensed under the MIT and GPL licenses.
+	http://www.opensource.org/licenses/mit-license.php
+	http://www.gnu.org/licenses/gpl.html
 Local Modifications: None.
 
 -----
@@ -26,6 +30,7 @@ src/main/webapp/src/ejs
 EJS(Embedded JavaScript)
 URL:http://embeddedjs.com
 License:MIT license
+	http://www.opensource.org/licenses/mit-license.php
 Local Modifications: add noescape flag.
 
 -----
@@ -35,6 +40,8 @@ src/main/webapp/test/lib/qunit
 Qunit
 URL:http://docs.jquery.com/QUnit
 License:Dual licensed under the MIT and GPL licenses
+	https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt
+	https://github.com/jquery/jquery/blob/master/GPL-LICENSE.txt
 Local Modifications: None.
 -----
 
