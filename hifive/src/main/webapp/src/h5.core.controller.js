@@ -2219,11 +2219,7 @@
 		}).fail(function(e) {
 			preinitDfd.reject(e);
 			if (controller.__controllerContext) {
-				if (controller.rootController) {
-					controller.rootController.dispose();
-				} else {
-					controller.dispose();
-				}
+				controller.rootController.dispose();
 			}
 		});
 
