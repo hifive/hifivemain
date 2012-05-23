@@ -93,7 +93,6 @@ test('db.sql() - クエリ文に文字列以外のものを指定するとエラ
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-		start();
 		return;
 	}
 
@@ -141,7 +140,6 @@ test('db.sql() - パラメータに配列とnull,undefined以外のものを指�
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-		start();
 		return;
 	}
 
@@ -297,8 +295,6 @@ asyncTest('db.sql()を実行後、同一トランザクションで、エラー�
 });
 
 
-
-
 module('H5Api - Web SQL Database - Insert', {
 	setup: setupFunc
 });
@@ -363,7 +359,6 @@ test('db.insert() - 引数がプレーンオブジェクトでない時にエラ
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-		start();
 		return;
 	}
 
@@ -863,7 +858,6 @@ test('db.update() - 引数にundefined,null,0,1,\'\',\'aa\',new String()を指�
 			if (!h5.api.sqldb.isSupported) {
 				expect(1);
 				ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-				start();
 				return;
 			}
 
@@ -1643,7 +1637,6 @@ test('db.select() - カラム名に不正な値を指定するとエラーが出
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-		start();
 		return;
 	}
 
@@ -2138,7 +2131,6 @@ test('db.transaction() - Insert/Update/Del/Select/Sqlクラスのインスタン
 			if (!h5.api.sqldb.isSupported) {
 				expect(1);
 				ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-				start();
 				return;
 			}
 
@@ -2562,7 +2554,6 @@ test('db.sql() - データベースのバージョンが異なる時にエラー
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-		start();
 		return;
 	}
 	try {
@@ -2604,7 +2595,6 @@ test('select()/insert()/update()/del()/sql() - テーブル名がString型以外
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-		start();
 		return;
 	}
 
@@ -2654,7 +2644,6 @@ test(
 			if (!h5.api.sqldb.isSupported) {
 				expect(1);
 				ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-				start();
 				return;
 			}
 
@@ -2710,46 +2699,3 @@ test(
 				same(errorCode, e.code, e.message);
 			}
 		});
-//
-// asyncTest('db.sql() - dbのバージョンが途中で変わった時にエラーが発生すること', 2, function() {
-// if (!h5.api.sqldb.isSupported) {
-// expect(1);
-// ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-// start();
-// return;
-// }
-// same(db._db.version, '1', 'dbのバージョン変更前');
-// db._db.changeVersion('1', '2', function(){
-// db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10,
-// 20000]).execute().progress(function(rs,tx) {
-// same(db._db.version, '2', 'dbのバージョン変更後');
-// ok(true, 'insert() エラーが発生しないこと');
-// db._db.changeVersion('2', '1',function(){
-// db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['def', 10, 20000],
-// tx).execute().done(function() {
-// ok(false, 'トランザクションの途中でversionが変わったのに、エラーが発生していません');
-// start();
-// }).fail(function(){
-// ok(true, e.code + ': ' + e.message);
-// start();
-//
-// }).always(function(){
-// same(db._db.version, '1', 'dbのバージョンを元に戻した');
-// });
-// start();
-// });
-// start();
-// }).fail(function(e) {
-// ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
-// // versionを1に戻せていなかった時はここで戻す
-// try{
-// db._db.changeVersion('2', '1',function(){
-// start();
-// });
-// } catch(error){
-// //
-// }
-// start();
-// });
-// });
-// });
