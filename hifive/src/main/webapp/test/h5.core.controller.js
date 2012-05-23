@@ -203,8 +203,6 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').click();
 
 			strictEqual($('#controllerResult').text(), 'ok', 'コントローラが要素にバインドされているか');
@@ -213,6 +211,7 @@ $(function() {
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 
 	});
@@ -466,7 +465,6 @@ $(function() {
 
 	asyncTest('テンプレートのロードが失敗する時のコントローラの動作', 5, function() {
 		var count = 0;
-		var errorCode = 7003;
 		var controller = {
 			__name: 'TestController',
 			__templates: ['./noExistPath'],
@@ -537,11 +535,9 @@ $(function() {
 					// (テンプレートファイルがないので、同期的にresolveする。)
 					// なので、即座に実行される。
 					same(++count, 2, '孫コントローラのpreinitPromiseのdoneハンドラが実行される。');
-					start();
 				}).fail(function(e) {
 					ok(false, 'テスト失敗。孫コントローラのpreinitPromiseのfailハンドラが実行されました。');
 					same(e.code, errorCode, e.message);
-					start();
 				});
 				same(++count, 3, '子コントローラのコンストラクタが実行される。');
 			},
@@ -570,11 +566,9 @@ $(function() {
 
 				this.childController.preinitPromise.done(function() {
 					ok(false, 'テスト失敗。子コントローラのpreinitPromiseのdoneハンドラが呼ばれた。');
-					start();
 				}).fail(function(e) {
 					same(++count, 5, '子コントローラのpreinitPromiseのfailハンドラが実行される。');
 					same(e.code, errorCode, e.message);
-					start();
 				});
 			},
 			__init: function(context) {
@@ -598,8 +592,8 @@ $(function() {
 							}
 						}
 						ok(!flag, str+'コントローラがdisposeされていること');
-						start();
 					}
+					start();
 				},0);
 			},
 			__unbind: function(context) {
@@ -664,7 +658,7 @@ $(function() {
 		});
 		testController.readyPromise.done(function(a) {
 			same(++count, 5, 'readyPromiseがresolve()されました。');
-			h5.core.createView = originalCreateView;
+			h5.core.view.createView = originalCreateView;
 			start();
 		});
 	});
@@ -720,12 +714,12 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.preinitPromise.done(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
-			h5.core.createView = originalCreateView;
+			h5.core.view.createView = originalCreateView;
 			start();
 		}).fail(function(e) {
 			same(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
 			same(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
-			h5.core.createView = originalCreateView;
+			h5.core.view.createView = originalCreateView;
 			start();
 		});
 		testController.initPromise.done(function(a) {
@@ -858,7 +852,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラ内のthis(AOPなし)', function() {
+	asyncTest('コントローラ内のthis(AOPなし)', 2, function() {
 
 		var controller = {
 			__name: 'TestController',
@@ -887,7 +881,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('コントローラ内のthis(AOPあり)', function() {
+	asyncTest('コントローラ内のthis(AOPあり)', 2, function() {
 		if (!h5.core._compileAspects) {
 			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
