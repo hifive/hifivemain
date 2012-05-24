@@ -97,41 +97,41 @@ test('db.sql() - クエリ文に文字列以外のものを指定するとエラ
 	}
 
 	var errorCode = 3007;
-	try{
+	try {
 		db.sql(undefined, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.sql(0, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.sql(1, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.sql(/a/, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.sql(true, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 
-	try{
+	try {
 		db.sql(new String('insert into ' + TABLE_NAME + ' values(?, ?, ?)'), [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 });
@@ -144,41 +144,45 @@ test('db.sql() - パラメータに配列とnull,undefined以外のものを指�
 	}
 
 	var errorCode = 3008;
-	try{
+	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(10, ?, 80.5)', "hoge");
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
-		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', {col1:10, col2:"hoge", col3:80.5});
+	try {
+		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', {
+			col1: 10,
+			col2: "hoge",
+			col3: 80.5
+		});
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', 0);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', 1);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', true);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 
-	try{
+	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', false);
 		ok(false, 'エラーが発生していません');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 });
@@ -363,52 +367,52 @@ test('db.insert() - 引数がプレーンオブジェクトでない時にエラ
 	}
 
 	var errorCode = 3006;
-	try{
+	try {
 		db.insert(TABLE_NAME, 0);
 		ok(false, 'エラーが発生していません。');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.insert(TABLE_NAME, 1);
 		ok(false, 'エラーが発生していません。');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.insert(TABLE_NAME, false);
 		ok(false, 'エラーが発生していません。');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.insert(TABLE_NAME, true);
 		ok(false, 'エラーが発生していません。');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.insert(TABLE_NAME, '');
 		ok(false, 'エラーが発生していません。');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.insert(TABLE_NAME, 'a');
 		ok(false, 'エラーが発生していません。');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.insert(TABLE_NAME, /a/);
 		ok(false, 'エラーが発生していません。');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
-	try{
+	try {
 		db.insert(TABLE_NAME, new String());
 		ok(false, 'エラーが発生していません。');
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 });
@@ -491,8 +495,6 @@ asyncTest('db.insert()を実行後、同一トランザクションで、db.inse
 		start();
 	});
 });
-
-
 
 asyncTest('db.insert()を実行後、同一トランザクションで、エラーのdb.insert()を実行', 13, function() {
 	if (!h5.api.sqldb.isSupported) {
@@ -864,44 +866,37 @@ test('db.update() - 引数にundefined,null,0,1,\'\',\'aa\',new String()を指�
 			var errorCode = 3006;
 			try {
 				db.update(TABLE_NAME);
-			}
-			catch (e) {
+			} catch (e) {
 				same(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, null);
-			}
-			catch (e) {
+			} catch (e) {
 				same(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, 0);
-			}
-			catch (e) {
+			} catch (e) {
 				same(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, 1);
-			}
-			catch (e) {
+			} catch (e) {
 				same(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, '');
-			}
-			catch (e) {
+			} catch (e) {
 				same(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, 'aa');
-			}
-			catch (e) {
+			} catch (e) {
 				same(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, new String());
-			}
-			catch (e) {
+			} catch (e) {
 				same(e.code, errorCode, e.message);
 			}
 		});
@@ -1094,7 +1089,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col2: 'hoge',
 			col3: 80.5
 		}).where();
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
@@ -1102,7 +1097,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col2: 'hoge',
 			col3: 80.5
 		}).where(null);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
@@ -1110,7 +1105,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col2: 'hoge',
 			col3: 80.5
 		}).where(10);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
@@ -1118,7 +1113,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col2: 'hoge',
 			col3: 80.5
 		}).where(true);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
@@ -1126,7 +1121,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col2: 'hoge',
 			col3: 80.5
 		}).where(new String("col1 >= 10"));
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 });
@@ -1449,27 +1444,27 @@ test('db.del()を実行 - 誤ったwhereを指定 2', 5, function() {
 	var errorCode = 3004;
 	try {
 		db.del(TABLE_NAME).where();
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.del(TABLE_NAME).where(null);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.del(TABLE_NAME).where(10);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.del(TABLE_NAME).where(true);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.del(TABLE_NAME).where(new String("col1 >= 10"));
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 });
@@ -1644,22 +1639,19 @@ test('db.select() - カラム名に不正な値を指定するとエラーが出
 	try {
 		db.select(TABLE_NAME);
 		ok(false, 'エラーが発生していません。');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, 'col1');
 		ok(false, 'エラーが発生していません。');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '');
 		ok(false, 'エラーが発生していません。');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 });
@@ -1860,27 +1852,27 @@ test('db.select()を実行 - 誤ったwhereを指定 2', 5, function() {
 	var errorCode = 3004;
 	try {
 		db.select(TABLE_NAME, '*').where();
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '*').where(null);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '*').where(10);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '*').where(true);
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '*').where(new String("col1 >= 10"));
-	} catch(e){
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 });
@@ -2140,8 +2132,7 @@ test('db.transaction() - Insert/Update/Del/Select/Sqlクラスのインスタン
 			for ( var i = 0; i < args.length; i++) {
 				try {
 					db.transaction().add(args[i]);
-				}
-				catch (e) {
+				} catch (e) {
 					same(e.code, errorCode, args[i] + ': ' + e.message);
 				}
 			}
@@ -2559,8 +2550,7 @@ test('db.sql() - データベースのバージョンが異なる時にエラー
 	try {
 		var db2 = h5.api.sqldb.open('hcdb', '0.9', 'hcdb', 2 * 1024 * 1024);
 		ok(false, "エラーが発生していません");
-	}
-	catch (e) {
+	} catch (e) {
 		ok(true, e.code + ": " + e.message);
 	}
 });
@@ -2580,8 +2570,7 @@ asyncTest('db.sql() - execute()を2回呼び出したときにエラーが発生
 			sql.execute();
 			ok(false, 'エラーが発生していません');
 			start();
-		}
-		catch (e) {
+		} catch (e) {
 			ok(true, e.code + ': ' + e.message);
 			start();
 		}
@@ -2602,8 +2591,7 @@ test('select()/insert()/update()/del()/sql() - テーブル名がString型以外
 	try {
 		db.select(null, '*');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(errorCode, e.code, e.message);
 	}
 	try {
@@ -2613,8 +2601,7 @@ test('select()/insert()/update()/del()/sql() - テーブル名がString型以外
 			col3: 'test'
 		});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(errorCode, e.code, e.message);
 	}
 	try {
@@ -2623,8 +2610,7 @@ test('select()/insert()/update()/del()/sql() - テーブル名がString型以外
 			col3: 80.5
 		});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(errorCode, e.code, e.message);
 	}
 	try {
@@ -2632,8 +2618,7 @@ test('select()/insert()/update()/del()/sql() - テーブル名がString型以外
 			table: TABLE_NAME
 		});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(errorCode, e.code, e.message);
 	}
 });
@@ -2651,8 +2636,7 @@ test(
 			try {
 				db.select(TABLE_NAME, '*', '');
 				ok(false, 'エラーが発生していません');
-			}
-			catch (e) {
+			} catch (e) {
 				same(errorCode, e.code, e.message);
 			}
 			try {
@@ -2662,8 +2646,7 @@ test(
 					col3: 'test'
 				}, 0);
 				ok(false, 'エラーが発生していません');
-			}
-			catch (e) {
+			} catch (e) {
 				same(errorCode, e.code, e.message);
 			}
 			try {
@@ -2672,30 +2655,91 @@ test(
 					col3: 80.5
 				}, db.transaction());
 				ok(false, 'エラーが発生していません');
-			}
-			catch (e) {
+			} catch (e) {
 				same(errorCode, e.code, e.message);
 			}
 			try {
 				del = db.del(TABLE_NAME, null);
 				ok(false, 'エラーが発生していません');
-			}
-			catch (e) {
+			} catch (e) {
 				same(errorCode, e.code, e.message);
 			}
 			try {
 				del = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10, 20000],
 						[]);
 				ok(false, 'エラーが発生していません');
-			}
-			catch (e) {
+			} catch (e) {
 				same(errorCode, e.code, e.message);
 			}
 			try {
 				del = db.transaction(NaN);
 				ok(false, 'エラーが発生していません');
-			}
-			catch (e) {
+			} catch (e) {
 				same(errorCode, e.code, e.message);
 			}
 		});
+
+asyncTest('db.sql() スタブを使ったテスト。各エラーが取得できること。', 32, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var origin = window.openDatabase;
+
+	var SQLError = function(code, message) {
+		this.UNKNOWN_ERR = 0;
+		this.DATABASE_ERR = 1;
+		this.VERSION_ERR = 2;
+		this.TOO_LARGE_ERR = 3;
+		this.QUOTA_ERR = 4;
+		this.SYNTAX_ERR = 5;
+		this.CONSTRAINT_ERR = 6;
+		this.TIMEOUT_ERR = 7;
+		this.code = code;
+		this.message = message;
+	};
+
+	// メッセージはネイティブだとユーザの言語で入る（とW3Cに書かれている)。
+	// ここでは空でない何かしらの文字列を入れている。
+	var errs = [new SQLError(0, '不明なエラー'), new SQLError(1, 'データベースエラー'),
+			new SQLError(2, 'バージョンエラー'), new SQLError(3, '取得結果のサイズが多すぎるエラー'),
+			new SQLError(4, '空き容量不足エラー'), new SQLError(5, '構文エラー'), new SQLError(6, '一意制約エラー'),
+			new SQLError(7, 'タイムアウトエラー')];
+
+
+	function loop(i) {
+		if (i === errs.length) {
+			window.openDatabase = origin;
+			start();
+			return;
+		}
+
+		window.openDatabase = function() {
+			return {
+				transaction: function(param1, param2, param3) {
+					param1({
+						executeSql: function() {}
+					});
+					param2(errs[i]);
+				}
+			};
+		};
+		var dbDummy = h5.api.sqldb.open('hcdb', '1', 'hcdb', 2 * 1024 * 1024);
+
+		var s = dbDummy.sql('insert into ' + TABLE_NAME + ' values(1,1,1)');
+		s.execute().fail(
+				function(e) {
+					ok(e.message.match(new RegExp('^トランザクション処理中にエラーが発生しました。.*' + e.detail.message + '$')),
+							'エラーメッセージが格納されていること。' + e.message);
+					strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+					ok(e.detail.code != null, 'エラーコード:' + e.detail.code
+							+ ' detailにはSQLErrorのメッセージが格納されていること。');
+					ok(e.detail.message != null, e.detail.message);
+					loop(++i);
+				});
+	}
+	loop(0);
+});

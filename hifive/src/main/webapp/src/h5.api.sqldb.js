@@ -119,11 +119,8 @@
 			return '取得結果の行が多すぎます。';
 		case e.UNKNOWN_ERR:
 			return 'トランザクション内で例外がスローされました。';
-		// データベースのバージョン違いのエラーは同期で発生するためコメントアウト
-//		case e.VERSION_ERR:
-//			return 'データベースのバージョンが一致しません。';
-//		default:
-//			return '';
+		case e.VERSION_ERR:
+			return 'データベースのバージョンが一致しません。';
 		}
 	}
 
