@@ -235,6 +235,7 @@
 		 * @memberOf JQMController
 		 */
 		'* h5controllerbound': function(context) {
+			context.event.stopPropagation();
 			var id = context.event.target.id;
 			if (!controllerInstanceMap[id]) {
 				controllerInstanceMap[id] = [];
