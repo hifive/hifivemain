@@ -339,12 +339,13 @@
 			this.root = root;
 			this.highlightPos = 1;
 			this.hide();
-			root.appendChild(this.baseDiv);
+			this.root.appendChild(this.baseDiv);
 			this._run();
 		},
 		hide: function() {
-
-			this.root.innerHTML = "";
+			// this.root.innerHTML = ''だと、IEにてthis.child.innerHTMLまで空になってしまう
+			// removeChildを使うとDOMがない時にエラーが出るため、jQueryのremove()を使っている
+			$(this.baseDiv).remove();
 
 			if (this._runId) {
 				clearTimeout(this._runId);
