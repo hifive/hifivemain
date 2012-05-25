@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,9 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
- *   version 1.0.0
+ *   version 0.0.1
+ *   build at 2012/05/25 14:50:26.436 (+0900)
+ *   (util,controller,view,ui,api.geo,api.sqldb,api.storage)
  */
 (function($){
 
@@ -70,6 +72,7 @@
 
 
 
+/* h5scopedglobals */
 
 // =========================================================================
 //
@@ -79,7 +82,11 @@
 // =============================
 // Misc Variables
 // =============================
-/** { (エラーコード): (フォーマット文字列) } なマップ */
+/**
+ *  { (エラーコード): (フォーマット文字列) } なマップ
+ *
+ *  @private
+ */
 var errorCodeToMessageMap = {};
 
 // =============================
@@ -89,6 +96,7 @@ var errorCodeToMessageMap = {};
 /**
  * フレームワークエラーを発生させます。
  *
+ * @private
  * @param code {Number} エラーコード
  * @param msgParam {Any[]} フォーマットパラメータ
  * @param detail {Any} 追加のデータ(内容はAPIごとに異なる)
@@ -112,6 +120,7 @@ function throwFwError(code, msgParam, detail) {
 /**
  * エラーコードとエラーメッセージのマップを追加します。
  *
+ * @private
  * @param mapObj {Object} { (エラーコード): (フォーマット文字列) }という構造のオブジェクト
  */
 function addFwErrorCodeMap(mapObj) {
@@ -125,6 +134,7 @@ function addFwErrorCodeMap(mapObj) {
 /**
  * 非同期APIのReject時の理由オブジェクトを作成します。
  *
+ * @private
  * @param code {Number} エラーコード
  * @param msgParam {Any[]} フォーマットパラメータ
  * @param detail {Any} 追加のデータ(内容はAPIごとに異なる)
@@ -148,11 +158,12 @@ function createRejectReason(code, msgParam, detail) {
 /**
  * 引数を配列化します。既に配列だった場合はそれをそのまま返し、 配列以外だった場合は配列にして返します。 ただし、nullまたはundefinedの場合はそのまま返します。
  *
+ * @private
  * @param value 値
  * @returns 配列化された値、ただし引数がnullまたはundefinedの場合はそのまま
  */
 function wrapInArray(value) {
-	if (!value) {
+	if (value == null) {
 		return value;
 	}
 	return $.isArray(value) ? value : [value];
@@ -161,9 +172,9 @@ function wrapInArray(value) {
 /**
  * 相対URLを絶対URLに変換します。
  *
+ * @private
  * @param {String} relativePath 相対URL
  * @returns {String} 絶対パス
- * @private
  */
 function toAbsoluteUrl(relativePath) {
 	var e = document.createElement('span');
@@ -178,6 +189,7 @@ function toAbsoluteUrl(relativePath) {
 /**
  * 文字列の正規表現記号をエスケープします。
  *
+ * @private
  * @param {String} str 文字列
  * @returns {String} エスケープ済文字列
  */
@@ -188,6 +200,7 @@ function escapeRegex(str) {
 /**
  * 引数がStringの場合、RegExpオブジェクトにして返します。 引数がRegExpオブジェクトの場合はそのまま返します。
  *
+ * @private
  * @param {String|RegExp} target 値
  * @returns {RegExp} オブジェクト
  */
@@ -266,6 +279,17 @@ function getRegex(target) {
 	var ERR_CODE_INVALID_VALUE = 11006;
 
 	/**
+	 * loadScript()に渡されたパスが不正(文字列以外、空文字、空白文字)である時に発生するエラー
+	 */
+	var ERR_CODE_INVALID_SCRIPT_PATH = 11007;
+
+
+	/**
+	 * loadScript()に渡されたオプションが不正(プレーンオブジェクト、null、undefined)である時に発生するエラー
+	 */
+	var ERR_CODE_INVALID_OPTION = 11008;
+
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
@@ -276,6 +300,8 @@ function getRegex(target) {
 	errMsgMap[ERR_CODE_DESERIALIZE] = '型情報の判定に失敗したため、デシリアライズできませんでした。';
 	errMsgMap[ERR_CODE_REFERENCE_CYCLE] = '循環参照が含まれています。';
 	errMsgMap[ERR_CODE_INVALID_VALUE] = '不正な値が含まれるため、デシリアライズできませんでした。';
+	errMsgMap[ERR_CODE_INVALID_SCRIPT_PATH] = 'スクリプトのパスが不正です。空文字以外の文字列、またはその配列を指定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -359,8 +385,6 @@ function getRegex(target) {
 			return 'a';
 		case 'object':
 			return 'o';
-		case 'function':
-			return 'f';
 		case 'null':
 			return 'l';
 		case TYPE_OF_UNDEFINED:
@@ -444,8 +468,17 @@ function getRegex(target) {
 	 */
 	var loadScript = function(path, opt) {
 		var resource = wrapInArray(path);
-		if (resource.length === 0) {
-			return;
+		if (!resource || resource.length === 0) {
+			throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
+		}
+		for(var i = 0, l = resource.length; i < l; i++){
+			var path = resource[i];
+			if(typeof path !== 'string' || !$.trim(path)){
+				throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
+			}
+		}
+		if(opt != null && !$.isPlainObject(opt)){
+			throwFwError(ERR_CODE_INVALID_OPTION, 'h5.u.loadScript()');
 		}
 		var force = opt && opt.force === true;
 		var srcLen = resource.length;
@@ -780,7 +813,7 @@ function getRegex(target) {
 					}
 				}
 				if (hash) {
-					ret += ((val.length) ? ',' : '') + '"@{'
+					ret += ((val.length) ? ',' : '') + '"' + typeToCode('objElem') + '{'
 							+ hash.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 					ret = ret.replace(/,$/, '');
 					ret += '}"';
@@ -842,6 +875,7 @@ function getRegex(target) {
 		var ret = RegExp.$2;
 
 		function func(val) {
+			var originValue = val;
 			/**
 			 * 型情報のコードを文字列に変換します。
 			 *
@@ -876,8 +910,6 @@ function getRegex(target) {
 					return 'array';
 				case 'o':
 					return 'object';
-				case 'f':
-					return 'function';
 				case 'l':
 					return 'null';
 				case 'u':
@@ -933,13 +965,12 @@ function getRegex(target) {
 						var obj = $.parseJSON(ret);
 
 						for ( var i = 0; i < obj.length; i++) {
-							if (obj[i].match(new RegExp('^' + typeToCode('undefElem')))) {
+							switch (codeToType(obj[i].substring(0, 1))) {
+							case 'undefElem':
 								delete obj[i];
-								continue;
-							}
-							if (obj[i].match(new RegExp('^' + typeToCode('objElem')))) {
-								var extendObj = func(obj[i].replace(new RegExp('^'
-										+ typeToCode('objElem')), typeToCode('object')));
+								break;
+							case 'objElem':
+								var extendObj = func(typeToCode('object') + obj[i].substring(1));
 								var tempObj = [];
 								for ( var i = 0, l = obj.length - 1; i < l; i++) {
 									tempObj[i] = obj[i];
@@ -948,7 +979,8 @@ function getRegex(target) {
 								for ( var key in extendObj) {
 									obj[key] = extendObj[key];
 								}
-							} else {
+								break;
+							default:
 								obj[i] = func(obj[i]);
 							}
 						}
@@ -972,7 +1004,6 @@ function getRegex(target) {
 						ret = new RegExp(regStr, flg);
 						break;
 					case 'null':
-					case 'function': // Function型はnullにする
 						ret = null;
 						break;
 					case TYPE_OF_UNDEFINED:
@@ -987,18 +1018,17 @@ function getRegex(target) {
 					case '-infinity':
 						ret = -Infinity;
 						break;
+					default:
+						throwFwError(ERR_CODE_INVALID_VALUE);
 					}
 				}
-			}
-
-			catch (e) {
+			} catch (e) {
 				// 型情報の判定(復元)に失敗した場合、値をそのまま返すので何もしない
 				// throwFwError(ERR_CODE_DESERIALIZE);
+				ret = originValue;
 			}
-
 			return ret;
-		}
-		;
+		};
 
 		return func(ret);
 	};
@@ -1166,12 +1196,12 @@ function getRegex(target) {
 	// =============================
 
 	/**
-	 * ログターゲットの指定が不正なときのエラーコード
+	 * ログターゲット(targets)の指定が不正なときのエラーコード
 	 */
-	var ERR_CODE_LOG_TARGET = 10000;
+	var ERR_CODE_LOG_TARGET_TYPE = 10000;
 
 	/**
-	 * out.categoryの指定が空文字のときのエラーコード
+	 * out.categoryのが指定されていないときのエラーコード
 	 */
 	var ERR_CODE_OUT_CATEGORY_IS_NONE = 10001;
 
@@ -1186,14 +1216,9 @@ function getRegex(target) {
 	var ERR_CODE_LEVEL_INVALID = 10003;
 
 	/**
-	 * ログターゲットが複数回指定されたときのエラーコード
-	 */
-	var ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES = 10003;
-
-	/**
 	 * 存在しないログターゲットを指定されたときのエラーコード
 	 */
-	var ERR_CODE_LOG_TARGET_IS_NONE = 10004;
+	var ERR_CODE_LOG_TARGETS_IS_NONE = 10004;
 
 	/**
 	 * カテゴリに文字列以外または空文字を指定したときのエラーコード
@@ -1201,16 +1226,39 @@ function getRegex(target) {
 	var ERR_CODE_CATEGORY_INVALID = 10005;
 
 	/**
+	 * ログターゲット(targets)が複数回指定されたときのエラーコード
+	 */
+	var ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES = 10007;
+
+	/**
+	 * ログターゲット(targets)に文字列以外または空文字を指定されたときのエラーコード
+	 */
+	var ERR_CODE_LOG_TARGETS_INVALID = 10008;
+
+	/**
+	 * ログターゲット(target)にオブジェクト以外を指定されたときのエラーコード
+	 */
+	var ERR_CODE_LOG_TARGET_INVALID = 10009;
+
+	/**
+	 * out.categoryが指定されていないときのエラーコード
+	 */
+	var ERR_CODE_OUT_CATEGORY_INVALID = 10010;
+
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_LOG_TARGET] = 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。';
-	errMsgMap[ERR_CODE_OUT_CATEGORY_IS_NONE] = 'out.categoryは必須項目です。';
+	errMsgMap[ERR_CODE_LOG_TARGET_TYPE] = 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。';
+	errMsgMap[ERR_CODE_OUT_CATEGORY_IS_NONE] = 'outの各要素について、categoryは必須項目です。。';
 	errMsgMap[ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES] = 'category"{0}"が複数回指定されています。';
-	errMsgMap[ERR_CODE_LEVEL_INVALID] = 'level"{0}"の指定は不正です。Number、もしくはtrace, info, debug, warn, errorを指定してください。';
-	errMsgMap[ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES] = 'ログターゲット"{0}"が複数回指定されています。';
-	errMsgMap[ERR_CODE_LOG_TARGET_IS_NONE] = '"{0}"という名前のログターゲットはありません。';
+	errMsgMap[ERR_CODE_LEVEL_INVALID] = 'level"{0}"の指定は不正です。Number、もしくはtrace, info, debug, warn, error, noneを指定してください。';
+	errMsgMap[ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES] = 'ログターゲット"{0}"が複数回指定されています。';
+	errMsgMap[ERR_CODE_LOG_TARGETS_IS_NONE] = '"{0}"という名前のログターゲットはありません。';
 	errMsgMap[ERR_CODE_CATEGORY_INVALID] = 'categoryは必須項目です。1文字以上の文字列を指定してください。';
+	errMsgMap[ERR_CODE_LOG_TARGETS_INVALID] = 'ログターゲット(targets)の指定は1文字以上の文字列、または配列で指定してください。';
+	errMsgMap[ERR_CODE_LOG_TARGET_INVALID] = 'ログターゲット(target)の指定はプレーンオブジェクトで指定してください。';
+	errMsgMap[ERR_CODE_OUT_CATEGORY_INVALID] = 'outの各要素についてcategoryは文字列で指定する必要があります。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -1323,12 +1371,6 @@ function getRegex(target) {
 			return 'DEBUG';
 		} else if (level === logLevel.TRACE) {
 			return 'TRACE';
-		} else if (level === logLevel.ALL) {
-			return 'ALL';
-		} else if (level === logLevel.NONE) {
-			return 'NONE';
-		} else {
-			return 'OTHER';
 		}
 	}
 
@@ -1576,17 +1618,15 @@ function getRegex(target) {
 		},
 
 		_output: function(func, args) {
-			if (typeof func.apply !== 'undefined') {
-				func.apply(console, args);
-				return;
+			var f = func;
+			if (!func.call) {
+				// IEでは、console.log/error/info/warnにcallがないので、その対応をする
+				f = function(arg) {
+					func(arg);
+				};
 			}
-			var msg = '';
-			if (!$.isArray(args)) {
-				msg += args.toString();
-			} else {
-				msg += args.join(' ');
-			}
-			func(msg);
+			f.call(console, args);
+			return;
 		}
 	};
 
@@ -1614,12 +1654,15 @@ function getRegex(target) {
 		/* del end */
 
 		function compileLogTarget(targets) {
+			if (!$.isPlainObject(targets)) {
+				throwFwError(ERR_CODE_LOG_TARGET_INVALID);
+			}
 			for ( var prop in targets) {
 				var obj = targets[prop];
 				var type = $.type(obj.type);
 				// 今は"remote"でもエラーとなる
-				if (type === 'object' || (type === 'string' && obj.type !== 'console')) {
-					throwFwError(ERR_CODE_LOG_TARGET);
+				if (type !== 'object' && obj.type !== 'console') {
+					throwFwError(ERR_CODE_LOG_TARGET_TYPE);
 				}
 				var compiledTarget = null;
 				if (obj.type === 'console') {
@@ -1644,43 +1687,54 @@ function getRegex(target) {
 		function compileOutput(_logTarget, out, _dOut) {
 			var isDefault = _dOut == null;
 			if (!isDefault) {
-				var category = $.trim(out.category);
-				if (category.length === 0 && !_dOut) {
-					throwFwError(ERR_CODE_OUT_CATEGORY_IS_NONE);
+				var category = out.category;
+				if (typeof category !== 'string' || $.trim(category).length === 0) {
+					throwFwError(ERR_CODE_OUT_CATEGORY_INVALID);
 				}
+				category = $.trim(category);
 				if ($.inArray(category, categoryCache) !== -1) {
 					throwFwError(ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES, out.category);
 				}
 				out.compiledCategory = getRegex(category);
+				categoryCache.push(category);
 			}
-			var level = $.trim(out.level);
-			if (level.length === 0) {
-				level = isDefault ? defaultOut.level : _dOut.level;
+			var compiledLevel;
+			if (out.level == null) {
+				compiledLevel = stringToLevel(isDefault ? defaultOut.level : _dOut.level);
+			} else {
+				compiledLevel = typeof out.level === 'string' ? stringToLevel($.trim(out.level))
+						: out.level;
 			}
-			var compiledLevel = $.type(level) === 'number' ? level : stringToLevel(level);
-			if (compiledLevel == null) {
-				throwFwError(ERR_CODE_LEVEL_INVALID, level);
+			if (typeof compiledLevel !== 'number') {
+				throwFwError(ERR_CODE_LEVEL_INVALID, out.level);
 			}
 			out.compiledLevel = compiledLevel;
 
 			var compiledTargets = [];
 			var targets = out.targets;
-			if (!isDefault && !targets) {
-				compiledTargets = _dOut.compiledTargets;
-			} else if (!isDefault || targets) {
+			if (!isDefault || targets != null) {
 				var targetNames = [];
+				// targetsの指定は文字列または配列またはnull,undefinedのみ
+				if (!(targets == null || $.isArray(targets) || (typeof targets === 'string' && $
+						.trim(targets).length))) {
+					throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
+				}
 				targets = wrapInArray(targets);
 				for ( var i = 0, len = targets.length; i < len; i++) {
+					if (!(targets[i] == null || (typeof targets[i] === 'string' && $
+							.trim(targets[i]).length))) {
+						throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
+					}
 					var targetName = targets[i];
 					if (!targetName) {
 						continue;
 					}
 					if ($.inArray(targetName, targetNames) !== -1) {
-						throwFwError(ERR_CODE_LOG_TARGET_NAMED_MULTIPLE_TIMES, targetName);
+						throwFwError(ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES, targetName);
 					}
 					var l = _logTarget[targetName];
 					if (!l) {
-						throwFwError(ERR_CODE_LOG_TARGET_IS_NONE, targetName);
+						throwFwError(ERR_CODE_LOG_TARGETS_IS_NONE, targetName);
 					}
 					targetNames.push(targetName);
 					compiledTargets.push(l.compiledTarget);
@@ -1733,16 +1787,17 @@ function getRegex(target) {
 	 * @name Log
 	 */
 	function Log(category) {
-		// 0は大丈夫なので category == null で判断する
-		if (category == null || $.trim(category).length === 0) {
+		// categoryの指定が文字列以外、または空文字、空白文字ならエラー。
+		if (typeof category !== 'string' || $.trim(category).length === 0) {
 			throwFwError(ERR_CODE_CATEGORY_INVALID);
 		}
 
 		/**
-		 * ログカテゴリ。
+		 * ログカテゴリ
 		 *
 		 * @memberOf Log
 		 * @type String
+		 * @name category
 		 */
 		this.category = $.trim(category);
 	}
@@ -1776,7 +1831,7 @@ function getRegex(target) {
 		 * @see h5.u.str.format
 		 * @memberOf Log
 		 * @function
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		error: function(var_args) {
 			this._log(logLevel.ERROR, arguments, this.error);
@@ -1792,7 +1847,7 @@ function getRegex(target) {
 		 * @see h5.u.str.format
 		 * @memberOf Log
 		 * @function
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		warn: function(var_args) {
 			this._log(logLevel.WARN, arguments, this.warn);
@@ -1808,7 +1863,7 @@ function getRegex(target) {
 		 * @see h5.u.str.format
 		 * @memberOf Log
 		 * @function
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		info: function(var_args) {
 			this._log(logLevel.INFO, arguments, this.info);
@@ -1824,7 +1879,7 @@ function getRegex(target) {
 		 * @see h5.u.str.format
 		 * @function
 		 * @memberOf Log
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		debug: function(var_args) {
 			this._log(logLevel.DEBUG, arguments, this.debug);
@@ -1840,7 +1895,7 @@ function getRegex(target) {
 		 * @see h5.u.str.format
 		 * @memberOf Log
 		 * @function
-		 * @param {Any} var_args
+		 * @param {Any} var_args コンソールに出力する内容
 		 */
 		trace: function(var_args) {
 			this._log(logLevel.TRACE, arguments, this.trace);
@@ -2009,7 +2064,7 @@ function getRegex(target) {
 	 * @see Log
 	 */
 	var createLogger = function(category) {
-		return new Log($.trim(category));
+		return new Log(category);
 	};
 
 	// =============================
@@ -2127,10 +2182,7 @@ function getRegex(target) {
 		aspects: null,
 
 		/**
-		 * ログの設定を行います。<br />
-		 * <ul>
-		 * <li></li>
-		 * </ul>
+		 * ログの設定を行います。
 		 *
 		 * @memberOf h5.settings
 		 * @type Object
@@ -2142,6 +2194,7 @@ function getRegex(target) {
 	/**
 	 * 実行時間の計測を行うインターセプタ。
 	 *
+	 * @function
 	 * @param {Function} invocation 次に実行する関数
 	 * @returns {Any} invocationの戻り値
 	 * @memberOf h5.core.interceptor
@@ -2161,6 +2214,7 @@ function getRegex(target) {
 	/**
 	 * イベントコンテキストに格納されているものをコンソールに出力するインターセプタ。
 	 *
+	 * @function
 	 * @param {Function} invocation 次に実行する関数
 	 * @returns {Any} invocationの戻り値
 	 * @memberOf h5.core.interceptor
@@ -2435,10 +2489,12 @@ function getRegex(target) {
 		};
 		var spaceSplit = function(target, ignoreCase) {
 			var v = getVersion(target, '[^;)]*', ignoreCase).split(' ');
+			if(v.length === 1) return '';
 			return v[v.length - 1];
 		};
 		var slashSplit = function(target, ignoreCase) {
 			var v = getVersion(target, '[^;) ]*', ignoreCase).split('/');
+			if(v.length === 1) return '';
 			return v[v.length - 1];
 		};
 		var getMainVersion = function(target) {
@@ -2466,6 +2522,11 @@ function getRegex(target) {
 			osVersion = getMainVersion(s);
 			osVersionFull = s;
 		}
+		// Operaのuaに'MSIE'が入っているとき用に、isIE && isOperaならisIEをfalseにする
+		if(isIE && isOpera){
+			isIE = false;
+		}
+
 		// デスクトップの場合。osVersion, osVersionFullはnull
 		/**
 		 * ブラウザのバージョンを表します。
@@ -2990,7 +3051,12 @@ function getRegex(target) {
 	// =========================================================================
 	/**
 	 * HTTP通信を行います。<br />
-	 * <a href="http://api.jquery.com/jQuery.ajax/">jQuery.ajax()</a>と使い方は同じです。
+	 * 基本的に使い方は、<a href="http://api.jquery.com/jQuery.ajax/">jQuery.ajax()</a>と同じです。<br />
+	 *
+	 * jQuery.ajax()と異なる点は共通のエラーハンドラが定義できることです。<br/>
+	 * h5.settings.commonFailHandlerに関数を設定し、h5.ajax()に引数として渡すオプションにerror/completeコールバックが設定されていない、<br />
+	 * もしくは戻り値のPromiseオブジェクトに対するfail/alwaysコールバックが設定されていない場合にエラーが発生すると <br />
+	 * h5.settings.commonFailHandlerに設定した関数が呼ばれます。
 	 *
 	 * @param {Any} var_args jQuery.ajaxに渡す引数
 	 * @returns {Promise} Promiseオブジェクト
@@ -3100,7 +3166,7 @@ function getRegex(target) {
 	var ERR_CODE_CONTROLLER_ALREADY_CREATED = 6008;
 	/** エラーコード: コントローラの参照が循環している */
 	var ERR_CODE_CONTROLLER_CIRCULAR_REF = 6009;
-	/** エラーコード: コントローラの参照が循環している */
+	/** エラーコード: コントローラ内のロジックの参照が循環している */
 	var ERR_CODE_LOGIC_CIRCULAR_REF = 6010;
 	/** エラーコード: コントローラの参照が循環している */
 	var ERR_CODE_CONTROLLER_SAME_PROPERTY = 6011;
@@ -3125,7 +3191,7 @@ function getRegex(target) {
 
 	// エラーコードマップ
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "window.", "navigator", "navigator."で始まるセレクタは指定できません。';
+	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'バインド対象となる要素を指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
@@ -3159,7 +3225,6 @@ function getRegex(target) {
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	/* del end */
 
-
 	// =========================================================================
 	//
 	// Cache
@@ -3184,7 +3249,6 @@ function getRegex(target) {
 	// =============================
 	// Functions
 	// =============================
-
 
 	/**
 	 * コントローラのexecuteListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
@@ -3470,13 +3534,7 @@ function getRegex(target) {
 	 * @param {Controller} controller コントローラ
 	 */
 	function bindDescendantHandlers(controller) {
-		var targets = [];
 		var execute = function(controllerInstance) {
-			if (controllerInstance.isReady || $.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-
 			var meta = controllerInstance.__meta;
 			var notBindControllers = {};
 			if (meta) {
@@ -3546,9 +3604,6 @@ function getRegex(target) {
 		default:
 			bindObj = getNormalBindObj(controller, selector, event, func);
 			break;
-		}
-		if (!bindObj) {
-			return;
 		}
 
 		if (!$.isArray(bindObj)) {
@@ -3620,13 +3675,7 @@ function getRegex(target) {
 	 * @param {Controller} controller コントローラ
 	 */
 	function unbindDescendantHandlers(controller) {
-		var targets = [];
 		var execute = function(controllerInstance) {
-			if ($.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-
 			var meta = controllerInstance.__meta;
 			var notBindControllers = {};
 			if (meta) {
@@ -3745,8 +3794,6 @@ function getRegex(target) {
 	 * @param {Booelan} isInitEvent __initイベントを実行するかどうか.
 	 */
 	function executeLifecycleEventChain(controller, isInitEvent) {
-		var targets = [];
-		var flagName = isInitEvent ? 'isInit' : 'isReady';
 		var funcName = isInitEvent ? '__init' : '__ready';
 
 		var leafDfd = getDeferred();
@@ -3756,15 +3803,6 @@ function getRegex(target) {
 		var leafPromise = leafDfd.promise();
 
 		var execInner = function(controllerInstance) {
-			if ($.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-			// 既にライフサイクルイベントを実行済みであれば何もしない
-			if (controllerInstance[flagName]) {
-				return;
-			}
-
 			var isLeafController = true;
 			for ( var prop in controllerInstance) {
 				// 子コントローラがあれば再帰的に処理
@@ -3776,11 +3814,6 @@ function getRegex(target) {
 
 			// 子孫コントローラの準備ができた時に実行させる関数を定義
 			var func = function() {
-				// 既にライフサイクルイベントを実行済みであれば何もしない
-				// 数行上で同じチェックを行っているが、非同期の場合ここでのチェックも必須となるはず
-				if (controllerInstance[flagName]) {
-					return;
-				}
 				var ret = null;
 				var lifecycleFunc = controllerInstance[funcName];
 				if (lifecycleFunc) {
@@ -3821,7 +3854,7 @@ function getRegex(target) {
 		// 子孫コントローラのinitPromiseオブジェクトを取得
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
 		// 自身のテンプレート用Promiseオブジェクトを取得
-		initPromises.push(controller.__controllerContext.templatePromise);
+		initPromises.push(controller.preinitPromise);
 		return initPromises;
 	}
 
@@ -3843,7 +3876,8 @@ function getRegex(target) {
 	 */
 	function createCallbackForInit(controller) {
 		return function() {
-			if (controller.isInit) {
+			// disopseされていたら何もしない。
+			if (isDisposing(controller)) {
 				return;
 			}
 			controller.isInit = true;
@@ -3867,7 +3901,8 @@ function getRegex(target) {
 	 */
 	function createCallbackForReady(controller) {
 		return function() {
-			if (controller.isReady) {
+			// disopseされていたら何もしない。
+			if (isDisposing(controller)) {
 				return;
 			}
 			controller.isReady = true;
@@ -3894,16 +3929,10 @@ function getRegex(target) {
 	 * @returns {Boolean} テンプレートに渡すセレクタとして正しいかどうか(true=正しい)
 	 */
 	function isCorrectTemplatePrefix(selector) {
-		if (startsWith('window')) {
+		if (startsWith(selector, 'window')) {
 			return false;
 		}
-		if (startsWith('window.')) {
-			return false;
-		}
-		if (startsWith('navigator')) {
-			return false;
-		}
-		if (startsWith('navigator.')) {
+		if (startsWith(selector, 'navigator')) {
 			return false;
 		}
 		return true;
@@ -3926,7 +3955,7 @@ function getRegex(target) {
 		var selector = $.trim(element);
 		if (isGlobalSelector(selector)) {
 			var s = trimGlobalSelectorBracket(selector);
-			if (isTemplate && isCorrectTemplatePrefix(s)) {
+			if (isTemplate && !isCorrectTemplatePrefix(s)) {
 				throwFwError(ERR_CODE_INVALID_TEMPLATE_SELECTOR);
 			}
 			$targets = $(getGlobalSelectorTarget(s));
@@ -4003,7 +4032,7 @@ function getRegex(target) {
 				var eventContext = createEventContext(controller, arguments);
 				var event = eventContext.event;
 				// Firefox
-				if (event.detail) {
+				if (event.originalEvent && event.originalEvent.detail) {
 					event.wheelDelta = -event.detail * 40;
 				}
 				func.call(controller, eventContext);
@@ -4035,7 +4064,10 @@ function getRegex(target) {
 			// イベントオブジェクトの正規化
 			return getNormalBindObj(controller, selector, eventName, function(context) {
 				var event = context.event;
-				var offset = $(event.currentTarget).offset();
+				var offset = $(event.currentTarget).offset() || {
+					left: 0,
+					top: 0
+				};
 				event.offsetX = event.pageX - offset.left;
 				event.offsetY = event.pageY - offset.top;
 				func.apply(this, arguments);
@@ -4052,8 +4084,6 @@ function getRegex(target) {
 			case 'touchend':
 			case 'mouseup':
 				return EVENT_NAME_H5_TRACKEND;
-			default:
-				return;
 			}
 		};
 
@@ -4104,34 +4134,30 @@ function getRegex(target) {
 						execute = true;
 					}
 					if (isStart && execute) {
-						if (!newEvent.isDefaultPrevented()) {
-							newEvent.h5DelegatingEvent.preventDefault();
-							var nt = newEvent.target;
+						newEvent.h5DelegatingEvent.preventDefault();
+						var nt = newEvent.target;
 
-							// 直前のh5track系イベントとの位置の差分を格納
-							var ox = newEvent.clientX;
-							var oy = newEvent.clientY;
-							var setupDPos = function(ev) {
-								var cx = ev.clientX;
-								var cy = ev.clientY;
-								ev.dx = cx - ox;
-								ev.dy = cy - oy;
-								ox = cx;
-								oy = cy;
-							};
-							var moveHandler = getHandler(move, nt, setupDPos);
-							var upHandler = getHandler(end, nt);
+						// 直前のh5track系イベントとの位置の差分を格納
+						var ox = newEvent.clientX;
+						var oy = newEvent.clientY;
+						var setupDPos = function(ev) {
+							var cx = ev.clientX;
+							var cy = ev.clientY;
+							ev.dx = cx - ox;
+							ev.dy = cy - oy;
+							ox = cx;
+							oy = cy;
+						};
+						var moveHandler = getHandler(move, nt, setupDPos);
+						var upHandler = getHandler(end, nt);
 
-							var $bindTarget = hasTouchEvent ? $(nt) : $document;
-							removeHandlers = function() {
-								$bindTarget.unbind(move, moveHandler);
-								$bindTarget.unbind(end, upHandler);
-							};
-							$bindTarget.bind(move, moveHandler);
-							$bindTarget.bind(end, upHandler);
-						} else {
-							execute = false;
-						}
+						var $bindTarget = hasTouchEvent ? $(nt) : $document;
+						removeHandlers = function() {
+							$bindTarget.unbind(move, moveHandler);
+							$bindTarget.unbind(end, upHandler);
+						};
+						$bindTarget.bind(move, moveHandler);
+						$bindTarget.bind(end, upHandler);
 					}
 					if (type === EVENT_NAME_H5_TRACKEND) {
 						removeHandlers();
@@ -4166,12 +4192,12 @@ function getRegex(target) {
 				: originalEvent.touches[0];
 		var pageX = touches.pageX;
 		var pageY = touches.pageY;
-		event.pageX, originalEvent.pageX = pageX;
-		event.pageY, originalEvent.pageY = pageY;
-		event.screenX, originalEvent.screenX = touches.screenX;
-		event.screenY, originalEvent.screenY = touches.screenY;
-		event.clientX, originalEvent.clientX = touches.clientX;
-		event.clientY, originalEvent.clientY = touches.clientY;
+		event.pageX = originalEvent.pageX = pageX;
+		event.pageY = originalEvent.pageY = pageY;
+		event.screenX = originalEvent.screenX = touches.screenX;
+		event.screenY = originalEvent.screenY = touches.screenY;
+		event.clientX = originalEvent.clientX = touches.clientX;
+		event.clientY = originalEvent.clientY = touches.clientY;
 
 		var target = event.target;
 		if (target.ownerSVGElement) {
@@ -4183,8 +4209,8 @@ function getRegex(target) {
 		if (offset) {
 			var offsetX = pageX - offset.left;
 			var offsetY = pageY - offset.top;
-			event.offsetX, originalEvent.offsetX = offsetX;
-			event.offsetY, originalEvent.offsetY = offsetY;
+			event.offsetX = originalEvent.offsetX = offsetX;
+			event.offsetY = originalEvent.offsetY = offsetY;
 		}
 	}
 	/**
@@ -4260,7 +4286,7 @@ function getRegex(target) {
 	}
 
 	/**
-	 * コントローラとｓの子孫コントローラのrootElementをセットします。
+	 * コントローラとその子孫コントローラのrootElementをセットします。
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -4293,7 +4319,7 @@ function getRegex(target) {
 	function getBindTarget(element, rootElement, controller) {
 		if (!element) {
 			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED);
-		} else if (!controller) {
+		} else if (!controller || !controller.__controllerContext) {
 			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
 		}
 		var $targets;
@@ -4464,6 +4490,15 @@ function getRegex(target) {
 			return getView(templateId, controller.parentController);
 		}
 		return h5.core.view;
+	}
+
+	/**
+	 * 指定されたコントローラがdispose済みかどうか、(非同期の場合はdispose中かどうか)を返します。
+	 *
+	 * @param {Controller} controller コントローラ
+	 */
+	function isDisposing(controller) {
+		return !controller.__controllerContext || controller.__controllerContext.isDisposing;
 	}
 
 	// =========================================================================
@@ -4900,6 +4935,11 @@ function getRegex(target) {
 		 * @memberOf Controller
 		 */
 		dispose: function() {
+			// disopseされていたら何もしない。
+			if (isDisposing(this)) {
+				return;
+			}
+			this.__controllerContext.isDisposing = 1;
 			var dfd = this.deferred();
 			this.unbind();
 			var that = this;
@@ -5096,7 +5136,10 @@ function getRegex(target) {
 		 * @private
 		 */
 		$(document).bind('triggerIndicator', function(event, opt) {
-			opt.indicator = callIndicator(this, opt).show();
+			if (opt.target == null) {
+				opt.target = document;
+			}
+			opt.indicator = callIndicator(this, opt);
 			event.stopPropagation();
 		});
 
@@ -5189,7 +5232,6 @@ function getRegex(target) {
 			});
 		}
 
-
 		// バインド対象となる要素のチェック
 		if (targetElement) {
 			var $bindTargetElement = $(targetElement);
@@ -5227,8 +5269,11 @@ function getRegex(target) {
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
 		var templatePromise = templateDfd.promise();
+		var preinitDfd = getDeferred();
+		var preinitPromise = preinitDfd.promise();
 
 		controller.__controllerContext.templatePromise = templatePromise;
+		controller.preinitPromise = preinitPromise;
 		controller.__controllerContext.initDfd = getDeferred();
 		controller.initPromise = controller.__controllerContext.initDfd.promise();
 		controller.__controllerContext.readyDfd = getDeferred();
@@ -5237,10 +5282,9 @@ function getRegex(target) {
 		if (templates && templates.length > 0) {
 			// テンプレートがあればロード
 			var viewLoad = function(count) {
-				// Viewモジュールがなければエラーログを出力する。
-				// この直後のloadでエラーになるはず。
+				// Viewモジュールがない場合、この直後のloadでエラーが発生してしまうためここでエラーを投げる。
 				if (!getByPath('h5.core.view')) {
-					fwLogger.error(errMsgMap[ERR_CODE_NOT_VIEW]);
+					throwFwError(ERR_CODE_NOT_VIEW);
 				}
 				var vp = controller.view.load(templates);
 				vp.then(function(result) {
@@ -5256,13 +5300,14 @@ function getRegex(target) {
 					// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に"0"になっていること、
 					// IEの場合は、コネクションが繋がらない時のコードが"12029"であること。
 					// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
-					// WinInet のエラーコード(12001 - 12156): http://support.microsoft.com/kb/193625/ja
+					// WinInet のエラーコード(12001 - 12156):
+					// http://support.microsoft.com/kb/193625/ja
 					var jqXhrStatus = result.detail.error.status;
 					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
-							|| jqXhrStatus !== 12029) {
+							&& jqXhrStatus !== 12029) {
 						result.controllerDefObject = controllerDefObj;
-						templateDfd.reject(result);
-						// controller.__controllerContext.initDfd.reject();
+						setTimeout(function(){
+						templateDfd.reject(result);},0);
 						return;
 					}
 					setTimeout(function() {
@@ -5275,6 +5320,16 @@ function getRegex(target) {
 			// テンプレートがない場合は、resolve()しておく
 			templateDfd.resolve();
 		}
+
+		// テンプレートプロミスのハンドラ登録
+		templatePromise.done(function() {
+			preinitDfd.resolve();
+		}).fail(function(e) {
+			preinitDfd.reject(e);
+			if (controller.__controllerContext) {
+				controller.rootController.dispose();
+			}
+		});
 
 		for ( var prop in clonedControllerDef) {
 			if (controllerPropertyMap[prop]) {
@@ -5316,12 +5371,6 @@ function getRegex(target) {
 				controller[prop] = weavedFunc;
 			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
 					&& !$.isFunction(clonedControllerDef[prop])) {
-				// 子コントローラ
-				var controllerTarget = clonedControllerDef[prop];
-				if (!controllerTarget) {
-					controller[prop] = controllerTarget;
-					continue;
-				}
 				var c = createAndBindController(null,
 						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
 							isInternal: true
@@ -5370,11 +5419,14 @@ function getRegex(target) {
 		if (controller.__construct) {
 			controller.__construct(createInitializationContext(controller));
 		}
-		// ルートコントローラではない場合、インスタンスを戻す
-		if (!controller.__controllerContext.isRoot) {
-			return controller;
+
+		if (isDisposing(controller)) {
+			return null;
 		}
-		setRootAndTriggerInit(controller);
+		// ルートコントローラなら、ルートをセット
+		if (controller.__controllerContext.isRoot) {
+			setRootAndTriggerInit(controller);
+		}
 		return controller;
 	}
 
@@ -5416,7 +5468,6 @@ function getRegex(target) {
 	// =============================
 	// Expose to window
 	// =============================
-
 
 	/**
 	 * Core MVCの名前空間
@@ -5529,9 +5580,9 @@ function getRegex(target) {
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_TEMPLATE_COMPILE] = 'テンプレートをコンパイルできませんでした。{0}';
 	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。{0}';
-	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません';
+	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。';
-	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルが指定されていません。';
+	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
 
@@ -5652,7 +5703,7 @@ function getRegex(target) {
 		getCacheInfo: function() {
 			var ret = [];
 			for ( var url in this.cache) {
-				var obj = cache[url];
+				var obj = this.cache[url];
 				var ids = [];
 				for ( var id in obj.templates) {
 					ids.push(id);
@@ -5734,7 +5785,8 @@ function getRegex(target) {
 				$templateElements.each(function() {
 					var templateId = $.trim(this.id);
 					var templateString = $.trim(this.innerHTML);
-					if (templateId == null) {// 空文字は許容する。
+					if (!templateId) {
+						// 空文字または空白ならエラー
 						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
 					}
 
@@ -5919,20 +5971,26 @@ function getRegex(target) {
 			// resourcePathsが文字列か配列でなかったらエラーを投げます。
 			switch ($.type(resourcePaths)) {
 			case 'string':
-				if (!resourcePaths) {
-					throwFwError(ERR_CODE_INVALID_FILE_PATH, []);
+				if (!$.trim(resourcePaths)) {
+					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
 				paths = [resourcePaths];
 				break;
 			case 'array':
 				paths = resourcePaths;
 				if (paths.length === 0) {
-					throwFwError(ERR_CODE_INVALID_FILE_PATH, []);
+					throwFwError(ERR_CODE_INVALID_FILE_PATH);
+				}
+				for(var i = 0, len = paths.length; i < len; i++){
+					if(typeof paths[i] !== 'string') {
+						throwFwError(ERR_CODE_INVALID_FILE_PATH);
+					} else if (!$.trim(paths[i])) {
+						throwFwError(ERR_CODE_INVALID_FILE_PATH);
+					}
 				}
 				break;
 			default:
-				throwFwError(ERR_CODE_INVALID_FILE_PATH, []);
-				break;
+				throwFwError(ERR_CODE_INVALID_FILE_PATH);
 			}
 
 			cacheManager.getTemplateByUrls(paths).done(function(result, datas) {
@@ -5983,7 +6041,7 @@ function getRegex(target) {
 				throwFwError(ERR_CODE_TEMPLATE_COMPILE, [ERR_REASON_TEMPLATE_IS_NOT_STRING], {
 					id: templateId
 				});
-			} else if (!templateId) {
+			} else if (typeof templateId !== 'string' || !$.trim(templateId)) {
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, []);
 			}
 
@@ -6052,7 +6110,7 @@ function getRegex(target) {
 				return null;
 			}
 
-			if (!templateId) {
+			if (typeof templateId !== 'string' || !$.trim(templateId)) {
 				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
@@ -6155,7 +6213,7 @@ function getRegex(target) {
 		 *
 		 * @memberOf View
 		 * @name clear
-		 * @param {String|String[]} テンプレートID
+		 * @param {String|String[]} templateIds テンプレートID
 		 * @function
 		 */
 		clear: function(templateIds) {
@@ -6170,11 +6228,28 @@ function getRegex(target) {
 				templateIdsArray = [templateIds];
 				break;
 			case 'array':
+				if(!templateIds.length){
+					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
+					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
+				}
 				templateIdsArray = templateIds;
 				break;
 			default:
-				templateIdsArray = [];
-				break;
+				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
+				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
+			}
+
+			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
+				var id = templateIdsArray[i];
+				if(typeof id !== 'string' || !$.trim(id)){
+					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
+					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
+				}
+				/* del begin */
+				if(!this.__cachedTemplates[id]){
+					fwLogger.warn('指定されたIDのテンプレートは登録されていません。"{0}"', id);
+				}
+				/* del end */
 			}
 
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
@@ -6466,10 +6541,6 @@ function getRegex(target) {
 			this._run();
 		},
 		hide: function() {
-			if (!this.root) {
-				return;
-			}
-
 			this.root.innerHTML = "";
 
 			if (this._runId) {
@@ -6510,9 +6581,6 @@ function getRegex(target) {
 			this.highlightPos = highlightPos;
 			var perMills = Math.floor(roundTime / lineCount);
 
-			if (perMills < 50) {
-				perMills = 50;
-			}
 			var that = this;
 
 			this._runId = setTimeout(function() {
@@ -6575,15 +6643,13 @@ function getRegex(target) {
 			this.root = root;
 			this.highlightPos = 1;
 			this.hide();
-			root.appendChild(this.baseDiv);
+			this.root.appendChild(this.baseDiv);
 			this._run();
 		},
 		hide: function() {
-			if (!this.root) {
-				return;
-			}
-
-			this.root.innerHTML = "";
+			// this.root.innerHTML = ''だと、IEにてthis.child.innerHTMLまで空になってしまう
+			// removeChildを使うとDOMがない時にエラーが出るため、jQueryのremove()を使っている
+			$(this.baseDiv).remove();
 
 			if (this._runId) {
 				clearTimeout(this._runId);
@@ -6629,9 +6695,6 @@ function getRegex(target) {
 			this.highlightPos = highlightPos;
 			var perMills = Math.floor(roundTime / lineCount);
 
-			if (perMills < 50) {
-				perMills = 50;
-			}
 			var that = this;
 
 			this._runId = setTimeout(function() {
@@ -6840,7 +6903,7 @@ function getRegex(target) {
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		percent: function(percent) {
-			if (typeof param === 'number' && percent >= 0 && percent <= 100) {
+			if (typeof percent === 'number' && percent >= 0 && percent <= 100) {
 				this.throbber.setPercent(percent);
 			}
 
@@ -7014,7 +7077,7 @@ function getRegex(target) {
 	 * @function
 	 * @memberOf h5.ui
 	 */
-	var scrollToTop = function(wait) {
+	var scrollToTop = function() {
 		var waitCount = 3;
 		var waitMillis = 500;
 		function fnScroll() {
@@ -7029,7 +7092,7 @@ function getRegex(target) {
 		}
 
 		window.scrollTo(0, 1);
-		if (window.scrollY !== 1) {
+		if ($(window).scrollTop !== 1) {
 			setTimeout(fnScroll, waitMillis);
 		}
 	};
@@ -7110,13 +7173,6 @@ function getRegex(target) {
 	var initParamMap = {};
 
 	/**
-	 * dispose対象から外すページの配列
-	 *
-	 * @type Object[]
-	 */
-	var excludeDispose = [];
-
-	/**
 	 * CSSファイルのマップ キー：ページID、値：CSSファイルパスのオブジェクト
 	 *
 	 * @type Object
@@ -7170,8 +7226,6 @@ function getRegex(target) {
 
 	/**
 	 * JQMコントローラ
-	 *
-	 * @name JQMController
 	 */
 	var jqmController = {
 		/**
@@ -7189,11 +7243,8 @@ function getRegex(target) {
 		 */
 		__ready: function(context) {
 			var that = this;
-			excludeDispose.push(this.rootElement);
 			$(':jqmData(role="page"), :jqmData(role="dialog")').each(function() {
-				excludeDispose.push(this);
 				that.loadScript(this.id);
-
 			});
 		},
 
@@ -7266,7 +7317,7 @@ function getRegex(target) {
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
-		'* h5controllerbound': function(context) {
+		'{rootElement} h5controllerbound': function(context) {
 			var id = context.event.target.id;
 			if (!controllerInstanceMap[id]) {
 				controllerInstanceMap[id] = [];
@@ -7330,10 +7381,6 @@ function getRegex(target) {
 		 * @memberOf JQMController
 		 */
 		addCSS: function(id) {
-			if (this.firstAddCSS) {
-				this.firstAddCSS = false;
-			}
-
 			var src = cssMap[id];
 
 			if (!src) {
@@ -7417,7 +7464,7 @@ function getRegex(target) {
 				if (jqmControllerInstance) {
 					fwLogger.info('JQMマネージャは既に初期化されています。');
 				} else {
-					jqmControllerInstance = h5.core.controller(document.body, jqmController);
+					jqmControllerInstance = h5.core.controller('body', jqmController);
 				}
 				bindToActivePage();
 			});
@@ -7799,6 +7846,8 @@ function getRegex(target) {
 	var ERR_CODE_INVALID_TRANSACTION_TARGET = 3009;
 	/** エラーコード: トランザクション処理失敗 */
 	var ERR_CODE_TRANSACTION_PROCESSING_FAILURE = 3010;
+	/** エラーコード: where句に指定されたカラム名が不正 */
+	var ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE = 3011;
 
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_RETRY_SQL] = '同一オブジェクトによるSQLの再実行はできません。';
@@ -7812,6 +7861,7 @@ function getRegex(target) {
 	errMsgMap[ERR_CODE_TYPE_NOT_ARRAY] = '{0}: パラメータは配列で指定して下さい。';
 	errMsgMap[ERR_CODE_INVALID_TRANSACTION_TARGET] = '指定されたオブジェクトはトランザクションに追加できません。Insert/Update/Del/Select/Sqlクラスのインスタンスを指定して下さい。';
 	errMsgMap[ERR_CODE_TRANSACTION_PROCESSING_FAILURE] = 'トランザクション処理中にエラーが発生しました。{0} {1}';
+	errMsgMap[ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE] = 'where句に指定されたカラム名が空白または空文字です。';
 	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
@@ -7858,8 +7908,6 @@ function getRegex(target) {
 			return 'トランザクション内で例外がスローされました。';
 		case e.VERSION_ERR:
 			return 'データベースのバージョンが一致しません。';
-		default:
-			return '';
 		}
 	}
 
@@ -7904,7 +7952,7 @@ function getRegex(target) {
 	}
 
 	/**
-	 * DatabaseWrapper.select()/insert()/update()/del()/sql() のパラメータチェック
+	 * DatabaseWrapper.select()/insert()/update()/del() のパラメータチェック
 	 * <p>
 	 * tableNameが未指定またはString型以外の型の値が指定された場合、例外をスローします。
 	 */
@@ -7920,7 +7968,7 @@ function getRegex(target) {
 	 * txwがTransactionWrapper型ではない場合、例外をスローします。
 	 */
 	function checkTransaction(funcName, txw) {
-		if (txw && !(txw instanceof SQLTransactionWrapper)) {
+		if (txw !== undefined && !(txw instanceof SQLTransactionWrapper)) {
 			throw new throwFwError(ERR_CODE_INVALID_TRANSACTION_TYPE, funcName);
 		}
 	}
@@ -7931,11 +7979,11 @@ function getRegex(target) {
 	function createConditionAndParameters(whereObj, conditions, parameters) {
 		if ($.isPlainObject(whereObj)) {
 			for ( var prop in whereObj) {
-				var params = prop.replace(/ +/g, ' ').split(' ');
+				var params = $.trim(prop).replace(/ +/g, ' ').split(' ');
 				var param = [];
 
-				if (params.length === 0 || params[0] === "") {
-					continue;
+				if (params[0] === "") {
+					throw new throwFwError(ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE);
 				} else if (params.length === 1) {
 					param.push(params[0]);
 					param.push('=');
@@ -7994,34 +8042,37 @@ function getRegex(target) {
 		/**
 		 * トランザクション処理中か判定します。
 		 *
+		 * @private
 		 * @memberOf SQLTransactionWrapper
 		 * @function
 		 * @returns {Boolean} true:実行中 / false: 未実行
 		 */
-		runTransaction: function() {
+		_runTransaction: function() {
 			return this._tx != null;
 		},
 		/**
 		 * トランザクション処理中か判定し、未処理の場合はトランザクションの開始を、処理中の場合はSQLの実行を行います。
 		 *
+		 * @private
 		 * @memberOf SQLTransactionWrapper
 		 * @function
 		 * @param {String|Function} param1 パラメータ1
 		 * @param {String|Function} param2 パラメータ2
 		 * @param {Function} param3 パラメータ3
 		 */
-		execute: function(param1, param2, param3) {
-			this.runTransaction() ? this._tx.executeSql(param1, param2, param3) : this._db
+		_execute: function(param1, param2, param3) {
+			this._runTransaction() ? this._tx.executeSql(param1, param2, param3) : this._db
 					.transaction(param1, param2, param3);
 		},
 		/**
 		 * トランザクション内で実行中のDeferredオブジェクトを管理対象として追加します。
 		 *
+		 * @private
 		 * @memberOf SQLTransactionWrapper
 		 * @function
 		 * @param {Deferred} df Deferredオブジェクト
 		 */
-		addTask: function(df) {
+		_addTask: function(df) {
 			this._tasks.push({
 				deferred: df,
 				result: null
@@ -8030,11 +8081,12 @@ function getRegex(target) {
 		/**
 		 * SQLの実行結果を設定します。
 		 *
+		 * @private
 		 * @memberOf SQLTransactionWrapper
 		 * @function
 		 * @param {Any} resul SQL実行結果
 		 */
-		setResult: function(result) {
+		_setResult: function(result) {
 			this._tasks[this._tasks.length - 1].result = result;
 		}
 	});
@@ -8219,26 +8271,26 @@ function getRegex(target) {
 			var executed = this._executed;
 			var resultSet = null;
 
-			if (txw.runTransaction()) {
-				txw.addTask(df);
+			if (txw._runTransaction()) {
+				txw._addTask(df);
 				build();
 				checkSqlExecuted(executed);
 				fwLogger.debug('Select: ' + this._statement);
-				txw.execute(this._statement, this._params, function(innerTx, rs) {
+				txw._execute(this._statement, this._params, function(innerTx, rs) {
 					resultSet = rs.rows;
-					txw.setResult(resultSet);
+					txw._setResult(resultSet);
 					df.notify(resultSet, txw);
 				});
 			} else {
-				txw.execute(function(tx) {
-					txw.addTask(df);
+				txw._execute(function(tx) {
+					txw._addTask(df);
 					build();
 					checkSqlExecuted(executed);
 					txw._tx = tx;
 					fwLogger.debug('Select: ' + that._statement);
 					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
 						resultSet = rs.rows;
-						txw.setResult(resultSet);
+						txw._setResult(resultSet);
 						df.notify(resultSet, txw);
 					});
 				}, function(e) {
@@ -8320,7 +8372,7 @@ function getRegex(target) {
 						for ( var i = 0, len = valueObjs.length; i < len; i++) {
 							var valueObj = valueObjs[i];
 
-							if (!valueObj) {
+							if (valueObj == null) {
 								that._statement.push(h5.u.str.format(INSERT_SQL_EMPTY_VALUES,
 										that._tableName));
 								that._params.push([]);
@@ -8330,9 +8382,6 @@ function getRegex(target) {
 								var params = [];
 
 								for ( var prop in valueObj) {
-									if (!valueObj.hasOwnProperty(prop)) {
-										continue;
-									}
 									values.push('?');
 									columns.push(prop);
 									params.push(valueObj[prop]);
@@ -8354,13 +8403,13 @@ function getRegex(target) {
 					function executeSql() {
 						if (that._statement.length === index) {
 							resultSet = insertRowIds;
-							txw.setResult(resultSet);
+							txw._setResult(resultSet);
 							df.notify(resultSet, txw);
 							return;
 						}
 
 						fwLogger.debug('Insert: ' + that._statement[index]);
-						txw.execute(that._statement[index], that._params[index], function(innerTx,
+						txw._execute(that._statement[index], that._params[index], function(innerTx,
 								rs) {
 							index++;
 							insertRowIds.push(rs.insertId);
@@ -8368,14 +8417,14 @@ function getRegex(target) {
 						});
 					}
 
-					if (txw.runTransaction()) {
-						txw.addTask(df);
+					if (txw._runTransaction()) {
+						txw._addTask(df);
 						build();
 						checkSqlExecuted(executed);
 						executeSql();
 					} else {
-						txw.execute(function(tx) {
-							txw.addTask(df);
+						txw._execute(function(tx) {
+							txw._addTask(df);
 							build();
 							checkSqlExecuted(executed);
 							txw._tx = tx;
@@ -8516,9 +8565,6 @@ function getRegex(target) {
 				var columns = [];
 
 				for ( var prop in valueObj) {
-					if (!valueObj.hasOwnProperty(prop)) {
-						continue;
-					}
 					columns.push(prop + ' = ?');
 					that._params.push(valueObj[prop]);
 				}
@@ -8539,26 +8585,26 @@ function getRegex(target) {
 			var executed = this._executed;
 			var resultSet = null;
 
-			if (txw.runTransaction()) {
-				txw.addTask(df);
+			if (txw._runTransaction()) {
+				txw._addTask(df);
 				build();
 				checkSqlExecuted(executed);
 				fwLogger.debug('Update: ' + this._statement);
-				txw.execute(this._statement, this._params, function(innerTx, rs) {
+				txw._execute(this._statement, this._params, function(innerTx, rs) {
 					resultSet = rs.rowsAffected;
-					txw.setResult(resultSet);
+					txw._setResult(resultSet);
 					df.notify(resultSet, txw);
 				});
 			} else {
-				txw.execute(function(tx) {
-					txw.addTask(df);
+				txw._execute(function(tx) {
+					txw._addTask(df);
 					build();
 					checkSqlExecuted(executed);
 					txw._tx = tx;
 					fwLogger.debug('Update: ' + that._statement);
 					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
 						resultSet = rs.rowsAffected;
-						txw.setResult(resultSet);
+						txw._setResult(resultSet);
 						df.notify(resultSet, txw);
 					});
 				}, function(e) {
@@ -8701,26 +8747,26 @@ function getRegex(target) {
 			var executed = this._executed;
 			var resultSet = null;
 
-			if (txw.runTransaction()) {
-				txw.addTask(df);
+			if (txw._runTransaction()) {
+				txw._addTask(df);
 				build();
 				checkSqlExecuted(executed);
 				fwLogger.debug('Del: ' + this._statement);
-				txw.execute(this._statement, this._params, function(innerTx, rs) {
+				txw._execute(this._statement, this._params, function(innerTx, rs) {
 					resultSet = rs.rowsAffected;
-					txw.setResult(resultSet);
+					txw._setResult(resultSet);
 					df.notify(resultSet, txw);
 				});
 			} else {
-				txw.execute(function(tx) {
-					txw.addTask(df);
+				txw._execute(function(tx) {
+					txw._addTask(df);
 					build();
 					checkSqlExecuted(executed);
 					txw._tx = tx;
 					fwLogger.debug('Del: ' + that._statement);
 					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
 						resultSet = rs.rowsAffected;
-						txw.setResult(resultSet);
+						txw._setResult(resultSet);
 						df.notify(resultSet, txw);
 					});
 				}, function(e) {
@@ -8838,24 +8884,24 @@ function getRegex(target) {
 			var params = this._params;
 			var resultSet = null;
 
-			if (txw.runTransaction()) {
-				txw.addTask(df);
+			if (txw._runTransaction()) {
+				txw._addTask(df);
 				checkSqlExecuted(executed);
 				fwLogger.debug('Sql: ' + statement);
-				txw.execute(statement, params, function(tx, rs) {
+				txw._execute(statement, params, function(tx, rs) {
 					resultSet = rs;
-					txw.setResult(resultSet);
+					txw._setResult(resultSet);
 					df.notify(resultSet, txw);
 				});
 			} else {
-				txw.execute(function(tx) {
-					txw.addTask(df);
+				txw._execute(function(tx) {
+					txw._addTask(df);
 					checkSqlExecuted(executed);
 					txw._tx = tx;
 					fwLogger.debug('Sql: ' + statement);
 					tx.executeSql(statement, params, function(innerTx, rs) {
 						resultSet = rs;
-						txw.setResult(resultSet);
+						txw._setResult(resultSet);
 						df.notify(resultSet, txw);
 					});
 				}, function(e) {
@@ -8977,7 +9023,7 @@ function getRegex(target) {
 						results.push(result[0].result);
 					}
 
-					txw.setResult(results);
+					txw._setResult(results);
 					df.notify(results, txw);
 					return;
 				}
@@ -8988,14 +9034,14 @@ function getRegex(target) {
 				});
 			}
 
-			if (txw.runTransaction()) {
-				txw.addTask(df);
+			if (txw._runTransaction()) {
+				txw._addTask(df);
 				checkSqlExecuted(executed);
 				tasks = createTransactionTask(txw._tx);
 				executeSql();
 			} else {
-				txw.execute(function(tx) {
-					txw.addTask(df);
+				txw._execute(function(tx) {
+					txw._addTask(df);
 					checkSqlExecuted(executed);
 					tasks = createTransactionTask(tx);
 					txw._tx = tx;
@@ -9108,7 +9154,7 @@ function getRegex(target) {
 			checkTableName('insert', tableName);
 			checkTransaction('insert', txw);
 
-			if (values && !$.isArray(values) && !$.isPlainObject(values)) {
+			if (values != null && !$.isArray(values) && !$.isPlainObject(values)) {
 				throw new throwFwError(ERR_CODE_INVALID_VALUES, 'insert');
 			}
 
@@ -9189,7 +9235,7 @@ function getRegex(target) {
 				throw new throwFwError(ERR_CODE_INVALID_STATEMENT, 'sql');
 			}
 
-			if (parameters && !$.isArray(parameters)) {
+			if (parameters != null && !$.isArray(parameters)) {
 				throw new throwFwError(ERR_CODE_TYPE_NOT_ARRAY, 'sql');
 			}
 
@@ -9463,14 +9509,9 @@ function getRegex(target) {
 
 })();
 
-/*
- * Copyright (C) 2012 NS Solutions Corporation, All rights reserved.
- */
+/* del begin */
 /* ------ h5.dev.api.geo ------ */
 (function() {
-	if (!h5) {
-		return;
-	}
 
 	// =========================================================================
 	//
@@ -9614,21 +9655,6 @@ function getRegex(target) {
 	// originalAPI に 元のgetCurrentPositionとwatchPositionをとっておく
 	originalAPI.getCurrentPosition = h5.api.geo.getCurrentPosition;
 	originalAPI.watchPosition = h5.api.geo.watchPosition;
-	/**
-	 * デバッグ用 PositionErrorクラス 以下のAPIが失敗時に返すオブジェクトと同様の構造を持つ。
-	 * <ul>
-	 * <li>navigator.geolocation.getWachPosition</li>
-	 * <li>navigator.geolocation.currentPosition</li>
-	 * </ul>
-	 */
-	function DummyPositionError() {
-		this.PERMISSION_DENIED = 1;
-		this.POSITION_UNAVALABLE = 2;
-		this.TIMEOUT = 3;
-	}
-
-	DummyPositionError.prototype.code = 1;
-	DummyPositionError.prototype.message = '';
 
 	function H5GeolocationSupport() {
 	// 空コンストラクタ
@@ -9797,7 +9823,7 @@ function getRegex(target) {
 		 * </pre>
 		 *
 		 * <p>
-		 * <a href="../sandbox/geolocation/index.html">座標データ生成ツール</a>を使うと地図から緯度と経度を求められます。
+		 * <a href="http://www.htmlhifive.com/ja/recipe/geolocation/index.html">座標データ生成ツール</a>を使うと地図から緯度と経度を求められます。
 		 * </p>
 		 *
 		 * @memberOf h5.dev.api.geo
@@ -9834,22 +9860,15 @@ function getRegex(target) {
 			return dfd.promise();
 		}
 
-		var dummyPositions = h5.dev.api.geo.dummyPositions;
-		if (!dummyPositions || dummyPositions.length === 0) {
+		var positions = h5.dev.api.geo.dummyPositions;
+		if (!positions || positions.length === 0) {
 			return originalAPI.getCurrentPosition(option);
 		}
 		// dummyPositionsが配列でない場合も対応する
-		var dummyPositions = $.isArray(h5.dev.api.geo.dummyPositions) ? h5.dev.api.geo.dummyPositions
-				: [h5.dev.api.geo.dummyPositions];
+		var positionsAry = $.isArray(positions) ? positions: [positions];
 
 		setTimeout(function() {
-			if (dummyPositions.length > 0) {
-				dfd.resolve(createPosition(dummyPositions[0]));
-			} else {
-				dfd.reject({
-					code: new DummyPositionError().POSITION_UNAVALABLE
-				});
-			}
+			dfd.resolve(createPosition(positionsAry[0]));
 		}, 0);
 		return dfd.promise();
 	}
@@ -9899,12 +9918,7 @@ function getRegex(target) {
 		WatchPositionPromise.prototype = {
 			// unwatchを呼び出したdeferredを_dfds[]から削除
 			unwatch: function() {
-				if (!_dfds[watchID]) {
-					// deferredオブジェクトが_dfdsに登録されていないのにunwatchが呼ばれる場合は
-					// reject()済みであるため、resolve()する必要がない。
-					return;
-				}
-				_dfds[watchID].resolve();
+				_dfds[watchID] && _dfds[watchID].resolve();
 				delete _dfds[watchID];
 				setTimeout(function() {
 					// deferredオブジェクトがすべてなくなったらタイマーの停止
@@ -9919,27 +9933,21 @@ function getRegex(target) {
 		};
 
 		setTimeout(function() {
-			if (dummyPos.length > 0) {
-				_dfds[watchID] = dfd;
-				if (_timerID === null) {
-					var intervalFunc = function() {
-						var pos;
-						if (_watchPointer >= dummyPos.length) {
-							pos = dummyPos[dummyPos.length - 1];
-						} else {
-							pos = dummyPos[_watchPointer++];
-						}
-						for ( var id in _dfds) {
-							_dfds[id].notify(createPosition(pos));
-						}
-					};
-					intervalFunc();
-					_timerID = setInterval(intervalFunc, h5.dev.api.geo.watchIntervalTime);
-				}
-			} else {
-				dfd.reject({
-					code: new DummyPositionError().POSITION_UNAVALABLE
-				});
+			_dfds[watchID] = dfd;
+			if (_timerID === null) {
+				var intervalFunc = function() {
+					var pos;
+					if (_watchPointer >= dummyPos.length) {
+						pos = dummyPos[dummyPos.length - 1];
+					} else {
+						pos = dummyPos[_watchPointer++];
+					}
+					for ( var id in _dfds) {
+						_dfds[id].notify(createPosition(pos));
+					}
+				};
+				intervalFunc();
+				_timerID = setInterval(intervalFunc, h5.dev.api.geo.watchIntervalTime);
 			}
 		}, 0);
 		return dfd.promise(new WatchPositionPromise(watchID));

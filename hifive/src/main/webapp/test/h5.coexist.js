@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -34,7 +34,7 @@ $(function() {
 	});
 
 	test('バージョンが同じものを2重読み込みする。', function() {
-		h5.u.loadScript('../release/h5.dev.js', {
+		h5.u.loadScript('../archives/current/h5.js', {
 			force: true
 		});
 
@@ -44,9 +44,9 @@ $(function() {
 
 	});
 
-	test('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.dev.jsを読み込む。', function() {
+	test('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.jsを読み込む。', function() {
 		h5 = {};
-		originalH5.u.loadScript('../release/h5.dev.js', {
+		originalH5.u.loadScript('../archives/current/h5.js', {
 			force: true
 		});
 		var savedH5 = h5.coexist();
@@ -57,15 +57,15 @@ $(function() {
 	module('バージョンが違うh5を2重読み込み', {
 		setup: function() {
 			// vesion0.0.1のjsファイルをインクルードする
-			h5.u.loadScript('./h5version0.0.1/h5.dev.js', {
+			h5.u.loadScript('./h5version0.0.1/h5.js', {
 				force: true
 			});
 		},
 		teardown: function() {
 			h5 = originalH5;
 			// コントローラを全部アンバインド
-			for ( var i = 0, l = h5.core.controllerManager.controllers.length; i < l; i++) {
-				h5.core.controllerManager.controllers[i].unbind();
+			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0; ) {
+				h5.core.controllerManager.controllers[l].unbind();
 			}
 		}
 	});
