@@ -60,12 +60,18 @@ $(function() {
 			h5.u.loadScript('./h5version0.0.1/h5.js', {
 				force: true
 			});
+			// コントローラを全部アンバインド
+			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0; ) {
+				var controller = h5.core.controllerManager.controllers[l];
+				controller.unbind || controller.unbind();
+			}
 		},
 		teardown: function() {
 			h5 = originalH5;
 			// コントローラを全部アンバインド
 			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0; ) {
-				h5.core.controllerManager.controllers[l].unbind();
+				var controller = h5.core.controllerManager.controllers[l];
+				controller.unbind || controller.unbind();
 			}
 		}
 	});
