@@ -69,9 +69,9 @@
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_TEMPLATE_COMPILE] = 'テンプレートをコンパイルできませんでした。{0}';
 	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。{0}';
-	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません';
+	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。';
-	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルが指定されていません。';
+	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
 
@@ -192,7 +192,7 @@
 		getCacheInfo: function() {
 			var ret = [];
 			for ( var url in this.cache) {
-				var obj = cache[url];
+				var obj = this.cache[url];
 				var ids = [];
 				for ( var id in obj.templates) {
 					ids.push(id);
@@ -274,7 +274,8 @@
 				$templateElements.each(function() {
 					var templateId = $.trim(this.id);
 					var templateString = $.trim(this.innerHTML);
-					if (templateId == null) {// 空文字は許容する。
+					if (!templateId) {
+						// 空文字または空白ならエラー
 						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
 					}
 
@@ -459,20 +460,26 @@
 			// resourcePathsが文字列か配列でなかったらエラーを投げます。
 			switch ($.type(resourcePaths)) {
 			case 'string':
-				if (!resourcePaths) {
-					throwFwError(ERR_CODE_INVALID_FILE_PATH, []);
+				if (!$.trim(resourcePaths)) {
+					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
 				paths = [resourcePaths];
 				break;
 			case 'array':
 				paths = resourcePaths;
 				if (paths.length === 0) {
-					throwFwError(ERR_CODE_INVALID_FILE_PATH, []);
+					throwFwError(ERR_CODE_INVALID_FILE_PATH);
+				}
+				for(var i = 0, len = paths.length; i < len; i++){
+					if(typeof paths[i] !== 'string') {
+						throwFwError(ERR_CODE_INVALID_FILE_PATH);
+					} else if (!$.trim(paths[i])) {
+						throwFwError(ERR_CODE_INVALID_FILE_PATH);
+					}
 				}
 				break;
 			default:
-				throwFwError(ERR_CODE_INVALID_FILE_PATH, []);
-				break;
+				throwFwError(ERR_CODE_INVALID_FILE_PATH);
 			}
 
 			cacheManager.getTemplateByUrls(paths).done(function(result, datas) {
@@ -523,7 +530,7 @@
 				throwFwError(ERR_CODE_TEMPLATE_COMPILE, [ERR_REASON_TEMPLATE_IS_NOT_STRING], {
 					id: templateId
 				});
-			} else if (!templateId) {
+			} else if (typeof templateId !== 'string' || !$.trim(templateId)) {
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, []);
 			}
 
@@ -592,7 +599,7 @@
 				return null;
 			}
 
-			if (!templateId) {
+			if (typeof templateId !== 'string' || !$.trim(templateId)) {
 				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
@@ -710,11 +717,28 @@
 				templateIdsArray = [templateIds];
 				break;
 			case 'array':
+				if(!templateIds.length){
+					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
+					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
+				}
 				templateIdsArray = templateIds;
 				break;
 			default:
-				templateIdsArray = [];
-				break;
+				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
+				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
+			}
+
+			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
+				var id = templateIdsArray[i];
+				if(typeof id !== 'string' || !$.trim(id)){
+					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
+					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
+				}
+				/* del begin */
+				if(!this.__cachedTemplates[id]){
+					fwLogger.warn('指定されたIDのテンプレートは登録されていません。"{0}"', id);
+				}
+				/* del end */
 			}
 
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {

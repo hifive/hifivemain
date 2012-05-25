@@ -1,0 +1,48 @@
+@charset "utf-8";
+/*
+ * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ * hifive css
+ */
+div.b.throbber {
+	width: 60px;
+	height: 60px;
+}
+
+div.b.throbber-line {
+	width: 2px;
+	color: #9A3;
+}
+
+.blockUI.b  .throbber-percent {
+	font-size: 18px;
+	font-family: ＭＳ ゴシック;
+	color: #C20;
+}
+
+.blockUI.b  .indicator-message {
+	font-size: 20px;
+	color: #480;
+}
+
+.blockUI.b  {
+	background-color: #409;
+	color: #666;
+	border: none;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	opacity: 0.4;
+}

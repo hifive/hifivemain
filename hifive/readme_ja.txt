@@ -1,35 +1,66 @@
 hifiveMain
 ----------------------------------------------
-hifive‚ÌƒRƒA•”•ª‚ÌŠJ”­—p‚Å‚·B
-‚±‚±‚Å‚Íhifive‚ÌƒŠƒŠ[ƒX”ÅAŠJ”­”ÅACSSAEJS‚Ìƒrƒ‹ƒh•û–@‚ğ‹Lq‚µ‚Ü‚·B
+hifiveã®ã‚³ã‚¢éƒ¨åˆ†ã®é–‹ç™ºç”¨ã§ã™ã€‚
+ã“ã“ã§ã¯hifiveã®ãƒªãƒªãƒ¼ã‚¹ç‰ˆã€é–‹ç™ºç‰ˆã€CSSã€EJSã®ãƒ“ãƒ«ãƒ‰æ–¹æ³•ã‚’è¨˜è¿°ã—ã¾ã™ã€‚
 
-1.ƒŠƒ|ƒWƒgƒŠ‚ÌƒNƒ[ƒ“
+1.ãƒªãƒã‚¸ãƒˆãƒªã®ã‚¯ãƒ­ãƒ¼ãƒ³
   $ git clone git@github.com:hifive/hifivemain.git
 
-2.Apache ivy‚ğ—˜—p‚µhifiveƒrƒ‹ƒh‚É•K—v‚Èƒ‰ƒCƒuƒ‰ƒŠ‚ğ’Ç‰Á
-@@hifive/ivy_build.xml‚Ìresolveƒ^[ƒQƒbƒg‚ğÀs‚µ‚Ü‚·B
+2.Apache ivyã‚’åˆ©ç”¨ã—hifiveãƒ“ãƒ«ãƒ‰ã«å¿…è¦ãªãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚’è¿½åŠ 
+  hifive/ivy_build.xmlã®resolveã‚¿ãƒ¼ã‚²ãƒƒãƒˆã‚’å®Ÿè¡Œã—ã¾ã™ã€‚
 
-@@-ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“‚©‚ç
+  -ã‚³ãƒãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ã‹ã‚‰
    $ cd hifive
    $ ant -buildfile ivy_build.xml
    
-  -IDE(eclipse)‚©‚ç
-   hifiveƒvƒƒWƒFƒNƒg‚ğƒCƒ“ƒ|[ƒg -> hifive/ivy_build.xml‚ğ‰EƒNƒŠƒbƒN -> Às -> Antƒrƒ‹ƒh
+  -IDE(eclipse)ã‹ã‚‰
+   hifiveãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã‚’ã‚¤ãƒ³ãƒãƒ¼ãƒˆ -> hifive/ivy_build.xmlã‚’å³ã‚¯ãƒªãƒƒã‚¯ -> å®Ÿè¡Œ -> Antãƒ“ãƒ«ãƒ‰
 
-3.hifiveƒrƒ‹ƒh‚ğÀs
-@@hifive/build_for_js.xml‚Ìbuildƒ^[ƒQƒbƒg‚ğÀs‚µ‚Ü‚·B
+3.hifiveãƒ“ãƒ«ãƒ‰ã‚’å®Ÿè¡Œ
+  hifive/build_for_js.xmlã®buildã‚¿ãƒ¼ã‚²ãƒƒãƒˆã‚’å®Ÿè¡Œã—ã¾ã™ã€‚
 
-@@-ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“‚©‚ç
+  -ã‚³ãƒãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ã‹ã‚‰
    $ cd hifive
    $ ant -buildfile build_for_js.xml
    
-  -IDE(eclipse‚©‚ç)
-   hifive/build_for_js.xml‚ğ‰EƒNƒŠƒbƒN -> Às -> Antƒrƒ‹ƒh
+  -IDE(eclipseã‹ã‚‰)
+   hifive/build_for_js.xmlã‚’å³ã‚¯ãƒªãƒƒã‚¯ -> å®Ÿè¡Œ -> Antãƒ“ãƒ«ãƒ‰
    
-@@ƒo[ƒWƒ‡ƒ“‚ğ“ü—Í(”CˆÓ)‚·‚é‚Æ
-@@hifive/src/main/webapp/release/
+  ãƒãƒ¼ã‚¸ãƒ§ãƒ³ã‚’å…¥åŠ›(ä»»æ„)ã™ã‚‹ã¨
+  hifive/src/main/webapp/release/
     ejs.js
     h5.css
     h5.dev.js
     h5.js
-     ‚ª¶¬‚³‚ê‚Ü‚·B
+     ãŒç”Ÿæˆã•ã‚Œã¾ã™ã€‚
+------------------------------------------------------------
+ã“ã“ã§ã¯hifiveã®ãƒ†ã‚¹ãƒˆå®Ÿè¡Œæ–¹æ³•ã«ã¤ã„ã¦ç¤ºã—ã¾ã™ã€‚
+
+1.ãƒªãƒã‚¸ãƒˆãƒªã‚’ã‚¯ãƒ­ãƒ¼ãƒ³ã—ã€ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚’å–å¾—(ä¸Šè¨˜é …ç›®1,2)
+
+2.jscoverageã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—jsTool/jscoverageã«jscoverage.exeã‚’é…ç½®
+  - http://siliconforks.com/jscoverage/
+
+3.build_for_js.xmlã®jscoverageã‚¿ãƒ¼ã‚²ãƒƒãƒˆã‚’å®Ÿè¡Œ
+
+4.lib/seleniumå†…ã«ä»¥ä¸‹ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é…ç½®
+  - firebug-x.x.x-fx.xpi  http://getfirebug.com/
+  - chromedriver          http://code.google.com/p/selenium/
+
+5.src/main/webapp/libã«ä»¥ä¸‹ã«ç¤ºã™ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®è¿½åŠ 
+  - ejs
+  - jqplugins
+  - jquery
+  - syntaxhighlighter
+  - modernizr.js  
+  
+6.CoverageMargeTestã‚’å®Ÿè¡Œã™ã‚‹
+- IDE(Eclipseåˆ©ç”¨)ã®å ´åˆ
+  1.tomcatãƒ—ãƒ©ã‚°ã‚¤ãƒ³ã‚’ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã—ã€è¨­å®šã‚’è¡Œã†.
+  - http://www.eclipsetotale.com/tomcatPlugin.html
+  
+  2.ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã‚’å³ã‚¯ãƒªãƒƒã‚¯ã—Tomcatå®šç¾©ã‚’æ›´æ–°
+  
+  3.Tomcatèµ·å‹•
+  
+  4.CoverageMargeTestã§junitå®Ÿè¡Œ

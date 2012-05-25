@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 /* ------ h5.ui ------ */
@@ -237,10 +237,6 @@
 			this._run();
 		},
 		hide: function() {
-			if (!this.root) {
-				return;
-			}
-
 			this.root.innerHTML = "";
 
 			if (this._runId) {
@@ -281,9 +277,6 @@
 			this.highlightPos = highlightPos;
 			var perMills = Math.floor(roundTime / lineCount);
 
-			if (perMills < 50) {
-				perMills = 50;
-			}
 			var that = this;
 
 			this._runId = setTimeout(function() {
@@ -346,15 +339,13 @@
 			this.root = root;
 			this.highlightPos = 1;
 			this.hide();
-			root.appendChild(this.baseDiv);
+			this.root.appendChild(this.baseDiv);
 			this._run();
 		},
 		hide: function() {
-			if (!this.root) {
-				return;
-			}
-
-			this.root.innerHTML = "";
+			// this.root.innerHTML = ''だと、IEにてthis.child.innerHTMLまで空になってしまう
+			// removeChildを使うとDOMがない時にエラーが出るため、jQueryのremove()を使っている
+			$(this.baseDiv).remove();
 
 			if (this._runId) {
 				clearTimeout(this._runId);
@@ -400,9 +391,6 @@
 			this.highlightPos = highlightPos;
 			var perMills = Math.floor(roundTime / lineCount);
 
-			if (perMills < 50) {
-				perMills = 50;
-			}
 			var that = this;
 
 			this._runId = setTimeout(function() {
@@ -785,7 +773,7 @@
 	 * @function
 	 * @memberOf h5.ui
 	 */
-	var scrollToTop = function(wait) {
+	var scrollToTop = function() {
 		var waitCount = 3;
 		var waitMillis = 500;
 		function fnScroll() {
@@ -800,7 +788,7 @@
 		}
 
 		window.scrollTo(0, 1);
-		if (window.scrollY !== 1) {
+		if ($(window).scrollTop !== 1) {
 			setTimeout(fnScroll, waitMillis);
 		}
 	};
