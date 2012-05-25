@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -58,7 +58,7 @@
 	var ERR_CODE_CONTROLLER_ALREADY_CREATED = 6008;
 	/** エラーコード: コントローラの参照が循環している */
 	var ERR_CODE_CONTROLLER_CIRCULAR_REF = 6009;
-	/** エラーコード: コントローラの参照が循環している */
+	/** エラーコード: コントローラ内のロジックの参照が循環している */
 	var ERR_CODE_LOGIC_CIRCULAR_REF = 6010;
 	/** エラーコード: コントローラの参照が循環している */
 	var ERR_CODE_CONTROLLER_SAME_PROPERTY = 6011;
@@ -83,7 +83,7 @@
 
 	// エラーコードマップ
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "window.", "navigator", "navigator."で始まるセレクタは指定できません。';
+	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'バインド対象となる要素を指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
@@ -117,7 +117,6 @@
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	/* del end */
 
-
 	// =========================================================================
 	//
 	// Cache
@@ -142,7 +141,6 @@
 	// =============================
 	// Functions
 	// =============================
-
 
 	/**
 	 * コントローラのexecuteListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
@@ -428,13 +426,7 @@
 	 * @param {Controller} controller コントローラ
 	 */
 	function bindDescendantHandlers(controller) {
-		var targets = [];
 		var execute = function(controllerInstance) {
-			if (controllerInstance.isReady || $.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-
 			var meta = controllerInstance.__meta;
 			var notBindControllers = {};
 			if (meta) {
@@ -504,9 +496,6 @@
 		default:
 			bindObj = getNormalBindObj(controller, selector, event, func);
 			break;
-		}
-		if (!bindObj) {
-			return;
 		}
 
 		if (!$.isArray(bindObj)) {
@@ -578,13 +567,7 @@
 	 * @param {Controller} controller コントローラ
 	 */
 	function unbindDescendantHandlers(controller) {
-		var targets = [];
 		var execute = function(controllerInstance) {
-			if ($.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-
 			var meta = controllerInstance.__meta;
 			var notBindControllers = {};
 			if (meta) {
@@ -703,8 +686,6 @@
 	 * @param {Booelan} isInitEvent __initイベントを実行するかどうか.
 	 */
 	function executeLifecycleEventChain(controller, isInitEvent) {
-		var targets = [];
-		var flagName = isInitEvent ? 'isInit' : 'isReady';
 		var funcName = isInitEvent ? '__init' : '__ready';
 
 		var leafDfd = getDeferred();
@@ -714,15 +695,6 @@
 		var leafPromise = leafDfd.promise();
 
 		var execInner = function(controllerInstance) {
-			if ($.inArray(controllerInstance, targets) !== -1) {
-				return;
-			}
-			targets.push(controllerInstance);
-			// 既にライフサイクルイベントを実行済みであれば何もしない
-			if (controllerInstance[flagName]) {
-				return;
-			}
-
 			var isLeafController = true;
 			for ( var prop in controllerInstance) {
 				// 子コントローラがあれば再帰的に処理
@@ -734,11 +706,6 @@
 
 			// 子孫コントローラの準備ができた時に実行させる関数を定義
 			var func = function() {
-				// 既にライフサイクルイベントを実行済みであれば何もしない
-				// 数行上で同じチェックを行っているが、非同期の場合ここでのチェックも必須となるはず
-				if (controllerInstance[flagName]) {
-					return;
-				}
 				var ret = null;
 				var lifecycleFunc = controllerInstance[funcName];
 				if (lifecycleFunc) {
@@ -779,7 +746,7 @@
 		// 子孫コントローラのinitPromiseオブジェクトを取得
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
 		// 自身のテンプレート用Promiseオブジェクトを取得
-		initPromises.push(controller.__controllerContext.templatePromise);
+		initPromises.push(controller.preinitPromise);
 		return initPromises;
 	}
 
@@ -801,7 +768,8 @@
 	 */
 	function createCallbackForInit(controller) {
 		return function() {
-			if (controller.isInit) {
+			// disopseされていたら何もしない。
+			if (isDisposing(controller)) {
 				return;
 			}
 			controller.isInit = true;
@@ -825,7 +793,8 @@
 	 */
 	function createCallbackForReady(controller) {
 		return function() {
-			if (controller.isReady) {
+			// disopseされていたら何もしない。
+			if (isDisposing(controller)) {
 				return;
 			}
 			controller.isReady = true;
@@ -852,16 +821,10 @@
 	 * @returns {Boolean} テンプレートに渡すセレクタとして正しいかどうか(true=正しい)
 	 */
 	function isCorrectTemplatePrefix(selector) {
-		if (startsWith('window')) {
+		if (startsWith(selector, 'window')) {
 			return false;
 		}
-		if (startsWith('window.')) {
-			return false;
-		}
-		if (startsWith('navigator')) {
-			return false;
-		}
-		if (startsWith('navigator.')) {
+		if (startsWith(selector, 'navigator')) {
 			return false;
 		}
 		return true;
@@ -884,7 +847,7 @@
 		var selector = $.trim(element);
 		if (isGlobalSelector(selector)) {
 			var s = trimGlobalSelectorBracket(selector);
-			if (isTemplate && isCorrectTemplatePrefix(s)) {
+			if (isTemplate && !isCorrectTemplatePrefix(s)) {
 				throwFwError(ERR_CODE_INVALID_TEMPLATE_SELECTOR);
 			}
 			$targets = $(getGlobalSelectorTarget(s));
@@ -961,7 +924,7 @@
 				var eventContext = createEventContext(controller, arguments);
 				var event = eventContext.event;
 				// Firefox
-				if (event.detail) {
+				if (event.originalEvent && event.originalEvent.detail) {
 					event.wheelDelta = -event.detail * 40;
 				}
 				func.call(controller, eventContext);
@@ -993,7 +956,10 @@
 			// イベントオブジェクトの正規化
 			return getNormalBindObj(controller, selector, eventName, function(context) {
 				var event = context.event;
-				var offset = $(event.currentTarget).offset();
+				var offset = $(event.currentTarget).offset() || {
+					left: 0,
+					top: 0
+				};
 				event.offsetX = event.pageX - offset.left;
 				event.offsetY = event.pageY - offset.top;
 				func.apply(this, arguments);
@@ -1010,8 +976,6 @@
 			case 'touchend':
 			case 'mouseup':
 				return EVENT_NAME_H5_TRACKEND;
-			default:
-				return;
 			}
 		};
 
@@ -1062,34 +1026,30 @@
 						execute = true;
 					}
 					if (isStart && execute) {
-						if (!newEvent.isDefaultPrevented()) {
-							newEvent.h5DelegatingEvent.preventDefault();
-							var nt = newEvent.target;
+						newEvent.h5DelegatingEvent.preventDefault();
+						var nt = newEvent.target;
 
-							// 直前のh5track系イベントとの位置の差分を格納
-							var ox = newEvent.clientX;
-							var oy = newEvent.clientY;
-							var setupDPos = function(ev) {
-								var cx = ev.clientX;
-								var cy = ev.clientY;
-								ev.dx = cx - ox;
-								ev.dy = cy - oy;
-								ox = cx;
-								oy = cy;
-							};
-							var moveHandler = getHandler(move, nt, setupDPos);
-							var upHandler = getHandler(end, nt);
+						// 直前のh5track系イベントとの位置の差分を格納
+						var ox = newEvent.clientX;
+						var oy = newEvent.clientY;
+						var setupDPos = function(ev) {
+							var cx = ev.clientX;
+							var cy = ev.clientY;
+							ev.dx = cx - ox;
+							ev.dy = cy - oy;
+							ox = cx;
+							oy = cy;
+						};
+						var moveHandler = getHandler(move, nt, setupDPos);
+						var upHandler = getHandler(end, nt);
 
-							var $bindTarget = hasTouchEvent ? $(nt) : $document;
-							removeHandlers = function() {
-								$bindTarget.unbind(move, moveHandler);
-								$bindTarget.unbind(end, upHandler);
-							};
-							$bindTarget.bind(move, moveHandler);
-							$bindTarget.bind(end, upHandler);
-						} else {
-							execute = false;
-						}
+						var $bindTarget = hasTouchEvent ? $(nt) : $document;
+						removeHandlers = function() {
+							$bindTarget.unbind(move, moveHandler);
+							$bindTarget.unbind(end, upHandler);
+						};
+						$bindTarget.bind(move, moveHandler);
+						$bindTarget.bind(end, upHandler);
 					}
 					if (type === EVENT_NAME_H5_TRACKEND) {
 						removeHandlers();
@@ -1218,7 +1178,7 @@
 	}
 
 	/**
-	 * コントローラとｓの子孫コントローラのrootElementをセットします。
+	 * コントローラとその子孫コントローラのrootElementをセットします。
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -1251,7 +1211,7 @@
 	function getBindTarget(element, rootElement, controller) {
 		if (!element) {
 			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED);
-		} else if (!controller) {
+		} else if (!controller || !controller.__controllerContext) {
 			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
 		}
 		var $targets;
@@ -1422,6 +1382,15 @@
 			return getView(templateId, controller.parentController);
 		}
 		return h5.core.view;
+	}
+
+	/**
+	 * 指定されたコントローラがdispose済みかどうか、(非同期の場合はdispose中かどうか)を返します。
+	 *
+	 * @param {Controller} controller コントローラ
+	 */
+	function isDisposing(controller) {
+		return !controller.__controllerContext || controller.__controllerContext.isDisposing;
 	}
 
 	// =========================================================================
@@ -1858,6 +1827,11 @@
 		 * @memberOf Controller
 		 */
 		dispose: function() {
+			// disopseされていたら何もしない。
+			if (isDisposing(this)) {
+				return;
+			}
+			this.__controllerContext.isDisposing = 1;
 			var dfd = this.deferred();
 			this.unbind();
 			var that = this;
@@ -2054,7 +2028,10 @@
 		 * @private
 		 */
 		$(document).bind('triggerIndicator', function(event, opt) {
-			opt.indicator = callIndicator(this, opt).show();
+			if (opt.target == null) {
+				opt.target = document;
+			}
+			opt.indicator = callIndicator(this, opt);
 			event.stopPropagation();
 		});
 
@@ -2147,7 +2124,6 @@
 			});
 		}
 
-
 		// バインド対象となる要素のチェック
 		if (targetElement) {
 			var $bindTargetElement = $(targetElement);
@@ -2185,8 +2161,11 @@
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
 		var templatePromise = templateDfd.promise();
+		var preinitDfd = getDeferred();
+		var preinitPromise = preinitDfd.promise();
 
 		controller.__controllerContext.templatePromise = templatePromise;
+		controller.preinitPromise = preinitPromise;
 		controller.__controllerContext.initDfd = getDeferred();
 		controller.initPromise = controller.__controllerContext.initDfd.promise();
 		controller.__controllerContext.readyDfd = getDeferred();
@@ -2195,10 +2174,9 @@
 		if (templates && templates.length > 0) {
 			// テンプレートがあればロード
 			var viewLoad = function(count) {
-				// Viewモジュールがなければエラーログを出力する。
-				// この直後のloadでエラーになるはず。
+				// Viewモジュールがない場合、この直後のloadでエラーが発生してしまうためここでエラーを投げる。
 				if (!getByPath('h5.core.view')) {
-					fwLogger.error(errMsgMap[ERR_CODE_NOT_VIEW]);
+					throwFwError(ERR_CODE_NOT_VIEW);
 				}
 				var vp = controller.view.load(templates);
 				vp.then(function(result) {
@@ -2214,13 +2192,14 @@
 					// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に"0"になっていること、
 					// IEの場合は、コネクションが繋がらない時のコードが"12029"であること。
 					// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
-					// WinInet のエラーコード(12001 - 12156): http://support.microsoft.com/kb/193625/ja
+					// WinInet のエラーコード(12001 - 12156):
+					// http://support.microsoft.com/kb/193625/ja
 					var jqXhrStatus = result.detail.error.status;
 					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
-							|| jqXhrStatus !== 12029) {
+							&& jqXhrStatus !== 12029) {
 						result.controllerDefObject = controllerDefObj;
-						templateDfd.reject(result);
-						// controller.__controllerContext.initDfd.reject();
+						setTimeout(function(){
+						templateDfd.reject(result);},0);
 						return;
 					}
 					setTimeout(function() {
@@ -2233,6 +2212,16 @@
 			// テンプレートがない場合は、resolve()しておく
 			templateDfd.resolve();
 		}
+
+		// テンプレートプロミスのハンドラ登録
+		templatePromise.done(function() {
+			preinitDfd.resolve();
+		}).fail(function(e) {
+			preinitDfd.reject(e);
+			if (controller.__controllerContext) {
+				controller.rootController.dispose();
+			}
+		});
 
 		for ( var prop in clonedControllerDef) {
 			if (controllerPropertyMap[prop]) {
@@ -2274,12 +2263,6 @@
 				controller[prop] = weavedFunc;
 			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
 					&& !$.isFunction(clonedControllerDef[prop])) {
-				// 子コントローラ
-				var controllerTarget = clonedControllerDef[prop];
-				if (!controllerTarget) {
-					controller[prop] = controllerTarget;
-					continue;
-				}
 				var c = createAndBindController(null,
 						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
 							isInternal: true
@@ -2328,11 +2311,14 @@
 		if (controller.__construct) {
 			controller.__construct(createInitializationContext(controller));
 		}
-		// ルートコントローラではない場合、インスタンスを戻す
-		if (!controller.__controllerContext.isRoot) {
-			return controller;
+
+		if (isDisposing(controller)) {
+			return null;
 		}
-		setRootAndTriggerInit(controller);
+		// ルートコントローラなら、ルートをセット
+		if (controller.__controllerContext.isRoot) {
+			setRootAndTriggerInit(controller);
+		}
 		return controller;
 	}
 
@@ -2374,7 +2360,6 @@
 	// =============================
 	// Expose to window
 	// =============================
-
 
 	/**
 	 * Core MVCの名前空間

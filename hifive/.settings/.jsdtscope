@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**/lib/*.js|jqgrid/lib/grid.locale-ja.js|jqgrid/lib/jquery.jqGrid.min.js|jqgrid/lib/jquery.jqGrid.src.js|jqm/lib/jquery.mobile-1.0b1.js|jqm/lib/jquery.mobile-1.0b2.js|jquery-ui/lib/jquery-ui-1.8.15.custom.min.js|jquery-ui/lib/jquery-ui-datepicker-ja.js|suggest/js/lib/jqm/jquery.mobile-1.0b2.js|suggest/js/lib/plugin/jquery.easing.1.3.js" kind="src" path="src/main/webapp/sandbox"/>
+	<classpathentry kind="src" path="src/main/webapp/src"/>
+	<classpathentry excluding="h5version0.0.1/*|lib/qunit/qunit.js" kind="src" path="src/main/webapp/test"/>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.baseBrowserLibrary/StandardBrowser/html5"/>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.USER_LIBRARY/hifiveLib"/>
+	<classpathentry kind="output" path=""/>
+</classpath>

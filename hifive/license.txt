@@ -1,0 +1,58 @@
+Unless otherwise stated, all source files are licensed under
+the Apache License, Version 2.0(http://www.apache.org/licenses/LICENSE-2.0).
+
+-----
+Code under:
+src/main/webapp/res/lib/jquery
+
+jQuery
+URL:http://jquery.com/
+License:Dual licensed under the MIT and GPL licenses.
+	https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt
+	https://github.com/jquery/jquery/blob/master/GPL-LICENSE.txt
+Local Modifications: None.
+
+-----
+Code under:
+src/main/webapp/res/lib/jqplugins/blockui
+
+jQuery blockUI plugin
+URL:http://jquery.malsup.com/block/
+License:Dual licensed under the MIT and GPL licenses.
+	http://www.opensource.org/licenses/mit-license.php
+	http://www.gnu.org/licenses/gpl.html
+Local Modifications: None.
+
+-----
+Code under:
+src/main/webapp/src/ejs
+
+EJS(Embedded JavaScript)
+URL:http://embeddedjs.com
+License:MIT license
+	http://www.opensource.org/licenses/mit-license.php
+Local Modifications: add noescape flag.
+
+-----
+Code under:
+src/main/webapp/res/lib/jqplugins/jqm
+
+jQuery Mobile
+URL:http://jquerymobile.com/
+License:Dual licensed under the MIT and GPL licenses.
+	https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt
+	https://github.com/jquery/jquery/blob/master/GPL-LICENSE.txt
+Local Modifications: None.
+
+-----
+Code under:
+src/main/webapp/test/lib/qunit
+
+Qunit
+URL:http://docs.jquery.com/QUnit
+License:Dual licensed under the MIT and GPL licenses
+	https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt
+	https://github.com/jquery/jquery/blob/master/GPL-LICENSE.txt
+Local Modifications: None.
+-----
+

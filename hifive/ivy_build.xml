@@ -27,8 +27,7 @@
 	<target name="download-ivy" depends="check-ivy" unless="skip.download" description="--> download ivy">
 		<mkdir dir="${ivy.install.dir}" />
 		<echo message="installing ivy..." />
-		<get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
-			dest="${ivy.install.dir}/ivy-${ivy.install.version}.jar" usetimestamp="true" />
+		<get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.install.dir}/ivy-${ivy.install.version}.jar" usetimestamp="true" />
 	</target>
 
 	<target name="install-ivy" depends="download-ivy" description="--> install ivy">
@@ -40,8 +39,7 @@
 
 	<target name="resolve" depends="install-ivy" description="--> retrieve dependencies with ivy">
 
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source"
-			conf="closurecompiler" />
+		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="closurecompiler" />
 		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="closurecompiler" />
 
 		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="commons" />
@@ -62,12 +60,13 @@
 		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="log" />
 		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="log" />
 
+		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="selenium" />
+		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="selenium" />
+
 		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="spring" />
 		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="spring" />
-		<!--
-			<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="test" />
-			<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="test" />
-		-->
+		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="test" />
+		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="test" />
 		<!--
 			<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="tiles" />
 			<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="tiles" />
