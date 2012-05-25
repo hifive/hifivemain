@@ -34,7 +34,6 @@ $(function() {
 					$.mobile.activePage = page;
 				},
 				teardown: function() {
-					pageremove();
 					delete window.loadedTestForJQM;
 					$('link').filter(function() {
 						if ($(this).attr('href') === 'css/test.css') {
@@ -61,6 +60,7 @@ $(function() {
 				ok(window.loadedTestForJQM, 'jsファイルがロードされていること');
 				$('#top_main_pageForJQMTest button#test').trigger('click');
 				same($('#top_main_pageForJQMTest h1').css('font-size'), '111px', 'CSSが適応されている');
+				pageremove();
 				start();
 			},
 
@@ -91,6 +91,7 @@ $(function() {
 				ok(window.loadedTestForJQM, 'jsファイルがロードされていること_');
 				$('#top_main_pageForJQMTest button#test').trigger('click');
 				h5.ui.jqm.dataPrefix = 'h5';
+				pageremove();
 				start();
 			},
 
@@ -101,13 +102,13 @@ $(function() {
 		h5.ui.jqm.manager.define('top_main_pageForJQMTest', 'css/test.css', controller);
 	});
 
-	test('h5.ui.jqmmanager init() すでにinit()済みならログが出力(※要目視)されて、何もされないこと。', 1, function() {
-		try {
-			h5.ui.jqm.manager.init();
-			h5.ui.jqm.manager.init();
-			ok(true, '「JQMマネージャは既に初期化されています。」とログが出力されること。他のテストでinit()/define()済みであれば2回出力されます。');
-		} catch (e) {
-			ok(false, 'エラーが発生しました。');
-		}
-	});
+//	test('h5.ui.jqmmanager init() すでにinit()済みならログが出力(※要目視)されて、何もされないこと。', 1, function() {
+//		try {
+//			h5.ui.jqm.manager.init();
+//			h5.ui.jqm.manager.init();
+//			ok(true, '「JQMマネージャは既に初期化されています。」とログが出力されること。他のテストでinit()/define()済みであれば2回出力されます。');
+//		} catch (e) {
+//			ok(false, 'エラーが発生しました。');
+//		}
+//	});
 });
