@@ -61,18 +61,13 @@ $(function() {
 				force: true
 			});
 			// コントローラを全部アンバインド
-			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0; ) {
+			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0;) {
 				var controller = h5.core.controllerManager.controllers[l];
-				controller && controller.unbind && controller.unbind();
+				controller.unbind();
 			}
 		},
 		teardown: function() {
 			h5 = originalH5;
-			// コントローラを全部アンバインド
-			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0; ) {
-				var controller = h5.core.controllerManager.controllers[l];
-				controller && controller.unbind && controller.unbind();
-			}
 		}
 	});
 
@@ -81,7 +76,7 @@ $(function() {
 
 		var loadedH5 = h5;
 		var retH5 = h5.coexist();
-		ok(h5 === originalH5, 'h5.coexist()を実行するとwindow.h5が上書き前のh5になること。' );
+		ok(h5 === originalH5, 'h5.coexist()を実行するとwindow.h5が上書き前のh5になること。');
 		ok(retH5 === loadedH5, 'h5.coexist()の戻り値がversion0.0.1のH5であること。');
 		start();
 	});
@@ -91,13 +86,13 @@ $(function() {
 			__name: 'testController'
 		};
 		var controller = h5.core.controller('body', testController);
-		controller.readyPromise.done(function(){
+		controller.readyPromise.done(function() {
 			strictEqual(h5.core.controllerManager.controllers.length, 1, 'h5にコントローラをバインド。');
 			strictEqual(originalH5.core.controllerManager.controllers.length, 0,
 					'originalH5にはまだコントローラはバインドされていない。');
 
 			var originalController = originalH5.core.controller('body', testController);
-			originalController.readyPromise.done(function(){
+			originalController.readyPromise.done(function() {
 				strictEqual(originalH5.core.controllerManager.controllers.length, 1,
 						'originalH5にコントローラをバインド。');
 				strictEqual(h5.core.controllerManager.controllers.length, 1, 'h5のコントローラの数は変わらない。');
