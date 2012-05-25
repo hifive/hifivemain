@@ -63,7 +63,7 @@ $(function() {
 			// コントローラを全部アンバインド
 			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0; ) {
 				var controller = h5.core.controllerManager.controllers[l];
-				controller.unbind || controller.unbind();
+				controller && controller.unbind && controller.unbind();
 			}
 		},
 		teardown: function() {
@@ -71,7 +71,7 @@ $(function() {
 			// コントローラを全部アンバインド
 			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0; ) {
 				var controller = h5.core.controllerManager.controllers[l];
-				controller.unbind || controller.unbind();
+				controller && controller.unbind && controller.unbind();
 			}
 		}
 	});
