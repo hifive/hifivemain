@@ -26,7 +26,7 @@ $(function() {
 		});
 		$('.divForJQM').remove();
 	}
-
+	$('.ui-loader').toggle();
 	$.mobile.activePage = $('body');
 
 	function createPage(id) {
