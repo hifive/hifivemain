@@ -80,13 +80,6 @@
 	var initParamMap = {};
 
 	/**
-	 * dispose対象から外すページの配列
-	 *
-	 * @type Array
-	 */
-	var excludeDispose = [];
-
-	/**
 	 * CSSファイルのマップ キー：ページID、値：CSSファイルパスのオブジェクト
 	 *
 	 * @type Object
@@ -157,11 +150,8 @@
 		 */
 		__ready: function(context) {
 			var that = this;
-			excludeDispose.push(this.rootElement);
 			$(':jqmData(role="page"), :jqmData(role="dialog")').each(function() {
-				excludeDispose.push(this);
 				that.loadScript(this.id);
-
 			});
 		},
 
@@ -234,8 +224,7 @@
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
-		'* h5controllerbound': function(context) {
-			context.event.stopPropagation();
+		'{rootElement} h5controllerbound': function(context) {
 			var id = context.event.target.id;
 			if (!controllerInstanceMap[id]) {
 				controllerInstanceMap[id] = [];
@@ -299,10 +288,6 @@
 		 * @memberOf JQMController
 		 */
 		addCSS: function(id) {
-			if (this.firstAddCSS) {
-				this.firstAddCSS = false;
-			}
-
 			var src = cssMap[id];
 
 			if (!src) {
@@ -386,7 +371,7 @@
 				if (jqmControllerInstance) {
 					fwLogger.info('JQMマネージャは既に初期化されています。');
 				} else {
-					jqmControllerInstance = h5.core.controller(document.body, jqmController);
+					jqmControllerInstance = h5.core.controller('body', jqmController);
 				}
 				bindToActivePage();
 			});

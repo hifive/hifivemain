@@ -14,4 +14,4 @@ xcopy /S /E /I %base%\test %work%\qunitTestOrg\test
 xcopy /S /E /I %base%\res %work%\qunitTestOrg\res
 xcopy /S /E /I %base%\archives %work%\qunitTestOrg\archives
 
-jscoverage.exe --no-instrument=\res --no-instrument=test\runner.js --no-instrument=test --encoding=UTF-8 %work%\qunitTestOrg %work%\inst
+jscoverage.exe --no-instrument=\res --no-instrument=test\runner.js --no-instrument=archives\current/ejs-h5mod.js --no-instrument=test --encoding=UTF-8 %work%\qunitTestOrg %work%\inst
