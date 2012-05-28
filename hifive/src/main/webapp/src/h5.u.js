@@ -97,7 +97,7 @@
 	errMsgMap[ERR_CODE_NAMESPACE_EXIST] = '名前空間"{0}"には、プロパティ"{1}"が既に存在します。';
 	errMsgMap[ERR_CODE_SERIALIZE_FUNCTION] = 'Function型のオブジェクトは変換できません。';
 	errMsgMap[ERR_CODE_SERIALIZE_VERSION] = 'シリアライザのバージョンが違います。シリアライズされたバージョン：{0} 現行のバージョン：{1}';
-	errMsgMap[ERR_CODE_DESERIALIZE_TYPE] = '型情報の判定に失敗したため、デシリアライズできませんでした。';
+	errMsgMap[ERR_CODE_DESERIALIZE_TYPE] = '型指定子が不正です。';
 	errMsgMap[ERR_CODE_REFERENCE_CYCLE] = '循環参照が含まれています。';
 	errMsgMap[ERR_CODE_DESERIALIZE_VALUE] = '不正な値が含まれるため、デシリアライズできませんでした。';
 	errMsgMap[ERR_CODE_INVALID_SCRIPT_PATH] = 'スクリプトのパスが不正です。空文字以外の文字列、またはその配列を指定して下さい。';
