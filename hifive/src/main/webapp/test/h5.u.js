@@ -242,18 +242,22 @@ $(function() {
 		window.h5samplefunc = undefined;
 	});
 
-	test('スクリプトのロード(h5.u.loadScript) 引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。', 2, function() {
-		window.sample4loaded = undefined;
-		h5.u.loadScript(['data/sample4.js?1', 'data/sample.js','data/sample4.js?1']);
-		same(window.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
+	test(
+			'スクリプトのロード(h5.u.loadScript) 引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
+			2, function() {
+				window.sample4loaded = undefined;
+				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1']);
+				same(window.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
 
-		window.sample4loaded = undefined;
-		h5.u.loadScript(['data/sample4.js?1', 'data/sample.js','data/sample4.js?1'], {force: true});
-		same(window.sample4loaded, 2, 'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
+				window.sample4loaded = undefined;
+				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1'], {
+					force: true
+				});
+				same(window.sample4loaded, 2, 'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
 
-		window.sample4loaded = undefined;
+				window.sample4loaded = undefined;
 
-	});
+			});
 
 	test('スクリプトのロード(h5.u.loadScript) リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
 		window.sample4loaded = undefined;
@@ -314,15 +318,14 @@ $(function() {
 				}
 			});
 
-	test(
-			'スクリプトのロード(h5.u.loadScript) オプションに プレーンオブジェクト/undefined/null 以外を渡すと、エラーが出ること。',
-			8, function() {
-				var opts = [[],'','data/sample.js',new String(),0,1,true,false];
-				for(var i = 0, l = opts.length; i < l; i++){
-					try{
+	test('スクリプトのロード(h5.u.loadScript) オプションに プレーンオブジェクト/undefined/null 以外を渡すと、エラーが出ること。', 8,
+			function() {
+				var opts = [[], '', 'data/sample.js', new String(), 0, 1, true, false];
+				for ( var i = 0, l = opts.length; i < l; i++) {
+					try {
 						h5.u.loadScript('data/sample.js', opts[i]);
 						ok(false, 'エラーが発生していません。');
-					} catch(e){
+					} catch (e) {
 						ok(true, e.code + ': ' + e.message);
 					}
 				}
@@ -410,8 +413,9 @@ $(function() {
 					}).done(
 							function() {
 								same(window.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
-								h5.u.loadScript(['data/sample4.js?12345', 'data/sample4.js?123',
-										'data/sample4.js?123456'], {
+								h5.u.loadScript(
+										['data/sample4.js?12345', 'data/sample4.js?123',
+												'data/sample4.js?123456'], {
 											async: true
 										}).done(function() {
 									same(window.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
@@ -472,9 +476,11 @@ $(function() {
 				}
 			});
 
-	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。', 2, function() {
-		window.sample4loaded = undefined;
-		h5.u.loadScript(['data/sample4.js?2', 'data/sample.js','data/sample4.js?2'], {
+	asyncTest(
+			'スクリプトのロード(h5.u.loadScript) 【非同期】引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
+			2, function() {
+				window.sample4loaded = undefined;
+				h5.u.loadScript(['data/sample4.js?2', 'data/sample.js', 'data/sample4.js?2'], {
 					async: true
 				}).done(
 						function() {
@@ -492,7 +498,7 @@ $(function() {
 										window.sample4loaded = undefined;
 										start()
 									});
-		});
+						});
 			});
 
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】存在しないスクリプトを指定しても、ほかのスクリプトの読み込みが中断されないこと。', 2,
@@ -1000,8 +1006,29 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize シリアライズしたバージョンの違う文字列をデシリアライズできないこと。', 1, function() {
+	test('serialize/deserialize シリアライズしたバージョンの違う文字列をデシリアライズできないこと。', 4, function() {
 		var serialized = "2|shello";
+		try {
+			h5.u.obj.deserialize(serialized);
+			ok(false, 'エラーが投げられていません。' + serialized);
+		} catch (e) {
+			ok(true, e.message);
+		}
+		serialized = "";
+		try {
+			h5.u.obj.deserialize(serialized);
+			ok(false, 'エラーが投げられていません。' + serialized);
+		} catch (e) {
+			ok(true, e.message);
+		}
+		serialized = " ";
+		try {
+			h5.u.obj.deserialize(serialized);
+			ok(false, 'エラーが投げられていません。' + serialized);
+		} catch (e) {
+			ok(true, e.message);
+		}
+		serialized = " 1|n1";
 		try {
 			h5.u.obj.deserialize(serialized);
 			ok(false, 'エラーが投げられていません。' + serialized);
@@ -1045,23 +1072,80 @@ $(function() {
 		}
 	});
 
-	test('deserialize 不正な文字をデシリアライズしようとしたときにエラーが発生せず、渡した文字列がそのまま返ってくること。', 14, function() {
-		var strs = ['1|', '1| ', '1|_', '1|@{}', '1|"abc"', '1|b2', '1|B3'];
+	test('deserialize 型情報が不正な文字をデシリアライズしようとしたときはエラーが発生すること。', 7, function() {
+		var strs = ['1|', '1| ', '1|_', '1|@{}', '1|"abc"', '1|A', '1|O'];
+		var errorCode = 11004;
+		var deserialized;
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
-			var deserialized = h5.u.obj.deserialize(str);
-			same(deserialized, strs[i].substring(2), "渡した文字列がそのまま返ってくること。");
+			try {
+				deserialized = h5.u.obj.deserialize(str);
+				ok(false, 'エラーが発生していません。 ' + deserialized);
+			} catch (e) {
+				same(e.code, errorCode, e.message + ' ' + str);
+			}
 		}
-		var objStrs = ['1|a["f1"]', '1|a["n1","m2"]', '1|o{"key":"svalue","innerObj":"o{\\"key\\":\\"o{key:2}\\"}"}'];
-		var expects = [["f1"], [1,"m2"], {key:'value',innerObj:{key:'o{key:2}'}}];
+
+	});
+
+	test('deserialize 値が不正な文字をデシリアライズしようとしたときはエラーが発生すること。', 17, function() {
+
+		var strs = ['1|n1px', '1|nNaN', '1|NNaN', '1|aary', '1|a{}', '1|o["n1"]', '1|o{"n1"}', '1|o1', '1|b2', '1|B2',
+				'1|xx', '1|ii', '1|II', '1|ll', '1|uu', '1|r2', '1|r/a/G'];
+		var errorCode = 11006;
 		for ( var i = 0, len = strs.length; i < len; i++) {
-			var str = objStrs[i];
-			var deserialized = h5.u.obj.deserialize(str);
-			same(deserialized, expects[i], "オブジェクトや配列の場合は中身が不正な文字の時に中身だけがそのまま文字列として返ってくること。");
+			var str = strs[i];
+			try {
+				var deserialized = h5.u.obj.deserialize(str);
+				ok(false, 'エラーが発生していません。 ' + deserialized);
+			} catch (e) {
+				same(e.code, errorCode, e.message + ' ' + str);
+			}
 		}
 	});
 
-	test('h5.u.createInterceptor() インターセプタを作成できること', 5, function(){
+	test('deserialize 要素に不正な値を含む配列やオブジェクト文字列をデシリアライズしようとしたときはエラーが発生すること。', 10, function() {
+		var objStrs = ['1|a["n1","q"]', '1|o{"key":"qq"}', '1|o{"key":"a[\\\"1\\\"]"}',
+				'1|o{"key":"@[\\\"n1\\\"]"}', '1|a["@{\\\"key\\\":\\\"1\\\"}"]'];
+		var errorCode = 11004;
+		for ( var i = 0, len = objStrs.length; i < len; i++) {
+			var str = objStrs[i];
+			try {
+				var deserialized = h5.u.obj.deserialize(str);
+				ok(false, 'エラーが発生していません。 ' + deserialized);
+			} catch (e) {
+				same(e.code, errorCode, e.message + ' ' + str);
+			}
+		}
+		objStrs = ['1|a["n1","nq"]', '1|o{"key":"b2"}', '1|o{"key":"a[\\\"nNaN\\\"]"}',
+				'1|o{"key":"a[\\\"ll\\\"]"}', '1|a["@{\\\"key\\\":\\\"xx\\\"}"]'];
+		var errorCode = 11006;
+		for ( var i = 0, len = objStrs.length; i < len; i++) {
+			var str = objStrs[i];
+			try {
+				var deserialized = h5.u.obj.deserialize(str);
+				ok(false, 'エラーが発生していません。 ' + deserialized);
+			} catch (e) {
+				same(e.code, errorCode, e.message + ' ' + str);
+			}
+		}
+	});
+
+	test('deserialize 文字列以外をデシリアライズしようとしたときはエラーが発生すること。', 8, function() {
+		var objStrs = [[], {}, true, false ,1, 2, undefined, null];
+		var errorCode = 11009;
+		for ( var i = 0, len = objStrs.length; i < len; i++) {
+			var str = objStrs[i];
+			try {
+				var deserialized = h5.u.obj.deserialize(str);
+				ok(false, 'エラーが発生していません。 ' + deserialized);
+			} catch (e) {
+				same(e.code, errorCode, e.message + ' ' + str);
+			}
+		}
+	});
+
+	test('h5.u.createInterceptor() インターセプタを作成できること', 5, function() {
 		var count = 0;
 		var count2 = 0;
 		var ret = 0;
@@ -1072,7 +1156,7 @@ $(function() {
 		}, function(invocation, data) {
 			count2++;
 		});
-		testInterceptor(function(){
+		testInterceptor(function() {
 			ret = 100;
 		});
 		same(count, 1, '関数の初めに実行したい関数が実行されること');
@@ -1086,7 +1170,7 @@ $(function() {
 			count++;
 			invocation();
 		});
-		testInterceptor(function(){
+		testInterceptor(function() {
 			ret = 100;
 		});
 		same(count, 1, '第二引数省略 関数の初めに実行したい関数が実行されること');

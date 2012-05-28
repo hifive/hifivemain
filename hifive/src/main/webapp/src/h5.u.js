@@ -61,7 +61,7 @@
 	/**
 	 * deserialize()で型情報の判定に失敗したときに発生するエラー
 	 */
-	var ERR_CODE_DESERIALIZE = 11004;
+	var ERR_CODE_DESERIALIZE_TYPE = 11004;
 
 	/**
 	 * serialize()に渡されたオブジェクト/配列が循環参照を持つときに発生するエラー
@@ -71,7 +71,7 @@
 	/**
 	 * deserialize()で値が不正でデシリアライズできない時に発生するエラー
 	 */
-	var ERR_CODE_INVALID_VALUE = 11006;
+	var ERR_CODE_DESERIALIZE_VALUE = 11006;
 
 	/**
 	 * loadScript()に渡されたパスが不正(文字列以外、空文字、空白文字)である時に発生するエラー
@@ -85,6 +85,11 @@
 	var ERR_CODE_INVALID_OPTION = 11008;
 
 	/**
+	 * deserialize()で引数に文字列でないものを渡されたときのエラー
+	 */
+	var ERR_CODE_DESERIALIZE_ARGUMENT = 11009;
+
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
@@ -92,11 +97,12 @@
 	errMsgMap[ERR_CODE_NAMESPACE_EXIST] = '名前空間"{0}"には、プロパティ"{1}"が既に存在します。';
 	errMsgMap[ERR_CODE_SERIALIZE_FUNCTION] = 'Function型のオブジェクトは変換できません。';
 	errMsgMap[ERR_CODE_SERIALIZE_VERSION] = 'シリアライザのバージョンが違います。シリアライズされたバージョン：{0} 現行のバージョン：{1}';
-	errMsgMap[ERR_CODE_DESERIALIZE] = '型情報の判定に失敗したため、デシリアライズできませんでした。';
+	errMsgMap[ERR_CODE_DESERIALIZE_TYPE] = '型情報の判定に失敗したため、デシリアライズできませんでした。';
 	errMsgMap[ERR_CODE_REFERENCE_CYCLE] = '循環参照が含まれています。';
-	errMsgMap[ERR_CODE_INVALID_VALUE] = '不正な値が含まれるため、デシリアライズできませんでした。';
+	errMsgMap[ERR_CODE_DESERIALIZE_VALUE] = '不正な値が含まれるため、デシリアライズできませんでした。';
 	errMsgMap[ERR_CODE_INVALID_SCRIPT_PATH] = 'スクリプトのパスが不正です。空文字以外の文字列、またはその配列を指定して下さい。';
 	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
+	errMsgMap[ERR_CODE_DESERIALIZE_ARGUMENT] = 'deserialize() 引数の値が不正です。引数には文字列を指定してください。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -266,13 +272,13 @@
 		if (!resource || resource.length === 0) {
 			throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
 		}
-		for(var i = 0, l = resource.length; i < l; i++){
+		for ( var i = 0, l = resource.length; i < l; i++) {
 			var path = resource[i];
-			if(typeof path !== 'string' || !$.trim(path)){
+			if (typeof path !== 'string' || !$.trim(path)) {
 				throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
 			}
 		}
-		if(opt != null && !$.isPlainObject(opt)){
+		if (opt != null && !$.isPlainObject(opt)) {
 			throwFwError(ERR_CODE_INVALID_OPTION, 'h5.u.loadScript()');
 		}
 		var force = opt && opt.force === true;
@@ -659,7 +665,7 @@
 	 */
 	var deserialize = function(value) {
 		if (typeof value !== 'string') {
-			return value;
+			throwFwError(ERR_CODE_DESERIALIZE_ARGUMENT);
 		}
 
 		value.match(/^(.)\|(.*)/);
@@ -715,116 +721,147 @@
 					return 'objElem';
 				}
 			}
-			try {
-				val.match(/^(.)(.*)/);
-				type = RegExp.$1;
-				ret = (RegExp.$2) ? RegExp.$2 : '';
-				if (type !== undefined && type !== '') {
-					var value = ret;// ret.substring(repPos, ret.length);
-
-					switch (codeToType(type)) {
-					case 'String':
-						ret = new String(ret);
-						break;
-					case 'string':
-						break;
-					case 'Boolean':
-						if (ret === '0' || ret === '1') {
-							ret = new Boolean(ret === '1');
-						} else {
-							throwFwError(ERR_CODE_INVALID_VALUE);
-						}
-						break;
-					case 'boolean':
-						if (ret === '0' || ret === '1') {
-							ret = ret === '1';
-						} else {
-							throwFwError(ERR_CODE_INVALID_VALUE);
-						}
-						break;
-					case 'Number':
-						if (codeToType(ret) === 'infinity') {
-							ret = new Number(Infinity);
-						} else if (codeToType(ret) === '-infinity') {
-							ret = new Number(-Infinity);
-						} else if (codeToType(ret) === 'nan') {
-							ret = new Number(NaN);
-						} else {
-							ret = new Number(ret);
-						}
-						break;
-					case 'number':
-						ret = parseFloat(ret);
-						break;
-					case 'array':
-						var obj = $.parseJSON(ret);
-
-						for ( var i = 0; i < obj.length; i++) {
-							switch (codeToType(obj[i].substring(0, 1))) {
-							case 'undefElem':
-								delete obj[i];
-								break;
-							case 'objElem':
-								var extendObj = func(typeToCode('object') + obj[i].substring(1));
-								var tempObj = [];
-								for ( var i = 0, l = obj.length - 1; i < l; i++) {
-									tempObj[i] = obj[i];
-								}
-								obj = tempObj;
-								for ( var key in extendObj) {
-									obj[key] = extendObj[key];
-								}
-								break;
-							default:
-								obj[i] = func(obj[i]);
-							}
-						}
-						ret = obj;
-						break;
-					case 'object':
-						var obj = $.parseJSON(ret);
-
-						for ( var key in obj) {
-							obj[key] = func(obj[key]);
-						}
-						ret = obj;
-						break;
-					case 'date':
-						ret = new Date(parseInt(value, 10));
-						break;
-					case 'regexp':
-						value.match(/^\/(.*)\/(.*)$/);
-						var regStr = RegExp.$1;
-						var flg = RegExp.$2;
-						ret = new RegExp(regStr, flg);
-						break;
-					case 'null':
-						ret = null;
-						break;
-					case TYPE_OF_UNDEFINED:
-						ret = undefined;
-						break;
-					case 'nan':
-						ret = NaN;
-						break;
-					case 'infinity':
-						ret = Infinity;
-						break;
-					case '-infinity':
-						ret = -Infinity;
-						break;
-					default:
-						throwFwError(ERR_CODE_INVALID_VALUE);
+			val.match(/^(.)(.*)/);
+			type = RegExp.$1;
+			ret = (RegExp.$2) ? RegExp.$2 : '';
+			if (type !== undefined && type !== '') {
+				switch (codeToType(type)) {
+				case 'String':
+					ret = new String(ret);
+					break;
+				case 'string':
+					break;
+				case 'Boolean':
+					if (ret === '0' || ret === '1') {
+						ret = new Boolean(ret === '1');
+					} else {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
+					break;
+				case 'boolean':
+					if (ret === '0' || ret === '1') {
+						ret = ret === '1';
+					} else {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					break;
+				case 'nan':
+					if(ret !== ''){
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = NaN;
+					break;
+				case 'infinity':
+					if(ret !== ''){
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = Infinity;
+					break;
+				case '-infinity':
+					if(ret !== ''){
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = -Infinity;
+					break;
+				case 'Number':
+					if (codeToType(ret) === 'infinity') {
+						ret = new Number(Infinity);
+					} else if (codeToType(ret) === '-infinity') {
+						ret = new Number(-Infinity);
+					} else if (codeToType(ret) === 'nan') {
+						ret = new Number(NaN);
+					} else {
+						ret = new Number(ret);
+						if (isNaN(ret.valueOf())) {
+							throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+						}
+					}
+					break;
+				case 'number':
+					ret = new Number(ret).valueOf();
+					if (isNaN(ret)) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					break;
+				case 'array':
+					var obj;
+					try{
+						obj = $.parseJSON(ret);
+					} catch (e){
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					if(!$.isArray(obj)) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					for ( var i = 0; i < obj.length; i++) {
+						switch (codeToType(obj[i].substring(0, 1))) {
+						case 'undefElem':
+							delete obj[i];
+							break;
+						case 'objElem':
+							var extendObj = func(typeToCode('object') + obj[i].substring(1));
+							var tempObj = [];
+							for ( var i = 0, l = obj.length - 1; i < l; i++) {
+								tempObj[i] = obj[i];
+							}
+							obj = tempObj;
+							for ( var key in extendObj) {
+								obj[key] = extendObj[key];
+							}
+							break;
+						default:
+							obj[i] = func(obj[i]);
+						}
+					}
+					ret = obj;
+					break;
+				case 'object':
+					var obj;
+					try{
+						obj = $.parseJSON(ret);
+					} catch (e){
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					if(!$.isPlainObject(obj)) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					for ( var key in obj) {
+						obj[key] = func(obj[key]);
+					}
+					ret = obj;
+					break;
+				case 'date':
+					ret = new Date(parseInt(ret, 10));
+					break;
+				case 'regexp':
+					ret.match(/^\/(.*)\/(.*)$/);
+					var regStr = RegExp.$1;
+					var flg = RegExp.$2;
+					try{
+						ret = new RegExp(regStr, flg);
+					} catch(e){
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					break;
+				case 'null':
+					if(ret !== ''){
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = null;
+					break;
+				case TYPE_OF_UNDEFINED:
+					if(ret !== ''){
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = undefined;
+					break;
+				default:
+					throwFwError(ERR_CODE_DESERIALIZE_TYPE);
 				}
-			} catch (e) {
-				// 型情報の判定(復元)に失敗した場合、値をそのまま返すので何もしない
-				// throwFwError(ERR_CODE_DESERIALIZE);
-				ret = originValue;
 			}
-			return ret;
-		};
 
+			return ret;
+		}
 		return func(ret);
 	};
 
