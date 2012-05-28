@@ -21,7 +21,7 @@ $(function() {
 	$('body>:jqmData(role="page")').removeAttr('data-role');
 
 	function pageremove(selector) {
-		$('.divForJQM').each(function(){
+		$('.divForJQM').each(function() {
 			$(this).trigger('pageremove');
 		});
 		$('.divForJQM').remove();
@@ -31,7 +31,8 @@ $(function() {
 
 	function createPage(id) {
 		id = id || 'top_main_pageForJQMTest';
-		var page = $('<div id="' + id + '" class="divForJQM" data-role="page" data-h5-script="data/testforJQM.js?'
+		var page = $('<div id="' + id
+				+ '" class="divForJQM" data-role="page" data-h5-script="data/testforJQM.js?'
 				+ new Date().getTime() + '"></div>');
 		var header = $('<div id="top_header" class="ui-bar-f ui-header appLogoHeader"><h1>header</h1></div>');
 		var content = $('<div id="top_content" >content<button id="test"></button></div>');
@@ -148,11 +149,22 @@ $(function() {
 
 				ok(window.loadedTestForJQM, 'jsファイルがロードされていること');
 				$('#top_main_pageForJQMTest button#test').trigger('click');
-				same($('#top_main_pageForJQMTest h1').css('font-size'), '111px', 'CSSが適応されている');
 
-				start();
+				var count = 5;
+				function checkCSS() {
+					if (--count === 0
+							|| $('#top_main_pageForJQMTest h1').css('font-size') === '111px') {
+						same($('#top_main_pageForJQMTest h1').css('font-size'), '111px',
+								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
+						start();
+					} else {
+						setTimeout(function() {
+							checkCSS();
+						}, 1000);
+					}
+				}
+				checkCSS();
 			},
-
 			'button#test click': function() {
 				ok(true, 'button#test click が実行される');
 			}
@@ -212,7 +224,7 @@ $(function() {
 				start();
 			}
 		};
-		h5.ui.jqm.manager.define('top_main_pageForJQMTest', null , controller);
+		h5.ui.jqm.manager.define('top_main_pageForJQMTest', null, controller);
 	});
 
 	module("changePage", {
@@ -232,8 +244,8 @@ $(function() {
 	});
 
 	asyncTest('h5.ui.jqmmanager 画面遷移(changePage)。', 6, function() {
-		var stab = function(role){
-			if(role === 'page'){
+		var stab = function(role) {
+			if (role === 'page') {
 				this._trigger = this.trigger;
 				return this;
 			}
@@ -242,36 +254,36 @@ $(function() {
 		var $page1 = createPage('topPage1');
 		$page1.data = stab;
 		var controller2 = {
-				__name: 'Sub1Controller',
+			__name: 'Sub1Controller',
 
-				__construct: function() {
-					ok(true, '2番目のページの__constructが実行される');
-				},
-				__init: function() {
-					ok(true, '2番目のページの__initが実行される');
-				},
-				__ready: function() {
-					ok(true, '2番目のページの__readyが実行される');
-					$.mobile.changePage($page1);
-					start();
-				}
-			};
+			__construct: function() {
+				ok(true, '2番目のページの__constructが実行される');
+			},
+			__init: function() {
+				ok(true, '2番目のページの__initが実行される');
+			},
+			__ready: function() {
+				ok(true, '2番目のページの__readyが実行される');
+				$.mobile.changePage($page1);
+				start();
+			}
+		};
 		var controller1 = {
-				__name: 'Top1Controller',
+			__name: 'Top1Controller',
 
-				__construct: function() {
-					ok(true, '1番目のページの__constructが実行される');
-				},
-				__init: function() {
-					ok(true, '1番目のページの__initが実行される');
-				},
-				__ready: function() {
-					ok(true, '1番目のページの__readyが実行される');
-					$page2 = createPage('subPage1');
-					$page2.data = stab;
-					h5.ui.jqm.manager.define($page2[0].id, 'css/test.css', controller2);
-				}
-			};
+			__construct: function() {
+				ok(true, '1番目のページの__constructが実行される');
+			},
+			__init: function() {
+				ok(true, '1番目のページの__initが実行される');
+			},
+			__ready: function() {
+				ok(true, '1番目のページの__readyが実行される');
+				$page2 = createPage('subPage1');
+				$page2.data = stab;
+				h5.ui.jqm.manager.define($page2[0].id, 'css/test.css', controller2);
+			}
+		};
 		h5.ui.jqm.manager.define($page1[0].id, 'css/test.css', controller1);
 	});
 });
