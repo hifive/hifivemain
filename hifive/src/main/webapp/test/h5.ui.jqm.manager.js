@@ -186,12 +186,27 @@ $(function() {
 				ok(true, '__readyが実行される');
 
 				$('#top_main_pageForJQMTest button#test').trigger('click');
-				same($('#top_main_pageForJQMTest h1').css('font-size'), '111px', 'CSSが適応されている');
-				// ページ遷移
-				$.mobile.activePage = $('<div id="a">');
-				$(this.rootElement).trigger('pagehide');
-				ok($('#top_main_pageForJQMTest h1').css('font-size') !== '111px', 'CSSが元に戻っている。');
-				start();
+				var count = 5;
+				var that = this;
+				function checkCSS() {
+					if (--count === 0
+							|| $('#top_main_pageForJQMTest h1').css('font-size') === '111px') {
+						same($('#top_main_pageForJQMTest h1').css('font-size'), '111px',
+								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
+
+						// ページ遷移
+						$.mobile.activePage = $('<div id="a">');
+						$(that.rootElement).trigger('pagehide');
+						ok($('#top_main_pageForJQMTest h1').css('font-size') !== '111px',
+								'CSSが元に戻っている。');
+						start();
+					} else {
+						setTimeout(function() {
+							checkCSS();
+						}, 1000);
+					}
+				}
+				checkCSS();
 			},
 
 			'button#test click': function() {
