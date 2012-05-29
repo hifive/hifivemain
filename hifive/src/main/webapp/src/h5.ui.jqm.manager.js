@@ -86,6 +86,13 @@
 	 */
 	var cssMap = {};
 
+	/**
+	 * h5.ui.jqm.manager.init()が呼ばれたかどうかを示すフラグ
+	 *
+	 * @type Boolean
+	 */
+	var initCalled = false;
+
 	// =============================
 	// Functions
 	// =============================
@@ -225,6 +232,9 @@
 		 * @memberOf JQMController
 		 */
 		'{rootElement} h5controllerbound': function(context) {
+			if (this === context.evArg) {
+				return;
+			}
 			var id = context.event.target.id;
 			if (!controllerInstanceMap[id]) {
 				controllerInstanceMap[id] = [];
@@ -367,6 +377,10 @@
 		 * @name init
 		 */
 		init: function() {
+			if (initCalled) {
+				return;
+			}
+			initCalled = true;
 			$(function() {
 				if (jqmControllerInstance) {
 					fwLogger.info('JQMマネージャは既に初期化されています。');
