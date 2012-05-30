@@ -1,10 +1,10 @@
 hifivemain
 ==========
 
-This is main repository for hifive framework.
+This is the main repository for the hifive framework.
 
-- [hifive / hifivemain](https://github.com/hifive/hifivemain/) is for release.
-- [hifive-labs / hifivemain](https://github.com/hifive-labs/hifivemain/) is for development.
+- [hifive / hifivemain](https://github.com/hifive/hifivemain/) is provided for release purposes.
+- [hifive-labs / hifivemain](https://github.com/hifive-labs/hifivemain/) is provided for development purposes.
 
 This product is licensed under the Apache License, Version 2.0.
 
