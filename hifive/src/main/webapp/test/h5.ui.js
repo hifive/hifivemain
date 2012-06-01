@@ -20,6 +20,22 @@ $(function() {
 	var test2 = '#isInViewTest2';
 	var test3 = '#isInViewTest3';
 
+	function getWindowWidth() {
+		if (window.innerWidth) {
+			return window.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientWidth != 0) {
+			return document.documentElement.clientWidth;
+		}
+	}
+	function getWindowHeight() {
+		if (window.innerHeight) {
+			return window.innerHeight;
+		} else if (document.documentElement && document.documentElement.clientHeight != 0) {
+			return document.documentElement.clientHeight;
+		} else if (document.body) {
+			return document.body.clientHeight;
+		}
+	}
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
 	function check(fn, expect, message, s1, s2) {
 		var obj1 = [s1, $(s1), $(s1)[0]];
@@ -54,17 +70,17 @@ $(function() {
 									'<div id="'
 											+ test2.substring(1)
 											+ '" style="position:absolute; top:50px; left:50px; margin:5px; padding:5px; width:20px; height:20px"></div>');
-					$(fixture).css('height', '100px');
-					$(fixture).css('width', '200px');
-					$(fixture).css('padding', '10px');
-					$(fixture).css('margin', '10px');
-					$(fixture).css('border', '10px solid');
+					$(fixture)[0].style.height = '100px';
+					$(fixture)[0].style.width = '200px';
+					$(fixture)[0].style.padding = '10px';
+					$(fixture)[0].style.margin = '10px';
+					$(fixture)[0].style.border = '10px solid';
 				},
 				teardown: function() {
 					$(test1).remove();
 					$(test2).remove();
-					$(fixture).css('height', '');
-					$(fixture).css('width', '');
+					$(fixture)[0].style.height = '';
+					$(fixture)[0].style.width = '';
 				}
 			});
 
@@ -80,70 +96,64 @@ $(function() {
 	asyncTest(
 			'h5.ui.isInView - 親子関係である要素について、親のborderの内側に子のborderの外側が見えていればisInView()の結果がtrue、見えてない場合はfalseであること。',
 			3 * 4 * 9, function() {
+				var test1Dom = $(test1)[0];
 				function testFunc() {
 					var top,left;
 					// 1 - ( 内側の要素のボーダー(上下(左右)の合計) + 内側の要素のパディング(上下(左右)の合計) + 内側の要素の高さ(幅) +
 					// 外側の要素のボーダー)
 					top = left = -40;
 
-					// Firefoxだと負の値を設定したときに1px～2pxずれるため、調整。WebDriver版はずれない。
-					if (h5.env.ua.isFirefox && navigator.userAgent.indexOf('WebDriver') === -1) {
-						top++;
-						left++;
-					}
-					$(test1).css('top', top + 'px');
-					$(test1).css('left', left + 'px');
-					check(same, true, '左上1pxが見えている状態', test1, fixture);
-					$(test1).css('top', top - 1 + 'px');
-					$(test1).css('left', left + 'px');
-					check(same, false, '左上1pxが見えている状態から上に1px移動', test1, fixture);
-					$(test1).css('top', top + 'px');
-					$(test1).css('left', left - 1 + 'px');
-					check(same, false, '左上1pxが見えている状態から左に1px移動', test1, fixture);
+					test1Dom.style.top = top + 'px';
+					test1Dom.style.left = left + 'px';
+					check(same, true, '左上1pxが見えている状態', test1Dom, fixture);
+					test1Dom.style.top = top - 1 + 'px';
+					test1Dom.style.left = left + 'px';
+					check(same, false, '左上1pxが見えている状態から上に1px移動', test1Dom, fixture);
+					test1Dom.style.top = top + 'px';
+					test1Dom.style.left = left - 1 + 'px';
+					check(same, false, '左上1pxが見えている状態から左に1px移動', test1Dom, fixture);
 
 					// 外側の要素の幅 + 外側の要素のボーダー + 外側の要素のパディング(左右) - 内側の要素のマージン - 1
 					left = 214;
-					$(test1).css('top', top + 'px');
-					$(test1).css('left', left + 'px');
-					check(same, true, '右上1pxが見えている状態', test1, fixture);
-					$(test1).css('top', top - 1 + 'px');
-					$(test1).css('left', left + 'px');
-					check(same, false, '右上1pxが見えている状態から上に1px移動', test1, fixture);
-					$(test1).css('top', top + 'px');
-					$(test1).css('left', left + 1 + 'px');
-					check(same, false, '右上1pxが見えている状態から右に1px移動', test1, fixture);
+					test1Dom.style.top = top + 'px';
+					test1Dom.style.left = left + 'px';
+					check(same, true, '右上1pxが見えている状態', test1Dom, fixture);
+					test1Dom.style.top = top - 1 + 'px';
+					test1Dom.style.left = left + 'px';
+					check(same, false, '右上1pxが見えている状態から上に1px移動', test1Dom, fixture);
+					test1Dom.style.top = top + 'px';
+					test1Dom.style.left = left + 1 + 'px';
+					check(same, false, '右上1pxが見えている状態から右に1px移動', test1Dom, fixture);
 
 					// 外側の要素の高さ + 外側の要素のボーダー + 外側の要素のパディング(上下) - 内側の要素のマージン - 1
 					top = 114;
-					$(test1).css('top', top + 'px');
-					$(test1).css('left', left + 'px');
-					check(same, true, '右下1pxが見えている状態', test1, fixture);
-					$(test1).css('top', top + 1 + 'px');
-					$(test1).css('left', left + 'px');
-					check(same, false, '右下1pxが見えている状態から下に1px移動', test1, fixture);
-					$(test1).css('top', top + 'px');
-					$(test1).css('left', left + 1 + 'px');
-					check(same, false, '右下1pxが見えている状態から右に1px移動', test1, fixture);
+					test1Dom.style.top = top + 'px';
+					test1Dom.style.left = left + 'px';
+					check(same, true, '右下1pxが見えている状態', test1Dom, fixture);
+					test1Dom.style.top = top + 1 + 'px';
+					test1Dom.style.left = left + 'px';
+					check(same, false, '右下1pxが見えている状態から下に1px移動', test1Dom, fixture);
+					test1Dom.style.top = top + 'px';
+					test1Dom.style.left = left + 1 + 'px';
+					check(same, false, '右下1pxが見えている状態から右に1px移動', test1Dom, fixture);
 
 					// leftを左側に戻す
 					left = -40;
-					if (h5.env.ua.isFirefox && navigator.userAgent.indexOf('WebDriver') === -1) {
-						left++;
-					}
-					$(test1).css('top', top + 'px');
-					$(test1).css('left', left + 'px');
-					check(same, true, '左下1pxが見えている状態', test1, fixture);
-					$(test1).css('top', top + 1 + 'px');
-					$(test1).css('left', left + 'px');
-					check(same, false, '左下1pxが見えている状態から下に1px移動', test1, fixture);
-					$(test1).css('top', top + 'px');
-					$(test1).css('left', left - 1 + 'px');
-					check(same, false, '左下1pxが見えている状態から右に1px移動', test1, fixture);
+
+					test1Dom.style.top = top + 'px';
+					test1Dom.style.left = left + 'px';
+					check(same, true, '左下1pxが見えている状態', test1Dom, fixture);
+					test1Dom.style.top = top + 1 + 'px';
+					test1Dom.style.left = left + 'px';
+					check(same, false, '左下1pxが見えている状態から下に1px移動', test1Dom, fixture);
+					test1Dom.style.top = top + 'px';
+					test1Dom.style.left = left - 1 + 'px';
+					check(same, false, '左下1pxが見えている状態から右に1px移動', test1Dom, fixture);
 
 					start();
 				}
 				function waitForDom(i) {
-					if ($(test1).offset()) {
+					if ($(test1Dom).offset()) {
 						testFunc();
 						return;
 					}
@@ -154,9 +164,6 @@ $(function() {
 				waitForDom();
 			});
 
-
-	var originTop = $(window).scrollTop();
-	var originLeft = $(window).scrollLeft();
 	module(
 			"isInView2",
 			{
@@ -171,10 +178,10 @@ $(function() {
 					// スクロールできるようにするための要素を追加
 					$('body').append(
 							'<div id="enableScroll" style="width:1px;visible:hidden;height:1px; position:absolute; top:'
-									+ $(window).height() + 1000 + 'px; width:' + $(window).width()
+									+ getWindowHeight() + 1000 + 'px; width:' + getWindowWidth()
 									+ 1000 + 'px;"></div>');
 					// 一時的にスクロールバーを消す
-					$('body').css('overflow', 'hidden');
+					document.body.style.overflow = 'hidden';
 					// 0,0にスクロールしてテスト
 					$(window).scrollTop(0);
 					$(window).scrollLeft(0);
@@ -184,7 +191,7 @@ $(function() {
 					$(test3).remove();
 					$('#enableScroll').remove();
 					// スクロールバーを元に戻す
-					$('body').css('overflow', 'visible');
+					document.body.style.overflow = 'visible';
 					$(window).scrollTop(originTop);
 					$(window).scrollTop(originLeft);
 				}
@@ -193,114 +200,76 @@ $(function() {
 			'h5.ui.isInView - 第二引数を省略したときに、可視範囲の内側に子のborderの外側が見えていればisInView()の結果がtrue、見えてない場合はfalseであること。',
 			2 * 3 * 4 * 9,
 			function() {
+				var testDom = $(test3)[0];
 				function testFunc(scrollTop, scrollLeft) {
 					// テスト実行中に$(test3)がなくなることがあるので、なければ作る。
-					if (!$(test3).offset()) {
-						$(test3).remove && $(test3).remove();
+					if (!$(testDom).offset()) {
+						$(testDom).remove && $(testDom).remove();
 						$('body')
 								.append(
 
 										'<div id="'
-												+ test3.substring(1)
+												+ testDom.substring(1)
 												+ '" style="position:absolute; top:50px; left:50px; padding:5px; border:3px solid; width:20px; height:20px;"></div>');
 
 					}
 					var viewTop = scrollTop | 0;
 					var viewLeft = scrollLeft | 0;
 
-					if (h5.env.ua.isFirefox) {
-						if (scrollTop) {
-							viewTop++;
-						}
-						if (scrollLeft) {
-							viewLeft++;
-						}
-					}
-
 					var top,left;
 					// 1 - 内側の要素のパディング(上下(左右)の合計) + 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
 					// viewTop(viewLeft)
 					top = viewTop - 35;
 					left = viewLeft - 35;
-					// Firefoxだとずれるため、調整。
-					if (h5.env.ua.isFirefox) {
-						if (navigator.userAgent.indexOf('WebDriver') === -1) {
-							top += 2;
-							left += 2;
-						}
-						if (scrollTop) {
-							top--;
-						}
-						if (scrollLeft) {
-							left--;
-						}
-					}
 
-					$(test3).css('top', top + 'px');
-					$(test3).css('left', left + 'px');
-					check(same, true, '左上1pxが見えている状態', test3);
-					$(test3).css('top', top - 1 + 'px');
-					$(test3).css('left', left + 'px');
-					check(same, false, '左上1pxが見えている状態から上に1px移動', test3);
-					$(test3).css('top', top + 'px');
-					$(test3).css('left', left - 1 + 'px');
-					check(same, false, '左上1pxが見えている状態から左に1px移動', test3);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 'px';
+					check(same, true, '左上1pxが見えている状態', testDom);
+					testDom.style.top = top - 1 + 'px';
+					testDom.style.left = left + 'px';
+					check(same, false, '左上1pxが見えている状態から上に1px移動', testDom);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left - 1 + 'px';
+					check(same, false, '左上1pxが見えている状態から左に1px移動', testDom);
 
 					// window幅 - 1
-					left = $(window).width() + viewLeft - 1;
-					if (h5.env.ua.isFirefox && navigator.userAgent.indexOf('WebDriver') !== -1) {
-						if (scrollLeft) {
-							left--;
-						}
-					}
-					$(test3).css('top', top + 'px');
-					$(test3).css('left', left + 'px');
-					check(same, true, '右上1pxが見えている状態', test3);
-					$(test3).css('top', top - 1 + 'px');
-					$(test3).css('left', left + 'px');
-					check(same, false, '右上1pxが見えている状態から上に1px移動', test3);
-					$(test3).css('top', top + 'px');
-					$(test3).css('left', left + 1 + 'px');
-					check(same, false, '右上1pxが見えている状態から右に1px移動', test3);
+					left = getWindowWidth() + viewLeft - 1;
+
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 'px';
+					check(same, true, '右上1pxが見えている状態', testDom);
+					testDom.style.top = top - 1 + 'px';
+					testDom.style.left = left + 'px';
+					check(same, false, '右上1pxが見えている状態から上に1px移動', testDom);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 1 + 'px';
+					check(same, false, '右上1pxが見えている状態から右に1px移動', testDom);
 
 					// windowの高さ - 1
-					top = $(window).height() + viewTop - 1;
-					if (h5.env.ua.isFirefox && navigator.userAgent.indexOf('WebDriver') !== -1) {
-						if (scrollTop) {
-							top--;
-						}
-					}
-					$(test3).css('top', top + 'px');
-					$(test3).css('left', left + 'px');
-					check(same, true, '右下1pxが見えている状態', test3);
-					$(test3).css('top', top + 1 + 'px');
-					$(test3).css('left', left + 'px');
-					check(same, false, '右下1pxが見えている状態から下に1px移動', test3);
-					$(test3).css('top', top + 'px');
-					$(test3).css('left', left + 1 + 'px');
-					check(same, false, '右下1pxが見えている状態から右に1px移動', test3);
+					top = getWindowHeight() + viewTop - 1;
+
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 'px';
+					check(same, true, '右下1pxが見えている状態', testDom);
+					testDom.style.top = top + 1 + 'px';
+					testDom.style.left = left + 'px';
+					check(same, false, '右下1pxが見えている状態から下に1px移動', testDom);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 1 + 'px';
+					check(same, false, '右下1pxが見えている状態から右に1px移動', testDom);
 
 					// leftを左側に戻す
 					left = viewLeft - 35;
 
-					// Firefoxだとずれるため、調整。
-					if (h5.env.ua.isFirefox) {
-						if (navigator.userAgent.indexOf('WebDriver') === -1) {
-							left += 2;
-						}
-						if (scrollLeft) {
-							left--;
-						}
-					}
-					$(test3).css('top', top + 'px');
-					$(test3).css('left', left + 'px');
-					check(same, true, '左下1pxが見えている状態', test3);
-					$(test3).css('top', top + 1 + 'px');
-					$(test3).css('left', left + 'px');
-					check(same, false, '左下1pxが見えている状態から下に1px移動', test3);
-					$(test3).css('top', top + 'px');
-					$(test3).css('left', left - 1 + 'px');
-					check(same, false, '左下1pxが見えている状態から右に1px移動', test3);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 'px';
+					check(same, true, '左下1pxが見えている状態', testDom);
+					testDom.style.top = top + 1 + 'px';
+					testDom.style.left = left + 'px';
+					check(same, false, '左下1pxが見えている状態から下に1px移動', testDom);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left - 1 + 'px';
+					check(same, false, '左下1pxが見えている状態から右に1px移動', testDom);
 
 					if (!(scrollTop && scrollLeft)) {
 						$(window).scrollTop(100);
@@ -323,7 +292,7 @@ $(function() {
 			// スクロールできるようにするための要素を追加
 			$('body').append(
 					'<div id="enableScroll" style="width:1px;visible:hidden;height:1px; position:absolute; top:'
-							+ $(window).height() + 1000 + 'px; width:' + $(window).width() + 1000
+							+ getWindowHeight() + 1000 + 'px; width:' + getWindowWidth() + 1000
 							+ 'px;"></div>');
 		},
 		teardown: function() {
