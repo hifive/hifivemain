@@ -13,7 +13,6 @@
  *
  * hifive
  */
-
 $(function() {
 	var fixture = '#qunit-fixture';
 	var test1 = '#isInViewTest1';
@@ -23,18 +22,14 @@ $(function() {
 	function getWindowWidth() {
 		if (window.innerWidth) {
 			return window.innerWidth;
-		} else if (document.documentElement && document.documentElement.clientWidth != 0) {
-			return document.documentElement.clientWidth;
 		}
+		return document.documentElement.clientWidth;
 	}
 	function getWindowHeight() {
 		if (window.innerHeight) {
 			return window.innerHeight;
-		} else if (document.documentElement && document.documentElement.clientHeight != 0) {
+		} else
 			return document.documentElement.clientHeight;
-		} else if (document.body) {
-			return document.body.clientHeight;
-		}
 	}
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
 	function check(fn, expect, message, s1, s2) {
