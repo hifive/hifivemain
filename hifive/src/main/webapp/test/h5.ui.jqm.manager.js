@@ -29,11 +29,11 @@ $(function() {
 	$('.ui-loader').toggle();
 	$.mobile.activePage = $('body');
 
-	function createPage(id) {
-		id = id || 'top_main_pageForJQMTest';
+	function createPage(_id, _js) {
+		id = _id || 'top_main_pageForJQMTest';
+		js = _js || 'data/testforJQM.js?' + new Date().getTime();
 		var page = $('<div id="' + id
-				+ '" class="divForJQM" data-role="page" data-h5-script="data/testforJQM.js?'
-				+ new Date().getTime() + '"></div>');
+				+ '" class="divForJQM" data-role="page" data-h5-script="'+ js + '"></div>');
 		var header = $('<div id="top_header" class="ui-bar-f ui-header appLogoHeader"><h1>header</h1></div>');
 		var content = $('<div id="top_content" >content<button id="test"></button></div>');
 		var footer = $('<div id="top_footer" data-role="footer" style="width:100%">footer</div>');
@@ -74,7 +74,19 @@ $(function() {
 		h5.ui.jqm.manager.define('top_main_pageForJQMTest', null, controller);
 	});
 
-
+	asyncTest('h5.ui.jqmmanager define() loadScriptで読み込んだjsからdefine()できること。', 2, function() {
+		createPage('test3', 'data/testforJQM3.js');
+		createPage('test4', 'data/testforJQM4.js');
+		$(':jqmData(role="page"), :jqmData(role="dialog")').trigger('pageinit');
+		setTimeout(function(){
+			$('#qunit-fixture').trigger('click');
+			ok(window.testforJQM3Clicked, 'define()でコントローラがバインドされた');
+			ok(window.testforJQM4Clicked, 'define()でコントローラがバインドされた');
+			delete window.testforJQM3Clicked;
+			delete window.testforJQM4Clicked;
+			start();
+		},300);
+	});
 
 	asyncTest(
 			'h5.ui.jqmmanager define() コントローラがdefineでバインドできること。h5.ui.jqm.dataPrefixがnullの時にデフォルトのprefixが"h5"であること。',
