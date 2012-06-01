@@ -93,19 +93,33 @@
 	 */
 	var initCalled = false;
 
+	/**
+	 * loadScriptでscriptを読み込んだ時に、define()が呼ばれたかどうかを示すフラグ
+	 *
+	 * @type Boolean
+	 */
+	var definedInScript = false;
+
 	// =============================
 	// Functions
 	// =============================
 
 	/**
-	 * 現在のアクティブページにコントローラをバインドします。
+	 * 指定されたidのページにコントローラをバインドします。 idの指定がない場合は、現在のアクティブページにコントローラをバインドします。
+	 *
+	 * @param {String} _id ページID
 	 */
-	function bindToActivePage() {
-		var activePage = $.mobile.activePage;
-		if (!activePage) {
-			return;
+	function bindToActivePage(_id) {
+		var id;
+		if (_id) {
+			id = _id;
+		} else {
+			var activePage = $.mobile.activePage;
+			if (!activePage) {
+				return;
+			}
+			id = activePage.attr('id');
 		}
-		var id = activePage.attr('id');
 		var controllers = controllerInstanceMap[id];
 		if (controllerMap[id] && (!controllers || controllers.length === 0)) {
 			jqmControllerInstance.addCSS(id);
@@ -170,9 +184,12 @@
 		 */
 		':jqmData(role="page"), :jqmData(role="dialog") pageinit': function(context) {
 			var id = context.event.target.id;
+			// loadScriptの中でdefineされたかどうかフラグでチェックする。
+			definedFlag = false;
 			this.loadScript(id);
 			this.addCSS(id);
-			this.bindController(id);
+			// loadScriptの中でdefineされていたらbindControllerは呼ばない。
+			definedFlag || this.bindController(id);
 		},
 
 		/**
@@ -288,6 +305,7 @@
 			if (!controllerMap[id] || (controllers && controllers.length > 0)) {
 				return;
 			}
+			definedFlag = true;
 			h5.core.controller('#' + id, controllerMap[id], initParamMap[id]);
 		},
 
@@ -376,7 +394,7 @@
 		 * @function
 		 * @name init
 		 */
-		init: function() {
+		init: function(id) {
 			if (initCalled) {
 				return;
 			}
@@ -387,7 +405,7 @@
 				} else {
 					jqmControllerInstance = h5.core.controller('body', jqmController);
 				}
-				bindToActivePage();
+				bindToActivePage(id);
 			});
 		},
 
@@ -407,7 +425,7 @@
 			controllerMap[id] = controllerDefObject;
 			initParamMap[id] = initParam;
 			cssMap[id] = wrapInArray(cssSrc);
-			!jqmControllerInstance ? h5.ui.jqm.manager.init() : bindToActivePage();
+			!jqmControllerInstance ? h5.ui.jqm.manager.init(id) : bindToActivePage(id);
 		}
 	});
 })();
