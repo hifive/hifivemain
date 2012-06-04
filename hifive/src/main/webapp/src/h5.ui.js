@@ -736,36 +736,35 @@
 	 */
 	var isInView = function(element, container) {
 		var viewTop,viewBottom,viewLeft,viewRight;
-		var elem = $(element)[0];
+		var $element = $(element);
 		var height,width;
-		var cont;
+		var $container;
 		// containerの位置を取得。borderの内側の位置で判定する。
 		if (container === undefined) {
 			// containerが指定されていないときは、画面表示範囲内にあるかどうか判定する
-			height = window.innerHeight || document.documentElement.clientHeight;
-			width = window.innerWidth || document.documentElement.clientWidth;
-			viewTop = window.scrollY  || document.body.scrollTop || document.documentElement.scrollTop;
-			viewLeft = window.scrollX || document.body.scrollLeft || document.documentElement.scrollLeft;
+			height = h5.env.ua.isiOS ? window.innerHeight : $(window).height();
+			width = h5.env.ua.isiOS ? window.innerWidth : $(window).width();
+			viewTop = $(window).scrollTop();
+			viewLeft = $(window).scrollLeft();
 		} else {
-			if ($(container).find(elem).length === 0) {
-				// elemとcontaienrが親子関係でなければundefinedを返す
+			$container = $(container);
+			if ($container.find($element).length === 0) {
+				// elementとcontaienrが親子関係でなければundefinedを返す
 				return undefined;
 			}
-			cont = $(container)[0];
-			viewTop = $(cont).offset().top + parseFloat(cont.style.borderTopWidth);
-			viewLeft = $(cont).offset().left + parseFloat(cont.style.borderLeftWidth);
-
-			height = cont.clientHeight;
-			width = cont.clientWidth;
+			viewTop = $container.offset().top + parseInt($container.css('border-top-width'));
+			viewLeft = $container.offset().left + parseInt($container.css('border-left-width'));
+			height = $container.innerHeight();
+			width = $container.innerWidth();
 		}
 		viewBottom = viewTop + height;
 		viewRight = viewLeft + width;
 
-		// elemの位置を取得。borderの外側の位置で判定する。
-		var positionTop = $(elem).offset().top;
-		var positionLeft = $(elem).offset().left;
-		var positionBottom = positionTop + elem.offsetHeight;
-		var positionRight = positionLeft + elem.offsetWidth;
+		// elementの位置を取得。borderの外側の位置で判定する。
+		var positionTop = $element.offset().top;
+		var positionLeft = $element.offset().left;
+		var positionBottom = positionTop + $element.outerHeight();
+		var positionRight = positionLeft + $element.outerWidth();
 		return ((viewTop <= positionTop && positionTop < viewBottom) || (viewTop < positionBottom && positionBottom <= viewBottom))
 				&& ((viewLeft <= positionLeft && positionLeft < viewRight) || (viewLeft < positionRight && positionRight <= viewRight));
 	};
