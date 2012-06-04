@@ -84,6 +84,8 @@ $(function() {
 			ok(window.testforJQM4Clicked, 'define()でコントローラがバインドされた');
 			delete window.testforJQM3Clicked;
 			delete window.testforJQM4Clicked;
+			pageremove("test3");
+			pageremove("test4");
 			start();
 		},300);
 	});
