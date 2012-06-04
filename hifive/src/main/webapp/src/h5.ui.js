@@ -744,16 +744,16 @@
 			// containerが指定されていないときは、画面表示範囲内にあるかどうか判定する
 			height = window.innerHeight;
 			width = window.innerWidth;
-			viewTop = $(window).scrollTop();
-			viewLeft = $(window).scrollLeft();
+			viewTop = window.scrollY;
+			viewLeft = window.scrollX;
 		} else {
 			if ($(container).find(elem).length === 0) {
 				// elemとcontaienrが親子関係でなければundefinedを返す
 				return undefined;
 			}
 			cont = $(container)[0];
-			viewTop = cont.offsetTop + parseFloat($(cont).css('border-top-width'));
-			viewLeft = cont.offsetLeft + parseFloat($(cont).css('border-left-width'));
+			viewTop = $(cont).offset().top + parseFloat(cont.style.borderTopWidth);
+			viewLeft = $(cont).offset().left + parseFloat(cont.style.borderLeftWidth);
 
 			height = cont.clientHeight;
 			width = cont.clientWidth;
