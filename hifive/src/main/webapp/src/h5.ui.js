@@ -742,10 +742,10 @@
 		// containerの位置を取得。borderの内側の位置で判定する。
 		if (container === undefined) {
 			// containerが指定されていないときは、画面表示範囲内にあるかどうか判定する
-			height = window.innerHeight;
-			width = window.innerWidth;
-			viewTop = window.scrollY;
-			viewLeft = window.scrollX;
+			height = window.innerHeight || document.documentElement.clientHeight;
+			width = window.innerWidth || document.documentElement.clientWidth;
+			viewTop = window.scrollY  || document.body.scrollTop || document.documentElement.scrollTop;
+			viewLeft = window.scrollX || document.body.scrollLeft || document.documentElement.scrollLeft;
 		} else {
 			if ($(container).find(elem).length === 0) {
 				// elemとcontaienrが親子関係でなければundefinedを返す

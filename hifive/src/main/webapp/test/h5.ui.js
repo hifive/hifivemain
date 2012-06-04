@@ -405,17 +405,6 @@ $(function() {
 			function() {
 				var testDom = $(test3)[0];
 				function testFunc(scrollTop, scrollLeft) {
-					// テスト実行中に$(test3)がなくなることがあるので、なければ作る。
-//					if (!$(testDom).offset()) {
-//						$(testDom).remove && $(testDom).remove();
-//						$('body')
-//								.append(
-//
-//										'<div id="'
-//												+ testDom.substring(1)
-//												+ '" style="position:absolute; top:50px; left:50px; padding:5px; border:3px solid; width:20px; height:20px;"></div>');
-//
-//					}
 					var viewTop = scrollTop | 0;
 					var viewLeft = scrollLeft | 0;
 
