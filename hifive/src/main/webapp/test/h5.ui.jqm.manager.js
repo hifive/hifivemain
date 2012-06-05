@@ -130,8 +130,8 @@ $(function() {
 		},
 		teardown: function() {
 			resetJQM();
-			delete window.loadedTestForJQM6;
-			delete window.loadedTestForJQM7;
+			window.loadedTestForJQM6 = undefined;
+			window.loadedTestForJQM7 = undefined;
 		}
 	});
 	asyncTest('init()時に存在するページのdata-h5-scriptに指定されているjsがロードされること。', 2, function() {
@@ -154,8 +154,8 @@ $(function() {
 		},
 		teardown: function() {
 			resetJQM();
-			delete window.loadedTestForJQM6;
-			delete window.loadedTestForJQM7;
+			window.loadedTestForJQM6 = undefined;
+			window.loadedTestForJQM7 = undefined;
 		}
 	});
 	asyncTest('pageinitイベントがページから呼ばれると、そのページのscriptがロードされること。', 3, function() {
@@ -219,8 +219,8 @@ $(function() {
 		teardown: function() {
 			resetJQM();
 			h5.ui.jqm.dataPrefix = originalPrefix;
-			delete window.loadedTestForJQM1;
-			delete window.loadedTestForJQM2;
+			window.loadedTestForJQM1 = undefined;
+			window.loadedTestForJQM2 = undefined;
 		}
 	});
 	asyncTest('h5.ui.jqm.dataPrefixがnullの場合でも、data-h5-script属性に指定したjsファイルがロードできること。', 5, function() {
@@ -264,8 +264,8 @@ $(function() {
 		},
 		teardown: function() {
 			resetJQM();
-			delete window.loadedTestForJQM1;
-			delete window.loadedTestForJQM2;
+			window.loadedTestForJQM1 = undefined;
+			window.loadedTestForJQM2 = undefined;
 		}
 	});
 	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドできること。', 4, function() {
@@ -308,8 +308,8 @@ $(function() {
 		},
 		teardown: function() {
 			resetJQM();
-			delete window.testforJQM3Clicked;
-			delete window.testforJQM4Clicked;
+			window.testforJQM3Clicked = undefined;
+			window.testforJQM4Clicked = undefined;
 		}
 	});
 	asyncTest('h5.ui.jqmmanager define() loadScriptで読み込んだjsからdefine()できること。', 2, function() {
