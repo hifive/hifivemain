@@ -378,15 +378,12 @@
 		 */
 		init: function() {
 			if (initCalled) {
+				fwLogger.info('JQMマネージャは既に初期化されています。');
 				return;
 			}
 			initCalled = true;
 			$(function() {
-				if (jqmControllerInstance) {
-					fwLogger.info('JQMマネージャは既に初期化されています。');
-				} else {
-					jqmControllerInstance = h5.core.controller('body', jqmController);
-				}
+				jqmControllerInstance = h5.core.controller('body', jqmController);
 				bindToActivePage();
 			});
 		},
@@ -433,12 +430,9 @@
 			}
 			if (flag === true || flag === false) {
 				initCalled = flag;
-				if (!flag) {
-					jqmControllerInstance = null;
-				}
 				return flag;
 			}
-			fwLogger.warn('initCalled() 引数にはtrueかfalseを指定してください。');
+			fwLogger.warn('h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。');
 		}
 	/* del end */
 	});
