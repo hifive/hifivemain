@@ -16,11 +16,7 @@
 
 // jQueryMobileの読み込み
 h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js");
-
 $(function() {
-
-	// JQMが生成するbody内をラップするdiv要素を外す
-	$('body>div').children().unwrap();
 
 	function resetJQM() {
 		h5.ui.jqm.manager.__initFlag && h5.ui.jqm.manager.__initFlag(false);
@@ -31,7 +27,11 @@ $(function() {
 		h5.core.controllerManager.controllers[0]
 				&& h5.core.controllerManager.controllers[0].dispose();
 		$.mobile.activePage = undefined;
-		$('body>h1:last').css('display', 'none');
+		// JQMが生成するbody内をラップするdiv要素を外す
+		$('body>div').children().unwrap();
+		// JQMが生成するloadingのh1要素を削除
+		$('h1:not(#qunit-header)').remove();
+
 	}
 
 	function pageremove(selector) {
@@ -40,8 +40,6 @@ $(function() {
 		});
 		$('.divForJQM').remove();
 	}
-
-	$.mobile.activePage = $('body');
 
 	// idからページを作る。jsが指定されていればdata-h5-script、activFlag=trueなら作成したページをactivePageにする。
 	function createPage(id, _js, activeFlag) {
@@ -61,32 +59,153 @@ $(function() {
 
 	// h5.ui.jqm.manager.__initFlagが存在するかどうかをチェックする。存在しない場合はテストを終了させる。
 	// 引数にtrueを指定した場合はstart()を呼ばない。
-	function checkDev(sync) {
+	function checkDev() {
 		if (!h5.ui.jqm.manager.__initFlag) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			if (!sync) {
-				start();
-			}
-			return;
+			return false;
 		}
+		return true;
 	}
+
 
 	// 擬似的にページ遷移を行う
 	function changePage(to, initialize) {
-		from = $.mobile.activePage;
-		to = $(to);
+		var $from = $.mobile.activePage;
+		$to = $(to);
 		if (initialize) {
-			to.trigger('pageinit');
+			$to.trigger('pageinit');
 		}
-		$.mobile.activePage = to;
-		from && from.trigger('pagebeforehide');
-		to.trigger('pagebeforeshow');
-		from && from.trigger('pagehide');
-		to.trigger('pageshow');
+		$.mobile.activePage = $to;
+		$from && $from.trigger('pagebeforehide');
+		$to.trigger('pagebeforeshow');
+		$from && $from.trigger('pagehide');
+		$to.trigger('pageshow');
 	}
 
 	var originalPrefix = '';
+
+	module("init1", {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+	asyncTest('init() initを実行するとJQMControllerがバインドされること。', 1, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+		setTimeout(function() {
+			var controllers = h5.core.controllerManager.controllers;
+			same(controllers[controllers.length - 1].__name, 'JQMController',
+					'JQMControllerがバインドされている。');
+			start();
+		}, 0);
+	});
+
+	asyncTest('init() すでにinit()済みならログが出力(※要目視)されて、何もされないこと。', 1, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+		setTimeout(function() {
+			try {
+				h5.ui.jqm.manager.init();
+				ok(true, '「JQMマネージャは既に初期化されています。」とログが出力されること');
+			} catch (e) {
+				ok(false, 'テスト失敗。エラーが発生しました。');
+			}
+			start();
+		}, 0);
+	});
+
+	module("init2", {
+		setup: function() {
+			createPage("testjs1", 'data/testforJQM6.js', true);
+			createPage("testjs2", 'data/testforJQM7.js');
+			h5.ui.jqm.manager.init();
+		},
+		teardown: function() {
+			resetJQM();
+			delete window.loadedTestForJQM6;
+			delete window.loadedTestForJQM7;
+		}
+	});
+	asyncTest('init()時に存在するページのdata-h5-scriptに指定されているjsがロードされること。', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
+		setTimeout(function() {
+			ok(window.loadedTestForJQM6, 'data-h5-scriptに指定したjsファイルがロードされていること');
+			ok(window.loadedTestForJQM7, 'data-h5-scriptに指定したjsファイルがロードされていること');
+			start();
+		}, 0);
+	});
+
+	module("init2", {
+		setup: function() {
+			createPage("testjs3", 'data/testforJQM6.js', true);
+			h5.ui.jqm.manager.init();
+		},
+		teardown: function() {
+			resetJQM();
+			delete window.loadedTestForJQM6;
+			delete window.loadedTestForJQM7;
+		}
+	});
+	asyncTest('pageinitイベントがページから呼ばれると、そのページのscriptがロードされること。', 3, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
+		setTimeout(function() {
+			createPage("testjs4", 'data/testforJQM7.js');
+			ok(window.loadedTestForJQM6, 'data-h5-scriptに指定したjsファイルがロードされていること');
+			ok(!window.loadedTestForJQM7, 'init()時になかったページについてはjsファイルがロードされないこと');
+			$('#testjs4').trigger('pageinit');
+			setTimeout(function() {
+				ok(window.loadedTestForJQM7, 'pageinitイベントが発生するとjsファイルがロードされる。');
+				start();
+			}, 100);
+		}, 0);
+	});
+
+	module("__initFlag", {
+		setup: function() {},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+	asyncTest('__initFlag()でinit()済みかどうかを取得/設定できること', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+		same(h5.ui.jqm.manager.__initFlag(), false, 'init()前なので、falseを取得できること。');
+		h5.ui.jqm.manager.init();
+		same(h5.ui.jqm.manager.__initFlag(), true, 'init()済みなので、trueを取得できること。');
+		setTimeout(function() {
+			// init()内部の処理が終わるまで次のテストが実行されないよう、非同期にして待機。
+			start();
+		}, 0);
+	});
+	test('__initFlag()にtrue,false以外を指定するとログが表示されること(※要目視確認)', 3, function() {
+		if (!checkDev()) {
+			return;
+		}
+		h5.ui.jqm.manager.__initFlag(0);
+		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
+		h5.ui.jqm.manager.__initFlag(new Boolean(true));
+		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
+		h5.ui.jqm.manager.__initFlag(new Boolean(false));
+		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
+	});
 
 	module("dataPrefix1", {
 		setup: function() {
@@ -104,8 +223,11 @@ $(function() {
 			delete window.loadedTestForJQM2;
 		}
 	});
-	asyncTest('h5.ui.jqm.dataPrefixがnullの時にデフォルトのprefixが"h5"であること。', 5, function() {
-		checkDev();
+	asyncTest('h5.ui.jqm.dataPrefixがnullの場合でも、data-h5-script属性に指定したjsファイルがロードできること。', 5, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
 		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
 		setTimeout(function() {
 			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
@@ -134,57 +256,10 @@ $(function() {
 		}, 0);
 	});
 
-	module("init", {
-		setup: function() {
-			h5.ui.jqm.manager.init();
-		},
-		teardown: function() {
-			resetJQM();
-		}
-	});
-	asyncTest('h5.ui.jqmmanager init() すでにinit()済みならログが出力(※要目視)されて、何もされないこと。', 1, function() {
-		checkDev();
-		ok(true, '「JQMマネージャは既に初期化されています。」とログが出力されること');
-		setTimeout(function() {
-			try {
-				h5.ui.jqm.manager.init();
-			} catch (e) {
-				ok(false, 'テスト失敗。エラーが発生しました。');
-			}
-			start();
-		}, 0);
-	});
-
-	module("init2", {
-		setup: function() {},
-		teardown: function() {
-			resetJQM();
-		}
-	});
-	asyncTest('h5.ui.jqm.manager.__initFlag() でinit()済みかどうかを取得/設定できること', 2, function() {
-		checkDev();
-		same(h5.ui.jqm.manager.__initFlag(), false, 'init()前なので、falseを取得できること。');
-		h5.ui.jqm.manager.init();
-		same(h5.ui.jqm.manager.__initFlag(), true, 'init()済みなので、trueを取得できること。');
-		setTimeout(function() {
-			// init()内部の処理が終わるまで次のテストが実行されないよう、非同期にして待機。
-			start();
-		}, 0);
-	});
-	test('h5.ui.jqm.manager.__initFlag()にtrue,false以外を指定するとログが表示されること(※要目視確認)', 3, function() {
-		checkDev();
-		h5.ui.jqm.manager.__initFlag(0);
-		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
-		h5.ui.jqm.manager.__initFlag(new Boolean(true));
-		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
-		h5.ui.jqm.manager.__initFlag(new Boolean(false));
-		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
-	});
-
 	module("define1", {
 		setup: function() {
-			createPage("test3", 'data/testforJQM1.js', true);
-			createPage("test4", 'data/testforJQM2.js');
+			createPage("test3", null, true);
+			createPage("test4");
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
@@ -193,13 +268,13 @@ $(function() {
 			delete window.loadedTestForJQM2;
 		}
 	});
-	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドできること。jsがロードされること。', 6, function() {
-		checkDev();
-
+	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドできること。', 4, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
 		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
 		setTimeout(function() {
-			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
 			var controller = {
 				__name: 'Test3Controller',
 
@@ -238,7 +313,10 @@ $(function() {
 		}
 	});
 	asyncTest('h5.ui.jqmmanager define() loadScriptで読み込んだjsからdefine()できること。', 2, function() {
-		checkDev();
+		if (!checkDev()) {
+			start();
+			return;
+		}
 		setTimeout(function() {
 			$('#qunit-fixture').trigger('click');
 			ok(window.testforJQM4Clicked, 'define()でactivePageにコントローラがバインドされた');
@@ -258,7 +336,10 @@ $(function() {
 		}
 	});
 	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドし、cssがロードされること。', 1, function() {
-		checkDev();
+		if (!checkDev()) {
+			start();
+			return;
+		}
 		setTimeout(function() {
 			var controller = {
 				__name: 'Test6Controller',
@@ -295,7 +376,10 @@ $(function() {
 	});
 
 	asyncTest('ページ遷移したときにcssが切り替わること。', 9, function() {
-		checkDev();
+		if (!checkDev()) {
+			start();
+			return;
+		}
 		var controller7 = {
 			__name: 'Test7Controller',
 
@@ -340,8 +424,8 @@ $(function() {
 
 				var count = 50;
 				function checkCSS() {
-					if (--count === 0 || $('#test8 h1').css('font-weight') === 'bold') {
-						same($('#test8 h1').css('font-weight'), 'bold',
+					if (--count === 0 || $('#test8 h1').css('margin-left') === '33px') {
+						same($('#test8 h1').css('margin-left'), '33px',
 								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
 						ok($('#test8 h1').css('font-size') !== '111px', '遷移元ページのCSSは適用されていない。');
 						start();
@@ -374,7 +458,10 @@ $(function() {
 	});
 
 	asyncTest('ページ遷移したときに遷移先のコントローラがバインドされること。', 4, function() {
-		checkDev();
+		if (!checkDev()) {
+			start();
+			return;
+		}
 		var controller9 = {
 			__name: 'Test9Controller',
 
@@ -429,7 +516,10 @@ $(function() {
 	});
 
 	asyncTest('ページ遷移先がコントローラの無いページの場合でも、遷移できる。', 4, function() {
-		checkDev();
+		if (!checkDev()) {
+			start();
+			return;
+		}
 		var controller11 = {
 			__name: 'Test11Controller',
 
@@ -440,10 +530,10 @@ $(function() {
 			'button#test click': function(context) {
 				ok(true, '#test11内のbutton#test click が実行される');
 				createPage('test12');
-				$('#test11').bind('pagehide', function(){
+				$('#test11').bind('pagehide', function() {
 					ok(true, 'test11のpagehideが呼ばれた。');
 				});
-				$('#test12').bind('pageshow', function(){
+				$('#test12').bind('pageshow', function() {
 					ok(true, 'test12のpageshowが呼ばれた。');
 					start();
 				});
