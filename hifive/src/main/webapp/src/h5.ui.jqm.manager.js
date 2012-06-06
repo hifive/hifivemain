@@ -86,6 +86,13 @@
 	 */
 	var cssMap = {};
 
+	/**
+	 * h5.ui.jqm.manager.init()が呼ばれたかどうかを示すフラグ
+	 *
+	 * @type Boolean
+	 */
+	var initCalled = false;
+
 	// =============================
 	// Functions
 	// =============================
@@ -93,7 +100,7 @@
 	/**
 	 * 現在のアクティブページにコントローラをバインドします。
 	 */
-	function bindToActivePage() {
+	function bindToActivePage(id) {
 		var activePage = $.mobile.activePage;
 		if (!activePage) {
 			return;
@@ -225,6 +232,9 @@
 		 * @memberOf JQMController
 		 */
 		'{rootElement} h5controllerbound': function(context) {
+			if (this === context.evArg) {
+				return;
+			}
 			var id = context.event.target.id;
 			if (!controllerInstanceMap[id]) {
 				controllerInstanceMap[id] = [];
@@ -367,12 +377,13 @@
 		 * @name init
 		 */
 		init: function() {
+			if (initCalled) {
+				fwLogger.info('JQMマネージャは既に初期化されています。');
+				return;
+			}
+			initCalled = true;
 			$(function() {
-				if (jqmControllerInstance) {
-					fwLogger.info('JQMマネージャは既に初期化されています。');
-				} else {
-					jqmControllerInstance = h5.core.controller('body', jqmController);
-				}
+				jqmControllerInstance = h5.core.controller('body', jqmController);
 				bindToActivePage();
 			});
 		},
@@ -393,7 +404,36 @@
 			controllerMap[id] = controllerDefObject;
 			initParamMap[id] = initParam;
 			cssMap[id] = wrapInArray(cssSrc);
+			if(!$.mobile.activePage || ($.mobile.activePage).attr('id') !== id){
+				return;
+			}
 			!jqmControllerInstance ? h5.ui.jqm.manager.init() : bindToActivePage();
 		}
+		/* del begin */
+		,
+		/**
+		 * 引数なしの場合はh5.ui.jqm.manager.init()が呼ばれたかどうかを返します。<br />
+		 * 引数を指定した場合は、h5.ui.jqm.manager.init()が呼ばれたかどうかのフラグ変数を変更します。<br />
+		 * 引数を指定する場合ははtrueまたはfalseを指定してください。<br />
+		 * この関数は開発版(h5.dev.js)でのみ使用できます。<br />
+		 * 通常は、この関数で値の設定を行う必要はありません。
+		 *
+		 * @param {boolean} [flag] h5.ui.jqm.manager.init()が呼ばれたかどうかのフラグに設定する値。引数なしの場合は現在のフラグを返します。
+		 * @returns {boolean} h5.ui.jqm.manager.init()が呼ばれたかどうか(もしくは設定した)値。
+		 * @memberOf h5.ui.jqm.manager
+		 * @function
+		 * @name __initFlag
+		 */
+		__initFlag: function(flag) {
+			if (flag === undefined) {
+				return initCalled;
+			}
+			if (flag === true || flag === false) {
+				initCalled = flag;
+				return flag;
+			}
+			fwLogger.warn('h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。');
+		}
+	/* del end */
 	});
 })();

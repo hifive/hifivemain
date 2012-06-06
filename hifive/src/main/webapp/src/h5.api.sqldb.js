@@ -179,9 +179,10 @@
 	 * DatabaseWrapper.select()/insert()/update()/del()/sql()/transaction() のパラメータチェック
 	 * <p>
 	 * txwがTransactionWrapper型ではない場合、例外をスローします。
+	 * null,undefinedの場合は例外をスローしません。
 	 */
 	function checkTransaction(funcName, txw) {
-		if (txw !== undefined && !(txw instanceof SQLTransactionWrapper)) {
+		if (txw != undefined && !(txw instanceof SQLTransactionWrapper)) {
 			throw new throwFwError(ERR_CODE_INVALID_TRANSACTION_TYPE, funcName);
 		}
 	}

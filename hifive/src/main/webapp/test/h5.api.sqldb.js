@@ -2625,7 +2625,7 @@ test('select()/insert()/update()/del()/sql() - テーブル名がString型以外
 
 test(
 		'select()/insert()/update()/del()/sql()/transaction() - トランザクションがTransactionWrapper型ではない時ににエラーが発生すること',
-		6, function() {
+		5, function() {
 			if (!h5.api.sqldb.isSupported) {
 				expect(1);
 				ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -2654,12 +2654,6 @@ test(
 					col2: 'hoge',
 					col3: 80.5
 				}, db.transaction());
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				same(errorCode, e.code, e.message);
-			}
-			try {
-				del = db.del(TABLE_NAME, null);
 				ok(false, 'エラーが発生していません');
 			} catch (e) {
 				same(errorCode, e.code, e.message);
