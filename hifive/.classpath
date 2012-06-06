@@ -90,5 +90,6 @@
 	<classpathentry kind="lib" path="lib/test/junit-4.10.jar"/>
 	<classpathentry kind="lib" path="lib/test/spring-test-3.1.1.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/test/testng-6.3.1.jar"/>
+	<classpathentry kind="lib" path="lib/h5Tools/h5WebDriverTestRunner.jar"/>
 	<classpathentry kind="output" path="src/main/webapp/WEB-INF/classes"/>
 </classpath>
