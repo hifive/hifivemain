@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -118,7 +118,11 @@
 		 * @returns {Any} キーに紐付く値
 		 */
 		getItem: function(key) {
-			return h5.u.obj.deserialize(this._storage.getItem(key));
+			var str = this._storage.getItem(key);
+			if (str === null) {
+				return null;
+			}
+			return h5.u.obj.deserialize(str);
 		},
 
 		/**

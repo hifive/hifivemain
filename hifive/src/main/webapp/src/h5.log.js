@@ -451,15 +451,13 @@
 		},
 
 		_output: function(func, args) {
-			var f = func;
-			if (!func.call) {
-				// IEでは、console.log/error/info/warnにcallがないので、その対応をする
-				f = function(arg) {
-					func(arg);
-				};
+			if (!func.apply) {
+				// IEでは、console.log/error/info/warnにapplyがない。
+				func(args);
+				return;
 			}
-			f.call(console, args);
-			return;
+			// IE以外では、applyを使って呼び出さないと『TypeError:Illegal invocation』が発生する
+			func.apply(console, args);
 		}
 	};
 
