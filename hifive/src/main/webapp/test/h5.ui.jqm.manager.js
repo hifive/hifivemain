@@ -223,38 +223,39 @@ $(function() {
 			window.loadedTestForJQM2 = undefined;
 		}
 	});
-	asyncTest('h5.ui.jqm.dataPrefixがnullの場合でも、data-h5-script属性に指定したjsファイルがロードできること。', 5, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
-		setTimeout(function() {
-			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			var controller = {
-				__name: 'Test1Controller',
-
-				__construct: function() {
-					ok(true, '__constructが実行される');
-				},
-				__init: function() {
-					ok(true, '__initが実行される');
-				},
-				__ready: function() {
-					ok(true, '__readyが実行される');
-
-					$('#test4 button#test').trigger('click');
+	asyncTest('h5.ui.jqm.dataPrefixがnullの場合でも、data-h5-script属性に指定したjsファイルがロードできること。', 5,
+			function() {
+				if (!checkDev()) {
 					start();
-				},
-
-				'button#test click': function() {
-					ok(true, 'button#test click が実行される');
+					return;
 				}
-			};
-			h5.ui.jqm.manager.define('test2', null, controller);
-		}, 0);
-	});
+				// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
+				setTimeout(function() {
+					ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
+					ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
+					var controller = {
+						__name: 'Test1Controller',
+
+						__construct: function() {
+							ok(true, '__constructが実行される');
+						},
+						__init: function() {
+							ok(true, '__initが実行される');
+						},
+						__ready: function() {
+							ok(true, '__readyが実行される');
+
+							$('#test4 button#test').trigger('click');
+							start();
+						},
+
+						'button#test click': function() {
+							ok(true, 'button#test click が実行される');
+						}
+					};
+					h5.ui.jqm.manager.define('test2', null, controller);
+				}, 0);
+			});
 
 	module("define1", {
 		setup: function() {
@@ -312,18 +313,30 @@ $(function() {
 			window.testforJQM4Clicked = undefined;
 		}
 	});
-	asyncTest('h5.ui.jqmmanager define() loadScriptで読み込んだjsからdefine()できること。', 2, function() {
+
+	asyncTest('h5.ui.jqmmanager define() data-h5-scriptに指定したjsからdefine()できること。', 2, function() {
 		if (!checkDev()) {
 			start();
 			return;
 		}
-		setTimeout(function() {
-			$('#qunit-fixture').trigger('click');
-			ok(window.testforJQM4Clicked, 'define()でactivePageにコントローラがバインドされた');
-			ok(!window.testforJQM5Clicked, 'define()しても、activePageでない要素にはコントローラはバインドされない');
-			start();
-		}, 100);
+
+		// コントローラがバインドされ、__readyが実行されるまで待機する。
+		var count = 50;
+		function check() {
+			if (count-- === 0 || window.testforJQM4ready) {
+				ok(window.testforJQM4ready,
+						'define()でactivePageにバインドしたコントローラの__readyが実行された');
+				ok(!window.testforJQM5ready, 'define()しても、activePageでない要素にはコントローラはバインドされない');
+				start();
+			} else {
+				setTimeout(function() {
+					check();
+				}, 100);
+			}
+		}
+		check();
 	});
+
 
 	module("define3", {
 		setup: function() {
@@ -348,7 +361,7 @@ $(function() {
 					function checkCSS() {
 						if (--count === 0 || $('#test6 h1').css('font-size') === '111px') {
 							same($('#test6 h1').css('font-size'), '111px',
-									'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
+									'CSSが適応されている。(※CSSファイルが5秒経っても取得できない場合、失敗します)');
 							start();
 						} else {
 							setTimeout(function() {
