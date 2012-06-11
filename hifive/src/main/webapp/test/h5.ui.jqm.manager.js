@@ -237,6 +237,36 @@ $(function() {
 		}
 	});
 
+	asyncTest('h5.ui.jqm.dataPrefixに文字列を指定した場合、data-(指定した文字列)-script属性に指定したjsファイルがロードできること。', 2,
+			function() {
+				if (!checkDev()) {
+					start();
+					return;
+				}
+				setTimeout(function() {
+					ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
+					ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
+					start();
+				}, 0);
+			});
+
+	module("dataPrefix2", {
+		setup: function() {
+			originalPrefix = h5.ui.jqm.dataPrefix;
+			h5.ui.jqm.dataPrefix = null;
+			createPage("test1", 'data/testforJQM1.js');
+			createPage("test2", 'data/testforJQM2.js', true);
+
+			h5.ui.jqm.manager.init();
+		},
+		teardown: function() {
+			resetJQM();
+			h5.ui.jqm.dataPrefix = originalPrefix;
+			window.loadedTestForJQM1 = undefined;
+			window.loadedTestForJQM2 = undefined;
+		}
+	});
+
 	asyncTest('h5.ui.jqm.dataPrefixがnullの場合は、data-h5-script属性に指定したjsファイルがロードできること。', 2, function() {
 		if (!checkDev()) {
 			start();
