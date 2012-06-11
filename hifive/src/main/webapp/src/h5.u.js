@@ -233,9 +233,24 @@
 	};
 
 	/**
-	 * オブジェクトを指定された名前空間に登録し、グローバルに公開します。 引数namespaceの型がObjectでそのObjectがグローバルに紐付いていない場合は公開されません。
+	 * オブジェクトを指定された名前空間に公開(グローバルから辿れる状態)します。
+	 * <p>
 	 *
-	 * @param {String|Object} namespace 名前空間
+	 * 実行例:
+	 * <pre>
+	 * expose('hoge1.hoge2', {
+	 *     funcA: function() {
+	 *         return 'test';
+	 *     },
+	 *     value1: 10
+	 * });
+	 * </pre>
+	 *
+	 * 実行結果:(windowは省略可)<br>
+	 * window.hoge1.hoge2.funcA -&gt; "test"<br>
+	 * window.hoge1.hoge2.value1 -&gt; 10
+	 *
+	 * @param {String} namespace 名前空間
 	 * @param {Object} object 登録するオブジェクト
 	 * @memberOf h5.u.obj
 	 */
