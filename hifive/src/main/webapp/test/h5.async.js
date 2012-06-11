@@ -12,14 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
 $(function() {
 	module("Async");
 
-	test('Deferredオブジェクトは作成できたか(h5.async.deferred)', function() {
+	test('Deferredオブジェクトは作成できたか(h5.async.deferred)', 5, function() {
 		var dfd = h5.async.deferred();
 		var promise = dfd.promise();
 		ok(dfd, 'Deferredオブジェクトは作成できたか');
@@ -29,8 +29,14 @@ $(function() {
 		ok(promise.progress, 'Promiseオブジェクトにprogressメソッドが用意されているか');
 	});
 
+	test('h5.async.isPromise() promiseオブジェクトかどうか判定できること。', 4, function(){
+		ok(h5.async.isPromise(h5.async.deferred().promise()), 'h5.async.deferred().promise()はpromiseオブジェクト');
+		ok(h5.async.isPromise($.Deferred().promise()), '$.Deferred().promise()はpromiseオブジェクト');
+		ok(!h5.async.isPromise(h5.async.deferred()), 'h5.async.deferred()はpromiseオブジェクトではない。');
+		ok(!h5.async.isPromise($.Deferred()), '$.Deferred().promise()はpromiseオブジェクトではない。');
+	});
 
-	test('Deferredオブジェクトでnotify/progressは使用できるか(h5.async.deferred)', function() {
+	test('Deferredオブジェクトでnotify/progressは使用できるか(h5.async.deferred)', 8, function() {
 		var dfd = h5.async.deferred();
 
 		var filtered1 = dfd.pipe(null, null, function(value) {
@@ -89,7 +95,7 @@ $(function() {
 		dfd2.notify(10);
 	});
 
-	test('Deferred#then()の動作(h5.async.deferred)', function() {
+	test('Deferred#then()の動作(h5.async.deferred)', 1, function() {
 		var dfd = h5.async.deferred();
 		var ret = null;
 		dfd.then(null, null, function(value) {
@@ -100,7 +106,7 @@ $(function() {
 	});
 
 	test(
-			'commonFailHandlerの動作',
+			'commonFailHandlerの動作', 6,
 			function() {
 				var ret = '';
 				var cfhm = 'commonFailHandler';
@@ -157,7 +163,7 @@ $(function() {
 				ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
 			});
 
-	asyncTest('h5.async.loop()の動作1', function() {
+	asyncTest('h5.async.loop()の動作1', 1, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -168,7 +174,7 @@ $(function() {
 			strictEqual(ret.join(';'), '0;1;2;3;4;5', 'ちゃんとループしているか');
 		});
 	});
-	asyncTest('h5.async.loop()の動作2', function() {
+	asyncTest('h5.async.loop()の動作2', 1, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -185,7 +191,7 @@ $(function() {
 			strictEqual(ret.join(';'), '0;1;2;3;4;5', 'promiseを返した時に処理を待っているか');
 		});
 	});
-	asyncTest('h5.async.loop()の動作3', function() {
+	asyncTest('h5.async.loop()の動作3', 2, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -203,7 +209,7 @@ $(function() {
 			ok(false, 'loopControl.stop()でdoneコールバックが呼ばれるか');
 		});
 	});
-	asyncTest('h5.async.loop()の動作4', function() {
+	asyncTest('h5.async.loop()の動作4', 2, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -228,7 +234,7 @@ $(function() {
 			ok(false, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
 		});
 	});
-	asyncTest('h5.async.loop()の動作5', function() {
+	asyncTest('h5.async.loop()の動作5', 1, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -243,7 +249,7 @@ $(function() {
 			strictEqual(ret.join(';'), '0;1;2;3;4;5', 'loopControlは動作しているか');
 		});
 	});
-	asyncTest('h5.async.loop()の動作6', function() {
+	asyncTest('h5.async.loop()の動作6', 10, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var time = 2;
@@ -261,7 +267,7 @@ $(function() {
 			strictEqual(ret.join(';'), '0;1;2;3;4;5', '基本動作の確認');
 		});
 	});
-	asyncTest('h5.async.loop()の動作7', function() {
+	asyncTest('h5.async.loop()の動作7', 10, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var time = 2;
@@ -283,7 +289,7 @@ $(function() {
 			strictEqual(ret.join(';'), '0;1;2;3;4;5', '基本動作の確認');
 		});
 	});
-	asyncTest('h5.async.loop()の動作8', function() {
+	asyncTest('h5.async.loop()の動作8', 2, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var time = 2;
