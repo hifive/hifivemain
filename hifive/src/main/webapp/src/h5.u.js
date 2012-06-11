@@ -247,8 +247,8 @@
 	 * </pre>
 	 *
 	 * 実行結果:(windowは省略可)<br>
-	 * window.hoge1.hoge2.funcA -&gt; "test"<br>
-	 * window.hoge1.hoge2.value1 -&gt; 10
+	 * alert(window.hoge1.hoge2.funcA) -&gt; "test"と表示。<br>
+	 * alert(window.hoge1.hoge2.value1) -&gt; 10と表示。
 	 *
 	 * @param {String} namespace 名前空間
 	 * @param {Object} object 登録するオブジェクト
