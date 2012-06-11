@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -128,8 +128,8 @@ $(function() {
 	});
 
 	asyncTest('ロジックのAOPは動作しているか', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -173,7 +173,7 @@ $(function() {
 				ret2 = result.join(';');
 			}
 		};
-		h5.core._compileAspects(logicAspect);
+		h5.core.__compileAspects(logicAspect);
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
 			start();
@@ -189,8 +189,8 @@ $(function() {
 	});
 
 	test('h5.core.logic() の動作', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			return;
 		}
 
@@ -220,7 +220,7 @@ $(function() {
 				invocation.proceed();
 			}
 		};
-		h5.core._compileAspects(logicAspect);
+		h5.core.__compileAspects(logicAspect);
 
 		var logic = h5.core.logic(new TestLogic());
 

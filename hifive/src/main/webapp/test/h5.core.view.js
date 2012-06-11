@@ -133,71 +133,61 @@ test('load()に文字列または中身のある配列以外、空文字、空�
 	try {
 		view.load();
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(null);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load([]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load({});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load('');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(' ');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['./template/test1.ejs', ' ']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['./template/test1.ejs', 1]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, invalidErrorCode, e.message);
 	}
 });
@@ -578,8 +568,7 @@ test('get() 存在しないテンプレートIDを指定してテンプレート
 	try {
 		h5.core.view.get('aaa');
 		ok(false, '例外は発生しませんでした。');
-	}
-	catch (e) {
+	} catch (e) {
 		ok(true, '存在しないテンプレートIDでgetしたので例外が発生すること。');
 	}
 });
@@ -588,8 +577,7 @@ test('get() 引数を指定せずに呼び出し。', function() {
 	try {
 		h5.core.view.get();
 		ok(false, '例外は発生しませんでした。');
-	}
-	catch (e) {
+	} catch (e) {
 		ok(true, 'テンプレートIDを指定しなかったので例外が発生すること。');
 	}
 });
@@ -601,51 +589,44 @@ test('get() idの指定が不正である時に例外が発生すること。', 
 	try {
 		view.get('');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(' ');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get([]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get({});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(0);
 		ok(true, view.get(0), {});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(/a/);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(new String(templateId));
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 });
@@ -698,8 +679,7 @@ asyncTest('clear() テンプレートをキャッシュから全て削除。', 8
 			ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。');
 			try {
 				view.get(id);
-			}
-			catch (e) {
+			} catch (e) {
 				ok(true, '削除したテンプレートに対してgetView()を行うと例外が発生すること。' + e.message);
 			}
 		}
@@ -726,8 +706,7 @@ asyncTest('clear() テンプレートIDを指定してキャッシュからテ�
 			ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。' + id);
 			try {
 				view.get(id);
-			}
-			catch (e) {
+			} catch (e) {
 				ok(true, '削除したテンプレートに対してgetView()を行うと例外が発生すること。：' + e.message);
 			}
 		}
@@ -737,8 +716,7 @@ asyncTest('clear() テンプレートIDを指定してキャッシュからテ�
 			try {
 				view.get(id);
 				ok(true, '削除されていないテンプレートIDに対してgetView()できること。');
-			}
-			catch (e) {
+			} catch (e) {
 				ok(false, '例外が発生しました。：' + e.message);
 			}
 		}
@@ -753,51 +731,44 @@ test('clear() idの指定が不正である時に例外が発生すること。'
 	try {
 		view.clear('');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(' ');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear([]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear({});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(0);
 		ok(true, view.clear(0), {});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(/a/);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(new String(templateId));
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 });
@@ -811,8 +782,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, '']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -820,8 +790,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, ' ']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -829,8 +798,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, undefined]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -838,8 +806,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, null]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -847,8 +814,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, {}]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -856,8 +822,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, []]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -865,8 +830,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, 1]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -874,8 +838,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, true]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -883,8 +846,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, false]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -892,8 +854,7 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([new String(templateId)]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
 		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
@@ -991,51 +952,44 @@ test('register()で、idの指定が不正である時に例外が発生する�
 	try {
 		view.register('', correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(' ', correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register([], correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register({}, correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(0, correctTemplate1);
 		ok(true, view.get(0), {});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(/a/, correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(new String(templateId), correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateIdErrorCode, e.message);
 	}
 });
@@ -1048,29 +1002,25 @@ test('register()で、idを指定していない時または、テンプレー�
 	try {
 		h5.core.view.register(templateId);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, 1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, ['']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, {});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, templateStringErrorCode, e.message);
 	}
 });
@@ -1081,8 +1031,7 @@ test('register() テンプレート文字列が不正な時にエラーが発生
 	try {
 		h5.core.view.register(templateId, '[%= [%= %]');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
+	} catch (e) {
 		same(e.code, errorCode, e.message);
 	}
 });
@@ -1158,6 +1107,9 @@ asyncTest('getAvailableTemplates() viewインスタンスで利用可能なテ�
 module('View3', {
 	setup: function() {
 		backupFixture = $('#qunit-fixture').html();
+		if(!h5.dev){
+			return;
+		}
 		h5.dev.core.view.cacheManager.cache = {};
 		h5.dev.core.view.cacheManager.cacheUrls = [];
 	},
@@ -1173,8 +1125,8 @@ asyncTest(
 			var cacheManager = null;
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
-			}
-			catch (e) {
+			} catch (e) {
+				expect(1);
 				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
 				start();
 				return;
@@ -1236,8 +1188,8 @@ asyncTest(
 		2, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
-			}
-			catch (e) {
+			} catch (e) {
+				expect(1);
 				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
 				start();
 				return;
@@ -1287,8 +1239,8 @@ asyncTest(
 		1, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
-			}
-			catch (e) {
+			} catch (e) {
+				expect(1);
 				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
 				start();
 				return;

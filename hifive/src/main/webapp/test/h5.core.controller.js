@@ -155,8 +155,9 @@ $(function() {
 	});
 
 	asyncTest('コントローラの作成と要素へのバインド(AOPあり)', 3, function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -199,7 +200,7 @@ $(function() {
 			}
 		};
 
-		h5.core._compileAspects([aop1, aop2]);
+		h5.core.__compileAspects([aop1, aop2]);
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
@@ -1110,8 +1111,9 @@ $(function() {
 	});
 
 	asyncTest('コントローラ内のthis(AOPあり)', 2, function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1144,7 +1146,7 @@ $(function() {
 				invocation.proceed();
 			}
 		};
-		h5.core._compileAspects([aop1, aop2]);
+		h5.core.__compileAspects([aop1, aop2]);
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise
@@ -1164,8 +1166,9 @@ $(function() {
 	});
 
 	asyncTest('アスペクトの動作1', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1192,7 +1195,7 @@ $(function() {
 				invocation.proceed();
 			}
 		};
-		h5.core._compileAspects([aop1, aop2]);
+		h5.core.__compileAspects([aop1, aop2]);
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
@@ -1207,8 +1210,9 @@ $(function() {
 	});
 
 	asyncTest('アスペクトの動作2', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1231,7 +1235,7 @@ $(function() {
 			ret.push(1);
 			invocation.proceed();
 		};
-		h5.core._compileAspects({
+		h5.core.__compileAspects({
 			interceptors: [ic1, ic2]
 		});
 
@@ -1247,8 +1251,9 @@ $(function() {
 	});
 
 	asyncTest('アスペクトの動作3', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1281,7 +1286,7 @@ $(function() {
 		}, {
 			interceptors: ic3
 		}];
-		h5.core._compileAspects(aspects);
+		h5.core.__compileAspects(aspects);
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
@@ -1295,8 +1300,9 @@ $(function() {
 	});
 
 	asyncTest('アスペクトの動作4', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1322,7 +1328,7 @@ $(function() {
 			ret.push(this.__name);
 			invocation.proceed();
 		};
-		h5.core._compileAspects({
+		h5.core.__compileAspects({
 			target: 'jp.co.nssol.test.controller*',
 			interceptors: ic,
 			pointCut: null
@@ -1346,8 +1352,9 @@ $(function() {
 	});
 
 	asyncTest('アスペクトの動作5', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1373,7 +1380,7 @@ $(function() {
 			ret.push(this.__name);
 			invocation.proceed();
 		};
-		h5.core._compileAspects({
+		h5.core.__compileAspects({
 			target: 'jp.co.nssol.test.controller*',
 			interceptors: ic,
 			pointCut: /^\_\_i.*$/
@@ -1779,8 +1786,9 @@ $(function() {
 	asyncTest(
 			'h5.core.interceptor.logInterceptorの動作',
 			function() {
-				if (!h5.core._compileAspects) {
-					ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+				if (!h5.core.__compileAspects) {
+					expect(1);
+					ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 					start();
 					return;
 				}
@@ -1788,7 +1796,7 @@ $(function() {
 				var log = {
 					interceptors: h5.core.interceptor.logInterceptor
 				};
-				h5.core._compileAspects([log]);
+				h5.core.__compileAspects([log]);
 
 				var controller = {
 					__name: 'TestController',
@@ -1824,8 +1832,9 @@ $(function() {
 	asyncTest(
 			'h5.core.interceptor.lapInterceptorの動作',
 			function() {
-				if (!h5.core._compileAspects) {
-					ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+				if (!h5.core.__compileAspects) {
+					expect(1);
+					ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 					start();
 					return;
 				}
@@ -1833,7 +1842,7 @@ $(function() {
 				var lap = {
 					interceptors: h5.core.interceptor.lapInterceptor
 				};
-				h5.core._compileAspects([lap]);
+				h5.core.__compileAspects([lap]);
 
 				var controller = {
 					__name: 'TestController',
@@ -1868,8 +1877,9 @@ $(function() {
 			});
 
 	asyncTest('h5.core.interceptor.errorInterceptorの動作', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1877,7 +1887,7 @@ $(function() {
 		var errorInterceptor = {
 			interceptors: h5.core.interceptor.errorInterceptor
 		};
-		h5.core._compileAspects([errorInterceptor]);
+		h5.core.__compileAspects([errorInterceptor]);
 
 		var errMsg = null;
 		h5.settings.commonFailHandler = function(e) {
@@ -2888,8 +2898,9 @@ $(function() {
 	});
 
 	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -2947,7 +2958,7 @@ $(function() {
 				result.push('customEvent');
 			}
 		};
-		h5.core._compileAspects([countAspects]);
+		h5.core.__compileAspects([countAspects]);
 
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
