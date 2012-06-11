@@ -18,6 +18,9 @@
 h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js");
 $(function() {
 
+	/**
+	 * JQMControllerのアンバインド
+	 */
 	function resetJQM() {
 		h5.ui.jqm.manager.__initFlag && h5.ui.jqm.manager.__initFlag(false);
 		$('body>div.testForJQM').each(function() {
@@ -34,6 +37,9 @@ $(function() {
 
 	}
 
+	/**
+	 * テスト用に作成したDOMの削除
+	 */
 	function pageremove(selector) {
 		$('.divForJQM').each(function() {
 			$(this).trigger('pageremove');
@@ -41,24 +47,27 @@ $(function() {
 		$('.divForJQM').remove();
 	}
 
-	// idからページを作る。jsが指定されていればdata-h5-script、activFlag=trueなら作成したページをactivePageにする。
+	/**
+	 * idからページを作る。jsが指定されていればdata-h5-script、activFlag=trueなら作成したページをactivePageにする。
+	 */
 	function createPage(id, _js, activeFlag) {
 		js = _js ? ' data-h5-script="' + _js + '?' + new Date().getTime() + '"' : '';
-		var page = $('<div id="' + id + '" class="testForJQM" data-role="page"' + js + '></div>');
-		var header = $('<div id="top_header" class="ui-bar-f ui-header appLogoHeader"><h1>header</h1></div>');
-		var content = $('<div id="top_content" >content<button id="test"></button></div>');
-		var footer = $('<div id="top_footer" data-role="footer" style="width:100%">footer</div>');
-		page.append(header).append(content).append(footer);
-		$('body').append(page);
+		var $page = $('<div id="' + id + '" class="testForJQM" data-role="page"' + js + '></div>');
+		var $header = $('<div id="top_header" class="ui-bar-f ui-header appLogoHeader"><h1>header</h1></div>');
+		var $content = $('<div id="top_content" >content<button id="test"></button></div>');
+		var $footer = $('<div id="top_footer" data-role="footer" style="width:100%">footer</div>');
+		$page.append($header).append($content).append($footer);
+		$('body').append($page);
 		if (activeFlag) {
-			$.mobile.activePage = page;
-			page.addClass('ui-page ui-body-c ui-page-active');
+			$.mobile.activePage = $page;
+			$page.addClass('ui-page ui-body-c ui-page-active');
 		}
-		return page;
+		return $page;
 	}
 
-	// h5.ui.jqm.manager.__initFlagが存在するかどうかをチェックする。存在しない場合はテストを終了させる。
-	// 引数にtrueを指定した場合はstart()を呼ばない。
+	/**
+	 * h5.ui.jqm.manager.__initFlagが存在するかどうかをチェックする。存在しない場合はテストを終了させる。 引数にtrueを指定した場合はstart()を呼ばない。
+	 */
 	function checkDev() {
 		if (!h5.ui.jqm.manager.__initFlag) {
 			expect(1);
@@ -69,7 +78,12 @@ $(function() {
 	}
 
 
-	// 擬似的にページ遷移を行う
+	/**
+	 * 擬似的にページ遷移を行う
+	 *
+	 * @param {selector} to 遷移先のページ
+	 * @param {boolean} [initialize] pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
+	 */
 	function changePage(to, initialize) {
 		var $from = $.mobile.activePage;
 		$to = $(to);
@@ -98,6 +112,8 @@ $(function() {
 			start();
 			return;
 		}
+		// h5.core.controllerManager.controllersに追加されるのは、JQMControllerの__init()後なので非同期である。
+		// そのため、setTimeoutで非同期にしてJQMControllerがバインドされていることを確認する。
 		setTimeout(function() {
 			var controllers = h5.core.controllerManager.controllers;
 			same(controllers[controllers.length - 1].__name, 'JQMController',
@@ -124,14 +140,14 @@ $(function() {
 
 	module("init2", {
 		setup: function() {
-			createPage("testjs1", 'data/testforJQM6.js', true);
-			createPage("testjs2", 'data/testforJQM7.js');
+			createPage("testjs1", 'data/testforJQM1.js', true);
+			createPage("testjs2", 'data/testforJQM2.js');
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
 			resetJQM();
-			window.loadedTestForJQM6 = undefined;
-			window.loadedTestForJQM7 = undefined;
+			window.loadedTestForJQM1 = undefined;
+			window.loadedTestForJQM2 = undefined;
 		}
 	});
 	asyncTest('init()時に存在するページのdata-h5-scriptに指定されているjsがロードされること。', 2, function() {
@@ -139,23 +155,22 @@ $(function() {
 			start();
 			return;
 		}
-		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
 		setTimeout(function() {
-			ok(window.loadedTestForJQM6, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			ok(window.loadedTestForJQM7, 'data-h5-scriptに指定したjsファイルがロードされていること');
+			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
+			ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
 			start();
 		}, 0);
 	});
 
 	module("init2", {
 		setup: function() {
-			createPage("testjs3", 'data/testforJQM6.js', true);
+			createPage("testjs3", 'data/testforJQM1.js', true);
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
 			resetJQM();
-			window.loadedTestForJQM6 = undefined;
-			window.loadedTestForJQM7 = undefined;
+			window.loadedTestForJQM1 = undefined;
+			window.loadedTestForJQM2 = undefined;
 		}
 	});
 	asyncTest('pageinitイベントがページから呼ばれると、そのページのscriptがロードされること。', 3, function() {
@@ -165,14 +180,12 @@ $(function() {
 		}
 		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
 		setTimeout(function() {
-			createPage("testjs4", 'data/testforJQM7.js');
-			ok(window.loadedTestForJQM6, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			ok(!window.loadedTestForJQM7, 'init()時になかったページについてはjsファイルがロードされないこと');
+			createPage("testjs4", 'data/testforJQM2.js');
+			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
+			ok(!window.loadedTestForJQM2, 'init()時になかったページについてはjsファイルがロードされないこと');
 			$('#testjs4').trigger('pageinit');
-			setTimeout(function() {
-				ok(window.loadedTestForJQM7, 'pageinitイベントが発生するとjsファイルがロードされる。');
-				start();
-			}, 100);
+			ok(window.loadedTestForJQM2, 'pageinitイベントが発生するとjsファイルがロードされる。');
+			start();
 		}, 0);
 	});
 
@@ -191,7 +204,7 @@ $(function() {
 		h5.ui.jqm.manager.init();
 		same(h5.ui.jqm.manager.__initFlag(), true, 'init()済みなので、trueを取得できること。');
 		setTimeout(function() {
-			// init()内部の処理が終わるまで次のテストが実行されないよう、非同期にして待機。
+			// JQMControllerのバインドが終わるまで次のテストが実行されないよう、非同期にして待機。
 			start();
 		}, 0);
 	});
@@ -210,9 +223,9 @@ $(function() {
 	module("dataPrefix1", {
 		setup: function() {
 			originalPrefix = h5.ui.jqm.dataPrefix;
-			h5.ui.jqm.dataPrefix = null;
-			createPage("test1", 'data/testforJQM1.js');
-			createPage("test2", 'data/testforJQM2.js', true);
+			h5.ui.jqm.dataPrefix = 'hifive';
+			createPage("test1").attr('data-hifive-script', 'data/testforJQM1.js');
+			createPage("test2", '', true).attr('data-hifive-script', 'data/testforJQM2.js');
 
 			h5.ui.jqm.manager.init();
 		},
@@ -223,39 +236,18 @@ $(function() {
 			window.loadedTestForJQM2 = undefined;
 		}
 	});
-	asyncTest('h5.ui.jqm.dataPrefixがnullの場合でも、data-h5-script属性に指定したjsファイルがロードできること。', 5,
-			function() {
-				if (!checkDev()) {
-					start();
-					return;
-				}
-				// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
-				setTimeout(function() {
-					ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
-					ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
-					var controller = {
-						__name: 'Test1Controller',
 
-						__construct: function() {
-							ok(true, '__constructが実行される');
-						},
-						__init: function() {
-							ok(true, '__initが実行される');
-						},
-						__ready: function() {
-							ok(true, '__readyが実行される');
-
-							$('#test4 button#test').trigger('click');
-							start();
-						},
-
-						'button#test click': function() {
-							ok(true, 'button#test click が実行される');
-						}
-					};
-					h5.ui.jqm.manager.define('test2', null, controller);
-				}, 0);
-			});
+	asyncTest('h5.ui.jqm.dataPrefixがnullの場合は、data-h5-script属性に指定したjsファイルがロードできること。', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+		setTimeout(function() {
+			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
+			ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
+			start();
+		}, 0);
+	});
 
 	module("define1", {
 		setup: function() {
@@ -302,39 +294,31 @@ $(function() {
 
 	module("define2", {
 		setup: function() {
-			createPage("test4", 'data/testforJQM4.js', true);
-			createPage("test5", 'data/testforJQM5.js');
+			createPage("test4", 'data/testforJQM3.js', true);
+			createPage("test5", 'data/testforJQM4.js');
 
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
 			resetJQM();
-			window.testforJQM3Clicked = undefined;
-			window.testforJQM4Clicked = undefined;
 		}
 	});
 
-	asyncTest('h5.ui.jqmmanager define() data-h5-scriptに指定したjsからdefine()できること。', 2, function() {
+	asyncTest('h5.ui.jqmmanager define() data-h5-scriptに指定したjsからdefine()できること。', 1, function() {
 		if (!checkDev()) {
 			start();
 			return;
 		}
 
-		// コントローラがバインドされ、__readyが実行されるまで待機する。
-		var count = 50;
-		function check() {
-			if (count-- === 0 || window.testforJQM4ready) {
-				ok(window.testforJQM4ready,
-						'define()でactivePageにバインドしたコントローラの__readyが実行された');
-				ok(!window.testforJQM5ready, 'define()しても、activePageでない要素にはコントローラはバインドされない');
-				start();
-			} else {
-				setTimeout(function() {
-					check();
-				}, 100);
-			}
-		}
-		check();
+		// コントローラの__ready()で、テスト用イベント'controllerReadyDone'をトリガーしている。
+		$('#test4').bind('controllerReadyDone', function() {
+			ok(true, 'define()でactivePageにバインドしたコントローラの__readyが実行された');
+			start();
+		});
+		$('#test5').bind('controllerReadyDone', function() {
+			ok(false, 'テスト失敗。define()しても、activePageでない要素にはコントローラはバインドされない');
+			start();
+		});
 	});
 
 
@@ -348,6 +332,7 @@ $(function() {
 			resetJQM();
 		}
 	});
+
 	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドし、cssがロードされること。', 1, function() {
 		if (!checkDev()) {
 			start();

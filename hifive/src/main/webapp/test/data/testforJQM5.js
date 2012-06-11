@@ -20,7 +20,7 @@ $(function() {
 	h5.ui.jqm.manager.define('test5', null, {
 		__name: 'Test5Controller',
 		__ready: function() {
-			window.testforJQM5ready = true;
+			$('#test5').trigger('controllerReadyDone');
 		}
 	});
 });
