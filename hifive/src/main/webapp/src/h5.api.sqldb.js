@@ -202,8 +202,6 @@
 					param.push(params[0]);
 					param.push('=');
 					param.push('?');
-				} else if (!/^(<=|<|>=|>|=|!=|like)$/i.test(params[1])) {
-					throw new throwFwError(ERR_CODE_INVALID_OPERATOR);
 				} else if (params.length === 3 && /^like$/i.test(params[1])) {
 					param.push(params[0]);
 					param.push(params[1]);
@@ -485,10 +483,11 @@
 			var executed = this._executed;
 			var resultSet = null;
 
+			checkSqlExecuted(executed);
+
 			if (txw._runTransaction()) {
 				txw._addTask(df);
 				build();
-				checkSqlExecuted(executed);
 				fwLogger.debug('Select: ' + this._statement);
 				txw._execute(this._statement, this._params, function(innerTx, rs) {
 					resultSet = rs.rows;
@@ -499,7 +498,6 @@
 				txw._execute(function(tx) {
 					txw._addTask(df);
 					build();
-					checkSqlExecuted(executed);
 					txw._tx = tx;
 					fwLogger.debug('Select: ' + that._statement);
 					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
@@ -614,6 +612,8 @@
 					var insertRowIds = [];
 					var index = 0;
 
+					checkSqlExecuted(executed);
+
 					function executeSql() {
 						if (that._statement.length === index) {
 							resultSet = insertRowIds;
@@ -634,13 +634,11 @@
 					if (txw._runTransaction()) {
 						txw._addTask(df);
 						build();
-						checkSqlExecuted(executed);
 						executeSql();
 					} else {
 						txw._execute(function(tx) {
 							txw._addTask(df);
 							build();
-							checkSqlExecuted(executed);
 							txw._tx = tx;
 							executeSql();
 						}, function(e) {
@@ -799,10 +797,11 @@
 			var executed = this._executed;
 			var resultSet = null;
 
+			checkSqlExecuted(executed);
+
 			if (txw._runTransaction()) {
 				txw._addTask(df);
 				build();
-				checkSqlExecuted(executed);
 				fwLogger.debug('Update: ' + this._statement);
 				txw._execute(this._statement, this._params, function(innerTx, rs) {
 					resultSet = rs.rowsAffected;
@@ -813,7 +812,6 @@
 				txw._execute(function(tx) {
 					txw._addTask(df);
 					build();
-					checkSqlExecuted(executed);
 					txw._tx = tx;
 					fwLogger.debug('Update: ' + that._statement);
 					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
@@ -961,10 +959,11 @@
 			var executed = this._executed;
 			var resultSet = null;
 
+			checkSqlExecuted(executed);
+
 			if (txw._runTransaction()) {
 				txw._addTask(df);
 				build();
-				checkSqlExecuted(executed);
 				fwLogger.debug('Del: ' + this._statement);
 				txw._execute(this._statement, this._params, function(innerTx, rs) {
 					resultSet = rs.rowsAffected;
@@ -975,7 +974,6 @@
 				txw._execute(function(tx) {
 					txw._addTask(df);
 					build();
-					checkSqlExecuted(executed);
 					txw._tx = tx;
 					fwLogger.debug('Del: ' + that._statement);
 					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
@@ -1098,9 +1096,10 @@
 			var params = this._params;
 			var resultSet = null;
 
+			checkSqlExecuted(executed);
+
 			if (txw._runTransaction()) {
 				txw._addTask(df);
-				checkSqlExecuted(executed);
 				fwLogger.debug('Sql: ' + statement);
 				txw._execute(statement, params, function(tx, rs) {
 					resultSet = rs;
@@ -1110,7 +1109,6 @@
 			} else {
 				txw._execute(function(tx) {
 					txw._addTask(df);
-					checkSqlExecuted(executed);
 					txw._tx = tx;
 					fwLogger.debug('Sql: ' + statement);
 					tx.executeSql(statement, params, function(innerTx, rs) {
@@ -1213,6 +1211,8 @@
 			var index = 0;
 			var tasks = null;
 
+			checkSqlExecuted(executed);
+
 			function createTransactionTask(txObj) {
 				function TransactionTask(tx) {
 					this._txw = new SQLTransactionWrapper(null, tx);
@@ -1250,13 +1250,11 @@
 
 			if (txw._runTransaction()) {
 				txw._addTask(df);
-				checkSqlExecuted(executed);
 				tasks = createTransactionTask(txw._tx);
 				executeSql();
 			} else {
 				txw._execute(function(tx) {
 					txw._addTask(df);
-					checkSqlExecuted(executed);
 					tasks = createTransactionTask(tx);
 					txw._tx = tx;
 					executeSql();

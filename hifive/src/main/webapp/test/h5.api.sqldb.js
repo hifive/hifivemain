@@ -2047,7 +2047,7 @@ asyncTest('db.transaction() - 3件SQLをaddして実行', 15, function() {
 	});
 });
 
-asyncTest('db.transaction() - promise()メソッドで、execute()を呼ぶ前にpromiseオブジェクトを受け取れること。', 2, function() {
+asyncTest('db.transaction() - promise()で、execute()を呼ぶ前にpromiseオブジェクトを受け取れること。', 2, function() {
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -2062,18 +2062,39 @@ asyncTest('db.transaction() - promise()メソッドで、execute()を呼ぶ前�
 		ok(true, '先に受け取ったpromiseオブジェクトに登録したdoneコールバックが実行されること');
 	}).fail(function(e) {
 		ok(false, e.code + ': ' + e.message);
-		start();
 	});
 
 	tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000]))
 			.execute().done(function() {
 				ok(true, 'execute()記述時に登録したdoneコールバックが実行されること');
 				start();
+			}).fail(function(e) {
+				ok(false, 'テスト失敗');
+			});
+});
+
+
+asyncTest('db.transaction() - execute()実行済みのオブジェクトで再度execute()を実行', 2, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var tx = db.transaction();
+
+	tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000]))
+			.execute().done(function() {
+				ok(true, 'execute()記述時に登録したdoneコールバックが実行されること');
+				start();
+			}).fail(function(e) {
+				ok(false, 'テスト失敗');
 			});
 
-	// reject済のpromiseに登録されたコールバックは実行されないこと。(テストが2個で終わる）。
-	tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest2', 10, 20000]))
-			.execute();
+	raises(function() {
+		tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest2', 10, 20000])).execute();
+	}, 'execute()は実行済みなので、例外が発生すること。');
 });
 
 asyncTest('db.transaction() - 3件中1件不正なSQLをaddして実行', 6, function() {
