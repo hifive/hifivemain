@@ -233,12 +233,16 @@
 	};
 
 	/**
-	 * オブジェクトを指定された名前空間に公開(グローバルから辿れる状態)します。
+	 * 指定された名前空間に、オブジェクトの各プロパティをそれぞれ対応するキー名で公開（グローバルからたどれる状態に）します。
 	 * <p>
+	 * <ul>
+	 * <li>指定された名前空間が既に存在する場合は、その名前空間に対してプロパティを追加します。</li>
+	 * <li>指定された名前空間にプロパティが存在する場合は、『上書きは行われず』例外が発生します。。</li>
+	 * </ul>
 	 *
 	 * 実行例:
 	 * <pre>
-	 * expose('hoge1.hoge2', {
+	 * expose('sample.namespace', {
 	 *     funcA: function() {
 	 *         return 'test';
 	 *     },
@@ -246,22 +250,22 @@
 	 * });
 	 * </pre>
 	 *
-	 * 実行結果:(windowは省略可)<br>
-	 * alert(window.hoge1.hoge2.funcA) -&gt; "test"と表示。<br>
-	 * alert(window.hoge1.hoge2.value1) -&gt; 10と表示。
+	 * 実行結果:&nbsp;(window.は省略可)<br>
+	 * alert(window.sample.namespace.funcA) -&gt; "test"と表示。<br>
+	 * alert(window.sample.namespace.value1) -&gt; 10と表示。
 	 *
 	 * @param {String} namespace 名前空間
-	 * @param {Object} object 登録するオブジェクト
+	 * @param {Object} obj グローバルに公開したいプロパティをもつオブジェクト
 	 * @memberOf h5.u.obj
 	 */
-	var expose = function(namespace, object) {
+	var expose = function(namespace, obj) {
 		var nsObj = ns(namespace);
-		for ( var prop in object) {
-			if (object.hasOwnProperty(prop)) {
+		for ( var prop in obj) {
+			if (obj.hasOwnProperty(prop)) {
 				if (nsObj[prop]) {
 					throwFwError(ERR_CODE_NAMESPACE_EXIST, namespace, prop);
 				}
-				nsObj[prop] = object[prop];
+				nsObj[prop] = obj[prop];
 			}
 		}
 	};
