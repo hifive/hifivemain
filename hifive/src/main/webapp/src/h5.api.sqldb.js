@@ -202,6 +202,8 @@
 					param.push(params[0]);
 					param.push('=');
 					param.push('?');
+				} else if (!/^(<=|<|>=|>|=|!=|like)$/i.test(params[1])) {
+					throw new throwFwError(ERR_CODE_INVALID_OPERATOR);
 				} else if (params.length === 3 && /^like$/i.test(params[1])) {
 					param.push(params[0]);
 					param.push(params[1]);
@@ -483,33 +485,34 @@
 			var executed = this._executed;
 			var resultSet = null;
 
-			checkSqlExecuted(executed);
-
-			if (txw._runTransaction()) {
+			try {
 				txw._addTask(df);
+				checkSqlExecuted(executed);
 				build();
-				fwLogger.debug('Select: ' + this._statement);
-				txw._execute(this._statement, this._params, function(innerTx, rs) {
-					resultSet = rs.rows;
-					txw._setResult(resultSet);
-					df.notify(resultSet, txw);
-				});
-			} else {
-				txw._execute(function(tx) {
-					txw._addTask(df);
-					build();
-					txw._tx = tx;
-					fwLogger.debug('Select: ' + that._statement);
-					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
+				fwLogger.debug(['Select: '+ this._statement], this._params);
+
+				if (txw._runTransaction()) {
+					txw._execute(this._statement, this._params, function(innerTx, rs) {
 						resultSet = rs.rows;
 						txw._setResult(resultSet);
 						df.notify(resultSet, txw);
 					});
-				}, function(e) {
-					transactionErrorCallback(txw, e);
-				}, function() {
-					transactionSuccessCallback(txw);
-				});
+				} else {
+					txw._execute(function(tx) {
+						txw._tx = tx;
+						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
+							resultSet = rs.rows;
+							txw._setResult(resultSet);
+							df.notify(resultSet, txw);
+						});
+					}, function(e) {
+						transactionErrorCallback(txw, e);
+					}, function() {
+						transactionSuccessCallback(txw);
+					});
+				}
+			} catch (e) {
+				df.reject(e);
 			}
 
 			this._executed = true;
@@ -612,8 +615,6 @@
 					var insertRowIds = [];
 					var index = 0;
 
-					checkSqlExecuted(executed);
-
 					function executeSql() {
 						if (that._statement.length === index) {
 							resultSet = insertRowIds;
@@ -622,7 +623,7 @@
 							return;
 						}
 
-						fwLogger.debug('Insert: ' + that._statement[index]);
+						fwLogger.debug(['Insert: ' + that._statement[index]], that._params[index]);
 						txw._execute(that._statement[index], that._params[index], function(innerTx,
 								rs) {
 							index++;
@@ -631,21 +632,25 @@
 						});
 					}
 
-					if (txw._runTransaction()) {
+					try {
 						txw._addTask(df);
+						checkSqlExecuted(executed);
 						build();
-						executeSql();
-					} else {
-						txw._execute(function(tx) {
-							txw._addTask(df);
-							build();
-							txw._tx = tx;
+
+						if (txw._runTransaction()) {
 							executeSql();
-						}, function(e) {
-							transactionErrorCallback(txw, e);
-						}, function() {
-							transactionSuccessCallback(txw);
-						});
+						} else {
+							txw._execute(function(tx) {
+								txw._tx = tx;
+								executeSql();
+							}, function(e) {
+								transactionErrorCallback(txw, e);
+							}, function() {
+								transactionSuccessCallback(txw);
+							});
+						}
+					} catch (e) {
+						df.reject(e);
 					}
 
 					this._executed = true;
@@ -797,33 +802,34 @@
 			var executed = this._executed;
 			var resultSet = null;
 
-			checkSqlExecuted(executed);
-
-			if (txw._runTransaction()) {
+			try {
 				txw._addTask(df);
+				checkSqlExecuted(executed);
 				build();
-				fwLogger.debug('Update: ' + this._statement);
-				txw._execute(this._statement, this._params, function(innerTx, rs) {
-					resultSet = rs.rowsAffected;
-					txw._setResult(resultSet);
-					df.notify(resultSet, txw);
-				});
-			} else {
-				txw._execute(function(tx) {
-					txw._addTask(df);
-					build();
-					txw._tx = tx;
-					fwLogger.debug('Update: ' + that._statement);
-					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
+				fwLogger.debug(['Update: ' + this._statement], this._params);
+
+				if (txw._runTransaction()) {
+					txw._execute(this._statement, this._params, function(innerTx, rs) {
 						resultSet = rs.rowsAffected;
 						txw._setResult(resultSet);
 						df.notify(resultSet, txw);
 					});
-				}, function(e) {
-					transactionErrorCallback(txw, e);
-				}, function() {
-					transactionSuccessCallback(txw);
-				});
+				} else {
+					txw._execute(function(tx) {
+						txw._tx = tx;
+						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
+							resultSet = rs.rowsAffected;
+							txw._setResult(resultSet);
+							df.notify(resultSet, txw);
+						});
+					}, function(e) {
+						transactionErrorCallback(txw, e);
+					}, function() {
+						transactionSuccessCallback(txw);
+					});
+				}
+			} catch (e) {
+				df.reject(e);
 			}
 
 			this._executed = true;
@@ -959,35 +965,37 @@
 			var executed = this._executed;
 			var resultSet = null;
 
-			checkSqlExecuted(executed);
-
-			if (txw._runTransaction()) {
+			try {
 				txw._addTask(df);
+				checkSqlExecuted(executed);
 				build();
-				fwLogger.debug('Del: ' + this._statement);
-				txw._execute(this._statement, this._params, function(innerTx, rs) {
-					resultSet = rs.rowsAffected;
-					txw._setResult(resultSet);
-					df.notify(resultSet, txw);
-				});
-			} else {
-				txw._execute(function(tx) {
-					txw._addTask(df);
-					build();
-					txw._tx = tx;
-					fwLogger.debug('Del: ' + that._statement);
-					tx.executeSql(that._statement, that._params, function(innerTx, rs) {
+				fwLogger.debug(['Del: ' + this._statement], this._params);
+
+				if (txw._runTransaction()) {
+					txw._execute(this._statement, this._params, function(innerTx, rs) {
 						resultSet = rs.rowsAffected;
 						txw._setResult(resultSet);
 						df.notify(resultSet, txw);
 					});
-				}, function(e) {
-					transactionErrorCallback(txw, e);
-				}, function() {
-					transactionSuccessCallback(txw);
-				});
+				} else {
+					txw._execute(function(tx) {
+						txw._tx = tx;
+						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
+							resultSet = rs.rowsAffected;
+							txw._setResult(resultSet);
+							df.notify(resultSet, txw);
+						});
+					}, function(e) {
+						transactionErrorCallback(txw, e);
+					}, function() {
+						transactionSuccessCallback(txw);
+					});
+				}
+			} catch (e) {
+				df.reject(e);
 			}
 
+			this._executed = true;
 			return df.promise();
 		}
 	});
@@ -1096,31 +1104,33 @@
 			var params = this._params;
 			var resultSet = null;
 
-			checkSqlExecuted(executed);
-
-			if (txw._runTransaction()) {
+			try {
 				txw._addTask(df);
-				fwLogger.debug('Sql: ' + statement);
-				txw._execute(statement, params, function(tx, rs) {
-					resultSet = rs;
-					txw._setResult(resultSet);
-					df.notify(resultSet, txw);
-				});
-			} else {
-				txw._execute(function(tx) {
-					txw._addTask(df);
-					txw._tx = tx;
-					fwLogger.debug('Sql: ' + statement);
-					tx.executeSql(statement, params, function(innerTx, rs) {
+				checkSqlExecuted(executed);
+				fwLogger.debug(['Sql: ' + statement], params);
+
+				if (txw._runTransaction()) {
+					txw._execute(statement, params, function(tx, rs) {
 						resultSet = rs;
 						txw._setResult(resultSet);
 						df.notify(resultSet, txw);
 					});
-				}, function(e) {
-					transactionErrorCallback(txw, e);
-				}, function() {
-					transactionSuccessCallback(txw);
-				});
+				} else {
+					txw._execute(function(tx) {
+						txw._tx = tx;
+						tx.executeSql(statement, params, function(innerTx, rs) {
+							resultSet = rs;
+							txw._setResult(resultSet);
+							df.notify(resultSet, txw);
+						});
+					}, function(e) {
+						transactionErrorCallback(txw, e);
+					}, function() {
+						transactionSuccessCallback(txw);
+					});
+				}
+			} catch (e) {
+				df.reject(e);
 			}
 
 			this._executed = true;
@@ -1211,8 +1221,6 @@
 			var index = 0;
 			var tasks = null;
 
-			checkSqlExecuted(executed);
-
 			function createTransactionTask(txObj) {
 				function TransactionTask(tx) {
 					this._txw = new SQLTransactionWrapper(null, tx);
@@ -1248,23 +1256,29 @@
 				});
 			}
 
-			if (txw._runTransaction()) {
+			try {
 				txw._addTask(df);
-				tasks = createTransactionTask(txw._tx);
-				executeSql();
-			} else {
-				txw._execute(function(tx) {
-					txw._addTask(df);
-					tasks = createTransactionTask(tx);
-					txw._tx = tx;
+				checkSqlExecuted(executed);
+
+				if (txw._runTransaction()) {
+					tasks = createTransactionTask(txw._tx);
 					executeSql();
-				}, function(e) {
-					transactionErrorCallback(txw, e);
-				}, function() {
-					transactionSuccessCallback(txw);
-				});
+				} else {
+					txw._execute(function(tx) {
+						tasks = createTransactionTask(tx);
+						txw._tx = tx;
+						executeSql();
+					}, function(e) {
+						transactionErrorCallback(txw, e);
+					}, function() {
+						transactionSuccessCallback(txw);
+					});
+				}
+			} catch(e) {
+				df.reject(e);
 			}
 
+			this._df = getDeferred();
 			this._executed = true;
 			return df.promise();
 		},

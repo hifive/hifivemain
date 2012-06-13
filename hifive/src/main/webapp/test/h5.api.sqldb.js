@@ -298,6 +298,56 @@ asyncTest('db.sql()を実行後、同一トランザクションで、エラー�
 					});
 });
 
+asyncTest('db.sql() - execute()を2回呼び出す', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var sql = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10, 20000]);
+	sql.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+		sql.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			ok(e.code == 3000, e.code + ': ' + e.message);
+			start();
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+		start();
+	});
+});
+
+asyncTest('db.sql() - execute()を2回呼び出す 2', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var sql = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10, 20000]);
+	sql.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+		start();
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+		start();
+	});
+
+	sql.execute().fail(function(e) {
+		ok(true, '二回目のexecute()は、エラーとして処理されること');
+		ok(e.code == 3000, e.code + ': ' + e.message);
+	}).done(function() {
+		ok(false, 'エラーが発生していないためテスト失敗');
+	});
+});
+
 
 module('H5Api - Web SQL Database - Insert', {
 	setup: setupFunc
@@ -821,6 +871,66 @@ asyncTest('配列で値を指定したdb.insert()を実行後、同一トラン�
 });
 
 
+asyncTest('db.insert() - execute()を2回呼び出す', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var insert = db.insert(TABLE_NAME, {
+		col1: 20,
+		col2: 'hoge1',
+		col3: 111
+	});
+	insert.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+		insert.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			ok(e.code == 3000, e.code + ': ' + e.message);
+			start();
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+		start();
+	});
+});
+
+asyncTest('db.insert() - execute()を2回呼び出す 2', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var insert = db.insert(TABLE_NAME, {
+		col1: 20,
+		col2: 'hoge1',
+		col3: 111
+	});
+
+	insert.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+		start();
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+		start();
+	});
+
+	insert.execute().fail(function(e) {
+		ok(true, '二回目のexecute()は、エラーとして処理されること');
+		ok(e.code == 3000, e.code + ': ' + e.message);
+	}).done(function() {
+		ok(false, 'エラーが発生していないためテスト失敗');
+	});
+});
+
+
 
 module('H5Api - Web SQL Database - Update', {
 	setup: setupFunc2
@@ -1019,7 +1129,10 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 		return;
 	}
 
-	var errorCode = 3010;
+	// whereのオペレータが不正
+	var errorCodeInvalidOperator = 3003;
+	// whereのカラムが無い
+	var errorCodeEmptyWhereCondition = 3011;
 
 	db.update(TABLE_NAME, {
 		col2: 'hoge',
@@ -1032,7 +1145,7 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 		ok(false, 'テスト失敗');
 		start();
 	}).fail(function(e) {
-		same(e.code, errorCode, e.message);
+		same(e.code, errorCodeInvalidOperator, e.message);
 		db.update(TABLE_NAME, {
 			col2: 'hoge',
 			col3: 80.5
@@ -1044,7 +1157,7 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 			ok(false, 'テスト失敗');
 			start();
 		}).fail(function(e) {
-			same(e.code, errorCode, e.message);
+			same(e.code, errorCodeInvalidOperator, e.message);
 			db.update(TABLE_NAME, {
 				col2: 'hoge',
 				col3: 80.5
@@ -1056,7 +1169,7 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 				ok(false, 'テスト失敗');
 				start();
 			}).fail(function(e) {
-				same(e.code, errorCode, e.message);
+				same(e.code, errorCodeEmptyWhereCondition, e.message);
 				db.update(TABLE_NAME, {
 					col2: 'hoge',
 					col3: 80.5
@@ -1068,7 +1181,7 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 					ok(false, 'テスト失敗');
 					start();
 				}).fail(function(e) {
-					same(e.code, errorCode, e.message);
+					same(e.code, errorCodeEmptyWhereCondition, e.message);
 					start();
 				});
 			});
@@ -1253,6 +1366,66 @@ asyncTest('db.update()を実行後、同一トランザクションで、エラ�
 			});
 });
 
+asyncTest('db.update() - execute()を2回呼び出す', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var update = db.update(TABLE_NAME, {
+		col2: 'hoge',
+		col3: 100
+	});
+
+	update.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+		update.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			ok(e.code == 3000, e.code + ': ' + e.message);
+			start();
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+		start();
+	});
+});
+
+asyncTest('db.update() - execute()を2回呼び出す 2', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var update = db.update(TABLE_NAME, {
+		col2: 'hoge',
+		col3: 100
+	});
+
+	update.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+		start();
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+		start();
+	});
+
+	update.execute().fail(function(e) {
+		ok(true, '二回目のexecute()は、エラーとして処理されること');
+		ok(e.code == 3000, e.code + ': ' + e.message);
+	}).done(function() {
+		ok(false, 'エラーが発生していないためテスト失敗');
+	});
+});
+
+
+
 
 module('H5Api - Web SQL Database - Del', {
 	setup: setupFunc2
@@ -1390,7 +1563,11 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 		return;
 	}
 
-	var errorCode = 3010;
+	// whereのオペレータが不正
+	var errorCodeInvalidOperator = 3003;
+	// whereのカラムが無い
+	var errorCodeEmptyWhereCondition = 3011;
+
 	db.del(TABLE_NAME).where({
 		// 演算子が不正
 		'col1 a': 10,
@@ -1399,7 +1576,7 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 		ok(false, 'テスト失敗');
 		start();
 	}).fail(function(e) {
-		same(e.code, errorCode, e.message);
+		same(e.code, errorCodeInvalidOperator, e.message);
 		db.del(TABLE_NAME).where({
 			// 渡す数が不正
 			'col1 col2 =': 10,
@@ -1408,7 +1585,7 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 			ok(false, 'テスト失敗');
 			start();
 		}).fail(function(e) {
-			same(e.code, errorCode, e.message);
+			same(e.code, errorCodeInvalidOperator, e.message);
 			db.del(TABLE_NAME).where({
 				// 空文字
 				'': 10,
@@ -1417,7 +1594,7 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 				ok(false, 'テスト失敗');
 				start();
 			}).fail(function(e) {
-				same(e.code, errorCode, e.message);
+				same(e.code, errorCodeEmptyWhereCondition, e.message);
 				db.del(TABLE_NAME).where({
 					// 空白文字
 					'  ': 10,
@@ -1426,7 +1603,7 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 					ok(false, 'テスト失敗');
 					start();
 				}).fail(function(e) {
-					same(e.code, errorCode, e.message);
+					same(e.code, errorCodeEmptyWhereCondition, e.message);
 					start();
 				});
 			});
@@ -1595,6 +1772,60 @@ asyncTest('db.del()を実行後、同一トランザクションで、エラー�
 				});
 			});
 });
+
+asyncTest('db.del() - execute()を2回呼び出す', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var del = db.del(TABLE_NAME).where({col1: 10});
+
+	del.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+		del.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			ok(e.code == 3000, e.code + ': ' + e.message);
+			start();
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+		start();
+	});
+});
+
+asyncTest('db.update() - execute()を2回呼び出す 2', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var del = db.del(TABLE_NAME).where({col1: 10});
+
+	del.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+		start();
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+		start();
+	});
+
+	del.execute().fail(function(e) {
+		ok(true, '二回目のexecute()は、エラーとして処理されること');
+		ok(e.code == 3000, e.code + ': ' + e.message);
+	}).done(function() {
+		ok(false, 'エラーが発生していないためテスト失敗');
+	});
+});
+
+
 
 
 module('H5Api - Web SQL Database - Select', {
@@ -1797,7 +2028,11 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 		return;
 	}
 
-	var errorCode = 3010;
+	// whereのオペレータが不正
+	var errorCodeInvalidOperator = 3003;
+	// whereのカラムが無い
+	var errorCodeEmptyWhereCondition = 3011;
+
 	db.select(TABLE_NAME, '*').where({
 		// 演算子が不正
 		'col1 a': 10,
@@ -1806,7 +2041,7 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 		ok(false, 'テスト失敗');
 		start();
 	}).fail(function(e) {
-		same(e.code, errorCode, e.message);
+		same(e.code, errorCodeInvalidOperator, e.message);
 		db.select(TABLE_NAME, '*').where({
 			// 渡す数が不正
 			'col1 col2 =': 10,
@@ -1815,7 +2050,7 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 			ok(false, 'テスト失敗');
 			start();
 		}).fail(function(e) {
-			same(e.code, errorCode, e.message);
+			same(e.code, errorCodeInvalidOperator, e.message);
 			db.select(TABLE_NAME, '*').where({
 				// 空文字
 				'': 10,
@@ -1824,7 +2059,7 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 				ok(false, 'テスト失敗');
 				start();
 			}).fail(function(e) {
-				same(e.code, errorCode, e.message);
+				same(e.code, errorCodeEmptyWhereCondition, e.message);
 				db.select(TABLE_NAME, '*').where({
 					// 空白文字
 					'  ': 10,
@@ -1833,7 +2068,7 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 					ok(false, 'テスト失敗');
 					start();
 				}).fail(function(e) {
-					same(e.code, errorCode, e.message);
+					same(e.code, errorCodeEmptyWhereCondition, e.message);
 					start();
 				});
 			});
@@ -1990,6 +2225,58 @@ asyncTest('db.select()を実行後、同一トランザクションで、db.sele
 	});
 });
 
+asyncTest('db.select() - execute()を2回呼び出す', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var select = db.select(TABLE_NAME, '*').where({col1: 10});
+
+	select.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+		select.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			ok(e.code == 3000, e.code + ': ' + e.message);
+			start();
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+		start();
+	});
+});
+
+asyncTest('db.select() - execute()を2回呼び出す 2', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var select = db.select(TABLE_NAME, '*').where({col1: 10});
+
+	select.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+		start();
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+		start();
+	});
+
+	select.execute().fail(function(e) {
+		ok(true, '二回目のexecute()は、エラーとして処理されること');
+		ok(e.code == 3000, e.code + ': ' + e.message);
+	}).done(function() {
+		ok(false, 'エラーが発生していないためテスト失敗');
+	});
+});
+
 
 module('H5Api - Web SQL Database - Transaction', {
 	setup: setupFunc
@@ -2086,15 +2373,18 @@ asyncTest('db.transaction() - execute()実行済みのオブジェクトで再�
 
 	tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000]))
 			.execute().done(function() {
-				ok(true, 'execute()記述時に登録したdoneコールバックが実行されること');
+				ok(true, 'execute()記述時に登録したdoneコールバックが実行されること。');
 				start();
 			}).fail(function(e) {
 				ok(false, 'テスト失敗');
+				start();
 			});
 
-	raises(function() {
-		tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest2', 10, 20000])).execute();
-	}, 'execute()は実行済みなので、例外が発生すること。');
+	tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest2', 10, 20000])).execute().fail(function() {
+		ok(true, 'execute()が既に実行されていたらエラー。fail()で処理されること。');
+	}).done(function() {
+		ok(false, 'テスト失敗');
+	});
 });
 
 asyncTest('db.transaction() - 3件中1件不正なSQLをaddして実行', 6, function() {
@@ -2473,6 +2763,59 @@ asyncTest(
 					});
 		});
 
+asyncTest('db.transaction() - execute()を2回呼び出す', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var transaction = db.transaction().add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10,
+					20000])).add(db.insert(TABLE_NAME, {col1: 'txtest2', col2: 'rerere', col3: 777}));
+
+	transaction.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+		transaction.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			ok(e.code == 3000, e.code + ': ' + e.message);
+			start();
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+		start();
+	});
+});
+
+asyncTest('db.transaction() - execute()を2回呼び出す 2', 3, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var transaction = db.transaction().add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10,
+	                20000])).add(db.insert(TABLE_NAME, {col1: 'txtest2', col2: 'rerere', col3: 777}));
+
+	transaction.execute().done(function() {
+		ok(true, '一回目のexecute()ではエラーが発生しないこと');
+		start();
+	}).fail(function(e) {
+		ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+		start();
+	});
+
+	transaction.execute().fail(function(e) {
+		ok(true, '二回目のexecute()は、エラーとして処理されること');
+		ok(e.code == 3000, e.code + ': ' + e.message);
+	}).done(function() {
+		ok(false, 'エラーが発生していないためテスト失敗');
+	});
+});
 
 
 
@@ -2562,7 +2905,7 @@ asyncTest('トランザクションを引き継がないでCRUDを実行', 9, fu
 	});
 });
 
-test('db.sql() - データベースのバージョンが異なる時にエラーが発生すること', 1, function() {
+test('異なるデータベースのバージョンをオープンする', 1, function() {
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -2576,32 +2919,7 @@ test('db.sql() - データベースのバージョンが異なる時にエラー
 	}
 });
 
-asyncTest('db.sql() - execute()を2回呼び出したときにエラーが発生すること', 2, function() {
-	if (!h5.api.sqldb.isSupported) {
-		expect(1);
-		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-		start();
-		return;
-	}
-
-	var sql = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10, 20000]);
-	sql.execute().done(function() {
-		ok(true, '一回目のexecute()ではエラーが発生しないこと');
-		try {
-			sql.execute();
-			ok(false, 'エラーが発生していません');
-			start();
-		} catch (e) {
-			ok(true, e.code + ': ' + e.message);
-			start();
-		}
-	}).fail(function(e) {
-		ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
-		start();
-	});
-});
-
-test('select()/insert()/update()/del()/sql() - テーブル名がString型以外である時にエラーが発生すること', 4, function() {
+test('select()/insert()/update()/del()/sql() - String型以外の値をテーブル名を指定する', 4, function() {
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -2645,7 +2963,7 @@ test('select()/insert()/update()/del()/sql() - テーブル名がString型以外
 });
 
 test(
-		'select()/insert()/update()/del()/sql()/transaction() - トランザクションがTransactionWrapper型ではない時ににエラーが発生すること',
+		'select()/insert()/update()/del()/sql()/transaction() - TransactionWrapper型以外の値をトランザクションに指定する',
 		5, function() {
 			if (!h5.api.sqldb.isSupported) {
 				expect(1);
@@ -2694,7 +3012,7 @@ test(
 			}
 		});
 
-asyncTest('db.sql() スタブを使ったテスト。各エラーが取得できること。', 32, function() {
+asyncTest('スタブを使ったテスト。各エラーを取得する', 32, function() {
 	if (!h5.api.sqldb.isSupported) {
 		expect(1);
 		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
