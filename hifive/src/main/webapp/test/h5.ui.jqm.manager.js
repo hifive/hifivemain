@@ -116,7 +116,7 @@ $(function() {
 		// そのため、setTimeoutで非同期にしてJQMControllerがバインドされていることを確認する。
 		setTimeout(function() {
 			var controllers = h5.core.controllerManager.controllers;
-			same(controllers[controllers.length - 1].__name, 'JQMController',
+			deepEqual(controllers[controllers.length - 1].__name, 'JQMController',
 					'JQMControllerがバインドされている。');
 			start();
 		}, 0);
@@ -200,9 +200,9 @@ $(function() {
 			start();
 			return;
 		}
-		same(h5.ui.jqm.manager.__initFlag(), false, 'init()前なので、falseを取得できること。');
+		deepEqual(h5.ui.jqm.manager.__initFlag(), false, 'init()前なので、falseを取得できること。');
 		h5.ui.jqm.manager.init();
-		same(h5.ui.jqm.manager.__initFlag(), true, 'init()済みなので、trueを取得できること。');
+		deepEqual(h5.ui.jqm.manager.__initFlag(), true, 'init()済みなので、trueを取得できること。');
 		setTimeout(function() {
 			// JQMControllerのバインドが終わるまで次のテストが実行されないよう、非同期にして待機。
 			start();
@@ -375,7 +375,7 @@ $(function() {
 					var count = 50;
 					function checkCSS() {
 						if (--count === 0 || $('#test6 h1').css('font-size') === '111px') {
-							same($('#test6 h1').css('font-size'), '111px',
+							deepEqual($('#test6 h1').css('font-size'), '111px',
 									'CSSが適応されている。(※CSSファイルが5秒経っても取得できない場合、失敗します)');
 							start();
 						} else {
@@ -423,7 +423,7 @@ $(function() {
 				var count = 50;
 				function checkCSS() {
 					if (--count === 0 || $('#test7 h1').css('font-size') === '111px') {
-						same($('#test7 h1').css('font-size'), '111px',
+						deepEqual($('#test7 h1').css('font-size'), '111px',
 								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
 						changePage('#test8', true);
 					} else {
@@ -453,7 +453,7 @@ $(function() {
 				var count = 50;
 				function checkCSS() {
 					if (--count === 0 || $('#test8 h1').css('margin-left') === '33px') {
-						same($('#test8 h1').css('margin-left'), '33px',
+						deepEqual($('#test8 h1').css('margin-left'), '33px',
 								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
 						ok($('#test8 h1').css('font-size') !== '111px', '遷移元ページのCSSは適用されていない。');
 						start();

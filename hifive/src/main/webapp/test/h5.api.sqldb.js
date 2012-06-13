@@ -101,38 +101,38 @@ test('db.sql() - クエリ文に文字列以外のものを指定するとエラ
 		db.sql(undefined, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.sql(0, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.sql(1, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.sql(/a/, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.sql(true, [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 
 	try {
 		db.sql(new String('insert into ' + TABLE_NAME + ' values(?, ?, ?)'), [10, "hoge", 80.5]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -148,7 +148,7 @@ test('db.sql() - パラメータに配列とnull,undefined以外のものを指�
 		db.sql('insert into ' + TABLE_NAME + ' values(10, ?, 80.5)', "hoge");
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', {
@@ -158,32 +158,32 @@ test('db.sql() - パラメータに配列とnull,undefined以外のものを指�
 		});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', 0);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', 1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', true);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 
 	try {
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', false);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -421,49 +421,49 @@ test('db.insert() - 引数がプレーンオブジェクトでない時にエラ
 		db.insert(TABLE_NAME, 0);
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.insert(TABLE_NAME, 1);
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.insert(TABLE_NAME, false);
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.insert(TABLE_NAME, true);
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.insert(TABLE_NAME, '');
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.insert(TABLE_NAME, 'a');
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.insert(TABLE_NAME, /a/);
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.insert(TABLE_NAME, new String());
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -977,37 +977,37 @@ test('db.update() - 引数にundefined,null,0,1,\'\',\'aa\',new String()を指�
 			try {
 				db.update(TABLE_NAME);
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, null);
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, 0);
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, 1);
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, '');
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, 'aa');
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 			try {
 				db.update(TABLE_NAME, new String());
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 		});
 
@@ -1145,7 +1145,7 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 		ok(false, 'テスト失敗');
 		start();
 	}).fail(function(e) {
-		same(e.code, errorCodeInvalidOperator, e.message);
+		deepEqual(e.code, errorCodeInvalidOperator, e.message);
 		db.update(TABLE_NAME, {
 			col2: 'hoge',
 			col3: 80.5
@@ -1157,7 +1157,7 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 			ok(false, 'テスト失敗');
 			start();
 		}).fail(function(e) {
-			same(e.code, errorCodeInvalidOperator, e.message);
+			deepEqual(e.code, errorCodeInvalidOperator, e.message);
 			db.update(TABLE_NAME, {
 				col2: 'hoge',
 				col3: 80.5
@@ -1169,7 +1169,7 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 				ok(false, 'テスト失敗');
 				start();
 			}).fail(function(e) {
-				same(e.code, errorCodeEmptyWhereCondition, e.message);
+				deepEqual(e.code, errorCodeEmptyWhereCondition, e.message);
 				db.update(TABLE_NAME, {
 					col2: 'hoge',
 					col3: 80.5
@@ -1181,7 +1181,7 @@ asyncTest('db.update()を実行 - 誤ったwhereを指定', 4, function() {
 					ok(false, 'テスト失敗');
 					start();
 				}).fail(function(e) {
-					same(e.code, errorCodeEmptyWhereCondition, e.message);
+					deepEqual(e.code, errorCodeEmptyWhereCondition, e.message);
 					start();
 				});
 			});
@@ -1203,7 +1203,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col3: 80.5
 		}).where();
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.update(TABLE_NAME, {
@@ -1211,7 +1211,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col3: 80.5
 		}).where(null);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.update(TABLE_NAME, {
@@ -1219,7 +1219,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col3: 80.5
 		}).where(10);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.update(TABLE_NAME, {
@@ -1227,7 +1227,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col3: 80.5
 		}).where(true);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.update(TABLE_NAME, {
@@ -1235,7 +1235,7 @@ test('db.update()を実行 - 誤ったwhereを指定 2', 5, function() {
 			col3: 80.5
 		}).where(new String("col1 >= 10"));
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -1576,7 +1576,7 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 		ok(false, 'テスト失敗');
 		start();
 	}).fail(function(e) {
-		same(e.code, errorCodeInvalidOperator, e.message);
+		deepEqual(e.code, errorCodeInvalidOperator, e.message);
 		db.del(TABLE_NAME).where({
 			// 渡す数が不正
 			'col1 col2 =': 10,
@@ -1585,7 +1585,7 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 			ok(false, 'テスト失敗');
 			start();
 		}).fail(function(e) {
-			same(e.code, errorCodeInvalidOperator, e.message);
+			deepEqual(e.code, errorCodeInvalidOperator, e.message);
 			db.del(TABLE_NAME).where({
 				// 空文字
 				'': 10,
@@ -1594,7 +1594,7 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 				ok(false, 'テスト失敗');
 				start();
 			}).fail(function(e) {
-				same(e.code, errorCodeEmptyWhereCondition, e.message);
+				deepEqual(e.code, errorCodeEmptyWhereCondition, e.message);
 				db.del(TABLE_NAME).where({
 					// 空白文字
 					'  ': 10,
@@ -1603,7 +1603,7 @@ asyncTest('db.del()を実行 - 誤ったwhereを指定', 4, function() {
 					ok(false, 'テスト失敗');
 					start();
 				}).fail(function(e) {
-					same(e.code, errorCodeEmptyWhereCondition, e.message);
+					deepEqual(e.code, errorCodeEmptyWhereCondition, e.message);
 					start();
 				});
 			});
@@ -1622,27 +1622,27 @@ test('db.del()を実行 - 誤ったwhereを指定 2', 5, function() {
 	try {
 		db.del(TABLE_NAME).where();
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.del(TABLE_NAME).where(null);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.del(TABLE_NAME).where(10);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.del(TABLE_NAME).where(true);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.del(TABLE_NAME).where(new String("col1 >= 10"));
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -1871,19 +1871,19 @@ test('db.select() - カラム名に不正な値を指定するとエラーが出
 		db.select(TABLE_NAME);
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, 'col1');
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '');
 		ok(false, 'エラーが発生していません。');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -2041,7 +2041,7 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 		ok(false, 'テスト失敗');
 		start();
 	}).fail(function(e) {
-		same(e.code, errorCodeInvalidOperator, e.message);
+		deepEqual(e.code, errorCodeInvalidOperator, e.message);
 		db.select(TABLE_NAME, '*').where({
 			// 渡す数が不正
 			'col1 col2 =': 10,
@@ -2050,7 +2050,7 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 			ok(false, 'テスト失敗');
 			start();
 		}).fail(function(e) {
-			same(e.code, errorCodeInvalidOperator, e.message);
+			deepEqual(e.code, errorCodeInvalidOperator, e.message);
 			db.select(TABLE_NAME, '*').where({
 				// 空文字
 				'': 10,
@@ -2059,7 +2059,7 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 				ok(false, 'テスト失敗');
 				start();
 			}).fail(function(e) {
-				same(e.code, errorCodeEmptyWhereCondition, e.message);
+				deepEqual(e.code, errorCodeEmptyWhereCondition, e.message);
 				db.select(TABLE_NAME, '*').where({
 					// 空白文字
 					'  ': 10,
@@ -2068,7 +2068,7 @@ asyncTest('db.select()を実行 - 誤ったwhereを指定', 4, function() {
 					ok(false, 'テスト失敗');
 					start();
 				}).fail(function(e) {
-					same(e.code, errorCodeEmptyWhereCondition, e.message);
+					deepEqual(e.code, errorCodeEmptyWhereCondition, e.message);
 					start();
 				});
 			});
@@ -2088,27 +2088,27 @@ test('db.select()を実行 - 誤ったwhereを指定 2', 5, function() {
 	try {
 		db.select(TABLE_NAME, '*').where();
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '*').where(null);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '*').where(10);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '*').where(true);
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 	try {
 		db.select(TABLE_NAME, '*').where(new String("col1 >= 10"));
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -2444,7 +2444,7 @@ test('db.transaction() - Insert/Update/Del/Select/Sqlクラスのインスタン
 				try {
 					db.transaction().add(args[i]);
 				} catch (e) {
-					same(e.code, errorCode, args[i] + ': ' + e.message);
+					deepEqual(e.code, errorCode, args[i] + ': ' + e.message);
 				}
 			}
 		});
@@ -2931,7 +2931,7 @@ test('select()/insert()/update()/del()/sql() - String型以外の値をテーブ
 		db.select(null, '*');
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(errorCode, e.code, e.message);
+		deepEqual(errorCode, e.code, e.message);
 	}
 	try {
 		insert = db.insert(123, {
@@ -2941,7 +2941,7 @@ test('select()/insert()/update()/del()/sql() - String型以外の値をテーブ
 		});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(errorCode, e.code, e.message);
+		deepEqual(errorCode, e.code, e.message);
 	}
 	try {
 		update = db.update(new String(TABLE_NAME), {
@@ -2950,7 +2950,7 @@ test('select()/insert()/update()/del()/sql() - String型以外の値をテーブ
 		});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(errorCode, e.code, e.message);
+		deepEqual(errorCode, e.code, e.message);
 	}
 	try {
 		del = db.del({
@@ -2958,7 +2958,7 @@ test('select()/insert()/update()/del()/sql() - String型以外の値をテーブ
 		});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(errorCode, e.code, e.message);
+		deepEqual(errorCode, e.code, e.message);
 	}
 });
 
@@ -2976,7 +2976,7 @@ test(
 				db.select(TABLE_NAME, '*', '');
 				ok(false, 'エラーが発生していません');
 			} catch (e) {
-				same(errorCode, e.code, e.message);
+				deepEqual(errorCode, e.code, e.message);
 			}
 			try {
 				insert = db.insert(TABLE_NAME, {
@@ -2986,7 +2986,7 @@ test(
 				}, 0);
 				ok(false, 'エラーが発生していません');
 			} catch (e) {
-				same(errorCode, e.code, e.message);
+				deepEqual(errorCode, e.code, e.message);
 			}
 			try {
 				update = db.update(TABLE_NAME, {
@@ -2995,20 +2995,20 @@ test(
 				}, db.transaction());
 				ok(false, 'エラーが発生していません');
 			} catch (e) {
-				same(errorCode, e.code, e.message);
+				deepEqual(errorCode, e.code, e.message);
 			}
 			try {
 				del = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10, 20000],
 						[]);
 				ok(false, 'エラーが発生していません');
 			} catch (e) {
-				same(errorCode, e.code, e.message);
+				deepEqual(errorCode, e.code, e.message);
 			}
 			try {
 				del = db.transaction(NaN);
 				ok(false, 'エラーが発生していません');
 			} catch (e) {
-				same(errorCode, e.code, e.message);
+				deepEqual(errorCode, e.code, e.message);
 			}
 		});
 
