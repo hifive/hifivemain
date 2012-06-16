@@ -473,6 +473,9 @@
 	};
 
 
+	//TODO Descriptorを使わず、動的に生成するパターン
+
+
 	/***********************************************************************************************
 	 * @class
 	 **********************************************************************************************/
@@ -552,7 +555,7 @@
 		this.converter = converterFunction;
 	};
 
-	DataBinder.prototype.appendRenderer = function(elem){
+	DataBinder.prototype.appendRenderer = function(elem) {
 
 	};
 
@@ -560,14 +563,54 @@
 
 	};
 
-	function applyBinding(view, rootElement, templateKey, models) {
-		//var target = getTarget(element, this.__controller.rootElement, true); //TODO getTarget
-		var target = $(rootElement); //elementはターゲットとなる親要素
-
-		var html = view.get(templateKey, models);
-		var $html = $(html);
+	function applyBinding(view, rootElement, templateKey, models, useRaw) { //TODO useRawはなくなる
 
 		var that = this;
+
+		function applyToView($elem, content, isHtml) {
+			function getTargetAttr($elem) {
+				var bindTarget = $elem.data('h5Bind'); //TODO キープレフィクス対応
+
+				var attrBracketFrom = bindTarget.indexOf('{');
+				if (attrBracketFrom > -1) { //TODO 判定ロジックはもっときちんとする
+					var attrBracketTo = bindTarget.indexOf('}');
+					if (attrBracketTo == -1) { //TODO === だとダメ？
+						throw new Error();// throwFwError();
+					}
+					return bindTarget.substring(attrBracketFrom + 1, attrBracketTo);
+				} else {
+					return null; //属性ではない
+				}
+			}
+
+			var targetAttr = getTargetAttr($elem);
+
+			if (!targetAttr) {
+				//子要素としてバインド
+				if (isHtml) {
+					$elem.html(content);
+				} else {
+					$elem.text(content);
+				}
+			} else {
+				//属性に対するバインド
+				$elem.attr(targetAttr, content); //TODO ここはエスケープ考えなくてよいか？？
+			}
+
+		} // End of applyToView
+
+
+		//var target = getTarget(element, this.__controller.rootElement, true); //TODO getTarget
+		var $target = $(rootElement); //elementはターゲットとなる親要素
+
+		var $html;
+		if(useRaw) {
+			$html = $('<div>').append($(templateKey)); //RAW, 文字列でHTMLが来ているのでcloneは不要.
+		}
+		else {
+			$html = $('<div>').append(view.get(templateKey, models));
+
+		}
 
 		//		if (!(bindObjectName || $html.attr('data-bind-property'))) {
 
@@ -594,20 +637,26 @@
 
 			$clone.attr(getH5DataKey('bind-key'), uuid);
 
+			//TODO $().find()は自分自身を探せないので仕方なく。後で変更。
+			//var $cloneWrapper = $('<div></div>');
+			//$clone.wrapAll($cloneWrapper);
 			var $dataBind = $clone.find('*[' + getH5DataKey('bind') + ']');
 
+
+			//TODO Model-1 : View-many の場合
 			//モデル中の各要素について
 			for ( var p in model) {
-				fwLogger.debug('prop = {0}', p);
+				//				fwLogger.debug('prop = {0}', p);
 
 				var $dom = $dataBind.filter(function() {
 					//					return $(this).attr('data-bind') === bindObjectName + '.' + p;
 
 					//fwLogger.debug('attr = {0}, p = {1}', $(this).attr(getH5DataKey('bind')), p);
 
-					return $(this).attr(getH5DataKey('bind')).lastIndexOf(p, 0) === 0;
+					//TODO この判定で大丈夫か？ []がある場合。もう少しきちんと判定しておくべきか
+					return $(this).attr(getH5DataKey('bind')).lastIndexOf(p, 0) == 0;
 
-//					return $(this).attr(getH5DataKey('bind')) === p;
+					//					return $(this).attr(getH5DataKey('bind')) === p;
 					//TODO 子オブジェクトのバインドもできるように
 				});
 
@@ -615,16 +664,25 @@
 				$dom.each(function() {
 					var $this = $(this);
 
-					if ($this.is('[data-h5-bind-template]')) {
-						var templateKey = $this.attr('data-h5-bind-template');
-						if(templateKey.indexOf) {
-						}
+					if ($this.is('[data-h5-bind-template="inner"]')) {
+						//TODO tempコード
+						var clonedInner = $this.html();
 
-						//ネストしてテンプレートを適用
+						$this.empty(); //innerなのでempty()にする。これは本当はBinding生成時に行う必要がある。
+						//TODO 事前にいくつか要素が入っていた場合を考えると、emptyではなく data-h5-bind-template="this" のような属性を付けて行うべきかも。
+
+						var childBindProp = $this.attr(getH5DataKey('bind')); //TODO hoisting
+						applyBinding.call(that, view, this, clonedInner, model[childBindProp], true);
+					}
+					else if ($this.is('[data-h5-bind-template]')) {
+						//var templateKey = $this.attr('data-h5-bind-template');
+						//TODO templateをindexOfするコードは…なんで必要なんだっけ？？
+
 						var childBindProp = $this.attr(getH5DataKey('bind'));
 						//fwLogger.debug('child templateId = {0}',$this.attr(getH5DataKey('bind-template')));
 
-						applyBinding(view, this, $this.attr(getH5DataKey('bind-template')),
+						//ネストしてテンプレートを適用
+						applyBinding.call(that, view, this, $this.attr(getH5DataKey('bind-template')),
 								model[childBindProp]);
 					} else {
 						//						that.applyValue($this, model, p);
@@ -632,73 +690,71 @@
 							var cv = that.converter(model, model, p, model[p]);
 
 							if ($.isPlainObject(cv)) {
-								//cv.valueがない場合のチェック
+								//TODO cv.valueがない場合のチェック
 
 								if (cv.isHtml) {
-									$this.html(cv.value);
+									applyToView($this, cv.value, true);
 								} else {
-									$this.text(cv.value);
+									applyToView($this, cv.value, false);
 								}
 							} else {
-								$this.text(cv); //TODO オブジェクトが子要素の場合を考える。パス表記を渡すようにする？？
+								applyToView($this, cv, false);
+								//$this.text(cv); //TODO オブジェクトが子要素の場合を考える。パス表記を渡すようにする？？
 							}
 						} else {
-							$this.html(model[p]);
+							applyToView($this, model[p], false);
+							//$this.html(model[p]);
 						}
 					}
 				});
 			}
 
-
-			target.append($clone);
+			//TODO transitionはバインドの「ルート」の場合のみでよいだろう。
+			//子要素ごとにかけると重すぎる。
+			if (that.inTransition) {
+				that.inTransition($target.get(0), $clone); //TODO children()以外の方法
+			} else {
+				$target.append($clone.children());
+			}
 		}
 	}
 
-	DataBinder.prototype.applyValue = function($elem, model, p) {
-		//TODO
-		var that = this;
-		var $this = $elem;
-
-
-		//そのまま要素の中身を書き換える
-		//ただしコンバータが入っている場合はコンバートする
-		//		if(that.converter) {
-		//			var cv = that.converter(model, model, p, model[p]);
-		//
-		//			if($.isPlainObject(cv)) {
-		//				//cv.valueがない場合のチェック
-		//
-		//				if(cv.isHtml) {
-		//					$this.html(cv.value);
-		//				}
-		//				else {
-		//					$this.text(cv.value);
-		//				}
-		//			}
-		//			else {
-		//				$this.text(cv); //TODO オブジェクトが子要素の場合を考える。パス表記を渡すようにする？？
-		//			}
-		//		}
-		//		else {
-		$this.html(model[p]);
-		//		}
-	};
 
 	/**
-	 * in/out transition関数の仕様：
-	 * function transition(elem:DOM, operation:String, callbackWhenCompleted(elem)):elem
-	 *   operationはstart/stop/goToEnd/goToStart
-	 *   callbackは基となるDataBinderへのコールバック
+	 * in/out transition関数の仕様： function transition(target:DOM, elemForAppend:DOM, operation:String,
+	 * callbackWhenCompleted(elem)):elem operationはstart/stop/goToEnd/goToStart
+	 * callbackは基となるDataBinderへのコールバック
+	 *
 	 * @param func
 	 */
 	DataBinder.prototype.setOutTransition = function(func) {
 		this.outTransition = func;
+		//outTransitionはDeferredで実装されなければならない。
+		//完了したら elemを resolve(elen);で返す必要がある。
+		//返さないと、インスタンスの管理ができない。
 	};
 
+	//TODO inTransition中にそのインスタンスを外したくなったらどうする？？
+	// 1. タイマー回すのをFW側で行うようにする
+	// 2. inTransitionFuncに引数を渡して「直ちに停止」できるようにする
+	//TODO 既に要素が存在していて後からバインドを行った場合
+	//inTransitionは動かす？？ -> 多分、動かす、でよい
 	DataBinder.prototype.setInTransition = function(func) {
 		this.inTransition = func;
 	};
 
+	//TODO これはいらないかも？？
+	//オブジェクトに変更があった場合に画面エフェクトを付ける。
+	//ただし、どういうエフェクトを付けるべきかはまちまちなので
+	//使いどころが難しいかもしれない。
+	DataBinder.prototype.setChangeEffect = function(func) {
+		this.changeEffect = func;
+	};
+
+	//TODO addEventListenerの方式にする？？
+	DataBinder.prototype.setChangeCallback = function(func) {
+
+	};
 
 	DataBinder.prototype.applyBinding = function() {
 		fwLogger.debug('applyBinding called');
@@ -709,6 +765,19 @@
 
 	function createBinder(controller, modelCollection, renderRoot, template) {
 		return new DataBinder(controller, modelCollection, renderRoot, template);
+	}
+
+	//collect？
+	/**
+	 * 特定の要素以下から、一定のルールに従って、
+	 * モデルの要素を取得する。
+	 * ただし、overridePropertiesが指定されている場合は、
+	 * 指定されているプロパティについては指定されたセレクタorエレメントから値を取得する。
+	 *
+	 * TODO 属性から取得する、要素のvalueから取得する、値から取得する、などはいろいろある
+	 */
+	function gather(element, dataModelName, override) {
+		//ネストしたレコードのoverrideはどうやって書く・・・？？
 	}
 
 	//=============================
