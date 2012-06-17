@@ -521,7 +521,7 @@
 
 		this.autoBind = true;
 
-		var that = this;
+		//var that = this;
 
 		this.collection.addEventListener('add', function(event) {
 			fwLogger.debug('collection added');
@@ -767,16 +767,26 @@
 		return new DataBinder(controller, modelCollection, renderRoot, template);
 	}
 
-	//collect？
+	//TODO フォームはHTML5 Formsもある・・・ -> HTML5 Forms2.0に従ってvalidationする
+
+	//DataBindingでは、editable属性があって、editOnで、どのタイミングでエディット状態にするか指定する。
+	//editOnは…JS?HTML?
+	//typeはinput, textarea, contenteditableあたりか
+
 	/**
 	 * 特定の要素以下から、一定のルールに従って、
-	 * モデルの要素を取得する。
+	 * ユーザー入力を取得する。
+	 * ルール：
+	 * ・inputタグをそのnameに従って取得
+	 * ・引数のincludeで指定されたものも取得
+	 * ・引数のexcludeで指定されたものは取得しない
+	 * ・include,excludeは配列、
 	 * ただし、overridePropertiesが指定されている場合は、
 	 * 指定されているプロパティについては指定されたセレクタorエレメントから値を取得する。
 	 *
 	 * TODO 属性から取得する、要素のvalueから取得する、値から取得する、などはいろいろある
 	 */
-	function gather(element, dataModelName, override) {
+	function gather(root, dataModelName, override) {
 		//ネストしたレコードのoverrideはどうやって書く・・・？？
 	}
 
