@@ -769,24 +769,76 @@
 
 	//TODO フォームはHTML5 Formsもある・・・ -> HTML5 Forms2.0に従ってvalidationする
 
+
+	function ValidationError() {
+		this.count = 0;
+	}
+
 	//DataBindingでは、editable属性があって、editOnで、どのタイミングでエディット状態にするか指定する。
 	//editOnは…JS?HTML?
 	//typeはinput, textarea, contenteditableあたりか
+
+	function UserInput(elements) {
+		this.elements = elements;
+	}
+
+	UserInput.prototype.validate = function() {
+		//タグに記述されたvaldiation ruleに基づいてチェック。
+		//HTML5 Forms2.0相当。
+
+		return new ValidationError();
+	};
+
+	UserInput.prototype.validateAs = function(dataModel, ignoreTagRule){
+		for(var key in this.elements) {
+			if(!this.hasOwnProperty(key)) {
+				continue;
+			}
+
+			//TODO ignoretagRuleがfalseの場合は、タグに記述されたvalidationルールを無視して、
+			//dataModel側に記述されたルールに基づいてチェックを行う
+		}
+
+		return new ValidationError();
+
+	};
 
 	/**
 	 * 特定の要素以下から、一定のルールに従って、
 	 * ユーザー入力を取得する。
 	 * ルール：
 	 * ・inputタグをそのnameに従って取得
-	 * ・引数のincludeで指定されたものも取得
+	 * ・includeで指定されたものも取得
 	 * ・引数のexcludeで指定されたものは取得しない
 	 * ・include,excludeは配列、
 	 * ただし、overridePropertiesが指定されている場合は、
 	 * 指定されているプロパティについては指定されたセレクタorエレメントから値を取得する。
+	 * inputにはname属性を付ける必要があります。
 	 *
 	 * TODO 属性から取得する、要素のvalueから取得する、値から取得する、などはいろいろある
+	 * @param root 入力値を取得するルート。省略またはnullが渡された場合はコントローラのrootElementが指定されたとみなす
+	 * @param include 追加で取得するパラメータ.
+	 * @param exclude 戻り値に含めないパラメータ. 除外元には自動的に取得されるinputタグも含む
+	 * TODO 日本語改善
 	 */
-	function gather(root, dataModelName, override) {
+	function getUserInput(root, include, exclude) {
+		//TODO rootはDOMElementまたはセレクタ、{}記法をサポート
+
+		var $root = $(root);
+
+		var $userInput = $root.find('input[name]'); //TODO includeをloopで回して.add()する
+
+//		var input = {};
+//		$userInput.each(function(){
+//			var $this = $(this);
+//			input[$this.attr('name')] = $this.val();
+//		});
+
+		var inputElem = $userInput.toArray();
+
+		var ret = new UserInput(inputElem);
+		return ret;
+
 		//ネストしたレコードのoverrideはどうやって書く・・・？？
 	}
 
