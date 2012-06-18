@@ -134,61 +134,61 @@ test('load()に文字列または中身のある配列以外、空文字、空�
 		view.load();
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(null);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load([]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load({});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load('');
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(' ');
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['']);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['./template/test1.ejs', ' ']);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['./template/test1.ejs', 1]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 });
 
@@ -527,13 +527,13 @@ asyncTest('load() テンプレートIDが空文字または空白である場合
 		ok(false, 'エラーが発生していません');
 		start();
 	}).fail(function(e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 
 		view.load('template/test12.ejs').done(function() {
 			ok(false, 'エラーが発生していません');
 			start();
 		}).fail(function(error) {
-			same(error.code, errorCode, error.message);
+			deepEqual(error.code, errorCode, error.message);
 			start();
 		});
 	});
@@ -590,44 +590,44 @@ test('get() idの指定が不正である時に例外が発生すること。', 
 		view.get('');
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(' ');
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get([]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get({});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(0);
 		ok(true, view.get(0), {});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(/a/);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(new String(templateId));
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 });
 
@@ -732,44 +732,44 @@ test('clear() idの指定が不正である時に例外が発生すること。'
 		view.clear('');
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(' ');
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear([]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear({});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(0);
 		ok(true, view.clear(0), {});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(/a/);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(new String(templateId));
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 });
 
@@ -783,81 +783,81 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 		view.clear([templateId, '']);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, ' ']);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, undefined]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, null]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, {}]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, []]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, 1]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, true]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, false]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([new String(templateId)]);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 });
 
@@ -934,7 +934,7 @@ test('register() 置換要素有りテンプレートを登録。渡したオブ
 	var view = h5.core.view.createView();
 	view.register('v1', '[% val1 = 1; val2 = 2; inner.val = 3;%]');
 	view.get('v1', obj);
-	same(obj, obj_clone, 'view.getに渡したオブジェクトが変化しない。');
+	deepEqual(obj, obj_clone, 'view.getに渡したオブジェクトが変化しない。');
 });
 
 test('[%:= %]内はエスケープされないこと。', 1, function() {
@@ -953,44 +953,44 @@ test('register()で、idの指定が不正である時に例外が発生する�
 		view.register('', correctTemplate1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(' ', correctTemplate1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register([], correctTemplate1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register({}, correctTemplate1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(0, correctTemplate1);
 		ok(true, view.get(0), {});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(/a/, correctTemplate1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(new String(templateId), correctTemplate1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 });
 
@@ -1003,25 +1003,25 @@ test('register()で、idを指定していない時または、テンプレー�
 		h5.core.view.register(templateId);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateStringErrorCode, e.message);
+		deepEqual(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, 1);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateStringErrorCode, e.message);
+		deepEqual(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, ['']);
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateStringErrorCode, e.message);
+		deepEqual(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, {});
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, templateStringErrorCode, e.message);
+		deepEqual(e.code, templateStringErrorCode, e.message);
 	}
 });
 
@@ -1032,7 +1032,7 @@ test('register() テンプレート文字列が不正な時にエラーが発生
 		h5.core.view.register(templateId, '[%= [%= %]');
 		ok(false, 'エラーが発生していません');
 	} catch (e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -1144,7 +1144,7 @@ asyncTest(
 								var cache = cacheInfo[i];
 								var path = cache.path;
 								if (path === "./template/test2.ejs") {
-									same(cache.path, './template/test2.ejs',
+									deepEqual(cache.path, './template/test2.ejs',
 											'相対パス(指定したパス)が取得できる - ' + path);
 									ok(cache.absoluteUrl.match(/http.*\/template\/test2\.ejs/),
 											'URLが取得できる - ' + cache.absoluteUrl);
@@ -1155,7 +1155,7 @@ asyncTest(
 										}
 									}
 								} else if (path === "./template/test3.ejs") {
-									same(cache.path, './template/test3.ejs', 'キャッシュ' + path);
+									deepEqual(cache.path, './template/test3.ejs', 'キャッシュ' + path);
 									ok(cache.absoluteUrl.match(/http.*\/template\/test3\.ejs/),
 											'URLが取得できる - ' + cache.absoluteUrl);
 									for ( var j = 0; j < cache.ids.length; j++) {
@@ -1165,7 +1165,7 @@ asyncTest(
 										}
 									}
 								} else if (path === "./template/test4.ejs") {
-									same(cache.path, './template/test4.ejs', 'キャッシュ' + path);
+									deepEqual(cache.path, './template/test4.ejs', 'キャッシュ' + path);
 									ok(cache.absoluteUrl.match(/http.*\/template\/test4\.ejs/),
 											'URLが取得できる - ' + cache.absoluteUrl);
 									for ( var j = 0; j < cache.ids.length; j++) {
