@@ -50,7 +50,7 @@ $(function() {
 			force: true
 		});
 		var savedH5 = h5.coexist();
-		same(h5, {}, 'coexistすると、window.h5はもともと入っていたオブジェクトになる');
+		deepEqual(h5, {}, 'coexistすると、window.h5はもともと入っていたオブジェクトになる');
 		strictEqual(savedH5.env.version, originalH5.env.version, 'h5.coexist()の戻り値が元のh5と同じ。');
 	});
 

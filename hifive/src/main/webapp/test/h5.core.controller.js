@@ -228,23 +228,23 @@ $(function() {
 				try {
 					testController.bind();
 				} catch (e) {
-					same(e.code, 6001, e.message);
+					deepEqual(e.code, 6001, e.message);
 				}
 				try {
 					var bind = testController.bind
 					bind('#controllerTest');
 				} catch (e) {
-					same(e.code, 6002, e.message);
+					deepEqual(e.code, 6002, e.message);
 				}
 				try {
 					testController.bind('#noexist');
 				} catch (e) {
-					same(e.code, 6003, e.message);
+					deepEqual(e.code, 6003, e.message);
 				}
 				try {
 					testController.bind('.test');
 				} catch (e) {
-					same(e.code, 6004, e.message);
+					deepEqual(e.code, 6004, e.message);
 				}
 			});
 
@@ -281,7 +281,7 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -298,7 +298,7 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -472,7 +472,7 @@ $(function() {
 			__name: 'TestController',
 			__templates: ['./noExistPath'],
 			__construct: function(context) {
-				same(++count, 1, '1. コンストラクタが実行される。');
+				deepEqual(++count, 1, '1. コンストラクタが実行される。');
 			},
 			__init: function(context) {
 				ok(false, 'テスト失敗。__initが実行されました。');
@@ -481,11 +481,11 @@ $(function() {
 				ok(false, 'テスト失敗。__readyが実行されました。');
 			},
 			__dispose: function(context) {
-				same(++count, 4, '4. __disposeが実行される。');
+				deepEqual(++count, 4, '4. __disposeが実行される。');
 				start();
 			},
 			__unbind: function(context) {
-				same(++count, 3, '3. __unbindが実行される。');
+				deepEqual(++count, 3, '3. __unbindが実行される。');
 			}
 		};
 
@@ -493,8 +493,8 @@ $(function() {
 		testController.preinitPromise.done(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
 		}).fail(function(e) {
-			same(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			same(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+			deepEqual(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
 		})
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
@@ -511,7 +511,7 @@ $(function() {
 			__name: 'BController',
 
 			__construct: function(context) {
-				same(++count, 1, '孫コントローラのコンストラクタが実行される。');
+				deepEqual(++count, 1, '孫コントローラのコンストラクタが実行される。');
 			},
 			__init: function(context) {
 			// 孫の__initは、その前にコントローラ群がdisposeされていれば実行されない
@@ -520,11 +520,11 @@ $(function() {
 			// 孫の__readyは、その前にコントローラ群がdisposeされていれば実行されない
 			},
 			__dispose: function(context) {
-				same(++count, 9, '孫コントローラの__disposeが実行される。');
+				deepEqual(++count, 9, '孫コントローラの__disposeが実行される。');
 				disposedController.b = this;
 			},
 			__unbind: function(context) {
-				same(++count, 6, '孫コントローラの__unbindが実行される。');
+				deepEqual(++count, 6, '孫コントローラの__unbindが実行される。');
 			}
 		};
 		var aController = {
@@ -537,12 +537,12 @@ $(function() {
 					// 孫コントローラのpreinitDfdはこの時点でresolveしてるはず
 					// (テンプレートファイルがないので、同期的にresolveする。)
 					// なので、即座に実行される。
-					same(++count, 2, '孫コントローラのpreinitPromiseのdoneハンドラが実行される。');
+					deepEqual(++count, 2, '孫コントローラのpreinitPromiseのdoneハンドラが実行される。');
 				}).fail(function(e) {
 					ok(false, 'テスト失敗。孫コントローラのpreinitPromiseのfailハンドラが実行されました。');
-					same(e.code, errorCode, e.message);
+					deepEqual(e.code, errorCode, e.message);
 				});
-				same(++count, 3, '子コントローラのコンストラクタが実行される。');
+				deepEqual(++count, 3, '子コントローラのコンストラクタが実行される。');
 			},
 			__init: function(context) {
 				ok(false, 'テスト失敗。子コントローラの__initが実行されました。');
@@ -551,11 +551,11 @@ $(function() {
 				ok(false, 'テスト失敗。子コントローラの__readyが実行されました。');
 			},
 			__dispose: function(context) {
-				same(++count, 10, '子コントローラの__disposeが実行される。');
+				deepEqual(++count, 10, '子コントローラの__disposeが実行される。');
 				disposedController.a = this;
 			},
 			__unbind: function(context) {
-				same(++count, 7, '子コントローラの__unbindが実行される。');
+				deepEqual(++count, 7, '子コントローラの__unbindが実行される。');
 			}
 		};
 
@@ -565,13 +565,13 @@ $(function() {
 			childController: aController,
 
 			__construct: function(context) {
-				same(++count, 4, '4. 親のコンストラクタが実行される。');
+				deepEqual(++count, 4, '4. 親のコンストラクタが実行される。');
 
 				this.childController.preinitPromise.done(function() {
 					ok(false, 'テスト失敗。子コントローラのpreinitPromiseのdoneハンドラが呼ばれた。');
 				}).fail(function(e) {
-					same(++count, 5, '子コントローラのpreinitPromiseのfailハンドラが実行される。');
-					same(e.code, errorCode, e.message);
+					deepEqual(++count, 5, '子コントローラのpreinitPromiseのfailハンドラが実行される。');
+					deepEqual(e.code, errorCode, e.message);
 				});
 			},
 			__init: function(context) {
@@ -581,7 +581,7 @@ $(function() {
 				ok(false, 'テスト失敗。親の__readyが実行されました。');
 			},
 			__dispose: function(context) {
-				same(++count, 11, '親の__disposeが実行される。');
+				deepEqual(++count, 11, '親の__disposeが実行される。');
 				disposedController.test = this;
 				setTimeout(function() {
 					for ( var i = 0; i < 3; i++) {
@@ -600,7 +600,7 @@ $(function() {
 				}, 0);
 			},
 			__unbind: function(context) {
-				same(++count, 8, '親の__unbindが実行される。');
+				deepEqual(++count, 8, '親の__unbindが実行される。');
 			}
 		};
 
@@ -643,24 +643,24 @@ $(function() {
 			__name: 'TestController',
 			__templates: ['./noExistPath'],
 			__construct: function(context) {
-				same(++count, 1, '__constructが実行される。');
+				deepEqual(++count, 1, '__constructが実行される。');
 			},
 			__init: function(context) {
-				same(++count, 2, '__initが実行される。');
+				deepEqual(++count, 2, '__initが実行される。');
 			},
 			__ready: function(context) {
-				same(++count, 4, '__readyが実行される。');
+				deepEqual(++count, 4, '__readyが実行される。');
 			}
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.initPromise.done(function(a) {
-			same(++count, 3, 'initPromiseがresolve()されました。');
+			deepEqual(++count, 3, 'initPromiseがresolve()されました。');
 		}).fail(function(e, opt) {
 			ok(false, 'テスト失敗。initPromiseがreject()されました。');
 		});
 		testController.readyPromise.done(function(a) {
-			same(++count, 5, 'readyPromiseがresolve()されました。');
+			deepEqual(++count, 5, 'readyPromiseがresolve()されました。');
 			h5.core.view.createView = originalCreateView;
 			start();
 		});
@@ -698,7 +698,7 @@ $(function() {
 			__name: 'TestController',
 			__templates: ['./noExistPath'],
 			__construct: function(context) {
-				same(++count, 1, 'コンストラクタが実行される。');
+				deepEqual(++count, 1, 'コンストラクタが実行される。');
 			},
 			__init: function(context) {
 				ok(false, 'テスト失敗。__initが実行されました。');
@@ -707,10 +707,10 @@ $(function() {
 				ok(false, 'テスト失敗。__readyが実行されました。');
 			},
 			__dispose: function(context) {
-				same(++count, 4, '__disposeが実行される。');
+				deepEqual(++count, 4, '__disposeが実行される。');
 			},
 			__unbind: function(context) {
-				same(++count, 3, '__unbindが実行される。');
+				deepEqual(++count, 3, '__unbindが実行される。');
 			}
 		};
 
@@ -720,8 +720,8 @@ $(function() {
 			h5.core.view.createView = originalCreateView;
 			start();
 		}).fail(function(e) {
-			same(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			same(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+			deepEqual(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
 			h5.core.view.createView = originalCreateView;
 			start();
 		});
@@ -745,7 +745,7 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが起きていません');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 		h5.core.view = view;
 	});
@@ -1645,18 +1645,18 @@ $(function() {
 
 			'{rootElement} click': function(context) {
 				this.view.register('templateId1', '111');
-				same(this.view.get('templateId1'), '111',
+				deepEqual(this.view.get('templateId1'), '111',
 						'this.view.register(id, template)でテンプレートを登録できること。');
-				same(this.view.isValid('[%= data %]'), true,
+				deepEqual(this.view.isValid('[%= data %]'), true,
 						'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
-				same(this.view.isValid('<div>[%= hoge fuga %]</div>'), false,
+				deepEqual(this.view.isValid('<div>[%= hoge fuga %]</div>'), false,
 						'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
-				same(this.view.isAvailable('templateId1'), true,
+				deepEqual(this.view.isAvailable('templateId1'), true,
 						'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
-				same(this.view.isAvailable('templateId2'), false,
+				deepEqual(this.view.isAvailable('templateId2'), false,
 						'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
 				this.view.clear();
-				same(this.view.isAvailable('templateId1'), false,
+				deepEqual(this.view.isAvailable('templateId1'), false,
 						'this.view.clear()でテンプレートを削除できること');
 			}
 		};
@@ -1703,9 +1703,9 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 			ok(html.length > 0, '指定されたテンプレートIDを自身のビューが扱っていない場合、親コントローラのビューへカスケードされること');
 			ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
-			same(errorObj.code, expectErrorObj.code,
+			deepEqual(errorObj.code, expectErrorObj.code,
 					'指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
-			same(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
+			deepEqual(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
 			testController.unbind();
 			start();
 		});
@@ -2140,7 +2140,7 @@ $(function() {
 				}
 				var indicator = this.indicator(new NoPlain()).show();
 
-				same($(indicator.target).find('.blockUI.a.blockElement > .indicator-message')
+				deepEqual($(indicator.target).find('.blockUI.a.blockElement > .indicator-message')
 						.text(), '', 'オプションは無視されて、メッセージは表示されていないこと。');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
 						'Indicator#show() インジケータが表示されること。');
@@ -2296,7 +2296,7 @@ $(function() {
 					target: '#child'
 				}).show();
 
-				same($(indicator.target).find('.blockUI.a.blockElement').length, 0,
+				deepEqual($(indicator.target).find('.blockUI.a.blockElement').length, 0,
 						'インジケータが表示されていないこと');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 0,
 						'Indicator#show() インジケータ(オーバーレイ)が表示されていないこと。');
