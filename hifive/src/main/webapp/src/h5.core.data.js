@@ -488,7 +488,7 @@
 	 */
 	GlobalDataModelManager.prototype.register = function(name, descriptor) {
 		//TODO nameもdescriptorの中に入れられるようにする？
-		this.collections[name] = createModelCollection(descriptor);
+		this.collections[name] = createDataModel(descriptor);
 		return this.collections[name]; //TODO 高速化
 	};
 
@@ -509,15 +509,15 @@
 		return ObjectManager.createFromDescriptor(descriptor);
 	}
 
-	function DataBinding(controller, modelCollection, renderRoot, templateKey, converter) {
+	function DataBinding(controller, modelCollection, renderRoot, itemTemplate, converter) {
 		this.collection = modelCollection;
-		this.templateKey = templateKey;
+		this.templateKey = itemTemplate;
 		this.renderRoot = renderRoot; //TODO $find()的なことをする対応
 
 		this.__controller = controller;
 
 		//TODO KeyだけでなくDOM要素も受け取れるようにする
-		this.templateCache = $(controller.view.get(templateKey)).clone();
+		this.templateCache = $(controller.view.get(itemTemplate)).clone();
 
 		this.autoBind = true;
 
@@ -774,8 +774,8 @@
 	h5.u.obj.expose('h5.core.data', {
 		manager: new GlobalDataModelManager(),
 		createLocalDataModel: createDataModel,
-		createDataBinding: function(controller, modelCollection, renderRoot, template) {
-			return new DataBinding(controller, modelCollection, renderRoot, template);
+		createDataBinding: function(controller, modelCollection, renderRoot, itemTemplate) {
+			return new DataBinding(controller, modelCollection, renderRoot, itemTemplate);
 		}
 	});
 })();
