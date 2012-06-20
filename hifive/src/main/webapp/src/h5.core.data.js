@@ -225,7 +225,7 @@
 	/***********************************************************************************************
 	 * @class
 	 **********************************************************************************************/
-	function ObjectManager() {
+	function DataModel() {
 		this.objectDescriptor = null;
 		this.objects = {};
 		this.objectArray = [];
@@ -253,27 +253,27 @@
 	}
 
 	/**
-	 * @returns {ObjectManager}
+	 * @returns {DataModel}
 	 */
-	ObjectManager.createFromDescriptor = function(objectDescriptor) {
+	DataModel.createFromDescriptor = function(objectDescriptor) {
 		if (!$.isPlainObject(objectDescriptor)) {
 			throw new Error('objectDescriptorにはオブジェクトを指定してください。');
 		}
 
-		var om = new ObjectManager();
+		var om = new DataModel();
 		om._init(objectDescriptor);
 		return om;
 	};
 
-	ObjectManager.prototype = new EventDispatcher();
+	DataModel.prototype = new EventDispatcher();
 
-	//	ObjectManager.prototype.push = function(obj){
+	//	DataModel.prototype.push = function(obj){
 	//		//TODO 本当はpushは可変長引数に対応するのでその対応が必要
 	//		this.size++;
 	//		this.objectArray.push(obj);
 	//	};
 	//
-	//	ObjectManager.prototype.pop = function() {
+	//	DataModel.prototype.pop = function() {
 	//		//TODO
 	//		this.size--;
 	//		this.objectArray.pop();
@@ -281,7 +281,7 @@
 
 	/**
 	 */
-	ObjectManager.prototype._init = function(objectDescriptor) {
+	DataModel.prototype._init = function(objectDescriptor) {
 		this.objectDescriptor = objectDescriptor;
 
 		var defineProxyProperty = function(obj, propName) {
@@ -337,12 +337,12 @@
 	/**
 	 * @returns {Object}
 	 */
-	ObjectManager.prototype._createObjectById = function(id) {
+	DataModel.prototype._createObjectById = function(id) {
 		if (id === undefined || id === null) {
-			throw new Error('ObjectManager.createObjectById: idが指定されていません');
+			throw new Error('DataModel.createObjectById: idが指定されていません');
 		}
 		if (id in this.objects) {
-			throw new Error('ObjectManager.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
+			throw new Error('DataModel.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
 		}
 
 		var obj = new this.proxy();
@@ -357,10 +357,10 @@
 	/**
 	 * @returns {Object}
 	 */
-	ObjectManager.prototype.createObject = function(obj) {
+	DataModel.prototype.createObject = function(obj) {
 		var id = obj[this.idKey];
 		if (id === null || id === undefined) {
-			throw new Error('ObjectManager.createObject: idが指定されていません');
+			throw new Error('DataModel.createObject: idが指定されていません');
 		}
 
 		var o = this._createObjectById(id);
@@ -388,7 +388,7 @@
 	/**
 	 * @returns {Object}
 	 */
-	ObjectManager.prototype.setObject = function(obj) {
+	DataModel.prototype.setObject = function(obj) {
 		var idKey = this.idKey;
 
 		var o = this.findById(obj[idKey]);
@@ -408,13 +408,13 @@
 
 	/**
 	 */
-	ObjectManager.prototype.removeObject = function(obj) {
+	DataModel.prototype.removeObject = function(obj) {
 		this.removeObjectById(obj[this.idKey]);
 	};
 
-	ObjectManager.prototype.removeObjectById = function(id) {
+	DataModel.prototype.removeObjectById = function(id) {
 		if (id === undefined || id === null) {
-			throw new Error('ObjectManager.removeObjectById: idが指定されていません');
+			throw new Error('DataModel.removeObjectById: idが指定されていません');
 		}
 		if (!(id in this.objects)) {
 			return;
@@ -433,7 +433,7 @@
 		this.dispatchEvent(ev);
 	};
 
-	ObjectManager.prototype.getAllObjects = function() {
+	DataModel.prototype.getAllObjects = function() {
 		var ret = [];
 		var objects = this.objects;
 		for ( var prop in objects) {
@@ -445,13 +445,13 @@
 	/**
 	 * @returns {Number} オブジェクトの個数
 	 */
-	ObjectManager.prototype.getSize = function() {
+	DataModel.prototype.getSize = function() {
 		return this.size;
 	};
 
 	/**
 	 */
-	ObjectManager.prototype.objectChangeListener = function(event) {
+	DataModel.prototype.objectChangeListener = function(event) {
 		var ev = {
 			type: 'change',
 			obj: event.target,
@@ -464,11 +464,11 @@
 
 	/**
 	 */
-	ObjectManager.prototype.findById = function(id) {
+	DataModel.prototype.findById = function(id) {
 		return this.objects[id];
 	};
 
-	ObjectManager.prototype.has = function(obj) {
+	DataModel.prototype.has = function(obj) {
 		return !!this.findById(obj[this.idKey]);
 	};
 
@@ -480,7 +480,7 @@
 	 * @class
 	 **********************************************************************************************/
 	function GlobalDataModelManager() {
-		this.collections = {};
+		this.dataModels = {};
 	}
 
 	/**
@@ -488,13 +488,13 @@
 	 */
 	GlobalDataModelManager.prototype.register = function(name, descriptor) {
 		//TODO nameもdescriptorの中に入れられるようにする？
-		this.collections[name] = createDataModel(descriptor);
-		return this.collections[name]; //TODO 高速化
+		this.dataModels[name] = createDataModel(descriptor);
+		return this.dataModels[name]; //TODO 高速化
 	};
 
 	GlobalDataModelManager.prototype.getCollection = function(name) {
 		//TODO undefチェック必要か
-		return this.collections[name];
+		return this.dataModels[name];
 	};
 
 	// =========================================================================
@@ -506,11 +506,30 @@
 	//TODO モジュール本体のコードはここに書く
 
 	function createDataModel(descriptor) {
-		return ObjectManager.createFromDescriptor(descriptor);
+		return DataModel.createFromDescriptor(descriptor);
 	}
 
-	function DataBinding(controller, modelCollection, renderRoot, itemTemplate, converter) {
-		this.collection = modelCollection;
+	//TODO JSDoc
+	function SimpleRenderer() {}
+	$.extend(SimpleRenderer.prototype, {
+		onItemsAdd: function(dataItems) {
+
+		},
+
+		onItemsChange: function(dataItems, changed) {
+
+		},
+
+		onItemsRemove: function(dataItems) {
+
+		}
+	});
+
+	//TODO Rendererは、実際に処理をすべきタイミングで呼ばれる。
+	//DataBindingは、今が処理すべきかどうかを
+
+	function DataBinding(controller, dataModel, renderRoot, itemTemplate) {
+		this.dataModel = dataModel;
 		this.templateKey = itemTemplate;
 		this.renderRoot = renderRoot; //TODO $find()的なことをする対応
 
@@ -523,16 +542,16 @@
 
 		//var that = this;
 
-		this.collection.addEventListener('add', function(event) {
-			fwLogger.debug('collection added');
+		this.dataModel.addEventListener('add', function(event) {
+			fwLogger.debug('dataModel added');
 			//			that.applyBinding(event.obj);
 		});
 
-		this.collection.addEventListener('change', function(event) {
+		this.dataModel.addEventListener('change', function(event) {
 
 		});
 
-		this.collection.addEventListener('remove', function(event) {
+		this.dataModel.addEventListener('remove', function(event) {
 
 		});
 
@@ -547,12 +566,16 @@
 	};
 
 	/**
-	 * converterFunctionの仕様： converterFunction(rootObject, object, key, value) { return
+	 * formatFunctionの仕様： formatterFunction(rootObject, object, key, value) { return
 	 * value-for-key-or-object; } $.isPlainObject以外の値が返ってきた場合⇒ $.text()で文字列として流し込む Objectの場合⇒
 	 * isHtmlがtrueなら$.html()、それ以外なら$.text()で valueにセットされている値を流し込む
 	 */
-	DataBinding.prototype.setConverter = function(converterFunction) {
-		this.converter = converterFunction;
+	DataBinding.prototype.setFormatter = function(formatFunction) {
+		this.formatter = formatFunction;
+	};
+
+	DataBinding.prototype.setConverter = function(convertFunction) {
+		this.converter = convertFunction;
 	};
 
 	DataBinding.prototype.appendRenderer = function(elem) {
@@ -685,8 +708,8 @@
 								.attr(getH5DataKey('bind-template')), model[childBindProp]);
 					} else {
 						//						that.applyValue($this, model, p);
-						if (that.converter) {
-							var cv = that.converter(model, model, p, model[p]);
+						if (that.formatter) {
+							var cv = that.formatter(model, model, p, model[p]);
 
 							if ($.isPlainObject(cv)) {
 								//TODO cv.valueがない場合のチェック
@@ -759,8 +782,14 @@
 		fwLogger.debug('applyBinding called');
 		//call使う必要があるかは要検討
 		applyBinding.call(this, this.__controller.view, this.renderRoot, this.templateKey,
-				this.collection.getAllObjects());
+				this.dataModel.getAllObjects());
 	};
+
+	//TODO Rendererに何をどこまで任せる？
+	//・表示するかどうか -> 画面をスクロールした時に判断、とかも必要。
+	//　　・イベントハンドラをレンダラが設定できる必要あり
+	//・Rendererの能動性が強すぎるかも…
+
 
 	//DataBindingでは、editable属性があって、editOnで、どのタイミングでエディット状態にするか指定する。
 	//editOnは…JS?HTML?
@@ -773,9 +802,10 @@
 
 	h5.u.obj.expose('h5.core.data', {
 		manager: new GlobalDataModelManager(),
+		//TODO managerは自分でgetManager()するのがいいか？managerをここでシングルトンにするとポートレット系のときに支障があるかも
 		createLocalDataModel: createDataModel,
-		createDataBinding: function(controller, modelCollection, renderRoot, itemTemplate) {
-			return new DataBinding(controller, modelCollection, renderRoot, itemTemplate);
+		createDataBinding: function(controller, dataModel, renderRoot, itemTemplate) {
+			return new DataBinding(controller, dataModel, renderRoot, itemTemplate);
 		}
 	});
 })();
