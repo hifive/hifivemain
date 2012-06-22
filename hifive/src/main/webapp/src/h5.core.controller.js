@@ -1736,6 +1736,10 @@
 		 * @returns {ValidationError} 検証エラーオブジェクト
 		 */
 		validateAs: function(dataModel, ignoreTagRule) {
+			if (!dataModel) {
+				throwFwError('200000'); //TODO codeを正しくする
+			}
+
 			for ( var key in this.elements) {
 				if (!this.hasOwnProperty(key)) {
 					continue;
@@ -2082,12 +2086,23 @@
 		 * ※inputにはname属性を付ける必要があります。
 		 *
 		 * @memberOf Controller
-		 * @param {String|Element|jQuery} root 入力値を取得するルート要素(この要素以下から入力値を取得します)
+		 * @param {String|Element|jQuery} root 入力値を取得するルート要素(この要素以下から入力値を取得します)。nullの場合はコントローラのrootElementになります。
 		 * @param {String[]|Element[]|jQuery[]} include デフォルトルールにマッチしない要素を追加で指定します
 		 * @returns 入力値オブジェクト
 		 */
 		getUserInput: function(root, include) {
-			var $root = $(root);
+			var $root;
+			if(!root) {
+				$root = $(this.rootElement);
+			}
+			else {
+				$root = $(root); //TODO rootの{}対応
+			}
+
+			//TODO ユーザー入力は通常自分でループしてくるが、
+			//構造に従って取り出す。
+
+			//TODO UserInputに、対応するDataModel（存在する場合）を入れておくのがよいか。
 
 			var $userInput = $root.find('input[name]'); //TODO includeをloopで回して.add()するなど
 
@@ -2100,6 +2115,7 @@
 		/**
 		 * TODO JSDoc追加 データバインディングを作成します。
 		 *
+		 * @memberOf Controller
 		 * @param {DataModel} dataModel データモデル
 		 * @param {String|Element|jQuery} renderRoot データを表示させるコンテナ要素
 		 * @param {String|Element|jQuery} template データを表示させるテンプレート

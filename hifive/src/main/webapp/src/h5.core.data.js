@@ -357,7 +357,7 @@
 	/**
 	 * @returns {Object}
 	 */
-	DataModel.prototype.createObject = function(obj) {
+	DataModel.prototype.createItem = function(obj) {
 		var id = obj[this.idKey];
 		if (id === null || id === undefined) {
 			throw new Error('DataModel.createObject: idが指定されていません');
@@ -377,8 +377,8 @@
 		});
 
 		var ev = {
-			type: 'add',
-			obj: o
+			type: 'itemAdd',
+			item: o
 		};
 		this.dispatchEvent(ev);
 
@@ -388,13 +388,13 @@
 	/**
 	 * @returns {Object}
 	 */
-	DataModel.prototype.setObject = function(obj) {
+	DataModel.prototype.setItem = function(obj) {
 		var idKey = this.idKey;
 
 		var o = this.findById(obj[idKey]);
 		if (!o) {
 			// 新規オブジェクトの場合は作成
-			return this.createObject(obj);
+			return this.createItem(obj);
 		}
 
 		// 既に存在するオブジェクトの場合は値を更新
@@ -427,8 +427,8 @@
 		this.size--;
 
 		var ev = {
-			type: 'remove',
-			obj: obj
+			type: 'itemRemove',
+			item: obj
 		};
 		this.dispatchEvent(ev);
 	};
@@ -453,8 +453,8 @@
 	 */
 	DataModel.prototype.objectChangeListener = function(event) {
 		var ev = {
-			type: 'change',
-			obj: event.target,
+			type: 'itemChange',
+			item: event.target,
 			property: event.property,
 			oldValue: event.oldValue,
 			newValue: event.newValue
@@ -509,84 +509,7 @@
 		return DataModel.createFromDescriptor(descriptor);
 	}
 
-	//TODO JSDoc
-	function SimpleRenderer() {}
-	$.extend(SimpleRenderer.prototype, {
-		onItemsAdd: function(dataItems) {
-
-		},
-
-		onItemsChange: function(dataItems, changed) {
-
-		},
-
-		onItemsRemove: function(dataItems) {
-
-		}
-	});
-
-	//TODO Rendererは、実際に処理をすべきタイミングで呼ばれる。
-	//DataBindingは、今が処理すべきかどうかを
-
-	function DataBinding(controller, dataModel, renderRoot, itemTemplate) {
-		this.dataModel = dataModel;
-		this.templateKey = itemTemplate;
-		this.renderRoot = renderRoot; //TODO $find()的なことをする対応
-
-		this.__controller = controller;
-
-		//TODO KeyだけでなくDOM要素も受け取れるようにする
-		this.templateCache = $(controller.view.get(itemTemplate)).clone();
-
-		this.autoBind = true;
-
-		//var that = this;
-
-		this.dataModel.addEventListener('add', function(event) {
-			fwLogger.debug('dataModel added');
-			//			that.applyBinding(event.obj);
-		});
-
-		this.dataModel.addEventListener('change', function(event) {
-
-		});
-
-		this.dataModel.addEventListener('remove', function(event) {
-
-		});
-
-	}
-
-	DataBinding.prototype.getCurrentViewState = function(renderModel) {
-		throw new Error('未実装');
-	};
-
-	DataBinding.prototype.setRenderControllFunction = function(func) {
-		this.renderFunction = func;
-	};
-
-	/**
-	 * formatFunctionの仕様： formatterFunction(rootObject, object, key, value) { return
-	 * value-for-key-or-object; } $.isPlainObject以外の値が返ってきた場合⇒ $.text()で文字列として流し込む Objectの場合⇒
-	 * isHtmlがtrueなら$.html()、それ以外なら$.text()で valueにセットされている値を流し込む
-	 */
-	DataBinding.prototype.setFormatter = function(formatFunction) {
-		this.formatter = formatFunction;
-	};
-
-	DataBinding.prototype.setConverter = function(convertFunction) {
-		this.converter = convertFunction;
-	};
-
-	DataBinding.prototype.appendRenderer = function(elem) {
-
-	};
-
-	DataBinding.prototype.removeRenderer = function(elem) {
-
-	};
-
-	function applyBinding(view, rootElement, templateKey, models, useRaw) { //TODO useRawはなくなる
+	function applyBinding(view, rootElement, templateKey, models, parentModel) {
 
 		var that = this;
 
@@ -626,13 +549,8 @@
 		//var target = getTarget(element, this.__controller.rootElement, true); //TODO getTarget
 		var $target = $(rootElement); //elementはターゲットとなる親要素
 
-		var $html;
-		if (useRaw) {
-			$html = $('<div>').append($(templateKey)); //RAW, 文字列でHTMLが来ているのでcloneは不要.
-		} else {
-			$html = $('<div>').append(view.get(templateKey, models));
+		var $html = $('<div>').append($(templateKey)); //RAW, 文字列でHTMLが来ているのでcloneは不要.
 
-		}
 
 		//		if (!(bindObjectName || $html.attr('data-bind-property'))) {
 
@@ -654,10 +572,13 @@
 			var uuid = createSerialNumber();
 
 			bindingMap[uuid] = {
-				m: model
+				m: model,
+				parent: parentModel
 			};
 
-			$clone.attr(getH5DataKey('bind-key'), uuid);
+			$clone.children().attr("data-h5-bind-guid", uuid);
+
+			//			$clone.attr(getH5DataKey('bind-key'), uuid);
 
 			//TODO $().find()は自分自身を探せないので仕方なく。後で変更。
 			//var $cloneWrapper = $('<div></div>');
@@ -683,52 +604,54 @@
 				});
 
 				//見つかった要素をバインド
-				$dom.each(function() {
-					var $this = $(this);
+				$dom
+						.each(function() {
+							var $this = $(this);
 
-					if ($this.is('[data-h5-bind-template="inner"]')) {
-						//TODO tempコード
-						var clonedInner = $this.html();
+							if ($this.is('[data-h5-bind-template="inner"]')) {
+								//TODO tempコード
+								var clonedInner = $this.html();
 
-						$this.empty(); //innerなのでempty()にする。これは本当はBinding生成時に行う必要がある。
-						//TODO 事前にいくつか要素が入っていた場合を考えると、emptyではなく data-h5-bind-template="this" のような属性を付けて行うべきかも。
+								$this.empty(); //innerなのでempty()にする。これは本当はBinding生成時に行う必要がある。
+								//TODO 事前にいくつか要素が入っていた場合を考えると、emptyではなく data-h5-bind-template="this" のような属性を付けて行うべきかも。
 
-						var childBindProp = $this.attr(getH5DataKey('bind')); //TODO hoisting
-						applyBinding
-								.call(that, view, this, clonedInner, model[childBindProp], true);
-					} else if ($this.is('[data-h5-bind-template]')) {
-						//var templateKey = $this.attr('data-h5-bind-template');
-						//TODO templateをindexOfするコードは…なんで必要なんだっけ？？
+								var childBindProp = $this.attr(getH5DataKey('bind')); //TODO hoisting
+								applyBinding.call(that, view, this, clonedInner,
+										model[childBindProp], model);
+							} else if ($this.is('[data-h5-bind-template]')) {
+								//var templateKey = $this.attr('data-h5-bind-template');
+								//TODO templateをindexOfするコードは…なんで必要なんだっけ？？
 
-						var childBindProp = $this.attr(getH5DataKey('bind'));
-						//fwLogger.debug('child templateId = {0}',$this.attr(getH5DataKey('bind-template')));
+								var childBindProp = $this.attr(getH5DataKey('bind'));
+								//fwLogger.debug('child templateId = {0}',$this.attr(getH5DataKey('bind-template')));
 
-						//ネストしてテンプレートを適用
-						applyBinding.call(that, view, this, $this
-								.attr(getH5DataKey('bind-template')), model[childBindProp]);
-					} else {
-						//						that.applyValue($this, model, p);
-						if (that.formatter) {
-							var cv = that.formatter(model, model, p, model[p]);
-
-							if ($.isPlainObject(cv)) {
-								//TODO cv.valueがない場合のチェック
-
-								if (cv.isHtml) {
-									applyToView($this, cv.value, true);
-								} else {
-									applyToView($this, cv.value, false);
-								}
+								//ネストしてテンプレートを適用
+								applyBinding.call(that, view, this, view.get($this
+										.attr(getH5DataKey('bind-template'))),
+										model[childBindProp], model);
 							} else {
-								applyToView($this, cv, false);
-								//$this.text(cv); //TODO オブジェクトが子要素の場合を考える。パス表記を渡すようにする？？
+								//that.applyValue($this, model, p);
+								if (that.formatter) {
+									var cv = that.formatter(model, model, p, model[p]);
+
+									if ($.isPlainObject(cv)) {
+										//TODO cv.valueがない場合のチェック
+
+										if (cv.isHtml) {
+											applyToView($this, cv.value, true);
+										} else {
+											applyToView($this, cv.value, false);
+										}
+									} else {
+										applyToView($this, cv, false);
+										//$this.text(cv); //TODO オブジェクトが子要素の場合を考える。パス表記を渡すようにする？？
+									}
+								} else {
+									applyToView($this, model[p], false);
+									//$this.html(model[p]);
+								}
 							}
-						} else {
-							applyToView($this, model[p], false);
-							//$this.html(model[p]);
-						}
-					}
-				});
+						});
 			}
 
 			//TODO transitionはバインドの「ルート」の場合のみでよいだろう。
@@ -742,48 +665,197 @@
 	}
 
 
-	/**
-	 * in/out transition関数の仕様： function transition(target:DOM, elemForAppend:DOM, operation:String,
-	 * callbackWhenCompleted(elem)):elem operationはstart/stop/goToEnd/goToStart
-	 * callbackは基となるDataBindingへのコールバック
-	 *
-	 * @param func
-	 */
-	DataBinding.prototype.setOutTransition = function(func) {
-		this.outTransition = func;
-		//outTransitionはDeferredで実装されなければならない。
-		//完了したら elemを resolve(elen);で返す必要がある。
-		//返さないと、インスタンスの管理ができない。
-	};
 
-	//TODO inTransition中にそのインスタンスを外したくなったらどうする？？
-	// 1. タイマー回すのをFW側で行うようにする
-	// 2. inTransitionFuncに引数を渡して「直ちに停止」できるようにする
-	//TODO 既に要素が存在していて後からバインドを行った場合
-	//inTransitionは動かす？？ -> 多分、動かす、でよい
-	DataBinding.prototype.setInTransition = function(func) {
-		this.inTransition = func;
-	};
 
 	//TODO これはいらないかも？？
 	//オブジェクトに変更があった場合に画面エフェクトを付ける。
 	//ただし、どういうエフェクトを付けるべきかはまちまちなので
 	//使いどころが難しいかもしれない。
-	DataBinding.prototype.setChangeEffect = function(func) {
-		this.changeEffect = func;
-	};
+	//	DataBinding.prototype.setChangeEffect = function(func) {
+	//		this.changeEffect = func;
+	//	};
 
 	//TODO addEventListenerの方式にする？？
-	DataBinding.prototype.setChangeCallback = function(func) {
+	//	DataBinding.prototype.setChangeCallback = function(func) {
+	//
+	//	};
 
-	};
 
-	DataBinding.prototype.applyBinding = function() {
-		fwLogger.debug('applyBinding called');
-		//call使う必要があるかは要検討
-		applyBinding.call(this, this.__controller.view, this.renderRoot, this.templateKey,
-				this.dataModel.getAllObjects());
-	};
+	/**
+	 * @name SimpleRenderer
+	 * @class
+	 */
+	function SimpleRenderer() {}
+	$.extend(SimpleRenderer.prototype, {
+		/**
+		 * @memberOf SimpleRenderer
+		 * @param dataItems
+		 * @param bindRoot
+		 * @param applyBindingFunc
+		 */
+		onItemsAdd: function(dataBinding, addedItems, bindingFunc) {
+			fwLogger.debug('SimpleRenderer onItemsAdd');
+
+			bindingFunc(addedItems[0]);
+
+			fwLogger.debug('onItemsAdd end');
+		},
+
+		onItemsChange: function(dataBinding, changedItems, applyFunc) {
+			//TODO 変更されたItem, 対応するView, old/newValueを返す
+		},
+
+		onItemsRemove: function(dataBinding, removedItems) {
+
+		}
+	});
+
+	//simpleRendererはシングルトンでよい
+	var simpleRendererInstance = new SimpleRenderer();
+
+
+	/**
+	 * @name DataBinding
+	 * @class
+	 */
+	function DataBinding(controller, dataModel, root, itemTemplate) {
+		this.dataModel = dataModel;
+		this.templateKey = itemTemplate;
+
+		this.root = root; //TODO $find()的なことをする対応
+
+		this.controller = controller;
+
+		//TODO KeyだけでなくDOM要素も受け取れるようにする
+		this.templateCache = $(controller.view.get(itemTemplate)).clone();
+
+		this.autoBind = true;
+
+		var that = this;
+
+		this.setRenderer(simpleRendererInstance);
+
+		function bindingFunc(dataItem) {
+			applyBinding.call(that, controller.view, that.root, that.templateCache, [dataItem],
+					null);
+		}
+
+		this.dataModel.addEventListener('itemAdd', function(event) {
+			fwLogger.debug('dataItem added');
+			that.renderer.onItemsAdd(that, [event.item], bindingFunc);
+		});
+
+		this.dataModel.addEventListener('itemChange', function(event) {
+			fwLogger.debug('dataItem change');
+//TODO oldValue, newValue
+			that.renderer.onItemsChange(that, [event.item]);
+		});
+
+		this.dataModel.addEventListener('itemRemove', function(event) {
+			fwLogger.debug('dataItem remove');
+
+		});
+	}
+	$.extend(DataBinding.prototype, {
+		/**
+		 * @memberOf DataBinding
+		 */
+		refresh: function() {
+			fwLogger.debug('DataBinding.refresh()');
+		},
+
+		/**
+		 * @memberOf DataBinding
+		 */
+		getRenderer: function() {
+			return this.renderer;
+		},
+
+		setRenderer: function(renderer) {
+			if (this.renderer === renderer) {
+				return;
+			}
+
+			this.renderer = renderer;
+			//TODO rendererが変更されたらデータバインドはすべてやり直す
+		},
+
+		/**
+		 * 指定されたデータアイテムにバインドされたエレメントを返します。<br>
+		 * 対応するビュー(エレメント)が見つからない場合はnullを返します。
+		 *
+		 * @param {DataItem} dataItem データアイテム
+		 */
+		getView: function(dataItem) {
+
+		},
+
+		/**
+		 * 指定された要素の親要素を順にたどり、最も近い要素にバインドされているデータアイテムを返します。<br>
+		 * バインドされたデータアイテムが見つからない場合はnullを返します。
+		 *
+		 * @param {Element} element DOM要素
+		 */
+		getDataItem: function(element) {
+			//TODO バインドしているルートそのものを指定した時に正しく返るか
+
+			var $item = $(element).closest('[data-h5-bind-guid]'); //TODO namespace対応
+			if ($item.length === 0) {
+				return null;
+			}
+
+			var uuid = $item.data('h5BindGuid'); // TODO namespace対応
+			var root = bindingMap[uuid];
+			while (root.parent !== null) {
+				root = root.parent;
+			}
+
+			return root.m;
+		},
+
+		setItemTemplate: function(itemTemplate) {
+
+		},
+
+		/**
+		 * formatFunctionの仕様： formatterFunction(rootObject, object, key, value) { return
+		 * value-for-key-or-object; } $.isPlainObject以外の値が返ってきた場合⇒ $.text()で文字列として流し込む Objectの場合⇒
+		 * isHtmlがtrueなら$.html()、それ以外なら$.text()で valueにセットされている値を流し込む
+		 */
+		setFormatter: function(formatFunction) {
+			this.formatter = formatFunction;
+		},
+
+		setConverter: function(convertFunction) {
+			this.converter = convertFunction;
+		},
+
+
+		/**
+		 * in/out transition関数の仕様： function transition(target:DOM, elemForAppend:DOM,
+		 * operation:String, callbackWhenCompleted(elem)):elem
+		 * operationはstart/stop/goToEnd/goToStart callbackは基となるDataBindingへのコールバック
+		 *
+		 * @param func
+		 */
+		setOutTransition: function(func) {
+			this.outTransition = func;
+			//outTransitionはDeferredで実装されなければならない。
+			//完了したら elemを resolve(elen);で返す必要がある。
+			//返さないと、インスタンスの管理ができない。
+		},
+
+		//TODO inTransition中にそのインスタンスを外したくなったらどうする？？
+		// 1. タイマー回すのをFW側で行うようにする
+		// 2. inTransitionFuncに引数を渡して「直ちに停止」できるようにする
+		//TODO 既に要素が存在していて後からバインドを行った場合
+		//inTransitionは動かす？？ -> 多分、動かす、でよい
+		setInTransition: function(func) {
+			this.inTransition = func;
+		}
+	});
+
+
 
 	//TODO Rendererに何をどこまで任せる？
 	//・表示するかどうか -> 画面をスクロールした時に判断、とかも必要。
@@ -804,8 +876,8 @@
 		manager: new GlobalDataModelManager(),
 		//TODO managerは自分でgetManager()するのがいいか？managerをここでシングルトンにするとポートレット系のときに支障があるかも
 		createLocalDataModel: createDataModel,
-		createDataBinding: function(controller, dataModel, renderRoot, itemTemplate) {
-			return new DataBinding(controller, dataModel, renderRoot, itemTemplate);
+		createDataBinding: function(controller, dataModel, root, itemTemplate) {
+			return new DataBinding(controller, dataModel, root, itemTemplate);
 		}
 	});
 })();
