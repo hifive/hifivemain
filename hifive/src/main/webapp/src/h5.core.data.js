@@ -479,20 +479,22 @@
 	/***********************************************************************************************
 	 * @class
 	 **********************************************************************************************/
-	function GlobalDataModelManager() {
+	function DataModelManager() {
+		//TODO 「アプリ名」「グループ名」など、このマネージャが管理するデータモデル群の名前を引数にとるようにする
+		//名前なしの場合はエラーにする
 		this.dataModels = {};
 	}
 
 	/**
-	 * @memberOf GlobalDataModelManager
+	 * @memberOf DataModelManager
 	 */
-	GlobalDataModelManager.prototype.register = function(name, descriptor) {
+	DataModelManager.prototype.register = function(name, descriptor) {
 		//TODO nameもdescriptorの中に入れられるようにする？
 		this.dataModels[name] = createDataModel(descriptor);
 		return this.dataModels[name]; //TODO 高速化
 	};
 
-	GlobalDataModelManager.prototype.getCollection = function(name) {
+	DataModelManager.prototype.getDataModel = function(name) {
 		//TODO undefチェック必要か
 		return this.dataModels[name];
 	};
@@ -868,12 +870,18 @@
 	//typeはinput, textarea, contenteditableあたりか
 
 
+	function createManager() {
+		//TODO 引数を取るように
+		return new DataModelManager();
+	}
+
 	//=============================
 	// Expose to window
 	//=============================
 
 	h5.u.obj.expose('h5.core.data', {
-		manager: new GlobalDataModelManager(),
+		manager: new DataModelManager(),
+		createManager: createManager,
 		//TODO managerは自分でgetManager()するのがいいか？managerをここでシングルトンにするとポートレット系のときに支障があるかも
 		createLocalDataModel: createDataModel,
 		createDataBinding: function(controller, dataModel, root, itemTemplate) {
