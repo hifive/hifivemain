@@ -222,9 +222,10 @@
 
 
 
-	/***********************************************************************************************
+	/**
 	 * @class
-	 **********************************************************************************************/
+	 * @name DataModel
+	 */
 	function DataModel() {
 		this.objectDescriptor = null;
 		this.objects = {};
@@ -236,6 +237,7 @@
 		function ObjectProxy() {}
 		ObjectProxy.prototype = new EventDispatcher();
 
+		//TODO triggerChangeはクロージャで持たせる
 		defineProperty(ObjectProxy.prototype, '_proxy_triggerChange', {
 			value: function(obj, prop, oldValue, newValue) {
 				var event = {
@@ -252,20 +254,228 @@
 		this.proxy = ObjectProxy;
 	}
 
+	DataModel.prototype = new EventDispatcher();
+	$.extend(DataModel.prototype, {
+		/**
+		 * @memberOf DataModel
+		 */
+		_init: function(objectDescriptor, manager) {
+			this.objectDescriptor = objectDescriptor;
+
+			//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
+
+			this.name = objectDescriptor.name;
+			this.manager = null;
+			if (manager) {
+				this.manager = manager;
+			}
+
+			//TODO this.fullname -> managerの名前までを含めた完全修飾名
+
+			var defineProxyProperty = function(obj, propName) {
+				var p = '_' + propName;
+
+				defineProperty(obj, propName, {
+					enumerable: true,
+					configurable: true,
+					get: function() {
+						return this[p];
+					},
+					set: function(value) {
+						if (this[p] === value) {
+							// 値の変更がない場合はchangeイベントは発火しない
+							return;
+						}
+
+						var oldValue = this[p];
+
+						if (this[p] === undefined) {
+							defineProperty(this, p, {
+								value: value,
+								writable: true,
+							});
+						}
+
+						this[p] = value;
+
+						this._proxy_triggerChange(this, propName, oldValue, value);
+					}
+				});
+			};
+
+			var hasId = false;
+
+			for ( var p in objectDescriptor.prop) {
+				defineProxyProperty(this.proxy.prototype, p);
+				if (objectDescriptor.prop[p] && (objectDescriptor.prop[p].isId === true)) {
+					if (hasId) {
+						throw new Error('isIdを持つプロパティが複数存在します。 prop = ' + p);
+					}
+
+					this.idKey = p;
+					hasId = true;
+				}
+			}
+
+			if (!hasId) {
+				throw new Error('id指定されたプロパティが存在しません。isId = trueであるプロパティが1つ必要です');
+			}
+		},
+
+		/**
+		 * @returns {Object}
+		 */
+		_createObjectById: function(id) {
+			if (id === undefined || id === null) {
+				throw new Error('DataModel.createObjectById: idが指定されていません');
+			}
+			if (id in this.objects) {
+				throw new Error('DataModel.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
+			}
+
+			var obj = new this.proxy();
+			obj[this.idKey] = id;
+
+			this.objects[id] = obj;
+			this.size++;
+
+			return obj;
+		},
+
+		/**
+		 * @returns {Object}
+		 */
+		createItem: function(obj) {
+			var id = obj[this.idKey];
+			if (id === null || id === undefined) {
+				throw new Error('DataModel.createItem: idが指定されていません');
+			}
+
+			var o = this._createObjectById(id);
+			for (prop in obj) {
+				if (prop == this.idKey) {
+					continue;
+				}
+				o[prop] = obj[prop];
+			}
+
+			var that = this;
+			o.addEventListener('change', function(event) {
+				that.objectChangeListener(event);
+			});
+
+			var ev = {
+				type: 'itemAdd',
+				item: o
+			};
+			this.dispatchEvent(ev);
+
+			return o;
+		},
+
+		/**
+		 * @memberOf DataModel
+		 * @returns {Object}
+		 */
+		setItem: function(obj) {
+			var idKey = this.idKey;
+
+			var o = this.findById(obj[idKey]);
+			if (!o) {
+				// 新規オブジェクトの場合は作成
+				return this.createItem(obj);
+			}
+
+			// 既に存在するオブジェクトの場合は値を更新
+			for (prop in obj) {
+				if (prop == idKey) {
+					continue;
+				}
+				o[prop] = obj[prop];
+			}
+		},
+
+		/**
+		 */
+		removeItem: function(obj) {
+			this.removeItemById(obj[this.idKey]);
+		},
+
+		removeItemById: function(id) {
+			if (id === undefined || id === null) {
+				throw new Error('DataModel.removeObjectById: idが指定されていません');
+			}
+			if (!(id in this.objects)) {
+				return;
+			}
+
+			var obj = this.objects[id];
+
+			delete this.objects[id];
+
+			this.size--;
+
+			var ev = {
+				type: 'itemRemove',
+				item: obj
+			};
+			this.dispatchEvent(ev);
+		},
+
+		getAllItems: function() {
+			var ret = [];
+			var objects = this.objects;
+			for ( var prop in objects) {
+				ret.push(objects[prop]);
+			}
+			return ret;
+		},
+
+		/**
+		 * @returns {Number} オブジェクトの個数
+		 */
+		getSize: function() {
+			return this.size;
+		},
+
+		/**
+		 */
+		objectChangeListener: function(event) {
+			var ev = {
+				type: 'itemChange',
+				item: event.target,
+				property: event.property,
+				oldValue: event.oldValue,
+				newValue: event.newValue
+			};
+			this.dispatchEvent(ev);
+		},
+
+		/**
+		 */
+		findById: function(id) {
+			return this.objects[id];
+		},
+
+		has: function(obj) {
+			return !!this.findById(obj[this.idKey]);
+		}
+	});
+
+
 	/**
+	 * @memberOf DataModel
 	 * @returns {DataModel}
 	 */
-	DataModel.createFromDescriptor = function(objectDescriptor) {
+	DataModel.createFromDescriptor = function(objectDescriptor, manager) {
 		if (!$.isPlainObject(objectDescriptor)) {
 			throw new Error('objectDescriptorにはオブジェクトを指定してください。');
 		}
 
 		var om = new DataModel();
-		om._init(objectDescriptor);
+		om._init(objectDescriptor, manager);
 		return om;
 	};
-
-	DataModel.prototype = new EventDispatcher();
 
 	//	DataModel.prototype.push = function(obj){
 	//		//TODO 本当はpushは可変長引数に対応するのでその対応が必要
@@ -279,225 +489,15 @@
 	//		this.objectArray.pop();
 	//	};
 
-	/**
-	 */
-	DataModel.prototype._init = function(objectDescriptor) {
-		this.objectDescriptor = objectDescriptor;
 
-		var defineProxyProperty = function(obj, propName) {
-			var p = '_' + propName;
-
-			defineProperty(obj, propName, {
-				enumerable: true,
-				configurable: true,
-				get: function() {
-					return this[p];
-				},
-				set: function(value) {
-					if (this[p] === value) {
-						// 値の変更がない場合はchangeイベントは発火しない
-						return;
-					}
-
-					var oldValue = this[p];
-
-					if (this[p] === undefined) {
-						defineProperty(this, p, {
-							value: value,
-							writable: true,
-						});
-					}
-
-					this[p] = value;
-
-					this._proxy_triggerChange(this, propName, oldValue, value);
-				}
-			});
-		};
-
-		var hasId = false;
-
-		for ( var p in objectDescriptor) {
-			defineProxyProperty(this.proxy.prototype, p);
-			if (objectDescriptor[p] && (objectDescriptor[p].isId === true)) {
-				if (hasId) {
-					throw new Error('isIdを持つプロパティが複数存在します。 prop = ' + p);
-				}
-
-				this.idKey = p;
-				hasId = true;
-			}
-		}
-
-		if (!hasId) {
-			throw new Error('id指定されたプロパティが存在しません。isId = trueであるプロパティが1つ必要です');
-		}
-	};
-
-	/**
-	 * @returns {Object}
-	 */
-	DataModel.prototype._createObjectById = function(id) {
-		if (id === undefined || id === null) {
-			throw new Error('DataModel.createObjectById: idが指定されていません');
-		}
-		if (id in this.objects) {
-			throw new Error('DataModel.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
-		}
-
-		var obj = new this.proxy();
-		obj[this.idKey] = id;
-
-		this.objects[id] = obj;
-		this.size++;
-
-		return obj;
-	};
-
-	/**
-	 * @returns {Object}
-	 */
-	DataModel.prototype.createItem = function(obj) {
-		var id = obj[this.idKey];
-		if (id === null || id === undefined) {
-			throw new Error('DataModel.createObject: idが指定されていません');
-		}
-
-		var o = this._createObjectById(id);
-		for (prop in obj) {
-			if (prop == this.idKey) {
-				continue;
-			}
-			o[prop] = obj[prop];
-		}
-
-		var that = this;
-		o.addEventListener('change', function(event) {
-			that.objectChangeListener(event);
-		});
-
-		var ev = {
-			type: 'itemAdd',
-			item: o
-		};
-		this.dispatchEvent(ev);
-
-		return o;
-	};
-
-	/**
-	 * @returns {Object}
-	 */
-	DataModel.prototype.setItem = function(obj) {
-		var idKey = this.idKey;
-
-		var o = this.findById(obj[idKey]);
-		if (!o) {
-			// 新規オブジェクトの場合は作成
-			return this.createItem(obj);
-		}
-
-		// 既に存在するオブジェクトの場合は値を更新
-		for (prop in obj) {
-			if (prop == idKey) {
-				continue;
-			}
-			o[prop] = obj[prop];
-		}
-	};
-
-	/**
-	 */
-	DataModel.prototype.removeObject = function(obj) {
-		this.removeObjectById(obj[this.idKey]);
-	};
-
-	DataModel.prototype.removeObjectById = function(id) {
-		if (id === undefined || id === null) {
-			throw new Error('DataModel.removeObjectById: idが指定されていません');
-		}
-		if (!(id in this.objects)) {
-			return;
-		}
-
-		var obj = this.objects[id];
-
-		delete this.objects[id];
-
-		this.size--;
-
-		var ev = {
-			type: 'itemRemove',
-			item: obj
-		};
-		this.dispatchEvent(ev);
-	};
-
-	DataModel.prototype.getAllObjects = function() {
-		var ret = [];
-		var objects = this.objects;
-		for ( var prop in objects) {
-			ret.push(objects[prop]);
-		}
-		return ret;
-	};
-
-	/**
-	 * @returns {Number} オブジェクトの個数
-	 */
-	DataModel.prototype.getSize = function() {
-		return this.size;
-	};
-
-	/**
-	 */
-	DataModel.prototype.objectChangeListener = function(event) {
-		var ev = {
-			type: 'itemChange',
-			item: event.target,
-			property: event.property,
-			oldValue: event.oldValue,
-			newValue: event.newValue
-		};
-		this.dispatchEvent(ev);
-	};
-
-	/**
-	 */
-	DataModel.prototype.findById = function(id) {
-		return this.objects[id];
-	};
-
-	DataModel.prototype.has = function(obj) {
-		return !!this.findById(obj[this.idKey]);
-	};
-
-
-	//TODO Descriptorを使わず、動的に生成するパターン
-
-
-	/***********************************************************************************************
-	 * @class
-	 **********************************************************************************************/
-	function DataModelManager() {
-		//TODO 「アプリ名」「グループ名」など、このマネージャが管理するデータモデル群の名前を引数にとるようにする
-		//名前なしの場合はエラーにする
-		this.dataModels = {};
+	function getItemFullname(dataModel, item) {
+		return dataModel.fullname + '.' + item[dataModel.idKey];
 	}
 
-	/**
-	 * @memberOf DataModelManager
-	 */
-	DataModelManager.prototype.register = function(name, descriptor) {
-		//TODO nameもdescriptorの中に入れられるようにする？
-		this.dataModels[name] = createDataModel(descriptor);
-		return this.dataModels[name]; //TODO 高速化
-	};
 
-	DataModelManager.prototype.getDataModel = function(name) {
-		//TODO undefチェック必要か
-		return this.dataModels[name];
-	};
+	//TODO Descriptorを使わず、動的に生成するパターンもあった方がよいだろう
+
+
 
 	// =========================================================================
 	//
@@ -505,13 +505,58 @@
 	//
 	// =========================================================================
 
-	//TODO モジュール本体のコードはここに書く
+	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
 
-	function createDataModel(descriptor) {
-		return DataModel.createFromDescriptor(descriptor);
+	/**
+	 * @class
+	 * @name DataModelManager
+	 */
+	function DataModelManager() {
+		//TODO 「アプリ名」「グループ名」など、このマネージャが管理するデータモデル群の名前を引数にとるようにする
+		//名前なしの場合はエラーにする
+		this.dataModels = {};
+	}
+	$.extend(DataModelManager.prototype, {
+		/**
+		 * @param {Object} descriptor データモデルディスクリプタ
+		 * @memberOf DataModelManager
+		 */
+		register: function(descriptor) {
+			var modelName = descriptor.name;
+
+			if (this.dataModels[modelName]) {
+				//TODO メッセージの外部化、マネージャ名を追加
+				fwLogger.info(MSG_ERROR_DUP_REGISTER, 'MANAGER_NAME_STUB', modelName);
+			} else {
+				this.dataModels[modelName] = createDataModel(descriptor, this);
+			}
+
+			return this.dataModels[modelName];
+		},
+
+		/**
+		 * @param {String} name データモデル名
+		 * @memberOf DataModelManager
+		 */
+		getDataModel: function(name) {
+			return this.dataModels[name];
+		}
+	});
+
+
+	//TODO JSDoc
+	//descriptorのnameにはスペース・ピリオドを含めることはできません。
+	/**
+	 *
+	 */
+	function createDataModel(descriptor, manager) {
+		return DataModel.createFromDescriptor(descriptor, manager);
 	}
 
-	function applyBinding(view, rootElement, templateKey, models, parentModel) {
+	function applyBinding(view, rootElement, template, dataItem, parentItem) {
+		if (!dataItem) {
+			return;
+		}
 
 		var that = this;
 
@@ -547,118 +592,112 @@
 
 		} // End of applyToView
 
-
 		//var target = getTarget(element, this.__controller.rootElement, true); //TODO getTarget
 		var $target = $(rootElement); //elementはターゲットとなる親要素
 
-		var $html = $('<div>').append($(templateKey)); //RAW, 文字列でHTMLが来ているのでcloneは不要.
+		var $html = $('<div>').append($(template)); //RAW, 文字列でHTMLが来ているのでcloneは不要.
 
 
-		//		if (!(bindObjectName || $html.attr('data-bind-property'))) {
 
-		//bindObjectName = bindObjectName ? bindObjectName : $html.attr('data-bind-property');
+		//要素数分使うのでクローンする
+		var $clone = $html.clone(); //TODO ループしなくなったので不要？？
+		var uuid = createSerialNumber();
 
-		//var models = param[bindObjectName];
-		if (!models) {
-			return;
-		}
-		//models = wrapInArray(models);
+		//TODO bindingMapはここで作るのではなくループの中で作らないとダメ
+		//プロパティが配列の場合があるから.
+		bindingMap[uuid] = {
+			item: dataItem,
+			parent: parentItem
+		};
 
-		var modelArray = models; //models.getAllObjects();
+		$clone.children().attr("data-h5-bind-guid", uuid);
 
-		//コレクションの数だけループ
-		for ( var i = 0, len = modelArray.length; i < len; i++) {
-			var model = modelArray[i];
-			//要素数分使うのでクローンする
-			var $clone = $html.clone();
-			var uuid = createSerialNumber();
+		//			$clone.attr(getH5DataKey('bind-key'), uuid);
 
-			bindingMap[uuid] = {
-				m: model,
-				parent: parentModel
-			};
-
-			$clone.children().attr("data-h5-bind-guid", uuid);
-
-			//			$clone.attr(getH5DataKey('bind-key'), uuid);
-
-			//TODO $().find()は自分自身を探せないので仕方なく。後で変更。
-			//var $cloneWrapper = $('<div></div>');
-			//$clone.wrapAll($cloneWrapper);
-			var $dataBind = $clone.find('*[' + getH5DataKey('bind') + ']');
+		//TODO $().find()は自分自身を探せないので仕方なく。後で変更。
+		//var $cloneWrapper = $('<div></div>');
+		//$clone.wrapAll($cloneWrapper);
+		var $dataBind = $clone.find('*[' + getH5DataKey('bind') + ']'); //TODO andSelf
 
 
-			//TODO Model-1 : View-many の場合
-			//モデル中の各要素について
-			for ( var p in model) {
-				//				fwLogger.debug('prop = {0}', p);
+		//TODO dataItemは最初は必ず単品だが、再帰した時に中のプロパティが配列の場合があるので
+		//配列で扱わざるを得ない。
 
-				var $dom = $dataBind.filter(function() {
-					//					return $(this).attr('data-bind') === bindObjectName + '.' + p;
+		//TODO Model-1 : View-many の場合
+		//モデル中の各要素について
+		for ( var p in dataItem) {
+			//pがdataItemに属していない可能性を考慮(ネストしたモデルの中に同名プロパティがあるかもしれない)
 
-					//fwLogger.debug('attr = {0}, p = {1}', $(this).attr(getH5DataKey('bind')), p);
+			var $dom = $dataBind.filter(function() {
+				//					return $(this).attr('data-bind') === bindObjectName + '.' + p;
 
-					//TODO この判定で大丈夫か？ []がある場合。もう少しきちんと判定しておくべきか
-					return $(this).attr(getH5DataKey('bind')).lastIndexOf(p, 0) == 0;
+				//fwLogger.debug('attr = {0}, p = {1}', $(this).attr(getH5DataKey('bind')), p);
 
-					//					return $(this).attr(getH5DataKey('bind')) === p;
-					//TODO 子オブジェクトのバインドもできるように
-				});
+				//TODO この判定で大丈夫か？ []がある場合。もう少しきちんと判定しておくべきか
+				return $(this).attr(getH5DataKey('bind')).lastIndexOf(p, 0) == 0;
 
-				//見つかった要素をバインド
-				$dom
-						.each(function() {
-							var $this = $(this);
+				//					return $(this).attr(getH5DataKey('bind')) === p;
+				//TODO 子オブジェクトのバインドもできるように
+			});
 
-							if ($this.is('[data-h5-bind-template="inner"]')) {
-								//TODO tempコード
-								var clonedInner = $this.html();
+			//見つかった要素をバインド
+			$dom.each(function() {
+				var $this = $(this);
 
-								$this.empty(); //innerなのでempty()にする。これは本当はBinding生成時に行う必要がある。
-								//TODO 事前にいくつか要素が入っていた場合を考えると、emptyではなく data-h5-bind-template="this" のような属性を付けて行うべきかも。
+				//				if($this.closest('[data-h5-bind-template]').length > 0) {
+				//					//この要素は別のテンプレートに含まれているので処理しない
+				//					return;
+				//				}
 
-								var childBindProp = $this.attr(getH5DataKey('bind')); //TODO hoisting
-								applyBinding.call(that, view, this, clonedInner,
-										model[childBindProp], model);
-							} else if ($this.is('[data-h5-bind-template]')) {
-								//var templateKey = $this.attr('data-h5-bind-template');
-								//TODO templateをindexOfするコードは…なんで必要なんだっけ？？
+				if ($this.is('[data-h5-bind-template="inner"]')) {
+					//TODO tempコード
+					var clonedInner = $this.html();
 
-								var childBindProp = $this.attr(getH5DataKey('bind'));
-								//fwLogger.debug('child templateId = {0}',$this.attr(getH5DataKey('bind-template')));
+					$this.empty(); //innerなのでempty()にする。これは本当はBinding生成時に行う必要がある。
+					//TODO 事前にいくつか要素が入っていた場合を考えると、emptyではなく data-h5-bind-template="this" のような属性を付けて行うべきかも。
 
-								//ネストしてテンプレートを適用
-								applyBinding.call(that, view, this, view.get($this
-										.attr(getH5DataKey('bind-template'))),
-										model[childBindProp], model);
+					var childBindProp = $this.attr(getH5DataKey('bind')); //TODO hoisting
+					applyBinding.call(that, view, this, clonedInner, dataItem[childBindProp],
+							dataItem);
+				} else if ($this.is('[data-h5-bind-template]')) {
+					//var template = $this.attr('data-h5-bind-template');
+					//TODO templateをindexOfするコードは…なんで必要なんだっけ？？
+
+					var childBindProp = $this.attr(getH5DataKey('bind'));
+					//fwLogger.debug('child templateId = {0}',$this.attr(getH5DataKey('bind-template')));
+
+					//ネストしてテンプレートを適用
+					applyBinding.call(that, view, this, view.get($this
+							.attr(getH5DataKey('bind-template'))), dataItem[childBindProp],
+							dataItem);
+				} else {
+					//that.applyValue($this, dataItem, p);
+					if (that.formatter) {
+						var cv = that.formatter(dataItem, dataItem, p, dataItem[p]);
+
+						if ($.isPlainObject(cv)) {
+							//TODO cv.valueがない場合のチェック
+
+							if (cv.isHtml) {
+								applyToView($this, cv.value, true);
 							} else {
-								//that.applyValue($this, model, p);
-								if (that.formatter) {
-									var cv = that.formatter(model, model, p, model[p]);
-
-									if ($.isPlainObject(cv)) {
-										//TODO cv.valueがない場合のチェック
-
-										if (cv.isHtml) {
-											applyToView($this, cv.value, true);
-										} else {
-											applyToView($this, cv.value, false);
-										}
-									} else {
-										applyToView($this, cv, false);
-										//$this.text(cv); //TODO オブジェクトが子要素の場合を考える。パス表記を渡すようにする？？
-									}
-								} else {
-									applyToView($this, model[p], false);
-									//$this.html(model[p]);
-								}
+								applyToView($this, cv.value, false);
 							}
-						});
-			}
+						} else {
+							applyToView($this, cv, false);
+							//$this.text(cv); //TODO オブジェクトが子要素の場合を考える。パス表記を渡すようにする？？
+						}
+					} else {
+						applyToView($this, dataItem[p], false);
+						//$this.html(dataItem[p]);
+					}
+				}
+			});
 
-			//TODO transitionはバインドの「ルート」の場合のみでよいだろう。
-			//子要素ごとにかけると重すぎる。
-			if (that.inTransition) {
+			//TODO inTransitionをいれるのはこのタイミングなく
+			//Renderer側に寄せるのがよいかも（Rendererに制御の機会を与える）
+			if (!parentItem && that.inTransition) {
+				//Transitionをかけるのは、ルート要素に対してのみ。
 				that.inTransition($target.get(0), $clone); //TODO children()以外の方法
 			} else {
 				$target.append($clone.children());
@@ -667,7 +706,9 @@
 	}
 
 
+	function changeValue(dataItem, property, newValue) {
 
+	}
 
 	//TODO これはいらないかも？？
 	//オブジェクトに変更があった場合に画面エフェクトを付ける。
@@ -695,20 +736,25 @@
 		 * @param bindRoot
 		 * @param applyBindingFunc
 		 */
-		onItemsAdd: function(dataBinding, addedItems, bindingFunc) {
-			fwLogger.debug('SimpleRenderer onItemsAdd');
+		onItemAdd: function(dataBinding, item, bindingFunc) {
+			fwLogger.debug('SimpleRenderer onItemAdd');
 
-			bindingFunc(addedItems[0]);
+			bindingFunc(item);
 
-			fwLogger.debug('onItemsAdd end');
+			fwLogger.debug('onItemAdd end');
 		},
 
-		onItemsChange: function(dataBinding, changedItems, applyFunc) {
+		onItemChange: function(dataBinding, item, view, newValue, oldValue, applyFunc) {
 			//TODO 変更されたItem, 対応するView, old/newValueを返す
+			applyFunc(item);
 		},
 
-		onItemsRemove: function(dataBinding, removedItems) {
+		onItemRemove: function(dataBinding, item, view, removeFunc) {
+			fwLogger.debug('begin onItemRemove');
 
+			removeFunc(item);
+
+			fwLogger.debug('end onItemRemove');
 		}
 	});
 
@@ -717,40 +763,47 @@
 
 
 	/**
+	 * @param {Controller} controller コントローラインスタンス
+	 * @param {DataModel} dataModel データモデル
+	 * @param {Element|jQuery} root DataItemに対応するビューを保持するルート要素
+	 * @param {String|Element|jQuery} itemTemplate 1つのDataItemに対応するビューテンプレート。
+	 *            文字列の場合はビューとなるHTML文字列をセットしてください。 従って、EJSを併用する場合は this.view.get(templateKey)
+	 *            の戻り値をセットしてください。
 	 * @name DataBinding
 	 * @class
 	 */
 	function DataBinding(controller, dataModel, root, itemTemplate) {
 		this.dataModel = dataModel;
-		this.templateKey = itemTemplate;
 
 		this.root = root; //TODO $find()的なことをする対応
 
 		this.controller = controller;
 
 		//TODO KeyだけでなくDOM要素も受け取れるようにする
-		this.templateCache = $(controller.view.get(itemTemplate)).clone();
+		//stringでも「テンプレートキー」だったり「HTML文字列そのもの」だったりする
+		//テンプレートキーを受け取るのはやめる？(this.view.get()せよ、ということにする)
+		//HTML文字列、もしくはElement,jQueryにするのがよいか・・・
+		this.templateCache = $(itemTemplate).clone();
 
-		this.autoBind = true;
+		//TODO itemTemplateがDOM要素の場合、removeして見えないようにしておく
 
 		var that = this;
 
 		this.setRenderer(simpleRendererInstance);
 
 		function bindingFunc(dataItem) {
-			applyBinding.call(that, controller.view, that.root, that.templateCache, [dataItem],
-					null);
+			applyBinding.call(that, controller.view, that.root, that.templateCache, dataItem, null);
 		}
 
 		this.dataModel.addEventListener('itemAdd', function(event) {
 			fwLogger.debug('dataItem added');
-			that.renderer.onItemsAdd(that, [event.item], bindingFunc);
+			that.renderer.onItemAdd(that, event.item, bindingFunc);
 		});
 
 		this.dataModel.addEventListener('itemChange', function(event) {
 			fwLogger.debug('dataItem change');
-//TODO oldValue, newValue
-			that.renderer.onItemsChange(that, [event.item]);
+			//TODO oldValue, newValue
+			that.renderer.onItemChange(that, event.item);
 		});
 
 		this.dataModel.addEventListener('itemRemove', function(event) {
@@ -764,6 +817,7 @@
 		 */
 		refresh: function() {
 			fwLogger.debug('DataBinding.refresh()');
+			//TODO setRendererでやっていることと同じ…でよい？？
 		},
 
 		/**
@@ -779,7 +833,20 @@
 			}
 
 			this.renderer = renderer;
-			//TODO rendererが変更されたらデータバインドはすべてやり直す
+
+			$(this.root).empty();
+
+			//TODO コピーしているので何とかしたい
+			function bindingFunc(dataItem) {
+				applyBinding.call(this, this.controller.view, this.root, this.templateCache,
+						dataItem, null);
+			}
+
+			//Rendererが変更された場合は、一度ビューをクリアして全データアイテムのバインドをやり直す
+			var items = this.dataModel.getAllItems();
+			for ( var i = 0, len = items.length; i < len; i++) {
+				renderer.onItemAdd(this, items[i], bindingFunc);
+			}
 		},
 
 		/**
@@ -795,6 +862,7 @@
 		/**
 		 * 指定された要素の親要素を順にたどり、最も近い要素にバインドされているデータアイテムを返します。<br>
 		 * バインドされたデータアイテムが見つからない場合はnullを返します。
+		 * DataItemが親子関係を持っている場合、「ルート」のインスタンス（親を持たないDataItem）を返します。
 		 *
 		 * @param {Element} element DOM要素
 		 */
@@ -807,12 +875,12 @@
 			}
 
 			var uuid = $item.data('h5BindGuid'); // TODO namespace対応
-			var root = bindingMap[uuid];
-			while (root.parent !== null) {
-				root = root.parent;
+			var binding = bindingMap[uuid];
+			while (binding.parent !== null) {
+				binding = binding.parent;
 			}
 
-			return root.m;
+			return binding.item;
 		},
 
 		setItemTemplate: function(itemTemplate) {
@@ -875,15 +943,17 @@
 		return new DataModelManager();
 	}
 
+	function createLocalDataModel(descriptor) {
+		return createDataModel(descriptor);
+	}
+
 	//=============================
 	// Expose to window
 	//=============================
 
 	h5.u.obj.expose('h5.core.data', {
-		manager: new DataModelManager(),
 		createManager: createManager,
-		//TODO managerは自分でgetManager()するのがいいか？managerをここでシングルトンにするとポートレット系のときに支障があるかも
-		createLocalDataModel: createDataModel,
+		createLocalDataModel: createLocalDataModel,
 		createDataBinding: function(controller, dataModel, root, itemTemplate) {
 			return new DataBinding(controller, dataModel, root, itemTemplate);
 		}
