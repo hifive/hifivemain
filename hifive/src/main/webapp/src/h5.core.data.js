@@ -67,6 +67,8 @@
 
 	var bindingMap = {};
 
+	//TODO 要素の属性の値が長くなった場合にどれくらいパフォーマンス（速度・メモリ）に影響出る？？要調査
+	var itemToViewMap = {};
 
 	//=============================
 	// Functions
@@ -236,6 +238,7 @@
 
 		function ObjectProxy() {}
 		ObjectProxy.prototype = new EventDispatcher();
+		ObjectProxy.prototype.__dataModel = this; //これは仕方ないかな・・・ prototypeチェーン側なので許してもらうことにしよう
 
 		//TODO triggerChangeはクロージャで持たせる
 		defineProperty(ObjectProxy.prototype, '_proxy_triggerChange', {
@@ -498,6 +501,23 @@
 	//TODO Descriptorを使わず、動的に生成するパターンもあった方がよいだろう
 
 
+	function addBindMapEntry(uuid, view, dataModel, dataItem, parentItem) {
+		bindingMap[uuid] = {
+			item: dataItem,
+			parent: parentItem
+		};
+
+		itemToViewMap[getItemFullname(dataModel, dataItem)] = {
+			item: dataItem,
+			view: view
+		};
+	}
+
+	function removeBindMapEntry(uuid, view, dataModel, dataItem) {
+		delete bindingMap[uuid];
+		delete itemToViewMap[getItemFullName(dataModel, dataItem)];
+	}
+
 
 	// =========================================================================
 	//
@@ -558,6 +578,7 @@
 			return;
 		}
 
+		//thisはDataBindingインスタンス
 		var that = this;
 
 		function applyToView($elem, content, isHtml) {
@@ -603,12 +624,14 @@
 		var $clone = $html.clone(); //TODO ループしなくなったので不要？？
 		var uuid = createSerialNumber();
 
+		//TODO createLocalDataModelのときはmanagerがnullなので
+		//DataModelのfullnameは単純にモデル名になってしまう
+		// -> DataModelに適当な一意名を付けておく
+
 		//TODO bindingMapはここで作るのではなくループの中で作らないとダメ
 		//プロパティが配列の場合があるから.
-		bindingMap[uuid] = {
-			item: dataItem,
-			parent: parentItem
-		};
+
+		addBindMapEntry(uuid, $clone.children(), this.dataModel, dataItem, parentItem);
 
 		$clone.children().attr("data-h5-bind-guid", uuid);
 
@@ -749,7 +772,7 @@
 			applyFunc(item);
 		},
 
-		onItemRemove: function(dataBinding, item, view, removeFunc) {
+		onItemRemove: function(dataBinding, item, removeFunc) {
 			fwLogger.debug('begin onItemRemove');
 
 			removeFunc(item);
@@ -795,6 +818,23 @@
 			applyBinding.call(that, controller.view, that.root, that.templateCache, dataItem, null);
 		}
 
+		function removeFunc(dataItem) {
+			var view = that.getView(dataItem);
+			if (view) {
+				var uuid = $(view).attr("data-h5-bind-guid");
+
+				//dataModelは・・・まぁいいか
+				removeBindMapEntry(uuid, view, dataModel, dataItem);
+
+				delete bindingMap[uuid];
+
+				//TODO itemToViewMap も削除する。
+				//TODO DataItem -> DataModel を知るすべを。
+
+				$(view).remove();
+			}
+		}
+
 		this.dataModel.addEventListener('itemAdd', function(event) {
 			fwLogger.debug('dataItem added');
 			that.renderer.onItemAdd(that, event.item, bindingFunc);
@@ -803,12 +843,13 @@
 		this.dataModel.addEventListener('itemChange', function(event) {
 			fwLogger.debug('dataItem change');
 			//TODO oldValue, newValue
-			that.renderer.onItemChange(that, event.item);
+			that.renderer.onItemChange(that, event.item, that.getView(event.item), event.newValue,
+					event.oldValue);
 		});
 
 		this.dataModel.addEventListener('itemRemove', function(event) {
 			fwLogger.debug('dataItem remove');
-
+			that.renderer.onItemRemove(that, event.item, removeFunc);
 		});
 	}
 	$.extend(DataBinding.prototype, {
@@ -856,7 +897,11 @@
 		 * @param {DataItem} dataItem データアイテム
 		 */
 		getView: function(dataItem) {
-
+			var entry = itemToViewMap[getItemFullname(this.dataModel, dataItem)];
+			if (entry) {
+				return entry.view;
+			}
+			return null;
 		},
 
 		/**
