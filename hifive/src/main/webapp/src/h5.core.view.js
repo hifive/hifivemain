@@ -301,39 +301,12 @@
 					}
 				};
 			}
-			;
 
-			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
-			for ( var i = 0; i < resourcePaths.length; i++) {
-				var path = resourcePaths[i];
-				var absolutePath = toAbsoluteUrl(path);
-				if (this.cache[absolutePath]) {
-					$.extend(ret, getTemplateByURL(absolutePath));
-					datas.push({
-						absoluteUrl: absolutePath
-					});
-					continue;
-				}
-				tasks.push(path);
-			}
+			function load(absolutePath, filePath) {
+				var df = getDeferred();
 
-			var df = getDeferred();
-
-			function load(task, count) {
-				var step = count || 0;
-				if (task.length == step) {
-					df.resolve();
-					return;
-				}
-				var filePath = task[step];
-				var absolutePath = toAbsoluteUrl(filePath);
-				if (!that.accessingUrls[absolutePath]) {
-					that.accessingUrls[absolutePath] = h5.ajax(filePath);
-				}
-
-				that.accessingUrls[absolutePath].then(
+				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
-							delete that.accessingUrls[absolutePath];
 							var templateText = obj.responseText;
 							// IE8以下で、テンプレート要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまうため、ここで除去する
 							var $elements = $(templateText).filter(
@@ -350,8 +323,11 @@
 											url: absolutePath,
 											path: filePath
 										}));
+								return;
 							}
+
 							var compileData = null;
+
 							try {
 								compileData = compileTemplatesByElements($elements
 										.filter('script[type="text/ejs"]'));
@@ -359,7 +335,9 @@
 								e.detail.url = absolutePath;
 								e.detail.path = filePath;
 								df.reject(e);
+								return;
 							}
+
 							try {
 								var compiled = compileData.compiled;
 								var data = compileData.data;
@@ -368,14 +346,16 @@
 								$.extend(ret, compiled);
 								datas.push(data);
 								that.append(absolutePath, compiled, filePath);
-								load(task, ++step);
 							} catch (e) {
 								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
 									error: e,
 									url: absolutePath,
 									path: filePath
 								}));
+								return;
 							}
+
+							df.resolve();
 						}).fail(function(e) {
 					df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, null, {
 						url: absolutePath,
@@ -388,9 +368,23 @@
 				return df.promise();
 			}
 
+			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
+			for ( var i = 0; i < resourcePaths.length; i++) {
+				var path = resourcePaths[i];
+				var absolutePath = toAbsoluteUrl(path);
+				if (this.cache[absolutePath]) {
+					$.extend(ret, getTemplateByURL(absolutePath));
+					datas.push({
+						absoluteUrl: absolutePath
+					});
+					continue;
+				}
+				tasks.push(load(absolutePath, path));
+			}
+
 			var parentDf = getDeferred();
 
-			$.when(load(tasks)).done(function() {
+			$.when.apply($, tasks).done(function() {
 				parentDf.resolve(ret, datas);
 			}).fail(function(e) {
 				parentDf.reject(e);
