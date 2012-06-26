@@ -1698,11 +1698,16 @@
 	 */
 	function ValidationError() {
 		/**
-		 * 検出された検証エラーの数です。
+		 * 検出された検証エラーの数。
 		 *
 		 * @memberOf ValidationError
 		 */
 		this.count = 0;
+
+		/**
+		 * エラーの理由。
+		 */
+		this.reason = [];
 	}
 
 	/**
@@ -1711,8 +1716,8 @@
 	 * @name UserInput
 	 * @class
 	 */
-	function UserInput(elements) {
-		this.elements = elements;
+	function UserInput($elements) {
+		this.$elements = $elements;
 	}
 	$.extend(UserInput.prototype, {
 		/**
@@ -1724,7 +1729,18 @@
 		validate: function() {
 			//TODO HTML5 Formsに従ってvalidate
 
-			return new ValidationError();
+			var error = new ValidationError();
+
+			this.$elements.each(function() {
+				var $this = $(this);
+				var req = $this.attr('required');
+				if (req && !$this.val()) {
+					error.count++;
+					error.reason.push('required'); //TODO STUB
+				}
+			});
+
+			return error;
 		},
 
 		/**
@@ -2086,16 +2102,16 @@
 		 * ※inputにはname属性を付ける必要があります。
 		 *
 		 * @memberOf Controller
-		 * @param {String|Element|jQuery} root 入力値を取得するルート要素(この要素以下から入力値を取得します)。nullの場合はコントローラのrootElementになります。
+		 * @param {String|Element|jQuery} root
+		 *            入力値を取得するルート要素(この要素以下から入力値を取得します)。nullの場合はコントローラのrootElementになります。
 		 * @param {String[]|Element[]|jQuery[]} include デフォルトルールにマッチしない要素を追加で指定します
 		 * @returns 入力値オブジェクト
 		 */
 		getUserInput: function(root, include) {
 			var $root;
-			if(!root) {
+			if (!root) {
 				$root = $(this.rootElement);
-			}
-			else {
+			} else {
 				$root = $(root); //TODO rootの{}対応
 			}
 
@@ -2104,11 +2120,9 @@
 
 			//TODO UserInputに、対応するDataModel（存在する場合）を入れておくのがよいか。
 
-			var $userInput = $root.find('input[name]'); //TODO includeをloopで回して.add()するなど
+			var $elements = $root.find('input[name]'); //TODO includeをloopで回して.add()するなど
 
-			var inputElem = $userInput.toArray();
-
-			var ret = new UserInput(inputElem);
+			var ret = new UserInput($elements);
 			return ret;
 		},
 

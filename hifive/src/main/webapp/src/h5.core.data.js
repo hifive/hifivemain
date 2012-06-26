@@ -65,10 +65,16 @@
 	//=============================
 	var globalBindSerialNumber = 0;
 
-	var bindingMap = {};
 
 	//TODO 要素の属性の値が長くなった場合にどれくらいパフォーマンス（速度・メモリ）に影響出る？？要調査
-	var itemToViewMap = {};
+	//問題なければfullnameをView側のキーにしてしまうことも考える
+
+	var bindingMap = {};
+
+
+	//TODO グローバルなBindingManagerを用意して、「私はどのDataBindingで制御されているビュー（に含まれている要素）？」を
+	//問合せできるようにすべきか
+
 
 	//=============================
 	// Functions
@@ -229,7 +235,7 @@
 	 * @name DataModel
 	 */
 	function DataModel() {
-		this.objectDescriptor = null;
+		this.descriptor = null;
 		this.objects = {};
 		this.objectArray = [];
 
@@ -262,12 +268,12 @@
 		/**
 		 * @memberOf DataModel
 		 */
-		_init: function(objectDescriptor, manager) {
-			this.objectDescriptor = objectDescriptor;
+		_init: function(descriptor, manager) {
+			this.descriptor = descriptor;
 
 			//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
 
-			this.name = objectDescriptor.name;
+			this.name = descriptor.name;
 			this.manager = null;
 			if (manager) {
 				this.manager = manager;
@@ -308,9 +314,9 @@
 
 			var hasId = false;
 
-			for ( var p in objectDescriptor.prop) {
+			for ( var p in descriptor.prop) {
 				defineProxyProperty(this.proxy.prototype, p);
-				if (objectDescriptor.prop[p] && (objectDescriptor.prop[p].isId === true)) {
+				if (descriptor.prop[p] && (descriptor.prop[p].isId === true)) {
 					if (hasId) {
 						throw new Error('isIdを持つプロパティが複数存在します。 prop = ' + p);
 					}
@@ -381,6 +387,8 @@
 		 * @returns {Object}
 		 */
 		setItem: function(obj) {
+			//TODO 配列で受け取って一度に登録できるようにする
+
 			var idKey = this.idKey;
 
 			var o = this.findById(obj[idKey]);
@@ -470,13 +478,13 @@
 	 * @memberOf DataModel
 	 * @returns {DataModel}
 	 */
-	DataModel.createFromDescriptor = function(objectDescriptor, manager) {
-		if (!$.isPlainObject(objectDescriptor)) {
-			throw new Error('objectDescriptorにはオブジェクトを指定してください。');
+	DataModel.createFromDescriptor = function(descriptor, manager) {
+		if (!$.isPlainObject(descriptor)) {
+			throw new Error('descriptorにはオブジェクトを指定してください。');
 		}
 
 		var om = new DataModel();
-		om._init(objectDescriptor, manager);
+		om._init(descriptor, manager);
 		return om;
 	};
 
@@ -501,21 +509,39 @@
 	//TODO Descriptorを使わず、動的に生成するパターンもあった方がよいだろう
 
 
-	function addBindMapEntry(uuid, view, dataModel, dataItem, parentItem) {
+	function addBindMapEntry(dataBinding, uuid, itemView, dataModel, dataItem, parentItem) {
+		//View -> Item は一意に特定可能.
+		//Viewは常にシングルトンな存在なのでグローバルなマップで管理すればよい
 		bindingMap[uuid] = {
 			item: dataItem,
 			parent: parentItem
 		};
 
-		itemToViewMap[getItemFullname(dataModel, dataItem)] = {
-			item: dataItem,
-			view: view
-		};
+		var itemFullname = getItemFullname(dataModel, dataItem);
+
+
+		//TODO 1つのDataItemを「一つのタグ(ツリー)」だけで表すとは限らない。
+		//そこで、Rendererが配列でDOMを返した場合を考慮しておく。
+		//Viewは「アイテムビュー」というセット(実体はただの配列)で扱うことにする。
+		//1つのデータアイテムが「1つのアイテムビュー」と対応することにする。
+		//DataItem:ItemView = 1:many は考慮しない。
+
+
+		//TODO itemToViewは 1:many の可能性がある
+		var entry = dataBinding.itemToViewMap[itemFullname];
+		if (entry) {
+			entry.view.push(itemView);
+		} else {
+			dataBinding.itemToViewMap[itemFullname] = {
+				item: dataItem,
+				view: itemView
+			};
+		}
 	}
 
-	function removeBindMapEntry(uuid, view, dataModel, dataItem) {
+	function removeBindMapEntry(dataBinding, uuid, view, dataModel, dataItem) {
 		delete bindingMap[uuid];
-		delete itemToViewMap[getItemFullName(dataModel, dataItem)];
+		delete dataBinding.itemToViewMap[getItemFullname(dataModel, dataItem)]; //TODO viewが複数の場合に対応
 	}
 
 
@@ -631,7 +657,7 @@
 		//TODO bindingMapはここで作るのではなくループの中で作らないとダメ
 		//プロパティが配列の場合があるから.
 
-		addBindMapEntry(uuid, $clone.children(), this.dataModel, dataItem, parentItem);
+		addBindMapEntry(this, uuid, $clone.children(), this.dataModel, dataItem, parentItem);
 
 		$clone.children().attr("data-h5-bind-guid", uuid);
 
@@ -694,11 +720,25 @@
 							.attr(getH5DataKey('bind-template'))), dataItem[childBindProp],
 							dataItem);
 				} else {
-					//that.applyValue($this, dataItem, p);
 					if (that.formatter) {
 						var cv = that.formatter(dataItem, dataItem, p, dataItem[p]);
 
-						if ($.isPlainObject(cv)) {
+						if (cv === undefined) {
+							var defaultFormatter = null;
+							//TODO getByPathなどでやった方がよいかも
+							if (dataItem.__dataModel && dataItem.__dataModel.descriptor
+									&& dataItem.__dataModel.descriptor.prop[p]) {
+								defaultFormatter = dataItem.__dataModel.descriptor.prop[p].format;
+							}
+
+							var val;
+							if (defaultFormatter) {
+								val = defaultFormatter(dataItem[p]);
+							} else {
+								val = dataItem[p];
+							}
+							applyToView($this, val, false);
+						} else if ($.isPlainObject(cv)) {
 							//TODO cv.valueがない場合のチェック
 
 							if (cv.isHtml) {
@@ -711,7 +751,25 @@
 							//$this.text(cv); //TODO オブジェクトが子要素の場合を考える。パス表記を渡すようにする？？
 						}
 					} else {
-						applyToView($this, dataItem[p], false);
+						//TODO コピーしているので後できれいに
+						var defaultFormatter = null;
+						//TODO getByPathなどでやった方がよいかも
+						if (dataItem.__dataModel && dataItem.__dataModel.descriptor
+								&& dataItem.__dataModel.descriptor.prop[p]) {
+							defaultFormatter = dataItem.__dataModel.descriptor.prop[p].format;
+						}
+
+						//TODO defaultFormatterでもHTMLを返せるようにする
+
+						var val;
+						if (defaultFormatter) {
+							val = defaultFormatter(dataItem[p]);
+						} else {
+							val = dataItem[p];
+						}
+
+
+						applyToView($this, val, false);
 						//$this.html(dataItem[p]);
 					}
 				}
@@ -729,7 +787,29 @@
 	}
 
 
-	function changeValue(dataItem, property, newValue) {
+	//TODO rename
+	function changeView(dataBinding, dataItem, property, newValue) {
+		var map = dataBinding.itemToViewMap[getItemFullname(dataItem.__dataModel, dataItem)];
+		//		map.item,view
+
+		//TODO namespace対応
+
+		for ( var i = 0, len = map.view.length; i < len; i++) {
+			$(map.view[i]).andSelf().find('[data-h5-bind="' + property + '"]').each(function() {
+				var $this = $(this);
+
+				var guid = $this.closest('[data-h5-bind-guid]').attr('data-h5-bind-guid');
+
+				if (!guid) {
+					return;
+				}
+
+				//ネストした他のDataItemのプロパティの可能性があるので、同じDataItemを見ているかどうかをチェック
+				if (bindingMap[guid].item === dataItem) {
+					$this.text(newValue); //TODO applyToViewを使わないとだめ
+				}
+			});
+		}
 
 	}
 
@@ -767,9 +847,9 @@
 			fwLogger.debug('onItemAdd end');
 		},
 
-		onItemChange: function(dataBinding, item, view, newValue, oldValue, applyFunc) {
+		onItemChange: function(dataBinding, item, view, newValue, oldValue, applyChange) {
 			//TODO 変更されたItem, 対応するView, old/newValueを返す
-			applyFunc(item);
+			applyChange();
 		},
 
 		onItemRemove: function(dataBinding, item, removeFunc) {
@@ -796,11 +876,20 @@
 	 * @class
 	 */
 	function DataBinding(controller, dataModel, root, itemTemplate) {
+		//TODO 同じルート要素に複数のDataBindingを使っても
+		//独立して動く（主にremove時に自分の分だけを消す）ようにする
+
+		//TODO itemTemplateが省略された場合、
+		//rootの子要素のうちをh5DataItemTemplateクラスがついたものとして自動的に使うようにする。
+
+
 		this.dataModel = dataModel;
 
 		this.root = root; //TODO $find()的なことをする対応
 
 		this.controller = controller;
+
+		this.itemToViewMap = {};
 
 		//TODO KeyだけでなくDOM要素も受け取れるようにする
 		//stringでも「テンプレートキー」だったり「HTML文字列そのもの」だったりする
@@ -823,13 +912,7 @@
 			if (view) {
 				var uuid = $(view).attr("data-h5-bind-guid");
 
-				//dataModelは・・・まぁいいか
-				removeBindMapEntry(uuid, view, dataModel, dataItem);
-
-				delete bindingMap[uuid];
-
-				//TODO itemToViewMap も削除する。
-				//TODO DataItem -> DataModel を知るすべを。
+				removeBindMapEntry(that, uuid, view, dataModel, dataItem);
 
 				$(view).remove();
 			}
@@ -841,10 +924,18 @@
 		});
 
 		this.dataModel.addEventListener('itemChange', function(event) {
+			//			var view = that.getView(event.item);
+
+			function applyChangeFunc() {
+				fwLogger.debug('begin applyChange');
+				changeView(that, event.item, event.property, event.newValue);
+				fwLogger.debug('end applyChange');
+			}
+
 			fwLogger.debug('dataItem change');
 			//TODO oldValue, newValue
 			that.renderer.onItemChange(that, event.item, that.getView(event.item), event.newValue,
-					event.oldValue);
+					event.oldValue, applyChangeFunc);
 		});
 
 		this.dataModel.addEventListener('itemRemove', function(event) {
@@ -875,7 +966,7 @@
 
 			this.renderer = renderer;
 
-			$(this.root).empty();
+			//			$(this.root).empty();
 
 			//TODO コピーしているので何とかしたい
 			function bindingFunc(dataItem) {
@@ -885,7 +976,7 @@
 
 			//Rendererが変更された場合は、一度ビューをクリアして全データアイテムのバインドをやり直す
 			var items = this.dataModel.getAllItems();
-			for ( var i = 0, len = items.length; i < len; i++) {
+			for ( var i = 0, len = items.length; i < len; i++) { //TODO 一度にたくさん回すとUIが固まるのでasync.loop使う
 				renderer.onItemAdd(this, items[i], bindingFunc);
 			}
 		},
@@ -897,7 +988,7 @@
 		 * @param {DataItem} dataItem データアイテム
 		 */
 		getView: function(dataItem) {
-			var entry = itemToViewMap[getItemFullname(this.dataModel, dataItem)];
+			var entry = this.itemToViewMap[getItemFullname(this.dataModel, dataItem)];
 			if (entry) {
 				return entry.view;
 			}
@@ -914,7 +1005,11 @@
 		getDataItem: function(element) {
 			//TODO バインドしているルートそのものを指定した時に正しく返るか
 
-			var $item = $(element).closest('[data-h5-bind-guid]'); //TODO namespace対応
+			//TODO this.rootに対して複数のデータバインドが行われている場合
+			//this.rootからfind()しても誤ったものを選択する可能性あり。
+			//「このバインドを管理しているのが自分かどうか」を判断する方法が必要か。
+			//bindingMapに持たせてしまうのも手。
+			var $item = $(this.root).andSelf().find(element).closest('[data-h5-bind-guid]'); //TODO namespace対応
 			if ($item.length === 0) {
 				return null;
 			}
@@ -971,6 +1066,10 @@
 	});
 
 
+	//TODO createSkeleton(view) みたいなUtil関数を用意して
+	//実ビューから中身を抜いたスケルトンを生成できるようにする？
+	// -> デザイナが作ったひな形をほぼそのまま作れる…
+
 
 	//TODO Rendererに何をどこまで任せる？
 	//・表示するかどうか -> 画面をスクロールした時に判断、とかも必要。
@@ -983,9 +1082,11 @@
 	//typeはinput, textarea, contenteditableあたりか
 
 
-	function createManager() {
-		//TODO 引数を取るように
-		return new DataModelManager();
+	function createManager(name) {
+		if (!name) {
+			throwFwError(30000); //TODO 正しく例外を出す
+		}
+		return new DataModelManager(name);
 	}
 
 	function createLocalDataModel(descriptor) {
