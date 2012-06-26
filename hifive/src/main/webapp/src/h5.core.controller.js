@@ -731,8 +731,6 @@
 			}
 			$.when.apply($, promises).done(function() {
 				func();
-			}).fail(function(e) {
-				throwFwError(e.code, '', e.detail);
 			});
 		};
 		execInner(controller);

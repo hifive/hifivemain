@@ -274,9 +274,12 @@
 				$templateElements.each(function() {
 					var templateId = $.trim(this.id);
 					var templateString = $.trim(this.innerHTML);
+
 					if (!templateId) {
 						// 空文字または空白ならエラー
-						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
+						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {
+							error: ''
+						});
 					}
 
 					try {
@@ -285,12 +288,10 @@
 						compiled[templateId] = compiledTemplate.process;
 						ids.push(templateId);
 					} catch (e) {
-						var lineNo = e.lineNumber;
-						var msg = lineNo ? ' line:' + lineNo : '';
-						throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(
-								ERR_REASON_SYNTAX_ERR, msg, e.message)], {
+						throwFwError(ERR_CODE_TEMPLATE_COMPILE, null, {
 							id: templateId,
-							error: e
+							error: e,
+							lineNo: e.lineNumber
 						});
 					}
 				});
@@ -318,11 +319,14 @@
 							var filePath = this.url;
 
 							if ($elements.not('script[type="text/ejs"]').length > 0) {
-								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE,
-										[ERR_REASON_SCRIPT_ELEMENT_IS_NOT_EXIST], {
-											url: absolutePath,
-											path: filePath
-										}));
+								df.reject({
+									code: ERR_CODE_TEMPLATE_FILE,
+									msgParam: '',
+									detail: {
+										url: absolutePath,
+										path: filePath
+									}
+								});
 								return;
 							}
 
@@ -332,9 +336,11 @@
 								compileData = compileTemplatesByElements($elements
 										.filter('script[type="text/ejs"]'));
 							} catch (e) {
-								e.detail.url = absolutePath;
-								e.detail.path = filePath;
-								df.reject(e);
+								df.reject({
+									code: e.code,
+									msgParam: e.detail.error,
+									detail: e.detail
+								});
 								return;
 							}
 
@@ -347,11 +353,15 @@
 								datas.push(data);
 								that.append(absolutePath, compiled, filePath);
 							} catch (e) {
-								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
-									error: e,
-									url: absolutePath,
-									path: filePath
-								}));
+								df.reject({
+									code: ERR_CODE_TEMPLATE_FILE,
+									msgParam: '',
+									detail: {
+										url: absolutePath,
+										path: filePath,
+										error: e
+									}
+								});
 								return;
 							}
 
@@ -387,7 +397,11 @@
 			$.when.apply($, tasks).done(function() {
 				parentDf.resolve(ret, datas);
 			}).fail(function(e) {
-				parentDf.reject(e);
+				if (e.code !== ERR_CODE_TEMPLATE_AJAX) {
+					throwFwError(e.code, e.msgParam, e.detail);
+				}
+
+				parentDef.reject(e);
 			});
 
 			return parentDf.promise();
@@ -464,8 +478,8 @@
 				if (paths.length === 0) {
 					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
-				for(var i = 0, len = paths.length; i < len; i++){
-					if(typeof paths[i] !== 'string') {
+				for ( var i = 0, len = paths.length; i < len; i++) {
+					if (typeof paths[i] !== 'string') {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
 					} else if (!$.trim(paths[i])) {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
@@ -525,7 +539,7 @@
 					id: templateId
 				});
 			} else if (typeof templateId !== 'string' || !$.trim(templateId)) {
-				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, []);
+				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
 			try {
@@ -711,7 +725,7 @@
 				templateIdsArray = [templateIds];
 				break;
 			case 'array':
-				if(!templateIds.length){
+				if (!templateIds.length) {
 					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
@@ -724,12 +738,12 @@
 
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				var id = templateIdsArray[i];
-				if(typeof id !== 'string' || !$.trim(id)){
+				if (typeof id !== 'string' || !$.trim(id)) {
 					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				/* del begin */
-				if(!this.__cachedTemplates[id]){
+				if (!this.__cachedTemplates[id]) {
 					fwLogger.warn('指定されたIDのテンプレートは登録されていません。"{0}"', id);
 				}
 				/* del end */
