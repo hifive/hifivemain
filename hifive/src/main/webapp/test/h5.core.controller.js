@@ -16,6 +16,10 @@
 
 
 $(function() {
+	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
+	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
+
+
 	// アサートが稀に失敗する場合があるので、フェードアウトのアニメ―ションを実行しない。
 	$.blockUI.defaults.fadeOut = -1;
 
@@ -69,7 +73,7 @@ $(function() {
 			__name: 'TestController'
 		};
 		var c2 = {
-			__name: 'jp.co.nssol.controller.TestController'
+			__name: 'com.htmlhifive.test.controller.TestController'
 		};
 		var c3 = {
 			a: 1
@@ -78,7 +82,7 @@ $(function() {
 		h5.core.expose(c1);
 		strictEqual(c1, window.TestController, '"."を含まない__nameの場合、window直下に紐付けられたか');
 		h5.core.expose(c2);
-		strictEqual(c2, window.jp.co.nssol.controller.TestController,
+		strictEqual(c2, window.com.htmlhifive.test.controller.TestController,
 				'"."を含む__nameの場合、window以下に名前空間が作られて紐付けられたか');
 		var errMsg = null;
 		try {
@@ -492,10 +496,12 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.preinitPromise.done(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
-		}).fail(function(e) {
-			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			deepEqual(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
-		})
+		}).fail(
+				function(e) {
+					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+					deepEqual(e.controllerDefObject.__name, 'TestController',
+							'エラーオブジェクトからコントローラオブジェクトが取得できる');
+				})
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
 		}).fail(function(e, opt) {
@@ -719,12 +725,14 @@ $(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
 			h5.core.view.createView = originalCreateView;
 			start();
-		}).fail(function(e) {
-			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			deepEqual(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
-			h5.core.view.createView = originalCreateView;
-			start();
-		});
+		}).fail(
+				function(e) {
+					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+					deepEqual(e.controllerDefObject.__name, 'TestController',
+							'エラーオブジェクトからコントローラオブジェクトが取得できる');
+					h5.core.view.createView = originalCreateView;
+					start();
+				});
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
 		}).fail(function(e, opt) {
@@ -1029,7 +1037,8 @@ $(function() {
 			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
 		}).fail(function() {
 			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
-		});		testController.preinitPromise.done(function() {
+		});
+		testController.preinitPromise.done(function() {
 			ok(true, 'preinitPromiseのdoneハンドラが実行されること');
 			// dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
 			// なので、バックアップを取ってdispose.apply(testController)を使って2回呼ぶ
@@ -1175,7 +1184,7 @@ $(function() {
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 				ret.push(2);
@@ -1219,7 +1228,7 @@ $(function() {
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 				ret.push(2);
@@ -1260,7 +1269,7 @@ $(function() {
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 				ret.push(3);
@@ -1309,7 +1318,7 @@ $(function() {
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 			// 何もしない
@@ -1317,7 +1326,7 @@ $(function() {
 		};
 
 		var controller2 = {
-			__name: 'jp.co.nssol.test2.controller.Test2Controller',
+			__name: 'com.htmlhifive.test2.controller.Test2Controller',
 
 			__init: function() {
 			// 何もしない
@@ -1329,7 +1338,7 @@ $(function() {
 			invocation.proceed();
 		};
 		h5.core.__compileAspects({
-			target: 'jp.co.nssol.test.controller*',
+			target: 'com.htmlhifive.test.controller*',
 			interceptors: ic,
 			pointCut: null
 		});
@@ -1361,7 +1370,7 @@ $(function() {
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 			// 何もしない
@@ -1369,7 +1378,7 @@ $(function() {
 		};
 
 		var controller2 = {
-			__name: 'jp.co.nssol.test.controller.Test2Controller',
+			__name: 'com.htmlhifive.test.controller.Test2Controller',
 
 			__ready: function() {
 			// 何もしない
@@ -1381,7 +1390,7 @@ $(function() {
 			invocation.proceed();
 		};
 		h5.core.__compileAspects({
-			target: 'jp.co.nssol.test.controller*',
+			target: 'com.htmlhifive.test.controller*',
 			interceptors: ic,
 			pointCut: /^\_\_i.*$/
 		});
@@ -4431,7 +4440,7 @@ $(function() {
 			'h5trackイベント(mousedown, mousemove, mouseup) SVG',
 			26,
 			function() {
-				if(!document.createElementNS){
+				if (!document.createElementNS) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -4577,7 +4586,7 @@ $(function() {
 			'h5trackイベント(touchstart, touchmove, touchend) SVG',
 			26,
 			function() {
-				if(!document.createElementNS){
+				if (!document.createElementNS) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();

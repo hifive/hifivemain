@@ -18,6 +18,9 @@
 h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js");
 $(function() {
 
+	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
+	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
+
 	/**
 	 * JQMControllerのアンバインド
 	 */
@@ -80,7 +83,7 @@ $(function() {
 
 	/**
 	 * 擬似的にページ遷移を行う
-	 *
+	 * 
 	 * @param {selector} to 遷移先のページ
 	 * @param {boolean} [initialize] pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
 	 */
@@ -146,8 +149,8 @@ $(function() {
 		},
 		teardown: function() {
 			resetJQM();
-			window.loadedTestForJQM1 = undefined;
-			window.loadedTestForJQM2 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
 	asyncTest('init()時に存在するページのdata-h5-scriptに指定されているjsがロードされること。', 2, function() {
@@ -155,11 +158,14 @@ $(function() {
 			start();
 			return;
 		}
-		setTimeout(function() {
-			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			start();
-		}, 0);
+		setTimeout(
+				function() {
+					ok(window.com.htmlhifive.test.loadedTestForJQM1,
+							'data-h5-scriptに指定したjsファイルがロードされていること');
+					ok(window.com.htmlhifive.test.loadedTestForJQM2,
+							'data-h5-scriptに指定したjsファイルがロードされていること');
+					start();
+				}, 0);
 	});
 
 	module("init2", {
@@ -169,8 +175,8 @@ $(function() {
 		},
 		teardown: function() {
 			resetJQM();
-			window.loadedTestForJQM1 = undefined;
-			window.loadedTestForJQM2 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
 	asyncTest('pageinitイベントがページから呼ばれると、そのページのscriptがロードされること。', 3, function() {
@@ -179,14 +185,18 @@ $(function() {
 			return;
 		}
 		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
-		setTimeout(function() {
-			createPage("testjs4", 'data/testforJQM2.js');
-			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			ok(!window.loadedTestForJQM2, 'init()時になかったページについてはjsファイルがロードされないこと');
-			$('#testjs4').trigger('pageinit');
-			ok(window.loadedTestForJQM2, 'pageinitイベントが発生するとjsファイルがロードされる。');
-			start();
-		}, 0);
+		setTimeout(
+				function() {
+					createPage("testjs4", 'data/testforJQM2.js');
+					ok(window.com.htmlhifive.test.loadedTestForJQM1,
+							'data-h5-scriptに指定したjsファイルがロードされていること');
+					ok(!window.com.htmlhifive.test.loadedTestForJQM2,
+							'init()時になかったページについてはjsファイルがロードされないこと');
+					$('#testjs4').trigger('pageinit');
+					ok(window.com.htmlhifive.test.loadedTestForJQM2,
+							'pageinitイベントが発生するとjsファイルがロードされる。');
+					start();
+				}, 0);
 	});
 
 	module("__initFlag", {
@@ -232,8 +242,8 @@ $(function() {
 		teardown: function() {
 			resetJQM();
 			h5.ui.jqm.dataPrefix = originalPrefix;
-			window.loadedTestForJQM1 = undefined;
-			window.loadedTestForJQM2 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
 
@@ -244,8 +254,10 @@ $(function() {
 					return;
 				}
 				setTimeout(function() {
-					ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
-					ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
+					ok(window.com.htmlhifive.test.loadedTestForJQM1,
+							'data-h5-scriptに指定したjsファイルがロードされていること');
+					ok(window.com.htmlhifive.test.loadedTestForJQM2,
+							'data-h5-scriptに指定したjsファイルがロードされていること');
 					start();
 				}, 0);
 			});
@@ -262,8 +274,8 @@ $(function() {
 		teardown: function() {
 			resetJQM();
 			h5.ui.jqm.dataPrefix = originalPrefix;
-			window.loadedTestForJQM1 = undefined;
-			window.loadedTestForJQM2 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
 
@@ -272,11 +284,14 @@ $(function() {
 			start();
 			return;
 		}
-		setTimeout(function() {
-			ok(window.loadedTestForJQM1, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			ok(window.loadedTestForJQM2, 'data-h5-scriptに指定したjsファイルがロードされていること');
-			start();
-		}, 0);
+		setTimeout(
+				function() {
+					ok(window.com.htmlhifive.test.loadedTestForJQM1,
+							'data-h5-scriptに指定したjsファイルがロードされていること');
+					ok(window.com.htmlhifive.test.loadedTestForJQM2,
+							'data-h5-scriptに指定したjsファイルがロードされていること');
+					start();
+				}, 0);
 	});
 
 	module("define1", {
@@ -287,8 +302,8 @@ $(function() {
 		},
 		teardown: function() {
 			resetJQM();
-			window.loadedTestForJQM1 = undefined;
-			window.loadedTestForJQM2 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
+			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
 	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドできること。', 4, function() {

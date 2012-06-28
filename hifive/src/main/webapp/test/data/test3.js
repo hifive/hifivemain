@@ -12,13 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 (function() {
-	window.test3 = {
+	window.com.htmlhifive.test.test3 = {
 		c: 3,
-		test1: window.test1,
-		test2: window.test2
+		test1: window.com.htmlhifive.test.test1,
+		test2: window.com.htmlhifive.test.test2
 	};
 })();
