@@ -383,6 +383,7 @@
 								}));
 							}
 						}).fail(function(e) {
+					delete that.accessingUrls[absolutePath];
 					df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, null, {
 						url: absolutePath,
 						path: filePath,
