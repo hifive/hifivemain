@@ -2217,10 +2217,10 @@
 		templatePromise.done(function() {
 			preinitDfd.resolve();
 		}).fail(function(e) {
+			preinitDfd.reject(e);
 			if (controller.__controllerContext) {
 				controller.rootController.dispose();
 			}
-			preinitDfd.reject(e);
 		});
 
 		for ( var prop in clonedControllerDef) {

@@ -278,7 +278,7 @@
 					if (!templateId) {
 						// 空文字または空白ならエラー
 						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {
-							error: ''
+							error: null
 						});
 					}
 
@@ -288,10 +288,13 @@
 						compiled[templateId] = compiledTemplate.process;
 						ids.push(templateId);
 					} catch (e) {
-						throwFwError(ERR_CODE_TEMPLATE_COMPILE, null, {
+						var lineNo = e.lineNumber;
+						var msg = lineNo ? ' line:' + lineNo : '';
+						throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(
+								ERR_REASON_SYNTAX_ERR, msg, e.message)], {
 							id: templateId,
 							error: e,
-							lineNo: e.lineNumber
+							lineNo: lineNo
 						});
 					}
 				});
@@ -319,14 +322,11 @@
 							var filePath = this.url;
 
 							if ($elements.not('script[type="text/ejs"]').length > 0) {
-								df.reject({
-									code: ERR_CODE_TEMPLATE_FILE,
-									msgParam: '',
-									detail: {
-										url: absolutePath,
-										path: filePath
-									}
-								});
+								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE,
+										[ERR_REASON_SCRIPT_ELEMENT_IS_NOT_EXIST], {
+											url: absolutePath,
+											path: filePath
+										}));
 								return;
 							}
 
@@ -336,11 +336,9 @@
 								compileData = compileTemplatesByElements($elements
 										.filter('script[type="text/ejs"]'));
 							} catch (e) {
-								df.reject({
-									code: e.code,
-									msgParam: e.detail.error,
-									detail: e.detail
-								});
+								e.detail.url = absolutePath;
+								e.detail.path = filePath;
+								df.reject(e);
 								return;
 							}
 
@@ -353,15 +351,11 @@
 								datas.push(data);
 								that.append(absolutePath, compiled, filePath);
 							} catch (e) {
-								df.reject({
-									code: ERR_CODE_TEMPLATE_FILE,
-									msgParam: '',
-									detail: {
-										url: absolutePath,
-										path: filePath,
-										error: e
-									}
-								});
+								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
+									error: e,
+									url: absolutePath,
+									path: filePath
+								}));
 								return;
 							}
 
@@ -389,22 +383,35 @@
 					});
 					continue;
 				}
-				tasks.push(load(absolutePath, path));
+				tasks.push([load, [absolutePath, path]]);
 			}
 
-			var parentDf = getDeferred();
 
-			$.when.apply($, tasks).done(function() {
-				parentDf.resolve(ret, datas);
-			}).fail(function(e) {
-				if (e.code !== ERR_CODE_TEMPLATE_AJAX) {
-					throwFwError(e.code, e.msgParam, e.detail);
-				}
+			var retDf = getDeferred();
+			var tasksDf = getDeferred();
+			var loadDf = getDeferred().resolve();
 
-				parentDef.reject(e);
+			$.each(tasks, function() {
+				var task = this;
+
+				loadDf = loadDf.pipe(function() {
+					return task[0].apply(task[0], task[1]).fail(function(e) {
+						tasksDf.reject(e);
+					});
+				});
 			});
 
-			return parentDf.promise();
+			loadDf.pipe(function() {
+				return tasksDf.resolve();
+			});
+
+			tasksDf.done(function() {
+				retDf.resolve(ret, datas);
+			}).fail(function(e) {
+				retDf.reject(e);
+			});
+
+			return retDf.promise();
 		}
 	};
 
@@ -478,7 +485,7 @@
 				if (paths.length === 0) {
 					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
-				for ( var i = 0, len = paths.length; i < len; i++) {
+				for (var i = 0, len = paths.length; i < len; i++) {
 					if (typeof paths[i] !== 'string') {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
 					} else if (!$.trim(paths[i])) {
