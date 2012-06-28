@@ -15,4 +15,8 @@
  *
  * hifive
  */
-window.com.htmlhifive.test.sample4loaded = window.sample4loaded ? window.sample4loaded + 1 : 1;
+if (window.com.htmlhifive.test.sample4loaded) {
+	window.com.htmlhifive.test.sample4loaded++;
+} else {
+	window.com.htmlhifive.test.sample4loaded = 1;
+}

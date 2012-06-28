@@ -15,6 +15,6 @@
  *
  * hifive
  */
-window.com.htmlhifive.h5samplefunc = function() {
+window.com.htmlhifive.test.h5samplefunc = function() {
 	return true;
 };
