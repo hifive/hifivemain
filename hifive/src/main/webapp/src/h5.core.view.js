@@ -280,12 +280,9 @@
 				$templateElements.each(function() {
 					var templateId = $.trim(this.id);
 					var templateString = $.trim(this.innerHTML);
-
 					if (!templateId) {
 						// 空文字または空白ならエラー
-						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {
-							error: null
-						});
+						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
 					}
 
 					try {
@@ -299,8 +296,7 @@
 						throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(
 								ERR_REASON_SYNTAX_ERR, msg, e.message)], {
 							id: templateId,
-							error: e,
-							lineNo: lineNo
+							error: e
 						});
 					}
 				});
@@ -311,11 +307,37 @@
 					}
 				};
 			}
+			;
 
-			function load(absolutePath, filePath) {
-				var df = getDeferred();
+			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
+			for ( var i = 0; i < resourcePaths.length; i++) {
+				var path = resourcePaths[i];
+				var absolutePath = toAbsoluteUrl(path);
+				if (this.cache[absolutePath]) {
+					$.extend(ret, getTemplateByURL(absolutePath));
+					datas.push({
+						absoluteUrl: absolutePath
+					});
+					continue;
+				}
+				tasks.push(path);
+			}
 
-				h5.ajax(filePath).done(
+			var df = getDeferred();
+
+			function load(task, count) {
+				var step = count || 0;
+				if (task.length == step) {
+					df.resolve();
+					return;
+				}
+				var filePath = task[step];
+				var absolutePath = toAbsoluteUrl(filePath);
+				if (!that.accessingUrls[absolutePath]) {
+					that.accessingUrls[absolutePath] = h5.ajax(filePath);
+				}
+
+				that.accessingUrls[absolutePath].then(
 						function(result, statusText, obj) {
 							delete that.accessingUrls[absolutePath];
 							var templateText = obj.responseText;
@@ -334,11 +356,8 @@
 											url: absolutePath,
 											path: filePath
 										}));
-								return;
 							}
-
 							var compileData = null;
-
 							try {
 								compileData = compileTemplatesByElements($elements
 										.filter('script[type="text/ejs"]'));
@@ -346,9 +365,7 @@
 								e.detail.url = absolutePath;
 								e.detail.path = filePath;
 								df.reject(e);
-								return;
 							}
-
 							try {
 								var compiled = compileData.compiled;
 								var data = compileData.data;
@@ -357,16 +374,14 @@
 								$.extend(ret, compiled);
 								datas.push(data);
 								that.append(absolutePath, compiled, filePath);
+								load(task, ++step);
 							} catch (e) {
 								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
 									error: e,
 									url: absolutePath,
 									path: filePath
 								}));
-								return;
 							}
-
-							df.resolve();
 						}).fail(function(e) {
 					delete that.accessingUrls[absolutePath];
 					df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, null, {
@@ -380,46 +395,15 @@
 				return df.promise();
 			}
 
-			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
-			for ( var i = 0; i < resourcePaths.length; i++) {
-				var path = resourcePaths[i];
-				var absolutePath = toAbsoluteUrl(path);
-				if (this.cache[absolutePath]) {
-					$.extend(ret, getTemplateByURL(absolutePath));
-					datas.push({
-						absoluteUrl: absolutePath
-					});
-					continue;
-				}
-				tasks.push([load, [absolutePath, path]]);
-			}
+			var parentDf = getDeferred();
 
-
-			var retDf = getDeferred();
-			var tasksDf = getDeferred();
-			var loadDf = getDeferred().resolve();
-
-			$.each(tasks, function() {
-				var task = this;
-
-				loadDf = loadDf.pipe(function() {
-					return task[0].apply(task[0], task[1]).fail(function(e) {
-						tasksDf.reject(e);
-					});
-				});
-			});
-
-			loadDf.pipe(function() {
-				return tasksDf.resolve();
-			});
-
-			tasksDf.done(function() {
-				retDf.resolve(ret, datas);
+			$.when(load(tasks)).done(function() {
+				parentDf.resolve(ret, datas);
 			}).fail(function(e) {
-				retDf.reject(e);
+				parentDf.reject(e);
 			});
 
-			return retDf.promise();
+			return parentDf.promise();
 		}
 	};
 
@@ -493,7 +477,7 @@
 				if (paths.length === 0) {
 					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
-				for (var i = 0, len = paths.length; i < len; i++) {
+				for ( var i = 0, len = paths.length; i < len; i++) {
 					if (typeof paths[i] !== 'string') {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
 					} else if (!$.trim(paths[i])) {
@@ -555,7 +539,7 @@
 					id: templateId
 				});
 			} else if (typeof templateId !== 'string' || !$.trim(templateId)) {
-				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
+				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, []);
 			}
 
 			try {
