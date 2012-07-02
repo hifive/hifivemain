@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -61,6 +61,12 @@
 	// Privates
 	//
 	// =========================================================================
+	/**
+	 * jQueryのDeferred関数
+	 * 
+	 * @private
+	 */
+	var jQueryDeferred = $.Deferred;
 	// =============================
 	// Variables
 	// =============================
@@ -75,14 +81,14 @@
 	/**
 	 * 登録された共通のエラー処理を実行できるDeferredオブジェクトを返します。<br>
 	 * Deferredに notify() / notifyWith() / progress() メソッドがない場合は、追加したオブジェクトを返します。
-	 *
+	 * 
 	 * @returns {Deferred} Deferredオブジェクト
 	 * @name deferred
 	 * @function
 	 * @memberOf h5.async
 	 */
 	var deferred = function() {
-		var dfd = $.Deferred();
+		var dfd = jQueryDeferred();
 		// jQuery1.6.xにはDeferred.notify/notifyWith/progressがない
 		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
 			// 既にnorify/notifyWithが呼ばれたかどうかのフラグ
@@ -264,7 +270,7 @@
 	/**
 	 * オブジェクトがPromiseオブジェクトであるかどうかを返します。<br />
 	 * オブジェクトがDeferredオブジェクトの場合、falseが返ります。
-	 *
+	 * 
 	 * @param {Object} object オブジェクト
 	 * @returns {Boolean} オブジェクトがPromiseオブジェクトであるかどうか
 	 * @name isPromise
@@ -277,7 +283,7 @@
 
 	/**
 	 * 指定された回数ごとにループを抜けブラウザに制御を戻すユーティリティメソッドです。
-	 *
+	 * 
 	 * @param {Any[]} array 配列
 	 * @param {Function} callback コールバック関数。<br />
 	 *            コールバックには引数として現在のインデックス、現在の値、ループコントローラが渡されます。<br />
@@ -366,6 +372,29 @@
 		return dfd.promise();
 	};
 
+	/**
+	 * 引数に指定した１つ以上のプロミスオブジェクトについて、生成したプロミスオブジェクトを返すメソッドです。<br>
+	 * 次のようなプロミスオブジェクトを返します。<br>
+	 * <ul>
+	 * <li>引数に指定されたプロミスオブジェクトのうち、１つでもrejectされると、failコールバックが実行されます。</li>
+	 * <li>引数に指定されたすべてのプロミスオブジェクトが全てresolveされると、doneコールバックが実行されます。</li>
+	 * </ul>
+	 * このメソッドはjQuery.whenをラップしており、同じように使うことができます。<br>
+	 * このメソッドを使うと、共通のエラー処理を実行させることができます。<br>
+	 * 
+	 * @param {Promise} var_args promiseオブジェクト
+	 * @returns {Promise} Promiseオブジェクト
+	 * @name when
+	 * @function
+	 * @memberOf h5.async
+	 */
+	var when = function(/* var_args */) {
+		jQuery.Deferred = h5.async.deferred;
+		var promise = $.when.apply($, arguments);
+		jQuery.Deferred = jQueryDeferred;
+		return promise;
+	};
+
 	// =============================
 	// Expose to window
 	// =============================
@@ -377,6 +406,7 @@
 	 */
 	h5.u.obj.expose('h5.async', {
 		deferred: deferred,
+		when: when,
 		isPromise: isPromise,
 		loop: loop
 	});
