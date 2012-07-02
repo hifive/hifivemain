@@ -383,29 +383,12 @@
 					});
 					continue;
 				}
-				tasks.push([load, [absolutePath, path]]);
+				tasks.push(load(absolutePath, path));
 			}
 
-
 			var retDf = getDeferred();
-			var tasksDf = getDeferred();
-			var loadDf = getDeferred().resolve();
 
-			$.each(tasks, function() {
-				var task = this;
-
-				loadDf = loadDf.pipe(function() {
-					return task[0].apply(task[0], task[1]).fail(function(e) {
-						tasksDf.reject(e);
-					});
-				});
-			});
-
-			loadDf.pipe(function() {
-				return tasksDf.resolve();
-			});
-
-			tasksDf.done(function() {
+			$.when.apply($, tasks).done(function() {
 				retDf.resolve(ret, datas);
 			}).fail(function(e) {
 				retDf.reject(e);
@@ -454,7 +437,6 @@
 		 */
 		this.__cachedTemplates = {};
 	}
-	;
 
 	$.extend(View.prototype, {
 		/**
@@ -485,7 +467,7 @@
 				if (paths.length === 0) {
 					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
-				for (var i = 0, len = paths.length; i < len; i++) {
+				for ( var i = 0, len = paths.length; i < len; i++) {
 					if (typeof paths[i] !== 'string') {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
 					} else if (!$.trim(paths[i])) {
