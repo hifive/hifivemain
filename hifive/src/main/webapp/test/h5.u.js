@@ -92,13 +92,14 @@ $(function() {
 		}
 	});
 	test('名前空間作成-ドット区切りでネスト  (h5.u.obj.ns)', 6, function() {
-		var ns = h5.u.obj.ns("jp.co.nssol.sysrdc");
+		var ns = h5.u.obj.ns("com.htmlhifive.test.test1");
 
-		strictEqual(ns, jp.co.nssol.sysrdc, 'ns()の戻り値は作成した名前空間オブジェクト。ネストしている場合は一番末尾のオブジェクトであること。');
-		notStrictEqual(jp, undefined, CREATE_NAMESPACE_PASS_REASON);
-		notStrictEqual(jp.co, undefined, CREATE_NAMESPACE_PASS_REASON);
-		notStrictEqual(jp.co.nssol, undefined, CREATE_NAMESPACE_PASS_REASON);
-		notStrictEqual(jp.co.nssol.sysrdc, undefined, CREATE_NAMESPACE_PASS_REASON);
+		strictEqual(ns, com.htmlhifive.test.test1,
+				'ns()の戻り値は作成した名前空間オブジェクト。ネストしている場合は一番末尾のオブジェクトであること。');
+		notStrictEqual(com, undefined, CREATE_NAMESPACE_PASS_REASON);
+		notStrictEqual(com.htmlhifive, undefined, CREATE_NAMESPACE_PASS_REASON);
+		notStrictEqual(com.htmlhifive.test, undefined, CREATE_NAMESPACE_PASS_REASON);
+		notStrictEqual(com.htmlhifive.test.test1, undefined, CREATE_NAMESPACE_PASS_REASON);
 
 		window.jp = undefined;
 		strictEqual(window.jp, undefined, '（クリーンアップ）');
@@ -118,23 +119,23 @@ $(function() {
 		strictEqual(window.dummy, undefined, 'ns()のパラメータにString型以外を指定した場合はエラーとして処理されること。');
 	});
 
-	test('jp.co.nssol.sysrdcにオブジェクトを公開する (h5.u.obj.ns)', 4, function() {
-		var jpStr = 'JP';
-		var coStr = 'CO';
+	test('com.htmlhifive.test.test1にオブジェクトを公開する (h5.u.obj.ns)', 4, function() {
+		var comStr = 'COM';
+		var htmlhifiveStr = 'HTMLHIFIVE';
 
-		window.jp = {
-			dummy: jpStr
+		window.com = {
+			dummy: comStr
 		};
-		window.jp.co = {
-			dummy: coStr
+		window.com.htmlhifive = {
+			dummy: htmlhifiveStr
 		};
 
-		var sysrdc = h5.u.obj.ns('jp.co.nssol.sysrdc');
+		var test1 = h5.u.obj.ns('com.htmlhifive.test.test1');
 
-		equal(jp.dummy, jpStr);
-		equal(jp.co.dummy, coStr);
-		strictEqual(sysrdc, jp.co.nssol.sysrdc, 'nsの戻り値と作成された名前空間が同一であること。');
-		notStrictEqual(jp.co.nssol.sysrdc, undefined, '存在しない分については新規作成されていること。');
+		equal(com.dummy, comStr);
+		equal(com.htmlhifive.dummy, htmlhifiveStr);
+		strictEqual(test1, com.htmlhifive.test.test1, 'nsの戻り値と作成された名前空間が同一であること。');
+		notStrictEqual(com.htmlhifive.test.test1, undefined, '存在しない分については新規作成されていること。');
 	});
 
 	test('h5test1.exposeにオブジェクトを公開する (h5.u.obj.expose)', 5, function() {
