@@ -392,7 +392,7 @@
 
 			var parentDf = getDeferred();
 
-			$.when(load(tasks)).done(function() {
+			h5.async.when(load(tasks)).done(function() {
 				parentDf.resolve(ret, datas);
 			}).fail(function(e) {
 				parentDf.reject(e);

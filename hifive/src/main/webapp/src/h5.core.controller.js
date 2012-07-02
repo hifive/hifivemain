@@ -729,7 +729,7 @@
 			if (isInitEvent && isLeafController) {
 				promises.push(leafPromise);
 			}
-			$.when.apply($, promises).done(function() {
+			h5.async.when.apply($, promises).done(function() {
 				func();
 			});
 		};
@@ -1250,7 +1250,7 @@
 		// コントローラの__ready処理を実行
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
 		initPromises.push(controller.initPromise);
-		$.when.apply($, initPromises).done(function() {
+		h5.async.when.apply($, initPromises).done(function() {
 			executeLifecycleEventChain(controller, false);
 		});
 	}
@@ -1836,7 +1836,7 @@
 			this.unbind();
 			var that = this;
 			var promises = executeLifeEndChain(this, '__dispose');
-			$.when.apply($, promises).done(function() {
+			h5.async.when.apply($, promises).done(function() {
 				disposeController(that);
 				dfd.resolve();
 			});
