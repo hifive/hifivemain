@@ -64,6 +64,7 @@ $(function() {
 				},
 				teardown: function() {
 					$('#controllerTest').remove();
+					h5.settings.commonFailHandler = undefined;
 				}
 			});
 
@@ -470,7 +471,12 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートが存在しない時のコントローラの動作', 5, function() {
+	asyncTest('テンプレートが存在しない時のコントローラの動作', 6, function() {
+		var ret = '';
+		var cfhm = 'commonFailHandler';
+		h5.settings.commonFailHandler = function() {
+			ret += cfhm;
+		};
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
@@ -486,6 +492,7 @@ $(function() {
 			},
 			__dispose: function(context) {
 				deepEqual(++count, 4, '4. __disposeが実行される。');
+				strictEqual(ret, cfhm, 'commonFailHandlerが実行されていること。');
 				start();
 			},
 			__unbind: function(context) {
@@ -509,7 +516,12 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートが存在しない時のコントローラの動作 2', 16, function() {
+	asyncTest('テンプレートが存在しない時のコントローラの動作 2', 17, function() {
+		var ret = '';
+		var cfhm = 'commonFailHandler';
+		h5.settings.commonFailHandler = function() {
+			ret += cfhm;
+		};
 		var errorCode = 7003;
 		var count = 0;
 		var disposedController = {};
@@ -602,6 +614,8 @@ $(function() {
 						}
 						ok(!flag, str + 'コントローラがdisposeされていること');
 					}
+
+					strictEqual(ret, cfhm, 'commonFailHandlerが1回実行されていること。');
 					start();
 				}, 0);
 			},
@@ -673,12 +687,17 @@ $(function() {
 	});
 
 
-	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreinitPromiseのfailが呼ばれること。', 5, function() {
+	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreinitPromiseのfailが呼ばれること。', 6, function() {
+		var ret = '';
+		var cfhm = 'commonFailHandler';
+		h5.settings.commonFailHandler = function() {
+			ret += cfhm;
+		};
 		// view.load()をスタブに差し替え
 		var retryCount = 0;
 		var retryLimit = 3;
 		var load = function() {
-			var dfd = h5.async.deferred();
+			var dfd = $.Deferred();
 			var e = {
 				detail: {
 					error: {
@@ -731,6 +750,7 @@ $(function() {
 					deepEqual(e.controllerDefObject.__name, 'TestController',
 							'エラーオブジェクトからコントローラオブジェクトが取得できる');
 					h5.core.view.createView = originalCreateView;
+					strictEqual(ret, cfhm, 'commonFailHandlerが1回実行されていること。');
 					start();
 				});
 		testController.initPromise.done(function(a) {
@@ -740,7 +760,12 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 5, function() {
+	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 6, function() {
+		var ret = '';
+		var cfhm = 'commonFailHandler';
+		h5.settings.commonFailHandler = function() {
+			ret += cfhm;
+		};
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
@@ -756,6 +781,7 @@ $(function() {
 			},
 			__dispose: function(context) {
 				deepEqual(++count, 4, '4. __disposeが実行される。');
+				strictEqual(ret, cfhm, 'commonFailHandlerが1回実行されていること。');
 				start();
 			},
 			__unbind: function(context) {
@@ -779,7 +805,7 @@ $(function() {
 		});
 	});
 
-	test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', function() {
+	test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', 1, function() {
 		var errorCode = 6029;
 		var view = h5.core.view;
 		h5.core.view = null;
