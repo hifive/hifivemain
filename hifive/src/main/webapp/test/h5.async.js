@@ -29,8 +29,9 @@ $(function() {
 		ok(promise.progress, 'Promiseオブジェクトにprogressメソッドが用意されているか');
 	});
 
-	test('h5.async.isPromise() promiseオブジェクトかどうか判定できること。', 4, function(){
-		ok(h5.async.isPromise(h5.async.deferred().promise()), 'h5.async.deferred().promise()はpromiseオブジェクト');
+	test('h5.async.isPromise() promiseオブジェクトかどうか判定できること。', 4, function() {
+		ok(h5.async.isPromise(h5.async.deferred().promise()),
+				'h5.async.deferred().promise()はpromiseオブジェクト');
 		ok(h5.async.isPromise($.Deferred().promise()), '$.Deferred().promise()はpromiseオブジェクト');
 		ok(!h5.async.isPromise(h5.async.deferred()), 'h5.async.deferred()はpromiseオブジェクトではない。');
 		ok(!h5.async.isPromise($.Deferred()), '$.Deferred().promise()はpromiseオブジェクトではない。');
@@ -106,7 +107,8 @@ $(function() {
 	});
 
 	test(
-			'commonFailHandlerの動作', 6,
+			'commonFailHandlerの動作',
+			6,
 			function() {
 				var ret = '';
 				var cfhm = 'commonFailHandler';
@@ -163,6 +165,94 @@ $(function() {
 				ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
 			});
 
+
+	test('h5.async.whenの動作 1', 4, function() {
+		var ret = '';
+		var cfhm = 'commonFailHandler';
+		h5.settings.commonFailHandler = function() {
+			ret += cfhm;
+		};
+		var dfd1 = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		var dfd1Resolved = false;
+		var dfd2Resolved = false;
+		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
+		whenPromise.done(function() {
+			ok(dfd1Resolved, '1番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(dfd2Resolved, '2番目の引数のプロミスオブジェクトがresolveされていること。');
+		});
+		dfd1Resolved = true;
+		dfd1.resolve();
+		dfd2Resolved = true;
+		dfd2.resolve();
+		strictEqual(ret, '', 'rejectしていないので、commonFailHandlerは実行されていないこと。');
+		h5.settings.commonFailHandler = undefined;
+		ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
+	});
+
+	test('h5.async.whenの動作 2', 3, function() {
+		var ret = '';
+		var cfhm = 'commonFailHandler';
+		h5.settings.commonFailHandler = function() {
+			ret += cfhm;
+		};
+		var dfd1 = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
+		whenPromise.done(function() {
+			ok(false, 'テスト失敗。doneコールバックが実行された');
+		}).fail(function() {
+			ok(true, 'h5.async.whenに渡したpromiseオブジェクトが一つでもrejectされたら、whenのfailコールバックが実行されること');
+		});
+		dfd1.resolve();
+		dfd2.reject();
+
+		strictEqual(ret, '', 'failコールバックを指定しているので、commonFailHandlerは実行されていないこと。');
+		h5.settings.commonFailHandler = undefined;
+		ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
+	});
+	test(
+			'h5.async.whenの動作 3',
+			4,
+			function() {
+				var ret = '';
+				var cfhm = 'commonFailHandler';
+				h5.settings.commonFailHandler = function() {
+					ret += cfhm;
+				};
+				var dfd1 = h5.async.deferred();
+				var dfd2 = h5.async.deferred();
+				var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
+				whenPromise.done(function() {
+					ok(false, 'テスト失敗。doneコールバックが実行された');
+				});
+				dfd1.resolve();
+				dfd2.reject();
+				strictEqual(ret, cfhm, 'failコールバックを指定していないので、commonFailHandlerが実行されること。');
+
+
+				ret = '';
+				dfd1 = h5.async.deferred();
+				dfd2 = h5.async.deferred();
+				var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
+				whenPromise.done(function() {
+					ok(false, 'テスト失敗。doneコールバックが実行された');
+				});
+				dfd2
+						.fail(function() {
+							ok(true,
+									'h5.async.whenに渡したpromiseオブジェクトがrejectされたとき、そのpromiseオブジェクトのfailコールバックが実行されること。');
+						});
+				dfd1.resolve();
+				dfd2.reject();
+				strictEqual(
+						ret,
+						cfhm,
+						'h5.async.whenに渡したpromiseオブジェクトのfailコールバックが実行されても、h5.async.whenの戻り値にfailコールバックを指定していないので、commonFailHandlerが実行されること。');
+
+				h5.settings.commonFailHandler = undefined;
+				ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
+			});
 	asyncTest('h5.async.loop()の動作1', 1, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
