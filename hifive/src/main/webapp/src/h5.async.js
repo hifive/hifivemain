@@ -389,10 +389,13 @@
 	 * @memberOf h5.async
 	 */
 	var when = function(/* var_args */) {
-		jQuery.Deferred = h5.async.deferred;
-		var promise = $.when.apply($, arguments);
-		jQuery.Deferred = jQueryDeferred;
-		return promise;
+		var dfd = h5.async.deferred();
+		$.when.apply($, arguments).done(function() {
+			dfd.resolve();
+		}).fail(function() {
+			dfd.reject();
+		});
+		return dfd.promise();
 	};
 
 	// =============================
