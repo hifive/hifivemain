@@ -492,10 +492,12 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.preinitPromise.done(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
-		}).fail(function(e) {
-			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			deepEqual(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
-		})
+		}).fail(
+				function(e) {
+					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+					deepEqual(e.controllerDefObject.__name, 'TestController',
+							'エラーオブジェクトからコントローラオブジェクトが取得できる');
+				})
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
 		}).fail(function(e, opt) {
@@ -719,12 +721,14 @@ $(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
 			h5.core.view.createView = originalCreateView;
 			start();
-		}).fail(function(e) {
-			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			deepEqual(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
-			h5.core.view.createView = originalCreateView;
-			start();
-		});
+		}).fail(
+				function(e) {
+					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+					deepEqual(e.controllerDefObject.__name, 'TestController',
+							'エラーオブジェクトからコントローラオブジェクトが取得できる');
+					h5.core.view.createView = originalCreateView;
+					start();
+				});
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
 		}).fail(function(e, opt) {
@@ -1029,7 +1033,8 @@ $(function() {
 			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
 		}).fail(function() {
 			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
-		});		testController.preinitPromise.done(function() {
+		});
+		testController.preinitPromise.done(function() {
 			ok(true, 'preinitPromiseのdoneハンドラが実行されること');
 			// dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
 			// なので、バックアップを取ってdispose.apply(testController)を使って2回呼ぶ
@@ -4431,7 +4436,7 @@ $(function() {
 			'h5trackイベント(mousedown, mousemove, mouseup) SVG',
 			26,
 			function() {
-				if(!document.createElementNS){
+				if (!document.createElementNS) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -4577,7 +4582,7 @@ $(function() {
 			'h5trackイベント(touchstart, touchmove, touchend) SVG',
 			26,
 			function() {
-				if(!document.createElementNS){
+				if (!document.createElementNS) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -4984,4 +4989,43 @@ $(function() {
 					start();
 				});
 			});
+
+	test('__construct()で例外をスローする。', 1, function() {
+		var controller = {
+			__name: '',
+			__construct: function() {
+				throw new Error('__construct error.');
+			}
+		};
+
+		raises(function() {
+			h5.core.controller('#controllerTest', controller);
+		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
+	});
+
+	test('__init()で例外をスローする。', 1, function() {
+		var controller = {
+			__name: '',
+			__init: function() {
+				throw new Error('__init error.');
+			}
+		};
+
+		raises(function() {
+			h5.core.controller('#controllerTest', controller);
+		}, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+	});
+
+	test('__ready()で例外をスローする。', 1, function() {
+		var controller = {
+			__name: '',
+			__ready: function() {
+				throw new Error('__ready error.');
+			}
+		};
+
+		raises(function() {
+			h5.core.controller('#controllerTest', controller);
+		}, '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+	});
 });
