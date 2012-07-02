@@ -62,12 +62,6 @@
 	 * テンプレートに渡すパラメータに必要なプロパティが設定されていない時に発生するエラー
 	 */
 	var ERR_CODE_TEMPLATE_PROPATY_UNDEFINED = 7006;
-
-	/**
-	 * テンプレートのロードに失敗した時に発生するエラー
-	 */
-	var ERR_CODE_TEMPLATE_NOT_FOUND = 7007;
-
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
@@ -75,11 +69,10 @@
 	errMsgMap[ERR_CODE_TEMPLATE_COMPILE] = 'テンプレートをコンパイルできませんでした。{0}';
 	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。{0}';
 	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
-	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。';
+	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0} URL:{1}';
 	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
-	errMsgMap[ERR_CODE_TEMPLATE_NOT_FOUND] = 'テンプレートをロードできませんでした。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -382,15 +375,17 @@
 									path: filePath
 								}));
 							}
-						}).fail(function(e) {
-					delete that.accessingUrls[absolutePath];
-					df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, null, {
-						url: absolutePath,
-						path: filePath,
-						error: e
-					}));
-					return;
-				});
+						}).fail(
+						function(e) {
+							delete that.accessingUrls[absolutePath];
+							df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [e.status,
+									absolutePath], {
+								url: absolutePath,
+								path: filePath,
+								error: e
+							}));
+							return;
+						});
 
 				return df.promise();
 			}

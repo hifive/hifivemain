@@ -542,30 +542,67 @@ asyncTest('load() テンプレートIDが空文字または空白である場合
 	});
 });
 
-asyncTest('存在しないテンプレートを読み込む。', 11, function() {
-	var p = h5.core.view.load(['./template/hogehoge.ejs']);
-	p.fail(function(e) {
-		ok(e.code, 'エラーコード: ' + e.code);
-		strictEqual(e.detail.error.status, 404,
-				'エラーオブジェクトにAjaxエラーのオブジェクトが格納されていて、ステータスコード404が取得できる。');
-		ok(e.detail.url.search(/http:\/\//) === 0
-				&& e.detail.url.search(/\/template\/hogehoge\.ejs$/),
-				'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
-		strictEqual(e.detail.path, './template/hogehoge.ejs', 'エラーの起きたテンプレートファイルのパスが取得できる');
-		var propCount = 0;
-		for ( var prop in h5.core.view.__cachedTemplates) {
-			ok(prop, prop);
-			propCount++;
-		}
+asyncTest(
+		'存在しないテンプレートを読み込む。出力されるログも確認する ※要目視',
+		18,
+		function() {
+			var p = h5.core.view.load(['./template/hogehoge.ejs']);
+			p
+					.fail(function(e) {
+						ok(e.code, 'エラーコード: ' + e.code);
+						strictEqual(e.detail.error.status, 404,
+								'エラーオブジェクトにAjaxエラーのオブジェクトが格納されていて、ステータスコード404が取得できる。');
+						ok(e.detail.url.search(/http:\/\//) === 0
+								&& e.detail.url.search(/\/template\/hogehoge\.ejs$/),
+								'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
+						strictEqual(e.detail.path, './template/hogehoge.ejs',
+								'エラーの起きたテンプレートファイルのパスが取得できる');
+						ok(
+								true,
+								'※要目視 WARNレベルで次のようにログが出力されていることを確認してください。'
+										+ '『[WARN]10:49:26,38: テンプレートファイルを取得できませんでした。ステータスコード:404 URL:http://localhost:8080/hifive/test/template/hogehoge.ejs 』');
 
-		strictEqual(propCount, 3, '画面HTMLに書かれているテンプレートの件数、3件と一致すること');
+						h5.core.view
+								.load('./template/hogehoge.ejs')
+								.fail(
+										function(e) {
+											ok(true,
+													'一度ロードしようとした存在しないURLにもう一度アクセスした時、もう一度アクセスを試みること。');
+											ok(e.code, 'エラーコード: ' + e.code);
+											strictEqual(e.detail.error.status, 404,
+													'エラーオブジェクトにAjaxエラーのオブジェクトが格納されていて、ステータスコード404が取得できる。');
+											ok(e.detail.url.search(/http:\/\//) === 0
+													&& e.detail.url
+															.search(/\/template\/hogehoge\.ejs$/),
+													'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
+											strictEqual(e.detail.path, './template/hogehoge.ejs',
+													'エラーの起きたテンプレートファイルのパスが取得できる');
+											ok(
+													true,
+													'※要目視 WARNレベルで次のようにログが出力されていることを確認してください。'
+															+ '『[WARN]10:49:26,38: テンプレートファイルを取得できませんでした。ステータスコード:404 URL:http://localhost:8080/hifive/test/template/hogehoge.ejs 』');
 
-		strictEqual(h5.core.view.isAvailable('view1'), true);
-		strictEqual(h5.core.view.isAvailable('view2'), true);
-		strictEqual(h5.core.view.isAvailable('view3'), true);
-		start();
-	});
-});
+											var propCount = 0;
+											for ( var prop in h5.core.view.__cachedTemplates) {
+												ok(prop, prop);
+												propCount++;
+											}
+
+											strictEqual(propCount, 3,
+													'画面HTMLに書かれているテンプレートの件数、3件と一致すること');
+
+											strictEqual(h5.core.view.isAvailable('view1'), true);
+											strictEqual(h5.core.view.isAvailable('view2'), true);
+											strictEqual(h5.core.view.isAvailable('view3'), true);
+
+											start();
+
+										}).done(function() {
+									ok(false, 'テスト失敗。存在しないURLなのにdoneコールバックが実行された');
+									start();
+								});
+					});
+		});
 
 test('get() 存在しないテンプレートIDを指定してテンプレート取得。', function() {
 	try {
