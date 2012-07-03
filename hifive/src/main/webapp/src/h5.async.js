@@ -390,10 +390,10 @@
 	 */
 	var when = function(/* var_args */) {
 		var dfd = h5.async.deferred();
-		$.when.apply($, arguments).done(function() {
-			dfd.resolve();
-		}).fail(function() {
-			dfd.reject();
+		$.when.apply($, arguments).done(function(/* var_args */) {
+			dfd.resolve.apply(dfd, arguments);
+		}).fail(function(/* var_args */) {
+			dfd.reject.apply(dfd, arguments);
 		});
 		return dfd.promise();
 	};

@@ -211,6 +211,7 @@ $(function() {
 		h5.settings.commonFailHandler = undefined;
 		ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
 	});
+
 	test(
 			'h5.async.whenの動作 3',
 			4,
@@ -253,6 +254,44 @@ $(function() {
 				h5.settings.commonFailHandler = undefined;
 				ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
 			});
+
+	test('h5.async.whenの動作 4', 7, function() {
+		var dfd1 = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
+		whenPromise.done(function() {
+			ok(false, 'テスト失敗。doneコールバックが実行された');
+		}).fail(function(one, two, three) {
+			strictEqual(one, 1, 'failコールバックで引数が受け取れること。');
+			strictEqual(two, 2, 'failコールバックで引数が受け取れること。');
+			strictEqual(three, 3, 'failコールバックで引数が受け取れること。');
+		});
+		dfd1.resolve(3, 2, 1);
+		dfd2.reject(1, 2, 3);
+
+		ret = '';
+		dfd1 = h5.async.deferred();
+		dfd2 = h5.async.deferred();
+		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
+		whenPromise.done(function(one, two) {
+			strictEqual(one, 1, 'doneコールバックで引数が受け取れること。');
+			strictEqual(two, 2, 'doneコールバックで引数が受け取れること。');
+		});
+		dfd1.resolve(1);
+		dfd2.resolve(2);
+
+		ret = '';
+		dfd1 = h5.async.deferred();
+		dfd2 = h5.async.deferred();
+		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
+		whenPromise.done(function(one, two) {
+			deepEqual(one, [1, 2], 'doneコールバックで引数が受け取れること。');
+			strictEqual(two, 2, 'doneコールバックで引数が受け取れること。');
+		});
+		dfd1.resolve(1, 2);
+		dfd2.resolve(2);
+	});
+
 	asyncTest('h5.async.loop()の動作1', 1, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
