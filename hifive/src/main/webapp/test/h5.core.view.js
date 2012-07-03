@@ -1261,7 +1261,7 @@ asyncTest(
 
 asyncTest(
 		'テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
-		1, function() {
+		4, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
 			} catch (e) {
@@ -1275,15 +1275,17 @@ asyncTest(
 			var array1 = ['./template/test_cache1.ejs', './template/test_cache1.ejs?',
 					'./template/test_cache1.ejs?aa', './template/test_cache1.ejs?bb'];
 			var expectArray1 = array1;
-			view1.load(array1).done(function() {
-				var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-				var cache = h5.dev.core.view.cacheManager.cache;
-				var paths = [];
-				for ( var i = 0, l = cacheUrls.length; i < l; i++) {
-					var url = cacheUrls[i];
-					paths.push(cache[url].path);
-				}
-				deepEqual(paths, expectArray1, 'キャッシュが4ファイル分されていて、正しい順番であること');
-				start();
-			});
+
+			view1.load(array1).done(
+					function() {
+						var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+						var cache = h5.dev.core.view.cacheManager.cache;
+
+						for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+							var url = cacheUrls[i];
+							ok($.inArray(cache[url].path, expectArray1) != -1,
+									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
+						}
+						start();
+					});
 		});
