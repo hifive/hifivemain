@@ -176,8 +176,8 @@ $(function() {
 		var dfd2 = h5.async.deferred();
 		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
 		whenPromise.done(function() {
-			ok(dfd1.isResolved, '1番目の引数のプロミスオブジェクトがresolveされていること。');
-			ok(dfd2.isResolved, '2番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(dfd1.isResolved(), '1番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(dfd2.isResolved(), '2番目の引数のプロミスオブジェクトがresolveされていること。');
 		});
 		dfd1.resolve();
 		dfd2.resolve();
