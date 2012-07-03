@@ -174,16 +174,12 @@ $(function() {
 		};
 		var dfd1 = h5.async.deferred();
 		var dfd2 = h5.async.deferred();
-		var dfd1Resolved = false;
-		var dfd2Resolved = false;
 		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
 		whenPromise.done(function() {
-			ok(dfd1Resolved, '1番目の引数のプロミスオブジェクトがresolveされていること。');
-			ok(dfd2Resolved, '2番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(dfd1.isResolved, '1番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(dfd2.isResolved, '2番目の引数のプロミスオブジェクトがresolveされていること。');
 		});
-		dfd1Resolved = true;
 		dfd1.resolve();
-		dfd2Resolved = true;
 		dfd2.resolve();
 		strictEqual(ret, '', 'rejectしていないので、commonFailHandlerは実行されていないこと。');
 		h5.settings.commonFailHandler = undefined;
