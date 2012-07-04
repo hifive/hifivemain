@@ -2299,7 +2299,7 @@
 				preinitDfd.resolve();
 			}
 		}).fail(function(e) {
-			preinitDfd.reject.apply(preinitDfd, e);
+			preinitDfd.reject(e);
 			if (controller.rootController && !isDisposing(controller.rootController)) {
 				fwLogger.error(MESSAGE_INIT_CONTROLLER_ERROR, controller.rootController.__name);
 			}
