@@ -128,6 +128,7 @@
 	// Privates
 	//
 	// =========================================================================
+	var MESSAGE_LIFECYCLE_ERROR = 'コントローラのバインド中にエラーが発生しました。';
 	// =============================
 	// Variables
 	// =============================
@@ -718,6 +719,9 @@
 				if (h5.async.isPromise(ret)) {
 					ret.done(function() {
 						callback();
+					}).fail(function(/* var_args */) {
+						fwLogger.warn(MESSAGE_LIFECYCLE_ERROR);
+						controller.rootController.dispose();
 					});
 				} else {
 					callback();
@@ -729,7 +733,7 @@
 			if (isInitEvent && isLeafController) {
 				promises.push(leafPromise);
 			}
-			h5.async.when.apply($, promises).done(function() {
+			h5.async.when.apply(h5.async, promises).done(function() {
 				func();
 			});
 		};
@@ -1250,8 +1254,10 @@
 		// コントローラの__ready処理を実行
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
 		initPromises.push(controller.initPromise);
-		h5.async.when.apply($, initPromises).done(function() {
+		h5.async.when.apply(h5.async, initPromises).done(function() {
 			executeLifecycleEventChain(controller, false);
+		}).fail(function(e) {
+			fwLogger.warn(e);
 		});
 	}
 
@@ -1393,12 +1399,63 @@
 		return !controller.__controllerContext || controller.__controllerContext.isDisposing;
 	}
 
+	/**
+	 * 指定されたコントローラとその子供コントローラのresolve/rejectされていないdeferredをrejectします。
+	 * 
+	 * @param {Controller} controller コントローラ
+	 * @param {Array} args rejectに渡す引数の配列
+	 */
+	function rejectControllerDfd(controller, args) {
+		// 指定されたコントローラから見た末裔のコントローラを取得
+		var descendantControllers = [];
+		var getDescendant = function(con) {
+			var hasChildController = false;
+			for ( var prop in con) {
+				// 子コントローラがあれば再帰的に処理
+				if (isChildController(con, prop)) {
+					hasChildController = true;
+					getDescendant(con[prop]);
+				}
+			}
+			if (!hasChildController) {
+				// 子コントローラを持っていないなら、descendantControllersにpush
+				descendantControllers.push(con);
+			}
+		};
+		getDescendant(controller);
+
+		var propertyArray = ['preinitDfd', 'initDfd', 'readyDfd'];
+		function rejectControllerDfdLoop(con, propertyIndex) {
+			var property = propertyArray[propertyIndex];
+			if (!property) {
+				return;
+			}
+			var dfd = con.__controllerContext[property];
+			if (dfd) {
+				if (!dfd.isRejected() && !dfd.isResolved()) {
+					dfd.reject.apply(dfd, args);
+				}
+			}
+			if (con.parentController) {
+				rejectControllerDfdLoop(con.parentController, propertyIndex);
+			} else {
+				// readyDfdまでrejectしたら終了
+				if (propertyIndex < propertyArray.length - 1) {
+					// ルートコントローラまで辿ったら、末裔のコントローラに対して次のdfdをrejectさせる
+					for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+						rejectControllerDfdLoop(descendantControllers[i], propertyIndex + 1);
+					}
+				}
+			}
+		}
+		rejectControllerDfdLoop(controller, 0);
+	}
+
 	// =========================================================================
 	//
 	// Body
 	//
 	// =========================================================================
-
 	function controllerFactory(controller, rootElement, controllerName, param, isRoot) {
 
 		/**
@@ -1831,12 +1888,15 @@
 			if (isDisposing(this)) {
 				return;
 			}
+			// rejectまたはfailされていないdeferredをreject()する。
+			rejectControllerDfd(this, arguments);
+
 			this.__controllerContext.isDisposing = 1;
 			var dfd = this.deferred();
 			this.unbind();
 			var that = this;
 			var promises = executeLifeEndChain(this, '__dispose');
-			h5.async.when.apply($, promises).done(function() {
+			h5.async.when.apply(h5.async, promises).done(function() {
 				disposeController(that);
 				dfd.resolve();
 			});
@@ -2164,7 +2224,7 @@
 		var preinitDfd = getDeferred();
 		var preinitPromise = preinitDfd.promise();
 
-		controller.__controllerContext.templatePromise = templatePromise;
+		controller.__controllerContext.preinitDfd = preinitDfd;
 		controller.preinitPromise = preinitPromise;
 		controller.__controllerContext.initDfd = getDeferred();
 		controller.initPromise = controller.__controllerContext.initDfd.promise();
@@ -2216,12 +2276,13 @@
 
 		// テンプレートプロミスのハンドラ登録
 		templatePromise.done(function() {
-			preinitDfd.resolve();
-		}).fail(function(e) {
-			preinitDfd.reject(e);
-			if (controller.__controllerContext) {
-				controller.rootController.dispose();
+			if (!isDisposing(controller)) {
+				preinitDfd.resolve();
 			}
+		}).fail(function(/* var_args */) {
+			fwLogger.warn(MESSAGE_LIFECYCLE_ERROR);
+			preinitDfd.reject.apply(preinitDfd, arguments);
+			controller.rootController.dispose();
 		});
 
 		for ( var prop in clonedControllerDef) {
