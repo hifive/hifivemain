@@ -471,12 +471,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートが存在しない時のコントローラの動作', 8, function() {
-		var ret = '';
-		var cfhm = 'commonFailHandler';
-		h5.settings.commonFailHandler = function() {
-			ret += cfhm;
-		};
+	asyncTest('テンプレートが存在しない時のコントローラの動作', 7, function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
@@ -492,7 +487,6 @@ $(function() {
 			},
 			__dispose: function(context) {
 				deepEqual(++count, 4, '4. __disposeが実行される。');
-				strictEqual(ret, cfhm, 'commonFailHandlerが実行されていること。');
 				start();
 			},
 			__unbind: function(context) {
@@ -503,12 +497,10 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.preinitPromise.done(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
-		}).fail(
-				function(e) {
-					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-					deepEqual(e.controllerDefObject.__name, 'TestController',
-							'エラーオブジェクトからコントローラオブジェクトが取得できる');
-				});
+		}).fail(function(e) {
+			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+			strictEqual(e.controllerDefObject, controller, 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+		});
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
 		}).fail(function(e, opt) {
@@ -522,11 +514,6 @@ $(function() {
 	});
 
 	asyncTest('テンプレートが存在しない時のコントローラの動作 2', 21, function() {
-		var ret = '';
-		var cfhm = 'commonFailHandler';
-		h5.settings.commonFailHandler = function() {
-			ret += cfhm;
-		};
 		// TODO エラーコードも確認する
 		var errorCode = 7003;
 		var disposedController = {};
@@ -635,8 +622,6 @@ $(function() {
 						}
 						ok(!flag, str + 'コントローラがdisposeされていること');
 					}
-					// TODO 全てのfailにハンドルしないとすべて実行されてしまうが、いいのかどうか確認
-					// strictEqual(ret, cfhm, 'commonFailHandlerが1回実行されていること。');
 					start();
 				}, 0);
 			},
@@ -663,7 +648,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること。 3', 5, function() {
+	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること', 5, function() {
 		// view.load()をスタブに差し替え
 		var retryCount = 0;
 		var retryLimit = 3;
@@ -718,85 +703,104 @@ $(function() {
 	});
 
 
-	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreinitPromiseのfailが呼ばれること。', 6, function() {
-		var ret = '';
-		var cfhm = 'commonFailHandler';
-		h5.settings.commonFailHandler = function() {
-			ret += cfhm;
-		};
-		// view.load()をスタブに差し替え
-		var retryCount = 0;
-		var retryLimit = 3;
-		var load = function() {
-			var dfd = $.Deferred();
-			var e = {
-				detail: {
-					error: {
-						status: h5.env.ua.isIE ? 0 : 12029
+	asyncTest(
+			'テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreinitPromiseのfailが呼ばれること。',
+			11,
+			function() {
+				// view.load()をスタブに差し替え
+				var retryCount = 0;
+				var retryLimit = 3;
+				var load = function() {
+					var dfd = $.Deferred();
+					var e = {
+						detail: {
+							error: {
+								status: h5.env.ua.isIE ? 0 : 12029
+							}
+						}
+					};
+					if (retryCount++ == retryLimit + 1) {
+						dfd.resolve();
+					} else {
+						dfd.reject(e);
 					}
-				}
-			};
-			if (retryCount++ == retryLimit + 1) {
-				dfd.resolve();
-			} else {
-				dfd.reject(e);
-			}
-			return dfd.promise();
-		};
-		var originalCreateView = h5.core.view.createView;
-		h5.core.view.createView = function() {
-			var view = originalCreateView();
-			view.load = load;
-			return view;
-		};
-		var count = 0;
-		var controller = {
-			__name: 'TestController',
-			__templates: ['./noExistPath'],
-			__construct: function(context) {
-				deepEqual(++count, 1, 'コンストラクタが実行される。');
-			},
-			__init: function(context) {
-				ok(false, 'テスト失敗。__initが実行されました。');
-			},
-			__ready: function(context) {
-				ok(false, 'テスト失敗。__readyが実行されました。');
-			},
-			__dispose: function(context) {
-				deepEqual(++count, 4, '__disposeが実行される。');
-			},
-			__unbind: function(context) {
-				deepEqual(++count, 3, '__unbindが実行される。');
-			}
-		};
+					return dfd.promise();
+				};
+				var originalCreateView = h5.core.view.createView;
+				h5.core.view.createView = function() {
+					var view = originalCreateView();
+					view.load = load;
+					return view;
+				};
+				var count = 0;
+				var controller = {
+					__name: 'TestController',
+					__templates: ['./noExistPath'],
+					__construct: function(context) {
+						deepEqual(++count, 1, 'コンストラクタが実行される。');
+					},
+					__init: function(context) {
+						ok(false, 'テスト失敗。__initが実行されました。');
+					},
+					__ready: function(context) {
+						ok(false, 'テスト失敗。__readyが実行されました。');
+					},
+					__dispose: function(context) {
+						deepEqual(++count, 6, '__disposeが実行される。');
+					},
+					__unbind: function(context) {
+						deepEqual(++count, 5, '__unbindが実行される。');
+					}
+				};
 
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.preinitPromise.done(function() {
-			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
-			h5.core.view.createView = originalCreateView;
-			start();
-		}).fail(
-				function(e) {
-					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-					deepEqual(e.controllerDefObject.__name, 'TestController',
-							'エラーオブジェクトからコントローラオブジェクトが取得できる');
+				var testController = h5.core.controller('#controllerTest', controller);
+
+				var errorObj;
+				testController.preinitPromise.done(function() {
+					// createViewを元に戻す
 					h5.core.view.createView = originalCreateView;
-					strictEqual(ret, cfhm, 'commonFailHandlerが1回実行されていること。');
+					ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
+					h5.core.view.createView = originalCreateView;
 					start();
-				});
-		testController.initPromise.done(function(a) {
-			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
-		}).fail(function(e, opt) {
-			ok(false, 'テスト失敗。initPromiseがreject()されました。');
-		});
-	});
+				}).fail(
+						function(e) {
+							// createViewを元に戻す
+							h5.core.view.createView = originalCreateView;
+							errorObj = e;
+							deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+							strictEqual(e.controllerDefObject, controller,
+									'エラーオブジェクトからコントローラオブジェクトが取得できること');
+						});
+				testController.initPromise
+						.done(function(a) {
+							ok(false, 'テスト失敗。initPromiseがresolve()されました。');
+							start();
+						})
+						.fail(
+								function(e) {
+									deepEqual(++count, 3, 'initPromiseがreject()されました。');
+									strictEqual(e.controllerDefObject, controller,
+											'エラーオブジェクトからコントローラオブジェクトが取得できること');
+									strictEqual(e, errorObj,
+											'preinitPromiseのfailで取得したエラーオブジェクトとinitPromiseのfailで取得したエラーオブジェクトが同じであること');
+								});
+				testController.readyPromise
+						.done(function() {
+							ok(false, 'テスト失敗。 readyPromiseがresolve()されました。');
+							start();
+						})
+						.fail(
+								function(e) {
+									strictEqual(++count, 4, 'readyPromiseがreject()されました。');
+									strictEqual(e.controllerDefObject, controller,
+											'エラーオブジェクトからコントローラオブジェクトが取得できること');
+									strictEqual(e, errorObj,
+											'preinitPromiseのfailで取得したエラーオブジェクトとreadyPromiseのfailで取得したエラーオブジェクトが同じであること');
+									start();
+								});
+			});
 
-	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 6, function() {
-		var ret = '';
-		var cfhm = 'commonFailHandler';
-		h5.settings.commonFailHandler = function() {
-			ret += cfhm;
-		};
+	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 7, function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
@@ -811,28 +815,32 @@ $(function() {
 				ok(false, 'テスト失敗。__readyが実行されました。');
 			},
 			__dispose: function(context) {
-				deepEqual(++count, 4, '4. __disposeが実行される。');
-				strictEqual(ret, cfhm, 'commonFailHandlerが1回実行されていること。');
+				deepEqual(++count, 6, '__disposeが実行される。');
 				start();
 			},
 			__unbind: function(context) {
-				deepEqual(++count, 3, '3. __unbindが実行される。');
+				deepEqual(++count, 5, '__unbindが実行される。');
 			}
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.preinitPromise.done(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
-		}).fail(
-				function(e) {
-					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-					deepEqual(e.controllerDefObject.__name, 'TestController',
-							'エラーオブジェクトからコントローラオブジェクトが取得できる');
-				})
+		}).fail(function(e) {
+			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+			strictEqual(e.controllerDefObject, controller, 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+		});
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
 		}).fail(function(e, opt) {
-			ok(false, 'テスト失敗。initPromiseがreject()されました。');
+			deepEqual(++count, 3, 'initPromiseがreject()されました。');
+		});
+		testController.readyPromise.done(function(a) {
+			ok(false, 'テスト失敗。readyPromiseがresolve()されました。');
+			start();
+		}).fail(function(e, opt) {
+			deepEqual(++count, 4, 'readyPromiseがreject()されました。');
+			start();
 		});
 	});
 
@@ -1029,12 +1037,12 @@ $(function() {
 				testController.initPromise.done(function() {
 					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
 				}).fail(function() {
-					ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+					ok(true, 'initPromiseのfailハンドラが実行されました。');
 				});
 				testController.readyPromise.done(function() {
 					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
 				}).fail(function() {
-					ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+					ok(true, 'initPromiseのfailハンドラが実行されました。');
 				});
 				testController.preinitPromise.done(function() {
 					ok(true, 'preinitPromiseのdoneハンドラが実行されること');
