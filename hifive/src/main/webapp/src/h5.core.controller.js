@@ -719,10 +719,12 @@
 				if (h5.async.isPromise(ret)) {
 					ret.done(function() {
 						callback();
-					}).fail(function(/* var_args */) {
-						fwLogger.warn(MESSAGE_LIFECYCLE_ERROR);
-						controller.rootController.dispose();
-					});
+					}).fail(
+							function(/* var_args */) {
+								fwLogger.warn(MESSAGE_LIFECYCLE_ERROR);
+								controller.rootController.dispose.apply(controller.rootController,
+										arguments);
+							});
 				} else {
 					callback();
 				}
@@ -1424,7 +1426,7 @@
 		};
 		getDescendant(controller);
 
-		var propertyArray = ['preinitDfd', 'initDfd', 'readyDfd'];
+		var propertyArray = ['initDfd', 'readyDfd'];
 		function rejectControllerDfdLoop(con, propertyIndex) {
 			var property = propertyArray[propertyIndex];
 			if (!property) {
@@ -1448,7 +1450,9 @@
 				}
 			}
 		}
-		rejectControllerDfdLoop(controller, 0);
+		for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+			rejectControllerDfdLoop(descendantControllers[i], 0);
+		}
 	}
 
 	// =========================================================================
@@ -1880,10 +1884,11 @@
 		 * コントローラのリソースをすべて削除します。<br />
 		 * Controller#unbind() の処理を包含しています。
 		 * 
+		 * @param {Any} var_args disposeの際にrejectするdeferredのpromiseのfailハンドラに渡すパラメータ（可変長)
 		 * @returns {Promise} Promiseオブジェクト
 		 * @memberOf Controller
 		 */
-		dispose: function() {
+		dispose: function(/* var_args */) {
 			// disopseされていたら何もしない。
 			if (isDisposing(this)) {
 				return;
@@ -2279,10 +2284,10 @@
 			if (!isDisposing(controller)) {
 				preinitDfd.resolve();
 			}
-		}).fail(function(/* var_args */) {
+		}).fail(function(e) {
 			fwLogger.warn(MESSAGE_LIFECYCLE_ERROR);
-			preinitDfd.reject.apply(preinitDfd, arguments);
-			controller.rootController.dispose();
+			preinitDfd.reject.apply(preinitDfd, e);
+			controller.rootController.dispose(e);
 		});
 
 		for ( var prop in clonedControllerDef) {
