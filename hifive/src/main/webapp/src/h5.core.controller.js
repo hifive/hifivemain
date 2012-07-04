@@ -128,7 +128,7 @@
 	// Privates
 	//
 	// =========================================================================
-	var MESSAGE_LIFECYCLE_ERROR = 'コントローラのバインド中にエラーが発生しました。';
+	var MESSAGE_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
 	// =============================
 	// Variables
 	// =============================
@@ -717,14 +717,26 @@
 				var callback = isInitEvent ? createCallbackForInit(controllerInstance)
 						: createCallbackForReady(controllerInstance);
 				if (h5.async.isPromise(ret)) {
-					ret.done(function() {
-						callback();
-					}).fail(
-							function(/* var_args */) {
-								fwLogger.warn(MESSAGE_LIFECYCLE_ERROR);
-								controller.rootController.dispose.apply(controller.rootController,
-										arguments);
-							});
+					ret
+							.done(function() {
+								callback();
+							})
+							.fail(
+									function(/* var_args */) {
+										var controllerName = controllerInstance.__name;
+										fwLogger
+												.error(
+														'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。',
+														controllerName, isInitEvent ? '__init'
+																: '__ready');
+										fwLogger.error(MESSAGE_INIT_CONTROLLER_ERROR,
+												controller.rootController.__name);
+
+										// 同じrootControllerを持つ他の子のdisposeによって、
+										// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
+										controller.rootController
+												&& controller.rootController.dispose(arguments);
+									});
 				} else {
 					callback();
 				}
@@ -2262,6 +2274,8 @@
 					var jqXhrStatus = result.detail.error.status;
 					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
 							&& jqXhrStatus !== 12029) {
+						fwLogger.error('コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}', controllerName,
+								result.detail.url);
 						result.controllerDefObject = controllerDefObj;
 						setTimeout(function() {
 							templateDfd.reject(result);
@@ -2285,9 +2299,13 @@
 				preinitDfd.resolve();
 			}
 		}).fail(function(e) {
-			fwLogger.warn(MESSAGE_LIFECYCLE_ERROR);
 			preinitDfd.reject.apply(preinitDfd, e);
-			controller.rootController.dispose(e);
+			if (controller.rootController && !isDisposing(controller.rootController)) {
+				fwLogger.error(MESSAGE_INIT_CONTROLLER_ERROR, controller.rootController.__name);
+			}
+			// 同じrootControllerを持つ他の子のdisposeによって、
+			// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
+			controller.rootController && controller.rootController.dispose(e);
 		});
 
 		for ( var prop in clonedControllerDef) {
