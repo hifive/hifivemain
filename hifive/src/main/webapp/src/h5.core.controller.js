@@ -1375,13 +1375,15 @@
 				parentController.view.clear();
 			}
 			for ( var prop in parentController) {
-				if (isChildController(parentController, prop)) {
-					var c = parentController[prop];
-					if ($.inArray(c, targets) === -1) {
-						dispose(c);
+				if (parentController.hasOwnProperty(prop)) {
+					if (isChildController(parentController, prop)) {
+						var c = parentController[prop];
+						if ($.inArray(c, targets) === -1) {
+							dispose(c);
+						}
 					}
+					parentController[prop] = null;
 				}
-				parentController[prop] = null;
 			}
 		};
 		dispose(controller);

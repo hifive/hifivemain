@@ -51,6 +51,18 @@ $(function() {
 		return hexStr;
 	};
 
+	// コントローラがdisposeされているかどうかチェックする関数
+	function isDisposed(controller) {
+		var ret = true;
+		for ( var p in controller) {
+			if (controller.hasOwnProperty(p) && controller[p] !== null) {
+				ret = false;
+			}
+		}
+		return ret;
+	}
+
+
 	var cleanAspects = function() {
 		h5.settings.aspects = null;
 	};
@@ -613,14 +625,7 @@ $(function() {
 					for ( var i = 0; i < 3; i++) {
 						var prop = ['b', 'a', 'test'][i];
 						var str = ['孫', '子', '親'][i];
-						var flag = 0;
-						for ( var p in disposedController[prop]) {
-							if (disposedController[prop][p] !== null) {
-								flag = 1;
-								break;
-							}
-						}
-						ok(!flag, str + 'コントローラがdisposeされていること');
+						ok(isDisposed(disposedController[prop]), str + 'コントローラがdisposeされていること');
 					}
 					start();
 				}, 0);
@@ -885,22 +890,9 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-
-				var rootDispose = true;
-				var childDispose = true;
-				for ( var p in testController) {
-					if (testController[p] !== null) {
-						rootDispose = false;
-					}
-				}
-				for ( var p in cc) {
-					if (cc[p] !== null) {
-						childDispose = false;
-					}
-				}
 				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
-				ok(rootDispose, 'ルートコントローラのリソースはすべて削除されたか');
-				ok(childDispose, '子コントローラのリソースはすべて削除されたか');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
 			});
 		});
@@ -945,22 +937,10 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				var rootDispose = true;
-				var childDispose = true;
-				for ( var p in testController) {
-					if (testController[p] !== null) {
-						rootDispose = false;
-					}
-				}
-				for ( var p in cc) {
-					if (cc[p] !== null) {
-						childDispose = false;
-					}
-				}
 				ok(root, '__disposeイベントはPromiseオブジェクトを考慮しているか1');
 				ok(child, '__disposeイベントはPromiseオブジェクトを考慮しているか2');
-				ok(rootDispose, 'ルートコントローラのリソースはすべて削除されたか');
-				ok(childDispose, '子コントローラのリソースはすべて削除されたか');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
 			});
 		});
@@ -996,11 +976,8 @@ $(function() {
 						});
 
 						// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
-						// this.dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
-						// なので、バックアップを取ってdispose.apply(this)を使って2回呼ぶ
-						var dispose = this.dispose;
-						dispose.apply(this);
-						dispose.apply(this);
+						this.dispose();
+						this.dispose();
 						ok(true, 'コンストラクタは実行されること');
 					},
 					__init: function() {
@@ -1071,11 +1048,10 @@ $(function() {
 				});
 				testController.preinitPromise.done(function() {
 					ok(true, 'preinitPromiseのdoneハンドラが実行されること');
-					// dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
-					// なので、バックアップを取ってdispose.apply(testController)を使って2回呼ぶ
+					// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
 					var dispose = testController.dispose;
-					dispose.apply(testController);
-					dispose.apply(testController);
+					testController.dispose();
+					testController.dispose();
 				});
 			});
 
