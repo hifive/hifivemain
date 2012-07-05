@@ -1184,8 +1184,7 @@ asyncTest(
 
 asyncTest(
 		'getAvailableTemplates() LRUでキャッシュされていること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
-		20,
-		function() {
+		20, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
 			} catch (e) {
@@ -1209,54 +1208,43 @@ asyncTest(
 					'./template/test_cache10.ejs', './template/test_cache11.ejs',
 					'./template/test_cache2.ejs', './template/test_cache12.ejs'];
 
-			view1
-					.load(array1)
-					.done(
-							function() {
-								var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-								var cache = h5.dev.core.view.cacheManager.cache;
+			view1.load(array1).done(
+					function() {
+						var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+						var cache = h5.dev.core.view.cacheManager.cache;
 
-								for ( var i = 0, l = cacheUrls.length; i < l; i++) {
-									var url = cacheUrls[i];
-									ok($.inArray(cache[url].path, expectArray) != -1,
-											'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
-													+ cache[url].path);
-								}
+						for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+							var url = cacheUrls[i];
+							ok($.inArray(cache[url].path, expectArray) != -1,
+									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
+						}
 
-								view2
-										.load('./template/test_cache11.ejs')
-										.done(
-												function() {
-													cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+						var view2Done3Func = function() {
+							var cacheUrls2 = h5.dev.core.view.cacheManager.cacheUrls;
+							var cache2 = h5.dev.core.view.cacheManager.cache;
 
-													view2
-															.load('./template/test_cache2.ejs')
-															.done(
-																	function() {
-																		view2
-																				.load(
-																						'./template/test_cache12.ejs')
-																				.done(
-																						function() {
-																							var cacheUrls2 = h5.dev.core.view.cacheManager.cacheUrls;
-																							var cache2 = h5.dev.core.view.cacheManager.cache;
+							for ( var i = 0, l = cacheUrls2.length; i < l; i++) {
+								var url2 = cacheUrls2[i];
+								ok($.inArray(cache2[url2].path, expectArray2) != -1,
+										'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
+												+ cache2[url2].path);
+							}
 
-																							for ( var i = 0, l = cacheUrls2.length; i < l; i++) {
-																								var url2 = cacheUrls2[i];
-																								ok(
-																										$
-																												.inArray(
-																														cache2[url2].path,
-																														expectArray2) != -1,
-																										'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
-																												+ cache2[url2].path);
-																							}
+							start();
+						};
 
-																							start();
-																						});
-																	});
-												});
-							});
+						var view2Done2Func = function() {
+							view2.load('./template/test_cache12.ejs').done(view2Done3Func);
+						};
+
+						var view2Done1Func = function() {
+							cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+
+							view2.load('./template/test_cache2.ejs').done(view2Done2Func);
+						};
+
+						view2.load('./template/test_cache11.ejs').done(view2Done1Func);
+					});
 		});
 
 asyncTest(
