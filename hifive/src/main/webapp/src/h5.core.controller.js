@@ -112,9 +112,8 @@
 	// =============================
 
 	/* del begin */
-	var fwLogger = h5.log.createLogger('h5.core');
-
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var fwLogger = h5.log.createLogger('h5.core');
 	/* del end */
 
 	// =========================================================================

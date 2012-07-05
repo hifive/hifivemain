@@ -475,7 +475,7 @@
 			});
 
 			if (promises.length > 0) {
-				h5.async.when.apply(null, promises).pipe(promiseCallback, promiseCallback);
+				h5.async.when.apply(h5.async, promises).pipe(promiseCallback, promiseCallback);
 			}
 		} else if (isPromise(promises)) {
 			promises.pipe(promiseCallback, promiseCallback);
