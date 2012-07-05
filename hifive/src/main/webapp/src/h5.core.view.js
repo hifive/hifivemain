@@ -275,8 +275,9 @@
 					var templateId = $.trim(this.id);
 					var templateString = $.trim(this.innerHTML);
 
+					// 空文字または空白ならエラー
 					if (!templateId) {
-						// 空文字または空白ならエラー
+						// load()で更にdetail対してエラー情報を追加するため、ここで空のdetailオブジェクトを生成する
 						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
 					}
 
