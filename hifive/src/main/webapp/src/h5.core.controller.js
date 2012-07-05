@@ -1418,9 +1418,9 @@
 	 * 指定されたコントローラとその子供コントローラのresolve/rejectされていないdeferredをrejectします。
 	 * 
 	 * @param {Controller} controller コントローラ
-	 * @param {Array} args rejectに渡す引数の配列
+	 * @param {Any} [errorObj] rejectに渡すオブジェクト
 	 */
-	function rejectControllerDfd(controller, args) {
+	function rejectControllerDfd(controller, errorObj) {
 		// 指定されたコントローラから見た末裔のコントローラを取得
 		var descendantControllers = [];
 		var getDescendant = function(con) {
@@ -1448,7 +1448,7 @@
 			var dfd = con.__controllerContext[property];
 			if (dfd) {
 				if (!dfd.isRejected() && !dfd.isResolved()) {
-					dfd.reject.apply(dfd, args);
+					dfd.reject(errorObj);
 				}
 			}
 			if (con.parentController) {
@@ -1897,17 +1897,17 @@
 		 * コントローラのリソースをすべて削除します。<br />
 		 * Controller#unbind() の処理を包含しています。
 		 * 
-		 * @param {Any} var_args disposeの際にrejectするdeferredのpromiseのfailハンドラに渡すパラメータ（可変長)
-		 * @returns {Promise} Promiseオブジェクト
+		 * @param {Any} [errorObj] disposeの際にrejectするdeferredのpromiseのfailハンドラに渡すオブジェクト
+		 * @returns {Promise} Promiseオブジェク
 		 * @memberOf Controller
 		 */
-		dispose: function(/* var_args */) {
+		dispose: function(errorObj) {
 			// disopseされていたら何もしない。
 			if (isDisposing(this)) {
 				return;
 			}
 			// rejectまたはfailされていないdeferredをreject()する。
-			rejectControllerDfd(this, arguments);
+			rejectControllerDfd(this, errorObj);
 
 			this.__controllerContext.isDisposing = 1;
 			var dfd = this.deferred();
