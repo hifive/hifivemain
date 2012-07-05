@@ -410,9 +410,11 @@
 		var dfd = h5.async.deferred();
 
 		/* del begin */
-		// 引数にpromiseオブジェクト以外があった場合はログを出力します。
+		// 引数にpromise・deferredオブジェクト以外があった場合はログを出力します。
 		for ( var i = 0, l = args.length; i < l; i++) {
-			if (args[i] != null && !isPromise(args[i])) {
+			// DeferredもPromiseも、promiseメソッドを持つので、
+			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
+			if (args[i] != null && !args[i].promise && !$.isFunction(args[i].promise)) {
 				fwLogger.info('h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。');
 				break;
 			}
