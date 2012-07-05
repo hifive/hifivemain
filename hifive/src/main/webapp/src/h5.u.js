@@ -325,7 +325,7 @@
 			var count = index;
 			if (srcLen <= count) {
 				// 読み込み終了
-				h5.async.when.apply($, promises).done(function() {
+				h5.async.when(promises).done(function() {
 					dfd.resolve();
 				});
 				return;

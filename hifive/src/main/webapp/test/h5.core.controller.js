@@ -1450,7 +1450,7 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		var test2Controller = h5.core.controller('#controllerTest', controller2);
-		$.when(testController.readyPromise, test2Controller.readyPromise).done(
+		h5.async.when(testController.readyPromise, test2Controller.readyPromise).done(
 				function() {
 					start();
 
@@ -1502,7 +1502,7 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		var test2Controller = h5.core.controller('#controllerTest', controller2);
-		$.when(testController.readyPromise, test2Controller.readyPromise).done(
+		h5.async.when(testController.readyPromise, test2Controller.readyPromise).done(
 				function() {
 					start();
 
@@ -2685,7 +2685,7 @@ $(function() {
 
 					df2.resolve();
 				}, 200);
-				$.when(df.promise(), df2.promise()).done(function() {
+				h5.async.when(df.promise(), df2.promise()).done(function() {
 					setTimeout(function() {
 						dfd.resolve();
 					}, 0);
@@ -2895,20 +2895,21 @@ $(function() {
 				};
 				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
 				var test2Controller = h5.core.controller('#controllerTest2', controllerBase2);
-				$.when(test1Controller.readyPromise, test2Controller.readyPromise).done(function() {
-					start();
+				h5.async.when(test1Controller.readyPromise, test2Controller.readyPromise).done(
+						function() {
+							start();
 
-					$('#controllerTest1 input[type=button]').click();
+							$('#controllerTest1 input[type=button]').click();
 
-					ok(triggerEvent, 'イベントの送出ができたか');
-					strictEqual(message, 'dispatchTest', 'dispatchを使ってパラメータは渡せたか');
+							ok(triggerEvent, 'イベントの送出ができたか');
+							strictEqual(message, 'dispatchTest', 'dispatchを使ってパラメータは渡せたか');
 
-					test1Controller.unbind();
-					test2Controller.unbind();
-					$('#controllerTest1').remove();
-					$('#controllerTest2').remove();
-					ok(!$('#parent').length, '（DOMのクリーンアップ）');
-				});
+							test1Controller.unbind();
+							test2Controller.unbind();
+							$('#controllerTest1').remove();
+							$('#controllerTest2').remove();
+							ok(!$('#parent').length, '（DOMのクリーンアップ）');
+						});
 			});
 
 	asyncTest('コントローラ内のxxxControllerが動作しているか(テンプレート使用)', function() {
@@ -3244,34 +3245,36 @@ $(function() {
 
 		var noTemplateController = h5.core.controller('#controllerTest', controller2);
 
-		$.when(testController.readyPromise, noTemplateController.readyPromise).done(function() {
-			strictEqual(array.join(';'), '0;1;2', '__construct, __init, __readyは適切なタイミングで発火しているか');
-			ok(ip1, '__constructイベントの中でinitPromiseに触れるか');
-			ok(rp1, '__constructイベントの中でreadyPromiseに触れるか');
-			ok(ip2, '__initイベントの中でinitPromiseに触れるか');
-			ok(rp2, '__initイベントの中でreadyPromiseに触れるか');
-			ok(ip3, '__readyイベントの中でinitPromiseに触れるか');
-			ok(rp3, '__readyイベントの中でreadyPromiseに触れるか');
+		h5.async.when(testController.readyPromise, noTemplateController.readyPromise).done(
+				function() {
+					strictEqual(array.join(';'), '0;1;2',
+							'__construct, __init, __readyは適切なタイミングで発火しているか');
+					ok(ip1, '__constructイベントの中でinitPromiseに触れるか');
+					ok(rp1, '__constructイベントの中でreadyPromiseに触れるか');
+					ok(ip2, '__initイベントの中でinitPromiseに触れるか');
+					ok(rp2, '__initイベントの中でreadyPromiseに触れるか');
+					ok(ip3, '__readyイベントの中でinitPromiseに触れるか');
+					ok(rp3, '__readyイベントの中でreadyPromiseに触れるか');
 
 
-			ok(noip1, 'テンプレートを使わない場合でも、__constructイベントの中でinitPromiseに触れるか');
-			ok(norp1, 'テンプレートを使わない場合でも、__constructイベントの中でreadyPromiseに触れるか');
-			ok(noip2, 'テンプレートを使わない場合でも、__initイベントの中でinitPromiseに触れるか');
-			ok(norp2, 'テンプレートを使わない場合でも、__initイベントの中でreadyPromiseに触れるか');
-			ok(noip3, 'テンプレートを使わない場合でも、__readyイベントの中でinitPromiseに触れるか');
-			ok(norp3, 'テンプレートを使わない場合でも、__readyイベントの中でreadyPromiseに触れるか');
+					ok(noip1, 'テンプレートを使わない場合でも、__constructイベントの中でinitPromiseに触れるか');
+					ok(norp1, 'テンプレートを使わない場合でも、__constructイベントの中でreadyPromiseに触れるか');
+					ok(noip2, 'テンプレートを使わない場合でも、__initイベントの中でinitPromiseに触れるか');
+					ok(norp2, 'テンプレートを使わない場合でも、__initイベントの中でreadyPromiseに触れるか');
+					ok(noip3, 'テンプレートを使わない場合でも、__readyイベントの中でinitPromiseに触れるか');
+					ok(norp3, 'テンプレートを使わない場合でも、__readyイベントの中でreadyPromiseに触れるか');
 
-			var root = $('#controllerTest').get(0);
-			strictEqual(ir, root, '__initイベントの中でrootElementに触れるか');
-			strictEqual(rr, root, '__readyイベントの中でrootElementに触れるか');
-			strictEqual(noir, root, 'テンプレートを使わない場合でも、__initイベントの中でrootElementに触れるか');
-			strictEqual(norr, root, 'テンプレートを使わない場合でも、__readyイベントの中でrootElementに触れるか');
+					var root = $('#controllerTest').get(0);
+					strictEqual(ir, root, '__initイベントの中でrootElementに触れるか');
+					strictEqual(rr, root, '__readyイベントの中でrootElementに触れるか');
+					strictEqual(noir, root, 'テンプレートを使わない場合でも、__initイベントの中でrootElementに触れるか');
+					strictEqual(norr, root, 'テンプレートを使わない場合でも、__readyイベントの中でrootElementに触れるか');
 
-			start();
+					start();
 
-			testController.unbind();
-			noTemplateController.unbind();
-		});
+					testController.unbind();
+					noTemplateController.unbind();
+				});
 	});
 
 	asyncTest('__construct, __init, __readyが動作するタイミングは正しいか2(テンプレート使用)', function() {
@@ -3531,7 +3534,7 @@ $(function() {
 
 				var c = h5.core.controller('#controllerTest', testController);
 
-				$.when(c.readyPromise, d1.promise(), d2.promise(), d3.promise()).done(
+				h5.async.when(c.readyPromise, d1.promise(), d2.promise(), d3.promise()).done(
 						function() {
 
 							start();
@@ -3647,7 +3650,7 @@ $(function() {
 
 				var c = h5.core.controller('#controllerTest', testController);
 
-				$.when(c.readyPromise, cp, ip, rp).done(
+				h5.async.when(c.readyPromise, cp, ip, rp).done(
 						function() {
 
 							start();
@@ -3742,7 +3745,7 @@ $(function() {
 			p3.unbind();
 		});
 
-		$.when(d1.promise(), d2.promise(), d3.promise()).done(function() {
+		h5.async.when(d1.promise(), d2.promise(), d3.promise()).done(function() {
 			start();
 		});
 	});
