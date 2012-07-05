@@ -277,9 +277,7 @@
 
 					if (!templateId) {
 						// 空文字または空白ならエラー
-						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {
-							error: null
-						});
+						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
 					}
 
 					try {
