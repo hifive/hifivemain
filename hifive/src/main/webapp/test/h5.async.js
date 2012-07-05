@@ -308,17 +308,17 @@ $(function() {
 		ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
 	});
 
-	test('h5.async.whenの動作 引数なしの場合は、即実行されること', 2, function() {
+	test('※要目視確認：h5.async.whenの動作 引数なしの場合は、即実行されること。ログは出力されないこと。', 2, function() {
 		var count = 0;
 		h5.async.when().done(function() {
 			strictEqual(++count, 1, '引数なしの場合、即doneハンドラが実行されること');
-			ok(true, '※要目視 引数なしの場合はログが出力されないこと。')
+			ok(true, '※要目視確認：引数なしの場合はログが出力されないこと。')
 		});
 		++count;
 	});
 
 
-	test('h5.async.whenの動作 引数にnull/undefinedを渡した場合は、即実行されること', 3, function() {
+	test('※要目視確認：h5.async.whenの動作 引数にnull/undefinedを渡した場合は、即実行されること。ログは出力されないこと。', 3, function() {
 		var count = 0;
 		h5.async.when(undefined).done(function() {
 			strictEqual(count, 0, '引数undefinedの場合、即doneハンドラが実行されること');
@@ -331,10 +331,10 @@ $(function() {
 		});
 		count++;
 
-		ok(true, '※要目視 null/undefinedの場合はログが出力されないこと。');
+		ok(true, '※要目視確認：null/undefinedの場合はログが出力されないこと。');
 	});
 
-	test('h5.async.whenの動作 引数にプロミスオブジェクトと配列以外のものを渡した場合は、即実行されること', function() {
+	test('※要目視確認：h5.async.whenの動作 引数にプロミスオブジェクトと配列以外のものを渡した場合は、即実行されること。ログが出力されること。', function() {
 		var argArray = [0, 1, true, false, {}];
 		expect(argArray.length + 1);
 
@@ -345,26 +345,12 @@ $(function() {
 			});
 			count++;
 		}
-		ok(true, '※要目視 次のようなログが' + argArray.length
+		ok(true, '※要目視確認：次のようなログが' + argArray.length
 				+ '回出力されていること。『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
 	});
 
-	test('h5.async.whenの動作 可変長', function() {
-		var argArray = [0, 1, true, false, {}];
-		expect(argArray.length + 1);
-
-		for ( var i = 0, l = argArray.length; i < l; i++) {
-			count = 0;
-			h5.async.when(argArray[i]).done(function() {
-				strictEqual(count, 0, '引数が' + argArray[i].toString() + 'の場合、即doneハンドラが実行されること');
-			});
-			count++;
-		}
-		ok(true, '※要目視 次のようなログが、INFOレベルで' + argArray.length
-				+ '回出力されていること。『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
-	});
-
-	test('h5.async.whenの動作 引数を2つ以上渡して、プロミス以外のものがある場合、プロミス以外のものだけを無視してpromiseオブジェクトのresolveを待つこと',
+	test(
+			'※要目視確認：h5.async.whenの動作 引数を2つ以上渡して、プロミス以外のものがある場合、プロミス以外のものだけを無視してpromiseオブジェクトのresolveを待つこと。ログが出力されること。',
 			13, function() {
 				var dfd1;
 				var argArray = [0, 1, true, false, {}, []];
@@ -380,12 +366,12 @@ $(function() {
 					});
 					dfd1.resolve();
 				}
-				ok(true, '※要目視 次のようなログが、INFOレベルで' + argArray.length
+				ok(true, '※要目視確認：次のようなログが、INFOレベルで' + argArray.length
 						+ '回出力されていること。『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
 			});
 
 	test(
-			'h5.async.whenの動作 引数を2つ以上渡して、プロミスの配列がある場合、配列は無視して配列以外のpromiseオブジェクトのresolveだけを待つこと',
+			'※要目視確認：h5.async.whenの動作 引数を2つ以上渡して、プロミスの配列がある場合、配列は無視して配列以外のpromiseオブジェクトのresolveだけを待つこと。ログが出力されること。',
 			5,
 			function() {
 				var dfd1,dfd2,dfd3;
@@ -411,7 +397,7 @@ $(function() {
 				dfd3.resolve();
 				dfd1.resolve();
 				ok(true,
-						'※要目視 次のようなログが、INFOレベルで2回出力されていること。 『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
+						'※要目視確認：次のようなログが、INFOレベルで2回出力されていること。 『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
 			});
 
 
@@ -428,7 +414,7 @@ $(function() {
 							ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneハンドラが実行されること');
 							ok(dfd1.isResolved(), '1番目の引数のプロミスオブジェクトがresolveされていること');
 							ok(true,
-									'※要目視 次のようなログが、INFOレベルで出力されていること 『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』')
+									'※要目視確認：次のようなログが、INFOレベルで出力されていること 『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』')
 						});
 				dfd2.reject();
 				dfd3.reject();
