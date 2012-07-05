@@ -4992,7 +4992,7 @@ $(function() {
 
 	test('__construct()で例外をスローする。', 1, function() {
 		var controller = {
-			__name: '',
+			__name: 'TestController',
 			__construct: function() {
 				throw new Error('__construct error.');
 			}
@@ -5003,29 +5003,77 @@ $(function() {
 		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
 	});
 
-	test('__init()で例外をスローする。', 1, function() {
+	asyncTest('__init()で例外をスローする。', 1, function() {
+		window.onerror = function(ev) {
+			ok(true, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+			window.onerror = null;
+		};
+
 		var controller = {
-			__name: '',
+			__name: 'TestController',
 			__init: function() {
 				throw new Error('__init error.');
 			}
 		};
 
-		raises(function() {
-			h5.core.controller('#controllerTest', controller);
-		}, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+		h5.core.controller('#controllerTest', controller);
 	});
 
-	test('__ready()で例外をスローする。', 1, function() {
+	asyncTest('__ready()で例外をスローする。', 1, function() {
+		window.onerror = function(ev) {
+			ok(true, '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+			window.onerror = null;
+		};
+
 		var controller = {
-			__name: '',
+			__name: 'TestController',
 			__ready: function() {
 				throw new Error('__ready error.');
 			}
 		};
 
-		raises(function() {
-			h5.core.controller('#controllerTest', controller);
-		}, '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('__unbind()で例外をスローする。', 1, function() {
+		window.onerror = function(ev) {
+			ok(true, '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+			window.onerror = null;
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				this.unbind();
+			},
+			__unbind: function() {
+				throw new Error('__unbind error.');
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('__dispose()で例外をスローする。', 1, function() {
+		window.onerror = function(ev) {
+			ok(true, '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+			window.onerror = null;
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				this.dispose();
+			},
+			__dispose: function() {
+				throw new Error('__dispose error.');
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
 	});
 });
