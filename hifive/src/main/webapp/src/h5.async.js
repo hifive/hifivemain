@@ -47,6 +47,7 @@
 	// =============================
 
 	/* del begin */
+	var fwLogger = h5.log.createLogger('h5.async');
 
 	/* del end */
 
@@ -380,17 +381,44 @@
 	 * <li>引数に指定されたすべてのプロミスオブジェクトが全てresolveされると、doneコールバックが実行されます。</li>
 	 * </ul>
 	 * このメソッドはjQuery.whenをラップしており、同じように使うことができます。<br>
-	 * このメソッドを使うと、共通のエラー処理を実行させることができます。<br>
+	 * このメソッドを使うと、共通のエラー処理(<a href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行させることができます。<br>
+	 * <br>
+	 * 引数は、配列または可変長で、複数のプロミスオブジェクトを渡すことができます。<br>
+	 * 例)
+	 * <ul>
+	 * <li>h5.async.when(p1, p2, p3); </li>
+	 * <li>h5.async.when([p1, p2, p3]); </li>
+	 * </ul>
+	 * プロミスオブジェクト以外を渡した時は無視されます。<br>
+	 * また、可変長と配列の組み合わせで指定することはできません。<br>
+	 * <ul>
+	 * <li>h5.async.when(p1, [p2, p3], p4);</li>
+	 * </ul>
+	 * のようなコードを書いた時、2番目の引数は「配列」であり「プロミス」ではないので無視され、p1とp4のみ待ちます。
 	 * 
-	 * @param {Promise} var_args promiseオブジェクト
+	 * @param {Promise} var_args promiseオブジェクト。可変長、または配列で複数のpromiseを指定できます。
 	 * @returns {Promise} Promiseオブジェクト
 	 * @name when
 	 * @function
 	 * @memberOf h5.async
 	 */
 	var when = function(/* var_args */) {
+		var args = arguments;
+		if (args.length === 1 && $.isArray(args[0])) {
+			args = args[0];
+		}
 		var dfd = h5.async.deferred();
-		$.when.apply($, arguments).done(function(/* var_args */) {
+
+		/* del begin */
+		// 引数にpromiseオブジェクト以外があった場合はログを出力します。
+		for ( var i = 0, l = args.length; i < l; i++) {
+			if (args[i] != null && !isPromise(args[i])) {
+				fwLogger.info('h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。');
+				break;
+			}
+		}
+		/* del end */
+		$.when.apply($, args).done(function(/* var_args */) {
 			dfd.resolve.apply(dfd, arguments);
 		}).fail(function(/* var_args */) {
 			dfd.reject.apply(dfd, arguments);
