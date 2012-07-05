@@ -1202,11 +1202,7 @@ asyncTest(
 					'./template/test_cache9.ejs', './template/test_cache10.ejs'];
 			var expectArray = array1;
 
-			var expectArray2 = ['./template/test_cache4.ejs', './template/test_cache5.ejs',
-					'./template/test_cache6.ejs', './template/test_cache7.ejs',
-					'./template/test_cache8.ejs', './template/test_cache9.ejs',
-					'./template/test_cache10.ejs', './template/test_cache11.ejs',
-					'./template/test_cache2.ejs', './template/test_cache12.ejs'];
+			var expectArray2 = [];
 
 			view1.load(array1).done(
 					function() {
@@ -1217,7 +1213,13 @@ asyncTest(
 							var url = cacheUrls[i];
 							ok($.inArray(cache[url].path, expectArray) != -1,
 									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
+							expectArray2.push(cache[url].path);
 						}
+
+						expectArray2.splice(0, 2);
+						expectArray2 = expectArray2.concat(['./template/test_cache11.ejs',
+								'./template/test_cache2.ejs', './template/test_cache12.ejs']);
+
 
 						var view2Done3Func = function() {
 							var cacheUrls2 = h5.dev.core.view.cacheManager.cacheUrls;
@@ -1238,8 +1240,6 @@ asyncTest(
 						};
 
 						var view2Done1Func = function() {
-							cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-
 							view2.load('./template/test_cache2.ejs').done(view2Done2Func);
 						};
 

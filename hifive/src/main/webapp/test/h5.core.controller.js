@@ -2718,7 +2718,7 @@ $(function() {
 		function Test(callback) {
 			this.callback = callback;
 		}
-		;
+
 		Test.prototype.execute = function() {
 			this.callback(100, 200);
 		};
@@ -5004,16 +5004,19 @@ $(function() {
 	});
 
 	asyncTest('__init()で例外をスローする。', 1, function() {
+		var errorMsg = '__init error.';
+		var onerrorHandler = window.onerror;
+
 		window.onerror = function(ev) {
-			ok(true, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(erroMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
-			window.onerror = null;
 		};
 
 		var controller = {
 			__name: 'TestController',
 			__init: function() {
-				throw new Error('__init error.');
+				throw new Error(errorMsg);
 			}
 		};
 
@@ -5021,16 +5024,19 @@ $(function() {
 	});
 
 	asyncTest('__ready()で例外をスローする。', 1, function() {
+		var errorMsg = '__ready error.';
+		var onerrorHandler = window.onerror;
+
 		window.onerror = function(ev) {
-			ok(true, '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(erroMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
-			window.onerror = null;
 		};
 
 		var controller = {
 			__name: 'TestController',
 			__ready: function() {
-				throw new Error('__ready error.');
+				throw new Error(errorMsg);
 			}
 		};
 
@@ -5038,10 +5044,13 @@ $(function() {
 	});
 
 	asyncTest('__unbind()で例外をスローする。', 1, function() {
+		var errorMsg = '__unbind error.';
+		var onerrorHandler = window.onerror;
+
 		window.onerror = function(ev) {
-			ok(true, '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(erroMsg), '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
-			window.onerror = null;
 		};
 
 		var controller = {
@@ -5050,7 +5059,7 @@ $(function() {
 				this.unbind();
 			},
 			__unbind: function() {
-				throw new Error('__unbind error.');
+				throw new Error(errorMsg);
 			}
 		};
 
@@ -5058,10 +5067,13 @@ $(function() {
 	});
 
 	asyncTest('__dispose()で例外をスローする。', 1, function() {
+		var errorMsg = '__dispose error.';
+		var onerrorHandler = window.onerror;
+
 		window.onerror = function(ev) {
-			ok(true, '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(erroMsg), '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
-			window.onerror = null;
 		};
 
 		var controller = {
@@ -5070,7 +5082,7 @@ $(function() {
 				this.dispose();
 			},
 			__dispose: function() {
-				throw new Error('__dispose error.');
+				throw new Error(errorMsg);
 			}
 		};
 
