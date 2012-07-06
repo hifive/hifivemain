@@ -218,7 +218,7 @@ $(function() {
 		setTimeout(function() {
 			var c = h5.core.controllerManager.controllers[0];
 			raises(function() {
-				c.unbind();L
+				c.unbind();
 			}, 'JQMControllerはunbinedできないこと。');
 
 			equal('JQMController', c.__name, 'JQMControllerがdisposeされていないこと。');

@@ -13,8 +13,6 @@
  *
  * hifive
  */
-
-
 $(function() {
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -248,7 +246,7 @@ $(function() {
 					deepEqual(e.code, 6001, e.message);
 				}
 				try {
-					var bind = testController.bind
+					var bind = testController.bind;
 					bind('#controllerTest');
 				} catch (e) {
 					deepEqual(e.code, 6002, e.message);
@@ -760,7 +758,7 @@ $(function() {
 
 				var testController = h5.core.controller('#controllerTest', controller);
 
-				var errorObj;
+				var errorObj = null;
 				testController.preinitPromise.done(function() {
 					// createViewを元に戻す
 					h5.core.view.createView = originalCreateView;
@@ -866,7 +864,7 @@ $(function() {
 		h5.core.view = view;
 	});
 
-	asyncTest('コントローラのdispose1', function() {
+	asyncTest('コントローラのdispose (同期処理) - __dispose()の実行順序をテスト', function() {
 		var ret = [];
 		var childController = {
 			__name: 'ChildController',
@@ -898,7 +896,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラのdispose2', function() {
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', function() {
 
 		var child = true;
 		var childController = {
@@ -926,6 +924,53 @@ $(function() {
 				setTimeout(function() {
 					root = that.__name === 'TestController';
 					dfd.resolve();
+				}, 100);
+				return dfd.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				ok(root, '__disposeイベントはPromiseオブジェクトを考慮しているか1');
+				ok(child, '__disposeイベントはPromiseオブジェクトを考慮しているか2');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', function() {
+
+		var child = true;
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				var dfd = this.deferred();
+				var that = this;
+				setTimeout(function() {
+					child = that.__name === 'ChildController';
+					dfd.resolve();
+				}, 400);
+				return dfd.promise();
+			}
+		};
+		var root = true;
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				var dfd = this.deferred();
+				var that = this;
+				setTimeout(function() {
+					root = that.__name === 'TestController';
+					dfd.reject();
 				}, 100);
 				return dfd.promise();
 			}
@@ -1200,7 +1245,7 @@ $(function() {
 			__name: 'TestController',
 			__templates: './noExistPath',
 			childController: {
-				__name: 'childController',
+				__name: 'childController'
 			},
 			__dispose: function() {
 				strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
@@ -1378,7 +1423,7 @@ $(function() {
 				var controller = {
 					__name: 'TestController',
 					childController: {
-						__name: 'childController',
+						__name: 'childController'
 					},
 					__ready: function() {
 						setTimeout(function() {
@@ -1449,7 +1494,7 @@ $(function() {
 				var controller = {
 					__name: 'TestController',
 					childController: {
-						__name: 'childController',
+						__name: 'childController'
 					},
 					__dispose: function() {
 						setTimeout(function() {
@@ -2538,7 +2583,6 @@ $(function() {
 						strictEqual($('.blockUI', indicator.target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
 
-						//
 						testController.unbind();
 
 						start();
@@ -2566,7 +2610,7 @@ $(function() {
 					message: 'indicator testController'
 				}).show();
 			}
-		}
+		};
 		var childController = {
 			__name: 'TestController',
 
@@ -2645,11 +2689,9 @@ $(function() {
 	});
 
 	asyncTest('h5.ui.indicator()', function() {
-
 		var testController = null;
 		var controllerBase = {
 			__name: 'TestController',
-
 			'input[type=button] click': function() {
 				var indicator2 = h5.ui.indicator(document, {
 					message: 'BlockMessageTest2',
@@ -2687,14 +2729,10 @@ $(function() {
 	});
 
 	asyncTest('this.indicator() 2', function() {
-
-
 		var controllerBase = {
 			__name: 'TestController',
-
 			'input[type=button] click': function() {
 				var that = this;
-
 				var indicator2 = this.indicator({
 					target: '#controllerResult',
 					message: 'BlockMessageTest-child'
@@ -2880,7 +2918,6 @@ $(function() {
 						testControllerGrobal.unbind();
 						start();
 					}, 0);
-
 
 					testController.unbind();
 				}, 0);
@@ -3069,6 +3106,15 @@ $(function() {
 				});
 
 	});
+
+
+
+
+
+
+
+
+
 
 	asyncTest('h5.ui.indicator() テーマを変更して実行', function() {
 
@@ -5478,10 +5524,14 @@ $(function() {
 	});
 
 	var testTimeoutFunc = function(msg) {
-		var id = setTimeout(function() {
-			ok(true, msg +' が、コンソールまたはスクリプトエラーのウィドウに表示されていること。IE6～9 は、非同期処理中に発生した例外がwindow.onerrorにトラップされない為、目視で確認して下さい。');
-			start();
-		}, 5000);
+		var id = setTimeout(
+				function() {
+					ok(
+							true,
+							msg
+									+ ' が、コンソールまたはスクリプトエラーのウィドウに表示されていること。IE6～9 は、非同期処理中に発生した例外がwindow.onerrorにトラップされない為、目視で確認して下さい。');
+					start();
+				}, 5000);
 		return id;
 	};
 
