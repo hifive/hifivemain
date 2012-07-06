@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
 
@@ -47,6 +47,7 @@
 	// =============================
 
 	/* del begin */
+	var fwLogger = h5.log.createLogger('h5.async');
 
 	/* del end */
 
@@ -61,6 +62,12 @@
 	// Privates
 	//
 	// =========================================================================
+	/**
+	 * jQueryのDeferred関数
+	 * 
+	 * @private
+	 */
+	var jQueryDeferred = $.Deferred;
 	// =============================
 	// Variables
 	// =============================
@@ -75,14 +82,14 @@
 	/**
 	 * 登録された共通のエラー処理を実行できるDeferredオブジェクトを返します。<br>
 	 * Deferredに notify() / notifyWith() / progress() メソッドがない場合は、追加したオブジェクトを返します。
-	 *
+	 * 
 	 * @returns {Deferred} Deferredオブジェクト
 	 * @name deferred
 	 * @function
 	 * @memberOf h5.async
 	 */
 	var deferred = function() {
-		var dfd = $.Deferred();
+		var dfd = jQueryDeferred();
 		// jQuery1.6.xにはDeferred.notify/notifyWith/progressがない
 		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
 			// 既にnorify/notifyWithが呼ばれたかどうかのフラグ
@@ -264,7 +271,7 @@
 	/**
 	 * オブジェクトがPromiseオブジェクトであるかどうかを返します。<br />
 	 * オブジェクトがDeferredオブジェクトの場合、falseが返ります。
-	 *
+	 * 
 	 * @param {Object} object オブジェクト
 	 * @returns {Boolean} オブジェクトがPromiseオブジェクトであるかどうか
 	 * @name isPromise
@@ -277,7 +284,7 @@
 
 	/**
 	 * 指定された回数ごとにループを抜けブラウザに制御を戻すユーティリティメソッドです。
-	 *
+	 * 
 	 * @param {Any[]} array 配列
 	 * @param {Function} callback コールバック関数。<br />
 	 *            コールバックには引数として現在のインデックス、現在の値、ループコントローラが渡されます。<br />
@@ -366,6 +373,67 @@
 		return dfd.promise();
 	};
 
+	/**
+	 * 引数に指定した１つ以上のプロミスオブジェクトについて、生成したプロミスオブジェクトを返すメソッドです。<br>
+	 * 次のようなプロミスオブジェクトを返します。<br>
+	 * <ul>
+	 * <li>引数に指定されたプロミスオブジェクトのうち、１つでもrejectされると、failコールバックが実行されます。</li>
+	 * <li>引数に指定されたすべてのプロミスオブジェクトが全てresolveされると、doneコールバックが実行されます。</li>
+	 * </ul>
+	 * このメソッドはjQuery.whenをラップしており、同じように使うことができます。<br>
+	 * このメソッドを使うと、共通のエラー処理(<a href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行させることができます。<br>
+	 * <br>
+	 * 引数は、配列または可変長で、複数のプロミスオブジェクトを渡すことができます。<br>
+	 * 例)
+	 * <ul>
+	 * <li>h5.async.when(p1, p2, p3); </li>
+	 * <li>h5.async.when([p1, p2, p3]); </li>
+	 * </ul>
+	 * プロミスオブジェクト以外を渡した時は無視されます。<br>
+	 * また、可変長と配列の組み合わせで指定することはできません。<br>
+	 * <ul>
+	 * <li>h5.async.when(p1, [p2, p3], p4);</li>
+	 * </ul>
+	 * のようなコードを書いた時、2番目の引数は「配列」であり「プロミス」ではないので無視され、p1とp4のみ待ちます。<br>
+	 * <br>
+	 * また、配列が入れ子になっていても、再帰的に評価はしません。<br>
+	 * <ul>
+	 * <li>h5.async.when([pi, [p2, p3], p4])</li>
+	 * </ul>
+	 * と書いても、先の例と同様p1とp4のみ待ちます。
+	 * 
+	 * @param {Promise} var_args promiseオブジェクト。可変長、または配列で複数のpromiseを指定できます。
+	 * @returns {Promise} Promiseオブジェクト
+	 * @name when
+	 * @function
+	 * @memberOf h5.async
+	 */
+	var when = function(/* var_args */) {
+		var args = arguments;
+		if (args.length === 1 && $.isArray(args[0])) {
+			args = args[0];
+		}
+		var dfd = h5.async.deferred();
+
+		/* del begin */
+		// 引数にpromise・deferredオブジェクト以外があった場合はログを出力します。
+		for ( var i = 0, l = args.length; i < l; i++) {
+			// DeferredもPromiseも、promiseメソッドを持つので、
+			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
+			if (args[i] != null && !args[i].promise && !$.isFunction(args[i].promise)) {
+				fwLogger.info('h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。');
+				break;
+			}
+		}
+		/* del end */
+		$.when.apply($, args).done(function(/* var_args */) {
+			dfd.resolve.apply(dfd, arguments);
+		}).fail(function(/* var_args */) {
+			dfd.reject.apply(dfd, arguments);
+		});
+		return dfd.promise();
+	};
+
 	// =============================
 	// Expose to window
 	// =============================
@@ -377,6 +445,7 @@
 	 */
 	h5.u.obj.expose('h5.async', {
 		deferred: deferred,
+		when: when,
 		isPromise: isPromise,
 		loop: loop
 	});

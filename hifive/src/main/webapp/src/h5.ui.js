@@ -406,7 +406,7 @@
 
 	/**
 	 * インジケータ(メッセージ・画面ブロック・進捗表示)の表示や非表示を行うクラス。
-	 *
+	 * 
 	 * @class
 	 * @name Indicator
 	 * @param {String|Object} target インジケータを表示する対象のDOMオブジェクトまたはセレクタ
@@ -475,7 +475,7 @@
 			});
 
 			if (promises.length > 0) {
-				$.when.apply(null, promises).pipe(promiseCallback, promiseCallback);
+				h5.async.when(promises).pipe(promiseCallback, promiseCallback);
 			}
 		} else if (isPromise(promises)) {
 			promises.pipe(promiseCallback, promiseCallback);
@@ -500,7 +500,7 @@
 	Indicator.prototype = {
 		/**
 		 * 画面上にインジケータ(メッセージ・画面ブロック・進捗表示)を表示します。
-		 *
+		 * 
 		 * @memberOf Indicator
 		 * @function
 		 * @returns {Indicator} インジケータオブジェクト
@@ -526,7 +526,7 @@
 		},
 		/**
 		 * 内部のコンテンツ納まるようイジケータの幅を調整し、表示位置(topとleft)が中央になるよう設定します。
-		 *
+		 * 
 		 * @memberOf Indicator
 		 * @function
 		 * @private
@@ -564,7 +564,7 @@
 		},
 		/**
 		 * 指定された要素がウィンドウ領域全体をブロックすべき要素か判定します。
-		 *
+		 * 
 		 * @memberOf Indicator
 		 * @function
 		 * @private
@@ -576,7 +576,7 @@
 		},
 		/**
 		 * 画面上に表示されているインジケータ(メッセージ・画面ブロック・進捗表示)を除去します。
-		 *
+		 * 
 		 * @memberOf Indicator
 		 * @function
 		 * @returns {Indicator} インジケータオブジェクト
@@ -592,7 +592,7 @@
 		},
 		/**
 		 * 進捗のパーセント値を指定された値に更新します。
-		 *
+		 * 
 		 * @memberOf Indicator
 		 * @function
 		 * @param {Number} percent 進捗率(0～100%)
@@ -607,7 +607,7 @@
 		},
 		/**
 		 * メッセージを指定された値に更新します。
-		 *
+		 * 
 		 * @memberOf Indicator
 		 * @function
 		 * @param {String} message メッセージ
@@ -642,58 +642,58 @@
 	 * <h4>使用例</h4>
 	 * <b>画面全体をブロックする場合</b><br>
 	 * ・画面全体をブロックする場合、targetオプションに<b>document</b>、<b>window</b>または<b>body</b>を指定する。<br>
-	 *
+	 * 
 	 * <pre>
 	 * var indicator = h5.ui.indicator({
 	 * 	target: document,
 	 * }).show();
 	 * </pre>
-	 *
-	 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しないる場合</b><br>
-	 *
+	 * 
+	 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
+	 * 
 	 * <pre>
 	 * var indicator = h5.ui.indicator('li', {
 	 * 	block: false
 	 * }).show();
 	 * </pre>
-	 *
+	 * 
 	 * <b>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
 	 * resolve() または resolve() が実行されると、画面からインジケータを除去します。
-	 *
+	 * 
 	 * <pre>
 	 * var df = $.Deferred();
 	 * var indicator = h5.ui.indicator(document, {
 	 * 	promises: df.promise()
 	 * }).show();
-	 *
+	 * 
 	 * setTimeout(function() {
 	 * 	df.resolve() // ここでイジケータが除去される
 	 * }, 2000);
 	 * </pre>
-	 *
+	 * 
 	 * <b>パラメータに複数のPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
 	 * Promiseオブジェクトを複数指定すると、全てのPromiseオブジェクトでresolve()が実行されるか、またはいずれかのPromiseオブジェクトでfail()が実行されるタイミングでインジケータを画面から除去します。
-	 *
+	 * 
 	 * <pre>
 	 * var df = $.Deferred();
 	 * var df2 = $.Deferred();
 	 * var indicator = h5.ui.indicator(document, {
 	 * 	promises: [df.promise(), df2.promise()]
 	 * }).show();
-	 *
+	 * 
 	 * setTimeout(function() {
 	 * 	df.resolve()
 	 * }, 2000);
-	 *
+	 * 
 	 * setTimeout(function() {
 	 * 	df.resolve() // ここでイジケータが除去される
 	 * }, 4000);
 	 * </pre>
-	 *
+	 * 
 	 * <p>
 	 * コントローラのindicator()の仕様については、<a href="./Controller.html#indicator">Controller.indicator</a>のドキュメント
 	 * を参照下さい。
-	 *
+	 * 
 	 * @memberOf h5.ui
 	 * @name indicator
 	 * @function
@@ -726,7 +726,7 @@
 	 * <p>
 	 * いずれの場合も、要素が非表示の場合の動作は保障されません。
 	 * </p>
-	 *
+	 * 
 	 * @param {String|Element|jQuery} element 要素
 	 * @param {Object} container コンテナ
 	 * @returns {Boolean} 要素が可視範囲内にあるかどうか
@@ -771,7 +771,7 @@
 
 	/**
 	 * ブラウザのトップにスクロールします。
-	 *
+	 * 
 	 * @name scrollToTop
 	 * @function
 	 * @memberOf h5.ui

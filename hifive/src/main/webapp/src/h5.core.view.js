@@ -62,7 +62,6 @@
 	 * テンプレートに渡すパラメータに必要なプロパティが設定されていない時に発生するエラー
 	 */
 	var ERR_CODE_TEMPLATE_PROPATY_UNDEFINED = 7006;
-
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
@@ -70,7 +69,7 @@
 	errMsgMap[ERR_CODE_TEMPLATE_COMPILE] = 'テンプレートをコンパイルできませんでした。{0}';
 	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。{0}';
 	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
-	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。';
+	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
 	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
@@ -102,10 +101,9 @@
 	// Development Only
 	// =============================
 
-	var fwLogger = h5.log.createLogger('h5.core.view');
-
 	/* del begin */
-
+	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var fwLogger = h5.log.createLogger('h5.core.view');
 	/* del end */
 
 	// =========================================================================
@@ -274,8 +272,10 @@
 				$templateElements.each(function() {
 					var templateId = $.trim(this.id);
 					var templateString = $.trim(this.innerHTML);
+
+					// 空文字または空白ならエラー
 					if (!templateId) {
-						// 空文字または空白ならエラー
+						// load()で更にdetail対してエラー情報を追加するため、ここで空のdetailオブジェクトを生成する
 						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
 					}
 
@@ -290,10 +290,12 @@
 						throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(
 								ERR_REASON_SYNTAX_ERR, msg, e.message)], {
 							id: templateId,
-							error: e
+							error: e,
+							lineNo: lineNo
 						});
 					}
 				});
+
 				return {
 					compiled: compiled,
 					data: {
@@ -301,39 +303,12 @@
 					}
 				};
 			}
-			;
 
-			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
-			for ( var i = 0; i < resourcePaths.length; i++) {
-				var path = resourcePaths[i];
-				var absolutePath = toAbsoluteUrl(path);
-				if (this.cache[absolutePath]) {
-					$.extend(ret, getTemplateByURL(absolutePath));
-					datas.push({
-						absoluteUrl: absolutePath
-					});
-					continue;
-				}
-				tasks.push(path);
-			}
+			function load(absolutePath, filePath) {
+				var df = getDeferred();
 
-			var df = getDeferred();
-
-			function load(task, count) {
-				var step = count || 0;
-				if (task.length == step) {
-					df.resolve();
-					return;
-				}
-				var filePath = task[step];
-				var absolutePath = toAbsoluteUrl(filePath);
-				if (!that.accessingUrls[absolutePath]) {
-					that.accessingUrls[absolutePath] = h5.ajax(filePath);
-				}
-
-				that.accessingUrls[absolutePath].then(
+				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
-							delete that.accessingUrls[absolutePath];
 							var templateText = obj.responseText;
 							// IE8以下で、テンプレート要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまうため、ここで除去する
 							var $elements = $(templateText).filter(
@@ -350,8 +325,11 @@
 											url: absolutePath,
 											path: filePath
 										}));
+								return;
 							}
+
 							var compileData = null;
+
 							try {
 								compileData = compileTemplatesByElements($elements
 										.filter('script[type="text/ejs"]'));
@@ -359,7 +337,9 @@
 								e.detail.url = absolutePath;
 								e.detail.path = filePath;
 								df.reject(e);
+								return;
 							}
+
 							try {
 								var compiled = compileData.compiled;
 								var data = compileData.data;
@@ -368,35 +348,55 @@
 								$.extend(ret, compiled);
 								datas.push(data);
 								that.append(absolutePath, compiled, filePath);
-								load(task, ++step);
 							} catch (e) {
 								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
 									error: e,
 									url: absolutePath,
 									path: filePath
 								}));
+								return;
 							}
-						}).fail(function(e) {
-					df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, null, {
-						url: absolutePath,
-						path: filePath,
-						error: e
-					}));
-					return;
+
+							df.resolve();
+						}).fail(
+						function(e) {
+							df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [e.status,
+									absolutePath], {
+								url: absolutePath,
+								path: filePath,
+								error: e
+							}));
+							return;
+						}).always(function() {
+					delete that.accessingUrls[absolutePath];
 				});
 
 				return df.promise();
 			}
 
-			var parentDf = getDeferred();
+			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
+			for (var i = 0; i < resourcePaths.length; i++) {
+				var path = resourcePaths[i];
+				var absolutePath = toAbsoluteUrl(path);
+				if (this.cache[absolutePath]) {
+					$.extend(ret, getTemplateByURL(absolutePath));
+					datas.push({
+						absoluteUrl: absolutePath
+					});
+					continue;
+				}
+				tasks.push(load(absolutePath, path));
+			}
 
-			$.when(load(tasks)).done(function() {
-				parentDf.resolve(ret, datas);
+			var retDf = getDeferred();
+
+			h5.async.when(tasks).done(function() {
+				retDf.resolve(ret, datas);
 			}).fail(function(e) {
-				parentDf.reject(e);
+				retDf.reject(e);
 			});
 
-			return parentDf.promise();
+			return retDf.promise();
 		}
 	};
 
@@ -439,7 +439,6 @@
 		 */
 		this.__cachedTemplates = {};
 	}
-	;
 
 	$.extend(View.prototype, {
 		/**
@@ -470,8 +469,8 @@
 				if (paths.length === 0) {
 					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
-				for(var i = 0, len = paths.length; i < len; i++){
-					if(typeof paths[i] !== 'string') {
+				for ( var i = 0, len = paths.length; i < len; i++) {
+					if (typeof paths[i] !== 'string') {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
 					} else if (!$.trim(paths[i])) {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
@@ -493,6 +492,7 @@
 				$.extend(that.__cachedTemplates, result);
 				dfd.resolve(datas);
 			}).fail(function(e) {
+				fwLogger.warn(e.message);
 				dfd.reject(e);
 			});
 			return dfd.promise();
@@ -717,7 +717,7 @@
 				templateIdsArray = [templateIds];
 				break;
 			case 'array':
-				if(!templateIds.length){
+				if (!templateIds.length) {
 					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
@@ -730,12 +730,12 @@
 
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				var id = templateIdsArray[i];
-				if(typeof id !== 'string' || !$.trim(id)){
+				if (typeof id !== 'string' || !$.trim(id)) {
 					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				/* del begin */
-				if(!this.__cachedTemplates[id]){
+				if (!this.__cachedTemplates[id]) {
 					fwLogger.warn('指定されたIDのテンプレートは登録されていません。"{0}"', id);
 				}
 				/* del end */

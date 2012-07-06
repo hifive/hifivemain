@@ -31,11 +31,10 @@
 	// =============================
 	// Development Only
 	// =============================
-	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
 
 	/* del begin */
-
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
 	/* del end */
 
 
@@ -60,35 +59,35 @@
 
 	/**
 	 * コントローラのマップ キー：ページID、値：コントローラ定義オブジェクト
-	 *
+	 * 
 	 * @type Object
 	 */
 	var controllerMap = {};
 
 	/**
 	 * コントローラインスタンスのマップ キー：ページID、値：コントローラインスタンスの配列
-	 *
+	 * 
 	 * @type Object
 	 */
 	var controllerInstanceMap = {};
 
 	/**
 	 * 初期化パラメータのマップ キー：ページID、値：初期化パラメータ
-	 *
+	 * 
 	 * @type Object
 	 */
 	var initParamMap = {};
 
 	/**
 	 * CSSファイルのマップ キー：ページID、値：CSSファイルパスのオブジェクト
-	 *
+	 * 
 	 * @type Object
 	 */
 	var cssMap = {};
 
 	/**
 	 * h5.ui.jqm.manager.init()が呼ばれたかどうかを示すフラグ
-	 *
+	 * 
 	 * @type Boolean
 	 */
 	var initCalled = false;
@@ -131,7 +130,7 @@
 	/**
 	 * hifiveで使用するdata属性のプレフィックス。<br />
 	 * デフォルトは"h5"。
-	 *
+	 * 
 	 * @type String
 	 * @memberOf h5.ui.jqm
 	 * @name dataPrefix
@@ -144,14 +143,14 @@
 	var jqmController = {
 		/**
 		 * コントローラ名
-		 *
+		 * 
 		 * @memberOf JQMController
 		 */
 		__name: 'JQMController',
 
 		/**
 		 * __readyイベントのハンドラ
-		 *
+		 * 
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -164,7 +163,7 @@
 
 		/**
 		 * pageinitイベントのハンドラ
-		 *
+		 * 
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -177,7 +176,7 @@
 
 		/**
 		 * pageremoveイベントのハンドラ
-		 *
+		 * 
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -195,7 +194,7 @@
 
 		/**
 		 * pagebeforeshowイベントのハンドラ
-		 *
+		 * 
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -217,7 +216,7 @@
 
 		/**
 		 * pagehideイベントのハンドラ
-		 *
+		 * 
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -227,7 +226,7 @@
 
 		/**
 		 * h5controllerboundイベントを監視しコントローラインスタンスを管理するためのイベントハンドラ
-		 *
+		 * 
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -244,7 +243,7 @@
 
 		/**
 		 * 指定されたページIDに紐付くスクリプトをロードする。
-		 *
+		 * 
 		 * @param {String} id ページID
 		 * @memberOf JQMController
 		 */
@@ -265,7 +264,7 @@
 
 		/**
 		 * JQMコントローラが使用するdata属性にprefixを付けた属性名を返す。
-		 *
+		 * 
 		 * @param {String} attributeName 属性名
 		 * @returns {String} prefixを付けた属性名
 		 */
@@ -279,7 +278,7 @@
 
 		/**
 		 * コントローラのバインドを行う
-		 *
+		 * 
 		 * @param {String} id ページID
 		 * @memberOf JQMController
 		 */
@@ -293,7 +292,7 @@
 
 		/**
 		 * 指定されたページIDに紐付くCSSを追加する。
-		 *
+		 * 
 		 * @param {String} id ページID
 		 * @memberOf JQMController
 		 */
@@ -336,7 +335,7 @@
 
 		/**
 		 * 指定されたページIDに紐付くCSSを削除する。
-		 *
+		 * 
 		 * @param {String} id ページID
 		 * @memberOf JQMController
 		 */
@@ -371,7 +370,7 @@
 		/**
 		 * jQuery Mobile用hifiveコントローラマネージャを初期化します。<br />
 		 * 2回目以降は何も処理を行いません。
-		 *
+		 * 
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
 		 * @name init
@@ -391,7 +390,7 @@
 		/**
 		 * jQuery Mobile用hifiveコントローラマネージャにコントローラを登録します。<br />
 		 * 1画面1コントローラを想定しています。<br />
-		 *
+		 * 
 		 * @param {String} id ページID
 		 * @param {String|String[]} cssSrc CSSファイルパス配列
 		 * @param {Object} controllerDefObject コントローラを定義したオブジェクト
@@ -404,7 +403,7 @@
 			controllerMap[id] = controllerDefObject;
 			initParamMap[id] = initParam;
 			cssMap[id] = wrapInArray(cssSrc);
-			if(!$.mobile.activePage || ($.mobile.activePage).attr('id') !== id){
+			if (!$.mobile.activePage || ($.mobile.activePage).attr('id') !== id) {
 				return;
 			}
 			!jqmControllerInstance ? h5.ui.jqm.manager.init() : bindToActivePage();

@@ -131,14 +131,14 @@
 	// =============================
 	/**
 	 * loadScript()によって追加されたjsファイルの絶対パスを保持する配列
-	 *
+	 * 
 	 * @private
 	 */
 	var addedJS = [];
 
 	/**
 	 * HTMLのエスケープルール
-	 *
+	 * 
 	 * @private
 	 */
 	var htmlEscapeRules = {
@@ -154,7 +154,7 @@
 
 	/**
 	 * 型情報の文字列をコードに変換します。
-	 *
+	 * 
 	 * @private
 	 * @returns {String} 型を表すコード（１字）
 	 */
@@ -203,9 +203,10 @@
 	// =========================================================================
 
 	/**
-	 * ドット区切りで名前空間オブジェクトを生成します。 （h5.u.obj.ns('jp.co.nssol')と呼ぶと、window.jp.co.nssolとオブジェクトを生成します。）
+	 * ドット区切りで名前空間オブジェクトを生成します。
+	 * （h5.u.obj.ns('sample.namespace')と呼ぶと、window.sample.namespaceとオブジェクトを生成します。）
 	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外が渡された場合はエラーとします。
-	 *
+	 * 
 	 * @param {String} namespace 名前空間
 	 * @memberOf h5.u.obj
 	 * @returns {Object} 作成した名前空間オブジェクト
@@ -239,21 +240,21 @@
 	 * <li>指定された名前空間が既に存在する場合は、その名前空間に対してプロパティを追加します。</li>
 	 * <li>指定された名前空間にプロパティが存在する場合は、『上書きは行われず』例外が発生します。。</li>
 	 * </ul>
-	 *
 	 * 実行例:
+	 * 
 	 * <pre>
 	 * expose('sample.namespace', {
-	 *     funcA: function() {
-	 *         return 'test';
-	 *     },
-	 *     value1: 10
+	 * 	funcA: function() {
+	 * 		return 'test';
+	 * 	},
+	 * 	value1: 10
 	 * });
 	 * </pre>
-	 *
+	 * 
 	 * 実行結果:&nbsp;(window.は省略可)<br>
 	 * alert(window.sample.namespace.funcA) -&gt; "test"と表示。<br>
 	 * alert(window.sample.namespace.value1) -&gt; 10と表示。
-	 *
+	 * 
 	 * @param {String} namespace 名前空間
 	 * @param {Object} obj グローバルに公開したいプロパティをもつオブジェクト
 	 * @memberOf h5.u.obj
@@ -272,7 +273,7 @@
 
 	/**
 	 * 指定されたスクリプトをロードします。
-	 *
+	 * 
 	 * @param {String|String[]} path ソースパス
 	 * @param {Object} [opt] オプション
 	 * @param {Boolean} [opt.async] 非同期で読み込むかどうかを指定します。デフォルトはfalse(同期)です。<br />
@@ -324,7 +325,7 @@
 			var count = index;
 			if (srcLen <= count) {
 				// 読み込み終了
-				$.when.apply($, promises).done(function() {
+				h5.async.when(promises).done(function() {
 					dfd.resolve();
 				});
 				return;
@@ -386,7 +387,7 @@
 
 	/**
 	 * 文字列のプレフィックスが指定したものかどうかを返します。
-	 *
+	 * 
 	 * @param {String} str 文字列
 	 * @param {String} prefix プレフィックス
 	 * @returns {Boolean} 文字列のプレフィックスが指定したものかどうか
@@ -400,7 +401,7 @@
 
 	/**
 	 * 文字列のサフィックスが指定したものかどうかを返します。
-	 *
+	 * 
 	 * @param {String} str 文字列
 	 * @param {String} suffix サフィックス
 	 * @returns {Boolean} 文字列のサフィックスが指定したものかどうか
@@ -415,15 +416,15 @@
 
 	/**
 	 * 第一引数の文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第2引数以降に指定されたパラメータに置換します。
-	 *
+	 * 
 	 * <pre>
 	 * 例：
 	 * 		var myValue = 10;
 	 * 		h5.u.str.format('{0} is {1}', 'myValue', myValue);
 	 * </pre>
-	 *
+	 * 
 	 * 実行結果: myValue is 10
-	 *
+	 * 
 	 * @param {String} str 文字列
 	 * @param {Any} var_args 可変長引数
 	 * @returns {String} フォーマット済み文字列
@@ -447,7 +448,7 @@
 
 	/**
 	 * 指定されたHTML文字列をエスケープします。
-	 *
+	 * 
 	 * @param {String} str HTML文字列
 	 * @returns {String} エスケープ済HTML文字列
 	 * @name escapeHTML
@@ -498,19 +499,19 @@
 	 * </p>
 	 * <p>
 	 * 内部に同一インスタンスを持つarray型またはobject型は、別インスタンスとしてシリアライズします。以下のようなarray型オブジェクトaにおいて、a[0]とa[1]が同一インスタンスであるという情報は保存しません。
-	 *
+	 * 
 	 * <pre>
 	 * a = [];
 	 * a[0] = a[1] = [];
 	 * </pre>
-	 *
+	 * 
 	 * </p>
 	 * <h4>注意</h4>
 	 * <p>
 	 * function型のオブジェクトは<b>変換できません</b>。例外をスローします。
 	 * array型にfunction型のオブジェクトが存在する場合は、undefinedとしてシリアライズします。object型または連想配列にfunction型のオブジェクトが存在する場合は、無視します。
 	 * </p>
-	 *
+	 * 
 	 * @param {Object} value オブジェクト
 	 * @returns {String} 型情報を付与した文字列
 	 * @name serialize
@@ -675,7 +676,7 @@
 
 	/**
 	 * 型情報が付与された文字列をオブジェクトを復元します。
-	 *
+	 * 
 	 * @param {String} value 型情報が付与された文字列
 	 * @returns {Any} 復元されたオブジェクト
 	 * @name deserialize
@@ -698,7 +699,7 @@
 			var originValue = val;
 			/**
 			 * 型情報のコードを文字列に変換します。
-			 *
+			 * 
 			 * @private
 			 * @returns {String} 型を表す文字列
 			 */
@@ -765,19 +766,19 @@
 					}
 					break;
 				case 'nan':
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = NaN;
 					break;
 				case 'infinity':
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = Infinity;
 					break;
 				case '-infinity':
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = -Infinity;
@@ -804,12 +805,12 @@
 					break;
 				case 'array':
 					var obj;
-					try{
+					try {
 						obj = $.parseJSON(ret);
-					} catch (e){
+					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					if(!$.isArray(obj)) {
+					if (!$.isArray(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					for ( var i = 0; i < obj.length; i++) {
@@ -836,12 +837,12 @@
 					break;
 				case 'object':
 					var obj;
-					try{
+					try {
 						obj = $.parseJSON(ret);
-					} catch (e){
+					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					if(!$.isPlainObject(obj)) {
+					if (!$.isPlainObject(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					for ( var key in obj) {
@@ -856,20 +857,20 @@
 					ret.match(/^\/(.*)\/(.*)$/);
 					var regStr = RegExp.$1;
 					var flg = RegExp.$2;
-					try{
+					try {
 						ret = new RegExp(regStr, flg);
-					} catch(e){
+					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					break;
 				case 'null':
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = null;
 					break;
 				case TYPE_OF_UNDEFINED:
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = undefined;
@@ -886,7 +887,7 @@
 
 	/**
 	 * オブジェクトがjQueryオブジェクトかどうかを返します。
-	 *
+	 * 
 	 * @param {Object} obj オブジェクト
 	 * @returns {Boolean} jQueryオブジェクトかどうか
 	 * @name isJQueryObject
@@ -902,7 +903,7 @@
 
 	/**
 	 * argumentsを配列に変換します。
-	 *
+	 * 
 	 * @param {Arguments} args Arguments
 	 * @returns {Any[]} argumentsを変換した配列
 	 * @name argsToArray
@@ -915,7 +916,7 @@
 
 	/**
 	 * 指定された名前空間に存在するオブジェクトを取得します。
-	 *
+	 * 
 	 * @param {String} 名前空間
 	 * @return {Any} その名前空間に存在するオブジェクト
 	 * @name getByPath
@@ -944,7 +945,7 @@
 
 	/**
 	 * インターセプタを作成します。
-	 *
+	 * 
 	 * @param {Function} pre インターセプト先関数の実行前に呼ばれる関数です。
 	 * @param {Function} post インターセプト先関数の実行後に呼ばれる関数です。<br />
 	 *            <ul>
@@ -955,7 +956,7 @@
 	 *            <li>pre()が指定されていない場合、invocation.proceed()を実行した後にpost()を呼びます。</li>
 	 *            </ul>
 	 *            コード例(h5.core.interceptor.lapInterceptor)を以下に示します。<br />
-	 *
+	 * 
 	 * <pre>
 	 * var lapInterceptor = h5.u.createInterceptor(function(invocation, data) {
 	 * 	// 開始時間をdataオブジェクトに格納
@@ -969,7 +970,7 @@
 	 * 		this.log.info('{0} &quot;{1}&quot;: {2}ms', this.__name, invocation.funcName, (end - data.start));
 	 * 	});
 	 * </pre>
-	 *
+	 * 
 	 * @return {Function} インターセプタ
 	 * @name createInterceptor
 	 * @function
