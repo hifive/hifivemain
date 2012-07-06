@@ -128,6 +128,13 @@
 	//
 	// =========================================================================
 	var MESSAGE_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
+
+	/**
+	 * commonFailHandlerを発火させないために登録するdummyのfailハンドラ
+	 */
+	var dummyFailHandler = function() {
+	//
+	};
 	// =============================
 	// Variables
 	// =============================
@@ -746,9 +753,10 @@
 			if (isInitEvent && isLeafController) {
 				promises.push(leafPromise);
 			}
+			// dfdがrejectされたとき、commonFailHandlerが発火しないようにするため、dummyのfailハンドラを登録する
 			h5.async.when(promises).done(function() {
 				func();
-			});
+			}).fail(dummyFailHandler);
 		};
 		execInner(controller);
 	}
@@ -2245,10 +2253,17 @@
 		controller.__controllerContext.preinitDfd = preinitDfd;
 		controller.preinitPromise = preinitPromise;
 		controller.__controllerContext.initDfd = getDeferred();
-		controller.initPromise = controller.__controllerContext.initDfd.promise();
+
+		// initPromiseが失敗してもcommonFailHandlerを発火させないようにするため、dummyのfailハンドラを登録する
+		controller.initPromise = controller.__controllerContext.initDfd.promise().fail(
+				dummyFailHandler);
 		controller.__controllerContext.readyDfd = getDeferred();
 		controller.readyPromise = controller.__controllerContext.readyDfd.promise();
 
+		if (!isRoot) {
+			// ルートコントローラでないなら、readyPromiseの失敗でcommonFailHandlerを発火させないようにする
+			controller.readyPromise.fail(dummyFailHandler);
+		}
 		if (templates && templates.length > 0) {
 			// テンプレートがあればロード
 			var viewLoad = function(count) {

@@ -949,12 +949,7 @@ $(function() {
 			'コントローラのdispose __constructでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行される',
 			7, function() {
 				var flag = false;
-				var cfh = 0;
-				h5.settings.commonFailHandler = function(e) {
-					console.log(e)
-				};
 				var controller = {
-
 					__name: 'TestController',
 					__construct: function() {
 
@@ -1193,6 +1188,110 @@ $(function() {
 				}).fail(function(e) {
 					ok(true, 'readyPromiseのfailハンドラが実行された');
 					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作', 1, function() {
+		var cfh = 0;
+		h5.settings.commonFailHandler = function() {
+			cfh++;
+		};
+		var controller = {
+			__name: 'TestController',
+			__templates: './noExistPath',
+			childController: {
+				__name: 'childController',
+			},
+			__dispose: function() {
+				strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+				start();
+			}
+		};
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 子コントローラで初期化失敗した場合', 1, function() {
+		var cfh = 0;
+		h5.settings.commonFailHandler = function() {
+			cfh++;
+		};
+		var controller = {
+			__name: 'TestController',
+			childController: {
+				__name: 'childController',
+				__templates: './noExistPath'
+			},
+			__dispose: function() {
+				strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+				start();
+			}
+		};
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 ルートコントローラのreadyPromiseにfailハンドラを登録した場合',
+			2, function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var controller = {
+					__name: 'TestController',
+					childController: {
+						__name: 'childController',
+						__templates: './noExistPath'
+					},
+					__dispose: function() {
+						strictEqual(cfh, 0, 'commonFailHandlerが実行されていないこと');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.readyPromise.fail(function() {
+					ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+				});
+			});
+
+	asyncTest(
+			'コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 ルートコントローラのreadyPromise以外にfailハンドラを登録した場合',
+			6, function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var controller = {
+					__name: 'TestController',
+					childController: {
+						__name: 'childController',
+						__templates: './noExistPath'
+					},
+					__construct: function() {
+						this.childController.preinitPromise.fail(function() {
+							ok(true, '子コントローラのpreinitPromiseのfailが実行された');
+						});
+						this.childController.initPromise.fail(function() {
+							ok(true, '子コントローラのinitPromiseのfailが実行された');
+						});
+						this.childController.readyPromise.fail(function() {
+							ok(true, '子コントローラのreadyPromiseのfailが実行された');
+						});
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.preinitPromise.done(function() {
+					ok(true, 'ルートコントローラのpreinitPromiseのdoneが実行される');
+				}).fail(function() {
+					ok(false, 'テスト失敗。ルートコントローラのpreinitPromiseのfailが実行された');
+				});
+				c.initPromise.fail(function() {
+					ok(true, 'ルートコントローラのinitPromiseのfailが実行された');
+				});
+				c.readyPromise.done(function() {
+					ok(false, 'テスト失敗。ルートコントローラのreadyのdoneが実行された');
 				});
 			});
 

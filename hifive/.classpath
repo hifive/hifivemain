@@ -30,43 +30,6 @@
 	<classpathentry kind="lib" path="lib/log/log4j-1.2.16.jar"/>
 	<classpathentry kind="lib" path="lib/log/slf4j-api-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/log/slf4j-log4j12-1.6.4.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/bcprov-jdk15on-1.47.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/cglib-nodep-2.1_3.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/commons-exec-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/cssparser-0.9.5.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/hamcrest-core-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/htmlunit-2.9.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/htmlunit-core-js-2.9.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/httpclient-4.1.2.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/httpcore-4.1.3.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/httpmime-4.1.2.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/jcip-annotations-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/jetty-repacked-7.6.1.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/jna-3.4.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/json-20080701.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/mx4j-tools-3.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/nekohtml-1.9.15.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/netty-3.2.7.Final.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/platform-3.4.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/sac-1.3.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-android-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-api-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-chrome-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-firefox-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-htmlunit-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-ie-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-iphone-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-java-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-remote-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-safari-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-server-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-support-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/serializer-2.7.1.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/snakeyaml-1.8.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/webbit-0.4.6.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/xalan-2.7.1.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/xercesImpl-2.9.1.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/xml-apis-1.3.04.jar"/>
 	<classpathentry kind="lib" path="lib/spring/spring-aop-3.1.1.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/spring/spring-asm-3.1.1.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/spring/spring-beans-3.1.1.RELEASE.jar"/>
@@ -83,13 +46,8 @@
 	<classpathentry kind="lib" path="lib/velocity/oro-2.0.8.jar"/>
 	<classpathentry kind="lib" path="lib/velocity/velocity-1.7.jar"/>
 	<classpathentry kind="lib" path="lib/velocity/werken-xpath-0.9.4.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/operadriver-0.13.jar"/>
-	<classpathentry kind="lib" path="lib/test/dbunit-2.4.8.jar"/>
-	<classpathentry kind="lib" path="lib/test/hamcrest-core-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/test/jmockit-0.999.14.jar"/>
-	<classpathentry kind="lib" path="lib/test/junit-4.10.jar"/>
-	<classpathentry kind="lib" path="lib/test/spring-test-3.1.1.RELEASE.jar"/>
-	<classpathentry kind="lib" path="lib/test/testng-6.3.1.jar"/>
 	<classpathentry kind="lib" path="lib/h5Tools/h5WebDriverTestRunner.jar"/>
+	<classpathentry kind="lib" path="/hifiveServerLibrary/test/selenium-server-standalone-2.21.0.jar"/>
+	<classpathentry kind="lib" path="/hifiveServerLibrary/test/junit-4.10.jar"/>
 	<classpathentry kind="output" path="src/main/webapp/WEB-INF/classes"/>
 </classpath>
