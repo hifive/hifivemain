@@ -27,6 +27,17 @@
 	// =============================
 	// Production
 	// =============================
+	/** エラーコード: JQMControllerがdisposeされた */
+	var ERR_CODE_JQM_MANAGER_NOT_DISPOSE = 12000;
+	/** エラーコード: JQMControllerがunbindされた */
+	var ERR_CODE_JQM_MANAGER_NOT_UNBIND = 12001;
+
+
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_JQM_MANAGER_NOT_DISPOSE] = 'JQMControllerはdisposeできません。';
+	errMsgMap[ERR_CODE_JQM_MANAGER_NOT_UNBIND] = 'JQMControllerはunbindできません。';
+
+	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
 	// Development Only
@@ -35,6 +46,9 @@
 	/* del begin */
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
+
+	var disposeFunc = null;
+	var unbindFunc = null;
 	/* del end */
 
 
@@ -43,6 +57,7 @@
 	// Cache
 	//
 	// =========================================================================
+
 	// TODO 高速化のために他で定義されている関数などを変数に入れておく場合はここに書く
 	// =========================================================================
 	//
@@ -59,35 +74,35 @@
 
 	/**
 	 * コントローラのマップ キー：ページID、値：コントローラ定義オブジェクト
-	 * 
+	 *
 	 * @type Object
 	 */
 	var controllerMap = {};
 
 	/**
 	 * コントローラインスタンスのマップ キー：ページID、値：コントローラインスタンスの配列
-	 * 
+	 *
 	 * @type Object
 	 */
 	var controllerInstanceMap = {};
 
 	/**
 	 * 初期化パラメータのマップ キー：ページID、値：初期化パラメータ
-	 * 
+	 *
 	 * @type Object
 	 */
 	var initParamMap = {};
 
 	/**
 	 * CSSファイルのマップ キー：ページID、値：CSSファイルパスのオブジェクト
-	 * 
+	 *
 	 * @type Object
 	 */
 	var cssMap = {};
 
 	/**
 	 * h5.ui.jqm.manager.init()が呼ばれたかどうかを示すフラグ
-	 * 
+	 *
 	 * @type Boolean
 	 */
 	var initCalled = false;
@@ -99,7 +114,7 @@
 	/**
 	 * 現在のアクティブページにコントローラをバインドします。
 	 */
-	function bindToActivePage(id) {
+	function bindToActivePage() {
 		var activePage = $.mobile.activePage;
 		if (!activePage) {
 			return;
@@ -130,7 +145,7 @@
 	/**
 	 * hifiveで使用するdata属性のプレフィックス。<br />
 	 * デフォルトは"h5"。
-	 * 
+	 *
 	 * @type String
 	 * @memberOf h5.ui.jqm
 	 * @name dataPrefix
@@ -143,14 +158,35 @@
 	var jqmController = {
 		/**
 		 * コントローラ名
-		 * 
+		 *
 		 * @memberOf JQMController
 		 */
 		__name: 'JQMController',
 
 		/**
+		 * __constructイベントのハンドラ
+		 * <p>
+		 * ユーザから、JQMControllerをdispose()またはunbind()されないよう、これらのメソッドを差し替える。
+		 */
+		__construct: function() {
+			/* del begin */
+			// h5.ui.jqm.manager.__reset()のためにdispose/unbindメソッドを退避する
+			disposeFunc = this.dispose;
+			unbindFunc = this.unbind;
+			/* del end */
+
+			this.dispose = function() {
+				throwFwError(ERR_CODE_JQM_MANAGER_NOT_DISPOSE);
+			};
+
+			this.unbind = function() {
+				throwFwError(ERR_CODE_JQM_MANAGER_NOT_UNBIND);
+			};
+		},
+
+		/**
 		 * __readyイベントのハンドラ
-		 * 
+		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -163,7 +199,7 @@
 
 		/**
 		 * pageinitイベントのハンドラ
-		 * 
+		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -176,7 +212,7 @@
 
 		/**
 		 * pageremoveイベントのハンドラ
-		 * 
+		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -194,7 +230,7 @@
 
 		/**
 		 * pagebeforeshowイベントのハンドラ
-		 * 
+		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -216,7 +252,7 @@
 
 		/**
 		 * pagehideイベントのハンドラ
-		 * 
+		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -226,7 +262,7 @@
 
 		/**
 		 * h5controllerboundイベントを監視しコントローラインスタンスを管理するためのイベントハンドラ
-		 * 
+		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
@@ -243,7 +279,7 @@
 
 		/**
 		 * 指定されたページIDに紐付くスクリプトをロードする。
-		 * 
+		 *
 		 * @param {String} id ページID
 		 * @memberOf JQMController
 		 */
@@ -264,7 +300,7 @@
 
 		/**
 		 * JQMコントローラが使用するdata属性にprefixを付けた属性名を返す。
-		 * 
+		 *
 		 * @param {String} attributeName 属性名
 		 * @returns {String} prefixを付けた属性名
 		 */
@@ -278,7 +314,7 @@
 
 		/**
 		 * コントローラのバインドを行う
-		 * 
+		 *
 		 * @param {String} id ページID
 		 * @memberOf JQMController
 		 */
@@ -292,7 +328,7 @@
 
 		/**
 		 * 指定されたページIDに紐付くCSSを追加する。
-		 * 
+		 *
 		 * @param {String} id ページID
 		 * @memberOf JQMController
 		 */
@@ -335,7 +371,7 @@
 
 		/**
 		 * 指定されたページIDに紐付くCSSを削除する。
-		 * 
+		 *
 		 * @param {String} id ページID
 		 * @memberOf JQMController
 		 */
@@ -370,7 +406,7 @@
 		/**
 		 * jQuery Mobile用hifiveコントローラマネージャを初期化します。<br />
 		 * 2回目以降は何も処理を行いません。
-		 * 
+		 *
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
 		 * @name init
@@ -390,7 +426,7 @@
 		/**
 		 * jQuery Mobile用hifiveコントローラマネージャにコントローラを登録します。<br />
 		 * 1画面1コントローラを想定しています。<br />
-		 * 
+		 *
 		 * @param {String} id ページID
 		 * @param {String|String[]} cssSrc CSSファイルパス配列
 		 * @param {Object} controllerDefObject コントローラを定義したオブジェクト
@@ -403,36 +439,35 @@
 			controllerMap[id] = controllerDefObject;
 			initParamMap[id] = initParam;
 			cssMap[id] = wrapInArray(cssSrc);
-			if (!$.mobile.activePage || ($.mobile.activePage).attr('id') !== id) {
-				return;
+
+			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
+					&& jqmControllerInstance) {
+				bindToActivePage();
+			} else {
+				this.init();
 			}
-			!jqmControllerInstance ? h5.ui.jqm.manager.init() : bindToActivePage();
 		}
 		/* del begin */
 		,
 		/*
-		 * テスト用に公開。
-		 * 引数なしの場合はh5.ui.jqm.manager.init()が呼ばれたかどうかを返します。<br />
-		 * 引数を指定した場合は、h5.ui.jqm.manager.init()が呼ばれたかどうかのフラグ変数を変更します。<br />
-		 * 引数を指定する場合ははtrueまたはfalseを指定してください。<br />
-		 * この関数は開発版(h5.dev.js)でのみ使用できます。<br />
-		 * 通常は、この関数で値の設定を行う必要はありません。
+		 * テスト用に公開
+		 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
 		 *
-		 * @param {boolean} [flag] h5.ui.jqm.manager.init()が呼ばれたかどうかのフラグに設定する値。引数なしの場合は現在のフラグを返します。
-		 * @returns {boolean} h5.ui.jqm.manager.init()が呼ばれたかどうか(もしくは設定した)値。
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
-		 * @name __initFlag
+		 * @name __reset
 		 */
-		__initFlag: function(flag) {
-			if (flag === undefined) {
-				return initCalled;
-			}
-			if (flag === true || flag === false) {
-				initCalled = flag;
-				return flag;
-			}
-			fwLogger.warn('h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。');
+		__reset: function() {
+			jqmControllerInstance.unbind = unbindFunc;
+			jqmControllerInstance.dispose = disposeFunc;
+			jqmControllerInstance.dispose();
+
+			jqmControllerInstance = null;
+			controllerMap = {};
+			controllerInstanceMap = {};
+			initParamMap = {};
+			cssMap = {};
+			initCalled = false;
 		}
 	/* del end */
 	});
