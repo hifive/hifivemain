@@ -1224,7 +1224,7 @@ asyncTest(
 
 asyncTest(
 		'getAvailableTemplates() LRUでキャッシュされていること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
-		2, function() {
+		20, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
 			} catch (e) {
@@ -1240,42 +1240,56 @@ asyncTest(
 					'./template/test_cache5.ejs', './template/test_cache6.ejs',
 					'./template/test_cache7.ejs', './template/test_cache8.ejs',
 					'./template/test_cache9.ejs', './template/test_cache10.ejs'];
-			var expectArray1 = array1;
-			var expectArray2 = ['./template/test_cache4.ejs', './template/test_cache5.ejs',
-					'./template/test_cache6.ejs', './template/test_cache7.ejs',
-					'./template/test_cache8.ejs', './template/test_cache9.ejs',
-					'./template/test_cache10.ejs', './template/test_cache11.ejs',
-					'./template/test_cache2.ejs', './template/test_cache12.ejs'];
-			view1.load(array1).done(function() {
-				var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-				var cache = h5.dev.core.view.cacheManager.cache;
-				var paths = [];
-				for ( var i = 0, l = cacheUrls.length; i < l; i++) {
-					var url = cacheUrls[i];
-					paths.push(cache[url].path);
-				}
-				deepEqual(paths, expectArray1, 'キャッシュが10ファイル分されていて、正しい順番であること');
-				view2.load('./template/test_cache11.ejs').done(function() {
-					view2.load('./template/test_cache2.ejs').done(function() {
-						view2.load('./template/test_cache12.ejs').done(function() {
-							var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-							var cache = h5.dev.core.view.cacheManager.cache;
-							var paths = [];
-							for ( var i = 0, l = cacheUrls.length; i < l; i++) {
-								var url = cacheUrls[i];
-								paths.push(cache[url].path);
+			var expectArray = array1;
+
+			var expectArray2 = [];
+
+			view1.load(array1).done(
+					function() {
+						var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+						var cache = h5.dev.core.view.cacheManager.cache;
+
+						for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+							var url = cacheUrls[i];
+							ok($.inArray(cache[url].path, expectArray) != -1,
+									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
+							expectArray2.push(cache[url].path);
+						}
+
+						expectArray2.splice(0, 2);
+						expectArray2 = expectArray2.concat(['./template/test_cache11.ejs',
+								'./template/test_cache2.ejs', './template/test_cache12.ejs']);
+
+
+						var view2Done3Func = function() {
+							var cacheUrls2 = h5.dev.core.view.cacheManager.cacheUrls;
+							var cache2 = h5.dev.core.view.cacheManager.cache;
+
+							for ( var i = 0, l = cacheUrls2.length; i < l; i++) {
+								var url2 = cacheUrls2[i];
+								ok($.inArray(cache2[url2].path, expectArray2) != -1,
+										'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
+												+ cache2[url2].path);
 							}
-							deepEqual(paths, expectArray2, 'キャッシュが10ファイル分されていて、正しい順番であること');
+
 							start();
-						});
+						};
+
+						var view2Done2Func = function() {
+							view2.load('./template/test_cache12.ejs').done(view2Done3Func);
+						};
+
+						var view2Done1Func = function() {
+							view2.load('./template/test_cache2.ejs').done(view2Done2Func);
+						};
+
+						view2.load('./template/test_cache11.ejs').done(view2Done1Func);
 					});
-				});
-			});
 		});
 
 asyncTest(
 		'テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
-		1, function() {
+		4, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
 			} catch (e) {
@@ -1289,15 +1303,17 @@ asyncTest(
 			var array1 = ['./template/test_cache1.ejs', './template/test_cache1.ejs?',
 					'./template/test_cache1.ejs?aa', './template/test_cache1.ejs?bb'];
 			var expectArray1 = array1;
-			view1.load(array1).done(function() {
-				var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-				var cache = h5.dev.core.view.cacheManager.cache;
-				var paths = [];
-				for ( var i = 0, l = cacheUrls.length; i < l; i++) {
-					var url = cacheUrls[i];
-					paths.push(cache[url].path);
-				}
-				deepEqual(paths, expectArray1, 'キャッシュが4ファイル分されていて、正しい順番であること');
-				start();
-			});
+
+			view1.load(array1).done(
+					function() {
+						var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+						var cache = h5.dev.core.view.cacheManager.cache;
+
+						for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+							var url = cacheUrls[i];
+							ok($.inArray(cache[url].path, expectArray1) != -1,
+									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
+						}
+						start();
+					});
 		});

@@ -130,7 +130,7 @@
 
 		/**
 		 * HTML文字列をエスケープします。
-		 * 
+		 *
 		 * @param {String} str エスケープ対象文字列
 		 * @returns {String} エスケープされた文字列
 		 */
@@ -165,7 +165,7 @@
 
 		/**
 		 * コンパイル済みテンプレートオブジェクトをキャッシュします。
-		 * 
+		 *
 		 * @param {String} url URL(絶対パス)
 		 * @param {Object} compiled コンパイル済みテンプレートオブジェクト
 		 * @param {String} [path] 相対パス
@@ -183,7 +183,7 @@
 		/* del begin */
 		/**
 		 * テンプレートのグローバルキャッシュが保持しているURL、指定された相対パス、テンプレートIDを持ったオブジェクトを返します。 この関数は開発版でのみ利用できます。
-		 * 
+		 *
 		 * @returns {Array[Object]} グローバルキャッシュが保持しているテンプレート情報オブジェクトの配列。 [{path:(指定されたパス、相対パス),
 		 *          absoluteUrl:(絶対パス), ids:(ファイルから取得したテンプレートのIDの配列)} ,...]
 		 */
@@ -207,7 +207,7 @@
 
 		/**
 		 * 指定されたURLのキャッシュを削除します。
-		 * 
+		 *
 		 * @param {String} url URL
 		 * @param {Boolean} isOnlyUrls trueを指定された場合、キャッシュは消さずに、キャッシュしているURLリストから引数に指定されたURLを削除します。
 		 */
@@ -225,7 +225,7 @@
 
 		/**
 		 * 指定されたテンプレートパスからテンプレートを非同期で読み込みます。 テンプレートパスがキャッシュに存在する場合はキャッシュから読み込みます。
-		 * 
+		 *
 		 * @param {Array[String]} resourcePaths テンプレートパス
 		 * @returns {Object} Promiseオブジェクト
 		 */
@@ -237,7 +237,7 @@
 			var that = this;
 			/**
 			 * キャッシュからテンプレートを取得します。
-			 * 
+			 *
 			 * @param {String} url ファイルの絶対パス
 			 * @returns {Object} テンプレートIDがkeyである、コンパイル済みテンプレートオブジェクトを持つオブジェクト
 			 */
@@ -250,7 +250,7 @@
 
 			/**
 			 * テンプレートをEJS用にコンパイルされたテンプレートに変換します。
-			 * 
+			 *
 			 * @param {jQuery} $templateElements テンプレートが記述されている要素(<script type="text/ejs">...</script>)
 			 * @returns {Object}
 			 *          テンプレートIDがkeyである、コンパイル済みテンプレートオブジェクトを持つオブジェクトと、テンプレートを取得したファイルパスと絶対パス(URL)を保持するオブジェクト
@@ -272,8 +272,10 @@
 				$templateElements.each(function() {
 					var templateId = $.trim(this.id);
 					var templateString = $.trim(this.innerHTML);
+
+					// 空文字または空白ならエラー
 					if (!templateId) {
-						// 空文字または空白ならエラー
+						// load()で更にdetail対してエラー情報を追加するため、ここで空のdetailオブジェクトを生成する
 						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
 					}
 
@@ -288,10 +290,12 @@
 						throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(
 								ERR_REASON_SYNTAX_ERR, msg, e.message)], {
 							id: templateId,
-							error: e
+							error: e,
+							lineNo: lineNo
 						});
 					}
 				});
+
 				return {
 					compiled: compiled,
 					data: {
@@ -299,39 +303,12 @@
 					}
 				};
 			}
-			;
 
-			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
-			for ( var i = 0; i < resourcePaths.length; i++) {
-				var path = resourcePaths[i];
-				var absolutePath = toAbsoluteUrl(path);
-				if (this.cache[absolutePath]) {
-					$.extend(ret, getTemplateByURL(absolutePath));
-					datas.push({
-						absoluteUrl: absolutePath
-					});
-					continue;
-				}
-				tasks.push(path);
-			}
+			function load(absolutePath, filePath) {
+				var df = getDeferred();
 
-			var df = getDeferred();
-
-			function load(task, count) {
-				var step = count || 0;
-				if (task.length == step) {
-					df.resolve();
-					return;
-				}
-				var filePath = task[step];
-				var absolutePath = toAbsoluteUrl(filePath);
-				if (!that.accessingUrls[absolutePath]) {
-					that.accessingUrls[absolutePath] = h5.ajax(filePath);
-				}
-
-				that.accessingUrls[absolutePath].then(
+				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
-							delete that.accessingUrls[absolutePath];
 							var templateText = obj.responseText;
 							// IE8以下で、テンプレート要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまうため、ここで除去する
 							var $elements = $(templateText).filter(
@@ -348,8 +325,11 @@
 											url: absolutePath,
 											path: filePath
 										}));
+								return;
 							}
+
 							var compileData = null;
+
 							try {
 								compileData = compileTemplatesByElements($elements
 										.filter('script[type="text/ejs"]'));
@@ -357,7 +337,9 @@
 								e.detail.url = absolutePath;
 								e.detail.path = filePath;
 								df.reject(e);
+								return;
 							}
+
 							try {
 								var compiled = compileData.compiled;
 								var data = compileData.data;
@@ -366,17 +348,18 @@
 								$.extend(ret, compiled);
 								datas.push(data);
 								that.append(absolutePath, compiled, filePath);
-								load(task, ++step);
 							} catch (e) {
 								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
 									error: e,
 									url: absolutePath,
 									path: filePath
 								}));
+								return;
 							}
+
+							df.resolve();
 						}).fail(
 						function(e) {
-							delete that.accessingUrls[absolutePath];
 							df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [e.status,
 									absolutePath], {
 								url: absolutePath,
@@ -384,20 +367,36 @@
 								error: e
 							}));
 							return;
-						});
+						}).always(function() {
+					delete that.accessingUrls[absolutePath];
+				});
 
 				return df.promise();
 			}
 
-			var parentDf = getDeferred();
+			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
+			for (var i = 0; i < resourcePaths.length; i++) {
+				var path = resourcePaths[i];
+				var absolutePath = toAbsoluteUrl(path);
+				if (this.cache[absolutePath]) {
+					$.extend(ret, getTemplateByURL(absolutePath));
+					datas.push({
+						absoluteUrl: absolutePath
+					});
+					continue;
+				}
+				tasks.push(load(absolutePath, path));
+			}
 
-			h5.async.when(load(tasks)).done(function() {
-				parentDf.resolve(ret, datas);
+			var retDf = getDeferred();
+
+			h5.async.when(tasks).done(function() {
+				retDf.resolve(ret, datas);
 			}).fail(function(e) {
-				parentDf.reject(e);
+				retDf.reject(e);
 			});
 
-			return parentDf.promise();
+			return retDf.promise();
 		}
 	};
 
@@ -407,7 +406,7 @@
 
 	/**
 	 * jQueryオブジェクトか判定し、jQueryオブジェクトならそのまま、そうでないならjQueryオブジェクトに変換して返します。
-	 * 
+	 *
 	 * @function
 	 * @param {Object} obj DOM要素
 	 * @returns {Object} jQueryObject
@@ -427,25 +426,24 @@
 	 * <p>
 	 * コントローラは内部にViewインスタンスを持ち、コントローラ内であればthis.viewで参照することができます。
 	 * </p>
-	 * 
+	 *
 	 * @class
 	 * @name View
 	 */
 	function View() {
 		/**
 		 * キャッシュしたテンプレートを保持するオブジェクト
-		 * 
+		 *
 		 * @name __cachedTemplates
 		 * @memberOf View
 		 */
 		this.__cachedTemplates = {};
 	}
-	;
 
 	$.extend(View.prototype, {
 		/**
 		 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name load
 		 * @function
@@ -502,7 +500,7 @@
 
 		/**
 		 * Viewインスタンスに登録されている、利用可能なテンプレートのIDの配列を返します。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name getAvailableTemplates
 		 * @function
@@ -520,7 +518,7 @@
 		 * <p>
 		 * 指定されたIDのテンプレートがすでに存在する場合は上書きします。 templateStringが不正な場合はエラーを投げます。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name register
 		 * @function
@@ -552,7 +550,7 @@
 
 		/**
 		 * テンプレート文字列が、コンパイルできるかどうかを返します。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name isValid
 		 * @function
@@ -586,7 +584,7 @@
 		 * <a href="#update">update()</a>, <a href="#append">append()</a>, <a
 		 * href="#prepend">prepend()</a>についても同様です。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name get
 		 * @function
@@ -635,7 +633,7 @@
 		 * templateIdがこのViewインスタンスで利用可能でなければエラーを投げますが、
 		 * コントローラが持つviewインスタンスから呼ばれた場合は親コントローラのviewを再帰的にたどります。詳細は<a href="#get">get()</a>をご覧ください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name update
 		 * @function
@@ -654,7 +652,7 @@
 		 * templateIdがこのViewインスタンスで利用可能でなければエラーを投げますが、
 		 * コントローラが持つviewインスタンスから呼ばれた場合は親コントローラのviewを再帰的にたどります。詳細は<a href="#get">get()</a>をご覧ください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name append
 		 * @function
@@ -673,7 +671,7 @@
 		 * templateIdがこのViewインスタンスで利用可能でなければエラーを投げますが、
 		 * コントローラが持つviewインスタンスから呼ばれた場合は親コントローラのviewを再帰的にたどります。詳細は<a href="#get">get()</a>をご覧ください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name prepend
 		 * @function
@@ -688,7 +686,7 @@
 
 		/**
 		 * 指定されたテンプレートIDのテンプレートが存在するか判定します。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name isAvailable
 		 * @function
@@ -701,7 +699,7 @@
 
 		/**
 		 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name clear
 		 * @param {String|String[]} templateIds テンプレートID
@@ -756,7 +754,7 @@
 	 * <p>
 	 * この関数はh5.core.viewに公開されたViewインスタンスのみが持ちます。この関数で作られたViewインスタンスはcreateView()を持ちません。
 	 * </p>
-	 * 
+	 *
 	 * @name createView
 	 * @memberOf h5.core.view
 	 * @function
@@ -791,7 +789,7 @@
 
 	/**
 	 * グローバルに公開されているViewクラスのインスタンスです。
-	 * 
+	 *
 	 * @name view
 	 * @memberOf h5.core
 	 * @see View
