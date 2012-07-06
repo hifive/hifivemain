@@ -2287,7 +2287,8 @@
 					// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
 					// WinInet のエラーコード(12001 - 12156):
 					// http://support.microsoft.com/kb/193625/ja
-					var jqXhrStatus = result.detail.error.status;
+					var errorObj = result.detail.error;
+					var jqXhrStatus = errorObj ? errorObj.status : null;
 					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
 							&& jqXhrStatus !== 12029) {
 						fwLogger.error('コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}', controllerName,

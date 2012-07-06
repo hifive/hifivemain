@@ -3189,7 +3189,7 @@ $(function() {
 		function Test(callback) {
 			this.callback = callback;
 		}
-		;
+
 		Test.prototype.execute = function() {
 			this.callback(100, 200);
 		};
@@ -5463,4 +5463,119 @@ $(function() {
 					start();
 				});
 			});
+
+	test('__construct()で例外をスローする。', 1, function() {
+		var controller = {
+			__name: 'TestController',
+			__construct: function() {
+				throw new Error('__construct error.');
+			}
+		};
+
+		raises(function() {
+			h5.core.controller('#controllerTest', controller);
+		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
+	});
+
+	var testTimeoutFunc = function(msg) {
+		var id = setTimeout(function() {
+			ok(true, msg +' が、コンソールまたはスクリプトエラーのウィドウに表示されていること。IE6～9 は、非同期処理中に発生した例外がwindow.onerrorにトラップされない為、目視で確認して下さい。');
+			start();
+		}, 5000);
+		return id;
+	};
+
+	asyncTest('※IE6～9の場合は要目視確認: __init()で例外をスローする。', 1, function() {
+		var errorMsg = '__init error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__init: function() {
+				throw new Error(errorMsg);
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('※IE6～9の場合は要目視確認: __ready()で例外をスローする。', 1, function() {
+		var errorMsg = '__ready error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				throw new Error(errorMsg);
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('※IE6～9の場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
+		var errorMsg = '__unbind error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				this.unbind();
+			},
+			__unbind: function() {
+				throw new Error(errorMsg);
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('※IE6～9の場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
+		var errorMsg = '__dispose error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				this.dispose();
+			},
+			__dispose: function() {
+				throw new Error(errorMsg);
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
 });
