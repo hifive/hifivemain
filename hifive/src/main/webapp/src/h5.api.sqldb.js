@@ -239,7 +239,7 @@
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * Insert/Select/Update/Del/Sql/Transactionオブジェクトのexecute()が返す、Promiseオブジェクトのprogress()の引数に存在します。
-	 * 
+	 *
 	 * @class
 	 * @name SQLTransactionWrapper
 	 */
@@ -252,7 +252,7 @@
 	$.extend(SQLTransactionWrapper.prototype, {
 		/**
 		 * トランザクション処理中か判定します。
-		 * 
+		 *
 		 * @private
 		 * @memberOf SQLTransactionWrapper
 		 * @function
@@ -263,7 +263,7 @@
 		},
 		/**
 		 * トランザクション処理中か判定し、未処理の場合はトランザクションの開始を、処理中の場合はSQLの実行を行います。
-		 * 
+		 *
 		 * @private
 		 * @memberOf SQLTransactionWrapper
 		 * @function
@@ -277,7 +277,7 @@
 		},
 		/**
 		 * トランザクション内で実行中のDeferredオブジェクトを管理対象として追加します。
-		 * 
+		 *
 		 * @private
 		 * @memberOf SQLTransactionWrapper
 		 * @function
@@ -291,7 +291,7 @@
 		},
 		/**
 		 * SQLの実行結果を設定します。
-		 * 
+		 *
 		 * @private
 		 * @memberOf SQLTransactionWrapper
 		 * @function
@@ -328,7 +328,7 @@
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().select()</b>を呼び出すと、このクラスのインスタンスが返されます。
-	 * 
+	 *
 	 * @class
 	 * @name Select
 	 */
@@ -357,14 +357,14 @@
 		 * <b>オブジェクト</b>の場合、キーに『<b>カラム名[半角スペース]オペレータ</b>』、バリューに<b>値</b>を指定します。
 		 * <p>
 		 * 例. IDが0以上100以下。
-		 * 
+		 *
 		 * <pre>
 		 * db.select('USER', '*').where({
 		 * 	'ID &gt;': 0,
 		 * 	'ID &lt;=': 100
 		 * })
 		 * </pre>
-		 * 
+		 *
 		 * オペレータで使用可能な文字は以下の通りです。
 		 * <ul>
 		 * <li> &lt;=</li>
@@ -382,22 +382,22 @@
 		 * エスケープ文字はクォートやダブルクォートで囲わず、エスケープ文字のみ指定して下さい。
 		 * <p>
 		 * 例. $をエスケープ文字として指定する場合
-		 * 
+		 *
 		 * <pre>
 		 * db.select('USER', '*').where({
 		 * 	'NAME like $': 'SUZUKI$'
 		 * });
 		 * </pre>
-		 * 
+		 *
 		 * <p>
 		 * <b>文字列</b>の場合、SQLステートメントに追加するWHERE文を指定します。
 		 * <p>
 		 * 例. IDが0以上100以下。
-		 * 
+		 *
 		 * <pre>
 		 * db.select('USER', '*').where('ID &gt;= 10 AND ID &lt;= 100');
 		 * </pre>
-		 * 
+		 *
 		 * @function
 		 * @memberOf Select
 		 * @param {Object|String} whereObj 条件
@@ -417,19 +417,19 @@
 		 * ソート対象のカラムが一つの場合は<b>文字列</b>、複数の場合は<b>配列</b>で指定します。
 		 * <p>
 		 * 例.IDを降順でソートする場合
-		 * 
+		 *
 		 * <pre>
 		 * db.select('USER', '*').orderBy('ID DESC');
 		 * </pre>
-		 * 
+		 *
 		 * 例.IDを降順、NAMEを昇順でソートする場合
-		 * 
+		 *
 		 * <pre>
 		 * db.select('USER', '*').orderBy(['ID DESC', 'NAME ASC']);
 		 * </pre>
-		 * 
+		 *
 		 * なお、複数の条件が指定されている場合、ソートは配列の先頭に指定されたカラムから順番に実行されます。
-		 * 
+		 *
 		 * @function
 		 * @memberOf Select
 		 * @param {Array|String} orderBy 条件
@@ -449,24 +449,24 @@
 		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>検索結果を保持するインスタンス</b>が返されます。
 		 * <p>
 		 * 検索結果へのアクセスは以下のように実行します。
-		 * 
+		 *
 		 * <pre>
 		 *  db.insert('USER', {ID:10, NAME:'TANAKA'}).execute().done(function(rows) {
 		 * 　rows.item(0).ID     // 検索にマッチした1件目のレコードのID
 		 * 　rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 * 
+		 *
 		 * <pre>
 		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
 		 * 　db.update('STOCK', {PRICE: 2000}, tx).where({ID: rs.item(0).ID}).execute();
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * db.select().execute()で返ってきたトランザクションを、db.update()の第三引数に指定することで、db.selec()とdb.update()は同一トランザクションで実行されます。
-		 * 
+		 *
 		 * @function
 		 * @memberOf Select
 		 * @returns {Promise} Promiseオブジェクト
@@ -524,7 +524,7 @@
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().insert()</b>を呼び出すと、このクラスのインスタンスが返されます。
-	 * 
+	 *
 	 * @class
 	 * @name Insert
 	 */
@@ -547,24 +547,24 @@
 				 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>登録に成功したレコードのIDを持つ配列</b>が返されます。
 				 * <p>
 				 * 検索結果へのアクセスは以下のように実行します。
-				 * 
+				 *
 				 * <pre>
 				 *  db.insert('USER', {ID:10, NAME:'TANAKA'}).execute().done(function(rows) {
 				 * 　rows.item(0).ID     // 検索にマッチした1件目のレコードのID
 				 * 　rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
 				 *  });
 				 * </pre>
-				 * 
+				 *
 				 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-				 * 
+				 *
 				 * <pre>
 				 *  db.select('STOCK', {ID:10, NAME:'ballA'}).execute().progress(function(rs, tx) { // ※1
 				 * 　db.insert('STOCK', {ID:11, NAME:'ballB'}, tx).execute(); // ※2
 				 *  });
 				 * </pre>
-				 * 
+				 *
 				 * ※1のprogress()で返ってきたトランザクション(tx)を、※2のinsert()の第三引数に指定することで、2つのdb.insert()は同一トランザクションで実行されます。
-				 * 
+				 *
 				 * @function
 				 * @memberOf Insert
 				 * @returns {Promise} Promiseオブジェクト
@@ -660,7 +660,7 @@
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().update()</b>を呼び出すと、このクラスのインスタンスが返されます。
-	 * 
+	 *
 	 * @class
 	 * @name Update
 	 */
@@ -688,7 +688,7 @@
 		 * <b>オブジェクト</b>の場合、キーに『<b>カラム名[半角スペース]オペレータ</b>』、バリューに<b>値</b>を指定します。
 		 * <p>
 		 * 例. IDが0以上100以下。
-		 * 
+		 *
 		 * <pre>
 		 * db.update('USER', {
 		 * 	NAME: 'TANAKA'
@@ -697,7 +697,7 @@
 		 * 	'ID &lt;=': 100
 		 * })
 		 * </pre>
-		 * 
+		 *
 		 * オペレータで使用可能な文字は以下の通りです。
 		 * <ul>
 		 * <li> &lt;=</li>
@@ -715,7 +715,7 @@
 		 * エスケープ文字はクォートやダブルクォートで囲わず、エスケープ文字のみ指定して下さい。
 		 * <p>
 		 * 例. $をエスケープ文字として指定する場合
-		 * 
+		 *
 		 * <pre>
 		 * db.update('USER', {
 		 * 	NAME: 'TANAKA'
@@ -723,16 +723,16 @@
 		 * 	'NAME like $': 'SUZUKI$'
 		 * });
 		 * </pre>
-		 * 
+		 *
 		 * <p>
 		 * <b>文字列</b>の場合、SQLステートメントに追加するWHERE文を指定します。
 		 * <p>
 		 * 例. IDが0以上100以下。
-		 * 
+		 *
 		 * <pre>
 		 * db.update('USER').where('ID &gt;= 10 AND ID &lt;= 100')
 		 * </pre>
-		 * 
+		 *
 		 * @function
 		 * @memberOf Update
 		 * @param {Object|String} whereObj 条件
@@ -750,23 +750,23 @@
 		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します。
 		 * <p>
 		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>更新されたレコードの件数</b>が返されます。
-		 * 
+		 *
 		 * <pre>
 		 *  db.update('USER', {NAME:TANAKA}).where({ID:10}).execute().done(function(rowsAffected) {
 		 *  　rowsAffected // 更新されたレコードの行数(Number型)
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 * 
+		 *
 		 * <pre>
 		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
 		 * 　db.update('STOCK', {PRICE: 2000}, tx).where({ID: rs.item(0).ID}).execute();
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * db.select().execute()で返ってきたトランザクションを、db.update()の第三引数に指定することで、db.select()とdb.update()は同一トランザクションで実行されます。
-		 * 
+		 *
 		 * @function
 		 * @memberOf Update
 		 * @returns {Promise} Promiseオブジェクト
@@ -841,7 +841,7 @@
 	 * <b>h5.api.sqldb.open().del()</b>を呼び出すと、このクラスのインスタンスが返されます。
 	 * <p>
 	 * <i>deleteは予約語なため、Delとしています。</i>
-	 * 
+	 *
 	 * @class
 	 * @name Del
 	 */
@@ -868,11 +868,11 @@
 		 * <b>オブジェクト</b>の場合、キーに『<b>カラム名[半角スペース]オペレータ</b>』、バリューに<b>値</b>を指定します。
 		 * <p>
 		 * 例. IDが0以上100以下。
-		 * 
+		 *
 		 * <pre>
 		 * db.delete('USER').where({'ID &gt;':0, 'ID &lt;=':100})
 		 * </pre>
-		 * 
+		 *
 		 * オペレータで使用可能な文字は以下の通りです。
 		 * <ul>
 		 * <li> &lt;=</li>
@@ -890,20 +890,20 @@
 		 * エスケープ文字はクォートやダブルクォートで囲わず、エスケープ文字のみ指定して下さい。
 		 * <p>
 		 * 例. $をエスケープ文字として指定する場合
-		 * 
+		 *
 		 * <pre>
 		 * db.delete('USER').where({'NAME like $': 'SUZUKI$'});
 		 * </pre>
-		 * 
+		 *
 		 * <p>
 		 * <b>文字列</b>の場合、SQLステートメントに追加するWHERE文を指定します。
 		 * <p>
 		 * 例. IDが0以上100以下。
-		 * 
+		 *
 		 * <pre>
 		 * db.delete('USER').where('ID &gt;= 10 AND ID &lt;= 100')
 		 * </pre>
-		 * 
+		 *
 		 * @function
 		 * @memberOf Del
 		 * @param {Object|String} whereObj 条件
@@ -921,23 +921,23 @@
 		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します。
 		 * <p>
 		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>削除されたレコードの件数</b>が返されます。
-		 * 
+		 *
 		 * <pre>
 		 *  db.del('USER').where({ID:10}).execute().done(function(rowsAffected) {
 		 *  　rowsAffected // 削除されたレコードの行数(Number型)
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 * 
+		 *
 		 * <pre>
 		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
 		 *  　db.del('STOCK', tx).where({ID: rs.item(0).ID}).execute();
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * db.select().execute()で返ってきたトランザクションを、db.del()の第二引数に指定することで、db.select()とdb.del()は同一トランザクションで実行されます。
-		 * 
+		 *
 		 * @function
 		 * @memberOf Del
 		 * @returns {Promise} Promiseオブジェクト
@@ -1002,7 +1002,7 @@
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().sql()</b>を呼び出すと、このクラスのインスタンスが返されます。
-	 * 
+	 *
 	 * @class
 	 * @name Sql
 	 */
@@ -1042,7 +1042,7 @@
 		 * </table>
 		 * <p>
 		 * 例.検索結果の取得
-		 * 
+		 *
 		 * <pre>
 		 *  db.sql('SELECT * FROM USER').execute().done(function(rs) {
 		 *  　rs.rows          // SQLResultSetRowList
@@ -1050,7 +1050,7 @@
 		 *  　rs.rowsAffected  // Number
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * <p>
 		 * <b>SQLResultSetRowList</b>は、以下のプロパティを持っています。<br>
 		 * <table border="1">
@@ -1069,26 +1069,26 @@
 		 * </table>
 		 * <p>
 		 * 例.検索結果の取得する
-		 * 
+		 *
 		 * <pre>
 		 *  db.sql('SELECT ID, NAME FROM USER').execute().done(function(rs) {
 		 * 　rs.rows.item(0).ID     // 検索にマッチした1件目のレコードのID
 		 * 　rs.rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
 		 * <p>
 		 * 例.同一トランザクションでdb.insert()とdb.sql()を実行する
-		 * 
+		 *
 		 * <pre>
 		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
 		 * 　db.sql('UPDATE STOCK SET PRICE = 2000', tx).where({ID: rs.item(0).ID}).execute();
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * db.select().execute()で返ってきたトランザクションを、db.sql()の第三引数に指定することで、db.select()とdb.sql()は同一トランザクションで実行されます。
-		 * 
+		 *
 		 * @function
 		 * @memberOf Sql
 		 * @returns {Promise} Promiseオブジェクト
@@ -1140,7 +1140,7 @@
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().transaction()</b>を呼び出すと、このクラスのインスタンスが返されます。
-	 * 
+	 *
 	 * @class
 	 * @name Transaction
 	 */
@@ -1164,7 +1164,7 @@
 		 * <li><a href="Select.html">Select</a></li>
 		 * <li><a href="Sql.html">Sql</a></li>
 		 * </ul>
-		 * 
+		 *
 		 * @function
 		 * @memberOf Transaction
 		 * @param {Any} task Insert/Update/Del/Select/Sqlクラスのインスタンス
@@ -1181,7 +1181,7 @@
 		 * add()で追加された順にSQLを実行します。
 		 * <p>
 		 * 実行結果は、戻り値であるPromiseオブジェクトのprogress()に指定したコールバック関数、またはdone()に指定したコールバック関数に返されます。
-		 * 
+		 *
 		 * <pre>
 		 *  db.transaction()
 		 *   .add(db.insert('USER', {ID:10, NAME:TANAKA}))
@@ -1190,12 +1190,12 @@
 		 *  　rs // 第一引数: 実行結果
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * 実行結果は<b>配列(Array)</b>で返され、結果の格納順序は、<b>add()で追加した順序</b>に依存します。<br>
 		 * 上記例の場合、3件 db.insert()をadd()で追加しているので、実行結果rsには3つのROWIDが格納されています。( [1, 2, 3]のような構造になっている )
 		 * <p>
 		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 * 
+		 *
 		 * <pre>
 		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
 		 * 　db.transaction(tx)
@@ -1203,9 +1203,9 @@
 		 * 　　.execute();
 		 *  });
 		 * </pre>
-		 * 
+		 *
 		 * select().execute()で返ってきたトランザクションを、db.transaction()の引数に指定することで、db.select()とdb.transaction()は同一トランザクションで実行されます。
-		 * 
+		 *
 		 * @function
 		 * @memberOf Transaction
 		 * @returns {Promise} Promiseオブジェクト
@@ -1289,7 +1289,7 @@
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open()</b>を呼び出すと、このクラスのインスタンスが返されます。
-	 * 
+	 *
 	 * @class
 	 * @name DatabaseWrapper
 	 * @param {Database} db openDatabase()が返すネイティブのDatabaseオブジェクト
@@ -1301,7 +1301,7 @@
 	$.extend(DatabaseWrapper.prototype, {
 		/**
 		 * 指定されたテーブルに対して、検索処理(SELECT)を行うためのオブジェクトを生成します。
-		 * 
+		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} tableName テーブル名
@@ -1328,31 +1328,31 @@
 		 * 1テーブルに1件INSERTを行う場合は<b>オブジェクト</b>で値を指定します。また、1テーブルに複数件INSERTを行う場合は<b>配列</b>で値を指定します。<br>
 		 * <p>
 		 * オブジェクトで指定する場合、シンタックスは以下のようになります。
-		 * 
+		 *
 		 * <pre>
 		 * {カラム名:登録する値, ...}
 		 * </pre>
-		 * 
+		 *
 		 * <p>
 		 * 例.USERテーブルに、1件レコードをINSERTする。
-		 * 
+		 *
 		 * <pre>
 		 * db.insert('USER', {
 		 * 	ID: 10,
 		 * 	NAME: 'TANAKA'
 		 * }).execute();
 		 * </pre>
-		 * 
+		 *
 		 * <p>
 		 * 配列で指定する場合、シンタックスは以下のようになります。
-		 * 
+		 *
 		 * <pre>
 		 * [{カラム名:登録する値, ...}, {カラム名:登録する値, ...}, ...]
 		 * </pre>
-		 * 
+		 *
 		 * <p>
 		 * 例.USERテーブルに、3件レコードをINSERTする。
-		 * 
+		 *
 		 * <pre>
 		 * db.insert('USER', [{
 		 * 	ID: 1,
@@ -1365,7 +1365,7 @@
 		 * 	NAME: 'SUZUKI'
 		 * }]).execute();
 		 * </pre>
-		 * 
+		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} tableName テーブル名
@@ -1390,22 +1390,22 @@
 		 * <b>第二引数valuesの指定方法</b>
 		 * <p>
 		 * オブジェクトリテラルで以下のように指定します。
-		 * 
+		 *
 		 * <pre>
 		 * {
 		 * 	カラム名: 更新後の値
 		 * }
 		 * </pre>
-		 * 
+		 *
 		 * <p>
 		 * 例.USERテーブルのNAMEカラムを"TANAKA"に更新する。
-		 * 
+		 *
 		 * <pre>
 		 * db.update('USER', {
 		 * 	NAME: 'TANAKA'
 		 * }).excute();
 		 * </pre>
-		 * 
+		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} tableName テーブル名
@@ -1428,7 +1428,7 @@
 		 * 指定されたテーブルに対して、削除処理(DELETE)を行うためのオブジェクトを生成します。
 		 * <p>
 		 * <i>deleteは予約語なため、delとしています。</i>
-		 * 
+		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} tableName テーブル名
@@ -1443,7 +1443,7 @@
 		},
 		/**
 		 * 指定されたステートメントとパラメータから、SQLを実行するためのオブジェクトを生成します。
-		 * 
+		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} statement SQLステートメント
@@ -1467,7 +1467,7 @@
 		},
 		/**
 		 * 指定された複数のSQLを同一トランザクションで実行するためのオブジェクトを生成します。
-		 * 
+		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} statement テーブル名
@@ -1486,7 +1486,7 @@
 
 	/**
 	 * Web SQL Database
-	 * 
+	 *
 	 * @memberOf h5.api
 	 * @name sqldb
 	 * @namespace
@@ -1494,7 +1494,7 @@
 	$.extend(WebSqlDatabase.prototype, {
 		/**
 		 * Web SQL Databaseが使用可能であるかの判定結果
-		 * 
+		 *
 		 * @memberOf h5.api.sqldb
 		 * @name isSupported
 		 * @type Boolean
@@ -1502,7 +1502,7 @@
 		isSupported: !!window.openDatabase,
 		/**
 		 * データベースに接続します。
-		 * 
+		 *
 		 * @memberOf h5.api.sqldb
 		 * @name open
 		 * @function

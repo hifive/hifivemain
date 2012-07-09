@@ -81,7 +81,7 @@ $(function() {
 
 	/**
 	 * 擬似的にページ遷移を行う
-	 * 
+	 *
 	 * @param {selector} to 遷移先のページ
 	 * @param {boolean} [initialize] pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
 	 */
