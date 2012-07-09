@@ -32,7 +32,6 @@
 	/** エラーコード: JQMControllerがunbindされた */
 	var ERR_CODE_JQM_MANAGER_CANNOT_UNBIND = 12001;
 
-
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE] = 'JQMControllerはdisposeできません。';
 	errMsgMap[ERR_CODE_JQM_MANAGER_CANNOT_UNBIND] = 'JQMControllerはunbindできません。';
@@ -43,10 +42,10 @@
 	// Development Only
 	// =============================
 
+	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
 	/* del begin */
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
-	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
-
+	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = 'JQMマネージャは既に初期化されています。';
 	var disposeFunc = null;
 	var unbindFunc = null;
 	/* del end */
@@ -412,7 +411,7 @@
 		 */
 		init: function() {
 			if (initCalled) {
-				fwLogger.info('JQMマネージャは既に初期化されています。');
+				fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
 				return;
 			}
 			initCalled = true;

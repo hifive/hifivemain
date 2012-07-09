@@ -81,10 +81,8 @@
 	// Development Only
 	// =============================
 
-	/* del begin */
-
 	var fwLogger = h5.log.createLogger('h5.api.sqldb');
-
+	/* del begin */
 	/* del end */
 
 	// =========================================================================
@@ -178,8 +176,7 @@
 	/**
 	 * DatabaseWrapper.select()/insert()/update()/del()/sql()/transaction() のパラメータチェック
 	 * <p>
-	 * txwがTransactionWrapper型ではない場合、例外をスローします。
-	 * null,undefinedの場合は例外をスローしません。
+	 * txwがTransactionWrapper型ではない場合、例外をスローします。 null,undefinedの場合は例外をスローしません。
 	 */
 	function checkTransaction(funcName, txw) {
 		if (txw != undefined && !(txw instanceof SQLTransactionWrapper)) {
@@ -489,7 +486,7 @@
 				txw._addTask(df);
 				checkSqlExecuted(executed);
 				build();
-				fwLogger.debug(['Select: '+ this._statement], this._params);
+				fwLogger.debug(['Select: ' + this._statement], this._params);
 
 				if (txw._runTransaction()) {
 					txw._execute(this._statement, this._params, function(innerTx, rs) {
@@ -1274,7 +1271,7 @@
 						transactionSuccessCallback(txw);
 					});
 				}
-			} catch(e) {
+			} catch (e) {
 				df.reject(e);
 			}
 

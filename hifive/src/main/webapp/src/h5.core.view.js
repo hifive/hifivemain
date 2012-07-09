@@ -101,9 +101,11 @@
 	// Development Only
 	// =============================
 
+	var fwLogger = h5.log.createLogger('h5.core.view');
 	/* del begin */
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
-	var fwLogger = h5.log.createLogger('h5.core.view');
+	var FW_LOG_TEMPLATE_NOT_REGISTERED = '指定されたIDのテンプレートは登録されていません。"{0}"';
+	var FW_LOG_TEMPLATE_OVERWRITE = 'テンプレートID:{0} は上書きされました。';
 	/* del end */
 
 	// =========================================================================
@@ -375,7 +377,7 @@
 			}
 
 			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
-			for (var i = 0; i < resourcePaths.length; i++) {
+			for ( var i = 0; i < resourcePaths.length; i++) {
 				var path = resourcePaths[i];
 				var absolutePath = toAbsoluteUrl(path);
 
@@ -493,7 +495,7 @@
 				/* del begin */
 				for ( var id in result) {
 					if (that.__cachedTemplates[id]) {
-						fwLogger.info('テンプレートID:{0} は上書きされました。', id);
+						fwLogger.info(FW_LOG_TEMPLATE_OVERWRITE, id);
 					}
 				}
 				/* del end */
@@ -744,7 +746,7 @@
 				}
 				/* del begin */
 				if (!this.__cachedTemplates[id]) {
-					fwLogger.warn('指定されたIDのテンプレートは登録されていません。"{0}"', id);
+					fwLogger.warn(FW_LOG_TEMPLATE_NOT_REGISTERED, id);
 				}
 				/* del end */
 			}
