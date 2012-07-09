@@ -17,7 +17,6 @@ $(function() {
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
-
 	// アサートが稀に失敗する場合があるので、フェードアウトのアニメ―ションを実行しない。
 	$.blockUI.defaults.fadeOut = -1;
 
@@ -4610,9 +4609,14 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup)',
+			'h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
+				if (document.ontouchstart !== undefined) {
+					expect(1);
+					ok(false, 'タブレット、スマートフォンでは失敗します');
+					start();
+				}
 				var controller = {
 
 					__name: 'TestController',
@@ -4852,9 +4856,14 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) SVG',
+			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
+				if (document.ontouchstart !== undefined) {
+					expect(1);
+					ok(false, 'タブレット、スマートフォンでは失敗します');
+					start();
+				}
 				if (!document.createElementNS) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
@@ -5149,9 +5158,14 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) window',
+			'h5trackイベント(mousedown, mousemove, mouseup) window ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
+				if (document.ontouchstart !== undefined) {
+					expect(1);
+					ok(false, 'タブレット、スマートフォンでは失敗します');
+					start();
+				}
 				var controller = {
 
 					__name: 'TestController',
