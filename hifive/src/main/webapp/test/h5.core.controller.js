@@ -928,8 +928,8 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				ok(rootDfd.isResolved(), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
-				ok(childDfd.isResolved(), '__disposeイベントはPromiseオブジェクトを考慮しているか2');
+				ok(isResolved(rootDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
+				ok(isResolved(childDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか2');
 				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
 				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
@@ -973,8 +973,8 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				ok(rootDfd.isRejected(), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
-				ok(!childDfd.isResolved() && !childDfd.isRejected(),
+				ok(isRejected(rootDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
+				ok(!isResolved(childDfd) && !isRejected(childDfd),
 						'__disposeイベントはPromiseオブジェクトを考慮しているか2');
 				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
 				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
@@ -1034,7 +1034,6 @@ $(function() {
 				ok(h5.core.controller('#controllerTest', controller) === null,
 						'h5.core.controller()がnullを返すこと');
 			});
-
 
 	asyncTest(
 			'コントローラのdispose preinitProimseのdoneハンドラでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること',
@@ -1139,7 +1138,6 @@ $(function() {
 					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
 				});
 			});
-
 
 	asyncTest(
 			'コントローラのdispose initPromiseのdoneハンドラでdisposeを呼ぶと__readyは実行されず、readyPromiseのfailハンドラが実行されること',
@@ -1352,7 +1350,7 @@ $(function() {
 				},
 				__ready: function() {
 					ok(true, '子コントローラ１の__readyが実行される');
-					ok(dfdRootInit.isResolved(), 'ルートコントローラの__initが返したpromiseがresolveされていること');
+					ok(isResolved(dfdRootInit), 'ルートコントローラの__initが返したpromiseがresolveされていること');
 					setTimeout(function() {
 						dfdChild1Ready.resolve();
 					}, 0);
@@ -1369,7 +1367,7 @@ $(function() {
 				},
 				__ready: function() {
 					ok(true, '子コントローラ２の__readyが実行される');
-					ok(dfdRootInit.isResolved(), 'ルートコントローラの__initが返したpromiseがresolveされていること');
+					ok(isResolved(dfdRootInit), 'ルートコントローラの__initが返したpromiseがresolveされていること');
 					setTimeout(function() {
 						dfdChild2Ready.resolve();
 					}, 0);
@@ -1378,8 +1376,8 @@ $(function() {
 			},
 			__init: function() {
 				ok(true, 'ルートコントローラの__initが実行されること');
-				ok(dfdChild1Init.isResolved(), '子コントローラ１の__initが返したpromiseがresolveされていること');
-				ok(dfdChild2Init.isResolved(), '子コントローラ２の__initが返したpromiseがresolveされていること');
+				ok(isResolved(dfdChild1Init), '子コントローラ１の__initが返したpromiseがresolveされていること');
+				ok(isResolved(dfdChild2Init), '子コントローラ２の__initが返したpromiseがresolveされていること');
 				setTimeout(function() {
 					dfdRootInit.resolve();
 				}, 0);
@@ -1387,8 +1385,8 @@ $(function() {
 			},
 			__ready: function() {
 				ok(true, 'ルートコントローラの__readyが実行されること');
-				ok(dfdChild1Ready.isResolved(), '子コントローラ１の__readyが返したpromiseがresolveされていること');
-				ok(dfdChild2Ready.isResolved(), '子コントローラ２の__readyが返したpromiseがresolveされていること');
+				ok(isResolved(dfdChild1Ready), '子コントローラ１の__readyが返したpromiseがresolveされていること');
+				ok(isResolved(dfdChild2Ready), '子コントローラ２の__readyが返したpromiseがresolveされていること');
 				setTimeout(function() {
 					dfdRootReady.resolve();
 				}, 0);
@@ -1398,17 +1396,186 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', controller);
 		c.initPromise.done(function() {
 			ok(true, 'ルートコントローラのinitPromiseのdoneハンドラが実行されること');
-			ok(dfdRootInit.isResolved(), 'ルートコントローラ２の__initが返したpromiseがresolveされていること');
+			ok(isResolved(dfdRootInit), 'ルートコントローラの__initが返したpromiseがresolveされていること');
 		}).fail(function() {
 			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのfailが実行された');
 		});
 		c.readyPromise.done(function() {
 			ok(true, 'ルートコントローラのreadyPromiseのdoneハンドラが実行されること');
-			ok(dfdRootReady.isResolved(), 'ルートコントローラ２の__initが返したpromiseがresolveされていること');
+			ok(isResolved(dfdRootReady), 'ルートコントローラの__initが返したpromiseがresolveされていること');
 			start();
 		}).fail(function() {
 			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのfailが実行された');
 			start();
+		});
+	});
+
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 ルートの__initが返すpromiseがrejectされる時の挙動', 7, function() {
+		var dfd = h5.async.deferred();
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				__name: 'child1Controller',
+				__init: function() {
+					ok(true, '子コントローラの__initは実行されること');
+				},
+				__ready: function() {
+					ok(false, '子コントローラの__readyは実行されないこと');
+				}
+			},
+			child2Controller: {
+				__name: 'child2Controller',
+				__init: function() {
+					ok(true, '子コントローラの__initは実行されること');
+				},
+				__ready: function() {
+					ok(false, '子コントローラの__readyは実行されない');
+				}
+			},
+			__init: function() {
+				ok(true, 'ルートコントローラの__initが実行されること');
+				setTimeout(function() {
+					dfd.reject();
+				}, 0);
+				return dfd.promise();
+			},
+			__ready: function() {
+				ok(false, 'ルートコントローラの__readyは実行されないこと');
+			},
+			__dispose: function() {
+				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+					start();
+				}, 0);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.initPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
+		}).fail(function() {
+			ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
+			ok(isRejected(dfd), 'ルートコントローラの__initが返したpromiseがrejectされていること');
+		});
+		c.readyPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+			start();
+		}).fail(function() {
+			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+		});
+	});
+
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 ルートの__readyが返すpromiseがrejectされる時の挙動', 6, function() {
+		var dfd = h5.async.deferred();
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				__name: 'child1Controller',
+				__ready: function() {
+					ok(true, '子コントローラの__readyが実行されること');
+				}
+			},
+			child2Controller: {
+				__name: 'child2Controller',
+				__ready: function() {
+					ok(true, '子コントローラの__readyが実行されること');
+				}
+			},
+			__ready: function() {
+				ok(true, 'ルートコントローラの__initが実行されること');
+				setTimeout(function() {
+					dfd.reject();
+				}, 0);
+				return dfd.promise();
+			},
+			__dispose: function() {
+				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+					start();
+				}, 0);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+			start();
+		}).fail(function() {
+			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+			ok(isRejected(dfd), 'ルートコントローラの__readyが返したpromiseがrejectされていること');
+		});
+	});
+
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__initが返すpromiseがrejectされる時の挙動', 4, function() {
+		var dfd = h5.async.deferred();
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				__name: 'child1Controller'
+			},
+			child2Controller: {
+				__name: 'child2Controller',
+				__init: function() {
+					ok(true, '子コントローラの__initが実行されること');
+					setTimeout(function() {
+						dfd.reject();
+					}, 0);
+					return dfd.promise();
+				}
+			},
+			__init: function() {
+				ok(false, 'テスト失敗。ルートの__initが実行された');
+			},
+			__dispose: function() {
+				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+					start();
+				}, 0);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.initPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
+			start();
+		}).fail(function() {
+			ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
+			ok(isRejected(dfd), '子コントローラの__initが返したpromiseがrejectされていること');
+		});
+	});
+
+
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__readyが返すpromiseがrejectされる時の挙動', 4, function() {
+		var dfd = h5.async.deferred();
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				__name: 'child1Controller'
+			},
+			child2Controller: {
+				__name: 'child2Controller',
+				__ready: function() {
+					ok(true, '子コントローラの__initが実行されること');
+					setTimeout(function() {
+						dfd.reject();
+					}, 0);
+					return dfd.promise();
+				}
+			},
+			__ready: function() {
+				ok(false, 'テスト失敗。ルートの__readyが実行された。');
+			},
+			__dispose: function() {
+				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+					start();
+				}, 0);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+			start();
+		}).fail(function() {
+			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+			ok(isRejected(dfd), '子コントローラの__readyが返したpromiseがrejectされていること');
 		});
 	});
 

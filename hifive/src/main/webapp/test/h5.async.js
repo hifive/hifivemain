@@ -17,6 +17,7 @@
  */
 
 $(function() {
+
 	module("Async");
 
 	test('Deferredオブジェクトは作成できたか(h5.async.deferred)', 5, function() {
@@ -176,8 +177,8 @@ $(function() {
 		var dfd2 = h5.async.deferred();
 		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
 		whenPromise.done(function() {
-			ok(dfd1.isResolved(), '1番目の引数のプロミスオブジェクトがresolveされていること。');
-			ok(dfd2.isResolved(), '2番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(isResolved(dfd2), '2番目の引数のプロミスオブジェクトがresolveされていること。');
 		});
 		dfd1.resolve();
 		dfd2.resolve();
@@ -298,8 +299,8 @@ $(function() {
 		var dfd2 = h5.async.deferred();
 		var whenPromise = h5.async.when([dfd1.promise(), dfd2.promise()]);
 		whenPromise.done(function() {
-			ok(dfd1.isResolved(), '1番目の引数のプロミスオブジェクトがresolveされていること。');
-			ok(dfd2.isResolved(), '2番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること。');
+			ok(isResolved(dfd2), '2番目の引数のプロミスオブジェクトがresolveされていること。');
 		});
 		dfd1.resolve();
 		dfd2.resolve();
@@ -361,7 +362,7 @@ $(function() {
 
 					h5.async.when(dfd1.promise(), argArray).done(function() {
 						ok(true, 'doneハンドラが実行されること');
-						ok(dfd1.isResolved(), '1番目の引数のプロミスオブジェクトがresolveされていること');
+						ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 
 					});
 					dfd1.resolve();
@@ -380,7 +381,7 @@ $(function() {
 				dfd2 = h5.async.deferred();
 				h5.async.when(dfd1, [dfd2]).done(function() {
 					ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneハンドラが実行されること');
-					ok(dfd1.isResolved(), '1番目の引数のプロミスオブジェクトがresolveされていること');
+					ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 				});
 				dfd1.resolve();
 				dfd2.reject();
@@ -391,7 +392,7 @@ $(function() {
 				dfd3 = h5.async.deferred();
 				h5.async.when(dfd1, [dfd2, dfd3]).done(function() {
 					ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneハンドラが実行されること');
-					ok(dfd1.isResolved(), '1番目の引数のプロミスオブジェクトがresolveされていること');
+					ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 				});
 				dfd2.resolve();
 				dfd3.resolve();
@@ -412,7 +413,7 @@ $(function() {
 				whenPromise
 						.done(function() {
 							ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneハンドラが実行されること');
-							ok(dfd1.isResolved(), '1番目の引数のプロミスオブジェクトがresolveされていること');
+							ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 							ok(true,
 									'※要目視確認：次のようなログが、INFOレベルで出力されていること 『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』')
 						});
