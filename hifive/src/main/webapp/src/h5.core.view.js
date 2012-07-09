@@ -161,7 +161,7 @@
 		/**
 		 * 現在アクセス中のURL(絶対パス)をkeyにして、そのpromiseオブジェクトを持つ連想配列
 		 */
-		accessingUrls: [],
+		accessingUrls: {},
 
 		/**
 		 * コンパイル済みテンプレートオブジェクトをキャッシュします。
@@ -378,6 +378,7 @@
 			for (var i = 0; i < resourcePaths.length; i++) {
 				var path = resourcePaths[i];
 				var absolutePath = toAbsoluteUrl(path);
+
 				if (this.cache[absolutePath]) {
 					$.extend(ret, getTemplateByURL(absolutePath));
 					datas.push({
@@ -385,7 +386,14 @@
 					});
 					continue;
 				}
-				tasks.push(load(absolutePath, path));
+
+				if (this.accessingUrls[absolutePath]) {
+					tasks.push(this.accessingUrls[absolutePath]);
+				} else {
+					var loadPromise = load(absolutePath, path);
+					this.accessingUrls[absolutePath] = loadPromise;
+					tasks.push(loadPromise);
+				}
 			}
 
 			var retDf = getDeferred();

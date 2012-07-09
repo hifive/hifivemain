@@ -1317,3 +1317,33 @@ asyncTest(
 						start();
 					});
 		});
+
+
+asyncTest('同じテンプレートファイルを並列にロードする。', 2, function() {
+	try {
+		cacheManager = h5.dev.core.view.cacheManager;
+	} catch (e) {
+		expect(1);
+		ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+		start();
+		return;
+	}
+
+	var view1 = h5.core.view.createView();
+	h5.core.view.createView();
+
+	$.when(view1.load('./template/test_cache1.ejs'), view1.load('./template/test_cache1.ejs'))
+			.done(
+					function() {
+						var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+						var cache = h5.dev.core.view.cacheManager.cache;
+
+						equal(cacheUrls.length, 1, '1ファイルのみキャッシュされていること。同じファイルが重複してキャッシュされていないこと。');
+
+						for (var i = 0, l = cacheUrls.length; i < l; i++) {
+							var url = cacheUrls[i];
+							equal(cache[url].path, './template/test_cache1.ejs', 'test_cache1.ejsがキャッシュされていること。');
+						}
+						start();
+					});
+});
