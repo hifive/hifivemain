@@ -22,12 +22,12 @@ $(function() {
 
 	// resolve済みかどうかをチェックする関数
 	function isResolved(dfd) {
-		return dfd.isResolve ? dfd.isResolve() : dfd.state() === 'resolved';
+		return dfd.isResolved ? dfd.isResolved() : dfd.state() === 'resolved';
 	}
 
 	// reject済みかどうかをチェックする関数
 	function isRejected(dfd) {
-		return dfd.isReject ? dfd.isReject() : dfd.state() === 'rejected';
+		return dfd.isRejected ? dfd.isRejected() : dfd.state() === 'rejected';
 	}
 
 	var rgbToHex = function(rgbStr) {
