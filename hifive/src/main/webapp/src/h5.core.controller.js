@@ -118,6 +118,7 @@
 	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
 	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
 	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
+	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ{0}の初期化が正常に完了しました。';
 	/* del end */
 
 	// =========================================================================
@@ -131,7 +132,6 @@
 	// Privates
 	//
 	// =========================================================================
-
 	/**
 	 * commonFailHandlerを発火させないために登録するdummyのfailハンドラ
 	 */
@@ -2262,6 +2262,14 @@
 			// ルートコントローラでないなら、readyPromiseの失敗でcommonFailHandlerを発火させないようにする
 			controller.readyPromise.fail(dummyFailHandler);
 		}
+		/* del begin */
+		else {
+			// ルートコントローラなら、readyPromise.doneのタイミングで、ログを出力する
+			controller.readyPromise.done(function() {
+				fwLogger.info(FW_LOG_INIT_CONTROLLER_COMPLETE, controllerName);
+			});
+		}
+		/* del end */
 		if (templates && templates.length > 0) {
 			// テンプレートがあればロード
 			var viewLoad = function(count) {
@@ -2273,7 +2281,7 @@
 				vp.then(function(result) {
 					/* del begin */
 					if (templates && templates.length > 0) {
-						fwLogger.info(FW_LOG_TEMPLATE_LOADED, controllerName);
+						fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
 					}
 					/* del end */
 					templateDfd.resolve();
