@@ -46,9 +46,8 @@
 	// Development Only
 	// =============================
 
-	/* del begin */
 	var fwLogger = h5.log.createLogger('h5.async');
-
+	/* del begin */
 	/* del end */
 
 
