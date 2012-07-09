@@ -48,7 +48,7 @@
 
 	/* del begin */
 	var fwLogger = h5.log.createLogger('h5.async');
-
+	var FW_LOG_H5_WHEN_INVALID_PARAMTER = 'h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。';
 	/* del end */
 
 
@@ -64,7 +64,7 @@
 	// =========================================================================
 	/**
 	 * jQueryのDeferred関数
-	 * 
+	 *
 	 * @private
 	 */
 	var jQueryDeferred = $.Deferred;
@@ -82,7 +82,7 @@
 	/**
 	 * 登録された共通のエラー処理を実行できるDeferredオブジェクトを返します。<br>
 	 * Deferredに notify() / notifyWith() / progress() メソッドがない場合は、追加したオブジェクトを返します。
-	 * 
+	 *
 	 * @returns {Deferred} Deferredオブジェクト
 	 * @name deferred
 	 * @function
@@ -271,7 +271,7 @@
 	/**
 	 * オブジェクトがPromiseオブジェクトであるかどうかを返します。<br />
 	 * オブジェクトがDeferredオブジェクトの場合、falseが返ります。
-	 * 
+	 *
 	 * @param {Object} object オブジェクト
 	 * @returns {Boolean} オブジェクトがPromiseオブジェクトであるかどうか
 	 * @name isPromise
@@ -284,7 +284,7 @@
 
 	/**
 	 * 指定された回数ごとにループを抜けブラウザに制御を戻すユーティリティメソッドです。
-	 * 
+	 *
 	 * @param {Any[]} array 配列
 	 * @param {Function} callback コールバック関数。<br />
 	 *            コールバックには引数として現在のインデックス、現在の値、ループコントローラが渡されます。<br />
@@ -401,7 +401,7 @@
 	 * <li>h5.async.when([pi, [p2, p3], p4])</li>
 	 * </ul>
 	 * と書いても、先の例と同様p1とp4のみ待ちます。
-	 * 
+	 *
 	 * @param {Promise} var_args promiseオブジェクト。可変長、または配列で複数のpromiseを指定できます。
 	 * @returns {Promise} Promiseオブジェクト
 	 * @name when
@@ -421,7 +421,7 @@
 			// DeferredもPromiseも、promiseメソッドを持つので、
 			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
 			if (args[i] != null && !args[i].promise && !$.isFunction(args[i].promise)) {
-				fwLogger.info('h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。');
+				fwLogger.info(FW_LOG_H5_WHEN_INVALID_PARAMTER);
 				break;
 			}
 		}

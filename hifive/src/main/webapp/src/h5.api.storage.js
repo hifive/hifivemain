@@ -37,6 +37,7 @@
 
 	/* del begin */
 	var fwLogger = h5.log.createLogger('h5.api.storage');
+	var FW_LOG_STORAGE_SUPPORTED = 'local storage supported:{0}, session storage supported:{1}';
 	/* del end */
 
 	// =========================================================================
@@ -63,7 +64,7 @@
 	function WebStorage(storage) {
 		/**
 		 * ストレージオブジェクト(localStorage/sessionStorage)
-		 * 
+		 *
 		 * @member h5.api.storage.local
 		 * @name storage
 		 * @type Storage
@@ -74,7 +75,7 @@
 
 	/**
 	 * Web Storage
-	 * 
+	 *
 	 * @memberOf h5.api
 	 * @name storage
 	 * @namespace
@@ -82,7 +83,7 @@
 	$.extend(WebStorage.prototype, {
 		/**
 		 * ストレージに保存されている、キーと値のペアの数を取得します。
-		 * 
+		 *
 		 * @memberOf h5.api.storage.local
 		 * @name getLength
 		 * @function
@@ -94,7 +95,7 @@
 
 		/**
 		 * 指定されたインデックスにあるキーを、ストレージから取得します。
-		 * 
+		 *
 		 * @memberOf h5.api.storage.local
 		 * @name key
 		 * @function
@@ -109,7 +110,7 @@
 		 * 指定されたキーに紐付く値を、ストレージから取得します。
 		 * <p>
 		 * 自動的にsetItem()実行時に保存したときの型に戻します。
-		 * 
+		 *
 		 * @memberOf h5.api.storage.local
 		 * @name getItem
 		 * @function
@@ -129,7 +130,7 @@
 		 * <p>
 		 * 値は、シリアライズして保存します。保存できる型は<a href="./h5.u.obj.html#serialize">h5.u.obj.serialize()</a>を参照してください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.api.storage.local
 		 * @name setItem
 		 * @function
@@ -142,7 +143,7 @@
 
 		/**
 		 * 指定されたキーに紐付く値を、ストレージから削除します。
-		 * 
+		 *
 		 * @memberOf h5.api.storage.local
 		 * @name removeItem
 		 * @function
@@ -154,7 +155,7 @@
 
 		/**
 		 * ストレージに保存されている全てのキーとそれに紐付く値を全て削除します。
-		 * 
+		 *
 		 * @memberOf h5.api.storage.local
 		 * @name clear
 		 * @function
@@ -165,7 +166,7 @@
 
 		/**
 		 * 現在ストレージに保存されているオブジェクト数分、キーと値をペアで取得します。
-		 * 
+		 *
 		 * @memberOf h5.api.storage.local
 		 * @name each
 		 * @function
@@ -188,7 +189,7 @@
 	h5.u.obj.expose('h5.api.storage', {
 		/**
 		 * ブラウザがこのAPIをサポートしているか。
-		 * 
+		 *
 		 * @memberOf h5.api.storage
 		 * @name isSupported
 		 * @type Boolean
@@ -198,7 +199,7 @@
 		isSupported: !!window.localStorage,
 		/**
 		 * ローカルストレージ
-		 * 
+		 *
 		 * @memberOf h5.api.storage
 		 * @name local
 		 * @namespace
@@ -206,7 +207,7 @@
 		local: new WebStorage(window.localStorage),
 		/**
 		 * セッションストレージ
-		 * 
+		 *
 		 * @memberOf h5.api.storage
 		 * @name session
 		 * @namespace
@@ -214,7 +215,7 @@
 		session: new WebStorage(window.sessionStorage)
 	});
 
-	fwLogger.debug(h5.u.str.format('local storage supported:{0}, session storage supported:{1}',
-			!!window.localStorage, !!window.sessionStorage));
-
+	/* del begin */
+	fwLogger.debug(FW_LOG_STORAGE_SUPPORTED, !!window.localStorage, !!window.sessionStorage);
+	/* del end */
 })();
