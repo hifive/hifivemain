@@ -1906,7 +1906,7 @@
 		 * Controller#unbind() の処理を包含しています。
 		 * 
 		 * @param {Any} [errorObj] disposeの際にrejectするdeferredのpromiseのfailハンドラに渡すオブジェクト
-		 * @returns {Promise} Promiseオブジェク
+		 * @returns {Promise} Promiseオブジェクト
 		 * @memberOf Controller
 		 */
 		dispose: function(errorObj) {
