@@ -378,6 +378,7 @@
 			for (var i = 0; i < resourcePaths.length; i++) {
 				var path = resourcePaths[i];
 				var absolutePath = toAbsoluteUrl(path);
+				var urls = this.accessingUrls;
 
 				if (this.cache[absolutePath]) {
 					$.extend(ret, getTemplateByURL(absolutePath));
@@ -387,12 +388,12 @@
 					continue;
 				}
 
-				if ($.inArray(absolutePath, this.accessingUrls) === -1) {
-					var loadPromsie = load(absolutePath, path);
-					this.accessingUrls[absolutePath] = loadPromsie;
-					tasks.push(loadPromsie);
+				if (urls[absolutePath]) {
+					tasks.push(urls[absolutePath]);
 				} else {
-					tasks.push(this.accessingUrls[absolutePath]);
+					var loadPromise = load(absolutePath, path);
+					urls[absolutePath] = loadPromise;
+					tasks.push(loadPromise);
 				}
 			}
 
