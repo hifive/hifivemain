@@ -1922,7 +1922,7 @@
 			this.unbind();
 			var that = this;
 			var promises = executeLifeEndChain(this, '__dispose');
-			h5.async.when(promises).done(function() {
+			h5.async.when(promises).always(function() {
 				disposeController(that);
 				dfd.resolve();
 			});

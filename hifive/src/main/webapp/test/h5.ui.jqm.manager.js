@@ -25,13 +25,11 @@ $(function() {
 	 * JQMControllerのアンバインド
 	 */
 	function resetJQM() {
-		h5.ui.jqm.manager.__initFlag && h5.ui.jqm.manager.__initFlag(false);
 		$('body>div.testForJQM').each(function() {
 			$(this).trigger('pageremove');
 		});
 		$('body>div.testForJQM').remove();
-		h5.core.controllerManager.controllers[0]
-				&& h5.core.controllerManager.controllers[0].dispose();
+		h5.ui.jqm.manager.__reset();
 		$.mobile.activePage = undefined;
 		// JQMが生成するbody内をラップするdiv要素を外す
 		$('body>div').children().unwrap();
@@ -72,7 +70,7 @@ $(function() {
 	 * h5.ui.jqm.manager.__initFlagが存在するかどうかをチェックする。存在しない場合はテストを終了させる。 引数にtrueを指定した場合はstart()を呼ばない。
 	 */
 	function checkDev() {
-		if (!h5.ui.jqm.manager.__initFlag) {
+		if (!h5.ui.jqm.manager.__reset) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			return false;
@@ -102,7 +100,208 @@ $(function() {
 
 	var originalPrefix = '';
 
-	module("init1", {
+	module('JQMManager - define', {
+		setup: function() {
+			createPage("test1", 'data/testforJQM1.js', true);
+			createPage("test2", 'data/testforJQM2.js');
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	asyncTest('init()を実行せず、define()を実行する。', 1, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		var controllerDefObj = {
+			__name: 'DefineTestController',
+			__ready: function() {
+				ok(true, 'h5.ui.jqm.controller.define()でコントローラがバインドされ、__ready()が実行すること。');
+				start();
+			}
+		};
+
+		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
+	});
+
+	asyncTest('init()を実行せずにdefine()を実行して、遷移を行う。', 9, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		var controller1 = {
+			__name: 'Test1Controller',
+
+			__construct: function() {
+				ok(true, '__constructが実行される');
+			},
+			__init: function() {
+				ok(true, '__initが実行される');
+			},
+			__ready: function() {
+				ok(true, '__readyが実行される');
+
+				var count = 50;
+				function checkCSS() {
+					if (--count === 0 || $('#test1 h1').css('font-size') === '111px') {
+						deepEqual($('#test1 h1').css('font-size'), '111px',
+								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
+						changePage('#test2', true);
+					} else {
+						setTimeout(function() {
+							checkCSS();
+						}, 100);
+					}
+				}
+				checkCSS();
+			},
+			'button#test click': function() {
+				ok(true, 'button#test click が実行される');
+			}
+		};
+
+		var controller2 = {
+			__name: 'Test2Controller',
+
+			__construct: function() {
+				ok(true, '__constructが実行される');
+			},
+			__init: function() {
+				ok(true, '__initが実行される');
+			},
+			__ready: function() {
+				ok(true, '__readyが実行される');
+
+				var count = 50;
+				function checkCSS() {
+					if (--count === 0 || $('#test2 h1').css('margin-left') === '33px') {
+						deepEqual($('#test2 h1').css('margin-left'), '33px',
+								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
+						ok($('#test2 h1').css('font-size') !== '111px', '遷移元ページのCSSは適用されていない。');
+						start();
+					} else {
+						setTimeout(function() {
+							checkCSS();
+						}, 100);
+					}
+				}
+				checkCSS();
+			},
+			'button#test click': function() {
+				ok(true, 'button#test click が実行される');
+			}
+		};
+
+		h5.ui.jqm.manager.define('test1', 'css/test.css', controller1);
+		h5.ui.jqm.manager.define('test2', 'css/test2.css', controller2);
+	});
+
+
+	module('JQMManager - unbind', {
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	asyncTest('h5.ui.jqm.manager.init()後、JQMControllerをunbindする。', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		h5.ui.jqm.manager.init();
+
+		setTimeout(function() {
+			var c = h5.core.controllerManager.controllers[0];
+			raises(function() {
+				c.unbind();
+			}, 'JQMControllerはunbinedできないこと。');
+
+			equal('JQMController', c.__name, 'JQMControllerがdisposeされていないこと。');
+			start();
+		}, 0);
+	});
+
+	asyncTest('h5.ui.jqm.manager.define()後、JQMControllerをunbindする。', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+		createPage("test1", 'data/testforJQM1.js', true);
+
+		var controllerDefObj = {
+			__name: 'DefineTestController'
+		};
+
+		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
+
+		setTimeout(function() {
+			var c = h5.core.controllerManager.controllers[0];
+			raises(function() {
+				c.unbind();
+			}, 'JQMControllerはunbinedできないこと。');
+
+			equal('JQMController', c.__name, 'JQMControllerがdisposeされていないこと。');
+			start();
+		}, 0);
+	});
+
+	module('JQMManager - dispose', {
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	asyncTest('h5.ui.jqm.manager.init()後、JQMControllerをdisposeする。', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		h5.ui.jqm.manager.init();
+
+		setTimeout(function() {
+			var c = h5.core.controllerManager.controllers[0];
+			raises(function() {
+				c.unbind();
+			}, 'JQMControllerはdisposeできないこと。');
+
+			equal('JQMController', c.__name);
+			start();
+		}, 0);
+	});
+
+	asyncTest('h5.ui.jqm.manager.define()後、JQMControllerをdisposeする。', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		createPage("test1", 'data/testforJQM1.js', true);
+
+		var controllerDefObj = {
+			__name: 'DefineTestController'
+		};
+
+		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
+
+		setTimeout(function() {
+			var c = h5.core.controllerManager.controllers[0];
+			raises(function() {
+				c.unbind();
+			}, 'JQMControllerはdisposeできないこと。');
+
+			equal('JQMController', c.__name, 'JQMControllerがdisposeされていないこと。');
+			start();
+		}, 0);
+	});
+
+
+	module("JQMManager - init1", {
 		setup: function() {
 			h5.ui.jqm.manager.init();
 		},
@@ -141,7 +340,7 @@ $(function() {
 		}, 0);
 	});
 
-	module("init2", {
+	module("JQMManager - init2", {
 		setup: function() {
 			createPage("testjs1", 'data/testforJQM1.js', true);
 			createPage("testjs2", 'data/testforJQM2.js');
@@ -168,7 +367,7 @@ $(function() {
 				}, 0);
 	});
 
-	module("init2", {
+	module("JQMManager - init2", {
 		setup: function() {
 			createPage("testjs3", 'data/testforJQM1.js', true);
 			h5.ui.jqm.manager.init();
@@ -199,38 +398,7 @@ $(function() {
 				}, 0);
 	});
 
-	module("__initFlag", {
-		setup: function() {},
-		teardown: function() {
-			resetJQM();
-		}
-	});
-	asyncTest('__initFlag()でinit()済みかどうかを取得/設定できること', 2, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-		deepEqual(h5.ui.jqm.manager.__initFlag(), false, 'init()前なので、falseを取得できること。');
-		h5.ui.jqm.manager.init();
-		deepEqual(h5.ui.jqm.manager.__initFlag(), true, 'init()済みなので、trueを取得できること。');
-		setTimeout(function() {
-			// JQMControllerのバインドが終わるまで次のテストが実行されないよう、非同期にして待機。
-			start();
-		}, 0);
-	});
-	test('__initFlag()にtrue,false以外を指定するとログが表示されること(※要目視確認)', 3, function() {
-		if (!checkDev()) {
-			return;
-		}
-		h5.ui.jqm.manager.__initFlag(0);
-		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
-		h5.ui.jqm.manager.__initFlag(new Boolean(true));
-		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
-		h5.ui.jqm.manager.__initFlag(new Boolean(false));
-		ok(true, '『h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。』とログがコンソールに表示されていること。');
-	});
-
-	module("dataPrefix1", {
+	module("JQMManager - dataPrefix1", {
 		setup: function() {
 			originalPrefix = h5.ui.jqm.dataPrefix;
 			h5.ui.jqm.dataPrefix = 'hifive';
@@ -262,7 +430,7 @@ $(function() {
 				}, 0);
 			});
 
-	module("dataPrefix2", {
+	module("JQMManager - dataPrefix2", {
 		setup: function() {
 			originalPrefix = h5.ui.jqm.dataPrefix;
 			h5.ui.jqm.dataPrefix = null;
@@ -294,7 +462,7 @@ $(function() {
 				}, 0);
 	});
 
-	module("define1", {
+	module("JQMManager - define1", {
 		setup: function() {
 			createPage("test3", null, true);
 			createPage("test4");
@@ -337,7 +505,7 @@ $(function() {
 		}, 0);
 	});
 
-	module("define2", {
+	module("JQMManager - define2", {
 		setup: function() {
 			createPage("test4", 'data/testforJQM3.js', true);
 			createPage("test5", 'data/testforJQM4.js');
@@ -367,7 +535,7 @@ $(function() {
 	});
 
 
-	module("define3", {
+	module("JQMManager - define3", {
 		setup: function() {
 			createPage("test6", null, true);
 
@@ -406,7 +574,7 @@ $(function() {
 		}, 0);
 	});
 
-	module('define4', {
+	module('JQMManager - define4', {
 		setup: function() {
 			createPage('test7', null, true);
 			createPage('test8');
@@ -488,7 +656,7 @@ $(function() {
 		h5.ui.jqm.manager.define('test8', 'css/test2.css', controller8);
 	});
 
-	module('define5', {
+	module('JQMManager - define5', {
 		setup: function() {
 			createPage('test9', null, true);
 			createPage('test10');
@@ -496,7 +664,7 @@ $(function() {
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+		//resetJQM();
 		}
 	});
 
@@ -546,7 +714,7 @@ $(function() {
 		h5.ui.jqm.manager.define('test10', null, controller10);
 	});
 
-	module('define6', {
+	module('JQMManager - define6', {
 		setup: function() {
 			createPage('test11', null, true);
 			createPage('test12');
