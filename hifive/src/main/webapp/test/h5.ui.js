@@ -175,7 +175,8 @@ $(function() {
 											+ test1.substring(1)
 											+ '" style="position:absolute; top:10px; left:-20px; overflow:hidden"></div>');
 
-					$(test1).append(
+					$(test1)
+							.append(
 									'<div id="'
 											+ test2.substring(1)
 											+ '" style="position:absolute; margin:5px; padding:5px; width:10px; height:20px; border:2px solid red"></div>');
@@ -192,77 +193,75 @@ $(function() {
 					$(fixture)[0].style.width = '';
 				}
 			});
-	asyncTest(
-			'h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。',
-			12, function() {
-				var test2Dom = $(test2)[0];
-				function testFunc() {
-					var top,left;
-					// 1 - ( 内側の要素のボーダー(上下(左右)の合計) + 内側の要素のパディング(上下(左右)の合計) + 内側の要素の高さ(幅) +
-					// 外側の要素のボーダー)
-					top = -38;
-					left = -28;
+	asyncTest('h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。', 12, function() {
+		var test2Dom = $(test2)[0];
+		function testFunc() {
+			var top,left;
+			// 1 - ( 内側の要素のボーダー(上下(左右)の合計) + 内側の要素のパディング(上下(左右)の合計) + 内側の要素の高さ(幅) +
+			// 外側の要素のボーダー)
+			top = -38;
+			left = -28;
 
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, true, '左上1pxが見えている状態', test2, test1);
-					test2Dom.style.top = top - 1 + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', test2, test1);
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left - 1 + 'px';
-					check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, true, '左上1pxが見えている状態', test2, test1);
+			test2Dom.style.top = top - 1 + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left - 1 + 'px';
+			check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test2, test1);
 
-					// 外側の要素の幅 + 外側の要素のボーダー + 外側の要素のパディング(左右) - 内側の要素のマージン - 1
-					left = 214;
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, true, '右上1pxが見えている状態', test2, test1);
-					test2Dom.style.top = top - 1 + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', test2, test1);
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 1 + 'px';
-					check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test2, test1);
+			// 外側の要素の幅 + 外側の要素のボーダー + 外側の要素のパディング(左右) - 内側の要素のマージン - 1
+			left = 214;
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, true, '右上1pxが見えている状態', test2, test1);
+			test2Dom.style.top = top - 1 + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 1 + 'px';
+			check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test2, test1);
 
-					// 外側の要素の高さ + 外側の要素のボーダー + 外側の要素のパディング(上下) - 内側の要素のマージン - 1
-					top = 114;
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, true, '右下1pxが見えている状態', test2, test1);
-					test2Dom.style.top = top + 1 + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', test2, test1);
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 1 + 'px';
-					check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test2, test1);
+			// 外側の要素の高さ + 外側の要素のボーダー + 外側の要素のパディング(上下) - 内側の要素のマージン - 1
+			top = 114;
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, true, '右下1pxが見えている状態', test2, test1);
+			test2Dom.style.top = top + 1 + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 1 + 'px';
+			check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test2, test1);
 
-					// leftを左側に戻す
-					left = -28;
+			// leftを左側に戻す
+			left = -28;
 
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, true, '左下1pxが見えている状態', test2, test1);
-					test2Dom.style.top = top + 1 + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', test2, test1);
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left - 1 + 'px';
-					check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, true, '左下1pxが見えている状態', test2, test1);
+			test2Dom.style.top = top + 1 + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left - 1 + 'px';
+			check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', test2, test1);
 
-					start();
-				}
-				function waitForDom(i) {
-					if ($(test2).offset()) {
-						testFunc();
-						return;
-					}
-					setTimeout(function() {
-						waitForDom();
-					}, 0);
-				}
+			start();
+		}
+		function waitForDom(i) {
+			if ($(test2).offset()) {
+				testFunc();
+				return;
+			}
+			setTimeout(function() {
 				waitForDom();
-			});
+			}, 0);
+		}
+		waitForDom();
+	});
 
 
 	module(
@@ -274,14 +273,12 @@ $(function() {
 									'<div id="'
 											+ test1.substring(1)
 											+ '" style="position:absolute; top:10px; left:-20px; overflow:hidden"></div>');
-					$(test1).append(
+					$(test1).append('<div id="' + test3.substring(1) + '"></div>');
+					$(test3)
+							.append(
 									'<div id="'
-											+ test3.substring(1)
-											+ '"></div>');
-					$(test3).append(
-							'<div id="'
-									+ test2.substring(1)
-									+ '" style="position:absolute; margin:5px; padding:5px; width:10px; height:20px; border:2px solid red"></div>');
+											+ test2.substring(1)
+											+ '" style="position:absolute; margin:5px; padding:5px; width:10px; height:20px; border:2px solid red"></div>');
 
 					$(test1)[0].style.height = '100px';
 					$(test1)[0].style.width = '200px';
@@ -295,77 +292,75 @@ $(function() {
 					$(fixture)[0].style.width = '';
 				}
 			});
-	asyncTest(
-			'h5.ui.isInView - 孫要素に対してもisInView()の結果が正しく取得できること。',
-			12, function() {
-				var test2Dom = $(test2)[0];
-				function testFunc() {
-					var top,left;
-					// 1 - ( 内側の要素のボーダー(上下(左右)の合計) + 内側の要素のパディング(上下(左右)の合計) + 内側の要素の高さ(幅) +
-					// 外側の要素のボーダー)
-					top = -38;
-					left = -28;
+	asyncTest('h5.ui.isInView - 孫要素に対してもisInView()の結果が正しく取得できること。', 12, function() {
+		var test2Dom = $(test2)[0];
+		function testFunc() {
+			var top,left;
+			// 1 - ( 内側の要素のボーダー(上下(左右)の合計) + 内側の要素のパディング(上下(左右)の合計) + 内側の要素の高さ(幅) +
+			// 外側の要素のボーダー)
+			top = -38;
+			left = -28;
 
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, true, '左上1pxが見えている状態', test2, test1);
-					test2Dom.style.top = top - 1 + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', test2, test1);
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left - 1 + 'px';
-					check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, true, '左上1pxが見えている状態', test2, test1);
+			test2Dom.style.top = top - 1 + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left - 1 + 'px';
+			check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test2, test1);
 
-					// 外側の要素の幅 + 外側の要素のボーダー + 外側の要素のパディング(左右) - 内側の要素のマージン - 1
-					left = 214;
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, true, '右上1pxが見えている状態', test2, test1);
-					test2Dom.style.top = top - 1 + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', test2, test1);
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 1 + 'px';
-					check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test2, test1);
+			// 外側の要素の幅 + 外側の要素のボーダー + 外側の要素のパディング(左右) - 内側の要素のマージン - 1
+			left = 214;
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, true, '右上1pxが見えている状態', test2, test1);
+			test2Dom.style.top = top - 1 + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 1 + 'px';
+			check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test2, test1);
 
-					// 外側の要素の高さ + 外側の要素のボーダー + 外側の要素のパディング(上下) - 内側の要素のマージン - 1
-					top = 114;
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, true, '右下1pxが見えている状態', test2, test1);
-					test2Dom.style.top = top + 1 + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', test2, test1);
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 1 + 'px';
-					check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test2, test1);
+			// 外側の要素の高さ + 外側の要素のボーダー + 外側の要素のパディング(上下) - 内側の要素のマージン - 1
+			top = 114;
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, true, '右下1pxが見えている状態', test2, test1);
+			test2Dom.style.top = top + 1 + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 1 + 'px';
+			check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test2, test1);
 
-					// leftを左側に戻す
-					left = -28;
+			// leftを左側に戻す
+			left = -28;
 
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, true, '左下1pxが見えている状態', test2, test1);
-					test2Dom.style.top = top + 1 + 'px';
-					test2Dom.style.left = left + 'px';
-					check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', test2, test1);
-					test2Dom.style.top = top + 'px';
-					test2Dom.style.left = left - 1 + 'px';
-					check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, true, '左下1pxが見えている状態', test2, test1);
+			test2Dom.style.top = top + 1 + 'px';
+			test2Dom.style.left = left + 'px';
+			check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', test2, test1);
+			test2Dom.style.top = top + 'px';
+			test2Dom.style.left = left - 1 + 'px';
+			check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', test2, test1);
 
-					start();
-				}
-				function waitForDom(i) {
-					if ($(test2).offset()) {
-						testFunc();
-						return;
-					}
-					setTimeout(function() {
-						waitForDom();
-					}, 0);
-				}
+			start();
+		}
+		function waitForDom(i) {
+			if ($(test2).offset()) {
+				testFunc();
+				return;
+			}
+			setTimeout(function() {
 				waitForDom();
-			});
+			}, 0);
+		}
+		waitForDom();
+	});
 
 	module(
 			"isInView4",
@@ -399,9 +394,7 @@ $(function() {
 					$(window).scrollTop(originLeft);
 				}
 			});
-	test(
-			'h5.ui.isInView - 第二引数を省略したときはウィンドウ上に見えているかどうかを判定できること。スクロールした状態でも見えているかどうかで判定されること。',
-			24,
+	test('h5.ui.isInView - 第二引数を省略したときはウィンドウ上に見えているかどうかを判定できること。スクロールした状態でも見えているかどうかで判定されること。', 24,
 			function() {
 				var testDom = $(test3)[0];
 				function testFunc(scrollTop, scrollLeft) {
