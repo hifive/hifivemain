@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
  package jp.co.nssol.h5.test.selenium.testcase.coverage.marge;
@@ -24,9 +24,9 @@ import org.openqa.selenium.WebDriver;
 
 /**
  * TODO テストケースの追加
- * 
+ *
  * @author fukuda
- * 
+ *
  */
 public class WaitForQUnitTest extends H5TestCase {
 
@@ -41,8 +41,7 @@ public class WaitForQUnitTest extends H5TestCase {
 		try {
 			getDriver().switchTo().frame(querySelector("#browserIframe").get(0));
 
-			while (querySelector("#qunit-testresult").get(0).getText().contains("Running...")) {
-				System.out.println(querySelector("#qunit-testresult").get(0).getText());
+			while (querySelector("#qunit-testresult").get(0).getText().contains("Running:")) {
 				Thread.sleep(1000);
 			}
 			System.out.println("QUnitテスト終了");
