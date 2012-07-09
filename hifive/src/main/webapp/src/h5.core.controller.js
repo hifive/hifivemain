@@ -1973,7 +1973,7 @@
 		 * }).show();
 		 * </pre>
 		 *
-		 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しないる場合</b><br>
+		 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
 		 *
 		 * <pre>
 		 * var indicator = this.indicator({
@@ -2050,16 +2050,23 @@
 		},
 
 		/**
-		 * フォーマット済みメッセージを詰めたエラーをthrowします。
+		 * 指定された値をメッセージとして例外をスローします。
+		 * <p>
+		 * 第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+		 * <p>
+		 * <b>文字列の場合</b><br>
+		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
+		 * <p>
+		 * <b>オブジェクトの場合</b><br>
+		 * オブジェクトをtoString()した文字列を、メッセージ文字列とします。
 		 *
 		 * @memberOf Controller
-		 * @param {String|Object} parameter 文字列の場合、第2引数以降をパラメータとしてフォーマットします。<br />
-		 *            オブジェクトの場合、そのままErrorクラスへ格納します。
-		 * @param {Any} [var_args] 第1引数が文字列の場合のパラメータ
+		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
+		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
-		throwError: function(parameter, var_args) {
+		throwError: function(msgOrErrObj, var_args) {
 			var error = null;
-			if (parameter && typeof parameter === 'string') {
+			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
 				error = new Error(format.apply(null, argsToArray(arguments)));
 			} else {
 				error = Error.apply(null, arguments);
@@ -2069,13 +2076,22 @@
 		},
 
 		/**
-		 * エラータイプとフォーマット済みメッセージを詰めたエラーをthrowします。
+		 * 指定された値をメッセージとして例外をスローします。
+		 * <p>
+		 * このメソッドでスローされたErrorオブジェクトのcustomTypeプロパティには、第一引数で指定した型情報が格納されます。
+		 * <p>
+		 * 第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+		 * <p>
+		 * <b>文字列の場合</b><br>
+		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
+		 * <p>
+		 * <b>オブジェクトの場合</b><br>
+		 * オブジェクトをtoString()した文字列を、メッセージ文字列とします。
 		 *
 		 * @memberOf Controller
-		 * @param {String} customType エラータイプ
-		 * @param {String|Object} parameter 文字列の場合、第3引数以降をパラメータとしてフォーマットします。<br />
-		 *            オブジェクトの場合、そのままErrorクラスへ格納します。
-		 * @param {Any} [var_args] 第2引数が文字列の場合のパラメータ
+		 * @param {String} customType 型情報
+		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
+		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwCustomError: function(customType, parameter, var_args) {
 			// null, undefinedの場合をtrueとしたいため、あえて厳密等価にしていない
