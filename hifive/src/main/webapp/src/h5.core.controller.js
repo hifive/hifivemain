@@ -115,7 +115,7 @@
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	var fwLogger = h5.log.createLogger('h5.core');
 	var FW_LOG_TEMPLATE_LOADED = 'コントローラ"{0}"のテンプレートの読み込みに成功しました。';
-	var FW_LOG_TEMPLATE_LOAD_FAILD = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
+	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
 	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
 	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
 	/* del end */
@@ -2290,7 +2290,7 @@
 					var jqXhrStatus = errorObj ? errorObj.status : null;
 					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
 							&& jqXhrStatus !== 12029) {
-						fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILD, controllerName,
+						fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
 								result.detail.url);
 						result.controllerDefObject = controllerDefObj;
 						setTimeout(function() {

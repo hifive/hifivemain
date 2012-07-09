@@ -48,7 +48,7 @@
 
 	/* del begin */
 	var fwLogger = h5.log.createLogger('h5.async');
-	var FW_LOG_H5_WHEN_INVALID_PARAMTER = 'h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。';
+	var FW_LOG_H5_WHEN_INVALID_PARAMETER = 'h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。';
 	/* del end */
 
 
@@ -421,7 +421,7 @@
 			// DeferredもPromiseも、promiseメソッドを持つので、
 			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
 			if (args[i] != null && !args[i].promise && !$.isFunction(args[i].promise)) {
-				fwLogger.info(FW_LOG_H5_WHEN_INVALID_PARAMTER);
+				fwLogger.info(FW_LOG_H5_WHEN_INVALID_PARAMETER);
 				break;
 			}
 		}
