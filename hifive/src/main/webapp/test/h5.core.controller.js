@@ -20,16 +20,6 @@ $(function() {
 	// アサートが稀に失敗する場合があるので、フェードアウトのアニメ―ションを実行しない。
 	$.blockUI.defaults.fadeOut = -1;
 
-	// resolve済みかどうかをチェックする関数
-	function isResolved(dfd) {
-		return dfd.isResolved ? dfd.isResolved() : dfd.state() === 'resolved';
-	}
-
-	// reject済みかどうかをチェックする関数
-	function isRejected(dfd) {
-		return dfd.isRejected ? dfd.isRejected() : dfd.state() === 'rejected';
-	}
-
 	var rgbToHex = function(rgbStr) {
 		if (/^#\d{3,6}$/.test(rgbStr)) {
 			return rgbStr;
