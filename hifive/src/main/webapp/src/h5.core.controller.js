@@ -1261,10 +1261,13 @@
 		bindByBindMap(controller);
 		bindDescendantHandlers(controller);
 
-		// コントローラマネージャの管理対象に追加
+		// コントローラマネージャの管理対象に追加する
+		// フレームワークオプションでコントローラマネージャの管理対象としない(managed:false)の場合、コントローラマネージャに登録しない
 		var controllers = h5.core.controllerManager.controllers;
-		if ($.inArray(controller, controllers) === -1) {
+		if ($.inArray(controller, controllers) === -1
+				&& controller.__controllerContext.managed !== false) {
 			controllers.push(controller);
+			delete controller.__controllerContext.managed;
 		}
 
 		// h5controllerboundイベントをトリガ.
@@ -1446,6 +1449,9 @@
 		var propertyArray = ['initDfd', 'readyDfd'];
 		function rejectControllerDfdLoop(con, propertyIndex) {
 			var property = propertyArray[propertyIndex];
+			if (!property) {
+				return;
+			}
 			var dfd = con.__controllerContext[property];
 			if (dfd) {
 				if (!dfd.isRejected() && !dfd.isResolved()) {
@@ -2434,12 +2440,21 @@
 		if (isDisposing(controller)) {
 			return null;
 		}
+
+		// コントローラマネージャの管理対象とするか判定する
+		if (fwOpt && 'managed' in fwOpt) {
+			controller.__controllerContext.managed = fwOpt.managed;
+		}
+
 		// ルートコントローラなら、ルートをセット
 		if (controller.__controllerContext.isRoot) {
 			setRootAndTriggerInit(controller);
 		}
 		return controller;
 	}
+
+	// fwOptを引数に取る、コントローラ化を行うメソッドを、h5internal.core.controllerInternalとして内部用に登録
+	h5internal.core.controllerInternal = createAndBindController;
 
 	/**
 	 * オブジェクトのロジック化を行います。
@@ -2501,7 +2516,9 @@
 		 * @function
 		 * @memberOf h5.core
 		 */
-		controller: createAndBindController,
+		controller: function(targetElement, controllerDefObj, param) {
+			return createAndBindController(targetElement, controllerDefObj, param);
+		},
 
 		logic: createLogic,
 

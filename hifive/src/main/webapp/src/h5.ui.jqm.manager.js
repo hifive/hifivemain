@@ -321,7 +321,10 @@
 			if (!controllerMap[id] || (controllers && controllers.length > 0)) {
 				return;
 			}
-			h5.core.controller('#' + id, controllerMap[id], initParamMap[id]);
+			h5internal.core.controllerInternal('#' + id, controllerMap[id], initParamMap[id], null,
+					{
+						managed: false
+					});
 		},
 
 		/**
@@ -416,7 +419,10 @@
 			}
 			initCalled = true;
 			$(function() {
-				jqmControllerInstance = h5.core.controller('body', jqmController);
+				jqmControllerInstance = h5internal.core.controllerInternal('body', jqmController,
+						null, {
+							managed: false
+						});
 				bindToActivePage();
 			});
 		},
