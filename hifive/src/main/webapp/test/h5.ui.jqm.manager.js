@@ -207,6 +207,106 @@ $(function() {
 		h5.ui.jqm.manager.define('test2', 'css/test2.css', controller2);
 	});
 
+	module('JQMManager - managed test', {
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	asyncTest('h5.ui.jqm.manager.init() JQMControllerはコントローラマネージャの管理対象に含まれていないこと。', 1, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		h5.ui.jqm.manager.init();
+
+		setTimeout(function() {
+			equal(h5.core.controllerManager.controllers.length, 0);
+			start();
+		}, 0);
+	});
+
+	asyncTest('h5.ui.jqm.manager.define() JQMControllerはコントローラマネージャの管理対象に含まれていないこと。', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		createPage("test1", 'data/testforJQM1.js', true);
+
+		var controllerDefObj = {
+			__name: 'DefineTestController'
+		};
+
+		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
+
+		setTimeout(function() {
+			equal(h5.core.controllerManager.controllers.length, 1);
+			equal(h5.core.controllerManager.controllers[0].__name, 'DefineTestController', 'define()でバインドしたコントローラはコントローラマネージャの管理対象に含まれていること。');
+			start();
+		}, 0);
+	});
+
+
+
+	asyncTest('h5.ui.jqm.manager.init() h5controllerboundイベントがトリガされないこと。', 1, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		var testController = {
+				__name: 'TestController',
+				'{rootElement} h5controllerbound': function(context) {
+					if (context.evArg.__name === 'JQMController') {
+						ok(false, 'JQMControllerからh5controllerイベントがトリガされたためエラー');
+					} else {
+						ok(true);
+						start();
+						c.dispose();
+					}
+				}
+		};
+
+		var c = h5.core.controller('body', testController);
+
+		h5.ui.jqm.manager.init();
+	});
+
+	asyncTest('h5.ui.jqm.manager.define() h5controllerboundイベントがトリガされないこと。', 2, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		var testController = {
+				__name: 'TestController',
+				'{rootElement} h5controllerbound': function(context) {
+					var name = context.evArg.__name;
+					if (name === 'JQMController') {
+						ok(false, 'JQMControllerからh5controllerイベントがトリガされたためエラー');
+					} else if (name === 'TestController') {
+						ok(true);
+					} else if (name === 'DefineController') {
+						ok(true);
+						start();
+						c.dispose();
+					}
+				}
+		};
+
+		var c = h5.core.controller('body', testController);
+
+		createPage("test1", 'data/testforJQM1.js', true);
+
+		var controllerDefObj = {
+			__name: 'DefineController'
+		};
+
+		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
+	});
+
 
 	module('JQMManager - unbind', {
 		teardown: function() {

@@ -321,10 +321,7 @@
 			if (!controllerMap[id] || (controllers && controllers.length > 0)) {
 				return;
 			}
-			h5internal.core.controllerInternal('#' + id, controllerMap[id], initParamMap[id], null,
-					{
-						managed: false
-					});
+			h5.core.controller('#' + id, controllerMap[id], initParamMap[id]);
 		},
 
 		/**
