@@ -2059,7 +2059,7 @@
 		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
 		 * <p>
 		 * <b>オブジェクトの場合</b><br>
-		 * オブジェクトの文字列表現を、メッセージ文字列とします。
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
 		 *
 		 * @memberOf Controller
 		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
@@ -2070,7 +2070,8 @@
 			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
 				error = new Error(format.apply(null, argsToArray(arguments)));
 			} else {
-				error = Error.apply(null, arguments);
+				error = new Error();
+				error.detail = msgOrErrObj;
 			}
 			error.customType = null;
 			throw error;
@@ -2081,30 +2082,31 @@
 		 * <p>
 		 * このメソッドでスローされたErrorオブジェクトのcustomTypeプロパティには、第一引数で指定した型情報が格納されます。
 		 * <p>
-		 * 第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+		 * 第二引数がオブジェクトまたは文字列によって、出力される内容が異なります。
 		 * <p>
 		 * <b>文字列の場合</b><br>
 		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
 		 * <p>
 		 * <b>オブジェクトの場合</b><br>
-		 * オブジェクトの文字列表現を、メッセージ文字列とします。
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
 		 *
 		 * @memberOf Controller
 		 * @param {String} customType 型情報
 		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
-		throwCustomError: function(customType, parameter, var_args) {
+		throwCustomError: function(customType, msgOrErrObj, var_args) {
 			// null, undefinedの場合をtrueとしたいため、あえて厳密等価にしていない
 			if (customType == null) {
 				throwFwError(ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED);
 			}
 			var args = argsToArray(arguments);
 			args.shift();
-			if (parameter && typeof parameter === 'string') {
+			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
 				error = new Error(format.apply(null, argsToArray(args)));
 			} else {
-				error = Error.apply(null, args);
+				error = new Error();
+				error.detail = msgOrErrObj;
 			}
 			error.customType = customType;
 			throw error;
