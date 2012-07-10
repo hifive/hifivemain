@@ -1275,9 +1275,7 @@
 		initPromises.push(controller.initPromise);
 		h5.async.when(initPromises).done(function() {
 			executeLifecycleEventChain(controller, false);
-		}).fail(function(e) {
-			fwLogger.warn(e);
-		});
+		}).fail(dummyFailHandler);
 	}
 
 	/**
