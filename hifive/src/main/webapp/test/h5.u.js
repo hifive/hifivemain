@@ -550,12 +550,11 @@ $(function() {
 										deepEqual(window.com.htmlhifive.test.sample4loaded, 3,
 												'sample4.jsが3回読み込まれたこと。(パラレル)');
 										window.com.htmlhifive.test.sample4loaded = undefined;
-										start();
 									}).fail(function(e) {
 								ok(false, e.code + ': ' + e.message);
-								start();
 							}).always(function() {
 								window.onerror = qunitWindowOnErrorFunc;
+								start();
 							});
 						}).fail(function(e) {
 					ok(false, e.code + ': ' + e.message);
