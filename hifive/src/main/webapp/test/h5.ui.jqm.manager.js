@@ -308,130 +308,22 @@ $(function() {
 	});
 
 
-	module('JQMManager - unbind', {
-		teardown: function() {
-			resetJQM();
-		}
-	});
-
-	asyncTest('h5.ui.jqm.manager.init()後、JQMControllerをunbindする  ※min版ではエラーになります', 2, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-
-		h5.ui.jqm.manager.init();
-
-		setTimeout(function() {
-			var c = h5.core.controllerManager.controllers[0];
-			raises(function() {
-				c.unbind();
-			}, 'JQMControllerはunbinedできないこと。');
-
-			equal('JQMController', c.__name, 'JQMControllerがdisposeされていないこと。');
-			start();
-		}, 0);
-	});
-
-	asyncTest('h5.ui.jqm.manager.define()後、JQMControllerをunbindする  ※min版ではエラーになります', 2, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-		createPage("test1", 'data/testforJQM1.js', true);
-
-		var controllerDefObj = {
-			__name: 'DefineTestController'
-		};
-
-		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
-
-		setTimeout(function() {
-			var c = h5.core.controllerManager.controllers[0];
-			raises(function() {
-				c.unbind();
-			}, 'JQMControllerはunbinedできないこと。');
-
-			equal('JQMController', c.__name, 'JQMControllerがdisposeされていないこと。');
-			start();
-		}, 0);
-	});
-
-	module('JQMManager - dispose', {
-		teardown: function() {
-			resetJQM();
-		}
-	});
-
-	asyncTest('h5.ui.jqm.manager.init()後、JQMControllerをdisposeする  ※min版ではエラーになります', 2, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-
-		h5.ui.jqm.manager.init();
-
-		setTimeout(function() {
-			var c = h5.core.controllerManager.controllers[0];
-			raises(function() {
-				c.unbind();
-			}, 'JQMControllerはdisposeできないこと。');
-
-			equal('JQMController', c.__name);
-			start();
-		}, 0);
-	});
-
-	asyncTest('h5.ui.jqm.manager.define()後、JQMControllerをdisposeする  ※min版ではエラーになります', 2, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-
-		createPage("test1", 'data/testforJQM1.js', true);
-
-		var controllerDefObj = {
-			__name: 'DefineTestController'
-		};
-
-		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
-
-		setTimeout(function() {
-			var c = h5.core.controllerManager.controllers[0];
-			raises(function() {
-				c.unbind();
-			}, 'JQMControllerはdisposeできないこと。');
-
-			equal('JQMController', c.__name, 'JQMControllerがdisposeされていないこと。');
-			start();
-		}, 0);
-	});
-
 
 	module("JQMManager - init1", {
-		setup: function() {
-			h5.ui.jqm.manager.init();
-		},
 		teardown: function() {
 			resetJQM();
 		}
 	});
-	asyncTest('init() initを実行するとJQMControllerがバインドされること  ※min版ではエラーになります', 1, function() {
+	test('※要目視確認 init() initを実行するとJQMControllerがバインドされること。  ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
 			start();
 			return;
 		}
-		// h5.core.controllerManager.controllersに追加されるのは、JQMControllerの__init()後なので非同期である。
-		// そのため、setTimeoutで非同期にしてJQMControllerがバインドされていることを確認する。
-		setTimeout(function() {
-			var controllers = h5.core.controllerManager.controllers;
-			deepEqual(controllers[controllers.length - 1].__name, 'JQMController',
-					'JQMControllerがバインドされている。');
-			start();
-		}, 0);
+		h5.ui.jqm.manager.init();
+		ok(true, '「コントローラJQMControllerの初期化が正常に完了しました。」のログが、コンソールに出力されること。');
 	});
 
-	asyncTest('init() すでにinit()済みならログが出力(※要目視)されて、何もされないこと  ※min版ではエラーになります', 1, function() {
+	asyncTest('※要目視確認 init() すでにinit()済みならログが出力されて、何もされないこと。  ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
 			start();
 			return;
