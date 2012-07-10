@@ -4543,7 +4543,8 @@ $(function() {
 						try {
 							this.throwError(obj, obj);
 						} catch (e) {
-							ok(e.message, 'throwErrorメソッドの第1引数がオブジェクトの場合、そのまま出力されているか');
+							equal(e.message, '', '第一引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							deepEqual(e.detail, obj, 'detailプロパティに第一引数に指定したオブジェクトが設定されていること。');
 						}
 						try {
 							this.throwCustomError();
@@ -4575,7 +4576,8 @@ $(function() {
 						try {
 							this.throwCustomError('customType', obj, obj);
 						} catch (e) {
-							ok(e.message, 'throwErrorメソッドの第2引数がオブジェクトの場合、そのまま出力されているか');
+							equal(e.message, '', '第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							deepEqual(e.detail, obj, 'detailプロパティに第二引数に指定したオブジェクトが設定されていること。');
 						}
 					}
 				};
