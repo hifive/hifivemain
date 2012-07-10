@@ -13,6 +13,13 @@
  *
  * hifive
  */
+
+function isAndroid2() {
+	// Android2系の場合は、ネイティブのSQLErrorのcodeプロパティからエラーの種類を特定できないため
+	// hifiveが包んだエラーオブジェクトのメッセージの内容もエラーの種類別に変えていない。
+	// そのため、メッセージを比較するテストで、Android2系かどうかの判別が必要になる。
+	return h5.env.ua.isAndroid && h5.env.ua.browserVersion === 2;
+}
 var db = h5.api.sqldb.open('hcdb', '1', 'hcdb', 2 * 1024 * 1024);
 var TABLE_NAME = 'TBL_WEB_SQL_DB_TEST1';
 // テストメソッド実行毎に処理する関数 sql/insert/transaction/
@@ -276,7 +283,8 @@ asyncTest('db.sql()を実行後、同一トランザクションで、エラー�
 						.execute().fail(
 								function(e) {
 									strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 '
+									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+											+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 											+ e.detail.message, 'エラーメッセージが格納されていること。');
 									strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -285,8 +293,9 @@ asyncTest('db.sql()を実行後、同一トランザクションで、エラー�
 					}).fail(
 					function(e) {
 						strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 '
-								+ e.detail.message, 'エラーメッセージが格納されていること。');
+						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+								+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ') + e.detail.message,
+								'エラーメッセージが格納されていること。');
 						strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 						ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 						ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -572,7 +581,8 @@ asyncTest('db.insert()を実行後、同一トランザクションで、エラ�
 				}, tx).execute().fail(
 						function(e) {
 							strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 '
+							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+									+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 									+ e.detail.message, 'エラーメッセージが格納されていること。');
 							strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -581,7 +591,8 @@ asyncTest('db.insert()を実行後、同一トランザクションで、エラ�
 			}).fail(
 			function(e) {
 				strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-				strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 ' + e.detail.message,
+				strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+						+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ') + e.detail.message,
 						'エラーメッセージが格納されていること。');
 				strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 				ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1338,7 +1349,8 @@ asyncTest('db.update()を実行後、同一トランザクションで、エラ�
 				}, tx).execute().fail(
 						function(e) {
 							strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 '
+							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+									+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 									+ e.detail.message, 'エラーメッセージが格納されていること。');
 							strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1347,7 +1359,8 @@ asyncTest('db.update()を実行後、同一トランザクションで、エラ�
 			}).fail(
 			function(e) {
 				strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-				strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 ' + e.detail.message,
+				strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+						+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ') + e.detail.message,
 						'エラーメッセージが格納されていること。');
 				strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 				ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1741,9 +1754,9 @@ asyncTest('db.del()を実行後、同一トランザクションで、エラー�
 							}).execute().fail(
 									function(e) {
 										strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-										strictEqual(e.message,
-												'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 '
-														+ e.detail.message, 'エラーメッセージが格納されていること。');
+										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+												+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ')
+												+ e.detail.message, 'エラーメッセージが格納されていること。');
 										strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -1751,7 +1764,8 @@ asyncTest('db.del()を実行後、同一トランザクションで、エラー�
 						}).fail(
 						function(e) {
 							strictEqual(seqNo++, 3, 'fail2 3番目に実行されること。');
-							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 '
+							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+									+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 									+ e.detail.message, 'エラーメッセージが格納されていること。');
 							strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1760,7 +1774,8 @@ asyncTest('db.del()を実行後、同一トランザクションで、エラー�
 			}).fail(
 			function(e) {
 				strictEqual(seqNo++, 4, 'fail1 4番目に実行されること。');
-				strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 ' + e.detail.message,
+				strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+						+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ') + e.detail.message,
 						'エラーメッセージが格納されていること。');
 				strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 				ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1781,7 +1796,9 @@ asyncTest('db.del() - execute()を2回呼び出す', 3, function() {
 		return;
 	}
 
-	var del = db.del(TABLE_NAME).where({col1: 10});
+	var del = db.del(TABLE_NAME).where({
+		col1: 10
+	});
 
 	del.execute().done(function() {
 		ok(true, '一回目のexecute()ではエラーが発生しないこと');
@@ -1807,7 +1824,9 @@ asyncTest('db.update() - execute()を2回呼び出す 2', 3, function() {
 		return;
 	}
 
-	var del = db.del(TABLE_NAME).where({col1: 10});
+	var del = db.del(TABLE_NAME).where({
+		col1: 10
+	});
 
 	del.execute().done(function() {
 		ok(true, '一回目のexecute()ではエラーが発生しないこと');
@@ -2233,7 +2252,9 @@ asyncTest('db.select() - execute()を2回呼び出す', 3, function() {
 		return;
 	}
 
-	var select = db.select(TABLE_NAME, '*').where({col1: 10});
+	var select = db.select(TABLE_NAME, '*').where({
+		col1: 10
+	});
 
 	select.execute().done(function() {
 		ok(true, '一回目のexecute()ではエラーが発生しないこと');
@@ -2259,7 +2280,9 @@ asyncTest('db.select() - execute()を2回呼び出す 2', 3, function() {
 		return;
 	}
 
-	var select = db.select(TABLE_NAME, '*').where({col1: 10});
+	var select = db.select(TABLE_NAME, '*').where({
+		col1: 10
+	});
 
 	select.execute().done(function() {
 		ok(true, '一回目のexecute()ではエラーが発生しないこと');
@@ -2380,11 +2403,12 @@ asyncTest('db.transaction() - execute()実行済みのオブジェクトで再�
 				start();
 			});
 
-	tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest2', 10, 20000])).execute().fail(function() {
-		ok(true, 'execute()が既に実行されていたらエラー。fail()で処理されること。');
-	}).done(function() {
-		ok(false, 'テスト失敗');
-	});
+	tx.add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest2', 10, 20000]))
+			.execute().fail(function() {
+				ok(true, 'execute()が既に実行されていたらエラー。fail()で処理されること。');
+			}).done(function() {
+				ok(false, 'テスト失敗');
+			});
 });
 
 asyncTest('db.transaction() - 3件中1件不正なSQLをaddして実行', 6, function() {
@@ -2415,7 +2439,8 @@ asyncTest('db.transaction() - 3件中1件不正なSQLをaddして実行', 6, fun
 	}).fail(
 			function(e) {
 				ok(e, 'SQLの実行に失敗してfail()で処理されること。');
-				strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 ' + e.detail.message,
+				strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+						+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ') + e.detail.message,
 						'エラーメッセージが格納されていること。');
 				strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 				ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -2740,7 +2765,8 @@ asyncTest(
 						})).execute().fail(
 								function(e) {
 									strictEqual(seqNo++, 1, 'fail2: 1番目に実行されること。');
-									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 '
+									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+											+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 											+ e.detail.message, 'エラーメッセージが格納されていること。');
 									strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -2750,8 +2776,9 @@ asyncTest(
 					}).fail(
 					function(e) {
 						strictEqual(seqNo++, 2, 'fail1: 2番目に実行されること。');
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。構文に誤りがあります。 '
-								+ e.detail.message, 'エラーメッセージが格納されていること。');
+						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+								+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ') + e.detail.message,
+								'エラーメッセージが格納されていること。');
 						strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 						ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 						ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -2771,8 +2798,13 @@ asyncTest('db.transaction() - execute()を2回呼び出す', 3, function() {
 		return;
 	}
 
-	var transaction = db.transaction().add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10,
-					20000])).add(db.insert(TABLE_NAME, {col1: 'txtest2', col2: 'rerere', col3: 777}));
+	var transaction = db.transaction().add(
+			db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000])).add(
+			db.insert(TABLE_NAME, {
+				col1: 'txtest2',
+				col2: 'rerere',
+				col3: 777
+			}));
 
 	transaction.execute().done(function() {
 		ok(true, '一回目のexecute()ではエラーが発生しないこと');
@@ -2798,8 +2830,13 @@ asyncTest('db.transaction() - execute()を2回呼び出す 2', 3, function() {
 		return;
 	}
 
-	var transaction = db.transaction().add(db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10,
-	                20000])).add(db.insert(TABLE_NAME, {col1: 'txtest2', col2: 'rerere', col3: 777}));
+	var transaction = db.transaction().add(
+			db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000])).add(
+			db.insert(TABLE_NAME, {
+				col1: 'txtest2',
+				col2: 'rerere',
+				col3: 777
+			}));
 
 	transaction.execute().done(function() {
 		ok(true, '一回目のexecute()ではエラーが発生しないこと');
@@ -3011,68 +3048,3 @@ test(
 				deepEqual(errorCode, e.code, e.message);
 			}
 		});
-
-asyncTest('スタブを使ったテスト。各エラーを取得する', 32, function() {
-	if (!h5.api.sqldb.isSupported) {
-		expect(1);
-		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-		start();
-		return;
-	}
-
-	var origin = window.openDatabase;
-
-	var SQLError = function(code, message) {
-		this.UNKNOWN_ERR = 0;
-		this.DATABASE_ERR = 1;
-		this.VERSION_ERR = 2;
-		this.TOO_LARGE_ERR = 3;
-		this.QUOTA_ERR = 4;
-		this.SYNTAX_ERR = 5;
-		this.CONSTRAINT_ERR = 6;
-		this.TIMEOUT_ERR = 7;
-		this.code = code;
-		this.message = message;
-	};
-
-	// メッセージはネイティブだとユーザの言語で入る（とW3Cに書かれている)。
-	// ここでは空でない何かしらの文字列を入れている。
-	var errs = [new SQLError(0, '不明なエラー'), new SQLError(1, 'データベースエラー'),
-			new SQLError(2, 'バージョンエラー'), new SQLError(3, '取得結果のサイズが多すぎるエラー'),
-			new SQLError(4, '空き容量不足エラー'), new SQLError(5, '構文エラー'), new SQLError(6, '一意制約エラー'),
-			new SQLError(7, 'タイムアウトエラー')];
-
-
-	function loop(i) {
-		if (i === errs.length) {
-			window.openDatabase = origin;
-			start();
-			return;
-		}
-
-		window.openDatabase = function() {
-			return {
-				transaction: function(param1, param2, param3) {
-					param1({
-						executeSql: function() {}
-					});
-					param2(errs[i]);
-				}
-			};
-		};
-		var dbDummy = h5.api.sqldb.open('hcdb', '1', 'hcdb', 2 * 1024 * 1024);
-
-		var s = dbDummy.sql('insert into ' + TABLE_NAME + ' values(1,1,1)');
-		s.execute().fail(
-				function(e) {
-					ok(e.message.match(new RegExp('^トランザクション処理中にエラーが発生しました。.*' + e.detail.message + '$')),
-							'エラーメッセージが格納されていること。' + e.message);
-					strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
-					ok(e.detail.code != null, 'エラーコード:' + e.detail.code
-							+ ' detailにはSQLErrorのメッセージが格納されていること。');
-					ok(e.detail.message != null, e.detail.message);
-					loop(++i);
-				});
-	}
-	loop(0);
-});
