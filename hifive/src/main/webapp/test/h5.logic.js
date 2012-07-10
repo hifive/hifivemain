@@ -127,7 +127,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('ロジックのAOPは動作しているか', function() {
+	asyncTest('ロジックのAOPは動作しているか ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
@@ -188,7 +188,7 @@ $(function() {
 		});
 	});
 
-	test('h5.core.logic() の動作', function() {
+	test('h5.core.logic() の動作 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			return;

@@ -1160,7 +1160,7 @@ module('View3', {
 });
 
 asyncTest(
-		'cacheManager 取得したテンプレートのURLがキャッシュされていて、その情報が取得できること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
+		'cacheManager 取得したテンプレートのURLがキャッシュされていて、その情報が取得できること ※min版ではエラーになります',
 		10, function() {
 			var cacheManager = null;
 			try {
@@ -1223,7 +1223,7 @@ asyncTest(
 		});
 
 asyncTest(
-		'getAvailableTemplates() LRUでキャッシュされていること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
+		'getAvailableTemplates() LRUでキャッシュされていること。※h5.dev.core.view.cacheManagerがない場合 ※min版ではエラーになります',
 		20, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
@@ -1288,7 +1288,7 @@ asyncTest(
 		});
 
 asyncTest(
-		'テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
+		'テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること ※min版ではエラーになります',
 		4, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
@@ -1319,7 +1319,7 @@ asyncTest(
 		});
 
 
-asyncTest('同じテンプレートファイルを並列にロードする。', 2, function() {
+asyncTest('同じテンプレートファイルを並列にロードする ※min版ではエラーになります', 2, function() {
 	try {
 		cacheManager = h5.dev.core.view.cacheManager;
 	} catch (e) {

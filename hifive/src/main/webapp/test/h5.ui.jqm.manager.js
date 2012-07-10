@@ -22,6 +22,11 @@ $(function() {
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
 	/**
+	 * min版かどうか。min版ならjqm.managerをリセットできないので、テストできない。
+	 */
+	var isMin = !h5.ui.jqm.manager.__reset;
+
+	/**
 	 * JQMControllerのアンバインド
 	 */
 	function resetJQM() {
@@ -29,7 +34,9 @@ $(function() {
 			$(this).trigger('pageremove');
 		});
 		$('body>div.testForJQM').remove();
-		h5.ui.jqm.manager.__reset();
+		if (!isMin) {
+			h5.ui.jqm.manager.__reset();
+		}
 		$.mobile.activePage = undefined;
 		// JQMが生成するbody内をラップするdiv要素を外す
 		$('body>div').children().unwrap();
@@ -67,10 +74,10 @@ $(function() {
 	}
 
 	/**
-	 * h5.ui.jqm.manager.__initFlagが存在するかどうかをチェックする。存在しない場合はテストを終了させる。 引数にtrueを指定した場合はstart()を呼ばない。
+	 * 開発版かどうかをチェックする。開発版でない場合はテストを終了させる。
 	 */
 	function checkDev() {
-		if (!h5.ui.jqm.manager.__reset) {
+		if (isMin) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			return false;
@@ -110,7 +117,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('init()を実行せず、define()を実行する。', 1, function() {
+	asyncTest('init()を実行せず、define()を実行する ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -127,7 +134,7 @@ $(function() {
 		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
 	});
 
-	asyncTest('init()を実行せずにdefine()を実行して、遷移を行う。', 9, function() {
+	asyncTest('init()を実行せずにdefine()を実行して、遷移を行う ※min版ではエラーになります', 9, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -207,7 +214,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('h5.ui.jqm.manager.init()後、JQMControllerをunbindする。', 2, function() {
+	asyncTest('h5.ui.jqm.manager.init()後、JQMControllerをunbindする  ※min版ではエラーになります', 2, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -226,7 +233,7 @@ $(function() {
 		}, 0);
 	});
 
-	asyncTest('h5.ui.jqm.manager.define()後、JQMControllerをunbindする。', 2, function() {
+	asyncTest('h5.ui.jqm.manager.define()後、JQMControllerをunbindする  ※min版ではエラーになります', 2, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -256,7 +263,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('h5.ui.jqm.manager.init()後、JQMControllerをdisposeする。', 2, function() {
+	asyncTest('h5.ui.jqm.manager.init()後、JQMControllerをdisposeする  ※min版ではエラーになります', 2, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -275,7 +282,7 @@ $(function() {
 		}, 0);
 	});
 
-	asyncTest('h5.ui.jqm.manager.define()後、JQMControllerをdisposeする。', 2, function() {
+	asyncTest('h5.ui.jqm.manager.define()後、JQMControllerをdisposeする  ※min版ではエラーになります', 2, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -309,7 +316,7 @@ $(function() {
 			resetJQM();
 		}
 	});
-	asyncTest('init() initを実行するとJQMControllerがバインドされること。', 1, function() {
+	asyncTest('init() initを実行するとJQMControllerがバインドされること  ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -324,7 +331,7 @@ $(function() {
 		}, 0);
 	});
 
-	asyncTest('init() すでにinit()済みならログが出力(※要目視)されて、何もされないこと。', 1, function() {
+	asyncTest('init() すでにinit()済みならログが出力(※要目視)されて、何もされないこと  ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -352,7 +359,7 @@ $(function() {
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
-	asyncTest('init()時に存在するページのdata-h5-scriptに指定されているjsがロードされること。', 2, function() {
+	asyncTest('init()時に存在するページのdata-h5-scriptに指定されているjsがロードされること  ※min版ではエラーになります', 2, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -378,7 +385,7 @@ $(function() {
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
-	asyncTest('pageinitイベントがページから呼ばれると、そのページのscriptがロードされること。', 3, function() {
+	asyncTest('pageinitイベントがページから呼ばれると、そのページのscriptがロードされること  ※min版ではエラーになります', 3, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -415,7 +422,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('h5.ui.jqm.dataPrefixに文字列を指定した場合、data-(指定した文字列)-script属性に指定したjsファイルがロードできること。', 2,
+	asyncTest('h5.ui.jqm.dataPrefixに文字列を指定した場合、data-(指定した文字列)-script属性に指定したjsファイルがロードできること  ※min版ではエラーになります', 2,
 			function() {
 				if (!checkDev()) {
 					start();
@@ -447,7 +454,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('h5.ui.jqm.dataPrefixがnullの場合は、data-h5-script属性に指定したjsファイルがロードできること。', 2, function() {
+	asyncTest('h5.ui.jqm.dataPrefixがnullの場合は、data-h5-script属性に指定したjsファイルがロードできること  ※min版ではエラーになります', 2, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -474,7 +481,7 @@ $(function() {
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
-	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドできること。', 4, function() {
+	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドできること  ※min版ではエラーになります', 4, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -517,7 +524,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('h5.ui.jqmmanager define() data-h5-scriptに指定したjsからdefine()できること。', 1, function() {
+	asyncTest('h5.ui.jqmmanager define() data-h5-scriptに指定したjsからdefine()できること  ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -546,7 +553,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドし、cssがロードされること。', 1, function() {
+	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドし、cssがロードされること  ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -586,7 +593,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('ページ遷移したときにcssが切り替わること。', 9, function() {
+	asyncTest('ページ遷移したときにcssが切り替わること  ※min版ではエラーになります', 9, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -668,7 +675,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('ページ遷移したときに遷移先のコントローラがバインドされること。', 4, function() {
+	asyncTest('ページ遷移したときに遷移先のコントローラがバインドされること  ※min版ではエラーになります', 4, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -726,7 +733,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('ページ遷移先がコントローラの無いページの場合でも、遷移できる。', 4, function() {
+	asyncTest('ページ遷移先がコントローラの無いページの場合でも、遷移できる  ※min版ではエラーになります', 4, function() {
 		if (!checkDev()) {
 			start();
 			return;

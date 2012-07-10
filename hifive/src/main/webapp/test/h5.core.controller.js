@@ -168,7 +168,7 @@ $(function() {
 
 	});
 
-	asyncTest('コントローラの作成と要素へのバインド(AOPあり)', 3, function() {
+	asyncTest('コントローラの作成と要素へのバインド(AOPあり) ※min版ではエラーになります', 3, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1722,7 +1722,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('コントローラ内のthis(AOPあり)', 2, function() {
+	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 2, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1777,7 +1777,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('アスペクトの動作1', function() {
+	asyncTest('アスペクトの動作1 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1821,7 +1821,7 @@ $(function() {
 
 	});
 
-	asyncTest('アスペクトの動作2', function() {
+	asyncTest('アスペクトの動作2 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1862,7 +1862,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('アスペクトの動作3', function() {
+	asyncTest('アスペクトの動作3 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1911,7 +1911,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('アスペクトの動作4', function() {
+	asyncTest('アスペクトの動作4 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1963,7 +1963,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('アスペクトの動作5', function() {
+	asyncTest('アスペクトの動作5 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -2396,7 +2396,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5.core.interceptor.logInterceptorの動作',
+			'h5.core.interceptor.logInterceptorの動作 ※min版ではエラーになります',
 			function() {
 				if (!h5.core.__compileAspects) {
 					expect(1);
@@ -2442,7 +2442,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5.core.interceptor.lapInterceptorの動作',
+			'h5.core.interceptor.lapInterceptorの動作 ※min版ではエラーになります',
 			function() {
 				if (!h5.core.__compileAspects) {
 					expect(1);
@@ -2488,7 +2488,7 @@ $(function() {
 						});
 			});
 
-	asyncTest('h5.core.interceptor.errorInterceptorの動作', function() {
+	asyncTest('h5.core.interceptor.errorInterceptorの動作 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -3511,7 +3511,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか', function() {
+	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
