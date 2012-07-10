@@ -1268,7 +1268,6 @@
 		var controllers = h5.core.controllerManager.controllers;
 		if ($.inArray(controller, controllers) === -1 && managed !== false) {
 			controllers.push(controller);
-			delete controller.__controllerContext.managed;
 		}
 
 		// managed=falseの場合、コントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない
