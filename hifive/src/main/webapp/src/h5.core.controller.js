@@ -2443,7 +2443,7 @@
 		}
 
 		// コントローラマネージャの管理対象とするか判定する
-		if (fwOpt && typeof fwOpt['managed'] === 'boolean') {
+		if (fwOpt && 'managed' in fwOpt) {
 			controller.__controllerContext.managed = fwOpt.managed;
 		}
 
