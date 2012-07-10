@@ -56,7 +56,6 @@ function clearCachedTemplate() {
 		if (prop === "view1" || prop === 'view2' || prop === 'view3' || prop === 'inscript') {
 			continue;
 		}
-
 		delete cache[prop];
 	}
 }
@@ -112,7 +111,6 @@ function assertElement(base, actual) {
 			}
 		}
 	};
-
 	func($(actual), $(base));
 }
 
@@ -918,7 +916,6 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	}
 });
 
-
 test('clear() 登録されていないテンプレートIDを指定した時に、WARNレベルでログが出力されること ※要目視確認', 3, function() {
 	var templateId = 'id1';
 	var view = h5.core.view;
@@ -959,7 +956,6 @@ test('register() テンプレートを登録できること。', 2, function() {
 		val2: 'BB'
 	}), correctTemplate3Result);
 });
-
 
 test('register() 置換要素有りテンプレートを登録。[%= %]内はデフォルトでHTMLエスケープされること。 view.get ', function() {
 	var view = h5.core.view.createView();
@@ -1049,7 +1045,6 @@ test('register()で、idの指定が不正である時に例外が発生する�
 	}
 });
 
-
 test('register()で、idを指定していない時または、テンプレート文字列に文字列でないものを指定した時に例外が発生すること。', 4, function() {
 	var templateId = 'id1';
 	var templateStringErrorCode = 7000;
@@ -1136,28 +1131,6 @@ asyncTest('getAvailableTemplates() viewインスタンスで利用可能なテ�
 			});
 	start();
 });
-
-// asyncTest('同時に一つのテンプレートファイルへアクセスしても、一度しかアクセスしないこと。※要ログ確認。TRACEレベルでログを出しています。『http://localhost:8080/hifive/test/template/test8.ejsにアクセスします』と1度だけ表示されていること',
-// function() {
-// var view1 = h5.core.view.createView();
-// var view2 = h5.core.view.createView();
-// var view3 = h5.core.view.createView();
-// var p1 = view1.load(['./template/test10.ejs']);
-// var p2 = view2.load(['./template/test10.ejs']);
-// var p3 = view3.load(['./template/test10.ejs', './template/test2.ejs']);
-// p1.done(function() {
-// ok(true, '読み込みに成功しました。view1');
-// });
-// p2.done(function(){
-// ok(true,'読み込みに成功しました。view2');
-// });
-// p3.done(function(){
-// ok(true,'読み込みに成功しました。view3');
-// start();
-// }).fail(function(e){
-// start();
-// });
-// });
 
 module('View3', {
 	setup: function() {
@@ -1328,7 +1301,6 @@ asyncTest('テンプレートファイルのURLにクエリパラメータが付
 						start();
 					});
 		});
-
 
 asyncTest('同じテンプレートファイルを並列にロードする ※min版ではエラーになります', 2,
 		function() {
