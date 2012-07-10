@@ -1261,17 +1261,21 @@
 		bindByBindMap(controller);
 		bindDescendantHandlers(controller);
 
+		var managed = controller.__controllerContext.managed;
+
 		// コントローラマネージャの管理対象に追加する
 		// フレームワークオプションでコントローラマネージャの管理対象としない(managed:false)の場合、コントローラマネージャに登録しない
 		var controllers = h5.core.controllerManager.controllers;
-		if ($.inArray(controller, controllers) === -1
-				&& controller.__controllerContext.managed !== false) {
+		if ($.inArray(controller, controllers) === -1 && managed !== false) {
 			controllers.push(controller);
 			delete controller.__controllerContext.managed;
 		}
 
-		// h5controllerboundイベントをトリガ.
-		$(controller.rootElement).trigger('h5controllerbound', [controller]);
+		// managed=falseの場合、コントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない
+		if (managed !== false) {
+			// h5controllerboundイベントをトリガ.
+			$(controller.rootElement).trigger('h5controllerbound', [controller]);
+		}
 
 		// コントローラの__ready処理を実行
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
@@ -2439,7 +2443,7 @@
 		}
 
 		// コントローラマネージャの管理対象とするか判定する
-		if (fwOpt && 'managed' in fwOpt) {
+		if (fwOpt && typeof fwOpt['managed'] === 'boolean') {
 			controller.__controllerContext.managed = fwOpt.managed;
 		}
 
