@@ -1446,9 +1446,6 @@
 		var propertyArray = ['initDfd', 'readyDfd'];
 		function rejectControllerDfdLoop(con, propertyIndex) {
 			var property = propertyArray[propertyIndex];
-			if (!property) {
-				return;
-			}
 			var dfd = con.__controllerContext[property];
 			if (dfd) {
 				if (!dfd.isRejected() && !dfd.isResolved()) {
