@@ -543,23 +543,23 @@ asyncTest('load() テンプレートIDが空文字または空白である場合
 });
 
 asyncTest(
-		'存在しないテンプレートを読み込む。出力されるログも確認する ※要目視',
+		'存在しないテンプレートを読み込む。出力されるログも確認する ※要目視確認',
 		18,
 		function() {
+			var errCode = 7003;
 			var p = h5.core.view.load(['./template/hogehoge.ejs']);
 			p
 					.fail(function(e) {
-						ok(e.code, 'エラーコード: ' + e.code);
+						strictEqual(e.code, errCode, 'エラーコード: ' + e.code);
 						strictEqual(e.detail.error.status, 404,
 								'エラーオブジェクトにAjaxエラーのオブジェクトが格納されていて、ステータスコード404が取得できる。');
-						ok(e.detail.url.search(/http:\/\//) === 0
-								&& e.detail.url.search(/\/template\/hogehoge\.ejs$/),
+						ok(e.detail.url.match(/^http:\/\/.*\/template\/hogehoge\.ejs$/),
 								'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
 						strictEqual(e.detail.path, './template/hogehoge.ejs',
 								'エラーの起きたテンプレートファイルのパスが取得できる');
 						ok(
 								true,
-								'※要目視 WARNレベルで次のようにログが出力されていることを確認してください。'
+								'※要目視確認：WARNレベルで次のようにログが出力されていることを確認してください。'
 										+ '『[WARN]10:49:26,38: テンプレートファイルを取得できませんでした。ステータスコード:404 URL:http://localhost:8080/hifive/test/template/hogehoge.ejs 』');
 
 						h5.core.view
@@ -579,7 +579,7 @@ asyncTest(
 													'エラーの起きたテンプレートファイルのパスが取得できる');
 											ok(
 													true,
-													'※要目視 WARNレベルで次のようにログが出力されていることを確認してください。'
+													'※要目視確認：WARNレベルで次のようにログが出力されていることを確認してください。'
 															+ '『[WARN]10:49:26,38: テンプレートファイルを取得できませんでした。ステータスコード:404 URL:http://localhost:8080/hifive/test/template/hogehoge.ejs 』');
 
 											var propCount = 0;
@@ -601,6 +601,29 @@ asyncTest(
 									ok(false, 'テスト失敗。存在しないURLなのにdoneコールバックが実行された');
 									start();
 								});
+					});
+		});
+
+
+asyncTest(
+		'中身が空のテンプレートファイルを読み込む。出力されるログも確認する ※要目視確認',
+		4,
+		function() {
+			var errCode = 7001;
+			var p = h5.core.view.load(['./template/test14.ejs']);
+			p
+					.fail(function(e) {
+						strictEqual(e.code, errCode, 'エラーコード: ' + e.code);
+						ok(e.detail.url.match(/^http:\/\/.*\/template\/test14\.ejs$/),
+								'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
+						strictEqual(e.detail.path, './template/test14.ejs',
+								'エラーの起きたテンプレートファイルのパスが取得できる');
+						ok(
+								true,
+								'※要目視確認：WARNレベルで次のようにログが出力されていることを確認してください。'
+										+ '『[WARN]11:29:59,835: テンプレートファイルが不正です。null』');
+
+						start();
 					});
 		});
 
@@ -1159,68 +1182,65 @@ module('View3', {
 	}
 });
 
-asyncTest(
-		'cacheManager 取得したテンプレートのURLがキャッシュされていて、その情報が取得できること ※min版ではエラーになります',
-		10, function() {
-			var cacheManager = null;
-			try {
-				cacheManager = h5.dev.core.view.cacheManager;
-			} catch (e) {
-				expect(1);
-				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
-				start();
-				return;
-			}
-			var view1 = h5.core.view.createView();
-			var view2 = h5.core.view.createView();
-			var p1 = view1.load(['./template/test2.ejs', './template/test3.ejs']);
-			view2.load('./template/test4.ejs');
-			p1.done(function() {
-				// view2のダウンロードが終わるまで100ms待つ
-				setTimeout(function() {
-					var cacheInfo = cacheManager.getCacheInfo();
-					for ( var i = 0; i < cacheInfo.length; i++) {
-						var cache = cacheInfo[i];
-						var path = cache.path;
-						if (path === "./template/test2.ejs") {
-							deepEqual(cache.path, './template/test2.ejs', '相対パス(指定したパス)が取得できる - '
-									+ path);
-							ok(cache.absoluteUrl.match(/http.*\/template\/test2\.ejs/),
-									'URLが取得できる - ' + cache.absoluteUrl);
-							for ( var j = 0; j < cache.ids.length; j++) {
-								var id = cache.ids[j];
-								if (id === 'template2') {
-									ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
-								}
-							}
-						} else if (path === "./template/test3.ejs") {
-							deepEqual(cache.path, './template/test3.ejs', 'キャッシュ' + path);
-							ok(cache.absoluteUrl.match(/http.*\/template\/test3\.ejs/),
-									'URLが取得できる - ' + cache.absoluteUrl);
-							for ( var j = 0; j < cache.ids.length; j++) {
-								var id = cache.ids[j];
-								if (id === 'template3') {
-									ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
-								}
-							}
-						} else if (path === "./template/test4.ejs") {
-							deepEqual(cache.path, './template/test4.ejs', 'キャッシュ' + path);
-							ok(cache.absoluteUrl.match(/http.*\/template\/test4\.ejs/),
-									'URLが取得できる - ' + cache.absoluteUrl);
-							for ( var j = 0; j < cache.ids.length; j++) {
-								var id = cache.ids[j];
-								if (id === 'template4') {
-									ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
-								} else if (id === 'template5') {
-									ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
-								}
-							}
+asyncTest('cacheManager 取得したテンプレートのURLがキャッシュされていて、その情報が取得できること ※min版ではエラーになります', 10, function() {
+	var cacheManager = null;
+	try {
+		cacheManager = h5.dev.core.view.cacheManager;
+	} catch (e) {
+		expect(1);
+		ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+		start();
+		return;
+	}
+	var view1 = h5.core.view.createView();
+	var view2 = h5.core.view.createView();
+	var p1 = view1.load(['./template/test2.ejs', './template/test3.ejs']);
+	view2.load('./template/test4.ejs');
+	p1.done(function() {
+		// view2のダウンロードが終わるまで100ms待つ
+		setTimeout(function() {
+			var cacheInfo = cacheManager.getCacheInfo();
+			for ( var i = 0; i < cacheInfo.length; i++) {
+				var cache = cacheInfo[i];
+				var path = cache.path;
+				if (path === "./template/test2.ejs") {
+					deepEqual(cache.path, './template/test2.ejs', '相対パス(指定したパス)が取得できる - ' + path);
+					ok(cache.absoluteUrl.match(/http.*\/template\/test2\.ejs/), 'URLが取得できる - '
+							+ cache.absoluteUrl);
+					for ( var j = 0; j < cache.ids.length; j++) {
+						var id = cache.ids[j];
+						if (id === 'template2') {
+							ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
 						}
 					}
-					start();
-				}, 100);
-			});
-		});
+				} else if (path === "./template/test3.ejs") {
+					deepEqual(cache.path, './template/test3.ejs', 'キャッシュ' + path);
+					ok(cache.absoluteUrl.match(/http.*\/template\/test3\.ejs/), 'URLが取得できる - '
+							+ cache.absoluteUrl);
+					for ( var j = 0; j < cache.ids.length; j++) {
+						var id = cache.ids[j];
+						if (id === 'template3') {
+							ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
+						}
+					}
+				} else if (path === "./template/test4.ejs") {
+					deepEqual(cache.path, './template/test4.ejs', 'キャッシュ' + path);
+					ok(cache.absoluteUrl.match(/http.*\/template\/test4\.ejs/), 'URLが取得できる - '
+							+ cache.absoluteUrl);
+					for ( var j = 0; j < cache.ids.length; j++) {
+						var id = cache.ids[j];
+						if (id === 'template4') {
+							ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
+						} else if (id === 'template5') {
+							ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
+						}
+					}
+				}
+			}
+			start();
+		}, 100);
+	});
+});
 
 asyncTest(
 		'getAvailableTemplates() LRUでキャッシュされていること。※h5.dev.core.view.cacheManagerがない場合 ※min版ではエラーになります',
@@ -1287,9 +1307,8 @@ asyncTest(
 					});
 		});
 
-asyncTest(
-		'テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること ※min版ではエラーになります',
-		4, function() {
+asyncTest('テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること ※min版ではエラーになります', 4,
+		function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
 			} catch (e) {
@@ -1319,31 +1338,35 @@ asyncTest(
 		});
 
 
-asyncTest('同じテンプレートファイルを並列にロードする ※min版ではエラーになります', 2, function() {
-	try {
-		cacheManager = h5.dev.core.view.cacheManager;
-	} catch (e) {
-		expect(1);
-		ok(false, 'h5.dev.core.view.cacheManagerがありません。');
-		start();
-		return;
-	}
+asyncTest('同じテンプレートファイルを並列にロードする ※min版ではエラーになります', 2,
+		function() {
+			try {
+				cacheManager = h5.dev.core.view.cacheManager;
+			} catch (e) {
+				expect(1);
+				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+				start();
+				return;
+			}
 
-	var view1 = h5.core.view.createView();
-	h5.core.view.createView();
+			var view1 = h5.core.view.createView();
+			h5.core.view.createView();
 
-	$.when(view1.load('./template/test_cache1.ejs'), view1.load('./template/test_cache1.ejs'))
-			.done(
-					function() {
-						var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-						var cache = h5.dev.core.view.cacheManager.cache;
+			$.when(view1.load('./template/test_cache1.ejs'),
+					view1.load('./template/test_cache1.ejs'))
+					.done(
+							function() {
+								var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+								var cache = h5.dev.core.view.cacheManager.cache;
 
-						equal(cacheUrls.length, 1, '1ファイルのみキャッシュされていること。同じファイルが重複してキャッシュされていないこと。');
+								equal(cacheUrls.length, 1,
+										'1ファイルのみキャッシュされていること。同じファイルが重複してキャッシュされていないこと。');
 
-						for (var i = 0, l = cacheUrls.length; i < l; i++) {
-							var url = cacheUrls[i];
-							equal(cache[url].path, './template/test_cache1.ejs', 'test_cache1.ejsがキャッシュされていること。');
-						}
-						start();
-					});
-});
+								for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+									var url = cacheUrls[i];
+									equal(cache[url].path, './template/test_cache1.ejs',
+											'test_cache1.ejsがキャッシュされていること。');
+								}
+								start();
+							});
+		});
