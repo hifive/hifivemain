@@ -517,13 +517,15 @@ $(function() {
 												'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
 
 										window.com.htmlhifive.test.sample4loaded = undefined;
-										start()
+										start();
 									});
 						});
 			});
 
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】存在しないスクリプトを指定しても、ほかのスクリプトの読み込みが中断されないこと。', 2,
 			function() {
+				var qunitWindowOnErrorFunc = window.onerror;
+				window.onerror = function() {};
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(
 						['data/sample4.js?testWidthError1', 'data/noExistFile.js',
@@ -552,12 +554,15 @@ $(function() {
 									}).fail(function(e) {
 								ok(false, e.code + ': ' + e.message);
 								start();
+							}).always(function() {
+								window.onerror = qunitWindowOnErrorFunc;
 							});
 						}).fail(function(e) {
 					ok(false, e.code + ': ' + e.message);
 					start();
 				});
 			});
+
 
 	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
 		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
