@@ -53,7 +53,7 @@ $('head').append(correctView1).append(correctView2).append(correctView3).append(
 function clearCachedTemplate() {
 	var cache = h5.core.view.__cachedTemplates;
 	for ( var prop in cache) {
-		if (prop === "view1" || prop === 'view2' || prop === 'view3') {
+		if (prop === "view1" || prop === 'view2' || prop === 'view3' || prop === 'inscript') {
 			continue;
 		}
 
@@ -544,7 +544,7 @@ asyncTest('load() テンプレートIDが空文字または空白である場合
 
 asyncTest(
 		'存在しないテンプレートを読み込む。出力されるログも確認する ※要目視確認',
-		18,
+		20,
 		function() {
 			var errCode = 7003;
 			var p = h5.core.view.load(['./template/hogehoge.ejs']);
@@ -588,12 +588,13 @@ asyncTest(
 												propCount++;
 											}
 
-											strictEqual(propCount, 3,
+											strictEqual(propCount, 4,
 													'画面HTMLに書かれているテンプレートの件数、3件と一致すること');
 
 											strictEqual(h5.core.view.isAvailable('view1'), true);
 											strictEqual(h5.core.view.isAvailable('view2'), true);
 											strictEqual(h5.core.view.isAvailable('view3'), true);
+											strictEqual(h5.core.view.isAvailable('inscript'), true);
 
 											start();
 
@@ -605,27 +606,20 @@ asyncTest(
 		});
 
 
-asyncTest(
-		'中身が空のテンプレートファイルを読み込む。出力されるログも確認する ※要目視確認',
-		4,
-		function() {
-			var errCode = 7001;
-			var p = h5.core.view.load(['./template/test14.ejs']);
-			p
-					.fail(function(e) {
-						strictEqual(e.code, errCode, 'エラーコード: ' + e.code);
-						ok(e.detail.url.match(/^http:\/\/.*\/template\/test14\.ejs$/),
-								'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
-						strictEqual(e.detail.path, './template/test14.ejs',
-								'エラーの起きたテンプレートファイルのパスが取得できる');
-						ok(
-								true,
-								'※要目視確認：WARNレベルで次のようにログが出力されていることを確認してください。'
-										+ '『[WARN]11:29:59,835: テンプレートファイルが不正です。null』');
+asyncTest('中身が空のテンプレートファイルを読み込む。出力されるログも確認する ※要目視確認', 4, function() {
+	var errCode = 7001;
+	var p = h5.core.view.load(['./template/test14.ejs']);
+	p.fail(function(e) {
+		strictEqual(e.code, errCode, 'エラーコード: ' + e.code);
+		ok(e.detail.url.match(/^http:\/\/.*\/template\/test14\.ejs$/),
+				'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
+		strictEqual(e.detail.path, './template/test14.ejs', 'エラーの起きたテンプレートファイルのパスが取得できる');
+		ok(true, '※要目視確認：WARNレベルで次のようにログが出力されていることを確認してください。'
+				+ '『[WARN]11:29:59,835: テンプレートファイルが不正です。null』');
 
-						start();
-					});
-		});
+		start();
+	});
+});
 
 test('get() 存在しないテンプレートIDを指定してテンプレート取得。', function() {
 	try {
@@ -925,18 +919,16 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 });
 
 
-test(
-		'clear() 登録されていないテンプレートIDを指定した時に、WARNレベルでログが出力されること(要目視:id2とid3について合計2回ログ出力される)。',
-		1,
-		function() {
-			var templateId = 'id1';
-			var view = h5.core.view;
-			view.register(templateId, 'ok');
-			view.clear('id2');
-			view.clear(['id3', templateId]);
-			ok(!view.isAvailable(templateId), '登録されていないIDを含む配列を指定しても、エラーが発生せず、その他のテンプレートは削除されること。');
-
-		});
+test('clear() 登録されていないテンプレートIDを指定した時に、WARNレベルでログが出力されること ※要目視確認', 3, function() {
+	var templateId = 'id1';
+	var view = h5.core.view;
+	view.register(templateId, 'ok');
+	view.clear('id2');
+	view.clear(['id3', templateId]);
+	ok(!view.isAvailable(templateId), '登録されていないIDを含む配列を指定しても、エラーが発生せず、その他のテンプレートは削除されること。');
+	ok(true, 'ログに『[WARN]13:53:37,960: 指定されたIDのテンプレートは登録されていません。"id2" 』と出力されていること ※要目視確認');
+	ok(true, 'ログに『[WARN]13:53:37,960: 指定されたIDのテンプレートは登録されていません。"id3" 』と出力されていること ※要目視確認');
+});
 
 asyncTest('viewのインスタンスが違うなら利用可能なテンプレートも違うこと。', 4, function() {
 	var view1Id = 'template2';
@@ -1130,16 +1122,16 @@ asyncTest('view.load() 複数のテンプレートファイルを読み込んだ
 		});
 
 asyncTest('getAvailableTemplates() viewインスタンスで利用可能なテンプレートIDを配列で取得できること。', 3, function() {
-	deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3'].sort(),
-			'画面HTMLに書かれたテンプレートIDが取得できること');
+	deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3', 'inscript']
+			.sort(), '画面HTMLに書かれたテンプレートIDが取得できること');
 	h5.core.view.load(['./template/test2.ejs', './template/test3.ejs']).done(
 			function() {
 				deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3',
-						'template2', 'template3'].sort(),
+						'inscript', 'template2', 'template3'].sort(),
 						'画面HTMLに書かれたテンプレートIDとロードしたテンプレートのIDが取得できること');
 				h5.core.view.clear('template2');
 				deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3',
-						'template3'].sort(), 'clear()で削除したテンプレートIDが利用可能でないこと。');
+						'inscript', 'template3'].sort(), 'clear()で削除したテンプレートIDが利用可能でないこと。');
 
 			});
 	start();
