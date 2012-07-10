@@ -293,9 +293,10 @@ asyncTest('db.sql()を実行後、同一トランザクションで、エラー�
 					}).fail(
 					function(e) {
 						strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ') + e.detail.message,
-								'エラーメッセージが格納されていること。');
+						strictEqual(e.message,
+								'トランザクション処理中にエラーが発生しました。'
+										+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ')
+										+ e.detail.message, 'エラーメッセージが格納されていること。');
 						strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 						ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 						ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -2776,9 +2777,10 @@ asyncTest(
 					}).fail(
 					function(e) {
 						strictEqual(seqNo++, 2, 'fail1: 2番目に実行されること。');
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ') + e.detail.message,
-								'エラーメッセージが格納されていること。');
+						strictEqual(e.message,
+								'トランザクション処理中にエラーが発生しました。'
+										+ (isAndroid2() ? 'データベースエラー ' : '構文に誤りがあります。 ')
+										+ e.detail.message, 'エラーメッセージが格納されていること。');
 						strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
 						ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 						ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -3048,3 +3050,68 @@ test(
 				deepEqual(errorCode, e.code, e.message);
 			}
 		});
+
+asyncTest('スタブを使ったテスト。各エラーを取得する', 32, function() {
+	if (!h5.api.sqldb.isSupported) {
+		expect(1);
+		ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+		start();
+		return;
+	}
+
+	var origin = window.openDatabase;
+
+	var SQLError = function(code, message) {
+		this.UNKNOWN_ERR = 0;
+		this.DATABASE_ERR = 1;
+		this.VERSION_ERR = 2;
+		this.TOO_LARGE_ERR = 3;
+		this.QUOTA_ERR = 4;
+		this.SYNTAX_ERR = 5;
+		this.CONSTRAINT_ERR = 6;
+		this.TIMEOUT_ERR = 7;
+		this.code = code;
+		this.message = message;
+	};
+
+	// メッセージはネイティブだとユーザの言語で入る（とW3Cに書かれている)。
+	// ここでは空でない何かしらの文字列を入れている。
+	var errs = [new SQLError(0, '不明なエラー'), new SQLError(1, 'データベースエラー'),
+			new SQLError(2, 'バージョンエラー'), new SQLError(3, '取得結果のサイズが多すぎるエラー'),
+			new SQLError(4, '空き容量不足エラー'), new SQLError(5, '構文エラー'), new SQLError(6, '一意制約エラー'),
+			new SQLError(7, 'タイムアウトエラー')];
+
+
+	function loop(i) {
+		if (i === errs.length) {
+			window.openDatabase = origin;
+			start();
+			return;
+		}
+
+		window.openDatabase = function() {
+			return {
+				transaction: function(param1, param2, param3) {
+					param1({
+						executeSql: function() {}
+					});
+					param2(errs[i]);
+				}
+			};
+		};
+		var dbDummy = h5.api.sqldb.open('hcdb', '1', 'hcdb', 2 * 1024 * 1024);
+
+		var s = dbDummy.sql('insert into ' + TABLE_NAME + ' values(1,1,1)');
+		s.execute().fail(
+				function(e) {
+					ok(e.message.match(new RegExp('^トランザクション処理中にエラーが発生しました。.*' + e.detail.message
+							+ '$')), 'エラーメッセージが格納されていること。' + e.message);
+					strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+					ok(e.detail.code != null, 'エラーコード:' + e.detail.code
+							+ ' detailにはSQLErrorのメッセージが格納されていること。');
+					ok(e.detail.message != null, e.detail.message);
+					loop(++i);
+				});
+	}
+	loop(0);
+});
