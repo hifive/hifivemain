@@ -1127,9 +1127,8 @@ asyncTest('getAvailableTemplates() viewインスタンスで利用可能なテ�
 				h5.core.view.clear('template2');
 				deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3',
 						'inscript', 'template3'].sort(), 'clear()で削除したテンプレートIDが利用可能でないこと。');
-
+				start();
 			});
-	start();
 });
 
 module('View3', {
