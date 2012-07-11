@@ -370,7 +370,11 @@
 							}));
 							return;
 						}).always(function() {
-					delete that.accessingUrls[absolutePath];
+					// ajax通信に成功しても失敗してもアクセス中のURLから消去する。
+					// IE6で、ajaxのdone,fail,alwaysハンドラが同期的に動いていしまうので、明示的に非同期にする必要がある
+					setTimeout(function() {
+						delete that.accessingUrls[absolutePath];
+					}, 0);
 				});
 
 				return df.promise();
