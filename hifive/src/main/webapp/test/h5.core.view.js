@@ -1311,10 +1311,7 @@ asyncTest('同じテンプレートファイルを並列にロードする ※mi
 				start();
 				return;
 			}
-
 			var view1 = h5.core.view.createView();
-			h5.core.view.createView();
-
 			$.when(view1.load('./template/test_cache1.ejs'),
 					view1.load('./template/test_cache1.ejs'))
 					.done(
