@@ -4811,6 +4811,7 @@ $(function() {
 					expect(1);
 					ok(false, 'タブレット、スマートフォンでは失敗します');
 					start();
+					return;
 				}
 				var controller = {
 
@@ -5058,6 +5059,7 @@ $(function() {
 					expect(1);
 					ok(false, 'タブレット、スマートフォンでは失敗します');
 					start();
+					return;
 				}
 				if (!document.createElementNS) {
 					expect(1);
@@ -5360,6 +5362,7 @@ $(function() {
 					expect(1);
 					ok(false, 'タブレット、スマートフォンでは失敗します');
 					start();
+					return;
 				}
 				var controller = {
 
