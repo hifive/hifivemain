@@ -5051,7 +5051,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォンでは失敗します',
+			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
 				if (document.ontouchstart !== undefined) {
@@ -5202,7 +5202,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) SVG',
+			'h5trackイベント(touchstart, touchmove, touchend) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
 				if (!document.createElementNS) {
