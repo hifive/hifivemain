@@ -306,9 +306,7 @@
 				};
 			}
 
-			function load(absolutePath, filePath) {
-				var df = getDeferred();
-
+			function load(absolutePath, filePath, df) {
 				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
 							var templateText = obj.responseText;
@@ -370,11 +368,7 @@
 							}));
 							return;
 						}).always(function() {
-					// ajax通信に成功しても失敗してもアクセス中のURLから消去する。
-					// IE6で、ajaxのdone,fail,alwaysハンドラが同期的に動いていしまうので、明示的に非同期にする必要がある
-					setTimeout(function() {
-						delete that.accessingUrls[absolutePath];
-					}, 0);
+					delete that.accessingUrls[absolutePath];
 				});
 
 				return df.promise();
@@ -393,11 +387,11 @@
 					continue;
 				}
 
-				if (this.accessingUrls[absolutePath]) {
-					tasks.push(this.accessingUrls[absolutePath]);
-				} else {
-					var loadPromise = load(absolutePath, path);
-					this.accessingUrls[absolutePath] = loadPromise;
+				if (!this.accessingUrls[absolutePath]) {
+					var df = h5.async.deferred();
+					// IE6で、load内のajaxが同期的に動くので、load()の呼び出しより先にaccessingUrlsへpromiseを登録する
+					this.accessingUrls[absolutePath] = df.promise();
+					var loadPromise = load(absolutePath, path, df);
 					tasks.push(loadPromise);
 				}
 			}
