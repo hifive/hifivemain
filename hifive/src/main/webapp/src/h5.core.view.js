@@ -309,6 +309,7 @@
 			function load(absolutePath, filePath, df) {
 				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
+							delete that.accessingUrls[absolutePath];
 							var templateText = obj.responseText;
 							// IE8以下で、テンプレート要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまうため、ここで除去する
 							var $elements = $(templateText).filter(
@@ -360,6 +361,7 @@
 							df.resolve();
 						}).fail(
 						function(e) {
+							delete that.accessingUrls[absolutePath];
 							df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [e.status,
 									absolutePath], {
 								url: absolutePath,
@@ -367,9 +369,7 @@
 								error: e
 							}));
 							return;
-						}).always(function() {
-					delete that.accessingUrls[absolutePath];
-				});
+						});
 
 				return df.promise();
 			}
