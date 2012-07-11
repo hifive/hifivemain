@@ -73,14 +73,13 @@ $(function() {
 		}
 	});
 
-	asyncTest('h5.coexist()で読み込む前のh5が取得できること。', 3, function() {
+	test('h5.coexist()で読み込む前のh5が取得できること。', 3, function() {
 		strictEqual(h5.env.version, '0.0.1', 'h5がバージョン0.0.1のものに上書きされていること。');
 
 		var loadedH5 = h5;
 		var retH5 = h5.coexist();
 		ok(h5 === originalH5, 'h5.coexist()を実行するとwindow.h5が上書き前のh5になること。');
 		ok(retH5 === loadedH5, 'h5.coexist()の戻り値がversion0.0.1のH5であること。');
-		start();
 	});
 
 	asyncTest('上書きしたh5と上書きされる前のh5(originalH5)で管理するコントローラが異なること。', 5, function() {
