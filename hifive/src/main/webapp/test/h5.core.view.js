@@ -1330,3 +1330,16 @@ asyncTest('同じテンプレートファイルを並列にロードする ※mi
 								start();
 							});
 		});
+
+asyncTest('同じテンプレートファイルを別インスタンスのviewで並列にロードする', 4, function() {
+	var v1 = h5.core.view.createView();
+	var v2 = h5.core.view.createView();
+
+	$.when(v1.load('./template/test4.ejs?test46'),v2.load('./template/test4.ejs?test46')).done(function(){
+		ok(v1.isAvailable('template4'), 'viewインスタンス１でid:template4のテンプレートが使用可能であること');
+		ok(v1.isAvailable('template5'), 'viewインスタンス１でid:template5のテンプレートが使用可能であること');
+		ok(v2.isAvailable('template4'), 'viewインスタンス２でid:template4のテンプレートが使用可能であること');
+		ok(v2.isAvailable('template5'), 'viewインスタンス２でid:template5のテンプレートが使用可能であること');
+		start();
+	})
+});

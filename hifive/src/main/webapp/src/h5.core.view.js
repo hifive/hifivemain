@@ -309,7 +309,9 @@
 			function load(absolutePath, filePath, df) {
 				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
+							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 							delete that.accessingUrls[absolutePath];
+
 							var templateText = obj.responseText;
 							// IE8以下で、テンプレート要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまうため、ここで除去する
 							var $elements = $(templateText).filter(
@@ -341,13 +343,13 @@
 								return;
 							}
 
+							var _ret,_data;
 							try {
 								var compiled = compileData.compiled;
-								var data = compileData.data;
-								data.path = filePath;
-								data.absoluteUrl = absolutePath;
-								$.extend(ret, compiled);
-								datas.push(data);
+								_data = compileData.data;
+								_data.path = filePath;
+								_data.absoluteUrl = absolutePath;
+								_ret = compiled;
 								that.append(absolutePath, compiled, filePath);
 							} catch (e) {
 								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
@@ -358,10 +360,12 @@
 								return;
 							}
 
-							df.resolve();
+							df.resolve(_ret, _data);
 						}).fail(
 						function(e) {
+							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 							delete that.accessingUrls[absolutePath];
+
 							df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [e.status,
 									absolutePath], {
 								url: absolutePath,
@@ -370,8 +374,6 @@
 							}));
 							return;
 						});
-
-				return df.promise();
 			}
 
 			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
@@ -387,18 +389,33 @@
 					continue;
 				}
 
-				if (!this.accessingUrls[absolutePath]) {
+				if (this.accessingUrls[absolutePath]) {
+					// 現在アクセス中のURLであれば、そのpromiseを待つようにし、新たにアクセスしない
+					tasks.push(this.accessingUrls[absolutePath]);
+				} else {
 					var df = h5.async.deferred();
-					// IE6で、load内のajaxが同期的に動くので、load()の呼び出しより先にaccessingUrlsへpromiseを登録する
-					this.accessingUrls[absolutePath] = df.promise();
-					var loadPromise = load(absolutePath, path, df);
-					tasks.push(loadPromise);
+					// IE6でファイルがキャッシュ内にある場合、load内のajaxが同期的に動くので、
+					// load()の呼び出しより先にaccessingUrlsとtasksへpromiseを登録する
+					tasks.push(this.accessingUrls[absolutePath] = df.promise());
+					load(absolutePath, path, df);
 				}
 			}
 
 			var retDf = getDeferred();
 
 			h5.async.when(tasks).done(function() {
+				var args = arguments;
+				if (tasks.length < 2) {
+					// tasksにpromiseが一つしかない場合は、そのresolve()に渡されたものがそのままくるので、
+					// 複数ある場合と合わせるために配列で包む
+					args = [args];
+				}
+
+				// loadされたものを、キャッシュから持ってきたものとマージする
+				for ( var i = 0, l = args.length; i < l; i++) {
+					$.extend(ret, args[i][0]);
+					datas.push(args[i][1]);
+				}
 				retDf.resolve(ret, datas);
 			}).fail(function(e) {
 				retDf.reject(e);
