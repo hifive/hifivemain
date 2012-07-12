@@ -360,7 +360,10 @@
 								return;
 							}
 
-							df.resolve(_ret, _data);
+							df.resolve({
+								ret: _ret,
+								data: _data
+							});
 						}).fail(
 						function(e) {
 							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
@@ -390,7 +393,7 @@
 				}
 
 				if (this.accessingUrls[absolutePath]) {
-					// 現在アクセス中のURLであれば、そのpromiseを待つようにし、新たにアクセスしない
+					// 現在アクセス中のURLであれば、そのpromiseを待つようにし、新たにリクエストを出さない
 					tasks.push(this.accessingUrls[absolutePath]);
 				} else {
 					var df = h5.async.deferred();
@@ -404,17 +407,12 @@
 			var retDf = getDeferred();
 
 			h5.async.when(tasks).done(function() {
-				var args = arguments;
-				if (tasks.length < 2) {
-					// tasksにpromiseが一つしかない場合は、そのresolve()に渡されたものがそのままくるので、
-					// 複数ある場合と合わせるために配列で包む
-					args = [args];
-				}
+				var args = h5.u.obj.argsToArray(arguments);
 
 				// loadされたものを、キャッシュから持ってきたものとマージする
 				for ( var i = 0, l = args.length; i < l; i++) {
-					$.extend(ret, args[i][0]);
-					datas.push(args[i][1]);
+					$.extend(ret, args[i].ret);
+					datas.push(args[i].data);
 				}
 				retDf.resolve(ret, datas);
 			}).fail(function(e) {
