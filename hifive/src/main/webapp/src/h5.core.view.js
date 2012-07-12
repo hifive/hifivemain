@@ -625,14 +625,12 @@
 			}
 
 			if (typeof templateId !== 'string' || !$.trim(templateId)) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
 			var template = cache[templateId];
 
 			if (!template) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE], templateId);
 				throwFwError(ERR_CODE_TEMPLATE_ID_UNAVAILABLE, templateId);
 			}
 
@@ -645,7 +643,6 @@
 			try {
 				ret = template.call(p, p, helper);
 			} catch (e) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED], e.toString());
 				throwFwError(ERR_CODE_TEMPLATE_PROPATY_UNDEFINED, e.toString(), e);
 			}
 
@@ -743,20 +740,17 @@
 				break;
 			case 'array':
 				if (!templateIds.length) {
-					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				templateIdsArray = templateIds;
 				break;
 			default:
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				var id = templateIdsArray[i];
 				if (typeof id !== 'string' || !$.trim(id)) {
-					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				/* del begin */
