@@ -20,6 +20,9 @@ $(function() {
 	// アサートが稀に失敗する場合があるので、フェードアウトのアニメ―ションを実行しない。
 	$.blockUI.defaults.fadeOut = -1;
 
+	// svgをサポートしているか
+	var isSupportSVG = !document.createElementNS || document.createElementNS('http://www.w3.org/2000/svg', 'svg').__proto__.constructor.name !== 'SVGSVGElement'
+
 	var rgbToHex = function(rgbStr) {
 		if (/^#\d{3,6}$/.test(rgbStr)) {
 			return rgbStr;
@@ -5069,7 +5072,7 @@ $(function() {
 					start();
 					return;
 				}
-				if (!document.createElementNS) {
+				if (!isSupportSVG){
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -5215,7 +5218,7 @@ $(function() {
 			'h5trackイベント(touchstart, touchmove, touchend) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
-				if (!document.createElementNS) {
+				if (!isSupportSVG){
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
