@@ -1475,6 +1475,33 @@
 		}
 	}
 
+	/**
+	 * 指定された値をメッセージとして例外をスローします。
+	 * <p>
+	 * 第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+	 * <p>
+	 * <b>文字列の場合</b><br>
+	 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
+	 * <p>
+	 * <b>オブジェクトの場合</b><br>
+	 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
+	 *
+	 * @param {String} customType 型情報
+	 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
+	 * @param {Any} [args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
+	 */
+	function createError(customType, msgOrErrObj, args) {
+		if (msgOrErrObj && typeof msgOrErrObj === 'string') {
+			error = new Error(format.apply(null, args));
+		} else {
+			// iOS4は引数を渡さないと"unknown error"というエラーメッセージが、その他のブラウザは空文字がデフォルトで入る
+			error = new Error();
+			error.detail = msgOrErrObj;
+		}
+		error.customType = customType;
+		throw error;
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -2066,15 +2093,7 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwError: function(msgOrErrObj, var_args) {
-			var error = null;
-			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
-				error = new Error(format.apply(null, argsToArray(arguments)));
-			} else {
-				error = new Error();
-				error.detail = msgOrErrObj;
-			}
-			error.customType = null;
-			throw error;
+			createError(null, msgOrErrObj, argsToArray(arguments));
 		},
 
 		/**
@@ -2102,14 +2121,7 @@
 			}
 			var args = argsToArray(arguments);
 			args.shift();
-			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
-				error = new Error(format.apply(null, argsToArray(args)));
-			} else {
-				error = new Error();
-				error.detail = msgOrErrObj;
-			}
-			error.customType = customType;
-			throw error;
+			createError(customType, msgOrErrObj, args);
 		}
 	});
 
