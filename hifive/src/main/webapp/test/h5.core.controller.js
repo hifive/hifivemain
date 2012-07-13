@@ -4543,7 +4543,11 @@ $(function() {
 						try {
 							this.throwError(obj, obj);
 						} catch (e) {
-							equal(e.message, '', '第一引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
+								equal(e.message, 'Unknown error', '第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+							} else {
+								equal(e.message, '', '第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							}
 							deepEqual(e.detail, obj, 'detailプロパティに第一引数に指定したオブジェクトが設定されていること。');
 						}
 						try {
@@ -4576,7 +4580,11 @@ $(function() {
 						try {
 							this.throwCustomError('customType', obj, obj);
 						} catch (e) {
-							equal(e.message, '', '第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
+								equal(e.message, 'Unknown error', '第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+							} else {
+								equal(e.message, '', '第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							}
 							deepEqual(e.detail, obj, 'detailプロパティに第二引数に指定したオブジェクトが設定されていること。');
 						}
 					}
