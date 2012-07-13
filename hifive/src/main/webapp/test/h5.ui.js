@@ -23,6 +23,9 @@ $(function() {
 		return document.documentElement.clientWidth;
 	}
 	function getWindowHeight() {
+		if(h5.env.ua.isiPhone){
+			return window.innerHeight;
+		}
 		return document.documentElement.clientHeight;
 	}
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
