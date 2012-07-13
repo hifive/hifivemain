@@ -4544,22 +4544,24 @@ $(function() {
 							this.throwError(obj, obj);
 						} catch (e) {
 							if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
-								equal(e.message, 'Unknown error', '第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+								equal(e.message, 'Unknown error',
+										'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
 							} else {
-								equal(e.message, '', '第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+								equal(e.message, '',
+										'第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
 							}
 							deepEqual(e.detail, obj, 'detailプロパティに第一引数に指定したオブジェクトが設定されていること。');
 						}
 						try {
 							this.throwCustomError();
 						} catch (e) {
-							strictEqual(e.message, 'エラータイプを指定してください。',
+							strictEqual(e.message, '正しい数の引数を指定して下さい。',
 									'throwCustomErrorメソッドでエラータイプが指定されないとエラーが発生するか');
 						}
 						var err2 = null;
 						var err2Type = null;
 						try {
-							this.throwCustomError('customType');
+							this.throwCustomError('customType', '');
 						} catch (e) {
 							err2 = e;
 							err2Type = e.customType;
@@ -4581,9 +4583,11 @@ $(function() {
 							this.throwCustomError('customType', obj, obj);
 						} catch (e) {
 							if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
-								equal(e.message, 'Unknown error', '第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+								equal(e.message, 'Unknown error',
+										'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
 							} else {
-								equal(e.message, '', '第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+								equal(e.message, '',
+										'第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
 							}
 							deepEqual(e.detail, obj, 'detailプロパティに第二引数に指定したオブジェクトが設定されていること。');
 						}
