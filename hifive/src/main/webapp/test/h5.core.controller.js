@@ -22,7 +22,6 @@ $(function() {
 
 	// svgをサポートしているか
 	var isSupportSVG = !document.createElementNS || document.createElementNS('http://www.w3.org/2000/svg', 'svg').constructor.name !== 'SVGSVGElement';
-	console.log(window.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'));
 
 	var rgbToHex = function(rgbStr) {
 		if (/^#\d{3,6}$/.test(rgbStr)) {
