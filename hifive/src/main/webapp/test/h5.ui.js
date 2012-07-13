@@ -394,79 +394,85 @@ $(function() {
 					$(window).scrollTop(originLeft);
 				}
 			});
-	test('h5.ui.isInView - 第二引数を省略したときはウィンドウ上に見えているかどうかを判定できること。スクロールした状態でも見えているかどうかで判定されること。', 24,
-			function() {
-				var testDom = $(test3)[0];
-				function testFunc(scrollTop, scrollLeft) {
-					var viewTop = scrollTop | 0;
-					var viewLeft = scrollLeft | 0;
+	asyncTest(
+			'h5.ui.isInView - 第二引数を省略したときはウィンドウ上に見えているかどうかを判定できること。スクロールした状態でも見えているかどうかで判定されること。',
+			24, function() {
+				setTimeout(function() {
+					var testDom = $(test3)[0];
+					function testFunc(scrollTop, scrollLeft) {
+						var viewTop = scrollTop | 0;
+						var viewLeft = scrollLeft | 0;
 
-					var top,left;
-					// 1 - 内側の要素のパディング(上下(左右)の合計) + 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
-					// viewTop(viewLeft)
-					top = viewTop - 35;
-					left = viewLeft - 35;
+						var top,left;
+						// 1 - 内側の要素のパディング(上下(左右)の合計) + 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
+						// viewTop(viewLeft)
+						top = viewTop - 35;
+						left = viewLeft - 35;
 
-					testDom.style.top = top + 'px';
-					testDom.style.left = left + 'px';
-					check(deepEqual, true, '左上1pxが見えている状態', testDom);
-					testDom.style.top = top - 1 + 'px';
-					testDom.style.left = left + 'px';
-					check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', testDom);
-					testDom.style.top = top + 'px';
-					testDom.style.left = left - 1 + 'px';
-					check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', testDom);
+						testDom.style.top = top + 'px';
+						testDom.style.left = left + 'px';
+						check(deepEqual, true, '左上1pxが見えている状態', testDom);
+						testDom.style.top = top - 1 + 'px';
+						testDom.style.left = left + 'px';
+						check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', testDom);
+						testDom.style.top = top + 'px';
+						testDom.style.left = left - 1 + 'px';
+						check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', testDom);
 
-					// window幅 - 1
-					left = getWindowWidth() + viewLeft - 1;
+						// window幅 - 1
+						left = getWindowWidth() + viewLeft - 1;
 
-					testDom.style.top = top + 'px';
-					testDom.style.left = left + 'px';
-					check(deepEqual, true, '右上1pxが見えている状態', testDom);
-					testDom.style.top = top - 1 + 'px';
-					testDom.style.left = left + 'px';
-					check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', testDom);
-					testDom.style.top = top + 'px';
-					testDom.style.left = left + 1 + 'px';
-					check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', testDom);
+						testDom.style.top = top + 'px';
+						testDom.style.left = left + 'px';
+						check(deepEqual, true, '右上1pxが見えている状態', testDom);
+						testDom.style.top = top - 1 + 'px';
+						testDom.style.left = left + 'px';
+						check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', testDom);
+						testDom.style.top = top + 'px';
+						testDom.style.left = left + 1 + 'px';
+						check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', testDom);
 
-					// windowの高さ - 1
-					top = getWindowHeight() + viewTop - 1;
+						// windowの高さ - 1
+						top = getWindowHeight() + viewTop - 1;
 
-					testDom.style.top = top + 'px';
-					testDom.style.left = left + 'px';
-					check(deepEqual, true, '右下1pxが見えている状態', testDom);
-					testDom.style.top = top + 1 + 'px';
-					testDom.style.left = left + 'px';
-					check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', testDom);
-					testDom.style.top = top + 'px';
-					testDom.style.left = left + 1 + 'px';
-					check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', testDom);
+						testDom.style.top = top + 'px';
+						testDom.style.left = left + 'px';
+						check(deepEqual, true, '右下1pxが見えている状態', testDom);
+						testDom.style.top = top + 1 + 'px';
+						testDom.style.left = left + 'px';
+						check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', testDom);
+						testDom.style.top = top + 'px';
+						testDom.style.left = left + 1 + 'px';
+						check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', testDom);
 
-					// leftを左側に戻す
-					left = viewLeft - 35;
+						// leftを左側に戻す
+						left = viewLeft - 35;
 
-					testDom.style.top = top + 'px';
-					testDom.style.left = left + 'px';
-					check(deepEqual, true, '左下1pxが見えている状態', testDom);
-					testDom.style.top = top + 1 + 'px';
-					testDom.style.left = left + 'px';
-					check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', testDom);
-					testDom.style.top = top + 'px';
-					testDom.style.left = left - 1 + 'px';
-					check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', testDom);
+						testDom.style.top = top + 'px';
+						testDom.style.left = left + 'px';
+						check(deepEqual, true, '左下1pxが見えている状態', testDom);
+						testDom.style.top = top + 1 + 'px';
+						testDom.style.left = left + 'px';
+						check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', testDom);
+						testDom.style.top = top + 'px';
+						testDom.style.left = left - 1 + 'px';
+						check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', testDom);
 
-					if (!(scrollTop && scrollLeft)) {
-						$(window).scrollTop(100);
-						$(window).scrollLeft(100);
-					} else {
-						return;
+						if (!(scrollTop && scrollLeft)) {
+							$(window).scrollTop(100);
+							$(window).scrollLeft(100);
+						} else {
+							return;
+						}
+						// 100, 100にスクロールされた状態でテスト
+						testFunc(100, 100);
+
 					}
-					// 100, 100にスクロールされた状態でテスト
-					testFunc(100, 100);
-
-				}
-				testFunc();
+					setTimeout(function() {
+						testFunc();
+						start();
+					}, 0);
+				}, 0);
 			});
 
 	module('scrollToTop', {
