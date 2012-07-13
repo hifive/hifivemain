@@ -488,7 +488,7 @@ $(function() {
 
 		var count = 0;
 		function waitForScroll() {
-			if (window.scrollY === 1 && window.scrollX === 0) {
+			if ($(window).scrollTop() === 1 && $(window).scrollLeft() === 0) {
 				ok(true, '(0,1)にスクロールされた');
 				start();
 				return;
