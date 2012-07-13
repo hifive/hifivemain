@@ -3,6 +3,7 @@
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta charset="UTF-8">
+		<meta name="viewport" content="initial-scale=1.0">
 		<script src="../res/js/lib/jquery/jquery.js"></script>
 		<script src="../res/js/lib/jqplugins/blockui/jquery.blockUI.js"></script>
 		<script src="../archives/current/ejs-h5mod.js"></script>
@@ -15,6 +16,7 @@
 
 		<link rel="stylesheet" href="css/indicator-theme-b.css"/>
 		<script type="text/javascript" src="./lib/qunit/qunit.js"></script>
+		<script src="testcommon.js"></script>
 
 		<script src="h5preinit.js"></script>
 
@@ -59,11 +61,7 @@
 		<title>hifiveテスト</title>
 	</head>
 	<body>
-		<h1 id="qunit-header">hifiveテスト</h1>
-		<h2 id="qunit-banner"></h2>
-		<div id="qunit-testrunner-toolbar"></div>
-		<h2 id="qunit-userAgent"></h2>
-		<ol id="qunit-tests"></ol>
+		<div id="qunit"></div>
 		<div id="qunit-fixture">test markup, will be hidden</div>
 	</body>
 </html>

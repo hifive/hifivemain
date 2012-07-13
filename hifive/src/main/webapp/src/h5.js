@@ -207,7 +207,7 @@
 	/* del begin */
 	// テストのために公開している。
 	h5.u.obj.expose('h5.core', {
-		_compileAspects: compileAspects
+		__compileAspects: compileAspects
 	});
 	/* del end */
 })();

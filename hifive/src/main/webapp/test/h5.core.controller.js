@@ -13,11 +13,15 @@
  *
  * hifive
  */
-
-
 $(function() {
+	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
+	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
+
 	// アサートが稀に失敗する場合があるので、フェードアウトのアニメ―ションを実行しない。
 	$.blockUI.defaults.fadeOut = -1;
+
+	// svgをサポートしているか
+	var isSupportSVG = document.createElementNS && document.createElementNS('http://www.w3.org/2000/svg', 'svg').constructor.name !== 'SVGSVGElement';
 
 	var rgbToHex = function(rgbStr) {
 		if (/^#\d{3,6}$/.test(rgbStr)) {
@@ -47,6 +51,18 @@ $(function() {
 		return hexStr;
 	};
 
+	// コントローラがdisposeされているかどうかチェックする関数
+	function isDisposed(controller) {
+		var ret = true;
+		for ( var p in controller) {
+			if (controller.hasOwnProperty(p) && controller[p] !== null) {
+				ret = false;
+			}
+		}
+		return ret;
+	}
+
+
 	var cleanAspects = function() {
 		h5.settings.aspects = null;
 	};
@@ -60,6 +76,7 @@ $(function() {
 				},
 				teardown: function() {
 					$('#controllerTest').remove();
+					h5.settings.commonFailHandler = undefined;
 				}
 			});
 
@@ -69,7 +86,7 @@ $(function() {
 			__name: 'TestController'
 		};
 		var c2 = {
-			__name: 'jp.co.nssol.controller.TestController'
+			__name: 'com.htmlhifive.test.controller.TestController'
 		};
 		var c3 = {
 			a: 1
@@ -78,7 +95,7 @@ $(function() {
 		h5.core.expose(c1);
 		strictEqual(c1, window.TestController, '"."を含まない__nameの場合、window直下に紐付けられたか');
 		h5.core.expose(c2);
-		strictEqual(c2, window.jp.co.nssol.controller.TestController,
+		strictEqual(c2, window.com.htmlhifive.test.controller.TestController,
 				'"."を含む__nameの場合、window以下に名前空間が作られて紐付けられたか');
 		var errMsg = null;
 		try {
@@ -154,9 +171,10 @@ $(function() {
 
 	});
 
-	asyncTest('コントローラの作成と要素へのバインド(AOPあり)', 3, function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('コントローラの作成と要素へのバインド(AOPあり) ※min版ではエラーになります', 3, function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -199,7 +217,7 @@ $(function() {
 			}
 		};
 
-		h5.core._compileAspects([aop1, aop2]);
+		h5.core.__compileAspects([aop1, aop2]);
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
@@ -216,7 +234,7 @@ $(function() {
 
 	});
 
-	test('bind() 引数なし、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること。',
+	test('bind() 引数なし、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること',
 			function() {
 				$('#controllerTest').append('<div class="test">a</div>');
 				$('#controllerTest').append('<div class="test">b</div>');
@@ -227,23 +245,23 @@ $(function() {
 				try {
 					testController.bind();
 				} catch (e) {
-					same(e.code, 6001, e.message);
+					deepEqual(e.code, 6001, e.message);
 				}
 				try {
-					var bind = testController.bind
+					var bind = testController.bind;
 					bind('#controllerTest');
 				} catch (e) {
-					same(e.code, 6002, e.message);
+					deepEqual(e.code, 6002, e.message);
 				}
 				try {
 					testController.bind('#noexist');
 				} catch (e) {
-					same(e.code, 6003, e.message);
+					deepEqual(e.code, 6003, e.message);
 				}
 				try {
 					testController.bind('.test');
 				} catch (e) {
-					same(e.code, 6004, e.message);
+					deepEqual(e.code, 6004, e.message);
 				}
 			});
 
@@ -280,7 +298,7 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -297,7 +315,7 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -465,52 +483,74 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートのロードが失敗する時のコントローラの動作', 5, function() {
+	asyncTest('テンプレートが存在しない時のコントローラの動作', 7, function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
 			__templates: ['./noExistPath'],
 			__construct: function(context) {
-				same(++count, 1, '1. コンストラクタが実行される。');
+				deepEqual(++count, 1, '1. コンストラクタが実行される。');
 			},
 			__init: function(context) {
-				ok(false, 'テスト失敗。__initが実行されました。');
+				ok(false, 'テスト失敗。__initが実行された');
 			},
 			__ready: function(context) {
-				ok(false, 'テスト失敗。__readyが実行されました。');
+				ok(false, 'テスト失敗。__readyが実行された');
 			},
 			__dispose: function(context) {
-				same(++count, 4, '4. __disposeが実行される。');
+				deepEqual(++count, 4, '4. __disposeが実行されること');
 				start();
 			},
 			__unbind: function(context) {
-				same(++count, 3, '3. __unbindが実行される。');
+				deepEqual(++count, 3, '3. __unbindが実行されること');
 			}
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.preinitPromise.done(function() {
-			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
+			ok(false, 'テスト失敗。preinitPromiseがresolve()された');
 		}).fail(function(e) {
-			same(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			same(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
-		})
+			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+			strictEqual(e.controllerDefObject, controller, 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+		});
 		testController.initPromise.done(function(a) {
-			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
+			ok(false, 'テスト失敗。initPromiseがresolve()された');
 		}).fail(function(e, opt) {
-			ok(false, 'テスト失敗。initPromiseがreject()されました。');
+			ok(true, 'initPromiseのfailハンドラが実行される');
+		});
+		testController.readyPromise.done(function(a) {
+			ok(false, 'テスト失敗。readyPromiseがresolve()された');
+		}).fail(function(e, opt) {
+			ok(true, 'reaedyPromiseのfailハンドラが実行される');
 		});
 	});
 
-	asyncTest('テンプレートのロードが失敗する時のコントローラの動作 2', 16, function() {
+	asyncTest('テンプレートが存在しない時のコントローラの動作 2', 21, function() {
+		// TODO エラーコードも確認する
 		var errorCode = 7003;
-		var count = 0;
 		var disposedController = {};
 		var bController = {
 			__name: 'BController',
 
 			__construct: function(context) {
-				same(++count, 1, '孫コントローラのコンストラクタが実行される。');
+				ok(true, '孫コントローラのコンストラクタが実行される。');
+				this.preinitPromise.done(function() {
+					ok(true, '孫コントローラのpreinitPromiseのdoneハンドラが呼ばれる。');
+				}).fail(function() {
+					ok(false, 'テスト失敗。孫コントローラのpreinitPromiseのfailハンドラが呼ばれた。');
+				});
+				this.initPromise.done(function() {
+					ok(true, '孫コントローラのinitPromiseのdoneハンドラが呼ばれる。');
+				}).fail(function() {
+					ok(false, 'テスト失敗。孫コントローラのinitPromiseのfailハンドラが呼ばれた。');
+				});
+				this.readyPromise.done(function() {
+					ok(false, 'テスト失敗。孫コントローラのreadyPromiseのdoneハンドラが呼ばれた。');
+					start();
+				}).fail(function() {
+					ok(true, '孫コントローラのreadyPromiseのfailハンドラが呼ばれる。');
+				});
+
 			},
 			__init: function(context) {
 			// 孫の__initは、その前にコントローラ群がdisposeされていれば実行されない
@@ -519,11 +559,11 @@ $(function() {
 			// 孫の__readyは、その前にコントローラ群がdisposeされていれば実行されない
 			},
 			__dispose: function(context) {
-				same(++count, 9, '孫コントローラの__disposeが実行される。');
+				ok(true, '孫コントローラの__disposeが実行される。');
 				disposedController.b = this;
 			},
 			__unbind: function(context) {
-				same(++count, 6, '孫コントローラの__unbindが実行される。');
+				ok(true, '孫コントローラの__unbindが実行される。');
 			}
 		};
 		var aController = {
@@ -532,29 +572,35 @@ $(function() {
 			childController: bController,
 
 			__construct: function(context) {
-				this.childController.preinitPromise.done(function() {
-					// 孫コントローラのpreinitDfdはこの時点でresolveしてるはず
-					// (テンプレートファイルがないので、同期的にresolveする。)
-					// なので、即座に実行される。
-					same(++count, 2, '孫コントローラのpreinitPromiseのdoneハンドラが実行される。');
-				}).fail(function(e) {
-					ok(false, 'テスト失敗。孫コントローラのpreinitPromiseのfailハンドラが実行されました。');
-					same(e.code, errorCode, e.message);
+				ok(true, '子コントローラのコンストラクタが実行される。');
+				this.preinitPromise.done(function() {
+					ok(false, 'テスト失敗。子コントローラのpreinitPromiseのdoneハンドラが呼ばれた。');
+				}).fail(function() {
+					ok(true, '子コントローラのpreinitPromiseのfailハンドラが呼ばれる。');
 				});
-				same(++count, 3, '子コントローラのコンストラクタが実行される。');
+				this.initPromise.done(function() {
+					ok(false, 'テスト失敗。子コントローラのinitPromiseのdoneハンドラが呼ばれた。');
+				}).fail(function() {
+					ok(true, '子コントローラのinitPromiseのfailハンドラが呼ばれる。');
+				});
+				this.readyPromise.done(function() {
+					ok(false, 'テスト失敗。子コントローラのreadyPromiseのdoneハンドラが呼ばれた。');
+				}).fail(function() {
+					ok(true, '子コントローラのreadyPromiseのfailハンドラが呼ばれる。');
+				});
 			},
 			__init: function(context) {
-				ok(false, 'テスト失敗。子コントローラの__initが実行されました。');
+				ok(false, 'テスト失敗。子コントローラの__initが実行された');
 			},
 			__ready: function(context) {
-				ok(false, 'テスト失敗。子コントローラの__readyが実行されました。');
+				ok(false, 'テスト失敗。子コントローラの__readyが実行された');
 			},
 			__dispose: function(context) {
-				same(++count, 10, '子コントローラの__disposeが実行される。');
+				ok(true, '子コントローラの__disposeが実行される。');
 				disposedController.a = this;
 			},
 			__unbind: function(context) {
-				same(++count, 7, '子コントローラの__unbindが実行される。');
+				ok(true, '子コントローラの__unbindが実行される。');
 			}
 		};
 
@@ -564,42 +610,28 @@ $(function() {
 			childController: aController,
 
 			__construct: function(context) {
-				same(++count, 4, '4. 親のコンストラクタが実行される。');
-
-				this.childController.preinitPromise.done(function() {
-					ok(false, 'テスト失敗。子コントローラのpreinitPromiseのdoneハンドラが呼ばれた。');
-				}).fail(function(e) {
-					same(++count, 5, '子コントローラのpreinitPromiseのfailハンドラが実行される。');
-					same(e.code, errorCode, e.message);
-				});
+				ok(true, '親コントローラのコンストラクタが実行される。');
 			},
 			__init: function(context) {
-				ok(false, 'テスト失敗。親の__initが実行されました。');
+				ok(false, 'テスト失敗。親コントローラの__initが実行された');
 			},
 			__ready: function(context) {
-				ok(false, 'テスト失敗。親の__readyが実行されました。');
+				ok(false, 'テスト失敗。親コントローラの__readyが実行された');
 			},
 			__dispose: function(context) {
-				same(++count, 11, '親の__disposeが実行される。');
+				ok(true, '親コントローラの__disposeが実行される。');
 				disposedController.test = this;
 				setTimeout(function() {
 					for ( var i = 0; i < 3; i++) {
 						var prop = ['b', 'a', 'test'][i];
 						var str = ['孫', '子', '親'][i];
-						var flag = 0;
-						for ( var p in disposedController[prop]) {
-							if (disposedController[prop][p] !== null) {
-								flag = 1;
-								break;
-							}
-						}
-						ok(!flag, str + 'コントローラがdisposeされていること');
+						ok(isDisposed(disposedController[prop]), str + 'コントローラがdisposeされていること');
 					}
 					start();
 				}, 0);
 			},
 			__unbind: function(context) {
-				same(++count, 8, '親の__unbindが実行される。');
+				ok(true, '親コントローラの__unbindが実行される。');
 			}
 		};
 
@@ -609,9 +641,19 @@ $(function() {
 		}).fail(function() {
 			ok(false, 'テスト失敗。親コントローラのpreinitPromiseのfailハンドラが呼ばれた。');
 		});
+		testController.initPromise.done(function() {
+			ok(false, 'テスト失敗。親コントローラのinitPromiseのdoneハンドラが呼ばれた。');
+		}).fail(function() {
+			ok(true, '親コントローラのinitPromiseのfailハンドラが呼ばれる。');
+		});
+		testController.readyPromise.done(function() {
+			ok(false, 'テスト失敗。親コントローラのreadyPromiseのdoneハンドラが呼ばれた。');
+		}).fail(function() {
+			ok(true, '親コントローラのreadyPromiseのfailハンドラが呼ばれる。');
+		});
 	});
 
-	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること。 3', 5, function() {
+	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること', 5, function() {
 		// view.load()をスタブに差し替え
 		var retryCount = 0;
 		var retryLimit = 3;
@@ -642,97 +684,172 @@ $(function() {
 			__name: 'TestController',
 			__templates: ['./noExistPath'],
 			__construct: function(context) {
-				same(++count, 1, '__constructが実行される。');
+				deepEqual(++count, 1, '__constructが実行される。');
 			},
 			__init: function(context) {
-				same(++count, 2, '__initが実行される。');
+				deepEqual(++count, 2, '__initが実行される。');
 			},
 			__ready: function(context) {
-				same(++count, 4, '__readyが実行される。');
+				deepEqual(++count, 4, '__readyが実行される。');
 			}
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.initPromise.done(function(a) {
-			same(++count, 3, 'initPromiseがresolve()されました。');
+			deepEqual(++count, 3, 'initPromiseがresolve()された');
 		}).fail(function(e, opt) {
-			ok(false, 'テスト失敗。initPromiseがreject()されました。');
+			ok(false, 'テスト失敗。initPromiseがreject()された');
 		});
 		testController.readyPromise.done(function(a) {
-			same(++count, 5, 'readyPromiseがresolve()されました。');
+			deepEqual(++count, 5, 'readyPromiseがresolve()された');
 			h5.core.view.createView = originalCreateView;
 			start();
 		});
 	});
 
 
-	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreinitPromiseのfailが呼ばれること。', 5, function() {
-		// view.load()をスタブに差し替え
-		var retryCount = 0;
-		var retryLimit = 3;
-		var load = function() {
-			var dfd = h5.async.deferred();
-			var e = {
-				detail: {
-					error: {
-						status: h5.env.ua.isIE ? 0 : 12029
+	asyncTest(
+			'テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreinitPromiseのfailが呼ばれること',
+			11,
+			function() {
+				// view.load()をスタブに差し替え
+				var retryCount = 0;
+				var retryLimit = 3;
+				var load = function() {
+					var dfd = $.Deferred();
+					var e = {
+						detail: {
+							error: {
+								status: h5.env.ua.isIE ? 0 : 12029
+							}
+						}
+					};
+					if (retryCount++ == retryLimit + 1) {
+						dfd.resolve();
+					} else {
+						dfd.reject(e);
 					}
-				}
-			};
-			if (retryCount++ == retryLimit + 1) {
-				dfd.resolve();
-			} else {
-				dfd.reject(e);
-			}
-			return dfd.promise();
-		};
-		var originalCreateView = h5.core.view.createView;
-		h5.core.view.createView = function() {
-			var view = originalCreateView();
-			view.load = load;
-			return view;
-		};
+					return dfd.promise();
+				};
+				var originalCreateView = h5.core.view.createView;
+				h5.core.view.createView = function() {
+					var view = originalCreateView();
+					view.load = load;
+					return view;
+				};
+				var count = 0;
+				var controller = {
+					__name: 'TestController',
+					__templates: ['./noExistPath'],
+					__construct: function(context) {
+						deepEqual(++count, 1, 'コンストラクタが実行される。');
+					},
+					__init: function(context) {
+						ok(false, 'テスト失敗。__initが実行された');
+					},
+					__ready: function(context) {
+						ok(false, 'テスト失敗。__readyが実行された');
+					},
+					__dispose: function(context) {
+						deepEqual(++count, 6, '__disposeが実行される。');
+					},
+					__unbind: function(context) {
+						deepEqual(++count, 5, '__unbindが実行される。');
+					}
+				};
+
+				var testController = h5.core.controller('#controllerTest', controller);
+
+				var errorObj = null;
+				testController.preinitPromise.done(function() {
+					// createViewを元に戻す
+					h5.core.view.createView = originalCreateView;
+					ok(false, 'テスト失敗。preinitPromiseがresolve()された');
+					h5.core.view.createView = originalCreateView;
+					start();
+				}).fail(
+						function(e) {
+							// createViewを元に戻す
+							h5.core.view.createView = originalCreateView;
+							errorObj = e;
+							deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+							strictEqual(e.controllerDefObject, controller,
+									'エラーオブジェクトからコントローラオブジェクトが取得できること');
+						});
+				testController.initPromise
+						.done(function(a) {
+							ok(false, 'テスト失敗。initPromiseがresolve()された');
+							start();
+						})
+						.fail(
+								function(e) {
+									deepEqual(++count, 3, 'initPromiseがreject()された');
+									strictEqual(e.controllerDefObject, controller,
+											'エラーオブジェクトからコントローラオブジェクトが取得できること');
+									strictEqual(e, errorObj,
+											'preinitPromiseのfailで取得したエラーオブジェクトとinitPromiseのfailで取得したエラーオブジェクトが同じであること');
+								});
+				testController.readyPromise
+						.done(function() {
+							ok(false, 'テスト失敗。 readyPromiseがresolve()された');
+							start();
+						})
+						.fail(
+								function(e) {
+									strictEqual(++count, 4, 'readyPromiseがreject()された');
+									strictEqual(e.controllerDefObject, controller,
+											'エラーオブジェクトからコントローラオブジェクトが取得できること');
+									strictEqual(e, errorObj,
+											'preinitPromiseのfailで取得したエラーオブジェクトとreadyPromiseのfailで取得したエラーオブジェクトが同じであること');
+									start();
+								});
+			});
+
+	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 7, function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
-			__templates: ['./noExistPath'],
+			__templates: ['./template/test13.ejs?'],
 			__construct: function(context) {
-				same(++count, 1, 'コンストラクタが実行される。');
+				deepEqual(++count, 1, '1. コンストラクタが実行される。');
 			},
 			__init: function(context) {
-				ok(false, 'テスト失敗。__initが実行されました。');
+				ok(false, 'テスト失敗。__initが実行された');
 			},
 			__ready: function(context) {
-				ok(false, 'テスト失敗。__readyが実行されました。');
+				ok(false, 'テスト失敗。__readyが実行された');
 			},
 			__dispose: function(context) {
-				same(++count, 4, '__disposeが実行される。');
+				deepEqual(++count, 6, '__disposeが実行される。');
+				start();
 			},
 			__unbind: function(context) {
-				same(++count, 3, '__unbindが実行される。');
+				deepEqual(++count, 5, '__unbindが実行される。');
 			}
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.preinitPromise.done(function() {
-			ok(false, 'テスト失敗。preinitPromiseがresolve()されました。');
-			h5.core.view.createView = originalCreateView;
-			start();
+			ok(false, 'テスト失敗。preinitPromiseがresolve()された');
 		}).fail(function(e) {
-			same(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			same(e.controllerDefObject.__name, 'TestController', 'エラーオブジェクトからコントローラオブジェクトが取得できる');
-			h5.core.view.createView = originalCreateView;
-			start();
+			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+			strictEqual(e.controllerDefObject, controller, 'エラーオブジェクトからコントローラオブジェクトが取得できる');
 		});
 		testController.initPromise.done(function(a) {
-			ok(false, 'テスト失敗。initPromiseがresolve()されました。');
+			ok(false, 'テスト失敗。initPromiseがresolve()された');
 		}).fail(function(e, opt) {
-			ok(false, 'テスト失敗。initPromiseがreject()されました。');
+			deepEqual(++count, 3, 'initPromiseがreject()された');
+		});
+		testController.readyPromise.done(function(a) {
+			ok(false, 'テスト失敗。readyPromiseがresolve()された');
+			start();
+		}).fail(function(e, opt) {
+			deepEqual(++count, 4, 'readyPromiseがreject()された');
+			start();
 		});
 	});
 
-
-	test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', function() {
+	test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', 1, function() {
 		var errorCode = 6029;
 		var view = h5.core.view;
 		h5.core.view = null;
@@ -744,12 +861,12 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが起きていません');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 		h5.core.view = view;
 	});
 
-	asyncTest('コントローラのdispose1', function() {
+	asyncTest('コントローラのdispose (同期処理) - __dispose()の実行順序をテスト', function() {
 		var ret = [];
 		var childController = {
 			__name: 'ChildController',
@@ -773,58 +890,39 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-
-				var rootDispose = true;
-				var childDispose = true;
-				for ( var p in testController) {
-					if (testController[p] !== null) {
-						rootDispose = false;
-					}
-				}
-				for ( var p in cc) {
-					if (cc[p] !== null) {
-						childDispose = false;
-					}
-				}
 				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
-				ok(rootDispose, 'ルートコントローラのリソースはすべて削除されたか');
-				ok(childDispose, '子コントローラのリソースはすべて削除されたか');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
 			});
 		});
 	});
 
-
-	asyncTest('コントローラのdispose2', function() {
-
-		var child = true;
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', function() {
+		var childDfd = h5.async.deferred();
+		var rootDfd = h5.async.deferred();
 		var childController = {
 			__name: 'ChildController',
 
 			__dispose: function() {
-				var dfd = this.deferred();
 				var that = this;
 				setTimeout(function() {
-					child = that.__name === 'ChildController';
-					dfd.resolve();
+					childDfd.resolve();
 				}, 400);
-				return dfd.promise();
+				return childDfd.promise();
 			}
 		};
-		var root = true;
 		var controller = {
 			__name: 'TestController',
 
 			childController: childController,
 
 			__dispose: function() {
-				var dfd = this.deferred();
 				var that = this;
 				setTimeout(function() {
-					root = that.__name === 'TestController';
-					dfd.resolve();
+					rootDfd.resolve();
 				}, 100);
-				return dfd.promise();
+				return rootDfd.promise();
 			}
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
@@ -833,67 +931,118 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				var rootDispose = true;
-				var childDispose = true;
-				for ( var p in testController) {
-					if (testController[p] !== null) {
-						rootDispose = false;
-					}
-				}
-				for ( var p in cc) {
-					if (cc[p] !== null) {
-						childDispose = false;
-					}
-				}
-				ok(root, '__disposeイベントはPromiseオブジェクトを考慮しているか1');
-				ok(child, '__disposeイベントはPromiseオブジェクトを考慮しているか2');
-				ok(rootDispose, 'ルートコントローラのリソースはすべて削除されたか');
-				ok(childDispose, '子コントローラのリソースはすべて削除されたか');
+				ok(isResolved(rootDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
+				ok(isResolved(childDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか2');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
 			});
 		});
 	});
 
-	asyncTest('__constructでthis.disposeを呼んだらライフサイクルイベントは実行されない', 4, function() {
-		var flag = false;
-		var controller = {
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', function() {
+		var childDfd = h5.async.deferred();
+		var rootDfd = h5.async.deferred();
 
-			__name: 'TestController',
-			__construct: function() {
-				// this.dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
-				// なので、バックアップを取ってdispose.apply(this)を使って2回呼ぶ
-				var dispose = this.dispose;
-				dispose.apply(this);
-				dispose.apply(this);
-				ok(true, 'コンストラクタは実行されること');
-			},
-			__init: function() {
-				ok(false, 'テスト失敗。__initが実行された');
-			},
-			__ready: function() {
-				ok(false, 'テスト失敗。__readyが実行された');
-				start();
-			},
+		var childController = {
+			__name: 'ChildController',
+
 			__dispose: function() {
-				ok(!flag, '__disposeが1度だけ実行されること。');
-				flag = true;
+				var that = this;
 				setTimeout(function() {
-					start();
-				}, 0);
-			},
-			__unbind: function() {
-				ok(true, '__unbindが実行されること。');
+					child = that.__name === 'ChildController';
+					childDfd.resolve();
+				}, 400);
+				return childDfd.promise();
 			}
 		};
+		var controller = {
+			__name: 'TestController',
 
-		ok(h5.core.controller('#controllerTest', controller) === null,
-				'h5.core.controller()がnullを返すこと');
+			childController: childController,
+
+			__dispose: function() {
+				var that = this;
+				setTimeout(function() {
+					root = that.__name === 'TestController';
+					rootDfd.reject();
+				}, 100);
+				return rootDfd.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				ok(isRejected(rootDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
+				ok(!isResolved(childDfd) && !isRejected(childDfd),
+						'__disposeイベントはPromiseオブジェクトを考慮しているか2');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
 	});
 
-
-	asyncTest('controller.preinitProimseのdoneハンドラでthis.disposeを呼んだらライフサイクルイベントは実行されない', 4,
-			function() {
+	asyncTest(
+			'コントローラのdispose __constructでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行される',
+			7, function() {
 				var flag = false;
+				var controller = {
+					__name: 'TestController',
+					__construct: function() {
+
+						this.preinitPromise.done(function() {
+							ok(true, 'preinitPromiseのdoneハンドラが実行された');
+						}).fail(function() {
+							ok(false, 'テスト失敗。preinitPromiseのfailハンドラが実行された');
+						});
+						this.initPromise.done(function() {
+							ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+						}).fail(function() {
+							ok(true, 'initPromiseのfailハンドラが実行された');
+						});
+						this.readyPromise.done(function() {
+							ok(false, 'テスト失敗。readyPromiseのdoneハンドラが実行された');
+						}).fail(function() {
+							ok(true, 'readyPromiseのfailハンドラが実行された');
+						});
+
+						// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
+						this.dispose();
+						this.dispose();
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						ok(false, 'テスト失敗。__initが実行された');
+					},
+					__ready: function() {
+						ok(false, 'テスト失敗。__readyが実行された');
+						start();
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+
+				ok(h5.core.controller('#controllerTest', controller) === null,
+						'h5.core.controller()がnullを返すこと');
+			});
+
+	asyncTest(
+			'コントローラのdispose preinitProimseのdoneハンドラでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること',
+			8, function() {
+				var flag = false;
+				var errorObj = {};
 				var controller = {
 
 					__name: 'TestController',
@@ -910,173 +1059,640 @@ $(function() {
 						}, 0);
 					},
 					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること。');
+						ok(!flag, '__disposeが1度だけ実行されること');
 						flag = true;
 						setTimeout(function() {
 							start();
 						}, 0);
 					},
 					__unbind: function() {
-						ok(true, '__unbindが実行されること。');
+						ok(true, '__unbindが実行されること');
 					}
 				};
 
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.initPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
-				}).fail(function() {
-					ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'initPromiseのfailハンドラが実行されること');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
 				});
 				testController.readyPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
-				}).fail(function() {
-					ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'initPromiseのfailハンドラが実行されること');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
 				});
 				testController.preinitPromise.done(function() {
 					ok(true, 'preinitPromiseのdoneハンドラが実行されること');
-					// dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
-					// なので、バックアップを取ってdispose.apply(testController)を使って2回呼ぶ
+					// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
 					var dispose = testController.dispose;
-					dispose.apply(testController);
-					dispose.apply(testController);
+					testController.dispose(errorObj);
+					testController.dispose(errorObj);
 				});
 			});
 
-	asyncTest('__initでthis.disposeを呼んだらinitPromise以降は実行されない', 5, function() {
-		var flag = false;
-		var controller = {
+	asyncTest(
+			'コントローラのdispose __initでthis.disposeを呼ぶと__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること',
+			9, function() {
+				var errorObj = {};
+				var flag = false;
+				var controller = {
 
+					__name: 'TestController',
+					__construct: function() {
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						// disposeを2回呼ぶ
+						this.dispose(errorObj);
+						this.dispose(errorObj);
+						ok(true, '__initが実行されること');
+					},
+					__ready: function() {
+						ok(false, 'テスト失敗。__readyが実行された');
+						start();
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.preinitPromise.done(function() {
+					ok(true, 'preinitPromiseのdoneハンドラが実行されること');
+				});
+				testController.initPromise.done(function() {
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'initPromiseのfailハンドラが実行された');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+				testController.readyPromise.done(function() {
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'initPromiseのfailハンドラが実行された');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+			});
+
+	asyncTest(
+			'コントローラのdispose initPromiseのdoneハンドラでdisposeを呼ぶと__readyは実行されず、readyPromiseのfailハンドラが実行されること',
+			7, function() {
+				var errorObj = {};
+				var flag = false;
+				var controller = {
+
+					__name: 'TestController',
+					__construct: function() {
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						ok(true, '__initが実行されること');
+					},
+					__ready: function() {
+						ok(false, 'テスト失敗。__readyが実行された');
+						start();
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+
+				var testController = h5.core.controller('#controllerTest', controller);
+
+				testController.initPromise.done(function() {
+					ok(true, 'initPromiseのdoneハンドラが実行されること');
+					// dispose()を2回呼ぶ
+					testController.dispose(errorObj);
+					testController.dispose(errorObj);
+				}).fail(function() {
+					ok(true, 'テスト失敗。initPromiseのfailハンドラが実行された');
+				});
+				testController.readyPromise.done(function() {
+					ok(false, 'テスト失敗。readyPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'readyPromiseのfailハンドラが実行された');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+			});
+
+	asyncTest('コントローラのdispose __readyでthis.disposeを呼ぶとreadyPromiseのfailハンドラが実行されること', 7,
+			function() {
+				var errorObj = {};
+				var flag = false;
+				var controller = {
+
+					__name: 'TestController',
+					__construct: function() {
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						ok(true, '__initが実行されること');
+					},
+					__ready: function() {
+						// disposeを2回呼ぶ
+						this.dispose(errorObj);
+						this.dispose(errorObj);
+						ok(true, '__readyが実行されること');
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.readyPromise.done(function() {
+					ok(false, 'テスト失敗。redayPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'readyPromiseのfailハンドラが実行された');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 テンプレートのロードに失敗した場合', 1, function() {
+		var cfh = 0;
+		h5.settings.commonFailHandler = function() {
+			cfh++;
+		};
+		var controller = {
 			__name: 'TestController',
-			__construct: function() {
-				ok(true, 'コンストラクタは実行されること');
-			},
-			__init: function() {
-				// this.dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
-				// なので、バックアップを取ってdispose.apply(this)を使って2回呼ぶ
-				var dispose = this.dispose;
-				dispose.apply(this);
-				dispose.apply(this);
-				ok(true, '__initが実行されること');
-			},
-			__ready: function() {
-				ok(false, 'テスト失敗。__readyが実行された。');
-				start();
+			__templates: './noExistPath',
+			childController: {
+				__name: 'childController'
 			},
 			__dispose: function() {
-				ok(!flag, '__disposeが1度だけ実行されること。');
-				flag = true;
-				setTimeout(function() {
-					start();
-				}, 0);
-			},
-			__unbind: function() {
-				ok(true, '__unbindが実行されること。');
+				strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+				start();
 			}
 		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.preinitPromise.done(function() {
-			ok(true, 'preinitPromiseのdoneハンドラが実行されること');
-		});
-		testController.initPromise.done(function() {
-			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 子コントローラでテンプレートのロードに失敗した場合', 1,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var controller = {
+					__name: 'TestController',
+					childController: {
+						__name: 'childController',
+						__templates: './noExistPath'
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __initでpromiseを返してrejectする場合 1', 1,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var dfd = h5.async.deferred();
+				var controller = {
+					childController: {
+						__name: 'childController'
+					},
+					__name: 'TestController',
+					__init: function() {
+						setTimeout(function() {
+							dfd.reject();
+						});
+						return dfd.promise();
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __initでpromiseを返してrejectする場合 2', 2,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var dfd = h5.async.deferred();
+				var controller = {
+					childController: {
+						__name: 'childController'
+					},
+					__name: 'TestController',
+					__init: function() {
+						setTimeout(function() {
+							dfd.reject();
+						});
+						var p = dfd.promise();
+						p.fail(function() {
+							ok(true, '__initが返すpromiseのfailハンドラが実行される');
+						});
+						return p;
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+			});
+
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __readyでpromiseを返してrejectする場合 1', 1,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var dfd = h5.async.deferred();
+				var controller = {
+					childController: {
+						__name: 'childController'
+					},
+					__name: 'TestController',
+					__ready: function() {
+						setTimeout(function() {
+							dfd.reject();
+						});
+						return dfd.promise();
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __readyでpromiseを返してrejectする場合 2', 2,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var dfd = h5.async.deferred();
+				var controller = {
+					childController: {
+						__name: 'childController'
+					},
+					__name: 'TestController',
+					__ready: function() {
+						setTimeout(function() {
+							dfd.reject();
+						});
+						var p = dfd.promise();
+						p.fail(function() {
+							ok(true, '__readyが返すpromiseのfailハンドラが実行される');
+						});
+						return p;
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 ルートコントローラのreadyPromiseにfailハンドラを登録した場合',
+			2, function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var controller = {
+					__name: 'TestController',
+					childController: {
+						__name: 'childController',
+						__templates: './noExistPath'
+					},
+					__dispose: function() {
+						strictEqual(cfh, 0, 'commonFailHandlerが実行されていないこと');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.readyPromise.fail(function() {
+					ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+				});
+			});
+
+	asyncTest(
+			'コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 ルートコントローラのreadyPromise以外にfailハンドラを登録した場合',
+			6, function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var controller = {
+					__name: 'TestController',
+					childController: {
+						__name: 'childController',
+						__templates: './noExistPath'
+					},
+					__construct: function() {
+						this.childController.preinitPromise.fail(function() {
+							ok(true, '子コントローラのpreinitPromiseのfailが実行された');
+						});
+						this.childController.initPromise.fail(function() {
+							ok(true, '子コントローラのinitPromiseのfailが実行された');
+						});
+						this.childController.readyPromise.fail(function() {
+							ok(true, '子コントローラのreadyPromiseのfailが実行された');
+						});
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.preinitPromise.done(function() {
+					ok(true, 'ルートコントローラのpreinitPromiseのdoneが実行される');
+				}).fail(function() {
+					ok(false, 'テスト失敗。ルートコントローラのpreinitPromiseのfailが実行された');
+				});
+				c.initPromise.fail(function() {
+					ok(true, 'ルートコントローラのinitPromiseのfailが実行された');
+				});
+				c.readyPromise.done(function() {
+					ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+				});
+			});
+
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 __init, __readyで、resolveされる時の挙動', 14, function() {
+		var dfdChild1Init = h5.async.deferred();
+		var dfdChild1Ready = h5.async.deferred();
+		var dfdChild2Init = h5.async.deferred();
+		var dfdChild2Ready = h5.async.deferred();
+		var dfdRootInit = h5.async.deferred();
+		var dfdRootReady = h5.async.deferred();
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				__name: 'child1Controller',
+				__init: function() {
+					setTimeout(function() {
+						dfdChild1Init.resolve();
+					}, 0);
+					return dfdChild1Init.promise();
+				},
+				__ready: function() {
+					ok(true, '子コントローラ１の__readyが実行される');
+					ok(isResolved(dfdRootInit), 'ルートコントローラの__initが返したpromiseがresolveされていること');
+					setTimeout(function() {
+						dfdChild1Ready.resolve();
+					}, 0);
+					return dfdChild1Ready.promise();
+				}
+			},
+			child2Controller: {
+				__name: 'child2Controller',
+				__init: function() {
+					setTimeout(function() {
+						dfdChild2Init.resolve();
+					}, 0);
+					return dfdChild2Init.promise();
+				},
+				__ready: function() {
+					ok(true, '子コントローラ２の__readyが実行される');
+					ok(isResolved(dfdRootInit), 'ルートコントローラの__initが返したpromiseがresolveされていること');
+					setTimeout(function() {
+						dfdChild2Ready.resolve();
+					}, 0);
+					return dfdChild2Ready.promise();
+				}
+			},
+			__init: function() {
+				ok(true, 'ルートコントローラの__initが実行されること');
+				ok(isResolved(dfdChild1Init), '子コントローラ１の__initが返したpromiseがresolveされていること');
+				ok(isResolved(dfdChild2Init), '子コントローラ２の__initが返したpromiseがresolveされていること');
+				setTimeout(function() {
+					dfdRootInit.resolve();
+				}, 0);
+				return dfdRootInit.promise();
+			},
+			__ready: function() {
+				ok(true, 'ルートコントローラの__readyが実行されること');
+				ok(isResolved(dfdChild1Ready), '子コントローラ１の__readyが返したpromiseがresolveされていること');
+				ok(isResolved(dfdChild2Ready), '子コントローラ２の__readyが返したpromiseがresolveされていること');
+				setTimeout(function() {
+					dfdRootReady.resolve();
+				}, 0);
+				return dfdRootReady.promise();
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.initPromise.done(function() {
+			ok(true, 'ルートコントローラのinitPromiseのdoneハンドラが実行されること');
+			ok(isResolved(dfdRootInit), 'ルートコントローラの__initが返したpromiseがresolveされていること');
 		}).fail(function() {
-			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのfailが実行された');
 		});
-		testController.readyPromise.done(function() {
-			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+		c.readyPromise.done(function() {
+			ok(true, 'ルートコントローラのreadyPromiseのdoneハンドラが実行されること');
+			ok(isResolved(dfdRootReady), 'ルートコントローラの__initが返したpromiseがresolveされていること');
+			start();
 		}).fail(function() {
-			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのfailが実行された');
+			start();
+		});
+	});
+
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 ルートの__initが返すpromiseがrejectされる時の挙動', 7, function() {
+		var dfd = h5.async.deferred();
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				__name: 'child1Controller',
+				__init: function() {
+					ok(true, '子コントローラの__initは実行されること');
+				},
+				__ready: function() {
+					ok(false, '子コントローラの__readyは実行されないこと');
+				}
+			},
+			child2Controller: {
+				__name: 'child2Controller',
+				__init: function() {
+					ok(true, '子コントローラの__initは実行されること');
+				},
+				__ready: function() {
+					ok(false, '子コントローラの__readyは実行されない');
+				}
+			},
+			__init: function() {
+				ok(true, 'ルートコントローラの__initが実行されること');
+				setTimeout(function() {
+					dfd.reject();
+				}, 0);
+				return dfd.promise();
+			},
+			__ready: function() {
+				ok(false, 'ルートコントローラの__readyは実行されないこと');
+			},
+			__dispose: function() {
+				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+					start();
+				}, 0);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.initPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
+		}).fail(function() {
+			ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
+			ok(isRejected(dfd), 'ルートコントローラの__initが返したpromiseがrejectされていること');
+		});
+		c.readyPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+			start();
+		}).fail(function() {
+			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+		});
+	});
+
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 ルートの__readyが返すpromiseがrejectされる時の挙動', 6, function() {
+		var dfd = h5.async.deferred();
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				__name: 'child1Controller',
+				__ready: function() {
+					ok(true, '子コントローラの__readyが実行されること');
+				}
+			},
+			child2Controller: {
+				__name: 'child2Controller',
+				__ready: function() {
+					ok(true, '子コントローラの__readyが実行されること');
+				}
+			},
+			__ready: function() {
+				ok(true, 'ルートコントローラの__initが実行されること');
+				setTimeout(function() {
+					dfd.reject();
+				}, 0);
+				return dfd.promise();
+			},
+			__dispose: function() {
+				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+					start();
+				}, 0);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+			start();
+		}).fail(function() {
+			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+			ok(isRejected(dfd), 'ルートコントローラの__readyが返したpromiseがrejectされていること');
+		});
+	});
+
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__initが返すpromiseがrejectされる時の挙動', 4, function() {
+		var dfd = h5.async.deferred();
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				__name: 'child1Controller'
+			},
+			child2Controller: {
+				__name: 'child2Controller',
+				__init: function() {
+					ok(true, '子コントローラの__initが実行されること');
+					setTimeout(function() {
+						dfd.reject();
+					}, 0);
+					return dfd.promise();
+				}
+			},
+			__init: function() {
+				ok(false, 'テスト失敗。ルートの__initが実行された');
+			},
+			__dispose: function() {
+				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+					start();
+				}, 0);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.initPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
+			start();
+		}).fail(function() {
+			ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
+			ok(isRejected(dfd), '子コントローラの__initが返したpromiseがrejectされていること');
 		});
 	});
 
 
-	asyncTest('initPromiseのdoneハンドラでdisposeを呼んだら__ready以降は実行されない', 4, function() {
-		var flag = false;
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__readyが返すpromiseがrejectされる時の挙動', 4, function() {
+		var dfd = h5.async.deferred();
 		var controller = {
-
 			__name: 'TestController',
-			__construct: function() {
-				ok(true, 'コンストラクタは実行されること');
+			child1Controller: {
+				__name: 'child1Controller'
 			},
-			__init: function() {
-				ok(true, '__initが実行されること');
+			child2Controller: {
+				__name: 'child2Controller',
+				__ready: function() {
+					ok(true, '子コントローラの__initが実行されること');
+					setTimeout(function() {
+						dfd.reject();
+					}, 0);
+					return dfd.promise();
+				}
 			},
 			__ready: function() {
-				ok(false, 'テスト失敗。__readyが実行された。');
-				start();
+				ok(false, 'テスト失敗。ルートの__readyが実行された。');
 			},
 			__dispose: function() {
-				ok(!flag, '__disposeが1度だけ実行されること。');
-				flag = true;
 				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
 					start();
 				}, 0);
-			},
-			__unbind: function() {
-				ok(true, '__unbindが実行されること。');
 			}
 		};
-
-		var testController = h5.core.controller('#controllerTest', controller);
-
-		testController.initPromise.done(function() {
-			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+			start();
 		}).fail(function() {
-			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
-		});
-		testController.readyPromise.done(function() {
-			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
-		}).fail(function() {
-			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
-		});		testController.preinitPromise.done(function() {
-			ok(true, 'preinitPromiseのdoneハンドラが実行されること');
-			// dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
-			// なので、バックアップを取ってdispose.apply(testController)を使って2回呼ぶ
-			var dispose = testController.dispose;
-			dispose.apply(testController);
-			dispose.apply(testController);
-		});
-	});
-
-	asyncTest('__readyでthis.disposeを呼んだらreadyPromiseは実行されない', 5, function() {
-		var flag = false;
-		var controller = {
-
-			__name: 'TestController',
-			__construct: function() {
-				ok(true, 'コンストラクタは実行されること');
-			},
-			__init: function() {
-				ok(true, '__initが実行されること');
-			},
-			__ready: function() {
-				// this.dispose()を同期で2回呼べない(disposeメソッドがdisposeされるため)
-				// なので、バックアップを取ってdispose.apply(this)を使って2回呼ぶ
-				var dispose = this.dispose;
-				dispose.apply(this);
-				dispose.apply(this);
-				ok(true, '__readyが実行されること。');
-
-
-
-			},
-			__dispose: function() {
-				ok(!flag, '__disposeが1度だけ実行されること。');
-				flag = true;
-				setTimeout(function() {
-					start();
-				}, 0);
-			},
-			__unbind: function() {
-				ok(true, '__unbindが実行されること。');
-			}
-		};
-
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行されました。');
-		}).fail(function() {
-			ok(false, 'テスト失敗。initPromiseのfailハンドラが実行されました。');
+			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+			ok(isRejected(dfd), '子コントローラの__readyが返したpromiseがrejectされていること');
 		});
 	});
 
@@ -1109,9 +1725,10 @@ $(function() {
 				});
 	});
 
-	asyncTest('コントローラ内のthis(AOPあり)', 2, function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 2, function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1144,7 +1761,7 @@ $(function() {
 				invocation.proceed();
 			}
 		};
-		h5.core._compileAspects([aop1, aop2]);
+		h5.core.__compileAspects([aop1, aop2]);
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise
@@ -1163,16 +1780,17 @@ $(function() {
 				});
 	});
 
-	asyncTest('アスペクトの動作1', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('アスペクトの動作1 ※min版ではエラーになります', function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 				ret.push(2);
@@ -1192,7 +1810,7 @@ $(function() {
 				invocation.proceed();
 			}
 		};
-		h5.core._compileAspects([aop1, aop2]);
+		h5.core.__compileAspects([aop1, aop2]);
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
@@ -1206,16 +1824,17 @@ $(function() {
 
 	});
 
-	asyncTest('アスペクトの動作2', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('アスペクトの動作2 ※min版ではエラーになります', function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 				ret.push(2);
@@ -1231,7 +1850,7 @@ $(function() {
 			ret.push(1);
 			invocation.proceed();
 		};
-		h5.core._compileAspects({
+		h5.core.__compileAspects({
 			interceptors: [ic1, ic2]
 		});
 
@@ -1246,16 +1865,17 @@ $(function() {
 		});
 	});
 
-	asyncTest('アスペクトの動作3', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('アスペクトの動作3 ※min版ではエラーになります', function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 				ret.push(3);
@@ -1281,7 +1901,7 @@ $(function() {
 		}, {
 			interceptors: ic3
 		}];
-		h5.core._compileAspects(aspects);
+		h5.core.__compileAspects(aspects);
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
@@ -1294,16 +1914,17 @@ $(function() {
 		});
 	});
 
-	asyncTest('アスペクトの動作4', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('アスペクトの動作4 ※min版ではエラーになります', function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 			// 何もしない
@@ -1311,7 +1932,7 @@ $(function() {
 		};
 
 		var controller2 = {
-			__name: 'jp.co.nssol.test2.controller.Test2Controller',
+			__name: 'com.htmlhifive.test2.controller.Test2Controller',
 
 			__init: function() {
 			// 何もしない
@@ -1322,15 +1943,15 @@ $(function() {
 			ret.push(this.__name);
 			invocation.proceed();
 		};
-		h5.core._compileAspects({
-			target: 'jp.co.nssol.test.controller*',
+		h5.core.__compileAspects({
+			target: 'com.htmlhifive.test.controller*',
 			interceptors: ic,
 			pointCut: null
 		});
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		var test2Controller = h5.core.controller('#controllerTest', controller2);
-		$.when(testController.readyPromise, test2Controller.readyPromise).done(
+		h5.async.when(testController.readyPromise, test2Controller.readyPromise).done(
 				function() {
 					start();
 
@@ -1345,16 +1966,17 @@ $(function() {
 				});
 	});
 
-	asyncTest('アスペクトの動作5', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('アスペクトの動作5 ※min版ではエラーになります', function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
 
 		var ret = [];
 		var controller = {
-			__name: 'jp.co.nssol.test.controller.TestController',
+			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
 			// 何もしない
@@ -1362,7 +1984,7 @@ $(function() {
 		};
 
 		var controller2 = {
-			__name: 'jp.co.nssol.test.controller.Test2Controller',
+			__name: 'com.htmlhifive.test.controller.Test2Controller',
 
 			__ready: function() {
 			// 何もしない
@@ -1373,15 +1995,15 @@ $(function() {
 			ret.push(this.__name);
 			invocation.proceed();
 		};
-		h5.core._compileAspects({
-			target: 'jp.co.nssol.test.controller*',
+		h5.core.__compileAspects({
+			target: 'com.htmlhifive.test.controller*',
 			interceptors: ic,
 			pointCut: /^\_\_i.*$/
 		});
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		var test2Controller = h5.core.controller('#controllerTest', controller2);
-		$.when(testController.readyPromise, test2Controller.readyPromise).done(
+		h5.async.when(testController.readyPromise, test2Controller.readyPromise).done(
 				function() {
 					start();
 
@@ -1543,7 +2165,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'テンプレートを使用できるか2 view.append()に指定されたDOM要素が{window*},{document*}である時にエラーが発生すること。',
+			'テンプレートを使用できるか2 view.append()に指定されたDOM要素が{window*},{document*}である時にエラーが発生すること',
 			function() {
 				var html = '';
 				var updateView = 0;
@@ -1638,18 +2260,18 @@ $(function() {
 
 			'{rootElement} click': function(context) {
 				this.view.register('templateId1', '111');
-				same(this.view.get('templateId1'), '111',
-						'this.view.register(id, template)でテンプレートを登録できること。');
-				same(this.view.isValid('[%= data %]'), true,
+				deepEqual(this.view.get('templateId1'), '111',
+						'this.view.register(id, template)でテンプレートを登録できること');
+				deepEqual(this.view.isValid('[%= data %]'), true,
 						'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
-				same(this.view.isValid('<div>[%= hoge fuga %]</div>'), false,
+				deepEqual(this.view.isValid('<div>[%= hoge fuga %]</div>'), false,
 						'this.view.isValid(template)でテンプレートがコンパイルできるかどうか判定できること');
-				same(this.view.isAvailable('templateId1'), true,
+				deepEqual(this.view.isAvailable('templateId1'), true,
 						'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
-				same(this.view.isAvailable('templateId2'), false,
+				deepEqual(this.view.isAvailable('templateId2'), false,
 						'this.view.isAvailable(template)でテンプレートが利用可能かどうか判定できること');
 				this.view.clear();
-				same(this.view.isAvailable('templateId1'), false,
+				deepEqual(this.view.isAvailable('templateId1'), false,
 						'this.view.clear()でテンプレートを削除できること');
 			}
 		};
@@ -1696,9 +2318,9 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 			ok(html.length > 0, '指定されたテンプレートIDを自身のビューが扱っていない場合、親コントローラのビューへカスケードされること');
 			ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
-			same(errorObj.code, expectErrorObj.code,
+			deepEqual(errorObj.code, expectErrorObj.code,
 					'指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
-			same(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
+			deepEqual(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
 			testController.unbind();
 			start();
 		});
@@ -1777,10 +2399,11 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5.core.interceptor.logInterceptorの動作',
+			'h5.core.interceptor.logInterceptorの動作 ※min版ではエラーになります',
 			function() {
-				if (!h5.core._compileAspects) {
-					ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+				if (!h5.core.__compileAspects) {
+					expect(1);
+					ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 					start();
 					return;
 				}
@@ -1788,7 +2411,7 @@ $(function() {
 				var log = {
 					interceptors: h5.core.interceptor.logInterceptor
 				};
-				h5.core._compileAspects([log]);
+				h5.core.__compileAspects([log]);
 
 				var controller = {
 					__name: 'TestController',
@@ -1822,10 +2445,11 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5.core.interceptor.lapInterceptorの動作',
+			'h5.core.interceptor.lapInterceptorの動作 ※min版ではエラーになります',
 			function() {
-				if (!h5.core._compileAspects) {
-					ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+				if (!h5.core.__compileAspects) {
+					expect(1);
+					ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 					start();
 					return;
 				}
@@ -1833,7 +2457,7 @@ $(function() {
 				var lap = {
 					interceptors: h5.core.interceptor.lapInterceptor
 				};
-				h5.core._compileAspects([lap]);
+				h5.core.__compileAspects([lap]);
 
 				var controller = {
 					__name: 'TestController',
@@ -1867,9 +2491,10 @@ $(function() {
 						});
 			});
 
-	asyncTest('h5.core.interceptor.errorInterceptorの動作', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('h5.core.interceptor.errorInterceptorの動作 ※min版ではエラーになります', function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -1877,7 +2502,7 @@ $(function() {
 		var errorInterceptor = {
 			interceptors: h5.core.interceptor.errorInterceptor
 		};
-		h5.core._compileAspects([errorInterceptor]);
+		h5.core.__compileAspects([errorInterceptor]);
 
 		var errMsg = null;
 		h5.settings.commonFailHandler = function(e) {
@@ -1998,10 +2623,10 @@ $(function() {
 						.find('.blockUI.a.blockElement > .indicator-message').text(),
 						'BlockMessageTest');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').css('display'),
-						'block', 'オーバーレイが表示されていること。');
+						'block', 'オーバーレイが表示されていること');
 
 				setTimeout(function() {
 					indicator.hide();
@@ -2009,7 +2634,7 @@ $(function() {
 					setTimeout(function() {
 						start();
 						strictEqual($('.blockUI', indicator.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること');
 
 						testController.unbind();
 					}, 0);
@@ -2038,21 +2663,20 @@ $(function() {
 				strictEqual($(indicator.target).find('.blockUI.a.blockPage > .indicator-message')
 						.text(), 'BlockMessageTest');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '20',
-						'Indicator#show() 進捗率が表示されること。');
+						'Indicator#show() 進捗率が表示されること');
 
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').css('display'),
-						'block', 'オーバーレイが表示されていること。');
+						'block', 'オーバーレイが表示されていること');
 
 				setTimeout(function() {
 					indicator.hide();
 
 					setTimeout(function() {
 						strictEqual($('.blockUI', indicator.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること');
 
-						//
 						testController.unbind();
 
 						start();
@@ -2080,7 +2704,7 @@ $(function() {
 					message: 'indicator testController'
 				}).show();
 			}
-		}
+		};
 		var childController = {
 			__name: 'TestController',
 
@@ -2091,19 +2715,19 @@ $(function() {
 						.find('.blockUI.a.blockElement > .indicator-message').text(),
 						'indicator testController');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '30',
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').css('display'),
-						'block', 'オーバーレイが表示されていること。');
+						'block', 'オーバーレイが表示されていること');
 
 				setTimeout(function() {
 					indicator.hide();
 
 					setTimeout(function() {
 						strictEqual($('.blockUI', indicator.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること');
 						start();
 					}, 0);
 				}, 0);
@@ -2118,7 +2742,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() オプションにプレーンオブジェクト以外を渡した時は無視されること。', 4, function() {
+	asyncTest('this.indicator() オプションにプレーンオブジェクト以外を渡した時は無視されること', 4, function() {
 
 		var testController = null;
 		var controllerBase = {
@@ -2130,13 +2754,13 @@ $(function() {
 				}
 				var indicator = this.indicator(new NoPlain()).show();
 
-				same($(indicator.target).find('.blockUI.a.blockElement > .indicator-message')
+				deepEqual($(indicator.target).find('.blockUI.a.blockElement > .indicator-message')
 						.text(), '', 'オプションは無視されて、メッセージは表示されていないこと。');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').css('display'),
-						'block', 'オーバーレイが表示されていること。');
+						'block', 'オーバーレイが表示されていること');
 
 				setTimeout(function() {
 					indicator.hide();
@@ -2144,7 +2768,7 @@ $(function() {
 					setTimeout(function() {
 						start();
 						strictEqual($('.blockUI', indicator.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること');
 
 						testController.unbind();
 					}, 0);
@@ -2159,11 +2783,9 @@ $(function() {
 	});
 
 	asyncTest('h5.ui.indicator()', function() {
-
 		var testController = null;
 		var controllerBase = {
 			__name: 'TestController',
-
 			'input[type=button] click': function() {
 				var indicator2 = h5.ui.indicator(document, {
 					message: 'BlockMessageTest2',
@@ -2174,19 +2796,19 @@ $(function() {
 				strictEqual($(indicator2.target).find('.blockUI.a.blockPage > .indicator-message')
 						.text(), 'BlockMessageTest2');
 				strictEqual($(indicator2.target).find('.blockUI.blockOverlay').length, 1,
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 				strictEqual($(indicator2.target).find('.throbber-percent').text(), '20',
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 
 				strictEqual($(indicator2.target).find('.blockUI.blockOverlay').css('display'),
-						'block', 'オーバーレイが表示されていること。');
+						'block', 'オーバーレイが表示されていること');
 
 				setTimeout(function() {
 					indicator2.hide();
 
 					setTimeout(function() {
 						strictEqual($('.blockUI', indicator2.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること');
 						testController.unbind();
 						start();
 					}, 0);
@@ -2201,14 +2823,10 @@ $(function() {
 	});
 
 	asyncTest('this.indicator() 2', function() {
-
-
 		var controllerBase = {
 			__name: 'TestController',
-
 			'input[type=button] click': function() {
 				var that = this;
-
 				var indicator2 = this.indicator({
 					target: '#controllerResult',
 					message: 'BlockMessageTest-child'
@@ -2235,7 +2853,7 @@ $(function() {
 
 					setTimeout(function() {
 						strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 0,
-								'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること');
 
 						that.deferredFunc();
 					}, 0);
@@ -2250,14 +2868,14 @@ $(function() {
 				}).show();
 
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-						'promiseオブジェクトを渡して、インジケータが表示されること。');
+						'promiseオブジェクトを渡して、インジケータが表示されること');
 
 				setTimeout(function() {
 					df.resolve();
 
 					setTimeout(function() {
 						strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 0,
-								'resolve()が呼ばれると、インジケータが非表示になること。');
+								'resolve()が呼ばれると、インジケータが非表示になること');
 						start();
 					}, 0);
 				}, 0);
@@ -2286,7 +2904,7 @@ $(function() {
 					target: '#child'
 				}).show();
 
-				same($(indicator.target).find('.blockUI.a.blockElement').length, 0,
+				deepEqual($(indicator.target).find('.blockUI.a.blockElement').length, 0,
 						'インジケータが表示されていないこと');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 0,
 						'Indicator#show() インジケータ(オーバーレイ)が表示されていないこと。');
@@ -2306,7 +2924,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() 4 Indicator#percent()で指定した進捗率に更新されること。', 22, function() {
+	asyncTest('this.indicator() 4 Indicator#percent()で指定した進捗率に更新されること', 22, function() {
 
 		var testController = null;
 		var controllerBase = {
@@ -2322,21 +2940,21 @@ $(function() {
 				strictEqual($(indicator.target).find('.indicator-message').text(),
 						'BlockMessageTest');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '10',
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').css('display'),
-						'block', 'オーバーレイが表示されていること。');
+						'block', 'オーバーレイが表示されていること');
 				indicator.percent(30);
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '30',
-						'Indicator#show() インジケータの進捗率表示が30に更新されていること。');
+						'Indicator#show() インジケータの進捗率表示が30に更新されていること');
 				indicator.percent(100);
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '100',
-						'Indicator#show() インジケータの進捗率表示が100に更新されていること。');
+						'Indicator#show() インジケータの進捗率表示が100に更新されていること');
 				indicator.percent(5);
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '5',
-						'Indicator#show() インジケータの進捗率表示が5に更新されていること。');
+						'Indicator#show() インジケータの進捗率表示が5に更新されていること');
 				indicator.percent(-1);
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '5',
 						'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
@@ -2345,12 +2963,12 @@ $(function() {
 						'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
 				indicator.percent(33.3333333);
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '33.3333333',
-						'Indicator#show() インジケータの進捗率に小数を指定できること。');
+						'Indicator#show() インジケータの進捗率に小数を指定できること');
 				indicator.hide();
 				var that = this;
 				setTimeout(function() {
 					strictEqual($('.blockUI', indicator.target).length, 0,
-							'Indicator#hide() インジケータが除去されていること。');
+							'Indicator#hide() インジケータが除去されていること');
 
 					var indicator2 = that.indicator({
 						message: 'BlockMessageTestGrobal',
@@ -2361,20 +2979,20 @@ $(function() {
 					strictEqual($(indicator2.target).find('.indicator-message').text(),
 							'BlockMessageTestGrobal');
 					strictEqual($(indicator2.target).find('.blockUI.blockOverlay').length, 1,
-							'Indicator#show() インジケータが表示されること。');
+							'Indicator#show() インジケータが表示されること');
 					strictEqual($(indicator2.target).find('.throbber-percent').text(), '10',
-							'Indicator#show() インジケータの進捗率が表示されること。');
+							'Indicator#show() インジケータの進捗率が表示されること');
 					strictEqual($(indicator2.target).find('.blockUI.blockOverlay').css('display'),
-							'block', 'オーバーレイが表示されていること。');
+							'block', 'オーバーレイが表示されていること');
 					indicator2.percent(30);
 					strictEqual($(indicator2.target).find('.throbber-percent').text(), '30',
-							'Indicator#show() インジケータの進捗率表示が30に更新されていること。');
+							'Indicator#show() インジケータの進捗率表示が30に更新されていること');
 					indicator2.percent(100);
 					strictEqual($(indicator2.target).find('.throbber-percent').text(), '100',
-							'Indicator#show() インジケータの進捗率表示が100に更新されていること。');
+							'Indicator#show() インジケータの進捗率表示が100に更新されていること');
 					indicator2.percent(5);
 					strictEqual($(indicator2.target).find('.throbber-percent').text(), '5',
-							'Indicator#show() インジケータの進捗率表示が5に更新されていること。');
+							'Indicator#show() インジケータの進捗率表示が5に更新されていること');
 					indicator2.percent(-1);
 					strictEqual($(indicator2.target).find('.throbber-percent').text(), '5',
 							'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
@@ -2383,18 +3001,17 @@ $(function() {
 							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
 					indicator2.percent(33.3333333);
 					strictEqual($(indicator2.target).find('.throbber-percent').text(),
-							'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること。');
+							'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること');
 					indicator2.hide();
 					setTimeout(function() {
 						strictEqual($('.blockUI', indicator2.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること');
 						testController.readyPromise.done(function() {
 							$('#controllerTest').click();
 						});
 						testControllerGrobal.unbind();
 						start();
 					}, 0);
-
 
 					testController.unbind();
 				}, 0);
@@ -2417,7 +3034,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() 5 Indicator#message()で指定したメッセージに更新されること。', 26, function() {
+	asyncTest('this.indicator() 5 Indicator#message()で指定したメッセージに更新されること', 26, function() {
 
 		var testController = null;
 		var controllerBase = {
@@ -2432,12 +3049,12 @@ $(function() {
 				strictEqual($(indicator.target).find('.indicator-message').text(),
 						'BlockMessageTest');
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 				strictEqual($(indicator.target).find('.throbber-percent').text(), '10',
-						'Indicator#show() インジケータが表示されること。');
+						'Indicator#show() インジケータが表示されること');
 
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').css('display'),
-						'block', 'オーバーレイが表示されていること。');
+						'block', 'オーバーレイが表示されていること');
 
 				indicator.message('changeMessage');
 				strictEqual($(indicator.target).find('.indicator-message').text(), 'changeMessage',
@@ -2467,7 +3084,7 @@ $(function() {
 				var that = this;
 				setTimeout(function() {
 					strictEqual($('.blockUI', indicator.target).length, 0,
-							'Indicator#hide() インジケータが除去されていること。');
+							'Indicator#hide() インジケータが除去されていること');
 
 					var indicator2 = that.indicator({
 						message: 'BlockMessageTestGrobal',
@@ -2478,12 +3095,12 @@ $(function() {
 					strictEqual($(indicator2.target).find('.indicator-message').text(),
 							'BlockMessageTestGrobal');
 					strictEqual($(indicator2.target).find('.blockUI.blockOverlay').length, 1,
-							'Indicator#show() インジケータが表示されること。');
+							'Indicator#show() インジケータが表示されること');
 					strictEqual($(indicator2.target).find('.throbber-percent').text(), '10',
-							'Indicator#show() インジケータが表示されること。');
+							'Indicator#show() インジケータが表示されること');
 
 					strictEqual($(indicator2.target).find('.blockUI.blockOverlay').css('display'),
-							'block', 'オーバーレイが表示されていること。');
+							'block', 'オーバーレイが表示されていること');
 
 					indicator2.message('changeMessage');
 					strictEqual($(indicator2.target).find('.indicator-message').text(),
@@ -2512,7 +3129,7 @@ $(function() {
 					indicator2.hide();
 					setTimeout(function() {
 						strictEqual($('.blockUI', indicator.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること。');
+								'Indicator#hide() インジケータが除去されていること');
 
 						testController.unbind();
 						start();
@@ -2546,22 +3163,22 @@ $(function() {
 				}).show();
 
 				strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-						'promiseオブジェクトを渡して、インジケータが表示されること。');
+						'promiseオブジェクトを渡して、インジケータが表示されること');
 
 				setTimeout(function() {
 					strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-							'resolve()していないので、インジケータが表示されること。');
+							'resolve()していないので、インジケータが表示されること');
 
 					df.resolve();
 				}, 100);
 
 				setTimeout(function() {
 					strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 1,
-							'resolve()していないので、インジケータが表示されること。');
+							'resolve()していないので、インジケータが表示されること');
 
 					df2.resolve();
 				}, 200);
-				$.when(df.promise(), df2.promise()).done(function() {
+				h5.async.when(df.promise(), df2.promise()).done(function() {
 					setTimeout(function() {
 						dfd.resolve();
 					}, 0);
@@ -2576,13 +3193,22 @@ $(function() {
 		dfd.promise().done(
 				function() {
 					strictEqual($(indicator.target).find('.blockUI.blockOverlay').length, 0,
-							'全てのresolve()が呼ばれたら、インジケータが非表示になること。');
+							'全てのresolve()が呼ばれたら、インジケータが非表示になること');
 
 					start();
 					testController.unbind();
 				});
 
 	});
+
+
+
+
+
+
+
+
+
 
 	asyncTest('h5.ui.indicator() テーマを変更して実行', function() {
 
@@ -2603,26 +3229,26 @@ $(function() {
 				var $percentElem = $(indicator2.target).find(
 						'.blockUI.b.blockPage .throbber-percent');
 				strictEqual($percentElem.css('font-size'), '18px',
-						'スロバー:変更したテーマのCSSがインジケータに適用されていること。');
+						'スロバー:変更したテーマのCSSがインジケータに適用されていること');
 				strictEqual(rgbToHex($percentElem.css('color')), '#c20',
-						'スロバー:変更したテーマのCSSがインジケータに適用されていること。');
+						'スロバー:変更したテーマのCSSがインジケータに適用されていること');
 
 				var $messageElem = $(indicator2.target).find(
 						'.blockUI.b.blockPage .indicator-message');
 				strictEqual($messageElem.css('font-size'), '20px',
-						'メッセージ:変更したテーマのCSSがインジケータに適用されていること。');
+						'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
 				strictEqual(rgbToHex($messageElem.css('color')), '#480',
-						'メッセージ:変更したテーマのCSSがインジケータに適用されていること。');
+						'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
 
 				var $blockUIb = $(indicator2.target).find('.blockUI.b');
 				strictEqual(rgbToHex($blockUIb.css('background-color')), '#409',
-						'blockUI本体:変更したテーマのCSSがインジケータに適用されていること。');
+						'blockUI本体:変更したテーマのCSSがインジケータに適用されていること');
 
 				setTimeout(function() {
 					indicator2.hide();
 
 					setTimeout(function() {
-						strictEqual($('.blockUI').length, 0, 'Indicator#hide() インジケータが除去されていること。');
+						strictEqual($('.blockUI').length, 0, 'Indicator#hide() インジケータが除去されていること');
 						testController.unbind();
 						start();
 					}, 0);
@@ -2703,7 +3329,7 @@ $(function() {
 		function Test(callback) {
 			this.callback = callback;
 		}
-		;
+
 		Test.prototype.execute = function() {
 			this.callback(100, 200);
 		};
@@ -2771,20 +3397,21 @@ $(function() {
 				};
 				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
 				var test2Controller = h5.core.controller('#controllerTest2', controllerBase2);
-				$.when(test1Controller.readyPromise, test2Controller.readyPromise).done(function() {
-					start();
+				h5.async.when(test1Controller.readyPromise, test2Controller.readyPromise).done(
+						function() {
+							start();
 
-					$('#controllerTest1 input[type=button]').click();
+							$('#controllerTest1 input[type=button]').click();
 
-					ok(triggerEvent, 'イベントの送出ができたか');
-					strictEqual(message, 'dispatchTest', 'dispatchを使ってパラメータは渡せたか');
+							ok(triggerEvent, 'イベントの送出ができたか');
+							strictEqual(message, 'dispatchTest', 'dispatchを使ってパラメータは渡せたか');
 
-					test1Controller.unbind();
-					test2Controller.unbind();
-					$('#controllerTest1').remove();
-					$('#controllerTest2').remove();
-					ok(!$('#parent').length, '（DOMのクリーンアップ）');
-				});
+							test1Controller.unbind();
+							test2Controller.unbind();
+							$('#controllerTest1').remove();
+							$('#controllerTest2').remove();
+							ok(!$('#parent').length, '（DOMのクリーンアップ）');
+						});
 			});
 
 	asyncTest('コントローラ内のxxxControllerが動作しているか(テンプレート使用)', function() {
@@ -2887,9 +3514,10 @@ $(function() {
 		});
 	});
 
-	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか', function() {
-		if (!h5.core._compileAspects) {
-			ok(false, 'h5.core._compileAspectsが公開されていないため、h5.jsでは失敗します。');
+	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか ※min版ではエラーになります', function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
 			start();
 			return;
 		}
@@ -2947,7 +3575,7 @@ $(function() {
 				result.push('customEvent');
 			}
 		};
-		h5.core._compileAspects([countAspects]);
+		h5.core.__compileAspects([countAspects]);
 
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
@@ -3119,34 +3747,36 @@ $(function() {
 
 		var noTemplateController = h5.core.controller('#controllerTest', controller2);
 
-		$.when(testController.readyPromise, noTemplateController.readyPromise).done(function() {
-			strictEqual(array.join(';'), '0;1;2', '__construct, __init, __readyは適切なタイミングで発火しているか');
-			ok(ip1, '__constructイベントの中でinitPromiseに触れるか');
-			ok(rp1, '__constructイベントの中でreadyPromiseに触れるか');
-			ok(ip2, '__initイベントの中でinitPromiseに触れるか');
-			ok(rp2, '__initイベントの中でreadyPromiseに触れるか');
-			ok(ip3, '__readyイベントの中でinitPromiseに触れるか');
-			ok(rp3, '__readyイベントの中でreadyPromiseに触れるか');
+		h5.async.when(testController.readyPromise, noTemplateController.readyPromise).done(
+				function() {
+					strictEqual(array.join(';'), '0;1;2',
+							'__construct, __init, __readyは適切なタイミングで発火しているか');
+					ok(ip1, '__constructイベントの中でinitPromiseに触れるか');
+					ok(rp1, '__constructイベントの中でreadyPromiseに触れるか');
+					ok(ip2, '__initイベントの中でinitPromiseに触れるか');
+					ok(rp2, '__initイベントの中でreadyPromiseに触れるか');
+					ok(ip3, '__readyイベントの中でinitPromiseに触れるか');
+					ok(rp3, '__readyイベントの中でreadyPromiseに触れるか');
 
 
-			ok(noip1, 'テンプレートを使わない場合でも、__constructイベントの中でinitPromiseに触れるか');
-			ok(norp1, 'テンプレートを使わない場合でも、__constructイベントの中でreadyPromiseに触れるか');
-			ok(noip2, 'テンプレートを使わない場合でも、__initイベントの中でinitPromiseに触れるか');
-			ok(norp2, 'テンプレートを使わない場合でも、__initイベントの中でreadyPromiseに触れるか');
-			ok(noip3, 'テンプレートを使わない場合でも、__readyイベントの中でinitPromiseに触れるか');
-			ok(norp3, 'テンプレートを使わない場合でも、__readyイベントの中でreadyPromiseに触れるか');
+					ok(noip1, 'テンプレートを使わない場合でも、__constructイベントの中でinitPromiseに触れるか');
+					ok(norp1, 'テンプレートを使わない場合でも、__constructイベントの中でreadyPromiseに触れるか');
+					ok(noip2, 'テンプレートを使わない場合でも、__initイベントの中でinitPromiseに触れるか');
+					ok(norp2, 'テンプレートを使わない場合でも、__initイベントの中でreadyPromiseに触れるか');
+					ok(noip3, 'テンプレートを使わない場合でも、__readyイベントの中でinitPromiseに触れるか');
+					ok(norp3, 'テンプレートを使わない場合でも、__readyイベントの中でreadyPromiseに触れるか');
 
-			var root = $('#controllerTest').get(0);
-			strictEqual(ir, root, '__initイベントの中でrootElementに触れるか');
-			strictEqual(rr, root, '__readyイベントの中でrootElementに触れるか');
-			strictEqual(noir, root, 'テンプレートを使わない場合でも、__initイベントの中でrootElementに触れるか');
-			strictEqual(norr, root, 'テンプレートを使わない場合でも、__readyイベントの中でrootElementに触れるか');
+					var root = $('#controllerTest').get(0);
+					strictEqual(ir, root, '__initイベントの中でrootElementに触れるか');
+					strictEqual(rr, root, '__readyイベントの中でrootElementに触れるか');
+					strictEqual(noir, root, 'テンプレートを使わない場合でも、__initイベントの中でrootElementに触れるか');
+					strictEqual(norr, root, 'テンプレートを使わない場合でも、__readyイベントの中でrootElementに触れるか');
 
-			start();
+					start();
 
-			testController.unbind();
-			noTemplateController.unbind();
-		});
+					testController.unbind();
+					noTemplateController.unbind();
+				});
 	});
 
 	asyncTest('__construct, __init, __readyが動作するタイミングは正しいか2(テンプレート使用)', function() {
@@ -3406,7 +4036,7 @@ $(function() {
 
 				var c = h5.core.controller('#controllerTest', testController);
 
-				$.when(c.readyPromise, d1.promise(), d2.promise(), d3.promise()).done(
+				h5.async.when(c.readyPromise, d1.promise(), d2.promise(), d3.promise()).done(
 						function() {
 
 							start();
@@ -3522,7 +4152,7 @@ $(function() {
 
 				var c = h5.core.controller('#controllerTest', testController);
 
-				$.when(c.readyPromise, cp, ip, rp).done(
+				h5.async.when(c.readyPromise, cp, ip, rp).done(
 						function() {
 
 							start();
@@ -3617,7 +4247,7 @@ $(function() {
 			p3.unbind();
 		});
 
-		$.when(d1.promise(), d2.promise(), d3.promise()).done(function() {
+		h5.async.when(d1.promise(), d2.promise(), d3.promise()).done(function() {
 			start();
 		});
 	});
@@ -3891,7 +4521,8 @@ $(function() {
 		});
 	});
 
-	asyncTest('throwError() / throwCustomError() の動作',
+	asyncTest(
+			'throwError() / throwCustomError() の動作',
 			function() {
 				var testController = {
 					__name: 'TestController',
@@ -3901,33 +4532,56 @@ $(function() {
 						try {
 							this.throwError();
 						} catch (e) {
-							err1 = e;
+							err1 = e.message;
 						}
-						ok(err1, '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
+						equal(err1, '正しい数の引数を指定して下さい。', '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
 						try {
 							this.throwError('コントローラ"{0}"における{1}のテスト', this.__name, 'throwError');
 						} catch (e) {
 							strictEqual(e.message, 'コントローラ"TestController"におけるthrowErrorのテスト',
 									'throwErrorメソッドの第1引数が文字列の場合、可変長引数を取ってフォーマットされるか');
 						}
+						try {
+							this.throwError('エラーメッセージ!!');
+						} catch (e) {
+							strictEqual(e.message, 'エラーメッセージ!!',
+									'指定したメッセージがmessageプロパティに設定されていること。');
+							strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
+						}
+
 						var obj = {
 							a: 1
 						};
 						try {
 							this.throwError(obj, obj);
 						} catch (e) {
-							ok(e.message, 'throwErrorメソッドの第1引数がオブジェクトの場合、そのまま出力されているか');
+							if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
+								equal(e.message, 'Unknown error',
+										'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+							} else {
+								equal(e.message, '',
+										'第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							}
+							deepEqual(e.detail, obj, 'detailプロパティに第一引数に指定したオブジェクトが設定されていること。');
 						}
 						try {
 							this.throwCustomError();
 						} catch (e) {
-							strictEqual(e.message, 'エラータイプを指定してください。',
-									'throwCustomErrorメソッドでエラータイプが指定されないとエラーが発生するか');
+							strictEqual(e.message, '正しい数の引数を指定して下さい。',
+									'throwCustomError()で必須のパラメータが指定されていない場合、エラーが発生すること。');
 						}
+
+						try {
+							this.throwCustomError(null, 'エラーメッセージ!');
+						} catch (e) {
+							strictEqual(e.message, 'エラーメッセージ!', '指定したメッセージがmessageプロパティに設定されていること。');
+							strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
+						}
+
 						var err2 = null;
 						var err2Type = null;
 						try {
-							this.throwCustomError('customType');
+							this.throwCustomError('customType', '');
 						} catch (e) {
 							err2 = e;
 							err2Type = e.customType;
@@ -3948,7 +4602,14 @@ $(function() {
 						try {
 							this.throwCustomError('customType', obj, obj);
 						} catch (e) {
-							ok(e.message, 'throwErrorメソッドの第2引数がオブジェクトの場合、そのまま出力されているか');
+							if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
+								equal(e.message, 'Unknown error',
+										'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+							} else {
+								equal(e.message, '',
+										'第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							}
+							deepEqual(e.detail, obj, 'detailプロパティに第二引数に指定したオブジェクトが設定されていること。');
 						}
 					}
 				};
@@ -4175,9 +4836,15 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup)',
+			'h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
+				if (document.ontouchstart !== undefined) {
+					expect(1);
+					ok(false, 'タブレット、スマートフォンでは失敗します');
+					start();
+					return;
+				}
 				var controller = {
 
 					__name: 'TestController',
@@ -4417,10 +5084,16 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) SVG',
+			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
-				if(!document.createElementNS){
+				if (document.ontouchstart !== undefined) {
+					expect(1);
+					ok(false, 'タブレット、スマートフォンでは失敗します');
+					start();
+					return;
+				}
+				if (!isSupportSVG){
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -4563,10 +5236,10 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) SVG',
+			'h5trackイベント(touchstart, touchmove, touchend) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
-				if(!document.createElementNS){
+				if (!isSupportSVG){
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -4714,9 +5387,15 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) window',
+			'h5trackイベント(mousedown, mousemove, mouseup) window ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
+				if (document.ontouchstart !== undefined) {
+					expect(1);
+					ok(false, 'タブレット、スマートフォンでは失敗します');
+					start();
+					return;
+				}
 				var controller = {
 
 					__name: 'TestController',
@@ -4973,4 +5652,123 @@ $(function() {
 					start();
 				});
 			});
+
+	test('__construct()で例外をスローする。', 1, function() {
+		var controller = {
+			__name: 'TestController',
+			__construct: function() {
+				throw new Error('__construct error.');
+			}
+		};
+
+		raises(function() {
+			h5.core.controller('#controllerTest', controller);
+		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
+	});
+
+	var testTimeoutFunc = function(msg) {
+		var id = setTimeout(
+				function() {
+					ok(
+							true,
+							msg
+									+ ' が、コンソールまたはスクリプトエラーのウィドウに表示されていること。IE6～9 は、非同期処理中に発生した例外がwindow.onerrorにトラップされない為、目視で確認して下さい。');
+					start();
+				}, 5000);
+		return id;
+	};
+
+	asyncTest('※IE6～9の場合は要目視確認: __init()で例外をスローする。', 1, function() {
+		var errorMsg = '__init error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__init: function() {
+				throw new Error(errorMsg);
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('※IE6～9の場合は要目視確認: __ready()で例外をスローする。', 1, function() {
+		var errorMsg = '__ready error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				throw new Error(errorMsg);
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('※IE6～9の場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
+		var errorMsg = '__unbind error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				this.unbind();
+			},
+			__unbind: function() {
+				throw new Error(errorMsg);
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('※IE6～9の場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
+		var errorMsg = '__dispose error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				this.dispose();
+			},
+			__dispose: function() {
+				throw new Error(errorMsg);
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
+	});
 });

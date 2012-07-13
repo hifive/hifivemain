@@ -46,14 +46,16 @@ var backupFixture = $('#qunit-fixture').html();
 $('head').append(correctView1).append(correctView2).append(correctView3).append(correctView4)
 		.append(wrongView1);
 
+// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
+((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
+
 // load()で読み込まれたテンプレートを全て削除する
 function clearCachedTemplate() {
 	var cache = h5.core.view.__cachedTemplates;
 	for ( var prop in cache) {
-		if (prop === "view1" || prop === 'view2' || prop === 'view3') {
+		if (prop === "view1" || prop === 'view2' || prop === 'view3' || prop === 'inscript') {
 			continue;
 		}
-
 		delete cache[prop];
 	}
 }
@@ -109,7 +111,6 @@ function assertElement(base, actual) {
 			}
 		}
 	};
-
 	func($(actual), $(base));
 }
 
@@ -133,72 +134,62 @@ test('load()に文字列または中身のある配列以外、空文字、空�
 	try {
 		view.load();
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(null);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load([]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load({});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load('');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(' ');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['./template/test1.ejs', ' ']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 	try {
 		view.load(['./template/test1.ejs', 1]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, invalidErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, invalidErrorCode, e.message);
 	}
 });
 
@@ -212,29 +203,29 @@ module('View2', {
 	}
 });
 
-test('画面に書かれた、scriptタグが含まれているテンプレートをロードする。',
-		function() {
-			var template = h5.core.view.get('inscript');
-			strictEqual(window.sample2loaded, undefined, 'sample2.jsはロードされていないこと。');
+test('画面に書かれた、scriptタグが含まれているテンプレートをロードする。', function() {
+	var template = h5.core.view.get('inscript');
+	strictEqual(window.com.htmlhifive.test.sample2loaded, undefined, 'sample2.jsはロードされていないこと。');
 
-			$('#qunit-fixture').html(template);
-			strictEqual(window.sample2loaded, 'sample2.js is loaded.',
-					'DOMツリーに追加した時にsample2.jsがロードされること。');
-			window.sample2loaded = undefined;
-			$('#inscript').remove();
-		});
+	$('#qunit-fixture').html(template);
+	strictEqual(window.com.htmlhifive.test.sample2loaded, 'sample2.js is loaded.',
+			'DOMツリーに追加した時にsample2.jsがロードされること。');
+	window.com.htmlhifive.test.sample2loaded = undefined;
+	$('#inscript').remove();
+});
 
 asyncTest('ejsファイルに書かれた、scriptタグが含まれているテンプレートをロードする。', 2, function() {
 	h5.core.view.load('template/test10.ejs').done(
 			function() {
 				var template = h5.core.view.get('test10-1');
-				strictEqual(window.sample3loaded, undefined, 'sample2.jsはロードされていないこと。');
+				strictEqual(window.com.htmlhifive.test.sample3loaded, undefined,
+						'sample3.jsはロードされていないこと。');
 
 				$('#qunit-fixture').html(template);
-				strictEqual(window.sample3loaded, 'sample3.js is loaded.',
-						'DOMツリーに追加した時にsample2.jsがロードされること。');
+				strictEqual(window.com.htmlhifive.test.sample3loaded, 'sample3.js is loaded.',
+						'DOMツリーに追加した時にsample3.jsがロードされること。');
 				h5.core.view.clear('test10-1');
-				window.sample2loaded = undefined;
+				window.com.htmlhifive.test.sample3loaded = undefined;
 				start();
 			}).fail(function(e) {
 		ok(false, e.message);
@@ -250,7 +241,7 @@ asyncTest('ejsファイルに書かれた、scriptタグが含まれているテ
 // $('#qunit-fixture')[0].innerHTML = template;
 // strictEqual(window.imgerr, 'imgの読み込みに失敗。', 'DOMツリーに追加した時にimgタグのonerrorイベントが発生すること。');
 // h5.core.view.clear('test10-1');
-// window.sample2loaded = undefined;
+// window.com.htmlhifive.test.sample2loaded = undefined;
 // start();
 // }).fail(function(e){
 // ok(false, e.message);
@@ -537,39 +528,93 @@ asyncTest('load() テンプレートIDが空文字または空白である場合
 		ok(false, 'エラーが発生していません');
 		start();
 	}).fail(function(e) {
-		same(e.code, errorCode, e.message);
+		deepEqual(e.code, errorCode, e.message);
 
 		view.load('template/test12.ejs').done(function() {
 			ok(false, 'エラーが発生していません');
 			start();
 		}).fail(function(error) {
-			same(error.code, errorCode, error.message);
+			deepEqual(error.code, errorCode, error.message);
 			start();
 		});
 	});
 });
 
-asyncTest('存在しないテンプレートを読み込む。', 11, function() {
-	var p = h5.core.view.load(['./template/hogehoge.ejs']);
+asyncTest(
+		'存在しないテンプレートを読み込む。出力されるログも確認する ※要目視確認',
+		20,
+		function() {
+			var errCode = 7003;
+			var p = h5.core.view.load(['./template/hogehoge.ejs']);
+			p
+					.fail(function(e) {
+						strictEqual(e.code, errCode, 'エラーコード: ' + e.code);
+						strictEqual(e.detail.error.status, 404,
+								'エラーオブジェクトにAjaxエラーのオブジェクトが格納されていて、ステータスコード404が取得できる。');
+						ok(e.detail.url.match(/^http:\/\/.*\/template\/hogehoge\.ejs$/),
+								'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
+						strictEqual(e.detail.path, './template/hogehoge.ejs',
+								'エラーの起きたテンプレートファイルのパスが取得できる');
+						ok(
+								true,
+								'※要目視確認：WARNレベルで次のようにログが出力されていることを確認してください。'
+										+ '『[WARN]10:49:26,38: テンプレートファイルを取得できませんでした。ステータスコード:404 URL:http://localhost:8080/hifive/test/template/hogehoge.ejs 』');
+
+						h5.core.view
+								.load('./template/hogehoge.ejs')
+								.fail(
+										function(e) {
+											ok(true,
+													'一度ロードしようとした存在しないURLにもう一度アクセスした時、もう一度アクセスを試みること。');
+											ok(e.code, 'エラーコード: ' + e.code);
+											strictEqual(e.detail.error.status, 404,
+													'エラーオブジェクトにAjaxエラーのオブジェクトが格納されていて、ステータスコード404が取得できる。');
+											ok(e.detail.url.search(/http:\/\//) === 0
+													&& e.detail.url
+															.search(/\/template\/hogehoge\.ejs$/),
+													'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
+											strictEqual(e.detail.path, './template/hogehoge.ejs',
+													'エラーの起きたテンプレートファイルのパスが取得できる');
+											ok(
+													true,
+													'※要目視確認：WARNレベルで次のようにログが出力されていることを確認してください。'
+															+ '『[WARN]10:49:26,38: テンプレートファイルを取得できませんでした。ステータスコード:404 URL:http://localhost:8080/hifive/test/template/hogehoge.ejs 』');
+
+											var propCount = 0;
+											for ( var prop in h5.core.view.__cachedTemplates) {
+												ok(prop, prop);
+												propCount++;
+											}
+
+											strictEqual(propCount, 4,
+													'画面HTMLに書かれているテンプレートの件数、3件と一致すること');
+
+											strictEqual(h5.core.view.isAvailable('view1'), true);
+											strictEqual(h5.core.view.isAvailable('view2'), true);
+											strictEqual(h5.core.view.isAvailable('view3'), true);
+											strictEqual(h5.core.view.isAvailable('inscript'), true);
+
+											start();
+
+										}).done(function() {
+									ok(false, 'テスト失敗。存在しないURLなのにdoneコールバックが実行された');
+									start();
+								});
+					});
+		});
+
+
+asyncTest('中身が空のテンプレートファイルを読み込む。出力されるログも確認する ※要目視確認', 4, function() {
+	var errCode = 7001;
+	var p = h5.core.view.load(['./template/test14.ejs']);
 	p.fail(function(e) {
-		ok(e.code, 'エラーコード: ' + e.code);
-		strictEqual(e.detail.error.status, 404,
-				'エラーオブジェクトにAjaxエラーのオブジェクトが格納されていて、ステータスコード404が取得できる。');
-		ok(e.detail.url.search(/http:\/\//) === 0
-				&& e.detail.url.search(/\/template\/hogehoge\.ejs$/),
+		strictEqual(e.code, errCode, 'エラーコード: ' + e.code);
+		ok(e.detail.url.match(/^http:\/\/.*\/template\/test14\.ejs$/),
 				'エラーの起きたテンプレートファイルのURLが取得できる。：' + e.detail.url);
-		strictEqual(e.detail.path, './template/hogehoge.ejs', 'エラーの起きたテンプレートファイルのパスが取得できる');
-		var propCount = 0;
-		for ( var prop in h5.core.view.__cachedTemplates) {
-			ok(prop, prop);
-			propCount++;
-		}
+		strictEqual(e.detail.path, './template/test14.ejs', 'エラーの起きたテンプレートファイルのパスが取得できる');
+		ok(true, '※要目視確認：WARNレベルで次のようにログが出力されていることを確認してください。'
+				+ '『[WARN]11:29:59,835: テンプレートファイルが不正です。null』');
 
-		strictEqual(propCount, 3, '画面HTMLに書かれているテンプレートの件数、3件と一致すること');
-
-		strictEqual(h5.core.view.isAvailable('view1'), true);
-		strictEqual(h5.core.view.isAvailable('view2'), true);
-		strictEqual(h5.core.view.isAvailable('view3'), true);
 		start();
 	});
 });
@@ -578,8 +623,7 @@ test('get() 存在しないテンプレートIDを指定してテンプレート
 	try {
 		h5.core.view.get('aaa');
 		ok(false, '例外は発生しませんでした。');
-	}
-	catch (e) {
+	} catch (e) {
 		ok(true, '存在しないテンプレートIDでgetしたので例外が発生すること。');
 	}
 });
@@ -588,8 +632,7 @@ test('get() 引数を指定せずに呼び出し。', function() {
 	try {
 		h5.core.view.get();
 		ok(false, '例外は発生しませんでした。');
-	}
-	catch (e) {
+	} catch (e) {
 		ok(true, 'テンプレートIDを指定しなかったので例外が発生すること。');
 	}
 });
@@ -601,52 +644,45 @@ test('get() idの指定が不正である時に例外が発生すること。', 
 	try {
 		view.get('');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(' ');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get([]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get({});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(0);
 		ok(true, view.get(0), {});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(/a/);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.get(new String(templateId));
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 });
 
@@ -698,8 +734,7 @@ asyncTest('clear() テンプレートをキャッシュから全て削除。', 8
 			ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。');
 			try {
 				view.get(id);
-			}
-			catch (e) {
+			} catch (e) {
 				ok(true, '削除したテンプレートに対してgetView()を行うと例外が発生すること。' + e.message);
 			}
 		}
@@ -726,8 +761,7 @@ asyncTest('clear() テンプレートIDを指定してキャッシュからテ�
 			ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。' + id);
 			try {
 				view.get(id);
-			}
-			catch (e) {
+			} catch (e) {
 				ok(true, '削除したテンプレートに対してgetView()を行うと例外が発生すること。：' + e.message);
 			}
 		}
@@ -737,8 +771,7 @@ asyncTest('clear() テンプレートIDを指定してキャッシュからテ�
 			try {
 				view.get(id);
 				ok(true, '削除されていないテンプレートIDに対してgetView()できること。');
-			}
-			catch (e) {
+			} catch (e) {
 				ok(false, '例外が発生しました。：' + e.message);
 			}
 		}
@@ -753,52 +786,45 @@ test('clear() idの指定が不正である時に例外が発生すること。'
 	try {
 		view.clear('');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(' ');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear([]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear({});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(0);
 		ok(true, view.clear(0), {});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(/a/);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.clear(new String(templateId));
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 });
 
@@ -811,108 +837,95 @@ test('clear() idを配列で指定し、その中に不正な要素がある時�
 	try {
 		view.clear([templateId, '']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, ' ']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, undefined]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, null]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, {}]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, []]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, 1]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, true]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([templateId, false]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 	try {
 		view.clear([new String(templateId)]);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 		ok(view.isAvailable(templateId), 'テンプレートが削除されていないこと。');
-		same(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
+		deepEqual(view.get(templateId), 'ok', '登録されたテンプレートを取得できること。');
 	}
 });
 
-
-test(
-		'clear() 登録されていないテンプレートIDを指定した時に、WARNレベルでログが出力されること(要目視:id2とid3について合計2回ログ出力される)。',
-		1,
-		function() {
-			var templateId = 'id1';
-			var view = h5.core.view;
-			view.register(templateId, 'ok');
-			view.clear('id2');
-			view.clear(['id3', templateId]);
-			ok(!view.isAvailable(templateId), '登録されていないIDを含む配列を指定しても、エラーが発生せず、その他のテンプレートは削除されること。');
-
-		});
+test('clear() 登録されていないテンプレートIDを指定した時に、WARNレベルでログが出力されること ※要目視確認', 3, function() {
+	var templateId = 'id1';
+	var view = h5.core.view;
+	view.register(templateId, 'ok');
+	view.clear('id2');
+	view.clear(['id3', templateId]);
+	ok(!view.isAvailable(templateId), '登録されていないIDを含む配列を指定しても、エラーが発生せず、その他のテンプレートは削除されること。');
+	ok(true, 'ログに『[WARN]13:53:37,960: 指定されたIDのテンプレートは登録されていません。"id2" 』と出力されていること ※要目視確認');
+	ok(true, 'ログに『[WARN]13:53:37,960: 指定されたIDのテンプレートは登録されていません。"id3" 』と出力されていること ※要目視確認');
+});
 
 asyncTest('viewのインスタンスが違うなら利用可能なテンプレートも違うこと。', 4, function() {
 	var view1Id = 'template2';
@@ -944,7 +957,6 @@ test('register() テンプレートを登録できること。', 2, function() {
 	}), correctTemplate3Result);
 });
 
-
 test('register() 置換要素有りテンプレートを登録。[%= %]内はデフォルトでHTMLエスケープされること。 view.get ', function() {
 	var view = h5.core.view.createView();
 	view.register('v1', correctTemplate3);
@@ -973,7 +985,7 @@ test('register() 置換要素有りテンプレートを登録。渡したオブ
 	var view = h5.core.view.createView();
 	view.register('v1', '[% val1 = 1; val2 = 2; inner.val = 3;%]');
 	view.get('v1', obj);
-	same(obj, obj_clone, 'view.getに渡したオブジェクトが変化しない。');
+	deepEqual(obj, obj_clone, 'view.getに渡したオブジェクトが変化しない。');
 });
 
 test('[%:= %]内はエスケープされないこと。', 1, function() {
@@ -991,55 +1003,47 @@ test('register()で、idの指定が不正である時に例外が発生する�
 	try {
 		view.register('', correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(' ', correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register([], correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register({}, correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(0, correctTemplate1);
 		ok(true, view.get(0), {});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(/a/, correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 	try {
 		view.register(new String(templateId), correctTemplate1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateIdErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateIdErrorCode, e.message);
 	}
 });
-
 
 test('register()で、idを指定していない時または、テンプレート文字列に文字列でないものを指定した時に例外が発生すること。', 4, function() {
 	var templateId = 'id1';
@@ -1048,30 +1052,26 @@ test('register()で、idを指定していない時または、テンプレー�
 	try {
 		h5.core.view.register(templateId);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateStringErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, 1);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateStringErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, ['']);
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateStringErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateStringErrorCode, e.message);
 	}
 	try {
 		h5.core.view.register(templateId, {});
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, templateStringErrorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, templateStringErrorCode, e.message);
 	}
 });
 
@@ -1081,9 +1081,8 @@ test('register() テンプレート文字列が不正な時にエラーが発生
 	try {
 		h5.core.view.register(templateId, '[%= [%= %]');
 		ok(false, 'エラーが発生していません');
-	}
-	catch (e) {
-		same(e.code, errorCode, e.message);
+	} catch (e) {
+		deepEqual(e.code, errorCode, e.message);
 	}
 });
 
@@ -1118,46 +1117,26 @@ asyncTest('view.load() 複数のテンプレートファイルを読み込んだ
 		});
 
 asyncTest('getAvailableTemplates() viewインスタンスで利用可能なテンプレートIDを配列で取得できること。', 3, function() {
-	deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3'].sort(),
-			'画面HTMLに書かれたテンプレートIDが取得できること');
+	deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3', 'inscript']
+			.sort(), '画面HTMLに書かれたテンプレートIDが取得できること');
 	h5.core.view.load(['./template/test2.ejs', './template/test3.ejs']).done(
 			function() {
 				deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3',
-						'template2', 'template3'].sort(),
+						'inscript', 'template2', 'template3'].sort(),
 						'画面HTMLに書かれたテンプレートIDとロードしたテンプレートのIDが取得できること');
 				h5.core.view.clear('template2');
 				deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3',
-						'template3'].sort(), 'clear()で削除したテンプレートIDが利用可能でないこと。');
-
+						'inscript', 'template3'].sort(), 'clear()で削除したテンプレートIDが利用可能でないこと。');
+				start();
 			});
-	start();
 });
-
-// asyncTest('同時に一つのテンプレートファイルへアクセスしても、一度しかアクセスしないこと。※要ログ確認。TRACEレベルでログを出しています。『http://localhost:8080/hifive/test/template/test8.ejsにアクセスします』と1度だけ表示されていること',
-// function() {
-// var view1 = h5.core.view.createView();
-// var view2 = h5.core.view.createView();
-// var view3 = h5.core.view.createView();
-// var p1 = view1.load(['./template/test10.ejs']);
-// var p2 = view2.load(['./template/test10.ejs']);
-// var p3 = view3.load(['./template/test10.ejs', './template/test2.ejs']);
-// p1.done(function() {
-// ok(true, '読み込みに成功しました。view1');
-// });
-// p2.done(function(){
-// ok(true,'読み込みに成功しました。view2');
-// });
-// p3.done(function(){
-// ok(true,'読み込みに成功しました。view3');
-// start();
-// }).fail(function(e){
-// start();
-// });
-// });
 
 module('View3', {
 	setup: function() {
 		backupFixture = $('#qunit-fixture').html();
+		if (!h5.dev) {
+			return;
+		}
 		h5.dev.core.view.cacheManager.cache = {};
 		h5.dev.core.view.cacheManager.cacheUrls = [];
 	},
@@ -1167,77 +1146,73 @@ module('View3', {
 	}
 });
 
-asyncTest(
-		'cacheManager 取得したテンプレートのURLがキャッシュされていて、その情報が取得できること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
-		10, function() {
-			var cacheManager = null;
-			try {
-				cacheManager = h5.dev.core.view.cacheManager;
+asyncTest('cacheManager 取得したテンプレートのURLがキャッシュされていて、その情報が取得できること ※min版ではエラーになります', 10, function() {
+	var cacheManager = null;
+	try {
+		cacheManager = h5.dev.core.view.cacheManager;
+	} catch (e) {
+		expect(1);
+		ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+		start();
+		return;
+	}
+	var view1 = h5.core.view.createView();
+	var view2 = h5.core.view.createView();
+	var p1 = view1.load(['./template/test2.ejs', './template/test3.ejs']);
+	view2.load('./template/test4.ejs');
+	p1.done(function() {
+		// view2のダウンロードが終わるまで100ms待つ
+		setTimeout(function() {
+			var cacheInfo = cacheManager.getCacheInfo();
+			for ( var i = 0; i < cacheInfo.length; i++) {
+				var cache = cacheInfo[i];
+				var path = cache.path;
+				if (path === "./template/test2.ejs") {
+					deepEqual(cache.path, './template/test2.ejs', '相対パス(指定したパス)が取得できる - ' + path);
+					ok(cache.absoluteUrl.match(/http.*\/template\/test2\.ejs/), 'URLが取得できる - '
+							+ cache.absoluteUrl);
+					for ( var j = 0; j < cache.ids.length; j++) {
+						var id = cache.ids[j];
+						if (id === 'template2') {
+							ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
+						}
+					}
+				} else if (path === "./template/test3.ejs") {
+					deepEqual(cache.path, './template/test3.ejs', 'キャッシュ' + path);
+					ok(cache.absoluteUrl.match(/http.*\/template\/test3\.ejs/), 'URLが取得できる - '
+							+ cache.absoluteUrl);
+					for ( var j = 0; j < cache.ids.length; j++) {
+						var id = cache.ids[j];
+						if (id === 'template3') {
+							ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
+						}
+					}
+				} else if (path === "./template/test4.ejs") {
+					deepEqual(cache.path, './template/test4.ejs', 'キャッシュ' + path);
+					ok(cache.absoluteUrl.match(/http.*\/template\/test4\.ejs/), 'URLが取得できる - '
+							+ cache.absoluteUrl);
+					for ( var j = 0; j < cache.ids.length; j++) {
+						var id = cache.ids[j];
+						if (id === 'template4') {
+							ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
+						} else if (id === 'template5') {
+							ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
+						}
+					}
+				}
 			}
-			catch (e) {
-				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
-				start();
-				return;
-			}
-			var view1 = h5.core.view.createView();
-			var view2 = h5.core.view.createView();
-			var p1 = view1.load(['./template/test2.ejs', './template/test3.ejs']);
-			view2.load('./template/test4.ejs');
-			p1.done(function() {
-				// view2のダウンロードが終わるまで100ms待つ
-				setTimeout(
-						function() {
-							var cacheInfo = cacheManager.getCacheInfo();
-							for ( var i = 0; i < cacheInfo.length; i++) {
-								var cache = cacheInfo[i];
-								var path = cache.path;
-								if (path === "./template/test2.ejs") {
-									same(cache.path, './template/test2.ejs',
-											'相対パス(指定したパス)が取得できる - ' + path);
-									ok(cache.absoluteUrl.match(/http.*\/template\/test2\.ejs/),
-											'URLが取得できる - ' + cache.absoluteUrl);
-									for ( var j = 0; j < cache.ids.length; j++) {
-										var id = cache.ids[j];
-										if (id === 'template2') {
-											ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
-										}
-									}
-								} else if (path === "./template/test3.ejs") {
-									same(cache.path, './template/test3.ejs', 'キャッシュ' + path);
-									ok(cache.absoluteUrl.match(/http.*\/template\/test3\.ejs/),
-											'URLが取得できる - ' + cache.absoluteUrl);
-									for ( var j = 0; j < cache.ids.length; j++) {
-										var id = cache.ids[j];
-										if (id === 'template3') {
-											ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
-										}
-									}
-								} else if (path === "./template/test4.ejs") {
-									same(cache.path, './template/test4.ejs', 'キャッシュ' + path);
-									ok(cache.absoluteUrl.match(/http.*\/template\/test4\.ejs/),
-											'URLが取得できる - ' + cache.absoluteUrl);
-									for ( var j = 0; j < cache.ids.length; j++) {
-										var id = cache.ids[j];
-										if (id === 'template4') {
-											ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
-										} else if (id === 'template5') {
-											ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:' + id);
-										}
-									}
-								}
-							}
-							start();
-						}, 100);
-			});
-		});
+			start();
+		}, 100);
+	});
+});
 
 asyncTest(
-		'getAvailableTemplates() LRUでキャッシュされていること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
-		2, function() {
+		'getAvailableTemplates() LRUでキャッシュされていること。※h5.dev.core.view.cacheManagerがない場合 ※min版ではエラーになります',
+		20, function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
-			}
-			catch (e) {
+			} catch (e) {
+				expect(1);
 				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
 				start();
 				return;
@@ -1249,46 +1224,59 @@ asyncTest(
 					'./template/test_cache5.ejs', './template/test_cache6.ejs',
 					'./template/test_cache7.ejs', './template/test_cache8.ejs',
 					'./template/test_cache9.ejs', './template/test_cache10.ejs'];
-			var expectArray1 = array1;
-			var expectArray2 = ['./template/test_cache4.ejs', './template/test_cache5.ejs',
-					'./template/test_cache6.ejs', './template/test_cache7.ejs',
-					'./template/test_cache8.ejs', './template/test_cache9.ejs',
-					'./template/test_cache10.ejs', './template/test_cache11.ejs',
-					'./template/test_cache2.ejs', './template/test_cache12.ejs'];
-			view1.load(array1).done(function() {
-				var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-				var cache = h5.dev.core.view.cacheManager.cache;
-				var paths = [];
-				for ( var i = 0, l = cacheUrls.length; i < l; i++) {
-					var url = cacheUrls[i];
-					paths.push(cache[url].path);
-				}
-				deepEqual(paths, expectArray1, 'キャッシュが10ファイル分されていて、正しい順番であること');
-				view2.load('./template/test_cache11.ejs').done(function() {
-					view2.load('./template/test_cache2.ejs').done(function() {
-						view2.load('./template/test_cache12.ejs').done(function() {
-							var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-							var cache = h5.dev.core.view.cacheManager.cache;
-							var paths = [];
-							for ( var i = 0, l = cacheUrls.length; i < l; i++) {
-								var url = cacheUrls[i];
-								paths.push(cache[url].path);
+			var expectArray = array1;
+
+			var expectArray2 = [];
+
+			view1.load(array1).done(
+					function() {
+						var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+						var cache = h5.dev.core.view.cacheManager.cache;
+
+						for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+							var url = cacheUrls[i];
+							ok($.inArray(cache[url].path, expectArray) != -1,
+									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
+							expectArray2.push(cache[url].path);
+						}
+
+						expectArray2.splice(0, 2);
+						expectArray2 = expectArray2.concat(['./template/test_cache11.ejs',
+								'./template/test_cache2.ejs', './template/test_cache12.ejs']);
+
+
+						var view2Done3Func = function() {
+							var cacheUrls2 = h5.dev.core.view.cacheManager.cacheUrls;
+							var cache2 = h5.dev.core.view.cacheManager.cache;
+
+							for ( var i = 0, l = cacheUrls2.length; i < l; i++) {
+								var url2 = cacheUrls2[i];
+								ok($.inArray(cache2[url2].path, expectArray2) != -1,
+										'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
+												+ cache2[url2].path);
 							}
-							deepEqual(paths, expectArray2, 'キャッシュが10ファイル分されていて、正しい順番であること');
+
 							start();
-						});
+						};
+
+						var view2Done2Func = function() {
+							view2.load('./template/test_cache12.ejs').done(view2Done3Func);
+						};
+
+						var view2Done1Func = function() {
+							view2.load('./template/test_cache2.ejs').done(view2Done2Func);
+						};
+
+						view2.load('./template/test_cache11.ejs').done(view2Done1Func);
 					});
-				});
-			});
 		});
 
-asyncTest(
-		'テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること。※h5.dev.core.view.cacheManagerがない場合(min版)ではエラーになります。',
-		1, function() {
+asyncTest('テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること ※min版ではエラーになります', 4,
+		function() {
 			try {
 				cacheManager = h5.dev.core.view.cacheManager;
-			}
-			catch (e) {
+			} catch (e) {
+				expect(1);
 				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
 				start();
 				return;
@@ -1298,15 +1286,60 @@ asyncTest(
 			var array1 = ['./template/test_cache1.ejs', './template/test_cache1.ejs?',
 					'./template/test_cache1.ejs?aa', './template/test_cache1.ejs?bb'];
 			var expectArray1 = array1;
-			view1.load(array1).done(function() {
-				var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
-				var cache = h5.dev.core.view.cacheManager.cache;
-				var paths = [];
-				for ( var i = 0, l = cacheUrls.length; i < l; i++) {
-					var url = cacheUrls[i];
-					paths.push(cache[url].path);
-				}
-				deepEqual(paths, expectArray1, 'キャッシュが4ファイル分されていて、正しい順番であること');
-				start();
-			});
+
+			view1.load(array1).done(
+					function() {
+						var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+						var cache = h5.dev.core.view.cacheManager.cache;
+
+						for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+							var url = cacheUrls[i];
+							ok($.inArray(cache[url].path, expectArray1) != -1,
+									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
+						}
+						start();
+					});
 		});
+
+asyncTest('同じテンプレートファイルを並列にロードする ※min版ではエラーになります', 2,
+		function() {
+			try {
+				cacheManager = h5.dev.core.view.cacheManager;
+			} catch (e) {
+				expect(1);
+				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+				start();
+				return;
+			}
+			var view1 = h5.core.view.createView();
+			$.when(view1.load('./template/test_cache1.ejs'),
+					view1.load('./template/test_cache1.ejs'))
+					.done(
+							function() {
+								var cacheUrls = h5.dev.core.view.cacheManager.cacheUrls;
+								var cache = h5.dev.core.view.cacheManager.cache;
+
+								equal(cacheUrls.length, 1,
+										'1ファイルのみキャッシュされていること。同じファイルが重複してキャッシュされていないこと。');
+
+								for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+									var url = cacheUrls[i];
+									equal(cache[url].path, './template/test_cache1.ejs',
+											'test_cache1.ejsがキャッシュされていること。');
+								}
+								start();
+							});
+		});
+
+asyncTest('同じテンプレートファイルを別インスタンスのviewで並列にロードする', 4, function() {
+	var v1 = h5.core.view.createView();
+	var v2 = h5.core.view.createView();
+
+	$.when(v1.load('./template/test4.ejs?test46'),v2.load('./template/test4.ejs?test46')).done(function(){
+		ok(v1.isAvailable('template4'), 'viewインスタンス１でid:template4のテンプレートが使用可能であること');
+		ok(v1.isAvailable('template5'), 'viewインスタンス１でid:template5のテンプレートが使用可能であること');
+		ok(v2.isAvailable('template4'), 'viewインスタンス２でid:template4のテンプレートが使用可能であること');
+		ok(v2.isAvailable('template5'), 'viewインスタンス２でid:template5のテンプレートが使用可能であること');
+		start();
+	})
+});

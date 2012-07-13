@@ -19,18 +19,26 @@
 
 $(function() {
 
+	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
+	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
+
+
 	var CREATE_NAMESPACE_PASS_REASON = '名前空間オブジェクトを作成したので、undefinedでなくオブジェクトが入っているはず';
 
-	module("h5.u");
+	module("h5.u", {
+		teardown: function() {
+			window.com.htmlhifive.test = {};
+		}
+	});
 
 	test('名前空間作成 (h5.u.obj.ns)', 3, function() {
-		var ns = h5.u.obj.ns('nssol');
+		var ns = h5.u.obj.ns('htmlhifive');
 
-		strictEqual(ns, window.nssol, 'ns()の戻り値は作成した名前空間オブジェクト');
-		notStrictEqual(window.nssol, undefined, CREATE_NAMESPACE_PASS_REASON);
+		strictEqual(ns, window.htmlhifive, 'ns()の戻り値は作成した名前空間オブジェクト');
+		notStrictEqual(window.htmlhifive, undefined, CREATE_NAMESPACE_PASS_REASON);
 
-		window.nssol = undefined;
-		strictEqual(window.nssol, undefined, '（クリーンアップ）');
+		window.htmlhifive = undefined;
+		strictEqual(window.htmlhifive, undefined, '（クリーンアップ）');
 	});
 
 	test('名前空間作成 (h5.u.obj.ns) 異常系', 8, function() {
@@ -84,13 +92,14 @@ $(function() {
 		}
 	});
 	test('名前空間作成-ドット区切りでネスト  (h5.u.obj.ns)', 6, function() {
-		var ns = h5.u.obj.ns("jp.co.nssol.sysrdc");
+		var ns = h5.u.obj.ns("com.htmlhifive.test.test1");
 
-		strictEqual(ns, jp.co.nssol.sysrdc, 'ns()の戻り値は作成した名前空間オブジェクト。ネストしている場合は一番末尾のオブジェクトであること。');
-		notStrictEqual(jp, undefined, CREATE_NAMESPACE_PASS_REASON);
-		notStrictEqual(jp.co, undefined, CREATE_NAMESPACE_PASS_REASON);
-		notStrictEqual(jp.co.nssol, undefined, CREATE_NAMESPACE_PASS_REASON);
-		notStrictEqual(jp.co.nssol.sysrdc, undefined, CREATE_NAMESPACE_PASS_REASON);
+		strictEqual(ns, com.htmlhifive.test.test1,
+				'ns()の戻り値は作成した名前空間オブジェクト。ネストしている場合は一番末尾のオブジェクトであること。');
+		notStrictEqual(com, undefined, CREATE_NAMESPACE_PASS_REASON);
+		notStrictEqual(com.htmlhifive, undefined, CREATE_NAMESPACE_PASS_REASON);
+		notStrictEqual(com.htmlhifive.test, undefined, CREATE_NAMESPACE_PASS_REASON);
+		notStrictEqual(com.htmlhifive.test.test1, undefined, CREATE_NAMESPACE_PASS_REASON);
 
 		window.jp = undefined;
 		strictEqual(window.jp, undefined, '（クリーンアップ）');
@@ -110,23 +119,23 @@ $(function() {
 		strictEqual(window.dummy, undefined, 'ns()のパラメータにString型以外を指定した場合はエラーとして処理されること。');
 	});
 
-	test('jp.co.nssol.sysrdcにオブジェクトを公開する (h5.u.obj.ns)', 4, function() {
-		var jpStr = 'JP';
-		var coStr = 'CO';
+	test('com.htmlhifive.test.test1にオブジェクトを公開する (h5.u.obj.ns)', 4, function() {
+		var comStr = 'COM';
+		var htmlhifiveStr = 'HTMLHIFIVE';
 
-		window.jp = {
-			dummy: jpStr
+		window.com = {
+			dummy: comStr
 		};
-		window.jp.co = {
-			dummy: coStr
+		window.com.htmlhifive = {
+			dummy: htmlhifiveStr
 		};
 
-		var sysrdc = h5.u.obj.ns('jp.co.nssol.sysrdc');
+		var test1 = h5.u.obj.ns('com.htmlhifive.test.test1');
 
-		equal(jp.dummy, jpStr);
-		equal(jp.co.dummy, coStr);
-		strictEqual(sysrdc, jp.co.nssol.sysrdc, 'nsの戻り値と作成された名前空間が同一であること。');
-		notStrictEqual(jp.co.nssol.sysrdc, undefined, '存在しない分については新規作成されていること。');
+		equal(com.dummy, comStr);
+		equal(com.htmlhifive.dummy, htmlhifiveStr);
+		strictEqual(test1, com.htmlhifive.test.test1, 'nsの戻り値と作成された名前空間が同一であること。');
+		notStrictEqual(com.htmlhifive.test.test1, undefined, '存在しない分については新規作成されていること。');
 	});
 
 	test('h5test1.exposeにオブジェクトを公開する (h5.u.obj.expose)', 5, function() {
@@ -226,48 +235,50 @@ $(function() {
 	});
 
 	test('スクリプトのロード(h5.u.loadScript)', 3, function() {
-		window.h5samplefunc = undefined;
+		window.com.htmlhifive.test.h5samplefunc = undefined;
 		h5.u.loadScript('data/sample.js', {
 			force: true
 		});
 
-		ok(window.h5samplefunc, 'スクリプトがロードできたか');
-		window.h5samplefunc = undefined;
+		ok(window.com.htmlhifive.test.h5samplefunc, 'スクリプトがロードできたか');
+		window.com.htmlhifive.test.h5samplefunc = undefined;
 		h5.u.loadScript('data/sample.js');
-		ok(!window.h5samplefunc, '2重読み込みの防止はされていること。');
+		ok(!window.com.htmlhifive.test.h5samplefunc, '2重読み込みの防止はされていること。');
 		h5.u.loadScript('data/sample.js', {
 			force: true
 		});
-		ok(window.h5samplefunc(), 'forceオプションは有効か');
-		window.h5samplefunc = undefined;
+		ok(window.com.htmlhifive.test.h5samplefunc, 'forceオプションは有効か');
+		window.com.htmlhifive.test.h5samplefunc = undefined;
 	});
 
 	test(
 			'スクリプトのロード(h5.u.loadScript) 引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
-			2, function() {
-				window.sample4loaded = undefined;
+			2,
+			function() {
+				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1']);
-				same(window.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
+				deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
 
-				window.sample4loaded = undefined;
+				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1'], {
 					force: true
 				});
-				same(window.sample4loaded, 2, 'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
+				deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
+						'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
 
-				window.sample4loaded = undefined;
+				window.com.htmlhifive.test.sample4loaded = undefined;
 
 			});
 
 	test('スクリプトのロード(h5.u.loadScript) リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
-		window.sample4loaded = undefined;
+		window.com.htmlhifive.test.sample4loaded = undefined;
 		h5.u.loadScript('data/sample4.js?s123');
-		same(window.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
+		deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
 		h5.u.loadScript('data/sample4.js?s1234');
-		same(window.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
+		deepEqual(window.com.htmlhifive.test.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
 		h5.u.loadScript(['data/sample4.js?s12345', 'data/sample4.js?s123',
 				'data/sample4.js?s123456']);
-		same(window.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
+		deepEqual(window.com.htmlhifive.test.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
 	});
 	test(
 			'スクリプトのロード(h5.u.loadScript) 引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
@@ -336,17 +347,20 @@ $(function() {
 			force: true
 		});
 
-		ok(window.test1.a, 'スクリプトが同期的にロードされたか1');
-		ok(window.test2.b, 'スクリプトが同期的にロードされたか2');
-		ok(window.test3.c, 'スクリプトが同期的にロードされたか3');
+		ok(window.com.htmlhifive.test.test1.a, 'スクリプトが同期的にロードされたか1');
+		ok(window.com.htmlhifive.test.test2.b, 'スクリプトが同期的にロードされたか2');
+		ok(window.com.htmlhifive.test.test3.c, 'スクリプトが同期的にロードされたか3');
 
-		strictEqual(window.test1, window.test2.test1, 'スクリプトはシーケンシャルに読み込まれたか1');
-		strictEqual(window.test1, window.test3.test1, 'スクリプトはシーケンシャルに読み込まれたか2');
-		strictEqual(window.test2, window.test3.test2, 'スクリプトはシーケンシャルに読み込まれたか3');
+		strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test2.test1,
+				'スクリプトはシーケンシャルに読み込まれたか1');
+		strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test3.test1,
+				'スクリプトはシーケンシャルに読み込まれたか2');
+		strictEqual(window.com.htmlhifive.test.test2, window.com.htmlhifive.test.test3.test2,
+				'スクリプトはシーケンシャルに読み込まれたか3');
 
-		window.test1 = undefined;
-		window.test2 = undefined;
-		window.test3 = undefined;
+		window.com.htmlhifive.test.test1 = undefined;
+		window.com.htmlhifive.test.test2 = undefined;
+		window.com.htmlhifive.test.test3 = undefined;
 	});
 
 	asyncTest('スクリプトの非同期(parallel=true)ロード(h5.u.loadScript)', 6, function() {
@@ -356,18 +370,18 @@ $(function() {
 			parallel: true
 		});
 
-		ok(!window.test1, 'スクリプトが非同期にロードされたか1');
-		ok(!window.test2, 'スクリプトが非同期にロードされたか2');
-		ok(!window.test3, 'スクリプトが非同期にロードされたか3');
+		ok(!window.com.htmlhifive.test.test1, 'スクリプトが非同期にロードされたか1');
+		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
+		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
 
 		promise.done(function() {
-			ok(window.test1.a, 'スクリプトが非同期にロードされたか4');
-			ok(window.test2.b, 'スクリプトが非同期にロードされたか5');
-			ok(window.test3.c, 'スクリプトが非同期にロードされたか6');
+			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
+			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
+			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
 
-			window.test1 = undefined;
-			window.test2 = undefined;
-			window.test3 = undefined;
+			window.com.htmlhifive.test.test1 = undefined;
+			window.com.htmlhifive.test.test2 = undefined;
+			window.com.htmlhifive.test.test3 = undefined;
 			start();
 		});
 
@@ -380,47 +394,53 @@ $(function() {
 			parallel: false
 		});
 
-		ok(!window.test1, 'スクリプトが非同期にロードされたか1');
-		ok(!window.test2, 'スクリプトが非同期にロードされたか2');
-		ok(!window.test3, 'スクリプトが非同期にロードされたか3');
+		ok(!window.com.htmlhifive.test.test1, 'スクリプトが非同期にロードされたか1');
+		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
+		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
 
 		promise.done(function() {
-			ok(window.test1.a, 'スクリプトが非同期にロードされたか4');
-			ok(window.test2.b, 'スクリプトが非同期にロードされたか5');
-			ok(window.test3.c, 'スクリプトが非同期にロードされたか6');
+			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
+			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
+			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
 
-			strictEqual(window.test1, window.test2.test1, 'スクリプトはシーケンシャルに読み込まれたか1');
-			strictEqual(window.test1, window.test3.test1, 'スクリプトはシーケンシャルに読み込まれたか2');
-			strictEqual(window.test2, window.test3.test2, 'スクリプトはシーケンシャルに読み込まれたか3');
+			strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test2.test1,
+					'スクリプトはシーケンシャルに読み込まれたか1');
+			strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test3.test1,
+					'スクリプトはシーケンシャルに読み込まれたか2');
+			strictEqual(window.com.htmlhifive.test.test2, window.com.htmlhifive.test.test3.test2,
+					'スクリプトはシーケンシャルに読み込まれたか3');
 
-			window.test1 = undefined;
-			window.test2 = undefined;
-			window.test3 = undefined;
+			window.com.htmlhifive.test.test1 = undefined;
+			window.com.htmlhifive.test.test2 = undefined;
+			window.com.htmlhifive.test.test3 = undefined;
 			start();
 		});
 
 	});
 
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
-		window.sample4loaded = undefined;
-		h5.u.loadScript('data/sample4.js?123', {
+		window.com.htmlhifive.test.sample4loaded = undefined;
+		h5.u.loadScript('data/sample4.js?async123', {
 			async: true
 		}).done(
 				function() {
-					same(window.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
-					h5.u.loadScript('data/sample4.js?1234', {
+					deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
+					h5.u.loadScript('data/sample4.js?async1234', {
 						async: true
 					}).done(
 							function() {
-								same(window.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
+								deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
+										'スクリプトが2回読み込まれたこと。');
 								h5.u.loadScript(
-										['data/sample4.js?12345', 'data/sample4.js?123',
-												'data/sample4.js?123456'], {
+										['data/sample4.js?async12345', 'data/sample4.js?async123',
+												'data/sample4.js?async123456'], {
 											async: true
-										}).done(function() {
-									same(window.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
-									start();
-								});
+										}).done(
+										function() {
+											deepEqual(window.com.htmlhifive.test.sample4loaded, 4,
+													'スクリプトが4回読み込まれたこと。');
+											start();
+										});
 							});
 				});
 	});
@@ -479,31 +499,34 @@ $(function() {
 	asyncTest(
 			'スクリプトのロード(h5.u.loadScript) 【非同期】引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
 			2, function() {
-				window.sample4loaded = undefined;
+				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(['data/sample4.js?2', 'data/sample.js', 'data/sample4.js?2'], {
 					async: true
 				}).done(
 						function() {
-							same(window.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
-							window.sample4loaded = undefined;
+							deepEqual(window.com.htmlhifive.test.sample4loaded, 1,
+									'sample4.jsが2重読み込みされていないこと。');
+							window.com.htmlhifive.test.sample4loaded = undefined;
 							h5.u.loadScript(
 									['data/sample4.js?2', 'data/sample.js', 'data/sample4.js?2'], {
 										async: true,
 										force: true
 									}).done(
 									function() {
-										same(window.sample4loaded, 2,
+										deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
 												'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
 
-										window.sample4loaded = undefined;
-										start()
+										window.com.htmlhifive.test.sample4loaded = undefined;
+										start();
 									});
 						});
 			});
 
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】存在しないスクリプトを指定しても、ほかのスクリプトの読み込みが中断されないこと。', 2,
 			function() {
-				window.sample4loaded = undefined;
+				var qunitWindowOnErrorFunc = window.onerror;
+				window.onerror = function() {};
+				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(
 						['data/sample4.js?testWidthError1', 'data/noExistFile.js',
 								'data/sample4.js?testWidthError2',
@@ -512,8 +535,9 @@ $(function() {
 							force: true
 						}).done(
 						function() {
-							same(window.sample4loaded, 3, 'sample4.jsが3回読み込まれたこと。');
-							window.sample4loaded = undefined;
+							deepEqual(window.com.htmlhifive.test.sample4loaded, 3,
+									'sample4.jsが3回読み込まれたこと。');
+							window.com.htmlhifive.test.sample4loaded = undefined;
 							h5.u.loadScript(
 									['data/sample4.js?testWidthError1', 'data/noExistFile.js',
 											'data/sample4.js?testWidthError2',
@@ -521,12 +545,15 @@ $(function() {
 										async: true,
 										parallel: true,
 										force: true
-									}).done(function() {
-								same(window.sample4loaded, 3, 'sample4.jsが3回読み込まれたこと。(パラレル)');
-								window.sample4loaded = undefined;
-								start();
-							}).fail(function(e) {
+									}).done(
+									function() {
+										deepEqual(window.com.htmlhifive.test.sample4loaded, 3,
+												'sample4.jsが3回読み込まれたこと。(パラレル)');
+										window.com.htmlhifive.test.sample4loaded = undefined;
+									}).fail(function(e) {
 								ok(false, e.code + ': ' + e.message);
+							}).always(function() {
+								window.onerror = qunitWindowOnErrorFunc;
 								start();
 							});
 						}).fail(function(e) {
@@ -534,6 +561,7 @@ $(function() {
 					start();
 				});
 			});
+
 
 	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
 		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
@@ -569,17 +597,17 @@ $(function() {
 		};
 
 		var objs = h5.u.obj.getByPath('hoge.hogehoge.test');
-		same(objs, window.hoge.hogehoge.test, '10を取得できること。');
+		deepEqual(objs, window.hoge.hogehoge.test, '10を取得できること。');
 		objs = h5.u.obj.getByPath('hoge.hogehoge2');
-		same(objs, window.hoge.hogehoge2, 'nullが取得できること。');
+		deepEqual(objs, window.hoge.hogehoge2, 'nullが取得できること。');
 		objs = h5.u.obj.getByPath('hoge');
-		same(objs, window.hoge, 'window.hogeオブジェクトが取得できること。');
+		deepEqual(objs, window.hoge, 'window.hogeオブジェクトが取得できること。');
 		objs = h5.u.obj.getByPath('hoge.hogehoge4');
-		same(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
+		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 		objs = h5.u.obj.getByPath('hoge.hogehoge4.hoge2');
-		same(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
+		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 		objs = h5.u.obj.getByPath('hoge2');
-		same(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
+		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 		raises(function() {
 			h5.u.obj.getByPath(window.hoge);
 		}, '文字列以外をパラメータに指定すると例外が発生すること。');
@@ -591,7 +619,7 @@ $(function() {
 			var str = strs[i];
 			var serialized = h5.u.obj.serialize(str, true);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, str, "シリアライズしてデシリアライズした文字列が元の文字列と同じ");
+			deepEqual(deserialized, str, "シリアライズしてデシリアライズした文字列が元の文字列と同じ");
 		}
 	});
 
@@ -601,7 +629,7 @@ $(function() {
 			var num = nums[i];
 			var serialized = h5.u.obj.serialize(num);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, num, "シリアライズしてデシリアライズした数値が元の数値と同じ");
+			deepEqual(deserialized, num, "シリアライズしてデシリアライズした数値が元の数値と同じ");
 		}
 	});
 
@@ -611,7 +639,7 @@ $(function() {
 			var num = nums[i];
 			var serialized = h5.u.obj.serialize(num);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, num, "シリアライズしてデシリアライズした数値が元の数値と同じ");
+			deepEqual(deserialized, num, "シリアライズしてデシリアライズした数値が元の数値と同じ");
 		}
 	});
 
@@ -621,20 +649,22 @@ $(function() {
 			var date = dates[i];
 			var serialized = h5.u.obj.serialize(date);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, date, "シリアライズしてデシリアライズしたDateオブジェクトが元のDateオブジェクトと同じ。"
+			deepEqual(deserialized, date, "シリアライズしてデシリアライズしたDateオブジェクトが元のDateオブジェクトと同じ。"
 					+ deserialized.getTime());
 		}
 	});
 
-	test('serialize/deserialize 正規表現', 6, function() {
-		var regExps = [/hello/, /^o*(.*)[a|b]{0,}?$/, /\\/g, /a|b/i, /x/gi, /\/\\\//img];
-		for ( var i = 0, len = regExps.length; i < len; i++) {
-			var regExp = regExps[i];
-			var serialized = h5.u.obj.serialize(regExp);
-			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, regExp, "シリアライズしてデシリアライズした正規表現が元の正規表現と同じ。" + regExp.toString());
-		}
-	});
+	test('serialize/deserialize 正規表現', 6,
+			function() {
+				var regExps = [/hello/, /^o*(.*)[a|b]{0,}?$/, /\\/g, /a|b/i, /x/gi, /\/\\\//img];
+				for ( var i = 0, len = regExps.length; i < len; i++) {
+					var regExp = regExps[i];
+					var serialized = h5.u.obj.serialize(regExp);
+					var deserialized = h5.u.obj.deserialize(serialized);
+					deepEqual(deserialized, regExp, "シリアライズしてデシリアライズした正規表現が元の正規表現と同じ。"
+							+ regExp.toString());
+				}
+			});
 
 	test('serialize/deserialize 配列', 3, function() {
 		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}']];
@@ -642,7 +672,7 @@ $(function() {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
+			deepEqual(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
 		}
 	});
 
@@ -652,7 +682,7 @@ $(function() {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
+			deepEqual(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
 		}
 	});
 
@@ -677,7 +707,7 @@ $(function() {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
+			deepEqual(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
 		}
 	});
 
@@ -704,12 +734,12 @@ $(function() {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
-			same(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。");
+			deepEqual(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
+			deepEqual(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。");
 			for ( var key in array) {
 				var compFunction = strictEqual;
 				if (typeof array[key] === 'object') {
-					compFunction = same;
+					compFunction = deepEqual;
 				}
 				compFunction(deserialized[key], array[key], "シリアライズしてデシリアライズした配列の値が各要素で同じ。 key = "
 						+ key);
@@ -790,7 +820,7 @@ $(function() {
 		delete obj.BOL;
 		delete deserialized.BOL;
 
-		same(deserialized, obj, "プリミティブ型を除いて、シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
+		deepEqual(deserialized, obj, "プリミティブ型を除いて、シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
 	});
 
 	test('serialize/deserialize オブジェクトの入れ子', 2, function() {
@@ -848,7 +878,7 @@ $(function() {
 			var obj = objs[i];
 			var serialized = h5.u.obj.serialize(obj);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, obj, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
+			deepEqual(deserialized, obj, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
 		}
 	});
 
@@ -944,7 +974,7 @@ $(function() {
 					try {
 						var serialized = h5.u.obj.serialize(obj);
 						var deserialized = h5.u.obj.deserialize(serialized);
-						same(deserialized, obj, "シリアライズしてデシリアライズした配列が元の配列と同じ。");
+						deepEqual(deserialized, obj, "シリアライズしてデシリアライズした配列が元の配列と同じ。");
 					} catch (e) {
 						ok(false, "エラーメッセージ：" + e.message);
 					}
@@ -964,8 +994,8 @@ $(function() {
 
 				var serialized = h5.u.obj.serialize(array);
 				var deserialized = h5.u.obj.deserialize(serialized);
-				same(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
-				same(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。"
+				deepEqual(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
+				deepEqual(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。"
 						+ array.length);
 				for ( var i = 0, l = array.length; i < l; i++) {
 					strictEqual(deserialized.hasOwnProperty(i), array.hasOwnProperty(i),
@@ -991,7 +1021,7 @@ $(function() {
 				hasOwnObj[p] = obj[p];
 			}
 		}
-		same(deserialized, hasOwnObj, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
+		deepEqual(deserialized, hasOwnObj, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
 	});
 
 	test('serialize/deserialize 関数をserializeするとエラーが出ること。', 1, function() {
@@ -1064,7 +1094,7 @@ $(function() {
 			var objNoFunction = objsNoFunction[i];
 			var serialized = h5.u.obj.serialize(obj);
 			var deserialized = h5.u.obj.deserialize(serialized);
-			same(deserialized, objNoFunction, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
+			deepEqual(deserialized, objNoFunction, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
 			for ( var key in deserialized) {
 				strictEqual(deserialized.hasOwnProperty(key), objNoFunction.hasOwnProperty(key),
 						"シリアライズしてデシリアライズした配列のhasOwnProperty()の値が各要素で同じ。key = " + key);
@@ -1082,16 +1112,16 @@ $(function() {
 				deserialized = h5.u.obj.deserialize(str);
 				ok(false, 'エラーが発生していません。 ' + deserialized);
 			} catch (e) {
-				same(e.code, errorCode, e.message + ' ' + str);
+				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
 
 	});
 
-	test('deserialize 値が不正な文字をデシリアライズしようとしたときはエラーが発生すること。', 17, function() {
+	test('deserialize 値が不正な文字をデシリアライズしようとしたときはエラーが発生すること。', 15, function() {
 
-		var strs = ['1|n1px', '1|nNaN', '1|NNaN', '1|aary', '1|a{}', '1|o["n1"]', '1|o{"n1"}', '1|o1', '1|b2', '1|B2',
-				'1|xx', '1|ii', '1|II', '1|ll', '1|uu', '1|r2', '1|r/a/G'];
+		var strs = ['1|n1px', '1|nNaN', '1|NNaN', '1|aary', '1|a{}', '1|o["n1"]', '1|o{"n1"}',
+				'1|o1', '1|b2', '1|B2', '1|xx', '1|ii', '1|II', '1|ll', '1|uu'];
 		var errorCode = 11006;
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
@@ -1099,7 +1129,30 @@ $(function() {
 				var deserialized = h5.u.obj.deserialize(str);
 				ok(false, 'エラーが発生していません。 ' + deserialized);
 			} catch (e) {
-				same(e.code, errorCode, e.message + ' ' + str);
+				deepEqual(e.code, errorCode, e.message + ' ' + str);
+			}
+		}
+	});
+
+	test('deserialize 値が不正な正規表現文字列をRegExpオブジェクトにデシリアライズする。', 5, function() {
+
+		var strs = ['1|r2', '1|r/a/y', '1|r/a/gy', '1|r/a/mG', '1|r/a/iQ'];
+		// Firefoxにはyオプションがあるため、yオプションも復元されて取得できる
+		var expect = h5.env.ua.isFirefox ? ['/r/', '/a/y', '/a/gy', '/a/m', '/a/i'] : ['/r/',
+				'/a/', '/a/g', '/a/m', '/a/i'];
+		var errorCode = 11006;
+		for ( var i = 0, len = strs.length; i < len; i++) {
+			var str = strs[i];
+			try {
+				var deserialized = h5.u.obj.deserialize(str);
+				var patternStr = deserialized.toString();
+				// RegExpの第二引数に不正なグローバルオプションを指定した場合、ブラウザによっては例外を出さず、不正な値のみ無視してRegExpを生成する。
+				// そのため、例外を出さないブラウザでは以下のテストで検証する。
+				// 例外を出さないブラウザ: Android 2,3, 3.1, 4.0.1 デフォルトブラウザ、 iOS4 Safari
+				equal(patternStr, expect[i], '不正なグローバルオプションのみ無視されたRegExpオブジェクトが生成(復元)されること。'
+						+ patternStr);
+			} catch (e) {
+				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
 	});
@@ -1114,7 +1167,7 @@ $(function() {
 				var deserialized = h5.u.obj.deserialize(str);
 				ok(false, 'エラーが発生していません。 ' + deserialized);
 			} catch (e) {
-				same(e.code, errorCode, e.message + ' ' + str);
+				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
 		objStrs = ['1|a["n1","nq"]', '1|o{"key":"b2"}', '1|o{"key":"a[\\\"nNaN\\\"]"}',
@@ -1126,13 +1179,13 @@ $(function() {
 				var deserialized = h5.u.obj.deserialize(str);
 				ok(false, 'エラーが発生していません。 ' + deserialized);
 			} catch (e) {
-				same(e.code, errorCode, e.message + ' ' + str);
+				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
 	});
 
 	test('deserialize 文字列以外をデシリアライズしようとしたときはエラーが発生すること。', 8, function() {
-		var objStrs = [[], {}, true, false ,1, 2, undefined, null];
+		var objStrs = [[], {}, true, false, 1, 2, undefined, null];
 		var errorCode = 11009;
 		for ( var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
@@ -1140,7 +1193,7 @@ $(function() {
 				var deserialized = h5.u.obj.deserialize(str);
 				ok(false, 'エラーが発生していません。 ' + deserialized);
 			} catch (e) {
-				same(e.code, errorCode, e.message + ' ' + str);
+				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
 	});
@@ -1159,9 +1212,9 @@ $(function() {
 		testInterceptor(function() {
 			ret = 100;
 		});
-		same(count, 1, '関数の初めに実行したい関数が実行されること');
-		same(count2, 1, '関数の終わりに実行したい関数が実行されること');
-		same(ret, 100, '関数そのものが実行されていること');
+		deepEqual(count, 1, '関数の初めに実行したい関数が実行されること');
+		deepEqual(count2, 1, '関数の終わりに実行したい関数が実行されること');
+		deepEqual(ret, 100, '関数そのものが実行されていること');
 
 		count = 0;
 		ret = 0;
@@ -1173,8 +1226,8 @@ $(function() {
 		testInterceptor(function() {
 			ret = 100;
 		});
-		same(count, 1, '第二引数省略 関数の初めに実行したい関数が実行されること');
-		same(ret, 100, '第二引数省略 関数そのものが実行されていること');
+		deepEqual(count, 1, '第二引数省略 関数の初めに実行したい関数が実行されること');
+		deepEqual(ret, 100, '第二引数省略 関数そのものが実行されていること');
 
 	});
 

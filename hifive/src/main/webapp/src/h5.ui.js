@@ -475,7 +475,7 @@
 			});
 
 			if (promises.length > 0) {
-				$.when.apply(null, promises).pipe(promiseCallback, promiseCallback);
+				h5.async.when(promises).pipe(promiseCallback, promiseCallback);
 			}
 		} else if (isPromise(promises)) {
 			promises.pipe(promiseCallback, promiseCallback);
@@ -649,7 +649,7 @@
 	 * }).show();
 	 * </pre>
 	 *
-	 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しないる場合</b><br>
+	 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
 	 *
 	 * <pre>
 	 * var indicator = h5.ui.indicator('li', {

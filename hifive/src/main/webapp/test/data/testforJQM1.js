@@ -15,4 +15,4 @@
  *
  * hifive
  */
-window.loadedTestForJQM1 = true;
+window.com.htmlhifive.test.loadedTestForJQM1 = true;
