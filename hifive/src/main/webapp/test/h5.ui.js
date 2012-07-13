@@ -20,16 +20,10 @@ $(function() {
 	var test3 = '#isInViewTest3';
 
 	function getWindowWidth() {
-		if (window.innerWidth) {
-			return window.innerWidth;
-		}
 		return document.documentElement.clientWidth;
 	}
 	function getWindowHeight() {
-		if (window.innerHeight) {
-			return window.innerHeight;
-		} else
-			return document.documentElement.clientHeight;
+		return document.documentElement.clientHeight;
 	}
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
 	function checkAllMode(fn, expect, message, s1, s2) {
@@ -377,8 +371,7 @@ $(function() {
 					$('body')
 							.append(
 									'<div id="enableScroll" style="width:2000px;height:2000px;visible:hidden;top:0;left:0;position:absolute;"></div>');
-					// 一時的にスクロールバーを消す
-					document.body.style.overflow = 'hidden';
+
 					// 0,0にスクロールしてテスト
 					window.scrollTo(0, 0);
 				},
@@ -386,8 +379,6 @@ $(function() {
 					// テスト用に作った要素の削除
 					$(test3).remove();
 					$('#enableScroll').remove();
-					// スクロールバーを元に戻す
-					document.body.style.overflow = 'visible';
 					$(window).scrollTop(originTop);
 					$(window).scrollTop(originLeft);
 				}
