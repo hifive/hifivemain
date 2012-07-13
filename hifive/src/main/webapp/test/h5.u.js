@@ -553,8 +553,10 @@ $(function() {
 									}).fail(function(e) {
 								ok(false, e.code + ': ' + e.message);
 							}).always(function() {
-								window.onerror = qunitWindowOnErrorFunc;
-								start();
+								setTimeout(function() {
+									window.onerror = qunitWindowOnErrorFunc;
+									start();
+								});
 							});
 						}).fail(function(e) {
 					ok(false, e.code + ': ' + e.message);
