@@ -374,15 +374,13 @@ $(function() {
 											+ test3.substring(1)
 											+ '" style="position:absolute; top:50px; left:50px; padding:5px; border:3px solid; width:20px; height:20px;"></div>');
 					// スクロールできるようにするための要素を追加
-					$('body').append(
-							'<div id="enableScroll" style="width:1px;visible:hidden;height:1px; position:absolute; top:'
-									+ getWindowHeight() + 1000 + 'px; width:' + getWindowWidth()
-									+ 1000 + 'px;"></div>');
+					$('body')
+							.append(
+									'<div id="enableScroll" style="width:2000px;height:2000px;visible:hidden;top:0;left:0;position:absolute;"></div>');
 					// 一時的にスクロールバーを消す
 					document.body.style.overflow = 'hidden';
 					// 0,0にスクロールしてテスト
-					$(window).scrollTop(0);
-					$(window).scrollLeft(0);
+					window.scrollTo(0, 0);
 				},
 				teardown: function() {
 					// テスト用に作った要素の削除
@@ -459,8 +457,7 @@ $(function() {
 						check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', testDom);
 
 						if (!(scrollTop && scrollLeft)) {
-							$(window).scrollTop(100);
-							$(window).scrollLeft(100);
+							window.scrollTo(100, 100);
 						} else {
 							return;
 						}
@@ -468,42 +465,34 @@ $(function() {
 							// 100, 100にスクロールされた状態でテスト
 							testFunc(100, 100);
 							start();
-						}, 0);
+						}, 1000);
 
 					}
 					testFunc();
-				}, 0);
+				}, 1000);
 			});
 
 	module('scrollToTop', {
-
 		setup: function() {
-			originTop = $(window).scrollTop();
-			originLeft = $(window).scrollLeft();
 			// スクロールできるようにするための要素を追加
 			$('body').append(
 					'<div id="enableScroll" style="width:1px;visible:hidden;height:1px; position:absolute; top:'
-							+ getWindowHeight() + 1000 + 'px; width:' + getWindowWidth() + 1000
+							+ (getWindowHeight() + 1000) + 'px; width:' + (getWindowWidth() + 1000)
 							+ 'px;"></div>');
 		},
 		teardown: function() {
 			// テスト用に作った要素の削除
 			$('#enableScroll').remove();
-			// スクロールバーを元に戻す
-			$(window).scrollTop(originTop);
-			$(window).scrollTop(originLeft);
 		}
 	});
 
 	asyncTest('h5.ui.scrollToTop', 1, function() {
-		// 100,100にスクロール
-		$(window).scrollTop(100);
-		$(window).scrollLeft(100);
 		// scrollToTopで(0,1)にスクロール
 		h5.ui.scrollToTop();
+
 		var count = 0;
 		function waitForScroll() {
-			if ($(window).scrollTop() === 1 && $(window).scrollLeft() === 0) {
+			if (window.scrollY === 1 && window.scrollX === 0) {
 				ok(true, '(0,1)にスクロールされた');
 				start();
 				return;
@@ -512,7 +501,7 @@ $(function() {
 				start();
 				return;
 			}
-			setTimeout(waitForScroll, 300);
+			setTimeout(waitForScroll, 200);
 		}
 		waitForScroll();
 	});
