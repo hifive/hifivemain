@@ -464,14 +464,14 @@ $(function() {
 						} else {
 							return;
 						}
-						// 100, 100にスクロールされた状態でテスト
-						testFunc(100, 100);
+						setTimeout(function() {
+							// 100, 100にスクロールされた状態でテスト
+							testFunc(100, 100);
+							start();
+						}, 0);
 
 					}
-					setTimeout(function() {
-						testFunc();
-						start();
-					}, 0);
+					testFunc();
 				}, 0);
 			});
 
