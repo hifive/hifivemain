@@ -2070,7 +2070,7 @@
 			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
 				error = new Error(format.apply(null, argsToArray(arguments)));
 			} else {
-				error = new Error();
+				error = new Error('');
 				error.detail = msgOrErrObj;
 			}
 			error.customType = null;
@@ -2105,7 +2105,7 @@
 			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
 				error = new Error(format.apply(null, argsToArray(args)));
 			} else {
-				error = new Error();
+				error = new Error('');
 				error.detail = msgOrErrObj;
 			}
 			error.customType = customType;
