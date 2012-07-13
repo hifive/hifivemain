@@ -2066,9 +2066,7 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwError: function(msgOrErrObj, var_args) {
-			if (arguments.length < 1) {
-				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
-			}
+			//引数の個数チェックはthrowCustomErrorで行う
 			var args = argsToArray(arguments);
 			args.unshift(null);
 			this.throwCustomError.apply(null, args);

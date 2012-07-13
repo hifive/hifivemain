@@ -4518,7 +4518,8 @@ $(function() {
 		});
 	});
 
-	asyncTest('throwError() / throwCustomError() の動作',
+	asyncTest(
+			'throwError() / throwCustomError() の動作',
 			function() {
 				var testController = {
 					__name: 'TestController',
@@ -4528,15 +4529,23 @@ $(function() {
 						try {
 							this.throwError();
 						} catch (e) {
-							err1 = e;
+							err1 = e.message;
 						}
-						ok(err1, '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
+						equal(err1, '正しい数の引数を指定して下さい。', '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
 						try {
 							this.throwError('コントローラ"{0}"における{1}のテスト', this.__name, 'throwError');
 						} catch (e) {
 							strictEqual(e.message, 'コントローラ"TestController"におけるthrowErrorのテスト',
 									'throwErrorメソッドの第1引数が文字列の場合、可変長引数を取ってフォーマットされるか');
 						}
+						try {
+							this.throwError('エラーメッセージ!!');
+						} catch (e) {
+							strictEqual(e.message, 'エラーメッセージ!!',
+									'指定したメッセージがmessageプロパティに設定されていること。');
+							strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
+						}
+
 						var obj = {
 							a: 1
 						};
@@ -4556,8 +4565,16 @@ $(function() {
 							this.throwCustomError();
 						} catch (e) {
 							strictEqual(e.message, '正しい数の引数を指定して下さい。',
-									'throwCustomErrorメソッドでエラータイプが指定されないとエラーが発生するか');
+									'throwCustomError()で必須のパラメータが指定されていない場合、エラーが発生すること。');
 						}
+
+						try {
+							this.throwCustomError(null, 'エラーメッセージ!');
+						} catch (e) {
+							strictEqual(e.message, 'エラーメッセージ!', '指定したメッセージがmessageプロパティに設定されていること。');
+							strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
+						}
+
 						var err2 = null;
 						var err2Type = null;
 						try {
