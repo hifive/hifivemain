@@ -48,8 +48,8 @@
 	var ERR_CODE_BIND_NOT_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
 	var ERR_CODE_BIND_TARGET_COMPLEX = 6004;
-	/** エラーコード: エラータイプが指定されていない */
-	var ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED = 6005;
+	/** エラーコード: 指定された引数の数が少ない */
+	var ERR_CODE_TOO_FEW_ARGUMENTS = 6005;
 	/** エラーコード: コントローラの名前が指定されていない */
 	var ERR_CODE_CONTROLLER_NAME_REQUIRED = 6006;
 	/** エラーコード: コントローラの初期化パラメータが不正 */
@@ -88,7 +88,7 @@
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_COMPLEX] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
-	errMsgMap[ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED] = 'エラータイプを指定してください。';
+	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_NAME_REQUIRED] = 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_ALREADY_CREATED] = '指定されたオブジェクトは既にコントローラ化されています。';
@@ -1475,33 +1475,6 @@
 		}
 	}
 
-	/**
-	 * 指定された値をメッセージとして例外をスローします。
-	 * <p>
-	 * 第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。
-	 * <p>
-	 * <b>文字列の場合</b><br>
-	 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
-	 * <p>
-	 * <b>オブジェクトの場合</b><br>
-	 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
-	 *
-	 * @param {String} customType 型情報
-	 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
-	 * @param {Any} [args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
-	 */
-	function createError(customType, msgOrErrObj, args) {
-		if (msgOrErrObj && typeof msgOrErrObj === 'string') {
-			error = new Error(format.apply(null, args));
-		} else {
-			// iOS4は引数を渡さないと"unknown error"というエラーメッセージが、その他のブラウザは空文字がデフォルトで入る
-			error = new Error();
-			error.detail = msgOrErrObj;
-		}
-		error.customType = customType;
-		throw error;
-	}
-
 	// =========================================================================
 	//
 	// Body
@@ -2093,7 +2066,10 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwError: function(msgOrErrObj, var_args) {
-			createError(null, msgOrErrObj, argsToArray(arguments));
+			//引数の個数チェックはthrowCustomErrorで行う
+			var args = argsToArray(arguments);
+			args.unshift(null);
+			this.throwCustomError.apply(null, args);
 		},
 
 		/**
@@ -2115,13 +2091,19 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwCustomError: function(customType, msgOrErrObj, var_args) {
-			// null, undefinedの場合をtrueとしたいため、あえて厳密等価にしていない
-			if (customType == null) {
-				throwFwError(ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED);
+			if (arguments.length < 2) {
+				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
-			var args = argsToArray(arguments);
-			args.shift();
-			createError(customType, msgOrErrObj, args);
+
+			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
+				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));
+			} else {
+				// 引数を渡さないと、iOS4は"unknown error"、その他のブラウザは空文字が、デフォルトのエラーメッセージとして入る
+				error = new Error();
+				error.detail = msgOrErrObj;
+			}
+			error.customType = customType;
+			throw error;
 		}
 	});
 
