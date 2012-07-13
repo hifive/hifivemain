@@ -20,9 +20,11 @@ $(function() {
 	var test3 = '#isInViewTest3';
 
 	function getWindowWidth() {
+		// window.innerHeightではスクロールバーの幅も入ってしまうため、clientWidthを使う
 		return document.documentElement.clientWidth;
 	}
 	function getWindowHeight() {
+		// iPhoneの場合、clientHeightだと下のツールバーまで含まれてしまうので、innerHeightを使う
 		if(h5.env.ua.isiPhone){
 			return window.innerHeight;
 		}
