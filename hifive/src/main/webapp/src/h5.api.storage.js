@@ -34,10 +34,9 @@
 	// Development Only
 	// =============================
 
-	var fwLogger = h5.log.createLogger('h5.api.storage');
-
 	/* del begin */
-
+	var fwLogger = h5.log.createLogger('h5.api.storage');
+	var FW_LOG_STORAGE_SUPPORTED = 'local storage supported:{0}, session storage supported:{1}';
 	/* del end */
 
 	// =========================================================================
@@ -215,7 +214,7 @@
 		session: new WebStorage(window.sessionStorage)
 	});
 
-	fwLogger.debug(h5.u.str.format('local storage supported:{0}, session storage supported:{1}',
-			!!window.localStorage, !!window.sessionStorage));
-
+	/* del begin */
+	fwLogger.debug(FW_LOG_STORAGE_SUPPORTED, !!window.localStorage, !!window.sessionStorage);
+	/* del end */
 })();

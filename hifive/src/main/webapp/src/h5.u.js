@@ -203,7 +203,8 @@
 	// =========================================================================
 
 	/**
-	 * ドット区切りで名前空間オブジェクトを生成します。 （h5.u.obj.ns('jp.co.nssol')と呼ぶと、window.jp.co.nssolとオブジェクトを生成します。）
+	 * ドット区切りで名前空間オブジェクトを生成します。
+	 * （h5.u.obj.ns('sample.namespace')と呼ぶと、window.sample.namespaceとオブジェクトを生成します。）
 	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外が渡された場合はエラーとします。
 	 *
 	 * @param {String} namespace 名前空間
@@ -233,20 +234,39 @@
 	};
 
 	/**
-	 * オブジェクトを指定された名前空間に登録し、グローバルに公開します。 引数namespaceの型がObjectでそのObjectがグローバルに紐付いていない場合は公開されません。
+	 * 指定された名前空間に、オブジェクトの各プロパティをそれぞれ対応するキー名で公開（グローバルからたどれる状態に）します。
+	 * <p>
+	 * <ul>
+	 * <li>指定された名前空間が既に存在する場合は、その名前空間に対してプロパティを追加します。</li>
+	 * <li>指定された名前空間にプロパティが存在する場合は、『上書きは行われず』例外が発生します。。</li>
+	 * </ul>
+	 * 実行例:
 	 *
-	 * @param {String|Object} namespace 名前空間
-	 * @param {Object} object 登録するオブジェクト
+	 * <pre>
+	 * expose('sample.namespace', {
+	 * 	funcA: function() {
+	 * 		return 'test';
+	 * 	},
+	 * 	value1: 10
+	 * });
+	 * </pre>
+	 *
+	 * 実行結果:&nbsp;(window.は省略可)<br>
+	 * alert(window.sample.namespace.funcA) -&gt; "test"と表示。<br>
+	 * alert(window.sample.namespace.value1) -&gt; 10と表示。
+	 *
+	 * @param {String} namespace 名前空間
+	 * @param {Object} obj グローバルに公開したいプロパティをもつオブジェクト
 	 * @memberOf h5.u.obj
 	 */
-	var expose = function(namespace, object) {
+	var expose = function(namespace, obj) {
 		var nsObj = ns(namespace);
-		for ( var prop in object) {
-			if (object.hasOwnProperty(prop)) {
+		for ( var prop in obj) {
+			if (obj.hasOwnProperty(prop)) {
 				if (nsObj[prop]) {
 					throwFwError(ERR_CODE_NAMESPACE_EXIST, namespace, prop);
 				}
-				nsObj[prop] = object[prop];
+				nsObj[prop] = obj[prop];
 			}
 		}
 	};
@@ -305,7 +325,7 @@
 			var count = index;
 			if (srcLen <= count) {
 				// 読み込み終了
-				$.when.apply($, promises).done(function() {
+				h5.async.when(promises).done(function() {
 					dfd.resolve();
 				});
 				return;
@@ -746,19 +766,19 @@
 					}
 					break;
 				case 'nan':
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = NaN;
 					break;
 				case 'infinity':
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = Infinity;
 					break;
 				case '-infinity':
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = -Infinity;
@@ -785,12 +805,12 @@
 					break;
 				case 'array':
 					var obj;
-					try{
+					try {
 						obj = $.parseJSON(ret);
-					} catch (e){
+					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					if(!$.isArray(obj)) {
+					if (!$.isArray(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					for ( var i = 0; i < obj.length; i++) {
@@ -817,12 +837,12 @@
 					break;
 				case 'object':
 					var obj;
-					try{
+					try {
 						obj = $.parseJSON(ret);
-					} catch (e){
+					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					if(!$.isPlainObject(obj)) {
+					if (!$.isPlainObject(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					for ( var key in obj) {
@@ -837,20 +857,20 @@
 					ret.match(/^\/(.*)\/(.*)$/);
 					var regStr = RegExp.$1;
 					var flg = RegExp.$2;
-					try{
+					try {
 						ret = new RegExp(regStr, flg);
-					} catch(e){
+					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					break;
 				case 'null':
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = null;
 					break;
 				case TYPE_OF_UNDEFINED:
-					if(ret !== ''){
+					if (ret !== '') {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					ret = undefined;

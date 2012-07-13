@@ -48,8 +48,8 @@
 	var ERR_CODE_BIND_NOT_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
 	var ERR_CODE_BIND_TARGET_COMPLEX = 6004;
-	/** エラーコード: エラータイプが指定されていない */
-	var ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED = 6005;
+	/** エラーコード: 指定された引数の数が少ない */
+	var ERR_CODE_TOO_FEW_ARGUMENTS = 6005;
 	/** エラーコード: コントローラの名前が指定されていない */
 	var ERR_CODE_CONTROLLER_NAME_REQUIRED = 6006;
 	/** エラーコード: コントローラの初期化パラメータが不正 */
@@ -88,7 +88,7 @@
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_COMPLEX] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
-	errMsgMap[ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED] = 'エラータイプを指定してください。';
+	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_NAME_REQUIRED] = 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_ALREADY_CREATED] = '指定されたオブジェクトは既にコントローラ化されています。';
@@ -110,11 +110,15 @@
 	// =============================
 	// Development Only
 	// =============================
-	var fwLogger = h5.log.createLogger('h5.core');
 
 	/* del begin */
-
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var fwLogger = h5.log.createLogger('h5.core');
+	var FW_LOG_TEMPLATE_LOADED = 'コントローラ"{0}"のテンプレートの読み込みに成功しました。';
+	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
+	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
+	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
+	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ{0}の初期化が正常に完了しました。';
 	/* del end */
 
 	// =========================================================================
@@ -128,6 +132,12 @@
 	// Privates
 	//
 	// =========================================================================
+	/**
+	 * commonFailHandlerを発火させないために登録するdummyのfailハンドラ
+	 */
+	var dummyFailHandler = function() {
+	//
+	};
 	// =============================
 	// Variables
 	// =============================
@@ -718,7 +728,19 @@
 				if (h5.async.isPromise(ret)) {
 					ret.done(function() {
 						callback();
-					});
+					}).fail(
+							function(/* var_args */) {
+								var controllerName = controllerInstance.__name;
+								fwLogger.error(FW_LOG_INIT_CONTROLLER_REJECTED, controllerName,
+										isInitEvent ? '__init' : '__ready');
+								fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR,
+										controller.rootController.__name);
+
+								// 同じrootControllerを持つ他の子のdisposeによって、
+								// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
+								controller.rootController
+										&& controller.rootController.dispose(arguments);
+							});
 				} else {
 					callback();
 				}
@@ -729,9 +751,10 @@
 			if (isInitEvent && isLeafController) {
 				promises.push(leafPromise);
 			}
-			$.when.apply($, promises).done(function() {
+			// dfdがrejectされたとき、commonFailHandlerが発火しないようにするため、dummyのfailハンドラを登録する
+			h5.async.when(promises).done(function() {
 				func();
-			});
+			}).fail(dummyFailHandler);
 		};
 		execInner(controller);
 	}
@@ -1238,21 +1261,27 @@
 		bindByBindMap(controller);
 		bindDescendantHandlers(controller);
 
-		// コントローラマネージャの管理対象に追加
+		var managed = controller.__controllerContext.managed;
+
+		// コントローラマネージャの管理対象に追加する
+		// フレームワークオプションでコントローラマネージャの管理対象としない(managed:false)の場合、コントローラマネージャに登録しない
 		var controllers = h5.core.controllerManager.controllers;
-		if ($.inArray(controller, controllers) === -1) {
+		if ($.inArray(controller, controllers) === -1 && managed !== false) {
 			controllers.push(controller);
 		}
 
-		// h5controllerboundイベントをトリガ.
-		$(controller.rootElement).trigger('h5controllerbound', [controller]);
+		// managed=falseの場合、コントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない
+		if (managed !== false) {
+			// h5controllerboundイベントをトリガ.
+			$(controller.rootElement).trigger('h5controllerbound', [controller]);
+		}
 
 		// コントローラの__ready処理を実行
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
 		initPromises.push(controller.initPromise);
-		$.when.apply($, initPromises).done(function() {
+		h5.async.when(initPromises).done(function() {
 			executeLifecycleEventChain(controller, false);
-		});
+		}).fail(dummyFailHandler);
 	}
 
 	/**
@@ -1355,13 +1384,15 @@
 				parentController.view.clear();
 			}
 			for ( var prop in parentController) {
-				if (isChildController(parentController, prop)) {
-					var c = parentController[prop];
-					if ($.inArray(c, targets) === -1) {
-						dispose(c);
+				if (parentController.hasOwnProperty(prop)) {
+					if (isChildController(parentController, prop)) {
+						var c = parentController[prop];
+						if ($.inArray(c, targets) === -1) {
+							dispose(c);
+						}
 					}
+					parentController[prop] = null;
 				}
-				parentController[prop] = null;
 			}
 		};
 		dispose(controller);
@@ -1393,12 +1424,62 @@
 		return !controller.__controllerContext || controller.__controllerContext.isDisposing;
 	}
 
+	/**
+	 * 指定されたコントローラとその子供コントローラのresolve/rejectされていないdeferredをrejectします。
+	 *
+	 * @param {Controller} controller コントローラ
+	 * @param {Any} [errorObj] rejectに渡すオブジェクト
+	 */
+	function rejectControllerDfd(controller, errorObj) {
+		// 指定されたコントローラから見た末裔のコントローラを取得
+		var descendantControllers = [];
+		var getDescendant = function(con) {
+			var hasChildController = false;
+			for ( var prop in con) {
+				// 子コントローラがあれば再帰的に処理
+				if (isChildController(con, prop)) {
+					hasChildController = true;
+					getDescendant(con[prop]);
+				}
+			}
+			if (!hasChildController) {
+				// 子コントローラを持っていないなら、descendantControllersにpush
+				descendantControllers.push(con);
+			}
+		};
+		getDescendant(controller);
+
+		var propertyArray = ['initDfd', 'readyDfd'];
+		function rejectControllerDfdLoop(con, propertyIndex) {
+			var property = propertyArray[propertyIndex];
+			var dfd = con.__controllerContext[property];
+			if (dfd) {
+				if (!dfd.isRejected() && !dfd.isResolved()) {
+					dfd.reject(errorObj);
+				}
+			}
+			if (con.parentController) {
+				rejectControllerDfdLoop(con.parentController, propertyIndex);
+			} else {
+				// readyDfdまでrejectしたら終了
+				if (propertyIndex < propertyArray.length - 1) {
+					// ルートコントローラまで辿ったら、末裔のコントローラに対して次のdfdをrejectさせる
+					for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+						rejectControllerDfdLoop(descendantControllers[i], propertyIndex + 1);
+					}
+				}
+			}
+		}
+		for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+			rejectControllerDfdLoop(descendantControllers[i], 0);
+		}
+	}
+
 	// =========================================================================
 	//
 	// Body
 	//
 	// =========================================================================
-
 	function controllerFactory(controller, rootElement, controllerName, param, isRoot) {
 
 		/**
@@ -1823,20 +1904,24 @@
 		 * コントローラのリソースをすべて削除します。<br />
 		 * Controller#unbind() の処理を包含しています。
 		 *
+		 * @param {Any} [errorObj] disposeの際にrejectするdeferredのpromiseのfailハンドラに渡すオブジェクト
 		 * @returns {Promise} Promiseオブジェクト
 		 * @memberOf Controller
 		 */
-		dispose: function() {
+		dispose: function(errorObj) {
 			// disopseされていたら何もしない。
 			if (isDisposing(this)) {
 				return;
 			}
+			// rejectまたはfailされていないdeferredをreject()する。
+			rejectControllerDfd(this, errorObj);
+
 			this.__controllerContext.isDisposing = 1;
 			var dfd = this.deferred();
 			this.unbind();
 			var that = this;
 			var promises = executeLifeEndChain(this, '__dispose');
-			$.when.apply($, promises).done(function() {
+			h5.async.when(promises).always(function() {
 				disposeController(that);
 				dfd.resolve();
 			});
@@ -1889,7 +1974,7 @@
 		 * }).show();
 		 * </pre>
 		 *
-		 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しないる場合</b><br>
+		 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
 		 *
 		 * <pre>
 		 * var indicator = this.indicator({
@@ -1966,44 +2051,56 @@
 		},
 
 		/**
-		 * フォーマット済みメッセージを詰めたエラーをthrowします。
+		 * 指定された値をメッセージとして例外をスローします。
+		 * <p>
+		 * 第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+		 * <p>
+		 * <b>文字列の場合</b><br>
+		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
+		 * <p>
+		 * <b>オブジェクトの場合</b><br>
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
 		 *
 		 * @memberOf Controller
-		 * @param {String|Object} parameter 文字列の場合、第2引数以降をパラメータとしてフォーマットします。<br />
-		 *            オブジェクトの場合、そのままErrorクラスへ格納します。
-		 * @param {Any} [var_args] 第1引数が文字列の場合のパラメータ
+		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
+		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
-		throwError: function(parameter, var_args) {
-			var error = null;
-			if (parameter && typeof parameter === 'string') {
-				error = new Error(format.apply(null, argsToArray(arguments)));
-			} else {
-				error = Error.apply(null, arguments);
-			}
-			error.customType = null;
-			throw error;
+		throwError: function(msgOrErrObj, var_args) {
+			//引数の個数チェックはthrowCustomErrorで行う
+			var args = argsToArray(arguments);
+			args.unshift(null);
+			this.throwCustomError.apply(null, args);
 		},
 
 		/**
-		 * エラータイプとフォーマット済みメッセージを詰めたエラーをthrowします。
+		 * 指定された値をメッセージとして例外をスローします。
+		 * <p>
+		 * このメソッドでスローされたErrorオブジェクトのcustomTypeプロパティには、第一引数で指定した型情報が格納されます。
+		 * <p>
+		 * 第二引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+		 * <p>
+		 * <b>文字列の場合</b><br>
+		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
+		 * <p>
+		 * <b>オブジェクトの場合</b><br>
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
 		 *
 		 * @memberOf Controller
-		 * @param {String} customType エラータイプ
-		 * @param {String|Object} parameter 文字列の場合、第3引数以降をパラメータとしてフォーマットします。<br />
-		 *            オブジェクトの場合、そのままErrorクラスへ格納します。
-		 * @param {Any} [var_args] 第2引数が文字列の場合のパラメータ
+		 * @param {String} customType 型情報
+		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
+		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
-		throwCustomError: function(customType, parameter, var_args) {
-			// null, undefinedの場合をtrueとしたいため、あえて厳密等価にしていない
-			if (customType == null) {
-				throwFwError(ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED);
+		throwCustomError: function(customType, msgOrErrObj, var_args) {
+			if (arguments.length < 2) {
+				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
-			var args = argsToArray(arguments);
-			args.shift();
-			if (parameter && typeof parameter === 'string') {
-				error = new Error(format.apply(null, argsToArray(args)));
+
+			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
+				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));
 			} else {
-				error = Error.apply(null, args);
+				// 引数を渡さないと、iOS4は"unknown error"、その他のブラウザは空文字が、デフォルトのエラーメッセージとして入る
+				error = new Error();
+				error.detail = msgOrErrObj;
 			}
 			error.customType = customType;
 			throw error;
@@ -2164,13 +2261,28 @@
 		var preinitDfd = getDeferred();
 		var preinitPromise = preinitDfd.promise();
 
-		controller.__controllerContext.templatePromise = templatePromise;
+		controller.__controllerContext.preinitDfd = preinitDfd;
 		controller.preinitPromise = preinitPromise;
 		controller.__controllerContext.initDfd = getDeferred();
-		controller.initPromise = controller.__controllerContext.initDfd.promise();
+
+		// initPromiseが失敗してもcommonFailHandlerを発火させないようにするため、dummyのfailハンドラを登録する
+		controller.initPromise = controller.__controllerContext.initDfd.promise().fail(
+				dummyFailHandler);
 		controller.__controllerContext.readyDfd = getDeferred();
 		controller.readyPromise = controller.__controllerContext.readyDfd.promise();
 
+		if (!isRoot) {
+			// ルートコントローラでないなら、readyPromiseの失敗でcommonFailHandlerを発火させないようにする
+			controller.readyPromise.fail(dummyFailHandler);
+		}
+		/* del begin */
+		else {
+			// ルートコントローラなら、readyPromise.doneのタイミングで、ログを出力する
+			controller.readyPromise.done(function() {
+				fwLogger.info(FW_LOG_INIT_CONTROLLER_COMPLETE, controllerName);
+			});
+		}
+		/* del end */
 		if (templates && templates.length > 0) {
 			// テンプレートがあればロード
 			var viewLoad = function(count) {
@@ -2182,7 +2294,7 @@
 				vp.then(function(result) {
 					/* del begin */
 					if (templates && templates.length > 0) {
-						fwLogger.info('コントローラ"{0}"のテンプレートの読み込みに成功しました。', controllerName);
+						fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
 					}
 					/* del end */
 					templateDfd.resolve();
@@ -2194,12 +2306,16 @@
 					// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
 					// WinInet のエラーコード(12001 - 12156):
 					// http://support.microsoft.com/kb/193625/ja
-					var jqXhrStatus = result.detail.error.status;
+					var errorObj = result.detail.error;
+					var jqXhrStatus = errorObj ? errorObj.status : null;
 					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
 							&& jqXhrStatus !== 12029) {
+						fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
+								result.detail.url);
 						result.controllerDefObject = controllerDefObj;
-						setTimeout(function(){
-						templateDfd.reject(result);},0);
+						setTimeout(function() {
+							templateDfd.reject(result);
+						}, 0);
 						return;
 					}
 					setTimeout(function() {
@@ -2215,12 +2331,17 @@
 
 		// テンプレートプロミスのハンドラ登録
 		templatePromise.done(function() {
-			preinitDfd.resolve();
+			if (!isDisposing(controller)) {
+				preinitDfd.resolve();
+			}
 		}).fail(function(e) {
 			preinitDfd.reject(e);
-			if (controller.__controllerContext) {
-				controller.rootController.dispose();
+			if (controller.rootController && !isDisposing(controller.rootController)) {
+				fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR, controller.rootController.__name);
 			}
+			// 同じrootControllerを持つ他の子のdisposeによって、
+			// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
+			controller.rootController && controller.rootController.dispose(e);
 		});
 
 		for ( var prop in clonedControllerDef) {
@@ -2315,12 +2436,21 @@
 		if (isDisposing(controller)) {
 			return null;
 		}
+
+		// コントローラマネージャの管理対象とするか判定する
+		if (fwOpt && 'managed' in fwOpt) {
+			controller.__controllerContext.managed = fwOpt.managed;
+		}
+
 		// ルートコントローラなら、ルートをセット
 		if (controller.__controllerContext.isRoot) {
 			setRootAndTriggerInit(controller);
 		}
 		return controller;
 	}
+
+	// fwOptを引数に取る、コントローラ化を行うメソッドを、h5internal.core.controllerInternalとして内部用に登録
+	h5internal.core.controllerInternal = createAndBindController;
 
 	/**
 	 * オブジェクトのロジック化を行います。
@@ -2382,13 +2512,15 @@
 		 * @function
 		 * @memberOf h5.core
 		 */
-		controller: createAndBindController,
+		controller: function(targetElement, controllerDefObj, param) {
+			return createAndBindController(targetElement, controllerDefObj, param);
+		},
 
 		logic: createLogic,
 
 		/**
 		 * コントローラ、ロジックを__nameで公開します。<br />
-		 * 例：__nameが"jp.co.nssol.controller.TestController"の場合、window.jp.co.nssol.controller.TestController
+		 * 例：__nameが"sample.namespace.controller.TestController"の場合、window.sample.namespace.controller.TestController
 		 * で グローバルから辿れるようにします。
 		 *
 		 * @param {Controller|Logic} obj コントローラ、もしくはロジック

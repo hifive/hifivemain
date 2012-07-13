@@ -64,6 +64,7 @@ $(function() {
 
 	test(
 			'※要目視確認：基本コンソールログ出力',
+			1,
 			function() {
 				outputEachLevel();
 				ok(
@@ -71,40 +72,40 @@ $(function() {
 						'デフォルトレベルで出力します。開発支援版(h5.dev.js)の場合はデバッグコンソールを確認し、ERROR, WARN, INFO, DEBUGのレベル順にメッセージが出ていることを確認してください。');
 			});
 
-	test('※要目視確認：ログレベル閾値動作 error,ERROR', function() {
+	test('※要目視確認：ログレベル閾値動作 error,ERROR', 2, function() {
 		testForLogLevelStr('error',
 				'デバッグコンソールを確認し、ERRORのログが出力され、WARN, INFO、DEBUG, TRACEのログが出力「されていない」ことを確認してください。');
 	});
 
 
-	test('※要目視確認：ログレベル閾値動作 warn,WARN', function() {
+	test('※要目視確認：ログレベル閾値動作 warn,WARN', 2, function() {
 		testForLogLevelStr('warn',
 				'デバッグコンソールを確認し、ERROR, WARNのログが出力され、INFO, DEBUG, TRACEのログが出力「されていない」ことを確認してください。');
 	});
 
-	test('※要目視確認：ログレベル閾値動作 info,INFO', function() {
+	test('※要目視確認：ログレベル閾値動作 info,INFO', 2, function() {
 		testForLogLevelStr('info',
 				'デバッグコンソールを確認し、ERROR, WARN, INFOのログが出力され、DEBUG, TRACEのログが出力「されていない」ことを確認してください。');
 	});
 
 
-	test('※要目視確認：ログレベル閾値動作 debug,DEBUG', function() {
+	test('※要目視確認：ログレベル閾値動作 debug,DEBUG', 2, function() {
 		testForLogLevelStr('debug',
 				'デバッグコンソールを確認し、ERROR, WARN, INFO, DEBUGのログが出力され、TRACEのログが出力「されていない」ことを確認してください。');
 	});
 
 
-	test('※要目視確認：ログレベル閾値動作 trace,TRACE', function() {
+	test('※要目視確認：ログレベル閾値動作 trace,TRACE', 2, function() {
 		testForLogLevelStr('trace',
 				'デバッグコンソールを確認し、ERROR, WARN, INFO, DEBUG, TRACEの順にログが出力されていることを確認してください。');
 	});
 
-	test('※要目視確認：ログレベル閾値動作 all,ALL', function() {
+	test('※要目視確認：ログレベル閾値動作 all,ALL', 2, function() {
 		testForLogLevelStr('all',
 				'デバッグコンソールを確認し、ERROR, WARN, INFO, DEBUG, TRACEの順にログが出力されていることを確認してください。');
 	});
 
-	test('※要目視確認：ログレベル閾値動作 none,NONE', function() {
+	test('※要目視確認：ログレベル閾値動作 none,NONE', 2, function() {
 		testForLogLevelStr('none', 'デバッグコンソールを確認し、ログが出力「されていない」ことを確認してください。');
 	});
 
@@ -161,7 +162,7 @@ $(function() {
 		}
 	});
 
-	test('ログレベル閾値動作 aaa(不正な文字)を指定するとエラーが出ること', function() {
+	test('ログレベル閾値動作 aaa(不正な文字)を指定するとエラーが出ること', 1, function() {
 		try {
 			h5.settings.log = {
 				defaultOut: {
@@ -286,7 +287,7 @@ $(function() {
 				h5.log.configure();
 				ok(false, 'エラーが発生していません。 ' + categorysStr[i]);
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 		}
 	});
@@ -374,7 +375,7 @@ $(function() {
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 		h5.settings.log = {
 			target: ['console']
@@ -383,7 +384,7 @@ $(function() {
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 		h5.settings.log = {
 			target: new String()
@@ -392,7 +393,7 @@ $(function() {
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -445,7 +446,7 @@ $(function() {
 				h5.log.configure();
 				ok(true, 'null,undefined,"console"ではエラー発生しない。');
 			} catch (e) {
-				same(e.code, errorCode, e.message);
+				deepEqual(e.code, errorCode, e.message);
 			}
 		}
 	});
@@ -472,7 +473,7 @@ $(function() {
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -495,11 +496,11 @@ $(function() {
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
-	test('※要目視確認：スタックトレース グローバル領域(loadScriptで読み込む)から出力', function() {
+	test('※要目視確認：スタックトレース グローバル領域(loadScriptで読み込む)から出力', 1, function() {
 		if(!h5.u){
 			ok(false, 'このテストはh5.uを読み込む必要があります');
 			return;
@@ -508,7 +509,7 @@ $(function() {
 		ok(true, 'Chrome,Firefoxではトレース結果が出力されていること(chromeだと、[DEBUG]16:39:3,213: スタックトレース - テスト [eval <anonymous> () <- eval (native) <- {anonymous} ...])'
 				+ 'IE,Safariではトレースできないため、[DEBUG]16:39:3,213: スタックトレース - テスト [undefined] のように表示されていることを確認してください。')
 	});
-	test('※要目視確認：スタックトレース', function() {
+	test('※要目視確認：スタックトレース', 0, function() {
 
 		// ネイティブのトレース機能を確認
 		// 名前付き(fn.nameで名前を取得できる)関数。
@@ -530,6 +531,7 @@ $(function() {
 		noApplyFunc1();
 
 		if (!window.console) {
+			expect(1);
 			ok(false, 'このブラウザはconsoleをサポートしていません。IE9の場合は、開発者ツールを開いてからテストを実行して下さい。');
 			return;
 		}
@@ -599,7 +601,7 @@ $(function() {
 				h5.log.configure();
 				ok(false, 'エラーが発生していません ' + categorysStr[i]);
 			} catch (e) {
-				same(e.code, errorCode, e.message + categorysStr[i]);
+				deepEqual(e.code, errorCode, e.message + categorysStr[i]);
 			}
 		}
 	});
@@ -615,7 +617,7 @@ $(function() {
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -629,7 +631,7 @@ $(function() {
 			h5.log.configure();
 			ok(true, 'null,undefined,"console"ではエラー発生しない。');
 		} catch (e) {
-			same(false, e.code + ': ' + e.message);
+			deepEqual(false, e.code + ': ' + e.message);
 		}
 
 		var errorCode = 10004;
@@ -642,7 +644,7 @@ $(function() {
 			h5.log.configure();
 			ok(true, 'null,undefined,"console"ではエラー発生しない。');
 		} catch (e) {
-			same(e.code, errorCode, e.message);
+			deepEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -661,7 +663,7 @@ $(function() {
 						h5.log.configure();
 						ok(true, 'null,undefined,"console"ではエラー発生しない。');
 					} catch (e) {
-						same(e.code, errorCode, e.message);
+						deepEqual(e.code, errorCode, e.message);
 					}
 				}
 			});

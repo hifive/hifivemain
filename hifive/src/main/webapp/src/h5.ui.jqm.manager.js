@@ -27,15 +27,27 @@
 	// =============================
 	// Production
 	// =============================
+	/** エラーコード: JQMControllerがdisposeされた */
+	var ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE = 12000;
+	/** エラーコード: JQMControllerがunbindされた */
+	var ERR_CODE_JQM_MANAGER_CANNOT_UNBIND = 12001;
+
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE] = 'JQMControllerはdisposeできません。';
+	errMsgMap[ERR_CODE_JQM_MANAGER_CANNOT_UNBIND] = 'JQMControllerはunbindできません。';
+
+	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
 	// Development Only
 	// =============================
+
 	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
-
 	/* del begin */
-
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = 'JQMマネージャは既に初期化されています。';
+	var disposeFunc = null;
+	var unbindFunc = null;
 	/* del end */
 
 
@@ -100,7 +112,7 @@
 	/**
 	 * 現在のアクティブページにコントローラをバインドします。
 	 */
-	function bindToActivePage(id) {
+	function bindToActivePage() {
 		var activePage = $.mobile.activePage;
 		if (!activePage) {
 			return;
@@ -148,6 +160,27 @@
 		 * @memberOf JQMController
 		 */
 		__name: 'JQMController',
+
+		/**
+		 * __constructイベントのハンドラ
+		 * <p>
+		 * ユーザから、JQMControllerをdispose()またはunbind()されないよう、これらのメソッドを差し替える。
+		 */
+		__construct: function() {
+			/* del begin */
+			// h5.ui.jqm.manager.__reset()のためにdispose/unbindメソッドを退避する
+			disposeFunc = this.dispose;
+			unbindFunc = this.unbind;
+			/* del end */
+
+			this.dispose = function() {
+				throwFwError(ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE);
+			};
+
+			this.unbind = function() {
+				throwFwError(ERR_CODE_JQM_MANAGER_CANNOT_UNBIND);
+			};
+		},
 
 		/**
 		 * __readyイベントのハンドラ
@@ -378,12 +411,15 @@
 		 */
 		init: function() {
 			if (initCalled) {
-				fwLogger.info('JQMマネージャは既に初期化されています。');
+				fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
 				return;
 			}
 			initCalled = true;
 			$(function() {
-				jqmControllerInstance = h5.core.controller('body', jqmController);
+				jqmControllerInstance = h5internal.core.controllerInternal('body', jqmController,
+						null, {
+							managed: false
+						});
 				bindToActivePage();
 			});
 		},
@@ -404,35 +440,35 @@
 			controllerMap[id] = controllerDefObject;
 			initParamMap[id] = initParam;
 			cssMap[id] = wrapInArray(cssSrc);
-			if(!$.mobile.activePage || ($.mobile.activePage).attr('id') !== id){
-				return;
+
+			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
+					&& jqmControllerInstance) {
+				bindToActivePage();
+			} else {
+				this.init();
 			}
-			!jqmControllerInstance ? h5.ui.jqm.manager.init() : bindToActivePage();
 		}
 		/* del begin */
 		,
-		/**
-		 * 引数なしの場合はh5.ui.jqm.manager.init()が呼ばれたかどうかを返します。<br />
-		 * 引数を指定した場合は、h5.ui.jqm.manager.init()が呼ばれたかどうかのフラグ変数を変更します。<br />
-		 * 引数を指定する場合ははtrueまたはfalseを指定してください。<br />
-		 * この関数は開発版(h5.dev.js)でのみ使用できます。<br />
-		 * 通常は、この関数で値の設定を行う必要はありません。
+		/*
+		 * テスト用に公開
+		 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
 		 *
-		 * @param {boolean} [flag] h5.ui.jqm.manager.init()が呼ばれたかどうかのフラグに設定する値。引数なしの場合は現在のフラグを返します。
-		 * @returns {boolean} h5.ui.jqm.manager.init()が呼ばれたかどうか(もしくは設定した)値。
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
-		 * @name __initFlag
+		 * @name __reset
 		 */
-		__initFlag: function(flag) {
-			if (flag === undefined) {
-				return initCalled;
-			}
-			if (flag === true || flag === false) {
-				initCalled = flag;
-				return flag;
-			}
-			fwLogger.warn('h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。');
+		__reset: function() {
+			jqmControllerInstance.unbind = unbindFunc;
+			jqmControllerInstance.dispose = disposeFunc;
+			jqmControllerInstance.dispose();
+
+			jqmControllerInstance = null;
+			controllerMap = {};
+			controllerInstanceMap = {};
+			initParamMap = {};
+			cssMap = {};
+			initCalled = false;
 		}
 	/* del end */
 	});

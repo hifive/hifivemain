@@ -26,9 +26,9 @@
 // Misc Variables
 // =============================
 /**
- *  { (エラーコード): (フォーマット文字列) } なマップ
+ * { (エラーコード): (フォーマット文字列) } なマップ
  *
- *  @private
+ * @private
  */
 var errorCodeToMessageMap = {};
 
@@ -161,4 +161,10 @@ function getRegex(target) {
 		str = target;
 	}
 	return new RegExp('^' + str + '$');
+};
+
+var h5internal = {
+	core: {
+		controllerInternal: null
+	}
 };

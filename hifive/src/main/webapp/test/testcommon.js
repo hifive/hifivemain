@@ -15,4 +15,13 @@
  *
  * hifive
  */
-window.loadedTestForJQM6 = true;
+
+// resolve済みかどうかをチェックする関数
+function isResolved(dfd) {
+	return dfd.isResolved ? dfd.isResolved() : dfd.state() === 'resolved';
+}
+
+// reject済みかどうかをチェックする関数
+function isRejected(dfd) {
+	return dfd.isRejected ? dfd.isRejected() : dfd.state() === 'rejected';
+}
