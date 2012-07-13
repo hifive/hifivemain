@@ -1138,8 +1138,10 @@ $(function() {
 
 	test('deserialize 値が不正な正規表現文字列をRegExpオブジェクトにデシリアライズする。', 5, function() {
 
-		var strs = ['1|r2', '1|r/a/y', '1|r/a/yg', '1|r/a/mG', '1|r/a/iQ'];
-		var expect = ['/r/', '/a/', '/a/g', '/a/m', '/a/i'];
+		var strs = ['1|r2', '1|r/a/y', '1|r/a/gy', '1|r/a/mG', '1|r/a/iQ'];
+		// Firefoxにはyオプションがあるため、yオプションも復元されて取得できる
+		var expect = h5.env.ua.isFirefox ? ['/r/', '/a/y', '/a/gy', '/a/m', '/a/i'] : ['/r/',
+				'/a/', '/a/g', '/a/m', '/a/i'];
 		var errorCode = 11006;
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
@@ -1149,7 +1151,8 @@ $(function() {
 				// RegExpの第二引数に不正なグローバルオプションを指定した場合、ブラウザによっては例外を出さず、不正な値のみ無視してRegExpを生成する。
 				// そのため、例外を出さないブラウザでは以下のテストで検証する。
 				// 例外を出さないブラウザ: Android 2,3, 3.1, 4.0.1 デフォルトブラウザ、 iOS4 Safari
-				equal(patternStr, expect[i], '不正なグローバルオプションのみ無視されたRegExpオブジェクトが生成(復元)されること。'+ patternStr);
+				equal(patternStr, expect[i], '不正なグローバルオプションのみ無視されたRegExpオブジェクトが生成(復元)されること。'
+						+ patternStr);
 			} catch (e) {
 				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
