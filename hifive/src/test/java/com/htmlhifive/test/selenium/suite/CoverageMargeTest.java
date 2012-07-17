@@ -15,23 +15,24 @@
  *
  * hifive
  */
- package jp.co.nssol.h5.test.selenium.suite;
+ package com.htmlhifive.test.selenium.suite;
 
 import jp.co.nssol.h5.test.selenium.base.ConfigurationXmlPath;
 import jp.co.nssol.h5.test.selenium.base.H5Suite;
 import jp.co.nssol.h5.test.selenium.base.TargetDriver;
-import jp.co.nssol.h5.test.selenium.testcase.coverage.ShowCoveragePage;
-import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.CoverageMarge;
-import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.CoverageMargeOut;
-import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.Runner;
-import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.RunnerJQuery1_6_4;
-import jp.co.nssol.h5.test.selenium.testcase.coverage.marge.WaitForQUnitTest;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite.SuiteClasses;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.ie.InternetExplorerDriver;
+
+import com.htmlhifive.test.selenium.testcase.coverage.ShowCoveragePage;
+import com.htmlhifive.test.selenium.testcase.coverage.marge.CoverageMarge;
+import com.htmlhifive.test.selenium.testcase.coverage.marge.CoverageMargeOut;
+import com.htmlhifive.test.selenium.testcase.coverage.marge.Runner;
+import com.htmlhifive.test.selenium.testcase.coverage.marge.RunnerJQuery1_6_4;
+import com.htmlhifive.test.selenium.testcase.coverage.marge.WaitForQUnitTest;
 
 @TargetDriver({ FirefoxDriver.class, ChromeDriver.class, InternetExplorerDriver.class })
 @ConfigurationXmlPath("config/webdriver_config.xml")

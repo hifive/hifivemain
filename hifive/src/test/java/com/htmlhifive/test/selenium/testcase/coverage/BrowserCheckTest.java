@@ -12,42 +12,33 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * 
  * hifive
  */
- package jp.co.nssol.h5.test.selenium.testcase.coverage.marge;
+ package com.htmlhifive.test.selenium.testcase.coverage;
 
 import jp.co.nssol.h5.test.selenium.base.H5TestCase;
 
 import org.junit.Test;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
-/**
- * TODO テストケースの追加
- *
- * @author fukuda
- *
- */
-public class WaitForQUnitTest extends H5TestCase {
-
-	public WaitForQUnitTest(WebDriver driver) throws InterruptedException {
-
+public class BrowserCheckTest extends H5TestCase {
+	public BrowserCheckTest(WebDriver driver) {
 		super(driver);
 	}
 
 	@Test
-	public void waitForTestEnd() throws InterruptedException {
+	public void showBrowserCheckPage() throws InterruptedException {
 
-		try {
-			getDriver().switchTo().frame(querySelector("#browserIframe").get(0));
-
-			while (querySelector("#qunit-testresult").get(0).getText().contains("Running:")) {
-				Thread.sleep(1000);
-			}
-			System.out.println("QUnitテスト終了");
-			getDriver().switchTo().defaultContent();
-		} catch (Exception e) {
-			System.out.println("waitForTestEnd error");
-		}
+		WebElement locationBox = querySelector("#location").get(0);
+		locationBox.clear();
+		locationBox
+		.sendKeys("http://localhost:8080/htmlhifiveWeb/coverage/webdriver/sandboxInternal/coverage/");
+		WebElement openInFrame = querySelector("[title='open URL in the iframe below [Enter]']").get(0);
+		openInFrame.click();
+		Thread.sleep(100);
+		getDriver().switchTo().defaultContent();
+		Thread.sleep(100);
 	}
 }

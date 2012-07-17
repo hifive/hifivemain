@@ -15,7 +15,7 @@
  * 
  * hifive
  */
- package jp.co.nssol.h5.test.selenium.testcase.coverage.marge;
+ package com.htmlhifive.test.selenium.testcase.coverage.marge;
 
 import jp.co.nssol.h5.test.selenium.base.H5TestCase;
 

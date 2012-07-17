@@ -15,13 +15,12 @@
  *
  * hifive
  */
- package jp.co.nssol.h5.test.selenium.testcase.coverage.marge;
+ package com.htmlhifive.test.selenium.testcase.coverage.marge;
 
 import jp.co.nssol.h5.test.selenium.base.H5TestCase;
 
 import org.junit.Test;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 
 /**
  * TODO テストケースの追加
@@ -29,22 +28,26 @@ import org.openqa.selenium.WebElement;
  * @author fukuda
  *
  */
-public class RunnerJQuery1_6_4 extends H5TestCase {
+public class WaitForQUnitTest extends H5TestCase {
 
-	public static final String QUNIT_PAGE =
-			"http://localhost:8080/hifive/coverage/inst/test/runner.jquery1.6.4.html";
+	public WaitForQUnitTest(WebDriver driver) throws InterruptedException {
 
-	public RunnerJQuery1_6_4(WebDriver driver) throws InterruptedException {
 		super(driver);
 	}
-	@Test
-	public void openQUnit() throws InterruptedException{
 
-		WebElement locationBox = querySelector("#location").get(0);
-		locationBox.clear();
-		locationBox.sendKeys(QUNIT_PAGE);
-		WebElement openInWindow = querySelector("[title='open URL in the iframe below [Enter]']").get(0);
-		openInWindow.click();
-		Thread.sleep(1000);
+	@Test
+	public void waitForTestEnd() throws InterruptedException {
+
+		try {
+			getDriver().switchTo().frame(querySelector("#browserIframe").get(0));
+
+			while (querySelector("#qunit-testresult").get(0).getText().contains("Running:")) {
+				Thread.sleep(1000);
+			}
+			System.out.println("QUnitテスト終了");
+			getDriver().switchTo().defaultContent();
+		} catch (Exception e) {
+			System.out.println("waitForTestEnd error");
+		}
 	}
 }
