@@ -644,7 +644,7 @@
 				break;
 			case 'object':
 				if (existStack(val)) {
-					throwFwError('循環参照が含まれています。');
+					throwFwError(ERR_CODE_REFERENCE_CYCLE);
 				}
 				objStack.push(val);
 				ret = typeToCode(type) + '{';
