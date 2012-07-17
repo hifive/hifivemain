@@ -134,7 +134,7 @@
 		/**
 		 * レンダリングエンジンがWebkitであるかどうかを表します。
 		 *
-		 * @name isFirefox
+		 * @name isWebkit
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
