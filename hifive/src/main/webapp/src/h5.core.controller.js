@@ -111,9 +111,9 @@
 	// Development Only
 	// =============================
 
+	var fwLogger = h5.log.createLogger('h5.core');
 	/* del begin */
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
-	var fwLogger = h5.log.createLogger('h5.core');
 	var FW_LOG_TEMPLATE_LOADED = 'コントローラ"{0}"のテンプレートの読み込みに成功しました。';
 	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
 	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
