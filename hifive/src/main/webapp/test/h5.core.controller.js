@@ -21,7 +21,9 @@ $(function() {
 	$.blockUI.defaults.fadeOut = -1;
 
 	// svgをサポートしているか
-	var isSupportSVG = document.createElementNS && $.isFunction(document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect);
+	var isSupportSVG = document.createElementNS
+			&& $
+					.isFunction(document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect);
 
 	var rgbToHex = function(rgbStr) {
 		if (/^#\d{3,6}$/.test(rgbStr)) {
@@ -3414,6 +3416,61 @@ $(function() {
 						});
 			});
 
+	asyncTest(
+			'context.selectorが取得できること',
+			7,
+			function() {
+				$('#qunit-fixture')
+						.append(
+								'<div id="controllerTest1" style="display: none;"><input type="button" class="testclass" value="click" /><div id="test"><div id="innertest"  class="innerdiv"></div></div></div>');
+				$('#qunit-fixture').append(
+						'<div id="controllerTest2" style="display: none;"></div>');
+
+				var controllerBase1 = {
+					__name: 'Test1Controller',
+
+					'input click': function(context) {
+						strictEqual(context.selector, 'input', 'セレクタが取得できること');
+					},
+					'input[type=button] click': function(context) {
+						strictEqual(context.selector, 'input[type=button]', 'セレクタが取得できること');
+					},
+					'   .testclass   click': function(context) {
+						strictEqual(context.selector, '.testclass', 'セレクタが取得できること');
+					},
+					'{rootElement} click2': function(context) {
+						strictEqual(context.selector, '{rootElement}', 'セレクタが取得できること');
+					},
+					' { body   }   click3': function(context) {
+						strictEqual(context.selector, '{body}', 'セレクタが取得できること');
+					},
+					'  #test  #innertest.innerdiv   h5trackstart': function(context) {
+						strictEqual(context.selector, '#test #innertest.innerdiv', 'セレクタが取得できること');
+					},
+					'   {window} mousewheel': function(context) {
+						strictEqual(context.selector, '{window}', 'セレクタが取得できること');
+					}
+				};
+				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
+				test1Controller.readyPromise.done(function() {
+
+					$('#controllerTest1 input[type=button]').click();
+					$('#controllerTest1').trigger('click2');
+					$('body').trigger('click3');
+					$('#controllerTest1 #test').trigger('click3');
+					$('#controllerTest1 .innerdiv').mousedown();
+
+
+					var eventName = h5.env.ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
+					$(window).trigger(new $.Event(eventName));
+
+					test1Controller.unbind();
+					$('#controllerTest1').remove();
+					ok(!$('#parent').length, '（DOMのクリーンアップ）');
+					start();
+				});
+			});
+
 	asyncTest('コントローラ内のxxxControllerが動作しているか(テンプレート使用)', function() {
 
 
@@ -5093,7 +5150,7 @@ $(function() {
 					start();
 					return;
 				}
-				if (!isSupportSVG){
+				if (!isSupportSVG) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -5239,7 +5296,7 @@ $(function() {
 			'h5trackイベント(touchstart, touchmove, touchend) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
-				if (!isSupportSVG){
+				if (!isSupportSVG) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();

@@ -916,7 +916,7 @@
 			selector: selector,
 			eventName: eventName,
 			handler: function(/* var_args */) {
-				func.call(controller, createEventContext(controller, arguments));
+				func.call(controller, createEventContext(controller, selector, arguments));
 			}
 		};
 	}
@@ -944,7 +944,7 @@
 			eventName: typeof document.onmousewheel === TYPE_OF_UNDEFINED ? 'DOMMouseScroll'
 					: eventName,
 			handler: function(/* var_args */) {
-				var eventContext = createEventContext(controller, arguments);
+				var eventContext = createEventContext(controller, selector, arguments);
 				var event = eventContext.event;
 				// Firefox
 				if (event.originalEvent && event.originalEvent.detail) {
@@ -1029,7 +1029,7 @@
 					if (isStart && execute) {
 						return;
 					}
-					var eventContext = createEventContext(controller, arguments);
+					var eventContext = createEventContext(controller, selector, arguments);
 					var event = eventContext.event;
 					if (hasTouchEvent) {
 						// タッチイベントの場合、イベントオブジェクトに座標系のプロパティを付加
@@ -1154,9 +1154,10 @@
 	 * イベントコンテキストを作成します。
 	 *
 	 * @param {Object} controller コントローラ
+	 * @param {String} selector セレクタ
 	 * @param {Object} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
 	 */
-	function createEventContext(controller, args) {
+	function createEventContext(controller, selector, args) {
 		var event = null;
 		var evArg = null;
 		if (args) {
@@ -1165,11 +1166,14 @@
 		}
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
+
+		var selectorTrimmed = selector.replace(/\s+/g,' ').replace(/\{\s/g, '{').replace(/\s\}/g, '}');
 		return {
 			controller: controller,
 			rootElement: controller.rootElement,
 			event: event,
-			evArg: evArg
+			evArg: evArg,
+			selector: selectorTrimmed
 		};
 	}
 
