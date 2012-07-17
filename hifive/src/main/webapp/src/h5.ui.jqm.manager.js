@@ -27,16 +27,6 @@
 	// =============================
 	// Production
 	// =============================
-	/** エラーコード: JQMControllerがdisposeされた */
-	var ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE = 12000;
-	/** エラーコード: JQMControllerがunbindされた */
-	var ERR_CODE_JQM_MANAGER_CANNOT_UNBIND = 12001;
-
-	var errMsgMap = {};
-	errMsgMap[ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE] = 'JQMControllerはdisposeできません。';
-	errMsgMap[ERR_CODE_JQM_MANAGER_CANNOT_UNBIND] = 'JQMControllerはunbindできません。';
-
-	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
 	// Development Only
@@ -46,8 +36,6 @@
 	/* del begin */
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = 'JQMマネージャは既に初期化されています。';
-	var disposeFunc = null;
-	var unbindFunc = null;
 	/* del end */
 
 
@@ -160,27 +148,6 @@
 		 * @memberOf JQMController
 		 */
 		__name: 'JQMController',
-
-		/**
-		 * __constructイベントのハンドラ
-		 * <p>
-		 * ユーザから、JQMControllerをdispose()またはunbind()されないよう、これらのメソッドを差し替える。
-		 */
-		__construct: function() {
-			/* del begin */
-			// h5.ui.jqm.manager.__reset()のためにdispose/unbindメソッドを退避する
-			disposeFunc = this.dispose;
-			unbindFunc = this.unbind;
-			/* del end */
-
-			this.dispose = function() {
-				throwFwError(ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE);
-			};
-
-			this.unbind = function() {
-				throwFwError(ERR_CODE_JQM_MANAGER_CANNOT_UNBIND);
-			};
-		},
 
 		/**
 		 * __readyイベントのハンドラ
@@ -459,10 +426,7 @@
 		 * @name __reset
 		 */
 		__reset: function() {
-			jqmControllerInstance.unbind = unbindFunc;
-			jqmControllerInstance.dispose = disposeFunc;
 			jqmControllerInstance.dispose();
-
 			jqmControllerInstance = null;
 			controllerMap = {};
 			controllerInstanceMap = {};
