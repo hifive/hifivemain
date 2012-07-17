@@ -32,8 +32,8 @@
 	// Development Only
 	// =============================
 
-	/* del begin */
 	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
+	/* del begin */
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = 'JQMマネージャは既に初期化されています。';
 	/* del end */
