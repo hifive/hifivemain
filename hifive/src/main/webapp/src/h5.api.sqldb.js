@@ -102,6 +102,11 @@
 	 * SQLErrorのエラーコードに対応するメッセージを取得します。
 	 */
 	function getTransactionErrorMsg(e) {
+		if (!e.DATABASE_ERR) {
+			// Android2系、iOS4はエラーオブジェクトに定数メンバが無いのでここを通る。
+			// また、codeが1固定であるため、"データベースエラー"として扱う。
+			return 'データベースエラー';
+		}
 		switch (e.code) {
 		case e.CONSTRAINT_ERR:
 			return '一意制約に反しています。';

@@ -48,8 +48,8 @@
 	var ERR_CODE_BIND_NOT_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
 	var ERR_CODE_BIND_TARGET_COMPLEX = 6004;
-	/** エラーコード: エラータイプが指定されていない */
-	var ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED = 6005;
+	/** エラーコード: 指定された引数の数が少ない */
+	var ERR_CODE_TOO_FEW_ARGUMENTS = 6005;
 	/** エラーコード: コントローラの名前が指定されていない */
 	var ERR_CODE_CONTROLLER_NAME_REQUIRED = 6006;
 	/** エラーコード: コントローラの初期化パラメータが不正 */
@@ -88,7 +88,7 @@
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_COMPLEX] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
-	errMsgMap[ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED] = 'エラータイプを指定してください。';
+	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_NAME_REQUIRED] = 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_ALREADY_CREATED] = '指定されたオブジェクトは既にコントローラ化されています。';
@@ -111,9 +111,9 @@
 	// Development Only
 	// =============================
 
+	var fwLogger = h5.log.createLogger('h5.core');
 	/* del begin */
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
-	var fwLogger = h5.log.createLogger('h5.core');
 	var FW_LOG_TEMPLATE_LOADED = 'コントローラ"{0}"のテンプレートの読み込みに成功しました。';
 	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
 	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
@@ -1261,23 +1261,27 @@
 		bindByBindMap(controller);
 		bindDescendantHandlers(controller);
 
-		// コントローラマネージャの管理対象に追加
+		var managed = controller.__controllerContext.managed;
+
+		// コントローラマネージャの管理対象に追加する
+		// フレームワークオプションでコントローラマネージャの管理対象としない(managed:false)の場合、コントローラマネージャに登録しない
 		var controllers = h5.core.controllerManager.controllers;
-		if ($.inArray(controller, controllers) === -1) {
+		if ($.inArray(controller, controllers) === -1 && managed !== false) {
 			controllers.push(controller);
 		}
 
-		// h5controllerboundイベントをトリガ.
-		$(controller.rootElement).trigger('h5controllerbound', [controller]);
+		// managed=falseの場合、コントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない
+		if (managed !== false) {
+			// h5controllerboundイベントをトリガ.
+			$(controller.rootElement).trigger('h5controllerbound', [controller]);
+		}
 
 		// コントローラの__ready処理を実行
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
 		initPromises.push(controller.initPromise);
 		h5.async.when(initPromises).done(function() {
 			executeLifecycleEventChain(controller, false);
-		}).fail(function(e) {
-			fwLogger.warn(e);
-		});
+		}).fail(dummyFailHandler);
 	}
 
 	/**
@@ -1448,9 +1452,6 @@
 		var propertyArray = ['initDfd', 'readyDfd'];
 		function rejectControllerDfdLoop(con, propertyIndex) {
 			var property = propertyArray[propertyIndex];
-			if (!property) {
-				return;
-			}
 			var dfd = con.__controllerContext[property];
 			if (dfd) {
 				if (!dfd.isRejected() && !dfd.isResolved()) {
@@ -2138,21 +2139,17 @@
 		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
 		 * <p>
 		 * <b>オブジェクトの場合</b><br>
-		 * オブジェクトの文字列表現を、メッセージ文字列とします。
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
 		 *
 		 * @memberOf Controller
 		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwError: function(msgOrErrObj, var_args) {
-			var error = null;
-			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
-				error = new Error(format.apply(null, argsToArray(arguments)));
-			} else {
-				error = Error.apply(null, arguments);
-			}
-			error.customType = null;
-			throw error;
+			//引数の個数チェックはthrowCustomErrorで行う
+			var args = argsToArray(arguments);
+			args.unshift(null);
+			this.throwCustomError.apply(null, args);
 		},
 
 		/**
@@ -2160,30 +2157,30 @@
 		 * <p>
 		 * このメソッドでスローされたErrorオブジェクトのcustomTypeプロパティには、第一引数で指定した型情報が格納されます。
 		 * <p>
-		 * 第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+		 * 第二引数がオブジェクトまたは文字列によって、出力される内容が異なります。
 		 * <p>
 		 * <b>文字列の場合</b><br>
 		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
 		 * <p>
 		 * <b>オブジェクトの場合</b><br>
-		 * オブジェクトの文字列表現を、メッセージ文字列とします。
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
 		 *
 		 * @memberOf Controller
 		 * @param {String} customType 型情報
 		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
-		throwCustomError: function(customType, parameter, var_args) {
-			// null, undefinedの場合をtrueとしたいため、あえて厳密等価にしていない
-			if (customType == null) {
-				throwFwError(ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED);
+		throwCustomError: function(customType, msgOrErrObj, var_args) {
+			if (arguments.length < 2) {
+				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
-			var args = argsToArray(arguments);
-			args.shift();
-			if (parameter && typeof parameter === 'string') {
-				error = new Error(format.apply(null, argsToArray(args)));
+
+			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
+				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));
 			} else {
-				error = Error.apply(null, args);
+				// 引数を渡さないと、iOS4は"unknown error"、その他のブラウザは空文字が、デフォルトのエラーメッセージとして入る
+				error = new Error();
+				error.detail = msgOrErrObj;
 			}
 			error.customType = customType;
 			throw error;
@@ -2568,12 +2565,21 @@
 		if (isDisposing(controller)) {
 			return null;
 		}
+
+		// コントローラマネージャの管理対象とするか判定する
+		if (fwOpt && 'managed' in fwOpt) {
+			controller.__controllerContext.managed = fwOpt.managed;
+		}
+
 		// ルートコントローラなら、ルートをセット
 		if (controller.__controllerContext.isRoot) {
 			setRootAndTriggerInit(controller);
 		}
 		return controller;
 	}
+
+	// fwOptを引数に取る、コントローラ化を行うメソッドを、h5internal.core.controllerInternalとして内部用に登録
+	h5internal.core.controllerInternal = createAndBindController;
 
 	/**
 	 * オブジェクトのロジック化を行います。
@@ -2635,7 +2641,9 @@
 		 * @function
 		 * @memberOf h5.core
 		 */
-		controller: createAndBindController,
+		controller: function(targetElement, controllerDefObj, param) {
+			return createAndBindController(targetElement, controllerDefObj, param);
+		},
 
 		logic: createLogic,
 

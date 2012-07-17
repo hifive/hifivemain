@@ -306,11 +306,12 @@
 				};
 			}
 
-			function load(absolutePath, filePath) {
-				var df = getDeferred();
-
+			function load(absolutePath, filePath, df) {
 				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
+							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
+							delete that.accessingUrls[absolutePath];
+
 							var templateText = obj.responseText;
 							// IE8以下で、テンプレート要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまうため、ここで除去する
 							var $elements = $(templateText).filter(
@@ -342,13 +343,13 @@
 								return;
 							}
 
+							var _ret,_data;
 							try {
 								var compiled = compileData.compiled;
-								var data = compileData.data;
-								data.path = filePath;
-								data.absoluteUrl = absolutePath;
-								$.extend(ret, compiled);
-								datas.push(data);
+								_data = compileData.data;
+								_data.path = filePath;
+								_data.absoluteUrl = absolutePath;
+								_ret = compiled;
 								that.append(absolutePath, compiled, filePath);
 							} catch (e) {
 								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
@@ -359,9 +360,15 @@
 								return;
 							}
 
-							df.resolve();
+							df.resolve({
+								ret: _ret,
+								data: _data
+							});
 						}).fail(
 						function(e) {
+							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
+							delete that.accessingUrls[absolutePath];
+
 							df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [e.status,
 									absolutePath], {
 								url: absolutePath,
@@ -369,11 +376,7 @@
 								error: e
 							}));
 							return;
-						}).always(function() {
-					delete that.accessingUrls[absolutePath];
-				});
-
-				return df.promise();
+						});
 			}
 
 			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
@@ -390,17 +393,27 @@
 				}
 
 				if (this.accessingUrls[absolutePath]) {
+					// 現在アクセス中のURLであれば、そのpromiseを待つようにし、新たにリクエストを出さない
 					tasks.push(this.accessingUrls[absolutePath]);
 				} else {
-					var loadPromise = load(absolutePath, path);
-					this.accessingUrls[absolutePath] = loadPromise;
-					tasks.push(loadPromise);
+					var df = h5.async.deferred();
+					// IE6でファイルがキャッシュ内にある場合、load内のajaxが同期的に動くので、
+					// load()の呼び出しより先にaccessingUrlsとtasksへpromiseを登録する
+					tasks.push(this.accessingUrls[absolutePath] = df.promise());
+					load(absolutePath, path, df);
 				}
 			}
 
 			var retDf = getDeferred();
 
 			h5.async.when(tasks).done(function() {
+				var args = h5.u.obj.argsToArray(arguments);
+
+				// loadされたものを、キャッシュから持ってきたものとマージする
+				for ( var i = 0, l = args.length; i < l; i++) {
+					$.extend(ret, args[i].ret);
+					datas.push(args[i].data);
+				}
 				retDf.resolve(ret, datas);
 			}).fail(function(e) {
 				retDf.reject(e);
@@ -610,14 +623,12 @@
 			}
 
 			if (typeof templateId !== 'string' || !$.trim(templateId)) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
 			var template = cache[templateId];
 
 			if (!template) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE], templateId);
 				throwFwError(ERR_CODE_TEMPLATE_ID_UNAVAILABLE, templateId);
 			}
 
@@ -630,7 +641,6 @@
 			try {
 				ret = template.call(p, p, helper);
 			} catch (e) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED], e.toString());
 				throwFwError(ERR_CODE_TEMPLATE_PROPATY_UNDEFINED, e.toString(), e);
 			}
 
@@ -728,20 +738,17 @@
 				break;
 			case 'array':
 				if (!templateIds.length) {
-					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				templateIdsArray = templateIds;
 				break;
 			default:
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				var id = templateIdsArray[i];
 				if (typeof id !== 'string' || !$.trim(id)) {
-					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				/* del begin */

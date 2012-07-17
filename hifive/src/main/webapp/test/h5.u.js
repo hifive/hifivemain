@@ -517,13 +517,15 @@ $(function() {
 												'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
 
 										window.com.htmlhifive.test.sample4loaded = undefined;
-										start()
+										start();
 									});
 						});
 			});
 
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】存在しないスクリプトを指定しても、ほかのスクリプトの読み込みが中断されないこと。', 2,
 			function() {
+				var qunitWindowOnErrorFunc = window.onerror;
+				window.onerror = function() {};
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(
 						['data/sample4.js?testWidthError1', 'data/noExistFile.js',
@@ -548,9 +550,10 @@ $(function() {
 										deepEqual(window.com.htmlhifive.test.sample4loaded, 3,
 												'sample4.jsが3回読み込まれたこと。(パラレル)');
 										window.com.htmlhifive.test.sample4loaded = undefined;
-										start();
 									}).fail(function(e) {
 								ok(false, e.code + ': ' + e.message);
+							}).always(function() {
+								window.onerror = qunitWindowOnErrorFunc;
 								start();
 							});
 						}).fail(function(e) {
@@ -558,6 +561,7 @@ $(function() {
 					start();
 				});
 			});
+
 
 	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
 		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
@@ -1114,16 +1118,39 @@ $(function() {
 
 	});
 
-	test('deserialize 値が不正な文字をデシリアライズしようとしたときはエラーが発生すること。', 17, function() {
+	test('deserialize 値が不正な文字をデシリアライズしようとしたときはエラーが発生すること。', 15, function() {
 
 		var strs = ['1|n1px', '1|nNaN', '1|NNaN', '1|aary', '1|a{}', '1|o["n1"]', '1|o{"n1"}',
-				'1|o1', '1|b2', '1|B2', '1|xx', '1|ii', '1|II', '1|ll', '1|uu', '1|r2', '1|r/a/G'];
+				'1|o1', '1|b2', '1|B2', '1|xx', '1|ii', '1|II', '1|ll', '1|uu'];
 		var errorCode = 11006;
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			try {
 				var deserialized = h5.u.obj.deserialize(str);
 				ok(false, 'エラーが発生していません。 ' + deserialized);
+			} catch (e) {
+				deepEqual(e.code, errorCode, e.message + ' ' + str);
+			}
+		}
+	});
+
+	test('deserialize 値が不正な正規表現文字列をRegExpオブジェクトにデシリアライズする。', 5, function() {
+
+		var strs = ['1|r2', '1|r/a/y', '1|r/a/gy', '1|r/a/mG', '1|r/a/iQ'];
+		// Firefoxにはyオプションがあるため、yオプションも復元されて取得できる
+		var expect = h5.env.ua.isFirefox ? ['/r/', '/a/y', '/a/gy', '/a/m', '/a/i'] : ['/r/',
+				'/a/', '/a/g', '/a/m', '/a/i'];
+		var errorCode = 11006;
+		for ( var i = 0, len = strs.length; i < len; i++) {
+			var str = strs[i];
+			try {
+				var deserialized = h5.u.obj.deserialize(str);
+				var patternStr = deserialized.toString();
+				// RegExpの第二引数に不正なグローバルオプションを指定した場合、ブラウザによっては例外を出さず、不正な値のみ無視してRegExpを生成する。
+				// そのため、例外を出さないブラウザでは以下のテストで検証する。
+				// 例外を出さないブラウザ: Android 2,3, 3.1, 4.0.1 デフォルトブラウザ、 iOS4 Safari
+				equal(patternStr, expect[i], '不正なグローバルオプションのみ無視されたRegExpオブジェクトが生成(復元)されること。'
+						+ patternStr);
 			} catch (e) {
 				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}

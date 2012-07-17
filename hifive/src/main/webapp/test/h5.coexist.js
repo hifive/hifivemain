@@ -19,6 +19,8 @@
 
 $(function() {
 	var originalH5 = h5;
+	var h5jsPath = '../archives/current/h5.js';
+	var oldh5jsPath = './h5version0.0.1/h5.js';
 
 	module("h5.coexist", {
 		teardown: function() {
@@ -34,7 +36,7 @@ $(function() {
 	});
 
 	test('バージョンが同じものを2重読み込みする。', function() {
-		h5.u.loadScript('../archives/current/h5.js', {
+		h5.u.loadScript(h5jsPath, {
 			force: true
 		});
 
@@ -46,7 +48,7 @@ $(function() {
 
 	test('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.jsを読み込む。', function() {
 		h5 = {};
-		originalH5.u.loadScript('../archives/current/h5.js', {
+		originalH5.u.loadScript(h5jsPath, {
 			force: true
 		});
 		var savedH5 = h5.coexist();
@@ -57,7 +59,7 @@ $(function() {
 	module('バージョンが違うh5を2重読み込み', {
 		setup: function() {
 			// vesion0.0.1のjsファイルをインクルードする
-			h5.u.loadScript('./h5version0.0.1/h5.js', {
+			h5.u.loadScript(oldh5jsPath, {
 				force: true
 			});
 			// コントローラを全部アンバインド
@@ -71,14 +73,13 @@ $(function() {
 		}
 	});
 
-	asyncTest('h5.coexist()で読み込む前のh5が取得できること。', 3, function() {
+	test('h5.coexist()で読み込む前のh5が取得できること。', 3, function() {
 		strictEqual(h5.env.version, '0.0.1', 'h5がバージョン0.0.1のものに上書きされていること。');
 
 		var loadedH5 = h5;
 		var retH5 = h5.coexist();
 		ok(h5 === originalH5, 'h5.coexist()を実行するとwindow.h5が上書き前のh5になること。');
 		ok(retH5 === loadedH5, 'h5.coexist()の戻り値がversion0.0.1のH5であること。');
-		start();
 	});
 
 	asyncTest('上書きしたh5と上書きされる前のh5(originalH5)で管理するコントローラが異なること。', 5, function() {
@@ -86,28 +87,36 @@ $(function() {
 		var testController = {
 			__name: name
 		};
-		function inControllers(controller, controllers){
-			for(var l = controllers.length; l-- > 0;){
-				if(controllers[l] === controller){
+		function inControllers(controller, controllers) {
+			for ( var l = controllers.length; l-- > 0;) {
+				if (controllers[l] === controller) {
 					return true;
 				}
 			}
 			return false;
 		}
 		var controller = h5.core.controller('body', testController);
-		controller.readyPromise.done(function() {
-			ok(inControllers(controller, h5.core.controllerManager.controllers), 'h5にコントローラをバインド。');
-			ok(!inControllers(controller, originalH5.core.controllerManager.controllers) , 'originalH5にはまだコントローラはバインドされていない。');
+		controller.readyPromise
+				.done(function() {
+					ok(inControllers(controller, h5.core.controllerManager.controllers),
+							'h5にコントローラをバインド。');
+					ok(!inControllers(controller, originalH5.core.controllerManager.controllers),
+							'originalH5にはまだコントローラはバインドされていない。');
 
-			var originalController = originalH5.core.controller('body', testController);
-			originalController.readyPromise.done(function() {
-				ok(inControllers(originalController, originalH5.core.controllerManager.controllers), 'originalH5にコントローラをバインド。');
-				controller.unbind();
+					var originalController = originalH5.core.controller('body', testController);
+					originalController.readyPromise.done(function() {
+						ok(inControllers(originalController,
+								originalH5.core.controllerManager.controllers),
+								'originalH5にコントローラをバインド。');
+						controller.unbind();
 
-				ok(!inControllers(controller, h5.core.controllerManager.controllers), 'h5のコントローラをアンバインド。');
-				ok(inControllers(originalController, originalH5.core.controllerManager.controllers), 'originalH5からはアンバインドされていない。');
-				start();
-			});
-		});
+						ok(!inControllers(controller, h5.core.controllerManager.controllers),
+								'h5のコントローラをアンバインド。');
+						ok(inControllers(originalController,
+								originalH5.core.controllerManager.controllers),
+								'originalH5からはアンバインドされていない。');
+						start();
+					});
+				});
 	});
 });

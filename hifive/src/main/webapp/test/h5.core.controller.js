@@ -20,6 +20,9 @@ $(function() {
 	// アサートが稀に失敗する場合があるので、フェードアウトのアニメ―ションを実行しない。
 	$.blockUI.defaults.fadeOut = -1;
 
+	// svgをサポートしているか
+	var isSupportSVG = document.createElementNS && $.isFunction(document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect);
+
 	var rgbToHex = function(rgbStr) {
 		if (/^#\d{3,6}$/.test(rgbStr)) {
 			return rgbStr;
@@ -168,7 +171,7 @@ $(function() {
 
 	});
 
-	asyncTest('コントローラの作成と要素へのバインド(AOPあり)', 3, function() {
+	asyncTest('コントローラの作成と要素へのバインド(AOPあり) ※min版ではエラーになります', 3, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1227,7 +1230,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作', 1, function() {
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 テンプレートのロードに失敗した場合', 1, function() {
 		var cfh = 0;
 		h5.settings.commonFailHandler = function() {
 			cfh++;
@@ -1246,24 +1249,138 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 子コントローラで初期化失敗した場合', 1, function() {
-		var cfh = 0;
-		h5.settings.commonFailHandler = function() {
-			cfh++;
-		};
-		var controller = {
-			__name: 'TestController',
-			childController: {
-				__name: 'childController',
-				__templates: './noExistPath'
-			},
-			__dispose: function() {
-				strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
-				start();
-			}
-		};
-		h5.core.controller('#controllerTest', controller);
-	});
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 子コントローラでテンプレートのロードに失敗した場合', 1,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var controller = {
+					__name: 'TestController',
+					childController: {
+						__name: 'childController',
+						__templates: './noExistPath'
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __initでpromiseを返してrejectする場合 1', 1,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var dfd = h5.async.deferred();
+				var controller = {
+					childController: {
+						__name: 'childController'
+					},
+					__name: 'TestController',
+					__init: function() {
+						setTimeout(function() {
+							dfd.reject();
+						});
+						return dfd.promise();
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __initでpromiseを返してrejectする場合 2', 2,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var dfd = h5.async.deferred();
+				var controller = {
+					childController: {
+						__name: 'childController'
+					},
+					__name: 'TestController',
+					__init: function() {
+						setTimeout(function() {
+							dfd.reject();
+						});
+						var p = dfd.promise();
+						p.fail(function() {
+							ok(true, '__initが返すpromiseのfailハンドラが実行される');
+						});
+						return p;
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+			});
+
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __readyでpromiseを返してrejectする場合 1', 1,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var dfd = h5.async.deferred();
+				var controller = {
+					childController: {
+						__name: 'childController'
+					},
+					__name: 'TestController',
+					__ready: function() {
+						setTimeout(function() {
+							dfd.reject();
+						});
+						return dfd.promise();
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __readyでpromiseを返してrejectする場合 2', 2,
+			function() {
+				var cfh = 0;
+				h5.settings.commonFailHandler = function() {
+					cfh++;
+				};
+				var dfd = h5.async.deferred();
+				var controller = {
+					childController: {
+						__name: 'childController'
+					},
+					__name: 'TestController',
+					__ready: function() {
+						setTimeout(function() {
+							dfd.reject();
+						});
+						var p = dfd.promise();
+						p.fail(function() {
+							ok(true, '__readyが返すpromiseのfailハンドラが実行される');
+						});
+						return p;
+					},
+					__dispose: function() {
+						strictEqual(cfh, 1, 'commonFailHandlerが1回だけ実行されていること');
+						start();
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+			});
 
 	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 ルートコントローラのreadyPromiseにfailハンドラを登録した場合',
 			2, function() {
@@ -1608,7 +1725,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('コントローラ内のthis(AOPあり)', 2, function() {
+	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 2, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1663,7 +1780,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('アスペクトの動作1', function() {
+	asyncTest('アスペクトの動作1 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1707,7 +1824,7 @@ $(function() {
 
 	});
 
-	asyncTest('アスペクトの動作2', function() {
+	asyncTest('アスペクトの動作2 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1748,7 +1865,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('アスペクトの動作3', function() {
+	asyncTest('アスペクトの動作3 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1797,7 +1914,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('アスペクトの動作4', function() {
+	asyncTest('アスペクトの動作4 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1849,7 +1966,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('アスペクトの動作5', function() {
+	asyncTest('アスペクトの動作5 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -2282,7 +2399,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5.core.interceptor.logInterceptorの動作',
+			'h5.core.interceptor.logInterceptorの動作 ※min版ではエラーになります',
 			function() {
 				if (!h5.core.__compileAspects) {
 					expect(1);
@@ -2328,7 +2445,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5.core.interceptor.lapInterceptorの動作',
+			'h5.core.interceptor.lapInterceptorの動作 ※min版ではエラーになります',
 			function() {
 				if (!h5.core.__compileAspects) {
 					expect(1);
@@ -2374,7 +2491,7 @@ $(function() {
 						});
 			});
 
-	asyncTest('h5.core.interceptor.errorInterceptorの動作', function() {
+	asyncTest('h5.core.interceptor.errorInterceptorの動作 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -3397,7 +3514,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか', function() {
+	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -4404,7 +4521,8 @@ $(function() {
 		});
 	});
 
-	asyncTest('throwError() / throwCustomError() の動作',
+	asyncTest(
+			'throwError() / throwCustomError() の動作',
 			function() {
 				var testController = {
 					__name: 'TestController',
@@ -4414,33 +4532,56 @@ $(function() {
 						try {
 							this.throwError();
 						} catch (e) {
-							err1 = e;
+							err1 = e.message;
 						}
-						ok(err1, '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
+						equal(err1, '正しい数の引数を指定して下さい。', '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
 						try {
 							this.throwError('コントローラ"{0}"における{1}のテスト', this.__name, 'throwError');
 						} catch (e) {
 							strictEqual(e.message, 'コントローラ"TestController"におけるthrowErrorのテスト',
 									'throwErrorメソッドの第1引数が文字列の場合、可変長引数を取ってフォーマットされるか');
 						}
+						try {
+							this.throwError('エラーメッセージ!!');
+						} catch (e) {
+							strictEqual(e.message, 'エラーメッセージ!!',
+									'指定したメッセージがmessageプロパティに設定されていること。');
+							strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
+						}
+
 						var obj = {
 							a: 1
 						};
 						try {
 							this.throwError(obj, obj);
 						} catch (e) {
-							ok(e.message, 'throwErrorメソッドの第1引数がオブジェクトの場合、そのまま出力されているか');
+							if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
+								equal(e.message, 'Unknown error',
+										'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+							} else {
+								equal(e.message, '',
+										'第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							}
+							deepEqual(e.detail, obj, 'detailプロパティに第一引数に指定したオブジェクトが設定されていること。');
 						}
 						try {
 							this.throwCustomError();
 						} catch (e) {
-							strictEqual(e.message, 'エラータイプを指定してください。',
-									'throwCustomErrorメソッドでエラータイプが指定されないとエラーが発生するか');
+							strictEqual(e.message, '正しい数の引数を指定して下さい。',
+									'throwCustomError()で必須のパラメータが指定されていない場合、エラーが発生すること。');
 						}
+
+						try {
+							this.throwCustomError(null, 'エラーメッセージ!');
+						} catch (e) {
+							strictEqual(e.message, 'エラーメッセージ!', '指定したメッセージがmessageプロパティに設定されていること。');
+							strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
+						}
+
 						var err2 = null;
 						var err2Type = null;
 						try {
-							this.throwCustomError('customType');
+							this.throwCustomError('customType', '');
 						} catch (e) {
 							err2 = e;
 							err2Type = e.customType;
@@ -4461,7 +4602,14 @@ $(function() {
 						try {
 							this.throwCustomError('customType', obj, obj);
 						} catch (e) {
-							ok(e.message, 'throwErrorメソッドの第2引数がオブジェクトの場合、そのまま出力されているか');
+							if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
+								equal(e.message, 'Unknown error',
+										'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+							} else {
+								equal(e.message, '',
+										'第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+							}
+							deepEqual(e.detail, obj, 'detailプロパティに第二引数に指定したオブジェクトが設定されていること。');
 						}
 					}
 				};
@@ -4695,6 +4843,7 @@ $(function() {
 					expect(1);
 					ok(false, 'タブレット、スマートフォンでは失敗します');
 					start();
+					return;
 				}
 				var controller = {
 
@@ -4935,15 +5084,16 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォンでは失敗します',
+			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
 				if (document.ontouchstart !== undefined) {
 					expect(1);
 					ok(false, 'タブレット、スマートフォンでは失敗します');
 					start();
+					return;
 				}
-				if (!document.createElementNS) {
+				if (!isSupportSVG){
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -5086,10 +5236,10 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) SVG',
+			'h5trackイベント(touchstart, touchmove, touchend) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
-				if (!document.createElementNS) {
+				if (!isSupportSVG){
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -5244,6 +5394,7 @@ $(function() {
 					expect(1);
 					ok(false, 'タブレット、スマートフォンでは失敗します');
 					start();
+					return;
 				}
 				var controller = {
 
