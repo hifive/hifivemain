@@ -15,7 +15,7 @@
  *
  * hifive
  *   version 0.0.1
- *   build at 2012/07/03 10:49:26.637 (+0900)
+ *   build at 2012/07/17 10:13:48.903 (+0900)
  *   (util,controller,view,ui,api.geo,api.sqldb,api.storage)
  */
 (function($){
@@ -83,9 +83,9 @@
 // Misc Variables
 // =============================
 /**
- *  { (エラーコード): (フォーマット文字列) } なマップ
+ * { (エラーコード): (フォーマット文字列) } なマップ
  *
- *  @private
+ * @private
  */
 var errorCodeToMessageMap = {};
 
@@ -220,6 +220,12 @@ function getRegex(target) {
 	return new RegExp('^' + str + '$');
 };
 
+var h5internal = {
+	core: {
+		controllerInternal: null
+	}
+};
+
 
 /* ------ h5.u ------ */
 (function() {
@@ -336,14 +342,14 @@ function getRegex(target) {
 	// =============================
 	/**
 	 * loadScript()によって追加されたjsファイルの絶対パスを保持する配列
-	 * 
+	 *
 	 * @private
 	 */
 	var addedJS = [];
 
 	/**
 	 * HTMLのエスケープルール
-	 * 
+	 *
 	 * @private
 	 */
 	var htmlEscapeRules = {
@@ -359,7 +365,7 @@ function getRegex(target) {
 
 	/**
 	 * 型情報の文字列をコードに変換します。
-	 * 
+	 *
 	 * @private
 	 * @returns {String} 型を表すコード（１字）
 	 */
@@ -411,7 +417,7 @@ function getRegex(target) {
 	 * ドット区切りで名前空間オブジェクトを生成します。
 	 * （h5.u.obj.ns('sample.namespace')と呼ぶと、window.sample.namespaceとオブジェクトを生成します。）
 	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外が渡された場合はエラーとします。
-	 * 
+	 *
 	 * @param {String} namespace 名前空間
 	 * @memberOf h5.u.obj
 	 * @returns {Object} 作成した名前空間オブジェクト
@@ -446,7 +452,7 @@ function getRegex(target) {
 	 * <li>指定された名前空間にプロパティが存在する場合は、『上書きは行われず』例外が発生します。。</li>
 	 * </ul>
 	 * 実行例:
-	 * 
+	 *
 	 * <pre>
 	 * expose('sample.namespace', {
 	 * 	funcA: function() {
@@ -455,11 +461,11 @@ function getRegex(target) {
 	 * 	value1: 10
 	 * });
 	 * </pre>
-	 * 
+	 *
 	 * 実行結果:&nbsp;(window.は省略可)<br>
 	 * alert(window.sample.namespace.funcA) -&gt; "test"と表示。<br>
 	 * alert(window.sample.namespace.value1) -&gt; 10と表示。
-	 * 
+	 *
 	 * @param {String} namespace 名前空間
 	 * @param {Object} obj グローバルに公開したいプロパティをもつオブジェクト
 	 * @memberOf h5.u.obj
@@ -478,7 +484,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定されたスクリプトをロードします。
-	 * 
+	 *
 	 * @param {String|String[]} path ソースパス
 	 * @param {Object} [opt] オプション
 	 * @param {Boolean} [opt.async] 非同期で読み込むかどうかを指定します。デフォルトはfalse(同期)です。<br />
@@ -530,7 +536,7 @@ function getRegex(target) {
 			var count = index;
 			if (srcLen <= count) {
 				// 読み込み終了
-				h5.async.when.apply($, promises).done(function() {
+				h5.async.when(promises).done(function() {
 					dfd.resolve();
 				});
 				return;
@@ -592,7 +598,7 @@ function getRegex(target) {
 
 	/**
 	 * 文字列のプレフィックスが指定したものかどうかを返します。
-	 * 
+	 *
 	 * @param {String} str 文字列
 	 * @param {String} prefix プレフィックス
 	 * @returns {Boolean} 文字列のプレフィックスが指定したものかどうか
@@ -606,7 +612,7 @@ function getRegex(target) {
 
 	/**
 	 * 文字列のサフィックスが指定したものかどうかを返します。
-	 * 
+	 *
 	 * @param {String} str 文字列
 	 * @param {String} suffix サフィックス
 	 * @returns {Boolean} 文字列のサフィックスが指定したものかどうか
@@ -621,15 +627,15 @@ function getRegex(target) {
 
 	/**
 	 * 第一引数の文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第2引数以降に指定されたパラメータに置換します。
-	 * 
+	 *
 	 * <pre>
 	 * 例：
 	 * 		var myValue = 10;
 	 * 		h5.u.str.format('{0} is {1}', 'myValue', myValue);
 	 * </pre>
-	 * 
+	 *
 	 * 実行結果: myValue is 10
-	 * 
+	 *
 	 * @param {String} str 文字列
 	 * @param {Any} var_args 可変長引数
 	 * @returns {String} フォーマット済み文字列
@@ -653,7 +659,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定されたHTML文字列をエスケープします。
-	 * 
+	 *
 	 * @param {String} str HTML文字列
 	 * @returns {String} エスケープ済HTML文字列
 	 * @name escapeHTML
@@ -704,19 +710,19 @@ function getRegex(target) {
 	 * </p>
 	 * <p>
 	 * 内部に同一インスタンスを持つarray型またはobject型は、別インスタンスとしてシリアライズします。以下のようなarray型オブジェクトaにおいて、a[0]とa[1]が同一インスタンスであるという情報は保存しません。
-	 * 
+	 *
 	 * <pre>
 	 * a = [];
 	 * a[0] = a[1] = [];
 	 * </pre>
-	 * 
+	 *
 	 * </p>
 	 * <h4>注意</h4>
 	 * <p>
 	 * function型のオブジェクトは<b>変換できません</b>。例外をスローします。
 	 * array型にfunction型のオブジェクトが存在する場合は、undefinedとしてシリアライズします。object型または連想配列にfunction型のオブジェクトが存在する場合は、無視します。
 	 * </p>
-	 * 
+	 *
 	 * @param {Object} value オブジェクト
 	 * @returns {String} 型情報を付与した文字列
 	 * @name serialize
@@ -881,7 +887,7 @@ function getRegex(target) {
 
 	/**
 	 * 型情報が付与された文字列をオブジェクトを復元します。
-	 * 
+	 *
 	 * @param {String} value 型情報が付与された文字列
 	 * @returns {Any} 復元されたオブジェクト
 	 * @name deserialize
@@ -904,7 +910,7 @@ function getRegex(target) {
 			var originValue = val;
 			/**
 			 * 型情報のコードを文字列に変換します。
-			 * 
+			 *
 			 * @private
 			 * @returns {String} 型を表す文字列
 			 */
@@ -1092,7 +1098,7 @@ function getRegex(target) {
 
 	/**
 	 * オブジェクトがjQueryオブジェクトかどうかを返します。
-	 * 
+	 *
 	 * @param {Object} obj オブジェクト
 	 * @returns {Boolean} jQueryオブジェクトかどうか
 	 * @name isJQueryObject
@@ -1108,7 +1114,7 @@ function getRegex(target) {
 
 	/**
 	 * argumentsを配列に変換します。
-	 * 
+	 *
 	 * @param {Arguments} args Arguments
 	 * @returns {Any[]} argumentsを変換した配列
 	 * @name argsToArray
@@ -1121,7 +1127,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定された名前空間に存在するオブジェクトを取得します。
-	 * 
+	 *
 	 * @param {String} 名前空間
 	 * @return {Any} その名前空間に存在するオブジェクト
 	 * @name getByPath
@@ -1150,7 +1156,7 @@ function getRegex(target) {
 
 	/**
 	 * インターセプタを作成します。
-	 * 
+	 *
 	 * @param {Function} pre インターセプト先関数の実行前に呼ばれる関数です。
 	 * @param {Function} post インターセプト先関数の実行後に呼ばれる関数です。<br />
 	 *            <ul>
@@ -1161,7 +1167,7 @@ function getRegex(target) {
 	 *            <li>pre()が指定されていない場合、invocation.proceed()を実行した後にpost()を呼びます。</li>
 	 *            </ul>
 	 *            コード例(h5.core.interceptor.lapInterceptor)を以下に示します。<br />
-	 * 
+	 *
 	 * <pre>
 	 * var lapInterceptor = h5.u.createInterceptor(function(invocation, data) {
 	 * 	// 開始時間をdataオブジェクトに格納
@@ -1175,7 +1181,7 @@ function getRegex(target) {
 	 * 		this.log.info('{0} &quot;{1}&quot;: {2}ms', this.__name, invocation.funcName, (end - data.start));
 	 * 	});
 	 * </pre>
-	 * 
+	 *
 	 * @return {Function} インターセプタ
 	 * @name createInterceptor
 	 * @function
@@ -2717,8 +2723,9 @@ function getRegex(target) {
 	// Development Only
 	// =============================
 
+	var fwLogger = h5.log.createLogger('h5.async');
 	/* del begin */
-
+	var FW_LOG_H5_WHEN_INVALID_PARAMETER = 'h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。';
 	/* del end */
 
 
@@ -2734,7 +2741,7 @@ function getRegex(target) {
 	// =========================================================================
 	/**
 	 * jQueryのDeferred関数
-	 * 
+	 *
 	 * @private
 	 */
 	var jQueryDeferred = $.Deferred;
@@ -2752,7 +2759,7 @@ function getRegex(target) {
 	/**
 	 * 登録された共通のエラー処理を実行できるDeferredオブジェクトを返します。<br>
 	 * Deferredに notify() / notifyWith() / progress() メソッドがない場合は、追加したオブジェクトを返します。
-	 * 
+	 *
 	 * @returns {Deferred} Deferredオブジェクト
 	 * @name deferred
 	 * @function
@@ -2941,7 +2948,7 @@ function getRegex(target) {
 	/**
 	 * オブジェクトがPromiseオブジェクトであるかどうかを返します。<br />
 	 * オブジェクトがDeferredオブジェクトの場合、falseが返ります。
-	 * 
+	 *
 	 * @param {Object} object オブジェクト
 	 * @returns {Boolean} オブジェクトがPromiseオブジェクトであるかどうか
 	 * @name isPromise
@@ -2954,7 +2961,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定された回数ごとにループを抜けブラウザに制御を戻すユーティリティメソッドです。
-	 * 
+	 *
 	 * @param {Any[]} array 配列
 	 * @param {Function} callback コールバック関数。<br />
 	 *            コールバックには引数として現在のインデックス、現在の値、ループコントローラが渡されます。<br />
@@ -3051,17 +3058,52 @@ function getRegex(target) {
 	 * <li>引数に指定されたすべてのプロミスオブジェクトが全てresolveされると、doneコールバックが実行されます。</li>
 	 * </ul>
 	 * このメソッドはjQuery.whenをラップしており、同じように使うことができます。<br>
-	 * このメソッドを使うと、共通のエラー処理を実行させることができます。<br>
-	 * 
-	 * @param {Promise} var_args promiseオブジェクト
+	 * このメソッドを使うと、共通のエラー処理(<a href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行させることができます。<br>
+	 * <br>
+	 * 引数は、配列または可変長で、複数のプロミスオブジェクトを渡すことができます。<br>
+	 * 例)
+	 * <ul>
+	 * <li>h5.async.when(p1, p2, p3); </li>
+	 * <li>h5.async.when([p1, p2, p3]); </li>
+	 * </ul>
+	 * プロミスオブジェクト以外を渡した時は無視されます。<br>
+	 * また、可変長と配列の組み合わせで指定することはできません。<br>
+	 * <ul>
+	 * <li>h5.async.when(p1, [p2, p3], p4);</li>
+	 * </ul>
+	 * のようなコードを書いた時、2番目の引数は「配列」であり「プロミス」ではないので無視され、p1とp4のみ待ちます。<br>
+	 * <br>
+	 * また、配列が入れ子になっていても、再帰的に評価はしません。<br>
+	 * <ul>
+	 * <li>h5.async.when([pi, [p2, p3], p4])</li>
+	 * </ul>
+	 * と書いても、先の例と同様p1とp4のみ待ちます。
+	 *
+	 * @param {Promise} var_args promiseオブジェクト。可変長、または配列で複数のpromiseを指定できます。
 	 * @returns {Promise} Promiseオブジェクト
 	 * @name when
 	 * @function
 	 * @memberOf h5.async
 	 */
 	var when = function(/* var_args */) {
+		var args = arguments;
+		if (args.length === 1 && $.isArray(args[0])) {
+			args = args[0];
+		}
 		var dfd = h5.async.deferred();
-		$.when.apply($, arguments).done(function(/* var_args */) {
+
+		/* del begin */
+		// 引数にpromise・deferredオブジェクト以外があった場合はログを出力します。
+		for ( var i = 0, l = args.length; i < l; i++) {
+			// DeferredもPromiseも、promiseメソッドを持つので、
+			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
+			if (args[i] != null && !args[i].promise && !$.isFunction(args[i].promise)) {
+				fwLogger.info(FW_LOG_H5_WHEN_INVALID_PARAMETER);
+				break;
+			}
+		}
+		/* del end */
+		$.when.apply($, args).done(function(/* var_args */) {
 			dfd.resolve.apply(dfd, arguments);
 		}).fail(function(/* var_args */) {
 			dfd.reject.apply(dfd, arguments);
@@ -3244,8 +3286,8 @@ function getRegex(target) {
 	var ERR_CODE_BIND_NOT_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
 	var ERR_CODE_BIND_TARGET_COMPLEX = 6004;
-	/** エラーコード: エラータイプが指定されていない */
-	var ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED = 6005;
+	/** エラーコード: 指定された引数の数が少ない */
+	var ERR_CODE_TOO_FEW_ARGUMENTS = 6005;
 	/** エラーコード: コントローラの名前が指定されていない */
 	var ERR_CODE_CONTROLLER_NAME_REQUIRED = 6006;
 	/** エラーコード: コントローラの初期化パラメータが不正 */
@@ -3284,7 +3326,7 @@ function getRegex(target) {
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_COMPLEX] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
-	errMsgMap[ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED] = 'エラータイプを指定してください。';
+	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_NAME_REQUIRED] = 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_ALREADY_CREATED] = '指定されたオブジェクトは既にコントローラ化されています。';
@@ -3306,11 +3348,15 @@ function getRegex(target) {
 	// =============================
 	// Development Only
 	// =============================
-	var fwLogger = h5.log.createLogger('h5.core');
 
 	/* del begin */
-
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var fwLogger = h5.log.createLogger('h5.core');
+	var FW_LOG_TEMPLATE_LOADED = 'コントローラ"{0}"のテンプレートの読み込みに成功しました。';
+	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
+	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
+	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
+	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ{0}の初期化が正常に完了しました。';
 	/* del end */
 
 	// =========================================================================
@@ -3324,6 +3370,12 @@ function getRegex(target) {
 	// Privates
 	//
 	// =========================================================================
+	/**
+	 * commonFailHandlerを発火させないために登録するdummyのfailハンドラ
+	 */
+	var dummyFailHandler = function() {
+	//
+	};
 	// =============================
 	// Variables
 	// =============================
@@ -3340,7 +3392,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラのexecuteListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
-	 * 
+	 *
 	 * @param {Object} invocation インヴォケーション.
 	 */
 	function executeListenersInterceptor(invocation) {
@@ -3352,7 +3404,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定されたオブジェクトの関数にアスペクトを織り込みます。
-	 * 
+	 *
 	 * @param {Object} controllerDefObject オブジェクト.
 	 * @param {Object} prop プロパティ名.
 	 * @param {Boolean} isEventHandler イベントハンドラかどうか.
@@ -3369,7 +3421,7 @@ function getRegex(target) {
 
 	/**
 	 * 関数名とポイントカットを比べて、条件に合致すればインターセプタを返す.
-	 * 
+	 *
 	 * @param {String} targetName バインドする必要のある関数名.
 	 * @param {Object} pcName ポイントカットで判別する対象名.
 	 * @returns {Function[]} AOP用関数配列.
@@ -3404,7 +3456,7 @@ function getRegex(target) {
 
 	/**
 	 * 基本となる関数にアスペクトを織り込んだ関数を返します。
-	 * 
+	 *
 	 * @param {Function} baseFunc 基本関数.
 	 * @param {String} funcName 基本関数名.
 	 * @param {Function[]} aspects AOP用関数配列.
@@ -3437,7 +3489,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定されたオブジェクトの関数にアスペクトを織り込みます。
-	 * 
+	 *
 	 * @param {Object} logic ロジック.
 	 * @returns {Object} AOPに必要なメソッドを織り込んだロジック.
 	 */
@@ -3455,7 +3507,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラ定義オブジェクトのプロパティがライフサイクルイベントどうかを返します。
-	 * 
+	 *
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
 	 * @param {String} prop プロパティ名
 	 * @returns {Boolean} コントローラ定義オブジェクトのプロパティがライフサイクルイベントかどうか
@@ -3469,7 +3521,7 @@ function getRegex(target) {
 	/**
 	 * セレクタがコントローラの外側の要素を指しているかどうかを返します。<br>
 	 * (外側の要素 = true)
-	 * 
+	 *
 	 * @param {String} selector セレクタ
 	 * @returns {Boolean} コントローラの外側の要素を指しているかどうか
 	 */
@@ -3479,7 +3531,7 @@ function getRegex(target) {
 
 	/**
 	 * イベント名がjQuery.bindを使って要素にイベントをバインドするかどうかを返します。
-	 * 
+	 *
 	 * @param {String} eventName イベント名
 	 * @returns {Boolean} jQuery.bindを使って要素にイベントをバインドするかどうか
 	 */
@@ -3489,7 +3541,7 @@ function getRegex(target) {
 
 	/**
 	 * セレクタから{}を外した文字列を返します。
-	 * 
+	 *
 	 * @param {String} selector セレクタ
 	 * @returns {String} セレクタから{}を外した文字列
 	 */
@@ -3499,7 +3551,7 @@ function getRegex(target) {
 
 	/**
 	 * イベント名から[]を外した文字列を返す
-	 * 
+	 *
 	 * @param {String} eventName イベント名
 	 * @returns {String} イベント名から[]を外した文字列
 	 */
@@ -3510,7 +3562,7 @@ function getRegex(target) {
 	/**
 	 * 指定されたセレクタがwindow, window., document, document., navidator, navigator. で
 	 * 始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します。
-	 * 
+	 *
 	 * @param {String} selector セレクタ
 	 * @returns {DOM|String} DOM要素、もしくはセレクタ
 	 */
@@ -3526,7 +3578,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定されたプロパティがイベントハンドラかどうかを返します。
-	 * 
+	 *
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
 	 * @param {String} prop プロパティ名
 	 * @returns {Boolean} プロパティがイベントハンドラかどうか
@@ -3537,7 +3589,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラ定義オブジェクトの子孫コントローラ定義が循環参照になっているかどうかをチェックします。
-	 * 
+	 *
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
 	 * @returns {Boolean} 循環参照になっているかどうか(true=循環参照)
 	 */
@@ -3555,7 +3607,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラ定義オブジェクトのロジック定義が循環参照になっているかどうかをチェックします。
-	 * 
+	 *
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
 	 * @returns {Boolean} 循環参照になっているかどうか(true=循環参照)
 	 */
@@ -3573,7 +3625,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラのプロパティが子コントローラかどうかを返します。
-	 * 
+	 *
 	 * @param {Object} controller コントローラ
 	 * @param {String} プロパティ名
 	 * @returns {Boolean} コントローラのプロパティが子コントローラかどうか(true=子コントローラである)
@@ -3587,7 +3639,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定されたコントローラの子孫コントローラのPromiseオブジェクトを全て取得します。
-	 * 
+	 *
 	 * @param {Object} controller コントローラ
 	 * @param {String} propertyName プロパティ名(initPromise,readyPromise)
 	 * @param {Object} aquireFromControllerContext コントローラコンテキストのプロパティかどうか
@@ -3618,7 +3670,7 @@ function getRegex(target) {
 
 	/**
 	 * 子孫コントローラのイベントハンドラをバインドします。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function bindDescendantHandlers(controller) {
@@ -3650,7 +3702,7 @@ function getRegex(target) {
 
 	/**
 	 * バインドマップに基づいてイベントハンドラをバインドします。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function bindByBindMap(controller) {
@@ -3666,7 +3718,7 @@ function getRegex(target) {
 
 	/**
 	 * イベントハンドラのバインドを行います。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
 	 * @param {String} eventName イベント名
@@ -3705,7 +3757,7 @@ function getRegex(target) {
 
 	/**
 	 * バインドオブジェクトに基づいてイベントハンドラをバインドします。
-	 * 
+	 *
 	 * @param {Object} bindObj バインドオブジェクト
 	 */
 	function bindByBindObject(bindObj) {
@@ -3744,7 +3796,7 @@ function getRegex(target) {
 
 	/**
 	 * バインドオブジェクトに対して必要であればイベント名を修正し、アンバインドマップにハンドラを追加した後、 実際にバインドを行います。
-	 * 
+	 *
 	 * @param {Object} bindObj バインドオブジェクト
 	 * @param {Boolean} bindRequested イベントハンドラをバインド([]記法)すべきかどうか
 	 */
@@ -3759,7 +3811,7 @@ function getRegex(target) {
 
 	/**
 	 * 子孫コントローラのイベントハンドラをアンバインドします。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function unbindDescendantHandlers(controller) {
@@ -3791,7 +3843,7 @@ function getRegex(target) {
 
 	/**
 	 * バインドマップに基づいてイベントハンドラをアンバインドします。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function unbindByBindMap(controller) {
@@ -3830,7 +3882,7 @@ function getRegex(target) {
 
 	/**
 	 * 指定されたフラグで子コントローラを含む全てのコントローラのexecuteListenersフラグを変更します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {Boolean} flag フラグ
 	 */
@@ -3854,7 +3906,7 @@ function getRegex(target) {
 
 	/**
 	 * rootControllerとparentControllerをセットします。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function initRootAndParentController(controller) {
@@ -3877,7 +3929,7 @@ function getRegex(target) {
 
 	/**
 	 * __init, __readyイベントを実行する.
-	 * 
+	 *
 	 * @param ｛Object} controller コントローラ.
 	 * @param {Booelan} isInitEvent __initイベントを実行するかどうか.
 	 */
@@ -3914,7 +3966,19 @@ function getRegex(target) {
 				if (h5.async.isPromise(ret)) {
 					ret.done(function() {
 						callback();
-					});
+					}).fail(
+							function(/* var_args */) {
+								var controllerName = controllerInstance.__name;
+								fwLogger.error(FW_LOG_INIT_CONTROLLER_REJECTED, controllerName,
+										isInitEvent ? '__init' : '__ready');
+								fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR,
+										controller.rootController.__name);
+
+								// 同じrootControllerを持つ他の子のdisposeによって、
+								// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
+								controller.rootController
+										&& controller.rootController.dispose(arguments);
+							});
 				} else {
 					callback();
 				}
@@ -3925,19 +3989,17 @@ function getRegex(target) {
 			if (isInitEvent && isLeafController) {
 				promises.push(leafPromise);
 			}
-			h5.async.when.apply($, promises).done(function() {
+			// dfdがrejectされたとき、commonFailHandlerが発火しないようにするため、dummyのfailハンドラを登録する
+			h5.async.when(promises).done(function() {
 				func();
-			}).fail(function(e) {
-				fwLogger.warn('コントローラのバインドに失敗しました。{0}', e.message);
-				h5.settings.commonFailHandler && h5.settings.commonFailHandler(e);
-			});
+			}).fail(dummyFailHandler);
 		};
 		execInner(controller);
 	}
 
 	/**
 	 * __initイベントを実行するために必要なPromiseを返します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @returns {Promise[]} Promiseオブジェクト
 	 */
@@ -3951,7 +4013,7 @@ function getRegex(target) {
 
 	/**
 	 * __readyイベントを実行するために必要なPromiseを返します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @returns {Promise[]} Promiseオブジェクト
 	 */
@@ -3962,7 +4024,7 @@ function getRegex(target) {
 
 	/**
 	 * __initイベントで実行するコールバック関数を返します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function createCallbackForInit(controller) {
@@ -3987,7 +4049,7 @@ function getRegex(target) {
 
 	/**
 	 * __readyイベントで実行するコールバック関数を返します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function createCallbackForReady(controller) {
@@ -4015,7 +4077,7 @@ function getRegex(target) {
 
 	/**
 	 * テンプレートに渡すセレクタとして正しいかどうかを返します。
-	 * 
+	 *
 	 * @param {String} selector セレクタ
 	 * @returns {Boolean} テンプレートに渡すセレクタとして正しいかどうか(true=正しい)
 	 */
@@ -4032,7 +4094,7 @@ function getRegex(target) {
 	/**
 	 * 指定された要素が文字列があれば、ルートエレメント、{}記法を考慮した要素をjQueryオブジェクト化して返します。 DOM要素、jQueryオブジェクトであれば、
 	 * jQueryオブジェクト化して(指定要素がjQueryオブジェクトの場合、無駄な処理になるがコスト的には問題ない)返します。
-	 * 
+	 *
 	 * @param {String|DOM|jQuery} セレクタ、DOM要素、jQueryオブジェクト
 	 * @param {DOM} rootElement ルートエレメント
 	 * @param {Boolean} isTemplate テンプレートで使用するかどうか
@@ -4058,7 +4120,7 @@ function getRegex(target) {
 
 	/**
 	 * ハンドラをアンバインドマップに登録します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
 	 * @param {String} eventName イベント名
@@ -4073,7 +4135,7 @@ function getRegex(target) {
 
 	/**
 	 * バインドオブジェクトを返します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
 	 * @param {String} eventName イベント名
@@ -4099,7 +4161,7 @@ function getRegex(target) {
 
 	/**
 	 * クラスブラウザな"mousewheel"イベントのためのバインドオブジェクトを返します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
 	 * @param {String} eventName イベント名
@@ -4132,7 +4194,7 @@ function getRegex(target) {
 	}
 	/**
 	 * hifiveの独自イベント"h5trackstart", "h5trackmove", "h5trackend"のためのバインドオブジェクトを返します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
 	 * @param {String} eventName イベント名
@@ -4273,7 +4335,7 @@ function getRegex(target) {
 
 	/**
 	 * タッチイベントのイベントオブジェクトにpageXやoffsetXといった座標系のプロパティを追加します。
-	 * 
+	 *
 	 * @param {Object} event jQuery.Eventオブジェクト
 	 * @param {String} eventName イベント名
 	 */
@@ -4306,7 +4368,7 @@ function getRegex(target) {
 	}
 	/**
 	 * イベントオブジェクトを正規化します。
-	 * 
+	 *
 	 * @param {Object} event jQuery.Eventオブジェクト
 	 */
 	function normalizeEventObjext(event) {
@@ -4328,7 +4390,7 @@ function getRegex(target) {
 
 	/**
 	 * イベントコンテキストを作成します。
-	 * 
+	 *
 	 * @param {Object} controller コントローラ
 	 * @param {Object} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
 	 */
@@ -4351,7 +4413,7 @@ function getRegex(target) {
 
 	/**
 	 * 初期化イベントコンテキストをセットアップします。
-	 * 
+	 *
 	 * @param {Object} rootController ルートコントローラ
 	 */
 	function createInitializationContext(rootController) {
@@ -4362,7 +4424,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラとその子孫コントローラのrootElementにnullをセットします。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function unbindRootElement(controller) {
@@ -4378,7 +4440,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラとその子孫コントローラのrootElementをセットします。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function copyAndSetRootElement(controller) {
@@ -4401,7 +4463,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラをバインドする対象となる要素を返します。
-	 * 
+	 *
 	 * @param {String|DOM|jQuery} element セレクタ、DOM要素、もしくはjQueryオブジェクト
 	 * @param {DOM} [rootElement] ルートエレメント
 	 * @param {Controller} controller コントローラ
@@ -4430,33 +4492,39 @@ function getRegex(target) {
 
 	/**
 	 * イベントハンドラのバインドと__readyイベントを実行します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function bindAndTriggerReady(controller) {
 		bindByBindMap(controller);
 		bindDescendantHandlers(controller);
 
-		// コントローラマネージャの管理対象に追加
+		var managed = controller.__controllerContext.managed;
+
+		// コントローラマネージャの管理対象に追加する
+		// フレームワークオプションでコントローラマネージャの管理対象としない(managed:false)の場合、コントローラマネージャに登録しない
 		var controllers = h5.core.controllerManager.controllers;
-		if ($.inArray(controller, controllers) === -1) {
+		if ($.inArray(controller, controllers) === -1 && managed !== false) {
 			controllers.push(controller);
 		}
 
-		// h5controllerboundイベントをトリガ.
-		$(controller.rootElement).trigger('h5controllerbound', [controller]);
+		// managed=falseの場合、コントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない
+		if (managed !== false) {
+			// h5controllerboundイベントをトリガ.
+			$(controller.rootElement).trigger('h5controllerbound', [controller]);
+		}
 
 		// コントローラの__ready処理を実行
 		var initPromises = getDescendantControllerPromises(controller, 'initPromise');
 		initPromises.push(controller.initPromise);
-		h5.async.when.apply($, initPromises).done(function() {
+		h5.async.when(initPromises).done(function() {
 			executeLifecycleEventChain(controller, false);
-		});
+		}).fail(dummyFailHandler);
 	}
 
 	/**
 	 * rootController, parentControllerのセットと__initイベントを実行します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function setRootAndTriggerInit(controller) {
@@ -4472,7 +4540,7 @@ function getRegex(target) {
 
 	/**
 	 * h5.core.bindController()のために必要なプロパティをコントローラに追加します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} param 初期化パラメータ
 	 */
@@ -4496,7 +4564,7 @@ function getRegex(target) {
 
 	/**
 	 * インジケータを呼び出します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} option インジケータのオプション
 	 */
@@ -4515,7 +4583,7 @@ function getRegex(target) {
 
 	/**
 	 * __unbind, __disposeイベントを実行します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} property プロパティ名(__unbind | __dispose)
 	 * @returns {Promise[]} Promiseオブジェクト
@@ -4543,7 +4611,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラのリソース解放処理を行います。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function disposeController(controller) {
@@ -4554,13 +4622,15 @@ function getRegex(target) {
 				parentController.view.clear();
 			}
 			for ( var prop in parentController) {
-				if (isChildController(parentController, prop)) {
-					var c = parentController[prop];
-					if ($.inArray(c, targets) === -1) {
-						dispose(c);
+				if (parentController.hasOwnProperty(prop)) {
+					if (isChildController(parentController, prop)) {
+						var c = parentController[prop];
+						if ($.inArray(c, targets) === -1) {
+							dispose(c);
+						}
 					}
+					parentController[prop] = null;
 				}
-				parentController[prop] = null;
 			}
 		};
 		dispose(controller);
@@ -4570,7 +4640,7 @@ function getRegex(target) {
 	 * 指定されたIDを持つViewインスタンスを返します。 自身が持つViewインスタンスが指定されたIDを持っていない場合、parentControllerのViewインスタンスに対して
 	 * 持っているかどうか問い合わせ、持っていればそのインスタンスを、持っていなければ更に上に問い合わせます。
 	 * ルートコントローラのViewインスタンスも持っていない場合、h5.core.viewに格納された最上位のViewインスタンスを返します。
-	 * 
+	 *
 	 * @param {String} templateId テンプレートID
 	 * @param {Controller} controller コントローラ
 	 */
@@ -4585,11 +4655,62 @@ function getRegex(target) {
 
 	/**
 	 * 指定されたコントローラがdispose済みかどうか、(非同期の場合はdispose中かどうか)を返します。
-	 * 
+	 *
 	 * @param {Controller} controller コントローラ
 	 */
 	function isDisposing(controller) {
 		return !controller.__controllerContext || controller.__controllerContext.isDisposing;
+	}
+
+	/**
+	 * 指定されたコントローラとその子供コントローラのresolve/rejectされていないdeferredをrejectします。
+	 *
+	 * @param {Controller} controller コントローラ
+	 * @param {Any} [errorObj] rejectに渡すオブジェクト
+	 */
+	function rejectControllerDfd(controller, errorObj) {
+		// 指定されたコントローラから見た末裔のコントローラを取得
+		var descendantControllers = [];
+		var getDescendant = function(con) {
+			var hasChildController = false;
+			for ( var prop in con) {
+				// 子コントローラがあれば再帰的に処理
+				if (isChildController(con, prop)) {
+					hasChildController = true;
+					getDescendant(con[prop]);
+				}
+			}
+			if (!hasChildController) {
+				// 子コントローラを持っていないなら、descendantControllersにpush
+				descendantControllers.push(con);
+			}
+		};
+		getDescendant(controller);
+
+		var propertyArray = ['initDfd', 'readyDfd'];
+		function rejectControllerDfdLoop(con, propertyIndex) {
+			var property = propertyArray[propertyIndex];
+			var dfd = con.__controllerContext[property];
+			if (dfd) {
+				if (!dfd.isRejected() && !dfd.isResolved()) {
+					dfd.reject(errorObj);
+				}
+			}
+			if (con.parentController) {
+				rejectControllerDfdLoop(con.parentController, propertyIndex);
+			} else {
+				// readyDfdまでrejectしたら終了
+				if (propertyIndex < propertyArray.length - 1) {
+					// ルートコントローラまで辿ったら、末裔のコントローラに対して次のdfdをrejectさせる
+					for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+						rejectControllerDfdLoop(descendantControllers[i], propertyIndex + 1);
+					}
+				}
+			}
+		}
+		for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+			rejectControllerDfdLoop(descendantControllers[i], 0);
+		}
 	}
 
 	// =========================================================================
@@ -4597,12 +4718,11 @@ function getRegex(target) {
 	// Body
 	//
 	// =========================================================================
-
 	function controllerFactory(controller, rootElement, controllerName, param, isRoot) {
 
 		/**
 		 * コントローラ名.
-		 * 
+		 *
 		 * @type String
 		 * @name __name
 		 * @memberOf Controller
@@ -4611,7 +4731,7 @@ function getRegex(target) {
 
 		/**
 		 * テンプレート.
-		 * 
+		 *
 		 * @type String|String[]
 		 * @name __templates
 		 * @memberOf Controller
@@ -4620,7 +4740,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラがバインドされた要素.
-		 * 
+		 *
 		 * @type Element
 		 * @name rootElement
 		 * @memberOf Controller
@@ -4629,7 +4749,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラコンテキスト.
-		 * 
+		 *
 		 * @private
 		 * @memberOf Controller
 		 * @name __controllerContext
@@ -4638,28 +4758,28 @@ function getRegex(target) {
 
 			/**
 			 * リスナーを実行するかどうかのフラグ
-			 * 
+			 *
 			 * @type Boolean
 			 */
 			executeListeners: true,
 
 			/**
 			 * ルートコントローラかどうか
-			 * 
+			 *
 			 * @type Boolean
 			 */
 			isRoot: isRoot,
 
 			/**
 			 * バインド対象となるイベントハンドラのマップ.
-			 * 
+			 *
 			 * @type Object
 			 */
 			bindMap: {},
 
 			/**
 			 * アンバインド対象となるイベントハンドラのマップ.
-			 * 
+			 *
 			 * @type Object
 			 */
 			unbindMap: {}
@@ -4672,7 +4792,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラのライフサイクルイベント__initが終了したかどうかを返します。
-		 * 
+		 *
 		 * @type Boolean
 		 * @memberOf Controller
 		 * @name isInit
@@ -4681,7 +4801,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラのライフサイクルイベント__readyが終了したかどうかを返します。
-		 * 
+		 *
 		 * @type Boolean
 		 * @memberOf Controller
 		 * @name isReady
@@ -4690,7 +4810,7 @@ function getRegex(target) {
 
 		/**
 		 * 親子関係を持つコントローラ群の一番祖先であるコントローラを返します。祖先がいない場合、自分自身を返します。
-		 * 
+		 *
 		 * @type Controller
 		 * @memberOf Controller
 		 * @name rootController
@@ -4699,7 +4819,7 @@ function getRegex(target) {
 
 		/**
 		 * 親子関係を持つコントローラの親コントローラを返します。親コントローラがいない場合、nullを返します。
-		 * 
+		 *
 		 * @type Controller
 		 * @memberOf Controller
 		 * @name parentController
@@ -4708,7 +4828,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラのライフサイクルイベント__initについてのPromiseオブジェクトを返します。
-		 * 
+		 *
 		 * @type Promise
 		 * @memberOf Controller
 		 * @name initPromise
@@ -4717,7 +4837,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラのライフサイクルイベント__readyについてのPromiseオブジェクトを返します。
-		 * 
+		 *
 		 * @type Promise
 		 * @memberOf Controller
 		 * @name readyPromise
@@ -4726,7 +4846,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラのロガーを返します。
-		 * 
+		 *
 		 * @type Log
 		 * @memberOf Controller
 		 * @name log
@@ -4735,7 +4855,7 @@ function getRegex(target) {
 
 		/**
 		 * ビュー操作に関するメソッドを格納しています。
-		 * 
+		 *
 		 * @namespace
 		 * @name view
 		 * @memberOf Controller
@@ -4757,7 +4877,7 @@ function getRegex(target) {
 
 		/**
 		 * パラメータで置換された、指定されたテンプレートIDのテンプレートを取得します。
-		 * 
+		 *
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
 		 * @returns {String} テンプレート文字列
@@ -4772,7 +4892,7 @@ function getRegex(target) {
 
 		/**
 		 * 要素を指定されたIDのテンプレートで書き換えます。
-		 * 
+		 *
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
@@ -4788,7 +4908,7 @@ function getRegex(target) {
 
 		/**
 		 * 要素の末尾に指定されたIDのテンプレートを挿入します。
-		 * 
+		 *
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
@@ -4804,7 +4924,7 @@ function getRegex(target) {
 
 		/**
 		 * 要素の先頭に指定されたIDのテンプレートを挿入します。
-		 * 
+		 *
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
@@ -4820,7 +4940,7 @@ function getRegex(target) {
 
 		/**
 		 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします。
-		 * 
+		 *
 		 * @param {String|String[]} resourcePaths テンプレートファイル(.ejs)のパス (配列で複数指定可能)
 		 * @returns {Promise} Promiseオブジェクト
 		 * @function
@@ -4834,7 +4954,7 @@ function getRegex(target) {
 
 		/**
 		 * Viewインスタンスに、指定されたIDとテンプレート文字列からテンプレートを1件登録します。
-		 * 
+		 *
 		 * @param {String} templateId テンプレートID
 		 * @param {String} templateString テンプレート文字列
 		 * @function
@@ -4848,7 +4968,7 @@ function getRegex(target) {
 
 		/**
 		 * テンプレート文字列が、コンパイルできるかどうかを返します。
-		 * 
+		 *
 		 * @param {String} templateString テンプレート文字列
 		 * @returns {Boolean} 渡されたテンプレート文字列がコンパイル可能かどうか。
 		 * @function
@@ -4862,7 +4982,7 @@ function getRegex(target) {
 
 		/**
 		 * 指定されたテンプレートIDのテンプレートが存在するか判定します。
-		 * 
+		 *
 		 * @param {String} templateId テンプレートID
 		 * @returns {Boolean} 判定結果(存在する: true / 存在しない: false)
 		 * @function
@@ -4877,7 +4997,7 @@ function getRegex(target) {
 		/**
 		 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 <br />
 		 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
-		 * 
+		 *
 		 * @param {String|String[]} [templateId] テンプレートID
 		 * @function
 		 * @name clear
@@ -4891,7 +5011,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラのコンストラクタ
-	 * 
+	 *
 	 * @param {Element} rootElement コントローラをバインドした要素
 	 * @param {String} controllerName コントローラ名
 	 * @param {Object} param 初期化パラメータ
@@ -4905,7 +5025,7 @@ function getRegex(target) {
 	$.extend(Controller.prototype, {
 		/**
 		 * コントローラがバインドされた要素内から要素を選択します。
-		 * 
+		 *
 		 * @param {String} selector セレクタ
 		 * @returns {jQuery} セレクタにマッチするjQueryオブジェクト
 		 * @memberOf Controller
@@ -4916,7 +5036,7 @@ function getRegex(target) {
 
 		/**
 		 * Deferredオブジェクトを返します。
-		 * 
+		 *
 		 * @returns {Deferred} Deferredオブジェクト
 		 * @memberOf Controller
 		 */
@@ -4926,7 +5046,7 @@ function getRegex(target) {
 
 		/**
 		 * ルート要素を起点に指定されたイベントを実行します。
-		 * 
+		 *
 		 * @param {String} eventName イベント名
 		 * @param {Object} [parameter] パラメータ
 		 * @memberOf Controller
@@ -4937,7 +5057,7 @@ function getRegex(target) {
 
 		/**
 		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更して実行する関数を返します。
-		 * 
+		 *
 		 * @param {Function} func 関数
 		 * @return {Function} コンテキスト(this)をコントローラに変更した関数
 		 * @memberOf Controller
@@ -4951,7 +5071,7 @@ function getRegex(target) {
 
 		/**
 		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えて実行する関数を返します。
-		 * 
+		 *
 		 * @param {Function} func 関数
 		 * @return {Function} コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えた関数
 		 * @memberOf Controller
@@ -4967,7 +5087,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラを要素へバインドします。
-		 * 
+		 *
 		 * @memberOf Controller
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.<br />
 		 *            セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。
@@ -4990,7 +5110,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラのバインドを解除します。
-		 * 
+		 *
 		 * @memberOf Controller
 		 */
 		unbind: function() {
@@ -5021,21 +5141,25 @@ function getRegex(target) {
 		/**
 		 * コントローラのリソースをすべて削除します。<br />
 		 * Controller#unbind() の処理を包含しています。
-		 * 
+		 *
+		 * @param {Any} [errorObj] disposeの際にrejectするdeferredのpromiseのfailハンドラに渡すオブジェクト
 		 * @returns {Promise} Promiseオブジェクト
 		 * @memberOf Controller
 		 */
-		dispose: function() {
+		dispose: function(errorObj) {
 			// disopseされていたら何もしない。
 			if (isDisposing(this)) {
 				return;
 			}
+			// rejectまたはfailされていないdeferredをreject()する。
+			rejectControllerDfd(this, errorObj);
+
 			this.__controllerContext.isDisposing = 1;
 			var dfd = this.deferred();
 			this.unbind();
 			var that = this;
 			var promises = executeLifeEndChain(this, '__dispose');
-			h5.async.when.apply($, promises).done(function() {
+			h5.async.when(promises).always(function() {
 				disposeController(that);
 				dfd.resolve();
 			});
@@ -5044,7 +5168,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラのインジケータイベントを実行します。
-		 * 
+		 *
 		 * @param {Object} opt オプション
 		 * @param {String} [opt.message] メッセージ
 		 * @param {Number} [opt.percent] 進捗を0～100の値で指定する。
@@ -5081,40 +5205,40 @@ function getRegex(target) {
 		 * <h4>使用例</h4>
 		 * <b>画面全体をブロックする場合</b><br>
 		 * ・画面全体をブロックする場合、targetオプションに<b>document</b>、<b>window</b>または<b>body</b>を指定する。<br>
-		 * 
+		 *
 		 * <pre>
 		 * var indicator = this.indicator({
 		 * 	target: document
 		 * }).show();
 		 * </pre>
-		 * 
-		 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しないる場合</b><br>
-		 * 
+		 *
+		 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
+		 *
 		 * <pre>
 		 * var indicator = this.indicator({
 		 * 	target: 'li',
 		 * 	block: false
 		 * }).show();
 		 * </pre>
-		 * 
+		 *
 		 * <b>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
 		 * resolve() または resolve() が実行されると、画面からインジケータを除去します。
-		 * 
+		 *
 		 * <pre>
 		 * var df = $.Deferred();
 		 * var indicator = this.indicator({
 		 * 	target: document,
 		 * 	promises: df.promise()
 		 * }).show();
-		 * 
+		 *
 		 * setTimeout(function() {
 		 * 	df.resolve() // ここでイジケータが除去される
 		 * }, 2000);
 		 * </pre>
-		 * 
+		 *
 		 * <b>パラメータに複数のPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
 		 * Promiseオブジェクトを配列で複数指定すると、全てのPromiseオブジェクトでresolve()が実行されるか、またはいずれかのPromiseオブジェクトでfail()が実行されるタイミングでインジケータを画面から除去します。
-		 * 
+		 *
 		 * <pre>
 		 * var df = $.Deferred();
 		 * var df2 = $.Deferred();
@@ -5122,16 +5246,16 @@ function getRegex(target) {
 		 * 	target: document,
 		 * 	promises: [df.promise(), df2.promise()]
 		 * }).show();
-		 * 
+		 *
 		 * setTimeout(function() {
 		 * 	df.resolve()
 		 * }, 2000);
-		 * 
+		 *
 		 * setTimeout(function() {
 		 * 	df.resolve() // ここでイジケータが除去される
 		 * }, 4000);
 		 * </pre>
-		 * 
+		 *
 		 * @param {Object} [opt]
 		 * @param {String} [opt.message] メッセージ
 		 * @param {Number} [opt.percent] 進捗を0～100の値で指定する。
@@ -5148,7 +5272,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラに定義されているリスナーの実行を許可します。
-		 * 
+		 *
 		 * @memberOf Controller
 		 */
 		enableListeners: function() {
@@ -5157,7 +5281,7 @@ function getRegex(target) {
 
 		/**
 		 * コントローラに定義されているリスナーの実行を禁止します。
-		 * 
+		 *
 		 * @memberOf Controller
 		 */
 		disableListeners: function() {
@@ -5165,44 +5289,56 @@ function getRegex(target) {
 		},
 
 		/**
-		 * フォーマット済みメッセージを詰めたエラーをthrowします。
-		 * 
+		 * 指定された値をメッセージとして例外をスローします。
+		 * <p>
+		 * 第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+		 * <p>
+		 * <b>文字列の場合</b><br>
+		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
+		 * <p>
+		 * <b>オブジェクトの場合</b><br>
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
+		 *
 		 * @memberOf Controller
-		 * @param {String|Object} parameter 文字列の場合、第2引数以降をパラメータとしてフォーマットします。<br />
-		 *            オブジェクトの場合、そのままErrorクラスへ格納します。
-		 * @param {Any} [var_args] 第1引数が文字列の場合のパラメータ
+		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
+		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
-		throwError: function(parameter, var_args) {
-			var error = null;
-			if (parameter && typeof parameter === 'string') {
-				error = new Error(format.apply(null, argsToArray(arguments)));
-			} else {
-				error = Error.apply(null, arguments);
-			}
-			error.customType = null;
-			throw error;
+		throwError: function(msgOrErrObj, var_args) {
+			//引数の個数チェックはthrowCustomErrorで行う
+			var args = argsToArray(arguments);
+			args.unshift(null);
+			this.throwCustomError.apply(null, args);
 		},
 
 		/**
-		 * エラータイプとフォーマット済みメッセージを詰めたエラーをthrowします。
-		 * 
+		 * 指定された値をメッセージとして例外をスローします。
+		 * <p>
+		 * このメソッドでスローされたErrorオブジェクトのcustomTypeプロパティには、第一引数で指定した型情報が格納されます。
+		 * <p>
+		 * 第二引数がオブジェクトまたは文字列によって、出力される内容が異なります。
+		 * <p>
+		 * <b>文字列の場合</b><br>
+		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
+		 * <p>
+		 * <b>オブジェクトの場合</b><br>
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
+		 *
 		 * @memberOf Controller
-		 * @param {String} customType エラータイプ
-		 * @param {String|Object} parameter 文字列の場合、第3引数以降をパラメータとしてフォーマットします。<br />
-		 *            オブジェクトの場合、そのままErrorクラスへ格納します。
-		 * @param {Any} [var_args] 第2引数が文字列の場合のパラメータ
+		 * @param {String} customType 型情報
+		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
+		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
-		throwCustomError: function(customType, parameter, var_args) {
-			// null, undefinedの場合をtrueとしたいため、あえて厳密等価にしていない
-			if (customType == null) {
-				throwFwError(ERR_CODE_CUSTOM_ERROR_TYPE_REQUIRED);
+		throwCustomError: function(customType, msgOrErrObj, var_args) {
+			if (arguments.length < 2) {
+				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
-			var args = argsToArray(arguments);
-			args.shift();
-			if (parameter && typeof parameter === 'string') {
-				error = new Error(format.apply(null, argsToArray(args)));
+
+			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
+				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));
 			} else {
-				error = Error.apply(null, args);
+				// 引数を渡さないと、iOS4は"unknown error"、その他のブラウザは空文字が、デフォルトのエラーメッセージとして入る
+				error = new Error();
+				error.detail = msgOrErrObj;
 			}
 			error.customType = customType;
 			throw error;
@@ -5211,7 +5347,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラマネージャクラス
-	 * 
+	 *
 	 * @name ControllerManager
 	 * @class
 	 */
@@ -5221,7 +5357,7 @@ function getRegex(target) {
 
 		/**
 		 * triggerIndicatorイベントハンドラ
-		 * 
+		 *
 		 * @param {EventContext} context
 		 * @memberOf ControllerManager
 		 * @private
@@ -5239,7 +5375,7 @@ function getRegex(target) {
 
 		/**
 		 * すべてのコントローラのインスタンスの配列を返します。
-		 * 
+		 *
 		 * @returns {Controller[]} コントローラ配列
 		 * @memberOf ControllerManager
 		 */
@@ -5249,7 +5385,7 @@ function getRegex(target) {
 
 		/**
 		 * 指定した要素にバインドされているコントローラを返します。
-		 * 
+		 *
 		 * @param {String|Element|jQuery} rootElement 要素
 		 * @returns {Controller} コントローラ
 		 * @memberOf ControllerManager
@@ -5268,7 +5404,7 @@ function getRegex(target) {
 	h5.u.obj.expose('h5.core', {
 		/**
 		 * コントローラマネージャ
-		 * 
+		 *
 		 * @name controllerManager
 		 * @type ControllerManager
 		 * @memberOf h5.core
@@ -5293,7 +5429,7 @@ function getRegex(target) {
 
 	/**
 	 * コントローラのファクトリ
-	 * 
+	 *
 	 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.
 	 * @param {Object} controllerDefObj コントローラ定義オブジェクト
 	 * @param {Object} [param] 初期化パラメータ.
@@ -5363,13 +5499,28 @@ function getRegex(target) {
 		var preinitDfd = getDeferred();
 		var preinitPromise = preinitDfd.promise();
 
-		controller.__controllerContext.templatePromise = templatePromise;
+		controller.__controllerContext.preinitDfd = preinitDfd;
 		controller.preinitPromise = preinitPromise;
 		controller.__controllerContext.initDfd = getDeferred();
-		controller.initPromise = controller.__controllerContext.initDfd.promise();
+
+		// initPromiseが失敗してもcommonFailHandlerを発火させないようにするため、dummyのfailハンドラを登録する
+		controller.initPromise = controller.__controllerContext.initDfd.promise().fail(
+				dummyFailHandler);
 		controller.__controllerContext.readyDfd = getDeferred();
 		controller.readyPromise = controller.__controllerContext.readyDfd.promise();
 
+		if (!isRoot) {
+			// ルートコントローラでないなら、readyPromiseの失敗でcommonFailHandlerを発火させないようにする
+			controller.readyPromise.fail(dummyFailHandler);
+		}
+		/* del begin */
+		else {
+			// ルートコントローラなら、readyPromise.doneのタイミングで、ログを出力する
+			controller.readyPromise.done(function() {
+				fwLogger.info(FW_LOG_INIT_CONTROLLER_COMPLETE, controllerName);
+			});
+		}
+		/* del end */
 		if (templates && templates.length > 0) {
 			// テンプレートがあればロード
 			var viewLoad = function(count) {
@@ -5381,7 +5532,7 @@ function getRegex(target) {
 				vp.then(function(result) {
 					/* del begin */
 					if (templates && templates.length > 0) {
-						fwLogger.info('コントローラ"{0}"のテンプレートの読み込みに成功しました。', controllerName);
+						fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
 					}
 					/* del end */
 					templateDfd.resolve();
@@ -5393,9 +5544,12 @@ function getRegex(target) {
 					// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
 					// WinInet のエラーコード(12001 - 12156):
 					// http://support.microsoft.com/kb/193625/ja
-					var jqXhrStatus = result.detail.error.status;
+					var errorObj = result.detail.error;
+					var jqXhrStatus = errorObj ? errorObj.status : null;
 					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
 							&& jqXhrStatus !== 12029) {
+						fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
+								result.detail.url);
 						result.controllerDefObject = controllerDefObj;
 						setTimeout(function() {
 							templateDfd.reject(result);
@@ -5415,12 +5569,17 @@ function getRegex(target) {
 
 		// テンプレートプロミスのハンドラ登録
 		templatePromise.done(function() {
-			preinitDfd.resolve();
+			if (!isDisposing(controller)) {
+				preinitDfd.resolve();
+			}
 		}).fail(function(e) {
 			preinitDfd.reject(e);
-			if (controller.__controllerContext) {
-				controller.rootController.dispose();
+			if (controller.rootController && !isDisposing(controller.rootController)) {
+				fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR, controller.rootController.__name);
 			}
+			// 同じrootControllerを持つ他の子のdisposeによって、
+			// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
+			controller.rootController && controller.rootController.dispose(e);
 		});
 
 		for ( var prop in clonedControllerDef) {
@@ -5515,6 +5674,12 @@ function getRegex(target) {
 		if (isDisposing(controller)) {
 			return null;
 		}
+
+		// コントローラマネージャの管理対象とするか判定する
+		if (fwOpt && 'managed' in fwOpt) {
+			controller.__controllerContext.managed = fwOpt.managed;
+		}
+
 		// ルートコントローラなら、ルートをセット
 		if (controller.__controllerContext.isRoot) {
 			setRootAndTriggerInit(controller);
@@ -5522,9 +5687,12 @@ function getRegex(target) {
 		return controller;
 	}
 
+	// fwOptを引数に取る、コントローラ化を行うメソッドを、h5internal.core.controllerInternalとして内部用に登録
+	h5internal.core.controllerInternal = createAndBindController;
+
 	/**
 	 * オブジェクトのロジック化を行います。
-	 * 
+	 *
 	 * @param {Object} logicDefObj ロジック定義オブジェクト
 	 * @returns {Logic}
 	 * @name logic
@@ -5563,7 +5731,7 @@ function getRegex(target) {
 
 	/**
 	 * Core MVCの名前空間
-	 * 
+	 *
 	 * @name core
 	 * @memberOf h5
 	 * @namespace
@@ -5571,7 +5739,7 @@ function getRegex(target) {
 	h5.u.obj.expose('h5.core', {
 		/**
 		 * オブジェクトのコントローラ化と、要素へのバインドを行います。
-		 * 
+		 *
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト..<br />
 		 *            セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。
 		 * @param {Object} controllerDefObj コントローラ定義オブジェクト
@@ -5582,7 +5750,9 @@ function getRegex(target) {
 		 * @function
 		 * @memberOf h5.core
 		 */
-		controller: createAndBindController,
+		controller: function(targetElement, controllerDefObj, param) {
+			return createAndBindController(targetElement, controllerDefObj, param);
+		},
 
 		logic: createLogic,
 
@@ -5590,7 +5760,7 @@ function getRegex(target) {
 		 * コントローラ、ロジックを__nameで公開します。<br />
 		 * 例：__nameが"sample.namespace.controller.TestController"の場合、window.sample.namespace.controller.TestController
 		 * で グローバルから辿れるようにします。
-		 * 
+		 *
 		 * @param {Controller|Logic} obj コントローラ、もしくはロジック
 		 * @name expose
 		 * @function
@@ -5672,7 +5842,7 @@ function getRegex(target) {
 	errMsgMap[ERR_CODE_TEMPLATE_COMPILE] = 'テンプレートをコンパイルできませんでした。{0}';
 	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。{0}';
 	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
-	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0} URL:{1}';
+	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
 	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
@@ -5705,9 +5875,10 @@ function getRegex(target) {
 	// =============================
 
 	var fwLogger = h5.log.createLogger('h5.core.view');
-
 	/* del begin */
-
+	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var FW_LOG_TEMPLATE_NOT_REGISTERED = '指定されたIDのテンプレートは登録されていません。"{0}"';
+	var FW_LOG_TEMPLATE_OVERWRITE = 'テンプレートID:{0} は上書きされました。';
 	/* del end */
 
 	// =========================================================================
@@ -5734,7 +5905,7 @@ function getRegex(target) {
 
 		/**
 		 * HTML文字列をエスケープします。
-		 * 
+		 *
 		 * @param {String} str エスケープ対象文字列
 		 * @returns {String} エスケープされた文字列
 		 */
@@ -5765,11 +5936,11 @@ function getRegex(target) {
 		/**
 		 * 現在アクセス中のURL(絶対パス)をkeyにして、そのpromiseオブジェクトを持つ連想配列
 		 */
-		accessingUrls: [],
+		accessingUrls: {},
 
 		/**
 		 * コンパイル済みテンプレートオブジェクトをキャッシュします。
-		 * 
+		 *
 		 * @param {String} url URL(絶対パス)
 		 * @param {Object} compiled コンパイル済みテンプレートオブジェクト
 		 * @param {String} [path] 相対パス
@@ -5787,7 +5958,7 @@ function getRegex(target) {
 		/* del begin */
 		/**
 		 * テンプレートのグローバルキャッシュが保持しているURL、指定された相対パス、テンプレートIDを持ったオブジェクトを返します。 この関数は開発版でのみ利用できます。
-		 * 
+		 *
 		 * @returns {Array[Object]} グローバルキャッシュが保持しているテンプレート情報オブジェクトの配列。 [{path:(指定されたパス、相対パス),
 		 *          absoluteUrl:(絶対パス), ids:(ファイルから取得したテンプレートのIDの配列)} ,...]
 		 */
@@ -5811,7 +5982,7 @@ function getRegex(target) {
 
 		/**
 		 * 指定されたURLのキャッシュを削除します。
-		 * 
+		 *
 		 * @param {String} url URL
 		 * @param {Boolean} isOnlyUrls trueを指定された場合、キャッシュは消さずに、キャッシュしているURLリストから引数に指定されたURLを削除します。
 		 */
@@ -5829,7 +6000,7 @@ function getRegex(target) {
 
 		/**
 		 * 指定されたテンプレートパスからテンプレートを非同期で読み込みます。 テンプレートパスがキャッシュに存在する場合はキャッシュから読み込みます。
-		 * 
+		 *
 		 * @param {Array[String]} resourcePaths テンプレートパス
 		 * @returns {Object} Promiseオブジェクト
 		 */
@@ -5841,7 +6012,7 @@ function getRegex(target) {
 			var that = this;
 			/**
 			 * キャッシュからテンプレートを取得します。
-			 * 
+			 *
 			 * @param {String} url ファイルの絶対パス
 			 * @returns {Object} テンプレートIDがkeyである、コンパイル済みテンプレートオブジェクトを持つオブジェクト
 			 */
@@ -5854,7 +6025,7 @@ function getRegex(target) {
 
 			/**
 			 * テンプレートをEJS用にコンパイルされたテンプレートに変換します。
-			 * 
+			 *
 			 * @param {jQuery} $templateElements テンプレートが記述されている要素(<script type="text/ejs">...</script>)
 			 * @returns {Object}
 			 *          テンプレートIDがkeyである、コンパイル済みテンプレートオブジェクトを持つオブジェクトと、テンプレートを取得したファイルパスと絶対パス(URL)を保持するオブジェクト
@@ -5876,8 +6047,10 @@ function getRegex(target) {
 				$templateElements.each(function() {
 					var templateId = $.trim(this.id);
 					var templateString = $.trim(this.innerHTML);
+
+					// 空文字または空白ならエラー
 					if (!templateId) {
-						// 空文字または空白ならエラー
+						// load()で更にdetail対してエラー情報を追加するため、ここで空のdetailオブジェクトを生成する
 						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
 					}
 
@@ -5892,10 +6065,12 @@ function getRegex(target) {
 						throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(
 								ERR_REASON_SYNTAX_ERR, msg, e.message)], {
 							id: templateId,
-							error: e
+							error: e,
+							lineNo: lineNo
 						});
 					}
 				});
+
 				return {
 					compiled: compiled,
 					data: {
@@ -5903,39 +6078,13 @@ function getRegex(target) {
 					}
 				};
 			}
-			;
 
-			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
-			for ( var i = 0; i < resourcePaths.length; i++) {
-				var path = resourcePaths[i];
-				var absolutePath = toAbsoluteUrl(path);
-				if (this.cache[absolutePath]) {
-					$.extend(ret, getTemplateByURL(absolutePath));
-					datas.push({
-						absoluteUrl: absolutePath
-					});
-					continue;
-				}
-				tasks.push(path);
-			}
-
-			var df = getDeferred();
-
-			function load(task, count) {
-				var step = count || 0;
-				if (task.length == step) {
-					df.resolve();
-					return;
-				}
-				var filePath = task[step];
-				var absolutePath = toAbsoluteUrl(filePath);
-				if (!that.accessingUrls[absolutePath]) {
-					that.accessingUrls[absolutePath] = h5.ajax(filePath);
-				}
-
-				that.accessingUrls[absolutePath].then(
+			function load(absolutePath, filePath, df) {
+				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
+							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 							delete that.accessingUrls[absolutePath];
+
 							var templateText = obj.responseText;
 							// IE8以下で、テンプレート要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまうため、ここで除去する
 							var $elements = $(templateText).filter(
@@ -5952,8 +6101,11 @@ function getRegex(target) {
 											url: absolutePath,
 											path: filePath
 										}));
+								return;
 							}
+
 							var compileData = null;
+
 							try {
 								compileData = compileTemplatesByElements($elements
 										.filter('script[type="text/ejs"]'));
@@ -5961,26 +6113,35 @@ function getRegex(target) {
 								e.detail.url = absolutePath;
 								e.detail.path = filePath;
 								df.reject(e);
+								return;
 							}
+
+							var _ret,_data;
 							try {
 								var compiled = compileData.compiled;
-								var data = compileData.data;
-								data.path = filePath;
-								data.absoluteUrl = absolutePath;
-								$.extend(ret, compiled);
-								datas.push(data);
+								_data = compileData.data;
+								_data.path = filePath;
+								_data.absoluteUrl = absolutePath;
+								_ret = compiled;
 								that.append(absolutePath, compiled, filePath);
-								load(task, ++step);
 							} catch (e) {
 								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
 									error: e,
 									url: absolutePath,
 									path: filePath
 								}));
+								return;
 							}
+
+							df.resolve({
+								ret: _ret,
+								data: _data
+							});
 						}).fail(
 						function(e) {
+							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 							delete that.accessingUrls[absolutePath];
+
 							df.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [e.status,
 									absolutePath], {
 								url: absolutePath,
@@ -5989,19 +6150,49 @@ function getRegex(target) {
 							}));
 							return;
 						});
-
-				return df.promise();
 			}
 
-			var parentDf = getDeferred();
+			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
+			for ( var i = 0; i < resourcePaths.length; i++) {
+				var path = resourcePaths[i];
+				var absolutePath = toAbsoluteUrl(path);
 
-			h5.async.when(load(tasks)).done(function() {
-				parentDf.resolve(ret, datas);
+				if (this.cache[absolutePath]) {
+					$.extend(ret, getTemplateByURL(absolutePath));
+					datas.push({
+						absoluteUrl: absolutePath
+					});
+					continue;
+				}
+
+				if (this.accessingUrls[absolutePath]) {
+					// 現在アクセス中のURLであれば、そのpromiseを待つようにし、新たにリクエストを出さない
+					tasks.push(this.accessingUrls[absolutePath]);
+				} else {
+					var df = h5.async.deferred();
+					// IE6でファイルがキャッシュ内にある場合、load内のajaxが同期的に動くので、
+					// load()の呼び出しより先にaccessingUrlsとtasksへpromiseを登録する
+					tasks.push(this.accessingUrls[absolutePath] = df.promise());
+					load(absolutePath, path, df);
+				}
+			}
+
+			var retDf = getDeferred();
+
+			h5.async.when(tasks).done(function() {
+				var args = h5.u.obj.argsToArray(arguments);
+
+				// loadされたものを、キャッシュから持ってきたものとマージする
+				for ( var i = 0, l = args.length; i < l; i++) {
+					$.extend(ret, args[i].ret);
+					datas.push(args[i].data);
+				}
+				retDf.resolve(ret, datas);
 			}).fail(function(e) {
-				parentDf.reject(e);
+				retDf.reject(e);
 			});
 
-			return parentDf.promise();
+			return retDf.promise();
 		}
 	};
 
@@ -6011,7 +6202,7 @@ function getRegex(target) {
 
 	/**
 	 * jQueryオブジェクトか判定し、jQueryオブジェクトならそのまま、そうでないならjQueryオブジェクトに変換して返します。
-	 * 
+	 *
 	 * @function
 	 * @param {Object} obj DOM要素
 	 * @returns {Object} jQueryObject
@@ -6031,25 +6222,24 @@ function getRegex(target) {
 	 * <p>
 	 * コントローラは内部にViewインスタンスを持ち、コントローラ内であればthis.viewで参照することができます。
 	 * </p>
-	 * 
+	 *
 	 * @class
 	 * @name View
 	 */
 	function View() {
 		/**
 		 * キャッシュしたテンプレートを保持するオブジェクト
-		 * 
+		 *
 		 * @name __cachedTemplates
 		 * @memberOf View
 		 */
 		this.__cachedTemplates = {};
 	}
-	;
 
 	$.extend(View.prototype, {
 		/**
 		 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name load
 		 * @function
@@ -6091,7 +6281,7 @@ function getRegex(target) {
 				/* del begin */
 				for ( var id in result) {
 					if (that.__cachedTemplates[id]) {
-						fwLogger.info('テンプレートID:{0} は上書きされました。', id);
+						fwLogger.info(FW_LOG_TEMPLATE_OVERWRITE, id);
 					}
 				}
 				/* del end */
@@ -6106,7 +6296,7 @@ function getRegex(target) {
 
 		/**
 		 * Viewインスタンスに登録されている、利用可能なテンプレートのIDの配列を返します。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name getAvailableTemplates
 		 * @function
@@ -6124,7 +6314,7 @@ function getRegex(target) {
 		 * <p>
 		 * 指定されたIDのテンプレートがすでに存在する場合は上書きします。 templateStringが不正な場合はエラーを投げます。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name register
 		 * @function
@@ -6156,7 +6346,7 @@ function getRegex(target) {
 
 		/**
 		 * テンプレート文字列が、コンパイルできるかどうかを返します。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name isValid
 		 * @function
@@ -6190,7 +6380,7 @@ function getRegex(target) {
 		 * <a href="#update">update()</a>, <a href="#append">append()</a>, <a
 		 * href="#prepend">prepend()</a>についても同様です。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name get
 		 * @function
@@ -6206,14 +6396,12 @@ function getRegex(target) {
 			}
 
 			if (typeof templateId !== 'string' || !$.trim(templateId)) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
 			var template = cache[templateId];
 
 			if (!template) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE], templateId);
 				throwFwError(ERR_CODE_TEMPLATE_ID_UNAVAILABLE, templateId);
 			}
 
@@ -6226,7 +6414,6 @@ function getRegex(target) {
 			try {
 				ret = template.call(p, p, helper);
 			} catch (e) {
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED], e.toString());
 				throwFwError(ERR_CODE_TEMPLATE_PROPATY_UNDEFINED, e.toString(), e);
 			}
 
@@ -6239,7 +6426,7 @@ function getRegex(target) {
 		 * templateIdがこのViewインスタンスで利用可能でなければエラーを投げますが、
 		 * コントローラが持つviewインスタンスから呼ばれた場合は親コントローラのviewを再帰的にたどります。詳細は<a href="#get">get()</a>をご覧ください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name update
 		 * @function
@@ -6258,7 +6445,7 @@ function getRegex(target) {
 		 * templateIdがこのViewインスタンスで利用可能でなければエラーを投げますが、
 		 * コントローラが持つviewインスタンスから呼ばれた場合は親コントローラのviewを再帰的にたどります。詳細は<a href="#get">get()</a>をご覧ください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name append
 		 * @function
@@ -6277,7 +6464,7 @@ function getRegex(target) {
 		 * templateIdがこのViewインスタンスで利用可能でなければエラーを投げますが、
 		 * コントローラが持つviewインスタンスから呼ばれた場合は親コントローラのviewを再帰的にたどります。詳細は<a href="#get">get()</a>をご覧ください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf View
 		 * @name prepend
 		 * @function
@@ -6292,7 +6479,7 @@ function getRegex(target) {
 
 		/**
 		 * 指定されたテンプレートIDのテンプレートが存在するか判定します。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name isAvailable
 		 * @function
@@ -6305,7 +6492,7 @@ function getRegex(target) {
 
 		/**
 		 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
-		 * 
+		 *
 		 * @memberOf View
 		 * @name clear
 		 * @param {String|String[]} templateIds テンプレートID
@@ -6324,25 +6511,22 @@ function getRegex(target) {
 				break;
 			case 'array':
 				if (!templateIds.length) {
-					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				templateIdsArray = templateIds;
 				break;
 			default:
-				fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				var id = templateIdsArray[i];
 				if (typeof id !== 'string' || !$.trim(id)) {
-					fwLogger.info(errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID]);
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				/* del begin */
 				if (!this.__cachedTemplates[id]) {
-					fwLogger.warn('指定されたIDのテンプレートは登録されていません。"{0}"', id);
+					fwLogger.warn(FW_LOG_TEMPLATE_NOT_REGISTERED, id);
 				}
 				/* del end */
 			}
@@ -6360,7 +6544,7 @@ function getRegex(target) {
 	 * <p>
 	 * この関数はh5.core.viewに公開されたViewインスタンスのみが持ちます。この関数で作られたViewインスタンスはcreateView()を持ちません。
 	 * </p>
-	 * 
+	 *
 	 * @name createView
 	 * @memberOf h5.core.view
 	 * @function
@@ -6395,7 +6579,7 @@ function getRegex(target) {
 
 	/**
 	 * グローバルに公開されているViewクラスのインスタンスです。
-	 * 
+	 *
 	 * @name view
 	 * @memberOf h5.core
 	 * @see View
@@ -6805,7 +6989,7 @@ function getRegex(target) {
 
 	/**
 	 * インジケータ(メッセージ・画面ブロック・進捗表示)の表示や非表示を行うクラス。
-	 * 
+	 *
 	 * @class
 	 * @name Indicator
 	 * @param {String|Object} target インジケータを表示する対象のDOMオブジェクトまたはセレクタ
@@ -6874,7 +7058,7 @@ function getRegex(target) {
 			});
 
 			if (promises.length > 0) {
-				h5.async.when.apply(null, promises).pipe(promiseCallback, promiseCallback);
+				h5.async.when(promises).pipe(promiseCallback, promiseCallback);
 			}
 		} else if (isPromise(promises)) {
 			promises.pipe(promiseCallback, promiseCallback);
@@ -6899,7 +7083,7 @@ function getRegex(target) {
 	Indicator.prototype = {
 		/**
 		 * 画面上にインジケータ(メッセージ・画面ブロック・進捗表示)を表示します。
-		 * 
+		 *
 		 * @memberOf Indicator
 		 * @function
 		 * @returns {Indicator} インジケータオブジェクト
@@ -6925,7 +7109,7 @@ function getRegex(target) {
 		},
 		/**
 		 * 内部のコンテンツ納まるようイジケータの幅を調整し、表示位置(topとleft)が中央になるよう設定します。
-		 * 
+		 *
 		 * @memberOf Indicator
 		 * @function
 		 * @private
@@ -6963,7 +7147,7 @@ function getRegex(target) {
 		},
 		/**
 		 * 指定された要素がウィンドウ領域全体をブロックすべき要素か判定します。
-		 * 
+		 *
 		 * @memberOf Indicator
 		 * @function
 		 * @private
@@ -6975,7 +7159,7 @@ function getRegex(target) {
 		},
 		/**
 		 * 画面上に表示されているインジケータ(メッセージ・画面ブロック・進捗表示)を除去します。
-		 * 
+		 *
 		 * @memberOf Indicator
 		 * @function
 		 * @returns {Indicator} インジケータオブジェクト
@@ -6991,7 +7175,7 @@ function getRegex(target) {
 		},
 		/**
 		 * 進捗のパーセント値を指定された値に更新します。
-		 * 
+		 *
 		 * @memberOf Indicator
 		 * @function
 		 * @param {Number} percent 進捗率(0～100%)
@@ -7006,7 +7190,7 @@ function getRegex(target) {
 		},
 		/**
 		 * メッセージを指定された値に更新します。
-		 * 
+		 *
 		 * @memberOf Indicator
 		 * @function
 		 * @param {String} message メッセージ
@@ -7041,58 +7225,58 @@ function getRegex(target) {
 	 * <h4>使用例</h4>
 	 * <b>画面全体をブロックする場合</b><br>
 	 * ・画面全体をブロックする場合、targetオプションに<b>document</b>、<b>window</b>または<b>body</b>を指定する。<br>
-	 * 
+	 *
 	 * <pre>
 	 * var indicator = h5.ui.indicator({
 	 * 	target: document,
 	 * }).show();
 	 * </pre>
-	 * 
+	 *
 	 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
-	 * 
+	 *
 	 * <pre>
 	 * var indicator = h5.ui.indicator('li', {
 	 * 	block: false
 	 * }).show();
 	 * </pre>
-	 * 
+	 *
 	 * <b>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
 	 * resolve() または resolve() が実行されると、画面からインジケータを除去します。
-	 * 
+	 *
 	 * <pre>
 	 * var df = $.Deferred();
 	 * var indicator = h5.ui.indicator(document, {
 	 * 	promises: df.promise()
 	 * }).show();
-	 * 
+	 *
 	 * setTimeout(function() {
 	 * 	df.resolve() // ここでイジケータが除去される
 	 * }, 2000);
 	 * </pre>
-	 * 
+	 *
 	 * <b>パラメータに複数のPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
 	 * Promiseオブジェクトを複数指定すると、全てのPromiseオブジェクトでresolve()が実行されるか、またはいずれかのPromiseオブジェクトでfail()が実行されるタイミングでインジケータを画面から除去します。
-	 * 
+	 *
 	 * <pre>
 	 * var df = $.Deferred();
 	 * var df2 = $.Deferred();
 	 * var indicator = h5.ui.indicator(document, {
 	 * 	promises: [df.promise(), df2.promise()]
 	 * }).show();
-	 * 
+	 *
 	 * setTimeout(function() {
 	 * 	df.resolve()
 	 * }, 2000);
-	 * 
+	 *
 	 * setTimeout(function() {
 	 * 	df.resolve() // ここでイジケータが除去される
 	 * }, 4000);
 	 * </pre>
-	 * 
+	 *
 	 * <p>
 	 * コントローラのindicator()の仕様については、<a href="./Controller.html#indicator">Controller.indicator</a>のドキュメント
 	 * を参照下さい。
-	 * 
+	 *
 	 * @memberOf h5.ui
 	 * @name indicator
 	 * @function
@@ -7125,7 +7309,7 @@ function getRegex(target) {
 	 * <p>
 	 * いずれの場合も、要素が非表示の場合の動作は保障されません。
 	 * </p>
-	 * 
+	 *
 	 * @param {String|Element|jQuery} element 要素
 	 * @param {Object} container コンテナ
 	 * @returns {Boolean} 要素が可視範囲内にあるかどうか
@@ -7170,7 +7354,7 @@ function getRegex(target) {
 
 	/**
 	 * ブラウザのトップにスクロールします。
-	 * 
+	 *
 	 * @name scrollToTop
 	 * @function
 	 * @memberOf h5.ui
@@ -7218,15 +7402,27 @@ function getRegex(target) {
 	// =============================
 	// Production
 	// =============================
+	/** エラーコード: JQMControllerがdisposeされた */
+	var ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE = 12000;
+	/** エラーコード: JQMControllerがunbindされた */
+	var ERR_CODE_JQM_MANAGER_CANNOT_UNBIND = 12001;
+
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE] = 'JQMControllerはdisposeできません。';
+	errMsgMap[ERR_CODE_JQM_MANAGER_CANNOT_UNBIND] = 'JQMControllerはunbindできません。';
+
+	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
 	// Development Only
 	// =============================
+
 	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
-
 	/* del begin */
-
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = 'JQMマネージャは既に初期化されています。';
+	var disposeFunc = null;
+	var unbindFunc = null;
 	/* del end */
 
 
@@ -7291,7 +7487,7 @@ function getRegex(target) {
 	/**
 	 * 現在のアクティブページにコントローラをバインドします。
 	 */
-	function bindToActivePage(id) {
+	function bindToActivePage() {
 		var activePage = $.mobile.activePage;
 		if (!activePage) {
 			return;
@@ -7339,6 +7535,27 @@ function getRegex(target) {
 		 * @memberOf JQMController
 		 */
 		__name: 'JQMController',
+
+		/**
+		 * __constructイベントのハンドラ
+		 * <p>
+		 * ユーザから、JQMControllerをdispose()またはunbind()されないよう、これらのメソッドを差し替える。
+		 */
+		__construct: function() {
+			/* del begin */
+			// h5.ui.jqm.manager.__reset()のためにdispose/unbindメソッドを退避する
+			disposeFunc = this.dispose;
+			unbindFunc = this.unbind;
+			/* del end */
+
+			this.dispose = function() {
+				throwFwError(ERR_CODE_JQM_MANAGER_CANNOT_DISPOSE);
+			};
+
+			this.unbind = function() {
+				throwFwError(ERR_CODE_JQM_MANAGER_CANNOT_UNBIND);
+			};
+		},
 
 		/**
 		 * __readyイベントのハンドラ
@@ -7569,12 +7786,15 @@ function getRegex(target) {
 		 */
 		init: function() {
 			if (initCalled) {
-				fwLogger.info('JQMマネージャは既に初期化されています。');
+				fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
 				return;
 			}
 			initCalled = true;
 			$(function() {
-				jqmControllerInstance = h5.core.controller('body', jqmController);
+				jqmControllerInstance = h5internal.core.controllerInternal('body', jqmController,
+						null, {
+							managed: false
+						});
 				bindToActivePage();
 			});
 		},
@@ -7595,36 +7815,35 @@ function getRegex(target) {
 			controllerMap[id] = controllerDefObject;
 			initParamMap[id] = initParam;
 			cssMap[id] = wrapInArray(cssSrc);
-			if(!$.mobile.activePage || ($.mobile.activePage).attr('id') !== id){
-				return;
+
+			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
+					&& jqmControllerInstance) {
+				bindToActivePage();
+			} else {
+				this.init();
 			}
-			!jqmControllerInstance ? h5.ui.jqm.manager.init() : bindToActivePage();
 		}
 		/* del begin */
 		,
 		/*
-		 * テスト用に公開。
-		 * 引数なしの場合はh5.ui.jqm.manager.init()が呼ばれたかどうかを返します。<br />
-		 * 引数を指定した場合は、h5.ui.jqm.manager.init()が呼ばれたかどうかのフラグ変数を変更します。<br />
-		 * 引数を指定する場合ははtrueまたはfalseを指定してください。<br />
-		 * この関数は開発版(h5.dev.js)でのみ使用できます。<br />
-		 * 通常は、この関数で値の設定を行う必要はありません。
+		 * テスト用に公開
+		 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
 		 *
-		 * @param {boolean} [flag] h5.ui.jqm.manager.init()が呼ばれたかどうかのフラグに設定する値。引数なしの場合は現在のフラグを返します。
-		 * @returns {boolean} h5.ui.jqm.manager.init()が呼ばれたかどうか(もしくは設定した)値。
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
-		 * @name __initFlag
+		 * @name __reset
 		 */
-		__initFlag: function(flag) {
-			if (flag === undefined) {
-				return initCalled;
-			}
-			if (flag === true || flag === false) {
-				initCalled = flag;
-				return flag;
-			}
-			fwLogger.warn('h5.ui.jqm.manager.__initFlag() 引数にはtrueかfalseを指定してください。');
+		__reset: function() {
+			jqmControllerInstance.unbind = unbindFunc;
+			jqmControllerInstance.dispose = disposeFunc;
+			jqmControllerInstance.dispose();
+
+			jqmControllerInstance = null;
+			controllerMap = {};
+			controllerInstanceMap = {};
+			initParamMap = {};
+			cssMap = {};
+			initCalled = false;
 		}
 	/* del end */
 	});
@@ -8007,10 +8226,8 @@ function getRegex(target) {
 	// Development Only
 	// =============================
 
-	/* del begin */
-
 	var fwLogger = h5.log.createLogger('h5.api.sqldb');
-
+	/* del begin */
 	/* del end */
 
 	// =========================================================================
@@ -8030,6 +8247,11 @@ function getRegex(target) {
 	 * SQLErrorのエラーコードに対応するメッセージを取得します。
 	 */
 	function getTransactionErrorMsg(e) {
+		if (!e.DATABASE_ERR) {
+			// Android2系、iOS4はエラーオブジェクトに定数メンバが無いのでここを通る。
+			// また、codeが1固定であるため、"データベースエラー"として扱う。
+			return 'データベースエラー';
+		}
 		switch (e.code) {
 		case e.CONSTRAINT_ERR:
 			return '一意制約に反しています。';
@@ -8104,8 +8326,7 @@ function getRegex(target) {
 	/**
 	 * DatabaseWrapper.select()/insert()/update()/del()/sql()/transaction() のパラメータチェック
 	 * <p>
-	 * txwがTransactionWrapper型ではない場合、例外をスローします。
-	 * null,undefinedの場合は例外をスローしません。
+	 * txwがTransactionWrapper型ではない場合、例外をスローします。 null,undefinedの場合は例外をスローしません。
 	 */
 	function checkTransaction(funcName, txw) {
 		if (txw != undefined && !(txw instanceof SQLTransactionWrapper)) {
@@ -8415,7 +8636,7 @@ function getRegex(target) {
 				txw._addTask(df);
 				checkSqlExecuted(executed);
 				build();
-				fwLogger.debug(['Select: '+ this._statement], this._params);
+				fwLogger.debug(['Select: ' + this._statement], this._params);
 
 				if (txw._runTransaction()) {
 					txw._execute(this._statement, this._params, function(innerTx, rs) {
@@ -9200,7 +9421,7 @@ function getRegex(target) {
 						transactionSuccessCallback(txw);
 					});
 				}
-			} catch(e) {
+			} catch (e) {
 				df.reject(e);
 			}
 
@@ -9479,10 +9700,9 @@ function getRegex(target) {
 	// Development Only
 	// =============================
 
-	var fwLogger = h5.log.createLogger('h5.api.storage');
-
 	/* del begin */
-
+	var fwLogger = h5.log.createLogger('h5.api.storage');
+	var FW_LOG_STORAGE_SUPPORTED = 'local storage supported:{0}, session storage supported:{1}';
 	/* del end */
 
 	// =========================================================================
@@ -9660,9 +9880,9 @@ function getRegex(target) {
 		session: new WebStorage(window.sessionStorage)
 	});
 
-	fwLogger.debug(h5.u.str.format('local storage supported:{0}, session storage supported:{1}',
-			!!window.localStorage, !!window.sessionStorage));
-
+	/* del begin */
+	fwLogger.debug(FW_LOG_STORAGE_SUPPORTED, !!window.localStorage, !!window.sessionStorage);
+	/* del end */
 })();
 
 /* del begin */
