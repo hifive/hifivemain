@@ -66,7 +66,7 @@
 	/**
 	 * serialize()に渡されたオブジェクト/配列が循環参照を持つときに発生するエラー
 	 */
-	var ERR_CODE_REFERENCE_CYCLE = 11005;
+	var ERR_CODE_CIRCULAR_REFERENCE = 11005;
 
 	/**
 	 * deserialize()で値が不正でデシリアライズできない時に発生するエラー
@@ -98,7 +98,7 @@
 	errMsgMap[ERR_CODE_SERIALIZE_FUNCTION] = 'Function型のオブジェクトは変換できません。';
 	errMsgMap[ERR_CODE_SERIALIZE_VERSION] = 'シリアライザのバージョンが違います。シリアライズされたバージョン：{0} 現行のバージョン：{1}';
 	errMsgMap[ERR_CODE_DESERIALIZE_TYPE] = '型指定子が不正です。';
-	errMsgMap[ERR_CODE_REFERENCE_CYCLE] = '循環参照が含まれています。';
+	errMsgMap[ERR_CODE_CIRCULAR_REFERENCE] = '循環参照が含まれています。';
 	errMsgMap[ERR_CODE_DESERIALIZE_VALUE] = '不正な値が含まれるため、デシリアライズできませんでした。';
 	errMsgMap[ERR_CODE_INVALID_SCRIPT_PATH] = 'スクリプトのパスが不正です。空文字以外の文字列、またはその配列を指定して下さい。';
 	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
@@ -644,7 +644,7 @@
 				break;
 			case 'object':
 				if (existStack(val)) {
-					throwFwError(ERR_CODE_REFERENCE_CYCLE);
+					throwFwError(ERR_CODE_CIRCULAR_REFERENCE);
 				}
 				objStack.push(val);
 				ret = typeToCode(type) + '{';
