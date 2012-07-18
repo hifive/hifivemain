@@ -566,6 +566,14 @@
 		if (bindRequested) {
 			bindObj.eventName = '[' + bindObj.eventName + ']';
 		}
+		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
+		// unbindMapにラップしたものが登録されるように、このタイミングで行う必要がある
+		var _handler = bindObj.handler;
+		var handler = function(/* var args */) {
+			_handler.call(bindObj.controller, createEventContext(bindObj.controller,
+					bindObj.selector, arguments));
+		};
+		bindObj.handler = handler;
 		// アンバインドマップにハンドラを追加
 		registerUnbindMap(bindObj.controller, bindObj.selector, bindObj.eventName, bindObj.handler);
 		bindByBindObject(bindObj);
@@ -915,9 +923,7 @@
 			controller: controller,
 			selector: selector,
 			eventName: eventName,
-			handler: function(/* var_args */) {
-				func.call(controller, createEventContext(controller, selector, arguments));
-			}
+			handler: func
 		};
 	}
 
@@ -943,14 +949,12 @@
 			// Firefoxには"mousewheel"イベントがない
 			eventName: typeof document.onmousewheel === TYPE_OF_UNDEFINED ? 'DOMMouseScroll'
 					: eventName,
-			handler: function(/* var_args */) {
-				var eventContext = createEventContext(controller, selector, arguments);
-				var event = eventContext.event;
+			handler: function(context) {
 				// Firefox
-				if (event.originalEvent && event.originalEvent.detail) {
-					event.wheelDelta = -event.detail * 40;
+				if (context.event.originalEvent && context.event.originalEvent.detail) {
+					context.event.wheelDelta = -context.event.detail * 40;
 				}
-				func.call(controller, eventContext);
+				func.call(controller, context);
 			}
 		};
 	}
@@ -1014,6 +1018,7 @@
 			}
 			dest.h5DelegatingEvent = src;
 		};
+
 		var start = hasTouchEvent ? 'touchstart' : 'mousedown';
 		var move = hasTouchEvent ? 'touchmove' : 'mousemove';
 		var end = hasTouchEvent ? 'touchend' : 'mouseup';
@@ -1023,21 +1028,19 @@
 			var removeHandlers = null;
 			var execute = false;
 			var getHandler = function(en, eventTarget, setup) {
-				return function(var_args) {
+				return function(context) {
 					var type = getEventType(en);
 					var isStart = type === EVENT_NAME_H5_TRACKSTART;
 					if (isStart && execute) {
 						return;
 					}
-					var eventContext = createEventContext(controller, selector, arguments);
-					var event = eventContext.event;
 					if (hasTouchEvent) {
 						// タッチイベントの場合、イベントオブジェクトに座標系のプロパティを付加
-						initTouchEventObject(event, en);
+						initTouchEventObject(context.event, en);
 					}
 					var newEvent = new $.Event(type);
-					copyEventObject(event, newEvent);
-					var target = event.target;
+					copyEventObject(context.event, newEvent);
+					var target = context.event.target;
 					if (eventTarget) {
 						target = eventTarget;
 					}
@@ -1045,7 +1048,7 @@
 						setup(newEvent);
 					}
 					if (!hasTouchEvent || (execute || isStart)) {
-						$(target).trigger(newEvent, eventContext.evArg);
+						$(target).trigger(newEvent, context.evArg);
 						execute = true;
 					}
 					if (isStart && execute) {
@@ -1063,17 +1066,36 @@
 							ox = cx;
 							oy = cy;
 						};
+
+						// h5trackstart実行時に、move、upのハンドラを作成して登録する。
+						// コンテキストをとるように関数をラップして、bindする。
 						var moveHandler = getHandler(move, nt, setupDPos);
 						var upHandler = getHandler(end, nt);
+						var moveHandlerWrapped = function(e, args) {
+							// イベントオブジェクトと引数のみ差し替える
+							// controller, rootElement, selector はh5trackstart開始時と同じなので、差し替える必要はない
+							context.event = e;
+							context.evArg = args;
+							moveHandler(context);
+						};
+						var upHandlerWrapped = function(e, args) {
+							context.event = e;
+							context.evArg = args;
+							upHandler(context);
+						};
 
 						var $bindTarget = hasTouchEvent ? $(nt) : $document;
+						// moveとendのunbindをする関数
 						removeHandlers = function() {
-							$bindTarget.unbind(move, moveHandler);
-							$bindTarget.unbind(end, upHandler);
+							$bindTarget.unbind(move, moveHandlerWrapped);
+							$bindTarget.unbind(end, upHandlerWrapped);
 						};
-						$bindTarget.bind(move, moveHandler);
-						$bindTarget.bind(end, upHandler);
+						// h5trackmoveとh5trackendのbindを行う
+						$bindTarget.bind(move, moveHandlerWrapped);
+						$bindTarget.bind(end, upHandlerWrapped);
 					}
+
+					// h5trackend時にmoveとendのハンドラをunbindする
 					if (type === EVENT_NAME_H5_TRACKEND) {
 						removeHandlers();
 						execute = false;
@@ -1167,7 +1189,8 @@
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
 
-		var selectorTrimmed = selector.replace(/\s+/g,' ').replace(/\{\s/g, '{').replace(/\s\}/g, '}');
+		var selectorTrimmed = selector.replace(/\s+/g, ' ').replace(/\{\s/g, '{').replace(/\s\}/g,
+				'}');
 		return {
 			controller: controller,
 			rootElement: controller.rootElement,

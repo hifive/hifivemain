@@ -3418,7 +3418,7 @@ $(function() {
 
 	asyncTest(
 			'context.selectorが取得できること',
-			7,
+			8,
 			function() {
 				$('#qunit-fixture')
 						.append(
@@ -3430,25 +3430,36 @@ $(function() {
 					__name: 'Test1Controller',
 
 					'input click': function(context) {
-						strictEqual(context.selector, 'input', 'セレクタが取得できること');
+						var exSelector = 'input';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
 					'input[type=button] click': function(context) {
-						strictEqual(context.selector, 'input[type=button]', 'セレクタが取得できること');
+						var exSelector = 'input[type=button]';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
 					'   .testclass   click': function(context) {
-						strictEqual(context.selector, '.testclass', 'セレクタが取得できること');
+						var exSelector = '.testclass'
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
 					'{rootElement} click2': function(context) {
-						strictEqual(context.selector, '{rootElement}', 'セレクタが取得できること');
+						var exSelector = '{rootElement}';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
 					' { body   }   click3': function(context) {
-						strictEqual(context.selector, '{body}', 'セレクタが取得できること');
+						var exSelector = '{body}';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
 					'  #test  #innertest.innerdiv   h5trackstart': function(context) {
-						strictEqual(context.selector, '#test #innertest.innerdiv', 'セレクタが取得できること');
+						var exSelector = '#test #innertest.innerdiv';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
-					'   {window} mousewheel': function(context) {
-						strictEqual(context.selector, '{window}', 'セレクタが取得できること');
+					'  #test  #innertest.innerdiv   h5trackend': function(context) {
+						var exSelector = '#test #innertest.innerdiv';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+					},
+					'{window} mousewheel': function(context) {
+						var exSelector = '{window}';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					}
 				};
 				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
@@ -3457,12 +3468,14 @@ $(function() {
 					$('#controllerTest1 input[type=button]').click();
 					$('#controllerTest1').trigger('click2');
 					$('body').trigger('click3');
-					$('#controllerTest1 #test').trigger('click3');
 					$('#controllerTest1 .innerdiv').mousedown();
+					$('#controllerTest1 .innerdiv').mouseup();
 
 
 					var eventName = h5.env.ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
-					$(window).trigger(new $.Event(eventName));
+					$(window).trigger(new $.Event(eventName), {
+						test: true
+					});
 
 					test1Controller.unbind();
 					$('#controllerTest1').remove();
