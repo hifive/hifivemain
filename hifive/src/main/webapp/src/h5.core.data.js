@@ -34,10 +34,10 @@
 	// Development Only
 	//=============================
 
+	var fwLogger = h5.log.createLogger('h5.core.data');
 
 	/* del begin */
 
-	var fwLogger = h5.log.createLogger('h5.core.data');
 
 	/* del end */
 
