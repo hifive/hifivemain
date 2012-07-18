@@ -132,21 +132,31 @@
 	// Privates
 	//
 	// =========================================================================
+	// =============================
+	// Variables
+	// =============================
 	/**
 	 * commonFailHandlerを発火させないために登録するdummyのfailハンドラ
 	 */
 	var dummyFailHandler = function() {
 	//
 	};
-	// =============================
-	// Variables
-	// =============================
 	var getDeferred = h5.async.deferred;
 	var startsWith = h5.u.str.startsWith;
 	var endsWith = h5.u.str.endsWith;
 	var format = h5.u.str.format;
 	var argsToArray = h5.u.obj.argsToArray;
 	var getByPath = h5.u.obj.getByPath;
+	/**
+	 * セレクタのタイプを表す定数
+	 * イベントコンテキストの中に格納する
+	 */
+	var selectorTypeConst =
+	{
+		SELECTOR_TYPE_LOCAL: 1,
+		SELECTOR_TYPE_GLOBAL: 2,
+		SELECTOR_TYPE_OBJECT: 3
+	};
 
 	// =============================
 	// Functions
@@ -530,24 +540,42 @@
 		var handler = bindObj.handler;
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
+
+		// イベントコンテキストで使用するデータ(selector, selectorType)をbindObj.contextに保持しておく
+		bindObj.context = {};
+
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
-			var selectTarget = trimGlobalSelectorBracket(selector);
+			var selectorTrimmed = trimGlobalSelectorBracket(selector);
 			var isSelf = false;
-			if (selectTarget === ROOT_ELEMENT_NAME) {
+			var selectTarget;
+			if (selectorTrimmed === ROOT_ELEMENT_NAME) {
 				selectTarget = rootElement;
 				isSelf = true;
 			} else {
-				selectTarget = getGlobalSelectorTarget(selectTarget);
+				selectTarget = getGlobalSelectorTarget(selectorTrimmed);
 			}
 			// バインド対象がdocument, windowの場合、live, delegateではイベントが拾えないことへの対応
 			var needBind = selectTarget === document || selectTarget === window;
 			if (isSelf || useBind || needBind) {
+				// bindObj.contextにselectorTypeとselectorを登録する。
+				// selectorがrootElement, window, documentの場合は登録する
+				bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
+				bindObj.context.selector = $(selectTarget);
+
 				$(selectTarget).bind(event, handler);
 			} else {
+				// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を登録する
+				bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
+				bindObj.context.selector = selectTarget;
+
 				$(selectTarget).live(event, handler);
 			}
 		} else {
+			// selectorがグローバル指定でない場合はcontext.selectorにselectorを登録する
+			bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
+			bindObj.context.selector = selector;
+
 			if (useBind) {
 				$(selector, rootElement).bind(event, handler);
 			} else {
@@ -566,6 +594,13 @@
 		if (bindRequested) {
 			bindObj.eventName = '[' + bindObj.eventName + ']';
 		}
+		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
+		// unbindMapにラップしたものが登録されるように、このタイミングで行う必要がある
+		var _handler = bindObj.handler;
+		var handler = function(/* var args */) {
+			_handler.call(bindObj.controller, createEventContext(bindObj, arguments));
+		};
+		bindObj.handler = handler;
 		// アンバインドマップにハンドラを追加
 		registerUnbindMap(bindObj.controller, bindObj.selector, bindObj.eventName, bindObj.handler);
 		bindByBindObject(bindObj);
@@ -915,9 +950,7 @@
 			controller: controller,
 			selector: selector,
 			eventName: eventName,
-			handler: function(/* var_args */) {
-				func.call(controller, createEventContext(controller, arguments));
-			}
+			handler: func
 		};
 	}
 
@@ -943,14 +976,13 @@
 			// Firefoxには"mousewheel"イベントがない
 			eventName: typeof document.onmousewheel === TYPE_OF_UNDEFINED ? 'DOMMouseScroll'
 					: eventName,
-			handler: function(/* var_args */) {
-				var eventContext = createEventContext(controller, arguments);
-				var event = eventContext.event;
+			handler: function(context) {
+				var event = context.event;
 				// Firefox
 				if (event.originalEvent && event.originalEvent.detail) {
 					event.wheelDelta = -event.detail * 40;
 				}
-				func.call(controller, eventContext);
+				func.call(controller, context);
 			}
 		};
 	}
@@ -1014,6 +1046,7 @@
 			}
 			dest.h5DelegatingEvent = src;
 		};
+
 		var start = hasTouchEvent ? 'touchstart' : 'mousedown';
 		var move = hasTouchEvent ? 'touchmove' : 'mousemove';
 		var end = hasTouchEvent ? 'touchend' : 'mouseup';
@@ -1023,21 +1056,19 @@
 			var removeHandlers = null;
 			var execute = false;
 			var getHandler = function(en, eventTarget, setup) {
-				return function(var_args) {
+				return function(context) {
 					var type = getEventType(en);
 					var isStart = type === EVENT_NAME_H5_TRACKSTART;
 					if (isStart && execute) {
 						return;
 					}
-					var eventContext = createEventContext(controller, arguments);
-					var event = eventContext.event;
 					if (hasTouchEvent) {
 						// タッチイベントの場合、イベントオブジェクトに座標系のプロパティを付加
-						initTouchEventObject(event, en);
+						initTouchEventObject(context.event, en);
 					}
 					var newEvent = new $.Event(type);
-					copyEventObject(event, newEvent);
-					var target = event.target;
+					copyEventObject(context.event, newEvent);
+					var target = context.event.target;
 					if (eventTarget) {
 						target = eventTarget;
 					}
@@ -1045,7 +1076,7 @@
 						setup(newEvent);
 					}
 					if (!hasTouchEvent || (execute || isStart)) {
-						$(target).trigger(newEvent, eventContext.evArg);
+						$(target).trigger(newEvent, context.evArg);
 						execute = true;
 					}
 					if (isStart && execute) {
@@ -1063,17 +1094,36 @@
 							ox = cx;
 							oy = cy;
 						};
+
+						// h5trackstart実行時に、move、upのハンドラを作成して登録する。
+						// コンテキストをとるように関数をラップして、bindする。
 						var moveHandler = getHandler(move, nt, setupDPos);
 						var upHandler = getHandler(end, nt);
+						var moveHandlerWrapped = function(e, args) {
+							// イベントオブジェクトと引数のみ差し替える
+							// controller, rootElement, selector はh5trackstart開始時と同じなので、差し替える必要はない
+							context.event = e;
+							context.evArg = args;
+							moveHandler(context);
+						};
+						var upHandlerWrapped = function(e, args) {
+							context.event = e;
+							context.evArg = args;
+							upHandler(context);
+						};
 
 						var $bindTarget = hasTouchEvent ? $(nt) : $document;
+						// moveとendのunbindをする関数
 						removeHandlers = function() {
-							$bindTarget.unbind(move, moveHandler);
-							$bindTarget.unbind(end, upHandler);
+							$bindTarget.unbind(move, moveHandlerWrapped);
+							$bindTarget.unbind(end, upHandlerWrapped);
 						};
-						$bindTarget.bind(move, moveHandler);
-						$bindTarget.bind(end, upHandler);
+						// h5trackmoveとh5trackendのbindを行う
+						$bindTarget.bind(move, moveHandlerWrapped);
+						$bindTarget.bind(end, upHandlerWrapped);
 					}
+
+					// h5trackend時にmoveとendのハンドラをunbindする
 					if (type === EVENT_NAME_H5_TRACKEND) {
 						removeHandlers();
 						execute = false;
@@ -1154,9 +1204,13 @@
 	 * イベントコンテキストを作成します。
 	 *
 	 * @param {Object} controller コントローラ
+	 * @param {String} selector セレクタ
 	 * @param {Object} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
 	 */
-	function createEventContext(controller, args) {
+	function createEventContext(bindObj, args) {
+		var controller = bindObj.controller;
+		var selector = bindObj.context.selector;
+		var selectorType = bindObj.context.selectorType;
 		var event = null;
 		var evArg = null;
 		if (args) {
@@ -1165,12 +1219,19 @@
 		}
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
-		return {
+
+		function Context(obj){
+			$.extend(this,obj);
+		}
+		Context.prototype = selectorTypeConst;
+		return new Context({
 			controller: controller,
 			rootElement: controller.rootElement,
 			event: event,
-			evArg: evArg
-		};
+			evArg: evArg,
+			selector: selector,
+			selectorType: selectorType
+		});
 	}
 
 	/**

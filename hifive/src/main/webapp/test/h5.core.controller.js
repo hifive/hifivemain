@@ -21,7 +21,9 @@ $(function() {
 	$.blockUI.defaults.fadeOut = -1;
 
 	// svgをサポートしているか
-	var isSupportSVG = document.createElementNS && $.isFunction(document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect);
+	var isSupportSVG = document.createElementNS
+			&& $
+					.isFunction(document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect);
 
 	var rgbToHex = function(rgbStr) {
 		if (/^#\d{3,6}$/.test(rgbStr)) {
@@ -3414,6 +3416,92 @@ $(function() {
 						});
 			});
 
+	asyncTest(
+			'context.selectorが取得できること',
+			20,
+			function() {
+				$('#qunit-fixture')
+						.append(
+								'<div id="controllerTest1" style="display: none;"><input type="button" class="testclass" value="click" /><div id="test"><div id="innertest"  class="innerdiv"></div></div></div>');
+				$('#qunit-fixture').append(
+						'<div id="controllerTest2" style="display: none;"></div>');
+
+				var controllerBase1 = {
+					__name: 'Test1Controller',
+
+					'input click': function(context) {
+						var exSelector = 'input';
+						strictEqual(context.SELECTOR_TYPE_LOCAL, 1, 'selectorTypeを表す定数が格納されていること 1');
+						strictEqual(context.SELECTOR_TYPE_GLOBAL, 2,
+								'selectorTypeを表す定数が格納されていること 2');
+						strictEqual(context.SELECTOR_TYPE_OBJECT, 3,
+								'selectorTypeを表す定数が格納されていること 3');
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+					},
+					'{input[type=button]} click': function(context) {
+						var exSelector = 'input[type=button]';
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_GLOBAL,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+					},
+					'.testclass click1': function(context) {
+						var exSelector = '.testclass';
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+					},
+					'{rootElement} click2': function(context) {
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector[0], this.rootElement, 'ルートエレメントが取得できること');
+					},
+					'{body}   click3': function(context) {
+						var exSelector = 'body';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_GLOBAL,
+						'selectorTypeが取得できること');
+					},
+					'#test #innertest.innerdiv   h5trackstart': function(context) {
+						var exSelector = '#test #innertest.innerdiv';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+						'selectorTypeが取得できること');
+					},
+					'#test    #innertest.innerdiv   h5trackend': function(context) {
+						var exSelector = '#test    #innertest.innerdiv';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+						'selectorTypeが取得できること');
+					},
+					'{window} mousewheel': function(context) {
+						strictEqual(context.selector[0], window, 'windowオブジェクトが取得できること');
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
+						'selectorTypeが取得できること');
+					}
+				};
+				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
+				test1Controller.readyPromise.done(function() {
+					$('#controllerTest1 input[type=button]').click();
+					$('#controllerTest1 .testclass').trigger('click1');
+					$('#controllerTest1').trigger('click2');
+					$('body').trigger('click3');
+					$('#controllerTest1 .innerdiv').mousedown();
+					$('#controllerTest1 .innerdiv').mouseup();
+
+					var eventName = h5.env.ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
+					$(window).trigger(new $.Event(eventName), {
+						test: true
+					});
+
+					test1Controller.unbind();
+					$('#controllerTest1').remove();
+					ok(!$('#parent').length, '（DOMのクリーンアップ）');
+					start();
+				});
+			});
+
 	asyncTest('コントローラ内のxxxControllerが動作しているか(テンプレート使用)', function() {
 
 
@@ -5093,7 +5181,7 @@ $(function() {
 					start();
 					return;
 				}
-				if (!isSupportSVG){
+				if (!isSupportSVG) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -5239,7 +5327,7 @@ $(function() {
 			'h5trackイベント(touchstart, touchmove, touchend) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
-				if (!isSupportSVG){
+				if (!isSupportSVG) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
