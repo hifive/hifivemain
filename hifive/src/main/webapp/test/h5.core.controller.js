@@ -3483,15 +3483,12 @@ $(function() {
 				};
 				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
 				test1Controller.readyPromise.done(function() {
-
 					$('#controllerTest1 input[type=button]').click();
 					$('#controllerTest1 .testclass').trigger('click1');
 					$('#controllerTest1').trigger('click2');
 					$('body').trigger('click3');
 					$('#controllerTest1 .innerdiv').mousedown();
 					$('#controllerTest1 .innerdiv').mouseup();
-					$(window.navigator).click();
-
 
 					var eventName = h5.env.ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
 					$(window).trigger(new $.Event(eventName), {
