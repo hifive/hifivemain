@@ -148,11 +148,9 @@
 	var argsToArray = h5.u.obj.argsToArray;
 	var getByPath = h5.u.obj.getByPath;
 	/**
-	 * セレクタのタイプを表す定数
-	 * イベントコンテキストの中に格納する
+	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
-	var selectorTypeConst =
-	{
+	var selectorTypeConst = {
 		SELECTOR_TYPE_LOCAL: 1,
 		SELECTOR_TYPE_GLOBAL: 2,
 		SELECTOR_TYPE_OBJECT: 3
@@ -161,6 +159,13 @@
 	// =============================
 	// Functions
 	// =============================
+
+	/**
+	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
+	 */
+	function EventContext() {
+		$.extend(this, selectorTypeConst);
+	}
 
 	/**
 	 * コントローラのexecuteListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
@@ -541,8 +546,8 @@
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
 
-		// イベントコンテキストで使用するデータ(selector, selectorType)をbindObj.contextに保持しておく
-		bindObj.context = {};
+		// イベントコンテキストで使用するデータ(selector, selectorType)をbindObj.eventContextに保持しておく
+		var eventContext = {};
 
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
@@ -558,23 +563,23 @@
 			// バインド対象がdocument, windowの場合、live, delegateではイベントが拾えないことへの対応
 			var needBind = selectTarget === document || selectTarget === window;
 			if (isSelf || useBind || needBind) {
-				// bindObj.contextにselectorTypeとselectorを登録する。
+				// bindObj.eventContextにselectorTypeとselectorを登録する。
 				// selectorがrootElement, window, documentの場合は登録する
-				bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
-				bindObj.context.selector = $(selectTarget);
+				eventContext.selectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
+				eventContext.selector = $(selectTarget);
 
 				$(selectTarget).bind(event, handler);
 			} else {
 				// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を登録する
-				bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
-				bindObj.context.selector = selectTarget;
+				eventContext.selectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
+				eventContext.selector = selectTarget;
 
 				$(selectTarget).live(event, handler);
 			}
 		} else {
 			// selectorがグローバル指定でない場合はcontext.selectorにselectorを登録する
-			bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
-			bindObj.context.selector = selector;
+			eventContext.selectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
+			eventContext.selector = selector;
 
 			if (useBind) {
 				$(selector, rootElement).bind(event, handler);
@@ -582,6 +587,8 @@
 				$(rootElement).delegate(selector, event, handler);
 			}
 		}
+
+		bindObj.eventContext = eventContext;
 	}
 
 	/**
@@ -1203,14 +1210,13 @@
 	/**
 	 * イベントコンテキストを作成します。
 	 *
-	 * @param {Object} controller コントローラ
-	 * @param {String} selector セレクタ
+	 * @param {Object} bindObj バインドオブジェクト
 	 * @param {Object} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
 	 */
 	function createEventContext(bindObj, args) {
 		var controller = bindObj.controller;
-		var selector = bindObj.context.selector;
-		var selectorType = bindObj.context.selectorType;
+		var selector = bindObj.eventContext.selector;
+		var selectorType = bindObj.eventContext.selectorType;
 		var event = null;
 		var evArg = null;
 		if (args) {
@@ -1220,11 +1226,7 @@
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
 
-		function Context(obj){
-			$.extend(this,obj);
-		}
-		Context.prototype = selectorTypeConst;
-		return new Context({
+		return $.extend(new EventContext(), {
 			controller: controller,
 			rootElement: controller.rootElement,
 			event: event,
