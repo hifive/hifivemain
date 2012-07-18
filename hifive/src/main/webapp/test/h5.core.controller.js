@@ -3418,7 +3418,7 @@ $(function() {
 
 	asyncTest(
 			'context.selectorが取得できること',
-			8,
+			20,
 			function() {
 				$('#qunit-fixture')
 						.append(
@@ -3431,45 +3431,70 @@ $(function() {
 
 					'input click': function(context) {
 						var exSelector = 'input';
+						strictEqual(context.SELECTOR_TYPE_LOCAL, 1, 'selectorTypeを表す定数が格納されていること 1');
+						strictEqual(context.SELECTOR_TYPE_GLOBAL, 2,
+								'selectorTypeを表す定数が格納されていること 2');
+						strictEqual(context.SELECTOR_TYPE_OBJECT, 3,
+								'selectorTypeを表す定数が格納されていること 3');
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+								'selectorTypeが取得できること');
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
-					'input[type=button] click': function(context) {
+					'{input[type=button]} click': function(context) {
 						var exSelector = 'input[type=button]';
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_GLOBAL,
+								'selectorTypeが取得できること');
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
-					'   .testclass   click': function(context) {
-						var exSelector = '.testclass'
+					'.testclass click1': function(context) {
+						var exSelector = '.testclass';
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+								'selectorTypeが取得できること');
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
 					'{rootElement} click2': function(context) {
-						var exSelector = '{rootElement}';
-						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						console.log(context);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector[0], this.rootElement, 'ルートエレメントが取得できること');
 					},
-					' { body   }   click3': function(context) {
-						var exSelector = '{body}';
+					'{body}   click3': function(context) {
+						console.log(context);
+						var exSelector = 'body';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_GLOBAL,
+						'selectorTypeが取得できること');
 					},
-					'  #test  #innertest.innerdiv   h5trackstart': function(context) {
+					'#test #innertest.innerdiv   h5trackstart': function(context) {
+						console.log(context);
 						var exSelector = '#test #innertest.innerdiv';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+						'selectorTypeが取得できること');
 					},
-					'  #test  #innertest.innerdiv   h5trackend': function(context) {
-						var exSelector = '#test #innertest.innerdiv';
+					'#test    #innertest.innerdiv   h5trackend': function(context) {
+						console.log(context);
+						var exSelector = '#test    #innertest.innerdiv';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+						'selectorTypeが取得できること');
 					},
 					'{window} mousewheel': function(context) {
-						var exSelector = '{window}';
-						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selector[0], window, 'windowオブジェクトが取得できること');
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
+						'selectorTypeが取得できること');
 					}
 				};
 				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
 				test1Controller.readyPromise.done(function() {
 
 					$('#controllerTest1 input[type=button]').click();
+					$('#controllerTest1 .testclass').trigger('click1');
 					$('#controllerTest1').trigger('click2');
 					$('body').trigger('click3');
 					$('#controllerTest1 .innerdiv').mousedown();
 					$('#controllerTest1 .innerdiv').mouseup();
+					$(window.navigator).click();
 
 
 					var eventName = h5.env.ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';

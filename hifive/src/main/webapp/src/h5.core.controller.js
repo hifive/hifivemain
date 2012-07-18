@@ -132,21 +132,31 @@
 	// Privates
 	//
 	// =========================================================================
+	// =============================
+	// Variables
+	// =============================
 	/**
 	 * commonFailHandlerを発火させないために登録するdummyのfailハンドラ
 	 */
 	var dummyFailHandler = function() {
 	//
 	};
-	// =============================
-	// Variables
-	// =============================
 	var getDeferred = h5.async.deferred;
 	var startsWith = h5.u.str.startsWith;
 	var endsWith = h5.u.str.endsWith;
 	var format = h5.u.str.format;
 	var argsToArray = h5.u.obj.argsToArray;
 	var getByPath = h5.u.obj.getByPath;
+	/**
+	 * セレクタのタイプを表す定数
+	 * イベントコンテキストの中に格納する
+	 */
+	var selectorTypeConst =
+	{
+		SELECTOR_TYPE_LOCAL: 1,
+		SELECTOR_TYPE_GLOBAL: 2,
+		SELECTOR_TYPE_OBJECT: 3
+	};
 
 	// =============================
 	// Functions
@@ -530,24 +540,42 @@
 		var handler = bindObj.handler;
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
+
+		// イベントコンテキストで使用するデータ(selector, selectorType)をbindObj.contextに保持しておく
+		bindObj.context = {};
+
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
-			var selectTarget = trimGlobalSelectorBracket(selector);
+			var selectorTrimmed = trimGlobalSelectorBracket(selector);
 			var isSelf = false;
-			if (selectTarget === ROOT_ELEMENT_NAME) {
+			var selectTarget;
+			if (selectorTrimmed === ROOT_ELEMENT_NAME) {
 				selectTarget = rootElement;
 				isSelf = true;
 			} else {
-				selectTarget = getGlobalSelectorTarget(selectTarget);
+				selectTarget = getGlobalSelectorTarget(selectorTrimmed);
 			}
 			// バインド対象がdocument, windowの場合、live, delegateではイベントが拾えないことへの対応
 			var needBind = selectTarget === document || selectTarget === window;
 			if (isSelf || useBind || needBind) {
+				// bindObj.contextにselectorTypeとselectorを登録する。
+				// selectorがrootElement, window, documentの場合は登録する
+				bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
+				bindObj.context.selector = $(selectTarget);
+
 				$(selectTarget).bind(event, handler);
 			} else {
+				// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を登録する
+				bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
+				bindObj.context.selector = selectTarget;
+
 				$(selectTarget).live(event, handler);
 			}
 		} else {
+			// selectorがグローバル指定でない場合はcontext.selectorにselectorを登録する
+			bindObj.context.selectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
+			bindObj.context.selector = selector;
+
 			if (useBind) {
 				$(selector, rootElement).bind(event, handler);
 			} else {
@@ -570,8 +598,7 @@
 		// unbindMapにラップしたものが登録されるように、このタイミングで行う必要がある
 		var _handler = bindObj.handler;
 		var handler = function(/* var args */) {
-			_handler.call(bindObj.controller, createEventContext(bindObj.controller,
-					bindObj.selector, arguments));
+			_handler.call(bindObj.controller, createEventContext(bindObj, arguments));
 		};
 		bindObj.handler = handler;
 		// アンバインドマップにハンドラを追加
@@ -950,9 +977,10 @@
 			eventName: typeof document.onmousewheel === TYPE_OF_UNDEFINED ? 'DOMMouseScroll'
 					: eventName,
 			handler: function(context) {
+				var event = context.event;
 				// Firefox
-				if (context.event.originalEvent && context.event.originalEvent.detail) {
-					context.event.wheelDelta = -context.event.detail * 40;
+				if (event.originalEvent && event.originalEvent.detail) {
+					event.wheelDelta = -event.detail * 40;
 				}
 				func.call(controller, context);
 			}
@@ -1179,7 +1207,10 @@
 	 * @param {String} selector セレクタ
 	 * @param {Object} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
 	 */
-	function createEventContext(controller, selector, args) {
+	function createEventContext(bindObj, args) {
+		var controller = bindObj.controller;
+		var selector = bindObj.context.selector;
+		var selectorType = bindObj.context.selectorType;
 		var event = null;
 		var evArg = null;
 		if (args) {
@@ -1189,15 +1220,18 @@
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
 
-		var selectorTrimmed = selector.replace(/\s+/g, ' ').replace(/\{\s/g, '{').replace(/\s\}/g,
-				'}');
-		return {
+		function Context(obj){
+			$.extend(this,obj);
+		}
+		Context.prototype = selectorTypeConst;
+		return new Context({
 			controller: controller,
 			rootElement: controller.rootElement,
 			event: event,
 			evArg: evArg,
-			selector: selectorTrimmed
-		};
+			selector: selector,
+			selectorType: selectorType
+		});
 	}
 
 	/**
