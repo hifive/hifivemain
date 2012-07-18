@@ -3453,27 +3453,23 @@ $(function() {
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 					},
 					'{rootElement} click2': function(context) {
-						console.log(context);
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
 								'selectorTypeが取得できること');
 						strictEqual(context.selector[0], this.rootElement, 'ルートエレメントが取得できること');
 					},
 					'{body}   click3': function(context) {
-						console.log(context);
 						var exSelector = 'body';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_GLOBAL,
 						'selectorTypeが取得できること');
 					},
 					'#test #innertest.innerdiv   h5trackstart': function(context) {
-						console.log(context);
 						var exSelector = '#test #innertest.innerdiv';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
 						'selectorTypeが取得できること');
 					},
 					'#test    #innertest.innerdiv   h5trackend': function(context) {
-						console.log(context);
 						var exSelector = '#test    #innertest.innerdiv';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
