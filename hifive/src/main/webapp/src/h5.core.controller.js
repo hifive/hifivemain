@@ -2260,6 +2260,7 @@
 	 */
 	// fwOptは内部的に使用している.
 	function createAndBindController(targetElement, controllerDefObj, param, fwOpt) {
+		var isRoot = !fwOpt || !fwOpt.isInternal;
 
 		// コントローラ名
 		var controllerName = controllerDefObj.__name;
@@ -2289,23 +2290,26 @@
 
 		// バインド対象となる要素のチェック
 		// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
-		if (typeof targetElement === 'string' || typeof targetElement === 'object') {
-			var $bindTargetElement = $(targetElement);
-			// 要素が1つでない場合はエラー
-			if ($bindTargetElement.length === 0) {
-				throwFwError(ERR_CODE_BIND_NOT_TARGET, [controllerName], {
+		if (isRoot || targetElement) {
+			if (typeof targetElement === 'string' || typeof targetElement === 'object') {
+				var $bindTargetElement = $(targetElement);
+				// 要素が1つでない場合はエラー
+				if ($bindTargetElement.length === 0) {
+					console.log(targetElement);
+					throwFwError(ERR_CODE_BIND_NOT_TARGET, [controllerName], {
+						controllerDefObj: controllerDefObj
+					});
+				}
+				if ($bindTargetElement.length > 1) {
+					throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controllerName], {
+						controllerDefObj: controllerDefObj
+					});
+				}
+			} else {
+				throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controllerName], {
 					controllerDefObj: controllerDefObj
 				});
 			}
-			if ($bindTargetElement.length > 1) {
-				throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controllerName], {
-					controllerDefObj: controllerDefObj
-				});
-			}
-		} else {
-			throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controllerName], {
-				controllerDefObj: controllerDefObj
-			});
 		}
 
 		// コントローラの循環参照チェック
@@ -2322,7 +2326,6 @@
 			});
 		}
 
-		var isRoot = !fwOpt || !fwOpt.isInternal;
 		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
 				controllerName, param, isRoot);
