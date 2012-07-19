@@ -568,12 +568,12 @@
 			// バインド対象がdocument, windowの場合、live, delegateではイベントが拾えないことへの対応
 			var needBind = selectTarget === document || selectTarget === window;
 			if (isSelf || useBind || needBind) {
-				// bindObj.eventContextにselectorTypeを登録する
+				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
 
 				$(selectTarget).bind(event, handler);
 			} else {
-				// bindObj.eventContextにselectorTypeを登録する
+				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
 
 				$(selectTarget).live(event, handler);
@@ -582,7 +582,8 @@
 			// selectorがオブジェクト指定(rootElement, window, document)の場合はオブジェクトを格納する
 			bindObj.evSelector = selectTarget;
 		} else {
-			// selectorがグローバル指定でない場合はcontext.selectorにselectorを登録する
+			// selectorがグローバル指定でない場合
+			// bindObjにselectorTypeを登録し、selectorは文字列を格納する
 			bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
 			bindObj.evSelector = selector;
 
@@ -1213,13 +1214,9 @@
 	 * イベントコンテキストを作成します。
 	 *
 	 * @param {Object} bindObj バインドオブジェクト
-	 * @param {Object} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
+	 * @param {Array} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
 	 */
 	function createEventContext(bindObj, args) {
-		var controller = bindObj.controller;
-		var rootElement = bindObj.rootElement;
-		var selector = bindObj.evSelector;
-		var selectorType = bindObj.evSelectorType;
 		var event = null;
 		var evArg = null;
 		if (args) {
@@ -1229,7 +1226,8 @@
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
 
-		return new EventContext(controller, rootElement, event, evArg, selector, selectorType);
+		return new EventContext(bindObj.controller, bindObj.rootElement, event, evArg,
+				bindObj.evSelector, bindObj.evSelectorType);
 	}
 
 	/**
