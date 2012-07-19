@@ -82,7 +82,8 @@
 	var ERR_CODE_NOT_VIEW = 6029;
 	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
 	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
-
+	/** エラーコード：コントローラの名前に文字列以外が指定された */
+	var ERR_CODE_CONTROLLER_NAME_TYPE = 6031;
 	// エラーコードマップ
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
@@ -107,6 +108,7 @@
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
+	errMsgMap[ERR_CODE_CONTROLLER_NAME_TYPE] = 'コントローラの名前は文字列である必要があります。__nameにコントローラ名を文字列で設定して下さい。';
 
 	addFwErrorCodeMap(errMsgMap);
 
@@ -2261,8 +2263,12 @@
 
 		// コントローラ名
 		var controllerName = controllerDefObj.__name;
-		if (!controllerName || $.trim(controllerName).length === 0) {
+		if (controllerName == null || $.trim(controllerName).length === 0) {
 			throwFwError(ERR_CODE_CONTROLLER_NAME_REQUIRED, null, {
+				controllerDefObj: controllerDefObj
+			});
+		} else if (typeof controllerName !== 'string') {
+			throwFwError(ERR_CODE_CONTROLLER_NAME_TYPE, null, {
 				controllerDefObj: controllerDefObj
 			});
 		}
