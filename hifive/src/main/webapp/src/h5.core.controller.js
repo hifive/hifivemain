@@ -913,7 +913,7 @@
 	 * @returns {jQuery} jQueryオブジェクト
 	 */
 	function getTarget(element, rootElement, isTemplate) {
-		if (typeof element !== 'string') {
+		if (!isString(element)) {
 			return $(element);
 		}
 		var $targets;
@@ -2157,7 +2157,7 @@
 				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
 
-			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
+			if (msgOrErrObj && isString(msgOrErrObj)) {
 				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));
 			} else {
 				// 引数を渡さないと、iOS4は"unknown error"、その他のブラウザは空文字が、デフォルトのエラーメッセージとして入る
@@ -2269,7 +2269,7 @@
 			throwFwError(ERR_CODE_CONTROLLER_NAME_REQUIRED, null, {
 				controllerDefObj: controllerDefObj
 			});
-		} else if (typeof controllerName !== 'string') {
+		} else if (!isString(controllerName)) {
 			throwFwError(ERR_CODE_CONTROLLER_NAME_TYPE, null, {
 				controllerDefObj: controllerDefObj
 			});
@@ -2292,7 +2292,7 @@
 		// バインド対象となる要素のチェック
 		// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
 		if (isRoot || targetElement) {
-			if (typeof targetElement === 'string' || typeof targetElement === 'object') {
+			if (isString(targetElement) || typeof targetElement === 'object') {
 				var $bindTargetElement = $(targetElement);
 				// 要素が1つでない場合はエラー
 				if ($bindTargetElement.length === 0) {

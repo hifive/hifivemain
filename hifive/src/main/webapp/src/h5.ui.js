@@ -614,7 +614,7 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		message: function(message) {
-			if (typeof message === 'string') {
+			if (isString(message)) {
 				var setting = this._style;
 				var $blockElement = null;
 

@@ -294,7 +294,7 @@
 		}
 		for ( var i = 0, l = resource.length; i < l; i++) {
 			var path = resource[i];
-			if (typeof path !== 'string' || !$.trim(path)) {
+			if (!isString(path) || !$.trim(path)) {
 				throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
 			}
 		}
@@ -684,7 +684,7 @@
 	 * @memberOf h5.u.obj
 	 */
 	var deserialize = function(value) {
-		if (typeof value !== 'string') {
+		if (!isString(value)) {
 			throwFwError(ERR_CODE_DESERIALIZE_ARGUMENT);
 		}
 
@@ -924,7 +924,7 @@
 	 * @memberOf h5.u.obj
 	 */
 	var getByPath = function(namespace) {
-		if (typeof namespace !== 'string') {
+		if (!isString(namespace)) {
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
 		}
 

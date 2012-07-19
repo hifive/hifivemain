@@ -335,7 +335,7 @@
 			}
 
 			var args = logObj.args;
-			if (typeof args[0] !== 'string') {
+			if (!isString(args[0])) {
 				this._logObj(logObj);
 			} else {
 				this._logMsg(logObj);
@@ -519,7 +519,7 @@
 			var isDefault = _dOut == null;
 			if (!isDefault) {
 				var category = out.category;
-				if (typeof category !== 'string' || $.trim(category).length === 0) {
+				if (!isString(category) || $.trim(category).length === 0) {
 					throwFwError(ERR_CODE_OUT_CATEGORY_INVALID);
 				}
 				category = $.trim(category);
@@ -533,8 +533,7 @@
 			if (out.level == null) {
 				compiledLevel = stringToLevel(isDefault ? defaultOut.level : _dOut.level);
 			} else {
-				compiledLevel = typeof out.level === 'string' ? stringToLevel($.trim(out.level))
-						: out.level;
+				compiledLevel = isString(out.level) ? stringToLevel($.trim(out.level)) : out.level;
 			}
 			if (typeof compiledLevel !== 'number') {
 				throwFwError(ERR_CODE_LEVEL_INVALID, out.level);
@@ -546,14 +545,13 @@
 			if (!isDefault || targets != null) {
 				var targetNames = [];
 				// targetsの指定は文字列または配列またはnull,undefinedのみ
-				if (!(targets == null || $.isArray(targets) || (typeof targets === 'string' && $
+				if (!(targets == null || $.isArray(targets) || (isString(targets) && $
 						.trim(targets).length))) {
 					throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
 				}
 				targets = wrapInArray(targets);
 				for ( var i = 0, len = targets.length; i < len; i++) {
-					if (!(targets[i] == null || (typeof targets[i] === 'string' && $
-							.trim(targets[i]).length))) {
+					if (!(targets[i] == null || (isString(targets[i]) && $.trim(targets[i]).length))) {
 						throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
 					}
 					var targetName = targets[i];
@@ -619,7 +617,7 @@
 	 */
 	function Log(category) {
 		// categoryの指定が文字列以外、または空文字、空白文字ならエラー。
-		if (typeof category !== 'string' || $.trim(category).length === 0) {
+		if (!isString(category) || $.trim(category).length === 0) {
 			throwFwError(ERR_CODE_CATEGORY_INVALID);
 		}
 

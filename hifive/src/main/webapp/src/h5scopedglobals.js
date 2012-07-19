@@ -125,6 +125,16 @@ function toAbsoluteUrl(relativePath) {
 	return e.firstChild.href;
 }
 
+/**
+ * 引数が文字列かどうかを判定します。
+ *
+ * @private
+ * @param {String} target 値
+ * @returns {boolean} 文字列ならtrue、そうでないならfalse
+ */
+function isString(target) {
+	return typeof target === 'string';
+}
 
 // =============================
 // ロガー・アスペクトで使用する共通処理
@@ -138,7 +148,7 @@ function toAbsoluteUrl(relativePath) {
  */
 function escapeRegex(str) {
 	return str.replace(/\W/g, '\\$&');
-};
+}
 
 /**
  * 引数がStringの場合、RegExpオブジェクトにして返します。 引数がRegExpオブジェクトの場合はそのまま返します。
@@ -161,7 +171,7 @@ function getRegex(target) {
 		str = target;
 	}
 	return new RegExp('^' + str + '$');
-};
+}
 
 var h5internal = {
 	core: {

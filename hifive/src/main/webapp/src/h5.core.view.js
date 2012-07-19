@@ -493,7 +493,7 @@
 					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
 				for ( var i = 0, len = paths.length; i < len; i++) {
-					if (typeof paths[i] !== 'string') {
+					if (!isString(paths[i])) {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
 					} else if (!$.trim(paths[i])) {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
@@ -553,7 +553,7 @@
 				throwFwError(ERR_CODE_TEMPLATE_COMPILE, [ERR_REASON_TEMPLATE_IS_NOT_STRING], {
 					id: templateId
 				});
-			} else if (typeof templateId !== 'string' || !$.trim(templateId)) {
+			} else if (!isString(templateId) || !$.trim(templateId)) {
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, []);
 			}
 
@@ -622,7 +622,7 @@
 				return null;
 			}
 
-			if (typeof templateId !== 'string' || !$.trim(templateId)) {
+			if (!isString(templateId) || !$.trim(templateId)) {
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
@@ -748,7 +748,7 @@
 
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				var id = templateIdsArray[i];
-				if (typeof id !== 'string' || !$.trim(id)) {
+				if (!isString(id) || !$.trim(id)) {
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 				}
 				/* del begin */
