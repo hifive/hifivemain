@@ -80,6 +80,8 @@
 	var ERR_CODE_EXPOSE_NAME_REQUIRED = 6019;
 	/** エラーコード: Viewモジュールが組み込まれていない */
 	var ERR_CODE_NOT_VIEW = 6029;
+	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
+	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
 
 	// エラーコードマップ
 	var errMsgMap = {};
@@ -104,6 +106,7 @@
 	errMsgMap[ERR_CODE_LOGIC_ALREADY_CREATED] = '指定されたオブジェクトは既にロジック化されています。';
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
+	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
 
 	addFwErrorCodeMap(errMsgMap);
 
@@ -2279,8 +2282,10 @@
 		}
 
 		// バインド対象となる要素のチェック
-		if (targetElement) {
+		// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
+		if (typeof targetElement === 'string' || typeof targetElement === 'object') {
 			var $bindTargetElement = $(targetElement);
+			// 要素が1つでない場合はエラー
 			if ($bindTargetElement.length === 0) {
 				throwFwError(ERR_CODE_BIND_NOT_TARGET, [controllerName], {
 					controllerDefObj: controllerDefObj
@@ -2291,6 +2296,10 @@
 					controllerDefObj: controllerDefObj
 				});
 			}
+		} else {
+			throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controllerName], {
+				controllerDefObj: controllerDefObj
+			});
 		}
 
 		// コントローラの循環参照チェック
