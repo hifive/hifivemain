@@ -163,9 +163,16 @@
 	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
-	function EventContext() {
-		$.extend(this, selectorTypeConst);
+	function EventContext(controller, rootElement, event, evArg, selector, selectorType) {
+		this.controller = controller;
+		this.rootElement = rootElement;
+		this.event = event;
+		this.evArg = evArg;
+		this.selector = selector;
+		this.selectorType = selectorType;
 	}
+	// prototypeにセレクタのタイプを表す定数を追加
+	$.extend(EventContext.prototype, selectorTypeConst);
 
 	/**
 	 * コントローラのexecuteListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
@@ -546,8 +553,6 @@
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
 
-		// イベントコンテキストで使用するデータ(selector, selectorType)をbindObj.eventContextに保持しておく
-		var eventContext = {};
 
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
@@ -563,23 +568,23 @@
 			// バインド対象がdocument, windowの場合、live, delegateではイベントが拾えないことへの対応
 			var needBind = selectTarget === document || selectTarget === window;
 			if (isSelf || useBind || needBind) {
-				// bindObj.eventContextにselectorTypeとselectorを登録する。
-				// selectorがrootElement, window, documentの場合は登録する
-				eventContext.selectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
-				eventContext.selector = $(selectTarget);
+				// bindObj.eventContextにselectorTypeを登録する
+				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
 
 				$(selectTarget).bind(event, handler);
 			} else {
-				// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を登録する
-				eventContext.selectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
-				eventContext.selector = selectTarget;
+				// bindObj.eventContextにselectorTypeを登録する
+				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
 
 				$(selectTarget).live(event, handler);
 			}
+			// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を格納する
+			// selectorがオブジェクト指定(rootElement, window, document)の場合はオブジェクトを格納する
+			bindObj.evSelector = selectTarget;
 		} else {
 			// selectorがグローバル指定でない場合はcontext.selectorにselectorを登録する
-			eventContext.selectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
-			eventContext.selector = selector;
+			bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
+			bindObj.evSelector = selector;
 
 			if (useBind) {
 				$(selector, rootElement).bind(event, handler);
@@ -587,8 +592,6 @@
 				$(rootElement).delegate(selector, event, handler);
 			}
 		}
-
-		bindObj.eventContext = eventContext;
 	}
 
 	/**
@@ -603,11 +606,10 @@
 		}
 		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
 		// unbindMapにラップしたものが登録されるように、このタイミングで行う必要がある
-		var _handler = bindObj.handler;
-		var handler = function(/* var args */) {
-			_handler.call(bindObj.controller, createEventContext(bindObj, arguments));
+		var handler = bindObj.handler;
+		bindObj.handler = function(/* var args */) {
+			handler.call(bindObj.controller, createEventContext(bindObj, arguments));
 		};
-		bindObj.handler = handler;
 		// アンバインドマップにハンドラを追加
 		registerUnbindMap(bindObj.controller, bindObj.selector, bindObj.eventName, bindObj.handler);
 		bindByBindObject(bindObj);
@@ -1215,8 +1217,9 @@
 	 */
 	function createEventContext(bindObj, args) {
 		var controller = bindObj.controller;
-		var selector = bindObj.eventContext.selector;
-		var selectorType = bindObj.eventContext.selectorType;
+		var rootElement = bindObj.rootElement;
+		var selector = bindObj.evSelector;
+		var selectorType = bindObj.evSelectorType;
 		var event = null;
 		var evArg = null;
 		if (args) {
@@ -1226,14 +1229,7 @@
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
 
-		return $.extend(new EventContext(), {
-			controller: controller,
-			rootElement: controller.rootElement,
-			event: event,
-			evArg: evArg,
-			selector: selector,
-			selectorType: selectorType
-		});
+		return new EventContext(controller, rootElement, event, evArg, selector, selectorType);
 	}
 
 	/**

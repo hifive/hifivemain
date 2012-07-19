@@ -3455,7 +3455,7 @@ $(function() {
 					'{rootElement} click2': function(context) {
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
 								'selectorTypeが取得できること');
-						strictEqual(context.selector[0], this.rootElement, 'ルートエレメントが取得できること');
+						strictEqual(context.selector, this.rootElement, 'ルートエレメントが取得できること');
 					},
 					'{body}   click3': function(context) {
 						var exSelector = 'body';
@@ -3476,7 +3476,7 @@ $(function() {
 						'selectorTypeが取得できること');
 					},
 					'{window} mousewheel': function(context) {
-						strictEqual(context.selector[0], window, 'windowオブジェクトが取得できること');
+						strictEqual(context.selector, window, 'windowオブジェクトが取得できること');
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
 						'selectorTypeが取得できること');
 					}
