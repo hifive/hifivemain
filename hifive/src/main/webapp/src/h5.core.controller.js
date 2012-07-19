@@ -169,9 +169,8 @@
 	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
-	function EventContext(controller, rootElement, event, evArg, selector, selectorType) {
+	function EventContext(controller, event, evArg, selector, selectorType) {
 		this.controller = controller;
-		this.rootElement = rootElement;
 		this.event = event;
 		this.evArg = evArg;
 		this.selector = selector;
@@ -1232,8 +1231,8 @@
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
 
-		return new EventContext(bindObj.controller, bindObj.rootElement, event, evArg,
-				bindObj.evSelector, bindObj.evSelectorType);
+		return new EventContext(bindObj.controller, event, evArg, bindObj.evSelector,
+				bindObj.evSelectorType);
 	}
 
 	/**
