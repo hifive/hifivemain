@@ -84,10 +84,11 @@
 	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
 	/** エラーコード：コントローラの名前に文字列以外が指定された */
 	var ERR_CODE_CONTROLLER_NAME_TYPE = 6031;
+
 	// エラーコードマップ
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
-	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'バインド対象となる要素を指定して下さい。';
+	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'コントローラ"{0}"のバインド対象となる要素を指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_COMPLEX] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
@@ -1294,20 +1295,27 @@
 	 * @returns {DOM} コントローラのバインド対象である要素
 	 */
 	function getBindTarget(element, rootElement, controller) {
-		if (!element) {
-			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED);
-		} else if (!controller || !controller.__controllerContext) {
+		if (!controller || !controller.__controllerContext) {
 			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
+		} else if (element == null) {
+			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controller.__name]);
 		}
 		var $targets;
+		// elementが文字列でもオブジェクトでもないときはエラー
+		if (!isString(element) && typeof element !== 'object') {
+			throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controller.__name]);
+		}
 		if (rootElement) {
 			$targets = getTarget(element, rootElement);
 		} else {
 			$targets = $(element);
 		}
+
+		// 要素が存在しないときはエラー
 		if ($targets.length === 0) {
 			throwFwError(ERR_CODE_BIND_NOT_TARGET, [controller.__name]);
 		}
+		// 要素が複数存在するときはエラー
 		if ($targets.length > 1) {
 			throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controller.__name]);
 		}
@@ -2292,7 +2300,11 @@
 		// バインド対象となる要素のチェック
 		// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
 		if (isRoot || targetElement) {
-			if (isString(targetElement) || typeof targetElement === 'object') {
+			if (targetElement == null) {
+				throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controllerName], {
+					controllerDefObj: controllerDefObj
+				});
+			} else if (isString(targetElement) || typeof targetElement === 'object') {
 				var $bindTargetElement = $(targetElement);
 				// 要素が1つでない場合はエラー
 				if ($bindTargetElement.length === 0) {
