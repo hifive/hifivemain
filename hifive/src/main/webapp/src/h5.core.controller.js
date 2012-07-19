@@ -2296,7 +2296,6 @@
 				var $bindTargetElement = $(targetElement);
 				// 要素が1つでない場合はエラー
 				if ($bindTargetElement.length === 0) {
-					console.log(targetElement);
 					throwFwError(ERR_CODE_BIND_NOT_TARGET, [controllerName], {
 						controllerDefObj: controllerDefObj
 					});
