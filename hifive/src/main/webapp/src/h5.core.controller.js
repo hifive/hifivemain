@@ -2413,9 +2413,10 @@
 				controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
 			} else if (isEventHandler(clonedControllerDef, prop)) {
 				// イベントハンドラ
-				var lastIndex = $.trim(prop).lastIndexOf(' ');
-				var selector = $.trim(prop.substring(0, lastIndex));
-				var eventName = $.trim(prop.substring(lastIndex + 1, prop.length));
+				var propTrimmed = $.trim(prop);
+				var lastIndex = propTrimmed.lastIndexOf(' ');
+				var selector = $.trim(propTrimmed.substring(0, lastIndex));
+				var eventName = $.trim(propTrimmed.substring(lastIndex + 1, propTrimmed.length));
 				if (isBindRequested(eventName)) {
 					eventName = '[' + $.trim(trimBindEventBracket(eventName)) + ']';
 				}
