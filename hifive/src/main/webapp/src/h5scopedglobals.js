@@ -129,7 +129,7 @@ function toAbsoluteUrl(relativePath) {
  * 引数が文字列かどうかを判定します。
  *
  * @private
- * @param {String} target 値
+ * @param {Any} target 値
  * @returns {boolean} 文字列ならtrue、そうでないならfalse
  */
 function isString(target) {
