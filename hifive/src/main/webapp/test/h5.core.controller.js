@@ -74,7 +74,7 @@ $(function() {
 				setup: function() {
 					$('#qunit-fixture')
 							.append(
-									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
 					$('#controllerTest').remove();
@@ -114,7 +114,7 @@ $(function() {
 		strictEqual(undefined, window.jp, '（名前空間のクリーンアップ2）');
 	});
 
-	asyncTest('コントローラの作成と要素へのバインド(AOPなし)', 4, function() {
+	asyncTest('コントローラの作成と要素へのバインド(AOPなし)', 3, function() {
 		var cc = null;
 		var controller = {
 
@@ -124,11 +124,6 @@ $(function() {
 				cc = context.controller;
 				this.test();
 			},
-
-			'   input[type=button]           dblclick         ': function() {
-				this.dblTest();
-			},
-
 			test: function() {
 				$('#controllerResult').empty().text('ok');
 			},
@@ -144,10 +139,7 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 			var clickResult = $('#controllerResult').text();
 
-			$('#controllerTest input[type=button]').dblclick();
-			var dblclickResult = $('#controllerResult').text();
 			strictEqual(clickResult, 'ok', 'コントローラが要素にバインドされているか');
-			strictEqual(dblclickResult, 'dblok', 'セレクタ、イベントの前後にスペースが有っても動作するか');
 			ok(testController === cc, 'イベントコンテキストにコントローラの参照(context.controller)が格納されているか');
 
 			var result = [];
@@ -170,7 +162,6 @@ $(function() {
 				start();
 			});
 		});
-
 	});
 
 	asyncTest('コントローラの作成と要素へのバインド(AOPあり) ※min版ではエラーになります', 3, function() {
@@ -188,11 +179,6 @@ $(function() {
 			'input[type=button] click': function(context) {
 				this.test();
 			},
-
-			'   input[type=button]           dblclick         ': function() {
-				this.dblTest();
-			},
-
 			test: function() {
 				$('#controllerResult').empty().text('ok');
 			},
@@ -235,6 +221,67 @@ $(function() {
 		});
 
 	});
+
+	asyncTest('コントローラの作成と要素へのバインド セレクタ、イベントの前後にスペースがあってもイベントハンドリングできること', 9, function() {
+		var cc = null;
+		var controller = {
+
+			__name: 'TestController',
+
+			' input[type=button] click': function(context) {
+				this.test(0);
+			},
+			'  input[type=button]  dblclick       ': function(context) {
+				this.dblTest();
+			},
+			' #a .b click1': function(context) {
+				this.test(1);
+			},
+			'      #a .b    click2 ': function(context) {
+				this.test(2);
+			},
+			'      #a    .b  click3': function(context) {
+				this.test(3);
+			},
+			' {#a .b} click4': function(context) {
+				this.test(4);
+			},
+			' { #a .b}    click5': function(context) {
+				this.test(5);
+			},
+			' { #a  .b} click6   ': function(context) {
+				this.test(6);
+			},
+			'  {   #a    .b    }    click7   ': function(context) {
+				this.test(7);
+			},
+			test: function(n) {
+				$('#controllerResult').empty().text(n);
+			},
+
+			dblTest: function() {
+				$('#controllerResult').empty().text('dblok');
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var $result = $('#controllerResult');
+
+			$('#controllerTest input[type=button]').click();
+			strictEqual($result.text(), '0', 'コントローラが要素にバインドされているか');
+
+			$('#controllerTest input[type=button]').dblclick();
+			strictEqual($result.text(), 'dblok', 'コントローラが要素にバインドされているか');
+
+			for ( var i = 1; i <= 7; i++) {
+				$('#controllerTest #a .b').trigger('click' + i);
+				strictEqual($result.text(), '' + i, 'コントローラが要素にバインドされているか');
+			}
+			start();
+		});
+	});
+
 
 	test('bind() 引数なし、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること',
 			function() {
@@ -3455,30 +3502,30 @@ $(function() {
 					'{rootElement} click2': function(context) {
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
 								'selectorTypeが取得できること');
-						strictEqual(context.selector[0], this.rootElement, 'ルートエレメントが取得できること');
+						strictEqual(context.selector, this.rootElement, 'ルートエレメントが取得できること');
 					},
-					'{body}   click3': function(context) {
+					'  {  body } click3': function(context) {
 						var exSelector = 'body';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_GLOBAL,
-						'selectorTypeが取得できること');
+								'selectorTypeが取得できること');
 					},
 					'#test #innertest.innerdiv   h5trackstart': function(context) {
 						var exSelector = '#test #innertest.innerdiv';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
-						'selectorTypeが取得できること');
+								'selectorTypeが取得できること');
 					},
-					'#test    #innertest.innerdiv   h5trackend': function(context) {
+					'       #test    #innertest.innerdiv   h5trackend': function(context) {
 						var exSelector = '#test    #innertest.innerdiv';
 						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
-						'selectorTypeが取得できること');
+								'selectorTypeが取得できること');
 					},
 					'{window} mousewheel': function(context) {
-						strictEqual(context.selector[0], window, 'windowオブジェクトが取得できること');
+						strictEqual(context.selector, window, 'windowオブジェクトが取得できること');
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
-						'selectorTypeが取得できること');
+								'selectorTypeが取得できること');
 					}
 				};
 				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
