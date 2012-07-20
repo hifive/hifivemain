@@ -45,9 +45,9 @@
 	/** エラーコード: bindControllerメソッドにコントローラではないオブジェクトが渡された */
 	var ERR_CODE_BIND_NOT_CONTROLLER = 6002;
 	/** エラーコード: バインド対象となるDOMがない */
-	var ERR_CODE_BIND_NOT_TARGET = 6003;
+	var ERR_CODE_BIND_NO_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
-	var ERR_CODE_BIND_TARGET_COMPLEX = 6004;
+	var ERR_CODE_BIND_TOO_MANY_TARGET = 6004;
 	/** エラーコード: 指定された引数の数が少ない */
 	var ERR_CODE_TOO_FEW_ARGUMENTS = 6005;
 	/** エラーコード: コントローラの名前が指定されていない */
@@ -90,8 +90,8 @@
 	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'コントローラ"{0}"のバインド対象となる要素を指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
-	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
-	errMsgMap[ERR_CODE_BIND_TARGET_COMPLEX] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
+	errMsgMap[ERR_CODE_BIND_NO_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
+	errMsgMap[ERR_CODE_BIND_TOO_MANY_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_NAME_REQUIRED] = 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
@@ -1312,11 +1312,11 @@
 
 		// 要素が存在しないときはエラー
 		if ($targets.length === 0) {
-			throwFwError(ERR_CODE_BIND_NOT_TARGET, [controller.__name]);
+			throwFwError(ERR_CODE_BIND_NO_TARGET, [controller.__name]);
 		}
 		// 要素が複数存在するときはエラー
 		if ($targets.length > 1) {
-			throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controller.__name]);
+			throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controller.__name]);
 		}
 		return $targets.get(0);
 	}
@@ -2307,12 +2307,12 @@
 				var $bindTargetElement = $(targetElement);
 				// 要素が1つでない場合はエラー
 				if ($bindTargetElement.length === 0) {
-					throwFwError(ERR_CODE_BIND_NOT_TARGET, [controllerName], {
+					throwFwError(ERR_CODE_BIND_NO_TARGET, [controllerName], {
 						controllerDefObj: controllerDefObj
 					});
 				}
 				if ($bindTargetElement.length > 1) {
-					throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controllerName], {
+					throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controllerName], {
 						controllerDefObj: controllerDefObj
 					});
 				}
