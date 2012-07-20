@@ -51,7 +51,7 @@
 	/** エラーコード: 指定された引数の数が少ない */
 	var ERR_CODE_TOO_FEW_ARGUMENTS = 6005;
 	/** エラーコード: コントローラの名前が指定されていない */
-	var ERR_CODE_CONTROLLER_NAME_REQUIRED = 6006;
+	var ERR_CODE_INVALID_CONTROLLER_NAME = 6006;
 	/** エラーコード: コントローラの初期化パラメータが不正 */
 	var ERR_CODE_CONTROLLER_INVALID_INIT_PARAM = 6007;
 	/** エラーコード: 既にコントローラ化されている */
@@ -72,8 +72,8 @@
 	var ERR_CODE_CONTROLLER_META_KEY_NULL = 6015;
 	/** エラーコード: __metaで指定されたプロパティがコントローラではない */
 	var ERR_CODE_CONTROLLER_META_KEY_NOT_CONTROLLER = 6016;
-	/** エラーコード: ロジックの名前が指定されていない */
-	var ERR_CODE_LOGIC_NAME_REQUIRED = 6017;
+	/** エラーコード: ロジックの名前に文字列が指定されていない */
+	var ERR_CODE_INVALID_LOGIC_NAME = 6017;
 	/** エラーコード: 既にロジック化されている */
 	var ERR_CODE_LOGIC_ALREADY_CREATED = 6018;
 	/** エラーコード: exposeする際にコントローラ、もしくはロジックの名前がない */
@@ -82,8 +82,6 @@
 	var ERR_CODE_NOT_VIEW = 6029;
 	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
 	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
-	/** エラーコード：コントローラの名前に文字列以外が指定された */
-	var ERR_CODE_CONTROLLER_NAME_TYPE = 6031;
 
 	// エラーコードマップ
 	var errMsgMap = {};
@@ -93,7 +91,7 @@
 	errMsgMap[ERR_CODE_BIND_NO_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
 	errMsgMap[ERR_CODE_BIND_TOO_MANY_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
-	errMsgMap[ERR_CODE_CONTROLLER_NAME_REQUIRED] = 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_CONTROLLER_NAME] = 'コントローラの名前は必須です。コントローラの__nameにコントローラ名を空でない文字列で設定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_ALREADY_CREATED] = '指定されたオブジェクトは既にコントローラ化されています。';
 	errMsgMap[ERR_CODE_CONTROLLER_CIRCULAR_REF] = 'コントローラ"{0}"で、参照が循環しているため、コントローラを生成できません。';
@@ -104,12 +102,11 @@
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_INVALID] = 'コントローラ"{0}"には__metaで指定されたプロパティ"{1}"がありません。';
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_NULL] = 'コントローラ"{0}"の__metaに指定されたキー"{1}"の値がnullです。コントローラを持つプロパティキー名を指定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_NOT_CONTROLLER] = 'コントローラ"{0}"の__metaに指定されたキー"{1}"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。';
-	errMsgMap[ERR_CODE_LOGIC_NAME_REQUIRED] = 'ロジック名が定義されていません。__nameにロジック名を設定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_LOGIC_NAME] = 'ロジック名は必須です。ロジックの__nameにロジック名を空でない文字列で設定して下さい。';
 	errMsgMap[ERR_CODE_LOGIC_ALREADY_CREATED] = '指定されたオブジェクトは既にロジック化されています。';
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
-	errMsgMap[ERR_CODE_CONTROLLER_NAME_TYPE] = 'コントローラの名前は文字列である必要があります。__nameにコントローラ名を文字列で設定して下さい。';
 
 	addFwErrorCodeMap(errMsgMap);
 
@@ -2272,12 +2269,8 @@
 
 		// コントローラ名
 		var controllerName = controllerDefObj.__name;
-		if (controllerName == null || $.trim(controllerName).length === 0) {
-			throwFwError(ERR_CODE_CONTROLLER_NAME_REQUIRED, null, {
-				controllerDefObj: controllerDefObj
-			});
-		} else if (!isString(controllerName)) {
-			throwFwError(ERR_CODE_CONTROLLER_NAME_TYPE, null, {
+		if (!isString(controllerName) || $.trim(controllerName).length === 0) {
+			throwFwError(ERR_CODE_INVALID_CONTROLLER_NAME, null, {
 				controllerDefObj: controllerDefObj
 			});
 		}
@@ -2551,8 +2544,8 @@
 	 */
 	function createLogic(logicDefObj) {
 		var logicName = logicDefObj.__name;
-		if (!logicName || $.trim(logicName.length) === 0) {
-			throwFwError(ERR_CODE_LOGIC_NAME_REQUIRED, null, {
+		if (!isString(logicName) || $.trim(logicName.length) === 0) {
+			throwFwError(ERR_CODE_INVALID_LOGIC_NAME, null, {
 				logicDefObj: logicDefObj
 			});
 		}
