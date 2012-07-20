@@ -117,118 +117,118 @@
 	 * @class
 	 * @name h5.helper.EventDispatcher
 	 **********************************************************************************************/
-	function EventDispatcher(target) {
-		//TODO eventListenerはクロージャで管理する（thisを汚さない）ようにする
-		if (target) {
-			this._eventTarget = target;
-			var that = this;
+	function getEventDispatcher(_eventListeners) {
+		var eventListeners = _eventListeners;
+		function EventDispatcher(target) {
+			//TODO eventListenerはクロージャで管理する（thisを汚さない）ようにする
+			if (target) {
+				this._eventTarget = target;
+				var that = this;
 
-			target.hasEventListener = function(type, listener) {
-				that.hasEventListener(type, listener);
-			};
-			target.addEventListener = function(type, listener) {
-				that.addEventListener(type, listener);
-			};
-			target.removeEventListener = function(type, listener) {
-				that.removeEventListener(type, listener);
-			};
-			target.dispatchEvent = function(event) {
-				that.dispatchEvent(event);
-			};
-		}
-	}
-
-	/**
-	 * @memberOf h5.helper.EventDispatcher
-	 * @param type
-	 * @param listener
-	 * @returns {Boolean}
-	 */
-	EventDispatcher.prototype.hasEventListener = function(type, listener) {
-		if (!this._eventListeners) {
-			return false;
-		}
-		var l = this._eventListeners[type];
-		if (!l) {
-			return false;
-		}
-
-		for ( var i = 0, count = l.length; i < count; i++) {
-			if (l[i] === listener) {
-				return true;
+				target.hasEventListener = function(type, listener) {
+					that.hasEventListener(type, listener);
+				};
+				target.addEventListener = function(type, listener) {
+					that.addEventListener(type, listener);
+				};
+				target.removeEventListener = function(type, listener) {
+					that.removeEventListener(type, listener);
+				};
+				target.dispatchEvent = function(event) {
+					that.dispatchEvent(event);
+				};
 			}
 		}
-		return false;
 
-	};
+		/**
+		 * @memberOf h5.helper.EventDispatcher
+		 * @param type
+		 * @param listener
+		 * @returns {Boolean}
+		 */
+		EventDispatcher.prototype.hasEventListener = function(type, listener) {
+			if (!eventListeners) {
+				return false;
+			}
+			var l = eventListeners[type];
+			if (!l) {
+				return false;
+			}
 
-	/**
-	 * @memberOf h5.helper.EventDispatcher
-	 * @param type
-	 * @param listener
-	 */
-	EventDispatcher.prototype.addEventListener = function(type, listener) {
-		if (this.hasEventListener(type, listener)) {
-			return;
-		}
+			for ( var i = 0, count = l.length; i < count; i++) {
+				if (l[i] === listener) {
+					return true;
+				}
+			}
+			return false;
 
-		if (!this._eventListeners) {
-			this._eventListeners = {};
-		}
+		};
 
-		if (!(type in this._eventListeners)) {
-			this._eventListeners[type] = [];
-		}
-
-		this._eventListeners[type].push(listener);
-	};
-
-	/**
-	 * @memberOf h5.helper.EventDispatcher
-	 * @param type
-	 * @param lisntener
-	 */
-	EventDispatcher.prototype.removeEventListener = function(type, lisntener) {
-		if (!this.hasEventListener(type, listener)) {
-			return;
-		}
-
-		var l = this._eventListeners[type];
-
-		for ( var i = 0, count = l.length; i < count; i++) {
-			if (l[i] === listener) {
-				l.splice(i, 1);
+		/**
+		 * @memberOf h5.helper.EventDispatcher
+		 * @param type
+		 * @param listener
+		 */
+		EventDispatcher.prototype.addEventListener = function(type, listener) {
+			if (this.hasEventListener(type, listener)) {
 				return;
 			}
-		}
 
-	};
+			if (!eventListeners) {
+				eventListeners = {};
+			}
 
-	/**
-	 * @memberOf h5.helper.EventDispatcher
-	 * @param event
-	 */
-	EventDispatcher.prototype.dispatchEvent = function(event) {
-		if (!this._eventListeners) {
-			return;
-		}
-		var l = this._eventListeners[event.type];
-		if (!l) {
-			return;
-		}
+			if (!(type in eventListeners)) {
+				eventListeners[type] = [];
+			}
 
-		if (!event.target) {
-			event.target = this._eventTarget ? this._eventTarget : this;
-		}
+			eventListeners[type].push(listener);
+		};
 
-		for ( var i = 0, count = l.length; i < count; i++) {
-			l[i].call(event.target, event);
-		}
-	};
+		/**
+		 * @memberOf h5.helper.EventDispatcher
+		 * @param type
+		 * @param lisntener
+		 */
+		EventDispatcher.prototype.removeEventListener = function(type, lisntener) {
+			if (!this.hasEventListener(type, listener)) {
+				return;
+			}
 
+			var l = eventListeners[type];
 
+			for ( var i = 0, count = l.length; i < count; i++) {
+				if (l[i] === listener) {
+					l.splice(i, 1);
+					return;
+				}
+			}
 
+		};
 
+		/**
+		 * @memberOf h5.helper.EventDispatcher
+		 * @param event
+		 */
+		EventDispatcher.prototype.dispatchEvent = function(event) {
+			if (!eventListeners) {
+				return;
+			}
+			var l = eventListeners[event.type];
+			if (!l) {
+				return;
+			}
+
+			if (!event.target) {
+				event.target = this._eventTarget ? this._eventTarget : this;
+			}
+
+			for ( var i = 0, count = l.length; i < count; i++) {
+				l[i].call(event.target, event);
+			}
+		};
+		return new EventDispatcher();
+	}
 
 	/**
 	 * @class
@@ -243,7 +243,6 @@
 		this.size = 0;
 
 		function ObjectProxy() {}
-		ObjectProxy.prototype = new EventDispatcher();
 		ObjectProxy.prototype.__dataModel = this; //これは仕方ないかな・・・ prototypeチェーン側なので許してもらうことにしよう
 
 		//TODO triggerChangeはクロージャで持たせる
@@ -259,11 +258,10 @@
 				this.dispatchEvent(event);
 			}
 		});
-
 		this.proxy = ObjectProxy;
 	}
 
-	DataModel.prototype = new EventDispatcher();
+	DataModel.prototype = getEventDispatcher();
 	$.extend(DataModel.prototype, {
 		/**
 		 * @memberOf DataModel
@@ -307,13 +305,22 @@
 
 						this[p] = value;
 
-						this._proxy_triggerChange(this, propName, oldValue, value);
+						// この時点でdispatch呼べるようにしておく必要がある？
+						// createじゃなくて_initの中でthis.proxy呼んでおく必要がある？
+						if (eventListeners['change']) {
+							for ( var i = 0, l = eventListeners['change'].length; i < l; i++) {
+								eventListeners['change'][i].call(this, propName, oldValue, value);
+							}
+						}
 					}
 				});
 			};
 
 			var hasId = false;
 
+
+			var eventListeners = {};
+			this.proxy.prototype = getEventDispatcher(eventListeners);
 			for ( var p in descriptor.prop) {
 				defineProxyProperty(this.proxy.prototype, p);
 				if (descriptor.prop[p] && (descriptor.prop[p].isId === true)) {
@@ -341,8 +348,7 @@
 			if (id in this.objects) {
 				throw new Error('DataModel.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
 			}
-
-			var obj = new this.proxy();
+			obj = new this.proxy();
 			obj[this.idKey] = id;
 
 			this.objects[id] = obj;
