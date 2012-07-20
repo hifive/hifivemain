@@ -45,13 +45,13 @@
 	/** エラーコード: bindControllerメソッドにコントローラではないオブジェクトが渡された */
 	var ERR_CODE_BIND_NOT_CONTROLLER = 6002;
 	/** エラーコード: バインド対象となるDOMがない */
-	var ERR_CODE_BIND_NOT_TARGET = 6003;
+	var ERR_CODE_BIND_NO_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
-	var ERR_CODE_BIND_TARGET_COMPLEX = 6004;
+	var ERR_CODE_BIND_TOO_MANY_TARGET = 6004;
 	/** エラーコード: 指定された引数の数が少ない */
 	var ERR_CODE_TOO_FEW_ARGUMENTS = 6005;
 	/** エラーコード: コントローラの名前が指定されていない */
-	var ERR_CODE_CONTROLLER_NAME_REQUIRED = 6006;
+	var ERR_CODE_INVALID_CONTROLLER_NAME = 6006;
 	/** エラーコード: コントローラの初期化パラメータが不正 */
 	var ERR_CODE_CONTROLLER_INVALID_INIT_PARAM = 6007;
 	/** エラーコード: 既にコントローラ化されている */
@@ -72,24 +72,26 @@
 	var ERR_CODE_CONTROLLER_META_KEY_NULL = 6015;
 	/** エラーコード: __metaで指定されたプロパティがコントローラではない */
 	var ERR_CODE_CONTROLLER_META_KEY_NOT_CONTROLLER = 6016;
-	/** エラーコード: ロジックの名前が指定されていない */
-	var ERR_CODE_LOGIC_NAME_REQUIRED = 6017;
+	/** エラーコード: ロジックの名前に文字列が指定されていない */
+	var ERR_CODE_INVALID_LOGIC_NAME = 6017;
 	/** エラーコード: 既にロジック化されている */
 	var ERR_CODE_LOGIC_ALREADY_CREATED = 6018;
 	/** エラーコード: exposeする際にコントローラ、もしくはロジックの名前がない */
 	var ERR_CODE_EXPOSE_NAME_REQUIRED = 6019;
 	/** エラーコード: Viewモジュールが組み込まれていない */
 	var ERR_CODE_NOT_VIEW = 6029;
+	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
+	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
 
 	// エラーコードマップ
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
-	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'バインド対象となる要素を指定して下さい。';
+	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'コントローラ"{0}"のバインド対象となる要素を指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
-	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
-	errMsgMap[ERR_CODE_BIND_TARGET_COMPLEX] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
+	errMsgMap[ERR_CODE_BIND_NO_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
+	errMsgMap[ERR_CODE_BIND_TOO_MANY_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
-	errMsgMap[ERR_CODE_CONTROLLER_NAME_REQUIRED] = 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_CONTROLLER_NAME] = 'コントローラの名前は必須です。コントローラの__nameにコントローラ名を空でない文字列で設定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_ALREADY_CREATED] = '指定されたオブジェクトは既にコントローラ化されています。';
 	errMsgMap[ERR_CODE_CONTROLLER_CIRCULAR_REF] = 'コントローラ"{0}"で、参照が循環しているため、コントローラを生成できません。';
@@ -100,10 +102,11 @@
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_INVALID] = 'コントローラ"{0}"には__metaで指定されたプロパティ"{1}"がありません。';
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_NULL] = 'コントローラ"{0}"の__metaに指定されたキー"{1}"の値がnullです。コントローラを持つプロパティキー名を指定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_NOT_CONTROLLER] = 'コントローラ"{0}"の__metaに指定されたキー"{1}"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。';
-	errMsgMap[ERR_CODE_LOGIC_NAME_REQUIRED] = 'ロジック名が定義されていません。__nameにロジック名を設定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_LOGIC_NAME] = 'ロジック名は必須です。ロジックの__nameにロジック名を空でない文字列で設定して下さい。';
 	errMsgMap[ERR_CODE_LOGIC_ALREADY_CREATED] = '指定されたオブジェクトは既にロジック化されています。';
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
+	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
 
 	addFwErrorCodeMap(errMsgMap);
 
@@ -163,9 +166,8 @@
 	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
-	function EventContext(controller, rootElement, event, evArg, selector, selectorType) {
+	function EventContext(controller, event, evArg, selector, selectorType) {
 		this.controller = controller;
-		this.rootElement = rootElement;
 		this.event = event;
 		this.evArg = evArg;
 		this.selector = selector;
@@ -908,7 +910,7 @@
 	 * @returns {jQuery} jQueryオブジェクト
 	 */
 	function getTarget(element, rootElement, isTemplate) {
-		if (typeof element !== 'string') {
+		if (!isString(element)) {
 			return $(element);
 		}
 		var $targets;
@@ -1226,8 +1228,8 @@
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
 
-		return new EventContext(bindObj.controller, bindObj.rootElement, event, evArg,
-				bindObj.evSelector, bindObj.evSelectorType);
+		return new EventContext(bindObj.controller, event, evArg, bindObj.evSelector,
+				bindObj.evSelectorType);
 	}
 
 	/**
@@ -1289,22 +1291,29 @@
 	 * @returns {DOM} コントローラのバインド対象である要素
 	 */
 	function getBindTarget(element, rootElement, controller) {
-		if (!element) {
-			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED);
-		} else if (!controller || !controller.__controllerContext) {
+		if (!controller || !controller.__controllerContext) {
 			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
+		} else if (element == null) {
+			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controller.__name]);
 		}
 		var $targets;
+		// elementが文字列でもオブジェクトでもないときはエラー
+		if (!isString(element) && typeof element !== 'object') {
+			throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controller.__name]);
+		}
 		if (rootElement) {
 			$targets = getTarget(element, rootElement);
 		} else {
 			$targets = $(element);
 		}
+
+		// 要素が存在しないときはエラー
 		if ($targets.length === 0) {
-			throwFwError(ERR_CODE_BIND_NOT_TARGET, [controller.__name]);
+			throwFwError(ERR_CODE_BIND_NO_TARGET, [controller.__name]);
 		}
+		// 要素が複数存在するときはエラー
 		if ($targets.length > 1) {
-			throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controller.__name]);
+			throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controller.__name]);
 		}
 		return $targets.get(0);
 	}
@@ -2232,7 +2241,7 @@
 				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
 
-			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
+			if (msgOrErrObj && isString(msgOrErrObj)) {
 				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));
 			} else {
 				// 引数を渡さないと、iOS4は"unknown error"、その他のブラウザは空文字が、デフォルトのエラーメッセージとして入る
@@ -2384,11 +2393,13 @@
 	 */
 	// fwOptは内部的に使用している.
 	function createAndBindController(targetElement, controllerDefObj, param, fwOpt) {
+		// 内部から再帰的に呼び出された場合は、fwOpt.isInternalが指定されているはずなので、ルートコントローラかどうかはfwOpt.isInternalで判別できる
+		var isRoot = !fwOpt || !fwOpt.isInternal;
 
 		// コントローラ名
 		var controllerName = controllerDefObj.__name;
-		if (!controllerName || $.trim(controllerName).length === 0) {
-			throwFwError(ERR_CODE_CONTROLLER_NAME_REQUIRED, null, {
+		if (!isString(controllerName) || $.trim(controllerName).length === 0) {
+			throwFwError(ERR_CODE_INVALID_CONTROLLER_NAME, null, {
 				controllerDefObj: controllerDefObj
 			});
 		}
@@ -2408,15 +2419,27 @@
 		}
 
 		// バインド対象となる要素のチェック
-		if (targetElement) {
-			var $bindTargetElement = $(targetElement);
-			if ($bindTargetElement.length === 0) {
-				throwFwError(ERR_CODE_BIND_NOT_TARGET, [controllerName], {
+		// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
+		if (isRoot || targetElement) {
+			if (targetElement == null) {
+				throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controllerName], {
 					controllerDefObj: controllerDefObj
 				});
-			}
-			if ($bindTargetElement.length > 1) {
-				throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controllerName], {
+			} else if (isString(targetElement) || typeof targetElement === 'object') {
+				var $bindTargetElement = $(targetElement);
+				// 要素が1つでない場合はエラー
+				if ($bindTargetElement.length === 0) {
+					throwFwError(ERR_CODE_BIND_NO_TARGET, [controllerName], {
+						controllerDefObj: controllerDefObj
+					});
+				}
+				if ($bindTargetElement.length > 1) {
+					throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controllerName], {
+						controllerDefObj: controllerDefObj
+					});
+				}
+			} else {
+				throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controllerName], {
 					controllerDefObj: controllerDefObj
 				});
 			}
@@ -2436,7 +2459,6 @@
 			});
 		}
 
-		var isRoot = !fwOpt || !fwOpt.isInternal;
 		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
 				controllerName, param, isRoot);
@@ -2571,6 +2593,7 @@
 				controller[prop] = weavedFunc;
 			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
 					&& !$.isFunction(clonedControllerDef[prop])) {
+				// 子コントローラをバインドする。fwOpt.isInternalを指定して、子コントローラであるかどうか分かるようにする
 				var c = createAndBindController(null,
 						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
 							isInternal: true
@@ -2650,8 +2673,8 @@
 	 */
 	function createLogic(logicDefObj) {
 		var logicName = logicDefObj.__name;
-		if (!logicName || $.trim(logicName.length) === 0) {
-			throwFwError(ERR_CODE_LOGIC_NAME_REQUIRED, null, {
+		if (!isString(logicName) || $.trim(logicName.length) === 0) {
+			throwFwError(ERR_CODE_INVALID_LOGIC_NAME, null, {
 				logicDefObj: logicDefObj
 			});
 		}

@@ -282,36 +282,93 @@ $(function() {
 		});
 	});
 
+	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 6, function() {
+		$('#controllerTest').append('<div class="test">a</div>');
+		$('#controllerTest').append('<div class="test">b</div>');
+		var controller = {
+			__name: 'TestController'
+		};
+		try {
+			h5.core.controller(null, controller);
+		} catch (e) {
+			strictEqual(e.code, 6001, e.message);
+		}
+		try {
+			h5.core.controller(undefined, controller);
+		} catch (e) {
+			strictEqual(e.code, 6001, e.message);
+		}
+		try {
+			h5.core.controller('#noexist', controller);
+		} catch (e) {
+			strictEqual(e.code, 6003, e.message);
+		}
+		try {
+			h5.core.controller('', controller);
+		} catch (e) {
+			strictEqual(e.code, 6003, e.message);
+		}
+		try {
+			h5.core.controller('.test', controller);
+		} catch (e) {
+			strictEqual(e.code, 6004, e.message);
+		}
+		try {
+			h5.core.controller(1, controller);
+		} catch (e) {
+			strictEqual(e.code, 6030, e.message);
+		}
+	});
 
-	test('bind() 引数なし、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること',
+	asyncTest('bind() 引数が不正、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 7,
 			function() {
 				$('#controllerTest').append('<div class="test">a</div>');
 				$('#controllerTest').append('<div class="test">b</div>');
 				var controller = {
 					__name: 'TestController'
 				};
-				var testController = h5.core.controller(null, controller);
-				try {
-					testController.bind();
-				} catch (e) {
-					deepEqual(e.code, 6001, e.message);
-				}
-				try {
-					var bind = testController.bind;
-					bind('#controllerTest');
-				} catch (e) {
-					deepEqual(e.code, 6002, e.message);
-				}
-				try {
-					testController.bind('#noexist');
-				} catch (e) {
-					deepEqual(e.code, 6003, e.message);
-				}
-				try {
-					testController.bind('.test');
-				} catch (e) {
-					deepEqual(e.code, 6004, e.message);
-				}
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.readyPromise.done(function() {
+					try {
+						testController.bind();
+					} catch (e) {
+						strictEqual(e.code, 6001, e.message);
+					}
+					try {
+						testController.bind(null);
+					} catch (e) {
+						strictEqual(e.code, 6001, e.message);
+					}
+					try {
+						var bind = testController.bind;
+						bind('#controllerTest');
+					} catch (e) {
+						strictEqual(e.code, 6002, e.message);
+					}
+					try {
+						testController.bind('#noexist');
+					} catch (e) {
+						strictEqual(e.code, 6003, e.message);
+					}
+					try {
+						testController.bind('');
+					} catch (e) {
+						strictEqual(e.code, 6003, e.message);
+					}
+					try {
+						testController.bind('.test');
+					} catch (e) {
+						strictEqual(e.code, 6004, e.message);
+					}
+					try {
+						testController.bind(1);
+					} catch (e) {
+						strictEqual(e.code, 6030, e.message);
+					}
+					testController.dispose().done(function() {
+						start();
+					});
+				});
 			});
 
 	asyncTest('イベントハンドラの{}記法でオブジェクトを指定する時に2階層以上下のオブジェクトを指定できるか', function() {
@@ -4816,7 +4873,7 @@ $(function() {
 			errMsg = e.message;
 		}
 
-		strictEqual(errMsg, 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。',
+		strictEqual(errMsg, 'コントローラの名前は必須です。コントローラの__nameにコントローラ名を空でない文字列で設定して下さい。',
 				'__nameプロパティが設定されていない時にエラーが発生したか');
 	});
 
