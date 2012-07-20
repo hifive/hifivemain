@@ -90,6 +90,11 @@
 	var ERR_CODE_DESERIALIZE_ARGUMENT = 11009;
 
 	/**
+	 * loadScript() 読み込みに失敗した場合に発生するエラー
+	 */
+	var ERR_CODE_SCRIPT_FILE_LOAD_FAILD = 11010;
+
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
@@ -103,6 +108,7 @@
 	errMsgMap[ERR_CODE_INVALID_SCRIPT_PATH] = 'スクリプトのパスが不正です。空文字以外の文字列、またはその配列を指定して下さい。';
 	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
 	errMsgMap[ERR_CODE_DESERIALIZE_ARGUMENT] = 'deserialize() 引数の値が不正です。引数には文字列を指定してください。';
+	errMsgMap[ERR_CODE_SCRIPT_FILE_LOAD_FAILD] = 'スクリプトファイルの読み込みに失敗しました。URL:{0}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -130,11 +136,11 @@
 	// Variables
 	// =============================
 	/**
-	 * loadScript()によって追加されたjsファイルの絶対パスを保持する配列
+	 * loadScript()によって追加されたjsファイルの絶対パスを保持するオブジェクト
 	 *
 	 * @private
 	 */
-	var addedJS = [];
+	var addedJS = {};
 
 	/**
 	 * HTMLのエスケープルール
@@ -196,6 +202,34 @@
 			return '@';
 		}
 	}
+
+	/**
+	 * 指定されたスクリプトファイルをロードして、スクリプト文字列を取得します。(loadScriptメソッド用)
+	 * <p>
+	 * dataType:scriptを指定した場合のデフォルトの挙動は、スクリプトファイルの読み込み完了後に$.globalEval()で評価を行うため、
+	 * convertersを上書きしています。
+	 * <p>
+	 * また、読み込み対象のスクリプトがApplicationCacheによってキャッシュされている場合エラーが発生するため、cacheオプションにtrueを設定しています。
+	 *
+	 * @private
+	 * @param {String} url 読み込み対象のスクリプトパス
+	 * @param {Boolean} async 非同期でロードを行うか (true:非同期 / false:同期)
+	 * @param {Boolean} cache キャッシュされた通信結果が存在する場合、その通信結果を使用するか (true:使用する/false:使用しない)
+	 */
+	function getScriptString(url, async, cache) {
+		return h5.ajax({
+			url: url,
+			async: async,
+			cache: cache,
+			dataType: 'script',
+			converters: {
+				'text script': function(text) {
+					return text;
+				}
+			}
+		});
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -276,113 +310,302 @@
 	 *
 	 * @param {String|String[]} path ソースパス
 	 * @param {Object} [opt] オプション
-	 * @param {Boolean} [opt.async] 非同期で読み込むかどうかを指定します。デフォルトはfalse(同期)です。<br />
-	 *            trueの場合は、戻り値としてPromiseオブジェクトを返します。
-	 * @param {Boolean} [opt.force] 既に読み込み済みのスクリプトを再度読み込むかどうかを指定します。<br />
-	 *            読み込み済みかどうかの判定は相対パスではなく、絶対パスで行います。デフォルトはfalse(読み込まない)です。
-	 * @param {Boolean} [opt.parallel] 非同期で読み込む場合にパラレルに読み込むかどうかを指定します。<br />
-	 *            trueの場合は、指定した順番を考慮せずに読み込みます。デフォルトはfalse(シーケンシャルに読み込む)です。
-	 * @returns {Promise} Promiseオブジェクト。第2引数optのasyncプロパティがtrueである場合のみ戻り値としてPromiseオブジェクトを返します。
+	 * @param {Boolean} [opt.async] 非同期で読み込むかどうかを指定します。デフォルトはfalse(同期)です。<br>
+	 *            trueの場合、戻り値としてPromiseオブジェクトを返します。
+	 * @param {Boolean} [opt.force] 既に読み込み済みのスクリプトを再度読み込むかどうかを指定します。<br>
+	 *            trueの場合、サーバーから最新のスクリプトファイルを取得します。デフォルトはfalse(読み込まない)です。
+	 * @param {Boolean} [opt.parallel] 非同期で読み込む場合にパラレルに読み込むかどうかを指定します。<br>
+	 *            trueの場合、指定した順番を考慮せずに読み込みます。デフォルトはfalse(シーケンシャルに読み込む)です。<br>
+	 *            また、このオプションはasyncオプションがtrue(非同期)のときのみ有効です。
+	 * @param {Boolean} [opt.atomic] ファイルの読み込みが全て正常に完了した時点でスクリプトを評価します。デフォルトはfalse(逐次読み込み)です。<br>
+	 *            読み込みに失敗したファイルが1つ以上存在する場合、指定した全てのスクリプトがロードされません。
+	 * @returns {Any} asyncオプションがtrueの場合はPromiseオブジェクトを、falseの場合は何も返しません。
 	 * @name loadScript
 	 * @function
 	 * @memberOf h5.u
 	 */
 	var loadScript = function(path, opt) {
-		var resource = wrapInArray(path);
-		if (!resource || resource.length === 0) {
+		var getDeferred = h5.async.deferred;
+		var resources = wrapInArray(path);
+
+		if (!resources || resources.length === 0) {
 			throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
 		}
+
 		for ( var i = 0, l = resource.length; i < l; i++) {
 			var path = resource[i];
 			if (!isString(path) || !$.trim(path)) {
 				throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
 			}
 		}
+
 		if (opt != null && !$.isPlainObject(opt)) {
 			throwFwError(ERR_CODE_INVALID_OPTION, 'h5.u.loadScript()');
 		}
-		var force = opt && opt.force === true;
-		var srcLen = resource.length;
-		// 同期読み込みの場合
-		if (!opt || opt.async !== true) {
-			var $head = $('head');
-			for ( var i = 0; i < srcLen; i++) {
-				var s = toAbsoluteUrl(resource[i]);
-				if (force || $.inArray(s, addedJS) === -1) {
-					$head.append('<script type="text/javascript" src="' + s + '"></script>');
-					addedJS.push(s);
-				}
-			}
-			// 同期の場合は何も返さない。
-			return;
-		}
-		// 非同期読み込みの場合
-		var parallel = opt && opt.parallel === true;
-		var promises = [];
-		var dfd = h5.async.deferred();
-		var head = document.head || document.getElementsByTagName('head')[0];
-		var load = function(index) {
-			var count = index;
-			if (srcLen <= count) {
-				// 読み込み終了
-				h5.async.when(promises).done(function() {
-					dfd.resolve();
-				});
-				return;
-			}
 
-			var s = toAbsoluteUrl(resource[count]);
-			if (!force && $.inArray(s, addedJS) !== -1) {
-				load(++count);
-				return;
-			}
+		// asyncオプションはデフォルトtrueなので、falseが明示的に指定された場合のみfalseにする
+		var async = !!(opt && opt.async === true);
+		var force = !!(opt && opt.force === true);
+		var parallel = !!(opt && opt.parallel === true);
+		var atomic = !!(opt && opt.atomic === true);
 
-			var script = document.createElement('script');
-			script.type = 'text/javascript';
+		// forceオプションがtrue(ロード済みのJSファイルを再度読み込む)の場合、サーバから最新のファイルを取得する
+		var cache = !force;
+		var retDf = async ? getDeferred() : null;
+		var retDfFailCallback = async ? function(url) {
+			retDf.reject(createRejectReason(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]));
+		} : null;
+		var asyncFunc = async ? function() {
+			var df = getDeferred();
+			setTimeout(function() {
+				df.resolve([]);
+			}, 0);
 
-			var scriptDfd = parallel ? h5.async.deferred() : null;
-			if (window.ActiveXObject) {
-				script.onreadystatechange = function() {
-					if (script.readyState == 'complete' || script.readyState == 'loaded') {
-						script.onreadystatechange = null;
-						if (scriptDfd) {
-							scriptDfd.resolve();
-						} else {
-							load(++count);
-						}
+			return df.promise();
+		} : null;
+		var promises = parallel ? [] : null;
+
+		if (atomic) {
+			var scriptData = [];
+			var loadedUrl = {};
+
+			if (async) {
+				var ajaxLoad = function() {
+					var loadDf = getDeferred();
+					var loadDfFailCallback = function() {
+						loadDf.reject(this.url);
+					};
+
+					if (parallel) {
+						// 必ず非同期として処理されるようsetTimeout()で強制的に非同期にする
+						promises.push(asyncFunc());
+
+						$.each(resources, function() {
+							var url = toAbsoluteUrl(this);
+
+							if (!force && (url in addedJS || url in loadedUrl)) {
+								return true;
+							}
+
+							promises.push(getScriptString(url, async, cache));
+							loadedUrl[url] = url;
+						});
+
+						h5.async.when(promises).then(function(text, status, xhr) {
+							if (promises.length === 1) {
+								scriptData.push(text);
+							} else {
+								$.each(h5.u.obj.argsToArray(arguments), function(i, e) {
+									scriptData.push(e[0]); // e[0] = responseText
+								});
+							}
+
+							loadDf.resolve();
+						}, loadDfFailCallback);
+					} else {
+						var secDf = getDeferred().resolve();
+
+						// 必ず非同期として処理されるようsetTimeout()で強制的に非同期にする
+						secDf = secDf.pipe(asyncFunc);
+
+						$.each(resources, function() {
+							var url = toAbsoluteUrl(this);
+
+							secDf = secDf.pipe(function() {
+								var df = getDeferred();
+
+								if (!force && (url in addedJS || url in loadedUrl)) {
+									df.resolve();
+								} else {
+									getScriptString(url, async, cache).then(
+											function(text, status, xhr) {
+												scriptData.push(text);
+												loadedUrl[url] = url;
+												df.resolve();
+											}, function() {
+												df.reject(this.url);
+											});
+								}
+
+								return df.promise();
+							}, loadDfFailCallback);
+						});
+
+						secDf.pipe(function() {
+							loadDf.resolve();
+						}, loadDfFailCallback);
 					}
+
+					return loadDf.promise();
 				};
+
+				ajaxLoad().then(function() {
+					// 読み込みに成功した全てのスクリプトを評価する
+					$.each(scriptData, function(i, e) {
+						$.globalEval(e);
+					});
+
+					$.extend(addedJS, loadedUrl);
+					retDf.resolve();
+				}, retDfFailCallback);
+
+				return retDf.promise();
 			} else {
-				script.onerror = function() {
-					script.onerror = null;
-					if (scriptDfd) {
-						scriptDfd.resolve();
-					} else {
-						load(++count);
-					}
-				};
-				script.onload = function() {
-					script.onload = null;
-					if (scriptDfd) {
-						scriptDfd.resolve();
-					} else {
-						load(++count);
-					}
-				};
-			}
-			script.src = s;
-			head.appendChild(script);
-			addedJS.push(s);
-			if (scriptDfd) {
-				promises.push(scriptDfd.promise());
-				load(++count);
-			}
+				$.each(resources, function() {
+					var url = toAbsoluteUrl(this);
 
-		};
-		setTimeout(function() {
-			load(0);
-		}, 0);
-		return dfd.promise();
+					if (!force && (url in addedJS || url in loadedUrl)) {
+						return true;
+					}
+
+					getScriptString(url, async, cache).then(function(text, status, xhr) {
+						scriptData.push(text);
+						loadedUrl[url] = url;
+					}, function() {
+						throwFwError(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]);
+					});
+				});
+
+				// 読み込みに成功した全てのスクリプトを評価する
+				$.each(scriptData, function(i, e) {
+					$.globalEval(e);
+				});
+
+				$.extend(addedJS, loadedUrl);
+				// 同期ロードの場合は何もreturnしない
+			}
+		} else {
+			var env = h5.env.ua;
+			var isIE8Lower = env.isIE && env.browserVersion <= 8;
+
+			if (async) {
+				var $head = $('head');
+				var scriptLoad = function(url) {
+					var scriptDfd = getDeferred();
+					var script = document.createElement('script');
+
+					script.onload = function() {
+						script.onload = null;
+						addedJS[url] = url;
+						scriptDfd.resolve();
+					};
+					script.onerror = function() {
+						script.onerror = null;
+						scriptDfd.reject(url);
+					};
+
+					script.type = 'text/javascript';
+					// cacheがfalse(最新のJSファイルを取得する)の場合、URLの末尾にパラメータを付与して常に最新のJSファイルを取得する
+					script.src = cache ? url : url + '?_' + (+new Date());
+					$head[0].appendChild(script);
+
+					return scriptDfd.promise();
+				};
+
+				if (parallel) {
+					// 必ず非同期として処理されるようsetTimeout()で強制的に非同期にする
+					promises.push(asyncFunc());
+
+					if (isIE8Lower) {
+						$.each(resources, function() {
+							var url = toAbsoluteUrl(this);
+
+							if (!force && url in addedJS) {
+								return true;
+							}
+
+							promises.push(getScriptString(url, async, cache));
+						});
+
+						h5.async.when(promises).then(function(text, status, xhr) {
+							$.each(h5.u.obj.argsToArray(arguments), function(i, e) {
+								$.globalEval(e[0]); // e[0] = responseText
+							});
+
+							retDf.resolve();
+						}, retDfFailCallback);
+					} else {
+						$.each(resources, function() {
+							var url = toAbsoluteUrl(this);
+
+							if (!force && url in addedJS) {
+								return true;
+							}
+
+							promises.push(scriptLoad(url));
+						});
+
+						h5.async.when(promises).then(function() {
+							retDf.resolve();
+						}, retDfFailCallback);
+					}
+				} else {
+					var secDf = getDeferred().resolve();
+
+					// 必ず非同期として処理されるようsetTimeout()で強制的に非同期にする
+					secDf = secDf.pipe(asyncFunc);
+
+					// IE6,7,8は、SCRIPTタグのonerrorイベントが発生せず、読み込み失敗を検知できないため、これらのブラウザの場合はajaxで動的にスクリプトをロードする
+					if (isIE8Lower) {
+						$.each(resources, function() {
+							var url = toAbsoluteUrl(this);
+
+							secDf = secDf.pipe(function() {
+								var df = getDeferred();
+
+								if (!force && url in addedJS) {
+									df.resolve();
+								} else {
+									getScriptString(url, async, cache).then(
+											function(text, status, xhr) {
+												$.globalEval(text);
+												addedJS[url] = url;
+												df.resolve();
+											}, function() {
+												df.reject(this.url);
+											});
+								}
+
+								return df.promise();
+							}, retDfFailCallback);
+						});
+					} else {
+						$.each(resources, function() {
+							var url = toAbsoluteUrl(this);
+
+							secDf = secDf.pipe(function() {
+								if (!force && url in addedJS) {
+									return;
+								}
+								return scriptLoad(url);
+							}, retDfFailCallback);
+						});
+					}
+
+					secDf.pipe(function() {
+						retDf.resolve();
+					}, retDfFailCallback);
+				}
+
+				return retDf.promise();
+			} else {
+				$.each(resources, function() {
+					var url = toAbsoluteUrl(this);
+
+					if (!force && url in addedJS) {
+						return true;
+					}
+
+					getScriptString(url, async, cache).then(function(text, status, xhr) {
+						$.globalEval(text);
+						addedJS[url] = url;
+					}, function() {
+						throwFwError(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]);
+					});
+				});
+				// 同期ロードの場合は何もreturnしない
+			}
+		}
 	};
 
 	/**

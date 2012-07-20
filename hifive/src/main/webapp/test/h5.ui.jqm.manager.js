@@ -506,8 +506,8 @@ $(function() {
 
 	module("JQMManager - define2", {
 		setup: function() {
-			createPage("test4", 'data/testforJQM3.js', true);
-			createPage("test5", 'data/testforJQM4.js');
+			createPage("test4", 'data/testforJQM4.js', true);
+			createPage("test5", 'data/testforJQM5.js');
 
 			h5.ui.jqm.manager.init();
 		},
