@@ -33,6 +33,12 @@
 	 */
 	var ERR_CODE_LOG_TARGET_TYPE = 10000;
 
+	/*
+	 * out.categoryのが指定されていないときのエラーコード
+	 * ERR_CODE_OUT_CATEGORY_INVALIDに統合したためver.1.1.0で廃止
+	 * var ERR_CODE_OUT_CATEGORY_IS_NONE = 10001;
+	 */
+
 	/**
 	 * カテゴリが複数回指定されたときのエラーコード
 	 */
