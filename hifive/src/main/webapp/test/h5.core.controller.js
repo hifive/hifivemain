@@ -408,6 +408,23 @@ $(function() {
 		}
 	});
 
+	test('__name属性が不正なオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
+		var names = ['', '   ', 1, {}, ["MyController"]];
+		var l = names.length;
+		expect(l);
+		var errorCode = 6006;
+		for ( var i = 0; i < l; i++) {
+			try {
+				h5.core.controller('#controllerTest', {
+					__name: names[i]
+				});
+				ok(false, 'エラーが発生していません。');
+			} catch (e) {
+				deepEqual(e.code, errorCode, e.message);
+			}
+		}
+	});
+
 
 	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
 		var errorCode = 6017;
@@ -422,6 +439,27 @@ $(function() {
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
 			deepEqual(e.code, errorCode, e.message);
+		}
+	});
+
+
+	test('__name属性が不正なロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
+		var names = ['', '   ', 1, {}, ["MyLogic"]];
+		var l = names.length;
+		expect(l);
+		var errorCode = 6017;
+		for ( var i = 0; i < l; i++) {
+			try {
+				h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					myLogic: {
+						__name: names[i]
+					}
+				});
+				ok(false, 'エラーが発生していません。');
+			} catch (e) {
+				deepEqual(e.code, errorCode, e.message);
+			}
 		}
 	});
 
@@ -4861,20 +4899,6 @@ $(function() {
 			c.unbind();
 			start();
 		});
-	});
-
-	test('コントローラの__nameプロパティが設定されていない時の動作', function() {
-		var testController = {};
-
-		var errMsg = null;
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			errMsg = e.message;
-		}
-
-		strictEqual(errMsg, 'コントローラの名前は必須です。コントローラの__nameにコントローラ名を空でない文字列で設定して下さい。',
-				'__nameプロパティが設定されていない時にエラーが発生したか');
 	});
 
 	test('コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作', function() {
