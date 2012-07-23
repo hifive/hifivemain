@@ -117,25 +117,25 @@
 	 * @class
 	 * @name h5.helper.EventDispatcher
 	 **********************************************************************************************/
-	function EventDispatcher(target) {
-		//TODO eventListenerはクロージャで管理する（thisを汚さない）ようにする
-		if (target) {
-			this._eventTarget = target;
-			var that = this;
-
-			target.hasEventListener = function(type, listener) {
-				that.hasEventListener(type, listener);
-			};
-			target.addEventListener = function(type, listener) {
-				that.addEventListener(type, listener);
-			};
-			target.removeEventListener = function(type, listener) {
-				that.removeEventListener(type, listener);
-			};
-			target.dispatchEvent = function(event) {
-				that.dispatchEvent(event);
-			};
-		}
+	function EventDispatcher() {
+	//TODO 今回使用する範囲では下記のコードは不要なので削除予定
+	//		if (target) {
+	//			this._eventTarget = target;
+	//			var that = this;
+	//
+	//			target.hasEventListener = function(type, listener) {
+	//				that.hasEventListener(type, listener);
+	//			};
+	//			target.addEventListener = function(type, listener) {
+	//				that.addEventListener(type, listener);
+	//			};
+	//			target.removeEventListener = function(type, listener) {
+	//				that.removeEventListener(type, listener);
+	//			};
+	//			target.dispatchEvent = function(event) {
+	//				that.dispatchEvent(event);
+	//			};
+	//		}
 	}
 
 	/**
@@ -242,12 +242,12 @@
 		this.idKey = null;
 		this.size = 0;
 
-		function ObjectProxy() {}
-		ObjectProxy.prototype = new EventDispatcher();
-		ObjectProxy.prototype.__dataModel = this; //これは仕方ないかな・・・ prototypeチェーン側なので許してもらうことにしよう
+		function DataItem() {}
+		DataItem.prototype = EventDispatcher.prototype;
+		DataItem.prototype.dataModel = this;
 
 		//TODO triggerChangeはクロージャで持たせる
-		defineProperty(ObjectProxy.prototype, '_proxy_triggerChange', {
+		defineProperty(DataItem.prototype, '_proxy_triggerChange', {
 			value: function(obj, prop, oldValue, newValue) {
 				var event = {
 					type: 'change',
@@ -260,10 +260,10 @@
 			}
 		});
 
-		this.proxy = ObjectProxy;
+		this.proxy = DataItem;
 	}
 
-	DataModel.prototype = new EventDispatcher();
+	DataModel.prototype = EventDispatcher.prototype;
 	$.extend(DataModel.prototype, {
 		/**
 		 * @memberOf DataModel
@@ -557,10 +557,11 @@
 	 * @class
 	 * @name DataModelManager
 	 */
-	function DataModelManager() {
+	function DataModelManager(name) {
 		//TODO 「アプリ名」「グループ名」など、このマネージャが管理するデータモデル群の名前を引数にとるようにする
 		//名前なしの場合はエラーにする
-		this.dataModels = {};
+		this.m = {};
+		this.name = name;
 	}
 	$.extend(DataModelManager.prototype, {
 		/**
@@ -569,15 +570,19 @@
 		 */
 		register: function(descriptor) {
 			var modelName = descriptor.name;
+			if (!modelName) {
+				//nameがnullまたは空文字の場合
+				throwFwError(30001); //TODO 正しい例外を出す
+			}
 
-			if (this.dataModels[modelName]) {
+			if (this.m[modelName]) {
 				//TODO メッセージの外部化、マネージャ名を追加
 				fwLogger.info(MSG_ERROR_DUP_REGISTER, 'MANAGER_NAME_STUB', modelName);
 			} else {
-				this.dataModels[modelName] = createDataModel(descriptor, this);
+				this.m[modelName] = createDataModel(descriptor, this);
 			}
 
-			return this.dataModels[modelName];
+			return this.m[modelName];
 		},
 
 		/**
@@ -585,7 +590,7 @@
 		 * @memberOf DataModelManager
 		 */
 		getDataModel: function(name) {
-			return this.dataModels[name];
+			return this.m[name];
 		}
 	});
 
