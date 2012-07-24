@@ -4,22 +4,20 @@
 	<description>
 		このAntを実行すると必要なライブラリを自動的にダウンロードします。
 		外部接続にプロキシ設定が必要な場合は、Eclipseの設定で変更後、
-		Ant実行時のVMをワークスペースのものに変更(Run in the
-		same JRE as the workspace)して下さい。
+		Ant実行時のVMをワークスペースのものに変更(Run in the same JRE as the workspace)して下さい。
 	</description>
 
 	<!-- ivy導入バージョン -->
-	<property name="ivy.install.version" value="2.2.0" />
+	<property name="ivy.install.version" value="2.3.0-rc1" />
 	<!-- ivy導入フォルダ -->
-	<property name="ivy.install.dir" location="./lib/ivy" />
+	<property name="ivy.install.dir" location="lib/ivy" />
 	<!-- 取得ライブラリ展開フォルダ -->
-	<property name="lib.dir" location="./lib" />
+	<property name="lib.dir" location="lib" />
 
 	<target name="check-ivy">
-		<mkdir dir="${ivy.install.dir}" />
 		<condition property="skip.download">
 			<resourcecount when="greater" count="0">
-				<fileset dir="${ivy.install.dir}" includes="ivy*.jar" />
+				<fileset dir="${ivy.install.dir}" includes="ivy-${ivy.install.version}.jar" />
 			</resourcecount>
 		</condition>
 	</target>
@@ -32,7 +30,7 @@
 
 	<target name="install-ivy" depends="download-ivy" description="--> install ivy">
 		<path id="ivy.lib.path">
-			<fileset dir="${ivy.install.dir}" includes="*.jar" />
+			<fileset dir="${ivy.install.dir}" includes="ivy-${ivy.install.version}.jar" />
 		</path>
 		<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path" />
 	</target>

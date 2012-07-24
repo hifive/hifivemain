@@ -63,7 +63,6 @@
 		<dependency org="commons-logging" name="commons-logging" rev="1.1.1" conf="commons->*" transitive="false" />
 		<dependency org="commons-pool" name="commons-pool" rev="1.5.4" conf="commons->*" transitive="false" />
 		<dependency org="commons-cli" name="commons-cli" rev="1.2" conf="commons->*" transitive="false" />
-		<dependency org="commons-cli" name="commons-cli" rev="1.2" conf="commons->*" transitive="false" />
 		<dependency org="commons-io" name="commons-io" rev="2.1" conf="commons->*" transitive="false" />
 		<dependency org="commons-fileupload" name="commons-fileupload" rev="1.2.2" conf="commons->*" transitive="false" />
 		<dependency org="commons-codec" name="commons-codec" rev="1.3" conf="commons->*" transitive="false" />
