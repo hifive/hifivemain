@@ -430,6 +430,8 @@
 			dfd.resolve.apply(dfd, arguments);
 		}).fail(function(/* var_args */) {
 			dfd.reject.apply(dfd, arguments);
+		}).progress(function(/* ver_args */) {
+			dfd.notifyWith(dfd, arguments);
 		});
 		return dfd.promise();
 	};
