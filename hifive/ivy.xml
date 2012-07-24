@@ -143,47 +143,6 @@
 			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
 			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
 			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
 		-->
 		<!-- validation -->
 		<!--
