@@ -88,7 +88,7 @@
 	 * <p>
 	 * (true:サポート/false:未サポート)
 	 */
-	var isCanvasSupported = true;
+	var isCanvasSupported = !!document.createElement("canvas").getContext;
 
 	/**
 	 * VMLをサポートしているか (true:サポート/false:未サポート)
@@ -173,18 +173,13 @@
 	//
 	// =========================================================================
 
-	// VMLとCanvasのサポート判定
-	$(function() {
-		// Cnavasがサポートされているかチェック
-		isCanvasSupported = !!document.createElement("canvas").getContext;
-
-		if (!isCanvasSupported && isVMLSupported) {
-			document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
-			document.createStyleSheet().cssText = ['v\\:stroke', 'v\\:line', 'v\\:textbox']
-					.join(',')
-					+ '{behavior\: url(#default#VML);}';
-		}
-	});
+	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう定義する
+	if (!isCanvasSupported && isVMLSupported) {
+		document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
+		document.createStyleSheet().cssText = ['v\\:stroke', 'v\\:line', 'v\\:textbox']
+				.join(',')
+				+ '{behavior\: url(#default#VML);}';
+	}
 
 	/**
 	 * VML版スロバー (IE 6,7,8)用
