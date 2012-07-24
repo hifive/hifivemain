@@ -94,7 +94,7 @@
 	 * VMLをサポートしているか (true:サポート/false:未サポート)
 	 */
 	// 機能ベースでの判定方法が無いため、ブラウザの種類で判定する
-	var isVMLSupported = h5ua.isIE;
+	var isVMLSupported = h5ua.isIE && h5ua.browserVersion <= 8;
 
 
 	// =============================
@@ -176,8 +176,7 @@
 	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう定義する
 	if (!isCanvasSupported && isVMLSupported) {
 		document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
-		document.createStyleSheet().cssText = ['v\\:stroke', 'v\\:line', 'v\\:textbox']
-				.join(',')
+		document.createStyleSheet().cssText = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
 				+ '{behavior\: url(#default#VML);}';
 	}
 
