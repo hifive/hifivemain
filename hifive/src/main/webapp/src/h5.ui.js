@@ -93,8 +93,15 @@
 	/**
 	 * VMLをサポートしているか (true:サポート/false:未サポート)
 	 */
-	var isVMLSupported = null;
-
+	// 機能ベースでVMLのサポート判定を行う(IE6,7,8,9:true その他のブラウザ:false)
+	var isVMLSupported = (function() {
+		var fragment = document.createDocumentFragment();
+		var div = fragment.appendChild(document.createElement('div'));
+		div.innerHTML = '<v:line strokeweight="1"/>';
+		var child = div.firstChild;
+		child.style.behavior = 'url(#default#VML)';
+		return typeof child.strokeweight === 'number';
+	})();
 
 	// =============================
 	// Functions
@@ -171,16 +178,6 @@
 	// Body
 	//
 	// =========================================================================
-
-	// 機能ベースでVMLのサポート判定を行う(IE6,7,8,9:true その他のブラウザ:false)
-	isVMLSupported = (function() {
-		var fragment = document.createDocumentFragment();
-		var div = fragment.appendChild(document.createElement('div'));
-		div.innerHTML = '<v:line strokeweight="1"/>';
-		var child = div.firstChild;
-		child.style.behavior = 'url(#default#VML)';
-		return typeof child.strokeweight === 'number';
-	})();
 
 	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
 	if (!isCanvasSupported && isVMLSupported) {
