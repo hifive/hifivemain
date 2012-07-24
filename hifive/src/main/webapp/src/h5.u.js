@@ -449,111 +449,111 @@
 						retDf.resolve();
 					}, retDfFailCallback);
 				}
-
-				return retDf.promise();
 			}
+			// IE6,7,8の場合、SCRIPTタグのonerrorイベントが発生せずatomicな読み込みができないため、Ajaxでスクリプトを読み込む
+			else {
+				if (parallel) {
+					var loadedScripts = [];
 
-			// IE6,7,8の場合、SCRIPTタグのonerrorイベントが発生せずatomicな読み込みができないため、Ajaxスクリプトを読み込む
-			if (parallel) {
-				var loadedScripts = [];
+					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+					promises.push(asyncFunc());
+					loadedScripts.push(null);
 
-				// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
-				promises.push(asyncFunc());
-				loadedScripts.push(null);
-
-				$.each(resources, function() {
-					var url = toAbsoluteUrl(this);
-
-					if (!force && (url in addedJS || url in loadedUrl)) {
-						return true;
-					}
-
-					promises.push(getScriptString(url, async, cache));
-					atomic ? loadedUrl[url] = url : loadedScripts.push(null);
-				});
-
-				var doneCallback = null;
-				var progressCallback = null;
-
-				if (atomic) {
-					doneCallback = function() {
-						$.each(argsToArray(arguments), function(i, e) {
-							$.globalEval(e[0]); // e[0] = responseText
-						});
-
-						$.extend(addedJS, loadedUrl);
-						retDf.resolve();
-					};
-					progressCallback = $.noop;
-				} else {
-					doneCallback = function() {
-						retDf.resolve();
-					};
-					progressCallback = function() {
-						var results = argsToArray(arguments);
-
-						for ( var i = 0; i < loadedScripts.length; i++) {
-							var result = results[i];
-
-							if (!result) {
-								continue;
-							}
-
-							var url = results[i][3]; // results[i][3] = url
-							if (loadedScripts[i] === url) {
-								continue;
-							}
-
-							$.globalEval(results[i][0]); // results[i][0] = responseText
-							loadedScripts.splice(i, 1, url);
-						}
-					};
-				}
-
-				h5.async.when(promises).then(doneCallback, retDfFailCallback, progressCallback);
-			} else {
-				// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
-				var secDf = getDeferred().resolve().pipe(asyncFunc);
-
-				$.each(resources, function() {
-					var url = toAbsoluteUrl(this);
-
-					secDf = secDf.pipe(function() {
-						var df = getDeferred();
+					$.each(resources, function() {
+						var url = toAbsoluteUrl(this);
 
 						if (!force && (url in addedJS || url in loadedUrl)) {
-							df.resolve();
-						} else {
-							getScriptString(url, async, cache).then(function(text, status, xhr) {
-								if (atomic) {
-									scriptData.push(text);
-									loadedUrl[url] = url;
-								} else {
-									$.globalEval(text);
-									addedJS[url] = url;
-								}
-
-								df.resolve();
-							}, function() {
-								df.reject(this.url);
-							});
+							return true;
 						}
 
-						return df.promise();
-					}, retDfFailCallback);
-				});
+						promises.push(getScriptString(url, async, cache));
+						atomic ? loadedUrl[url] = url : loadedScripts.push(null);
+					});
 
-				secDf.pipe(function() {
+					var doneCallback = null;
+					var progressCallback = null;
+
 					if (atomic) {
-						$.each(scriptData, function(i, e) {
-							$.globalEval(e);
-						});
+						doneCallback = function() {
+							$.each(argsToArray(arguments), function(i, e) {
+								$.globalEval(e[0]); // e[0] = responseText
+							});
 
-						$.extend(addedJS, loadedUrl);
+							$.extend(addedJS, loadedUrl);
+							retDf.resolve();
+						};
+						progressCallback = $.noop;
+					} else {
+						doneCallback = function() {
+							retDf.resolve();
+						};
+						progressCallback = function() {
+							var results = argsToArray(arguments);
+
+							for ( var i = 0; i < loadedScripts.length; i++) {
+								var result = results[i];
+
+								if (!result) {
+									continue;
+								}
+
+								var url = results[i][3]; // results[i][3] = url
+								if (loadedScripts[i] === url) {
+									continue;
+								}
+
+								$.globalEval(results[i][0]); // results[i][0] = responseText
+								loadedScripts.splice(i, 1, url);
+							}
+						};
 					}
 
-					retDf.resolve();
-				}, retDfFailCallback);
+					h5.async.when(promises).then(doneCallback, retDfFailCallback, progressCallback);
+				} else {
+					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+					var secDf = getDeferred().resolve().pipe(asyncFunc);
+
+					$.each(resources, function() {
+						var url = toAbsoluteUrl(this);
+
+						secDf = secDf.pipe(function() {
+							var df = getDeferred();
+
+							if (!force && (url in addedJS || url in loadedUrl)) {
+								df.resolve();
+							} else {
+								getScriptString(url, async, cache).then(
+										function(text, status, xhr) {
+											if (atomic) {
+												scriptData.push(text);
+												loadedUrl[url] = url;
+											} else {
+												$.globalEval(text);
+												addedJS[url] = url;
+											}
+
+											df.resolve();
+										}, function() {
+											df.reject(this.url);
+										});
+							}
+
+							return df.promise();
+						}, retDfFailCallback);
+					});
+
+					secDf.pipe(function() {
+						if (atomic) {
+							$.each(scriptData, function(i, e) {
+								$.globalEval(e);
+							});
+
+							$.extend(addedJS, loadedUrl);
+						}
+
+						retDf.resolve();
+					}, retDfFailCallback);
+				}
 			}
 
 			return retDf.promise();
@@ -737,7 +737,7 @@
 			}
 			return false;
 		}
-		;
+
 		function popStack(obj) {
 			for ( var i = 0, len = objStack.length; i < len; i++) {
 				if (obj === objStack[i]) {
@@ -745,7 +745,6 @@
 				}
 			}
 		}
-		;
 
 		function func(val) {
 			var ret = val;
