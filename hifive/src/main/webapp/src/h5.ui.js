@@ -93,8 +93,7 @@
 	/**
 	 * VMLをサポートしているか (true:サポート/false:未サポート)
 	 */
-	// 機能ベースでの判定方法が無いため、ブラウザの種類で判定する
-	var isVMLSupported = h5ua.isIE && h5ua.browserVersion <= 8;
+	var isVMLSupported = null;
 
 
 	// =============================
@@ -173,11 +172,26 @@
 	//
 	// =========================================================================
 
-	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう定義する
+	// 機能ベースでVMLのサポート判定を行う(IE6,7,8,9:true その他のブラウザ:false)
+	isVMLSupported = (function() {
+		var fragment = document.createDocumentFragment();
+		var div = fragment.appendChild(document.createElement('div'));
+		div.innerHTML = '<v:line strokeweight="1"/>';
+		var child = div.firstChild;
+		child.style.behavior = 'url(#default#VML)';
+		return typeof child.strokeweight === 'number';
+	})();
+
+	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
 	if (!isCanvasSupported && isVMLSupported) {
 		document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
-		document.createStyleSheet().cssText = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
-				+ '{behavior\: url(#default#VML);}';
+		// メモリリークとIE9で動作しない問題があるため、document.createStyleSheet()は使用しない
+		var vmlStyle = document.createElement('style');
+		var styleDef = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
+				+ ' { behavior:url(#default#VML); }';
+		vmlStyle.setAttribute('type', 'text/css');
+		vmlStyle.styleSheet.cssText = styleDef;
+		document.getElementsByTagName('head')[0].appendChild(vmlStyle);
 	}
 
 	/**
