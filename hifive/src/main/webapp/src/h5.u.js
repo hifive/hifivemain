@@ -360,8 +360,8 @@
 			throwFwError(ERR_CODE_INVALID_OPTION, 'h5.u.loadScript()');
 		}
 
-		// asyncオプションはデフォルトtrueなので、falseが明示的に指定された場合のみfalseにする
-		var async = !!(opt && opt.async === true);
+		// asyncオプションはデフォルトtrue(非同期)なので、falseが明示的に指定された場合のみfalse(同期)とする
+		var async = opt && opt.async === false ? false : true;
 		var force = !!(opt && opt.force === true);
 		var parallel = !!(opt && opt.parallel === true);
 		var atomic = !!(opt && opt.atomic === true);

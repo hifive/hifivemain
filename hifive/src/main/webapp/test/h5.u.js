@@ -238,7 +238,9 @@ $(function() {
 			'スクリプトのロード(h5.u.loadScript) 引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
 			10, function() {
 				try {
-					h5.u.loadScript();
+					h5.u.loadScript({
+						async: false
+					});
 					ok(false, '引数なしでエラーが発生していません。');
 				} catch (e) {
 					ok(true, '引数なしでエラーが発生しました。');
@@ -249,7 +251,8 @@ $(function() {
 				for ( var i = 0, l = vals.length; i < l; i++) {
 					try {
 						h5.u.loadScript(vals[i], {
-							force: true
+							force: true,
+							async: false
 						});
 						ok(false, 'エラーが発生していません。' + valsStr[i]);
 					} catch (e) {
@@ -272,7 +275,8 @@ $(function() {
 				for ( var i = 0, l = vals.length; i < l; i++) {
 					try {
 						h5.u.loadScript(vals[i], {
-							force: true
+							force: true,
+							async: false
 						});
 						ok(false, 'エラーが発生していません。' + valsStr[i]);
 					} catch (e) {
@@ -288,7 +292,9 @@ $(function() {
 				var opts = [[], '', 'data/sample.js', new String(), 0, 1, true, false];
 				for ( var i = 0, l = opts.length; i < l; i++) {
 					try {
-						h5.u.loadScript('data/sample.js', opts[i]);
+						h5.u.loadScript('data/sample.js', opts[i], {
+							async: false
+						});
 						ok(false, 'エラーが発生していません。');
 					} catch (e) {
 						ok(true, e.code + ': ' + e.message);
@@ -299,15 +305,19 @@ $(function() {
 	test('スクリプトのロード(h5.u.loadScript)', 3, function() {
 		window.com.htmlhifive.test.h5samplefunc = undefined;
 		h5.u.loadScript('data/sample.js', {
-			force: true
+			force: true,
+			async: false
 		});
 
 		ok(window.com.htmlhifive.test.h5samplefunc, 'スクリプトがロードできたか');
 		window.com.htmlhifive.test.h5samplefunc = undefined;
-		h5.u.loadScript('data/sample.js');
+		h5.u.loadScript('data/sample.js', {
+			async: false
+		});
 		ok(!window.com.htmlhifive.test.h5samplefunc, '2重読み込みの防止はされていること。');
 		h5.u.loadScript('data/sample.js', {
-			force: true
+			force: true,
+			async: false
 		});
 		ok(window.com.htmlhifive.test.h5samplefunc, 'forceオプションは有効か');
 		window.com.htmlhifive.test.h5samplefunc = undefined;
@@ -318,12 +328,15 @@ $(function() {
 			2,
 			function() {
 				window.com.htmlhifive.test.sample4loaded = undefined;
-				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1']);
+				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1'], {
+					async: false
+				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
 
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1'], {
-					force: true
+					force: true,
+					async: false
 				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
 						'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
@@ -334,12 +347,18 @@ $(function() {
 
 	test('スクリプトのロード(h5.u.loadScript) リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
 		window.com.htmlhifive.test.sample4loaded = undefined;
-		h5.u.loadScript('data/sample4.js?s123');
+		h5.u.loadScript('data/sample4.js?s123', {
+			async: false
+		});
 		deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
-		h5.u.loadScript('data/sample4.js?s1234');
+		h5.u.loadScript('data/sample4.js?s1234', {
+			async: false
+		});
 		deepEqual(window.com.htmlhifive.test.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
 		h5.u.loadScript(['data/sample4.js?s12345', 'data/sample4.js?s123',
-				'data/sample4.js?s123456']);
+				'data/sample4.js?s123456'], {
+			async: false
+		});
 		deepEqual(window.com.htmlhifive.test.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
 	});
 
@@ -367,7 +386,8 @@ $(function() {
 
 	test('スクリプトの同期ロード(h5.u.loadScript)', 6, function() {
 		h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
-			force: true
+			force: true,
+			async: false
 		});
 
 		ok(window.com.htmlhifive.test.test1.a, 'スクリプトが同期的にロードされたか1');
@@ -391,16 +411,19 @@ $(function() {
 	test('スクリプトのロード(h5.u.loadScript) (atomicオプション有効)', 3, function() {
 		window.com.htmlhifive.test.h5samplefunc5 = undefined;
 		h5.u.loadScript('data/sample5.js', {
-			atomic: true
+			atomic: true,
+			async: false
 		});
-
 		ok(window.com.htmlhifive.test.h5samplefunc5, 'スクリプトがロードできたか');
 		window.com.htmlhifive.test.h5samplefunc5 = undefined;
-		h5.u.loadScript('data/sample5.js');
+		h5.u.loadScript('data/sample5.js', {
+			async: false
+		});
 		ok(!window.com.htmlhifive.test.h5samplefunc5, '2重読み込みの防止はされていること。');
 		h5.u.loadScript('data/sample5.js', {
 			force: true,
-			atomic: true
+			atomic: true,
+			async: false
 		});
 		ok(window.com.htmlhifive.test.h5samplefunc5, 'forceオプションは有効か');
 		window.com.htmlhifive.test.h5samplefunc5 = undefined;
@@ -412,14 +435,16 @@ $(function() {
 			function() {
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(['data/sample4.js?3', 'data/sample.js', 'data/sample4.js?3'], {
-					atomic: true
+					atomic: true,
+					async: false
 				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
 
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(['data/sample4.js?3', 'data/sample.js', 'data/sample4.js?3'], {
 					force: true,
-					atomic: true
+					atomic: true,
+					async: false
 				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
 						'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
@@ -432,16 +457,19 @@ $(function() {
 			function() {
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript('data/sample4.js?atomic123', {
-					atomic: true
+					atomic: true,
+					async: false
 				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
 				h5.u.loadScript('data/sample4.js?atomic1234', {
-					atomic: true
+					atomic: true,
+					async: false
 				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
 				h5.u.loadScript(['data/sample4.js?atomic12345', 'data/sample4.js?atomic123',
 						'data/sample4.js?atomic123456'], {
-					atomic: true
+					atomic: true,
+					async: false
 				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
 			});
@@ -474,7 +502,8 @@ $(function() {
 	test('スクリプトの同期ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
 		h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
 			force: true,
-			atomic: true
+			atomic: true,
+			async: false
 		});
 
 		ok(window.com.htmlhifive.test.test1.a, 'スクリプトが同期的にロードされたか1');
@@ -497,7 +526,6 @@ $(function() {
 
 	asyncTest('スクリプトの非同期(parallel=true)ロード(h5.u.loadScript)', 6, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
-			async: true,
 			force: true,
 			parallel: true
 		});
@@ -522,7 +550,6 @@ $(function() {
 
 	asyncTest('スクリプトの非同期(parallel=true)ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
-			async: true,
 			force: true,
 			parallel: true,
 			atomic: true
@@ -548,7 +575,6 @@ $(function() {
 
 	asyncTest('スクリプトの非同期(parallel=false)ロード(h5.u.loadScript)', 9, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
-			async: true,
 			force: true,
 			parallel: false
 		});
@@ -579,22 +605,16 @@ $(function() {
 
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
 		window.com.htmlhifive.test.sample4loaded = undefined;
-		h5.u.loadScript('data/sample4.js?async123', {
-			async: true
-		}).done(
+		h5.u.loadScript('data/sample4.js?async123').done(
 				function() {
 					deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
-					h5.u.loadScript('data/sample4.js?async1234', {
-						async: true
-					}).done(
+					h5.u.loadScript('data/sample4.js?async1234').done(
 							function() {
 								deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
 										'スクリプトが2回読み込まれたこと。');
 								h5.u.loadScript(
 										['data/sample4.js?async12345', 'data/sample4.js?async123',
-												'data/sample4.js?async123456'], {
-											async: true
-										}).done(
+												'data/sample4.js?async123456']).done(
 										function() {
 											deepEqual(window.com.htmlhifive.test.sample4loaded, 4,
 													'スクリプトが4回読み込まれたこと。');
@@ -619,8 +639,7 @@ $(function() {
 				for ( var i = 0, l = vals.length; i < l; i++) {
 					try {
 						h5.u.loadScript(vals[i], {
-							force: true,
-							async: true
+							force: true
 						});
 						ok(false, 'エラーが発生していません。' + valsStr[i]);
 					} catch (e) {
@@ -643,8 +662,7 @@ $(function() {
 				for ( var i = 0, l = vals.length; i < l; i++) {
 					try {
 						h5.u.loadScript(vals[i], {
-							force: true,
-							async: true
+							force: true
 						});
 						ok(false, 'エラーが発生していません。' + valsStr[i]);
 					} catch (e) {
@@ -659,16 +677,13 @@ $(function() {
 			'スクリプトのロード(h5.u.loadScript) 【非同期】引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
 			2, function() {
 				window.com.htmlhifive.test.sample4loaded = undefined;
-				h5.u.loadScript(['data/sample4.js?2', 'data/sample.js', 'data/sample4.js?2'], {
-					async: true
-				}).done(
+				h5.u.loadScript(['data/sample4.js?2', 'data/sample.js', 'data/sample4.js?2']).done(
 						function() {
 							deepEqual(window.com.htmlhifive.test.sample4loaded, 1,
 									'sample4.jsが2重読み込みされていないこと。');
 							window.com.htmlhifive.test.sample4loaded = undefined;
 							h5.u.loadScript(
 									['data/sample4.js?2', 'data/sample.js', 'data/sample4.js?2'], {
-										async: true,
 										force: true
 									}).done(
 									function() {
@@ -689,7 +704,6 @@ $(function() {
 				h5.u.loadScript(
 						['data/sample4.js?existFile1', 'data/noExistFile.js',
 								'data/sample4.js?existFile2', 'data/sample4.js?existFile3'], {
-							async: true,
 							force: true
 						}).done(function() {
 					ok(false, 'テスト失敗');
