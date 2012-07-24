@@ -29,7 +29,7 @@
 	// =============================
 
 	/**
-	 * テンプレート文字列のコンパイル時に発生するエラー
+	 * h5.async.loopの第一引数に配列以外のものが渡されたときに発生するエラー
 	 */
 	var ERR_CODE_NOT_ARRAY = 5000;
 
@@ -430,6 +430,8 @@
 			dfd.resolve.apply(dfd, arguments);
 		}).fail(function(/* var_args */) {
 			dfd.reject.apply(dfd, arguments);
+		}).progress(function(/* ver_args */) {
+			dfd.notifyWith(dfd, arguments);
 		});
 		return dfd.promise();
 	};

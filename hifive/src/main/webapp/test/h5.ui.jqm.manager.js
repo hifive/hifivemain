@@ -15,14 +15,14 @@
  */
 
 // jQueryMobileの読み込み
-h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js");
+h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js", {async:false});
 $(function() {
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
 	/**
-	 * min版かどうか。min版ならjqm.managerをリセットできないので、テストできない。
+	 * min版かどうか。min版の場合、jqm.manager__resetを実行できないのでテスト不可。
 	 */
 	var isMin = !h5.ui.jqm.manager.__reset;
 
@@ -506,8 +506,8 @@ $(function() {
 
 	module("JQMManager - define2", {
 		setup: function() {
-			createPage("test4", 'data/testforJQM3.js', true);
-			createPage("test5", 'data/testforJQM4.js');
+			createPage("test4", 'data/testforJQM4.js', true);
+			createPage("test5", 'data/testforJQM5.js');
 
 			h5.ui.jqm.manager.init();
 		},

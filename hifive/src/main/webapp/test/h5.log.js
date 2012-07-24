@@ -243,7 +243,7 @@ $(function() {
 		try {
 			h5.log.createLogger();
 		} catch (e) {
-			ok(e.message === 'categoryは必須項目です。1文字以上の文字列を指定してください。',
+			ok(e.message === 'categoryは必須項目です。空文字で無い文字列を指定して下さい。',
 					'h5.log.createLogger() に何も渡さない場合、エラーが発生すること。');
 		}
 
@@ -261,7 +261,7 @@ $(function() {
 						h5.log.createLogger(categorys[i]);
 						ok(false, 'エラーが発生していません');
 					} catch (e) {
-						ok(e.message === 'categoryは必須項目です。1文字以上の文字列を指定してください。',
+						ok(e.message === 'categoryは必須項目です。空文字で無い文字列を指定して下さい。',
 								'h5.log.createLogger() に' + categorysStr[i] + 'を渡した場合、エラーが発生すること。');
 					}
 				}

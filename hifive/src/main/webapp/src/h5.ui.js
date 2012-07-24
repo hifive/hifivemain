@@ -88,14 +88,20 @@
 	 * <p>
 	 * (true:サポート/false:未サポート)
 	 */
-	var isCanvasSupported = true;
+	var isCanvasSupported = !!document.createElement("canvas").getContext;
 
 	/**
 	 * VMLをサポートしているか (true:サポート/false:未サポート)
 	 */
-	// 機能ベースでの判定方法が無いため、ブラウザの種類で判定する
-	var isVMLSupported = h5ua.isIE;
-
+	// 機能ベースでVMLのサポート判定を行う(IE6,7,8,9:true その他のブラウザ:false)
+	var isVMLSupported = (function() {
+		var fragment = document.createDocumentFragment();
+		var div = fragment.appendChild(document.createElement('div'));
+		div.innerHTML = '<v:line strokeweight="1"/>';
+		var child = div.firstChild;
+		child.style.behavior = 'url(#default#VML)';
+		return typeof child.strokeweight === 'number';
+	})();
 
 	// =============================
 	// Functions
@@ -173,18 +179,17 @@
 	//
 	// =========================================================================
 
-	// VMLとCanvasのサポート判定
-	$(function() {
-		// Cnavasがサポートされているかチェック
-		isCanvasSupported = !!document.createElement("canvas").getContext;
-
-		if (!isCanvasSupported && isVMLSupported) {
-			document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
-			document.createStyleSheet().cssText = ['v\\:stroke', 'v\\:line', 'v\\:textbox']
-					.join(',')
-					+ '{behavior\: url(#default#VML);}';
-		}
-	});
+	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
+	if (!isCanvasSupported && isVMLSupported) {
+		document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
+		// メモリリークとIE9で動作しない問題があるため、document.createStyleSheet()は使用しない
+		var vmlStyle = document.createElement('style');
+		var styleDef = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
+				+ ' { behavior:url(#default#VML); }';
+		vmlStyle.setAttribute('type', 'text/css');
+		vmlStyle.styleSheet.cssText = styleDef;
+		document.getElementsByTagName('head')[0].appendChild(vmlStyle);
+	}
 
 	/**
 	 * VML版スロバー (IE 6,7,8)用
@@ -614,7 +619,7 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		message: function(message) {
-			if (typeof message === 'string') {
+			if (isString(message)) {
 				var setting = this._style;
 				var $blockElement = null;
 

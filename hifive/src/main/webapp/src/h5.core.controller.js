@@ -45,13 +45,13 @@
 	/** エラーコード: bindControllerメソッドにコントローラではないオブジェクトが渡された */
 	var ERR_CODE_BIND_NOT_CONTROLLER = 6002;
 	/** エラーコード: バインド対象となるDOMがない */
-	var ERR_CODE_BIND_NOT_TARGET = 6003;
+	var ERR_CODE_BIND_NO_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
-	var ERR_CODE_BIND_TARGET_COMPLEX = 6004;
+	var ERR_CODE_BIND_TOO_MANY_TARGET = 6004;
 	/** エラーコード: 指定された引数の数が少ない */
 	var ERR_CODE_TOO_FEW_ARGUMENTS = 6005;
 	/** エラーコード: コントローラの名前が指定されていない */
-	var ERR_CODE_CONTROLLER_NAME_REQUIRED = 6006;
+	var ERR_CODE_INVALID_CONTROLLER_NAME = 6006;
 	/** エラーコード: コントローラの初期化パラメータが不正 */
 	var ERR_CODE_CONTROLLER_INVALID_INIT_PARAM = 6007;
 	/** エラーコード: 既にコントローラ化されている */
@@ -72,24 +72,26 @@
 	var ERR_CODE_CONTROLLER_META_KEY_NULL = 6015;
 	/** エラーコード: __metaで指定されたプロパティがコントローラではない */
 	var ERR_CODE_CONTROLLER_META_KEY_NOT_CONTROLLER = 6016;
-	/** エラーコード: ロジックの名前が指定されていない */
-	var ERR_CODE_LOGIC_NAME_REQUIRED = 6017;
+	/** エラーコード: ロジックの名前に文字列が指定されていない */
+	var ERR_CODE_INVALID_LOGIC_NAME = 6017;
 	/** エラーコード: 既にロジック化されている */
 	var ERR_CODE_LOGIC_ALREADY_CREATED = 6018;
 	/** エラーコード: exposeする際にコントローラ、もしくはロジックの名前がない */
 	var ERR_CODE_EXPOSE_NAME_REQUIRED = 6019;
 	/** エラーコード: Viewモジュールが組み込まれていない */
 	var ERR_CODE_NOT_VIEW = 6029;
+	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
+	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
 
 	// エラーコードマップ
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
-	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'バインド対象となる要素を指定して下さい。';
+	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'コントローラ"{0}"のバインド対象となる要素を指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
-	errMsgMap[ERR_CODE_BIND_NOT_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
-	errMsgMap[ERR_CODE_BIND_TARGET_COMPLEX] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
+	errMsgMap[ERR_CODE_BIND_NO_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
+	errMsgMap[ERR_CODE_BIND_TOO_MANY_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
-	errMsgMap[ERR_CODE_CONTROLLER_NAME_REQUIRED] = 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_CONTROLLER_NAME] = 'コントローラの名前は必須です。コントローラの__nameにコントローラ名を空でない文字列で設定して下さい。';
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_ALREADY_CREATED] = '指定されたオブジェクトは既にコントローラ化されています。';
 	errMsgMap[ERR_CODE_CONTROLLER_CIRCULAR_REF] = 'コントローラ"{0}"で、参照が循環しているため、コントローラを生成できません。';
@@ -100,10 +102,11 @@
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_INVALID] = 'コントローラ"{0}"には__metaで指定されたプロパティ"{1}"がありません。';
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_NULL] = 'コントローラ"{0}"の__metaに指定されたキー"{1}"の値がnullです。コントローラを持つプロパティキー名を指定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_META_KEY_NOT_CONTROLLER] = 'コントローラ"{0}"の__metaに指定されたキー"{1}"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。';
-	errMsgMap[ERR_CODE_LOGIC_NAME_REQUIRED] = 'ロジック名が定義されていません。__nameにロジック名を設定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_LOGIC_NAME] = 'ロジック名は必須です。ロジックの__nameにロジック名を空でない文字列で設定して下さい。';
 	errMsgMap[ERR_CODE_LOGIC_ALREADY_CREATED] = '指定されたオブジェクトは既にロジック化されています。';
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
+	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
 
 	addFwErrorCodeMap(errMsgMap);
 
@@ -132,25 +135,46 @@
 	// Privates
 	//
 	// =========================================================================
+	// =============================
+	// Variables
+	// =============================
 	/**
 	 * commonFailHandlerを発火させないために登録するdummyのfailハンドラ
 	 */
 	var dummyFailHandler = function() {
 	//
 	};
-	// =============================
-	// Variables
-	// =============================
 	var getDeferred = h5.async.deferred;
 	var startsWith = h5.u.str.startsWith;
 	var endsWith = h5.u.str.endsWith;
 	var format = h5.u.str.format;
 	var argsToArray = h5.u.obj.argsToArray;
 	var getByPath = h5.u.obj.getByPath;
+	/**
+	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
+	 */
+	var selectorTypeConst = {
+		SELECTOR_TYPE_LOCAL: 1,
+		SELECTOR_TYPE_GLOBAL: 2,
+		SELECTOR_TYPE_OBJECT: 3
+	};
 
 	// =============================
 	// Functions
 	// =============================
+
+	/**
+	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
+	 */
+	function EventContext(controller, event, evArg, selector, selectorType) {
+		this.controller = controller;
+		this.event = event;
+		this.evArg = evArg;
+		this.selector = selector;
+		this.selectorType = selectorType;
+	}
+	// prototypeにセレクタのタイプを表す定数を追加
+	$.extend(EventContext.prototype, selectorTypeConst);
 
 	/**
 	 * コントローラのexecuteListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
@@ -530,24 +554,41 @@
 		var handler = bindObj.handler;
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
+
+
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
-			var selectTarget = trimGlobalSelectorBracket(selector);
+			var selectorTrimmed = trimGlobalSelectorBracket(selector);
 			var isSelf = false;
-			if (selectTarget === ROOT_ELEMENT_NAME) {
+			var selectTarget;
+			if (selectorTrimmed === ROOT_ELEMENT_NAME) {
 				selectTarget = rootElement;
 				isSelf = true;
 			} else {
-				selectTarget = getGlobalSelectorTarget(selectTarget);
+				selectTarget = getGlobalSelectorTarget(selectorTrimmed);
 			}
 			// バインド対象がdocument, windowの場合、live, delegateではイベントが拾えないことへの対応
 			var needBind = selectTarget === document || selectTarget === window;
 			if (isSelf || useBind || needBind) {
+				// bindObjにselectorTypeを登録する
+				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
+
 				$(selectTarget).bind(event, handler);
 			} else {
+				// bindObjにselectorTypeを登録する
+				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
+
 				$(selectTarget).live(event, handler);
 			}
+			// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を格納する
+			// selectorがオブジェクト指定(rootElement, window, document)の場合はオブジェクトを格納する
+			bindObj.evSelector = selectTarget;
 		} else {
+			// selectorがグローバル指定でない場合
+			// bindObjにselectorTypeを登録し、selectorは文字列を格納する
+			bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
+			bindObj.evSelector = selector;
+
 			if (useBind) {
 				$(selector, rootElement).bind(event, handler);
 			} else {
@@ -566,6 +607,12 @@
 		if (bindRequested) {
 			bindObj.eventName = '[' + bindObj.eventName + ']';
 		}
+		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
+		// unbindMapにラップしたものが登録されるように、このタイミングで行う必要がある
+		var handler = bindObj.handler;
+		bindObj.handler = function(/* var args */) {
+			handler.call(bindObj.controller, createEventContext(bindObj, arguments));
+		};
 		// アンバインドマップにハンドラを追加
 		registerUnbindMap(bindObj.controller, bindObj.selector, bindObj.eventName, bindObj.handler);
 		bindByBindObject(bindObj);
@@ -863,7 +910,7 @@
 	 * @returns {jQuery} jQueryオブジェクト
 	 */
 	function getTarget(element, rootElement, isTemplate) {
-		if (typeof element !== 'string') {
+		if (!isString(element)) {
 			return $(element);
 		}
 		var $targets;
@@ -915,9 +962,7 @@
 			controller: controller,
 			selector: selector,
 			eventName: eventName,
-			handler: function(/* var_args */) {
-				func.call(controller, createEventContext(controller, selector, arguments));
-			}
+			handler: func
 		};
 	}
 
@@ -943,14 +988,13 @@
 			// Firefoxには"mousewheel"イベントがない
 			eventName: typeof document.onmousewheel === TYPE_OF_UNDEFINED ? 'DOMMouseScroll'
 					: eventName,
-			handler: function(/* var_args */) {
-				var eventContext = createEventContext(controller, selector, arguments);
-				var event = eventContext.event;
+			handler: function(context) {
+				var event = context.event;
 				// Firefox
 				if (event.originalEvent && event.originalEvent.detail) {
 					event.wheelDelta = -event.detail * 40;
 				}
-				func.call(controller, eventContext);
+				func.call(controller, context);
 			}
 		};
 	}
@@ -1014,6 +1058,7 @@
 			}
 			dest.h5DelegatingEvent = src;
 		};
+
 		var start = hasTouchEvent ? 'touchstart' : 'mousedown';
 		var move = hasTouchEvent ? 'touchmove' : 'mousemove';
 		var end = hasTouchEvent ? 'touchend' : 'mouseup';
@@ -1023,21 +1068,19 @@
 			var removeHandlers = null;
 			var execute = false;
 			var getHandler = function(en, eventTarget, setup) {
-				return function(var_args) {
+				return function(context) {
 					var type = getEventType(en);
 					var isStart = type === EVENT_NAME_H5_TRACKSTART;
 					if (isStart && execute) {
 						return;
 					}
-					var eventContext = createEventContext(controller, selector, arguments);
-					var event = eventContext.event;
 					if (hasTouchEvent) {
 						// タッチイベントの場合、イベントオブジェクトに座標系のプロパティを付加
-						initTouchEventObject(event, en);
+						initTouchEventObject(context.event, en);
 					}
 					var newEvent = new $.Event(type);
-					copyEventObject(event, newEvent);
-					var target = event.target;
+					copyEventObject(context.event, newEvent);
+					var target = context.event.target;
 					if (eventTarget) {
 						target = eventTarget;
 					}
@@ -1045,7 +1088,7 @@
 						setup(newEvent);
 					}
 					if (!hasTouchEvent || (execute || isStart)) {
-						$(target).trigger(newEvent, eventContext.evArg);
+						$(target).trigger(newEvent, context.evArg);
 						execute = true;
 					}
 					if (isStart && execute) {
@@ -1063,17 +1106,36 @@
 							ox = cx;
 							oy = cy;
 						};
+
+						// h5trackstart実行時に、move、upのハンドラを作成して登録する。
+						// コンテキストをとるように関数をラップして、bindする。
 						var moveHandler = getHandler(move, nt, setupDPos);
 						var upHandler = getHandler(end, nt);
+						var moveHandlerWrapped = function(e, args) {
+							// イベントオブジェクトと引数のみ差し替える
+							// controller, rootElement, selector はh5trackstart開始時と同じなので、差し替える必要はない
+							context.event = e;
+							context.evArg = args;
+							moveHandler(context);
+						};
+						var upHandlerWrapped = function(e, args) {
+							context.event = e;
+							context.evArg = args;
+							upHandler(context);
+						};
 
 						var $bindTarget = hasTouchEvent ? $(nt) : $document;
+						// moveとendのunbindをする関数
 						removeHandlers = function() {
-							$bindTarget.unbind(move, moveHandler);
-							$bindTarget.unbind(end, upHandler);
+							$bindTarget.unbind(move, moveHandlerWrapped);
+							$bindTarget.unbind(end, upHandlerWrapped);
 						};
-						$bindTarget.bind(move, moveHandler);
-						$bindTarget.bind(end, upHandler);
+						// h5trackmoveとh5trackendのbindを行う
+						$bindTarget.bind(move, moveHandlerWrapped);
+						$bindTarget.bind(end, upHandlerWrapped);
 					}
+
+					// h5trackend時にmoveとendのハンドラをunbindする
 					if (type === EVENT_NAME_H5_TRACKEND) {
 						removeHandlers();
 						execute = false;
@@ -1153,11 +1215,10 @@
 	/**
 	 * イベントコンテキストを作成します。
 	 *
-	 * @param {Object} controller コントローラ
-	 * @param {String} selector セレクタ
-	 * @param {Object} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
+	 * @param {Object} bindObj バインドオブジェクト
+	 * @param {Array} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
 	 */
-	function createEventContext(controller, selector, args) {
+	function createEventContext(bindObj, args) {
 		var event = null;
 		var evArg = null;
 		if (args) {
@@ -1167,14 +1228,8 @@
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
 
-		var selectorTrimmed = selector.replace(/\s+/g,' ').replace(/\{\s/g, '{').replace(/\s\}/g, '}');
-		return {
-			controller: controller,
-			rootElement: controller.rootElement,
-			event: event,
-			evArg: evArg,
-			selector: selectorTrimmed
-		};
+		return new EventContext(bindObj.controller, event, evArg, bindObj.evSelector,
+				bindObj.evSelectorType);
 	}
 
 	/**
@@ -1236,22 +1291,29 @@
 	 * @returns {DOM} コントローラのバインド対象である要素
 	 */
 	function getBindTarget(element, rootElement, controller) {
-		if (!element) {
-			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED);
-		} else if (!controller || !controller.__controllerContext) {
+		if (!controller || !controller.__controllerContext) {
 			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
+		} else if (element == null) {
+			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controller.__name]);
 		}
 		var $targets;
+		// elementが文字列でもオブジェクトでもないときはエラー
+		if (!isString(element) && typeof element !== 'object') {
+			throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controller.__name]);
+		}
 		if (rootElement) {
 			$targets = getTarget(element, rootElement);
 		} else {
 			$targets = $(element);
 		}
+
+		// 要素が存在しないときはエラー
 		if ($targets.length === 0) {
-			throwFwError(ERR_CODE_BIND_NOT_TARGET, [controller.__name]);
+			throwFwError(ERR_CODE_BIND_NO_TARGET, [controller.__name]);
 		}
+		// 要素が複数存在するときはエラー
 		if ($targets.length > 1) {
-			throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controller.__name]);
+			throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controller.__name]);
 		}
 		return $targets.get(0);
 	}
@@ -2099,7 +2161,7 @@
 				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
 
-			if (msgOrErrObj && typeof msgOrErrObj === 'string') {
+			if (msgOrErrObj && isString(msgOrErrObj)) {
 				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));
 			} else {
 				// 引数を渡さないと、iOS4は"unknown error"、その他のブラウザは空文字が、デフォルトのエラーメッセージとして入る
@@ -2202,11 +2264,13 @@
 	 */
 	// fwOptは内部的に使用している.
 	function createAndBindController(targetElement, controllerDefObj, param, fwOpt) {
+		// 内部から再帰的に呼び出された場合は、fwOpt.isInternalが指定されているはずなので、ルートコントローラかどうかはfwOpt.isInternalで判別できる
+		var isRoot = !fwOpt || !fwOpt.isInternal;
 
 		// コントローラ名
 		var controllerName = controllerDefObj.__name;
-		if (!controllerName || $.trim(controllerName).length === 0) {
-			throwFwError(ERR_CODE_CONTROLLER_NAME_REQUIRED, null, {
+		if (!isString(controllerName) || $.trim(controllerName).length === 0) {
+			throwFwError(ERR_CODE_INVALID_CONTROLLER_NAME, null, {
 				controllerDefObj: controllerDefObj
 			});
 		}
@@ -2226,15 +2290,27 @@
 		}
 
 		// バインド対象となる要素のチェック
-		if (targetElement) {
-			var $bindTargetElement = $(targetElement);
-			if ($bindTargetElement.length === 0) {
-				throwFwError(ERR_CODE_BIND_NOT_TARGET, [controllerName], {
+		// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
+		if (isRoot || targetElement) {
+			if (targetElement == null) {
+				throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controllerName], {
 					controllerDefObj: controllerDefObj
 				});
-			}
-			if ($bindTargetElement.length > 1) {
-				throwFwError(ERR_CODE_BIND_TARGET_COMPLEX, [controllerName], {
+			} else if (isString(targetElement) || typeof targetElement === 'object') {
+				var $bindTargetElement = $(targetElement);
+				// 要素が1つでない場合はエラー
+				if ($bindTargetElement.length === 0) {
+					throwFwError(ERR_CODE_BIND_NO_TARGET, [controllerName], {
+						controllerDefObj: controllerDefObj
+					});
+				}
+				if ($bindTargetElement.length > 1) {
+					throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controllerName], {
+						controllerDefObj: controllerDefObj
+					});
+				}
+			} else {
+				throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controllerName], {
 					controllerDefObj: controllerDefObj
 				});
 			}
@@ -2254,7 +2330,6 @@
 			});
 		}
 
-		var isRoot = !fwOpt || !fwOpt.isInternal;
 		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
 				controllerName, param, isRoot);
@@ -2358,9 +2433,10 @@
 				controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
 			} else if (isEventHandler(clonedControllerDef, prop)) {
 				// イベントハンドラ
-				var lastIndex = $.trim(prop).lastIndexOf(' ');
-				var selector = $.trim(prop.substring(0, lastIndex));
-				var eventName = $.trim(prop.substring(lastIndex + 1, prop.length));
+				var propTrimmed = $.trim(prop);
+				var lastIndex = propTrimmed.lastIndexOf(' ');
+				var selector = $.trim(propTrimmed.substring(0, lastIndex));
+				var eventName = $.trim(propTrimmed.substring(lastIndex + 1, propTrimmed.length));
 				if (isBindRequested(eventName)) {
 					eventName = '[' + $.trim(trimBindEventBracket(eventName)) + ']';
 				}
@@ -2388,6 +2464,7 @@
 				controller[prop] = weavedFunc;
 			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
 					&& !$.isFunction(clonedControllerDef[prop])) {
+				// 子コントローラをバインドする。fwOpt.isInternalを指定して、子コントローラであるかどうか分かるようにする
 				var c = createAndBindController(null,
 						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
 							isInternal: true
@@ -2467,8 +2544,8 @@
 	 */
 	function createLogic(logicDefObj) {
 		var logicName = logicDefObj.__name;
-		if (!logicName || $.trim(logicName.length) === 0) {
-			throwFwError(ERR_CODE_LOGIC_NAME_REQUIRED, null, {
+		if (!isString(logicName) || $.trim(logicName).length === 0) {
+			throwFwError(ERR_CODE_INVALID_LOGIC_NAME, null, {
 				logicDefObj: logicDefObj
 			});
 		}

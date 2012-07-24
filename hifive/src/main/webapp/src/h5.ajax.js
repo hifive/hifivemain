@@ -68,7 +68,6 @@
 	/**
 	 * HTTP通信を行います。<br />
 	 * 基本的に使い方は、<a href="http://api.jquery.com/jQuery.ajax/">jQuery.ajax()</a>と同じです。<br />
-	 *
 	 * jQuery.ajax()と異なる点は共通のエラーハンドラが定義できることです。<br/>
 	 * h5.settings.commonFailHandlerに関数を設定し、h5.ajax()に引数として渡すオプションにerror/completeコールバックが設定されていない、<br />
 	 * もしくは戻り値のPromiseオブジェクトに対するfail/alwaysコールバックが設定されていない場合にエラーが発生すると <br />
@@ -81,7 +80,7 @@
 	 * @memberOf h5
 	 */
 	var ajax = function(var_args) {
-		var opt = typeof arguments[0] === 'string' ? arguments[1] : arguments[0];
+		var opt = isString(arguments[0]) ? arguments[1] : arguments[0];
 		var hasFailCallback = opt && (opt.error || opt.fail || opt.complete || opt.always);
 		var jqXHR = $.ajax.apply($, arguments);
 
