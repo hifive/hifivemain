@@ -217,7 +217,10 @@
 	 * @param {Boolean} cache キャッシュされた通信結果が存在する場合、その通信結果を使用するか (true:使用する/false:使用しない)
 	 */
 	function getScriptString(url, async, cache) {
-		return h5.ajax({
+		var argsToArray = h5.u.obj.argsToArray;
+
+		var df = h5.async.deferred();
+		h5.ajax({
 			url: url,
 			async: async,
 			cache: cache,
@@ -227,8 +230,21 @@
 					return text;
 				}
 			}
+		}).done(function() {
+			var args = argsToArray(arguments);
+			args.push(this.url);
+
+			df.notifyWith(df, args);
+			df.resolveWith(df, args);
+		}).fail(function() {
+			df.rejectWith(df, argsToArray(arguments));
+		}).progress(function() {
+			alert("hoge");
 		});
+
+		return df.promise();
 	}
+
 
 	// =========================================================================
 	//
@@ -326,14 +342,15 @@
 	 */
 	var loadScript = function(path, opt) {
 		var getDeferred = h5.async.deferred;
+		var argsToArray = h5.u.obj.argsToArray;
 		var resources = wrapInArray(path);
 
 		if (!resources || resources.length === 0) {
 			throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
 		}
 
-		for ( var i = 0, l = resource.length; i < l; i++) {
-			var path = resource[i];
+		for ( var i = 0, l = resources.length; i < l; i++) {
+			var path = resources[i];
 			if (!isString(path) || !$.trim(path)) {
 				throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
 			}
@@ -348,9 +365,9 @@
 		var force = !!(opt && opt.force === true);
 		var parallel = !!(opt && opt.parallel === true);
 		var atomic = !!(opt && opt.atomic === true);
-
 		// forceオプションがtrue(ロード済みのJSファイルを再度読み込む)の場合、サーバから最新のファイルを取得する
 		var cache = !force;
+
 		var retDf = async ? getDeferred() : null;
 		var retDfFailCallback = async ? function(url) {
 			retDf.reject(createRejectReason(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]));
@@ -364,121 +381,15 @@
 			return df.promise();
 		} : null;
 		var promises = parallel ? [] : null;
+		var scriptData = [];
+		var loadedUrl = {};
 
-		if (atomic) {
-			var scriptData = [];
-			var loadedUrl = {};
-
-			if (async) {
-				var ajaxLoad = function() {
-					var loadDf = getDeferred();
-					var loadDfFailCallback = function() {
-						loadDf.reject(this.url);
-					};
-
-					if (parallel) {
-						// 必ず非同期として処理されるようsetTimeout()で強制的に非同期にする
-						promises.push(asyncFunc());
-
-						$.each(resources, function() {
-							var url = toAbsoluteUrl(this);
-
-							if (!force && (url in addedJS || url in loadedUrl)) {
-								return true;
-							}
-
-							promises.push(getScriptString(url, async, cache));
-							loadedUrl[url] = url;
-						});
-
-						h5.async.when(promises).then(function(text, status, xhr) {
-							if (promises.length === 1) {
-								scriptData.push(text);
-							} else {
-								$.each(h5.u.obj.argsToArray(arguments), function(i, e) {
-									scriptData.push(e[0]); // e[0] = responseText
-								});
-							}
-
-							loadDf.resolve();
-						}, loadDfFailCallback);
-					} else {
-						var secDf = getDeferred().resolve();
-
-						// 必ず非同期として処理されるようsetTimeout()で強制的に非同期にする
-						secDf = secDf.pipe(asyncFunc);
-
-						$.each(resources, function() {
-							var url = toAbsoluteUrl(this);
-
-							secDf = secDf.pipe(function() {
-								var df = getDeferred();
-
-								if (!force && (url in addedJS || url in loadedUrl)) {
-									df.resolve();
-								} else {
-									getScriptString(url, async, cache).then(
-											function(text, status, xhr) {
-												scriptData.push(text);
-												loadedUrl[url] = url;
-												df.resolve();
-											}, function() {
-												df.reject(this.url);
-											});
-								}
-
-								return df.promise();
-							}, loadDfFailCallback);
-						});
-
-						secDf.pipe(function() {
-							loadDf.resolve();
-						}, loadDfFailCallback);
-					}
-
-					return loadDf.promise();
-				};
-
-				ajaxLoad().then(function() {
-					// 読み込みに成功した全てのスクリプトを評価する
-					$.each(scriptData, function(i, e) {
-						$.globalEval(e);
-					});
-
-					$.extend(addedJS, loadedUrl);
-					retDf.resolve();
-				}, retDfFailCallback);
-
-				return retDf.promise();
-			} else {
-				$.each(resources, function() {
-					var url = toAbsoluteUrl(this);
-
-					if (!force && (url in addedJS || url in loadedUrl)) {
-						return true;
-					}
-
-					getScriptString(url, async, cache).then(function(text, status, xhr) {
-						scriptData.push(text);
-						loadedUrl[url] = url;
-					}, function() {
-						throwFwError(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]);
-					});
-				});
-
-				// 読み込みに成功した全てのスクリプトを評価する
-				$.each(scriptData, function(i, e) {
-					$.globalEval(e);
-				});
-
-				$.extend(addedJS, loadedUrl);
-				// 同期ロードの場合は何もreturnしない
-			}
-		} else {
+		if (async) {
 			var env = h5.env.ua;
-			var isIE8Lower = env.isIE && env.browserVersion <= 8;
+			var isIE8Under = env.isIE && env.browserVersion <= 8;
 
-			if (async) {
+			// atomicオプションが無効でかつIE6,7,8以外のブラウザの場合、SCRIPTタグでスクリプトを動的に読み込む
+			if (!atomic && !isIE8Under) {
 				var $head = $('head');
 				var scriptLoad = function(url) {
 					var scriptDfd = getDeferred();
@@ -503,84 +414,36 @@
 				};
 
 				if (parallel) {
-					// 必ず非同期として処理されるようsetTimeout()で強制的に非同期にする
+					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
 					promises.push(asyncFunc());
 
-					if (isIE8Lower) {
-						$.each(resources, function() {
-							var url = toAbsoluteUrl(this);
+					$.each(resources, function() {
+						var url = toAbsoluteUrl(this);
 
-							if (!force && url in addedJS) {
-								return true;
-							}
+						if (!force && url in addedJS) {
+							return true;
+						}
 
-							promises.push(getScriptString(url, async, cache));
-						});
+						promises.push(scriptLoad(url));
+					});
 
-						h5.async.when(promises).then(function(text, status, xhr) {
-							$.each(h5.u.obj.argsToArray(arguments), function(i, e) {
-								$.globalEval(e[0]); // e[0] = responseText
-							});
-
-							retDf.resolve();
-						}, retDfFailCallback);
-					} else {
-						$.each(resources, function() {
-							var url = toAbsoluteUrl(this);
-
-							if (!force && url in addedJS) {
-								return true;
-							}
-
-							promises.push(scriptLoad(url));
-						});
-
-						h5.async.when(promises).then(function() {
-							retDf.resolve();
-						}, retDfFailCallback);
-					}
+					h5.async.when(promises).then(function() {
+						retDf.resolve();
+					}, retDfFailCallback);
 				} else {
-					var secDf = getDeferred().resolve();
+					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+					var secDf = getDeferred().resolve().pipe(asyncFunc);
 
-					// 必ず非同期として処理されるようsetTimeout()で強制的に非同期にする
-					secDf = secDf.pipe(asyncFunc);
+					$.each(resources, function() {
+						var url = toAbsoluteUrl(this);
 
-					// IE6,7,8は、SCRIPTタグのonerrorイベントが発生せず、読み込み失敗を検知できないため、これらのブラウザの場合はajaxで動的にスクリプトをロードする
-					if (isIE8Lower) {
-						$.each(resources, function() {
-							var url = toAbsoluteUrl(this);
-
-							secDf = secDf.pipe(function() {
-								var df = getDeferred();
-
-								if (!force && url in addedJS) {
-									df.resolve();
-								} else {
-									getScriptString(url, async, cache).then(
-											function(text, status, xhr) {
-												$.globalEval(text);
-												addedJS[url] = url;
-												df.resolve();
-											}, function() {
-												df.reject(this.url);
-											});
-								}
-
-								return df.promise();
-							}, retDfFailCallback);
-						});
-					} else {
-						$.each(resources, function() {
-							var url = toAbsoluteUrl(this);
-
-							secDf = secDf.pipe(function() {
-								if (!force && url in addedJS) {
-									return;
-								}
-								return scriptLoad(url);
-							}, retDfFailCallback);
-						});
-					}
+						secDf = secDf.pipe(function() {
+							if (!force && url in addedJS) {
+								return;
+							}
+							return scriptLoad(url);
+						}, retDfFailCallback);
+					});
 
 					secDf.pipe(function() {
 						retDf.resolve();
@@ -588,23 +451,142 @@
 				}
 
 				return retDf.promise();
-			} else {
+			}
+
+			// IE6,7,8の場合、SCRIPTタグのonerrorイベントが発生せずatomicな読み込みができないため、Ajaxスクリプトを読み込む
+			if (parallel) {
+				var loadedScripts = [];
+
+				// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+				promises.push(asyncFunc());
+				loadedScripts.push(null);
+
 				$.each(resources, function() {
 					var url = toAbsoluteUrl(this);
 
-					if (!force && url in addedJS) {
+					if (!force && (url in addedJS || url in loadedUrl)) {
 						return true;
 					}
 
-					getScriptString(url, async, cache).then(function(text, status, xhr) {
+					promises.push(getScriptString(url, async, cache));
+					atomic ? loadedUrl[url] = url : loadedScripts.push(null);
+				});
+
+				var doneCallback = null;
+				var progressCallback = null;
+
+				if (atomic) {
+					doneCallback = function() {
+						$.each(argsToArray(arguments), function(i, e) {
+							$.globalEval(e[0]); // e[0] = responseText
+						});
+
+						$.extend(addedJS, loadedUrl);
+						retDf.resolve();
+					};
+					progressCallback = $.noop;
+				} else {
+					doneCallback = function() {
+						retDf.resolve();
+					};
+					progressCallback = function() {
+						var results = argsToArray(arguments);
+
+						for ( var i = 0; i < loadedScripts.length; i++) {
+							var result = results[i];
+
+							if (!result) {
+								continue;
+							}
+
+							var url = results[i][3]; // results[i][3] = url
+							if (loadedScripts[i] === url) {
+								continue;
+							}
+
+							$.globalEval(results[i][0]); // results[i][0] = responseText
+							loadedScripts.splice(i, 1, url);
+						}
+					};
+				}
+
+				h5.async.when(promises).then(doneCallback, retDfFailCallback, progressCallback);
+			} else {
+				// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+				var secDf = getDeferred().resolve().pipe(asyncFunc);
+
+				$.each(resources, function() {
+					var url = toAbsoluteUrl(this);
+
+					secDf = secDf.pipe(function() {
+						var df = getDeferred();
+
+						if (!force && (url in addedJS || url in loadedUrl)) {
+							df.resolve();
+						} else {
+							getScriptString(url, async, cache).then(function(text, status, xhr) {
+								if (atomic) {
+									scriptData.push(text);
+									loadedUrl[url] = url;
+								} else {
+									$.globalEval(text);
+									addedJS[url] = url;
+								}
+
+								df.resolve();
+							}, function() {
+								df.reject(this.url);
+							});
+						}
+
+						return df.promise();
+					}, retDfFailCallback);
+				});
+
+				secDf.pipe(function() {
+					if (atomic) {
+						$.each(scriptData, function(i, e) {
+							$.globalEval(e);
+						});
+
+						$.extend(addedJS, loadedUrl);
+					}
+
+					retDf.resolve();
+				}, retDfFailCallback);
+			}
+
+			return retDf.promise();
+		} else {
+			$.each(resources, function() {
+				var url = toAbsoluteUrl(this);
+
+				if (!force && (url in addedJS || url in loadedUrl)) {
+					return true;
+				}
+
+				getScriptString(url, async, cache).then(function(text, status, xhr) {
+					if (atomic) {
+						scriptData.push(text);
+						loadedUrl[url] = url;
+					} else {
 						$.globalEval(text);
 						addedJS[url] = url;
-					}, function() {
-						throwFwError(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]);
-					});
+					}
+
+				}, function() {
+					throwFwError(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]);
 				});
-				// 同期ロードの場合は何もreturnしない
+			});
+
+			if (atomic) {
+				// 読み込みに成功した全てのスクリプトを評価する
+				$.each(scriptData, function(i, e) {
+					$.globalEval(e);
+				});
+				$.extend(addedJS, loadedUrl);
 			}
+			// 同期ロードの場合は何もreturnしない
 		}
 	};
 
