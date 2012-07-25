@@ -326,12 +326,16 @@
 		//TODO triggerChangeはクロージャで持たせる
 		defineProperty(DataItem.prototype, '_proxy_triggerChange', {
 			value: function(obj, prop, oldValue, newValue) {
+				var changedProps = {};
+				changedProps[prop] = {
+					oldValue: oldValue,
+					newValue: newValue
+				};
+
 				var event = {
 					type: 'change',
 					target: obj,
-					property: prop,
-					oldValue: oldValue,
-					newValue: newValue
+					props: changedProps
 				};
 				this.dispatchEvent(event);
 			}
@@ -380,11 +384,11 @@
 
 		var hasId = false;
 
-		for ( var p in descriptor.prop) {
+		for ( var p in descriptor.schema) {
 			defineProxyProperty(this.proxy.prototype, p);
-			if (descriptor.prop[p] && (descriptor.prop[p].isId === true)) {
+			if (descriptor.schema[p] && (descriptor.schema[p].id === true)) {
 				if (hasId) {
-					throw new Error('isIdを持つプロパティが複数存在します。 prop = ' + p);
+					throw new Error('idとして設定されているプロパティが複数存在します。 prop = ' + p);
 				}
 
 				this.idKey = p;
@@ -393,7 +397,7 @@
 		}
 
 		if (!hasId) {
-			throw new Error('id指定されたプロパティが存在しません。isId = trueであるプロパティが1つ必要です');
+			throw new Error('id指定されたプロパティが存在しません。is = trueであるプロパティが1つ必要です');
 		}
 	}
 
