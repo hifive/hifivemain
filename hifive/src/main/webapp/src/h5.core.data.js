@@ -267,6 +267,19 @@
 	}
 
 
+	//TODO JSDoc
+	//descriptorのnameにはスペース・ピリオドを含めることはできません。
+	/**
+	 *
+	 */
+	function createDataModel(descriptor, manager) {
+		return DataModel.createFromDescriptor(descriptor, manager);
+	}
+
+	function getItemId(value, idKey) {
+		return isString(value) ? value : value[idKey];
+	}
+
 
 	// =========================================================================
 	//
@@ -284,7 +297,7 @@
 	 * @class
 	 * @name DataModel
 	 */
-	function DataModel(manager, descriptor) {
+	function DataModel(descriptor, manager) {
 		/**
 		 * @memberOf DataModel
 		 */
@@ -387,28 +400,44 @@
 
 	DataModel.prototype = new EventDispatcher();
 	$.extend(DataModel.prototype, {
+		create: function(objOrArray) {
+			var ret = [];
+
+			var items = wrapInArray(objOrArray);
+			for ( var i = 0, len = items.length; i < len; i++) {
+				// 既に存在するオブジェクトの場合は値を更新
+				//TODO 値更新
+				//				for (prop in obj) {
+				//					if (prop == idKey) {
+				//						continue;
+				//					}
+				//					o[prop] = obj[prop];
+				//				}
+
+
+				ret.push(createItem(this, items[i]));
+			}
+
+			if ($.isArray(objOrArray)) {
+				return ret;
+			}
+			return ret[0];
+		},
+
 		/**
 		 * @memberOf DataModel
 		 * @returns {Object}
 		 */
-		getItem: function(obj) {
-			//TODO 配列で受け取って一度に登録できるようにする
-
-			var idKey = this.idKey;
-
-			var o = this.findById(obj[idKey]);
-			if (!o) {
-				// 新規オブジェクトの場合は作成
-				return createItem(this, obj);
+		get: function(idOrArray) {
+			if (isString(idOrArray)) {
+				return this.findById(idOrArray);
 			}
 
-			// 既に存在するオブジェクトの場合は値を更新
-			for (prop in obj) {
-				if (prop == idKey) {
-					continue;
-				}
-				o[prop] = obj[prop];
+			var ret = [];
+			for ( var i = 0, len = idOrArray.length; i < len; i++) {
+				ret.push(this.findById(idOrArray[i]));
 			}
+			return ret;
 		},
 
 		/**
@@ -417,37 +446,47 @@
 		 * @memberOf DataModel
 		 * @returns {DataModel[]}
 		 */
-		removeItem: function(objOrItemId) {
-			var ids = wrapInArray(objOrItemId);
+		remove: function(objOrItemIdOrArray) {
+			/*
+			 * 指定されたidのデータアイテムを削除します。
+			 */
+			function removeItemById(model, id) {
+				if (id === undefined || id === null) {
+					throw new Error('DataModel.removeObjectById: idが指定されていません');
+				}
+				if (!(id in model.items)) {
+					return;
+				}
+
+				var obj = model.items[id];
+
+				delete model.items[id];
+
+				model.size--;
+
+				//TODO イベントを出す位置は変える
+				var ev = {
+					type: 'itemRemove',
+					item: obj
+				};
+				model.dispatchEvent(ev);
+
+				return obj;
+			}
 
 			var idKey = this.idKey;
+			var ids = wrapInArray(objOrItemId);
 
+			var ret = [];
 			for ( var i = 0, len = ids.length; i < len; i++) {
-				var item = objOrItemId[i];
-				var id = isString(item) ? item : item[idKey];
-				this.removeItemById(id);
-			}
-		},
-
-		removeItemById: function(id) {
-			if (id === undefined || id === null) {
-				throw new Error('DataModel.removeObjectById: idが指定されていません');
-			}
-			if (!(id in this.items)) {
-				return;
+				var id = getItemId(objOrItemId[i], idKey);
+				ret.push(removeItemById(this, id));
 			}
 
-			var obj = this.items[id];
-
-			delete this.items[id];
-
-			this.size--;
-
-			var ev = {
-				type: 'itemRemove',
-				item: obj
-			};
-			this.dispatchEvent(ev);
+			if ($.isArray(objOrItemIdOrArray)) {
+				return ret;
+			}
+			return ret[0];
 		},
 
 		getAllItems: function() {
@@ -457,13 +496,6 @@
 				ret.push(items[prop]);
 			}
 			return ret;
-		},
-
-		/**
-		 * @returns {Number} オブジェクトの個数
-		 */
-		getSize: function() {
-			return this.size;
 		},
 
 		/**
@@ -486,7 +518,7 @@
 		},
 
 		has: function(obj) {
-			return !!this.findById(obj[this.idKey]);
+			return !!this.findById(getItemId(obj, this.idKey));
 		}
 	});
 
@@ -500,7 +532,7 @@
 			throw new Error('descriptorにはオブジェクトを指定してください。');
 		}
 
-		var om = new DataModel(manager, descriptor);
+		var om = new DataModel(descriptor, manager);
 		return om;
 	};
 
@@ -551,16 +583,6 @@
 			return model;
 		}
 	});
-
-
-	//TODO JSDoc
-	//descriptorのnameにはスペース・ピリオドを含めることはできません。
-	/**
-	 *
-	 */
-	function createDataModel(descriptor, manager) {
-		return DataModel.createFromDescriptor(descriptor, manager);
-	}
 
 
 	function createManager(name, namespace) {
