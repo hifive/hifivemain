@@ -2287,18 +2287,6 @@
 
 			var ret = new UserInput($elements);
 			return ret;
-		},
-
-		/**
-		 * TODO JSDoc追加 データバインディングを作成します。
-		 *
-		 * @memberOf Controller
-		 * @param {DataModel} dataModel データモデル
-		 * @param {String|Element|jQuery} renderRoot データを表示させるコンテナ要素
-		 * @param {String|Element|jQuery} template データを表示させるテンプレート
-		 */
-		createDataBinding: function(dataModel, renderRoot, template) {
-			return new h5.core.data.createDataBinding(this, dataModel, renderRoot, template);
 		}
 	});
 
