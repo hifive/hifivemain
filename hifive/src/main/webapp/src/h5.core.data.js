@@ -41,6 +41,7 @@
 
 	/* del begin */
 
+	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
 
 	/* del end */
 
@@ -81,6 +82,106 @@
 	// Functions
 	//=============================
 
+
+
+	/***********************************************************************************************
+	 * @private
+	 * @class
+	 * @name EventDispatcher
+	 **********************************************************************************************/
+	function EventDispatcher() {}
+
+	/**
+	 * @memberOf EventDispatcher
+	 * @param type
+	 * @param listener
+	 * @returns {Boolean}
+	 */
+	EventDispatcher.prototype.hasEventListener = function(type, listener) {
+		if (!this.__listeners) {
+			return false;
+		}
+		var l = this.__listeners[type];
+		if (!l) {
+			return false;
+		}
+
+		for ( var i = 0, count = l.length; i < count; i++) {
+			if (l[i] === listener) {
+				return true;
+			}
+		}
+		return false;
+
+	};
+
+	/**
+	 * @memberOf EventDispatcher
+	 * @param type
+	 * @param listener
+	 */
+	EventDispatcher.prototype.addEventListener = function(type, listener) {
+		if (this.hasEventListener(type, listener)) {
+			return;
+		}
+
+		if (!this.__listeners) {
+			this.__listeners = {};
+		}
+
+		if (!(type in this.__listeners)) {
+			this.__listeners[type] = [];
+		}
+
+		this.__listeners[type].push(listener);
+	};
+
+	/**
+	 * @memberOf EventDispatcher
+	 * @param type
+	 * @param lisntener
+	 */
+	EventDispatcher.prototype.removeEventListener = function(type, lisntener) {
+		if (!this.hasEventListener(type, listener)) {
+			return;
+		}
+
+		var l = this.__listeners[type];
+
+		for ( var i = 0, count = l.length; i < count; i++) {
+			if (l[i] === listener) {
+				l.splice(i, 1);
+				return;
+			}
+		}
+
+	};
+
+	/**
+	 * @memberOf EventDispatcher
+	 * @param event
+	 */
+	EventDispatcher.prototype.dispatchEvent = function(event) {
+		if (!this.__listeners) {
+			return;
+		}
+		var l = this.__listeners[event.type];
+		if (!l) {
+			return;
+		}
+
+		//TODO 削除予定
+		if (!event.target) {
+			event.target = this._eventTarget ? this._eventTarget : this;
+		}
+
+		for ( var i = 0, count = l.length; i < count; i++) {
+			l[i].call(event.target, event);
+		}
+	};
+
+
+
 	function createSerialNumber() {
 		return globalBindSerialNumber++;
 	}
@@ -113,104 +214,14 @@
 		}
 	}
 
-
-	/***********************************************************************************************
+	/**
+	 * propで指定されたプロパティのプロパティディスクリプタを作成します。
+	 *
 	 * @private
-	 * @class
-	 * @name EventDispatcher
-	 **********************************************************************************************/
-	function EventDispatcher() {}
-
-	/**
-	 * @memberOf EventDispatcher
-	 * @param type
-	 * @param listener
-	 * @returns {Boolean}
 	 */
-	EventDispatcher.prototype.hasEventListener = function(type, listener) {
-		if (!this.__eventListeners) {
-			return false;
-		}
-		var l = this.__eventListeners[type];
-		if (!l) {
-			return false;
-		}
+	function createPropertyDesc(descriptor, prop) {
 
-		for ( var i = 0, count = l.length; i < count; i++) {
-			if (l[i] === listener) {
-				return true;
-			}
-		}
-		return false;
-
-	};
-
-	/**
-	 * @memberOf EventDispatcher
-	 * @param type
-	 * @param listener
-	 */
-	EventDispatcher.prototype.addEventListener = function(type, listener) {
-		if (this.hasEventListener(type, listener)) {
-			return;
-		}
-
-		if (!this.__eventListeners) {
-			this.__eventListeners = {};
-		}
-
-		if (!(type in this.__eventListeners)) {
-			this.__eventListeners[type] = [];
-		}
-
-		this.__eventListeners[type].push(listener);
-	};
-
-	/**
-	 * @memberOf EventDispatcher
-	 * @param type
-	 * @param lisntener
-	 */
-	EventDispatcher.prototype.removeEventListener = function(type, lisntener) {
-		if (!this.hasEventListener(type, listener)) {
-			return;
-		}
-
-		var l = this.__eventListeners[type];
-
-		for ( var i = 0, count = l.length; i < count; i++) {
-			if (l[i] === listener) {
-				l.splice(i, 1);
-				return;
-			}
-		}
-
-	};
-
-	/**
-	 * @memberOf EventDispatcher
-	 * @param event
-	 */
-	EventDispatcher.prototype.dispatchEvent = function(event) {
-		if (!this.__eventListeners) {
-			return;
-		}
-		var l = this.__eventListeners[event.type];
-		if (!l) {
-			return;
-		}
-
-		//TODO 削除予定
-		if (!event.target) {
-			event.target = this._eventTarget ? this._eventTarget : this;
-		}
-
-		for ( var i = 0, count = l.length; i < count; i++) {
-			l[i].call(event.target, event);
-		}
-	};
-
-
+	}
 
 
 
@@ -275,6 +286,11 @@
 		return DataModel.createFromDescriptor(descriptor, manager);
 	}
 
+	/**
+	 * @private
+	 * @param {String|Object} value データアイテムオブジェクトまたはID文字列
+	 * @param {String} idKey IDとみなすプロパティ名
+	 */
 	function getItemId(value, idKey) {
 		return isString(value) ? value : value[idKey];
 	}
@@ -285,11 +301,6 @@
 	// Body
 	//
 	// =========================================================================
-
-	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
-
-
-
 
 	/**
 	 * @memberOf h5.core.data
