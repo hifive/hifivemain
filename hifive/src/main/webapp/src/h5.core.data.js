@@ -218,19 +218,19 @@
 	/**
 	 * @returns {Object}
 	 */
-	function createObjectById(id) {
+	function createObjectById(model, id) {
 		if (id === undefined || id === null) {
 			throw new Error('DataModel.createObjectById: idが指定されていません');
 		}
-		if (id in this.items) {
+		if (id in model.items) {
 			throw new Error('DataModel.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
 		}
 
-		var obj = new this.proxy();
-		obj[this.idKey] = id;
+		var obj = new model.proxy();
+		obj[model.idKey] = id;
 
-		this.items[id] = obj;
-		this.size++;
+		model.items[id] = obj;
+		model.size++;
 
 		return obj;
 	}
@@ -244,7 +244,7 @@
 			throw new Error('DataModel.createItem: idが指定されていません');
 		}
 
-		var o = createObjectById(id);
+		var o = createObjectById(model, id);
 		for (prop in obj) {
 			if (prop == model.idKey) {
 				continue;
@@ -252,16 +252,15 @@
 			o[prop] = obj[prop];
 		}
 
-		var that = model;
 		o.addEventListener('change', function(event) {
-			that.objectChangeListener(event);
+			model.objectChangeListener(event);
 		});
 
-		var ev = {
-			type: 'itemAdd',
-			item: o
-		};
-		model.dispatchEvent(ev);
+		//		var ev = {
+		//			type: 'itemAdd',
+		//			item: o
+		//		};
+		//		model.dispatchEvent(ev);
 
 		return o;
 	}
@@ -403,19 +402,26 @@
 		create: function(objOrArray) {
 			var ret = [];
 
+			var idKey = this.idKey;
+
 			var items = wrapInArray(objOrArray);
 			for ( var i = 0, len = items.length; i < len; i++) {
-				// 既に存在するオブジェクトの場合は値を更新
-				//TODO 値更新
-				//				for (prop in obj) {
-				//					if (prop == idKey) {
-				//						continue;
-				//					}
-				//					o[prop] = obj[prop];
-				//				}
-
-
-				ret.push(createItem(this, items[i]));
+				var existingItem = this.findById(items[i][idKey]);
+				if (existingItem) {
+					// 既に存在するオブジェクトの場合は値を更新
+					//TODO 値更新
+					//				for (prop in obj) {
+					//					if (prop == idKey) {
+					//						continue;
+					//					}
+					//					o[prop] = obj[prop];
+					//				}
+					ret.push(existingItem);
+				} else {
+					var newItem = createItem(this, items[i]);
+					ret.push(newItem);
+					this.items[newItem[idKey]] = newItem;
+				}
 			}
 
 			if ($.isArray(objOrArray)) {
@@ -455,7 +461,7 @@
 					throw new Error('DataModel.removeObjectById: idが指定されていません');
 				}
 				if (!(id in model.items)) {
-					return;
+					return null;
 				}
 
 				var obj = model.items[id];
@@ -475,11 +481,11 @@
 			}
 
 			var idKey = this.idKey;
-			var ids = wrapInArray(objOrItemId);
+			var ids = wrapInArray(objOrItemIdOrArray);
 
 			var ret = [];
 			for ( var i = 0, len = ids.length; i < len; i++) {
-				var id = getItemId(objOrItemId[i], idKey);
+				var id = getItemId(ids[i], idKey);
 				ret.push(removeItemById(this, id));
 			}
 
