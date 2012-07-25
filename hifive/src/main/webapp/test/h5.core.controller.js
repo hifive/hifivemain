@@ -1042,14 +1042,13 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', function() {
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', 3, function() {
 		var childDfd = h5.async.deferred();
 		var rootDfd = h5.async.deferred();
 		var childController = {
 			__name: 'ChildController',
 
 			__dispose: function() {
-				var that = this;
 				setTimeout(function() {
 					childDfd.resolve();
 				}, 400);
@@ -1062,7 +1061,6 @@ $(function() {
 			childController: childController,
 
 			__dispose: function() {
-				var that = this;
 				setTimeout(function() {
 					rootDfd.resolve();
 				}, 100);
@@ -1075,8 +1073,8 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				ok(isResolved(rootDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
-				ok(isResolved(childDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか2');
+				ok(isResolved(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
 				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
 				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
@@ -1084,7 +1082,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', function() {
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', 3, function() {
 		var childDfd = h5.async.deferred();
 		var rootDfd = h5.async.deferred();
 
@@ -1096,7 +1094,7 @@ $(function() {
 				setTimeout(function() {
 					child = that.__name === 'ChildController';
 					childDfd.resolve();
-				}, 400);
+				}, 800);
 				return childDfd.promise();
 			}
 		};
@@ -1120,9 +1118,8 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				ok(isRejected(rootDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
-				ok(!isResolved(childDfd) && !isRejected(childDfd),
-						'__disposeイベントはPromiseオブジェクトを考慮しているか2');
+				ok(isRejected(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
 				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
 				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
