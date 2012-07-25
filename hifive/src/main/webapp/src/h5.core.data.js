@@ -72,8 +72,6 @@
 	//TODO 要素の属性の値が長くなった場合にどれくらいパフォーマンス（速度・メモリ）に影響出る？？要調査
 	//問題なければfullnameをView側のキーにしてしまうことも考える
 
-	var bindingMap = {};
-
 
 	//TODO グローバルなBindingManagerを用意して、「私はどのDataBindingで制御されているビュー（に含まれている要素）？」を
 	//問合せできるようにすべきか
@@ -216,12 +214,77 @@
 
 
 
+
+	/**
+	 * @returns {Object}
+	 */
+	function createObjectById(id) {
+		if (id === undefined || id === null) {
+			throw new Error('DataModel.createObjectById: idが指定されていません');
+		}
+		if (id in this.items) {
+			throw new Error('DataModel.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
+		}
+
+		var obj = new this.proxy();
+		obj[this.idKey] = id;
+
+		this.items[id] = obj;
+		this.size++;
+
+		return obj;
+	}
+
+	/**
+	 * @returns {Object}
+	 */
+	function createItem(model, obj) {
+		var id = obj[model.idKey];
+		if (id === null || id === undefined) {
+			throw new Error('DataModel.createItem: idが指定されていません');
+		}
+
+		var o = createObjectById(id);
+		for (prop in obj) {
+			if (prop == model.idKey) {
+				continue;
+			}
+			o[prop] = obj[prop];
+		}
+
+		var that = model;
+		o.addEventListener('change', function(event) {
+			that.objectChangeListener(event);
+		});
+
+		var ev = {
+			type: 'itemAdd',
+			item: o
+		};
+		model.dispatchEvent(ev);
+
+		return o;
+	}
+
+
+
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+
+	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
+
+
+
+
 	/**
 	 * @memberOf h5.core.data
 	 * @class
 	 * @name DataModel
 	 */
-	function DataModel() {
+	function DataModel(manager, descriptor) {
 		/**
 		 * @memberOf DataModel
 		 */
@@ -242,6 +305,8 @@
 		 */
 		this.size = 0;
 
+		this.idSequence = 0;
+
 		function DataItem() {}
 		DataItem.prototype = EventDispatcher.prototype;
 		DataItem.prototype.dataModel = this;
@@ -261,132 +326,72 @@
 		});
 
 		this.proxy = DataItem;
+
+
+		//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
+
+		this.name = descriptor.name;
+		this.manager = manager;
+
+		//TODO this.fullname -> managerの名前までを含めた完全修飾名
+
+		var defineProxyProperty = function(obj, propName) {
+			var p = '_' + propName;
+
+			defineProperty(obj, propName, {
+				enumerable: true,
+				configurable: true,
+				get: function() {
+					return this[p];
+				},
+				set: function(value) {
+					if (this[p] === value) {
+						// 値の変更がない場合はchangeイベントは発火しない
+						return;
+					}
+
+					var oldValue = this[p];
+
+					if (this[p] === undefined) {
+						defineProperty(this, p, {
+							value: value,
+							writable: true,
+						});
+					}
+
+					this[p] = value;
+
+					this._proxy_triggerChange(this, propName, oldValue, value);
+				}
+			});
+		};
+
+		var hasId = false;
+
+		for ( var p in descriptor.prop) {
+			defineProxyProperty(this.proxy.prototype, p);
+			if (descriptor.prop[p] && (descriptor.prop[p].isId === true)) {
+				if (hasId) {
+					throw new Error('isIdを持つプロパティが複数存在します。 prop = ' + p);
+				}
+
+				this.idKey = p;
+				hasId = true;
+			}
+		}
+
+		if (!hasId) {
+			throw new Error('id指定されたプロパティが存在しません。isId = trueであるプロパティが1つ必要です');
+		}
 	}
 
-	DataModel.prototype = new EventDispatcher;
+	DataModel.prototype = new EventDispatcher();
 	$.extend(DataModel.prototype, {
 		/**
 		 * @memberOf DataModel
-		 */
-		_init: function(descriptor, manager) {
-			this.descriptor = descriptor;
-
-			//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
-
-			this.name = descriptor.name;
-			this.manager = null;
-			if (manager) {
-				this.manager = manager;
-			}
-
-			//TODO this.fullname -> managerの名前までを含めた完全修飾名
-
-			var defineProxyProperty = function(obj, propName) {
-				var p = '_' + propName;
-
-				defineProperty(obj, propName, {
-					enumerable: true,
-					configurable: true,
-					get: function() {
-						return this[p];
-					},
-					set: function(value) {
-						if (this[p] === value) {
-							// 値の変更がない場合はchangeイベントは発火しない
-							return;
-						}
-
-						var oldValue = this[p];
-
-						if (this[p] === undefined) {
-							defineProperty(this, p, {
-								value: value,
-								writable: true,
-							});
-						}
-
-						this[p] = value;
-
-						this._proxy_triggerChange(this, propName, oldValue, value);
-					}
-				});
-			};
-
-			var hasId = false;
-
-			for ( var p in descriptor.prop) {
-				defineProxyProperty(this.proxy.prototype, p);
-				if (descriptor.prop[p] && (descriptor.prop[p].isId === true)) {
-					if (hasId) {
-						throw new Error('isIdを持つプロパティが複数存在します。 prop = ' + p);
-					}
-
-					this.idKey = p;
-					hasId = true;
-				}
-			}
-
-			if (!hasId) {
-				throw new Error('id指定されたプロパティが存在しません。isId = trueであるプロパティが1つ必要です');
-			}
-		},
-
-		/**
 		 * @returns {Object}
 		 */
-		_createObjectById: function(id) {
-			if (id === undefined || id === null) {
-				throw new Error('DataModel.createObjectById: idが指定されていません');
-			}
-			if (id in this.items) {
-				throw new Error('DataModel.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
-			}
-
-			var obj = new this.proxy();
-			obj[this.idKey] = id;
-
-			this.items[id] = obj;
-			this.size++;
-
-			return obj;
-		},
-
-		/**
-		 * @returns {Object}
-		 */
-		createItem: function(obj) {
-			var id = obj[this.idKey];
-			if (id === null || id === undefined) {
-				throw new Error('DataModel.createItem: idが指定されていません');
-			}
-
-			var o = this._createObjectById(id);
-			for (prop in obj) {
-				if (prop == this.idKey) {
-					continue;
-				}
-				o[prop] = obj[prop];
-			}
-
-			var that = this;
-			o.addEventListener('change', function(event) {
-				that.objectChangeListener(event);
-			});
-
-			var ev = {
-				type: 'itemAdd',
-				item: o
-			};
-			this.dispatchEvent(ev);
-
-			return o;
-		},
-
-		/**
-		 * @memberOf DataModel
-		 * @returns {Object}
-		 */
-		setItem: function(obj) {
+		getItem: function(obj) {
 			//TODO 配列で受け取って一度に登録できるようにする
 
 			var idKey = this.idKey;
@@ -394,7 +399,7 @@
 			var o = this.findById(obj[idKey]);
 			if (!o) {
 				// 新規オブジェクトの場合は作成
-				return this.createItem(obj);
+				return createItem(this, obj);
 			}
 
 			// 既に存在するオブジェクトの場合は値を更新
@@ -407,9 +412,21 @@
 		},
 
 		/**
+		 * TODO JSDocの書き方(DataModel[]はOK？)
+		 *
+		 * @memberOf DataModel
+		 * @returns {DataModel[]}
 		 */
-		removeItem: function(obj) {
-			this.removeItemById(obj[this.idKey]);
+		removeItem: function(objOrItemId) {
+			var ids = wrapInArray(objOrItemId);
+
+			var idKey = this.idKey;
+
+			for ( var i = 0, len = ids.length; i < len; i++) {
+				var item = objOrItemId[i];
+				var id = isString(item) ? item : item[idKey];
+				this.removeItemById(id);
+			}
 		},
 
 		removeItemById: function(id) {
@@ -483,63 +500,14 @@
 			throw new Error('descriptorにはオブジェクトを指定してください。');
 		}
 
-		var om = new DataModel();
-		om._init(descriptor, manager);
+		var om = new DataModel(manager, descriptor);
 		return om;
 	};
-
 
 	function getItemFullname(dataModel, item) {
 		return dataModel.fullname + '.' + item[dataModel.idKey];
 	}
 
-
-	//TODO Descriptorを使わず、動的に生成するパターンもあった方がよいだろう
-
-
-	function addBindMapEntry(dataBinding, uuid, itemView, dataModel, dataItem, parentItem) {
-		//View -> Item は一意に特定可能.
-		//Viewは常にシングルトンな存在なのでグローバルなマップで管理すればよい
-		bindingMap[uuid] = {
-			item: dataItem,
-			parent: parentItem
-		};
-
-		var itemFullname = getItemFullname(dataModel, dataItem);
-
-
-		//TODO 1つのDataItemを「一つのタグ(ツリー)」だけで表すとは限らない。
-		//そこで、Rendererが配列でDOMを返した場合を考慮しておく。
-		//Viewは「アイテムビュー」というセット(実体はただの配列)で扱うことにする。
-		//1つのデータアイテムが「1つのアイテムビュー」と対応することにする。
-		//DataItem:ItemView = 1:many は考慮しない。
-
-
-		//TODO itemToViewは 1:many の可能性がある
-		var entry = dataBinding.itemToViewMap[itemFullname];
-		if (entry) {
-			entry.view.push(itemView);
-		} else {
-			dataBinding.itemToViewMap[itemFullname] = {
-				item: dataItem,
-				view: itemView
-			};
-		}
-	}
-
-	function removeBindMapEntry(dataBinding, uuid, view, dataModel, dataItem) {
-		delete bindingMap[uuid];
-		delete dataBinding.itemToViewMap[getItemFullname(dataModel, dataItem)]; //TODO viewが複数の場合に対応
-	}
-
-
-	// =========================================================================
-	//
-	// Body
-	//
-	// =========================================================================
-
-	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
 
 	/**
 	 * @class
@@ -574,9 +542,13 @@
 		},
 
 		dropModel: function(name) {
-			if (this.models[name]) {
-				delete this.models[name];
+			var model = this.models[name];
+			if (!model) {
+				return;
 			}
+			model.manager = null;
+			delete this.models[name];
+			return model;
 		}
 	});
 
