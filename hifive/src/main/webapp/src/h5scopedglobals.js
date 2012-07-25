@@ -136,6 +136,22 @@ function isString(target) {
 	return typeof target === 'string';
 }
 
+/**
+ * 引数がJavaScriptの識別子として正しい文字列かどうかを判定します。 ただし、予約語かどうかのチェックは行いません。
+ *
+ * @private
+ * @param {Any} property 値
+ * @returns {boolean} JavaScriptの識別子として正しい文字列であればtrue、そうでないならfalse
+ */
+function isValidJSIdentifier(property) {
+	if (!isString(property)) {
+		return false;
+	}
+
+	// 全角文字は考慮しない
+	return !!property.match(/^[A-Za-z_\$][\w|\$]*$/);
+}
+
 // =============================
 // ロガー・アスペクトで使用する共通処理
 // =============================
