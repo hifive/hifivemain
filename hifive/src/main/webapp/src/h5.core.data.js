@@ -33,6 +33,21 @@
 	/** マネージャ名が不正 */
 	var ERR_CODE_INVALID_MANAGER_NAME = 30000;
 
+	/** DataItemのsetterに渡された値の型がDescriptorで指定されたものと異なる */
+	var ERR_CODE_INVALID_TYPE = 30001;
+
+	/** dependが設定されたプロパティのセッターを呼び出した */
+	var ERR_CODE_DEPEND_PROPERTY = 30002;
+
+	/** イベントのターゲットが指定されていない */
+	var ERR_CODE_NO_EVENT_TARGET = 30003;
+
+	var ERR_CODE_INVALID_SCHEMA = 30004;
+
+	var ITEM_PROP_BACKING_STORE_PREFIX = '__';
+
+	var PROP_CONSTRAINT_REQUIRED = 'required';
+
 	//=============================
 	// Development Only
 	//=============================
@@ -170,9 +185,8 @@
 			return;
 		}
 
-		//TODO 削除予定
 		if (!event.target) {
-			event.target = this._eventTarget ? this._eventTarget : this;
+			throwFwError(ERR_CODE_NO_EVENT_TARGET);
 		}
 
 		for ( var i = 0, count = l.length; i < count; i++) {
@@ -214,13 +228,283 @@
 		}
 	}
 
+	function isValidTypeString(value) {
+		if (isString(value)) {
+			return true;
+		}
+		return false;
+	}
+
+	function isValidTypeNumber(value) {
+		if ($.type(value) === 'number') {
+			return true;
+		}
+		if (!isString(value)) {
+			return false;
+		}
+		//TODO 先頭文字が数値として有効だったらtrue、それ以外はfalseにする
+		return true;
+	}
+
+	var typeCheckFunc = {
+		'string': isValidTypeString,
+		'number': isValidTypeNumber
+	};
+
+
+	//TODO DataItemにsetData等同名のプロパティが出てきたらどうするか。
+	//今のうちに_とかでよけておくか、
+	//それともschema側を自動的によけるようにするか、
+	//またはぶつからないだろうと考えてよけないか
+	//(今は良いかもしれないが、将来的には少し怖い)
+	function DataItemBase() {}
+	DataItemBase.prototype = new EventDispatcher();
+	$.extend(DataItemBase.prototype, {
+		setData: function(data) {
+			//TODO このままだと即時にイベントが上がるので、
+			//セットした値をまとめて1つのイベントで通知するようにする
+			for ( var prop in data) {
+				this[prop] = data[prop];
+			}
+		},
+	});
+
+	var PROP_TYPE_ENUM = 'enum';
+	var PROP_TYPE_STRING = 'string';
+	var PROP_TYPE_OBJECT = 'object';
+	var PROP_TYPE_ANY = 'any';
+	var NULLABLE_PROP_TYPES = [PROP_TYPE_ENUM, PROP_TYPE_STRING, PROP_TYPE_OBJECT, PROP_TYPE_ANY];
+
 	/**
-	 * propで指定されたプロパティのプロパティディスクリプタを作成します。
+	 * propで指定されたプロパティのプロパティソースを作成します。
 	 *
 	 * @private
 	 */
-	function createPropertyDesc(descriptor, prop) {
+	function createDataItemConstructor(model, descriptor) {
+		var schema = model.schema;
 
+		//{ 依存元: [依存先] }という構造のマップ。依存先プロパティは配列内で重複はしない。
+		var dependencyMap = {};
+
+		for ( var prop in schema) {
+			var dependency = schema[prop] ? schema[prop].depend : null;
+			if (dependency) {
+				var dependOn = wrapInArray(dependency.on);
+				for ( var i = 0, len = dependOn.length; i < len; i++) {
+					var dependSrcPropName = dependOn[i];
+
+					fwLogger.debug('{0} depends on {1}', prop, dependSrcPropName);
+
+					if (!dependencyMap[dependSrcPropName]) {
+						dependencyMap[dependSrcPropName] = [];
+					}
+					if ($.inArray(prop, dependencyMap[dependSrcPropName]) === -1) {
+						dependencyMap[dependSrcPropName].push(prop);
+					}
+				}
+			}
+		}
+
+		function recalculateDependProperties(item, dependProp) {
+			var newValue = model.schema[dependProp].depend.calc.call(item);
+			return newValue;
+		}
+
+		function getValue(item, prop) {
+			return item[ITEM_PROP_BACKING_STORE_PREFIX + prop];
+		}
+
+		function setValue(item, prop, value) {
+			item[ITEM_PROP_BACKING_STORE_PREFIX + prop] = value;
+		}
+
+		function createSrc(name, propDesc) {
+			//			var propType = propDesc.type;
+
+			//nullが可能な型かどうか
+			//TODO combination-typeの場合は「許容されるすべての型がnot nullable」で判定する必要がある
+			//			var isNullable = false;
+			//			if (propType.charAt(0) === '@' || $.inArray(propType, NULLABLE_PROP_TYPES)) {
+			//				isNullable = true;
+			//			}
+			//
+			//			var isRequired = propDesc.constraint
+			//					&& ($.inArray(PROP_CONSTRAINT_REQUIRED, propDesc.constraint) !== -1);
+			//
+			//			var enumValues = propDesc.enumValues;
+
+			function createSetter() {
+				/**
+				 * スキーマのプロパティタイプをパースします。
+				 */
+				function parseType(type) {
+					var ret = [];
+
+					var splittedType = type.split(',');
+					for ( var i = 0, len = splittedType.length; i < len; i++) {
+						var typeDef = {
+							isArray: false,
+							dim: 0,
+							checkInner: []
+						};
+
+						var t = $.trim(splittedType[i]);
+						var arrayIndicatorPos = t.indexOf('[');
+
+						if (arrayIndicatorPos !== -1) {
+							typeDef.isArray = true;
+							if (t.charAt(0) === '(') {
+								//配列内に複数の型が混在できる場合
+							} else {
+								//'string[]'のように、配列内の型は1つである場合
+								var innerType = $.trim(t.slice(1, arrayIndicatorPos));
+								if (innerType.charAt(0) === '@') {
+									typeDef.checkInner.push();
+								} else if (typeCheckFunc[innerType]) {
+									typeDef.checkInner.push(typeCheckFunc[innerType]);
+								}
+							}
+						}
+
+						ret.push(typeDef);
+					}
+
+
+					return ret;
+				} /* End of parseType() */
+
+				if (propDesc.depend) {
+					//依存プロパティの場合は、setterは動作しない（無理に呼ぶとエラー）
+					return function() {
+						throwFwError(ERR_CODE_DEPEND_PROPERTY);
+					};
+				}
+
+				return function(value) {
+					//					if (isNullable && !isRequired && (value === null)) {
+					//プロパティの値が必須でない場合、nullが代入されようとしたら
+					//						setValue(this, name, value);
+					//						return;
+					//					}
+
+					//					if (propType === PROP_TYPE_ENUM) {
+					//						//enumの場合は列挙値でチェック
+					//						if ($.inArray(value, enumValues) === -1) {
+					//							throwFwError(ERR_CODE_INVALID_TYPE);
+					//						}
+					//					} else {
+					//						//それ以外の場合は各関数でチェック
+					//						if (!isValidType(value)) {
+					//							throwFwError(ERR_CODE_INVALID_TYPE);
+					//						}
+					//					}
+
+					var oldValue = getValue(this, name);
+
+					if (oldValue === value) {
+						//同じ値がセットされた場合は何もしない
+						return;
+					}
+
+					setValue(this, name, value);
+
+					var changedProps = {};
+					changedProps[name] = {
+						oldValue: oldValue,
+						newValue: value
+					};
+
+					var depends = dependencyMap[name];
+					if (depends) {
+						//このプロパティに依存しているプロパティがある場合は
+						//再計算を行う
+						for ( var i = 0, len = depends.length; i < len; i++) {
+							var dependProp = depends[i];
+							var dependOldValue = getValue(this, dependProp);
+							var dependNewValue = recalculateDependProperties(this, dependProp);
+							setValue(this, dependProp, dependNewValue);
+							changedProps[dependProp] = {
+								oldValue: dependOldValue,
+								newValue: dependNewValue
+							};
+						}
+					}
+
+					//今回変更されたプロパティと依存プロパティを含めてイベント送出
+					var event = {
+						type: 'change',
+						target: this,
+						props: changedProps
+					};
+					this.dispatchEvent(event);
+				};
+			}
+
+
+			//descには、プロパティ名、エンハンスするかどうか、セットすべきセッター、ゲッター
+			var src = {
+				name: name,
+				enhance: propDesc.enhance === false ? false : true, //enhanceのデフォルト値はtrue
+			};
+
+			if (src.enhance) {
+				if (propDesc.defaultValue) {
+					src.defaultValue = propDesc.defaultValue;
+				}
+
+				src.getter = function() {
+					return getValue(this, name);
+				};
+
+				src.setter = createSetter();
+			}
+
+			return src;
+		}
+
+
+		//DataItemのコンストラクタ
+		function DataItem() {}
+		DataItem.prototype = new DataItemBase();
+
+		//TODO 外部に移動
+		var defaultPropDesc = {
+			type: 'any',
+			enhance: true
+		};
+
+		var nonEnhanceProps = [];
+
+		//データアイテムのプロトタイプを作成
+		//schemaは継承関係展開後のスキーマになっている
+		for ( var prop in schema) {
+			var propDesc = schema[prop];
+			if (!propDesc) {
+				propDesc = defaultPropDesc;
+			}
+
+			var src = createSrc(prop, propDesc);
+
+			fwLogger.debug('{0}のプロパティ{1}を作成', model.name, prop);
+
+			if (!src.enhance) {
+				nonEnhanceProps.push(prop);
+				continue; //非enhanceなプロパティは、Item生成時にプロパティだけ生成して終わり
+			}
+
+			//getter/setterを作成
+			defineProperty(DataItem.prototype, prop, {
+				enumerable: true,
+				configurable: false, //プロパティの削除や変更は許可しない
+				get: src.getter,
+				set: src.setter
+			});
+		}
+
+		return {
+			itemConstructor: DataItem,
+			nonEnhanceProps: nonEnhanceProps
+		};
 	}
 
 
@@ -237,7 +521,8 @@
 			throw new Error('DataModel.createObjectById: id = ' + id + ' のオブジェクトは既に存在します');
 		}
 
-		var obj = new model.proxy();
+		var obj = new model.itemConstructor();
+
 		obj[model.idKey] = id;
 
 		model.items[id] = obj;
@@ -283,7 +568,7 @@
 	 *
 	 */
 	function createDataModel(descriptor, manager) {
-		return DataModel.createFromDescriptor(descriptor, manager);
+		return createFromDescriptor(descriptor, manager);
 	}
 
 	/**
@@ -301,6 +586,27 @@
 	// Body
 	//
 	// =========================================================================
+
+	function validateSchema(manager, schema) {
+		var errorReason = [];
+
+		var hasId = false;
+
+		for ( var p in schema) {
+			if (schema[p] && (schema[p].id === true)) {
+				if (hasId) {
+					errorReason.push('idが複数存在');
+				}
+				hasId = true;
+			}
+		}
+
+		if (!hasId) {
+			errorReason.push('idがない');
+		}
+
+		return errorReason;
+	}
 
 	/**
 	 * @memberOf h5.core.data
@@ -321,99 +627,83 @@
 		/**
 		 * @memberOf DataModel
 		 */
-		this.idKey = null;
+		this.size = 0;
 
 		/**
 		 * @memberOf DataModel
 		 */
-		this.size = 0;
-
-		this.idSequence = 0;
-
-		function DataItem() {}
-		DataItem.prototype = EventDispatcher.prototype;
-		DataItem.prototype.dataModel = this;
-
-		//TODO triggerChangeはクロージャで持たせる
-		defineProperty(DataItem.prototype, '_proxy_triggerChange', {
-			value: function(obj, prop, oldValue, newValue) {
-				var changedProps = {};
-				changedProps[prop] = {
-					oldValue: oldValue,
-					newValue: newValue
-				};
-
-				var event = {
-					type: 'change',
-					target: obj,
-					props: changedProps
-				};
-				this.dispatchEvent(event);
-			}
-		});
-
-		this.proxy = DataItem;
-
-
-		//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
-
 		this.name = descriptor.name;
+
+		/**
+		 * @memberOf DataModel
+		 */
 		this.manager = manager;
 
-		//TODO this.fullname -> managerの名前までを含めた完全修飾名
+		//TODO
+		this.idSequence = 0;
 
-		var defineProxyProperty = function(obj, propName) {
-			var p = '_' + propName;
+		//継承元がある場合はそのプロパティディスクリプタを先にコピーする。
+		//継承元と同名のプロパティを自分で定義している場合は
+		//自分が持っている定義を優先するため。
+		var schema = {};
 
-			defineProperty(obj, propName, {
-				enumerable: true,
-				configurable: true,
-				get: function() {
-					return this[p];
-				},
-				set: function(value) {
-					if (this[p] === value) {
-						// 値の変更がない場合はchangeイベントは発火しない
-						return;
-					}
+		function extendSchema(schema, desc) {
+			var base = desc.base;
 
-					var oldValue = this[p];
-
-					if (this[p] === undefined) {
-						defineProperty(this, p, {
-							value: value,
-							writable: true,
-						});
-					}
-
-					this[p] = value;
-
-					this._proxy_triggerChange(this, propName, oldValue, value);
-				}
-			});
-		};
-
-		var hasId = false;
-
-		for ( var p in descriptor.schema) {
-			defineProxyProperty(this.proxy.prototype, p);
-			if (descriptor.schema[p] && (descriptor.schema[p].id === true)) {
-				if (hasId) {
-					throw new Error('idとして設定されているプロパティが複数存在します。 prop = ' + p);
+			if (base) {
+				if (!manager) {
+					//baseが設定されている場合、このデータモデルがマネージャに属していなければ継承元を探せないのでエラー
+					throwFwError(ERR_CODE_NO_MANAGER);
 				}
 
-				this.idKey = p;
-				hasId = true;
+				//$.extend()は後勝ちなので、より上位のものから順にextend()するように再帰
+				extendSchema(schema, baseModelDesc);
+			}
+
+			$.extend(schema, desc.schema);
+		}
+
+		//継承を考慮してスキーマを作成
+		extendSchema(schema, descriptor);
+
+		for (prop in schema) {
+			if (schema[prop] && schema[prop].id === true) {
+				/**
+				 * @memberOf DataModel
+				 */
+				this.idKey = prop;
+				break;
 			}
 		}
-
-		if (!hasId) {
-			throw new Error('id指定されたプロパティが存在しません。is = trueであるプロパティが1つ必要です');
+		if (!this.idKey) {
+			throwFwError(30005);
 		}
+
+
+
+		var errorReason = validateSchema(manager, schema);
+		if (errorReason.length > 0) {
+			//スキーマにエラーがある
+			throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
+		}
+
+		//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
+		this.schema = schema;
+
+		var itemSrc = createDataItemConstructor(this, descriptor);
+
+		this.itemConstructor = itemSrc.itemConstructor;
+		this.nonEnhanceProps = itemSrc.nonEnhanceProps;
+
+		//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
+		//TODO this.fullname -> managerの名前までを含めた完全修飾名
 	}
 
 	DataModel.prototype = new EventDispatcher();
 	$.extend(DataModel.prototype, {
+		/**
+		 * @memberOf DataModel
+		 */
 		create: function(objOrArray) {
 			var ret = [];
 
@@ -540,7 +830,58 @@
 
 		has: function(obj) {
 			return !!this.findById(getItemId(obj, this.idKey));
+		},
+
+
+
+		beginUpdate: function() {
+			//TODO __internalsはあらかじめ作っておかないとダメ
+
+			//change[prop] = { oldValue: 変更前の値, newValue: 変更後の値 }
+			this.__internals.change = {};
+			this.__internals.isInUpdate = true;
+		},
+
+		endUpdate: function() {
+			var changedProps = {};
+			$.extend(changedProps, this.__internals.change);
+
+			var alreadyCalculated = [];
+
+			//再計算したプロパティをchangedPropsに追加していくので、ループは__internals.changeで回す必要がある
+			for ( var srcProp in this.__internals.change) {
+				var depends = dependencyMap[srcProp];
+				if (depends) {
+					for ( var i = 0, len = depends.length; i < len; i++) {
+						var dependProp = depends[i];
+						//同じ依存プロパティの再計算は一度だけ行う
+						if ($.inArray(dependProp, alreadyCalculated) === -1) {
+							var dependOldValue = getValue(this, dependProp);
+							var dependNewValue = recalculateDependProperties(this, dependProp);
+							setValue(this, dependProp, dependNewValue);
+							//TODO 同じ処理が何か所かで出てくるのでまとめる
+							changedProps[dependProp] = {
+								oldValue: dependOldValue,
+								newValue: dependNewValue
+							};
+							alreadyCalculated.push(dependProp);
+						}
+					}
+				}
+			}
+
+			var event = {
+				type: 'change',
+				target: this,
+				props: changedProps
+			};
+
+			this.__internals.change = null;
+			this.__internals.isInUpdate = false;
+
+			this.dispatchEvent(event);
 		}
+
 	});
 
 
@@ -548,14 +889,15 @@
 	 * @memberOf DataModel
 	 * @returns {DataModel}
 	 */
-	DataModel.createFromDescriptor = function(descriptor, manager) {
+	function createFromDescriptor(descriptor, manager) {
+		//TODO Descriptorチェックはここで行う？
 		if (!$.isPlainObject(descriptor)) {
 			throw new Error('descriptorにはオブジェクトを指定してください。');
 		}
 
 		var om = new DataModel(descriptor, manager);
 		return om;
-	};
+	}
 
 	function getItemFullname(dataModel, item) {
 		return dataModel.fullname + '.' + item[dataModel.idKey];
@@ -594,7 +936,15 @@
 			return this.models[modelName];
 		},
 
+		/**
+		 * 指定されたデータモデルを削除します。 データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後 データモデル自体をマネージャから削除します。
+		 *
+		 * @param {String} name データモデル名
+		 * @memberOf DataModelManager
+		 */
 		dropModel: function(name) {
+			//TODO dropModelするときに依存していたらどうするか？
+			//エラーにしてしまうか。
 			var model = this.models[name];
 			if (!model) {
 				return;
