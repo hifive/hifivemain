@@ -137,13 +137,14 @@ function isString(target) {
 }
 
 /**
- * 引数がJavaScriptの識別子として正しい文字列かどうかを判定します。 ただし、予約語かどうかのチェックは行いません。
+ * 引数が名前空間として有効な文字列かどうかを判定します。
+ * ただし、全角文字が含まれる場合はfalseを返します。
  *
  * @private
  * @param {Any} property 値
- * @returns {boolean} JavaScriptの識別子として正しい文字列であればtrue、そうでないならfalse
+ * @returns {boolean} 名前空間として有効な文字列であればtrue、そうでないならfalse
  */
-function isValidJSIdentifier(property) {
+function isValidNamespaceIdentifier(property) {
 	if (!isString(property)) {
 		return false;
 	}
