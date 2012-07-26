@@ -46,9 +46,25 @@
 
 	var ERR_CODE_INVALID_MANAGER_NAMESPACE = 30005;
 
+	var ERR_CODE_INVALID_DATAMODEL_NAME = 30006;
+
 	var ITEM_PROP_BACKING_STORE_PREFIX = '__';
 
 	var PROP_CONSTRAINT_REQUIRED = 'required';
+
+
+	var UPDATE_LOG_TYPE_CREATE = 1;
+	var UPDATE_LOG_TYPE_CHANGE = 2;
+	var UPDATE_LOG_TYPE_REMOVE = 3;
+
+
+
+	var DEFAULT_TYPE_VALUE = {
+		'number': 0,
+		'integer': 0,
+		'boolean': false
+	};
+
 
 	//=============================
 	// Development Only
@@ -277,11 +293,14 @@
 	var PROP_TYPE_ANY = 'any';
 	var NULLABLE_PROP_TYPES = [PROP_TYPE_ENUM, PROP_TYPE_STRING, PROP_TYPE_OBJECT, PROP_TYPE_ANY];
 
-	var DEFAULT_TYPE_VALUE = {
-		'number': 0,
-		'integer': 0,
-		'boolean': false
-	};
+
+	function getValue(item, prop) {
+		return item[ITEM_PROP_BACKING_STORE_PREFIX + prop];
+	}
+
+	function setValue(item, prop, value) {
+		item[ITEM_PROP_BACKING_STORE_PREFIX + prop] = value;
+	}
 
 	/**
 	 * propで指定されたプロパティのプロパティソースを作成します。
@@ -289,16 +308,8 @@
 	 * @private
 	 */
 	function createDataItemConstructor(model, descriptor) {
-
+		//model.schemaは継承関係を展開した後のスキーマ
 		var schema = model.schema;
-
-		function getValue(item, prop) {
-			return item[ITEM_PROP_BACKING_STORE_PREFIX + prop];
-		}
-
-		function setValue(item, prop, value) {
-			item[ITEM_PROP_BACKING_STORE_PREFIX + prop] = value;
-		}
 
 		function recalculateDependProperties(item, dependProp) {
 			return schema[dependProp].depend.calc.call(item);
@@ -562,7 +573,7 @@
 			throw new Error('DataModel.createItem: idが指定されていません');
 		}
 
-		var o = createObjectById(model, id);
+		var o = createObjectById(model, id); //TODO inline化
 		for (prop in obj) {
 			if (prop == model.idKey) {
 				continue;
@@ -571,14 +582,17 @@
 		}
 
 		o.addEventListener('change', function(event) {
-			model.objectChangeListener(event);
+			model.itemChangeListener(event);
 		});
 
-		//		var ev = {
-		//			type: 'itemAdd',
-		//			item: o
-		//		};
-		//		model.dispatchEvent(ev);
+		if (!model.__updateLog[model.idKey]) {
+			model.__updateLog[model.idKey] = [];
+		}
+
+		model.__updateLog[model.idKey].push({
+			type: UPDATE_LOG_TYPE_CREATE,
+			item: o
+		});
 
 		return o;
 	}
@@ -678,6 +692,9 @@
 					throwFwError(ERR_CODE_NO_MANAGER);
 				}
 
+				//TODO データモデルの登録の順序関係に注意
+				var baseModelDesc = manager.models[base.slice(1)];
+
 				//$.extend()は後勝ちなので、より上位のものから順にextend()するように再帰
 				extendSchema(schema, baseModelDesc);
 			}
@@ -728,6 +745,12 @@
 
 			var idKey = this.idKey;
 
+			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
+			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
+			//入っていない場合は一時的にセッションを作成する。
+			var isAlreadyInUpdate = this.isInUpdate();
+			this.beginUpdate();
+
 			var items = wrapInArray(objOrArray);
 			for ( var i = 0, len = items.length; i < len; i++) {
 				var existingItem = this.findById(items[i][idKey]);
@@ -746,6 +769,10 @@
 					ret.push(newItem);
 					this.items[newItem[idKey]] = newItem;
 				}
+			}
+
+			if (!isAlreadyInUpdate) {
+				this.endUpdate();
 			}
 
 			if ($.isArray(objOrArray)) {
@@ -781,36 +808,47 @@
 			 * 指定されたidのデータアイテムを削除します。
 			 */
 			function removeItemById(model, id) {
-				if (id === undefined || id === null) {
-					throw new Error('DataModel.removeObjectById: idが指定されていません');
-				}
 				if (!(id in model.items)) {
 					return null;
 				}
 
-				var obj = model.items[id];
+				var item = model.items[id];
+
+				item.removeEventListener('change', this.itemChangeListener);
 
 				delete model.items[id];
 
 				model.size--;
 
-				//TODO イベントを出す位置は変える
-				var ev = {
-					type: 'itemRemove',
-					item: obj
-				};
-				model.dispatchEvent(ev);
+				if (!model.__updateLog[model.idKey]) {
+					model.__updateLog[model.idKey] = [];
+				}
 
-				return obj;
+				model.__updateLog[model.idKey].push({
+					type: UPDATE_LOG_TYPE_REMOVE,
+					item: item
+				});
+
+				return item;
 			}
 
 			var idKey = this.idKey;
 			var ids = wrapInArray(objOrItemIdOrArray);
 
+			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
+			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
+			//入っていない場合は一時的にセッションを作成する。
+			var isAlreadyInUpdate = this.isInUpdate();
+			this.beginUpdate();
+
 			var ret = [];
 			for ( var i = 0, len = ids.length; i < len; i++) {
 				var id = getItemId(ids[i], idKey);
 				ret.push(removeItemById(this, id));
+			}
+
+			if (!isAlreadyInUpdate) {
+				this.endUpdate();
 			}
 
 			if ($.isArray(objOrItemIdOrArray)) {
@@ -819,18 +857,31 @@
 			return ret[0];
 		},
 
+		/**
+		 * @returns {DataItem[]} データアイテム配列
+		 */
 		getAllItems: function() {
 			var ret = [];
 			var items = this.items;
 			for ( var prop in items) {
-				ret.push(items[prop]);
+				if (items.hasOwnProperty(prop)) {
+					ret.push(items[prop]);
+				}
 			}
 			return ret;
 		},
 
 		/**
 		 */
-		objectChangeListener: function(event) {
+		itemChangeListener: function(event) {
+			if (this.isInUpdate()) {
+				this.__updateLog[event.target[this.idKey]].push({
+					type: UPDATE_LOG_TYPE_CHANGE,
+					ev: event
+				});
+				return;
+			}
+
 			var ev = {
 				type: 'itemsChange',
 
@@ -851,18 +902,63 @@
 			return !!this.findById(getItemId(obj, this.idKey));
 		},
 
-
+		/**
+		 * @returns {Boolean} アップデートセッション中かどうか
+		 */
+		isInUpdate: function() {
+			return !!this.__updateLog; //TODO 配列だとこれではダメ？
+		},
 
 		beginUpdate: function() {
-			//TODO __internalsはあらかじめ作っておかないとダメ
+			if (this.isInUpdate()) {
+				return;
+			}
 
-			//change[prop] = { oldValue: 変更前の値, newValue: 変更後の値 }
-			this.__internals.change = {};
-			this.__internals.isInUpdate = true;
+			//logは{ (item-key): [{ type: '1(=create)/2(=delete)/3(=change)', item: (item), changed: {(change event)} }, ...] という構造を持つ
+			this.__updateLog = {};
 		},
 
 		endUpdate: function() {
-			var changedProps = {};
+			if (!this.isInUpdate()) {
+				return;
+			}
+
+			//TODO endUpdateのタイミングで更新伝搬処理を行う
+			return;
+
+			var event = {
+				type: 'itemsChange',
+				added: [],
+				changed: [],
+				removed: []
+			};
+
+			var log = this.__updateLog;
+
+			//__updateLog は { (item-key): [ { type: '1(=create)/2(=delete)/3(=change)', item: (item), changed: {(change event)} }, ...] という構造を持つ
+
+			for ( var itemId in log) {
+				var itemLog = log[itemId];
+				var createdOrRemoved = false;
+
+				//新しい変更が後ろに入っているので、降順で履歴をチェックする
+				for ( var i = itemLog.length - 1; i >= 0; i--) {
+					var l = itemLog[i];
+					if (l.type === UPDATE_LOG_TYPE_CREATE) {
+						event.added.push(l.item);
+						createdOrRemoved = true;
+						break;
+					} else if (l.type === UPDATE_LOG_TYPE_REMOVE) {
+						event.removed.push(l.item);
+						createdOrRemoved = true;
+						break;
+					}
+				}
+
+				//新規追加または削除
+			}
+
+
 			$.extend(changedProps, this.__internals.change);
 
 			var alreadyCalculated = [];
@@ -890,12 +986,10 @@
 			}
 
 			var event = {
-				type: 'change',
 				props: changedProps
 			};
 
-			this.__internals.change = null;
-			this.__internals.isInUpdate = false;
+			delete this.__updateLog;
 
 			this.dispatchEvent(event);
 		}
@@ -931,8 +1025,6 @@
 			throwFwError(ERR_CODE_INVALID_MANAGER_NAME);
 		}
 
-		//TODO 「アプリ名」「グループ名」など、このマネージャが管理するデータモデル群の名前を引数にとるようにする
-		//名前なしの場合はエラーにする
 		this.models = {};
 		this.name = name;
 	}
@@ -943,9 +1035,8 @@
 		 */
 		createModel: function(descriptor) {
 			var modelName = descriptor.name;
-			if (!modelName) {
-				//nameがnullまたは空文字の場合
-				throwFwError(30001); //TODO 正しい例外を出す
+			if (!isValidNamespaceIdentifier(modelName)) {
+				throwFwError(ERR_CODE_INVALID_DATAMODEL_NAME); //TODO 正しい例外を出す
 			}
 
 			if (this.models[modelName]) {
