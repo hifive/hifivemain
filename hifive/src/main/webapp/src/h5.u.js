@@ -98,7 +98,7 @@
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_NAMESPACE_INVALID] = '{0} 第一引数には空文字で無い文字列を指定して下さい。';
+	errMsgMap[ERR_CODE_NAMESPACE_INVALID] = '{0} 名前空間の指定が不正です。名前空間として有効な文字列を指定してください。';
 	errMsgMap[ERR_CODE_NAMESPACE_EXIST] = '名前空間"{0}"には、プロパティ"{1}"が既に存在します。';
 	errMsgMap[ERR_CODE_SERIALIZE_FUNCTION] = 'Function型のオブジェクトは変換できません。';
 	errMsgMap[ERR_CODE_SERIALIZE_VERSION] = 'シリアライザのバージョンが違います。シリアライズされたバージョン：{0} 現行のバージョン：{1}';
@@ -239,28 +239,30 @@
 	/**
 	 * ドット区切りで名前空間オブジェクトを生成します。
 	 * （h5.u.obj.ns('sample.namespace')と呼ぶと、window.sample.namespaceとオブジェクトを生成します。）
-	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外が渡された場合はエラーとします。
+	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外、または、識別子として不適切な文字列が渡された場合はエラーとします。
 	 *
 	 * @param {String} namespace 名前空間
 	 * @memberOf h5.u.obj
 	 * @returns {Object} 作成した名前空間オブジェクト
 	 */
 	var ns = function(namespace) {
-		if (!namespace) {
-			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
-		}
-
-		if ($.type(namespace) !== 'string') {
+		if (!isString(namespace)) {
+			// 文字列でないならエラー
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
 		}
 
 		var nsArray = namespace.split('.');
 		var parentObj = window;
 		for ( var i = 0, len = nsArray.length; i < len; i++) {
-			if (parentObj[nsArray[i]] === undefined) {
-				parentObj[nsArray[i]] = {};
+			var name = nsArray[i];
+			if (!isValidNamespaceIdentifier(name)) {
+				// ドットアクセスできないような文字列、または全角文字を含む文字列の場合はエラー
+				throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
 			}
-			parentObj = parentObj[nsArray[i]];
+			if (parentObj[name] === undefined) {
+				parentObj[name] = {};
+			}
+			parentObj = parentObj[name];
 		}
 
 		// ループが終了しているので、parentObjは一番末尾のオブジェクトを指している
