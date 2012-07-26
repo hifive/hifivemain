@@ -136,6 +136,23 @@ function isString(target) {
 	return typeof target === 'string';
 }
 
+/**
+ * 引数が名前空間として有効な文字列かどうかを判定します。
+ * ただし、全角文字が含まれる場合はfalseを返します。
+ *
+ * @private
+ * @param {Any} property 値
+ * @returns {boolean} 名前空間として有効な文字列であればtrue、そうでないならfalse
+ */
+function isValidNamespaceIdentifier(property) {
+	if (!isString(property)) {
+		return false;
+	}
+
+	// 全角文字は考慮しない
+	return !!property.match(/^[A-Za-z_\$][\w|\$]*$/);
+}
+
 // =============================
 // ロガー・アスペクトで使用する共通処理
 // =============================
