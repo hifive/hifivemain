@@ -275,13 +275,33 @@
 	var PROP_TYPE_ANY = 'any';
 	var NULLABLE_PROP_TYPES = [PROP_TYPE_ENUM, PROP_TYPE_STRING, PROP_TYPE_OBJECT, PROP_TYPE_ANY];
 
+	var DEFAULT_TYPE_VALUE = {
+		'number': 0,
+		'integer': 0,
+		'boolean': false
+	};
+
 	/**
 	 * propで指定されたプロパティのプロパティソースを作成します。
 	 *
 	 * @private
 	 */
 	function createDataItemConstructor(model, descriptor) {
+
 		var schema = model.schema;
+
+		function getValue(item, prop) {
+			return item[ITEM_PROP_BACKING_STORE_PREFIX + prop];
+		}
+
+		function setValue(item, prop, value) {
+			item[ITEM_PROP_BACKING_STORE_PREFIX + prop] = value;
+		}
+
+		function recalculateDependProperties(item, dependProp) {
+			return schema[dependProp].depend.calc.call(item);
+		}
+
 
 		//{ 依存元: [依存先] }という構造のマップ。依存先プロパティは配列内で重複はしない。
 		var dependencyMap = {};
@@ -303,19 +323,6 @@
 					}
 				}
 			}
-		}
-
-		function recalculateDependProperties(item, dependProp) {
-			var newValue = model.schema[dependProp].depend.calc.call(item);
-			return newValue;
-		}
-
-		function getValue(item, prop) {
-			return item[ITEM_PROP_BACKING_STORE_PREFIX + prop];
-		}
-
-		function setValue(item, prop, value) {
-			item[ITEM_PROP_BACKING_STORE_PREFIX + prop] = value;
 		}
 
 		function createSrc(name, propDesc) {
@@ -443,15 +450,10 @@
 
 			//descには、プロパティ名、エンハンスするかどうか、セットすべきセッター、ゲッター
 			var src = {
-				name: name,
 				enhance: propDesc.enhance === false ? false : true, //enhanceのデフォルト値はtrue
 			};
 
 			if (src.enhance) {
-				if (propDesc.defaultValue) {
-					src.defaultValue = propDesc.defaultValue;
-				}
-
 				src.getter = function() {
 					return getValue(this, name);
 				};
@@ -462,9 +464,33 @@
 			return src;
 		}
 
-
 		//DataItemのコンストラクタ
-		function DataItem() {}
+		function DataItem() {
+			//デフォルト値を代入する
+			for ( var plainProp in schema) {
+				var propDesc = schema[plainProp];
+				if (!propDesc) {
+					//propDescがない場合はtype:anyとみなす
+					this[plainProp] = null;
+					continue;
+				}
+
+				if (propDesc.depend) {
+					continue;
+				}
+
+				var defaultValue = propDesc.defaultValue;
+				if (defaultValue !== undefined) {
+					this[plainProp] = defaultValue;
+				} else {
+					if (propDesc.type && DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
+						this[plainProp] = DEFAULT_TYPE_VALUE[propDesc.type];
+					} else {
+						this[plainProp] = null;
+					}
+				}
+			}
+		}
 		DataItem.prototype = new DataItemBase();
 
 		//TODO 外部に移動
@@ -472,8 +498,6 @@
 			type: 'any',
 			enhance: true
 		};
-
-		var nonEnhanceProps = [];
 
 		//データアイテムのプロトタイプを作成
 		//schemaは継承関係展開後のスキーマになっている
@@ -488,10 +512,10 @@
 			fwLogger.debug('{0}のプロパティ{1}を作成', model.name, prop);
 
 			if (!src.enhance) {
-				nonEnhanceProps.push(prop);
 				continue; //非enhanceなプロパティは、Item生成時にプロパティだけ生成して終わり
 			}
 
+			//TODO definePropertiesで作るようにする
 			//getter/setterを作成
 			defineProperty(DataItem.prototype, prop, {
 				enumerable: true,
@@ -501,10 +525,7 @@
 			});
 		}
 
-		return {
-			itemConstructor: DataItem,
-			nonEnhanceProps: nonEnhanceProps
-		};
+		return DataItem
 	}
 
 
@@ -690,10 +711,7 @@
 		//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
 		this.schema = schema;
 
-		var itemSrc = createDataItemConstructor(this, descriptor);
-
-		this.itemConstructor = itemSrc.itemConstructor;
-		this.nonEnhanceProps = itemSrc.nonEnhanceProps;
+		this.itemConstructor = createDataItemConstructor(this, descriptor);
 
 		//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
 		//TODO this.fullname -> managerの名前までを含めた完全修飾名
