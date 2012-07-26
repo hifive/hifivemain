@@ -44,6 +44,8 @@
 
 	var ERR_CODE_INVALID_SCHEMA = 30004;
 
+	var ERR_CODE_INVALID_MANAGER_NAMESPACE = 30005;
+
 	var ITEM_PROP_BACKING_STORE_PREFIX = '__';
 
 	var PROP_CONSTRAINT_REQUIRED = 'required';
@@ -186,7 +188,7 @@
 		}
 
 		if (!event.target) {
-			throwFwError(ERR_CODE_NO_EVENT_TARGET);
+			event.target = this;
 		}
 
 		for ( var i = 0, count = l.length; i < count; i++) {
@@ -440,7 +442,6 @@
 					//今回変更されたプロパティと依存プロパティを含めてイベント送出
 					var event = {
 						type: 'change',
-						target: this,
 						props: changedProps
 					};
 					this.dispatchEvent(event);
@@ -525,7 +526,7 @@
 			});
 		}
 
-		return DataItem
+		return DataItem;
 	}
 
 
@@ -831,11 +832,11 @@
 		 */
 		objectChangeListener: function(event) {
 			var ev = {
-				type: 'itemChange',
-				item: event.target,
-				property: event.property,
-				oldValue: event.oldValue,
-				newValue: event.newValue
+				type: 'itemsChange',
+
+				added: null,
+				removed: null,
+				changed: [event]
 			};
 			this.dispatchEvent(ev);
 		},
@@ -890,7 +891,6 @@
 
 			var event = {
 				type: 'change',
-				target: this,
 				props: changedProps
 			};
 
@@ -927,6 +927,10 @@
 	 * @name DataModelManager
 	 */
 	function DataModelManager(name) {
+		if (!isValidNamespaceIdentifier(name)) {
+			throwFwError(ERR_CODE_INVALID_MANAGER_NAME);
+		}
+
 		//TODO 「アプリ名」「グループ名」など、このマネージャが管理するデータモデル群の名前を引数にとるようにする
 		//名前なしの場合はエラーにする
 		this.models = {};
@@ -945,8 +949,7 @@
 			}
 
 			if (this.models[modelName]) {
-				//TODO メッセージの外部化、マネージャ名を追加
-				fwLogger.info(MSG_ERROR_DUP_REGISTER, 'MANAGER_NAME_STUB', modelName);
+				fwLogger.info(MSG_ERROR_DUP_REGISTER, this.name, modelName);
 			} else {
 				this.models[modelName] = createDataModel(descriptor, this);
 			}
@@ -975,14 +978,14 @@
 
 
 	function createManager(name, namespace) {
-		if (!name) {
-			//マネージャ名は1文字以上含まれていなければならない
-			//TODO 識別子的なチェックも入れる
-			throwFwError(ERR_CODE_INVALID_MANAGER_NAME);
-		}
 		var manager = new DataModelManager(name);
 
+		//第2引数が省略される場合もあるので、厳密等価でなく通常の等価比較を行う
 		if (namespace != null) {
+			if (!isValidNamespaceIdentifier(namespace)) {
+				throwFwError(ERR_CODE_INVALID_MANAGER_NAMESPACE);
+			}
+
 			//namespaceがnullまたはundefinedでない場合は、その名前空間に、指定した名前でマネージャを公開する
 			var o = {};
 			o[name] = manager;
