@@ -52,7 +52,19 @@
 
 	<target name="build" depends="getVersion,getGitHash">
 		<buildService>
-			<buildParameter tmpFiles="false" ejsName="ejs-h5mod.js" cssName="h5.css" releaseName="h5.js" devName="h5.dev.js" srcDir="src/main/webapp/src/" cssSrcDir="src/main/webapp/srcCss/" ejsSrcDir="src/main/webapp/src/ejs/" dstDir="${releaseDir}/" version="${versionNumber}" ejsVersion="1.0" moduleNames="util,controller,view,ui,api.geo,api.sqldb,api.storage" />
+			<buildParameter
+				tmpFiles="false"
+				ejsName="ejs-h5mod.js"
+				cssName="h5.css"
+				releaseName="h5.js"
+				devName="h5.dev.js"
+				srcDir="src/main/webapp/src/"
+				cssSrcDir="src/main/webapp/srcCss/"
+				ejsSrcDir="src/main/webapp/src/ejs/"
+				dstDir="${releaseDir}/"
+				version="${versionNumber}"
+				ejsVersion="1.0"
+				moduleNames="util,controller,view,ui,api.geo,api.sqldb,api.storage" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
