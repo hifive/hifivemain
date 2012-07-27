@@ -2,7 +2,8 @@
 <project name="ivy" default="resolve" xmlns:ivy="antlib:org.apache.ivy.ant">
 
 	<description>
-		このAntを実行すると必要なライブラリを自動的にダウンロードします。
+		このAntを実行するとivy.xmlの定義を元に必要なライブラリを自動的にダウンロードします。
+		ivyがインストールされていない場合は先にダウンロードを行います。
 		外部接続にプロキシ設定が必要な場合は、Eclipseの設定で変更後、
 		Ant実行時のVMをワークスペースのものに変更(Run in the same JRE as the workspace)して下さい。
 	</description>
@@ -13,19 +14,24 @@
 	<property name="ivy.install.dir" location="lib/ivy" />
 	<!-- 取得ライブラリ展開フォルダ -->
 	<property name="lib.dir" location="lib" />
+	<!-- ivy取得URL -->
+	<property name="ivy.url" value="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" />
 
-	<target name="check-ivy">
+	<target name="check-ivy" description="--> ivy installation check">
 		<condition property="skip.download">
-			<resourcecount when="greater" count="0">
-				<fileset dir="${ivy.install.dir}" includes="ivy-${ivy.install.version}.jar" />
-			</resourcecount>
+			<and>
+				<available file="${ivy.install.dir}"/>
+				<resourcecount when="greater" count="0">
+					<fileset dir="${ivy.install.dir}" includes="ivy-${ivy.install.version}.jar" />
+				</resourcecount>
+			</and>
 		</condition>
 	</target>
 
 	<target name="download-ivy" depends="check-ivy" unless="skip.download" description="--> download ivy">
 		<mkdir dir="${ivy.install.dir}" />
 		<echo message="installing ivy..." />
-		<get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.install.dir}/ivy-${ivy.install.version}.jar" usetimestamp="true" />
+		<get src="${ivy.url}" dest="${ivy.install.dir}/ivy-${ivy.install.version}.jar" usetimestamp="true" />
 	</target>
 
 	<target name="install-ivy" depends="download-ivy" description="--> install ivy">
@@ -36,50 +42,25 @@
 	</target>
 
 	<target name="resolve" depends="install-ivy" description="--> retrieve dependencies with ivy">
-
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="closurecompiler" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="closurecompiler" />
-
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="commons" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="commons" />
-		<!--
-			<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="db" />
-			<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="db" />
-		-->
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="etc" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="etc" />
-
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="h5Tools" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="h5Tools" />
-		<!--
-			<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="javaee" />
-			<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="javaee" />
-		-->
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="log" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="log" />
-
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="selenium" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="selenium" />
-
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="spring" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="spring" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="test" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="test" />
-		<!--
-			<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="tiles" />
-			<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="tiles" />
-		-->
-		<!--
-			<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="validation" 
-			/>
-			<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="validation" />
-		-->
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="velocity" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="velocity" />
-
+		<xmlproperty file="ivy.xml" prefix="ivy" collapseattributes="true" />
+		<script language="JavaScript">
+			<![CDATA[
+			var project = self.getProject();
+			var confList = project.getProperty("ivy.ivy-module.configurations.conf.name").split(",");
+			var targetResolve = project.getTargets().get("resolve-sub" );
+			for (var i = 0; i < confList.length; i++) {
+				project.setProperty("conf.name", confList[i]);
+				targetResolve.execute();
+			}
+		]]></script>
 	</target>
 
-	<target name="resolve_for_m2e" depends="install-ivy">
+	<target name="resolve-sub" description="--> call ivy">
+		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="${conf.name}" />
+		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="${conf.name}" />
+	</target>
+
+	<target name="resolve-for-m2e" depends="install-ivy">
 		<ivy:configure />
 		<ivy:resolve file="pom.xml" type="runtime,sources" />
 		<ivy:retrieve />

@@ -1,165 +1,100 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file
-	distributed with this work for additional information regarding copyright ownership. The ASF licenses this file to you under
-	the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may
-	obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to
-	in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
-	OF
-	ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under
-	the License. -->
-<ivy-module version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
 
-	<!--
-		ライブラリは、http://mvnrepository.com で検索可能
-	-->
+<project name="h5jsbuilder" basedir="." default="build">
+	<property name="webappdir" value="src/main/webapp" />
+	<property name="archivesDir" value="${webappdir}/archives" />
+	<property name="releaseDir" value="${archivesDir}/current" />
 
-	<info organisation="ivy" module="reference-library" revision="1.0.0" />
+	<property name="webapp.root.dir" value="src/main/webapp" />
+	<property name="web-inf.dir" value="${webapp.root.dir}/WEB-INF" />
+	<property name="lib.tool.dir" value="${basedir}/jstool" />
+	<property name="lib.project.dir" value="lib" />
 
-	<configurations>
-		<conf name="closurecompiler" />
-		<conf name="commons" />
-		<!--
-			<conf name="db" />
-		-->
-		<conf name="etc" />
-		<conf name="h5Tools" />
-		<!--
-			<conf name="javaee" />
-		-->
-		<conf name="log" />
-		<conf name="selenium" />
-		<conf name="spring" />
-		<conf name="test" />
-		<!--
-			<conf name="tiles" />
-		-->
-		<!--
-			<conf name="validation" />
-		-->
-		<conf name="velocity" />
-	</configurations>
+	<path id="base.path">
+		<fileset dir="${lib.project.dir}" includes="**/*.jar" />
+	</path>
 
-	<dependencies>
-		<!-- closurecompiler -->
-		<dependency org="com.google.javascript" name="closure-compiler" rev="r1810" conf="closurecompiler->*"
-			transitive="true">
-			<exclude name="ant" />
-			<exclude name="ant-launcher" />
-			<exclude name="json" />
-			<exclude name="caja" />
-			<exclude name="junit" />
-			<exclude name="jarjar" />
-		</dependency>
+	<property name="blank.project.path.h5" value="../hifive_blank/WebContent/lib/h5/" />
+	<property name="blank.project.path.ejs" value="../hifive_blank/WebContent/lib/ejs/" />
+	<property name="blank.project.index" value="../hifive_blank/WebContent/index.html" />
 
-		<!-- commons -->
-		<dependency org="commons-beanutils" name="commons-beanutils" rev="1.8.0" conf="commons->*" transitive="false" />
-		<dependency org="commons-collections" name="commons-collections" rev="3.2.1" conf="commons->*" transitive="false" />
-		<dependency org="commons-configuration" name="commons-configuration" rev="1.7" conf="commons->*"
-			transitive="false" />
-		<dependency org="commons-dbcp" name="commons-dbcp" rev="1.4" conf="commons->*" transitive="false" />
-		<dependency org="commons-digester" name="commons-digester" rev="2.0" conf="commons->*" transitive="false" />
-		<dependency org="commons-lang" name="commons-lang" rev="2.6" conf="commons->*" transitive="false" />
-		<dependency org="commons-logging" name="commons-logging" rev="1.1.1" conf="commons->*" transitive="false" />
-		<dependency org="commons-pool" name="commons-pool" rev="1.5.4" conf="commons->*" transitive="false" />
-		<dependency org="commons-cli" name="commons-cli" rev="1.2" conf="commons->*" transitive="false" />
-		<dependency org="commons-io" name="commons-io" rev="2.1" conf="commons->*" transitive="false" />
-		<dependency org="commons-fileupload" name="commons-fileupload" rev="1.2.2" conf="commons->*" transitive="false" />
-		<dependency org="commons-codec" name="commons-codec" rev="1.3" conf="commons->*" transitive="false" />
+	<condition property="isExistDir">
+		<and>
+			<available file="${blank.project.path.h5}" />
+		</and>
+	</condition>
 
-		<!-- db -->
-		<!--
-			<dependency org="hsqldb" name="hsqldb" rev="1.8.0.10" conf="db->*" transitive="false" />
-			<dependency org="ojdbc" name="ojdbc" rev="6" conf="db->*" transitive="false" />
-			<dependency org="mysql" name="mysql-connector-java" rev="5.1.18" conf="db->*" transitive="false" />
-		-->
-		<!-- etc -->
-		<dependency org="org.apache.ant" name="ant" rev="1.8.3" conf="etc->*" transitive="false" />
-		<dependency org="aopalliance" name="aopalliance" rev="1.0" conf="etc->*" transitive="false" />
-		<dependency org="asm" name="asm" rev="3.1" conf="etc->*" transitive="false" />
-		<dependency org="org.aspectj" name="aspectjweaver" rev="1.6.12" conf="etc->*" transitive="false" />
-		<dependency org="cglib" name="cglib" rev="2.2" conf="etc->*" transitive="false" />
-		<dependency org="javax.inject" name="javax.inject" rev="1" conf="etc->*" transitive="false" />
-		<dependency org="joda-time" name="joda-time" rev="2.0" conf="etc->*" transitive="false" />
-
-		<!-- h5Tools -->
-		<dependency org="org.mozilla" name="rhino" rev="1.7R3" conf="h5Tools->*" transitive="false" />
-
-		<!-- javaee -->
-		<!--
-			<dependency org="javax.el" name="javax.el-api" rev="2.2.4" conf="javaee->*" transitive="false" />
-			<dependency org="javax.servlet.jsp" name="jsp-api" rev="2.2" conf="javaee->*" transitive="false" />
-			<dependency org="javax.servlet" name="javax.servlet-api" rev="3.0.1" conf="javaee->*" transitive="false" />
-			<dependency org="javax.servlet" name="jstl" rev="1.2" conf="javaee->*" transitive="false" />
-		-->
-		<!-- log -->
-		<dependency org="log4j" name="log4j" rev="1.2.16" conf="log->*" transitive="false" />
-		<dependency org="org.slf4j" name="slf4j-api" rev="1.6.4" conf="log->*" transitive="false" />
-		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.4" conf="log->*" transitive="false" />
-		<!-- selenium -->
-		<dependency org="com.opera" name="operadriver" rev="0.13" conf="selenium->*" transitive="false" />
-		<dependency org="org.seleniumhq.selenium" name="selenium-server" rev="2.21.0" conf="selenium->*"
-			transitive="true">
-			<exclude name="junit" />
-			<exclude name="commons-codec" />
-			<exclude name="commons-collections" />
-			<exclude name="commons-io" />
-			<exclude name="commons-lang" />
-			<exclude name="commons-logging" />
-			<exclude name="guava" />
-			<exclude name="jsr305" />
-			<exclude name="servlet-api-2.5" />
-		</dependency>
-		<!-- spring -->
-		<dependency org="org.springframework" name="spring-aop" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
-		<dependency org="org.springframework" name="spring-asm" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
-		<dependency org="org.springframework" name="spring-beans" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
-		<dependency org="org.springframework" name="spring-context" rev="3.1.1.RELEASE" conf="spring->*"
-			transitive="false" />
-		<dependency org="org.springframework" name="spring-context-support" rev="3.1.1.RELEASE" conf="spring->*"
-			transitive="false" />
-		<dependency org="org.springframework" name="spring-core" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
-		<dependency org="org.springframework" name="spring-expression" rev="3.1.1.RELEASE" conf="spring->*"
-			transitive="false" />
-		<dependency org="org.springframework" name="spring-jdbc" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
-		<dependency org="org.springframework" name="spring-tx" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
-		<dependency org="org.springframework" name="spring-web" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
-		<dependency org="org.springframework" name="spring-webmvc" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
-
-		<!-- test -->
-		<dependency org="junit" name="junit" rev="4.10" conf="test->*" transitive="false" />
-		<dependency org="org.dbunit" name="dbunit" rev="2.4.8" conf="test->*" transitive="false" />
-		<dependency org="org.springframework" name="spring-test" rev="3.1.1.RELEASE" conf="test->*" transitive="false" />
-		<dependency org="com.googlecode.jmockit" name="jmockit" rev="0.999.14" conf="test->*" transitive="true">
-			<exclude name="log4j" />
-			<exclude name="slf4j-api" />
-			<exclude name="commons-logging" />
-			<exclude name="junit" />
-		</dependency>
-		<!-- tiles -->
-		<!--
-			<dependency org="org.apache.tiles" name="tiles-api" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-core" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-jsp" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-servlet" rev="2.2.2" conf="tiles->*" transitive="false" />
-			<dependency org="org.apache.tiles" name="tiles-template" rev="2.2.2" conf="tiles->*" transitive="false" />
-		-->
-		<!-- validation -->
-		<!--
-			<dependency org="org.hibernate" name="hibernate-validator" rev="4.2.0.Final" conf="validation->*"
-			transitive="false" />
-			<dependency org="javax.validation" name="validation-api" rev="1.0.0.GA" conf="validation->*" transitive="false" />
-		-->
-		<!-- velocity -->
-		<dependency org="org.apache.velocity" name="velocity" rev="1.7" conf="velocity->*" transitive="true">
-			<exclude name="ant" />
-			<exclude name="commons-collections" />
-			<exclude name="commons-lang" />
-			<exclude name="commons-logging" />
-			<exclude name="log4j" />
-			<exclude name="servlet-api" />
-		</dependency>
+	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpathref="base.path" />
+	<taskdef name="buildService" classname="com.htmlhifive.dev.service.ant.BuilderServiceTask" classpathref="base.path" />
 
 
-	</dependencies>
-</ivy-module>
+	<target name="all" depends="build, jscoverage" />
+	<!-- - - - - - - - - - - - - - - - - -
+          target: name
+         - - - - - - - - - - - - - - - - - -->
+	<target name="cleanCurrent">
+		<delete>
+			<fileset dir="${archivesDir}/current">
+				<include name="**" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="getVersion" depends="cleanCurrent">
+		<input message="バージョン番号を入力してください。(ex. 1.0.1)" addproperty="versionNumber" />
+		<condition property="isCorrectNumber">
+			<matches pattern="[0-9]+\.[0-9]+\.[0-9]+" string="${versionNumber}" />
+		</condition>
+		<fail unless="isCorrectNumber" message="正しいバージョン番号を入力してください。" />
+		<touch file="${archivesDir}/current/${versionNumber}" />
+		<echo message="versionNumber: ${versionNumber}" />
+	</target>
+
+
+	<target name="build" depends="getVersion,getGitHash">
+		<buildService>
+			<buildParameter
+				tmpFiles="false"
+				ejsName="ejs-h5mod.js"
+				cssName="h5.css"
+				releaseName="h5.js"
+				devName="h5.dev.js"
+				srcDir="src/main/webapp/src/"
+				cssSrcDir="src/main/webapp/srcCss/"
+				ejsSrcDir="src/main/webapp/src/ejs/"
+				dstDir="${releaseDir}/"
+				version="${versionNumber}"
+				ejsVersion="1.0"
+				moduleNames="util,controller,view,ui,api.geo,api.sqldb,api.storage" />
+			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
+		</buildService>
+	</target>
+
+	<target name="jsdoc">
+		<delete dir="${webappdir}/doc" />
+		<exec executable="cmd" dir="jstool/jsdoc">
+			<arg line="/C jsdoc.bat" />
+		</exec>
+	</target>
+
+	<target name="jscoverage">
+		<delete dir="${webappdir}/coverage" />
+		<exec executable="cmd" dir="jstool/jscoverage">
+			<arg line="/C inst.bat" />
+		</exec>
+	</target>
+
+
+	<target name="getGitHash">
+		<property name="git.dir" value="../.git/logs/HEAD" />
+		<available file="${git.dir}" property="git.exists" />
+		<fail unless="git.exists" message="${git.dir}が存在しません" />
+		<loadfile srcfile="${git.dir}" property="gitCommitId">
+			<filterchain>
+				<tailfilter lines="1" />
+				<replaceregex pattern="[A-z0-9]+ ([A-z0-9]+) .+" replace="\1" />
+			</filterchain>
+		</loadfile>
+		<echo message="gitCommitId: ${gitCommitId}" />
+	</target>
+</project>
