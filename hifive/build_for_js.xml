@@ -24,55 +24,37 @@
 		</and>
 	</condition>
 
-	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpathref="base.path"  />
-	<taskdef name="buildService" classname="jp.co.nssol.h5.dev.service.ant.BuilderServiceTask" classpathref="base.path" />
+	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpathref="base.path" />
+	<taskdef name="buildService" classname="com.htmlhifive.dev.service.ant.BuilderServiceTask" classpathref="base.path" />
 
 
-	<target name="all" depends="build, copyToBlank, zipCurrentRelease, jscoverage" />
+	<target name="all" depends="build, jscoverage" />
+	<!-- - - - - - - - - - - - - - - - - -
+          target: name
+         - - - - - - - - - - - - - - - - - -->
+	<target name="cleanCurrent">
+		<delete>
+			<fileset dir="${archivesDir}/current">
+				<include name="**" />
+			</fileset>
+		</delete>
+	</target>
 
-	<target name="getVersion">
-			<input message="バージョン番号を入力してください。(ex. 1.0.1)" addproperty="versionNumber" />
+	<target name="getVersion" depends="cleanCurrent">
+		<input message="バージョン番号を入力してください。(ex. 1.0.1)" addproperty="versionNumber" />
 		<condition property="isCorrectNumber">
 			<matches pattern="[0-9]+\.[0-9]+\.[0-9]+" string="${versionNumber}" />
 		</condition>
 		<fail unless="isCorrectNumber" message="正しいバージョン番号を入力してください。" />
+		<touch file="${archivesDir}/current/${versionNumber}" />
 	</target>
 
-	<target name="copyToBlank" if="${isExistDir}" depends="getVersion">
-		<delete>
-			<fileset dir="${blank.project.path.h5}" includes="*" />
-		</delete>
-		<delete dir="${blank.project.path.ejs}" excludes="ejs-lint.js,ejs-helper.js" />
 
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.js" tofile="${blank.project.path.h5}h5-${versionNumber}.js" />
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.dev.js" tofile="${blank.project.path.h5}h5-${versionNumber}.dev.js" />
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/h5.css" tofile="${blank.project.path.h5}h5-${versionNumber}.css" />
-		<copy overwrite="true" preservelastmodified="true" file="${releaseDir}/ejs-h5mod.js" tofile="${blank.project.path.ejs}ejs-1.0.h5mod.js" />
-
-		<replaceregexp file="${blank.project.index}" match="lib/ejs/ejs(.*).js" replace="lib/ejs/ejs-1.0.h5mod.js" />
-		<replaceregexp file="${blank.project.index}" match="lib/h5/h5(.*).css" replace="lib/h5/h5-${versionNumber}.css" />
-		<replaceregexp file="${blank.project.index}" match="lib/h5/h5(.*).js" replace="lib/h5/h5-${versionNumber}.js" />
-	</target>
-
-	<target name="zipCurrentRelease" depends="build">
-		<delete file="${archivesDir}/current/hifive-all-${versionNumber}.zip"/>
-		<zip destfile="${archivesDir}/current/hifive-all-${versionNumber}.zip" basedir="${archivesDir}/current">
-		</zip>
-	</target>
-
-	<target name="build" depends="getVersion">
-		<buildService tmpFiles="false"
-		       ejsName="ejs-h5mod.js"
-		       cssName="h5.css"
-		       releaseName="h5.js"
-		       devName="h5.dev.js"
-		       srcDir="src/main/webapp/src/"
-		       cssSrcDir="src/main/webapp/srcCss/"
-		       ejsSrcDir="src/main/webapp/src/ejs/"
-		       dstDir="${releaseDir}/"
-		       version="${versionNumber}"
-		       ejsVersion="1.0"
-		       moduleNames="util,controller,view,ui,api.geo,api.sqldb,api.storage" />
+	<target name="build" depends="getVersion,getGitHash">
+		<buildService>
+			<buildParameter tmpFiles="false" ejsName="ejs-h5mod.js" cssName="h5.css" releaseName="h5.js" devName="h5.dev.js" srcDir="src/main/webapp/src/" cssSrcDir="src/main/webapp/srcCss/" ejsSrcDir="src/main/webapp/src/ejs/" dstDir="${releaseDir}/" version="${versionNumber}" ejsVersion="1.0" moduleNames="util,controller,view,ui,api.geo,api.sqldb,api.storage" />
+			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
+		</buildService>
 	</target>
 
 	<target name="jsdoc">
@@ -87,5 +69,19 @@
 		<exec executable="cmd" dir="jstool/jscoverage">
 			<arg line="/C inst.bat" />
 		</exec>
+	</target>
+
+
+	<target name="getGitHash">
+		<property name="git.dir" value="../.git/logs/HEAD" />
+		<available file="${git.dir}" property="git.exists" />
+		<fail unless="git.exists" message="${git.dir}が存在しません" />
+		<loadfile srcfile="${git.dir}" property="gitCommitId">
+			<filterchain>
+				<tailfilter lines="1" />
+				<replaceregex pattern="[A-z0-9]+ ([A-z0-9]+) .+" replace="\1" />
+			</filterchain>
+		</loadfile>
+		<echo message="gitCommitId: ${gitCommitId}" />
 	</target>
 </project>
