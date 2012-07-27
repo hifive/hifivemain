@@ -31,6 +31,33 @@ $(function() {
 		}
 	}
 
+	/**
+	 * 引数に指定されたオブジェクト(Any)をschema.valueに指定した時、createModelでエラーが出ることをテストする関数
+	 *
+	 * @param [Any|Any[]]
+	 */
+	function testErrorWhenCreateModelByValueProperty(ary, errCode) {
+		var invalidProps = wrapInArray(ary);
+		var l = invalidProps.length;
+		for ( var i = 0; i < l; i++) {
+			try {
+				manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						value: invalidProps
+					}
+				});
+				var errMsg = JSON ? JSON.stringify(invalidProps) : invalidProps;
+				ok(false, 'エラーが発生していません。' + errMsg);
+			} catch (e) {
+				strictEqual(e.code, errCode, e.message);
+			}
+		}
+	}
+
 	module('createManager', {
 		setup: function() {
 			manager = undefined;
@@ -89,7 +116,8 @@ $(function() {
 
 	test('データモデルマネージャの作成 名前空間指定が不正な時にエラーが出ること', function() {
 		var errCode = 30005;
-		var invalidNs = [0, 1, true, false, [], {}, '', ' '];
+		var invalidNs = [0, 1, true, false, [], {}, '', '.com.htmlhifive', 'あ', 'com htmlhifive',
+				'com.htmlhifive.'];
 		var l = invalidNs.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
@@ -102,13 +130,27 @@ $(function() {
 		}
 	});
 
+	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', function() {
+		var errCode = 30005;
+		h5.u.obj.expose('com.htmlhifive.test', {
+			TestModel: 0
+		});
+		try {
+			manager = h5.core.data.createManager('TestModel', 'com.htmlhifive.test');
+			ok(false, 'エラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
+		com.htmlhifive.test.TestModel = undefined;
+	});
+
 	module('createModel', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
-		teardonw: function() {
+		teardown: function() {
 			// マネージャをリセットする
-			manager.dropModel('TestManager');
+			dropAllModel(manager);
 		}
 	});
 
@@ -163,7 +205,7 @@ $(function() {
 	test('データモデルの登録 descriptorがオブジェクトでない場合はエラーが発生すること', function() {
 		// TODO エラーコード確認する
 		var errCode = 30001;
-		var noDescriptors = ["a", 1, null, undefined, true];
+		var noDescriptors = ["a", 1, null, undefined, true, []];
 		var l = noDescriptors.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
@@ -190,13 +232,7 @@ $(function() {
 				description: 'データモデルテスト',
 				schema: {
 					empId: {
-						id: true,
-						title: 'ID',
-						description: 'IDを保持するプロパティです'
-					},
-					name: {
-						title: '名前',
-						description: '名前を保持するプロパティです'
+						id: true
 					}
 				}
 			});
@@ -248,7 +284,8 @@ $(function() {
 		}
 	});
 
-	test('baseにデータモデルが指定されている場合は、指定されたデータモデルのプロパティを継承し、schema指定されたプロパティと同名のものがあれば上書かれていること',
+	test(
+			'データモデルの登録 baseにデータモデルが指定されている場合は、指定されたデータモデルのプロパティを継承し、schema指定されたプロパティと同名のものがあれば上書かれていること',
 			function() {
 				manager.createModel({
 					name: 'TestDataModel',
@@ -281,24 +318,69 @@ $(function() {
 					id: 0
 				});
 
-				strictEqual(item.id, 0, 'createの引数に指定したidが取得できること');
+				strictEqual(item.id, 0, '指定したidでアイテムが生成されていること');
 				strictEqual(item.value, 2, '同名のプロパティについては、baseを指定している側で設定したdefaultValueが入っていること');
 				strictEqual(item.value2, 1, '継承先にしかないプロパティの値を取得できること');
 				strictEqual(item.val, 2, 'baseを指定している側にしかないプロパティの値に指定したdefaultValueが入っていること');
 			});
 
-	test('baseにデータモデルを指定し、schemaに指定したデータモデルと同名のid:trueな属性がある場合は、上書きされてモデルが作成されること', function() {
+	test('データモデルの登録 baseにデータモデルを指定し、schemaに指定したデータモデルと同名のid:trueな属性がある場合は、上書きされてモデルが作成されること',
+			function() {
+				manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						value: {
+							defaultValue: 1
+						},
+						value2: {
+							defaultValue: 1
+						}
+					}
+				});
+				var model2 = manager.createModel({
+					name: 'TestDataModel2',
+					base: '@TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						value: {
+							defaultValue: 2
+						},
+						val: {
+							defaultValue: 2
+						}
+					}
+				});
+
+				var item = model2.create({
+					id: "a"
+				});
+
+				strictEqual(item.id, 'a', '指定したidでアイテムが生成されていること');
+				strictEqual(item.value, 2, '同名のプロパティについては、baseを指定している側で設定したdefaultValueが入っていること');
+				strictEqual(item.value2, 1, '継承先にしかないプロパティの値を取得できること');
+				strictEqual(item.val, 2, 'baseを指定している側にしかないプロパティの値に指定したdefaultValueが入っていること');
+			});
+
+
+	test('データモデルの登録 baseに、データモデルを継承しているデータモデルを指定できること', 7, function() {
 		manager.createModel({
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'number'
+					id: true
 				},
 				value: {
 					defaultValue: 1
 				},
 				value2: {
+					defaultValue: 1
+				},
+				data1: {
 					defaultValue: 1
 				}
 			}
@@ -307,54 +389,49 @@ $(function() {
 			name: 'TestDataModel2',
 			base: '@TestDataModel',
 			schema: {
-				id: {
-					id: true,
-					type: 'string'
-				},
 				value: {
 					defaultValue: 2
 				},
-				val: {
+				value3: {
+					defaultValue: 2
+				},
+				data2: {
 					defaultValue: 2
 				}
 			}
 		});
+		var model3 = manager.createModel({
+			name: 'TestDataModel3',
+			base: '@TestDataMode2',
+			schema: {
+				value: {
+					defaultValue: 3
+				},
+				value2: {
+					defaultValue: 3
+				},
+				value3: {
+					defaultValue: 3
+				},
+				data3: {
+					defaultValue: 3
+				}
+			}
+		});
 
-		var item = model2.create({
+		var item = model3.create({
 			id: "a"
 		});
 
-		strictEqual(item.id, 'a', 'createの引数に上書き後のtypeでidを指定できること');
-		strictEqual(item.value, 2, '同名のプロパティについては、baseを指定している側で設定したdefaultValueが入っていること');
-		strictEqual(item.value2, 1, '継承先にしかないプロパティの値を取得できること');
-		strictEqual(item.val, 2, 'baseを指定している側にしかないプロパティの値に指定したdefaultValueが入っていること');
+		strictEqual(item.id, 'a', '指定したidでアイテムが生成されていること');
+		strictEqual(item.value, 3, '同名のプロパティについては、上書かれていること');
+		strictEqual(item.value2, 3, '同名のプロパティについては、上書かれていること');
+		strictEqual(item.value3, 3, '同名のプロパティについては、上書かれていること');
+		strictEqual(item.data1, 1, '継承先にしかないプロパティの値を取得できること');
+		strictEqual(item.data2, 2, '継承先にしかないプロパティの値を取得できること');
+		strictEqual(item.data3, 2, '継承先にないデータはそのモデルで指定したdefaultValueの値が格納されていること');
 	});
 
-	test('データモデルの登録 descriptionが不正な場合はエラーが発生すること', function() {
-		// TODO エラーコード確認する
-		var errCode = 30000;
-		// TODO 空文字、空白文字はＯＫなのか確認する
-		var invalidDescriptions = [{}, [], 1, true];
-		var l = invalidDescriptions.length;
-		expect(l);
-		for ( var i = 0; i < l; i++) {
-			var description = invalidDescriptions[i];
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					description: description,
-					schema: {
-						id: {
-							id: true
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
-		}
-	});
 
 	test('データモデルの登録 baseの指定が文字列でない場合はエラーが発生すること', function() {
 		// TODO エラーコード確認する
@@ -598,22 +675,9 @@ $(function() {
 		expect(l);
 
 		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {
-							type: noStrs[i]
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
+			testErrorWhenCreateModelByValueProperty({
+				type: noStrs[i]
+			}, errCode);
 		}
 	});
 
@@ -627,22 +691,9 @@ $(function() {
 		expect(l);
 
 		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {
-							type: invalidStrs[i]
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
+			testErrorWhenCreateModelByValueProperty({
+				type: invalidStrs[i]
+			}, errCode);
 		}
 	});
 
@@ -655,22 +706,9 @@ $(function() {
 		var l = noArrays.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {
-							enum: noArrays[i]
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
+			testErrorWhenCreateModelByValueProperty({
+				type: noArrays[i]
+			}, errCode);
 		}
 	});
 
@@ -683,22 +721,9 @@ $(function() {
 		var l = invalidArrays.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {
-							enum: invalidArrays[i]
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
+			testErrorWhenCreateModelByValueProperty({
+				type: invalidArrays[i]
+			}, errCode);
 		}
 	});
 
@@ -709,72 +734,9 @@ $(function() {
 		var l = invalidValues.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {
-							enhance: invalidValues[i]
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
-		}
-	});
-
-	test('データモデルの登録 schemaのチェック titleに文字列以外を指定した場合はエラーが出ること', function() {
-		// TODO エラーコード確認する
-		var errCode = 30000;
-		var noStrs = [['title'], 1, true, {}];
-		var l = noStrs.length;
-		expect(l);
-
-		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true,
-							title: noStrs[i]
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
-		}
-	});
-
-	test('データモデルの登録 schemaのチェック descriptionに文字列以外を指定した場合はエラーが出ること', function() {
-		// TODO エラーコード確認する
-		var errCode = 30000;
-		var noStrs = [['description'], 1, true, {}];
-		var l = noStrs.length;
-		expect(l);
-
-		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true,
-							description: noStrs[i]
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
+			testErrorWhenCreateModelByValueProperty({
+				type: invalidValues[i]
+			}, errCode);
 		}
 	});
 
@@ -822,160 +784,154 @@ $(function() {
 		expect(l);
 
 		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true,
-						},
-						val: {
-							constraint: invalidValues[i]
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
+			testErrorWhenCreateModelByValueProperty({
+				constraint: invalidValues[i]
+			}, errCode);
 		}
 	});
 
-	test(
-			'データモデルの登録 schemaのチェック constraintの各プロパティについて正しく値を指定していない場合はエラーが出ること',
-			function() {
-				// TODO エラーコード確認する
-				var errCode = 30000;
+	test('データモデルの登録 schemaのチェック constraintの各プロパティについて正しく値を指定していない場合はエラーが出ること', function() {
+		// TODO エラーコード確認する
+		var errCode = 30000;
 
-				var invalidValues = [];
-				var invalidNumMin = ['10', NaN, -Infinity, Infinity, [], {}, true];
-				for ( var i = 0, l = invalidNumMin.length; i < l; i++) {
-					invalidValues.push({
-						type: 'number',
-						constraint: {
-							min: invalidNumMin[i]
-						}
-					});
-				}
-				var invalidNumMax = invalidNumMin;
-				for ( var i = 0, l = invalidNumMax.length; i < l; i++) {
-					invalidValues.push({
-						type: 'number',
-						constraint: {
-							max: invalidNumMax[i]
-						}
-					});
-				}
-				var invalidIntMin = ['10', 5.7, NaN, -Infinity, Infinity, [], {}, true];
-				for ( var i = 0, l = invalidIntMin.length; i < l; i++) {
-					invalidValues.push({
-						type: 'integer',
-						constraint: {
-							max: invalidIntMin[i]
-						}
-					});
-				}
-				var invalidIntMax = invalidIntMin;
-				for ( var i = 0, l = invalidIntMax.length; i < l; i++) {
-					invalidValues.push({
-						type: 'integer',
-						constraint: {
-							max: invalidIntMax[i]
-						}
-					});
-				}
-				var invalidStrMinLength = [-1, '10', NaN, -Infinity, Infinity, [], {}, true];
-				for ( var i = 0, l = invalidStrMinLength.length; i < l; i++) {
-					invalidValues.push({
-						type: 'string',
-						constraint: {
-							minLength: invalidStrMinLength[i]
-						}
-					});
-				}
-				var invalidStrMaxLength = invalidStrMinLength;
-				for ( var i = 0, l = invalidStrMaxLength.length; i < l; i++) {
-					invalidValues.push({
-						type: 'string',
-						constraint: {
-							maxLength: invalidStrMaxLength[i]
-						}
-					});
-				}
-				var invalidStrNotNull = [0, 'true', [], {}, new Boolean(true)];
-				for ( var i = 0, l = invalidStrNotNull.length; i < l; i++) {
-					invalidValues.push({
-						type: 'string',
-						constraint: {
-							notNull: invalidStrNotNull[i]
-						}
-					});
-				}
-				var invalidStrNotEmpty = invalidStrNotNull;
-				for ( var i = 0, l = invalidStrNotEmpty.length; i < l; i++) {
-					invalidValues.push({
-						type: 'string',
-						constraint: {
-							notNull: invalidStrNotEmpty[i]
-						}
-					});
-				}
-				var invalidStrPattern = [1, 'a', [], {}, true, false];
-				for ( var i = 0, l = invalidStrPattern.length; i < l; i++) {
-					invalidValues.push({
-						type: 'string',
-						constraint: {
-							pattern: invalidStrPattern[i]
-						}
-					});
-				}
+		var invalidValues = [];
 
-				var l = invalidValues.length;
-				expect(l + 1);
-
-				for ( var i = 0; i < l; i++) {
-					try {
-						manager.createModel({
-							name: 'TestDataModel',
-							schema: {
-								id: {
-									id: true,
-								},
-								val: {
-									type: invalidValues[i].type,
-									constraint: invalidValues[i].constraint
-								}
-							}
-						});
-						ok(false, 'エラーが発生していません。 type:' + invalidValues[i].type + ' constraint: '
-								+ invalidValues[i].constraint);
-					} catch (e) {
-						strictEqual(e.code, errCode, e.message);
-					}
-				}
-
-				try {
-					manager.createModel({
-						name: 'TestDataModel',
-						schema: {
-							id: {
-								id: true,
-							},
-							val: {
-								type: 'string',
-								constraint: {
-									notEmpty: true,
-									maxLength: 0
-								}
-							}
-						}
-					});
-					ok(false,
-							'エラーが発生していません。 type:string, contraint{notEmpty:true, maxLength:0} でエラーが発生していません');
-				} catch (e) {
-					strictEqual(e.code, errCode, e.message);
+		// type:numberで、constraint.minの値が不正な場合
+		var invalidNumMin = ['10', NaN, -Infinity, Infinity, [], {}, true];
+		for ( var i = 0, l = invalidNumMin.length; i < l; i++) {
+			invalidValues.push({
+				type: 'number',
+				constraint: {
+					min: invalidNumMin[i]
 				}
 			});
+		}
+
+		// type:numberで、constraint.maxの値が不正な場合
+		var invalidNumMax = invalidNumMin;
+		for ( var i = 0, l = invalidNumMax.length; i < l; i++) {
+			invalidValues.push({
+				type: 'number',
+				constraint: {
+					max: invalidNumMax[i]
+				}
+			});
+		}
+		// type:integerで、constraint.minの値が不正な場合 (integerの時は小数不可)
+		var invalidIntMin = ['10', 5.7, NaN, -Infinity, Infinity, [], {}, true];
+		for ( var i = 0, l = invalidIntMin.length; i < l; i++) {
+			invalidValues.push({
+				type: 'integer',
+				constraint: {
+					min: invalidIntMin[i]
+				}
+			});
+		}
+
+		// type:integerで、constraint.maxの値が不正な場合 (integerの時は小数不可)
+		var invalidIntMax = invalidIntMin;
+		for ( var i = 0, l = invalidIntMax.length; i < l; i++) {
+			invalidValues.push({
+				type: 'integer',
+				constraint: {
+					max: invalidIntMax[i]
+				}
+			});
+		}
+
+		// constraint.minLengthの値が不正な場合
+		var invalidStrMinLength = [-1, '10', NaN, -Infinity, Infinity, [], {}, true];
+		for ( var i = 0, l = invalidStrMinLength.length; i < l; i++) {
+			invalidValues.push({
+				type: 'string',
+				constraint: {
+					minLength: invalidStrMinLength[i]
+				}
+			});
+		}
+
+		// constraint.maxLengthの値が不正な場合
+		var invalidStrMaxLength = invalidStrMinLength;
+		for ( var i = 0, l = invalidStrMaxLength.length; i < l; i++) {
+			invalidValues.push({
+				type: 'string',
+				constraint: {
+					maxLength: invalidStrMaxLength[i]
+				}
+			});
+		}
+
+		// constraint.notNullの値が不正な場合
+		var invalidStrNotNull = [0, 'true', [], {}, new Boolean(true)];
+		for ( var i = 0, l = invalidStrNotNull.length; i < l; i++) {
+			invalidValues.push({
+				type: 'string',
+				constraint: {
+					notNull: invalidStrNotNull[i]
+				}
+			});
+		}
+
+		// constraint.notEmptyの値が不正な場合
+		var invalidStrNotEmpty = invalidStrNotNull;
+		for ( var i = 0, l = invalidStrNotEmpty.length; i < l; i++) {
+			invalidValues.push({
+				type: 'string',
+				constraint: {
+					notEmpty: invalidStrNotEmpty[i]
+				}
+			});
+		}
+
+		// constraint.patternの値が不正な場合
+		var invalidStrPattern = [1, 'a', [], {}, true, false];
+		for ( var i = 0, l = invalidStrPattern.length; i < l; i++) {
+			invalidValues.push({
+				type: 'string',
+				constraint: {
+					pattern: invalidStrPattern[i]
+				}
+			});
+		}
+
+		// constraintの組み合わせで不整合が出る場合
+		// notEmptyかつmaxLength:0
+		invalidValues.push({
+			type: 'string',
+			constraint: {
+				notEmpty: true,
+				maxLength: 0
+			}
+		});
+
+		// min > max
+		invalidValues.push({
+			type: 'number',
+			constraint: {
+				min: 11,
+				max: 10
+			}
+		});
+
+		// minLength > maxLength
+		invalidValues.push({
+			type: 'string',
+			constraint: {
+				minLength: 11,
+				maxLength: 10
+			}
+		});
+
+		var l = invalidValues.length;
+		expect(l);
+
+		for ( var i = 0; i < l; i++) {
+			testErrorWhenCreateModelByValueProperty({
+				type: invalidValues[i].type,
+				constraint: invalidValues[i].constraint
+			}, errCode);
+		}
+	});
 
 	test('データモデルの登録 schemaのチェック constraintの指定とtypeの指定に不整合がある場合はエラーが出ること', function() {
 		// TODO エラーコード確認する
@@ -1205,23 +1161,10 @@ $(function() {
 		});
 
 		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true,
-						},
-						val: {
-							type: invalidValues[i].type,
-							constraint: invalinvalidValues[i].constraint
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
+			testErrorWhenCreateModelByValueProperty({
+				type: invalidValues[i].type,
+				constraint: invalinvalidValues[i].constraint
+			}, errCode);
 		}
 
 		// type:enumの場合について
@@ -1267,24 +1210,11 @@ $(function() {
 		}
 		l = invalidValues.length;
 		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true,
-						},
-						val: {
-							type: invalidValues[i].type,
-							enum: [1, 'a', 1.1],
-							constraint: invalinvalidValues[i].constraint
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
+			testErrorWhenCreateModelByValueProperty({
+				type: invalidValues[i].type,
+				enum: [1, 'a', 1.1],
+				constraint: invalinvalidValues[i].constraint
+			});
 		}
 	});
 
@@ -1368,7 +1298,7 @@ $(function() {
 				}
 			}
 		};
-		var parentModel1 = maanger.createModel(parentModelDesc);
+		var parentModel1 = manger.createModel(parentModelDesc);
 		var parentModel2 = manager2.createModel(parentModelDesc);
 		var parentModelItem = parentModel1.create({
 			id: 1
@@ -1422,26 +1352,7 @@ $(function() {
 			}
 		}
 
-		var l = invalidProps.length;
-		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						value: {
-							type: invalidProps[i].type,
-							defaultValue: invalidProps[i].defaultValue
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません。 type: ' + invalidProps[i].type);
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
-		}
+		testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 
 		// enum, enum[], enum[][]の場合
 		var invalidEnumValues = [{
@@ -1477,27 +1388,8 @@ $(function() {
 			enum: [1, 2, 3],
 			defaultValue: [1]
 		}];
-		for ( var i = 0, l = invalidEnumValues.length; i < l; i++) {
-			var obj = invalidEnumValues[i];
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						value: {
-							type: obj.type,
-							enum: obj.enum,
-							defaultValue: obj.defaultValue
-						}
-					}
-				});
-				ok(false, 'エラーが発生していません。 type: ' + invalidProps[i].type);
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
-		}
+		testErrorWhenCreateModelByValueProperty(invalidEnumValues, errCode);
+		dropAllModel(manager2);
 	});
 
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること number',
@@ -1512,103 +1404,72 @@ $(function() {
 						notNull: true
 					}
 				}, {
+					type: type,
 					constraint: {
 						notNull: true
 					},
 					defaultValue: null
 				}, {
+					type: type,
 					constraint: {
 						min: -1.11
 					},
 					defaultValue: -1.111
 				}, {
+					type: type,
 					constraint: {
 						max: 3.33
 					},
 					defaultValue: 3.333
 				}];
 
-				var l = invalidProps.length;
-				for ( var i = 0; i < l; i++) {
-					try {
-						manager.createModel({
-							name: 'TestDataModel',
-							schema: {
-								id: {
-									id: true
-								},
-								value: {
-									type: 'number',
-									constraint: invalidProps[i].constraint,
-									defaultValue: invalidProps[i].defaultValue
-								}
-							}
-						});
-						ok(false, 'エラーが発生していません。 type: ' + invalidProps[i].type);
-					} catch (e) {
-						strictEqual(e.code, errCode, e.message);
-					}
-				}
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string',
 			function() {
 				// TODO エラーコード確認
 				var errCode = 30000;
-
+				var type = 'string';
 				var invalidProps = [{
+					type: type,
 					// defaultValueなし
 					constraint: {
 						notNull: true
 					}
 				}, {
+					type: type,
 					constraint: {
 						notNull: true
 					},
 					defaultValue: null
 				}, {
+					type: type,
 					constraint: {
 						notEmpty: true
 					},
 					defaultValue: ''
 				}, {
+					type: type,
 					constraint: {
 						minLength: 2
 					},
 					defaultValue: 'a'
 				}, {
+					type: type,
 					constraint: {
 						maxLength: 4
 					},
 					defaultValue: 'abcde'
 				}, {
+					type: type,
 					constraint: {
 						pattern: /^s/
 					},
 					defaultValue: 'S123456'
 				}];
 
-				var l = invalidProps.length;
-				for ( var i = 0; i < l; i++) {
-					try {
-						manager.createModel({
-							name: 'TestDataModel',
-							schema: {
-								id: {
-									id: true
-								},
-								value: {
-									type: 'string',
-									constraint: invalidProps[i].constraint,
-									defaultValue: invalidProps[i].defaultValue
-								}
-							}
-						});
-						ok(false, 'エラーが発生していません。 type: ' + invalidProps[i].type);
-					} catch (e) {
-						strictEqual(e.code, errCode, e.message);
-					}
-				}
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 
 
@@ -1616,50 +1477,34 @@ $(function() {
 			function() {
 				// TODO エラーコード確認
 				var errCode = 30000;
-
+				var type = 'integer';
 				var invalidProps = [{
+					type: type,
 					// defaultValueなし
 					constraint: {
 						notNull: true
 					}
 				}, {
+					type: type,
 					constraint: {
 						notNull: true
 					},
 					defaultValue: null
 				}, {
+					type: type,
 					constraint: {
 						min: 2
 					},
 					defaultValue: 1
 				}, {
+					type: type,
 					constraint: {
 						max: 4
 					},
 					defaultValue: 5
 				}];
 
-				var l = invalidProps.length;
-				for ( var i = 0; i < l; i++) {
-					try {
-						manager.createModel({
-							name: 'TestDataModel',
-							schema: {
-								id: {
-									id: true
-								},
-								value: {
-									type: 'integer',
-									constraint: invalidProps[i].constraint,
-									defaultValue: invalidProps[i].defaultValue
-								}
-							}
-						});
-						ok(false, 'エラーが発生していません。 type: ' + invalidProps[i].type);
-					} catch (e) {
-						strictEqual(e.code, errCode, e.message);
-					}
-				}
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 
 
@@ -1671,54 +1516,122 @@ $(function() {
 				var type = 'boolean';
 
 				var invalidProps = [{
+					type: type,
 					// defaultValueなし
 					constraint: {
 						notNull: true
 					}
 				}, {
+					type: type,
 					constraint: {
 						notNull: true
 					},
 					defaultValue: null
 				}];
 
-				var l = invalidProps.length;
-				for ( var i = 0; i < l; i++) {
-					try {
-						manager.createModel({
-							name: 'TestDataModel',
-							schema: {
-								id: {
-									id: true
-								},
-								value: {
-									type: type,
-									constraint: invalidProps[i].constraint,
-									defaultValue: invalidProps[i].defaultValue
-								}
-							}
-						});
-						ok(false, 'エラーが発生していません。 type: ' + invalidProps[i].type);
-					} catch (e) {
-						strictEqual(e.code, errCode, e.message);
-					}
-				}
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 
+	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること object',
+			function() {
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = 'object';
+
+				var invalidProps = [{
+					type: type,
+					// defaultValueなし
+					constraint: {
+						notNull: true
+					}
+				}, {
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: null
+				}];
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
+			});
+	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること array',
+			function() {
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = 'array';
+
+				var invalidProps = [{
+					type: type,
+					// defaultValueなし
+					constraint: {
+						notNull: true
+					}
+				}, {
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: null
+				}];
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
+			});
+	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること any',
+			function() {
+			// TODO
+			});
+	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること @DataModelName',
+			function() {
+			// TODO
+			});
+	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string[]',
+			function() {
+			// TODO
+			});
+	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string[][]',
+			function() {
+			// TODO
+			});
+
+	test('データモデルの登録 schemaのチェック descriptorと、schemaのプロパティ定義に無関係なプロパティが含まれていても、エラーにならないこと。', 1,
+			function() {
+				var model = manager.createModel({
+					name: 'TestDataModel',
+					__name: 'TestDataModel(関係ないプロパティ)',
+					title: '関係ないプロパティ',
+					description: '関係ないプロパティ',
+					schema: {
+						id: {
+							id: true,
+							title: '関係ないプロパティ',
+							description: '関係ないプロパティ'
+						},
+						value: {
+							dummyProp1: '関係ないプロパティ',
+							dummyProp2: {
+								description: '関係ないプロパティ'
+							},
+						}
+					}
+				});
+				ok(model);
+			});
 
 	module('dropModel', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
-		teardonw: function() {
+		teardown: function() {
 			// マネージャをリセットする
-			manager.dropModel('TestManager');
+			dropAllModel(manager);
 		}
 	});
 
 	test(
 			'データモデルのドロップ',
-			11,
+			10,
 			function() {
 				var model1 = manager.createModel({
 					name: 'TestDataModel1',
@@ -1752,17 +1665,17 @@ $(function() {
 				strictEqual(manager.models.TestDataModel2, model2,
 						'ドロップする前は作成したモデル2がmanager.modelsの中に入っていること');
 				var model1 = manager.dropModel('TestDataModel1');
-				strictEqual(manager.models.TestDataModel1, model1,
+				strictEqual(manager.models.TestDataModel1, undefined,
 						'モデル1だけをドロップした後、モデル1がmanager.modelsの中に入っていないこと');
-				strictEqual(manager.models.TestDataModel2, model1,
+				strictEqual(manager.models.TestDataModel2, model2,
 						'モデル1だけをドロップした後、モデル2がmanager.modelsの中に入っていること');
 				strictEqual(model1.name, 'TestDataModel1',
 						'dropModelの戻り値はドロップしたデータモデルオブジェクトであり、名前が取得できること');
 				strictEqual(model1.manager, null, 'dropModelの戻り値のmanagerプロパティはnullであること');
 				strictEqual(model1.size, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、サイズを取得できること');
-				strictEqual(model1['1'].val, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、値を取得できること');
+				strictEqual(model1.items['1'].val, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、値を取得できること');
 				manager.dropModel('TestDataModel2');
-				strictEqual(manager.models.TestDataModel2, model1,
+				strictEqual(manager.models.TestDataModel2, undefined,
 						'モデル2をドロップした後、モデル2がmanager.modelsの中に入っていないこと');
 				deepEqual(manager.models, {}, '全てのモデルをドロップしたので、manager.modelsは空オブジェクトであること');
 			});
@@ -1771,9 +1684,9 @@ $(function() {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
-		teardonw: function() {
+		teardown: function() {
 			// マネージャをリセットする
-			manager.dropModel('TestManager');
+			dropAllModel(manager);
 		}
 	});
 
@@ -1785,16 +1698,17 @@ $(function() {
 	// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー
 	});
 
-
-
+	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
+	// TODO
+	});
 
 	module('type', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
-		teardonw: function() {
+		teardown: function() {
 			// マネージャをリセットする
-			manager.dropModel('TestManager');
+			dropAllModel(manager);
 		}
 	});
 
@@ -3270,9 +3184,9 @@ $(function() {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
-		teardonw: function() {
+		teardown: function() {
 			// マネージャをリセットする
-			manager.dropModel('TestManager');
+			dropAllModel(manager);
 		}
 	});
 
@@ -3324,9 +3238,9 @@ $(function() {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
-		teardonw: function() {
+		teardown: function() {
 			// マネージャをリセットする
-			manager.dropModel('TestManager');
+			dropAllModel(manager);
 		}
 	});
 
@@ -3345,9 +3259,9 @@ $(function() {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
-		teardonw: function() {
+		teardown: function() {
 			// マネージャをリセットする
-			manager.dropModel('TestManager');
+			dropAllModel(manager);
 		}
 	});
 
