@@ -1420,6 +1420,8 @@
 		var promises = [];
 		var targets = [];
 		var execute = function(parentController) {
+			var df = getDeferred();
+
 			targets.push(parentController);
 			for ( var prop in parentController) {
 				if (isChildController(parentController, prop)) {
@@ -1430,7 +1432,13 @@
 				}
 			}
 			if (parentController[property] && $.isFunction(parentController[property])) {
-				promises.push(parentController[property]());
+				var promise = parentController[property]();
+				if (h5.async.isPromise(promise)) {
+					promise.always(function() {
+						df.resolve();
+					});
+					promises.push(df.promise());
+				}
 			}
 		};
 		execute(controller);
@@ -1987,7 +1995,7 @@
 			this.unbind();
 			var that = this;
 			var promises = executeLifeEndChain(this, '__dispose');
-			h5.async.when(promises).always(function() {
+			h5.async.when(promises).done(function() {
 				disposeController(that);
 				dfd.resolve();
 			});

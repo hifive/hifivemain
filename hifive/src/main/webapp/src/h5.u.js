@@ -238,8 +238,6 @@
 			df.resolveWith(df, args);
 		}).fail(function() {
 			df.rejectWith(df, argsToArray(arguments));
-		}).progress(function() {
-			alert("hoge");
 		});
 
 		return df.promise();
