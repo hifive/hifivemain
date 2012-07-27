@@ -84,12 +84,6 @@
 	// Cache
 	//
 	// =========================================================================
-	var prefix = "h5";
-
-	//TODO グローバルキャッシュに持っていくべき
-	function getH5DataKey(key) {
-		return 'data-' + prefix + '-' + key;
-	}
 
 
 	// =========================================================================
@@ -100,15 +94,6 @@
 	//=============================
 	// Variables
 	//=============================
-	var globalBindSerialNumber = 0;
-
-
-	//TODO 要素の属性の値が長くなった場合にどれくらいパフォーマンス（速度・メモリ）に影響出る？？要調査
-	//問題なければfullnameをView側のキーにしてしまうことも考える
-
-
-	//TODO グローバルなBindingManagerを用意して、「私はどのDataBindingで制御されているビュー（に含まれている要素）？」を
-	//問合せできるようにすべきか
 
 
 	//=============================
@@ -212,39 +197,6 @@
 		}
 	};
 
-
-
-	function createSerialNumber() {
-		return globalBindSerialNumber++;
-	}
-
-	/**
-	 * プロパティを作成する。 ES5のObject.definePropertyが使用できない場合は 非標準の__defineGetter__, __defineSetter__を使用する。
-	 * どちらも使用できない場合は例外を発生させる。 参考：
-	 * http://blogs.msdn.com/b/ie/archive/2010/09/07/transitioning-existing-code-to-the-es5-getter-setter-apis.aspx
-	 */
-	function defineProperty(obj, prop, desc) {
-		var ieVer = h5.env.ua.browserVersion;
-		var isIE = h5.env.ua.isIE;
-		var isES5Compliant = Object.defineProperty && (!isIE || (isIE && (ieVer >= 9))); // TODO
-		// Safari5.0も対応していないのではじく必要あり
-
-		if (isES5Compliant) {
-			Object.defineProperty(obj, prop, desc);
-		} else if (Object.prototype.__defineGetter__) {
-			if ('get' in desc) {
-				obj.__defineGetter__(prop, desc.get);
-			}
-			if ('set' in desc) {
-				obj.__defineSetter__(prop, desc.set);
-			}
-			if ('value' in desc) {
-				obj[prop] = desc.value;
-			}
-		} else {
-			throw new Error('defineProperty: プロパティを作成できません');
-		}
-	}
 
 	function isValidTypeString(value) {
 		if (isString(value)) {
