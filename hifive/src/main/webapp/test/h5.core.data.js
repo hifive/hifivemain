@@ -293,233 +293,1541 @@ $(function() {
 	// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー
 	});
 
-	test('constraintに指定されているルールを満たさない値は、格納できずにエラーになること', function() {
-	// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー
+
+
+
+	module('type', {
+		setup: function() {
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardonw: function() {
+			// マネージャをリセットする
+			manager.dropModel('TestManager');
+		}
 	});
 
-	// TODO typeプロパティ指定が正しい場合についてのテスト
-	// type毎にテストケースを書く
-	// type毎にdefaultValueのチェック(指定していない場合)を確認する
 	// defaultValueに不正な値を指定している場合はcreateModelのテストでチェックしているのでここでは不要
-	test('type指定 string', function() {
+	// 2012/07/27 竹内追記
+	// Any/Array 以外 typeに[]を指定可能
+	// id:true の場合type指定不可
+	// type:object 廃止
+	test('type指定 string 正常系', function() {
 		var model = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
 				id: {
 					id: true,
-					type: 'number',
 				},
-				str: {
+				test1: {
+					type: 'string',
+					defaultValue: 'a'
+				},
+				test2: {
 					type: 'string'
 				}
 			}
 		});
-		// TODO modelのchange, add イベントが発火するかどうかを確認する
-		var changed = false;
-		model.objectChangeListener(function() {
-			changed = true;
-		});
 
-		var item = {};
-		var id = 0;
 		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			equal(item.test1, 'a', 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			strictEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
 			item = model.create({
 				id: id++,
-				str: 'taro'
-			});
-			strictEqual(item.str, 'taro', 'type:\'string\'のプロパティに文字列値が格納できること');
-		} catch (e) {
-			ok(false, 'エラーが発生しました。『' + e.message + '』');
-		} finally {
-			itemsChanged = false;
-			changed = false;
-			item = {};
-		}
-
-		try {
-			item = model.create({
-				id: 1,
-				str: ''
-			});
-			strictEqual(item.str, '', '空文字を格納できること');
-		} catch (e) {
-			ok(false, 'エラーが発生しました。『' + e.message + '』');
-		} finally {
-			itemsChanged = false;
-			changed = false;
-			item = {};
-		}
-
-		try {
-			item = model.create({
-				id: 2
-			});
-			strictEqual(item.str, null, '指定していない場合はnullが格納されていること');
-		} catch (e) {
-			ok(false, 'エラーが発生しました。『' + e.message + '』');
-		} finally {
-			itemsChanged = false;
-			changed = false;
-			item = {};
-		}
-
-		try {
-			item = model.create({
-				id: 2,
-				str: null
-			});
-			strictEqual(item.str, null, 'nullを指定した場合はnullが格納されていること');
-		} catch (e) {
-			ok(false, 'エラーが発生しました。『' + e.message + '』');
-		} finally {
-			itemsChanged = false;
-			changed = false;
-			item = {};
-		}
-
-		try {
-			item = model.create({
-				id: 2,
-				str: undefined
+				test1: 'c'
 			});
 
-			strictEqual(item.str, null, 'undefinedを指定した場合はnullが格納されていること');
-		} catch (e) {
-			ok(false, 'エラーが発生しました。『' + e.message + '』');
-		} finally {
-			itemsChanged = false;
-			changed = false;
-			item = {};
-		}
+			equal(item.test1, 'c', 'type:\'string\'のプロパティに値が代入できること。');
 
-		var noStrs = [0, true, {
-			str: "test"
-		}, ["test"], /test/, new String('test')];
-
-		var l = noStrs.length;
-		expect(l + 2);
-
-		for ( var i = 0; i < l; i++) {
-			try {
-				model.create({
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new String('a'), new Object('i'), "", ''];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
 					id: id++,
-					str: noStrs[i]
+					test1: sub[i]
 				});
-				ok(false, 'テスト失敗。文字列以外を格納したが、エラーが発生していない');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
+
+				equal(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test1 = sub[i];
+
+				equal(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
 			}
-		}
-
-		item.str = 'jiro';
-		strictEqual(item.str, 'jiro', 'type:\'string\'のプロパティに文字列値を代入できること');
-
-		for ( var i = 0, l = noStrs.length; i < l; i++) {
-			try {
-				item.str = noStrs[i];
-				ok(false, 'テスト失敗。文字列以外を代入したが、エラーが発生していない');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
-		}
-
-		try {
-			item.str = null;
-			ok(false, 'テスト失敗。文字列以外を代入したが、エラーが発生していない');
 		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
 		}
 	});
 
-	test('type指定 DataModel', 1, function() {
-		var nameDescriptor = {
-			name: 'NameModel',
-			schema: {
-				id: {
-					id: true
-				},
-				name: {}
-			}
-		};
-		var nameModel = manager.createModel(nameDescriptor);
+	test('type指定 string 異常系', function() {
 		var model = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
 				id: {
 					id: true,
-					type: 'number',
 				},
-				dataModel1: {
-					type: '@NameModel'
+				test1: {
+					type: 'string',
+					defaultValue: 'a'
 				},
-				dataModel2: {
-					type: '@TestDataModel'
+				test2: {
+					type: 'string'
 				}
 			}
 		});
 
-		var manager2 = h5.core.data.createManager('Test2Manager');
-		var modelName2 = manager2.createModel(nameDescriptor);
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
 
-		var item = model.create({
-			id: 0,
-			str: 'taro'
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [1, null, undefined, /[0-9]/, new RegExp(), false, new Boolean(1),
+					Infinity, -Infinity, new Number(1), NaN, window, {}, new Object(1),
+					new Object(['a']), new Array('a'), ['a']];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 string[] 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string[]',
+					defaultValue: ['a']
+				},
+				test2: {
+					type: 'string[]'
+				}
+			}
 		});
 
-		strictEqual(item.str, 'taro', 'type:\'string\'のプロパティに文字列値が格納できること');
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
 
-		var noStrs = [0, true, {
-			str: "test"
-		}, ["test"], /test/, new String('test')];
+			// 初期値は正しいか
+			deepEqual(item.test1, ['a'], 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			deepEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
-		var l = noStrs.length;
-		expect(l + 2);
+			item = model.create({
+				id: id++,
+				test1: ['c', 'z']
+			});
 
-		for ( var i = 0; i < l; i++) {
-			try {
-				model.create({
-					id: 'noStr' + i,
-					str: noStrs[i]
+			deepEqual(item.test1, ['c', 'z'], 'type:\'string[]\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Array(new String('a'), new String(10)), new Array('x', 'r'),
+					new Array('8', '5'), new Object(['i', 'd']), new Object(['3', '4'])];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test1: sub[i]
 				});
-				ok(false, 'テスト失敗。文字列以外を格納したが、エラーが発生していない');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
-		}
 
-		item.str = 'jiro';
-		strictEqual(item.str, 'jiro', 'type:\'string\'のプロパティに文字列値を代入できること');
+				equal(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
 
-		for ( var i = 0, l = noStrs.length; i < l; i++) {
-			try {
-				item.str = noStrs[i];
-				ok(false, 'テスト失敗。文字列以外を代入したが、エラーが発生していない');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
+				item2.test1 = sub[i];
+
+				equal(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
 			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
 		}
 	});
-	// TODO ↑のケースに引き続き、ほかのtype、複合タイプについても書く
 
-	test('enumの指定されているプロパティは、宣言されている値しか格納できないこと', function() {
-	// TODO
+	test('type指定 string[] 異常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string[]',
+					defaultValue: ['a']
+				},
+				test2: {
+					type: 'string[]'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [1, null, undefined, /[0-9]/, new RegExp(), 'false', '', Infinity,
+					-Infinity, new Number(1), NaN, window, {}, new Object([10, 'v']),
+					new Object(['a']), new Array(1, 'a'), [], [undefined, 'a'], function() {
+						return 10;
+					}];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
 	});
 
-	test('propertiesの指定されているプロパティは、オブジェクトの中身もチェックされること', function() {
-	// TODO
+	test('type指定 DataModel 正常系', 4, function() {
+		var descriptor1 = {
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string'
+				}
+			}
+		};
+		var desc1Model = manager.createModel(descriptor1);
+		var model1DataItem = desc1Model.create({
+			id: 1,
+			test1: 'aaa'
+		});
+
+		var descriptor2 = {
+			name: 'DataModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'number'
+				}
+			}
+		};
+
+		var descModel2 = manager.createModel(descriptor2);
+		var model2DataItem = descModel2.create({
+			id: 1,
+			test1: 20
+		});
+
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				dataModel1: {
+					type: '@DataModel1[]'
+				},
+				dataModel2: {
+					type: '@DataModel2[]'
+				}
+			}
+		});
+
+		// DataItemでcreateできるか
+		var item1 = model.create({
+			id: 1,
+			dataModel1: model1DataItem
+		});
+		var item2 = model.create({
+			id: 2,
+			dataModel2: model2DataItem
+		});
+
+		equal(item1.dataModel1.test1, 'aaa', 'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item1.dataModel2, null, 'create時に何も値を指定しない場合、nullが取得できること。');
+		equal(item2.dataModel1, null, 'create時に何も値を指定しない場合、nullが取得できること。');
+		equal(item2.dataModel2.test1, 20, 'create時に指定したモデルの値が、DataItemから取得できること。');
 	});
 
-	test('defaultValueの指定されているプロパティに値を指定せずにcreateすると、defaultValueに指定した値が格納されていること', function() {
-	// TODO
+	test('type指定 DataModel 異常系', 4, function() {
+		var descriptor1 = {
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string'
+				}
+			}
+		};
+		var desc1Model = manager.createModel(descriptor1);
+		var model1DataItem = desc1Model.create({
+			id: 1,
+			test1: 'aaa'
+		});
+
+		var descriptor2 = {
+			name: 'DataModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'number'
+				}
+			}
+		};
+
+		var descModel2 = manager.createModel(descriptor2);
+		var model2DataItem = descModel2.create({
+			id: 1,
+			test1: 20
+		});
+
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				dataModel1: {
+					type: '@DataModel1[]'
+				},
+				dataModel2: {
+					type: '@DataModel2[]'
+				}
+			}
+		});
+
+		// DataItemでcreateできるか
+		var item1 = model.create({
+			id: 1,
+			dataModel1: model1DataItem
+		});
+		var item2 = model.create({
+			id: 2,
+			dataModel2: model2DataItem
+		});
+
+		// 異なる型を指定してcreateするとエラーが発生すること
+		raises(function() {
+			model.create({
+				id: 3,
+				dataModel2: model1DataItem
+			});
+		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
+
+		// 異なる型を代入するとエラーが発生すること
+		raises(function() {
+			item1.dataModel1 = model2DataItem;
+		}, 'type:DataMode2のプロパティに異なる型の値を代入するとエラーが発生すること。');
 	});
 
+	test('type指定 DataModel[] 正常系', 6, function() {
+		var descriptor1 = {
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string'
+				}
+			}
+		};
+		var desc1Model = manager.createModel(descriptor1);
+		var model1DataItem1 = desc1Model.create({
+			id: 1,
+			test1: 'aaa'
+		});
+		var model1DataItem2 = desc1Model.create({
+			id: 2,
+			test1: 'bbb'
+		});
+
+		var descriptor2 = {
+			name: 'DataModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'number'
+				}
+			}
+		};
+
+		var descModel2 = manager.createModel(descriptor2);
+		var model2DataItem1 = descModel2.create({
+			id: 1,
+			test1: 20
+		});
+		var model2DataItem2 = descModel2.create({
+			id: 2,
+			test1: 30
+		});
+
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				dataModel1: {
+					type: '@DataModel1'
+				},
+				dataModel2: {
+					type: '@DataModel2'
+				}
+			}
+		});
+
+		// DataItemでcreateできるか
+		var item1 = model.create({
+			id: 1,
+			dataModel1: [model1DataItem1, model1DataItem2]
+		});
+		var item2 = model.create({
+			id: 2,
+			dataModel2: [model2DataItem1, model2DataItem2]
+		});
+
+		equal(item1.dataModel1[0].test1, 'aaa', 'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item1.dataModel1[1].test1, 'bbb', 'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item1.dataModel2, null, 'create時に何も値を指定しない場合、nullが取得できること。');
+		equal(item2.dataModel2[0].test1, 20, 'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item2.dataModel2[1].test1, 30, 'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item2.dataModel1, null, 'create時に何も値を指定しない場合、nullが取得できること。');
+	});
+
+	test('type指定 DataModel[] 異常系', 4, function() {
+		var descriptor1 = {
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string'
+				}
+			}
+		};
+		var desc1Model = manager.createModel(descriptor1);
+		var model1DataItem1 = desc1Model.create({
+			id: 1,
+			test1: 'aaa'
+		});
+		var model1DataItem2 = desc1Model.create({
+			id: 2,
+			test1: 'bbb'
+		});
+
+		var descriptor2 = {
+			name: 'DataModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'number'
+				}
+			}
+		};
+
+		var descModel2 = manager.createModel(descriptor2);
+		var model2DataItem1 = descModel2.create({
+			id: 1,
+			test1: 20
+		});
+
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				dataModel1: {
+					type: '@DataModel1'
+				},
+				dataModel2: {
+					type: '@DataModel2'
+				}
+			}
+		});
+
+		var item1 = model.create({
+			id: 1,
+			dataModel1: [model1DataItem1, model1DataItem2]
+		});
+
+		// 異なる型を指定してcreateするとエラーが発生すること
+		raises(function() {
+			model.create({
+				id: 2,
+				dataModel1: [model1DataItem1, model2DataItem1]
+			});
+		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
+
+		// 異なる型を指定してcreateするとエラーが発生すること
+		raises(function() {
+			model.create({
+				id: 2,
+				dataModel2: [model1DataItem1, model2DataItem1]
+			});
+		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
+
+		// 異なる型を代入するとエラーが発生すること
+		raises(function() {
+			item1.dataModel1 = [model1DataItem1, model2DataItem1];
+		}, 'type:DataMode2のプロパティに異なる型の値を代入するとエラーが発生すること。');
+
+		// 異なる型を代入するとエラーが発生すること
+		raises(function() {
+			item1.dataModel2 = [model1DataItem1, model2DataItem1];
+		}, 'type:DataMode2のプロパティに異なる型の値を代入するとエラーが発生すること。');
+	});
+
+
+	test('type指定 number 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'number',
+					defaultValue: 20
+				},
+				test2: {
+					type: 'number'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			strictEqual(item.test1, 20, 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			strictEqual(item.test2, 0, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: id++,
+				test1: 10
+			});
+
+			strictEqual(item.test1, 10, 'type:number のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Number(10), Infinity, -Infinity, NaN, new Object(10.9)];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test1: sub[i]
+				});
+
+				deepEqual(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test1 = sub[i];
+
+				deepEqual(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 number 異常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'number',
+					defaultValue: 20
+				},
+				test2: {
+					type: 'number'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [undefined, '', null, undefined, /[0-9]/, new RegExp(), {
+				1: 1
+			}, '1', [1], new String(1), new Object(1), new Array(), new Boolean(1), window,
+					function() {
+						return 10;
+					}];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 number[] 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'number[]',
+					defaultValue: [20]
+				},
+				test2: {
+					type: 'number[]'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			deepEqual(item.test1, [20], 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			equal(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: id++,
+				test1: [30, 10]
+			});
+
+			deepEqual(item.test1, [30, 10], 'type:\'number[]\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Array(new Number(10)), new Array(40, 90), new Object([10, 30]),
+					[Infinity, -Infinity, NaN], new Array(Infinity, -Infinity, NaN),
+					new Object([Infinity, -Infinity, NaN])];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test1: sub[i]
+				});
+
+				deepEqual(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test1 = sub[i];
+
+				deepEqual(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	// 2012/07/27 竹内追記
+	// type:number/ type:integer にNaNは代入可
+	test('type指定 number[] 異常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'number[]',
+					defaultValue: [20]
+				},
+				test2: {
+					type: 'number[]'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			item = model.create({
+				id: id++,
+				test1: [30, 10]
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [1, null, undefined, /[0-9]/, new RegExp(), 'false', new String('[10]'),
+					'', Infinity, -Infinity, new Number(1), NaN, window, {}, new Object(),
+					new Object(['a']), new Array(1, 'a'), [], [undefined, 10], function() {
+						return 10;
+					}];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 integer 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'integer',
+					defaultValue: 50
+				},
+				test2: {
+					type: 'integer'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			strictEqual(item.test1, 50, 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			strictEqual(item.test2, 0, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: id++,
+				test1: 10
+			});
+
+			strictEqual(item.test1, 10, 'type:integer のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Number(10), new Number(10.8), '10', '20.4', new String('56'),
+					new String('48.21'), new Object('3a0'), new Object('9a1.9'), new Object('30'),
+					new Object('31.9'), new Object(20), new Object(20.3), NaN];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test1: sub[i]
+				});
+
+				deepEqual(item2.test1, parseInt(sub[i], 10), 'test1に' + parseInt(sub[i], 10)
+						+ 'が代入されてDataItemが生成されること。');
+
+				item2.test1 = sub[i];
+
+				deepEqual(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+
+	// 2012/07/27 竹内追記
+	// Infinity -Infinity は parseInt()するとNaNになるので、type:integerの場合は代入不可(ただしparseFloat()するとInfinity/-Infinityが返ってくる)
+	test('type指定 integer 異常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'integer',
+					defaultValue: 50
+				},
+				test2: {
+					type: 'integer'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			item = model.create({
+				id: id++,
+				test1: 10
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [undefined, '', 'a1', null, undefined, /[0-9]/, new RegExp(), {
+				1: 1
+			}, '1', [1], new String('a3'), new Object('a2'), new Array(), new Boolean(1), window,
+					Infinity, -Infinity, function() {
+						return 10;
+					}];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 integer[] 正常系',
+			function() {
+				var model = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'integer[]',
+							defaultValue: [50, 15]
+						},
+						test2: {
+							type: 'integer[]'
+						}
+					}
+				});
+
+				try {
+					var id = 1;
+					var item = model.create({
+						id: id++
+					});
+
+					// 初期値は正しいか
+					deepEqual(item.test1, [50, 15],
+							'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+					deepEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+					item = model.create({
+						id: id++,
+						test1: [10, 30]
+					});
+
+					deepEqual(item.test1, [10, 30], 'type:integer[] のプロパティに値が代入できること。');
+
+					// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+					var item2 = null;
+					var sub = [[new Number(10), new Number(20)],
+							[new Number(10.8), new Number(30.5)], ['10', '20.4'],
+							[new String('56'), new String('48.21')],
+							[new Object('3a0'), new Object('9a1.9')],
+							[new Object('30'), new Object('31.9')],
+							[new Object(20), new Object(20.3)], [NaN, NaN],
+							new Array(new Number(10), new Number(20)),
+							new Array(new Number(10.8), new Number(30.5)), new Array('10', '20.4'),
+							new Array(new String('56'), new String('48.21')),
+							new Array(new Object('3a0'), new Object('9a1.9')),
+							new Array(new Object('30'), new Object('31.9')),
+							new Array(new Object(20), new Object(20.3)), new Array(NaN, NaN)];
+					for ( var i = 0; i < sub.length; i++) {
+						item2 = model.create({
+							id: id++,
+							test1: sub[i]
+						});
+
+						deepEqual(item2.test1, parseInt(sub[i], 10), 'test1に'
+								+ parseInt(sub[i], 10) + 'が代入されてDataItemが生成されること。');
+
+						item2.test1 = sub[i];
+
+						deepEqual(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+					}
+				} catch (e) {
+					ok(false, 'エラーが発生しました。『' + e.message + '』');
+				}
+			});
+
+	test('type指定 integer[] 異常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'integer[]',
+					defaultValue: [50, 15]
+				},
+				test2: {
+					type: 'integer[]'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			item = model.create({
+				id: id++,
+				test1: [10, 30]
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [undefined, 1, '', 'a1', null, undefined, /[0-9]/, new RegExp(), {
+				1: 1
+			}, '1', new Number(10), new String('a3'), new Object('a2'), new Array(),
+					new Boolean(1), window, Infinity, -Infinity, NaN, function() {
+						return 10;
+					}];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 boolean 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'boolean',
+					defaultValue: true
+				},
+				test2: {
+					type: 'boolean'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			strictEqual(item.test1, true, 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			strictEqual(item.test2, false, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: id++,
+				test1: false
+			});
+
+			strictEqual(item.test1, false, 'type:boolean のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Boolean(1), new Boolean(0), new Object(true), new Object(false)];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test1: sub[i]
+				});
+
+				equal(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test1 = sub[i];
+
+				equal(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 boolean 異常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'boolean',
+					defaultValue: true
+				},
+				test2: {
+					type: 'boolean'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			item = model.create({
+				id: id++,
+				test1: false
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [undefined, 1, '', null, undefined, /[0-9]/, new RegExp(), {
+				1: 1
+			}, 'false', [1], new String('true'), new Object(), new Array(), Infinity, -Infinity,
+					new Number(1), NaN, window, function() {
+						return 10;
+					}];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 boolean[] 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'boolean[]',
+					defaultValue: [true, false]
+				},
+				test2: {
+					type: 'boolean[]'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			deepEqual(item.test1, [true, false],
+					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			deepEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: id++,
+				test1: [false, true, false]
+			});
+
+			deepEqual(item.test1, [false, true, false], 'type:boolean[] のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [[new Boolean(1), new Boolean(0)], new Array(new Boolean(1), new Boolean(0)),
+					[new Object(true), new Object(false)],
+					new Array(new Object(true), new Object(false))];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test1: sub[i]
+				});
+
+				equal(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test1 = sub[i];
+
+				equal(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 boolean[] 異常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'boolean[]',
+					defaultValue: [true, false]
+				},
+				test2: {
+					type: 'boolean[]'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			item = model.create({
+				id: id++,
+				test1: [false, true, false]
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [undefined, 1, '', null, undefined, /[0-9]/, new RegExp(), {
+				1: 1
+			}, 'false', [1], new String('true'), new Object(), new Array(), Infinity, -Infinity,
+					new Number(1), NaN, window, function() {
+						return 10;
+					}, ['true', 'false'], [1, 0]];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+
+	// 2012/07/27 竹内追記 type:array[]は無い
+	test('type指定 array 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'array',
+					defaultValue: [10]
+				},
+				test2: {
+					type: 'array'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			deepEqual(item.test1, [10], 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			deepEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: id++,
+				test1: [30]
+			});
+
+			deepEqual(item.test1, [30], 'type:\'array\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Array(10, 8), new Object(['a'])];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test1: sub[i]
+				});
+
+				deepEqual(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test1 = sub[i];
+
+				deepEqual(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 array 異常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'array',
+					defaultValue: [10]
+				},
+				test2: {
+					type: 'array'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			item = model.create({
+				id: id++,
+				test1: [30]
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [undefined, 1, null, undefined, /[0-9]/, new RegExp(), 'false',
+					new String('true'), '', Infinity, -Infinity, new Number(1), NaN, window, {},
+					new Object(), function() {
+						return 10;
+					}];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	// 2012/07/27 竹内追記 type:any[]は無い
+	test('type指定 any', function() {
+		var div = document.createElement('div');
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'any',
+					defaultValue: div
+				},
+				test2: {
+					type: 'any'
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			equal(item.test1, div, 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			equal(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			function Test1Obj() {
+				this.name = 'test1Obj';
+				this.num = 10;
+			}
+
+			item = model.create({
+				id: id++,
+				test1: new Test1Obj()
+			});
+
+			deepEqual(item.test1, new Test1Obj(), 'type:\'any\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var sub = [1, null, undefined, /[0-9]/, new RegExp(), 'false', new String('true'), '',
+					Infinity, -Infinity, new Number(1), NaN, window, new Array(), [1], {},
+					new Object(), function() {
+						return 10;
+					}];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test1: sub[i]
+				});
+
+				equal(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test1 = sub[i];
+
+				equal(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 enum 正常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'enum',
+					defaultValue: 10,
+					enumValue: ['a', 10, true, testClass1]
+				},
+				test2: {
+					type: 'enum',
+					enumValue: ['b', 20, false, testClass1]
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			equal(item.test1, 10, 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			strictEqual(item.test2, 'b', 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: id++,
+				test1: testClass1
+			});
+
+			deepEqual(item.test1, testClass1, 'type:\'enum\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = ['b', 20, false, testClass1];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test2: sub[i]
+				});
+
+				deepEqual(item2.test1, sub[i], 'test2に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test2 = sub[i];
+
+				deepEqual(item2.test2, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 enum 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'enum',
+					defaultValue: 10,
+					enumValue: ['a', 10, true, testClass1]
+				},
+				test2: {
+					type: 'enum',
+					enumValue: ['b', 20, false, testClass1]
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			item = model.create({
+				id: id++,
+				test1: testClass1
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [1, false, 'z', null, undefined, /[0-9]/, new RegExp(), 'true',
+					new String(10), '', Infinity, -Infinity, new Number(1), NaN, window, {},
+					new Object(), new Object(['b']), new Array('a'), ['a'], function() {
+						return 'a';
+					}, new TestClass1(), new String('a'), new Object('a'), new Number(10),
+					new Object(10), new Boolean(1), new Object(true)];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	// 2012/07/27 竹内追記 仕様が確定するまで取りあえず放置
 	test('enhanceの指定されているプロパティは、値をセットしても何もイベントが起きず、値のチェックも行われないこと', function() {
 	// TODO
 	});
 
-	test('dependの設定されているプロパティに、値はセットできないこと。depend先のアイテムから値が変更されたら、dependを設定しているプロパティの値も変わること', function() {
+	test('dependの設定されているプロパティに、値はセットできないこと。depend先のアイテムから値が変更されたら、dependを設定しているプロパティの値も変わること',
+			function() {
+			// TODO
+			});
+
+	module('constraint', {
+		setup: function() {
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardonw: function() {
+			// マネージャをリセットする
+			manager.dropModel('TestManager');
+		}
+	});
+
+
+	//	・nullについて
+	//	　・number, integer, boolean は"Nullable"な存在とする。
+	//	　　つまり、type:number でnotNull制約がなければ null代入可。
+	//	　　（DBと同じようなイメージ）
+	//	　　defaultValueが設定されていない場合はnullがデフォルト。
+	//	　　デフォルトを設定したい場合はdefaultValueを設定すればよい。
+	//	　　notNull制約がついている場合、
+	//	　　defaultValueがなく初期生成時にも値を渡さない場合、エラーとする。
+	//
+	//	・長さ系/patternのチェックは、
+	//	　値が入っている場合のみかかる。
+	//	　従って、nullがセットされた場合はかからない。
+	test('notNull 制約が適用されているか', function() {
 	// TODO
 	});
+
+	test('notEmpty 制約が適用されているか', function() {
+	// TODO
+	});
+
+	test('min 制約が適用されているか', function() {
+	// TODO
+	});
+
+	test('max 制約が適用されているか', function() {
+	// TODO
+	});
+
+	test('minLength 制約が適用されているか', function() {
+	// TODO
+	});
+
+	test('maxLength 制約が適用されているか', function() {
+	// TODO
+	});
+
+	test('pattern 制約が適用されているか', function() {
+	// TODO
+	});
+
+
+
 
 	module('データモデルの操作', {
 		setup: function() {
@@ -635,7 +1943,7 @@ $(function() {
 		reset();
 
 		try {
-			item.id = "1";
+			item.id = '1';
 		} finally {
 			strictEqual(changeCount, 0, '型指定の異なる値を代入した場合はエラーが発生し、ハンドラは実行されないこと');
 		}
