@@ -208,6 +208,56 @@ $(function() {
 		ok(count === l, '登録したモデルの数だけ格納されていること');
 	});
 
+
+	test(
+			'※要目視確認 同名のデータモデルを同じマネージャに登録すると無視されて、戻り値がundefinedであること。ログが出力されること',
+			2,
+			function() {
+				var model1 = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						val: {
+							defaultValue: 1
+						}
+					}
+				});
+				var model2 = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						val: {
+							defaultValue: 2
+						}
+					}
+				});
+				strictEqual(model2, undefined, '同名のデータモデルを登録しようとすると戻り値がundefinedであること');
+				ok(
+						true,
+						'※要目視確認 以下のようなログが出力されていること。『 同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は TestManager, 登録しようとしたデータモデル名は TestDataModel です。 』');
+				var item = model1.create({
+					id: 1
+				});
+				strictEqual(item.val, 1, '最初に作成したモデルのスキーマでアイテムが生成されること');
+				var manager2 = h5.core.data.createManager('TestManager');
+				var model3 = manager2.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						val: {
+							defaultValue: 3
+						}
+					}
+				});
+				ok(model3, '別マネージャであれば同名のモデルを登録できること');
+			});
+
 	test('データモデルの登録 descriptorがオブジェクトでない場合はエラーが発生すること', function() {
 		// TODO エラーコード確認する
 		var errCode = 30001;
@@ -846,7 +896,7 @@ $(function() {
 		}
 
 		// constraint.minLengthの値が不正な場合
-		var invalidStrMinLength = [-1, '10', NaN, -Infinity, Infinity, [], {}, true];
+		var invalidStrMinLength = [-1, 10.1, '10', NaN, -Infinity, Infinity, [], {}, true];
 		for ( var i = 0, l = invalidStrMinLength.length; i < l; i++) {
 			invalidValues.push({
 				type: 'string',
@@ -1819,7 +1869,7 @@ $(function() {
 				deepEqual(manager.models, {}, '全てのモデルをドロップしたので、manager.modelsは空オブジェクトであること');
 			});
 
-	module('create, set', {
+	module('create, get, remove', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
@@ -1871,7 +1921,44 @@ $(function() {
 		strictEqual(items[2].id, '1', '戻り値の配列の中身が正しいこと');
 	});
 
-	test('idの重複するアイテムは生成できず、エラーになること', 2, function() {
+	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 2, function() {
+		var errCode = 30000;
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {},
+				val2: {}
+			}
+		});
+
+		var item = model.create({
+			id: 1,
+			val: 1
+		});
+		var item2 = model.create({
+			id: 1,
+			val2: 2
+		});
+		strictEqual(item, item2, '同一のidを指定してcreateをした時、戻り値は同じインスタンスであること');
+		strictEqual(item.val, 1, '上書かれていないプロパティを取得できること');
+		strictEqual(item.val2, 2, '上書いたプロパティを取得できること');
+		var items = model.create([{
+			id: 2,
+			val: 2
+		}, {
+			id: 2,
+			val2: 3
+		}]);
+		strictEqual(items[0], items[1], '同じid要素を持つオブジェクトを配列で渡した時、戻り値は同じインスタンスであること');
+		strictEqual(item[0].val, 2, '上書かれていないプロパティを取得できること');
+		strictEqual(item[0].val2, 3, '上書いたプロパティを取得できること');
+	});
+
+	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、エラーが起きるまでの要素までは生成され、残りは生成されないこと', function() {
+		// TODO アトミックかどうか確認する
 		var errCode = 30000;
 		var model = manager.createModel({
 			name: 'TestDataModel',
@@ -1882,22 +1969,11 @@ $(function() {
 				val: {}
 			}
 		});
-
-		model.create({
-			id: 1
-		});
-		try {
-			model.create({
-				id: 1
-			});
-			ok(false, 'エラーが発生していません。');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-			strictEqual(model.get("1"), null, 'エラーが発生した場合はアイテムが生成されていないこと');
-		}
 		try {
 			model.create([{
-				id: 2
+				id: 1
+			}, {
+				id: {}
 			}, {
 				id: 2
 			}]);
@@ -1906,12 +1982,10 @@ $(function() {
 			strictEqual(e.code, errCode, e.message);
 		} finally {
 			// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない(TODO 確認する)
-			strictEqual(model.get("2"), null, 'エラーが発生した場合はアイテムが生成されていないこと');
+			ok(model.has(1), '配列で渡した場合にエラーが発生したら、その要素より前のアイテムは生成されること');
+			ok(!model.has(2), '配列で渡した場合にエラーが発生したら、その要素以降のアイテムは生成されないこと');
+			strictEqual(model.size, 1, 'sizeが1であること');
 		}
-	});
-
-	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、アイテムは一つも生成されないこと(アトミックに処理されること)', function() {
-	// TODO アトミックかどうか確認する
 	});
 
 	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
@@ -1934,20 +2008,22 @@ $(function() {
 			}
 		});
 
-		model.create([{
+		var item1 = model.create({
 			id: 1,
 			val: 'item1'
-		},{
+		});
+		var item2 = model.create({
 			id: 2,
 			val: 'item2'
-		},{
+		});
+		var item3 = model.create({
 			id: 3,
 			val: 'item3'
-		}]);
+		});
 		model2.create([{
 			id: 1,
 			val: 'model2 item1'
-		},{
+		}, {
 			id: 4,
 			val: 'model2 item1'
 		}]);
@@ -1962,21 +2038,74 @@ $(function() {
 				val: {}
 			}
 		});
-		model3.create({id: 2,val:'manager2 item2'});
+		model3.create({
+			id: 2,
+			val: 'manager2 item2'
+		});
 
-
-		strictEqual(model.get('1').val, 'item1', '登録したアイテムが取得できること');
-		strictEqual(model.get('2').val, 'item2', '登録したアイテムが取得できること');
-		strictEqual(model.get('3').val, 'item3', '登録したアイテムが取得できること');
+		strictEqual(model.get('item1'), item1, '登録したアイテムが取得できること');
+		strictEqual(model.get('item2'), item2, '登録したアイテムが取得できること');
+		strictEqual(model.get('item3').item3, 'item3', '登録したアイテムが取得できること');
 		strictEqual(model.get('abc'), null, '登録されていないidを渡すとnullが返ってくること');
 		strictEqual(model.get('4'), null, '違うモデルに登録したアイテムは取得できないこと。');
-		var items = model.get(['2','4','1','3', 'abcd']);
-		strictEqual(items.length, 3, 'idの配列を引数に渡してアイテムを取得できること');
+		var items = model.get(['2', '4', '1', '3', 'noExistId']);
+		deepEqual(items, [item2, null, item1, item3, null],
+				'getに配列を渡した時の戻り値は各要素のget結果が格納された配列であること');
 		strictEqual(model.get('2').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
 		strictEqual(model.get('2').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
 		strictEqual(model.get('2').val, 'item2', '登録したアイテムが取得できること');
 		strictEqual(model.get('3').val, 'item3', '登録したアイテムが取得できること');
 
+	});
+
+	test('removeでアイテムを削除できること。引数に配列を指定した場合は複数削除できること', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+		var item1 = model.create({
+			id: 1,
+			val: 1
+		});
+		var item2 = model.create({
+			id: 2,
+			val: 2
+		});
+		var item3 = model.create({
+			id: 3,
+			val: 3
+		});
+		strictEqual(model.has(1), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(model.has(2), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(model.has(3), true, '削除する前はmodel.hasの結果がtrueであること');
+
+		var item = model.remove(1);
+		strictEqual(item, item1, 'removeの戻り値はDataItemインスタンスであること');
+
+		strictEqual(model.get(1), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(model.has(1), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(model.size, 2, 'model.sizeが1減っていること');
+
+		item = model.remove('noExistId');
+		strictEqual(item, null, '存在しないIDをremoveした時の戻り値はnullであること');
+
+		var items = model.remove([2, 'noExistId', 3]);
+		// TODO removeの戻り値を確認する
+		deepEqual(items, [item2, null, item3], 'removeに配列を渡した時の戻り値は各要素のremove結果が格納された配列であること');
+
+
+		// TODO 削除されたアイテムインスタンスがどうなっているか確認する
+
+		strictEqual(model.get(2), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(model.has(2), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(model.get(3), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(model.has(3), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(model.size, 0, 'すべて削除したので、model.sizeが0になっていること');
 	});
 
 	module('type', {
@@ -5846,38 +5975,21 @@ $(function() {
 		}
 	});
 
-	test('addEventListener itemsChangeイベント', function() {
-		var itemsChangeArgs = {};
-		var itemsChangeCount = 0;
-		function itemsChangeListener(arg) {
-			itemsChangeArgs = obj;
-			itemsChangeCount++;
-		}
-
-		function reset() {
-			// ハンドラ実行回数をカウントする変数のリセット
-			itemsChangeCount = 0;
-			// 引数を格納するオブジェクト変数のリセット
-			itemsChangeArgs = {};
-		}
-
-		// TODO itemChangeイベントをテストするコードを書く。
-		// beginUpdate/endUpdateを使ったテストは、beginUpdate/endUpdateのテストの箇所に書く
-		// create([item1,item2,,,,])とした場合は、発火は1回、引数に複数のアイテムが入ってくるので、それはここで確認する
-	});
-
-	test('addEventListener changeイベント', function() {
-		// addEventListenerに登録するハンドラの定義
+	test('changeイベント', function() {
+		// addEventListenerに登録したハンドラが実行されたことを確認する変数
 		var changeCount = 0;
 		var changeCount2 = 0;
+		// changeイベントに渡された引数
 		var changeArgs = {};
-		var changeArgs2 = {};
+		// 呼ばれた順番
+		var order = [];
 		function changeListener(arg) {
+			order.push('changeListener');
 			changeArgs = arg;
 			changeCount++;
 		}
 		function changeListener2(arg) {
-			changeArgs2 = arg;
+			order.push('changeListener2');
 			changeCount2++;
 		}
 
@@ -5887,6 +5999,8 @@ $(function() {
 			// 引数を格納するオブジェクト変数のリセット
 			changeArgs = {};
 			changeArgs2 = {};
+			// 呼ばれた順番をリセット
+			order = [];
 		}
 
 		var model = manager.createModel({
@@ -5894,17 +6008,15 @@ $(function() {
 			schema: {
 				id: {
 					id: true,
-					type: 'number',
 				},
-				value: {
-					type: 'string'
-				}
+				value: {},
+				value2: {}
 			}
 		});
 
 		var item = model.create({
-			id: 0,
-			value: 'test'
+			id: 1,
+			value: 1
 		});
 
 		ok(!item.hasEventListener('change', changeListener),
@@ -5912,39 +6024,67 @@ $(function() {
 		item.addEventListener('change', changeListener);
 		ok(item.hasEventListener('change', changeListener),
 				'addEventListenerした後のhasEventListener()はtrueであること');
-		ok(item.hasEventListener('change', changeListener),
-				'addEventListenerした後のhasEventListener()はtrueであること');
 
-		item.id = 1;
+		item.value = 'test';
+		item.refresh();
 		strictEqual(changeCount, 1, '値を変更すると、addEventListenerのchangeイベントに登録したハンドラが実行されること');
-		// TODO ハンドラの引数のチェックを行う
+		ok(changeArgs, 'changeイベントオブジェクトが取得できること');
+		strictEqual(changeArgs.type, 'change', 'typeは"change"であること');
+		strictEqual(changeArgs.target, item, 'targetはDataItemインスタンスであること');
+		deepEqual(changeArgs.props, {
+			value: {
+				oldValue: 1,
+				newValue: 'test'
+			}
+		}, 'targetはDataItemインスタンスであること');
 		reset();
 
-		item.value = 'a';
-		strictEqual(changeCount, 1, '値を変更すると、addEventListenerのchangeイベントに登録したハンドラが実行されること');
+		item.value = 'test';
+		item.refresh();
+		strictEqual(changeCount, 0, '代入しても値が変わらない場合はイベントが起きないこと');
 		reset();
 
-		item.value = 'a';
-		strictEqual(changeCount, 0, '同じ値を代入した場合(変更なしの場合)、ハンドラは実行されないこと');
+		manager.beginUpdate();
+		item.value = 'AB';
+		item.value = 'ABC';
+		item.value = 'ABC2';
+		manager.endUpdate();
+		item.refresh();
+		strictEqual(changeCount, 1, '値を変更すると、addEventListenerのchangeイベントに登録したハンドラが実行されること');
+		ok(changeArgs, 'changeイベントオブジェクトが取得できること');
+		strictEqual(changeArgs.type, 'change', 'typeは"change"であること');
+		strictEqual(changeArgs.target, item, 'targetはDataItemインスタンスであること');
+		deepEqual(changeArgs.props, {
+			value: {
+				oldValue: 'test',
+				newValue: 'ABC'
+			},
+			value2: {
+				oldValue: null,
+				newValue: 'ABC2'
+			},
+		}, 'propsプロパティから変更点が分かること');
 		reset();
 
 		try {
-			item.id = '1';
+			item.id = {};
+			item.refresh();
 		} finally {
-			strictEqual(changeCount, 0, '型指定の異なる値を代入した場合はエラーが発生し、ハンドラは実行されないこと');
+			strictEqual(changeCount, 0, 'プロパティ代入時(refresh時に)エラーが発生た場合は、ハンドラは実行されないこと');
 		}
 		reset();
-
 		var item2 = model.create({
 			id: 1,
 			value: 'test'
 		});
 		item2.value = 'a';
+		item2.refresh();
 		strictEqual(changeCount, 0, 'addEventListenerしていないインスタンスの値を変更しても、ハンドラは実行されないこと');
 		reset();
 
 		item.addEventListener('change', changeListener);
 		item.value = 'b';
+		item.refresh();
 		strictEqual(changeCount, 1, '同じハンドラを再度addEventListenerしても、値変更時に1度だけ実行されること');
 		reset();
 
@@ -5955,9 +6095,163 @@ $(function() {
 		strictEqual(changeCount2, 1, 'addEventListenerを2回、異なるハンドラを登録した場合、2つ目のハンドラが実行されること');
 		reset();
 
-		// テスト用に追加したハンドラをremove
-		item.removeEventListener('change', changeListener);
-		item.removeEventListener('change', changeListener2);
+		model.addEventListener('itemsChange', function() {
+			order.push('itemsChangeListener');
+		});
+
+		item.value = 'd';
+		item.refresh();
+		deepEqual(order, ['changeListener', 'changeListener2', 'itemsChangelistener'],
+				'changeイベントに登録したハンドラが登録順に実行され、最後にモデルのitemsChangeイベントハンドラが実行されること');
+	});
+
+	test('itemsChangeイベント create', function() {
+		var itemsChangeArgs = null;
+		var itemsChangeCount = 0;
+		function itemsChangeListener(args) {
+			itemsChangeArgs = args;
+			itemsChangeCount++;
+		}
+
+		function reset() {
+			// ハンドラ実行回数をカウントする変数のリセット
+			itemsChangeCount = 0;
+			// 引数を格納する変数のリセット
+			itemsChangeArgs = null;
+			// changeイベントに渡された引数を格納する変数のリセット
+			changeArgs = null;
+
+		}
+
+		// TODO itemChangeイベントをテストするコードを書く。
+		// beginUpdate/endUpdateを使ったテストは、beginUpdate/endUpdateのテストの箇所に書く
+		// create([item1,item2,,,,])とした場合は、発火は1回、引数に複数のアイテムが入ってくるので、それはここで確認する
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				value: {},
+				value2: {}
+			}
+		});
+
+		model.addEventListener('itemsChange', itemsChangeListener);
+		var item = model.create({
+			id: 1
+		});
+		item.addEventListener('change', function(args) {
+			changeArgs = args;
+		});
+
+		strictEqual(itemsChangeCount, 1, 'itemsChangeイベントに登録したハンドラが一度だけ実行されていること');
+		ok(itemsChangeArgs, 'itemsChangeイベントオブジェクトが取得できること');
+		strictEqual(itemsChangeArgs.type, 'itemsChange', 'typeプロパティの値が"itemsChange"であること"');
+		strictEqual(itemsChangeArgs.target, model, 'targetプロパティに当該データモデルインスタンスが格納されていること');
+		deepEqual(itemsChangeArgs.added, [item], 'addedプロパティに追加されたアイテムが格納されていること');
+		deepEqual(itemsChangeArgs.removed, [], 'removedプロパティは空配列であること');
+		deepEqual(itemsChangeArgs.changed, [], 'changedプロパティは空配列であること');
+
+		reset();
+
+		var items = model.create([{
+			id: 11
+		}, {
+			id: 22
+		}, {
+			id: 33
+		}]);
+
+		strictEqual(itemsChangeCount, 1, 'itemsChangeイベントに登録したハンドラが一度だけ実行されていること');
+		ok(itemsChangeArgs, 'itemsChangeイベントオブジェクトが取得できること');
+		strictEqual(itemsChangeArgs.type, 'itemsChange', 'typeプロパティの値が"itemsChange"であること"');
+		strictEqual(itemsChangeArgs.target, model, 'targetプロパティに当該データモデルインスタンスが格納されていること');
+		deepEqual(itemsChangeArgs.added, items, 'addedプロパティに追加されたアイテムが格納されていること');
+		deepEqual(itemsChangeArgs.removed, [], 'removedプロパティは空配列であること');
+		deepEqual(itemsChangeArgs.changed, [], 'changedプロパティは空配列であること');
+
+		items = model.remove(['11', '22', '33']);
+
+		strictEqual(itemsChangeCount, 1, 'itemsChangeイベントに登録したハンドラが一度だけ実行されていること');
+		ok(itemsChangeArgs, 'itemsChangeイベントオブジェクトが取得できること');
+		strictEqual(itemsChangeArgs.type, 'itemsChange', 'typeプロパティの値が"itemsChange"であること"');
+		strictEqual(itemsChangeArgs.target, model, 'targetプロパティに当該データモデルインスタンスが格納されていること');
+		deepEqual(itemsChangeArgs.added, [], 'addedプロパティは空配列であること');
+		deepEqual(itemsChangeArgs.removed, items, 'removedプロパティに削除されたアイテムが格納されていること');
+		deepEqual(itemsChangeArgs.changed, [], 'changedプロパティは空配列であること');
+
+		reset();
+
+		item.value = "abc";
+		item.refresh();
+
+		strictEqual(itemsChangeCount, 1, 'itemsChangeイベントに登録したハンドラが一度だけ実行されていること');
+		ok(itemsChangeArgs, 'itemsChangeイベントオブジェクトが取得できること');
+		strictEqual(itemsChangeArgs.type, 'itemsChange', 'typeプロパティの値が"itemsChange"であること"');
+		strictEqual(itemsChangeArgs.target, model, 'targetプロパティに当該データモデルインスタンスが格納されていること');
+		deepEqual(itemsChangeArgs.added, [], 'addedプロパティは空配列であること');
+		deepEqual(itemsChangeArgs.removed, [], 'removedプロパティは空配列であること');
+		deepEqual(changedArray, [changedArgs], 'changedプロパティがchangeイベントオブジェクトが1つ格納されている配列であること');
+
+
+		// 複数のプロパティを変えた場合
+		model.create({
+			id: 1,
+			value: 1111,
+			value: 2222
+		});
+
+		strictEqual(itemsChangeCount, 1, 'itemsChangeイベントに登録したハンドラが一度だけ実行されていること');
+		ok(itemsChangeArgs, 'itemsChangeイベントオブジェクトが取得できること');
+		strictEqual(itemsChangeArgs.type, 'itemsChange', 'typeプロパティの値が"itemsChange"であること"');
+		strictEqual(itemsChangeArgs.target, model, 'targetプロパティに当該データモデルインスタンスが格納されていること');
+		deepEqual(itemsChangeArgs.added, [], 'addedプロパティは空配列であること');
+		deepEqual(itemsChangeArgs.removed, [], 'removedプロパティは空配列であること');
+		var changedArray = itemsChangeArgs.changed;
+		deepEqual(changedArray, [changedArgs], 'changedプロパティがchangeイベントオブジェクトが1つ格納されている配列であること');
+
+
+		// create内に、同一idのオブジェクトがある場合
+		reset();
+		var changeArgsArray = [];
+		var item11 = model.get(11);
+		item11.addEventListener('change', function(args) {
+			changeArgsArray.push(args);
+		});
+		var item22 = model.get(22);
+		item22.addEventListener('change', function(args) {
+			changeArgsArray.push(args);
+		});
+		var items = model.create({
+			id: 111
+		}, {
+			id: 222
+		}, {
+			id: 333
+		}, {
+			id: 111,
+			value: 'abc'
+		}, {
+			id: 222,
+			value: 'abc'
+		}, {
+			id: 11,
+			value: 'abc'
+		}, {
+			id: 22,
+			value: 'abc'
+		});
+
+		strictEqual(itemsChangeCount, 1, 'itemsChangeイベントに登録したハンドラが一度だけ実行されていること');
+		ok(itemsChangeArgs, 'itemsChangeイベントオブジェクトが取得できること');
+		strictEqual(itemsChangeArgs.type, 'itemsChange', 'typeプロパティの値が"itemsChange"であること"');
+		strictEqual(itemsChangeArgs.target, model, 'targetプロパティに当該データモデルインスタンスが格納されていること');
+		deepEqual(itemsChangeArgs.added, [items[0], items[1], items[2]],
+				'addedに追加されたDataItemインスタンスの配列が格納されていること');
+		deepEqual(itemsChangeArgs.removed, [], 'removedプロパティは空配列であること');
+		deepEqual(itemsChangeArgs.changed, changeArgsArray,
+				'changedプロパティが、DataItem二つの変更分のchangeイベントオブジェクトが格納されている配列であること');
 	});
 
 	test('removeEventListener', function() {
