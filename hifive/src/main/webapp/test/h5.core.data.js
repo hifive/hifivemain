@@ -130,6 +130,12 @@ $(function() {
 		}
 	});
 
+	test('データモデルマネージャの作成 名前空間指定のない場合は同名のにマネージャを作成できること', function() {
+		manager = h5.core.data.createManager('TestModel');
+		var manager2 = h5.core.data.createManager('TestModel');
+		ok(manager !== manager2, '同名のマネージャを作成したとき、別インスタンスであること');
+	});
+
 	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', function() {
 		var errCode = 30005;
 		h5.u.obj.expose('com.htmlhifive.test', {
@@ -1580,19 +1586,153 @@ $(function() {
 			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること any',
 			function() {
-			// TODO
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = 'any';
+
+				var invalidProps = [{
+					type: type,
+					// defaultValueなし
+					constraint: {
+						notNull: true
+					}
+				}, {
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: null
+				}];
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること @DataModelName',
 			function() {
-			// TODO
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = '@ParentModel';
+
+				var invalidProps = [{
+					type: type,
+					// defaultValueなし
+					constraint: {
+						notNull: true
+					}
+				}, {
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: null
+				}];
+
+				// ParentModelの作成
+				manager.createModel({
+					name: 'ParentModel',
+					schema: {
+						id: {
+							id: true
+						}
+					}
+				});
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string[]',
 			function() {
-			// TODO
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = 'string[]';
+
+				var invalidProps = [{
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: [null]
+				}, {
+					type: type,
+					constraint: {
+						notEmpty: true
+					},
+					defaultValue: [null]
+				}, {
+					type: type,
+					constraint: {
+						notEmpty: true
+					},
+					defaultValue: ['']
+				}, {
+					type: type,
+					constraint: {
+						minLength: 3
+					},
+					defaultValue: ["abc", "ab"]
+				}, {
+					type: type,
+					constraint: {
+						maxLength: 3
+					},
+					defaultValue: ["abc", "ab", "abcd"]
+				}, {
+					type: type,
+					constraint: {
+						pattern: /a/
+					},
+					defaultValue: ["abc", "ab", "bcd"]
+				}];
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string[][]',
 			function() {
-			// TODO
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = 'string[]';
+
+				var invalidProps = [{
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: [["a", "b"], [null]]
+				}, {
+					type: type,
+					constraint: {
+						notEmpty: true
+					},
+					defaultValue: [["a", "b"], [null]]
+				}, {
+					type: type,
+					constraint: {
+						notEmpty: true
+					},
+					defaultValue: [["a", "b"]['']]
+				}, {
+					type: type,
+					constraint: {
+						minLength: 3
+					},
+					defaultValue: [["abc", "abc"], ["abc", "ab"]]
+				}, {
+					type: type,
+					constraint: {
+						maxLength: 3
+					},
+					defaultValue: [["abc", "abc"], ["abcd", "abc", "abc"]]
+				}, {
+					type: type,
+					constraint: {
+						pattern: /a/
+					},
+					defaultValue: [["abc", "abc"], ["abcd", "bc", "abc"]]
+				}];
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 
 	test('データモデルの登録 schemaのチェック descriptorと、schemaのプロパティ定義に無関係なプロパティが含まれていても、エラーにならないこと。', 1,
@@ -1629,9 +1769,7 @@ $(function() {
 		}
 	});
 
-	test(
-			'データモデルのドロップ',
-			10,
+	test('データモデルのドロップ', 10,
 			function() {
 				var model1 = manager.createModel({
 					name: 'TestDataModel1',
@@ -1673,7 +1811,8 @@ $(function() {
 						'dropModelの戻り値はドロップしたデータモデルオブジェクトであり、名前が取得できること');
 				strictEqual(model1.manager, null, 'dropModelの戻り値のmanagerプロパティはnullであること');
 				strictEqual(model1.size, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、サイズを取得できること');
-				strictEqual(model1.items['1'].val, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、値を取得できること');
+				strictEqual(model1.items['1'].val, 1,
+						'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、値を取得できること');
 				manager.dropModel('TestDataModel2');
 				strictEqual(manager.models.TestDataModel2, undefined,
 						'モデル2をドロップした後、モデル2がmanager.modelsの中に入っていないこと');
@@ -1691,15 +1830,153 @@ $(function() {
 	});
 
 	test('createでアイテムが生成できること。引数に配列を渡した場合は戻り値も配列になること。', function() {
-	// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー (配列の途中でエラーが出た場合、アトミックに処理されるかどうかの仕様を確認する)
+		// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー (配列の途中でエラーが出た場合、アトミックに処理されるかどうかの仕様を確認する)
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+
+		var item = model.create({
+			id: '123',
+			val: 456
+		});
+
+		strictEqual(item.id, '123', 'create時に指定した値が戻り値から取得できること');
+		strictEqual(item.val, 456, 'create時に指定した値が戻り値から取得できること');
+
+
+		item = model.create({
+			id: 456
+		});
+
+		strictEqual(item.id, '456', 'createでidに数字を指定しても、文字列として格納されていること');
+		strictEqual(item.val, null, 'create時に値を指定していない値について、nullが格納されてること');
+
+		var items = model.create([{
+			id: 1
+		}, {
+			id: 2
+		}, {
+			id: 3
+		}]);
+
+		strictEqual(items.length, 3, 'createの引数に配列を渡すと、戻り値がアイテムの配列として返ってくること');
+		strictEqual(items[0].id, '1', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[1].id, '1', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[2].id, '1', '戻り値の配列の中身が正しいこと');
 	});
 
-	test('idの重複するアイテムは生成できず、エラーになること', function() {
-	// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー
+	test('idの重複するアイテムは生成できず、エラーになること', 2, function() {
+		var errCode = 30000;
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+
+		model.create({
+			id: 1
+		});
+		try {
+			model.create({
+				id: 1
+			});
+			ok(false, 'エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+			strictEqual(model.get("1"), null, 'エラーが発生した場合はアイテムが生成されていないこと');
+		}
+		try {
+			model.create([{
+				id: 2
+			}, {
+				id: 2
+			}]);
+			ok(false, 'エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		} finally {
+			// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない(TODO 確認する)
+			strictEqual(model.get("2"), null, 'エラーが発生した場合はアイテムが生成されていないこと');
+		}
+	});
+
+	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、アイテムは一つも生成されないこと(アトミックに処理されること)', function() {
+	// TODO アトミックかどうか確認する
 	});
 
 	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
-	// TODO
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+		var model2 = manager.createModel({
+			name: 'TestDataModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+
+		model.create([{
+			id: 1,
+			val: 'item1'
+		},{
+			id: 2,
+			val: 'item2'
+		},{
+			id: 3,
+			val: 'item3'
+		}]);
+		model2.create([{
+			id: 1,
+			val: 'model2 item1'
+		},{
+			id: 4,
+			val: 'model2 item1'
+		}]);
+
+		var manager2 = createManager('TestManager');
+		var model3 = manager2.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+		model3.create({id: 2,val:'manager2 item2'});
+
+
+		strictEqual(model.get('1').val, 'item1', '登録したアイテムが取得できること');
+		strictEqual(model.get('2').val, 'item2', '登録したアイテムが取得できること');
+		strictEqual(model.get('3').val, 'item3', '登録したアイテムが取得できること');
+		strictEqual(model.get('abc'), null, '登録されていないidを渡すとnullが返ってくること');
+		strictEqual(model.get('4'), null, '違うモデルに登録したアイテムは取得できないこと。');
+		var items = model.get(['2','4','1','3', 'abcd']);
+		strictEqual(items.length, 3, 'idの配列を引数に渡してアイテムを取得できること');
+		strictEqual(model.get('2').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
+		strictEqual(model.get('2').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
+		strictEqual(model.get('2').val, 'item2', '登録したアイテムが取得できること');
+		strictEqual(model.get('3').val, 'item3', '登録したアイテムが取得できること');
+
 	});
 
 	module('type', {
@@ -2986,6 +3263,7 @@ $(function() {
 		}
 	});
 
+	// NaN === NaN = false(h5.core.data.js l.525の判定を修正する)
 	// 2012/07/27 竹内追記 type:any[]は無い
 	test('type指定 any', function() {
 		var div = document.createElement('div');
@@ -3039,11 +3317,11 @@ $(function() {
 					test1: sub[i]
 				});
 
-				equal(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
+				deepEqual(item2.test1, sub[i], 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
 
 				item2.test1 = sub[i];
 
-				equal(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+				deepEqual(item2.test1, sub[i], 'typeプロパティで指定した型の値が代入できること。');
 			}
 		} catch (e) {
 			ok(false, 'エラーが発生しました。『' + e.message + '』');
@@ -3170,6 +3448,126 @@ $(function() {
 		}
 	});
 
+	test('type指定 enum[] 正常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'enum[]',
+					defaultValue: 10,
+					enumValue: ['a', 10, true, testClass1]
+				},
+				test2: {
+					type: 'enum[]',
+					enumValue: ['b', 20, false, testClass1]
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			// 初期値は正しいか
+			equal(item.test1, 10, 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			strictEqual(item.test2, 'b', 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: id++,
+				test1: testClass1
+			});
+
+			deepEqual(item.test1, testClass1, 'type:\'enum[]\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = ['b', 20, false, testClass1];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: id++,
+					test2: sub[i]
+				});
+
+				deepEqual(item2.test1, sub[i], 'test2に' + sub[i] + 'が代入されてDataItemが生成されること。');
+
+				item2.test2 = sub[i];
+
+				deepEqual(item2.test2, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
+	test('type指定 enum[] 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'enum[]',
+					defaultValue: 10,
+					enumValue: ['a', 10, true, testClass1]
+				},
+				test2: {
+					type: 'enum[]',
+					enumValue: ['b', 20, false, testClass1]
+				}
+			}
+		});
+
+		try {
+			var id = 1;
+			var item = model.create({
+				id: id++
+			});
+
+			item = model.create({
+				id: id++,
+				test1: testClass1
+			});
+
+			// 代入不可な値を指定した場合は例外が発生するか
+			var nosub = [1, false, 'z', null, undefined, /[0-9]/, new RegExp(), 'true',
+					new String(10), '', Infinity, -Infinity, new Number(1), NaN, window, {},
+					new Object(), new Object(['b']), new Array('a'), ['a'], function() {
+						return 'a';
+					}, new TestClass1(), new String('a'), new Object('a'), new Number(10),
+					new Object(10), new Boolean(1), new Object(true)];
+			for ( var i = 0; i < nosub.length; i++) {
+				raises(function() {
+					model.create({
+						id: id++,
+						test1: nosub[i]
+					});
+				}, '指定された型以外の値でcreateできないこと。');
+
+				raises(function() {
+					item.test1 = nosub[i];
+				}, '指定された型以外の値は代入できないこと。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
+
 	// 2012/07/27 竹内追記 仕様が確定するまで取りあえず放置
 	test('enhanceの指定されているプロパティは、値をセットしても何もイベントが起きず、値のチェックも行われないこと', function() {
 	// TODO
@@ -3203,38 +3601,2137 @@ $(function() {
 	//	・長さ系/patternのチェックは、
 	//	　値が入っている場合のみかかる。
 	//	　従って、nullがセットされた場合はかからない。
-	test('notNull 制約が適用されているか', function() {
-	// TODO
+	test('notNull 制約が適用されているか 正常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'aaa'
+				},
+				test2: {
+					type: 'string[]',
+					defaultValue: ['a', 'b', 'c']
+				},
+				test3: {
+					type: 'number',
+					defaultValue: 10.5
+				},
+				test4: {
+					type: 'number[]',
+					defaultValue: [20.1, 20.2, 20.3]
+				},
+				test5: {
+					type: 'integer',
+					defaultValue: 6
+				},
+				test6: {
+					type: 'integer[]',
+					defaultValue: [7, 8, 9]
+				},
+				test7: {
+					type: 'boolean',
+					defaultValue: true
+				},
+				test8: {
+					type: 'boolean[]',
+					defaultValue: [true, false]
+				},
+				test9: {
+					type: 'array',
+					defaultValue: [30, 'ZZZ', /[0-9]/]
+				},
+				test10: {
+					type: 'any',
+					defaultValue: {
+						hoge: 1
+					}
+				},
+				test11: {
+					type: '@DataModel1',
+					defaultValue: itemA
+				},
+				test12: {
+					type: '@DataModel1[]',
+					defaultValue: [itemB, itemA]
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [10.8, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemB],
+					defaultValue: [1, 2, 3]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 5, 'YYY', 10.8],
+					defaultValue: testClass1
+				},
+				constraint: {
+					notNull: true
+				}
+			}
+		});
+
+		var id = 1;
+
+		var item1 = model1.create({
+			id: id++
+		});
+
+		equal(item1.test1, 'aaa', 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test2, ['a', 'b', 'c'], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test3, 10.5, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test4, [20.1, 20.2, 20.3], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test5, 6, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test6, [7, 8, 9], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test7, true, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test8, [true, false], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test9, [30, 'ZZZ', /[0-9]/], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test10, {
+			hoge: 1
+		}, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test11, itemA, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test12, [itemB, itemA], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test13, [1, 2, 3], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test14, testClass1, 'defaultValueで指定した値を持つDataItemが作成できること。');
+
+		var $div = $('<div></div>');
+
+		var item2 = model1.create({
+			id: id++,
+			test1: 'bbb',
+			test2: ['A', 'B', 'C'],
+			test3: 120.1,
+			test4: [81.1, 81.2, 81.3],
+			test5: 3000,
+			test6: [4000, 5000, 6000],
+			test7: false,
+			test8: [false, false],
+			test9: [true, '9999', 70.5],
+			test10: $div,
+			test11: itemB,
+			test12: itemA,
+			test13: true,
+			test14: 5
+		});
+
+		equal(item2.test1, 'bbb', 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test2, ['A', 'B', 'C'], 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test3, 120.1, 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test4, [81.1, 81.2, 81.3], 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test5, 3000, 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test6, [4000, 5000, 6000], 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test7, false, 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test8, [false, false], 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test9, [true, '9999', 70.5], 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test10, $div, 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test11, itemB, 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test12, itemA, 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test13, true, 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test14, 5, 'descriptionに指定した値を持つDataItemが作成できること。');
 	});
 
-	test('notEmpty 制約が適用されているか', function() {
-	// TODO
+	test('notNull 制約が適用されているか 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'aaa'
+				},
+				test2: {
+					type: 'string[]',
+					defaultValue: ['a', 'b', 'c']
+				},
+				test3: {
+					type: 'number',
+					defaultValue: 10.5
+				},
+				test4: {
+					type: 'number[]',
+					defaultValue: [20.1, 20.2, 20.3]
+				},
+				test5: {
+					type: 'integer',
+					defaultValue: 6
+				},
+				test6: {
+					type: 'integer[]',
+					defaultValue: [7, 8, 9]
+				},
+				test7: {
+					type: 'boolean',
+					defaultValue: true
+				},
+				test8: {
+					type: 'boolean[]',
+					defaultValue: [true, false]
+				},
+				test9: {
+					type: 'array',
+					defaultValue: [30, 'ZZZ', /[0-9]/]
+				},
+				test10: {
+					type: 'any',
+					defaultValue: {
+						hoge: 1
+					}
+				},
+				test11: {
+					type: '@DataModel1',
+					defaultValue: itemA
+				},
+				test12: {
+					type: '@DataModel1[]',
+					defaultValue: [itemB, itemA]
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [10.8, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemB],
+					defaultValue: [1, 2, 3]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 5, 'YYY', 10.8],
+					defaultValue: testClass1
+				},
+				constraint: {
+					notNull: true
+				}
+			}
+		});
+
+		var i = 0;
+		for (i = 0; i < 15; i++) {
+			raises(function() {
+				var desc1 = {
+					id: i
+				};
+				desc1['test' + i] = null;
+
+				model1.create(desc1);
+			}, 'NotNull制約があるため、値にnullを指定してDataItemを作成できないこと。');
+		}
+
+		for (i = 0; i < 15; i++) {
+			raises(function() {
+				var desc2 = {
+					id: i
+				};
+				desc2['test' + i] = undefined;
+
+				model1.create(desc2);
+			}, 'NotNull制約があるため、値にundefinedを指定してDataItemを作成できないこと。');
+		}
 	});
 
-	test('min 制約が適用されているか', function() {
-	// TODO
+	test('notEmpty 制約が適用されているか 正常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'aaa'
+				},
+				test2: {
+					type: 'string[]',
+					defaultValue: ['a', 'b', 'c']
+				},
+				test3: {
+					type: 'number',
+					defaultValue: 10.5
+				},
+				test4: {
+					type: 'number[]',
+					defaultValue: [20.1, 20.2, 20.3]
+				},
+				test5: {
+					type: 'integer',
+					defaultValue: 6
+				},
+				test6: {
+					type: 'integer[]',
+					defaultValue: [7, 8, 9]
+				},
+				test7: {
+					type: 'boolean',
+					defaultValue: true
+				},
+				test8: {
+					type: 'boolean[]',
+					defaultValue: [true, false]
+				},
+				test9: {
+					type: 'array',
+					defaultValue: [30, 'ZZZ', /[0-9]/]
+				},
+				test10: {
+					type: 'any',
+					defaultValue: {
+						hoge: 1
+					}
+				},
+				test11: {
+					type: '@DataModel1',
+					defaultValue: itemA
+				},
+				test12: {
+					type: '@DataModel1[]',
+					defaultValue: [itemB, itemA]
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [10.8, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemB],
+					defaultValue: [1, 2, 3]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 5, 'YYY', 10.8],
+					defaultValue: testClass1
+				},
+				constraint: {
+					notEmpty: true
+				}
+			}
+		});
+
+		var id = 1;
+
+		var item1 = model1.create({
+			id: id++
+		});
+
+		equal(item1.test1, 'aaa', 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test2, ['a', 'b', 'c'], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test3, 10.5, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test4, [20.1, 20.2, 20.3], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test5, 6, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test6, [7, 8, 9], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test7, true, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test8, [true, false], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test9, [30, 'ZZZ', /[0-9]/], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test10, {
+			hoge: 1
+		}, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test11, itemA, 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test12, [itemB, itemA], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		deepEqual(item1.test13, [1, 2, 3], 'defaultValueで指定した値を持つDataItemが作成できること。');
+		equal(item1.test14, testClass1, 'defaultValueで指定した値を持つDataItemが作成できること。');
+
+		var $div = $('<div></div>');
+
+		var item2 = model1.create({
+			id: id++,
+			test1: 'bbb',
+			test2: ['A', 'B', 'C'],
+			test3: 120.1,
+			test4: [81.1, 81.2, 81.3],
+			test5: 3000,
+			test6: [4000, 5000, 6000],
+			test7: false,
+			test8: [false, false],
+			test9: [true, '9999', 70.5],
+			test10: $div,
+			test11: itemB,
+			test12: itemA,
+			test13: true,
+			test14: 5
+		});
+
+		equal(item2.test1, 'bbb', 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test2, ['A', 'B', 'C'], 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test3, 120.1, 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test4, [81.1, 81.2, 81.3], 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test5, 3000, 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test6, [4000, 5000, 6000], 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test7, false, 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test8, [false, false], 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test9, [true, '9999', 70.5], 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test10, $div, 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test11, itemB, 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test12, itemA, 'descriptionに指定した値を持つDataItemが作成できること。');
+		deepEqual(item2.test13, true, 'descriptionに指定した値を持つDataItemが作成できること。');
+		equal(item2.test14, 5, 'descriptionに指定した値を持つDataItemが作成できること。');
 	});
 
-	test('max 制約が適用されているか', function() {
-	// TODO
+	test('notNull 制約が適用されているか 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'a'
+				},
+				test2: {
+					type: 'string[]',
+					defaultValue: ['a', 'b', 'c']
+				},
+				test3: {
+					type: 'number',
+					defaultValue: 10.5
+				},
+				test4: {
+					type: 'number[]',
+					defaultValue: [20.1, 20.2, 20.3]
+				},
+				test5: {
+					type: 'integer',
+					defaultValue: 6
+				},
+				test6: {
+					type: 'integer[]',
+					defaultValue: [7, 8, 9]
+				},
+				test7: {
+					type: 'boolean',
+					defaultValue: true
+				},
+				test8: {
+					type: 'boolean[]',
+					defaultValue: [true, false]
+				},
+				test9: {
+					type: 'array',
+					defaultValue: [30, 'ZZZ', /[0-9]/]
+				},
+				test10: {
+					type: 'any',
+					defaultValue: {
+						hoge: 1
+					}
+				},
+				test11: {
+					type: '@DataModel1',
+					defaultValue: itemA
+				},
+				test12: {
+					type: '@DataModel1[]',
+					defaultValue: [itemB, itemA]
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [10.8, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemB],
+					defaultValue: [1, 2, 3]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 5, 'YYY', 10.8],
+					defaultValue: testClass1
+				},
+				constraint: {
+					notEmpty: true
+				}
+			}
+		});
+
+		var i = 0;
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: ''
+			});
+		}, 'NotEmpty制約があるため、値に空文字を指定してDataItemを作成できないこと。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test2: ['a', '']
+			});
+		}, 'NotEmpty制約があるため、値に空文字を指定してDataItemを作成できないこと。');
 	});
 
-	test('minLength 制約が適用されているか', function() {
-	// TODO
+	test('min 制約が適用されているか 正常系',
+			function() {
+				function TestClass1() {
+					this.num = 10;
+				}
+				var testClass1 = new TestClass1();
+
+				var model1 = manager.createModel({
+					name: 'DataModel1',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'string',
+							defaultValue: 'ccc'
+						}
+					}
+				});
+
+				var id = 1;
+
+				var itemA = model1.create({
+					id: id++,
+					test1: 'bbb'
+				});
+
+				var itemB = model1.create({
+					id: id++,
+					test1: 'bbb'
+				});
+
+				model1 = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true,
+						},
+						test1: {
+							type: 'string'
+						},
+						test2: {
+							type: 'string[]'
+						},
+						test3: {
+							type: 'number',
+						},
+						test4: {
+							type: 'number[]'
+						},
+						test5: {
+							type: 'integer'
+						},
+						test6: {
+							type: 'integer[]'
+						},
+						test7: {
+							type: 'boolean'
+						},
+						test8: {
+							type: 'boolean[]'
+						},
+						test9: {
+							type: 'array'
+						},
+						test10: {
+							type: 'any'
+						},
+						test11: {
+							type: '@DataModel1'
+						},
+						test12: {
+							type: '@DataModel1[]'
+						},
+						test13: {
+							type: 'enum',
+							enumValue: [4.5, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemA]
+						},
+						test14: {
+							type: 'enum[]',
+							enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4, 'YYY',
+									10.8]
+						},
+						constraint: {
+							min: 5
+						}
+					}
+				});
+
+				var item1 = model1.create({
+					id: id++,
+					test1: '4',
+					test2: ['4'],
+					test3: 5.0,
+					test4: [5.0],
+					test5: 5,
+					test6: [5],
+					test7: true,
+					test8: [true],
+					test9: [4],
+					test10: 4,
+					test11: itemA,
+					test12: [itemB, itemA],
+					test13: 4.0,
+					test14: 4
+				});
+
+				equal(item1.test1, '4',
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				deepEqual(item1.test2, ['4'],
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				equal(item1.test3, 5.0,
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				deepEqual(item1.test4, [5.0],
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				equal(item1.test5, 5,
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				deepEqual(item1.test6, [5],
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				equal(item1.test7, true,
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				deepEqual(item1.test8, [true],
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				deepEqual(item1.test9, [4],
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				equal(item1.test10, 4,
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				equal(item1.test11, itemA,
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				deepEqual(item1.test12, [itemB, itemA],
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				equal(item1.test13, 4.0,
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+				equal(item1.test14, 4,
+						'type:number,number[],integer,integer[]の場合、create時にminがチェックされること。');
+			});
+
+	test('min 制約が適用されているか 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string'
+				},
+				test2: {
+					type: 'string[]'
+				},
+				test3: {
+					type: 'number',
+				},
+				test4: {
+					type: 'number[]'
+				},
+				test5: {
+					type: 'integer'
+				},
+				test6: {
+					type: 'integer[]'
+				},
+				test7: {
+					type: 'boolean'
+				},
+				test8: {
+					type: 'boolean[]'
+				},
+				test9: {
+					type: 'array'
+				},
+				test10: {
+					type: 'any'
+				},
+				test11: {
+					type: '@DataModel1'
+				},
+				test12: {
+					type: '@DataModel1[]'
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [4.5, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemA]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4, 'YYY', 10.8]
+				},
+				constraint: {
+					min: 5
+				}
+			}
+		});
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test3: 4.999
+			});
+		}, 'minで設定した値未満の場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test4: [5.0, 4.999]
+			});
+		}, 'minで設定した値未満の場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				test5: 4
+			});
+		}, 'minで設定した値未満の場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test6: [5, 4.9]
+			});
+		}, 'minで設定した値未満の場合は、制約でエラーになること。');
 	});
 
-	test('maxLength 制約が適用されているか', function() {
-	// TODO
+	test('max 制約が適用されているか 正常系',
+			function() {
+				function TestClass1() {
+					this.num = 10;
+				}
+				var testClass1 = new TestClass1();
+
+				var model1 = manager.createModel({
+					name: 'DataModel1',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'string',
+							defaultValue: 'ccc'
+						}
+					}
+				});
+
+				var id = 1;
+
+				var itemA = model1.create({
+					id: id++,
+					test1: 'bbb'
+				});
+
+				var itemB = model1.create({
+					id: id++,
+					test1: 'bbb'
+				});
+
+				model1 = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true,
+						},
+						test1: {
+							type: 'string'
+						},
+						test2: {
+							type: 'string[]'
+						},
+						test3: {
+							type: 'number',
+						},
+						test4: {
+							type: 'number[]'
+						},
+						test5: {
+							type: 'integer'
+						},
+						test6: {
+							type: 'integer[]'
+						},
+						test7: {
+							type: 'boolean'
+						},
+						test8: {
+							type: 'boolean[]'
+						},
+						test9: {
+							type: 'array'
+						},
+						test10: {
+							type: 'any'
+						},
+						test11: {
+							type: '@DataModel1'
+						},
+						test12: {
+							type: '@DataModel1[]'
+						},
+						test13: {
+							type: 'enum',
+							enumValue: [4.5, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemB]
+						},
+						test14: {
+							type: 'enum[]',
+							enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4, 'YYY',
+									10.8]
+						},
+						constraint: {
+							max: 5
+						}
+					}
+				});
+
+				var item1 = model1.create({
+					id: id++,
+					test1: '6',
+					test2: ['6'],
+					test3: 5.0,
+					test4: [5.0],
+					test5: 5,
+					test6: [5],
+					test7: true,
+					test8: [true],
+					test9: [6],
+					test10: 6,
+					test11: itemA,
+					test12: [itemB, itemA],
+					test13: 6.0,
+					test14: 6
+				});
+
+				equal(item1.test1, '6',
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				deepEqual(item1.test2, ['6'],
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				equal(item1.test3, 5.0,
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				deepEqual(item1.test4, [5.0],
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				equal(item1.test5, 5,
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				deepEqual(item1.test6, [5],
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				equal(item1.test7, true,
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				deepEqual(item1.test8, [true],
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				deepEqual(item1.test9, [6],
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				equal(item1.test10, 6,
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				equal(item1.test11, itemA,
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				deepEqual(item1.test12, [itemB, itemA],
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				equal(item1.test13, 6.0,
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+				equal(item1.test14, 6,
+						'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
+			});
+
+	test('max 制約が適用されているか 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string'
+				},
+				test2: {
+					type: 'string[]'
+				},
+				test3: {
+					type: 'number',
+				},
+				test4: {
+					type: 'number[]'
+				},
+				test5: {
+					type: 'integer'
+				},
+				test6: {
+					type: 'integer[]'
+				},
+				test7: {
+					type: 'boolean'
+				},
+				test8: {
+					type: 'boolean[]'
+				},
+				test9: {
+					type: 'array'
+				},
+				test10: {
+					type: 'any'
+				},
+				test11: {
+					type: '@DataModel1'
+				},
+				test12: {
+					type: '@DataModel1[]'
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [4.5, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemA]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4, 'YYY', 10.8]
+				},
+				constraint: {
+					min: 5
+				}
+			}
+		});
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test3: 6.00001
+			});
+		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test4: [6.0, 6.00000001]
+			});
+		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				test5: 6
+			});
+		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test6: [5, 6]
+			});
+		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
 	});
 
-	test('pattern 制約が適用されているか', function() {
-	// TODO
+	test('minLength 制約が適用されているか 正常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string'
+				},
+				test2: {
+					type: 'string[]'
+				},
+				test3: {
+					type: 'number',
+				},
+				test4: {
+					type: 'number[]'
+				},
+				test5: {
+					type: 'integer'
+				},
+				test6: {
+					type: 'integer[]'
+				},
+				test7: {
+					type: 'boolean'
+				},
+				test8: {
+					type: 'boolean[]'
+				},
+				test9: {
+					type: 'array'
+				},
+				test10: {
+					type: 'any'
+				},
+				test11: {
+					type: '@DataModel1'
+				},
+				test12: {
+					type: '@DataModel1[]'
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [4.5, 'aaaa', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemA]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4, 'YYYY', 10.8]
+				},
+				constraint: {
+					minLength: 5
+				}
+			}
+		});
+
+		var item1 = model1.create({
+			id: id++,
+			test1: 'AAAAA',
+			test2: ['DDDDD'],
+			test3: 4.0,
+			test4: [4.0],
+			test5: 4,
+			test6: [4],
+			test7: true,
+			test8: [true],
+			test9: ['BBBB'],
+			test10: 'CCCC',
+			test11: itemA,
+			test12: [itemB, itemA],
+			test13: 'aaaa',
+			test14: 'YYYY'
+		});
+
+		equal(item1.test1, 'AAAAA', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test2, ['DDDDD'], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test3, 4.0, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test4, [4.0], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test5, 4, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test6, [4], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test7, true, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test8, [true], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test9, ['BBBB'], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test10, 'CCCC', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test11, itemA, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test12, [itemB, itemA],
+				'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test13, 'aaaa', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test14, 'YYYY', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+
+		var item2 = model1.create({
+			id: id++,
+			test1: null,
+			test2: [null]
+		});
+
+		equal(item2.test1, null, 'nullの場合はminLengthのチェックは行われないこと。');
+		deepEqual(item2.test2, [null], 'nullの場合はminLengthのチェックは行われないこと。');
 	});
 
+	test('minLength 制約が適用されているか 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
 
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
 
+		var id = 1;
 
-	module('データモデルの操作', {
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string'
+				},
+				test2: {
+					type: 'string[]'
+				},
+				test3: {
+					type: 'number',
+				},
+				test4: {
+					type: 'number[]'
+				},
+				test5: {
+					type: 'integer'
+				},
+				test6: {
+					type: 'integer[]'
+				},
+				test7: {
+					type: 'boolean'
+				},
+				test8: {
+					type: 'boolean[]'
+				},
+				test9: {
+					type: 'array'
+				},
+				test10: {
+					type: 'any'
+				},
+				test11: {
+					type: '@DataModel1'
+				},
+				test12: {
+					type: '@DataModel1[]'
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [4.5, 'aaaa', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemA]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4, 'YYYY', 10.8]
+				},
+				constraint: {
+					minLength: 5
+				}
+			}
+		});
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 'AAAA'
+			});
+		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test2: [null, 'BBBB']
+			});
+		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				test1: 'あいうえ'
+			});
+		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: [null, 'おかきく']
+			});
+		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
+	});
+
+	test('maxLength 制約が適用されているか 正常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string'
+				},
+				test2: {
+					type: 'string[]'
+				},
+				test3: {
+					type: 'number',
+				},
+				test4: {
+					type: 'number[]'
+				},
+				test5: {
+					type: 'integer'
+				},
+				test6: {
+					type: 'integer[]'
+				},
+				test7: {
+					type: 'boolean'
+				},
+				test8: {
+					type: 'boolean[]'
+				},
+				test9: {
+					type: 'array'
+				},
+				test10: {
+					type: 'any'
+				},
+				test11: {
+					type: '@DataModel1'
+				},
+				test12: {
+					type: '@DataModel1[]'
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [4.5, 'aaaaaa', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemA]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4, 'YYYYYY', 10.8]
+				},
+				constraint: {
+					maxLength: 5
+				}
+			}
+		});
+
+		var item1 = model1.create({
+			id: id++,
+			test1: 'AAAAA',
+			test2: ['DDDDD'],
+			test3: 6.0,
+			test4: [6.0],
+			test5: 6,
+			test6: [6],
+			test7: true,
+			test8: [true],
+			test9: ['BBBBBB'],
+			test10: 'CCCCCC',
+			test11: itemA,
+			test12: [itemB, itemA],
+			test13: 'aaaaaa',
+			test14: 'YYYYYY'
+		});
+
+		equal(item1.test1, 'AAAAA', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test2, ['DDDDD'], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test3, 6.0, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test4, [6.0], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test5, 6, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test6, [6], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test7, true, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test8, [true], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test9, ['BBBBBB'], 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test10, 'CCCCCC', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test11, itemA, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		deepEqual(item1.test12, [itemB, itemA],
+				'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test13, 'aaaaaa', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+		equal(item1.test14, 'YYYYYY', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
+
+		var item2 = model1.create({
+			id: id++,
+			test1: null,
+			test2: [null]
+		});
+
+		equal(item2.test1, null, 'nullの場合はmaxLengthのチェックは行われないこと。');
+		deepEqual(item2.test2, [null], 'nullの場合はmaxLengthのチェックは行われないこと。');
+	});
+
+	test('maxLength 制約が適用されているか 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string'
+				},
+				test2: {
+					type: 'string[]'
+				},
+				test3: {
+					type: 'number',
+				},
+				test4: {
+					type: 'number[]'
+				},
+				test5: {
+					type: 'integer'
+				},
+				test6: {
+					type: 'integer[]'
+				},
+				test7: {
+					type: 'boolean'
+				},
+				test8: {
+					type: 'boolean[]'
+				},
+				test9: {
+					type: 'array'
+				},
+				test10: {
+					type: 'any'
+				},
+				test11: {
+					type: '@DataModel1'
+				},
+				test12: {
+					type: '@DataModel1[]'
+				},
+				test13: {
+					type: 'enum',
+					enumValue: [4.5, 'aaaa', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemA]
+				},
+				test14: {
+					type: 'enum[]',
+					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4, 'YYYY', 10.8]
+				},
+				constraint: {
+					minLength: 5
+				}
+			}
+		});
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 'AAAAAA'
+			});
+		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test2: [null, 'BBBBBB']
+			});
+		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				test1: 'あいうえおか'
+			});
+		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: [null, 'きくけこさし']
+			});
+		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
+	});
+
+	test(
+			'pattern 制約が適用されているか 正常系',
+			function() {
+				function TestClass1() {
+					this.num = 10;
+				}
+				var testClass1 = new TestClass1();
+
+				var model1 = manager.createModel({
+					name: 'DataModel1',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'string',
+							defaultValue: 'ccc'
+						}
+					}
+				});
+
+				var id = 1;
+
+				var itemA = model1.create({
+					id: id++,
+					test1: 'bbb'
+				});
+
+				var itemB = model1.create({
+					id: id++,
+					test1: 'bbb'
+				});
+
+				model1 = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true,
+						},
+						test1: {
+							type: 'string'
+						},
+						test2: {
+							type: 'string[]'
+						},
+						test3: {
+							type: 'number',
+						},
+						test4: {
+							type: 'number[]'
+						},
+						test5: {
+							type: 'integer'
+						},
+						test6: {
+							type: 'integer[]'
+						},
+						test7: {
+							type: 'boolean'
+						},
+						test8: {
+							type: 'boolean[]'
+						},
+						test9: {
+							type: 'array'
+						},
+						test10: {
+							type: 'any'
+						},
+						test11: {
+							type: '@DataModel1'
+						},
+						test12: {
+							type: '@DataModel1[]'
+						},
+						test13: {
+							type: 'enum',
+							enumValue: [4.5, 'hifive005', 5, true, [1, 2, 3], /[0-9]/, testClass1,
+									itemA]
+						},
+						test14: {
+							type: 'enum[]',
+							enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4,
+									'hifive006', 10.8]
+						},
+						constraint: {
+							pattern: /^hifive[0-9][0-9]$/
+						}
+					}
+				});
+
+				var item1 = model1.create({
+					id: id++,
+					test1: 'hifive01',
+					test2: ['hifive02'],
+					test3: 6.0,
+					test4: [6.0],
+					test5: 6,
+					test6: [6],
+					test7: true,
+					test8: [true],
+					test9: ['hifive003'],
+					test10: 'hifive004',
+					test11: itemA,
+					test12: [itemB, itemA],
+					test13: 'hifive005',
+					test14: 'hifive006'
+				});
+
+				equal(item1.test1, 'hifive01', 'type:string,string[]の場合、create時にpatternがチェックされること。');
+				deepEqual(item1.test2, ['hifive02'],
+						'type:string,string[]の場合、create時にpatternがチェックされること。');
+				equal(item1.test3, 6.0, 'type:string,string[]の場合、create時にpatternがチェックされること。');
+				deepEqual(item1.test4, [6.0], 'type:string,string[]の場合、create時にpatternがチェックされること。');
+				equal(item1.test5, 6, 'type:string,string[]の場合、create時にpatternがチェックされること。');
+				deepEqual(item1.test6, [6], 'type:string,string[]の場合、create時にpatternがチェックされること。');
+				equal(item1.test7, true, 'type:string,string[]の場合、create時にpatternがチェックされること。');
+				deepEqual(item1.test8, [true], 'type:string,string[]の場合、create時にpatternがチェックされること。');
+				deepEqual(item1.test9, ['hifive003'],
+						'type:string,string[]の場合、create時にpatternがチェックされること。');
+				equal(item1.test10, 'hifive004',
+						'type:string,string[]の場合、create時にpatternがチェックされること。');
+				equal(item1.test11, itemA, 'type:string,string[]の場合、create時にpatternがチェックされること。');
+				deepEqual(item1.test12, [itemB, itemA],
+						'type:string,string[]の場合、create時にpatternがチェックされること。');
+				equal(item1.test13, 'hifive005',
+						'type:string,string[]の場合、create時にpatternがチェックされること。');
+				equal(item1.test14, 'hifive006',
+						'type:string,string[]の場合、create時にpatternがチェックされること。');
+
+				var item2 = model1.create({
+					id: id++,
+					test1: null,
+					test2: [null]
+				});
+
+				equal(item2.test1, null, 'nullの場合はpatternのチェックは行われないこと。');
+				deepEqual(item2.test2, [null], 'nullの場合はpatternのチェックは行われないこと。');
+			});
+
+	test('pattern 制約が適用されているか 異常系', function() {
+		function TestClass1() {
+			this.num = 10;
+		}
+		var testClass1 = new TestClass1();
+
+		var model1 = manager.createModel({
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var itemA = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		var itemB = model1.create({
+			id: id++,
+			test1: 'bbb'
+		});
+
+		model1 = manager
+				.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true,
+						},
+						test1: {
+							type: 'string'
+						},
+						test2: {
+							type: 'string[]'
+						},
+						test3: {
+							type: 'number',
+						},
+						test4: {
+							type: 'number[]'
+						},
+						test5: {
+							type: 'integer'
+						},
+						test6: {
+							type: 'integer[]'
+						},
+						test7: {
+							type: 'boolean'
+						},
+						test8: {
+							type: 'boolean[]'
+						},
+						test9: {
+							type: 'array'
+						},
+						test10: {
+							type: 'any'
+						},
+						test11: {
+							type: '@DataModel1'
+						},
+						test12: {
+							type: '@DataModel1[]'
+						},
+						test13: {
+							type: 'enum',
+							enumValue: [4.5, 'hifive05', 5, true, [1, 2, 3], /[0-9]/, testClass1,
+									itemA]
+						},
+						test14: {
+							type: 'enum[]',
+							enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 4,
+									'hifive06', 10.8]
+						},
+						constraint: {
+							pattern: /^hifive[0-9][0-9]$/
+						}
+					}
+				});
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 'hifive001'
+			});
+		}, '値がpatternと一致しない場合、制約でエラーになること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test2: [null, 'hifive001']
+			});
+		}, '値がpatternと一致しない場合、制約でエラーになること。');
+	});
+
+	test('constraint 適用順序のチェック number', function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'number',
+					defaultValue: 5.0
+				},
+				test2: {
+					type: 'number',
+					defaultValue: 5.0
+				},
+				constraint: {
+					notNull: true,
+					min: 4.6,
+					max: 5.8
+				}
+			}
+		});
+
+		var id = 1;
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 3.5,
+				test2: null
+			});
+		}, 'notNullの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 6.5,
+				test2: null
+			});
+		}, 'notNullの制約エラーが発生すること。');
+	});
+
+	test('constraint 適用順序のチェック number[]', function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'number[]',
+					defaultValue: [3.1, 4.5]
+				},
+				test2: {
+					type: 'number[]',
+					defaultValue: [5.7, 8.2]
+				},
+				constraint: {
+					notNull: true,
+					min: 3.1,
+					max: 8.2
+				}
+			}
+		});
+
+		var id = 1;
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: [2.5, 7.2],
+				test2: null
+			});
+		}, 'notNullの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: [3.5, 9.2],
+				test2: null
+			});
+		}, 'notNullの制約エラーが発生すること。');
+	});
+
+	test('constraint 適用順序のチェック integer', function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'integer',
+					defaultValue: 5
+				},
+				test2: {
+					type: 'integer',
+					defaultValue: 6
+				},
+				constraint: {
+					notNull: true,
+					min: 5,
+					max: 8
+				}
+			}
+		});
+
+		var id = 1;
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 4,
+				test2: null
+			});
+		}, 'notNullの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 9,
+				test2: null
+			});
+		}, 'notNullの制約エラーが発生すること。');
+	});
+
+	test('constraint 適用順序のチェック integer[]', function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'integer[]',
+					defaultValue: [3, 4]
+				},
+				test2: {
+					type: 'integer[]',
+					defaultValue: [5, 6]
+				},
+				constraint: {
+					notNull: true,
+					min: 3,
+					max: 6
+				}
+			}
+		});
+
+		var id = 1;
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: [2, 5],
+				test2: null
+			});
+		}, 'notNullの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: [4, 7],
+				test2: null
+			});
+		}, 'notNullの制約エラーが発生すること。');
+	});
+
+	test('constraint 適用順序のチェック string', function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string',
+					defaultValue: '00000'
+				},
+				test2: {
+					type: 'string',
+					defaultValue: '11111'
+				},
+				test3: {
+					type: 'string',
+					defaultValue: '22222'
+				},
+				test4: {
+					type: 'string',
+					defaultValue: '33333'
+				},
+				constraint: {
+					notNull: true,
+					notEmpty: true,
+					minLength: 5,
+					maxLength: 10,
+					pattern: /^[0-9][0-9][0-9][0-9][0-9]$/
+				}
+			}
+		});
+
+		var id = 1;
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: null,
+				test2: '',
+				test3: '2222',
+				test3: 'aaaaa'
+			});
+		}, 'notNullの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 'aaaaa',
+				test2: '',
+				test3: '2222',
+				test3: 'aaaaa'
+			});
+		}, 'notEmptyの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: aaaaa,
+				test2: 'aaaaa',
+				test3: '2222',
+				test3: 'aaaaa'
+			});
+		}, 'lengthの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: 'aaaaa',
+				test2: 'aaaaa',
+				test3: 'aaaaa',
+				test3: '2222a'
+			});
+		}, 'patternの制約エラーが発生すること。');
+	});
+
+	test('constraint 適用順序のチェック string[]', function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string',
+					defaultValue: ['00000', '00000']
+				},
+				test2: {
+					type: 'string',
+					defaultValue: ['11111', '11111']
+				},
+				test3: {
+					type: 'string',
+					defaultValue: ['22222', '22222']
+				},
+				test4: {
+					type: 'string',
+					defaultValue: ['33333', '33333']
+				},
+				constraint: {
+					notNull: true,
+					notEmpty: true,
+					minLength: 5,
+					maxLength: 10,
+					pattern: /^[0-9][0-9][0-9][0-9][0-9]$/
+				}
+			}
+		});
+
+		var id = 1;
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: null,
+				test2: ['aaaaa', ''],
+				test3: ['aaaaa', '2222'],
+				test3: ['aaaaa', 'aaaaa']
+			});
+		}, 'notNullの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: ['aaaaa', 'aaaaa'],
+				test2: ['aaaaa', ''],
+				test3: ['aaaaa', '2222'],
+				test3: ['aaaaa', 'aaaaa']
+			});
+		}, 'notEmptyの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: ['aaaaa', 'aaaaa'],
+				test2: ['aaaaa', 'aaaaa'],
+				test3: ['aaaaa', '2222'],
+				test3: ['aaaaa', 'aaaaa']
+			});
+		}, 'lengthの制約エラーが発生すること。');
+
+		raises(function() {
+			model1.create({
+				id: id++,
+				test1: ['aaaaa', 'aaaaa'],
+				test2: ['aaaaa', 'aaaaa'],
+				test3: ['aaaaa', 'aaaaa'],
+				test3: ['aaaaa', '2222a']
+			});
+		}, 'patternの制約エラーが発生すること。');
+	});
+
+	module('depend', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
@@ -3244,15 +5741,99 @@ $(function() {
 		}
 	});
 
-	test('get DataModelオブジェクトからアイテムを取得できること', function() {
-	// TODO
+	test('同じモデル依存先プロパティの値が変更された場合のテスト1', function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true,
+				},
+				test1: {
+					type: 'string',
+					defaultValue: 'aaa',
+					depend: {
+						on: 'test2',
+						calc: function(ev) {
+							//ok(ev, '引数にイベントオブジェクトがあること。');
+							ok(this.test2, 'test2のdefaultValueが設定されていること。');
+							//ok(ev.props.test2.oldValue, '変更前の値が取得できること。');
+							//ok(ev.props.test2.newValue, '変更後の値が取得できること。');
+							return this.test2 + 'a';
+						}
+					}
+				},
+				test2: {
+					type: 'string',
+					defaultValue: 'bbb'
+				}
+			}
+		});
+
+		var id = 1;
+
+		var item = model1.create({
+			id: id++,
+			test2: 'AAA'
+		});
+
+
+		item.addEventListener('change', function(ev) {
+			console.log(ev);
+		});
+
+		item.test2 = 'bbb';
 	});
-	test('remove DataModelオブジェクトからアイテムを削除できること', function() {
-	// TODO
+
+	test('同じモデル依存先プロパティの値が変更された場合のテスト2', function() {
+		manager.createModel({
+			name: 'BaseDataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test2: {
+					type: 'string',
+					defaultValue: 'ccc'
+				}
+			}
+		});
+
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			base: '@BaseDataModel1',
+			schema: {
+				test1: {
+					type: 'string',
+					defaultValue: 'aaa',
+					depend: {
+						on: 'test2',
+						calc: function(ev) {
+							//ok(ev, '引数にイベントオブジェクトがあること。');
+							ok(this.test2, 'test2のdefaultValueが設定されていること。');
+							//ok(ev.props.test2.oldValue, '変更前の値が取得できること。');
+							//ok(ev.props.test2.newValue, '変更後の値が取得できること。');
+							return this.test2 + 'a';
+						}
+					}
+				}
+			}
+		});
+
+		var id = 1;
+
+		var item = model1.create({
+			id: id++,
+			test2: 'ZZZ'
+		});
+
+
+		item.addEventListener('change', function(ev) {
+			console.log(ev);
+		});
+
+		item.test2 = 'YYY';
 	});
-	test('query DataModelオブジェクトからクエリでアイテムを操作できること', function() {
-	// TODO CRUD操作が可能
-	});
+
 
 
 	module('イベント', {
