@@ -130,6 +130,12 @@ $(function() {
 		}
 	});
 
+	test('データモデルマネージャの作成 名前空間指定のない場合は同名のにマネージャを作成できること', function() {
+		manager = h5.core.data.createManager('TestModel');
+		var manager2 = h5.core.data.createManager('TestModel');
+		ok(manager !== manager2, '同名のマネージャを作成したとき、別インスタンスであること');
+	});
+
 	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', function() {
 		var errCode = 30005;
 		h5.u.obj.expose('com.htmlhifive.test', {
@@ -1580,19 +1586,153 @@ $(function() {
 			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること any',
 			function() {
-			// TODO
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = 'any';
+
+				var invalidProps = [{
+					type: type,
+					// defaultValueなし
+					constraint: {
+						notNull: true
+					}
+				}, {
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: null
+				}];
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること @DataModelName',
 			function() {
-			// TODO
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = '@ParentModel';
+
+				var invalidProps = [{
+					type: type,
+					// defaultValueなし
+					constraint: {
+						notNull: true
+					}
+				}, {
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: null
+				}];
+
+				// ParentModelの作成
+				manager.createModel({
+					name: 'ParentModel',
+					schema: {
+						id: {
+							id: true
+						}
+					}
+				});
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string[]',
 			function() {
-			// TODO
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = 'string[]';
+
+				var invalidProps = [{
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: [null]
+				}, {
+					type: type,
+					constraint: {
+						notEmpty: true
+					},
+					defaultValue: [null]
+				}, {
+					type: type,
+					constraint: {
+						notEmpty: true
+					},
+					defaultValue: ['']
+				}, {
+					type: type,
+					constraint: {
+						minLength: 3
+					},
+					defaultValue: ["abc", "ab"]
+				}, {
+					type: type,
+					constraint: {
+						maxLength: 3
+					},
+					defaultValue: ["abc", "ab", "abcd"]
+				}, {
+					type: type,
+					constraint: {
+						pattern: /a/
+					},
+					defaultValue: ["abc", "ab", "bcd"]
+				}];
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string[][]',
 			function() {
-			// TODO
+				// TODO エラーコード確認
+				var errCode = 30000;
+
+				var type = 'string[]';
+
+				var invalidProps = [{
+					type: type,
+					constraint: {
+						notNull: true
+					},
+					defaultValue: [["a", "b"], [null]]
+				}, {
+					type: type,
+					constraint: {
+						notEmpty: true
+					},
+					defaultValue: [["a", "b"], [null]]
+				}, {
+					type: type,
+					constraint: {
+						notEmpty: true
+					},
+					defaultValue: [["a", "b"]['']]
+				}, {
+					type: type,
+					constraint: {
+						minLength: 3
+					},
+					defaultValue: [["abc", "abc"], ["abc", "ab"]]
+				}, {
+					type: type,
+					constraint: {
+						maxLength: 3
+					},
+					defaultValue: [["abc", "abc"], ["abcd", "abc", "abc"]]
+				}, {
+					type: type,
+					constraint: {
+						pattern: /a/
+					},
+					defaultValue: [["abc", "abc"], ["abcd", "bc", "abc"]]
+				}];
+
+				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 
 	test('データモデルの登録 schemaのチェック descriptorと、schemaのプロパティ定義に無関係なプロパティが含まれていても、エラーにならないこと。', 1,
@@ -1629,9 +1769,7 @@ $(function() {
 		}
 	});
 
-	test(
-			'データモデルのドロップ',
-			10,
+	test('データモデルのドロップ', 10,
 			function() {
 				var model1 = manager.createModel({
 					name: 'TestDataModel1',
@@ -1673,7 +1811,8 @@ $(function() {
 						'dropModelの戻り値はドロップしたデータモデルオブジェクトであり、名前が取得できること');
 				strictEqual(model1.manager, null, 'dropModelの戻り値のmanagerプロパティはnullであること');
 				strictEqual(model1.size, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、サイズを取得できること');
-				strictEqual(model1.items['1'].val, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、値を取得できること');
+				strictEqual(model1.items['1'].val, 1,
+						'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、値を取得できること');
 				manager.dropModel('TestDataModel2');
 				strictEqual(manager.models.TestDataModel2, undefined,
 						'モデル2をドロップした後、モデル2がmanager.modelsの中に入っていないこと');
@@ -1691,15 +1830,153 @@ $(function() {
 	});
 
 	test('createでアイテムが生成できること。引数に配列を渡した場合は戻り値も配列になること。', function() {
-	// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー (配列の途中でエラーが出た場合、アトミックに処理されるかどうかの仕様を確認する)
+		// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー (配列の途中でエラーが出た場合、アトミックに処理されるかどうかの仕様を確認する)
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+
+		var item = model.create({
+			id: '123',
+			val: 456
+		});
+
+		strictEqual(item.id, '123', 'create時に指定した値が戻り値から取得できること');
+		strictEqual(item.val, 456, 'create時に指定した値が戻り値から取得できること');
+
+
+		item = model.create({
+			id: 456
+		});
+
+		strictEqual(item.id, '456', 'createでidに数字を指定しても、文字列として格納されていること');
+		strictEqual(item.val, null, 'create時に値を指定していない値について、nullが格納されてること');
+
+		var items = model.create([{
+			id: 1
+		}, {
+			id: 2
+		}, {
+			id: 3
+		}]);
+
+		strictEqual(items.length, 3, 'createの引数に配列を渡すと、戻り値がアイテムの配列として返ってくること');
+		strictEqual(items[0].id, '1', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[1].id, '1', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[2].id, '1', '戻り値の配列の中身が正しいこと');
 	});
 
-	test('idの重複するアイテムは生成できず、エラーになること', function() {
-	// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー
+	test('idの重複するアイテムは生成できず、エラーになること', 2, function() {
+		var errCode = 30000;
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+
+		model.create({
+			id: 1
+		});
+		try {
+			model.create({
+				id: 1
+			});
+			ok(false, 'エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+			strictEqual(model.get("1"), null, 'エラーが発生した場合はアイテムが生成されていないこと');
+		}
+		try {
+			model.create([{
+				id: 2
+			}, {
+				id: 2
+			}]);
+			ok(false, 'エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		} finally {
+			// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない(TODO 確認する)
+			strictEqual(model.get("2"), null, 'エラーが発生した場合はアイテムが生成されていないこと');
+		}
+	});
+
+	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、アイテムは一つも生成されないこと(アトミックに処理されること)', function() {
+	// TODO アトミックかどうか確認する
 	});
 
 	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
-	// TODO
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+		var model2 = manager.createModel({
+			name: 'TestDataModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+
+		model.create([{
+			id: 1,
+			val: 'item1'
+		},{
+			id: 2,
+			val: 'item2'
+		},{
+			id: 3,
+			val: 'item3'
+		}]);
+		model2.create([{
+			id: 1,
+			val: 'model2 item1'
+		},{
+			id: 4,
+			val: 'model2 item1'
+		}]);
+
+		var manager2 = createManager('TestManager');
+		var model3 = manager2.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+		model3.create({id: 2,val:'manager2 item2'});
+
+
+		strictEqual(model.get('1').val, 'item1', '登録したアイテムが取得できること');
+		strictEqual(model.get('2').val, 'item2', '登録したアイテムが取得できること');
+		strictEqual(model.get('3').val, 'item3', '登録したアイテムが取得できること');
+		strictEqual(model.get('abc'), null, '登録されていないidを渡すとnullが返ってくること');
+		strictEqual(model.get('4'), null, '違うモデルに登録したアイテムは取得できないこと。');
+		var items = model.get(['2','4','1','3', 'abcd']);
+		strictEqual(items.length, 3, 'idの配列を引数に渡してアイテムを取得できること');
+		strictEqual(model.get('2').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
+		strictEqual(model.get('2').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
+		strictEqual(model.get('2').val, 'item2', '登録したアイテムが取得できること');
+		strictEqual(model.get('3').val, 'item3', '登録したアイテムが取得できること');
+
 	});
 
 	module('type', {
