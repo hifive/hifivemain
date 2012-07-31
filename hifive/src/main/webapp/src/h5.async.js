@@ -185,10 +185,10 @@
 				return this;
 			};
 
-			var originalPipe = dfd.pipe;
+			var lastPointPipe = dfd.pipe;
 			dfd.pipe = function(doneFilter, failFilter, progressFilter) {
 				// pipe()の戻り値であるfilteredは元のDeferredオブジェクトとはインスタンスが異なる
-				var filtered = originalPipe.call(this, doneFilter, failFilter);
+				var filtered = lastPointPipe.call(this, doneFilter, failFilter);
 				if (progressFilter) {
 					if (!this.__h5__progressPipeFilters) {
 						filtered.__h5__progressPipeFilters = [progressFilter];
@@ -197,6 +197,7 @@
 								.concat([progressFilter]);
 					}
 				}
+				lastPointPipe = filtered.pipe;
 				filtered.pipe = dfd.pipe;
 				filtered.progress = dfd.progress;
 				return filtered;

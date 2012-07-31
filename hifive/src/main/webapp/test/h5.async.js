@@ -107,6 +107,124 @@ $(function() {
 		strictEqual(ret, 3, 'Deferred#then()で登録したprogressCallbackは動作するか');
 	});
 
+	asyncTest('h5.async.deferred() pipeのdoneコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか',
+			function() {
+				var count = 1;
+				var tStart = new Date();
+
+				h5.async.deferred().resolve().pipe(function() {
+					var dfd = $.Deferred();
+					var time = 1200;
+
+					setTimeout(function() {
+						equal(count++, 1, '1番目に実行されること。');
+						var end = +new Date();
+						var result = end - tStart;
+						var delay = Math.abs(time - result);
+						tStart = end;
+						ok((delay >= 0 && delay <= 5), '約1.2秒後に実行されること。');
+						dfd.resolve();
+					}, time);
+
+					return dfd.promise();
+				}).done(function() {
+					equal(count++, 2, '1番目のpipeが返すPromiseがresolveされたので、doneコールバックが実行されること。');
+				}).pipe(function() {
+					var dfd = $.Deferred();
+					var time = 600;
+
+					setTimeout(function() {
+						equal(count++, 3, '3番目に実行されること。');
+						var end = +new Date();
+						var result = end - tStart;
+						var delay = Math.abs(time - result);
+						tStart = end;
+						ok((delay >= 0 && delay <= 5), '約0.6秒後に実行されること。');
+						dfd.resolve();
+					}, time);
+
+					return dfd.promise();
+				}).done(function() {
+					equal(count++, 4, '2番目のpipeが返すPromiseがresolveされたので、doneコールバックが実行されること。');
+				}).pipe(function() {
+					var dfd = $.Deferred();
+					var time = 800;
+
+					setTimeout(function() {
+						equal(count++, 5, '5番目に実行されること。');
+						var end = +new Date();
+						var result = end - tStart;
+						var delay = Math.abs(time - result);
+						ok((delay >= 0 && delay <= 5), '約0.8秒後に実行されること。');
+						dfd.resolve();
+					}, time);
+
+					return dfd.promise();
+				}).done(function() {
+					equal(count++, 6, '3番目のpipeが返すPromiseがresolveされたので、doneコールバックが実行されること。');
+					start();
+				});
+			});
+
+	asyncTest('h5.async.deferred() pipeのfailコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか',
+			function() {
+				var count = 1;
+				var tStart = new Date();
+
+				h5.async.deferred().reject().pipe(null, function() {
+					var dfd = $.Deferred();
+					var time = 1200;
+
+					setTimeout(function() {
+						equal(count++, 1, '1番目に実行されること。');
+						var end = +new Date();
+						var result = end - tStart;
+						var delay = Math.abs(time - result);
+						tStart = end;
+						ok((delay >= 0 && delay <= 5), '約1.2秒後に実行されること。');
+						dfd.reject();
+					}, time);
+
+					return dfd.promise();
+				}).fail(function() {
+					equal(count++, 2, '1番目のpipeが返すPromiseがrejectされたので、failコールバックが実行されること。');
+				}).pipe(null, function() {
+					var dfd = $.Deferred();
+					var time = 600;
+
+					setTimeout(function() {
+						equal(count++, 3, '3番目に実行されること。');
+						var end = +new Date();
+						var result = end - tStart;
+						var delay = Math.abs(time - result);
+						tStart = end;
+						ok((delay >= 0 && delay <= 5), '約0.6秒後に実行されること。');
+						dfd.reject();
+					}, time);
+
+					return dfd.promise();
+				}).fail(function() {
+					equal(count++, 4, '2番目のpipeが返すPromiseがrejectされたので、failコールバックが実行されること。');
+				}).pipe(null, function() {
+					var dfd = $.Deferred();
+					var time = 800;
+
+					setTimeout(function() {
+						equal(count++, 5, '5番目に実行されること。');
+						var end = +new Date();
+						var result = end - tStart;
+						var delay = Math.abs(time - result);
+						ok((delay >= 0 && delay <= 5), '約0.8秒後に実行されること。');
+						dfd.reject();
+					}, time);
+
+					return dfd.promise();
+				}).fail(function() {
+					equal(count++, 6, '3番目のpipeが返すPromiseがrejectされたので、failコールバックが実行されること。');
+					start();
+				});
+			});
+
 	test(
 			'commonFailHandlerの動作',
 			6,
