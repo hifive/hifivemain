@@ -84,8 +84,6 @@
 	// Cache
 	//
 	// =========================================================================
-
-
 	// =========================================================================
 	//
 	// Privates
@@ -94,14 +92,9 @@
 	//=============================
 	// Variables
 	//=============================
-
-
 	//=============================
 	// Functions
 	//=============================
-
-
-
 	/***********************************************************************************************
 	 * @private
 	 * @class
@@ -228,6 +221,29 @@
 	var PROP_TYPE_OBJECT = 'object';
 	var PROP_TYPE_ANY = 'any';
 	var NULLABLE_PROP_TYPES = [PROP_TYPE_ENUM, PROP_TYPE_STRING, PROP_TYPE_OBJECT, PROP_TYPE_ANY];
+
+
+
+	function validateSchema(manager, schema) {
+		var errorReason = [];
+
+		var hasId = false;
+
+		for ( var p in schema) {
+			if (schema[p] && (schema[p].id === true)) {
+				if (hasId) {
+					errorReason.push('idが複数存在');
+				}
+				hasId = true;
+			}
+		}
+
+		if (!hasId) {
+			errorReason.push('idがない');
+		}
+
+		return errorReason;
+	}
 
 
 	function getValue(item, prop) {
@@ -586,456 +602,455 @@
 	//
 	// =========================================================================
 
-	function validateSchema(manager, schema) {
-		var errorReason = [];
 
-		var hasId = false;
+	function createManager(managerName, namespace) {
+		/* --- DataModelManagerローカル ここから --- */
 
-		for ( var p in schema) {
-			if (schema[p] && (schema[p].id === true)) {
-				if (hasId) {
-					errorReason.push('idが複数存在');
-				}
-				hasId = true;
+
+
+		/* --- DataModelManagerローカル ここまで --- */
+
+
+		/* ----------------- DataModelManagerコード ここから ----------------- */
+
+		/**
+		 * @class
+		 * @name DataModelManager
+		 */
+		function DataModelManager(managerName) {
+			if (!isValidNamespaceIdentifier(managerName)) {
+				throwFwError(ERR_CODE_INVALID_MANAGER_NAME);
 			}
+
+			this.models = {};
+			this.name = managerName;
 		}
-
-		if (!hasId) {
-			errorReason.push('idがない');
-		}
-
-		return errorReason;
-	}
-
-	/**
-	 * @memberOf h5.core.data
-	 * @class
-	 * @name DataModel
-	 */
-	function DataModel(descriptor, manager) {
-		/**
-		 * @memberOf DataModel
-		 */
-		this.descriptor = null;
-
-		/**
-		 * @memberOf DataModel
-		 */
-		this.items = {};
-
-		/**
-		 * @memberOf DataModel
-		 */
-		this.size = 0;
-
-		/**
-		 * @memberOf DataModel
-		 */
-		this.name = descriptor.name;
-
-		/**
-		 * @memberOf DataModel
-		 */
-		this.manager = manager;
-
-		//TODO
-		this.idSequence = 0;
-
-		//継承元がある場合はそのプロパティディスクリプタを先にコピーする。
-		//継承元と同名のプロパティを自分で定義している場合は
-		//自分が持っている定義を優先するため。
-		var schema = {};
-
-		function extendSchema(schema, desc) {
-			var base = desc.base;
-
-			if (base) {
-				if (!manager) {
-					//baseが設定されている場合、このデータモデルがマネージャに属していなければ継承元を探せないのでエラー
-					throwFwError(ERR_CODE_NO_MANAGER);
-				}
-
-				//TODO データモデルの登録の順序関係に注意
-				var baseModelDesc = manager.models[base.slice(1)];
-
-				//$.extend()は後勝ちなので、より上位のものから順にextend()するように再帰
-				extendSchema(schema, baseModelDesc);
-			}
-
-			$.extend(schema, desc.schema);
-		}
-
-		//継承を考慮してスキーマを作成
-		extendSchema(schema, descriptor);
-
-		for (prop in schema) {
-			if (schema[prop] && schema[prop].id === true) {
-				/**
-				 * @memberOf DataModel
-				 */
-				this.idKey = prop;
-				break;
-			}
-		}
-		if (!this.idKey) {
-			throwFwError(30005);
-		}
-
-
-
-		var errorReason = validateSchema(manager, schema);
-		if (errorReason.length > 0) {
-			//スキーマにエラーがある
-			throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
-		}
-
-		//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
-		this.schema = schema;
-
-		var itemSrc = createDataItemConstructor(this, descriptor);
-
-		this.itemConstructor = itemSrc.itemConstructor;
-		this.itemPropDesc = itemSrc.propDesc;
-
-		//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
-		//TODO this.fullname -> managerの名前までを含めた完全修飾名
-	}
-
-	DataModel.prototype = new EventDispatcher();
-	$.extend(DataModel.prototype, {
-		/**
-		 * @memberOf DataModel
-		 */
-		create: function(objOrArray) {
-			var ret = [];
-
-			var idKey = this.idKey;
-
-			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
-			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
-			//入っていない場合は一時的にセッションを作成する。
-			//			var isAlreadyInUpdate = this.manager.isInUpdate();
-			//			this.manager.beginUpdate();
-
-			var items = wrapInArray(objOrArray);
-			for ( var i = 0, len = items.length; i < len; i++) {
-				var existingItem = this.findById(items[i][idKey]);
-				if (existingItem) {
-					// 既に存在するオブジェクトの場合は値を更新
-					//TODO 値更新
-					//				for (prop in obj) {
-					//					if (prop == idKey) {
-					//						continue;
-					//					}
-					//					o[prop] = obj[prop];
-					//				}
-					ret.push(existingItem);
-				} else {
-					var newItem = createItem(this, items[i]);
-					ret.push(newItem);
-					this.items[newItem[idKey]] = newItem;
-				}
-			}
-
-			//			if (!isAlreadyInUpdate) {
-			//				this.manager.endUpdate();
-			//			}
-
-			if ($.isArray(objOrArray)) {
-				return ret;
-			}
-			return ret[0];
-		},
-
-		/**
-		 * @memberOf DataModel
-		 * @returns {Object}
-		 */
-		get: function(idOrArray) {
-			if (isString(idOrArray)) {
-				return this.findById(idOrArray);
-			}
-
-			var ret = [];
-			for ( var i = 0, len = idOrArray.length; i < len; i++) {
-				ret.push(this.findById(idOrArray[i]));
-			}
-			return ret;
-		},
-
-		/**
-		 * TODO JSDocの書き方(DataModel[]はOK？)
-		 *
-		 * @memberOf DataModel
-		 * @returns {DataModel[]}
-		 */
-		remove: function(objOrItemIdOrArray) {
-			/*
-			 * 指定されたidのデータアイテムを削除します。
+		$.extend(DataModelManager.prototype, {
+			/**
+			 * @param {Object} descriptor データモデルディスクリプタ
+			 * @memberOf DataModelManager
 			 */
-			function removeItemById(model, id) {
-				if (!(id in model.items)) {
-					return null;
+			createModel: function(descriptor) {
+				var modelName = descriptor.name;
+				if (!isValidNamespaceIdentifier(modelName)) {
+					throwFwError(ERR_CODE_INVALID_DATAMODEL_NAME); //TODO 正しい例外を出す
 				}
 
-				var item = model.items[id];
-
-				item.removeEventListener('change', this.itemChangeListener);
-
-				delete model.items[id];
-
-				model.size--;
-
-				if (!model.__updateLog[model.idKey]) {
-					model.__updateLog[model.idKey] = [];
+				if (this.models[modelName]) {
+					fwLogger.info(MSG_ERROR_DUP_REGISTER, this.name, modelName);
+				} else {
+					this.models[modelName] = createDataModel(descriptor, this);
 				}
 
-				model.__updateLog[model.idKey].push({
-					type: UPDATE_LOG_TYPE_REMOVE,
-					item: item
-				});
+				return this.models[modelName];
+			},
 
-				return item;
-			}
-
-			var idKey = this.idKey;
-			var ids = wrapInArray(objOrItemIdOrArray);
-
-			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
-			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
-			//入っていない場合は一時的にセッションを作成する。
-			var isAlreadyInUpdate = this.isInUpdate();
-			this.beginUpdate();
-
-			var ret = [];
-			for ( var i = 0, len = ids.length; i < len; i++) {
-				var id = getItemId(ids[i], idKey);
-				ret.push(removeItemById(this, id));
-			}
-
-			if (!isAlreadyInUpdate) {
-				this.endUpdate();
-			}
-
-			if ($.isArray(objOrItemIdOrArray)) {
-				return ret;
-			}
-			return ret[0];
-		},
-
-		/**
-		 * @returns {DataItem[]} データアイテム配列
-		 */
-		getAllItems: function() {
-			var ret = [];
-			var items = this.items;
-			for ( var prop in items) {
-				if (items.hasOwnProperty(prop)) {
-					ret.push(items[prop]);
+			/**
+			 * 指定されたデータモデルを削除します。 データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後 データモデル自体をマネージャから削除します。
+			 *
+			 * @param {String} name データモデル名
+			 * @memberOf DataModelManager
+			 */
+			dropModel: function(name) {
+				//TODO dropModelするときに依存していたらどうするか？
+				//エラーにしてしまうか。
+				var model = this.models[name];
+				if (!model) {
+					return;
 				}
-			}
-			return ret;
-		},
+				model.manager = null;
+				delete this.models[name];
+				return model;
+			},
 
-		/**
-		 */
-		itemChangeListener: function(event) {
-			if (this.isInUpdate()) {
-				this.__updateLog[event.target[this.idKey]].push({
-					type: UPDATE_LOG_TYPE_CHANGE,
-					ev: event
-				});
+
+			/**
+			 * @returns {Boolean} アップデートセッション中かどうか
+			 */
+			isInUpdate: function() {
+				return !!this.__updateLog; //TODO 配列だとこれではダメ？
+			},
+
+			beginUpdate: function() {
+				if (this.isInUpdate()) {
+					return;
+				}
+
+				//logは{ (item-key): [{ type: '1(=create)/2(=delete)/3(=change)', item: (item), changed: {(change event)} }, ...] という構造を持つ
+				this.__updateLog = {};
+			},
+
+			endUpdate: function() {
+				if (!this.isInUpdate()) {
+					return;
+				}
+
+				//TODO endUpdateのタイミングで更新伝搬処理を行う
 				return;
-			}
 
-			var ev = {
-				type: 'itemsChange',
+				var event = {
+					type: 'itemsChange',
+					added: [],
+					changed: [],
+					removed: []
+				};
 
-				added: null,
-				removed: null,
-				changed: [event]
-			};
-			this.dispatchEvent(ev);
-		},
+				var log = this.__updateLog;
 
-		/**
-		 */
-		findById: function(id) {
-			return this.items[id];
-		},
+				//__updateLog は { (item-key): [ { type: '1(=create)/2(=delete)/3(=change)', item: (item), changed: {(change event)} }, ...] という構造を持つ
 
-		has: function(obj) {
-			return !!this.findById(getItemId(obj, this.idKey));
-		}
-	});
+				for ( var itemId in log) {
+					var itemLog = log[itemId];
+					var createdOrRemoved = false;
 
-
-	/**
-	 * @memberOf DataModel
-	 * @returns {DataModel}
-	 */
-	function createFromDescriptor(descriptor, manager) {
-		//TODO Descriptorチェックはここで行う？
-		if (!$.isPlainObject(descriptor)) {
-			throw new Error('descriptorにはオブジェクトを指定してください。');
-		}
-
-		var om = new DataModel(descriptor, manager);
-		return om;
-	}
-
-	function getItemFullname(dataModel, item) {
-		return dataModel.fullname + '.' + item[dataModel.idKey];
-	}
-
-
-	/**
-	 * @class
-	 * @name DataModelManager
-	 */
-	function DataModelManager(name) {
-		if (!isValidNamespaceIdentifier(name)) {
-			throwFwError(ERR_CODE_INVALID_MANAGER_NAME);
-		}
-
-		this.models = {};
-		this.name = name;
-	}
-	$.extend(DataModelManager.prototype, {
-		/**
-		 * @param {Object} descriptor データモデルディスクリプタ
-		 * @memberOf DataModelManager
-		 */
-		createModel: function(descriptor) {
-			var modelName = descriptor.name;
-			if (!isValidNamespaceIdentifier(modelName)) {
-				throwFwError(ERR_CODE_INVALID_DATAMODEL_NAME); //TODO 正しい例外を出す
-			}
-
-			if (this.models[modelName]) {
-				fwLogger.info(MSG_ERROR_DUP_REGISTER, this.name, modelName);
-			} else {
-				this.models[modelName] = createDataModel(descriptor, this);
-			}
-
-			return this.models[modelName];
-		},
-
-		/**
-		 * 指定されたデータモデルを削除します。 データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後 データモデル自体をマネージャから削除します。
-		 *
-		 * @param {String} name データモデル名
-		 * @memberOf DataModelManager
-		 */
-		dropModel: function(name) {
-			//TODO dropModelするときに依存していたらどうするか？
-			//エラーにしてしまうか。
-			var model = this.models[name];
-			if (!model) {
-				return;
-			}
-			model.manager = null;
-			delete this.models[name];
-			return model;
-		},
-
-
-		/**
-		 * @returns {Boolean} アップデートセッション中かどうか
-		 */
-		isInUpdate: function() {
-			return !!this.__updateLog; //TODO 配列だとこれではダメ？
-		},
-
-		beginUpdate: function() {
-			if (this.isInUpdate()) {
-				return;
-			}
-
-			//logは{ (item-key): [{ type: '1(=create)/2(=delete)/3(=change)', item: (item), changed: {(change event)} }, ...] という構造を持つ
-			this.__updateLog = {};
-		},
-
-		endUpdate: function() {
-			if (!this.isInUpdate()) {
-				return;
-			}
-
-			//TODO endUpdateのタイミングで更新伝搬処理を行う
-			return;
-
-			var event = {
-				type: 'itemsChange',
-				added: [],
-				changed: [],
-				removed: []
-			};
-
-			var log = this.__updateLog;
-
-			//__updateLog は { (item-key): [ { type: '1(=create)/2(=delete)/3(=change)', item: (item), changed: {(change event)} }, ...] という構造を持つ
-
-			for ( var itemId in log) {
-				var itemLog = log[itemId];
-				var createdOrRemoved = false;
-
-				//新しい変更が後ろに入っているので、降順で履歴をチェックする
-				for ( var i = itemLog.length - 1; i >= 0; i--) {
-					var l = itemLog[i];
-					if (l.type === UPDATE_LOG_TYPE_CREATE) {
-						event.added.push(l.item);
-						createdOrRemoved = true;
-						break;
-					} else if (l.type === UPDATE_LOG_TYPE_REMOVE) {
-						event.removed.push(l.item);
-						createdOrRemoved = true;
-						break;
+					//新しい変更が後ろに入っているので、降順で履歴をチェックする
+					for ( var i = itemLog.length - 1; i >= 0; i--) {
+						var l = itemLog[i];
+						if (l.type === UPDATE_LOG_TYPE_CREATE) {
+							event.added.push(l.item);
+							createdOrRemoved = true;
+							break;
+						} else if (l.type === UPDATE_LOG_TYPE_REMOVE) {
+							event.removed.push(l.item);
+							createdOrRemoved = true;
+							break;
+						}
 					}
+
+					//新規追加または削除
 				}
 
-				//新規追加または削除
-			}
 
+				$.extend(changedProps, this.__internals.change);
 
-			$.extend(changedProps, this.__internals.change);
+				var alreadyCalculated = [];
 
-			var alreadyCalculated = [];
-
-			//再計算したプロパティをchangedPropsに追加していくので、ループは__internals.changeで回す必要がある
-			for ( var srcProp in this.__internals.change) {
-				var depends = dependencyMap[srcProp];
-				if (depends) {
-					for ( var i = 0, len = depends.length; i < len; i++) {
-						var dependProp = depends[i];
-						//同じ依存プロパティの再計算は一度だけ行う
-						if ($.inArray(dependProp, alreadyCalculated) === -1) {
-							var dependOldValue = getValue(this, dependProp);
-							var dependNewValue = recalculateDependProperties(this, dependProp);
-							setValue(this, dependProp, dependNewValue);
-							//TODO 同じ処理が何か所かで出てくるのでまとめる
-							changedProps[dependProp] = {
-								oldValue: dependOldValue,
-								newValue: dependNewValue
-							};
-							alreadyCalculated.push(dependProp);
+				//再計算したプロパティをchangedPropsに追加していくので、ループは__internals.changeで回す必要がある
+				for ( var srcProp in this.__internals.change) {
+					var depends = dependencyMap[srcProp];
+					if (depends) {
+						for ( var i = 0, len = depends.length; i < len; i++) {
+							var dependProp = depends[i];
+							//同じ依存プロパティの再計算は一度だけ行う
+							if ($.inArray(dependProp, alreadyCalculated) === -1) {
+								var dependOldValue = getValue(this, dependProp);
+								var dependNewValue = recalculateDependProperties(this, dependProp);
+								setValue(this, dependProp, dependNewValue);
+								//TODO 同じ処理が何か所かで出てくるのでまとめる
+								changedProps[dependProp] = {
+									oldValue: dependOldValue,
+									newValue: dependNewValue
+								};
+								alreadyCalculated.push(dependProp);
+							}
 						}
 					}
 				}
+
+				var event = {
+					props: changedProps
+				};
+
+				delete this.__updateLog;
+
+				this.dispatchEvent(event);
+			}
+		});
+
+		/* ----------------- DataModelManagerコード ここまで ----------------- */
+
+
+
+		/* ----------------- DataModelコード ここから ----------------- */
+
+		function createDataModel(descriptor, manager) {
+			if (!$.isPlainObject(descriptor)) {
+				throw new Error('descriptorにはオブジェクトを指定してください。');
 			}
 
-			var event = {
-				props: changedProps
-			};
 
-			delete this.__updateLog;
-
-			this.dispatchEvent(event);
-		}
-	});
+			/* --- DataModelローカル ここから --- */
 
 
-	function createManager(name, namespace) {
-		var manager = new DataModelManager(name);
+
+
+			/* --- DataModelローカル ここまで --- */
+
+			/**
+			 * @memberOf h5.core.data
+			 * @class
+			 * @name DataModel
+			 */
+			function DataModel(descriptor, manager) {
+				/**
+				 * @memberOf DataModel
+				 */
+				this.descriptor = null;
+
+				/**
+				 * @memberOf DataModel
+				 */
+				this.items = {};
+
+				/**
+				 * @memberOf DataModel
+				 */
+				this.size = 0;
+
+				/**
+				 * @memberOf DataModel
+				 */
+				this.name = descriptor.name;
+
+				/**
+				 * @memberOf DataModel
+				 */
+				this.manager = manager;
+
+				//TODO
+				this.idSequence = 0;
+
+				//継承元がある場合はそのプロパティディスクリプタを先にコピーする。
+				//継承元と同名のプロパティを自分で定義している場合は
+				//自分が持っている定義を優先するため。
+				var schema = {};
+
+				function extendSchema(schema, desc) {
+					var base = desc.base;
+
+					if (base) {
+						if (!manager) {
+							//baseが設定されている場合、このデータモデルがマネージャに属していなければ継承元を探せないのでエラー
+							throwFwError(ERR_CODE_NO_MANAGER);
+						}
+
+						//TODO データモデルの登録の順序関係に注意
+						var baseModelDesc = manager.models[base.slice(1)];
+
+						//$.extend()は後勝ちなので、より上位のものから順にextend()するように再帰
+						extendSchema(schema, baseModelDesc);
+					}
+
+					$.extend(schema, desc.schema);
+				}
+
+				//継承を考慮してスキーマを作成
+				extendSchema(schema, descriptor);
+
+				for (prop in schema) {
+					if (schema[prop] && schema[prop].id === true) {
+						/**
+						 * @memberOf DataModel
+						 */
+						this.idKey = prop;
+						break;
+					}
+				}
+				if (!this.idKey) {
+					throwFwError(30005);
+				}
+
+
+
+				var errorReason = validateSchema(manager, schema);
+				if (errorReason.length > 0) {
+					//スキーマにエラーがある
+					throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
+				}
+
+				//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
+				this.schema = schema;
+
+				var itemSrc = createDataItemConstructor(this, descriptor);
+
+				this.itemConstructor = itemSrc.itemConstructor;
+				this.itemPropDesc = itemSrc.propDesc;
+
+				//TODO nameにスペース・ピリオドが入っている場合はthrowFwError()
+				//TODO this.fullname -> managerの名前までを含めた完全修飾名
+			}
+
+			DataModel.prototype = new EventDispatcher();
+			$.extend(DataModel.prototype, {
+				/**
+				 * @memberOf DataModel
+				 */
+				create: function(objOrArray) {
+					var ret = [];
+
+					var idKey = this.idKey;
+
+					//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
+					//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
+					//入っていない場合は一時的にセッションを作成する。
+					//			var isAlreadyInUpdate = this.manager.isInUpdate();
+					//			this.manager.beginUpdate();
+
+					var items = wrapInArray(objOrArray);
+					for ( var i = 0, len = items.length; i < len; i++) {
+						var existingItem = this.findById(items[i][idKey]);
+						if (existingItem) {
+							// 既に存在するオブジェクトの場合は値を更新
+							//TODO 値更新
+							//				for (prop in obj) {
+							//					if (prop == idKey) {
+							//						continue;
+							//					}
+							//					o[prop] = obj[prop];
+							//				}
+							ret.push(existingItem);
+						} else {
+							var newItem = createItem(this, items[i]);
+							ret.push(newItem);
+							this.items[newItem[idKey]] = newItem;
+						}
+					}
+
+					//			if (!isAlreadyInUpdate) {
+					//				this.manager.endUpdate();
+					//			}
+
+					if ($.isArray(objOrArray)) {
+						return ret;
+					}
+					return ret[0];
+				},
+
+				/**
+				 * @memberOf DataModel
+				 * @returns {Object}
+				 */
+				get: function(idOrArray) {
+					if (isString(idOrArray)) {
+						return this.findById(idOrArray);
+					}
+
+					var ret = [];
+					for ( var i = 0, len = idOrArray.length; i < len; i++) {
+						ret.push(this.findById(idOrArray[i]));
+					}
+					return ret;
+				},
+
+				/**
+				 * TODO JSDocの書き方(DataModel[]はOK？)
+				 *
+				 * @memberOf DataModel
+				 * @returns {DataModel[]}
+				 */
+				remove: function(objOrItemIdOrArray) {
+					/*
+					 * 指定されたidのデータアイテムを削除します。
+					 */
+					function removeItemById(model, id) {
+						if (!(id in model.items)) {
+							return null;
+						}
+
+						var item = model.items[id];
+
+						item.removeEventListener('change', this.itemChangeListener);
+
+						delete model.items[id];
+
+						model.size--;
+
+						if (!model.__updateLog[model.idKey]) {
+							model.__updateLog[model.idKey] = [];
+						}
+
+						model.__updateLog[model.idKey].push({
+							type: UPDATE_LOG_TYPE_REMOVE,
+							item: item
+						});
+
+						return item;
+					}
+
+					var idKey = this.idKey;
+					var ids = wrapInArray(objOrItemIdOrArray);
+
+					//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
+					//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
+					//入っていない場合は一時的にセッションを作成する。
+					var isAlreadyInUpdate = this.isInUpdate();
+					this.beginUpdate();
+
+					var ret = [];
+					for ( var i = 0, len = ids.length; i < len; i++) {
+						var id = getItemId(ids[i], idKey);
+						ret.push(removeItemById(this, id));
+					}
+
+					if (!isAlreadyInUpdate) {
+						this.endUpdate();
+					}
+
+					if ($.isArray(objOrItemIdOrArray)) {
+						return ret;
+					}
+					return ret[0];
+				},
+
+				/**
+				 * @returns {DataItem[]} データアイテム配列
+				 */
+				getAllItems: function() {
+					var ret = [];
+					var items = this.items;
+					for ( var prop in items) {
+						if (items.hasOwnProperty(prop)) {
+							ret.push(items[prop]);
+						}
+					}
+					return ret;
+				},
+
+				/**
+				 */
+				itemChangeListener: function(event) {
+					if (this.isInUpdate()) {
+						this.__updateLog[event.target[this.idKey]].push({
+							type: UPDATE_LOG_TYPE_CHANGE,
+							ev: event
+						});
+						return;
+					}
+
+					var ev = {
+						type: 'itemsChange',
+
+						added: null,
+						removed: null,
+						changed: [event]
+					};
+					this.dispatchEvent(ev);
+				},
+
+				/**
+				 */
+				findById: function(id) {
+					return this.items[id];
+				},
+
+				has: function(obj) {
+					return !!this.findById(getItemId(obj, this.idKey));
+				}
+			});
+
+
+			return new DataModel(descriptor, manager);
+
+		} /* End of createDataModel() */
+
+
+		/* ----------------- DataModelコード ここまで ----------------- */
+
+
+
+
+		//データモデルマネージャインスタンスを生成
+		var manager = new DataModelManager(managerName);
 
 		//第2引数が省略される場合もあるので、厳密等価でなく通常の等価比較を行う
 		if (namespace != null) {
@@ -1045,16 +1060,20 @@
 
 			//namespaceがnullまたはundefinedでない場合は、その名前空間に、指定した名前でマネージャを公開する
 			var o = {};
-			o[name] = manager;
+			o[managerName] = manager;
 			h5.u.obj.expose(namespace, o);
 		}
 
 		return manager;
-	}
+	} /* End of createManager() */
 
-	function createLocalDataModel(descriptor) {
-		return createDataModel(descriptor);
-	}
+
+
+
+	//TODO Localの場合は、テンポラリなManagerを渡す実装にする予定
+//	function createLocalDataModel(descriptor) {
+//		return createDataModel(descriptor);
+//	}
 
 	//=============================
 	// Expose to window
