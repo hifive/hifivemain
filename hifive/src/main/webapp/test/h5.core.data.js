@@ -832,6 +832,34 @@ $(function() {
 		}
 	});
 
+	test('データモデルの登録 schemaのチェック depend指定のあるプロパティにdefaultValueを設定できないこと', function() {
+		// TODO エラーコード確認する
+		var errCode = 30000;
+		try {
+			manager.createModel({
+				name: 'TestDataModel',
+				schema: {
+					id: {
+						id: true,
+					},
+					val: {
+						depend: {
+							props: 'id',
+							calc: function() {
+								return 0;
+							},
+							defaultValue: 0
+						}
+
+					}
+				}
+			});
+			ok(false, 'エラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
+	});
+
 	test('データモデルの登録 schemaのチェック constraintにオブジェクトでない値を指定した場合はエラーが出ること', function() {
 		// TODO エラーコード確認する
 		var errCode = 30000;
@@ -3440,6 +3468,7 @@ $(function() {
 					new Object(), function() {
 						return 10;
 					}];
+			var item2 = null;
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: id++,
@@ -5975,7 +6004,7 @@ $(function() {
 		}
 	});
 
-	test('changeイベント', function() {
+	test('addEventListener changeイベント', function() {
 		// addEventListenerに登録したハンドラが実行されたことを確認する変数
 		var changeCount = 0;
 		var changeCount2 = 0;
@@ -6019,11 +6048,9 @@ $(function() {
 			value: 1
 		});
 
-		ok(!item.hasEventListener('change', changeListener),
-				'addEventListenerする前のhasEventListener()はfalseであること');
-		item.addEventListener('change', changeListener);
-		ok(item.hasEventListener('change', changeListener),
-				'addEventListenerした後のhasEventListener()はtrueであること');
+
+		var ret = item.addEventListener('change', changeListener);
+		strictEqual(ret, undefined, 'addEventListenerの戻り値はundefinedであること');
 
 		item.value = 'test';
 		item.refresh();
@@ -6095,6 +6122,14 @@ $(function() {
 		strictEqual(changeCount2, 1, 'addEventListenerを2回、異なるハンドラを登録した場合、2つ目のハンドラが実行されること');
 		reset();
 
+		item.addEventListener('change', changeListener);
+		item.addEventListener('change', changeListener2);
+
+		item.value = 'c';
+		strictEqual(changeCount, 1, 'addEventListenerで、既に登録済みのハンドラを登録した場合、1つ目のハンドラが1回だけ実行されること');
+		strictEqual(changeCount2, 1, 'addEventListenerで、既に登録済みハンドラを登録した場合、2つ目のハンドラが1回だけ実行されること');
+		reset();
+
 		model.addEventListener('itemsChange', function() {
 			order.push('itemsChangeListener');
 		});
@@ -6105,7 +6140,7 @@ $(function() {
 				'changeイベントに登録したハンドラが登録順に実行され、最後にモデルのitemsChangeイベントハンドラが実行されること');
 	});
 
-	test('itemsChangeイベント create', function() {
+	test('addEventListener itemsChangeイベント', function() {
 		var itemsChangeArgs = null;
 		var itemsChangeCount = 0;
 		function itemsChangeListener(args) {
@@ -6123,9 +6158,6 @@ $(function() {
 
 		}
 
-		// TODO itemChangeイベントをテストするコードを書く。
-		// beginUpdate/endUpdateを使ったテストは、beginUpdate/endUpdateのテストの箇所に書く
-		// create([item1,item2,,,,])とした場合は、発火は1回、引数に複数のアイテムが入ってくるので、それはここで確認する
 		var model = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
@@ -6137,7 +6169,9 @@ $(function() {
 			}
 		});
 
-		model.addEventListener('itemsChange', itemsChangeListener);
+		var ret = model.addEventListener('itemsChange', itemsChangeListener);
+		strictEqual(ret, undefined, 'addEventListenerの戻り値はundefinedであること');
+
 		var item = model.create({
 			id: 1
 		});
@@ -6254,37 +6288,314 @@ $(function() {
 				'changedプロパティが、DataItem二つの変更分のchangeイベントオブジェクトが格納されている配列であること');
 	});
 
-	test('removeEventListener', function() {
-	// TODO addEventListenerのテストと切り分け可能か
-	});
-	test('hasEventListener', function() {
-	// TODO addEventListenerのテストと切り分け可能か
-	});
+	test('removeEventListener, hasEventListener',
+			function() {
+				var model = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						val: {}
+					}
+				});
+				var countItemsChange = 0;
+				var listenerItemsChange = function() {
+					countItemsChange++;
+				};
+				var countChange = 0;
+				var listenerChange = function() {
+					countChange++;
+				};
+				var item = model.create({
+					id: 1
+				});
+				strictEqual(model.hasEventListener('change', listenerChange), false,
+						'DataModel.addEventListener前のhasEventListener()はfalseであること');
+				strictEqual(item.hasEventListener('change', itemsChangeListener),
+						'DataItem.addEventListener前のhasEventListener()はfalseであること');
+
+				model.addEventListener('itemsChange', listenerItemsChange);
+
+				strictEqual(model.hasEventListener('change', listenerChange), true,
+						'DataModel.addEventListener後のhasEventListener()はtrueであること');
+				item.addEventListener('change', listenerChange);
+
+				strictEqual(item.hasEventListener('change', itemsChangeListener), true,
+						'DataItem.addEventListener後のhasEventListener()はtrueであること');
+
+				item.create({
+					id: 1,
+					val: 1
+				});
+				strictEqual(countChange, 1, 'removeEventListenerする前はchangeイベントハンドラが実行されていること');
+				strictEqual(countItemsChange, 1,
+						'removeEventListenerする前はitemsChangeイベントハンドラが実行されていること');
+
+				countChange = countItemsChange = 0;
+
+				model.removeEventListener('change', listenerItemsChange);
+				model.removeEventListener('itemsChange', listenerChange);
+				item.removeEventListener('itemsChange', listenerChange);
+				item.removeEventListener('change', listenerItemsChange);
+				model.create({
+					id: 1,
+					val: 2
+				});
+
+				strictEqual(countItemsChange, 0,
+						'DataModel.removeEventListenerに登録していないイベントを指定しても、削除されないこと');
+				strictEqual(countItemsChange, 0,
+						'DataModel.removeEventListenerに登録していないハンドラを指定しても、削除されないこと');
+				strictEqual(countChange, 0,
+						'DataItem.removeEventListenerに登録していないイベントを指定しても、削除されないこと');
+				strictEqual(countChange, 0,
+						'DataItem.removeEventListenerに登録していないハンドラを指定しても、削除されないこと');
+				reset();
+
+				// モデルのイベントハンドラだけを削除
+				model.removeEventListener('itemsChange', listenerItemsChange);
+				model.create({
+					id: 1,
+					val: 3
+				});
+				strictEqual(countItemsChange, 0, 'DataModel.removeEventListenerしたハンドラは実行されないこと');
+				strictEqual(countChange, 1, 'DataItemのイベントハンドラが実行されていること');
+				reset();
+
+				// モデルのイベントハンドラだけを削除
+				model.addEventListener('itemsChange', listenerItemsChange);
+				item.addEventListener('change', listenerChange);
+				model.create({
+					id: 1,
+					val: 4
+				});
+				strictEqual(countItemsChange, 1, 'DataModelのイベントハンドラが実行されること');
+				strictEqual(countChange, 0, 'DataItem.removeEventListenerしたハンドラは実行されないこと');
+			});
+
 	test('beginUpdate/endUpdate', function() {
-	//		DataModelのitemsChangeイベントについて仕様詳細化：
-	//		・beginUpdate()を呼ぶと、その間の変更はキューに貯められ、
-	//		　endUpdate()を呼ぶと変更がまとめて1つのイベントとして発火する
-	//
-	//		・この時、同じItemが複数変更された場合、
-	//		　changed: の中にはそれらの変更はマージされて存在(propsに変更がマージされる)。
-	//		　従って、changedの中は、同じインスタンスについての変更は1つしかない。
-	//
-	//		・change -> change -> remove のようになった場合、
-	//		　最終状態に基づいてイベントオブジェクトが作成される。
-	//		　上の場合、changed:の中には当該インスタンスについてイベントオブジェクトはなく
-	//		　removed: の中にItemインスタンスそのものが入っている。
-	//		　　・add -> change -> remove の場合（こんなことあんまりないと思うけど…）
-	//		　　　は、added, changed, removedのいずれにも入らない。
-	//		　　　# あくまでbegin-endを使った時の話なので
-	//		　　　　begin-end中でadd->removeとやった場合に外部に通知する必要は
-	//		　　　　ない（ユーザーが意図的にやったのだ）という理解。
-	//
-	//		・begin -> add -> change -> end の場合は
-	//		　added: にのみ入る。
-	//		　endで状態が確定した人から見るとあくまで「新規に追加された」インスタンスと捉えればよいから。
-	//
-	//		・あるPropを a -> b -> c -> a と変更すると
-	//		　endのときに c -> a と変更通知が出てしまうので
-	//		　最初のchangeのときに値を覚えておいてendのタイミングで最初===最後かどうかをチェックする
+		var model = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+		// 最終的に変更のないアイテム
+		var item1 = model.create({
+			id: 1
+		});
+		// 変更のあるアイテム
+		var item2 = model.create({
+			id: 2
+		});
+		// 削除するが、また同じIDでcreateするidのアイテム
+		var item3 = model.create({
+			id: 3
+		});
+		// 削除するアイテム
+		var item4 = model.create({
+			id: 4
+		});
+
+		var itemsChangeArgs = null;
+		var changeArgs1 = null;
+		var changeArgs2 = null;
+		var changeArgs3 = null;
+		var changeArgs4 = null;
+
+		var itemsChangeCount = 0;
+		var changeCount1 = 0;
+		var changeCount2 = 0;
+		var changeCount3 = 0;
+		var changeCount4 = 0;
+
+		function reset() {
+			itemsChangeArgs = null;
+			changeArgs1 = null;
+			changeArgs2 = null;
+			itemsChangeCount = 0;
+			hangeCount1 = 0;
+		}
+
+		model.addEventListener('itemsChange', function(args) {
+			itemsChangeCount++;
+			itemsChangeArgs = args;
+		});
+		item1.addEventListener('change', function(args) {
+			changeCount1++;
+			changeArgs1 = args;
+		});
+		item2.addEventListener('change', function(args) {
+			changeCount2++;
+			changeArgs2 = args;
+		});
+		item3.addEventListener('change', function(args) {
+			changeCount3++;
+			changeArgs3 = args;
+		});
+		item4.addEventListener('change', function(args) {
+			changeCount3++;
+			changeArgs3 = args;
+		});
+
+		manager.beginUpdate();
+		// id:1～5のアイテムを作成(1～4は上書き)
+		for ( var i = 1; i <= 5; i++) {
+			var item = model.create({
+				id: i,
+				val: i
+			});
+			strictEqual(item.dep, 'depend:' + i, 'begin-endの中でも、create時にdepend指定されている項目が更新される。');
+		}
+		strictEqual(itemsChangeCount, 0, 'itemsChangeイベントハンドラは実行されていないこと');
+		strictEqual(changeCount1, 0, 'changeイベントハンドラは実行されていないこと');
+		strictEqual(changeCount2, 0, 'changeイベントハンドラは実行されていないこと');
+
+		item1.val = 4;
+		item1.refresh();
+
+		strictEqual(itemsChangeCount, 0, 'itemsChangeイベントハンドラは実行されていないこと');
+		strictEqual(changeCount1, 0, 'changeイベントハンドラは実行されていないこと');
+		strictEqual(changeCount2, 0, 'changeイベントハンドラは実行されていないこと');
+
+
+		model.remove([3, 4]);
+
+		item1.val = null;
+		item2.val = 22;
+		item3 = model.create({
+			id: 3
+		});
+
+		manager.endUpdate();
+
+		strictEqual(changeCount1, 1, 'begin-end間で最終的に変更のなかったアイテムのchangeイベントハンドラは実行されないこと');
+		strictEqual(changeCount2, 1, 'begin-end間で変更のあったアイテムのchangeイベントハンドラが1回だけ実行されること');
+		strictEqual(changeCount3, 1, 'begin-end間で削除されたアイテムのchangeイベントハンドラは実行されないこと');
+		strictEqual(changeCount4, 1, 'begin-end間で削除されたアイテムのchangeイベントハンドラは実行されないこと');
+
+		deepEqual(changeArgs1.target, {
+			type: 'change',
+			target: item1
+		})
+
+		strictEqual(itemsChangeCount, 1, 'endUpdateで、itemsChangeイベントハンドラが1回だけ実行されること');
+		strictEqual(itemsChangeArgs.added.length, 1,
+				'begin時とend時を比較して、増えたアイテムの数だけアイテムがaddedに入っていること');
+		strictEqual(itemsChangeArgs.added[0].id, '5', 'addedの中身が正しいこと');
+		strictEqual(itemsChangeArgs.removed.length, 1,
+				'begin時とend時を比較して、削除されたアイテムの数だけアイテムがremovedに入っていること');
+		strictEqual(itemsChangeArgs.added[0].id, '4', 'removedの中身が正しいこと');
+		strictEqual(itemsChangeArgs.removed.length, 1,
+				'begin時とend時を比較して、増えたアイテムの数だけアイテムがremovedに入っていること');
+		strictEqual(itemsChangeArgs.added[0].id, '3', 'removedの中身が正しいこと');
 	});
+
+
+	test('beginUpdate/endUpdate begin-end内ではdepend指定されている項目は、refreshしない限り更新されないこと', function() {
+		var model = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {},
+				dep: {
+					depend: {
+						on: 'val',
+						calc: function(v) {
+							return 'depend:' + v;
+						}
+					}
+				}
+			}
+		});
+
+		var item1 = model.create({
+			id: 1,
+			val: 1
+		});
+		var item2 = model.create({
+			id: 2,
+			val: 2
+		});
+
+		manager.beginUpdate();
+		// 代入で値を変更
+		item1.val = 11;
+		// createで値を変更
+		model.create({
+			id: 2,
+			val: 22
+		});
+
+		strictEqual(item1.dep, 'depend:1', 'begin-endの中では、refreshするまでdepend指定されている項目は更新されないこと');
+		strictEqual(item2.dep, 'depend:2', 'begin-endの中では、refreshするまでdepend指定されている項目は更新されないこと');
+
+		item1.refresh();
+
+		strictEqual(item1.dep, 'depend:11', 'refresh()でdepend指定されている項目の値が更新されること');
+		manager.endUpdate();
+
+		strictEqual(item2.dep, 'depend:22', 'endUpdate()でdepend指定されている項目の値が更新されること');
+	});
+
+
+	test(
+			'beginUpdate/endUpdate内でadd/removeEventListenerした場合、endUpdate時に登録されているEventListenerだけが実行されること',
+			function() {
+				var model = manager.createModel({
+					name: 'TestModel',
+					schema: {
+						id: {
+							id: true
+						},
+						val: {}
+					}
+				});
+				var item1 = model.create({
+					id: 1
+				});
+				var item2 = model.create({
+					id: 2
+				});
+
+				var itemsChangeCount = changeCount1 = changeCount2 = 0;
+				var modelListener = function(args) {
+					itemsChangeCount++;
+				};
+
+				var item1Listener = function(args) {
+					changeCount1++;
+				};
+
+				var item2Listener = function(args) {
+					changeCount2++;
+				};
+
+				model.addEventListener('itemsChange', modelListener);
+				item1.addEventListener('change', item1Listener);
+				item2.addEventListener('change', item2Listener);
+
+				manager.begeinUpdate();
+				item1.val = 11;
+				item2.val = 22;
+
+				item1.removeEventListener('change', item1Listener);
+				item1.addEventListener('change', function() {
+					changeCount += 100;
+				});
+				item2.removeEventListener('change', item2Listener);
+				model.removeEventListener('itemsChange', modelListener);
+
+				manager.endUpdate();
+
+				strictEqual(itemsChangeCount, 0, 'endUpdate時に存在しないハンドラは実行されていないこと');
+				strictEqual(changeCount1, 100, 'endUpdate時に存在しないハンドラは実行されず、新たに登録したハンドラが実行されていること');
+				strictEqual(changeCount2, 0, 'endUpdate時に存在しないハンドラは実行されていないこと');
+			});
 });
