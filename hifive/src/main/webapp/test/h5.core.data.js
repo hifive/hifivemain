@@ -1908,7 +1908,6 @@ $(function() {
 	});
 
 	test('createでアイテムが生成できること。引数に配列を渡した場合は戻り値も配列になること。', function() {
-		// TODO createやitem.id=xxx で重複したidを持たせようとするとエラー (配列の途中でエラーが出た場合、アトミックに処理されるかどうかの仕様を確認する)
 		var model = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
@@ -1945,8 +1944,8 @@ $(function() {
 
 		strictEqual(items.length, 3, 'createの引数に配列を渡すと、戻り値がアイテムの配列として返ってくること');
 		strictEqual(items[0].id, '1', '戻り値の配列の中身が正しいこと');
-		strictEqual(items[1].id, '1', '戻り値の配列の中身が正しいこと');
-		strictEqual(items[2].id, '1', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[1].id, '2', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[2].id, '3', '戻り値の配列の中身が正しいこと');
 	});
 
 	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 2, function() {
