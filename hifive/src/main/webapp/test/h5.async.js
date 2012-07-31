@@ -107,10 +107,10 @@ $(function() {
 		strictEqual(ret, 3, 'Deferred#then()で登録したprogressCallbackは動作するか');
 	});
 
-	asyncTest('h5.async.deferred() pipeのdoneコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか',
-			function() {
+	asyncTest(
+			'h5.async.deferred() pipeのdoneコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか (jQuery1.6.x用テスト)',
+			6, function() {
 				var count = 1;
-				var tStart = new Date();
 
 				h5.async.deferred().resolve().pipe(function() {
 					var dfd = $.Deferred();
@@ -118,11 +118,6 @@ $(function() {
 
 					setTimeout(function() {
 						equal(count++, 1, '1番目に実行されること。');
-						var end = +new Date();
-						var result = end - tStart;
-						var delay = Math.abs(time - result);
-						tStart = end;
-						ok((delay >= 0 && delay <= 5), '約1.2秒後に実行されること。');
 						dfd.resolve();
 					}, time);
 
@@ -135,11 +130,6 @@ $(function() {
 
 					setTimeout(function() {
 						equal(count++, 3, '3番目に実行されること。');
-						var end = +new Date();
-						var result = end - tStart;
-						var delay = Math.abs(time - result);
-						tStart = end;
-						ok((delay >= 0 && delay <= 5), '約0.6秒後に実行されること。');
 						dfd.resolve();
 					}, time);
 
@@ -152,10 +142,6 @@ $(function() {
 
 					setTimeout(function() {
 						equal(count++, 5, '5番目に実行されること。');
-						var end = +new Date();
-						var result = end - tStart;
-						var delay = Math.abs(time - result);
-						ok((delay >= 0 && delay <= 5), '約0.8秒後に実行されること。');
 						dfd.resolve();
 					}, time);
 
@@ -166,10 +152,10 @@ $(function() {
 				});
 			});
 
-	asyncTest('h5.async.deferred() pipeのfailコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか',
-			function() {
+	asyncTest(
+			'h5.async.deferred() pipeのfailコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか (jQuery1.6.x用テスト)',
+			6, function() {
 				var count = 1;
-				var tStart = new Date();
 
 				h5.async.deferred().reject().pipe(null, function() {
 					var dfd = $.Deferred();
@@ -177,11 +163,6 @@ $(function() {
 
 					setTimeout(function() {
 						equal(count++, 1, '1番目に実行されること。');
-						var end = +new Date();
-						var result = end - tStart;
-						var delay = Math.abs(time - result);
-						tStart = end;
-						ok((delay >= 0 && delay <= 5), '約1.2秒後に実行されること。');
 						dfd.reject();
 					}, time);
 
@@ -194,11 +175,6 @@ $(function() {
 
 					setTimeout(function() {
 						equal(count++, 3, '3番目に実行されること。');
-						var end = +new Date();
-						var result = end - tStart;
-						var delay = Math.abs(time - result);
-						tStart = end;
-						ok((delay >= 0 && delay <= 5), '約0.6秒後に実行されること。');
 						dfd.reject();
 					}, time);
 
@@ -211,10 +187,6 @@ $(function() {
 
 					setTimeout(function() {
 						equal(count++, 5, '5番目に実行されること。');
-						var end = +new Date();
-						var result = end - tStart;
-						var delay = Math.abs(time - result);
-						ok((delay >= 0 && delay <= 5), '約0.8秒後に実行されること。');
 						dfd.reject();
 					}, time);
 
@@ -223,6 +195,149 @@ $(function() {
 					equal(count++, 6, '3番目のpipeが返すPromiseがrejectされたので、failコールバックが実行されること。');
 					start();
 				});
+			});
+
+	test('h5.async.when() $.Deferred()のPromiseを引数に指定して実行 - done() (jQuery1.6.x用テスト)', 1,
+			function() {
+				var df1 = $.Deferred();
+				var df2 = $.Deferred();
+
+				h5.async.when([df1, df2]).done(function() {
+					ok(true, '$.Deferred()のPromiseがresolveされたので、doneコールバックが実行されること。');
+				});
+
+				df1.resolve();
+				df2.resolve();
+			});
+
+	test('h5.async.when() $.Deferred()のPromiseを引数に指定して実行 - fail() (jQuery1.6.x用テスト)', 1,
+			function() {
+				var df1 = $.Deferred();
+				var df2 = $.Deferred();
+
+				h5.async.when([df1, df2]).done(function() {
+					ok(false, 'テスト失敗');
+				}).fail(function() {
+					ok(true, '$.Deferred()のPromiseの一つがrejectされたので、failコールバックが実行されること。');
+				});
+
+				df1.reject();
+				df2.resolve();
+			});
+
+	test('h5.async.when() h5.async.deferred()のPromiseを引数に指定して実行 - done() (jQuery1.6.x用テスト)', 1,
+			function() {
+				var df1 = h5.async.deferred();
+				var df2 = h5.async.deferred();
+
+				h5.async.when([df1, df2]).done(function() {
+					ok(true, '$.Deferred()のPromiseがresolveされたので、doneコールバックが実行されること。');
+				});
+
+				df1.resolve();
+				df2.resolve();
+			});
+
+	test('h5.async.when() h5.async.deferred()のPromiseを引数に指定して実行 - fail() (jQuery1.6.x用テスト)', 1,
+			function() {
+				var df1 = h5.async.deferred();
+				var df2 = h5.async.deferred();
+
+				h5.async.when([df1, df2]).done(function() {
+					ok(false, 'テスト失敗');
+				}).fail(function() {
+					ok(true, '$.Deferred()のPromiseの一つがrejectされたので、failコールバックが実行されること。');
+				});
+
+				df1.reject();
+				df2.resolve();
+			});
+
+	test('h5.async.when() 値を指定してh5.async.deferred().resolve()を実行 (jQuery1.6.x用テスト)', 2, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+
+		h5.async.when([df1, df2]).done(function(name, name2) {
+			equal(name, 'df1', 'df1のresolve()が実行され、doneコールバックが実行されること。');
+			equal(name2, 'df2', 'df2のresolve()が実行され、doneコールバックが実行されること。');
+		});
+
+		df1.resolve('df1');
+		df2.resolve('df2');
+	});
+
+	test('h5.async.when() 値を指定してh5.async.deferred().resolveWith()を実行 (jQuery1.6.x用テスト)', 2,
+			function() {
+				var df1 = h5.async.deferred();
+				var df2 = h5.async.deferred();
+
+				h5.async.when([df1, df2]).done(function(name, name2) {
+					equal(name, 'df1', 'df1のresolveWith()が実行され、doneコールバックが実行されること。');
+					equal(name2, 'df2', 'df2のresolveWith()が実行され、doneコールバックが実行されること。');
+				});
+
+				df1.resolveWith(null, ['df1']);
+				df2.resolveWith(null, ['df2']);
+			});
+
+	test('h5.async.when() 値を指定してh5.async.deferred().reject()を実行 (jQuery1.6.x用テスト)', 2, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+
+		h5.async.when([df1, df2]).fail(function(name, name2) {
+			equal(name, 'df1', 'df1のreject()が実行され、doneコールバックが実行されること。');
+			equal(name2, undefined, 'df1のreject()が実行されたので、第二引数のname2には何も入っていないこと。');
+		});
+
+		df1.reject('df1');
+		df2.reject('df2');
+	});
+
+	test('h5.async.when() 値を指定してh5.async.deferred().rejectWith()を実行 (jQuery1.6.x用テスト)', 2,
+			function() {
+				var df1 = h5.async.deferred();
+				var df2 = h5.async.deferred();
+
+				h5.async.when([df1, df2]).fail(function(name, name2) {
+					equal(name, 'df1', 'df1のrejectWith()が実行され、doneコールバックが実行されること。');
+					equal(name2, undefined, 'df1のrejectWith()が実行されたので、第二引数のname2には何も入っていないこと。');
+				});
+
+				df1.rejectWith(null, ['df1']);
+				df2.rejectWith(null, ['df2']);
+			});
+
+	test('h5.async.when() 値を指定して h5.async.deferred().notify()を実行 (jQuery1.6.x用テスト)', 2, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+
+		h5.async.when([df1, df2]).progress(function(name, name2) {
+			if (name == 'df1' && name2 == undefined) {
+				ok(true, 'df1のnotifyが実行され、progressコールバックが実行されること。');
+			} else if (name == 'df1' && name2 == 'df2') {
+				ok(true, 'df2のnotifyが実行され、progressコールバックが実行されること。');
+			}
+		});
+
+		df1.notify('df1');
+		df2.notify('df2');
+	});
+
+	test('h5.async.when() 値を指定して h5.async.deferred().notifyWith()を実行 (jQuery1.6.x用テスト)', 2,
+			function() {
+				var df1 = h5.async.deferred();
+				var df2 = h5.async.deferred();
+
+				h5.async.when([df1, df2]).progress(function(name, name2) {
+					if (name == 'df1' && name2 == undefined) {
+						ok(true, 'df1のnotifyが実行され、progressコールバックが実行されること。');
+					} else if (name == 'df1' && name2 == 'df2') {
+						ok(true, 'df2のnotifyが実行され、progressコールバックが実行されること。');
+					}
+				});
+
+				df1.notifyWith(df1, ['df1']);
+				df2.notifyWith(df2, ['df2']);
 			});
 
 	test(
@@ -431,7 +546,7 @@ $(function() {
 		var count = 0;
 		h5.async.when().done(function() {
 			strictEqual(++count, 1, '引数なしの場合、即doneハンドラが実行されること');
-			ok(true, '※要目視確認：引数なしの場合はログが出力されないこと。')
+			ok(true, '※要目視確認：引数なしの場合はログが出力されないこと。');
 		});
 		++count;
 	});
@@ -453,20 +568,23 @@ $(function() {
 		ok(true, '※要目視確認：null/undefinedの場合はログが出力されないこと。');
 	});
 
-	test('※要目視確認：h5.async.whenの動作 引数にプロミスオブジェクトと配列以外のものを渡した場合は、即実行されること。ログが出力されること。', function() {
-		var argArray = [0, 1, true, false, {}];
-		expect(argArray.length + 1);
+	test('※要目視確認：h5.async.whenの動作 引数にプロミスオブジェクトと配列以外のものを渡した場合は、同期実行されること。ログが出力されること。', 11,
+			function() {
+				var argArray = [0, 1, true, false, {}];
 
-		for ( var i = 0, l = argArray.length; i < l; i++) {
-			count = 0;
-			h5.async.when(argArray[i]).done(function() {
-				strictEqual(count, 0, '引数が' + argArray[i].toString() + 'の場合、即doneハンドラが実行されること');
+				for ( var i = 0, l = argArray.length; i < l; i++) {
+					var count = 0;
+					h5.async.when(argArray[i]).done(
+							function() {
+								equal(count++, 0, '引数が' + argArray[i].toString()
+										+ 'の場合、doneハンドラが同期的に実行されること。');
+							});
+
+					equal(count, 1, 'h5.async.whenのdoneハンドラの実行が同期的に行われること。');
+				}
+				ok(true, '※要目視確認：次のようなログが' + argArray.length
+						+ '回出力されていること。『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
 			});
-			count++;
-		}
-		ok(true, '※要目視確認：次のようなログが' + argArray.length
-				+ '回出力されていること。『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
-	});
 
 	test(
 			'※要目視確認：h5.async.whenの動作 引数を2つ以上渡して、プロミス以外のものがある場合、プロミス以外のものだけを無視してpromiseオブジェクトのresolveを待つこと。ログが出力されること。',
@@ -533,7 +651,7 @@ $(function() {
 							ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneハンドラが実行されること');
 							ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 							ok(true,
-									'※要目視確認：次のようなログが、INFOレベルで出力されていること 『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』')
+									'※要目視確認：次のようなログが、INFOレベルで出力されていること 『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
 						});
 				dfd2.reject();
 				dfd3.reject();

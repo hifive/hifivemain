@@ -410,11 +410,14 @@
 	 * @memberOf h5.async
 	 */
 	var when = function(/* var_args */) {
-		var args = arguments;
+		var argsToArray = h5.u.obj.argsToArray;
+		var getDeferred = h5.async.deferred;
+
+		var args = argsToArray(arguments);
+
 		if (args.length === 1 && $.isArray(args[0])) {
 			args = args[0];
 		}
-		var dfd = h5.async.deferred();
 
 		/* del begin */
 		// 引数にpromise・deferredオブジェクト以外があった場合はログを出力します。
@@ -427,13 +430,62 @@
 			}
 		}
 		/* del end */
-		$.when.apply($, args).done(function(/* var_args */) {
-			dfd.resolve.apply(dfd, arguments);
-		}).fail(function(/* var_args */) {
-			dfd.reject.apply(dfd, arguments);
-		}).progress(function(/* ver_args */) {
-			dfd.notifyWith(dfd, arguments);
-		});
+
+		var dfd = $.Deferred();
+
+		// jQueryのバージョンが1.6.xの場合、progress/notifyが使用できるよう機能を追加する
+		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
+			var i = 0;
+			var len = args.length;
+			var count = len;
+			var pValues = new Array(len);
+			var firstParam = args[0];
+
+			dfd = len <= 1 && firstParam && jQuery.isFunction(firstParam.promise) ? firstParam
+					: getDeferred();
+
+			function resolveFunc(i) {
+				return function(value) {
+					args[i] = arguments.length > 1 ? argsToArray(arguments) : value;
+					if (!(--count)) {
+						dfd.resolveWith(dfd, args);
+					}
+				};
+			}
+
+			function progressFunc(i) {
+				return function(value) {
+					pValues[i] = arguments.length > 1 ? argsToArray(arguments) : value;
+					dfd.notifyWith(dfd.promise(), pValues);
+				};
+			}
+
+			if (len > 1) {
+				for (; i < len; i++) {
+					if (args[i] && args[i].promise && $.isFunction(args[i].promise)) {
+						args[i].promise().then(resolveFunc(i), dfd.reject, progressFunc(i));
+					} else {
+						--count;
+					}
+				}
+				if (!count) {
+					dfd.resolveWith(dfd, args);
+				}
+			} else if (dfd !== firstParam) {
+				dfd.resolveWith(dfd, len ? [firstParam] : []);
+			}
+		} else {
+			dfd = getDeferred();
+
+			$.when.apply($, args).done(function(/* var_args */) {
+				dfd.resolve.apply(dfd, arguments);
+			}).fail(function(/* var_args */) {
+				dfd.reject.apply(dfd, arguments);
+			}).progress(function(/* ver_args */) {
+				dfd.notifyWith(dfd, argsToArray(arguments));
+			});
+		}
+
 		return dfd.promise();
 	};
 
