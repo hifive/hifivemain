@@ -45,20 +45,34 @@ var errorCodeToMessageMap = {};
  * @param detail {Any} 追加のデータ(内容はAPIごとに異なる)
  */
 function throwFwError(code, msgParam, detail) {
-	var e = new Error();
-	if (code) {
-		e.code = code; // TODO codeは必須、ない場合は…throw Error
+	var msg = null;
+	var msgSrc = errorCodeToMessageMap[code];
+
+	if (msgSrc) {
+		msg = h5.u.str.format.apply(null, [msgSrc].concat(msgParam));
 	}
-	var msg = errorCodeToMessageMap[code];
-	if (msg) {
-		var args = [msg].concat(msgParam);
-		e.message = h5.u.str.format.apply(null, args);
+
+	var e = msg ? new Error(msg) : new Error('FwError: code = ' + code);
+
+	if (code) {
+		e.code = code;
 	}
 	if (detail) {
 		e.detail = detail;
 	}
+
 	throw e;
 }
+
+/* del begin */
+// テストのためにexposeする
+window.com = {
+	htmlhifive: {
+		throwFwError: throwFwError
+	}
+};
+/* del end */
+
 
 /**
  * エラーコードとエラーメッセージのマップを追加します。
