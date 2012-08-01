@@ -50,6 +50,7 @@ function throwFwError(code, msgParam, detail) {
 
 	if (msgSrc) {
 		msg = h5.u.str.format.apply(null, [msgSrc].concat(msgParam));
+		msg += '(code=' + code + ')';
 	}
 
 	var e = msg ? new Error(msg) : new Error('FwError: code = ' + code);

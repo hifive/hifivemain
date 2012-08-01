@@ -19,13 +19,13 @@ test('throwFwError() ※dev版のみ(min版ではエラーになります)', fun
 		raises(function(enviroment) {
 			func(10000);
 		}, function(actual) {
-			return 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。' === actual.message;
+			return 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。(code=10000)' === actual.message;
 		}, 'エラーコードに紐づくエラーメッセージがmesasgeプロパティに保持していること。');
 
 		raises(function(enviroment) {
 			func(7003, [1000, 'aaa']);
 		}, function(actual) {
-			return 'テンプレートファイルを取得できませんでした。ステータスコード:1000, URL:aaa' === actual.message;
+			return 'テンプレートファイルを取得できませんでした。ステータスコード:1000, URL:aaa(code=7003)' === actual.message;
 		}, 'エラーコードに紐づくエラーメッセージがmesasgeプロパティに保持していること。');
 	} else {
 		ok(false, 'このテストはdev版でのみ有効です。');
