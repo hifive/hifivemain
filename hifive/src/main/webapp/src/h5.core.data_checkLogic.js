@@ -617,12 +617,31 @@
 	}
 
 	/**
-	 * データモデルのディスクリプタとして正しいオブジェクトかどうかチェックする。 正しくないなら例外を投げる。
+	 * type:'number' 指定のプロパティに代入できるかのチェック null,undefinedは入るので、trueを返す。
+	 *
+	 * @param {Any} val 判定する値
+	 * @param {integer} dementnion 判定する型の配列次元(配列でないなら0)
+	 * @return {Boolean} numberとして正しい値かどうか。
+	 */
+	function isNumber(val) {
+		if (val == null) {
+			return true;
+		}
+		if (typeof val === 'number') {
+			return true;
+		}
+		return false;
+	}
+	// TODO ↑と同様に各型について書いていく
+
+	/**
+	 * データモデルのディスクリプタとして正しいオブジェクトかどうかチェックする。 schema以外をチェックして、正しくないなら例外を投げる。
+	 * 正しい場合はvalidateSchemaの戻り値を返す
 	 *
 	 * @private
 	 * @param {Object} descriptor オブジェクト
-	 * @param {Object} DataManagerオブジェクト。
-	 * @return {Boolean} データモデルのディスクリプタとして正しいオブジェクトならtrueを返す。正しくない場合は例外を投げる。
+	 * @param {Object} DataManagerオブジェクト
+	 * @return {Object} schemaのチェック結果。validateSchemaの戻り値をそのまま返す
 	 */
 	function validateDescriptor(descriptor, manager) {
 		// descriptorがオブジェクトかどうか
@@ -630,7 +649,6 @@
 
 		// nameのチェック
 		// TODO 識別子として有効でない文字列ならエラーにするでいいか？
-		// ※同名のデータモデルが存在するかどうかはこの関数では判定しない。
 		if (!isValidNamespaceIdentifier(descriptor.name)) {
 			throw new Error('データモデル名が不正です。使用できる文字は、半角英数字、_、$、のみで、先頭は数字以外である必要があります。');
 		}
@@ -662,10 +680,39 @@
 		return validateSchema(schema, manager);
 	}
 
+
 	/**
 	 * schemaが正しいかどうか判定する
+	 *
+	 * @private
+	 * @param {Object} schema schemaオブジェクト
+	 * @param {Object} manager DataManagerオブジェクト
+	 * @return {Object} schemaのチェック結果。以下のようなオブジェクトを返す。
+	 *
+	 * <pre>
+	 * {
+	 * 		errorReason: Array, // エラー情報(エラーがない場合は空配列)
+	 * 		meta:{
+	 * 			type: {	// type情報をパースした結果
+	 * 				isDataModel: boolean,		// データモデル指定かどうか
+	 * 				dataModelName: string,	 	// データモデル指定の時、データモデルの名前
+	 * 				elmType: string,			// type指定文字から配列部分を除いた文字列
+	 * 				enumValue: array			// enumValue(elmTypeが&quot;enum&quot;の場合のみ)
+	 * 				dimension: dimention,		// 配列の階層 (配列指定でないときは0)
+	 * 				check:function				// 値がelmTypeを満たすかどうかチェックする関数
+	 * 			},
+	 * 			constraint: {
+	 * 				// 指定したプロパティとその値
+	 * 				check: function  	// 値がconstraintに指定された条件を満たすかどうかチェックする関数
+	 * 			},
+	 * 			checkValue: function	// typeとconstraintを元に、valueがあっているかどうかをチェックする関数。typeに配列が指定されている場合は中身も見る
+	 * 			}
+	 * 		}
+	 * }
+	 * </pre>
 	 */
 	function validateSchema(schema, manager) {
+		// TODO エラーメッセージを定数化する
 		var errorReason = [];
 
 
@@ -683,17 +730,17 @@
 			errorReason.push('idがない');
 		}
 
-		for ( var p in schema) {
-			var propObj = schema[p];
+		for ( var schemaProp in schema) {
+			var propObj = schema[schemaProp];
 			var isId = propObj.id;
 
 			// プロパティ名が適切なものかどうかチェック
-			if (!isValidNamespaceIdentifier(p)) {
-				errorReason.push('"' + p
+			if (!isValidNamespaceIdentifier(schemaProp)) {
+				errorReason.push('"' + schemaProp
 						+ '"をプロパティ名に指定できません。半角英数字,_,$ で構成される文字列で、先頭は数字以外である必要があります');
 			}
 
-			// dependのチェック
+			// -- dependのチェック --
 			// defaultValueが指定されていたらエラー
 			// onに指定されているプロパティがschema内に存在すること
 			var depend = propObj.depend;
@@ -720,11 +767,15 @@
 				}
 			}
 
-			// TODO typeのチェック
+			// -- typeのチェック --
 			// typeに指定されている文字列は正しいか
 			// defaultValueとの矛盾はないか
 			// constraintにそのtypeで使えない指定がないか
 			// enumの時は、enumValueが指定されているか
+			var typeCheck = function() {
+				// type指定がない場合でもcheckメソッドを持たせる
+				return true;
+			};
 			var typeObj = {};
 			if (propObj.type != null) {
 				// id指定されているならエラー
@@ -759,42 +810,299 @@
 							errorReason.push('タイプにenumを指定する場合はenumValueも指定する必要があります');
 						}
 					}
+
+					// 配列の次元。配列でないなら0
+					var dimention = matched[3] ? matched[3].length / 2 : 0;
+
+					// type指定を元に値をチェックする関数を作成する
+					typeCheck = createTypeCheckFunction(matched[1], {
+						manager: manager,
+						enumValue: propObj.enumValue
+					});
+
+					// constraintのチェックで使用するタイプ情報
 					typeObj = {
 						isDataModel: !!matched[2],
 						dataModelName: matched[2],
 						elmType: matched[1],
-						demension: matched[3].length / 2
+						demension: dimention
 					};
 				}
 			}
 
-			// TODO constraintのチェック
+			// constraintのチェック
 			// プロパティのチェック
 			// 値のチェック
 			// タイプと矛盾していないかのチェック
-			var constraintObj = {};
-			if (propObj.constraint != null) {
+			var constraintObj = propObj.constraint;
+			var constraintCkeck = function() {
+				return true;
+			};
+			if (constraintObj != null) {
+				if (!$.isPlainObject(constraintObj)) {
+					errorReason.push('constraintはオブジェクトで指定してください');
+				} else {
+					for ( var p in constraintObj) {
+						// constraintのプロパティの値とtype指定との整合チェック
+						var val = constraintObj[p];
+						switch (p) {
+						case 'notNull':
+							if (val != null) {
+								if (val !== true || val !== false) {
+									errorReason.push('constraint.notNullは、trueまたはfalseで指定してください');
+								}
+							}
+							break;
+						case 'min':
+						case 'max':
+							if (val != null) {
+								switch (typeObj.elmType) {
+								case 'integer':
+									if (!isInteger(val) || isNaN(val)) {
+										errorReason
+												.push('constraint.minとmax は、数値で指定してください。typeにintegerを指定している場合は整数値で指定する必要があります');
+									}
+									break;
+								case 'number':
+									if (!isNumber(val) || val === Infinity || val === -Infinity
+											|| isNaN(val)) {
+										errorReason.push('constraint.minとmax は、数値で指定してください');
+									}
+									break;
+								default:
+									errorReason
+											.push('constraintにminとmaxを指定できるのはtypeに"number"または"integer"またはその配列を指定した時のみです');
+								}
+							}
+							break;
+						case 'minLength':
+						case 'maxLength':
+							if (val != null) {
+								switch (typeObj.elmType) {
+								case 'string':
+									if (!isInteger(val) || isNaN(val) || val <= 0) {
+										errorReason
+												.push('constraint.minLengthとmaxLength は、0以上の整数値で指定してください');
+									}
+									break;
+								default:
+									errorReason
+											.push('constraintにminLengthとmaxLengthを指定できるのはtypeに"string"またはその配列を指定した時のみです');
+								}
+							}
+							break;
+						case 'notEmpty':
+							if (val != null) {
+								switch (typeObj.elmType) {
+								case 'string':
+									if (!isBoolean(val)) {
+										errorReason
+												.push('constraint.notEmpty は、trueまたはfalseで指定してください');
+									}
+									break;
+								default:
+									errorReason
+											.push('constraintにnotEmptyを指定できるのはtypeに"string"またはその配列を指定した時のみです');
+								}
+							}
+							break;
+						case 'pattern':
+							if (val != null) {
+								switch (typeObj.elmType) {
+								case 'string':
+									if ($.type(val) !== 'regexp') {
+										errorReason.push('constraint.notEmpty は、正規表現で指定してください');
+									}
+									break;
+								default:
+									errorReason
+											.push('constraintにpatternを指定できるのはtypeに"string"またはその配列を指定した時のみです');
+								}
+							}
+							break;
+						}
+					}
+
+					// constraintの中身に矛盾がないかどうかチェック
+					if (constraintObj.notEmpty && constraintObj.minLength === 0) {
+						errorReason
+								.push('constraintのチェックでエラーが発生しました。notEmptyを指定している場合は\minLengthに0を指定することはできません');
+					}
+					if (constraintObj.notEmpty && constraintObj.minLength === 0) {
+						errorReason
+								.push('constraintのチェックでエラーが発生しました。notEmptyを指定している場合は\minLengthに0を指定することはできません');
+					}
+					if (constraintObj.min != null && constraintObj.max != null
+							&& constraintObj.min > constraintObj.max) {
+						errorReason.push('constraintのチェックでエラーが発生しました。min > max となるような数字は設定できません');
+					}
+					if (constraintObj.minLength != null && constraintObj.maxLength != null
+							&& constraintObj.minLength > constraintObj.maxLength) {
+						errorReason
+								.push('constraintのチェックでエラーが発生しました。minLength > maxLength となるような数字は設定できません');
+					}
+				}
+				// constraintを値が満たすかどうかチェックする関数
+				constraintCkeck = createConstraintCheckFunction(constraintObj);
 			}
 
 
-			// TODO enumValueのチェック
-			if (propObj.enumValue != null) {
+			// enumValueのチェック
+			var enumValue = propObj.enumValue;
+			if (enumValue != null) {
 				// typeObj.elmTypeがenumか
+				if (typeObj.elmType !== 'elem') {
+					errorReason.push('enumValueはtypeに"enum"またはその配列が指定されている場合のみ指定可能です');
+				}
+				// 空でない配列かどうか
+				if (!$.isArray(enumValue) || enumValue.length === 0) {
+					errorReason.push('enumValueは空でない配列を指定してください。');
+				}
+				if (propObj.constraint != null) {
+					// constraintのチェック
+					errorReason.push('enumValue');
+				}
 
-				// 配列かどうか
 			}
 
-			// TODO defaultValueのチェック
+			// TODO この関数を外出しする。(この関数を作る関数を外だしする)
+			function checkValue(v) {
+				if (typeObj.elmType === 'array') {
+					return $.isArray(v);
+				}
+				function _checkValue(v, d) {
+					if (!d) {
+						return typeCheck(v) && constraintCheck(v);
+					}
+					if (!$.isArray(v)) {
+						return false;
+					}
+					for ( var i = 0, l = v.length; i < l; i++) {
+						if (!_checkValue(v[i], d - 1)) {
+							return false;
+						}
+					}
+					return true;
+				}
+				return _checkValue(v, typeObj.dimentnion);
+			}
+			// defaultValueのチェック
 			// typeObj, constraintObjと矛盾していないかのチェック
 			// enumの場合はenumの中にあるかどうかのチェック
 			// enumの中にNaNがあるときはisNaNを使ってチェック
 			// defaultValueはnullの時は、nullが指定されたものとする。
 			// undefinedの時は、指定無しと解釈する
-
-
+			var defaultValue = propObj.defaultValue;
+			if (propObj.hasOwnProperty('defaultValue')) {
+				// dafaultValueはnullやundefinedであっても、指定されていれば(hasOwnPropertyがtrueなら)その値をチェックする
+				checkValue(defaultValue) || error.Reason.push('defaultValueのエラー');
+			}
 		}
 
+		// TODO チェック関数をそとだしするので、ここはエラーメッセージを返せばOK..？
 		return errorReason;
+	}
+
+	/**
+	 * constraintオブジェクトから、値がそのconstraintの条件を満たすかどうか判定する関数を作成する
+	 *
+	 * @param {object} constraint constraintオブジェクト
+	 * @return {function}
+	 */
+	function createConstraintCheckFunction(constraint) {
+		return function(v) {
+			if (constraint.notNull && v == null) {
+				return false;
+			}
+			if (v == null) {
+				// nullでないものについてチェックを行うので、nullならtrueを返す
+				return true;
+			}
+			if (constraint.notEmpty && !v) {
+				return false;
+			}
+			if (constraint.min != null && v < constraint.min) {
+				return false;
+			}
+			if (constraint.max != null && constraint.max < v) {
+				return false;
+			}
+			if (constraint.minLength != null && v < constraint.minLength) {
+				return false;
+			}
+			if (constraint.maxLength != null && constraint.maxLength < v) {
+				return false;
+			}
+			if (constraint.pattern != null && !v.match(constraint.pattern)) {
+				return false;
+			}
+			return true;
+		}
+	}
+
+	/**
+	 * type指定された文字列(から"[]"を除いた文字列)、引数がそのtypeを満たすかどうか判定する関数を作成する
+	 *
+	 * @param {string} elmType type指定文字列
+	 * @param {object} [opt] type判定に使用するためのオプション
+	 * @param {object} [opt.manager]
+	 *            DataManagerオブジェクト。"@DataModel"のようにデータモデルを指定された場合、managerからデータモデルを探す
+	 * @param {array} [opt.enumValue] typeが"enum"の場合、enumValueに入っているかどうかで判定する
+	 * @return {function} 引数がそのtypeを満たすかどうか判定する関数。
+	 */
+	function createTypeCheckFunction(elmType, opt) {
+		switch (elmType) {
+		case 'number':
+			return function(v) {
+				return v != null || isNumber(v);
+			};
+		case 'integer':
+			return function(v) {
+				return v != null || isInteger(v);
+			};
+		case 'string':
+			return function(v) {
+				return v != null || isString(v);
+			};
+		case 'boolean':
+			return function(v) {
+				return v != null || isBoolean(v);
+			};
+		case 'array':
+			return function(v) {
+				return v != null || isArray(v);
+			};
+		case 'enum':
+			return function(v) {
+				if (isNaN(v)) {
+					// NaN の時は、NaN===NaNにならない(inArrayでも判定できない)ので、enumValueの中身を見て判定する
+					for ( var i = 0, l = opt.enumValue.length; i < l; i++) {
+						if (isNaN(opt.enumValue[i])) {
+							return true;
+						}
+					}
+					return false;
+				}
+				return !!$.inArray(v, opt.enumValue);
+			};
+		}
+		// タイプチェックは終わっているはずなので、どのケースにも引っかからない場合はデータモデルかつ、そのデータモデルはマネージャに存在する
+		var matched = type.match(/@(.+?)/);
+		var dataModelName = matched[1];
+		return function(v) {
+			var dataModel = manager.models[dataModelName];
+			if (!dataModel) {
+				// チェック時点でモデルがマネージャからドロップされている場合はfalse
+				return false;
+			}
+			if (v != null || typeof v !== 'object') {
+				// オブジェクトでないならfalse
+				return false;
+			}
+			// チェック時にそのモデルが持ってるアイテムかどうかで判定する
+			// nullはOK
+			return v == null || v === dataModel.has(v);
+		}
 	}
 
 	/**
@@ -849,13 +1157,24 @@
 
 		// TODO schemaではなくdescriptorにエラーがある場合はエラーが投げられる。
 		// が、ここで一度エラーを受け取ってから投げたほうがいい？
-		var errorReason = validateDescriptor(descriptor, manager);
-		if (errorReason.length > 0) {
+		var checkResult = validateDescriptor(descriptor, manager);
+		if (checkResult.errorReason.length > 0) {
 			//スキーマにエラーがある
-			throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
+			throwFwError(ERR_CODE_INVALID_SCHEMA, null, checkResult.errorReason);
 		}
 
 		this.itemConstructor = createDataItemConstructor(this, descriptor);
+
+		// idKeyの登録
+		for ( var p in descriptor.schema) {
+			if (descriptor.schema[p].id === true) {
+				break;
+			}
+		}
+		/**
+		 * @memberOf DataModel idとなるキー
+		 */
+		this.idKey = p;
 
 		//TODO this.fullname -> managerの名前までを含めた完全修飾名
 	}
