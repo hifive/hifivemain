@@ -375,27 +375,38 @@
 	};
 
 	/**
-	 * 引数に指定した１つ以上のプロミスオブジェクトについて、生成したプロミスオブジェクトを返すメソッドです。<br>
-	 * 次のようなプロミスオブジェクトを返します。<br>
+	 * 引数に指定した１つ以上のPromiseオブジェクトに基づいて、コールバックメソッドを実行します。
+	 * <p>
+	 * 引数に指定されたPromiseオブジェクトの挙動によって、以下のような処理を実行します。<br>
 	 * <ul>
-	 * <li>引数に指定されたプロミスオブジェクトのうち、１つでもrejectされると、failコールバックが実行されます。</li>
-	 * <li>引数に指定されたすべてのプロミスオブジェクトが全てresolveされると、doneコールバックが実行されます。</li>
+	 * <li>引数に指定されたPromiseオブジェクトのうち、１つでもreject()が実行されると、failコールバックを実行します。</li>
+	 * <li>引数に指定されたすべてのPromiseオブジェクトの全てでresolve()が実行されると、doneコールバックを実行します。</li>
+	 * <li>引数に指定されたPromiseオブジェクトでnotify()が実行されると、progressコールバックを実行します。</li>
 	 * </ul>
-	 * このメソッドはjQuery.whenをラップしており、同じように使うことができます。<br>
-	 * このメソッドを使うと、共通のエラー処理(<a href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行させることができます。<br>
-	 * <br>
-	 * 引数は、配列または可変長で、複数のプロミスオブジェクトを渡すことができます。<br>
+	 * 本メソッドはjQuery.when()と同様の機能を持っており、同じように使うことができます。<br>
+	 * ただし、以下のような違いがあります。
+	 * <h4>jQuery.when()と相違点</h4>
+	 * <ul>
+	 * <li>failコールバックが未指定の場合、共通のエラー処理(<a
+	 * href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行します。</li>
+	 * <li>jQuery1.6.xを使用している場合、jQuery.when()では使用できないnotify/progressの機能を使用することができます。ただし、この機能を使用するには<a
+	 * href="h5.async.html#deferred">h5.async.deferred()</a>によって生成されたDeferredのPromiseオブジェクトを引数に指定する必要があります。<br>
+	 * </li>
+	 * <li>引数の指定方法について、jQuery.when()は可変長のみなのに対し、本メソッドは可変長またはPromiseオブジェクトを持つ配列で指定することができます。</li>
+	 * </ul>
+	 * <h4>引数の指定方法</h4>
+	 * 配列または可変長で、複数のPromiseオブジェクトを渡すことができます。<br>
 	 * 例)
 	 * <ul>
 	 * <li>h5.async.when(p1, p2, p3); </li>
 	 * <li>h5.async.when([p1, p2, p3]); </li>
 	 * </ul>
-	 * プロミスオブジェクト以外を渡した時は無視されます。<br>
+	 * Promiseオブジェクト以外を渡した時は無視されます。<br>
 	 * また、可変長と配列の組み合わせで指定することはできません。<br>
 	 * <ul>
 	 * <li>h5.async.when(p1, [p2, p3], p4);</li>
 	 * </ul>
-	 * のようなコードを書いた時、2番目の引数は「配列」であり「プロミス」ではないので無視され、p1とp4のみ待ちます。<br>
+	 * のようなコードを書いた時、2番目の引数は「配列」であり「Promise」ではないので無視され、p1とp4のみ待ちます。<br>
 	 * <br>
 	 * また、配列が入れ子になっていても、再帰的に評価はしません。<br>
 	 * <ul>
@@ -403,7 +414,7 @@
 	 * </ul>
 	 * と書いても、先の例と同様p1とp4のみ待ちます。
 	 *
-	 * @param {Promise} var_args promiseオブジェクト。可変長、または配列で複数のpromiseを指定できます。
+	 * @param {Promise} var_args Promiseオブジェクﾄ(可変長または配列で複数のPromiseを指定する)
 	 * @returns {Promise} Promiseオブジェクト
 	 * @name when
 	 * @function
