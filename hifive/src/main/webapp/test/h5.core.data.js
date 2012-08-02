@@ -1382,7 +1382,7 @@ $(function() {
 				}
 			}
 		};
-		var parentModel1 = manger.createModel(parentModelDesc);
+		var parentModel1 = manager.createModel(parentModelDesc);
 		var parentModel2 = manager2.createModel(parentModelDesc);
 		var parentModelItem = parentModel1.create({
 			id: 1
