@@ -28,7 +28,9 @@
 			<conf name="javaee" />
 		-->
 		<conf name="log" />
-		<conf name="selenium" />
+		<!--
+			<conf name="selenium" />
+		-->
 		<conf name="spring" />
 		<conf name="test" />
 		<!--
@@ -97,6 +99,7 @@
 		<dependency org="org.slf4j" name="slf4j-api" rev="1.6.4" conf="log->*" transitive="false" />
 		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.4" conf="log->*" transitive="false" />
 		<!-- selenium -->
+		<!--
 		<dependency org="com.opera" name="operadriver" rev="0.13" conf="selenium->*" transitive="false" />
 		<dependency org="org.seleniumhq.selenium" name="selenium-server" rev="2.21.0" conf="selenium->*"
 			transitive="true">
@@ -110,6 +113,7 @@
 			<exclude name="jsr305" />
 			<exclude name="servlet-api-2.5" />
 		</dependency>
+		 -->
 		<!-- spring -->
 		<dependency org="org.springframework" name="spring-aop" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
 		<dependency org="org.springframework" name="spring-asm" rev="3.1.1.RELEASE" conf="spring->*" transitive="false" />
