@@ -26,7 +26,6 @@
 	<classpathentry kind="lib" path="lib/etc/cglib-2.2.jar"/>
 	<classpathentry kind="lib" path="lib/etc/javax.inject-1.jar"/>
 	<classpathentry kind="lib" path="lib/etc/joda-time-2.0.jar"/>
-	<classpathentry kind="lib" path="lib/h5Tools/rhino-1.7R3.jar" sourcepath="lib/h5Tools/sources/rhino-1.7R3-sources.jar"/>
 	<classpathentry kind="lib" path="lib/log/log4j-1.2.16.jar"/>
 	<classpathentry kind="lib" path="lib/log/slf4j-api-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/log/slf4j-log4j12-1.6.4.jar"/>
@@ -91,5 +90,6 @@
 	<classpathentry kind="lib" path="lib/test/spring-test-3.1.1.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/test/testng-6.3.1.jar"/>
 	<classpathentry kind="lib" path="lib/h5Tools/h5WebDriverTestRunner.jar"/>
+	<classpathentry kind="lib" path="lib/h5Tools/rhino-1.7R4.jar"/>
 	<classpathentry kind="output" path="src/main/webapp/WEB-INF/classes"/>
 </classpath>

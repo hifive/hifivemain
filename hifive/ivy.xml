@@ -83,7 +83,7 @@
 		<dependency org="joda-time" name="joda-time" rev="2.0" conf="etc->*" transitive="false" />
 
 		<!-- h5Tools -->
-		<dependency org="org.mozilla" name="rhino" rev="1.7R3" conf="h5Tools->*" transitive="false" />
+		<dependency org="org.mozilla" name="rhino" rev="1.7R4" conf="h5Tools->*" transitive="false" />
 
 		<!-- javaee -->
 		<!--
