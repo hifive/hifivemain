@@ -105,7 +105,7 @@ $(function() {
 		} catch (e) {
 			errMsg = e.message;
 		}
-		strictEqual(errMsg, 'コントローラ、もしくはロジックの __name が設定されていません。',
+		strictEqual(errMsg, 'コントローラ、もしくはロジックの __name が設定されていません。(code=6019)',
 				'コントローラ、ロジック以外(__nameプロパティがない)のオブジェクトをh5.core.expose()に渡すとエラーが発生するか');
 
 		window.TestController = undefined;
@@ -482,10 +482,10 @@ $(function() {
 			err2 = e;
 		}
 
-		strictEqual(err1.message, 'コントローラ"TestController"のバインド対象となる要素が存在しません。',
+		strictEqual(err1.message, 'コントローラ"TestController"のバインド対象となる要素が存在しません。(code=6003)',
 				'バインド対象がない場合エラーとなるか');
 		strictEqual(err2.message,
-				'コントローラ"TestController"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。',
+				'コントローラ"TestController"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。(code=6004)',
 				'バインド対象が複数ある場合エラーとなるか');
 	});
 
@@ -2196,7 +2196,7 @@ $(function() {
 			$('#controllerTest').click();
 
 			strictEqual(errMsg, 'コントローラ"ErrorController"でセレクタ名にthisが指定されています。'
-					+ 'コントローラをバインドした要素自身を指定したい時はrootElementを指定してください。',
+					+ 'コントローラをバインドした要素自身を指定したい時はrootElementを指定してください。(code=6012)',
 					'セレクタに{this}が指定された時にエラーが発生するか');
 			ok(isSame, '"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか');
 
@@ -2378,7 +2378,7 @@ $(function() {
 							strictEqual(prepend, 'test',
 									'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
 
-							var errMsg = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
+							var errMsg = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。(code=6000)';
 							strictEqual(viewError1.message, errMsg,
 									'this.update/append/prependで、"{window}"を指定するとエラーになるか');
 							strictEqual(viewError2.message, errMsg,
@@ -2429,7 +2429,7 @@ $(function() {
 		var errorObj = {};
 		var expectErrorObj = {
 			code: 7005,
-			message: "テンプレートID:template4 テンプレートがありません。"
+			message: "テンプレートID:template4 テンプレートがありません。(code=7005)"
 		};
 
 		var childController = {
@@ -3403,31 +3403,34 @@ $(function() {
 		});
 	});
 
-	test('プロパティの重複チェック', function() {
+	test(
+			'プロパティの重複チェック',
+			function() {
 
 
-		var testController = {
-			/**
-			 * コントローラ名
-			 */
-			__name: 'TestController',
+				var testController = {
+					/**
+					 * コントローラ名
+					 */
+					__name: 'TestController',
 
-			indicator: function() {
-			// 何もしない
-			}
-		};
+					indicator: function() {
+					// 何もしない
+					}
+				};
 
-		var errMsg = null;
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			errMsg = e.message;
-		}
+				var errMsg = null;
+				try {
+					h5.core.controller('#controllerTest', testController);
+				} catch (e) {
+					errMsg = e.message;
+				}
 
-		strictEqual(errMsg,
-				'コントローラ"TestController"のプロパティ"indicator"はコントローラ化によって追加されるプロパティと名前が重複しています。',
-				'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
-	});
+				strictEqual(
+						errMsg,
+						'コントローラ"TestController"のプロパティ"indicator"はコントローラ化によって追加されるプロパティと名前が重複しています。(code=6011)',
+						'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
+			});
 
 	asyncTest('this.own()の動作', function() {
 
@@ -4761,7 +4764,8 @@ $(function() {
 						} catch (e) {
 							err1 = e.message;
 						}
-						equal(err1, '正しい数の引数を指定して下さい。', '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
+						equal(err1, '正しい数の引数を指定して下さい。(code=6005)',
+								'引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
 						try {
 							this.throwError('コントローラ"{0}"における{1}のテスト', this.__name, 'throwError');
 						} catch (e) {
@@ -4794,7 +4798,7 @@ $(function() {
 						try {
 							this.throwCustomError();
 						} catch (e) {
-							strictEqual(e.message, '正しい数の引数を指定して下さい。',
+							strictEqual(e.message, '正しい数の引数を指定して下さい。(code=6005)',
 									'throwCustomError()で必須のパラメータが指定されていない場合、エラーが発生すること。');
 						}
 
@@ -4867,7 +4871,8 @@ $(function() {
 		} catch (e) {
 			errMsg = e.message;
 		}
-		strictEqual(errMsg, 'コントローラ"Test1Controller"で、参照が循環しているため、コントローラを生成できません。', 'エラーが発生したか');
+		strictEqual(errMsg, 'コントローラ"Test1Controller"で、参照が循環しているため、コントローラを生成できません。(code=6009)',
+				'エラーが発生したか');
 	});
 
 	asyncTest('mousewheelイベントの動作', function() {
@@ -4898,22 +4903,25 @@ $(function() {
 		});
 	});
 
-	test('コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作', function() {
-		var testController = {
-			__name: 'TestController'
-		};
+	test(
+			'コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作',
+			function() {
+				var testController = {
+					__name: 'TestController'
+				};
 
-		var errMsg = null;
-		try {
-			h5.core.controller('#controllerTest', testController, '初期化パラメータ');
-		} catch (e) {
-			errMsg = e.message;
-		}
+				var errMsg = null;
+				try {
+					h5.core.controller('#controllerTest', testController, '初期化パラメータ');
+				} catch (e) {
+					errMsg = e.message;
+				}
 
-		strictEqual(errMsg,
-				'コントローラ"TestController"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。',
-				'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
-	});
+				strictEqual(
+						errMsg,
+						'コントローラ"TestController"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。(code=6007)',
+						'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
+			});
 
 	asyncTest('h5.core.controller()にコントローラ化済みのオブジェクトを渡した時の動作', function() {
 		var testController = {
@@ -4930,31 +4938,35 @@ $(function() {
 				errMsg = e.message;
 			}
 
-			strictEqual(errMsg, '指定されたオブジェクトは既にコントローラ化されています。', 'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
+			strictEqual(errMsg, '指定されたオブジェクトは既にコントローラ化されています。(code=6008)',
+					'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 			c.unbind();
 
 		});
 	});
 
-	test('あるセレクタに対して重複するイベントハンドラを設定した時の動作', function() {
-		var testController = {
-			__name: 'TestController',
+	test(
+			'あるセレクタに対して重複するイベントハンドラを設定した時の動作',
+			function() {
+				var testController = {
+					__name: 'TestController',
 
-			' {rootElement}   click': function(context) {},
+					' {rootElement}   click': function(context) {},
 
-			'{rootElement} click': function(context) {}
-		};
-		var errMsg = null;
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			errMsg = e.message;
-		}
+					'{rootElement} click': function(context) {}
+				};
+				var errMsg = null;
+				try {
+					h5.core.controller('#controllerTest', testController);
+				} catch (e) {
+					errMsg = e.message;
+				}
 
-		strictEqual(errMsg,
-				'コントローラ"TestController"のセレクタ"{rootElement}"に対して"click"というイベントハンドラが重複して設定されています。',
-				'重複するイベントハンドラを設定した時にエラーが発生したか');
-	});
+				strictEqual(
+						errMsg,
+						'コントローラ"TestController"のセレクタ"{rootElement}"に対して"click"というイベントハンドラが重複して設定されています。(code=6013)',
+						'重複するイベントハンドラを設定した時にエラーが発生したか');
+			});
 
 	asyncTest('xxxControllerというプロパティの値が設定されていない時にエラーにならないか', function() {
 		var testController = {
@@ -4990,7 +5002,8 @@ $(function() {
 			errMsg = e.message;
 		}
 
-		strictEqual(errMsg, 'コントローラ"TestController"には__metaで指定されたプロパティ"childController"がありません。',
+		strictEqual(errMsg,
+				'コントローラ"TestController"には__metaで指定されたプロパティ"childController"がありません。(code=6014)',
 				'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがundefinedの場合にエラーが発生するか');
 	});
 
@@ -5017,7 +5030,7 @@ $(function() {
 
 				strictEqual(
 						errMsg,
-						'コントローラ"TestController"の__metaに指定されたキー"childController"の値がnullです。コントローラを持つプロパティキー名を指定してください。',
+						'コントローラ"TestController"の__metaに指定されたキー"childController"の値がnullです。コントローラを持つプロパティキー名を指定してください。(code=6015)',
 						'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがnullの場合にエラーが発生するか');
 			});
 
@@ -5042,9 +5055,9 @@ $(function() {
 					errMsg = e.message;
 				}
 
-				strictEqual(
+				equal(
 						errMsg,
-						'コントローラ"TestController"の__metaに指定されたキー"child"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。',
+						'コントローラ"TestController"の__metaに指定されたキー"child"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。(code=6016)',
 						'__metaに設定された名前と一致するプロパティの値がコントローラではないときにエラーが発生するか');
 			});
 

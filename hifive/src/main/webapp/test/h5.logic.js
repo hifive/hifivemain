@@ -265,6 +265,6 @@ $(function() {
 		} catch (e) {
 			errMsg = e.message;
 		}
-		strictEqual(errMsg, 'コントローラ"TestController"のロジックで、参照が循環しているため、ロジックを生成できません。', 'エラーが発生したか');
+		strictEqual(errMsg, 'コントローラ"TestController"のロジックで、参照が循環しているため、ロジックを生成できません。(code=6010)', 'エラーが発生したか');
 	});
 });
