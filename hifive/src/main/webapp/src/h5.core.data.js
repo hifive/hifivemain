@@ -221,10 +221,11 @@
 	};
 
 
-	function createDataModelItemsChangeEvent(created, removed, changed) {
+	function createDataModelItemsChangeEvent(created, recreated, removed, changed) {
 		return {
 			type: EVENT_ITEMS_CHANGE,
 			created: created,
+			recreated: recreated,
 			removed: removed,
 			changed: changed
 		};
@@ -716,7 +717,7 @@
 									//beginより前にアイテムがなく、セッション中に作られたが最終的には
 									//またremoveされた場合、begin-endの外から見ると「何もなかった」と扱えばよい。
 
-									if (firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
+									if (firstCRLog && firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
 										//begin->remove->create->remove->endの場合、begin-endの外から見ると
 										//「最初のremoveで取り除かれた」という扱いにすればよい。
 										removed.push(firstCRLog.item);
@@ -809,7 +810,7 @@
 				for ( var modelName in updateLogs) {
 					var mc = modelChanges[modelName];
 					this.models[modelName].dispatchEvent(createDataModelItemsChangeEvent(
-							mc.created, mc.removed, mc.changed));
+							mc.created, mc.recreated, mc.removed, mc.changed));
 				}
 
 				this._updateLogs = null;
@@ -1114,7 +1115,7 @@
 					return;
 				}
 
-				targetModel.dispatchEvent(createDataModelItemsChangeEvent(null, null, [event]));
+				targetModel.dispatchEvent(createDataModelItemsChangeEvent([], [], [], [event]));
 			}
 
 			return targetModel;
