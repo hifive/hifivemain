@@ -489,9 +489,9 @@
 			dfd = getDeferred();
 
 			$.when.apply($, args).done(function(/* var_args */) {
-				dfd.resolve.apply(dfd, arguments);
+				dfd.resolveWith(dfd, argsToArray(arguments));
 			}).fail(function(/* var_args */) {
-				dfd.reject.apply(dfd, arguments);
+				dfd.rejectWith(dfd, argsToArray(arguments));
 			}).progress(function(/* ver_args */) {
 				dfd.notifyWith(dfd, argsToArray(arguments));
 			});
