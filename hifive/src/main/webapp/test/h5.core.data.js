@@ -47,10 +47,11 @@ $(function() {
 						id: {
 							id: true
 						},
-						value: invalidProps
+						value: invalidProps[i]
 					}
 				});
-				var errMsg = JSON ? JSON.stringify(invalidProps) : invalidProps;
+				var errMsg = JSON ? JSON.stringify(invalidProps[i]) : invalidProps;
+				manager.dropModel('TestDataModel');
 				ok(false, 'エラーが発生していません。' + errMsg);
 			} catch (e) {
 				strictEqual(e.code, errCode, e.message);
@@ -101,7 +102,7 @@ $(function() {
 		// TODO エラーコード確認する
 		var errCode = 30000;
 		// TODO trimされるのかどうか確認する。$,_がOKなのかどうか確認する
-		var invalidStrs = ['', ' ', '1A', '$A', 'A$', ' TestModel', '_TestModel', 'Test Model'];
+		var invalidStrs = ['', ' ', '.', ',', '1A', ' TestModel', 'Test Model'];
 		var l = invalidStrs.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
@@ -137,7 +138,7 @@ $(function() {
 	});
 
 	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', function() {
-		var errCode = 30005;
+		var errCode = 30008;
 		h5.u.obj.expose('com.htmlhifive.test', {
 			TestModel: 0
 		});
@@ -210,8 +211,8 @@ $(function() {
 
 
 	test(
-			'※要目視確認 同名のデータモデルを同じマネージャに登録すると無視されて、戻り値がundefinedであること。ログが出力されること',
-			2,
+			'※要目視確認 同名のデータモデルを同じマネージャに登録すると無視されて、戻り値が登録済みのデータモデルであること。ログが出力されること',
+			4,
 			function() {
 				var model1 = manager.createModel({
 					name: 'TestDataModel',
@@ -235,7 +236,7 @@ $(function() {
 						}
 					}
 				});
-				strictEqual(model2, undefined, '同名のデータモデルを登録しようとすると戻り値がundefinedであること');
+				strictEqual(model2, model1, '同名のデータモデルを登録しようとすると戻り値が登録済みのデータモデルであること');
 				ok(
 						true,
 						'※要目視確認 以下のようなログが出力されていること。『 同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は TestManager, 登録しようとしたデータモデル名は TestDataModel です。 』');
@@ -260,7 +261,7 @@ $(function() {
 
 	test('データモデルの登録 descriptorがオブジェクトでない場合はエラーが発生すること', function() {
 		// TODO エラーコード確認する
-		var errCode = 30001;
+		var errCode = 30007;
 		var noDescriptors = ["a", 1, null, undefined, true, []];
 		var l = noDescriptors.length;
 		expect(l);
@@ -276,7 +277,7 @@ $(function() {
 
 	test('データモデルの登録 descriptorにnameプロパティがない場合はエラーが発生すること', 2, function() {
 		// TODO エラーコード確認する
-		var errCode = 30001;
+		var errCode = 30006;
 		try {
 			manager.createModel({});
 		} catch (e) {
@@ -330,7 +331,7 @@ $(function() {
 
 	test('データモデルの登録 descriptorにschemaプロパティがない場合はエラーが発生すること', 1, function() {
 		// TODO エラーコード確認する
-		var errCode = 30005;
+		var errCode = 30004;
 		try {
 			manager.createModel({
 				name: 'TestDataModel'
@@ -458,7 +459,7 @@ $(function() {
 		});
 		var model3 = manager.createModel({
 			name: 'TestDataModel3',
-			base: '@TestDataMode2',
+			base: '@TestDataModel2',
 			schema: {
 				value: {
 					defaultValue: 3
@@ -485,7 +486,7 @@ $(function() {
 		strictEqual(item.value3, 3, '同名のプロパティについては、上書かれていること');
 		strictEqual(item.data1, 1, '継承先にしかないプロパティの値を取得できること');
 		strictEqual(item.data2, 2, '継承先にしかないプロパティの値を取得できること');
-		strictEqual(item.data3, 2, '継承先にないデータはそのモデルで指定したdefaultValueの値が格納されていること');
+		strictEqual(item.data3, 3, '継承先にないデータはそのモデルで指定したdefaultValueの値が格納されていること');
 	});
 
 
@@ -1370,7 +1371,7 @@ $(function() {
 
 	test('データモデルの登録 schemaのチェック defaultValueがtypeに指定されている型を満たさない場合はエラーになること', function() {
 		// TODO エラーコード確認
-		var errCode = 30000;
+		var errCode = 30009;
 
 		// @ParentModelのテスト用にモデルを2つのマネージャで作成する
 		var manager2 = h5.core.data.createManager('TestDataModel');
@@ -1387,13 +1388,12 @@ $(function() {
 		var parentModelItem = parentModel1.create({
 			id: 1
 		});
-		var paretModelItem2 = parentModel2.create({
+		var parentModelItem2 = parentModel2.create({
 			id: 1
 		});
 
-		var types = ['string', 'number', 'integer', 'boolean', 'object', 'array', '@ParentModel',
-				'string[]', 'number[]', 'integer[]', 'boolean[]', 'object[]', '@ParentModel[]',
-				'string[][]'];
+		var types = ['string', 'number', 'integer', 'boolean', 'array', '@ParentModel', 'string[]',
+				'number[]', 'integer[]', 'boolean[]', '@ParentModel[]', 'string[][]'];
 		var invalidValueArrays = [];
 		// stringでないもの
 		invalidValueArrays.push([1, true, ["a"], {}]);
@@ -1403,22 +1403,20 @@ $(function() {
 		invalidValueArrays.push([1.1, Infinity, -Infinity, '1', true, [1], {}]);
 		// booleanでないもの
 		invalidValueArrays.push([1, '1', [true], {}, new Boolean(true)]);
-		// objectでないもの
-		invalidValueArrays.push([1, '1', [{}]]);
 		// arrayでないもの
 		invalidValueArrays.push([1, "1", {}]);
 		// 同じマネージャのデータモデル@ParentModelでないもの
 		invalidValueArrays.push([1, "1", {
 			id: 1
-		}, paretModelItem2, [parentModelItem]]);
+		}, parentModelItem2, [parentModelItem]]);
 		// string[]でないもの
 		invalidValueArrays.push(["a", ["a", "b", 1], [["a"]]]);
 		// number[]でないもの
 		invalidValueArrays.push([1, [1, 2, "1"], [[1]]]);
 		// integer[]でないもの
 		invalidValueArrays.push([1, [1, 2, 1.1], [[1]]]);
-		// object[]でないもの
-		invalidValueArrays.push([{}, [[]], [[{}]]]);
+		// boolean[]でないもの
+		invalidValueArrays.push([[true, false, 'true'], true, [[true, false]]]);
 		// @ParentModel[]でないもの
 		invalidValueArrays.push([parentModelItem, [parentModelItem2], [[parentModelItem]]]);
 		// string[][]でないもの
@@ -1427,7 +1425,7 @@ $(function() {
 		var invalidProps = [];
 		for ( var i = 0, typesLen = types.length; i < typesLen; i++) {
 			var type = types[i];
-			for ( var j = 0, valueArraysLen = invalidValueArrays.length; j < valueArraysLen; j++) {
+			for ( var j = 0, valueArrayLen = invalidValueArrays[i].length; j < valueArrayLen; j++) {
 				var defaultValue = invalidValueArrays[i][j];
 				invalidProps.push({
 					type: type,
@@ -2487,7 +2485,7 @@ $(function() {
 		// 異なる型を代入するとエラーが発生すること
 		raises(function() {
 			item1.dataModel1 = model2DataItem;
-		}, 'type:DataMode2のプロパティに異なる型の値を代入するとエラーが発生すること。');
+		}, 'type:DataModel2のプロパティに異なる型の値を代入するとエラーが発生すること。');
 	});
 
 	test('type指定 DataModel[] 正常系', 6, function() {
@@ -2646,12 +2644,12 @@ $(function() {
 		// 異なる型を代入するとエラーが発生すること
 		raises(function() {
 			item1.dataModel1 = [model1DataItem1, model2DataItem1];
-		}, 'type:DataMode2のプロパティに異なる型の値を代入するとエラーが発生すること。');
+		}, 'type:DataModel2のプロパティに異なる型の値を代入するとエラーが発生すること。');
 
 		// 異なる型を代入するとエラーが発生すること
 		raises(function() {
 			item1.dataModel2 = [model1DataItem1, model2DataItem1];
-		}, 'type:DataMode2のプロパティに異なる型の値を代入するとエラーが発生すること。');
+		}, 'type:DataModel2のプロパティに異なる型の値を代入するとエラーが発生すること。');
 	});
 
 
