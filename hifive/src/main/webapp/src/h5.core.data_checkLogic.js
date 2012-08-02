@@ -49,6 +49,29 @@
 
 	var ERR_CODE_INVALID_DATAMODEL_NAME = 30006;
 
+	/** ディスクリプタにエラーがある */
+	var ERR_CODE_INVALID_DESCRIPTOR = 30007;
+
+	/** テストマネージャをグローバルに公開しようとした名前空間に、すでに同名のプロパティが存在する */
+	var ERR_CODE_ALREADY_EXIST_MANAGER_NAMESPACE = 30008;
+
+	/** defaultValueが不正 */
+	var ERR_CODE_INVALID_DEFAULT_VALUE = 30009;
+
+	// エラーコードマップ
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_INVALID_DATAMODEL_NAME] = 'データモデルの名前が不正です。ディスクリプタの"name"に名前を文字列で指定してください。';
+	errMsgMap[ERR_CODE_INVALID_DESCRIPTOR] = 'データモデルのディスクリプタにはオブジェクトを指定してください。';
+	errMsgMap[ERR_CODE_ALREADY_EXIST_MANAGER_NAMESPACE] = 'テストマネージャをグローバルに公開しようとした名前空間に、すでに同名のプロパティが存在します。';
+	errMsgMap[ERR_CODE_INVALID_SCHEMA] = 'ディスクリプタのschemaが不正です。';
+	errMsgMap[ERR_CODE_INVALID_DEFAULT_VALUE] = 'defaultValueが不正です。typeとconstraintに指定した制約を満たしている必要があります。';
+
+	addFwErrorCodeMap(errMsgMap);
+
+
+
+
+
 	var ITEM_PROP_BACKING_STORE_PREFIX = '__';
 
 	var PROP_CONSTRAINT_REQUIRED = 'required';
@@ -219,6 +242,16 @@
 		return globalBindSerialNumber++;
 	}
 
+	/**
+	 * 引数がNaNかどうか判定する
+	 * isNaNとは違い、例えば文字列はNaNじゃないのでfalse
+	 *
+	 * @param {any} v
+	 * @return {boolena} 引数がNaNかどうか
+	 */
+	function equalNaN(v){
+		return typeof v === 'number' && isNaN(v);
+	}
 	/**
 	 * プロパティを作成する。 ES5のObject.definePropertyが使用できない場合は 非標準の__defineGetter__, __defineSetter__を使用する。
 	 * どちらも使用できない場合は例外を発生させる。 参考：
@@ -629,7 +662,7 @@
 		// nullまたはundefinedはtrue
 		// NaNを直接入れた場合はtrue
 		// typeがnumberでなくても、parseFloatしてNaNにならないなら代入可能
-		return val == null || isNaN(val) || !isNaN(perseFloat(val));
+		return val == null || equalNaN(val) || !equalNaN(parseFloat(val));
 	}
 
 	/**
@@ -686,10 +719,10 @@
 	 * @return {Boolean} type:'enum'指定のプロパティに代入可能か
 	 */
 	function isEnumValue(v, enumValue) {
-		if (isNaN(v)) {
+		if (equalNaN(v)) {
 			// NaN の時は、NaN===NaNにならない(inArrayでも判定できない)ので、enumValueの中身を見て判定する
 			for ( var i = 0, l = opt.enumValue.length; i < l; i++) {
-				if (isNaN(opt.enumValue[i])) {
+				if (equalNaN(opt.enumValue[i])) {
 					return true;
 				}
 			}
@@ -796,8 +829,11 @@
 	 * @return {Object} schemaのチェック結果。validateSchemaの戻り値をそのまま返す
 	 */
 	function validateDescriptor(descriptor, manager) {
+		// TODO validateDescriptorとvalidateSchemaで、エラー投げるのかerrorReason返すのか統一する
 		// descriptorがオブジェクトかどうか
-		// TODO 呼び出し元でチェックするから要らない？
+		if (!$.isPlainObject(descriptor)) {
+			throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
+		}
 
 		// nameのチェック
 		// TODO 識別子として有効でない文字列ならエラーにするでいいか？
@@ -810,24 +846,29 @@
 		var baseSchema;
 		if (base != null) {
 			// nullまたはundefinedならチェックしない
-			if ((!isString(base) || !base.indexOf('@'))) {
-				// @で始まる文字列でないならエラー
+			if (!isString(base) || base.indexOf('@')) {
+				// @で始まる文字列（base.indexOf('@')が0でない）ならエラー
 				throw new Error('baseの指定が不正です。指定する場合は、継承したいデータモデル名の先頭に"@"を付けた文字列を指定してください。');
 			}
 			var baseName = base.substring(1);
 			var baseModel = manager.models[baseName];
-			if (baseModel) {
+			if (!baseModel) {
 				throw new Error('baseに指定されたデータモデルは存在しません。' + baseName);
 			}
 			baseSchema = manager.models[baseName].schema;
 		}
 
 		// schemaのチェック
-		if (!$.isPlainObject(descriptor.schema)) {
-			throw new Error('ディスクリプタにschemaが正しく設定されていません。schemaをオブジェクトで指定してください。');
+		// baseSchemaがないのに、schemaが指定されていなかったらエラー
+		// schemaが指定されていて、オブジェクトでないならエラー
+		var schema = descriptor.schema;
+		if (!baseSchema && schema == null || !$.isPlainObject(schema)) {
+			throwFwError(ERR_CODE_INVALID_SCHEMA);
 		}
-		// base指定されていた場合は、後勝ちでextendする。
-		schema = $.extend(baseSchema, descriptor.schema);
+
+		// base指定されていた場合は、後勝ちでextendする
+		schema = $.extend(baseSchema, schema);
+
 
 		// ここでエラー投げるべき？
 		return validateSchema(schema, manager);
@@ -843,255 +884,264 @@
 	 * @return {array} エラー理由を格納した配列。エラーのない場合は空配列を返す。
 	 */
 	function validateSchema(schema, manager) {
-		// TODO チェック関数作成する部分を切り離す。ここでは作らないし、作らせない（呼び出して作ることもしない）。
-		//　↑にともなって、defaultValueのチェックもここではしない。
-		// new DataModelのなかで validate → createCheckFunc → defaultValueのチェック　になるはず
+
+
+		// new DataModelのなかで validate → createCheckFunc → defaultValueの順でチェックする。ここではdefaultValueのチェックはしない。
 		// TODO エラーメッセージを定数化する
+
+		// schemaがオブジェクトかどうか
+		// TODO 必ずvalidateDescriptorから呼ばれるなら要らない？
+		if (!$.isPlainObject(schema)) {
+			throwFwError(ERR_CODE_INVALID_SCHEMA);
+		}
+
 		// TODO エラーはチェック不整合があったらすぐ投げた方がいい？
 		var errorReason = [];
+		try {
 
-
-		// id指定されている属性が一つだけであることをチェック
-		var hasId = false;
-		for ( var p in schema) {
-			if (schema[p].id === true) {
-				if (hasId) {
-					errorReason.push('idが複数存在');
-				}
-				hasId = true;
-			}
-		}
-		if (!hasId) {
-			errorReason.push('idがない');
-		}
-
-		for ( var schemaProp in schema) {
-			var propObj = schema[schemaProp];
-			var isId = propObj.id;
-			// 代入やdefaultValueの値をチェックする関数を格納する配列([typeCheck, constraintCheck]のように格納する)
-			var checkFuncArray = [];
-
-			// プロパティ名が適切なものかどうかチェック
-			if (!isValidNamespaceIdentifier(schemaProp)) {
-				errorReason.push('"' + schemaProp
-						+ '"をプロパティ名に指定できません。半角英数字,_,$ で構成される文字列で、先頭は数字以外である必要があります');
-			}
-
-			// -- dependのチェック --
-			// defaultValueが指定されていたらエラー
-			// onに指定されているプロパティがschema内に存在すること
-			var depend = propObj.depend;
-			if (depend != null) {
-				// id指定されているならエラー
-				if (isId) {
-					errorReason.push('id指定されたプロパティにdependを指定することはできません');
-				}
-
-				// dependが指定されているなら、on,calcが指定されていること
-				if (depend.on == null) {
-					errorReason.push('depend.onには文字列、または文字列の配列ででプロパティ名を指定する必要があります');
-				} else {
-					var onArray = wrapInArray(depend.on);
-					for ( var i = 0, l = onArray.length; i < l; i++) {
-						if (!schema[onArray[i]]) {
-							errorReason.push('depend.onに指定されたプロパティがデータモデルにありません。');
-							break;
-						}
+			// id指定されている属性が一つだけであることをチェック
+			var hasId = false;
+			for ( var p in schema) {
+				if (schema[p].id === true) {
+					if (hasId) {
+						errorReason.push('idが複数存在');
 					}
-				}
-				if (typeof depend.calc !== 'function') {
-					errorReason.push('depend.calcには関数を指定する必要があります');
+					hasId = true;
 				}
 			}
+			if (!hasId) {
+				errorReason.push('idがない');
+			}
 
-			// -- typeのチェック --
-			// typeに指定されている文字列は正しいか
-			// defaultValueとの矛盾はないか
-			// constraintにそのtypeで使えない指定がないか
-			// enumの時は、enumValueが指定されているか
-			var elmType = null;
-			if (propObj.type != null) {
-				// id指定されているならエラー
-				if (isId) {
-					errorReason.push('id指定されたプロパティにtypeを指定することはできません');
-				}
-				var type = propObj.type;
-				if (!isString(type)) {
-					errorReason.push('typeは文字列で指定する必要があります');
-				}
-				// "string", "number[][]", "@DataModel"... などを正規表現でチェック
-				// TODO 文字列からtypeObjを作成するような関数を作って外だしする
-				var matched = type
-						.match(/^(string|number|integer|boolean|object|array|any|enum|@(.+?))(\[\])*$/);
-				if (!matched) {
-					errorReason.push('typeに指定された文字が不正です。');
-				} else {
-					// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
-					// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
-					// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
+			for ( var schemaProp in schema) {
+				var propObj = schema[schemaProp];
+				var isId = propObj.id;
+				// 代入やdefaultValueの値をチェックする関数を格納する配列([typeCheck, constraintCheck]のように格納する)
+				var checkFuncArray = [];
 
-					// データモデルの場合
-					if (matched[2]) {
-						if (!managerl.models[matched[2]]) {
-							errorReason.push('タイプに指定されたデータモデルはありません');
-						}
+				// プロパティ名が適切なものかどうかチェック
+				if (!isValidNamespaceIdentifier(schemaProp)) {
+					errorReason.push('"' + schemaProp
+							+ '"をプロパティ名に指定できません。半角英数字,_,$ で構成される文字列で、先頭は数字以外である必要があります');
+				}
+
+				// -- dependのチェック --
+				// defaultValueが指定されていたらエラー
+				// onに指定されているプロパティがschema内に存在すること
+				var depend = propObj.depend;
+				if (depend != null) {
+					// id指定されているならエラー
+					if (isId) {
+						errorReason.push('id指定されたプロパティにdependを指定することはできません');
 					}
 
-					// enumの場合
-					if (matched[1] === 'enum') {
-						// enumValueが無ければエラー
-						if (propObj.enumValue == null) {
-							errorReason.push('タイプにenumを指定する場合はenumValueも指定する必要があります');
-						}
-					}
-
-					// 配列の次元。配列でないなら0
-					dimention = matched[3] ? matched[3].length / 2 : 0;
-
-					// タイプから配列指定部分を除いたもの
-					elmType = matched[1];
-
-					// type指定を元に値を(配列は考慮せずに)チェックする関数を作成してcheckFuncArrayに追加
-					checkFuncArray.push(createTypeCheckFunction(elmType, {
-						manager: manager,
-						enumValue: propObj.enumValue
-					}));
-				}
-			}
-
-			// constraintのチェック
-			// プロパティのチェック
-			// 値のチェック
-			// タイプと矛盾していないかのチェック
-			var constraintObj = propObj.constraint;
-			if (constraintObj != null) {
-				if (!$.isPlainObject(constraintObj)) {
-					errorReason.push('constraintはオブジェクトで指定してください');
-				} else {
-					for ( var p in constraintObj) {
-						// constraintのプロパティの値とtype指定との整合チェック
-						var val = constraintObj[p];
-						switch (p) {
-						case 'notNull':
-							if (val != null) {
-								if (val !== true || val !== false) {
-									errorReason.push('constraint.notNullは、trueまたはfalseで指定してください');
-								}
+					// dependが指定されているなら、on,calcが指定されていること
+					if (depend.on == null) {
+						errorReason.push('depend.onには文字列、または文字列の配列ででプロパティ名を指定する必要があります');
+					} else {
+						var onArray = wrapInArray(depend.on);
+						for ( var i = 0, l = onArray.length; i < l; i++) {
+							if (!schema[onArray[i]]) {
+								errorReason.push('depend.onに指定されたプロパティがデータモデルにありません。');
+								break;
 							}
-							break;
-						case 'min':
-						case 'max':
-							if (val != null) {
-								switch (elmType) {
-								case 'integer':
-									if (!isIntegerValue(val) || isNaN(val)) {
+						}
+					}
+					if (typeof depend.calc !== 'function') {
+						errorReason.push('depend.calcには関数を指定する必要があります');
+					}
+				}
+
+				// -- typeのチェック --
+				// typeに指定されている文字列は正しいか
+				// defaultValueとの矛盾はないか
+				// constraintにそのtypeで使えない指定がないか
+				// enumの時は、enumValueが指定されているか
+				var elmType = null;
+				if (propObj.type != null) {
+					// id指定されているならエラー
+					if (isId) {
+						errorReason.push('id指定されたプロパティにtypeを指定することはできません');
+					}
+					var type = propObj.type;
+					if (!isString(type)) {
+						errorReason.push('typeは文字列で指定する必要があります');
+					}
+					// "string", "number[][]", "@DataModel"... などを正規表現でチェック
+					// TODO 文字列からtypeObjを作成するような関数を作って外だしする
+					var matched = type
+							.match(/^(string|number|integer|boolean|object|array|any|enum|@(.+?))(\[\])*$/);
+					if (!matched) {
+						errorReason.push('typeに指定された文字が不正です。');
+					} else {
+						// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
+						// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
+						// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
+
+						// データモデルの場合
+						if (matched[2]) {
+							if (!managerl.models[matched[2]]) {
+								errorReason.push('タイプに指定されたデータモデルはありません');
+							}
+						}
+
+						// enumの場合
+						if (matched[1] === 'enum') {
+							// enumValueが無ければエラー
+							if (propObj.enumValue == null) {
+								errorReason.push('タイプにenumを指定する場合はenumValueも指定する必要があります');
+							}
+						}
+
+						// 配列の次元。配列でないなら0
+						dimention = matched[3] ? matched[3].length / 2 : 0;
+
+						// タイプから配列指定部分を除いたもの
+						elmType = matched[1];
+
+						// type指定を元に値を(配列は考慮せずに)チェックする関数を作成してcheckFuncArrayに追加
+						checkFuncArray.push(createTypeCheckFunction(elmType, {
+							manager: manager,
+							enumValue: propObj.enumValue
+						}));
+					}
+				}
+
+				// constraintのチェック
+				// プロパティのチェック
+				// 値のチェック
+				// タイプと矛盾していないかのチェック
+				var constraintObj = propObj.constraint;
+				if (constraintObj != null) {
+					if (!$.isPlainObject(constraintObj)) {
+						errorReason.push('constraintはオブジェクトで指定してください');
+					} else {
+						for ( var p in constraintObj) {
+							// constraintのプロパティの値とtype指定との整合チェック
+							var val = constraintObj[p];
+							switch (p) {
+							case 'notNull':
+								if (val != null) {
+									if (val !== true || val !== false) {
 										errorReason
-												.push('constraint.minとmax は、数値で指定してください。typeにintegerを指定している場合は整数値で指定する必要があります');
+												.push('constraint.notNullは、trueまたはfalseで指定してください');
 									}
-									break;
-								case 'number':
-									if (!isNumberValue(val) || val === Infinity
-											|| val === -Infinity || isNaN(val)) {
-										errorReason.push('constraint.minとmax は、数値で指定してください');
-									}
-									break;
-								default:
-									errorReason
-											.push('constraintにminとmaxを指定できるのはtypeに"number"または"integer"またはその配列を指定した時のみです');
 								}
-							}
-							break;
-						case 'minLength':
-						case 'maxLength':
-							if (val != null) {
-								switch (elmType) {
-								case 'string':
-									if (!isIntegerValue(val) || isNaN(val) || val <= 0) {
+								break;
+							case 'min':
+							case 'max':
+								if (val != null) {
+									switch (elmType) {
+									case 'integer':
+										if (!isIntegerValue(val) || equalNaN(val)) {
+											errorReason
+													.push('constraint.minとmax は、数値で指定してください。typeにintegerを指定している場合は整数値で指定する必要があります');
+										}
+										break;
+									case 'number':
+										if (!isNumberValue(val) || val === Infinity
+												|| val === -Infinity || equalNaN(val)) {
+											errorReason.push('constraint.minとmax は、数値で指定してください');
+										}
+										break;
+									default:
 										errorReason
-												.push('constraint.minLengthとmaxLength は、0以上の整数値で指定してください');
+												.push('constraintにminとmaxを指定できるのはtypeに"number"または"integer"またはその配列を指定した時のみです');
 									}
-									break;
-								default:
-									errorReason
-											.push('constraintにminLengthとmaxLengthを指定できるのはtypeに"string"またはその配列を指定した時のみです');
 								}
-							}
-							break;
-						case 'notEmpty':
-							if (val != null) {
-								switch (elmType) {
-								case 'string':
-									if (!isBoolean(val)) {
+								break;
+							case 'minLength':
+							case 'maxLength':
+								if (val != null) {
+									switch (elmType) {
+									case 'string':
+										if (!isIntegerValue(val) || equalNaN(val) || val <= 0) {
+											errorReason
+													.push('constraint.minLengthとmaxLength は、0以上の整数値で指定してください');
+										}
+										break;
+									default:
 										errorReason
-												.push('constraint.notEmpty は、trueまたはfalseで指定してください');
+												.push('constraintにminLengthとmaxLengthを指定できるのはtypeに"string"またはその配列を指定した時のみです');
 									}
-									break;
-								default:
-									errorReason
-											.push('constraintにnotEmptyを指定できるのはtypeに"string"またはその配列を指定した時のみです');
 								}
-							}
-							break;
-						case 'pattern':
-							if (val != null) {
-								switch (elmType) {
-								case 'string':
-									if ($.type(val) !== 'regexp') {
-										errorReason.push('constraint.notEmpty は、正規表現で指定してください');
+								break;
+							case 'notEmpty':
+								if (val != null) {
+									switch (elmType) {
+									case 'string':
+										if (!isBoolean(val)) {
+											errorReason
+													.push('constraint.notEmpty は、trueまたはfalseで指定してください');
+										}
+										break;
+									default:
+										errorReason
+												.push('constraintにnotEmptyを指定できるのはtypeに"string"またはその配列を指定した時のみです');
 									}
-									break;
-								default:
-									errorReason
-											.push('constraintにpatternを指定できるのはtypeに"string"またはその配列を指定した時のみです');
 								}
+								break;
+							case 'pattern':
+								if (val != null) {
+									switch (elmType) {
+									case 'string':
+										if ($.type(val) !== 'regexp') {
+											errorReason.push('constraint.notEmpty は、正規表現で指定してください');
+										}
+										break;
+									default:
+										errorReason
+												.push('constraintにpatternを指定できるのはtypeに"string"またはその配列を指定した時のみです');
+									}
+								}
+								break;
 							}
-							break;
+						}
+
+						// constraintの中身に矛盾がないかどうかチェック
+						if (constraintObj.notEmpty && constraintObj.minLength === 0) {
+							errorReason
+									.push('constraintのチェックでエラーが発生しました。notEmptyを指定している場合は\minLengthに0を指定することはできません');
+						}
+						if (constraintObj.notEmpty && constraintObj.minLength === 0) {
+							errorReason
+									.push('constraintのチェックでエラーが発生しました。notEmptyを指定している場合は\minLengthに0を指定することはできません');
+						}
+						if (constraintObj.min != null && constraintObj.max != null
+								&& constraintObj.min > constraintObj.max) {
+							errorReason
+									.push('constraintのチェックでエラーが発生しました。min > max となるような数字は設定できません');
+						}
+						if (constraintObj.minLength != null && constraintObj.maxLength != null
+								&& constraintObj.minLength > constraintObj.maxLength) {
+							errorReason
+									.push('constraintのチェックでエラーが発生しました。minLength > maxLength となるような数字は設定できません');
 						}
 					}
+				}
 
-					// constraintの中身に矛盾がないかどうかチェック
-					if (constraintObj.notEmpty && constraintObj.minLength === 0) {
-						errorReason
-								.push('constraintのチェックでエラーが発生しました。notEmptyを指定している場合は\minLengthに0を指定することはできません');
+
+				// enumValueのチェック
+				var enumValue = propObj.enumValue;
+				if (enumValue != null) {
+					// elmTypeがenumか
+					if (elmType !== 'elem') {
+						errorReason.push('enumValueはtypeに"enum"またはその配列が指定されている場合のみ指定可能です');
 					}
-					if (constraintObj.notEmpty && constraintObj.minLength === 0) {
-						errorReason
-								.push('constraintのチェックでエラーが発生しました。notEmptyを指定している場合は\minLengthに0を指定することはできません');
+					// 空でない配列かどうか
+					if (!$.isArray(enumValue) || enumValue.length === 0) {
+						errorReason.push('enumValueは空でない配列を指定してください。');
 					}
-					if (constraintObj.min != null && constraintObj.max != null
-							&& constraintObj.min > constraintObj.max) {
-						errorReason.push('constraintのチェックでエラーが発生しました。min > max となるような数字は設定できません');
+					if (propObj.constraint != null) {
+						// constraintのチェック
+						errorReason.push('enumValue');
 					}
-					if (constraintObj.minLength != null && constraintObj.maxLength != null
-							&& constraintObj.minLength > constraintObj.maxLength) {
-						errorReason
-								.push('constraintのチェックでエラーが発生しました。minLength > maxLength となるような数字は設定できません');
-					}
+
 				}
 			}
-
-
-			// enumValueのチェック
-			var enumValue = propObj.enumValue;
-			if (enumValue != null) {
-				// elmTypeがenumか
-				if (elmType !== 'elem') {
-					errorReason.push('enumValueはtypeに"enum"またはその配列が指定されている場合のみ指定可能です');
-				}
-				// 空でない配列かどうか
-				if (!$.isArray(enumValue) || enumValue.length === 0) {
-					errorReason.push('enumValueは空でない配列を指定してください。');
-				}
-				if (propObj.constraint != null) {
-					// constraintのチェック
-					errorReason.push('enumValue');
-				}
-
-			}
+		} finally {
+			return errorReason;
 		}
-
-		// TODO チェック関数作成をそとだしするので、ここはエラーメッセージを返せばOK..？
-		return errorReason;
 	}
 
 	/**
@@ -1223,9 +1273,18 @@
 			throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
 		}
 
-		this.itemConstructor = createDataItemConstructor(this, descriptor);
-
+		/**
+		 * @memberOf DataModel
+		 */
 		this.schema = descriptor.schema;
+
+		// baseがあればschemaを拡張する
+		if (descriptor.base) {
+			var baseSchema = manager.models[descriptor.base.substring(1)].schema;
+			$.extend(this.schema, baseSchema);
+		}
+
+		this.itemConstructor = createDataItemConstructor(this, descriptor);
 
 
 		/**
@@ -1254,10 +1313,12 @@
 			if (descriptor.schema[p].hasOwnProperty('defaultValue')
 					&& !this.__checkProperty[p](descriptor.schema[p].defaultValue)) {
 
-				throwFwError('defaultValueの値が不正')
+				throwFwError(ERR_CODE_INVALID_DEFAULT_VALUE);
 			}
 		}
 
+		// manager.modelsに登録
+		manager.models[this.name] = this;
 		//TODO this.fullname -> managerの名前までを含めた完全修飾名
 	}
 
@@ -1560,6 +1621,9 @@
 		 * @memberOf DataModelManager
 		 */
 		createModel: function(descriptor) {
+			if (!$.isPlainObject(descriptor)) {
+				throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
+			}
 			var modelName = descriptor.name;
 			if (!isValidNamespaceIdentifier(modelName)) {
 				throwFwError(ERR_CODE_INVALID_DATAMODEL_NAME); //TODO 正しい例外を出す
@@ -1599,10 +1663,15 @@
 
 		//namespaceがnullまたはundefinedでない場合は、その名前空間に、指定した名前でマネージャを公開する
 		if (namespace != null) {
+			var ns;
 			try {
-				h5.u.obj.ns(namespace);
+				ns = h5.u.obj.ns(namespace);
 			} catch (e) {
+				// 名前空間の指定が不正
 				throwFwError(ERR_CODE_INVALID_MANAGER_NAMESPACE);
+			}
+			if (ns[name] != null) {
+				throwFwError(ERR_CODE_ALREADY_EXIST_MANAGER_NAMESPACE);
 			}
 
 			var o = {};
