@@ -243,7 +243,7 @@ $(function() {
 		try {
 			h5.log.createLogger();
 		} catch (e) {
-			ok(e.message === 'categoryは必須項目です。空文字で無い文字列を指定して下さい。',
+			equal(e.message, 'categoryは必須項目です。空文字で無い文字列を指定して下さい。(code=10005)',
 					'h5.log.createLogger() に何も渡さない場合、エラーが発生すること。');
 		}
 
@@ -261,7 +261,7 @@ $(function() {
 						h5.log.createLogger(categorys[i]);
 						ok(false, 'エラーが発生していません');
 					} catch (e) {
-						ok(e.message === 'categoryは必須項目です。空文字で無い文字列を指定して下さい。',
+						equal(e.message, 'categoryは必須項目です。空文字で無い文字列を指定して下さい。(code=10005)',
 								'h5.log.createLogger() に' + categorysStr[i] + 'を渡した場合、エラーが発生すること。');
 					}
 				}
@@ -500,20 +500,25 @@ $(function() {
 		}
 	});
 
-	test('※要目視確認：スタックトレース グローバル領域(loadScriptで読み込む)から出力', 1, function() {
-		if(!h5.u){
-			ok(false, 'このテストはh5.uを読み込む必要があります');
-			return;
-		}
-		h5.u.loadScript('data/stacktrace.js');
-		ok(true, 'Chrome,Firefoxではトレース結果が出力されていること(chromeだと、[DEBUG]16:39:3,213: スタックトレース - テスト [eval <anonymous> () <- eval (native) <- {anonymous} ...])'
-				+ 'IE,Safariではトレースできないため、[DEBUG]16:39:3,213: スタックトレース - テスト [undefined] のように表示されていることを確認してください。')
-	});
+	test(
+			'※要目視確認：スタックトレース グローバル領域(loadScriptで読み込む)から出力',
+			1,
+			function() {
+				if (!h5.u) {
+					ok(false, 'このテストはh5.uを読み込む必要があります');
+					return;
+				}
+				h5.u.loadScript('data/stacktrace.js');
+				ok(
+						true,
+						'Chrome,Firefoxではトレース結果が出力されていること(chromeだと、[DEBUG]16:39:3,213: スタックトレース - テスト [eval <anonymous> () <- eval (native) <- {anonymous} ...])'
+								+ 'IE,Safariではトレースできないため、[DEBUG]16:39:3,213: スタックトレース - テスト [undefined] のように表示されていることを確認してください。')
+			});
 	test('※要目視確認：スタックトレース', 0, function() {
 
 		// ネイティブのトレース機能を確認
 		// 名前付き(fn.nameで名前を取得できる)関数。
-		var func1Named = function func1_1(){
+		var func1Named = function func1_1() {
 			this.name = 'func1_1';
 			function func1_2() {
 				var logger = h5.log.createLogger("テスト h5.u");
