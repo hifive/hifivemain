@@ -312,7 +312,7 @@
 		for ( var prop in obj) {
 			if (obj.hasOwnProperty(prop)) {
 				if (nsObj[prop]) {
-					throwFwError(ERR_CODE_NAMESPACE_EXIST, namespace, prop);
+					throwFwError(ERR_CODE_NAMESPACE_EXIST, [namespace, prop]);
 				}
 				nsObj[prop] = obj[prop];
 			}
