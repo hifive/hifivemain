@@ -58,7 +58,10 @@
 	var ERR_CODE_REGISTER_TARGET_ALREADY_EXIST = 30008;
 
 	/** 内部エラー：更新ログタイプ不正（通常起こらないはず） */
-	var ERR_CODE_INVALID_UPDATE_LOG_TYPE = 30008;
+	var ERR_CODE_INVALID_UPDATE_LOG_TYPE = 30009;
+
+	/** IDは文字列でなければならない */
+	var ERR_CODE_ID_MUST_BE_STRING = 30010;
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
@@ -71,6 +74,7 @@
 	ERROR_MESSAGES[ERR_CODE_NO_ID] = 'createItemでIDが必要なのに指定されていない';
 	ERROR_MESSAGES[ERR_CODE_REGISTER_TARGET_ALREADY_EXIST] = 'マネージャの登録先に指定されたnamespaceにはすでにその名前のプロパティが存在する';
 	ERROR_MESSAGES[ERR_CODE_INVALID_UPDATE_LOG_TYPE] = '内部エラー：更新ログタイプ不正';
+	ERROR_MESSAGES[ERR_CODE_ID_MUST_BE_STRING] = 'IDは文字列でなければならない';
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
 
@@ -890,7 +894,7 @@
 					}
 				}
 				if (!this.idKey) {
-					throwFwError(30005);
+					throwFwError(30005); //TODO throw proper error
 				}
 
 
@@ -993,15 +997,15 @@
 				 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
 				 */
 				get: function(idOrArray) {
-					if (isString(idOrArray)) {
-						return this._findById(idOrArray);
+					if ($.isArray(idOrArray)) {
+						var ret = [];
+						for ( var i = 0, len = idOrArray.length; i < len; i++) {
+							ret.push(this._findById(idOrArray[i]));
+						}
+						return ret;
 					}
-
-					var ret = [];
-					for ( var i = 0, len = idOrArray.length; i < len; i++) {
-						ret.push(this._findById(idOrArray[i]));
-					}
-					return ret;
+					//引数の型チェックはfindById内で行われる
+					return this._findById(idOrArray);
 				},
 
 				/**
@@ -1009,20 +1013,37 @@
 				 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。<br>
 				 * 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、<br>
 				 * 戻り値の配列の対応位置にnullが入ります。<br>
-				 * （例：remove(['id1', 'id2', 'id3']) でid2のアイテムがない場合、戻り値は [item1, null, item3] のようになる ）
+				 * （例：remove(['id1', 'id2', 'id3']) でid2のアイテムがない場合、<br>
+				 * 戻り値は [item1, null, item3]のようになります。）<br>
+				 * 引数にID(文字列)またはデータアイテム以外を渡した場合はnullを返します。
 				 *
 				 * @memberOf DataModel
-				 * @param {String|Object|String or Object[]}
+				 * @param {String|DataItem|String[]|DataItem[]} 削除するデータアイテム
 				 * @returns {DataItem|DataItem[]} 削除したデータアイテム
 				 */
 				remove: function(objOrItemIdOrArray) {
-					/*
-					 * 指定されたidのデータアイテムを削除します。
-					 */
-					function removeItemById(model, id) {
-						if (!(id in model.items)) {
-							return null;
+					//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
+					//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
+					//入っていない場合は一時的にセッションを作成する。
+					var isAlreadyInUpdate = manager ? manager.isInUpdate() : false;
+					if (!isAlreadyInUpdate) {
+						this.manager.beginUpdate();
+					}
+
+					var idKey = this.idKey;
+					var ids = wrapInArray(objOrItemIdOrArray);
+
+					var actualRemovedItems = [];
+					var ret = [];
+
+					for ( var i = 0, len = ids.length; i < len; i++) {
+						if (!this.has(ids[i])) {
+							//指定されたアイテムが存在しない場合はnull
+							ret.push(null);
+							continue;
 						}
+
+						var id = isString(ids[i]) ? ids[i] : ids[i][idKey];
 
 						var item = model.items[id];
 
@@ -1032,32 +1053,8 @@
 
 						model.size--;
 
-						return item;
-					}
-
-					var idKey = this.idKey;
-					var ids = wrapInArray(objOrItemIdOrArray);
-
-					//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
-					//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
-					//入っていない場合は一時的にセッションを作成する。
-					var isAlreadyInUpdate = manager ? manager.isInUpdate() : false;
-					if (!isAlreadyInUpdate) {
-						this.manager.beginUpdate();
-					}
-
-					var actualRemovedItems = [];
-
-					var ret = [];
-					for ( var i = 0, len = ids.length; i < len; i++) {
-						var id = getItemId(ids[i], idKey);
-						var removedItem = removeItemById(this, id);
-						ret.push(removedItem);
-
-						if (removedItem) {
-							//actualRemovedItemsにはnullは入れない
-							actualRemovedItems.push(removedItem);
-						}
+						ret.push(item);
+						actualRemovedItems.push(removedItem);
 					}
 
 					if (actualRemovedItems.length > 0) {
@@ -1075,21 +1072,11 @@
 				},
 
 				/**
-				 * 指定されたIDのデータアイテムを返します。 アイテムがない場合はnullを返します。
-				 *
-				 * @private
-				 * @param {String} id データアイテムのID
-				 * @returns {DataItem} データアイテム、存在しない場合はnull
-				 */
-				_findById: function(id) {
-					var item = this.items[id];
-					return item === undefined ? null : item;
-				},
-
-				/**
-				 * 文字列が渡された場合はID文字列とみなす。 オブジェクトが渡された場合はデータアイテムとみなす。<br>
-				 * 従って、オブジェクトを渡す場合は、単に同じ構造を持つオブジェクトを引数に渡してもfalseが返る。<br>
-				 * データアイテムインスタンスを引数に渡した場合に限り（そのインスタンスをこのデータモデルが保持していれば）trueが返る。<br>
+				 * 指定されたデータアイテムを保持しているかどうかを返します。<br>
+				 * 文字列が渡された場合はID(文字列)とみなし、 オブジェクトが渡された場合はデータアイテムとみなします。<br>
+				 * オブジェクトが渡された場合、自分が保持しているデータアイテムインスタンスかどうかをチェックします。<br>
+				 * 従って、同じ構造を持つ別のインスタンスを引数に渡した場合はfalseが返ります。<br>
+				 * データアイテムインスタンスを引数に渡した場合に限り（そのインスタンスをこのデータモデルが保持していれば）trueが返ります。<br>
 				 *
 				 * @param {String|Object} idOrObj ID文字列またはデータアイテムオブジェクト
 				 * @returns {Boolean} 指定されたIDのデータアイテムをこのデータモデルが保持しているかどうか
@@ -1103,6 +1090,22 @@
 					} else {
 						return false;
 					}
+				},
+
+				/**
+				 * 指定されたIDのデータアイテムを返します。 アイテムがない場合はnullを返します。
+				 *
+				 * @private
+				 * @param {String} id データアイテムのID
+				 * @returns {DataItem} データアイテム、存在しない場合はnull
+				 */
+				_findById: function(id) {
+					//データアイテムは、取得系APIではIDを文字列型で渡さなければならない
+					if (!isString(id)) {
+						throwFwError(ERR_CODE_ID_MUST_BE_STRING);
+					}
+					var item = this.items[id];
+					return item === undefined ? null : item;
 				}
 			});
 
@@ -1127,22 +1130,15 @@
 
 		/* --- DataModelManagerローカル ここから --- */
 
+		if (!isValidNamespaceIdentifier(managerName)) {
+			throwFwError(ERR_CODE_INVALID_MANAGER_NAME);
+		}
+
 		//データモデルマネージャインスタンスを生成
 		var manager = new DataModelManager(managerName);
 
-
 		//第2引数が省略される場合もあるので、厳密等価でなく通常の等価比較を行う
 		if (namespace != null) {
-			if (!isValidNamespaceIdentifier(namespace)) {
-				throwFwError(ERR_CODE_INVALID_MANAGER_NAMESPACE);
-			}
-
-			var exposureNs = h5.u.obj.getByPath(namespace);
-			if ((exposureNs !== undefined) && (exposureNs[managerName] !== undefined)) {
-				//指定された場所にすでにプロパティが存在したらエラー(上書き防止)
-				throwFwError(ERR_CODE_REGISTER_TARGET_ALREADY_EXIST);
-			}
-
 			//指定された名前空間に、managerNameでマネージャを公開する
 			var o = {};
 			o[managerName] = manager;
