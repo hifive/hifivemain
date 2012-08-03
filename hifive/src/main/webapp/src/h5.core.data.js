@@ -1045,16 +1045,16 @@
 
 						var id = isString(ids[i]) ? ids[i] : ids[i][idKey];
 
-						var item = model.items[id];
+						var item = this.items[id];
 
 						item.removeEventListener('change', itemChangeListener);
 
-						delete model.items[id];
+						delete this.items[id];
 
-						model.size--;
+						this.size--;
 
 						ret.push(item);
-						actualRemovedItems.push(removedItem);
+						actualRemovedItems.push(item);
 					}
 
 					if (actualRemovedItems.length > 0) {
