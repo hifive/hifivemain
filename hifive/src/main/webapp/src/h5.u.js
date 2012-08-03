@@ -311,7 +311,7 @@
 		var nsObj = ns(namespace);
 		for ( var prop in obj) {
 			if (obj.hasOwnProperty(prop)) {
-				if (nsObj[prop]) {
+				if (nsObj[prop] !== undefined) {
 					throwFwError(ERR_CODE_NAMESPACE_EXIST, [namespace, prop]);
 				}
 				nsObj[prop] = obj[prop];
