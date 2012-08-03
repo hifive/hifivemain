@@ -1420,6 +1420,8 @@
 		var promises = [];
 		var targets = [];
 		var execute = function(parentController) {
+			var df = getDeferred();
+
 			targets.push(parentController);
 			for ( var prop in parentController) {
 				if (isChildController(parentController, prop)) {
@@ -1430,7 +1432,13 @@
 				}
 			}
 			if (parentController[property] && $.isFunction(parentController[property])) {
-				promises.push(parentController[property]());
+				var promise = parentController[property]();
+				if (h5.async.isPromise(promise)) {
+					promise.always(function() {
+						df.resolve();
+					});
+					promises.push(df.promise());
+				}
 			}
 		};
 		execute(controller);
@@ -1838,86 +1846,6 @@
 	});
 
 	/**
-	 * バリデーションエラーのコンストラクタ
-	 *
-	 * @name ValidationError
-	 * @class
-	 */
-	function ValidationError() {
-		/**
-		 * 検出された検証エラーの数。
-		 *
-		 * @memberOf ValidationError
-		 */
-		this.count = 0;
-
-		/**
-		 * エラーの理由。
-		 */
-		this.reason = [];
-	}
-
-	/**
-	 * ユーザー入力値オブジェクトのコンストラクタ
-	 *
-	 * @name UserInput
-	 * @class
-	 */
-	function UserInput($elements) {
-		this.$elements = $elements;
-	}
-	$.extend(UserInput.prototype, {
-		/**
-		 * inputタグに記述されたルールに基づいて入力値チェックを行います。
-		 *
-		 * @memberOf UserInput
-		 * @returns {ValidationError} 検証エラーオブジェクト
-		 */
-		validate: function() {
-			//TODO HTML5 Formsに従ってvalidate
-
-			var error = new ValidationError();
-
-			this.$elements.each(function() {
-				var $this = $(this);
-				var req = $this.attr('required');
-				if (req && !$this.val()) {
-					error.count++;
-					error.reason.push('required'); //TODO STUB
-				}
-			});
-
-			return error;
-		},
-
-		/**
-		 * inputタグに記述されたルールに加え、指定されたデータモデルに基づいて入力値チェックを行います。<br>
-		 * ただし、ignoreTagRuleがtrueの場合は、タグに記述されたルールを使用せず<br>
-		 * データモデルにのみ基づいてチェックを行います。
-		 *
-		 * @memberOf UserInput
-		 * @returns {ValidationError} 検証エラーオブジェクト
-		 */
-		validateAs: function(dataModel, ignoreTagRule) {
-			if (!dataModel) {
-				throwFwError('200000'); //TODO codeを正しくする
-			}
-
-			for ( var key in this.elements) {
-				if (!this.hasOwnProperty(key)) {
-					continue;
-				}
-
-				//TODO ignoretagRuleがfalseの場合は、タグに記述されたvalidationルールを無視して、
-				//dataModel側に記述されたルールに基づいてチェックを行う
-			}
-
-			return new ValidationError();
-		}
-	});
-
-
-	/**
 	 * コントローラのコンストラクタ
 	 *
 	 * @param {Element} rootElement コントローラをバインドした要素
@@ -2067,7 +1995,7 @@
 			this.unbind();
 			var that = this;
 			var promises = executeLifeEndChain(this, '__dispose');
-			h5.async.when(promises).always(function() {
+			h5.async.when(promises).done(function() {
 				disposeController(that);
 				dfd.resolve();
 			});
@@ -2250,43 +2178,6 @@
 			}
 			error.customType = customType;
 			throw error;
-		},
-
-		/**
-		 * TODO JSDoc整理 特定の要素以下から、一定のルールに従って、 ユーザー入力を取得する。<br>
-		 * ルール：
-		 * <ul>
-		 * <li>inputタグをそのnameに従って取得</li>
-		 * <li>includeで指定されたものも取得</li>
-		 * <li>引数のexcludeで指定されたものは取得しない</li>
-		 * </ul>
-		 * include,excludeは配列、ただし、overridePropertiesが指定されている場合は、<br>
-		 * 指定されているプロパティについては指定されたセレクタorエレメントから値を取得する。<br>
-		 * ※inputにはname属性を付ける必要があります。
-		 *
-		 * @memberOf Controller
-		 * @param {String|Element|jQuery} root
-		 *            入力値を取得するルート要素(この要素以下から入力値を取得します)。nullの場合はコントローラのrootElementになります。
-		 * @param {String[]|Element[]|jQuery[]} include デフォルトルールにマッチしない要素を追加で指定します
-		 * @returns 入力値オブジェクト
-		 */
-		getUserInput: function(root, include) {
-			var $root;
-			if (!root) {
-				$root = $(this.rootElement);
-			} else {
-				$root = $(root); //TODO rootの{}対応
-			}
-
-			//TODO ユーザー入力は通常自分でループしてくるが、
-			//構造に従って取り出す。
-
-			//TODO UserInputに、対応するDataModel（存在する場合）を入れておくのがよいか。
-
-			var $elements = $root.find('input[name]'); //TODO includeをloopで回して.add()するなど
-
-			var ret = new UserInput($elements);
-			return ret;
 		}
 	});
 
@@ -2661,7 +2552,7 @@
 	 */
 	function createLogic(logicDefObj) {
 		var logicName = logicDefObj.__name;
-		if (!isString(logicName) || $.trim(logicName.length) === 0) {
+		if (!isString(logicName) || $.trim(logicName).length === 0) {
 			throwFwError(ERR_CODE_INVALID_LOGIC_NAME, null, {
 				logicDefObj: logicDefObj
 			});
