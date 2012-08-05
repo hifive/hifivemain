@@ -505,15 +505,13 @@
 	 * @returns {DataItem} データアイテムオブジェクト
 	 */
 	function createItem(model, data, itemChangeListener) {
+		//キーが文字列かつ空でない、かどうかのチェックはDataModel.create()で行われている
+
 		var idKey = model.idKey;
 		var id = data[idKey];
 
 		//TODO id自動生成の場合は生成する
 
-		//キーとして'0'が渡される可能性があるので!idでチェックしてはいけない
-		if (id === null || id === undefined) {
-			throwFwError(ERR_CODE_NO_ID);
-		}
 
 		var item = new model.itemConstructor();
 
@@ -527,7 +525,7 @@
 		model.size++;
 
 		//初期値として渡されたデータを詰める
-		for (prop in data) {
+		for (var prop in data) {
 			if ((prop == idKey) || !(prop in model.schema)) {
 				continue;
 			}
@@ -539,16 +537,6 @@
 		return item;
 	}
 
-
-	/**
-	 * IDまたはデータアイテムオブジェクトを引数にとり、型に応じた方法でID文字列を返します。
-	 *
-	 * @param {String|Object} value データアイテムオブジェクトまたはID文字列
-	 * @param {String} idKey IDとみなすプロパティ名
-	 */
-	function getItemId(value, idKey) {
-		return isString(value) ? value : value[idKey];
-	}
 
 
 	/**
@@ -951,18 +939,25 @@
 
 					var items = wrapInArray(objOrArray);
 					for ( var i = 0, len = items.length; i < len; i++) {
-						var existingItem = this._findById(getItemId(items[i], idKey));
+						var valueObj = items[i];
+
+						var itemId = valueObj[idKey];
+						if (!isString(itemId) || itemId.length === 0) {
+							throwFwError(ERR_CODE_NO_ID);
+						}
+
+						var existingItem = this._findById(itemId);
 						if (existingItem) {
 							// 既に存在するオブジェクトの場合は値を更新
-							for (prop in this.schema) {
+							for (var prop in valueObj) {
 								if (prop == idKey) {
 									continue;
 								}
-								existingItem[prop] = obj[prop];
+								existingItem[prop] = valueObj[prop];
 							}
 							ret.push(existingItem);
 						} else {
-							var newItem = createItem(this, items[i], itemChangeListener);
+							var newItem = createItem(this, valueObj, itemChangeListener);
 
 							actualNewItems.push(newItem);
 							ret.push(newItem);
