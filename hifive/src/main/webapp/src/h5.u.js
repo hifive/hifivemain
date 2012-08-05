@@ -1200,6 +1200,36 @@
 		};
 	};
 
+
+	function ObservableArray() {}
+	$.extend(ObservableArray.prototype, EventDispatcher.prototype);
+	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
+			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
+			'some', 'reduce', 'reduceRight'];
+	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
+		ObservableArray.prototype[arrayMethods[i]] = (function(method) {
+			//TODO fallback実装の提供
+			return function() {
+				var ret = Array.prototype[method].apply(this, arguments);
+				var ev = {
+					type: 'observe',
+					method: method,
+					args: arguments,
+					returnValue: ret
+				};
+				this.dispatchEvent(ev);
+				return ret;
+			};
+		})(arrayMethods[i]);
+	}
+
+	/**
+	 * @memberOf h5.u.obj
+	 */
+	function createObservableArray() {
+		return new ObservableArray();
+	}
+
 	// =============================
 	// Expose to window
 	// =============================
@@ -1233,7 +1263,8 @@
 		deserialize: deserialize,
 		isJQueryObject: isJQueryObject,
 		argsToArray: argsToArray,
-		getByPath: getByPath
+		getByPath: getByPath,
+		createObservableArray: createObservableArray
 	});
 
 })();

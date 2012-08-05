@@ -152,8 +152,7 @@ function isString(target) {
 }
 
 /**
- * 引数が名前空間として有効な文字列かどうかを判定します。
- * ただし、全角文字が含まれる場合はfalseを返します。
+ * 引数が名前空間として有効な文字列かどうかを判定します。 ただし、全角文字が含まれる場合はfalseを返します。
  *
  * @private
  * @param {Any} property 値
@@ -204,6 +203,108 @@ function getRegex(target) {
 	}
 	return new RegExp('^' + str + '$');
 }
+
+
+
+
+/***************************************************************************************************
+ * イベントディスパッチャのプロトタイプ。ObservableArray, DataModel等で使用するのでグローバルに配置している。
+ *
+ * @private
+ * @class
+ * @name EventDispatcher
+ **************************************************************************************************/
+function EventDispatcher() {}
+
+/**
+ * @memberOf EventDispatcher
+ * @param type
+ * @param listener
+ * @returns {Boolean}
+ */
+EventDispatcher.prototype.hasEventListener = function(type, listener) {
+	if (!this.__listeners) {
+		return false;
+	}
+	var l = this.__listeners[type];
+	if (!l) {
+		return false;
+	}
+
+	for ( var i = 0, count = l.length; i < count; i++) {
+		if (l[i] === listener) {
+			return true;
+		}
+	}
+	return false;
+
+};
+
+/**
+ * @memberOf EventDispatcher
+ * @param type
+ * @param listener
+ */
+EventDispatcher.prototype.addEventListener = function(type, listener) {
+	if (this.hasEventListener(type, listener)) {
+		return;
+	}
+
+	if (!this.__listeners) {
+		this.__listeners = {};
+	}
+
+	if (!(type in this.__listeners)) {
+		this.__listeners[type] = [];
+	}
+
+	this.__listeners[type].push(listener);
+};
+
+/**
+ * @memberOf EventDispatcher
+ * @param type
+ * @param listener
+ */
+EventDispatcher.prototype.removeEventListener = function(type, listener) {
+	if (!this.hasEventListener(type, listener)) {
+		return;
+	}
+
+	var l = this.__listeners[type];
+
+	for ( var i = 0, count = l.length; i < count; i++) {
+		if (l[i] === listener) {
+			l.splice(i, 1);
+			return;
+		}
+	}
+
+};
+
+/**
+ * @memberOf EventDispatcher
+ * @param event
+ */
+EventDispatcher.prototype.dispatchEvent = function(event) {
+	if (!this.__listeners) {
+		return;
+	}
+	var l = this.__listeners[event.type];
+	if (!l) {
+		return;
+	}
+
+	if (!event.target) {
+		event.target = this;
+	}
+
+	for ( var i = 0, count = l.length; i < count; i++) {
+		l[i].call(event.target, event);
+	}
+};
+
+
 
 var h5internal = {
 	core: {
