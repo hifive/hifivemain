@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,29 @@
  * hifive
  */
 
+(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
 
-$(function() {
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
 
+	//=============================
+	// Variables
+	//=============================
+
+	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.core.data;
+
+	//=============================
+	// Functions
+	//=============================
 
 	function setLevel(level) {
 		h5.settings.log = {
@@ -56,11 +76,25 @@ $(function() {
 		ok(true, message);
 	}
 
+	// =========================================================================
+	//
+	// Test Module
+	//
+	// =========================================================================
+
+	//=============================
+	// Definition
+	//=============================
+
 	module("h5.log", {
 		teardown: function() {
 			setLevel();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test(
 			'※要目視確認：基本コンソールログ出力',
@@ -428,7 +462,7 @@ $(function() {
 		h5.log.configure();
 		var logger = h5.log.createLogger('for test target.type');
 		logger.trace('test');
-		ok(true, '"■■上書きされたlog関数による出力■■ test"  と出力されていることを確認してください。')
+		ok(true, '"■■上書きされたlog関数による出力■■ test"  と出力されていることを確認してください。');
 	});
 
 	test('target.typeに、オブジェクト, "console"以外を指定するとエラーになること。', 6, function() {
@@ -512,7 +546,7 @@ $(function() {
 				ok(
 						true,
 						'Chrome,Firefoxではトレース結果が出力されていること(chromeだと、[DEBUG]16:39:3,213: スタックトレース - テスト [eval <anonymous> () <- eval (native) <- {anonymous} ...])'
-								+ 'IE,Safariではトレースできないため、[DEBUG]16:39:3,213: スタックトレース - テスト [undefined] のように表示されていることを確認してください。')
+								+ 'IE,Safariではトレースできないため、[DEBUG]16:39:3,213: スタックトレース - テスト [undefined] のように表示されていることを確認してください。');
 			});
 	test('※要目視確認：スタックトレース', 0, function() {
 
@@ -672,4 +706,5 @@ $(function() {
 					}
 				}
 			});
-});
+
+})();

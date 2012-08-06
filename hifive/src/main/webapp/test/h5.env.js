@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,51 @@
  * hifive
  */
 
-$(function() {
-
+(function() {
 	// min版ではh5.env.__checkがプリプロセッサによって削除される
 	if (!h5.env.__check) {
 		return;
 	}
 
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+
+	//=============================
+	// Variables
+	//=============================
+
+	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.core.data;
+
+	//=============================
+	// Functions
+	//=============================
+
+	// =========================================================================
+	//
+	// Test Module
+	//
+	// =========================================================================
+
+	//=============================
+	// Definition
+	//=============================
+
 	module("h5.env");
+
+	//=============================
+	// Body
+	//=============================
+
 	test(
 			'uaの確認1(Android 4.0.1, Chrome for Android 16.0.912.75)',
 			function() {
@@ -351,34 +388,31 @@ $(function() {
 				strictEqual(ret.isWebkit, false, 'Webkitか');
 			});
 
-	test(
-			'uaの確認14(Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61)',
-			function() {
-				var ua = 'Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61';
-				var ret = h5.env.__check(ua);
-				strictEqual(ret.osVersion, null, 'OSのバージョンは正しいか');
-				strictEqual(ret.osVersionFull, null, 'OSのフルバージョンは正しいか');
-				strictEqual(ret.browserVersion, 11, 'ブラウザのバージョンは正しいか');
-				strictEqual(ret.browserVersionFull, '11.61', 'ブラウザのフルバージョンは正しいか');
-				strictEqual(ret.isiPhone, false, 'iPhoneか');
-				strictEqual(ret.isiPad, false, 'iPadか');
-				strictEqual(ret.isiOS, false, 'iOSか');
-				strictEqual(ret.isAndroid, false, 'Androidか');
-				strictEqual(ret.isWindowsPhone, false, 'WindowsPhoneか');
-				strictEqual(ret.isIE, false, 'IEか');
-				strictEqual(ret.isFirefox, false, 'Firefoxか');
-				strictEqual(ret.isChrome, false, 'Chromeか');
-				strictEqual(ret.isSafari, false, 'Safariか');
-				strictEqual(ret.isOpera, true, 'Operaか');
-				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
-				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
-				strictEqual(ret.isTablet, false, 'タブレットか');
-				strictEqual(ret.isDesktop, true, 'デスクトップか');
-				strictEqual(ret.isWebkit, false, 'Webkitか');
-			});
+	test('uaの確認14(Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61)', function() {
+		var ua = 'Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61';
+		var ret = h5.env.__check(ua);
+		strictEqual(ret.osVersion, null, 'OSのバージョンは正しいか');
+		strictEqual(ret.osVersionFull, null, 'OSのフルバージョンは正しいか');
+		strictEqual(ret.browserVersion, 11, 'ブラウザのバージョンは正しいか');
+		strictEqual(ret.browserVersionFull, '11.61', 'ブラウザのフルバージョンは正しいか');
+		strictEqual(ret.isiPhone, false, 'iPhoneか');
+		strictEqual(ret.isiPad, false, 'iPadか');
+		strictEqual(ret.isiOS, false, 'iOSか');
+		strictEqual(ret.isAndroid, false, 'Androidか');
+		strictEqual(ret.isWindowsPhone, false, 'WindowsPhoneか');
+		strictEqual(ret.isIE, false, 'IEか');
+		strictEqual(ret.isFirefox, false, 'Firefoxか');
+		strictEqual(ret.isChrome, false, 'Chromeか');
+		strictEqual(ret.isSafari, false, 'Safariか');
+		strictEqual(ret.isOpera, true, 'Operaか');
+		strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
+		strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
+		strictEqual(ret.isTablet, false, 'タブレットか');
+		strictEqual(ret.isDesktop, true, 'デスクトップか');
+		strictEqual(ret.isWebkit, false, 'Webkitか');
+	});
 
-	test(
-			'uaの確認14(Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10)',
+	test('uaの確認14(Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10)',
 			function() {
 				var ua = 'Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10';
 				var ret = h5.env.__check(ua);
@@ -402,4 +436,4 @@ $(function() {
 				strictEqual(ret.isDesktop, true, 'デスクトップか');
 				strictEqual(ret.isWebkit, false, 'Webkitか');
 			});
-});
+})();

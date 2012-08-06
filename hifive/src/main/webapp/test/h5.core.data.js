@@ -1,24 +1,49 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  * hifive
  */
-$(function() {
+
+(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+
+	//=============================
+	// Variables
+	//=============================
+
+	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.core.data;
+
 	/**
 	 * データモデルマネージャ
 	 */
-	// TODO マネージャを新規生成するテストでなければ、setupでmanagerを生成し、teardownでmanager.dropModelを呼べばOK
-	var manager = {};
+	var manager = {}; // マネージャを新規生成するテスト以外では、setupでmanagerを生成し、teardownでmanager.dropModelを実行すればよい
+
+	//=============================
+	// Functions
+	//=============================
 
 	/**
 	 * 引数に指定されたマネージャが持つモデルを全てdropする
@@ -59,6 +84,16 @@ $(function() {
 		}
 	}
 
+	// =========================================================================
+	//
+	// Test Module
+	//
+	// =========================================================================
+
+	//=============================
+	// Definition
+	//=============================
+
 	module('createManager', {
 		setup: function() {
 			manager = undefined;
@@ -68,6 +103,10 @@ $(function() {
 			dropAllModel(manager);
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('データモデルマネージャの作成', 1, function() {
 		manager = h5.core.data.createManager('TestManager');
@@ -151,6 +190,10 @@ $(function() {
 		com.htmlhifive.test.TestModel = undefined;
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('createModel', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
@@ -160,6 +203,10 @@ $(function() {
 			dropAllModel(manager);
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('データモデルの登録', 5, function() {
 		var schema = {
@@ -1835,6 +1882,10 @@ $(function() {
 				ok(model);
 			});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('dropModel', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
@@ -1844,6 +1895,10 @@ $(function() {
 			dropAllModel(manager);
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('データモデルのドロップ', 10,
 			function() {
@@ -1895,6 +1950,10 @@ $(function() {
 				deepEqual(manager.models, {}, '全てのモデルをドロップしたので、manager.modelsは空オブジェクトであること');
 			});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('create, get, remove', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
@@ -1904,6 +1963,10 @@ $(function() {
 			dropAllModel(manager);
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('createでアイテムが生成できること。引数に配列を渡した場合は戻り値も配列になること。', function() {
 		var model = manager.createModel({
@@ -2013,6 +2076,24 @@ $(function() {
 		}
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
+	module('get', {
+		setup: function() {
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardown: function() {
+			// マネージャをリセットする
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
 	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
 		var model = manager.createModel({
 			name: 'TestDataModel',
@@ -2083,6 +2164,24 @@ $(function() {
 
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
+	module('remove', {
+		setup: function() {
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardown: function() {
+			// マネージャをリセットする
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
 	test('removeでアイテムを削除できること。引数に配列を指定した場合は複数削除できること', function() {
 		var model = manager.createModel({
 			name: 'TestDataModel',
@@ -2133,6 +2232,10 @@ $(function() {
 		strictEqual(model.size, 0, 'すべて削除したので、model.sizeが0になっていること');
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('type', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
@@ -2142,6 +2245,10 @@ $(function() {
 			dropAllModel(manager);
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	// 2012/07/27 竹内追記
 	// Any/Array 以外 typeに[]を指定可能
@@ -3723,15 +3830,9 @@ $(function() {
 		}
 	});
 
-	// 2012/07/27 竹内追記 仕様が確定するまで取りあえず放置
-	test('enhanceの指定されているプロパティは、値をセットしても何もイベントが起きず、値のチェックも行われないこと', function() {
-	// TODO
-	});
-
-	test('dependの設定されているプロパティに、値はセットできないこと。depend先のアイテムから値が変更されたら、dependを設定しているプロパティの値も変わること',
-			function() {
-			// TODO
-			});
+	//=============================
+	// Definition
+	//=============================
 
 	module('constraint', {
 		setup: function() {
@@ -3743,6 +3844,32 @@ $(function() {
 		}
 	});
 
+	//=============================
+	// Body
+	//=============================
+
+	// 2012/07/27 竹内追記 仕様が確定するまで取りあえず放置
+	test('値をセットしても何もイベントが起きず、値のチェックも行われないこと', function() {
+	// TODO
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('constraint', {
+		setup: function() {
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardown: function() {
+			// マネージャをリセットする
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
 
 	//	・nullについて
 	//	　・number, integer, boolean は"Nullable"な存在とする。
@@ -5886,6 +6013,10 @@ $(function() {
 		}, 'patternの制約エラーが発生すること。');
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('depend', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
@@ -5895,6 +6026,10 @@ $(function() {
 			dropAllModel(manager);
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('同じモデル依存先プロパティの値が変更された場合のテスト1', function() {
 		var model1 = manager.createModel({
@@ -5990,8 +6125,11 @@ $(function() {
 	});
 
 
+	//=============================
+	// Definition
+	//=============================
 
-	module('イベント', {
+	module('addEventListener', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
 		},
@@ -6001,7 +6139,11 @@ $(function() {
 		}
 	});
 
-	test('addEventListener changeイベント', function() {
+	//=============================
+	// Body
+	//=============================
+
+	test(' changeイベント', function() {
 		// addEventListenerに登録したハンドラが実行されたことを確認する変数
 		var changeCount = 0;
 		var changeCount2 = 0;
@@ -6137,7 +6279,7 @@ $(function() {
 				'changeイベントに登録したハンドラが登録順に実行され、最後にモデルのitemsChangeイベントハンドラが実行されること');
 	});
 
-	test('addEventListener itemsChangeイベント', function() {
+	test('itemsChangeイベント', function() {
 		var itemsChangeArgs = null;
 		var itemsChangeCount = 0;
 		function itemsChangeListener(args) {
@@ -6285,7 +6427,87 @@ $(function() {
 				'changedプロパティが、DataItem二つの変更分のchangeイベントオブジェクトが格納されている配列であること');
 	});
 
-	test('removeEventListener, hasEventListener',
+	//=============================
+	// Definition
+	//=============================
+
+	module('hasEventListener', {
+		setup: function() {
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardown: function() {
+			// マネージャをリセットする
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('hasEventListener', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+		var countItemsChange = 0;
+		var listenerItemsChange = function() {
+			countItemsChange++;
+		};
+		var countChange = 0;
+		var listenerChange = function() {
+			countChange++;
+		};
+		var item = model.create({
+			id: 1
+		});
+
+		strictEqual(model.hasEventListener('change', listenerChange), false,
+				'DataModel.addEventListener前のhasEventListener()はfalseであること');
+		strictEqual(item.hasEventListener('change', itemsChangeListener),
+				'DataItem.addEventListener前のhasEventListener()はfalseであること');
+
+		model.addEventListener('itemsChange', listenerItemsChange);
+
+		strictEqual(model.hasEventListener('change', listenerChange), true,
+				'DataModel.addEventListener後のhasEventListener()はtrueであること');
+		item.addEventListener('change', listenerChange);
+
+		strictEqual(item.hasEventListener('change', itemsChangeListener), true,
+				'DataItem.addEventListener後のhasEventListener()はtrueであること');
+
+		item.create({
+			id: 1,
+			val: 1
+		});
+		strictEqual(countChange, 1, 'removeEventListenerする前はchangeイベントハンドラが実行されていること');
+		strictEqual(countItemsChange, 1, 'removeEventListenerする前はitemsChangeイベントハンドラが実行されていること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('removeEventListener', {
+		setup: function() {
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardown: function() {
+			// マネージャをリセットする
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('removeEventListener',
 			function() {
 				var model = manager.createModel({
 					name: 'TestDataModel',
@@ -6307,19 +6529,6 @@ $(function() {
 				var item = model.create({
 					id: 1
 				});
-				strictEqual(model.hasEventListener('change', listenerChange), false,
-						'DataModel.addEventListener前のhasEventListener()はfalseであること');
-				strictEqual(item.hasEventListener('change', itemsChangeListener),
-						'DataItem.addEventListener前のhasEventListener()はfalseであること');
-
-				model.addEventListener('itemsChange', listenerItemsChange);
-
-				strictEqual(model.hasEventListener('change', listenerChange), true,
-						'DataModel.addEventListener後のhasEventListener()はtrueであること');
-				item.addEventListener('change', listenerChange);
-
-				strictEqual(item.hasEventListener('change', itemsChangeListener), true,
-						'DataItem.addEventListener後のhasEventListener()はtrueであること');
 
 				item.create({
 					id: 1,
@@ -6370,6 +6579,25 @@ $(function() {
 				strictEqual(countItemsChange, 1, 'DataModelのイベントハンドラが実行されること');
 				strictEqual(countChange, 0, 'DataItem.removeEventListenerしたハンドラは実行されないこと');
 			});
+
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('beginUpdate/endUpdate', {
+		setup: function() {
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardown: function() {
+			// マネージャをリセットする
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('beginUpdate/endUpdate', function() {
 		var model = manager.createModel({
@@ -6478,7 +6706,7 @@ $(function() {
 		deepEqual(changeArgs1.target, {
 			type: 'change',
 			target: item1
-		})
+		});
 
 		strictEqual(itemsChangeCount, 1, 'endUpdateで、itemsChangeイベントハンドラが1回だけ実行されること');
 		strictEqual(itemsChangeArgs.added.length, 1,
@@ -6541,7 +6769,6 @@ $(function() {
 		strictEqual(item2.dep, 'depend:22', 'endUpdate()でdepend指定されている項目の値が更新されること');
 	});
 
-
 	test(
 			'beginUpdate/endUpdate内でadd/removeEventListenerした場合、endUpdate時に登録されているEventListenerだけが実行されること',
 			function() {
@@ -6595,4 +6822,4 @@ $(function() {
 				strictEqual(changeCount1, 100, 'endUpdate時に存在しないハンドラは実行されず、新たに登録したハンドラが実行されていること');
 				strictEqual(changeCount2, 0, 'endUpdate時に存在しないハンドラは実行されていないこと');
 			});
-});
+})();
