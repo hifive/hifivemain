@@ -28,49 +28,45 @@
 	// Production
 	//=============================
 
-	//TODO エラーコード定数等Minify版（製品利用版）でも必要なものはここに書く
-
 	/** マネージャ名が不正 */
-	var ERR_CODE_INVALID_MANAGER_NAME = 30000;
+	var ERR_CODE_INVALID_MANAGER_NAME = 15000;
 
 	/** DataItemのsetterに渡された値の型がDescriptorで指定されたものと異なる */
-	var ERR_CODE_INVALID_TYPE = 30001;
+	var ERR_CODE_INVALID_TYPE = 15001;
 
 	/** dependが設定されたプロパティのセッターを呼び出した */
-	var ERR_CODE_DEPEND_PROPERTY = 30002;
+	var ERR_CODE_DEPEND_PROPERTY = 15002;
 
 	/** イベントのターゲットが指定されていない */
-	var ERR_CODE_NO_EVENT_TARGET = 30003;
+	var ERR_CODE_NO_EVENT_TARGET = 15003;
 
-	/** スキーマが不正 */
-	var ERR_CODE_INVALID_SCHEMA = 30004;
+	/** ディスプリプタが不正 */
+	var ERR_CODE_INVALID_DESCRIPTOR = 15004;
 
 	/** createDataModelManagerのnamespaceが不正 */
-	var ERR_CODE_INVALID_MANAGER_NAMESPACE = 30005;
+	var ERR_CODE_INVALID_MANAGER_NAMESPACE = 15005;
 
 	/** データモデル名が不正 */
-	var ERR_CODE_INVALID_DATAMODEL_NAME = 30006;
+	var ERR_CODE_INVALID_DATAMODEL_NAME = 15006;
 
 	/** createItemでIDが必要なのに指定されていない */
-	var ERR_CODE_NO_ID = 30007;
+	var ERR_CODE_NO_ID = 15007;
 
 	/** マネージャの登録先に指定されたnamespaceにはすでにその名前のプロパティが存在する */
-	var ERR_CODE_REGISTER_TARGET_ALREADY_EXIST = 30008;
+	var ERR_CODE_REGISTER_TARGET_ALREADY_EXIST = 15008;
 
 	/** 内部エラー：更新ログタイプ不正（通常起こらないはず） */
-	var ERR_CODE_INVALID_UPDATE_LOG_TYPE = 30009;
+	var ERR_CODE_INVALID_UPDATE_LOG_TYPE = 15009;
 
 	/** IDは文字列でなければならない */
-	var ERR_CODE_ID_MUST_BE_STRING = 30010;
+	var ERR_CODE_ID_MUST_BE_STRING = 15010;
 
-	var ERR_CODE_INVALID_DESCRIPTOR = 30011;
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_TYPE] = 'DataItemのsetterに渡された値の型がDescriptorで指定されたものと異なる';
 	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティのセッターを呼び出した';
 	ERROR_MESSAGES[ERR_CODE_NO_EVENT_TARGET] = 'イベントのターゲットが指定されていない';
-	ERROR_MESSAGES[ERR_CODE_INVALID_SCHEMA] = 'スキーマが不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAMESPACE] = 'createDataModelManagerのnamespaceが不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_DATAMODEL_NAME] = 'データモデル名が不正';
 	ERROR_MESSAGES[ERR_CODE_NO_ID] = 'createItemでIDが必要なのに指定されていない';
@@ -372,7 +368,7 @@
 		// schemaが指定されていて、オブジェクトでないならエラー
 		var schema = descriptor.schema;
 		if (!baseSchema && schema == null || !$.isPlainObject(schema)) {
-			throwFwError(ERR_CODE_INVALID_SCHEMA);
+			throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
 		}
 
 		// base指定されていた場合は、後勝ちでextendする
@@ -399,7 +395,7 @@
 		// schemaがオブジェクトかどうか
 		// TODO 必ずvalidateDescriptorから呼ばれるなら要らない？
 		if (!$.isPlainObject(schema)) {
-			throwFwError(ERR_CODE_INVALID_SCHEMA);
+			throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
 		}
 
 		// TODO エラーはチェック不整合があったらすぐ投げた方がいい？
@@ -1403,21 +1399,11 @@
 
 				for ( var prop in schema) {
 					if (schema[prop] && schema[prop].id === true) {
+						//ディスクリプタは事前検証済みなので、IDフィールドは必ず存在する
 						this.idKey = prop;
 						break;
 					}
 				}
-				if (!this.idKey) {
-					throwFwError(30005); //TODO throw proper error
-				}
-
-
-				//TODO
-				//				var errorReason = validateSchema(manager, schema);
-				//				if (errorReason.length > 0) {
-				//					//スキーマにエラーがある
-				//					throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
-				//				}
 
 				//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
 				this.schema = schema;
