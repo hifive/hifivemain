@@ -8,7 +8,7 @@
 	<property name="webapp.root.dir" value="src/main/webapp" />
 	<property name="web-inf.dir" value="${webapp.root.dir}/WEB-INF" />
 	<property name="lib.tool.dir" value="${basedir}/jstool" />
-	<property name="lib.project.dir" value="." />
+	<property name="lib.project.dir" value="./lib" />
 
 	<path id="base.path">
 		<fileset dir="${lib.project.dir}" includes="**/*.jar" />
