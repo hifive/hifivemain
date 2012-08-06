@@ -40,8 +40,8 @@
 	/** イベントのターゲットが指定されていない */
 	var ERR_CODE_NO_EVENT_TARGET = 15003;
 
-	/** スキーマが不正 */
-	var ERR_CODE_INVALID_SCHEMA = 15004;
+	/** ディスプリプタが不正 */
+	var ERR_CODE_INVALID_DESCRIPTOR = 15004;
 
 	/** createDataModelManagerのnamespaceが不正 */
 	var ERR_CODE_INVALID_MANAGER_NAMESPACE = 15005;
@@ -61,14 +61,12 @@
 	/** IDは文字列でなければならない */
 	var ERR_CODE_ID_MUST_BE_STRING = 15010;
 
-	var ERR_CODE_INVALID_DESCRIPTOR = 15011;
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_TYPE] = 'DataItemのsetterに渡された値の型がDescriptorで指定されたものと異なる';
 	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティのセッターを呼び出した';
 	ERROR_MESSAGES[ERR_CODE_NO_EVENT_TARGET] = 'イベントのターゲットが指定されていない';
-	ERROR_MESSAGES[ERR_CODE_INVALID_SCHEMA] = 'スキーマが不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAMESPACE] = 'createDataModelManagerのnamespaceが不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_DATAMODEL_NAME] = 'データモデル名が不正';
 	ERROR_MESSAGES[ERR_CODE_NO_ID] = 'createItemでIDが必要なのに指定されていない';
@@ -370,7 +368,7 @@
 		// schemaが指定されていて、オブジェクトでないならエラー
 		var schema = descriptor.schema;
 		if (!baseSchema && schema == null || !$.isPlainObject(schema)) {
-			throwFwError(ERR_CODE_INVALID_SCHEMA);
+			throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
 		}
 
 		// base指定されていた場合は、後勝ちでextendする
@@ -397,7 +395,7 @@
 		// schemaがオブジェクトかどうか
 		// TODO 必ずvalidateDescriptorから呼ばれるなら要らない？
 		if (!$.isPlainObject(schema)) {
-			throwFwError(ERR_CODE_INVALID_SCHEMA);
+			throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
 		}
 
 		// TODO エラーはチェック不整合があったらすぐ投げた方がいい？
