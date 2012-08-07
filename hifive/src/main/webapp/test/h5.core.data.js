@@ -29,6 +29,15 @@
 	//
 	// =========================================================================
 
+	// constraintのテストで使用
+	var constraintDataModel = null;
+	var testClass1 = null;
+	var itemA = null;
+	var itemB = null;
+
+	// 各moduleのsetup()で、h5.core.data.createSequence()によって生成されたシーケンスオブジェクトを持つ
+	var sequence = null;
+
 	//=============================
 	// Variables
 	//=============================
@@ -71,8 +80,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						value: invalidProps[i]
 					}
@@ -99,8 +107,10 @@
 	module('createManager', {
 		setup: function() {
 			manager = undefined;
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -196,6 +206,7 @@
 	module('createModel', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 		},
 		teardown: function() {
 			dropAllModel(manager);
@@ -241,8 +252,7 @@
 				name: name,
 				schema: {
 					id: {
-						id: true,
-						type: 'integer'
+						id: true
 					}
 				}
 			});
@@ -264,8 +274,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						val: {
 							defaultValue: 1
@@ -276,8 +285,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						val: {
 							defaultValue: 2
@@ -289,7 +297,7 @@
 						true,
 						'※要目視確認 以下のようなログが出力されていること。『 同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は TestManager, 登録しようとしたデータモデル名は TestDataModel です。 』');
 				var item = model1.create({
-					id: 1
+					id: sequence.next()
 				});
 				strictEqual(item.val, 1, '最初に作成したモデルのスキーマでアイテムが生成されること');
 				var manager2 = h5.core.data.createManager('TestManager');
@@ -297,8 +305,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						val: {
 							defaultValue: 3
@@ -336,8 +343,7 @@
 				description: 'データモデルテスト',
 				schema: {
 					empId: {
-						id: true,
-						type: 'integer'
+						id: true
 					}
 				}
 			});
@@ -351,8 +357,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				value: {
 					defaultValue: 1
@@ -363,8 +368,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				value: {
 					defaultValue: 2
@@ -373,7 +377,7 @@
 		});
 		strictEqual(model, model2, '2度目のcreateModelの戻り値が1度目の戻り値と同じインスタンスを返すこと');
 		var item = model2.create({
-			id: 0
+			id: sequence.next()
 		});
 		strictEqual(item.value, 1, '1度目のcreateModelのスキーマに基づいてアイテムが生成されること');
 	});
@@ -384,6 +388,7 @@
 
 	module('createModel - schema', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -413,8 +418,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						value: {
 							defaultValue: 1
@@ -438,10 +442,10 @@
 				});
 
 				var item = model2.create({
-					id: 0
+					id: sequence.next()
 				});
 
-				strictEqual(item.id, 0, '指定したidでアイテムが生成されていること');
+				strictEqual(item.id, "1", '指定したidでアイテムが生成されていること');
 				strictEqual(item.value, 2, '同名のプロパティについては、baseを指定している側で設定したdefaultValueが入っていること');
 				strictEqual(item.value2, 1, '継承先にしかないプロパティの値を取得できること');
 				strictEqual(item.val, 2, 'baseを指定している側にしかないプロパティの値に指定したdefaultValueが入っていること');
@@ -453,8 +457,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						value: {
 							defaultValue: 1
@@ -469,8 +472,7 @@
 					base: '@TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						value: {
 							defaultValue: 2
@@ -482,10 +484,10 @@
 				});
 
 				var item = model2.create({
-					id: "a"
+					id: sequence.next()
 				});
 
-				strictEqual(item.id, 'a', '指定したidでアイテムが生成されていること');
+				strictEqual(item.id, '1', '指定したidでアイテムが生成されていること');
 				strictEqual(item.value, 2, '同名のプロパティについては、baseを指定している側で設定したdefaultValueが入っていること');
 				strictEqual(item.value2, 1, '継承先にしかないプロパティの値を取得できること');
 				strictEqual(item.val, 2, 'baseを指定している側にしかないプロパティの値に指定したdefaultValueが入っていること');
@@ -497,8 +499,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				value: {
 					defaultValue: 1
@@ -546,10 +547,10 @@
 		});
 
 		var item = model3.create({
-			id: "a"
+			id: sequence.next()
 		});
 
-		strictEqual(item.id, 'a', '指定したidでアイテムが生成されていること');
+		strictEqual(item.id, '1', '指定したidでアイテムが生成されていること');
 		strictEqual(item.value, 3, '同名のプロパティについては、上書かれていること');
 		strictEqual(item.value2, 3, '同名のプロパティについては、上書かれていること');
 		strictEqual(item.value3, 3, '同名のプロパティについては、上書かれていること');
@@ -568,8 +569,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'number'
+					id: true
 				},
 				value: {
 					defaultValue: 1
@@ -586,8 +586,7 @@
 					base: noStrs[i],
 					schema: {
 						id: {
-							id: true,
-							type: 'string'
+							id: true
 						},
 						value: {
 							defaultValue: 2
@@ -612,8 +611,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'number'
+					id: true
 				},
 				value: {
 					defaultValue: 1
@@ -627,8 +625,7 @@
 			name: 'TestDataModel2',
 			schema: {
 				id: {
-					id: true,
-					type: 'number'
+					id: true
 				},
 				value: {
 					defaultValue: 1
@@ -645,8 +642,7 @@
 					base: invalidStrs[i],
 					schema: {
 						id: {
-							id: true,
-							type: 'string'
+							id: true
 						},
 						value: {
 							defaultValue: 2
@@ -671,8 +667,7 @@
 				base: '@TestDataModel2',
 				schema: {
 					id: {
-						id: true,
-						type: 'integer'
+						id: true
 					}
 				}
 			});
@@ -690,8 +685,7 @@
 				base: '@TestDataModel',
 				schema: {
 					id: {
-						id: true,
-						type: 'integer'
+						id: true
 					}
 				}
 			});
@@ -708,8 +702,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				}
 			}
 		});
@@ -901,8 +894,8 @@
 				name: 'TestDataModel',
 				schema: {
 					id: {
-						id: true,
-						type: 'integer'
+						id: true
+
 					},
 					val: {
 						depend: {
@@ -1413,7 +1406,6 @@
 				schema: {
 					id: {
 						id: true,
-						type: 'integer',
 						defaultValue: '12345'
 					}
 				}
@@ -1432,18 +1424,17 @@
 			name: 'ParentModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				}
 			}
 		};
 		var parentModel1 = manager.createModel(parentModelDesc);
 		var parentModel2 = manager2.createModel(parentModelDesc);
 		var parentModelItem = parentModel1.create({
-			id: 1
+			id: sequence.next()
 		});
 		var parentModelItem2 = parentModel2.create({
-			id: 1
+			id: sequence.next()
 		});
 
 		var types = ['string', 'number', 'integer', 'boolean', 'array', '@ParentModel', 'string[]',
@@ -1461,7 +1452,7 @@
 		invalidValueArrays.push([1, "1", {}]);
 		// 同じマネージャのデータモデル@ParentModelでないもの
 		invalidValueArrays.push([1, "1", {
-			id: 1
+			id: sequence.next()
 		}, parentModelItem2, [parentModelItem]]);
 		// string[]でないもの
 		invalidValueArrays.push(["a", ["a", "b", 1], [["a"]]]);
@@ -1871,6 +1862,7 @@
 
 	module('dropModel', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -1888,8 +1880,7 @@
 					name: 'TestDataModel1',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						val: {}
 					}
@@ -1898,18 +1889,17 @@
 					name: 'TestDataModel2',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						val: {}
 					}
 				});
 				model1.create({
-					id: 1,
+					id: sequence.next(),
 					val: 1
 				});
 				model2.create({
-					id: 2,
+					id: sequence.next(),
 					val: 2
 				});
 
@@ -1941,13 +1931,13 @@
 
 	module('create, get, remove', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			testDataModel = manager.createModel({
 				name: 'TestDataModel',
 				schema: {
 					id: {
-						id: true,
-						type: 'integer'
+						id: true
 					},
 					val: {},
 					val2: {}
@@ -1966,41 +1956,41 @@
 
 	test('createでアイテムが生成できること。引数に配列を渡した場合は戻り値も配列になること。', function() {
 		var item = testDataModel.create({
-			id: '123',
+			id: sequence.next(),
 			val: 456
 		});
 
-		strictEqual(item.id, '123', 'create時に指定した値が戻り値から取得できること');
+		strictEqual(item.id, '1', 'create時に指定した値が戻り値から取得できること');
 		strictEqual(item.val, 456, 'create時に指定した値が戻り値から取得できること');
 
 		item = testDataModel.create({
-			id: 456
+			id: sequence.next()
 		});
 
-		strictEqual(item.id, '456', 'createでidに数字を指定しても、文字列として格納されていること');
+		strictEqual(item.id, '2', 'createでidに数字を指定しても、文字列として格納されていること');
 		strictEqual(item.val, null, 'create時に値を指定していない値について、nullが格納されてること');
 
 		var items = testDataModel.create([{
-			id: 1
+			id: sequence.next()
 		}, {
-			id: 2
+			id: sequence.next()
 		}, {
-			id: 3
+			id: sequence.next()
 		}]);
 
 		strictEqual(items.length, 3, 'createの引数に配列を渡すと、戻り値がアイテムの配列として返ってくること');
-		strictEqual(items[0].id, '1', '戻り値の配列の中身が正しいこと');
-		strictEqual(items[1].id, '2', '戻り値の配列の中身が正しいこと');
-		strictEqual(items[2].id, '3', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[0].id, '3', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[1].id, '4', '戻り値の配列の中身が正しいこと');
+		strictEqual(items[2].id, '5', '戻り値の配列の中身が正しいこと');
 	});
 
 	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 2, function() {
 		var item = testDataModel.create({
-			id: 1,
+			id: sequence.next(),
 			val: 1
 		});
 		var item2 = testDataModel.create({
-			id: 1,
+			id: '1',
 			val2: 2
 		});
 
@@ -2009,10 +1999,10 @@
 		strictEqual(item.val2, 2, '上書いたプロパティを取得できること');
 
 		var items = testDataModel.create([{
-			id: 2,
+			id: sequence.next(),
 			val: 2
 		}, {
-			id: 2,
+			id: '2',
 			val2: 3
 		}]);
 
@@ -2025,19 +2015,19 @@
 		// TODO アトミックかどうか確認する
 		try {
 			testDataModel.create([{
-				id: 1
+				id: sequence.next()
 			}, {
 				id: {}
 			}, {
-				id: 2
+				id: sequence.next()
 			}]);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_NAMESPACE_INVALID, e.message);
 		} finally {
 			// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない(TODO 確認する)
-			ok(testDataModel.has(1), '配列で渡した場合にエラーが発生したら、その要素より前のアイテムは生成されること');
-			ok(!testDataModel.has(2), '配列で渡した場合にエラーが発生したら、その要素以降のアイテムは生成されないこと');
+			ok(testDataModel.has('1'), '配列で渡した場合にエラーが発生したら、その要素より前のアイテムは生成されること');
+			ok(!testDataModel.has('2'), '配列で渡した場合にエラーが発生したら、その要素以降のアイテムは生成されないこと');
 			strictEqual(testDataModel.size, 1, 'sizeが1であること');
 		}
 	});
@@ -2048,28 +2038,27 @@
 
 	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
 		var item1 = testDataModel.create({
-			id: 1,
+			id: sequence.next(),
 			val: 'item1'
 		});
 		var item2 = testDataModel.create({
-			id: 2,
+			id: sequence.next(),
 			val: 'item2'
 		});
 		var item3 = testDataModel.create({
-			id: 3,
+			id: sequence.next(),
 			val: 'item3'
 		});
 
-		strictEqual(testDataModel.get('item1'), item1, '登録したアイテムが取得できること');
-		strictEqual(testDataModel.get('item2'), item2, '登録したアイテムが取得できること');
-		strictEqual(testDataModel.get('item3').item3, 'item3', '登録したアイテムが取得できること');
+		strictEqual(testDataModel.get('1'), item1, '登録したアイテムが取得できること');
+		strictEqual(testDataModel.get('2'), item2, '登録したアイテムが取得できること');
+		strictEqual(testDataModel.get('3'), item3, '登録したアイテムが取得できること');
 		strictEqual(testDataModel.get('abc'), null, '登録されていないidを渡すとnullが返ってくること');
 		strictEqual(testDataModel.get('4'), null, '違うモデルに登録したアイテムは取得できないこと。');
 		var items = testDataModel.get(['2', '4', '1', '3', 'noExistId']);
 		deepEqual(items, [item2, null, item1, item3, null],
 				'getに配列を渡した時の戻り値は各要素のget結果が格納された配列であること');
-		strictEqual(testDataModel.get('2').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
-		strictEqual(testDataModel.get('2').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
+		strictEqual(testDataModel.get('1').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
 		strictEqual(testDataModel.get('2').val, 'item2', '登録したアイテムが取得できること');
 		strictEqual(testDataModel.get('3').val, 'item3', '登録したアイテムが取得できること');
 
@@ -2077,42 +2066,42 @@
 
 	test('removeでアイテムを削除できること。引数に配列を指定した場合は複数削除できること', function() {
 		var item1 = testDataModel.create({
-			id: 1,
+			id: sequence.next(),
 			val: 1
 		});
 		var item2 = testDataModel.create({
-			id: 2,
+			id: sequence.next(),
 			val: 2
 		});
 		var item3 = testDataModel.create({
-			id: 3,
+			id: sequence.next(),
 			val: 3
 		});
-		strictEqual(testDataModel.has(1), true, '削除する前はmodel.hasの結果がtrueであること');
-		strictEqual(testDataModel.has(2), true, '削除する前はmodel.hasの結果がtrueであること');
-		strictEqual(testDataModel.has(3), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(testDataModel.has('1'), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(testDataModel.has('2'), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(testDataModel.has('3'), true, '削除する前はmodel.hasの結果がtrueであること');
 
-		var item = testDataModel.remove(1);
+		var item = testDataModel.remove('1');
 		strictEqual(item, item1, 'removeの戻り値はDataItemインスタンスであること');
 
-		strictEqual(testDataModel.get(1), null, '削除したアイテムのidでgetすると戻り値がnullであること');
-		strictEqual(testDataModel.has(1), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(testDataModel.get('1'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(testDataModel.has('1'), false, 'model.hasの結果がfalseになっていること');
 		strictEqual(testDataModel.size, 2, 'model.sizeが1減っていること');
 
 		item = testDataModel.remove('noExistId');
 		strictEqual(item, null, '存在しないIDをremoveした時の戻り値はnullであること');
 
-		var items = testDataModel.remove([2, 'noExistId', 3]);
+		var items = testDataModel.remove(['2', 'noExistId', '3']);
 		// TODO removeの戻り値を確認する
 		deepEqual(items, [item2, null, item3], 'removeに配列を渡した時の戻り値は各要素のremove結果が格納された配列であること');
 
 
 		// TODO 削除されたアイテムインスタンスがどうなっているか確認する
 
-		strictEqual(testDataModel.get(2), null, '削除したアイテムのidでgetすると戻り値がnullであること');
-		strictEqual(testDataModel.has(2), false, 'model.hasの結果がfalseになっていること');
-		strictEqual(testDataModel.get(3), null, '削除したアイテムのidでgetすると戻り値がnullであること');
-		strictEqual(testDataModel.has(3), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(testDataModel.get('2'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(testDataModel.has('2'), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(testDataModel.get('3'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(testDataModel.has('3'), false, 'model.hasの結果がfalseになっていること');
 		strictEqual(testDataModel.size, 0, 'すべて削除したので、model.sizeが0になっていること');
 	});
 
@@ -2122,6 +2111,7 @@
 
 	module('type', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -2154,8 +2144,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'string',
@@ -2168,9 +2157,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -2178,7 +2166,7 @@
 			strictEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 'c'
 			});
 
@@ -2189,7 +2177,7 @@
 			var sub = [new String('a'), new Object('i'), "", ''];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -2209,8 +2197,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'string',
@@ -2223,9 +2211,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
@@ -2235,7 +2222,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -2254,8 +2241,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'string[]',
@@ -2268,9 +2255,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -2278,7 +2264,7 @@
 			deepEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: ['c', 'z']
 			});
 
@@ -2290,7 +2276,7 @@
 					new Array('8', '5'), new Object(['i', 'd']), new Object(['3', '4'])];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -2310,8 +2296,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 
 				},
 				test1: {
@@ -2325,9 +2311,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
@@ -2339,7 +2324,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -2358,8 +2343,8 @@
 			name: 'DataModel1',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'string'
@@ -2376,8 +2361,8 @@
 			name: 'DataModel2',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'number'
@@ -2395,8 +2380,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				dataModel1: {
 					type: '@DataModel1[]'
@@ -2428,8 +2413,8 @@
 			name: 'DataModel1',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'string'
@@ -2464,8 +2449,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				dataModel1: {
 					type: '@DataModel1[]'
@@ -2505,8 +2490,8 @@
 			name: 'DataModel1',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'string'
@@ -2527,8 +2512,8 @@
 			name: 'DataModel2',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'number'
@@ -2550,8 +2535,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				dataModel1: {
 					type: '@DataModel1'
@@ -2585,8 +2570,8 @@
 			name: 'DataModel1',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'string'
@@ -2607,8 +2592,8 @@
 			name: 'DataModel2',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'number'
@@ -2626,8 +2611,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				dataModel1: {
 					type: '@DataModel1'
@@ -2676,8 +2661,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'number',
@@ -2690,9 +2675,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -2700,7 +2684,7 @@
 			strictEqual(item.test2, 0, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 10
 			});
 
@@ -2711,7 +2695,7 @@
 			var sub = [new Number(10), Infinity, -Infinity, NaN, new Object(10.9)];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -2731,8 +2715,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'number',
@@ -2745,9 +2729,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
@@ -2760,7 +2743,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -2779,8 +2762,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'number[]',
@@ -2793,9 +2776,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -2803,7 +2785,7 @@
 			equal(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [30, 10]
 			});
 
@@ -2816,7 +2798,7 @@
 					new Object([Infinity, -Infinity, NaN])];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -2838,8 +2820,8 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
+
 				},
 				test1: {
 					type: 'number[]',
@@ -2852,13 +2834,12 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [30, 10]
 			});
 
@@ -2871,7 +2852,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -2890,8 +2871,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'integer',
@@ -2904,9 +2884,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -2914,7 +2893,7 @@
 			strictEqual(item.test2, 0, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 10
 			});
 
@@ -2927,7 +2906,7 @@
 					new Object('31.9'), new Object(20), new Object(20.3), NaN];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -2951,8 +2930,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'integer',
@@ -2965,13 +2943,12 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 10
 			});
 
@@ -2985,7 +2962,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -3005,8 +2982,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						test1: {
 							type: 'integer[]',
@@ -3019,9 +2995,8 @@
 				});
 
 				try {
-					var id = 1;
 					var item = model.create({
-						id: id++
+						id: sequence.next()
 					});
 
 					// 初期値は正しいか
@@ -3030,7 +3005,7 @@
 					deepEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 					item = model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: [10, 30]
 					});
 
@@ -3052,7 +3027,7 @@
 							new Array(new Object(20), new Object(20.3)), new Array(NaN, NaN)];
 					for ( var i = 0; i < sub.length; i++) {
 						item2 = model.create({
-							id: id++,
+							id: sequence.next(),
 							test1: sub[i]
 						});
 
@@ -3073,8 +3048,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'integer[]',
@@ -3087,13 +3061,12 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [10, 30]
 			});
 
@@ -3107,7 +3080,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -3126,8 +3099,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'boolean',
@@ -3140,9 +3112,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -3150,7 +3121,7 @@
 			strictEqual(item.test2, false, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: false
 			});
 
@@ -3161,7 +3132,7 @@
 			var sub = [new Boolean(1), new Boolean(0), new Object(true), new Object(false)];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -3181,8 +3152,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'boolean',
@@ -3195,13 +3165,12 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: false
 			});
 
@@ -3215,7 +3184,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -3234,8 +3203,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'boolean[]',
@@ -3248,9 +3216,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -3259,7 +3226,7 @@
 			deepEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [false, true, false]
 			});
 
@@ -3272,7 +3239,7 @@
 					new Array(new Object(true), new Object(false))];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -3292,8 +3259,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'boolean[]',
@@ -3306,13 +3272,12 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [false, true, false]
 			});
 
@@ -3326,7 +3291,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -3347,8 +3312,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'array',
@@ -3361,9 +3325,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -3371,7 +3334,7 @@
 			deepEqual(item.test2, null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [30]
 			});
 
@@ -3382,7 +3345,7 @@
 			var sub = [new Array(10, 8), new Object(['a'])];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -3402,8 +3365,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'array',
@@ -3416,13 +3378,12 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [30]
 			});
 
@@ -3435,7 +3396,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -3457,8 +3418,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'any',
@@ -3471,9 +3431,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -3486,7 +3445,7 @@
 			}
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: new Test1Obj()
 			});
 
@@ -3501,7 +3460,7 @@
 			var item2 = null;
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test1: sub[i]
 				});
 
@@ -3526,8 +3485,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'enum',
@@ -3542,9 +3500,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -3552,7 +3509,7 @@
 			strictEqual(item.test2, 'b', 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: testClass1
 			});
 
@@ -3563,7 +3520,7 @@
 			var sub = ['b', 20, false, testClass1];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test2: sub[i]
 				});
 
@@ -3588,8 +3545,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'enum',
@@ -3604,13 +3560,12 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: testClass1
 			});
 
@@ -3624,7 +3579,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -3648,8 +3603,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'enum[]',
@@ -3664,9 +3618,8 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			// 初期値は正しいか
@@ -3674,7 +3627,7 @@
 			strictEqual(item.test2, 'b', 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: testClass1
 			});
 
@@ -3685,7 +3638,7 @@
 			var sub = ['b', 20, false, testClass1];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
-					id: id++,
+					id: sequence.next(),
 					test2: sub[i]
 				});
 
@@ -3710,8 +3663,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'enum[]',
@@ -3726,13 +3678,12 @@
 		});
 
 		try {
-			var id = 1;
 			var item = model.create({
-				id: id++
+				id: sequence.next()
 			});
 
 			item = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: testClass1
 			});
 
@@ -3746,7 +3697,7 @@
 			for ( var i = 0; i < nosub.length; i++) {
 				raises(function() {
 					model.create({
-						id: id++,
+						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
@@ -3766,6 +3717,7 @@
 
 	module('constraint', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -3786,20 +3738,15 @@
 	// Definition
 	//=============================
 
-	var constraintDataModel = null;
-	var testClass1 = null;
-	var itemA = null;
-	var itemB = null;
-
 	module('constraint - notNull/notEmpty', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			var model = manager.createModel({
 				name: 'DataModel1',
 				schema: {
 					id: {
-						id: true,
-						type: 'integer'
+						id: true
 					},
 					test1: {
 						type: 'string',
@@ -3829,8 +3776,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						test1: {
 							type: 'string',
@@ -3928,9 +3874,8 @@
 			notNull: true
 		});
 
-		var id = 1;
 		var item1 = model1.create({
-			id: id++
+			id: sequence.next()
 		});
 
 		equal(item1.test1, 'aaa', 'defaultValueで指定した値を持つDataItemが作成できること。');
@@ -3953,7 +3898,7 @@
 		var $div = $('<div></div>');
 
 		var item2 = model1.create({
-			id: id++,
+			id: sequence.next(),
 			test1: 'bbb',
 			test2: ['A', 'B', 'C'],
 			test3: 120.1,
@@ -4019,9 +3964,8 @@
 		var model1 = constraintDataModel({
 			notEmpty: true
 		});
-		var id = 1;
 		var item1 = model1.create({
-			id: id++
+			id: sequence.next()
 		});
 
 		equal(item1.test1, 'aaa', 'defaultValueで指定した値を持つDataItemが作成できること。');
@@ -4044,7 +3988,7 @@
 		var $div = $('<div></div>');
 
 		var item2 = model1.create({
-			id: id++,
+			id: sequence.next(),
 			test1: 'bbb',
 			test2: ['A', 'B', 'C'],
 			test3: 120.1,
@@ -4081,18 +4025,17 @@
 		var model1 = constraintDataModel({
 			notEmpty: true
 		});
-		var id = 1;
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: ''
 			});
 		}, 'NotEmpty制約があるため、値に空文字を指定してDataItemを作成できないこと。');
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test2: ['a', '']
 			});
 		}, 'NotEmpty制約があるため、値に空文字を指定してDataItemを作成できないこと。');
@@ -4104,13 +4047,13 @@
 
 	module('constraint - min/max/minLength/maxLength/pattern', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			var model = manager.createModel({
 				name: 'DataModel1',
 				schema: {
 					id: {
-						id: true,
-						type: 'integer'
+						id: true
 					},
 					test1: {
 						type: 'string',
@@ -4123,13 +4066,13 @@
 				this.num = 10;
 			}
 			testClass1 = new TestClass1();
-			var id = 1;
+
 			itemA = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 'bbb'
 			});
 			itemB = model.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 'bbb'
 			});
 
@@ -4138,8 +4081,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						test1: {
 							type: 'string'
@@ -4212,7 +4154,7 @@
 				});
 
 				var item1 = model1.create({
-					id: id++,
+					id: sequence.next(),
 					test1: '4',
 					test2: ['4'],
 					test3: 5.0,
@@ -4266,14 +4208,14 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test3: 4.999
 			});
 		}, 'minで設定した値未満の場合は、制約でエラーになること。');
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test4: [5.0, 4.999]
 			});
 		}, 'minで設定した値未満の場合は、制約でエラーになること。');
@@ -4286,7 +4228,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test6: [5, 4.9]
 			});
 		}, 'minで設定した値未満の場合は、制約でエラーになること。');
@@ -4299,7 +4241,7 @@
 				});
 
 				var item1 = model1.create({
-					id: id++,
+					id: sequence.next(),
 					test1: '6',
 					test2: ['6'],
 					test3: 5.0,
@@ -4353,14 +4295,14 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test3: 6.00001
 			});
 		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test4: [6.0, 6.00000001]
 			});
 		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
@@ -4373,7 +4315,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test6: [5, 6]
 			});
 		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
@@ -4385,7 +4327,7 @@
 		});
 
 		var item1 = model1.create({
-			id: id++,
+			id: sequence.next(),
 			test1: 'AAAAA',
 			test2: ['DDDDD'],
 			test3: 4.0,
@@ -4419,7 +4361,7 @@
 		equal(item1.test14, 'YYYY', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
 
 		var item2 = model1.create({
-			id: id++,
+			id: sequence.next(),
 			test1: null,
 			test2: [null]
 		});
@@ -4435,14 +4377,14 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 'AAAA'
 			});
 		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test2: [null, 'BBBB']
 			});
 		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
@@ -4455,7 +4397,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [null, 'おかきく']
 			});
 		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
@@ -4467,7 +4409,7 @@
 		});
 
 		var item1 = model1.create({
-			id: id++,
+			id: sequence.next(),
 			test1: 'AAAAA',
 			test2: ['DDDDD'],
 			test3: 6.0,
@@ -4501,7 +4443,7 @@
 		equal(item1.test14, 'YYYYYY', 'type:string,string[]の場合、create時にminLengthがチェックされること。');
 
 		var item2 = model1.create({
-			id: id++,
+			id: sequence.next(),
 			test1: null,
 			test2: [null]
 		});
@@ -4517,14 +4459,14 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 'AAAAAA'
 			});
 		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test2: [null, 'BBBBBB']
 			});
 		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
@@ -4537,7 +4479,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [null, 'きくけこさし']
 			});
 		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
@@ -4551,7 +4493,7 @@
 				});
 
 				var item1 = model1.create({
-					id: id++,
+					id: sequence.next(),
 					test1: 'hifive01',
 					test2: ['hifive02'],
 					test3: 6.0,
@@ -4590,7 +4532,7 @@
 						'type:string,string[]の場合、create時にpatternがチェックされること。');
 
 				var item2 = model1.create({
-					id: id++,
+					id: sequence.next(),
 					test1: null,
 					test2: [null]
 				});
@@ -4606,14 +4548,14 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 'hifive001'
 			});
 		}, '値がpatternと一致しない場合、制約でエラーになること。');
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test2: [null, 'hifive001']
 			});
 		}, '値がpatternと一致しない場合、制約でエラーになること。');
@@ -4625,6 +4567,7 @@
 
 	module('constraint', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -4641,8 +4584,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'number',
@@ -4660,11 +4602,9 @@
 			}
 		});
 
-		var id = 1;
-
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 3.5,
 				test2: null
 			});
@@ -4674,7 +4614,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 6.5,
 				test2: null
 			});
@@ -4688,8 +4628,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'number[]',
@@ -4707,11 +4646,9 @@
 			}
 		});
 
-		var id = 1;
-
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [2.5, 7.2],
 				test2: null
 			});
@@ -4721,7 +4658,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [3.5, 9.2],
 				test2: null
 			});
@@ -4735,8 +4672,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'integer',
@@ -4754,11 +4690,9 @@
 			}
 		});
 
-		var id = 1;
-
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 4,
 				test2: null
 			});
@@ -4768,7 +4702,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 9,
 				test2: null
 			});
@@ -4782,8 +4716,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'integer[]',
@@ -4801,11 +4734,9 @@
 			}
 		});
 
-		var id = 1;
-
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [2, 5],
 				test2: null
 			});
@@ -4815,7 +4746,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: [4, 7],
 				test2: null
 			});
@@ -4829,8 +4760,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'string',
@@ -4858,11 +4788,9 @@
 			}
 		});
 
-		var id = 1;
-
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: null,
 				test2: '',
 				test3: '2222',
@@ -4874,7 +4802,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 'aaaaa',
 				test2: '',
 				test3: '2222',
@@ -4886,7 +4814,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: aaaaa,
 				test2: 'aaaaa',
 				test3: '2222',
@@ -4898,7 +4826,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: 'aaaaa',
 				test2: 'aaaaa',
 				test3: 'aaaaa',
@@ -4914,8 +4842,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'string',
@@ -4943,11 +4870,9 @@
 			}
 		});
 
-		var id = 1;
-
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: null,
 				test2: ['aaaaa', ''],
 				test3: ['aaaaa', '2222'],
@@ -4959,7 +4884,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: ['aaaaa', 'aaaaa'],
 				test2: ['aaaaa', ''],
 				test3: ['aaaaa', '2222'],
@@ -4971,7 +4896,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: ['aaaaa', 'aaaaa'],
 				test2: ['aaaaa', 'aaaaa'],
 				test3: ['aaaaa', '2222'],
@@ -4983,7 +4908,7 @@
 
 		raises(function() {
 			model1.create({
-				id: id++,
+				id: sequence.next(),
 				test1: ['aaaaa', 'aaaaa'],
 				test2: ['aaaaa', 'aaaaa'],
 				test3: ['aaaaa', 'aaaaa'],
@@ -5000,6 +4925,7 @@
 
 	module('depend', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -5016,8 +4942,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test1: {
 					type: 'string',
@@ -5040,10 +4965,8 @@
 			}
 		});
 
-		var id = 1;
-
 		var item = model1.create({
-			id: id++,
+			id: sequence.next(),
 			test2: 'AAA'
 		});
 
@@ -5060,8 +4983,7 @@
 			name: 'BaseDataModel1',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				test2: {
 					type: 'string',
@@ -5091,10 +5013,8 @@
 			}
 		});
 
-		var id = 1;
-
 		var item = model1.create({
-			id: id++,
+			id: sequence.next(),
 			test2: 'ZZZ'
 		});
 
@@ -5113,6 +5033,7 @@
 
 	module('addEventListener', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -5156,8 +5077,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				value: {},
 				value2: {}
@@ -5283,8 +5203,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				value: {},
 				value2: {}
@@ -5416,6 +5335,7 @@
 
 	module('hasEventListener', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -5432,8 +5352,7 @@
 			name: 'TestDataModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				val: {}
 			}
@@ -5478,6 +5397,7 @@
 
 	module('removeEventListener', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -5495,8 +5415,7 @@
 					name: 'TestDataModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						val: {}
 					}
@@ -5570,6 +5489,7 @@
 
 	module('beginUpdate/endUpdate', {
 		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -5586,8 +5506,7 @@
 			name: 'TestModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 
 				},
 				val: {}
@@ -5710,8 +5629,7 @@
 			name: 'TestModel',
 			schema: {
 				id: {
-					id: true,
-					type: 'integer'
+					id: true
 				},
 				val: {},
 				dep: {
@@ -5726,11 +5644,11 @@
 		});
 
 		var item1 = model.create({
-			id: 1,
+			id: sequence.next(),
 			val: 1
 		});
 		var item2 = model.create({
-			id: 2,
+			id: sequence.next(),
 			val: 2
 		});
 
@@ -5761,17 +5679,16 @@
 					name: 'TestModel',
 					schema: {
 						id: {
-							id: true,
-							type: 'integer'
+							id: true
 						},
 						val: {}
 					}
 				});
 				var item1 = model.create({
-					id: 1
+					id: sequence.next()
 				});
 				var item2 = model.create({
-					id: 2
+					id: sequence.next()
 				});
 
 				var itemsChangeCount = changeCount1 = changeCount2 = 0;
