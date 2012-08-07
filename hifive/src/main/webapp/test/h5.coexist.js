@@ -33,9 +33,6 @@
 	// Variables
 	//=============================
 
-	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
-
 	var originalH5 = h5;
 	var h5jsPath = '../archives/current/h5.js';
 	var oldh5jsPath = './h5version0.0.1/h5.js';

@@ -34,7 +34,7 @@
 	//=============================
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
+	var ERR = ERRCODE.h5.api.geo;
 
 	// IE9でドキュメントモードを8以下にしている場合はisSupportedをfalseにして、テストを飛ばす。
 	var isSupported = h5.api.geo.isSupported && navigator.geolocation;
@@ -70,7 +70,7 @@
 				start();
 				ok(true, pos.coords.latitude + "," + pos.coords.longitude);
 			}).fail(function(error) {
-				equal(!!error.code, true, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+				equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
 				start();
 			});
 		}
@@ -99,7 +99,7 @@
 			promise.unwatch();
 			ok(true, pos.coords.latitude + "," + pos.coords.longitude);
 		}).fail(function(error) {
-			equal(!!error.code, true, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+			equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
 			start();
 		}).done(function() {
 			ok(true, 'watchPositionが停止すること。');
@@ -132,7 +132,7 @@
 						ok(true, pos.coords.latitude + "," + pos.coords.longitude);
 					}).fail(function(error) {
 						promise3.unwatch && promise3.unwatch();
-						equal(!!error.code, true, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+						equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
 						start();
 					}).done(function() {
 						ok(true, '3つ目のwatchPositionが停止すること。');
@@ -144,7 +144,7 @@
 					ok(true, pos.coords.latitude + "," + pos.coords.longitude);
 				}).fail(function(error) {
 					promise1.unwatch && promise1.unwatch();
-					equal(!!error.code, true, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+					equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
 				}).done(function() {
 					ok(true, '1つ目のwatchPositionが停止すること。');
 				});
@@ -153,7 +153,7 @@
 					ok(true, pos.coords.latitude + "," + pos.coords.longitude);
 				}).fail(function(error) {
 					promise2.unwatch && promise2.unwatch();
-					equal(!!error.code, true, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+					equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
 				}).done(function() {
 					ok(true, '2つ目のwatchPositionが停止すること。');
 				});

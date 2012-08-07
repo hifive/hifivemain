@@ -34,7 +34,7 @@
 	//=============================
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
+	var ERR = ERRCODE.h5.api.sqldb;
 
 	var db = h5.api.sqldb.open('hcdb', '1', 'hcdb', 2 * 1024 * 1024);
 	var TABLE_NAME = 'TBL_WEB_SQL_DB_TEST1';
@@ -48,7 +48,7 @@
 		// hifiveが包んだエラーオブジェクトのメッセージの内容もエラーの種類別に変えていない。
 		// そのため、メッセージを比較するテストで、Android2系かどうかの判別が必要になる。
 		return h5.env.ua.isAndroid && h5.env.ua.browserVersion === 2 || h5.env.ua.isiOS
-				&& h5.env.ua.browserVersion === 4
+				&& h5.env.ua.browserVersion === 4;
 	}
 
 	// テストメソッド実行毎に処理する関数 sql/insert/transaction/
@@ -147,7 +147,7 @@
 			return;
 		}
 
-		var errorCode = 3007;
+		var errorCode = ERR.ERR_CODE_INVALID_STATEMENT;
 		try {
 			db.sql(undefined, [10, "hoge", 80.5]);
 			ok(false, 'エラーが発生していません');
@@ -196,7 +196,7 @@
 			return;
 		}
 
-		var errorCode = 3008;
+		var errorCode = ERR.ERR_CODE_TYPE_NOT_ARRAY;
 		try {
 			db.sql('insert into ' + TABLE_NAME + ' values(10, ?, 80.5)', "hoge");
 			ok(false, 'エラーが発生していません');
@@ -318,6 +318,7 @@
 		}
 
 		var seqNo = 1;
+		var errCode = ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE;
 
 		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', [10, "hoge1", 100]).execute()
 				.progress(
@@ -334,7 +335,7 @@
 												+ (isAbleToGetErrorCode() ? 'データベースエラー '
 														: '構文に誤りがあります。 ') + e.detail.message,
 												'エラーメッセージが格納されていること。');
-										strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+										strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 									});
@@ -344,7 +345,7 @@
 							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 									+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 									+ e.detail.message, 'エラーメッセージが格納されていること。');
-							strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+							strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 
@@ -369,7 +370,7 @@
 
 			sql.execute().fail(function(e) {
 				ok(true, '二回目のexecute()は、エラーとして処理されること');
-				ok(e.code == 3000, e.code + ': ' + e.message);
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 				start();
 			}).done(function() {
 				ok(false, 'エラーが発生していないためテスト失敗');
@@ -399,7 +400,7 @@
 
 		sql.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
-			ok(e.code == 3000, e.code + ': ' + e.message);
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
 		});
@@ -480,7 +481,7 @@
 			return;
 		}
 
-		var errorCode = 3006;
+		var errorCode = ERR.ERR_CODE_INVALID_VALUES;
 		try {
 			db.insert(TABLE_NAME, 0);
 			ok(false, 'エラーが発生していません。');
@@ -639,7 +640,8 @@
 								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 										+ e.detail.message, 'エラーメッセージが格納されていること。');
-								strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+								strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
+										'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 							});
@@ -649,7 +651,8 @@
 					strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 							+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 							+ e.detail.message, 'エラーメッセージが格納されていること。');
-					strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+					strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
+							'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 
@@ -959,7 +962,7 @@
 
 			insert.execute().fail(function(e) {
 				ok(true, '二回目のexecute()は、エラーとして処理されること');
-				ok(e.code == 3000, e.code + ': ' + e.message);
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 				start();
 			}).done(function() {
 				ok(false, 'エラーが発生していないためテスト失敗');
@@ -994,7 +997,7 @@
 
 		insert.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
-			ok(e.code == 3000, e.code + ': ' + e.message);
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
 		});
@@ -1048,7 +1051,7 @@
 			return;
 		}
 
-		var errorCode = 3006;
+		var errorCode = ERR.ERR_CODE_INVALID_VALUES;
 		try {
 			db.update(TABLE_NAME);
 		} catch (e) {
@@ -1205,9 +1208,9 @@
 		}
 
 		// whereのオペレータが不正
-		var errorCodeInvalidOperator = 3003;
+		var errorCodeInvalidOperator = ERR.ERR_CODE_INVALID_OPERATOR;
 		// whereのカラムが無い
-		var errorCodeEmptyWhereCondition = 3011;
+		var errorCodeEmptyWhereCondition = ERR.ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE;
 
 		db.update(TABLE_NAME, {
 			col2: 'hoge',
@@ -1271,7 +1274,7 @@
 			return;
 		}
 
-		var errorCode = 3004;
+		var errorCode = ERR.ERR_CODE_INVALID_PARAM_TYPE;
 		try {
 			db.update(TABLE_NAME, {
 				col2: 'hoge',
@@ -1416,7 +1419,8 @@
 								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 										+ e.detail.message, 'エラーメッセージが格納されていること。');
-								strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+								strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
+										'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 							});
@@ -1426,7 +1430,8 @@
 					strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 							+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 							+ e.detail.message, 'エラーメッセージが格納されていること。');
-					strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+					strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
+							'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 
@@ -1461,7 +1466,7 @@
 
 			update.execute().fail(function(e) {
 				ok(true, '二回目のexecute()は、エラーとして処理されること');
-				ok(e.code == 3000, e.code + ': ' + e.message);
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 				start();
 			}).done(function() {
 				ok(false, 'エラーが発生していないためテスト失敗');
@@ -1495,7 +1500,7 @@
 
 		update.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
-			ok(e.code == 3000, e.code + ': ' + e.message);
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
 		});
@@ -1646,9 +1651,9 @@
 		}
 
 		// whereのオペレータが不正
-		var errorCodeInvalidOperator = 3003;
+		var errorCodeInvalidOperator = ERR.ERR_CODE_INVALID_OPERATOR;
 		// whereのカラムが無い
-		var errorCodeEmptyWhereCondition = 3011;
+		var errorCodeEmptyWhereCondition = ERR.ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE;
 
 		db.del(TABLE_NAME).where({
 			// 演算子が不正
@@ -1700,7 +1705,7 @@
 			return;
 		}
 
-		var errorCode = 3004;
+		var errorCode = ERR.ERR_CODE_INVALID_PARAM_TYPE;
 		try {
 			db.del(TABLE_NAME).where();
 		} catch (e) {
@@ -1808,6 +1813,7 @@
 		}
 
 		var seqNo = 1;
+		var errorCode = ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE;
 
 		db.del(TABLE_NAME).where({
 			col1: 10
@@ -1827,7 +1833,7 @@
 													+ (isAbleToGetErrorCode() ? 'データベースエラー '
 															: '構文に誤りがあります。 ') + e.detail.message,
 													'エラーメッセージが格納されていること。');
-											strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+											strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 											ok(e.detail.message,
 													'detailにはSQLErrorのメッセージが格納されていること。');
 											ok(e.detail.message,
@@ -1839,7 +1845,7 @@
 								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 										+ e.detail.message, 'エラーメッセージが格納されていること。');
-								strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+								strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 							});
@@ -1849,7 +1855,7 @@
 					strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 							+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 							+ e.detail.message, 'エラーメッセージが格納されていること。');
-					strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+					strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 
@@ -1877,7 +1883,7 @@
 
 			del.execute().fail(function(e) {
 				ok(true, '二回目のexecute()は、エラーとして処理されること');
-				ok(e.code == 3000, e.code + ': ' + e.message);
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 				start();
 			}).done(function() {
 				ok(false, 'エラーが発生していないためテスト失敗');
@@ -1910,7 +1916,7 @@
 
 		del.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
-			ok(e.code == 3000, e.code + ': ' + e.message);
+			ok(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
 		});
@@ -1962,7 +1968,7 @@
 			return;
 		}
 
-		var errorCode = 3005;
+		var errorCode = ERR.ERR_CODE_INVALID_COLUMN_NAME;
 		try {
 			db.select(TABLE_NAME);
 			ok(false, 'エラーが発生していません。');
@@ -2125,9 +2131,10 @@
 		}
 
 		// whereのオペレータが不正
-		var errorCodeInvalidOperator = 3003;
+		var errorCodeInvalidOperator = ERR.ERR_CODE_INVALID_OPERATOR;
 		// whereのカラムが無い
-		var errorCodeEmptyWhereCondition = 3011;
+		var errorCodeEmptyWhereCondition = ERR.ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE;
+		;
 
 		db.select(TABLE_NAME, '*').where({
 			// 演算子が不正
@@ -2180,7 +2187,7 @@
 		}
 
 
-		var errorCode = 3004;
+		var errorCode = ERR.ERR_CODE_INVALID_PARAM_TYPE;
 		try {
 			db.select(TABLE_NAME, '*').where();
 		} catch (e) {
@@ -2338,7 +2345,7 @@
 
 			select.execute().fail(function(e) {
 				ok(true, '二回目のexecute()は、エラーとして処理されること');
-				ok(e.code == 3000, e.code + ': ' + e.message);
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 				start();
 			}).done(function() {
 				ok(false, 'エラーが発生していないためテスト失敗');
@@ -2371,7 +2378,7 @@
 
 		select.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
-			ok(e.code == 3000, e.code + ': ' + e.message);
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
 		});
@@ -2516,6 +2523,8 @@
 			return;
 		}
 
+		var errorCode = ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE;
+
 		db.transaction().add(
 				db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000]))
 				.add(db.insert(TABLE_NAME, {
@@ -2539,7 +2548,7 @@
 							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 									+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 									+ e.detail.message, 'エラーメッセージが格納されていること。');
-							strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+							strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 
@@ -2551,25 +2560,25 @@
 	});
 
 
-	test('Insert/Update/Del/Select/Sqlクラスのインスタンス以外のものをadd()するとエラーが発生すること。',
-			function() {
-				if (!h5.api.sqldb.isSupported) {
-					expect(1);
-					ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-					return;
-				}
+	test('Insert/Update/Del/Select/Sqlクラスのインスタンス以外のものをadd()するとエラーが発生すること。', function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			return;
+		}
 
-				var args = [, undefined, null, 0, 1, '', 'a', new String(), {}, db.transaction()];
-				expect(args.length - 1);
-				var errorCode = 3009;
-				for ( var i = 0; i < args.length; i++) {
-					try {
-						db.transaction().add(args[i]);
-					} catch (e) {
-						deepEqual(e.code, errorCode, args[i] + ': ' + e.message);
-					}
-				}
-			});
+		var args = [, undefined, null, 0, 1, '', 'a', new String(), {}, db.transaction()];
+		expect(args.length - 1);
+
+		for ( var i = 0; i < args.length; i++) {
+			try {
+				db.transaction().add(args[i]);
+			} catch (e) {
+				deepEqual(e.code, ERR.ERR_CODE_INVALID_TRANSACTION_TARGET, args[i] + ': '
+						+ e.message);
+			}
+		}
+	});
 
 
 
@@ -2845,6 +2854,7 @@
 				}
 
 				var seqNo = 1;
+				var errorCode = ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE;
 
 				db.transaction().add(
 						db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10,
@@ -2873,7 +2883,7 @@
 												+ (isAbleToGetErrorCode() ? 'データベースエラー '
 														: '構文に誤りがあります。 ') + e.detail.message,
 												'エラーメッセージが格納されていること。');
-										strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+										strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 									});
@@ -2884,7 +2894,7 @@
 							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 									+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
 									+ e.detail.message, 'エラーメッセージが格納されていること。');
-							strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+							strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
 
@@ -2916,7 +2926,7 @@
 
 			transaction.execute().fail(function(e) {
 				ok(true, '二回目のexecute()は、エラーとして処理されること');
-				ok(e.code == 3000, e.code + ': ' + e.message);
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 				start();
 			}).done(function() {
 				ok(false, 'エラーが発生していないためテスト失敗');
@@ -2953,7 +2963,7 @@
 
 		transaction.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
-			ok(e.code == 3000, e.code + ': ' + e.message);
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
 		});
@@ -3060,7 +3070,7 @@
 			return;
 		}
 		try {
-			var db2 = h5.api.sqldb.open('hcdb', '0.9', 'hcdb', 2 * 1024 * 1024);
+			h5.api.sqldb.open('hcdb', '0.9', 'hcdb', 2 * 1024 * 1024);
 			ok(false, "エラーが発生していません");
 		} catch (e) {
 			ok(true, e.code + ": " + e.message);
@@ -3074,7 +3084,7 @@
 			return;
 		}
 
-		var errorCode = 3001;
+		var errorCode = ERR.ERR_CODE_INVALID_TABLE_NAME;
 		try {
 			db.select(null, '*');
 			ok(false, 'エラーが発生していません');
@@ -3119,12 +3129,12 @@
 					return;
 				}
 
-				var errorCode = 3002;
+				var errorCode = ERR.ERR_CODE_INVALID_TRANSACTION_TYPE;
 				try {
 					db.select(TABLE_NAME, '*', '');
 					ok(false, 'エラーが発生していません');
 				} catch (e) {
-					deepEqual(errorCode, e.code, e.message);
+					deepEqual(e.code, errorCode, e.message);
 				}
 				try {
 					insert = db.insert(TABLE_NAME, {
@@ -3134,7 +3144,7 @@
 					}, 0);
 					ok(false, 'エラーが発生していません');
 				} catch (e) {
-					deepEqual(errorCode, e.code, e.message);
+					deepEqual(e.code, errorCode, e.message);
 				}
 				try {
 					update = db.update(TABLE_NAME, {
@@ -3143,20 +3153,20 @@
 					}, db.transaction());
 					ok(false, 'エラーが発生していません');
 				} catch (e) {
-					deepEqual(errorCode, e.code, e.message);
+					deepEqual(e.code, errorCode, e.message);
 				}
 				try {
 					del = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10,
 							20000], []);
 					ok(false, 'エラーが発生していません');
 				} catch (e) {
-					deepEqual(errorCode, e.code, e.message);
+					deepEqual(e.code, errorCode, e.message);
 				}
 				try {
 					del = db.transaction(NaN);
 					ok(false, 'エラーが発生していません');
 				} catch (e) {
-					deepEqual(errorCode, e.code, e.message);
+					deepEqual(e.code, errorCode, e.message);
 				}
 			});
 
@@ -3215,7 +3225,8 @@
 					function(e) {
 						ok(e.message.match(new RegExp('^トランザクション処理中にエラーが発生しました。.*'
 								+ e.detail.message + '$')), 'エラーメッセージが格納されていること。' + e.message);
-						strictEqual(e.code, 3010, 'エラーコードが格納されていること。');
+						strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
+								'エラーコードが格納されていること。');
 						ok(e.detail.code != null, 'エラーコード:' + e.detail.code
 								+ ' detailにはSQLErrorのメッセージが格納されていること。');
 						ok(e.detail.message != null, e.detail.message);

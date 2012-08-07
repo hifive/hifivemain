@@ -34,7 +34,7 @@
 	//=============================
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
+	var ERR = ERRCODE.h5.log;
 
 	//=============================
 	// Functions
@@ -271,23 +271,22 @@
 		ok(true, 'デバッグコンソールを確認し、ERROR, WARN, INFO, DEBUG, TRACEのレベル順にメッセージが出ていることを確認してください。');
 	});
 
-	test('ログカテゴリの設定 (h5.log.createLogger)', function() {
+	test('ログカテゴリの設定 (h5.log.createLogger)', 2, function() {
 		var category = 'log.category';
 		var logger1 = h5.log.createLogger(category);
+
 		try {
 			h5.log.createLogger();
 		} catch (e) {
-			equal(e.message, 'categoryは必須項目です。空文字で無い文字列を指定して下さい。(code=10005)',
+			equal(e.code, ERR.ERR_CODE_CATEGORY_INVALID,
 					'h5.log.createLogger() に何も渡さない場合、エラーが発生すること。');
 		}
 
 		ok(category === logger1.category, 'h5.log.createLogger() に渡したカテゴリが設定されていること。');
 	});
 
-	test(
-			'ログカテゴリの設定 (h5.log.createLogger) 不正な値を設定するとエラーが出ること。("", " ", {}, [], 0, 1, true, false)',
-			8,
-			function() {
+	test('ログカテゴリの設定 (h5.log.createLogger) 不正な値を設定するとエラーが出ること。("", " ", {}, [], 0, 1, true, false)',
+			8, function() {
 				var categorys = ['', ' ', {}, [], 0, 1, true, false];
 				var categorysStr = ["''", "' '", "{}", "[]", "0", "1", "true", "false"];
 				for ( var i = 0, l = categorys.length; i < l; i++) {
@@ -295,15 +294,15 @@
 						h5.log.createLogger(categorys[i]);
 						ok(false, 'エラーが発生していません');
 					} catch (e) {
-						equal(e.message, 'categoryは必須項目です。空文字で無い文字列を指定して下さい。(code=10005)',
-								'h5.log.createLogger() に' + categorysStr[i] + 'を渡した場合、エラーが発生すること。');
+						equal(e.code, ERR.ERR_CODE_CATEGORY_INVALID, 'h5.log.createLogger() に'
+								+ categorysStr[i] + 'を渡した場合、エラーが発生すること。');
 					}
 				}
 			});
 	test('カテゴリによるフィルタ outに指定するカテゴリが不正な時にエラー', 8, function() {
-		var errorCode = 10010;
 		var categorys = ['', ' ', {}, [], 0, 1, true, false];
 		var categorysStr = ["''", "' '", "{}", "[]", "0", "1", "true", "false"];
+
 		for ( var i = 0, l = categorys.length; i < l; i++) {
 			h5.settings.log = {
 				target: {
@@ -317,11 +316,12 @@
 					targets: ['myTarget']
 				}]
 			};
+
 			try {
 				h5.log.configure();
 				ok(false, 'エラーが発生していません。 ' + categorysStr[i]);
 			} catch (e) {
-				deepEqual(e.code, errorCode, e.message);
+				equal(e.code, ERR.ERR_CODE_OUT_CATEGORY_INVALID, e.message);
 			}
 		}
 	});
@@ -401,7 +401,7 @@
 			});
 
 	test('targetにプレーンオブジェクト以外のものを指定してエラーが発生すること。', 3, function() {
-		var errorCode = 10009;
+		var errorCode = ERR.ERR_CODE_LOG_TARGET_INVALID;
 		h5.settings.log = {
 			target: 'console'
 		};
@@ -466,8 +466,8 @@
 	});
 
 	test('target.typeに、オブジェクト, "console"以外を指定するとエラーになること。', 6, function() {
-		var errorCode = 10000;
 		var vals = [[], '', 'remote', 1, true, false];
+
 		for ( var i = 0, l = vals.length; i < l; i++) {
 			h5.settings.log = {
 				target: {
@@ -476,17 +476,17 @@
 					}
 				}
 			};
+
 			try {
 				h5.log.configure();
 				ok(true, 'null,undefined,"console"ではエラー発生しない。');
 			} catch (e) {
-				deepEqual(e.code, errorCode, e.message);
+				deepEqual(e.code, ERR.ERR_CODE_LOG_TARGET_TYPE, e.message);
 			}
 		}
 	});
 
 	test('categoryに重複したものをとうろくしてconfigure()するとエラーが発生すること。', 1, function() {
-		var errorCode = 10002;
 		h5.settings.log = {
 			target: {
 				myTarget: {
@@ -503,17 +503,17 @@
 				targets: 'console'
 			}]
 		};
+
 		try {
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			deepEqual(e.code, errorCode, e.message);
+			deepEqual(e.code, ERR.ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES, e.message);
 		}
 	});
 
 
 	test('targetsに重複したターゲットを登録してconfigure()するとエラーが発生すること。', 1, function() {
-		var errorCode = 10007;
 		h5.settings.log = {
 			target: {
 				myTarget: {
@@ -526,11 +526,12 @@
 				targets: ['myTarget', 'console', 'myTarget']
 			}]
 		};
+
 		try {
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			deepEqual(e.code, errorCode, e.message);
+			deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES, e.message);
 		}
 	});
 
@@ -542,7 +543,9 @@
 					ok(false, 'このテストはh5.uを読み込む必要があります');
 					return;
 				}
-				h5.u.loadScript('data/stacktrace.js');
+				h5.u.loadScript('data/stacktrace.js', {
+					async: false
+				});
 				ok(
 						true,
 						'Chrome,Firefoxではトレース結果が出力されていること(chromeだと、[DEBUG]16:39:3,213: スタックトレース - テスト [eval <anonymous> () <- eval (native) <- {anonymous} ...])'
@@ -629,7 +632,7 @@
 		var categorys = [window.console || function() {}, '', ' ', {}, 0, 1, true, false];
 		var categorysStr = [window.console ? "window.console" : 'function(){}', "''", "' '", "{}",
 				"0", "1", "true", "false"];
-		var errorCode = 10008;
+
 		for ( var i = 0, l = categorys.length; i < l; i++) {
 			try {
 				h5.settings.log = {
@@ -640,13 +643,12 @@
 				h5.log.configure();
 				ok(false, 'エラーが発生していません ' + categorysStr[i]);
 			} catch (e) {
-				deepEqual(e.code, errorCode, e.message + categorysStr[i]);
+				deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_INVALID, e.message + categorysStr[i]);
 			}
 		}
 	});
 
 	test('ログターゲットの設定 (h5.log.createLogger)  "console"以外の文字列を指定したときはエラーが出ること。', 1, function() {
-		var errorCode = 10004;
 		try {
 			h5.settings.log = {
 				defaultOut: {
@@ -656,7 +658,7 @@
 			h5.log.configure();
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			deepEqual(e.code, errorCode, e.message);
+			deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_IS_NONE, e.message);
 		}
 	});
 
@@ -673,7 +675,6 @@
 			deepEqual(false, e.code + ': ' + e.message);
 		}
 
-		var errorCode = 10004;
 		h5.settings.log = {
 			defaultOut: {
 				targets: ['aa', 'console']
@@ -683,14 +684,13 @@
 			h5.log.configure();
 			ok(true, 'null,undefined,"console"ではエラー発生しない。');
 		} catch (e) {
-			deepEqual(e.code, errorCode, e.message);
+			deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_IS_NONE, e.message);
 		}
 	});
 
 	test(
 			'ログターゲットの設定 (h5.log.createLogger)  配列の中に(null/undefined/文字列)以外、空文字、空白文字、を指定したときはエラーが出ること。',
 			7, function() {
-				var errorCode = 10008;
 				var vals = [{}, [], '', ' ', 1, true, false];
 				for ( var i = 0, l = vals.length; i < l; i++) {
 					h5.settings.log = {
@@ -702,7 +702,7 @@
 						h5.log.configure();
 						ok(true, 'null,undefined,"console"ではエラー発生しない。');
 					} catch (e) {
-						deepEqual(e.code, errorCode, e.message);
+						equal(e.code, ERR.ERR_CODE_LOG_TARGETS_INVALID, e.message);
 					}
 				}
 			});

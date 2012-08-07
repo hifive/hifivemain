@@ -34,7 +34,7 @@
 	//=============================
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
+	var ERR = ERRCODE.h5.u;
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -125,6 +125,7 @@
 			ok(true, '[\'a\']:' + e.message);
 		}
 	});
+
 	test('名前空間作成-ドット区切りでネスト', 6, function() {
 		var ns = h5.u.obj.ns("com.htmlhifive.test.test1");
 
@@ -153,21 +154,9 @@
 		strictEqual(window.dummy, undefined, 'ns()のパラメータにString型以外を指定した場合はエラーとして処理されること。');
 	});
 
-	test('com.htmlhifive.test.test1にオブジェクトを公開する', 4, function() {
-		var comStr = 'COM';
-		var htmlhifiveStr = 'HTMLHIFIVE';
-
-		window.com = {
-			dummy: comStr
-		};
-		window.com.htmlhifive = {
-			dummy: htmlhifiveStr
-		};
-
+	test('com.htmlhifive.test.test1にオブジェクトを公開する', 2, function() {
 		var test1 = h5.u.obj.ns('com.htmlhifive.test.test1');
 
-		equal(com.dummy, comStr);
-		equal(com.htmlhifive.dummy, htmlhifiveStr);
 		strictEqual(test1, com.htmlhifive.test.test1, 'nsの戻り値と作成された名前空間が同一であること。');
 		notStrictEqual(com.htmlhifive.test.test1, undefined, '存在しない分については新規作成されていること。');
 	});
@@ -498,7 +487,7 @@
 			});
 			ok(false, '例外がスローされなかったためテスト失敗');
 		} catch (e) {
-			equal(e.code, 11010, e.message);
+			equal(e.code, ERR.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 			equal(window.com.htmlhifive.test.sample4loaded, 2,
 					'data/sample4.js?existFile2 までは読み込まれていること。');
 		}
@@ -612,7 +601,7 @@
 					});
 					ok(false, '例外がスローされなかったためテスト失敗');
 				} catch (e) {
-					equal(e.code, 11010, e.message);
+					equal(e.code, ERR.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 					equal(window.com.htmlhifive.test.sample4loaded, undefined,
 							'全てのスクリプトが読み込まれていないこと。');
 				}
@@ -806,7 +795,7 @@
 			ok(false, 'テスト失敗');
 		}).fail(
 				function(e) {
-					equal(e.code, 11010, e.message);
+					equal(e.code, ERR.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 					equal(window.com.htmlhifive.test.sample4loaded, 1,
 							'data/sample4.js?existFile1 までは読み込まれていること。');
 				}).always(function() {
@@ -1006,7 +995,7 @@
 
 	test('型情報が不正な文字をデシリアライズしようとしたときはエラーが発生すること。', 7, function() {
 		var strs = ['1|', '1| ', '1|_', '1|@{}', '1|"abc"', '1|A', '1|O'];
-		var errorCode = 11004;
+		var errorCode = ERR.ERR_CODE_DESERIALIZE_TYPE;
 		var deserialized;
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
@@ -1024,7 +1013,7 @@
 
 		var strs = ['1|n1px', '1|nNaN', '1|NNaN', '1|aary', '1|a{}', '1|o["n1"]', '1|o{"n1"}',
 				'1|o1', '1|b2', '1|B2', '1|xx', '1|ii', '1|II', '1|ll', '1|uu'];
-		var errorCode = 11006;
+		var errorCode = ERR.ERR_CODE_DESERIALIZE_VALUE;
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			try {
@@ -1042,7 +1031,7 @@
 		// Firefoxにはyオプションがあるため、yオプションも復元されて取得できる
 		var expect = h5.env.ua.isFirefox ? ['/r/', '/a/y', '/a/gy', '/a/m', '/a/i'] : ['/r/',
 				'/a/', '/a/g', '/a/m', '/a/i'];
-		var errorCode = 11006;
+		var errorCode = ERR.ERR_CODE_DESERIALIZE_VALUE;
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			try {
@@ -1062,7 +1051,7 @@
 	test('要素に不正な値を含む配列やオブジェクト文字列をデシリアライズしようとしたときはエラーが発生すること。', 10, function() {
 		var objStrs = ['1|a["n1","q"]', '1|o{"key":"qq"}', '1|o{"key":"a[\\\"1\\\"]"}',
 				'1|o{"key":"@[\\\"n1\\\"]"}', '1|a["@{\\\"key\\\":\\\"1\\\"}"]'];
-		var errorCode = 11004;
+		var errorCode = ERR.ERR_CODE_DESERIALIZE_TYPE;
 		for ( var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
 			try {
@@ -1074,7 +1063,7 @@
 		}
 		objStrs = ['1|a["n1","nq"]', '1|o{"key":"b2"}', '1|o{"key":"a[\\\"nNaN\\\"]"}',
 				'1|o{"key":"a[\\\"ll\\\"]"}', '1|a["@{\\\"key\\\":\\\"xx\\\"}"]'];
-		var errorCode = 11006;
+		var errorCode = ERR.ERR_CODE_DESERIALIZE_VALUE;
 		for ( var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
 			try {

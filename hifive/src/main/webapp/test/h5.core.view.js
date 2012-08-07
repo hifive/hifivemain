@@ -34,7 +34,7 @@
 	//=============================
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
+	var ERR = ERRCODE.h5.core.view;
 
 	var noCache = $.isEmptyObject(h5.core.view.__cachedTemplates);
 
@@ -170,7 +170,7 @@
 
 	test('load()に文字列または中身のある配列以外、空文字、空白文字を渡したときに例外が発生すること。', 10, function() {
 		var view = h5.core.view.createView();
-		var invalidErrorCode = 7004;
+		var invalidErrorCode = ERR.ERR_CODE_INVALID_FILE_PATH;
 		try {
 			view.load();
 			ok(false, 'エラーが発生していません');
@@ -475,7 +475,7 @@
 			ok(e.message, 'エラーからmessageプロパティが取得できること。' + e.message);
 			strictEqual(h5.core.view.isAvailable('test1'), false,
 					'scriptタグで囲まれていないテンプレートはエラーとして処理されること。');
-			ok(!!e.code, 'エラーからcodeプロパティが取得できること。:' + e.code);
+			equal(e.code, ERR.ERR_CODE_TEMPLATE_FILE, 'エラーからcodeプロパティが取得できること。:' + e.code);
 			ok(!!e.detail.url, 'エラーからdetail.urlプロパティが取得できること。:' + e.detail.url);
 			start();
 		});
@@ -560,7 +560,7 @@
 	asyncTest('load() 構文エラーのテンプレートファイルを取得', 5, function() {
 		var p = h5.core.view.load(['./template/test5.ejs']);
 		p.fail(function(e) {
-			ok(e.code, 'エラーコード: ' + e.code);
+			equal(e.code, ERR.ERR_CODE_TEMPLATE_COMPILE, 'エラーコード: ' + e.code);
 			ok(e.message, 'エラーメッセージ：' + e.message);
 			ok(e.detail.url.search(/http:\/\//) === 0
 					&& e.detail.url.search(/\/template\/test5\.ejs$/),
@@ -572,7 +572,7 @@
 	});
 
 	asyncTest('load() テンプレートIDが空文字または空白である場合エラーが発生すること。', 2, function() {
-		var errorCode = 7002;
+		var errorCode = ERR.ERR_CODE_TEMPLATE_INVALID_ID;
 		var view = h5.core.view.createView();
 		view.load('template/test11.ejs').done(function() {
 			ok(false, 'エラーが発生していません');
@@ -594,7 +594,7 @@
 			'存在しないテンプレートを読み込む。出力されるログも確認する ※要目視確認',
 			20,
 			function() {
-				var errCode = 7003;
+				var errCode = ERR.ERR_CODE_TEMPLATE_AJAX;
 				var p = h5.core.view.load(['./template/hogehoge.ejs']);
 				p
 						.fail(function(e) {
@@ -616,7 +616,7 @@
 											function(e) {
 												ok(true,
 														'一度ロードしようとした存在しないURLにもう一度アクセスした時、もう一度アクセスを試みること。');
-												ok(e.code, 'エラーコード: ' + e.code);
+												equal(e.code, ERR.ERR_CODE_TEMPLATE_AJAX, 'エラーコード: ' + e.code);
 												strictEqual(e.detail.error.status, 404,
 														'エラーオブジェクトにAjaxエラーのオブジェクトが格納されていて、ステータスコード404が取得できる。');
 												ok(
@@ -659,7 +659,7 @@
 
 
 	asyncTest('中身が空のテンプレートファイルを読み込む。出力されるログも確認する ※要目視確認', 4, function() {
-		var errCode = 7001;
+		var errCode = ERR.ERR_CODE_TEMPLATE_FILE;
 		var p = h5.core.view.load(['./template/test14.ejs']);
 		p.fail(function(e) {
 			strictEqual(e.code, errCode, 'エラーコード: ' + e.code);
@@ -693,7 +693,7 @@
 
 	test('get() idの指定が不正である時に例外が発生すること。', 7, function() {
 		var templateId = 'id1';
-		var templateIdErrorCode = 7002;
+		var templateIdErrorCode = ERR.ERR_CODE_TEMPLATE_INVALID_ID;
 		var view = h5.core.view;
 		try {
 			view.get('');
@@ -843,7 +843,7 @@
 
 	test('clear() idの指定が不正である時に例外が発生すること。', 7, function() {
 		var templateId = 'id1';
-		var templateIdErrorCode = 7002;
+		var templateIdErrorCode = ERR.ERR_CODE_TEMPLATE_INVALID_ID;
 		var view = h5.core.view;
 		try {
 			view.clear('');
@@ -893,7 +893,7 @@
 
 	test('clear() idを配列で指定し、その中に不正な要素がある時に例外が発生し、テンプレートの削除は行われないこと。', 30, function() {
 		var templateId = 'id1';
-		var templateIdErrorCode = 7002;
+		var templateIdErrorCode = ERR.ERR_CODE_TEMPLATE_INVALID_ID;
 		var view = h5.core.view;
 		view.register(templateId, 'ok');
 		try {
@@ -1060,7 +1060,7 @@
 
 	test('register()で、idの指定が不正である時に例外が発生すること。', 7, function() {
 		var templateId = 'id1';
-		var templateIdErrorCode = 7002;
+		var templateIdErrorCode = ERR.ERR_CODE_TEMPLATE_INVALID_ID;
 		var view = h5.core.view.createView();
 		try {
 			view.register('', validTemplate1);
@@ -1109,7 +1109,7 @@
 
 	test('register()で、idを指定していない時または、テンプレート文字列に文字列でないものを指定した時に例外が発生すること。', 4, function() {
 		var templateId = 'id1';
-		var templateStringErrorCode = 7000;
+		var templateStringErrorCode = ERR.ERR_CODE_TEMPLATE_COMPILE;
 
 		try {
 			h5.core.view.register(templateId);
@@ -1139,7 +1139,7 @@
 
 	test('register() テンプレート文字列が不正な時にエラーが発生すること。', 1, function() {
 		var templateId = 'id1';
-		var errorCode = 7000;
+		var errorCode = ERR.ERR_CODE_TEMPLATE_COMPILE;
 		try {
 			h5.core.view.register(templateId, '[%= [%= %]');
 			ok(false, 'エラーが発生していません');
