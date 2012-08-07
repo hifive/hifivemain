@@ -120,8 +120,7 @@
 	});
 
 	test('データモデルマネージャの作成 名前指定が文字列以外の時にエラーが出ること', function() {
-		// TODO エラーコード確認する
-		var errCode = 30000;
+		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
 		var noStrs = [0, 1, null, undefined, true, ['TestModel'], {
 			name: 'TestModel'
 		}];
@@ -138,8 +137,7 @@
 	});
 
 	test('データモデルマネージャの作成 名前指定が不正な文字列の時にエラーが出ること', function() {
-		// TODO エラーコード確認する
-		var errCode = 30000;
+		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
 		// TODO trimされるのかどうか確認する。$,_がOKなのかどうか確認する
 		var invalidStrs = ['', ' ', '.', ',', '1A', ' TestModel', 'Test Model'];
 		var l = invalidStrs.length;
@@ -155,7 +153,7 @@
 	});
 
 	test('データモデルマネージャの作成 名前空間指定が不正な時にエラーが出ること', function() {
-		var errCode = 30005;
+		var errCode = ERR.ERR_CODE_INVALID_MANAGER_NAME;
 		var invalidNs = [0, 1, true, false, [], {}, '', '.com.htmlhifive', 'あ', 'com htmlhifive',
 				'com.htmlhifive.'];
 		var l = invalidNs.length;
@@ -177,7 +175,7 @@
 	});
 
 	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', function() {
-		var errCode = 30008;
+		var errCode = ERR.MSG_ERROR_DUP_REGISTER;
 		h5.u.obj.expose('com.htmlhifive.test', {
 			TestModel: 0
 		});
@@ -307,8 +305,7 @@
 			});
 
 	test('データモデルの登録 descriptorがオブジェクトでない場合はエラーが発生すること', function() {
-		// TODO エラーコード確認する
-		var errCode = 30007;
+		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
 		var noDescriptors = ["a", 1, null, undefined, true, []];
 		var l = noDescriptors.length;
 		expect(l);
@@ -323,8 +320,7 @@
 	});
 
 	test('データモデルの登録 descriptorにnameプロパティがない場合はエラーが発生すること', 2, function() {
-		// TODO エラーコード確認する
-		var errCode = 30006;
+		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
 		try {
 			manager.createModel({});
 		} catch (e) {
@@ -377,8 +373,7 @@
 	});
 
 	test('データモデルの登録 descriptorにschemaプロパティがない場合はエラーが発生すること', 1, function() {
-		// TODO エラーコード確認する
-		var errCode = 30004;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		try {
 			manager.createModel({
 				name: 'TestDataModel'
@@ -710,8 +705,7 @@
 	});
 
 	test('データモデルの登録 schemaがオブジェクトでない場合はエラーが発生すること', function() {
-		// TODO エラーコード確認する
-		var errCode = 30000;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		var noObjs = ['a', 1, true];
 		var l = noObjs.length;
 		expect(l);
@@ -729,8 +723,7 @@
 	});
 
 	test('データモデルの登録 schemaのチェック schemaがプロパティを持たないオブジェクト(空オブジェクト)の場合エラーが発生すること', function() {
-		// TODO エラーコード確認する
-		var errCode = 30000;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -742,8 +735,7 @@
 	});
 
 	test('データモデルの登録 schemaのチェック id指定されているプロパティがない場合・複数ある場合はエラーが出ること', 2, function() {
-		// TODO エラーコード確認する
-		var errCode = 30000;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',

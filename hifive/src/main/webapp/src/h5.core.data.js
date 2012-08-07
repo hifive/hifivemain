@@ -763,7 +763,7 @@
 				for ( var i = 0, len = dependOn.length; i < len; i++) {
 					var dependSrcPropName = dependOn[i];
 
-					fwLogger.debug('{0} depends on {1}', prop, dependSrcPropName);
+					fwLogger.trace('{0} depends on {1}', prop, dependSrcPropName);
 
 					if (!dependencyMap[dependSrcPropName]) {
 						dependencyMap[dependSrcPropName] = [];
@@ -791,45 +791,6 @@
 			//			var enumValues = propDesc.enumValues;
 
 			function createSetter() {
-				/**
-				 * スキーマのプロパティタイプをパースします。
-				 */
-				function parseType(type) {
-					var ret = [];
-
-					var splittedType = type.split(',');
-					for ( var i = 0, len = splittedType.length; i < len; i++) {
-						var typeDef = {
-							isArray: false,
-							dim: 0,
-							checkInner: []
-						};
-
-						var t = $.trim(splittedType[i]);
-						var arrayIndicatorPos = t.indexOf('[');
-
-						if (arrayIndicatorPos !== -1) {
-							typeDef.isArray = true;
-							if (t.charAt(0) === '(') {
-								//配列内に複数の型が混在できる場合
-							} else {
-								//'string[]'のように、配列内の型は1つである場合
-								var innerType = $.trim(t.slice(1, arrayIndicatorPos));
-								if (innerType.charAt(0) === '@') {
-									typeDef.checkInner.push();
-								} else if (typeCheckFunc[innerType]) {
-									typeDef.checkInner.push(typeCheckFunc[innerType]);
-								}
-							}
-						}
-
-						ret.push(typeDef);
-					}
-
-
-					return ret;
-				} /* End of parseType() */
-
 				if (propDesc.depend) {
 					//依存プロパティの場合は、setterは動作しない（無理に呼ぶとエラー）
 					return function() {
@@ -939,6 +900,9 @@
 		}
 		DataItem.prototype = new EventDispatcher();
 		$.extend(DataItem.prototype, {
+			dirty: function() {
+			//TODO dirtyフラグを立てる
+			},
 			refresh: function() {
 			//TODO refreshされたら、整合性チェックとchangeLog追加を行う
 			}

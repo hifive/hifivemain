@@ -34,7 +34,7 @@
 	//=============================
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
+	var ERR = ERRCODE.h5.core.controller;
 
 	//=============================
 	// Functions
@@ -283,8 +283,7 @@
 
 		});
 
-		test('ロジックの循環参照チェックに引っかかるとエラーが発生するか', function() {
-
+		test('ロジックの循環参照チェックに引っかかるとエラーが発生するか', 1, function() {
 			var test1Logic = {
 				__name: 'Test1Logic'
 			};
@@ -293,21 +292,20 @@
 
 				test1Logic: test1Logic
 			};
+
 			test1Logic.test2Logic = test2Logic;
 
 			var testController = {
 				__name: 'TestController',
 				test1Logic: test1Logic
 			};
-			var errMsg = null;
+
 			try {
 				h5.core.controller('#controllerTest', testController);
 			} catch (e) {
-				errMsg = e.message;
+				strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, 'エラーが発生したか');
 			}
-			strictEqual(errMsg,
-					'コントローラ"TestController"のロジックで、参照が循環しているため、ロジックを生成できません。(code=6010)',
-					'エラーが発生したか');
+
 		});
 	});
 })();

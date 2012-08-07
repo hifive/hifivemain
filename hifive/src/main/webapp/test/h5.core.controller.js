@@ -34,7 +34,8 @@
 	//=============================
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
+	var ERR = ERRCODE.h5.core.controller;
+	var ERR_VIEW = ERRCODE.h5.core.view;
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -141,14 +142,13 @@
 			h5.core.expose(c2);
 			strictEqual(c2, window.com.htmlhifive.test.controller.TestController,
 					'"."を含む__nameの場合、window以下に名前空間が作られて紐付けられたか');
-			var errMsg = null;
+
 			try {
 				h5.core.expose(c3);
 			} catch (e) {
-				errMsg = e.message;
+				strictEqual(e.code, ERR.ERR_CODE_EXPOSE_NAME_REQUIRED,
+						'コントローラ、ロジック以外(__nameプロパティがない)のオブジェクトをh5.core.expose()に渡すとエラーが発生するか');
 			}
-			strictEqual(errMsg, 'コントローラ、もしくはロジックの __name が設定されていません。(code=6019)',
-					'コントローラ、ロジック以外(__nameプロパティがない)のオブジェクトをh5.core.expose()に渡すとエラーが発生するか');
 
 			window.TestController = undefined;
 			window.jp = undefined;
@@ -288,7 +288,6 @@
 		});
 
 		asyncTest('コントローラの作成と要素へのバインド セレクタ、イベントの前後にスペースがあってもイベントハンドリングできること', 9, function() {
-			var cc = null;
 			var controller = {
 
 				__name: 'TestController',
@@ -356,32 +355,32 @@
 			try {
 				h5.core.controller(null, controller);
 			} catch (e) {
-				strictEqual(e.code, 6001, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 			}
 			try {
 				h5.core.controller(undefined, controller);
 			} catch (e) {
-				strictEqual(e.code, 6001, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 			}
 			try {
 				h5.core.controller('#noexist', controller);
 			} catch (e) {
-				strictEqual(e.code, 6003, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 			}
 			try {
 				h5.core.controller('', controller);
 			} catch (e) {
-				strictEqual(e.code, 6003, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 			}
 			try {
 				h5.core.controller('.test', controller);
 			} catch (e) {
-				strictEqual(e.code, 6004, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, e.message);
 			}
 			try {
 				h5.core.controller(1, controller);
 			} catch (e) {
-				strictEqual(e.code, 6030, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
 			}
 		});
 
@@ -398,38 +397,38 @@
 						try {
 							testController.bind();
 						} catch (e) {
-							strictEqual(e.code, 6001, e.message);
+							strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 						}
 						try {
 							testController.bind(null);
 						} catch (e) {
-							strictEqual(e.code, 6001, e.message);
+							strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 						}
 						try {
 							var bind = testController.bind;
 							bind('#controllerTest');
 						} catch (e) {
-							strictEqual(e.code, 6002, e.message);
+							strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_CONTROLLER, e.message);
 						}
 						try {
 							testController.bind('#noexist');
 						} catch (e) {
-							strictEqual(e.code, 6003, e.message);
+							strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 						}
 						try {
 							testController.bind('');
 						} catch (e) {
-							strictEqual(e.code, 6003, e.message);
+							strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 						}
 						try {
 							testController.bind('.test');
 						} catch (e) {
-							strictEqual(e.code, 6004, e.message);
+							strictEqual(e.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, e.message);
 						}
 						try {
 							testController.bind(1);
 						} catch (e) {
-							strictEqual(e.code, 6030, e.message);
+							strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
 						}
 						testController.dispose().done(function() {
 							start();
@@ -462,7 +461,7 @@
 		});
 
 		test('__name属性のないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
-			var errorCode = 6006;
+			var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
 			var controller = {
 				name: 'TestController'
 			};
@@ -478,7 +477,7 @@
 			var names = ['', '   ', 1, {}, ["MyController"]];
 			var l = names.length;
 			expect(l);
-			var errorCode = 6006;
+			var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
 			for ( var i = 0; i < l; i++) {
 				try {
 					h5.core.controller('#controllerTest', {
@@ -493,7 +492,7 @@
 
 
 		test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
-			var errorCode = 6017;
+			var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
 			var controller = {
 				__name: 'TestController',
 				myLogic: {
@@ -513,7 +512,7 @@
 			var names = ['', '   ', 1, {}, ["MyLogic"]];
 			var l = names.length;
 			expect(l);
-			var errorCode = 6017;
+			var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
 			for ( var i = 0; i < l; i++) {
 				try {
 					h5.core.controller('#controllerTest', {
@@ -548,11 +547,8 @@
 				err2 = e;
 			}
 
-			strictEqual(err1.message, 'コントローラ"TestController"のバインド対象となる要素が存在しません。(code=6003)',
-					'バインド対象がない場合エラーとなるか');
-			strictEqual(err2.message,
-					'コントローラ"TestController"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。(code=6004)',
-					'バインド対象が複数ある場合エラーとなるか');
+			strictEqual(err1.code, ERR.ERR_CODE_BIND_NO_TARGET, 'バインド対象がない場合エラーとなるか');
+			strictEqual(err2.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, 'バインド対象が複数ある場合エラーとなるか');
 		});
 
 		asyncTest('コントローラのアンバインド', function() {
@@ -735,9 +731,7 @@
 			});
 		});
 
-		asyncTest('テンプレートが存在しない時のコントローラの動作 2', 21, function() {
-			// TODO エラーコードも確認する
-			var errorCode = 7003;
+		asyncTest('テンプレートが存在しない時のコントローラの動作 2', 23, function() {
 			var disposedController = {};
 			var bController = {
 				__name: 'BController',
@@ -855,12 +849,14 @@
 			});
 			testController.initPromise.done(function() {
 				ok(false, 'テスト失敗。親コントローラのinitPromiseのdoneハンドラが呼ばれた。');
-			}).fail(function() {
+			}).fail(function(result) {
+				equal(result.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX);
 				ok(true, '親コントローラのinitPromiseのfailハンドラが呼ばれる。');
 			});
 			testController.readyPromise.done(function() {
 				ok(false, 'テスト失敗。親コントローラのreadyPromiseのdoneハンドラが呼ばれた。');
-			}).fail(function() {
+			}).fail(function(result) {
+				equal(result.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX);
 				ok(true, '親コントローラのreadyPromiseのfailハンドラが呼ばれる。');
 			});
 		});
@@ -1062,7 +1058,7 @@
 		});
 
 		test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', 1, function() {
-			var errorCode = 6029;
+			var errorCode = ERR.ERR_CODE_NOT_VIEW;
 			var view = h5.core.view;
 			h5.core.view = null;
 			var controller = {
@@ -1501,7 +1497,7 @@
 							start();
 						}
 					};
-					var c = h5.core.controller('#controllerTest', controller);
+					h5.core.controller('#controllerTest', controller);
 				});
 
 		asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __initでpromiseを返してrejectする場合 2', 2,
@@ -1531,7 +1527,7 @@
 							start();
 						}
 					};
-					var c = h5.core.controller('#controllerTest', controller);
+					h5.core.controller('#controllerTest', controller);
 				});
 
 
@@ -1558,7 +1554,7 @@
 							start();
 						}
 					};
-					var c = h5.core.controller('#controllerTest', controller);
+					h5.core.controller('#controllerTest', controller);
 				});
 
 		asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __readyでpromiseを返してrejectする場合 2', 2,
@@ -1588,7 +1584,7 @@
 							start();
 						}
 					};
-					var c = h5.core.controller('#controllerTest', controller);
+					h5.core.controller('#controllerTest', controller);
 				});
 
 		asyncTest(
@@ -2249,24 +2245,18 @@
 				}
 			};
 
-			var errMsg = null;
 			try {
 				h5.core.controller('body', errorController);
 			} catch (e) {
-				errMsg = e.message;
+				strictEqual(e.code, ERR.ERR_CODE_EVENT_HANDLER_SELECTOR_THIS,
+						'セレクタに{this}が指定された時にエラーが発生するか');
 			}
 
 			var testController = h5.core.controller('#controllerTest', controller);
 			testController.readyPromise.done(function() {
 				start();
-
 				$('#controllerTest').click();
-
-				strictEqual(errMsg, 'コントローラ"ErrorController"でセレクタ名にthisが指定されています。'
-						+ 'コントローラをバインドした要素自身を指定したい時はrootElementを指定してください。(code=6012)',
-						'セレクタに{this}が指定された時にエラーが発生するか');
 				ok(isSame, '"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか');
-
 				testController.unbind();
 			});
 		});
@@ -2433,31 +2423,30 @@
 						}
 					};
 					var testController = h5.core.controller('#controllerTest', controller);
-					testController.readyPromise
-							.done(function() {
-								$('#controllerTest input[type=button]').click();
-								ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
-								ok(updateView, 'this.view.updateでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
-								strictEqual(append, 'test',
-										'this.view.appendでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
-								strictEqual(append2, 'test',
-										'this.view.appendでテンプレートからHTML文字列を取得し、グローバルセレクタで指定した要素に出力できたか');
-								strictEqual(prepend, 'test',
-										'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
+					testController.readyPromise.done(function() {
+						$('#controllerTest input[type=button]').click();
+						ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
+						ok(updateView, 'this.view.updateでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
+						strictEqual(append, 'test',
+								'this.view.appendでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
+						strictEqual(append2, 'test',
+								'this.view.appendでテンプレートからHTML文字列を取得し、グローバルセレクタで指定した要素に出力できたか');
+						strictEqual(prepend, 'test',
+								'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
 
-								var errMsg = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。(code=6000)';
-								strictEqual(viewError1.message, errMsg,
-										'this.update/append/prependで、"{window}"を指定するとエラーになるか');
-								strictEqual(viewError2.message, errMsg,
-										'this.update/append/prependで、"{window.xxx}"を指定するとエラーになるか');
-								strictEqual(viewError3.message, errMsg,
-										'this.update/append/prependで、"{navigator}"を指定するとエラーになるか');
-								strictEqual(viewError4.message, errMsg,
-										'this.update/append/prependで、"{navigator.xxx}"を指定するとエラーになるか');
+						var errorCode = ERR.ERR_CODE_INVALID_TEMPLATE_SELECTOR;
+						strictEqual(viewError1.code, errorCode,
+								'this.update/append/prependで、"{window}"を指定するとエラーになるか');
+						strictEqual(viewError2.code, errorCode,
+								'this.update/append/prependで、"{window.xxx}"を指定するとエラーになるか');
+						strictEqual(viewError3.code, errorCode,
+								'this.update/append/prependで、"{navigator}"を指定するとエラーになるか');
+						strictEqual(viewError4.code, errorCode,
+								'this.update/append/prependで、"{navigator.xxx}"を指定するとエラーになるか');
 
-								testController.unbind();
-								start();
-							});
+						testController.unbind();
+						start();
+					});
 				});
 
 		asyncTest('view操作', function() {
@@ -2494,10 +2483,6 @@
 		asyncTest('テンプレートのカスケーディング1', function() {
 			var html = html2 = '';
 			var errorObj = {};
-			var expectErrorObj = {
-				code: 7005,
-				message: "テンプレートID:template4 テンプレートがありません。(code=7005)"
-			};
 
 			var childController = {
 				__name: 'ChildController',
@@ -2526,9 +2511,8 @@
 				$('#controllerTest input[type=button]').click();
 				ok(html.length > 0, '指定されたテンプレートIDを自身のビューが扱っていない場合、親コントローラのビューへカスケードされること');
 				ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
-				deepEqual(errorObj.code, expectErrorObj.code,
+				deepEqual(errorObj.code, ERR_VIEW.ERR_CODE_TEMPLATE_ID_UNAVAILABLE,
 						'指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
-				deepEqual(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
 				testController.unbind();
 				start();
 			});
@@ -3481,42 +3465,33 @@
 			});
 		});
 
-		test(
-				'プロパティの重複チェック',
-				function() {
+		test('プロパティの重複チェック', 1, function() {
 
 
-					var testController = {
-						/**
-						 * コントローラ名
-						 */
-						__name: 'TestController',
+			var testController = {
+				/**
+				 * コントローラ名
+				 */
+				__name: 'TestController',
 
-						indicator: function() {
-						// 何もしない
-						}
-					};
+				indicator: function() {
+				// 何もしない
+				}
+			};
 
-					var errMsg = null;
-					try {
-						h5.core.controller('#controllerTest', testController);
-					} catch (e) {
-						errMsg = e.message;
-					}
-
-					strictEqual(
-							errMsg,
-							'コントローラ"TestController"のプロパティ"indicator"はコントローラ化によって追加されるプロパティと名前が重複しています。(code=6011)',
-							'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
-				});
+			try {
+				h5.core.controller('#controllerTest', testController);
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_SAME_PROPERTY,
+						'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
+			}
+		});
 
 		asyncTest('this.own()の動作', function() {
-
-
 			function Test(callback) {
 				this.callback = callback;
 			}
-			;
+
 			Test.prototype.execute = function() {
 				this.callback(100, 200);
 			};
@@ -3546,8 +3521,6 @@
 		});
 
 		asyncTest('this.ownWithOrg()の動作', function() {
-
-
 			function Test(callback) {
 				this.callback = callback;
 			}
@@ -4846,103 +4819,102 @@
 			});
 		});
 
-		asyncTest('throwError() / throwCustomError() の動作', function() {
-			var testController = {
-				__name: 'TestController',
+		asyncTest(
+				'throwError() / throwCustomError() の動作',
+				13,
+				function() {
+					var testController = {
+						__name: 'TestController',
 
-				__ready: function(context) {
-					var err1 = null;
-					try {
-						this.throwError();
-					} catch (e) {
-						err1 = e.message;
-					}
-					equal(err1, '正しい数の引数を指定して下さい。(code=6005)',
-							'引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
-					try {
-						this.throwError('コントローラ"{0}"における{1}のテスト', this.__name, 'throwError');
-					} catch (e) {
-						strictEqual(e.message, 'コントローラ"TestController"におけるthrowErrorのテスト',
-								'throwErrorメソッドの第1引数が文字列の場合、可変長引数を取ってフォーマットされるか');
-					}
-					try {
-						this.throwError('エラーメッセージ!!');
-					} catch (e) {
-						strictEqual(e.message, 'エラーメッセージ!!', '指定したメッセージがmessageプロパティに設定されていること。');
-						strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
-					}
+						__ready: function(context) {
+							try {
+								this.throwError();
+							} catch (e) {
+								equal(e.code, ERR.ERR_CODE_TOO_FEW_ARGUMENTS,
+										'codeプロパティにエラーコードを保持していること。');
+							}
 
-					var obj = {
-						a: 1
+							try {
+								this
+										.throwError('コントローラ"{0}"における{1}のテスト', this.__name,
+												'throwError');
+							} catch (e) {
+								strictEqual(e.message, 'コントローラ"TestController"におけるthrowErrorのテスト',
+										'throwErrorメソッドの第1引数が文字列の場合、可変長引数を取ってフォーマットされるか');
+							}
+							try {
+								this.throwError('エラーメッセージ!!');
+							} catch (e) {
+								strictEqual(e.message, 'エラーメッセージ!!',
+										'指定したメッセージがmessageプロパティに設定されていること。');
+								strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
+							}
+
+							var obj = {
+								a: 1
+							};
+							try {
+								this.throwError(obj, obj);
+							} catch (e) {
+								if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
+									equal(e.message, 'Unknown error',
+											'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+								} else {
+									equal(e.message, '',
+											'第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+								}
+								deepEqual(e.detail, obj, 'detailプロパティに第一引数に指定したオブジェクトが設定されていること。');
+							}
+
+							try {
+								this.throwCustomError(null, 'エラーメッセージ!');
+							} catch (e) {
+								strictEqual(e.message, 'エラーメッセージ!',
+										'指定したメッセージがmessageプロパティに設定されていること。');
+								strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
+							}
+
+							try {
+								this.throwCustomError('customType', '');
+							} catch (e) {
+								ok(e, 'エラータイプのみ指定してthrowCustomErrorメソッドを実行すると、エラーが投げられているか');
+								strictEqual(e.customType, 'customType',
+										'エラーオブジェクトのcustomTypeプロパティに指定したエラータイプが格納されているか');
+
+							}
+
+							try {
+								this.throwCustomError('customType', 'コントローラ"{0}"における{1}のテスト',
+										this.__name, 'throwCustomError');
+							} catch (e) {
+								strictEqual(e.message,
+										'コントローラ"TestController"におけるthrowCustomErrorのテスト',
+										'throwCustomErrorメソッドの第2引数が文字列の場合、可変長引数を取ってフォーマットされるか');
+							}
+							try {
+								this.throwCustomError('customType', obj, obj);
+							} catch (e) {
+								if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
+									equal(e.message, 'Unknown error',
+											'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
+								} else {
+									equal(e.message, '',
+											'第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
+								}
+								deepEqual(e.detail, obj, 'detailプロパティに第二引数に指定したオブジェクトが設定されていること。');
+							}
+						}
 					};
-					try {
-						this.throwError(obj, obj);
-					} catch (e) {
-						if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
-							equal(e.message, 'Unknown error',
-									'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
-						} else {
-							equal(e.message, '', '第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
-						}
-						deepEqual(e.detail, obj, 'detailプロパティに第一引数に指定したオブジェクトが設定されていること。');
-					}
-					try {
-						this.throwCustomError();
-					} catch (e) {
-						strictEqual(e.message, '正しい数の引数を指定して下さい。(code=6005)',
-								'throwCustomError()で必須のパラメータが指定されていない場合、エラーが発生すること。');
-					}
 
-					try {
-						this.throwCustomError(null, 'エラーメッセージ!');
-					} catch (e) {
-						strictEqual(e.message, 'エラーメッセージ!', '指定したメッセージがmessageプロパティに設定されていること。');
-						strictEqual(e.customType, null, 'customTypeにnullが設定されていること。');
-					}
+					var c = h5.core.controller('#controllerTest', testController);
+					c.readyPromise.done(function() {
+						start();
+						c.unbind();
+					});
 
-					var err2 = null;
-					var err2Type = null;
-					try {
-						this.throwCustomError('customType', '');
-					} catch (e) {
-						err2 = e;
-						err2Type = e.customType;
+				});
 
-					}
-					ok(err2, 'エラータイプのみ指定してthrowCustomErrorメソッドを実行すると、エラーが投げられているか');
-					strictEqual(err2Type, 'customType',
-							'エラーオブジェクトのcustomTypeプロパティに指定したエラータイプが格納されているか');
-
-					try {
-						this.throwCustomError('customType', 'コントローラ"{0}"における{1}のテスト', this.__name,
-								'throwCustomError');
-					} catch (e) {
-						strictEqual(e.message, 'コントローラ"TestController"におけるthrowCustomErrorのテスト',
-								'throwCustomErrorメソッドの第2引数が文字列の場合、可変長引数を取ってフォーマットされるか');
-					}
-					try {
-						this.throwCustomError('customType', obj, obj);
-					} catch (e) {
-						if (h5.env.ua.isiOS && h5.env.ua.osVersion == 4) {
-							equal(e.message, 'Unknown error',
-									'第二引数にオブジェクトが指定された場合、messageに"Unkonwn error"が設定されていること。');
-						} else {
-							equal(e.message, '', '第二引数にオブジェクトが指定された場合は、messageには何も値が設定されていないこと。');
-						}
-						deepEqual(e.detail, obj, 'detailプロパティに第二引数に指定したオブジェクトが設定されていること。');
-					}
-				}
-			};
-
-			var c = h5.core.controller('#controllerTest', testController);
-			c.readyPromise.done(function() {
-				start();
-				c.unbind();
-			});
-
-		});
-
-		test('コントローラの循環参照チェックに引っかかるとエラーが発生するか', function() {
+		test('コントローラの循環参照チェックに引っかかるとエラーが発生するか', 1, function() {
 			var test2Controller = {
 				__name: 'Test2Controller'
 			};
@@ -4954,14 +4926,11 @@
 			};
 			test2Controller.test1Controller = test1Controller;
 
-			var errMsg = null;
 			try {
 				h5.core.controller('#controllerTest', test1Controller);
 			} catch (e) {
-				errMsg = e.message;
+				strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_CIRCULAR_REF, 'エラーが発生したか');
 			}
-			strictEqual(errMsg, 'コントローラ"Test1Controller"で、参照が循環しているため、コントローラを生成できません。(code=6009)',
-					'エラーが発生したか');
 		});
 
 		asyncTest('mousewheelイベントの動作', function() {
@@ -4992,69 +4961,52 @@
 			});
 		});
 
-		test(
-				'コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作',
-				function() {
-					var testController = {
-						__name: 'TestController'
-					};
+		test('コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作', 1, function() {
+			var testController = {
+				__name: 'TestController'
+			};
 
-					var errMsg = null;
-					try {
-						h5.core.controller('#controllerTest', testController, '初期化パラメータ');
-					} catch (e) {
-						errMsg = e.message;
-					}
+			try {
+				h5.core.controller('#controllerTest', testController, '初期化パラメータ');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_INVALID_INIT_PARAM,
+						'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
+			}
+		});
 
-					strictEqual(
-							errMsg,
-							'コントローラ"TestController"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。(code=6007)',
-							'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
-				});
-
-		asyncTest('h5.core.controller()にコントローラ化済みのオブジェクトを渡した時の動作', function() {
+		asyncTest('h5.core.controller()にコントローラ化済みのオブジェクトを渡した時の動作', 1, function() {
 			var testController = {
 				__name: 'TestController'
 			};
 			var c = h5.core.controller('#controllerTest', testController);
-			c.readyPromise.done(function() {
-				start();
 
-				var errMsg = null;
+			c.readyPromise.done(function() {
 				try {
 					h5.core.controller('#controllerTest', c);
 				} catch (e) {
-					errMsg = e.message;
+					equal(e.code, ERR.ERR_CODE_CONTROLLER_ALREADY_CREATED,
+							'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 				}
 
-				strictEqual(errMsg, '指定されたオブジェクトは既にコントローラ化されています。(code=6008)',
-						'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 				c.unbind();
-
+				start();
 			});
 		});
 
-		test(
-				'あるセレクタに対して重複するイベントハンドラを設定した時の動作',
+		test('あるセレクタに対して重複するイベントハンドラを設定した時の動作', 1,
 				function() {
 					var testController = {
 						__name: 'TestController',
-
 						' {rootElement}   click': function(context) {},
-
 						'{rootElement} click': function(context) {}
 					};
-					var errMsg = null;
+
 					try {
 						h5.core.controller('#controllerTest', testController);
 					} catch (e) {
-						errMsg = e.message;
+						strictEqual(e.code, ERR.ERR_CODE_SAME_EVENT_HANDLER,
+								'重複するイベントハンドラを設定した時にエラーが発生したか');
 					}
-
-					strictEqual(
-							errMsg,
-							'コントローラ"TestController"のセレクタ"{rootElement}"に対して"click"というイベントハンドラが重複して設定されています。(code=6013)',
-							'重複するイベントハンドラを設定した時にエラーが発生したか');
 				});
 
 		asyncTest('xxxControllerというプロパティの値が設定されていない時にエラーにならないか', function() {
@@ -5074,7 +5026,7 @@
 
 		});
 
-		test('__metaのチェック1', function() {
+		test('__metaのチェック1', 1, function() {
 			var testController = {
 				__name: 'TestController',
 
@@ -5084,71 +5036,56 @@
 					}
 				}
 			};
-			var errMsg = null;
+
 			try {
 				h5.core.controller('#controllerTest', testController);
 			} catch (e) {
-				errMsg = e.message;
+				strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_META_KEY_INVALID,
+						'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがundefinedの場合にエラーが発生するか');
 			}
-
-			strictEqual(errMsg,
-					'コントローラ"TestController"には__metaで指定されたプロパティ"childController"がありません。(code=6014)',
-					'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがundefinedの場合にエラーが発生するか');
 		});
 
-		test(
-				'__metaのチェック2',
-				function() {
-					var testController = {
-						__name: 'TestController',
+		test('__metaのチェック2', 1, function() {
+			var testController = {
+				__name: 'TestController',
 
-						childController: null,
+				childController: null,
 
-						__meta: {
-							childController: {
-								useHandlers: true
-							}
-						}
-					};
-					var errMsg = null;
-					try {
-						h5.core.controller('#controllerTest', testController);
-					} catch (e) {
-						errMsg = e.message;
+				__meta: {
+					childController: {
+						useHandlers: true
 					}
+				}
+			};
 
-					strictEqual(
-							errMsg,
-							'コントローラ"TestController"の__metaに指定されたキー"childController"の値がnullです。コントローラを持つプロパティキー名を指定してください。(code=6015)',
-							'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがnullの場合にエラーが発生するか');
-				});
+			try {
+				h5.core.controller('#controllerTest', testController);
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_META_KEY_NULL,
+						'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがnullの場合にエラーが発生するか');
+			}
+		});
 
-		test(
-				'__metaのチェック3',
-				function() {
-					var testController = {
-						__name: 'TestController',
+		test('__metaのチェック3', 1, function() {
+			var testController = {
+				__name: 'TestController',
 
-						child: {},
+				child: {},
 
-						__meta: {
-							child: {
-								useHandlers: true
-							}
-						}
-					};
-					var errMsg = null;
-					try {
-						h5.core.controller('#controllerTest', testController);
-					} catch (e) {
-						errMsg = e.message;
+				__meta: {
+					child: {
+						useHandlers: true
 					}
+				}
+			};
 
-					equal(
-							errMsg,
-							'コントローラ"TestController"の__metaに指定されたキー"child"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。(code=6016)',
-							'__metaに設定された名前と一致するプロパティの値がコントローラではないときにエラーが発生するか');
-				});
+			try {
+				h5.core.controller('#controllerTest', testController);
+			} catch (e) {
+				equal(e.code, ERR.ERR_CODE_CONTROLLER_META_KEY_NOT_CONTROLLER,
+						'__metaに設定された名前と一致するプロパティの値がコントローラではないときにエラーが発生するか');
+			}
+		});
 
 		asyncTest(
 				'h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',

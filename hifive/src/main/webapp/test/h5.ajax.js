@@ -34,7 +34,7 @@
 	//=============================
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.core.data;
+	var ERR = ERRCODE.h5.ajax;
 
 	//=============================
 	// Functions
