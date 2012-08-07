@@ -215,6 +215,11 @@
 	var DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_ENUMVALUE = 26;
 
 	/**
+	 * id項目にdefaultValueが設定されている
+	 */
+	var DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_ID = 27;
+
+	/**
 	 * ディスクリプタのエラーメッセージ
 	 */
 	var DESCRIPTOR_VALIDATION_ERROR_MSGS = [];
@@ -244,6 +249,7 @@
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT] = '"{0}"プロパティの定義にエラーがあります。 constraintに矛盾する指定があります。{1},{2}';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_ENUMVALUE_TYPE] = '"{0}"プロパティの定義にエラーがあります。 enumValueはtypeに"enum"またはその配列が指定されている場合のみ指定可能です';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_ENUMVALUE] = '"{0}"プロパティの定義にエラーがあります。 enumValueは長さ1以上の配列を指定してください';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_ID] = '"{0}"プロパティの定義にエラーがあります。id指定した項目にdefaultValueを設定することはできません';
 
 	var ITEM_PROP_BACKING_STORE_PREFIX = '__';
 
@@ -311,6 +317,24 @@
 	//------------------------------
 
 	/**
+	 * type指定の文字列を、パースした結果を返す
+	 *
+	 * @param {String} type
+	 * @return elmType:タイプから配列部分を除いた文字列。dataModel:データモデル名。dimention:配列の深さ(配列指定でない場合は0)
+	 */
+	function getTypeObjFromString(type) {
+		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
+		// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
+		// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
+		var matched = type.match(/^(string|number|integer|boolean|array|any|enum|@(.+?))(\[\])*$/);
+		return matched && {
+			elmType: matched[1],
+			dataModel: matched[2],
+			dimention: matched[3] ? matched[3].length / 2 : 0
+		}
+	}
+
+	/**
 	 * 引数がNaNかどうか判定する isNaNとは違い、例えば文字列はNaNじゃないのでfalse
 	 *
 	 * @param {Any} v 判定する値
@@ -319,8 +343,6 @@
 	function isStrictNaN(v) {
 		return typeof v === 'number' && isNaN(v);
 	}
-
-
 
 	/**
 	 * type:'number' 指定のプロパティに代入できるかのチェック null,undefined,NaN,parseFloatしてNaNにならないもの
@@ -690,11 +712,12 @@
 				// constraintにそのtypeで使えない指定がないか
 				// enumの時は、enumValueが指定されているか
 				var elmType = null;
+				if (isId && propObj.type == null) {
+					// id項目で、typeが指定されていない場合は、type:stringにする
+					propObj.type = 'string';
+				}
+				var typeObj = {};
 				if (propObj.type != null) {
-					// id指定されているならエラー
-					//					if (isId) {
-					//						errorReason.push('id指定されたプロパティにtypeを指定することはできません');
-					//					}
 					var type = propObj.type;
 					if (!isString(type)) {
 						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_TYPE,
@@ -703,27 +726,28 @@
 							return errorReason;
 						}
 					}
-					// "string", "number[][]", "@DataModel"... などを正規表現でチェック
-					// TODO 文字列からtypeObjを作成するような関数を作って外だしする
-					var matched = type
-							.match(/^(string|number|integer|boolean|object|array|any|enum|@(.+?))(\[\])*$/);
-					if (!matched) {
+
+					if (isId && type !== 'string' && type !== 'integer') {
+						// id指定されているプロパティで、string,integer以外だった場合はエラー
+						errorReason.push('id指定されたプロパティにtypeを指定することはできません');
+					}
+
+					// "string", "number[][]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
+					typeObj = getTypeObjFromString(type);
+
+					if (!typeObj || !typeObj.elmType) {
 						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_TYPE,
 								schemaProp, type));
 						if (stopOnError) {
 							return errorReason;
 						}
 					} else {
-						// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
-						// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
-						// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
-
 						// データモデルの場合
-						if (matched[2]) {
-							if (!managerl.models[matched[2]]) {
+						if (typeObj.dataModel) {
+							if (!manager.models[typeObj.dataModel]) {
 								errorReason.push(createErrorReason(
 										DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_DATAMODEL, schemaProp,
-										matched[2]));
+										typeObj.dataModel));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -731,7 +755,7 @@
 						}
 
 						// enumの場合
-						if (matched[1] === 'enum') {
+						if (typeObj.elmType === 'enum') {
 							// enumValueが無ければエラー
 							if (propObj.enumValue == null) {
 								errorReason.push(createErrorReason(
@@ -743,14 +767,8 @@
 							}
 						}
 
-						// 配列の次元。配列でないなら0
-						dimention = matched[3] ? matched[3].length / 2 : 0;
-
-						// タイプから配列指定部分を除いたもの
-						elmType = matched[1];
-
 						// type指定を元に値を(配列は考慮せずに)チェックする関数を作成してcheckFuncArrayに追加
-						checkFuncArray.push(createTypeCheckFunction(elmType, {
+						checkFuncArray.push(createTypeCheckFunction(typeObj.elmType, {
 							manager: manager,
 							enumValue: propObj.enumValue
 						}));
@@ -774,136 +792,128 @@
 						for ( var p in constraintObj) {
 							// constraintのプロパティの値とtype指定との整合チェック
 							var val = constraintObj[p];
+							if (val == null) {
+								continue;
+							}
 							switch (p) {
 							case 'notNull':
-								if (val != null) {
-									if (val !== true || val !== false) {
-										// notNullにtrueまたはfalse以外が指定されていたらエラー
-										errorReason
-												.push(createErrorReason(
-														DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
-														schemaProp, p));
-										if (stopOnError) {
-											return errorReason;
-										}
-									} else if (isId && !val) {
-										// id項目にnotNull:falseが指定されていたらエラー
-										errorReason.push(createErrorReason(
-												DESCRIPTOR_SCHEMA_ERR_CODE_ID_NOTNULL, schemaProp));
-										if (stopOnError) {
-											return errorReason;
-										}
-
+								if (val !== true && val !== false) {
+									// notNullにtrueまたはfalse以外が指定されていたらエラー
+									errorReason
+											.push(createErrorReason(
+													DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
+													schemaProp, p));
+									if (stopOnError) {
+										return errorReason;
 									}
+								} else if (isId && !val) {
+									// id項目にnotNull:falseが指定されていたらエラー
+									errorReason.push(createErrorReason(
+											DESCRIPTOR_SCHEMA_ERR_CODE_ID_NOTNULL, schemaProp));
+									if (stopOnError) {
+										return errorReason;
+									}
+
 								}
 								break;
 							case 'min':
 							case 'max':
-								if (val != null) {
-									switch (elmType) {
-									case 'integer':
-										if (!isIntegerValue(val) || isStrictNaN(val)) {
-											// 整数値以外、NaNが指定されていたらエラー
-											errorReason
-													.push(createErrorReason(
-															DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX,
-															schemaProp, p));
-											if (stopOnError) {
-												return errorReason;
-											}
-										}
-										break;
-									case 'number':
-										if (!isNumberValue(val) || val === Infinity
-												|| val === -Infinity || isStrictNaN(val)) {
-											// 整数値以外、NaNが指定されていたらエラー
-											errorReason
-													.push(createErrorReason(
-															DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX,
-															schemaProp, p));
-											if (stopOnError) {
-												return errorReason;
-											}
-										}
-										break;
-									default:
-										// typeの指定とconstraintに不整合があったらエラー
-										errorReason.push(createErrorReason(
-												DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
-												schemaProp, p, elmType));
+								switch (typeObj.elmType) {
+								case 'integer':
+									if (!isIntegerValue(val) || isStrictNaN(val)) {
+										// 整数値以外、NaNが指定されていたらエラー
+										errorReason
+												.push(createErrorReason(
+														DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX,
+														schemaProp, p));
 										if (stopOnError) {
 											return errorReason;
 										}
+									}
+									break;
+								case 'number':
+									if (!isNumberValue(val) || val === Infinity
+											|| val === -Infinity || isStrictNaN(val)) {
+										// 整数値以外、NaNが指定されていたらエラー
+										errorReason
+												.push(createErrorReason(
+														DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX,
+														schemaProp, p));
+										if (stopOnError) {
+											return errorReason;
+										}
+									}
+									break;
+								default:
+									// typeの指定とconstraintに不整合があったらエラー
+									errorReason.push(createErrorReason(
+											DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_CONSTRAINT, schemaProp,
+											p, typeObj.elmType));
+									if (stopOnError) {
+										return errorReason;
 									}
 								}
 								break;
 							case 'minLength':
 							case 'maxLength':
-								if (val != null) {
-									switch (elmType) {
-									case 'string':
-										if (!isIntegerValue(val) || isStrictNaN(val) || val <= 0) {
-											// typeの指定とconstraintに不整合があったらエラー
-											errorReason
-													.push(createErrorReason(
-															DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH,
-															schemaProp, p));
-											if (stopOnError) {
-												return errorReason;
-											}
-										}
-										break;
-									default:
-										errorReason.push(createErrorReason(
-												DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
-												schemaProp, p, elmType));
+								switch (typeObj.elmType) {
+								case 'string':
+									if (!isIntegerValue(val) || isStrictNaN(val) || val <= 0) {
+										// typeの指定とconstraintに不整合があったらエラー
+										errorReason
+												.push(createErrorReason(
+														DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH,
+														schemaProp, p));
 										if (stopOnError) {
 											return errorReason;
 										}
+									}
+									break;
+								default:
+									errorReason.push(createErrorReason(
+											DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_CONSTRAINT, schemaProp,
+											p, typeObj.elmType));
+									if (stopOnError) {
+										return errorReason;
 									}
 								}
 								break;
 							case 'notEmpty':
-								if (val != null) {
-									switch (elmType) {
-									case 'string':
-										errorReason
-												.push(createErrorReason(
-														DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
-														schemaProp, p));
-										if (stopOnError) {
-											return errorReason;
-										}
-										break;
-									default:
-										errorReason.push(createErrorReason(
-												DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
-												schemaProp, p, elmType));
-										if (stopOnError) {
-											return errorReason;
-										}
+								switch (elmType) {
+								case 'string':
+									errorReason
+											.push(createErrorReason(
+													DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
+													schemaProp, p));
+									if (stopOnError) {
+										return errorReason;
+									}
+									break;
+								default:
+									errorReason.push(createErrorReason(
+											DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_CONSTRAINT, schemaProp,
+											p, typeObj.elmType));
+									if (stopOnError) {
+										return errorReason;
 									}
 								}
 								break;
 							case 'pattern':
-								if (val != null) {
-									switch (elmType) {
-									case 'string':
-										errorReason
-												.push(createErrorReason(
-														DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN,
-														schemaProp, p));
-										if (stopOnError) {
-											return errorReason;
-										}
-										break;
-									default:
-										errorReason.push(createErrorReason(
-												DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
-												schemaProp, p, elmType));
-										if (stopOnError) {
-											return errorReason;
-										}
+								switch (elmType) {
+								case 'string':
+									errorReason.push(createErrorReason(
+											DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN,
+											schemaProp, p));
+									if (stopOnError) {
+										return errorReason;
+									}
+									break;
+								default:
+									errorReason.push(createErrorReason(
+											DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_CONSTRAINT, schemaProp,
+											p, typeObj.elmType));
+									if (stopOnError) {
+										return errorReason;
 									}
 								}
 								break;
@@ -956,7 +966,7 @@
 				// enumValueのチェック
 				var enumValue = propObj.enumValue;
 				if (enumValue != null) {
-					if (elmType !== 'elem') {
+					if (typeObj.elmType !== 'enum') {
 						// type指定がenumでないならエラー
 						errorReason.push(createErrorReason(
 								DESCRIPTOR_SCHEMA_ERR_CODE_ENUMVALUE_TYPE, schemaProp));
@@ -971,6 +981,18 @@
 						if (stopOnError) {
 							return errorReason;
 						}
+					}
+				}
+
+				// defaultValueのチェック
+				// defaultValueがtypeやconstraintの条件を満たしているかのチェックはここでは行わない
+				// id:trueの項目にdefaultValueが指定されていればここでエラーにする
+				if (isId && propObj.hasOwnProperty('defaultValue')) {
+					// id項目にdefaultValueが設定されていたらエラー
+					errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_ID,
+							schemaProp));
+					if (stopOnError) {
+						return errorReason;
 					}
 				}
 			}
@@ -1040,9 +1062,14 @@
 			return isArrayValue;
 		case 'enum':
 			return isEnumValue;
+		case 'any':
+			// anyならタイプチェックは行わない
+			return function() {
+				return true;
+			}
 		}
 		// タイプチェックは終わっているはずなので、どのケースにも引っかからない場合はデータモデルかつ、そのデータモデルはマネージャに存在する
-		var matched = type.match(/@(.+?)/);
+		var matched = elmType.match(/@(.+?)/);
 		var dataModelName = matched[1];
 		return function(v) {
 			var dataModel = manager.models[dataModelName];
@@ -1059,8 +1086,6 @@
 			return v == null || dataModel.has(v);
 		}
 	}
-
-
 
 	function getValue(item, prop) {
 		return item[ITEM_PROP_BACKING_STORE_PREFIX + prop];
