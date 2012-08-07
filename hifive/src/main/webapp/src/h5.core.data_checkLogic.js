@@ -28,40 +28,43 @@
 	// Production
 	//=============================
 
-	//TODO エラーコード定数等Minify版（製品利用版）でも必要なものはここに書く
+
+	var SEQUENCE_RETURN_TYPE_STRING = 1;
+	var SEQUENCE_RETURN_TYPE_INT = 2;
+
 
 	/** マネージャ名が不正 */
-	var ERR_CODE_INVALID_MANAGER_NAME = 30000;
+	var ERR_CODE_INVALID_MANAGER_NAME = 15000;
 
 	/** DataItemのsetterに渡された値の型がDescriptorで指定されたものと異なる */
-	var ERR_CODE_INVALID_TYPE = 30001;
+	var ERR_CODE_INVALID_TYPE = 15001;
 
 	/** dependが設定されたプロパティのセッターを呼び出した */
-	var ERR_CODE_DEPEND_PROPERTY = 30002;
+	var ERR_CODE_DEPEND_PROPERTY = 15002;
 
 	/** イベントのターゲットが指定されていない */
-	var ERR_CODE_NO_EVENT_TARGET = 30003;
+	var ERR_CODE_NO_EVENT_TARGET = 15003;
+
+	/** ディスプリプタが不正 */
+	var ERR_CODE_INVALID_DESCRIPTOR = 15004;
 
 	/** createDataModelManagerのnamespaceが不正 */
-	var ERR_CODE_INVALID_MANAGER_NAMESPACE = 30005;
+	var ERR_CODE_INVALID_MANAGER_NAMESPACE = 15005;
 
 	/** データモデル名が不正 */
-	var ERR_CODE_INVALID_DATAMODEL_NAME = 30006;
+	var ERR_CODE_INVALID_DATAMODEL_NAME = 15006;
 
 	/** createItemでIDが必要なのに指定されていない */
-	var ERR_CODE_NO_ID = 30007;
+	var ERR_CODE_NO_ID = 15007;
 
 	/** マネージャの登録先に指定されたnamespaceにはすでにその名前のプロパティが存在する */
-	var ERR_CODE_REGISTER_TARGET_ALREADY_EXIST = 30008;
+	var ERR_CODE_REGISTER_TARGET_ALREADY_EXIST = 15008;
 
 	/** 内部エラー：更新ログタイプ不正（通常起こらないはず） */
-	var ERR_CODE_INVALID_UPDATE_LOG_TYPE = 30009;
+	var ERR_CODE_INVALID_UPDATE_LOG_TYPE = 15009;
 
 	/** IDは文字列でなければならない */
-	var ERR_CODE_ID_MUST_BE_STRING = 30010;
-
-	var ERR_CODE_INVALID_DESCRIPTOR = 30011;
-
+	var ERR_CODE_ID_MUST_BE_STRING = 15010;
 
 
 	var ERROR_MESSAGES = [];
@@ -854,7 +857,7 @@
 							case 'max':
 								switch (typeObj.elmType) {
 								case 'integer':
-									if (!isIntegerValue(val) || isStrictNaN(val)) {
+									if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)) {
 										// 整数値以外、NaNが指定されていたらエラー
 										errorReason
 												.push(createErrorReason(
@@ -866,7 +869,7 @@
 									}
 									break;
 								case 'number':
-									if (!isNumberValue(val) || val === Infinity
+									if (isString(val) || isString(val) || !isNumberValue(val) || val === Infinity
 											|| val === -Infinity || isStrictNaN(val)) {
 										// 整数値以外、NaNが指定されていたらエラー
 										errorReason
@@ -892,7 +895,7 @@
 							case 'maxLength':
 								switch (typeObj.elmType) {
 								case 'string':
-									if (!isIntegerValue(val) || isStrictNaN(val) || val < 0) {
+									if (isString(val) || !isIntegerValue(val) || isStrictNaN(val) || val < 0) {
 										// typeの指定とconstraintに不整合があったらエラー
 										errorReason
 												.push(createErrorReason(
@@ -1215,7 +1218,7 @@
 				for ( var i = 0, len = dependOn.length; i < len; i++) {
 					var dependSrcPropName = dependOn[i];
 
-					fwLogger.debug('{0} depends on {1}', prop, dependSrcPropName);
+					fwLogger.trace('{0} depends on {1}', prop, dependSrcPropName);
 
 					if (!dependencyMap[dependSrcPropName]) {
 						dependencyMap[dependSrcPropName] = [];
@@ -1243,45 +1246,6 @@
 			//			var enumValues = propDesc.enumValues;
 
 			function createSetter() {
-				/**
-				 * スキーマのプロパティタイプをパースします。
-				 */
-				function parseType(type) {
-					var ret = [];
-
-					var splittedType = type.split(',');
-					for ( var i = 0, len = splittedType.length; i < len; i++) {
-						var typeDef = {
-							isArray: false,
-							dim: 0,
-							checkInner: []
-						};
-
-						var t = $.trim(splittedType[i]);
-						var arrayIndicatorPos = t.indexOf('[');
-
-						if (arrayIndicatorPos !== -1) {
-							typeDef.isArray = true;
-							if (t.charAt(0) === '(') {
-								//配列内に複数の型が混在できる場合
-							} else {
-								//'string[]'のように、配列内の型は1つである場合
-								var innerType = $.trim(t.slice(1, arrayIndicatorPos));
-								if (innerType.charAt(0) === '@') {
-									typeDef.checkInner.push();
-								} else if (typeCheckFunc[innerType]) {
-									typeDef.checkInner.push(typeCheckFunc[innerType]);
-								}
-							}
-						}
-
-						ret.push(typeDef);
-					}
-
-
-					return ret;
-				} /* End of parseType() */
-
 				if (propDesc.depend) {
 					//依存プロパティの場合は、setterは動作しない（無理に呼ぶとエラー）
 					return function() {
@@ -1391,6 +1355,9 @@
 		}
 		DataItem.prototype = new EventDispatcher();
 		$.extend(DataItem.prototype, {
+			dirty: function() {
+			//TODO dirtyフラグを立てる
+			},
 			refresh: function() {
 			//TODO refreshされたら、整合性チェックとchangeLog追加を行う
 			}
@@ -1519,25 +1486,48 @@
 	// =========================================================================
 
 
-	function createSequence(start, step) {
-		var current = start !== undefined ? start : 0;
+	function createSequence(start, step, returnType) {
+		var current = start !== undefined ? start : 1;
 		var theStep = step !== undefined ? step : 1;
 
+		function currentInt() {
+			return current;
+		}
+
+		function nextInt() {
+			var val = current;
+			current += theStep;
+			return val;
+		}
+
+		function currentString() {
+			return current.toString();
+		}
+
+		function nextString() {
+			var val = current;
+			current += theStep;
+			return val.toString();
+		}
+
+		var methods;
+		if (type === SEQUENCE_RETURN_TYPE_STRING) {
+			methods = {
+				current: currentString,
+				next: nextString
+			};
+		} else {
+			methods = {
+				current: currentInt,
+				next: nextInt
+			};
+		}
+		methods.setCurrent = function(value) {
+			current = value;
+		};
+
 		function Sequence() {}
-		;
-		$.extend(Sequence.prototype, {
-			setCurrent: function(value) {
-				current = value;
-			},
-			current: function() {
-				return current.toString();
-			},
-			next: function() {
-				var val = current;
-				current += theStep;
-				return val.toString();
-			}
-		});
+		$.extend(Sequence.prototype, methods);
 
 		return new Sequence();
 	}
@@ -1566,22 +1556,10 @@
 			 * @memberOf DataModelManager
 			 */
 			createModel: function(descriptor) {
-				if (!$.isPlainObject(descriptor)) {
-					// descriptorがオブジェクトでなければエラー
-					throwFwError(ERR_CODE_INVALID_DESCRIPTOR); //TODO 正しい例外を出す
-				}
-				var modelName = descriptor.name;
-				if (!isValidNamespaceIdentifier(modelName)) {
-					throwFwError(ERR_CODE_INVALID_DATAMODEL_NAME); //TODO 正しい例外を出す
-				}
-
-				if (this.models[modelName]) {
-					fwLogger.info(MSG_ERROR_DUP_REGISTER, this.name, modelName);
-				} else {
-					this.models[modelName] = createDataModel(descriptor, this); //TODO validateSchema
-				}
-
-				return this.models[modelName];
+				//registerDataModelは初めにDescriptorの検証を行う。
+				//検証エラーがある場合は例外を送出する。
+				//エラーがない場合はデータモデルを返す（登録済みの場合は、すでにマネージャが持っているインスタンスを返す）。
+				return registerDataModel(descriptor, this);
 			},
 
 			/**
@@ -1797,22 +1775,13 @@
 
 		/* ----------------- DataModelコード ここから ----------------- */
 
-		function createDataModel(descriptor, manager) {
-			if (!$.isPlainObject(descriptor)) {
-				throw new Error('descriptorにはオブジェクトを指定してください。');
-			}
-
-			var errorReason = validateDescriptor(descriptor, manager);
-			if (errorReason.length > 0) {
-				throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, errorReason);
-			}
-
-			var checkFuncs = createCheckValueByDescriptor(descriptor, manager);
-
-			errorReason = validateDefaultValue(descriptor, checkFuncs);
-			if (errorReason.length > 0) {
-				throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, errorReason);
-			}
+		/**
+		 * データモデルを作成します。descriptorは事前に検証済みであることを仮定しています。
+		 *
+		 * @param {Object} descriptor データモデルディスクリプタ（事前検証済み）
+		 * @param {}
+		 */
+		function registerDataModel(descriptor, manager) {
 
 			/* --- DataModelローカル ここから --- */
 
@@ -1863,21 +1832,11 @@
 
 				for ( var prop in schema) {
 					if (schema[prop] && schema[prop].id === true) {
+						//ディスクリプタは事前検証済みなので、IDフィールドは必ず存在する
 						this.idKey = prop;
 						break;
 					}
 				}
-				if (!this.idKey) {
-					throwFwError(30005); //TODO throw proper error
-				}
-
-
-				//TODO
-				//				var errorReason = validateSchema(manager, schema);
-				//				if (errorReason.length > 0) {
-				//					//スキーマにエラーがある
-				//					throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
-				//				}
 
 				//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
 				this.schema = schema;
@@ -2090,7 +2049,36 @@
 				}
 			});
 
+
+			/* 生成コードここから */
+
+			//ディスクリプタの検証を最初に行い、以降はValidなディスクリプタが渡されていることを前提とする
+			var errorReason = validateDescriptor(descriptor, manager);
+			if (errorReason.length > 0) {
+				throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, errorReason);
+			}
+
+			var checkFuncs = createCheckValueByDescriptor(descriptor, manager);
+
+			var DefaultValueErrorReason = validateDefaultValue(descriptor, checkFuncs);
+			if (DefaultValueErrorReason.length > 0) {
+				throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, DefaultValueErrorReason);
+			}
+
+			//ここに到達したら、ディスクリプタにはエラーがなかったということ
+
+			var modelName = descriptor.name;
+
+			if (manager.models[modelName]) {
+				//既に登録済みのモデルの場合は今持っているインスタンスを返す
+				fwLogger.info(MSG_ERROR_DUP_REGISTER, this.name, modelName);
+				return manager.models[modelName];
+			}
+
+			//新しくモデルを作ってマネージャに登録
 			var targetModel = new DataModel(descriptor, manager);
+
+			manager.models[modelName] = targetModel;
 
 
 			function itemChangeListener(event) {
@@ -2103,7 +2091,7 @@
 			}
 
 			return targetModel;
-		} /* End of createDataModel() */
+		} /* End of registerDataModel() */
 
 
 		/* ----------------- DataModelコード ここまで ----------------- */
@@ -2210,7 +2198,13 @@
 		 * @param {String} [namespace] 公開先名前空間
 		 * @returns データモデルマネージャ
 		 */
-		createManager: createManager
+		createManager: createManager,
+
+		createSequence: createSequence,
+
+		SEQUENCE_RETURN_TYPE_STRING: SEQUENCE_RETURN_TYPE_STRING,
+
+		SEQUENCE_RETURN_TYPE_INT: SEQUENCE_RETURN_TYPE_INT
 
 	//		createLocalDataModel: createLocalDataModel,
 	});
