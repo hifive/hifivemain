@@ -316,7 +316,7 @@
 			});
 
 	test('データモデルの登録 descriptorがオブジェクトでない場合はエラーが発生すること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		var noDescriptors = ["a", 1, null, undefined, true, []];
 		var l = noDescriptors.length;
 		expect(l);
@@ -331,7 +331,7 @@
 	});
 
 	test('データモデルの登録 descriptorにnameプロパティがない場合はエラーが発生すること', 2, function() {
-		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		try {
 			manager.createModel({});
 		} catch (e) {
@@ -561,7 +561,7 @@
 
 
 	test('データモデルの登録 baseの指定が文字列でない場合はエラーが発生すること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		var noStrs = [['@TestDataModel'], {}, 1, true];
 		var l = noStrs.length;
 		expect(l);
@@ -603,7 +603,7 @@
 	});
 
 	test('データモデルの登録 baseを不正な文字列で指定した場合はエラーが発生すること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		var invalidStrs = ['TestDataModel', '@TestDataModel, @TestDataModel2'];
 		var l = invalidStrs.length;
 		expect(l);
@@ -659,8 +659,7 @@
 	});
 
 	test('データモデルの登録 baseに存在しないデータモデル名を指定した場合はエラーが発生すること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
-		;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -677,8 +676,7 @@
 	});
 
 	test('データモデルの登録 baseに自分自身のモデル名を指定した場合はエラーが発生すること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DATAMODEL_NAME;
-		;
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -1285,19 +1283,21 @@
 			}
 		}
 		l = invalidValues.length;
-		expect(l);
+		var testCount = l;
 
 		manager.createModel({
 			name: 'ParentModel',
 			schema: {
-				id: true
+				id: {
+					id: true
+				}
 			}
 		});
 
 		for ( var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: invalidValues[i].type,
-				constraint: invalinvalidValues[i].constraint
+				constraint: invalidValues[i].constraint
 			}, errCode);
 		}
 
@@ -1347,28 +1347,46 @@
 			testErrorWhenCreateModelByValueProperty({
 				type: invalidValues[i].type,
 				enum: [1, 'a', 1.1],
-				constraint: invalinvalidValues[i].constraint
-			});
+				constraint: invalidValues[i].constraint
+			}, errCode);
 		}
+		testCount += l;
+		expect(testCount);
 	});
 
-	test('データモデルの登録 schemaのチェック id:trueの項目にtypeを指定するとエラーになること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		try {
-			manager.createModel({
-				name: 'TestDataModel',
-				schema: {
-					id: {
-						id: true,
-						type: 'string'
+	test('データモデルの登録 schemaのチェック id:trueの項目にtype:"string" または "integer"以外を指定するとエラーになること',
+			function() {
+				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+				var invalidIdTypes = ['number', 'boolean', 'array', 'any', '@ParentModel',
+						'string[]', 'integer[]'];
+				var l = invalidIdTypes.length;
+				expect(l);
+
+				manager.createModel({
+					name: 'ParentModel',
+					schema: {
+						id: {
+							id: true
+						}
+					}
+				});
+				for ( var i = 0; i < l; i++) {
+					try {
+						manager.createModel({
+							name: 'TestDataModel',
+							schema: {
+								id: {
+									id: true,
+									type: invalidIdTypes[i]
+								}
+							}
+						});
+						ok(false, 'エラーが発生していません');
+					} catch (e) {
+						strictEqual(e.code, errCode, e.message);
 					}
 				}
 			});
-			ok(false, 'エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-	});
 
 	test('データモデルの登録 schemaのチェック id:trueの項目にnotNull, notEmpty, maxLength:0 を指定できないこと', function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
@@ -1445,7 +1463,7 @@
 		// numberでないもの
 		invalidValueArrays.push(['a1', true, [1], {}]);
 		// integerでないもの
-		invalidValueArrays.push([1.1, Infinity, -Infinity, '1', true, [1], {}]);
+		invalidValueArrays.push([1.1, Infinity, -Infinity, '1.1', '1px', true, [1], {}]);
 		// booleanでないもの
 		invalidValueArrays.push([1, '1', [true], {}, new Boolean(true)]);
 		// arrayでないもの
@@ -1653,42 +1671,22 @@
 				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
 
-	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること object',
-			function() {
-				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
-				var type = 'object';
-				var invalidProps = [{
-					type: type,
-					// defaultValueなし
-					constraint: {
-						notNull: true
-					}
-				}, {
-					type: type,
-					constraint: {
-						notNull: true
-					},
-					defaultValue: null
-				}];
-
-				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
-			});
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること array',
 			function() {
 				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 				var type = 'array';
 				var invalidProps = [{
 					type: type,
-					// defaultValueなし
 					constraint: {
 						notNull: true
-					}
+					},
+					defaultValue:null
 				}, {
 					type: type,
 					constraint: {
 						notNull: true
 					},
-					defaultValue: null
+					defaultValue: undefined
 				}];
 
 				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
@@ -1984,9 +1982,9 @@
 		strictEqual(items[2].id, '5', '戻り値の配列の中身が正しいこと');
 	});
 
-	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 2, function() {
+	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 6, function() {
 		var item = testDataModel.create({
-			id: sequence.next(),
+			id: '1',
 			val: 1
 		});
 		var item2 = testDataModel.create({
@@ -1999,7 +1997,7 @@
 		strictEqual(item.val2, 2, '上書いたプロパティを取得できること');
 
 		var items = testDataModel.create([{
-			id: sequence.next(),
+			id: '2',
 			val: 2
 		}, {
 			id: '2',
@@ -2007,8 +2005,8 @@
 		}]);
 
 		strictEqual(items[0], items[1], '同じid要素を持つオブジェクトを配列で渡した時、戻り値は同じインスタンスであること');
-		strictEqual(item[0].val, 2, '上書かれていないプロパティを取得できること');
-		strictEqual(item[0].val2, 3, '上書いたプロパティを取得できること');
+		strictEqual(items[0].val, 2, '上書かれていないプロパティを取得できること');
+		strictEqual(items[0].val2, 3, '上書いたプロパティを取得できること');
 	});
 
 	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、エラーが起きるまでの要素までは生成され、残りは生成されないこと', function() {
