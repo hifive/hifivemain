@@ -400,7 +400,7 @@
 	 * @return {Boolean} type:'string'指定のプロパティに代入可能か
 	 */
 	function isStringValue(val) {
-		return val == null || isString(val);
+		return val == null || isString(val) ||  val instanceof String;
 	}
 
 	/**
@@ -410,7 +410,7 @@
 	 * @return {Boolean} type:'boolean'指定のプロパティに代入可能か
 	 */
 	function isBooleanValue(val) {
-		return val == null || val === true || val === false;
+		return val == null || typeof val === 'boolean' || val instanceof Boolean;
 	}
 
 	/**
