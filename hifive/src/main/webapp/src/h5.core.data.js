@@ -857,7 +857,7 @@
 							case 'max':
 								switch (typeObj.elmType) {
 								case 'integer':
-									if (!isIntegerValue(val) || isStrictNaN(val)) {
+									if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)) {
 										// 整数値以外、NaNが指定されていたらエラー
 										errorReason
 												.push(createErrorReason(
@@ -869,7 +869,7 @@
 									}
 									break;
 								case 'number':
-									if (!isNumberValue(val) || val === Infinity
+									if (isString(val) || isString(val) || !isNumberValue(val) || val === Infinity
 											|| val === -Infinity || isStrictNaN(val)) {
 										// 整数値以外、NaNが指定されていたらエラー
 										errorReason
@@ -895,7 +895,7 @@
 							case 'maxLength':
 								switch (typeObj.elmType) {
 								case 'string':
-									if (!isIntegerValue(val) || isStrictNaN(val) || val < 0) {
+									if (isString(val) || !isIntegerValue(val) || isStrictNaN(val) || val < 0) {
 										// typeの指定とconstraintに不整合があったらエラー
 										errorReason
 												.push(createErrorReason(
