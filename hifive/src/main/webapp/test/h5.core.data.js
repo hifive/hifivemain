@@ -1986,7 +1986,7 @@
 		strictEqual(items[2].id, '5', '戻り値の配列の中身が正しいこと');
 	});
 
-	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 2, function() {
+	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 6, function() {
 		var item = dataModel1.create({
 			id: sequence.next(),
 			val: 1
@@ -2009,8 +2009,8 @@
 		}]);
 
 		strictEqual(items[0], items[1], '同じid要素を持つオブジェクトを配列で渡した時、戻り値は同じインスタンスであること');
-		strictEqual(item[0].val, 2, '上書かれていないプロパティを取得できること');
-		strictEqual(item[0].val2, 3, '上書いたプロパティを取得できること');
+		strictEqual(items[0].val, 2, '上書かれていないプロパティを取得できること');
+		strictEqual(items[0].val2, 3, '上書いたプロパティを取得できること');
 	});
 
 	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、エラーが起きるまでの要素までは生成され、残りは生成されないこと', function() {
@@ -2025,7 +2025,7 @@
 			}]);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_NAMESPACE_INVALID, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_NO_ID, e.message);
 		} finally {
 			// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない(TODO 確認する)
 			ok(dataModel1.has('1'), '配列で渡した場合にエラーが発生したら、その要素より前のアイテムは生成されること');
@@ -2574,7 +2574,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'string'
@@ -2596,7 +2595,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'number'
@@ -2615,7 +2613,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				dataModel1: {
 					type: '@DataModel1'
@@ -2665,7 +2662,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'number',
@@ -2719,7 +2715,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'number',
