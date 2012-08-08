@@ -30,7 +30,7 @@
 	// =========================================================================
 
 	// constraintのテストで使用
-	var constraintDataModel = null;
+	var dataModel1 = null;
 	var testClass1 = null;
 	var itemA = null;
 	var itemB = null;
@@ -209,6 +209,7 @@
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -392,6 +393,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -1691,6 +1693,7 @@
 
 				testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 			});
+
 	test('データモデルの登録 schemaのチェック defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること any',
 			function() {
 				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
@@ -1864,6 +1867,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -1925,13 +1929,12 @@
 	//=============================
 	// Definition
 	//=============================
-	var testDataModel = null;
 
 	module('create, get, remove', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
-			testDataModel = manager.createModel({
+			dataModel1 = manager.createModel({
 				name: 'TestDataModel',
 				schema: {
 					id: {
@@ -1943,7 +1946,8 @@
 			});
 		},
 		teardown: function() {
-			testDataModel = null;
+			sequence = null;
+			dataModel1 = null;
 			dropAllModel(manager);
 		}
 	});
@@ -1953,7 +1957,7 @@
 	//=============================
 
 	test('createでアイテムが生成できること。引数に配列を渡した場合は戻り値も配列になること。', function() {
-		var item = testDataModel.create({
+		var item = dataModel1.create({
 			id: sequence.next(),
 			val: 456
 		});
@@ -1961,14 +1965,14 @@
 		strictEqual(item.id, '1', 'create時に指定した値が戻り値から取得できること');
 		strictEqual(item.val, 456, 'create時に指定した値が戻り値から取得できること');
 
-		item = testDataModel.create({
+		item = dataModel1.create({
 			id: sequence.next()
 		});
 
 		strictEqual(item.id, '2', 'createでidに数字を指定しても、文字列として格納されていること');
 		strictEqual(item.val, null, 'create時に値を指定していない値について、nullが格納されてること');
 
-		var items = testDataModel.create([{
+		var items = dataModel1.create([{
 			id: sequence.next()
 		}, {
 			id: sequence.next()
@@ -1982,12 +1986,12 @@
 		strictEqual(items[2].id, '5', '戻り値の配列の中身が正しいこと');
 	});
 
-	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 6, function() {
-		var item = testDataModel.create({
-			id: '1',
+	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 2, function() {
+		var item = dataModel1.create({
+			id: sequence.next(),
 			val: 1
 		});
-		var item2 = testDataModel.create({
+		var item2 = dataModel1.create({
 			id: '1',
 			val2: 2
 		});
@@ -1996,8 +2000,8 @@
 		strictEqual(item.val, 1, '上書かれていないプロパティを取得できること');
 		strictEqual(item.val2, 2, '上書いたプロパティを取得できること');
 
-		var items = testDataModel.create([{
-			id: '2',
+		var items = dataModel1.create([{
+			id: sequence.next(),
 			val: 2
 		}, {
 			id: '2',
@@ -2005,14 +2009,14 @@
 		}]);
 
 		strictEqual(items[0], items[1], '同じid要素を持つオブジェクトを配列で渡した時、戻り値は同じインスタンスであること');
-		strictEqual(items[0].val, 2, '上書かれていないプロパティを取得できること');
-		strictEqual(items[0].val2, 3, '上書いたプロパティを取得できること');
+		strictEqual(item[0].val, 2, '上書かれていないプロパティを取得できること');
+		strictEqual(item[0].val2, 3, '上書いたプロパティを取得できること');
 	});
 
 	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、エラーが起きるまでの要素までは生成され、残りは生成されないこと', function() {
 		// TODO アトミックかどうか確認する
 		try {
-			testDataModel.create([{
+			dataModel1.create([{
 				id: sequence.next()
 			}, {
 				id: {}
@@ -2024,9 +2028,9 @@
 			strictEqual(e.code, ERR.ERR_CODE_NAMESPACE_INVALID, e.message);
 		} finally {
 			// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない(TODO 確認する)
-			ok(testDataModel.has('1'), '配列で渡した場合にエラーが発生したら、その要素より前のアイテムは生成されること');
-			ok(!testDataModel.has('2'), '配列で渡した場合にエラーが発生したら、その要素以降のアイテムは生成されないこと');
-			strictEqual(testDataModel.size, 1, 'sizeが1であること');
+			ok(dataModel1.has('1'), '配列で渡した場合にエラーが発生したら、その要素より前のアイテムは生成されること');
+			ok(!dataModel1.has('2'), '配列で渡した場合にエラーが発生したら、その要素以降のアイテムは生成されないこと');
+			strictEqual(dataModel1.size, 1, 'sizeが1であること');
 		}
 	});
 
@@ -2035,72 +2039,72 @@
 	//=============================
 
 	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
-		var item1 = testDataModel.create({
+		var item1 = dataModel1.create({
 			id: sequence.next(),
 			val: 'item1'
 		});
-		var item2 = testDataModel.create({
+		var item2 = dataModel1.create({
 			id: sequence.next(),
 			val: 'item2'
 		});
-		var item3 = testDataModel.create({
+		var item3 = dataModel1.create({
 			id: sequence.next(),
 			val: 'item3'
 		});
 
-		strictEqual(testDataModel.get('1'), item1, '登録したアイテムが取得できること');
-		strictEqual(testDataModel.get('2'), item2, '登録したアイテムが取得できること');
-		strictEqual(testDataModel.get('3'), item3, '登録したアイテムが取得できること');
-		strictEqual(testDataModel.get('abc'), null, '登録されていないidを渡すとnullが返ってくること');
-		strictEqual(testDataModel.get('4'), null, '違うモデルに登録したアイテムは取得できないこと。');
-		var items = testDataModel.get(['2', '4', '1', '3', 'noExistId']);
+		strictEqual(dataModel1.get('1'), item1, '登録したアイテムが取得できること');
+		strictEqual(dataModel1.get('2'), item2, '登録したアイテムが取得できること');
+		strictEqual(dataModel1.get('3'), item3, '登録したアイテムが取得できること');
+		strictEqual(dataModel1.get('abc'), null, '登録されていないidを渡すとnullが返ってくること');
+		strictEqual(dataModel1.get('4'), null, '違うモデルに登録したアイテムは取得できないこと。');
+		var items = dataModel1.get(['2', '4', '1', '3', 'noExistId']);
 		deepEqual(items, [item2, null, item1, item3, null],
 				'getに配列を渡した時の戻り値は各要素のget結果が格納された配列であること');
-		strictEqual(testDataModel.get('1').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
-		strictEqual(testDataModel.get('2').val, 'item2', '登録したアイテムが取得できること');
-		strictEqual(testDataModel.get('3').val, 'item3', '登録したアイテムが取得できること');
+		strictEqual(dataModel1.get('1').val, 'item1', '登録したアイテムが、渡したidの順に取得できること');
+		strictEqual(dataModel1.get('2').val, 'item2', '登録したアイテムが取得できること');
+		strictEqual(dataModel1.get('3').val, 'item3', '登録したアイテムが取得できること');
 
 	});
 
 	test('removeでアイテムを削除できること。引数に配列を指定した場合は複数削除できること', function() {
-		var item1 = testDataModel.create({
+		var item1 = dataModel1.create({
 			id: sequence.next(),
 			val: 1
 		});
-		var item2 = testDataModel.create({
+		var item2 = dataModel1.create({
 			id: sequence.next(),
 			val: 2
 		});
-		var item3 = testDataModel.create({
+		var item3 = dataModel1.create({
 			id: sequence.next(),
 			val: 3
 		});
-		strictEqual(testDataModel.has('1'), true, '削除する前はmodel.hasの結果がtrueであること');
-		strictEqual(testDataModel.has('2'), true, '削除する前はmodel.hasの結果がtrueであること');
-		strictEqual(testDataModel.has('3'), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(dataModel1.has('1'), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(dataModel1.has('2'), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(dataModel1.has('3'), true, '削除する前はmodel.hasの結果がtrueであること');
 
-		var item = testDataModel.remove('1');
+		var item = dataModel1.remove('1');
 		strictEqual(item, item1, 'removeの戻り値はDataItemインスタンスであること');
 
-		strictEqual(testDataModel.get('1'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
-		strictEqual(testDataModel.has('1'), false, 'model.hasの結果がfalseになっていること');
-		strictEqual(testDataModel.size, 2, 'model.sizeが1減っていること');
+		strictEqual(dataModel1.get('1'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(dataModel1.has('1'), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(dataModel1.size, 2, 'model.sizeが1減っていること');
 
-		item = testDataModel.remove('noExistId');
+		item = dataModel1.remove('noExistId');
 		strictEqual(item, null, '存在しないIDをremoveした時の戻り値はnullであること');
 
-		var items = testDataModel.remove(['2', 'noExistId', '3']);
+		var items = dataModel1.remove(['2', 'noExistId', '3']);
 		// TODO removeの戻り値を確認する
 		deepEqual(items, [item2, null, item3], 'removeに配列を渡した時の戻り値は各要素のremove結果が格納された配列であること');
 
 
 		// TODO 削除されたアイテムインスタンスがどうなっているか確認する
 
-		strictEqual(testDataModel.get('2'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
-		strictEqual(testDataModel.has('2'), false, 'model.hasの結果がfalseになっていること');
-		strictEqual(testDataModel.get('3'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
-		strictEqual(testDataModel.has('3'), false, 'model.hasの結果がfalseになっていること');
-		strictEqual(testDataModel.size, 0, 'すべて削除したので、model.sizeが0になっていること');
+		strictEqual(dataModel1.get('2'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(dataModel1.has('2'), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(dataModel1.get('3'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
+		strictEqual(dataModel1.has('3'), false, 'model.hasの結果がfalseになっていること');
+		strictEqual(dataModel1.size, 0, 'すべて削除したので、model.sizeが0になっていること');
 	});
 
 	//=============================
@@ -2113,6 +2117,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -3719,6 +3724,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -3768,7 +3774,7 @@
 				test1: 'bbb'
 			});
 
-			constraintDataModel = function(constraint) {
+			dataModel1 = function(constraint) {
 				return manager.createModel({
 
 					name: 'TestDataModel',
@@ -3843,7 +3849,8 @@
 			};
 		},
 		teardown: function() {
-			constraintDataModel = null;
+			sequence = null;
+			dataModel1 = null;
 			testClass1 = null;
 			itemA = null;
 			itemB = null;
@@ -3868,7 +3875,7 @@
 	//	　値が入っている場合のみかかる。
 	//	　従って、nullがセットされた場合はかからない。
 	test('notNull 制約が適用されているか 正常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			notNull: true
 		});
 
@@ -3930,7 +3937,7 @@
 	});
 
 	test('notNull 制約が適用されているか 異常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			notNull: true
 		});
 
@@ -3959,7 +3966,7 @@
 	});
 
 	test('notEmpty 制約が適用されているか 正常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			notEmpty: true
 		});
 		var item1 = model1.create({
@@ -4020,7 +4027,7 @@
 	});
 
 	test('notNull 制約が適用されているか 異常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			notEmpty: true
 		});
 
@@ -4074,7 +4081,7 @@
 				test1: 'bbb'
 			});
 
-			constraintDataModel = function(constraint) {
+			dataModel1 = function(constraint) {
 				return manager.createModel({
 					name: 'TestDataModel',
 					schema: {
@@ -4133,7 +4140,8 @@
 			};
 		},
 		teardown: function() {
-			constraintDataModel = null;
+			sequence = null;
+			dataModel1 = null;
 			testClass1 = null;
 			itemA = null;
 			itemB = null;
@@ -4147,7 +4155,7 @@
 
 	test('min 制約が適用されているか 正常系',
 			function() {
-				var model1 = constraintDataModel({
+				var model1 = dataModel1({
 					min: 5
 				});
 
@@ -4200,7 +4208,7 @@
 			});
 
 	test('min 制約が適用されているか 異常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			min: 5
 		});
 
@@ -4234,7 +4242,7 @@
 
 	test('max 制約が適用されているか 正常系',
 			function() {
-				var model1 = constraintDataModel({
+				var model1 = dataModel1({
 					max: 5
 				});
 
@@ -4287,7 +4295,7 @@
 			});
 
 	test('max 制約が適用されているか 異常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			max: 5
 		});
 
@@ -4320,7 +4328,7 @@
 	});
 
 	test('minLength 制約が適用されているか 正常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			minLength: 5
 		});
 
@@ -4369,7 +4377,7 @@
 	});
 
 	test('minLength 制約が適用されているか 異常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			minLength: 5
 		});
 
@@ -4402,7 +4410,7 @@
 	});
 
 	test('maxLength 制約が適用されているか 正常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			maxLength: 5
 		});
 
@@ -4451,7 +4459,7 @@
 	});
 
 	test('maxLength 制約が適用されているか 異常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			maxLength: 5
 		});
 
@@ -4486,7 +4494,7 @@
 	test(
 			'pattern 制約が適用されているか 正常系',
 			function() {
-				var model1 = constraintDataModel({
+				var model1 = dataModel1({
 					pattern: /^hifive[0-9][0-9]$/
 				});
 
@@ -4540,7 +4548,7 @@
 			});
 
 	test('pattern 制約が適用されているか 異常系', function() {
-		var model1 = constraintDataModel({
+		var model1 = dataModel1({
 			pattern: /^hifive[0-9][0-9]$/
 		});
 
@@ -4569,6 +4577,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -4927,6 +4936,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -5035,6 +5045,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -5337,6 +5348,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -5399,6 +5411,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
@@ -5491,6 +5504,7 @@
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
+			sequence = null;
 			dropAllModel(manager);
 		}
 	});
