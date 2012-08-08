@@ -365,12 +365,13 @@
 	function isNumberValue(val) {
 		// nullまたはundefinedはtrue
 		// NaNを直接入れた場合はtrue
+		// new Number() で生成したオブジェクトはtrue
 		// 文字列の場合は、[±(数字)(.数字)]で構成されている文字列ならOKにする
 		// ※ parseFloatよりも厳しいチェックにしている。
 		// "1.2", "+1.2", "1", ".2", "-.2" はOK。
 		// "12.3px"、"12.3.4"、"123.", [12.3, 4] はいずれもparseFloatできるが、ここではNG。
-		return val == null || isStrictNaN(val) || isString(val)
-				&& val.match(/^[+\-]{0,1}[0-9]*\.{0,1}[0-9]+$/);
+		return val == null || isStrictNaN(val) || typeof val === 'number' || val instanceof Number
+				|| !!(isString(val) && val.match(/^[+\-]{0,1}[0-9]*\.{0,1}[0-9]+$/));
 	}
 
 	/**
@@ -383,11 +384,13 @@
 	 */
 	function isIntegerValue(val) {
 		// parseIntとparseFloatの結果が同じかどうかで整数値かどうかの判定をする
+		// typeofが'nubmer'または、new Number()で生成したオブジェクトで、parseFloatとparseIntの結果が同じならtrue
 		// NaN, Infinity, -Infinityはfalseを返す(parseInt(Infinity)はNaNであるので、InfinityはIntじゃない扱いにする
 		// 文字列の場合は、[±数字]で構成されている文字列ならOKにする
 		// ※ parseIntよりも厳しいチェックにしている。"12px"、"12.3"、[12,3] はいずれもparseIntできるが、ここではNG。
-		return val == null || typeof val === 'number' && parseInt(val) === parseFloat(val)
-				|| typeof val === 'string' && val.match(/^[+\-]{0,1}[0-9]+$/);
+		return val == null || (typeof val === 'number' || val instanceof Number)
+				&& parseInt(val) === parseFloat(val) || typeof val === 'string'
+				&& val.match(/^[+\-]{0,1}[0-9]+$/);
 	}
 
 	/**
@@ -869,8 +872,9 @@
 									}
 									break;
 								case 'number':
-									if (isString(val) || isString(val) || !isNumberValue(val) || val === Infinity
-											|| val === -Infinity || isStrictNaN(val)) {
+									if (isString(val) || isString(val) || !isNumberValue(val)
+											|| val === Infinity || val === -Infinity
+											|| isStrictNaN(val)) {
 										// 整数値以外、NaNが指定されていたらエラー
 										errorReason
 												.push(createErrorReason(
@@ -895,7 +899,8 @@
 							case 'maxLength':
 								switch (typeObj.elmType) {
 								case 'string':
-									if (isString(val) || !isIntegerValue(val) || isStrictNaN(val) || val < 0) {
+									if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)
+											|| val < 0) {
 										// typeの指定とconstraintに不整合があったらエラー
 										errorReason
 												.push(createErrorReason(
