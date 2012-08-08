@@ -2526,7 +2526,7 @@
 			test1: 20
 		});
 		var model2DataItem2 = descModel2.create({
-			id: 2,
+			id: sequence.next(),
 			test1: 30
 		});
 
