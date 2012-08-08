@@ -1682,7 +1682,7 @@
 					constraint: {
 						notNull: true
 					},
-					defaultValue:null
+					defaultValue: null
 				}, {
 					type: type,
 					constraint: {
@@ -2201,7 +2201,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'string',
@@ -2245,7 +2244,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'string[]',
@@ -2300,8 +2298,6 @@
 			schema: {
 				id: {
 					id: true
-
-
 				},
 				test1: {
 					type: 'string[]',
@@ -2347,7 +2343,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'string'
@@ -2365,7 +2360,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'number'
@@ -2384,7 +2378,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				dataModel1: {
 					type: '@DataModel1[]'
@@ -2397,11 +2390,11 @@
 
 		// DataItemでcreateできるか
 		var item1 = model.create({
-			id: 1,
+			id: sequence.next(),
 			dataModel1: model1DataItem
 		});
 		var item2 = model.create({
-			id: 2,
+			id: sequence.next(),
 			dataModel2: model2DataItem
 		});
 
@@ -2417,7 +2410,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'string'
@@ -2453,7 +2445,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				dataModel1: {
 					type: '@DataModel1[]'
@@ -2466,18 +2457,18 @@
 
 		// DataItemでcreateできるか
 		var item1 = model.create({
-			id: 1,
+			id: sequence.next(),
 			dataModel1: model1DataItem
 		});
 		var item2 = model.create({
-			id: 2,
+			id: sequence.next(),
 			dataModel2: model2DataItem
 		});
 
 		// 異なる型を指定してcreateするとエラーが発生すること
 		raises(function() {
 			model.create({
-				id: 3,
+				id: sequence.next(),
 				dataModel2: model1DataItem
 			});
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
@@ -2494,7 +2485,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'string'
@@ -2503,11 +2493,11 @@
 		};
 		var desc1Model = manager.createModel(descriptor1);
 		var model1DataItem1 = desc1Model.create({
-			id: 1,
+			id: sequence.next(),
 			test1: 'aaa'
 		});
 		var model1DataItem2 = desc1Model.create({
-			id: 2,
+			id: sequence.next(),
 			test1: 'bbb'
 		});
 
@@ -2516,7 +2506,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'number'
@@ -2526,11 +2515,11 @@
 
 		var descModel2 = manager.createModel(descriptor2);
 		var model2DataItem1 = descModel2.create({
-			id: 1,
+			id: sequence.next(),
 			test1: 20
 		});
 		var model2DataItem2 = descModel2.create({
-			id: 2,
+			id: sequence.next(),
 			test1: 30
 		});
 
@@ -2539,7 +2528,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				dataModel1: {
 					type: '@DataModel1'
@@ -2552,11 +2540,11 @@
 
 		// DataItemでcreateできるか
 		var item1 = model.create({
-			id: 1,
+			id: sequence.next(),
 			dataModel1: [model1DataItem1, model1DataItem2]
 		});
 		var item2 = model.create({
-			id: 2,
+			id: sequence.next(),
 			dataModel2: [model2DataItem1, model2DataItem2]
 		});
 
@@ -2624,14 +2612,14 @@
 		});
 
 		var item1 = model.create({
-			id: 1,
+			id: sequence.next(),
 			dataModel1: [model1DataItem1, model1DataItem2]
 		});
 
 		// 異なる型を指定してcreateするとエラーが発生すること
 		raises(function() {
 			model.create({
-				id: 2,
+				id: sequence.next(),
 				dataModel1: [model1DataItem1, model2DataItem1]
 			});
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
@@ -2639,7 +2627,7 @@
 		// 異なる型を指定してcreateするとエラーが発生すること
 		raises(function() {
 			model.create({
-				id: 2,
+				id: sequence.next(),
 				dataModel2: [model1DataItem1, model2DataItem1]
 			});
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
@@ -2761,7 +2749,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'number[]',
@@ -2819,7 +2806,6 @@
 			schema: {
 				id: {
 					id: true
-
 				},
 				test1: {
 					type: 'number[]',
@@ -3760,12 +3746,12 @@
 			testClass1 = new TestClass1();
 
 			itemA = model.create({
-				id: 1,
+				id: sequence.next(),
 				test1: 'bbb'
 			});
 
 			itemB = model.create({
-				id: 2,
+				id: sequence.next(),
 				test1: 'bbb'
 			});
 
@@ -4590,16 +4576,21 @@
 				},
 				test1: {
 					type: 'number',
-					defaultValue: 5.0
+					defaultValue: 5.0,
+					constraint: {
+						notNull: true,
+						min: 4.6,
+						max: 5.8
+					}
 				},
 				test2: {
 					type: 'number',
-					defaultValue: 5.0
-				},
-				constraint: {
-					notNull: true,
-					min: 4.6,
-					max: 5.8
+					defaultValue: 5.0,
+					constraint: {
+						notNull: true,
+						min: 4.6,
+						max: 5.8
+					}
 				}
 			}
 		});
@@ -4634,16 +4625,21 @@
 				},
 				test1: {
 					type: 'number[]',
-					defaultValue: [3.1, 4.5]
+					defaultValue: [3.1, 4.5],
+					constraint: {
+						notNull: true,
+						min: 3.1,
+						max: 8.2
+					}
 				},
 				test2: {
 					type: 'number[]',
-					defaultValue: [5.7, 8.2]
-				},
-				constraint: {
-					notNull: true,
-					min: 3.1,
-					max: 8.2
+					defaultValue: [5.7, 8.2],
+					constraint: {
+						notNull: true,
+						min: 3.1,
+						max: 8.2
+					}
 				}
 			}
 		});
@@ -4678,16 +4674,21 @@
 				},
 				test1: {
 					type: 'integer',
-					defaultValue: 5
+					defaultValue: 5,
+					constraint: {
+						notNull: true,
+						min: 5,
+						max: 8
+					}
 				},
 				test2: {
 					type: 'integer',
-					defaultValue: 6
-				},
-				constraint: {
-					notNull: true,
-					min: 5,
-					max: 8
+					defaultValue: 6,
+					constraint: {
+						notNull: true,
+						min: 5,
+						max: 8
+					}
 				}
 			}
 		});
@@ -4722,16 +4723,21 @@
 				},
 				test1: {
 					type: 'integer[]',
-					defaultValue: [3, 4]
+					defaultValue: [3, 4],
+					constraint: {
+						notNull: true,
+						min: 3,
+						max: 6
+					}
 				},
 				test2: {
 					type: 'integer[]',
-					defaultValue: [5, 6]
-				},
-				constraint: {
-					notNull: true,
-					min: 3,
-					max: 6
+					defaultValue: [5, 6],
+					constraint: {
+						notNull: true,
+						min: 3,
+						max: 6
+					}
 				}
 			}
 		});
@@ -4766,26 +4772,47 @@
 				},
 				test1: {
 					type: 'string',
-					defaultValue: '00000'
+					defaultValue: '00000',
+					constraint: {
+						notNull: true,
+						notEmpty: true,
+						minLength: 5,
+						maxLength: 10,
+						pattern: /^[0-9]{5}$/
+					}
 				},
 				test2: {
 					type: 'string',
-					defaultValue: '11111'
+					defaultValue: '11111',
+					constraint: {
+						notNull: true,
+						notEmpty: true,
+						minLength: 5,
+						maxLength: 10,
+						pattern: /^[0-9]{5}$/
+					}
 				},
 				test3: {
 					type: 'string',
-					defaultValue: '22222'
+					defaultValue: '22222',
+					constraint: {
+						notNull: true,
+						notEmpty: true,
+						minLength: 5,
+						maxLength: 10,
+						pattern: /^[0-9]{5}$/
+					}
 				},
 				test4: {
 					type: 'string',
-					defaultValue: '33333'
-				},
-				constraint: {
-					notNull: true,
-					notEmpty: true,
-					minLength: 5,
-					maxLength: 10,
-					pattern: /^[0-9][0-9][0-9][0-9][0-9]$/
+					defaultValue: '33333',
+					constraint: {
+						notNull: true,
+						notEmpty: true,
+						minLength: 5,
+						maxLength: 10,
+						pattern: /^[0-9]{5}$/
+					}
 				}
 			}
 		});
@@ -4848,27 +4875,49 @@
 				},
 				test1: {
 					type: 'string',
-					defaultValue: ['00000', '00000']
+					defaultValue: ['00000', '00000'],
+					constraint: {
+						notNull: true,
+						notEmpty: true,
+						minLength: 5,
+						maxLength: 10,
+						pattern: /^[0-9]{5}$/
+					}
 				},
 				test2: {
 					type: 'string',
-					defaultValue: ['11111', '11111']
+					defaultValue: ['11111', '11111'],
+					constraint: {
+						notNull: true,
+						notEmpty: true,
+						minLength: 5,
+						maxLength: 10,
+						pattern: /^[0-9]{5}$/
+					}
 				},
 				test3: {
 					type: 'string',
-					defaultValue: ['22222', '22222']
+					defaultValue: ['22222', '22222'],
+					constraint: {
+						notNull: true,
+						notEmpty: true,
+						minLength: 5,
+						maxLength: 10,
+						pattern: /^[0-9]{5}$/
+					}
 				},
 				test4: {
 					type: 'string',
-					defaultValue: ['33333', '33333']
-				},
-				constraint: {
-					notNull: true,
-					notEmpty: true,
-					minLength: 5,
-					maxLength: 10,
-					pattern: /^[0-9][0-9][0-9][0-9][0-9]$/
+					defaultValue: ['33333', '33333'],
+					constraint: {
+						notNull: true,
+						notEmpty: true,
+						minLength: 5,
+						maxLength: 10,
+						pattern: /^[0-9]{5}$/
+					}
 				}
+
 			}
 		});
 
