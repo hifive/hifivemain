@@ -1511,15 +1511,17 @@
 		}
 
 		var methods;
-		if (type === SEQUENCE_RETURN_TYPE_STRING) {
+		if (returnType === SEQUENCE_RETURN_TYPE_STRING) {
 			methods = {
 				current: currentString,
-				next: nextString
+				next: nextString,
+				returnType: SEQUENCE_RETURN_TYPE_STRING
 			};
 		} else {
 			methods = {
 				current: currentInt,
-				next: nextInt
+				next: nextInt,
+				returnType: SEQUENCE_RETURN_TYPE_INT
 			};
 		}
 		methods.setCurrent = function(value) {
