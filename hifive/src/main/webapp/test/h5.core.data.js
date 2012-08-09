@@ -5120,7 +5120,7 @@
 		//TODO window.addEventListenerと同じで、何いれても(引数が2つさえあれば)エラー出ない？？
 		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
 				['change', undefined], [false, false], [undefined, undefined]];
-		var l = validEventNames.length
+		var l = validArgs.length
 		for ( var i = 0; i < l; i++) {
 			var ret = item.addEventListener(validArgs[i][0], validArgs[i][1]);
 			strictEqual(ret, undefined,
@@ -5129,7 +5129,7 @@
 		}
 		// addしたイベントを削除
 		item.removeEventListener('change', changeListener);
-		expect(l + 1);
+		expect(l);
 	});
 
 
@@ -5150,7 +5150,7 @@
 		}
 	});
 
-	test('hasEventListener 正常系', function() {
+	test('hasEventListener 正常系', 5, function() {
 		function changeListener() {
 		//
 		}
@@ -5227,7 +5227,6 @@
 	// Definition
 	//=============================
 
-	// 呼ばれることを確認する。ハンドラに渡される引数についてのテストはまた別途書いている。
 	// 呼ばれた順番
 	var order = [];
 	// ハンドラに渡された引数を格納するオブジェクト
@@ -5267,9 +5266,9 @@
 			// addしたイベントを削除
 			// addは各テストで必要な分をaddする。
 			// removeは存在しないハンドラをremoveしてもエラー出ないので、ここで全てremoveする
-			item1.removeEventListener('change', changeListener1);
+			item.removeEventListener('change', changeListener1);
 			item2.removeEventListener('change', changeListener1);
-			item1.removeEventListener('change', changeListener2);
+			item.removeEventListener('change', changeListener2);
 			item2.removeEventListener('change', changeListener2);
 		}
 	});
@@ -5280,89 +5279,155 @@
 	test('addEventListenerで"change"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。',
 			function() {
 				// イベントをaddする
-				item1.addEventListener('change', changeListener1);
+				item.addEventListener('change', changeListener1);
 
-				item1.val = sequence.next();
-				item1.refresh();
+				item.val = sequence.next();
+				item.refresh();
 
 				deepEqual(order, ['changeListener1'],
 						'addEventListenerの"change"にハンドリングした関数が実行されていること');
 
 				order = [];
-				item1.addEventListenr('change', changeListener1);
-				item1.val = sequence.next();
-				item1.refresh();
+				item.addEventListener('change', changeListener1);
+				item.val = sequence.next();
+				item.refresh();
 
 				deepEqual(order, ['changeListener1'],
 						'addEventListenerの"change"に同じ関数を2度ハンドリングしても一度だけ実行されること');
 
 				order = [];
-				item1.addEventListenr('change', changeListener2);
-				item1.val = sequence.next();
-				item1.refresh();
+				item.addEventListener('change', changeListener2);
+				item.val = sequence.next();
+				item.refresh();
 
 				deepEqual(order, ['changeListener1', 'changeListener2'],
 						'addEventListenerの"change"にさらに別の関数をハンドリングすると、addした順番で実行されること');
 
 				order = [];
-				item1.removeEventListenr('change', changeListener1);
-				item1.val = sequence.next();
-				item1.refresh();
+				item.removeEventListener('change', changeListener1);
+				item.val = sequence.next();
+				item.refresh();
 
 				deepEqual(order, ['changeListener2'],
 						'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				item1.removeEventListenr('change', changeListener2);
-				item1.val = sequence.next();
-				item1.refresh();
+				item.removeEventListener('change', changeListener2);
+				item.val = sequence.next();
+				item.refresh();
 
 				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				item1.addEventListenr('itemsChange', changeListener2);
-				item1.val = sequence.next();
-				item1.refresh();
+				item.addEventListener('itemsChange', changeListener2);
+				item.val = sequence.next();
+				item.refresh();
 
 				deepEqual(order, [], 'addEventListenerの"change"以外を指定してハンドリングした関数は、実行されないこと');
 
 				// addしたイベントを削除
-				item1.removeEventListener('itemsChange', changeListener1);
+				item.removeEventListener('itemsChange', changeListener1);
 			});
 
 	test('DataItemの値代入時(または値変更後のrefresh時)にchangeイベントハンドラが実行されること', 2, function() {
 		// イベントをaddする
-		item1.addEventListener('change', changeListener1);
+		item.addEventListener('change', changeListener1);
 
-		item1.val = sequence.next();
-		item1.refresh();
+		item.val = sequence.next();
+		item.refresh();
 
 		deepEqual(order, ['changeListener1'], 'addEventListenerの"change"にハンドリングした関数が実行されていること');
 
 		order = [];
-		item1.val = item1.val;
-		item1.refresh();
+		item.val = item.val;
+		item.refresh();
 
 		deepEqual(order, [], '代入しても値が変わっていない場合はchangeイベントが発火しないこと');
-
-
 	});
 
 	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること', function() {
+		// イベントをaddする
+		item.addEventListener('change', changeListener1);
 
+		var id = item.id;
+		dataModel1.create({
+			id: id,
+			val: 'test'
+		});
+
+		deepEqual(order, ['changeListener1'], 'addEventListenerの"change"にハンドリングした関数が実行されていること');
+		order = [];
+
+		dataModel1.create({
+			id: id,
+			val: 'test'
+		});
+
+		deepEqual(order, [], '値が変わっていないときはハンドラが実行されないこと');
+
+		order = [];
+		dataModel1.create([{
+			id: id,
+			val: 'test'
+		}, {
+			id: id,
+			val: 'test2'
+		}, {
+			id: id,
+			val: 'test'
+		}]);
+		deepEqual(order, [], 'createに配列で引数を渡して、最終的に値が変わっていなければイベントハンドラは実行されないこと');
+
+		order = [];
+		dataModel1.create([{
+			id: id,
+			val: 'test'
+		}, {
+			id: id,
+			val: 'test2'
+		}, {
+			id: id,
+			val: 'test3'
+		}]);
+		deepEqual(order, ['changeListener1'], 'createに配列で引数を渡して、最終的に値が変わったとき、イベントハンドラが一度だけ実行されること');
+
+		try {
+			item.id = {};
+			item.refresh();
+		} finally {
+			deepEqual(order, [], 'プロパティ代入時(refresh時に)エラーが発生た場合は、ハンドラは実行されないこと');
+		}
+		order=[];
+
+		item2.val = 'a';
+		item2.refresh();
+		deepEqual(order, [], 'addEventListenerしていないインスタンスの値を変更しても、ハンドラは実行されないこと');
+		order=[];
+
+		item.addEventListener('change', changeListener1);
+		item.val = 'b';
+		item.refresh();
+		deepEqual(order, ['changeListener1'], '既に登録済みのハンドラをさらにaddEventListenerしても、値変更時に1度だけ実行されること');
+		order=[];
+
+		item.addEventListener('change', changeListener2);
+
+		item.val = 'c';
+		item.refresh();
+		deepEqual(order, ['changeListener1', 'changeListener2'], 'addEventListenerを2回、異なるハンドラを登録した場合、2つのハンドラが登録した順で実行されること');
 	});
 
 	test(
 			'DataItemのbeginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること',
 			function() {
 				// イベントをaddする
-				item1.addEventListener('change', changeListener1);
+				item.addEventListener('change', changeListener1);
 
 				manager.beginUpdate();
-				item1.val = 'aaaa';
-				item1.refresh();
+				item.val = 'aaaa';
+				item.refresh();
 				deepEqual(order, [], 'begin/endUpdateの中ではプロパティを変更(refresh)してもイベントハンドラは呼ばれないこと');
-				item1.val = 'cccc';
+				item.val = 'cccc';
 				manager.endUpdate();
 
 				deepEqual(order, ['changeListener1'],
@@ -5370,33 +5435,33 @@
 
 				order = [];
 				manager.beginUpdate();
-				item1.val = 'bbbb';
-				item1.refresh();
-				item1.val = 'cccc';
+				item.val = 'bbbb';
+				item.refresh();
+				item.val = 'cccc';
 				manager.endUpdate();
 				deepEqual(order, [],
 						'begin/endUpdateの中でプロパティを変更し、endUpdate時にbegin時と比べて変更されていない場合はイベントハンドラは呼ばれないこと');
 
-				item1.addEventListenr('change', changeListener1);
+				item.addEventListener('change', changeListener1);
 				order = [];
 				manager.beginUpdate();
-				item1.val = sequence.next();
-				item1.val2 = sequence.next();
+				item.val = sequence.next();
+				item.val2 = sequence.next();
 				manager.endUpdate();
-				deepEqual(order, ['changeListener1', 'changeListener1'],
-						'二つのプロパティを変更した場合は、endUpdateのタイミングで、登録したイベントハンドラが2回呼ばれること');
+				deepEqual(order, ['changeListener1'],
+						'二つのプロパティを変更した場合、endUpdateのタイミングで、登録したイベントハンドラが1回だけ呼ばれること');
 			});
 
 	test(
 			'DataItemのbeginUpdate-endUpdateの間で値の変更があった時に、endUpdate時に登録されているchangeイベントハンドラだけが実行されること',
 			function() {
 				// イベントをaddする
-				item1.addEventListener('change', changeListener1);
+				item.addEventListener('change', changeListener1);
 
 				manager.beginUpdate();
-				item1.val = 'aaaa';
-				item1.refresh();
-				item1.removeEventListener('change', changeListener1);
+				item.val = 'aaaa';
+				item.refresh();
+				item.removeEventListener('change', changeListener1);
 				manager.endUpdate();
 
 				deepEqual(order, [],
@@ -5404,33 +5469,33 @@
 
 				order = [];
 				manager.beginUpdate();
-				item1.val = 'bbbb';
-				item1.addEventListener('change', changeListener1);
-				item1.val = 'cccc';
+				item.val = 'bbbb';
+				item.addEventListener('change', changeListener1);
+				item.val = 'cccc';
 				manager.endUpdate();
 				deepEqual(order, ['changeListener1'],
 						'begin/endUpdateの中でaddEventListenerをした場合、プロパティがbeginUpdate時と値が変わっていればイベントハンドラが実行されること');
 
 				order = [];
 				manager.beginUpdate();
-				item1.val = 'bbbb';
-				item1.addEventListener('change', changeListener1);
-				item1.val = 'cccc';
+				item.val = 'bbbb';
+				item.addEventListener('change', changeListener1);
+				item.val = 'cccc';
 				manager.endUpdate();
 				deepEqual(order, ['changeListener1'],
 						'begin/endUpdateの中でaddEventListenerをした場合、プロパティがbeginUpdate時と値が変わっていなければイベントハンドラは実行されないこと');
 
-				item1.addEventListenr('change', changeListener1);
+				item.addEventListener('change', changeListener1);
 				order = [];
 				manager.beginUpdate();
-				item1.val = sequence.next();
-				item1.val2 = sequence.next();
+				item.val = sequence.next();
+				item.val2 = sequence.next();
 				manager.endUpdate();
 				deepEqual(order, ['changeListener1', 'changeListener1'],
 						'二つのプロパティを変更した場合は、endUpdateのタイミングで、登録したイベントハンドラが2回呼ばれること');
 			});
 
-	test('DataItemで、型の自動変換が行われるものについて、変更後が代入前と同じ値ならchangeイベントは発火しないこと', function() {
+	test('DataItemで、型の自動変換が行われるものについて、変更後が代入前と同じ値ならchangeイベントは発火しないこと', 2, function() {
 		var model = manager.createModel({
 			name: 'Model',
 			schema: {
@@ -5443,119 +5508,136 @@
 			}
 		});
 
-		var item = model.create({
+		var testItem = model.create({
 			id: sequence.next(),
 			numVal: 1
 		});
 
-		item.addEventListener('change', changeListener1);
+		testItem.addEventListener('change', changeListener1);
 
-		item.val = '1';
-		item.refresh();
+		testItem.numVal = '1';
+		testItem.refresh();
 		deepEqual(order, [], '値が型変換されると変更前と変更後が同じになる場合はイベントが発火しないこと');
+		order = [];
 
-		item.val = new Number(1);
-		item.refresh();
+		testItem.numVal = new Number(1);
+		testItem.refresh();
 		deepEqual(order, [], '値が型変換されると変更前と変更後が同じになる場合はイベントが発火しないこと');
 	});
 
 
 	test('DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', function() {
-		// 引数を格納するオブジェクト変数のリセット
-		argsObj = {};
+		item.addEventListener('change', changeListener1);
+		item.addEventListener('change', changeListener2);
+		var orgVal = item.val;
+		item.val = 'test';
+		item.refresh();
 
-		item1.addEventListener('change', changeListener1);
-		item1.addEventListener('change', changeListener2);
-		var orgVal = item1.val;
-		item1.val = 'test';
-		item1.refresh();
-
-		ok(changeArgs, 'ハンドラの引数にchangeイベントオブジェクトが渡されること');
-		strictEqual(changeArgs1.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
-		strictEqual(changeArgs1.target, item1, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
-		deepEqual(changeArgs1.props, {
+		var arg = argsObj.changeListener1;
+		ok(typeof arg === 'object', '値を変更してrefresh()したとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		strictEqual(arg.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(arg.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(arg.props, {
 			val: {
 				oldValue: orgVal,
 				newValue: 'test'
 			}
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
-		strictEqual(changeArgs1, changeArgs2,
+		strictEqual(arg, argsObj.changeListener2,
 				'イベントハンドラが二つ登録されているとき、どちらのハンドラにも同じインスタンスのchangeイベントオブジェクトが渡されること');
 
-		changeArgs1 = changeArgs2 = null;
-
-		item1.val = 'test';
-		item1.refresh();
-		strictEqual(changeArgs1, null, '代入しても値が変わらない場合はイベントが起きないこと');
-		changeArgs1 = changeArgs2 = null;
+		// 引数を格納するオブジェクト変数のリセット
+		argsObj = {};
 
 		manager.beginUpdate();
-		item1.val = 'AB';
-		item1.val2 = 'ABC';
-		item1.val = 'ABC2';
+		item.val = '変更途中';
+		item.val2 = 'ABC2';
+		item.val = 'ABC';
 		manager.endUpdate();
 
-		deepEqual(order, ['changeListener'],
-				'beginUpdate/endUpdateの間で値を変更すると、addEventListenerのchangeイベントに登録したハンドラが1回実行されること');
-		ok(changeArgs, 'changeイベントオブジェクトが取得できること');
-		strictEqual(changeArgs.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
-		strictEqual(changeArgs.target, item1, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
-		deepEqual(changeArgs.props, {
-			value: {
+		arg = argsObj.changeListener1;
+
+		ok(typeof arg === 'object', 'beginUpdate/endUpdateの間で値を変更した時、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		strictEqual(arg.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(arg.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(arg.props, {
+			val: {
 				oldValue: 'test',
 				newValue: 'ABC'
 			},
-			value2: {
+			val2: {
 				oldValue: null,
 				newValue: 'ABC2'
 			},
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
-		reset();
 
-		try {
-			item1.id = {};
-			item1.refresh();
-		} finally {
-			strictEqual(changeCount, 0, 'プロパティ代入時(refresh時に)エラーが発生た場合は、ハンドラは実行されないこと');
-		}
-		reset();
+		argsObj = {};
 
-		item2.val = 'a';
-		item2.refresh();
-		strictEqual(changeCount, 0, 'addEventListenerしていないインスタンスの値を変更しても、ハンドラは実行されないこと');
-		reset();
-
-		item1.addEventListener('change', changeListener);
-		item1.value = 'b';
-		item1.refresh();
-		strictEqual(changeCount, 1, '同じハンドラを再度addEventListenerしても、値変更時に1度だけ実行されること');
-		reset();
-
-		item1.addEventListener('change', changeListener2);
-
-		item1.value = 'c';
-		strictEqual(changeCount, 1, 'addEventListenerを2回、異なるハンドラを登録した場合、1つ目のハンドラが実行されること');
-		strictEqual(changeCount2, 1, 'addEventListenerを2回、異なるハンドラを登録した場合、2つ目のハンドラが実行されること');
-		reset();
-
-		item1.addEventListener('change', changeListener);
-		item1.addEventListener('change', changeListener2);
-
-		item1.value = 'c';
-		strictEqual(changeCount, 1, 'addEventListenerで、既に登録済みのハンドラを登録した場合、1つ目のハンドラが1回だけ実行されること');
-		strictEqual(changeCount2, 1, 'addEventListenerで、既に登録済みハンドラを登録した場合、2つ目のハンドラが1回だけ実行されること');
-		reset();
-
-		model.addEventListener('itemsChange', function() {
-			order.push('itemsChangeListener');
+		var id = item.id;
+		dataModel1.create({
+			id: id,
+			val: '変更途中',
+			val2: '変更途中'
+		}, {
+			id: id,
+			val: 'AAAA',
+			val2: 'BBBB'
 		});
+		ok(typeof arg === 'object', 'createので値を変更した時、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		strictEqual(arg.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(arg.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(arg.props, {
+			value: {
+				oldValue: 'test',
+				newValue: 'AAAA'
+			},
+			value2: {
+				oldValue: null,
+				newValue: 'BBBB'
+			},
+		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
 
-		item1.value = 'd';
-		item1.refresh();
-		deepEqual(order, ['changeListener', 'changeListener2', 'itemsChangelistener'],
-				'changeイベントに登録したハンドラが登録順に実行され、最後にモデルのitemsChangeイベントハンドラが実行されること');
+		argsObj = {};
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
+	module('DataModel itemsChangeイベント', {
+		setup: function() {
+			sequence = h5.core.data
+					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+			createDataModel1();
+			item = dataModel1.create({
+				id: sequence.next(),
+				val: 1
+			});
+			item2 = dataModel1.create({
+				id: sequence.next(),
+				val2: 2
+			});
+		},
+		teardown: function() {
+			order = [];
+			argsObj = {};
+			sequence = null;
+			dataModel1 = null;
+			dropAllModel(manager);
+			// addしたイベントを削除
+			// addは各テストで必要な分をaddする。
+			// removeは存在しないハンドラをremoveしてもエラー出ないので、ここで全てremoveする
+			item1.removeEventListener('change', changeListener1);
+			item2.removeEventListener('change', changeListener1);
+			item1.removeEventListener('change', changeListener2);
+			item2.removeEventListener('change', changeListener2);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
 	test('itemsChangeイベント', function() {
 		var itemsChangeArgs = null;
 		var itemsChangeCount = 0;
@@ -5585,7 +5667,7 @@
 			}
 		});
 
-		var ret = model.addEventListener('itemsChange', itemsChangeListener);
+		var ret = model.addEventListener('itemsChange', itemsChangeListener1);
 		strictEqual(ret, undefined, 'addEventListenerの戻り値はundefinedであること');
 
 		var item = model.create({
