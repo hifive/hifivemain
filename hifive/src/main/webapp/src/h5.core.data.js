@@ -400,7 +400,7 @@
 	 * @return {Boolean} type:'string'指定のプロパティに代入可能か
 	 */
 	function isStringValue(val) {
-		return val == null || isString(val) ||  val instanceof String;
+		return val == null || isString(val) || val instanceof String;
 	}
 
 	/**
@@ -494,11 +494,13 @@
 	 * スキーマのプロパティオブジェクトから、そのプロパティに入る値かどうかをチェックする関数を作る。 # schema:{val:xxxx,val2:....}
 	 * のxxxxの部分と、マネージャを引数にとる スキーマのチェックが通ってから呼ばれる前提なので、エラーチェックは行わない。
 	 *
-	 * @param {object} propObj スキーマのプロパティオブジェクト
+	 * @param {object} propertyObject スキーマのプロパティオブジェクト
 	 * @param {object} [manager] そのスキーマを持つモデルが属するマネージャのインスタンス。データモデルのチェックに必要(要らないなら省略可能)
 	 * @return {function} 指定されたスキーマのプロパティに、引数の値が入るかどうかをチェックする関数
 	 */
-	function createCheckValueBySchemaPropertyObj(propObj, manager) {
+	function createCheckValueBySchemaPropertyObj(propertyObject, manager) {
+		// schema{prop:null} のように指定されている場合はpropObjはnullなので、空オブジェクト指定と同等に扱うようにする
+		var propObj = propertyObject || {};
 		var checkFuncArray = [];
 		var elmType = null;
 		var dimention = 0;
@@ -669,7 +671,7 @@
 			// id指定されている属性が一つだけであることをチェック
 			var hasId = false;
 			for ( var p in schema) {
-				if (schema[p].id === true) {
+				if (schema[p] && schema[p].id === true) {
 					if (hasId) {
 						errorReason
 								.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DUPLICATED_ID));
@@ -688,7 +690,8 @@
 			}
 
 			for ( var schemaProp in schema) {
-				var propObj = schema[schemaProp];
+				// null(またはundefined)がプロパティオブジェクトに指定されていたら、空オブジェクトと同等に扱い、エラーにしない。
+				var propObj = schema[schemaProp] == null ? {} : schema[schemaProp];
 				var isId = !!propObj.id;
 				// 代入やdefaultValueの値をチェックする関数を格納する配列([typeCheck, constraintCheck]のように格納する)
 				var checkFuncArray = [];
@@ -1082,7 +1085,7 @@
 		var errorReason = [];
 		for ( var p in descriptor.schema) {
 			var propObj = descriptor.schema[p];
-			if (!propObj.hasOwnProperty('defaultValue') && propObj.type
+			if (!propObj || !propObj.hasOwnProperty('defaultValue') && propObj.type
 					&& (propObj.type === 'array' || getTypeObjFromString(propObj.type).dimention)) {
 				// defaultValueが指定されていないかつ、type指定が配列指定であれば、
 				// 初期値は空のOvservableArrayになる。
