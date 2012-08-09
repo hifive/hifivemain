@@ -846,6 +846,7 @@
 			var initDfd = controller.__controllerContext.initDfd;
 			// FW、ユーザともに使用しないので削除
 			delete controller.__controllerContext.templatePromise;
+			delete controller.__controllerContext.preinitDfd;
 			delete controller.__controllerContext.initDfd;
 			initDfd.resolve();
 
