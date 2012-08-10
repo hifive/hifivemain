@@ -5384,6 +5384,132 @@
 	//=============================
 	// Definition
 	//=============================
+
+	module('auto boxing', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+			dataModel1 = manager.createModel({
+				name: 'AutoBoxingDataModel1',
+				schema: {
+					id: {
+						id: true
+					},
+					testI1: {
+						type: 'integer',
+						defaultValue: '10'
+					},
+					testI2: {
+						type: 'integer',
+						defaultValue: new Number('10')
+					},
+					testI3: {
+						type: 'integer',
+						defaultValue: new Object('10')
+					},
+					testI4: {
+						type: 'integer',
+						defaultValue: new String(10)
+					},
+					testN1: {
+						type: 'number',
+						defaultValue: '20'
+					},
+					testN2: {
+						type: 'number',
+						defaultValue: new Number('20')
+					},
+					testN3: {
+						type: 'number',
+						defaultValue: new Object('20')
+					},
+					testN4: {
+						type: 'integer',
+						defaultValue: new String(30)
+					},
+					testN5: {
+						type: 'number',
+						defaultValue: '30.1'
+					},
+					testN6: {
+						type: 'number',
+						defaultValue: new Number('30.1')
+					},
+					testN7: {
+						type: 'number',
+						defaultValue: new Object('30.1')
+					},
+					testN8: {
+						type: 'integer',
+						defaultValue: new String('30.1')
+					},
+				}
+			});
+		},
+		teardown: function() {
+			sequence = null;
+			dataModel1 = null;
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('DataItem生成時に自動的に型変換されていることを確認', function() {
+		var item = dataModel1.create({
+			id: sequence.next()
+		});
+
+		equal(item.testI1, 10, 'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
+		equal(item.testI2, 10, 'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
+		equal(item.testI3, 10, 'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
+		equal(item.testI4, 10, 'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
+		equal(item.testN1, 20, 'type:numberでdefaultValueがパース可能な文字列(整数)の場合、自動的に数値に変換されること。');
+		equal(item.testN2, 20, 'type:numberでdefaultValueがパース可能な文字列(整数)の場合、自動的に数値に変換されること。');
+		equal(item.testN3, 20, 'type:numberでdefaultValueがパース可能な文字列(整数)の場合、自動的に数値に変換されること。');
+		equal(item.testN4, 20, 'type:numberでdefaultValueがパース可能な文字列(整数)の場合、自動的に数値に変換されること。');
+		equal(item.testN5, 30.1, 'type:numberでdefaultValueがパース可能な文字列(小数点を含む)の場合、自動的に数値に変換されること。');
+		equal(item.testN6, 30.1, 'type:numberでdefaultValueがパース可能な文字列(小数点を含む)の場合、自動的に数値に変換されること。');
+		equal(item.testN7, 30.1, 'type:numberでdefaultValueがパース可能な文字列(小数点を含む)の場合、自動的に数値に変換されること。');
+		equal(item.testN8, 30.1, 'type:numberでdefaultValueがパース可能な文字列(小数点を含む)の場合、自動的に数値に変換されること。');
+
+	});
+
+	test('DataItemの値を更新すると自動的に型変換されていることを確認', function() {
+		var item = dataModel1.create({
+			id: sequence.next()
+		});
+
+		item.testI1 = '40';
+		item.testI2 = '40';
+		item.testI3 = '40';
+		item.testN1 = '50';
+		item.testN2 = '50';
+		item.testN3 = '50';
+		item.testN4 = '60.1';
+		item.testN5 = '60.1';
+		item.testN6 = '60.1';
+		item.testN7 = '60.1';
+		item.testN8 = '60.1';
+
+		equal(item.testI1, 40, 'type:integerのプロパティにパース可能な文字列を設定すると、自動的に数値に変換されること。');
+		equal(item.testI2, 40, 'type:integerのプロパティにパース可能な文字列を設定すると、自動的に数値に変換されること。');
+		equal(item.testI3, 40, 'type:integerのプロパティにパース可能な文字列を設定すると、自動的に数値に変換されること。');
+		equal(item.testN1, 50, 'type:numberのプロパティにパース可能な文字列(整数)を設定すると、自動的に数値に変換されること。');
+		equal(item.testN2, 50, 'type:numberのプロパティにパース可能な文字列(整数)を設定すると、自動的に数値に変換されること。');
+		equal(item.testN3, 50, 'type:numberのプロパティにパース可能な文字列(整数)を設定すると、自動的に数値に変換されること。');
+		equal(item.testN4, 60.1, 'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
+		equal(item.testN5, 60.1, 'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
+		equal(item.testN6, 60.1, 'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
+		equal(item.testN7, 60.1, 'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
+		equal(item.testN8, 60.1, 'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	var item = item2 = null;
 	// ハンドラが実行された順番を確認する用の配列
 	var order = [];
