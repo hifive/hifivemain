@@ -5733,66 +5733,64 @@
 		deepEqual(order, [], '代入しても値が変わっていない場合はchangeイベントが発火しないこと');
 	});
 
-	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること',6,
-			function() {
-				var id = item.id;
-				dataModel1.create({
-					id: id,
-					val: 'test'
-				});
+	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること', 6, function() {
+		var id = item.id;
+		dataModel1.create({
+			id: id,
+			val: 'test'
+		});
 
-				deepEqual(order, ['item', 'model', 'manager'],
-						'データアイテム、データモデル、データマネージャの順でイベントが発火すること');
-				order = [];
+		deepEqual(order, ['item', 'model', 'manager'], 'データアイテム、データモデル、データマネージャの順でイベントが発火すること');
+		order = [];
 
-				dataModel1.create({
-					id: id,
-					val: 'test'
-				});
-				deepEqual(order, [], '値が変わっていないときはハンドラが実行されないこと');
-				order = [];
+		dataModel1.create({
+			id: id,
+			val: 'test'
+		});
+		deepEqual(order, [], '値が変わっていないときはハンドラが実行されないこと');
+		order = [];
 
-				dataModel1.create([{
-					id: id,
-					val: 'test'
-				}, {
-					id: id,
-					val: 'test2'
-				}, {
-					id: id,
-					val: 'test'
-				}]);
-				deepEqual(order, [], 'createに配列で引数を渡して、最終的に値が変わっていなければイベントハンドラは実行されないこと');
-				order = [];
+		dataModel1.create([{
+			id: id,
+			val: 'test'
+		}, {
+			id: id,
+			val: 'test2'
+		}, {
+			id: id,
+			val: 'test'
+		}]);
+		deepEqual(order, [], 'createに配列で引数を渡して、最終的に値が変わっていなければイベントハンドラは実行されないこと');
+		order = [];
 
-				dataModel1.create([{
-					id: id,
-					val: 'test'
-				}, {
-					id: id,
-					val: 'test2'
-				}, {
-					id: id,
-					val: 'test3'
-				}]);
-				deepEqual(order, ['item', 'model', 'manager'],
-						'createに配列で引数を渡して、最終的に値が変わった時、データアイテム、データモデル、データマネージャの順で一度ずつイベントが発火すること');
-				order = [];
+		dataModel1.create([{
+			id: id,
+			val: 'test'
+		}, {
+			id: id,
+			val: 'test2'
+		}, {
+			id: id,
+			val: 'test3'
+		}]);
+		deepEqual(order, ['item', 'model', 'manager'],
+				'createに配列で引数を渡して、最終的に値が変わった時、データアイテム、データモデル、データマネージャの順で一度ずつイベントが発火すること');
+		order = [];
 
-				try {
-					item.id = {};
-					item.refresh();
-				} finally {
-					deepEqual(order, [], 'プロパティ代入時(refresh時に)エラーが発生た場合は、ハンドラは実行されないこと');
-				}
-				order = [];
+		try {
+			item.id = {};
+			item.refresh();
+		} finally {
+			deepEqual(order, [], 'プロパティ代入時(refresh時に)エラーが発生た場合は、ハンドラは実行されないこと');
+		}
+		order = [];
 
-				item2.val = 'a';
-				item2.refresh();
-				deepEqual(order, ['model', 'manager'],
-						'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
-				order = [];
-			});
+		item2.val = 'a';
+		item2.refresh();
+		deepEqual(order, ['model', 'manager'],
+				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
+		order = [];
+	});
 
 
 	//TODO ↑まで、item,model,managerのイベント発火のタイミングを同時に見るように作り直した。↓はまだリファクタ前です。
