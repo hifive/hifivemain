@@ -1453,6 +1453,305 @@
 		}
 	});
 
+	test('データモデルの登録 schemaのチェック defaultValueがtypeの条件を満たしている場合、データモデルが生成できること', 1, function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModelA',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {
+					type: 'string',
+					defaultValue: 'hoge'
+				}
+			}
+		});
+
+		var item1 = model1.create({
+			id: sequence.next()
+		});
+
+		var item2 = model1.create({
+			id: sequence.next()
+		});
+
+		var ar1 = new Array(10, 20);
+
+		try {
+			manager.createModel({
+				name: 'TestDataModel',
+				schema: {
+					id: {
+						id: true
+					},
+					testS1: {
+						type: 'string',
+						defaultValue: 'aaa'
+					},
+					testS2: {
+						type: 'string',
+						defaultValue: new String('aaa')
+					},
+					testS3: {
+						type: 'string',
+						defaultValue: new Object('aaa')
+					},
+					testB1: {
+						type: 'boolean',
+						defaultValue: true
+					},
+					testB2: {
+						type: 'boolean',
+						defaultValue: new Boolean(1)
+					},
+					testB3: {
+						type: 'boolean',
+						defaultValue: new Object(true)
+					},
+					testA1: {
+						type: 'array',
+						defaultValue: [10, 20]
+					},
+					testA2: {
+						type: 'array',
+						defaultValue: new Array(10, 20)
+					},
+					testA3: {
+						type: 'array',
+						defaultValue: new Object([10, 20])
+					},
+					testI1: {
+						type: 'integer',
+						defaultValue: 10
+					},
+					testI2: {
+						type: 'integer',
+						defaultValue: '10'
+					},
+					testI3: {
+						type: 'integer',
+						defaultValue: new Number('10')
+					},
+					testI4: {
+						type: 'integer',
+						defaultValue: new Object('10')
+					},
+					testI5: {
+						type: 'integer',
+						defaultValue: new String(10)
+					},
+					testN1: {
+						type: 'number',
+						defaultValue: 20
+					},
+					testN2: {
+						type: 'number',
+						defaultValue: 20.1
+					},
+					testN3: {
+						type: 'number',
+						defaultValue: '20'
+					},
+					testN4: {
+						type: 'number',
+						defaultValue: new Number('20')
+					},
+					testN5: {
+						type: 'number',
+						defaultValue: new Object('20')
+					},
+					testN6: {
+						type: 'number',
+						defaultValue: new String(20)
+					},
+					testN7: {
+						type: 'number',
+						defaultValue: '30.1'
+					},
+					testN8: {
+						type: 'number',
+						defaultValue: new Number('30.1')
+					},
+					testN9: {
+						type: 'number',
+						defaultValue: new Object('30.1')
+					},
+					testN10: {
+						type: 'number',
+						defaultValue: new String('30.1')
+					},
+					testE1: {
+						type: 'enum',
+						defaultValue: new String('aaa'),
+						enumValue: ['aaa']
+					},
+					testE2: {
+						type: 'enum',
+						defaultValue: new Boolean(1),
+						enumValue: [true]
+					},
+					testE3: {
+						type: 'enum',
+						defaultValue: new Number(10),
+						enumValue: [10]
+					},
+					testE4: {
+						type: 'enum',
+						defaultValue: new Number(10.5),
+						enumValue: [10.5]
+					},
+					testE5: {
+						type: 'enum',
+						defaultValue: ar1,
+						enumValue: [ar1]
+					},
+					testE6: {
+						type: 'enum',
+						defaultValue: item1,
+						enumValue: [item1]
+					},
+					testAny1: {
+						type: 'any',
+						defaultValue: 1
+					},
+					testAny2: {
+						type: 'any',
+						defaultValue: new Number(10)
+					},
+					testAny3: {
+						type: 'any',
+						defaultValue: new Object(10)
+					},
+					testAny4: {
+						type: 'any',
+						defaultValue: 10.7
+					},
+					testAny5: {
+						type: 'any',
+						defaultValue: new Number(10.7)
+					},
+					testAny6: {
+						type: 'any',
+						defaultValue: new Object(10.7)
+					},
+					testAny7: {
+						type: 'any',
+						defaultValue: 'A'
+					},
+					testAny8: {
+						type: 'any',
+						defaultValue: new String('A')
+					},
+					testAny9: {
+						type: 'any',
+						defaultValue: new Object('A')
+					},
+					testAny10: {
+						type: 'any',
+						defaultValue: [10, 20]
+					},
+					testAny11: {
+						type: 'any',
+						defaultValue: new Array(10, 20)
+					},
+					testAny12: {
+						type: 'any',
+						defaultValue: new Object([10, 20])
+					},
+					testAny13: {
+						type: 'any',
+						defaultValue: item1
+					},
+					testDI1: {
+						type: '@TestDataModelA',
+						defaultValue: item1
+					},
+					testSA1: {
+						type: 'string[]',
+						defaultValue: ['aaa', new String('aaa'), new Object('aaa')]
+					},
+					testSA2: {
+						type: 'string[]',
+						defaultValue: new Array('aaa', new String('aaa'), new Object('aaa'))
+					},
+					testSA3: {
+						type: 'string[]',
+						defaultValue: new Object(['aaa', new String('aaa'), new Object('aaa')])
+					},
+					testBA1: {
+						type: 'boolean[]',
+						defaultValue: [true, new Boolean(1), new Object(true)]
+					},
+					testBA2: {
+						type: 'boolean[]',
+						defaultValue: new Array(true, new Boolean(1), new Object(true))
+					},
+					testBA3: {
+						type: 'boolean[]',
+						defaultValue: new Object([true, new Boolean(1), new Object(true)])
+					},
+					testIA1: {
+						type: 'integer[]',
+						defaultValue: [10, '10', new String(10), new Object(10)]
+					},
+					testIA2: {
+						type: 'integer[]',
+						defaultValue: new Array(10, '10', new String(10), new Object(10))
+					},
+					testIA3: {
+						type: 'integer[]',
+						defaultValue: new Object([10, '10', new String(10), new Object(10)])
+					},
+					testNA1: {
+						type: 'number[]',
+						defaultValue: [10, '10', 10.1, '10.1', new String('10'), new Object('10'),
+								new String('10.1'), new Object('10.1')]
+					},
+					testNA2: {
+						type: 'number[]',
+						defaultValue: new Array(10, '10', 10.1, '10.1', new String('10'),
+								new Object('10'), new String('10.1'), new Object('10.1'))
+					},
+					testNA3: {
+						type: 'number[]',
+						defaultValue: new Object([10, '10', 10.1, '10.1', new String('10'),
+								new Object('10'), new String('10.1'), new Object('10.1')])
+					},
+					testDIA1: {
+						type: '@TestDataModelA[]',
+						defaultValue: [item1, item2]
+					},
+					testDIA2: {
+						type: '@TestDataModelA[]',
+						defaultValue: new Array(item1, item2)
+					},
+					testDIA3: {
+						type: '@TestDataModelA[]',
+						defaultValue: new Object([item1, item2])
+					},
+					testEnumA1: {
+						type: 'enum[]',
+						defaultValue: [10, 20],
+						enumValue: [new Number(10), Object('20')]
+					},
+					testEnumA1: {
+						type: 'enum[]',
+						defaultValue: [10, 20],
+						enumValue: new Array(new Number(10), Object('20'))
+					},
+					testEnumA1: {
+						type: 'enum[]',
+						defaultValue: [10, 20],
+						enumValue: new Object([new Number(10), Object('20')])
+					}
+				}
+			});
+			ok(true, 'DataModelが作成できること。');
+		} catch (e) {
+			ok(false, 'テスト失敗');
+		}
+	});
+
 	test('データモデルの登録 schemaのチェック defaultValueがtypeに指定されている型を満たさない場合はエラーになること', function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		// @ParentModelのテスト用にモデルを2つのマネージャで作成する
