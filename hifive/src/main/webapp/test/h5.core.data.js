@@ -5794,6 +5794,8 @@
 				order = [];
 			});
 
+
+	//TODO ↑まで、item,model,managerのイベント発火のタイミングを同時に見るように作り直した。↓はまだリファクタ前です。
 	test(
 			'DataItemのbeginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること',
 			function() {
