@@ -565,4 +565,55 @@
 		return instance;
 	};
 
+	window.manager = h5.core.data.createManager('TestManager', '');
+	var model = manager.createModel({
+		name: 'TestDataModel',
+		schema: {
+			id: {
+				id: true
+			},
+			name: {
+				type: 'string'
+			},
+			age: {
+				type: 'integer'
+			},
+			mail: {
+				type: 'string',
+				constraint: {
+					notEmpty: true,
+					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
+				}
+			}
+		}
+	})
+	var controller = {
+		__name: 'FormController',
+		'input[type=submit] click': function(e) {
+			e.event.preventDefault();
+			this.checkForm(this.$find('form'));
+		},
+		'input blur': function(context) {
+			var $target = $(context.event.target);
+			var errObj = h5.core.data.validateInput($target);
+			$target.next('span').remove();
+			for ( var i = 0, l = errObj.reasons.length; i < l; i++) {
+				var conditions = '';
+				for ( var condition in errObj.reasons[i]) {
+					conditions += condition + ':' + errObj.reasons[i][condition] + ' ';
+				}
+			}
+			if (conditions) {
+				$target.after(h5.u.str.format(
+						'<span class="validateError">次の条件を満たす必要があります。 {0}</span>', conditions));
+			}
+		},
+		checkForm: function($form) {
+			var errors = h5.core.data.validateForm($form, manager);
+			console.log(errors);
+		}
+	};
+
+	h5.core.controller('#wrap', controller);
+
 })();
