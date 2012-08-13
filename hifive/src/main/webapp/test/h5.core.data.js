@@ -1817,7 +1817,7 @@
 		// integerでないもの
 		invalidValueArrays.push([1.1, Infinity, -Infinity, '1.1', '1px', true, [1], {}]);
 		// booleanでないもの
-		invalidValueArrays.push([1, '1', [true], {}, new Boolean(true)]);
+		invalidValueArrays.push([1, '1', [true], {}]);
 		// arrayでないもの
 		invalidValueArrays.push([1, "1", {}]);
 		// 同じマネージャのデータモデル@ParentModelでないもの
@@ -1827,9 +1827,9 @@
 		// string[]でないもの
 		invalidValueArrays.push(["a", ["a", "b", 1], [["a"]]]);
 		// number[]でないもの
-		invalidValueArrays.push([1, [1, 2, "1"], [[1]]]);
+		invalidValueArrays.push([1, [1, 2, [1]], [[1]]]);
 		// integer[]でないもの
-		invalidValueArrays.push([1, [1, 2, 1.1], [[1]]]);
+		invalidValueArrays.push([1, [1, 2, 1.1, [1]], [[1]]]);
 		// boolean[]でないもの
 		invalidValueArrays.push([[true, false, 'true'], true, [[true, false]]]);
 		// @ParentModel[]でないもの
@@ -6107,13 +6107,14 @@
 
 	// イベントハンドラ
 	var changeListener1 = changeListener2 = changeListener3 = null;
+	// データアイテムインスタンス
+	var item2 = null;
 
 	module('イベント発火のタイミング', {
 		setup: function() {
 			sequence = h5.core.data
 					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
-			manager2 = h5.core.data.createManager('TestManager2');
 			// dataModel1の作成
 			createDataModel1();
 			// dataModel2の作成 TODO 関数呼び出しで作成するようにする
@@ -6521,7 +6522,6 @@
 			sequence = h5.core.data
 					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
-			manager2 = h5.core.data.createManager('TestManager2');
 			// dataModel1の作成
 			createDataModel1();
 			// dataModel2の作成 TODO 関数呼び出しで作成するようにする
@@ -6931,4 +6931,139 @@
 	//		//TODO
 	//	});
 
+
+	//TODO Object.definePropertyの使えるブラウザで、itemに値をセットしたタイミングで、値のチェック、値の型変換、イベントの発生、が起きることを確認するテスト
+	//=============================
+	// Definition
+	//=============================
+
+	module('オブジェクト拡張(※IE8-では失敗します)', {
+		setup: function() {
+			sequence = h5.core.data
+					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+
+
+			// dataModel1の作成
+			createDataModel1();
+			// dataModel2の作成 TODO 関数呼び出しで作成するようにする
+			dataModel2 = manager.createModel({
+				name: 'TestDataModel2',
+				schema: {
+					id: {
+						id: true
+					},
+					val: {},
+					val2: {},
+					num: {
+						type: 'number'
+					},
+					int: {
+						type: 'integer'
+					},
+					bool: {
+						type: 'boolean'
+					},
+					str: {
+						type: 'string',
+						constraint: {
+							notEmpty: true
+						},
+						defaultValue: 'str'
+					}
+				}
+			});
+			item = dataModel1.create({
+				id: sequence.next(),
+				val: 1
+			});
+
+			changeListener1 = function(arg) {
+				order.push('manager');
+				argsObj = argsObj || {};
+				argsObj['manager'] = arg;
+			}
+			changeListener2 = function(arg) {
+				order.push('model');
+				argsObj = argsObj || {};
+				argsObj['model'] = arg;
+			}
+
+			changeListener3 = function(arg) {
+				order.push('item');
+				argsObj = argsObj || {};
+				argsObj['item'] = arg;
+			}
+
+			manager.addEventListener('itemsChange', changeListener1);
+			dataModel1.addEventListener('itemsChange', changeListener2);
+			item.addEventListener('change', changeListener3);
+		},
+		teardown: function() {
+			// addしたイベントを削除
+			manager.removeEventListener('itemsChange', changeListener1);
+			dataModel1.removeEventListener('itemsChange', changeListener2);
+			item.removeEventListener('change', changeListener3);
+
+			order = [];
+			sequence = null;
+			dataModel1 = null;
+			dropAllModel(manager);
+		}
+	});
+	//=============================
+	// Body
+	//=============================
+	test('DataItem.refresh()を呼び出さなくても、イベントの発火、値のチェック、型変換、が発生すること', function() {
+		if (h5.env.ua.isIE && h5.env.ua.browserVersion < 9) {
+			ok(false, 'IE8以下では、このテストを実行できません');
+			expect(1);
+			return;
+		}
+		item.val = 'AAA';
+		deepEqual(order, ['item', 'model', 'manager'], '値の代入で値が変更されたとき、イベントが発火すること');
+		order = [];
+
+		item.val = 'AAA';
+		deepEqual(order, [], '値の代入で値の変更がなかった場合、イベントは発火しないこと');
+		order = [];
+
+		var item2 = dataModel2.create({
+			id: sequence.next()
+		});
+		item2.num = '12.3';
+		strictEqual(item2.num, 12.3, 'セット時に値の型変換が行われること');
+		item2.num = new Number(12.3);
+		strictEqual(item2.num, 12.3, 'セット時に値の型変換が行われること');
+		item2.num = new String('12.3');
+		strictEqual(item2.num, 12.3, 'セット時に値の型変換が行われること');
+
+		item2.int = '12';
+		strictEqual(item2.int, 12, 'セット時に値の型変換が行われること');
+		item2.int = new  Number(12);
+		strictEqual(item2.int, 12, 'セット時に値の型変換が行われること');
+		item2.int = new String('12');
+		strictEqual(item2.int, 12, 'セット時に値の型変換が行われること');
+
+		item2.bool = new Boolean(1);
+		strictEqual(item2.bool, true, 'セット時に値の型変換が行われること');
+
+		item2.str = new String('1');
+		strictEqual(item2.str, '1', 'セット時に値の型変換が行われること');
+
+		try {
+			item2.num = 'ABC';
+			ok(false, 'エラーが発生していません。typeのチェックが値のセット時に行われていません');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR,
+					'セット時に値の型変換が行われ、条件を満たさない値を代入するとエラーが発生すること');
+		}
+		try {
+			item2.str = '';
+			ok(false, 'エラーが発生していません。constraintのチェックが値のセット時に行われていません');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR,
+					'セット時に値の型変換が行われ、条件を満たさない値を代入するとエラーが発生すること');
+		}
+	});
 })();
