@@ -438,14 +438,14 @@
 	function isEnumValue(v, enumValue) {
 		if (isStrictNaN(v)) {
 			// NaN の時は、NaN===NaNにならない(inArrayでも判定できない)ので、enumValueの中身を見て判定する
-			for ( var i = 0, l = opt.enumValue.length; i < l; i++) {
-				if (isStrictNaN(opt.enumValue[i])) {
+			for ( var i = 0, l = enumValue.length; i < l; i++) {
+				if (isStrictNaN(enumValue[i])) {
 					return true;
 				}
 			}
 			return false;
 		}
-		return $.inArray(v, enumValue) > 0;
+		return $.inArray(v, enumValue) >= 0;
 	}
 
 	/**
@@ -457,29 +457,36 @@
 	 * @param {integer} [checkObj.dimention]
 	 *            チェックする値の配列の次元。配列のdimention次元目が全てcheckFuncsを満たすことと、dimention-1次元目まではすべて配列であることを確認する関数を作成して返す。
 	 *            0、または指定無しの場合は配列でないことを表す
+	 * @return {Function} 値をチェックする関数を返す。戻り値の関数はエラー理由を返す。length;0ならエラーでない。
 	 */
 	function createCheckValueByCheckObj(checkObj) {
 		var funcs = checkObj.checkFuncs;
 		if (!funcs || funcs.length === 0) {
 			return function() {
-				return true;
+				return [];
 			};
 		}
 		var dim = checkObj.dimention || 0;
 		return function checkValue(val) {
+			var errorReason = [];
 			function _checkValue(v, d) {
 				if (!d) {
 					// チェック関数を順番に適応して、falseが返ってきたらチェック終了してfalseを返す
+					var hasError = false;
 					for ( var i = 0, l = funcs.length; i < l; i++) {
-						if (!funcs[i](v)) {
+						var result = funcs[i](v);
+						if (result.length) {
+							errorReason = errorReason.concat(result);
 							return false;
 						}
 					}
-					// 全てのチェック関数についてtrueが返ってきた場合はtrueを返す
 					return true;
 				}
 				// 指定された配列次元と、渡された値の配列の次元があっていない場合はfalseを返す
 				if (!$.isArray(v)) {
+					errorReason.push({
+						dimention: dim
+					});
 					return false;
 				}
 				for ( var i = 0, l = v.length; i < l; i++) {
@@ -491,7 +498,8 @@
 				// 全ての要素についてチェックが通ればtrue
 				return true;
 			}
-			return _checkValue(val, dim);
+			_checkValue(val, dim);
+			return errorReason;
 		};
 	}
 
@@ -970,7 +978,7 @@
 								}
 								break;
 							case 'pattern':
-								switch (elmType) {
+								switch (typeObj.elmType) {
 								case 'string':
 									if ($.type(val) !== 'regexp') {
 										// patternにRegExpオブジェクト以外のものが指定されていたらエラー
@@ -1098,9 +1106,12 @@
 				continue;
 			}
 
-			// defaultValueが指定されていない場合の初期値は、typeが配列じゃなければnull
-			var defaultValue = propObj.hasOwnProperty('defaultValue') ? propObj.defaultValue : null;
-			if (!checkFuncs[p](defaultValue)) {
+			// defaultValueが指定されていない場合は、ここではチェックしない
+			if (!propObj.hasOwnProperty('defaultValue')) {
+				continue;
+			}
+			var defaultValue = propObj.defaultValue;
+			if (checkFuncs[p](defaultValue).length) {
 				errorReason.push(createErrorReason(
 						DESCRIPTOR_SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE, p, defaultValue));
 				if (stopOnError) {
@@ -1115,36 +1126,51 @@
 	 * constraintオブジェクトから、値がそのconstraintの条件を満たすかどうか判定する関数を作成する
 	 *
 	 * @param {object} constraint constraintオブジェクト
-	 * @return {function}
+	 * @return {function} 値がconstraintを満たすかどうかチェックする関数。正しい場合は空配列、そうじゃない場合は引っかかった項目を返す
 	 */
 	function createConstraintCheckFunction(constraint) {
 		return function(v) {
+			var errObjs = [];
 			if (constraint.notNull && v == null) {
-				return false;
+				errObjs.push({
+					notNull: constraint.notNull
+				});
 			}
 			if (constraint.notEmpty && !v) {
-				return false;
+				errObjs.push({
+					notEmpty: constraint.notEmpty
+				});
 			}
 			if (v == null) {
 				// notNull,notEmptyのチェック以外は、nullでないものについてチェックを行うので、nullならtrueを返す
-				return true;
+				return errObjs;
 			}
 			if (constraint.min != null && v < constraint.min) {
-				return false;
+				errObjs.push({
+					min: constraint.min
+				});
 			}
 			if (constraint.max != null && constraint.max < v) {
-				return false;
+				errObjs.push({
+					max: constraint.max
+				});
 			}
 			if (constraint.minLength != null && v.length < constraint.minLength) {
-				return false;
+				errObjs.push({
+					minLength: constraint.minLength
+				});
 			}
 			if (constraint.maxLength != null && constraint.maxLength < v.length) {
-				return false;
+				errObjs.push({
+					maxLength: constraint.maxLength
+				});
 			}
 			if (constraint.pattern != null && !v.match(constraint.pattern)) {
-				return false;
+				errObjs.push({
+					pattern: constraint.pattern
+				});
 			}
-			return true;
+			return errObjs;
 		};
 	}
 
@@ -1156,26 +1182,59 @@
 	 * @param {object} [opt.manager]
 	 *            DataManagerオブジェクト。"@DataModel"のようにデータモデルを指定された場合、managerからデータモデルを探す
 	 * @param {array} [opt.enumValue] typeが"enum"の場合、enumValueに入っているかどうかで判定する
-	 * @return {function} 引数がそのtypeを満たすかどうか判定する関数。
+	 * @return {function} 引数がそのtypeを満たすかどうか判定する関数。満たすなら空配列、満たさないならエラーオブジェクトの入った配列を返す。
 	 */
 	function createTypeCheckFunction(elmType, opt) {
+		var errObjs = [{
+			type: elmType
+		}];
 		switch (elmType) {
 		case 'number':
-			return isNumberValue;
+			return function(v) {
+				if (isNumberValue(v)) {
+					return [];
+				}
+				return errObjs;
+			};
 		case 'integer':
-			return isIntegerValue;
+			return function(v) {
+				if (isIntegerValue(v)) {
+					return [];
+				}
+				return errObjs;
+			};
 		case 'string':
-			return isStringValue;
+			return function(v) {
+				if (isStringValue(v)) {
+					return [];
+				}
+				return errObjs;
+			};
 		case 'boolean':
-			return isBooleanValue;
+			return function(v) {
+				if (isBooleanValue(v)) {
+					return [];
+				}
+				return errObjs;
+			};
 		case 'array':
-			return isArrayValue;
+			return function(v) {
+				if (isArrayValue(v)) {
+					return [];
+				}
+				return errObjs;
+			};
 		case 'enum':
-			return isEnumValue;
+			return function(v) {
+				if (isEnumValue(v, opt.enumValue)) {
+					return [];
+				}
+				return errObjs;
+			};
 		case 'any':
 			// anyならタイプチェックは行わない
 			return function() {
-				return true;
+				return [];
 			};
 		}
 		// タイプチェックは終わっているはずなので、どのケースにも引っかからない場合はデータモデルかつ、そのデータモデルはマネージャに存在する
@@ -1186,15 +1245,18 @@
 			var dataModel = manager.models[dataModelName];
 			if (!dataModel) {
 				// チェック時点でモデルがマネージャからドロップされている場合はfalse
-				return false;
+				return errObjs;
 			}
 			if (typeof v !== 'object' && v != null) {
 				// オブジェクト(またはnull,undefined)でないならfalse
-				return false;
+				return errObjs;
 			}
 			// チェック時にそのモデルが持ってるアイテムかどうかで判定する
 			// nullはOK
-			return v == null || dataModel.has(v);
+			if (v == null || dataModel.has(v)) {
+				return [];
+			}
+			return errObjs;
 		};
 	}
 
@@ -2093,6 +2155,10 @@
 			//新しくモデルを作ってマネージャに登録
 			var targetModel = new DataModel(descriptor, manager);
 
+			//TODO modelにチェック関数を持たせる、でOKか？
+			// とりあえず、ここで持たせてる
+			targetModel.itemPropCheck = checkFuncs;
+
 			manager.models[modelName] = targetModel;
 
 
@@ -2124,6 +2190,10 @@
 		//第2引数が省略される場合もあるので、厳密等価でなく通常の等価比較を行う
 		if (namespace != null) {
 			//指定された名前空間に、managerNameでマネージャを公開する
+			// 空文字指定ならグローバルに公開する
+			if (namespace === '') {
+				namespace = 'window';
+			}
 			var o = {};
 			o[managerName] = manager;
 			h5.u.obj.expose(namespace, o);
@@ -2183,19 +2253,108 @@
 
 	} /* End of createManager() */
 
+	/* -------- validateForm関係ここから -------- */
 
+	/**
+	 * form要素と、managerを引数にとって、validateのチェックを行う関数。 form要素のdata-model="xxx"にmanagerが持つデータモデル名を指定する。
+	 * 各input要素にname="xxx"でプロパティ名を指定する
+	 */
+	function validateForm(form) {
+		//TODO エラーチェック
+
+		var $form = $(form);
+		var matched = $form.data('model').match('^@(.*)$');
+		var modelPath = matched[1];
+		var split = modelPath.split('.');
+		var modelName = split.splice(split.length - 1, 1);
+		var managerName = split.splice(split.length - 1, 1);
+		var manager = (split.length ? h5.u.obj.ns(split.join('.')) : window)[managerName];
+
+		var model = manager.models[modelName];
+		if (!model) {
+			//TODO data-modelに指定されたデータモデル名がないエラー
+			throwFwError();
+			return;
+		}
+
+		var errorReason = [];
+		$form.find('input').each(
+				function() {
+					var $input = $(this);
+					var prop = $input.attr('name');
+					// nameが指定されているinputについてチェック
+					if (!prop) {
+						return;
+					}
+					if (model.itemPropDesc[prop]) {
+						var v = $input.val();
+						if (!model.itemPropCheck[prop](v)) {
+							errorReason.push(h5.u.str.format(
+									'データモデル"{0}のプロパティ"{1}"に、"{2}"をセットすることはできません', modelName, prop,
+									v));
+						}
+					}
+				});
+
+		return {
+			model: model,
+			properties: [{
+				prop: '',
+				value: '',
+				reasons: ['// どのチェックに引っかかったか。分かるようにチェック関数をつくる']
+			}],
+		};
+	}
+
+	/**
+	 * input要素とモデルから、値のチェック。 modelの指定がない場合は、親のformタグのdata-model指定から求める
+	 */
+	function validateInput(input, model) {
+		//TODO エラーチェック
+
+
+		var $input = $(input);
+		// とりあえずinput属性の親のform要素を、データモデルのvalidateチェック対象としている
+		if (!model) {
+			var $form = $input.parents('form:first');
+			var matched = $form.data('model').match('^@(.*)$');
+			var modelPath = matched[1];
+			var split = modelPath.split('.');
+			var modelName = split.splice(split.length - 1, 1);
+			var managerName = split.splice(split.length - 1, 1);
+			var manager = (split.length ? h5.u.obj.ns(split.join('.')) : window)[managerName];
+			model = manager.models[modelName];
+		}
+
+		var v = $input.val();
+		var prop = $input.attr('name');
+		// nameが指定されていない、またはデータ定義にないプロパティ名が指定されていればチェックしない
+		if (!prop || !model.itemPropDesc[prop]) {
+			return [];
+		}
+		var errorReasons = model.itemPropCheck[prop](v);
+		if (errorReasons === true){
+			// function(){return true}でチェックしている項目用
+			//TODO チェック関数の戻り値を全て統一する必要がある
+			errorReasons = [];
+		}
+		return {
+			prop: prop,
+			value: v,
+			reasons: errorReasons
+		};
+	}
+
+	/* -------- validateForm関係ここまで -------- */
 
 
 	//TODO Localの場合は、テンポラリなManagerを渡す実装にする予定
 	//	function createLocalDataModel(descriptor) {
 	//		return createDataModel(descriptor);
 	//	}
-
 	//=============================
 	// Expose to window
 	//=============================
-
-
 	/**
 	 * DataModelの名前空間
 	 *
@@ -2216,6 +2375,10 @@
 		createManager: createManager,
 
 		createSequence: createSequence,
+
+		//TODO validateForm,validateInputは、動作確認のためにとりあえず公開しているだけ
+		validateForm: validateForm,
+		validateInput: validateInput,
 
 		SEQUENCE_RETURN_TYPE_STRING: SEQUENCE_RETURN_TYPE_STRING,
 
