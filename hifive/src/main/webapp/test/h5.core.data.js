@@ -215,13 +215,13 @@
 
 	test('データモデルマネージャの作成 名前空間指定が不正な時にエラーが出ること', function() {
 		var errCode = ERR_U.ERR_CODE_NAMESPACE_INVALID;
-		var invalidNs = [0, 1, true, false, [], {}, '', '.com.htmlhifive', 'あ', 'com htmlhifive',
+		var invalidNs = [0, 1, true, false, [], {}, '.com.htmlhifive', 'あ', 'com htmlhifive',
 				'com.htmlhifive.'];
 		var l = invalidNs.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
 			try {
-				manager = h5.core.data.createManager('TestModel', invalidNs[i]);
+				manager = h5.core.data.createManager('TestManager', invalidNs[i]);
 				ok(false, 'エラーが発生していません');
 			} catch (e) {
 				strictEqual(e.code, errCode, e.message);
@@ -229,13 +229,19 @@
 		}
 	});
 
-	test('データモデルマネージャの作成 名前空間指定のない場合は同名のにマネージャを作成できること', function() {
-		manager = h5.core.data.createManager('TestModel');
-		var manager2 = h5.core.data.createManager('TestModel');
+	test('データモデルマネージャの作成 名前空間指定が空文字の場合はwindow直下ににマネージャを作成できること', 1, function() {
+		manager = h5.core.data.createManager('TestManager', '');
+		ok(manager === window.TestManager, '名前空間指定が空文字の場合はwindow直下ににマネージャを作成できること');
+		delete window.TestManager;
+	});
+
+	test('データモデルマネージャの作成 名前空間指定のない場合は同名のにマネージャを作成できること', 1, function() {
+		manager = h5.core.data.createManager('TestManager');
+		var manager2 = h5.core.data.createManager('TestManager');
 		ok(manager !== manager2, '同名のマネージャを作成したとき、別インスタンスであること');
 	});
 
-	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', function() {
+	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', 1, function() {
 		var errCode = ERR_U.ERR_CODE_NAMESPACE_EXIST;
 		h5.u.obj.expose('com.htmlhifive.test', {
 			TestModel: 0
@@ -1440,33 +1446,34 @@
 				}
 			});
 
-	test('データモデルの登録 schemaのチェック id:trueの項目にnotNull, notEmpty, maxLength:0 を指定できないこと', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		var invalidConstraint = [{
-			notNull: true
-		}, {
-			notEmpty: true
-		}, {
-			maxLength: 0
-		}];
-		var l = invalidConstraint.length;
-		for ( var i = 0; i < l; i++) {
-			try {
-				manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true,
-							constraint: invalidConstraint[i]
-						}
+	test('データモデルの登録 schemaのチェック id:trueの項目にnotNull:false, notEmpty:false, maxLength:0 を指定できないこと',
+			function() {
+				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+				var invalidConstraint = [{
+					notNull: false
+				}, {
+					notEmpty: false
+				}, {
+					maxLength: 0
+				}];
+				var l = invalidConstraint.length;
+				for ( var i = 0; i < l; i++) {
+					try {
+						manager.createModel({
+							name: 'TestDataModel',
+							schema: {
+								id: {
+									id: true,
+									constraint: invalidConstraint[i]
+								}
+							}
+						});
+						ok(false, 'エラーが発生していません');
+					} catch (e) {
+						strictEqual(e.code, errCode, e.message);
 					}
-				});
-				ok(false, 'エラーが発生していません');
-			} catch (e) {
-				strictEqual(e.code, errCode, e.message);
-			}
-		}
-	});
+				}
+			});
 
 	test('データモデルの登録 schemaのチェック id:trueの項目にdefaultValueが設定されている場合はエラーになること', function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
@@ -1613,35 +1620,20 @@
 						type: 'number',
 						defaultValue: new String('30.1')
 					},
-					testE1: {
+					testEnum1: {
 						type: 'enum',
-						defaultValue: new String('aaa'),
-						enumValue: ['aaa']
+						defaultValue: 2,
+						enumValue: [1, 2, 3]
 					},
-					testE2: {
+					testEnum2: {
 						type: 'enum',
-						defaultValue: new Boolean(1),
-						enumValue: [true]
+						defaultValue: window,
+						enumValue: [window]
 					},
-					testE3: {
+					testEnum2: {
 						type: 'enum',
-						defaultValue: new Number(10),
-						enumValue: [10]
-					},
-					testE4: {
-						type: 'enum',
-						defaultValue: new Number(10.5),
-						enumValue: [10.5]
-					},
-					testE5: {
-						type: 'enum',
-						defaultValue: ar1,
-						enumValue: [ar1]
-					},
-					testE6: {
-						type: 'enum',
-						defaultValue: item1,
-						enumValue: [item1]
+						defaultValue: NaN,
+						enumValue: [Infinity, NaN, -Infinity]
 					},
 					testAny1: {
 						type: 'any',
@@ -1764,18 +1756,8 @@
 					},
 					testEnumA1: {
 						type: 'enum[]',
-						defaultValue: [10, 20],
-						enumValue: [new Number(10), Object('20')]
-					},
-					testEnumA1: {
-						type: 'enum[]',
-						defaultValue: [10, 20],
-						enumValue: new Array(new Number(10), Object('20'))
-					},
-					testEnumA1: {
-						type: 'enum[]',
-						defaultValue: [10, 20],
-						enumValue: new Object([new Number(10), Object('20')])
+						defaultValue: [10, 20, '10'],
+						enumValue: ['10', 10, 20]
 					}
 				}
 			});
@@ -1894,12 +1876,6 @@
 				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 				var type = 'number';
 				var invalidProps = [{
-					// defaultValueなし
-					type: type,
-					constraint: {
-						notNull: true
-					}
-				}, {
 					type: type,
 					constraint: {
 						notNull: true
@@ -1927,12 +1903,6 @@
 				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 				var type = 'string';
 				var invalidProps = [{
-					type: type,
-					// defaultValueなし
-					constraint: {
-						notNull: true
-					}
-				}, {
 					type: type,
 					constraint: {
 						notNull: true
@@ -1974,12 +1944,6 @@
 				var type = 'integer';
 				var invalidProps = [{
 					type: type,
-					// defaultValueなし
-					constraint: {
-						notNull: true
-					}
-				}, {
-					type: type,
 					constraint: {
 						notNull: true
 					},
@@ -2007,12 +1971,6 @@
 				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 				var type = 'boolean';
 				var invalidProps = [{
-					type: type,
-					// defaultValueなし
-					constraint: {
-						notNull: true
-					}
-				}, {
 					type: type,
 					constraint: {
 						notNull: true
@@ -2050,12 +2008,6 @@
 				var type = 'any';
 				var invalidProps = [{
 					type: type,
-					// defaultValueなし
-					constraint: {
-						notNull: true
-					}
-				}, {
-					type: type,
 					constraint: {
 						notNull: true
 					},
@@ -2069,12 +2021,6 @@
 				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 				var type = '@ParentModel';
 				var invalidProps = [{
-					type: type,
-					// defaultValueなし
-					constraint: {
-						notNull: true
-					}
-				}, {
 					type: type,
 					constraint: {
 						notNull: true
@@ -6858,7 +6804,6 @@
 				manager.endUpdate();
 
 				var arg = argsObj['model'];
-				console.log(arg);
 
 				deepEqual(arg.changed, changeArgs, 'changedプロパティにchangeイベントオブジェクトが格納されていること');
 				deepEqual(arg.created, [newItem5], 'createdプロパティに生成されたDataItemインスタンスが格納されていること');
@@ -6927,12 +6872,11 @@
 						true);
 			});
 	//TODO createModelやdropModelした時のイベントについてテストする
-	//	test('DataManagerインスタンスの"xxx"に登録したハンドラが受け取る引数に正しく情報が格納されていること', function(){
+	//	test('DataManagerインスタンスの"xxx"イベントに登録したハンドラが受け取る引数に正しく情報が格納されていること', function(){
 	//		//TODO
 	//	});
 
 
-	//TODO Object.definePropertyの使えるブラウザで、itemに値をセットしたタイミングで、値のチェック、値の型変換、イベントの発生、が起きることを確認するテスト
 	//=============================
 	// Definition
 	//=============================
@@ -7040,7 +6984,7 @@
 
 		item2.int = '12';
 		strictEqual(item2.int, 12, 'セット時に値の型変換が行われること');
-		item2.int = new  Number(12);
+		item2.int = new Number(12);
 		strictEqual(item2.int, 12, 'セット時に値の型変換が行われること');
 		item2.int = new String('12');
 		strictEqual(item2.int, 12, 'セット時に値の型変換が行われること');
