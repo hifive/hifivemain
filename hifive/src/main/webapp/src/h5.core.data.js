@@ -370,8 +370,12 @@
 		// ※ parseFloatよりも厳しいチェックにしている。
 		// "1.2", "+1.2", "1", ".2", "-.2" はOK。
 		// "12.3px"、"12.3.4"、"123.", [12.3, 4] はいずれもparseFloatできるが、ここではNG。
-		return val == null || isStrictNaN(val) || typeof val === 'number' || val instanceof Number
-				|| !!(isString(val) && val.match(/^[+\-]{0,1}[0-9]*\.{0,1}[0-9]+$/));
+		return val == null
+				|| isStrictNaN(val)
+				|| typeof val === 'number'
+				|| val instanceof Number
+				|| !!((isString(val) || val instanceof String) && val
+						.match(/^[+\-]{0,1}[0-9]*\.{0,1}[0-9]+$/));
 	}
 
 	/**
@@ -389,7 +393,8 @@
 		// 文字列の場合は、[±数字]で構成されている文字列ならOKにする
 		// ※ parseIntよりも厳しいチェックにしている。"12px"、"12.3"、[12,3] はいずれもparseIntできるが、ここではNG。
 		return val == null || (typeof val === 'number' || val instanceof Number)
-				&& parseInt(val) === parseFloat(val) || typeof val === 'string'
+				&& parseInt(val) === parseFloat(val)
+				|| (typeof val === 'string' || val instanceof String)
 				&& val.match(/^[+\-]{0,1}[0-9]+$/);
 	}
 
@@ -1174,7 +1179,7 @@
 			};
 		}
 		// タイプチェックは終わっているはずなので、どのケースにも引っかからない場合はデータモデルかつ、そのデータモデルはマネージャに存在する
-		var matched = elmType.match(/@(.+?)/);
+		var matched = elmType.match(/^@(.+?)$/);
 		var dataModelName = matched[1];
 		var manager = opt.manager;
 		return function(v) {
@@ -1183,8 +1188,8 @@
 				// チェック時点でモデルがマネージャからドロップされている場合はfalse
 				return false;
 			}
-			if (v != null || typeof v !== 'object') {
-				// オブジェクトでないならfalse
+			if (typeof v !== 'object' && v != null) {
+				// オブジェクト(またはnull,undefined)でないならfalse
 				return false;
 			}
 			// チェック時にそのモデルが持ってるアイテムかどうかで判定する
