@@ -2313,10 +2313,15 @@
 		//TODO エラーチェック
 
 
+		var resultObj ={reasons:[]};
 		var $input = $(input);
 		// とりあえずinput属性の親のform要素を、データモデルのvalidateチェック対象としている
 		if (!model) {
-			var $form = $input.parents('form:first');
+			var $form = $(input.form);
+			if(!$form.length){
+				// formがない場合は終了
+				return resultObj;
+			}
 			var matched = $form.data('model').match('^@(.*)$');
 			var modelPath = matched[1];
 			var split = modelPath.split('.');
@@ -2330,7 +2335,7 @@
 		var prop = $input.attr('name');
 		// nameが指定されていない、またはデータ定義にないプロパティ名が指定されていればチェックしない
 		if (!prop || !model.itemPropDesc[prop]) {
-			return [];
+			return resultObj;
 		}
 		var errorReasons = model.itemPropCheck[prop](v);
 		if (errorReasons === true){

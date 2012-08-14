@@ -565,6 +565,7 @@
 		return instance;
 	};
 
+	// FormValidationテスト用。managerをグローバルに公開し、データモデルを作成する
 	window.manager = h5.core.data.createManager('TestManager', '');
 	var model = manager.createModel({
 		name: 'TestDataModel',
@@ -573,12 +574,56 @@
 				id: true
 			},
 			name: {
+				title: '名前',
 				type: 'string'
 			},
 			age: {
+				title: '年齢',
 				type: 'integer'
 			},
 			mail: {
+				title: 'メールアドレス',
+				type: 'string',
+				constraint: {
+					notEmpty: true,
+					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
+				}
+			},
+			mail2: {
+				title: 'メールアドレス2',
+				type: 'string',
+				constraint: {
+					notEmpty: true,
+					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
+				}
+			},
+			mail3: {
+				title: 'メールアドレス3',
+				type: 'string',
+				constraint: {
+					notEmpty: true,
+					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
+				},
+				defaultValue: 'example@abc.jp'
+			}
+		}
+	});
+	var model = manager.createModel({
+		name: 'TestDataModel2',
+		schema: {
+			id: {
+				id: true
+			},
+			name: {
+				title: '名前',
+				type: 'string'
+			},
+			age: {
+				title: '年齢',
+				type: 'integer'
+			},
+			mail: {
+				title: 'メールアドレス',
 				type: 'string',
 				constraint: {
 					notEmpty: true,
@@ -586,16 +631,59 @@
 				}
 			}
 		}
-	})
+	});
+
 	var controller = {
 		__name: 'FormController',
-		'input[type=submit] click': function(e) {
-			e.event.preventDefault();
-			this.checkForm(this.$find('form'));
+		__ready: function(context) {
+			var $form = this.$find('form');
+			$form.each(function() {
+				var matched = $(this).data('model').match('^@(.*)$');
+				var modelPath = matched[1];
+				var split = modelPath.split('.');
+				var modelName = split.splice(split.length - 1, 1);
+				var managerName = split.splice(split.length - 1, 1);
+				var manager = (split.length ? h5.u.obj.ns(split.join('.')) : window)[managerName];
+				model = manager.models[modelName];
+
+				var $input = $(this).children('input').add(
+						$('input[form="' + $(this).attr('id') + '"]'));
+				$input.each(function() {
+					var propName = $(this).attr('name');
+					if (!model.schema[propName]) {
+						return;
+					}
+					if ($(this).attr('placeholder') == undefined) {
+						$(this).attr('placeholder', model.schema[propName].title);
+					}
+					if (!$(this).val()) {
+						$(this).val(model.schema[propName].defaultValue);
+					}
+				});
+			});
+
+
+		},
+		'input[type=submit] click': function(context) {
+			//TODO novalidate指定があれば何もしない
+
+			context.event.preventDefault();
+
+			var target = context.event.target;
+			var form = $(target.form);
+
+			if (this.checkForm(form)) {
+				// formを送信する
+				//				form.submit();
+			}
 		},
 		'input blur': function(context) {
-			var $target = $(context.event.target);
-			var errObj = h5.core.data.validateInput($target);
+			var target = context.event.target;
+			var $target = $(target);
+			if ($target.attr('novalidate') !== undefined) {
+				return;
+			}
+			var errObj = h5.core.data.validateInput(target);
 			$target.next('span').remove();
 			for ( var i = 0, l = errObj.reasons.length; i < l; i++) {
 				var conditions = '';
@@ -608,12 +696,16 @@
 						'<span class="validateError">次の条件を満たす必要があります。 {0}</span>', conditions));
 			}
 		},
-		checkForm: function($form) {
+		checkForm: function(form) {
+			var $form = $(form);
 			var errors = h5.core.data.validateForm($form, manager);
 			console.log(errors);
+			return !errors.length;
 		}
 	};
 
-	h5.core.controller('#wrap', controller);
+	$(function() {
+		h5.core.controller('body', controller);
+	});
 
 })();
