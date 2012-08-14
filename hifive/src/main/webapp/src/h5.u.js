@@ -1224,10 +1224,26 @@
 	}
 
 	/**
+	 * ObservableArrayを作成します。
+	 *
 	 * @memberOf h5.u.obj
+	 * @returns ObservableArray
 	 */
 	function createObservableArray() {
 		return new ObservableArray();
+	}
+
+	/**
+	 * ObservableArrayかどうかを判定します。
+	 *
+	 * @memberOf h5.u.obj
+	 * @returns {Boolean} ObservableArrayかどうか
+	 */
+	function isObservableArray(obj) {
+		if (obj.constructor === ObservableArray) {
+			return true;
+		}
+		return false;
 	}
 
 	// =============================
@@ -1264,7 +1280,8 @@
 		isJQueryObject: isJQueryObject,
 		argsToArray: argsToArray,
 		getByPath: getByPath,
-		createObservableArray: createObservableArray
+		createObservableArray: createObservableArray,
+		isObservableArray: isObservableArray
 	});
 
 })();
