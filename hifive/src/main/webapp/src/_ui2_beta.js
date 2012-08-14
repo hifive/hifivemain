@@ -40,6 +40,8 @@
 	var SELECTOR_H5_TEMPLATE = 'script[type="text/x-h5-tmpl"][' + DATA_ATTR_TEMPLATE_ID + ']';
 
 
+	var TEMPLATE_MARKER = '[h5tmpl]';
+
 	// =============================
 	// Development Only
 	// =============================
@@ -80,6 +82,20 @@
 		return uiSerialNumber++;
 	}
 
+	/**
+	 * コメントノードからテンプレートを取得する
+	 *
+	 * @param コメントノードを子に持つノード。（domまたはjQueryオブジェクト）
+	 */
+	function getTemplateFromCommentNode(nodes) {
+		nodes = $(nodes);
+		for ( var i = 0, len = nodes.length; i < len; i++) {
+			if (nodes[i].nodeType === Node.COMMENT_NODE
+					&& nodes[i].nodeValue.indexOf(TEMPLATE_MARKER) === 0) {
+				return nodes[i].nodeValue.slice(TEMPLATE_MARKER.length);
+			}
+		}
+	}
 
 
 
@@ -398,7 +414,6 @@
 				//			applyBinding(elem);
 
 			})(uiName, elem);
-
 		}
 	}
 
@@ -428,7 +443,90 @@
 		fwLogger.debug('new ui count = {0}', $uis.length);
 
 		populateUI($uis);
+
+		// data-h5-bind指定されている要素にバインドを行う
+		bindModelData();
 	});
+
+	/**
+	 * data-h5-bind指定されている要素について、データモデルのイベントと紐づける
+	 */
+	function bindModelData() {
+		var $binds = $('[data-h5-bind^="@"]');
+		var modelBindMap = {};
+		$binds.each(function() {
+			// TODO 文字列からモデルを取得。関数にして外に出す。
+			var modelStr = $(this).data() && $(this).data().h5Bind;
+			if (!modelStr) {
+				return;
+			}
+			try {
+				var matched = modelStr.match('^@(.*)$');
+				var modelPath = matched[1];
+				var split = modelPath.split('.');
+				var modelName = split.splice(split.length - 1, 1);
+				var managerName = split.splice(split.length - 1, 1);
+				var manager = (split.length ? h5.u.obj.ns(split.join('.')) : window)[managerName];
+				model = manager.models[modelName];
+			} catch (e) {
+				// モデルが取得できない時
+				return;
+			}
+			// テンプレートの取得
+			var tmpl = getTemplateFromCommentNode(this.childNodes);
+			var $dom = $(this);
+
+			// テンプレートにid情報を付加したものを生成する関数
+			function getTmpl(id) {
+				return
+			}
+
+			// アイテムを引数にとって、DOMに追加する関数
+			function appendItem(item) {
+				$tmpl =  $(tmpl).attr('data-h5-dyn-id', item[model.idKey]);
+				for ( var prop in model.itemPropDesc) {
+					var $target = $tmpl.find('*[data-h5-bind^="$curr.' + prop + '"]');
+					if ($target.length) {
+						$target.text(item[prop]);
+					}
+				}
+				$dom.append($tmpl);
+			}
+
+			// 現在データモデルにあるアイテムを表示させる
+			for ( var id in model.items) {
+				var item = model.items[id];
+				appendItem(item);
+			}
+
+			// イベントリスナの作成
+			function listener(e) {
+				// 新規作成されたもの
+				for ( var i = 0, l = e.created.length; i < l; i++) {
+					appendItem(e.created[i]);
+				}
+
+				// 値が変更されたもの
+				for(var i = 0, l = e.changed.length; i < l; i++){
+					var changeEv = e.changed[i];
+					var id = changeEv.target[model.idKey];
+					var $target = $dom.find('*[data-h5-dyn-id="'+id+'"]');
+					if($target.length){
+						for(var prop in changeEv.props){
+							$target.find('*[data-h5-bind="$curr.'+prop+'"]').text(changeEv.props[prop].newValue);
+						}
+					}
+				}
+
+				// 削除されたもの
+				for(var i = 0, l = e.removed.length; i < l; i++){
+					var id = e.removed[i][model.idKey];
+					$dom.find('*[data-h5-dyn-id="'+id+'"]').remove();
+				}
+			}
+			model.addEventListener('itemsChange', listener);
+		});
+	}
 
 	// =============================
 	// Expose to window
@@ -455,19 +553,7 @@
 
 					var nodes = this.$find('[data-h5-bind="$controller.' + viewProp + '"]')[0].childNodes;
 
-					var TEMPLATE_MARKER = '[h5tmpl]';
-
-					var $cloneItem = null;
-
-					//コメントノードからテンプレートを探す
-					for ( var i = 0, len = nodes.length; i < len; i++) {
-						if (nodes[i].nodeType === Node.COMMENT_NODE
-								&& nodes[i].nodeValue.indexOf(TEMPLATE_MARKER) === 0) {
-							var tmpl = nodes[i].nodeValue.slice(TEMPLATE_MARKER.length);
-							$cloneItem = $(tmpl);
-							break;
-						}
-					}
+					var $cloneItem = getTemplateFromCommentNode(nodes);
 
 					//var $cloneItem = $(listItem).clone();
 
@@ -564,10 +650,9 @@
 
 		return instance;
 	};
-
 	// FormValidationテスト用。managerをグローバルに公開し、データモデルを作成する
 	window.manager = h5.core.data.createManager('TestManager', '');
-	var model = manager.createModel({
+	manager.createModel({
 		name: 'TestDataModel',
 		schema: {
 			id: {
@@ -608,7 +693,7 @@
 			}
 		}
 	});
-	var model = manager.createModel({
+	manager.createModel({
 		name: 'TestDataModel2',
 		schema: {
 			id: {
@@ -632,13 +717,59 @@
 			}
 		}
 	});
+	/* -----------data-h5-bindの動作確認用 AddresBookの作成 ------------- */
+	TestManager.createModel({
+		name: 'AddressBook',
+		schema: {
+			id: {
+				id: true
+			},
+			name: {
+				title: '名前',
+				type: 'string'
+			},
+			age: {
+				title: '年齢',
+				type: 'integer'
+			},
+			mail: {
+				title: 'メールアドレス',
+				type: 'string',
+				constraint: {
+					notEmpty: true,
+					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
+				}
+			}
+		}
+	}).create([{
+		id: '1',
+		name: '太郎',
+		age: 21,
+		mail: 'taro@abc.com'
+	}, {
+		id: '2',
+		name: '次郎',
+		age: 21,
+		mail: 'jiro@abc.com'
+	}, {
+		id: '3',
+		name: '三郎',
+		age: 21,
+		mail: 'sub-row@abc.com'
+	}]);
+
+
 
 	var controller = {
 		__name: 'FormController',
 		__ready: function(context) {
 			var $form = this.$find('form');
 			$form.each(function() {
-				var matched = $(this).data('model').match('^@(.*)$');
+				var modelStr = $(this).data('model');
+				if (!modelStr) {
+					return;
+				}
+				var matched = modelStr.match('^@(.*)$');
 				var modelPath = matched[1];
 				var split = modelPath.split('.');
 				var modelName = split.splice(split.length - 1, 1);
@@ -671,6 +802,9 @@
 
 			var target = context.event.target;
 			var form = $(target.form);
+			if (form == null) {
+				//TODO IEの場合form指定していても、form外にあるinputからformを取得できないので、ケアする
+			}
 
 			if (this.checkForm(form)) {
 				// formを送信する
