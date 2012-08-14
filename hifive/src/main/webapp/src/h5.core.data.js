@@ -2301,7 +2301,7 @@
 			properties: [{
 				prop: '',
 				value: '',
-				reasons: ['// どのチェックに引っかかったか。分かるようにチェック関数をつくる']
+				reasons: errorReason
 			}],
 		};
 	}
