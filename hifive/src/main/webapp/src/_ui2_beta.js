@@ -680,21 +680,27 @@
 		'input blur': function(context) {
 			var target = context.event.target;
 			var $target = $(target);
+
 			if ($target.attr('novalidate') !== undefined) {
 				return;
 			}
+			var conditions = '';
 			var errObj = h5.core.data.validateInput(target);
-			$target.next('span').remove();
 			for ( var i = 0, l = errObj.reasons.length; i < l; i++) {
-				var conditions = '';
 				for ( var condition in errObj.reasons[i]) {
 					conditions += condition + ':' + errObj.reasons[i][condition] + ' ';
 				}
 			}
-			if (conditions) {
-				$target.after(h5.u.str.format(
-						'<span class="validateError">次の条件を満たす必要があります。 {0}</span>', conditions));
-			}
+			//IEだと非同期にしないとレンダリングに反映されない
+			setTimeout(
+					function() {
+						$target.next('span').remove();
+						if (conditions) {
+							$target.after(h5.u.str.format(
+									'<span class="validateError">次の条件を満たす必要があります。 {0}</span>',
+									conditions));
+						}
+					}, 0);
 		},
 		checkForm: function(form) {
 			var $form = $(form);
