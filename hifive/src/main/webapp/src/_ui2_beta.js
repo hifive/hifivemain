@@ -40,7 +40,7 @@
 	var SELECTOR_H5_TEMPLATE = 'script[type="text/x-h5-tmpl"][' + DATA_ATTR_TEMPLATE_ID + ']';
 
 
-	var TEMPLATE_MARKER = '[h5tmpl]';
+	var TEMPLATE_MARKER = '(h5tmpl)';
 
 	// =============================
 	// Development Only
@@ -650,114 +650,6 @@
 
 		return instance;
 	};
-	// FormValidationテスト用。managerをグローバルに公開し、データモデルを作成する
-	window.manager = h5.core.data.createManager('TestManager', '');
-	manager.createModel({
-		name: 'TestDataModel',
-		schema: {
-			id: {
-				id: true
-			},
-			name: {
-				title: '名前',
-				type: 'string'
-			},
-			age: {
-				title: '年齢',
-				type: 'integer'
-			},
-			mail: {
-				title: 'メールアドレス',
-				type: 'string',
-				constraint: {
-					notEmpty: true,
-					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
-				}
-			},
-			mail2: {
-				title: 'メールアドレス2',
-				type: 'string',
-				constraint: {
-					notEmpty: true,
-					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
-				}
-			},
-			mail3: {
-				title: 'メールアドレス3',
-				type: 'string',
-				constraint: {
-					notEmpty: true,
-					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
-				},
-				defaultValue: 'example@abc.jp'
-			}
-		}
-	});
-	manager.createModel({
-		name: 'TestDataModel2',
-		schema: {
-			id: {
-				id: true
-			},
-			name: {
-				title: '名前',
-				type: 'string'
-			},
-			age: {
-				title: '年齢',
-				type: 'integer'
-			},
-			mail: {
-				title: 'メールアドレス',
-				type: 'string',
-				constraint: {
-					notEmpty: true,
-					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
-				}
-			}
-		}
-	});
-	/* -----------data-h5-bindの動作確認用 AddresBookの作成 ------------- */
-	TestManager.createModel({
-		name: 'AddressBook',
-		schema: {
-			id: {
-				id: true
-			},
-			name: {
-				title: '名前',
-				type: 'string'
-			},
-			age: {
-				title: '年齢',
-				type: 'integer'
-			},
-			mail: {
-				title: 'メールアドレス',
-				type: 'string',
-				constraint: {
-					notEmpty: true,
-					pattern: /^[A-Za-z0-9]+[\w-]+@[\w\.-]+\.\w{2,}$/
-				}
-			}
-		}
-	}).create([{
-		id: '1',
-		name: '太郎',
-		age: 21,
-		mail: 'taro@abc.com'
-	}, {
-		id: '2',
-		name: '次郎',
-		age: 21,
-		mail: 'jiro@abc.com'
-	}, {
-		id: '3',
-		name: '三郎',
-		age: 21,
-		mail: 'sub-row@abc.com'
-	}]);
-
 
 
 	var controller = {
@@ -765,7 +657,7 @@
 		__ready: function(context) {
 			var $form = this.$find('form');
 			$form.each(function() {
-				var modelStr = $(this).data('model');
+				var modelStr = $(this).data('h5Model');
 				if (!modelStr) {
 					return;
 				}

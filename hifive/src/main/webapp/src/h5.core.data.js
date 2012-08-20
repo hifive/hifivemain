@@ -2263,7 +2263,7 @@
 		//TODO エラーチェック
 
 		var $form = $(form);
-		var matched = $form.data('model').match('^@(.*)$');
+		var matched = $form.attr('data-h5-model').match('^@(.*)$');
 		var modelPath = matched[1];
 		var split = modelPath.split('.');
 		var modelName = split.splice(split.length - 1, 1);
@@ -2313,16 +2313,28 @@
 		//TODO エラーチェック
 
 
-		var resultObj ={reasons:[]};
+		var resultObj = {
+			reasons: []
+		};
 		var $input = $(input);
 		// とりあえずinput属性の親のform要素を、データモデルのvalidateチェック対象としている
 		if (!model) {
 			var $form = $(input.form);
-			if(!$form.length){
+			if (!$form.length) {
 				// formがない場合は終了
 				return resultObj;
 			}
-			var matched = $form.data('model').match('^@(.*)$');
+
+			var formModelName = $form.attr('data-h5-model');
+			if (!formModelName) {
+				return resultObj;
+			}
+
+			var matched = $form.attr('data-h5-model').match('^@(.*)$');
+			if (!matched) {
+				return resultObj;
+			}
+
 			var modelPath = matched[1];
 			var split = modelPath.split('.');
 			var modelName = split.splice(split.length - 1, 1);
@@ -2338,7 +2350,7 @@
 			return resultObj;
 		}
 		var errorReasons = model.itemPropCheck[prop](v);
-		if (errorReasons === true){
+		if (errorReasons === true) {
 			// function(){return true}でチェックしている項目用
 			//TODO チェック関数の戻り値を全て統一する必要がある
 			errorReasons = [];
