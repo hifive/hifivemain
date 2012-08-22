@@ -2638,7 +2638,7 @@
 		};
 		var desc1Model = manager.createModel(descriptor1);
 		var model1DataItem = desc1Model.create({
-			id: 1,
+			id: sequence.next(),
 			test1: 'aaa'
 		});
 
@@ -2656,7 +2656,7 @@
 
 		var descModel2 = manager.createModel(descriptor2);
 		var model2DataItem = descModel2.create({
-			id: 1,
+			id: sequence.next(),
 			test1: 20
 		});
 
@@ -2667,10 +2667,10 @@
 					id: true
 				},
 				dataModel1: {
-					type: '@DataModel1[]'
+					type: '@DataModel1' //FIXME @DataModel1[] となっていてエラーだった。正しくは何？
 				},
 				dataModel2: {
-					type: '@DataModel2[]'
+					type: '@DataModel2' //FIXME @DataModel2[] となっていてエラーだった。正しくは何？
 				}
 			}
 		});
@@ -2705,7 +2705,7 @@
 		};
 		var desc1Model = manager.createModel(descriptor1);
 		var model1DataItem = desc1Model.create({
-			id: 1,
+			id: sequence.next(),
 			test1: 'aaa'
 		});
 
@@ -2723,7 +2723,7 @@
 
 		var descModel2 = manager.createModel(descriptor2);
 		var model2DataItem = descModel2.create({
-			id: 1,
+			id: sequence.next(),
 			test1: 20
 		});
 
@@ -2734,10 +2734,10 @@
 					id: true
 				},
 				dataModel1: {
-					type: '@DataModel1[]'
+					type: '@DataModel1[]' //FIXME @DataModel1 ?
 				},
 				dataModel2: {
-					type: '@DataModel2[]'
+					type: '@DataModel2[]' //FIXME @DataModel2 ?
 				}
 			}
 		});
@@ -2817,10 +2817,10 @@
 					id: true
 				},
 				dataModel1: {
-					type: '@DataModel1'
+					type: '@DataModel1' // FIXME @DataModel1[] ？
 				},
 				dataModel2: {
-					type: '@DataModel2'
+					type: '@DataModel2' // FIXME 同上
 				}
 			}
 		});
@@ -2857,11 +2857,11 @@
 		};
 		var desc1Model = manager.createModel(descriptor1);
 		var model1DataItem1 = desc1Model.create({
-			id: 1,
+			id: sequence.next(),
 			test1: 'aaa'
 		});
 		var model1DataItem2 = desc1Model.create({
-			id: 2,
+			id: sequence.next(),
 			test1: 'bbb'
 		});
 
@@ -2879,7 +2879,7 @@
 
 		var descModel2 = manager.createModel(descriptor2);
 		var model2DataItem1 = descModel2.create({
-			id: 1,
+			id: sequence.next(),
 			test1: 20
 		});
 
@@ -2890,10 +2890,10 @@
 					id: true
 				},
 				dataModel1: {
-					type: '@DataModel1'
+					type: '@DataModel1' //FIXME こちらは @DataModel1[] にするのが正しい？
 				},
 				dataModel2: {
-					type: '@DataModel2'
+					type: '@DataModel2' //FIXME こちらは @DataModel2[] にするのが正しい？
 				}
 			}
 		});
@@ -3174,7 +3174,7 @@
 			var item2 = null;
 			var sub = [new Number(10), new Number(10.8), '10', '20.4', new String('56'),
 					new String('48.21'), new Object('3a0'), new Object('9a1.9'), new Object('30'),
-					new Object('31.9'), new Object(20), new Object(20.3), NaN];
+					new Object('31.9'), new Object(20), new Object(20.3), NaN]; //FIXME type:integerなので、NaNは入らないはず
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
@@ -3284,6 +3284,8 @@
 
 					// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 					var item2 = null;
+
+					//FIXME 制約が厳しくなったので、type:integer([])の場合、正確に「整数」に変換できるもの以外はエラーになるはず
 					var sub = [[new Number(10), new Number(20)],
 							[new Number(10.8), new Number(30.5)], ['10', '20.4'],
 							[new String('56'), new String('48.21')],
@@ -3295,7 +3297,7 @@
 							new Array(new String('56'), new String('48.21')),
 							new Array(new Object('3a0'), new Object('9a1.9')),
 							new Array(new Object('30'), new Object('31.9')),
-							new Array(new Object(20), new Object(20.3)), new Array(NaN, NaN)];
+							new Array(new Object(20), new Object(20.3)), new Array(NaN, NaN)]; //FIXME type:integerなのでNaNは入らないはず
 					for ( var i = 0; i < sub.length; i++) {
 						item2 = model.create({
 							id: sequence.next(),

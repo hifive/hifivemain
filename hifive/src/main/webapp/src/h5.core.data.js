@@ -36,8 +36,8 @@
 	/** マネージャ名が不正 */
 	var ERR_CODE_INVALID_MANAGER_NAME = 15000;
 
-	/** DataItemのsetterに渡された値の型がDescriptorで指定されたものと異なる */
-	var ERR_CODE_INVALID_TYPE = 15001;
+	/** DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反している */
+	var ERR_CODE_INVALID_ITEM_VALUE = 15001;
 
 	/** dependが設定されたプロパティのセッターを呼び出した */
 	var ERR_CODE_DEPEND_PROPERTY = 15002;
@@ -69,7 +69,7 @@
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
-	ERROR_MESSAGES[ERR_CODE_INVALID_TYPE] = 'DataItemのsetterに渡された値の型がDescriptorで指定されたものと異なる';
+	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反している';
 	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティのセッターを呼び出した';
 	ERROR_MESSAGES[ERR_CODE_NO_EVENT_TARGET] = 'イベントのターゲットが指定されていない';
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAMESPACE] = 'createDataModelManagerのnamespaceが不正';
@@ -347,11 +347,11 @@
 	/**
 	 * 引数がNaNかどうか判定する。isNaNとは違い、例えば文字列はNaNではないのでfalseとする
 	 *
-	 * @param {Any} v 判定する値
-	 * @return {Boolena} 引数がNaNかどうか
+	 * @param {Any} val 判定する値
+	 * @return {Boolean} 引数がNaNかどうか
 	 */
-	function isStrictNaN(v) {
-		return typeof v === 'number' && isNaN(v);
+	function isStrictNaN(val) {
+		return typeof val === 'number' && isNaN(val);
 	}
 
 	/**
@@ -1079,10 +1079,12 @@
 					}
 				}
 			}
-		} finally {
-			// 例外を握りつぶしたいので、finallyでreturnしている
-			return errorReason;
+		} catch (e) {
+			//ignore errors
+			fwLogger.debug('validateSchema: Exception occured. message = {0}', e.message);
 		}
+
+		return errorReason;
 	}
 
 	/**
@@ -1335,7 +1337,7 @@
 					//型・制約チェック
 					var validateResult = model._validateItemValue(name, value);
 					if (validateResult.length > 0) {
-						throwFwError(111); //FIXME
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
 					}
 
 					var oldValue = getValue(this, name);
@@ -1479,7 +1481,7 @@
 					}
 					var validateResult = model._validateItemValue(prop, this[prop]);
 					if (validateResult) {
-						throwFwError(111); //FIXME
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
 					} else {
 						setValue(this, prop, this[prop]);
 					}
