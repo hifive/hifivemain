@@ -3795,7 +3795,7 @@
 					test2: sub[i]
 				});
 
-				deepEqual(item2.test1, sub[i], 'test2に' + sub[i] + 'が代入されてDataItemが生成されること。');
+				deepEqual(item2.test2, sub[i], 'test2に' + sub[i] + 'が代入されてDataItemが生成されること。');
 
 				item2.test2 = sub[i];
 
