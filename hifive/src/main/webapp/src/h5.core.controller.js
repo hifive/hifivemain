@@ -1663,6 +1663,61 @@
 		controller.parentController = null;
 
 		/**
+		 * __templatesに指定したテンプレートファイルの読み込みに、成功または失敗したかの状態を持つPromiseオブジェクト。
+		 * このオブジェクトが持つ以下の関数で、状態をチェックすることができます。
+		 * <p>
+		 * <b>state()</b> <table border="1">
+		 * <tr>
+		 * <td>戻り値</td>
+		 * <td>結果</td>
+		 * </tr>
+		 * <tr>
+		 * <td>"resolved"</td>
+		 * <td>読み込みに成功</td>
+		 * </tr>
+		 * <tr>
+		 * <td>"rejected"</td>
+		 * <td>読み込みに失敗</td>
+		 * </tr>
+		 * <tr>
+		 * <td>"pending"</td>
+		 * <td>読み込みが開始されていないまたは読み込み中</td>
+		 * </tr>
+		 * </table> 注意: jQuery1.7.x未満の場合、この関数は使用できません。
+		 * <p>
+		 * <b>isResolved(), isRejected()</b> <table border="1">
+		 * <tr>
+		 * <td>isResolved()の戻り値</td>
+		 * <td>isRejected()の戻り値</td>
+		 * <td>結果</td>
+		 * </tr>
+		 * <tr>
+		 * <td>true</td>
+		 * <td>false</td>
+		 * <td>読み込みに成功</td>
+		 * </tr>
+		 * <tr>
+		 * <td>false</td>
+		 * <td>true</td>
+		 * <td>読み込みに失敗</td>
+		 * </tr>
+		 * <tr>
+		 * <td>false</td>
+		 * <td>false</td>
+		 * <td>読み込みが開始されていないまたは読み込み中</td>
+		 * </tr>
+		 * </table>
+		 * <p>
+		 * また、preinitPromise.done()に関数を設定すると読み込み成功時に、
+		 * preinitPromise.fail()に関数を設定すると読み込み失敗時に、設定した関数を実行します。
+		 *
+		 * @type Promise
+		 * @memberOf Controller
+		 * @name preinitPromise
+		 */
+		controller.preinitPromise = null;
+
+		/**
 		 * コントローラのライフサイクルイベント__initについてのPromiseオブジェクトを返します。
 		 *
 		 * @type Promise
