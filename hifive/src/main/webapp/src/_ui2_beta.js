@@ -40,7 +40,7 @@
 	var SELECTOR_H5_TEMPLATE = 'script[type="text/x-h5-tmpl"][' + DATA_ATTR_TEMPLATE_ID + ']';
 
 
-	var TEMPLATE_MARKER = '(h5tmpl)';
+	var TEMPLATE_MARKER = '{h5tmpl}';
 
 	// =============================
 	// Development Only
@@ -657,11 +657,15 @@
 		__ready: function(context) {
 			var $form = this.$find('form');
 			$form.each(function() {
-				var modelStr = $(this).data('h5Model');
+				var modelStr = $(this).attr('data-h5-model');
 				if (!modelStr) {
 					return;
 				}
 				var matched = modelStr.match('^@(.*)$');
+				if(!matched) {
+					return;
+				}
+
 				var modelPath = matched[1];
 				var split = modelPath.split('.');
 				var modelName = split.splice(split.length - 1, 1);
