@@ -1388,4 +1388,23 @@ $(function() {
 
 	});
 
+	test('h5.u.obj.expose 指定した名前空間に既にオブジェクトが存在する状態でexposeを実行', 3, function() {
+		h5.u.obj.expose('com.htmlhifive.test2', {
+			exposedObj: false
+		});
+
+		equal(com.htmlhifive.test2.exposedObj, false, 'com.htmlhifive.test2.exposedObjがexposeされていること。');
+
+		raises(function(enviroment) {
+			h5.u.obj.expose('com.htmlhifive.test2', {
+				exposedObj: 10
+			});
+		}, function(actual) {
+			return 11001 === actual.code && h5.u.str.format('名前空間"{0}"には、プロパティ"{1}"が既に存在します。(code={2})', 'com.htmlhifive.test2', 'exposedObj', actual.code) === actual.message;
+		}, '指定した名前空間が既に存在する場合エラーとなること');
+
+		equal(com.htmlhifive.test2.exposedObj, false, '値が上書きされていないこと。');
+
+		window.com.htmlhifive.test2 = undefined;
+	});
 });
