@@ -1311,20 +1311,6 @@
 		}
 
 		function createSrc(name, propDesc) {
-			//			var propType = propDesc.type;
-
-			//nullが可能な型かどうか
-			//TODO combination-typeの場合は「許容されるすべての型がnot nullable」で判定する必要がある
-			//			var isNullable = false;
-			//			if (propType.charAt(0) === '@' || $.inArray(propType, NULLABLE_PROP_TYPES)) {
-			//				isNullable = true;
-			//			}
-			//
-			//			var isRequired = propDesc.constraint
-			//					&& ($.inArray(PROP_CONSTRAINT_REQUIRED, propDesc.constraint) !== -1);
-			//
-			//			var enumValues = propDesc.enumValues;
-
 			function createSetter() {
 				if (propDesc.depend) {
 					//依存プロパティの場合は、setterは動作しない（無理に呼ぶとエラー）
@@ -1417,10 +1403,8 @@
 						setValue(this, plainProp, propDesc.enumValue[0]);
 					} else if (propDesc.type && DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
 						setValue(this, plainProp, DEFAULT_TYPE_VALUE[propDesc.type]);
-						//						this[plainProp] = DEFAULT_TYPE_VALUE[propDesc.type];
 					} else {
 						setValue(this, plainProp, null);
-						//						this[plainProp] = null;
 					}
 				}
 			}
@@ -1514,8 +1498,6 @@
 			if (!propDesc) {
 				propDesc = defaultPropDesc;
 			}
-
-			//fwLogger.debug('{0}のプロパティ{1}を作成', model.name, prop);
 
 			if (propDesc.enhance !== undefined && propDesc.enhance === false) {
 				continue; //非enhanceなプロパティは、Item生成時にプロパティだけ生成して終わり
