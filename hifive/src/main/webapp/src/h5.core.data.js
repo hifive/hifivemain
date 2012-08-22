@@ -2302,7 +2302,7 @@
 				prop: '',
 				value: '',
 				reasons: errorReason
-			}],
+			}]
 		};
 	}
 
