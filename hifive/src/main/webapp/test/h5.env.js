@@ -351,34 +351,31 @@ $(function() {
 				strictEqual(ret.isWebkit, false, 'Webkitか');
 			});
 
-	test(
-			'uaの確認14(Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61)',
-			function() {
-				var ua = 'Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61';
-				var ret = h5.env.__check(ua);
-				strictEqual(ret.osVersion, null, 'OSのバージョンは正しいか');
-				strictEqual(ret.osVersionFull, null, 'OSのフルバージョンは正しいか');
-				strictEqual(ret.browserVersion, 11, 'ブラウザのバージョンは正しいか');
-				strictEqual(ret.browserVersionFull, '11.61', 'ブラウザのフルバージョンは正しいか');
-				strictEqual(ret.isiPhone, false, 'iPhoneか');
-				strictEqual(ret.isiPad, false, 'iPadか');
-				strictEqual(ret.isiOS, false, 'iOSか');
-				strictEqual(ret.isAndroid, false, 'Androidか');
-				strictEqual(ret.isWindowsPhone, false, 'WindowsPhoneか');
-				strictEqual(ret.isIE, false, 'IEか');
-				strictEqual(ret.isFirefox, false, 'Firefoxか');
-				strictEqual(ret.isChrome, false, 'Chromeか');
-				strictEqual(ret.isSafari, false, 'Safariか');
-				strictEqual(ret.isOpera, true, 'Operaか');
-				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
-				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
-				strictEqual(ret.isTablet, false, 'タブレットか');
-				strictEqual(ret.isDesktop, true, 'デスクトップか');
-				strictEqual(ret.isWebkit, false, 'Webkitか');
-			});
+	test('uaの確認14(Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61)', function() {
+		var ua = 'Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61';
+		var ret = h5.env.__check(ua);
+		strictEqual(ret.osVersion, null, 'OSのバージョンは正しいか');
+		strictEqual(ret.osVersionFull, null, 'OSのフルバージョンは正しいか');
+		strictEqual(ret.browserVersion, 11, 'ブラウザのバージョンは正しいか');
+		strictEqual(ret.browserVersionFull, '11.61', 'ブラウザのフルバージョンは正しいか');
+		strictEqual(ret.isiPhone, false, 'iPhoneか');
+		strictEqual(ret.isiPad, false, 'iPadか');
+		strictEqual(ret.isiOS, false, 'iOSか');
+		strictEqual(ret.isAndroid, false, 'Androidか');
+		strictEqual(ret.isWindowsPhone, false, 'WindowsPhoneか');
+		strictEqual(ret.isIE, false, 'IEか');
+		strictEqual(ret.isFirefox, false, 'Firefoxか');
+		strictEqual(ret.isChrome, false, 'Chromeか');
+		strictEqual(ret.isSafari, false, 'Safariか');
+		strictEqual(ret.isOpera, true, 'Operaか');
+		strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
+		strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
+		strictEqual(ret.isTablet, false, 'タブレットか');
+		strictEqual(ret.isDesktop, true, 'デスクトップか');
+		strictEqual(ret.isWebkit, false, 'Webkitか');
+	});
 
-	test(
-			'uaの確認14(Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10)',
+	test('uaの確認14(Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10)',
 			function() {
 				var ua = 'Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10';
 				var ret = h5.env.__check(ua);
@@ -401,5 +398,32 @@ $(function() {
 				strictEqual(ret.isTablet, false, 'タブレットか');
 				strictEqual(ret.isDesktop, true, 'デスクトップか');
 				strictEqual(ret.isWebkit, false, 'Webkitか');
+			});
+
+	// https://developers.google.com/chrome/mobile/docs/user-agent
+	test(
+			'uaの確認15(Chrome for iOS 19.0.1084.60)',
+			function() {
+				var ua = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 5_1_1 like Mac OS X; ja-jp) AppleWebKit/534.46.0 (KHTML, like Gecko) CriOS/19.0.1084.60 Mobile/9B206 Safari/7534.48.3';
+				var ret = h5.env.__check(ua);
+				strictEqual(ret.osVersion, 5, 'OSのバージョンは正しいか');
+				strictEqual(ret.osVersionFull, '5.1.1', 'OSのフルバージョンは正しいか');
+				strictEqual(ret.browserVersion, 5, 'ブラウザのバージョンは正しいか');
+				strictEqual(ret.browserVersionFull, '5.1.1', 'ブラウザのフルバージョンは正しいか');
+				strictEqual(ret.isiPhone, true, 'iPhoneか');
+				strictEqual(ret.isiPad, false, 'iPadか');
+				strictEqual(ret.isiOS, true, 'iOSか');
+				strictEqual(ret.isAndroid, false, 'Androidか');
+				strictEqual(ret.isWindowsPhone, false, 'WindowsPhoneか');
+				strictEqual(ret.isIE, false, 'IEか');
+				strictEqual(ret.isFirefox, false, 'Firefoxか');
+				strictEqual(ret.isChrome, true, 'Chromeか');
+				strictEqual(ret.isSafari, false, 'Safariか');
+				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
+				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
+				strictEqual(ret.isTablet, false, 'タブレットか');
+				strictEqual(ret.isDesktop, false, 'デスクトップか');
+				strictEqual(ret.isWebkit, true, 'Webkitか');
 			});
 });

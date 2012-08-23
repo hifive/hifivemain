@@ -117,12 +117,17 @@
 		var isFirefox = !!ua.match(/Firefox/i);
 		/**
 		 * ブラウザがGoogle Chromeであるかどうかを表します。
+		 * <ul>
+		 * <li>Chrome - Chrome for Android / Desktop</li>
+		 * <li>CrMo - Chrome beta for Android</li>
+		 * <li>CriOS - Chrome for iOS</li>
+		 * </ul>
 		 *
 		 * @name isChrome
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
-		var isChrome = !!ua.match(/Chrome/i) || !!ua.match(/CrMo/);
+		var isChrome = !!ua.match(/Chrome/i) || !!ua.match(/CrMo/) || !!ua.match(/CriOS/);
 		/**
 		 * ブラウザがSafariであるかどうかを表します。
 		 *
@@ -225,12 +230,14 @@
 		};
 		var spaceSplit = function(target, ignoreCase) {
 			var v = getVersion(target, '[^;)]*', ignoreCase).split(' ');
-			if(v.length === 1) return '';
+			if (v.length === 1)
+				return '';
 			return v[v.length - 1];
 		};
 		var slashSplit = function(target, ignoreCase) {
 			var v = getVersion(target, '[^;) ]*', ignoreCase).split('/');
-			if(v.length === 1) return '';
+			if (v.length === 1)
+				return '';
 			return v[v.length - 1];
 		};
 		var getMainVersion = function(target) {
@@ -259,7 +266,7 @@
 			osVersionFull = s;
 		}
 		// Operaのuaに'MSIE'が入っているとき用に、isIE && isOperaならisIEをfalseにする
-		if(isIE && isOpera){
+		if (isIE && isOpera) {
 			isIE = false;
 		}
 
