@@ -48,18 +48,6 @@
 	<classpathentry kind="lib" path="lib/selenium/netty-3.2.7.Final.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/platform-3.4.0.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/sac-1.3.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-android-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-api-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-chrome-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-firefox-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-htmlunit-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-ie-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-iphone-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-java-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-remote-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-safari-driver-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-server-2.21.0.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/selenium-support-2.21.0.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/serializer-2.7.1.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/snakeyaml-1.8.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/webbit-0.4.6.jar"/>
@@ -90,6 +78,17 @@
 	<classpathentry kind="lib" path="lib/test/spring-test-3.1.1.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/test/testng-6.3.1.jar"/>
 	<classpathentry kind="lib" path="lib/h5Tools/h5WebDriverTestRunner.jar"/>
-	<classpathentry kind="lib" path="lib/h5Tools/rhino-1.7R4.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-android-driver-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-api-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-chrome-driver-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-firefox-driver-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-htmlunit-driver-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-ie-driver-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-iphone-driver-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-java-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-remote-driver-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-safari-driver-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-server-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/selenium-support-2.25.0.jar"/>
 	<classpathentry kind="output" path="src/main/webapp/WEB-INF/classes"/>
 </classpath>

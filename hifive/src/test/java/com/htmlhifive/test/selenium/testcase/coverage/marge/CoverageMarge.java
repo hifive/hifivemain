@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
  package com.htmlhifive.test.selenium.testcase.coverage.marge;
@@ -62,7 +62,8 @@ public class CoverageMarge extends H5TestCaseMarge {
 						// 　コピーした配列のtoString()の結果を取得している。
 						"	ret += '\"' + k + '\":[' + (function(){var ary = [];"
 						+ "for(var i = 0; i < obj[k].length;i++)ary.push(obj[k][i]);return ary.toString()})() + '],';"
-						+ "ret = ret.replace(/,$/,'')+'}';" + "return ret;})(_$jscoverage);");
+						// TODO safariだと、文字数が多いと返ってこない？調べる。
+						+ "return ret.replace(/,$/,'')+'}';})(_$jscoverage);");
 		System.out.println(jscoverageStr);
 		Matcher keyMatcher = Pattern.compile("\"(.*?)\"").matcher(jscoverageStr);
 
