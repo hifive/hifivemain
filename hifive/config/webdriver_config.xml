@@ -14,7 +14,7 @@
 
   <!-- 以降、通常は変更不要 -->
   <!-- FireFoxアドイン FireBugの配置場所 -->
-  <entry key="firebugPath">lib/selenium/firebug-1.9.2-fx.xpi</entry>
+  <entry key="firebugPath">lib/selenium/firebug-1.10.2-fx.xpi</entry>
   <!-- Chromium(chromedriver.exe)の配置場所 -->
   <entry key="chromiumPath">lib/selenium/chromedriver.exe</entry>
 </properties>
