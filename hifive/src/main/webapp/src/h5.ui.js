@@ -103,6 +103,34 @@
 		return typeof child.strokeweight === 'number';
 	})();
 
+	/**
+	 * h5.env.uaが解析の対象としている範囲で、ユーザエージェントからposition:fixedをサポートしているか判定する。
+	 * <p>
+	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
+	 * <p>
+	 * 以下の理由から、機能ベースでの判定は行わない。
+	 * <ul>
+	 * <li>$.support.fixedPosition()にバグがあり、モバイルブラウザの判定が正しくない。</li>
+	 * <li>jQuery1.8では、$.support.fixedPosition()が無くなっている。 (fixedPositionを判定するAPIが無い)</li>
+	 * <li>機能ベースでモバイル・デスクトップの両方を検知するのは困難。</li>
+	 * </ul>
+	 * <p>
+	 * <b>メモ</b>
+	 * <ul>
+	 * <li>position:fixed対応表: http://caniuse.com/css-fixed</li>
+	 * <li>Androidは2.2からサポートしているが、2.2と2.3はmetaタグに「user-scalable=no」が設定されていないと機能しない。<br>
+	 * http://blog.webcreativepark.net/2011/12/07-052517.html </li>
+	 * <li>Windows Phoneは7.0/7.5ともに未サポート https://github.com/jquery/jquery-mobile/issues/3489</li>
+	 * <ul>
+	 */
+	var isPositionFixedSupported = (function() {
+		var ua = h5.env.ua;
+		var fullver = parseFloat(ua.browserVersionFull);
+		return !((ua.isAndroidDefaultBrowser && fullver <= 2.1)
+				|| (ua.isAndroidDefaultBrowser && (fullver >= 2.2 && fullver < 2.4) && $('meta[name="viewport"][content*="user-scalable=no"]').length === 0)
+				|| (ua.isiOS && ua.browserVersion < 5) || (ua.isIE && ua.browserVersion < 7) || ua.isWindowsPhone);
+	})();
+
 	// =============================
 	// Functions
 	// =============================
@@ -407,8 +435,6 @@
 		}
 	};
 
-
-
 	/**
 	 * インジケータ(メッセージ・画面ブロック・進捗表示)の表示や非表示を行うクラス。
 	 *
@@ -430,8 +456,11 @@
 
 		var that = this;
 		var $target = this._isGlobalBlockTarget() ? $('body') : $(this.target);
-		var targetPositionStatic = $target.css('position');
+		var targetPosition = $target.css('position');
 		var targetZoom = $target.css('zoom');
+
+		var $window = $(window);
+		var handler = null;
 
 		// optionのデフォルト値
 		var opts = $.extend(true, {}, {
@@ -453,10 +482,90 @@
 			centerY: false,
 			onUnblock: function() { // blockUIが、画面ブロックの削除時に実行するコールバック関数
 				// インジケータを表示する要素のpositionがstaticの場合、blockUIがroot要素のpositionをrelativeに書き換えるため、インジケータを表示する前の状態に戻す
-				$target.css('position', targetPositionStatic);
+				$target.css('position', targetPosition);
 				// IEの場合、blockUIがroot要素にzoom:1を設定するため、インジケータを表示する前の状態に戻す
 				$target.css('zoom', targetZoom);
+
 				that.throbber.hide();
+
+				$window.unbind('h5scrollstop', handler);
+				$window.unbind('orientationchange resize', handler);
+			},
+			onBlock: function() {
+				if (!that._isGlobalBlockTarget()) {
+					return;
+				}
+
+				var $document = $(document);
+				var $blockUIOverlay = $('body div.blockUI.blockOverlay');
+				var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass
+						+ '.blockPage');
+
+				// コンテンツ領域全体にオーバーレイをかける(見えていない部分にもオーバーレイがかかる)
+				function resizeOverlay() {
+					$blockUIOverlay.height($document.height());
+					$blockUIOverlay.width($document.width());
+				}
+
+				if (isPositionFixedSupported) {
+					handler = function() {
+						that._setPositionAndResizeWidth();
+						resizeOverlay();
+					};
+				} else {
+					var isScrolling = false;
+					var timerId = null;
+
+					function triggerScrollEvent(ev, state) {
+						isScrolling = state;
+						$window.triggerHandler(isScrolling ? 'h5scrollstart' : 'h5scrollstop', ev);
+					}
+
+					$window.bind('touchmove scroll', function(ev) {
+						if (!isScrolling) {
+							triggerScrollEvent(ev, true);
+						}
+
+						clearTimeout(timerId);
+						timerId = setTimeout(function() {
+							triggerScrollEvent(ev, false);
+						}, 50);
+					});
+
+					function updateIndicatorPosition() {
+						// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
+						var displayHeight = window.innerHeight ? window.innerHeight : $window
+								.height();
+						// 表示領域中央にメッセージを表示する
+						$blockUIInner.css('position', 'absolute').css(
+								'top',
+								(($document.scrollTop() + (displayHeight / 2)) - ($blockUIInner
+										.height() / 2))
+										+ 'px');
+					}
+					handler = function(ev) {
+						that._setPositionAndResizeWidth();
+						resizeOverlay();
+						updateIndicatorPosition();
+					};
+
+					// インジケータメッセージを移動後の位置に更新する
+					$window.bind('h5scrollstop', handler);
+				}
+
+				// 以下のインジケータ上で発生したイベントをキャンセルする
+				$.each([$blockUIOverlay, $blockUIInner], function(i, v) {
+					v.bind('click touchstart touchmove touchend scroll', function() {
+						return false;
+					});
+				});
+
+				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
+				$window.bind('orientationchange resize', handler);
+
+				setTimeout(function() {
+					handler();
+				});
 			}
 		};
 		// スロバーのスタイル定義 (基本的にはCSSで記述する。ただし固定値はここで設定する)
