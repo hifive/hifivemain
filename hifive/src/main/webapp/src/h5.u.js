@@ -1222,6 +1222,29 @@
 			};
 		})(arrayMethods[i]);
 	}
+	/**
+	 * 指定された配列の要素をこのObservableArrayにシャローコピーします。 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
+	 *
+	 * @param {Array} src コピー元の配列
+	 * @returns {Array} 削除前の状態を持った配列
+	 */
+	ObservableArray.prototype.copyFrom = function(src) {
+		var ret = Array.prototype.slice.call(this, 0);
+
+		var args = src.slice(0);
+		args.unshift(0, this.length);
+		Array.prototype.splice.apply(this, args);
+
+		var ev = {
+			type: 'observe',
+			method: 'copyFrom',
+			args: src,
+			returnValue: ret
+		};
+		this.dispatchEvent(ev);
+
+		return ret;
+	};
 
 	/**
 	 * ObservableArrayを作成します。
