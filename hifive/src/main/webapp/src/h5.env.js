@@ -60,41 +60,41 @@
 	// =============================
 	function check(ua) {
 		/**
-		 * iPhoneであるかどうかを表します。
-		 * Chrome For iOS など、標準ブラウザでなくてもiPhoneであれば、trueです。
+		 * iPhoneであるかどうかを表します。 Chrome For iOS など、標準ブラウザでなくてもiPhoneであれば、trueです。
 		 *
 		 * @name isiPhone
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
 		var isiPhone = !!ua.match(/iPhone/i);
+
 		/**
-		 * iPadであるかどうかを表します。
-		 * Chrome For iOS など、標準ブラウザでなくてもiPhoneであれば、trueです。
+		 * iPadであるかどうかを表します。 Chrome For iOS など、標準ブラウザでなくてもiPhoneであれば、trueです。
 		 *
 		 * @name isiPad
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
 		var isiPad = !!ua.match(/iPad/i);
+
 		/**
-		 * iOSであるかどうかを表します。
-		 * isiPhoneまたはisiPadがtrueであればtrueです。
+		 * iOSであるかどうかを表します。 isiPhoneまたはisiPadがtrueであればtrueです。
 		 *
 		 * @name isiOS
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
 		var isiOS = isiPhone || isiPad;
+
 		/**
-		 * Androidであるかどうかを表します。
-		 * Androidであれば標準ブラウザでなくても、trueです。
+		 * Androidであるかどうかを表します。 Androidであれば標準ブラウザでなくても、trueです。
 		 *
 		 * @name isAndroid
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
 		var isAndroid = !!ua.match(/android/i);
+
 		/**
 		 * Windows Phoneであるかどうかを表します。
 		 *
@@ -103,6 +103,7 @@
 		 * @memberOf h5.env.ua
 		 */
 		var isWindowsPhone = !!ua.match(/Windows Phone/i);
+
 		/**
 		 * ブラウザがInternet Explorerであるかどうかを表します。
 		 *
@@ -111,22 +112,23 @@
 		 * @memberOf h5.env.ua
 		 */
 		var isIE = !!ua.match(/MSIE/);
+
 		/**
-		 * ブラウザがFirefoxであるかどうかを表します。
-		 * モバイル端末のFirefoxでもtrueです。
+		 * ブラウザがFirefoxであるかどうかを表します。 モバイル端末のFirefoxでもtrueです。
 		 *
 		 * @name isFirefox
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
 		var isFirefox = !!ua.match(/Firefox/i);
+
 		/**
-		 * ブラウザがGoogle Chromeであるかどうかを表します。
-		 * Chromeモバイル、Chrome iOS の場合もtrueです。
+		 * ブラウザがGoogle Chromeであるかどうかを表します。 Chromeモバイル、Chrome iOS の場合もtrueです。<br />
+		 * 以下の文字列が含まれる場合にtrueになります。<br />
 		 * <ul>
-		 * <li>Chrome - Chrome for Android / Desktop</li>
-		 * <li>CrMo - Chrome for Android</li>
-		 * <li>CriOS - Chrome for iOS</li>
+		 * <li>Chrome (Chrome for Android / Desktop)</li>
+		 * <li>CrMo (Chrome for Android)</li>
+		 * <li>CriOS (Chrome for iOS)</li>
 		 * </ul>
 		 *
 		 * @name isChrome
@@ -134,15 +136,16 @@
 		 * @memberOf h5.env.ua
 		 */
 		var isChrome = !!ua.match(/Chrome/i) || !!ua.match(/CrMo/) || !!ua.match(/CriOS/);
+
 		/**
-		 * ブラウザがSafariであるかどうかを表します。
-		 * iOSのSafariの場合もtrueです。
+		 * ブラウザがSafariであるかどうかを表します。 iOSのSafariの場合もtrueです。
 		 *
 		 * @name isSafari
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
 		var isSafari = !isAndroid && !!ua.match(/Safari/i) && !isChrome;
+
 		/**
 		 * レンダリングエンジンがWebkitであるかどうかを表します。
 		 *
@@ -151,9 +154,9 @@
 		 * @memberOf h5.env.ua
 		 */
 		var isWebkit = !!ua.match(/Webkit/i);
+
 		/**
-		 * ブラウザがOperaであるかどうかを表します。
-		 * モバイル、iOSのOperaの場合もtrueです。
+		 * ブラウザがOperaであるかどうかを表します。 モバイル、iOSのOperaの場合もtrueです。
 		 *
 		 * @name isOpera
 		 * @type Boolean
@@ -168,6 +171,7 @@
 		 * @memberOf h5.env.ua
 		 */
 		var isAndroidDefaultBrowser = isAndroid && !!ua.match(/Safari/i) && !isChrome;
+
 		/**
 		 * スマートフォンであるかどうかを表します。<br />
 		 * isiPhone, isWindowsPhoneがtrueならtrueとなります。<br />
@@ -186,6 +190,7 @@
 				|| (isAndroidDefaultBrowser && ua.match(/Mobile/) && !ua.match(/SC-01C/))
 				|| (isAndroid && isChrome && ua.match(/Mobile/)) || ua.match(/Fennec/i) || ua
 				.match(/Opera Mobi/i));
+
 		/**
 		 * タブレットであるかどうかを表します。<br />
 		 * isiPadがtrueならtrueとなります。<br />
@@ -203,15 +208,16 @@
 		var isTablet = !!(isiPad || (isAndroidDefaultBrowser && !ua.match(/Mobile/))
 				|| (isAndroid && isChrome && !ua.match(/Mobile/)) || ua.match(/SC-01C/)
 				|| ua.match(/Fennec/i) || ua.match(/Opera Tablet/i));
+
 		/**
-		 * PCであるかどうかを表します。
-		 * isSmartPhoneとisTabletがいずれもfalseの場合にtrueです。
+		 * PCであるかどうかを表します。 isSmartPhoneとisTabletがいずれもfalseの場合にtrueです。
 		 *
 		 * @name isDesktop
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
 		var isDesktop = !isSmartPhone && !isTablet;
+
 		/**
 		 * OSのバージョンを表します。<br />
 		 * h5.env.ua.isDesktopがtrueである場合、値はnullになります。
@@ -221,6 +227,7 @@
 		 * @memberOf h5.env.ua
 		 */
 		var osVersion = null;
+
 		/**
 		 * OSのフルバージョンを表します。<br />
 		 * h5.env.ua.isDesktopがtrueである場合、値はnullになります。
@@ -230,28 +237,34 @@
 		 * @memberOf h5.env.ua
 		 */
 		var osVersionFull = null;
+
 		var getiOSVersion = function(pre, post) {
 			return $.trim(ua.substring(ua.indexOf(pre) + pre.length, ua.indexOf(post))).split('_');
 		};
+
 		var getVersion = function(target, end, ignoreCase) {
 			var r = ignoreCase === false ? new RegExp(target + end) : new RegExp(target + end, 'i');
 			return $.trim(ua.match(r));
 		};
+
 		var spaceSplit = function(target, ignoreCase) {
 			var v = getVersion(target, '[^;)]*', ignoreCase).split(' ');
 			if (v.length === 1)
 				return '';
 			return v[v.length - 1];
 		};
+
 		var slashSplit = function(target, ignoreCase) {
 			var v = getVersion(target, '[^;) ]*', ignoreCase).split('/');
 			if (v.length === 1)
 				return '';
 			return v[v.length - 1];
 		};
+
 		var getMainVersion = function(target) {
 			return parseInt(target.split('.')[0]);
 		};
+
 		if (isiPhone) {
 			var s = getiOSVersion('iPhone OS', 'like');
 			osVersion = parseInt(s[0]);
@@ -274,6 +287,7 @@
 			osVersion = getMainVersion(s);
 			osVersionFull = s;
 		}
+
 		// Operaのuaに'MSIE'が入っているとき用に、isIE && isOperaならisIEをfalseにする
 		if (isIE && isOpera) {
 			isIE = false;
@@ -288,6 +302,7 @@
 		 * @memberOf h5.env.ua
 		 */
 		var browserVersion = null;
+
 		/**
 		 * ブラウザのフルバージョンを表します。
 		 *
@@ -296,6 +311,7 @@
 		 * @memberOf h5.env.ua
 		 */
 		var browserVersionFull = null;
+
 		if (isiOS || (isAndroid && isAndroidDefaultBrowser)) {
 			browserVersion = osVersion;
 			browserVersionFull = osVersionFull;
@@ -326,6 +342,7 @@
 				browserVersionFull = version;
 			}
 		}
+
 		return {
 			osVersion: osVersion,
 			osVersionFull: osVersionFull,
@@ -381,6 +398,7 @@
 	h5.u.obj.expose('h5.env', {
 		ua: check(navigator.userAgent)
 	});
+
 	/* del begin */
 	// テストのためにグローバルに公開。プリプロセッサで削除される。
 	h5.u.obj.expose('h5.env', {
