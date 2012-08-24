@@ -20,8 +20,6 @@ $(function() {
 	// アサートが稀に失敗する場合があるので、フェードアウトのアニメ―ションを実行しない。
 	$.blockUI.defaults.fadeOut = -1;
 
-	var isNotAvailableOnTouchStartEvent = !('ontouchstart' in document);
-
 	// svgをサポートしているか
 	var isSupportSVG = document.createElementNS
 			&& $
@@ -5155,7 +5153,6 @@ $(function() {
 						return ev;
 					};
 
-
 					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
 					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
 					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
@@ -5202,7 +5199,14 @@ $(function() {
 				});
 			});
 
-	asyncTest('h5trackイベント(touchstart, touchmove, touchend)', 26, function() {
+	asyncTest('h5trackイベント(touchstart, touchmove, touchend) ※PCブラウザでは失敗します。', 26, function() {
+		if (document.ontouchstart === undefined) {
+			expect(1);
+			ok(false, 'PCブラウザでは失敗します');
+			start();
+			return;
+		}
+
 		var controller = {
 			__name: 'TestController',
 			'{rootElement} h5trackstart': function(context) {
@@ -5248,11 +5252,6 @@ $(function() {
 			}
 		};
 
-		// hifiveにtouchイベントがあると思わせるために設定
-		if (isNotAvailableOnTouchStartEvent) {
-			document.ontouchstart = function() {};
-		}
-
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
 			var setPos = function(ev, pos, isEnd) {
@@ -5268,10 +5267,6 @@ $(function() {
 				ev.originalEvent = originalEvent;
 				return ev;
 			};
-			// hifiveにtouchイベントがあると思わせるために設定
-			if (isNotAvailableOnTouchStartEvent) {
-				document.ontouchstart = undefined;
-			}
 
 			var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 			var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
@@ -5319,16 +5314,21 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合も、h5trackイベントが発生するか',
+			'h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合もh5trackイベントが発生するか ※PCブラウザでは失敗します。',
 			27, function() {
+				if (document.ontouchstart === undefined) {
+					expect(1);
+					ok(false, 'PCブラウザでは失敗します');
+					start();
+					return;
+				}
+
 				var controller = {
 					__name: 'TestController',
 					__ready: function() {
 						$(this.rootElement).trigger('touchstart').trigger('touchmove').trigger(
 								'touchend');
-						if (isNotAvailableOnTouchStartEvent) {
-							document.ontouchstart = undefined;
-						}
+						testController.unbind();
 						start();
 					},
 					'{rootElement} h5trackstart': function(context) {
@@ -5392,11 +5392,7 @@ $(function() {
 					}
 				};
 
-				// hifiveにtouchイベントがあると思わせるために設定
-				if (isNotAvailableOnTouchStartEvent) {
-					document.ontouchstart = function() {};
-				}
-				h5.core.controller('#controllerTest', controller);
+				var testController = h5.core.controller('#controllerTest', controller);
 			});
 
 	asyncTest(
@@ -5552,9 +5548,16 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) SVG ※タブレット、スマートフォン、IE8-では失敗します',
+			'h5trackイベント(touchstart, touchmove, touchend) SVG ※PCブラウザでは失敗します',
 			26,
 			function() {
+				if (document.ontouchstart === undefined) {
+					expect(1);
+					ok(false, 'PCブラウザでは失敗します');
+					start();
+					return;
+				}
+
 				if (!isSupportSVG) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
@@ -5636,8 +5639,6 @@ $(function() {
 				svg.appendChild(rect);
 				document.getElementById('controllerTest').appendChild(svg);
 
-				// hifiveにtouchイベントがあると思わせるために設定
-				document.ontouchstart = 1;
 				var testController = h5.core.controller('#controllerTest', controller);
 
 				testController.readyPromise.done(function() {
@@ -5654,8 +5655,6 @@ $(function() {
 						ev.originalEvent = originalEvent;
 						return ev;
 					};
-					// hifiveにtouchイベントがあると思わせるために設定
-					document.ontouchstart = undefined;
 
 					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
@@ -5837,9 +5836,16 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) window',
+			'h5trackイベント(touchstart, touchmove, touchend) window ※PCブラウザでは失敗します',
 			26,
 			function() {
+				if (document.ontouchstart === undefined) {
+					expect(1);
+					ok(false, 'PCブラウザでは失敗します');
+					start();
+					return;
+				}
+
 				var controller = {
 					__name: 'TestController',
 
@@ -5903,8 +5909,6 @@ $(function() {
 					}
 				};
 
-				// hifiveにtouchイベントがあると思わせるために設定
-				document.ontouchstart = 1;
 				var testController = h5.core.controller(window, controller);
 
 				testController.readyPromise.done(function() {
@@ -5921,8 +5925,6 @@ $(function() {
 						ev.originalEvent = originalEvent;
 						return ev;
 					};
-					// hifiveにtouchイベントがあると思わせるために設定
-					document.ontouchstart = undefined;
 
 					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
