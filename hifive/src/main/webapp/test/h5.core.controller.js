@@ -3564,9 +3564,9 @@ $(function() {
 			function() {
 				$('#qunit-fixture')
 						.append(
-								'<div id="controllerTest1" style="display: none;"><input type="button" class="testclass" value="click" /><div id="test"><div id="innertest"  class="innerdiv"></div></div></div>');
+								'<div id="controllerTest3" style="display: none;"><input type="button" class="testclass" value="click" /><div id="test"><div id="innertest"  class="innerdiv"></div></div></div>');
 				$('#qunit-fixture').append(
-						'<div id="controllerTest2" style="display: none;"></div>');
+						'<div id="controllerTest4" style="display: none;"></div>');
 
 				var controllerBase1 = {
 					__name: 'Test1Controller',
@@ -3623,22 +3623,28 @@ $(function() {
 								'selectorTypeが取得できること');
 					}
 				};
-				var test1Controller = h5.core.controller('#controllerTest1', controllerBase1);
+				var test1Controller = h5.core.controller('#controllerTest3', controllerBase1);
 				test1Controller.readyPromise.done(function() {
-					$('#controllerTest1 input[type=button]').click();
-					$('#controllerTest1 .testclass').trigger('click1');
-					$('#controllerTest1').trigger('click2');
-					$('body').trigger('click3');
-					$('#controllerTest1 .innerdiv').mousedown();
-					$('#controllerTest1 .innerdiv').mouseup();
+					var ua = h5.env.ua;
 
-					var eventName = h5.env.ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
+					$('#controllerTest3 input[type=button]').click();
+					$('#controllerTest3 .testclass').trigger('click1');
+					$('#controllerTest3').trigger('click2');
+					$('body').trigger('click3');
+
+					var $innerDiv = $('#controllerTest3 .innerdiv');
+					typeof document.ontouchstart === 'undefined' ? $innerDiv.mousedown()
+							: $innerDiv.trigger('touchstart');
+					typeof document.ontouchend === 'undefined' ? $innerDiv.mouseup() : $innerDiv
+							.trigger('touchend');
+
+					var eventName = ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
 					$(window).trigger(new $.Event(eventName), {
 						test: true
 					});
 
 					test1Controller.unbind();
-					$('#controllerTest1').remove();
+					$('#controllerTest3').remove();
 					ok(!$('#parent').length, '（DOMのクリーンアップ）');
 					start();
 				});
@@ -5307,6 +5313,53 @@ $(function() {
 			$('#controllerResult').trigger(endMouseEvent);
 			start();
 		});
+	});
+
+	asyncTest('h5trackイベント(touchstart, touchmove, touchend) 2', 27, function() {
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				$(this.rootElement).trigger('touchstart').trigger('touchmove').trigger('touchend');
+				start();
+			},
+			'{rootElement} h5trackstart': function(context) {
+				ok(true, 'touchstartイベントをトリガするとh5trackstartイベントが発火すること。');
+				equal(context.event.pageX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.pageY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.screenX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.screenY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.clientX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.clientY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.offsetX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.offsetY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+			},
+
+			'{rootElement} h5trackmove': function(context) {
+				ok(true, 'mousemoveイベントをトリガするとh5trackmoveイベントが発火すること。');
+				equal(context.event.pageX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.pageY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.screenX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.screenY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.clientX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.clientY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.offsetX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.offsetY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+			},
+
+			'{rootElement} h5trackend': function(context) {
+				ok(true, 'mouseupイベントをトリガするとh5trackendイベントが発火すること。');
+				equal(context.event.pageX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.pageY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.screenX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.screenY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.clientX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.clientY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.offsetX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+				equal(context.event.offsetY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+			}
+		};
+
+		h5.core.controller('#controllerTest', controller);
 	});
 
 	asyncTest(

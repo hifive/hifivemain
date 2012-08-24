@@ -1159,12 +1159,19 @@
 
 	/**
 	 * タッチイベントのイベントオブジェクトにpageXやoffsetXといった座標系のプロパティを追加します。
+	 * <p>
+	 * touchstart/touchmove/touchendをjQuery.trigger()で発火させた場合、originalEventプロパティは存在しないので、座標系プロパティのコピーを行いません。
 	 *
 	 * @param {Object} event jQuery.Eventオブジェクト
 	 * @param {String} eventName イベント名
 	 */
 	function initTouchEventObject(event, eventName) {
 		var originalEvent = event.originalEvent;
+
+		if (!originalEvent) {
+			return;
+		}
+
 		var touches = eventName === 'touchend' || eventName === 'touchcancel' ? originalEvent.changedTouches[0]
 				: originalEvent.touches[0];
 		var pageX = touches.pageX;
