@@ -88,7 +88,7 @@
 	 * <p>
 	 * (true:サポート/false:未サポート)
 	 */
-	var isCanvasSupported = !!document.createElement("canvas").getContext;
+	var isCanvasSupported = !!document.createElement('canvas').getContext;
 
 	/**
 	 * VMLをサポートしているか (true:サポート/false:未サポート)
