@@ -61,6 +61,7 @@
 	function check(ua) {
 		/**
 		 * iPhoneであるかどうかを表します。
+		 * Chrome For iOS など、標準ブラウザでなくてもiPhoneであれば、trueです。
 		 *
 		 * @name isiPhone
 		 * @type Boolean
@@ -69,6 +70,7 @@
 		var isiPhone = !!ua.match(/iPhone/i);
 		/**
 		 * iPadであるかどうかを表します。
+		 * Chrome For iOS など、標準ブラウザでなくてもiPhoneであれば、trueです。
 		 *
 		 * @name isiPad
 		 * @type Boolean
@@ -77,6 +79,7 @@
 		var isiPad = !!ua.match(/iPad/i);
 		/**
 		 * iOSであるかどうかを表します。
+		 * isiPhoneまたはisiPadがtrueであればtrueです。
 		 *
 		 * @name isiOS
 		 * @type Boolean
@@ -85,6 +88,7 @@
 		var isiOS = isiPhone || isiPad;
 		/**
 		 * Androidであるかどうかを表します。
+		 * Androidであれば標準ブラウザでなくても、trueです。
 		 *
 		 * @name isAndroid
 		 * @type Boolean
@@ -109,6 +113,7 @@
 		var isIE = !!ua.match(/MSIE/);
 		/**
 		 * ブラウザがFirefoxであるかどうかを表します。
+		 * モバイル端末のFirefoxでもtrueです。
 		 *
 		 * @name isFirefox
 		 * @type Boolean
@@ -117,9 +122,10 @@
 		var isFirefox = !!ua.match(/Firefox/i);
 		/**
 		 * ブラウザがGoogle Chromeであるかどうかを表します。
+		 * Chromeモバイル、Chrome iOS の場合もtrueです。
 		 * <ul>
 		 * <li>Chrome - Chrome for Android / Desktop</li>
-		 * <li>CrMo - Chrome beta for Android</li>
+		 * <li>CrMo - Chrome for Android</li>
 		 * <li>CriOS - Chrome for iOS</li>
 		 * </ul>
 		 *
@@ -130,6 +136,7 @@
 		var isChrome = !!ua.match(/Chrome/i) || !!ua.match(/CrMo/) || !!ua.match(/CriOS/);
 		/**
 		 * ブラウザがSafariであるかどうかを表します。
+		 * iOSのSafariの場合もtrueです。
 		 *
 		 * @name isSafari
 		 * @type Boolean
@@ -146,6 +153,7 @@
 		var isWebkit = !!ua.match(/Webkit/i);
 		/**
 		 * ブラウザがOperaであるかどうかを表します。
+		 * モバイル、iOSのOperaの場合もtrueです。
 		 *
 		 * @name isOpera
 		 * @type Boolean
@@ -155,7 +163,7 @@
 		/**
 		 * ブラウザがAndroid標準ブラウザであるかどうかを表します。
 		 *
-		 * @name isOpera
+		 * @name isAndroidDefaultBrowser
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
@@ -197,6 +205,7 @@
 				|| ua.match(/Fennec/i) || ua.match(/Opera Tablet/i));
 		/**
 		 * PCであるかどうかを表します。
+		 * isSmartPhoneとisTabletがいずれもfalseの場合にtrueです。
 		 *
 		 * @name isDesktop
 		 * @type Boolean
@@ -356,8 +365,14 @@
 	 */
 	/**
 	 * ユーザーエージェントからOS、ブラウザを判別します。<br />
-	 * 『Geolocationが使えるか』等機能の有無を判別したい場合は、これらのプロパティを使わず機能の有無をチェックしてください。<br />
-	 * たとえばGeolocation機能はh5.api.geo.isSupportedで判別できます。
+	 * 例えば、iPhoneのSafariかどうかを判別したい場合は、<br />
+	 * <br />
+	 * h5.env.ua.isiPhone && h5.env.ua.isSafari<br />
+	 * <br />
+	 * で判別することができます。<br />
+	 * <br />
+	 * 機能の有無を判別したい場合は、基本的にはこれらのプロパティを使わず、機能の有無でチェックしてください。<br />
+	 * 例えば『Geolocationが使えるか』を判別したい場合、h5.api.geo.isSupportedで判別できます。<br />
 	 *
 	 * @namespace
 	 * @name ua
