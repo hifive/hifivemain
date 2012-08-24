@@ -25,7 +25,7 @@ $(function() {
 
 	module("h5.env");
 	test(
-			'uaの確認1(Android 4.0.1, Chrome for Android 16.0.912.75)',
+			'uaの確認(Android 4.0.1, Chrome for Android 16.0.912.75)',
 			function() {
 				// Galaxy Nexus
 				var ua = 'Mozilla/5.0 (Linux; U; Android 4.0.1; ja-jp; Galaxy Nexus Build/ITL41D) AppleWebKit/535.7 (KHTML, like Gecko) CrMo/16.0.912.75 Mobile Safari/535.7';
@@ -51,7 +51,7 @@ $(function() {
 				strictEqual(ret.isWebkit, true, 'Webkitか');
 			});
 	test(
-			'uaの確認2(Android 2.3.4, Android標準ブラウザ)',
+			'uaの確認(Android 2.3.4, Android標準ブラウザ)',
 			function() {
 				var ua = 'Mozilla/5.0 (Linux; U; Android 2.3.4; ja-jp; SonyEricssonIS11S Build/4.0.1.B.0.112) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1';
 				var ret = h5.env.__check(ua);
@@ -76,7 +76,7 @@ $(function() {
 				strictEqual(ret.isWebkit, true, 'Webkitか');
 			});
 	test(
-			'uaの確認3(iPhone 5.0.1, Safari)',
+			'uaの確認(iPhone 5.0.1, Safari)',
 			function() {
 				var ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 5_0_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Mobile/9A405 Safari/7534.48.3';
 				var ret = h5.env.__check(ua);
@@ -101,7 +101,7 @@ $(function() {
 				strictEqual(ret.isWebkit, true, 'Webkitか');
 			});
 	test(
-			'uaの確認4(iPad 4.3.4, Safari)',
+			'uaの確認(iPad 4.3.4, Safari)',
 			function() {
 				var ua = 'Mozilla/5.0 (iPad; U; CPU OS 4_3_4 like Mac OS X; ja-jp) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8K2 Safari/6533.18.5';
 				var ret = h5.env.__check(ua);
@@ -126,7 +126,7 @@ $(function() {
 				strictEqual(ret.isWebkit, true, 'Webkitか');
 			});
 	test(
-			'uaの確認5(Windows Phone 7.5, IE 9.0)',
+			'uaの確認(Windows Phone 7.5, IE 9.0)',
 			function() {
 				var ua = 'Mozilla/5.0 (compatible; MSIE 9.0; Windows Phone OS 7.5; Trident/5.0; IEMobile/9.0; FujitsuToshibaMobileCommun; IS12T; KDDI)';
 				var ret = h5.env.__check(ua);
@@ -151,7 +151,7 @@ $(function() {
 				strictEqual(ret.isWebkit, false, 'Webkitか');
 			});
 	test(
-			'uaの確認6(Windows NT 5.1, IE 8.0)',
+			'uaの確認(Windows NT 5.1, IE 8.0)',
 			function() {
 				var ua = 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; .NET CLR 2.0.50727; InfoPath.1';
 				var ret = h5.env.__check(ua);
@@ -176,7 +176,7 @@ $(function() {
 				strictEqual(ret.isWebkit, false, 'Webkitか');
 			});
 	test(
-			'uaの確認7(Ubuntu 10.04, Chrome 15.0.874.106)',
+			'uaの確認(Ubuntu 10.04, Chrome 15.0.874.106)',
 			function() {
 				var ua = 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.2 (KHTML, like Gecko) Ubuntu/10.04 Chromium/15.0.874.106 Chrome/15.0.874.106 Safari/535.2';
 				var ret = h5.env.__check(ua);
@@ -201,7 +201,7 @@ $(function() {
 				strictEqual(ret.isWebkit, true, 'Webkitか');
 			});
 	test(
-			'uaの確認8(Max OS X, Firefox 8.0.1)',
+			'uaの確認(Max OS X, Firefox 8.0.1)',
 			function() {
 				var ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.5; rv:8.0.1) Gecko/20100101 Firefox/8.0.1';
 				var ret = h5.env.__check(ua);
@@ -226,7 +226,7 @@ $(function() {
 				strictEqual(ret.isWebkit, false, 'Webkitか');
 			});
 	test(
-			'uaの確認9(Max OS X, Safari 5.1.2)',
+			'uaの確認(Max OS X, Safari 5.1.2)',
 			function() {
 				var ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.52.7 (KHTML, like Gecko) Version/5.1.2 Safari/534.52.7';
 				var ret = h5.env.__check(ua);
@@ -250,7 +250,7 @@ $(function() {
 				strictEqual(ret.isDesktop, true, 'デスクトップか');
 				strictEqual(ret.isWebkit, true, 'Webkitか');
 			});
-	test('uaの確認10(Windows NT 5.1, Opera 9.62)', function() {
+	test('uaの確認(Windows NT 5.1, Opera 9.62)', function() {
 		var ua = 'Opera/9.62 (Windows NT 5.1; U; ja) Presto/2.1.1';
 		var ret = h5.env.__check(ua);
 		strictEqual(ret.osVersion, null, 'OSのバージョンは正しいか');
@@ -274,7 +274,7 @@ $(function() {
 		strictEqual(ret.isWebkit, false, 'Webkitか');
 	});
 	test(
-			'uaの確認11(Android 2.3.3, Opera Mobi 11.50)',
+			'uaの確認(Android 2.3.3, Opera Mobi 11.50)',
 			function() {
 				var ua = 'Opera/9.80 (Android 2.3.3; Linux; Opera Mobi/ADR-1111101157; U; ja) Presto/2.9.201 Version/11.50';
 				var ret = h5.env.__check(ua);
@@ -300,7 +300,7 @@ $(function() {
 			});
 
 	test(
-			'uaの確認12(Android 3.2.1, Opera Tablet 11.10)',
+			'uaの確認(Android 3.2.1, Opera Tablet 11.10)',
 			function() {
 				var ua = 'Opera/9.80 (Android 3.2.1; Linux; Opera Tablet/ADR-1109081720; U; ja) Presto/2.8.149 Version/11.10';
 				var ret = h5.env.__check(ua);
@@ -326,7 +326,7 @@ $(function() {
 			});
 
 	test(
-			'uaの確認13(Windows Phone 6.5, IE 6.0)',
+			'uaの確認(Windows Phone 6.5, IE 6.0)',
 			function() {
 				var ua = 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; KDDI-TS01; Windows Phone 6.5.3.5)';
 				var ret = h5.env.__check(ua);
@@ -351,7 +351,7 @@ $(function() {
 				strictEqual(ret.isWebkit, false, 'Webkitか');
 			});
 
-	test('uaの確認14(Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61)', function() {
+	test('uaの確認(Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61)', function() {
 		var ua = 'Opera/9.80 (Windows NT 6.1; U; ja) Presto/2.10.229 Version/11.61';
 		var ret = h5.env.__check(ua);
 		strictEqual(ret.osVersion, null, 'OSのバージョンは正しいか');
@@ -375,7 +375,7 @@ $(function() {
 		strictEqual(ret.isWebkit, false, 'Webkitか');
 	});
 
-	test('uaの確認14(Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10)',
+	test('uaの確認(Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10)',
 			function() {
 				var ua = 'Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10';
 				var ret = h5.env.__check(ua);
@@ -402,7 +402,7 @@ $(function() {
 
 	// https://developers.google.com/chrome/mobile/docs/user-agent
 	test(
-			'uaの確認15(Chrome for iOS 19.0.1084.60)',
+			'uaの確認(Chrome for iOS 19.0.1084.60)',
 			function() {
 				var ua = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 5_1_1 like Mac OS X; ja-jp) AppleWebKit/534.46.0 (KHTML, like Gecko) CriOS/19.0.1084.60 Mobile/9B206 Safari/7534.48.3';
 				var ret = h5.env.__check(ua);
