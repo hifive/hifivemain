@@ -20,6 +20,8 @@ $(function() {
 	// アサートが稀に失敗する場合があるので、フェードアウトのアニメ―ションを実行しない。
 	$.blockUI.defaults.fadeOut = -1;
 
+	var isNotAvailableOnTouchStartEvent = !('ontouchstart' in document);
+
 	// svgをサポートしているか
 	var isSupportSVG = document.createElementNS
 			&& $
@@ -5202,9 +5204,7 @@ $(function() {
 
 	asyncTest('h5trackイベント(touchstart, touchmove, touchend)', 26, function() {
 		var controller = {
-
 			__name: 'TestController',
-
 			'{rootElement} h5trackstart': function(context) {
 				context.evArg
 						&& ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、実行されないこと。');
@@ -5218,7 +5218,6 @@ $(function() {
 				ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
 				ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
 			},
-
 			'{rootElement} h5trackmove': function(context) {
 				context.evArg
 						&& ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、実行されないこと。');
@@ -5234,7 +5233,6 @@ $(function() {
 				strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
 				strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
 			},
-
 			'{rootElement} h5trackend': function(context) {
 				context.evArg
 						&& ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、実行されないこと。');
@@ -5251,7 +5249,10 @@ $(function() {
 		};
 
 		// hifiveにtouchイベントがあると思わせるために設定
-		document.ontouchstart = 1;
+		if (isNotAvailableOnTouchStartEvent) {
+			document.ontouchstart = function() {};
+		}
+
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
 			var setPos = function(ev, pos, isEnd) {
@@ -5268,7 +5269,9 @@ $(function() {
 				return ev;
 			};
 			// hifiveにtouchイベントがあると思わせるために設定
-			document.ontouchstart = undefined;
+			if (isNotAvailableOnTouchStartEvent) {
+				document.ontouchstart = undefined;
+			}
 
 			var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 			var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
@@ -5315,52 +5318,86 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5trackイベント(touchstart, touchmove, touchend) 2', 27, function() {
-		var controller = {
-			__name: 'TestController',
-			__ready: function() {
-				$(this.rootElement).trigger('touchstart').trigger('touchmove').trigger('touchend');
-				start();
-			},
-			'{rootElement} h5trackstart': function(context) {
-				ok(true, 'touchstartイベントをトリガするとh5trackstartイベントが発火すること。');
-				equal(context.event.pageX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.pageY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.screenX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.screenY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.clientX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.clientY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.offsetX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.offsetY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-			},
+	asyncTest(
+			'h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合も、h5trackイベントが発生するか',
+			27, function() {
+				var controller = {
+					__name: 'TestController',
+					__ready: function() {
+						$(this.rootElement).trigger('touchstart').trigger('touchmove').trigger(
+								'touchend');
+						if (isNotAvailableOnTouchStartEvent) {
+							document.ontouchstart = undefined;
+						}
+						start();
+					},
+					'{rootElement} h5trackstart': function(context) {
+						ok(true, 'touchstartイベントをトリガするとh5trackstartイベントが発火すること。');
+						equal(context.event.pageX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.pageY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+					},
 
-			'{rootElement} h5trackmove': function(context) {
-				ok(true, 'mousemoveイベントをトリガするとh5trackmoveイベントが発火すること。');
-				equal(context.event.pageX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.pageY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.screenX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.screenY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.clientX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.clientY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.offsetX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.offsetY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-			},
+					'{rootElement} h5trackmove': function(context) {
+						ok(true, 'mousemoveイベントをトリガするとh5trackmoveイベントが発火すること。');
+						equal(context.event.pageX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.pageY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+					},
 
-			'{rootElement} h5trackend': function(context) {
-				ok(true, 'mouseupイベントをトリガするとh5trackendイベントが発火すること。');
-				equal(context.event.pageX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.pageY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.screenX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.screenY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.clientX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.clientY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.offsetX, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-				equal(context.event.offsetY, undefined, 'originalEventが無い場合は、座標プロパティが設定されてないこと。');
-			}
-		};
+					'{rootElement} h5trackend': function(context) {
+						ok(true, 'mouseupイベントをトリガするとh5trackendイベントが発火すること。');
+						equal(context.event.pageX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.pageY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+					}
+				};
 
-		h5.core.controller('#controllerTest', controller);
-	});
+				// hifiveにtouchイベントがあると思わせるために設定
+				if (isNotAvailableOnTouchStartEvent) {
+					document.ontouchstart = function() {};
+				}
+				h5.core.controller('#controllerTest', controller);
+			});
 
 	asyncTest(
 			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォン、IE8-では失敗します',
