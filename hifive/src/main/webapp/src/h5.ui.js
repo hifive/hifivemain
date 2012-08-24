@@ -455,13 +455,69 @@
 		this.target = h5.u.obj.isJQueryObject(target) ? target.get(0) : target;
 
 		var that = this;
+		var $window = $(window);
+		var $document = $(document);
 		var $target = this._isGlobalBlockTarget() ? $('body') : $(this.target);
 		var targetPosition = $target.css('position');
 		var targetZoom = $target.css('zoom');
 
-		var $window = $(window);
+		// コンテンツ領域全体にオーバーレイをかける(見えていない部分にもオーバーレイがかかる)
+		function resizeOverlay() {
+			var $blockUIOverlay = $('body div.blockUI.blockOverlay');
+			$blockUIOverlay.height($document.height());
+			$blockUIOverlay.width($document.width());
+		}
+
+		// インジケータのメッセージを画面中央に表示させる
+		function updateIndicatorPosition() {
+			var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass + '.blockPage');
+			// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
+			var displayHeight = window.innerHeight ? window.innerHeight : $window.height();
+
+			$blockUIInner.css('position', 'absolute').css(
+					'top',
+					(($document.scrollTop() + (displayHeight / 2)) - ($blockUIInner.height() / 2))
+							+ 'px');
+		}
+
+		// インジケータ上で発生したイベントを無効にする
+		function disableEventOnIndicator() {
+			var $blockUIOverlay = $('body div.blockUI.blockOverlay');
+			var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass + '.blockPage');
+			var disabledEventTypes = 'click dblclick touchstart touchmove touchend scroll blur focus focusin focusout mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select keydown keypress keyup';
+
+			$.each([$blockUIOverlay, $blockUIInner], function(i, v) {
+				v.bind(disabledEventTypes, function() {
+					return false;
+				});
+			});
+		}
+
 		var resizeIndicatorHandler = null;
-		var scrollstopHandler = null;
+
+		if (isPositionFixedSupported) {
+			resizeIndicatorHandler = function() {
+				that._setPositionAndResizeWidth();
+				resizeOverlay();
+			};
+		} else {
+			resizeIndicatorHandler = function() {
+				that._setPositionAndResizeWidth();
+				resizeOverlay();
+				updateIndicatorPosition();
+			};
+		}
+
+		var timerId = null;
+		function scrollstopHandler() {
+			if (timerId != null) {
+				clearTimeout(timerId);
+			}
+
+			timerId = setTimeout(function() {
+				resizeIndicatorHandler();
+			}, 50);
+		}
 
 		// optionのデフォルト値
 		var opts = $.extend(true, {}, {
@@ -497,61 +553,11 @@
 					return;
 				}
 
-				var $document = $(document);
-				var $blockUIOverlay = $('body div.blockUI.blockOverlay');
-				var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass
-						+ '.blockPage');
-
-				// コンテンツ領域全体にオーバーレイをかける(見えていない部分にもオーバーレイがかかる)
-				function resizeOverlay() {
-					$blockUIOverlay.height($document.height());
-					$blockUIOverlay.width($document.width());
-				}
-
-				if (isPositionFixedSupported) {
-					resizeIndicatorHandler = function() {
-						that._setPositionAndResizeWidth();
-						resizeOverlay();
-					};
-				} else {
-					function updateIndicatorPosition() {
-						// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
-						var displayHeight = window.innerHeight ? window.innerHeight : $window
-								.height();
-						// 表示領域中央にメッセージを表示する
-						$blockUIInner.css('position', 'absolute').css(
-								'top',
-								(($document.scrollTop() + (displayHeight / 2)) - ($blockUIInner
-										.height() / 2))
-										+ 'px');
-					}
-
-					resizeIndicatorHandler = function(ev) {
-						that._setPositionAndResizeWidth();
-						resizeOverlay();
-						updateIndicatorPosition();
-					};
-
-					var timerId = null;
-					scrollstopHandler = function() {
-						clearTimeout(timerId);
-						timerId = setTimeout(function() {
-							resizeIndicatorHandler();
-						}, 50);
-					};
-
+				if (!isPositionFixedSupported) {
 					$window.bind('touchmove scroll', scrollstopHandler);
 				}
 
-				// 無効にするイベントタイプ
-				var disabledEventTypes = 'click dblclick touchstart touchmove touchend scroll blur focus focusin focusout mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select keydown keypress keyup';
-
-				// 以下のインジケータ上で発生したイベントを無効にする
-				$.each([$blockUIOverlay, $blockUIInner], function(i, v) {
-					v.bind(disabledEventTypes, function() {
-						return false;
-					});
-				});
+				disableEventOnIndicator();
 
 				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
 				$window.bind('orientationchange resize', resizeIndicatorHandler);
