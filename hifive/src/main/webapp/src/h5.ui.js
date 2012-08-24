@@ -460,7 +460,8 @@
 		var targetZoom = $target.css('zoom');
 
 		var $window = $(window);
-		var handler = null;
+		var resizeIndicatorHandler = null;
+		var scrollstopHandler = null;
 
 		// optionのデフォルト値
 		var opts = $.extend(true, {}, {
@@ -488,8 +489,8 @@
 
 				that.throbber.hide();
 
-				$window.unbind('h5scrollstop', handler);
-				$window.unbind('orientationchange resize', handler);
+				$window.unbind('touchmove scroll', scrollstopHandler);
+				$window.unbind('orientationchange resize', resizeIndicatorHandler);
 			},
 			onBlock: function() {
 				if (!that._isGlobalBlockTarget()) {
@@ -508,30 +509,11 @@
 				}
 
 				if (isPositionFixedSupported) {
-					handler = function() {
+					resizeIndicatorHandler = function() {
 						that._setPositionAndResizeWidth();
 						resizeOverlay();
 					};
 				} else {
-					var isScrolling = false;
-					var timerId = null;
-
-					function triggerScrollEvent(ev, state) {
-						isScrolling = state;
-						$window.triggerHandler(isScrolling ? 'h5scrollstart' : 'h5scrollstop', ev);
-					}
-
-					$window.bind('touchmove scroll', function(ev) {
-						if (!isScrolling) {
-							triggerScrollEvent(ev, true);
-						}
-
-						clearTimeout(timerId);
-						timerId = setTimeout(function() {
-							triggerScrollEvent(ev, false);
-						}, 50);
-					});
-
 					function updateIndicatorPosition() {
 						// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
 						var displayHeight = window.innerHeight ? window.innerHeight : $window
@@ -543,28 +525,39 @@
 										.height() / 2))
 										+ 'px');
 					}
-					handler = function(ev) {
+
+					resizeIndicatorHandler = function(ev) {
 						that._setPositionAndResizeWidth();
 						resizeOverlay();
 						updateIndicatorPosition();
 					};
 
-					// インジケータメッセージを移動後の位置に更新する
-					$window.bind('h5scrollstop', handler);
+					var timerId = null;
+					scrollstopHandler = function() {
+						clearTimeout(timerId);
+						timerId = setTimeout(function() {
+							resizeIndicatorHandler();
+						}, 50);
+					};
+
+					$window.bind('touchmove scroll', scrollstopHandler);
 				}
 
-				// 以下のインジケータ上で発生したイベントをキャンセルする
+				// 無効にするイベントタイプ
+				var disabledEventTypes = 'click dblclick touchstart touchmove touchend scroll blur focus focusin focusout mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select keydown keypress keyup';
+
+				// 以下のインジケータ上で発生したイベントを無効にする
 				$.each([$blockUIOverlay, $blockUIInner], function(i, v) {
-					v.bind('click touchstart touchmove touchend scroll', function() {
+					v.bind(disabledEventTypes, function() {
 						return false;
 					});
 				});
 
 				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
-				$window.bind('orientationchange resize', handler);
+				$window.bind('orientationchange resize', resizeIndicatorHandler);
 
 				setTimeout(function() {
-					handler();
+					resizeIndicatorHandler();
 				});
 			}
 		};
