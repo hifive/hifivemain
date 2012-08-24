@@ -401,10 +401,9 @@
 					};
 
 					script.type = 'text/javascript';
-					// cacheがfalse(最新のJSファイルを取得する)の場合、URLの末尾にパラメータを付与して常に最新のJSファイルを取得する
-					// (URLにもともとパラメータが付いていれば、パラメータを追加する。)
-					script.src = cache ? url : url + (url.match(/\?/) ? '&_' : '?_') + (+new Date());
-					console.log(script.src);
+					// cacheがfalse(最新のJSファイルを取得する)の場合、URLの末尾にパラメータ(+new Date()で、getTime()の値)を付与して常に最新のJSファイルを取得する
+					// URLにもともとパラメータが付いていれば、パラメータを追加する。
+					script.src = cache ? url : url + ((url.indexOf('?') > 0) ? '&_' : '?_') + (+new Date());
 					$head[0].appendChild(script);
 
 					return scriptDfd.promise();
