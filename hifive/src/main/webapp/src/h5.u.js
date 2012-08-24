@@ -208,8 +208,6 @@
 	 * <p>
 	 * dataType:scriptを指定した場合のデフォルトの挙動は、スクリプトファイルの読み込み完了後に$.globalEval()で評価を行うため、
 	 * convertersを上書きしています。
-	 * <p>
-	 * また、読み込み対象のスクリプトがApplicationCacheによってキャッシュされている場合エラーが発生するため、cacheオプションにtrueを設定しています。
 	 *
 	 * @private
 	 * @param {String} url 読み込み対象のスクリプトパス
@@ -218,6 +216,7 @@
 	 */
 	function getScriptString(url, async, cache) {
 		var df = h5.async.deferred();
+		// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
 		h5.ajax({
 			url: url,
 			async: async,
