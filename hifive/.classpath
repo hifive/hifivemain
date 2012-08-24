@@ -90,5 +90,6 @@
 	<classpathentry kind="lib" path="lib/selenium/selenium-safari-driver-2.25.0.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/selenium-server-2.25.0.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/selenium-support-2.25.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/bcpkix-jdk15on-1.47.jar"/>
 	<classpathentry kind="output" path="src/main/webapp/WEB-INF/classes"/>
 </classpath>
