@@ -516,6 +516,7 @@
 
 			timerId = setTimeout(function() {
 				resizeIndicatorHandler();
+				timerId = null;
 			}, 50);
 		}
 
@@ -547,6 +548,10 @@
 
 				$window.unbind('touchmove scroll', scrollstopHandler);
 				$window.unbind('orientationchange resize', resizeIndicatorHandler);
+
+				if (timerId != null) {
+					clearTimeout(timerId);
+				}
 			},
 			onBlock: function() {
 				if (!that._isGlobalBlockTarget()) {
