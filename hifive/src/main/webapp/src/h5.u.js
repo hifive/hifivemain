@@ -403,7 +403,8 @@
 					script.type = 'text/javascript';
 					// cacheがfalse(最新のJSファイルを取得する)の場合、URLの末尾にパラメータ(+new Date()で、getTime()の値)を付与して常に最新のJSファイルを取得する
 					// URLにもともとパラメータが付いていれば、パラメータを追加する。
-					script.src = cache ? url : url + ((url.indexOf('?') > -1) ? '&_' : '?_') + (+new Date());
+					script.src = cache ? url : url + ((url.indexOf('?') > -1) ? '&_' : '?_')
+							+ (+new Date());
 					$head[0].appendChild(script);
 
 					return scriptDfd.promise();
@@ -446,7 +447,8 @@
 					}, retDfFailCallback);
 				}
 			}
-			// IE6,7,8の場合、SCRIPTタグのonerrorイベントが発生せずatomicな読み込みができないため、Ajaxでスクリプトを読み込む
+			// IE6,7,8の場合、SCRIPTタグのonerrorイベントが発生しないため、読み込みが成功または失敗したか判定できない。
+			// よってatomicな読み込みができないため、Ajaxでスクリプトを読み込む
 			else {
 				if (parallel) {
 					var loadedScripts = [];
