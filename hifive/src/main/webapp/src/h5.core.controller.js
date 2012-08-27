@@ -1535,7 +1535,7 @@
 			var property = propertyArray[propertyIndex];
 			var dfd = con.__controllerContext[property];
 			if (dfd) {
-				if (!dfd.isRejected() && !dfd.isResolved()) {
+				if (!isRejected(dfd) && !isResolved(dfd)) {
 					dfd.reject(errorObj);
 				}
 			}
