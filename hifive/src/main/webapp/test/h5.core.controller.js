@@ -5971,6 +5971,19 @@ $(function() {
 				});
 			});
 
+	module(
+			'ライフサイクルイベント内の例外',
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+				},
+				teardown: function() {
+					$('#controllerTest').remove();
+					h5.core.controllerManager.controllers = [];
+				}
+			});
 	test('__construct()で例外をスローする。', 1, function() {
 		var controller = {
 			__name: 'TestController',
@@ -6039,6 +6052,7 @@ $(function() {
 
 		h5.core.controller('#controllerTest', controller);
 	});
+
 
 	asyncTest('※IE6～9の場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
 		var errorMsg = '__unbind error.';
