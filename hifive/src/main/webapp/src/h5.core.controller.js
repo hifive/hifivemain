@@ -122,6 +122,7 @@
 	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
 	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
 	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ{0}の初期化が正常に完了しました。';
+	var FW_LOG_INIT_CONTROLLER_THROWN_ERROR = 'コントローラ{0}の{1}内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。';
 	/* del end */
 
 	// =========================================================================
@@ -765,19 +766,35 @@
 			var func = function() {
 				var ret = null;
 				var lifecycleFunc = controllerInstance[funcName];
+				var controllerName = controllerInstance.__name;
 				if (lifecycleFunc) {
-					ret = controllerInstance[funcName]
-							(createInitializationContext(controllerInstance));
+					try {
+						ret = controllerInstance[funcName]
+								(createInitializationContext(controllerInstance));
+					} catch (e) {
+						// __init, __readyで例外が投げられた
+						fwLogger.error(FW_LOG_INIT_CONTROLLER_THROWN_ERROR, controllerName,
+								isInitEvent ? '__init' : '__ready');
+
+						// 同じrootControllerを持つ他の子のdisposeによって、
+						// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
+						controller.rootController
+								&& controller.rootController.dispose(arguments);
+
+						// dispose処理が終わったら例外を投げる
+						throw e;
+					}
 				}
 				// ライフサイクルイベント実行後に呼ぶべきコールバック関数を作成
 				var callback = isInitEvent ? createCallbackForInit(controllerInstance)
 						: createCallbackForReady(controllerInstance);
 				if (h5.async.isPromise(ret)) {
+					// __init, __ready がpromiseを返している場合
 					ret.done(function() {
 						callback();
 					}).fail(
 							function(/* var_args */) {
-								var controllerName = controllerInstance.__name;
+								// rejectされた場合は連鎖的にdisposeする
 								fwLogger.error(FW_LOG_INIT_CONTROLLER_REJECTED, controllerName,
 										isInitEvent ? '__init' : '__ready');
 								fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR,

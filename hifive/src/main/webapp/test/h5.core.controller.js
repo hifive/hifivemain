@@ -6103,4 +6103,165 @@ $(function() {
 
 		h5.core.controller('#controllerTest', controller);
 	});
+
+	asyncTest('※要目視確認: __init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。', 13, function() {ok(
+			true,
+			'※要目視確認　コンソールに『コントローラchildControllerの__ready内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__initで発生したエラーが出力されていることを確認してください');
+		var errorMsg = '__init error.';
+		var id = testTimeoutFunc(errorMsg);
+		var onerrorHandler = window.onerror;
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			window.onerror = onerrorHandler;
+			ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+		};
+
+		var controller = {
+			__name: 'TestController',
+			child1Controller: {
+				grandchildController: {
+					__name: 'grandchildController',
+					__init: function() {
+						ok(true, '孫コントローラの__initは実行されること');
+					},
+					__ready: function() {
+						ok(false, '孫コントローラの__readyは実行されない');
+					},
+					__unbind: function() {
+						ok(true, '孫コントローラの__unbindが実行されること');
+					},
+					__dispose: function() {
+						ok(true, '孫コントローラの__disposeが実行されること');
+					}
+				},
+				__name: 'childController',
+				__init: function() {
+					ok(true, '子コントローラの__initは実行されること');
+					throw new Error('__init');
+				},
+				__ready: function() {
+					ok(false, '子コントローラの__readyは実行されないこと');
+				},
+				__unbind: function() {
+					ok(true, '子コントローラの__unbindが実行されること');
+				},
+				__dispose: function() {
+					ok(true, '子コントローラの__disposeが実行されること');
+
+				}
+			},
+			__init: function() {
+				ok(false, 'ルートコントローラの__initが実行されないこと');
+			},
+			__ready: function() {
+				ok(false, 'ルートコントローラの__readyは実行されないこと');
+			},
+			__unbind: function() {
+				ok(true, 'ルートコントローラの__unbindが実行されること');
+			},
+			__dispose: function() {
+				ok(true, 'ルートコントローラの__disposeが実行されること');
+				setTimeout(function() {
+					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+					start();
+				}, 0);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.initPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
+		}).fail(function() {
+			ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
+		});
+		c.readyPromise.done(function() {
+			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+			start();
+		}).fail(function() {
+			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+		});
+	});
+
+	asyncTest(
+			'※IE6～9の場合は要目視確認: __ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。',
+			16,
+			function() {
+				ok(
+						true,
+						'※要目視確認　コンソールに『コントローラchildControllerの__init内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__readyで発生したエラーが出力されていることを確認してください');
+				var errorMsg = '__ready error.';
+				var id = testTimeoutFunc(errorMsg);
+				var onerrorHandler = window.onerror;
+
+				window.onerror = function(ev) {
+					clearTimeout(id);
+					window.onerror = onerrorHandler;
+					ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+				};
+
+				var controller = {
+					__name: 'TestController',
+					child1Controller: {
+						grandchildController: {
+							__name: 'grandchildController',
+							__init: function() {
+								ok(true, '孫コントローラの__initは実行されること');
+							},
+							__ready: function() {
+								ok(true, '孫コントローラの__readyは実行されること');
+							},
+							__unbind: function() {
+								ok(true, '孫コントローラの__unbindが実行されること');
+							},
+							__dispose: function() {
+								ok(true, '孫コントローラの__disposeが実行されること');
+							}
+						},
+						__name: 'childController',
+						__init: function() {
+							ok(true, '子コントローラの__initは実行されること');
+						},
+						__ready: function() {
+							ok(true, '子コントローラの__readyは実行されること');
+							throw new Error('__ready');
+						},
+						__unbind: function() {
+							ok(true, '子コントローラの__unbindが実行されること');
+						},
+						__dispose: function() {
+							ok(true, '子コントローラの__disposeが実行されること');
+						}
+					},
+					__init: function() {
+						ok(true, 'ルートコントローラの__initが実行されること');
+					},
+					__ready: function() {
+						ok(false, 'ルートコントローラの__readyは実行されないこと');
+					},
+					__unbind: function() {
+						ok(true, 'ルートコントローラの__unbindが実行されること');
+					},
+					__dispose: function() {
+						ok(true, 'ルートコントローラの__disposeが実行されること');
+						setTimeout(function() {
+							ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+							start();
+						}, 0);
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.initPromise.done(function() {
+					ok(true, 'ルートコントローラのinitPromiseのdoneハンドラが実行されること');
+				}).fail(function() {
+					ok(false, 'テスト失敗。ルートコントローラのinitPromiseのfailハンドラが実行された');
+				});
+				c.readyPromise.done(function() {
+					ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+					start();
+				}).fail(function() {
+					ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+				});
+			});
+
+
 });
