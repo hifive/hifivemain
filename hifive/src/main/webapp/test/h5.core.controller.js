@@ -6114,7 +6114,7 @@ $(function() {
 		window.onerror = function(ev) {
 			clearTimeout(id);
 			window.onerror = onerrorHandler;
-			ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。(出力されるログも目視で確認すること)');
 		};
 
 		var controller = {
@@ -6183,7 +6183,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'※IE6～9の場合は要目視確認: __ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。',
+			'※要目視確認: __ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。(出力されるログも目視で確認すること)',
 			16,
 			function() {
 				ok(
