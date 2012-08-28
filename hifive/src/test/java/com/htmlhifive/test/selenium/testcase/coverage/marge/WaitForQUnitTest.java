@@ -39,8 +39,8 @@ public class WaitForQUnitTest extends H5TestCase {
 	public void waitForTestEnd() throws InterruptedException {
 
 		try {
-			// フレーム内のロードが終わる前にここに入ることがある(Safari)なので、1秒待機
-			Thread.sleep(1000);
+			// フレーム内のロードが終わる前にここに入ることがある(Safari)なので、3秒待機
+			Thread.sleep(3000);
 			getDriver().switchTo().frame(querySelector("#browserIframe").get(0));
 
 			while (querySelector("#qunit-testresult").get(0).getText().contains("Running:")) {
@@ -48,6 +48,8 @@ public class WaitForQUnitTest extends H5TestCase {
 			}
 			System.out.println("QUnitテスト終了");
 			getDriver().switchTo().defaultContent();
+			// switchToでフォーカスが移るまで時間がかかるためか、Safariだと待たないと失敗するため、ここで待機
+			Thread.sleep(1000);
 		} catch (Exception e) {
 			System.out.println("waitForTestEnd error");
 		}

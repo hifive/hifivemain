@@ -15,7 +15,7 @@
  *
  * hifive
  */
- package com.htmlhifive.test.selenium.suite;
+package com.htmlhifive.test.selenium.suite;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite.SuiteClasses;
@@ -34,18 +34,19 @@ import com.htmlhifive.test.selenium.testcase.coverage.marge.Runner;
 import com.htmlhifive.test.selenium.testcase.coverage.marge.RunnerJQuery1_6_4;
 import com.htmlhifive.test.selenium.testcase.coverage.marge.WaitForQUnitTest;
 
-@TargetDriver({ FirefoxDriver.class,  ChromeDriver.class, InternetExplorerDriver.class, SafariDriver.class })
+@TargetDriver({ FirefoxDriver.class, ChromeDriver.class ,SafariDriver.class, InternetExplorerDriver.class})
 @ConfigurationXmlPath("config/webdriver_config.xml")
 @RunWith(H5Suite.class)
 @SuiteClasses({
 /* カバレッジページを開くためのクラス */
-	ShowCoveragePage.class,
+ShowCoveragePage.class,
 
 /* 実行したいテストクラスをここに記述 */
-	Runner.class, WaitForQUnitTest.class,
+Runner.class, WaitForQUnitTest.class,
  RunnerJQuery1_6_4.class, WaitForQUnitTest.class,
 
 /* 以下はマージ結果を表示するためのクラス */
-	CoverageMarge.class, CoverageMargeOut.class })
+ CoverageMarge.class, CoverageMargeOut.class
+})
 public class CoverageMargeTest {
 }
