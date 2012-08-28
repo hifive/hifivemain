@@ -603,6 +603,48 @@ $(function() {
 
 	});
 
+	asyncTest('スクリプトの非同期ロード(parallel=true)で、force=trueなら既に読み込み済みのものはロードされないこと。', 2, function() {
+		var sample4js = 'data/sample4.js?parallelTrue-forceTrue';
+		h5.u.loadScript(sample4js).done(
+				function() {
+					strictEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプト1回目を読み込んだ。');
+					window.com.htmlhifive.test.sample4loaded = undefined;
+
+					// parallelで読み込み
+					h5.u.loadScript([sample4js, sample4js], {
+						force: true,
+						parallel: true
+					}).done(
+							function() {
+								strictEqual(window.com.htmlhifive.test.sample4loaded, 2,
+										'force=trueなので、既に読み込み済みでも読み込むこと');
+								window.com.htmlhifive.test.sample4loaded = undefined;
+								start();
+							});
+				});
+	});
+
+	asyncTest('スクリプトの非同期ロード(parallel=true)で、force=falseなら同一のパスは2重に読み込まれないこと', 2, function() {
+		var sample4js = 'data/sample4.js?parallelTrue-forceFalse';
+		h5.u.loadScript(sample4js).done(
+				function() {
+					strictEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプト1回目を読み込んだ。');
+					window.com.htmlhifive.test.sample4loaded = undefined;
+
+					// parallelで読み込み
+					h5.u.loadScript([sample4js, sample4js], {
+						force: false,
+						parallel: true
+					}).done(
+							function() {
+								strictEqual(window.com.htmlhifive.test.sample4loaded, undefined,
+										'force=falseなので、既に読み込み済みのスクリプトは読み込まないこと。');
+								window.com.htmlhifive.test.sample4loaded = undefined;
+								start();
+							});
+				});
+	});
+
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
 		window.com.htmlhifive.test.sample4loaded = undefined;
 		h5.u.loadScript('data/sample4.js?async123').done(
@@ -1393,14 +1435,17 @@ $(function() {
 			exposedObj: false
 		});
 
-		equal(com.htmlhifive.test2.exposedObj, false, 'com.htmlhifive.test2.exposedObjがexposeされていること。');
+		equal(com.htmlhifive.test2.exposedObj, false,
+				'com.htmlhifive.test2.exposedObjがexposeされていること。');
 
 		raises(function(enviroment) {
 			h5.u.obj.expose('com.htmlhifive.test2', {
 				exposedObj: 10
 			});
 		}, function(actual) {
-			return 11001 === actual.code && h5.u.str.format('名前空間"{0}"には、プロパティ"{1}"が既に存在します。(code={2})', 'com.htmlhifive.test2', 'exposedObj', actual.code) === actual.message;
+			return 11001 === actual.code
+					&& h5.u.str.format('名前空間"{0}"には、プロパティ"{1}"が既に存在します。(code={2})',
+							'com.htmlhifive.test2', 'exposedObj', actual.code) === actual.message;
 		}, '指定した名前空間が既に存在する場合エラーとなること');
 
 		equal(com.htmlhifive.test2.exposedObj, false, '値が上書きされていないこと。');
