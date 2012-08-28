@@ -2037,7 +2037,6 @@
 			this.__controllerContext.unbindMap = {};
 
 			// コントローラマネージャの管理対象から外す.
-			var targetRootElement = this.rootElement;
 			var controllers = h5.core.controllerManager.controllers;
 			var that = this;
 			h5.core.controllerManager.controllers = $.grep(controllers,

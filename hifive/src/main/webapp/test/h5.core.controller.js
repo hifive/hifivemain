@@ -3891,8 +3891,6 @@ $(function() {
 	});
 
 	asyncTest('unbindで[eventName]のハンドラが削除できるか', function() {
-
-
 		var msg = '';
 		var controller = {
 			__name: 'TestController',
@@ -3912,6 +3910,61 @@ $(function() {
 			testController.unbind();
 			$(document).click();
 			ok(msg.length === 0, 'イベントハンドラが動作しないことを確認');
+		});
+	});
+
+	asyncTest('unbindしたコントローラだけが管理下から外されること', 4, function() {
+		var controllerManager = h5.core.controllerManager;
+		controllerManager.controllers = [];
+		var msg = '';
+		var controller1 = {
+			__name: 'TestController1',
+
+			'{document} [click]': function(context) {
+				msg = this.__name;
+			}
+		};
+		var controller2 = {
+			__name: 'TestController1',
+
+			'{document} [click]': function(context) {
+				msg = this.__name;
+			}
+		};
+		var controller3 = {
+			__name: 'TestController1',
+
+			'{document} [click]': function(context) {
+				msg = this.__name;
+			}
+		};
+		var c1 = h5.core.controller('#controllerTest', controller1);
+		var c2 = h5.core.controller('#controllerTest', controller2);
+		var c3 = h5.core.controller('#controllerTest', controller3);
+
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromise).done(
+				function() {
+					deepEqual(controllerManager.controllers, [c1, c2, c3],
+							'コントローラが3つ、controllerManager.controllersに登録されていること');
+
+					// controller1 をunbind
+					c1.unbind();
+					deepEqual(controllerManager.controllers, [c2, c3],
+							'unbindしたコントローラがcontrollerManager.controllersから無くなっていること');
+
+					// controller3 をunbind
+					c3.unbind();
+					deepEqual(controllerManager.controllers, [c2],
+							'unbindしたコントローラがcontrollerManager.controllersから無くなっていること');
+
+					// controller2 をunbind
+					c2.unbind();
+					deepEqual(controllerManager.controllers, [],
+							'unbindしたコントローラがcontrollerManager.controllersから無くなっていること');
+
+					start();
+				}).fail(function() {
+			ok(false, 'テスト失敗。コントローラ化に失敗しました');
 		});
 	});
 
@@ -5980,7 +6033,7 @@ $(function() {
 									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					$('#controllerTest').remove();
+					$('#qunit-fixture #controllerTest').remove();
 					h5.core.controllerManager.controllers = [];
 				}
 			});
@@ -6087,7 +6140,8 @@ $(function() {
 		window.onerror = function(ev) {
 			clearTimeout(id);
 			window.onerror = onerrorHandler;
-			ok(ev.indexOf(errorMsg), '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(ev.indexOf(errorMsg),
+					'__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。(出力されるログも目視で確認すること)');
 			start();
 		};
 
@@ -6104,83 +6158,88 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※要目視確認: __init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。', 13, function() {ok(
-			true,
-			'※要目視確認　コンソールに『コントローラchildControllerの__ready内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__initで発生したエラーが出力されていることを確認してください');
-		var errorMsg = '__init error.';
-		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
+	asyncTest(
+			'※要目視確認: __init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。',
+			13,
+			function() {
+				ok(
+						true,
+						'※要目視確認　コンソールに『コントローラchildControllerの__ready内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__initで発生したエラーが出力されていることを確認してください');
+				var errorMsg = '__init error.';
+				var id = testTimeoutFunc(errorMsg);
+				var onerrorHandler = window.onerror;
 
-		window.onerror = function(ev) {
-			clearTimeout(id);
-			window.onerror = onerrorHandler;
-			ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。(出力されるログも目視で確認すること)');
-		};
+				window.onerror = function(ev) {
+					clearTimeout(id);
+					window.onerror = onerrorHandler;
+					ok(ev.indexOf(errorMsg),
+							'__ready()内で発生した例外がFW内で握りつぶされずcatchできること。(出力されるログも目視で確認すること)');
+				};
 
-		var controller = {
-			__name: 'TestController',
-			child1Controller: {
-				grandchildController: {
-					__name: 'grandchildController',
+				var controller = {
+					__name: 'TestController',
+					child1Controller: {
+						grandchildController: {
+							__name: 'grandchildController',
+							__init: function() {
+								ok(true, '孫コントローラの__initは実行されること');
+							},
+							__ready: function() {
+								ok(false, '孫コントローラの__readyは実行されない');
+							},
+							__unbind: function() {
+								ok(true, '孫コントローラの__unbindが実行されること');
+							},
+							__dispose: function() {
+								ok(true, '孫コントローラの__disposeが実行されること');
+							}
+						},
+						__name: 'childController',
+						__init: function() {
+							ok(true, '子コントローラの__initは実行されること');
+							throw new Error('__init');
+						},
+						__ready: function() {
+							ok(false, '子コントローラの__readyは実行されないこと');
+						},
+						__unbind: function() {
+							ok(true, '子コントローラの__unbindが実行されること');
+						},
+						__dispose: function() {
+							ok(true, '子コントローラの__disposeが実行されること');
+
+						}
+					},
 					__init: function() {
-						ok(true, '孫コントローラの__initは実行されること');
+						ok(false, 'ルートコントローラの__initが実行されないこと');
 					},
 					__ready: function() {
-						ok(false, '孫コントローラの__readyは実行されない');
+						ok(false, 'ルートコントローラの__readyは実行されないこと');
 					},
 					__unbind: function() {
-						ok(true, '孫コントローラの__unbindが実行されること');
+						ok(true, 'ルートコントローラの__unbindが実行されること');
 					},
 					__dispose: function() {
-						ok(true, '孫コントローラの__disposeが実行されること');
+						ok(true, 'ルートコントローラの__disposeが実行されること');
+						setTimeout(function() {
+							ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+							start();
+						}, 0);
 					}
-				},
-				__name: 'childController',
-				__init: function() {
-					ok(true, '子コントローラの__initは実行されること');
-					throw new Error('__init');
-				},
-				__ready: function() {
-					ok(false, '子コントローラの__readyは実行されないこと');
-				},
-				__unbind: function() {
-					ok(true, '子コントローラの__unbindが実行されること');
-				},
-				__dispose: function() {
-					ok(true, '子コントローラの__disposeが実行されること');
-
-				}
-			},
-			__init: function() {
-				ok(false, 'ルートコントローラの__initが実行されないこと');
-			},
-			__ready: function() {
-				ok(false, 'ルートコントローラの__readyは実行されないこと');
-			},
-			__unbind: function() {
-				ok(true, 'ルートコントローラの__unbindが実行されること');
-			},
-			__dispose: function() {
-				ok(true, 'ルートコントローラの__disposeが実行されること');
-				setTimeout(function() {
-					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.initPromise.done(function() {
+					ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
+				}).fail(function() {
+					ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
+				});
+				c.readyPromise.done(function() {
+					ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
 					start();
-				}, 0);
-			}
-		};
-		var c = h5.core.controller('#controllerTest', controller);
-		c.initPromise.done(function() {
-			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
-		}).fail(function() {
-			ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
-		});
-		c.readyPromise.done(function() {
-			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
-			start();
-		}).fail(function() {
-			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
-		});
-	});
+				}).fail(function() {
+					ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+				});
+			});
 
 	asyncTest(
 			'※要目視確認: __ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。(出力されるログも目視で確認すること)',
