@@ -603,7 +603,8 @@ $(function() {
 
 	});
 
-	asyncTest('スクリプトの非同期ロード(parallel=true)で、force=trueなら既に読み込み済みのものはロードされないこと。', 2, function() {
+	asyncTest('スクリプトの非同期ロード(parallel=true)で、force=trueなら既に読み込み済みのパスでも2重に読み込まれること', 2, function() {
+		// sample4.jsを読み込み済みにする
 		var sample4js = 'data/sample4.js?parallelTrue-forceTrue';
 		h5.u.loadScript(sample4js).done(
 				function() {
@@ -624,7 +625,8 @@ $(function() {
 				});
 	});
 
-	asyncTest('スクリプトの非同期ロード(parallel=true)で、force=falseなら同一のパスは2重に読み込まれないこと', 2, function() {
+	asyncTest('スクリプトの非同期ロード(parallel=true)で、force=falseなら既に読み込み済みのパスは2重に読み込まれないこと', 2, function() {
+		// sample4.jsを読み込み済みにする
 		var sample4js = 'data/sample4.js?parallelTrue-forceFalse';
 		h5.u.loadScript(sample4js).done(
 				function() {
