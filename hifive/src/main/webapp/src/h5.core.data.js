@@ -36,7 +36,7 @@
 	/** マネージャ名が不正 */
 	var ERR_CODE_INVALID_MANAGER_NAME = 15000;
 
-	/** DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反している */
+	/** DataItemのsetterに渡された値、またはcreateで渡された値がDescriptorで指定された型・制約に違反している */
 	var ERR_CODE_INVALID_ITEM_VALUE = 15001;
 
 	/** dependが設定されたプロパティのセッターを呼び出した */
@@ -66,6 +66,9 @@
 	/** IDは文字列でなければならない */
 	var ERR_CODE_ID_MUST_BE_STRING = 15010;
 
+	/** typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う） */
+	var ERR_CODE_CANNOT_SET_OBSARRAY = 15011;
+
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
@@ -79,6 +82,8 @@
 	ERROR_MESSAGES[ERR_CODE_INVALID_UPDATE_LOG_TYPE] = '内部エラー：更新ログタイプ不正';
 	ERROR_MESSAGES[ERR_CODE_ID_MUST_BE_STRING] = 'IDは文字列でなければならない';
 	ERROR_MESSAGES[ERR_CODE_INVALID_DESCRIPTOR] = 'データモデルディスクリプタにエラーがあります。';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_OBSARRAY] = 'typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う）';
+
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
 
@@ -1261,6 +1266,13 @@
 		};
 	}
 
+	function isTypeArray(typeStr) {
+		if (!typeStr) {
+			return false;
+		}
+		return typeStr.indexOf('[]') !== -1;
+	}
+
 	function getValue(item, prop) {
 		return item[ITEM_PROP_BACKING_STORE_PREFIX + prop];
 	}
@@ -1270,6 +1282,109 @@
 	}
 
 	/**
+	 * 依存プロパティの再計算を行います。再計算後の値はitemの各依存プロパティに代入されます。
+	 *
+	 * @param {DataModel} model データモデル
+	 * @param {DataItem} item データアイテム
+	 * @param {Object} event プロパティ変更イベント
+	 * @param {String|String[]} changedProps 今回変更されたプロパティ
+	 */
+	function calcDependencies(model, item, event, changedProps) {
+		var dependsMap = model._dependencyMap;
+
+		//変更された実プロパティを初期計算済みプロパティとしてdependの計算をスタート
+		var done = wrapInArray(changedProps).slice(0);
+
+		/**
+		 * この依存プロパティが計算可能（依存するすべてのプロパティの再計算が完了している）かどうかを返します。
+		 */
+		function isReady(dependProp) {
+			var deps = wrapInArray(model.schema[dependProp].depend.on);
+			for ( var i = 0, len = deps.length; i < len; i++) {
+				if ($.inArray(deps[i], done) === -1) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/**
+		 * changedPropsで指定されたプロパティに依存するプロパティをtargetArrayに追加する
+		 */
+		function addDependencies(targetArray, srcProps) {
+			for ( var i = 0, len = srcProps.length; i < len; i++) {
+				var depends = dependsMap[srcProps[i]];
+
+				if (!depends) {
+					continue;
+				}
+
+				for ( var j = 0, jlen = depends.length; j < jlen; j++) {
+					var dprop = depends[j];
+					if ($.inArray(dprop, targetArray) === -1) {
+						targetArray.push(dprop);
+					}
+				}
+			}
+		}
+
+		var targets = [];
+
+		//今回変更された実プロパティに依存するプロパティを列挙
+		addDependencies(targets, wrapInArray(changedProps));
+
+		while (targets.length !== 0) {
+			var restTargets = [];
+
+			//各依存プロパティについて、計算可能（依存するすべてのプロパティが計算済み）なら計算する
+			for ( var i = 0, len = targets.length; i < len; i++) {
+				var dp = targets[i];
+
+				if (isReady(dp)) {
+					var newValue = model.schema[dp].depend.calc.call(item, event);
+					setValue(item, dp, newValue);
+					done.push(dp);
+				} else {
+					restTargets.push(dp);
+				}
+			}
+
+			//今回計算対象となったプロパティに（再帰的に）依存するプロパティをrestに追加
+			//restTargetsは「今回計算できなかったプロパティ＋新たに依存関係が発見されたプロパティ」が含まれる
+			addDependencies(restTargets, targets);
+
+			targets = restTargets;
+		}
+	}
+
+	function createDependencyMap(schema) {
+		//{ 依存元: [依存先] }という構造のマップ。依存先プロパティは配列内で重複はしない。
+		var dependencyMap = {};
+
+		for ( var prop in schema) {
+			if (schema.hasOwnProperty(prop)) {
+				var dependency = schema[prop] ? schema[prop].depend : null;
+				if (dependency) {
+					var dependOn = wrapInArray(dependency.on);
+					for ( var i = 0, len = dependOn.length; i < len; i++) {
+						var dependSrcPropName = dependOn[i];
+
+						if (!dependencyMap[dependSrcPropName]) {
+							dependencyMap[dependSrcPropName] = [];
+						}
+						if ($.inArray(prop, dependencyMap[dependSrcPropName]) === -1) {
+							dependencyMap[dependSrcPropName].push(prop);
+						}
+					}
+				}
+			}
+		}
+
+		return dependencyMap;
+	}
+
+
+	/**
 	 * propで指定されたプロパティのプロパティソースを作成します。
 	 *
 	 * @private
@@ -1277,38 +1392,6 @@
 	function createDataItemConstructor(model, descriptor) {
 		//model.schemaは継承関係を展開した後のスキーマ
 		var schema = model.schema;
-
-		function recalculateDependProperty(item, dependProp) {
-			return schema[dependProp].depend.calc.call(item);
-		}
-
-		function recalculateAllDependProperties(item) {
-			return schema[dependProp].depend.calc.call(item);
-		}
-
-		//TODO 仮想プロパティに依存する仮想プロパティ、などのネストを考慮する
-
-		//{ 依存元: [依存先] }という構造のマップ。依存先プロパティは配列内で重複はしない。
-		var dependencyMap = {};
-
-		for ( var prop in schema) {
-			var dependency = schema[prop] ? schema[prop].depend : null;
-			if (dependency) {
-				var dependOn = wrapInArray(dependency.on);
-				for ( var i = 0, len = dependOn.length; i < len; i++) {
-					var dependSrcPropName = dependOn[i];
-
-					fwLogger.trace('{0} depends on {1}', prop, dependSrcPropName);
-
-					if (!dependencyMap[dependSrcPropName]) {
-						dependencyMap[dependSrcPropName] = [];
-					}
-					if ($.inArray(prop, dependencyMap[dependSrcPropName]) === -1) {
-						dependencyMap[dependSrcPropName].push(prop);
-					}
-				}
-			}
-		}
 
 		function createSrc(name, propDesc) {
 			function createSetter() {
@@ -1320,12 +1403,6 @@
 				}
 
 				return function(value) {
-					//型・制約チェック
-					var validateResult = model._validateItemValue(name, value);
-					if (validateResult.length > 0) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
-					}
-
 					var oldValue = getValue(this, name);
 
 					if (oldValue === value) {
@@ -1333,7 +1410,30 @@
 						return;
 					}
 
+					//TODO 毎回Array判定したくないので高速化
+					if (isTypeArray(propDesc.type)) {
+						//typeが配列の場合、別インスタンスの代入は許可しない
+						throwFwError(ERR_CODE_CANNOT_SET_OBSARRAY);
+					}
+
+					//型・制約チェック
+					var validateResult = model._validateItemValue(name, value);
+					if (validateResult.length > 0) {
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, null, validateResult);
+					}
+
+
+					//新しい値を代入
 					setValue(this, name, value);
+
+					if (model.manager && model.manager.isInUpdate()) {
+						//TODO もしこのDataItemがremoveされていたらmodelには属していない
+						//アップデートセッション中の場合はdirtyフラグを立てて終了
+						this.dirty();
+						return;
+					}
+
+					//セッション外なので、depend再計算、changeイベント発火を直ちに行う
 
 					//TODO もしmanager.isInUpdateだったら、もしくはコンストラクタ内でフラグが立っていたらrecalcを遅延させる、ようにする。
 					//コンストラクタ時なら、クロージャ内に変更オブジェクトを突っ込む。
@@ -1345,27 +1445,15 @@
 						newValue: value
 					};
 
-					var depends = dependencyMap[name];
-					if (depends) {
-						//このプロパティに依存しているプロパティがある場合は
-						//再計算を行う
-						for ( var i = 0, len = depends.length; i < len; i++) {
-							var dependProp = depends[i];
-							var dependOldValue = getValue(this, dependProp);
-							var dependNewValue = recalculateDependProperties(this, dependProp);
-							setValue(this, dependProp, dependNewValue);
-							changedProps[dependProp] = {
-								oldValue: dependOldValue,
-								newValue: dependNewValue
-							};
-						}
-					}
-
 					//今回変更されたプロパティと依存プロパティを含めてイベント送出
 					var event = {
 						type: 'change',
 						props: changedProps
 					};
+
+					//依存プロパティを再計算する
+					calcDependencies(model, this, event, name);
+
 					this.dispatchEvent(event);
 				};
 			}
@@ -1379,7 +1467,7 @@
 		}
 
 		//DataItemのコンストラクタ
-		function DataItem() {
+		function DataItem(initialValue) {
 			//デフォルト値を代入する
 			for ( var plainProp in schema) {
 				var propDesc = schema[plainProp];
@@ -1394,18 +1482,42 @@
 					continue;
 				}
 
-				var defaultValue = propDesc.defaultValue;
-				if (defaultValue !== undefined) {
-					setValue(this, plainProp, defaultValue);
-				} else {
-					if (propDesc.type === 'enum') {
-						//type:enumでdefaultValueが設定されていない場合はenumValueの先頭を初期値とする
-						setValue(this, plainProp, propDesc.enumValue[0]);
-					} else if (propDesc.type && DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
-						setValue(this, plainProp, DEFAULT_TYPE_VALUE[propDesc.type]);
-					} else {
-						setValue(this, plainProp, null);
+				//TODO isArrayのチェックルーチン共通化
+				if (isTypeArray(propDesc.type)) {
+					//配列の場合は最初にObservableArrayのインスタンスを入れる
+					setValue(this, plainProp, h5.u.obj.createObservableArray());
+				}
+
+				if (initialValue[plainProp] !== undefined) {
+					//create時に初期値が与えられていたらそれを代入
+
+					var initVal = initialValue[plainProp];
+
+					//型・制約チェック
+					//TODO validateItemValueは、plainPropが配列の場合は「initValが配列で、かつ各要素の中身がDescの制約を満たす」というチェックになっているか？
+					var validateResult = model._validateItemValue(plainProp, initVal);
+					if (validateResult.length > 0) {
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, null, validateResult);
 					}
+
+					if (isTypeArray(propDesc.type)) {
+						if (!$.isArray(initVal)) {
+							//初期値が配列でなかったらエラー
+							throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
+						}
+						this[plainProp].copyFrom(initVal);
+					} else {
+						setValue(this, plainProp, initVal);
+					}
+				} else if (propDesc.defaultValue !== undefined) {
+					//DescriptorのdefaultValueがあれば代入
+					setValue(this, plainProp, propDesc.defaultValue);
+				} else if (propDesc.type && DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
+					//各typeのデフォルト値があれば代入
+					setValue(this, plainProp, DEFAULT_TYPE_VALUE[propDesc.type]);
+				} else {
+					//createでもDescriptorでも初期値が与えられなかったのでnullを代入
+					setValue(this, plainProp, null);
 				}
 			}
 
@@ -1525,30 +1637,19 @@
 	 * 指定されたIDのデータアイテムを生成します。
 	 *
 	 * @param {DataModel} model データモデル
-	 * @param {Object} 初期値
+	 * @param {Object} data 初期値
 	 * @param {Function} itemChangeListener modelに対応する、データアイテムチェンジイベントリスナー
 	 * @returns {DataItem} データアイテムオブジェクト
 	 */
 	function createItem(model, data, itemChangeListener) {
 		//キーが文字列かつ空でない、かどうかのチェックはDataModel.create()で行われている
 
-		var idKey = model.idKey;
-		var id = data[idKey];
+		var id = data[model.idKey];
 
-		var item = new model.itemConstructor();
-
-		item[idKey] = id;
+		var item = new model.itemConstructor(data);
 
 		model.items[id] = item;
 		model.size++;
-
-		//初期値として渡されたデータを詰める
-		for ( var prop in data) {
-			if ((prop == idKey) || !(prop in model.schema)) {
-				continue;
-			}
-			item[prop] = data[prop];
-		}
 
 		item.refresh();
 
@@ -1759,10 +1860,17 @@
 		//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
 		this.schema = schema;
 
-		var itemSrc = createDataItemConstructor(this, descriptor);
+		/**
+		 * プロパティの依存関係マップ
+		 */
+		this._dependencyMap = createDependencyMap(schema);
 
+		/**
+		 * プロパティの型・制約チェック関数
+		 */
 		this._itemValueCheckFuncs = itemValueCheckFuncs;
 
+		var itemSrc = createDataItemConstructor(this, descriptor);
 		this.itemConstructor = itemSrc.itemConstructor;
 		this.itemPropDesc = itemSrc.propDesc;
 
