@@ -3617,8 +3617,8 @@ $(function() {
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
 								'selectorTypeが取得できること');
 					},
-					'{window} mousewheel': function(context) {
-						strictEqual(context.selector, window, 'windowオブジェクトが取得できること');
+					'{document} mousewheel': function(context) {
+						strictEqual(context.selector, document, 'documentオブジェクトが取得できること');
 						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
 								'selectorTypeが取得できること');
 					}
@@ -3639,7 +3639,7 @@ $(function() {
 							.trigger('touchend');
 
 					var eventName = ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
-					$(window).trigger(new $.Event(eventName), {
+					$(document).trigger(new $.Event(eventName), {
 						test: true
 					});
 
