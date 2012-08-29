@@ -16,12 +16,10 @@
  * hifive
  */
 
-
 $(function() {
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
-
 
 	var CREATE_NAMESPACE_PASS_REASON = '名前空間オブジェクトを作成したので、undefinedでなくオブジェクトが入っているはず';
 
@@ -757,9 +755,11 @@ $(function() {
 							equal(window.com.htmlhifive.test.sample4loaded, 1,
 									'data/sample4.js?existFile1 までは読み込まれていること。');
 						}).always(function() {
-					window.com.htmlhifive.test.sample4loaded = undefined;
-					window.onerror = qunitWindowOnErrorFunc;
-					start();
+					setTimeout(function() {
+						// window.onerrorを元に戻す
+						window.onerror = qunitWindowOnErrorFunc;
+						start();
+					}, 0);
 				});
 			});
 
