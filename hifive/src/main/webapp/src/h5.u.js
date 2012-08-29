@@ -154,6 +154,14 @@
 		'>': '&gt;',
 		"'": '&apos;'
 	};
+
+	/**
+	 * SCRIPTにonloadがあるかどうか
+	 *
+	 * @private
+	 */
+	var existScriptOnload = document.createElement('script').onload === null;
+
 	// =============================
 	// Functions
 	// =============================
@@ -380,10 +388,9 @@
 
 		if (async) {
 			var ua = h5.env.ua;
-			var isIE8Under = ua.isIE && ua.browserVersion <= 8;
 
-			// atomicオプションが無効でかつIE6,7,8以外のブラウザの場合、SCRIPTタグでスクリプトを動的に読み込む
-			if (!atomic && !isIE8Under) {
+			// atomicオプションが無効でかつscript.onloadがあるブラウザ(IE6,7,8以外のブラウザ)の場合、SCRIPTタグでスクリプトを動的に読み込む
+			if (!atomic && existScriptOnload) {
 				var $head = $('head');
 				var scriptLoad = function(url) {
 					var scriptDfd = getDeferred();
