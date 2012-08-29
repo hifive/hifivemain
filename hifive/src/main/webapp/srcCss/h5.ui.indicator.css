@@ -110,7 +110,7 @@ div.a.throbber-line {
     to {transform: rotate(360deg);}
 }
 
-.blockUI.a .canvas-throbber {
+.blockUI.a .throbber-canvas {
 	/** Chrome/Safari */
 	-webkit-animation-name: rotateThrobber;
     -webkit-animation-delay: 0;

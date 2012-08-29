@@ -36,7 +36,7 @@
 	/**
 	 * スロバー本体(Canvas)に付与するクラス名
 	 */
-	var CLASS_THROBBER_CANVAS = 'canvas-throbber';
+	var CLASS_THROBBER_CANVAS = 'throbber-canvas';
 
 	/**
 	 * スロバー内に進捗率(パーセント)を表示する要素のクラス名
@@ -422,7 +422,7 @@
 		canvas.height = this.style.throbber.height;
 		canvas.style.display = 'block';
 		canvas.style.position = 'absolute';
-		canvas.style.className = CLASS_THROBBER_CANVAS;
+		canvas.className = CLASS_THROBBER_CANVAS;
 		baseDiv.style.width = this.style.throbber.width + 'px';
 		baseDiv.style.height = this.style.throbber.height + 'px';
 		baseDiv.appendChild(canvas);
@@ -597,34 +597,31 @@
 			});
 		}
 
-		var resizeIndicatorHandler = null;
+		var resizeIndicatorFunc = null;
 
 		if (isPositionFixedSupported) {
-			resizeIndicatorHandler = function() {
-				that._redrawable = false;
+			resizeIndicatorFunc = function() {
 				that._setPositionAndResizeWidth();
 				resizeOverlay();
-
-				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
-				setTimeout(function() {
-					that._redrawable = true;
-					that.percent(that._lastPercent);
-					that.message(that._lastMessage);
-				}, 1000);
 			};
 		} else {
-			resizeIndicatorHandler = function() {
-				that._redrawable = false;
+			resizeIndicatorFunc = function() {
 				that._setPositionAndResizeWidth();
 				resizeOverlay();
 				updateIndicatorPosition();
-
-				setTimeout(function() {
-					that._redrawable = true;
-					that.percent(that._lastPercent);
-					that.message(that._lastMessage);
-				}, 1000);
 			};
+		}
+
+		function resizeIndicatorHandler() {
+			that._redrawable = false;
+
+			// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
+			setTimeout(function() {
+				resizeIndicatorFunc();
+				that._redrawable = true;
+				that.percent(that._lastPercent);
+				that.message(that._lastMessage);
+			}, 500);
 		}
 
 		var timerId = null;
@@ -633,8 +630,12 @@
 				clearTimeout(timerId);
 			}
 
+			if (!that._redrawable) {
+				return;
+			}
+
 			timerId = setTimeout(function() {
-				resizeIndicatorHandler();
+				updateIndicatorPosition();
 				timerId = null;
 			}, 50);
 		}
@@ -687,7 +688,7 @@
 				$window.bind('orientationchange resize', resizeIndicatorHandler);
 
 				setTimeout(function() {
-					resizeIndicatorHandler();
+					resizeIndicatorFunc();
 				});
 			}
 		};
@@ -904,8 +905,8 @@
 	 * <h4>スクリーンロック中の制限事項</h4>
 	 * <ul>
 	 * <li>Android
-	 * 4.xにてorientationchangeイベント発生直後にインジケータのDOM要素の書き換えを行うと画面の再描画が起こらなくなってしまうため、orientationchangeイベント発生から1秒間はpercent()/massage()での画面の書き換えをブロックします。<br>
-	 * orientationchagenイベント発生から1秒以内にpercent()/message()で値を設定した場合、最後に設定された値が画面に反映されます。</li>
+	 * 4.xにてorientationchangeイベント発生直後にインジケータのDOM要素の書き換えを行うと画面の再描画が起こらなくなってしまうため、orientationchangeイベント発生から0.5秒間はpercent()/massage()での画面の書き換えをブロックします。<br>
+	 * orientationchagenイベント発生から0.5秒以内にpercent()/message()で値を設定した場合、最後に設定された値が画面に反映されます。</li>
 	 * <li>WindowsPhone 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。</li>
 	 * </ul>
 	 * <h4>使用例</h4>
