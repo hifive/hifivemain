@@ -160,7 +160,7 @@
 	 *
 	 * @private
 	 */
-	var existScriptOnload = document.createElement('script').onload === null;
+	var existScriptOnload = document.createElement('script').onload !== undefined;
 
 	// =============================
 	// Functions
@@ -391,9 +391,8 @@
 		var loadedUrl = {};
 
 		if (async) {
-			var ua = h5.env.ua;
-
 			// atomicオプションが無効でかつscript.onloadがあるブラウザ(IE6,7,8以外のブラウザ)の場合、SCRIPTタグでスクリプトを動的に読み込む
+			// (IE9以降の場合、DocumentModeがQuirksおよび6～8の場合はonloadはundefinedになる)
 			if (!atomic && existScriptOnload) {
 				var $head = $('head');
 				var scriptLoad = function(url) {
