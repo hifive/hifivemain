@@ -6251,7 +6251,6 @@ $(function() {
 			function() {
 				var expectNum = 16;
 				// Android2,3では、throwErrorされてもwindow.onerrorには入らないため、テスト数を1少なくする
-				alert(h5.env.ua.browserVersion);
 				if (h5.env.ua.isAndroid && h5.env.ua.browserVersion < 4) {
 					expect(expectNum - 1);
 				}
