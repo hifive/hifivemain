@@ -907,7 +907,7 @@
 	 * <li>Android
 	 * 4.xにてorientationchangeイベント発生直後にインジケータのDOM要素の書き換えを行うと画面の再描画が起こらなくなってしまうため、orientationchangeイベント発生から0.5秒間はpercent()/massage()での画面の書き換えをブロックします。<br>
 	 * orientationchagenイベント発生から0.5秒以内にpercent()/message()で値を設定した場合、最後に設定された値が画面に反映されます。</li>
-	 * <li>WindowsPhone 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。</li>
+	 * <li>WindowsPhone 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。ただし、クリック等その他のイベントはキャンセルされます。</li>
 	 * </ul>
 	 * <h4>使用例</h4>
 	 * <b>スクリーンロックとして表示する</b><br>
