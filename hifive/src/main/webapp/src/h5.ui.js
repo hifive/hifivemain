@@ -501,9 +501,7 @@
 				return;
 			}
 
-			var perMills = Math.floor(roundTime / lineCount);
-
-			// CSSAnimations未サポートだがTransformをサポートしている場合は、setInterval+transform:rotateで描写する
+			// CSSAnimations未サポートだがTransformをサポートしている場合は、setInterval+transform:rotateで描画する
 			if (isCSS3TransfromsSupported) {
 				var $canvas = $(canvas);
 				var rotate = 0;
@@ -515,12 +513,13 @@
 					$canvas.css('-o-transform', cssValue);
 					$canvas.css('-ms-transform', cssValue);
 					$canvas.css('transform', cssValue);
-					(rotate += 10) >= 360 ? 0 : rotate;
-				}, perMills);
+					rotate = (rotate + 10) % 360;
+				}, 30);
 			} else {
+				var perMills = Math.floor(roundTime / lineCount);
 				var that = this;
 
-				// CSSAnimation/Transform未サポートだがCanvasはサポートしている場合は、setTimeoutで描写する
+				// CSSAnimation/Transform未サポートだがCanvasはサポートしている場合は、setTimeoutで描画する
 				// 対象ブラウザ: Firefox 2,3 / Opera  9.0～10.1 / Opera Mini 5.0～7.0 / Opera Mobile 10.0
 				// http://caniuse.com/transforms2d
 				// http://caniuse.com/#search=canvas
@@ -552,10 +551,7 @@
 		$.blockUI.defaults.overlayCSS = {};
 
 		this.target = h5.u.obj.isJQueryObject(target) ? target.get(0) : target;
-
 		// DOM要素の書き換え可能かを判定するフラグ
-		// Android3,4系の場合、orientationChangeイベント発生直後にDOM要素の書き換えが起こるとインジケータの表示が崩れるため
-		//このフラグを使用して制御する
 		this._redrawable = true;
 		// _redrawable=false時、percent()に渡された最新の値
 		this._lastPercent = 0;
@@ -609,6 +605,7 @@
 				that._setPositionAndResizeWidth();
 				resizeOverlay();
 
+				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
 				setTimeout(function() {
 					that._redrawable = true;
 					that.percent(that._lastPercent);
@@ -904,6 +901,13 @@
 	 * 上記以外のDOM要素を指定した場合は、指定した要素上にインジケータを表示します。
 	 * <p>
 	 * <b>スクリーンロック</b>とは、コンテンツ領域(スクロールしないと見えない領域も全て含めた領域)全体にオーバーレイを、表示領域(画面に見えている領域)中央にメッセージが表示し、画面を操作できないようにすることです。スマートフォン等タッチ操作に対応する端末の場合、スクロール操作も禁止します。
+	 * <h4>スクリーンロック中の制限事項</h4>
+	 * <ul>
+	 * <li>Android
+	 * 4.xにてorientationchangeイベント発生直後にインジケータのDOM要素の書き換えを行うと画面の再描画が起こらなくなってしまうため、orientationchangeイベント発生から1秒間はpercent()/massage()での画面の書き換えをブロックします。<br>
+	 * orientationchagenイベント発生から1秒以内にpercent()/message()で値を設定した場合、最後に設定された値が画面に反映されます。</li>
+	 * <li>WindowsPhone 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。</li>
+	 * </ul>
 	 * <h4>使用例</h4>
 	 * <b>スクリーンロックとして表示する</b><br>
 	 *
