@@ -67,7 +67,7 @@ $(function() {
 							ok(triggerCommonFailHandler,
 									'fail, error, always, completeに登録されたコールバックがない場合にh5.ajax() でcommonFailHandlerは動作するか');
 							h5.settings.commonFailHandler = null;
-						}, 500);
+						}, 2000);
 			});
 
 	asyncTest('commonFailHandlerの動作2', function() {
@@ -87,7 +87,7 @@ $(function() {
 					ok(!triggerCommonFailHandler,
 							'オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
 					h5.settings.commonFailHandler = null;
-				}, 500);
+				}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作3', function() {
@@ -107,7 +107,7 @@ $(function() {
 					ok(!triggerCommonFailHandler,
 							'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
 					h5.settings.commonFailHandler = null;
-				}, 500);
+				}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作4', function() {
@@ -126,7 +126,7 @@ $(function() {
 			ok(!triggerCommonFailHandler,
 					'オプションでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
 			h5.settings.commonFailHandler = null;
-		}, 500);
+		}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作5', function() {
@@ -145,7 +145,7 @@ $(function() {
 			ok(!triggerCommonFailHandler,
 					'オプションでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
 			h5.settings.commonFailHandler = null;
-		}, 500);
+		}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作6', function() {
@@ -163,7 +163,7 @@ $(function() {
 			ok(!triggerCommonFailHandler,
 					'メソッドチェーンでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
 			h5.settings.commonFailHandler = null;
-		}, 500);
+		}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作7', function() {
@@ -181,7 +181,7 @@ $(function() {
 			ok(!triggerCommonFailHandler,
 					'メソッドチェーンでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
 			h5.settings.commonFailHandler = null;
-		}, 500);
+		}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作8', function() {
@@ -199,7 +199,7 @@ $(function() {
 			ok(!triggerCommonFailHandler,
 					'メソッドチェーンでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
 			h5.settings.commonFailHandler = null;
-		}, 500);
+		}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作9', function() {
@@ -217,7 +217,7 @@ $(function() {
 			ok(!triggerCommonFailHandler,
 					'メソッドチェーンでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
 			h5.settings.commonFailHandler = null;
-		}, 500);
+		}, 2000);
 	});
 
 });
