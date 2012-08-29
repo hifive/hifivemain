@@ -98,7 +98,7 @@
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_NAMESPACE_INVALID] = '{0} 第一引数には空文字で無い文字列を指定して下さい。';
+	errMsgMap[ERR_CODE_NAMESPACE_INVALID] = '{0} 名前空間の指定が不正です。名前空間として有効な文字列を指定してください。';
 	errMsgMap[ERR_CODE_NAMESPACE_EXIST] = '名前空間"{0}"には、プロパティ"{1}"が既に存在します。';
 	errMsgMap[ERR_CODE_SERIALIZE_FUNCTION] = 'Function型のオブジェクトは変換できません。';
 	errMsgMap[ERR_CODE_SERIALIZE_VERSION] = 'シリアライザのバージョンが違います。シリアライズされたバージョン：{0} 現行のバージョン：{1}';
@@ -265,17 +265,21 @@
 	 * @returns {Object} 作成した名前空間オブジェクト
 	 */
 	function ns(namespace) {
-		if (!namespace) {
-			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
-		}
-
-		if ($.type(namespace) !== 'string') {
+		if (!isString(namespace)) {
+			// 文字列でないならエラー
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
 		}
 
 		var nsArray = namespace.split('.');
+		var len = nsArray.length;
+		for ( var i = 0; i < len; i++) {
+			if (!isValidNamespaceIdentifier(nsArray[i])) {
+				// 名前空間として不正な文字列ならエラー
+				throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
+			}
+		}
 		var parentObj = window;
-		for ( var i = 0, len = nsArray.length; i < len; i++) {
+		for ( var i = 0; i < len; i++) {
 			if (parentObj[nsArray[i]] === undefined) {
 				parentObj[nsArray[i]] = {};
 			}

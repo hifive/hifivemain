@@ -23,7 +23,7 @@ $(function() {
 
 	var CREATE_NAMESPACE_PASS_REASON = '名前空間オブジェクトを作成したので、undefinedでなくオブジェクトが入っているはず';
 
-	module("h5.u", {
+	module("h5.u.obj.ns", {
 		teardown: function() {
 			window.com.htmlhifive.test = {};
 		}
@@ -39,7 +39,31 @@ $(function() {
 		strictEqual(window.htmlhifive, undefined, '（クリーンアップ）');
 	});
 
-	test('名前空間作成 (h5.u.obj.ns) 異常系', 8, function() {
+	test(
+			'名前空間作成 (h5.u.obj.ns) 異常系(不正な文字列)',
+			8,
+			function() {
+				var invalids = ['', ' ', '.', 'あ', 'a b', 'a/b', '1a', '+a'];
+				for ( var i = 0, l = invalids.length; i < l; i++) {
+					try {
+						h5.u.obj.ns(invalids[i]);
+						ok(false, h5.u.str.format('h5.u.obj() {0}でエラーが発生しませんでした。', invalids[i]));
+					} catch (e) {
+						ok(true, e.message);
+					}
+				}
+				try {
+					h5.u.obj.ns('com.htmlhifive.test.abc.1');
+				} catch (e) {
+					ok(true, e.message);
+					ok(!window.com || !window.com.htmlhifive || !window.com.htmlhifive.test
+							|| !window.com.htmlhifive.test.abc,
+							'"com.htmlhifive.test.abc.1"を引数に渡した時はエラーになり、"com.htmlhifive.test.abc"の名前空間も作られないこと');
+				}
+				expect(invalids.length + 2);
+			});
+
+	test('名前空間作成 (h5.u.obj.ns) 異常系(文字列以外)', 8, function() {
 		try {
 			h5.u.obj.ns();
 			ok(false, 'h5.u.obj()（引数なし）でエラーが発生しませんでした。');
@@ -136,6 +160,7 @@ $(function() {
 		notStrictEqual(com.htmlhifive.test.test1, undefined, '存在しない分については新規作成されていること。');
 	});
 
+	module("h5.u.obj.expose");
 	test('h5test1.exposeにオブジェクトを公開する (h5.u.obj.expose)', 5, function() {
 		h5.u.obj.expose('h5test1.expose', {
 			test: 1
@@ -199,6 +224,45 @@ $(function() {
 		window.h5test1 = undefined;
 	});
 
+	test('h5.u.obj.expose 指定した名前空間に既にオブジェクトが存在する状態でexposeを実行', 3, function() {
+		h5.u.obj.expose('com.htmlhifive.test2', {
+			exposedObj: false
+		});
+
+		equal(com.htmlhifive.test2.exposedObj, false,
+				'com.htmlhifive.test2.exposedObjがexposeされていること。');
+
+		raises(function(enviroment) {
+			h5.u.obj.expose('com.htmlhifive.test2', {
+				exposedObj: 10
+			});
+		}, function(actual) {
+			return 11001 === actual.code
+					&& h5.u.str.format('名前空間"{0}"には、プロパティ"{1}"が既に存在します。(code={2})',
+							'com.htmlhifive.test2', 'exposedObj', actual.code) === actual.message;
+		}, '指定した名前空間が既に存在する場合エラーとなること');
+
+		equal(com.htmlhifive.test2.exposedObj, false, '値が上書きされていないこと。');
+
+		window.com.htmlhifive.test2 = undefined;
+	});
+
+
+	module("h5.u.obj.str");
+
+	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
+		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
+		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
+				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
+
+		strictEqual('', h5.u.str.format(null, 1), 'nullを渡すと空文字列が返るか');
+		strictEqual('', h5.u.str.format(undefined), 'undefinedを渡すと空文字列が返るか');
+		strictEqual('nullが渡されました。', h5.u.str.format('{0}が渡されました。', null),
+				'パラメータとしてnullを渡すと"null"という文字列になっているか');
+		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
+				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
+	});
+
 	test('html文字列をエスケープする(h5.u.str.espaceHtml)', 4, function() {
 		var str = '<div>hogehoge<span>TEST</span>hoge.!</script>';
 		var escapeStr = h5.u.str.escapeHtml(str);
@@ -232,6 +296,20 @@ $(function() {
 		notStrictEqual(h5.u.str.endsWith(str, suffix2), true, '文字列のサフィックスが efg 指定したものではないこと。');
 	});
 
+	/**
+	 * 元のwindow.onerror(QUnitが登録しているもの)を一時保存しておく
+	 */
+	var originalOnerror = window.onerror;
+	module('h5.u.loadScript', {
+		setup: function() {
+			// window.onerrorを空にする
+			window.onerror = null;
+		},
+		teardown: function() {
+			// テスト終了時にwindow.onerrorを元に戻す
+			window.onerror = originalOnerror;
+		}
+	});
 	test(
 			'スクリプトのロード(h5.u.loadScript) 引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
 			10, function() {
@@ -362,8 +440,6 @@ $(function() {
 
 
 	test('スクリプトのロード(h5.u.loadScript) 存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2, function() {
-		var qunitWindowOnErrorFunc = window.onerror;
-		window.onerror = function() {};
 		window.com.htmlhifive.test.sample4loaded = undefined;
 
 		try {
@@ -378,8 +454,6 @@ $(function() {
 			equal(window.com.htmlhifive.test.sample4loaded, 2,
 					'data/sample4.js?existFile2 までは読み込まれていること。');
 		}
-
-		window.onerror = qunitWindowOnErrorFunc;
 	});
 
 	test('スクリプトの同期ロード(h5.u.loadScript)', 6, function() {
@@ -476,8 +550,6 @@ $(function() {
 	test(
 			'スクリプトのロード(h5.u.loadScript) (atomicオプション有効) 存在しないスクリプトを指定した場合、直前まで読み込みに成功していスクリプトファイルも全て読み込まれないこと。',
 			2, function() {
-				var qunitWindowOnErrorFunc = window.onerror;
-				window.onerror = function() {};
 				window.com.htmlhifive.test.sample4loaded = undefined;
 
 				try {
@@ -493,8 +565,6 @@ $(function() {
 					equal(window.com.htmlhifive.test.sample4loaded, undefined,
 							'全てのスクリプトが読み込まれていないこと。');
 				}
-
-				window.onerror = qunitWindowOnErrorFunc;
 			});
 
 	test('スクリプトの同期ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
@@ -740,8 +810,6 @@ $(function() {
 
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2,
 			function() {
-				var qunitWindowOnErrorFunc = window.onerror;
-				window.onerror = function() {};
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(
 						['data/sample4.js?existFile1', 'data/noExistFile.js',
@@ -755,28 +823,11 @@ $(function() {
 							equal(window.com.htmlhifive.test.sample4loaded, 1,
 									'data/sample4.js?existFile1 までは読み込まれていること。');
 						}).always(function() {
-					setTimeout(function() {
-						// window.onerrorを元に戻す
-						window.onerror = qunitWindowOnErrorFunc;
-						start();
-					}, 0);
+					start();
 				});
 			});
 
-
-	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
-		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
-		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
-				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
-
-		strictEqual('', h5.u.str.format(null, 1), 'nullを渡すと空文字列が返るか');
-		strictEqual('', h5.u.str.format(undefined), 'undefinedを渡すと空文字列が返るか');
-		strictEqual('nullが渡されました。', h5.u.str.format('{0}が渡されました。', null),
-				'パラメータとしてnullを渡すと"null"という文字列になっているか');
-		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
-				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
-	});
-
+	module('h5.u.obj.argsToArray');
 	test('argumentsを配列に変換(h5.u.obj.argsToArray)', function() {
 		var func = function(a, b, c, d) {
 			return h5.u.obj.argsToArray(arguments);
@@ -786,6 +837,7 @@ $(function() {
 		deepEqual(result, [1, 2, 3, 4], 'argumentsオブジェクトが配列に変換されていること。');
 	});
 
+	module('h5.u.obj.getByPath');
 	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', 7, function() {
 		window.hoge = {
 			hogehoge: {
@@ -814,6 +866,7 @@ $(function() {
 		}, '文字列以外をパラメータに指定すると例外が発生すること。');
 	});
 
+	module('h5.u.obj.serialize/deserialize');
 	test('serialize/deserialize 文字列', 2, function() {
 		var strs = ["helloWorld", 'o{"str1":"\"string1\""}'];
 		for ( var i = 0, len = strs.length; i < len; i++) {
@@ -1399,6 +1452,8 @@ $(function() {
 		}
 	});
 
+
+	module('h5.u.createInterceptor');
 	test('h5.u.createInterceptor() インターセプタを作成できること', 5, function() {
 		var count = 0;
 		var count2 = 0;
@@ -1432,26 +1487,4 @@ $(function() {
 
 	});
 
-	test('h5.u.obj.expose 指定した名前空間に既にオブジェクトが存在する状態でexposeを実行', 3, function() {
-		h5.u.obj.expose('com.htmlhifive.test2', {
-			exposedObj: false
-		});
-
-		equal(com.htmlhifive.test2.exposedObj, false,
-				'com.htmlhifive.test2.exposedObjがexposeされていること。');
-
-		raises(function(enviroment) {
-			h5.u.obj.expose('com.htmlhifive.test2', {
-				exposedObj: 10
-			});
-		}, function(actual) {
-			return 11001 === actual.code
-					&& h5.u.str.format('名前空間"{0}"には、プロパティ"{1}"が既に存在します。(code={2})',
-							'com.htmlhifive.test2', 'exposedObj', actual.code) === actual.message;
-		}, '指定した名前空間が既に存在する場合エラーとなること');
-
-		equal(com.htmlhifive.test2.exposedObj, false, '値が上書きされていないこと。');
-
-		window.com.htmlhifive.test2 = undefined;
-	});
 });
