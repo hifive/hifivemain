@@ -186,7 +186,7 @@
 				return true;
 			}
 
-			propCamel = propStr.charAt(0).toUpperCase() + propStr.slice(1);
+			propCamel = propCamel.charAt(0).toUpperCase() + propCamel.slice(1);
 
 			// ベンダープレフィックスありでサポートしているか判定
 			for ( var i = 0; i < len; i++) {
