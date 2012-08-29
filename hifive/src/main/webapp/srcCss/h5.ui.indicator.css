@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive css
  */
 /** オーバーレイ */
@@ -26,7 +26,7 @@
 	width: 100%;
 }
 
-/* blockUI本体 */
+/* blockUI本体 DIV */
 .blockUI {
 	text-align: center;
 	padding: 5px 10px 5px 10px;
@@ -34,14 +34,14 @@
 	cursor: wait;
 }
 
-/* blockUI本体内 スロバー */
+/* blockUI本体内 スロバー SPAN */
 .blockUI .indicator-throbber {
 	display: inline-block;
 	zoom: 1;
 	vertical-align: middle;
 }
 
-/* blockUI本体内 メッセージ */
+/* blockUI本体内 メッセージ SPAN */
 .blockUI  .indicator-message {
 	display: inline-block;
 	zoom: 1;
@@ -50,13 +50,13 @@
 	color: #fff;
 }
 
-/*---- パーセント (IE6,7,8以外) ----*/
+/*---- パーセント SPAN (IE6,7,8以外) ----*/
 .blockUI  .throbber-percent {
 	position: absolute;
 	text-align: center;
 }
 
-/*---- パーセント (IE6,7,8用) -----*/
+/*---- パーセント SPAN (IE6,7,8用) -----*/
 .blockUI  .vml-root {
 	display: inline-block;
 	vertical-align: middle;
@@ -85,6 +85,58 @@ div.a.throbber-line {
 	color: #fff;
 }
 
+/* ----- スロバーの動作 ------*/
+/** Chrome/Safari */
+@-webkit-keyframes rotateThrobber {
+    from {-webkit-transform: rotate(0deg);}
+    to {-webkit-transform: rotate(360deg);}
+}
+
+/** Firefox */
+@-moz-keyframes rotateThrobber {
+    from {-moz-transform: rotate(0deg);}
+    to {-moz-transform: rotate(360deg);}
+}
+
+/** Opera */
+@-o-keyframes rotateThrobber {
+    from {-o-transform: rotate(0deg);}
+    to {-o-transform: rotate(360deg);}
+}
+
+/** no-prefix (IE10) */
+@-keyframes rotateThrobber {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+}
+
+.blockUI.a .canvas-throbber {
+	/** Chrome/Safari */
+	-webkit-animation-name: rotateThrobber;
+    -webkit-animation-delay: 0;
+    -webkit-animation-duration: 2s;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-iteration-count: infinite;
+    /** Firefox */
+	-moz-animation-name: rotateThrobber;
+    -moz-animation-delay: 0;
+    -moz-animation-duration: 2s;
+    -moz-animation-timing-function: linear;
+    -moz-animation-iteration-count: infinite;
+    /** Opera */
+    -o-animation-name: rotateThrobber;
+    -o-animation-delay: 0;
+    -o-animation-duration: 2s;
+    -o-animation-timing-function: linear;
+    -o-animation-iteration-count: infinite;
+    /** no-prefix (IE10) */
+    animation-name: rotateThrobber;
+    animation-delay: 0;
+    animation-duration: 2s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
 /*---- パーセント (スロバーの大きさに合わせて修正して下さい) ----*/
 .blockUI.a  .throbber-percent {
 	font-size: 12px;
@@ -105,6 +157,8 @@ div.a.throbber-line {
 	border: none;
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
+	-o-border-radius: 10px;
+	-ms-border-radius: 10px;
 	border-radius: 10px;
 	opacity: 0.7;
 }

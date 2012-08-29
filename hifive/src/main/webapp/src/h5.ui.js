@@ -34,6 +34,11 @@
 	var CLASS_INDICATOR_MESSAGE = 'indicator-message';
 
 	/**
+	 * スロバー本体(Canvas)に付与するクラス名
+	 */
+	var CLASS_THROBBER_CANVAS = 'canvas-throbber';
+
+	/**
 	 * スロバー内に進捗率(パーセント)を表示する要素のクラス名
 	 */
 	var CLASS_THROBBER_PERCENT = 'throbber-percent';
@@ -77,7 +82,8 @@
 	// =============================
 	// Variables
 	// =============================
-	// キーにスタイルクラス名、値に読み込む対象のプロパティを保持するマップ
+	// h5.cssを読み込んで、Canvas版スロバーに適用するスタイルの情報を保持するマップ
+	// key:クラス名  value:CSSプロパティ名
 	var throbberStyleMap = {
 		throbber: ['width', 'height'],
 		'throbber-line': ['width', 'color']
@@ -131,9 +137,67 @@
 				|| (ua.isiOS && ua.browserVersion < 5) || (ua.isIE && ua.browserVersion < 7) || ua.isWindowsPhone);
 	})();
 
+	/**
+	 * CSS3 Animationsをサポートしているか
+	 * <p>
+	 * (true:サポート/false:未サポート)
+	 */
+	var isCSS3AnimationsSupported = null;
+
+	/**
+	 * CSS Transformsをサポートしているか
+	 * <p>
+	 * (true:サポート/false:未サポート)
+	 */
+	var isCSS3TransfromsSupported = null;
+
 	// =============================
 	// Functions
 	// =============================
+
+	/**
+	 * 指定されたCSS3プロパティをサポートしているか判定します。
+	 * <p>
+	 * プレフィックスなし、プレフィックスありでサポート判定を行います。
+	 * <p>
+	 * 判定に使用するプレフィックス
+	 * <ul>
+	 * <li>Khtml (Safari2以前)
+	 * <li>ms (IE)
+	 * <li>O (Opera)
+	 * <li>Moz (Firefox)
+	 * </ul>
+	 * Webkit (Safari2以降/Chrome)
+	 * <p>
+	 * ※WebKitプレフィックスはデバッグでの表示上は小文字(webkitXxxxx)だが、大文字でも正しく判定される
+	 */
+	var supportsCSS3Property = (function() {
+		var fragment = document.createDocumentFragment();
+		var div = fragment.appendChild(document.createElement('div'));
+		var prefixes = 'Webkit Moz O ms Khtml'.split(' ');
+		var len = prefixes.length;
+
+		return function(propName) {
+			// CSSシンタックス(ハイフン区切りの文字列)をキャメルケースに変換
+			var propCamel = $.camelCase(propName);
+
+			// ベンダープレフィックスなしでサポートしているか判定
+			if (propCamel in div.style) {
+				return true;
+			}
+
+			propCamel = propStr.charAt(0).toUpperCase() + propStr.slice(1);
+
+			// ベンダープレフィックスありでサポートしているか判定
+			for ( var i = 0; i < len; i++) {
+				if (prefixes[i] + propCamel in div.style) {
+					return true;
+				}
+			}
+
+			return false;
+		};
+	})();
 
 	/**
 	 * CSSファイルに書かれた、Canvasのスタイル定義を取得します。
@@ -218,6 +282,12 @@
 		vmlStyle.styleSheet.cssText = styleDef;
 		document.getElementsByTagName('head')[0].appendChild(vmlStyle);
 	}
+
+	// CSS3 Animationのサポート判定
+	isCSS3AnimationsSupported = supportsCSS3Property('animationName');
+
+	// CSS3 Transfromのサポート判定
+	isCSS3TransfromsSupported = supportsCSS3Property('transform');
 
 	/**
 	 * VML版スロバー (IE 6,7,8)用
@@ -312,6 +382,7 @@
 
 			var that = this;
 
+			// VML版スロバーはIE8以下専用で、IE8以下はAnimations/Transformに対応していないのでこれらを考慮しない
 			this._runId = setTimeout(function() {
 				that._run.call(that);
 			}, perMills);
@@ -350,6 +421,7 @@
 		canvas.height = this.style.throbber.height;
 		canvas.style.display = 'block';
 		canvas.style.position = 'absolute';
+		canvas.style.className = CLASS_THROBBER_CANVAS;
 		baseDiv.style.width = this.style.throbber.width + 'px';
 		baseDiv.style.height = this.style.throbber.height + 'px';
 		baseDiv.appendChild(canvas);
@@ -422,13 +494,39 @@
 				highlightPos++;
 			}
 			this.highlightPos = highlightPos;
+
+			// CSSAnimationsサポートの場合はCSSファイルに定義されているので何もしない
+			if (isCSS3AnimationsSupported) {
+				return;
+			}
+
 			var perMills = Math.floor(roundTime / lineCount);
 
-			var that = this;
+			// CSSAnimations未サポートだがTransformをサポートしている場合は、setInterval+transform:rotateで描写する
+			if (isCSS3TransfromsSupported) {
+				var $canvas = $(canvas);
+				var rotate = 0;
 
-			this._runId = setTimeout(function() {
-				that._run.call(that);
-			}, perMills);
+				this._runId = setInterval(function() {
+					var cssValue = 'rotate(' + rotate + 'deg)';
+					$canvas.css('-webkit-transform', cssValue);
+					$canvas.css('-moz-transform', cssValue);
+					$canvas.css('-o-transform', cssValue);
+					$canvas.css('-ms-transform', cssValue);
+					$canvas.css('transform', cssValue);
+					(rotate += 10) >= 360 ? 0 : rotate;
+				}, perMills);
+			} else {
+				var that = this;
+
+				// CSSAnimation/Transform未サポートだがCanvasはサポートしている場合は、setTimeoutで描写する
+				// 対象ブラウザ: Firefox 2,3 / Opera  9.0～10.1 / Opera Mini 5.0～7.0 / Opera Mobile 10.0
+				// http://caniuse.com/transforms2d
+				// http://caniuse.com/#search=canvas
+				this._runId = setTimeout(function() {
+					that._run.call(that);
+				}, perMills);
+			}
 		},
 		setPercent: function(percent) {
 			this.percentDiv.innerHTML = percent;
@@ -573,6 +671,7 @@
 			}
 		};
 		// スロバーのスタイル定義 (基本的にはCSSで記述する。ただし固定値はここで設定する)
+		// CSSAnimationsがサポートされているブラウザの場合、roundTimeプロパティの値は使用しない(CSSのanimation-durationを使用するため)
 		var throbberSetting = {
 			throbber: {
 				roundTime: 1000,
@@ -631,6 +730,13 @@
 				$.blockUI(setting);
 				$blockElement = $('body').children(
 						'.blockUI.' + setting.blockMsgClass + '.blockPage');
+
+				// position:fixed未サポートのAndroid2.xの場合、親要素のDIVがposition:fixedで子要素のCanvas(スロバー)にkeyframes(CSSAnimation)を適用すると、
+				// 画面の向きが変更されたときに実行する「メッセージを画面中央に表示する処理」が正しく行われない(位置がずれて中央に表示できない)ため、
+				// keyframes適用前に親要素のDIVのpositionをabsoluteに設定する(isPositionFixedSupportedでブラウザのバージョン判定をしているのでここでは行わない)
+				if (!isPositionFixedSupported) {
+					$blockElement.css('position', 'absolute');
+				}
 			} else {
 				var $target = $(this.target);
 				$target.block(setting);
