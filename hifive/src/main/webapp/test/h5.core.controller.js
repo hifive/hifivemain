@@ -6161,8 +6161,14 @@ $(function() {
 
 	asyncTest(
 			'※要目視確認: __init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。(出力されるログも目視で確認すること)',
-			13,
 			function() {
+				var expectNum = 13;
+				// Android2,3では、throwErrorされてもwindow.onerrorには入らないため、テスト数を1少なくする
+				if (h5.env.ua.isAndroid && h5.env.ua.browserVersion < 4) {
+					expect(expectNum - 1);
+				}
+
+
 				ok(
 						true,
 						'※要目視確認　コンソールに『コントローラchildControllerの__ready内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__initで発生したエラーが出力されていることを確認してください');
@@ -6171,8 +6177,8 @@ $(function() {
 
 				window.onerror = function(ev) {
 					clearTimeout(id);
-					ok(ev.indexOf(errorMsg),
-							'__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+					// Android2,3では、throwErrorされてもwindow.onerrorには入らないのでこのテストは実行されない。
+					ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
 				};
 
 				var controller = {
@@ -6242,8 +6248,13 @@ $(function() {
 
 	asyncTest(
 			'※要目視確認: __ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。(出力されるログも目視で確認すること)',
-			16,
 			function() {
+				var expectNum = 16;
+				// Android2,3では、throwErrorされてもwindow.onerrorには入らないため、テスト数を1少なくする
+				alert(h5.env.ua.browserVersion);
+				if (h5.env.ua.isAndroid && h5.env.ua.browserVersion < 4) {
+					expect(expectNum - 1);
+				}
 				ok(
 						true,
 						'※要目視確認　コンソールに『コントローラchildControllerの__init内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__readyで発生したエラーが出力されていることを確認してください');
@@ -6252,6 +6263,7 @@ $(function() {
 
 				window.onerror = function(ev) {
 					clearTimeout(id);
+					// Android2,3では、throwErrorされてもwindow.onerrorには入らないのでこのテストは実行されない。
 					ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
 				};
 
