@@ -619,6 +619,7 @@ $(function() {
 						deepEqual($('#test7 h1').css('font-size'), '111px',
 								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
 						changePage('#test8', true);
+						h5.ui.jqm.manager.define('test8', 'css/test2.css', controller8);
 					} else {
 						setTimeout(function() {
 							checkCSS();
@@ -663,7 +664,6 @@ $(function() {
 			}
 		};
 		h5.ui.jqm.manager.define('test7', 'css/test.css', controller7);
-		h5.ui.jqm.manager.define('test8', 'css/test2.css', controller8);
 	});
 
 	module('JQMManager - define5', {
