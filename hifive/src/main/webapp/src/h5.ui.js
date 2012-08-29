@@ -552,6 +552,15 @@
 
 		this.target = h5.u.obj.isJQueryObject(target) ? target.get(0) : target;
 
+		// DOM要素の書き換え可能かを判定するフラグ
+		// Android3,4系の場合、orientationChangeイベント発生直後にDOM要素の書き換えが起こるとインジケータの表示が崩れるため
+		//このフラグを使用して制御する
+		this._redrawable = true;
+		// _redrawable=false時、percent()に渡された最新の値
+		this._latestPercent = 0;
+		// _redrawable=false時、message()に渡された最新の値
+		this._latestMessage = null;
+
 		var that = this;
 		var $window = $(window);
 		var $document = $(document);
@@ -595,14 +604,28 @@
 
 		if (isPositionFixedSupported) {
 			resizeIndicatorHandler = function() {
+				that._redrawable = false;
 				that._setPositionAndResizeWidth();
 				resizeOverlay();
+
+				setTimeout(function() {
+					that._redrawable = true;
+					that.persent(that._latestPercent);
+					that.message(that._latestMessage);
+				}, 1000);
 			};
 		} else {
 			resizeIndicatorHandler = function() {
+				that._redrawable = false;
 				that._setPositionAndResizeWidth();
 				resizeOverlay();
 				updateIndicatorPosition();
+
+				setTimeout(function() {
+					that._redrawable = true;
+					that.persent(that._latestPercent);
+					that.message(that._latestMessage);
+				}, 1000);
 			};
 		}
 
@@ -823,10 +846,16 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		percent: function(percent) {
-			if (typeof percent === 'number' && percent >= 0 && percent <= 100) {
-				this.throbber.setPercent(percent);
+			if (typeof percent !== 'number' || !(percent >= 0 && percent <= 100)) {
+				return this;
 			}
 
+			if (!this._redrawable) {
+				this._latestPercent = percent;
+				return this;
+			}
+
+			this.throbber.setPercent(percent);
 			return this;
 		},
 		/**
@@ -838,25 +867,31 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		message: function(message) {
-			if (isString(message)) {
-				var setting = this._style;
-				var $blockElement = null;
-
-				if (this._isGlobalBlockTarget()) {
-					$blockElement = $('body').children(
-							'.blockUI.' + setting.blockMsgClass + '.blockPage');
-
-				} else {
-					$blockElement = $(this.target).children(
-							'.blockUI.' + setting.blockMsgClass + '.blockElement');
-				}
-
-				$blockElement.children('.' + CLASS_INDICATOR_MESSAGE)
-						.css('display', 'inline-block').text(message);
-
-				this._setPositionAndResizeWidth();
+			if (!isString(message)) {
+				return this;
 			}
 
+			if (!this._redrawable) {
+				this._latestMessage = message;
+				return this;
+			}
+
+			var setting = this._style;
+			var $blockElement = null;
+
+			if (this._isGlobalBlockTarget()) {
+				$blockElement = $('body').children(
+						'.blockUI.' + setting.blockMsgClass + '.blockPage');
+
+			} else {
+				$blockElement = $(this.target).children(
+						'.blockUI.' + setting.blockMsgClass + '.blockElement');
+			}
+
+			$blockElement.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
+					.text(message);
+
+			this._setPositionAndResizeWidth();
 			return this;
 		}
 	};
