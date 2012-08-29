@@ -256,6 +256,20 @@ $(function() {
 		notStrictEqual(h5.u.str.endsWith(str, suffix2), true, '文字列のサフィックスが efg 指定したものではないこと。');
 	});
 
+	/**
+	 * 元のwindow.onerror(QUnitが登録しているもの)を一時保存しておく
+	 */
+	var originalOnerror = window.onerror;
+	module('loadScript', {
+		setup: function() {
+			// window.onerrorを空にする
+			window.onerror = null;
+		},
+		teardown: function() {
+			// テスト終了時にwindow.onerrorを元に戻す
+			window.onerror = originalOnerror;
+		}
+	});
 	test(
 			'スクリプトのロード(h5.u.loadScript) 引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
 			10, function() {
@@ -386,8 +400,6 @@ $(function() {
 
 
 	test('スクリプトのロード(h5.u.loadScript) 存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2, function() {
-		var qunitWindowOnErrorFunc = window.onerror;
-		window.onerror = function() {};
 		window.com.htmlhifive.test.sample4loaded = undefined;
 
 		try {
@@ -402,8 +414,6 @@ $(function() {
 			equal(window.com.htmlhifive.test.sample4loaded, 2,
 					'data/sample4.js?existFile2 までは読み込まれていること。');
 		}
-
-		window.onerror = qunitWindowOnErrorFunc;
 	});
 
 	test('スクリプトの同期ロード(h5.u.loadScript)', 6, function() {
@@ -500,8 +510,6 @@ $(function() {
 	test(
 			'スクリプトのロード(h5.u.loadScript) (atomicオプション有効) 存在しないスクリプトを指定した場合、直前まで読み込みに成功していスクリプトファイルも全て読み込まれないこと。',
 			2, function() {
-				var qunitWindowOnErrorFunc = window.onerror;
-				window.onerror = function() {};
 				window.com.htmlhifive.test.sample4loaded = undefined;
 
 				try {
@@ -517,8 +525,6 @@ $(function() {
 					equal(window.com.htmlhifive.test.sample4loaded, undefined,
 							'全てのスクリプトが読み込まれていないこと。');
 				}
-
-				window.onerror = qunitWindowOnErrorFunc;
 			});
 
 	test('スクリプトの同期ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
@@ -764,8 +770,6 @@ $(function() {
 
 	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2,
 			function() {
-				var qunitWindowOnErrorFunc = window.onerror;
-				window.onerror = function() {};
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(
 						['data/sample4.js?existFile1', 'data/noExistFile.js',
@@ -779,11 +783,7 @@ $(function() {
 							equal(window.com.htmlhifive.test.sample4loaded, 1,
 									'data/sample4.js?existFile1 までは読み込まれていること。');
 						}).always(function() {
-					setTimeout(function() {
-						// window.onerrorを元に戻す
-						window.onerror = qunitWindowOnErrorFunc;
-						start();
-					}, 0);
+					start();
 				});
 			});
 
