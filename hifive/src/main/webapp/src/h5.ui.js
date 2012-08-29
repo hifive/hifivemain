@@ -54,6 +54,9 @@
 	var FORMAT_THROBBER_MESSAGE_AREA = '<span class="' + CLASS_INDICATOR_THROBBER
 			+ '"></span><span class="' + CLASS_INDICATOR_MESSAGE + '" {0}>{1}</span>';
 
+	/** scrollToTop() リトライまでの待機時間 */
+	var WAIT_MILLIS = 500;
+
 	// =============================
 	// Production
 	// =============================
@@ -907,7 +910,8 @@
 	 * <li>Android
 	 * 4.xにてorientationchangeイベント発生直後にインジケータのDOM要素の書き換えを行うと画面の再描画が起こらなくなってしまうため、orientationchangeイベント発生から0.5秒間はpercent()/massage()での画面の書き換えをブロックします。<br>
 	 * orientationchagenイベント発生から0.5秒以内にpercent()/message()で値を設定した場合、最後に設定された値が画面に反映されます。</li>
-	 * <li>WindowsPhone 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。ただし、クリック等その他のイベントはキャンセルされます。</li>
+	 * <li>WindowsPhone
+	 * 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。ただし、クリック等その他のイベントはキャンセルされます。</li>
 	 * </ul>
 	 * <h4>使用例</h4>
 	 * <b>スクリーンロックとして表示する</b><br>
@@ -1047,7 +1051,7 @@
 	 */
 	var scrollToTop = function() {
 		var waitCount = 3;
-		var waitMillis = 500;
+
 		function fnScroll() {
 			if (window.scrollY === 1) {
 				waitCount = 0;
@@ -1055,13 +1059,13 @@
 			if (waitCount > 0) {
 				window.scrollTo(0, 1);
 				waitCount--;
-				setTimeout(fnScroll, waitMillis);
+				setTimeout(fnScroll, WAIT_MILLIS);
 			}
 		}
 
 		window.scrollTo(0, 1);
 		if ($(window).scrollTop !== 1) {
-			setTimeout(fnScroll, waitMillis);
+			setTimeout(fnScroll, WAIT_MILLIS);
 		}
 	};
 
