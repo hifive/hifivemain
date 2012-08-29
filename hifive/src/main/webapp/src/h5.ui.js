@@ -162,14 +162,15 @@
 	 * <p>
 	 * 判定に使用するプレフィックス
 	 * <ul>
-	 * <li>Khtml (Safari2以前)
-	 * <li>ms (IE)
-	 * <li>O (Opera)
-	 * <li>Moz (Firefox)
+	 * <li>Khtml (Safari2以前)</li>
+	 * <li>ms (IE)</li>
+	 * <li>O (Opera)</li>
+	 * <li>Moz (Firefox)</li>
+	 * <li>Webkit (Safari2以降/Chrome)</li>
 	 * </ul>
-	 * Webkit (Safari2以降/Chrome)
 	 * <p>
-	 * ※WebKitプレフィックスはデバッグでの表示上は小文字(webkitXxxxx)だが、大文字でも正しく判定される
+	 * ※Chrome20にて、WebKitプレフィックスはデバッグでの表示上は小文字(webkitXxxxx)だが、先頭文字が小文字または大文字でも正しく判定される。
+	 * しかし、古いバージョンでは確認できていないため『Webkit』で判定する。
 	 */
 	var supportsCSS3Property = (function() {
 		var fragment = document.createDocumentFragment();
@@ -557,9 +558,9 @@
 		//このフラグを使用して制御する
 		this._redrawable = true;
 		// _redrawable=false時、percent()に渡された最新の値
-		this._latestPercent = 0;
+		this._lastPercent = 0;
 		// _redrawable=false時、message()に渡された最新の値
-		this._latestMessage = null;
+		this._lastMessage = null;
 
 		var that = this;
 		var $window = $(window);
@@ -610,8 +611,8 @@
 
 				setTimeout(function() {
 					that._redrawable = true;
-					that.persent(that._latestPercent);
-					that.message(that._latestMessage);
+					that.percent(that._lastPercent);
+					that.message(that._lastMessage);
 				}, 1000);
 			};
 		} else {
@@ -623,8 +624,8 @@
 
 				setTimeout(function() {
 					that._redrawable = true;
-					that.persent(that._latestPercent);
-					that.message(that._latestMessage);
+					that.percent(that._lastPercent);
+					that.message(that._lastMessage);
 				}, 1000);
 			};
 		}
@@ -851,7 +852,7 @@
 			}
 
 			if (!this._redrawable) {
-				this._latestPercent = percent;
+				this._lastPercent = percent;
 				return this;
 			}
 
@@ -872,7 +873,7 @@
 			}
 
 			if (!this._redrawable) {
-				this._latestMessage = message;
+				this._lastMessage = message;
 				return this;
 			}
 
