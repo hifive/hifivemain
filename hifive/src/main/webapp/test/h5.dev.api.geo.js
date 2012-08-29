@@ -251,19 +251,21 @@ asyncTest(
 			var count1 = 0;
 			promise1.progress(
 					function(pos) {
-						positions1.push(pos);
-						times1.push(new Date().getTime());
-						var i = (count1 >= paramsLen - 1) ? count1 : count1++;
-						strictEqual(pos.coords.latitude, paramsArray[i].latitude, i
-								+ '番目にセットした緯度と取得した緯度が一致すること。');
-						strictEqual(pos.coords.longitude, paramsArray[i].longitude, i
-								+ '番目にセットした経度と取得した経度が一致すること。');
-						strictEqual(pos.coords.accuracy, 0, 'accuracyは0であること。');
-						strictEqual(pos.coords.altitude, null, 'altitudeはnullであること。');
-						strictEqual(pos.coords.altitudeAccuracy, null,
-								'altitudeAccuracyはnullであること。');
-						strictEqual(pos.coords.heading, null, 'headingはnullであること。');
-						strictEqual(pos.coords.speed, null, 'speedはnullであること。');
+						if (positions1.length < 6) {
+							positions1.push(pos);
+							times1.push(new Date().getTime());
+							var i = (count1 >= paramsLen - 1) ? count1 : count1++;
+							strictEqual(pos.coords.latitude, paramsArray[i].latitude, i
+									+ '番目にセットした緯度と取得した緯度が一致すること。');
+							strictEqual(pos.coords.longitude, paramsArray[i].longitude, i
+									+ '番目にセットした経度と取得した経度が一致すること。');
+							strictEqual(pos.coords.accuracy, 0, 'accuracyは0であること。');
+							strictEqual(pos.coords.altitude, null, 'altitudeはnullであること。');
+							strictEqual(pos.coords.altitudeAccuracy, null,
+									'altitudeAccuracyはnullであること。');
+							strictEqual(pos.coords.heading, null, 'headingはnullであること。');
+							strictEqual(pos.coords.speed, null, 'speedはnullであること。');
+						}
 					}).fail(function(error) {
 				promise1.unwatch && promise1.unwatch();
 				ok(false, 'watchPosition エラー:' + error.code);
@@ -277,8 +279,10 @@ asyncTest(
 					timeout: 10000
 				});
 				promise2.progress(function(pos) {
-					positions2.push(pos);
-					times2.push(new Date().getTime());
+					if (positions2.length < 5) {
+						positions2.push(pos);
+						times2.push(new Date().getTime());
+					}
 				}).fail(function(error) {
 					promise2.unwatch && promise2.unwatch();
 					ok(true, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
@@ -292,12 +296,13 @@ asyncTest(
 				promise3 = h5.api.geo.watchPosition({
 					timeout: 10000
 				});
-				var count3 = 0;
 				promise3.progress(function(pos) {
-					positions3.push(pos);
-					times3.push(new Date().getTime());
-					// 3つ目が3回取得したら終了
-					if (++count3 == 3) {
+					if (positions3.length < 3) {
+						positions3.push(pos);
+						times3.push(new Date().getTime());
+					} else {
+						// 3つ目が4回取得したら終了
+						// 3つ目の3回目までしか確認しないが、promise1,2のunwatchを呼ぶ(promise3.doneに入るタイミング)までに、positions1,2がテストに必要なだけ取得できている状態にするため
 						promise3.unwatch();
 					}
 				}).fail(function(error) {
