@@ -2860,10 +2860,10 @@
 
 		equal(item1.dataModel1[0].test1, 'aaa', 'create時に指定したモデルの値が、DataItemから取得できること。');
 		equal(item1.dataModel1[1].test1, 'bbb', 'create時に指定したモデルの値が、DataItemから取得できること。');
-		deepEqualObs(item1.dataModel2, [], 'create時に何も値を指定しない場合、nullが取得できること。');
+		deepEqualObs(item1.dataModel2, [], 'create時に何も値を指定しない場合、nullが取得できること。'); //FIXME nullが取得 -> 空のObsArrayが取得
 		equal(item2.dataModel2[0].test1, 20, 'create時に指定したモデルの値が、DataItemから取得できること。');
 		equal(item2.dataModel2[1].test1, 30, 'create時に指定したモデルの値が、DataItemから取得できること。');
-		deepEqualObs(item2.dataModel1, [], 'create時に何も値を指定しない場合、nullが取得できること。');
+		deepEqualObs(item2.dataModel1, [], 'create時に何も値を指定しない場合、nullが取得できること。'); //FIXME 同上
 
 		// 指定無し、null,undefined,空配列でcreateできるか
 		deepEqualObs(model.create({
@@ -2874,7 +2874,7 @@
 		deepEqualObs(model.create({
 			id: sequence.next(),
 			dataModel1: [undefined]
-		}), [undefined], 'create時に[null]を指定した場合、[null]が取得できること。');
+		}), [undefined], 'create時に[null]を指定した場合、[null]が取得できること。'); //FIXME null -> undef
 
 		deepEqualObs(model.create({
 			id: sequence.next(),
@@ -4842,12 +4842,12 @@
 					test6: [6],
 					test7: true,
 					test8: [true],
-					test9: ['hifive003'],
-					test10: 'hifive004',
+					test9: ['hifive003'], //FIXME 03が正しい？
+					test10: 'hifive004', //FIXME 04？
 					test11: itemA,
 					test12: [itemB, itemA],
-					test13: 'hifive005',
-					test14: 'hifive006'
+					test13: 'hifive005', //FIXME
+					test14: 'hifive006' //FIXME
 				});
 
 				equal(item1.test1, 'hifive01', 'type:string,string[]の場合、create時にpatternがチェックされること。');
