@@ -39,7 +39,31 @@ $(function() {
 		strictEqual(window.htmlhifive, undefined, '（クリーンアップ）');
 	});
 
-	test('名前空間作成 (h5.u.obj.ns) 異常系', 8, function() {
+	test(
+			'名前空間作成 (h5.u.obj.ns) 異常系(不正な文字列)',
+			8,
+			function() {
+				var invalids = ['', ' ', '.', 'あ', 'a b', 'a/b', '1a', '+a'];
+				for ( var i = 0, l = invalids.length; i < l; i++) {
+					try {
+						h5.u.obj.ns(invalids[i]);
+						ok(false, h5.u.str.format('h5.u.obj() {0}でエラーが発生しませんでした。', invalids[i]));
+					} catch (e) {
+						ok(true, e.message);
+					}
+				}
+				try {
+					h5.u.obj.ns('com.htmlhifive.test.abc.1');
+				} catch (e) {
+					ok(true, e.message);
+					ok(!window.com || !window.com.htmlhifive || !window.com.htmlhifive.test
+							|| !window.com.htmlhifive.test.abc,
+							'"com.htmlhifive.test.abc.1"を引数に渡した時はエラーになり、"com.htmlhifive.test.abc"の名前空間も作られないこと');
+				}
+				expect(invalids.length + 2);
+			});
+
+	test('名前空間作成 (h5.u.obj.ns) 異常系(文字列以外)', 8, function() {
 		try {
 			h5.u.obj.ns();
 			ok(false, 'h5.u.obj()（引数なし）でエラーが発生しませんでした。');
