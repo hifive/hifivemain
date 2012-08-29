@@ -72,7 +72,7 @@
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
-	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反している';
+	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 property = {0}';
 	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティのセッターを呼び出した';
 	ERROR_MESSAGES[ERR_CODE_NO_EVENT_TARGET] = 'イベントのターゲットが指定されていない';
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAMESPACE] = 'createDataModelManagerのnamespaceが不正';
@@ -1419,36 +1419,31 @@
 					//型・制約チェック
 					var validateResult = model._validateItemValue(name, value);
 					if (validateResult.length > 0) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, null, validateResult);
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, name, validateResult);
 					}
 
-
-					//新しい値を代入
-					setValue(this, name, value);
-
-					if (model.manager && model.manager.isInUpdate()) {
-						//TODO もしこのDataItemがremoveされていたらmodelには属していない
-						//アップデートセッション中の場合はdirtyフラグを立てて終了
-						this.dirty();
-						return;
-					}
-
-					//セッション外なので、depend再計算、changeイベント発火を直ちに行う
-
-					//TODO もしmanager.isInUpdateだったら、もしくはコンストラクタ内でフラグが立っていたらrecalcを遅延させる、ようにする。
-					//コンストラクタ時なら、クロージャ内に変更オブジェクトを突っ込む。
-					//manager.isInUpdateなら、manager.__changeLogに入れる
-
-					var changedProps = {};
-					changedProps[name] = {
+					var changedProp = {};
+					changedProp[name] = {
 						oldValue: oldValue,
 						newValue: value
 					};
 
+					if (model.manager && model.manager.isInUpdate()) {
+						//TODO もしこのDataItemがremoveされていたらmodelには属していない
+						//アップデートセッション中の場合はdirtyフラグを立てて終了
+						this.dirty(changedProp); //TODO
+						return;
+					}
+
+					//新しい値を代入
+					setValue(this, name, value);
+
+					//セッション外なので、depend再計算、changeイベント発火を直ちに行う
+
 					//今回変更されたプロパティと依存プロパティを含めてイベント送出
 					var event = {
 						type: 'change',
-						props: changedProps
+						props: changedProp
 					};
 
 					//依存プロパティを再計算する
@@ -1468,12 +1463,27 @@
 
 		//DataItemのコンストラクタ
 		function DataItem(initialValue) {
+			//TODO プロパティ拡張がある場合のみ
+			//isInUpdateがtrueの場合にセッターでセットされた値を一時的に格納するための領域
+			//内部は { (変更されたprop): { oldValue, newValue } } の形式
+			this.__dirty = {};
+
+			var changedProps = {};
+			var changedPropArray = [];
+
 			//デフォルト値を代入する
 			for ( var plainProp in schema) {
+				//初期生成なのですべてのプロパティが変更されたとみなす
+				changedPropArray.push(plainProp);
+
 				var propDesc = schema[plainProp];
 				if (!propDesc) {
 					//propDescがない場合はtype:anyとみなす
 					setValue(this, plainProp, null);
+					changedProps[plainProp] = {
+						oldValue: null,
+						newValue: null
+					};
 					continue;
 				}
 
@@ -1482,46 +1492,61 @@
 					continue;
 				}
 
-				//TODO isArrayのチェックルーチン共通化
 				if (isTypeArray(propDesc.type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					setValue(this, plainProp, h5.u.obj.createObservableArray());
 				}
 
+				var initValue = null;
+
 				if (initialValue[plainProp] !== undefined) {
 					//create時に初期値が与えられていたらそれを代入
 
-					var initVal = initialValue[plainProp];
+					var givenInitValue = initialValue[plainProp];
 
 					//型・制約チェック
-					//TODO validateItemValueは、plainPropが配列の場合は「initValが配列で、かつ各要素の中身がDescの制約を満たす」というチェックになっているか？
-					var validateResult = model._validateItemValue(plainProp, initVal);
+					//TODO validateItemValueは、plainPropが配列の場合は「givenInitValueが配列で、かつ各要素の中身がDescの制約を満たす」というチェックになっているか？
+					var validateResult = model._validateItemValue(plainProp, givenInitValue);
 					if (validateResult.length > 0) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, null, validateResult);
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, plainProp, validateResult);
 					}
 
 					if (isTypeArray(propDesc.type)) {
-						if (!$.isArray(initVal)) {
+						if (!$.isArray(givenInitValue)) {
 							//初期値が配列でなかったらエラー
-							throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
+							throwFwError(ERR_CODE_INVALID_ITEM_VALUE, plainProp);
 						}
-						this[plainProp].copyFrom(initVal);
+						this[plainProp].copyFrom(givenInitValue);
 					} else {
-						setValue(this, plainProp, initVal);
+						initValue = givenInitValue;
 					}
 				} else if (propDesc.defaultValue !== undefined) {
 					//DescriptorのdefaultValueがあれば代入
-					setValue(this, plainProp, propDesc.defaultValue);
+					initValue = propDesc.defaultValue;
 				} else if (propDesc.type && DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
 					//各typeのデフォルト値があれば代入
-					setValue(this, plainProp, DEFAULT_TYPE_VALUE[propDesc.type]);
-				} else {
-					//createでもDescriptorでも初期値が与えられなかったのでnullを代入
-					setValue(this, plainProp, null);
+					initValue = DEFAULT_TYPE_VALUE[propDesc.type];
 				}
+
+				if (!isTypeArray(propDesc.type)) {
+					//初期値をセット。createでもDescriptorでも初期値が与えられなければnullを代入
+					setValue(this, plainProp, initValue);
+				}
+
+				changedProps[plainProp] = {
+					oldValue: undefined,
+					newValue: initValue
+				};
 			}
 
-			//TODO dependな項目の計算を、最後に行うようにできないか
+			//今回変更されたプロパティと依存プロパティを含めてイベント送出
+			var event = {
+				type: 'change',
+				props: changedProps
+			};
+
+			//依存プロパティを再計算する
+			calcDependencies(model, this, event, name);
 		}
 		$.extend(DataItem.prototype, EventDispatcher.prototype, {
 			/**
@@ -1570,21 +1595,54 @@
 
 				//dirtyフラグが立っていなくても、refreshが呼ばれた場合は強制的に更新する
 
+				var changedProps = {};
+				var changedPropArray = [];
+
 				//TODO enhanceされている場合といない場合で処理が違う
 				for ( var prop in this) {
 					if (!this.hasOwnProperty(prop) || prop.indexOf('__') > -1) {
 						continue;
 					}
-					var validateResult = model._validateItemValue(prop, this[prop]);
-					if (validateResult) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
+
+					var newValue = this[prop];
+
+					var oldValue = getValue(this, prop);
+					if (oldValue === newValue) {
+						//同じ値がセットされた場合は何もしない
+						continue;
+					}
+
+					//TODO 毎回Array判定したくないので高速化
+					if (isTypeArray(model.schema[prop].type)) {
+						//typeが配列の場合、別インスタンスの代入は許可しない
+						throwFwError(ERR_CODE_CANNOT_SET_OBSARRAY);
+					}
+
+					var validateResult = model._validateItemValue(prop, newValue);
+					if (validateResult.length > 0) {
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
 					} else {
-						setValue(this, prop, this[prop]);
+						setValue(this, prop, newValue);
+						changedProps[prop] = {
+							oldValue: oldValue,
+							newValue: newValue
+						};
+						changedPropArray.push(prop);
 					}
 				}
 
+				//今回変更されたプロパティと依存プロパティを含めてイベント送出
+				var ev = {
+					type: 'change',
+					props: changedProps
+				};
 
-				//				recalculateAllDependProperties(this);
+				//依存プロパティを再計算する
+				calcDependencies(model, this, ev, changedPropArray);
+
+				if (model.manager && !model.manager.isInUpdate()) {
+					this.dispatchEvent(ev);
+				}
 			}
 		});
 
@@ -1650,8 +1708,6 @@
 
 		model.items[id] = item;
 		model.size++;
-
-		item.refresh();
 
 		item.addEventListener('change', itemChangeListener);
 
