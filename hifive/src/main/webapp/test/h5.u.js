@@ -23,7 +23,7 @@ $(function() {
 
 	var CREATE_NAMESPACE_PASS_REASON = '名前空間オブジェクトを作成したので、undefinedでなくオブジェクトが入っているはず';
 
-	module("h5.u", {
+	module("h5.u.obj.ns", {
 		teardown: function() {
 			window.com.htmlhifive.test = {};
 		}
@@ -160,6 +160,7 @@ $(function() {
 		notStrictEqual(com.htmlhifive.test.test1, undefined, '存在しない分については新規作成されていること。');
 	});
 
+	module("h5.u.obj.expose");
 	test('h5test1.exposeにオブジェクトを公開する (h5.u.obj.expose)', 5, function() {
 		h5.u.obj.expose('h5test1.expose', {
 			test: 1
@@ -223,6 +224,45 @@ $(function() {
 		window.h5test1 = undefined;
 	});
 
+	test('h5.u.obj.expose 指定した名前空間に既にオブジェクトが存在する状態でexposeを実行', 3, function() {
+		h5.u.obj.expose('com.htmlhifive.test2', {
+			exposedObj: false
+		});
+
+		equal(com.htmlhifive.test2.exposedObj, false,
+				'com.htmlhifive.test2.exposedObjがexposeされていること。');
+
+		raises(function(enviroment) {
+			h5.u.obj.expose('com.htmlhifive.test2', {
+				exposedObj: 10
+			});
+		}, function(actual) {
+			return 11001 === actual.code
+					&& h5.u.str.format('名前空間"{0}"には、プロパティ"{1}"が既に存在します。(code={2})',
+							'com.htmlhifive.test2', 'exposedObj', actual.code) === actual.message;
+		}, '指定した名前空間が既に存在する場合エラーとなること');
+
+		equal(com.htmlhifive.test2.exposedObj, false, '値が上書きされていないこと。');
+
+		window.com.htmlhifive.test2 = undefined;
+	});
+
+
+	module("h5.u.obj.str");
+
+	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
+		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
+		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
+				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
+
+		strictEqual('', h5.u.str.format(null, 1), 'nullを渡すと空文字列が返るか');
+		strictEqual('', h5.u.str.format(undefined), 'undefinedを渡すと空文字列が返るか');
+		strictEqual('nullが渡されました。', h5.u.str.format('{0}が渡されました。', null),
+				'パラメータとしてnullを渡すと"null"という文字列になっているか');
+		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
+				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
+	});
+
 	test('html文字列をエスケープする(h5.u.str.espaceHtml)', 4, function() {
 		var str = '<div>hogehoge<span>TEST</span>hoge.!</script>';
 		var escapeStr = h5.u.str.escapeHtml(str);
@@ -260,7 +300,7 @@ $(function() {
 	 * 元のwindow.onerror(QUnitが登録しているもの)を一時保存しておく
 	 */
 	var originalOnerror = window.onerror;
-	module('loadScript', {
+	module('h5.u.loadScript', {
 		setup: function() {
 			// window.onerrorを空にする
 			window.onerror = null;
@@ -787,20 +827,7 @@ $(function() {
 				});
 			});
 
-
-	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
-		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
-		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
-				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
-
-		strictEqual('', h5.u.str.format(null, 1), 'nullを渡すと空文字列が返るか');
-		strictEqual('', h5.u.str.format(undefined), 'undefinedを渡すと空文字列が返るか');
-		strictEqual('nullが渡されました。', h5.u.str.format('{0}が渡されました。', null),
-				'パラメータとしてnullを渡すと"null"という文字列になっているか');
-		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
-				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
-	});
-
+	module('h5.u.obj.argsToArray');
 	test('argumentsを配列に変換(h5.u.obj.argsToArray)', function() {
 		var func = function(a, b, c, d) {
 			return h5.u.obj.argsToArray(arguments);
@@ -810,6 +837,7 @@ $(function() {
 		deepEqual(result, [1, 2, 3, 4], 'argumentsオブジェクトが配列に変換されていること。');
 	});
 
+	module('h5.u.obj.getByPath');
 	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', 7, function() {
 		window.hoge = {
 			hogehoge: {
@@ -838,6 +866,7 @@ $(function() {
 		}, '文字列以外をパラメータに指定すると例外が発生すること。');
 	});
 
+	module('h5.u.obj.serialize/deserialize');
 	test('serialize/deserialize 文字列', 2, function() {
 		var strs = ["helloWorld", 'o{"str1":"\"string1\""}'];
 		for ( var i = 0, len = strs.length; i < len; i++) {
@@ -1423,6 +1452,8 @@ $(function() {
 		}
 	});
 
+
+	module('h5.u.createInterceptor');
 	test('h5.u.createInterceptor() インターセプタを作成できること', 5, function() {
 		var count = 0;
 		var count2 = 0;
@@ -1456,26 +1487,4 @@ $(function() {
 
 	});
 
-	test('h5.u.obj.expose 指定した名前空間に既にオブジェクトが存在する状態でexposeを実行', 3, function() {
-		h5.u.obj.expose('com.htmlhifive.test2', {
-			exposedObj: false
-		});
-
-		equal(com.htmlhifive.test2.exposedObj, false,
-				'com.htmlhifive.test2.exposedObjがexposeされていること。');
-
-		raises(function(enviroment) {
-			h5.u.obj.expose('com.htmlhifive.test2', {
-				exposedObj: 10
-			});
-		}, function(actual) {
-			return 11001 === actual.code
-					&& h5.u.str.format('名前空間"{0}"には、プロパティ"{1}"が既に存在します。(code={2})',
-							'com.htmlhifive.test2', 'exposedObj', actual.code) === actual.message;
-		}, '指定した名前空間が既に存在する場合エラーとなること');
-
-		equal(com.htmlhifive.test2.exposedObj, false, '値が上書きされていないこと。');
-
-		window.com.htmlhifive.test2 = undefined;
-	});
 });
