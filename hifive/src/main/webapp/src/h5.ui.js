@@ -600,19 +600,9 @@
 			});
 		}
 
-		var resizeIndicatorFunc = null;
-
-		if (isPositionFixedSupported) {
-			resizeIndicatorFunc = function() {
-				that._setPositionAndResizeWidth();
-				resizeOverlay();
-			};
-		} else {
-			resizeIndicatorFunc = function() {
-				that._setPositionAndResizeWidth();
-				resizeOverlay();
-				updateIndicatorPosition();
-			};
+		function resizeIndicatorFunc() {
+			resizeOverlay();
+			that._setPositionAndResizeWidth();
 		}
 
 		function resizeIndicatorHandler() {
@@ -624,7 +614,7 @@
 				that._redrawable = true;
 				that.percent(that._lastPercent);
 				that.message(that._lastMessage);
-			}, 500);
+			}, 1000);
 		}
 
 		var timerId = null;
@@ -790,9 +780,21 @@
 				$blockParent = $('body');
 				$blockElement = $blockParent.children('.blockUI.' + setting.blockMsgClass
 						+ '.blockPage');
-				// 画面全体をブロックするので、windowからheightを取得する
-				$blockElement.css('top', (($(window).height() - $blockElement.outerHeight()) / 2)
-						+ 'px');
+
+				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
+				var displayHeight = window.innerHeight ? window.innerHeight : $(window).height();
+
+				if (isPositionFixedSupported) {
+					// 可視領域からtopを計算する
+					$blockElement.css('top', ((displayHeight - $blockElement.outerHeight()) / 2)
+							+ 'px');
+				} else {
+					// コンテンツ領域(スクロールしないと見えない領域も含む)からtopを計算する
+					$blockElement.css('top',
+							(($(document).scrollTop() + (displayHeight / 2)) - ($blockElement
+									.height() / 2))
+									+ 'px');
+				}
 			} else {
 				$blockParent = $(this.target);
 				$blockElement = $blockParent.children('.blockUI.' + setting.blockMsgClass
@@ -908,8 +910,8 @@
 	 * <h4>スクリーンロック中の制限事項</h4>
 	 * <ul>
 	 * <li>Android
-	 * 4.xにてorientationchangeイベント発生直後にインジケータのDOM要素の書き換えを行うと画面の再描画が起こらなくなってしまうため、orientationchangeイベント発生から0.5秒間はpercent()/massage()での画面の書き換えをブロックします。<br>
-	 * orientationchagenイベント発生から0.5秒以内にpercent()/message()で値を設定した場合、最後に設定された値が画面に反映されます。</li>
+	 * 4.xにてorientationchangeイベント発生直後にインジケータのDOM要素の書き換えを行うと画面の再描画が起こらなくなってしまうため、orientationchangeイベント発生から1秒間percent()/massage()での画面の書き換えをブロックします。<br>
+	 * orientationchagenイベント発生から1秒以内にpercent()/message()で値を設定した場合、最後に設定された値が画面に反映されます。</li>
 	 * <li>WindowsPhone
 	 * 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。ただし、クリック等その他のイベントはキャンセルされます。</li>
 	 * </ul>
