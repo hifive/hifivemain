@@ -6024,6 +6024,10 @@ $(function() {
 				});
 			});
 
+	/**
+	 * window.onerrorを保管しておく変数
+	 */
+	var onerrorHandler = null;
 	module(
 			'ライフサイクルイベント内の例外',
 			{
@@ -6031,10 +6035,15 @@ $(function() {
 					$('#qunit-fixture')
 							.append(
 									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+
+					// 元のwindow.onerror(QUnitのもの)を一時的に保管する
+					onerrorHandler = window.onerror;
 				},
 				teardown: function() {
 					$('#qunit-fixture #controllerTest').remove();
 					h5.core.controllerManager.controllers = [];
+					// window.onerrorを元に戻す
+					window.onerror = onerrorHandler;
 				}
 			});
 	test('__construct()で例外をスローする。', 1, function() {
@@ -6065,11 +6074,9 @@ $(function() {
 	asyncTest('※IE6～9の場合は要目視確認: __init()で例外をスローする。', 1, function() {
 		var errorMsg = '__init error.';
 		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			window.onerror = onerrorHandler;
 			ok(ev.indexOf(errorMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
 		};
@@ -6087,11 +6094,9 @@ $(function() {
 	asyncTest('※IE6～9の場合は要目視確認: __ready()で例外をスローする。', 1, function() {
 		var errorMsg = '__ready error.';
 		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			window.onerror = onerrorHandler;
 			ok(ev.indexOf(errorMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
 		};
@@ -6110,11 +6115,9 @@ $(function() {
 	asyncTest('※IE6～9の場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
 		var errorMsg = '__unbind error.';
 		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			window.onerror = onerrorHandler;
 			ok(ev.indexOf(errorMsg), '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
 		};
@@ -6135,11 +6138,9 @@ $(function() {
 	asyncTest('※IE6～9の場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
 		var errorMsg = '__dispose error.';
 		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			window.onerror = onerrorHandler;
 			ok(ev.indexOf(errorMsg),
 					'__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。(出力されるログも目視で確認すること)');
 			start();
@@ -6159,7 +6160,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'※要目視確認: __init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。',
+			'※要目視確認: __init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。(出力されるログも目視で確認すること)',
 			13,
 			function() {
 				ok(
@@ -6167,13 +6168,11 @@ $(function() {
 						'※要目視確認　コンソールに『コントローラchildControllerの__ready内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__initで発生したエラーが出力されていることを確認してください');
 				var errorMsg = '__init error.';
 				var id = testTimeoutFunc(errorMsg);
-				var onerrorHandler = window.onerror;
 
 				window.onerror = function(ev) {
 					clearTimeout(id);
-					window.onerror = onerrorHandler;
 					ok(ev.indexOf(errorMsg),
-							'__ready()内で発生した例外がFW内で握りつぶされずcatchできること。(出力されるログも目視で確認すること)');
+							'__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
 				};
 
 				var controller = {
@@ -6250,11 +6249,9 @@ $(function() {
 						'※要目視確認　コンソールに『コントローラchildControllerの__init内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__readyで発生したエラーが出力されていることを確認してください');
 				var errorMsg = '__ready error.';
 				var id = testTimeoutFunc(errorMsg);
-				var onerrorHandler = window.onerror;
 
 				window.onerror = function(ev) {
 					clearTimeout(id);
-					window.onerror = onerrorHandler;
 					ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
 				};
 
