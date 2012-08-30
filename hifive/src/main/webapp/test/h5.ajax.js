@@ -72,21 +72,19 @@ $(function() {
 	asyncTest(
 			'commonFailHandlerの動作1',
 			function() {
-				var timerId = setTimeout(
-						function() {
-							// timerが止められてない = commonFailHandlerに入ってないので失敗
-							ok(false,
-									'fail, error, always, completeに登録されたコールバックがない場合にh5.ajax() でcommonFailHandlerが動作すること');
-							start();
-						}, timeoutTime);
+				var msg = 'fail, error, always, completeに登録されたコールバックがない場合にh5.ajax() でcommonFailHandlerが動作すること';
+				var timerId = setTimeout(function() {
+					// timerが止められてない = commonFailHandlerに入ってないので失敗
+					ok(false, msg);
+					start();
+				}, timeoutTime);
 
 				h5.settings.commonFailHandler = function() {
 					// タイマーを止める
 					clearTimeout(timerId);
 
 					// テスト成功
-					ok(true,
-							'fail, error, always, completeに登録されたコールバックがない場合にh5.ajax() でcommonFailHandlerが動作すること');
+					ok(true, msg);
 					start();
 				};
 
@@ -95,8 +93,9 @@ $(function() {
 			});
 
 	asyncTest('commonFailHandlerの動作2', function() {
+		var msg = 'オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと';
 		var timerId = setTimeout(function() {
-			ok(true, 'オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(true, msg);
 			start();
 		}, timeoutTime);
 
@@ -104,7 +103,7 @@ $(function() {
 			// タイマーを止める
 			clearTimeout(timerId);
 
-			ok(false, 'オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(false, msg);
 			start();
 		};
 
@@ -115,9 +114,9 @@ $(function() {
 	});
 
 	asyncTest('commonFailHandlerの動作3', function() {
-
+		var msg = 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと';
 		var timerId = setTimeout(function() {
-			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(true, msg);
 			start();
 		}, timeoutTime);
 
@@ -125,7 +124,7 @@ $(function() {
 			// タイマーを止める
 			clearTimeout(timerId);
 
-			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(false, msg);
 			start();
 		};
 
@@ -137,9 +136,9 @@ $(function() {
 	});
 
 	asyncTest('commonFailHandlerの動作4', function() {
-
+		var msg = 'オプションでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと';
 		var timerId = setTimeout(function() {
-			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(true, msg);
 			start();
 		}, timeoutTime);
 
@@ -147,7 +146,7 @@ $(function() {
 			// タイマーを止める
 			clearTimeout(timerId);
 
-			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(false, msg);
 			start();
 		};
 
@@ -159,9 +158,9 @@ $(function() {
 	});
 
 	asyncTest('commonFailHandlerの動作5', function() {
-
+		var msg = 'オプションでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと';
 		var timerId = setTimeout(function() {
-			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(true, msg);
 			start();
 		}, timeoutTime);
 
@@ -169,7 +168,7 @@ $(function() {
 			// タイマーを止める
 			clearTimeout(timerId);
 
-			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(false, msg);
 			start();
 		};
 
@@ -181,9 +180,9 @@ $(function() {
 	});
 
 	asyncTest('commonFailHandlerの動作6', function() {
-
+		var msg = 'メソッドチェーンでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと';
 		var timerId = setTimeout(function() {
-			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(true, msg);
 			start();
 		}, timeoutTime);
 
@@ -191,7 +190,7 @@ $(function() {
 			// タイマーを止める
 			clearTimeout(timerId);
 
-			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(false, msg);
 			start();
 		};
 
@@ -201,9 +200,9 @@ $(function() {
 	});
 
 	asyncTest('commonFailHandlerの動作7', function() {
-
+		var msg = 'メソッドチェーンでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと';
 		var timerId = setTimeout(function() {
-			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(true, msg);
 			start();
 		}, timeoutTime);
 
@@ -211,7 +210,7 @@ $(function() {
 			// タイマーを止める
 			clearTimeout(timerId);
 
-			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(false, msg);
 			start();
 		};
 
@@ -222,8 +221,9 @@ $(function() {
 	});
 
 	asyncTest('commonFailHandlerの動作8', function() {
+		var msg = 'メソッドチェーンでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと';
 		var timerId = setTimeout(function() {
-			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(true, msg);
 			start();
 		}, timeoutTime);
 
@@ -231,7 +231,7 @@ $(function() {
 			// タイマーを止める
 			clearTimeout(timerId);
 
-			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(false, msg);
 			start();
 		};
 
@@ -242,8 +242,9 @@ $(function() {
 	});
 
 	asyncTest('commonFailHandlerの動作9', function() {
+		var msg = 'メソッドチェーンでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと';
 		var timerId = setTimeout(function() {
-			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(true, msg);
 			start();
 		}, timeoutTime);
 
@@ -251,7 +252,7 @@ $(function() {
 			// タイマーを止める
 			clearTimeout(timerId);
 
-			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			ok(false, msg);
 			start();
 		};
 
