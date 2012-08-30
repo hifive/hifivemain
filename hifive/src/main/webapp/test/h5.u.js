@@ -478,8 +478,6 @@ $(function() {
 		window.com.htmlhifive.test.test3 = undefined;
 	});
 
-
-
 	test('スクリプトのロード(h5.u.loadScript) (atomicオプション有効)', 3, function() {
 		window.com.htmlhifive.test.h5samplefunc5 = undefined;
 		h5.u.loadScript('data/sample5.js', {
@@ -545,7 +543,6 @@ $(function() {
 				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
 			});
-
 
 	test(
 			'スクリプトのロード(h5.u.loadScript) (atomicオプション有効) 存在しないスクリプトを指定した場合、直前まで読み込みに成功していスクリプトファイルも全て読み込まれないこと。',
@@ -615,7 +612,6 @@ $(function() {
 
 	});
 
-
 	asyncTest('スクリプトの非同期(parallel=true)ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
 			force: true,
@@ -639,7 +635,28 @@ $(function() {
 		});
 	});
 
+	asyncTest('スクリプトの非同期(parallel=false)ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
+		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
+			force: true,
+			parallel: false,
+			atomic: true
+		});
 
+		ok(!window.com.htmlhifive.test.test1, 'スクリプトが非同期にロードされたか1');
+		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
+		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
+
+		promise.done(function() {
+			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
+			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
+			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
+
+			window.com.htmlhifive.test.test1 = undefined;
+			window.com.htmlhifive.test.test2 = undefined;
+			window.com.htmlhifive.test.test3 = undefined;
+			start();
+		});
+	});
 
 	asyncTest('スクリプトの非同期(parallel=false)ロード(h5.u.loadScript)', 9, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
