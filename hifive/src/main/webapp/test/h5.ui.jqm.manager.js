@@ -617,8 +617,8 @@ $(function() {
 					if (--count === 0 || $('#test7 h1').css('font-size') === '111px') {
 						deepEqual($('#test7 h1').css('font-size'), '111px',
 								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
-						changePage('#test8', true);
 						h5.ui.jqm.manager.define('test8', 'css/test2.css', controller8);
+						changePage('#test8', true);
 					} else {
 						setTimeout(function() {
 							checkCSS();
