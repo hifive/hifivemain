@@ -14,14 +14,15 @@
  * hifive
  */
 
-// JQMがロードされると、readyイベントの約50ms後に$.mobile.silentScroll()が実行されてtop:1pxの位置に移動してしまうため、top:0pxの位置に戻す
-$(document).bind('silentscroll', function() {
-	window.scrollTo(0, 0);
-});
 // jQueryMobileの読み込み
 h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js", {
 	async: false
 });
+
+// JQMがロードされると、readyイベントの約50ms後に$.mobile.silentScroll()が実行されてtop:1pxの位置に移動してしまう。
+// h5.ui.isInView() のテストに影響するためsilentScrollを無効にする
+$.mobile.silentScroll = function() {};
+
 $(function() {
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -47,7 +48,6 @@ $(function() {
 		$('body>div').children().unwrap();
 		// JQMが生成するloadingのh1要素を削除
 		$('h1:not(#qunit-header)').remove();
-
 	}
 
 	/**
@@ -89,7 +89,6 @@ $(function() {
 		}
 		return true;
 	}
-
 
 	/**
 	 * 擬似的にページ遷移を行う
