@@ -591,7 +591,7 @@
 		function disableEventOnIndicator() {
 			var $blockUIOverlay = $('body div.blockUI.blockOverlay');
 			var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass + '.blockPage');
-			var disabledEventTypes = 'click dblclick touchstart touchmove touchend scroll blur focus focusin focusout mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select keydown keypress keyup';
+			var disabledEventTypes = 'click dblclick touchstart touchmove touchend mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave focus focusin focusout blur change select';
 
 			$.each([$blockUIOverlay, $blockUIInner], function(i, v) {
 				v.bind(disabledEventTypes, function() {
