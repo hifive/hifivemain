@@ -173,7 +173,7 @@
 	 * tableNameが未指定またはString型以外の型の値が指定された場合、例外をスローします。
 	 */
 	function checkTableName(funcName, tableName) {
-		if (typeof tableName !== 'string') {
+		if (!isString(tableName)) {
 			throw new throwFwError(ERR_CODE_INVALID_TABLE_NAME, funcName);
 		}
 	}
@@ -317,7 +317,7 @@
 			var conditions = [];
 			createConditionAndParameters(where, conditions, params);
 			statement += (' WHERE ' + conditions.join(' AND '));
-		} else if (typeof where === 'string') {
+		} else if (isString(where)) {
 			statement += (' WHERE ' + where);
 		}
 
@@ -409,7 +409,7 @@
 		 * @returns {Select} Selectオブジェクト
 		 */
 		where: function(whereObj) {
-			if (!$.isPlainObject(whereObj) && typeof whereObj !== 'string') {
+			if (!$.isPlainObject(whereObj) && !isString(whereObj)) {
 				throw new throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Select', 'where']);
 			}
 
@@ -441,7 +441,7 @@
 		 * @returns {Select} Selectオブジェクト
 		 */
 		orderBy: function(orderByObj) {
-			if (!$.isPlainObject(orderByObj) && typeof orderByObj !== 'string') {
+			if (!$.isPlainObject(orderByObj) && !isString(orderByObj)) {
 				throw new throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Select', 'orderBy']);
 			}
 
@@ -744,7 +744,7 @@
 		 * @returns {Update} Updateオブジェクト
 		 */
 		where: function(whereObj) {
-			if (!$.isPlainObject(whereObj) && typeof whereObj !== 'string') {
+			if (!$.isPlainObject(whereObj) && !isString(whereObj)) {
 				throw new throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Update', 'where']);
 			}
 
@@ -795,7 +795,7 @@
 					var conditions = [];
 					createConditionAndParameters(whereObj, conditions, that._params);
 					that._statement += (' WHERE ' + conditions.join(' AND '));
-				} else if (typeof whereObj === 'string') {
+				} else if (isString(whereObj)) {
 					that._statement += (' WHERE ' + whereObj);
 				}
 			};
@@ -915,7 +915,7 @@
 		 * @returns {Del} Delオブジェクト
 		 */
 		where: function(whereObj) {
-			if (!$.isPlainObject(whereObj) && typeof whereObj !== 'string') {
+			if (!$.isPlainObject(whereObj) && !isString(whereObj)) {
 				throw new throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Del', 'where']);
 			}
 
@@ -958,7 +958,7 @@
 					var conditions = [];
 					createConditionAndParameters(whereObj, conditions, that._params);
 					that._statement += (' WHERE ' + conditions.join(' AND '));
-				} else if (typeof whereObj === 'string') {
+				} else if (isString(whereObj)) {
 					that._statement += (' WHERE ' + whereObj);
 				}
 			};
@@ -1459,7 +1459,7 @@
 		sql: function(statement, parameters, txw) {
 			checkTransaction('sql', txw);
 
-			if (typeof statement !== 'string') {
+			if (!isString(statement)) {
 				throw new throwFwError(ERR_CODE_INVALID_STATEMENT, 'sql');
 			}
 

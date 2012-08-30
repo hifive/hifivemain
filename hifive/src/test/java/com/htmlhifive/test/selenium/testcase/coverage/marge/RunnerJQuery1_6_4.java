@@ -12,12 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
- package jp.co.nssol.h5.test.selenium.testcase.coverage.marge;
+ package com.htmlhifive.test.selenium.testcase.coverage.marge;
 
-import jp.co.nssol.h5.test.selenium.base.H5TestCase;
+import com.htmlhifive.test.selenium.base.H5TestCase;
 
 import org.junit.Test;
 import org.openqa.selenium.WebDriver;
@@ -25,15 +25,16 @@ import org.openqa.selenium.WebElement;
 
 /**
  * TODO テストケースの追加
- * 
+ *
  * @author fukuda
- * 
+ *
  */
-public class Runner extends H5TestCase {
+public class RunnerJQuery1_6_4 extends H5TestCase {
 
-	public static final String QUNIT_PAGE = "http://localhost:8080/hifive/coverage/inst/test/runner.html";
+	public static final String QUNIT_PAGE =
+			"http://localhost:8080/hifive/coverage/inst/test/runner.jquery1.6.4.html";
 
-	public Runner(WebDriver driver) throws InterruptedException {
+	public RunnerJQuery1_6_4(WebDriver driver) throws InterruptedException {
 		super(driver);
 	}
 	@Test

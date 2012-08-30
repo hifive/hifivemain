@@ -12,10 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
- package jp.co.nssol.h5.test.selenium.testcase.coverage.marge;
+ package com.htmlhifive.test.selenium.testcase.coverage.marge;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,11 +49,13 @@ public class CoverageMarge extends H5TestCaseMarge {
 						+ "	return 'InternetExplorer';" + "if(ua.indexOf('Firefox') > 0)" + "	return 'Firefox';"
 						+ "if(ua.indexOf('Safari') > 0)" + "	return 'Safari';" + "return ua;");
 
+
 		System.out.println(browser);
 		HashMap<String, List<Integer>> coverageObj = new HashMap<String, List<Integer>>();
 
-		String jscoverageStr =
-				(String) execJavaScript("return (function(obj){"
+		// カバレッジ結果(_$jscoverage)を文字列化する。
+		// Safariに一度のexecuteJavascriptで取得できる文字数に制限があるので、とりあえずwindow._$jscoverageStrに文字列化したものを持たせる
+		execJavaScript("var obj = _$jscoverage;"
 						+ "var ret='{';"
 						+ "for(var k in obj)"
 						+
@@ -62,8 +64,23 @@ public class CoverageMarge extends H5TestCaseMarge {
 						// 　コピーした配列のtoString()の結果を取得している。
 						"	ret += '\"' + k + '\":[' + (function(){var ary = [];"
 						+ "for(var i = 0; i < obj[k].length;i++)ary.push(obj[k][i]);return ary.toString()})() + '],';"
-						+ "ret = ret.replace(/,$/,'')+'}';" + "return ret;})(_$jscoverage);");
-		System.out.println(jscoverageStr);
+						// safariだと、文字数が多いと返ってこない(半角16275文字まで)
+						// なので、window._$jscoverageStrに保存して置き、分割して取得する
+						+ "window._$jscoverageStr = ret.replace(/,$/,'')+'}';");
+
+		String jscoverageStr = "";
+		// Safariの文字数制限対策のため、カバレッジ結果を10000文字ごとに分割して取得する
+		while(true){
+			String tmpStr = (String)(execJavaScript("var ret = _$jscoverageStr.substr(0,10000);" +
+					"_$jscoverageStr = _$jscoverageStr.substring(10000);" +
+					"return ret;"));
+			if(tmpStr.length() == 0){
+				break;
+			}
+			jscoverageStr += tmpStr;
+			System.out.println(tmpStr);
+		}
+
 		Matcher keyMatcher = Pattern.compile("\"(.*?)\"").matcher(jscoverageStr);
 
 		// jsファイルのリスト

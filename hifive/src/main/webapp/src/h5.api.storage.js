@@ -34,8 +34,8 @@
 	// Development Only
 	// =============================
 
-	/* del begin */
 	var fwLogger = h5.log.createLogger('h5.api.storage');
+	/* del begin */
 	var FW_LOG_STORAGE_SUPPORTED = 'local storage supported:{0}, session storage supported:{1}';
 	/* del end */
 

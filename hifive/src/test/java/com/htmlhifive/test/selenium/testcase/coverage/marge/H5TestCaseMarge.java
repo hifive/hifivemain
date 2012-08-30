@@ -15,21 +15,21 @@
  * 
  * hifive
  */
- package jp.co.nssol.h5.test.selenium.testcase.coverage;
+ package com.htmlhifive.test.selenium.testcase.coverage.marge;
 
-import jp.co.nssol.h5.test.selenium.base.H5TestCase;
+import com.htmlhifive.test.selenium.base.H5TestCase;
 
-import org.junit.Test;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 
-public class ShowCoveragePage extends H5TestCase {
-	public ShowCoveragePage(WebDriver driver) {
-		super(driver);
+public class H5TestCaseMarge extends H5TestCase {
+
+	/**
+	 * マージ結果を格納する文字列
+	 */
+	public static String ret;
+
+	public H5TestCaseMarge(WebDriver _driver) {
+		super(_driver);
 	}
 
-	@Test
-	public void showCoveragePage() throws InterruptedException {
-		show("hifive/coverage/inst/jscoverage.html");
-	}
 }

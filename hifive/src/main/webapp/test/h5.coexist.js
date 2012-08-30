@@ -37,7 +37,8 @@ $(function() {
 
 	test('バージョンが同じものを2重読み込みする。', function() {
 		h5.u.loadScript(h5jsPath, {
-			force: true
+			force: true,
+			async: false
 		});
 
 		var savedH5 = h5.coexist();
@@ -49,7 +50,8 @@ $(function() {
 	test('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.jsを読み込む。', function() {
 		h5 = {};
 		originalH5.u.loadScript(h5jsPath, {
-			force: true
+			force: true,
+			async: false
 		});
 		var savedH5 = h5.coexist();
 		deepEqual(h5, {}, 'coexistすると、window.h5はもともと入っていたオブジェクトになる');
@@ -60,7 +62,8 @@ $(function() {
 		setup: function() {
 			// vesion0.0.1のjsファイルをインクルードする
 			h5.u.loadScript(oldh5jsPath, {
-				force: true
+				force: true,
+				async: false
 			});
 			// コントローラを全部アンバインド
 			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0;) {

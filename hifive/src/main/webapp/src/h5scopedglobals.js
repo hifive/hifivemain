@@ -45,20 +45,35 @@ var errorCodeToMessageMap = {};
  * @param detail {Any} 追加のデータ(内容はAPIごとに異なる)
  */
 function throwFwError(code, msgParam, detail) {
-	var e = new Error();
-	if (code) {
-		e.code = code; // TODO codeは必須、ない場合は…throw Error
+	var msg = null;
+	var msgSrc = errorCodeToMessageMap[code];
+
+	if (msgSrc) {
+		msg = h5.u.str.format.apply(null, [msgSrc].concat(msgParam));
+		msg += '(code=' + code + ')';
 	}
-	var msg = errorCodeToMessageMap[code];
-	if (msg) {
-		var args = [msg].concat(msgParam);
-		e.message = h5.u.str.format.apply(null, args);
+
+	var e = msg ? new Error(msg) : new Error('FwError: code = ' + code);
+
+	if (code) {
+		e.code = code;
 	}
 	if (detail) {
 		e.detail = detail;
 	}
+
 	throw e;
 }
+
+/* del begin */
+// テストのためにexposeする
+window.com = {
+	htmlhifive: {
+		throwFwError: throwFwError
+	}
+};
+/* del end */
+
 
 /**
  * エラーコードとエラーメッセージのマップを追加します。
@@ -125,6 +140,63 @@ function toAbsoluteUrl(relativePath) {
 	return e.firstChild.href;
 }
 
+/**
+ * 引数が文字列かどうかを判定します。
+ *
+ * @private
+ * @param {Any} target 値
+ * @returns {boolean} 文字列ならtrue、そうでないならfalse
+ */
+function isString(target) {
+	return typeof target === 'string';
+}
+
+/**
+ * DeferredオブジェクトがReject状態かどうかを判定します。 jQuery1.7でDeferred.isRejected/isResolvedはDeprecatedとなり、
+ * 1.8で削除された（代わりにstate()メソッドが1.7から追加された）ので、 使用可能なAPIを用いて判定します。
+ *
+ * @private
+ * @param {Object} dfd Deferredオブジェクト
+ * @returns {Boolean} Rejected状態かどうか
+ */
+function isRejected(dfd) {
+	if (dfd.isRejected) {
+		return dfd.isRejected();
+	}
+	//jQuery 1.7でisRejectedはDeprecatedになり、1.8.0で削除された
+	return dfd.state() === 'rejected';
+}
+
+/**
+ * DeferredオブジェクトがReject状態かどうかを判定します。 jQuery1.7でDeferred.isRejected/isResolvedはDeprecatedとなり、
+ * 1.8で削除された（代わりにstate()メソッドが1.7から追加された）ので、 使用可能なAPIを用いて判定します。
+ *
+ * @private
+ * @param {Object} dfd Deferredオブジェクト
+ * @returns {Boolean} Resolved状態かどうか
+ */
+function isResolved(dfd) {
+	if (dfd.isResolved) {
+		return dfd.isResolved();
+	}
+	return dfd.state() === 'resolved';
+}
+
+/**
+ * 引数が名前空間として有効な文字列かどうかを判定します。 ただし、全角文字が含まれる場合はfalseを返します。
+ *
+ * @private
+ * @param {Any} property 値
+ * @returns {boolean} 名前空間として有効な文字列であればtrue、そうでないならfalse
+ */
+function isValidNamespaceIdentifier(property) {
+	if (!isString(property)) {
+		return false;
+	}
+
+	// 全角文字は考慮しない
+	return !!property.match(/^[A-Za-z_\$][\w|\$]*$/);
+}
 
 // =============================
 // ロガー・アスペクトで使用する共通処理
@@ -138,7 +210,7 @@ function toAbsoluteUrl(relativePath) {
  */
 function escapeRegex(str) {
 	return str.replace(/\W/g, '\\$&');
-};
+}
 
 /**
  * 引数がStringの場合、RegExpオブジェクトにして返します。 引数がRegExpオブジェクトの場合はそのまま返します。
@@ -161,7 +233,7 @@ function getRegex(target) {
 		str = target;
 	}
 	return new RegExp('^' + str + '$');
-};
+}
 
 var h5internal = {
 	core: {
