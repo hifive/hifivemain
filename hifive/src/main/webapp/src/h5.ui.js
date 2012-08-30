@@ -572,7 +572,7 @@
 		function resizeOverlay() {
 			var $blockUIOverlay = $('body div.blockUI.blockOverlay');
 			$blockUIOverlay.height($document.height());
-			$blockUIOverlay.width($document.width());
+			// widthは100%が指定されているので計算しない
 		}
 
 		// インジケータのメッセージを画面中央に表示させる
