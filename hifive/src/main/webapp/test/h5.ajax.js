@@ -28,6 +28,25 @@ $(function() {
 		ok($.isFunction(jqXHR.progress), 'h5.async.ajax() の戻り値のオブジェクトにprogressメソッドが追加されているか');
 	});
 
+	/**
+	 * commonFailHandlerが実行されるかどうかを待機する時間
+	 */
+	var timeoutTime = 5000;
+
+	/**
+	 * コールバックに指定するダミー関数
+	 */
+	function dummyFunc() {
+	//
+	}
+	;
+
+	module('commonFailHandler', {
+		teardown: function() {
+			h5.settings.commonFailHandler = null;
+		}
+	});
+
 	test('commonFailHandlerが設定されている時、jqXHR#then()でprogressCallbackを登録しようとしてもエラーにならないか', function() {
 
 		h5.settings.commonFailHandler = function() {
@@ -47,177 +66,197 @@ $(function() {
 		} catch (e) {
 			error = true;
 		}
-		h5.settings.commonFailHandler = null;
 		ok(!error, 'h5.async.ajax() の戻り値のオブジェクトのthen()でprogressCallbackを登録しようとしてもエラーにならないか');
 	});
 
 	asyncTest(
 			'commonFailHandlerの動作1',
 			function() {
+				var timerId = setTimeout(
+						function() {
+							// timerが止められてない = commonFailHandlerに入ってないので失敗
+							ok(false,
+									'fail, error, always, completeに登録されたコールバックがない場合にh5.ajax() でcommonFailHandlerが動作すること');
+							start();
+						}, timeoutTime);
 
-				var triggerCommonFailHandler = false;
 				h5.settings.commonFailHandler = function() {
-					triggerCommonFailHandler = true;
+					// タイマーを止める
+					clearTimeout(timerId);
+
+					// テスト成功
+					ok(true,
+							'fail, error, always, completeに登録されたコールバックがない場合にh5.ajax() でcommonFailHandlerが動作すること');
+					start();
 				};
 
+				// 存在しないURLをajaxで読む。コールバックを登録していないので、commonFailHandlerに入るはず
 				h5.ajax('dummyURL');
-				setTimeout(
-						function() {
-							start();
-							ok(triggerCommonFailHandler,
-									'fail, error, always, completeに登録されたコールバックがない場合にh5.ajax() でcommonFailHandlerは動作するか');
-							h5.settings.commonFailHandler = null;
-						}, 2000);
 			});
 
 	asyncTest('commonFailHandlerの動作2', function() {
+		var timerId = setTimeout(function() {
+			ok(true, 'オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
+		}, timeoutTime);
 
-		var triggerCommonFailHandler = false;
 		h5.settings.commonFailHandler = function() {
-			triggerCommonFailHandler = true;
+			// タイマーを止める
+			clearTimeout(timerId);
+
+			ok(false, 'オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
 		};
 
 		h5.ajax({
 			url: 'dummyURL',
-			error: function() {}
+			error: dummyFunc
 		});
-		setTimeout(
-				function() {
-					start();
-					ok(!triggerCommonFailHandler,
-							'オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
-					h5.settings.commonFailHandler = null;
-				}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作3', function() {
 
-		var triggerCommonFailHandler = false;
+		var timerId = setTimeout(function() {
+			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
+		}, timeoutTime);
+
 		h5.settings.commonFailHandler = function() {
-			triggerCommonFailHandler = true;
+			// タイマーを止める
+			clearTimeout(timerId);
+
+			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
 		};
+
 
 		h5.ajax({
 			url: 'dummyURL',
-			fail: function() {}
+			fail: dummyFunc
 		});
-		setTimeout(
-				function() {
-					start();
-					ok(!triggerCommonFailHandler,
-							'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
-					h5.settings.commonFailHandler = null;
-				}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作4', function() {
 
-		var triggerCommonFailHandler = false;
+		var timerId = setTimeout(function() {
+			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
+		}, timeoutTime);
+
 		h5.settings.commonFailHandler = function() {
-			triggerCommonFailHandler = true;
+			// タイマーを止める
+			clearTimeout(timerId);
+
+			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
 		};
+
 
 		h5.ajax({
 			url: 'dummyURL',
-			complete: function() {}
+			complete: dummyFunc
 		});
-		setTimeout(function() {
-			start();
-			ok(!triggerCommonFailHandler,
-					'オプションでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
-			h5.settings.commonFailHandler = null;
-		}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作5', function() {
 
-		var triggerCommonFailHandler = false;
+		var timerId = setTimeout(function() {
+			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
+		}, timeoutTime);
+
 		h5.settings.commonFailHandler = function() {
-			triggerCommonFailHandler = true;
+			// タイマーを止める
+			clearTimeout(timerId);
+
+			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
 		};
+
 
 		h5.ajax({
 			url: 'dummyURL',
-			always: function() {}
+			always: dummyFunc
 		});
-		setTimeout(function() {
-			start();
-			ok(!triggerCommonFailHandler,
-					'オプションでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
-			h5.settings.commonFailHandler = null;
-		}, 2000);
 	});
 
 	asyncTest('commonFailHandlerの動作6', function() {
 
-		var triggerCommonFailHandler = false;
+		var timerId = setTimeout(function() {
+			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
+		}, timeoutTime);
+
 		h5.settings.commonFailHandler = function() {
-			triggerCommonFailHandler = true;
+			// タイマーを止める
+			clearTimeout(timerId);
+
+			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
 		};
 
 		h5.ajax({
 			url: 'dummyURL'
-		}).error(function() {});
-		setTimeout(function() {
-			start();
-			ok(!triggerCommonFailHandler,
-					'メソッドチェーンでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
-			h5.settings.commonFailHandler = null;
-		}, 2000);
+		}).error(dummyFunc);
 	});
 
 	asyncTest('commonFailHandlerの動作7', function() {
 
-		var triggerCommonFailHandler = false;
+		var timerId = setTimeout(function() {
+			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
+		}, timeoutTime);
+
 		h5.settings.commonFailHandler = function() {
-			triggerCommonFailHandler = true;
+			// タイマーを止める
+			clearTimeout(timerId);
+
+			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
 		};
+
 
 		h5.ajax({
 			url: 'dummyURL'
-		}).fail(function() {});
-		setTimeout(function() {
-			start();
-			ok(!triggerCommonFailHandler,
-					'メソッドチェーンでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
-			h5.settings.commonFailHandler = null;
-		}, 2000);
+		}).fail(dummyFunc);
 	});
 
 	asyncTest('commonFailHandlerの動作8', function() {
+		var timerId = setTimeout(function() {
+			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
+		}, timeoutTime);
 
-		var triggerCommonFailHandler = false;
 		h5.settings.commonFailHandler = function() {
-			triggerCommonFailHandler = true;
+			// タイマーを止める
+			clearTimeout(timerId);
+
+			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
 		};
 
 		h5.ajax({
-			url: 'dummyURL'
-		}).complete(function() {});
-		setTimeout(function() {
-			start();
-			ok(!triggerCommonFailHandler,
-					'メソッドチェーンでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
-			h5.settings.commonFailHandler = null;
-		}, 2000);
+			url: 'dummyURL',
+			fail: dummyFunc
+		}).complete(dummyFunc);
 	});
 
 	asyncTest('commonFailHandlerの動作9', function() {
+		var timerId = setTimeout(function() {
+			ok(true, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
+		}, timeoutTime);
 
-		var triggerCommonFailHandler = false;
 		h5.settings.commonFailHandler = function() {
-			triggerCommonFailHandler = true;
+			// タイマーを止める
+			clearTimeout(timerId);
+
+			ok(false, 'オプションでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと');
+			start();
 		};
 
 		h5.ajax({
 			url: 'dummyURL'
-		}).always(function() {});
-		setTimeout(function() {
-			start();
-			ok(!triggerCommonFailHandler,
-					'メソッドチェーンでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないか');
-			h5.settings.commonFailHandler = null;
-		}, 2000);
+		}).always(dummyFunc);
 	});
-
 });
