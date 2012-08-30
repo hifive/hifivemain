@@ -15,14 +15,14 @@
  * 
  * hifive
  */
- package jp.co.nssol.h5.test.selenium.testcase.coverage;
+ package com.htmlhifive.test.selenium.testcase.coverage;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.List;
 
-import jp.co.nssol.h5.test.selenium.base.H5TestCase;
+import com.htmlhifive.test.selenium.base.H5TestCase;
 
 import org.junit.After;
 import org.junit.Before;

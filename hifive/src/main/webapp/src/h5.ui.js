@@ -34,6 +34,11 @@
 	var CLASS_INDICATOR_MESSAGE = 'indicator-message';
 
 	/**
+	 * スロバー本体(Canvas)に付与するクラス名
+	 */
+	var CLASS_THROBBER_CANVAS = 'throbber-canvas';
+
+	/**
 	 * スロバー内に進捗率(パーセント)を表示する要素のクラス名
 	 */
 	var CLASS_THROBBER_PERCENT = 'throbber-percent';
@@ -48,6 +53,9 @@
 	 */
 	var FORMAT_THROBBER_MESSAGE_AREA = '<span class="' + CLASS_INDICATOR_THROBBER
 			+ '"></span><span class="' + CLASS_INDICATOR_MESSAGE + '" {0}>{1}</span>';
+
+	/** scrollToTop() リトライまでの待機時間 */
+	var WAIT_MILLIS = 500;
 
 	// =============================
 	// Production
@@ -77,7 +85,8 @@
 	// =============================
 	// Variables
 	// =============================
-	// キーにスタイルクラス名、値に読み込む対象のプロパティを保持するマップ
+	// h5.cssを読み込んで、Canvas版スロバーに適用するスタイルの情報を保持するマップ
+	// key:クラス名  value:CSSプロパティ名
 	var throbberStyleMap = {
 		throbber: ['width', 'height'],
 		'throbber-line': ['width', 'color']
@@ -88,18 +97,111 @@
 	 * <p>
 	 * (true:サポート/false:未サポート)
 	 */
-	var isCanvasSupported = true;
+	var isCanvasSupported = !!document.createElement('canvas').getContext;
 
 	/**
 	 * VMLをサポートしているか (true:サポート/false:未サポート)
 	 */
-	// 機能ベースでの判定方法が無いため、ブラウザの種類で判定する
-	var isVMLSupported = h5ua.isIE;
+	// 機能ベースでVMLのサポート判定を行う(IE6,7,8,9:true その他のブラウザ:false)
+	var isVMLSupported = (function() {
+		var fragment = document.createDocumentFragment();
+		var div = fragment.appendChild(document.createElement('div'));
+		div.innerHTML = '<v:line strokeweight="1"/>';
+		var child = div.firstChild;
+		child.style.behavior = 'url(#default#VML)';
+		return typeof child.strokeweight === 'number';
+	})();
 
+	/**
+	 * h5.env.uaが解析の対象としている範囲で、ユーザエージェントからposition:fixedをサポートしているか判定する。
+	 * <p>
+	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
+	 * <p>
+	 * 以下の理由から、機能ベースでの判定は行わない。
+	 * <ul>
+	 * <li>$.support.fixedPosition()にバグがあり、モバイルブラウザの判定が正しくない。</li>
+	 * <li>jQuery1.8では、$.support.fixedPosition()が無くなっている。 (fixedPositionを判定するAPIが無い)</li>
+	 * <li>機能ベースでモバイル・デスクトップの両方を検知するのは困難。</li>
+	 * </ul>
+	 * <p>
+	 * <b>メモ</b>
+	 * <ul>
+	 * <li>position:fixed対応表: http://caniuse.com/css-fixed</li>
+	 * <li>Androidは2.2からサポートしているが、2.2と2.3はmetaタグに「user-scalable=no」が設定されていないと機能しない。<br>
+	 * http://blog.webcreativepark.net/2011/12/07-052517.html </li>
+	 * <li>Windows Phoneは7.0/7.5ともに未サポート https://github.com/jquery/jquery-mobile/issues/3489</li>
+	 * <ul>
+	 */
+	var isPositionFixedSupported = (function() {
+		var ua = h5.env.ua;
+		var fullver = parseFloat(ua.browserVersionFull);
+		return !((ua.isAndroidDefaultBrowser && fullver <= 2.1)
+				|| (ua.isAndroidDefaultBrowser && (fullver >= 2.2 && fullver < 2.4) && $('meta[name="viewport"][content*="user-scalable=no"]').length === 0)
+				|| (ua.isiOS && ua.browserVersion < 5) || (ua.isIE && ua.browserVersion < 7) || ua.isWindowsPhone);
+	})();
+
+	/**
+	 * CSS3 Animationsをサポートしているか
+	 * <p>
+	 * (true:サポート/false:未サポート)
+	 */
+	var isCSS3AnimationsSupported = null;
+
+	/**
+	 * CSS Transformsをサポートしているか
+	 * <p>
+	 * (true:サポート/false:未サポート)
+	 */
+	var isCSS3TransfromsSupported = null;
 
 	// =============================
 	// Functions
 	// =============================
+
+	/**
+	 * 指定されたCSS3プロパティをサポートしているか判定します。
+	 * <p>
+	 * プレフィックスなし、プレフィックスありでサポート判定を行います。
+	 * <p>
+	 * 判定に使用するプレフィックス
+	 * <ul>
+	 * <li>Khtml (Safari2以前)</li>
+	 * <li>ms (IE)</li>
+	 * <li>O (Opera)</li>
+	 * <li>Moz (Firefox)</li>
+	 * <li>Webkit (Safari2以降/Chrome)</li>
+	 * </ul>
+	 * <p>
+	 * ※Chrome20にて、WebKitプレフィックスはデバッグでの表示上は小文字(webkitXxxxx)だが、先頭文字が小文字または大文字でも正しく判定される。
+	 * しかし、古いバージョンでは確認できていないため『Webkit』で判定する。
+	 */
+	var supportsCSS3Property = (function() {
+		var fragment = document.createDocumentFragment();
+		var div = fragment.appendChild(document.createElement('div'));
+		var prefixes = 'Webkit Moz O ms Khtml'.split(' ');
+		var len = prefixes.length;
+
+		return function(propName) {
+			// CSSシンタックス(ハイフン区切りの文字列)をキャメルケースに変換
+			var propCamel = $.camelCase(propName);
+
+			// ベンダープレフィックスなしでサポートしているか判定
+			if (propCamel in div.style) {
+				return true;
+			}
+
+			propCamel = propCamel.charAt(0).toUpperCase() + propCamel.slice(1);
+
+			// ベンダープレフィックスありでサポートしているか判定
+			for ( var i = 0; i < len; i++) {
+				if (prefixes[i] + propCamel in div.style) {
+					return true;
+				}
+			}
+
+			return false;
+		};
+	})();
 
 	/**
 	 * CSSファイルに書かれた、Canvasのスタイル定義を取得します。
@@ -173,18 +275,23 @@
 	//
 	// =========================================================================
 
-	// VMLとCanvasのサポート判定
-	$(function() {
-		// Cnavasがサポートされているかチェック
-		isCanvasSupported = !!document.createElement("canvas").getContext;
+	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
+	if (!isCanvasSupported && isVMLSupported) {
+		document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
+		// メモリリークとIE9で動作しない問題があるため、document.createStyleSheet()は使用しない
+		var vmlStyle = document.createElement('style');
+		var styleDef = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
+				+ ' { behavior:url(#default#VML); }';
+		vmlStyle.setAttribute('type', 'text/css');
+		vmlStyle.styleSheet.cssText = styleDef;
+		document.getElementsByTagName('head')[0].appendChild(vmlStyle);
+	}
 
-		if (!isCanvasSupported && isVMLSupported) {
-			document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
-			document.createStyleSheet().cssText = ['v\\:stroke', 'v\\:line', 'v\\:textbox']
-					.join(',')
-					+ '{behavior\: url(#default#VML);}';
-		}
-	});
+	// CSS3 Animationのサポート判定
+	isCSS3AnimationsSupported = supportsCSS3Property('animationName');
+
+	// CSS3 Transfromのサポート判定
+	isCSS3TransfromsSupported = supportsCSS3Property('transform');
 
 	/**
 	 * VML版スロバー (IE 6,7,8)用
@@ -279,6 +386,7 @@
 
 			var that = this;
 
+			// VML版スロバーはIE8以下専用で、IE8以下はAnimations/Transformに対応していないのでこれらを考慮しない
 			this._runId = setTimeout(function() {
 				that._run.call(that);
 			}, perMills);
@@ -317,6 +425,7 @@
 		canvas.height = this.style.throbber.height;
 		canvas.style.display = 'block';
 		canvas.style.position = 'absolute';
+		canvas.className = CLASS_THROBBER_CANVAS;
 		baseDiv.style.width = this.style.throbber.width + 'px';
 		baseDiv.style.height = this.style.throbber.height + 'px';
 		baseDiv.appendChild(canvas);
@@ -389,20 +498,43 @@
 				highlightPos++;
 			}
 			this.highlightPos = highlightPos;
-			var perMills = Math.floor(roundTime / lineCount);
 
-			var that = this;
+			// CSSAnimationsサポートの場合はCSSファイルに定義されているので何もしない
+			if (isCSS3AnimationsSupported) {
+				return;
+			}
 
-			this._runId = setTimeout(function() {
-				that._run.call(that);
-			}, perMills);
+			// CSSAnimations未サポートだがTransformをサポートしている場合は、setInterval+transform:rotateで描画する
+			if (isCSS3TransfromsSupported) {
+				var $canvas = $(canvas);
+				var rotate = 0;
+
+				this._runId = setInterval(function() {
+					var cssValue = 'rotate(' + rotate + 'deg)';
+					$canvas.css('-webkit-transform', cssValue);
+					$canvas.css('-moz-transform', cssValue);
+					$canvas.css('-o-transform', cssValue);
+					$canvas.css('-ms-transform', cssValue);
+					$canvas.css('transform', cssValue);
+					rotate = (rotate + 10) % 360;
+				}, 30);
+			} else {
+				var perMills = Math.floor(roundTime / lineCount);
+				var that = this;
+
+				// CSSAnimation/Transform未サポートだがCanvasはサポートしている場合は、setTimeoutで描画する
+				// 対象ブラウザ: Firefox 2,3 / Opera  9.0～10.1 / Opera Mini 5.0～7.0 / Opera Mobile 10.0
+				// http://caniuse.com/transforms2d
+				// http://caniuse.com/#search=canvas
+				this._runId = setTimeout(function() {
+					that._run.call(that);
+				}, perMills);
+			}
 		},
 		setPercent: function(percent) {
 			this.percentDiv.innerHTML = percent;
 		}
 	};
-
-
 
 	/**
 	 * インジケータ(メッセージ・画面ブロック・進捗表示)の表示や非表示を行うクラス。
@@ -422,11 +554,84 @@
 		$.blockUI.defaults.overlayCSS = {};
 
 		this.target = h5.u.obj.isJQueryObject(target) ? target.get(0) : target;
+		// DOM要素の書き換え可能かを判定するフラグ
+		this._redrawable = true;
+		// _redrawable=false時、percent()に渡された最新の値
+		this._lastPercent = 0;
+		// _redrawable=false時、message()に渡された最新の値
+		this._lastMessage = null;
 
 		var that = this;
+		var $window = $(window);
+		var $document = $(document);
 		var $target = this._isGlobalBlockTarget() ? $('body') : $(this.target);
-		var targetPositionStatic = $target.css('position');
+		var targetPosition = $target.css('position');
 		var targetZoom = $target.css('zoom');
+
+		// コンテンツ領域全体にオーバーレイをかける(見えていない部分にもオーバーレイがかかる)
+		function resizeOverlay() {
+			var $blockUIOverlay = $('body div.blockUI.blockOverlay');
+			$blockUIOverlay.height($document.height());
+			// widthは100%が指定されているので計算しない
+		}
+
+		// インジケータのメッセージを画面中央に表示させる
+		function updateIndicatorPosition() {
+			var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass + '.blockPage');
+			// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
+			var displayHeight = window.innerHeight ? window.innerHeight : $window.height();
+
+			$blockUIInner.css('position', 'absolute').css(
+					'top',
+					(($document.scrollTop() + (displayHeight / 2)) - ($blockUIInner.height() / 2))
+							+ 'px');
+		}
+
+		// インジケータ上で発生したイベントを無効にする
+		function disableEventOnIndicator() {
+			var $blockUIOverlay = $('body div.blockUI.blockOverlay');
+			var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass + '.blockPage');
+			var disabledEventTypes = 'click dblclick touchstart touchmove touchend mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave focus focusin focusout blur change select';
+
+			$.each([$blockUIOverlay, $blockUIInner], function(i, v) {
+				v.bind(disabledEventTypes, function() {
+					return false;
+				});
+			});
+		}
+
+		function resizeIndicatorFunc() {
+			resizeOverlay();
+			that._setPositionAndResizeWidth();
+		}
+
+		function resizeIndicatorHandler() {
+			that._redrawable = false;
+
+			// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
+			setTimeout(function() {
+				resizeIndicatorFunc();
+				that._redrawable = true;
+				that.percent(that._lastPercent);
+				that.message(that._lastMessage);
+			}, 1000);
+		}
+
+		var timerId = null;
+		function scrollstopHandler() {
+			if (timerId != null) {
+				clearTimeout(timerId);
+			}
+
+			if (!that._redrawable) {
+				return;
+			}
+
+			timerId = setTimeout(function() {
+				updateIndicatorPosition();
+				timerId = null;
+			}, 50);
+		}
 
 		// optionのデフォルト値
 		var opts = $.extend(true, {}, {
@@ -448,13 +653,40 @@
 			centerY: false,
 			onUnblock: function() { // blockUIが、画面ブロックの削除時に実行するコールバック関数
 				// インジケータを表示する要素のpositionがstaticの場合、blockUIがroot要素のpositionをrelativeに書き換えるため、インジケータを表示する前の状態に戻す
-				$target.css('position', targetPositionStatic);
+				$target.css('position', targetPosition);
 				// IEの場合、blockUIがroot要素にzoom:1を設定するため、インジケータを表示する前の状態に戻す
 				$target.css('zoom', targetZoom);
+
 				that.throbber.hide();
+
+				$window.unbind('touchmove scroll', scrollstopHandler);
+				$window.unbind('orientationchange resize', resizeIndicatorHandler);
+
+				if (timerId != null) {
+					clearTimeout(timerId);
+				}
+			},
+			onBlock: function() {
+				if (!that._isGlobalBlockTarget()) {
+					return;
+				}
+
+				if (!isPositionFixedSupported) {
+					$window.bind('touchmove scroll', scrollstopHandler);
+				}
+
+				disableEventOnIndicator();
+
+				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
+				$window.bind('orientationchange resize', resizeIndicatorHandler);
+
+				setTimeout(function() {
+					resizeIndicatorFunc();
+				});
 			}
 		};
 		// スロバーのスタイル定義 (基本的にはCSSで記述する。ただし固定値はここで設定する)
+		// CSSAnimationsがサポートされているブラウザの場合、roundTimeプロパティの値は使用しない(CSSのanimation-durationを使用するため)
 		var throbberSetting = {
 			throbber: {
 				roundTime: 1000,
@@ -513,6 +745,13 @@
 				$.blockUI(setting);
 				$blockElement = $('body').children(
 						'.blockUI.' + setting.blockMsgClass + '.blockPage');
+
+				// position:fixed未サポートのAndroid2.xの場合、親要素のDIVがposition:fixedで子要素のCanvas(スロバー)にkeyframes(CSSAnimation)を適用すると、
+				// 画面の向きが変更されたときに実行する「メッセージを画面中央に表示する処理」が正しく行われない(位置がずれて中央に表示できない)ため、
+				// keyframes適用前に親要素のDIVのpositionをabsoluteに設定する(isPositionFixedSupportedでブラウザのバージョン判定をしているのでここでは行わない)
+				if (!isPositionFixedSupported) {
+					$blockElement.css('position', 'absolute');
+				}
 			} else {
 				var $target = $(this.target);
 				$target.block(setting);
@@ -541,9 +780,21 @@
 				$blockParent = $('body');
 				$blockElement = $blockParent.children('.blockUI.' + setting.blockMsgClass
 						+ '.blockPage');
-				// 画面全体をブロックするので、windowからheightを取得する
-				$blockElement.css('top', (($(window).height() - $blockElement.outerHeight()) / 2)
-						+ 'px');
+
+				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
+				var displayHeight = window.innerHeight ? window.innerHeight : $(window).height();
+
+				if (isPositionFixedSupported) {
+					// 可視領域からtopを計算する
+					$blockElement.css('top', ((displayHeight - $blockElement.outerHeight()) / 2)
+							+ 'px');
+				} else {
+					// コンテンツ領域(スクロールしないと見えない領域も含む)からtopを計算する
+					$blockElement.css('top',
+							(($(document).scrollTop() + (displayHeight / 2)) - ($blockElement
+									.height() / 2))
+									+ 'px');
+				}
 			} else {
 				$blockParent = $(this.target);
 				$blockElement = $blockParent.children('.blockUI.' + setting.blockMsgClass
@@ -599,10 +850,16 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		percent: function(percent) {
-			if (typeof percent === 'number' && percent >= 0 && percent <= 100) {
-				this.throbber.setPercent(percent);
+			if (typeof percent !== 'number' || !(percent >= 0 && percent <= 100)) {
+				return this;
 			}
 
+			if (!this._redrawable) {
+				this._lastPercent = percent;
+				return this;
+			}
+
+			this.throbber.setPercent(percent);
 			return this;
 		},
 		/**
@@ -614,34 +871,52 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		message: function(message) {
-			if (typeof message === 'string') {
-				var setting = this._style;
-				var $blockElement = null;
-
-				if (this._isGlobalBlockTarget()) {
-					$blockElement = $('body').children(
-							'.blockUI.' + setting.blockMsgClass + '.blockPage');
-
-				} else {
-					$blockElement = $(this.target).children(
-							'.blockUI.' + setting.blockMsgClass + '.blockElement');
-				}
-
-				$blockElement.children('.' + CLASS_INDICATOR_MESSAGE)
-						.css('display', 'inline-block').text(message);
-
-				this._setPositionAndResizeWidth();
+			if (!isString(message)) {
+				return this;
 			}
 
+			if (!this._redrawable) {
+				this._lastMessage = message;
+				return this;
+			}
+
+			var setting = this._style;
+			var $blockElement = null;
+
+			if (this._isGlobalBlockTarget()) {
+				$blockElement = $('body').children(
+						'.blockUI.' + setting.blockMsgClass + '.blockPage');
+
+			} else {
+				$blockElement = $(this.target).children(
+						'.blockUI.' + setting.blockMsgClass + '.blockElement');
+			}
+
+			$blockElement.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
+					.text(message);
+
+			this._setPositionAndResizeWidth();
 			return this;
 		}
 	};
 
 	/**
 	 * 指定された要素に対して、インジケータ(メッセージ・画面ブロック・進捗)の表示や非表示を行うためのオブジェクトを取得します。
+	 * <p>
+	 * targetに<b>document</b>、<b>window</b>または<b>body</b>を指定しかつ、blockオプションがtrueの場合、「スクリーンロック」として動作します。<br>
+	 * 上記以外のDOM要素を指定した場合は、指定した要素上にインジケータを表示します。
+	 * <p>
+	 * <b>スクリーンロック</b>とは、コンテンツ領域(スクロールしないと見えない領域も全て含めた領域)全体にオーバーレイを、表示領域(画面に見えている領域)中央にメッセージが表示し、画面を操作できないようにすることです。スマートフォン等タッチ操作に対応する端末の場合、スクロール操作も禁止します。
+	 * <h4>スクリーンロック中の制限事項</h4>
+	 * <ul>
+	 * <li>Android
+	 * 4.xにてorientationchangeイベント発生直後にインジケータのDOM要素の書き換えを行うと画面の再描画が起こらなくなってしまうため、orientationchangeイベント発生から1秒間percent()/massage()での画面の書き換えをブロックします。<br>
+	 * orientationchagenイベント発生から1秒以内にpercent()/message()で値を設定した場合、最後に設定された値が画面に反映されます。</li>
+	 * <li>WindowsPhone
+	 * 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。ただし、クリック等その他のイベントはキャンセルされます。</li>
+	 * </ul>
 	 * <h4>使用例</h4>
-	 * <b>画面全体をブロックする場合</b><br>
-	 * ・画面全体をブロックする場合、targetオプションに<b>document</b>、<b>window</b>または<b>body</b>を指定する。<br>
+	 * <b>スクリーンロックとして表示する</b><br>
 	 *
 	 * <pre>
 	 * var indicator = h5.ui.indicator({
@@ -778,7 +1053,7 @@
 	 */
 	var scrollToTop = function() {
 		var waitCount = 3;
-		var waitMillis = 500;
+
 		function fnScroll() {
 			if (window.scrollY === 1) {
 				waitCount = 0;
@@ -786,13 +1061,13 @@
 			if (waitCount > 0) {
 				window.scrollTo(0, 1);
 				waitCount--;
-				setTimeout(fnScroll, waitMillis);
+				setTimeout(fnScroll, WAIT_MILLIS);
 			}
 		}
 
 		window.scrollTo(0, 1);
 		if ($(window).scrollTop !== 1) {
-			setTimeout(fnScroll, waitMillis);
+			setTimeout(fnScroll, WAIT_MILLIS);
 		}
 	};
 

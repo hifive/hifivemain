@@ -21,7 +21,9 @@ $(function() {
 	$.blockUI.defaults.fadeOut = -1;
 
 	// svgをサポートしているか
-	var isSupportSVG = document.createElementNS && document.createElementNS('http://www.w3.org/2000/svg', 'svg').constructor.name !== 'SVGSVGElement';
+	var isSupportSVG = document.createElementNS
+			&& $
+					.isFunction(document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect);
 
 	var rgbToHex = function(rgbStr) {
 		if (/^#\d{3,6}$/.test(rgbStr)) {
@@ -72,7 +74,7 @@ $(function() {
 				setup: function() {
 					$('#qunit-fixture')
 							.append(
-									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
 					$('#controllerTest').remove();
@@ -103,7 +105,7 @@ $(function() {
 		} catch (e) {
 			errMsg = e.message;
 		}
-		strictEqual(errMsg, 'コントローラ、もしくはロジックの __name が設定されていません。',
+		strictEqual(errMsg, 'コントローラ、もしくはロジックの __name が設定されていません。(code=6019)',
 				'コントローラ、ロジック以外(__nameプロパティがない)のオブジェクトをh5.core.expose()に渡すとエラーが発生するか');
 
 		window.TestController = undefined;
@@ -112,7 +114,7 @@ $(function() {
 		strictEqual(undefined, window.jp, '（名前空間のクリーンアップ2）');
 	});
 
-	asyncTest('コントローラの作成と要素へのバインド(AOPなし)', 4, function() {
+	asyncTest('コントローラの作成と要素へのバインド(AOPなし)', 3, function() {
 		var cc = null;
 		var controller = {
 
@@ -122,11 +124,6 @@ $(function() {
 				cc = context.controller;
 				this.test();
 			},
-
-			'   input[type=button]           dblclick         ': function() {
-				this.dblTest();
-			},
-
 			test: function() {
 				$('#controllerResult').empty().text('ok');
 			},
@@ -142,10 +139,7 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 			var clickResult = $('#controllerResult').text();
 
-			$('#controllerTest input[type=button]').dblclick();
-			var dblclickResult = $('#controllerResult').text();
 			strictEqual(clickResult, 'ok', 'コントローラが要素にバインドされているか');
-			strictEqual(dblclickResult, 'dblok', 'セレクタ、イベントの前後にスペースが有っても動作するか');
 			ok(testController === cc, 'イベントコンテキストにコントローラの参照(context.controller)が格納されているか');
 
 			var result = [];
@@ -168,7 +162,6 @@ $(function() {
 				start();
 			});
 		});
-
 	});
 
 	asyncTest('コントローラの作成と要素へのバインド(AOPあり) ※min版ではエラーになります', 3, function() {
@@ -186,11 +179,6 @@ $(function() {
 			'input[type=button] click': function(context) {
 				this.test();
 			},
-
-			'   input[type=button]           dblclick         ': function() {
-				this.dblTest();
-			},
-
 			test: function() {
 				$('#controllerResult').empty().text('ok');
 			},
@@ -234,35 +222,153 @@ $(function() {
 
 	});
 
-	test('bind() 引数なし、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること',
+	asyncTest('コントローラの作成と要素へのバインド セレクタ、イベントの前後にスペースがあってもイベントハンドリングできること', 9, function() {
+		var cc = null;
+		var controller = {
+
+			__name: 'TestController',
+
+			' input[type=button] click': function(context) {
+				this.test(0);
+			},
+			'  input[type=button]  dblclick       ': function(context) {
+				this.dblTest();
+			},
+			' #a .b click1': function(context) {
+				this.test(1);
+			},
+			'      #a .b    click2 ': function(context) {
+				this.test(2);
+			},
+			'      #a    .b  click3': function(context) {
+				this.test(3);
+			},
+			' {#a .b} click4': function(context) {
+				this.test(4);
+			},
+			' { #a .b}    click5': function(context) {
+				this.test(5);
+			},
+			' { #a  .b} click6   ': function(context) {
+				this.test(6);
+			},
+			'  {   #a    .b    }    click7   ': function(context) {
+				this.test(7);
+			},
+			test: function(n) {
+				$('#controllerResult').empty().text(n);
+			},
+
+			dblTest: function() {
+				$('#controllerResult').empty().text('dblok');
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var $result = $('#controllerResult');
+
+			$('#controllerTest input[type=button]').click();
+			strictEqual($result.text(), '0', 'コントローラが要素にバインドされているか');
+
+			$('#controllerTest input[type=button]').dblclick();
+			strictEqual($result.text(), 'dblok', 'コントローラが要素にバインドされているか');
+
+			for ( var i = 1; i <= 7; i++) {
+				$('#controllerTest #a .b').trigger('click' + i);
+				strictEqual($result.text(), '' + i, 'コントローラが要素にバインドされているか');
+			}
+			start();
+		});
+	});
+
+	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 6, function() {
+		$('#controllerTest').append('<div class="test">a</div>');
+		$('#controllerTest').append('<div class="test">b</div>');
+		var controller = {
+			__name: 'TestController'
+		};
+		try {
+			h5.core.controller(null, controller);
+		} catch (e) {
+			strictEqual(e.code, 6001, e.message);
+		}
+		try {
+			h5.core.controller(undefined, controller);
+		} catch (e) {
+			strictEqual(e.code, 6001, e.message);
+		}
+		try {
+			h5.core.controller('#noexist', controller);
+		} catch (e) {
+			strictEqual(e.code, 6003, e.message);
+		}
+		try {
+			h5.core.controller('', controller);
+		} catch (e) {
+			strictEqual(e.code, 6003, e.message);
+		}
+		try {
+			h5.core.controller('.test', controller);
+		} catch (e) {
+			strictEqual(e.code, 6004, e.message);
+		}
+		try {
+			h5.core.controller(1, controller);
+		} catch (e) {
+			strictEqual(e.code, 6030, e.message);
+		}
+	});
+
+	asyncTest('bind() 引数が不正、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 7,
 			function() {
 				$('#controllerTest').append('<div class="test">a</div>');
 				$('#controllerTest').append('<div class="test">b</div>');
 				var controller = {
 					__name: 'TestController'
 				};
-				var testController = h5.core.controller(null, controller);
-				try {
-					testController.bind();
-				} catch (e) {
-					deepEqual(e.code, 6001, e.message);
-				}
-				try {
-					var bind = testController.bind;
-					bind('#controllerTest');
-				} catch (e) {
-					deepEqual(e.code, 6002, e.message);
-				}
-				try {
-					testController.bind('#noexist');
-				} catch (e) {
-					deepEqual(e.code, 6003, e.message);
-				}
-				try {
-					testController.bind('.test');
-				} catch (e) {
-					deepEqual(e.code, 6004, e.message);
-				}
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.readyPromise.done(function() {
+					try {
+						testController.bind();
+					} catch (e) {
+						strictEqual(e.code, 6001, e.message);
+					}
+					try {
+						testController.bind(null);
+					} catch (e) {
+						strictEqual(e.code, 6001, e.message);
+					}
+					try {
+						var bind = testController.bind;
+						bind('#controllerTest');
+					} catch (e) {
+						strictEqual(e.code, 6002, e.message);
+					}
+					try {
+						testController.bind('#noexist');
+					} catch (e) {
+						strictEqual(e.code, 6003, e.message);
+					}
+					try {
+						testController.bind('');
+					} catch (e) {
+						strictEqual(e.code, 6003, e.message);
+					}
+					try {
+						testController.bind('.test');
+					} catch (e) {
+						strictEqual(e.code, 6004, e.message);
+					}
+					try {
+						testController.bind(1);
+					} catch (e) {
+						strictEqual(e.code, 6030, e.message);
+					}
+					testController.dispose().done(function() {
+						start();
+					});
+				});
 			});
 
 	asyncTest('イベントハンドラの{}記法でオブジェクトを指定する時に2階層以上下のオブジェクトを指定できるか', function() {
@@ -302,6 +408,23 @@ $(function() {
 		}
 	});
 
+	test('__name属性が不正なオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
+		var names = ['', '   ', 1, {}, ["MyController"]];
+		var l = names.length;
+		expect(l);
+		var errorCode = 6006;
+		for ( var i = 0; i < l; i++) {
+			try {
+				h5.core.controller('#controllerTest', {
+					__name: names[i]
+				});
+				ok(false, 'エラーが発生していません。');
+			} catch (e) {
+				deepEqual(e.code, errorCode, e.message);
+			}
+		}
+	});
+
 
 	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
 		var errorCode = 6017;
@@ -316,6 +439,27 @@ $(function() {
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
 			deepEqual(e.code, errorCode, e.message);
+		}
+	});
+
+
+	test('__name属性が不正なロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
+		var names = ['', '   ', 1, {}, ["MyLogic"]];
+		var l = names.length;
+		expect(l);
+		var errorCode = 6017;
+		for ( var i = 0; i < l; i++) {
+			try {
+				h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					myLogic: {
+						__name: names[i]
+					}
+				});
+				ok(false, 'エラーが発生していません。');
+			} catch (e) {
+				deepEqual(e.code, errorCode, e.message);
+			}
 		}
 	});
 
@@ -338,10 +482,10 @@ $(function() {
 			err2 = e;
 		}
 
-		strictEqual(err1.message, 'コントローラ"TestController"のバインド対象となる要素が存在しません。',
+		strictEqual(err1.message, 'コントローラ"TestController"のバインド対象となる要素が存在しません。(code=6003)',
 				'バインド対象がない場合エラーとなるか');
 		strictEqual(err2.message,
-				'コントローラ"TestController"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。',
+				'コントローラ"TestController"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。(code=6004)',
 				'バインド対象が複数ある場合エラーとなるか');
 	});
 
@@ -898,14 +1042,13 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', function() {
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', 3, function() {
 		var childDfd = h5.async.deferred();
 		var rootDfd = h5.async.deferred();
 		var childController = {
 			__name: 'ChildController',
 
 			__dispose: function() {
-				var that = this;
 				setTimeout(function() {
 					childDfd.resolve();
 				}, 400);
@@ -918,7 +1061,6 @@ $(function() {
 			childController: childController,
 
 			__dispose: function() {
-				var that = this;
 				setTimeout(function() {
 					rootDfd.resolve();
 				}, 100);
@@ -931,8 +1073,8 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				ok(isResolved(rootDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
-				ok(isResolved(childDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか2');
+				ok(isResolved(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
 				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
 				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
@@ -940,7 +1082,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', function() {
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', 3, function() {
 		var childDfd = h5.async.deferred();
 		var rootDfd = h5.async.deferred();
 
@@ -952,7 +1094,7 @@ $(function() {
 				setTimeout(function() {
 					child = that.__name === 'ChildController';
 					childDfd.resolve();
-				}, 400);
+				}, 800);
 				return childDfd.promise();
 			}
 		};
@@ -976,9 +1118,8 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				ok(isRejected(rootDfd), '__disposeイベントはPromiseオブジェクトを考慮しているか1');
-				ok(!isResolved(childDfd) && !isRejected(childDfd),
-						'__disposeイベントはPromiseオブジェクトを考慮しているか2');
+				ok(isRejected(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
 				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
 				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
 				start();
@@ -2055,7 +2196,7 @@ $(function() {
 			$('#controllerTest').click();
 
 			strictEqual(errMsg, 'コントローラ"ErrorController"でセレクタ名にthisが指定されています。'
-					+ 'コントローラをバインドした要素自身を指定したい時はrootElementを指定してください。',
+					+ 'コントローラをバインドした要素自身を指定したい時はrootElementを指定してください。(code=6012)',
 					'セレクタに{this}が指定された時にエラーが発生するか');
 			ok(isSame, '"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか');
 
@@ -2237,7 +2378,7 @@ $(function() {
 							strictEqual(prepend, 'test',
 									'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
 
-							var errMsg = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
+							var errMsg = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。(code=6000)';
 							strictEqual(viewError1.message, errMsg,
 									'this.update/append/prependで、"{window}"を指定するとエラーになるか');
 							strictEqual(viewError2.message, errMsg,
@@ -2288,7 +2429,7 @@ $(function() {
 		var errorObj = {};
 		var expectErrorObj = {
 			code: 7005,
-			message: "テンプレートID:template4 テンプレートがありません。"
+			message: "テンプレートID:template4 テンプレートがありません。(code=7005)"
 		};
 
 		var childController = {
@@ -3262,31 +3403,34 @@ $(function() {
 		});
 	});
 
-	test('プロパティの重複チェック', function() {
+	test(
+			'プロパティの重複チェック',
+			function() {
 
 
-		var testController = {
-			/**
-			 * コントローラ名
-			 */
-			__name: 'TestController',
+				var testController = {
+					/**
+					 * コントローラ名
+					 */
+					__name: 'TestController',
 
-			indicator: function() {
-			// 何もしない
-			}
-		};
+					indicator: function() {
+					// 何もしない
+					}
+				};
 
-		var errMsg = null;
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			errMsg = e.message;
-		}
+				var errMsg = null;
+				try {
+					h5.core.controller('#controllerTest', testController);
+				} catch (e) {
+					errMsg = e.message;
+				}
 
-		strictEqual(errMsg,
-				'コントローラ"TestController"のプロパティ"indicator"はコントローラ化によって追加されるプロパティと名前が重複しています。',
-				'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
-	});
+				strictEqual(
+						errMsg,
+						'コントローラ"TestController"のプロパティ"indicator"はコントローラ化によって追加されるプロパティと名前が重複しています。(code=6011)',
+						'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
+			});
 
 	asyncTest('this.own()の動作', function() {
 
@@ -3412,6 +3556,98 @@ $(function() {
 							$('#controllerTest2').remove();
 							ok(!$('#parent').length, '（DOMのクリーンアップ）');
 						});
+			});
+
+	asyncTest(
+			'context.selectorが取得できること',
+			20,
+			function() {
+				$('#qunit-fixture')
+						.append(
+								'<div id="controllerTest3" style="display: none;"><input type="button" class="testclass" value="click" /><div id="test"><div id="innertest"  class="innerdiv"></div></div></div>');
+				$('#qunit-fixture').append(
+						'<div id="controllerTest4" style="display: none;"></div>');
+
+				var controllerBase1 = {
+					__name: 'Test1Controller',
+
+					'input click': function(context) {
+						var exSelector = 'input';
+						strictEqual(context.SELECTOR_TYPE_LOCAL, 1, 'selectorTypeを表す定数が格納されていること 1');
+						strictEqual(context.SELECTOR_TYPE_GLOBAL, 2,
+								'selectorTypeを表す定数が格納されていること 2');
+						strictEqual(context.SELECTOR_TYPE_OBJECT, 3,
+								'selectorTypeを表す定数が格納されていること 3');
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+					},
+					'{input[type=button]} click': function(context) {
+						var exSelector = 'input[type=button]';
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_GLOBAL,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+					},
+					'.testclass click1': function(context) {
+						var exSelector = '.testclass';
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+					},
+					'{rootElement} click2': function(context) {
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
+								'selectorTypeが取得できること');
+						strictEqual(context.selector, this.rootElement, 'ルートエレメントが取得できること');
+					},
+					'  {  body } click3': function(context) {
+						var exSelector = 'body';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_GLOBAL,
+								'selectorTypeが取得できること');
+					},
+					'#test #innertest.innerdiv   h5trackstart': function(context) {
+						var exSelector = '#test #innertest.innerdiv';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+								'selectorTypeが取得できること');
+					},
+					'       #test    #innertest.innerdiv   h5trackend': function(context) {
+						var exSelector = '#test    #innertest.innerdiv';
+						strictEqual(context.selector, exSelector, 'セレクタが取得できること ' + exSelector);
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_LOCAL,
+								'selectorTypeが取得できること');
+					},
+					'{document} mousewheel': function(context) {
+						strictEqual(context.selector, document, 'documentオブジェクトが取得できること');
+						strictEqual(context.selectorType, context.SELECTOR_TYPE_OBJECT,
+								'selectorTypeが取得できること');
+					}
+				};
+				var test1Controller = h5.core.controller('#controllerTest3', controllerBase1);
+				test1Controller.readyPromise.done(function() {
+					var ua = h5.env.ua;
+
+					$('#controllerTest3 input[type=button]').click();
+					$('#controllerTest3 .testclass').trigger('click1');
+					$('#controllerTest3').trigger('click2');
+					$('body').trigger('click3');
+
+					var $innerDiv = $('#controllerTest3 .innerdiv');
+					typeof document.ontouchstart === 'undefined' ? $innerDiv.mousedown()
+							: $innerDiv.trigger('touchstart');
+					typeof document.ontouchend === 'undefined' ? $innerDiv.mouseup() : $innerDiv
+							.trigger('touchend');
+
+					var eventName = ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
+					$(document).trigger(new $.Event(eventName), {
+						test: true
+					});
+
+					test1Controller.unbind();
+					$('#controllerTest3').remove();
+					ok(!$('#parent').length, '（DOMのクリーンアップ）');
+					start();
+				});
 			});
 
 	asyncTest('コントローラ内のxxxControllerが動作しているか(テンプレート使用)', function() {
@@ -3655,8 +3891,6 @@ $(function() {
 	});
 
 	asyncTest('unbindで[eventName]のハンドラが削除できるか', function() {
-
-
 		var msg = '';
 		var controller = {
 			__name: 'TestController',
@@ -3676,6 +3910,61 @@ $(function() {
 			testController.unbind();
 			$(document).click();
 			ok(msg.length === 0, 'イベントハンドラが動作しないことを確認');
+		});
+	});
+
+	asyncTest('unbindしたコントローラだけが管理下から外されること', 4, function() {
+		var controllerManager = h5.core.controllerManager;
+		controllerManager.controllers = [];
+		var msg = '';
+		var controller1 = {
+			__name: 'TestController1',
+
+			'{document} [click]': function(context) {
+				msg = this.__name;
+			}
+		};
+		var controller2 = {
+			__name: 'TestController1',
+
+			'{document} [click]': function(context) {
+				msg = this.__name;
+			}
+		};
+		var controller3 = {
+			__name: 'TestController1',
+
+			'{document} [click]': function(context) {
+				msg = this.__name;
+			}
+		};
+		var c1 = h5.core.controller('#controllerTest', controller1);
+		var c2 = h5.core.controller('#controllerTest', controller2);
+		var c3 = h5.core.controller('#controllerTest', controller3);
+
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromise).done(
+				function() {
+					deepEqual(controllerManager.controllers, [c1, c2, c3],
+							'コントローラが3つ、controllerManager.controllersに登録されていること');
+
+					// controller1 をunbind
+					c1.unbind();
+					deepEqual(controllerManager.controllers, [c2, c3],
+							'unbindしたコントローラがcontrollerManager.controllersから無くなっていること');
+
+					// controller3 をunbind
+					c3.unbind();
+					deepEqual(controllerManager.controllers, [c2],
+							'unbindしたコントローラがcontrollerManager.controllersから無くなっていること');
+
+					// controller2 をunbind
+					c2.unbind();
+					deepEqual(controllerManager.controllers, [],
+							'unbindしたコントローラがcontrollerManager.controllersから無くなっていること');
+
+					start();
+				}).fail(function() {
+			ok(false, 'テスト失敗。コントローラ化に失敗しました');
 		});
 	});
 
@@ -4534,7 +4823,8 @@ $(function() {
 						} catch (e) {
 							err1 = e.message;
 						}
-						equal(err1, '正しい数の引数を指定して下さい。', '引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
+						equal(err1, '正しい数の引数を指定して下さい。(code=6005)',
+								'引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
 						try {
 							this.throwError('コントローラ"{0}"における{1}のテスト', this.__name, 'throwError');
 						} catch (e) {
@@ -4567,7 +4857,7 @@ $(function() {
 						try {
 							this.throwCustomError();
 						} catch (e) {
-							strictEqual(e.message, '正しい数の引数を指定して下さい。',
+							strictEqual(e.message, '正しい数の引数を指定して下さい。(code=6005)',
 									'throwCustomError()で必須のパラメータが指定されていない場合、エラーが発生すること。');
 						}
 
@@ -4640,7 +4930,8 @@ $(function() {
 		} catch (e) {
 			errMsg = e.message;
 		}
-		strictEqual(errMsg, 'コントローラ"Test1Controller"で、参照が循環しているため、コントローラを生成できません。', 'エラーが発生したか');
+		strictEqual(errMsg, 'コントローラ"Test1Controller"で、参照が循環しているため、コントローラを生成できません。(code=6009)',
+				'エラーが発生したか');
 	});
 
 	asyncTest('mousewheelイベントの動作', function() {
@@ -4671,36 +4962,25 @@ $(function() {
 		});
 	});
 
-	test('コントローラの__nameプロパティが設定されていない時の動作', function() {
-		var testController = {};
+	test(
+			'コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作',
+			function() {
+				var testController = {
+					__name: 'TestController'
+				};
 
-		var errMsg = null;
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			errMsg = e.message;
-		}
+				var errMsg = null;
+				try {
+					h5.core.controller('#controllerTest', testController, '初期化パラメータ');
+				} catch (e) {
+					errMsg = e.message;
+				}
 
-		strictEqual(errMsg, 'コントローラの名前が定義されていません。__nameにコントローラ名を設定して下さい。',
-				'__nameプロパティが設定されていない時にエラーが発生したか');
-	});
-
-	test('コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作', function() {
-		var testController = {
-			__name: 'TestController'
-		};
-
-		var errMsg = null;
-		try {
-			h5.core.controller('#controllerTest', testController, '初期化パラメータ');
-		} catch (e) {
-			errMsg = e.message;
-		}
-
-		strictEqual(errMsg,
-				'コントローラ"TestController"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。',
-				'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
-	});
+				strictEqual(
+						errMsg,
+						'コントローラ"TestController"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。(code=6007)',
+						'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
+			});
 
 	asyncTest('h5.core.controller()にコントローラ化済みのオブジェクトを渡した時の動作', function() {
 		var testController = {
@@ -4717,31 +4997,35 @@ $(function() {
 				errMsg = e.message;
 			}
 
-			strictEqual(errMsg, '指定されたオブジェクトは既にコントローラ化されています。', 'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
+			strictEqual(errMsg, '指定されたオブジェクトは既にコントローラ化されています。(code=6008)',
+					'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 			c.unbind();
 
 		});
 	});
 
-	test('あるセレクタに対して重複するイベントハンドラを設定した時の動作', function() {
-		var testController = {
-			__name: 'TestController',
+	test(
+			'あるセレクタに対して重複するイベントハンドラを設定した時の動作',
+			function() {
+				var testController = {
+					__name: 'TestController',
 
-			' {rootElement}   click': function(context) {},
+					' {rootElement}   click': function(context) {},
 
-			'{rootElement} click': function(context) {}
-		};
-		var errMsg = null;
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			errMsg = e.message;
-		}
+					'{rootElement} click': function(context) {}
+				};
+				var errMsg = null;
+				try {
+					h5.core.controller('#controllerTest', testController);
+				} catch (e) {
+					errMsg = e.message;
+				}
 
-		strictEqual(errMsg,
-				'コントローラ"TestController"のセレクタ"{rootElement}"に対して"click"というイベントハンドラが重複して設定されています。',
-				'重複するイベントハンドラを設定した時にエラーが発生したか');
-	});
+				strictEqual(
+						errMsg,
+						'コントローラ"TestController"のセレクタ"{rootElement}"に対して"click"というイベントハンドラが重複して設定されています。(code=6013)',
+						'重複するイベントハンドラを設定した時にエラーが発生したか');
+			});
 
 	asyncTest('xxxControllerというプロパティの値が設定されていない時にエラーにならないか', function() {
 		var testController = {
@@ -4777,7 +5061,8 @@ $(function() {
 			errMsg = e.message;
 		}
 
-		strictEqual(errMsg, 'コントローラ"TestController"には__metaで指定されたプロパティ"childController"がありません。',
+		strictEqual(errMsg,
+				'コントローラ"TestController"には__metaで指定されたプロパティ"childController"がありません。(code=6014)',
 				'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがundefinedの場合にエラーが発生するか');
 	});
 
@@ -4804,7 +5089,7 @@ $(function() {
 
 				strictEqual(
 						errMsg,
-						'コントローラ"TestController"の__metaに指定されたキー"childController"の値がnullです。コントローラを持つプロパティキー名を指定してください。',
+						'コントローラ"TestController"の__metaに指定されたキー"childController"の値がnullです。コントローラを持つプロパティキー名を指定してください。(code=6015)',
 						'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがnullの場合にエラーが発生するか');
 			});
 
@@ -4829,9 +5114,9 @@ $(function() {
 					errMsg = e.message;
 				}
 
-				strictEqual(
+				equal(
 						errMsg,
-						'コントローラ"TestController"の__metaに指定されたキー"child"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。',
+						'コントローラ"TestController"の__metaに指定されたキー"child"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。(code=6016)',
 						'__metaに設定された名前と一致するプロパティの値がコントローラではないときにエラーが発生するか');
 			});
 
@@ -4921,7 +5206,6 @@ $(function() {
 						return ev;
 					};
 
-
 					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
 					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
 					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
@@ -4968,11 +5252,16 @@ $(function() {
 				});
 			});
 
-	asyncTest('h5trackイベント(touchstart, touchmove, touchend)', 26, function() {
+	asyncTest('h5trackイベント(touchstart, touchmove, touchend) ※PCブラウザでは失敗します。', 26, function() {
+		if (document.ontouchstart === undefined) {
+			expect(1);
+			ok(false, 'PCブラウザでは失敗します');
+			start();
+			return;
+		}
+
 		var controller = {
-
 			__name: 'TestController',
-
 			'{rootElement} h5trackstart': function(context) {
 				context.evArg
 						&& ok(false, 'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、実行されないこと。');
@@ -4986,7 +5275,6 @@ $(function() {
 				ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
 				ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
 			},
-
 			'{rootElement} h5trackmove': function(context) {
 				context.evArg
 						&& ok(false, 'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、実行されないこと。');
@@ -5002,7 +5290,6 @@ $(function() {
 				strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
 				strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
 			},
-
 			'{rootElement} h5trackend': function(context) {
 				context.evArg
 						&& ok(false, 'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、実行されないこと。');
@@ -5018,8 +5305,6 @@ $(function() {
 			}
 		};
 
-		// hifiveにtouchイベントがあると思わせるために設定
-		document.ontouchstart = 1;
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
 			var setPos = function(ev, pos, isEnd) {
@@ -5035,8 +5320,6 @@ $(function() {
 				ev.originalEvent = originalEvent;
 				return ev;
 			};
-			// hifiveにtouchイベントがあると思わせるために設定
-			document.ontouchstart = undefined;
 
 			var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 			var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
@@ -5084,6 +5367,88 @@ $(function() {
 	});
 
 	asyncTest(
+			'h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合もh5trackイベントが発生するか ※PCブラウザでは失敗します。',
+			27, function() {
+				if (document.ontouchstart === undefined) {
+					expect(1);
+					ok(false, 'PCブラウザでは失敗します');
+					start();
+					return;
+				}
+
+				var controller = {
+					__name: 'TestController',
+					__ready: function() {
+						$(this.rootElement).trigger('touchstart').trigger('touchmove').trigger(
+								'touchend');
+						testController.unbind();
+						start();
+					},
+					'{rootElement} h5trackstart': function(context) {
+						ok(true, 'touchstartイベントをトリガするとh5trackstartイベントが発火すること。');
+						equal(context.event.pageX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.pageY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+					},
+
+					'{rootElement} h5trackmove': function(context) {
+						ok(true, 'mousemoveイベントをトリガするとh5trackmoveイベントが発火すること。');
+						equal(context.event.pageX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.pageY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+					},
+
+					'{rootElement} h5trackend': function(context) {
+						ok(true, 'mouseupイベントをトリガするとh5trackendイベントが発火すること。');
+						equal(context.event.pageX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.pageY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.screenY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.clientY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetX, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+						equal(context.event.offsetY, undefined,
+								'originalEventが無い場合は、座標プロパティが設定されてないこと。');
+					}
+				};
+
+				var testController = h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest(
 			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォン、IE8-では失敗します',
 			26,
 			function() {
@@ -5093,7 +5458,7 @@ $(function() {
 					start();
 					return;
 				}
-				if (!isSupportSVG){
+				if (!isSupportSVG) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -5236,10 +5601,17 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) SVG ※タブレット、スマートフォン、IE8-では失敗します',
+			'h5trackイベント(touchstart, touchmove, touchend) SVG ※PCブラウザでは失敗します',
 			26,
 			function() {
-				if (!isSupportSVG){
+				if (document.ontouchstart === undefined) {
+					expect(1);
+					ok(false, 'PCブラウザでは失敗します');
+					start();
+					return;
+				}
+
+				if (!isSupportSVG) {
 					expect(1);
 					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
 					start();
@@ -5320,8 +5692,6 @@ $(function() {
 				svg.appendChild(rect);
 				document.getElementById('controllerTest').appendChild(svg);
 
-				// hifiveにtouchイベントがあると思わせるために設定
-				document.ontouchstart = 1;
 				var testController = h5.core.controller('#controllerTest', controller);
 
 				testController.readyPromise.done(function() {
@@ -5338,8 +5708,6 @@ $(function() {
 						ev.originalEvent = originalEvent;
 						return ev;
 					};
-					// hifiveにtouchイベントがあると思わせるために設定
-					document.ontouchstart = undefined;
 
 					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
@@ -5521,9 +5889,16 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) window',
+			'h5trackイベント(touchstart, touchmove, touchend) window ※PCブラウザでは失敗します',
 			26,
 			function() {
+				if (document.ontouchstart === undefined) {
+					expect(1);
+					ok(false, 'PCブラウザでは失敗します');
+					start();
+					return;
+				}
+
 				var controller = {
 					__name: 'TestController',
 
@@ -5587,8 +5962,6 @@ $(function() {
 					}
 				};
 
-				// hifiveにtouchイベントがあると思わせるために設定
-				document.ontouchstart = 1;
 				var testController = h5.core.controller(window, controller);
 
 				testController.readyPromise.done(function() {
@@ -5605,8 +5978,6 @@ $(function() {
 						ev.originalEvent = originalEvent;
 						return ev;
 					};
-					// hifiveにtouchイベントがあると思わせるために設定
-					document.ontouchstart = undefined;
 
 					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
@@ -5653,6 +6024,28 @@ $(function() {
 				});
 			});
 
+	/**
+	 * window.onerrorを保管しておく変数
+	 */
+	var onerrorHandler = null;
+	module(
+			'ライフサイクルイベント内の例外',
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+
+					// 元のwindow.onerror(QUnitのもの)を一時的に保管する
+					onerrorHandler = window.onerror;
+				},
+				teardown: function() {
+					$('#qunit-fixture #controllerTest').remove();
+					h5.core.controllerManager.controllers = [];
+					// window.onerrorを元に戻す
+					window.onerror = onerrorHandler;
+				}
+			});
 	test('__construct()で例外をスローする。', 1, function() {
 		var controller = {
 			__name: 'TestController',
@@ -5681,11 +6074,9 @@ $(function() {
 	asyncTest('※IE6～9の場合は要目視確認: __init()で例外をスローする。', 1, function() {
 		var errorMsg = '__init error.';
 		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			window.onerror = onerrorHandler;
 			ok(ev.indexOf(errorMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
 		};
@@ -5703,12 +6094,10 @@ $(function() {
 	asyncTest('※IE6～9の場合は要目視確認: __ready()で例外をスローする。', 1, function() {
 		var errorMsg = '__ready error.';
 		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			window.onerror = onerrorHandler;
-			ok(ev.indexOf(errorMsg), '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
 		};
 
@@ -5722,14 +6111,13 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
+
 	asyncTest('※IE6～9の場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
 		var errorMsg = '__unbind error.';
 		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			window.onerror = onerrorHandler;
 			ok(ev.indexOf(errorMsg), '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
 			start();
 		};
@@ -5750,12 +6138,11 @@ $(function() {
 	asyncTest('※IE6～9の場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
 		var errorMsg = '__dispose error.';
 		var id = testTimeoutFunc(errorMsg);
-		var onerrorHandler = window.onerror;
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			window.onerror = onerrorHandler;
-			ok(ev.indexOf(errorMsg), '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(ev.indexOf(errorMsg),
+					'__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。(出力されるログも目視で確認すること)');
 			start();
 		};
 
@@ -5771,4 +6158,173 @@ $(function() {
 
 		h5.core.controller('#controllerTest', controller);
 	});
+
+	asyncTest(
+			'※要目視確認: __init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。(出力されるログも目視で確認すること)',
+			function() {
+				var expectNum = 13;
+				// Android2,3では、throwErrorされてもwindow.onerrorには入らないため、テスト数を1少なくする
+				if (h5.env.ua.isAndroid && h5.env.ua.browserVersion < 4) {
+					expect(expectNum - 1);
+				}
+
+
+				ok(
+						true,
+						'※要目視確認　コンソールに『コントローラchildControllerの__ready内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__initで発生したエラーが出力されていることを確認してください');
+				var errorMsg = '__init error.';
+
+				window.onerror = function(ev) {
+					// Android2,3では、throwErrorされてもwindow.onerrorには入らないのでこのテストは実行されない。
+					ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+				};
+
+				var controller = {
+					__name: 'TestController',
+					child1Controller: {
+						grandchildController: {
+							__name: 'grandchildController',
+							__init: function() {
+								ok(true, '孫コントローラの__initは実行されること');
+							},
+							__ready: function() {
+								ok(false, '孫コントローラの__readyは実行されない');
+							},
+							__unbind: function() {
+								ok(true, '孫コントローラの__unbindが実行されること');
+							},
+							__dispose: function() {
+								ok(true, '孫コントローラの__disposeが実行されること');
+							}
+						},
+						__name: 'childController',
+						__init: function() {
+							ok(true, '子コントローラの__initは実行されること');
+							throw new Error('__init');
+						},
+						__ready: function() {
+							ok(false, '子コントローラの__readyは実行されないこと');
+						},
+						__unbind: function() {
+							ok(true, '子コントローラの__unbindが実行されること');
+						},
+						__dispose: function() {
+							ok(true, '子コントローラの__disposeが実行されること');
+
+						}
+					},
+					__init: function() {
+						ok(false, 'ルートコントローラの__initが実行されないこと');
+					},
+					__ready: function() {
+						ok(false, 'ルートコントローラの__readyは実行されないこと');
+					},
+					__unbind: function() {
+						ok(true, 'ルートコントローラの__unbindが実行されること');
+					},
+					__dispose: function() {
+						ok(true, 'ルートコントローラの__disposeが実行されること');
+						setTimeout(function() {
+							ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+							start();
+						}, 0);
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.initPromise.done(function() {
+					ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
+				}).fail(function() {
+					ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
+				});
+				c.readyPromise.done(function() {
+					ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+					start();
+				}).fail(function() {
+					ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+				});
+			});
+
+	asyncTest(
+			'※要目視確認: __ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。(出力されるログも目視で確認すること)',
+			function() {
+				var expectNum = 16;
+				// Android2,3では、throwErrorされてもwindow.onerrorには入らないため、テスト数を1少なくする
+				if (h5.env.ua.isAndroid && h5.env.ua.browserVersion < 4) {
+					expect(expectNum - 1);
+				}
+				ok(
+						true,
+						'※要目視確認　コンソールに『コントローラchildControllerの__init内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。 』のログと、__readyで発生したエラーが出力されていることを確認してください');
+				var errorMsg = '__ready error.';
+
+				window.onerror = function(ev) {
+					// Android2,3では、throwErrorされてもwindow.onerrorには入らないのでこのテストは実行されない。
+					ok(ev.indexOf(errorMsg), '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+				};
+
+				var controller = {
+					__name: 'TestController',
+					child1Controller: {
+						grandchildController: {
+							__name: 'grandchildController',
+							__init: function() {
+								ok(true, '孫コントローラの__initは実行されること');
+							},
+							__ready: function() {
+								ok(true, '孫コントローラの__readyは実行されること');
+							},
+							__unbind: function() {
+								ok(true, '孫コントローラの__unbindが実行されること');
+							},
+							__dispose: function() {
+								ok(true, '孫コントローラの__disposeが実行されること');
+							}
+						},
+						__name: 'childController',
+						__init: function() {
+							ok(true, '子コントローラの__initは実行されること');
+						},
+						__ready: function() {
+							ok(true, '子コントローラの__readyは実行されること');
+							throw new Error('__ready');
+						},
+						__unbind: function() {
+							ok(true, '子コントローラの__unbindが実行されること');
+						},
+						__dispose: function() {
+							ok(true, '子コントローラの__disposeが実行されること');
+						}
+					},
+					__init: function() {
+						ok(true, 'ルートコントローラの__initが実行されること');
+					},
+					__ready: function() {
+						ok(false, 'ルートコントローラの__readyは実行されないこと');
+					},
+					__unbind: function() {
+						ok(true, 'ルートコントローラの__unbindが実行されること');
+					},
+					__dispose: function() {
+						ok(true, 'ルートコントローラの__disposeが実行されること');
+						setTimeout(function() {
+							ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
+							start();
+						}, 0);
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.initPromise.done(function() {
+					ok(true, 'ルートコントローラのinitPromiseのdoneハンドラが実行されること');
+				}).fail(function() {
+					ok(false, 'テスト失敗。ルートコントローラのinitPromiseのfailハンドラが実行された');
+				});
+				c.readyPromise.done(function() {
+					ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
+					start();
+				}).fail(function() {
+					ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+				});
+			});
+
+
 });
