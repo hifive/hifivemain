@@ -16,7 +16,7 @@
  * hifive
  */
 
-(function() {
+$(function() {
 	// min版ではh5.env.__checkがプリプロセッサによって削除される
 	if (!h5.env.__check) {
 		return;
@@ -464,4 +464,4 @@
 				strictEqual(ret.isDesktop, false, 'デスクトップか');
 				strictEqual(ret.isWebkit, true, 'Webkitか');
 			});
-})();
+});

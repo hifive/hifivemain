@@ -16,7 +16,7 @@
  * hifive
  */
 
-(function() {
+$(function() {
 	// =========================================================================
 	//
 	// Constants
@@ -182,6 +182,13 @@
 		var comStr = 'COM';
 		var htmlhifiveStr = 'HTMLHIFIVE';
 
+		// window.comのバックアップ
+		// dev版だと、throwFwErrorをwindow.com.htmlhifiveに公開しているため、バックアップを取る必要がある
+		var comHtmlhifive = null;
+		if (window.com && window.com.htmlhifive) {
+			comHtmlhifive = window.com.htmlhifive;
+		}
+
 		window.com = {
 			dummy: comStr
 		};
@@ -195,6 +202,10 @@
 		equal(com.htmlhifive.dummy, htmlhifiveStr);
 		strictEqual(test1, com.htmlhifive.test.test1, 'nsの戻り値と作成された名前空間が同一であること。');
 		notStrictEqual(com.htmlhifive.test.test1, undefined, '存在しない分については新規作成されていること。');
+
+		if (comHtmlhifive != null) {
+			window.com.htmlhifive = comHtmlhifive;
+		}
 	});
 
 	//=============================
@@ -1563,4 +1574,4 @@
 		deepEqual(ret, 100, '第二引数省略 関数そのものが実行されていること');
 
 	});
-})();
+});
