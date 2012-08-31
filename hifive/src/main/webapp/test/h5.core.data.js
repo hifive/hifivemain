@@ -78,7 +78,8 @@ $(function() {
 					id: true
 				},
 				val: {},
-				val2: {}
+				val2: {},
+				val3: {}
 			}
 		});
 	}
@@ -2280,31 +2281,37 @@ $(function() {
 		strictEqual(items[2].id, '5', '戻り値の配列の中身が正しいこと');
 	});
 
-	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 6, function() {
+	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 8, function() {
 		var item = dataModel1.create({
 			id: sequence.next(),
-			val: 1
+			val: 1,
+			val2: 2
 		});
 		var item2 = dataModel1.create({
 			id: '1',
-			val2: 2
+			val2: 22,
+			val3: 33
 		});
 
 		strictEqual(item, item2, '同一のidを指定してcreateをした時、戻り値は同じインスタンスであること');
 		strictEqual(item.val, 1, '上書かれていないプロパティを取得できること');
-		strictEqual(item.val2, 2, '上書いたプロパティを取得できること');
+		strictEqual(item.val2, 22, '上書いたプロパティを取得できること');
+		strictEqual(item.val3, 33, '上書いたプロパティを取得できること');
 
 		var items = dataModel1.create([{
-			id: sequence.next(),
-			val: 2
+			id: '2',
+			val: 1,
+			val2: 2
 		}, {
 			id: '2',
-			val2: 3
+			val2: 22,
+			val2: 33
 		}]);
 
 		strictEqual(items[0], items[1], '同じid要素を持つオブジェクトを配列で渡した時、戻り値は同じインスタンスであること');
-		strictEqual(items[0].val, 2, '上書かれていないプロパティを取得できること');
-		strictEqual(items[0].val2, 3, '上書いたプロパティを取得できること');
+		strictEqual(items[0].val, 1, '上書かれていないプロパティを取得できること');
+		strictEqual(items[0].val2, 22, '上書いたプロパティを取得できること');
+		strictEqual(items[0].val3, 33, '上書いたプロパティを取得できること');
 	});
 
 	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、エラーが起きるまでの要素までは生成され、残りは生成されないこと', function() {
@@ -2632,9 +2639,6 @@ $(function() {
 				}, '指定された型以外の値でcreateできないこと。');
 
 				raises(function() {
-					item.test1 = sub[i];
-				}, '指定された型以外の値は代入できないこと。');
-				raises(function() {
 					item.test1.copyFrom(sub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -2789,7 +2793,7 @@ $(function() {
 		}, 'type:DataModel2のプロパティに異なる型の値を代入するとエラーが発生すること。');
 	});
 
-	test('type指定 DataModel[] 正常系', 6, function() {
+	test('type指定 DataModel[] 正常系', 8, function() {
 		var descriptor1 = {
 			name: 'DataModel1',
 			schema: {
@@ -2860,26 +2864,27 @@ $(function() {
 
 		equal(item1.dataModel1[0].test1, 'aaa', 'create時に指定したモデルの値が、DataItemから取得できること。');
 		equal(item1.dataModel1[1].test1, 'bbb', 'create時に指定したモデルの値が、DataItemから取得できること。');
-		deepEqualObs(item1.dataModel2, [], 'create時に何も値を指定しない場合、nullが取得できること。'); //FIXME nullが取得 -> 空のObsArrayが取得
+		deepEqualObs(item1.dataModel2, [], 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
 		equal(item2.dataModel2[0].test1, 20, 'create時に指定したモデルの値が、DataItemから取得できること。');
 		equal(item2.dataModel2[1].test1, 30, 'create時に指定したモデルの値が、DataItemから取得できること。');
-		deepEqualObs(item2.dataModel1, [], 'create時に何も値を指定しない場合、nullが取得できること。'); //FIXME 同上
+		deepEqualObs(item2.dataModel1, [], 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
 
 		// 指定無し、null,undefined,空配列でcreateできるか
 		deepEqualObs(model.create({
 			id: sequence.next(),
 			dataModel1: [null]
-		}), [null], 'create時に[null]を指定した場合、[null]が取得できること。');
+		}).dataModel1, [null], 'create時に[null]を指定した場合、[null]が取得できること。');
 
-		deepEqualObs(model.create({
-			id: sequence.next(),
-			dataModel1: [undefined]
-		}), [undefined], 'create時に[null]を指定した場合、[null]が取得できること。'); //FIXME null -> undef
+		//TODO undefined → null の変換は型変換が行われることを確認するテストで行う
+		//		deepEqualObs(model.create({
+		//			id: sequence.next(),
+		//			dataModel1: [undefined]
+		//		}).dataModel1, [null], 'create時に[undefined]を指定した場合、[null]が取得できること。');
 
 		deepEqualObs(model.create({
 			id: sequence.next(),
 			dataModel1: []
-		}), [], 'create時に空配列を指定した場合、空配列が取得できること。');
+		}).dataModel1, [], 'create時に空配列を指定した場合、空配列が取得できること。');
 
 	});
 
@@ -2962,12 +2967,12 @@ $(function() {
 		// 異なる型を代入するとエラーが発生すること
 		raises(function() {
 			item1.dataModel1.copyFrom([model1DataItem1, model2DataItem1]);
-		}, 'type:DataModel2のプロパティに異なる型の値を代入するとエラーが発生すること。');
+		}, 'type:DataModel2のプロパティに異なる型の値を代入(copyFrom)するとエラーが発生すること。');
 
 		// 異なる型を代入するとエラーが発生すること
 		raises(function() {
 			item1.dataModel2.copyFrom([model1DataItem1, model2DataItem1]);
-		}, 'type:DataModel2のプロパティに異なる型の値を代入するとエラーが発生すること。');
+		}, 'type:DataModel2のプロパティに異なる型の値を代入(copyFromするとエラーが発生すること。');
 	});
 
 
@@ -3160,7 +3165,7 @@ $(function() {
 			// 代入不可な値を指定した場合は例外が発生するか
 			var nosub = [1, null, undefined, /[0-9]/, new RegExp(), 'false', new String('[10]'),
 					'', Infinity, -Infinity, new Number(1), NaN, window, {}, new Object(),
-					new Object(['a']), new Array(1, 'a'), function() {
+					[1, 'a'], new Object(['a']), new Array(1, 'a'), function() {
 						return 10;
 					}];
 			for ( var i = 0; i < nosub.length; i++) {
@@ -4049,6 +4054,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+
 	/**
 	 * schemaからデータモデルを作成する
 	 */
@@ -4058,6 +4064,7 @@ $(function() {
 			schema: schema
 		});
 	}
+
 	/**
 	 * notNullのテスト用モデルを作成する関数
 	 */
@@ -4300,6 +4307,9 @@ $(function() {
 	});
 
 	test('notEmpty 制約が適用されているか 正常系', function() {
+		//TODO これではnotEmptyをテストするモデルを作れない
+		// createNotEmptyModel (↑のテストのcreateNotNullModelのようなものを作る必要がある)
+		// これ以降の制約チェックのテストも同じ。
 		var model1 = dataModel1({
 			notEmpty: true
 		});
@@ -4842,12 +4852,12 @@ $(function() {
 					test6: [6],
 					test7: true,
 					test8: [true],
-					test9: ['hifive003'], //FIXME 03が正しい？
-					test10: 'hifive004', //FIXME 04？
+					test9: ['hifive03'],
+					test10: 'hifive04',
 					test11: itemA,
 					test12: [itemB, itemA],
-					test13: 'hifive005', //FIXME
-					test14: 'hifive006' //FIXME
+					test13: 'hifive05',
+					test14: 'hifive06'
 				});
 
 				equal(item1.test1, 'hifive01', 'type:string,string[]の場合、create時にpatternがチェックされること。');
