@@ -218,6 +218,7 @@
 				controllers[i].dispose();
 			}
 			controllerInstanceMap[id] = [];
+			dynamicControllerInstanceMap[id] = [];
 		},
 
 		/**
@@ -279,16 +280,26 @@
 				return;
 			}
 
-			var id = $.mobile.activePage.attr('id');
-
-			// define()でバインドしたコントローラも、h5controllerboundイベントを発火するので、
-			// このイベントを発生させたコントローラが、define()によってバインドしたコントローラか判定する
-			// ↑がtrue = 「既にJQMManagerの管理対象になっているコントローラ」なので、dynamicControllerInstanceMapに含めない
-			if ($.inArray(controllerInstanceMap[id], boundController) !== -1) {
+			if (!$.mobile.activePage) {
 				return;
 			}
 
-			dynamicControllerInstanceMap[id].push(boundController);
+			var id = $.mobile.activePage.attr('id');
+
+			if (isString(id) && id.length > 0) {
+				// define()でバインドしたコントローラも、h5controllerboundイベントを発火するので、
+				// このイベントを発生させたコントローラが、define()によってバインドしたコントローラか判定する
+				// ↑がtrue = 「既にJQMManagerの管理対象になっているコントローラ」なので、dynamicControllerInstanceMapに含めない
+				if ($.inArray(boundController, controllerInstanceMap[id]) !== -1) {
+					return;
+				}
+
+				if (!dynamicControllerInstanceMap[id]) {
+					dynamicControllerInstanceMap[id] = [];
+				}
+
+				dynamicControllerInstanceMap[id].push(boundController);
+			}
 		},
 
 		/**
@@ -335,10 +346,6 @@
 		bindController: function(id) {
 			if (!controllerInstanceMap[id]) {
 				controllerInstanceMap[id] = [];
-			}
-
-			if (!dynamicControllerInstanceMap[id]) {
-				dynamicControllerInstanceMap[id] = [];
 			}
 
 			controllerInstanceMap[id].push(h5.core.controller('#' + id, controllerMap[id],
