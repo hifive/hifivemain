@@ -371,7 +371,7 @@
 			return originalAPI.getCurrentPosition(option);
 		}
 		// dummyPositionsが配列でない場合も対応する
-		var positionsAry = $.isArray(positions) ? positions: [positions];
+		var positionsAry = wrapInArray(positions);
 
 		setTimeout(function() {
 			dfd.resolve(createPosition(positionsAry[0]));
@@ -408,8 +408,7 @@
 			return dfd.promise();
 		}
 		// dummyPositionsが配列でない場合も対応する
-		var dummyPos = $.isArray(h5.dev.api.geo.dummyPositions) ? h5.dev.api.geo.dummyPositions
-				: [h5.dev.api.geo.dummyPositions].slice(0);
+		var dummyPos = wrapInArray(h5.dev.api.geo.dummyPositions);
 		if (dummyPos.length === 0) {
 			return originalAPI.watchPosition(option);
 		}
