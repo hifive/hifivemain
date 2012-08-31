@@ -38,7 +38,7 @@
 	</target>
 
 
-	<target name="build" depends="getVersion,getGitHash">
+	<target name="build" depends="prepare,getVersion,getGitHash">
 		<buildService>
 			<buildParameter
 				tmpFiles="false"
@@ -83,5 +83,9 @@
 			</filterchain>
 		</loadfile>
 		<echo message="gitCommitId: ${gitCommitId}" />
+	</target>
+	
+	<target name="prepare">
+		<mkdir dir="${releaseDir}" />
 	</target>
 </project>
