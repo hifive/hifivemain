@@ -73,6 +73,11 @@
 	var controllerInstanceMap = {};
 
 	/**
+	 *
+	 */
+	var dynamicControllerInstanceMap = {};
+
+	/**
 	 * 初期化パラメータのマップ キー：ページID、値：初期化パラメータ
 	 *
 	 * @type Object
@@ -105,12 +110,16 @@
 		if (!activePage) {
 			return;
 		}
+
 		var id = activePage.attr('id');
-		var controllers = controllerInstanceMap[id];
-		if (controllerMap[id] && (!controllers || controllers.length === 0)) {
-			jqmControllerInstance.addCSS(id);
-			jqmControllerInstance.bindController(id);
+		var controllerInstances = controllerInstanceMap[id];
+
+		if (!controllerMap[id] || (controllerInstances && controllerInstances.length > 0)) {
+			return;
 		}
+
+		jqmControllerInstance.addCSS(id);
+		jqmControllerInstance.bindController(id);
 	}
 	// TODO モジュールレベルのプライベート関数はここに書く
 	// 関数は関数式ではなく function myFunction(){} のように関数定義で書く
@@ -170,6 +179,12 @@
 		 */
 		':jqmData(role="page"), :jqmData(role="dialog") pageinit': function(context) {
 			var id = context.event.target.id;
+			var controllerInstances = controllerInstanceMap[id];
+
+			if (!controllerMap[id] || (controllerInstances && controllerInstances.length > 0)) {
+				return;
+			}
+
 			this.loadScript(id);
 			this.addCSS(id);
 			this.bindController(id);
@@ -201,16 +216,30 @@
 		 */
 		'{document} pagebeforeshow': function(context) {
 			var id = context.event.target.id;
+			var prop = null;
+
 			this.addCSS(id);
 
 			// リスナーの有効・無効の切り替え
-			for ( var prop in controllerInstanceMap) {
+			for (prop in controllerInstanceMap) {
 				var controllers = controllerInstanceMap[prop];
-				var enable = id === prop;
+				var pageControllerEnabled = id === prop;
 
 				for ( var i = 0, len = controllers.length; i < len; i++) {
-					var c = controllers[i];
-					enable ? c.enableListeners() : c.disableListeners();
+					var controller = controllers[i];
+					pageControllerEnabled ? controller.enableListeners() : controller
+							.disableListeners();
+				}
+			}
+
+			for (prop in dynamicControllerInstanceMap) {
+				var dynamicControllers = dynamicControllerInstanceMap[prop];
+				var dynamicControllerEnabled = id === prop;
+
+				for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
+					var dynamicController = dynamicControllers[i];
+					dynamicControllerEnabled ? dynamicController.enableListeners()
+							: dynamicController.disableListeners();
 				}
 			}
 		},
@@ -232,14 +261,25 @@
 		 * @memberOf JQMController
 		 */
 		'{rootElement} h5controllerbound': function(context) {
-			if (this === context.evArg) {
+			var boundController = context.evArg;
+
+			if (this === boundController) {
 				return;
 			}
-			var id = context.event.target.id;
-			if (!controllerInstanceMap[id]) {
-				controllerInstanceMap[id] = [];
+
+			var id = $.mobile.activePage.attr('id');
+			var instances = controllerInstanceMap[id];
+
+			for ( var i = 0, len = instances.length; i < len; i++) {
+				// define()でバインドしたコントローラも、h5controllerboundイベントを発火するので、
+				// このイベントを発生させたコントローラが、define()によってバインドしたコントローラか判定する
+				// ↑がtrue = 「既にJQMManagerの管理対象になっているコントローラ」なので、dynamicControllerInstanceMapに含めない
+				if (boundController.__name === instances[i].__name) {
+					return;
+				}
 			}
-			controllerInstanceMap[id].push(context.evArg);
+
+			dynamicControllerInstanceMap[id].push(boundController);
 		},
 
 		/**
@@ -284,15 +324,20 @@
 		 * @memberOf JQMController
 		 */
 		bindController: function(id) {
-			var controllers = controllerInstanceMap[id];
-			if (!controllerMap[id] || (controllers && controllers.length > 0)) {
-				return;
+			if (!controllerInstanceMap[id]) {
+				controllerInstanceMap[id] = [];
 			}
-			h5.core.controller('#' + id, controllerMap[id], initParamMap[id]);
+
+			if (!dynamicControllerInstanceMap[id]) {
+				dynamicControllerInstanceMap[id] = [];
+			}
+
+			controllerInstanceMap[id].push(h5.core.controller('#' + id, controllerMap[id],
+					initParamMap[id]));
 		},
 
 		/**
-		 * 指定されたページIDに紐付くCSSを追加する。
+		 * 指定されたページIDに紐付くCSSをHEADに追加する。
 		 *
 		 * @param {String} id ページID
 		 * @memberOf JQMController
