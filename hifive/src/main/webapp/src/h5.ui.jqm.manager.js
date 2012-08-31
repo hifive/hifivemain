@@ -280,15 +280,12 @@
 			}
 
 			var id = $.mobile.activePage.attr('id');
-			var instances = controllerInstanceMap[id];
 
-			for ( var i = 0, len = instances.length; i < len; i++) {
-				// define()でバインドしたコントローラも、h5controllerboundイベントを発火するので、
-				// このイベントを発生させたコントローラが、define()によってバインドしたコントローラか判定する
-				// ↑がtrue = 「既にJQMManagerの管理対象になっているコントローラ」なので、dynamicControllerInstanceMapに含めない
-				if (boundController.__name === instances[i].__name) {
-					return;
-				}
+			// define()でバインドしたコントローラも、h5controllerboundイベントを発火するので、
+			// このイベントを発生させたコントローラが、define()によってバインドしたコントローラか判定する
+			// ↑がtrue = 「既にJQMManagerの管理対象になっているコントローラ」なので、dynamicControllerInstanceMapに含めない
+			if ($.inArray(controllerInstanceMap[id], boundController) !== -1) {
+				return;
 			}
 
 			dynamicControllerInstanceMap[id].push(boundController);
