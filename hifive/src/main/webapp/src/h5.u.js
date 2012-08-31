@@ -154,6 +154,14 @@
 		'>': '&gt;',
 		"'": '&apos;'
 	};
+
+	/**
+	 * SCRIPTにonloadがあるかどうか
+	 *
+	 * @private
+	 */
+	var existScriptOnload = document.createElement('script').onload !== undefined;
+
 	// =============================
 	// Functions
 	// =============================
@@ -208,8 +216,6 @@
 	 * <p>
 	 * dataType:scriptを指定した場合のデフォルトの挙動は、スクリプトファイルの読み込み完了後に$.globalEval()で評価を行うため、
 	 * convertersを上書きしています。
-	 * <p>
-	 * また、読み込み対象のスクリプトがApplicationCacheによってキャッシュされている場合エラーが発生するため、cacheオプションにtrueを設定しています。
 	 *
 	 * @private
 	 * @param {String} url 読み込み対象のスクリプトパス
@@ -217,9 +223,8 @@
 	 * @param {Boolean} cache キャッシュされた通信結果が存在する場合、その通信結果を使用するか (true:使用する/false:使用しない)
 	 */
 	function getScriptString(url, async, cache) {
-		var argsToArray = h5.u.obj.argsToArray;
-
 		var df = h5.async.deferred();
+		// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
 		h5.ajax({
 			url: url,
 			async: async,
@@ -259,20 +264,25 @@
 	 * @memberOf h5.u.obj
 	 * @returns {Object} 作成した名前空間オブジェクト
 	 */
-	var ns = function(namespace) {
+	function ns(namespace) {
 		if (!isString(namespace)) {
 			// 文字列でないならエラー
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
 		}
 
 		var nsArray = namespace.split('.');
-		var parentObj = window;
-		for ( var i = 0, len = nsArray.length; i < len; i++) {
-			var name = nsArray[i];
-			if (!isValidNamespaceIdentifier(name)) {
-				// ドットアクセスできないような文字列、または全角文字を含む文字列の場合はエラー
+		var len = nsArray.length;
+
+		for ( var i = 0; i < len; i++) {
+			if (!isValidNamespaceIdentifier(nsArray[i])) {
+				// 名前空間として不正な文字列ならエラー
 				throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
 			}
+		}
+
+		var parentObj = window;
+		for ( var i = 0; i < len; i++) {
+			var name = nsArray[i];
 			if (parentObj[name] === undefined) {
 				parentObj[name] = {};
 			}
@@ -281,7 +291,7 @@
 
 		// ループが終了しているので、parentObjは一番末尾のオブジェクトを指している
 		return parentObj;
-	};
+	}
 
 	/**
 	 * 指定された名前空間に、オブジェクトの各プロパティをそれぞれ対応するキー名で公開（グローバルからたどれる状態に）します。
@@ -309,7 +319,7 @@
 	 * @param {Object} obj グローバルに公開したいプロパティをもつオブジェクト
 	 * @memberOf h5.u.obj
 	 */
-	var expose = function(namespace, obj) {
+	function expose(namespace, obj) {
 		var nsObj = ns(namespace);
 		for ( var prop in obj) {
 			if (obj.hasOwnProperty(prop)) {
@@ -319,7 +329,7 @@
 				nsObj[prop] = obj[prop];
 			}
 		}
-	};
+	}
 
 	/**
 	 * 指定されたスクリプトをロードします。
@@ -340,9 +350,8 @@
 	 * @function
 	 * @memberOf h5.u
 	 */
-	var loadScript = function(path, opt) {
+	function loadScript(path, opt) {
 		var getDeferred = h5.async.deferred;
-		var argsToArray = h5.u.obj.argsToArray;
 		var resources = wrapInArray(path);
 
 		if (!resources || resources.length === 0) {
@@ -385,11 +394,9 @@
 		var loadedUrl = {};
 
 		if (async) {
-			var env = h5.env.ua;
-			var isIE8Under = env.isIE && env.browserVersion <= 8;
-
-			// atomicオプションが無効でかつIE6,7,8以外のブラウザの場合、SCRIPTタグでスクリプトを動的に読み込む
-			if (!atomic && !isIE8Under) {
+			// atomicオプションが無効でかつscript.onloadがあるブラウザ(IE6,7,8以外のブラウザ)の場合、SCRIPTタグでスクリプトを動的に読み込む
+			// (IE9以降の場合、DocumentModeがQuirksおよび6～8の場合はonloadはundefinedになる)
+			if (!atomic && existScriptOnload) {
 				var $head = $('head');
 				var scriptLoad = function(url) {
 					var scriptDfd = getDeferred();
@@ -406,8 +413,10 @@
 					};
 
 					script.type = 'text/javascript';
-					// cacheがfalse(最新のJSファイルを取得する)の場合、URLの末尾にパラメータを付与して常に最新のJSファイルを取得する
-					script.src = cache ? url : url + '?_' + (+new Date());
+					// cacheがfalse(最新のJSファイルを取得する)の場合、URLの末尾にパラメータ(+new Date()で、getTime()の値)を付与して常に最新のJSファイルを取得する
+					// URLにもともとパラメータが付いていれば、パラメータを追加する。
+					script.src = cache ? url : url + ((url.indexOf('?') > -1) ? '&_' : '?_')
+							+ (+new Date());
 					$head[0].appendChild(script);
 
 					return scriptDfd.promise();
@@ -450,7 +459,8 @@
 					}, retDfFailCallback);
 				}
 			}
-			// IE6,7,8の場合、SCRIPTタグのonerrorイベントが発生せずatomicな読み込みができないため、Ajaxでスクリプトを読み込む
+			// IE6,7,8の場合、SCRIPTタグのonerrorイベントが発生しないため、読み込みが成功または失敗したか判定できない。
+			// よってatomicな読み込みができないため、Ajaxでスクリプトを読み込む
 			else {
 				if (parallel) {
 					var loadedScripts = [];
@@ -588,7 +598,7 @@
 			}
 			// 同期ロードの場合は何もreturnしない
 		}
-	};
+	}
 
 	/**
 	 * 文字列のプレフィックスが指定したものかどうかを返します。
@@ -600,9 +610,9 @@
 	 * @function
 	 * @memberOf h5.u.str
 	 */
-	var startsWith = function(str, prefix) {
+	function startsWith(str, prefix) {
 		return str.lastIndexOf(prefix, 0) === 0;
-	};
+	}
 
 	/**
 	 * 文字列のサフィックスが指定したものかどうかを返します。
@@ -614,10 +624,10 @@
 	 * @function
 	 * @memberOf h5.u.str
 	 */
-	var endsWith = function(str, suffix) {
+	function endsWith(str, suffix) {
 		var sub = str.length - suffix.length;
 		return (sub >= 0) && (str.lastIndexOf(suffix) === sub);
-	};
+	}
 
 	/**
 	 * 第一引数の文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第2引数以降に指定されたパラメータに置換します。
@@ -637,7 +647,7 @@
 	 * @function
 	 * @memberOf h5.u.str
 	 */
-	var format = function(str, var_args) {
+	function format(str, var_args) {
 		if (str == null) {
 			return '';
 		}
@@ -649,7 +659,7 @@
 			}
 			return rep;
 		});
-	};
+	}
 
 	/**
 	 * 指定されたHTML文字列をエスケープします。
@@ -660,14 +670,14 @@
 	 * @function
 	 * @memberOf h5.u.str
 	 */
-	var escapeHtml = function(str) {
+	function escapeHtml(str) {
 		if ($.type(str) !== 'string') {
 			return str;
 		}
 		return str.replace(/[&"'<>]/g, function(c) {
 			return htmlEscapeRules[c];
 		});
-	};
+	}
 
 	/**
 	 * オブジェクトを、型情報を付与した文字列に変換します。
@@ -723,7 +733,7 @@
 	 * @function
 	 * @memberOf h5.u.obj
 	 */
-	var serialize = function(value) {
+	function serialize(value) {
 		if ($.isFunction(value)) {
 			throwFwError(ERR_CODE_SERIALIZE_FUNCTION);
 		}
@@ -876,7 +886,7 @@
 		}
 		;
 		return CURRENT_SEREALIZER_VERSION + '|' + func(value);
-	};
+	}
 
 	/**
 	 * 型情報が付与された文字列をオブジェクトを復元します。
@@ -887,7 +897,7 @@
 	 * @function
 	 * @memberOf h5.u.obj
 	 */
-	var deserialize = function(value) {
+	function deserialize(value) {
 		if (!isString(value)) {
 			throwFwError(ERR_CODE_DESERIALIZE_ARGUMENT);
 		}
@@ -1087,7 +1097,7 @@
 			return ret;
 		}
 		return func(ret);
-	};
+	}
 
 	/**
 	 * オブジェクトがjQueryオブジェクトかどうかを返します。
@@ -1098,12 +1108,12 @@
 	 * @function
 	 * @memberOf h5.u.obj
 	 */
-	var isJQueryObject = function(obj) {
+	function isJQueryObject(obj) {
 		if (!obj || !obj.jquery) {
 			return false;
 		}
 		return (obj.jquery === $().jquery);
-	};
+	}
 
 	/**
 	 * argumentsを配列に変換します。
@@ -1114,9 +1124,9 @@
 	 * @function
 	 * @memberOf h5.u.obj
 	 */
-	var argsToArray = function(args) {
+	function argsToArray(args) {
 		return Array.prototype.slice.call(args);
-	};
+	}
 
 	/**
 	 * 指定された名前空間に存在するオブジェクトを取得します。
@@ -1127,7 +1137,7 @@
 	 * @function
 	 * @memberOf h5.u.obj
 	 */
-	var getByPath = function(namespace) {
+	function getByPath(namespace) {
 		if (!isString(namespace)) {
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
 		}
@@ -1145,7 +1155,7 @@
 		}
 
 		return ret;
-	};
+	}
 
 	/**
 	 * インターセプタを作成します。
@@ -1180,7 +1190,7 @@
 	 * @function
 	 * @memberOf h5.u
 	 */
-	var createInterceptor = function(pre, post) {
+	function createInterceptor(pre, post) {
 		return function(invocation) {
 			var data = {};
 			var ret = pre ? pre.call(this, invocation, data) : invocation.proceed();
@@ -1198,7 +1208,7 @@
 			post.call(this, invocation, data);
 			return ret;
 		};
-	};
+	}
 
 
 	function ObservableArray() {}

@@ -122,6 +122,7 @@
 	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
 	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
 	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ{0}の初期化が正常に完了しました。';
+	var FW_LOG_INIT_CONTROLLER_THROWN_ERROR = 'コントローラ{0}の{1}内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。';
 	/* del end */
 
 	// =========================================================================
@@ -765,19 +766,35 @@
 			var func = function() {
 				var ret = null;
 				var lifecycleFunc = controllerInstance[funcName];
+				var controllerName = controllerInstance.__name;
 				if (lifecycleFunc) {
-					ret = controllerInstance[funcName]
-							(createInitializationContext(controllerInstance));
+					try {
+						ret = controllerInstance[funcName]
+								(createInitializationContext(controllerInstance));
+					} catch (e) {
+						// __init, __readyで例外が投げられた
+						fwLogger.error(FW_LOG_INIT_CONTROLLER_THROWN_ERROR, controllerName,
+								isInitEvent ? '__init' : '__ready');
+
+						// 同じrootControllerを持つ他の子のdisposeによって、
+						// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
+						controller.rootController
+								&& controller.rootController.dispose(arguments);
+
+						// dispose処理が終わったら例外を投げる
+						throw e;
+					}
 				}
 				// ライフサイクルイベント実行後に呼ぶべきコールバック関数を作成
 				var callback = isInitEvent ? createCallbackForInit(controllerInstance)
 						: createCallbackForReady(controllerInstance);
 				if (h5.async.isPromise(ret)) {
+					// __init, __ready がpromiseを返している場合
 					ret.done(function() {
 						callback();
 					}).fail(
 							function(/* var_args */) {
-								var controllerName = controllerInstance.__name;
+								// rejectされた場合は連鎖的にdisposeする
 								fwLogger.error(FW_LOG_INIT_CONTROLLER_REJECTED, controllerName,
 										isInitEvent ? '__init' : '__ready');
 								fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR,
@@ -1160,12 +1177,19 @@
 
 	/**
 	 * タッチイベントのイベントオブジェクトにpageXやoffsetXといった座標系のプロパティを追加します。
+	 * <p>
+	 * touchstart/touchmove/touchendをjQuery.trigger()で発火させた場合、originalEventプロパティは存在しないので、座標系プロパティのコピーを行いません。
 	 *
 	 * @param {Object} event jQuery.Eventオブジェクト
 	 * @param {String} eventName イベント名
 	 */
 	function initTouchEventObject(event, eventName) {
 		var originalEvent = event.originalEvent;
+
+		if (!originalEvent) {
+			return;
+		}
+
 		var touches = eventName === 'touchend' || eventName === 'touchcancel' ? originalEvent.changedTouches[0]
 				: originalEvent.touches[0];
 		var pageX = touches.pageX;
@@ -1529,7 +1553,7 @@
 			var property = propertyArray[propertyIndex];
 			var dfd = con.__controllerContext[property];
 			if (dfd) {
-				if (!dfd.isRejected() && !dfd.isResolved()) {
+				if (!isRejected(dfd) && !isResolved(dfd)) {
 					dfd.reject(errorObj);
 				}
 			}
@@ -1662,6 +1686,61 @@
 		 * @name parentController
 		 */
 		controller.parentController = null;
+
+		/**
+		 * __templatesに指定したテンプレートファイルの読み込みに、成功または失敗したかの状態を持つPromiseオブジェクト。
+		 * このオブジェクトが持つ以下の関数で、状態をチェックすることができます。
+		 * <p>
+		 * <b>state()</b> <table border="1">
+		 * <tr>
+		 * <td>戻り値</td>
+		 * <td>結果</td>
+		 * </tr>
+		 * <tr>
+		 * <td>"resolved"</td>
+		 * <td>読み込みに成功</td>
+		 * </tr>
+		 * <tr>
+		 * <td>"rejected"</td>
+		 * <td>読み込みに失敗</td>
+		 * </tr>
+		 * <tr>
+		 * <td>"pending"</td>
+		 * <td>読み込みが開始されていないまたは読み込み中</td>
+		 * </tr>
+		 * </table> 注意: jQuery1.7.x未満の場合、この関数は使用できません。
+		 * <p>
+		 * <b>isResolved(), isRejected()</b> <table border="1">
+		 * <tr>
+		 * <td>isResolved()の戻り値</td>
+		 * <td>isRejected()の戻り値</td>
+		 * <td>結果</td>
+		 * </tr>
+		 * <tr>
+		 * <td>true</td>
+		 * <td>false</td>
+		 * <td>読み込みに成功</td>
+		 * </tr>
+		 * <tr>
+		 * <td>false</td>
+		 * <td>true</td>
+		 * <td>読み込みに失敗</td>
+		 * </tr>
+		 * <tr>
+		 * <td>false</td>
+		 * <td>false</td>
+		 * <td>読み込みが開始されていないまたは読み込み中</td>
+		 * </tr>
+		 * </table>
+		 * <p>
+		 * また、preinitPromise.done()に関数を設定すると読み込み成功時に、
+		 * preinitPromise.fail()に関数を設定すると読み込み失敗時に、設定した関数を実行します。
+		 *
+		 * @type Promise
+		 * @memberOf Controller
+		 * @name preinitPromise
+		 */
+		controller.preinitPromise = null;
 
 		/**
 		 * コントローラのライフサイクルイベント__initについてのPromiseオブジェクトを返します。
@@ -1959,11 +2038,11 @@
 			this.__controllerContext.unbindMap = {};
 
 			// コントローラマネージャの管理対象から外す.
-			var targetRootElement = this.rootElement;
 			var controllers = h5.core.controllerManager.controllers;
+			var that = this;
 			h5.core.controllerManager.controllers = $.grep(controllers,
 					function(controllerInstance) {
-						return controllerInstance.rootElement !== targetRootElement;
+						return controllerInstance !== that;
 					});
 
 			// h5controllerunboundイベントをトリガ
@@ -2039,9 +2118,13 @@
 		 * <li>マッチした要素が複数存在する場合、最初にマッチした要素が対象となります。
 		 * </ul>
 		 * コントローラがバインドされた要素よりも外にある要素にインジケータを表示したい場合は、セレクタではなく<b>DOMオブジェクト</b>を指定して下さい。
+		 * <p>
+		 * targetに<b>document</b>、<b>window</b>または<b>body</b>を指定しかつ、blockオプションがtrueの場合、「スクリーンロック」として動作します。<br>
+		 * 上記以外のDOM要素を指定した場合は、指定した要素上にインジケータを表示します。
+		 * <p>
+		 * <b>スクリーンロック</b>とは、コンテンツ領域(スクロールしないと見えない領域も全て含めた領域)全体にオーバーレイを、表示領域(画面に見えている領域)中央にメッセージが表示し、画面を操作できないようにすることです。スマートフォン等タッチ操作に対応する端末の場合、スクロール操作も禁止します。
 		 * <h4>使用例</h4>
-		 * <b>画面全体をブロックする場合</b><br>
-		 * ・画面全体をブロックする場合、targetオプションに<b>document</b>、<b>window</b>または<b>body</b>を指定する。<br>
+		 * <b>スクリーンロックとして表示する</b><br>
 		 *
 		 * <pre>
 		 * var indicator = this.indicator({
@@ -2096,7 +2179,7 @@
 		 * @param {Object} [opt]
 		 * @param {String} [opt.message] メッセージ
 		 * @param {Number} [opt.percent] 進捗を0～100の値で指定する。
-		 * @param {Boolean} [opt.block] 操作できないよう画面をブロックするか (true:する/false:しない)
+		 * @param {Boolean} [opt.block] 操作できないよう画面をブロックするか (true:する/false:しない) デフォルト:true
 		 * @param {Promise|Promise[]} [opt.promises] Promiseオブジェクト (Promiseの状態と合わせてインジケータの表示・非表示する)
 		 * @param {String} [opt.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルをする場合に使用する)
 		 * @returns {Indicator} インジケータオブジェクト

@@ -152,6 +152,37 @@ function isString(target) {
 }
 
 /**
+ * DeferredオブジェクトがReject状態かどうかを判定します。 jQuery1.7でDeferred.isRejected/isResolvedはDeprecatedとなり、
+ * 1.8で削除された（代わりにstate()メソッドが1.7から追加された）ので、 使用可能なAPIを用いて判定します。
+ *
+ * @private
+ * @param {Object} dfd Deferredオブジェクト
+ * @returns {Boolean} Rejected状態かどうか
+ */
+function isRejected(dfd) {
+	if (dfd.isRejected) {
+		return dfd.isRejected();
+	}
+	//jQuery 1.7でisRejectedはDeprecatedになり、1.8.0で削除された
+	return dfd.state() === 'rejected';
+}
+
+/**
+ * DeferredオブジェクトがReject状態かどうかを判定します。 jQuery1.7でDeferred.isRejected/isResolvedはDeprecatedとなり、
+ * 1.8で削除された（代わりにstate()メソッドが1.7から追加された）ので、 使用可能なAPIを用いて判定します。
+ *
+ * @private
+ * @param {Object} dfd Deferredオブジェクト
+ * @returns {Boolean} Resolved状態かどうか
+ */
+function isResolved(dfd) {
+	if (dfd.isResolved) {
+		return dfd.isResolved();
+	}
+	return dfd.state() === 'resolved';
+}
+
+/**
  * 引数が名前空間として有効な文字列かどうかを判定します。 ただし、全角文字が含まれる場合はfalseを返します。
  *
  * @private

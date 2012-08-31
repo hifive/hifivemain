@@ -12,10 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive
  */
- package com.htmlhifive.test.selenium.testcase.coverage.marge;
+package com.htmlhifive.test.selenium.testcase.coverage.marge;
 
 import com.htmlhifive.test.selenium.base.H5TestCase;
 
@@ -25,9 +25,9 @@ import org.openqa.selenium.WebElement;
 
 /**
  * TODO テストケースの追加
- * 
+ *
  * @author fukuda
- * 
+ *
  */
 public class Runner extends H5TestCase {
 
@@ -36,9 +36,9 @@ public class Runner extends H5TestCase {
 	public Runner(WebDriver driver) throws InterruptedException {
 		super(driver);
 	}
+
 	@Test
 	public void openQUnit() throws InterruptedException{
-
 		WebElement locationBox = querySelector("#location").get(0);
 		locationBox.clear();
 		locationBox.sendKeys(QUNIT_PAGE);

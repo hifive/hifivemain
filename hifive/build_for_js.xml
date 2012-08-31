@@ -8,30 +8,18 @@
 	<property name="webapp.root.dir" value="src/main/webapp" />
 	<property name="web-inf.dir" value="${webapp.root.dir}/WEB-INF" />
 	<property name="lib.tool.dir" value="${basedir}/jstool" />
-	<property name="lib.project.dir" value="." />
+	<property name="lib.project.dir" value="./lib" />
 
 	<path id="base.path">
 		<fileset dir="${lib.project.dir}" includes="**/*.jar" />
 	</path>
-
-	<property name="blank.project.path.h5" value="../hifive_blank/WebContent/lib/h5/" />
-	<property name="blank.project.path.ejs" value="../hifive_blank/WebContent/lib/ejs/" />
-	<property name="blank.project.index" value="../hifive_blank/WebContent/index.html" />
-
-	<condition property="isExistDir">
-		<and>
-			<available file="${blank.project.path.h5}" />
-		</and>
-	</condition>
 
 	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpathref="base.path" />
 	<taskdef name="buildService" classname="com.htmlhifive.dev.service.ant.BuilderServiceTask" classpathref="base.path" />
 
 
 	<target name="all" depends="build, jscoverage" />
-	<!-- - - - - - - - - - - - - - - - - -
-          target: name
-         - - - - - - - - - - - - - - - - - -->
+
 	<target name="cleanCurrent">
 		<delete>
 			<fileset dir="${archivesDir}/current">
@@ -50,7 +38,7 @@
 	</target>
 
 
-	<target name="build" depends="getVersion,getGitHash">
+	<target name="build" depends="prepare,getVersion,getGitHash">
 		<buildService>
 			<buildParameter
 				tmpFiles="false"
@@ -95,5 +83,9 @@
 			</filterchain>
 		</loadfile>
 		<echo message="gitCommitId: ${gitCommitId}" />
+	</target>
+
+	<target name="prepare">
+		<mkdir dir="${releaseDir}" />
 	</target>
 </project>

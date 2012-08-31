@@ -446,7 +446,6 @@
 
 		// jQueryのバージョンが1.6.xの場合、progress/notifyが使用できるよう機能を追加する
 		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
-			var i = 0;
 			var len = args.length;
 			var count = len;
 			var pValues = new Array(len);
@@ -455,24 +454,26 @@
 			dfd = len <= 1 && firstParam && jQuery.isFunction(firstParam.promise) ? firstParam
 					: getDeferred();
 
-			function resolveFunc(i) {
+			// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
+
+			function resolveFunc(index) {
 				return function(value) {
-					args[i] = arguments.length > 1 ? argsToArray(arguments) : value;
+					args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
 					if (!(--count)) {
 						dfd.resolveWith(dfd, args);
 					}
 				};
 			}
 
-			function progressFunc(i) {
+			function progressFunc(index) {
 				return function(value) {
-					pValues[i] = arguments.length > 1 ? argsToArray(arguments) : value;
+					pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
 					dfd.notifyWith(dfd.promise(), pValues);
 				};
 			}
 
 			if (len > 1) {
-				for (; i < len; i++) {
+				for ( var i = 0; i < len; i++) {
 					if (args[i] && args[i].promise && $.isFunction(args[i].promise)) {
 						args[i].promise().then(resolveFunc(i), dfd.reject, progressFunc(i));
 					} else {
