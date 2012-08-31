@@ -59,33 +59,45 @@
 	var jqmControllerInstance = null;
 
 	/**
-	 * コントローラのマップ キー：ページID、値：コントローラ定義オブジェクト
+	 * コントローラのマップ
+	 * <p>
+	 * キー：ページID、値：コントローラ定義オブジェクト
 	 *
 	 * @type Object
 	 */
 	var controllerMap = {};
 
 	/**
-	 * コントローラインスタンスのマップ キー：ページID、値：コントローラインスタンスの配列
+	 * コントローラインスタンスのマップ
+	 * <p>
+	 * キー：ページID、値：コントローラインスタンスの配列
 	 *
 	 * @type Object
 	 */
 	var controllerInstanceMap = {};
 
 	/**
+	 * JQMManagerで管理する、h5.core.controller()で動的に生成されたコントローラインスタンスを保持するマップ
+	 * <p>
+	 * キー：ページID、値：コントローラインスタンスの配列
 	 *
+	 * @type Object
 	 */
 	var dynamicControllerInstanceMap = {};
 
 	/**
-	 * 初期化パラメータのマップ キー：ページID、値：初期化パラメータ
+	 * 初期化パラメータのマップ
+	 * <p>
+	 * キー：ページID、値：初期化パラメータ
 	 *
 	 * @type Object
 	 */
 	var initParamMap = {};
 
 	/**
-	 * CSSファイルのマップ キー：ページID、値：CSSファイルパスのオブジェクト
+	 * CSSファイルのマップ
+	 * <p>
+	 * キー：ページID、値：CSSファイルパスのオブジェクト
 	 *
 	 * @type Object
 	 */
