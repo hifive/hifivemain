@@ -122,16 +122,12 @@
 		if (!activePage) {
 			return;
 		}
-
 		var id = activePage.attr('id');
-		var controllerInstances = controllerInstanceMap[id];
-
-		if (!controllerMap[id] || (controllerInstances && controllerInstances.length > 0)) {
-			return;
+		var controllers = controllerInstanceMap[id];
+		if (controllerMap[id] && (!controllers || controllers.length === 0)) {
+			jqmControllerInstance.addCSS(id);
+			jqmControllerInstance.bindController(id);
 		}
-
-		jqmControllerInstance.addCSS(id);
-		jqmControllerInstance.bindController(id);
 	}
 	// TODO モジュールレベルのプライベート関数はここに書く
 	// 関数は関数式ではなく function myFunction(){} のように関数定義で書く
@@ -191,12 +187,6 @@
 		 */
 		':jqmData(role="page"), :jqmData(role="dialog") pageinit': function(context) {
 			var id = context.event.target.id;
-			var controllerInstances = controllerInstanceMap[id];
-
-			if (!controllerMap[id] || (controllerInstances && controllerInstances.length > 0)) {
-				return;
-			}
-
 			this.loadScript(id);
 			this.addCSS(id);
 			this.bindController(id);
@@ -344,7 +334,12 @@
 		 * @memberOf JQMController
 		 */
 		bindController: function(id) {
-			if (!controllerInstanceMap[id]) {
+			var controllers = controllerInstanceMap[id];
+			if (!controllerMap[id] || (controllers && controllers.length > 0)) {
+				return;
+			}
+
+			if (!controllers) {
 				controllerInstanceMap[id] = [];
 			}
 
