@@ -1288,6 +1288,7 @@
 	 * @param {DataItem} item データアイテム
 	 * @param {Object} event プロパティ変更イベント
 	 * @param {String|String[]} changedProps 今回変更されたプロパティ
+	 * @returns {Object} { dependProp1: { oldValue, newValue }, ... } という構造のオブジェクト
 	 */
 	function calcDependencies(model, item, event, changedProps) {
 		var dependsMap = model._dependencyMap;
@@ -1328,6 +1329,8 @@
 			}
 		}
 
+		var ret = {};
+
 		var targets = [];
 
 		//今回変更された実プロパティに依存するプロパティを列挙
@@ -1342,6 +1345,12 @@
 
 				if (isReady(dp)) {
 					var newValue = model.schema[dp].depend.calc.call(item, event);
+
+					ret[dp] = {
+						oldValue: getValue(item, dp),
+						newValue: newValue
+					};
+
 					setValue(item, dp, newValue);
 					done.push(dp);
 				} else {
@@ -1355,6 +1364,8 @@
 
 			targets = restTargets;
 		}
+
+		return ret;
 	}
 
 	function createDependencyMap(schema) {
@@ -1447,7 +1458,10 @@
 					};
 
 					//依存プロパティを再計算する
-					calcDependencies(model, this, event, name);
+					var changedDependProps = calcDependencies(model, this, event, name);
+
+					//依存プロパティの変更をchangeイベントに含める
+					$.extend(changedProp, changedDependProps);
 
 					this.dispatchEvent(event);
 				};
@@ -1893,8 +1907,8 @@
 		 */
 		this.manager = manager;
 
-		//TODO
-		this.idSequence = 0;
+		//TODO sequence対応は後日
+		//this.idSequence = 0;
 
 		//継承元がある場合はそのプロパティディスクリプタを先にコピーする。
 		//継承元と同名のプロパティを自分で定義している場合は
@@ -2136,6 +2150,7 @@
 		 * @returns {DataItem} データアイテム、存在しない場合はnull
 		 */
 		_findById: function(id) {
+			//TODO number対応
 			//データアイテムは、取得系APIではIDを文字列型で渡さなければならない
 			if (!isString(id)) {
 				throwFwError(ERR_CODE_ID_MUST_BE_STRING);
@@ -2193,7 +2208,6 @@
 			return model;
 		},
 
-
 		/**
 		 * @returns {Boolean} アップデートセッション中かどうか
 		 */
@@ -2228,11 +2242,13 @@
 
 			}
 
-			function createDataModelChanges(modelUpdateLogs) {
-				var recreated = {};
+			function createDataModelChanges(model, modelUpdateLogs) {
+				var recreated = [];
 				var created = [];
 				var changed = [];
 				var removed = [];
+
+				//TODO create, remove, recreatedの場合でもdependの計算は必要
 
 				for ( var itemId in modelUpdateLogs) {
 					var itemLogs = modelUpdateLogs[itemId];
@@ -2260,10 +2276,11 @@
 								//また、begin->create->remove->create->endの場合は、begin-endの外から見ると"create"扱いにすればよい。
 
 								if (firstCRLog && firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
-									recreated[itemId] = {
+									recreated.push({
+										id: itemId,
 										oldItem: firstCRLog.item,
 										newItem: log.item
-									};
+									});
 								} else {
 									created.push(log.item);
 								}
@@ -2303,7 +2320,10 @@
 							$.extend(mergedProps, changeEventStack[i].props);
 						}
 
-						//TODO dependの再計算もここで行う
+						var changedProps = [];
+						for ( var prop in mergedProps) {
+							changedProps.push(prop);
+						}
 
 						var mergedChange = {
 							type: 'change',
@@ -2311,37 +2331,14 @@
 							props: mergedProps
 						};
 
+						var changedDependProps = calcDependencies(model, model.items[itemId],
+								mergedChange, changedProps);
+
+						$.extend(mergedChange.props, changedDependProps);
+
 						changed.push(mergedChange);
 					}
 				}
-
-
-
-				//				var alreadyCalculated = [];
-				//
-				//				//再計算したプロパティをchangedPropsに追加していくので、ループは__internals.changeで回す必要がある
-				//				for ( var srcProp in this.__internals.change) {
-				//					var depends = dependencyMap[srcProp];
-				//					if (depends) {
-				//						for ( var i = 0, len = depends.length; i < len; i++) {
-				//							var dependProp = depends[i];
-				//							//同じ依存プロパティの再計算は一度だけ行う
-				//							if ($.inArray(dependProp, alreadyCalculated) === -1) {
-				//								var dependOldValue = getValue(this, dependProp);
-				//								var dependNewValue = recalculateDependProperties(this, dependProp);
-				//								setValue(this, dependProp, dependNewValue);
-				//								//TODO 同じ処理が何か所かで出てくるのでまとめる
-				//								changedProps[dependProp] = {
-				//									oldValue: dependOldValue,
-				//									newValue: dependNewValue
-				//								};
-				//								alreadyCalculated.push(dependProp);
-				//							}
-				//						}
-				//					}
-				//				}
-
-
 
 				return {
 					created: created,
@@ -2351,6 +2348,8 @@
 				};
 			}
 
+			//endUpdateの処理フローここから
+
 			var modelChanges = {};
 
 			var updateLogs = this._updateLogs;
@@ -2359,7 +2358,8 @@
 					continue;
 				}
 
-				modelChanges[modelName] = createDataModelChanges(updateLogs[modelName]);
+				modelChanges[modelName] = createDataModelChanges(this.models[modelName],
+						updateLogs[modelName]);
 			}
 
 			//全てのモデルの変更が完了してから各モデルの変更イベントを出すため、
