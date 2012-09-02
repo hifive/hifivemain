@@ -1519,7 +1519,6 @@
 					var givenInitValue = initialValue[plainProp];
 
 					//型・制約チェック
-					//TODO validateItemValueは、plainPropが配列の場合は「givenInitValueが配列で、かつ各要素の中身がDescの制約を満たす」というチェックになっているか？
 					var validateResult = model._validateItemValue(plainProp, givenInitValue);
 					if (validateResult.length > 0) {
 						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, plainProp, validateResult);
