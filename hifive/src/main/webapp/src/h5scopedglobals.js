@@ -330,9 +330,17 @@ EventDispatcher.prototype.dispatchEvent = function(event) {
 		event.target = this;
 	}
 
+	var isDefaultPrevented = false;
+
+	event.preventDefault = function() {
+		isDefaultPrevented = true;
+	};
+
 	for ( var i = 0, count = l.length; i < count; i++) {
 		l[i].call(event.target, event);
 	}
+
+	return isDefaultPrevented;
 };
 
 

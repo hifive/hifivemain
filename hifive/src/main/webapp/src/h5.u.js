@@ -28,6 +28,13 @@
 	// Production
 	// =============================
 
+	var METHOD_NAME_COPY_FROM = 'copyFrom';
+
+	var EVENT_TYPE_OBSERVE_BEFORE = 'observeBefore';
+
+	ver
+	EVENT_TYPE_OBSERVE = 'observe';
+
 	/**
 	 * undefinedのタイプ
 	 */
@@ -1220,15 +1227,24 @@
 		ObservableArray.prototype[arrayMethods[i]] = (function(method) {
 			//TODO fallback実装の提供
 			return function() {
-				var ret = Array.prototype[method].apply(this, arguments);
-				var ev = {
-					type: 'observe',
+				var evBefore = {
+					type: EVENT_TYPE_OBSERVE_BEFORE,
 					method: method,
-					args: arguments,
-					returnValue: ret
+					args: arguments
 				};
-				this.dispatchEvent(ev);
-				return ret;
+
+				if (!this.dispatchEvent(evBefore)) {
+					//preventDefault()が呼ばれなければ実際に処理を行う
+					var ret = Array.prototype[method].apply(this, arguments);
+					var evAfter = {
+						type: EVENT_TYPE_OBSERVE,
+						method: method,
+						args: arguments,
+						returnValue: ret
+					};
+					this.dispatchEvent(evAfter);
+					return ret;
+				}
 			};
 		})(arrayMethods[i]);
 	}
@@ -1236,24 +1252,32 @@
 	 * 指定された配列の要素をこのObservableArrayにシャローコピーします。 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
 	 *
 	 * @param {Array} src コピー元の配列
-	 * @returns {Array} 削除前の状態を持った配列
+	 * @returns {Array} 削除前の要素を持った配列
 	 */
 	ObservableArray.prototype.copyFrom = function(src) {
-		var ret = Array.prototype.slice.call(this, 0);
-
-		var args = src.slice(0);
-		args.unshift(0, this.length);
-		Array.prototype.splice.apply(this, args);
-
-		var ev = {
-			type: 'observe',
-			method: 'copyFrom',
-			args: src,
-			returnValue: ret
+		var evBefore = {
+			type: EVENT_TYPE_OBSERVE_BEFORE,
+			method: METHOD_NAME_COPY_FROM,
+			args: src
 		};
-		this.dispatchEvent(ev);
 
-		return ret;
+		if (!this.dispatchEvent(evBefore)) {
+			var ret = Array.prototype.slice.call(this, 0);
+
+			var args = src.slice(0);
+			args.unshift(0, this.length);
+			Array.prototype.splice.apply(this, args);
+
+			var evAfter = {
+				type: EVENT_TYPE_OBSERVE,
+				method: METHOD_NAME_COPY_FROM,
+				args: arguments,
+				returnValue: ret
+			};
+			this.dispatchEvent(evAfter);
+			return ret;
+		}
+
 	};
 
 	/**

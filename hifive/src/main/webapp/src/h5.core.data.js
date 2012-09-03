@@ -304,6 +304,9 @@
 	// Cache
 	//
 	// =========================================================================
+	var argsToArray = h5.u.obj.argsToArray;
+
+
 	// =========================================================================
 	//
 	// Privates
@@ -1278,7 +1281,9 @@
 	}
 
 	function setValue(item, prop, value) {
+		//TODO アクセサ拡張対応
 		item[ITEM_PROP_BACKING_STORE_PREFIX + prop] = value;
+		item[prop] = value;
 	}
 
 	/**
@@ -1475,6 +1480,34 @@
 			};
 		}
 
+		function setObservableArrayObserveBeforeListener(model, propName, observableArray) {
+			function validateObservableArrayChange(event) {
+				//TODO ES5対応
+				//Array自体を直接変化される関数、ただし、sort, reserveは値を追加するものではないのでバリデーションは不要（なので何もしない）
+				var breakingMethods = ['unshift', 'push', 'splice', 'copyFrom'];
+				if ($.inArray(event.method, breakingMethods) === -1) {
+					return;
+				}
+
+				var args = argsToArray(event.args);
+
+				if (event.method === 'splice') {
+					if (args.length <= 2) {
+						return;
+					}
+					args.shift();
+					args.shift();
+				}
+
+				var validateResult = model._validateItemValue(propName, args);
+				if (validateResult.length > 0) {
+					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, plainProp, validateResult);
+				}
+			}
+
+			observableArray.addEventListener('observeBefore', validateObservableArrayChange);
+		}
+
 		//DataItemのコンストラクタ
 		function DataItem(initialValue) {
 			//TODO プロパティ拡張がある場合のみ
@@ -1508,7 +1541,9 @@
 
 				if (isTypeArray(propDesc.type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
-					setValue(this, plainProp, h5.u.obj.createObservableArray());
+					var obsArray = h5.u.obj.createObservableArray(); //TODO cache
+					setObservableArrayObserveBeforeListener(model, plainProp, obsArray);
+					setValue(this, plainProp, obsArray);
 				}
 
 				var initValue = null;
@@ -1535,7 +1570,13 @@
 					}
 				} else if (propDesc.defaultValue !== undefined) {
 					//DescriptorのdefaultValueがあれば代入
-					initValue = propDesc.defaultValue;
+
+					if (isTypeArray(propDesc.type)) {
+						//type:[]の場合はcopyする
+						this[plainProp].copyFrom(propDesc.defaultValue);
+					} else {
+						initValue = propDesc.defaultValue;
+					}
 				} else if (propDesc.type && DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
 					//各typeのデフォルト値があれば代入
 					initValue = DEFAULT_TYPE_VALUE[propDesc.type];
@@ -1600,20 +1641,13 @@
 			 * changeイベントの発火は、beginUpdate-endUpdateのセッション中ならendUpdate()時、セッション外ならセッターで行われます。
 			 */
 			refresh: function() {
-				var idx = $.inArray(this, model._dirtyItems);
-				if (idx !== -1) {
-					//dirtyフラグが立っていれば削除
-					model._dirtyItems.splice(idx, 1);
-				}
-
-				//dirtyフラグが立っていなくても、refreshが呼ばれた場合は強制的に更新する
-
 				var changedProps = {};
 				var changedPropArray = [];
 
 				//TODO enhanceされている場合といない場合で処理が違う
 				for ( var prop in this) {
-					if (!this.hasOwnProperty(prop) || prop.indexOf('__') > -1) {
+					if (!this.hasOwnProperty(prop) || prop.indexOf('__') > -1 || prop === 'dirty'
+							|| prop === 'refresh') {
 						continue;
 					}
 
@@ -1654,8 +1688,13 @@
 				calcDependencies(model, this, ev, changedPropArray);
 
 				if (model.manager && !model.manager.isInUpdate()) {
+					//アップデートセッションの外の場合はイベントを発火させる
 					this.dispatchEvent(ev);
 				}
+
+				//dispatchEvent()していないのでtargetが入っていないため、ここでは自分で代入しておく
+				ev.target = this;
+				return ev;
 			}
 		});
 
@@ -1693,8 +1732,8 @@
 			propertiesDesc[prop] = src;
 		}
 
-		//TODO settingsか、Managerのフラグで制御する
-		Object.defineProperties(DataItem.prototype, propertiesDesc);
+		//TODO 一旦保留。settingsか、Managerのフラグで制御する。
+		//Object.defineProperties(DataItem.prototype, propertiesDesc);
 
 
 		return {
@@ -2085,6 +2124,14 @@
 
 				item.removeEventListener('change', this._itemChangeListener);
 
+				//dirtyリストに入っていたら取り除く
+				if (this._dirtyItems) {
+					var dirtyIdx = $.inArray(item, this._dirtyItems);
+					if (dirtyIdx > -1) {
+						this._dirtyItems.splice(dirtyIdx, 1);
+					}
+				}
+
 				delete this.items[id];
 
 				this.size--;
@@ -2133,10 +2180,11 @@
 		},
 
 		_itemChangeListener: function(event) {
-			if (this.manager && this.manager.isInUpdate()) {
-				addUpdateChangeLog(this, event);
-				return;
-			}
+			//TODO inUpdateの場合Item自体がイベントを出さないのでこの制御は不要になる予定
+			//			if (this.manager && this.manager.isInUpdate()) {
+			//				addUpdateChangeLog(this, event);
+			//				return;
+			//			}
 
 			this.dispatchEvent(createDataModelItemsChangeEvent([], [], [], [event]));
 		},
@@ -2348,6 +2396,18 @@
 			}
 
 			//endUpdateの処理フローここから
+
+			//dirtyなアイテムをリフレッシュする
+			for ( var modelName in this.models) {
+				if (this.models[modelName]._dirtyItems) {
+					var dirtyItems = this.models[modelName]._dirtyItems;
+					for ( var i = 0, len = dirtyItems.length; i < len; i++) {
+						var refreshEv = dirtyItems[i].refresh();
+						addUpdateChangeLog(this, refreshEv);
+					}
+					this.models[modelName]._dirtyItems = null;
+				}
+			}
 
 			var modelChanges = {};
 
