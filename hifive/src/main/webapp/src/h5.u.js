@@ -32,8 +32,7 @@
 
 	var EVENT_TYPE_OBSERVE_BEFORE = 'observeBefore';
 
-	ver
-	EVENT_TYPE_OBSERVE = 'observe';
+	var EVENT_TYPE_OBSERVE = 'observe';
 
 	/**
 	 * undefinedのタイプ

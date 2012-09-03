@@ -2285,6 +2285,7 @@
 				return null;
 			}
 
+			//TODO 不要？
 			function hasCreateLog(itemLogs, lastPos) {
 
 			}
