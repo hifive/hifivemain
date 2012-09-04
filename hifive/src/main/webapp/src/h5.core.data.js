@@ -1304,7 +1304,7 @@
 	}
 
 
-	function itemSetter(model, item, valueObj, ignoreArrayValueIsNull) {
+	function itemSetter(model, item, valueObj, noValidationProps) {
 		var readyProps = [];
 
 		//先に、すべてのプロパティの整合性チェックを行う
@@ -1328,11 +1328,10 @@
 				n: newValue
 			});
 
-			//型が配列（type:[]）の場合に、フラグが立っていたら、値がnull/undefinedでもよいとする
-			//(create()時にdefaultValueがなくてもエラーにならないようにする)
-			if (ignoreArrayValueIsNull && model.schema[prop]
-					&& isTypeArray(model.schema[prop].type)) {
-				//TODO 判定文改良
+			if (noValidationProps && ($.inArray(prop, noValidationProps) !== -1)) {
+				//このプロパティをバリデーションしなくてよいと明示されている場合はバリデーションを行わない
+				//型が配列（type:[]）の場合に、フラグが立っていたら、値がnull/undefinedでもよいとする
+				//(create()時にdefaultValueがなくてもエラーにならないようにする)のが用途
 				continue;
 			}
 
@@ -1552,6 +1551,8 @@
 
 			var actualInitialValue = {};
 
+			var noValidationProps = [];
+
 			//デフォルト値を代入する
 			for ( var plainProp in schema) {
 				var propDesc = schema[plainProp];
@@ -1576,6 +1577,12 @@
 				} else if (propDesc && propDesc.defaultValue !== undefined) {
 					//DescriptorのdefaultValueがあれば代入
 					initValue = propDesc.defaultValue;
+
+					//TODO else節と共通化
+					if (propDesc && isTypeArray(propDesc.type)) {
+						//type:[]の場合、、defaultValueは事前に制約チェック済みなので改めてvalidationしなくてよい
+						noValidationProps.push(plainProp);
+					}
 				} else if (propDesc && propDesc.type
 						&& DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
 					//各typeのデフォルト値があれば代入
@@ -1584,12 +1591,17 @@
 					//いずれでもない場合はnull
 					//ただし、notNull制約などがついている場合はセッターで例外が発生する
 					initValue = null;
+
+					if (propDesc && isTypeArray(propDesc.type)) {
+						//type:[]で、userInitValueもdefaultValueも与えられなかった場合はvalidationを行わない
+						noValidationProps.push(plainProp);
+					}
 				}
 
 				actualInitialValue[plainProp] = initValue;
 			}
 
-			itemSetter(model, this, actualInitialValue, true);
+			itemSetter(model, this, actualInitialValue, noValidationProps);
 		}
 		$.extend(DataItem.prototype, EventDispatcher.prototype, {
 			/**
@@ -1627,7 +1639,7 @@
 					throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
 				}
 
-				var event = itemSetter(model, this, valueObj, false);
+				var event = itemSetter(model, this, valueObj, null);
 
 				//TODO managerに属しているかの条件は修正？
 				if (!model.manager || (model.manager && !model.manager.isInUpdate())) {
