@@ -32,8 +32,8 @@
 	var SEQUENCE_RETURN_TYPE_STRING = 1;
 	var SEQUENCE_RETURN_TYPE_INT = 2;
 
-	var ID_TYPE_STRING = 1;
-	var ID_TYPE_INT = 2;
+	var ID_TYPE_STRING = 'string';
+	var ID_TYPE_INT = 'number';
 
 
 	/** マネージャ名が不正 */
@@ -1346,7 +1346,7 @@
 			//TODO 判定文改良
 			if (model.schema[readyProp.p] && isTypeArray(model.schema[readyProp.p].type)) {
 				//配列の場合は値のコピーを行う
-				item[readyProp.p].copyFrom(readyProp.n);
+				getValue(item, readyProp.p).copyFrom(readyProp.n);
 			} else {
 				//新しい値を代入
 				setValue(item, readyProp.p, readyProp.n);
