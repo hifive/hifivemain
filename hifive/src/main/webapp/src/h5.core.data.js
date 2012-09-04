@@ -332,9 +332,13 @@
 	}
 
 
-	//------------------------------
-	// Descriptorバリデーション関係
-	//------------------------------
+	//========================================================
+	//
+	// バリデーション関係コードここから
+	//
+	//========================================================
+
+
 
 	/**
 	 * type指定の文字列を、パースした結果を返す
@@ -1272,6 +1276,15 @@
 		};
 	}
 
+
+	//========================================================
+	//
+	// バリデーション関係コードここまで
+	//
+	//========================================================
+
+
+
 	function isTypeArray(typeStr) {
 		if (!typeStr) {
 			return false;
@@ -1285,6 +1298,79 @@
 
 	function setValue(item, prop, value) {
 		item[ITEM_PROP_BACKING_STORE_PREFIX + prop] = value;
+	}
+
+
+	function itemSetter(model, item, valueObj) {
+		var readyProps = [];
+
+		//先に、すべてのプロパティの整合性チェックを行う
+		for ( var prop in valueObj) {
+			if (!(prop in model.schema)) {
+				//schemaに存在しないプロパティは無視する
+				continue;
+			}
+
+			var oldValue = getValue(item, prop);
+			var newValue = valueObj[prop];
+
+			if (oldValue === newValue) {
+				//同じ値がセットされた場合は何もしない
+				continue;
+			}
+
+			//型・制約チェック
+			//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
+			var validateResult = model._validateItemValue(prop, newValue);
+			if (validateResult.length > 0) {
+				throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
+			}
+
+			readyProps.push({
+				p: prop,
+				o: oldValue,
+				n: newValue
+			});
+		}
+
+		var changedProps = {};
+		var changedPropNameArray = [];
+
+		//値の変更が起こる全てのプロパティについて整合性チェックが通ったら、実際に値を代入する
+		for ( var i = 0, len = readyProps.length; i < len; i++) {
+			var readyProp = readyProps[i];
+
+			//TODO 判定文改良
+			if (model.schema[readyProp.p] && isTypeArray(model.schema[readyProp.p].type)) {
+				//配列の場合は値のコピーを行う
+				item[readyProp.p].copyFrom(readyProp.n);
+			} else {
+				//新しい値を代入
+				setValue(item, readyProp.p, readyProp.n);
+			}
+
+			changedProps[readyProp.p] = {
+				oldValue: readyProp.o,
+				newValue: readyProp.n
+			};
+
+			changedPropNameArray.push(readyProp.p);
+		}
+
+		//今回変更されたプロパティと依存プロパティを含めてイベント送出
+		var event = {
+			type: 'change',
+			target: item,
+			props: changedProps
+		};
+
+		//依存プロパティを再計算する
+		var changedDependProps = calcDependencies(model, item, event, changedPropNameArray);
+
+		//依存プロパティの変更をchangeイベントに含める
+		$.extend(changedProps, changedDependProps);
+
+		return event;
 	}
 
 	/**
@@ -1438,40 +1524,31 @@
 			observableArray.addEventListener('observeBefore', validateObservableArrayChange);
 		}
 
-		//DataItemのコンストラクタ
-		function DataItem(initialValue) {
+		/**
+		 * DataItemのコンストラクタ
+		 *
+		 * @class
+		 * @constructor
+		 * @param {Object} userInitialValue ユーザー指定の初期値
+		 */
+		function DataItem(userInitialValue) {
 			//TODO プロパティ拡張がある場合のみ
 			//isInUpdateがtrueの場合にセッターでセットされた値を一時的に格納するための領域
 			//内部は { (変更されたprop): { oldValue, newValue } } の形式
 			this.__dirty = {};
 
-			var changedProps = {};
-			var changedPropArray = [];
-
-			//TODO set()を使うようにできないか
+			var actualInitialValue = {};
 
 			//デフォルト値を代入する
 			for ( var plainProp in schema) {
-				//初期生成なのですべてのプロパティが変更されたとみなす
-				changedPropArray.push(plainProp);
-
 				var propDesc = schema[plainProp];
-				if (!propDesc) {
-					//propDescがない場合はtype:anyとみなす
-					setValue(this, plainProp, null);
-					changedProps[plainProp] = {
-						oldValue: null,
-						newValue: null
-					};
-					continue;
-				}
 
-				if (propDesc.depend) {
+				if (propDesc && propDesc.depend) {
 					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
 					continue;
 				}
 
-				if (isTypeArray(propDesc.type)) {
+				if (propDesc && isTypeArray(propDesc.type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					var obsArray = h5.u.obj.createObservableArray(); //TODO cache
 					setObservableArrayObserveBeforeListener(model, plainProp, obsArray);
@@ -1480,59 +1557,26 @@
 
 				var initValue = null;
 
-				if (initialValue[plainProp] !== undefined) {
+				if (plainProp in userInitialValue) {
 					//create時に初期値が与えられていたらそれを代入
-
-					var givenInitValue = initialValue[plainProp];
-
-					//型・制約チェック
-					var validateResult = model._validateItemValue(plainProp, givenInitValue);
-					if (validateResult.length > 0) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, plainProp, validateResult);
-					}
-
-					if (isTypeArray(propDesc.type)) {
-						if (!$.isArray(givenInitValue)) {
-							//初期値が配列でなかったらエラー
-							throwFwError(ERR_CODE_INVALID_ITEM_VALUE, plainProp);
-						}
-						this[plainProp].copyFrom(givenInitValue);
-					} else {
-						initValue = givenInitValue;
-					}
-				} else if (propDesc.defaultValue !== undefined) {
+					initValue = userInitialValue[plainProp];
+				} else if (propDesc && propDesc.defaultValue !== undefined) {
 					//DescriptorのdefaultValueがあれば代入
-
-					if (isTypeArray(propDesc.type)) {
-						//type:[]の場合はcopyする
-						this[plainProp].copyFrom(propDesc.defaultValue);
-					} else {
-						initValue = propDesc.defaultValue;
-					}
-				} else if (propDesc.type && DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
+					initValue = propDesc.defaultValue;
+				} else if (propDesc && propDesc.type
+						&& DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
 					//各typeのデフォルト値があれば代入
 					initValue = DEFAULT_TYPE_VALUE[propDesc.type];
+				} else {
+					//いずれでもない場合はnull
+					//ただし、notNull制約などがついている場合はセッターで例外が発生する
+					initValue = null;
 				}
 
-				if (!isTypeArray(propDesc.type)) {
-					//初期値をセット。createでもDescriptorでも初期値が与えられなければnullを代入
-					setValue(this, plainProp, initValue);
-				}
-
-				changedProps[plainProp] = {
-					oldValue: undefined,
-					newValue: initValue
-				};
+				actualInitialValue[plainProp] = initValue;
 			}
 
-			//依存プロパティ再計算用にイベントオブジェクトを作成
-			var event = {
-				type: 'change',
-				props: changedProps
-			};
-
-			//依存プロパティを再計算する
-			calcDependencies(model, this, event, name);
+			itemSetter(model, this, actualInitialValue);
 		}
 		$.extend(DataItem.prototype, EventDispatcher.prototype,
 				{
@@ -1589,13 +1633,8 @@
 								continue;
 							}
 
-							//TODO 毎回Array判定したくないので高速化
-							if (model.schema[prop] && isTypeArray(model.schema[prop].type)) {
-								//typeが配列の場合、別インスタンスの代入は許可しない
-								throwFwError(ERR_CODE_CANNOT_SET_OBSARRAY, prop, this);
-							}
-
 							//型・制約チェック
+							//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
 							var validateResult = model._validateItemValue(prop, newValue);
 							if (validateResult.length > 0) {
 								throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
@@ -1615,8 +1654,15 @@
 						for ( var i = 0, len = readyProps.length; i < len; i++) {
 							var readyProp = readyProps[i];
 
-							//新しい値を代入
-							setValue(this, readyProp.p, readyProp.n);
+							//TODO 判定文改良
+							if (model.schema[readyProp.p]
+									&& isTypeArray(model.schema[readyProp.p].type)) {
+								//配列の場合は値のコピーを行う
+								this[readyProp.p].copyFrom(readyProp.n);
+							} else {
+								//新しい値を代入
+								setValue(this, readyProp.p, readyProp.n);
+							}
 
 							changedProps[readyProp.p] = {
 								oldValue: readyProp.o,
@@ -1937,16 +1983,16 @@
 					throwFwError(ERR_CODE_NO_ID);
 				}
 
-				var existingItem = this._findById(itemId);
-				if (existingItem) {
+				var storedItem = this._findById(itemId);
+				if (storedItem) {
 					// 既に存在するオブジェクトの場合は値を更新
 					for ( var prop in valueObj) {
 						if (prop == idKey) {
 							continue;
 						}
-						existingItem[prop] = valueObj[prop];
+						storedItem[prop] = valueObj[prop];
 					}
-					ret.push(existingItem);
+					ret.push(storedItem);
 				} else {
 					var newItem = createItem(this, valueObj, this._itemChangeListener);
 
