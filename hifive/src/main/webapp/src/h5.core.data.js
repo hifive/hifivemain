@@ -1304,7 +1304,7 @@
 	}
 
 
-	function itemSetter(model, item, valueObj) {
+	function itemSetter(model, item, valueObj, ignoreArrayValueIsNull) {
 		var readyProps = [];
 
 		//先に、すべてのプロパティの整合性チェックを行う
@@ -1322,18 +1322,26 @@
 				continue;
 			}
 
+			readyProps.push({
+				p: prop,
+				o: oldValue,
+				n: newValue
+			});
+
+			//型が配列（type:[]）の場合に、フラグが立っていたら、値がnull/undefinedでもよいとする
+			//(create()時にdefaultValueがなくてもエラーにならないようにする)
+			if (ignoreArrayValueIsNull && model.schema[prop]
+					&& isTypeArray(model.schema[prop].type)) {
+				//TODO 判定文改良
+				continue;
+			}
+
 			//型・制約チェック
 			//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
 			var validateResult = model._validateItemValue(prop, newValue);
 			if (validateResult.length > 0) {
 				throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
 			}
-
-			readyProps.push({
-				p: prop,
-				o: oldValue,
-				n: newValue
-			});
 		}
 
 		var changedProps = {};
@@ -1344,8 +1352,10 @@
 			var readyProp = readyProps[i];
 
 			//TODO 判定文改良
-			if (model.schema[readyProp.p] && isTypeArray(model.schema[readyProp.p].type)) {
-				//配列の場合は値のコピーを行う
+			if (model.schema[readyProp.p] && isTypeArray(model.schema[readyProp.p].type)
+					&& readyProp.n) {
+				//配列の場合は値のコピーを行う。ただし、コピー元がnullの場合があり得る（create()でdefaultValueがnull）ので
+				//その場合はコピーしない
 				getValue(item, readyProp.p).copyFrom(readyProp.n);
 			} else {
 				//新しい値を代入
@@ -1579,124 +1589,54 @@
 				actualInitialValue[plainProp] = initValue;
 			}
 
-			itemSetter(model, this, actualInitialValue);
+			itemSetter(model, this, actualInitialValue, true);
 		}
-		$.extend(DataItem.prototype, EventDispatcher.prototype,
-				{
-					/**
-					 * 指定されたキーのプロパティの値を取得します。
-					 *
-					 * @memberOf DataItem
-					 * @param {String} key プロパティキー
-					 * @returns {Any} 指定されたプロパティの値
-					 */
-					get: function(key) {
-						return getValue(this, key);
-					},
+		$.extend(DataItem.prototype, EventDispatcher.prototype, {
+			/**
+			 * 指定されたキーのプロパティの値を取得します。
+			 *
+			 * @memberOf DataItem
+			 * @param {String} key プロパティキー
+			 * @returns {Any} 指定されたプロパティの値
+			 */
+			get: function(key) {
+				return getValue(this, key);
+			},
 
-					/**
-					 * 指定されたキーのプロパティに値をセットします。<br>
-					 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ...
-					 * }という構造をもつオブジェクトを1つだけ渡してください。<br>
-					 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。<br>
-					 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。<br>
-					 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする<br>
-					 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
-					 *
-					 * @memberOf DataItem
-					 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取る
-					 */
-					set: function(var_args) {
-						//引数はオブジェクト1つ、または(key, value)で呼び出せる
-						var valueObj = var_args;
-						if (arguments.length === 2) {
-							valueObj = {};
-							valueObj[arguments[0]] = arguments[1];
-						}
+			/**
+			 * 指定されたキーのプロパティに値をセットします。<br>
+			 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ... }という構造をもつオブジェクトを1つだけ渡してください。<br>
+			 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。<br>
+			 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。<br>
+			 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする<br>
+			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
+			 *
+			 * @memberOf DataItem
+			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取る
+			 */
+			set: function(var_args) {
+				//引数はオブジェクト1つ、または(key, value)で呼び出せる
+				var valueObj = var_args;
+				if (arguments.length === 2) {
+					valueObj = {};
+					valueObj[arguments[0]] = arguments[1];
+				}
 
-						if (model.idKey in valueObj) {
-							//IDの上書きは禁止
-							throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
-						}
+				if (model.idKey in valueObj) {
+					//IDの上書きは禁止
+					throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
+				}
 
-						var readyProps = [];
+				var event = itemSetter(model, this, valueObj, false);
 
-						//先に、すべてのプロパティの整合性チェックを行う
-						for ( var prop in valueObj) {
-							if (!(prop in model.schema)) {
-								//schemaに存在しないプロパティは無視する
-								continue;
-							}
-
-							var oldValue = getValue(this, prop);
-							var newValue = valueObj[prop];
-
-							if (oldValue === newValue) {
-								//同じ値がセットされた場合は何もしない
-								continue;
-							}
-
-							//型・制約チェック
-							//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
-							var validateResult = model._validateItemValue(prop, newValue);
-							if (validateResult.length > 0) {
-								throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
-							}
-
-							readyProps.push({
-								p: prop,
-								o: oldValue,
-								n: newValue
-							});
-						}
-
-						var changedProps = {};
-						var changedPropNameArray = [];
-
-						//値の変更が起こる全てのプロパティについて整合性チェックが通ったら、実際に値を代入する
-						for ( var i = 0, len = readyProps.length; i < len; i++) {
-							var readyProp = readyProps[i];
-
-							//TODO 判定文改良
-							if (model.schema[readyProp.p]
-									&& isTypeArray(model.schema[readyProp.p].type)) {
-								//配列の場合は値のコピーを行う
-								this[readyProp.p].copyFrom(readyProp.n);
-							} else {
-								//新しい値を代入
-								setValue(this, readyProp.p, readyProp.n);
-							}
-
-							changedProps[readyProp.p] = {
-								oldValue: readyProp.o,
-								newValue: readyProp.n
-							};
-
-							changedPropNameArray.push(readyProp.p);
-						}
-
-						//今回変更されたプロパティと依存プロパティを含めてイベント送出
-						var event = {
-							type: 'change',
-							target: this,
-							props: changedProps
-						};
-
-						//依存プロパティを再計算する
-						var changedDependProps = calcDependencies(model, this, event,
-								changedPropNameArray);
-
-						//依存プロパティの変更をchangeイベントに含める
-						$.extend(changedProps, changedDependProps);
-
-						//TODO managerに属しているかの条件は修正？
-						if (!model.manager || (model.manager && !model.manager.isInUpdate())) {
-							//TODO もしこのDataItemがremoveされていたらmodelには属していない
-							//アップデートセッション外の場合は即座にイベント送出
-							this.dispatchEvent(event);
-						}
-					}
-				});
+				//TODO managerに属しているかの条件は修正？
+				if (!model.manager || (model.manager && !model.manager.isInUpdate())) {
+					//TODO もしこのDataItemがremoveされていたらmodelには属していない
+					//アップデートセッション外の場合は即座にイベント送出
+					this.dispatchEvent(event);
+				}
+			}
+		});
 
 		return DataItem;
 	}
