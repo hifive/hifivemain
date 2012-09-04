@@ -69,6 +69,8 @@
 	/** typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う） */
 	var ERR_CODE_CANNOT_SET_OBSARRAY = 15011;
 
+	/** DataItem.set()でidをセットすることはできない */
+	var ERR_CODE_CANNOT_SET_ID = 15012;
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
@@ -82,7 +84,8 @@
 	ERROR_MESSAGES[ERR_CODE_INVALID_UPDATE_LOG_TYPE] = '内部エラー：更新ログタイプ不正';
 	ERROR_MESSAGES[ERR_CODE_ID_MUST_BE_STRING] = 'IDは文字列でなければならない';
 	ERROR_MESSAGES[ERR_CODE_INVALID_DESCRIPTOR] = 'データモデルディスクリプタにエラーがあります。';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_OBSARRAY] = 'typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う）';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_OBSARRAY] = 'typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う）。 プロパティ名 = {0}';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'DataItem.set()でidをセットすることはできない';
 
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
@@ -1281,9 +1284,7 @@
 	}
 
 	function setValue(item, prop, value) {
-		//TODO アクセサ拡張対応
 		item[ITEM_PROP_BACKING_STORE_PREFIX + prop] = value;
-		item[prop] = value;
 	}
 
 	/**
@@ -1409,81 +1410,10 @@
 		//model.schemaは継承関係を展開した後のスキーマ
 		var schema = model.schema;
 
-		function createSrc(name, propDesc) {
-			function createSetter() {
-				if (propDesc.depend) {
-					//依存プロパティの場合は、setterは動作しない（無理に呼ぶとエラー）
-					return function() {
-						throwFwError(ERR_CODE_DEPEND_PROPERTY);
-					};
-				}
-
-				return function(value) {
-					var oldValue = getValue(this, name);
-
-					if (oldValue === value) {
-						//同じ値がセットされた場合は何もしない
-						return;
-					}
-
-					//TODO 毎回Array判定したくないので高速化
-					if (isTypeArray(propDesc.type)) {
-						//typeが配列の場合、別インスタンスの代入は許可しない
-						throwFwError(ERR_CODE_CANNOT_SET_OBSARRAY);
-					}
-
-					//型・制約チェック
-					var validateResult = model._validateItemValue(name, value);
-					if (validateResult.length > 0) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, name, validateResult);
-					}
-
-					var changedProp = {};
-					changedProp[name] = {
-						oldValue: oldValue,
-						newValue: value
-					};
-
-					if (model.manager && model.manager.isInUpdate()) {
-						//TODO もしこのDataItemがremoveされていたらmodelには属していない
-						//アップデートセッション中の場合はdirtyフラグを立てて終了
-						this.dirty(changedProp); //TODO
-						return;
-					}
-
-					//新しい値を代入
-					setValue(this, name, value);
-
-					//セッション外なので、depend再計算、changeイベント発火を直ちに行う
-
-					//今回変更されたプロパティと依存プロパティを含めてイベント送出
-					var event = {
-						type: 'change',
-						props: changedProp
-					};
-
-					//依存プロパティを再計算する
-					var changedDependProps = calcDependencies(model, this, event, name);
-
-					//依存プロパティの変更をchangeイベントに含める
-					$.extend(changedProp, changedDependProps);
-
-					this.dispatchEvent(event);
-				};
-			}
-
-			return {
-				get: function() {
-					return getValue(this, name);
-				},
-				set: createSetter()
-			};
-		}
-
 		function setObservableArrayObserveBeforeListener(model, propName, observableArray) {
 			function validateObservableArrayChange(event) {
 				//TODO ES5対応
-				//Array自体を直接変化される関数、ただし、sort, reserveは値を追加するものではないのでバリデーションは不要（なので何もしない）
+				//Array自体を直接変化される関数のリスト。ただし、sort, reserveは値を追加するものではないのでバリデーションは不要（なので何もしない）
 				var breakingMethods = ['unshift', 'push', 'splice', 'copyFrom'];
 				if ($.inArray(event.method, breakingMethods) === -1) {
 					return;
@@ -1517,6 +1447,8 @@
 
 			var changedProps = {};
 			var changedPropArray = [];
+
+			//TODO set()を使うようにできないか
 
 			//デフォルト値を代入する
 			for ( var plainProp in schema) {
@@ -1593,7 +1525,7 @@
 				};
 			}
 
-			//今回変更されたプロパティと依存プロパティを含めてイベント送出
+			//依存プロパティ再計算用にイベントオブジェクトを作成
 			var event = {
 				type: 'change',
 				props: changedProps
@@ -1602,144 +1534,122 @@
 			//依存プロパティを再計算する
 			calcDependencies(model, this, event, name);
 		}
-		$.extend(DataItem.prototype, EventDispatcher.prototype, {
-			/**
-			 * このデータアイテムの値変更済みフラグをセットします。<br>
-			 * refresh()が呼ばれたとき、またはDataModelManagerのendUpdate()が呼ばれたときに<br>
-			 * 代入の型・制約チェックと依存プロパティの再計算が行われ、フラグがクリアされます。
-			 */
-			dirty: function() {
-				if (model._dirtyItems && $.inArray(this, model._dirtyItems) !== -1) {
-					//既にフラグはセット済み
-					return;
-				}
+		$.extend(DataItem.prototype, EventDispatcher.prototype,
+				{
+					/**
+					 * 指定されたキーのプロパティの値を取得します。
+					 *
+					 * @memberOf DataItem
+					 * @param {String} key プロパティキー
+					 * @returns {Any} 指定されたプロパティの値
+					 */
+					get: function(key) {
+						return getValue(this, key);
+					},
 
-				if (!model._dirtyItems) {
-					model._dirtyItems = [];
-				}
-				model._dirtyItems.push(this);
-			},
+					/**
+					 * 指定されたキーのプロパティに値をセットします。<br>
+					 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ...
+					 * }という構造をもつオブジェクトを1つだけ渡してください。<br>
+					 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。<br>
+					 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。<br>
+					 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする<br>
+					 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
+					 *
+					 * @memberOf DataItem
+					 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取る
+					 */
+					set: function(var_args) {
+						//引数はオブジェクト1つ、または(key, value)で呼び出せる
+						var valueObj = var_args;
+						if (arguments.length === 2) {
+							valueObj = {};
+							valueObj[arguments[0]] = arguments[1];
+						}
 
-			/**
-			 * データアイテムをリフレッシュします。
-			 * <ul>
-			 * <li>プロパティ拡張を行っていない場合
-			 * <ol>
-			 * <li>型・制約チェックを行う
-			 * <li>代入を確定する
-			 * <li>依存プロパティを再計算する
-			 * <li>（DataModelManagerでbeginUpdate-endUpdateのセッションの外の場合のみ）changeイベントを発火させる
-			 * </ol>
-			 * </li>
-			 * <li>プロパティ拡張を行っている場合
-			 * <ol>
-			 * <li>依存プロパティを再計算する
-			 * </ol>
-			 * </li>
-			 * </ul>
-			 * ※プロパティ拡張を行っている場合、型・制約チェックと代入の確定はセッターで、<br>
-			 * changeイベントの発火は、beginUpdate-endUpdateのセッション中ならendUpdate()時、セッション外ならセッターで行われます。
-			 */
-			refresh: function() {
-				var changedProps = {};
-				var changedPropArray = [];
+						if (model.idKey in valueObj) {
+							//IDの上書きは禁止
+							throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
+						}
 
-				//TODO enhanceされている場合といない場合で処理が違う
-				for ( var prop in this) {
-					if (!this.hasOwnProperty(prop) || prop.indexOf('__') > -1 || prop === 'dirty'
-							|| prop === 'refresh') {
-						continue;
-					}
+						var readyProps = [];
 
-					var newValue = this[prop];
+						//先に、すべてのプロパティの整合性チェックを行う
+						for ( var prop in valueObj) {
+							if (!(prop in model.schema)) {
+								//schemaに存在しないプロパティは無視する
+								continue;
+							}
 
-					var oldValue = getValue(this, prop);
-					if (oldValue === newValue) {
-						//同じ値がセットされた場合は何もしない
-						continue;
-					}
+							var oldValue = getValue(this, prop);
+							var newValue = valueObj[prop];
 
-					//TODO 毎回Array判定したくないので高速化
-					if (isTypeArray(model.schema[prop].type)) {
-						//typeが配列の場合、別インスタンスの代入は許可しない
-						throwFwError(ERR_CODE_CANNOT_SET_OBSARRAY);
-					}
+							if (oldValue === newValue) {
+								//同じ値がセットされた場合は何もしない
+								continue;
+							}
 
-					var validateResult = model._validateItemValue(prop, newValue);
-					if (validateResult.length > 0) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
-					} else {
-						setValue(this, prop, newValue);
-						changedProps[prop] = {
-							oldValue: oldValue,
-							newValue: newValue
+							//TODO 毎回Array判定したくないので高速化
+							if (model.schema[prop] && isTypeArray(model.schema[prop].type)) {
+								//typeが配列の場合、別インスタンスの代入は許可しない
+								throwFwError(ERR_CODE_CANNOT_SET_OBSARRAY, prop, this);
+							}
+
+							//型・制約チェック
+							var validateResult = model._validateItemValue(prop, newValue);
+							if (validateResult.length > 0) {
+								throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
+							}
+
+							readyProps.push({
+								p: prop,
+								o: oldValue,
+								n: newValue
+							});
+						}
+
+						var changedProps = {};
+						var changedPropNameArray = [];
+
+						//値の変更が起こる全てのプロパティについて整合性チェックが通ったら、実際に値を代入する
+						for ( var i = 0, len = readyProps.length; i < len; i++) {
+							var readyProp = readyProps[i];
+
+							//新しい値を代入
+							setValue(this, readyProp.p, readyProp.n);
+
+							changedProps[readyProp.p] = {
+								oldValue: readyProp.o,
+								newValue: readyProp.n
+							};
+
+							changedPropNameArray.push(readyProp.p);
+						}
+
+						//今回変更されたプロパティと依存プロパティを含めてイベント送出
+						var event = {
+							type: 'change',
+							target: this,
+							props: changedProps
 						};
-						changedPropArray.push(prop);
+
+						//依存プロパティを再計算する
+						var changedDependProps = calcDependencies(model, this, event,
+								changedPropNameArray);
+
+						//依存プロパティの変更をchangeイベントに含める
+						$.extend(changedProps, changedDependProps);
+
+						//TODO managerに属しているかの条件は修正？
+						if (!model.manager || (model.manager && !model.manager.isInUpdate())) {
+							//TODO もしこのDataItemがremoveされていたらmodelには属していない
+							//アップデートセッション外の場合は即座にイベント送出
+							this.dispatchEvent(event);
+						}
 					}
-				}
+				});
 
-				//今回変更されたプロパティと依存プロパティを含めてイベント送出
-				var ev = {
-					type: 'change',
-					props: changedProps
-				};
-
-				//依存プロパティを再計算する
-				calcDependencies(model, this, ev, changedPropArray);
-
-				if (model.manager && !model.manager.isInUpdate()) {
-					//アップデートセッションの外の場合はイベントを発火させる
-					this.dispatchEvent(ev);
-				}
-
-				//dispatchEvent()していないのでtargetが入っていないため、ここでは自分で代入しておく
-				ev.target = this;
-				return ev;
-			}
-		});
-
-		//TODO DataItemの項目としてrefresh等同名のプロパティが出てきたらどうするか。
-		//今のうちに_とかでよけておくか、
-		//それともschema側を自動的によけるようにするか、
-		//またはぶつからないだろうと考えてよけないか
-		//(今は良いかもしれないが、将来的には少し怖い)
-
-
-		//TODO 外部に移動
-		var defaultPropDesc = {
-			type: 'any',
-			enhance: true
-		};
-
-		var propertiesDesc = {};
-
-		//データアイテムのプロトタイプを作成
-		//schemaは継承関係展開後のスキーマになっている
-		for ( var prop in schema) {
-			var propDesc = schema[prop];
-			if (!propDesc) {
-				propDesc = defaultPropDesc;
-			}
-
-			if (propDesc.enhance !== undefined && propDesc.enhance === false) {
-				continue; //非enhanceなプロパティは、Item生成時にプロパティだけ生成して終わり
-			}
-
-			var src = createSrc(prop, propDesc);
-			src.enumerable = true;
-			src.configurable = false;
-
-			propertiesDesc[prop] = src;
-		}
-
-		//TODO 一旦保留。settingsか、Managerのフラグで制御する。
-		//Object.defineProperties(DataItem.prototype, propertiesDesc);
-
-
-		return {
-			itemConstructor: DataItem,
-			propDesc: propertiesDesc
-		};
+		return DataItem;
 	}
 
 
@@ -1978,9 +1888,10 @@
 		 */
 		this._itemValueCheckFuncs = itemValueCheckFuncs;
 
-		var itemSrc = createDataItemConstructor(this, descriptor);
-		this.itemConstructor = itemSrc.itemConstructor;
-		this.itemPropDesc = itemSrc.propDesc;
+		/**
+		 * このデータモデルに対応するデータアイテムのコンストラクタ関数
+		 */
+		this.itemConstructor = createDataItemConstructor(this, descriptor);
 
 		//TODO this.fullname -> managerの名前までを含めた完全修飾名
 	}
@@ -2231,6 +2142,8 @@
 		 * @memberOf DataModelManager
 		 */
 		createModel: function(descriptor) {
+			//TODO 配列対応
+
 			//registerDataModelは初めにDescriptorの検証を行う。
 			//検証エラーがある場合は例外を送出する。
 			//エラーがない場合はデータモデルを返す（登録済みの場合は、すでにマネージャが持っているインスタンスを返す）。
