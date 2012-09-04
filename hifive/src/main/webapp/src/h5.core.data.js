@@ -1979,6 +1979,7 @@
 				var valueObj = items[i];
 
 				var itemId = valueObj[idKey];
+				//TODO idがintegerの場合もある
 				if (!isString(itemId) || itemId.length === 0) {
 					throwFwError(ERR_CODE_NO_ID);
 				}
@@ -1986,12 +1987,7 @@
 				var storedItem = this._findById(itemId);
 				if (storedItem) {
 					// 既に存在するオブジェクトの場合は値を更新
-					for ( var prop in valueObj) {
-						if (prop == idKey) {
-							continue;
-						}
-						storedItem[prop] = valueObj[prop];
-					}
+					storedItem.set(valueObj);
 					ret.push(storedItem);
 				} else {
 					var newItem = createItem(this, valueObj, this._itemChangeListener);
