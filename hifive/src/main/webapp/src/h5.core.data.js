@@ -1707,23 +1707,20 @@
 	 * @param {Function} itemChangeListener modelに対応する、データアイテムチェンジイベントリスナー
 	 * @returns {DataItem} データアイテムオブジェクト
 	 */
-	function createItem(model, data, itemChangeListener) {
-		//キーが文字列かつ空でない、かどうかのチェックはDataModel.create()で行われている
-
-		var id = data[model.idKey];
-
-		var item = new model.itemConstructor(data);
-
-		model.items[id] = item;
-		model.size++;
-
-		item.addEventListener('change', itemChangeListener);
-
-		return item;
-	}
-
-
-
+	//	function createItem(model, data, itemChangeListener) {
+	//		//キーが文字列かつ空でない、かどうかのチェックはDataModel.create()で行われている
+	//
+	//		var id = data[model.idKey];
+	//
+	//		var item = new model.itemConstructor(data);
+	//
+	//		model.items[id] = item;
+	//		model.size++;
+	//
+	//		item.addEventListener('change', itemChangeListener);
+	//
+	//		return item;
+	//	}
 	/**
 	 * スキーマの継承関係を展開し、フラットなスキーマを生成します。 同じ名前のプロパティは「後勝ち」です。
 	 *
@@ -1990,12 +1987,15 @@
 					storedItem.set(valueObj);
 					ret.push(storedItem);
 				} else {
-					var newItem = createItem(this, valueObj, this._itemChangeListener);
+					var newItem = new this.itemConstructor(valueObj);
+
+					this.items[itemId] = newItem;
+					this.size++;
+
+					newItem.addEventListener('change', this._itemChangeListener);
 
 					actualNewItems.push(newItem);
 					ret.push(newItem);
-
-					this.items[newItem[idKey]] = newItem;
 				}
 			}
 
