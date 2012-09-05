@@ -144,19 +144,19 @@
 	var DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME = 9;
 
 	/**
-	 * id指定されたプロパティにdeppendが指定されている
+	 * id指定されたプロパティにdependが指定されている
 	 */
-	var DESCRIPTOR_SCHEMA_ERR_CODE_ID_AND_DEPPEND = 10;
+	var DESCRIPTOR_SCHEMA_ERR_CODE_ID_DEPEND = 10;
 
 	/**
-	 * deppend.onに指定されたプロパティが存在しない
+	 * depend.onに指定されたプロパティが存在しない
 	 */
-	var DESCRIPTOR_SCHEMA_ERR_CODE_DEPPEND_ON = 11;
+	var DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_ON = 11;
 
 	/**
-	 * deppend.calcに関数が指定されていない
+	 * depend.calcに関数が指定されていない
 	 */
-	var DESCRIPTOR_SCHEMA_ERR_CODE_DEPPEND_CALC = 12;
+	var DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_CALC = 12;
 
 	/**
 	 * typeに文字列が指定されていない
@@ -239,6 +239,11 @@
 	var DESCRIPTOR_SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID = 29;
 
 	/**
+	 * defaultValue指定されたプロパティにdependが指定されている
+	 */
+	var DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND = 30;
+
+	/**
 	 * ディスクリプタのエラーメッセージ
 	 */
 	var DESCRIPTOR_VALIDATION_ERROR_MSGS = [];
@@ -251,9 +256,9 @@
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DUPLICATED_ID] = 'ID指定されているプロパティが複数あります。ID指定は1つのプロパティのみに指定してください。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_NO_ID] = 'ID指定されているプロパティがありません。ID指定は必須です。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME] = '{0}をプロパティ名に指定できません。半角英数字,_,$ で構成される文字列で、先頭は数字以外である必要があります。';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_ID_AND_DEPPEND] = '"{0}"プロパティの定義にエラーがあります。id指定されたプロパティにdependを指定することはできません。';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEPPEND_ON] = '"{0}"プロパティプロパティの定義にエラーがあります。depend.onに指定されたプロパティが存在しません。';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEPPEND_CALC] = '"{0}"プロパティプロパティの定義にエラーがあります。depend.calcには関数を指定する必要があります';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_ID_DEPEND] = '"{0}"プロパティの定義にエラーがあります。id指定されたプロパティにdependを指定することはできません。';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_ON] = '"{0}"プロパティプロパティの定義にエラーがあります。depend.onに指定されたプロパティが存在しません。';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_CALC] = '"{0}"プロパティプロパティの定義にエラーがあります。depend.calcには関数を指定する必要があります';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_TYPE] = '"{0}"プロパティプロパティの定義にエラーがあります。typeは文字列で指定して下さい。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_TYPE] = 'プロパティの定義にエラーがあります。typeに指定された文字列が不正です "{1}"';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_TYPE_DATAMODEL] = '"{0}"プロパティの定義にエラーがあります。 typeに指定されたデータモデル"{1}"は存在しません';
@@ -270,6 +275,8 @@
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_ID] = '"{0}"プロパティの定義にエラーがあります。id指定した項目にdefaultValueを設定することはできません';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE] = '"{0}"プロパティのdefaultValueに設定された値"{1}"は、typeまたはconstraintに定義された条件を満たしていません。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID] = '"{0}"プロパティの定義にエラーがあります。id指定された項目にconstraint.{1}:{2}を指定することはできません。';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND] = '"{0}"プロパティの定義にエラーがあります。dependが指定された項目にdefaultValueを指定することはできません。';
+
 
 	var ITEM_PROP_BACKING_STORE_PREFIX = '__';
 
@@ -725,7 +732,16 @@
 					// id指定されているならエラー
 					if (isId) {
 						errorReason.push(createErrorReason(
-								DESCRIPTOR_SCHEMA_ERR_CODE_ID_AND_DEPPEND, schemaProp));
+								DESCRIPTOR_SCHEMA_ERR_CODE_ID_DEPEND, schemaProp));
+						if (stopOnError) {
+							return errorReason;
+						}
+					}
+
+					// defaultValueが指定されているならエラー
+					if(propObj.hasOwnProperty('defaultValue')){
+						errorReason.push(createErrorReason(
+								DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND, schemaProp));
 						if (stopOnError) {
 							return errorReason;
 						}
@@ -733,7 +749,7 @@
 
 					// dependが指定されているなら、on,calcが指定されていること
 					if (depend.on == null) {
-						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEPPEND_ON,
+						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_ON,
 								schemaProp));
 						if (stopOnError) {
 							return errorReason;
@@ -743,7 +759,7 @@
 						for ( var i = 0, l = onArray.length; i < l; i++) {
 							if (!schema[onArray[i]]) {
 								errorReason.push(createErrorReason(
-										DESCRIPTOR_SCHEMA_ERR_CODE_DEPPEND_ON, schemaProp));
+										DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_ON, schemaProp));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -752,7 +768,7 @@
 						}
 					}
 					if (typeof depend.calc !== 'function') {
-						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEPPEND_CALC,
+						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_CALC,
 								schemaProp));
 						if (stopOnError) {
 							return errorReason;
@@ -1072,6 +1088,7 @@
 				// defaultValueのチェック
 				// defaultValueがtypeやconstraintの条件を満たしているかのチェックはここでは行わない
 				// id:trueの項目にdefaultValueが指定されていればここでエラーにする
+				// depend指定されている項目にdefaultValueが指定されている場合はエラー(dependのチェック時にエラーにしている)
 				if (isId && propObj.hasOwnProperty('defaultValue')) {
 					// id項目にdefaultValueが設定されていたらエラー
 					errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_ID,
