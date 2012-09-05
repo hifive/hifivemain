@@ -77,7 +77,7 @@
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
-	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 property = {0}';
+	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
 	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティのセッターを呼び出した';
 	ERROR_MESSAGES[ERR_CODE_NO_EVENT_TARGET] = 'イベントのターゲットが指定されていない';
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAMESPACE] = 'createDataModelManagerのnamespaceが不正';
@@ -283,13 +283,6 @@
 	var UPDATE_LOG_TYPE_CHANGE = 2;
 	var UPDATE_LOG_TYPE_REMOVE = 3;
 
-
-	//JSDTが使われていないと誤検出するが、使っているので削除してはいけない
-	var DEFAULT_TYPE_VALUE = {
-		'number': 0,
-		'integer': 0,
-		'boolean': false
-	};
 
 
 	//=============================
@@ -1288,13 +1281,13 @@
 	}
 
 
-	function itemSetter(model, item, valueObj, noValidationProps) {
+	function itemSetter(model, item, valueObj, noValidationProps, ignoreProps) {
 		var readyProps = [];
 
 		//先に、すべてのプロパティの整合性チェックを行う
 		for ( var prop in valueObj) {
-			if (!(prop in model.schema)) {
-				//schemaに存在しないプロパティは無視する
+			if (!(prop in model.schema) || (ignoreProps && ($.inArray(prop, ignoreProps) !== -1))) {
+				//schemaに存在しない、または無視すべきプロパティは無視する
 				continue;
 			}
 
@@ -1306,6 +1299,7 @@
 				continue;
 			}
 
+			//ここでpushしたプロパティのみ、後段で値をセットする
 			readyProps.push({
 				p: prop,
 				o: oldValue,
@@ -1335,11 +1329,12 @@
 			var readyProp = readyProps[i];
 
 			//TODO 判定文改良
-			if (model.schema[readyProp.p] && isTypeArray(model.schema[readyProp.p].type)
-					&& readyProp.n) {
+			if (model.schema[readyProp.p] && isTypeArray(model.schema[readyProp.p].type)) {
 				//配列の場合は値のコピーを行う。ただし、コピー元がnullの場合があり得る（create()でdefaultValueがnull）ので
 				//その場合はコピーしない
-				getValue(item, readyProp.p).copyFrom(readyProp.n);
+				if (readyProp.n) {
+					getValue(item, readyProp.p).copyFrom(readyProp.n);
+				}
 			} else {
 				//新しい値を代入
 				setValue(item, readyProp.p, readyProp.n);
@@ -1567,12 +1562,8 @@
 						//type:[]の場合、、defaultValueは事前に制約チェック済みなので改めてvalidationしなくてよい
 						noValidationProps.push(plainProp);
 					}
-				} else if (propDesc && propDesc.type
-						&& DEFAULT_TYPE_VALUE[propDesc.type] !== undefined) {
-					//各typeのデフォルト値があれば代入
-					initValue = DEFAULT_TYPE_VALUE[propDesc.type];
 				} else {
-					//いずれでもない場合はnull
+					//どちらでもない場合はnull
 					//ただし、notNull制約などがついている場合はセッターで例外が発生する
 					initValue = null;
 
@@ -1934,8 +1925,8 @@
 
 						var storedItem = this._findById(itemId);
 						if (storedItem) {
-							// 既に存在するオブジェクトの場合は値を更新
-							storedItem.set(valueObj);
+							// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
+							itemSetter(this, storedItem, valueObj, null, [idKey]);
 							ret.push(storedItem);
 						} else {
 							var newItem = new this.itemConstructor(valueObj);
