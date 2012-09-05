@@ -893,6 +893,20 @@ $(function() {
 		}
 	});
 
+	test('データモデルの登録 schemaのチェック enumValueに空配列、nullを含む配列、undefinedを含む配列を指定した場合はエラーが出ること',
+			function() {
+				var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+				var noArrays = [[], [null, 1], [undefined, 2]];
+				var l = noArrays.length;
+				expect(l);
+				for ( var i = 0; i < l; i++) {
+					testErrorWhenCreateModelByValueProperty({
+						type: 'enum',
+						enumValue: noArrays[i]
+					}, errCode);
+				}
+			});
+
 	test('データモデルの登録 schemaのチェック enumValueに空配列(lengthが0の配列)を指定した場合はエラーが出ること', function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		var ary = [];
@@ -1557,18 +1571,6 @@ $(function() {
 						type: 'boolean',
 						defaultValue: new Object(true)
 					},
-					testA1: {
-						type: 'array',
-						defaultValue: [10, 20]
-					},
-					testA2: {
-						type: 'array',
-						defaultValue: new Array(10, 20)
-					},
-					testA3: {
-						type: 'array',
-						defaultValue: new Object([10, 20])
-					},
 					testI1: {
 						type: 'integer',
 						defaultValue: 10
@@ -1639,10 +1641,15 @@ $(function() {
 						defaultValue: window,
 						enumValue: [window]
 					},
-					testEnum2: {
+					testEnum3: {
 						type: 'enum',
 						defaultValue: NaN,
 						enumValue: [Infinity, NaN, -Infinity]
+					},
+					testEnum4: {
+						type: 'enum',
+						defaultValue: null,
+						enumValue: [1, 2, 3]
 					},
 					testAny1: {
 						type: 'any',
@@ -2305,7 +2312,7 @@ $(function() {
 		}, {
 			id: '2',
 			val2: 22,
-			val2: 33
+			val3: 33
 		}]);
 
 		strictEqual(items[0], items[1], '同じid要素を持つオブジェクトを配列で渡した時、戻り値は同じインスタンスであること');
@@ -2541,62 +2548,61 @@ $(function() {
 		}
 	});
 
-	test('type指定 string[] 正常系',
-			function() {
-				var model = manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						test1: {
-							type: 'string[]',
-							defaultValue: ['a']
-						},
-						test2: {
-							type: 'string[]'
-						}
-					}
+	test('type指定 string[] 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string[]',
+					defaultValue: ['a']
+				},
+				test2: {
+					type: 'string[]'
+				}
+			}
+		});
+
+		try {
+			var item = model.create({
+				id: sequence.next()
+			});
+
+			// 初期値は正しいか
+			deepEqualObs(item.get('test1'), ['a'],
+					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: sequence.next(),
+				test1: ['c', 'z']
+			});
+
+			deepEqualObs(item.get('test1'), ['c', 'z'], 'type:\'string[]\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Array(new String('a'), new String(10)), new Array('x', 'r'),
+					new Array('8', '5'), new Object(['i', 'd']), new Object(['3', '4']), [],
+					[null, undefined]];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: sequence.next(),
+					test1: sub[i]
 				});
 
-				try {
-					var item = model.create({
-						id: sequence.next()
-					});
+				ok(true, 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
 
-					// 初期値は正しいか
-					deepEqualObs(item.test1, ['a'],
-							'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-					deepEqualObs(item.test2, [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+				item2.set('test1', sub[i]);
 
-					item = model.create({
-						id: sequence.next(),
-						test1: ['c', 'z']
-					});
-
-					deepEqualObs(item.test1, ['c', 'z'], 'type:\'string[]\'のプロパティに値が代入できること。');
-
-					// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
-					var item2 = null;
-					var sub = [new Array(new String('a'), new String(10)), new Array('x', 'r'),
-							new Array('8', '5'), new Object(['i', 'd']), new Object(['3', '4']),
-							[], [null, undefined]];
-					for ( var i = 0; i < sub.length; i++) {
-						item2 = model.create({
-							id: sequence.next(),
-							test1: sub[i]
-						});
-
-						ok(true, 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
-
-						item2.set('test1', sub[i]);
-
-						ok(true, 'typeプロパティで指定した型の値が代入できること。');
-					}
-				} catch (e) {
-					ok(false, 'エラーが発生しました。『' + e.message + '』');
-				}
-			});
+				ok(true, 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
 
 	test('type指定 string[] 異常系', function() {
 		var model = manager.createModel({
@@ -2643,74 +2649,77 @@ $(function() {
 		}
 	});
 
-	test('type指定 DataModel 正常系', 4, function() {
-		var descriptor1 = {
-			name: 'DataModel1',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'string'
-				}
-			}
-		};
-		var desc1Model = manager.createModel(descriptor1);
-		var model1DataItem = desc1Model.create({
-			id: sequence.next(),
-			test1: 'aaa'
-		});
+	test('type指定 DataModel 正常系', 4,
+			function() {
+				var descriptor1 = {
+					name: 'DataModel1',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'string'
+						}
+					}
+				};
+				var desc1Model = manager.createModel(descriptor1);
+				var model1DataItem = desc1Model.create({
+					id: sequence.next(),
+					test1: 'aaa'
+				});
 
-		var descriptor2 = {
-			name: 'DataModel2',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'number'
-				}
-			}
-		};
+				var descriptor2 = {
+					name: 'DataModel2',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'number'
+						}
+					}
+				};
 
-		var descModel2 = manager.createModel(descriptor2);
-		var model2DataItem = descModel2.create({
-			id: sequence.next(),
-			test1: 20
-		});
+				var descModel2 = manager.createModel(descriptor2);
+				var model2DataItem = descModel2.create({
+					id: sequence.next(),
+					test1: 20
+				});
 
-		var model = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				dataModel1: {
-					type: '@DataModel1'
-				},
-				dataModel2: {
-					type: '@DataModel2'
-				}
-			}
-		});
+				var model = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						dataModel1: {
+							type: '@DataModel1'
+						},
+						dataModel2: {
+							type: '@DataModel2'
+						}
+					}
+				});
 
-		// DataItemでcreateできるか
-		var item1 = model.create({
-			id: sequence.next(),
-			dataModel1: model1DataItem
-		});
-		var item2 = model.create({
-			id: sequence.next(),
-			dataModel2: model2DataItem
-		});
+				// DataItemでcreateできるか
+				var item1 = model.create({
+					id: sequence.next(),
+					dataModel1: model1DataItem
+				});
+				var item2 = model.create({
+					id: sequence.next(),
+					dataModel2: model2DataItem
+				});
 
-		equal(item1.dataModel1.test1, 'aaa', 'create時に指定したモデルの値が、DataItemから取得できること。');
-		equal(item1.get('dataModel2'), null, 'create時に何も値を指定しない場合、nullが取得できること。');
-		equal(item2.get('dataModel1'), null, 'create時に何も値を指定しない場合、nullが取得できること。');
-		equal(item2.dataModel2.test1, 20, 'create時に指定したモデルの値が、DataItemから取得できること。');
+				equal(item1.get('dataModel1').get('test1'), 'aaa',
+						'create時に指定したモデルの値が、DataItemから取得できること。');
+				equal(item1.get('dataModel2'), null, 'create時に何も値を指定しない場合、nullが取得できること。');
+				equal(item2.get('dataModel1'), null, 'create時に何も値を指定しない場合、nullが取得できること。');
+				equal(item2.get('dataModel2').get('test1'), 20,
+						'create時に指定したモデルの値が、DataItemから取得できること。');
 
-		//TODO null,undefinedでcreateできること、代入できることを確認する
-	});
+				//TODO null,undefinedでcreateできること、代入できることを確認する
+			});
 
 	test('type指定 DataModel 異常系', 2, function() {
 		var descriptor1 = {
@@ -2785,104 +2794,104 @@ $(function() {
 		// 異なる型をsetするとエラーが発生すること
 		raises(function() {
 			item1.set('dataModel1', model2DataItem);
-			item1.refresh();
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
 	});
 
-	test('type指定 DataModel[] 正常系', 8, function() {
-		var descriptor1 = {
-			name: 'DataModel1',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'string'
-				}
-			}
-		};
-		var desc1Model = manager.createModel(descriptor1);
-		var model1DataItem1 = desc1Model.create({
-			id: sequence.next(),
-			test1: 'aaa'
-		});
-		var model1DataItem2 = desc1Model.create({
-			id: sequence.next(),
-			test1: 'bbb'
-		});
+	test(
+			'type指定 DataModel[] 正常系',
+			8,
+			function() {
+				var descriptor1 = {
+					name: 'DataModel1',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'string'
+						}
+					}
+				};
+				var desc1Model = manager.createModel(descriptor1);
+				var model1DataItem1 = desc1Model.create({
+					id: sequence.next(),
+					test1: 'aaa'
+				});
+				var model1DataItem2 = desc1Model.create({
+					id: sequence.next(),
+					test1: 'bbb'
+				});
 
-		var descriptor2 = {
-			name: 'DataModel2',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'number'
-				}
-			}
-		};
+				var descriptor2 = {
+					name: 'DataModel2',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'number'
+						}
+					}
+				};
 
-		var descModel2 = manager.createModel(descriptor2);
-		var model2DataItem1 = descModel2.create({
-			id: sequence.next(),
-			test1: 20
-		});
-		var model2DataItem2 = descModel2.create({
-			id: sequence.next(),
-			test1: 30
-		});
+				var descModel2 = manager.createModel(descriptor2);
+				var model2DataItem1 = descModel2.create({
+					id: sequence.next(),
+					test1: 20
+				});
+				var model2DataItem2 = descModel2.create({
+					id: sequence.next(),
+					test1: 30
+				});
 
-		var model = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				dataModel1: {
-					type: '@DataModel1[]'
-				},
-				dataModel2: {
-					type: '@DataModel2[]'
-				}
-			}
-		});
+				var model = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						dataModel1: {
+							type: '@DataModel1[]'
+						},
+						dataModel2: {
+							type: '@DataModel2[]'
+						}
+					}
+				});
 
-		// DataItemでcreateできるか
-		var item1 = model.create({
-			id: sequence.next(),
-			dataModel1: [model1DataItem1, model1DataItem2]
-		});
-		var item2 = model.create({
-			id: sequence.next(),
-			dataModel2: [model2DataItem1, model2DataItem2]
-		});
+				// DataItemでcreateできるか
+				var item1 = model.create({
+					id: sequence.next(),
+					dataModel1: [model1DataItem1, model1DataItem2]
+				});
+				var item2 = model.create({
+					id: sequence.next(),
+					dataModel2: [model2DataItem1, model2DataItem2]
+				});
 
-		equal(item1.dataModel1[0].test1, 'aaa', 'create時に指定したモデルの値が、DataItemから取得できること。');
-		equal(item1.dataModel1[1].test1, 'bbb', 'create時に指定したモデルの値が、DataItemから取得できること。');
-		deepEqualObs(item1.dataModel2, [], 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
-		equal(item2.dataModel2[0].test1, 20, 'create時に指定したモデルの値が、DataItemから取得できること。');
-		equal(item2.dataModel2[1].test1, 30, 'create時に指定したモデルの値が、DataItemから取得できること。');
-		deepEqualObs(item2.dataModel1, [], 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
+				equal(item1.get('dataModel1')[0].get('test1'), 'aaa',
+						'create時に指定したモデルの値が、DataItemから取得できること。');
+				equal(item1.get('dataModel1')[1].get('test1'), 'bbb',
+						'create時に指定したモデルの値が、DataItemから取得できること。');
+				deepEqualObs(item1.get('dataModel2'), [], 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
+				equal(item2.get('dataModel2')[0].get('test1'), 20,
+						'create時に指定したモデルの値が、DataItemから取得できること。');
+				equal(item2.get('dataModel2')[1].get('test1'), 30,
+						'create時に指定したモデルの値が、DataItemから取得できること。');
+				deepEqualObs(item2.get('dataModel1'), [], 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
 
-		// 指定無し、null,undefined,空配列でcreateできるか
-		deepEqualObs(model.create({
-			id: sequence.next(),
-			dataModel1: [null]
-		}).dataModel1, [null], 'create時に[null]を指定した場合、[null]が取得できること。');
+				// 指定無し、null,空配列でcreateできるか
+				deepEqualObs(model.create({
+					id: sequence.next(),
+					dataModel1: [null]
+				}).get('dataModel1'), [null], 'create時に[null]を指定した場合、[null]が取得できること。');
 
-		//TODO undefined → null の変換は型変換が行われることを確認するテストで行う
-		//		deepEqualObs(model.create({
-		//			id: sequence.next(),
-		//			dataModel1: [undefined]
-		//		}).dataModel1, [null], 'create時に[undefined]を指定した場合、[null]が取得できること。');
+				deepEqualObs(model.create({
+					id: sequence.next(),
+					dataModel1: []
+				}).get('dataModel1'), [], 'create時に空配列を指定した場合、空のObsArrayが取得できること。');
 
-		deepEqualObs(model.create({
-			id: sequence.next(),
-			dataModel1: []
-		}).dataModel1, [], 'create時に空配列を指定した場合、空配列が取得できること。');
-
-	});
+			});
 
 	test('type指定 DataModel[] 異常系', 4, function() {
 		var descriptor1 = {
@@ -2972,7 +2981,8 @@ $(function() {
 	});
 
 
-	test('type指定 number 正常系',
+	test(
+			'type指定 number 正常系',
 			function() {
 				var model = manager.createModel({
 					name: 'TestDataModel',
@@ -2998,7 +3008,7 @@ $(function() {
 					// 初期値は正しいか
 					strictEqual(item.get('test1'), 20,
 							'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-					strictEqual(item.get('test2'), 0, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+					strictEqual(item.get('test2'), null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 					item = model.create({
 						id: sequence.next(),
@@ -3096,15 +3106,16 @@ $(function() {
 			});
 
 			// 初期値は正しいか
-			deepEqualObs(item.test1, [20], 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.test2, [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+			deepEqualObs(item.get('test1'), [20],
+					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
 				test1: [30, 10]
 			});
 
-			deepEqualObs(item.test1, [30, 10], 'type:\'number[]\'のプロパティcreateで値が代入できること。');
+			deepEqualObs(item.get('test1'), [30, 10], 'type:\'number[]\'のプロパティcreateで値が代入できること。');
 
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
@@ -3203,7 +3214,7 @@ $(function() {
 			// 初期値は正しいか
 			strictEqual(item.get('test1'), 50,
 					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			strictEqual(item.get('test2'), 0, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+			strictEqual(item.get('test2'), null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
@@ -3310,16 +3321,16 @@ $(function() {
 			});
 
 			// 初期値は正しいか
-			deepEqualObs(item.test1, [50, 15],
+			deepEqualObs(item.get('test1'), [50, 15],
 					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.test2, [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、空のObsArrayが代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
 				test1: [10, 30]
 			});
 
-			deepEqual(item.get('test1'), [10, 30], 'type:integer[] のプロパティに値が代入できること。');
+			deepEqualObs(item.get('test1'), [10, 30], 'type:integer[] のプロパティに値が代入できること。');
 
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
@@ -3423,7 +3434,7 @@ $(function() {
 			// 初期値は正しいか
 			strictEqual(item.get('test1'), true,
 					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			strictEqual(item.get('test2'), false, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+			strictEqual(item.get('test2'), null, 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
@@ -3527,16 +3538,17 @@ $(function() {
 			});
 
 			// 初期値は正しいか
-			deepEqualObs(item.test1, [true, false],
+			deepEqualObs(item.get('test1'), [true, false],
 					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.test2, [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
 				test1: [false, true, false]
 			});
 
-			deepEqualObs(item.test1, [false, true, false], 'type:boolean[] のプロパティに値が代入できること。');
+			deepEqualObs(item.get('test1'), [false, true, false],
+					'type:boolean[] のプロパティに値が代入できること。');
 
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
@@ -3684,61 +3696,60 @@ $(function() {
 
 	// 2012/07/27 竹内追記 type:array[]は無い
 	// 2012/08/23 福田追記 type:arrayは廃止。type:any[]を使用する
-	test('type指定 any[] 正常系',
-			function() {
-				var model = manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						test1: {
-							type: 'any[]',
-							defaultValue: [10]
-						},
-						test2: {
-							type: 'any[]'
-						}
-					}
+	test('type指定 any[] 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'any[]',
+					defaultValue: [10]
+				},
+				test2: {
+					type: 'any[]'
+				}
+			}
+		});
+
+		try {
+			var item = model.create({
+				id: sequence.next()
+			});
+
+			// 初期値は正しいか
+			deepEqualObs(item.get('test1'), [10],
+					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: sequence.next(),
+				test1: [30]
+			});
+
+			deepEqualObs(item.get('test1'), [30], 'type:\'any\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Array(10, 8), new Object(['a']), [new Number(1)], [null, undefined]];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: sequence.next(),
+					test1: sub[i]
 				});
 
-				try {
-					var item = model.create({
-						id: sequence.next()
-					});
+				deepEqualObs(item2.get('test1'), sub[i], 'test1に' + sub[i]
+						+ 'が代入されてDataItemが生成されること。');
 
-					// 初期値は正しいか
-					deepEqualObs(item.test1, [10],
-							'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-					deepEqualObs(item.test2, [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+				item2.set('test2', sub[i]);
 
-					item = model.create({
-						id: sequence.next(),
-						test1: [30]
-					});
-
-					deepEqualObs(item.test1, [30], 'type:\'any\'のプロパティに値が代入できること。');
-
-					// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
-					var item2 = null;
-					var sub = [new Array(10, 8), new Object(['a']), [new Number(1)]];
-					for ( var i = 0; i < sub.length; i++) {
-						item2 = model.create({
-							id: sequence.next(),
-							test1: sub[i]
-						});
-
-						deepEqual(item2.get('test1'), sub[i], 'test1に' + sub[i]
-								+ 'が代入されてDataItemが生成されること。');
-
-						item2.set('test1', sub[i]);
-
-						deepEqual(item2.get('test1'), sub[i], 'typeプロパティで指定した型の値が代入できること。');
-					}
-				} catch (e) {
-					ok(false, 'エラーが発生しました。『' + e.message + '』');
-				}
-			});
+				deepEqualObs(item2.get('test2'), sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
 
 	test('type指定 any[] 異常系', function() {
 		var model = manager.createModel({
@@ -3927,49 +3938,51 @@ $(function() {
 				test1: {
 					type: 'enum[]',
 					defaultValue: [10],
-					enumValue: ['a', 10, true, testClass1]
+					enumValue: ['a', 10, true, testClass1, NaN]
 				},
 				test2: {
 					type: 'enum[]',
-					enumValue: ['b', 20, false, testClass1]
+					enumValue: ['b', 20, false, testClass1, NaN]
 				}
 			}
 		});
+		var item = model.create({
+			id: sequence.next()
+		});
 
-		try {
-			var item = model.create({
-				id: sequence.next()
-			});
+		// 初期値は正しいか
+		deepEqualObs(item.get('test1'), [10],
+				'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+		deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
-			// 初期値は正しいか
-			deepEqualObs(item.test1, [10], 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.test2, [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+		item = model.create({
+			id: sequence.next(),
+			test1: ['a']
+		});
 
-			item = model.create({
-				id: sequence.next(),
-				test1: ['a']
-			});
+		deepEqualObs(item.get('test1'), ['a'], 'type:\'enum[]\'のプロパティに値が代入できること。');
 
-			deepEqual(item.get('test1'), testClass1, 'type:\'enum[]\'のプロパティに値が代入できること。');
+		// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+		var item2 = null;
+		var sub = [['b'], ['b', 'b'], ['b', 20], ['b', 20, false, testClass1, NaN], [NaN], [false],
+				[testClass1], [null], [null, null], []];
+		for ( var i = 0; i < sub.length; i++) {
+			try {
 
-			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
-			var item2 = null;
-			var sub = [['b'], ['b', 'b'], ['b', 20], ['b', 20, false, testClass1], [false],
-					[testClass1], [null], [undefined], [null, undefined]];
-			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test2: sub[i]
 				});
 
-				deepEqualObs(item2.test1, sub[i], 'test2に' + sub[i] + 'が代入されてDataItemが生成されること。');
+				deepEqualObs(item2.get('test2'), sub[i], 'test2に['
+						+ Array.prototype.toString.call(sub[i]) + ']が代入されてDataItemが生成されること。');
 
 				item2.set('test2', sub[i]);
 
-				deepEqualObs(item2.test2, sub[i], 'typeプロパティで指定した型の値が代入できること。');
+				deepEqualObs(item2.get('test2'), sub[i], 'typeプロパティで指定した型の値が代入できること。');
+			} catch (e) {
+				ok(false, 'エラーが発生しました。『' + e.message + '』');
 			}
-		} catch (e) {
-			ok(false, 'エラーが発生しました。『' + e.message + '』');
 		}
 	});
 
@@ -4155,7 +4168,7 @@ $(function() {
 					constraint: constraint
 				},
 				test9: {
-					type: 'array',
+					type: 'any[]',
 					defaultValue: [30, 'ZZZ', /[0-9]/],
 					constraint: constraint
 				},
@@ -4224,21 +4237,21 @@ $(function() {
 			id: sequence.next()
 		});
 		equal(item1.get('test1'), 'aaa', msg);
-		deepEqualObs(item1.test2, ['a', 'b', 'c'], msg);
+		deepEqualObs(item1.get('test2'), ['a', 'b', 'c'], msg);
 		equal(item1.get('test3'), 10.5, msg);
-		deepEqualObs(item1.test4, [20.1, 20.2, 20.3], msg);
+		deepEqualObs(item1.get('test4'), [20.1, 20.2, 20.3], msg);
 		equal(item1.get('test5'), 6, msg);
-		deepEqualObs(item1.test6, [7, 8, 9], msg);
+		deepEqualObs(item1.get('test6'), [7, 8, 9], msg);
 		equal(item1.get('test7'), true, msg);
-		deepEqualObs(item1.test8, [true, false], msg);
-		deepEqualObs(item1.test9, [30, 'ZZZ', /[0-9]/], msg);
+		deepEqualObs(item1.get('test8'), [true, false], msg);
+		deepEqualObs(item1.get('test9'), [30, 'ZZZ', /[0-9]/], msg);
 		deepEqual(item1.get('test10'), {
 			hoge: 1
 		}, msg);
 		equal(item1.get('test11'), itemA, msg);
-		deepEqualObs(item1.test12, [itemB, itemA], msg);
+		deepEqualObs(item1.get('test12'), [itemB, itemA], msg);
 		equal(item1.get('test13'), 10.8, msg);
-		deepEqualObs(item1.test14, [testClass1], msg);
+		deepEqualObs(item1.get('test14'), [testClass1], msg);
 
 		var $div = $('<div></div>');
 
@@ -4263,53 +4276,53 @@ $(function() {
 			test14: [5]
 		});
 		strictEqual(item2.get('test1'), 'bbb', msg);
-		deepEqualObs(item2.test2, ['A', 'B', 'C'], msg);
+		deepEqualObs(item2.get('test2'), ['A', 'B', 'C'], msg);
 		strictEqual(item2.get('test3'), 120.1, msg);
-		deepEqualObs(item2.test4, [81.1, 81.2, 81.3], msg);
+		deepEqualObs(item2.get('test4'), [81.1, 81.2, 81.3], msg);
 		strictEqual(item2.get('test5'), 3000, msg);
-		deepEqualObs(item2.test6, [4000, 5000, 6000], msg);
+		deepEqualObs(item2.get('test6'), [4000, 5000, 6000], msg);
 		strictEqual(item2.get('test7'), false, msg);
-		deepEqualObs(item2.test8, [false, false], msg);
-		deepEqualObs(item2.test9, [true, '9999', 70.5], msg);
+		deepEqualObs(item2.get('test8'), [false, false], msg);
+		deepEqualObs(item2.get('test9'), [true, '9999', 70.5], msg);
 		strictEqual(item2.get('test10'), $div, msg);
 		strictEqual(item2.get('test11'), itemB, msg);
-		deepEqualObs(item2.test12, [itemA], msg);
+		deepEqualObs(item2.get('test12'), [itemA], msg);
 		strictEqual(item2.get('test13'), true, msg);
-		deepEqualObs(item2.test14, [5], msg);
+		deepEqualObs(item2.get('test14'), [5], msg);
 
 		// setできること
-		msg = '条件を満たす値を代入できること';
+		msg = '条件を満たす値をsetできること';
 
 		item2.set('test1', 'ccc');
 		strictEqual(item2.get('test1'), 'ccc', msg);
 
 		item2.set('test2', ['aa', 'bb', 'cc']);
-		deepEqualObs(item2.test2, ['aa', 'bb', 'cc'], msg);
+		deepEqualObs(item2.get('test2'), ['aa', 'bb', 'cc'], msg);
 
 		item2.set('test3', 0);
 		strictEqual(item2.get('test3'), 0, msg);
 
 		item2.set('test4', [1, 2, 3]);
-		deepEqualObs(item2.test4, [1, 2, 3], msg);
+		deepEqualObs(item2.get('test4'), [1, 2, 3], msg);
 
 		item2.set('test5', -3000);
 		strictEqual(item2.get('test5'), -3000, msg);
 
 		item2.set('test6', [1, 2, 3]);
-		deepEqualObs(item2.test6, [1, 2, 3], msg);
+		deepEqualObs(item2.get('test6'), [1, 2, 3], msg);
 
 		item2.set('test7', true);
 		strictEqual(item2.get('test7'), true, msg);
 
 		item2.set('test8', [true, true, false]);
-		deepEqualObs(item2.test8, [true, true, false], msg);
+		deepEqualObs(item2.get('test8'), [true, true, false], msg);
 
 		item2.set('test9', [[1], 2, 'aaa']);
-		deepEqual(item2.get('test9'), [[1], 2, 'aaa'], msg);
+		deepEqualObs(item2.get('test9'), [[1], 2, 'aaa'], msg);
 
-		item2.test10 = {
+		item2.set('test10', {
 			a: 'b'
-		};
+		});
 		deepEqual(item2.get('test10'), {
 			a: 'b'
 		}, msg);
@@ -4318,13 +4331,13 @@ $(function() {
 		strictEqual(item2.get('test11'), itemA, msg);
 
 		item2.set('test12', [itemA, itemB, itemB]);
-		deepEqualObs(item2.test12, [itemA, itemB, itemB], msg);
+		deepEqualObs(item2.get('test12'), [itemA, itemB, itemB], msg);
 
 		item2.set('test13', 10.8);
 		strictEqual(item2.get('test13'), 10.8, msg);
 
 		item2.set('test14', [testClass1, 'YYY', true, true]);
-		deepEqualObs(item2.test14, [testClass1, 'YYY', true, true], msg);
+		deepEqualObs(item2.get('test14'), [testClass1, 'YYY', true, true], msg);
 
 
 	});
@@ -4364,7 +4377,7 @@ $(function() {
 			ok(false, 'テスト失敗。notNullの項目に値を設定しないでcreateした時にエラーが発生していません。');
 		} catch (e) {
 			//TODO エラーコード確認する(以降のconstraintチェック異常系のテストも同様)
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 	});
 
@@ -4403,8 +4416,6 @@ $(function() {
 			model = null;
 			sequence = null;
 			testClass1 = null;
-			itemA = null;
-			itemB = null;
 		}
 	});
 
@@ -4412,7 +4423,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('制約が適用されているか 正常系', 6, function() {
+	test('制約が適用されているか 正常系', 7, function() {
 		// 値を指定せずcreateできること
 		var msg = 'defaultValueで指定した値を持つDataItemが作成できること。';
 		var item = model.create({
@@ -4420,7 +4431,7 @@ $(function() {
 		});
 
 		equal(item.get('test1'), 'test1', msg);
-		deepEqualObs(item.test2, ['a', 'b', 'c'], msg);
+		deepEqualObs(item.get('test2'), ['a', 'b', 'c'], msg);
 
 		// 値を指定してcreateできること
 		msg = '条件を満たす値を持つDataItemが作成できること';
@@ -4432,7 +4443,7 @@ $(function() {
 		});
 
 		equal(item.get('test1'), 'bbb', msg);
-		deepEqualObs(item.test2, ['A', 'B', 'C'], msg);
+		deepEqualObs(item.get('test2'), ['A', 'B', 'C'], msg);
 
 
 		// setできること
@@ -4442,11 +4453,16 @@ $(function() {
 		strictEqual(item.get('test1'), 'bbb', msg);
 
 		item.set('test2', ['aa', 'bb', 'cc']);
-		deepEqualObs(item.test2, ['aa', 'bb', 'cc'], msg);
+		deepEqualObs(item.get('test2'), ['aa', 'bb', 'cc'], msg);
+
+		// string[]に[]をsetできること
+		item.set('test2', []);
+		deepEqualObs(item.get('test2'), [], msg);
 	});
 
 	test(
 			'制約が適用されているか 異常系',
+			9,
 			function() {
 				// createでエラー
 				try {
@@ -4456,7 +4472,7 @@ $(function() {
 					});
 					ok(false, 'テスト失敗。NotEmpty指定した項目(string)に空文字を指定してcreateした時にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 
 				try {
@@ -4466,7 +4482,7 @@ $(function() {
 					});
 					ok(false, 'テスト失敗。NotEmpty指定した項目(string[])に空文字を含む配列を指定してcreateした時にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 
 				try {
@@ -4476,7 +4492,7 @@ $(function() {
 					});
 					ok(false, 'テスト失敗。NotEmpty指定した項目(string)にnullを指定してcreateした時にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 
 				try {
@@ -4487,7 +4503,7 @@ $(function() {
 					ok(false,
 							'テスト失敗。NotEmpty指定した項目(string[])にnullを含む配列を指定してcreateした時にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 
 				var item = model.create({
@@ -4497,29 +4513,27 @@ $(function() {
 				// setでエラー
 				try {
 					item.set('test1', '');
-					ok(false, 'テスト失敗。NotEmpty指定した項目(string)に空文字を代入してrefreshした時にエラーが発生しませんでした');
+					ok(false, 'テスト失敗。NotEmpty指定した項目(string)に空文字をsetした時にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 				try {
 					item.set('test2', ['b', '']);
-					ok(false,
-							'テスト失敗。NotEmpty指定した項目(string[])に空文字を含む配列を代入してrefreshした時にエラーが発生しませんでした');
+					ok(false, 'テスト失敗。NotEmpty指定した項目(string[])に空文字を含む配列をsetした時にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 				try {
 					item.set('test1', null);
-					ok(false, 'テスト失敗。NotEmpty指定した項目(string)にnullを代入してrefreshした時にエラーが発生しませんでした');
+					ok(false, 'テスト失敗。NotEmpty指定した項目(string)にnullをsetした時にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 				try {
 					item.set('test2', ['b', null]);
-					ok(false,
-							'テスト失敗。NotEmpty指定した項目(string[])にnullを含む配列を代入してrefreshした時にエラーが発生しませんでした');
+					ok(false, 'テスト失敗。NotEmpty指定した項目(string[])にnullを含む配列をsetした時にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 
 				var constraint = {
@@ -4547,7 +4561,7 @@ $(function() {
 					ok(false,
 							'テスト失敗。NotEmpty制約の項目にdefaultValue指定がない項目を、create時に値を指定しなかった場合にエラーが発生しませんでした');
 				} catch (e) {
-					strictEqual(e.code, ERR.ERR_CODE_INVALID_TYPE, e.message);
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 			});
 
@@ -4601,6 +4615,616 @@ $(function() {
 			sequence = null;
 			dataModel1 = null;
 			testClass1 = null;
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('制約が適用されているか 正常系', 22, function() {
+		// 値を指定しないでcreate
+		var item = model.create({
+			id: sequence.next()
+		});
+		equal(item.get('num'), -5.5, 'type:num minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+		deepEqualObs(item.get('numA'), [55, -5.5],
+				'type:num[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+		equal(item.get('int'), 5, 'type:int minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+		deepEqualObs(item.get('intA'), [5, 6, 7],
+				'type:int[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+
+		// create
+		item = model.create({
+			id: sequence.next(),
+			num: -5.5,
+			numA: [-5.5, 0, 6.6, Infinity],
+			int: 5,
+			intA: [5, 10]
+		});
+
+		equal(item.get('num'), -5.5, 'type:num minの条件を満たす値でcreateできること');
+		deepEqualObs(item.get('numA'), [-5.5, 0, 6.6, Infinity],
+				'type:num[] minの条件を満たす値でcreateできること');
+		equal(item.get('int'), 5, 'type:intでminの条件を満たす値でcreateできること');
+		deepEqualObs(item.get('intA'), [5, 10], 'type:int[] minの条件を満たす値でcreateできること');
+
+		// set
+		item.set({
+			num: Infinity,
+			numA: [123.456],
+			int: 6,
+			intA: [5, 6, 7]
+		});
+		equal(item.get('num'), Infinity, 'type:num minの条件を満たす値をsetできること');
+		deepEqualObs(item.get('numA'), [123.456], 'type:num[] minの条件を満たす値をsetできること');
+		equal(item.get('int'), 6, 'type:int minの条件を満たす値をsetできること');
+		deepEqualObs(item.get('intA'), [5, 6, 7], 'type:int[] minの条件を満たす値をsetできること');
+
+		// nullをset
+		item.set({
+			num: null,
+			numA: [null, null],
+			int: null,
+			intA: [null, null]
+		});
+		equal(item.get('num'), null, 'type:num nullをsetできること');
+		deepEqualObs(item.get('numA'), [null, null], 'type:num[] [null, null]をsetできること');
+		equal(item.get('int'), null, 'type:int nullをsetできること');
+		deepEqualObs(item.get('intA'), [null, null], 'type:int[] [null, null]をsetできること');
+
+		// 空配列をset
+		item.set({
+			numA: [],
+			intA: []
+		});
+		deepEqualObs(item.get('numA'), [], 'type:num[] []をsetできること');
+		deepEqualObs(item.get('intA'), [], 'type:int[] []をsetできること');
+
+		// defaultValueが設定されていない場合
+		var constraint = {
+			min: 10
+		};
+		var model2 = manager.createModel({
+			name: 'TestModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				num: {
+					type: 'number',
+					constraint: constraint
+				},
+				numA: {
+					type: 'number[]',
+					constraint: constraint
+				},
+				int: {
+					type: 'integer',
+					constraint: constraint
+				},
+				intA: {
+					type: 'integer[]',
+					constraint: constraint
+				}
+			}
+		});
+		item = model2.create({
+			id: sequence.next()
+		});
+		strictEqual(item.get('num'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+		deepEqualObs(item.get('numA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+		strictEqual(item.get('int'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+		deepEqualObs(item.get('intA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+
+	});
+
+	test('制約が適用されているか 異常系', 8, function() {
+		//create
+		try {
+			model.create({
+				id: sequence.next(),
+				num: -5.55
+			});
+			ok(false, 'テスト失敗。minで設定した値未満をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			model.create({
+				id: sequence.next(),
+				numA: [4.44, -5.55, 6.66]
+			});
+			ok(false, 'テスト失敗。minで設定した値未満をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			model.create({
+				id: sequence.next(),
+				int: 4
+			});
+			ok(false, 'テスト失敗。minで設定した値未満をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			model.create({
+				id: sequence.next(),
+				intA: [8, 6, 4]
+			});
+			ok(false, 'テスト失敗。minで設定した値未満をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+
+		// set
+		var item = model.create({
+			id: sequence.next()
+		});
+		try {
+			item.set({
+				num: -5.50001
+			});
+			ok(false, 'テスト失敗。minで設定した値未満をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			item.set({
+				numA: [0, 1, -5.5000001]
+			});
+			ok(false, 'テスト失敗。minで設定した値未満をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			item.set({
+				int: 4
+			});
+			ok(false, 'テスト失敗。minで設定した値未満をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			item.set({
+				int: [6, 4]
+			});
+			ok(false, 'テスト失敗。minで設定した値未満をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('constraint - max', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+
+			model = manager.createModel({
+				name: 'TestDataModel',
+				schema: {
+					id: {
+						id: true
+					},
+					num: {
+						type: 'number',
+						constraint: {
+							max: -5.5
+						},
+						defaultValue: -5.5
+					},
+					numA: {
+						type: 'number[]',
+						constraint: {
+							max: 5.5
+						},
+						defaultValue: [-55, 5.5]
+					},
+					int: {
+						type: 'integer',
+						constraint: {
+							max: 5
+						},
+						defaultValue: 5
+					},
+					intA: {
+						type: 'integer[]',
+						constraint: {
+							max: 5
+						},
+						defaultValue: [3, 4, 5]
+					}
+				}
+			});
+		},
+		teardown: function() {
+			sequence = null;
+			dataModel1 = null;
+			testClass1 = null;
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('制約が適用されているか 正常系', 22, function() {
+		// 値を指定しないでcreate
+		var item = model.create({
+			id: sequence.next()
+		});
+		equal(item.get('num'), -5.5, 'type:num maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+		deepEqualObs(item.get('numA'), [-55, 5.5],
+				'type:num[] maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+		equal(item.get('int'), 5, 'type:int maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+		deepEqualObs(item.get('intA'), [3, 4, 5],
+				'type:int[] maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+
+		// create
+		item = model.create({
+			id: sequence.next(),
+			num: -5.5,
+			numA: [5.5, 0, -5, -Infinity],
+			int: 5,
+			intA: [5, -100]
+		});
+
+		equal(item.get('num'), -5.5, 'type:num maxの条件を満たす値でcreateできること');
+		deepEqualObs(item.get('numA'), [5.5, 0, -5, -Infinity],
+				'type:num[] maxの条件を満たす値でcreateできること');
+		equal(item.get('int'), 5, 'type:intでmaxの条件を満たす値でcreateできること');
+		deepEqualObs(item.get('intA'), [5, -100], 'type:int[] maxの条件を満たす値でcreateできること');
+
+		// set
+		item.set({
+			num: -Infinity,
+			numA: [5.5],
+			int: 4,
+			intA: [0, 1, 2]
+		});
+		equal(item.get('num'), -Infinity, 'type:num maxの条件を満たす値をsetできること');
+		deepEqualObs(item.get('numA'), [5.5], 'type:num[] maxの条件を満たす値をsetできること');
+		equal(item.get('int'), 4, 'type:int maxの条件を満たす値をsetできること');
+		deepEqualObs(item.get('intA'), [0, 1, 2], 'type:int[] maxの条件を満たす値をsetできること');
+
+		// nullをset
+		item.set({
+			num: null,
+			numA: [null, null],
+			int: null,
+			intA: [null, null]
+		});
+		equal(item.get('num'), null, 'type:num nullをsetできること');
+		deepEqualObs(item.get('numA'), [null, null], 'type:num[] [null, null]をsetできること');
+		equal(item.get('int'), null, 'type:int nullをsetできること');
+		deepEqualObs(item.get('intA'), [null, null], 'type:int[] [null, null]をsetできること');
+
+		// 空配列をset
+		item.set({
+			numA: [],
+			intA: []
+		});
+		deepEqualObs(item.get('numA'), [], 'type:num[] []をsetできること');
+		deepEqualObs(item.get('intA'), [], 'type:int[] []をsetできること');
+
+		// defaultValueが設定されていない場合
+		var constraint = {
+			max: -10
+		};
+		var model2 = manager.createModel({
+			name: 'TestModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				num: {
+					type: 'number',
+					constraint: constraint
+				},
+				numA: {
+					type: 'number[]',
+					constraint: constraint
+				},
+				int: {
+					type: 'integer',
+					constraint: constraint
+				},
+				intA: {
+					type: 'integer[]',
+					constraint: constraint
+				}
+			}
+		});
+		item = model2.create({
+			id: sequence.next()
+		});
+		strictEqual(item.get('num'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+		deepEqualObs(item.get('numA'), [], 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+		strictEqual(item.get('int'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+		deepEqualObs(item.get('intA'), [], 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+
+	});
+
+	test('制約が適用されているか 異常系', 8, function() {
+		//create
+		try {
+			model.create({
+				id: sequence.next(),
+				num: -5.45
+			});
+			ok(false, 'テスト失敗。maxで設定した値未満をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			model.create({
+				id: sequence.next(),
+				numA: [4.44, 5.55]
+			});
+			ok(false, 'テスト失敗。maxで設定した値未満をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			model.create({
+				id: sequence.next(),
+				int: 6
+			});
+			ok(false, 'テスト失敗。maxで設定した値未満をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			model.create({
+				id: sequence.next(),
+				intA: [2, 6, 4]
+			});
+			ok(false, 'テスト失敗。maxで設定した値未満をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+
+		// set
+		var item = model.create({
+			id: sequence.next()
+		});
+		try {
+			item.set({
+				num: -5.4999
+			});
+			ok(false, 'テスト失敗。maxで設定した値未満をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			item.set({
+				numA: [0, 1, 5.5000001]
+			});
+			ok(false, 'テスト失敗。maxで設定した値未満をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			item.set({
+				int: 6
+			});
+			ok(false, 'テスト失敗。maxで設定した値未満をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			item.set({
+				int: [6, 4]
+			});
+			ok(false, 'テスト失敗。maxで設定した値未満をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('constraint - minLength', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+
+			var constraint = {
+				minLength: 2
+			};
+			model = manager.createModel({
+				name: 'TestDataModel',
+				schema: {
+					id: {
+						id: true
+					},
+					str: {
+						type: 'string',
+						constraint: constraint,
+						defaultValue: 'ab'
+					},
+					strA: {
+						type: 'string[]',
+						constraint: constraint,
+						defaultValue: ['ab', 'abc']
+					}
+				}
+			});
+		},
+		teardown: function() {
+			sequence = null;
+			dataModel1 = null;
+			testClass1 = null;
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test(
+			'制約が適用されているか 正常系',
+			11,
+			function() {
+				// 値を指定しないでcreate
+				var item = model.create({
+					id: sequence.next()
+				});
+				equal(item.get('str'), 'ab',
+						'type:string minLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				deepEqualObs(item.get('strA'), ['ab', 'abc'],
+						'type:num[] minLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+
+				// create
+				item = model.create({
+					id: sequence.next(),
+					str: 'AB',
+					strA: ['ABC', 'AB']
+				});
+
+				equal(item.get('str'), 'AB',
+						'type:string minLengthの条件を満たす値でcreateした時、値を指定しないでcreateできること');
+				deepEqualObs(item.get('strA'), ['ABC', 'AB'],
+						'type:num[] minLengthの条件を満たす値でcreate時、値を指定しないでcreateできること');
+
+				// set
+				item.set({
+					str: 'CD',
+					strA: ['CDE', 'CD']
+				});
+				equal(item.get('str'), 'CD',
+						'type:string minLengthの条件を満たす値でcreateした時、値を指定しないでcreateできること');
+				deepEqualObs(item.get('strA'), ['CDE', 'CD'],
+						'type:num[] minLengthの条件を満たす値でcreate時、値を指定しないでcreateできること');
+
+				// nullをset
+				item.set({
+					str: null,
+					strA: [null, null]
+				});
+				equal(item.get('str'), null, 'type:string nullをsetできること');
+				deepEqualObs(item.get('strA'), [null, null], 'type:string[] [null, null]をsetできること');
+
+				// []をset
+				item.set({
+					strA: []
+				});
+				deepEqualObs(item.get('strA'), [], 'type:string[] 空配列をsetできること');
+
+				// defaultValueが設定されていない場合
+				var constraint = {
+					minLength: 5
+				};
+				var model2 = manager.createModel({
+					name: 'TestModel2',
+					schema: {
+						id: {
+							id: true
+						},
+						str: {
+							type: 'string',
+							constraint: constraint
+						},
+						strA: {
+							type: 'string[]',
+							constraint: constraint
+						}
+					}
+				});
+				item = model2.create({
+					id: sequence.next()
+				});
+				strictEqual(item.get('str'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+				deepEqualObs(item.get('strA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+			});
+
+	test('制約が適用されているか 異常系', 4, function() {
+		//create
+		try {
+			model.create({
+				id: sequence.next(),
+				str: 'a'
+			});
+			ok(false, 'テスト失敗。minLengthで設定した長さより短い文字列をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			model.create({
+				id: sequence.next(),
+				strA: ['abc', 'def', 'g']
+			});
+			ok(false, 'テスト失敗。minLengthで設定した長さより短い文字列をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+
+		// set
+		var item = model.create({
+			id: sequence.next()
+		});
+		try {
+			item.set({
+				str: 'b'
+			});
+			ok(false, 'テスト失敗。minLengthで設定した長さより短い文字列をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			item.set({
+				strA: ['ABC', 'D']
+			});
+			ok(false, 'テスト失敗。minLengthで設定した長さより短い文字列をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('constraint - maxLength', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+
+			var constraint = {
+				maxLength: 2
+			};
+			model = manager.createModel({
+				name: 'TestDataModel',
+				schema: {
+					id: {
+						id: true
+					},
+					str: {
+						type: 'string',
+						constraint: constraint,
+						defaultValue: 'ab'
+					},
+					strA: {
+						type: 'string[]',
+						constraint: constraint,
+						defaultValue: ['ab', 'a']
+					}
+				}
+			});
+		},
+		teardown: function() {
+			sequence = null;
+			dataModel1 = null;
+			testClass1 = null;
 			itemA = null;
 			itemB = null;
 			dropAllModel(manager);
@@ -4610,66 +5234,57 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
 	test(
 			'制約が適用されているか 正常系',
+			11,
 			function() {
 				// 値を指定しないでcreate
 				var item = model.create({
 					id: sequence.next()
 				});
-				equal(item.get('num'), -5.5,
-						'type:num minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-				deepEqualObs(item.get('numA'), [55, -5.5],
-						'type:num[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-				equal(item.get('int'), 5, 'type:int minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-				deepEqual(item.get('intA'), [5, 6, 7],
-						'type:int[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				equal(item.get('str'), 'ab',
+						'type:string maxLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				deepEqualObs(item.get('strA'), ['ab', 'a'],
+						'type:num[] maxLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 				// create
 				item = model.create({
 					id: sequence.next(),
-					num: -5.5,
-					numA: [-5.5, 0, 6.6, Infinity],
-					int: 5,
-					intA: [5, 10]
+					str: 'AB',
+					strA: ['A', 'AB']
 				});
 
-				equal(item.get('num'), -5.5, 'type:num minの条件を満たす値でcreateできること');
-				deepEqualObs(item.get('numA'), [-5.5, 0, 6.6, Infinity],
-						'type:num[] minの条件を満たす値でcreateできること');
-				equal(item.get('int'), 5, 'type:intでminの条件を満たす値でcreateできること');
-				deepEqual(item.get('intA'), [5, 10], 'type:int[] minの条件を満たす値でcreateできること');
+				equal(item.get('str'), 'AB', 'type:string maxLengthの条件を満たす値でcreateできること');
+				deepEqualObs(item.get('strA'), ['A', 'AB'],
+						'type:num[] maxLengthの条件を満たす値でcreateできること');
 
 				// set
 				item.set({
-					num: Infinity,
-					numA: [123.456],
-					int: 6,
-					intA: [5, 6, 7]
+					str: 'CD',
+					strA: ['', null, 'C', 'CD']
 				});
-				equal(item.get('num'), Infinity, 'type:num minの条件を満たす値をsetできること');
-				deepEqualObs(item.get('numA'), [-5.5, 0, 6.6, Infinity],
-						'type:num[] minの条件を満たす値をsetできること');
-				equal(item.get('int'), 5, 'type:int minの条件を満たす値をsetできること');
-				deepEqual(item.get('intA'), [5, 10], 'type:int[] minの条件を満たす値をsetできること');
+				equal(item.get('str'), 'CD',
+						'type:string maxLengthの条件を満たす値でcreateした時、値を指定しないでcreateできること');
+				deepEqualObs(item.get('strA'), ['', null, 'C', 'CD'],
+						'type:num[] maxLengthの条件を満たす値でcreate時、値を指定しないでcreateできること');
 
 				// nullをset
 				item.set({
-					num: null,
-					numA: [null, null],
-					int: null,
-					intA: [null, null]
+					str: null,
+					strA: [null, null]
 				});
-				equal(item.get('num'), Infinity, 'type:num nullをsetできること');
-				deepEqualObs(item.get('numA'), [-5.5, 0, 6.6, Infinity],
-						'type:num[] [null, null]をsetできること');
-				equal(item.get('int'), 5, 'type:int nullをsetできること');
-				deepEqual(item.get('intA'), [5, 10], 'type:int[] [null, null]をsetできること');
+				equal(item.get('str'), null, 'type:string nullをsetできること');
+				deepEqualObs(item.get('strA'), [null, null], 'type:string[] [null, null]をsetできること');
+
+				// []をset
+				item.set({
+					strA: []
+				});
+				deepEqualObs(item.get('strA'), [], 'type:string[] 空配列をsetできること');
 
 				// defaultValueが設定されていない場合
 				var constraint = {
-					min: 10
+					maxLength: 5
 				};
 				var model2 = manager.createModel({
 					name: 'TestModel2',
@@ -4677,76 +5292,42 @@ $(function() {
 						id: {
 							id: true
 						},
-						num: {
-							type: 'number',
+						str: {
+							type: 'string',
 							constraint: constraint
 						},
-						numA: {
-							type: 'number[]',
-							constraint: constraint
-						},
-						int: {
-							type: 'integer',
-							constraint: constraint
-						},
-						intA: {
-							type: 'integer[]',
+						strA: {
+							type: 'string[]',
 							constraint: constraint
 						}
 					}
 				});
-				try {
-					model2.create({
-						id: sequence.next()
-					});
-					strictEqual(itemget('num'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-					deepEqualObs(itemget('numA'), [null],
-							'defaultValue指定無しで、値nullのアイテムがcreateできること');
-					strictEqual(itemget('int'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-					deepEqualObs(itemget('int[]'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-				} catch (e) {
-					ok(false, e.message);
-				}
-
+				item = model2.create({
+					id: sequence.next()
+				});
+				strictEqual(item.get('str'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+				deepEqualObs(item.get('strA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
 			});
 
-	test('制約が適用されているか 異常系', function() {
+	test('制約が適用されているか 異常系', 4, function() {
 		//create
 		try {
 			model.create({
 				id: sequence.next(),
-				num: -5.55
+				str: 'abc'
 			});
-			ok(false, 'テスト失敗。minで設定した値未満をcreate時に指定して、エラーが発生していません。');
+			ok(false, 'テスト失敗。maxLengthで設定した長さより長い文字列をcreate時に指定して、エラーが発生していません。');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_CONSTRAINT, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
 			model.create({
 				id: sequence.next(),
-				numA: [4.44, -5.55, 6.66]
+				strA: ['a', 'bcd', 'e']
 			});
-			ok(false, 'テスト失敗。minで設定した値未満をcreate時に指定して、エラーが発生していません。');
+			ok(false, 'テスト失敗。maxLengthで設定した長さより長い文字列をcreate時に指定して、エラーが発生していません。');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_CONSTRAINT, e.message);
-		}
-		try {
-			model.create({
-				id: sequence.next(),
-				int: 4
-			});
-			ok(false, 'テスト失敗。minで設定した値未満をcreate時に指定して、エラーが発生していません。');
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_CONSTRAINT, e.message);
-		}
-		try {
-			model.create({
-				id: sequence.next(),
-				intA: [8, 6, 4]
-			});
-			ok(false, 'テスト失敗。minで設定した値未満をcreate時に指定して、エラーが発生していません。');
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_CONSTRAINT, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 
 		// set
@@ -4755,413 +5336,57 @@ $(function() {
 		});
 		try {
 			item.set({
-				id: sequence.next(),
-				num: -5.50001
+				str: 'bbb'
 			});
-			ok(false, 'テスト失敗。minで設定した値未満をsetした時、エラーが発生していません。');
+			ok(false, 'テスト失敗。maxLengthで設定した長さより長い文字列をsetした時、エラーが発生していません。');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALIDCONSTRAINT, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
 			item.set({
-				id: sequence.next(),
-				numA: [0, 1, -5.5000001]
+				strA: ['ABC', 'D']
 			});
-			ok(false, 'テスト失敗。minで設定した値未満をsetした時、エラーが発生していません。');
+			ok(false, 'テスト失敗。maxLengthで設定した長さより長い文字列をsetした時、エラーが発生していません。');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALIDCONSTRAINT, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
-		try {
-			item.set({
-				id: sequence.next(),
-				int: 4
-			});
-			ok(false, 'テスト失敗。minで設定した値未満をsetした時、エラーが発生していません。');
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALIDCONSTRAINT, e.message);
-		}
-		try {
-			item.set({
-				id: sequence.next(),
-				int: [6, 4]
-			});
-			ok(false, 'テスト失敗。minで設定した値未満をsetした時、エラーが発生していません。');
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALIDCONSTRAINT, e.message);
-		}
-	});
-
-	test('max 制約が適用されているか 正常系', function() {
-		var model1 = dataModel1({
-			max: 5
-		});
-
-		var item1 = model1.create({
-			id: sequence.next(),
-			test1: '6',
-			test2: ['6'],
-			test3: 5.0,
-			test4: [5.0],
-			test5: 5,
-			test6: [5],
-			test7: true,
-			test8: [true],
-			test9: [6],
-			test10: 6,
-			test11: itemA,
-			test12: [itemB, itemA],
-			test13: 6.0,
-			test14: 6
-		});
-
-		equal(item1.get('test1'), '6',
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		deepEqual(item1.get('test2'), ['6'],
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		equal(item1.get('test3'), 5.0,
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		deepEqual(item1.get('test4'), [5.0],
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		equal(item1.get('test5'), 5,
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		deepEqual(item1.get('test6'), [5],
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		equal(item1.get('test7'), true,
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		deepEqual(item1.get('test8'), [true],
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		deepEqual(item1.get('test9'), [6],
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		equal(item1.get('test10'), 6,
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		equal(item1.get('test11'), itemA,
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		deepEqual(item1.get('test12'), [itemB, itemA],
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		equal(item1.get('test13'), 6.0,
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-		equal(item1.get('test14'), 6,
-				'type:number,number[],integer,integer[]の場合、create時にmaxがチェックされること。');
-	});
-
-	test('max 制約が適用されているか 異常系', function() {
-		var model1 = dataModel1({
-			max: 5
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test3: 6.00001
-			});
-		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test4: [6.0, 6.00000001]
-			});
-		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				test5: 6
-			});
-		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test6: [5, 6]
-			});
-		}, 'maxで設定した値を超える場合は、制約でエラーになること。');
-	});
-
-	test(
-			'minLength 制約が適用されているか 正常系',
-			function() {
-				var model1 = dataModel1({
-					minLength: 5
-				});
-
-				var item1 = model1.create({
-					id: sequence.next(),
-					test1: 'AAAAA',
-					test2: ['DDDDD'],
-					test3: 4.0,
-					test4: [4.0],
-					test5: 4,
-					test6: [4],
-					test7: true,
-					test8: [true],
-					test9: ['BBBB'],
-					test10: 'CCCC',
-					test11: itemA,
-					test12: [itemB, itemA],
-					test13: 'aaaa',
-					test14: 'YYYY'
-				});
-
-				equal(item1.get('test1'), 'AAAAA',
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test2'), ['DDDDD'],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test3'), 4.0,
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test4'), [4.0],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test5'), 4, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test6'), [4],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test7'), true,
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test8'), [true],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test9'), ['BBBB'],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test10'), 'CCCC',
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test11'), itemA,
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test12'), [itemB, itemA],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test13'), 'aaaa',
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test14'), 'YYYY',
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-
-				var item2 = model1.create({
-					id: sequence.next(),
-					test1: null,
-					test2: [null]
-				});
-
-				equal(item2.get('test1'), null, 'nullの場合はminLengthのチェックは行われないこと。');
-				deepEqual(item2.get('test2'), [null], 'nullの場合はminLengthのチェックは行われないこと。');
-			});
-
-	test('minLength 制約が適用されているか 異常系', function() {
-		var model1 = dataModel1({
-			minLength: 5
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 'AAAA'
-			});
-		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test2: [null, 'BBBB']
-			});
-		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				test1: 'あいうえ'
-			});
-		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: [null, 'おかきく']
-			});
-		}, 'minLengthで設定した文字数未満の場合は、制約でエラーになること。');
-	});
-
-	test(
-			'maxLength 制約が適用されているか 正常系',
-			function() {
-				var model1 = dataModel1({
-					maxLength: 5
-				});
-
-				var item1 = model1.create({
-					id: sequence.next(),
-					test1: 'AAAAA',
-					test2: ['DDDDD'],
-					test3: 6.0,
-					test4: [6.0],
-					test5: 6,
-					test6: [6],
-					test7: true,
-					test8: [true],
-					test9: ['BBBBBB'],
-					test10: 'CCCCCC',
-					test11: itemA,
-					test12: [itemB, itemA],
-					test13: 'aaaaaa',
-					test14: 'YYYYYY'
-				});
-
-				equal(item1.get('test1'), 'AAAAA',
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test2'), ['DDDDD'],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test3'), 6.0,
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test4'), [6.0],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test5'), 6, 'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test6'), [6],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test7'), true,
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test8'), [true],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test9'), ['BBBBBB'],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test10'), 'CCCCCC',
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test11'), itemA,
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				deepEqual(item1.get('test12'), [itemB, itemA],
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test13'), 'aaaaaa',
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-				equal(item1.get('test14'), 'YYYYYY',
-						'type:string,string[]の場合、create時にminLengthがチェックされること。');
-
-				var item2 = model1.create({
-					id: sequence.next(),
-					test1: null,
-					test2: [null]
-				});
-
-				equal(item2.get('test1'), null, 'nullの場合はmaxLengthのチェックは行われないこと。');
-				deepEqual(item2.get('test2'), [null], 'nullの場合はmaxLengthのチェックは行われないこと。');
-			});
-
-	test('maxLength 制約が適用されているか 異常系', function() {
-		var model1 = dataModel1({
-			maxLength: 5
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 'AAAAAA'
-			});
-		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test2: [null, 'BBBBBB']
-			});
-		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				test1: 'あいうえおか'
-			});
-		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: [null, 'きくけこさし']
-			});
-		}, 'maxLengthで設定した文字数を超える場合は、制約でエラーになること。');
-	});
-
-	test(
-			'pattern 制約が適用されているか 正常系',
-			function() {
-				var model1 = dataModel1({
-					pattern: /^hifive[0-9][0-9]$/
-				});
-
-				var item1 = model1.create({
-					id: sequence.next(),
-					test1: 'hifive01',
-					test2: ['hifive02'],
-					test3: 6.0,
-					test4: [6.0],
-					test5: 6,
-					test6: [6],
-					test7: true,
-					test8: [true],
-					test9: ['hifive03'],
-					test10: 'hifive04',
-					test11: itemA,
-					test12: [itemB, itemA],
-					test13: 'hifive05',
-					test14: 'hifive06'
-				});
-
-				equal(item1.get('test1'), 'hifive01',
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				deepEqual(item1.get('test2'), ['hifive02'],
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				equal(item1.get('test3'), 6.0, 'type:string,string[]の場合、create時にpatternがチェックされること。');
-				deepEqual(item1.get('test4'), [6.0],
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				equal(item1.get('test5'), 6, 'type:string,string[]の場合、create時にpatternがチェックされること。');
-				deepEqual(item1.get('test6'), [6],
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				equal(item1.get('test7'), true,
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				deepEqual(item1.get('test8'), [true],
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				deepEqual(item1.get('test9'), ['hifive003'],
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				equal(item1.get('test10'), 'hifive004',
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				equal(item1.get('test11'), itemA,
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				deepEqual(item1.get('test12'), [itemB, itemA],
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				equal(item1.get('test13'), 'hifive005',
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-				equal(item1.get('test14'), 'hifive006',
-						'type:string,string[]の場合、create時にpatternがチェックされること。');
-
-				var item2 = model1.create({
-					id: sequence.next(),
-					test1: null,
-					test2: [null]
-				});
-
-				equal(item2.get('test1'), null, 'nullの場合はpatternのチェックは行われないこと。');
-				deepEqual(item2.get('test2'), [null], 'nullの場合はpatternのチェックは行われないこと。');
-			});
-
-	test('pattern 制約が適用されているか 異常系', function() {
-		var model1 = dataModel1({
-			pattern: /^hifive[0-9][0-9]$/
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 'hifive001'
-			});
-		}, '値がpatternと一致しない場合、制約でエラーになること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test2: [null, 'hifive001']
-			});
-		}, '値がpatternと一致しない場合、制約でエラーになること。');
 	});
 
 	//=============================
 	// Definition
 	//=============================
 
-	module('constraint', {
+	module('constraint - pattern', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
+
+			var constraint = {
+				pattern: /^h5/i
+			};
+			model = manager.createModel({
+				name: 'TestDataModel',
+				schema: {
+					id: {
+						id: true
+					},
+					str: {
+						type: 'string',
+						constraint: constraint,
+						defaultValue: 'h5'
+					},
+					strA: {
+						type: 'string[]',
+						constraint: constraint,
+						defaultValue: ['H5aa', 'h5']
+					}
+				}
+			});
 		},
 		teardown: function() {
 			sequence = null;
+			dataModel1 = null;
+			testClass1 = null;
 			dropAllModel(manager);
 		}
 	});
@@ -5169,408 +5394,122 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+	test(
+			'制約が適用されているか 正常系',
+			11,
+			function() {
+				// 値を指定しないでcreate
+				var item = model.create({
+					id: sequence.next()
+				});
+				equal(item.get('str'), 'h5',
+						'type:string patternの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				deepEqualObs(item.get('strA'), ['H5aa', 'h5'],
+						'type:num[] patternの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
-	test('constraint 適用順序のチェック number', function() {
-		var model1 = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'number',
-					defaultValue: 5.0,
-					constraint: {
-						notNull: true,
-						min: 4.6,
-						max: 5.8
+				// create
+				item = model.create({
+					id: sequence.next(),
+					str: 'H555',
+					strA: ['h555', null, 'h5']
+				});
+
+				equal(item.get('str'), 'H555', 'type:string patternの条件を満たす値でcreateできること');
+				deepEqualObs(item.get('strA'), ['h555', null, 'h5'],
+						'type:num[] patternの条件を満たす値でcreateできること');
+
+				// set
+				item.set({
+					str: 'h5',
+					strA: ['h5', null]
+				});
+				equal(item.get('str'), 'h5',
+						'type:string patternの条件を満たす値でcreateした時、値を指定しないでcreateできること');
+				deepEqualObs(item.get('strA'), ['h5', null],
+						'type:num[] patternの条件を満たす値でcreate時、値を指定しないでcreateできること');
+
+				// nullをset
+				item.set({
+					str: null,
+					strA: [null, null]
+				});
+				equal(item.get('str'), null, 'type:string nullをsetできること');
+				deepEqualObs(item.get('strA'), [null, null], 'type:string[] [null, null]をsetできること');
+
+				// 空配列をset
+				item.set({
+					strA: []
+				});
+				deepEqualObs(item.get('strA'), [], 'type:string[] 空配列をsetできること');
+
+				// defaultValueが設定されていない場合
+				var constraint = {
+					pattern: /hifive/i
+				};
+				var model2 = manager.createModel({
+					name: 'TestModel2',
+					schema: {
+						id: {
+							id: true
+						},
+						str: {
+							type: 'string',
+							constraint: constraint
+						},
+						strA: {
+							type: 'string[]',
+							constraint: constraint
+						}
 					}
-				},
-				test2: {
-					type: 'number',
-					defaultValue: 5.0,
-					constraint: {
-						notNull: true,
-						min: 4.6,
-						max: 5.8
-					}
-				}
-			}
+				});
+				item = model2.create({
+					id: sequence.next()
+				});
+				strictEqual(item.get('str'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+				deepEqualObs(item.get('strA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+			});
+
+	test('制約が適用されているか 異常系', 4, function() {
+		//create
+		try {
+			model.create({
+				id: sequence.next(),
+				str: 'ｈ５'
+			});
+			ok(false, 'テスト失敗。patternを満たさない文字列をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			model.create({
+				id: sequence.next(),
+				strA: ['a', 'h5', 'e']
+			});
+			ok(false, 'テスト失敗。patternを満たさない文字列をcreate時に指定して、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+
+		// set
+		var item = model.create({
+			id: sequence.next()
 		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 3.5,
-				test2: null
+		try {
+			item.set({
+				str: 'ｈ５'
 			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 6.5,
-				test2: null
+			ok(false, 'テスト失敗。patternを満たさない文字列をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
+		try {
+			item.set({
+				strA: ['h5', 'D']
 			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-	});
-
-	test('constraint 適用順序のチェック number[]', function() {
-		var model1 = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'number[]',
-					defaultValue: [3.1, 4.5],
-					constraint: {
-						notNull: true,
-						min: 3.1,
-						max: 8.2
-					}
-				},
-				test2: {
-					type: 'number[]',
-					defaultValue: [5.7, 8.2],
-					constraint: {
-						notNull: true,
-						min: 3.1,
-						max: 8.2
-					}
-				}
-			}
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: [2.5, 7.2],
-				test2: null
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: [3.5, 9.2],
-				test2: null
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-	});
-
-	test('constraint 適用順序のチェック integer', function() {
-		var model1 = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'integer',
-					defaultValue: 5,
-					constraint: {
-						notNull: true,
-						min: 5,
-						max: 8
-					}
-				},
-				test2: {
-					type: 'integer',
-					defaultValue: 6,
-					constraint: {
-						notNull: true,
-						min: 5,
-						max: 8
-					}
-				}
-			}
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 4,
-				test2: null
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 9,
-				test2: null
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-	});
-
-	test('constraint 適用順序のチェック integer[]', function() {
-		var model1 = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'integer[]',
-					defaultValue: [3, 4],
-					constraint: {
-						notNull: true,
-						min: 3,
-						max: 6
-					}
-				},
-				test2: {
-					type: 'integer[]',
-					defaultValue: [5, 6],
-					constraint: {
-						notNull: true,
-						min: 3,
-						max: 6
-					}
-				}
-			}
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: [2, 5],
-				test2: null
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: [4, 7],
-				test2: null
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-	});
-
-	test('constraint 適用順序のチェック string', function() {
-		var model1 = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'string',
-					defaultValue: '00000',
-					constraint: {
-						notNull: true,
-						notEmpty: true,
-						minLength: 5,
-						maxLength: 10,
-						pattern: /^[0-9]{5}$/
-					}
-				},
-				test2: {
-					type: 'string',
-					defaultValue: '11111',
-					constraint: {
-						notNull: true,
-						notEmpty: true,
-						minLength: 5,
-						maxLength: 10,
-						pattern: /^[0-9]{5}$/
-					}
-				},
-				test3: {
-					type: 'string',
-					defaultValue: '22222',
-					constraint: {
-						notNull: true,
-						notEmpty: true,
-						minLength: 5,
-						maxLength: 10,
-						pattern: /^[0-9]{5}$/
-					}
-				},
-				test4: {
-					type: 'string',
-					defaultValue: '33333',
-					constraint: {
-						notNull: true,
-						notEmpty: true,
-						minLength: 5,
-						maxLength: 10,
-						pattern: /^[0-9]{5}$/
-					}
-				}
-			}
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: null,
-				test2: '',
-				test3: '2222',
-				test3: 'aaaaa'
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 'aaaaa',
-				test2: '',
-				test3: '2222',
-				test3: 'aaaaa'
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notEmptyの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: aaaaa,
-				test2: 'aaaaa',
-				test3: '2222',
-				test3: 'aaaaa'
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'lengthの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: 'aaaaa',
-				test2: 'aaaaa',
-				test3: 'aaaaa',
-				test3: '2222a'
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'patternの制約エラーが発生すること。');
-	});
-
-	test('constraint 適用順序のチェック string[]', function() {
-		var model1 = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'string',
-					defaultValue: ['00000', '00000'],
-					constraint: {
-						notNull: true,
-						notEmpty: true,
-						minLength: 5,
-						maxLength: 10,
-						pattern: /^[0-9]{5}$/
-					}
-				},
-				test2: {
-					type: 'string',
-					defaultValue: ['11111', '11111'],
-					constraint: {
-						notNull: true,
-						notEmpty: true,
-						minLength: 5,
-						maxLength: 10,
-						pattern: /^[0-9]{5}$/
-					}
-				},
-				test3: {
-					type: 'string',
-					defaultValue: ['22222', '22222'],
-					constraint: {
-						notNull: true,
-						notEmpty: true,
-						minLength: 5,
-						maxLength: 10,
-						pattern: /^[0-9]{5}$/
-					}
-				},
-				test4: {
-					type: 'string',
-					defaultValue: ['33333', '33333'],
-					constraint: {
-						notNull: true,
-						notEmpty: true,
-						minLength: 5,
-						maxLength: 10,
-						pattern: /^[0-9]{5}$/
-					}
-				}
-
-			}
-		});
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: null,
-				test2: ['aaaaa', ''],
-				test3: ['aaaaa', '2222'],
-				test3: ['aaaaa', 'aaaaa']
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notNullの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: ['aaaaa', 'aaaaa'],
-				test2: ['aaaaa', ''],
-				test3: ['aaaaa', '2222'],
-				test3: ['aaaaa', 'aaaaa']
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'notEmptyの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: ['aaaaa', 'aaaaa'],
-				test2: ['aaaaa', 'aaaaa'],
-				test3: ['aaaaa', '2222'],
-				test3: ['aaaaa', 'aaaaa']
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'lengthの制約エラーが発生すること。');
-
-		raises(function() {
-			model1.create({
-				id: sequence.next(),
-				test1: ['aaaaa', 'aaaaa'],
-				test2: ['aaaaa', 'aaaaa'],
-				test3: ['aaaaa', 'aaaaa'],
-				test3: ['aaaaa', '2222a']
-			});
-		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		}, 'patternの制約エラーが発生すること。');
+			ok(false, 'テスト失敗。patternを満たさない文字列をsetした時、エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		}
 	});
 
 	//=============================
@@ -6444,7 +6383,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('DataItemの値代入時(または値変更後のrefresh時)にイベントハンドラが実行されること', 2, function() {
+	test('DataItemの値set時にイベントハンドラが実行されること', 2, function() {
 		item.set('val', sequence.next());
 
 		deepEqual(order, ['item', 'model', 'manager'], 'データアイテム、データモデル、データマネージャの順でイベントが発火すること');
@@ -6502,7 +6441,7 @@ $(function() {
 		try {
 			item.set('id', {});
 		} finally {
-			deepEqual(order, [], 'プロパティ代入時(refresh時に)エラーが発生た場合は、ハンドラは実行されないこと');
+			deepEqual(order, [], 'プロパティset時にエラーが発生た場合は、ハンドラは実行されないこと');
 		}
 		order = [];
 
@@ -6517,7 +6456,7 @@ $(function() {
 			function() {
 				manager.beginUpdate();
 				item.set('val', 'aaaa');
-				deepEqual(order, [], 'begin/endUpdateの中ではプロパティを変更(refresh)してもイベントハンドラは呼ばれないこと');
+				deepEqual(order, [], 'begin/endUpdateの中ではsetしてもイベントハンドラは呼ばれないこと');
 				order = [];
 				item.set('val', 'cccc');
 				manager.endUpdate();
@@ -6613,12 +6552,10 @@ $(function() {
 		testItem.addEventListener('change', changeListener3);
 
 		testItem.numVal = '1';
-		testItem.refresh();
 		deepEqual(order, [], '値が型変換されると変更前と変更後が同じになる場合はイベントが発火しないこと');
 		order = [];
 
 		testItem.numVal = new Number(1);
-		testItem.refresh();
 		deepEqual(order, [], '値が型変換されると変更前と変更後が同じになる場合はイベントが発火しないこと');
 	});
 
@@ -6857,7 +6794,7 @@ $(function() {
 		item.set('val', 'test');
 
 		var arg = argsObj.item;
-		ok(typeof arg === 'object', '値を変更してrefresh()したとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		ok(typeof arg === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
 		strictEqual(arg.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
 		strictEqual(arg.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
 		deepEqual(arg.props, {
@@ -7192,137 +7129,138 @@ $(function() {
 	//	});
 
 
+	// オブジェクト拡張は一旦無しになりました
 	//=============================
 	// Definition
 	//=============================
 
-	module('オブジェクト拡張(※IE8-では失敗します)', {
-		setup: function() {
-			sequence = h5.core.data
-					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
-			manager = h5.core.data.createManager('TestManager');
-
-
-			// dataModel1の作成
-			createDataModel1();
-			// dataModel2の作成 TODO 関数呼び出しで作成するようにする
-			dataModel2 = manager.createModel({
-				name: 'TestDataModel2',
-				schema: {
-					id: {
-						id: true
-					},
-					val: {},
-					val2: {},
-					num: {
-						type: 'number'
-					},
-					int: {
-						type: 'integer'
-					},
-					bool: {
-						type: 'boolean'
-					},
-					str: {
-						type: 'string',
-						constraint: {
-							notEmpty: true
-						},
-						defaultValue: 'str'
-					}
-				}
-			});
-			item = dataModel1.create({
-				id: sequence.next(),
-				val: 1
-			});
-
-			changeListener1 = function(arg) {
-				order.push('manager');
-				argsObj = argsObj || {};
-				argsObj['manager'] = arg;
-			}
-			changeListener2 = function(arg) {
-				order.push('model');
-				argsObj = argsObj || {};
-				argsObj['model'] = arg;
-			}
-
-			changeListener3 = function(arg) {
-				order.push('item');
-				argsObj = argsObj || {};
-				argsObj['item'] = arg;
-			}
-
-			manager.addEventListener('itemsChange', changeListener1);
-			dataModel1.addEventListener('itemsChange', changeListener2);
-			item.addEventListener('change', changeListener3);
-		},
-		teardown: function() {
-			// addしたイベントを削除
-			manager.removeEventListener('itemsChange', changeListener1);
-			dataModel1.removeEventListener('itemsChange', changeListener2);
-			item.removeEventListener('change', changeListener3);
-
-			order = [];
-			sequence = null;
-			dataModel1 = null;
-			dropAllModel(manager);
-		}
-	});
+	//	module('オブジェクト拡張(※IE8-では失敗します)', {
+	//		setup: function() {
+	//			sequence = h5.core.data
+	//					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+	//			manager = h5.core.data.createManager('TestManager');
+	//
+	//
+	//			// dataModel1の作成
+	//			createDataModel1();
+	//			// dataModel2の作成 TODO 関数呼び出しで作成するようにする
+	//			dataModel2 = manager.createModel({
+	//				name: 'TestDataModel2',
+	//				schema: {
+	//					id: {
+	//						id: true
+	//					},
+	//					val: {},
+	//					val2: {},
+	//					num: {
+	//						type: 'number'
+	//					},
+	//					int: {
+	//						type: 'integer'
+	//					},
+	//					bool: {
+	//						type: 'boolean'
+	//					},
+	//					str: {
+	//						type: 'string',
+	//						constraint: {
+	//							notEmpty: true
+	//						},
+	//						defaultValue: 'str'
+	//					}
+	//				}
+	//			});
+	//			item = dataModel1.create({
+	//				id: sequence.next(),
+	//				val: 1
+	//			});
+	//
+	//			changeListener1 = function(arg) {
+	//				order.push('manager');
+	//				argsObj = argsObj || {};
+	//				argsObj['manager'] = arg;
+	//			}
+	//			changeListener2 = function(arg) {
+	//				order.push('model');
+	//				argsObj = argsObj || {};
+	//				argsObj['model'] = arg;
+	//			}
+	//
+	//			changeListener3 = function(arg) {
+	//				order.push('item');
+	//				argsObj = argsObj || {};
+	//				argsObj['item'] = arg;
+	//			}
+	//
+	//			manager.addEventListener('itemsChange', changeListener1);
+	//			dataModel1.addEventListener('itemsChange', changeListener2);
+	//			item.addEventListener('change', changeListener3);
+	//		},
+	//		teardown: function() {
+	//			// addしたイベントを削除
+	//			manager.removeEventListener('itemsChange', changeListener1);
+	//			dataModel1.removeEventListener('itemsChange', changeListener2);
+	//			item.removeEventListener('change', changeListener3);
+	//
+	//			order = [];
+	//			sequence = null;
+	//			dataModel1 = null;
+	//			dropAllModel(manager);
+	//		}
+	//	});
 	//=============================
 	// Body
 	//=============================
-	test('DataItem.refresh()を呼び出さなくても、イベントの発火、値のチェック、型変換、が発生すること', function() {
-		if (h5.env.ua.isIE && h5.env.ua.browserVersion < 9) {
-			ok(false, 'IE8以下では、このテストを実行できません');
-			expect(1);
-			return;
-		}
-		item.set('val', 'AAA');
-		deepEqual(order, ['item', 'model', 'manager'], '値の代入で値が変更されたとき、イベントが発火すること');
-		order = [];
-
-		item.set('val', 'AAA');
-		deepEqual(order, [], '値の代入で値の変更がなかった場合、イベントは発火しないこと');
-		order = [];
-
-		var item2 = dataModel2.create({
-			id: sequence.next()
-		});
-		item2.set('num', '12.3');
-		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
-		item2.set('num', new Number(12.3));
-		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
-		item2.set('num', new String('12.3'));
-		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
-
-		item2.set('int', '12');
-		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
-		item2.set('int', new Number(12));
-		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
-		item2.set('int', new String('12'));
-		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
-
-		item2.set('bool', new Boolean(1));
-		strictEqual(item2.get('bool'), true, 'セット時に値の型変換が行われること');
-
-		item2.set('str', new String('1'));
-		strictEqual(item2.get('str'), '1', 'セット時に値の型変換が行われること');
-
-		try {
-			item2.set('num', 'ABC');
-			ok(false, 'エラーが発生していません。typeのチェックが値のセット時に行われていません');
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR,
-					'セット時に値の型変換が行われ、条件を満たさない値をsetするとエラーが発生すること');
-		}
-		try {
-			item2.set('str', '');
-			ok(false, 'エラーが発生していません。constraintのチェックが値のセット時に行われていません');
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR,
-					'セット時に値の型変換が行われ、条件を満たさない値をsetするとエラーが発生すること');
-		}
-	});
+	//	test('DataItem.refresh()を呼び出さなくても、イベントの発火、値のチェック、型変換、が発生すること', function() {
+	//		if (h5.env.ua.isIE && h5.env.ua.browserVersion < 9) {
+	//			ok(false, 'IE8以下では、このテストを実行できません');
+	//			expect(1);
+	//			return;
+	//		}
+	//		item.set('val', 'AAA');
+	//		deepEqual(order, ['item', 'model', 'manager'], '値の代入で値が変更されたとき、イベントが発火すること');
+	//		order = [];
+	//
+	//		item.set('val', 'AAA');
+	//		deepEqual(order, [], '値の代入で値の変更がなかった場合、イベントは発火しないこと');
+	//		order = [];
+	//
+	//		var item2 = dataModel2.create({
+	//			id: sequence.next()
+	//		});
+	//		item2.set('num', '12.3');
+	//		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
+	//		item2.set('num', new Number(12.3));
+	//		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
+	//		item2.set('num', new String('12.3'));
+	//		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
+	//
+	//		item2.set('int', '12');
+	//		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
+	//		item2.set('int', new Number(12));
+	//		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
+	//		item2.set('int', new String('12'));
+	//		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
+	//
+	//		item2.set('bool', new Boolean(1));
+	//		strictEqual(item2.get('bool'), true, 'セット時に値の型変換が行われること');
+	//
+	//		item2.set('str', new String('1'));
+	//		strictEqual(item2.get('str'), '1', 'セット時に値の型変換が行われること');
+	//
+	//		try {
+	//			item2.set('num', 'ABC');
+	//			ok(false, 'エラーが発生していません。typeのチェックが値のセット時に行われていません');
+	//		} catch (e) {
+	//			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR,
+	//					'セット時に値の型変換が行われ、条件を満たさない値をsetするとエラーが発生すること');
+	//		}
+	//		try {
+	//			item2.set('str', '');
+	//			ok(false, 'エラーが発生していません。constraintのチェックが値のセット時に行われていません');
+	//		} catch (e) {
+	//			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR,
+	//					'セット時に値の型変換が行われ、条件を満たさない値をsetするとエラーが発生すること');
+	//		}
+	//	});
 });
