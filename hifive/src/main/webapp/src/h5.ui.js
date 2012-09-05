@@ -557,7 +557,7 @@
 		// DOM要素の書き換え可能かを判定するフラグ
 		this._redrawable = true;
 		// _redrawable=false時、percent()に渡された最新の値
-		this._lastPercent = 0;
+		this._lastPercent = -1;
 		// _redrawable=false時、message()に渡された最新の値
 		this._lastMessage = null;
 
