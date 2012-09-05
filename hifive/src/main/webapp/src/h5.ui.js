@@ -136,7 +136,7 @@
 	 * <li>Windows Phoneは7.0/7.5ともに未サポート https://github.com/jquery/jquery-mobile/issues/3489</li>
 	 * <ul>
 	 */
-	var isTransformAnimationSupported = (function() {
+	var isTransformAnimationAvailable = (function() {
 		var ua = h5.env.ua;
 		var fullver = parseFloat(ua.browserVersionFull);
 		return !((ua.isAndroidDefaultBrowser && fullver < 3) || (ua.isiOS && ua.browserVersion < 5)
@@ -277,7 +277,7 @@
 	}
 
 	// CSS3Animationのサポート判定
-	isTransformAnimationSupported = isTransformAnimationSupported ? supportsCSS3Property('animationName')
+	isTransformAnimationAvailable = isTransformAnimationAvailable ? supportsCSS3Property('animationName')
 			: false;
 
 	/**
@@ -485,7 +485,7 @@
 			}
 			this.highlightPos = highlightPos;
 
-			if (isTransformAnimationSupported) {
+			if (isTransformAnimationAvailable) {
 				// CSS3Animationをサポートしている場合は、keyframesでスロバーを描写する
 				canvas.className = CLASS_THROBBER_CANVAS;
 			} else {
@@ -643,7 +643,7 @@
 					return;
 				}
 
-				if (!isTransformAnimationSupported) {
+				if (!isTransformAnimationAvailable) {
 					$window.bind('touchmove scroll', scrollstopHandler);
 				}
 
@@ -749,7 +749,7 @@
 				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
 				var displayHeight = window.innerHeight ? window.innerHeight : $(window).height();
 
-				if (isTransformAnimationSupported) {
+				if (isTransformAnimationAvailable) {
 					// 可視領域からtopを計算する
 					$blockElement.css('top', ((displayHeight - $blockElement.outerHeight()) / 2)
 							+ 'px');
