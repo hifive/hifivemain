@@ -113,7 +113,11 @@
 	})();
 
 	/**
-	 * h5.env.uaが解析の対象としている範囲で、ユーザエージェントからposition:fixedをサポートしているか判定する。
+	 * 以下の判定が全てtrueの場合、スロバーをCSS3Animationで描画する。
+	 * <ul>
+	 * <li>position:fixedをサポートしているユーザエージェントか。</li>
+	 * <li>CSSの『animation-name』プロパティをサポートしているか。</li>
+	 * <h5>position:fixedに関して</h5>
 	 * <p>
 	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
 	 * <p>
@@ -124,35 +128,20 @@
 	 * <li>機能ベースでモバイル・デスクトップの両方を検知するのは困難。</li>
 	 * </ul>
 	 * <p>
-	 * <b>メモ</b>
+	 * <b>備考</b>
 	 * <ul>
 	 * <li>position:fixed対応表: http://caniuse.com/css-fixed</li>
-	 * <li>Androidは2.2からサポートしているが、2.2と2.3はmetaタグに「user-scalable=no」が設定されていないと機能しない。<br>
+	 * <li>Androidは2.2からposition:fixedをサポートしており、2.2と2.3はmetaタグに「user-scalable=no」が設定されていると機能するが、バグが多いためAndroid3未満はposition:fixed未サポートとして処理する。<br>
 	 * http://blog.webcreativepark.net/2011/12/07-052517.html </li>
 	 * <li>Windows Phoneは7.0/7.5ともに未サポート https://github.com/jquery/jquery-mobile/issues/3489</li>
 	 * <ul>
 	 */
-	var isPositionFixedSupported = (function() {
+	var isTransformAnimationSupported = (function() {
 		var ua = h5.env.ua;
 		var fullver = parseFloat(ua.browserVersionFull);
-		return !((ua.isAndroidDefaultBrowser && fullver <= 2.1)
-				|| (ua.isAndroidDefaultBrowser && (fullver >= 2.2 && fullver < 2.4) && $('meta[name="viewport"][content*="user-scalable=no"]').length === 0)
-				|| (ua.isiOS && ua.browserVersion < 5) || (ua.isIE && ua.browserVersion < 7) || ua.isWindowsPhone);
+		return !((ua.isAndroidDefaultBrowser && fullver < 3) || (ua.isiOS && ua.browserVersion < 5)
+				|| (ua.isIE && ua.browserVersion < 7) || ua.isWindowsPhone);
 	})();
-
-	/**
-	 * CSS3 Animationsをサポートしているか
-	 * <p>
-	 * (true:サポート/false:未サポート)
-	 */
-	var isCSS3AnimationsSupported = null;
-
-	/**
-	 * CSS Transformsをサポートしているか
-	 * <p>
-	 * (true:サポート/false:未サポート)
-	 */
-	var isCSS3TransfromsSupported = null;
 
 	// =============================
 	// Functions
@@ -287,11 +276,9 @@
 		document.getElementsByTagName('head')[0].appendChild(vmlStyle);
 	}
 
-	// CSS3 Animationのサポート判定
-	isCSS3AnimationsSupported = supportsCSS3Property('animationName');
-
-	// CSS3 Transfromのサポート判定
-	isCSS3TransfromsSupported = supportsCSS3Property('transform');
+	// CSS3Animationのサポート判定
+	isTransformAnimationSupported = isTransformAnimationSupported ? supportsCSS3Property('animationName')
+			: false;
 
 	/**
 	 * VML版スロバー (IE 6,7,8)用
@@ -425,7 +412,6 @@
 		canvas.height = this.style.throbber.height;
 		canvas.style.display = 'block';
 		canvas.style.position = 'absolute';
-		canvas.className = CLASS_THROBBER_CANVAS;
 		baseDiv.style.width = this.style.throbber.width + 'px';
 		baseDiv.style.height = this.style.throbber.height + 'px';
 		baseDiv.appendChild(canvas);
@@ -499,33 +485,19 @@
 			}
 			this.highlightPos = highlightPos;
 
-			// CSSAnimationsサポートの場合はCSSファイルに定義されているので何もしない
-			if (isCSS3AnimationsSupported) {
-				return;
-			}
-
-			// CSSAnimations未サポートだがTransformをサポートしている場合は、setInterval+transform:rotateで描画する
-			if (isCSS3TransfromsSupported) {
-				var $canvas = $(canvas);
-				var rotate = 0;
-
-				this._runId = setInterval(function() {
-					var cssValue = 'rotate(' + rotate + 'deg)';
-					$canvas.css('-webkit-transform', cssValue);
-					$canvas.css('-moz-transform', cssValue);
-					$canvas.css('-o-transform', cssValue);
-					$canvas.css('-ms-transform', cssValue);
-					$canvas.css('transform', cssValue);
-					rotate = (rotate + 10) % 360;
-				}, 30);
+			if (isTransformAnimationSupported) {
+				// CSS3Animationをサポートしている場合は、keyframesでスロバーを描写する
+				canvas.className = CLASS_THROBBER_CANVAS;
 			} else {
 				var perMills = Math.floor(roundTime / lineCount);
 				var that = this;
 
-				// CSSAnimation/Transform未サポートだがCanvasはサポートしている場合は、setTimeoutで描画する
+				// CSSAnimation未サポートの場合タイマーアニメーションで描画する
 				// 対象ブラウザ: Firefox 2,3 / Opera  9.0～10.1 / Opera Mini 5.0～7.0 / Opera Mobile 10.0
 				// http://caniuse.com/transforms2d
 				// http://caniuse.com/#search=canvas
+				// ただし、Android 2.xは、-webkit-keyframesで-webkit-transformを使用すると、topとleftを変更してもその位置に描画されないバグがあるため、
+				// タイマーアニメーションでスロバーを描写する
 				this._runId = setTimeout(function() {
 					that._run.call(that);
 				}, perMills);
@@ -671,7 +643,7 @@
 					return;
 				}
 
-				if (!isPositionFixedSupported) {
+				if (!isTransformAnimationSupported) {
 					$window.bind('touchmove scroll', scrollstopHandler);
 				}
 
@@ -745,13 +717,6 @@
 				$.blockUI(setting);
 				$blockElement = $('body').children(
 						'.blockUI.' + setting.blockMsgClass + '.blockPage');
-
-				// position:fixed未サポートのAndroid2.xの場合、親要素のDIVがposition:fixedで子要素のCanvas(スロバー)にkeyframes(CSSAnimation)を適用すると、
-				// 画面の向きが変更されたときに実行する「メッセージを画面中央に表示する処理」が正しく行われない(位置がずれて中央に表示できない)ため、
-				// keyframes適用前に親要素のDIVのpositionをabsoluteに設定する(isPositionFixedSupportedでブラウザのバージョン判定をしているのでここでは行わない)
-				if (!isPositionFixedSupported) {
-					$blockElement.css('position', 'absolute');
-				}
 			} else {
 				var $target = $(this.target);
 				$target.block(setting);
@@ -784,7 +749,7 @@
 				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
 				var displayHeight = window.innerHeight ? window.innerHeight : $(window).height();
 
-				if (isPositionFixedSupported) {
+				if (isTransformAnimationSupported) {
 					// 可視領域からtopを計算する
 					$blockElement.css('top', ((displayHeight - $blockElement.outerHeight()) / 2)
 							+ 'px');
