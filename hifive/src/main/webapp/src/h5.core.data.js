@@ -353,8 +353,7 @@
 		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
 		// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
 		// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
-		var matched = type
-				.match(/^(string|number|integer|boolean|array|any|enum|@(.+?))((\[\])*)$/);
+		var matched = type.match(/^(string|number|integer|boolean|any|enum|@(.+?))((\[\])*)$/);
 		return matched && {
 			elmType: matched[1],
 			dataModel: matched[2],
@@ -437,16 +436,6 @@
 	}
 
 	/**
-	 * type:'array' 指定のプロパティに代入できるかのチェック
-	 *
-	 * @param {Any} val 判定する値
-	 * @return {Boolean} type:'array'指定のプロパティに代入可能か
-	 */
-	function isArrayValue(val) {
-		return val == null || $.isArray(val);
-	}
-
-	/**
 	 * type:'enum' 指定のプロパティに代入できるかのチェック
 	 *
 	 * @param {Any} val 判定する値
@@ -463,7 +452,7 @@
 			}
 			return false;
 		}
-		return $.inArray(v, enumValue) >= 0;
+		return v === null || $.inArray(v, enumValue) > -1;
 	}
 
 	/**
@@ -1075,8 +1064,10 @@
 							return errorReason;
 						}
 					}
-					if (!$.isArray(enumValue) || enumValue.length === 0) {
-						// 配列でない、または空配列ならエラー
+					if (!$.isArray(enumValue) || enumValue.length === 0
+							|| $.inArray(null, enumValue) > -1
+							|| $.inArray(undefined, enumValue) > -1) {
+						// 配列でない、または空配列、null,undefinedを含む配列ならエラー
 						errorReason.push(createErrorReason(
 								DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_ENUMVALUE, schemaProp));
 						if (stopOnError) {
@@ -1232,13 +1223,6 @@
 		case 'boolean':
 			return function(v) {
 				if (isBooleanValue(v)) {
-					return [];
-				}
-				return errObjs;
-			};
-		case 'array':
-			return function(v) {
-				if (isArrayValue(v)) {
 					return [];
 				}
 				return errObjs;
