@@ -1298,7 +1298,7 @@
 	}
 
 
-	function itemSetter(model, item, valueObj, noValidationProps, ignoreProps) {
+	function itemSetter(model, item, valueObj, noValidationProps, ignoreProps, isCreate) {
 		var readyProps = [];
 
 		//先に、すべてのプロパティの整合性チェックを行う
@@ -1365,9 +1365,12 @@
 			changedPropNameArray.push(readyProp.p);
 		}
 
+		//最初にアイテムを生成した時だけ、depend.calcに渡すイベントのtypeはcreateにする
+		var eventType = isCreate === true ? 'create' : 'change';
+
 		//今回変更されたプロパティと依存プロパティを含めてイベント送出
 		var event = {
-			type: 'change',
+			type: eventType,
 			target: item,
 			props: changedProps
 		};
@@ -1593,7 +1596,7 @@
 				actualInitialValue[plainProp] = initValue;
 			}
 
-			itemSetter(model, this, actualInitialValue, noValidationProps);
+			itemSetter(model, this, actualInitialValue, noValidationProps, null, true);
 		}
 		$.extend(DataItem.prototype, EventDispatcher.prototype, {
 			/**
