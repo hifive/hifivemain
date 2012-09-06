@@ -244,6 +244,11 @@
 	var DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND = 30;
 
 	/**
+	 * dependの依存関係が循環している
+	 */
+	var DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF = 31;
+
+	/**
 	 * ディスクリプタのエラーメッセージ
 	 */
 	var DESCRIPTOR_VALIDATION_ERROR_MSGS = [];
@@ -273,9 +278,11 @@
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_ENUMVALUE_TYPE] = '"{0}"プロパティの定義にエラーがあります。 enumValueはtypeに"enum"またはその配列が指定されている場合のみ指定可能です';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_ENUMVALUE] = '"{0}"プロパティの定義にエラーがあります。 enumValueは長さ1以上の配列を指定してください';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_ID] = '"{0}"プロパティの定義にエラーがあります。id指定した項目にdefaultValueを設定することはできません';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE] = '"{0}"プロパティのdefaultValueに設定された値"{1}"は、typeまたはconstraintに定義された条件を満たしていません。';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID] = '"{0}"プロパティの定義にエラーがあります。id指定された項目にconstraint.{1}:{2}を指定することはできません。';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE] = '"{0}"プロパティのdefaultValueに設定された値"{1}"は、typeまたはconstraintに定義された条件を満たしていません';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID] = '"{0}"プロパティの定義にエラーがあります。id指定された項目にconstraint.{1}:{2}を指定することはできません';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND] = '"{0}"プロパティの定義にエラーがあります。dependが指定された項目にdefaultValueを指定することはできません。';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF] = '"{0}"プロパティの定義にエラーがあります。depend.onに指定されたプロパティの依存関係が循環しています';
+
 
 
 	var ITEM_PROP_BACKING_STORE_PREFIX = '__';
@@ -334,14 +341,34 @@
 		};
 	}
 
-
 	//========================================================
 	//
 	// バリデーション関係コードここから
 	//
 	//========================================================
 
-
+	/**
+	 * dependの循環参照をチェックする関数 循環参照するならtrueを返す
+	 *
+	 * @param {String} prop map[prop]から辿って行って調べる。
+	 * @param {Object} map 依存関係をマップしたオブジェクト。{prop1: ['prop2','prop3'], prop2: ['prop3']}
+	 *            のような構造で依存関係を表したオブジェクト
+	 * @return {Boolean} 循環参照しているかどうか
+	 */
+	function checkControllerCircularRef(prop, map) {
+		return (function checkCircular(p, ancestors) {
+			if (!map[p]) {
+				return false;
+			}
+			for ( var i = 0, l = map[p].length; i < l; i++) {
+				if ($.inArray(map[p][i], ancestors) > -1
+						|| checkCircular(map[p][i], ancestors.concat([p]))) {
+					return true;
+				}
+			}
+			return false;
+		})(prop, []);
+	}
 
 	/**
 	 * type指定の文字列を、パースした結果を返す
@@ -708,6 +735,11 @@
 				}
 			}
 
+			// 循環参照チェックのため、depend指定されているプロパティが出てきたら覚えておく
+			// key: プロパティ名, value: そのプロパティのdepend.onをwrapInArrayしたもの
+			var dependencyMap = {};
+
+			// schemaのチェック
 			for ( var schemaProp in schema) {
 				// null(またはundefined)がプロパティオブジェクトに指定されていたら、空オブジェクトと同等に扱い、エラーにしない。
 				var propObj = schema[schemaProp] == null ? {} : schema[schemaProp];
@@ -731,15 +763,15 @@
 				if (depend != null) {
 					// id指定されているならエラー
 					if (isId) {
-						errorReason.push(createErrorReason(
-								DESCRIPTOR_SCHEMA_ERR_CODE_ID_DEPEND, schemaProp));
+						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_ID_DEPEND,
+								schemaProp));
 						if (stopOnError) {
 							return errorReason;
 						}
 					}
 
 					// defaultValueが指定されているならエラー
-					if(propObj.hasOwnProperty('defaultValue')){
+					if (propObj.hasOwnProperty('defaultValue')) {
 						errorReason.push(createErrorReason(
 								DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND, schemaProp));
 						if (stopOnError) {
@@ -747,7 +779,7 @@
 						}
 					}
 
-					// dependが指定されているなら、on,calcが指定されていること
+					// dependが指定されているなら、onが指定されていること
 					if (depend.on == null) {
 						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_ON,
 								schemaProp));
@@ -767,6 +799,8 @@
 							}
 						}
 					}
+
+					// dependが指定されているなら、calcが指定されていること
 					if (typeof depend.calc !== 'function') {
 						errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_CALC,
 								schemaProp));
@@ -774,6 +808,9 @@
 							return errorReason;
 						}
 					}
+
+					// 後の循環参照チェックのため、depend.onを覚えておく
+					dependencyMap[schemaProp] = wrapInArray(depend.on);
 				}
 
 				// -- typeのチェック --
@@ -1093,6 +1130,20 @@
 					// id項目にdefaultValueが設定されていたらエラー
 					errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_DEFAULTVALUE_ID,
 							schemaProp));
+					if (stopOnError) {
+						return errorReason;
+					}
+				}
+			}
+
+			// depend.onの循環参照チェック
+			// onに指定されているプロパティの定義が正しいかどうかのチェックが終わっているここでチェックする
+			// （循環参照チェック以前の、プロパティがあるのか、dependがあるならonがあるか、などのチェックをしなくて済むようにするため）
+			// （これ以前のチェックに引っかかっていたら、循環参照のチェックはしない）
+			for ( var prop in dependencyMap) {
+				if (checkControllerCircularRef(prop, dependencyMap)) {
+					errorReason.push(createErrorReason(
+							DESCRIPTOR_SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF, p));
 					if (stopOnError) {
 						return errorReason;
 					}
