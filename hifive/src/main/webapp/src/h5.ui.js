@@ -258,6 +258,21 @@
 		return positions;
 	}
 
+	/**
+	 * ドキュメントの高さ(コンテンツ全体の高さ)を取得します。
+	 * <p>
+	 * 1.6.4/1.7.1/1.8.0は正しい値を返すが1.7.1ではバグがあるため、jQuery.height()を使用せず自前で計算を行う。
+	 * <p>
+	 * http://bugs.jquery.com/ticket/3838<br>
+	 * http://pastebin.com/MaUuLjU2
+	 */
+	function getDocumentHeight() {
+		var body = document.body;
+		var doc = document.documentElement;
+		return Math.max(body.scrollHeight, doc.scrollHeight, body.offsetHeight, doc.offsetHeight,
+				doc.clientHeight);
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -535,28 +550,14 @@
 
 		var that = this;
 		var $window = $(window);
-		var $document = $(document);
 		var $target = this._isGlobalBlockTarget() ? $('body') : $(this.target);
 		var targetPosition = $target.css('position');
 		var targetZoom = $target.css('zoom');
 
 		// コンテンツ領域全体にオーバーレイをかける(見えていない部分にもオーバーレイがかかる)
 		function resizeOverlay() {
-			var $blockUIOverlay = $('body div.blockUI.blockOverlay');
-			$blockUIOverlay.height($document.height());
+			$('body div.blockUI.blockOverlay').height(getDocumentHeight());
 			// widthは100%が指定されているので計算しない
-		}
-
-		// インジケータのメッセージを画面中央に表示させる
-		function updateIndicatorPosition() {
-			var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass + '.blockPage');
-			// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
-			var displayHeight = window.innerHeight ? window.innerHeight : $window.height();
-
-			$blockUIInner.css('position', 'absolute').css(
-					'top',
-					(($document.scrollTop() + (displayHeight / 2)) - ($blockUIInner.height() / 2))
-							+ 'px');
 		}
 
 		// インジケータ上で発生したイベントを無効にする
@@ -600,7 +601,7 @@
 			}
 
 			timerId = setTimeout(function() {
-				updateIndicatorPosition();
+				that._setPositionAndResizeWidth();
 				timerId = null;
 			}, 50);
 		}
@@ -645,16 +646,13 @@
 
 				if (!isTransformAnimationAvailable) {
 					$window.bind('touchmove scroll', scrollstopHandler);
+					resizeOverlay();
 				}
 
 				disableEventOnIndicator();
 
 				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
 				$window.bind('orientationchange resize', resizeIndicatorHandler);
-
-				setTimeout(function() {
-					resizeIndicatorFunc();
-				});
 			}
 		};
 		// スロバーのスタイル定義 (基本的にはCSSで記述する。ただし固定値はここで設定する)
@@ -717,6 +715,11 @@
 				$.blockUI(setting);
 				$blockElement = $('body').children(
 						'.blockUI.' + setting.blockMsgClass + '.blockPage');
+
+				if (!isTransformAnimationAvailable) {
+					$blockElement.css('position', 'absolute');
+					$('body div.blockUI.blockOverlay').css('position', 'absolute');
+				}
 			} else {
 				var $target = $(this.target);
 				$target.block(setting);
