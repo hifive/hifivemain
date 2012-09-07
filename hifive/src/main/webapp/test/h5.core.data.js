@@ -72,7 +72,7 @@ $(function() {
 	 */
 	function createDataModel1() {
 		dataModel1 = manager.createModel({
-			name: 'TestDataModel',
+			name: 'TestDataModel1',
 			schema: {
 				id: {
 					id: true
@@ -2718,6 +2718,7 @@ $(function() {
 			}
 		} catch (e) {
 			ok(false, 'エラーが発生しました。『' + e.message + '』');
+			throw e;
 		}
 	});
 
@@ -5944,20 +5945,20 @@ $(function() {
 
 		// 依存する2つの項目のうち、1つを書き換え
 		// 予想されるeventObject
-		//		expectEvObj = {
-		//			props: {
-		//				v1: {
-		//					newValue: 'v111',
-		//					oldValue: 'test1'
-		//				}
-		//			},
-		//			type: 'change'
-		//		};
-		//		checkEvFlag = true;
-		//		item.set({
-		//			v1: 'v111'
-		//		});
-		//		strictEqual(item.get('v2'), 'v111v33', 'depend先の項目を変えると値が反映されること');
+		expectEvObj = {
+			props: {
+				v1: {
+					newValue: 'v111',
+					oldValue: 'test1'
+				}
+			},
+			type: 'change'
+		};
+		checkEvFlag = true;
+		item.set({
+			v1: 'v111'
+		});
+		strictEqual(item.get('v2'), 'v111test3', 'depend先の項目を変えると値が反映されること');
 
 		// テストの成功失敗に関わらず、次のテストでoldValueを同じにするため、setする
 		item.set({
@@ -5994,24 +5995,23 @@ $(function() {
 			v3: 'test333'
 		});
 
-		// TODO dependの実装が直ったらコメントインする
 		// 依存する2つの項目のうち1つをcreateで書き換え
 		// 予想されるeventObject
-		//		expectEvObj = {
-		//			props: {
-		//				v3: {
-		//					newValue: 'V3',
-		//					oldValue: 'test333'
-		//				}
-		//			},
-		//			type: 'change'
-		//		};
-		//		checkEvFlag = true;
-		//		model1.create({
-		//			id: item.get('id'),
-		//			v3: 'V3'
-		//		});
-		//		strictEqual(item.get('v2'), 'V1V3', 'depend先の項目を変えると値が反映されること');
+		expectEvObj = {
+			props: {
+				v3: {
+					newValue: 'V3',
+					oldValue: 'test333'
+				}
+			},
+			type: 'change'
+		};
+		checkEvFlag = true;
+		model1.create({
+			id: item.get('id'),
+			v3: 'V3'
+		});
+		strictEqual(item.get('v2'), 'test111V3', 'depend先の項目を変えると値が反映されること');
 	});
 
 	test('set,createで値の変更がない場合はdpend.calcは実行されないこと', 4, function() {
@@ -6084,7 +6084,7 @@ $(function() {
 				v2: {
 					type: 'string',
 					depend: {
-						on: ['v1', 'v3', 'v5'],
+						on: ['v3', 'v5'],
 						calc: function(ev) {
 							executed.push('v2');
 							if (checkEvFlag) {
@@ -6137,7 +6137,7 @@ $(function() {
 				}
 			},
 			type: 'create'
-		}
+		};
 		var item = model.create({
 			id: '1'
 		});
@@ -6145,43 +6145,40 @@ $(function() {
 		strictEqual(item.get('v3'), 'v1null', '正しく値が計算されて格納されていること');
 		strictEqual(item.get('v2'), 'v1v1nullnull', '正しく値が計算されて格納されていること');
 
-		// TODO dependの実装が直ったらコメントインする
 		// set
-		//		executed = [];
-		//		expectEvObj = {
-		//				PROPS: {
-		//					ID: {
-		//					V4: {
-		//						NEWVALUE: 'V44',
-		//						OLDVALUE: NULL
-		//					}
-		//				},
-		//				TYPE: 'CREATE'
-		//			}
-		//		item.set({
-		//			v4: 'v44'
-		//		});
-		//		deepEqual(executed, ['v3', 'v2'], '変更されたプロパティに依存するプロパティのcalcが依存関係順に実行されていること');
-		//		strictEqual(item.get('v3'), 'v1v44', '正しく値が計算されて格納されていること');
-		//		strictEqual(item.get('v2'), 'v1v1v44null', '正しく値が計算されて格納されていること');
-		//
-		//		executed = [];
-		//		expectEvObj = {
-		//				props: {
-		//					id: {
-		//					v5: {
-		//						newValue: 'v55',
-		//						oldValue: null
-		//					}
-		//				},
-		//				type: 'create'
-		//			}
-		//		item.set({
-		//			v5: 'v55'
-		//		});
-		//		deepEqual(executed, ['v2'], '変更されたプロパティに依存するプロパティのcalcが依存関係順に実行されていること');
-		//		strictEqual(item.get('v3'), 'v1v44', '正しく値が計算されて格納されていること');
-		//		strictEqual(item.get('v2'), 'v1v1v44v55', '正しく値が計算されて格納されていること');
+		executed = [];
+		expectEvObj = {
+			props: {
+				v4: {
+					newValue: 'v44',
+					oldValue: null
+				}
+			},
+			type: 'change'
+		};
+		item.set({
+			v4: 'v44'
+		});
+		deepEqual(executed, ['v3', 'v2'], '変更されたプロパティに依存するプロパティのcalcが依存関係順に実行されていること');
+		strictEqual(item.get('v3'), 'v1v44', '正しく値が計算されて格納されていること');
+		strictEqual(item.get('v2'), 'v1v1v44null', '正しく値が計算されて格納されていること');
+
+		executed = [];
+		expectEvObj = {
+			props: {
+				v5: {
+					newValue: 'v55',
+					oldValue: null
+				}
+			},
+			type: 'change'
+		};
+		item.set({
+			v5: 'v55'
+		});
+		deepEqual(executed, ['v2'], '変更されたプロパティに依存するプロパティのcalcが依存関係順に実行されていること');
+		strictEqual(item.get('v3'), 'v1v44', '正しく値が計算されて格納されていること');
+		strictEqual(item.get('v2'), 'v1v1v44v55', '正しく値が計算されて格納されていること');
 	});
 
 	test('set,createで値の変更がない場合はdpend.calcは実行されないこと', 4, function() {
@@ -6238,7 +6235,6 @@ $(function() {
 		ok(count === 0, 'create時に値の変更ない場合calcは実行されない');
 	});
 
-
 	test('depend指定されている項目にsetできないこと', 7, function() {
 		var model = manager.createModel({
 			name: 'TestDataModel',
@@ -6269,7 +6265,7 @@ $(function() {
 			});
 			ok(false, 'テスト失敗。depend指定された項目にsetしてエラーが発生しませんでした');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_DEPEND_PROPERTY, e.message);
 			strictEqual(item.get('v1'), null, 'setでエラーが起きたら、DataItemの中身は変わらないこと');
 			strictEqual(item.get('v2'), 'nulla', 'setでエラーが起きたら、DataItemの中身は変わらないこと');
 		}
@@ -6281,7 +6277,7 @@ $(function() {
 			});
 			ok(false, 'テスト失敗。create時にdepend指定された項目に値を指定してエラーが発生しませんでした');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_DEPEND_PROPERTY, e.message);
 		}
 
 		try {
@@ -6292,48 +6288,346 @@ $(function() {
 			});
 			ok(false, 'テスト失敗。create時にdepend指定された項目に値を指定してエラーが発生しませんでした');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_DEPEND_PROPERTY, e.message);
 			strictEqual(item.get('v1'), null, 'createでエラーが起きたら、DataItemの中身は変わらないこと');
 			strictEqual(item.get('v2'), 'nulla', 'createtでエラーが起きたら、DataItemの中身は変わらないこと');
 		}
 	});
 
-
-	test('calcが返す値が、そのプロパティの制約条件を満たさない場合はエラーになること', 7, function() {
+	test('depend.calcが指定された型と違う値を返したら、エラーになること（自動型変換もされないこと）', 15, function() {
+		// 型指定とdependのあるモデルを作成
 		var model = manager.createModel({
+			name: 'AutoBoxingDependDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				testS: {
+					type: 'string',
+					depend: {
+						on: 's',
+						calc: function() {
+							return this.get('s');
+						}
+					}
+				},
+				s: {},
+				testI1: {
+					type: 'integer',
+					depend: {
+						on: 'i',
+						calc: function() {
+							return this.get('i');
+						}
+					}
+				},
+				i: {},
+				testN: {
+					type: 'number',
+					depend: {
+						on: 'n',
+						calc: function() {
+							return this.get('n');
+						}
+					}
+				},
+				n: {},
+				testB: {
+					type: 'boolean',
+					depend: {
+						on: 'b',
+						calc: function() {
+							return this.get('b');
+						}
+					}
+				},
+				b: {},
+				testSA: {
+					type: 'string[]',
+					depend: {
+						on: 'sa',
+						calc: function() {
+							return this.get('sa');
+						}
+					}
+				},
+				sa: {},
+				testIA: {
+					type: 'integer[]',
+					depend: {
+						on: 'ia',
+						calc: function() {
+							return this.get('ia');
+						}
+					}
+				},
+				ia: {},
+				testNA: {
+					type: 'number[]',
+					depend: {
+						on: 'na',
+						calc: function() {
+							return this.get('na');
+						}
+					}
+				},
+				na: {},
+				testBA: {
+					type: 'boolean[]',
+					depend: {
+						on: 'ba',
+						calc: function() {
+							return this.get('ba');
+						}
+					}
+				},
+				ba: {}
+			}
+		});
+
+		// create
+		var item = model.create({
+			id: sequence.next(),
+			sa: [],
+			ia: [],
+			na: [],
+			ba: []
+		});
+
+		var failMsg = 'テスト失敗。type:{0} の要素のdepend.calcが{1}を返したのにエラーが発生していません';
+		try {
+			item.set('s', 1);
+			ok(false, h5.u.str.format(failMsg, 'string', '数値の1'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('s', new String('TEST'));
+			ok(false, h5.u.str.format(failMsg, 'string', 'Stringラッパークラス'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('i', 'a');
+			ok(false, h5.u.str.format(failMsg, 'integer', '文字列"a"'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('i', '1');
+			ok(false, h5.u.str.format(failMsg, 'integer', '文字列"1"'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('i', new Number(1));
+			ok(false, h5.u.str.format(failMsg, 'integer', 'new Number(1)'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('i', new Number(1));
+			ok(false, h5.u.str.format(failMsg, 'integer', 'new String(1)'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('n', 'a');
+			ok(false, h5.u.str.format(failMsg, 'number', '文字列"a"'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('n', '1');
+			ok(false, h5.u.str.format(failMsg, 'number', '文字列"1"'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('n', new Number(1));
+			ok(false, h5.u.str.format(failMsg, 'number', 'new Number(1)'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('n', new Number(1));
+			ok(false, h5.u.str.format(failMsg, 'number', 'new String(1)'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('b', new Boolean(true));
+			ok(false, h5.u.str.format(failMsg, 'boolean', 'new Boolean(true)'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('sa', [new String('ABCDE')]);
+			ok(false, h5.u.str.format(failMsg, 'string[]', '[new String("ABCDE")]'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('ia', [new Number(1)]);
+			ok(false, h5.u.str.format(failMsg, 'integer[]', '[new Number(1)]'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('na', [new Number(1)]);
+			ok(false, h5.u.str.format(failMsg, 'number[]', '[new Number(1)]'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+		try {
+			item.set('ba', [new Boolean(true)]);
+			ok(false, h5.u.str.format(failMsg, 'boolean[]', '[new Boolean(true)]'));
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
+		}
+	});
+	test('calcの返す値の制約チェックが行われること (type: number, number[], integer, integer[])', 29, function() {
+		var constraint = {
+			notNull: true,
+			min: -1,
+			max: 2
+		};
+		model = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
 				id: {
 					id: true
 				},
-				v1: {},
-				v2: {
-					type: 'string',
-					constraint: {
-						notNull: true,
-						pattern: /^hi/,
-						minLength: 6
-					},
+				num: {
+					type: 'number',
+					constraint: constraint,
 					depend: {
-						on: 'v1',
-						calc: function(ev) {
-							return this.get('v1');
+						on: 'n',
+						calc: function() {
+							return this.get('n');
 						}
 					}
+				},
+				numA: {
+					type: 'number[]',
+					constraint: constraint,
+					depend: {
+						on: 'na',
+						calc: function() {
+							return this.get('na');
+						}
+					}
+				},
+				int: {
+					type: 'integer',
+					constraint: constraint,
+					depend: {
+						on: 'i',
+						calc: function() {
+							return this.get('i');
+						}
+					}
+				},
+				intA: {
+					type: 'integer[]',
+					constraint: constraint,
+					depend: {
+						on: 'ia',
+						calc: function() {
+							return this.get('ia');
+						}
+					}
+				},
+				n: {
+					defaultValue: 0
+				},
+				i: {
+					defaultValue: 0
+				},
+				na: {
+					defaultValue: []
+				},
+				ia: {
+					defaultValue: []
 				}
 			}
 		});
 
-		try {
-			var item = model.create({
-				id: '1',
-				v1: 'AAA'
-			});
-			ok(false, 'テスト失敗。calcが制約条件を満たさない値を返したのにエラーになりませんでした');
-			item.set('v2', 'hifive');
-			console.log(item.get('v2'));
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+		ok(true, 'notNull:true, min:-1, max:2 の複合条件を持つプロパティを持つモデルを作成できること');
+		var values = [null, -2, -1, 0, 1, 2, 3];
+		var propTypes = ['number', 'number[]', 'integer', 'integer[]'];
+		var props = ['n', 'na', 'i', 'ia'];
+		for ( var i = 0, l = values.length; i < l; i++) {
+			for ( var j = 0, len = props.length; j < len; j++) {
+				var descriptor = {
+					id: sequence.next()
+				};
+				var v = propTypes[j].indexOf('[]') > -1 ? [values[i]] : values[i];
+				descriptor[props[j]] = v;
+				var vStr = $.isArray(v) ? '[' + v[0] + ']' : v;
+				var condition = !!(values[i] !== null && -1 <= values[i] && values[i] <= 2);
+				try {
+					model.create(descriptor);
+					ok(condition, h5.u.str.format(
+							'type:{0}, 値{1} はnotNull, min, max すべての条件を満たすのでエラーでない', propTypes[j],
+							vStr));
+				} catch (e) {
+					ok(!condition, h5.u.str.format(
+							'type:{0}, 値{1} はnotNull, min, max いずれかの条件を満たさないのでエラー', propTypes[j],
+							vStr));
+				}
+			}
+		}
+	});
+
+	test('string, string[]', 9, function() {
+		var constraint = {
+			pattern: /^hi/,
+			minLength: 4,
+			maxLength: 6
+		};
+		model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				str: {
+					type: 'string',
+					constraint: constraint
+				},
+				strA: {
+					type: 'string[]',
+					constraint: constraint
+				}
+			}
+		});
+
+		ok(true, 'pattern:/^hi/, minLength:4, maxLength:6 の複合条件を持つプロパティを持つモデルを作成できること');
+		var values = ['hifive', 'hi5', 'hi-five', 'HIFIVE'];
+		var propTypes = ['string', 'string[]'];
+		var props = ['str', 'strA'];
+		for ( var i = 0, l = values.length; i < l; i++) {
+			for ( var j = 0, len = props.length; j < len; j++) {
+				var descriptor = {
+					id: sequence.next()
+				};
+				var v = propTypes[j].indexOf('[]') > -1 ? [values[i]] : values[i];
+				descriptor[props[j]] = v;
+				var vStr = $.isArray(v) ? '[' + v[0] + ']' : v;
+				var condition = values[i].indexOf('hi') === 0 && 4 <= values[i].length
+						&& values[i].length <= 6;
+				try {
+					model.create(descriptor);
+					ok(condition, h5.u.str.format(
+							'type:{0}, 値{1} はpattern, minLength, maxLength すべての条件を満たすのでエラーでない',
+							propTypes[j], vStr));
+				} catch (e) {
+					ok(!condition, h5.u.str.format(
+							'type:{0}, 値{1} はpattern, minLength, maxLength いずれかの条件を満たさないのでエラー',
+							propTypes[j], vStr));
+				}
+			}
 		}
 	});
 
@@ -6341,7 +6635,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('auto boxing', {
+	module('自動型変換', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
@@ -6351,54 +6645,46 @@ $(function() {
 					id: {
 						id: true
 					},
+					testS1: {
+						type: 'string',
+						defaultValue: new String('abc')
+					},
 					testI1: {
 						type: 'integer',
 						defaultValue: '10'
 					},
 					testI2: {
 						type: 'integer',
-						defaultValue: new Number('10')
+						defaultValue: new Number(10)
 					},
 					testI3: {
-						type: 'integer',
-						defaultValue: new Object('10')
-					},
-					testI4: {
 						type: 'integer',
 						defaultValue: new String(10)
 					},
 					testN1: {
 						type: 'number',
-						defaultValue: '20'
+						defaultValue: '20.1'
 					},
 					testN2: {
 						type: 'number',
-						defaultValue: new Number('20')
+						defaultValue: new Number(20.1)
 					},
 					testN3: {
 						type: 'number',
-						defaultValue: new Object('20')
+						defaultValue: new String(20.1)
 					},
-					testN4: {
-						type: 'integer',
-						defaultValue: new String(30)
+					testSA1: {
+						type: 'string[]',
+						defaultValue: [new String('ABC')]
 					},
-					testN5: {
-						type: 'number',
-						defaultValue: '30.1'
+					testIA1: {
+						type: 'integer[]',
+						defaultValue: ['30', new Number(30), new String(30)]
 					},
-					testN6: {
-						type: 'number',
-						defaultValue: new Number('30.1')
-					},
-					testN7: {
-						type: 'number',
-						defaultValue: new Object('30.1')
-					},
-					testN8: {
-						type: 'integer',
-						defaultValue: new String('30.1')
-					},
+					testNA1: {
+						type: 'number[]',
+						defaultValue: ['40.1', new Number(40.1), new String(40.1)]
+					}
 				}
 			});
 		},
@@ -6413,68 +6699,155 @@ $(function() {
 	// Body
 	//=============================
 
-	test('DataItem生成時に自動的に型変換されていることを確認', function() {
-		var item = dataModel1.create({
-			id: sequence.next()
-		});
-
-		equal(item.get('testI1'), 10, 'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
-		equal(item.get('testI2'), 10, 'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
-		equal(item.get('testI3'), 10, 'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
-		equal(item.get('testI4'), 10, 'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
-		equal(item.get('testN1'), 20, 'type:numberでdefaultValueがパース可能な文字列(整数)の場合、自動的に数値に変換されること。');
-		equal(item.get('testN2'), 20, 'type:numberでdefaultValueがパース可能な文字列(整数)の場合、自動的に数値に変換されること。');
-		equal(item.get('testN3'), 20, 'type:numberでdefaultValueがパース可能な文字列(整数)の場合、自動的に数値に変換されること。');
-		equal(item.get('testN4'), 20, 'type:numberでdefaultValueがパース可能な文字列(整数)の場合、自動的に数値に変換されること。');
-		equal(item.get('testN5'), 30.1,
-				'type:numberでdefaultValueがパース可能な文字列(小数点を含む)の場合、自動的に数値に変換されること。');
-		equal(item.get('testN6'), 30.1,
-				'type:numberでdefaultValueがパース可能な文字列(小数点を含む)の場合、自動的に数値に変換されること。');
-		equal(item.get('testN7'), 30.1,
-				'type:numberでdefaultValueがパース可能な文字列(小数点を含む)の場合、自動的に数値に変換されること。');
-		equal(item.get('testN8'), 30.1,
-				'type:numberでdefaultValueがパース可能な文字列(小数点を含む)の場合、自動的に数値に変換されること。');
-
-	});
-
-	test(
-			'DataItemの値を更新すると自動的に型変換されていることを確認',
+	test('create時に自動的に型変換されること',
 			function() {
 				var item = dataModel1.create({
 					id: sequence.next()
 				});
 
-				item.set('testI1', '40');
-				item.set('testI2', '40');
-				item.set('testI3', '40');
-				item.set('testN1', '50');
-				item.set('testN2', '50');
-				item.set('testN3', '50');
-				item.set('testN4', '60.1');
-				item.set('testN5', '60.1');
-				item.set('testN6', '60.1');
-				item.set('testN7', '60.1');
-				item.set('testN8', '60.1');
+				strictEqual(item.get('testS1'), 'abc',
+						'type:stringでdefaultValueがStringラッパークラスの場合、自動的にstringに変換されること。');
+				strictEqual(item.get('testI1'), 10,
+						'type:integerでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
+				strictEqual(item.get('testI2'), 10,
+						'type:integerでdefaultValueがNumberラッパークラスの場合、自動的に数値に変換されること。');
+				strictEqual(item.get('testI3'), 10,
+						'type:integerでdefaultValueがパース可能な文字列のStringラッパークラスの場合、自動的に数値に変換されること。');
+				strictEqual(item.get('testN1'), 20,
+						'type:numberでdefaultValueがパース可能な文字列の場合、自動的に数値に変換されること。');
+				strictEqual(item.get('testN2'), 20,
+						'type:numberでdefaultValueがNumberラッパークラスの場合、自動的に数値に変換されること。');
+				strictEqual(item.get('testN3'), 20,
+						'type:numberでdefaultValueがパース可能な文字列のStringラッパークラスの場合、自動的に数値に変換されること。');
 
-				equal(item.get('testI1'), 40, 'type:integerのプロパティにパース可能な文字列を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testI2'), 40, 'type:integerのプロパティにパース可能な文字列を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testI3'), 40, 'type:integerのプロパティにパース可能な文字列を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testN1'), 50,
-						'type:numberのプロパティにパース可能な文字列(整数)を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testN2'), 50,
-						'type:numberのプロパティにパース可能な文字列(整数)を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testN3'), 50,
-						'type:numberのプロパティにパース可能な文字列(整数)を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testN4'), 60.1,
-						'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testN5'), 60.1,
-						'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testN6'), 60.1,
-						'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testN7'), 60.1,
-						'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
-				equal(item.get('testN8'), 60.1,
-						'type:numberのプロパティにパース可能な文字列(小数点を含む)を設定すると、自動的に数値に変換されること。');
+				deepEqualObs(item.get('testSA1'), ['ABC'],
+						'type:string[]でdefaultValueが型変換可能な値を要素に持つ配列の場合、自動的に変換されること。');
+
+				deepEqualObs(item.get('testIA1'), [30, 30, 30],
+						'type:numberでdefaultValueが型変換可能な値を要素に持つ配列の場合、自動的に変換されること。');
+
+				deepEqualObs(item.get('testNA1'), [40.1, 40.1, 40.1],
+						'type:numberでdefaultValueが型変換可能な値を要素に持つ配列の場合、自動的に変換されること。');
+
+			});
+
+	test('set時に型変換されること',
+			function() {
+				var item = dataModel1.create({
+					id: sequence.next()
+				});
+
+				item.set('testS1', new String('ABCDE'));
+				item.set('testI1', '-40');
+				item.set('testI2', new Number(-40));
+				item.set('testI3', new String(-40));
+				item.set('testN1', '-50.1');
+				item.set('testN2', new Number(-50.1));
+				item.set('testN3', new String(-50.1));
+				item.set('testSA1', [new String('A'), 'B', new String('C')]);
+				item.set('testIA1', ['+60', new Number(60), new String(60)]);
+				item.set('testNA1', ['70.1', new Number(70.1), new String(70.1)]);
+
+				strictEqual(item.get('testS1'), 'ABCDE',
+						'type:stringのプロパティにStringラッパークラスをsetすると、自動的に数値に変換されること。');
+				strictEqual(item.get('testI1'), -40,
+						'type:integerのプロパティにパース可能な文字列をsetすると、自動的に数値に変換されること。');
+				strictEqual(item.get('testI2'), -40,
+						'type:integerのプロパティにパース可能な文字列をsetすると、自動的に数値に変換されること。');
+				strictEqual(item.get('testI3'), -40,
+						'type:integerのプロパティにパース可能な文字列をsetすると、自動的に数値に変換されること。');
+				strictEqual(item.get('testN1'), -50.1,
+						'type:numberのプロパティにパース可能な文字列(整数)をsetすると、自動的に数値に変換されること。');
+				strictEqual(item.get('testN2'), -50.1,
+						'type:numberのプロパティにパース可能な文字列(整数)をsetすると、自動的に数値に変換されること。');
+				strictEqual(item.get('testN3'), -50.1,
+						'type:numberのプロパティにパース可能な文字列(整数)をsetすると、自動的に数値に変換されること。');
+				deepEqualObs(item.get('testSA1'), ['A', 'B', 'C']);
+				deepEqualObs(item.get('testIA1'), [60, 60, 60]);
+				deepEqualObs(item.get('testNA1'), [70, 1, 70.1, 70.1]);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+
+	// datamodelがObservableArrayを扱っていることのテスト
+	// h5.u.obj.createObservableArrayで作っているものなので、
+	// ObservableArray自体のテストはh5.uに記述する
+	module('ObservableArray', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+			createDataModel1();
+			item = dataModel1.create({
+				id: sequence.next(),
+				val: 1
+			});
+
+			model = manager.createModel({
+				name: 'TestModelForObsArray',
+				schema: {
+					id: {
+						id: true
+					},
+					numA: {
+						type: 'number[]'
+					},
+					intA: {
+						type: 'integer[]'
+					},
+					strA: {
+						type: 'string[]'
+					},
+					boolA: {
+						type: 'boolean[]'
+					},
+					anyA: {
+						type: 'any[]'
+					},
+					enumA: {
+						type: 'enum[]',
+						enumValue: [1, 2, 3]
+					},
+					datamodelA: {
+						type: '@' + dataModel1.name + '[]'
+					}
+				}
+			});
+		},
+		teardown: function() {
+			item.removeEventListener('change', changeListener);
+			sequence = null;
+			dataModel1 = null;
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('配列要素が自動的にObservableArrayに変換されること',
+			function() {
+				var item = model.create({
+					id: sequence.next()
+				});
+				var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'any[]', 'enum[]',
+						'@' + dataModel1.name + '[]'];
+				var keys = ['numA', 'intA', 'strA', 'boolA', 'anyA', 'enumA', 'datamodelA'];
+				var store = [];
+				for ( var i = 0, l = types.length; i < l; i++) {
+					ok(h5.u.obj.isObservableArray(item.get(keys[i])), h5.u.str.format(
+							'type:{0}の要素がObservableArray', types[i]));
+					store.push(item.get(keys[i]));
+
+					// 別のアイテムをセット
+					item.set(keys[i], [null]);
+				}
+
+				for ( var i = 0, l = types.length; i < l; i++) {
+					strictEqual(store[i], item.get(keys[i]),
+							'中身の違う配列をsetしてもObservableArrayのインスタンスは変わらないこと');
+				}
 			});
 
 	//=============================
