@@ -361,10 +361,10 @@
 		if ($.isArray(v)) {
 			for ( var i = 0, l = v.length; i < l; i++) {
 				// valueOfメソッドのあるオブジェクトならその値を入れる
-				v[i] = v[i] && v[i].valueOf && v[i].valueOf();
+				v[i] = v[i] && typeof v[i] === 'object' ? v[i] && v[i].valueOf && v[i].valueOf() : v[i];
 			}
 		} else {
-			v = v && v.valueOf && v.valueOf();
+			v = v && typeof v === 'object' ? v.valueOf && v.valueOf() : v;
 		}
 		return v;
 
@@ -1645,7 +1645,7 @@
 
 				var validateResult = model._validateItemValue(propName, args);
 				if (validateResult.length > 0) {
-					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, plainProp, validateResult);
+					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
 				}
 			}
 
