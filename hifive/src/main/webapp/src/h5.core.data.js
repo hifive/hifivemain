@@ -78,7 +78,7 @@
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
-	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティのセッターを呼び出した';
+	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティに値をセットすることはできません。違反したプロパティ={0}';
 	ERROR_MESSAGES[ERR_CODE_NO_EVENT_TARGET] = 'イベントのターゲットが指定されていない';
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAMESPACE] = 'createDataModelManagerのnamespaceが不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_DATAMODEL_NAME] = 'データモデル名が不正';
@@ -1359,6 +1359,11 @@
 				continue;
 			}
 
+			// depend指定されている項目はset禁止
+			if (model.schema[prop].depend) {
+				throwFwError(ERR_CODE_DEPEND_PROPERTY, prop);
+			}
+
 			var oldValue = getValue(item, prop);
 			var newValue = valueObj[prop];
 
@@ -1499,6 +1504,8 @@
 
 				if (isReady(dp)) {
 					var newValue = model.schema[dp].depend.calc.call(item, event);
+					//TODO newValueのチェック
+					// model._validateValue
 
 					ret[dp] = {
 						oldValue: getValue(item, dp),
@@ -1609,6 +1616,10 @@
 
 				if (propDesc && propDesc.depend) {
 					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
+					if (plainProp in userInitialValue) {
+						// 依存プロパティが与えられていた場合はエラー
+						throwFwError(ERR_CODE_DEPEND_PROPERTY, plainProp);
+					}
 					continue;
 				}
 
@@ -1622,7 +1633,12 @@
 				var initValue = null;
 
 				if (plainProp in userInitialValue) {
-					//create時に初期値が与えられていたらそれを代入
+					//create時に初期値が与えられていた場合
+					if (propDesc && propDesc.depend) {
+						// depend指定されているプロパティだった場合はエラー
+						throwFwError(ERR_CODE_DEPEND_PROPERTY, prop);
+					}
+					// 与えられた初期値を代入
 					initValue = userInitialValue[plainProp];
 				} else if (propDesc && propDesc.defaultValue !== undefined) {
 					//DescriptorのdefaultValueがあれば代入
