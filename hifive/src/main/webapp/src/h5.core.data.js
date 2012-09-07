@@ -75,6 +75,9 @@
 	/** DataItem.set()でidをセットすることはできない */
 	var ERR_CODE_CANNOT_SET_ID = 15012;
 
+	/** depend.calcが制約を満たさない値を返している */
+	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15013;
+
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
@@ -89,6 +92,7 @@
 	ERROR_MESSAGES[ERR_CODE_INVALID_DESCRIPTOR] = 'データモデルディスクリプタにエラーがあります。';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_OBSARRAY] = 'typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う）。 プロパティ名 = {0}';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'DataItem.set()でidをセットすることはできない';
+	ERROR_MESSAGES[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'depend.calcが返した値がプロパティの型・制約に違反しています。違反したプロパティ={0}, 違反した値={1}';
 
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
@@ -403,10 +407,10 @@
 	 * に当てはまる引数についてtrueを返す
 	 *
 	 * @param {Any} val 判定する値
-	 * @param {Integer} dementnion 判定する型の配列次元(配列でないなら0)
+	 * @param {Boolean} isStrict 厳密に判定するかどうか。isStrict === trueなら型変換可能でも型が違えばfalseを返す
 	 * @return {Boolean} type:'number'指定のプロパティに代入可能か
 	 */
-	function isNumberValue(val) {
+	function isNumberValue(val, isStrict) {
 		// nullまたはundefinedはtrue
 		// NaNを直接入れた場合はtrue
 		// new Number() で生成したオブジェクトはtrue
@@ -417,9 +421,8 @@
 		return val == null
 				|| isStrictNaN(val)
 				|| typeof val === 'number'
-				|| val instanceof Number
-				|| !!((isString(val) || val instanceof String) && val
-						.match(/^[+\-]{0,1}[0-9]*\.{0,1}[0-9]+$/));
+				|| (!isStrict && (val instanceof Number || !!((isString(val) || val instanceof String) && val
+						.match(/^[+\-]{0,1}[0-9]*\.{0,1}[0-9]+$/))));
 	}
 
 	/**
@@ -427,39 +430,41 @@
 	 * に当てはまる引数についてtrueを返す
 	 *
 	 * @param {Any} val 判定する値
-	 * @param {integer} dementnion 判定する型の配列次元(配列でないなら0)
+	 * @param {Boolean} isStrict 厳密に判定するかどうか。isStrict === trueなら型変換可能でも型が違えばfalseを返す
 	 * @return {Boolean} type:'integer'指定のプロパティに代入可能か
 	 */
-	function isIntegerValue(val) {
+	function isIntegerValue(val, isStrict) {
 		// parseIntとparseFloatの結果が同じかどうかで整数値かどうかの判定をする
 		// typeofが'nubmer'または、new Number()で生成したオブジェクトで、parseFloatとparseIntの結果が同じならtrue
 		// NaN, Infinity, -Infinityはfalseを返す(parseInt(Infinity)はNaNであるので、InfinityはIntじゃない扱いにする
 		// 文字列の場合は、[±数字]で構成されている文字列ならOKにする
 		// ※ parseIntよりも厳しいチェックにしている。"12px"、"12.3"、[12,3] はいずれもparseIntできるが、ここではNG。
-		return val == null || (typeof val === 'number' || val instanceof Number)
-				&& parseInt(val) === parseFloat(val)
-				|| (typeof val === 'string' || val instanceof String)
-				&& val.match(/^[+\-]{0,1}[0-9]+$/);
+		return val == null
+				|| (typeof val === 'number' && parseInt(val) === val)
+				|| (!isStrict && (val instanceof Number && parseInt(val) === parseFloat(val) || (typeof val === 'string' || val instanceof String)
+						&& val.match(/^[+\-]{0,1}[0-9]+$/)));
 	}
 
 	/**
 	 * type:'string' 指定のプロパティに代入できるかのチェック
 	 *
 	 * @param {Any} val 判定する値
+	 * @param {Boolean} isStrict 厳密に判定するかどうか。isStrict === trueなら型変換可能でも型が違えばfalseを返す
 	 * @return {Boolean} type:'string'指定のプロパティに代入可能か
 	 */
-	function isStringValue(val) {
-		return val == null || isString(val) || val instanceof String;
+	function isStringValue(val, isStrict) {
+		return !!(val == null || isString(val) || (!isStrict && val instanceof String));
 	}
 
 	/**
 	 * type:'boolean' 指定のプロパティに代入できるかのチェック
 	 *
 	 * @param {Any} val 判定する値
+	 * @param {Boolean} isStrict 厳密に判定するかどうか。isStrict === trueなら型変換可能でも型が違えばfalseを返す
 	 * @return {Boolean} type:'boolean'指定のプロパティに代入可能か
 	 */
-	function isBooleanValue(val) {
-		return val == null || typeof val === 'boolean' || val instanceof Boolean;
+	function isBooleanValue(val, isStrict) {
+		return val == null || typeof val === 'boolean' || (!isStrict && val instanceof Boolean);
 	}
 
 	/**
@@ -501,13 +506,19 @@
 			};
 		}
 		var dim = checkObj.dimention || 0;
-		return function checkValue(val) {
+		/**
+		 * 値のチェックを行う関数
+		 *
+		 * @param {Any} val 値
+		 * @param {Boolean} isStrict 型変換可能ならOKにするかどうか
+		 */
+		return function checkValue(val, isStrict) {
 			var errorReason = [];
 			function _checkValue(v, d) {
 				if (!d) {
 					// チェック関数を順番に適用して、falseが返ってきたらチェック終了してfalseを返す
 					for ( var i = 0, l = funcs.length; i < l; i++) {
-						var result = funcs[i](v);
+						var result = funcs[i](v, isStrict);
 						if (result.length) {
 							errorReason = errorReason.concat(result);
 							return false;
@@ -1261,29 +1272,29 @@
 		}];
 		switch (elmType) {
 		case 'number':
-			return function(v) {
-				if (isNumberValue(v)) {
+			return function(v, isStrict) {
+				if (isNumberValue(v, isStrict)) {
 					return [];
 				}
 				return errObjs;
 			};
 		case 'integer':
-			return function(v) {
-				if (isIntegerValue(v)) {
+			return function(v, isStrict) {
+				if (isIntegerValue(v, isStrict)) {
 					return [];
 				}
 				return errObjs;
 			};
 		case 'string':
-			return function(v) {
-				if (isStringValue(v)) {
+			return function(v, isStrict) {
+				if (isStringValue(v, isStrict)) {
 					return [];
 				}
 				return errObjs;
 			};
 		case 'boolean':
-			return function(v) {
-				if (isBooleanValue(v)) {
+			return function(v, isStrict) {
+				if (isBooleanValue(v, isStrict)) {
 					return [];
 				}
 				return errObjs;
@@ -1513,9 +1524,13 @@
 
 				if (isReady(dp)) {
 					var newValue = model.schema[dp].depend.calc.call(item, event);
-					//TODO newValueのチェック
-					// model._validateValue
 
+					// 型変換を行わない厳密チェックで、戻り値をチェックする
+					var errReason = model._itemValueCheckFuncs[dp](newValue, true);
+					if (errReason.length !== 0) {
+						// calcの返した値が型・制約違反ならエラー
+						throwFwError(ERR_CODE_CALC_RETURNED_INVALID_VALUE, [dp, newValue]);
+					}
 					ret[dp] = {
 						oldValue: getValue(item, dp),
 						newValue: newValue
