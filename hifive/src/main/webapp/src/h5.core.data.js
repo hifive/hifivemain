@@ -1450,6 +1450,9 @@
 	 * @returns {Object} { dependProp1: { oldValue, newValue }, ... } という構造のオブジェクト
 	 */
 	function calcDependencies(model, item, event, changedProps) {
+		// 今回の変更に依存するプロパティ
+		var targets = [];
+
 		var dependsMap = model._dependencyMap;
 
 		//変更された実プロパティを初期計算済みプロパティとしてdependの計算をスタート
@@ -1457,11 +1460,19 @@
 
 		/**
 		 * この依存プロパティが計算可能（依存するすべてのプロパティの再計算が完了している）かどうかを返します。
+		 * 依存しているプロパティが依存プロパティでない場合は常にtrue(計算済み)を返します
+		 * 依存しているプロパティが依存プロパティが今回の変更されたプロパティに依存していないならtrue(計算済み)を返します
 		 */
 		function isReady(dependProp) {
 			var deps = wrapInArray(model.schema[dependProp].depend.on);
 			for ( var i = 0, len = deps.length; i < len; i++) {
-				if ($.inArray(deps[i], done) === -1) {
+				if (!model.schema[deps[i]].depend) {
+					// 依存しているプロパティが、依存プロパティでなければ計算済み
+					continue;
+				}
+
+				if ($.inArray(deps[i], targets) !== -1 && $.inArray(deps[i], done) === -1) {
+					// 依存先が今回の変更に依存していてかつ、まだ計算済みでないならfalseを返す
 					return false;
 				}
 			}
@@ -1489,8 +1500,6 @@
 		}
 
 		var ret = {};
-
-		var targets = [];
 
 		//今回変更された実プロパティに依存するプロパティを列挙
 		addDependencies(targets, wrapInArray(changedProps));
@@ -1522,6 +1531,16 @@
 			//今回計算対象となったプロパティに（再帰的に）依存するプロパティをrestに追加
 			//restTargetsは「今回計算できなかったプロパティ＋新たに依存関係が発見されたプロパティ」が含まれる
 			addDependencies(restTargets, targets);
+
+			// 「新たに依存関係が発見されたプロパティ」に「今回計算できたプロパティ」が含まれる場合があるので、取り除く。
+			// 例：v1を変更→v1に依存するv2を変更→v1とv2に依存するv3を変更　なら一回のループで全て変更が行われる。
+			//     しかし、v2の変更によってv3が「新たに依存関係が発見されたプロパティ」になってしまう。
+			//     v3がv2に依存しているので、v3が「計算済みのプロパティ」に入ってしまう。
+			for ( var i = restTargets.length - 1; 0 <= i; i--) {
+				if ($.inArray(restTargets[i], done) > -1) {
+					restTargets.splice(i, 1);
+				}
+			}
 
 			targets = restTargets;
 		}
