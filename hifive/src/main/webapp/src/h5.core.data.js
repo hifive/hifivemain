@@ -352,6 +352,25 @@
 	//========================================================
 
 	/**
+	 * ラッパークラスをunboxする 配列が渡されたら、配列の中身をunboxする
+	 *
+	 * @param v {Any}
+	 * @return unboxしたもの
+	 */
+	function unbox(v) {
+		if ($.isArray(v)) {
+			for ( var i = 0, l = v.length; i < l; i++) {
+				// valueOfメソッドのあるオブジェクトならその値を入れる
+				v[i] = v[i] && v[i].valueOf && v[i].valueOf();
+			}
+		} else {
+			v = v && v.valueOf && v.valueOf();
+		}
+		return v;
+
+	}
+
+	/**
 	 * dependの循環参照をチェックする関数 循環参照するならtrueを返す
 	 *
 	 * @param {String} prop map[prop]から辿って行って調べる。
@@ -1377,6 +1396,12 @@
 
 			var oldValue = getValue(item, prop);
 			var newValue = valueObj[prop];
+
+			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
+			if (model.schema[prop].type
+					&& model.schema[prop].type.match(/string|number|integer|boolean/)) {
+				newValue = unbox(newValue);
+			}
 
 			if (oldValue === newValue) {
 				//同じ値がセットされた場合は何もしない
