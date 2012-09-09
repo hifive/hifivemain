@@ -361,7 +361,8 @@
 		if ($.isArray(v)) {
 			for ( var i = 0, l = v.length; i < l; i++) {
 				// valueOfメソッドのあるオブジェクトならその値を入れる
-				v[i] = v[i] && typeof v[i] === 'object' ? v[i] && v[i].valueOf && v[i].valueOf() : v[i];
+				v[i] = v[i] && typeof v[i] === 'object' ? v[i] && v[i].valueOf && v[i].valueOf()
+						: v[i];
 			}
 		} else {
 			v = v && typeof v === 'object' ? v.valueOf && v.valueOf() : v;
@@ -1624,8 +1625,11 @@
 		//model.schemaは継承関係を展開した後のスキーマ
 		var schema = model.schema;
 
-		function setObservableArrayObserveBeforeListener(model, propName, observableArray) {
-			function validateObservableArrayChange(event) {
+		function setObservableArrayListeners(model, item, propName, observableArray) {
+			//TODO 現状だとインスタンスごとにfunctionを作っているが、
+			//DataItem&&property名ごとに作るようにして数を減らしたい(DataItemのprototypeとして持たせればよい？)
+
+			function observeBeforeListener(event) {
 				//TODO ES5対応
 				//Array自体を直接変化される関数のリスト。ただし、sort, reserveは値を追加するものではないのでバリデーションは不要（なので何もしない）
 				var breakingMethods = ['unshift', 'push', 'splice', 'copyFrom'];
@@ -1649,7 +1653,16 @@
 				}
 			}
 
-			observableArray.addEventListener('observeBefore', validateObservableArrayChange);
+			function observeListener(event) {
+				var nestedEvent = {
+					type: 'nestedChange',
+					originalEvent: event
+				};
+				item.dispatchEvent(nestedEvent);
+			}
+
+			observableArray.addEventListener('observeBefore', observeBeforeListener);
+			observableArray.addEventListener('observe', observeListener);
 		}
 
 		/**
@@ -1685,7 +1698,7 @@
 				if (propDesc && isTypeArray(propDesc.type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					var obsArray = h5.u.obj.createObservableArray(); //TODO cache
-					setObservableArrayObserveBeforeListener(model, plainProp, obsArray);
+					setObservableArrayListeners(model, this, plainProp, obsArray);
 					setValue(this, plainProp, obsArray);
 				}
 
