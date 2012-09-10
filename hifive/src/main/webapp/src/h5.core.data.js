@@ -2269,11 +2269,6 @@
 				 * @returns {DataItem} データアイテム、存在しない場合はnull
 				 */
 				_findById: function(id) {
-					//TODO number対応
-					//データアイテムは、取得系APIではIDを文字列型で渡さなければならない
-					if (!isString(id)) {
-						throwFwError(ERR_CODE_ID_MUST_BE_STRING);
-					}
 					var item = this.items[id];
 					return item === undefined ? null : item;
 				}
