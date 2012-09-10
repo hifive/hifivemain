@@ -1381,6 +1381,7 @@
 
 
 	function itemSetter(model, item, valueObj, noValidationProps, ignoreProps, isCreate) {
+		// valueObjから整合性チェックに通ったものを整形して格納する配列
 		var readyProps = [];
 
 		//先に、すべてのプロパティの整合性チェックを行う
@@ -1399,14 +1400,43 @@
 			var newValue = valueObj[prop];
 
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
-			if (model.schema[prop].type
-					&& model.schema[prop].type.match(/string|number|integer|boolean/)) {
+			var type = model.schema[prop].type || model.schema[prop].type;
+			if (type && type.match(/string|number|integer|boolean/)) {
 				newValue = unbox(newValue);
 			}
 
 			if (oldValue === newValue) {
 				//同じ値がセットされた場合は何もしない
 				continue;
+			}
+
+
+			//このプロパティをバリデーションしなくてよいと明示されているならバリデーションを行わない
+			//型が配列（type:[]）の場合に、フラグが立っていたら、値がnull/undefinedでもよいとする
+			if ($.inArray(prop, noValidationProps) === -1) {
+				//型・制約チェック
+				//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
+				var validateResult = model._validateItemValue(prop, newValue);
+				if (validateResult.length > 0) {
+					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
+				}
+			}
+
+			//値がnull以外なら中身の型変換行う
+			//typeがnumber,integerで、newValueが文字列(もしくは配列)なら型変換を行う
+			//型のチェックは終わっているので、typeがnumber・integerならnewValueは数値・数値変換可能文字列・null またはそれらを要素に持つ配列のいずれかである
+			if (newValue != null && type && type.match(/number|integer/)
+					&& typeof newValue !== 'number') {
+				if ($.isArray(newValue)) {
+					for ( var i = 0, l = newValue.length; i < l; i++) {
+						// スパースな配列の場合、undefinedが入っている可能性があるので、!= で比較
+						if (newValue[i] != null) {
+							newValue[i] = parseFloat(newValue[i]);
+						}
+					}
+				} else if (newValue != null) {
+					newValue = parseFloat(newValue);
+				}
 			}
 
 			//ここでpushしたプロパティのみ、後段で値をセットする
@@ -1416,19 +1446,6 @@
 				n: newValue
 			});
 
-			if (noValidationProps && ($.inArray(prop, noValidationProps) !== -1)) {
-				//このプロパティをバリデーションしなくてよいと明示されている場合はバリデーションを行わない
-				//型が配列（type:[]）の場合に、フラグが立っていたら、値がnull/undefinedでもよいとする
-				//(create()時にdefaultValueがなくてもエラーにならないようにする)のが用途
-				continue;
-			}
-
-			//型・制約チェック
-			//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
-			var validateResult = model._validateItemValue(prop, newValue);
-			if (validateResult.length > 0) {
-				throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
-			}
 		}
 
 		var changedProps = {};
