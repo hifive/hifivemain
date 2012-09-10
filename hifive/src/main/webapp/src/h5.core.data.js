@@ -365,11 +365,9 @@
 				ary[i] = ary[i] && typeof ary[i] === 'object' ? ary[i] && ary[i].valueOf
 						&& ary[i].valueOf() : ary[i];
 			}
-		} else {
-			v = v && typeof v === 'object' ? v.valueOf && v.valueOf() : v;
+			return ary;
 		}
-		return v;
-
+		return v && typeof v === 'object' ? v.valueOf && v.valueOf() : v;
 	}
 
 	/**
