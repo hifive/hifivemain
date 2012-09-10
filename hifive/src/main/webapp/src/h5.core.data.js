@@ -441,7 +441,7 @@
 		return val == null
 				|| isStrictNaN(val)
 				|| typeof val === 'number'
-				|| (!isStrict && (val instanceof Number || !!((isString(val) || val instanceof String) && val
+				|| (!isStrict && (val instanceof Number || !!((isString(val) || val instanceof String) && !!val
 						.match(/^[+\-]{0,1}[0-9]*\.{0,1}[0-9]+$/))));
 	}
 
@@ -462,7 +462,7 @@
 		return val == null
 				|| (typeof val === 'number' && parseInt(val) === val)
 				|| (!isStrict && (val instanceof Number && parseInt(val) === parseFloat(val) || (typeof val === 'string' || val instanceof String)
-						&& val.match(/^[+\-]{0,1}[0-9]+$/)));
+						&& !!val.match(/^[+\-]{0,1}[0-9]+$/)));
 	}
 
 	/**
@@ -2094,8 +2094,9 @@
 						var valueObj = items[i];
 
 						var itemId = valueObj[idKey];
-						//TODO idがintegerの場合もある
-						if (!isString(itemId) || itemId.length === 0) {
+						//idがstringでもintegerでもない場合はid指定エラー
+						if (!isIntegerValue(itemId, true)
+								&& (!isString(itemId) || itemId.length === 0)) {
 							throwFwError(ERR_CODE_NO_ID);
 						}
 
