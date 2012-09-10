@@ -359,10 +359,11 @@
 	 */
 	function unbox(v) {
 		if ($.isArray(v)) {
-			for ( var i = 0, l = v.length; i < l; i++) {
-				// valueOfメソッドのあるオブジェクトならその値を入れる
-				v[i] = v[i] && typeof v[i] === 'object' ? v[i] && v[i].valueOf && v[i].valueOf()
-						: v[i];
+			var ary = v.slice(0);
+			for ( var i = 0, l = ary.length; i < l; i++) {
+				// aryalueOfメソッドのあるオブジェクトならその値を入れる
+				ary[i] = ary[i] && typeof ary[i] === 'object' ? ary[i] && ary[i].valueOf
+						&& ary[i].valueOf() : ary[i];
 			}
 		} else {
 			v = v && typeof v === 'object' ? v.valueOf && v.valueOf() : v;
@@ -1405,12 +1406,6 @@
 				newValue = unbox(newValue);
 			}
 
-			if (oldValue === newValue) {
-				//同じ値がセットされた場合は何もしない
-				continue;
-			}
-
-
 			//このプロパティをバリデーションしなくてよいと明示されているならバリデーションを行わない
 			//型が配列（type:[]）の場合に、フラグが立っていたら、値がnull/undefinedでもよいとする
 			if ($.inArray(prop, noValidationProps) === -1) {
@@ -1430,7 +1425,8 @@
 				if ($.isArray(newValue)) {
 					for ( var i = 0, l = newValue.length; i < l; i++) {
 						// スパースな配列の場合、undefinedが入っている可能性があるので、!= で比較
-						if (newValue[i] != null) {
+						// parseFloatできる値(isNumberValueに渡してtrueになる値)ならparseFloatする
+						if (newValue[i] != null && isNumberValue(newValue[i])) {
 							newValue[i] = parseFloat(newValue[i]);
 						}
 					}
@@ -1439,16 +1435,11 @@
 				}
 			}
 
-			// 値の型変更を行った後に、それでも値が変更されていないかチェックする
-			if (oldValue === newValue) {
-				//同じ値がセットされた場合は何もしない
-				continue;
-			}
 			// 配列なら、配列の中身も変更されていないかチェックする(type:anyならチェックしない)
-			// type:[]の場合、oldValueは必ずObsArrayまたはundefinedなので、newValueが配列(またはObsArray)を見て配列かどうか確認する
-			// 配列の長さが違う場合はチェック不要
+			// type:[]の場合、oldValueは必ずObsArrayまたはundefined。
+			// newValue,oldValueともに配列(oldValueの場合はObsArray)かつ、長さが同じ場合にのみチェックする
 			if (type != 'any' && ($.isArray(newValue) || h5.u.obj.isObservableArray(newValue))
-					&& oldValue && oldValue.length === newValue.length) {
+					&& h5.u.obj.isObservableArray(oldValue) && oldValue.length === newValue.length) {
 				for ( var i = 0, l = newValue.length; i < l; i++) {
 					if (oldValue[i] !== newValue[i]) {
 						break;
@@ -1460,15 +1451,20 @@
 				}
 			}
 
+
+			// 値の型変更を行った後に、値が変更されていないかチェックする
+			if (oldValue === newValue) {
+				//同じ値がセットされた場合は何もしない
+				continue;
+			}
+
 			//ここでpushしたプロパティのみ、後段で値をセットする
 			readyProps.push({
 				p: prop,
 				o: oldValue,
 				n: newValue
 			});
-
 		}
-
 		//更新する値のない場合は何も返さないで終了
 		if (!readyProps.length) {
 			return;
