@@ -1217,7 +1217,9 @@
 	}
 
 
-	function ObservableArray() {}
+	function ObservableArray() {
+		this.length = 0;
+	}
 	$.extend(ObservableArray.prototype, EventDispatcher.prototype);
 	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
 			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
@@ -1296,7 +1298,7 @@
 	 * @returns {Boolean} ObservableArrayかどうか
 	 */
 	function isObservableArray(obj) {
-		if (obj.constructor === ObservableArray) {
+		if (obj && obj.constructor === ObservableArray) {
 			return true;
 		}
 		return false;
