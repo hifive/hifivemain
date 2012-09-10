@@ -1439,6 +1439,27 @@
 				}
 			}
 
+			// 値の型変更を行った後に、それでも値が変更されていないかチェックする
+			if (oldValue === newValue) {
+				//同じ値がセットされた場合は何もしない
+				continue;
+			}
+			// 配列なら、配列の中身も変更されていないかチェックする(type:anyならチェックしない)
+			// type:[]の場合、oldValueは必ずObsArrayまたはundefinedなので、newValueが配列(またはObsArray)を見て配列かどうか確認する
+			// 配列の長さが違う場合はチェック不要
+			if (type != 'any' && ($.isArray(newValue) || h5.u.obj.isObservableArray(newValue))
+					&& oldValue && oldValue.length === newValue.length) {
+				for ( var i = 0, l = newValue.length; i < l; i++) {
+					if (oldValue[i] !== newValue[i]) {
+						break;
+					}
+				}
+				if (i === l) {
+					// 中身が全て同じなら何もしない
+					continue;
+				}
+			}
+
 			//ここでpushしたプロパティのみ、後段で値をセットする
 			readyProps.push({
 				p: prop,
@@ -1446,6 +1467,11 @@
 				n: newValue
 			});
 
+		}
+
+		//更新する値のない場合は何も返さないで終了
+		if (!readyProps.length) {
+			return;
 		}
 
 		var changedProps = {};
@@ -1792,8 +1818,9 @@
 
 				var event = itemSetter(model, this, valueObj, null);
 
+				//itemSetterが何も返さなかった時 = 更新する値のない時は何もしない
 				//TODO managerに属しているかの条件は修正？
-				if (!model.manager || (model.manager && !model.manager.isInUpdate())) {
+				if (event && (!model.manager || (model.manager && !model.manager.isInUpdate()))) {
 					//TODO もしこのDataItemがremoveされていたらmodelには属していない
 					//アップデートセッション外の場合は即座にイベント送出
 					this.dispatchEvent(event);
