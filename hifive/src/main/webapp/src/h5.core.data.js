@@ -2129,20 +2129,6 @@
 					var actualNewItems = [];
 
 					var items = wrapInArray(objOrArray);
-
-					// itemsで、同じIDのものがあったら、後勝ちにしてマージする
-					var tmpItems = {};
-					for ( var i = 0, l = items.length; i < l; i++) {
-						var id = items[i][this.idKey];
-						if (tmpItems[id]) {
-							$.extend(tmpItems[id], items[i]);
-							items.splice(i, 1);
-							i--;
-							l--;
-						} else {
-							tmpItems[id] = items[i];
-						}
-					}
 					for ( var i = 0, len = items.length; i < len; i++) {
 						var valueObj = items[i];
 
