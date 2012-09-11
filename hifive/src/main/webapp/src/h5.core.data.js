@@ -1823,7 +1823,10 @@
 					//アップデートセッション外の場合は即座にイベント送出
 					this.dispatchEvent(event);
 
+					// event.targetにitemを設定
 					event.target = this;
+
+					// モデルのitemsChangeイベントを発火
 					model._dispatchItemsChangeEvent(event);
 				} else {
 					//ChangeLogを追記
@@ -2297,7 +2300,14 @@
 				 * @param {Object} event DataItemのchangeイベント
 				 */
 				_dispatchItemsChangeEvent: function(event) {
-					this.dispatchEvent(createDataModelItemsChangeEvent([], [], [], [event]));
+					var modelEvent = createDataModelItemsChangeEvent([], [], [], [event]);
+					this.dispatchEvent(modelEvent);
+
+					// managerがあれば(dropされたモデルでなければ)managerのイベントを発火
+					if (this.manager) {
+						modelEvent.target = this;
+						this.manager._dataModelItemsChangeListener(modelEvent);
+					}
 				}
 			});
 
@@ -2347,7 +2357,8 @@
 				return;
 			}
 
-			model.removeEventListener('itemsChange', this._dataModelItemsChangeListener);
+			// 9/11 福田追記 addをコメントアウトしたのでremoveもコメントアウト
+			//			model.removeEventListener('itemsChange', this._dataModelItemsChangeListener);
 
 			model.manager = null;
 			delete this.models[name];
@@ -2534,8 +2545,6 @@
 
 			//最後に、マネージャから全ての変更イベントをあげる
 			this.dispatchEvent(event);
-
-			delete this._updateLogs;
 		},
 
 		_dataModelItemsChangeListener: function(event) {
@@ -2594,7 +2603,8 @@
 		var model = new DataModel(descriptor, manager, itemValueCheckFuncs);
 
 		//新しく作ったモデルに対してリスナーを登録
-		model.addEventListener('itemsChange', manager._dataModelItemsChangeListener);
+		// 9/11 福田追記 modelのイベントをdispatchした後に呼べばいいのでここでハンドリングしない
+		//		model.addEventListener('itemsChange', manager._dataModelItemsChangeListener);
 
 		manager.models[modelName] = model;
 
