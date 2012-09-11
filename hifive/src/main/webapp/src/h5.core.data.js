@@ -1928,7 +1928,7 @@
 	 * 当該モデルが属しているマネージャにUpdateChangeLogを追加する
 	 */
 	function addUpdateChangeLog(model, ev) {
-		if (model.manager !== manager) {
+		if (!model.manager) {
 			return;
 		}
 
