@@ -2438,9 +2438,34 @@ $(function() {
 		strictEqual(items[0].get('val3'), 33, '上書いたプロパティを取得できること');
 	});
 
-	test('idのtypeにstring,integerを指定しているモデルで、アイテムを作成できること', 8, function() {
+	test('idのtypeの指定がないモデルで、アイテムを作成できること(string指定と同様)', 5, function() {
 		// idのtype:string
 		model = manager.createModel({
+			name: 'IdNoTypeModel',
+			schema: {
+				id: {
+					id: true
+				},
+				v: {}
+			}
+		});
+		var item = model.create({
+			id: '1',
+			v: 'a'
+		});
+
+		strictEqual(item.get('id'), '1', 'idが文字列の"1"のアイテムが作成でき、item.get("id")の値が文字列"1"であること');
+		strictEqual(item.get('v'), 'a', '値を取得できること');
+		strictEqual(model.get('1'), item, 'model.get("1")でアイテムが取得できること');
+		strictEqual(model.get(1), item, 'model.get(1)でアイテムを取得できること');
+
+		model.remove(1);
+		strictEqual(model.get(1), item, 'model.remove(1)でアイテムは削除されないこと(数値→文字列の変換は行われない)');
+	});
+
+	test('idのtypeにstringを指定しているモデルで、アイテムを作成できること', 5, function() {
+		// idのtype:string
+		var model = manager.createModel({
 			name: 'IdStringModel',
 			schema: {
 				id: {
@@ -2457,11 +2482,16 @@ $(function() {
 
 		strictEqual(item.get('id'), '1', 'idが文字列の"1"のアイテムが作成でき、item.get("id")の値が文字列"1"であること');
 		strictEqual(item.get('v'), 'a', '値を取得できること');
-		strictEqual(model.get('1'), item, 'model.get("1")でアイテムが取得できること');
-		strictEqual(model.get(1), item, 'model.get(1)でアイテムが取得できること');
+		strictEqual(model.get('1'), item, 'model.get("1")でアイテムを取得できること');
+		strictEqual(model.get(1), item, 'model.get(1)でアイテムを取得できること');
 
+		model.remove(1);
+		strictEqual(model.get(1), item, 'model.remove(1)でアイテムは削除されないこと(数値→文字列の変換は行われない)');
+	});
+
+	test('idのtypeにintegerを指定しているモデルで、アイテムを作成できること', 5, function() {
 		// idのtype:integer
-		model = manager.createModel({
+		var model = manager.createModel({
 			name: 'IdIntegerModel',
 			schema: {
 				id: {
@@ -2471,7 +2501,7 @@ $(function() {
 				v: {}
 			}
 		});
-		item = model.create({
+		var item = model.create({
 			id: 1,
 			v: 'b'
 		});
@@ -2480,51 +2510,77 @@ $(function() {
 		strictEqual(item.get('v'), 'b', '値を取得できること');
 		strictEqual(model.get('1'), item, 'model.get("1")でアイテムが取得できること');
 		strictEqual(model.get(1), item, 'model.get(1)でアイテムが取得できること');
+
+		model.remove('1');
+		strictEqual(model.get(1), item, 'model.remove("1")でアイテムが削除されること');
 	});
 
-	test('idのtypeにstring,integerを指定しているモデルで、idが不正な値の場合はcreateでエラーが発生すること', 8, function() {
-		// TODO type:string null,undef,....new String(), ... でエラー
-		// type:integer null,undef,'aa','1',new Integer()... でエラー
-		// idのtype:string
-		model = manager.createModel({
-			name: 'IdStringModel',
-			schema: {
-				id: {
-					id: true,
-					type: 'string'
-				},
-				v: {}
-			}
-		});
-		var item = model.create({
-			id: '1',
-			v: 'a'
-		});
+	test('idが不正な値の場合はcreateでエラーが発生すること', 18,
+			function() {
+				// idのtype:string
+				model = manager.createModel({
+					name: 'IdStringModel',
+					schema: {
+						id: {
+							id: true
+						},
+						v: {}
+					}
+				});
 
-		// idのtype:integer
-		model = manager.createModel({
-			name: 'IdIntegerModel',
-			schema: {
-				id: {
-					id: true,
-					type: 'integer'
-				},
-				v: {}
-			}
-		});
-		item = model.create({
-			id: 1,
-			v: 'b'
-		});
-	});
+				var invalidIds = [null, undefined, 1, 1.1, true, [], {}, new String('abc'), /a/];
+				for ( var i = 0, l = invalidIds.length; i < l; i++) {
+					try {
+						model.create({
+							id: invalidIds[i]
+						});
+						ok(false, h5.u.str.format('type:string idに{0}を指定したのにエラーが発生していません',
+								invalidIds[i]));
+					} catch (e) {
+						if (invalidIds[i] == null || invalidIds[i] === '') {
+							strictEqual(e.code, ERR.ERR_CODE_NO_ID, e.message);
+						} else {
+							strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+						}
+					}
+				}
+
+				// idのtype:integer
+				model = manager.createModel({
+					name: 'IdIntegerModel',
+					schema: {
+						id: {
+							id: true,
+							type: 'integer'
+						},
+						v: {}
+					}
+				});
+
+				invalidIds = [null, undefined, 1.1, '1.1', true, [], {}, new Number('1'), /1/];
+				for ( var i = 0, l = invalidIds.length; i < l; i++) {
+					try {
+						model.create({
+							id: invalidIds[i]
+						});
+						ok(false, h5.u.str.format('type;integer idに{0}を指定したのにエラーが発生していません',
+								invalidIds[i]));
+					} catch (e) {
+						if (invalidIds[i] == null || invalidIds[i] === '') {
+							strictEqual(e.code, ERR.ERR_CODE_NO_ID, e.message);
+						} else {
+							strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+						}
+					}
+				}
+			});
 
 	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、エラーが起きるまでの要素までは生成され、残りは生成されないこと', function() {
-		// TODO アトミックかどうか確認する
 		try {
 			dataModel1.create([{
 				id: sequence.next()
 			}, {
-				id: {}
+				id: null
 			}, {
 				id: sequence.next()
 			}]);
@@ -2568,7 +2624,6 @@ $(function() {
 		strictEqual(dataModel1.get('1').get('val'), 'item1', '登録したアイテムが、渡したidの順に取得できること');
 		strictEqual(dataModel1.get('2').get('val'), 'item2', '登録したアイテムが取得できること');
 		strictEqual(dataModel1.get('3').get('val'), 'item3', '登録したアイテムが取得できること');
-
 	});
 
 	test('removeでアイテムを削除できること。引数に配列を指定した場合は複数削除できること', function() {
@@ -6711,6 +6766,47 @@ $(function() {
 		}
 	});
 
+	test('create時に、依存プロパティにundefinedをセットした場合も、calcが計算されること', function() {
+		var model = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				v: {},
+				d: {
+					depend: {
+						on: 'v',
+						calc: function(ev) {
+							checkEv.call(this, ev);
+						}
+					}
+				}
+			}
+		});
+		var expectEv;
+		function checkEv(ev) {
+			// イベントオブジェクトのチェック
+			ev.target = this;
+			deepEqual(ev, expectEv, 'イベントオブジェクトが予想通り');
+		}
+
+		expectEv = {
+			props: {
+				id: {
+					newValue: 1,
+					oldValue: undefined
+				}
+			},
+			type: 'create'
+		}
+
+		model.create({
+			id: sequence.next(),
+			v: undefined
+		});
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -7113,18 +7209,22 @@ $(function() {
 				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				item.addEventListener('change', function() {
-					console.log('change')
-				});
-				item.addEventListener('itemsChange', function() {
-					console.log('itemsChange')
-				});
-				item.set('val', 'えー');
+				function itemsChange() {
+					order.push('itemsChange');
+				}
+				function CHANGE() {
+					order.push('CHANGE');
+				}
+				item.addEventListener('itemsChange', itemsChange);
+				item.addEventListener('CHANGE', CHANGE);
+				item.set('val', sequence.next());
 
 				deepEqual(order, [], 'addEventListenerの"change"以外を指定してハンドリングした関数は、実行されないこと');
 
 				// addしたイベントを削除
 				item.removeEventListener('itemsChange', changeListener1);
+				item.removeEventListener('itemsChange', itemsChange);
+				item.removeEventListener('itemsChange', CHANGE);
 			});
 
 	//=============================
@@ -7570,13 +7670,14 @@ $(function() {
 	//=============================
 	test('DataItemの値set時にイベントハンドラが実行されること', 2, function() {
 		item.set('val', sequence.next());
-
 		deepEqual(order, ['item', 'model', 'manager'], 'データアイテム、データモデル、データマネージャの順でイベントが発火すること');
 
 		order = [];
+		item.set('val', new Object(item.get('val')));
+		deepEqual(order, ['item', 'model', 'manager'], 'データアイテム、データモデル、データマネージャの順でイベントが発火すること');
 	});
 
-	test('DataItemの値set時に値が変わらない場合はイベントハンドラは実行されないこと', function() {
+	test('DataItemの値set時に値が変わらない場合はイベントハンドラは実行されないこと', 14, function() {
 		item.set('val', item.get('val'));
 
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
@@ -7595,25 +7696,13 @@ $(function() {
 					type: 'integer',
 					defaultValue: 10
 				},
-				testI2: {
-					type: 'integer',
-					defaultValue: new Number(10)
-				},
-				testI3: {
-					type: 'integer',
-					defaultValue: new String(10)
-				},
 				testN1: {
 					type: 'number',
 					defaultValue: '20.1'
 				},
-				testN2: {
-					type: 'number',
-					defaultValue: new Number(20.1)
-				},
-				testN3: {
-					type: 'number',
-					defaultValue: new String(20.1)
+				testB1: {
+					type: 'boolean',
+					defaultValue: true
 				},
 				testSA1: {
 					type: 'string[]',
@@ -7621,11 +7710,15 @@ $(function() {
 				},
 				testIA1: {
 					type: 'integer[]',
-					defaultValue: [1]
+					defaultValue: [1, 2, 3]
 				},
 				testNA1: {
 					type: 'number[]',
-					defaultValue: ['40.1', new Number(40.1), new String(40.1)]
+					defaultValue: [1.1, 2.2, 3.3]
+				},
+				testBA1: {
+					type: 'boolean[]',
+					defaultValue: [true, false, true]
 				}
 			}
 		});
@@ -7636,14 +7729,35 @@ $(function() {
 		item.addEventListener('change', changeListener3);
 
 		order = [];
+		item.set('testS1', 'abc');
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		order = [];
 		item.set('testS1', new String('abc'));
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 
 		order = [];
 		item.set('testI1', '10');
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
 		order = [];
 		item.set('testI1', new Number(10));
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		order = [];
+		item.set('testI1', new String(10));
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		order = [];
+		item.set('testN1', '20.1');
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		order = [];
+		item.set('testN1', new Number(20.1));
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		order = [];
+		item.set('testB1', new Boolean(true));
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 
 		order = [];
@@ -7654,15 +7768,21 @@ $(function() {
 		item.set('testSA1', [new String('abc'), 'def']);
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 
-				order = [];
-		item.set('testIA1', ['1','3']);
+		order = [];
+		item.set('testIA1', ['1', new Number(2), '3']);
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 
+		order = [];
+		item.set('testNA1', ['1.1', new Number(2.2), '3.3']);
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		order = [];
+		item.set('testBA1', [new Boolean(true), new Boolean(false), new Boolean(true)]);
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 	});
 
-
 	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること', 6, function() {
-		var id = item.id;
+		var id = item.get('id');
 		dataModel1.create({
 			id: id,
 			val: 'test'
