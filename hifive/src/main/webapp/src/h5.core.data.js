@@ -2113,7 +2113,6 @@
 				 */
 				create: function(objOrArray) {
 					var ret = [];
-
 					var idKey = this.idKey;
 
 					//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
@@ -2144,8 +2143,15 @@
 						var storedItem = this._findById(itemId);
 						if (storedItem) {
 							// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
-							itemSetter(this, storedItem, valueObj, null, [idKey]);
+							var event = itemSetter(this, storedItem, valueObj, null, [idKey]);
+							if (!event) {
+								//itemSetterが何も返さなかった = 更新する値が何もない
+								continue;
+							}
+							//返す値にstoredItemを追加
 							ret.push(storedItem);
+
+							addUpdateChangeLog(this, event);
 						} else {
 							var newItem = new this.itemConstructor(valueObj);
 
@@ -2162,6 +2168,7 @@
 					}
 
 					if (!isAlreadyInUpdate) {
+						//既存のアイテムが変更されていればアイテムのイベントを上げる
 						this.manager.endUpdate();
 					}
 
@@ -2530,7 +2537,9 @@
 
 			//各DataModelからイベントを発火。
 			//全てのモデルの変更が完了してから各モデルの変更イベントを出すため、同じループをもう一度行う
+			var modelChanged = false
 			for ( var modelName in modelChanges) {
+				modelChanged = true;
 				var mc = modelChanges[modelName];
 				this.models[modelName].dispatchEvent(createDataModelItemsChangeEvent(mc.created,
 						mc.recreated, mc.removed, mc.changed));
@@ -2543,8 +2552,10 @@
 				models: modelChanges
 			};
 
-			//最後に、マネージャから全ての変更イベントをあげる
-			this.dispatchEvent(event);
+			//最後に、マネージャから全ての変更イベントをあげる。変更がない場合は何もしない
+			if (modelChanged) {
+				this.dispatchEvent(event);
+			}
 		},
 
 		_dataModelItemsChangeListener: function(event) {
