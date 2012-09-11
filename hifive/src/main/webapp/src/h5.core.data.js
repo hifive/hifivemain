@@ -2531,6 +2531,8 @@
 		},
 
 		_dataModelItemsChangeListener: function(event) {
+			var manager = event.target.manager;
+
 			var modelsChange = {};
 			modelsChange[event.target.name] = event;
 
@@ -2539,7 +2541,7 @@
 				models: modelsChange
 			};
 
-			this.dispatchEvent(managerEvent);
+			manager.dispatchEvent(managerEvent);
 		}
 	});
 
