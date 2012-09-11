@@ -1812,9 +1812,13 @@
 
 				var event = itemSetter(model, this, valueObj, null);
 
-				//itemSetterが何も返さなかった時 = 更新する値のない時は何もしない
+				if (!event) {
+					//itemSetterが何も返さなかった = 更新する値が何もない
+					return;
+				}
+
 				//TODO managerに属しているかの条件は修正？
-				if (event && (!model.manager || (model.manager && !model.manager.isInUpdate()))) {
+				if (!model.manager || (model.manager && !model.manager.isInUpdate())) {
 					//TODO もしこのDataItemがremoveされていたらmodelには属していない
 					//アップデートセッション外の場合は即座にイベント送出
 					this.dispatchEvent(event);
