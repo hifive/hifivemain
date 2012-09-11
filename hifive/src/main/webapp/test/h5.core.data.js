@@ -7827,6 +7827,8 @@ $(function() {
 
 		try {
 			item.set('id', {});
+		} catch (e) {
+
 		} finally {
 			deepEqual(order, [], 'プロパティset時にエラーが発生た場合は、ハンドラは実行されないこと');
 		}
@@ -7835,7 +7837,6 @@ $(function() {
 		item2.set('val', 'a');
 		deepEqual(order, ['model', 'manager'],
 				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
-		order = [];
 	});
 
 	test(
