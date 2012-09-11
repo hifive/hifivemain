@@ -1888,6 +1888,10 @@
 		var manager = model.manager;
 		var modelName = model.name;
 
+		if (!manager._updateLogs) {
+			manager._updateLogs = {};
+		}
+
 		if (!manager._updateLogs[modelName]) {
 			manager._updateLogs[modelName] = {};
 		}
