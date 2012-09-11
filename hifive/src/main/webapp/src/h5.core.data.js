@@ -2115,10 +2115,13 @@
 						var valueObj = items[i];
 
 						var itemId = valueObj[idKey];
-						//idがstringでもintegerでもない場合はid指定エラー
-						if (!isIntegerValue(itemId, true)
-								&& (!isString(itemId) || itemId.length === 0)) {
+						//idが空文字、null、undefined、はid指定エラー
+						if (itemId === '' || itemId == null) {
 							throwFwError(ERR_CODE_NO_ID);
+						}
+						//idがstringでもintegerでもない場合は制約違反エラー
+						if (!isIntegerValue(itemId, true) && !isString(itemId)) {
+							throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
 						}
 
 						var storedItem = this._findById(itemId);
