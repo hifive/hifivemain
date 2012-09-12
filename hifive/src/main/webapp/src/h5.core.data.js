@@ -1506,7 +1506,8 @@
 		};
 
 		//依存プロパティを再計算する
-		var changedDependProps = calcDependencies(model, item, event, changedPropNameArray);
+		var changedDependProps = calcDependencies(model, item, event, changedPropNameArray,
+				isCreate);
 
 		//依存プロパティの変更をchangeイベントに含める
 		$.extend(changedProps, changedDependProps);
@@ -1521,9 +1522,10 @@
 	 * @param {DataItem} item データアイテム
 	 * @param {Object} event プロパティ変更イベント
 	 * @param {String|String[]} changedProps 今回変更されたプロパティ
+	 * @param {Boolean} isCreate create時に呼ばれたものかどうか。createなら値の変更を見ずに無条件でcalcを実行する
 	 * @returns {Object} { dependProp1: { oldValue, newValue }, ... } という構造のオブジェクト
 	 */
-	function calcDependencies(model, item, event, changedProps) {
+	function calcDependencies(model, item, event, changedProps, isCreate) {
 		// 今回の変更に依存するプロパティ
 		var targets = [];
 
@@ -1575,8 +1577,20 @@
 
 		var ret = {};
 
-		//今回変更された実プロパティに依存するプロパティを列挙
-		addDependencies(targets, wrapInArray(changedProps));
+		if (isCreate) {
+			// createならすべての実プロパティに依存するプロパティを列挙する
+			// create時にundefinedがセットされた場合、変更なしなのでchangedPropsに入らないが、calcは計算させる
+			var realProps = [];
+			for ( var p in model.schema) {
+				if (!model.schema[p].deppend) {
+					realProps.push(p);
+				}
+			}
+			addDependencies(targets, realProps);
+		} else {
+			//今回変更された実プロパティに依存するプロパティを列挙
+			addDependencies(targets, wrapInArray(changedProps));
+		}
 
 		while (targets.length !== 0) {
 			var restTargets = [];
