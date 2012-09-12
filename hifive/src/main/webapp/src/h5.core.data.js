@@ -1909,7 +1909,7 @@
 
 		for ( var i = 0, len = items.length; i < len; i++) {
 			var item = items[i];
-			var itemId = item[model.idKey];
+			var itemId = item[ITEM_PROP_BACKING_STORE_PREFIX + model.idKey];
 
 			if (!modelLogs[itemId]) {
 				modelLogs[itemId] = [];
@@ -1931,7 +1931,7 @@
 
 		var modelLogs = getModelUpdateLogObj(model);
 
-		var itemId = ev.target[model.idKey];
+		var itemId = ev.target[ITEM_PROP_BACKING_STORE_PREFIX + model.idKey];
 
 		if (!modelLogs[itemId]) {
 			modelLogs[itemId] = [];
@@ -2155,14 +2155,15 @@
 
 						var storedItem = this._findById(itemId);
 						if (storedItem) {
+							//返す値にstoredItemを追加
+							ret.push(storedItem);
+
 							// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
 							var event = itemSetter(this, storedItem, valueObj, null, [idKey]);
 							if (!event) {
 								//itemSetterが何も返さなかった = 更新する値が何もない
 								continue;
 							}
-							//返す値にstoredItemを追加
-							ret.push(storedItem);
 
 							addUpdateChangeLog(this, event);
 						} else {
@@ -2520,7 +2521,7 @@
 												if (!mergedProps[p]) {
 													mergedProps[p] = changeEventStack[i].props[p];
 												} else {
-													mergedProps[p].newValue = changeEventStack[i].props[p].newValue;
+													mergedProps[p].oldValue = changeEventStack[i].props[p].oldValue;
 												}
 											}
 										}
