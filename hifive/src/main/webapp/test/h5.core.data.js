@@ -993,7 +993,7 @@ $(function() {
 	});
 
 	test('dependの依存先もdepend指定されている場合、循環参照になっていなければデータモデルを作成できること', function() {
-		strictEqual(manager.createModel({
+		strictEqual((m=manager.createModel({
 			name: 'TestDependModel',
 			schema: {
 				id: {
@@ -1024,10 +1024,13 @@ $(function() {
 							return 0;
 						}
 					}
-				}
+				},
+				val1:{},
+				val2:{depend:{on:'val1',calc:function(){return 0;}}},
+				val3:{depend:{on:['val1', 'val2'],calc:function(){return 0;}}},
 			}
-		}).name, 'TestDependModel', 'データモデルが作成できること');
-
+		}),m.name), 'TestDependModel', 'データモデルが作成できること');
+		console.log(m.create({id:'1'}))
 	});
 
 	test('dependの依存先の参照が循環していた場合はエラーになること', function() {
@@ -2460,7 +2463,7 @@ $(function() {
 		strictEqual(model.get(1), item, 'model.get(1)でアイテムを取得できること');
 
 		model.remove(1);
-		strictEqual(model.get(1), item, 'model.remove(1)でアイテムは削除されないこと(数値→文字列の変換は行われない)');
+		strictEqual(model.get(1), null, 'model.remove(1)でアイテムは削除されること');
 	});
 
 	test('idのtypeにstringを指定しているモデルで、アイテムを作成できること', 5, function() {
@@ -2486,7 +2489,7 @@ $(function() {
 		strictEqual(model.get(1), item, 'model.get(1)でアイテムを取得できること');
 
 		model.remove(1);
-		strictEqual(model.get(1), item, 'model.remove(1)でアイテムは削除されないこと(数値→文字列の変換は行われない)');
+		strictEqual(model.get(1), null, 'model.remove(1)でアイテムは削除されること');
 	});
 
 	test('idのtypeにintegerを指定しているモデルで、アイテムを作成できること', 5, function() {
@@ -2512,7 +2515,7 @@ $(function() {
 		strictEqual(model.get(1), item, 'model.get(1)でアイテムが取得できること');
 
 		model.remove('1');
-		strictEqual(model.get(1), item, 'model.remove("1")でアイテムが削除されること');
+		strictEqual(model.get(1), null, 'model.remove("1")でアイテムが削除されること');
 	});
 
 	test('idが不正な値の場合はcreateでエラーが発生すること', 18,
@@ -6766,7 +6769,7 @@ $(function() {
 		}
 	});
 
-	test('create時に、依存プロパティにundefinedをセットした場合も、calcが計算されること', function() {
+	test('create時に、依存プロパティにundefinedをセットした場合も、calcが計算されること', 3, function() {
 		var model = manager.createModel({
 			name: 'TestModel',
 			schema: {
@@ -6779,6 +6782,7 @@ $(function() {
 						on: 'v',
 						calc: function(ev) {
 							checkEv.call(this, ev);
+							return this.get('v');
 						}
 					}
 				}
@@ -6787,24 +6791,27 @@ $(function() {
 		var expectEv;
 		function checkEv(ev) {
 			// イベントオブジェクトのチェック
-			ev.target = this;
-			deepEqual(ev, expectEv, 'イベントオブジェクトが予想通り');
+			expectEv.target = this;
+			deepEqual(ev, expectEv, '依存プロパティにundefinedをセットした時にcalcが呼ばれ、イベントオブジェクトも正しいこと');
 		}
 
 		expectEv = {
 			props: {
 				id: {
-					newValue: 1,
+					newValue: '1',
 					oldValue: undefined
 				}
 			},
 			type: 'create'
 		}
 
-		model.create({
-			id: sequence.next(),
+		var item = model.create({
+			id: '1',
 			v: undefined
 		});
+
+		strictEqual(item.get('v'), undefined, 'undefiendが格納されていること');
+		strictEqual(item.get('d'), undefined, 'calcが返した値が依存プロパティに格納されていること');
 	});
 
 	//=============================
@@ -7781,7 +7788,7 @@ $(function() {
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 	});
 
-	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること', 6, function() {
+	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること', 9, function() {
 		var id = item.get('id');
 		dataModel1.create({
 			id: id,
@@ -7791,56 +7798,96 @@ $(function() {
 		deepEqual(order, ['item', 'model', 'manager'], 'データアイテム、データモデル、データマネージャの順でイベントが発火すること');
 		order = [];
 
+		dataModel1.create([{
+			id: id,
+			val: 'test1'
+		}]);
+
+		deepEqual(order, ['item', 'model', 'manager'], '配列で渡してもイベントが発火すること');
+		order = [];
+
 		dataModel1.create({
 			id: id,
-			val: 'test'
+			val: item.get('val')
 		});
 		deepEqual(order, [], '値が変わっていないときはハンドラが実行されないこと');
 		order = [];
 
 		dataModel1.create([{
 			id: id,
-			val: 'test'
-		}, {
-			id: id,
-			val: 'test2'
-		}, {
-			id: id,
-			val: 'test'
+			val: item.get('val')
 		}]);
-		deepEqual(order, [], 'createに配列で引数を渡して、最終的に値が変わっていなければイベントハンドラは実行されないこと');
+		deepEqual(order, [], '配列で渡しても値が変わっていないときはハンドラが実行されないこと');
 		order = [];
 
 		dataModel1.create([{
 			id: id,
-			val: 'test'
+			val: item.get()
+		}, {
+			id: id,
+			val: '2'
+		}, {
+			id: id,
+			val: '3'
+		}]);
+		deepEqual(order, ['item', 'model', 'manager'], 'createに配列で引数を渡したとき、値が最終的に変わっていたらイベントが1度だけ発火すること');
+		order = [];
+
+		dataModel1.create([{
+			id: id,
+			val: '4'
+		}, {
+			id: id,
+			val: '5'
+		}, {
+			id: id,
+			val: '6'
+		}]);
+		deepEqual(order, ['item', 'model', 'manager'], 'createに配列で引数を渡したとき、値が最終的に変わっていたらイベントが1度だけ発火すること');
+		order = [];
+
+		dataModel1.create([{
+			id: id,
+			val: '3'
 		}, {
 			id: id,
 			val: 'test2'
 		}, {
 			id: id,
-			val: 'test3'
+			val: item.get('val')
 		}]);
-		deepEqual(order, ['item', 'model', 'manager'],
-				'createに配列で引数を渡して、最終的に値が変わった時、データアイテム、データモデル、データマネージャの順で一度ずつイベントが発火すること');
+		deepEqual(order, [],
+				'createに配列で引数を渡したとき、値が最終的に変わらない場合はイベントは発火しないこと');
 		order = [];
 
 		try {
-			item.set('id', {});
+			item.create({
+				id:id,
+				val: 'aaaa'
+			});
 		} catch (e) {
 
 		} finally {
 			deepEqual(order, [], 'プロパティset時にエラーが発生た場合は、ハンドラは実行されないこと');
 		}
-		order = [];
 
-		item2.set('val', 'a');
+		order=[];
+		dataModel1.create([{
+			id: item2.get('id'),
+			val: '3'
+		}, {
+			id: item2.get('id'),
+			val: '4'
+		}, {
+			id: item2.get('id'),
+			val: '5'
+		}]);
 		deepEqual(order, ['model', 'manager'],
 				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
 	});
 
 	test(
-			'DataItemのbeginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること',
+			'DataItemのbeginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること',11,
 			function() {
 				manager.beginUpdate();
 				item.set('val', 'aaaa');
@@ -7866,7 +7913,39 @@ $(function() {
 				item.set('val2', sequence.next());
 				manager.endUpdate();
 				deepEqual(order, ['item', 'model', 'manager'],
-						'二つのプロパティを変更した場合、endUpdateのタイミングで、登録したイベントハンドラが1回だけ呼ばれること');
+						'二つのプロパティを変更した場合、endUpdateのタイミングで、Item,Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
+
+				order = [];
+				manager.beginUpdate();
+				dataModel1.create({
+					id:'a',
+					val:'aaaa'
+				});
+				deepEqual(order, [], 'begin/endUpdateの中ではcreateしてもイベントハンドラは呼ばれないこと');
+				manager.endUpdate();
+				deepEqual(order, ['model', 'manager'],
+						'新しくデータアイテムを作成した場合、endUpdateのタイミングで、Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
+
+				order = [];
+				manager.beginUpdate();
+				dataModel1.create({
+					id:'b',
+					val:'aaaa'
+				});
+				deepEqual(order, [], 'begin/endUpdateの中ではcreateしてもイベントハンドラは呼ばれないこと');
+				dataModel1.remove('b');
+				deepEqual(order, [], 'begin/endUpdateの中ではremoveしてもイベントハンドラは呼ばれないこと');
+				manager.endUpdate();
+				deepEqual(order, [],
+						'新しくデータアイテムを作成して、削除した場合、biginUpdate時とendUpdate時で比較して変更はないので、イベントハンドラは呼ばれないこと');
+
+				order = [];
+				manager.beginUpdate();
+				dataModel1.remove('a');
+				deepEqual(order, [], 'begin/endUpdateの中ではremoveしてもイベントハンドラは呼ばれないこと');
+				manager.endUpdate();
+				deepEqual(order, ['model', 'manager'],
+						'データアイテムを削除した場合、endUpdateのタイミングで、Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
 			});
 
 	test(
@@ -7889,9 +7968,7 @@ $(function() {
 
 				manager.addEventListener('itemsChange', changeListener1);
 				dataModel1.addEventListener('itemsChange', changeListener2);
-				item.removeEventListener('change', changeListener3);
-
-				item.set('val', 'cccc');
+				item.addEventListener('change', changeListener3);
 				manager.endUpdate();
 				deepEqual(order, ['item', 'model', 'manager'],
 						'begin/endUpdateの中でaddEventListenerをした場合、プロパティがbeginUpdate時と値が変わっていればイベントハンドラが実行されること');
