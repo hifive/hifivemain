@@ -1526,13 +1526,10 @@
 	 * @returns {Object} { dependProp1: { oldValue, newValue }, ... } という構造のオブジェクト
 	 */
 	function calcDependencies(model, item, event, changedProps, isCreate) {
-		// 今回の変更に依存するプロパティ
+		// 今回の変更に依存する、未計算のプロパティ
 		var targets = [];
 
 		var dependsMap = model._dependencyMap;
-
-		//変更された実プロパティを初期計算済みプロパティとしてdependの計算をスタート
-		var done = wrapInArray(changedProps).slice(0);
 
 		/**
 		 * この依存プロパティが計算可能（依存するすべてのプロパティの再計算が完了している）かどうかを返します。
@@ -1542,13 +1539,9 @@
 		function isReady(dependProp) {
 			var deps = wrapInArray(model.schema[dependProp].depend.on);
 			for ( var i = 0, len = deps.length; i < len; i++) {
-				if (!model.schema[deps[i]].depend) {
-					// 依存しているプロパティが、依存プロパティでなければ計算済み
-					continue;
-				}
-
-				if ($.inArray(deps[i], targets) !== -1 && $.inArray(deps[i], done) === -1) {
-					// 依存先が今回の変更に依存していてかつ、まだ計算済みでないならfalseを返す
+				if ($.inArray(deps[i], model._realProperty) === -1
+						&& $.inArray(deps[i], targets) !== -1) {
+					// 依存先が実プロパティでなく、未計算のプロパティであればfalseを返す
 					return false;
 				}
 			}
@@ -1580,13 +1573,7 @@
 		if (isCreate) {
 			// createならすべての実プロパティに依存するプロパティを列挙する
 			// create時にundefinedがセットされた場合、変更なしなのでchangedPropsに入らないが、calcは計算させる
-			var realProps = [];
-			for ( var p in model.schema) {
-				if (!model.schema[p].deppend) {
-					realProps.push(p);
-				}
-			}
-			addDependencies(targets, realProps);
+			targets = model._dependProps.slice();
 		} else {
 			//今回変更された実プロパティに依存するプロパティを列挙
 			addDependencies(targets, wrapInArray(changedProps));
@@ -1614,7 +1601,6 @@
 					};
 
 					setValue(item, dp, newValue);
-					done.push(dp);
 				} else {
 					restTargets.push(dp);
 				}
@@ -1623,16 +1609,6 @@
 			//今回計算対象となったプロパティに（再帰的に）依存するプロパティをrestに追加
 			//restTargetsは「今回計算できなかったプロパティ＋新たに依存関係が発見されたプロパティ」が含まれる
 			addDependencies(restTargets, targets);
-
-			// 「新たに依存関係が発見されたプロパティ」に「今回計算できたプロパティ」が含まれる場合があるので、取り除く。
-			// 例：v1を変更→v1に依存するv2を変更→v1とv2に依存するv3を変更　なら一回のループで全て変更が行われる。
-			//     しかし、v2の変更によってv3が「新たに依存関係が発見されたプロパティ」になってしまう。
-			//     v3がv2に依存しているので、v3が「計算済みのプロパティ」に入ってしまう。
-			for ( var i = restTargets.length - 1; 0 <= i; i--) {
-				if ($.inArray(restTargets[i], done) > -1) {
-					restTargets.splice(i, 1);
-				}
-			}
 
 			targets = restTargets;
 		}
@@ -2090,10 +2066,31 @@
 			this._idType = ID_TYPE_STRING;
 		}
 
+		// 実プロパティと依存プロパティを列挙
+		var realProps = [];
+		var dependProps = [];
+		for ( var p in schema) {
+			if (schema[p].depend) {
+				dependProps.push(p);
+			} else {
+				realProps.push(p);
+			}
+		}
+
 		/**
 		 * プロパティの依存関係マップ
 		 */
 		this._dependencyMap = createDependencyMap(schema);
+
+		/**
+		 * モデルが持つ依存プロパティ
+		 */
+		this._dependProps = dependProps;
+
+		/**
+		 * モデルが持つ実プロパティ(依存しないプロパティ)
+		 */
+		this._realProps = realProps;
 
 		/**
 		 * プロパティの型・制約チェック関数
@@ -2353,242 +2350,265 @@
 		this._updateLogs = null;
 	}
 	DataModelManager.prototype = new EventDispatcher();
-	$.extend(DataModelManager.prototype, {
-		/**
-		 * @param {Object} descriptor データモデルディスクリプタ
-		 * @memberOf DataModelManager
-		 */
-		createModel: function(descriptor) {
-			//TODO 配列対応
+	$
+			.extend(
+					DataModelManager.prototype,
+					{
+						/**
+						 * @param {Object} descriptor データモデルディスクリプタ
+						 * @memberOf DataModelManager
+						 */
+						createModel: function(descriptor) {
+							//TODO 配列対応
 
-			//registerDataModelは初めにDescriptorの検証を行う。
-			//検証エラーがある場合は例外を送出する。
-			//エラーがない場合はデータモデルを返す（登録済みの場合は、すでにマネージャが持っているインスタンスを返す）。
-			return registerDataModel(descriptor, this);
-		},
+							//registerDataModelは初めにDescriptorの検証を行う。
+							//検証エラーがある場合は例外を送出する。
+							//エラーがない場合はデータモデルを返す（登録済みの場合は、すでにマネージャが持っているインスタンスを返す）。
+							return registerDataModel(descriptor, this);
+						},
 
-		/**
-		 * 指定されたデータモデルを削除します。 データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後 データモデル自体をマネージャから削除します。
-		 *
-		 * @param {String} name データモデル名
-		 * @memberOf DataModelManager
-		 */
-		dropModel: function(name) {
-			//TODO dropModelするときに依存していたらどうするか？
-			//エラーにしてしまうか。
-			var model = this.models[name];
-			if (!model) {
-				return;
-			}
-
-			// 9/11 福田追記 addをコメントアウトしたのでremoveもコメントアウト
-			//			model.removeEventListener('itemsChange', this._dataModelItemsChangeListener);
-
-			model.manager = null;
-			delete this.models[name];
-			return model;
-		},
-
-		/**
-		 * @returns {Boolean} アップデートセッション中かどうか
-		 */
-		isInUpdate: function() {
-			return this._updateLogs !== null;
-		},
-
-		beginUpdate: function() {
-			if (this.isInUpdate()) {
-				return;
-			}
-
-			this._updateLogs = {};
-		},
-
-		endUpdate: function() {
-			if (!this.isInUpdate()) {
-				return;
-			}
-
-			function getFirstCRLog(itemLogs, lastPos) {
-				for ( var i = 0; i < lastPos; i++) {
-					var type = itemLogs[i].type;
-					if ((type === UPDATE_LOG_TYPE_CREATE || type === UPDATE_LOG_TYPE_REMOVE)) {
-						return itemLogs[i];
-					}
-				}
-				return null;
-			}
-
-
-			/**
-			 * 内部でDataItemごとのイベントを発火させます。
-			 */
-			function createDataModelChanges(model, modelUpdateLogs) {
-				var recreated = [];
-				var created = [];
-				var changed = [];
-				var removed = [];
-
-				for ( var itemId in modelUpdateLogs) {
-					var itemLogs = modelUpdateLogs[itemId];
-					var isChangeOnly = true;
-
-					var changeEventStack = [];
-
-					//新しい変更が後ろに入っているので、降順で履歴をチェックする
-					for ( var i = itemLogs.length - 1; i >= 0; i--) {
-						var log = itemLogs[i]; //あるitemについてのログ
-						var logType = log.type; //当該ログの種類
-
-						if (logType === UPDATE_LOG_TYPE_CHANGE) {
-							changeEventStack.push(log.ev);
-						} else {
-							//あるアイテムについての今回の変更のうち、最初に存在するCREATEまたはREMOVEのログ
-							//(従って、changeのみの場合存在しない場合もある)
-							var firstCRLog = getFirstCRLog(itemLogs, i);
-
-							if (logType === UPDATE_LOG_TYPE_CREATE) {
-								//begin->remove->create->end のような操作が行われた場合、
-								//begin-endの前後でアイテムのインスタンスが変わってしまう。
-								//これをイベントで判別可能にするため、remove->createだった場合はcreatedではなくrecreatedに入れる。
-								//なお、begin->remove->create->remove->create->endのような場合、
-								//途中のcreate->removeは（begin-endの外から見ると）無視してよいので、
-								//oldItemには「最初のremoveのときのインスタンス」、newItemには「最後のcreateのときのインスタンス」が入る。
-								//また、begin->create->remove->create->endの場合は、begin-endの外から見ると"create"扱いにすればよい。
-
-								//なお、createイベントはDataItemからは発火しない。(createはdependプロパティ内でのみ起こる)
-
-								if (firstCRLog && firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
-									recreated.push({
-										id: itemId,
-										oldItem: firstCRLog.item,
-										newItem: log.item
-									});
-								} else {
-									created.push(log.item);
-								}
-							} else {
-								//ここに来たら必ずUPDATE_LOG_TYPE_REMOVE
-
-								var removedItem;
-
-								if (firstCRLog && firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
-									//begin->remove->create->remove->endの場合、begin-endの外から見ると
-									//「最初のremoveで取り除かれた」という扱いにすればよい。
-									removedItem = firstCRLog.item;
-								} else if (!firstCRLog) {
-									//createまたはremoveのログが最後のremoveより前にない
-									//＝beginより前からアイテムが存在し、始めてremoveされた
-									//＝通常のremoveとして扱う
-									removedItem = log.item;
-								} else {
-									//begin->create-> ( remove->create-> ) remove -> end つまり
-									//beginより前にアイテムがなく、セッション中に作られたが最終的には
-									//またremoveされた場合、begin-endの外から見ると「何もなかった」と扱えばよい。
-									removedItem = null;
-								}
-
-								if (removedItem) {
-									removed.push(removedItem);
-
-									var removeEvent = {
-										type: 'remove',
-										model: model
-									};
-									removedItem.dispatchEvent(removeEvent);
-								}
+						/**
+						 * 指定されたデータモデルを削除します。 データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後
+						 * データモデル自体をマネージャから削除します。
+						 *
+						 * @param {String} name データモデル名
+						 * @memberOf DataModelManager
+						 */
+						dropModel: function(name) {
+							//TODO dropModelするときに依存していたらどうするか？
+							//エラーにしてしまうか。
+							var model = this.models[name];
+							if (!model) {
+								return;
 							}
 
-							isChangeOnly = false;
+							// 9/11 福田追記 addをコメントアウトしたのでremoveもコメントアウト
+							//			model.removeEventListener('itemsChange', this._dataModelItemsChangeListener);
 
-							//CREATEまたはREMOVEを見つけたら、そこで走査を終了
-							break;
+							model.manager = null;
+							delete this.models[name];
+							return model;
+						},
+
+						/**
+						 * @returns {Boolean} アップデートセッション中かどうか
+						 */
+						isInUpdate: function() {
+							return this._updateLogs !== null;
+						},
+
+						beginUpdate: function() {
+							if (this.isInUpdate()) {
+								return;
+							}
+
+							this._updateLogs = {};
+						},
+
+						endUpdate: function() {
+							if (!this.isInUpdate()) {
+								return;
+							}
+
+							function getFirstCRLog(itemLogs, lastPos) {
+								for ( var i = 0; i < lastPos; i++) {
+									var type = itemLogs[i].type;
+									if ((type === UPDATE_LOG_TYPE_CREATE || type === UPDATE_LOG_TYPE_REMOVE)) {
+										return itemLogs[i];
+									}
+								}
+								return null;
+							}
+
+
+							/**
+							 * 内部でDataItemごとのイベントを発火させます。
+							 */
+							function createDataModelChanges(model, modelUpdateLogs) {
+								var recreated = [];
+								var created = [];
+								var changed = [];
+								var removed = [];
+
+								for ( var itemId in modelUpdateLogs) {
+									var itemLogs = modelUpdateLogs[itemId];
+									var isChangeOnly = true;
+
+									var changeEventStack = [];
+
+									//新しい変更が後ろに入っているので、降順で履歴をチェックする
+									for ( var i = itemLogs.length - 1; i >= 0; i--) {
+										var log = itemLogs[i]; //あるitemについてのログ
+										var logType = log.type; //当該ログの種類
+
+										if (logType === UPDATE_LOG_TYPE_CHANGE) {
+											changeEventStack.push(log.ev);
+										} else {
+											//あるアイテムについての今回の変更のうち、最初に存在するCREATEまたはREMOVEのログ
+											//(従って、changeのみの場合存在しない場合もある)
+											var firstCRLog = getFirstCRLog(itemLogs, i);
+
+											if (logType === UPDATE_LOG_TYPE_CREATE) {
+												//begin->remove->create->end のような操作が行われた場合、
+												//begin-endの前後でアイテムのインスタンスが変わってしまう。
+												//これをイベントで判別可能にするため、remove->createだった場合はcreatedではなくrecreatedに入れる。
+												//なお、begin->remove->create->remove->create->endのような場合、
+												//途中のcreate->removeは（begin-endの外から見ると）無視してよいので、
+												//oldItemには「最初のremoveのときのインスタンス」、newItemには「最後のcreateのときのインスタンス」が入る。
+												//また、begin->create->remove->create->endの場合は、begin-endの外から見ると"create"扱いにすればよい。
+
+												//なお、createイベントはDataItemからは発火しない。(createはdependプロパティ内でのみ起こる)
+
+												if (firstCRLog
+														&& firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
+													recreated.push({
+														id: itemId,
+														oldItem: firstCRLog.item,
+														newItem: log.item
+													});
+												} else {
+													created.push(log.item);
+												}
+											} else {
+												//ここに来たら必ずUPDATE_LOG_TYPE_REMOVE
+
+												var removedItem;
+
+												if (firstCRLog
+														&& firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
+													//begin->remove->create->remove->endの場合、begin-endの外から見ると
+													//「最初のremoveで取り除かれた」という扱いにすればよい。
+													removedItem = firstCRLog.item;
+												} else if (!firstCRLog) {
+													//createまたはremoveのログが最後のremoveより前にない
+													//＝beginより前からアイテムが存在し、始めてremoveされた
+													//＝通常のremoveとして扱う
+													removedItem = log.item;
+												} else {
+													//begin->create-> ( remove->create-> ) remove -> end つまり
+													//beginより前にアイテムがなく、セッション中に作られたが最終的には
+													//またremoveされた場合、begin-endの外から見ると「何もなかった」と扱えばよい。
+													removedItem = null;
+												}
+
+												if (removedItem) {
+													removed.push(removedItem);
+
+													var removeEvent = {
+														type: 'remove',
+														model: model
+													};
+													removedItem.dispatchEvent(removeEvent);
+												}
+											}
+
+											isChangeOnly = false;
+
+											//CREATEまたはREMOVEを見つけたら、そこで走査を終了
+											break;
+										}
+									}
+
+									//新規追加or削除の場合はcreated, removedに当該オブジェクトが入ればよい。
+									//あるアイテムのcreate,removeどちらのログもなかったということは
+									//そのオブジェクトはbeginの時点から存在しendのタイミングまで残っていた、ということになる。
+									//従って、あとはchangeのイベントオブジェクトをマージすればよい。
+									if (isChangeOnly && changeEventStack.length > 0) {
+										var mergedProps = {};
+										for ( var i = 0, len = changeEventStack.length; i < len; i++) {
+											for ( var p in changeEventStack[i].props) {
+												if (!mergedProps[p]) {
+													mergedProps[p] = changeEventStack[i].props[p];
+												} else {
+													mergedProps[p].newValue = changeEventStack[i].props[p].newValue;
+												}
+											}
+										}
+
+										// mergedPropsの中身をみて、最終的に値が変わっているかどうか
+										var changedProps = false;
+										for ( var p in mergedProps) {
+											if (mergedProps[p].oldValue !== mergedProps[p].newValue) {
+												changedProps = true;
+												break;
+											}
+										}
+										if (changedProps) {
+											var mergedChange = {
+												type: 'change',
+												target: changeEventStack[0].target,
+												props: mergedProps
+											};
+
+											changed.push(mergedChange);
+
+											mergedChange.target.dispatchEvent(mergedChange);
+										}
+									}
+								}
+
+								return {
+									created: created,
+									recreated: recreated,
+									removed: removed,
+									changed: changed
+								};
+							}
+
+							//endUpdateの処理フローここから
+
+							var modelChanges = {};
+
+							var updateLogs = this._updateLogs;
+							for ( var modelName in updateLogs) {
+								if (!updateLogs.hasOwnProperty(modelName)) {
+									continue;
+								}
+
+								modelChanges[modelName] = createDataModelChanges(
+										this.models[modelName], updateLogs[modelName]);
+							}
+
+							//高速化のため、createDataModelChanges()の中で各DataItemからのイベントを発火させている
+
+							//各DataModelからイベントを発火。
+							//全てのモデルの変更が完了してから各モデルの変更イベントを出すため、同じループをもう一度行う
+							var modelChanged = false
+							for ( var modelName in modelChanges) {
+								modelChanged = true;
+								var mc = modelChanges[modelName];
+								this.models[modelName]
+										.dispatchEvent(createDataModelItemsChangeEvent(mc.created,
+												mc.recreated, mc.removed, mc.changed));
+							}
+
+							this._updateLogs = null;
+
+							var event = {
+								type: EVENT_ITEMS_CHANGE,
+								models: modelChanges
+							};
+
+							//最後に、マネージャから全ての変更イベントをあげる。変更がない場合は何もしない
+							if (modelChanged) {
+								this.dispatchEvent(event);
+							}
+						},
+
+						_dataModelItemsChangeListener: function(event) {
+							var manager = event.target.manager;
+
+							var modelsChange = {};
+							modelsChange[event.target.name] = event;
+
+							var managerEvent = {
+								type: EVENT_ITEMS_CHANGE,
+								models: modelsChange
+							};
+
+							manager.dispatchEvent(managerEvent);
 						}
-					}
-
-					//新規追加or削除の場合はcreated, removedに当該オブジェクトが入ればよい。
-					//あるアイテムのcreate,removeどちらのログもなかったということは
-					//そのオブジェクトはbeginの時点から存在しendのタイミングまで残っていた、ということになる。
-					//従って、あとはchangeのイベントオブジェクトをマージすればよい。
-					if (isChangeOnly && changeEventStack.length > 0) {
-						var mergedProps = {};
-						for ( var i = 0, len = changeEventStack.length; i < len; i++) {
-							$.extend(mergedProps, changeEventStack[i].props);
-						}
-
-						var mergedChange = {
-							type: 'change',
-							target: changeEventStack[0].target,
-							props: mergedProps
-						};
-
-						changed.push(mergedChange);
-
-						mergedChange.target.dispatchEvent(mergedChange);
-					}
-				}
-
-				return {
-					created: created,
-					recreated: recreated,
-					removed: removed,
-					changed: changed
-				};
-			}
-
-			//endUpdateの処理フローここから
-
-			var modelChanges = {};
-
-			var updateLogs = this._updateLogs;
-			for ( var modelName in updateLogs) {
-				if (!updateLogs.hasOwnProperty(modelName)) {
-					continue;
-				}
-
-				modelChanges[modelName] = createDataModelChanges(this.models[modelName],
-						updateLogs[modelName]);
-			}
-
-			//高速化のため、createDataModelChanges()の中で各DataItemからのイベントを発火させている
-
-			//各DataModelからイベントを発火。
-			//全てのモデルの変更が完了してから各モデルの変更イベントを出すため、同じループをもう一度行う
-			var modelChanged = false
-			for ( var modelName in modelChanges) {
-				modelChanged = true;
-				var mc = modelChanges[modelName];
-				this.models[modelName].dispatchEvent(createDataModelItemsChangeEvent(mc.created,
-						mc.recreated, mc.removed, mc.changed));
-			}
-
-			this._updateLogs = null;
-
-			var event = {
-				type: EVENT_ITEMS_CHANGE,
-				models: modelChanges
-			};
-
-			//最後に、マネージャから全ての変更イベントをあげる。変更がない場合は何もしない
-			if (modelChanged) {
-				this.dispatchEvent(event);
-			}
-		},
-
-		_dataModelItemsChangeListener: function(event) {
-			var manager = event.target.manager;
-
-			var modelsChange = {};
-			modelsChange[event.target.name] = event;
-
-			var managerEvent = {
-				type: EVENT_ITEMS_CHANGE,
-				models: modelsChange
-			};
-
-			manager.dispatchEvent(managerEvent);
-		}
-	});
+					});
 
 
 
