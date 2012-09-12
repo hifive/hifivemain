@@ -7059,7 +7059,7 @@ $(function() {
 			sequence = null;
 			dataModel1 = null;
 			order = [];
-			argsObj = {};
+			evObj = {};
 			dropAllModel(manager);
 			changeListener = null;
 		}
@@ -7249,7 +7249,7 @@ $(function() {
 		},
 		teardown: function() {
 			order = [];
-			argsObj = {};
+			evObj = {};
 			sequence = null;
 			dataModel1 = null;
 			dropAllModel(manager);
@@ -7435,7 +7435,7 @@ $(function() {
 		},
 		teardown: function() {
 			order = [];
-			argsObj = {};
+			evObj = {};
 			sequence = null;
 			dataModel1 = null;
 			changeListener = null;
@@ -7638,21 +7638,21 @@ $(function() {
 				val2: 2
 			});
 
-			changeListener1 = function(arg) {
+			changeListener1 = function(ev) {
 				order.push('manager');
-				argsObj = argsObj || {};
-				argsObj['manager'] = arg;
+				evObj = evObj || {};
+				evObj['manager'] = ev;
 			}
-			changeListener2 = function(arg) {
+			changeListener2 = function(ev) {
 				order.push('model');
-				argsObj = argsObj || {};
-				argsObj['model'] = arg;
+				evObj = evObj || {};
+				evObj['model'] = ev;
 			}
 
-			changeListener3 = function(arg) {
+			changeListener3 = function(ev) {
 				order.push('item');
-				argsObj = argsObj || {};
-				argsObj['item'] = arg;
+				evObj = evObj || {};
+				evObj['item'] = ev;
 			}
 
 			manager.addEventListener('itemsChange', changeListener1);
@@ -8181,7 +8181,7 @@ $(function() {
 	//=============================
 
 	// イベントオブジェクトを格納する変数
-	var argsObj = {};
+	var evObj = {};
 	module('イベントオブジェクトの確認', {
 		setup: function() {
 			sequence = h5.core.data
@@ -8209,21 +8209,21 @@ $(function() {
 				val2: 2
 			});
 
-			changeListener1 = function(arg) {
+			changeListener1 = function(ev) {
 				order.push('manager');
-				argsObj = argsObj || {};
-				argsObj['manager'] = arg;
+				evObj = evObj || {};
+				evObj['manager'] = ev;
 			}
-			changeListener2 = function(arg) {
+			changeListener2 = function(ev) {
 				order.push('model');
-				argsObj = argsObj || {};
-				argsObj['model'] = arg;
+				evObj = evObj || {};
+				evObj['model'] = ev;
 			}
 
-			changeListener3 = function(arg) {
+			changeListener3 = function(ev) {
 				order.push('item');
-				argsObj = argsObj || {};
-				argsObj['item'] = arg;
+				evObj = evObj || {};
+				evObj['item'] = ev;
 			}
 
 			manager.addEventListener('itemsChange', changeListener1);
@@ -8246,33 +8246,33 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', function() {
-		var listener = function(arg) {
-			argsObj.item2 = arg;
+	test('DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', 13, function() {
+		var listener = function(ev) {
+			evObj.item2 = ev;
 		};
 		item.addEventListener('change', listener);
 
 
 
-		var orgVal = item.val;
+		var orgVal = item.get('val');
 
 		item.set('val', 'test');
 
-		var arg = argsObj.item;
-		ok(typeof arg === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
-		strictEqual(arg.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
-		strictEqual(arg.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
-		deepEqual(arg.props, {
+		var ev = evObj.item;
+		ok(typeof ev === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(ev.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(ev.props, {
 			val: {
 				oldValue: orgVal,
 				newValue: 'test'
 			}
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
-		strictEqual(arg, argsObj.item2,
+		strictEqual(ev, evObj.item2,
 				'イベントハンドラが二つ登録されているとき、どちらのハンドラにも同じインスタンスのchangeイベントオブジェクトが渡されること');
 
 		// 引数を格納するオブジェクト変数のリセット
-		argsObj = {};
+		evObj = {};
 
 		// itemの二つ目のハンドラを削除
 		item.removeEventListener('change', listener);
@@ -8283,13 +8283,13 @@ $(function() {
 		item.set('val', 'ABC');
 		manager.endUpdate();
 
-		arg = argsObj.item;
+		ev = evObj.item;
 
-		ok(typeof arg === 'object',
+		ok(typeof ev === 'object',
 				'beginUpdate/endUpdateの間で値を変更した時、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
-		strictEqual(arg.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
-		strictEqual(arg.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
-		deepEqual(arg.props, {
+		strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(ev.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(ev.props, {
 			val: {
 				oldValue: 'test',
 				newValue: 'ABC'
@@ -8300,10 +8300,11 @@ $(function() {
 			},
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
 
-		argsObj = {};
-
-		var id = item.id;
-		dataModel1.create({
+		evObj = {};
+		var oldVal = item.get('val');
+		var oldVal2 = item.get('val2');
+		var id = item.get('id');
+		dataModel1.create([{
 			id: id,
 			val: '変更途中',
 			val2: '変更途中'
@@ -8311,22 +8312,23 @@ $(function() {
 			id: id,
 			val: 'AAAA',
 			val2: 'BBBB'
-		});
-		ok(typeof arg === 'object', 'createので値を変更した時、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
-		strictEqual(arg.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
-		strictEqual(arg.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
-		deepEqual(arg.props, {
+		}]);
+		ev = evObj.item;
+		ok(typeof ev === 'object', 'createので値を変更した時、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(ev.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(ev.props, {
 			val: {
-				oldValue: 'test',
+				oldValue: oldVal,
 				newValue: 'AAAA'
 			},
 			val2: {
-				oldValue: null,
+				oldValue: oldVal2,
 				newValue: 'BBBB'
 			},
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
 
-		argsObj = {};
+		evObj = {};
 	});
 
 
@@ -8335,30 +8337,30 @@ $(function() {
 				var item = dataModel1.create({
 					id: sequence.next()
 				});
-				var arg = argsObj['model'];
+				var ev = evObj['model'];
 
-				strictEqual(arg.type, 'itemsChange', 'typeプロパティにイベント名"itemsChange"が格納されていること');
-				strictEqual(arg.target, dataModel1, 'targetプロパティにデータモデルのインスタンスが格納されていること');
-				deepEqual(arg.changed, [], 'changedプロパティは空配列であること');
-				deepEqual(arg.created, [item], 'createdプロパティに、生成されたアイテムのインスタンスが格納されていること');
-				deepEqual(arg.recreated, {}, 'recreatedプロパティは空オブジェクトであること');
-				deepEqual(arg.removed, [], 'changedプロパティは空配列であること');
+				strictEqual(ev.type, 'itemsChange', 'typeプロパティにイベント名"itemsChange"が格納されていること');
+				strictEqual(ev.target, dataModel1, 'targetプロパティにデータモデルのインスタンスが格納されていること');
+				deepEqual(ev.changed, [], 'changedプロパティは空配列であること');
+				deepEqual(ev.created, [item], 'createdプロパティに、生成されたアイテムのインスタンスが格納されていること');
+				deepEqual(ev.recreated, [], 'recreatedプロパティは空配列であること');
+				deepEqual(ev.removed, [], 'changedプロパティは空配列であること');
 
-				argsObj = {};
+				evObj = {};
 				var items = dataModel1.create([{
 					id: sequence.next()
 				}, {
 					id: sequence.next()
 				}]);
-				var arg = argsObj['model'];
+				var ev = evObj['model'];
 
-				deepEqual(arg.changed, [], 'changedプロパティは空配列であること');
+				deepEqual(ev.changed, [], 'changedプロパティは空配列であること');
 				// createdの順番は問わないので、順序がitems(createの戻り値)と順序が違ってもテスト通るようにする
 				// 配列中の要素についてインスタンスが等しいかで比較(===)で比較する
-				equalsArrayIgnoreOrder(arg.created, items,
+				equalsArrayIgnoreOrder(ev.created, items,
 						'createdプロパティに、生成されたアイテムのインスタンスが格納されていること');
-				deepEqual(arg.recreated, {}, 'recreatedプロパティは空オブジェクトであること');
-				deepEqual(arg.removed, [], 'changedプロパティは空配列であること');
+				deepEqual(ev.recreated, [], 'recreatedプロパティは空配列であること');
+				deepEqual(ev.removed, [], 'changedプロパティは空配列であること');
 			});
 
 	test('DataModelインスタンスの"itemsChange"に登録したハンドラが受け取る引数に正しく情報が格納されていること changedプロパティの確認',
@@ -8366,28 +8368,28 @@ $(function() {
 				var item = dataModel1.create({
 					id: '1'
 				});
-				argsObj = {};
+				evObj = {};
 				// itemsChangeベントオブジェクトのchangeと比較するため、changeイベントオブジェクトをとっておく。
 				var changeArgs = [];
-				item.addEventListener('change', function(arg) {
-					changeArgs.push(arg);
+				item.addEventListener('change', function(ev) {
+					changeArgs.push(ev);
 				});
 				item.set('val', 'test');
-				var arg = argsObj['model'];
+				var ev = evObj['model'];
 
-				strictEqual(arg.changed[0], changeArgs[0],
+				strictEqual(ev.changed[0], changeArgs[0],
 						'changedプロパティに、変更したアイテムのchangeイベントオブジェクトが格納されていること');
-				deepEqual(arg.created, [], 'createdプロパティは空配列であること');
-				deepEqual(arg.recreated, {}, 'recreatedプロパティは空オブジェクトであること');
-				deepEqual(arg.removed, [], 'changedプロパティは空配列であること');
+				deepEqual(ev.created, [], 'createdプロパティは空配列であること');
+				deepEqual(ev.recreated, [], 'recreatedプロパティは空配列であること');
+				deepEqual(ev.removed, [], 'changedプロパティは空配列であること');
 
 				dataModel1.create({
 					id: '2'
-				}).addEventListener('change', function(arg) {
-					changeArgs.push(arg);
+				}).addEventListener('change', function(ev) {
+					changeArgs.push(ev);
 				});
 
-				argsObj = {};
+				evObj = {};
 				changeArgs = [];
 				dataModel1.create([{
 					id: '1',
@@ -8396,15 +8398,15 @@ $(function() {
 					id: '2',
 					val: 'BBB'
 				}]);
-				arg = argsObj['model'];
+				ev = evObj['model'];
 				// changeイベントオブジェクトがitemsChangeイベントオブジェクトのchangedに入っていることを確認する。
 				// 複数ある場合、格納される順番は問わないので、格納されている順序が違っていてもテストが通るようにする
 				// インスタンスは違ってていいので、deepで比較するよう指定する
-				equalsArrayIgnoreOrder(arg.changed, changeArgs,
+				equalsArrayIgnoreOrder(ev.changed, changeArgs,
 						'changedプロパティに、変更したアイテムインスタンスが格納されていること', true);
-				deepEqual(arg.created, [], 'createdプロパティは空配列であること');
-				deepEqual(arg.recreated, {}, 'recreatedプロパティは空オブジェクトであること');
-				deepEqual(arg.removed, [], 'changedプロパティは空配列であること');
+				deepEqual(ev.created, [], 'createdプロパティは空配列であること');
+				deepEqual(ev.recreated, [], 'recreatedプロパティは空配列であること');
+				deepEqual(ev.removed, [], 'changedプロパティは空配列であること');
 			});
 
 	test('DataModelインスタンスの"itemsChange"に登録したハンドラが受け取る引数に正しく情報が格納されていること recreatedの確認', 8,
@@ -8427,18 +8429,17 @@ $(function() {
 				});
 				manager.endUpdate();
 
-				var arg = argsObj['model'];
+				var ev = evObj['model'];
 
-				deepEqual(arg.changed, [], 'changedプロパティは空配列であること');
-				deepEqual(arg.created, [], 'createdプロパティは空配列であること');
-				deepEqual(arg.recreated, {
-					'1': {
-						oldItem: oldItem,
-						newItem: newItem
-					}
-				}, 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
-				deepEqual(arg.removed, [], 'removedプロパティは空配列であること');
-				argsObj = {};
+				deepEqual(ev.changed, [], 'changedプロパティは空配列であること');
+				deepEqual(ev.created, [], 'createdプロパティは空配列であること');
+				deepEqual(ev.recreated, [{
+					id:'1',
+					oldItem: oldItem,
+					newItem: newItem
+				}], 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
+				deepEqual(ev.removed, [], 'removedプロパティは空配列であること');
+				evObj = {};
 
 				oldItem = newItem;
 
@@ -8453,21 +8454,20 @@ $(function() {
 				});
 				manager.endUpdate();
 
-				var arg = argsObj['model'];
+				var ev = evObj['model'];
 
-				deepEqual(arg.changed, [], 'changedプロパティは空配列であること');
-				deepEqual(arg.created, [], 'createdプロパティは空配列であること');
-				deepEqual(arg.recreated, {
-					'1': {
+				deepEqual(ev.changed, [], 'changedプロパティは空配列であること');
+				deepEqual(ev.created, [], 'createdプロパティは空配列であること');
+				deepEqual(ev.recreated, [{
+						id: '1',
 						oldItem: oldItem,
 						newItem: newItem
-					},
-					'2': {
+					},{
+						id: '2',
 						oldItem: oldItem2,
 						newItem: newItem2
-					}
-				}, 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
-				deepEqual(arg.removed, [], 'removedプロパティは空配列であること');
+				}], 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
+				deepEqual(ev.removed, [], 'removedプロパティは空配列であること');
 			});
 
 	test('DataModelインスタンスの"itemsChange"に登録したハンドラが受け取る引数に正しく情報が格納されていること 複数のプロパティに変更情報が格納される場合',
@@ -8486,8 +8486,8 @@ $(function() {
 
 				// changeイベントオブジェクトを格納する
 				var changeArgs = [];
-				oldItem3.addEventListener('change', function(arg) {
-					changeArgs.push(arg);
+				oldItem3.addEventListener('change', function(ev) {
+					changeArgs.push(ev);
 				});
 
 				manager.beginUpdate();
@@ -8520,17 +8520,16 @@ $(function() {
 				dataModel1.remove('6');
 				manager.endUpdate();
 
-				var arg = argsObj['model'];
+				var ev = evObj['model'];
 
-				deepEqual(arg.changed, changeArgs, 'changedプロパティにchangeイベントオブジェクトが格納されていること');
-				deepEqual(arg.created, [newItem5], 'createdプロパティに生成されたDataItemインスタンスが格納されていること');
-				deepEqual(arg.recreated, {
-					'1': {
-						oldItem: oldItem,
-						newItem: newItem
-					}
-				}, 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
-				deepEqual(arg.removed, [oldItem2], 'removedプロパティに削除されたインスタンスが格納されていること');
+				deepEqual(ev.changed, changeArgs, 'changedプロパティにchangeイベントオブジェクトが格納されていること');
+				deepEqual(ev.created, [newItem5], 'createdプロパティに生成されたDataItemインスタンスが格納されていること');
+				deepEqual(ev.recreated, [{
+					id:'1',
+					oldItem: oldItem,
+					newItem: newItem
+				}], 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
+				deepEqual(ev.removed, [oldItem2], 'removedプロパティに削除されたインスタンスが格納されていること');
 			});
 
 	// ------------------------------------ DataManagerのイベントテスト------------------------------------
@@ -8543,7 +8542,8 @@ $(function() {
 					schema: {
 						id: {
 							id: true
-						}
+						},
+						val:{}
 					}
 				});
 				var model2 = manager.createModel({
@@ -8551,7 +8551,8 @@ $(function() {
 					schema: {
 						id: {
 							id: true
-						}
+						},
+						val:{}
 					}
 				});
 				var model3 = manager.createModel({
@@ -8559,34 +8560,58 @@ $(function() {
 					schema: {
 						id: {
 							id: true
-						}
+						},
+						val:{}
 					}
 				});
 
 				// 各モデルのitemsChangeハンドラに渡される引数を取得するため、イベントハンドラをaddする
-				var args = [];
-				function modelChangeListener(arg) {
-					args.push(arg);
+				var evs = {};
+				function modelChangeListener(ev) {
+					evs[ev.target.name] = ev;
 				}
 				model1.addEventListener('itemsChange', modelChangeListener);
 				model2.addEventListener('itemsChange', modelChangeListener);
 				model3.addEventListener('itemsChange', modelChangeListener);
 
-				// アイテムを生成してイベントを上げる
-				manager.beginUpdate();
 				model1.create({
 					id: '1'
+				});
+				model1.create({
+					id: '2'
 				});
 				model2.create({
 					id: '1'
 				});
+				model2.create({
+					id: '2'
+				});
+				// アイテムを生成してイベントを上げる
+				manager.beginUpdate();
+				model1.remove('1');
+				model1.create({
+					id: '1'
+				});
+				model1.create({
+					id:'2',
+					val:'2'
+				});
+				model1.create({
+					id: '3'
+				});
+				model2.create({
+					id: '3'
+				});
+				model2.remove('2');
 				manager.endUpdate();
 
-				equalsArrayIgnoreOrder(
-						argsObj.manager.models,
-						args,
-						'DataManagerのitemsChangeイベントオブジェクトに、変更のあったDataModelのitemsChangeイベントオブジェクトが格納されていること',
-						true);
+				strictEqual(evObj.manager.type, 'itemsChange', 'typeが"itemsChange"であること');
+				var evAry = ['created', 'changed', 'removed', 'recreated'];
+				for ( var i = 0, l = evAry.length; i < l; i++) {
+					var prop = evAry[i];
+					strictEqual(evObj.manager.models.AModel[prop], evs.AModel[prop], h5.u.str.format('AModelのイベントオブジェクトの{0}が、managerのイベントオブジェクトのmodels.AModel.{0}に格納されていること(インスタンスが同じ)',prop));
+					strictEqual(evObj.manager.models.BModel[prop], evs.BModel[prop], h5.u.str.format('BModelのイベントオブジェクトの{0}が、managerのイベントオブジェクトのmodels.BModel.{0}に格納されていること(インスタンスが同じ)',prop));
+				}
 			});
 	//TODO createModelやdropModelした時のイベントについてテストする
 	//	test('DataManagerインスタンスの"xxx"イベントに登録したハンドラが受け取る引数に正しく情報が格納されていること', function(){
@@ -8640,21 +8665,21 @@ $(function() {
 	//				val: 1
 	//			});
 	//
-	//			changeListener1 = function(arg) {
+	//			changeListener1 = function(ev) {
 	//				order.push('manager');
-	//				argsObj = argsObj || {};
-	//				argsObj['manager'] = arg;
+	//				evObj = evObj || {};
+	//				evObj['manager'] = ev;
 	//			}
-	//			changeListener2 = function(arg) {
+	//			changeListener2 = function(ev) {
 	//				order.push('model');
-	//				argsObj = argsObj || {};
-	//				argsObj['model'] = arg;
+	//				evObj = evObj || {};
+	//				evObj['model'] = ev;
 	//			}
 	//
-	//			changeListener3 = function(arg) {
+	//			changeListener3 = function(ev) {
 	//				order.push('item');
-	//				argsObj = argsObj || {};
-	//				argsObj['item'] = arg;
+	//				evObj = evObj || {};
+	//				evObj['item'] = ev;
 	//			}
 	//
 	//			manager.addEventListener('itemsChange', changeListener1);
