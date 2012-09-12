@@ -2252,7 +2252,8 @@
 							continue;
 						}
 
-						var id = isString(ids[i]) ? ids[i] : ids[i][idKey];
+						var id = (isString(ids[i]) || isIntegerValue(ids[i], true)) ? ids[i]
+								: ids[i][idKey];
 
 						var item = this.items[id];
 
@@ -2280,7 +2281,7 @@
 
 				/**
 				 * 指定されたデータアイテムを保持しているかどうかを返します。<br>
-				 * 文字列が渡された場合はID(文字列)とみなし、 オブジェクトが渡された場合はデータアイテムとみなします。<br>
+				 * 文字列または整数値が渡された場合はID(文字列)とみなし、 オブジェクトが渡された場合はデータアイテムとみなします。<br>
 				 * オブジェクトが渡された場合、自分が保持しているデータアイテムインスタンスかどうかをチェックします。<br>
 				 * 従って、同じ構造を持つ別のインスタンスを引数に渡した場合はfalseが返ります。<br>
 				 * データアイテムインスタンスを引数に渡した場合に限り（そのインスタンスをこのデータモデルが保持していれば）trueが返ります。<br>
@@ -2289,7 +2290,7 @@
 				 * @returns {Boolean} 指定されたIDのデータアイテムをこのデータモデルが保持しているかどうか
 				 */
 				has: function(idOrObj) {
-					if (isString(idOrObj)) {
+					if (isString(idOrObj) || isIntegerValue(idOrObj, true)) {
 						return !!this._findById(idOrObj);
 					} else if (typeof idOrObj === 'object') {
 						//型の厳密性はitemsとの厳密等価比較によってチェックできるので、if文ではtypeofで充分
