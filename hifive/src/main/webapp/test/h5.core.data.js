@@ -1030,7 +1030,6 @@ $(function() {
 				val3:{depend:{on:['val1', 'val2'],calc:function(){return 0;}}},
 			}
 		}),m.name), 'TestDependModel', 'データモデルが作成できること');
-		console.log(m.create({id:'1'}))
 	});
 
 	test('dependの依存先の参照が循環していた場合はエラーになること', function() {
@@ -7175,42 +7174,42 @@ $(function() {
 	test('addEventListenerで"change"イベントに登録したハンドラだけが実行され、removeEventListenerされたハンドラは実行されなくなること。',
 			function() {
 				// イベントをaddする
-				var changeListener1 = function() {
-					order.push('changeListener1');
+				var managerEventListener = function() {
+					order.push('managerEventListener');
 				};
-				var changeListener2 = function() {
-					order.push('changeListener2');
+				var modelEventListener = function() {
+					order.push('modelEventListener');
 				};
-				item.addEventListener('change', changeListener1);
+				item.addEventListener('change', managerEventListener);
 
 				item.set('val', sequence.next());
 
-				deepEqual(order, ['changeListener1'],
+				deepEqual(order, ['managerEventListener'],
 						'addEventListenerの"change"にハンドリングした関数が実行されていること');
 
 				order = [];
-				item.addEventListener('change', changeListener1);
+				item.addEventListener('change', managerEventListener);
 				item.set('val', sequence.next());
 
-				deepEqual(order, ['changeListener1'],
+				deepEqual(order, ['managerEventListener'],
 						'addEventListenerの"change"に同じ関数を2度ハンドリングしても一度だけ実行されること');
 
 				order = [];
-				item.addEventListener('change', changeListener2);
+				item.addEventListener('change', modelEventListener);
 				item.set('val', sequence.next());
 
-				deepEqual(order, ['changeListener1', 'changeListener2'],
+				deepEqual(order, ['managerEventListener', 'modelEventListener'],
 						'addEventListenerの"change"にさらに別の関数をハンドリングすると、addした順番で実行されること');
 
 				order = [];
-				item.removeEventListener('change', changeListener1);
+				item.removeEventListener('change', managerEventListener);
 				item.set('val', sequence.next());
 
-				deepEqual(order, ['changeListener2'],
+				deepEqual(order, ['modelEventListener'],
 						'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				item.removeEventListener('change', changeListener2);
+				item.removeEventListener('change', modelEventListener);
 				item.set('val', sequence.next());
 
 				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
@@ -7229,7 +7228,7 @@ $(function() {
 				deepEqual(order, [], 'addEventListenerの"change"以外を指定してハンドリングした関数は、実行されないこと');
 
 				// addしたイベントを削除
-				item.removeEventListener('itemsChange', changeListener1);
+				item.removeEventListener('itemsChange', managerEventListener);
 				item.removeEventListener('itemsChange', itemsChange);
 				item.removeEventListener('itemsChange', CHANGE);
 			});
@@ -7367,13 +7366,13 @@ $(function() {
 	});
 	test('addEventListenerで"itemsChange"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。', 6,
 			function() {
-				var changeListener1 = function() {
+				var managerEventListener = function() {
 					order.push('itemsChange');
 				};
-				var changeListener2 = function() {
+				var modelEventListener = function() {
 					order.push('itemsChange2');
 				};
-				dataModel1.addEventListener('itemsChange', changeListener1);
+				dataModel1.addEventListener('itemsChange', managerEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
@@ -7382,7 +7381,7 @@ $(function() {
 						'addEventListenerの"itemsChange"にハンドリングした関数が実行されていること');
 
 				order = [];
-				dataModel1.addEventListener('itemsChange', changeListener1);
+				dataModel1.addEventListener('itemsChange', managerEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
@@ -7390,7 +7389,7 @@ $(function() {
 						'addEventListenerの"itemsChange"に同じ関数を2度ハンドリングしても一度だけ実行されること');
 
 				order = [];
-				dataModel1.addEventListener('itemsChange', changeListener2);
+				dataModel1.addEventListener('itemsChange', modelEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
@@ -7398,28 +7397,28 @@ $(function() {
 						'addEventListenerの"itemsChange"にさらに別の関数をハンドリングすると、addした順番で実行されること');
 
 				order = [];
-				dataModel1.removeEventListener('itemsChange', changeListener2);
+				dataModel1.removeEventListener('itemsChange', modelEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
 				deepEqual(order, ['itemsChange'], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				dataModel1.removeEventListener('itemsChange', changeListener1);
+				dataModel1.removeEventListener('itemsChange', managerEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
 				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				dataModel1.addEventListener('change', changeListener1);
+				dataModel1.addEventListener('change', managerEventListener);
 				dataModel1.val = sequence.next();
 
 				deepEqual(order, [], 'addEventListenerの"itemsChange"以外を指定してハンドリングした関数は、実行されないこと');
 
 				// addしたイベントを削除
-				dataModel1.removeEventListener('change', changeListener1);
-				dataModel1.removeEventListener('change', changeListener2);
+				dataModel1.removeEventListener('change', managerEventListener);
+				dataModel1.removeEventListener('change', modelEventListener);
 			});
 
 	//=============================
@@ -7547,13 +7546,13 @@ $(function() {
 
 	test('addEventListenerで"itemsChange"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。', 6,
 			function() {
-				var changeListener1 = function() {
+				var managerEventListener = function() {
 					order.push('itemsChange');
 				};
-				var changeListener2 = function() {
+				var modelEventListener = function() {
 					order.push('itemsChange2');
 				};
-				manager.addEventListener('itemsChange', changeListener1);
+				manager.addEventListener('itemsChange', managerEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
@@ -7562,7 +7561,7 @@ $(function() {
 						'addEventListenerの"itemsChange"にハンドリングした関数が実行されていること');
 
 				order = [];
-				manager.addEventListener('itemsChange', changeListener1);
+				manager.addEventListener('itemsChange', managerEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
@@ -7570,7 +7569,7 @@ $(function() {
 						'addEventListenerの"itemsChange"に同じ関数を2度ハンドリングしても一度だけ実行されること');
 
 				order = [];
-				manager.addEventListener('itemsChange', changeListener2);
+				manager.addEventListener('itemsChange', modelEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
@@ -7578,28 +7577,28 @@ $(function() {
 						'addEventListenerの"itemsChange"にさらに別の関数をハンドリングすると、addした順番で実行されること');
 
 				order = [];
-				manager.removeEventListener('itemsChange', changeListener2);
+				manager.removeEventListener('itemsChange', modelEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
 				deepEqual(order, ['itemsChange'], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				manager.removeEventListener('itemsChange', changeListener1);
+				manager.removeEventListener('itemsChange', managerEventListener);
 				dataModel1.create({
 					id: sequence.next()
 				});
 				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				manager.addEventListener('change', changeListener1);
+				manager.addEventListener('change', managerEventListener);
 				dataModel1.val = sequence.next();
 
 				deepEqual(order, [], 'addEventListenerの"itemsChange"以外を指定してハンドリングした関数は、実行されないこと');
 
 				// addしたイベントを削除
-				manager.removeEventListener('change', changeListener1);
-				manager.removeEventListener('change', changeListener2);
+				manager.removeEventListener('change', managerEventListener);
+				manager.removeEventListener('change', modelEventListener);
 			});
 
 	//=============================
@@ -7607,7 +7606,7 @@ $(function() {
 	//=============================
 
 	// イベントハンドラ
-	var changeListener1 = changeListener2 = changeListener3 = null;
+	var managerEventListener = modelEventListener = itemEventListener = null;
 	// データアイテムインスタンス
 	var item2 = null;
 
@@ -7638,32 +7637,32 @@ $(function() {
 				val2: 2
 			});
 
-			changeListener1 = function(ev) {
+			managerEventListener = function(ev) {
 				order.push('manager');
 				evObj = evObj || {};
 				evObj['manager'] = ev;
 			}
-			changeListener2 = function(ev) {
+			modelEventListener = function(ev) {
 				order.push('model');
 				evObj = evObj || {};
 				evObj['model'] = ev;
 			}
 
-			changeListener3 = function(ev) {
+			itemEventListener = function(ev) {
 				order.push('item');
 				evObj = evObj || {};
 				evObj['item'] = ev;
 			}
 
-			manager.addEventListener('itemsChange', changeListener1);
-			dataModel1.addEventListener('itemsChange', changeListener2);
-			item.addEventListener('change', changeListener3);
+			manager.addEventListener('itemsChange', managerEventListener);
+			dataModel1.addEventListener('itemsChange', modelEventListener);
+			item.addEventListener('change', itemEventListener);
 		},
 		teardown: function() {
 			// addしたイベントを削除
-			manager.removeEventListener('itemsChange', changeListener1);
-			dataModel1.removeEventListener('itemsChange', changeListener2);
-			item.removeEventListener('change', changeListener3);
+			manager.removeEventListener('itemsChange', managerEventListener);
+			dataModel1.removeEventListener('itemsChange', modelEventListener);
+			item.removeEventListener('change', itemEventListener);
 
 			order = [];
 			sequence = null;
@@ -7733,7 +7732,7 @@ $(function() {
 			id: '1'
 		});
 
-		item.addEventListener('change', changeListener3);
+		item.addEventListener('change', itemEventListener);
 
 		order = [];
 		item.set('testS1', 'abc');
@@ -7886,6 +7885,94 @@ $(function() {
 				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
 	});
 
+	test('DataItemのcreateでObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 10, function() {
+		var model = manager.createModel({
+			name: 'AryModel',
+			schema: {
+				id: {
+					id: true
+				},
+				ary: {
+					type: 'any[]'
+				}
+			}
+		});
+		model.addEventListener('itemsChange', modelEventListener);
+		var item = model.create({
+			id: sequence.next()
+		});
+
+		item.addEventListener('change', itemEventListener);
+
+		var expEvObj = null;
+		order = [];
+		item.addEventListener('change', itemEventListener);
+		o=item.get('ary');
+		item.set('ary',[1,2,3]);
+		deepEqual(order, ['item', 'model', 'manager'], 'setでイベントが上がる');
+
+		order=[];
+		evObj = {};
+		model.create({
+			id:item.get('id'),
+			ary:[2,2,2,2]
+		});
+		deepEqual(order, ['item', 'model','manager'], 'createnによる変更でイベント上がる');
+
+		order=[];
+		evObj = {};
+		manager.addEventListener('itemsChage', managerEventListener);
+		o = item.get('ary');
+		o.copyFrom([1,2,3,4]);
+		deepEqual(order, ['item', 'model','manager'], 'copyFromでイベント上がる');
+
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.push(1);
+		deepEqual(order, ['item', 'model','manager'], 'pushでイベント上がる');
+
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.unshift(1);
+		deepEqual(order, ['item', 'model','manager'], 'unshiftでイベント上がる');
+
+		o.copyFrom([2,1,3]);
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.sort();
+		deepEqual(order, ['item', 'model','manager'], 'sortでイベント上がる');
+
+		o.copyFrom([2,1,3]);
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.reverse();
+		deepEqual(order, ['item', 'model','manager'], 'reverseでイベント上がる');
+
+		o.copyFrom([2,1,3]);
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.pop();
+		deepEqual(order, ['item', 'model','manager'], 'popでイベント上がる');
+
+		o.copyFrom([2,1,3]);
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.slice(0);
+		deepEqual(order, [], '配列の中身の変わらないメソッド(slice)を呼んだ時はイベントは上がらない');
+
+		o.copyFrom([1,2,3]);
+		order=[];
+		evObj = {};
+		o.sort();
+		deepEqual(order, [], '配列の中身が変わらない時(sort)はイベントは上がらない');
+	});
+
 	test(
 			'DataItemのbeginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること',11,
 			function() {
@@ -7953,9 +8040,9 @@ $(function() {
 			function() {
 				manager.beginUpdate();
 				item.set('val', 'aaaa');
-				manager.removeEventListener('itemsChange', changeListener1);
-				dataModel1.removeEventListener('itemsChange', changeListener2);
-				item.removeEventListener('change', changeListener3);
+				manager.removeEventListener('itemsChange', managerEventListener);
+				dataModel1.removeEventListener('itemsChange', modelEventListener);
+				item.removeEventListener('change', itemEventListener);
 				manager.endUpdate();
 
 				deepEqual(order, [],
@@ -7966,9 +8053,9 @@ $(function() {
 				manager.beginUpdate();
 				item.set('val', 'bbbb');
 
-				manager.addEventListener('itemsChange', changeListener1);
-				dataModel1.addEventListener('itemsChange', changeListener2);
-				item.addEventListener('change', changeListener3);
+				manager.addEventListener('itemsChange', managerEventListener);
+				dataModel1.addEventListener('itemsChange', modelEventListener);
+				item.addEventListener('change', itemEventListener);
 				manager.endUpdate();
 				deepEqual(order, ['item', 'model', 'manager'],
 						'begin/endUpdateの中でaddEventListenerをした場合、プロパティがbeginUpdate時と値が変わっていればイベントハンドラが実行されること');
@@ -7976,13 +8063,13 @@ $(function() {
 				order = [];
 				manager.beginUpdate();
 				item.set('val', 'bbbb');
-				item.addEventListener('change', changeListener3);
+				item.addEventListener('change', itemEventListener);
 				item.set('val', 'cccc');
 				manager.endUpdate();
 				deepEqual(order, ['item', 'model', 'manager'],
 						'begin/endUpdateの中でaddEventListenerをした場合、プロパティがbeginUpdate時と値が変わっていなければイベントハンドラは実行されないこと');
 
-				item.addEventListener('change', changeListener3);
+				item.addEventListener('change', itemEventListener);
 				order = [];
 				manager.beginUpdate();
 				item.set('val', sequence.next());
@@ -8013,8 +8100,8 @@ $(function() {
 		order = [];
 
 
-		model.addEventListener('itemsChange', changeListener2);
-		testItem.addEventListener('change', changeListener3);
+		model.addEventListener('itemsChange', modelEventListener);
+		testItem.addEventListener('change', itemEventListener);
 
 		testItem.numVal = '1';
 		deepEqual(order, [], '値が型変換されると変更前と変更後が同じになる場合はイベントが発火しないこと');
@@ -8079,103 +8166,6 @@ $(function() {
 		deepEqual(order, [], 'removeを呼んだが削除するものがなかった時、DataModelのitemsChangeイベントハンドラは実行されないこと');
 	});
 
-
-	//TODO 8/13メモ： DataModelの作成、削除時には、itemsChangeイベントじゃなくて、別のイベントが発火する仕様にする
-	//
-	//	test('DataModel作成時に、ManagerのitemsChangeイベントが発火すること', function() {
-	//		manager.createModel({
-	//			name: 'AModel',
-	//			schema: {
-	//				id: {
-	//					id: true
-	//				}
-	//			}
-	//		});
-	//		deepEqual(order, ['manager'], 'データモデル生成時にDataManagerのitemsChangeイベントハンドラが実行されること');
-	//		order = [];
-	//
-	//		manager.beginUpdate();
-	//		manager.createModel({
-	//			name: 'BModel',
-	//			schema: {
-	//				id: {
-	//					id: true
-	//				}
-	//			}
-	//		});
-	//		deepEqual(order, [], 'begin-end内では、DataManagerのitemsChangeイベントハンドラは実行されないこと');
-	//		manager.createModel({
-	//			name: 'CModel',
-	//			schema: {
-	//				id: {
-	//					id: true
-	//				}
-	//			}
-	//		});
-	//		manager.endUpdate();
-	//		deepEqual(order, ['manager'],
-	//				'begin-end内で2つデータモデルを生成した時にendUpdate時にDataManagerのitemsChangeイベントハンドラが実行されること');
-	//		order = [];
-	//	});
-	//
-	//	test('DataModel削除時に、ManagerのitemsChangeイベントが発火すること', function() {
-	//		manager.createModel({
-	//			name: 'AModel',
-	//			schema: {
-	//				id: {
-	//					id: true
-	//				}
-	//			}
-	//		});
-	//		order = [];
-	//
-	//
-	//		manager.createModel({
-	//			name: 'AModel',
-	//			schema: {
-	//				id: {
-	//					id: true
-	//				}
-	//			}
-	//		});
-	//		manager.createModel({
-	//			name: 'BModel',
-	//			schema: {
-	//				id: {
-	//					id: true
-	//				}
-	//			}
-	//		});
-	//		order = [];
-	//
-	//		manager.beginUpdate();
-	//		manager.dropModel('AModel');
-	//		manager.dropModel('BModel');
-	//		deepEqual(order, [],
-	//				'begin-end内でデータモデル削除しても、endUpdate前にDataManagerのitemsChangeイベントハンドラは実行されないこと');
-	//		manager.endUpdate();
-	//
-	//		deepEqual(order, ['manager'],
-	//				'begin-end内でデータモデル削除した時、endUpdate時にDataManagerのitemsChangeイベントハンドラが実行されること');
-	//
-	//		manager.beginUpdate();
-	//		deepEqual(order, [], 'begin-end内では、DataManagerのitemsChangeイベントハンドラは実行されないこと');
-	//		manager.createModel({
-	//			name: 'CModel',
-	//			schema: {
-	//				id: {
-	//					id: true
-	//				}
-	//			}
-	//		});
-	//		manager.dropModel('CModel');
-	//		manager.endUpdate();
-	//		deepEqual(order, ['manager'],
-	//				'begin-end内でデータモデルを生成して削除た時に、endUpdate時にDataManagerのitemsChangeイベントハンドラが実行されること');
-	//		order = [];
-	//	});
-
-
 	//=============================
 	// Definition
 	//=============================
@@ -8197,7 +8187,8 @@ $(function() {
 						id: true
 					},
 					val: {},
-					val2: {}
+					val2: {},
+					ary:{type:'string[]'}
 				}
 			});
 			item = dataModel1.create({
@@ -8209,32 +8200,32 @@ $(function() {
 				val2: 2
 			});
 
-			changeListener1 = function(ev) {
+			managerEventListener = function(ev) {
 				order.push('manager');
 				evObj = evObj || {};
 				evObj['manager'] = ev;
 			}
-			changeListener2 = function(ev) {
+			modelEventListener = function(ev) {
 				order.push('model');
 				evObj = evObj || {};
 				evObj['model'] = ev;
 			}
 
-			changeListener3 = function(ev) {
+			itemEventListenerqqq = function(ev) {
 				order.push('item');
 				evObj = evObj || {};
 				evObj['item'] = ev;
 			}
 
-			manager.addEventListener('itemsChange', changeListener1);
-			dataModel1.addEventListener('itemsChange', changeListener2);
-			item.addEventListener('change', changeListener3);
+			manager.addEventListener('itemsChange', managerEventListener);
+			dataModel1.addEventListener('itemsChange', modelEventListener);
+			item.addEventListener('change', itemEventListener);
 		},
 		teardown: function() {
 			// addしたイベントを削除
-			manager.removeEventListener('itemsChange', changeListener1);
-			dataModel1.removeEventListener('itemsChange', changeListener2);
-			item.removeEventListener('change', changeListener3);
+			manager.removeEventListener('itemsChange', managerEventListener);
+			dataModel1.removeEventListener('itemsChange', modelEventListener);
+			item.removeEventListener('change', itemEventListener);
 
 			order = [];
 			sequence = null;
@@ -8327,10 +8318,7 @@ $(function() {
 				newValue: 'BBBB'
 			},
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
-
-		evObj = {};
 	});
-
 
 	test('DataModelインスタンスの"itemsChange"に登録したハンドラが受け取る引数に正しく情報が格納されていること createdプロパティの確認',
 			function() {
@@ -8665,32 +8653,32 @@ $(function() {
 	//				val: 1
 	//			});
 	//
-	//			changeListener1 = function(ev) {
+	//			managerEventListener = function(ev) {
 	//				order.push('manager');
 	//				evObj = evObj || {};
 	//				evObj['manager'] = ev;
 	//			}
-	//			changeListener2 = function(ev) {
+	//			modelEventListener = function(ev) {
 	//				order.push('model');
 	//				evObj = evObj || {};
 	//				evObj['model'] = ev;
 	//			}
 	//
-	//			changeListener3 = function(ev) {
+	//			itemEventListener = function(ev) {
 	//				order.push('item');
 	//				evObj = evObj || {};
 	//				evObj['item'] = ev;
 	//			}
 	//
-	//			manager.addEventListener('itemsChange', changeListener1);
-	//			dataModel1.addEventListener('itemsChange', changeListener2);
-	//			item.addEventListener('change', changeListener3);
+	//			manager.addEventListener('itemsChange', managerEventListener);
+	//			dataModel1.addEventListener('itemsChange', modelEventListener);
+	//			item.addEventListener('change', itemEventListener);
 	//		},
 	//		teardown: function() {
 	//			// addしたイベントを削除
-	//			manager.removeEventListener('itemsChange', changeListener1);
-	//			dataModel1.removeEventListener('itemsChange', changeListener2);
-	//			item.removeEventListener('change', changeListener3);
+	//			manager.removeEventListener('itemsChange', managerEventListener);
+	//			dataModel1.removeEventListener('itemsChange', modelEventListener);
+	//			item.removeEventListener('change', itemEventListener);
 	//
 	//			order = [];
 	//			sequence = null;
