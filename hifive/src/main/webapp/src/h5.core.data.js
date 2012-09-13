@@ -1459,7 +1459,8 @@
 			// ObservableArrayの場合、oldValueはスナップしたただの配列にする
 			// ただし、typeが未指定またはanyにObservableArrayが入っていた場合はそのまま
 			if (type && type !== 'any' && h5.u.obj.isObservableArray(oldValue)) {
-				oldValue = oldValue.splice(0);
+				//TODO sliceを何度もしないようにする
+				oldValue = oldValue.slice(0);
 			}
 
 			//ここでpushしたプロパティのみ、後段で値をセットする
@@ -1666,27 +1667,28 @@
 			// 配列操作前と操作後で使う共通の変数
 			// 配列操作が同期のため、必ずobserveBeforeListener→配列操作→observeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
 
-			// 変更前の配列の値(observableArrayをsplice(0)したもの
+			// 変更前の配列の値(observableArrayをslice(0)したもの
 			var snapArray = null;
 			// アップデートセッション中かどうか
 			var isAlreadyInUpdate = false;
 
-			// TODO 追加も削除もソートもしないメソッド
-			var noChangeMethods = [];
+			// 追加しないメソッド。validateする必要がない。
+			var eventMethods = ['sort', 'reverse', 'pop'];
 
-			// 追加は行わないが、削除やソートが行われるメソッド(validateする必要がない)
-			var noAddElmentMethods = ['unshift', 'push', 'splice', 'copyFrom'];
+			// 追加が行われるメソッド。validateする必要がある。
+			var validateAndEventMethods = ['unshift', 'push', 'splice', 'copyFrom'];
 
 
 			function observeBeforeListener(event) {
 				// 追加も削除もソートもしないメソッドなら何もしない
-				if ($.inArray(event.method, noChangeMethods) !== -1) {
+				if ($.inArray(event.method, validateAndEventMethods) === -1
+						&& $.inArray(event.method, eventMethods) === -1) {
 					return;
 				}
-				//TODO ES5対応
-				var checkFlag = $.inArray(event.method, noAddElmentMethods) !== -1;
-
 				var args = argsToArray(event.args);
+
+				//
+				var checkFlag = $.inArray(event.method, eventMethods) === -1;
 
 				if (event.method === 'splice') {
 					if (args.length <= 2) {
@@ -1709,31 +1711,42 @@
 					}
 				}
 
+				//TODO 何度もspliceしなくていいようにする
+				// _updateLogにoldValueのキャッシュを持たせておいて、それを参照するようにすればいいはず。
+				// itemSetterでも、oldValueのためにslice()している箇所があるので、そこも対応する
+				snapArray = Array.prototype.slice.call(observableArray, 0);
+
 				// 配列操作前にbeginUpdateして、配列操作後にendUpdateする
 				isAlreadyInUpdate = model.manager ? model.manager.isInUpdate() : false;
 				if (!isAlreadyInUpdate) {
 					model.manager.beginUpdate();
 				}
-
-				//TODO 何度もspliceしなくていいようにする
-				// isAleadyInUpdateなら、一度splice済み(oldValue取得済み)であればspliceする必要ない
-				snapArray = item.get(propName).splice(0);
 			}
 
 			function observeListener(event) {
 				// 追加も削除もソートもしないメソッドなら何もしない
-				if ($.inArray(event.method, noChangeMethods) !== -1) {
+				if ($.inArray(event.method, validateAndEventMethods) === -1
+						&& $.inArray(event.method, eventMethods) === -1) {
 					return;
 				}
-				// spliceで第2引数がないなら何もしない
+				// sliceで第2引数がないなら何もしない
 				var args = argsToArray(event.args);
-				if (event.method === 'splice' && args[0] === 0 && args.length === 1) {
-					return;
-				}
+
 				// 配列の値が変化していたらitemのイベントを上げる
 
 				// TODO isAlreadyInUpdateでないならsnapShotと比較して、同じならreturn
-				// 中身比較する関数をitemSetterでも使っているので外だしする
+				if (observableArray.length === snapArray.length) {
+					for ( var i = 0, l = observableArray.length; i < l; i++) {
+						if (observableArray[i] !== snapArray[i]) {
+							break;
+						}
+					}
+					if (i === l) {
+						// 中身が全て同じなら何もしない
+						return;
+					}
+				}
+
 
 				// changeイベントオブジェクトの作成
 				var ev = {
@@ -1743,7 +1756,7 @@
 				};
 				ev.props[propName] = {
 					oldValue: snapArray,
-					newValue: item.get(observableArray)
+					newValue: observableArray
 				};
 
 				addUpdateChangeLog(model, ev);
@@ -1774,6 +1787,9 @@
 
 			var noValidationProps = [];
 
+			//TODO モデルに持たせる
+			var arrayProps = [];
+
 			//デフォルト値を代入する
 			for ( var plainProp in schema) {
 				var propDesc = schema[plainProp];
@@ -1790,8 +1806,8 @@
 				if (propDesc && isTypeArray(propDesc.type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					var obsArray = h5.u.obj.createObservableArray(); //TODO cache
-					setObservableArrayListeners(model, this, plainProp, obsArray);
 					setValue(this, plainProp, obsArray);
+					arrayProps.push(plainProp);
 				}
 
 				var initValue = null;
@@ -1828,6 +1844,10 @@
 			}
 
 			itemSetter(model, this, actualInitialValue, noValidationProps, null, true);
+
+			for ( var i = 0, l = arrayProps.length; i < l; i++) {
+				setObservableArrayListeners(model, this, arrayProps[i], this.get(arrayProps[i]));
+			}
 		}
 		$.extend(DataItem.prototype, EventDispatcher.prototype, {
 			/**
@@ -2468,6 +2488,7 @@
 		},
 
 		endUpdate: function() {
+			//TODO _updateLogをまず削除する。イベントハンドラ内で、値を変更された時に_updateLogをきちんと残せるようにするため。
 			if (!this.isInUpdate()) {
 				return;
 			}
