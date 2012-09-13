@@ -1865,6 +1865,14 @@
 					throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
 				}
 
+				// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
+				// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
+				// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
+				var isAlreadyInUpdate = model.manager ? model.manager.isInUpdate() : false;
+				if (!isAlreadyInUpdate) {
+					model.manager.beginUpdate();
+				}
+
 				var event = itemSetter(model, this, valueObj, null);
 
 				if (!event) {
@@ -1872,20 +1880,12 @@
 					return;
 				}
 
-				//TODO managerに属しているかの条件は修正？
-				if (!model.manager || (model.manager && !model.manager.isInUpdate())) {
-					//TODO もしこのDataItemがremoveされていたらmodelには属していない
-					//アップデートセッション外の場合は即座にイベント送出
-					this.dispatchEvent(event);
+				// ChangeLogを追記
+				addUpdateChangeLog(model, event);
 
-					// event.targetにitemを設定
-					event.target = this;
-
-					// モデルのitemsChangeイベントを発火
-					model._dispatchItemsChangeEvent(event);
-				} else {
-					//ChangeLogを追記
-					addUpdateChangeLog(model, event);
+				// endUpdateを呼んでイベントを発火
+				if (!isAlreadyInUpdate) {
+					model.manager.endUpdate();
 				}
 			}
 		});
