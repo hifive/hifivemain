@@ -1459,7 +1459,7 @@
 			// ObservableArrayの場合、oldValueはスナップしたただの配列にする
 			// ただし、typeが未指定またはanyにObservableArrayが入っていた場合はそのまま
 			if (type && type !== 'any' && h5.u.obj.isObservableArray(oldValue)) {
-				oldValue = oldValue.slice(0);
+				oldValue = oldValue.splice(0);
 			}
 
 			//ここでpushしたプロパティのみ、後段で値をセットする
@@ -1663,36 +1663,94 @@
 			//TODO 現状だとインスタンスごとにfunctionを作っているが、
 			//DataItem&&property名ごとに作るようにして数を減らしたい(DataItemのprototypeとして持たせればよい？)
 
+			// 配列操作前と操作後で使う共通の変数
+			// 配列操作が同期のため、必ずobserveBeforeListener→配列操作→observeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
+
+			// 変更前の配列の値(observableArrayをsplice(0)したもの
+			var snapArray = null;
+			// アップデートセッション中かどうか
+			var isAlreadyInUpdate = false;
+
+			// TODO 追加も削除もソートもしないメソッド
+			var noChangeMethods = [];
+
+			// 追加は行わないが、削除やソートが行われるメソッド(validateする必要がない)
+			var noAddElmentMethods = ['unshift', 'push', 'splice', 'copyFrom'];
+
+
 			function observeBeforeListener(event) {
-				//TODO ES5対応
-				//Array自体を直接変化される関数のリスト。ただし、sort, reserveは値を追加するものではないのでバリデーションは不要（なので何もしない）
-				var breakingMethods = ['unshift', 'push', 'splice', 'copyFrom'];
-				if ($.inArray(event.method, breakingMethods) === -1) {
+				// 追加も削除もソートもしないメソッドなら何もしない
+				if ($.inArray(event.method, noChangeMethods) !== -1) {
 					return;
 				}
+				//TODO ES5対応
+				var checkFlag = $.inArray(event.method, noAddElmentMethods) !== -1;
 
 				var args = argsToArray(event.args);
 
 				if (event.method === 'splice') {
 					if (args.length <= 2) {
-						return;
+						if (args[0] === 0 && args.length <= 1) {
+							// spliceの引数が1つで0が渡されたときは、値の変更がないので何もせずreturn
+							return;
+						}
+						// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+						checkFlag = false;
 					}
+					checkFlag = false;
 					args.shift();
 					args.shift();
 				}
 
-				var validateResult = model._validateItemValue(propName, args);
-				if (validateResult.length > 0) {
-					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+				if (checkFlag) {
+					var validateResult = model._validateItemValue(propName, args);
+					if (validateResult.length > 0) {
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+					}
 				}
+
+				// 配列操作前にbeginUpdateして、配列操作後にendUpdateする
+				isAlreadyInUpdate = model.manager ? model.manager.isInUpdate() : false;
+				if (!isAlreadyInUpdate) {
+					model.manager.beginUpdate();
+				}
+
+				//TODO 何度もspliceしなくていいようにする
+				// isAleadyInUpdateなら、一度splice済み(oldValue取得済み)であればspliceする必要ない
+				snapArray = item.get(propName).splice(0);
 			}
 
 			function observeListener(event) {
-				var nestedEvent = {
-					type: 'nestedChange',
-					originalEvent: event
+				// 追加も削除もソートもしないメソッドなら何もしない
+				if ($.inArray(event.method, noChangeMethods) !== -1) {
+					return;
+				}
+				// spliceで第2引数がないなら何もしない
+				var args = argsToArray(event.args);
+				if (event.method === 'splice' && args[0] === 0 && args.length === 1) {
+					return;
+				}
+				// 配列の値が変化していたらitemのイベントを上げる
+
+				// TODO isAlreadyInUpdateでないならsnapShotと比較して、同じならreturn
+				// 中身比較する関数をitemSetterでも使っているので外だしする
+
+				// changeイベントオブジェクトの作成
+				var ev = {
+					type: 'change',
+					target: item,
+					props: {}
 				};
-				item.dispatchEvent(nestedEvent);
+				ev.props[propName] = {
+					oldValue: snapArray,
+					newValue: item.get(observableArray)
+				};
+
+				addUpdateChangeLog(model, ev);
+				// アップデートセッション中じゃなければendUpdate()
+				if (!isAlreadyInUpdate) {
+					model.manager.endUpdate();
+				}
 			}
 
 			observableArray.addEventListener('observeBefore', observeBeforeListener);
