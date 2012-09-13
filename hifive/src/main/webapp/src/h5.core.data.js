@@ -1398,8 +1398,8 @@
 			var oldValue = getValue(item, prop);
 			var newValue = valueObj[prop];
 
+			var type = model.schema[prop].type;
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
-			var type = model.schema[prop].type || model.schema[prop].type;
 			if (type && type.match(/string|number|integer|boolean/)) {
 				newValue = unbox(newValue);
 			}
@@ -1456,6 +1456,12 @@
 				continue;
 			}
 
+			// ObservableArrayの場合、oldValueはスナップしたただの配列にする
+			// ただし、typeが未指定またはanyにObservableArrayが入っていた場合はそのまま
+			if (type && type !== 'any' && h5.u.obj.isObservableArray(oldValue)) {
+				oldValue = oldValue.slice(0);
+			}
+
 			//ここでpushしたプロパティのみ、後段で値をセットする
 			readyProps.push({
 				p: prop,
@@ -1487,9 +1493,10 @@
 				setValue(item, readyProp.p, readyProp.n);
 			}
 
+			// newValueにはgetして持ってきた値（type:[]ならnewValueはObservableArrayになるようにする）
 			changedProps[readyProp.p] = {
 				oldValue: readyProp.o,
-				newValue: readyProp.n
+				newValue: item.get(readyProp.p)
 			};
 
 			changedPropNameArray.push(readyProp.p);
@@ -2419,8 +2426,7 @@
 
 
 			/**
-			 * 内部でDataItemごとのイベントを発火させます。
-			 * 変更が1つでもあればモデルイベントオブジェクト(のひな形)を返しますが、変更がない場合はfalseを返します
+			 * 内部でDataItemごとのイベントを発火させます。 変更が1つでもあればモデルイベントオブジェクト(のひな形)を返しますが、変更がない場合はfalseを返します
 			 */
 			function createDataModelChanges(model, modelUpdateLogs) {
 				var recreated = [];
