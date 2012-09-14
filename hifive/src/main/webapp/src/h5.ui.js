@@ -660,6 +660,8 @@
 		var contentElem = h5.u.str.format(FORMAT_THROBBER_MESSAGE_AREA,
 				(settings.message === '') ? 'style="display: none;"' : '', settings.message);
 
+		// UID(イベントハンドラの管理に使用する)
+		this._uid = $.now();
 		// スクリーンロックで表示するか
 		this._isScreenLock = isScreenlockTarget(target);
 		// 表示対象のDOM要素
@@ -761,7 +763,8 @@
 					disableEventOnIndicator(that.$overlay, that.$overlay);
 
 					if (!usePositionFixed) {
-						$window.bind('touchmove scroll', that._scrollStopHandler);
+						$window.bind('touchmove.' + that._uid, that._scrollStopHandler);
+						$window.bind('scroll.' + that._uid, that._scrollStopHandler);
 						// コンテンツ領域全体にオーバーレイをかける(不可視の領域にもオーバーレイがかかる)
 						// widthは100%が指定されているので計算しない
 						that.$overlay.height(getDocumentHeight());
@@ -769,7 +772,8 @@
 				}
 
 				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
-				$window.bind('orientationchange resize', that._orientationResizeHandler);
+				$window.bind('orientationchange.' + that._uid, that._orientationResizeHandler);
+				$window.bind('resize.' + that._uid, that._orientationResizeHandler);
 			};
 
 			// position:absoluteで親要素からの相対位置で表示するため、親要素がstaticの場合のみrelativeに変更する
@@ -850,13 +854,17 @@
 			var fadeOutTime = this._fadeOutTime;
 			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
 			var cb = function() {
+				var $window = $(window);
 				$elems.remove();
 				// 親要素のpositionをインジケータ表示前の状態に戻す
 				if (that._isStatic) {
 					that.$target.css('position', 'static');
 				}
-				$(window).unbind('touchmove scroll', that._scrollstopHandler).unbind(
-						'orientationchange resize', that._orientationChangeAndResizeHandler);
+				$window.unbind('touchmove.' + that._uid, that._scrollstopHandler);
+				$window.unbind('scroll.' + that._uid, that._scrollstopHandler);
+				$window.unbind('orientationchange.' + that._uid,
+						that._orientationChangeAndResizeHandler);
+				$window.unbind('resize.' + that._uid, that._orientationChangeAndResizeHandler);
 			};
 
 			if (fadeOutTime < 0) {
