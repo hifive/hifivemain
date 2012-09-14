@@ -44,6 +44,28 @@
 	var CLASS_THROBBER_PERCENT = 'throbber-percent';
 
 	/**
+	 * インジケータ - ルートのクラス名
+	 */
+	var CLASS_INDICATOR_ROOT = 'h5-indicator';
+
+	/**
+	 * インジケータ - メッセージのクラス名
+	 */
+	var CLASS_INDICATOR_CONTENT = 'content';
+
+	/**
+	 * インジケータ - オーバーレイのクラス名
+	 */
+	var CLASS_OVERLAY = 'overlay';
+
+	/**
+	 * インジケータ - オーバーレイのクラス名
+	 * <p>
+	 * IE6でのみ使用する。
+	 */
+	var CLASS_SKIN = 'skin';
+
+	/**
 	 * 一番外側にあるVML要素のクラス名
 	 */
 	var CLASS_VML_ROOT = 'vml-root';
@@ -75,6 +97,8 @@
 	// =========================================================================
 	var isPromise = h5.async.isPromise;
 	var h5ua = h5.env.ua;
+	var isJQueryObject = h5.u.obj.isJQueryObject;
+	var argsToArray = h5.u.obj.argsToArray;
 
 	// =========================================================================
 	//
@@ -113,11 +137,7 @@
 	})();
 
 	/**
-	 * 以下の判定が全てtrueの場合、スロバーをCSS3Animationで描画する。
-	 * <ul>
-	 * <li>position:fixedをサポートしているユーザエージェントか。</li>
-	 * <li>CSSの『animation-name』プロパティをサポートしているか。</li>
-	 * <h5>position:fixedに関して</h5>
+	 * position:fixedでインジケータを描画するかのフラグ。
 	 * <p>
 	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
 	 * <p>
@@ -128,20 +148,27 @@
 	 * <li>機能ベースでモバイル・デスクトップの両方を検知するのは困難。</li>
 	 * </ul>
 	 * <p>
-	 * <b>備考</b>
+	 * <b>position:fixedについて</b>
 	 * <ul>
 	 * <li>position:fixed対応表: http://caniuse.com/css-fixed</li>
-	 * <li>Androidは2.2からposition:fixedをサポートしており、2.2と2.3はmetaタグに「user-scalable=no」が設定されていると機能するが、バグが多いためAndroid3未満はposition:fixed未サポートとして処理する。<br>
+	 * <li>Androidは2.2からposition:fixedをサポートしており、2.2と2.3はmetaタグに「user-scalable=no」が設定されていないと機能しない。<br>
 	 * http://blog.webcreativepark.net/2011/12/07-052517.html </li>
+	 * <li>Androidのデフォルトブラウザでposition:fixedを使用すると、2.xはkeyframesとtransformをposition:fixedで使用すると正しい位置に表示されないバグが、4.xは画面の向きが変更されると描画が崩れるバグがあるため使用しない。
 	 * <li>Windows Phoneは7.0/7.5ともに未サポート https://github.com/jquery/jquery-mobile/issues/3489</li>
 	 * <ul>
 	 */
-	var isTransformAnimationAvailable = (function() {
+	var usePositionFixed = (function() {
 		var ua = h5.env.ua;
-		var fullver = parseFloat(ua.browserVersionFull);
-		return !((ua.isAndroidDefaultBrowser && fullver < 3) || (ua.isiOS && ua.browserVersion < 5)
+		return !(ua.isAndroidDefaultBrowser || (ua.isiOS && ua.browserVersion < 5)
 				|| (ua.isIE && ua.browserVersion < 7) || ua.isWindowsPhone);
 	})();
+
+	/**
+	 * CSS3 Animationsをサポートしているか
+	 * <p>
+	 * (true:サポート/false:未サポート)
+	 */
+	var isCSS3AnimationsSupported = null;
 
 	// =============================
 	// Functions
@@ -273,6 +300,68 @@
 				doc.clientHeight);
 	}
 
+	/**
+	 * 指定された要素で発生したイベントを無効にする
+	 */
+	function disableEventOnIndicator(/* var_args */) {
+		var disabledEventTypes = 'click dblclick touchstart touchmove touchend mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave focus focusin focusout blur change select';
+
+		$.each(argsToArray(arguments), function(i, e) {
+			e.bind(disabledEventTypes, function() {
+				return false;
+			});
+		});
+	}
+
+	/**
+	 * イベントハンドラ
+	 * <p>
+	 * orientationChange/resizeイベントがが発生した1秒後に、インジケータのメッセージとパーセントの表示を更新する。
+	 */
+	function createOrientationChangeAndResizeHandler(context) {
+		var that = context;
+
+		return function() {
+			that._redrawable = false;
+
+			// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
+			setTimeout(function() {
+				if (that._isScreenLock && !usePositionFixed) {
+					that.$overlay.height(getDocumentHeight());
+				}
+				that._setPositionAndResizeWidth();
+				that._redrawable = true;
+				that.percent(that._lastPercent);
+				that.message(that._lastMessage);
+			}, 1000);
+		};
+	}
+
+	/**
+	 * イベントハンドラ
+	 * <p>
+	 * タッチまたはホイールスクロールの停止を検知する
+	 */
+	function createScrollstopHandler(context) {
+		var timerId = null;
+		var that = context;
+
+		return function() {
+			if (timerId != null) {
+				clearTimeout(timerId);
+			}
+
+			if (!that._redrawable) {
+				return;
+			}
+
+			timerId = setTimeout(function() {
+				that._setPositionAndResizeWidth();
+				timerId = null;
+			}, 50);
+		};
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -291,9 +380,8 @@
 		document.getElementsByTagName('head')[0].appendChild(vmlStyle);
 	}
 
-	// CSS3Animationのサポート判定
-	isTransformAnimationAvailable = isTransformAnimationAvailable ? supportsCSS3Property('animationName')
-			: false;
+	// CSS3 Animationのサポート判定
+	isCSS3AnimationsSupported = supportsCSS3Property('animationName');
 
 	/**
 	 * VML版スロバー (IE 6,7,8)用
@@ -500,7 +588,7 @@
 			}
 			this.highlightPos = highlightPos;
 
-			if (isTransformAnimationAvailable) {
+			if (isCSS3AnimationsSupported) {
 				// CSS3Animationをサポートしている場合は、keyframesでスロバーを描写する
 				canvas.className = CLASS_THROBBER_CANVAS;
 			} else {
@@ -523,6 +611,11 @@
 		}
 	};
 
+	function isScreenlockTarget(element) {
+		var e = isJQueryObject(element) ? element[0] : element;
+		return e === window || e === document || e === document.body;
+	}
+
 	/**
 	 * インジケータ(メッセージ・画面ブロック・進捗表示)の表示や非表示を行うクラス。
 	 *
@@ -533,131 +626,27 @@
 	 * @param {String} [option.message] メッセージ
 	 * @param {Number} [option.percent] 進捗を0～100の値で指定する。
 	 * @param {Boolean} [option.block] 操作できないよう画面をブロックするか (true:する/false:しない)
+	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
+	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
 	 * @param {Promise|Promise[]} [option.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
 	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
 	 */
 	function Indicator(target, option) {
-		$.blockUI.defaults.css = {};
-		$.blockUI.defaults.overlayCSS = {};
-
-		this.target = h5.u.obj.isJQueryObject(target) ? target.get(0) : target;
-		// DOM要素の書き換え可能かを判定するフラグ
-		this._redrawable = true;
-		// _redrawable=false時、percent()に渡された最新の値
-		this._lastPercent = -1;
-		// _redrawable=false時、message()に渡された最新の値
-		this._lastMessage = null;
-
-		var that = this;
-		var $window = $(window);
-		var $target = this._isGlobalBlockTarget() ? $('body') : $(this.target);
-		var targetPosition = $target.css('position');
-		var targetZoom = $target.css('zoom');
-
-		// コンテンツ領域全体にオーバーレイをかける(見えていない部分にもオーバーレイがかかる)
-		function resizeOverlay() {
-			$('body div.blockUI.blockOverlay').height(getDocumentHeight());
-			// widthは100%が指定されているので計算しない
-		}
-
-		// インジケータ上で発生したイベントを無効にする
-		function disableEventOnIndicator() {
-			var $blockUIOverlay = $('body div.blockUI.blockOverlay');
-			var $blockUIInner = $('body div.blockUI.' + that._style.blockMsgClass + '.blockPage');
-			var disabledEventTypes = 'click dblclick touchstart touchmove touchend mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave focus focusin focusout blur change select';
-
-			$.each([$blockUIOverlay, $blockUIInner], function(i, v) {
-				v.bind(disabledEventTypes, function() {
-					return false;
-				});
-			});
-		}
-
-		function resizeIndicatorFunc() {
-			resizeOverlay();
-			that._setPositionAndResizeWidth();
-		}
-
-		function resizeIndicatorHandler() {
-			that._redrawable = false;
-
-			// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
-			setTimeout(function() {
-				resizeIndicatorFunc();
-				that._redrawable = true;
-				that.percent(that._lastPercent);
-				that.message(that._lastMessage);
-			}, 1000);
-		}
-
-		var timerId = null;
-		function scrollstopHandler() {
-			if (timerId != null) {
-				clearTimeout(timerId);
-			}
-
-			if (!that._redrawable) {
-				return;
-			}
-
-			timerId = setTimeout(function() {
-				that._setPositionAndResizeWidth();
-				timerId = null;
-			}, 50);
-		}
-
-		// optionのデフォルト値
-		var opts = $.extend(true, {}, {
+		// デフォルトオプション
+		var defaultOption = {
 			message: '',
 			percent: -1,
 			block: true,
+			fadeIn: -1,
+			fadeOut: -1,
 			promises: null,
 			theme: 'a'
-		}, option);
-		// BlockUIのスタイル定義
-		var blockUISetting = {
-			message: h5.u.str.format(FORMAT_THROBBER_MESSAGE_AREA,
-					(opts.message === '') ? 'style="display: none;"' : '', opts.message),
-			css: {},
-			overlayCSS: {},
-			blockMsgClass: opts.theme,
-			showOverlay: opts.block,
-			centerX: false,
-			centerY: false,
-			onUnblock: function() { // blockUIが、画面ブロックの削除時に実行するコールバック関数
-				// インジケータを表示する要素のpositionがstaticの場合、blockUIがroot要素のpositionをrelativeに書き換えるため、インジケータを表示する前の状態に戻す
-				$target.css('position', targetPosition);
-				// IEの場合、blockUIがroot要素にzoom:1を設定するため、インジケータを表示する前の状態に戻す
-				$target.css('zoom', targetZoom);
-
-				that.throbber.hide();
-
-				$window.unbind('touchmove scroll', scrollstopHandler);
-				$window.unbind('orientationchange resize', resizeIndicatorHandler);
-
-				if (timerId != null) {
-					clearTimeout(timerId);
-				}
-			},
-			onBlock: function() {
-				if (!that._isGlobalBlockTarget()) {
-					return;
-				}
-
-				if (!isTransformAnimationAvailable) {
-					$window.bind('touchmove scroll', scrollstopHandler);
-					resizeOverlay();
-				}
-
-				disableEventOnIndicator();
-
-				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
-				$window.bind('orientationchange resize', resizeIndicatorHandler);
-			}
 		};
+		// オプション情報
+		var settings = $.extend(true, {}, defaultOption, option);
 		// スロバーのスタイル定義 (基本的にはCSSで記述する。ただし固定値はここで設定する)
 		// CSSAnimationsがサポートされているブラウザの場合、roundTimeプロパティの値は使用しない(CSSのanimation-durationを使用するため)
-		var throbberSetting = {
+		var defaultStyle = {
 			throbber: {
 				roundTime: 1000,
 				lines: 12
@@ -665,8 +654,68 @@
 			throbberLine: {},
 			percent: {}
 		};
+		// スタイルの設定情報
+		var throbberStyles = $.extend(true, {}, defaultStyle, readThrobberStyle(settings.theme));
+		// コンテンツ内の要素
+		var contentElem = h5.u.str.format(FORMAT_THROBBER_MESSAGE_AREA,
+				(settings.message === '') ? 'style="display: none;"' : '', settings.message);
 
-		var promises = opts.promises;
+		// スクリーンロックで表示するか
+		this._isScreenLock = isScreenlockTarget(target);
+		// 表示対象のDOM要素
+		this.$target = this._isScreenLock ? $('body') : (isJQueryObject(target) ? target
+				: $(target));
+		// 親要素のpositionがstaticか
+		this._isStatic = this.$target.css('position') === 'static';
+		// オーバーレイ
+		this.$overlay = $('<div></div>').addClass(CLASS_INDICATOR_ROOT).addClass(settings.theme)
+				.addClass(CLASS_OVERLAY).hide();
+		// コンテンツ(メッセージ/スロバー)
+		this.$content = $('<div></div>').append(contentElem).addClass(CLASS_INDICATOR_ROOT)
+				.addClass(settings.theme).addClass(CLASS_INDICATOR_CONTENT).hide();
+		// スクロール停止イベントハンドラ
+		this._scrollStopHandler = createScrollstopHandler(this);
+		// リサイズ・オリエンテーション変更ハンドラ
+		this._orientationResizeHandler = createOrientationChangeAndResizeHandler(this);
+		// DOM要素の書き換え可能かを判定するフラグ
+		this._redrawable = true;
+		// _redrawable=false時、percent()に渡された最新の値
+		this._lastPercent = -1;
+		// _redrawable=false時、message()に渡された最新の値
+		this._lastMessage = null;
+		// フェードインの時間 (フェードインで表示しない場合は-1)
+		this._fadeInTime = typeof settings.fadeIn === 'number' ? settings.fadeIn : -1;
+		// フェードアウトの時間 (フェードアウトで表示しない場合は-1)
+		this._fadeOutTime = typeof settings.fadeOut === 'number' ? settings.fadeOut : -1;
+
+		// IE6の場合はselectタグがz-indexを無視するためオーバーレイと同一階層にiframe要素を生成する
+		// http://www.programming-magic.com/20071107222415/
+		if (h5ua.isIE && h5ua.browserVersion === 6) {
+			// httpsでiframeを開くと警告が出るためsrcに指定する値を変える
+			// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
+			var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
+			this.$skin = $('<iframe></iframe>').attr('src', srcVal).addClass(CLASS_INDICATOR_ROOT)
+					.addClass(CLASS_SKIN).hide();
+		} else {
+			this.$skin = null;
+		}
+
+		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
+		// オーバーレイ・コンテンツにpositionを設定する
+		$.each([this.$overlay, this.$content], function(i, e) {
+			e.css('position', position);
+		});
+
+		var startZIndex = 1000;
+		// スキン・オーバーレイ・コンテンツにz-indexを設定する
+		$.each([this.$skin, this.$overlay, this.$content], function(i, e) {
+			if (e == null) {
+				return true;
+			}
+			e.css('z-index', startZIndex++);
+		});
+
+		var promises = settings.promises;
 		var promiseCallback = $.proxy(function() {
 			this.hide();
 		}, this);
@@ -683,19 +732,14 @@
 			promises.pipe(promiseCallback, promiseCallback);
 		}
 
-		var canvasStyles = readThrobberStyle(opts.theme);
-		throbberSetting = $.extend(true, throbberSetting, canvasStyles);
-
-		this._style = $.extend(true, {}, blockUISetting, throbberSetting);
-
 		if (isCanvasSupported) {
-			this.throbber = new ThrobberCanvas(this._style);
+			this.throbber = new ThrobberCanvas(throbberStyles);
 		} else if (isVMLSupported) {
-			this.throbber = new ThrobberVML(this._style);
+			this.throbber = new ThrobberVML(throbberStyles);
 		}
 
-		if (this.throbber && opts.percent > -1) {
-			this.throbber.setPercent(opts.percent);
+		if (this.throbber && settings.percent > -1) {
+			this.throbber.setPercent(settings.percent);
 		}
 	}
 
@@ -708,90 +752,91 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		show: function() {
-			var setting = this._style;
-			var $blockElement = null;
+			var that = this;
+			var fadeInTime = this._fadeInTime;
+			var cb = function() {
+				var $window = $(window);
 
-			if (this._isGlobalBlockTarget()) {
-				$.blockUI(setting);
-				$blockElement = $('body').children(
-						'.blockUI.' + setting.blockMsgClass + '.blockPage');
+				if (that._isScreenLock) {
+					disableEventOnIndicator(that.$overlay, that.$overlay);
 
-				if (!isTransformAnimationAvailable) {
-					$blockElement.css('position', 'absolute');
-					$('body div.blockUI.blockOverlay').css('position', 'absolute');
+					if (!usePositionFixed) {
+						$window.bind('touchmove scroll', that._scrollStopHandler);
+						// コンテンツ領域全体にオーバーレイをかける(不可視の領域にもオーバーレイがかかる)
+						// widthは100%が指定されているので計算しない
+						that.$overlay.height(getDocumentHeight());
+					}
 				}
+
+				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
+				$window.bind('orientationchange resize', that._orientationResizeHandler);
+			};
+
+			// position:absoluteで親要素からの相対位置で表示するため、親要素がstaticの場合のみrelativeに変更する
+			if (this._isStatic) {
+				this.$target.css('position', 'relative');
+			}
+			// IEでのレイアウトバグを回避するためzoomプロパティを強制的に"1"に設定する
+			this.$target.css('zoom', '1');
+
+			$.each([this.$skin, this.$overlay, this.$content], function(i, e) {
+				if (e == null) {
+					return true;
+				}
+
+				that.$target.append(e);
+			});
+			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
+
+			this.throbber.show(this.$content.children('.' + CLASS_INDICATOR_THROBBER)[0]);
+
+			if (fadeInTime < 0) {
+				$elems.show();
+				cb();
 			} else {
-				var $target = $(this.target);
-				$target.block(setting);
-				$blockElement = $target.children('.blockUI.' + setting.blockMsgClass
-						+ '.blockElement');
+				$elems.fadeIn(fadeInTime, cb);
 			}
 
-			this.throbber.show($blockElement.children('.' + CLASS_INDICATOR_THROBBER)[0]);
 			this._setPositionAndResizeWidth();
 			return this;
 		},
 		/**
-		 * 内部のコンテンツ納まるようイジケータの幅を調整し、表示位置(topとleft)が中央になるよう設定します。
+		 * インジケータのメッセージ要素のwidthを調整し、中央になるようtopとleftの位置を設定します。
 		 *
 		 * @memberOf Indicator
 		 * @function
 		 * @private
 		 */
 		_setPositionAndResizeWidth: function() {
-			var setting = this._style;
-			var $blockParent = null;
-			var $blockElement = null;
-			var width = 0;
-
-			if (this._isGlobalBlockTarget()) {
-				$blockParent = $('body');
-				$blockElement = $blockParent.children('.blockUI.' + setting.blockMsgClass
-						+ '.blockPage');
-
+			if (this._isScreenLock) {
 				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
 				var displayHeight = window.innerHeight ? window.innerHeight : $(window).height();
 
-				if (isTransformAnimationAvailable) {
+				if (usePositionFixed) {
 					// 可視領域からtopを計算する
-					$blockElement.css('top', ((displayHeight - $blockElement.outerHeight()) / 2)
+					this.$content.css('top', ((displayHeight - this.$content.outerHeight()) / 2)
 							+ 'px');
 				} else {
-					// コンテンツ領域(スクロールしないと見えない領域も含む)からtopを計算する
-					$blockElement.css('top',
-							(($(document).scrollTop() + (displayHeight / 2)) - ($blockElement
+					// 可視領域+スクロール領域から計算する
+					this.$content.css('top',
+							(($(document).scrollTop() + (displayHeight / 2)) - (this.$content
 									.height() / 2))
 									+ 'px');
 				}
 			} else {
-				$blockParent = $(this.target);
-				$blockElement = $blockParent.children('.blockUI.' + setting.blockMsgClass
-						+ '.blockElement');
-				$blockElement.css('top',
-						(($blockParent.height() - $blockElement.outerHeight()) / 2) + 'px');
+				this.$content.css('top',
+						((this.$target.height() - this.$content.outerHeight()) / 2) + 'px');
 			}
 
-			var blockElementPadding = $blockElement.innerWidth() - $blockElement.width();
+			var blockElementPadding = this.$content.innerWidth() - this.$content.width();
+			var totalWidth = 0;
 
-			$blockElement.children().each(function() {
-				width += $(this).outerWidth(true);
+			this.$content.children().each(function() {
+				totalWidth += $(this).outerWidth(true);
 			});
-
-			$blockElement.width(width + blockElementPadding);
-			$blockElement.css('left', (($blockParent.width() - $blockElement.outerWidth()) / 2)
+			this.$content.width(totalWidth + blockElementPadding);
+			this.$content.css('left', ((this.$target.width() - this.$content.outerWidth()) / 2)
 					+ 'px');
-		},
-		/**
-		 * 指定された要素がウィンドウ領域全体をブロックすべき要素か判定します。
-		 *
-		 * @memberOf Indicator
-		 * @function
-		 * @private
-		 * @returns {Boolean} 領域全体に対してブロックする要素か (true:対象要素 / false: 非対象要素)
-		 */
-		_isGlobalBlockTarget: function() {
-			return this.target === document || this.target === window
-					|| this.target === document.body;
 		},
 		/**
 		 * 画面上に表示されているインジケータ(メッセージ・画面ブロック・進捗表示)を除去します。
@@ -801,10 +846,24 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		hide: function() {
-			if (this._isGlobalBlockTarget()) {
-				$.unblockUI();
+			var that = this;
+			var fadeOutTime = this._fadeOutTime;
+			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
+			var cb = function() {
+				$elems.remove();
+				// 親要素のpositionをインジケータ表示前の状態に戻す
+				if (that._isStatic) {
+					that.$target.css('position', 'static');
+				}
+				$(window).unbind('touchmove scroll', that._scrollstopHandler).unbind(
+						'orientationchange resize', that._orientationChangeAndResizeHandler);
+			};
+
+			if (fadeOutTime < 0) {
+				$elems.hide();
+				cb();
 			} else {
-				$(this.target).unblock();
+				$elems.fadeOut(fadeOutTime, cb);
 			}
 
 			return this;
@@ -848,22 +907,10 @@
 				return this;
 			}
 
-			var setting = this._style;
-			var $blockElement = null;
-
-			if (this._isGlobalBlockTarget()) {
-				$blockElement = $('body').children(
-						'.blockUI.' + setting.blockMsgClass + '.blockPage');
-
-			} else {
-				$blockElement = $(this.target).children(
-						'.blockUI.' + setting.blockMsgClass + '.blockElement');
-			}
-
-			$blockElement.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
+			this.$target.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
 					.text(message);
-
 			this._setPositionAndResizeWidth();
+
 			return this;
 		}
 	};
