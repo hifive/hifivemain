@@ -7031,6 +7031,27 @@ $(function() {
 				}
 			});
 
+	test('配列の操作に対しても制約チェックが行われること',6,
+			function() {
+				var item = model.create({
+					id: sequence.next()
+				});
+				var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'enum[]',
+						'@' + dataModel1.name + '[]'];
+				var keys = ['numA', 'intA', 'strA', 'boolA', 'enumA', 'datamodelA'];
+				var invalidVals = ['a', 1.1, 1, 'a', 4, {}];
+
+				for ( var i = 0, l = types.length; i < l; i++) {
+					var o = item.get(keys[i]);
+					try{
+						o.push(invalidVals[i]);
+						ok(false, 'テスト失敗。エラーが発生していません');
+					}catch(e){
+						strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+					}
+				}
+			});
+
 	//=============================
 	// Definition
 	//=============================
@@ -8434,6 +8455,13 @@ $(function() {
 						'createdプロパティに、生成されたアイテムのインスタンスが格納されていること');
 				deepEqual(ev.recreated, [], 'recreatedプロパティは空配列であること');
 				deepEqual(ev.removed, [], 'changedプロパティは空配列であること');
+
+				ev = {};
+				dataModel2.addEventListener('itemsChange', modelEventListener);
+				var item2 = dataModel2.create({
+					id: sequence.next(),
+					ary: ['a','b']
+				});
 			});
 
 	test('DataModelインスタンスの"itemsChange"に登録したハンドラが受け取る引数に正しく情報が格納されていること changedプロパティの確認',
@@ -8686,144 +8714,4 @@ $(function() {
 					strictEqual(evObj.manager.models.BModel[prop], evs.BModel[prop], h5.u.str.format('BModelのイベントオブジェクトの{0}が、managerのイベントオブジェクトのmodels.BModel.{0}に格納されていること(インスタンスが同じ)',prop));
 				}
 			});
-	//TODO createModelやdropModelした時のイベントについてテストする
-	//	test('DataManagerインスタンスの"xxx"イベントに登録したハンドラが受け取る引数に正しく情報が格納されていること', function(){
-	//		//TODO
-	//	});
-
-
-	// オブジェクト拡張は一旦無しになりました
-	//=============================
-	// Definition
-	//=============================
-
-	//	module('オブジェクト拡張(※IE8-では失敗します)', {
-	//		setup: function() {
-	//			sequence = h5.core.data
-	//					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
-	//			manager = h5.core.data.createManager('TestManager');
-	//
-	//
-	//			// dataModel1の作成
-	//			createDataModel1();
-	//			// dataModel2の作成 TODO 関数呼び出しで作成するようにする
-	//			dataModel2 = manager.createModel({
-	//				name: 'TestDataModel2',
-	//				schema: {
-	//					id: {
-	//						id: true
-	//					},
-	//					val: {},
-	//					val2: {},
-	//					num: {
-	//						type: 'number'
-	//					},
-	//					int: {
-	//						type: 'integer'
-	//					},
-	//					bool: {
-	//						type: 'boolean'
-	//					},
-	//					str: {
-	//						type: 'string',
-	//						constraint: {
-	//							notEmpty: true
-	//						},
-	//						defaultValue: 'str'
-	//					}
-	//				}
-	//			});
-	//			item = dataModel1.create({
-	//				id: sequence.next(),
-	//				val: 1
-	//			});
-	//
-	//			managerEventListener = function(ev) {
-	//				order.push('manager');
-	//				evObj = evObj || {};
-	//				evObj['manager'] = ev;
-	//			}
-	//			modelEventListener = function(ev) {
-	//				order.push('model');
-	//				evObj = evObj || {};
-	//				evObj['model'] = ev;
-	//			}
-	//
-	//			itemEventListener = function(ev) {
-	//				order.push('item');
-	//				evObj = evObj || {};
-	//				evObj['item'] = ev;
-	//			}
-	//
-	//			manager.addEventListener('itemsChange', managerEventListener);
-	//			dataModel1.addEventListener('itemsChange', modelEventListener);
-	//			item.addEventListener('change', itemEventListener);
-	//		},
-	//		teardown: function() {
-	//			// addしたイベントを削除
-	//			manager.removeEventListener('itemsChange', managerEventListener);
-	//			dataModel1.removeEventListener('itemsChange', modelEventListener);
-	//			item.removeEventListener('change', itemEventListener);
-	//
-	//			order = [];
-	//			sequence = null;
-	//			dataModel1 = null;
-	//			dropAllModel(manager);
-	//		}
-	//	});
-	//=============================
-	// Body
-	//=============================
-	//	test('DataItem.refresh()を呼び出さなくても、イベントの発火、値のチェック、型変換、が発生すること', function() {
-	//		if (h5.env.ua.isIE && h5.env.ua.browserVersion < 9) {
-	//			ok(false, 'IE8以下では、このテストを実行できません');
-	//			expect(1);
-	//			return;
-	//		}
-	//		item.set('val', 'AAA');
-	//		deepEqual(order, ['item', 'model', 'manager'], '値の代入で値が変更されたとき、イベントが発火すること');
-	//		order = [];
-	//
-	//		item.set('val', 'AAA');
-	//		deepEqual(order, [], '値の代入で値の変更がなかった場合、イベントは発火しないこと');
-	//		order = [];
-	//
-	//		var item2 = dataModel2.create({
-	//			id: sequence.next()
-	//		});
-	//		item2.set('num', '12.3');
-	//		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
-	//		item2.set('num', new Number(12.3));
-	//		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
-	//		item2.set('num', new String('12.3'));
-	//		strictEqual(item2.get('num'), 12.3, 'セット時に値の型変換が行われること');
-	//
-	//		item2.set('int', '12');
-	//		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
-	//		item2.set('int', new Number(12));
-	//		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
-	//		item2.set('int', new String('12'));
-	//		strictEqual(item2.get('int'), 12, 'セット時に値の型変換が行われること');
-	//
-	//		item2.set('bool', new Boolean(1));
-	//		strictEqual(item2.get('bool'), true, 'セット時に値の型変換が行われること');
-	//
-	//		item2.set('str', new String('1'));
-	//		strictEqual(item2.get('str'), '1', 'セット時に値の型変換が行われること');
-	//
-	//		try {
-	//			item2.set('num', 'ABC');
-	//			ok(false, 'エラーが発生していません。typeのチェックが値のセット時に行われていません');
-	//		} catch (e) {
-	//			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR,
-	//					'セット時に値の型変換が行われ、条件を満たさない値をsetするとエラーが発生すること');
-	//		}
-	//		try {
-	//			item2.set('str', '');
-	//			ok(false, 'エラーが発生していません。constraintのチェックが値のセット時に行われていません');
-	//		} catch (e) {
-	//			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR,
-	//					'セット時に値の型変換が行われ、条件を満たさない値をsetするとエラーが発生すること');
-	//		}
-	//	});
 });
