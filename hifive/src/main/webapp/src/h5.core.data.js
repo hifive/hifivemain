@@ -352,32 +352,6 @@
 	//========================================================
 
 	/**
-	 * ObservableArrayまたは配列を２つ引数にとり、中身が同じかどうかを比較する
-	 *
-	 * @param {ObservableArray|Array} ary1
-	 * @param {ObservableArray|Array} ary2
-	 * @return {Boolean} 配列の中身が同じかどうか
-	 */
-	function equalElementsInArray(ary1, ary2) {
-		if (!ary1 || !ary2) {
-			return false;
-		}
-		if (ary1.length !== ary2.length) {
-			return false;
-		}
-
-		for ( var i = 0, l = ary1.length; i < l; i++) {
-			if (ary1[i] !== ary2[i]) {
-				return false;
-			}
-		}
-		if (i === l) {
-			// 中身が全て同じreturn true
-			return true;
-		}
-	}
-
-	/**
 	 * ラッパークラスをunboxする 配列が渡されたら、配列の中身をunboxする
 	 *
 	 * @param v {Any}
@@ -1462,7 +1436,8 @@
 			// 配列なら、配列の中身も変更されていないかチェックする(type:anyならチェックしない)
 			// type:[]の場合、oldValueは必ずObsArrayまたはundefined。
 			// newValue,oldValueともに配列(oldValueの場合はObsArray)かつ、長さが同じ場合にのみチェックする
-			if (type && type.indexOf('[]') !== -1 && equalElementsInArray(newValue, oldValue)) {
+			if (type && type.indexOf('[]') !== -1 && oldValue
+					&& oldValue.equals(newValue, oldValue)) {
 				continue;
 			}
 
@@ -2669,8 +2644,8 @@
 														var oldValue = model.manager._oldValueLogs[model.name]
 																&& model.manager._oldValueLogs[model.name][itemId]
 																&& model.manager._oldValueLogs[model.name][itemId][p];
-														if (!equalElementsInArray(oldValue, model
-																.get(itemId).get(p))) {
+														if (!model.get(itemId).get(p).equals(
+																oldValue)) {
 															mergedProps[p] = {
 																oldValue: oldValue
 															}

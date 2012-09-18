@@ -1221,6 +1221,36 @@
 		this.length = 0;
 	}
 	$.extend(ObservableArray.prototype, EventDispatcher.prototype);
+	// equalsメソッドの追加
+	$.extend(ObservableArray.prototype,
+			{
+				/**
+				 * ObservableArrayまたは配列を２つ引数にとり、中身が同じかどうかを比較する
+				 *
+				 * @param {ObservableArray|Array} ary1
+				 * @param {ObservableArray|Array} ary2
+				 * @return {Boolean} 配列の中身が同じかどうか
+				 */
+				equals: function(ary) {
+					// aryが配列でもObservableArrayでもないならfalse
+					if (!($.isArray(ary) || h5.u.obj.isObservableArray(ary))
+							|| ary.length !== this.length) {
+						return false;
+					}
+
+					// 中身の比較
+					for ( var i = 0, l = ary.length; i < l; i++) {
+						if (ary[i] !== this[i]) {
+							return false;
+						}
+					}
+					if (i === l) {
+						// 中身が全て同じならreturn true
+						return true;
+					}
+					return false;
+				}
+			});
 	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
 			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
 			'some', 'reduce', 'reduceRight'];
