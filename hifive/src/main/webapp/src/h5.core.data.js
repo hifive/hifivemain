@@ -1420,7 +1420,7 @@
 			//型のチェックは終わっているので、typeがnumber・integerならnewValueは数値・数値変換可能文字列・null またはそれらを要素に持つ配列のいずれかである
 			if (newValue != null && type && type.match(/number|integer/)
 					&& typeof newValue !== 'number') {
-				if ($.isArray(newValue)) {
+				if ($.isArray(newValue) || h5.u.obj.isObservableArray(newValue)) {
 					for ( var i = 0, l = newValue.length; i < l; i++) {
 						// スパースな配列の場合、undefinedが入っている可能性があるので、!= で比較
 						// parseFloatできる値(isNumberValueに渡してtrueになる値)ならparseFloatする
@@ -1436,7 +1436,7 @@
 			// 配列なら、配列の中身も変更されていないかチェックする(type:anyならチェックしない)
 			// type:[]の場合、oldValueは必ずObsArrayまたはundefined。
 			// newValue,oldValueともに配列(oldValueの場合はObsArray)かつ、長さが同じ場合にのみチェックする
-			if (type && type.indexOf('[]') !== -1 && oldValue
+			if (isTypeArray(type) && oldValue
 					&& oldValue.equals(newValue, oldValue)) {
 				continue;
 			}

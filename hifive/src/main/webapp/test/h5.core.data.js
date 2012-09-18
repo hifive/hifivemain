@@ -2756,6 +2756,7 @@ $(function() {
 			}
 		} catch (e) {
 			ok(false, 'エラーが発生しました。『' + e.message + '』');
+			console.log(e.stack)
 		}
 	});
 
@@ -7046,6 +7047,50 @@ $(function() {
 					try{
 						o.push(invalidVals[i]);
 						ok(false, 'テスト失敗。エラーが発生していません');
+					}catch(e){
+						strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+					}
+				}
+			});
+
+	test('配列要素にObservableArrayを格納できること',
+			function() {
+				var item = model.create({
+					id: sequence.next()
+				});
+				var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'any[]', 'enum[]',
+								'@' + dataModel1.name + '[]'];
+				var keys = ['numA', 'intA', 'strA', 'boolA', 'anyA', 'enumA', 'datamodelA'];
+				var numOA = h5.u.obj.createObservableArray();
+				numOA.copyFrom([1.1,2.2,3.3]);
+				var intOA = h5.u.obj.createObservableArray();
+				intOA.copyFrom([1,2,3]);
+				var strOA = h5.u.obj.createObservableArray();
+				strOA.copyFrom(['a','b']);
+				var boolOA = h5.u.obj.createObservableArray();
+				boolOA.copyFrom([true,false,true]);
+				var anyOA = h5.u.obj.createObservableArray();
+				anyOA.copyFrom([1,true,undefined,'a']);
+				var enumOA = h5.u.obj.createObservableArray();
+				enumOA.copyFrom([1,3,2]);
+				var datamodelOA = h5.u.obj.createObservableArray();
+				var item1 = dataModel1.create({
+					id:'1'
+				});
+				datamodelOA.copyFrom([item1, null, item1]);
+
+				var vals = [numOA, intOA, strOA, boolOA, anyOA, enumOA, datamodelOA];
+
+				for ( var i = 0, l = types.length; i < l; i++) {
+					try{
+						var desc ={
+								id: sequence.next()
+							};
+						desc[keys[i]] = vals[i];
+						var item = model.create(desc);
+						ok(true, h5.u.str.format('type:{0}にObservableArrayを格納できること',types[i]));
+						ok(item.get(keys[i]).equals(vals[i]), '格納するときに渡したObsArrayと、アイテムが持つObsArrayの中身が同じであること');
+						notStrictEqual(item.get(keys[i]), vals[i], '格納するときに渡したObsArrayと、アイテムが持つObsArrayはインスタンスが異なること');
 					}catch(e){
 						strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 					}
