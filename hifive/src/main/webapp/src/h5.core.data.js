@@ -2641,7 +2641,8 @@
 													// type:[]ならmanager._oldValueLogsから持ってくる
 													if (h5.u.obj.isObservableArray(model
 															.get(itemId).get(p))) {
-														var oldValue = model.manager._oldValueLogs[model.name]
+														var oldValue = model.manager._oldValueLogs
+																&& model.manager._oldValueLogs[model.name]
 																&& model.manager._oldValueLogs[model.name][itemId]
 																&& model.manager._oldValueLogs[model.name][itemId][p];
 														if (!model.get(itemId).get(p).equals(
