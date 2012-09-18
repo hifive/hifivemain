@@ -546,7 +546,7 @@
 					return true;
 				}
 				// 指定された配列次元と、渡された値の配列の次元があっていない場合はfalseを返す
-				if (!$.isArray(v)) {
+				if (!$.isArray(v) && !h5.u.obj.isObservableArray(v)) {
 					errorReason.push({
 						dimention: dim
 					});
