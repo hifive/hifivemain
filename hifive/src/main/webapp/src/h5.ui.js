@@ -307,6 +307,10 @@
 		var disabledEventTypes = 'click dblclick touchstart touchmove touchend mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave focus focusin focusout blur change select';
 
 		$.each(argsToArray(arguments), function(i, e) {
+			if (e == null) {
+				return true;
+			}
+
 			e.bind(disabledEventTypes, function() {
 				return false;
 			});
@@ -645,7 +649,7 @@
 		// オプション情報
 		var settings = $.extend(true, {}, defaultOption, option);
 		// スロバーのスタイル定義 (基本的にはCSSで記述する。ただし固定値はここで設定する)
-		// CSSAnimationsがサポートされているブラウザの場合、roundTimeプロパティの値は使用しない(CSSのanimation-durationを使用するため)
+		// CSSAnimationsがサポートされているブラウザの場合、CSSのanimation-durationを使用するためroundTimeプロパティの値は使用しない
 		var defaultStyle = {
 			throbber: {
 				roundTime: 1000,
@@ -669,12 +673,6 @@
 				: $(target));
 		// 親要素のpositionがstaticか
 		this._isStatic = this.$target.css('position') === 'static';
-		// オーバーレイ
-		this.$overlay = $('<div></div>').addClass(CLASS_INDICATOR_ROOT).addClass(settings.theme)
-				.addClass(CLASS_OVERLAY).hide();
-		// コンテンツ(メッセージ/スロバー)
-		this.$content = $('<div></div>').append(contentElem).addClass(CLASS_INDICATOR_ROOT)
-				.addClass(settings.theme).addClass(CLASS_INDICATOR_CONTENT).hide();
 		// スクロール停止イベントハンドラ
 		this._scrollStopHandler = createScrollstopHandler(this);
 		// リサイズ・オリエンテーション変更ハンドラ
@@ -689,6 +687,19 @@
 		this._fadeInTime = typeof settings.fadeIn === 'number' ? settings.fadeIn : -1;
 		// フェードアウトの時間 (フェードアウトで表示しない場合は-1)
 		this._fadeOutTime = typeof settings.fadeOut === 'number' ? settings.fadeOut : -1;
+
+		// コンテンツ(メッセージ/スロバー)
+		this.$content = $('<div></div>').append(contentElem).addClass(CLASS_INDICATOR_ROOT)
+				.addClass(settings.theme).addClass(CLASS_INDICATOR_CONTENT).hide();
+
+		// オーバーレイ
+		if (settings.block !== false) {
+			this.$overlay = $('<div></div>').addClass(CLASS_INDICATOR_ROOT)
+					.addClass(settings.theme).addClass(CLASS_OVERLAY).hide();
+		} else {
+			// blockオプションがfalseの場合、オーバーレイ非表示にする
+			this.$overlay = null;
+		}
 
 		// IE6の場合はselectタグがz-indexを無視するためオーバーレイと同一階層にiframe要素を生成する
 		// http://www.programming-magic.com/20071107222415/
@@ -705,16 +716,11 @@
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
 		// オーバーレイ・コンテンツにpositionを設定する
 		$.each([this.$overlay, this.$content], function(i, e) {
-			e.css('position', position);
-		});
-
-		var startZIndex = 1000;
-		// スキン・オーバーレイ・コンテンツにz-indexを設定する
-		$.each([this.$skin, this.$overlay, this.$content], function(i, e) {
 			if (e == null) {
 				return true;
 			}
-			e.css('z-index', startZIndex++);
+
+			e.css('position', position);
 		});
 
 		var promises = settings.promises;
@@ -760,7 +766,7 @@
 				var $window = $(window);
 
 				if (that._isScreenLock) {
-					disableEventOnIndicator(that.$overlay, that.$overlay);
+					disableEventOnIndicator(that.$overlay, that.$content);
 
 					if (!usePositionFixed) {
 						$window.bind('touchmove.' + that._uid, that._scrollStopHandler);
@@ -835,8 +841,13 @@
 			var blockElementPadding = this.$content.innerWidth() - this.$content.width();
 			var totalWidth = 0;
 
-			this.$content.children().each(function() {
-				totalWidth += $(this).outerWidth(true);
+			this.$content.children().each(function(i, e) {
+				var $e = $(e);
+				// IE9にて不可視要素でouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
+				if ($e.css('display') === 'none') {
+					return true;
+				}
+				totalWidth += $e.outerWidth(true);
 			});
 			this.$content.width(totalWidth + blockElementPadding);
 			this.$content.css('left', ((this.$target.width() - this.$content.outerWidth()) / 2)
@@ -855,11 +866,13 @@
 			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
 			var cb = function() {
 				var $window = $(window);
+
 				$elems.remove();
 				// 親要素のpositionをインジケータ表示前の状態に戻す
 				if (that._isStatic) {
 					that.$target.css('position', 'static');
 				}
+
 				$window.unbind('touchmove.' + that._uid, that._scrollstopHandler);
 				$window.unbind('scroll.' + that._uid, that._scrollstopHandler);
 				$window.unbind('orientationchange.' + that._uid,
