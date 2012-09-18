@@ -7885,7 +7885,7 @@ $(function() {
 				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
 	});
 
-	test('DataItemのcreateでObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 10, function() {
+	test('DataItemのcreateでObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 12, function() {
 		var model = manager.createModel({
 			name: 'AryModel',
 			schema: {
@@ -7971,10 +7971,26 @@ $(function() {
 		evObj = {};
 		o.sort();
 		deepEqual(order, [], '配列の中身が変わらない時(sort)はイベントは上がらない');
+
+		o.copyFrom([1,2,3]);
+		order=[];
+		evObj = {};
+		o.splice(1,0);
+		deepEqual(order, [], '配列の中身が変わらない時(splice)はイベントは上がらない');
+
+		o.copyFrom([1,2,3]);
+		order=[];
+		evObj = {};
+		manager.beginUpdate();
+		o.push(4);
+		o.splice(3,1,5);
+		o.pop();
+		manager.endUpdate();
+		deepEqual(order, [], 'beginUpdate-endUpdateで囲んでいて、最終的に配列の中身が変わらない時(sort)はイベントは上がらない');
 	});
 
 	test(
-			'DataItemのbeginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること',11,
+			'beginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること',11,
 			function() {
 				manager.beginUpdate();
 				item.set('val', 'aaaa');
@@ -8036,7 +8052,7 @@ $(function() {
 			});
 
 	test(
-			'DataItemのbeginUpdate-endUpdateの間で値の変更があった時に、endUpdate時に登録されているchangeイベントハンドラだけが実行されること',
+			'beginUpdate-endUpdateの間で値の変更があった時に、endUpdate時に登録されているchangeイベントハンドラだけが実行されること',
 			function() {
 				manager.beginUpdate();
 				item.set('val', 'aaaa');
@@ -8077,6 +8093,35 @@ $(function() {
 				manager.endUpdate();
 				deepEqual(order, ['item', 'model', 'manager'],
 						'二つのプロパティを変更ても場合は、endUpdateのタイミングで、登録したイベントハンドラが1回だけ呼ばれること');
+			});
+
+	test(
+			'beginUpdate-endUpdateの間でも、依存プロパティは即座に計算されること',1,
+			function() {
+				var model = manager.createModel({
+					name: 'DependModel',
+					schema: {
+						id: {
+							id:true
+						},
+						v: {},
+						d: {
+							depend: {
+								on:'v',
+								calc: function(){
+									return this.get('v');
+								}
+							}
+						}
+					}
+				});
+				var item = model.create({
+					id: sequence.next()
+				});
+				manager.beginUpdate();
+				item.set('v', 'a');
+				strictEqual(item.get('v'), 'a', 'endUpdateを呼ばなくても、depend項目は計算されている');
+				manager.endUpdate();
 			});
 
 	test('DataItemで、型の自動変換が行われるものについて、変更後が代入前と同じ値ならchangeイベントは発火しないこと', 2, function() {
@@ -8211,7 +8256,7 @@ $(function() {
 				evObj['model'] = ev;
 			}
 
-			itemEventListenerqqq = function(ev) {
+			itemEventListener = function(ev) {
 				order.push('item');
 				evObj = evObj || {};
 				evObj['item'] = ev;
@@ -8318,6 +8363,46 @@ $(function() {
 				newValue: 'BBBB'
 			},
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
+	});
+
+	test('type:[]の要素について、DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', 14, function() {
+		var item2 = dataModel2.create({
+			id: sequence.next()
+		});
+		var listener = function(ev) {
+			evObj.item2 = ev;
+		};
+		item2.addEventListener('change', listener);
+
+		item2.set('ary', ['a','b']);
+
+		var ev = evObj.item2;
+		ok(typeof ev === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(ev.target, item2, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(ev.props.ary.oldValue, [], 'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
+		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
+		deepEqualObs(ev.props.ary.newValue, ['a','b'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
+		strictEqual(ev.props.ary.newValue, item2.get('ary'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
+
+		// 引数を格納するオブジェクト変数のリセット
+		evObj = {};
+
+		// begin-end間で配列の中身を更新
+		manager.beginUpdate();
+		var ary = item2.get('ary');
+		item2.set('ary', ['A']);
+		ary.push('B');
+		manager.endUpdate();
+
+		ev = evObj.item2;
+		ok(typeof ev === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(ev.target, item2, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(ev.props.ary.oldValue, ['a','b'], 'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
+		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
+		deepEqualObs(ev.props.ary.newValue, ['A','B'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
+		strictEqual(ev.props.ary.newValue, item2.get('ary'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
 	});
 
 	test('DataModelインスタンスの"itemsChange"に登録したハンドラが受け取る引数に正しく情報が格納されていること createdプロパティの確認',
