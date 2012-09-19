@@ -137,6 +137,14 @@
 	})();
 
 	/**
+	 * 対象ブラウザがIE6以前のブラウザまたはQuirksモードか
+	 */
+	var isLegacyIE = (function() {
+		var ua = h5.env.ua;
+		return (ua.isIE && (ua.browserVersion <= 6 || !!(document.documentMode && document.documentMode === 5)));
+	})();
+
+	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
 	 * <p>
 	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
@@ -159,8 +167,7 @@
 	 */
 	var usePositionFixed = (function() {
 		var ua = h5.env.ua;
-		return !(ua.isAndroidDefaultBrowser || (ua.isiOS && ua.browserVersion < 5)
-				|| (ua.isIE && ua.browserVersion < 7) || ua.isWindowsPhone);
+		return !(ua.isAndroidDefaultBrowser || (ua.isiOS && ua.browserVersion < 5) || isLegacyIE || ua.isWindowsPhone);
 	})();
 
 	/**
@@ -301,6 +308,15 @@
 	}
 
 	/**
+	 * ドキュメントの幅を取得します。
+	 * <p>
+	 * IE6だとwidthとpaddingの計算にバグがあるため、自前で計算を行う
+	 */
+	function getDocumentWidth() {
+		return $(document).outerWidth(true);
+	}
+
+	/**
 	 * 指定された要素で発生したイベントを無効にする
 	 */
 	function disableEventOnIndicator(/* var_args */) {
@@ -320,31 +336,52 @@
 	/**
 	 * イベントハンドラ
 	 * <p>
-	 * orientationChange/resizeイベントがが発生した1秒後に、インジケータのメッセージとパーセントの表示を更新する。
+	 * orientationChange/resizeイベントが発生した1秒後に、インジケータとオーバーレイを画面サイズに合わせて再描画し、 メッセージとパーセントの内容を更新する。
 	 */
 	function createOrientationChangeAndResizeHandler(context) {
 		var that = context;
 
+		function updateMessageArea() {
+			that._setPositionAndResizeWidth();
+			that._redrawable = true;
+			that.percent(that._lastPercent);
+			that.message(that._lastMessage);
+		}
+		;
+
 		return function() {
 			that._redrawable = false;
+			var w = that._isScreenLock ? getDocumentWidth() : that.$target.outerWidth(true);
+			var h = that._isScreenLock ? getDocumentHeight() : that.$target.outerHeight(true);
 
-			// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
-			setTimeout(function() {
-				if (that._isScreenLock && !usePositionFixed) {
-					that.$overlay.height(getDocumentHeight());
-				}
-				that._setPositionAndResizeWidth();
-				that._redrawable = true;
-				that.percent(that._lastPercent);
-				that.message(that._lastMessage);
-			}, 1000);
+			// IE6はwidthにバグがあるため自前で計算を行う。
+			// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
+			if (isLegacyIE) {
+				$.each([that.$overlay, that.$skin], function(i, e) {
+					if (e == null) {
+						return true;
+					}
+
+					e.width(w).height(h);
+				});
+
+				updateMessageArea();
+			} else if (usePositionFixed) {
+				updateMessageArea();
+			} else {
+				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
+				setTimeout(function() {
+					that.$overlay.height(h);
+					updateMessageArea();
+				}, 1000);
+			}
 		};
 	}
 
 	/**
 	 * イベントハンドラ
 	 * <p>
-	 * タッチまたはホイールスクロールの停止を検知する
+	 * タッチまたはホイールスクロールの停止を検知します
 	 */
 	function createScrollstopHandler(context) {
 		var timerId = null;
@@ -364,6 +401,14 @@
 				timerId = null;
 			}, 50);
 		};
+	}
+
+	/**
+	 * スクリーンロック対象の要素か判定します。
+	 */
+	function isScreenlockTarget(element) {
+		var e = isJQueryObject(element) ? element[0] : element;
+		return e === window || e === document || e === document.body;
 	}
 
 	// =========================================================================
@@ -480,7 +525,7 @@
 
 			var that = this;
 
-			// VML版スロバーはIE8以下専用で、IE8以下はAnimations/Transformに対応していないのでこれらを考慮しない
+			// VML版スロバーはIE8以下専用でかつ、IE8以下はAnimations/Transformに対応していないのでsetTimeoutでスロバーを描写する
 			this._runId = setTimeout(function() {
 				that._run.call(that);
 			}, perMills);
@@ -615,11 +660,6 @@
 		}
 	};
 
-	function isScreenlockTarget(element) {
-		var e = isJQueryObject(element) ? element[0] : element;
-		return e === window || e === document || e === document.body;
-	}
-
 	/**
 	 * インジケータ(メッセージ・画面ブロック・進捗表示)の表示や非表示を行うクラス。
 	 *
@@ -636,6 +676,7 @@
 	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
 	 */
 	function Indicator(target, option) {
+		var $t = $(target);
 		// デフォルトオプション
 		var defaultOption = {
 			message: '',
@@ -667,15 +708,14 @@
 		// UID(イベントハンドラの管理に使用する)
 		this._uid = $.now();
 		// スクリーンロックで表示するか
-		this._isScreenLock = isScreenlockTarget(target);
+		this._isScreenLock = isScreenlockTarget($t);
 		// 表示対象のDOM要素
-		this.$target = this._isScreenLock ? $('body') : (isJQueryObject(target) ? target
-				: $(target));
-		// 親要素のpositionがstaticか
-		this._isStatic = this.$target.css('position') === 'static';
+		this.$target = this._isScreenLock ? $('body') : $t;
+		// 親要素のpositionがstaticか (親要素がbody(スクリーンロック)の場合はチェックしない)
+		this._isStatic = !this._isScreenLock && this.$target.css('position') === 'static';
 		// スクロール停止イベントハンドラ
 		this._scrollStopHandler = createScrollstopHandler(this);
-		// リサイズ・オリエンテーション変更ハンドラ
+		// リサイズ・オリエンテーションイベントハンドラ
 		this._orientationResizeHandler = createOrientationChangeAndResizeHandler(this);
 		// DOM要素の書き換え可能かを判定するフラグ
 		this._redrawable = true;
@@ -701,9 +741,9 @@
 			this.$overlay = null;
 		}
 
-		// IE6の場合はselectタグがz-indexを無視するためオーバーレイと同一階層にiframe要素を生成する
+		// IE6の場合、selectタグがz-indexを無視するため、オーバーレイと同一階層にiframe要素を生成してselectタグを操作出来ないようにする
 		// http://www.programming-magic.com/20071107222415/
-		if (h5ua.isIE && h5ua.browserVersion === 6) {
+		if (isLegacyIE) {
 			// httpsでiframeを開くと警告が出るためsrcに指定する値を変える
 			// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
 			var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
@@ -771,23 +811,23 @@
 					if (!usePositionFixed) {
 						$window.bind('touchmove.' + that._uid, that._scrollStopHandler);
 						$window.bind('scroll.' + that._uid, that._scrollStopHandler);
-						// コンテンツ領域全体にオーバーレイをかける(不可視の領域にもオーバーレイがかかる)
-						// widthは100%が指定されているので計算しない
-						that.$overlay.height(getDocumentHeight());
 					}
 				}
 
-				// 画面の向きが変更されたらインジータが中央に表示されるよう更新する
+				// 画面の向きが変更されたらインジータが中央に表示させる
 				$window.bind('orientationchange.' + that._uid, that._orientationResizeHandler);
 				$window.bind('resize.' + that._uid, that._orientationResizeHandler);
+				that._orientationResizeHandler();
 			};
 
-			// position:absoluteで親要素からの相対位置で表示するため、親要素がstaticの場合のみrelativeに変更する
+			// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する
+			// また、IEのレイアウトバグを回避するためzoom:1を設定する
 			if (this._isStatic) {
-				this.$target.css('position', 'relative');
+				this.$target.css({
+					position: 'relative',
+					zoom: '1'
+				});
 			}
-			// IEでのレイアウトバグを回避するためzoomプロパティを強制的に"1"に設定する
-			this.$target.css('zoom', '1');
 
 			$.each([this.$skin, this.$overlay, this.$content], function(i, e) {
 				if (e == null) {
@@ -843,7 +883,7 @@
 
 			this.$content.children().each(function(i, e) {
 				var $e = $(e);
-				// IE9にて不可視要素でouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
+				// IE9にて不可視要素に対してouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
 				if ($e.css('display') === 'none') {
 					return true;
 				}
@@ -870,7 +910,10 @@
 				$elems.remove();
 				// 親要素のpositionをインジケータ表示前の状態に戻す
 				if (that._isStatic) {
-					that.$target.css('position', 'static');
+					that.$target.css({
+						position: '',
+						zoom: ''
+					});
 				}
 
 				$window.unbind('touchmove.' + that._uid, that._scrollstopHandler);
