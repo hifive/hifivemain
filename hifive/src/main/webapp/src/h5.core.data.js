@@ -78,8 +78,8 @@
 	/** depend.calcが制約を満たさない値を返している */
 	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15013;
 
-	/** createModelに渡された配列内のディスクリプタについて、依存関係が不正 */
-	var ERR_CODE_CANNOT_CALC_DEPEND = 15014;
+	/** createModelに渡された配列内のディスクリプタ同士でtypeやbaseによる依存関係が循環参照している */
+	var ERR_CODE_DESCRIPTOR_CIRCULAR_REF = 15014;
 
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
@@ -96,7 +96,7 @@
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_OBSARRAY] = 'typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う）。 プロパティ名 = {0}';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'DataItem.set()でidをセットすることはできない';
 	ERROR_MESSAGES[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'depend.calcが返した値がプロパティの型・制約に違反しています。違反したプロパティ={0}, 違反した値={1}';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_CALC_DEPEND] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、依存関係を計算することができませんでした。baseやtypeにデータモデル名を指定しているディスクリプタについて、存在するデータモデル名か、循環参照していないか、を確認してください';
+	ERROR_MESSAGES[ERR_CODE_DESCRIPTOR_CIRCULAR_REF] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、baseやtypeによる依存関係が循環参照しています。';
 
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
@@ -2488,10 +2488,12 @@
 											[createErrorReason(DESCRIPTOR_ERR_CODE_NOT_OBJECT)]);
 								}
 								var dependMap = {};
+								var namesInDescriptors = [];
 								// 依存関係のチェック
-								// 前提条件として、要素がオブジェクトであり、name、schemaプロパティを持つこと
+								// 要素がオブジェクトであり、name、schemaプロパティを持っていない場合はcatch節で、ディスクリプタのエラーを投げる
 								for ( var i = 0; i < l; i++) {
 									try {
+										namesInDescriptors.push(descriptor[i].name);
 										var depends = [];
 										if (descriptor[i].base) {
 											depends.push(descriptor[i].base.substring(1));
@@ -2515,12 +2517,20 @@
 									size: 0
 								};
 								while (retObj.size < l) {
+									// 見つからなかったモデルを覚えておく
+									// 循環参照のエラーなのか、単に存在しないモデル名指定によるエラーなのかを区別するため
+									var noExistModels = {};
+
+									// このwhileループ内で1つでも登録されたか
 									var registed = false;
+
+									// descriptorでループさせて、依存関係が解決された居たらデータモデルを登録
 									for ( var i = 0; i < l; i++) {
 										if (!dependMap[i].registed) {
 											var depends = dependMap[i].depends;
 											for ( var j = 0, len = depends.length; j < len; j++) {
 												if (!this.models[depends[j]]) {
+													noExistModels[depends[j]] = true;
 													break;
 												}
 											}
@@ -2535,7 +2545,22 @@
 									}
 									if (!registed) {
 										// whileループの中で一つも登録されなかった場合は、存在しないデータモデル名を依存指定、または循環参照
-										throwFwError(ERR_CODE_CANNOT_CALC_DEPEND);
+										// 存在しなかったデータモデル名が全てディスクリプタに渡されたモデル名のいずれかだったら、それは循環参照エラー
+										var isCircular = true;
+										for ( var modelName in noExistModels) {
+											if ($.inArray(modelName, namesInDescriptors) === -1) {
+												isCircular = false;
+												break;
+											}
+										}
+										if (isCircular) {
+											// 循環参照エラー
+											throwFwError(ERR_CODE_DESCRIPTOR_CIRCULAR_REF);
+										}
+										throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
+												[createErrorReason(
+														DESCRIPTOR_ERR_CODE_NO_EXIST_BASE,
+														noExistModels[i])]);
 									}
 								}
 								var retAry = [];
