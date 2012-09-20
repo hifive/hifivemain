@@ -90,7 +90,7 @@ $(function() {
 	 * @param [Any|Any[]]
 	 */
 	function testErrorWhenCreateModelByValueProperty(ary, errCode) {
-		var invalidProps = wrapInArray(ary);
+		var invalidProps = $.isArray(ary) ? ary : [ary];
 		var l = invalidProps.length;
 		for ( var i = 0; i < l; i++) {
 			try {
