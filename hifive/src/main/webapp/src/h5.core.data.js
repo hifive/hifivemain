@@ -2189,7 +2189,7 @@
 		var realProps = [];
 		var dependProps = [];
 		for ( var p in schema) {
-			if (schema[p].depend) {
+			if (schema[p] && schema[p].depend) {
 				dependProps.push(p);
 			} else {
 				realProps.push(p);
