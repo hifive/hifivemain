@@ -139,10 +139,7 @@
 	/**
 	 * 対象ブラウザがIE6以前のブラウザまたはQuirksモードか
 	 */
-	var isLegacyIE = (function() {
-		var ua = h5.env.ua;
-		return (ua.isIE && (ua.browserVersion <= 6 || !!(document.documentMode && document.documentMode === 5)));
-	})();
+	var isLegacyIE = (h5ua.isIE && (h5ua.browserVersion <= 6 || !!(document.documentMode && document.documentMode === 5)));
 
 	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
@@ -165,10 +162,8 @@
 	 * <li>Windows Phoneは7.0/7.5ともに未サポート https://github.com/jquery/jquery-mobile/issues/3489</li>
 	 * <ul>
 	 */
-	var usePositionFixed = (function() {
-		var ua = h5.env.ua;
-		return !(ua.isAndroidDefaultBrowser || (ua.isiOS && ua.browserVersion < 5) || isLegacyIE || ua.isWindowsPhone);
-	})();
+	var usePositionFixed = !(h5ua.isAndroidDefaultBrowser
+			|| (h5ua.isiOS && h5ua.browserVersion < 5) || isLegacyIE || h5ua.isWindowsPhone);
 
 	/**
 	 * CSS3 Animationsをサポートしているか
@@ -342,21 +337,29 @@
 		var that = context;
 
 		function updateMessageArea() {
-			that._setPositionAndResizeWidth();
+			that._reposition();
 			that._redrawable = true;
 			that.percent(that._lastPercent);
 			that.message(that._lastMessage);
 		}
-		;
 
 		return function() {
 			that._redrawable = false;
 			var w = that._isScreenLock ? getDocumentWidth() : that.$target.outerWidth(true);
 			var h = that._isScreenLock ? getDocumentHeight() : that.$target.outerHeight(true);
 
-			// IE6はwidthにバグがあるため自前で計算を行う。
-			// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
-			if (isLegacyIE) {
+			if (usePositionFixed) {
+				updateMessageArea();
+			} else if (!isLegacyIE) {
+				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
+				setTimeout(function() {
+					// widthは100%が指定されているので、heightのみ更新する
+					that.$overlay.height(h);
+					updateMessageArea();
+				}, 1000);
+			} else {
+				// IE6はwidthにバグがあるため自前で計算を行う。
+				// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
 				$.each([that.$overlay, that.$skin], function(i, e) {
 					if (e == null) {
 						return true;
@@ -366,14 +369,6 @@
 				});
 
 				updateMessageArea();
-			} else if (usePositionFixed) {
-				updateMessageArea();
-			} else {
-				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
-				setTimeout(function() {
-					that.$overlay.height(h);
-					updateMessageArea();
-				}, 1000);
 			}
 		};
 	}
@@ -397,7 +392,7 @@
 			}
 
 			timerId = setTimeout(function() {
-				that._setPositionAndResizeWidth();
+				that._reposition();
 				timerId = null;
 			}, 50);
 		};
@@ -667,9 +662,9 @@
 	 * @name Indicator
 	 * @param {String|Object} target インジケータを表示する対象のDOMオブジェクトまたはセレクタ
 	 * @param {Object} [option] オプション
-	 * @param {String} [option.message] メッセージ
-	 * @param {Number} [option.percent] 進捗を0～100の値で指定する。
-	 * @param {Boolean} [option.block] 操作できないよう画面をブロックするか (true:する/false:しない)
+	 * @param {String} [option.message] スロバーの右側に表示する文字列
+	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する
+	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない)
 	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
 	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
 	 * @param {Promise|Promise[]} [option.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
@@ -711,8 +706,8 @@
 		this._isScreenLock = isScreenlockTarget($t);
 		// 表示対象のDOM要素
 		this.$target = this._isScreenLock ? $('body') : $t;
-		// 親要素のpositionがstaticか (親要素がbody(スクリーンロック)の場合はチェックしない)
-		this._isStatic = !this._isScreenLock && this.$target.css('position') === 'static';
+		// 親要素のpositionがstaticか
+		this._isPositionStatic = this.$target.css('position') === 'static';
 		// スクロール停止イベントハンドラ
 		this._scrollStopHandler = createScrollstopHandler(this);
 		// リサイズ・オリエンテーションイベントハンドラ
@@ -733,7 +728,7 @@
 				.addClass(settings.theme).addClass(CLASS_INDICATOR_CONTENT).hide();
 
 		// オーバーレイ
-		if (settings.block !== false) {
+		if (settings.block === true) {
 			this.$overlay = $('<div></div>').addClass(CLASS_INDICATOR_ROOT)
 					.addClass(settings.theme).addClass(CLASS_OVERLAY).hide();
 		} else {
@@ -820,9 +815,9 @@
 				that._orientationResizeHandler();
 			};
 
-			// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する
+			// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
 			// また、IEのレイアウトバグを回避するためzoom:1を設定する
-			if (this._isStatic) {
+			if (!this._isScreenLock && this._isPositionStatic) {
 				this.$target.css({
 					position: 'relative',
 					zoom: '1'
@@ -847,7 +842,7 @@
 				$elems.fadeIn(fadeInTime, cb);
 			}
 
-			this._setPositionAndResizeWidth();
+			this._reposition();
 			return this;
 		},
 		/**
@@ -857,7 +852,7 @@
 		 * @function
 		 * @private
 		 */
-		_setPositionAndResizeWidth: function() {
+		_reposition: function() {
 			if (this._isScreenLock) {
 				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
 				var displayHeight = window.innerHeight ? window.innerHeight : $(window).height();
@@ -867,7 +862,7 @@
 					this.$content.css('top', ((displayHeight - this.$content.outerHeight()) / 2)
 							+ 'px');
 				} else {
-					// 可視領域+スクロール領域から計算する
+					// 可視領域+スクロール領域からtopを計算する
 					this.$content.css('top',
 							(($(document).scrollTop() + (displayHeight / 2)) - (this.$content
 									.height() / 2))
@@ -909,7 +904,7 @@
 
 				$elems.remove();
 				// 親要素のpositionをインジケータ表示前の状態に戻す
-				if (that._isStatic) {
+				if (!that._isScreenLock && that._isPositionStatic) {
 					that.$target.css({
 						position: '',
 						zoom: ''
@@ -973,7 +968,7 @@
 
 			this.$target.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
 					.text(message);
-			this._setPositionAndResizeWidth();
+			this._reposition();
 
 			return this;
 		}
@@ -1052,12 +1047,14 @@
 	 * @name indicator
 	 * @function
 	 * @param {String|Object} target インジケータを表示する対象のDOMオブジェクトまたはセレクタ
-	 * @param {String} [option.message] メッセージ
-	 * @param {Number} [option.percent] 進捗を0～100の値で指定する。
-	 * @param {Boolean} [option.block] 操作できないよう画面をブロックするか (true:する/false:しない)
+	 * @param {String} [option.message] スロバーの右側に表示する文字列
+	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する
+	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない)
 	 * @param {Object} [option.style] スタイルオプション (詳細はIndicatorクラスのドキュメントを参照)
+	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
+	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
+	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
 	 * @param {Promise|Promise[]} [option.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
-	 * @param {String} [options.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルをする場合に使用する)
 	 * @see Indicator
 	 * @see Controller.indicator
 	 */
@@ -1096,8 +1093,8 @@
 		// containerの位置を取得。borderの内側の位置で判定する。
 		if (container === undefined) {
 			// containerが指定されていないときは、画面表示範囲内にあるかどうか判定する
-			height = h5.env.ua.isiOS ? window.innerHeight : $(window).height();
-			width = h5.env.ua.isiOS ? window.innerWidth : $(window).width();
+			height = h5ua.isiOS ? window.innerHeight : $(window).height();
+			width = h5ua.isiOS ? window.innerWidth : $(window).width();
 			viewTop = $(window).scrollTop();
 			viewLeft = $(window).scrollLeft();
 		} else {
