@@ -2335,7 +2335,8 @@ $(function() {
 			schema: {
 				id: {
 					id: true
-				}
+				},
+				v:null
 			}
 		}]);
 		ok(manager.models.Test1, '1つ目、type指定で依存していても正しく作成されること');
@@ -6065,6 +6066,55 @@ $(function() {
 			}
 		}
 	});
+
+
+	//=============================
+	// Definition
+	//=============================
+	module('schemaのプロパティオブジェクトがnull', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+		},
+		teardown: function() {
+			sequence = null;
+			dropAllModel(manager);
+		}
+	});
+
+	test('データモデルが生成でき、空オブジェクトを指定した場合と同じで、type:"any"扱いになりどんなものでもセットできること', function(){
+		var schema = {
+			id: {
+				id: true
+			},
+			v: null
+		};
+		var item1 = manager.createModel({
+			name: 'TestModel',
+			schema: schema
+		}).create({
+			id: sequence.next()
+		});
+
+		var item2 = manager.createModel([{
+			name: 'TestModel2',
+			schema: schema
+		}])[0].create({
+			id: sequence.next()
+		});
+
+		var vals = [1, 'abc', new String('ABC'), new Number(1), {}, [], h5.u.obj.createObservableArray(), null, undefined];
+
+		for(var i = 0, l = vals.length; i < l; i++) {
+			item1.set('v', vals[i]);
+			strictEqual(item1.get('v'), vals[i], vals[i] + 'がsetできてgetできること');
+			item2.set('v', vals[i]);
+			strictEqual(item2.get('v'), vals[i], vals[i] + 'がsetできてgetできること');
+		}
+
+		expect(2 * l);
+	});
+
 
 	//=============================
 	// Definition
