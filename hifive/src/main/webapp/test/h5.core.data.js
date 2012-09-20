@@ -2378,7 +2378,7 @@ $(function() {
 		deepEqual(models, [manager.models.Test3, manager.models.Test4, manager.models.Test5, manager.models.Test6], '戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
 	});
 
-	test('ディスクリプタを配列で指定した時、依存関係に循環参照があったらエラーになること',8,function(){
+	test('ディスクリプタを配列で指定した時、依存関係に循環参照があったらエラーになること',1,function(){
 		try{
 			var models = manager.createModel([{
 				name: 'Test3',
@@ -2413,6 +2413,44 @@ $(function() {
 			ok(false, 'テスト失敗。エラーが発生していません');
 		} catch(e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CALC_DEPEND,e.message);
+		}
+	});
+
+	test('ディスクリプタを配列で指定した時、存在しないデータモデル名に依存指定しているディスクリプタがあったらエラーになること',1,function(){
+		try{
+			var models = manager.createModel([{
+				name: 'Test3',
+				base: '@Test6',
+				schema: {}
+			}, {
+				name: 'Test4',
+				base: '@Test6',
+				schema: {
+					v: {
+						type: '@Test3'
+					}
+				}
+			}, {
+				name: 'Test5',
+				schema: {
+					id: {
+						id: true
+					}
+				}
+			}, {
+				name: 'Test6',
+				schema: {
+					id: {
+						id: true
+					},
+					v: {
+						type: '@Test44'
+					}
+				}
+			}]);
+			ok(false, 'テスト失敗。エラーが発生していません');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR, e.message);
 		}
 	});
 	//=============================
