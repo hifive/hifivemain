@@ -78,6 +78,9 @@
 	/** depend.calcが制約を満たさない値を返している */
 	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15013;
 
+	/** createModelに渡された配列内のディスクリプタについて、依存関係が不正 */
+	var ERR_CODE_CANNOT_CALC_DEPEND = 15014;
+
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
@@ -93,6 +96,7 @@
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_OBSARRAY] = 'typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う）。 プロパティ名 = {0}';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'DataItem.set()でidをセットすることはできない';
 	ERROR_MESSAGES[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'depend.calcが返した値がプロパティの型・制約に違反しています。違反したプロパティ={0}, 違反した値={1}';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_CALC_DEPEND] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、依存関係を計算することができませんでした。baseやtypeにデータモデル名を指定しているディスクリプタについて、存在するデータモデル名か、循環参照していないか、を確認してください';
 
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
@@ -195,7 +199,7 @@
 	/**
 	 * min-maxに数値が入力されなかった時のエラー
 	 */
-	DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX = 20;
+	var DESCRIPTOR_SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX = 20;
 
 	/**
 	 * typeがinteger,numberじゃないのにconstraint.min/max を指定されたときのエラー
@@ -1436,8 +1440,7 @@
 			// 配列なら、配列の中身も変更されていないかチェックする(type:anyならチェックしない)
 			// type:[]の場合、oldValueは必ずObsArrayまたはundefined。
 			// newValue,oldValueともに配列(oldValueの場合はObsArray)かつ、長さが同じ場合にのみチェックする
-			if (isTypeArray(type) && oldValue
-					&& oldValue.equals(newValue, oldValue)) {
+			if (isTypeArray(type) && oldValue && oldValue.equals(newValue, oldValue)) {
 				continue;
 			}
 
@@ -2477,7 +2480,70 @@
 						 */
 						createModel: function(descriptor) {
 							//TODO 配列対応
-
+							if ($.isArray(descriptor)) {
+								var l = descriptor.length;
+								if (!l) {
+									//空配列
+									throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
+											[createErrorReason(DESCRIPTOR_ERR_CODE_NOT_OBJECT)]);
+								}
+								var dependMap = {};
+								// 依存関係のチェック
+								// 前提条件として、要素がオブジェクトであり、name、schemaプロパティを持つこと
+								for ( var i = 0; i < l; i++) {
+									try {
+										var depends = [];
+										if (descriptor[i].base) {
+											depends.push(descriptor[i].base.substring(1));
+										}
+										for ( var p in descriptor[i].schema) {
+											var type = descriptor[i].schema[p].type;
+											if (type && type.substring(0, 1) === '@') {
+												depends.push(type.substring(1));
+											}
+										}
+										dependMap[i] = {
+											depends: depends
+										};
+									} catch (e) {
+										//descriptorがオブジェクトでない、またはnameとschemaが設定されていない。またはname,baseが文字列でない、schemaがオブジェクトでない
+										throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
+									}
+								}
+								// dependMapを元に、循環参照チェック
+								var retObj = {
+									size: 0
+								};
+								while (retObj.size < l) {
+									var registed = false;
+									for ( var i = 0; i < l; i++) {
+										if (!dependMap[i].registed) {
+											var depends = dependMap[i].depends;
+											for ( var j = 0, len = depends.length; j < len; j++) {
+												if (!this.models[depends[j]]) {
+													break;
+												}
+											}
+											if (j === len) {
+												// 依存しているものはすべて登録済みなら登録
+												retObj[i] = registerDataModel(descriptor[i], this);
+												retObj.size++;
+												registed = true;
+												dependMap[i].registed = true;
+											}
+										}
+									}
+									if (!registed) {
+										// whileループの中で一つも登録されなかった場合は、存在しないデータモデル名を依存指定、または循環参照
+										throwFwError(ERR_CODE_CANNOT_CALC_DEPEND);
+									}
+								}
+								var retAry = [];
+								for ( var i = 0; i < l; i++) {
+									retAry.push(retObj[i]);
+								}
+								return retAry;
+							}
 							//registerDataModelは初めにDescriptorの検証を行う。
 							//検証エラーがある場合は例外を送出する。
 							//エラーがない場合はデータモデルを返す（登録済みの場合は、すでにマネージャが持っているインスタンスを返す）。
@@ -2767,6 +2833,7 @@
 	 * @returns {DataModel} 登録されたデータモデル
 	 */
 	function registerDataModel(descriptor, manager) {
+
 		//ディスクリプタの検証を最初に行い、以降はValidなディスクリプタが渡されていることを前提とする
 		//ここでは1つでもエラーがあればすぐにエラーを出す
 		var errorReason = validateDescriptor(descriptor, manager, true);
