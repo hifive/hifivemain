@@ -2287,6 +2287,134 @@ $(function() {
 		ok(model);
 	});
 
+	test('ディスクリプタを配列で指定してモデルを作成できること',5,function(){
+		var models = manager.createModel([{
+			name: 'Test1',
+			schema: {
+				id: {
+					id: true
+				}
+			}
+		}]);
+		ok(manager.models.Test1, '1つ指定して作成されていること');
+		deepEqual(models, [manager.models.Test1], '戻り値は作成されたデータモデルが格納された配列であること');
+
+		var models = manager.createModel([{
+			name: 'Test2',
+			schema: {
+				id: {
+					id: true
+				}
+			}
+		}, {
+			name: 'Test3',
+			schema: {
+				id: {
+					id: true
+				}
+			}
+		}]);
+		ok(manager.models.Test2, '2つ指定して1つ目が作成されていること');
+		ok(manager.models.Test3, '2つ指定して2つ目が作成されていること');
+		deepEqual(models, [manager.models.Test2, manager.models.Test3], '戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
+	});
+
+	test('ディスクリプタを配列で指定してモデルを作成できること。渡したディスクリプタの配列内で依存関係があっても作成されること',8,function(){
+		var models = manager.createModel([{
+			name: 'Test1',
+			schema: {
+				id: {
+					id: true
+				},
+				d:{
+					type:'@Test2'
+				}
+			}
+		},{
+			name: 'Test2',
+			schema: {
+				id: {
+					id: true
+				}
+			}
+		}]);
+		ok(manager.models.Test1, '1つ目、type指定で依存していても正しく作成されること');
+		ok(manager.models.Test2, '2つ目、正しく作成されること');
+		deepEqual(models, [manager.models.Test1, manager.models.Test2], '戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
+		var models = manager.createModel([{
+			name: 'Test3',
+			base: '@Test6',
+			schema: {}
+		}, {
+			name: 'Test4',
+			base: '@Test6',
+			schema: {
+				v: {
+					type: '@Test3'
+				}
+			}
+		}, {
+			name: 'Test5',
+			schema: {
+				id: {
+					id: true
+				}
+			}
+		}, {
+			name: 'Test6',
+			schema: {
+				id: {
+					id: true
+				},
+				v: {
+					type: '@Test1'
+				}
+			}
+		}]);
+		ok(manager.models.Test3, '1つ目、base指定で依存していても正しく作成されること');
+		ok(manager.models.Test4, '2つ目、base, type指定で依存していても正しく作成されること');
+		ok(manager.models.Test5, '3つ目、正しく作成されること');
+		ok(manager.models.Test6, '4つ目、正しく作成されること');
+		deepEqual(models, [manager.models.Test3, manager.models.Test4, manager.models.Test5, manager.models.Test6], '戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
+	});
+
+	test('ディスクリプタを配列で指定した時、依存関係に循環参照があったらエラーになること',8,function(){
+		try{
+			var models = manager.createModel([{
+				name: 'Test3',
+				base: '@Test6',
+				schema: {}
+			}, {
+				name: 'Test4',
+				base: '@Test6',
+				schema: {
+					v: {
+						type: '@Test3'
+					}
+				}
+			}, {
+				name: 'Test5',
+				schema: {
+					id: {
+						id: true
+					}
+				}
+			}, {
+				name: 'Test6',
+				schema: {
+					id: {
+						id: true
+					},
+					v: {
+						type: '@Test4'
+					}
+				}
+			}]);
+			ok(false, 'テスト失敗。エラーが発生していません');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CALC_DEPEND,e.message);
+		}
+	});
 	//=============================
 	// Definition
 	//=============================
