@@ -2560,7 +2560,7 @@
 										throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
 												[createErrorReason(
 														DESCRIPTOR_ERR_CODE_NO_EXIST_BASE,
-														noExistModels[i])]);
+														modelName)]);
 									}
 								}
 								var retAry = [];
