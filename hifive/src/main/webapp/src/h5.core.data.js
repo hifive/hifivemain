@@ -2501,7 +2501,7 @@
 										for ( var p in descriptor[i].schema) {
 											var propObj = descriptor[i].schema[p];
 											if (!propObj) {
-												return;
+												continue;
 											}
 											var type = propObj.type;
 											if (type && type.substring(0, 1) === '@') {
