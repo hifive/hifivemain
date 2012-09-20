@@ -1402,7 +1402,7 @@
 			var oldValue = getValue(item, prop);
 			var newValue = valueObj[prop];
 
-			var type = model.schema[prop].type;
+			var type = model.schema[prop] && model.schema[prop].type;
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
 			if (type && type.match(/string|number|integer|boolean/)) {
 				newValue = unbox(newValue);
