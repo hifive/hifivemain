@@ -1395,7 +1395,7 @@
 			}
 
 			// depend指定されている項目はset禁止
-			if (model.schema[prop].depend) {
+			if (model.schema[prop] && model.schema[prop].depend) {
 				throwFwError(ERR_CODE_DEPEND_PROPERTY, prop);
 			}
 
@@ -2499,7 +2499,11 @@
 											depends.push(descriptor[i].base.substring(1));
 										}
 										for ( var p in descriptor[i].schema) {
-											var type = descriptor[i].schema[p].type;
+											var propObj = descriptor[i].schema[p];
+											if (!propObj) {
+												return;
+											}
+											var type = propObj.type;
 											if (type && type.substring(0, 1) === '@') {
 												depends.push(type.substring(1));
 											}
