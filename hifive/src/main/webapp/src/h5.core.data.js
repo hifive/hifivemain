@@ -407,11 +407,11 @@
 		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
 		// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
 		// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
-		var matched = type.match(/^(string|number|integer|boolean|any|enum|@(.+?))((\[\])*)$/);
+		var matched = type.match(/^(string|number|integer|boolean|any|enum|@(.+?))((\[\]){0,1})$/);
 		return matched && {
 			elmType: matched[1],
 			dataModel: matched[2],
-			dimention: matched[3] ? matched[3].length / 2 : 0
+			dimention: matched[3] ? 1 : 0
 		};
 	}
 
@@ -603,7 +603,7 @@
 
 
 			elmType = typeObj.elmType;
-			// 配列の次元。配列でないなら0
+			// 配列の次元(0か1のみ)。配列でないなら0
 			dimention = typeObj.dimention;
 
 			// type指定を元に値を(配列は考慮せずに)チェックする関数を作成してcheckFuncArrayに追加
@@ -873,7 +873,7 @@
 						errorReason.push('id指定されたプロパティにtypeを指定することはできません');
 					}
 
-					// "string", "number[][]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
+					// "string", "number[]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
 					typeObj = getTypeObjFromString(type);
 
 					if (!typeObj || !typeObj.elmType) {
