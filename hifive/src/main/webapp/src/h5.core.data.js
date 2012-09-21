@@ -2505,7 +2505,10 @@
 											}
 											var type = propObj.type;
 											if (type && type.substring(0, 1) === '@') {
-												depends.push(type.substring(1));
+												type = (type.indexOf('[]') === -1) ? type
+														.substring(1) : type.substring(1,
+														type.length - 2);
+												depends.push(type);
 											}
 										}
 										dependMap[i] = {
