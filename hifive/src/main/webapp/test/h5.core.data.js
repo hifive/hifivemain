@@ -932,7 +932,31 @@ $(function() {
 		expect(l);
 		for ( var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
-				type: invalidArrays[i]
+				type: 'enum',
+				enumValue: invalidArrays[i]
+			}, errCode);
+		}
+	});
+
+	test('type:enumでないのにenumValueを指定した場合はエラーが出ること', 6, function() {
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var ary = [];
+		ary['a'] = 1;
+		manager.createModel({
+			name: 'A',
+			schema: {
+				id: {
+					id: true
+				}
+			}
+		});
+		var notEnumTypes = ['string', 'number', 'integer', 'boolean', '@A', 'any'];
+		var l = notEnumTypes.length;
+		expect(l);
+		for ( var i = 0; i < l; i++) {
+			testErrorWhenCreateModelByValueProperty({
+				type: notEnumTypes[i],
+				enumValue: [1]
 			}, errCode);
 		}
 	});
@@ -2808,10 +2832,6 @@ $(function() {
 		}
 	});
 
-	//=============================
-	// Body
-	//=============================
-
 	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
 		var item1 = dataModel1.create({
 			id: sequence.next(),
@@ -2877,6 +2897,57 @@ $(function() {
 		strictEqual(dataModel1.get('3'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
 		strictEqual(dataModel1.has('3'), false, 'model.hasの結果がfalseになっていること');
 		strictEqual(dataModel1.size, 0, 'すべて削除したので、model.sizeが0になっていること');
+	});
+
+	test('id指定の項目にsetできないこと', 2, function() {
+		var item = dataModel1.create({
+			id: sequence.next(),
+			val: 'item1'
+		});
+		try {
+			item.set('id', 'a');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
+		}
+		try {
+			item.set('id', item.get('id'));
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
+		}
+	});
+
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('has', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+			createDataModel1();
+		},
+		teardown: function() {
+			sequence = null;
+			dropAllModel(manager);
+		}
+	});
+
+	test('hasでデータモデルがアイテムを持っているかどうか判別できること', 8, function() {
+		var item = dataModel1.create({
+			id: '1'
+		});
+		var item2 = dataModel1.create({
+			id: 'true',
+		});
+		ok(dataModel1.has(item), 'アイテムインすタスを渡してtrueが返ってくること');
+		ok(dataModel1.has(item2), 'アイテムインすタスを渡してtrueが返ってくること');
+		ok(dataModel1.has('1'), 'idを渡してtrueが返ってくること');
+		ok(dataModel1.has(1), 'idを数値で渡してtrueが返ってくること');
+		ok(!dataModel1.has({id:'1'}), 'id:"1"を持つオブジェクトを渡すとfalseが返ってくること');
+		ok(!dataModel1.has({id:1}), 'id:1を持つオブジェクトを渡すとfalseが返ってくること');
+		ok(dataModel1.has('true'), 'id:"true"のアイテムがあるので"true"を渡すとtrueが返ってくること');
+		ok(!dataModel1.has(true), 'id:"true"のアイテムがあってもtrueを渡すとfalseが返ってくること');
 	});
 
 	//=============================
@@ -3188,7 +3259,7 @@ $(function() {
 				//TODO null,undefinedでcreateできること、代入できることを確認する
 			});
 
-	test('type指定 DataModel 異常系', 2, function() {
+	test('type指定 DataModel 異常系', 4, function() {
 		var descriptor1 = {
 			name: 'DataModel1',
 			schema: {
@@ -3262,6 +3333,16 @@ $(function() {
 		raises(function() {
 			item1.set('dataModel1', model2DataItem);
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
+
+		item1.set('dataModel1', null);
+		// DaaModel1をdrop
+		manager.dropModel('DataModel1');
+		try {
+			item1.set('dataModel1', model1DataItem);
+		} catch(e) {
+			ok(true, 'ドロップしたモデルのアイテムは格納できないこと');
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message)
+		}
 	});
 
 	test(
@@ -3360,7 +3441,7 @@ $(function() {
 
 			});
 
-	test('type指定 DataModel[] 異常系', 4, function() {
+	test('type指定 DataModel[] 異常系', 6, function() {
 		var descriptor1 = {
 			name: 'DataModel1',
 			schema: {
@@ -3445,6 +3526,15 @@ $(function() {
 		raises(function() {
 			item1.set('dataModel2', [model1DataItem1, model2DataItem1]);
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
+
+		// DaaModel1をdrop
+		manager.dropModel('DataModel1');
+		try {
+			item1.set('dataModel1', [model1DataItem1]);
+		} catch(e) {
+			ok(true, 'ドロップしたモデルのアイテムは格納できないこと');
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message)
+		}
 	});
 
 
@@ -4095,7 +4185,7 @@ $(function() {
 	// NaN === NaN = false(h5.core.data.js l.525の判定を修正する)
 	// 2012/07/27 竹内追記 type:any[]は無い
 	// 2012/08/23 福田追記 type:arrayが廃止になって、中身の型の指定のない配列はtype:any[]になった。
-	test('type指定 any',
+	test('type指定 any 正常系',
 			function() {
 				var div = document.createElement('div');
 				var model = manager.createModel({
@@ -4163,7 +4253,7 @@ $(function() {
 
 	// 2012/07/27 竹内追記 type:array[]は無い
 	// 2012/08/23 福田追記 type:arrayは廃止。type:any[]を使用する
-	test('type指定 any[] 正常系', function() {
+	test('type指定 any[]', function() {
 		var model = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
@@ -8286,7 +8376,7 @@ $(function() {
 				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
 	});
 
-	test('DataItemのcreateでObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 12, function() {
+	test('DataItemのcreateでObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 13, function() {
 		var model = manager.createModel({
 			name: 'AryModel',
 			schema: {
@@ -8318,7 +8408,7 @@ $(function() {
 			id:item.get('id'),
 			ary:[2,2,2,2]
 		});
-		deepEqual(order, ['item', 'model','manager'], 'createnによる変更でイベント上がる');
+		deepEqual(order, ['item', 'model','manager'], 'createによる変更でイベント上がる');
 
 		order=[];
 		evObj = {};
@@ -8359,6 +8449,13 @@ $(function() {
 		o = item.get('ary');
 		o.pop();
 		deepEqual(order, ['item', 'model','manager'], 'popでイベント上がる');
+
+		o.copyFrom([2,1,3]);
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.splice(0);
+		deepEqual(order, ['item', 'model','manager'], 'spliceでイベント上がる');
 
 		o.copyFrom([2,1,3]);
 		order=[];
