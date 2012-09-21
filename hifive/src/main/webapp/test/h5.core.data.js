@@ -787,8 +787,6 @@ $(function() {
 		dropAllModel(manager2);
 	});
 
-
-
 	test('schemaがオブジェクトでない場合はエラーが発生すること', function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		var noObjs = ['a', 1, true];
@@ -816,6 +814,28 @@ $(function() {
 			});
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
+		}
+	});
+
+	test('schemaの持つプロパティ名が不正な場合エラーが発生すること', function() {
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var invalidPropNames = ['', ' ',  '1a', ' abc', 'a bc'];
+		for(var i = 0, l = invalidPropNames.length; i < l; i++) {
+			try {
+				var schema = {
+						id:{
+							id: true
+						}
+					};
+				schema[invalidPropNames[i]] = {};
+				manager.createModel({
+					name: 'TestDataModel',
+					schema: schema
+				});
+				ok(false, 'テスト失敗。エラーが発生していません。プロパティ名: ' + invalidPropNames[i]);
+			} catch (e) {
+				strictEqual(e.code, errCode, e.message);
+			}
 		}
 	});
 
@@ -984,6 +1004,30 @@ $(function() {
 						defaultValue: 0
 
 					}
+				}
+			});
+			ok(false, 'エラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
+	});
+
+	test('id指定のプロパティにdependを設定できないこと', 1, function() {
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		try {
+			manager.createModel({
+				name: 'TestDataModel',
+				schema: {
+					id: {
+						id: true,
+						depend: {
+							on: 'v',
+							calc: function() {
+								return 0;
+							}
+						}
+					},
+					v: null
 				}
 			});
 			ok(false, 'エラーが発生していません');
@@ -4486,9 +4530,73 @@ $(function() {
 	// Body
 	//=============================
 
-	// 2012/07/27 竹内追記 仕様が確定するまで取りあえず放置
-	test('値をセットしても何もイベントが起きず、値のチェックも行われないこと', 0, function() {
-	// TODO
+	test('constraintの各プロパティについてnullまたはundefinedを指定した時は、指定無しと同じ扱いで制約がかからないこと', 44, function() {
+		var nullConstraint = {
+				notNull: null,
+				notEmpty: null,
+				min: null,
+				max: null,
+				minLength: null,
+				maxLength: null,
+				pattern: null
+		};
+		var undefConstraint = {
+				notNull: undefined,
+				notEmpty: undefined,
+				min: undefined,
+				max: undefined,
+				minLength: undefined,
+				maxLength: undefined,
+				pattern: undefined
+		};
+		var item = manager.createModel({
+			name: 'Test',
+			schema: {
+				id: {
+					id: true
+				}
+			}
+		}).create({
+			id: sequence.next()
+		});
+		var enumValue = [true, 1, 'ab', item];
+		var typeValMap = {
+				number: [null, 1.1, -12.3],
+				integer: [null, 1, -12],
+				boolean: [null, true, false],
+				string: [null, '', 'ab'],
+				enum: [true, 1, 'ab', item],
+				'@Test': [null, item],
+				any: [null, undefined, item, window]
+		};
+		for(var c = 0; c < 2; c++) {
+			var constraint = [nullConstraint, undefConstraint][c];
+			for ( var type in typeValMap) {
+				var propObj = {
+						type: type,
+						constraint: constraint
+					};
+				if (type === 'enum') {
+					propObj.enumValue = enumValue;
+				}
+				var model = manager.createModel({
+					name: 'TestModel' + sequence.next(),
+					schema: {
+						id: {
+							id: true
+						},
+						v: propObj
+					}
+				});
+				for (var i = 0, l = typeValMap[type].length; i < l; i++) {
+					var item = model.create({
+						id: sequence.next(),
+						v: typeValMap[type][i]
+					});
+					strictEqual(item.get('v'), typeValMap[type][i], h5.u.str.format('モデルに制約がかかっていないこと。type: {0}, value: {1}', type, typeValMap[type][i]));
+				}
+			}
+		}
 	});
 
 	//=============================
@@ -6840,6 +6948,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_CALC_RETURNED_INVALID_VALUE, e.message);
 		}
 	});
+
 	test('calcの返す値の制約チェックが行われること (type: number, number[], integer, integer[])', 29, function() {
 		var constraint = {
 			notNull: true,
