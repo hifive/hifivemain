@@ -288,27 +288,83 @@
 	}
 
 	/**
-	 * ドキュメントの高さ(コンテンツ全体の高さ)を取得します。
-	 * <p>
-	 * 1.6.4/1.7.1/1.8.0は正しい値を返すが1.7.1ではバグがあるため、jQuery.height()を使用せず自前で計算を行う。
-	 * <p>
-	 * http://bugs.jquery.com/ticket/3838<br>
-	 * http://pastebin.com/MaUuLjU2
+	 * 指定された文字列をキャピタライズします。
+	 *
+	 * @param str 文字列
+	 * @returns キャピタライズされた文字列
 	 */
-	function getDocumentHeight() {
-		var body = document.body;
-		var doc = document.documentElement;
-		return Math.max(body.scrollHeight, doc.scrollHeight, body.offsetHeight, doc.offsetHeight,
-				doc.clientHeight);
+	function capitalize(str) {
+		var trimd = str.replace(/ /, '');
+		return (typeof trimd === 'string') ? trimd.charAt(0).toUpperCase()
+				+ trimd.slice(1).toLowerCase() : null;
 	}
 
 	/**
-	 * ドキュメントの幅を取得します。
+	 * ドキュメント(コンテンツ全体)の高さまたは幅を取得します。
 	 * <p>
-	 * IE6だとwidthとpaddingの計算にバグがあるため、自前で計算を行う
+	 * ウィンドウの高さを取得したい場合は引数に"height"(大文字小文字区別しない)を、 ウィンドウの幅を取得したい場合は引数に"width"(大文字小文字区別しない)を指定して下さい。
+	 * <p>
+	 * 以下のバグがあるため自前で計算を行う。
+	 * <p>
+	 * 1.6.4/1.7.1/1.8.0は正しい値を返すが1.7.1ではバグがあるため正しい値を返さない。<br>
+	 * http://bugs.jquery.com/ticket/3838<br>
+	 * http://pastebin.com/MaUuLjU2
+	 * <p>
+	 * IE6だと同一要素に対してスタイルにwidthとpaddingを指定するとサイズがおかしくなる。<br>
+	 * http://hiromedo-net.sakura.ne.jp/memoblog/?p=47
 	 */
-	function getDocumentWidth() {
-		return $(document).outerWidth(true);
+	function getDocumentSize(propName) {
+		var capProp = capitalize(propName);
+
+		if (capProp !== 'Height' && capProp !== 'Width') {
+			return 0;
+		}
+
+		var body = document.body;
+		var doc = document.documentElement;
+		return Math.max(body['scroll' + capProp], doc['scroll' + capProp],
+				body['offset' + capProp], doc['offset' + capProp], doc['client' + capProp]);
+	}
+
+	/**
+	 * ウィンドウの幅と高さを取得します。
+	 * <p>
+	 * ウィンドウの高さを取得したい場合は引数に"height"(大文字小文字区別しない)を、 ウィンドウの幅を取得したい場合は引数に"width"(大文字小文字区別しない)を指定して下さい。
+	 * <p>
+	 * jQuery1.8からQuirksモードをサポートしていないため、$(window).height()からウィンドウサイズを取得できない(0を返す)ため、自前で計算を行う。<br>
+	 * http://blog.jquery.com/2012/08/30/jquery-1-8-1-released/
+	 */
+	function getWindowSize(propName) {
+		var capProp = capitalize(propName);
+
+		if (capProp !== 'Height' && capProp !== 'Width') {
+			return 0;
+		}
+
+		var body = document.body;
+		var docElem = document.documentElement;
+		return (typeof window['inner' + capProp] === 'number') ? window['inner' + capProp]
+				: (document.compatMode === 'CSS1Compat') ? docElem['client' + capProp]
+						: body['client' + capProp];
+	}
+
+	/**
+	 * Y方向またはX方向のスクロール量を取得します。
+	 * <p>
+	 * Y方向のスクロール量を取得したい場合は引数に"top"(大文字小文字区別しない)を、 X方向のスクロール量を取得したい場合は引数に"left"(大文字小文字区別しない)を指定して下さい。
+	 */
+	function getScrollSize(propName) {
+		var capProp = capitalize(propName);
+
+		if (capProp !== 'Top' && capProp !== 'Left') {
+			return 0;
+		}
+
+		var elem = (document.compatMode === 'CSS1Compat') ? document.documentElement
+				: document.body;
+		var offsetProp = (capProp === 'Top') ? 'Y' : 'X';
+
+		return window['page' + offsetProp + 'Offset'] || elem['scroll' + capProp];
 	}
 
 	/**
@@ -345,8 +401,8 @@
 
 		return function() {
 			that._redrawable = false;
-			var w = that._isScreenLock ? getDocumentWidth() : that.$target.outerWidth(true);
-			var h = that._isScreenLock ? getDocumentHeight() : that.$target.outerHeight(true);
+			var w = that._isScreenLock ? getDocumentSize('width') : that.$target.outerWidth(true);
+			var h = that._isScreenLock ? getDocumentSize('height') : that.$target.outerHeight(true);
 
 			if (usePositionFixed) {
 				updateMessageArea();
@@ -854,19 +910,21 @@
 		 */
 		_reposition: function() {
 			if (this._isScreenLock) {
-				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightを参照する
-				var displayHeight = window.innerHeight ? window.innerHeight : $(window).height();
+				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightをから高さを取得する
+				// また、quirksモードでjQuery1.8.xの$(window).height()を実行すると0を返すので、clientHeightから高さを取得する
+				var windowHeight = getWindowSize('height');
 
 				if (usePositionFixed) {
 					// 可視領域からtopを計算する
-					this.$content.css('top', ((displayHeight - this.$content.outerHeight()) / 2)
+					this.$content.css('top', ((windowHeight - this.$content.outerHeight()) / 2)
 							+ 'px');
 				} else {
 					// 可視領域+スクロール領域からtopを計算する
-					this.$content.css('top',
-							(($(document).scrollTop() + (displayHeight / 2)) - (this.$content
-									.height() / 2))
-									+ 'px');
+					this.$content
+							.css('top',
+									((getScrollSize('top') + (windowHeight / 2)) - (this.$content
+											.height() / 2))
+											+ 'px');
 				}
 			} else {
 				this.$content.css('top',
