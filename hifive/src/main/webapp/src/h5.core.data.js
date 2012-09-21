@@ -710,13 +710,19 @@
 
 		// schemaのチェック
 		// baseSchemaがないのに、schemaが指定されていなかったらエラー
-		// schemaが指定されていて、オブジェクトでないならエラー
 		var schema = descriptor.schema;
 		if (!baseSchema && schema == null) {
 			errorReason.push(createErrorReason(DESCRIPTOR_ERR_CODE_NO_SCHEMA));
 			if (stopOnError) {
 				return errorReason;
 			}
+		}
+
+		// schemaが指定されていて、オブジェクトでないならエラー
+		if (!baseSchema && !$.isPlainObject(schema)) {
+			errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT));
+			// schemaがオブジェクトでなかったら、schemaのチェックのしようがないので、stopOnErrorの値に関わらずreturnする
+			return errorReason;
 		}
 
 		// base指定されていた場合は、後勝ちでextendする
@@ -736,16 +742,9 @@
 	 * @return {Array} エラー理由を格納した配列。エラーのない場合は空配列を返す。
 	 */
 	function validateSchema(schema, manager, stopOnError) {
-		var errorReason = [];
-
 		// new DataModelのなかで validate → createCheckFunc → defaultValueの順でチェックする。ここではdefaultValueのチェックはしない。
 
-		// schemaがオブジェクトかどうか
-		if (!$.isPlainObject(schema)) {
-			errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT));
-			// schemaがオブジェクトでなかったら、これ以上チェックしようがないので、stopOnErrorの値に関わらずreturnする
-			return errorReason;
-		}
+		var errorReason = [];
 
 		try {
 			// id指定されている属性が一つだけであることをチェック
@@ -2878,7 +2877,7 @@
 
 		var itemValueCheckFuncs = createCheckValueByDescriptor(extendedSchema, manager);
 
-		var defaultValueErrorReason = validateDefaultValue(extendedSchema, itemValueCheckFuncs);
+		var defaultValueErrorReason = validateDefaultValue(extendedSchema, itemValueCheckFuncs, true);
 		if (defaultValueErrorReason.length > 0) {
 			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, defaultValueErrorReason);
 		}
