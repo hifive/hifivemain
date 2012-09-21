@@ -7349,24 +7349,23 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('addEventListener 正常系', function() {
-		//TODO window.addEventListenerと同じで、何いれても(引数が2つさえあれば)エラー出ない？？
+	test('addEventListener 正常系', 4, function() {
+		// (文字列,関数)ならエラーにならない
 		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				['change', undefined], [false, false], [undefined, undefined]];
+				[' ', changeListener], ['', changeListener]];
 		var l = validArgs.length
 		for ( var i = 0; i < l; i++) {
 			var ret = item.addEventListener(validArgs[i][0], validArgs[i][1]);
 			strictEqual(ret, undefined,
-					'addEventListenerの戻り値はundefinedであること。引数が2つ指定されていればエラーにはならないこと');
+					'(文字列、関数)ならエラーにならないこと。戻り値はundefinedであること。'+validArgs[i]);
 			item.removeEventListener(validArgs[i][0], validArgs[i][1]);
 		}
 		expect(l);
 	});
 
 
-	test('addEventListener 異常系', 3, function() {
-		//TODO エラーコード確認する
-		var errCode// = ERR.ERR_CODE_XXX;
+	test('addEventListener 異常系', 5, function() {
+		var errCode = ERRCODE.h5scopeglobals.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
 			item.addEventListener();
 			ok(false, 'エラーが発生していません');
@@ -7385,9 +7384,21 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
 		}
+		try {
+			item.addEventListener(new Event('itemsChange'), function() {});
+			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
+		try {
+			item.addEventListener('itemsChange', {});
+			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
 	});
 
-	test('hasEventListener 正常系', 5, function() {
+	test('hasEventListener', 5, function() {
 		var ret = item.hasEventListener('change', changeListener);
 		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
 
@@ -7409,12 +7420,8 @@ $(function() {
 		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
 	});
 
-	test('hasEventListener 異常系', function() {
-	//TODO hasEventListenerの引数チェックを確認する
-	});
-
 	test(
-			'removeEventListener 正常系',
+			'removeEventListener',
 			function() {
 				var ret = item.removeEventListener('change', changeListener);
 				strictEqual(ret, undefined,
@@ -7448,10 +7455,6 @@ $(function() {
 						false,
 						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
 			});
-
-	test('removeEventListener 異常系', function() {
-	//TODO removeEventListenerの引数チェックを確認する
-	});
 
 	test('addEventListenerで"change"イベントに登録したハンドラだけが実行され、removeEventListenerされたハンドラは実行されなくなること。',
 			function() {
@@ -7542,9 +7545,9 @@ $(function() {
 	// Body
 	//=============================
 	test('addEventListener 正常系', function() {
-		//TODO window.addEventListenerと同じで、何いれても(引数が2つさえあれば)エラー出ない？？
+		// (文字列,関数)ならエラーにならない
 		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				['change', undefined], [false, false], [undefined, undefined]];
+				[' ', changeListener], ['', changeListener]];
 		var l = validArgs.length
 		for ( var i = 0; i < l; i++) {
 			var ret = dataModel1.addEventListener(validArgs[i][0], validArgs[i][1]);
@@ -7556,16 +7559,14 @@ $(function() {
 	});
 
 
-	test('addEventListener 異常系', function() {
-		//TODO エラーコード確認する
-		var errCode// = ERR.ERR_CODE_XXX;
+	test('addEventListener 異常系', 5, function() {
+		var errCode = ERRCODE.h5scopeglobals.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
 			dataModel1.addEventListener();
 			ok(false, '引数なしでエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
 		}
-		var errCode// = ERR.ERR_CODE_XXX;
 		try {
 			dataModel1.addEventListener('cnahge');
 			ok(false, 'イベント名だけを引数に渡して呼び出した場合に、エラーが発生していません');
@@ -7573,14 +7574,26 @@ $(function() {
 			strictEqual(e.code, errCode, e.message);
 		}
 		try {
-			item.addEventListener(function() {});
+			dataModel1.addEventListener(function() {});
 			ok(false, '関数だけを引数に渡して呼び出した場合にエラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
+		try {
+			dataModel1.addEventListener(new Event('itemsChange'), function() {});
+			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
+		try {
+			dataModel1.addEventListener('itemsChange', {});
+			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
 		}
 	});
 
-	test('hasEventListener 正常系', 5, function() {
+	test('hasEventListener', 5, function() {
 		var ret = dataModel1.hasEventListener('itemsChange', changeListener);
 		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
 
@@ -7602,12 +7615,8 @@ $(function() {
 		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
 	});
 
-	test('hasEventListener 異常系', function() {
-	//TODO hasEventListenerの引数チェックを確認する
-	});
-
 	test(
-			'removeEventListener 正常系',
+			'removeEventListener ',
 			function() {
 
 				var ret = dataModel1.removeEventListener('change', changeListener);
@@ -7643,9 +7652,6 @@ $(function() {
 						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
 			});
 
-	test('removeEventListener 異常系', function() {
-	//TODO removeEventListenerの引数チェックを確認する
-	});
 	test('addEventListenerで"itemsChange"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。', 6,
 			function() {
 				var managerEventListener = function() {
@@ -7729,8 +7735,9 @@ $(function() {
 	// Body
 	//=============================
 	test('addEventListener 正常系', function() {
+		// (文字列,関数)ならエラーにならない
 		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				['change', undefined], [false, false], [undefined, undefined]];
+				[' ', changeListener], ['', changeListener]];
 		var l = validArgs.length
 		for ( var i = 0; i < l; i++) {
 			var ret = manager.addEventListener(validArgs[i][0], validArgs[i][1]);
@@ -7743,8 +7750,7 @@ $(function() {
 
 
 	test('addEventListener 異常系', function() {
-		//TODO エラーコード確認する
-		var errCode// = ERR.ERR_CODE_XXX;
+		var errCode = ERRCODE.h5scopeglobals.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
 			manager.addEventListener('itemsCnahge');
 			ok(false, 'エラーが発生していません');
@@ -7757,9 +7763,21 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
 		}
+		try {
+			manager.addEventListener(new Event('itemsChange'), function() {});
+			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
+		try {
+			manager.addEventListener('itemsChange', {});
+			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
 	});
 
-	test('hasEventListener 正常系', 5, function() {
+	test('hasEventListener', 5, function() {
 		var ret = manager.hasEventListener('itemsChange', changeListener);
 		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
 
@@ -7781,12 +7799,8 @@ $(function() {
 		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
 	});
 
-	test('hasEventListener 異常系', function() {
-	//TODO hasEventListenerの引数チェックを確認する
-	});
-
 	test(
-			'removeEventListener 正常系',
+			'removeEventListener',
 			function() {
 
 				var ret = manager.removeEventListener('change', changeListener);
@@ -7821,10 +7835,6 @@ $(function() {
 						false,
 						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
 			});
-
-	test('removeEventListener 異常系', function() {
-	//TODO hasEventListenerの引数チェックを確認する
-	});
 
 	test('addEventListenerで"itemsChange"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。', 6,
 			function() {

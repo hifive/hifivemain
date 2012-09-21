@@ -16,6 +16,10 @@
  * hifive
  */
 
+h5.u.obj.expose('ERRCODE.h5scopeglobals',{
+	ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER: 100
+});
+
 h5.u.obj.expose('ERRCODE.h5.api.geo', {
 	ERR_CODE_INVALID_COORDS: 2000,
 	ERR_CODE_INVALID_GEOSYSTEM_CONSTANT: 2001,
