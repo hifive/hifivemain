@@ -1260,7 +1260,8 @@
 					var evBefore = {
 						type: EVENT_TYPE_OBSERVE_BEFORE,
 						method: METHOD_NAME_COPY_FROM,
-						args: src
+						args: src,
+						isDestructive: true
 					};
 
 					if (!this.dispatchEvent(evBefore)) {
@@ -1274,7 +1275,8 @@
 							type: EVENT_TYPE_OBSERVE,
 							method: METHOD_NAME_COPY_FROM,
 							args: arguments,
-							returnValue: ret
+							returnValue: ret,
+							isDestructive: true
 						};
 						this.dispatchEvent(evAfter);
 						return ret;
@@ -1285,14 +1287,19 @@
 	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
 			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
 			'some', 'reduce', 'reduceRight'];
+	// 破壊的(副作用のある)メソッド
+	var destructiveMethods = ['sort', 'reverse', 'pop', 'unshift', 'push', 'splice'];
+
 	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
 		ObservableArray.prototype[arrayMethods[i]] = (function(method) {
 			//TODO fallback実装の提供
 			return function() {
+				var isDestructive = $.inArray(method, destructiveMethods) !== -1;
 				var evBefore = {
 					type: EVENT_TYPE_OBSERVE_BEFORE,
 					method: method,
-					args: arguments
+					args: arguments,
+					isDestructive: isDestructive
 				};
 
 				if (!this.dispatchEvent(evBefore)) {
@@ -1302,7 +1309,8 @@
 						type: EVENT_TYPE_OBSERVE,
 						method: method,
 						args: arguments,
-						returnValue: ret
+						returnValue: ret,
+						isDestructive: true
 					};
 					this.dispatchEvent(evAfter);
 					return ret;
