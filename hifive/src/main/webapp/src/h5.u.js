@@ -1310,7 +1310,7 @@
 						method: method,
 						args: arguments,
 						returnValue: ret,
-						isDestructive: true
+						isDestructive: isDestructive
 					};
 					this.dispatchEvent(evAfter);
 					return ret;
