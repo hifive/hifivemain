@@ -32,6 +32,17 @@
  */
 var errorCodeToMessageMap = {};
 
+//=============================
+// Errors
+//=============================
+/** addEventListener,removeEventListenerに渡された引数が不正 */
+var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 100;
+
+var ERROR_MESSAGES = [];
+ERROR_MESSAGES[ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
+
+addFwErrorCodeMap(ERROR_MESSAGES);
+
 // =============================
 // Misc Functions
 // =============================
@@ -277,6 +288,10 @@ EventDispatcher.prototype.hasEventListener = function(type, listener) {
  * @param listener
  */
 EventDispatcher.prototype.addEventListener = function(type, listener) {
+	// 引数チェック
+	if (!isString(type) || !$.isFunction(listener)) {
+		throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
+	}
 	if (this.hasEventListener(type, listener)) {
 		return;
 	}
@@ -310,7 +325,6 @@ EventDispatcher.prototype.removeEventListener = function(type, listener) {
 			return;
 		}
 	}
-
 };
 
 /**
