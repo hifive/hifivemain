@@ -865,7 +865,7 @@ $(function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		// TODO 不正になる文字列を確認する
 		var invalidStrs = ['string|number', 'string number', 'int', 'num', 'null', 'String',
-				'Number', 'Boolean', 'Object', 'Array', 'Null', 'Any', 'undefined'];
+				'Number', 'Boolean', 'Object', 'Array', 'Null', 'Any', 'undefined', 'string[][]', 'any[][]', '@string'];
 		var l = invalidStrs.length;
 		expect(l);
 
