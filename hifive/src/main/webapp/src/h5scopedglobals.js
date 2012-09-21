@@ -35,13 +35,16 @@ var errorCodeToMessageMap = {};
 //=============================
 // Errors
 //=============================
-/** addEventListener,removeEventListenerに渡された引数が不正 */
-var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 100;
+/**
+ * addEventListener,removeEventListenerに渡された引数が不正
+ * @private
+ */
+var G_ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 100;
 
-var ERROR_MESSAGES = [];
-ERROR_MESSAGES[ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
+var G_ERROR_MESSAGES = [];
+G_ERROR_MESSAGES[G_ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
 
-addFwErrorCodeMap(ERROR_MESSAGES);
+addFwErrorCodeMap(G_ERROR_MESSAGES);
 
 // =============================
 // Misc Functions
@@ -269,7 +272,7 @@ EventDispatcher.prototype.hasEventListener = function(type, listener) {
 		return false;
 	}
 	var l = this.__listeners[type];
-	if (!l) {
+	if (!l || !this.__listeners.hasOwnProperty(type)) {
 		return false;
 	}
 
@@ -290,7 +293,7 @@ EventDispatcher.prototype.hasEventListener = function(type, listener) {
 EventDispatcher.prototype.addEventListener = function(type, listener) {
 	// 引数チェック
 	if (!isString(type) || !$.isFunction(listener)) {
-		throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
+		throwFwError(G_ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
 	}
 	if (this.hasEventListener(type, listener)) {
 		return;
@@ -300,7 +303,7 @@ EventDispatcher.prototype.addEventListener = function(type, listener) {
 		this.__listeners = {};
 	}
 
-	if (!(type in this.__listeners)) {
+	if (!(this.__listeners.hasOwnProperty(type))) {
 		this.__listeners[type] = [];
 	}
 
