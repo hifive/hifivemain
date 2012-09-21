@@ -1645,23 +1645,18 @@
 			// アップデートセッション中かどうか
 			var isAlreadyInUpdate = false;
 
-			// 追加しないメソッド。validateする必要がない。
-			var eventMethods = ['sort', 'reverse', 'pop'];
-
-			// 追加が行われるメソッド。validateする必要がある。
-			var validateAndEventMethods = ['unshift', 'push', 'splice', 'copyFrom'];
-
+			// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
+			var noAddMethods = ['sort', 'reverse', 'pop'];
 
 			function observeBeforeListener(event) {
-				// 追加も削除もソートもしないメソッドなら何もしない
-				if ($.inArray(event.method, validateAndEventMethods) === -1
-						&& $.inArray(event.method, eventMethods) === -1) {
+				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+				if (!event.isDestructive) {
 					return;
 				}
+
 				var args = argsToArray(event.args);
 
-				//
-				var checkFlag = $.inArray(event.method, eventMethods) === -1;
+				var checkFlag = $.inArray(event.method, noAddMethods) === -1;
 
 				if (event.method === 'splice') {
 					if (args.length <= 2) {
@@ -1691,13 +1686,10 @@
 			}
 
 			function observeListener(event) {
-				// 追加も削除もソートもしないメソッドなら何もしない
-				if ($.inArray(event.method, validateAndEventMethods) === -1
-						&& $.inArray(event.method, eventMethods) === -1) {
+				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+				if (!event.isDestructive) {
 					return;
 				}
-				// sliceで第2引数がないなら何もしない
-				var args = argsToArray(event.args);
 
 				// 配列の値が変化していたらitemのイベントを上げる
 				// は、endUpdateのなかでやる
