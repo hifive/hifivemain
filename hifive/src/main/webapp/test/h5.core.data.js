@@ -2351,7 +2351,7 @@ $(function() {
 			base: '@Test6',
 			schema: {
 				v: {
-					type: '@Test3'
+					type: '@Test3[]'
 				}
 			}
 		}, {
@@ -2445,7 +2445,7 @@ $(function() {
 						id: true
 					},
 					v: {
-						type: '@Test44'
+						type: '@TestNoExistModel'
 					}
 				}
 			}]);
