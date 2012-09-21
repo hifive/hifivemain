@@ -1216,13 +1216,11 @@
 		};
 	}
 
-
 	function ObservableArray() {
 		this.length = 0;
 	}
-	$.extend(ObservableArray.prototype, EventDispatcher.prototype);
-	// equalsメソッドの追加
-	$.extend(ObservableArray.prototype,
+
+	$.extend(ObservableArray.prototype, EventDispatcher.prototype,
 			{
 				/**
 				 * ObservableArrayまたは配列を２つ引数にとり、中身が同じかどうかを比較する
@@ -1249,8 +1247,41 @@
 						return true;
 					}
 					return false;
+				},
+
+				/**
+				 * 指定された配列の要素をこのObservableArrayにシャローコピーします。
+				 * 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
+				 *
+				 * @param {Array} src コピー元の配列
+				 * @returns {Array} 削除前の要素を持った配列
+				 */
+				copyFrom: function(src) {
+					var evBefore = {
+						type: EVENT_TYPE_OBSERVE_BEFORE,
+						method: METHOD_NAME_COPY_FROM,
+						args: src
+					};
+
+					if (!this.dispatchEvent(evBefore)) {
+						var ret = Array.prototype.slice.call(this, 0);
+
+						var args = src.slice(0);
+						args.unshift(0, this.length);
+						Array.prototype.splice.apply(this, args);
+
+						var evAfter = {
+							type: EVENT_TYPE_OBSERVE,
+							method: METHOD_NAME_COPY_FROM,
+							args: arguments,
+							returnValue: ret
+						};
+						this.dispatchEvent(evAfter);
+						return ret;
+					}
 				}
 			});
+
 	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
 			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
 			'some', 'reduce', 'reduceRight'];
@@ -1279,37 +1310,6 @@
 			};
 		})(arrayMethods[i]);
 	}
-	/**
-	 * 指定された配列の要素をこのObservableArrayにシャローコピーします。 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
-	 *
-	 * @param {Array} src コピー元の配列
-	 * @returns {Array} 削除前の要素を持った配列
-	 */
-	ObservableArray.prototype.copyFrom = function(src) {
-		var evBefore = {
-			type: EVENT_TYPE_OBSERVE_BEFORE,
-			method: METHOD_NAME_COPY_FROM,
-			args: src
-		};
-
-		if (!this.dispatchEvent(evBefore)) {
-			var ret = Array.prototype.slice.call(this, 0);
-
-			var args = src.slice(0);
-			args.unshift(0, this.length);
-			Array.prototype.splice.apply(this, args);
-
-			var evAfter = {
-				type: EVENT_TYPE_OBSERVE,
-				method: METHOD_NAME_COPY_FROM,
-				args: arguments,
-				returnValue: ret
-			};
-			this.dispatchEvent(evAfter);
-			return ret;
-		}
-
-	};
 
 	/**
 	 * ObservableArrayを作成します。
