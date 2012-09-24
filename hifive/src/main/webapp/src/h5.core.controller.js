@@ -1922,6 +1922,10 @@
 		 */
 		clear: function(templateIds) {
 			this.__view.clear(templateIds);
+		},
+
+		bind: function(target, context) {
+			this.__view.bind(target, context);
 		}
 	});
 

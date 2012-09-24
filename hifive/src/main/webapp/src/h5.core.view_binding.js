@@ -15,7 +15,7 @@
  *
  * hifive
  */
-/* h5init */
+/* h5.core.view_binding */
 (function() {
 
 	// =========================================================================
@@ -27,6 +27,13 @@
 	// =============================
 	// Production
 	// =============================
+
+	var DATA_H5_CONTEXT = 'data-h5-context';
+
+	var DATA_H5_LOOP_CONTEXT = 'data-h5-loop-context';
+
+	var DATA_H5_DYN_CTX = 'data-h5-dyn-ctx';
+
 
 	//var DATA_ATTR_UI = 'data-h5-ui'; //TODO 名前空間
 
@@ -41,6 +48,10 @@
 
 
 	var COMMENT_BINDING_TARGET_MARKER = '{h5bind';
+
+	var BIND_BEGIN_MARKER = '{h5bindmarker id="{0}"}';
+
+	var BIND_END_MARKER = '{/h5bindmarker}';
 
 	// =============================
 	// Development Only
@@ -68,9 +79,20 @@
 	// Variables
 	// =============================
 
+	var markerUid = 0;
+
+	var contextUid = 0;
+
+
 	//var compMap = {};
 
 	var uid = 0;
+
+
+	//バインドUID（現在表示されているDOM）にひもづけているリスナー。キー：uid, 値：リスナー関数
+	//TODO もっと良い方法考える
+	var listeners = {};
+
 
 	//var uiMap = {};
 
@@ -248,38 +270,11 @@
 
 
 	function isDataItem(obj) {
-		if (obj.addEventListener) {
+		//TODO 厳密に判定
+		if (obj.addEventListener && !$.isArray(obj) && !h5.u.obj.isObservableArray(obj)) {
 			return true;
 		}
 		return false;
-	}
-
-	function observableArray_observeListener(event) {
-		var views = getViewsFromSrc(event.target);
-		if (!views) {
-			return;
-		}
-
-		for ( var i = 0, len = views.length; i < len; i++) {
-
-		}
-	}
-
-	function dataItem_changeListener(event) {
-
-		var views = getViewsFromSrc(event.target);
-		if (!views) {
-			return;
-		}
-
-		var newValues = {};
-		for ( var p in event.props) {
-			newValues[p] = event.props[p].newValue;
-		}
-
-		for ( var i = 0, len = views.length; i < len; i++) {
-			updateBinding(views[i], event.target, newValues);
-		}
 	}
 
 	function updateBinding(rootElement, context, values) {
@@ -307,33 +302,40 @@
 		});
 	}
 
-
-
 	/**
 	 * データバインドを行う。
 	 *
 	 * @param {Element} rootElement データコンテキストを持つルート要素。ただし、コメントターゲットのルートの場合はdocumentFragmentになっている
 	 * @param {Object} context データコンテキスト
 	 */
-	function applyBinding(rootElement, context, isFragmentRoot, isLoopContext) {
+	function applyBinding(binding, rootElement, context, isLoopContext) {
 		if (!context) {
 			return;
 		}
 
 		var isItem = isDataItem(context);
 
-		if (!isFragmentRoot) {
-			//context単位にsrc/viewの対応を保存。
-			//可能ならイベントハンドラを設定して、変更伝搬させる
-			var uid = getUid();
-			$(rootElement).attr('data-h5-dyn-bind', uid);
-			addBindingEntry(context, rootElement, uid);
+		//context単位にsrc/viewの対応を保存。
+		//可能ならイベントハンドラを設定して、変更伝搬させる
+		var uid = getUid();
+		$(rootElement).attr('data-h5-dyn-bind', uid);
+		addBindingEntry(context, rootElement, uid);
 
-			if (h5.u.obj.isObservableArray(context)) {
-				context.addEventListener('observe', observableArray_observeListener);
-			} else if (isItem) {
-				context.addEventListener('change', dataItem_changeListener);
-			}
+		//TODO 高速化
+		if (h5.u.obj.isObservableArray(context)) {
+			var observeListener = function(event) {
+				binding._observableArray_observeListener(event);
+			};
+			listeners[uid] = observeListener;
+
+			context.addEventListener('observe', observeListener);
+		} else if (isItem) {
+			var changeListener = function(event) {
+				binding._dataItem_changeListener(event);
+			};
+			listeners[uid] = changeListener;
+
+			context.addEventListener('change', changeListener);
 		}
 
 		//loop-contextの場合はループ処理して終わり
@@ -350,7 +352,7 @@
 				for ( var j = 0, childLen = rootChildNodes.length; j < childLen; j++) {
 					var clonedInnerNode = rootChildNodes[j].cloneNode(true); //deep copy
 					if (clonedInnerNode.nodeType === Node.ELEMENT_NODE) {
-						applyBinding(clonedInnerNode, context[i]);
+						applyBinding(binding, clonedInnerNode, context[i]);
 					}
 					fragment.appendChild(clonedInnerNode);
 				}
@@ -364,12 +366,13 @@
 
 		//以下はloop-contextでない場合
 
+		//TODO 一番最初に来たとき、rootElementにdata-contextが書いてあると正しく動作しない。
+
 		//自分のコンテキストに属しているバインディング対象要素を探す。
 		var $bindElements = $getBindElementInContext(rootElement);
 
-
-		//コメントバインディングでない場合は、rootElement自体もバインド対象になり得る
-		if (!isFragmentRoot && $(rootElement).attr('data-h5-bind') != null) {
+		//rootElement自体もバインド対象になり得る
+		if ($(rootElement).attr('data-h5-bind') != null) {
 			//add()は元のjQueryオブジェクトを変更せず、新しいセットを返す
 			$bindElements = $bindElements.add(rootElement);
 		}
@@ -390,11 +393,11 @@
 		});
 
 		//data-context, data-loop-contextそれぞれについて、バインディングを実行
-		applyChildBinding(rootElement, context, false);
-		applyChildBinding(rootElement, context, true);
+		applyChildBinding(binding, rootElement, context, false);
+		applyChildBinding(binding, rootElement, context, true);
 	}
 
-	function applyChildBinding(rootElement, context, isLoopContext) {
+	function applyChildBinding(binding, rootElement, context, isLoopContext) {
 		var dataContextAttr = isLoopContext ? 'data-h5-loop-context' : 'data-h5-context';
 
 		//自分のコンテキストに属するdata-contextを探す
@@ -406,8 +409,21 @@
 			var childContextProp = $this.attr(dataContextAttr);
 			var childContext = context[childContextProp];
 
-			applyBinding($this[0], childContext, false, isLoopContext);
+			applyBinding(binding, $this[0], childContext, isLoopContext);
 		});
+	}
+
+
+	function clearContents(markerBegin, markerEnd) {
+		for ( var node = markerBegin.nextSibling; node; node = node.nextSibling) {
+			if (node.nodeType !== Node.COMMENT_NODE || node !== markerEnd) {
+				node.parentNode.removeChild(node);
+			}
+
+			if (node === markerEnd) {
+				break;
+			}
+		}
 	}
 
 	// =========================================================================
@@ -417,35 +433,156 @@
 	// =========================================================================
 
 	function Binding(target, dataContext) {
+
+		this._parent = target.parentNode;
+
+		this._marker = document.createComment(h5.u.str.format(BIND_BEGIN_MARKER, markerUid++));
+
+		//Endマーカーをターゲットの後ろに入れる
+		this._markerEnd = document.createComment(BIND_END_MARKER);
+		this._parent.insertBefore(this._markerEnd, target.nextSibling);
+
 		if (target.nodeType !== undefined) {
-			//エレメントまたはコメントノード
 			if (target.nodeType === Node.ELEMENT_NODE) {
-				this._src = target.cloneNode(true);
+				//エレメントノード
+
+				//ターゲットの前にマーカーコメントノードを追加する。
+				//これにより、バインディングの結果ターゲットノード自体がなくなってしまうような場合でも
+				//どこにノードを追加すればよいか追跡し続けることができる
+				this._parent.insertBefore(this._marker, target);
+				this._src = [target.cloneNode(true)];
+				$(target).remove();
+			} else {
+				//コメントノード
+				var tempParent = document.createElement('div');
+				tempParent.innerHTML = target;
+
+				//TODO
+
+				this._marker = target;
+				this._src = target;
 			}
-			//TODO comment-binding
-			//			else {
-			//				var tempParent = document.createElement('div');
-			//				tempParent.innerHTML = target
-			//				this._src = target;
-			// 			}
-			//this._isCommentTarget = true;
 		} else {
-			//NodeList
+			//複数のノード
 			var srcList = [];
 			for ( var i = 0, len = target.length; i < len; i++) {
 				srcList.push(target[i].cloneNode(true));
 			}
+			this._parent.insertBefore(this._marker, target[0]);
 			this._src = srcList;
 		}
 
-		this._target = target;
+		this._bindingId = contextUid++;
+
+		//this._srcは常に配列
+		//初期状態のノードに、コンテキストごとに固有のIDを振っておく
+		for ( var i = 0, len = this._src.length; i < len; i++) {
+			var $src = $(this._src[i]);
+
+			if ($src.attr('data-h5-context') || $src.attr('data-h5-loop-context')) {
+				$src.attr(DATA_H5_DYN_CTX, contextUid++);
+			}
+
+			$src.find('[data-h5-context],[data-h5-loop-context]').each(function() {
+				$(this).attr(DATA_H5_DYN_CTX, contextUid++);
+			});
+		}
 
 		this._context = dataContext;
-		this._contextId = 0;
 	}
 	$.extend(Binding.prototype, {
 		refresh: function() {
+			clearContents(this._marker, this._markerEnd);
 
+			var fragment = document.createDocumentFragment();
+
+			for ( var i = 0, len = this._src.length; i < len; i++) {
+				var src = this._src[i].cloneNode(true);
+				fragment.appendChild(src);
+				if (src.nodeType === Node.ELEMENT_NODE) {
+					applyBinding(this, src, this._context);
+				}
+			}
+			this._parent.insertBefore(fragment, this._markerEnd);
+		},
+
+		_observableArray_observeListener: function(event) {
+//			if (!event.isDestructive) {
+//				return;
+//			}
+
+			var orgViews = getViewsFromSrc(event.target);
+			if (!orgViews) {
+				return;
+			}
+
+			var views = orgViews.slice(0);
+
+			for ( var i = 0, len = views.length; i < len; i++) {
+				$view = $(views[i]);
+				var contextId = $view.attr(DATA_H5_DYN_CTX);
+				var contextSrc;
+
+				if (contextId == null) {
+					contextSrc = this._src;
+				} else {
+					for ( var j = 0, srcLen = this._src.length; j < srcLen; j++) {
+						contextSrc = $('[' + DATA_H5_DYN_CTX + '="' + contextId + '"]',
+								this._src[i])[0];
+						if (contextSrc) {
+							break;
+						}
+					}
+				}
+
+				contextSrc = wrapInArray(contextSrc);
+				for ( var j = 0, ctxSrcLen = contextSrc.length; j < ctxSrcLen; j++) {
+					var newView = contextSrc[j].cloneNode(true);
+					$view[0].parentNode.insertBefore(newView, $view[0]);
+
+					var oldUid = $view.attr('data-h5-dyn-bind');
+					event.target.removeEventListener('change', listeners[oldUid]);
+					removeBindingEntry(event.target, $view[0], oldUid);
+
+					$view.remove();
+
+					applyBinding(this, newView, event.target, true);
+				}
+			}
+		},
+
+		_dataItem_changeListener: function(event) {
+			var views = getViewsFromSrc(event.target);
+			if (!views) {
+				return;
+			}
+
+			for ( var i = 0, len = views.length; i < len; i++) {
+				var rootElement = views[i];
+
+				//自分のコンテキストに属しているバインディング対象要素を探す。
+				var $bindElements = $getBindElementInContext(rootElement);
+
+				//rootElement自体もバインド対象になり得る
+				if ($(rootElement).attr('data-h5-bind') != null) {
+					//add()は元のjQueryオブジェクトを変更せず、新しいセットを返す
+					$bindElements = $bindElements.add(rootElement);
+				}
+
+				//各要素についてバインドする
+				$bindElements.each(function() {
+					var $this = $(this);
+					var prop = $this.attr('data-h5-bind');
+
+					if (prop in event.props) {
+						//TODO 各種特別バインディング
+						var value = event.props[prop].newValue;
+						$this.text(value);
+						//TODO newValueがobj/arrayでnot observableの場合はつぶしてapply
+					}
+
+				});
+			}
 		}
 	});
 
@@ -460,6 +597,5 @@
 
 	h5internal.view = {};
 	h5internal.view.createBinding = createBinding;
-	h5internal.view.applyBinding = applyBinding;
 
 })();
