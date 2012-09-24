@@ -2647,7 +2647,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('create, set, get, remove', {
+	module('create, get, remove', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
@@ -3118,6 +3118,53 @@ $(function() {
 		ok(dataModel1.has('true'), 'id:"true"のアイテムがあるので"true"を渡すとtrueが返ってくること');
 		ok(!dataModel1.has(true), 'id:"true"のアイテムがあってもtrueを渡すとfalseが返ってくること');
 	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('DataItem.get/set', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+			createDataModel1();
+		},
+		teardown: function() {
+			sequence = null;
+			dataModel1 = null;
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('getで値の取得、setで値の格納ができること', 3, function(){
+		var item = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		}).create({
+			id: sequence.next()
+		});
+
+		item.set('val', 'abc');
+		strictEqual(item.get('val'), 'abc', 'setした値がgetで取得できること');
+		var obj = item.get();
+		deepEqual(obj, {
+			id: item.get('id'),
+			val: 'abc'
+		}, 'get()を引数なしで呼び出すと、値の格納されたオブジェクトが返ること');
+
+		obj.val = 'def';
+		strictEqual(item.get('val'), 'abc', 'get()で取得した値の格納されたオブジェクト内の値を変更してもデータアイテム内の値は変わらないこと');
+	});
+
+
 
 	//=============================
 	// Definition
