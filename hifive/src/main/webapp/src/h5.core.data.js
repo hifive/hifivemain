@@ -81,6 +81,12 @@
 	/** createModelに渡された配列内のディスクリプタ同士でtypeやbaseによる依存関係が循環参照している */
 	var ERR_CODE_DESCRIPTOR_CIRCULAR_REF = 15014;
 
+	/** DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemは変更できない */
+	var ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM = 15015;
+
+	/** DataManagerに属していないDataModelで、create/remove/変更できない */
+	var ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL = 15016;
+
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
@@ -97,6 +103,8 @@
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'DataItem.set()でidをセットすることはできない';
 	ERROR_MESSAGES[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'depend.calcが返した値がプロパティの型・制約に違反しています。違反したプロパティ={0}, 違反した値={1}';
 	ERROR_MESSAGES[ERR_CODE_DESCRIPTOR_CIRCULAR_REF] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、baseやtypeによる依存関係が循環参照しています。';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM] = 'DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemの中身は変更できません。id={0}, メソッド={1}';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL] = 'DataManagerに属していないDataModelの中身は変更できません。メソッド{0}は使用できません。モデル名={0}, メソッド={1}';
 
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
@@ -1651,6 +1659,12 @@
 					return;
 				}
 
+				// itemがmodelに属していない又は、itemが属しているmodelがmanagerに属していないならエラー
+				if (item.getModel() !== model || !model.manager) {
+					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [item.__values[model.idKey],
+							event.method]);
+				}
+
 				var args = argsToArray(event.args);
 
 				var checkFlag = $.inArray(event.method, noAddMethods) === -1;
@@ -1820,7 +1834,7 @@
 			 * @returns {Any} 指定されたプロパティの値
 			 */
 			get: function(key) {
-				if(arguments.length === 0){
+				if (arguments.length === 0) {
 					return $.extend({}, this.__values);
 				}
 				return getValue(this, key);
@@ -1838,6 +1852,11 @@
 			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取る
 			 */
 			set: function(var_args) {
+				// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
+				if (this.getModel() !== model || !this.getModel().manager) {
+					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [this.__values[model.idKey],
+							'set'], this);
+				}
 				//引数はオブジェクト1つ、または(key, value)で呼び出せる
 				var valueObj = var_args;
 				if (arguments.length === 2) {
@@ -2361,6 +2380,7 @@
 				this.size--;
 
 				ret.push(item);
+				item.__model = null;
 				actualRemovedItems.push(item);
 			}
 
@@ -2568,20 +2588,19 @@
 						 * 指定されたデータモデルを削除します。 データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後
 						 * データモデル自体をマネージャから削除します。
 						 *
-						 * @param {String} name データモデル名
+						 * @param {String|DataModel} nameOrModel データモデル名またはデータモデルインスタンス
 						 * @memberOf DataModelManager
 						 */
-						dropModel: function(name) {
+						dropModel: function(nameOrModel) {
 							//TODO dropModelするときに依存していたらどうするか？
 							//エラーにしてしまうか。
-							var model = this.models[name];
-							if (!model) {
+							var name = isString(nameOrModel) ? nameOrModel
+									: (typeof nameOrModel === 'object' ? nameOrModel.name : null);
+
+							if (!name || !this.models[name]) {
 								return;
 							}
-
-							// 9/11 福田追記 addをコメントアウトしたのでremoveもコメントアウト
-							//			model.removeEventListener('itemsChange', this._dataModelItemsChangeListener);
-
+							var model = this.models[name];
 							model.manager = null;
 							delete this.models[name];
 							return model;
