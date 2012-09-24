@@ -103,8 +103,8 @@
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'DataItem.set()でidをセットすることはできない';
 	ERROR_MESSAGES[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'depend.calcが返した値がプロパティの型・制約に違反しています。違反したプロパティ={0}, 違反した値={1}';
 	ERROR_MESSAGES[ERR_CODE_DESCRIPTOR_CIRCULAR_REF] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、baseやtypeによる依存関係が循環参照しています。';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM] = 'DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemの中身は変更できません。id={0}, メソッド={1}';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL] = 'DataManagerに属していないDataModelの中身は変更できません。メソッド{0}は使用できません。モデル名={0}, メソッド={1}';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM] = 'DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemの中身は変更できません。データアイテムID={0}, メソッド={1}';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL] = 'DataManagerに属していないDataModelの中身は変更できません。モデル名={0}, メソッド={1}';
 
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
@@ -2072,8 +2072,9 @@
 
 
 	function createSequence(start, step, returnType) {
-		var current = start !== undefined ? start : 1;
-		var theStep = step !== undefined ? step : 1;
+		// start,stepをdefault値で、returnTypeだけ指定したい場合、createSequence(null,null,returnType)で呼べるように、==nullで比較している
+		var current = start != null ? start : 1;
+		var theStep = step != null ? step : 1;
 
 		function currentInt() {
 			return current;
@@ -2243,6 +2244,10 @@
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
 		 */
 		create: function(objOrArray) {
+			// modelがmanagerを持たない(dropModelされた)ならエラー
+			if (!this.manager) {
+				throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'create']);
+			}
 			//TODO objOrArrayがobjでもArrayでもなかったらエラー
 
 			var ret = [];
@@ -2349,6 +2354,11 @@
 		 * @returns {DataItem|DataItem[]} 削除したデータアイテム
 		 */
 		remove: function(objOrItemIdOrArray) {
+			// modelがmanagerを持たない(dropModelされた)ならエラー
+			if (!this.manager) {
+				throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'remove']);
+			}
+
 			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
 			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
 			//入っていない場合は一時的にセッションを作成する。
