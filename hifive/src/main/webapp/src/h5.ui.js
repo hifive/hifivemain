@@ -137,9 +137,14 @@
 	})();
 
 	/**
-	 * 対象ブラウザがIE6以前のブラウザまたはQuirksモードか
+	 * 互換モードか判定します
 	 */
-	var isLegacyIE = (h5ua.isIE && (h5ua.browserVersion <= 6 || !!(document.documentMode && document.documentMode === 5)));
+	var compatMode = (document.compatMode !== 'CSS1Compat');
+
+	/**
+	 * 対象ブラウザがIE6以前のブラウザか
+	 */
+	var isLegacyIE = h5ua.isIE && h5ua.browserVersion <= 6;
 
 	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
@@ -163,7 +168,7 @@
 	 * <ul>
 	 */
 	var usePositionFixed = !(h5ua.isAndroidDefaultBrowser
-			|| (h5ua.isiOS && h5ua.browserVersion < 5) || isLegacyIE || h5ua.isWindowsPhone);
+			|| (h5ua.isiOS && h5ua.browserVersion < 5) || isLegacyIE || compatMode || h5ua.isWindowsPhone);
 
 	/**
 	 * CSS3 Animationsをサポートしているか
@@ -171,6 +176,36 @@
 	 * (true:サポート/false:未サポート)
 	 */
 	var isCSS3AnimationsSupported = null;
+
+	/**
+	 * ウィンドウの高さを取得するメソッド
+	 */
+	var windowHeight = null;
+
+	/**
+	 * ウィンドウの幅を取得するメソッド
+	 */
+	var windowWidth = null;
+
+	/**
+	 * ドキュメントの高さを取得するメソッド
+	 */
+	var documentHeight = null;
+
+	/**
+	 * ドキュメントの高さを取得するメソッド
+	 */
+	var documentWidth = null;
+
+	/**
+	 * Y方向のスクロール値を取得するメソッド
+	 */
+	var scrollTop = null;
+
+	/**
+	 * X方向のスクロール値を取得するメソッド
+	 */
+	var scrollLeft = null;
 
 	// =============================
 	// Functions
@@ -288,21 +323,9 @@
 	}
 
 	/**
-	 * 指定された文字列をキャピタライズします。
-	 *
-	 * @param str 文字列
-	 * @returns キャピタライズされた文字列
-	 */
-	function capitalize(str) {
-		var trimd = str.replace(/ /, '');
-		return (typeof trimd === 'string') ? trimd.charAt(0).toUpperCase()
-				+ trimd.slice(1).toLowerCase() : null;
-	}
-
-	/**
 	 * ドキュメント(コンテンツ全体)の高さまたは幅を取得します。
 	 * <p>
-	 * ウィンドウの高さを取得したい場合は引数に"height"(大文字小文字区別しない)を、 ウィンドウの幅を取得したい場合は引数に"width"(大文字小文字区別しない)を指定して下さい。
+	 * ウィンドウの高さを取得したい場合は引数に"Height"を、 ウィンドウの幅を取得したい場合は引数に"Width"を指定して下さい。
 	 * <p>
 	 * 以下のバグがあるため自前で計算を行う。
 	 * <p>
@@ -313,58 +336,65 @@
 	 * IE6だと同一要素に対してスタイルにwidthとpaddingを指定するとサイズがおかしくなる。<br>
 	 * http://hiromedo-net.sakura.ne.jp/memoblog/?p=47
 	 */
-	function getDocumentSize(propName) {
-		var capProp = capitalize(propName);
+	function documentSize(propName) {
+		var prop = propName;
 
-		if (capProp !== 'Height' && capProp !== 'Width') {
-			return 0;
-		}
+		return function() {
+			var body = document.body;
+			var docElem = document.documentElement;
+			// 互換モードの場合はサイズ計算にbody要素を、IE6標準の場合はdocumentElementを使用する
+			var elem = compatMode ? body : isLegacyIE ? docElem : null;
 
-		var body = document.body;
-		var doc = document.documentElement;
-		return Math.max(body['scroll' + capProp], doc['scroll' + capProp],
-				body['offset' + capProp], doc['offset' + capProp], doc['client' + capProp]);
+			if (elem) {
+				if (prop === 'Height') {
+					// ウィンドウサイズを大きくすると、scroll[Width/Height]よりもclient[Width/Height]の値のほうが大きくなるため、
+					// client[Width/Height]のほうが大きい場合はこの値を返す
+					return elem['client' + prop] > elem['scroll' + prop] ? elem['client' + prop] : elem['scroll' + prop];
+				} else {
+					return elem['client' + prop];
+				}
+			} else {
+				return Math.max(body['scroll' + prop],
+						docElem['scroll' + prop], body['offset' + prop], docElem['offset' + prop],
+						docElem['client' + prop]);
+			}
+		};
 	}
 
 	/**
 	 * ウィンドウの幅と高さを取得します。
 	 * <p>
-	 * ウィンドウの高さを取得したい場合は引数に"height"(大文字小文字区別しない)を、 ウィンドウの幅を取得したい場合は引数に"width"(大文字小文字区別しない)を指定して下さい。
+	 * ウィンドウの高さを取得したい場合は引数に"Height"を、 ウィンドウの幅を取得したい場合は引数に"Width"を指定して下さい。
 	 * <p>
 	 * jQuery1.8からQuirksモードをサポートしていないため、$(window).height()からウィンドウサイズを取得できない(0を返す)ため、自前で計算を行う。<br>
 	 * http://blog.jquery.com/2012/08/30/jquery-1-8-1-released/
 	 */
-	function getWindowSize(propName) {
-		var capProp = capitalize(propName);
+	function windowSize(propName) {
+		var prop = propName;
 
-		if (capProp !== 'Height' && capProp !== 'Width') {
-			return 0;
-		}
-
-		var body = document.body;
-		var docElem = document.documentElement;
-		return (typeof window['inner' + capProp] === 'number') ? window['inner' + capProp]
-				: (document.compatMode === 'CSS1Compat') ? docElem['client' + capProp]
-						: body['client' + capProp];
+		return function() {
+			var body = document.body;
+			var docElem = document.documentElement;
+			return (typeof window['inner' + prop] === 'number') ? window['inner' + prop]
+					: compatMode ? body['client' + prop] : docElem['client' + prop];
+		};
 	}
 
 	/**
 	 * Y方向またはX方向のスクロール量を取得します。
 	 * <p>
-	 * Y方向のスクロール量を取得したい場合は引数に"top"(大文字小文字区別しない)を、 X方向のスクロール量を取得したい場合は引数に"left"(大文字小文字区別しない)を指定して下さい。
+	 * Y方向のスクロール量を取得したい場合は引数に"Top"を、 X方向のスクロール量を取得したい場合は引数に"Left"を指定して下さい。
 	 */
-	function getScrollSize(propName) {
-		var capProp = capitalize(propName);
+	function scrollPosition(propName) {
+		var prop = propName;
 
-		if (capProp !== 'Top' && capProp !== 'Left') {
-			return 0;
-		}
-
-		var elem = (document.compatMode === 'CSS1Compat') ? document.documentElement
-				: document.body;
-		var offsetProp = (capProp === 'Top') ? 'Y' : 'X';
-
-		return window['page' + offsetProp + 'Offset'] || elem['scroll' + capProp];
+		return function() {
+			// doctypeが「XHTML1.0 Transitional DTD」だと、document.documentElement.scrollTopが0を返すので、互換モードを判定する
+			// http://mokumoku.mydns.jp/dok/88.html
+			var elem = compatMode ? document.body : document.documentElement;
+			var offsetProp = (prop === 'Top') ? 'Y' : 'X';
+			return window['page' + offsetProp + 'Offset'] || elem['scroll' + prop];
+		};
 	}
 
 	/**
@@ -401,12 +431,12 @@
 
 		return function() {
 			that._redrawable = false;
-			var w = that._isScreenLock ? getDocumentSize('width') : that.$target.outerWidth(true);
-			var h = that._isScreenLock ? getDocumentSize('height') : that.$target.outerHeight(true);
+			var w = that._isScreenLock ? documentWidth() : that.$target.outerWidth(true);
+			var h = that._isScreenLock ? documentHeight() : that.$target.outerHeight(true);
 
 			if (usePositionFixed) {
 				updateMessageArea();
-			} else if (!isLegacyIE) {
+			} else if (!isLegacyIE && !compatMode) {
 				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
 				setTimeout(function() {
 					// widthは100%が指定されているので、heightのみ更新する
@@ -467,6 +497,13 @@
 	// Body
 	//
 	// =========================================================================
+
+	windowHeight = windowSize('Height');
+	windowWidth = windowSize('Width');
+	documentHeight = documentSize('Height');
+	documentWidth = documentSize('Width');
+	scrollTop = scrollPosition('Top');
+	scrollLeft = scrollPosition('Left');
 
 	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
 	if (!isCanvasSupported && isVMLSupported) {
@@ -794,7 +831,7 @@
 
 		// IE6の場合、selectタグがz-indexを無視するため、オーバーレイと同一階層にiframe要素を生成してselectタグを操作出来ないようにする
 		// http://www.programming-magic.com/20071107222415/
-		if (isLegacyIE) {
+		if (isLegacyIE || compatMode) {
 			// httpsでiframeを開くと警告が出るためsrcに指定する値を変える
 			// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
 			var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
@@ -912,19 +949,15 @@
 			if (this._isScreenLock) {
 				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightをから高さを取得する
 				// また、quirksモードでjQuery1.8.xの$(window).height()を実行すると0を返すので、clientHeightから高さを取得する
-				var windowHeight = getWindowSize('height');
+				var wh = windowHeight();
 
 				if (usePositionFixed) {
 					// 可視領域からtopを計算する
-					this.$content.css('top', ((windowHeight - this.$content.outerHeight()) / 2)
-							+ 'px');
+					this.$content.css('top', ((wh - this.$content.outerHeight()) / 2) + 'px');
 				} else {
 					// 可視領域+スクロール領域からtopを計算する
-					this.$content
-							.css('top',
-									((getScrollSize('top') + (windowHeight / 2)) - (this.$content
-											.height() / 2))
-											+ 'px');
+					this.$content.css('top',
+							((scrollTop() + (wh / 2)) - (this.$content.height() / 2)) + 'px');
 				}
 			} else {
 				this.$content.css('top',
