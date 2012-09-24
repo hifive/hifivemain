@@ -183,11 +183,6 @@
 	var windowHeight = null;
 
 	/**
-	 * ウィンドウの幅を取得するメソッド
-	 */
-	var windowWidth = null;
-
-	/**
 	 * ドキュメントの高さを取得するメソッド
 	 */
 	var documentHeight = null;
@@ -201,11 +196,6 @@
 	 * Y方向のスクロール値を取得するメソッド
 	 */
 	var scrollTop = null;
-
-	/**
-	 * X方向のスクロール値を取得するメソッド
-	 */
-	var scrollLeft = null;
 
 	// =============================
 	// Functions
@@ -499,11 +489,9 @@
 	// =========================================================================
 
 	windowHeight = windowSize('Height');
-	windowWidth = windowSize('Width');
 	documentHeight = documentSize('Height');
 	documentWidth = documentSize('Width');
 	scrollTop = scrollPosition('Top');
-	scrollLeft = scrollPosition('Left');
 
 	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
 	if (!isCanvasSupported && isVMLSupported) {
