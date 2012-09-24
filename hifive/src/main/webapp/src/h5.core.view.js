@@ -761,6 +761,15 @@
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				delete this.__cachedTemplates[templateIdsArray[i]];
 			}
+		},
+
+		bind: function(target, context) {
+			if(h5.u.obj.isJQueryObject(target)) {
+				target = target[0];
+			}
+			//TODO targetがjQueryObjの場合, セレクタの場合、targetIdの場合
+			var binding = h5internal.view.createBinding(target, context);
+			binding.refresh();
 		}
 	});
 
