@@ -2541,7 +2541,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('データモデルのドロップ', 10,
+	test('データモデルのドロップ', 11,
 			function() {
 				var model1 = manager.createModel({
 					name: 'TestDataModel1',
@@ -2561,6 +2561,15 @@ $(function() {
 						val: {}
 					}
 				});
+				var model3 = manager.createModel({
+					name: 'TestDataModel3',
+					schema: {
+						id: {
+							id: true
+						},
+						val: {}
+					}
+				});
 				model1.create({
 					id: sequence.next(),
 					val: 1
@@ -2568,6 +2577,10 @@ $(function() {
 				model2.create({
 					id: sequence.next(),
 					val: 2
+				});
+				model3.create({
+					id: sequence.next(),
+					val: 3
 				});
 
 				strictEqual(manager.models.TestDataModel1, model1,
@@ -2588,14 +2601,53 @@ $(function() {
 				manager.dropModel('TestDataModel2');
 				strictEqual(manager.models.TestDataModel2, undefined,
 						'モデル2をドロップした後、モデル2がmanager.modelsの中に入っていないこと');
+
+				manager.dropModel(model3);
+				strictEqual(model3.manager, null, '引数にデータモデルインスタンスを渡してモデルを削除できること');
 				deepEqual(manager.models, {}, '全てのモデルをドロップしたので、manager.modelsは空オブジェクトであること');
+
+			});
+
+	test('dropModelされたモデルでcreate/removeできないこと', 2,
+			function() {
+				var model1 = manager.createModel({
+					name: 'TestDataModel1',
+					schema: {
+						id: {
+							id: true
+						},
+						val: {}
+					}
+				});
+				var item = model1.create({
+					id: sequence.next(),
+					val: 1
+				});
+
+				manager.dropModel(model1);
+
+				try{
+					model1.create({
+						id: sequence.next()
+					});
+					ok(false, 'テスト失敗。エラーが発生していません');
+				} catch(e){
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, e.message);
+				}
+				try{
+					model1.remove(item);
+					ok(false, 'テスト失敗。エラーが発生していません');
+				} catch(e){
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, e.message);
+				}
+
 			});
 
 	//=============================
 	// Definition
 	//=============================
 
-	module('create, get, remove', {
+	module('create, set, get, remove', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
@@ -2859,7 +2911,7 @@ $(function() {
 		strictEqual(dataModel1.get('3').get('val'), 'item3', '登録したアイテムが取得できること');
 	});
 
-	test('removeでアイテムを削除できること。引数に配列を指定した場合は複数削除できること', function() {
+	test('removeでアイテムを削除できること。引数に配列を指定した場合は複数削除できること', 17, function() {
 		var item1 = dataModel1.create({
 			id: sequence.next(),
 			val: 1
@@ -2872,21 +2924,30 @@ $(function() {
 			id: sequence.next(),
 			val: 3
 		});
+		var item4 = dataModel1.create({
+			id: sequence.next(),
+			val: 4
+		});
 		strictEqual(dataModel1.has('1'), true, '削除する前はmodel.hasの結果がtrueであること');
 		strictEqual(dataModel1.has('2'), true, '削除する前はmodel.hasの結果がtrueであること');
 		strictEqual(dataModel1.has('3'), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(dataModel1.has('4'), true, '削除する前はmodel.hasの結果がtrueであること');
+		strictEqual(dataModel1.size, 4, '削除する前はmodel.size()の結果が4であること');
 
 		var item = dataModel1.remove('1');
 		strictEqual(item, item1, 'removeの戻り値はDataItemインスタンスであること');
 
 		strictEqual(dataModel1.get('1'), null, '削除したアイテムのidでgetすると戻り値がnullであること');
 		strictEqual(dataModel1.has('1'), false, 'model.hasの結果がfalseになっていること');
-		strictEqual(dataModel1.size, 2, 'model.sizeが1減っていること');
+		strictEqual(dataModel1.size, 3, 'model.sizeが1減っていること');
+
+		dataModel1.remove(item4);
+		strictEqual(dataModel1.get('4'), null, '引数にデータアイテムインスタンスを指定して削除できること');
 
 		item = dataModel1.remove('noExistId');
 		strictEqual(item, null, '存在しないIDをremoveした時の戻り値はnullであること');
 
-		var items = dataModel1.remove(['2', 'noExistId', '3']);
+		var items = dataModel1.remove(['2', 'noExistId', item3]);
 
 		// removeの戻り値を確認する
 		deepEqual(items, [item2, null, item3], 'removeに配列を渡した時の戻り値は各要素のremove結果が格納された配列であること');
@@ -2898,6 +2959,115 @@ $(function() {
 		strictEqual(dataModel1.has('3'), false, 'model.hasの結果がfalseになっていること');
 		strictEqual(dataModel1.size, 0, 'すべて削除したので、model.sizeが0になっていること');
 	});
+
+	test('データモデルから削除されたアイテムの項目について、getはできるがsetできないこと。ObsevableArrayのプロパティについて、副作用のあるメソッドは使用できないこと。', 8, function() {
+		var model = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				v: null,
+				ary: {
+					type: 'any[]'
+				}
+			}
+		});
+
+		var item = model.create({
+			id: sequence.next(),
+			v: 'a',
+			ary: [1,2,3]
+		});
+
+		model.remove(item);
+		strictEqual(item.getModel(), null, 'モデルから削除したアイテムのgetModel()がnullを返すこと');
+		strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
+		deepEqualObs(item.get('ary'), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
+		deepEqual(item.get('ary').slice(0), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
+
+		try {
+			item.set('v', 'a');
+			ok(false, 'テスト失敗。エラーが発生しませんでした。');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+		}
+		try {
+			item.set('ary', [1]);
+			ok(false, 'テスト失敗。エラーが発生しませんでした。');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+		}
+		try {
+			var o = item.get('ary');
+			o.push(4);
+			ok(false, 'テスト失敗。エラーが発生しませんでした。');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+		}
+		try {
+			var o = item.get('ary');
+			o.splice(0,1,1);
+			ok(false, 'テスト失敗。エラーが発生しませんでした。');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+		}
+	});
+
+	test('データマネージャから削除されたデータモデルに属するアイテムの項目について、getはできるがsetできないこと。ObsevableArrayのプロパティについて、副作用のあるメソッドは使用できないこと。', 8,
+			function() {
+				var model = manager.createModel({
+					name: 'TestModel',
+					schema: {
+						id: {
+							id: true
+						},
+						v: null,
+						ary: {
+							type: 'any[]'
+						}
+					}
+				});
+
+				var item = model.create({
+					id: sequence.next(),
+					v: 'a',
+					ary: [1,2,3]
+				});
+
+				manager.dropModel(model.name);
+				strictEqual(model.manager, null, 'model.managerがnull');
+				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
+				deepEqualObs(item.get('ary'), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
+				deepEqual(item.get('ary').slice(0), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
+
+				try {
+					item.set('v', 'a');
+					ok(false, 'テスト失敗。エラーが発生しませんでした。');
+				} catch(e) {
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+				}
+				try {
+					item.set('ary', [1]);
+					ok(false, 'テスト失敗。エラーが発生しませんでした。');
+				} catch(e) {
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+				}
+				try {
+					var o = item.get('ary');
+					o.push(4);
+					ok(false, 'テスト失敗。エラーが発生しませんでした。');
+				} catch(e) {
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+				}
+				try {
+					var o = item.get('ary');
+					o.splice(0,1,1);
+					ok(false, 'テスト失敗。エラーが発生しませんでした。');
+				} catch(e) {
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+				}
+			});
 
 	test('id指定の項目にsetできないこと', 2, function() {
 		var item = dataModel1.create({
@@ -2915,7 +3085,6 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
 		}
 	});
-
 
 	//=============================
 	// Definition
@@ -8376,7 +8545,7 @@ $(function() {
 				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
 	});
 
-	test('DataItemのcreateでObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 13, function() {
+	test('DataItemが持つObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 13, function() {
 		var model = manager.createModel({
 			name: 'AryModel',
 			schema: {
@@ -9191,4 +9360,63 @@ $(function() {
 					strictEqual(evObj.manager.models.BModel[prop], evs.BModel[prop], h5.u.str.format('BModelのイベントオブジェクトの{0}が、managerのイベントオブジェクトのmodels.BModel.{0}に格納されていること(インスタンスが同じ)',prop));
 				}
 			});
+	//=============================
+	// Definition
+	//=============================
+	module('createSequence', {
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('createSequence', 35, function(){
+		var sequence = h5.core.data.createSequence();
+		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数なし returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+		strictEqual(sequence.current(), 1, '引数なし 初期値が1であること');
+		strictEqual(sequence.next(), 1, '引数なし next()でcurrent()の値が取得できること');
+		strictEqual(sequence.current(), 2, '引数なし next()を呼んだのでcurrent()の戻り値が2になっていること');
+		strictEqual(sequence.next(), 2, '引数なし next()でcurrent()の値が取得できること');
+
+		sequence = h5.core.data.createSequence(0);
+		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数(0) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+		strictEqual(sequence.current(), 0, '引数(0) 初期値が0であること');
+		strictEqual(sequence.next(), 0, '引数(0) next()でcurrent()の値が取得できること');
+		strictEqual(sequence.current(), 1, '引数(0) next()を呼んだのでcurrent()の戻り値が1になっていること');
+		strictEqual(sequence.next(), 1, '引数(0) next()でcurrent()の値が取得できること');
+
+		sequence = h5.core.data.createSequence(null, 100);
+		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数(null, 100) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+		strictEqual(sequence.current(), 1, '引数(null, 100) 初期値が1であること');
+		strictEqual(sequence.next(), 1, '引数(null, 100) next()でcurrent()の値が取得できること');
+		strictEqual(sequence.current(), 101, '引数(null, 100) next()を呼んだのでcurrent()の戻り値が101になっていること');
+		strictEqual(sequence.next(), 101, '引数(null, 100) next()でcurrent()の値が取得できること');
+
+		sequence = h5.core.data.createSequence(1000, 100);
+		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数(1000, 100) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+		strictEqual(sequence.current(), 1000, '引数(1000, 100) 初期値が1000であること');
+		strictEqual(sequence.next(), 1000, '引数(1000, 100) next()でcurrent()の値が取得できること');
+		strictEqual(sequence.current(), 1100, '引数(1000, 100) next()を呼んだのでcurrent()の戻り値が1100になっていること');
+		strictEqual(sequence.next(), 1100, '引数(1000, 100) next()でcurrent()の値が取得できること');
+
+		sequence = h5.core.data.createSequence(null, null, h5.core.data.SEQUENCE_RETURN_TYPE_INT);
+		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+		strictEqual(sequence.current(), 1, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) 初期値が1であること');
+		strictEqual(sequence.next(), 1, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()でcurrent()の値が取得できること');
+		strictEqual(sequence.current(), 2, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()を呼んだのでcurrent()の戻り値が2になっていること');
+		strictEqual(sequence.next(), 2, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()でcurrent()の値が取得できること');
+
+		sequence = h5.core.data.createSequence(null, null, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_STRING, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_STRINGであること');
+		strictEqual(sequence.current(), "1", '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) 初期値が"1"であること');
+		strictEqual(sequence.next(), "1", '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+		strictEqual(sequence.current(), "2", '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()を呼んだのでcurrent()の戻り値が"2"になっていること');
+		strictEqual(sequence.next(), "2", '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+
+		sequence = h5.core.data.createSequence(500, 5, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_STRING, '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_STRINGであること');
+		strictEqual(sequence.current(), "500", '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) 初期値が"500"であること');
+		strictEqual(sequence.next(), "500", '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+		strictEqual(sequence.current(), "505", '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()を呼んだのでcurrent()の戻り値が"505"になっていること');
+		strictEqual(sequence.next(), "505", '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+	});
 });
