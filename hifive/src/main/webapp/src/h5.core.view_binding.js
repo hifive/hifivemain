@@ -28,6 +28,8 @@
 	// Production
 	// =============================
 
+	var DATA_H5_BIND = 'data-h5-bind';
+
 	var DATA_H5_CONTEXT = 'data-h5-context';
 
 	var DATA_H5_LOOP_CONTEXT = 'data-h5-loop-context';
@@ -52,6 +54,18 @@
 	var BIND_BEGIN_MARKER = '{h5bindmarker id="{0}"}';
 
 	var BIND_END_MARKER = '{/h5bindmarker}';
+
+
+	var BIND_DESC_TARGET_SEPARATOR = ':';
+
+	var BIND_DESC_SEPARATOR = ';';
+
+	var BIND_TARGET_DETAIL_REGEXP = /\(\s*(\S+)\s*\)/;
+
+
+	var ERR_CODE_REQUIRE_DETAIL = 16000;
+	var ERR_CODE_UNKNOWN_BIND_DIRECTION = 16001;
+
 
 	// =============================
 	// Development Only
@@ -379,17 +393,7 @@
 
 		//各要素についてバインドする
 		$bindElements.each(function() {
-			var $this = $(this);
-			var prop = $this.attr('data-h5-bind');
-
-			//TODO 各種特別バインディング
-			var value;
-			if (isItem) {
-				value = context.get(prop);
-			} else {
-				value = context[prop];
-			}
-			$this.text(value);
+			doBind(this, context, isItem);
 		});
 
 		//data-context, data-loop-contextそれぞれについて、バインディングを実行
@@ -431,6 +435,113 @@
 	// Body
 	//
 	// =========================================================================
+
+
+	function parseBindDesc(bindDesc) {
+		var splitDescs = bindDesc.split(BIND_DESC_SEPARATOR);
+		var target = [];
+		var targetDetail = [];
+		var prop = [];
+
+		for ( var i = 0, len = splitDescs.length; i < len; i++) {
+			var desc = splitDescs[i];
+			if (desc.indexOf(BIND_DESC_TARGET_SEPARATOR) === -1) {
+				var trimmed = $.trim(desc);
+				if (trimmed.length > 0) {
+					//ターゲット指定がない＝自動バインドの場合
+					target.push(null);
+					targetDetail.push(null);
+					prop.push($.trim(desc));
+				}
+			} else {
+				var sd = desc.split(BIND_DESC_TARGET_SEPARATOR);
+				var trimmedTarget = $.trim(sd[0]);
+				var trimmedProp = $.trim(sd[1]);
+
+				var trimmedDetail = null;
+				var detail = BIND_TARGET_DETAIL_REGEXP.exec(trimmedTarget);
+				if (detail) {
+					//attr(color) -> attr, colorに分離してそれぞれ格納
+					trimmedDetail = detail[1];
+					trimmedTarget = /(\S+)[\s\(]/.exec(trimmedTarget)[1];
+				}
+
+				if (trimmedTarget.length > 0 && trimmedProp.length > 0) {
+					target.push(trimmedTarget);
+					targetDetail.push(trimmedDetail);
+					prop.push(trimmedProp);
+				}
+			}
+
+		}
+
+		var ret = {
+			t: target,
+			d: targetDetail,
+			p: prop
+		};
+		return ret;
+	}
+
+	function doBind(element, context, isItem) {
+		var bindDesc = parseBindDesc($(element).attr(DATA_H5_BIND));
+		var targets = bindDesc.t;
+		var details = bindDesc.d;
+		var props = bindDesc.p;
+
+		var $element = $(element);
+
+		//targetsとpropsのlengthは必ず同じ
+		for ( var i = 0, len = targets.length; i < len; i++) {
+			var target = targets[i];
+			var detail = details[i];
+			var prop = props[i];
+
+			var value;
+			if (isItem) {
+				value = context.get(prop);
+			} else {
+				value = context[prop];
+			}
+
+			if (target == null) {
+				//自動ターゲット
+				if (element.tagName === 'input') {
+					target = 'attr';
+					detail = 'value';
+				} else {
+					target = 'text';
+				}
+			}
+
+			switch (target) {
+			case 'text':
+				$element.text(value);
+				break;
+			case 'html':
+				$element.html(value);
+				break;
+			case 'class':
+				$element.addClass(value);
+				break;
+			case 'attr':
+				if (!detail) {
+					throwFwError(ERR_CODE_REQUIRE_DETAIL);
+				}
+				$element.attr(detail, value);
+				break;
+			case 'style':
+				if (!detail) {
+					throwFwError(ERR_CODE_REQUIRE_DETAIL);
+				}
+				$element.css(detail, value);
+				break;
+			default:
+				throwFwError(ERR_CODE_UNKNOWN_BIND_DIRECTION);
+			}
+		}
+	}
+
 
 	function Binding(target, dataContext) {
 
@@ -507,9 +618,9 @@
 		},
 
 		_observableArray_observeListener: function(event) {
-//			if (!event.isDestructive) {
-//				return;
-//			}
+			//			if (!event.isDestructive) {
+			//				return;
+			//			}
 
 			var orgViews = getViewsFromSrc(event.target);
 			if (!orgViews) {
@@ -571,16 +682,9 @@
 
 				//各要素についてバインドする
 				$bindElements.each(function() {
-					var $this = $(this);
-					var prop = $this.attr('data-h5-bind');
+					doBind(this, event.target, true);
 
-					if (prop in event.props) {
-						//TODO 各種特別バインディング
-						var value = event.props[prop].newValue;
-						$this.text(value);
-						//TODO newValueがobj/arrayでnot observableの場合はつぶしてapply
-					}
-
+					//TODO newValueがobj/arrayでnot observableの場合はつぶしてapply
 				});
 			}
 		}
