@@ -1742,6 +1742,9 @@
 			//内部は { (変更されたprop): { oldValue, newValue } } の形式
 			this.__dirty = {};
 
+			// モデルを持たせる
+			this.__model = model;
+
 			var actualInitialValue = {};
 
 			var noValidationProps = [];
@@ -1862,9 +1865,20 @@
 				if (!isAlreadyInUpdate) {
 					model.manager.endUpdate();
 				}
+			},
+
+
+			/**
+			 * DataItemが属しているDataModelインスタンスを返します。
+			 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
+			 *
+			 * @memberOf DataItem
+			 * @return DataModel
+			 */
+			getModel: function() {
+				return this.__model;
 			}
 		});
-
 		return DataItem;
 	}
 
@@ -2337,7 +2351,7 @@
 						}
 
 						var id = (isString(ids[i]) || isIntegerValue(ids[i], true)) ? ids[i]
-								: ids[i][idKey];
+								: ids[i][ITEM_PROP_BACKING_STORE_PREFIX + idKey];
 
 						var item = this.items[id];
 
