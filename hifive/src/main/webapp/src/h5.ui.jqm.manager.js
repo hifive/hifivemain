@@ -68,6 +68,13 @@
 	var controllerMap = {};
 
 	/**
+	 * define済みのコントローラ定義オブジェクトを保持するマップ
+	 * <p>
+	 * キー：ページID、値：コントローラ定義オブジェクト
+	 */
+	var predefinedControllerMap = {};
+
+	/**
 	 * コントローラインスタンスのマップ
 	 * <p>
 	 * キー：ページID、値：コントローラインスタンスの配列
@@ -123,8 +130,8 @@
 			return;
 		}
 		var id = activePage.attr('id');
-		var controllers = controllerInstanceMap[id];
-		if (controllerMap[id] && (!controllers || controllers.length === 0)) {
+
+		if (controllerMap[id]) {
 			jqmControllerInstance.addCSS(id);
 			jqmControllerInstance.bindController(id);
 		}
@@ -207,6 +214,8 @@
 			for ( var i = 0, len = controllers.length; i < len; i++) {
 				controllers[i].dispose();
 			}
+
+			predefinedControllerMap[id] = [];
 			controllerInstanceMap[id] = [];
 			dynamicControllerInstanceMap[id] = [];
 		},
@@ -334,17 +343,23 @@
 		 * @memberOf JQMController
 		 */
 		bindController: function(id) {
-			var controllers = controllerInstanceMap[id];
-			if (!controllerMap[id] || (controllers && controllers.length > 0)) {
+			var controllerDef = controllerMap[id];
+			var initParam = initParamMap[id];
+
+			if (!controllerDef) {
 				return;
 			}
 
-			if (!controllers) {
+			if (!controllerInstanceMap[id]) {
 				controllerInstanceMap[id] = [];
 			}
 
-			controllerInstanceMap[id].push(h5.core.controller('#' + id, controllerMap[id],
-					initParamMap[id]));
+			if (!predefinedControllerMap[id]) {
+				predefinedControllerMap[id] = [];
+			}
+
+			controllerInstanceMap[id].push(h5.core.controller('#' + id, controllerDef, initParam));
+			predefinedControllerMap[id].push(controllerDef);
 		},
 
 		/**
@@ -366,7 +381,7 @@
 
 			src = wrapInArray(src);
 			for ( var i = 0, srcLen = src.length; i < srcLen; i++) {
-				var path = $.mobile.path.parseUrl(cssMap[id][i]).filename;
+				var path = $.mobile.path.parseUrl(src[i]).filename;
 				var isLoaded = false;
 
 				for ( var j = 0; j < linkLen; j++) {
@@ -385,7 +400,7 @@
 				var cssNode = document.createElement('link');
 				cssNode.type = 'text/css';
 				cssNode.rel = 'stylesheet';
-				cssNode.href = cssMap[id][i];
+				cssNode.href = src[i];
 				head.appendChild(cssNode);
 			}
 		},
@@ -398,18 +413,20 @@
 		 */
 		removeCSS: function(id) {
 			var current = cssMap[id];
+
 			if (!current) {
 				return;
 			}
+
 			var activeId = $.mobile.activePage.attr('id');
-			var active = cssMap[activeId];
-			var src = wrapInArray(current);
-			var activeSrc = wrapInArray(active);
-			var css = $('link').filter(function() {
+			var fromPageCSS = wrapInArray(current);
+			var toPageCSS = wrapInArray(cssMap[activeId]);
+
+			$('link').filter(function() {
 				var href = $(this).attr('href');
-				return $.inArray(href, src) !== -1 && $.inArray(href, activeSrc) === -1;
-			});
-			css.remove();
+				// 遷移元のページで使用していたCSSファイルを、遷移先のページでも使用する場合はremoveしない
+				return $.inArray(href, fromPageCSS) !== -1 && $.inArray(href, toPageCSS) === -1;
+			}).remove();
 		}
 	};
 
@@ -479,6 +496,17 @@
 		 * @name define
 		 */
 		define: function(id, cssSrc, controllerDefObject, initParam) {
+			// 指定されたidの要素が"page"または"dialog"ではない場合defineしない
+			if (typeof id !== 'string'
+					|| !$('#' + id).is(':jqmData(role="page"), :jqmData(role="dialog")')) {
+				return;
+			}
+
+			// 既にコントローラ化されている定義オブジェクトの場合はdefineしない
+			if ($.inArray(controllerDefObject, predefinedControllerMap[id]) !== -1) {
+				return;
+			}
+
 			controllerMap[id] = controllerDefObject;
 			initParamMap[id] = initParam;
 			cssMap[id] = wrapInArray(cssSrc);

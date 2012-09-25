@@ -762,4 +762,63 @@ $(function() {
 		};
 		h5.ui.jqm.manager.define('test11', null, controller11);
 	});
+
+	module('JQMManager - define6', {
+		setup: function() {
+			createPage('test11', null, true);
+			createPage('test12');
+
+			h5.ui.jqm.manager.init();
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	asyncTest('１ページに２つコントローラをバインドした場合 ※min版ではエラーになります', 5, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+		var controller11A = {
+			__name: 'Test11AController',
+			__ready: function() {
+				ok(true, 'Test11AController.__readyが実行される');
+				$('#test11 button').trigger('click');
+			},
+			'button#test click': function(context) {
+				if (context.evArg) {
+					ok(false, 'テスト失敗。ページ遷移後に遷移元のコントローラがバインドしたイベントが呼び出された');
+					return;
+				}
+				ok(true, 'Test11AControllerの#test click が実行される');
+			}
+		};
+		var controller11B = {
+				__name: 'Test11BController',
+				__ready: function() {
+					ok(true, 'Test11BController.__readyが実行される');
+					changePage('#test12', true);
+				}
+			};
+
+		var controller12 = {
+			__name: 'Test12Controller',
+
+			__ready: function() {
+				ok(true, 'Test12Controller.__readyが実行される');
+				$('#test12 button').trigger('click', {
+					opt: true
+				});
+			},
+			'button#test click': function() {
+				ok(true, '#test12内のbutton#test click が実行される');
+				start();
+			}
+		};
+		h5.ui.jqm.manager.define('test11', null, controller11A);
+		h5.ui.jqm.manager.define('test11', null, controller11B);
+		h5.ui.jqm.manager.define('test11', null, controller11A); // バインドされないこと
+		h5.ui.jqm.manager.define('test12', null, controller12);
+	});
 });
