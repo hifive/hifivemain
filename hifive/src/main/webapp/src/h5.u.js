@@ -1288,7 +1288,7 @@
 			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
 			'some', 'reduce', 'reduceRight'];
 	// 破壊的(副作用のある)メソッド
-	var destructiveMethods = ['sort', 'reverse', 'pop', 'unshift', 'push', 'splice'];
+	var destructiveMethods = ['sort', 'reverse', 'pop', 'shift', 'unshift', 'push', 'splice'];
 
 	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
 		ObservableArray.prototype[arrayMethods[i]] = (function(method) {

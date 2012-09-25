@@ -8592,7 +8592,7 @@ $(function() {
 				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
 	});
 
-	test('DataItemが持つObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 13, function() {
+	test('DataItemが持つObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 14, function() {
 		var model = manager.createModel({
 			name: 'AryModel',
 			schema: {
@@ -8638,6 +8638,12 @@ $(function() {
 		o = item.get('ary');
 		o.push(1);
 		deepEqual(order, ['item', 'model','manager'], 'pushでイベント上がる');
+
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.shift(1);
+		deepEqual(order, ['item', 'model','manager'], 'shiftでイベント上がる');
 
 		order=[];
 		evObj = {};
