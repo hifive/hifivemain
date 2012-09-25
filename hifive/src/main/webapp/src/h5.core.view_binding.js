@@ -36,6 +36,8 @@
 
 	var DATA_H5_DYN_CTX = 'data-h5-dyn-ctx';
 
+	var DATA_H5_DYN_BIND = 'data-h5-dyn-bind';
+
 
 	//var DATA_ATTR_UI = 'data-h5-ui'; //TODO 名前空間
 
@@ -266,7 +268,7 @@
 	}
 
 	/**
-	 * 自分のコンテキストに属するdata-contextを返します。
+	 * 自分のコンテキストに属するdata-context（またはdata-loop-context）を返します。
 	 */
 	function $getChildContexts(rootElement, dataContextAttr) {
 		var $childContexts = $('[' + dataContextAttr + ']', rootElement).filter(function() {
@@ -285,7 +287,8 @@
 
 	function isDataItem(obj) {
 		//TODO 厳密に判定
-		if (obj.addEventListener && !$.isArray(obj) && !h5.u.obj.isObservableArray(obj)) {
+		if (obj.addEventListener && obj.getModel && !$.isArray(obj)
+				&& !h5.u.obj.isObservableArray(obj)) {
 			return true;
 		}
 		return false;
@@ -316,6 +319,7 @@
 		});
 	}
 
+
 	/**
 	 * データバインドを行う。
 	 *
@@ -332,7 +336,7 @@
 		//context単位にsrc/viewの対応を保存。
 		//可能ならイベントハンドラを設定して、変更伝搬させる
 		var uid = getUid();
-		$(rootElement).attr('data-h5-dyn-bind', uid);
+		$(rootElement).attr(DATA_H5_DYN_BIND, uid);
 		addBindingEntry(context, rootElement, uid);
 
 		//TODO 高速化
@@ -362,9 +366,15 @@
 			$(rootElement).empty();
 
 			for ( var i = 0, len = context.length; i < len; i++) {
+				//子要素がエレメントだけとは限らないので、先頭にマーカー用のコメントノードを付与。
+				//TODO コメントノードだとセレクタでクエリできないが、先頭からたどると遅いのでchildNodesを見て二分木で探すようにする
+				var idxMarker = document.createComment(createLoopIndexComment(i));
+				fragment.appendChild(idxMarker);
+
 				//TODO 高速化の余地がある（古いブラウザへの対応に気を付けなければいけないが）
 				for ( var j = 0, childLen = rootChildNodes.length; j < childLen; j++) {
 					var clonedInnerNode = rootChildNodes[j].cloneNode(true); //deep copy
+
 					if (clonedInnerNode.nodeType === Node.ELEMENT_NODE) {
 						applyBinding(binding, clonedInnerNode, context[i]);
 					}
@@ -436,6 +446,81 @@
 	//
 	// =========================================================================
 
+	function createLoopIndexComment(index) {
+		return '{h5loopidx value="' + index + '"/}';
+	}
+
+	/**
+	 * 指定されたインデックスを持つ、data-loop-contextで動的生成された子要素のインデックスマーカー（コメントノード）を返します。
+	 *
+	 * @params {Element} endElement 探索終了エレメント
+	 * @returns {Element} インデックスマーカー、見つからない場合はnull
+	 */
+	function findLoopMarker(idx, parentElement, endElement) {
+		var marker = createLoopIndexComment(idx);
+
+		if (!endElement) {
+			endElement = null;
+		}
+
+		//TODO 高速化。エレメントにはidxをdata属性で入れておき、現在位置を検出するのを高速化、その後二分木などで探索する、など
+		for ( var elem = parentElement.firstChild; elem; elem = elem.nextSibling) {
+			if (elem.nodeType === Node.COMMENT_NODE && elem.nodeValue === marker) {
+				return elem;
+			}
+
+			if (elem === endElement) {
+				return null;
+			}
+		}
+		return null;
+	}
+
+	function isLoopMarker(node) {
+		if (node.nodeType !== Node.COMMENT_NODE) {
+			return false;
+		}
+		return node.nodeValue.indexOf('{h5loopidx ') === 0;
+	}
+
+	function getLoopMarkerIndex(node) {
+		if (node.nodeType !== Node.COMMENT_NODE) {
+			return -1;
+		}
+
+		var index = /{h5loopidx value="(\d+)"\/}/.exec(node.nodeValue);
+		if (index == null) {
+			return -1;
+		}
+		return index[1];
+	}
+
+	function removeLoopElements(parentElement, start, count) {
+		var startMarker = findLoopMarker(start, parentElement);
+		var stopMarker = findLoopMarker(start + count, parentElement); //nullなら最後まで削除する
+
+		//TODO 高速化を考える
+		var nodeToRemove = startMarker;
+		while (nodeToRemove !== stopMarker) {
+			var nextNode = nodeToRemove.nextSibling;
+			parentElement.removeChild(nextNode);
+			nodeToRemove = nextNode;
+		}
+	}
+
+	function updateLoopIndex(parentElement) {
+		var index = 0;
+
+		for ( var elem = parentElement.firstChild; elem; elem = elem.nextSibling) {
+			if (elem.nodeType === Node.COMMENT_NODE && elem.nodeValue === marker) {
+				return elem;
+			}
+
+			if (elem === endElement) {
+				return null;
+			}
+		}
+	}
 
 	function parseBindDesc(bindDesc) {
 		var splitDescs = bindDesc.split(BIND_DESC_SEPARATOR);
@@ -483,6 +568,9 @@
 		return ret;
 	}
 
+	/**
+	 * 指定されたエレメントに対して、data-bindで指示された方法で値をセットします。
+	 */
 	function doBind(element, context, isItem) {
 		var bindDesc = parseBindDesc($(element).attr(DATA_H5_BIND));
 		var targets = bindDesc.t;
@@ -541,7 +629,6 @@
 			}
 		}
 	}
-
 
 	function Binding(target, dataContext) {
 
@@ -618,9 +705,9 @@
 		},
 
 		_observableArray_observeListener: function(event) {
-			//			if (!event.isDestructive) {
-			//				return;
-			//			}
+			if (!event.isDestructive) {
+				return;
+			}
 
 			var orgViews = getViewsFromSrc(event.target);
 			if (!orgViews) {
@@ -631,6 +718,14 @@
 
 			for ( var i = 0, len = views.length; i < len; i++) {
 				$view = $(views[i]);
+
+				switch (event.method) {
+				case 'shift':
+					break;
+				case 'pop':
+					break;
+				}
+
 				var contextId = $view.attr(DATA_H5_DYN_CTX);
 				var contextSrc;
 
