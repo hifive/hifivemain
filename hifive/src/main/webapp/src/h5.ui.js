@@ -772,8 +772,10 @@
 		this._uid = $.now();
 		// スクリーンロックで表示するか
 		this._isScreenLock = isScreenlockTarget($t);
-		// 表示対象のDOM要素
+		// 表示対象であるDOM要素を保持するjQueryオブジェクト
 		this.$target = this._isScreenLock ? $('body') : $t;
+		// 表示対象のDOM要素 (旧バージョン互換用)
+		this.target = this.$target[0];
 		// 親要素のpositionがstaticか
 		this._isPositionStatic = this.$target.css('position') === 'static';
 		// スクロール停止イベントハンドラ
@@ -1048,7 +1050,7 @@
 				return this;
 			}
 
-			this.$target.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
+			this.$content.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
 					.text(message);
 			this._reposition();
 
