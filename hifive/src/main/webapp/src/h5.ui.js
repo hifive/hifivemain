@@ -899,19 +899,20 @@
 			return this;
 		},
 		/**
-		 * スクリーンロックされているインジケータのオーバーレイのサイズを再計算します。
+		 * オーバーレイのサイズを再計算します。
 		 * <p>
 		 * position:fixedで表示している場合は再計算しません。
 		 * <p>
 		 * position:absoluteの場合は高さのみ再計算を行い、IE6以下の標準モード及びQuirksモードの場合は高さと幅の両方を再計算します。
+		 *
+		 * @memberOf Indicator
+		 * @function
+		 * @private
+		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		_resizeOverlay: function() {
-			if (!this._isScreenLock) {
-				return;
-			}
-
-			var w = documentWidth();
-			var h = documentHeight();
+			var w = this._isScreenLock ? documentWidth() : this.$target.outerWidth(true);
+			var h = this._isScreenLock ? documentHeight() : this.$target.outerHeight(true);
 
 			if (isLegacyIE || compatMode) {
 				// IE6はwidthにバグがあるため、heightに加えてwidthも自前で計算を行う。
@@ -930,6 +931,7 @@
 		 * @memberOf Indicator
 		 * @function
 		 * @private
+		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		_reposition: function() {
 			if (this._isScreenLock) {
@@ -942,8 +944,9 @@
 					this.$content.css('top', ((wh - this.$content.outerHeight()) / 2) + 'px');
 				} else {
 					// 可視領域+スクロール領域からtopを計算する
-					this.$content.css('top',
-							((scrollTop() + (wh / 2)) - (this.$content.outerHeight() / 2)) + 'px');
+					this.$content.css('top', ((scrollTop() + (wh / 2)) - (this.$content
+							.outerHeight() / 2))
+							+ 'px');
 				}
 			} else {
 				this.$content.css('top',
@@ -964,6 +967,8 @@
 			this.$content.width(totalWidth + blockElementPadding);
 			this.$content.css('left', ((this.$target.width() - this.$content.outerWidth()) / 2)
 					+ 'px');
+
+			return this;
 		},
 		/**
 		 * 画面上に表示されているインジケータ(メッセージ・画面ブロック・進捗表示)を除去します。
