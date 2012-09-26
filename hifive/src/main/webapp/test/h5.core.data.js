@@ -282,7 +282,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('データモデルの登録', 5, function() {
+	test('データモデルの登録', 3, function() {
 		var schema = {
 			empId: {
 				id: true,
@@ -302,9 +302,7 @@ $(function() {
 		var model = manager.createModel(descripter);
 
 		ok(model, 'モデルが作成できること');
-		deepEqual(model.schema, schema, 'モデルにschemaが格納されていること');
-		strictEqual(model.idKey, 'empId', 'IDとなるキーが取得できること');
-		strictEqual(model.manager, manager, 'データモデルマネージャが取得できること');
+		strictEqual(model.getManager(), manager, 'データモデルマネージャが取得できること');
 		strictEqual(model.size, 0, 'データを格納していないので、sizeが0であること');
 	});
 
@@ -2594,7 +2592,7 @@ $(function() {
 						'モデル1だけをドロップした後、モデル2がmanager.modelsの中に入っていること');
 				strictEqual(model1.name, 'TestDataModel1',
 						'dropModelの戻り値はドロップしたデータモデルオブジェクトであり、名前が取得できること');
-				strictEqual(model1.manager, null, 'dropModelの戻り値のmanagerプロパティはnullであること');
+				strictEqual(model1.getManager(), null, 'dropModelの戻り値のmanagerプロパティはnullであること');
 				strictEqual(model1.size, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、サイズを取得できること');
 				strictEqual(model1.items['1'].get('val'), 1,
 						'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、値を取得できること');
@@ -2603,7 +2601,7 @@ $(function() {
 						'モデル2をドロップした後、モデル2がmanager.modelsの中に入っていないこと');
 
 				manager.dropModel(model3);
-				strictEqual(model3.manager, null, '引数にデータモデルインスタンスを渡してモデルを削除できること');
+				strictEqual(model3.getManager(), null, '引数にデータモデルインスタンスを渡してモデルを削除できること');
 				deepEqual(manager.models, {}, '全てのモデルをドロップしたので、manager.modelsは空オブジェクトであること');
 
 			});
@@ -3036,7 +3034,7 @@ $(function() {
 				});
 
 				manager.dropModel(model.name);
-				strictEqual(model.manager, null, 'model.managerがnull');
+				strictEqual(model.getManager(), null, 'model.getManager()がnull');
 				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
 				deepEqualObs(item.get('ary'), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
 				deepEqual(item.get('ary').slice(0), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
