@@ -455,88 +455,83 @@
 	 * @memberOf h5.ui.jqm
 	 * @namespace
 	 */
-	h5.u.obj.expose('h5.ui.jqm.manager', {
+	h5.u.obj.expose('h5.ui.jqm.manager',
+			{
 
-		/**
-		 * jQuery Mobile用hifiveコントローラマネージャを初期化します。
-		 * <p>
-		 * 2回目以降は何も処理を行いません。
-		 *
-		 * @memberOf h5.ui.jqm.manager
-		 * @function
-		 * @name init
-		 */
-		init: function() {
-			if (initCalled) {
-				fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
-				return;
-			}
-			initCalled = true;
-			$(function() {
-				jqmControllerInstance = h5internal.core.controllerInternal('body', jqmController,
-						null, {
-							managed: false
-						});
-				bindToActivePage();
+				/**
+				 * jQuery Mobile用hifiveコントローラマネージャを初期化します。
+				 * <p>
+				 * 2回目以降は何も処理を行いません。
+				 *
+				 * @memberOf h5.ui.jqm.manager
+				 * @function
+				 * @name init
+				 */
+				init: function() {
+					if (initCalled) {
+						fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
+						return;
+					}
+					initCalled = true;
+					$(function() {
+						jqmControllerInstance = h5internal.core.controllerInternal('body',
+								jqmController, null, {
+									managed: false
+								});
+						bindToActivePage();
+					});
+				},
+
+				/**
+				 * jQuery Mobile用hifiveコントローラマネージャにコントローラを登録します。
+				 * <p>
+				 * 「data-role="page"」または「data-role="dialog"」の属性が指定された要素でかつ、
+				 * idが第1引数で指定されたものに一致する要素に対してコントローラをバインドします。
+				 *
+				 * @param {String} id ページID
+				 * @param {String|String[]} cssSrc CSSファイルパス配列
+				 * @param {Object} controllerDefObject コントローラを定義したオブジェクト
+				 * @param {Object} initParam 初期化パラメータ
+				 * @memberOf h5.ui.jqm.manager
+				 * @function
+				 * @name define
+				 */
+				define: function(id, cssSrc, controllerDefObject, initParam) {
+					// 既にコントローラ化されている定義オブジェクトの場合はdefineしない
+					if ($.inArray(controllerDefObject, predefinedControllerMap[id]) !== -1) {
+						return;
+					}
+
+					controllerMap[id] = controllerDefObject;
+					initParamMap[id] = initParam;
+					cssMap[id] = wrapInArray(cssSrc);
+
+					if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
+							&& jqmControllerInstance) {
+						bindToActivePage();
+					} else {
+						this.init();
+					}
+				}
+				/* del begin */
+				,
+				/*
+				 * テスト用に公開
+				 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
+				 *
+				 * @memberOf h5.ui.jqm.manager
+				 * @function
+				 * @name __reset
+				 */
+				__reset: function() {
+					jqmControllerInstance.dispose();
+					jqmControllerInstance = null;
+					controllerMap = {};
+					controllerInstanceMap = {};
+					initParamMap = {};
+					cssMap = {};
+					initCalled = false;
+				}
+			/* del end */
 			});
-		},
-
-		/**
-		 * jQuery Mobile用hifiveコントローラマネージャにコントローラを登録します。
-		 * <p>
-		 * 「data-role="page"」または「data-role="dialog"」の属性が指定された要素でかつ、
-		 * idが第1引数で指定されたものに一致する要素に対してコントローラをバインドします。
-		 *
-		 * @param {String} id ページID
-		 * @param {String|String[]} cssSrc CSSファイルパス配列
-		 * @param {Object} controllerDefObject コントローラを定義したオブジェクト
-		 * @param {Object} initParam 初期化パラメータ
-		 * @memberOf h5.ui.jqm.manager
-		 * @function
-		 * @name define
-		 */
-		define: function(id, cssSrc, controllerDefObject, initParam) {
-			// 指定されたidの要素が"page"または"dialog"ではない場合defineしない
-			if (typeof id !== 'string'
-					|| !$('#' + id).is(':jqmData(role="page"), :jqmData(role="dialog")')) {
-				return;
-			}
-
-			// 既にコントローラ化されている定義オブジェクトの場合はdefineしない
-			if ($.inArray(controllerDefObject, predefinedControllerMap[id]) !== -1) {
-				return;
-			}
-
-			controllerMap[id] = controllerDefObject;
-			initParamMap[id] = initParam;
-			cssMap[id] = wrapInArray(cssSrc);
-
-			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
-					&& jqmControllerInstance) {
-				bindToActivePage();
-			} else {
-				this.init();
-			}
-		}
-		/* del begin */
-		,
-		/*
-		 * テスト用に公開
-		 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
-		 *
-		 * @memberOf h5.ui.jqm.manager
-		 * @function
-		 * @name __reset
-		 */
-		__reset: function() {
-			jqmControllerInstance.dispose();
-			jqmControllerInstance = null;
-			controllerMap = {};
-			controllerInstanceMap = {};
-			initParamMap = {};
-			cssMap = {};
-			initCalled = false;
-		}
-	/* del end */
-	});
 })();
