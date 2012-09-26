@@ -1751,7 +1751,7 @@
 		 */
 		function DataItem(userInitialValue) {
 			/**
-			 * データアイテムが属している
+			 * データアイテムが属しているデータモデル
 			 *
 			 * @private
 			 * @memberOf DataItem
@@ -2127,19 +2127,24 @@
 
 
 	/**
-	 * データモデル。 このクラスは直接newすることはできません。 <a
-	 * href="DataModelManager.html#createModel">DataManager#createModel()</a>を呼ぶと、DataModelクラスを生成して返します。
+	 * データモデル。 このクラスは直接newすることはできません。
+	 * <p>
+	 * <a href="DataModelManager.html#createModel">DataManager#createModel()</a>を呼ぶと、DataModelクラスを生成して返します。
+	 * </p>
 	 *
 	 * @class
 	 * @name DataModel
 	 */
 	function DataModel(descriptor, manager, itemValueCheckFuncs) {
 		/**
-		 * データモデルが持つデータアイテムを持つオブジェクト。<br>
-		 * データアイテムのidをキー、データアイテムインスタンスを値、として保持します。<br>
+		 * データモデルが持つデータアイテムを持つオブジェクト。
+		 * <p>
+		 * データアイテムのidをキー、データアイテムインスタンスを値、として保持します。
+		 * </p>
 		 *
-		 * @type Object
 		 * @memberOf DataModel
+		 * @type Object
+		 * @name items
 		 */
 		this.items = {};
 
@@ -2147,6 +2152,8 @@
 		 * データモデルが持つデータアイテムの数
 		 *
 		 * @memberOf DataModel
+		 * @type Integer
+		 * @name size
 		 */
 		this.size = 0;
 
@@ -2154,13 +2161,18 @@
 		 * データモデル名
 		 *
 		 * @memberOf DataModel
+		 * @type String
+		 * @name name
 		 */
 		this.name = descriptor.name;
 
 		/**
 		 * このデータモデルが属しているデータマネージャインスタンス。<br>
 		 *
+		 * @private
 		 * @memberOf DataModel
+		 * @type Object
+		 * @name _manager
 		 */
 		this._manager = manager;
 
@@ -2186,12 +2198,15 @@
 
 		//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
 		/**
-		 * データモデルのスキーマ。<br>
-		 * 継承関係を展開した後のスキーマを保持します。<br>
+		 * データモデルのスキーマ。
+		 * <p>
+		 * 継承関係を展開した後のスキーマを保持します。
+		 * </p>
 		 *
 		 * @private
-		 * @type Object
 		 * @memberOf DataModel
+		 * @type Object
+		 * @name _schema
 		 */
 		this._schema = schema;
 
@@ -2219,26 +2234,47 @@
 
 		/**
 		 * プロパティの依存関係マップ
+		 *
+		 * @private
+		 * @type Object
+		 * @memberOf DataModel
 		 */
 		this._dependencyMap = createDependencyMap(schema);
 
 		/**
 		 * モデルが持つ依存プロパティ
+		 *
+		 * @private
+		 * @type Array
+		 * @memberOf DataModel
 		 */
 		this._dependProps = dependProps;
 
 		/**
 		 * モデルが持つ実プロパティ(依存しないプロパティ)
+		 *
+		 * @private
+		 * @type Array
+		 * @memberOf DataModel
 		 */
 		this._realProps = realProps;
 
 		/**
-		 * プロパティの型・制約チェック関数
+		 * プロパティの型・制約チェック関数<br>
+		 * プロパティ名をキー、値としてチェック関数を持つ
+		 *
+		 * @private
+		 * @type Object
+		 * @memberOf DataModel
 		 */
 		this._itemValueCheckFuncs = itemValueCheckFuncs;
 
 		/**
 		 * このデータモデルに対応するデータアイテムのコンストラクタ関数
+		 *
+		 * @private
+		 * @type function
+		 * @memberOf DataModel
 		 */
 		this._itemConstructor = createDataItemConstructor(this, descriptor);
 
@@ -2248,14 +2284,19 @@
 	//EventDispatcherの機能を持たせるため、prototypeをコピーし、そのうえでDataModel独自のプロパティを追加する
 	$.extend(DataModel.prototype, EventDispatcher.prototype, {
 		/**
-		 * 指定されたIDと初期値がセットされたデータアイテムを生成します。<br>
-		 * データアイテムはこのデータモデルに紐づけられた状態になっています。<br>
-		 * <br>
-		 * 指定されたIDのデータアイテムがすでにこのデータモデルに存在した場合は、<br>
-		 * 既に存在するデータアイテムを返します（新しいインスタンスは生成されません）。<br>
-		 * 従って、1つのデータモデルは、1IDにつき必ず1つのインスタンスだけを保持します。<br>
-		 * なお、ここでIDの他に初期値も渡された場合は、既存のインスタンスに初期値をセットしてから返します。<br>
+		 * 指定されたIDと初期値がセットされたデータアイテムを生成します。
+		 * <p>
+		 * データアイテムはこのデータモデルに紐づけられた状態になっています。
+		 * </p>
+		 * <p>
+		 * 指定されたIDのデータアイテムがすでにこのデータモデルに存在した場合は、
+		 * 既に存在するデータアイテムを返します（新しいインスタンスは生成されません）。
+		 * </p>
+		 * <p>
+		 * 従って、1つのデータモデルは、1IDにつき必ず1つのインスタンスだけを保持します。
+		 * なお、ここでIDの他に初期値も渡された場合は、既存のインスタンスに初期値をセットしてから返します。
 		 * このとき、当該インスタンスにイベントハンドラが設定されていれば、changeイベントが（通常の値更新と同様に）発生します。
+		 * </p>
 		 *
 		 * @memberOf DataModel
 		 * @param {Object|Object[]} objOrArray 初期値オブジェクト、またはその配列
@@ -2336,11 +2377,15 @@
 		},
 
 		/**
-		 * 指定されたIDのデータアイテムを返します。<br>
-		 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。<br>
-		 * 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、<br>
-		 * 戻り値の配列の対応位置にnullが入ります。<br>
+		 * 指定されたIDのデータアイテムを返します。
+		 * <p>
+		 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。
+		 * 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、
+		 * 戻り値の配列の対応位置にnullが入ります。
+		 * </p>
+		 * <p>
 		 * （例：get(['id1', 'id2', 'id3']) でid2のアイテムがない場合、戻り値は [item1, null, item3] のようになる ）
+		 * </p>
 		 *
 		 * @memberOf DataModel
 		 * @param {String|String[]} ID、またはその配列
@@ -2359,13 +2404,12 @@
 		},
 
 		/**
-		 * 指定されたIDのデータアイテムをこのデータモデルから削除します。<br>
-		 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。<br>
-		 * 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、<br>
-		 * 戻り値の配列の対応位置にnullが入ります。<br>
-		 * （例：remove(['id1', 'id2', 'id3']) でid2のアイテムがない場合、<br>
-		 * 戻り値は [item1, null, item3]のようになります。）<br>
-		 * 引数にID(文字列)またはデータアイテム以外を渡した場合はnullを返します。
+		 * 指定されたIDのデータアイテムをこのデータモデルから削除します。
+		 * <p>
+		 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、
+		 * 戻り値の配列の対応位置にnullが入ります。 （例：remove(['id1', 'id2', 'id3']) でid2のアイテムがない場合、 戻り値は [item1,
+		 * null, item3]のようになります。） 引数にID(文字列)またはデータアイテム以外を渡した場合はnullを返します。
+		 * </p>
 		 *
 		 * @memberOf DataModel
 		 * @param {String|DataItem|String[]|DataItem[]} 削除するデータアイテム
@@ -2427,12 +2471,17 @@
 		},
 
 		/**
-		 * 指定されたデータアイテムを保持しているかどうかを返します。<br>
-		 * 文字列または整数値が渡された場合はID(文字列)とみなし、 オブジェクトが渡された場合はデータアイテムとみなします。<br>
-		 * オブジェクトが渡された場合、自分が保持しているデータアイテムインスタンスかどうかをチェックします。<br>
-		 * 従って、同じ構造を持つ別のインスタンスを引数に渡した場合はfalseが返ります。<br>
-		 * データアイテムインスタンスを引数に渡した場合に限り（そのインスタンスをこのデータモデルが保持していれば）trueが返ります。<br>
+		 * 指定されたデータアイテムを保持しているかどうかを返します。
+		 * <p>
+		 * 文字列または整数値が渡された場合はID(文字列)とみなし、 オブジェクトが渡された場合はデータアイテムとみなします。
+		 * オブジェクトが渡された場合、自分が保持しているデータアイテムインスタンスかどうかをチェックします。
+		 * </p>
+		 * <p>
+		 * 従って、同じ構造を持つ別のインスタンスを引数に渡した場合はfalseが返ります。
+		 * データアイテムインスタンスを引数に渡した場合に限り（そのインスタンスをこのデータモデルが保持していれば）trueが返ります。
+		 * </p>
 		 *
+		 * @memberOf DataModel
 		 * @param {String|Object} idOrObj ID文字列またはデータアイテムオブジェクト
 		 * @returns {Boolean} 指定されたIDのデータアイテムをこのデータモデルが保持しているかどうか
 		 */
@@ -2449,15 +2498,27 @@
 		},
 
 		/**
-		 * このモデルが属しているマネージャを返します。<br>
+		 * このモデルが属しているマネージャを返します。
+		 * <p>
 		 * dropModelされたモデルの場合はnullを返します。
+		 * </p>
 		 *
+		 * @memberOf DataModel
 		 * @returns {DataManager} このモデルが属しているマネージャ
 		 */
 		getManager: function() {
 			return this._manager
 		},
 
+		/**
+		 * 引数にプロパティ名と値を指定し、 値がそのプロパティの制約条件を満たすかどうかをチェックします。
+		 *
+		 * @private
+		 * @memberOf DataModel
+		 * @param {String} プロパティ名
+		 * @value {Any} 値
+		 * @return {Boolean} 値がプロパティの制約条件を満たすならtrue
+		 */
 		_validateItemValue: function(prop, value) {
 			return this._itemValueCheckFuncs[prop](value);
 		},
@@ -2466,6 +2527,7 @@
 		 * 指定されたIDのデータアイテムを返します。 アイテムがない場合はnullを返します。
 		 *
 		 * @private
+		 * @memberOf DataModel
 		 * @param {String} id データアイテムのID
 		 * @returns {DataItem} データアイテム、存在しない場合はnull
 		 */
@@ -2478,6 +2540,7 @@
 		 * 引数で指定されたchangeイベントに基づいて、itemsChangeイベントを即座に発火させます。
 		 *
 		 * @private
+		 * @memberOf DataModel
 		 * @param {Object} event DataItemのchangeイベント
 		 */
 		_dispatchItemsChangeEvent: function(event) {
@@ -2496,6 +2559,9 @@
 
 	/**
 	 * データモデルマネージャ
+	 * <p>
+	 * データモデルを管理するデータモデルマネージャクラスです。このインスタンスはh5.core.data.createManager()で作成します。
+	 * </p>
 	 *
 	 * @class
 	 * @name DataModelManager
@@ -2515,7 +2581,14 @@
 					DataModelManager.prototype,
 					{
 						/**
+						 * データモデルを作成します。
+						 * <p>
+						 * 引数にはデータモデルディスクリプタを渡します。
+						 * </p>
 						 * @param {Object} descriptor データモデルディスクリプタ
+						 * @param {String} descriptor.name データモデル名。必須。
+						 * @param {String} descriptor.base マネージャに属する別のデータモデルのschemaを継承する場合に指定します。『'@'+継承先データモデル名』で指定してください。
+						 * @param {Object} descriptor.schema スキーマを定義したオブジェクトを指定します。必須。
 						 * @memberOf DataModelManager
 						 */
 						createModel: function(descriptor) {
@@ -2623,8 +2696,11 @@
 						},
 
 						/**
-						 * 指定されたデータモデルを削除します。 データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後
+						 * 指定されたデータモデルを削除します。
+						 * <p>
+						 * データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後
 						 * データモデル自体をマネージャから削除します。
+						 *</p>
 						 *
 						 * @param {String|DataModel} nameOrModel データモデル名またはデータモデルインスタンス
 						 * @memberOf DataModelManager
@@ -2645,7 +2721,12 @@
 						},
 
 						/**
+						 * アップデートセッション中かどうかを返します。
+						 * <p>
+						 * beginUpdate()が呼ばれてからendUpdate()が呼ばれるまでの間はアップデートセッション中です。
+						 * </p>
 						 * @returns {Boolean} アップデートセッション中かどうか
+						 * @memberOf DataModelManager
 						 */
 						isInUpdate: function() {
 							return this._updateLogs !== null;

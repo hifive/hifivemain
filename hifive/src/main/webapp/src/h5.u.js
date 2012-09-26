@@ -1216,6 +1216,22 @@
 		};
 	}
 
+	/**
+	 * ObservableArray(オブザーバブルアレイ)とは、配列操作の監視可能な配列です。
+	 * <p>
+	 * h5.u.obj.createObservableArray()で作成します。
+	 * </p>
+	 * <p>
+	 * 通常の配列と同様の操作に加え、要素の追加、削除、変更についての監視ができます。
+	 * </p>
+	 * <p>
+	 * Arrayクラスの持つメソッド(concat, join, pop, push, reverse, shift, slice, sort, splice, unshift,
+	 * indexOf, lastIndexOf, every, filter, forEach, map, some, reduce, reduceRight)が使えます。
+	 * </p>
+	 *
+	 * @class
+	 * @name ObservableArray
+	 */
 	function ObservableArray() {
 		this.length = 0;
 	}
@@ -1223,8 +1239,9 @@
 	$.extend(ObservableArray.prototype, EventDispatcher.prototype,
 			{
 				/**
-				 * ObservableArrayまたは配列を２つ引数にとり、中身が同じかどうかを比較する
+				 * ObservableArrayまたは配列を２つ引数にとり、中身が同じかどうかを比較します。
 				 *
+				 * @memberOf ObservableArray
 				 * @param {ObservableArray|Array} ary1
 				 * @param {ObservableArray|Array} ary2
 				 * @return {Boolean} 配列の中身が同じかどうか
@@ -1251,8 +1268,11 @@
 
 				/**
 				 * 指定された配列の要素をこのObservableArrayにシャローコピーします。
+				 * <p>
 				 * 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
+				 * </p>
 				 *
+				 * @memberOf ObservableArray
 				 * @param {Array} src コピー元の配列
 				 * @returns {Array} 削除前の要素を持った配列
 				 */
