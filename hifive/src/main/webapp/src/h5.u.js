@@ -1138,7 +1138,7 @@
 	 * 指定された名前空間に存在するオブジェクトを取得します。
 	 *
 	 * @param {String} 名前空間
-	 * @return {Any} その名前空間に存在するオブジェクト
+	 * @returns {Any} その名前空間に存在するオブジェクト
 	 * @name getByPath
 	 * @function
 	 * @memberOf h5.u.obj
@@ -1191,7 +1191,7 @@
 	 * 	});
 	 * </pre>
 	 *
-	 * @return {Function} インターセプタ
+	 * @returns {Function} インターセプタ
 	 * @name createInterceptor
 	 * @function
 	 * @memberOf h5.u
@@ -1244,7 +1244,7 @@
 				 * @memberOf ObservableArray
 				 * @param {ObservableArray|Array} ary1
 				 * @param {ObservableArray|Array} ary2
-				 * @return {Boolean} 配列の中身が同じかどうか
+				 * @returns {Boolean} 配列の中身が同じかどうか
 				 */
 				equals: function(ary) {
 					// aryが配列でもObservableArrayでもないならfalse
@@ -1362,6 +1362,269 @@
 		return false;
 	}
 
+	/**
+	 * ObservableItem(オブザーバブルアアイテム)とは、プロパティ操作の監視可能なオブジェクトです。
+	 * <p>
+	 * h5.u.obj.createObservableItem()で作成します。
+	 * </p>
+	 * <p>
+	 * <a href="DataItem.html">データアイテム</a>と同様、get/setで値の読み書きを行います。
+	 * </p>
+	 *
+	 * @class
+	 * @name ObservableArray
+	 * @param {Object} schema schemaオブジェクト。データモデルディスクリプタのスキーマと同様のスキーマオブジェクトを指定します。ただしidの指定は不要です。
+	 */
+	function ObservableItem(schema, itemValueCheckFuncs) {
+		// 実プロパティと依存プロパティ、配列プロパティを列挙
+		var realProps = [];
+		var dependProps = [];
+		var aryProps = [];
+		for ( var p in schema) {
+			if (schema[p] && schema[p].depend) {
+				dependProps.push(p);
+			} else {
+				realProps.push(p);
+			}
+			if (schema[p] && schema[p].type && schema[p].type.indexOf('[]') !== -1) {
+				aryProps.push(p);
+			}
+		}
+
+		// データアイテムではモデルに持たせていた、値チェックに必要な情報を
+		// _contextに持たせる
+		this._context = {
+
+			/**
+			 * プロパティの依存関係マップ
+			 *
+			 * @private
+			 * @type Object
+			 */
+			dependencyMap: createDependencyMap(schema),
+
+			/**
+			 * モデルが持つ依存プロパティ
+			 *
+			 * @private
+			 * @type Array
+			 */
+			dependProps: dependProps,
+
+			/**
+			 * モデルが持つ実プロパティ(依存しないプロパティ)
+			 *
+			 * @private
+			 * @type Array
+			 * @memberOf DataModel
+			 */
+			realProps: realProps,
+
+			/**
+			 * ObservableArrayのプロパティ
+			 *
+			 * @private
+			 * @type Array
+			 */
+			aryProps: aryProps,
+
+			/**
+			 * プロパティの型・制約チェック関数<br>
+			 * プロパティ名をキー、値としてチェック関数を持つ
+			 *
+			 * @private
+			 * @type Object
+			 */
+			itemValueCheckFuncs: itemValueCheckFuncs
+		};
+
+		// this._valuesに値(defaultValue)のセット
+		this._values = {};
+		for ( var p in schema) {
+			if (schema[p].type && schema[p].type.indexOf('[]')) {
+				this._values[p] = h5.u.obj.createObservableArray();
+
+				if (schema[p].hasOwnProperty('defaultValue')) {
+					this._values[p].copyFrom(schema[p].defaultValue);
+				}
+				break;
+			}
+			if (schema[p].hasOwnProperty('defaultValue')) {
+				this._values[p] = schema[p].defaultValue;
+				break;
+			}
+			this._values[p] = null;
+		}
+
+		//-----------------------------------------------------------------------
+		// 配列プロパティについて、イベント管理用のリスナをaddEventListenerする
+		//-----------------------------------------------------------------------
+
+		// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
+		var noAddMethods = ['sort', 'reverse', 'pop'];
+
+		var that = this;
+
+		for ( var i = 0, l = aryProps.length; i < l; i++) {
+			var p = aryProps[i];
+			var obsAry = this._values[p];
+			(function(propName, observableArray) {
+				var oldValue; // プロパティのoldValue
+				function observeBeforeListener(event) {
+					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+					if (!event.isDestructive) {
+						return;
+					}
+
+					var args = argsToArray(event.args);
+
+					var checkFlag = $.inArray(event.method, noAddMethods) === -1;
+
+					if (event.method === 'splice') {
+						if (args.length <= 2) {
+							// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+							checkFlag = false;
+						}
+						checkFlag = false;
+						args.shift();
+						args.shift();
+					}
+
+					if (checkFlag) {
+						var validateResult = itemValueCheckFuncs[propName](args);
+						if (validateResult.length > 0) {
+							throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+						}
+					}
+
+					//oldValueを保存
+					oldValue = that._values[propName].slice(0);
+				}
+
+				function observeListener(event) {
+					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+					if (!event.isDestructive) {
+						return;
+					}
+
+					// 配列の値が変化していないなら何もしない
+					if (observableArray.equals(oldValue)) {
+						return;
+					}
+
+
+					// changeイベントオブジェクトの作成
+					var ev = {
+						type: 'change',
+						target: that,
+						props: {
+							oldValue: oldValue,
+							newValue: observableArray
+						}
+					};
+
+					// newValueは現在の値、oldValueはmanager._oldValueLogsの中なので、ここでpropsを入れる必要ない
+					//					ev.props[propName] = {};
+
+					// TODO ObsItemのイベントを上げる
+					// setにオブジェクトで渡されて、更新される場合があるので、isUpdateSessionとかで判断する必要がある
+					that.dispatchEvent(ev);
+				}
+				observableArray.addEventListener('observeBefore', observeBeforeListener);
+				observableArray.addEventListener('observe', observeListener);
+			})(p, obsAry);
+		}
+	}
+
+
+
+	$.extend(ObservableItem.prototype, EventDispatcher.prototype, {
+		set: function(p, v) {
+			//TODO 引数をオブジェクトで渡せるようにする
+
+			//値のチェック
+			var errorReason = this._context.itemValueCheckFuncs[p](v);
+			if (errorReason.length) {
+				throwFwError('セット不可', errorReason);
+			}
+
+			var oldValue = this._values[p];
+
+			// 値に変更があったかどうかチェック
+			if ($.inArray(p, this._context.aryProps) !== -1) {
+				if (this._values[p].equals(v)) {
+					// 変更なし
+					return;
+				}
+				oldValue = oldValue.slice(0);
+				this._values[p].copyFrom(v);
+			} else {
+				if (v === this._values[p]) {
+					// 変更なし
+					return;
+				}
+				this._values[p] = v;
+			}
+
+			var event = {
+				target: this,
+				type: 'change',
+				prop: {
+					oldValue: oldValue,
+					newValue: this._values[p]
+				}
+			};
+
+			// イベントの発火
+			this.dispatchEvent(event);
+		},
+		get: function(p) {
+			return this._values[p];
+		}
+	});
+
+	/**
+	 * ObservableItemを作成します。
+	 *
+	 * @memberOf h5.u.obj
+	 * @returns ObservableItem
+	 */
+	function createObservableItem(schema) {
+		// TODO schemaがオブジェクトじゃないならエラー
+
+		var errorReason = validateSchema(schema, null, true, true);
+		if (errorReason.length > 0) {
+			// schemaのエラー
+			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, errorReason);
+		}
+
+		var itemValueCheckFuncs = createCheckValueByDescriptor(schema);
+
+		// defaultValueのチェック
+		var defaultValueErrorReason = validateDefaultValue(schema, itemValueCheckFuncs, true);
+
+		if (defaultValueErrorReason.length > 0) {
+			// defaultValueのエラー
+			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, defaultValueErrorReason);
+		}
+
+		return new ObservableItem(schema, itemValueCheckFuncs);
+	}
+
+	/**
+	 * ObserevableItemかどうかを判定します。
+	 *
+	 * @memberOf h5.u.obj
+	 * @returns ObservableItemかどうか
+	 */
+	function isObservableItem(obj) {
+		if (obj instanceof ObservableItem) {
+			return true;
+		}
+		return false;
+	}
+
+
 	// =============================
 	// Expose to window
 	// =============================
@@ -1397,7 +1660,7 @@
 		argsToArray: argsToArray,
 		getByPath: getByPath,
 		createObservableArray: createObservableArray,
+		createObservableItem: createObservableItem,
 		isObservableArray: isObservableArray
 	});
-
 })();
