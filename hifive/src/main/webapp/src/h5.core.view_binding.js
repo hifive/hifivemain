@@ -692,24 +692,14 @@
 			return;
 		}
 
+		//this._src はビューのノード配列（1要素でも必ず配列）
+
 		this._parent = target.parentNode;
-
-		this._marker = document.createComment(h5.u.str.format(BIND_BEGIN_MARKER, markerUid++));
-
-		//Endマーカーをターゲットの後ろに入れる
-		this._markerEnd = document.createComment(BIND_END_MARKER);
-		this._parent.insertBefore(this._markerEnd, target.nextSibling);
 
 		if (target.nodeType !== undefined) {
 			if (target.nodeType === Node.ELEMENT_NODE) {
 				//エレメントノード
-
-				//ターゲットの前にマーカーコメントノードを追加する。
-				//これにより、バインディングの結果ターゲットノード自体がなくなってしまうような場合でも
-				//どこにノードを追加すればよいか追跡し続けることができる
-				this._parent.insertBefore(this._marker, target);
 				this._src = [target.cloneNode(true)];
-				$(target).remove();
 			} else {
 				//コメントノード
 				var tempParent = document.createElement('div');
@@ -726,11 +716,9 @@
 			for ( var i = 0, len = target.length; i < len; i++) {
 				srcList.push(target[i].cloneNode(true));
 			}
-			this._parent.insertBefore(this._marker, target[0]);
 			this._src = srcList;
 		}
 
-		//this._srcは常に配列
 		//初期状態のノードに、コンテキストごとに固有のIDを振っておく
 		for ( var i = 0, len = this._src.length; i < len; i++) {
 			var $src = $(this._src[i]);
