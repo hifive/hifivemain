@@ -339,14 +339,14 @@
 				if (prop === 'Height') {
 					// ウィンドウサイズを大きくすると、scroll[Width/Height]よりもclient[Width/Height]の値のほうが大きくなるため、
 					// client[Width/Height]のほうが大きい場合はこの値を返す
-					return elem['client' + prop] > elem['scroll' + prop] ? elem['client' + prop] : elem['scroll' + prop];
+					return elem['client' + prop] > elem['scroll' + prop] ? elem['client' + prop]
+							: elem['scroll' + prop];
 				} else {
 					return elem['client' + prop];
 				}
 			} else {
-				return Math.max(body['scroll' + prop],
-						docElem['scroll' + prop], body['offset' + prop], docElem['offset' + prop],
-						docElem['client' + prop]);
+				return Math.max(body['scroll' + prop], docElem['scroll' + prop], body['offset'
+						+ prop], docElem['offset' + prop], docElem['client' + prop]);
 			}
 		};
 	}
@@ -394,10 +394,6 @@
 		var disabledEventTypes = 'click dblclick touchstart touchmove touchend mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave focus focusin focusout blur change select';
 
 		$.each(argsToArray(arguments), function(i, e) {
-			if (e == null) {
-				return true;
-			}
-
 			e.bind(disabledEventTypes, function() {
 				return false;
 			});
@@ -411,8 +407,10 @@
 	 */
 	function createOrientationChangeAndResizeHandler(context) {
 		var that = context;
+		var timerId = null;
 
 		function updateMessageArea() {
+			that._resizeOverlay();
 			that._reposition();
 			that._redrawable = true;
 			that.percent(that._lastPercent);
@@ -420,31 +418,20 @@
 		}
 
 		return function() {
+			if (timerId) {
+				clearTimeout(timerId);
+			}
+
 			that._redrawable = false;
-			var w = that._isScreenLock ? documentWidth() : that.$target.outerWidth(true);
-			var h = that._isScreenLock ? documentHeight() : that.$target.outerHeight(true);
 
-			if (usePositionFixed) {
+			if (usePositionFixed || isLegacyIE || compatMode) {
 				updateMessageArea();
-			} else if (!isLegacyIE && !compatMode) {
-				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらないため、対症療法的に対処
-				setTimeout(function() {
-					// widthは100%が指定されているので、heightのみ更新する
-					that.$overlay.height(h);
-					updateMessageArea();
-				}, 1000);
 			} else {
-				// IE6はwidthにバグがあるため自前で計算を行う。
-				// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
-				$.each([that.$overlay, that.$skin], function(i, e) {
-					if (e == null) {
-						return true;
-					}
-
-					e.width(w).height(h);
-				});
-
-				updateMessageArea();
+				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらなくなることがあるため、対症療法的に対処
+				timerId = setTimeout(function() {
+					updateMessageArea();
+					timerId = null;
+				}, 1000);
 			}
 		};
 	}
@@ -459,7 +446,7 @@
 		var that = context;
 
 		return function() {
-			if (timerId != null) {
+			if (timerId) {
 				clearTimeout(timerId);
 			}
 
@@ -809,33 +796,22 @@
 				.addClass(settings.theme).addClass(CLASS_INDICATOR_CONTENT).hide();
 
 		// オーバーレイ
-		if (settings.block === true) {
-			this.$overlay = $('<div></div>').addClass(CLASS_INDICATOR_ROOT)
-					.addClass(settings.theme).addClass(CLASS_OVERLAY).hide();
-		} else {
-			// blockオプションがfalseの場合、オーバーレイ非表示にする
-			this.$overlay = null;
-		}
+		this.$overlay = (settings.block ? $('<div></div>') : $()).addClass(CLASS_INDICATOR_ROOT)
+				.addClass(settings.theme).addClass(CLASS_OVERLAY).hide();
 
+		// スキン
 		// IE6の場合、selectタグがz-indexを無視するため、オーバーレイと同一階層にiframe要素を生成してselectタグを操作出来ないようにする
 		// http://www.programming-magic.com/20071107222415/
-		if (isLegacyIE || compatMode) {
-			// httpsでiframeを開くと警告が出るためsrcに指定する値を変える
-			// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
-			var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
-			this.$skin = $('<iframe></iframe>').attr('src', srcVal).addClass(CLASS_INDICATOR_ROOT)
-					.addClass(CLASS_SKIN).hide();
-		} else {
-			this.$skin = null;
-		}
+		//
+		// httpsでiframeを開くと警告が出るためsrcに指定する値を変える
+		// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
+		var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
+		this.$skin = ((isLegacyIE || compatMode) ? $('<iframe></iframe>') : $())
+				.attr('src', srcVal).addClass(CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).hide();
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
 		// オーバーレイ・コンテンツにpositionを設定する
 		$.each([this.$overlay, this.$content], function(i, e) {
-			if (e == null) {
-				return true;
-			}
-
 			e.css('position', position);
 		});
 
@@ -893,7 +869,6 @@
 				// 画面の向きが変更されたらインジータが中央に表示させる
 				$window.bind('orientationchange.' + that._uid, that._orientationResizeHandler);
 				$window.bind('resize.' + that._uid, that._orientationResizeHandler);
-				that._orientationResizeHandler();
 			};
 
 			// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
@@ -906,10 +881,6 @@
 			}
 
 			$.each([this.$skin, this.$overlay, this.$content], function(i, e) {
-				if (e == null) {
-					return true;
-				}
-
 				that.$target.append(e);
 			});
 			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
@@ -924,7 +895,34 @@
 			}
 
 			this._reposition();
+			this._resizeOverlay();
 			return this;
+		},
+		/**
+		 * スクリーンロックされているインジケータのオーバーレイのサイズを再計算します。
+		 * <p>
+		 * position:fixedで表示している場合は再計算しません。
+		 * <p>
+		 * position:absoluteの場合は高さのみ再計算を行い、IE6以下の標準モード及びQuirksモードの場合は高さと幅の両方を再計算します。
+		 */
+		_resizeOverlay: function() {
+			if (!this._isScreenLock) {
+				return;
+			}
+
+			var w = documentWidth();
+			var h = documentHeight();
+
+			if (isLegacyIE || compatMode) {
+				// IE6はwidthにバグがあるため、heightに加えてwidthも自前で計算を行う。
+				// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
+				$.each([this.$overlay, this.$skin], function(i, e) {
+					e.width(w).height(h);
+				});
+			} else if (!usePositionFixed) {
+				// heightは100%で自動計算されるので何もしない
+				this.$overlay.height(h);
+			}
 		},
 		/**
 		 * インジケータのメッセージ要素のwidthを調整し、中央になるようtopとleftの位置を設定します。
@@ -945,11 +943,11 @@
 				} else {
 					// 可視領域+スクロール領域からtopを計算する
 					this.$content.css('top',
-							((scrollTop() + (wh / 2)) - (this.$content.height() / 2)) + 'px');
+							((scrollTop() + (wh / 2)) - (this.$content.outerHeight() / 2)) + 'px');
 				}
 			} else {
 				this.$content.css('top',
-						((this.$target.height() - this.$content.outerHeight()) / 2) + 'px');
+						((this.$target.outerHeight() - this.$content.outerHeight()) / 2) + 'px');
 			}
 
 			var blockElementPadding = this.$content.innerWidth() - this.$content.width();
