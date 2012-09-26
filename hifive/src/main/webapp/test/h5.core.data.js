@@ -282,7 +282,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('データモデルの登録', 5, function() {
+	test('データモデルの登録', 3, function() {
 		var schema = {
 			empId: {
 				id: true,
@@ -302,9 +302,7 @@ $(function() {
 		var model = manager.createModel(descripter);
 
 		ok(model, 'モデルが作成できること');
-		deepEqual(model.schema, schema, 'モデルにschemaが格納されていること');
-		strictEqual(model.idKey, 'empId', 'IDとなるキーが取得できること');
-		strictEqual(model.manager, manager, 'データモデルマネージャが取得できること');
+		strictEqual(model.getManager(), manager, 'データモデルマネージャが取得できること');
 		strictEqual(model.size, 0, 'データを格納していないので、sizeが0であること');
 	});
 
@@ -2594,7 +2592,7 @@ $(function() {
 						'モデル1だけをドロップした後、モデル2がmanager.modelsの中に入っていること');
 				strictEqual(model1.name, 'TestDataModel1',
 						'dropModelの戻り値はドロップしたデータモデルオブジェクトであり、名前が取得できること');
-				strictEqual(model1.manager, null, 'dropModelの戻り値のmanagerプロパティはnullであること');
+				strictEqual(model1.getManager(), null, 'dropModelの戻り値のmanagerプロパティはnullであること');
 				strictEqual(model1.size, 1, 'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、サイズを取得できること');
 				strictEqual(model1.items['1'].get('val'), 1,
 						'dropModelの戻り値はドロップ前にcreateしたアイテムを持っており、値を取得できること');
@@ -2603,7 +2601,7 @@ $(function() {
 						'モデル2をドロップした後、モデル2がmanager.modelsの中に入っていないこと');
 
 				manager.dropModel(model3);
-				strictEqual(model3.manager, null, '引数にデータモデルインスタンスを渡してモデルを削除できること');
+				strictEqual(model3.getManager(), null, '引数にデータモデルインスタンスを渡してモデルを削除できること');
 				deepEqual(manager.models, {}, '全てのモデルをドロップしたので、manager.modelsは空オブジェクトであること');
 
 			});
@@ -2647,7 +2645,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('create, set, get, remove', {
+	module('create, get, remove', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
@@ -3036,7 +3034,7 @@ $(function() {
 				});
 
 				manager.dropModel(model.name);
-				strictEqual(model.manager, null, 'model.managerがnull');
+				strictEqual(model.getManager(), null, 'model.getManager()がnull');
 				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
 				deepEqualObs(item.get('ary'), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
 				deepEqual(item.get('ary').slice(0), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
@@ -3118,6 +3116,53 @@ $(function() {
 		ok(dataModel1.has('true'), 'id:"true"のアイテムがあるので"true"を渡すとtrueが返ってくること');
 		ok(!dataModel1.has(true), 'id:"true"のアイテムがあってもtrueを渡すとfalseが返ってくること');
 	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('DataItem.get/set', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			manager = h5.core.data.createManager('TestManager');
+			createDataModel1();
+		},
+		teardown: function() {
+			sequence = null;
+			dataModel1 = null;
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('getで値の取得、setで値の格納ができること', 3, function(){
+		var item = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		}).create({
+			id: sequence.next()
+		});
+
+		item.set('val', 'abc');
+		strictEqual(item.get('val'), 'abc', 'setした値がgetで取得できること');
+		var obj = item.get();
+		deepEqual(obj, {
+			id: item.get('id'),
+			val: 'abc'
+		}, 'get()を引数なしで呼び出すと、値の格納されたオブジェクトが返ること');
+
+		obj.val = 'def';
+		strictEqual(item.get('val'), 'abc', 'get()で取得した値の格納されたオブジェクト内の値を変更してもデータアイテム内の値は変わらないこと');
+	});
+
+
 
 	//=============================
 	// Definition
@@ -8545,7 +8590,7 @@ $(function() {
 				'addEventListenerしていないデータアイテムの値を変更した時、モデル、マネージャのイベントだけ拾えること');
 	});
 
-	test('DataItemが持つObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 13, function() {
+	test('DataItemが持つObservableArrayの中身に変更があった時にchangeイベントハンドラが実行されること', 14, function() {
 		var model = manager.createModel({
 			name: 'AryModel',
 			schema: {
@@ -8591,6 +8636,12 @@ $(function() {
 		o = item.get('ary');
 		o.push(1);
 		deepEqual(order, ['item', 'model','manager'], 'pushでイベント上がる');
+
+		order=[];
+		evObj = {};
+		o = item.get('ary');
+		o.shift(1);
+		deepEqual(order, ['item', 'model','manager'], 'shiftでイベント上がる');
 
 		order=[];
 		evObj = {};
