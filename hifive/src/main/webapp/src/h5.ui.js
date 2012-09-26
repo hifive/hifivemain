@@ -739,6 +739,7 @@
 	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
 	 */
 	function Indicator(target, option) {
+		var that = this;
 		var $t = $(target);
 		// デフォルトオプション
 		var defaultOption = {
@@ -750,8 +751,6 @@
 			promises: null,
 			theme: 'a'
 		};
-		// オプション情報
-		var settings = $.extend(true, {}, defaultOption, option);
 		// スロバーのスタイル定義 (基本的にはCSSで記述する。ただし固定値はここで設定する)
 		// CSSAnimationsがサポートされているブラウザの場合、CSSのanimation-durationを使用するためroundTimeプロパティの値は使用しない
 		var defaultStyle = {
@@ -762,12 +761,15 @@
 			throbberLine: {},
 			percent: {}
 		};
-		// スタイルの設定情報
-		var throbberStyles = $.extend(true, {}, defaultStyle, readThrobberStyle(settings.theme));
-		// コンテンツ内の要素
-		var contentElem = h5.u.str.format(FORMAT_THROBBER_MESSAGE_AREA,
-				(settings.message === '') ? 'style="display: none;"' : '', settings.message);
+		// デフォルトオプションとユーザオプションをマージしたオプション情報
+		var settings = $.extend(true, {}, defaultOption, option);
 
+		// スロバーを保持する配列
+		this._throbbers = [];
+		// オプション情報
+		this._settings = settings;
+		// スタイル情報
+		this._styles = $.extend(true, {}, defaultStyle, readThrobberStyle(settings.theme));
 		// UID(イベントハンドラの管理に使用する)
 		this._uid = $.now();
 		// スクリーンロックで表示するか
@@ -775,7 +777,7 @@
 		// 表示対象であるDOM要素を保持するjQueryオブジェクト
 		this.$target = this._isScreenLock ? $('body') : $t;
 		// 表示対象のDOM要素 (旧バージョン互換用)
-		this.target = this.$target[0];
+		this.target = this.$target.length === 1 ? this.$target[0] : this.$target.toArray();
 		// 親要素のpositionがstaticか
 		this._isPositionStatic = this.$target.css('position') === 'static';
 		// スクロール停止イベントハンドラ
@@ -792,24 +794,32 @@
 		this._fadeInTime = typeof settings.fadeIn === 'number' ? settings.fadeIn : -1;
 		// フェードアウトの時間 (フェードアウトで表示しない場合は-1)
 		this._fadeOutTime = typeof settings.fadeOut === 'number' ? settings.fadeOut : -1;
-
 		// コンテンツ(メッセージ/スロバー)
-		this.$content = $('<div></div>').append(contentElem).addClass(CLASS_INDICATOR_ROOT)
-				.addClass(settings.theme).addClass(CLASS_INDICATOR_CONTENT).hide();
-
+		this.$content = $();
 		// オーバーレイ
-		this.$overlay = (settings.block ? $('<div></div>') : $()).addClass(CLASS_INDICATOR_ROOT)
-				.addClass(settings.theme).addClass(CLASS_OVERLAY).hide();
-
+		this.$overlay = $();
 		// スキン
 		// IE6の場合、selectタグがz-indexを無視するため、オーバーレイと同一階層にiframe要素を生成してselectタグを操作出来ないようにする
 		// http://www.programming-magic.com/20071107222415/
-		//
+		this.$skin = $();
+
+		// コンテンツ内の要素
+		var contentElem = h5.u.str.format(FORMAT_THROBBER_MESSAGE_AREA,
+				(settings.message === '') ? 'style="display: none;"' : '', settings.message);
 		// httpsでiframeを開くと警告が出るためsrcに指定する値を変える
 		// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
 		var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
-		this.$skin = ((isLegacyIE || compatMode) ? $('<iframe></iframe>') : $())
-				.attr('src', srcVal).addClass(CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).hide();
+
+		this.$target.each(function(i, e) {
+			that.$content = that.$content.add($('<div></div>').append(contentElem).addClass(
+					CLASS_INDICATOR_ROOT).addClass(settings.theme)
+					.addClass(CLASS_INDICATOR_CONTENT).hide());
+			that.$overlay = that.$overlay.add((settings.block ? $('<div></div>') : $()).addClass(
+					CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(CLASS_OVERLAY).hide());
+			that.$skin = that.$skin
+					.add(((isLegacyIE || compatMode) ? $('<iframe></iframe>') : $()).attr('src',
+							srcVal).addClass(CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).hide());
+		});
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
 		// オーバーレイ・コンテンツにpositionを設定する
@@ -818,9 +828,9 @@
 		});
 
 		var promises = settings.promises;
-		var promiseCallback = $.proxy(function() {
-			this.hide();
-		}, this);
+		var promiseCallback = function() {
+			that.hide();
+		};
 
 		if ($.isArray(promises)) {
 			$.map(promises, function(item, idx) {
@@ -832,16 +842,6 @@
 			}
 		} else if (isPromise(promises)) {
 			promises.pipe(promiseCallback, promiseCallback);
-		}
-
-		if (isCanvasSupported) {
-			this.throbber = new ThrobberCanvas(throbberStyles);
-		} else if (isVMLSupported) {
-			this.throbber = new ThrobberVML(throbberStyles);
-		}
-
-		if (this.throbber && settings.percent > -1) {
-			this.throbber.setPercent(settings.percent);
 		}
 	}
 
@@ -882,12 +882,26 @@
 				});
 			}
 
-			$.each([this.$skin, this.$overlay, this.$content], function(i, e) {
-				that.$target.append(e);
-			});
-			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
+			for ( var i = 0, len = that.$target.length; i < len; i++) {
+				this.$target.eq(i).append(this.$skin.eq(i)).append(this.$overlay.eq(i)).append(
+						this.$content.eq(i));
+			}
 
-			this.throbber.show(this.$content.children('.' + CLASS_INDICATOR_THROBBER)[0]);
+			this.$content.children('.' + CLASS_INDICATOR_THROBBER).each(
+					function(i, e) {
+						var throbber = isCanvasSupported ? new ThrobberCanvas(that._styles)
+								: isVMLSupported ? new ThrobberVML(that._styles) : null;
+
+						if (!throbber) {
+							return true;
+						}
+
+						that._throbbers.push(throbber);
+						that.percent(that._settings.percent);
+						throbber.show(e);
+					});
+
+			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
 
 			if (fadeInTime < 0) {
 				$elems.show();
@@ -913,18 +927,24 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		_resizeOverlay: function() {
-			var w = this._isScreenLock ? documentWidth() : this.$target.outerWidth(true);
-			var h = this._isScreenLock ? documentHeight() : this.$target.outerHeight(true);
+			for ( var i = 0, len = this.$target.length; i < len; i++) {
+				var $target = this.$target.eq(i);
+				var $overlay = this.$overlay.eq(i);
+				var $skin = this.$skin.eq(i);
 
-			if (isLegacyIE || compatMode) {
-				// IE6はwidthにバグがあるため、heightに加えてwidthも自前で計算を行う。
-				// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
-				$.each([this.$overlay, this.$skin], function(i, e) {
-					e.width(w).height(h);
-				});
-			} else if (!usePositionFixed) {
-				// heightは100%で自動計算されるので何もしない
-				this.$overlay.height(h);
+				var w = this._isScreenLock ? documentWidth() : $target.outerWidth(true);
+				var h = this._isScreenLock ? documentHeight() : $target.outerHeight(true);
+
+				if (isLegacyIE || compatMode) {
+					// IE6はwidthにバグがあるため、heightに加えてwidthも自前で計算を行う。
+					// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
+					$.each([$overlay, $skin], function(i, e) {
+						e.width(w).height(h);
+					});
+				} else if (!usePositionFixed) {
+					// heightは100%で自動計算されるので何もしない
+					$overlay.height(h);
+				}
 			}
 		},
 		/**
@@ -936,39 +956,42 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		_reposition: function() {
-			if (this._isScreenLock) {
-				// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightをから高さを取得する
-				// また、quirksモードでjQuery1.8.xの$(window).height()を実行すると0を返すので、clientHeightから高さを取得する
-				var wh = windowHeight();
+			for ( var i = 0, len = this.$target.length; i < len; i++) {
+				var $target = this.$target.eq(i);
+				var $content = this.$content.eq(i);
 
-				if (usePositionFixed) {
-					// 可視領域からtopを計算する
-					this.$content.css('top', ((wh - this.$content.outerHeight()) / 2) + 'px');
+				if (this._isScreenLock) {
+					// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightをから高さを取得する
+					// また、quirksモードでjQuery1.8.xの$(window).height()を実行すると0を返すので、clientHeightから高さを取得する
+					var wh = windowHeight();
+
+					if (usePositionFixed) {
+						// 可視領域からtopを計算する
+						$content.css('top', ((wh - $content.outerHeight()) / 2) + 'px');
+					} else {
+						// 可視領域+スクロール領域からtopを計算する
+						$content.css('top',
+								((scrollTop() + (wh / 2)) - ($content.outerHeight() / 2)) + 'px');
+					}
 				} else {
-					// 可視領域+スクロール領域からtopを計算する
-					this.$content.css('top', ((scrollTop() + (wh / 2)) - (this.$content
-							.outerHeight() / 2))
+					$content.css('top', (($target.outerHeight() - $content.outerHeight()) / 2)
 							+ 'px');
 				}
-			} else {
-				this.$content.css('top',
-						((this.$target.outerHeight() - this.$content.outerHeight()) / 2) + 'px');
+
+				var blockElementPadding = $content.innerWidth() - $content.width();
+				var totalWidth = 0;
+
+				$content.children().each(function(i, e) {
+					var $e = $(e);
+					// IE9にて不可視要素に対してouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
+					if ($e.css('display') === 'none') {
+						return true;
+					}
+					totalWidth += $e.outerWidth(true);
+				});
+				$content.width(totalWidth + blockElementPadding);
+				$content.css('left', (($target.width() - $content.outerWidth()) / 2) + 'px');
 			}
-
-			var blockElementPadding = this.$content.innerWidth() - this.$content.width();
-			var totalWidth = 0;
-
-			this.$content.children().each(function(i, e) {
-				var $e = $(e);
-				// IE9にて不可視要素に対してouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
-				if ($e.css('display') === 'none') {
-					return true;
-				}
-				totalWidth += $e.outerWidth(true);
-			});
-			this.$content.width(totalWidth + blockElementPadding);
-			this.$content.css('left', ((this.$target.width() - this.$content.outerWidth()) / 2)
-					+ 'px');
 
 			return this;
 		},
@@ -1029,7 +1052,10 @@
 				return this;
 			}
 
-			this.throbber.setPercent(percent);
+			for ( var i = 0, len = this._throbbers.length; i < len; i++) {
+				this._throbbers[i].setPercent(percent);
+			}
+
 			return this;
 		},
 		/**
