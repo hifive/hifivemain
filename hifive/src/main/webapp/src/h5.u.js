@@ -101,9 +101,24 @@
 	var ERR_CODE_SCRIPT_FILE_LOAD_FAILD = 11010;
 
 	/**
+	 * createObservableItemに指定されたスキーマのエラー
+	 */
+	var ERR_CODE_INVALID_SCHEMA = 11011;
+	/**
 	 * ObservableItemにスキーマ違反の値がセットされた
 	 */
-	var ERR_CODE_INVALID_ITEM_VALUE = 11011;
+	var ERR_CODE_INVALID_ITEM_VALUE = 11012;
+
+	/**
+	 * ObservableItemでスキーマで定義されていない値にセットされた
+	 */
+	var ERR_CODE_DEPEND_PROPERTY = 11013;
+
+	/**
+	 * ObservableItemで依存項目にセットされた
+	 */
+	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 11014;
+
 
 	/**
 	 * 各エラーコードに対応するメッセージ
@@ -120,7 +135,10 @@
 	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
 	errMsgMap[ERR_CODE_DESERIALIZE_ARGUMENT] = 'deserialize() 引数の値が不正です。引数には文字列を指定してください。';
 	errMsgMap[ERR_CODE_SCRIPT_FILE_LOAD_FAILD] = 'スクリプトファイルの読み込みに失敗しました。URL:{0}';
+	errMsgMap[ERR_CODE_INVALID_SCHEMA] = 'createObservableItemの引数に指定されたスキーマオブジェクトが不正です。';
 	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'ObservableItemのsetterに渡された値がSchemaで指定された型・制約に違反しています。 違反したプロパティ={0}';
+	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。 違反したプロパティ={0}';
+	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。違反したプロパティ={0}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -1453,11 +1471,11 @@
 				if (schema[p].hasOwnProperty('defaultValue')) {
 					this._values[p].copyFrom(schema[p].defaultValue);
 				}
-				break;
+				continue;
 			}
 			if (schema[p] && schema[p].hasOwnProperty('defaultValue')) {
 				this._values[p] = schema[p].defaultValue;
-				break;
+				continue;
 			}
 			this._values[p] = null;
 		}
@@ -1558,17 +1576,29 @@
 
 			// item._context.isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
 			this._context.isInSet = true;
-			// forループの中で、一回でもchangeが起きたか（値の変更があってイベントを上げるべきか）
-			var isChanged = false;
 			var props = {};
+
+			// 先に値のチェックを行う
 			for ( var p in setObj) {
+				if ($.inArray(p, this._context.realProps) === -1) {
+					if ($.inArray(p, this._context.dependProps !== -1)) {
+						// 依存プロパティにセットはできないのでエラー
+						throwFwError(ERR_CODE_DEPEND_PROPERTY, p);
+					}
+					// スキーマに定義されていないプロパティにセットはできないのでエラー
+					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, p);
+				}
 				v = setObj[p];
 				//値のチェック
 				var validateResult = this._context.itemValueCheckFuncs[p](v);
 				if (validateResult.length) {
 					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
 				}
+			}
 
+			// 値に変更があればセット
+			var isChanged = false;
+			for ( var p in setObj) {
 				var oldValue = this._values[p];
 
 				// 値に変更があったかどうかチェック
@@ -1579,7 +1609,6 @@
 					}
 					oldValue = oldValue.slice(0);
 					this._values[p].copyFrom(v);
-					this._context.isInSet = false;
 				} else {
 					if (v === this._values[p]) {
 						// 変更なし
@@ -1596,7 +1625,8 @@
 				isChanged = true;
 			}
 			this._context.isInSet = false;
-			// イベントの発火
+
+			// 変更があればイベントの発火
 			if (isChanged) {
 				this.dispatchEvent({
 					target: this,
@@ -1606,6 +1636,9 @@
 			}
 		},
 		get: function(p) {
+			if (arguments.length === 0) {
+				return $.extend({}, this._values);
+			}
 			return this._values[p];
 		}
 	});
@@ -1622,7 +1655,7 @@
 		var errorReason = validateSchema(schema, null, true, true);
 		if (errorReason.length > 0) {
 			// schemaのエラー
-			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, errorReason);
+			throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
 		}
 
 		var itemValueCheckFuncs = createCheckValueByDescriptor(schema);
@@ -1632,7 +1665,7 @@
 
 		if (defaultValueErrorReason.length > 0) {
 			// defaultValueのエラー
-			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, defaultValueErrorReason);
+			throwFwError(ERR_CODE_INVALID_SCHEMA, null, defaultValueErrorReason);
 		}
 
 		return new ObservableItem(schema, itemValueCheckFuncs);
