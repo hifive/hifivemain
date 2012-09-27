@@ -755,7 +755,6 @@
 	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
 	 */
 	function Indicator(target, option) {
-		var that = this;
 		var $t = $(target);
 		// デフォルトオプション
 		var defaultOption = {
@@ -780,6 +779,8 @@
 		// デフォルトオプションとユーザオプションをマージしたオプション情報
 		var settings = $.extend(true, {}, defaultOption, option);
 
+		// インジケータを画面に表示したか
+		this._displayed = false;
 		// スロバーを保持する配列
 		this._throbbers = [];
 		// オプション情報
@@ -824,16 +825,16 @@
 		// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
 		var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
 
-		this.$target.each(function(i, e) {
-			that.$content = that.$content.add($('<div></div>').append(contentElem).addClass(
+		for ( var i = 0, len = this.$target.length; i < len; i++) {
+			this.$content = this.$content.add($('<div></div>').append(contentElem).addClass(
 					CLASS_INDICATOR_ROOT).addClass(settings.theme)
 					.addClass(CLASS_INDICATOR_CONTENT).hide());
-			that.$overlay = that.$overlay.add((settings.block ? $('<div></div>') : $()).addClass(
+			this.$overlay = this.$overlay.add((settings.block ? $('<div></div>') : $()).addClass(
 					CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(CLASS_OVERLAY).hide());
-			that.$skin = that.$skin
+			this.$skin = this.$skin
 					.add(((isLegacyIE || compatMode) ? $('<iframe></iframe>') : $()).attr('src',
 							srcVal).addClass(CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).hide());
-		});
+		}
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
 		// オーバーレイ・コンテンツにpositionを設定する
@@ -842,9 +843,9 @@
 		});
 
 		var promises = settings.promises;
-		var promiseCallback = function() {
-			that.hide();
-		};
+		var promiseCallback = $.proxy(function() {
+			this.hide();
+		}, this);
 
 		if ($.isArray(promises)) {
 			$.map(promises, function(item, idx) {
@@ -868,6 +869,10 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		show: function() {
+			if (this._displayed || this.$target.children('.'+ CLASS_INDICATOR_ROOT).length > 0) {
+				return this;
+			}
+
 			var that = this;
 			var fadeInTime = this._fadeInTime;
 			var cb = function() {
@@ -885,46 +890,39 @@
 				// 画面の向きが変更されたらインジータが中央に表示させる
 				$window.bind('orientationchange.' + that._uid, that._orientationResizeHandler);
 				$window.bind('resize.' + that._uid, that._orientationResizeHandler);
+				that._displayed = true;
 			};
 
-			// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
-			// また、IEのレイアウトバグを回避するためzoom:1を設定する
-			if (!this._isScreenLock) {
-				this.$target.each(function(i, e) {
-					var $e = $(e);
+			for ( var i = 0, len = this.$target.length; i < len; i++) {
+				var $target = this.$target.eq(i);
+				var $content = this.$content.eq(i);
+				var $skin = this.$skin.eq(i);
+				var $overlay = this.$overlay.eq(i);
 
-					if ($e.css('position') !== 'static') {
-						return true;
-					}
+				// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
+				// また、IEのレイアウトバグを回避するためzoom:1を設定する
+				if (!this._isScreenLock && $target.css('position') === 'static') {
+					// スロバーメッセージ要素に親要素のposition/zoomを記憶させておく
+					$target.data(DATA_KEY_POSITION, $target.css('position'));
+					$target.data(DATA_KEY_ZOOM, $target.css('zoom'));
 
-					$e.data(DATA_KEY_POSITION, $e.css('position'));
-					$e.data(DATA_KEY_ZOOM, $e.css('zoom'));
-
-					$e.css({
+					$target.css({
 						position: 'relative',
 						zoom: '1'
 					});
-				});
+				}
+
+				var throbber = isCanvasSupported ? new ThrobberCanvas(this._styles)
+						: isVMLSupported ? new ThrobberVML(this._styles) : null;
+
+				if (throbber) {
+					that._throbbers.push(throbber);
+					that.percent(this._settings.percent);
+					throbber.show($content.children('.' + CLASS_INDICATOR_THROBBER)[0]);
+				}
+
+				$target.append($skin).append($overlay).append($content);
 			}
-
-			for ( var i = 0, len = this.$target.length; i < len; i++) {
-				this.$target.eq(i).append(this.$skin.eq(i)).append(this.$overlay.eq(i)).append(
-						this.$content.eq(i));
-			}
-
-			this.$content.children('.' + CLASS_INDICATOR_THROBBER).each(
-					function(i, e) {
-						var throbber = isCanvasSupported ? new ThrobberCanvas(that._styles)
-								: isVMLSupported ? new ThrobberVML(that._styles) : null;
-
-						if (!throbber) {
-							return true;
-						}
-
-						that._throbbers.push(throbber);
-						that.percent(that._settings.percent);
-						throbber.show(e);
-					});
 
 			var $elems = $().add(this.$skin).add(this.$content).add(this.$overlay);
 
@@ -1032,6 +1030,10 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		hide: function() {
+			if (!this._displayed) {
+				return this;
+			}
+
 			var that = this;
 			var fadeOutTime = this._fadeOutTime;
 			var $elems = $().add(this.$skin).add(this.$content).add(this.$overlay);
@@ -1043,16 +1045,10 @@
 				if (!that._isScreenLock) {
 					that.$target.each(function(i, e) {
 						var $e = $(e);
-						var beforePosition = $e.data(DATA_KEY_POSITION);
-						var beforeZoom = $e.data(DATA_KEY_ZOOM);
-
-						if (!beforePosition || !beforeZoom) {
-							return true;
-						}
 
 						$e.css({
-							position: beforePosition,
-							zoom: beforeZoom
+							position: $e.data(DATA_KEY_POSITION),
+							zoom: $e.data(DATA_KEY_ZOOM)
 						});
 
 						$e.removeData(DATA_KEY_POSITION).removeData(DATA_KEY_ZOOM);
@@ -1064,6 +1060,7 @@
 				$window.unbind('orientationchange.' + that._uid,
 						that._orientationChangeAndResizeHandler);
 				$window.unbind('resize.' + that._uid, that._orientationChangeAndResizeHandler);
+				that._displayed = false;
 			};
 
 			if (!isCSS3AnimationsSupported) {
