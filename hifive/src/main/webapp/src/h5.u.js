@@ -84,7 +84,6 @@
 	 */
 	var ERR_CODE_INVALID_SCRIPT_PATH = 11007;
 
-
 	/**
 	 * loadScript()に渡されたオプションが不正(プレーンオブジェクト、null、undefined)である時に発生するエラー
 	 */
@@ -101,23 +100,28 @@
 	var ERR_CODE_SCRIPT_FILE_LOAD_FAILD = 11010;
 
 	/**
+	 * createObservableItemに渡された引数がオブジェクトでない
+	 */
+	var ERR_CODE_REQUIRE_SCHEMA = 11011;
+
+	/**
 	 * createObservableItemに指定されたスキーマのエラー
 	 */
-	var ERR_CODE_INVALID_SCHEMA = 11011;
+	var ERR_CODE_INVALID_SCHEMA = 11012;
 	/**
 	 * ObservableItemにスキーマ違反の値がセットされた
 	 */
-	var ERR_CODE_INVALID_ITEM_VALUE = 11012;
+	var ERR_CODE_INVALID_ITEM_VALUE = 11013;
 
 	/**
 	 * ObservableItemでスキーマで定義されていない値にセットされた
 	 */
-	var ERR_CODE_DEPEND_PROPERTY = 11013;
+	var ERR_CODE_DEPEND_PROPERTY = 11014;
 
 	/**
 	 * ObservableItemで依存項目にセットされた
 	 */
-	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 11014;
+	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 11015;
 
 
 	/**
@@ -135,8 +139,9 @@
 	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
 	errMsgMap[ERR_CODE_DESERIALIZE_ARGUMENT] = 'deserialize() 引数の値が不正です。引数には文字列を指定してください。';
 	errMsgMap[ERR_CODE_SCRIPT_FILE_LOAD_FAILD] = 'スクリプトファイルの読み込みに失敗しました。URL:{0}';
-	errMsgMap[ERR_CODE_INVALID_SCHEMA] = 'createObservableItemの引数に指定されたスキーマオブジェクトが不正です。';
-	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'ObservableItemのsetterに渡された値がSchemaで指定された型・制約に違反しています。 違反したプロパティ={0}';
+	errMsgMap[ERR_CODE_REQUIRE_SCHEMA] = 'createObservableItemの引数にはスキーマ定義オブジェクトを指定する必要があります。';
+	errMsgMap[ERR_CODE_INVALID_SCHEMA] = 'createObservableItemの引数に指定されたスキーマ定義オブジェクトが不正です。';
+	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'ObservableItemのsetterに渡された値がスキーマで指定された型・制約に違反しています。 違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。 違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。違反したプロパティ={0}';
 
@@ -1650,7 +1655,10 @@
 	 * @returns ObservableItem
 	 */
 	function createObservableItem(schema) {
-		// TODO schemaがオブジェクトじゃないならエラー
+		if (typeof schema !== 'object') {
+			// schemaがオブジェクトじゃないならエラー
+			throwFwError(ERR_CODE_REQUIRE_SCHEMA);
+		}
 
 		var errorReason = validateSchema(schema, null, true, true);
 		if (errorReason.length > 0) {
