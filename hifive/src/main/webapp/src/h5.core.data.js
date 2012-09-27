@@ -1512,7 +1512,8 @@
 		 */
 		toArray: function() {
 			var ret = [];
-			for ( var id in this.items) {
+			var items = this.items;
+			for ( var id in items) {
 				ret.push(items[id]);
 			}
 			return ret;
@@ -1558,7 +1559,6 @@
 						 * @memberOf DataModelManager
 						 */
 						createModel: function(descriptor) {
-							//TODO 配列対応
 							if ($.isArray(descriptor)) {
 								var l = descriptor.length;
 								if (!l) {
@@ -1707,10 +1707,15 @@
 						},
 
 						endUpdate: function() {
-							//TODO _updateLogをまず削除する。イベントハンドラ内で、値を変更された時に_updateLogをきちんと残せるようにするため。
 							if (!this.isInUpdate()) {
 								return;
 							}
+
+							var updateLogs = this._updateLogs;
+							var oldValueLogs = this._oldValueLogs;
+							//_updateLog, _oldValueLogsをまず削除する。イベントハンドラ内で、値を変更された時に_updateLogをきちんと残せるようにするため。
+							this._updateLogs = null;
+							this._oldValueLogs = null;
 
 							function getFirstCRLog(itemLogs, lastPos) {
 								for ( var i = 0; i < lastPos; i++) {
@@ -1825,10 +1830,10 @@
 													// type:[]ならmanager._oldValueLogsから持ってくる
 													if (h5.u.obj.isObservableArray(model
 															.get(itemId).get(p))) {
-														var oldValue = model._manager._oldValueLogs
-																&& model._manager._oldValueLogs[model.name]
-																&& model._manager._oldValueLogs[model.name][itemId]
-																&& model._manager._oldValueLogs[model.name][itemId][p];
+														var oldValue = oldValueLogs
+																&& oldValueLogs[model.name]
+																&& oldValueLogs[model.name][itemId]
+																&& oldValueLogs[model.name][itemId][p];
 														if (!model.get(itemId).get(p).equals(
 																oldValue)) {
 															mergedProps[p] = {
@@ -1886,8 +1891,6 @@
 							//endUpdateの処理フローここから
 
 							var modelChanges = {};
-
-							var updateLogs = this._updateLogs;
 							for ( var modelName in updateLogs) {
 								if (!updateLogs.hasOwnProperty(modelName)) {
 									continue;
@@ -1911,9 +1914,6 @@
 										.dispatchEvent(createDataModelItemsChangeEvent(mc.created,
 												mc.recreated, mc.removed, mc.changed));
 							}
-
-							this._updateLogs = null;
-							this._oldValueLogs = null;
 
 							var event = {
 								type: EVENT_ITEMS_CHANGE,
