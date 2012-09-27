@@ -1690,16 +1690,4 @@
 		createObservableItem: createObservableItem,
 		isObservableArray: isObservableArray
 	});
-
-	item = h5.u.obj.createObservableItem({
-		name: null,
-		books: {
-			type: 'string[]'
-		}
-	});
-	item.set('name', 'taro');
-	item.set('books', ['漬物石100選', '漬物に合う白米の選び方(創刊号)']);
-	item.addEventListener('change', function(e) {
-		console.log(e)
-	});
 })();
