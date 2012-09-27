@@ -2645,7 +2645,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('create, get, remove', {
+	module('DataModel', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
@@ -2861,6 +2861,19 @@ $(function() {
 					}
 				}
 			});
+
+	test('toArrayでモデルが持つアイテムが配列で取得できること', 1, function() {
+		var items = dataModel1.create([{
+			id: sequence.next()
+		}, {
+			id: sequence.next()
+		}]);
+		var item = dataModel1.create({
+			id: sequence.next()
+		});
+		items.push(item);
+		equalsArrayIgnoreOrder(dataModel1.toArray(), items, 'toArrayでモデルが持つアイテムが配列で取得できること');
+	});
 
 	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、エラーが起きるまでの要素までは生成され、残りは生成されないこと', function() {
 		try {
@@ -9007,6 +9020,65 @@ $(function() {
 		dataModel1.remove('noExistId');
 		deepEqual(order, [], 'removeを呼んだが削除するものがなかった時、DataModelのitemsChangeイベントハンドラは実行されないこと');
 	});
+
+	test('イベントハンドラ内で値の変更があった時も、イベント発火すること', 6, function() {
+		var model = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				v: null,
+				v2: null
+			}
+		});
+
+		var item = model.create({
+			id: sequence.next()
+		});
+		var history = [];
+		var listener = function(e){
+			history.push(e.props.v.newValue);
+			if(this.get('v') === 5){
+				return;
+			}
+			this.set('v', this.get('v') + 1);
+		};
+		item.addEventListener('change', listener);
+
+		item.set('v',1);
+		deepEqual(history, [1, 2, 3, 4, 5], 'イベントリスナ内でアイテムの値をセットした時に、イベントが発火すること');
+
+		history = [];
+
+		manager.beginUpdate();
+		item.set('v', 3);
+		manager.endUpdate();
+		deepEqual(history, [3, 4, 5], 'イベントリスナ内でアイテムの値をセットした時に、イベントが発火すること');
+
+		history = [];
+		item.removeEventListener('change', listener);
+		listener = function(e){
+			history.push(e.props.v.newValue);
+			if(this.get('v') === 5){
+				return;
+			}
+			manager.beginUpdate();
+			this.set('v', this.get('v') + 1);
+		}
+		item.addEventListener('change', listener);
+		manager.beginUpdate();
+		item.set('v', 2);
+		manager.endUpdate();
+		deepEqual(history, [2], 'イベントリスナ内で、beginUpdate()できること。endUpdate()までイベント発火しないこと');
+		manager.endUpdate();
+		deepEqual(history, [2, 3], 'イベントリスナ内で、beginUpdate()できること。endUpdate()までイベント発火しないこと');
+		manager.endUpdate();
+		deepEqual(history, [2, 3, 4], 'イベントリスナ内で、beginUpdate()できること。endUpdate()までイベント発火しないこと');
+		manager.endUpdate();
+		deepEqual(history, [2, 3, 4, 5], 'イベントリスナ内で、beginUpdate()できること。endUpdate()までイベント発火しないこと');
+	});
+
 
 	//=============================
 	// Definition
