@@ -8890,6 +8890,37 @@ $(function() {
 				manager.endUpdate();
 			});
 
+	test(
+			'beginUpdate-endUpdateの間でもObservableArrayのイベントは即座に上がること',1,
+			function() {
+				var model = manager.createModel({
+					name: 'AryModel',
+					schema: {
+						id: {
+							id: true
+						},
+						ary: {
+							type: 'any[]'
+						}
+					}
+				});
+
+				var item = model.create({
+					id: sequence.next()
+				});
+
+				var order = [];
+				item.get('ary').addEventListener('observe', function(ev){
+					order.push(ev.method);
+				});
+				manager.beginUpdate();
+				item.get().ary.push('a');
+				// 内部でoldValueを保存するためにsliceが呼ばれる
+				deepEqual(order, ['slice', 'push'], 'begin-endUpdate内でもObservableArrayのイベントは即座に発火する。');
+				manager.endUpdate();
+			});
+
+
 	test('DataItemで、型の自動変換が行われるものについて、変更後が代入前と同じ値ならchangeイベントは発火しないこと', 2, function() {
 		var model = manager.createModel({
 			name: 'Model',
