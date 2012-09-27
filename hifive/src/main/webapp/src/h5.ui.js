@@ -76,7 +76,23 @@
 	var FORMAT_THROBBER_MESSAGE_AREA = '<span class="' + CLASS_INDICATOR_THROBBER
 			+ '"></span><span class="' + CLASS_INDICATOR_MESSAGE + '" {0}>{1}</span>';
 
-	/** scrollToTop() リトライまでの待機時間 */
+	/**
+	 * jQuery.data()で使用するキー名
+	 * <p>
+	 * インジケータ表示前のスタイル、positionプロパティの値を保持するために使用する
+	 */
+	var DATA_KEY_POSITION = 'before-position';
+
+	/**
+	 * jQuery.data()で使用するキー名
+	 * <p>
+	 * インジケータ表示前のスタイル、zoomプロパティの値を保持するために使用する
+	 */
+	var DATA_KEY_ZOOM = 'before-zoom';
+
+	/**
+	 * scrollToTop() リトライまでの待機時間
+	 */
 	var WAIT_MILLIS = 500;
 
 	// =============================
@@ -778,8 +794,6 @@
 		this.$target = this._isScreenLock ? $('body') : $t;
 		// 表示対象のDOM要素 (旧バージョン互換用)
 		this.target = this.$target.length === 1 ? this.$target[0] : this.$target.toArray();
-		// 親要素のpositionがstaticか
-		this._isPositionStatic = this.$target.css('position') === 'static';
 		// スクロール停止イベントハンドラ
 		this._scrollStopHandler = createScrollstopHandler(this);
 		// リサイズ・オリエンテーションイベントハンドラ
@@ -875,14 +889,25 @@
 
 			// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
 			// また、IEのレイアウトバグを回避するためzoom:1を設定する
-			if (!this._isScreenLock && this._isPositionStatic) {
-				this.$target.css({
-					position: 'relative',
-					zoom: '1'
+			if (!this._isScreenLock) {
+				this.$target.each(function(i, e) {
+					var $e = $(e);
+
+					if ($e.css('position') !== 'static') {
+						return true;
+					}
+
+					$e.data(DATA_KEY_POSITION, $e.css('position'));
+					$e.data(DATA_KEY_ZOOM, $e.css('zoom'));
+
+					$e.css({
+						position: 'relative',
+						zoom: '1'
+					});
 				});
 			}
 
-			for ( var i = 0, len = that.$target.length; i < len; i++) {
+			for ( var i = 0, len = this.$target.length; i < len; i++) {
 				this.$target.eq(i).append(this.$skin.eq(i)).append(this.$overlay.eq(i)).append(
 						this.$content.eq(i));
 			}
@@ -901,7 +926,7 @@
 						throbber.show(e);
 					});
 
-			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
+			var $elems = $().add(this.$skin).add(this.$content).add(this.$overlay);
 
 			if (fadeInTime < 0) {
 				$elems.show();
@@ -927,6 +952,10 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		_resizeOverlay: function() {
+			if (usePositionFixed) {
+				return this;
+			}
+
 			for ( var i = 0, len = this.$target.length; i < len; i++) {
 				var $target = this.$target.eq(i);
 				var $overlay = this.$overlay.eq(i);
@@ -1005,16 +1034,28 @@
 		hide: function() {
 			var that = this;
 			var fadeOutTime = this._fadeOutTime;
-			var $elems = this.$target.children('.' + CLASS_INDICATOR_ROOT);
+			var $elems = $().add(this.$skin).add(this.$content).add(this.$overlay);
 			var cb = function() {
 				var $window = $(window);
 
 				$elems.remove();
-				// 親要素のpositionをインジケータ表示前の状態に戻す
-				if (!that._isScreenLock && that._isPositionStatic) {
-					that.$target.css({
-						position: '',
-						zoom: ''
+				// 親要素のposition/zoomをインジケータ表示前の状態に戻す
+				if (!that._isScreenLock) {
+					that.$target.each(function(i, e) {
+						var $e = $(e);
+						var beforePosition = $e.data(DATA_KEY_POSITION);
+						var beforeZoom = $e.data(DATA_KEY_ZOOM);
+
+						if (!beforePosition || !beforeZoom) {
+							return true;
+						}
+
+						$e.css({
+							position: beforePosition,
+							zoom: beforeZoom
+						});
+
+						$e.removeData(DATA_KEY_POSITION).removeData(DATA_KEY_ZOOM);
 					});
 				}
 
@@ -1024,6 +1065,13 @@
 						that._orientationChangeAndResizeHandler);
 				$window.unbind('resize.' + that._uid, that._orientationChangeAndResizeHandler);
 			};
+
+			if (!isCSS3AnimationsSupported) {
+				// CSS3Animationをサポートしないブラウザの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
+				for ( var i = 0, len = this._throbbers.length; i < len; i++) {
+					this._throbbers[i].hide();
+				}
+			}
 
 			if (fadeOutTime < 0) {
 				$elems.hide();
