@@ -3137,14 +3137,15 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('getで値の取得、setで値の格納ができること', 3, function(){
+	test('getで値の取得、setで値の格納ができること', 4, function(){
 		var item = manager.createModel({
 			name: 'TestModel',
 			schema: {
 				id: {
 					id: true
 				},
-				val: {}
+				val: {},
+				val2: {}
 			}
 		}).create({
 			id: sequence.next()
@@ -3155,13 +3156,23 @@ $(function() {
 		var obj = item.get();
 		deepEqual(obj, {
 			id: item.get('id'),
-			val: 'abc'
+			val: 'abc',
+			val2: null
 		}, 'get()を引数なしで呼び出すと、値の格納されたオブジェクトが返ること');
 
-		obj.val = 'def';
-		strictEqual(item.get('val'), 'abc', 'get()で取得した値の格納されたオブジェクト内の値を変更してもデータアイテム内の値は変わらないこと');
-	});
+		item.set({
+			val: 'ABC',
+			val2: 'DEF'
+		});
+		deepEqual(item.get(), {
+			id: item.get('id'),
+			val: 'ABC',
+			val2: 'DEF'
+		}, 'setにオブジェクトを渡して複数のプロパティに同時に設定できること');
 
+		obj.val = 'def';
+		strictEqual(item.get('val'), 'ABC', 'get()で取得した値の格納されたオブジェクト内の値を変更してもデータアイテム内の値は変わらないこと');
+	});
 
 
 	//=============================
@@ -9000,7 +9011,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', 13, function() {
+	test('DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', 14, function() {
 		var listener = function(ev) {
 			evObj.item2 = ev;
 		};
@@ -9081,10 +9092,43 @@ $(function() {
 				newValue: 'BBBB'
 			},
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
+
+
+		oldVal = item.get('val');
+		oldVal2 = item.get('val2');
+		item.set({
+			val: 'CC',
+			val2: 'DD'
+		});
+		ev = evObj.item;
+		deepEqual(ev.props, {
+			val: {
+				oldValue: oldVal,
+				newValue: 'CC'
+			},
+			val2: {
+				oldValue: oldVal2,
+				newValue: 'DD'
+			}
+		}, 'setにオブジェクトを指定して複数値を更新した時、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
 	});
 
-	test('type:[]の要素について、DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', 14, function() {
-		var item2 = dataModel2.create({
+	test('type:[]の要素について、DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', 24, function() {
+		var model = manager.createModel({
+			name: 'aryModel',
+			schema: {
+				id: {
+					id: true
+				},
+				ary: {
+					type: 'any[]'
+				},
+				ary2: {
+					type: 'string[]'
+				}
+			}
+		});
+		var item2 = model.create({
 			id: sequence.next()
 		});
 		var listener = function(ev) {
@@ -9121,6 +9165,26 @@ $(function() {
 		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
 		deepEqualObs(ev.props.ary.newValue, ['A','B'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
 		strictEqual(ev.props.ary.newValue, item2.get('ary'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
+
+		// setに複数引数を渡して更新
+		evObj = {};
+		try{
+		item2.set({
+			ary: ['B'],
+			ary2: ['C', 'D']
+		});
+		}catch(e){}
+		ev = evObj.item2;
+		ok(typeof ev === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
+		strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+		strictEqual(ev.target, item2, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+		deepEqual(ev.props.ary.oldValue, ['A','B'], 'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
+		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
+		deepEqualObs(ev.props.ary.newValue, ['B'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
+		strictEqual(ev.props.ary.newValue, item2.get('ary'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
+		ok($.isArray(ev.props.ary2.oldValue), 'oldValueはArrayクラスであること');
+		deepEqualObs(ev.props.ary2.newValue, ['C', 'D'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
+		strictEqual(ev.props.ary2.newValue, item2.get('ary2'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
 	});
 
 	test('DataModelインスタンスの"itemsChange"に登録したハンドラが受け取る引数に正しく情報が格納されていること createdプロパティの確認',
