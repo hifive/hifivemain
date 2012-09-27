@@ -3409,6 +3409,33 @@ $(function() {
 		});
 	});
 
+	asyncTest('this.indicator() orientation/resizeイベントの発生につき1度だけハンドラが実行されているか', 1, function() {
+		var controllerBase = {
+			__name: 'TestController',
+			'input[type=button] click': function() {
+				var indicator = this.indicator({
+					target: this.rootElement,
+					message: 'テストテストテスト1'
+				}).show();
+
+				// _reposition()はresizeイベント中1度だけ呼ばれるメソッドなので、このメソッドをフックして呼ばれたことを確認する
+				indicator._reposition = function() {
+					ok(true, '1回のresizeイベントのハンドラは1度だけ実行されること');
+					start();
+				};
+
+				$(window).trigger('resize');
+				indicator.hide();
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+			testController.unbind();
+		});
+	});
+
 	asyncTest('h5.ui.indicator()', function() {
 		var testController = null;
 		var controllerBase = {
