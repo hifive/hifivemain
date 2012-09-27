@@ -162,10 +162,6 @@
 	originalAPI.getCurrentPosition = h5.api.geo.getCurrentPosition;
 	originalAPI.watchPosition = h5.api.geo.watchPosition;
 
-	function H5GeolocationSupport() {
-	// 空コンストラクタ
-	}
-
 	/**
 	 * ※この関数はh5.dev.jsを読み込んだ場合のみ利用可能です。開発支援用機能のため、最終リリース物にh5.dev.jsやデバッグコードが混入しないよう十分ご注意ください。<br>
 	 * dummyPosiitonsへ位置情報オブジェクトを格納して使用してください。位置情報はcreatePosition()で作成することができます。
@@ -174,7 +170,7 @@
 	 * @name geo
 	 * @namespace
 	 */
-	$.extend(H5GeolocationSupport.prototype, {
+	var h5GeolocationSupport = {
 		/**
 		 * 強制的にロケーションの取得に失敗させるかどうか
 		 *
@@ -336,7 +332,7 @@
 		 * @type Object[]
 		 */
 		dummyPositions: []
-	});
+	};
 
 	/**
 	 * dummyPositionsの先頭の位置情報を返します。dummyPositionsがオブジェクトの場合はdummyPositionsを返します。
@@ -412,7 +408,7 @@
 		if (dummyPos.length === 0) {
 			return originalAPI.watchPosition(option);
 		}
-		var that = this;
+
 		var watchID = _dfdID++;
 		// WatchPositionPromiseクラス
 		// _watchPositionはこのクラスをプロミス化して返す。
@@ -462,8 +458,6 @@
 	// Expose to window
 	// =============================
 
-	// geolocation
-	var h5GeolocationSupport = new H5GeolocationSupport();
 	// getCurrentPosition と watchPosition を上書きする。
 	$.extend(h5.api.geo, {
 		getCurrentPosition: getCurrentPosition,
