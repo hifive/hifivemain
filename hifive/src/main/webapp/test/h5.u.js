@@ -33,7 +33,7 @@ $(function() {
 	// Variables
 	//=============================
 
-	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.u;
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
@@ -338,7 +338,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("str.format");
+	module('str.format');
 
 	//=============================
 	// Body
@@ -886,7 +886,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("obj.argsToArray");
+	module('obj.argsToArray');
 
 	//=============================
 	// Body
@@ -947,7 +947,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("obj.serialize/deserialize");
+	module('obj.serialize/deserialize');
 
 	//=============================
 	// Body
@@ -1537,7 +1537,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("createInterceptor");
+	module('createInterceptor');
 
 	//=============================
 	// Body
@@ -1572,6 +1572,141 @@ $(function() {
 		});
 		deepEqual(count, 1, '第二引数省略 関数の初めに実行したい関数が実行されること');
 		deepEqual(ret, 100, '第二引数省略 関数そのものが実行されていること');
-
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ObservableArray');
+
+	//=============================
+	// Body
+	//=============================
+	test('createObservableArray', 3, function() {
+		var o = h5.u.obj.createObservableArray();
+		strictEqual(o.equals([]), true, 'ObservableArrayが作成できること。中身が空であること');
+		strictEqual(o[0], undefined, '0番目にインデックスアクセスすると、undefinedが返ってくること');
+		strictEqual(o.length, 0, 'lengthプロパティに0が入っていること');
+	});
+
+	test('copyFrom', 11, function() {
+		var o = h5.u.obj.createObservableArray();
+		ary = [1, 'a', window];
+		o.copyFrom(ary);
+		deepEqual(o.slice(), ary, 'copyFromで引数に渡した配列の中身がコピーされること');
+		notStrictEqual(o, ary, 'copyFromで渡した通常の配列とインスタンスが異なること');
+		strictEqual(o.length, ary.length, 'lengthが渡した配列と同じであること');
+		strictEqual(o[2], ary[2], 'インデックスアクセスできること');
+
+		o.copyFrom([]);
+		deepEqual(o.slice(), [], 'copyFromで引数に空配列を渡すと、ObservableArrayの中身も空になること');
+		strictEqual(o.length, 0, 'lengthが0になること');
+		strictEqual(o[0], undefined, '0番目にインデックスアクセスするとundefinedが取得できること');
+
+		var o2 = h5.u.obj.createObservableArray();
+		o2.copyFrom(ary);
+		o.copyFrom(o2);
+		deepEqual(o.slice(), ary, 'copyFromで引数にObservableArrayを渡すと、その中身がコピーされること');
+		notStrictEqual(o, ary, 'copyFromで渡したObservableArrayとインスタンスが異なること');
+		strictEqual(o.length, ary.length, 'lengthが更新されること');
+		strictEqual(o[2], ary[2], 'インデックスアクセスできること');
+	});
+
+	test('equals', 6, function() {
+		var o = h5.u.obj.createObservableArray();
+		ary = [1, 'a', window];
+		o.copyFrom(ary);
+		strictEqual(o.equals([1, 'a', window]), true, '引数の配列と中身が同じならequalsの結果がtrueであること');
+
+		var o2 = h5.u.obj.createObservableArray();
+		o2.copyFrom(ary);
+		strictEqual(o.equals(o2), true, '引数のObservableArrayと中身が同じならequalsの結果がtrueであること');
+
+		var o3 = h5.u.obj.createObservableArray();
+		strictEqual(o3.equals([]), true, '空のObservableArrayについて、equalsに空配列を渡されたら結果がtrueであること');
+
+		var o4 = h5.u.obj.createObservableArray();
+		strictEqual(o3.equals(o4), true,
+				'空のObservableArrayについて、equalsに空のObservableArrayを渡されたら結果がtrueであること');
+
+		strictEqual(o2.equals(o2), true, '同一のObservableArrayインスタンスならequalsの結果はtrueであること');
+
+		o2.copyFrom([1, 'a', {}]);
+		strictEqual(o.equals(o2), false, '中身が違うならfalseが返ってくること');
+	});
+
+	//TODO その他Arrayにあるメソッドのテスト
+
+
+
+	//=============================
+	// Definition
+	//=============================
+	var item = null;
+	module('ObservableItem', {
+		setup: function() {
+			item = h5.u.obj.createObservableItem({
+				nul: null,
+				blank: null,
+				str: {
+					type: 'string'
+				},
+				num: {
+					type: 'number'
+				},
+				int: {
+					type: 'integer'
+				},
+				bool: {
+					type: 'boolean'
+				},
+				enum: {
+					type: 'enum',
+					enumValue: [1, 'a', window]
+				},
+				any: {
+					type: 'any'
+				},
+				strA: {
+					type: 'string[]'
+				},
+				numA: {
+					type: 'number[]'
+				},
+				intA: {
+					type: 'integer[]'
+				},
+				anyA: {
+					type: 'any[]'
+				}
+			});
+		},
+		teardown: function() {
+			item = null;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('createObservableItem', function() {
+		var item = h5.u.obj.createObservableItem({
+			no: null,
+			name: null,
+		});
+		ok(item, 'ObservableItemが作成できること');
+	});
+
+	test('createObservableItemの引数にオブジェクト以外を渡すとエラーになること', function() {
+		var invalidValues = ['a', 1, true];
+		for ( var i = 0, l = invalidValues.length; i < l; i++) {
+			try {
+				h5.u.obj.createObservableItem(invalidValues[i]);
+				ok(false, 'テスト失敗。エラーが発生しませんでした。' + invalidValues[i]);
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_REQUIRE_SCHEMA, e.message);
+			}
+		}
+	});
+	//TODO ほぼデータアイテムのテストと同じになるか
 });
