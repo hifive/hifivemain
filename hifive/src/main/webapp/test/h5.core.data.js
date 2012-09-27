@@ -3121,11 +3121,25 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('DataItem.get/set', {
+	module('DataItem.get, set', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
+			model = manager.createModel({
+				name: 'TestModel',
+				schema: {
+					id: {
+						id: true
+					},
+					val: {},
+					val2: {}
+				}
+			});
+			item = model.create({
+				id: sequence.next()
+			});
+
 		},
 		teardown: function() {
 			sequence = null;
@@ -3138,19 +3152,6 @@ $(function() {
 	// Body
 	//=============================
 	test('getで値の取得、setで値の格納ができること', 4, function(){
-		var item = manager.createModel({
-			name: 'TestModel',
-			schema: {
-				id: {
-					id: true
-				},
-				val: {},
-				val2: {}
-			}
-		}).create({
-			id: sequence.next()
-		});
-
 		item.set('val', 'abc');
 		strictEqual(item.get('val'), 'abc', 'setした値がgetで取得できること');
 		var obj = item.get();
@@ -3174,6 +3175,42 @@ $(function() {
 		strictEqual(item.get('val'), 'ABC', 'get()で取得した値の格納されたオブジェクト内の値を変更してもデータアイテム内の値は変わらないこと');
 	});
 
+	test('スキーマに定義されていないプロパティに値をセットできないこと', 4, function(){
+		try{
+			model.create({
+				id: '000001',
+				val3: 'a'
+			});
+			ok(false, 'テスト失敗。create(新規作成)でスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
+		}
+		try{
+			model.create({
+				id: item.get('id'),
+				val3: 'a'
+			});
+			ok(false, 'テスト失敗。create(変更)でスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
+		}
+		try{
+			item.set('val3', 'c');
+			ok(false, 'テスト失敗。setでスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
+		}
+		try{
+			item.set({
+				val2: 'c',
+				val3: 'd'
+			});
+			ok(false, 'テスト失敗。setでスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
+		} catch(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
+		}
+
+	});
 
 	//=============================
 	// Definition
