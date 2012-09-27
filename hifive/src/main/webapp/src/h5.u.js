@@ -101,6 +101,11 @@
 	var ERR_CODE_SCRIPT_FILE_LOAD_FAILD = 11010;
 
 	/**
+	 * ObservableItemにスキーマ違反の値がセットされた
+	 */
+	var ERR_CODE_INVALID_ITEM_VALUE = 11011;
+
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
@@ -115,6 +120,7 @@
 	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
 	errMsgMap[ERR_CODE_DESERIALIZE_ARGUMENT] = 'deserialize() 引数の値が不正です。引数には文字列を指定してください。';
 	errMsgMap[ERR_CODE_SCRIPT_FILE_LOAD_FAILD] = 'スクリプトファイルの読み込みに失敗しました。URL:{0}';
+	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'ObservableItemのsetterに渡された値がSchemaで指定された型・制約に違反しています。 違反したプロパティ={0}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -1441,7 +1447,7 @@
 		// this._valuesに値(defaultValue)のセット
 		this._values = {};
 		for ( var p in schema) {
-			if (schema[p].type && schema[p].type.indexOf('[]')) {
+			if (schema[p] && schema[p].type && schema[p].type.indexOf('[]')) {
 				this._values[p] = h5.u.obj.createObservableArray();
 
 				if (schema[p].hasOwnProperty('defaultValue')) {
@@ -1449,7 +1455,7 @@
 				}
 				break;
 			}
-			if (schema[p].hasOwnProperty('defaultValue')) {
+			if (schema[p] && schema[p].hasOwnProperty('defaultValue')) {
 				this._values[p] = schema[p].defaultValue;
 				break;
 			}
@@ -1472,7 +1478,9 @@
 				var oldValue; // プロパティのoldValue
 				function observeBeforeListener(event) {
 					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
-					if (!event.isDestructive) {
+					// set内で呼ばれたcopyFromなら何もしない
+					// (checkもevent上げもsetでやっているため)
+					if (!event.isDestructive || item._context.isInSet) {
 						return;
 					}
 
@@ -1503,7 +1511,8 @@
 
 				function observeListener(event) {
 					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
-					if (!event.isDestructive) {
+					// set内で呼ばれたcopyFromなら何もしない(item._context.isInSetにフラグを立てている)
+					if (!event.isDestructive || item._context.isInSet) {
 						return;
 					}
 
@@ -1539,44 +1548,62 @@
 
 
 	$.extend(ObservableItem.prototype, EventDispatcher.prototype, {
-		set: function(p, v) {
-			//TODO 引数をオブジェクトで渡せるようにする
-
-			//値のチェック
-			var errorReason = this._context.itemValueCheckFuncs[p](v);
-			if (errorReason.length) {
-				throwFwError('セット不可', errorReason);
-			}
-
-			var oldValue = this._values[p];
-
-			// 値に変更があったかどうかチェック
-			if ($.inArray(p, this._context.aryProps) !== -1) {
-				if (this._values[p].equals(v)) {
-					// 変更なし
-					return;
-				}
-				oldValue = oldValue.slice(0);
-				this._values[p].copyFrom(v);
+		set: function(/* var_args */) {
+			var setObj = {};
+			if (arguments.length === 2) {
+				setObj[arguments[0]] = arguments[1];
 			} else {
-				if (v === this._values[p]) {
-					// 変更なし
-					return;
-				}
-				this._values[p] = v;
+				setObj = arguments[0];
 			}
 
-			var event = {
-				target: this,
-				type: 'change',
-				prop: {
+			// item._context.isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
+			this._context.isInSet = true;
+			// forループの中で、一回でもchangeが起きたか（値の変更があってイベントを上げるべきか）
+			var isChanged = false;
+			var props = {};
+			for ( var p in setObj) {
+				v = setObj[p];
+				//値のチェック
+				var validateResult = this._context.itemValueCheckFuncs[p](v);
+				if (validateResult.length) {
+					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
+				}
+
+				var oldValue = this._values[p];
+
+				// 値に変更があったかどうかチェック
+				if ($.inArray(p, this._context.aryProps) !== -1) {
+					if (this._values[p].equals(v)) {
+						// 変更なし
+						continue;
+					}
+					oldValue = oldValue.slice(0);
+					this._values[p].copyFrom(v);
+					this._context.isInSet = false;
+				} else {
+					if (v === this._values[p]) {
+						// 変更なし
+						continue;
+					}
+					this._values[p] = v;
+				}
+
+				props[p] = {
 					oldValue: oldValue,
 					newValue: this._values[p]
-				}
-			};
+				};
 
+				isChanged = true;
+			}
+			this._context.isInSet = false;
 			// イベントの発火
-			this.dispatchEvent(event);
+			if (isChanged) {
+				this.dispatchEvent({
+					target: this,
+					type: 'change',
+					props: props
+				});
+			}
 		},
 		get: function(p) {
 			return this._values[p];
@@ -1662,5 +1689,17 @@
 		createObservableArray: createObservableArray,
 		createObservableItem: createObservableItem,
 		isObservableArray: isObservableArray
+	});
+
+	item = h5.u.obj.createObservableItem({
+		name: null,
+		books: {
+			type: 'string[]'
+		}
+	});
+	item.set('name', 'taro');
+	item.set('books', ['漬物石100選', '漬物に合う白米の選び方(創刊号)']);
+	item.addEventListener('change', function(e) {
+		console.log(e)
 	});
 })();
