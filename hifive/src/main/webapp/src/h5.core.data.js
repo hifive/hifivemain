@@ -87,6 +87,9 @@
 	/** DataManagerに属していないDataModelで、create/remove/変更できない */
 	var ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL = 15016;
 
+	/** schemaに定義されていないプロパティにセットしようとした */
+	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 15017;
+
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
@@ -105,6 +108,7 @@
 	ERROR_MESSAGES[ERR_CODE_DESCRIPTOR_CIRCULAR_REF] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、baseやtypeによる依存関係が循環参照しています。';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM] = 'DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemの中身は変更できません。データアイテムID={0}, メソッド={1}';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL] = 'DataManagerに属していないDataModelの中身は変更できません。モデル名={0}, メソッド={1}';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。モデル"{0}"のスキーマに"{1}"は定義されていません。';
 
 	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
@@ -143,7 +147,6 @@
 	 * schemaがオブジェクトでない
 	 */
 	var DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT = 6;
-
 
 	/**
 	 * ディスクリプタのエラーメッセージ
@@ -326,7 +329,8 @@
 		//先に、すべてのプロパティの整合性チェックを行う
 		for ( var prop in valueObj) {
 			if (!(prop in model._schema)) {
-				//TODO エラーにする
+				// schemaに定義されていないプロパティ名が入っていたらエラー
+				throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, prop]);
 			}
 			if (ignoreProps && ($.inArray(prop, ignoreProps) !== -1)) {
 				//無視すべきプロパティはエラーにする
@@ -693,6 +697,13 @@
 
 			//TODO モデルに持たせる
 			var arrayProps = [];
+
+			// userInitailValueの中に、schemaで定義されていないプロパティへの値のセットが含まれていたらエラー
+			for ( var p in userInitialValue) {
+				if (!schema.hasOwnProperty(p)) {
+					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, p]);
+				}
+			}
 
 			//デフォルト値を代入する
 			for ( var plainProp in schema) {
@@ -1243,7 +1254,11 @@
 			if (!this._manager) {
 				throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'create']);
 			}
-			//TODO objOrArrayがobjでもArrayでもなかったらエラー
+
+			// objOrArrayがobjでもArrayでもなかったらエラー
+			if (typeof objOrArray !== 'object' && !$.isArray(objOrArray)) {
+				throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
+			}
 
 			var ret = [];
 			var idKey = this.idKey;
