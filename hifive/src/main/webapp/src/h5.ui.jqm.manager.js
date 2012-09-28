@@ -68,13 +68,6 @@
 	var controllerMap = {};
 
 	/**
-	 * define済みのコントローラ定義オブジェクトを保持するマップ
-	 * <p>
-	 * キー：ページID、値：コントローラ定義オブジェクト
-	 */
-	var predefinedControllerMap = {};
-
-	/**
 	 * コントローラインスタンスのマップ
 	 * <p>
 	 * キー：ページID、値：コントローラインスタンスの配列
@@ -95,7 +88,7 @@
 	/**
 	 * 初期化パラメータのマップ
 	 * <p>
-	 * キー：ページID、値：初期化パラメータ
+	 * キー：ページID、値：初期化パラメータの配列
 	 *
 	 * @type Object
 	 */
@@ -104,7 +97,7 @@
 	/**
 	 * CSSファイルのマップ
 	 * <p>
-	 * キー：ページID、値：CSSファイルパスのオブジェクト
+	 * キー：ページID、値：CSSファイルパスのオブジェクトの配列
 	 *
 	 * @type Object
 	 */
@@ -208,14 +201,19 @@
 		'{document} pageremove': function(context) {
 			var id = context.event.target.id;
 			var controllers = controllerInstanceMap[id];
+
 			if (!controllers) {
 				return;
 			}
+
 			for ( var i = 0, len = controllers.length; i < len; i++) {
 				controllers[i].dispose();
 			}
 
-			predefinedControllerMap[id] = [];
+			for ( var i = 0, len = dynamicControllerInstanceMap.length; i < len; i++) {
+				dynamicControllerInstanceMap[i].dispose();
+			}
+
 			controllerInstanceMap[id] = [];
 			dynamicControllerInstanceMap[id] = [];
 		},
@@ -343,10 +341,10 @@
 		 * @memberOf JQMController
 		 */
 		bindController: function(id) {
-			var controllerDef = controllerMap[id];
-			var initParam = initParamMap[id];
+			var controllersDefs = controllerMap[id];
+			var initParams = initParamMap[id];
 
-			if (!controllerDef) {
+			if (!controllersDefs || controllersDefs.length === 0) {
 				return;
 			}
 
@@ -354,12 +352,29 @@
 				controllerInstanceMap[id] = [];
 			}
 
-			if (!predefinedControllerMap[id]) {
-				predefinedControllerMap[id] = [];
-			}
+			var ci = controllerInstanceMap[id];
+			var equalsCtrlName = function(obj) {
+				var ret = false;
 
-			controllerInstanceMap[id].push(h5.core.controller('#' + id, controllerDef, initParam));
-			predefinedControllerMap[id].push(controllerDef);
+				for ( var i = 0, len = ci.length; i < len; i++) {
+					if (ci[i] && ci[i].__name === obj.__name) {
+						ret = true;
+						break;
+					}
+				}
+
+				return ret;
+			};
+
+			for ( var i = 0, len = controllersDefs.length; i < len; i++) {
+				var defObj = controllersDefs[i];
+
+				if (equalsCtrlName(defObj)) {
+					continue;
+				}
+
+				controllerInstanceMap[id].push(h5.core.controller('#' + id, defObj, initParams[i]));
+			}
 		},
 
 		/**
@@ -379,7 +394,6 @@
 			var linkTags = head.getElementsByTagName('link');
 			var linkLen = linkTags.length;
 
-			src = wrapInArray(src);
 			for ( var i = 0, srcLen = src.length; i < srcLen; i++) {
 				var path = $.mobile.path.parseUrl(src[i]).filename;
 				var isLoaded = false;
@@ -412,15 +426,14 @@
 		 * @memberOf JQMController
 		 */
 		removeCSS: function(id) {
-			var current = cssMap[id];
+			var fromPageCSS = cssMap[id];
 
-			if (!current) {
+			if (!fromPageCSS) {
 				return;
 			}
 
 			var activeId = $.mobile.activePage.attr('id');
-			var fromPageCSS = wrapInArray(current);
-			var toPageCSS = wrapInArray(cssMap[activeId]);
+			var toPageCSS = cssMap[activeId];
 
 			$('link').filter(function() {
 				var href = $(this).attr('href');
@@ -497,14 +510,14 @@
 				 * @name define
 				 */
 				define: function(id, cssSrc, controllerDefObject, initParam) {
-					// 既にコントローラ化されている定義オブジェクトの場合はdefineしない
-					if ($.inArray(controllerDefObject, predefinedControllerMap[id]) !== -1) {
-						return;
-					}
+					var param = initParam || {};
 
-					controllerMap[id] = controllerDefObject;
-					initParamMap[id] = initParam;
-					cssMap[id] = wrapInArray(cssSrc);
+					cssMap[id] ? cssMap[id].push(wrapInArray(cssSrc))
+							: cssMap[id] = wrapInArray(cssSrc);
+					controllerMap[id] ? controllerMap[id].push(controllerDefObject)
+							: controllerMap[id] = wrapInArray(controllerDefObject);
+					initParamMap[id] ? initParamMap[id].push(param)
+							: initParamMap[id] = wrapInArray(param);
 
 					if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
 							&& jqmControllerInstance) {
