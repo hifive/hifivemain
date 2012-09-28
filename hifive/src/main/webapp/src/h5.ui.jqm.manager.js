@@ -468,83 +468,113 @@
 	 * @memberOf h5.ui.jqm
 	 * @namespace
 	 */
-	h5.u.obj.expose('h5.ui.jqm.manager',
-			{
+	h5.u.obj.expose('h5.ui.jqm.manager', {
 
-				/**
-				 * jQuery Mobile用hifiveコントローラマネージャを初期化します。
-				 * <p>
-				 * 2回目以降は何も処理を行いません。
-				 *
-				 * @memberOf h5.ui.jqm.manager
-				 * @function
-				 * @name init
-				 */
-				init: function() {
-					if (initCalled) {
-						fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
-						return;
-					}
-					initCalled = true;
-					$(function() {
-						jqmControllerInstance = h5internal.core.controllerInternal('body',
-								jqmController, null, {
-									managed: false
-								});
-						bindToActivePage();
-					});
-				},
-
-				/**
-				 * jQuery Mobile用hifiveコントローラマネージャにコントローラを登録します。
-				 * <p>
-				 * 「data-role="page"」または「data-role="dialog"」の属性が指定された要素でかつ、
-				 * idが第1引数で指定されたものに一致する要素に対してコントローラをバインドします。
-				 *
-				 * @param {String} id ページID
-				 * @param {String|String[]} cssSrc CSSファイルパス配列
-				 * @param {Object} controllerDefObject コントローラを定義したオブジェクト
-				 * @param {Object} initParam 初期化パラメータ
-				 * @memberOf h5.ui.jqm.manager
-				 * @function
-				 * @name define
-				 */
-				define: function(id, cssSrc, controllerDefObject, initParam) {
-					var param = initParam || {};
-
-					cssMap[id] ? cssMap[id].push(wrapInArray(cssSrc))
-							: cssMap[id] = wrapInArray(cssSrc);
-					controllerMap[id] ? controllerMap[id].push(controllerDefObject)
-							: controllerMap[id] = wrapInArray(controllerDefObject);
-					initParamMap[id] ? initParamMap[id].push(param)
-							: initParamMap[id] = wrapInArray(param);
-
-					if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
-							&& jqmControllerInstance) {
-						bindToActivePage();
-					} else {
-						this.init();
-					}
-				}
-				/* del begin */
-				,
-				/*
-				 * テスト用に公開
-				 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
-				 *
-				 * @memberOf h5.ui.jqm.manager
-				 * @function
-				 * @name __reset
-				 */
-				__reset: function() {
-					jqmControllerInstance.dispose();
-					jqmControllerInstance = null;
-					controllerMap = {};
-					controllerInstanceMap = {};
-					initParamMap = {};
-					cssMap = {};
-					initCalled = false;
-				}
-			/* del end */
+		/**
+		 * jQuery Mobile用hifiveコントローラマネージャを初期化します。
+		 * <p>
+		 * 2回目以降は何も処理を行いません。
+		 *
+		 * @memberOf h5.ui.jqm.manager
+		 * @function
+		 * @name init
+		 */
+		init: function() {
+			if (initCalled) {
+				fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
+				return;
+			}
+			initCalled = true;
+			$(function() {
+				jqmControllerInstance = h5internal.core.controllerInternal('body', jqmController,
+						null, {
+							managed: false
+						});
+				bindToActivePage();
 			});
+		},
+
+		/**
+		 * jQuery Mobile用hifiveコントローラマネージャにコントローラを登録します。
+		 * <p>
+		 * 「data-role="page"」または「data-role="dialog"」の属性が指定された要素でかつ、
+		 * idが第1引数で指定されたものに一致する要素に対してコントローラを登録します。
+		 * <p>
+		 * 1つのページに複数コントローラを登録することもできます。<br>
+		 * 1度に複数のコントローラを登録する場合は、以下のように第二引数を配列で指定して下さい。
+		 *
+		 * <pre>
+		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', [controllerDefA, controllerDefB], [defAParams, defBParams]);
+		 * </pre>
+		 *
+		 * このとき第三引数のパラメータは以下のように処理されます。
+		 * <ul>
+		 * <li>controllerDefAのパラメータ = defAParams</li>
+		 * <li>controllerDefBのパラメータ = defBParams</li>
+		 *
+		 * <p>
+		 * また、以下のようにコントローラ定義オブジェクトの数分、define()を実行することでも1つのページに複数コントローラを登録することができます。
+		 *
+		 * <pre>
+		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefA, defAParams);
+		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefB, defBParams);
+		 * </pre>
+		 *
+		 * @param {String} id ページID
+		 * @param {String|String[]} cssSrc CSSファイルパス配列
+		 * @param {Object|Array} controllerDefObject コントローラを定義したオブジェクトまたはそれを保持する配列
+		 * @param {Object} initParam 初期化パラメータ
+		 * @memberOf h5.ui.jqm.manager
+		 * @function
+		 * @name define
+		 */
+		define: function(id, cssSrc, controllerDefObject, initParam) {
+			if (cssMap[id]) {
+				cssMap[id].push(wrapInArray(cssSrc));
+			} else {
+				cssMap[id] = wrapInArray(cssSrc);
+			}
+
+			if (controllerMap[id]) {
+				$.isArray(controllerDefObject) ? $.merge(controllerMap[id], controllerDefObject)
+						: controllerMap[id].push(controllerDefObject);
+			} else {
+				controllerMap[id] = wrapInArray(controllerDefObject);
+			}
+
+			var param = initParam || {};
+			if (initParamMap[id]) {
+				initParamMap[id].push(param);
+			} else {
+				initParamMap[id] = wrapInArray(param);
+			}
+
+			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
+					&& jqmControllerInstance) {
+				bindToActivePage();
+			} else {
+				this.init();
+			}
+		}
+		/* del begin */
+		,
+		/*
+		 * テスト用に公開
+		 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
+		 *
+		 * @memberOf h5.ui.jqm.manager
+		 * @function
+		 * @name __reset
+		 */
+		__reset: function() {
+			jqmControllerInstance.dispose();
+			jqmControllerInstance = null;
+			controllerMap = {};
+			controllerInstanceMap = {};
+			initParamMap = {};
+			cssMap = {};
+			initCalled = false;
+		}
+	/* del end */
+	});
 })();

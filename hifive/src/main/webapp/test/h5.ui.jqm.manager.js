@@ -882,4 +882,50 @@ $(function() {
 		h5.ui.jqm.manager.define('test14', null, controller14A); // バインドされないコントローラ
 		h5.ui.jqm.manager.define('test15', null, controller15);
 	});
+
+	module('JQMManager - define8', {
+		setup: function() {
+			createPage('test16', null, true);
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	asyncTest('コントローラを複数保持する配列を指定してdefine()を実行 ※min版ではエラーになります', 6, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		var controller16A = {
+			__name: 'Test16AController',
+			__ready: function() {
+				ok(true, 'Test16AController.__readyが実行されること');
+			}
+		};
+		var controller16B = {
+			__name: 'Test16BController',
+			__ready: function() {
+				ok(true, 'Test16BController.__readyが実行されること');
+				this.$find('#test').click();
+			},
+			'button#test click': function() {
+				ok(true, '#test16内のbutton#test click が実行されること');
+			}
+		};
+
+		var controller16C = {
+				__name: 'Test16CController',
+				__ready: function() {
+					ok(true, 'Test16CController.__readyが実行されること');
+					equal($('head > link[href*="test.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
+					equal($('head > link[href*="test2.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
+					start();
+				}
+			};
+
+		h5.ui.jqm.manager.define('test16', './css/test2.css', controller16C);
+		h5.ui.jqm.manager.define('test16', './css/test.css', [controller16A, controller16B]);
+	});
 });
