@@ -353,7 +353,7 @@
 			}
 
 			var ci = controllerInstanceMap[id];
-			var equalsCtrlName = function(obj) {
+			var equalsControllerName = function(obj) {
 				var ret = false;
 
 				for ( var i = 0, len = ci.length; i < len; i++) {
@@ -370,7 +370,7 @@
 				var defObj = controllersDefs[i];
 				var params = $.isEmptyObject(initParams[i]) ? null : initParams[i];
 
-				if (equalsCtrlName(defObj)) {
+				if (equalsControllerName(defObj)) {
 					continue;
 				}
 
