@@ -368,12 +368,13 @@
 
 			for ( var i = 0, len = controllersDefs.length; i < len; i++) {
 				var defObj = controllersDefs[i];
+				var params = $.isEmptyObject(initParams[i]) ? null : initParams[i];
 
 				if (equalsCtrlName(defObj)) {
 					continue;
 				}
 
-				controllerInstanceMap[id].push(h5.core.controller('#' + id, defObj, initParams[i]));
+				controllerInstanceMap[id].push(h5.core.controller('#' + id, defObj, params));
 			}
 		},
 
@@ -504,14 +505,14 @@
 		 * 1度に複数のコントローラを登録する場合は、以下のように第二引数を配列で指定して下さい。
 		 *
 		 * <pre>
-		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', [controllerDefA, controllerDefB], [defAParams, defBParams]);
+		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', [controllerDefA, controllerDefB], [defAParams,
+		 * 		defBParams]);
 		 * </pre>
 		 *
 		 * このとき第三引数のパラメータは以下のように処理されます。
 		 * <ul>
 		 * <li>controllerDefAのパラメータ = defAParams</li>
 		 * <li>controllerDefBのパラメータ = defBParams</li>
-		 *
 		 * <p>
 		 * また、以下のようにコントローラ定義オブジェクトの数分、define()を実行することでも1つのページに複数コントローラを登録することができます。
 		 *
@@ -544,7 +545,8 @@
 
 			var param = initParam || {};
 			if (initParamMap[id]) {
-				initParamMap[id].push(param);
+				$.isArray(param) ? $.merge(initParamMap[id], initParam) : initParamMap[id]
+						.push(initParam);
 			} else {
 				initParamMap[id] = wrapInArray(param);
 			}

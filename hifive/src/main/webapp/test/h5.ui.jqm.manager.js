@@ -56,10 +56,10 @@ $(function() {
 	 * テスト用に作成したページの削除
 	 */
 	function pageremove(id) {
-		$('#'+ id).each(function() {
+		$('#' + id).each(function() {
 			$(this).trigger('pageremove');
 		});
-		$('#'+ id).remove();
+		$('#' + id).remove();
 	}
 
 	/**
@@ -777,56 +777,62 @@ $(function() {
 		}
 	});
 
-	asyncTest('１ページに２つコントローラをバインドする ※min版ではエラーになります', 9, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-		var controller12A = {
-			__name: 'Test12AController',
-			__ready: function() {
-				ok(true, 'Test12AController.__readyが実行されること');
-				equal($('head > link[href*="test.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
-				equal($('head > link[href*="test2.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
-				$('#test12 button').trigger('click');
-			},
-			'button#test click': function(context) {
-				if (context.evArg) {
-					ok(false, 'テスト失敗。ページ遷移後に遷移元のコントローラがバインドしたイベントが呼び出された');
+	asyncTest('１ページに２つコントローラをバインドする ※min版ではエラーになります', 9,
+			function() {
+				if (!checkDev()) {
+					start();
 					return;
 				}
-				ok(true, 'Test12AControllerの#test click が実行されること');
-			}
-		};
-		var controller12B = {
-			__name: 'Test12BController',
-			__ready: function() {
-				ok(true, 'Test12BController.__readyが実行されること');
-				changePage('#test13', true);
-			}
-		};
+				var controller12A = {
+					__name: 'Test12AController',
+					__ready: function() {
+						ok(true, 'Test12AController.__readyが実行されること');
+						equal($('head > link[href*="test.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						equal($('head > link[href*="test2.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						$('#test12 button').trigger('click');
+					},
+					'button#test click': function(context) {
+						if (context.evArg) {
+							ok(false, 'テスト失敗。ページ遷移後に遷移元のコントローラがバインドしたイベントが呼び出された');
+							return;
+						}
+						ok(true, 'Test12AControllerの#test click が実行されること');
+					}
+				};
+				var controller12B = {
+					__name: 'Test12BController',
+					__ready: function() {
+						ok(true, 'Test12BController.__readyが実行されること');
+						changePage('#test13', true);
+					}
+				};
 
-		var controller13 = {
-			__name: 'Test13Controller',
+				var controller13 = {
+					__name: 'Test13Controller',
 
-			__ready: function() {
-				ok(true, 'Test13Controller.__readyが実行されること');
-				equal($('head > link[href*="test.css"]').length, 0, 'define()でCSSを何も指定していないので、test.cssは削除されていること');
-				equal($('head > link[href*="test2.css"]').length, 0, 'define()でCSSを何も指定していないので、test2.cssは削除されていること');
-				$('#test13 button').trigger('click', {
-					opt: true
-				});
-			},
-			'button#test click': function() {
-				ok(true, '#test13内のbutton#test click が実行されること');
-				start();
-			}
-		};
-		h5.ui.jqm.manager.define('test12', ['./css/test.css', './css/test2.css'], controller12A);
-		h5.ui.jqm.manager.define('test12', null, controller12B);
-		h5.ui.jqm.manager.define('test12', null, controller12A); // バインドされないコントローラ
-		h5.ui.jqm.manager.define('test13', null, controller13);
-	});
+					__ready: function() {
+						ok(true, 'Test13Controller.__readyが実行されること');
+						equal($('head > link[href*="test.css"]').length, 0,
+								'define()でCSSを何も指定していないので、test.cssは削除されていること');
+						equal($('head > link[href*="test2.css"]').length, 0,
+								'define()でCSSを何も指定していないので、test2.cssは削除されていること');
+						$('#test13 button').trigger('click', {
+							opt: true
+						});
+					},
+					'button#test click': function() {
+						ok(true, '#test13内のbutton#test click が実行されること');
+						start();
+					}
+				};
+				h5.ui.jqm.manager.define('test12', ['./css/test.css', './css/test2.css'],
+						controller12A);
+				h5.ui.jqm.manager.define('test12', null, controller12B);
+				h5.ui.jqm.manager.define('test12', null, controller12A); // バインドされないコントローラ
+				h5.ui.jqm.manager.define('test13', null, controller13);
+			});
 
 	module('JQMManager - define7', {
 		setup: function() {
@@ -838,50 +844,56 @@ $(function() {
 		}
 	});
 
-	asyncTest('AページとBページにそれぞれコントローラをバインドして、A->B->Aと遷移する ※min版ではエラーになります', 8, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
+	asyncTest('AページとBページにそれぞれコントローラをバインドして、A->B->Aと遷移する ※min版ではエラーになります', 8,
+			function() {
+				if (!checkDev()) {
+					start();
+					return;
+				}
 
-		var controller14A = {
-			__name: 'Test14AController',
-			__ready: function() {
-				ok(true, 'Test14AController.__readyが実行されること');
-				equal($('head > link[href*="test.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
-				equal($('head > link[href*="test2.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
-			}
-		};
-		var controller14B = {
-			__name: 'Test14BController',
-			__ready: function() {
-				ok(true, 'Test14BController.__readyが実行されること');
-				changePage('#test15', true);
-			},
-			'button#test click': function() {
-				ok(true, '#test14内のbutton#test click が実行されること');
-				start();
-			}
-		};
+				var controller14A = {
+					__name: 'Test14AController',
+					__ready: function() {
+						ok(true, 'Test14AController.__readyが実行されること');
+						equal($('head > link[href*="test.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						equal($('head > link[href*="test2.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+					}
+				};
+				var controller14B = {
+					__name: 'Test14BController',
+					__ready: function() {
+						ok(true, 'Test14BController.__readyが実行されること');
+						changePage('#test15', true);
+					},
+					'button#test click': function() {
+						ok(true, '#test14内のbutton#test click が実行されること');
+						start();
+					}
+				};
 
-		var controller15 = {
-			__name: 'Test15Controller',
+				var controller15 = {
+					__name: 'Test15Controller',
 
-			__ready: function() {
-				ok(true, 'Test15Controller.__readyが実行される');
-				equal($('head > link[href*="test.css"]').length, 0, 'define()でCSSを何も指定していないので、test.cssは削除されていること');
-				equal($('head > link[href*="test2.css"]').length, 0, 'define()でCSSを何も指定していないので、test2.cssは削除されていること');
-				pageremove('test15');
-				changePage('#test14');
-				// test14ページでボタンを押下した操作を想定
-				$('#test14 button').click();
-			}
-		};
-		h5.ui.jqm.manager.define('test14', ['./css/test.css', './css/test2.css'], controller14A);
-		h5.ui.jqm.manager.define('test14', null, controller14B);
-		h5.ui.jqm.manager.define('test14', null, controller14A); // バインドされないコントローラ
-		h5.ui.jqm.manager.define('test15', null, controller15);
-	});
+					__ready: function() {
+						ok(true, 'Test15Controller.__readyが実行される');
+						equal($('head > link[href*="test.css"]').length, 0,
+								'define()でCSSを何も指定していないので、test.cssは削除されていること');
+						equal($('head > link[href*="test2.css"]').length, 0,
+								'define()でCSSを何も指定していないので、test2.cssは削除されていること');
+						pageremove('test15');
+						changePage('#test14');
+						// test14ページでボタンを押下した操作を想定
+						$('#test14 button').click();
+					}
+				};
+				h5.ui.jqm.manager.define('test14', ['./css/test.css', './css/test2.css'],
+						controller14A);
+				h5.ui.jqm.manager.define('test14', null, controller14B);
+				h5.ui.jqm.manager.define('test14', null, controller14A); // バインドされないコントローラ
+				h5.ui.jqm.manager.define('test15', null, controller15);
+			});
 
 	module('JQMManager - define8', {
 		setup: function() {
@@ -892,40 +904,51 @@ $(function() {
 		}
 	});
 
-	asyncTest('コントローラを複数保持する配列を指定してdefine()を実行 ※min版ではエラーになります', 6, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-
-		var controller16A = {
-			__name: 'Test16AController',
-			__ready: function() {
-				ok(true, 'Test16AController.__readyが実行されること');
-			}
-		};
-		var controller16B = {
-			__name: 'Test16BController',
-			__ready: function() {
-				ok(true, 'Test16BController.__readyが実行されること');
-				this.$find('#test').click();
-			},
-			'button#test click': function() {
-				ok(true, '#test16内のbutton#test click が実行されること');
-			}
-		};
-
-		var controller16C = {
-				__name: 'Test16CController',
-				__ready: function() {
-					ok(true, 'Test16CController.__readyが実行されること');
-					equal($('head > link[href*="test.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
-					equal($('head > link[href*="test2.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
+	asyncTest('コントローラを複数保持する配列を指定してdefine()を実行 ※min版ではエラーになります', 9,
+			function() {
+				if (!checkDev()) {
 					start();
+					return;
 				}
-			};
 
-		h5.ui.jqm.manager.define('test16', './css/test2.css', controller16C);
-		h5.ui.jqm.manager.define('test16', './css/test.css', [controller16A, controller16B]);
-	});
+				var controller16A = {
+					__name: 'Test16AController',
+					__ready: function(context) {
+						ok(true, 'Test16AController.__readyが実行されること');
+						equal(context.args.hoge, 1, 'define()で指定したパラメータがcontextから取得できること');
+					}
+				};
+				var controller16B = {
+					__name: 'Test16BController',
+					__ready: function(context) {
+						ok(true, 'Test16BController.__readyが実行されること');
+						equal(context.args.hogehoge, 2, 'define()で指定したパラメータがcontextから取得できること');
+						this.$find('#test').click();
+					},
+					'button#test click': function() {
+						ok(true, '#test16内のbutton#test click が実行されること');
+					}
+				};
+
+				var controller16C = {
+					__name: 'Test16CController',
+					__ready: function(context) {
+						ok(true, 'Test16CController.__readyが実行されること');
+						ok('args' in context, 'define()に何もパラメータを指定していないのでargsプロパティが存在しないこと');
+						equal($('head > link[href*="test.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						equal($('head > link[href*="test2.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						start();
+					}
+				};
+
+				h5.ui.jqm.manager.define('test16', './css/test2.css', controller16C);
+				h5.ui.jqm.manager.define('test16', './css/test.css',
+						[controller16A, controller16B], [{
+							hoge: 1
+						}, {
+							hogehoge: 2
+						}]);
+			});
 });
