@@ -417,67 +417,6 @@
 	}
 
 	/**
-	 * イベントハンドラ
-	 * <p>
-	 * orientationChange/resizeイベントが発生した1秒後に、インジケータとオーバーレイを画面サイズに合わせて再描画し、 メッセージとパーセントの内容を更新する。
-	 */
-	function createOrientationChangeAndResizeHandler(context) {
-		var that = context;
-		var timerId = null;
-
-		function updateMessageArea() {
-			that._resizeOverlay();
-			that._reposition();
-			that._redrawable = true;
-			that.percent(that._lastPercent);
-			that.message(that._lastMessage);
-		}
-
-		return function() {
-			if (timerId) {
-				clearTimeout(timerId);
-			}
-
-			that._redrawable = false;
-
-			if (usePositionFixed || isLegacyIE || compatMode) {
-				updateMessageArea();
-			} else {
-				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらなくなることがあるため、対症療法的に対処
-				timerId = setTimeout(function() {
-					updateMessageArea();
-					timerId = null;
-				}, 1000);
-			}
-		};
-	}
-
-	/**
-	 * イベントハンドラ
-	 * <p>
-	 * タッチまたはホイールスクロールの停止を検知します
-	 */
-	function createScrollstopHandler(context) {
-		var timerId = null;
-		var that = context;
-
-		return function() {
-			if (timerId) {
-				clearTimeout(timerId);
-			}
-
-			if (!that._redrawable) {
-				return;
-			}
-
-			timerId = setTimeout(function() {
-				that._reposition();
-				timerId = null;
-			}, 50);
-		};
-	}
-
-	/**
 	 * スクリーンロック対象の要素か判定します。
 	 */
 	function isScreenlockTarget(element) {
@@ -755,6 +694,7 @@
 	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
 	 */
 	function Indicator(target, option) {
+		var that = this;
 		var $t = $(target);
 		// デフォルトオプション
 		var defaultOption = {
@@ -787,18 +727,24 @@
 		this._settings = settings;
 		// スタイル情報
 		this._styles = $.extend(true, {}, defaultStyle, readThrobberStyle(settings.theme));
-		// UID(イベントハンドラの管理に使用する)
-		this._uid = $.now();
 		// スクリーンロックで表示するか
 		this._isScreenLock = isScreenlockTarget($t);
 		// 表示対象であるDOM要素を保持するjQueryオブジェクト
-		this.$target = this._isScreenLock ? $('body') : $t;
+		this._$target = this._isScreenLock ? $('body') : $t;
 		// 表示対象のDOM要素 (旧バージョン互換用)
-		this.target = this.$target.length === 1 ? this.$target[0] : this.$target.toArray();
-		// スクロール停止イベントハンドラ
-		this._scrollStopHandler = createScrollstopHandler(this);
-		// リサイズ・オリエンテーションイベントハンドラ
-		this._orientationResizeHandler = createOrientationChangeAndResizeHandler(this);
+		this._target = this._$target.length === 1 ? this._$target[0] : this._$target.toArray();
+		// scroll/touchmoveイベントハンドラで使用するタイマーID
+		this._scrollEventTimerId = null;
+		// scroll/touchmoveイベントハンドラ
+		this._scrollHandler = function() {
+			that._handleScrollEvent();
+		};
+		// resize/orientationchangeイベントハンドラ内で使用するタイマーID
+		this._resizeEventTimerId = null;
+		// scroll/touchmoveイベントハンドラ
+		this._resizeHandler = function() {
+			that._handleResizeEvent();
+		};
 		// DOM要素の書き換え可能かを判定するフラグ
 		this._redrawable = true;
 		// _redrawable=false時、percent()に渡された最新の値
@@ -810,13 +756,13 @@
 		// フェードアウトの時間 (フェードアウトで表示しない場合は-1)
 		this._fadeOutTime = typeof settings.fadeOut === 'number' ? settings.fadeOut : -1;
 		// コンテンツ(メッセージ/スロバー)
-		this.$content = $();
+		this._$content = $();
 		// オーバーレイ
-		this.$overlay = $();
+		this._$overlay = $();
 		// スキン
 		// IE6の場合、selectタグがz-indexを無視するため、オーバーレイと同一階層にiframe要素を生成してselectタグを操作出来ないようにする
 		// http://www.programming-magic.com/20071107222415/
-		this.$skin = $();
+		this._$skin = $();
 
 		// コンテンツ内の要素
 		var contentElem = h5.u.str.format(FORMAT_THROBBER_MESSAGE_AREA,
@@ -825,27 +771,27 @@
 		// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
 		var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
 
-		for ( var i = 0, len = this.$target.length; i < len; i++) {
-			this.$content = this.$content.add($('<div></div>').append(contentElem).addClass(
+		for ( var i = 0, len = this._$target.length; i < len; i++) {
+			this._$content = this._$content.add($('<div></div>').append(contentElem).addClass(
 					CLASS_INDICATOR_ROOT).addClass(settings.theme)
 					.addClass(CLASS_INDICATOR_CONTENT).hide());
-			this.$overlay = this.$overlay.add((settings.block ? $('<div></div>') : $()).addClass(
+			this._$overlay = this._$overlay.add((settings.block ? $('<div></div>') : $()).addClass(
 					CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(CLASS_OVERLAY).hide());
-			this.$skin = this.$skin
+			this.__$skin = this._$skin
 					.add(((isLegacyIE || compatMode) ? $('<iframe></iframe>') : $()).attr('src',
 							srcVal).addClass(CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).hide());
 		}
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
 		// オーバーレイ・コンテンツにpositionを設定する
-		$.each([this.$overlay, this.$content], function(i, e) {
+		$.each([this._$overlay, this._$content], function(i, e) {
 			e.css('position', position);
 		});
 
 		var promises = settings.promises;
-		var promiseCallback = $.proxy(function() {
-			this.hide();
-		}, this);
+		var promiseCallback = function() {
+			that.hide();
+		};
 
 		if ($.isArray(promises)) {
 			$.map(promises, function(item, idx) {
@@ -869,9 +815,11 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		show: function() {
-			if (this._displayed || this.$target.children('.'+ CLASS_INDICATOR_ROOT).length > 0) {
+			if (this._displayed || this._$target.children('.' + CLASS_INDICATOR_ROOT).length > 0) {
 				return this;
 			}
+
+			this._displayed = true;
 
 			var that = this;
 			var fadeInTime = this._fadeInTime;
@@ -879,34 +827,33 @@
 				var $window = $(window);
 
 				if (that._isScreenLock) {
-					disableEventOnIndicator(that.$overlay, that.$content);
+					disableEventOnIndicator(that._$overlay, that._$content);
 
 					if (!usePositionFixed) {
-						$window.bind('touchmove.' + that._uid, that._scrollStopHandler);
-						$window.bind('scroll.' + that._uid, that._scrollStopHandler);
+						$window.bind('touchmove', that._scrollHandler);
+						$window.bind('scroll', that._scrollHandler);
 					}
 				}
 
-				// 画面の向きが変更されたらインジータが中央に表示させる
-				$window.bind('orientationchange.' + that._uid, that._orientationResizeHandler);
-				$window.bind('resize.' + that._uid, that._orientationResizeHandler);
-				that._displayed = true;
+				// 画面の向きの変更を検知したらインジータを中央に表示させる
+				$window.bind('orientationchange', that._resizeHandler);
+				$window.bind('resize', that._resizeHandler);
 			};
 
-			for ( var i = 0, len = this.$target.length; i < len; i++) {
-				var $target = this.$target.eq(i);
-				var $content = this.$content.eq(i);
-				var $skin = this.$skin.eq(i);
-				var $overlay = this.$overlay.eq(i);
+			for ( var i = 0, len = this._$target.length; i < len; i++) {
+				var _$target = this._$target.eq(i);
+				var _$content = this._$content.eq(i);
+				var _$skin = this._$skin.eq(i);
+				var _$overlay = this._$overlay.eq(i);
 
 				// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
 				// また、IEのレイアウトバグを回避するためzoom:1を設定する
-				if (!this._isScreenLock && $target.css('position') === 'static') {
+				if (!this._isScreenLock && _$target.css('position') === 'static') {
 					// スロバーメッセージ要素に親要素のposition/zoomを記憶させておく
-					$target.data(DATA_KEY_POSITION, $target.css('position'));
-					$target.data(DATA_KEY_ZOOM, $target.css('zoom'));
+					_$target.data(DATA_KEY_POSITION, _$target.css('position'));
+					_$target.data(DATA_KEY_ZOOM, _$target.css('zoom'));
 
-					$target.css({
+					_$target.css({
 						position: 'relative',
 						zoom: '1'
 					});
@@ -918,13 +865,13 @@
 				if (throbber) {
 					that._throbbers.push(throbber);
 					that.percent(this._settings.percent);
-					throbber.show($content.children('.' + CLASS_INDICATOR_THROBBER)[0]);
+					throbber.show(_$content.children('.' + CLASS_INDICATOR_THROBBER)[0]);
 				}
 
-				$target.append($skin).append($overlay).append($content);
+				_$target.append(_$skin).append(_$overlay).append(_$content);
 			}
 
-			var $elems = $().add(this.$skin).add(this.$content).add(this.$overlay);
+			var $elems = $().add(this._$skin).add(this._$content).add(this._$overlay);
 
 			if (fadeInTime < 0) {
 				$elems.show();
@@ -947,30 +894,29 @@
 		 * @memberOf Indicator
 		 * @function
 		 * @private
-		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		_resizeOverlay: function() {
 			if (usePositionFixed) {
-				return this;
+				return;
 			}
 
-			for ( var i = 0, len = this.$target.length; i < len; i++) {
-				var $target = this.$target.eq(i);
-				var $overlay = this.$overlay.eq(i);
-				var $skin = this.$skin.eq(i);
+			for ( var i = 0, len = this._$target.length; i < len; i++) {
+				var _$target = this._$target.eq(i);
+				var _$overlay = this._$overlay.eq(i);
+				var _$skin = this._$skin.eq(i);
 
-				var w = this._isScreenLock ? documentWidth() : $target.outerWidth(true);
-				var h = this._isScreenLock ? documentHeight() : $target.outerHeight(true);
+				var w = this._isScreenLock ? documentWidth() : _$target.outerWidth(true);
+				var h = this._isScreenLock ? documentHeight() : _$target.outerHeight(true);
 
 				if (isLegacyIE || compatMode) {
 					// IE6はwidthにバグがあるため、heightに加えてwidthも自前で計算を行う。
 					// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
-					$.each([$overlay, $skin], function(i, e) {
+					$.each([_$overlay, _$skin], function(i, e) {
 						e.width(w).height(h);
 					});
 				} else if (!usePositionFixed) {
 					// heightは100%で自動計算されるので何もしない
-					$overlay.height(h);
+					_$overlay.height(h);
 				}
 			}
 		},
@@ -980,12 +926,11 @@
 		 * @memberOf Indicator
 		 * @function
 		 * @private
-		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		_reposition: function() {
-			for ( var i = 0, len = this.$target.length; i < len; i++) {
-				var $target = this.$target.eq(i);
-				var $content = this.$content.eq(i);
+			for ( var i = 0, len = this._$target.length; i < len; i++) {
+				var _$target = this._$target.eq(i);
+				var _$content = this._$content.eq(i);
 
 				if (this._isScreenLock) {
 					// MobileSafari(iOS4)だと $(window).height()≠window.innerHeightなので、window.innerHeightをから高さを取得する
@@ -994,21 +939,21 @@
 
 					if (usePositionFixed) {
 						// 可視領域からtopを計算する
-						$content.css('top', ((wh - $content.outerHeight()) / 2) + 'px');
+						_$content.css('top', ((wh - _$content.outerHeight()) / 2) + 'px');
 					} else {
 						// 可視領域+スクロール領域からtopを計算する
-						$content.css('top',
-								((scrollTop() + (wh / 2)) - ($content.outerHeight() / 2)) + 'px');
+						_$content.css('top',
+								((scrollTop() + (wh / 2)) - (_$content.outerHeight() / 2)) + 'px');
 					}
 				} else {
-					$content.css('top', (($target.outerHeight() - $content.outerHeight()) / 2)
+					_$content.css('top', ((_$target.outerHeight() - _$content.outerHeight()) / 2)
 							+ 'px');
 				}
 
-				var blockElementPadding = $content.innerWidth() - $content.width();
+				var blockElementPadding = _$content.innerWidth() - _$content.width();
 				var totalWidth = 0;
 
-				$content.children().each(function(i, e) {
+				_$content.children().each(function(i, e) {
 					var $e = $(e);
 					// IE9にて不可視要素に対してouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
 					if ($e.css('display') === 'none') {
@@ -1016,11 +961,9 @@
 					}
 					totalWidth += $e.outerWidth(true);
 				});
-				$content.width(totalWidth + blockElementPadding);
-				$content.css('left', (($target.width() - $content.outerWidth()) / 2) + 'px');
+				_$content.width(totalWidth + blockElementPadding);
+				_$content.css('left', ((_$target.width() - _$content.outerWidth()) / 2) + 'px');
 			}
-
-			return this;
 		},
 		/**
 		 * 画面上に表示されているインジケータ(メッセージ・画面ブロック・進捗表示)を除去します。
@@ -1034,16 +977,18 @@
 				return this;
 			}
 
+			this._displayed = false;
+
 			var that = this;
 			var fadeOutTime = this._fadeOutTime;
-			var $elems = $().add(this.$skin).add(this.$content).add(this.$overlay);
+			var $elems = $().add(this._$skin).add(this._$content).add(this._$overlay);
 			var cb = function() {
 				var $window = $(window);
 
 				$elems.remove();
 				// 親要素のposition/zoomをインジケータ表示前の状態に戻す
 				if (!that._isScreenLock) {
-					that.$target.each(function(i, e) {
+					that._$target.each(function(i, e) {
 						var $e = $(e);
 
 						$e.css({
@@ -1055,12 +1000,10 @@
 					});
 				}
 
-				$window.unbind('touchmove.' + that._uid, that._scrollstopHandler);
-				$window.unbind('scroll.' + that._uid, that._scrollstopHandler);
-				$window.unbind('orientationchange.' + that._uid,
-						that._orientationChangeAndResizeHandler);
-				$window.unbind('resize.' + that._uid, that._orientationChangeAndResizeHandler);
-				that._displayed = false;
+				$window.unbind('touchmove', that._scrollHandler);
+				$window.unbind('scroll', that._scrollHandler);
+				$window.unbind('orientationchange', that._resizeHandler);
+				$window.unbind('resize', that._resizeHandler);
 			};
 
 			if (!isCSS3AnimationsSupported) {
@@ -1121,11 +1064,67 @@
 				return this;
 			}
 
-			this.$content.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
+			this._$content.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
 					.text(message);
 			this._reposition();
 
 			return this;
+		},
+		/**
+		 * scroll/touchmoveイベントハンドラ
+		 * <p>
+		 * タッチまたはホイールスクロールの停止を検知します
+		 */
+		_handleScrollEvent: function() {
+			if (this._scrollEventTimerId) {
+				clearTimeout(this._scrollEventTimerId);
+			}
+
+			if (!this._redrawable) {
+				return;
+			}
+
+			var that = this;
+			this._scrollEventTimerId = setTimeout(function() {
+				that._reposition();
+				that._scrollEventTimerId = null;
+			}, 50);
+		},
+		/**
+		 * orientationChange/resizeイベントハンドラ
+		 * <p>
+		 * orientationChange/resizeイベントが発生した1秒後に、インジケータとオーバーレイを画面サイズに合わせて再描画し、 メッセージとパーセントの内容を更新する。
+		 *
+		 * @memberOf Indicator
+		 * @function
+		 * @private
+		 */
+		_handleResizeEvent: function() {
+			var that = this;
+
+			function updateMessageArea() {
+				that._resizeOverlay();
+				that._reposition();
+				that._redrawable = true;
+				that.percent(that._lastPercent);
+				that.message(that._lastMessage);
+				that._resizeEventTimerId = null;
+			}
+
+			if (this._resizeEventTimerId) {
+				clearTimeout(this._resizeEventTimerId);
+			}
+
+			this._redrawable = false;
+
+			if (usePositionFixed || isLegacyIE || compatMode) {
+				updateMessageArea();
+			} else {
+				// Android 4.xの場合、orientationChangeイベント発生直後にDOM要素の書き換えを行うと画面の再描画が起こらなくなることがあるため、対症療法的に対処
+				this._resizeEventTimerId = setTimeout(function() {
+					updateMessageArea();
+				}, 1000);
+			}
 		}
 	};
 
