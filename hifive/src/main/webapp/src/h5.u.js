@@ -1470,7 +1470,7 @@
 		// this._valuesに値(defaultValue)のセット
 		this._values = {};
 		for ( var p in schema) {
-			if (schema[p] && schema[p].type && schema[p].type.indexOf('[]')) {
+			if (schema[p] && schema[p].type && schema[p].type.indexOf('[]') !== -1) {
 				this._values[p] = h5.u.obj.createObservableArray();
 
 				if (schema[p].hasOwnProperty('defaultValue')) {
@@ -1593,9 +1593,8 @@
 					// スキーマに定義されていないプロパティにセットはできないのでエラー
 					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, p);
 				}
-				v = setObj[p];
 				//値のチェック
-				var validateResult = this._context.itemValueCheckFuncs[p](v);
+				var validateResult = this._context.itemValueCheckFuncs[p](setObj[p]);
 				if (validateResult.length) {
 					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
 				}
@@ -1604,6 +1603,7 @@
 			// 値に変更があればセット
 			var isChanged = false;
 			for ( var p in setObj) {
+				var v = setObj[p];
 				var oldValue = this._values[p];
 
 				// 値に変更があったかどうかチェック
@@ -1729,6 +1729,7 @@
 		getByPath: getByPath,
 		createObservableArray: createObservableArray,
 		createObservableItem: createObservableItem,
-		isObservableArray: isObservableArray
+		isObservableArray: isObservableArray,
+		isObservableItem: isObservableItem
 	});
 })();
