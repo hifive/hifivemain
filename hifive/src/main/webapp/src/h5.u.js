@@ -1399,10 +1399,11 @@
 	 * <p>
 	 * <a href="DataItem.html">データアイテム</a>と同様、get/setで値の読み書きを行います。
 	 * </p>
-	 *
+	 *ｘ
 	 * @class
 	 * @name ObservableArray
 	 * @param {Object} schema schemaオブジェクト。データモデルディスクリプタのスキーマと同様のスキーマオブジェクトを指定します。ただしidの指定は不要です。
+	 * @param {Object} itemValueCheckFuncs データモデルのスキーマに適合するかどうかをチェックする関数。キーがプロパティ名で、値がチェック関数の配列
 	 */
 	function ObservableItem(schema, itemValueCheckFuncs) {
 		// 実プロパティと依存プロパティ、配列プロパティを列挙
@@ -1492,7 +1493,7 @@
 		// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
 		var noAddMethods = ['sort', 'reverse', 'pop'];
 
-		var that = this;
+		var item = this;
 
 		for ( var i = 0, l = aryProps.length; i < l; i++) {
 			var p = aryProps[i];
@@ -1529,7 +1530,7 @@
 					}
 
 					//oldValueを保存
-					oldValue = that._values[propName].slice(0);
+					oldValue = item._values[propName].slice(0);
 				}
 
 				function observeListener(event) {
@@ -1548,7 +1549,7 @@
 					// changeイベントオブジェクトの作成
 					var ev = {
 						type: 'change',
-						target: that,
+						target: item,
 						props: {
 							oldValue: oldValue,
 							newValue: observableArray
@@ -1560,15 +1561,13 @@
 
 					// TODO ObsItemのイベントを上げる
 					// setにオブジェクトで渡されて、更新される場合があるので、isUpdateSessionとかで判断する必要がある
-					that.dispatchEvent(ev);
+					item.dispatchEvent(ev);
 				}
 				observableArray.addEventListener('observeBefore', observeBeforeListener);
 				observableArray.addEventListener('observe', observeListener);
 			})(p, obsAry);
 		}
 	}
-
-
 
 	$.extend(ObservableItem.prototype, EventDispatcher.prototype, {
 		set: function(/* var_args */) {
@@ -1586,7 +1585,7 @@
 			// 先に値のチェックを行う
 			for ( var p in setObj) {
 				if ($.inArray(p, this._context.realProps) === -1) {
-					if ($.inArray(p, this._context.dependProps !== -1)) {
+					if ($.inArray(p, this._context.dependProps) !== -1) {
 						// 依存プロパティにセットはできないのでエラー
 						throwFwError(ERR_CODE_DEPEND_PROPERTY, p);
 					}
