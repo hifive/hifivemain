@@ -523,8 +523,8 @@
 		 *
 		 * @param {String} id ページID
 		 * @param {String|String[]} cssSrc CSSファイルパス配列
-		 * @param {Object|Array} controllerDefObject コントローラを定義したオブジェクトまたはそれを保持する配列
-		 * @param {Object} initParam 初期化パラメータ
+		 * @param {Object|Object[]} controllerDefObject コントローラを定義したオブジェクトまたはそれを保持する配列
+		 * @param {Object|Object[]} initParam 初期化パラメータ
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
 		 * @name define
