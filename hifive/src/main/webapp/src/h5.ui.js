@@ -759,8 +759,7 @@
 		this._$content = $();
 		// オーバーレイ
 		this._$overlay = $();
-		// スキン
-		// IE6の場合、selectタグがz-indexを無視するため、オーバーレイと同一階層にiframe要素を生成してselectタグを操作出来ないようにする
+		// スキン - IE6の場合selectタグがz-indexを無視するため、オーバーレイと同一階層にiframe要素を生成してselectタグを操作出来ないようにする
 		// http://www.programming-magic.com/20071107222415/
 		this._$skin = $();
 
@@ -777,9 +776,9 @@
 					.addClass(CLASS_INDICATOR_CONTENT).hide());
 			this._$overlay = this._$overlay.add((settings.block ? $('<div></div>') : $()).addClass(
 					CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(CLASS_OVERLAY).hide());
-			this.__$skin = this._$skin
-					.add(((isLegacyIE || compatMode) ? $('<iframe></iframe>') : $()).attr('src',
-							srcVal).addClass(CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).hide());
+			this._$skin = this._$skin.add(((isLegacyIE || compatMode) ? $('<iframe></iframe>')
+					: $()).attr('src', srcVal).addClass(CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN)
+					.hide());
 		}
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
@@ -1004,6 +1003,13 @@
 				$window.unbind('scroll', that._scrollHandler);
 				$window.unbind('orientationchange', that._resizeHandler);
 				$window.unbind('resize', that._resizeHandler);
+
+				if (that._resizeEventTimerId) {
+					clearTimeout(that._resizeEventTimerId);
+				}
+				if (that._scrollEventTimerId) {
+					clearTimeout(that._scrollEventTimerId);
+				}
 			};
 
 			if (!isCSS3AnimationsSupported) {
