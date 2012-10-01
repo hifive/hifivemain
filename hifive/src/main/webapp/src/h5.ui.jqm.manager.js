@@ -530,25 +530,29 @@
 		 * @name define
 		 */
 		define: function(id, cssSrc, controllerDefObject, initParam) {
+			var cssSrcArray = wrapInArray(cssSrc);
 			if (cssMap[id]) {
-				cssMap[id].push(wrapInArray(cssSrc));
+				cssMap[id].push(cssSrcArray);
 			} else {
-				cssMap[id] = wrapInArray(cssSrc);
+				cssMap[id] = cssSrcArray;
 			}
 
+			var defObjArray = wrapInArray(controllerDefObject);
 			if (controllerMap[id]) {
-				$.isArray(controllerDefObject) ? $.merge(controllerMap[id], controllerDefObject)
-						: controllerMap[id].push(controllerDefObject);
+				$.merge(controllerMap[id], defObjArray);
 			} else {
-				controllerMap[id] = wrapInArray(controllerDefObject);
+				controllerMap[id] = defObjArray;
 			}
 
-			var param = initParam || {};
+			// 配列に対する$.extend()は、要素がundefinedの場合extendされない
+			// initParamが配列の場合はそのままで、undefinedまたはnullの場合は空の配列がほしいため$.makeArray()を使用する
+			var paramArray = $.extend($.map(defObjArray, function() {
+				return {};
+			}), $.makeArray(initParam));
 			if (initParamMap[id]) {
-				$.isArray(param) ? $.merge(initParamMap[id], initParam) : initParamMap[id]
-						.push(initParam);
+				$.merge(initParamMap[id], paramArray);
 			} else {
-				initParamMap[id] = wrapInArray(param);
+				initParamMap[id] = paramArray;
 			}
 
 			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
