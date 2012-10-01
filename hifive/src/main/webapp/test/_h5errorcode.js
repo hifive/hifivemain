@@ -125,3 +125,7 @@ h5.u.obj.expose('ERRCODE.h5.core.data', {
 	ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL: 15016,
 	ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY: 15017
 });
+
+h5.u.obj.expose('ERRCODE.h5.core.view_binding', {
+//TODO エラー決まったらここに書く
+});

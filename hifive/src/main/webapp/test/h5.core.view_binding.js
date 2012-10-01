@@ -54,6 +54,11 @@ $(function() {
 	 */
 	var simpleLoopElm = $('<div id="dataBindTest"><ul data-h5-loop-context="items"><li data-h5-bind="test"></div>');
 
+	/**
+	 * エラーコード
+	 */
+	var ERR = ERRCODE.h5.core.view_binding;
+
 	//=============================
 	// Functions
 	//=============================
@@ -76,10 +81,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('data-h5-bind', {
-		setup: function() {},
-		teardown: function() {}
-	});
+	module('data-h5-bind');
 
 	//=============================
 	// Body
@@ -98,6 +100,13 @@ $(function() {
 				strictEqual($('#dataBindTest>div>pre').text(), 'abcd',
 						'data-h5-bind指定した要素に値が表示されていること');
 			});
+	test('data-h5-bind属性の指定してある要素自体にバインドできること', 1, function() {
+		$fixture.append(createBindSpan('test'));
+		h5.core.view.bind($fixture.find('span'), {
+			test: 'test'
+		});
+		strictEqual($fixture.find('span').text(), 'test', 'data-h5-bind属性を指定している要素自体にバインドされていること');
+	});
 
 	test('data-h5-bind属性をしていた要素にバインドされているプロパティの値で中身が書き変わること', function() {
 		$fixture.append(simpleElm);
@@ -166,6 +175,10 @@ $(function() {
 			test2: 'b'
 		};
 		var objB = {
+			test1: {
+				test1: 'aa',
+				test2: 'bb'
+			},
 			test2: 'B',
 			test3: 'C'
 		};
@@ -185,27 +198,97 @@ $(function() {
 		});
 
 		// objBのバインド
+		var $obj = $('<div data-h5-context="test1">');
+		$obj.append(createBindSpan('test1'));
+		$obj.append(createBindSpan('test2'));
+		$('#dataBindTest').append($obj);
+
 		h5.core.view.bind($('#dataBindTest'), objB);
-		result = ['a', 'B', 'C'];
+		result = ['[object Object]', 'B', 'C', 'aa', 'bb'];
 		$('#dataBindTest span').each(function(i) {
 			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
 	});
 
-	test('バインドに指定する要素が複数ある場合は、複数にバインドされること', function(){
-		//TODO
+	test('バインドに指定する要素が複数ある場合は、複数にバインドされること', function() {
+		//TODO 複数にバインドされるのか、エラーなのか仕様を確認する。(現状だと最初に見つかった要素だけ？)
+		$fixture.append(createBindSpan('test'), createBindSpan('test'));
+		h5.core.view.bind($fixture.find('span'), {
+			test: 'test'
+		});
+		result = ['test', 'test'];
+		$fixture.find('span').each(function(i) {
+			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
+		});
 	});
 
-	test('バインドに指定する要素が存在しない場合は、エラーになること', function(){
-		//TODO
+	test('バインドに指定する要素が存在しない場合は、エラーになること', function() {
+		$fixture.append(createBindSpan('test'));
+		try {
+			h5.core.view.bind($fixture.find('#noExist'), {
+				test: 'test'
+			});
+		} catch (e) {
+			//TODO エラーコード確認
+			strictEqual(e.code, ERR.xxxx, e.message);
+		}
 	});
 
-	test('バインドに指定する要素の指定方法はjQueryオブジェクト、DOM、セレクタのどれでもいいこと', function(){
-		//TODO
+	test('バインドに指定する要素の指定方法はjQueryオブジェクト、DOM、セレクタのどれでもいいこと', function() {
+		$fixture.append(createBindSpan('test'));
+		var strs = ['jQueryオブジェクト', 'DOM', 'セレクタ'];
+		for ( var i = 0, l = strs.length; i < l; i++) {
+			switch (i) {
+			case 0:
+				arg = $fixture.find('span');
+				break;
+			case 1:
+				arg = $fixture.find('span')[0];
+				break;
+			case 2:
+				arg = '#qunit-fixture>span';
+				break;
+			}
+			h5.core.view.bind(arg, {
+				test: i
+			});
+			equal($fixture.find('span').text(), i, strs[i] + 'を引数に指定できること');
+		}
 	});
 
-	test('バインド指定するものがオブジェクトでない場合はエラーになること', function(){
+	test('バインドに指定する要素の指定方法はjQueryオブジェクト、DOM、セレクタのどれでもいいこと', function() {
+		$fixture.append(createBindSpan('test'));
+		var strs = ['jQueryオブジェクト', 'DOM', 'セレクタ'];
+		for ( var i = 0, l = strs.length; i < l; i++) {
+			switch (i) {
+			case 0:
+				arg = $fixture.find('span');
+				break;
+			case 1:
+				arg = $fixture.find('span')[0];
+				break;
+			case 2:
+				arg = '#qunit-fixture>span';
+				break;
+			}
+			h5.core.view.bind(arg, {
+				test: i
+			});
+			equal($fixture.find('span').text(), i, strs[i] + 'を引数に指定できること');
+		}
+	});
 
+	test('バインド指定するものがオブジェクトでない場合はエラーになること', function() {
+		$fixture.append(createBindSpan('test'));
+		var invalidVals = [null, undefined, [1], 1, 'abc', true];
+		for ( var i = 0, l = invalidVals.length; i < l; i++) {
+			try {
+				h5.core.view.bind($fixture.find('span'), invalidVals[i]);
+				ok(false, 'テスト失敗。エラーが発生していません。' + invalidVals[i]);
+			} catch (e) {
+				strictEqual(e.code, ERR.xxxx, e.message);
+			}
+		}
 	});
 
 	//=============================
@@ -717,5 +800,7 @@ $(function() {
 		strictEqual($('#dataBindTest span:first').text(), 'CC', 'endUpdate時にバインド先に反映されること');
 		strictEqual(changed--, 1, 'イベントリスナが動作していること');
 	});
+
+	//TODO 属性、クラス、スタイル、テキストノード、innerHTMLへのバインド。inputタグへのバインド。
 
 });
