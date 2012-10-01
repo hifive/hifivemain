@@ -287,8 +287,10 @@
 
 	function isDataItem(obj) {
 		//TODO 厳密に判定
+		// 10/21 福田追記
+		// ObservableItemの場合もtrueを返す
 		if (obj.addEventListener && obj.getModel && !$.isArray(obj)
-				&& !h5.u.obj.isObservableArray(obj)) {
+				&& !h5.u.obj.isObservableArray(obj) || h5.u.obj.isObservableItem(obj)) {
 			return true;
 		}
 		return false;
