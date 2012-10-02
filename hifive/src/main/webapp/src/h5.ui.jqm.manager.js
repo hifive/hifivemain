@@ -513,6 +513,7 @@
 		 * <ul>
 		 * <li>controllerDefAのパラメータ = defAParams</li>
 		 * <li>controllerDefBのパラメータ = defBParams</li>
+		 * </ul>
 		 * <p>
 		 * また、以下のようにコントローラ定義オブジェクトの数分、define()を実行することでも1つのページに複数コントローラを登録することができます。
 		 *
@@ -520,10 +521,13 @@
 		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefA, defAParams);
 		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefB, defBParams);
 		 * </pre>
+		 * 注意:<br>
+		 * 一つのページに同じコントローラを複数登録することはできません。<br>
+		 * 同じコントローラであるかの判定は、コントローラ定義オブジェクトの<b>__name</b>プロパティの値が登録済みのコントローラと同値であるか比較し、同値の場合は登録しません。
 		 *
 		 * @param {String} id ページID
-		 * @param {String|String[]} cssSrc CSSファイルパス配列
-		 * @param {Object|Object[]} controllerDefObject コントローラを定義したオブジェクトまたはそれを保持する配列
+		 * @param {String|String[]} cssSrc CSSファイルパス列
+		 * @param {Object|Object[]} controllerDefObject コントローラを定義オブジェクト
 		 * @param {Object|Object[]} initParam 初期化パラメータ
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
