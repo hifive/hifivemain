@@ -225,7 +225,7 @@ $(function() {
 		h5.core.view.bind($fixture.find('span'), {
 			test: 'test'
 		});
-		result = ['test', ''];
+		var result = ['test', ''];
 		$fixture.find('span').each(function(i) {
 			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
@@ -363,7 +363,7 @@ $(function() {
 		// objBのバインド
 		h5.core.view.bind($('#dataBindTest'), objB);
 
-		result = ['a', 'B', 'C'];
+		var result = ['a', 'B', 'C'];
 		$('#dataBindTest span').each(function(i) {
 			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
@@ -510,7 +510,7 @@ $(function() {
 		});
 		h5.core.view.bind($('#dataBindTest'), newItem);
 
-		result = ['newItemStr', 'newItemNum'];
+		var result = ['newItemStr', 'newItemNum'];
 		$('#dataBindTest span').each(function(i) {
 			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 			if (i === result.length - 1) {
@@ -564,6 +564,65 @@ $(function() {
 		expect(exp.length);
 		$('#dataBindTest span').each(function(i) {
 			strictEqual(this.innerText, exp[i], 'ObservableItemの中身がバインドされていること' + exp[i]);
+		});
+	});
+
+	test('DataItem データがバインドされた要素に、再度バインドすると、後からバインドしたものに上書かれること', function() {
+		var manager = h5.core.data.createManager('TestManager');
+		testSchema.id = {
+			id: true
+		};
+		var model = manager.createModel({
+			name: 'TestModel',
+			schema: testSchema
+		});
+		var item = model.create({
+			id: '1'
+		});
+
+		// ObsItemのバインド
+		h5.core.view.bind($('#dataBindTest'), item);
+
+		// ObsItemで上書き
+		var newItem = model.create({
+			id: '2'
+		});
+		newItem.set({
+			str: 'newItemStr',
+			num: 5.5
+		});
+		h5.core.view.bind($('#dataBindTest'), newItem);
+
+		var result = ['newItemStr', '5.5'];
+		$('#dataBindTest span').each(function(i) {
+			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
+			if (i === result.length - 1) {
+				return false;
+			}
+		});
+
+		item.set('str', 'バインドされていないアイテム');
+
+		$('#dataBindTest span').each(
+				function(i) {
+					strictEqual(this.innerText, result[i], 'バインドされていないアイテムの値を変更しても、表示は変わらないこと'
+							+ result[i]);
+					if (i === result.length - 1) {
+						return false;
+					}
+				});
+		// オブジェクトで上書き
+		h5.core.view.bind($('#dataBindTest'), {
+			str: 'AA',
+			num: 'BB'
+		});
+
+		result = ['AA', 'BB'];
+		$('#dataBindTest span').each(function(i) {
+			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
+			if (i === result.length - 1) {
+				return false;
+			}
 		});
 	});
 
