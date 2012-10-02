@@ -55,126 +55,151 @@ addFwErrorCodeMap(G_ERROR_MESSAGES);
 
 /**
  * ID指定されたプロパティが重複している
+ * @private
  */
 var SCHEMA_ERR_CODE_DUPLICATED_ID = 7;
 
 /**
  * ID指定されたプロパティがない
+ * @private
  */
 var SCHEMA_ERR_CODE_NO_ID = 8;
 
 /**
  * プロパティ名が不正
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME = 9;
 
 /**
  * id指定されたプロパティにdependが指定されている
+ * @private
  */
 var SCHEMA_ERR_CODE_ID_DEPEND = 10;
 
 /**
  * depend.onに指定されたプロパティが存在しない
+ * @private
  */
 var SCHEMA_ERR_CODE_DEPEND_ON = 11;
 
 /**
  * depend.calcに関数が指定されていない
+ * @private
  */
 var SCHEMA_ERR_CODE_DEPEND_CALC = 12;
 
 /**
  * typeに文字列が指定されていない
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALID_TYPE = 13;
 
 /**
  * type文字列が不正
+ * @private
  */
 var SCHEMA_ERR_CODE_TYPE = 14;
 
 /**
  * typeに指定されたデータモデルが存在しない
+ * @private
  */
 var SCHEMA_ERR_CODE_TYPE_DATAMODEL = 15;
 
 /**
  * type:enumなのにenumValueが指定されていない
+ * @private
  */
 var SCHEMA_ERR_CODE_TYPE_ENUM_NO_ENUMVALUE = 16;
 
 /**
  * constraintにオブジェクトが指定されていない
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT = 17;
 
 /**
  * constraint.notNullの指定が不正
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 18;
 
 /**
  * min-maxに数値が入力されなかった時のエラー
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX = 20;
 
 /**
  * typeがinteger,numberじゃないのにconstraint.min/max を指定されたときのエラー
+ * @private
  */
 var SCHEMA_ERR_CODE_TYPE_CONSTRAINT = 21;
 
 /**
  * constraint.patternが正規表現じゃない
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN = 22;
 
 /**
  * minLength/maxLengthに0以上の整数値以外の値が渡された
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 23;
 
 /**
  * constraintの指定に矛盾がある場合(mix > maxなど)
+ * @private
  */
 var SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT = 24;
 
 /**
  * typeがenumでないのにenumValueが指定されている
+ * @private
  */
 var SCHEMA_ERR_CODE_ENUMVALUE_TYPE = 25;
 
 /**
  * enumValueが配列でない、または空配列
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALID_ENUMVALUE = 26;
 
 /**
  * id項目にdefaultValueが設定されている
+ * @private
  */
 var SCHEMA_ERR_CODE_DEFAULTVALUE_ID = 27;
 
 /**
  * defaultValueに設定された値がtype,constraintに指定された条件を満たしていない
+ * @private
  */
 var SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE = 28;
 
 /**
  * ID項目のconstraintに不正な指定がある
+ * @private
  */
 var SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID = 29;
 
 /**
  * defaultValue指定されたプロパティにdependが指定されている
+ * @private
  */
 var SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND = 30;
 
 /**
  * dependの依存関係が循環している
+ * @private
  */
 var SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF = 31;
 
 /**
  * スキーマのエラーメッセージ
+ * @private
  */
 var DESCRIPTOR_VALIDATION_ERROR_MSGS = [];
 DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_DUPLICATED_ID] = 'ID指定されているプロパティが複数あります。ID指定は1つのプロパティのみに指定してください。';
@@ -645,6 +670,7 @@ function isIntegerValue(val, isStrict) {
 /**
  * ラッパークラスをunboxする 配列が渡されたら、配列の中身をunboxする
  *
+ * @private
  * @param v {Any}
  * @returns unboxしたもの
  */
@@ -1443,7 +1469,7 @@ function createCheckValueByCheckObj(checkObj) {
 /**
  * schemaからdepend項目の依存関係を表すマップを作成する
  *
- * @praivate
+ * @private
  * @param schema
  * @returns {Object}
  */

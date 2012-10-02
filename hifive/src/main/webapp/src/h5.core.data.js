@@ -29,7 +29,26 @@
 	//=============================
 
 
+	/**
+	 * <a href="#createSequence">createSequence()</a>で使用するための、型指定定数。
+	 * <p>
+	 * 文字列型を表します。
+	 * </p>
+	 *
+	 * @memberOf h5.core.data
+	 * @type {Integer}
+	 */
 	var SEQUENCE_RETURN_TYPE_STRING = 1;
+
+	/**
+	 * <a href="#createSequence">createSequence()</a>で使用するための、型指定定数
+	 * <p>
+	 * 数値型を表します。
+	 * </p>
+	 *
+	 * @memberOf h5.core.data
+	 * @type {Integer}
+	 */
 	var SEQUENCE_RETURN_TYPE_INT = 2;
 
 	var ID_TYPE_STRING = 'string';
@@ -671,8 +690,10 @@
 		}
 
 		/**
-		 * データアイテムクラス<br>
-		 * データアイテムは<a href="DataModel.html#create>DataModel#create()</a>で作成します。
+		 * データアイテムクラス
+		 * <p>
+		 * データアイテムは<a href="DataModel.html#create">DataModel#create()</a>で作成します。
+		 * </p>
 		 *
 		 * @class
 		 * @constructor
@@ -780,12 +801,18 @@
 			},
 
 			/**
-			 * 指定されたキーのプロパティに値をセットします。<br>
-			 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ... }という構造をもつオブジェクトを1つだけ渡してください。<br>
-			 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。<br>
-			 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。<br>
-			 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする<br>
+			 * 指定されたキーのプロパティに値をセットします。
+			 * <p>
+			 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ... }という構造をもつオブジェクトを1つだけ渡してください。
+			 * </p>
+			 * <p>
+			 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。
+			 * </p>
+			 * <p>
+			 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。
+			 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする
 			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
+			 * </p>
 			 *
 			 * @memberOf DataItem
 			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取る
@@ -830,7 +857,9 @@
 
 			/**
 			 * DataItemが属しているDataModelインスタンスを返します。
+			 * <p>
 			 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
+			 * </p>
 			 *
 			 * @memberOf DataItem
 			 * @returns DataModel
@@ -1010,7 +1039,28 @@
 	//
 	// =========================================================================
 
-
+	/**
+	 * 採番を行う<a href="Sequence.html">Sequence</a>インスタンスを作成します。
+	 * <p>
+	 * 自動でデータアイテムのナンバリングを行いたい場合などに使用します。
+	 * </p>
+	 * <p>
+	 * 第一引数に開始番号(デフォルト1)、第二引数にステップ数(デフォルト1)、を指定します。
+	 * </p>
+	 * <p>
+	 * 第三引数には戻り値の型を指定します。
+	 * <ul>
+	 * <li><a href="#SEQUENCE_RETURN_TYPE_STRING">h5.core.data.SEQUENCE_RETURN_TYPE_STRING</a>
+	 * <li><a href="#SEQUENCE_RETURN_TYPE_INT">h5.core.data.SEQUENCE_RETURN_TYPE_INT</a>
+	 * </ul>
+	 * のいずれかを指定し、それぞれ文字列型、数値型で返します。デフォルトは数値型です。
+	 * </p>
+	 *
+	 * @memberOf h5.core.data
+	 * @param {Number} [start=1] 開始番号
+	 * @param {Number} [step=1] ステップ数
+	 * @param {Integer} [returnType=2] 戻り値の型(デフォルト number)
+	 */
 	function createSequence(start, step, returnType) {
 		// start,stepをdefault値で、returnTypeだけ指定したい場合、createSequence(null,null,returnType)で呼べるように、==nullで比較している
 		var current = start != null ? start : 1;
@@ -1054,6 +1104,15 @@
 			current = value;
 		};
 
+		/**
+		 * 採番を行うためのクラス。
+		 * <p>
+		 * 自動でデータアイテムのナンバリングを行いたい場合などに使用します。このクラスは<a
+		 * href="h5.core.data.html#createSequence">h5.core.data.createSequence()</a>で作成します。
+		 * </p>
+		 *
+		 * @class Sequence
+		 */
 		function Sequence() {}
 		$.extend(Sequence.prototype, methods);
 
@@ -1520,12 +1579,11 @@
 		}
 	});
 
-
-
 	/**
 	 * データモデルマネージャ
 	 * <p>
-	 * データモデルを管理するデータモデルマネージャクラスです。このインスタンスはh5.core.data.createManager()で作成します。
+	 * データモデルを管理するデータモデルマネージャクラスです。このインスタンスは<a
+	 * href="h5.core.data.html#createManager">h5.core.data.createManager()</a>で作成します。
 	 * </p>
 	 *
 	 * @class
@@ -1536,410 +1594,479 @@
 			throwFwError(ERR_CODE_INVALID_MANAGER_NAME);
 		}
 
+		/**
+		 * このデータモデルマネージャが管理するDataModelインスタンス。
+		 * <p>
+		 * <a href="#createModel">createmodel()</a>で作成したモデルは、データモデルマネージャの管理下に置かれ、modelsから参照できます。
+		 * </p>
+		 * <p>
+		 * {モデル名: データモデルインスタンス, ...} の構造を持つオブジェクトです。
+		 * </p>
+		 *
+		 * @name models
+		 * @type {Object}
+		 * @memberOf DataModelManager
+		 */
 		this.models = {};
+
+		/**
+		 * データモデルマネージャ名
+		 * <p>
+		 * <a href="h5.core.data.html#createManager">h5.core.data.createManager()</a>の第一引数に指定した値が格納されます。
+		 * </p>
+		 *
+		 * @name name
+		 * @type {String}
+		 * @memberOf DataModelManager
+		 */
 		this.name = managerName;
+
+
+		/**
+		 * アップデートログ
+		 * <p>
+		 * マネージャの管理下にあるデータモデル、アイテムのイベントをストアしておくためのオブジェクトです。内部で使用します。
+		 * </p>
+		 *
+		 * @private
+		 * @name _updateLogs
+		 * @type {Object}
+		 * @memberOf DataModelManager
+		 */
 		this._updateLogs = null;
 	}
 	DataModelManager.prototype = new EventDispatcher();
-	$
-			.extend(
-					DataModelManager.prototype,
-					{
-						/**
-						 * データモデルを作成します。
-						 * <p>
-						 * 引数にはデータモデルディスクリプタを渡します。
-						 * </p>
-						 *
-						 * @param {Object} descriptor データモデルディスクリプタ
-						 * @param {String} descriptor.name データモデル名。必須。
-						 * @param {String} descriptor.base
-						 *            マネージャに属する別のデータモデルのschemaを継承する場合に指定します。『'@'+継承先データモデル名』で指定してください。
-						 * @param {Object} descriptor.schema スキーマを定義したオブジェクトを指定します。必須。
-						 * @memberOf DataModelManager
-						 */
-						createModel: function(descriptor) {
-							if ($.isArray(descriptor)) {
-								var l = descriptor.length;
-								if (!l) {
-									//空配列
-									throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
-											[createErrorReason(DESCRIPTOR_ERR_CODE_NOT_OBJECT)]);
-								}
-								var dependMap = {};
-								var namesInDescriptors = [];
-								// 依存関係のチェック
-								// 要素がオブジェクトであり、name、schemaプロパティを持っていない場合はcatch節で、ディスクリプタのエラーを投げる
-								for ( var i = 0; i < l; i++) {
-									try {
-										namesInDescriptors.push(descriptor[i].name);
-										var depends = [];
-										if (descriptor[i].base) {
-											depends.push(descriptor[i].base.substring(1));
-										}
-										for ( var p in descriptor[i].schema) {
-											var propObj = descriptor[i].schema[p];
-											if (!propObj) {
-												continue;
-											}
-											var type = propObj.type;
-											if (type && type.substring(0, 1) === '@') {
-												type = (type.indexOf('[]') === -1) ? type
-														.substring(1) : type.substring(1,
-														type.length - 2);
-												depends.push(type);
-											}
-										}
-										dependMap[i] = {
-											depends: depends
-										};
-									} catch (e) {
-										//descriptorがオブジェクトでない、またはnameとschemaが設定されていない。またはname,baseが文字列でない、schemaがオブジェクトでない
-										throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
-									}
-								}
-								// dependMapを元に、循環参照チェック
-								var retObj = {
-									size: 0
-								};
-								while (retObj.size < l) {
-									// 見つからなかったモデルを覚えておく
-									// 循環参照のエラーなのか、単に存在しないモデル名指定によるエラーなのかを区別するため
-									var noExistModels = {};
-
-									// このwhileループ内で1つでも登録されたか
-									var registed = false;
-
-									// descriptorでループさせて、依存関係が解決された居たらデータモデルを登録
-									for ( var i = 0; i < l; i++) {
-										if (!dependMap[i].registed) {
-											var depends = dependMap[i].depends;
-											for ( var j = 0, len = depends.length; j < len; j++) {
-												if (!this.models[depends[j]]) {
-													noExistModels[depends[j]] = true;
-													break;
-												}
-											}
-											if (j === len) {
-												// 依存しているものはすべて登録済みなら登録
-												retObj[i] = registerDataModel(descriptor[i], this);
-												retObj.size++;
-												registed = true;
-												dependMap[i].registed = true;
-											}
-										}
-									}
-									if (!registed) {
-										// whileループの中で一つも登録されなかった場合は、存在しないデータモデル名を依存指定、または循環参照
-										// 存在しなかったデータモデル名が全てディスクリプタに渡されたモデル名のいずれかだったら、それは循環参照エラー
-										var isCircular = true;
-										for ( var modelName in noExistModels) {
-											if ($.inArray(modelName, namesInDescriptors) === -1) {
-												isCircular = false;
-												break;
-											}
-										}
-										if (isCircular) {
-											// 循環参照エラー
-											throwFwError(ERR_CODE_DESCRIPTOR_CIRCULAR_REF);
-										}
-										throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
-												[createErrorReason(
-														DESCRIPTOR_ERR_CODE_NO_EXIST_BASE,
-														modelName)]);
-									}
-								}
-								var retAry = [];
-								for ( var i = 0; i < l; i++) {
-									retAry.push(retObj[i]);
-								}
-								return retAry;
-							}
-							//registerDataModelは初めにDescriptorの検証を行う。
-							//検証エラーがある場合は例外を送出する。
-							//エラーがない場合はデータモデルを返す（登録済みの場合は、すでにマネージャが持っているインスタンスを返す）。
-							return registerDataModel(descriptor, this);
-						},
-
-						/**
-						 * 指定されたデータモデルを削除します。
-						 * <p>
-						 * データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後 データモデル自体をマネージャから削除します。
-						 * </p>
-						 *
-						 * @param {String|DataModel} nameOrModel データモデル名またはデータモデルインスタンス
-						 * @memberOf DataModelManager
-						 */
-						dropModel: function(nameOrModel) {
-							//TODO dropModelするときに依存していたらどうするか？
-							//エラーにしてしまうか。
-							var name = isString(nameOrModel) ? nameOrModel
-									: (typeof nameOrModel === 'object' ? nameOrModel.name : null);
-
-							if (!name || !this.models[name]) {
-								return;
-							}
-							var model = this.models[name];
-							model._manager = null;
-							delete this.models[name];
-							return model;
-						},
-
-						/**
-						 * アップデートセッション中かどうかを返します。
-						 * <p>
-						 * beginUpdate()が呼ばれてからendUpdate()が呼ばれるまでの間はアップデートセッション中です。
-						 * </p>
-						 *
-						 * @returns {Boolean} アップデートセッション中かどうか
-						 * @memberOf DataModelManager
-						 */
-						isInUpdate: function() {
-							return this._updateLogs !== null;
-						},
-
-						beginUpdate: function() {
-							if (this.isInUpdate()) {
-								return;
-							}
-
-							this._updateLogs = {};
-						},
-
-						endUpdate: function() {
-							if (!this.isInUpdate()) {
-								return;
-							}
-
-							var updateLogs = this._updateLogs;
-							var oldValueLogs = this._oldValueLogs;
-							//_updateLog, _oldValueLogsをまず削除する。イベントハンドラ内で、値を変更された時に_updateLogをきちんと残せるようにするため。
-							this._updateLogs = null;
-							this._oldValueLogs = null;
-
-							function getFirstCRLog(itemLogs, lastPos) {
-								for ( var i = 0; i < lastPos; i++) {
-									var type = itemLogs[i].type;
-									if ((type === UPDATE_LOG_TYPE_CREATE || type === UPDATE_LOG_TYPE_REMOVE)) {
-										return itemLogs[i];
-									}
-								}
-								return null;
-							}
-
-
-							/**
-							 * 内部でDataItemごとのイベントを発火させます。
-							 * 変更が1つでもあればモデルイベントオブジェクト(のひな形)を返しますが、変更がない場合はfalseを返します
-							 */
-							function createDataModelChanges(model, modelUpdateLogs) {
-								var recreated = [];
-								var created = [];
-								var changed = [];
-								var removed = [];
-
-								for ( var itemId in modelUpdateLogs) {
-									var itemLogs = modelUpdateLogs[itemId];
-									var isChangeOnly = true;
-
-									var changeEventStack = [];
-
-									//新しい変更が後ろに入っているので、降順で履歴をチェックする
-									for ( var i = itemLogs.length - 1; i >= 0; i--) {
-										var log = itemLogs[i]; //あるitemについてのログ
-										var logType = log.type; //当該ログの種類
-
-										if (logType === UPDATE_LOG_TYPE_CHANGE) {
-											changeEventStack.push(log.ev);
-										} else {
-											//あるアイテムについての今回の変更のうち、最初に存在するCREATEまたはREMOVEのログ
-											//(従って、changeのみの場合存在しない場合もある)
-											var firstCRLog = getFirstCRLog(itemLogs, i);
-
-											if (logType === UPDATE_LOG_TYPE_CREATE) {
-												//begin->remove->create->end のような操作が行われた場合、
-												//begin-endの前後でアイテムのインスタンスが変わってしまう。
-												//これをイベントで判別可能にするため、remove->createだった場合はcreatedではなくrecreatedに入れる。
-												//なお、begin->remove->create->remove->create->endのような場合、
-												//途中のcreate->removeは（begin-endの外から見ると）無視してよいので、
-												//oldItemには「最初のremoveのときのインスタンス」、newItemには「最後のcreateのときのインスタンス」が入る。
-												//また、begin->create->remove->create->endの場合は、begin-endの外から見ると"create"扱いにすればよい。
-
-												//なお、createイベントはDataItemからは発火しない。(createはdependプロパティ内でのみ起こる)
-
-												if (firstCRLog
-														&& firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
-													recreated.push({
-														id: itemId,
-														oldItem: firstCRLog.item,
-														newItem: log.item
-													});
-												} else {
-													created.push(log.item);
-												}
-											} else {
-												//ここに来たら必ずUPDATE_LOG_TYPE_REMOVE
-
-												var removedItem;
-
-												if (firstCRLog
-														&& firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
-													//begin->remove->create->remove->endの場合、begin-endの外から見ると
-													//「最初のremoveで取り除かれた」という扱いにすればよい。
-													removedItem = firstCRLog.item;
-												} else if (!firstCRLog) {
-													//createまたはremoveのログが最後のremoveより前にない
-													//＝beginより前からアイテムが存在し、始めてremoveされた
-													//＝通常のremoveとして扱う
-													removedItem = log.item;
-												} else {
-													//begin->create-> ( remove->create-> ) remove -> end つまり
-													//beginより前にアイテムがなく、セッション中に作られたが最終的には
-													//またremoveされた場合、begin-endの外から見ると「何もなかった」と扱えばよい。
-													removedItem = null;
-												}
-
-												if (removedItem) {
-													removed.push(removedItem);
-
-													var removeEvent = {
-														type: 'remove',
-														model: model
-													};
-													removedItem.dispatchEvent(removeEvent);
-												}
-											}
-
-											isChangeOnly = false;
-
-											//CREATEまたはREMOVEを見つけたら、そこで走査を終了
-											break;
-										}
-									}
-
-									//新規追加or削除の場合はcreated, removedに当該オブジェクトが入ればよい。
-									//あるアイテムのcreate,removeどちらのログもなかったということは
-									//そのオブジェクトはbeginの時点から存在しendのタイミングまで残っていた、ということになる。
-									//従って、あとはchangeのイベントオブジェクトをマージすればよい。
-									if (isChangeOnly && changeEventStack.length > 0) {
-										var mergedProps = {};
-										for ( var i = changeEventStack.length - 1; i >= 0; i--) {
-											for ( var p in changeEventStack[i].props) {
-												if (!mergedProps[p]) {
-													// oldValueのセット
-													// type:[]ならmanager._oldValueLogsから持ってくる
-													if (h5.u.obj.isObservableArray(model
-															.get(itemId).get(p))) {
-														var oldValue = oldValueLogs
-																&& oldValueLogs[model.name]
-																&& oldValueLogs[model.name][itemId]
-																&& oldValueLogs[model.name][itemId][p];
-														if (!model.get(itemId).get(p).equals(
-																oldValue)) {
-															mergedProps[p] = {
-																oldValue: oldValue
-															}
-														}
-													} else {
-														mergedProps[p] = {
-															oldValue: changeEventStack[i].props[p].oldValue
-														};
-													}
-												}
-											}
-										}
-										// 今のアイテムがoldValueと違う値を持っていたらmergedPropsにnewValueをセット
-										// 最終的に値が変わっているかどうかも同時にチェックする
-										//TODO oldValueは配列ならmanager._oldValueLogsにある
-										var changedProps = false;
-										for ( var p in mergedProps) {
-											if (mergedProps[p].oldValue !== model.get(itemId)
-													.get(p)) {
-												mergedProps[p].newValue = model.get(itemId).get(p);
-												changedProps = true;
-											} else {
-												delete mergedProps[p];
-											}
-										}
-										if (changedProps) {
-											var mergedChange = {
-												type: 'change',
-												target: changeEventStack[0].target,
-												props: mergedProps
-											};
-
-											changed.push(mergedChange);
-
-											mergedChange.target.dispatchEvent(mergedChange);
-										}
-									}
-								}
-
-								// 何も変更がなかった場合は、falseを返す
-								if (created.length === 0 && recreated.length === 0
-										&& removed.length === 0 && changed.length === 0) {
-									return false;
-								}
-								return {
-									created: created,
-									recreated: recreated,
-									removed: removed,
-									changed: changed
-								};
-							}
-
-							//endUpdateの処理フローここから
-
-							var modelChanges = {};
-							for ( var modelName in updateLogs) {
-								if (!updateLogs.hasOwnProperty(modelName)) {
-									continue;
-								}
-								var mc = createDataModelChanges(this.models[modelName],
-										updateLogs[modelName]);
-								if (mc) {
-									modelChanges[modelName] = mc;
-								}
-							}
-
-							//高速化のため、createDataModelChanges()の中で各DataItemからのイベントを発火させている
-
-							//各DataModelからイベントを発火。
-							//全てのモデルの変更が完了してから各モデルの変更イベントを出すため、同じループをもう一度行う
-							var modelChanged = false;
-							for ( var modelName in modelChanges) {
-								modelChanged = true;
-								var mc = modelChanges[modelName];
-								this.models[modelName]
-										.dispatchEvent(createDataModelItemsChangeEvent(mc.created,
-												mc.recreated, mc.removed, mc.changed));
-							}
-
-							var event = {
-								type: EVENT_ITEMS_CHANGE,
-								models: modelChanges
-							};
-
-							//最後に、マネージャから全ての変更イベントをあげる。変更がない場合は何もしない
-							if (modelChanged) {
-								this.dispatchEvent(event);
-							}
-						},
-
-						_dataModelItemsChangeListener: function(event) {
-							var manager = event.target.manager;
-
-							var modelsChange = {};
-							modelsChange[event.target.name] = event;
-
-							var managerEvent = {
-								type: EVENT_ITEMS_CHANGE,
-								models: modelsChange
-							};
-
-							manager.dispatchEvent(managerEvent);
+	$.extend(DataModelManager.prototype, {
+		/**
+		 * データモデルを作成します。
+		 * <p>
+		 * 引数にはデータモデルディスクリプタを渡します。
+		 * </p>
+		 *
+		 * @param {Object} descriptor データモデルディスクリプタ
+		 * @param {String} descriptor.name データモデル名。必須。
+		 * @param {String} descriptor.base
+		 *            マネージャに属する別のデータモデルのschemaを継承する場合に指定します。『'@'+継承先データモデル名』で指定してください。
+		 * @param {Object} descriptor.schema スキーマを定義したオブジェクトを指定します。必須。
+		 * @memberOf DataModelManager
+		 */
+		createModel: function(descriptor) {
+			if ($.isArray(descriptor)) {
+				var l = descriptor.length;
+				if (!l) {
+					//空配列
+					throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
+							[createErrorReason(DESCRIPTOR_ERR_CODE_NOT_OBJECT)]);
+				}
+				var dependMap = {};
+				var namesInDescriptors = [];
+				// 依存関係のチェック
+				// 要素がオブジェクトであり、name、schemaプロパティを持っていない場合はcatch節で、ディスクリプタのエラーを投げる
+				for ( var i = 0; i < l; i++) {
+					try {
+						namesInDescriptors.push(descriptor[i].name);
+						var depends = [];
+						if (descriptor[i].base) {
+							depends.push(descriptor[i].base.substring(1));
 						}
-					});
+						for ( var p in descriptor[i].schema) {
+							var propObj = descriptor[i].schema[p];
+							if (!propObj) {
+								continue;
+							}
+							var type = propObj.type;
+							if (type && type.substring(0, 1) === '@') {
+								type = (type.indexOf('[]') === -1) ? type.substring(1) : type
+										.substring(1, type.length - 2);
+								depends.push(type);
+							}
+						}
+						dependMap[i] = {
+							depends: depends
+						};
+					} catch (e) {
+						//descriptorがオブジェクトでない、またはnameとschemaが設定されていない。またはname,baseが文字列でない、schemaがオブジェクトでない
+						throwFwError(ERR_CODE_INVALID_DESCRIPTOR);
+					}
+				}
+				// dependMapを元に、循環参照チェック
+				var retObj = {
+					size: 0
+				};
+				while (retObj.size < l) {
+					// 見つからなかったモデルを覚えておく
+					// 循環参照のエラーなのか、単に存在しないモデル名指定によるエラーなのかを区別するため
+					var noExistModels = {};
+
+					// このwhileループ内で1つでも登録されたか
+					var registed = false;
+
+					// descriptorでループさせて、依存関係が解決された居たらデータモデルを登録
+					for ( var i = 0; i < l; i++) {
+						if (!dependMap[i].registed) {
+							var depends = dependMap[i].depends;
+							for ( var j = 0, len = depends.length; j < len; j++) {
+								if (!this.models[depends[j]]) {
+									noExistModels[depends[j]] = true;
+									break;
+								}
+							}
+							if (j === len) {
+								// 依存しているものはすべて登録済みなら登録
+								retObj[i] = registerDataModel(descriptor[i], this);
+								retObj.size++;
+								registed = true;
+								dependMap[i].registed = true;
+							}
+						}
+					}
+					if (!registed) {
+						// whileループの中で一つも登録されなかった場合は、存在しないデータモデル名を依存指定、または循環参照
+						// 存在しなかったデータモデル名が全てディスクリプタに渡されたモデル名のいずれかだったら、それは循環参照エラー
+						var isCircular = true;
+						for ( var modelName in noExistModels) {
+							if ($.inArray(modelName, namesInDescriptors) === -1) {
+								isCircular = false;
+								break;
+							}
+						}
+						if (isCircular) {
+							// 循環参照エラー
+							throwFwError(ERR_CODE_DESCRIPTOR_CIRCULAR_REF);
+						}
+						throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, [createErrorReason(
+								DESCRIPTOR_ERR_CODE_NO_EXIST_BASE, modelName)]);
+					}
+				}
+				var retAry = [];
+				for ( var i = 0; i < l; i++) {
+					retAry.push(retObj[i]);
+				}
+				return retAry;
+			}
+			//registerDataModelは初めにDescriptorの検証を行う。
+			//検証エラーがある場合は例外を送出する。
+			//エラーがない場合はデータモデルを返す（登録済みの場合は、すでにマネージャが持っているインスタンスを返す）。
+			return registerDataModel(descriptor, this);
+		},
+
+		/**
+		 * 指定されたデータモデルを削除します。
+		 * <p>
+		 * データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後 データモデル自体をマネージャから削除します。
+		 * </p>
+		 *
+		 * @param {String|DataModel} nameOrModel データモデル名またはデータモデルインスタンス
+		 * @memberOf DataModelManager
+		 */
+		dropModel: function(nameOrModel) {
+			//TODO dropModelするときに依存していたらどうするか？
+			//エラーにしてしまうか。
+			var name = isString(nameOrModel) ? nameOrModel
+					: (typeof nameOrModel === 'object' ? nameOrModel.name : null);
+
+			if (!name || !this.models[name]) {
+				return;
+			}
+			var model = this.models[name];
+			model._manager = null;
+			delete this.models[name];
+			return model;
+		},
+
+		/**
+		 * アップデートセッション中かどうかを返します。
+		 * <p>
+		 * beginUpdate()が呼ばれてからendUpdate()が呼ばれるまでの間はアップデートセッション中です。
+		 * </p>
+		 *
+		 * @returns {Boolean} アップデートセッション中かどうか
+		 * @memberOf DataModelManager
+		 */
+		isInUpdate: function() {
+			return this._updateLogs !== null;
+		},
+
+		/**
+		 * アップデートセッションを開始します。
+		 * <p>
+		 * beginUpdate()が呼ばれると、アップデートセッションを開始します。<a href="#endUpdate">endUpdate()</a>を呼ぶとアップデートセッションを解除します。
+		 * </p>
+		 * <p>
+		 * 既にアップデートセッション中であれば何もしません。
+		 * </p>
+		 * <p>
+		 * アップデートセッション中は、当DataModelManager、及びこのの管理下にあるDataModel、DataItemのイベントは発火しません。
+		 * endUpdate()が呼ばれた時点で、イベントが発火します。
+		 * </p>
+		 * <p>
+		 * アップデートセッション中の変更イベントはすべてマージされてendUpdate()時に発火します。
+		 * </p>
+		 *
+		 * <pre>
+		 * 例：
+		 *
+		 * // managerの管理下にあるDataItem
+		 * item.set('value', 'a');
+		 *
+		 * item.addEventListener('change', function(e){
+		 *     // oldValueとnewValueをalertで表示するイベントリスナ
+		 *     alert('oldValue:' + e.prop.value.oldValue + ', newValue:' + e.prop.value.newValue);
+		 * });
+		 *
+		 * // アップデートセッション
+		 * manager.beginUpdate();
+		 * item.set('value', 'b');
+		 * item.set('value', 'c');
+		 * manager.endUpdate();
+		 *
+		 * // &quot;oldValue: a, newValue: c&quot; とアラートが出る
+		 * </pre>
+		 *
+		 * @returns {Boolean} アップデートセッション中かどうか
+		 * @memberOf DataModelManager
+		 */
+		beginUpdate: function() {
+			if (this.isInUpdate()) {
+				return;
+			}
+
+			this._updateLogs = {};
+		},
+
+		/**
+		 * アップデートセッションを終了します。
+		 * <p>
+		 * アップデートセッション中でなければ何もしません。
+		 * </p>
+		 *
+		 * @memberOf DataModelManager
+		 */
+		endUpdate: function() {
+			if (!this.isInUpdate()) {
+				return;
+			}
+
+			var updateLogs = this._updateLogs;
+			var oldValueLogs = this._oldValueLogs;
+			//_updateLog, _oldValueLogsをまず削除する。イベントハンドラ内で、値を変更された時に_updateLogをきちんと残せるようにするため。
+			this._updateLogs = null;
+			this._oldValueLogs = null;
+
+			function getFirstCRLog(itemLogs, lastPos) {
+				for ( var i = 0; i < lastPos; i++) {
+					var type = itemLogs[i].type;
+					if ((type === UPDATE_LOG_TYPE_CREATE || type === UPDATE_LOG_TYPE_REMOVE)) {
+						return itemLogs[i];
+					}
+				}
+				return null;
+			}
+
+
+			/**
+			 * 内部でDataItemごとのイベントを発火させます。 変更が1つでもあればモデルイベントオブジェクト(のひな形)を返しますが、変更がない場合はfalseを返します
+			 */
+			function createDataModelChanges(model, modelUpdateLogs) {
+				var recreated = [];
+				var created = [];
+				var changed = [];
+				var removed = [];
+
+				for ( var itemId in modelUpdateLogs) {
+					var itemLogs = modelUpdateLogs[itemId];
+					var isChangeOnly = true;
+
+					var changeEventStack = [];
+
+					//新しい変更が後ろに入っているので、降順で履歴をチェックする
+					for ( var i = itemLogs.length - 1; i >= 0; i--) {
+						var log = itemLogs[i]; //あるitemについてのログ
+						var logType = log.type; //当該ログの種類
+
+						if (logType === UPDATE_LOG_TYPE_CHANGE) {
+							changeEventStack.push(log.ev);
+						} else {
+							//あるアイテムについての今回の変更のうち、最初に存在するCREATEまたはREMOVEのログ
+							//(従って、changeのみの場合存在しない場合もある)
+							var firstCRLog = getFirstCRLog(itemLogs, i);
+
+							if (logType === UPDATE_LOG_TYPE_CREATE) {
+								//begin->remove->create->end のような操作が行われた場合、
+								//begin-endの前後でアイテムのインスタンスが変わってしまう。
+								//これをイベントで判別可能にするため、remove->createだった場合はcreatedではなくrecreatedに入れる。
+								//なお、begin->remove->create->remove->create->endのような場合、
+								//途中のcreate->removeは（begin-endの外から見ると）無視してよいので、
+								//oldItemには「最初のremoveのときのインスタンス」、newItemには「最後のcreateのときのインスタンス」が入る。
+								//また、begin->create->remove->create->endの場合は、begin-endの外から見ると"create"扱いにすればよい。
+
+								//なお、createイベントはDataItemからは発火しない。(createはdependプロパティ内でのみ起こる)
+
+								if (firstCRLog && firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
+									recreated.push({
+										id: itemId,
+										oldItem: firstCRLog.item,
+										newItem: log.item
+									});
+								} else {
+									created.push(log.item);
+								}
+							} else {
+								//ここに来たら必ずUPDATE_LOG_TYPE_REMOVE
+
+								var removedItem;
+
+								if (firstCRLog && firstCRLog.type === UPDATE_LOG_TYPE_REMOVE) {
+									//begin->remove->create->remove->endの場合、begin-endの外から見ると
+									//「最初のremoveで取り除かれた」という扱いにすればよい。
+									removedItem = firstCRLog.item;
+								} else if (!firstCRLog) {
+									//createまたはremoveのログが最後のremoveより前にない
+									//＝beginより前からアイテムが存在し、始めてremoveされた
+									//＝通常のremoveとして扱う
+									removedItem = log.item;
+								} else {
+									//begin->create-> ( remove->create-> ) remove -> end つまり
+									//beginより前にアイテムがなく、セッション中に作られたが最終的には
+									//またremoveされた場合、begin-endの外から見ると「何もなかった」と扱えばよい。
+									removedItem = null;
+								}
+
+								if (removedItem) {
+									removed.push(removedItem);
+
+									var removeEvent = {
+										type: 'remove',
+										model: model
+									};
+									removedItem.dispatchEvent(removeEvent);
+								}
+							}
+
+							isChangeOnly = false;
+
+							//CREATEまたはREMOVEを見つけたら、そこで走査を終了
+							break;
+						}
+					}
+
+					//新規追加or削除の場合はcreated, removedに当該オブジェクトが入ればよい。
+					//あるアイテムのcreate,removeどちらのログもなかったということは
+					//そのオブジェクトはbeginの時点から存在しendのタイミングまで残っていた、ということになる。
+					//従って、あとはchangeのイベントオブジェクトをマージすればよい。
+					if (isChangeOnly && changeEventStack.length > 0) {
+						var mergedProps = {};
+						for ( var i = changeEventStack.length - 1; i >= 0; i--) {
+							for ( var p in changeEventStack[i].props) {
+								if (!mergedProps[p]) {
+									// oldValueのセット
+									// type:[]ならmanager._oldValueLogsから持ってくる
+									if (h5.u.obj.isObservableArray(model.get(itemId).get(p))) {
+										var oldValue = oldValueLogs && oldValueLogs[model.name]
+												&& oldValueLogs[model.name][itemId]
+												&& oldValueLogs[model.name][itemId][p];
+										if (!model.get(itemId).get(p).equals(oldValue)) {
+											mergedProps[p] = {
+												oldValue: oldValue
+											}
+										}
+									} else {
+										mergedProps[p] = {
+											oldValue: changeEventStack[i].props[p].oldValue
+										};
+									}
+								}
+							}
+						}
+						// 今のアイテムがoldValueと違う値を持っていたらmergedPropsにnewValueをセット
+						// 最終的に値が変わっているかどうかも同時にチェックする
+						//TODO oldValueは配列ならmanager._oldValueLogsにある
+						var changedProps = false;
+						for ( var p in mergedProps) {
+							if (mergedProps[p].oldValue !== model.get(itemId).get(p)) {
+								mergedProps[p].newValue = model.get(itemId).get(p);
+								changedProps = true;
+							} else {
+								delete mergedProps[p];
+							}
+						}
+						if (changedProps) {
+							var mergedChange = {
+								type: 'change',
+								target: changeEventStack[0].target,
+								props: mergedProps
+							};
+
+							changed.push(mergedChange);
+
+							mergedChange.target.dispatchEvent(mergedChange);
+						}
+					}
+				}
+
+				// 何も変更がなかった場合は、falseを返す
+				if (created.length === 0 && recreated.length === 0 && removed.length === 0
+						&& changed.length === 0) {
+					return false;
+				}
+				return {
+					created: created,
+					recreated: recreated,
+					removed: removed,
+					changed: changed
+				};
+			}
+
+			//endUpdateの処理フローここから
+
+			var modelChanges = {};
+			for ( var modelName in updateLogs) {
+				if (!updateLogs.hasOwnProperty(modelName)) {
+					continue;
+				}
+				var mc = createDataModelChanges(this.models[modelName], updateLogs[modelName]);
+				if (mc) {
+					modelChanges[modelName] = mc;
+				}
+			}
+
+			//高速化のため、createDataModelChanges()の中で各DataItemからのイベントを発火させている
+
+			//各DataModelからイベントを発火。
+			//全てのモデルの変更が完了してから各モデルの変更イベントを出すため、同じループをもう一度行う
+			var modelChanged = false;
+			for ( var modelName in modelChanges) {
+				modelChanged = true;
+				var mc = modelChanges[modelName];
+				this.models[modelName].dispatchEvent(createDataModelItemsChangeEvent(mc.created,
+						mc.recreated, mc.removed, mc.changed));
+			}
+
+			var event = {
+				type: EVENT_ITEMS_CHANGE,
+				models: modelChanges
+			};
+
+			//最後に、マネージャから全ての変更イベントをあげる。変更がない場合は何もしない
+			if (modelChanged) {
+				this.dispatchEvent(event);
+			}
+		},
+
+		_dataModelItemsChangeListener: function(event) {
+			var manager = event.target.manager;
+
+			var modelsChange = {};
+			modelsChange[event.target.name] = event;
+
+			var managerEvent = {
+				type: EVENT_ITEMS_CHANGE,
+				models: modelsChange
+			};
+
+			manager.dispatchEvent(managerEvent);
+		}
+	});
 
 	/**
 	 * データモデルを作成します。最初にdescriptorの検証を行い、エラーがある場合は例外を送出します。
@@ -1986,6 +2113,17 @@
 		return model;
 	}
 
+	/**
+	 * 第一引数に指定された名前のデータモデルマネージャを作成します。
+	 * <p>
+	 * 第2引数が渡された場合、その名前空間に<a href="DataModelManager.html">DataModelManager</a>インスタンスを公開します。
+	 * </p>
+	 *
+	 * @memberOf h5.core.data
+	 * @param {String} name マネージャ名
+	 * @param {String} [namespace] 公開先名前空間
+	 * @returns {DataModelManager} データモデルマネージャ
+	 */
 	function createManager(managerName, namespace) {
 		if (!isValidNamespaceIdentifier(managerName)) {
 			throwFwError(ERR_CODE_INVALID_MANAGER_NAME);
@@ -2139,15 +2277,6 @@
 	 * @namespace
 	 */
 	h5.u.obj.expose('h5.core.data', {
-		/**
-		 * 指定された名前のデータモデルマネージャを作成します。 第2引数が渡された場合、その名前空間にマネージャインスタンスを公開します。
-		 *
-		 * @memberOf h5.core.data
-		 * @name h5.core.data.createManager
-		 * @param {String} name マネージャ名
-		 * @param {String} [namespace] 公開先名前空間
-		 * @returns データモデルマネージャ
-		 */
 		createManager: createManager,
 
 		createSequence: createSequence,
