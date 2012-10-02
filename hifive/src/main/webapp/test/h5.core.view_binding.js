@@ -219,31 +219,30 @@ $(function() {
 		});
 	});
 
-	test('バインドに指定する要素が複数ある場合は、複数にバインドされること', function() {
+	test('バインドする要素が複数ある場合は、最初の一つの要素だけにバインドされること', function() {
 		//TODO 複数にバインドされるのか、エラーなのか仕様を確認する。(現状だと最初に見つかった要素だけ？)
 		$fixture.append(createBindSpan('test'), createBindSpan('test'));
 		h5.core.view.bind($fixture.find('span'), {
 			test: 'test'
 		});
-		result = ['test', 'test'];
+		result = ['test', ''];
 		$fixture.find('span').each(function(i) {
 			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
 	});
 
-	test('バインドに指定する要素が存在しない場合は、エラーになること', function() {
+	test('バインドする要素が存在しない場合は、エラーになること', function() {
 		$fixture.append(createBindSpan('test'));
 		try {
 			h5.core.view.bind($fixture.find('#noExist'), {
 				test: 'test'
 			});
 		} catch (e) {
-			//TODO エラーコード確認
-			strictEqual(e.code, ERR.xxxx, e.message);
+			strictEqual(e.code, ERRCODE.h5.core.view.ERR_CODE_BIND_TARGET_INVALID, e.message);
 		}
 	});
 
-	test('バインドに指定する要素の指定方法はjQueryオブジェクト、DOM、セレクタのどれでもいいこと', function() {
+	test('バインドする要素の指定方法はjQueryオブジェクト、DOM、セレクタのどれでもいいこと', function() {
 		$fixture.append(createBindSpan('test'));
 		var strs = ['jQueryオブジェクト', 'DOM', 'セレクタ'];
 		for ( var i = 0, l = strs.length; i < l; i++) {
@@ -265,25 +264,20 @@ $(function() {
 		}
 	});
 
-	test('バインドに指定する要素の指定方法はjQueryオブジェクト、DOM、セレクタのどれでもいいこと', function() {
+	test('バインドする要素の指定に不正な値を渡すとエラーになること', function() {
 		$fixture.append(createBindSpan('test'));
-		var strs = ['jQueryオブジェクト', 'DOM', 'セレクタ'];
-		for ( var i = 0, l = strs.length; i < l; i++) {
-			switch (i) {
-			case 0:
-				arg = $fixture.find('span');
-				break;
-			case 1:
-				arg = $fixture.find('span')[0];
-				break;
-			case 2:
-				arg = '#qunit-fixture>span';
-				break;
+		var invalids = [1, $([1, 2, 3]), function() {
+			throw {}
+		}, [1], true];
+		for ( var i = 0, l = invalids.length; i < l; i++) {
+			try {
+				h5.core.view.bind(invalids[i], {
+					test: i
+				});
+				ok(false, 'テスト失敗。エラーが発生していません。' + invalids[i]);
+			} catch (e) {
+				strictEqual(e.code, ERRCODE.h5.core.view.ERR_CODE_BIND_TARGET_INVALID, e.message);
 			}
-			h5.core.view.bind(arg, {
-				test: i
-			});
-			equal($fixture.find('span').text(), i, strs[i] + 'を引数に指定できること');
 		}
 	});
 
@@ -295,7 +289,7 @@ $(function() {
 				h5.core.view.bind($fixture.find('span'), invalidVals[i]);
 				ok(false, 'テスト失敗。エラーが発生していません。' + invalidVals[i]);
 			} catch (e) {
-				strictEqual(e.code, ERR.xxxx, e.message);
+				strictEqual(e.code, ERRCODE.h5.core.view.ERR_CODE_BIND_CONTEXT_INVALID, e.message);
 			}
 		}
 	});
@@ -682,7 +676,7 @@ $(function() {
 		strictEqual(observed--, 1, 'ObserableArrayのobserveにハンドリングしたイベントリスナが動作していること');
 	});
 
-	test('バインドされているObserbableItemの中身を変更すると、表示も書き変わること', 10, function() {
+	test('バインドされているObserbableItemの中身を変更すると、表示も書き変わること', 13, function() {
 		var item = h5.u.obj.createObservableItem(testSchema);
 		item.set({
 			str: 'AA',
@@ -703,7 +697,7 @@ $(function() {
 		$fixture.append($dataBindTest.append($loopContext));
 
 		h5.core.view.bind($('#dataBindTest'), item);
-		var result = ['AA', '11', 'ary[0]', 'ary[1}'];
+		var result = ['AA', '11', 'ary[0]', 'ary[1]'];
 		$('#dataBindTest span').each(function(i) {
 			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
@@ -728,7 +722,9 @@ $(function() {
 		strictEqual(changed--, 1, 'イベントリスナが動作していること');
 
 		// 配列だけ変更
-		item.get('ary').push('newAry[1]');
+		item.get('ary').push({
+			a: 'newAry[1]'
+		});
 		result.push('newAry[1]');
 		$('#dataBindTest span').each(function(i) {
 			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
@@ -736,7 +732,7 @@ $(function() {
 		strictEqual(changed--, 1, 'イベントリスナが動作していること');
 	});
 
-	test('バインドされているデータアイテムの中身を変更すると、表示も書き変わること', 17, function() {
+	test('バインドされているデータアイテムの中身を変更すると、表示も書き変わること', 16, function() {
 		testSchema.id = {
 			id: true
 		};
@@ -767,7 +763,7 @@ $(function() {
 		$fixture.append($dataBindTest.append($loopContext));
 
 		h5.core.view.bind($('#dataBindTest'), item);
-		var result = ['AA', '11', 'ary[0]', 'ary[1}'];
+		var result = ['AA', '11', 'ary[0]', 'ary[1]'];
 		$('#dataBindTest span').each(function(i) {
 			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
@@ -792,7 +788,9 @@ $(function() {
 		strictEqual(changed--, 1, 'イベントリスナが動作していること');
 
 		// 配列だけ変更
-		item.get('ary').push('newAry[1]');
+		item.get('ary').push({
+			a: 'newAry[1]'
+		});
 		result.push('newAry[1]');
 
 		$('#dataBindTest span').each(function(i) {
