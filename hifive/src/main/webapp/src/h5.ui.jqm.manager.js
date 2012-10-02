@@ -526,7 +526,7 @@
 		 * 同じコントローラであるかの判定は、コントローラ定義オブジェクトの<b>__name</b>プロパティの値が登録済みのコントローラと同値であるか比較し、同値の場合は登録しません。
 		 *
 		 * @param {String} id ページID
-		 * @param {String|String[]} cssSrc CSSファイルパス列
+		 * @param {String|String[]} cssSrc CSSファイルのパス
 		 * @param {Object|Object[]} controllerDefObject コントローラ定義オブジェクト
 		 * @param {Object|Object[]} initParam 初期化パラメータ
 		 * @memberOf h5.ui.jqm.manager
