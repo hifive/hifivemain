@@ -527,7 +527,7 @@
 		 *
 		 * @param {String} id ページID
 		 * @param {String|String[]} cssSrc CSSファイルパス列
-		 * @param {Object|Object[]} controllerDefObject コントローラを定義オブジェクト
+		 * @param {Object|Object[]} controllerDefObject コントローラ定義オブジェクト
 		 * @param {Object|Object[]} initParam 初期化パラメータ
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
