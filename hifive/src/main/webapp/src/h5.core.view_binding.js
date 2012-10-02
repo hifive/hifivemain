@@ -423,7 +423,9 @@
 		$childContexts.each(function() {
 			var $this = $(this);
 			var childContextProp = $this.attr(dataContextAttr);
-			var childContext = context[childContextProp];
+			//contextがisDataItemならgetでchildContextを取得する
+			var childContext = isDataItem(context) ? context.get(childContextProp)
+					: context[childContextProp];
 
 			applyBinding(binding, $this[0], childContext, isLoopContext);
 		});
