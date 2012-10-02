@@ -169,6 +169,15 @@ $(function() {
 		});
 	});
 
+	test('HTML文字がエスケープされること', 1, function() {
+		$fixture.append(createBindSpan('test'));
+		var str = '<div data-h5-bind="test"></div>';
+		h5.core.view.bind($fixture.find('span'), {
+			test: str
+		});
+		strictEqual($fixture.find('span').text(), str, 'data-h5-bind属性を指定している要素自体にバインドされていること');
+	});
+
 	test('データがバインドされた要素に、再度バインドすると、後からバインドしたものに上書かれること', function() {
 		var objA = {
 			test1: 'a',
@@ -803,4 +812,108 @@ $(function() {
 
 	//TODO 属性、クラス、スタイル、テキストノード、innerHTMLへのバインド。inputタグへのバインド。
 
+
+	//=============================
+	// Definition
+	//=============================
+	module('バインドの詳細指定');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('属性へのバインド', function() {
+		// バインド先の設定
+		var $dataBindTest = $('<div id="dataBindTest">');
+		$dataBindTest.append(createBindSpan('attr(id):id'));
+		$dataBindTest.find('span').text('test');
+		$fixture.append($dataBindTest);
+
+		h5.core.view.bind($('#dataBindTest'), {
+			id: 'bindTest123'
+		});
+
+		var $span = $fixture.find('span');
+		strictEqual($span.attr('id'), 'bindTest123', 'id属性の値が書き変わっていること');
+		strictEqual($span.text(), 'test', 'テキストノードの値は書き変わっていないこと');
+
+		h5.core.view.bind($('#dataBindTest'), {
+			'attr(id):id': 'attr(id):id'
+		});
+
+		$span = $fixture.find('span');
+		strictEqual($span.text(), 'test', '『:』を含むプロパティはバインドされないこと');
+	});
+
+	test('classへのバインド', function() {
+		// バインド先の設定
+		var $dataBindTest = $('<div id="dataBindTest">');
+		$dataBindTest.append(createBindSpan('class:cls'));
+		$fixture.append($dataBindTest);
+		$dataBindTest.find('span').text('test');
+		$dataBindTest.find('span').attr('class', 'testClass');
+
+		h5.core.view.bind($('#dataBindTest'), {
+			cls: 'bindTestCls123'
+		});
+
+		var $span = $fixture.find('span');
+		strictEqual($span.attr('class'), 'testClass bindTestCls123', 'class属性にバインドした値が追加されていること');
+		strictEqual($span.text(), 'test', 'テキストノードの値は書き変わっていないこと');
+	});
+
+	test('styleへのバインド', function() {
+		// バインド先の設定
+		var $dataBindTest = $('<div id="dataBindTest">');
+		$dataBindTest.append(createBindSpan('style(margin-left):marginLeft'));
+		$dataBindTest.append(createBindSpan('style(margin):margin'));
+		$dataBindTest.find('span').attr('style', 'color: red;margin-left:22px');
+		$fixture.append($dataBindTest);
+
+		h5.core.view.bind($('#dataBindTest'), {
+			marginLeft: '15px',
+			margin: '5px 10px 20px 30px'
+		});
+
+		var $span = $fixture.find('span');
+		var span1 = $span[0];
+		var span2 = $span[1];
+		strictEqual(span1.style.marginLeft, '15px', 'バインドしたスタイルが適応されていること');
+		strictEqual(span1.style.color, 'red', 'もともと指定していたスタイルがなくなっていないこと');
+		strictEqual(span2.style.marginTop, '5px', 'バインドしたスタイルが適応されていること');
+		strictEqual(span2.style.marginRight, '10px', 'バインドしたスタイルが適応されていること');
+		strictEqual(span2.style.marginBottom, '20px', 'バインドしたスタイルが適応されていること');
+		strictEqual(span2.style.marginLeft, '30px', 'バインドしたスタイルが適応されていること');
+		strictEqual(span2.style.color, 'red', 'もともと指定していたスタイルがなくなっていないこと');
+	});
+
+	test('テキストノードへのバインド', function() {
+		// バインド先の設定
+		var $dataBindTest = $('<div id="dataBindTest">');
+		$dataBindTest.append(createBindSpan('text:test'));
+		$fixture.append($dataBindTest);
+
+		var str = '<a href="#a">a</a>';
+		h5.core.view.bind($('#dataBindTest'), {
+			test: str
+		});
+
+		var $span = $fixture.find('span');
+		strictEqual($span.text(), str, '値がテキストノードとしてバインドされていること');
+	});
+
+	test('innerHTMLへのバインド', function() {
+		// バインド先の設定
+		var $dataBindTest = $('<div id="dataBindTest">');
+		$dataBindTest.append(createBindSpan('html:test'));
+		$fixture.append($dataBindTest);
+
+		var str = '<a href="#a">a</a>';
+		h5.core.view.bind($('#dataBindTest'), {
+			test: str
+		});
+
+		var $span = $fixture.find('span');
+		strictEqual($span.html(), str, '値がinnerHTMLとしてバインドされていること');
+	});
 });
