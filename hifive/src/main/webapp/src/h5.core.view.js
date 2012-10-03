@@ -69,14 +69,19 @@
 	var ERR_CODE_BIND_TARGET_INVALID = 7007;
 
 	/**
-	 * bindに指定したtargetがDOM要素(又は有効なセレクタ、jQueryオブジェクトでない)ならエラー
+	 * bindに指定したtargetが表すDOM要素が存在しないならエラー
 	 */
 	var ERR_CODE_BIND_TARGET_NO_EXIST = 7007;
 
 	/**
+	 * bindに指定したtargetが表すDOM要素が複数あるならエラー
+	 */
+	var ERR_CODE_BIND_TARGET_TOO_MANY = 7008;
+
+	/**
 	 * bindに指定したcontextがオブジェクトでない
 	 */
-	var ERR_CODE_BIND_CONTEXT_INVALID = 7008;
+	var ERR_CODE_BIND_CONTEXT_INVALID = 7009;
 
 	/**
 	 * 各エラーコードに対応するメッセージ
@@ -91,6 +96,7 @@
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_INVALID] = 'bindの引数に指定されたバインド先の要素の指定が不正です。有効なDOMオブジェクト、セレクタ、jQueryオブジェクトのいずれかを指定してください。';
 	errMsgMap[ERR_CODE_BIND_TARGET_NO_EXIST] = 'bindの引数に指定されたバインド先の要素の指定が存在しません。';
+	errMsgMap[ERR_CODE_BIND_TARGET_TOO_MANY] = 'bindの引数に指定されたバインド先の要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_BIND_CONTEXT_INVALID] = 'bindの引数に指定されたバインドオブジェクトが不正です。オブジェクト、またはデータアイテム、ObservableItemを指定してください。';
 
 	// メッセージの登録
@@ -782,11 +788,23 @@
 			}
 		},
 
+		/**
+		 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
+		 *
+		 * @memberOf View
+		 * @name clear
+		 * @param {String|String[]} templateIds テンプレートID
+		 * @function
+		 */
 		bind: function(target, context) {
 			var targetDOM = null;
 
 			// targetのチェック
 			if (h5.u.obj.isJQueryObject(target) && target[0] && target[0].nodeType === 1) {
+				if (target.length > 1) {
+					// 複数ある場合はエラー
+					throwFwError(ERR_CODE_BIND_TARGET_TOO_MANY);
+				}
 				// jQueryオブジェクトで、先頭の要素がDOM要素(nodeType===1)なら、その値
 				targetDOM = target[0];
 			} else if (isString(target)) {
@@ -794,6 +812,9 @@
 				if ($target.length === 0) {
 					// セレクタで指定された場合で、そのセレクタで要素が見つからない場合はエラー
 					throwFwError(ERR_CODE_BIND_TARGET_NO_EXIST);
+				} else if ($target.length > 1) {
+					// 複数ある場合はエラー
+					throwFwError(ERR_CODE_BIND_TARGET_TOO_MANY);
 				}
 				targetDOM = $target[0];
 			} else if (target && typeof target === 'object' && target.nodeType === 1) {
