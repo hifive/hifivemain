@@ -1399,7 +1399,7 @@
 	 * <p>
 	 * <a href="DataItem.html">データアイテム</a>と同様、get/setで値の読み書きを行います。
 	 * </p>
-	 *ｘ
+	 *
 	 * @class
 	 * @name ObservableArray
 	 * @param {Object} schema schemaオブジェクト。データモデルディスクリプタのスキーマと同様のスキーマオブジェクトを指定します。ただしidの指定は不要です。
