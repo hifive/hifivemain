@@ -502,33 +502,20 @@
 		 * idが第1引数で指定されたものに一致する要素に対してコントローラを登録します。
 		 * <p>
 		 * 1つのページに複数コントローラを登録することもできます。<br>
-		 * 1度に複数のコントローラを登録する場合は、以下のように第二引数を配列で指定して下さい。
-		 *
-		 * <pre>
-		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', [controllerDefA, controllerDefB], [defAParams,
-		 * 		defBParams]);
-		 * </pre>
-		 *
-		 * このとき第三引数のパラメータは以下のように処理されます。
-		 * <ul>
-		 * <li>controllerDefAのパラメータ = defAParams</li>
-		 * <li>controllerDefBのパラメータ = defBParams</li>
-		 * </ul>
-		 * <p>
-		 * また、以下のようにコントローラ定義オブジェクトの数分、define()を実行することでも1つのページに複数コントローラを登録することができます。
+		 * 以下のように、登録したいコントローラ定義オブジェクトの数分、define()を実行して下さい。
 		 *
 		 * <pre>
 		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefA, defAParams);
 		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefB, defBParams);
 		 * </pre>
 		 * 注意:<br>
-		 * 一つのページに同じコントローラを複数登録することはできません。<br>
+		 * ページに同じコントローラを複数登録することはできません。<br>
 		 * 同じコントローラであるかの判定は、コントローラ定義オブジェクトの<b>__name</b>プロパティの値が登録済みのコントローラと同値であるか比較し、同値の場合は登録しません。
 		 *
 		 * @param {String} id ページID
 		 * @param {String|String[]} cssSrc CSSファイルのパス
-		 * @param {Object|Object[]} controllerDefObject コントローラ定義オブジェクト
-		 * @param {Object|Object[]} initParam 初期化パラメータ
+		 * @param {Object} controllerDefObject コントローラ定義オブジェクト
+		 * @param {Object} initParam 初期化パラメータ
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
 		 * @name define
@@ -541,22 +528,16 @@
 				cssMap[id] = cssSrcArray;
 			}
 
-			var defObjArray = wrapInArray(controllerDefObject);
 			if (controllerMap[id]) {
-				$.merge(controllerMap[id], defObjArray);
+				controllerMap[id].push(controllerDefObject);
 			} else {
-				controllerMap[id] = defObjArray;
+				controllerMap[id] = wrapInArray(controllerDefObject);
 			}
 
-			// 配列に対する$.extend()は、要素がundefinedの場合extendされない
-			// initParamが配列の場合はそのままで、undefinedまたはnullの場合は空の配列がほしいため$.makeArray()を使用する
-			var paramArray = $.extend($.map(defObjArray, function() {
-				return {};
-			}), $.makeArray(initParam));
 			if (initParamMap[id]) {
-				$.merge(initParamMap[id], paramArray);
+				initParamMap[id].push(initParam);
 			} else {
-				initParamMap[id] = paramArray;
+				initParamMap[id] = wrapInArray(initParam);
 			}
 
 			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
