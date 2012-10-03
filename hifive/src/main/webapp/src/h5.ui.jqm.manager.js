@@ -201,6 +201,7 @@
 		'{document} pageremove': function(context) {
 			var id = context.event.target.id;
 			var controllers = controllerInstanceMap[id];
+			var dynamicControllers = dynamicControllerInstanceMap[id];
 
 			if (!controllers) {
 				return;
@@ -210,8 +211,8 @@
 				controllers[i].dispose();
 			}
 
-			for ( var i = 0, len = dynamicControllerInstanceMap.length; i < len; i++) {
-				dynamicControllerInstanceMap[i].dispose();
+			for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
+				dynamicControllers[i].dispose();
 			}
 
 			controllerInstanceMap[id] = [];
@@ -508,6 +509,7 @@
 		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefA, defAParams);
 		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefB, defBParams);
 		 * </pre>
+		 *
 		 * 注意:<br>
 		 * ページに同じコントローラを複数登録することはできません。<br>
 		 * 同じコントローラであるかの判定は、コントローラ定義オブジェクトの<b>__name</b>プロパティの値が登録済みのコントローラと同値であるか比較し、同値の場合は登録しません。
