@@ -1401,7 +1401,7 @@
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
 		 */
 		get: function(idOrArray) {
-			if ($.isArray(idOrArray)) {
+			if ($.isArray(idOrArray) || h5.u.obj.isObservableArray(idOrArray)) {
 				var ret = [];
 				for ( var i = 0, len = idOrArray.length; i < len; i++) {
 					ret.push(this._findById(idOrArray[i]));
