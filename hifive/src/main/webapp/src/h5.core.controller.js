@@ -778,8 +778,7 @@
 
 						// 同じrootControllerを持つ他の子のdisposeによって、
 						// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
-						controller.rootController
-								&& controller.rootController.dispose(arguments);
+						controller.rootController && controller.rootController.dispose(arguments);
 
 						// dispose処理が終わったら例外を投げる
 						throw e;
@@ -1926,6 +1925,10 @@
 
 	/**
 	 * コントローラのコンストラクタ
+	 * <p>
+	 * このオブジェクトは自分でnewすることはありません。 コントローラ化して動作させる場合は<a
+	 * href="h5.core.html#controller">h5.core.controller()</a>を使用してください。
+	 * </p>
 	 *
 	 * @param {Element} rootElement コントローラをバインドした要素
 	 * @param {String} controllerName コントローラ名
