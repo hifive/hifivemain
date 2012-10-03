@@ -288,7 +288,7 @@
 						return errorReason;
 					}
 				} else {
-					baseSchema = manager.models[baseName]._schema;
+					baseSchema = manager.models[baseName].schema;
 				}
 			}
 		}
@@ -347,7 +347,7 @@
 
 		//先に、すべてのプロパティの整合性チェックを行う
 		for ( var prop in valueObj) {
-			if (!(prop in model._schema)) {
+			if (!(prop in model.schema)) {
 				// schemaに定義されていないプロパティ名が入っていたらエラー
 				throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, prop]);
 			}
@@ -357,14 +357,14 @@
 			}
 
 			// depend指定されている項目はset禁止
-			if (model._schema[prop] && model._schema[prop].depend) {
+			if (model.schema[prop] && model.schema[prop].depend) {
 				throwFwError(ERR_CODE_DEPEND_PROPERTY, prop);
 			}
 
 			var oldValue = getValue(item, prop);
 			var newValue = valueObj[prop];
 
-			var type = model._schema[prop] && model._schema[prop].type;
+			var type = model.schema[prop] && model.schema[prop].type;
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
 			if (type && type.match(/string|number|integer|boolean/)) {
 				newValue = unbox(newValue);
@@ -439,7 +439,7 @@
 			var readyProp = readyProps[i];
 
 			//TODO 判定文改良
-			if (model._schema[readyProp.p] && isTypeArray(model._schema[readyProp.p].type)) {
+			if (model.schema[readyProp.p] && isTypeArray(model.schema[readyProp.p].type)) {
 				//配列の場合は値のコピーを行う。ただし、コピー元がnullの場合があり得る（create()でdefaultValueがnull）ので
 				//その場合はコピーしない
 				if (readyProp.n) {
@@ -501,7 +501,7 @@
 		 * 依存しているプロパティが依存プロパティが今回の変更されたプロパティに依存していないならtrue(計算済み)を返します
 		 */
 		function isReady(dependProp) {
-			var deps = wrapInArray(model._schema[dependProp].depend.on);
+			var deps = wrapInArray(model.schema[dependProp].depend.on);
 			for ( var i = 0, len = deps.length; i < len; i++) {
 				if ($.inArray(deps[i], model._realProperty) === -1
 						&& $.inArray(deps[i], targets) !== -1) {
@@ -551,7 +551,7 @@
 				var dp = targets[i];
 
 				if (isReady(dp)) {
-					var newValue = model._schema[dp].depend.calc.call(item, event);
+					var newValue = model.schema[dp].depend.calc.call(item, event);
 
 					// 型変換を行わない厳密チェックで、戻り値をチェックする
 					var errReason = model._itemValueCheckFuncs[dp](newValue, true);
@@ -587,7 +587,7 @@
 	 */
 	function createDataItemConstructor(model, descriptor) {
 		//model.schemaは継承関係を展開した後のスキーマ
-		var schema = model._schema;
+		var schema = model.schema;
 
 		function setObservableArrayListeners(model, item, propName, observableArray) {
 			//TODO 現状だとインスタンスごとにfunctionを作っているが、
@@ -923,7 +923,7 @@
 			var baseModel = manager.models[base.slice(1)];
 
 			// base指定されたモデルのschemaを取得
-			baseSchema = baseModel._schema;
+			baseSchema = baseModel.schema;
 		}
 		// extendした結果を返す。base指定されていない場合は渡されたdesc.schemaをシャローコピーしたもの。
 		$.extend(schema, baseSchema);
@@ -1231,9 +1231,9 @@
 		 * @private
 		 * @memberOf DataModel
 		 * @type Object
-		 * @name _schema
+		 * @name schema
 		 */
-		this._schema = schema;
+		this.schema = schema;
 
 		var schemaIdType = schema[this.idKey].type;
 		if (schemaIdType) {
