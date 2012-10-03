@@ -530,13 +530,13 @@
 		 * </pre>
 		 *
 		 * 注意:<br>
-		 * ページに同じコントローラを複数登録することはできません。<br>
-		 * 同じコントローラであるかの判定は、コントローラ定義オブジェクトの<b>__name</b>プロパティの値が登録済みのコントローラと同値であるか比較し、同値の場合は登録しません。
+		 * ただし、ページに同じコントローラを2つ以上バインドすることはできません。<br>
+		 * 同じコントローラであるかの判定は、コントローラ定義オブジェクトの<b>__name</b>プロパティの値がバインド済みのコントローラと同値であるか比較し、同値の場合はバインドされません。
 		 *
 		 * @param {String} id ページID
-		 * @param {String|String[]} cssSrc CSSファイルのパス
-		 * @param {Object} controllerDefObject コントローラ定義オブジェクト
-		 * @param {Object} initParam 初期化パラメータ (ライフサイクルイベント(__construct, __init,
+		 * @param {String|String[]} [cssSrc] CSSファイルのパス
+		 * @param {Object} [controllerDefObject] コントローラ定義オブジェクト
+		 * @param {Object} [initParam] 初期化パラメータ (ライフサイクルイベント(__construct, __init,
 		 *            __ready)の引数にargsプロパティとして渡されます)
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
@@ -551,7 +551,7 @@
 				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'cssSrc');
 			}
 
-			if (!$.isPlainObject(controllerDefObject)) {
+			if (controllerDefObject != null && !$.isPlainObject(controllerDefObject)) {
 				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'controllerDefObject');
 			}
 
