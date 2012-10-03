@@ -821,7 +821,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 			} else {
 				var onArray = wrapInArray(depend.on);
 				for ( var i = 0, l = onArray.length; i < l; i++) {
-					if (!schema[onArray[i]]) {
+					if (!schema.hasOwnProperty(onArray[i])) {
 						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_ON,
 								schemaProp));
 						if (stopOnError) {
