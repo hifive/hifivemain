@@ -1228,7 +1228,6 @@
 		 * 継承関係を展開した後のスキーマを保持します。
 		 * </p>
 		 *
-		 * @private
 		 * @memberOf DataModel
 		 * @type Object
 		 * @name schema
