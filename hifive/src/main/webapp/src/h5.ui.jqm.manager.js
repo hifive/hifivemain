@@ -129,7 +129,27 @@
 			jqmControllerInstance.bindController(id);
 		}
 	}
-	// TODO モジュールレベルのプライベート関数はここに書く
+
+	/**
+	 * コントローラインスタンスの__nameプロパティとコントローラ定義オブジェクトの__nameプロパティを比較し、同値であるかを判定します。
+	 *
+	 * @param {Object[]} controllerInstances コントローラインスタンスを保持する配列
+	 * @param {Object} controllerDefObj コントローラ定義オブジェクト
+	 */
+	function equalsControllerName(controllerInstances, controllerDefObj) {
+		var ret = false;
+
+		for ( var i = 0, len = controllerInstances.length; i < len; i++) {
+			var ci = controllerInstances[i];
+			if (ci && ci.__name === controllerDefObj.__name) {
+				ret = true;
+				break;
+			}
+		}
+
+		return ret;
+	}
+
 	// 関数は関数式ではなく function myFunction(){} のように関数定義で書く
 
 	// =========================================================================
@@ -211,11 +231,16 @@
 				controllers[i].dispose();
 			}
 
+			controllerInstanceMap[id] = [];
+
+			if (!dynamicControllers) {
+				return;
+			}
+
 			for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
 				dynamicControllers[i].dispose();
 			}
 
-			controllerInstanceMap[id] = [];
 			dynamicControllerInstanceMap[id] = [];
 		},
 
@@ -354,28 +379,15 @@
 			}
 
 			var ci = controllerInstanceMap[id];
-			var equalsControllerName = function(obj) {
-				var ret = false;
-
-				for ( var i = 0, len = ci.length; i < len; i++) {
-					if (ci[i] && ci[i].__name === obj.__name) {
-						ret = true;
-						break;
-					}
-				}
-
-				return ret;
-			};
 
 			for ( var i = 0, len = controllerDefs.length; i < len; i++) {
 				var defObj = controllerDefs[i];
-				var params = $.isEmptyObject(initParams[i]) ? null : initParams[i];
 
-				if (equalsControllerName(defObj)) {
+				if (equalsControllerName(ci, defObj)) {
 					continue;
 				}
 
-				controllerInstanceMap[id].push(h5.core.controller('#' + id, defObj, params));
+				controllerInstanceMap[id].push(h5.core.controller('#' + id, defObj, initParams[i]));
 			}
 		},
 
@@ -523,7 +535,7 @@
 		 * @name define
 		 */
 		define: function(id, cssSrc, controllerDefObject, initParam) {
-			var cssSrcArray = wrapInArray(cssSrc);
+			var cssSrcArray = $.makeArray(cssSrc);
 			if (cssMap[id]) {
 				cssMap[id].push(cssSrcArray);
 			} else {
@@ -533,13 +545,13 @@
 			if (controllerMap[id]) {
 				controllerMap[id].push(controllerDefObject);
 			} else {
-				controllerMap[id] = wrapInArray(controllerDefObject);
+				controllerMap[id] = $.makeArray(controllerDefObject);
 			}
 
 			if (initParamMap[id]) {
 				initParamMap[id].push(initParam);
 			} else {
-				initParamMap[id] = wrapInArray(initParam);
+				initParamMap[id] = $.makeArray(initParam);
 			}
 
 			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
@@ -564,6 +576,7 @@
 			jqmControllerInstance = null;
 			controllerMap = {};
 			controllerInstanceMap = {};
+			dynamicControllerInstanceMap = {};
 			initParamMap = {};
 			cssMap = {};
 			initCalled = false;

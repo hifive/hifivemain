@@ -50,6 +50,13 @@ $(function() {
 		$('h1:not(#qunit-header)').remove();
 		// test*.cssをheadから削除する
 		$('head > link[href*="test"]').remove();
+
+		var controllers = h5.core.controllerManager.controllers;
+		for ( var i = 0, len = controllers.length; i < len; i++) {
+			controllers[i].dispose();
+
+		}
+		controllers = [];
 	}
 
 	/**
@@ -675,7 +682,7 @@ $(function() {
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-		//resetJQM();
+			resetJQM();
 		}
 	});
 
@@ -898,60 +905,40 @@ $(function() {
 	module('JQMManager - define8', {
 		setup: function() {
 			createPage('test16', null, true);
+			createPage('test17');
 		},
 		teardown: function() {
 			resetJQM();
 		}
 	});
 
-	asyncTest('コントローラを複数保持する配列を指定してdefine()を実行 ※min版ではエラーになります', 9, function() {
+	asyncTest('動的コントローラのハンドラが、ページ遷移に合わせて有効・無効の切り替えが正しく行われているか。※min版ではエラーになります', 2, function() {
 		if (!checkDev()) {
 			start();
 			return;
 		}
 
-		var controller16A = {
-			__name: 'Test16AController',
+		var controller16 = {
+			__name: 'Test16Controller',
 			__ready: function(context) {
-				ok(true, 'Test16AController.__readyが実行されること');
-				equal(context.args.hoge, 1, 'define()で指定したパラメータがcontextから取得できること');
-			}
-		};
-		var controller16B = {
-			__name: 'Test16BController',
-			__ready: function(context) {
-				ok(true, 'Test16BController.__readyが実行されること');
-				equal(context.args.hogehoge, 2, 'define()で指定したパラメータがcontextから取得できること');
-				this.$find('#test').click();
+				ok(true, 'Test16Controller.__readyが実行されること');
+				changePage('#test17', true);
 			},
-			'button#test click': function() {
-				ok(true, '#test16内のbutton#test click が実行されること');
+			'{rootElement} click': function() {
+				ok(false, 'イベントハンドラが無効になっていないためテスト失敗。');
 			}
 		};
 
-		var controller16C = {
-			__name: 'Test16CController',
+		var controller17 = {
+			__name: 'Test17Controller',
 			__ready: function(context) {
-				ok(true, 'Test16CController.__readyが実行されること');
-				equal(context.args, undefined, 'define()に何もパラメータを指定していないのでargsプロパティが存在しないこと');
-			}
-		};
-
-		var controller16D = {
-			__name: 'Test16DController',
-			__ready: function(context) {
-				ok(true, 'Test16DController.__readyが実行されること');
-				equal(context.args, undefined, 'define()に何もパラメータを指定していないのでargsプロパティが存在しないこと');
+				ok(true, 'Test17Controller.__readyが実行されること');
+				$('#test').click();
 				start();
 			}
 		};
 
-		h5.ui.jqm.manager.define('test16', './css/test.css', [controller16A, controller16C], {
-			hoge: 1
-		});
-		h5.ui.jqm.manager.define('test16', null, controller16B, {
-			hogehoge: 2
-		});
-		h5.ui.jqm.manager.define('test16', './css/test2.css', controller16D);
+		h5.ui.jqm.manager.define('test17', null, controller17);
+		h5.core.controller('#test16', controller16);
 	});
 });
