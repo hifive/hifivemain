@@ -183,8 +183,7 @@ $(function() {
 		strictEqual($fixture.find('span').text(), str, 'data-h5-bind属性を指定している要素自体にバインドされていること');
 	});
 
-	test('バインドする要素が複数ある場合は、最初の一つの要素だけにバインドされること', function() {
-		//TODO 複数にバインドされるのか、エラーなのか仕様を確認する。(現状だと最初に見つかった要素だけ？)
+	test('バインドする要素が複数ある場合は、エラーになること', function() {
 		$fixture.append(createBindSpan('test'), createBindSpan('test'));
 		view.bind($fixture.find('span'), {
 			test: 'test'
@@ -711,8 +710,6 @@ $(function() {
 		strictEqual(changed--, 1, 'イベントリスナが動作していること');
 	});
 
-	//TODO 属性、クラス、スタイル、テキストノード、innerHTMLへのバインド。inputタグへのバインド。
-
 	//=============================
 	// Definition
 	//=============================
@@ -820,11 +817,29 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('バインドの詳細指定');
+	module('複数のプロパティを一つの要素にバインド');
 
 	//=============================
 	// Body
 	//=============================
+	test(
+			'セミコロンで複数のプロパティを一つの要素にバインドできること',
+			function() {
+				$fixture
+						.append('<span data-h5-bind="html:v5;text:v1;v2;attr(id):v3;style(color):v4;class:v1">');
+				view.bind($fixture.find('span'), {
+					v1: 'v1',
+					v2: 'v2',
+					v3: 'v3',
+					v4: 'red',
+					v5: 'v5'
+				});
+				var $span = $fixture.find('span');
+				strictEqual($span.text(), 'v2', '複数のプロパティをhtml,textで指定した場合、一番最後に指定したものがバインドされること');
+				strictEqual($span.attr('id'), 'v3', '属性値にバインドされていること');
+				strictEqual($span[0].style.color, 'red', 'styleにバインドされていること');
+				strictEqual($span.attr('class'), 'v1', 'classにバインドされていること');
+			});
 
 	//=============================
 	// Definition
