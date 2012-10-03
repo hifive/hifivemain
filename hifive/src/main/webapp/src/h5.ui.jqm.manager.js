@@ -342,10 +342,10 @@
 		 * @memberOf JQMController
 		 */
 		bindController: function(id) {
-			var controllersDefs = controllerMap[id];
+			var controllerDefs = controllerMap[id];
 			var initParams = initParamMap[id];
 
-			if (!controllersDefs || controllersDefs.length === 0) {
+			if (!controllerDefs || controllerDefs.length === 0) {
 				return;
 			}
 
@@ -367,8 +367,8 @@
 				return ret;
 			};
 
-			for ( var i = 0, len = controllersDefs.length; i < len; i++) {
-				var defObj = controllersDefs[i];
+			for ( var i = 0, len = controllerDefs.length; i < len; i++) {
+				var defObj = controllerDefs[i];
 				var params = $.isEmptyObject(initParams[i]) ? null : initParams[i];
 
 				if (equalsControllerName(defObj)) {
