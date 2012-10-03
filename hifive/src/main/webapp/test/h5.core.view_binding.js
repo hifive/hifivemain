@@ -853,15 +853,38 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	var bindItem = h5.u.obj.createObservableItem({
+		test: null,
+		obj: null,
+		ary: {
+			type: 'any[]'
+		}
+	});
+
 	module(
 			'append/prepend/get',
 			{
 				setup: function() {
 					$fixture.append('<div id="inFixture">');
+
+					bindItem.set({
+						test: 'a',
+						obj: {
+							test: 'obj.test'
+						},
+						ary: [{
+							name: 'taro',
+							address: 't'
+						}, {
+							name: 'jiro',
+							address: 'j'
+						}]
+					});
+
 					view
 							.register(
 									'1',
-									'<h1 data-h5-bind="test"></h1><h2 data-h5-bind="test"></h2><div data-h5-context="obj"><span data-h5-bind="test"></span></div><table data-h5-loop-context="ary"><tr><th data-h5-bind="name"></th><td data-h5-bind="address"></td></tr></table>');
+									'<h1 data-h5-bind="test"></h1><h2 data-h5-bind="test"></h2><h3>[%= _values.test %]</h3><div data-h5-context="obj"><span data-h5-bind="test"></span></div><table data-h5-loop-context="ary"><tr><th data-h5-bind="name"></th><td data-h5-bind="address"></td></tr></table>');
 				},
 				teardown: function() {
 					view.clear('1');
@@ -871,28 +894,19 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('view.appendでデータバインドできること',
+	test(
+			'view.appendでデータバインドできること',
 			function() {
-				var bindObj = {
-					test: 'a',
-					obj: {
-						test: 'obj.test'
-					},
-					ary: [{
-						name: 'taro',
-						address: 't'
-					}, {
-						name: 'jiro',
-						address: 'j'
-					}]
-				};
-				view.append($fixture, '1', bindObj);
+				view.append($fixture, '1', bindItem);
 
 				strictEqual($('#inFixture').next('h1').length, 1,
 						'appendで、指定した要素内に後ろからテンプレートが追加されていること');
 
+				var bindObj = bindItem.get();
+
 				strictEqual($fixture.find('h1').text(), bindObj.test, 'バインドされていること');
 				strictEqual($fixture.find('h2').text(), bindObj.test, 'バインドされていること');
+				strictEqual($fixture.find('h3').text(), bindObj.test, 'EJSの記法でバインドした箇所にバインドされていること');
 				strictEqual($fixture.find('span').text(), bindObj.obj.test, 'バインドされていること');
 				strictEqual($fixture.find('tr').length, bindObj.ary.length,
 						'data-h5-loop-contextの中身がバインドしている配列の数分だけあること');
@@ -904,30 +918,47 @@ $(function() {
 						'バインドされていること');
 				strictEqual($fixture.find('tr:nth-child(2) td').text(), bindObj.ary[1].address,
 						'バインドされていること');
-			});
 
-	test('view.prependでデータバインドできること',
-			function() {
-				var bindObj = {
-					test: 'a',
+				//値の変更
+				bindItem.set({
+					test: 'b',
 					obj: {
-						test: 'obj.test'
+						test: 'obj.test2'
 					},
 					ary: [{
-						name: 'taro',
-						address: 't'
-					}, {
-						name: 'jiro',
-						address: 'j'
+						name: 'taro2',
+						address: 't2'
 					}]
-				};
-				view.prepend($fixture, '1', bindObj);
+				});
+
+				bindObj = bindItem.get();
+
+				strictEqual($fixture.find('h1').text(), bindObj.test, '変更後の値がバインドされていること');
+				strictEqual($fixture.find('h2').text(), bindObj.test, '変更後の値がバインドされていること');
+				strictEqual($fixture.find('h3').text(), 'a', 'EJSの記法でバインドした箇所なので、値は変更されていないこと');
+				strictEqual($fixture.find('span').text(), bindObj.obj.test, '変更後の値がバインドされていること');
+				strictEqual($fixture.find('tr').length, bindObj.ary.length,
+						'data-h5-loop-contextの中身がバインドしている配列の数分だけあること');
+				strictEqual($fixture.find('tr:first-child th').text(), bindObj.ary[0].name,
+						'バインドされていること');
+				strictEqual($fixture.find('tr:first-child td').text(), bindObj.ary[0].address,
+						'バインドされていること');
+
+			});
+
+	test(
+			'view.prependでデータバインドできること',
+			function() {
+				view.prepend($fixture, '1', bindItem);
 
 				strictEqual($('#inFixture').nextAll().length, 0,
 						'prependで、指定した要素内に前からテンプレートが追加されていること');
 
+				var bindObj = bindItem.get();
+
 				strictEqual($fixture.find('h1').text(), bindObj.test, 'バインドされていること');
 				strictEqual($fixture.find('h2').text(), bindObj.test, 'バインドされていること');
+				strictEqual($fixture.find('h3').text(), bindObj.test, 'EJSの記法でバインドした箇所にバインドされていること');
 				strictEqual($fixture.find('span').text(), bindObj.obj.test, 'バインドされていること');
 				strictEqual($fixture.find('tr').length, bindObj.ary.length,
 						'data-h5-loop-contextの中身がバインドしている配列の数分だけあること');
@@ -939,26 +970,42 @@ $(function() {
 						'バインドされていること');
 				strictEqual($fixture.find('tr:nth-child(2) td').text(), bindObj.ary[1].address,
 						'バインドされていること');
-			});
 
-	test('view.getでデータバインドされた文字列を取得できること',
-			function() {
-				var bindObj = {
-					test: 'a',
+				//値の変更
+				bindItem.set({
+					test: 'b',
 					obj: {
-						test: 'obj.test'
+						test: 'obj.test2'
 					},
 					ary: [{
-						name: 'taro',
-						address: 't'
-					}, {
-						name: 'jiro',
-						address: 'j'
+						name: 'taro2',
+						address: 't2'
 					}]
-				};
-				var str = view.get('1', bindObj);
+				});
+
+				bindObj = bindItem.get();
+
+				strictEqual($fixture.find('h1').text(), bindObj.test, '変更後の値がバインドされていること');
+				strictEqual($fixture.find('h2').text(), bindObj.test, '変更後の値がバインドされていること');
+				strictEqual($fixture.find('h3').text(), 'a', 'EJSの記法でバインドした箇所なので、値は変更されていないこと');
+				strictEqual($fixture.find('span').text(), bindObj.obj.test, '変更後の値がバインドされていること');
+				strictEqual($fixture.find('tr').length, bindObj.ary.length,
+						'data-h5-loop-contextの中身がバインドしている配列の数分だけあること');
+				strictEqual($fixture.find('tr:first-child th').text(), bindObj.ary[0].name,
+						'バインドされていること');
+				strictEqual($fixture.find('tr:first-child td').text(), bindObj.ary[0].address,
+						'バインドされていること');
+
+			});
+
+	//TODO getの時にアイテムがバインドされるタイミングはいつ？
+	test('view.get',
+			function() {
+				var str = view.get('1', bindItem);
 
 				strictEqual(typeof str, 'string', '文字列が取得できること');
+
+				var bindObj = bindItem.get();
 
 				// 文字列で比較するのはコード量増えるので、ページにappendしてDOM要素にして比較する
 				$fixture.append(str);
@@ -976,5 +1023,97 @@ $(function() {
 						'バインドされていること');
 				strictEqual($fixture.find('tr:nth-child(2) td').text(), bindObj.ary[1].address,
 						'バインドされていること');
+
+				//値の変更
+				bindItem.set({
+					test: 'b',
+					obj: {
+						test: 'obj.test2'
+					},
+					ary: [{
+						name: 'taro2',
+						address: 't2'
+					}]
+				});
+
+				// この時点で変更が反映される？？
 			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('コメントノードにバインド');
+
+	//=============================
+	// Body
+	//=============================
+	test(
+			'コメントノードにバインドできること',
+			function() {
+				//TODO コメントノードでバインドの仕様を確認する
+				$fixture
+						.append('<span data-h5-bind="attr(id):id">v1:<!--{h5bind v1}-->,v2:<!-- {h5bind v2} --></span>');
+				view.bind($fixture.find('span'), {
+					v1: 'a',
+					v2: 'b',
+					id: 'bindTestId'
+				});
+				var $span = $fixture.find('span');
+				strictEqual($span.text(), 'v1:a,v2:b', 'コメントノードに書いた箇所にバインドされていること');
+				strictEqual($span.attr('id'), 'bindTestId', 'data-h5-bindで指定した箇所にもバインドされていること');
+			});
+
+	test(
+			'コメントノードにObservableItemをバインド',
+			function() {
+				var item = h5.u.obj.createObservableItem({
+					v1: null,
+					v2: null
+				});
+				item.set({
+					v1: 'a',
+					v2: 'b',
+					id: 'bindTestId'
+				});
+				$fixture
+						.append('<span data-h5-bind="attr(id):id">v1:<!--{h5bind v1}-->,v2:<!-- {h5bind v2} --></span>');
+				view.bind($fixture.find('span'), item);
+
+				var $span = $fixture.find('span');
+				strictEqual($span.text(), 'v1:a,v2:b', 'コメントノードに書いた箇所にバインドされていること');
+				strictEqual($span.attr('id'), 'bindTestId', 'data-h5-bindで指定した箇所にもバインドされていること');
+
+				//値の変更
+				item.set({
+					v1: 'aa',
+					b2: 'bb',
+					id: 'bindTestId2'
+				});
+
+				var $span = $fixture.find('span');
+				strictEqual($span.text(), 'v1:aa,v2:bb', 'コメントノードに書いた箇所にバインドされていること');
+				strictEqual($span.attr('id'), 'bindTestId2', 'data-h5-bindで指定した箇所にもバインドされていること');
+			});
+
+	test(
+			'コメントノードにObservableArrayをバインド',
+			function() {
+				var items = h5.u.obj.createObservableArray([{
+					v: 'a'
+				}, {
+					v: 'b'
+				}]);
+
+				//TODO loop-context-bindのやり方を確認する
+				$fixture
+						.append('<span data-h5-bind="attr(id):id">v1:<!--{h5bind v1}-->,v2:<!-- {h5bind v2} --></span>');
+
+				view.bind($fixture.find('span'), items);
+
+				//値の変更
+				items.copyFrom([{
+					v: 'aa'
+				}]);
+			});
+
 });
