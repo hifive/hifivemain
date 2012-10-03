@@ -183,15 +183,24 @@ $(function() {
 		strictEqual($fixture.find('span').text(), str, 'data-h5-bind属性を指定している要素自体にバインドされていること');
 	});
 
-	test('バインドする要素が複数ある場合は、エラーになること', function() {
+	test('バインドする要素が複数ある場合は、エラーになること', 2, function() {
 		$fixture.append(createBindSpan('test'), createBindSpan('test'));
-		view.bind($fixture.find('span'), {
-			test: 'test'
-		});
-		var result = ['test', ''];
-		$fixture.find('span').each(function(i) {
-			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
-		});
+		try {
+			view.bind($fixture.find('span'), {
+				test: 'test'
+			});
+			ok(false, 'テスト失敗。エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERRCODE.h5.core.view.ERR_CODE_BIND_TARGET_TOO_MANY, e.message);
+		}
+		try {
+			view.bind('#qunit-fixture>span', {
+				test: 'test'
+			});
+			ok(false, 'テスト失敗。エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, ERRCODE.h5.core.view.ERR_CODE_BIND_TARGET_TOO_MANY, e.message);
+		}
 	});
 
 	test('バインドする要素が存在しない場合は、エラーになること', function() {
