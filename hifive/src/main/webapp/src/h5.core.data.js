@@ -1802,7 +1802,7 @@
 		 * 既にアップデートセッション中であれば何もしません。
 		 * </p>
 		 * <p>
-		 * アップデートセッション中は、当DataModelManager、及びこのの管理下にあるDataModel、DataItemのイベントは発火しません。
+		 * アップデートセッション中は、このDataModelManager、及びこのの管理下にあるDataModel、DataItemのイベントは発火しません。
 		 * endUpdate()が呼ばれた時点で、イベントが発火します。
 		 * </p>
 		 * <p>
@@ -1843,7 +1843,7 @@
 		/**
 		 * アップデートセッションを終了します。
 		 * <p>
-		 * アップデートセッション中でなければ何もしません。
+		 * アップデートセッション中でなければ何もしません。イベントの発火など詳細は<a href="#beginUpdate">beginUpdate()</a>の説明を参照してください。
 		 * </p>
 		 *
 		 * @memberOf DataModelManager
