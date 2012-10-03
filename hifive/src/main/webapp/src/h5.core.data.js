@@ -1131,7 +1131,7 @@
 	/**
 	 * データモデル。 このクラスは直接newすることはできません。
 	 * <p>
-	 * <a href="DataModelManager.html#createModel">DataManager#createModel()</a>を呼ぶと、DataModelクラスを生成して返します。
+	 * <a href="DataModelManager.html#createModel">DataModelManager#createModel()</a>を呼ぶと、DataModelクラスを生成して返します。
 	 * </p>
 	 *
 	 * @class
