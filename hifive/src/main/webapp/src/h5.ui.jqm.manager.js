@@ -28,6 +28,13 @@
 	// Production
 	// =============================
 
+	var ERR_CODE_INVALID_TYPE = 12000;
+
+	// エラーコードマップ
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_INVALID_TYPE] = '引数{0}が不正です。正しい値を指定して下さい。';
+	addFwErrorCodeMap(errMsgMap);
+
 	// =============================
 	// Development Only
 	// =============================
@@ -529,12 +536,29 @@
 		 * @param {String} id ページID
 		 * @param {String|String[]} cssSrc CSSファイルのパス
 		 * @param {Object} controllerDefObject コントローラ定義オブジェクト
-		 * @param {Object} initParam 初期化パラメータ
+		 * @param {Object} initParam 初期化パラメータ (ライフサイクルイベント(__construct, __init,
+		 *            __ready)の引数にargsプロパティとして渡されます)
 		 * @memberOf h5.ui.jqm.manager
 		 * @function
 		 * @name define
 		 */
 		define: function(id, cssSrc, controllerDefObject, initParam) {
+			if (!isString(id)) {
+				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'id');
+			}
+
+			if (cssSrc != null && !isString(cssSrc) && !$.isArray(cssSrc)) {
+				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'cssSrc');
+			}
+
+			if (!$.isPlainObject(controllerDefObject)) {
+				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'controllerDefObject');
+			}
+
+			if (initParam != null && !$.isPlainObject(initParam)) {
+				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'initParam');
+			}
+
 			var cssSrcArray = $.makeArray(cssSrc);
 			if (cssMap[id]) {
 				cssMap[id].push(cssSrcArray);
