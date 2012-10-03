@@ -1190,6 +1190,18 @@
 		//継承を考慮してスキーマを作成
 		extendSchema(schema, manager, descriptor);
 
+		/**
+		 * このデータモデルが持つスキーマのキーを格納した配列
+		 * <p>
+		 * スキーマが持つキーを配列で保持します。
+		 * </p>
+		 *
+		 * @memberOf DataModel
+		 * @type Array
+		 * @name schemaKeys
+		 */
+		this.schemaKeys = [];
+
 		for ( var prop in schema) {
 			if (schema[prop] && schema[prop].id === true) {
 				//ディスクリプタは事前検証済みなので、IDフィールドは必ず存在する
@@ -1201,12 +1213,12 @@
 				 * </p>
 				 *
 				 * @memberOf DataModel
-				 * @type Object
+				 * @type String
 				 * @name idKey
 				 */
 				this.idKey = prop;
-				break;
 			}
+			this.schemaKeys.push(prop);
 		}
 
 		//DataModelのschemaプロパティには、継承関係を展開した後のスキーマを格納する
