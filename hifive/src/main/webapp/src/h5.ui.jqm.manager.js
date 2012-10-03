@@ -42,7 +42,9 @@
 	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
 	/* del begin */
 	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
-	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = 'JQMマネージャは既に初期化されています。';
+	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = '既にJQMマネージャは初期化されています。';
+	var FW_LOG_CONTROLLER_DEF_ALREADY_DEFINED = '既にコントローラ"{0}"はJQMマネージャに登録されています。';
+	var FW_LOG_CSS_FILE_PATH_ALREADY_DEFINED = '既にCSSファイル"{0}"はJQMマネージャに登録されています。';
 	/* del end */
 
 
@@ -559,23 +561,31 @@
 				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'initParam');
 			}
 
-			var cssSrcArray = $.makeArray(cssSrc);
-			if (cssMap[id]) {
-				cssMap[id].push(cssSrcArray);
-			} else {
-				cssMap[id] = cssSrcArray;
+			if (!cssMap[id]) {
+				cssMap[id] = [];
 			}
 
-			if (controllerMap[id]) {
+			if (!controllerMap[id]) {
+				controllerMap[id] = [];
+			}
+
+			if (!initParamMap[id]) {
+				initParamMap[id] = [];
+			}
+
+			$.merge(cssMap[id], $.map($.makeArray(cssSrc), function(val, i) {
+				if ($.inArray(val, cssMap[id]) !== -1) {
+					fwLogger.info(FW_LOG_CSS_FILE_PATH_ALREADY_DEFINED, val);
+					return null;
+				}
+				return val;
+			}));
+
+			if ($.inArray(controllerDefObject, controllerMap[id]) === -1) {
 				controllerMap[id].push(controllerDefObject);
-			} else {
-				controllerMap[id] = $.makeArray(controllerDefObject);
-			}
-
-			if (initParamMap[id]) {
 				initParamMap[id].push(initParam);
 			} else {
-				initParamMap[id] = $.makeArray(initParam);
+				fwLogger.info(FW_LOG_CONTROLLER_DEF_ALREADY_DEFINED, controllerDefObject.__name);
 			}
 
 			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id

@@ -837,7 +837,7 @@ $(function() {
 				h5.ui.jqm.manager.define('test12', ['./css/test.css', './css/test2.css'],
 						controller12A);
 				h5.ui.jqm.manager.define('test12', null, controller12B);
-				h5.ui.jqm.manager.define('test12', null, controller12A); // バインドされないコントローラ
+				h5.ui.jqm.manager.define('test12', './css/test.css', controller12A); // バインドされないコントローラ
 				h5.ui.jqm.manager.define('test13', null, controller13);
 			});
 
