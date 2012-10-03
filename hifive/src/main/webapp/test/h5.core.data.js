@@ -1091,7 +1091,7 @@ $(function() {
 						}
 					}
 				},
-				val1:{},
+				val1: null,
 				val2:{depend:{on:'val1',calc:function(){return 0;}}},
 				val3:{depend:{on:['val1', 'val2'],calc:function(){return 0;}}},
 			}
