@@ -3379,6 +3379,8 @@ $(function() {
 
 				var fired = false;
 
+				indicator.show();
+
 				// _handleResizeEvent()はresizeイベント中1度だけ呼ばれるメソッドなので、このメソッドをフックして呼ばれたことを確認する
 				indicator._handleResizeEvent = function() {
 					ok(true, '1回のresizeイベントのハンドラは1度だけ実行されること');
@@ -3386,7 +3388,6 @@ $(function() {
 					start();
 				};
 
-				indicator.show();
 
 				$(window).trigger('resize');
 				if (!fired) {
