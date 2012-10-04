@@ -29,14 +29,12 @@
 	// =============================
 
 	var ERR_CODE_INVALID_TYPE = 12000;
-	var ERR_CODE_NAME_NOT_FOUND = 12001;
-	var ERR_CODE_INVALID_NAME = 12002;
+	var ERR_CODE_NAME_INVALID_PARAMETER = 12001;
 
 	// エラーコードマップ
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TYPE] = '引数{0}が不正です。正しい値を指定して下さい。';
-	errMsgMap[ERR_CODE_NAME_NOT_FOUND] = 'コントローラ定義オブジェクトに__nameプロパティがありません。';
-	errMsgMap[ERR_CODE_INVALID_NAME] = 'コントローラ定義オブジェクトの__nameプロパティの値が不正です。文字列で値を指定して下さい。';
+	errMsgMap[ERR_CODE_NAME_INVALID_PARAMETER] = '引数の指定に誤りがあります。第2引数にCSSファイルパス、第3引数にコントローラ定義オブジェクトを指定して下さい。';
 	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
@@ -489,144 +487,143 @@
 	 * @memberOf h5.ui.jqm
 	 * @namespace
 	 */
-	h5.u.obj.expose('h5.ui.jqm.manager', {
+	h5.u.obj.expose('h5.ui.jqm.manager',
+			{
 
-		/**
-		 * jQuery Mobile用hifiveコントローラマネージャを初期化します。
-		 * <p>
-		 * 2回目以降は何も処理を行いません。
-		 *
-		 * @memberOf h5.ui.jqm.manager
-		 * @function
-		 * @name init
-		 */
-		init: function() {
-			if (initCalled) {
-				fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
-				return;
-			}
-			initCalled = true;
-			$(function() {
-				jqmControllerInstance = h5internal.core.controllerInternal('body', jqmController,
-						null, {
-							managed: false
-						});
-				bindToActivePage();
+				/**
+				 * jQuery Mobile用hifiveコントローラマネージャを初期化します。
+				 * <p>
+				 * 2回目以降は何も処理を行いません。
+				 *
+				 * @memberOf h5.ui.jqm.manager
+				 * @function
+				 * @name init
+				 */
+				init: function() {
+					if (initCalled) {
+						fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
+						return;
+					}
+					initCalled = true;
+					$(function() {
+						jqmControllerInstance = h5internal.core.controllerInternal('body',
+								jqmController, null, {
+									managed: false
+								});
+						bindToActivePage();
+					});
+				},
+
+				/**
+				 * jQuery Mobile用hifiveコントローラマネージャにコントローラを登録します。
+				 * <p>
+				 * 「data-role="page"」または「data-role="dialog"」の属性が指定された要素でかつ、
+				 * idが第1引数で指定されたものに一致する要素に対してコントローラを登録します。
+				 * <p>
+				 * 1つのページに複数コントローラを登録することもできます。<br>
+				 * 以下のように、登録したいコントローラ定義オブジェクトの数分、define()を実行して下さい。
+				 *
+				 * <pre>
+				 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefA, defAParams);
+				 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefB, defBParams);
+				 * </pre>
+				 *
+				 * 注意:<br>
+				 * ただし、ページに同じコントローラを2つ以上バインドすることはできません。<br>
+				 * 同じコントローラであるかの判定は、コントローラ定義オブジェクトの<b>__name</b>プロパティの値がバインド済みのコントローラと同値であるか比較し、同値の場合はバインドされません。
+				 *
+				 * @param {String} id ページID
+				 * @param {String|String[]} [cssSrc] CSSファイルのパス
+				 * @param {Object} [controllerDefObject] コントローラ定義オブジェクト
+				 * @param {Object} [initParam] 初期化パラメータ (ライフサイクルイベント(__construct, __init,
+				 *            __ready)の引数にargsプロパティとして渡されます)
+				 * @memberOf h5.ui.jqm.manager
+				 * @function
+				 * @name define
+				 */
+				define: function(id, cssSrc, controllerDefObject, initParam) {
+					if (!isString(id)) {
+						throw new throwFwError(ERR_CODE_INVALID_TYPE, 'id');
+					}
+
+					if (cssSrc != null && !isString(cssSrc) && !$.isArray(cssSrc)) {
+						throw new throwFwError(ERR_CODE_INVALID_TYPE, 'cssSrc');
+					}
+
+					if (controllerDefObject != null) {
+						if (isString(controllerDefObject) || $.isArray(controllerDefObject)) {
+							throw new throwFwError(ERR_CODE_NAME_INVALID_PARAMETER);
+						}
+
+						if (!$.isPlainObject(controllerDefObject)
+								|| !('__name' in controllerDefObject)) {
+							throw new throwFwError(ERR_CODE_INVALID_TYPE, 'controllerDefObject');
+						}
+
+						if (initParam != null && !$.isPlainObject(initParam)) {
+							throw new throwFwError(ERR_CODE_INVALID_TYPE, 'initParam');
+						}
+					}
+
+					if (!cssMap[id]) {
+						cssMap[id] = [];
+					}
+
+					if (!controllerMap[id]) {
+						controllerMap[id] = [];
+					}
+
+					if (!initParamMap[id]) {
+						initParamMap[id] = [];
+					}
+
+					$.merge(cssMap[id], $.map($.makeArray(cssSrc), function(val, i) {
+						if ($.inArray(val, cssMap[id]) !== -1) {
+							fwLogger.info(FW_LOG_CSS_FILE_PATH_ALREADY_DEFINED, val);
+							return null;
+						}
+						return val;
+					}));
+
+					if (controllerDefObject) {
+						if ($.inArray(controllerDefObject, controllerMap[id]) === -1) {
+							controllerMap[id].push(controllerDefObject);
+							initParamMap[id].push(initParam);
+						} else {
+							fwLogger.info(FW_LOG_CONTROLLER_DEF_ALREADY_DEFINED,
+									controllerDefObject.__name);
+						}
+					}
+
+					if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
+							&& jqmControllerInstance) {
+						bindToActivePage();
+					} else {
+						this.init();
+					}
+				}
+				/* del begin */
+				,
+				/*
+				 * テスト用に公開
+				 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
+				 *
+				 * @memberOf h5.ui.jqm.manager
+				 * @function
+				 * @name __reset
+				 */
+				__reset: function() {
+					if (jqmControllerInstance) {
+						jqmControllerInstance.dispose();
+						jqmControllerInstance = null;
+					}
+					controllerMap = {};
+					controllerInstanceMap = {};
+					dynamicControllerInstanceMap = {};
+					initParamMap = {};
+					cssMap = {};
+					initCalled = false;
+				}
+			/* del end */
 			});
-		},
-
-		/**
-		 * jQuery Mobile用hifiveコントローラマネージャにコントローラを登録します。
-		 * <p>
-		 * 「data-role="page"」または「data-role="dialog"」の属性が指定された要素でかつ、
-		 * idが第1引数で指定されたものに一致する要素に対してコントローラを登録します。
-		 * <p>
-		 * 1つのページに複数コントローラを登録することもできます。<br>
-		 * 以下のように、登録したいコントローラ定義オブジェクトの数分、define()を実行して下さい。
-		 *
-		 * <pre>
-		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefA, defAParams);
-		 * h5.ui.jqm.manager.define('pageA', 'css/pageA.css', controllerDefB, defBParams);
-		 * </pre>
-		 *
-		 * 注意:<br>
-		 * ただし、ページに同じコントローラを2つ以上バインドすることはできません。<br>
-		 * 同じコントローラであるかの判定は、コントローラ定義オブジェクトの<b>__name</b>プロパティの値がバインド済みのコントローラと同値であるか比較し、同値の場合はバインドされません。
-		 *
-		 * @param {String} id ページID
-		 * @param {String|String[]} [cssSrc] CSSファイルのパス
-		 * @param {Object} [controllerDefObject] コントローラ定義オブジェクト
-		 * @param {Object} [initParam] 初期化パラメータ (ライフサイクルイベント(__construct, __init,
-		 *            __ready)の引数にargsプロパティとして渡されます)
-		 * @memberOf h5.ui.jqm.manager
-		 * @function
-		 * @name define
-		 */
-		define: function(id, cssSrc, controllerDefObject, initParam) {
-			if (!isString(id)) {
-				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'id');
-			}
-
-			if (cssSrc != null && !isString(cssSrc) && !$.isArray(cssSrc)) {
-				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'cssSrc');
-			}
-
-			if (controllerDefObject != null) {
-				if (!$.isPlainObject(controllerDefObject)) {
-					throw new throwFwError(ERR_CODE_INVALID_TYPE, 'controllerDefObject');
-				}
-
-				if (!controllerDefObject.hasOwnProperty('__name')) {
-					throw new throwFwError(ERR_CODE_NAME_NOT_FOUND);
-				}
-
-				if (!isString(controllerDefObject.__name)) {
-					throw new throwFwError(ERR_CODE_INVALID_NAME);
-				}
-
-				if (initParam != null && !$.isPlainObject(initParam)) {
-					throw new throwFwError(ERR_CODE_INVALID_TYPE, 'initParam');
-				}
-			}
-
-			if (!cssMap[id]) {
-				cssMap[id] = [];
-			}
-
-			if (!controllerMap[id]) {
-				controllerMap[id] = [];
-			}
-
-			if (!initParamMap[id]) {
-				initParamMap[id] = [];
-			}
-
-			$.merge(cssMap[id], $.map($.makeArray(cssSrc), function(val, i) {
-				if ($.inArray(val, cssMap[id]) !== -1) {
-					fwLogger.info(FW_LOG_CSS_FILE_PATH_ALREADY_DEFINED, val);
-					return null;
-				}
-				return val;
-			}));
-
-			if (controllerDefObject) {
-				if ($.inArray(controllerDefObject, controllerMap[id]) === -1) {
-					controllerMap[id].push(controllerDefObject);
-					initParamMap[id].push(initParam);
-				} else {
-					fwLogger.info(FW_LOG_CONTROLLER_DEF_ALREADY_DEFINED, controllerDefObject.__name);
-				}
-			}
-
-			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
-					&& jqmControllerInstance) {
-				bindToActivePage();
-			} else {
-				this.init();
-			}
-		}
-		/* del begin */
-		,
-		/*
-		 * テスト用に公開
-		 * JQMControllerが管理しているコントローラへの参照と、JQMControllerインスタンスへの参照を除去し、JQMControllerをdisposeをします。
-		 *
-		 * @memberOf h5.ui.jqm.manager
-		 * @function
-		 * @name __reset
-		 */
-		__reset: function() {
-			if (jqmControllerInstance) {
-				jqmControllerInstance.dispose();
-				jqmControllerInstance = null;
-			}
-			controllerMap = {};
-			controllerInstanceMap = {};
-			dynamicControllerInstanceMap = {};
-			initParamMap = {};
-			cssMap = {};
-			initCalled = false;
-		}
-	/* del end */
-	});
 })();

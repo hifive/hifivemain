@@ -984,7 +984,7 @@ $(function() {
 	});
 
 
-	test('不正なパラメータを指定してdefine()を実行する ※min版ではエラーになります', 6, function() {
+	test('不正なパラメータを指定してdefine()を実行する ※min版ではエラーになります', 5, function() {
 		if (!checkDev()) {
 			start();
 			return;
@@ -1017,22 +1017,14 @@ $(function() {
 		raises(function(enviroment) {
 			h5.ui.jqm.manager.define('test', null, [10]);
 		}, function(actual) {
-			return 12000 === actual.code;
-		}, 'コントローラ定義オブジェクトObject型以外の値が指定されたたためエラーが発生すること。');
+			return 12001 === actual.code;
+		}, 'コントローラ定義オブジェクトにObject型以外の値が指定されたたためエラーが発生すること。');
 
 		raises(function(enviroment) {
 			h5.ui.jqm.manager.define('test', null, {});
 		}, function(actual) {
-			return 12001 === actual.code;
+			return 12000 === actual.code;
 		}, 'コントローラ定義オブジェクトに__nameプロパティが無いためエラーが発生すること。');
-
-		raises(function(enviroment) {
-			h5.ui.jqm.manager.define('test', null, {
-				__name: 10
-			});
-		}, function(actual) {
-			return 12002 === actual.code;
-		}, 'コントローラ定義オブジェクトの__nameプロパティにString型以外の値が指定されたためエラーが発生すること。');
 	});
 
 	module('JQMManager - define11', {
