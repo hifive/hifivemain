@@ -29,10 +29,14 @@
 	// =============================
 
 	var ERR_CODE_INVALID_TYPE = 12000;
+	var ERR_CODE_NAME_NOT_FOUND = 12001;
+	var ERR_CODE_INVALID_NAME = 12002;
 
 	// エラーコードマップ
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TYPE] = '引数{0}が不正です。正しい値を指定して下さい。';
+	errMsgMap[ERR_CODE_NAME_NOT_FOUND] = 'コントローラ定義オブジェクトに__nameプロパティがありません。';
+	errMsgMap[ERR_CODE_INVALID_NAME] = 'コントローラ定義オブジェクトの__nameプロパティの値が不正です。文字列で値を指定して下さい。';
 	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
@@ -133,10 +137,8 @@
 		}
 		var id = activePage.attr('id');
 
-		if (controllerMap[id]) {
-			jqmControllerInstance.addCSS(id);
-			jqmControllerInstance.bindController(id);
-		}
+		jqmControllerInstance.addCSS(id);
+		jqmControllerInstance.bindController(id);
 	}
 
 	/**
@@ -232,25 +234,21 @@
 			var controllers = controllerInstanceMap[id];
 			var dynamicControllers = dynamicControllerInstanceMap[id];
 
-			if (!controllers) {
-				return;
+			if (controllers) {
+				for ( var i = 0, len = controllers.length; i < len; i++) {
+					controllers[i].dispose();
+				}
+
+				controllerInstanceMap[id] = [];
 			}
 
-			for ( var i = 0, len = controllers.length; i < len; i++) {
-				controllers[i].dispose();
+			if (dynamicControllers) {
+				for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
+					dynamicControllers[i].dispose();
+				}
+
+				dynamicControllerInstanceMap[id] = [];
 			}
-
-			controllerInstanceMap[id] = [];
-
-			if (!dynamicControllers) {
-				return;
-			}
-
-			for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
-				dynamicControllers[i].dispose();
-			}
-
-			dynamicControllerInstanceMap[id] = [];
 		},
 
 		/**
@@ -553,12 +551,22 @@
 				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'cssSrc');
 			}
 
-			if (controllerDefObject != null && !$.isPlainObject(controllerDefObject)) {
-				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'controllerDefObject');
-			}
+			if (controllerDefObject != null) {
+				if (!$.isPlainObject(controllerDefObject)) {
+					throw new throwFwError(ERR_CODE_INVALID_TYPE, 'controllerDefObject');
+				}
 
-			if (initParam != null && !$.isPlainObject(initParam)) {
-				throw new throwFwError(ERR_CODE_INVALID_TYPE, 'initParam');
+				if (!controllerDefObject.hasOwnProperty('__name')) {
+					throw new throwFwError(ERR_CODE_NAME_NOT_FOUND);
+				}
+
+				if (!isString(controllerDefObject.__name)) {
+					throw new throwFwError(ERR_CODE_INVALID_NAME);
+				}
+
+				if (initParam != null && !$.isPlainObject(initParam)) {
+					throw new throwFwError(ERR_CODE_INVALID_TYPE, 'initParam');
+				}
 			}
 
 			if (!cssMap[id]) {
@@ -581,11 +589,13 @@
 				return val;
 			}));
 
-			if ($.inArray(controllerDefObject, controllerMap[id]) === -1) {
-				controllerMap[id].push(controllerDefObject);
-				initParamMap[id].push(initParam);
-			} else {
-				fwLogger.info(FW_LOG_CONTROLLER_DEF_ALREADY_DEFINED, controllerDefObject.__name);
+			if (controllerDefObject) {
+				if ($.inArray(controllerDefObject, controllerMap[id]) === -1) {
+					controllerMap[id].push(controllerDefObject);
+					initParamMap[id].push(initParam);
+				} else {
+					fwLogger.info(FW_LOG_CONTROLLER_DEF_ALREADY_DEFINED, controllerDefObject.__name);
+				}
 			}
 
 			if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
@@ -606,8 +616,10 @@
 		 * @name __reset
 		 */
 		__reset: function() {
-			jqmControllerInstance.dispose();
-			jqmControllerInstance = null;
+			if (jqmControllerInstance) {
+				jqmControllerInstance.dispose();
+				jqmControllerInstance = null;
+			}
 			controllerMap = {};
 			controllerInstanceMap = {};
 			dynamicControllerInstanceMap = {};

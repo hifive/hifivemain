@@ -941,4 +941,132 @@ $(function() {
 		h5.ui.jqm.manager.define('test17', null, controller17);
 		h5.core.controller('#test16', controller16);
 	});
+
+	module('JQMManager - define9', {
+		setup: function() {
+			createPage('test18', null, true);
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	asyncTest('同じコントローラだがCSSのファイルのパスが異なるdefine()を2回実行する。※min版ではエラーになります', 4,
+			function() {
+				if (!checkDev()) {
+					start();
+					return;
+				}
+
+				var controller18 = {
+					__name: 'Test18Controller',
+					__ready: function(context) {
+						ok(true, 'Test18Controller.__readyが実行されること');
+						equal($('head > link[href*="test.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						equal($('head > link[href*="test2.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						equal(context.args, undefined, '重複するコントローラをdefineしたときに指定したパラメータは無視されること。');
+						start();
+					}
+				};
+
+				h5.ui.jqm.manager.define('test18', './css/test.css', controller18);
+				h5.ui.jqm.manager.define('test18', './css/test2.css', controller18, {
+					num: 1
+				});
+			});
+
+	module('JQMManager - define10', {
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+
+	test('不正なパラメータを指定してdefine()を実行する ※min版ではエラーになります', 6, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		raises(function(enviroment) {
+			h5.ui.jqm.manager.define(10, null, {
+				__name: 'TestController'
+			});
+		}, function(actual) {
+			return 12000 === actual.code;
+		}, 'idにString型以外の値が指定されたためエラーが発生すること。');
+
+		raises(function(enviroment) {
+			h5.ui.jqm.manager.define('test', 10, {
+				__name: 'TestController'
+			});
+		}, function(actual) {
+			return 12000 === actual.code;
+		}, 'CSSファイルのパスにString型またはArray型以外の値が指定されたためエラーが発生すること。');
+
+		raises(function(enviroment) {
+			h5.ui.jqm.manager.define('test', './css/test.css', {
+				__name: 'TestController'
+			}, 10);
+		}, function(actual) {
+			return 12000 === actual.code;
+		}, 'パラメータにObject型以外の値が指定されたためエラーが発生すること。');
+
+		raises(function(enviroment) {
+			h5.ui.jqm.manager.define('test', null, [10]);
+		}, function(actual) {
+			return 12000 === actual.code;
+		}, 'コントローラ定義オブジェクトObject型以外の値が指定されたたためエラーが発生すること。');
+
+		raises(function(enviroment) {
+			h5.ui.jqm.manager.define('test', null, {});
+		}, function(actual) {
+			return 12001 === actual.code;
+		}, 'コントローラ定義オブジェクトに__nameプロパティが無いためエラーが発生すること。');
+
+		raises(function(enviroment) {
+			h5.ui.jqm.manager.define('test', null, {
+				__name: 10
+			});
+		}, function(actual) {
+			return 12002 === actual.code;
+		}, 'コントローラ定義オブジェクトの__nameプロパティにString型以外の値が指定されたためエラーが発生すること。');
+	});
+
+	module('JQMManager - define11', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			createPage('test19', null, true);
+			createPage('test20');
+
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	asyncTest('CSSファイルのパスのみ指定してdefine()を実行する。※min版ではエラーになります', 4, function() {
+		if (!checkDev()) {
+			start();
+			return;
+		}
+
+		h5.core.controller('body', {
+			__name: 'BodyController',
+			__ready: function() {
+				h5.ui.jqm.manager.define('test19', './css/test.css');
+				h5.ui.jqm.manager.define('test20', './css/test2.css');
+
+				equal($('head > link[href*="test.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
+				equal($('head > link[href*="test2.css"]').length, 0, 'define()で指定したCSSが読み込まれていること');
+				changePage('#test20', true);
+
+				equal($('head > link[href*="test.css"]').length, 0, 'define()で指定したCSSが読み込まれていること');
+				equal($('head > link[href*="test2.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
+				start();
+			}
+		});
+	});
 });
