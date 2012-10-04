@@ -219,7 +219,7 @@ asyncTest('watchPosition デバッグモード ダミー位置情報がセット
 	});
 });
 asyncTest(
-		'watchPosition デバッグモード watchPositionを3回呼ぶ。watchInterval=1000msにして2つ目と3つ目を500ms,2500msずらして呼び、それぞれが同時に正しい位置情報を取得し、それぞれを同時に停止し、正しく停止する。',
+		'watchPosition デバッグモード watchPositionを3回呼ぶ。watchInterval=1000msにして2つ目と3つ目を900ms,2900msずらして呼び、それぞれが同時に正しい位置情報を取得し、それぞれを同時に停止し、正しく停止する。',
 		61, function() {
 			// 1秒ごと
 			h5.dev.api.geo.watchIntervalTime = 1000;
@@ -238,12 +238,31 @@ asyncTest(
 			}];
 			var paramsLen = paramsArray.length;
 			h5.dev.api.geo.dummyPositions = paramsArray;
+
+			// watchPosition2,3を1回目とどれだけずらすか。
+			// 0～1秒ずらしたものと、2～3秒ずらしたものでテストをする。
+			// 例えば500,2500にすると設定したintervalからnotifyされるまでに500ms以上かかった場合に、
+			// 想定したnotifyより早くwatchPosition2,3が始まってしまい、テストが失敗する。
+			// 低スペック端末や、他のテストと同時で処理が重いなどでそういう状況が起こる。
+			// intervalからnotifyまでの時間が900ms以下になる想定で、900ms,2900msでテストする。
+			var def1 = 900;
+			var def2 = 2900;
+
+
+			// 各watciPositionが取得する位置
 			var positions1 = [];
 			var positions2 = [];
 			var positions3 = [];
+
+			// 各watchPositionPromiseがnotifyされた時間を記録する変数。
+			// 0ms, 1000ms, 2000ms ... でnotifyされるので、それ+処理時間分のタイムが入る
 			var times1 = [];
 			var times2 = [];
 			var times3 = [];
+
+			// 1つ目のwatchPositionを始めたtime
+			var startTime = +new Date();
+
 			// 1つ目のwatchPosition
 			var promise1 = h5.api.geo.watchPosition({
 				timeout: 10000
@@ -253,7 +272,7 @@ asyncTest(
 					function(pos) {
 						if (positions1.length < 6) {
 							positions1.push(pos);
-							times1.push(new Date().getTime());
+							times1.push(+new Date() - startTime);
 							var i = (count1 >= paramsLen - 1) ? count1 : count1++;
 							strictEqual(pos.coords.latitude, paramsArray[i].latitude, i
 									+ '番目にセットした緯度と取得した緯度が一致すること。');
@@ -281,7 +300,7 @@ asyncTest(
 				promise2.progress(function(pos) {
 					if (positions2.length < 5) {
 						positions2.push(pos);
-						times2.push(new Date().getTime());
+						times2.push(+new Date() - startTime);
 					}
 				}).fail(function(error) {
 					promise2.unwatch && promise2.unwatch();
@@ -289,7 +308,7 @@ asyncTest(
 				}).done(function() {
 					ok(true, '2番目に呼んだwatchPositionが停止すること。');
 				});
-			}, 500);
+			}, def1);
 			// 3つ目のwatchPositionを2500ms後に実行(1つ目が3つ取得した後)
 			var promise3 = null;
 			setTimeout(function() {
@@ -297,9 +316,9 @@ asyncTest(
 					timeout: 10000
 				});
 				promise3.progress(function(pos) {
-					if (positions3.length < 3) {
+					if (positions3.length < 4) {
 						positions3.push(pos);
-						times3.push(new Date().getTime());
+						times3.push(+new Date() - startTime);
 					} else {
 						// 3つ目が4回取得したら終了
 						// 3つ目の3回目までしか確認しないが、promise1,2のunwatchを呼ぶ(promise3.doneに入るタイミング)までに、positions1,2がテストに必要なだけ取得できている状態にするため
@@ -313,25 +332,23 @@ asyncTest(
 							ok(true, '3番目に呼んだwatchPositionが停止すること。');
 							promise1.unwatch();
 							promise2.unwatch();
-							for ( var i = 0, len = positions2.length; i < len; i++) {
+							for ( var i = 0; i < 5; i++) {
 								deepEqual(positions2[i], positions1[i + 1], "2つ目が" + (i + 1)
 										+ "番目に取得したposiitonオブジェクトと1つ目が" + (i + 2)
 										+ "番目に取得したpositionオブジェクトが同じ");
-								strictEqual(Math.floor(times2[i] / 100), Math
-										.floor(times1[i + 1] / 100), "2つ目が" + (i + 1)
+								ok(Math.abs(times2[i] - times1[i + 1]) <= 100, "2つ目が" + (i + 1)
 										+ "番目に取得した時間と1つ目が" + (i + 2) + "番目に取得した時間が誤差100ms以内：");
 							}
-							for ( var i = 0, len = positions3.length; i < len; i++) {
+							for ( var i = 0; i < 3; i++) {
 								deepEqual(positions3[i], positions1[i + 3], "3つ目が" + (i + 1)
 										+ "番目に取得したposiitonオブジェクトと1つ目が" + (i + 4)
 										+ "番目に取得したpositionオブジェクトが同じ");
-								strictEqual(Math.floor(times3[i] / 100), Math
-										.floor(times1[i + 3] / 100), "3つ目が" + (i + 1)
+								ok(Math.abs(times3[i] - times1[i + 3]) <= 100, "3つ目が" + (i + 1)
 										+ "番目に取得した時間と1つ目が" + (i + 4) + "番目に取得した時間が誤差100ms以内：");
 							}
 							start();
 						});
-			}, 2500);
+			}, def2);
 		});
 
 asyncTest('watchPosition 失敗 forceError=true', function() {

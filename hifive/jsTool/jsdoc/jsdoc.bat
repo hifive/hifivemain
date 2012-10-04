@@ -1,0 +1,2 @@
+cd bin
+java -cp lib/js.jar org.mozilla.javascript.tools.shell.Main -modules node_modules -modules rhino_modules jsdoc.js ../../../src/main/webapp/src ../../../src/main/webapp/srcJsdoc -d ../../../src/main/webapp/doc
