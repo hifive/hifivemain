@@ -71,7 +71,7 @@
 	var CLASS_VML_ROOT = 'vml-root';
 
 	/**
-	 * BlockUIのメッセージ欄に表示する文字列のフォーマット
+	 * メッセージに要素に表示する文字列のフォーマット
 	 */
 	var FORMAT_THROBBER_MESSAGE_AREA = '<span class="' + CLASS_INDICATOR_THROBBER
 			+ '"></span><span class="' + CLASS_INDICATOR_MESSAGE + '" {0}>{1}</span>';
