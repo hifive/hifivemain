@@ -169,7 +169,7 @@ div.a.throbber-line {
 	z-index: 1001;
 }
 
-/* blockUI メッセージDIV */
+/* メッセージDIV */
 .h5-indicator.a.content {
 	background-color: #333;
 	opacity: 0.7;
