@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * hifive css
  */
 div.b.throbber {
@@ -26,18 +26,18 @@ div.b.throbber-line {
 	color: #9A3;
 }
 
-.blockUI.b  .throbber-percent {
+.h5-indicator.b  .throbber-percent {
 	font-size: 18px;
 	font-family: ＭＳ ゴシック;
 	color: #C20;
 }
 
-.blockUI.b  .indicator-message {
+.h5-indicator.b  .indicator-message {
 	font-size: 20px;
 	color: #480;
 }
 
-.blockUI.b  {
+.h5-indicator.b  {
 	background-color: #409;
 	color: #666;
 	border: none;
