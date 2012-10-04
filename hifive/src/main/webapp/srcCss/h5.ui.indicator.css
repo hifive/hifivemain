@@ -16,59 +16,63 @@
  *
  * hifive css
  */
-/** オーバーレイ */
-.blockUI.blockOverlay {
-	background-color: #000;
-	opacity: 0.6;
-	filter:alpha(opacity=60) !important;
-	cursor: wait;
-	height: 100%;
-	width: 100%;
-}
 
-/* blockUI本体 DIV */
-.blockUI {
+/* インジケータ オーバーレイDIV,メッセージDIV 共通設定 */
+.h5-indicator {
 	text-align: center;
 	padding: 5px 10px 5px 10px;
 	white-space: nowarp;
 	cursor: wait;
 }
 
-/* blockUI本体内 スロバー SPAN */
-.blockUI .indicator-throbber {
+/* インジケータメッセージDIV - スロバーSPAN */
+.h5-indicator .indicator-throbber {
 	display: inline-block;
-	zoom: 1;
 	vertical-align: middle;
+	zoom: 1;
 }
 
-/* blockUI本体内 メッセージ SPAN */
-.blockUI  .indicator-message {
+/* インジケータメッセージDIV - メッセージSPAN */
+.h5-indicator .indicator-message {
 	display: inline-block;
-	zoom: 1;
 	vertical-align: middle;
-	font-size: 12pt;
-	color: #fff;
+	zoom: 1;
 }
 
-/*---- パーセント SPAN (IE6,7,8以外) ----*/
-.blockUI  .throbber-percent {
+/*---- インジケータメッセージDIV - パーセントSPAN (IE6,7,8以外) ----*/
+.h5-indicator .throbber-percent {
 	position: absolute;
 	text-align: center;
 }
 
-/*---- パーセント SPAN (IE6,7,8用) -----*/
-.blockUI  .vml-root {
+/*---- インジケータメッセージDIV - パーセントSPAN (IE6,7,8用) -----*/
+.h5-indicator .vml-root {
 	display: inline-block;
 	vertical-align: middle;
 	zoom: 1;
 }
 
-.blockUI  .vml-root .throbber-percent {
+.h5-indicator .vml-root .throbber-percent {
 	position: relative;
+	margin: 0;
+	padding: 0;
+	border: none;
+	zoom: 1;
+}
+
+/*---- オーバーレイ(iframe) (IE6用) -----*/
+.h5-indicator.skin {
+	position: absolute;
+	filter: alpha(opacity=0);
+	height: 100%;
+	width: 100%;
+	border: none;
 	margin: 0px;
 	padding: 0px;
-	zoom: 1;
-	border: 0px;
+	top: 0;
+	left: 0;
+	z-index: 1000;
+	overflow: hidden;
 }
 
 /*------------------------ Theme 'a' start ---------------------------*/
@@ -110,7 +114,7 @@ div.a.throbber-line {
     to {transform: rotate(360deg);}
 }
 
-.blockUI.a .throbber-canvas {
+.h5-indicator.a .throbber-canvas {
 	/** Chrome/Safari */
 	-webkit-animation-name: rotateThrobber;
     -webkit-animation-delay: 0;
@@ -138,21 +142,38 @@ div.a.throbber-line {
 }
 
 /*---- パーセント (スロバーの大きさに合わせて修正して下さい) ----*/
-.blockUI.a  .throbber-percent {
+.h5-indicator.a .throbber-percent {
 	font-size: 12px;
 	font-family: ＭＳ ゴシック;
 	color: #fff;
 }
 
 /* メッセージ */
-.blockUI.a  .indicator-message {
+.h5-indicator.a .indicator-message {
 	font-size: 14px;
 	color: #fff;
 }
 
-/* blockUI本体 */
-.blockUI.a {
+/** オーバーレイDIV */
+.h5-indicator.a.overlay {
+	background-color: #000;
+	opacity: 0.6;
+	filter: alpha(opacity=60);
+	height: 100%;
+	width: 100%;
+	border: none;
+	margin: 0px;
+	padding: 0px;
+	top: 0;
+	left: 0;
+	z-index: 1001;
+}
+
+/* メッセージDIV */
+.h5-indicator.a.content {
 	background-color: #333;
+	opacity: 0.7;
+	filter: alpha(opacity=70);
 	color: #fff;
 	border: none;
 	-webkit-border-radius: 10px;
@@ -160,7 +181,7 @@ div.a.throbber-line {
 	-o-border-radius: 10px;
 	-ms-border-radius: 10px;
 	border-radius: 10px;
-	opacity: 0.7;
+	z-index: 1002;
 }
 
 /*------------------------ Theme 'a' end ---------------------------*/
