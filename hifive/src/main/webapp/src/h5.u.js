@@ -1608,7 +1608,7 @@
 		 * </p>
 		 *
 		 * @memberOf ObservableItem
-		 * @param Any var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
+		 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
 		 */
 		set: function(/* var_args */) {
 			var setObj = {};
