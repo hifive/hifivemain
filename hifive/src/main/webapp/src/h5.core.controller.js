@@ -2178,12 +2178,18 @@
 		 * }, 4000);
 		 * </pre>
 		 *
-		 * @param {Object} [opt]
-		 * @param {String} [opt.message] メッセージ
-		 * @param {Number} [opt.percent] 進捗を0～100の値で指定する。
-		 * @param {Boolean} [opt.block] 操作できないよう画面をブロックするか (true:する/false:しない) デフォルト:true
-		 * @param {Promise|Promise[]} [opt.promises] Promiseオブジェクト (Promiseの状態と合わせてインジケータの表示・非表示する)
-		 * @param {String} [opt.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルをする場合に使用する)
+		 * @param {Object} [opt] オプション
+		 * @param {String|Object} [opt.target] インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
+		 * @param {String} [opt.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
+		 * @param {Number} [opt.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
+		 * @param {Boolean} [opt.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
+		 * @param {Number} [opt.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
+		 * @param {Number} [opt.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
+		 * @param {Promise|Promise[]} [opt.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
+		 * @param {String} [opt.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
+		 * @param {String} [opt.throbber.lines] スロバーの線の本数 (デフォルト:12)
+		 * @param {String} [opt.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
+		 *            (このオプションはCSS3Animationを未サポートブラウザのみ有効) (デフォルト:1000)
 		 * @returns {Indicator} インジケータオブジェクト
 		 * @memberOf Controller
 		 * @see Indicator

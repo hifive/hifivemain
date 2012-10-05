@@ -683,15 +683,18 @@
 	 *
 	 * @class
 	 * @name Indicator
-	 * @param {String|Object} target インジケータを表示する対象のDOMオブジェクトまたはセレクタ
+	 * @param {String|Object} target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
 	 * @param {Object} [option] オプション
-	 * @param {String} [option.message] スロバーの右側に表示する文字列
-	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する
-	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない)
-	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
-	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
+	 * @param {String} [option.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
+	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
+	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
+	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
+	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
 	 * @param {Promise|Promise[]} [option.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
-	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
+	 * @param {String} [option.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
+	 * @param {String} [option.throbber.lines] スロバーの線の本数 (デフォルト:12)
+	 * @param {String} [option.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
+	 *            (このオプションはCSS3Animationを未サポートブラウザのみ有効) (デフォルト:1000)
 	 */
 	function Indicator(target, option) {
 		var that = this;
@@ -1206,15 +1209,18 @@
 	 * @memberOf h5.ui
 	 * @name indicator
 	 * @function
-	 * @param {String|Object} target インジケータを表示する対象のDOMオブジェクトまたはセレクタ
-	 * @param {String} [option.message] スロバーの右側に表示する文字列
-	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する
-	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない)
-	 * @param {Object} [option.style] スタイルオプション (詳細はIndicatorクラスのドキュメントを参照)
-	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
-	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
-	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
+	 * @param {String|Object} target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
+	 * @param {Object} [option] オプション
+	 * @param {String} [option.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
+	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
+	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
+	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
+	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
 	 * @param {Promise|Promise[]} [option.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
+	 * @param {String} [option.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
+	 * @param {String} [option.throbber.lines] スロバーの線の本数 (デフォルト:12)
+	 * @param {String} [option.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
+	 *            (このオプションはCSS3Animationを未サポートブラウザのみ有効) (デフォルト:1000)
 	 * @see Indicator
 	 * @see Controller.indicator
 	 */
