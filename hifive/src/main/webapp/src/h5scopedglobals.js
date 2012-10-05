@@ -55,150 +55,175 @@ addFwErrorCodeMap(G_ERROR_MESSAGES);
 
 /**
  * ID指定されたプロパティが重複している
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_DUPLICATED_ID = 7;
 
 /**
  * ID指定されたプロパティがない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_NO_ID = 8;
 
 /**
  * プロパティ名が不正
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME = 9;
 
 /**
  * id指定されたプロパティにdependが指定されている
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_ID_DEPEND = 10;
 
 /**
  * depend.onに指定されたプロパティが存在しない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_DEPEND_ON = 11;
 
 /**
  * depend.calcに関数が指定されていない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_DEPEND_CALC = 12;
 
 /**
  * typeに文字列が指定されていない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALID_TYPE = 13;
 
 /**
  * type文字列が不正
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_TYPE = 14;
 
 /**
  * typeに指定されたデータモデルが存在しない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_TYPE_DATAMODEL = 15;
 
 /**
  * type:enumなのにenumValueが指定されていない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_TYPE_ENUM_NO_ENUMVALUE = 16;
 
 /**
  * constraintにオブジェクトが指定されていない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT = 17;
 
 /**
  * constraint.notNullの指定が不正
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 18;
 
 /**
  * min-maxに数値が入力されなかった時のエラー
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX = 20;
 
 /**
  * typeがinteger,numberじゃないのにconstraint.min/max を指定されたときのエラー
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_TYPE_CONSTRAINT = 21;
 
 /**
  * constraint.patternが正規表現じゃない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN = 22;
 
 /**
  * minLength/maxLengthに0以上の整数値以外の値が渡された
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 23;
 
 /**
  * constraintの指定に矛盾がある場合(mix > maxなど)
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT = 24;
 
 /**
  * typeがenumでないのにenumValueが指定されている
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_ENUMVALUE_TYPE = 25;
 
 /**
  * enumValueが配列でない、または空配列
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALID_ENUMVALUE = 26;
 
 /**
  * id項目にdefaultValueが設定されている
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_DEFAULTVALUE_ID = 27;
 
 /**
  * defaultValueに設定された値がtype,constraintに指定された条件を満たしていない
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE = 28;
 
 /**
  * ID項目のconstraintに不正な指定がある
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID = 29;
 
 /**
  * defaultValue指定されたプロパティにdependが指定されている
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND = 30;
 
 /**
  * dependの依存関係が循環している
+ *
  * @private
  */
 var SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF = 31;
 
 /**
  * スキーマのエラーメッセージ
+ *
  * @private
  */
 var DESCRIPTOR_VALIDATION_ERROR_MSGS = [];
@@ -454,20 +479,37 @@ function getRegex(target) {
 
 
 
-/***************************************************************************************************
- * イベントディスパッチャのプロトタイプ。ObservableArray, DataModel等で使用するのでグローバルに配置している。
+/**
+ * イベントディスパッチャ
+ * <p>
+ * イベントリスナを管理するクラスです。このクラスはnewできません。
+ * </p>
+ * <p>
+ * 以下のクラスがイベントディスパッチャのメソッドを持ちます。
+ * <ul>
+ * <li><a href="ObservableArray.html">ObservableArray</a>
+ * <li><a href="ObservableItem.html">ObservableItem</a>
+ * <li><a href="DataModelManager.html">DataModelManager</a>
+ * <li><a href="DataModel.html">DataModel</a>
+ * <li><a href="DataItem.html">DataItem</a>
+ * </ul>
+ * </p>
  *
- * @private
  * @class
  * @name EventDispatcher
- **************************************************************************************************/
+ */
 function EventDispatcher() {}
 
 /**
+ * イベントリスナが登録されているかどうかを返します
+ * <p>
+ * 第一引数にイベント名、第二引数にイベントリスナを渡し、指定したイベントに指定したイベントリスナが登録済みかどうかを返します。
+ * </p>
+ *
  * @memberOf EventDispatcher
- * @param type
- * @param listener
- * @returns {Boolean}
+ * @param {String} type イベント名
+ * @param {Function} listener イベントリスナ
+ * @returns {Boolean} 第一引数のイベント名に第二引数のイベントリスナが登録されているかどうか
  */
 EventDispatcher.prototype.hasEventListener = function(type, listener) {
 	if (!this.__listeners) {
@@ -488,9 +530,20 @@ EventDispatcher.prototype.hasEventListener = function(type, listener) {
 };
 
 /**
+ * イベントリスナを登録します。
+ * <p>
+ * 第一引数にイベント名、第二引数にイベントリスナを渡し、イベントリスナを登録します。指定したイベントが起こった時にイベントリスナが実行されます。
+ * </p>
+ * <p>
+ * 指定したイベントに、指定したイベントリスナが既に登録されていた場合は何もしません。
+ * </p>
+ * <p>
+ * 同一のイベントに対して複数回addEventListener()を呼び、複数のイベントリスナを登録した場合は、イベント発火時に登録した順番に実行されます。
+ * </p>
+ *
  * @memberOf EventDispatcher
- * @param type
- * @param listener
+ * @param {String} type イベント名
+ * @param {Function} listener イベントリスナ
  */
 EventDispatcher.prototype.addEventListener = function(type, listener) {
 	// 引数チェック
@@ -513,9 +566,17 @@ EventDispatcher.prototype.addEventListener = function(type, listener) {
 };
 
 /**
+ * イベントリスナを削除します。
+ * <p>
+ * 第一引数にイベント名、第二引数にイベントリスナを渡し、指定したイベントから指定したイベントリスナを削除します。
+ * </p>
+ * <p>
+ * 指定したイベント名に指定したイベントリスナが登録されていない場合は何もしません。
+ * </p>
+ *
  * @memberOf EventDispatcher
- * @param type
- * @param listener
+ * @param {String} type イベント名
+ * @param {Function} listener イベントリスナ
  */
 EventDispatcher.prototype.removeEventListener = function(type, listener) {
 	if (!this.hasEventListener(type, listener)) {
@@ -533,8 +594,18 @@ EventDispatcher.prototype.removeEventListener = function(type, listener) {
 };
 
 /**
+ * イベントをディスパッチします
+ * <p>
+ * イベントオブジェクトを引数に取り、そのevent.typeに登録されているイベントリスナを実行します。
+ * イベントオブジェクトにpreventDefault()関数を追加してイベントリスナの引数に渡して呼び出します。
+ * </p>
+ * <p>
+ * 戻り値は『イベントリスナ内でpreventDefault()が呼ばれたかどうか』を返します。
+ * </p>
+ *
  * @memberOf EventDispatcher
- * @param event
+ * @param {Object} event イベントオブジェクト
+ * @returns {Boolean} イベントリスナ内でpreventDefault()が呼ばれたかどうか。
  */
 EventDispatcher.prototype.dispatchEvent = function(event) {
 	if (!this.__listeners) {
@@ -781,8 +852,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 		// プロパティ名が適切なものかどうかチェック
 		if (!isValidNamespaceIdentifier(schemaProp)) {
-			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME,
-					schemaProp));
+			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME, schemaProp));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -795,8 +865,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		if (depend != null) {
 			// id指定されているならエラー
 			if (isId) {
-				errorReason
-						.push(createErrorReason(SCHEMA_ERR_CODE_ID_DEPEND, schemaProp));
+				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_ID_DEPEND, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -804,8 +873,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 			// defaultValueが指定されているならエラー
 			if (propObj.hasOwnProperty('defaultValue')) {
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND,
-						schemaProp));
+				errorReason
+						.push(createErrorReason(SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -813,8 +882,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 			// dependが指定されているなら、onが指定されていること
 			if (depend.on == null) {
-				errorReason
-						.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_ON, schemaProp));
+				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_ON, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -822,8 +890,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				var onArray = wrapInArray(depend.on);
 				for ( var i = 0, l = onArray.length; i < l; i++) {
 					if (!schema.hasOwnProperty(onArray[i])) {
-						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_ON,
-								schemaProp));
+						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_ON, schemaProp));
 						if (stopOnError) {
 							return errorReason;
 						}
@@ -834,8 +901,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 			// dependが指定されているなら、calcが指定されていること
 			if (typeof depend.calc !== 'function') {
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_CALC,
-						schemaProp));
+				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_CALC, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -859,8 +925,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		var typeObj = {};
 		if (type != null) {
 			if (!isString(type)) {
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_TYPE,
-						schemaProp));
+				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_TYPE, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -876,8 +941,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 			if (!typeObj || !typeObj.elmType) {
 				// パースできない文字列が指定されていたらエラー
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE, schemaProp,
-						type));
+				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE, schemaProp, type));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -886,16 +950,15 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				if (typeObj.dataModel) {
 					if (isObsItemSchema) {
 						// ObservableItemのスキーマにはデータモデルを指定できないのでエラー
-						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE,
-								schemaProp, typeObj.dataModel));
+						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE, schemaProp,
+								typeObj.dataModel));
 						if (stopOnError) {
 							return errorReason;
 						}
 					}
 					if (!manager.models[typeObj.dataModel]) {
-						errorReason.push(createErrorReason(
-								SCHEMA_ERR_CODE_TYPE_DATAMODEL, schemaProp,
-								typeObj.dataModel));
+						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_DATAMODEL,
+								schemaProp, typeObj.dataModel));
 						if (stopOnError) {
 							return errorReason;
 						}
@@ -906,8 +969,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				if (typeObj.elmType === 'enum') {
 					// enumValueが無ければエラー
 					if (propObj.enumValue == null) {
-						errorReason.push(createErrorReason(
-								SCHEMA_ERR_CODE_TYPE_ENUM_NO_ENUMVALUE, schemaProp));
+						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_ENUM_NO_ENUMVALUE,
+								schemaProp));
 						if (stopOnError) {
 							return errorReason;
 						}
@@ -924,8 +987,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		if (constraintObj != null) {
 			if (!$.isPlainObject(constraintObj)) {
 				// constraintがオブジェクトではない場合
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_CONSTRAINT,
-						schemaProp));
+				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_CONSTRAINT, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -949,8 +1011,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 						} else if (isId && !val) {
 							// id項目にnotNull:falseが指定されていたらエラー
 							errorReason.push(createErrorReason(
-									SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID, schemaProp,
-									p, val));
+									SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID, schemaProp, p, val));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -963,8 +1024,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)) {
 								// 整数値以外、NaNが指定されていたらエラー
 								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX,
-										schemaProp, p));
+										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX, schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -975,8 +1035,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 									|| val === Infinity || val === -Infinity || isStrictNaN(val)) {
 								// 整数値以外、NaNが指定されていたらエラー
 								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX,
-										schemaProp, p));
+										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX, schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -984,9 +1043,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							break;
 						default:
 							// typeの指定とconstraintに不整合があったらエラー
-							errorReason.push(createErrorReason(
-									SCHEMA_ERR_CODE_TYPE_CONSTRAINT, schemaProp, p,
-									typeObj.elmType));
+							errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
+									schemaProp, p, typeObj.elmType));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -999,18 +1057,18 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)
 									|| val < 0) {
 								// typeの指定とconstraintに不整合があったらエラー
-								errorReason
-										.push(createErrorReason(
-												SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH,
-												schemaProp, p));
+								errorReason.push(createErrorReason(
+										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH,
+										schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
 							} else if (isId && p === 'maxLength' && val === 0) {
 								// id項目にmaxLength: 0 が指定されていたらエラー
-								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID,
-										schemaProp, p, val));
+								errorReason
+										.push(createErrorReason(
+												SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID, schemaProp,
+												p, val));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -1018,9 +1076,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							break;
 						default:
 							// type:'string'以外の項目にmaxLength,minLengthが指定されていればエラー
-							errorReason.push(createErrorReason(
-									SCHEMA_ERR_CODE_TYPE_CONSTRAINT, schemaProp, p,
-									typeObj.elmType));
+							errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
+									schemaProp, p, typeObj.elmType));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -1031,18 +1088,18 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 						case 'string':
 							if (val !== true && val !== false) {
 								// notEmptyにtrue,false以外の指定がされていたらエラー
-								errorReason
-										.push(createErrorReason(
-												SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
-												schemaProp, p));
+								errorReason.push(createErrorReason(
+										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
+										schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
 							} else if (isId && !val) {
 								// id項目にnotEmpty: false が指定されていたらエラー
-								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID,
-										schemaProp, p, val));
+								errorReason
+										.push(createErrorReason(
+												SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID, schemaProp,
+												p, val));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -1050,9 +1107,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							break;
 						default:
 							// type:'string'以外の項目にnotEmptyが指定されていたらエラー
-							errorReason.push(createErrorReason(
-									SCHEMA_ERR_CODE_TYPE_CONSTRAINT, schemaProp, p,
-									typeObj.elmType));
+							errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
+									schemaProp, p, typeObj.elmType));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -1064,8 +1120,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							if ($.type(val) !== 'regexp') {
 								// patternにRegExpオブジェクト以外のものが指定されていたらエラー
 								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN,
-										schemaProp, p));
+										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN, schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -1073,9 +1128,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							break;
 						default:
 							// type:'string'以外の項目にpatterが指定されていたらエラー
-							errorReason.push(createErrorReason(
-									SCHEMA_ERR_CODE_TYPE_CONSTRAINT, schemaProp, p,
-									typeObj.elmType));
+							errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
+									schemaProp, p, typeObj.elmType));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -1087,9 +1141,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				// constraintの中身に矛盾がないかどうかチェック
 				if (constraintObj.notEmpty && constraintObj.maxLength === 0) {
 					// notNullなのにmanLengthが0
-					errorReason.push(createErrorReason(
-							SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT, schemaProp, 'notEmpty',
-							'maxLength'));
+					errorReason.push(createErrorReason(SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT,
+							schemaProp, 'notEmpty', 'maxLength'));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -1097,9 +1150,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				if (constraintObj.min != null && constraintObj.max != null
 						&& constraintObj.min > constraintObj.max) {
 					// min > max
-					errorReason.push(createErrorReason(
-							SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT, schemaProp, 'min',
-							'max'));
+					errorReason.push(createErrorReason(SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT,
+							schemaProp, 'min', 'max'));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -1107,9 +1159,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				if (constraintObj.minLength != null && constraintObj.maxLength != null
 						&& constraintObj.minLength > constraintObj.maxLength) {
 					// minLength > maxLength
-					errorReason.push(createErrorReason(
-							SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT, schemaProp,
-							'minLength', 'maxLength'));
+					errorReason.push(createErrorReason(SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT,
+							schemaProp, 'minLength', 'maxLength'));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -1122,8 +1173,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		if (enumValue != null) {
 			if (typeObj.elmType !== 'enum') {
 				// type指定がenumでないならエラー
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_ENUMVALUE_TYPE,
-						schemaProp));
+				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_ENUMVALUE_TYPE, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -1131,8 +1181,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 			if (!$.isArray(enumValue) || enumValue.length === 0 || $.inArray(null, enumValue) > -1
 					|| $.inArray(undefined, enumValue) > -1) {
 				// 配列でない、または空配列、null,undefinedを含む配列ならエラー
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_ENUMVALUE,
-						schemaProp));
+				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_ENUMVALUE, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -1145,8 +1194,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		// depend指定されている項目にdefaultValueが指定されている場合はエラー(dependのチェック時にエラーにしている)
 		if (isId && propObj.hasOwnProperty('defaultValue')) {
 			// id項目にdefaultValueが設定されていたらエラー
-			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEFAULTVALUE_ID,
-					schemaProp));
+			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEFAULTVALUE_ID, schemaProp));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -1195,8 +1243,8 @@ function validateDefaultValue(schema, checkFuncs, stopOnError) {
 		}
 		var defaultValue = propObj.defaultValue;
 		if (checkFuncs[p](defaultValue).length) {
-			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE,
-					p, defaultValue));
+			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE, p,
+					defaultValue));
 			if (stopOnError) {
 				return errorReason;
 			}

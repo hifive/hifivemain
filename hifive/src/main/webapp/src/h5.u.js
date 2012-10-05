@@ -1257,6 +1257,11 @@
 	 * Arrayクラスの持つメソッド(concat, join, pop, push, reverse, shift, slice, sort, splice, unshift,
 	 * indexOf, lastIndexOf, every, filter, forEach, map, some, reduce, reduceRight)が使えます。
 	 * </p>
+	 * <p>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * ObservableArrayは、 配列操作メソッド呼び出し時に'observeBefore'、配列操作メソッド実行後に'observe'イベントが発火します。
+	 * </p>
 	 *
 	 * @class
 	 * @name ObservableArray
@@ -1372,7 +1377,7 @@
 	 * ObservableArrayを作成します。
 	 *
 	 * @memberOf h5.u.obj
-	 * @returns ObservableArray
+	 * @returns {ObservableArray} ObservableArrayインスタンス
 	 */
 	function createObservableArray() {
 		return new ObservableArray();
@@ -1394,14 +1399,24 @@
 	/**
 	 * ObservableItem(オブザーバブルアアイテム)とは、プロパティ操作の監視可能なオブジェクトです。
 	 * <p>
-	 * h5.u.obj.createObservableItem()で作成します。
+	 * <a href="h5.u.obj.html#createObservableItem">h5.u.obj.createObservableItem()</a>で作成します。
 	 * </p>
 	 * <p>
 	 * <a href="DataItem.html">データアイテム</a>と同様、get/setで値の読み書きを行います。
 	 * </p>
+	 * <p>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * ObservableItemは、アイテムが持つ値に変更があった場合に'change'イベントが発火します。
+	 * </p>
 	 *
 	 * @class
-	 * @name ObservableArray
+	 * @name ObservableItem
+	 */
+	/**
+	 * (コンストラクタは公開していないので、JSDocに@paramが載らないようにしています。)
+	 *
+	 * @private
 	 * @param {Object} schema schemaオブジェクト。データモデルディスクリプタのスキーマと同様のスキーマオブジェクトを指定します。ただしidの指定は不要です。
 	 * @param {Object} itemValueCheckFuncs データモデルのスキーマに適合するかどうかをチェックする関数。キーがプロパティ名で、値がチェック関数の配列
 	 */
@@ -1421,8 +1436,16 @@
 			}
 		}
 
-		// データアイテムではモデルに持たせていた、値チェックに必要な情報を
-		// _contextに持たせる
+		/**
+		 * 値チェックに必要な情報を持つオブジェクト
+		 * <p>
+		 * データアイテムではモデルに持たせていましたが、ObservableItemにはモデルはないので、必要な情報を_contextプロパティに持ちます
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf ObservableItem
+		 * @type Object
+		 */
 		this._context = {
 
 			/**
@@ -1468,8 +1491,16 @@
 			itemValueCheckFuncs: itemValueCheckFuncs
 		};
 
-		// this._valuesに値(defaultValue)のセット
+		/**
+		 * 値を保持するオブジェクト
+		 *
+		 * @private
+		 * @memberOf ObservableItem
+		 * @type Object
+		 */
 		this._values = {};
+
+		// this._valuesに値(defaultValue)のセット
 		for ( var p in schema) {
 			if (schema[p] && schema[p].type && schema[p].type.indexOf('[]') !== -1) {
 				this._values[p] = h5.u.obj.createObservableArray();
@@ -1570,6 +1601,15 @@
 	}
 
 	$.extend(ObservableItem.prototype, EventDispatcher.prototype, {
+		/**
+		 * 値をセットします。
+		 * <p>
+		 * <a href="DataItem.html#set">DataItem#set()</a>と同様に値をセットします。
+		 * </p>
+		 *
+		 * @memberOf ObservableItem
+		 * @param Any var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
+		 */
 		set: function(/* var_args */) {
 			var setObj = {};
 			if (arguments.length === 2) {
@@ -1639,6 +1679,16 @@
 				});
 			}
 		},
+		/**
+		 * 値を取得します。
+		 * <p>
+		 * <a href="DataItem.html#get">DataItem#get()</a>と同様です。
+		 * </p>
+		 *
+		 * @memberOf ObservableItem
+		 * @param {String} [key] プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
+		 * @returns {Any} 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
+		 */
 		get: function(p) {
 			if (arguments.length === 0) {
 				return $.extend({}, this._values);
@@ -1649,9 +1699,17 @@
 
 	/**
 	 * ObservableItemを作成します。
+	 * <p>
+	 * 引数にはスキーマオブジェクトを指定します。スキーマオブジェクトとは、ディスクリプタオブジェクトのschemaプロパティに指定するオブジェクトのことです。
+	 * </p>
+	 * <p>
+	 * ディスクリプタオブジェクトについては<a
+	 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
+	 * </p>
 	 *
 	 * @memberOf h5.u.obj
-	 * @returns ObservableItem
+	 * @param {Object} schema スキーマオブジェクト
+	 * @returns {ObservableItem} ObservableItemインスタンス
 	 */
 	function createObservableItem(schema) {
 		if (typeof schema !== 'object') {
@@ -1682,7 +1740,7 @@
 	 * ObserevableItemかどうかを判定します。
 	 *
 	 * @memberOf h5.u.obj
-	 * @returns ObservableItemかどうか
+	 * @returns {Boolean} ObservableItemかどうか
 	 */
 	function isObservableItem(obj) {
 		if (obj instanceof ObservableItem) {

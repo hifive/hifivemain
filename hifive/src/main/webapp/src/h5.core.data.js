@@ -694,6 +694,11 @@
 		 * <p>
 		 * データアイテムは<a href="DataModel.html#create">DataModel#create()</a>で作成します。
 		 * </p>
+		 * <p>
+		 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+		 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+		 * データアイテムは、アイテムが持つ値に変更があった場合に'change'イベントが発火します。
+		 * </p>
 		 *
 		 * @class
 		 * @constructor
@@ -797,7 +802,7 @@
 			 *
 			 * @memberOf DataItem
 			 * @param {String} [key] プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
-			 * @returns {Any} 指定されたプロパティの値
+			 * @returns Any 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
 			 */
 			get: function(key) {
 				if (arguments.length === 0) {
@@ -821,7 +826,7 @@
 			 * </p>
 			 *
 			 * @memberOf DataItem
-			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取る
+			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
 			 */
 			set: function(var_args) {
 				// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
@@ -1133,6 +1138,11 @@
 	 * <p>
 	 * <a href="DataModelManager.html#createModel">DataModelManager#createModel()</a>を呼ぶと、DataModelクラスを生成して返します。
 	 * </p>
+	 * <p>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * データモデルは、データモデルが管理するデータアイテムに変更があった場合に'itemsChange'イベントが発火します。
+	 * </p>
 	 *
 	 * @class
 	 * @name DataModel
@@ -1320,9 +1330,13 @@
 		 * なお、ここでIDの他に初期値も渡された場合は、既存のインスタンスに初期値をセットしてから返します。
 		 * このとき、当該インスタンスにイベントハンドラが設定されていれば、changeイベントが（通常の値更新と同様に）発生します。
 		 * </p>
+		 * <p>
+		 * 引数にはディスクリプタオブジェクトまたはその配列を指定します。ディスクリプタオブジェクトについては<a
+		 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
+		 * </p>
 		 *
 		 * @memberOf DataModel
-		 * @param {Object|Object[]} objOrArray 初期値オブジェクト、またはその配列
+		 * @param {Object|Object[]} objOrArray ディスクリプタオブジェクト、またはその配列
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
 		 */
 		create: function(objOrArray) {
@@ -1601,6 +1615,11 @@
 	 * <p>
 	 * データモデルを管理するデータモデルマネージャクラスです。このインスタンスは<a
 	 * href="h5.core.data.html#createManager">h5.core.data.createManager()</a>で作成します。
+	 * </p>
+	 * <p>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * データモデルマネージャは、データモデルマネージャが管理するデータモデルに変更があった場合に'itemsChange'イベントが発火します。
 	 * </p>
 	 *
 	 * @class
