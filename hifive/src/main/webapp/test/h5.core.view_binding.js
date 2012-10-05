@@ -1047,47 +1047,51 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test(
-			'コメントノードにバインドできること',
-			function() {
-				//TODO コメントノードでバインドの仕様を確認する
-				$fixture
-						.append('<span data-h5-bind="attr(id):id">v1:<!--{h5bind v1}-->,v2:<!-- {h5bind v2} --></span>');
-				view.bind($fixture.find('span'), {
-					v1: 'a',
-					v2: 'b',
-					id: 'bindTestId'
-				});
-				var $span = $fixture.find('span');
-				strictEqual($span.text(), 'v1:a,v2:b', 'コメントノードに書いた箇所にバインドされていること');
-				strictEqual($span.attr('id'), 'bindTestId', 'data-h5-bindで指定した箇所にもバインドされていること');
-			});
+	test('コメントノードにバインドできること', function() {
+		var $dataBindTest = $('<div id="dataBindTest">');
+		;
+		$dataBindTest
+				.append('<!--{h5bind id="item"} <span data-h5-bind="v1;class:cls"></span> -->');
+
+		$fixture.append($dataBindTest);
+		view.bind($('#dataBindTest').contents(), {
+			v1: 'a',
+			cls: 'testClass'
+		});
+
+		var $span = $fixture.find('span');
+		strictEqual($span.text(), 'a', 'コメントノードにバインドされていること');
+		strictEqual($span.attr('class'), 'testClass', 'コメントノードにバインドされていること');
+	});
 
 	test(
 			'コメントノードにObservableItemをバインド',
 			function() {
 				var item = h5.u.obj.createObservableItem({
 					v1: null,
-					v2: null
+					v2: null,
+					item: null
 				});
 				item.set({
 					v1: 'a',
 					v2: 'b',
-					id: 'bindTestId'
+					item: item
 				});
-				$fixture
-						.append('<span data-h5-bind="attr(id):id">v1:<!--{h5bind v1}-->,v2:<!-- {h5bind v2} --></span>');
-				view.bind($fixture.find('span'), item);
+				var $dataBindTest = $('<div id="dataBindTest">');
+				;
+				$dataBindTest
+						.append('<!--{h5bind id="item"} <span data-h5-bind="v1"></span><div h5-bind-context="item"><span h5-data-bind="v1"></span></div> -->');
+				$fixture.append($dataBindTest);
+				view.bind($dataBindTest.contents(), item);
 
 				var $span = $fixture.find('span');
-				strictEqual($span.text(), 'v1:a,v2:b', 'コメントノードに書いた箇所にバインドされていること');
-				strictEqual($span.attr('id'), 'bindTestId', 'data-h5-bindで指定した箇所にもバインドされていること');
+				strictEqual($span[0].innerText, 'a', 'コメントノードに書いた箇所にバインドされていること');
+				strictEqual($span[1].innerText, 'b', 'コメントノードに書いた箇所にバインドされていること');
 
 				//値の変更
 				item.set({
 					v1: 'aa',
-					b2: 'bb',
-					id: 'bindTestId2'
+					v2: 'bb'
 				});
 
 				var $span = $fixture.find('span');
@@ -1098,22 +1102,33 @@ $(function() {
 	test(
 			'コメントノードにObservableArrayをバインド',
 			function() {
-				var items = h5.u.obj.createObservableArray([{
-					v: 'a'
+				var items = h5.u.obj.createObservableArray();
+				items.copyFrom([{
+					v1: 'a'
 				}, {
-					v: 'b'
+					v1: 'b'
 				}]);
+				var $dataBindTest = $('<div id="dataBindTest">');
 
-				//TODO loop-context-bindのやり方を確認する
-				$fixture
-						.append('<span data-h5-bind="attr(id):id">v1:<!--{h5bind v1}-->,v2:<!-- {h5bind v2} --></span>');
+				$dataBindTest
+						.append('<!--{h5bind id="item"} <div h5-bind-loop-context="items"><span h5-data-bind="v1"></span></div> -->');
+				$fixture.append($dataBindTest);
+				view.bind($dataBindTest.contents(), {
+					items: items
+				});
 
-				view.bind($fixture.find('span'), items);
+				var $span = $fixture.find('span');
+				strictEqual($span.length, 2, '配列の要素の数だけDOM要素が作られていること');
+				strictEqual($span[0].innerText, 'a', 'コメントノードに書いた箇所にバインドされていること');
+				strictEqual($span[1].innerText, 'b', 'コメントノードに書いた箇所にバインドされていること');
 
 				//値の変更
 				items.copyFrom([{
-					v: 'aa'
+					v1: 'aa'
 				}]);
-			});
 
+				var $span = $fixture.find('span');
+				strictEqual($span.length, 1, '配列の要素の数だけDOM要素が作られていること');
+				strictEqual($span[0].innerText, 'aa', 'コメントノードに書いた箇所にバインドされていること');
+			});
 });
