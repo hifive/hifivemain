@@ -817,14 +817,14 @@ $(function() {
 
 	test('schemaの持つプロパティ名が不正な場合エラーが発生すること', function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		var invalidPropNames = ['', ' ',  '1a', ' abc', 'a bc'];
-		for(var i = 0, l = invalidPropNames.length; i < l; i++) {
+		var invalidPropNames = ['', ' ', '1a', ' abc', 'a bc'];
+		for ( var i = 0, l = invalidPropNames.length; i < l; i++) {
 			try {
 				var schema = {
-						id:{
-							id: true
-						}
-					};
+					id: {
+						id: true
+					}
+				};
 				schema[invalidPropNames[i]] = {};
 				manager.createModel({
 					name: 'TestDataModel',
@@ -883,7 +883,8 @@ $(function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		// TODO 不正になる文字列を確認する
 		var invalidStrs = ['string|number', 'string number', 'int', 'num', 'null', 'String',
-				'Number', 'Boolean', 'Object', 'Array', 'Null', 'Any', 'undefined', 'string[][]', 'any[][]', '@string'];
+				'Number', 'Boolean', 'Object', 'Array', 'Null', 'Any', 'undefined', 'string[][]',
+				'any[][]', '@string'];
 		var l = invalidStrs.length;
 		expect(l);
 
@@ -1059,7 +1060,7 @@ $(function() {
 	});
 
 	test('dependの依存先もdepend指定されている場合、循環参照になっていなければデータモデルを作成できること', function() {
-		strictEqual((m=manager.createModel({
+		var m = manager.createModel({
 			name: 'TestDependModel',
 			schema: {
 				id: {
@@ -1092,10 +1093,25 @@ $(function() {
 					}
 				},
 				val1: null,
-				val2:{depend:{on:'val1',calc:function(){return 0;}}},
-				val3:{depend:{on:['val1', 'val2'],calc:function(){return 0;}}},
+				val2: {
+					depend: {
+						on: 'val1',
+						calc: function() {
+							return 0;
+						}
+					}
+				},
+				val3: {
+					depend: {
+						on: ['val1', 'val2'],
+						calc: function() {
+							return 0;
+						}
+					}
+				},
 			}
-		}),m.name), 'TestDependModel', 'データモデルが作成できること');
+		});
+		strictEqual(m.name, 'TestDependModel', 'データモデルが作成できること');
 	});
 
 	test('dependの依存先の参照が循環していた場合はエラーになること', function() {
@@ -2353,7 +2369,7 @@ $(function() {
 		ok(model);
 	});
 
-	test('ディスクリプタを配列で指定してモデルを作成できること',5,function(){
+	test('ディスクリプタを配列で指定してモデルを作成できること', 5, function() {
 		var models = manager.createModel([{
 			name: 'Test1',
 			schema: {
@@ -2382,32 +2398,34 @@ $(function() {
 		}]);
 		ok(manager.models.Test2, '2つ指定して1つ目が作成されていること');
 		ok(manager.models.Test3, '2つ指定して2つ目が作成されていること');
-		deepEqual(models, [manager.models.Test2, manager.models.Test3], '戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
+		deepEqual(models, [manager.models.Test2, manager.models.Test3],
+				'戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
 	});
 
-	test('ディスクリプタを配列で指定してモデルを作成できること。渡したディスクリプタの配列内で依存関係があっても作成されること',8,function(){
+	test('ディスクリプタを配列で指定してモデルを作成できること。渡したディスクリプタの配列内で依存関係があっても作成されること', 8, function() {
 		var models = manager.createModel([{
 			name: 'Test1',
 			schema: {
 				id: {
 					id: true
 				},
-				d:{
-					type:'@Test2'
+				d: {
+					type: '@Test2'
 				}
 			}
-		},{
+		}, {
 			name: 'Test2',
 			schema: {
 				id: {
 					id: true
 				},
-				v:null
+				v: null
 			}
 		}]);
 		ok(manager.models.Test1, '1つ目、type指定で依存していても正しく作成されること');
 		ok(manager.models.Test2, '2つ目、正しく作成されること');
-		deepEqual(models, [manager.models.Test1, manager.models.Test2], '戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
+		deepEqual(models, [manager.models.Test1, manager.models.Test2],
+				'戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
 		var models = manager.createModel([{
 			name: 'Test3',
 			base: '@Test6',
@@ -2442,11 +2460,12 @@ $(function() {
 		ok(manager.models.Test4, '2つ目、base, type指定で依存していても正しく作成されること');
 		ok(manager.models.Test5, '3つ目、正しく作成されること');
 		ok(manager.models.Test6, '4つ目、正しく作成されること');
-		deepEqual(models, [manager.models.Test3, manager.models.Test4, manager.models.Test5, manager.models.Test6], '戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
+		deepEqual(models, [manager.models.Test3, manager.models.Test4, manager.models.Test5,
+				manager.models.Test6], '戻り値のデータモデルの配列は引数に渡した順番で格納されていること');
 	});
 
-	test('ディスクリプタを配列で指定した時、依存関係に循環参照があったらエラーになること',1,function(){
-		try{
+	test('ディスクリプタを配列で指定した時、依存関係に循環参照があったらエラーになること', 1, function() {
+		try {
 			var models = manager.createModel([{
 				name: 'Test3',
 				base: '@Test6',
@@ -2478,13 +2497,13 @@ $(function() {
 				}
 			}]);
 			ok(false, 'テスト失敗。エラーが発生していません');
-		} catch(e) {
-			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CALC_DEPEND,e.message);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CALC_DEPEND, e.message);
 		}
 	});
 
-	test('ディスクリプタを配列で指定した時、存在しないデータモデル名に依存指定しているディスクリプタがあったらエラーになること',1,function(){
-		try{
+	test('ディスクリプタを配列で指定した時、存在しないデータモデル名に依存指定しているディスクリプタがあったらエラーになること', 1, function() {
+		try {
 			var models = manager.createModel([{
 				name: 'Test3',
 				base: '@Test6',
@@ -2516,7 +2535,7 @@ $(function() {
 				}
 			}]);
 			ok(false, 'テスト失敗。エラーが発生していません');
-		} catch(e) {
+		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR, e.message);
 		}
 	});
@@ -2606,40 +2625,39 @@ $(function() {
 
 			});
 
-	test('dropModelされたモデルでcreate/removeできないこと', 2,
-			function() {
-				var model1 = manager.createModel({
-					name: 'TestDataModel1',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {}
-					}
-				});
-				var item = model1.create({
-					id: sequence.next(),
-					val: 1
-				});
+	test('dropModelされたモデルでcreate/removeできないこと', 2, function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {}
+			}
+		});
+		var item = model1.create({
+			id: sequence.next(),
+			val: 1
+		});
 
-				manager.dropModel(model1);
+		manager.dropModel(model1);
 
-				try{
-					model1.create({
-						id: sequence.next()
-					});
-					ok(false, 'テスト失敗。エラーが発生していません');
-				} catch(e){
-					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, e.message);
-				}
-				try{
-					model1.remove(item);
-					ok(false, 'テスト失敗。エラーが発生していません');
-				} catch(e){
-					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, e.message);
-				}
-
+		try {
+			model1.create({
+				id: sequence.next()
 			});
+			ok(false, 'テスト失敗。エラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, e.message);
+		}
+		try {
+			model1.remove(item);
+			ok(false, 'テスト失敗。エラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, e.message);
+		}
+
+	});
 
 	//=============================
 	// Definition
@@ -2971,62 +2989,9 @@ $(function() {
 		strictEqual(dataModel1.size, 0, 'すべて削除したので、model.sizeが0になっていること');
 	});
 
-	test('データモデルから削除されたアイテムの項目について、getはできるがsetできないこと。ObsevableArrayのプロパティについて、副作用のあるメソッドは使用できないこと。', 8, function() {
-		var model = manager.createModel({
-			name: 'TestModel',
-			schema: {
-				id: {
-					id: true
-				},
-				v: null,
-				ary: {
-					type: 'any[]'
-				}
-			}
-		});
-
-		var item = model.create({
-			id: sequence.next(),
-			v: 'a',
-			ary: [1,2,3]
-		});
-
-		model.remove(item);
-		strictEqual(item.getModel(), null, 'モデルから削除したアイテムのgetModel()がnullを返すこと');
-		strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
-		deepEqualObs(item.get('ary'), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
-		deepEqual(item.get('ary').slice(0), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
-
-		try {
-			item.set('v', 'a');
-			ok(false, 'テスト失敗。エラーが発生しませんでした。');
-		} catch(e) {
-			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
-		}
-		try {
-			item.set('ary', [1]);
-			ok(false, 'テスト失敗。エラーが発生しませんでした。');
-		} catch(e) {
-			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
-		}
-		try {
-			var o = item.get('ary');
-			o.push(4);
-			ok(false, 'テスト失敗。エラーが発生しませんでした。');
-		} catch(e) {
-			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
-		}
-		try {
-			var o = item.get('ary');
-			o.splice(0,1,1);
-			ok(false, 'テスト失敗。エラーが発生しませんでした。');
-		} catch(e) {
-			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
-		}
-	});
-
-	test('データマネージャから削除されたデータモデルに属するアイテムの項目について、getはできるがsetできないこと。ObsevableArrayのプロパティについて、副作用のあるメソッドは使用できないこと。', 8,
-			function() {
+	test(
+			'データモデルから削除されたアイテムの項目について、getはできるがsetできないこと。ObsevableArrayのプロパティについて、副作用のあるメソッドは使用できないこと。',
+			8, function() {
 				var model = manager.createModel({
 					name: 'TestModel',
 					schema: {
@@ -3043,39 +3008,99 @@ $(function() {
 				var item = model.create({
 					id: sequence.next(),
 					v: 'a',
-					ary: [1,2,3]
+					ary: [1, 2, 3]
 				});
 
-				manager.dropModel(model.name);
-				strictEqual(model.getManager(), null, 'model.getManager()がnull');
+				model.remove(item);
+				strictEqual(item.getModel(), null, 'モデルから削除したアイテムのgetModel()がnullを返すこと');
 				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
-				deepEqualObs(item.get('ary'), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
-				deepEqual(item.get('ary').slice(0), [1,2,3], '削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
+				deepEqualObs(item.get('ary'), [1, 2, 3],
+						'削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
+				deepEqual(item.get('ary').slice(0), [1, 2, 3],
+						'削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
 
 				try {
 					item.set('v', 'a');
 					ok(false, 'テスト失敗。エラーが発生しませんでした。');
-				} catch(e) {
+				} catch (e) {
 					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
 				}
 				try {
 					item.set('ary', [1]);
 					ok(false, 'テスト失敗。エラーが発生しませんでした。');
-				} catch(e) {
+				} catch (e) {
 					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
 				}
 				try {
 					var o = item.get('ary');
 					o.push(4);
 					ok(false, 'テスト失敗。エラーが発生しませんでした。');
-				} catch(e) {
+				} catch (e) {
 					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
 				}
 				try {
 					var o = item.get('ary');
-					o.splice(0,1,1);
+					o.splice(0, 1, 1);
 					ok(false, 'テスト失敗。エラーが発生しませんでした。');
-				} catch(e) {
+				} catch (e) {
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+				}
+			});
+
+	test(
+			'データマネージャから削除されたデータモデルに属するアイテムの項目について、getはできるがsetできないこと。ObsevableArrayのプロパティについて、副作用のあるメソッドは使用できないこと。',
+			8, function() {
+				var model = manager.createModel({
+					name: 'TestModel',
+					schema: {
+						id: {
+							id: true
+						},
+						v: null,
+						ary: {
+							type: 'any[]'
+						}
+					}
+				});
+
+				var item = model.create({
+					id: sequence.next(),
+					v: 'a',
+					ary: [1, 2, 3]
+				});
+
+				manager.dropModel(model.name);
+				strictEqual(model.getManager(), null, 'model.getManager()がnull');
+				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
+				deepEqualObs(item.get('ary'), [1, 2, 3],
+						'削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
+				deepEqual(item.get('ary').slice(0), [1, 2, 3],
+						'削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
+
+				try {
+					item.set('v', 'a');
+					ok(false, 'テスト失敗。エラーが発生しませんでした。');
+				} catch (e) {
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+				}
+				try {
+					item.set('ary', [1]);
+					ok(false, 'テスト失敗。エラーが発生しませんでした。');
+				} catch (e) {
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+				}
+				try {
+					var o = item.get('ary');
+					o.push(4);
+					ok(false, 'テスト失敗。エラーが発生しませんでした。');
+				} catch (e) {
+					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
+				}
+				try {
+					var o = item.get('ary');
+					o.splice(0, 1, 1);
+					ok(false, 'テスト失敗。エラーが発生しませんでした。');
+				} catch (e) {
 					strictEqual(e.code, ERR.ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, e.message);
 				}
 			});
@@ -3087,12 +3112,12 @@ $(function() {
 		});
 		try {
 			item.set('id', 'a');
-		} catch(e) {
+		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
 		}
 		try {
 			item.set('id', item.get('id'));
-		} catch(e) {
+		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
 		}
 	});
@@ -3124,8 +3149,12 @@ $(function() {
 		ok(dataModel1.has(item2), 'アイテムインすタスを渡してtrueが返ってくること');
 		ok(dataModel1.has('1'), 'idを渡してtrueが返ってくること');
 		ok(dataModel1.has(1), 'idを数値で渡してtrueが返ってくること');
-		ok(!dataModel1.has({id:'1'}), 'id:"1"を持つオブジェクトを渡すとfalseが返ってくること');
-		ok(!dataModel1.has({id:1}), 'id:1を持つオブジェクトを渡すとfalseが返ってくること');
+		ok(!dataModel1.has({
+			id: '1'
+		}), 'id:"1"を持つオブジェクトを渡すとfalseが返ってくること');
+		ok(!dataModel1.has({
+			id: 1
+		}), 'id:1を持つオブジェクトを渡すとfalseが返ってくること');
 		ok(dataModel1.has('true'), 'id:"true"のアイテムがあるので"true"を渡すとtrueが返ってくること');
 		ok(!dataModel1.has(true), 'id:"true"のアイテムがあってもtrueを渡すとfalseが返ってくること');
 	});
@@ -3164,7 +3193,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('getで値の取得、setで値の格納ができること', 4, function(){
+	test('getで値の取得、setで値の格納ができること', 4, function() {
 		item.set('val', 'abc');
 		strictEqual(item.get('val'), 'abc', 'setした値がgetで取得できること');
 		var obj = item.get();
@@ -3188,38 +3217,38 @@ $(function() {
 		strictEqual(item.get('val'), 'ABC', 'get()で取得した値の格納されたオブジェクト内の値を変更してもデータアイテム内の値は変わらないこと');
 	});
 
-	test('スキーマに定義されていないプロパティに値をセットできないこと', 4, function(){
-		try{
+	test('スキーマに定義されていないプロパティに値をセットできないこと', 4, function() {
+		try {
 			model.create({
 				id: '000001',
 				val3: 'a'
 			});
 			ok(false, 'テスト失敗。create(新規作成)でスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
-		} catch(e) {
+		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
 		}
-		try{
+		try {
 			model.create({
 				id: item.get('id'),
 				val3: 'a'
 			});
 			ok(false, 'テスト失敗。create(変更)でスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
-		} catch(e) {
+		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
 		}
-		try{
+		try {
 			item.set('val3', 'c');
 			ok(false, 'テスト失敗。setでスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
-		} catch(e) {
+		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
 		}
-		try{
+		try {
 			item.set({
 				val2: 'c',
 				val3: 'd'
 			});
 			ok(false, 'テスト失敗。setでスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
-		} catch(e) {
+		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
 		}
 
@@ -3614,7 +3643,7 @@ $(function() {
 		manager.dropModel('DataModel1');
 		try {
 			item1.set('dataModel1', model1DataItem);
-		} catch(e) {
+		} catch (e) {
 			ok(true, 'ドロップしたモデルのアイテムは格納できないこと');
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message)
 		}
@@ -3806,7 +3835,7 @@ $(function() {
 		manager.dropModel('DataModel1');
 		try {
 			item1.set('dataModel1', [model1DataItem1]);
-		} catch(e) {
+		} catch (e) {
 			ok(true, 'ドロップしたモデルのアイテムは格納できないこと');
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message)
 		}
@@ -4897,22 +4926,22 @@ $(function() {
 
 	test('constraintの各プロパティについてnullまたはundefinedを指定した時は、指定無しと同じ扱いで制約がかからないこと', 44, function() {
 		var nullConstraint = {
-				notNull: null,
-				notEmpty: null,
-				min: null,
-				max: null,
-				minLength: null,
-				maxLength: null,
-				pattern: null
+			notNull: null,
+			notEmpty: null,
+			min: null,
+			max: null,
+			minLength: null,
+			maxLength: null,
+			pattern: null
 		};
 		var undefConstraint = {
-				notNull: undefined,
-				notEmpty: undefined,
-				min: undefined,
-				max: undefined,
-				minLength: undefined,
-				maxLength: undefined,
-				pattern: undefined
+			notNull: undefined,
+			notEmpty: undefined,
+			min: undefined,
+			max: undefined,
+			minLength: undefined,
+			maxLength: undefined,
+			pattern: undefined
 		};
 		var item = manager.createModel({
 			name: 'Test',
@@ -4926,21 +4955,21 @@ $(function() {
 		});
 		var enumValue = [true, 1, 'ab', item];
 		var typeValMap = {
-				number: [null, 1.1, -12.3],
-				integer: [null, 1, -12],
-				boolean: [null, true, false],
-				string: [null, '', 'ab'],
-				enum: [true, 1, 'ab', item],
-				'@Test': [null, item],
-				any: [null, undefined, item, window]
+			number: [null, 1.1, -12.3],
+			integer: [null, 1, -12],
+			boolean: [null, true, false],
+			string: [null, '', 'ab'],
+			enum: [true, 1, 'ab', item],
+			'@Test': [null, item],
+			any: [null, undefined, item, window]
 		};
-		for(var c = 0; c < 2; c++) {
+		for ( var c = 0; c < 2; c++) {
 			var constraint = [nullConstraint, undefConstraint][c];
 			for ( var type in typeValMap) {
 				var propObj = {
-						type: type,
-						constraint: constraint
-					};
+					type: type,
+					constraint: constraint
+				};
 				if (type === 'enum') {
 					propObj.enumValue = enumValue;
 				}
@@ -4953,12 +4982,13 @@ $(function() {
 						v: propObj
 					}
 				});
-				for (var i = 0, l = typeValMap[type].length; i < l; i++) {
+				for ( var i = 0, l = typeValMap[type].length; i < l; i++) {
 					var item = model.create({
 						id: sequence.next(),
 						v: typeValMap[type][i]
 					});
-					strictEqual(item.get('v'), typeValMap[type][i], h5.u.str.format('モデルに制約がかかっていないこと。type: {0}, value: {1}', type, typeValMap[type][i]));
+					strictEqual(item.get('v'), typeValMap[type][i], h5.u.str.format(
+							'モデルに制約がかかっていないこと。type: {0}, value: {1}', type, typeValMap[type][i]));
 				}
 			}
 		}
@@ -6555,7 +6585,7 @@ $(function() {
 		}
 	});
 
-	test('データモデルが生成でき、空オブジェクトを指定した場合と同じで、type:"any"扱いになりどんなものでもセットできること', function(){
+	test('データモデルが生成でき、空オブジェクトを指定した場合と同じで、type:"any"扱いになりどんなものでもセットできること', function() {
 		var schema = {
 			id: {
 				id: true
@@ -6576,9 +6606,10 @@ $(function() {
 			id: sequence.next()
 		});
 
-		var vals = [1, 'abc', new String('ABC'), new Number(1), {}, [], h5.u.obj.createObservableArray(), null, undefined];
+		var vals = [1, 'abc', new String('ABC'), new Number(1), {}, [],
+				h5.u.obj.createObservableArray(), null, undefined];
 
-		for(var i = 0, l = vals.length; i < l; i++) {
+		for ( var i = 0, l = vals.length; i < l; i++) {
 			item1.set('v', vals[i]);
 			strictEqual(item1.get('v'), vals[i], vals[i] + 'がsetできてgetできること');
 			item2.set('v', vals[i]);
@@ -7722,70 +7753,70 @@ $(function() {
 				}
 			});
 
-	test('配列の操作に対しても制約チェックが行われること',6,
-			function() {
-				var item = model.create({
+	test('配列の操作に対しても制約チェックが行われること', 6, function() {
+		var item = model.create({
+			id: sequence.next()
+		});
+		var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'enum[]',
+				'@' + dataModel1.name + '[]'];
+		var keys = ['numA', 'intA', 'strA', 'boolA', 'enumA', 'datamodelA'];
+		var invalidVals = ['a', 1.1, 1, 'a', 4, {}];
+
+		for ( var i = 0, l = types.length; i < l; i++) {
+			var o = item.get(keys[i]);
+			try {
+				o.push(invalidVals[i]);
+				ok(false, 'テスト失敗。エラーが発生していません');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+			}
+		}
+	});
+
+	test('配列要素にObservableArrayを格納できること', function() {
+		var item = model.create({
+			id: sequence.next()
+		});
+		var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'any[]', 'enum[]',
+				'@' + dataModel1.name + '[]'];
+		var keys = ['numA', 'intA', 'strA', 'boolA', 'anyA', 'enumA', 'datamodelA'];
+		var numOA = h5.u.obj.createObservableArray();
+		numOA.copyFrom([1.1, 2.2, 3.3]);
+		var intOA = h5.u.obj.createObservableArray();
+		intOA.copyFrom([1, 2, 3]);
+		var strOA = h5.u.obj.createObservableArray();
+		strOA.copyFrom(['a', 'b']);
+		var boolOA = h5.u.obj.createObservableArray();
+		boolOA.copyFrom([true, false, true]);
+		var anyOA = h5.u.obj.createObservableArray();
+		anyOA.copyFrom([1, true, undefined, 'a']);
+		var enumOA = h5.u.obj.createObservableArray();
+		enumOA.copyFrom([1, 3, 2]);
+		var datamodelOA = h5.u.obj.createObservableArray();
+		var item1 = dataModel1.create({
+			id: '1'
+		});
+		datamodelOA.copyFrom([item1, null, item1]);
+
+		var vals = [numOA, intOA, strOA, boolOA, anyOA, enumOA, datamodelOA];
+
+		for ( var i = 0, l = types.length; i < l; i++) {
+			try {
+				var desc = {
 					id: sequence.next()
-				});
-				var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'enum[]',
-						'@' + dataModel1.name + '[]'];
-				var keys = ['numA', 'intA', 'strA', 'boolA', 'enumA', 'datamodelA'];
-				var invalidVals = ['a', 1.1, 1, 'a', 4, {}];
-
-				for ( var i = 0, l = types.length; i < l; i++) {
-					var o = item.get(keys[i]);
-					try{
-						o.push(invalidVals[i]);
-						ok(false, 'テスト失敗。エラーが発生していません');
-					}catch(e){
-						strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
-					}
-				}
-			});
-
-	test('配列要素にObservableArrayを格納できること',
-			function() {
-				var item = model.create({
-					id: sequence.next()
-				});
-				var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'any[]', 'enum[]',
-								'@' + dataModel1.name + '[]'];
-				var keys = ['numA', 'intA', 'strA', 'boolA', 'anyA', 'enumA', 'datamodelA'];
-				var numOA = h5.u.obj.createObservableArray();
-				numOA.copyFrom([1.1,2.2,3.3]);
-				var intOA = h5.u.obj.createObservableArray();
-				intOA.copyFrom([1,2,3]);
-				var strOA = h5.u.obj.createObservableArray();
-				strOA.copyFrom(['a','b']);
-				var boolOA = h5.u.obj.createObservableArray();
-				boolOA.copyFrom([true,false,true]);
-				var anyOA = h5.u.obj.createObservableArray();
-				anyOA.copyFrom([1,true,undefined,'a']);
-				var enumOA = h5.u.obj.createObservableArray();
-				enumOA.copyFrom([1,3,2]);
-				var datamodelOA = h5.u.obj.createObservableArray();
-				var item1 = dataModel1.create({
-					id:'1'
-				});
-				datamodelOA.copyFrom([item1, null, item1]);
-
-				var vals = [numOA, intOA, strOA, boolOA, anyOA, enumOA, datamodelOA];
-
-				for ( var i = 0, l = types.length; i < l; i++) {
-					try{
-						var desc ={
-								id: sequence.next()
-							};
-						desc[keys[i]] = vals[i];
-						var item = model.create(desc);
-						ok(true, h5.u.str.format('type:{0}にObservableArrayを格納できること',types[i]));
-						ok(item.get(keys[i]).equals(vals[i]), '格納するときに渡したObsArrayと、アイテムが持つObsArrayの中身が同じであること');
-						notStrictEqual(item.get(keys[i]), vals[i], '格納するときに渡したObsArrayと、アイテムが持つObsArrayはインスタンスが異なること');
-					}catch(e){
-						strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
-					}
-				}
-			});
+				};
+				desc[keys[i]] = vals[i];
+				var item = model.create(desc);
+				ok(true, h5.u.str.format('type:{0}にObservableArrayを格納できること', types[i]));
+				ok(item.get(keys[i]).equals(vals[i]),
+						'格納するときに渡したObsArrayと、アイテムが持つObsArrayの中身が同じであること');
+				notStrictEqual(item.get(keys[i]), vals[i],
+						'格納するときに渡したObsArrayと、アイテムが持つObsArrayはインスタンスが異なること');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+			}
+		}
+	});
 
 	//=============================
 	// Definition
@@ -7830,8 +7861,7 @@ $(function() {
 		var l = validArgs.length
 		for ( var i = 0; i < l; i++) {
 			var ret = item.addEventListener(validArgs[i][0], validArgs[i][1]);
-			strictEqual(ret, undefined,
-					'(文字列、関数)ならエラーにならないこと。戻り値はundefinedであること。'+validArgs[i]);
+			strictEqual(ret, undefined, '(文字列、関数)ならエラーにならないこと。戻り値はundefinedであること。' + validArgs[i]);
 			item.removeEventListener(validArgs[i][0], validArgs[i][1]);
 		}
 		expect(l);
@@ -8595,7 +8625,8 @@ $(function() {
 			id: id,
 			val: '3'
 		}]);
-		deepEqual(order, ['item', 'model', 'manager'], 'createに配列で引数を渡したとき、値が最終的に変わっていたらイベントが1度だけ発火すること');
+		deepEqual(order, ['item', 'model', 'manager'],
+				'createに配列で引数を渡したとき、値が最終的に変わっていたらイベントが1度だけ発火すること');
 		order = [];
 
 		dataModel1.create([{
@@ -8608,7 +8639,8 @@ $(function() {
 			id: id,
 			val: '6'
 		}]);
-		deepEqual(order, ['item', 'model', 'manager'], 'createに配列で引数を渡したとき、値が最終的に変わっていたらイベントが1度だけ発火すること');
+		deepEqual(order, ['item', 'model', 'manager'],
+				'createに配列で引数を渡したとき、値が最終的に変わっていたらイベントが1度だけ発火すること');
 		order = [];
 
 		dataModel1.create([{
@@ -8621,13 +8653,12 @@ $(function() {
 			id: id,
 			val: item.get('val')
 		}]);
-		deepEqual(order, [],
-				'createに配列で引数を渡したとき、値が最終的に変わらない場合はイベントは発火しないこと');
+		deepEqual(order, [], 'createに配列で引数を渡したとき、値が最終的に変わらない場合はイベントは発火しないこと');
 		order = [];
 
 		try {
 			item.create({
-				id:id,
+				id: id,
 				val: 'aaaa'
 			});
 		} catch (e) {
@@ -8636,7 +8667,7 @@ $(function() {
 			deepEqual(order, [], 'プロパティset時にエラーが発生た場合は、ハンドラは実行されないこと');
 		}
 
-		order=[];
+		order = [];
 		dataModel1.create([{
 			id: item2.get('id'),
 			val: '3'
@@ -8673,162 +8704,160 @@ $(function() {
 		var expEvObj = null;
 		order = [];
 		item.addEventListener('change', itemEventListener);
-		o=item.get('ary');
-		item.set('ary',[1,2,3]);
+		o = item.get('ary');
+		item.set('ary', [1, 2, 3]);
 		deepEqual(order, ['item', 'model', 'manager'], 'setでイベントが上がる');
 
-		order=[];
+		order = [];
 		evObj = {};
 		model.create({
-			id:item.get('id'),
-			ary:[2,2,2,2]
+			id: item.get('id'),
+			ary: [2, 2, 2, 2]
 		});
-		deepEqual(order, ['item', 'model','manager'], 'createによる変更でイベント上がる');
+		deepEqual(order, ['item', 'model', 'manager'], 'createによる変更でイベント上がる');
 
-		order=[];
+		order = [];
 		evObj = {};
 		manager.addEventListener('itemsChage', managerEventListener);
 		o = item.get('ary');
-		o.copyFrom([1,2,3,4]);
-		deepEqual(order, ['item', 'model','manager'], 'copyFromでイベント上がる');
+		o.copyFrom([1, 2, 3, 4]);
+		deepEqual(order, ['item', 'model', 'manager'], 'copyFromでイベント上がる');
 
-		order=[];
+		order = [];
 		evObj = {};
 		o = item.get('ary');
 		o.push(1);
-		deepEqual(order, ['item', 'model','manager'], 'pushでイベント上がる');
+		deepEqual(order, ['item', 'model', 'manager'], 'pushでイベント上がる');
 
-		order=[];
+		order = [];
 		evObj = {};
 		o = item.get('ary');
 		o.shift(1);
-		deepEqual(order, ['item', 'model','manager'], 'shiftでイベント上がる');
+		deepEqual(order, ['item', 'model', 'manager'], 'shiftでイベント上がる');
 
-		order=[];
+		order = [];
 		evObj = {};
 		o = item.get('ary');
 		o.unshift(1);
-		deepEqual(order, ['item', 'model','manager'], 'unshiftでイベント上がる');
+		deepEqual(order, ['item', 'model', 'manager'], 'unshiftでイベント上がる');
 
-		o.copyFrom([2,1,3]);
-		order=[];
+		o.copyFrom([2, 1, 3]);
+		order = [];
 		evObj = {};
 		o = item.get('ary');
 		o.sort();
-		deepEqual(order, ['item', 'model','manager'], 'sortでイベント上がる');
+		deepEqual(order, ['item', 'model', 'manager'], 'sortでイベント上がる');
 
-		o.copyFrom([2,1,3]);
-		order=[];
+		o.copyFrom([2, 1, 3]);
+		order = [];
 		evObj = {};
 		o = item.get('ary');
 		o.reverse();
-		deepEqual(order, ['item', 'model','manager'], 'reverseでイベント上がる');
+		deepEqual(order, ['item', 'model', 'manager'], 'reverseでイベント上がる');
 
-		o.copyFrom([2,1,3]);
-		order=[];
+		o.copyFrom([2, 1, 3]);
+		order = [];
 		evObj = {};
 		o = item.get('ary');
 		o.pop();
-		deepEqual(order, ['item', 'model','manager'], 'popでイベント上がる');
+		deepEqual(order, ['item', 'model', 'manager'], 'popでイベント上がる');
 
-		o.copyFrom([2,1,3]);
-		order=[];
+		o.copyFrom([2, 1, 3]);
+		order = [];
 		evObj = {};
 		o = item.get('ary');
 		o.splice(0);
-		deepEqual(order, ['item', 'model','manager'], 'spliceでイベント上がる');
+		deepEqual(order, ['item', 'model', 'manager'], 'spliceでイベント上がる');
 
-		o.copyFrom([2,1,3]);
-		order=[];
+		o.copyFrom([2, 1, 3]);
+		order = [];
 		evObj = {};
 		o = item.get('ary');
 		o.slice(0);
 		deepEqual(order, [], '配列の中身の変わらないメソッド(slice)を呼んだ時はイベントは上がらない');
 
-		o.copyFrom([1,2,3]);
-		order=[];
+		o.copyFrom([1, 2, 3]);
+		order = [];
 		evObj = {};
 		o.sort();
 		deepEqual(order, [], '配列の中身が変わらない時(sort)はイベントは上がらない');
 
-		o.copyFrom([1,2,3]);
-		order=[];
+		o.copyFrom([1, 2, 3]);
+		order = [];
 		evObj = {};
-		o.splice(1,0);
+		o.splice(1, 0);
 		deepEqual(order, [], '配列の中身が変わらない時(splice)はイベントは上がらない');
 
-		o.copyFrom([1,2,3]);
-		order=[];
+		o.copyFrom([1, 2, 3]);
+		order = [];
 		evObj = {};
 		manager.beginUpdate();
 		o.push(4);
-		o.splice(3,1,5);
+		o.splice(3, 1, 5);
 		o.pop();
 		manager.endUpdate();
 		deepEqual(order, [], 'beginUpdate-endUpdateで囲んでいて、最終的に配列の中身が変わらない時(sort)はイベントは上がらない');
 	});
 
-	test(
-			'beginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること',11,
-			function() {
-				manager.beginUpdate();
-				item.set('val', 'aaaa');
-				deepEqual(order, [], 'begin/endUpdateの中ではsetしてもイベントハンドラは呼ばれないこと');
-				order = [];
-				item.set('val', 'cccc');
-				manager.endUpdate();
+	test('beginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること', 11, function() {
+		manager.beginUpdate();
+		item.set('val', 'aaaa');
+		deepEqual(order, [], 'begin/endUpdateの中ではsetしてもイベントハンドラは呼ばれないこと');
+		order = [];
+		item.set('val', 'cccc');
+		manager.endUpdate();
 
-				deepEqual(order, ['item', 'model', 'manager'],
-						'begin/endUpdateの中でプロパティを変更し、endUpdate時にbegin時と比べて変更されていた場合はイベントハンドラが1回だけ呼ばれること');
-				order = [];
+		deepEqual(order, ['item', 'model', 'manager'],
+				'begin/endUpdateの中でプロパティを変更し、endUpdate時にbegin時と比べて変更されていた場合はイベントハンドラが1回だけ呼ばれること');
+		order = [];
 
-				manager.beginUpdate();
-				item.set('val', 'bbbb');
-				item.set('val', 'cccc');
-				manager.endUpdate();
-				deepEqual(order, [],
-						'begin/endUpdateの中でプロパティを変更し、endUpdate時にbegin時と比べて変更されていない場合はイベントハンドラは呼ばれないこと');
+		manager.beginUpdate();
+		item.set('val', 'bbbb');
+		item.set('val', 'cccc');
+		manager.endUpdate();
+		deepEqual(order, [],
+				'begin/endUpdateの中でプロパティを変更し、endUpdate時にbegin時と比べて変更されていない場合はイベントハンドラは呼ばれないこと');
 
-				order = [];
-				manager.beginUpdate();
-				item.set('val', sequence.next());
-				item.set('val2', sequence.next());
-				manager.endUpdate();
-				deepEqual(order, ['item', 'model', 'manager'],
-						'二つのプロパティを変更した場合、endUpdateのタイミングで、Item,Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
+		order = [];
+		manager.beginUpdate();
+		item.set('val', sequence.next());
+		item.set('val2', sequence.next());
+		manager.endUpdate();
+		deepEqual(order, ['item', 'model', 'manager'],
+				'二つのプロパティを変更した場合、endUpdateのタイミングで、Item,Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
 
-				order = [];
-				manager.beginUpdate();
-				dataModel1.create({
-					id:'a',
-					val:'aaaa'
-				});
-				deepEqual(order, [], 'begin/endUpdateの中ではcreateしてもイベントハンドラは呼ばれないこと');
-				manager.endUpdate();
-				deepEqual(order, ['model', 'manager'],
-						'新しくデータアイテムを作成した場合、endUpdateのタイミングで、Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
+		order = [];
+		manager.beginUpdate();
+		dataModel1.create({
+			id: 'a',
+			val: 'aaaa'
+		});
+		deepEqual(order, [], 'begin/endUpdateの中ではcreateしてもイベントハンドラは呼ばれないこと');
+		manager.endUpdate();
+		deepEqual(order, ['model', 'manager'],
+				'新しくデータアイテムを作成した場合、endUpdateのタイミングで、Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
 
-				order = [];
-				manager.beginUpdate();
-				dataModel1.create({
-					id:'b',
-					val:'aaaa'
-				});
-				deepEqual(order, [], 'begin/endUpdateの中ではcreateしてもイベントハンドラは呼ばれないこと');
-				dataModel1.remove('b');
-				deepEqual(order, [], 'begin/endUpdateの中ではremoveしてもイベントハンドラは呼ばれないこと');
-				manager.endUpdate();
-				deepEqual(order, [],
-						'新しくデータアイテムを作成して、削除した場合、biginUpdate時とendUpdate時で比較して変更はないので、イベントハンドラは呼ばれないこと');
+		order = [];
+		manager.beginUpdate();
+		dataModel1.create({
+			id: 'b',
+			val: 'aaaa'
+		});
+		deepEqual(order, [], 'begin/endUpdateの中ではcreateしてもイベントハンドラは呼ばれないこと');
+		dataModel1.remove('b');
+		deepEqual(order, [], 'begin/endUpdateの中ではremoveしてもイベントハンドラは呼ばれないこと');
+		manager.endUpdate();
+		deepEqual(order, [],
+				'新しくデータアイテムを作成して、削除した場合、biginUpdate時とendUpdate時で比較して変更はないので、イベントハンドラは呼ばれないこと');
 
-				order = [];
-				manager.beginUpdate();
-				dataModel1.remove('a');
-				deepEqual(order, [], 'begin/endUpdateの中ではremoveしてもイベントハンドラは呼ばれないこと');
-				manager.endUpdate();
-				deepEqual(order, ['model', 'manager'],
-						'データアイテムを削除した場合、endUpdateのタイミングで、Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
-			});
+		order = [];
+		manager.beginUpdate();
+		dataModel1.remove('a');
+		deepEqual(order, [], 'begin/endUpdateの中ではremoveしてもイベントハンドラは呼ばれないこと');
+		manager.endUpdate();
+		deepEqual(order, ['model', 'manager'],
+				'データアイテムを削除した場合、endUpdateのタイミングで、Model,Managerに登録したイベントハンドラが1回づつ呼ばれること');
+	});
 
 	test(
 			'beginUpdate-endUpdateの間で値の変更があった時に、endUpdate時に登録されているchangeイベントハンドラだけが実行されること',
@@ -8874,64 +8903,60 @@ $(function() {
 						'二つのプロパティを変更ても場合は、endUpdateのタイミングで、登録したイベントハンドラが1回だけ呼ばれること');
 			});
 
-	test(
-			'beginUpdate-endUpdateの間でも、依存プロパティは即座に計算されること',1,
-			function() {
-				var model = manager.createModel({
-					name: 'DependModel',
-					schema: {
-						id: {
-							id:true
-						},
-						v: {},
-						d: {
-							depend: {
-								on:'v',
-								calc: function(){
-									return this.get('v');
-								}
-							}
+	test('beginUpdate-endUpdateの間でも、依存プロパティは即座に計算されること', 1, function() {
+		var model = manager.createModel({
+			name: 'DependModel',
+			schema: {
+				id: {
+					id: true
+				},
+				v: {},
+				d: {
+					depend: {
+						on: 'v',
+						calc: function() {
+							return this.get('v');
 						}
 					}
-				});
-				var item = model.create({
-					id: sequence.next()
-				});
-				manager.beginUpdate();
-				item.set('v', 'a');
-				strictEqual(item.get('v'), 'a', 'endUpdateを呼ばなくても、depend項目は計算されている');
-				manager.endUpdate();
-			});
+				}
+			}
+		});
+		var item = model.create({
+			id: sequence.next()
+		});
+		manager.beginUpdate();
+		item.set('v', 'a');
+		strictEqual(item.get('v'), 'a', 'endUpdateを呼ばなくても、depend項目は計算されている');
+		manager.endUpdate();
+	});
 
-	test(
-			'beginUpdate-endUpdateの間でもObservableArrayのイベントは即座に上がること',1,
-			function() {
-				var model = manager.createModel({
-					name: 'AryModel',
-					schema: {
-						id: {
-							id: true
-						},
-						ary: {
-							type: 'any[]'
-						}
-					}
-				});
+	test('beginUpdate-endUpdateの間でもObservableArrayのイベントは即座に上がること', 1, function() {
+		var model = manager.createModel({
+			name: 'AryModel',
+			schema: {
+				id: {
+					id: true
+				},
+				ary: {
+					type: 'any[]'
+				}
+			}
+		});
 
-				var item = model.create({
-					id: sequence.next()
-				});
+		var item = model.create({
+			id: sequence.next()
+		});
 
-				var order = [];
-				item.get('ary').addEventListener('observe', function(ev){
-					order.push(ev.method);
-				});
-				manager.beginUpdate();
-				item.get().ary.push('a');
-				// 内部でoldValueを保存するためにsliceが呼ばれる
-				deepEqual(order, ['slice', 'push'], 'begin-endUpdate内でもObservableArrayのイベントは即座に発火する。');
-				manager.endUpdate();
-			});
+		var order = [];
+		item.get('ary').addEventListener('observe', function(ev) {
+			order.push(ev.method);
+		});
+		manager.beginUpdate();
+		item.get().ary.push('a');
+		// 内部でoldValueを保存するためにsliceが呼ばれる
+		deepEqual(order, ['slice', 'push'], 'begin-endUpdate内でもObservableArrayのイベントは即座に発火する。');
+		manager.endUpdate();
+	});
 
 
 	test('DataItemで、型の自動変換が行われるものについて、変更後が代入前と同じ値ならchangeイベントは発火しないこと', 2, function() {
@@ -9037,16 +9062,16 @@ $(function() {
 			id: sequence.next()
 		});
 		var history = [];
-		var listener = function(e){
+		var listener = function(e) {
 			history.push(e.props.v.newValue);
-			if(this.get('v') === 5){
+			if (this.get('v') === 5) {
 				return;
 			}
 			this.set('v', this.get('v') + 1);
 		};
 		item.addEventListener('change', listener);
 
-		item.set('v',1);
+		item.set('v', 1);
 		deepEqual(history, [1, 2, 3, 4, 5], 'イベントリスナ内でアイテムの値をセットした時に、イベントが発火すること');
 
 		history = [];
@@ -9058,9 +9083,9 @@ $(function() {
 
 		history = [];
 		item.removeEventListener('change', listener);
-		listener = function(e){
+		listener = function(e) {
 			history.push(e.props.v.newValue);
-			if(this.get('v') === 5){
+			if (this.get('v') === 5) {
 				return;
 			}
 			manager.beginUpdate();
@@ -9102,7 +9127,9 @@ $(function() {
 					},
 					val: {},
 					val2: {},
-					ary:{type:'string[]'}
+					ary: {
+						type: 'string[]'
+					}
 				}
 			});
 			item = dataModel1.create({
@@ -9276,7 +9303,7 @@ $(function() {
 		};
 		item2.addEventListener('change', listener);
 
-		item2.set('ary', ['a','b']);
+		item2.set('ary', ['a', 'b']);
 
 		var ev = evObj.item2;
 		ok(typeof ev === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
@@ -9284,8 +9311,10 @@ $(function() {
 		strictEqual(ev.target, item2, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
 		deepEqual(ev.props.ary.oldValue, [], 'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
 		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
-		deepEqualObs(ev.props.ary.newValue, ['a','b'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
-		strictEqual(ev.props.ary.newValue, item2.get('ary'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
+		deepEqualObs(ev.props.ary.newValue, ['a', 'b'],
+				'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
+		strictEqual(ev.props.ary.newValue, item2.get('ary'),
+				'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
 
 		// 引数を格納するオブジェクト変数のリセット
 		evObj = {};
@@ -9301,30 +9330,39 @@ $(function() {
 		ok(typeof ev === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
 		strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
 		strictEqual(ev.target, item2, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
-		deepEqual(ev.props.ary.oldValue, ['a','b'], 'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
+		deepEqual(ev.props.ary.oldValue, ['a', 'b'],
+				'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
 		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
-		deepEqualObs(ev.props.ary.newValue, ['A','B'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
-		strictEqual(ev.props.ary.newValue, item2.get('ary'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
+		deepEqualObs(ev.props.ary.newValue, ['A', 'B'],
+				'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
+		strictEqual(ev.props.ary.newValue, item2.get('ary'),
+				'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
 
 		// setに複数引数を渡して更新
 		evObj = {};
-		try{
-		item2.set({
-			ary: ['B'],
-			ary2: ['C', 'D']
-		});
-		}catch(e){}
+		try {
+			item2.set({
+				ary: ['B'],
+				ary2: ['C', 'D']
+			});
+		} catch (e) {
+		}
 		ev = evObj.item2;
 		ok(typeof ev === 'object', '値をsetしたとき、イベントハンドラが実行され、changeイベントオブジェクトが取得できること');
 		strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
 		strictEqual(ev.target, item2, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
-		deepEqual(ev.props.ary.oldValue, ['A','B'], 'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
+		deepEqual(ev.props.ary.oldValue, ['A', 'B'],
+				'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
 		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
-		deepEqualObs(ev.props.ary.newValue, ['B'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
-		strictEqual(ev.props.ary.newValue, item2.get('ary'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
+		deepEqualObs(ev.props.ary.newValue, ['B'],
+				'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
+		strictEqual(ev.props.ary.newValue, item2.get('ary'),
+				'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
 		ok($.isArray(ev.props.ary2.oldValue), 'oldValueはArrayクラスであること');
-		deepEqualObs(ev.props.ary2.newValue, ['C', 'D'], 'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
-		strictEqual(ev.props.ary2.newValue, item2.get('ary2'), 'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
+		deepEqualObs(ev.props.ary2.newValue, ['C', 'D'],
+				'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
+		strictEqual(ev.props.ary2.newValue, item2.get('ary2'),
+				'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
 	});
 
 	test('DataModelインスタンスの"itemsChange"に登録したハンドラが受け取る引数に正しく情報が格納されていること createdプロパティの確認',
@@ -9361,7 +9399,7 @@ $(function() {
 				dataModel2.addEventListener('itemsChange', modelEventListener);
 				var item2 = dataModel2.create({
 					id: sequence.next(),
-					ary: ['a','b']
+					ary: ['a', 'b']
 				});
 			});
 
@@ -9436,7 +9474,7 @@ $(function() {
 				deepEqual(ev.changed, [], 'changedプロパティは空配列であること');
 				deepEqual(ev.created, [], 'createdプロパティは空配列であること');
 				deepEqual(ev.recreated, [{
-					id:'1',
+					id: '1',
 					oldItem: oldItem,
 					newItem: newItem
 				}], 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
@@ -9461,13 +9499,13 @@ $(function() {
 				deepEqual(ev.changed, [], 'changedプロパティは空配列であること');
 				deepEqual(ev.created, [], 'createdプロパティは空配列であること');
 				deepEqual(ev.recreated, [{
-						id: '1',
-						oldItem: oldItem,
-						newItem: newItem
-					},{
-						id: '2',
-						oldItem: oldItem2,
-						newItem: newItem2
+					id: '1',
+					oldItem: oldItem,
+					newItem: newItem
+				}, {
+					id: '2',
+					oldItem: oldItem2,
+					newItem: newItem2
 				}], 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
 				deepEqual(ev.removed, [], 'removedプロパティは空配列であること');
 			});
@@ -9527,7 +9565,7 @@ $(function() {
 				deepEqual(ev.changed, changeArgs, 'changedプロパティにchangeイベントオブジェクトが格納されていること');
 				deepEqual(ev.created, [newItem5], 'createdプロパティに生成されたDataItemインスタンスが格納されていること');
 				deepEqual(ev.recreated, [{
-					id:'1',
+					id: '1',
 					oldItem: oldItem,
 					newItem: newItem
 				}], 'recreatedプロパティに、削除されたインスタンスと、再生成されたインスタンスが格納されていること');
@@ -9545,7 +9583,7 @@ $(function() {
 						id: {
 							id: true
 						},
-						val:{}
+						val: {}
 					}
 				});
 				var model2 = manager.createModel({
@@ -9554,7 +9592,7 @@ $(function() {
 						id: {
 							id: true
 						},
-						val:{}
+						val: {}
 					}
 				});
 				var model3 = manager.createModel({
@@ -9563,7 +9601,7 @@ $(function() {
 						id: {
 							id: true
 						},
-						val:{}
+						val: {}
 					}
 				});
 
@@ -9595,8 +9633,8 @@ $(function() {
 					id: '1'
 				});
 				model1.create({
-					id:'2',
-					val:'2'
+					id: '2',
+					val: '2'
 				});
 				model1.create({
 					id: '3'
@@ -9611,67 +9649,111 @@ $(function() {
 				var evAry = ['created', 'changed', 'removed', 'recreated'];
 				for ( var i = 0, l = evAry.length; i < l; i++) {
 					var prop = evAry[i];
-					strictEqual(evObj.manager.models.AModel[prop], evs.AModel[prop], h5.u.str.format('AModelのイベントオブジェクトの{0}が、managerのイベントオブジェクトのmodels.AModel.{0}に格納されていること(インスタンスが同じ)',prop));
-					strictEqual(evObj.manager.models.BModel[prop], evs.BModel[prop], h5.u.str.format('BModelのイベントオブジェクトの{0}が、managerのイベントオブジェクトのmodels.BModel.{0}に格納されていること(インスタンスが同じ)',prop));
+					strictEqual(
+							evObj.manager.models.AModel[prop],
+							evs.AModel[prop],
+							h5.u.str
+									.format(
+											'AModelのイベントオブジェクトの{0}が、managerのイベントオブジェクトのmodels.AModel.{0}に格納されていること(インスタンスが同じ)',
+											prop));
+					strictEqual(
+							evObj.manager.models.BModel[prop],
+							evs.BModel[prop],
+							h5.u.str
+									.format(
+											'BModelのイベントオブジェクトの{0}が、managerのイベントオブジェクトのmodels.BModel.{0}に格納されていること(インスタンスが同じ)',
+											prop));
 				}
 			});
 	//=============================
 	// Definition
 	//=============================
-	module('createSequence', {
-	});
+	module('createSequence', {});
 
 	//=============================
 	// Body
 	//=============================
-	test('createSequence', 35, function(){
-		var sequence = h5.core.data.createSequence();
-		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数なし returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
-		strictEqual(sequence.current(), 1, '引数なし 初期値が1であること');
-		strictEqual(sequence.next(), 1, '引数なし next()でcurrent()の値が取得できること');
-		strictEqual(sequence.current(), 2, '引数なし next()を呼んだのでcurrent()の戻り値が2になっていること');
-		strictEqual(sequence.next(), 2, '引数なし next()でcurrent()の値が取得できること');
+	test(
+			'createSequence',
+			35,
+			function() {
+				var sequence = h5.core.data.createSequence();
+				strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT,
+						'引数なし returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.current(), 1, '引数なし 初期値が1であること');
+				strictEqual(sequence.next(), 1, '引数なし next()でcurrent()の値が取得できること');
+				strictEqual(sequence.current(), 2, '引数なし next()を呼んだのでcurrent()の戻り値が2になっていること');
+				strictEqual(sequence.next(), 2, '引数なし next()でcurrent()の値が取得できること');
 
-		sequence = h5.core.data.createSequence(0);
-		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数(0) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
-		strictEqual(sequence.current(), 0, '引数(0) 初期値が0であること');
-		strictEqual(sequence.next(), 0, '引数(0) next()でcurrent()の値が取得できること');
-		strictEqual(sequence.current(), 1, '引数(0) next()を呼んだのでcurrent()の戻り値が1になっていること');
-		strictEqual(sequence.next(), 1, '引数(0) next()でcurrent()の値が取得できること');
+				sequence = h5.core.data.createSequence(0);
+				strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT,
+						'引数(0) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.current(), 0, '引数(0) 初期値が0であること');
+				strictEqual(sequence.next(), 0, '引数(0) next()でcurrent()の値が取得できること');
+				strictEqual(sequence.current(), 1, '引数(0) next()を呼んだのでcurrent()の戻り値が1になっていること');
+				strictEqual(sequence.next(), 1, '引数(0) next()でcurrent()の値が取得できること');
 
-		sequence = h5.core.data.createSequence(null, 100);
-		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数(null, 100) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
-		strictEqual(sequence.current(), 1, '引数(null, 100) 初期値が1であること');
-		strictEqual(sequence.next(), 1, '引数(null, 100) next()でcurrent()の値が取得できること');
-		strictEqual(sequence.current(), 101, '引数(null, 100) next()を呼んだのでcurrent()の戻り値が101になっていること');
-		strictEqual(sequence.next(), 101, '引数(null, 100) next()でcurrent()の値が取得できること');
+				sequence = h5.core.data.createSequence(null, 100);
+				strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT,
+						'引数(null, 100) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.current(), 1, '引数(null, 100) 初期値が1であること');
+				strictEqual(sequence.next(), 1, '引数(null, 100) next()でcurrent()の値が取得できること');
+				strictEqual(sequence.current(), 101,
+						'引数(null, 100) next()を呼んだのでcurrent()の戻り値が101になっていること');
+				strictEqual(sequence.next(), 101, '引数(null, 100) next()でcurrent()の値が取得できること');
 
-		sequence = h5.core.data.createSequence(1000, 100);
-		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数(1000, 100) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
-		strictEqual(sequence.current(), 1000, '引数(1000, 100) 初期値が1000であること');
-		strictEqual(sequence.next(), 1000, '引数(1000, 100) next()でcurrent()の値が取得できること');
-		strictEqual(sequence.current(), 1100, '引数(1000, 100) next()を呼んだのでcurrent()の戻り値が1100になっていること');
-		strictEqual(sequence.next(), 1100, '引数(1000, 100) next()でcurrent()の値が取得できること');
+				sequence = h5.core.data.createSequence(1000, 100);
+				strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT,
+						'引数(1000, 100) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.current(), 1000, '引数(1000, 100) 初期値が1000であること');
+				strictEqual(sequence.next(), 1000, '引数(1000, 100) next()でcurrent()の値が取得できること');
+				strictEqual(sequence.current(), 1100,
+						'引数(1000, 100) next()を呼んだのでcurrent()の戻り値が1100になっていること');
+				strictEqual(sequence.next(), 1100, '引数(1000, 100) next()でcurrent()の値が取得できること');
 
-		sequence = h5.core.data.createSequence(null, null, h5.core.data.SEQUENCE_RETURN_TYPE_INT);
-		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
-		strictEqual(sequence.current(), 1, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) 初期値が1であること');
-		strictEqual(sequence.next(), 1, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()でcurrent()の値が取得できること');
-		strictEqual(sequence.current(), 2, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()を呼んだのでcurrent()の戻り値が2になっていること');
-		strictEqual(sequence.next(), 2, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()でcurrent()の値が取得できること');
+				sequence = h5.core.data.createSequence(null, null,
+						h5.core.data.SEQUENCE_RETURN_TYPE_INT);
+				strictEqual(
+						sequence.returnType,
+						h5.core.data.SEQUENCE_RETURN_TYPE_INT,
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.current(), 1,
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) 初期値が1であること');
+				strictEqual(sequence.next(), 1,
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()でcurrent()の値が取得できること');
+				strictEqual(sequence.current(), 2,
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()を呼んだのでcurrent()の戻り値が2になっていること');
+				strictEqual(sequence.next(), 2,
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()でcurrent()の値が取得できること');
 
-		sequence = h5.core.data.createSequence(null, null, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
-		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_STRING, '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_STRINGであること');
-		strictEqual(sequence.current(), "1", '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) 初期値が"1"であること');
-		strictEqual(sequence.next(), "1", '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
-		strictEqual(sequence.current(), "2", '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()を呼んだのでcurrent()の戻り値が"2"になっていること');
-		strictEqual(sequence.next(), "2", '引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+				sequence = h5.core.data.createSequence(null, null,
+						h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+				strictEqual(
+						sequence.returnType,
+						h5.core.data.SEQUENCE_RETURN_TYPE_STRING,
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_STRINGであること');
+				strictEqual(sequence.current(), "1",
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) 初期値が"1"であること');
+				strictEqual(sequence.next(), "1",
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+				strictEqual(sequence.current(), "2",
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()を呼んだのでcurrent()の戻り値が"2"になっていること');
+				strictEqual(sequence.next(), "2",
+						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
 
-		sequence = h5.core.data.createSequence(500, 5, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
-		strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_STRING, '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_STRINGであること');
-		strictEqual(sequence.current(), "500", '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) 初期値が"500"であること');
-		strictEqual(sequence.next(), "500", '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
-		strictEqual(sequence.current(), "505", '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()を呼んだのでcurrent()の戻り値が"505"になっていること');
-		strictEqual(sequence.next(), "505", '引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
-	});
+				sequence = h5.core.data.createSequence(500, 5,
+						h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+				strictEqual(
+						sequence.returnType,
+						h5.core.data.SEQUENCE_RETURN_TYPE_STRING,
+						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_STRINGであること');
+				strictEqual(sequence.current(), "500",
+						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) 初期値が"500"であること');
+				strictEqual(sequence.next(), "500",
+						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+				strictEqual(sequence.current(), "505",
+						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()を呼んだのでcurrent()の戻り値が"505"になっていること');
+				strictEqual(sequence.next(), "505",
+						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+			});
 });
