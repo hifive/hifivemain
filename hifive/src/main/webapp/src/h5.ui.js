@@ -213,6 +213,11 @@
 	 */
 	var scrollTop = null;
 
+	/**
+	 * Y方向のスクロール値を取得するメソッド
+	 */
+	var scrollLeft = null;
+
 	// =============================
 	// Functions
 	// =============================
@@ -368,7 +373,7 @@
 	}
 
 	/**
-	 * ウィンドウの幅と高さを取得します。
+	 * スクロールバーの幅も含めた、ウィンドウ幅または高さを取得します。
 	 * <p>
 	 * ウィンドウの高さを取得したい場合は引数に"Height"を、 ウィンドウの幅を取得したい場合は引数に"Width"を指定して下さい。
 	 * <p>
@@ -404,6 +409,45 @@
 	}
 
 	/**
+	 * スクロールバーの幅を含めない、ウィンドウ幅または高さを取得します。
+	 */
+	function getDisplayArea(prop) {
+		var e = compatMode ? document.body : document.documentElement;
+		return h5ua.isiOS ? window['inner' + prop] : e['client' + prop];
+	}
+
+	/**
+	 * 指定された要素の絶対座標を取得します。
+	 * <p>
+	 * 1.8.xのjQuery.offset()は、Quirksモードでのスクロール量の計算が正しく行われないため自前で計算する。
+	 * <p>
+	 * BODY要素が指定された場合は、jQuery.offset.bodyOffset()から値を取得する。
+	 */
+	function getOffset(element) {
+		var elem = $(element)[0];
+		var body = document.body;
+		var box = {top: 0, left: 0};
+
+		if (elem === body) {
+			return $.offset.bodyOffset(elem);
+		}
+
+		if (typeof elem.getBoundingClientRect !== "undefined") {
+			box = elem.getBoundingClientRect();
+		}
+
+		var docElem = compatMode ? body : document.documentElement;
+		var clientTop = docElem.clientTop || 0;
+		var clientLeft = docElem.clientLeft || 0;
+
+		return {
+			top: box.top + scrollTop() - clientTop,
+			left: box.left + scrollLeft() - clientLeft
+		};
+
+	}
+
+	/**
 	 * 指定された要素で発生したイベントを無効にする
 	 */
 	function disableEventOnIndicator(/* var_args */) {
@@ -434,6 +478,7 @@
 	documentHeight = documentSize('Height');
 	documentWidth = documentSize('Width');
 	scrollTop = scrollPosition('Top');
+	scrollLeft = scrollPosition('Left');
 
 	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
 	if (!isCanvasSupported && isVMLSupported) {
@@ -1255,22 +1300,23 @@
 		var viewTop,viewBottom,viewLeft,viewRight;
 		var $element = $(element);
 		var height,width;
-		var $container;
+
 		// containerの位置を取得。borderの内側の位置で判定する。
 		if (container === undefined) {
 			// containerが指定されていないときは、画面表示範囲内にあるかどうか判定する
-			height = h5ua.isiOS ? window.innerHeight : $(window).height();
-			width = h5ua.isiOS ? window.innerWidth : $(window).width();
-			viewTop = $(window).scrollTop();
-			viewLeft = $(window).scrollLeft();
+			height = getDisplayArea('Height');
+			width = getDisplayArea('Width');
+			viewTop = scrollTop();
+			viewLeft = scrollLeft();
 		} else {
-			$container = $(container);
+			var $container = $(container);
 			if ($container.find($element).length === 0) {
 				// elementとcontaienrが親子関係でなければundefinedを返す
 				return undefined;
 			}
-			viewTop = $container.offset().top + parseInt($container.css('border-top-width'));
-			viewLeft = $container.offset().left + parseInt($container.css('border-left-width'));
+			var containerOffset = getOffset($container);
+			viewTop = containerOffset.top + parseInt($container.css('border-top-width'));
+			viewLeft = containerOffset.left + parseInt($container.css('border-left-width'));
 			height = $container.innerHeight();
 			width = $container.innerWidth();
 		}
@@ -1278,8 +1324,9 @@
 		viewRight = viewLeft + width;
 
 		// elementの位置を取得。borderの外側の位置で判定する。
-		var positionTop = $element.offset().top;
-		var positionLeft = $element.offset().left;
+		var elementOffset = getOffset($element);
+		var positionTop = elementOffset.top;
+		var positionLeft = elementOffset.left;
 		var positionBottom = positionTop + $element.outerHeight();
 		var positionRight = positionLeft + $element.outerWidth();
 		return ((viewTop <= positionTop && positionTop < viewBottom) || (viewTop < positionBottom && positionBottom <= viewBottom))
