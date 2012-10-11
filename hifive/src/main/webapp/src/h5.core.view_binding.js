@@ -28,6 +28,12 @@
 	// Production
 	// =============================
 
+	/** Node.ELEMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
+	var NODE_TYPE_ELEMENT = 1;
+
+	/** Node.COMMENT_NODE */
+	var NODE_TYPE_COMMENT = 8;
+
 	var DATA_H5_BIND = 'data-h5-bind';
 
 	var DATA_H5_CONTEXT = 'data-h5-context';
@@ -36,32 +42,18 @@
 
 	var DATA_H5_DYN_CTX = 'data-h5-dyn-ctx';
 
-	var DATA_H5_DYN_BIND = 'data-h5-dyn-bind';
+	var DATA_H5_DYN_VID = 'data-h5-dyn-vid';
 
+	/** インラインコメントテンプレートのコメントノードの開始文字列 */
+	var COMMENT_BINDING_TARGET_MARKER = '{h5bind ';
 
-	//var DATA_ATTR_UI = 'data-h5-ui'; //TODO 名前空間
-
-	//TODO 規約化：動的に付加する属性には -dyn- をつける
-	var DATA_ATTR_UID = 'data-h5-dyn-uid'; //TODO 名前空間
-
-	//var DATA_ATTR_TEMPLATE_ID = 'data-h5-template-id';
-
-	//var DATA_ATTR_BIND = 'data-h5-bind';
-
-	//var SELECTOR_H5_TEMPLATE = 'script[type="text/x-h5-tmpl"][' + DATA_ATTR_TEMPLATE_ID + ']';
-
-
-	var COMMENT_BINDING_TARGET_MARKER = '{h5bind';
-
-	var BIND_BEGIN_MARKER = '{h5bindmarker id="{0}"}';
-
-	var BIND_END_MARKER = '{/h5bindmarker}';
-
-
+	/** 1つのバインド指定のターゲットとソースのセパレータ（「text:prop」の「:」） */
 	var BIND_DESC_TARGET_SEPARATOR = ':';
 
+	/** 複数のバインド指定のセパレータ（「text:prop1; attr(href):prop2」の「;」） */
 	var BIND_DESC_SEPARATOR = ';';
 
+	/** バインドターゲットのカッコ内を取得するための正規表現（「attr(href)」の「href」を取得） */
 	var BIND_TARGET_DETAIL_REGEXP = /\(\s*(\S+)\s*\)/;
 
 
@@ -83,209 +75,198 @@
 	// Cache
 	//
 	// =========================================================================
-	var getByPath = h5.u.obj.getByPath;
-
 	// =========================================================================
 	//
 	// Privates
 	//
 	// =========================================================================
-
 	// =============================
 	// Variables
 	// =============================
-
-	var markerUid = 0;
-
 	var contextUid = 0;
 
-
-	//var compMap = {};
-
-	var uid = 0;
+	/** viewUidカウンタ */
+	var viewUid = 0;
 
 
-	//バインドUID（現在表示されているDOM）にひもづけているリスナー。キー：uid, 値：リスナー関数
-	//TODO もっと良い方法考える
-	var listeners = {};
+	//MEMO バインド関係のマップのたどり方
+	//(1)ソース -> 特定のビュー： srcToViewMap[srcIndex][viewUid] がビュー。
+	//　srcIndexはbinding._usingContexts配列のソースオブジェクトのインデックス位置
+	//(2)特定のビュー -> ソース： viewUid経由でたどれる。viewToSrcMap[viewUid] がソースオブジェクト。
+	//ビュー -> ソースはbindingインスタンス単位ではなく、グローバルに管理（ビュー自体が実質シングルトンなので）。
+	//(3)loop-contextの各要素と対応する（要素ごとの）ビュー：
+	//binding._loopElementsMap[viewUid] = loopElementsArray;
+	//loopElementsArrayのi番目にはビューのノードの配列が入っていて、ソース配列のi番目と対応。
 
-
-	//var uiMap = {};
-
-	//var activeBindingMap = {};
-
-	var commentBindingTarget = {};
 
 	/**
-	 * データバインドのソースオブジェクトを入れる配列。同じインスタンスは1つしか入らない。 この配列のインデックスをキーにしてビューを探す。
+	 * ビュー（viewUid） -> ソースオブジェクト のマップ。many:1。キーはviewUid、値はソースオブジェクト。
 	 */
-	var bindingSrc = [];
-
-	/**
-	 * ソースオブジェクト -> ビュー のマップ。1:many。 キーはbindingSrcのインデックス。値はビューインスタンスへの配列。
-	 */
-	var srcToViewMap = {};
-
 	var viewToSrcMap = {};
-
-	/**
-	 * loop-contextが指定されたノード ⇒ その内部ノードリスト のマップ。キーはdyn-bindのid。値はノードリスト配列。
-	 */
-	var contextToOriginalNodesMap = {};
 
 	// =============================
 	// Functions
 	// =============================
 
-	/**
-	 * ソースオブジェクト -> ビュー のマップエントリを追加。すでにエントリが存在する場合は何もしない。
-	 */
-	function addBindingEntry(src, view, viewUid) {
-		var srcIndex = $.inArray(src, bindingSrc);
-		if (srcIndex === -1) {
-			//ソースエントリ追加
-			bindingSrc.push(src);
-			srcIndex = bindingSrc.length - 1;
+	function toArray(pseudoArray) {
+		var ret = [];
+		for ( var i = 0, len = pseudoArray.length; i < len; i++) {
+			ret.push(pseudoArray[i]);
 		}
-
-		var viewMap = srcToViewMap[srcIndex];
-		if (!viewMap) {
-			//配列作成。
-			srcToViewMap[srcIndex] = [view];
-			return;
-		}
-
-		if ($.inArray(view, viewMap) === -1) {
-			viewMap.push(view);
-		}
-
-		if (!viewToSrcMap[viewUid]) {
-			viewToSrcMap[viewUid] = src;
-		}
-	}
-
-	/**
-	 * ソースオブジェクト -> ビュー のマップエントリを削除（特定のビューへのマップのみを削除）
-	 */
-	function removeBindingEntry(src, view, viewUid) {
-		var srcIndex = $.inArray(src, bindingSrc);
-		if (srcIndex === -1) {
-			return;
-		}
-
-		var viewMap = srcToViewMap[srcIndex];
-		if (!viewMap) {
-			return;
-		}
-
-		var viewIndex = $.inArray(view, viewMap);
-		if (viewIndex !== -1) {
-			viewMap.splice(viewIndex, 1);
-		}
-
-		if (viewToSrcMap[viewUid]) {
-			delete viewToSrcMap[viewUid];
-		}
+		return ret;
 	}
 
 	function getSrcFromView(viewUid) {
 		return viewToSrcMap[viewUid];
 	}
 
-	function getViewsFromSrc(src) {
-		var srcIndex = $.inArray(src, bindingSrc);
-		if (srcIndex === -1) {
-			return null;
-		}
-		return srcToViewMap[srcIndex];
+	/**
+	 * viewUidを返す。返される値は、1回のFWの生存期間中一意。（リロードされるとリセット）
+	 */
+	function getViewUid() {
+		return viewUid++;
 	}
 
-
-
-	function addContextNodeEntry(dynContextId, nodeList) {
-		contextToOriginalNodesMap[dynContextId] = wrapInArray(nodeList);
-	}
-
-	function removeContextNodeEntry(dynContextId) {
-		if (dynContextId in contextToOriginalNodesMap) {
-			delete contextToOriginalNodesMap[dynContextId];
-		}
-	}
-
-	function getOriginalNodeFromContextId(dynContextId) {
-		return contextToOriginalNodesMap[dynContextId];
-	}
-
-
-	function getUid() {
-		return uid++;
-	}
-
-	function addBindDestination(node) {
-		//TODO idを取得して正しく計算
-		commentBindingTarget[getUid()] = node;
-	}
 
 	/**
-	 * コメントノードからテンプレートを取得する
+	 * インラインコメントテンプレートノードを探す
 	 *
+	 * @private
 	 * @param {Node} node 探索を開始するルートノード
+	 * @param {String} id テンプレートID
+	 * @retruns {Node} 発見したノード、見つからなかった場合はnull
 	 */
-	function findCommentBindingTarget(node) {
-		var childNodes = node.childNodes;
+	function findCommentBindingTarget(rootNode, id) {
+		var childNodes = rootNode.childNodes;
 		for ( var i = 0, len = childNodes.length; i < len; i++) {
 			var n = childNodes[i];
-			if (n.nodeType === Node.ELEMENT_NODE) {
-				findCommentBindingTarget(n);
-			} else if (n.nodeType === Node.COMMENT_NODE
-					&& n.nodeValue.indexOf(COMMENT_BINDING_TARGET_MARKER) === 0) {
-				addBindDestination(n);
+			if (n.nodeType === NODE_TYPE_ELEMENT) {
+				var ret = findCommentBindingTarget(n, id);
+				if (ret) {
+					//深さ優先で探索して見つかったらそこでリターン
+					return ret;
+				}
+			} else if (n.nodeType === NODE_TYPE_COMMENT) {
+				var nodeValue = n.nodeValue;
+				if (nodeValue.indexOf(COMMENT_BINDING_TARGET_MARKER) !== 0) {
+					//コメントが開始マーカーで始まっていないので探索継続
+					continue;
+				}
+
+				var beginTagCloseBracketIdx = nodeValue.indexOf('}');
+				if (beginTagCloseBracketIdx === -1) {
+					//マーカータグが正しく閉じられていない
+					continue;
+				}
+
+				var beginTag = nodeValue.slice(0, beginTagCloseBracketIdx);
+
+				var id = beginTag.match(/id="([A-Za-z][\w-:\.]*)"/);
+				if (!id) {
+					//idが正しく記述されていない
+					continue;
+				} else if (id[1] === id) {
+					//探しているidを持つインラインコメントテンプレートノードが見つかったのでリターン
+					return n;
+				}
 			}
 		}
+		return null;
 	}
 
 	/**
-	 * コンテキストに属しているバインド対象要素を返します。ネストしたコンテキストの中の対象要素は含まれません。
+	 * 別のコンテキストに属していない（＝現在のコンテキストに属している）バインド対象要素を返します。ネストしたコンテキストの中の対象要素は含まれません。
 	 *
-	 * @param {Element} rootElement ルート要素
-	 * @returns 要素
+	 * @param {Node|Node[]} rootNodes ルート要素、またはルート要素の配列
+	 * @returns {jQuery} 別のコンテキストに属していないバインド対象要素
 	 */
-	function $getBindElementInContext(rootElement) {
-		var $bindElements = $('[data-h5-bind]', rootElement).filter(
-				function() {
-					for ( var node = this; node != null; node = node.parentNode) {
-						if (node === rootElement) {
-							return true;
-						}
+	function $getBindElementInContext(rootNodes) {
+		rootNodes = wrapInArray(rootNodes);
 
-						if (node.getAttribute('data-h5-context') != null
-								|| node.getAttribute('data-h5-loop-context') != null) {
-							return false;
+		var $bindElements = $();
+
+		for ( var i = 0, len = rootNodes.length; i < len; i++) {
+			var rootNode = rootNodes[i];
+
+			//ルート要素がエレメントでない場合は何もしない
+			if (rootNode.nodeType !== NODE_TYPE_ELEMENT) {
+				continue;
+			}
+
+			//ルート要素で別のコンテキストが指定されている場合はそれ以下のノードは絶対に含まれない
+			if (rootNode.getAttribute(DATA_H5_CONTEXT) != null
+					|| rootNode.getAttribute(DATA_H5_LOOP_CONTEXT) != null) {
+				continue;
+			}
+
+			var $filtered = $('[data-h5-bind]', rootNode).filter(
+					function() {
+						for ( var node = this; node != null; node = node.parentNode) {
+							if (node === rootNode) {
+								return true;
+							}
+
+							if (node.getAttribute(DATA_H5_CONTEXT) != null
+									|| node.getAttribute(DATA_H5_LOOP_CONTEXT) != null) {
+								return false;
+							}
 						}
-					}
-				});
+						return true;
+					});
+			$bindElements = $bindElements.add($filtered);
+
+			if (rootNode.getAttribute(DATA_H5_BIND) != null) {
+				//ルートノード自体にdata-bindが書かれていれば、それも対象となる
+				$bindElements = $bindElements.add(rootNode);
+			}
+		}
+
 		return $bindElements;
 	}
 
 	/**
-	 * 自分のコンテキストに属するdata-context（またはdata-loop-context）を返します。
+	 * 自分のコンテキストの直接の子供であるdata-context（またはdata-loop-context）を返します。
 	 */
-	function $getChildContexts(rootElement, dataContextAttr) {
-		var $childContexts = $('[' + dataContextAttr + ']', rootElement).filter(function() {
-			var $this = $(this);
+	function $getChildContexts(rootNodes, dataContextAttr) {
+		var $childContexts = $();
 
-			var contextParent = $this.parent('[data-h5-context],[data-h5-loop-context]')[0];
+		for ( var i = 0, len = rootNodes.length; i < len; i++) {
+			var rootNode = rootNodes[i];
 
-			if (contextParent === undefined || contextParent === rootElement) {
-				return true;
+			//ルート要素がエレメントでない場合は別のコンテキストである可能性はない
+			if (rootNode.nodeType !== NODE_TYPE_ELEMENT) {
+				continue;
 			}
-			return false;
-		});
+
+			//ルート要素でコンテキストが指定されている場合それは必ず直接の子供
+			if (rootNode.getAttribute(dataContextAttr) != null) {
+				$childContexts = $childContexts.add(rootNode);
+				continue;
+			}
+
+			//各ルートノードの子孫ノードから、直接の子供であるコンテキストノードを探す
+			var $filtered = $('[' + dataContextAttr + ']', rootNode).filter(function() {
+				var $this = $(this);
+
+				var contextParent = $this.parent('[data-h5-context],[data-h5-loop-context]')[0];
+
+				if (contextParent === undefined) {
+					//undefinedということは、data-contextを持つ親ノードがなかったということ
+					//ルート要素がdata-contextを持っている場合は事前にチェック済みなので、
+					//ここではundefinedの場合だけ考えればよい
+					return true;
+				}
+				return false;
+			});
+
+			$childContexts = $childContexts.add($filtered);
+		}
+
 		return $childContexts;
 	}
 
 
-	function isDataItem(obj) {
+	function isObservableItem(obj) {
 		//TODO 厳密に判定
 		// 10/21 福田追記
 		// ObservableItemの場合もtrueを返す
@@ -302,15 +283,10 @@
 		//自分のコンテキストに属しているバインディング対象要素を探す。
 		var $bindElements = $getBindElementInContext(rootElement);
 
-		if ($(rootElement).attr('data-h5-bind') != null) {
-			//add()は元のjQueryオブジェクトを変更せず、新しいセットを返す
-			$bindElements = $bindElements.add(rootElement);
-		}
-
 		//自分のコンテキスト中のバインド値を更新
 		$bindElements.each(function() {
 			var $this = $(this);
-			var prop = $this.attr('data-h5-bind');
+			var prop = $this.attr(DATA_H5_BIND);
 
 			if (!(prop in values)) {
 				return;
@@ -323,85 +299,101 @@
 
 
 	/**
-	 * データバインドを行う。
+	 * データバインドを行う。context単位にsrc/viewの対応を保存。可能ならイベントハンドラを設定して、変更伝搬させる
 	 *
-	 * @param {Element} rootElement データコンテキストを持つルート要素。ただし、コメントターゲットのルートの場合はdocumentFragmentになっている
+	 * @param {Binding} binding バインディングインスタンス
+	 * @param {Node|Node[]} rootNodes
+	 *            データコンテキストを持つルートノード、またはルートノードの配列（テキストノードやコメントノードなどELEMENT以外が含まれる場合も有る）
 	 * @param {Object} context データコンテキスト
+	 * @param {Boolean} isLoopContext ループコンテキストかどうか
 	 */
-	function applyBinding(binding, rootElement, context, isLoopContext) {
-		if (!context) {
-			return;
-		}
+	function applyBinding(binding, rootNodes, context, isLoopContext) {
+		//配列化（要素が直接来た場合のため）
+		rootNodes = wrapInArray(rootNodes);
 
-		var isItem = isDataItem(context);
+		var viewUid = getViewUid();
 
-		//context単位にsrc/viewの対応を保存。
-		//可能ならイベントハンドラを設定して、変更伝搬させる
-		var uid = getUid();
-		$(rootElement).attr(DATA_H5_DYN_BIND, uid);
-		addBindingEntry(context, rootElement, uid);
-
-		//TODO 高速化
-		if (h5.u.obj.isObservableArray(context)) {
-			var observeListener = function(event) {
-				binding._observableArray_observeListener(event);
-			};
-			listeners[uid] = observeListener;
-
-			context.addEventListener('observe', observeListener);
-		} else if (isItem) {
-			var changeListener = function(event) {
-				binding._dataItem_changeListener(event);
-			};
-			listeners[uid] = changeListener;
-
-			context.addEventListener('change', changeListener);
+		//エレメントについては、ビュー->ソースをすぐにひけるようdata属性でviewUidを付加しておく
+		for ( var i = 0, len = rootNodes.length; i < len; i++) {
+			var rootElem = rootNodes[i];
+			if (rootElem.nodeType === NODE_TYPE_ELEMENT) {
+				$(rootElem).attr(DATA_H5_DYN_VID, viewUid);
+			}
 		}
 
 		//loop-contextの場合はループ処理して終わり
 		if (isLoopContext) {
+			//loop-contextの場合は、ループのルートノードは必ず単一のノード
+			var loopRootElement = rootNodes[0];
+
+			binding._addBindingEntry(context, loopRootElement, viewUid);
+
+			if (h5.u.obj.isObservableArray(context) && !binding._isWatching(context)) {
+				var observeListener = function(event) {
+					binding._observableArray_observeListener(event);
+				};
+				binding._listeners[binding._getContextIndex(context)] = observeListener;
+
+				context.addEventListener('observe', observeListener);
+			}
+
 			var fragment = document.createDocumentFragment();
 
-			var rootChildNodes = Array.prototype.slice.call(rootElement.childNodes, 0);
+			var rootChildNodes = toArray(loopRootElement.childNodes);
 
-			//ループ前に内部の要素はすべて外す
-			$(rootElement).empty();
+			//ループ前に一旦内部要素をすべて外す
+			$(loopRootElement).empty();
+
+			//このループコンテキストの各要素に対応するノード（配列）を格納する配列
+			var loopElementsArray = [];
+			binding._loopElementsMap[viewUid] = loopElementsArray;
 
 			for ( var i = 0, len = context.length; i < len; i++) {
-				//子要素がエレメントだけとは限らないので、先頭にマーカー用のコメントノードを付与。
-				//TODO コメントノードだとセレクタでクエリできないが、先頭からたどると遅いのでchildNodesを見て二分木で探すようにする
-				var idxMarker = document.createComment(createLoopIndexComment(i));
-				fragment.appendChild(idxMarker);
+				var loopNodes = [];
 
-				//TODO 高速化の余地がある（古いブラウザへの対応に気を付けなければいけないが）
+				//1要素分の内部ノードのクローンを作成
 				for ( var j = 0, childLen = rootChildNodes.length; j < childLen; j++) {
 					var clonedInnerNode = rootChildNodes[j].cloneNode(true); //deep copy
 
-					if (clonedInnerNode.nodeType === Node.ELEMENT_NODE) {
-						applyBinding(binding, clonedInnerNode, context[i]);
-					}
+					loopNodes.push(clonedInnerNode);
+
 					fragment.appendChild(clonedInnerNode);
 				}
 
+				//配列1要素分のノードリストを保存
+				loopElementsArray[i] = loopNodes;
+
+				//配列1要素分のバインディングを実行
+				applyBinding(binding, loopNodes, context[i]);
 			}
 
-			rootElement.appendChild(fragment);
+			//最後に、全ループ分のノードをルートに追加
+			loopRootElement.appendChild(fragment);
 
 			return;
 		}
 
 		//以下はloop-contextでない場合
 
-		//TODO 一番最初に来たとき、rootElementにdata-contextが書いてあると正しく動作しない。
+		binding._addBindingEntry(context, rootNodes, viewUid);
 
-		//自分のコンテキストに属しているバインディング対象要素を探す。
-		var $bindElements = $getBindElementInContext(rootElement);
+		var isItem = isObservableItem(context);
 
-		//rootElement自体もバインド対象になり得る
-		if ($(rootElement).attr('data-h5-bind') != null) {
-			//add()は元のjQueryオブジェクトを変更せず、新しいセットを返す
-			$bindElements = $bindElements.add(rootElement);
+		if (isItem && !binding._isWatching(context)) {
+			//まだこのバインディングが監視していないオブジェクトの場合は監視を始める。
+			//ソースデータコンテキストから対応するすべてのビューを知ることができるので、
+			//ハンドラは1アイテムにつき1つバインドすれば十分。
+			var changeListener = function(event) {
+				binding._observableItem_changeListener(event);
+			};
+			binding._listeners[binding._getContextIndex(context)] = changeListener;
+
+			context.addEventListener('change', changeListener);
 		}
+
+		//自分のコンテキストに属しているバインディング対象要素を探す
+		//（rootElement自体がバインド対象になっている場合もある）
+		var $bindElements = $getBindElementInContext(rootNodes);
 
 		//各要素についてバインドする
 		$bindElements.each(function() {
@@ -409,123 +401,35 @@
 		});
 
 		//data-context, data-loop-contextそれぞれについて、バインディングを実行
-		applyChildBinding(binding, rootElement, context, false);
-		applyChildBinding(binding, rootElement, context, true);
+		applyChildBinding(binding, rootNodes, context, false);
+		applyChildBinding(binding, rootNodes, context, true);
 	}
 
-	function applyChildBinding(binding, rootElement, context, isLoopContext) {
+	function applyChildBinding(binding, rootNodes, context, isLoopContext) {
 		var dataContextAttr = isLoopContext ? 'data-h5-loop-context' : 'data-h5-context';
 
 		//自分のコンテキストに属するdata-contextを探す
-		var $childContexts = $getChildContexts(rootElement, dataContextAttr);
+		var $childContexts = $getChildContexts(rootNodes, dataContextAttr);
 
 		//内部コンテキストについてapplyBindingを再帰的に行う
 		$childContexts.each(function() {
 			var $this = $(this);
 			var childContextProp = $this.attr(dataContextAttr);
-			//contextがisDataItemならgetでchildContextを取得する
-			var childContext = isDataItem(context) ? context.get(childContextProp)
+			//contextがisObservableItemならgetでchildContextを取得する
+			//TODO getContextValue()などで統一するか
+			var childContext = isObservableItem(context) ? context.get(childContextProp)
 					: context[childContextProp];
 
-			applyBinding(binding, $this[0], childContext, isLoopContext);
+			applyBinding(binding, this, childContext, isLoopContext);
 		});
 	}
 
-
-	function clearContents(markerBegin, markerEnd) {
-		for ( var node = markerBegin.nextSibling; node; node = node.nextSibling) {
-			if (node.nodeType !== Node.COMMENT_NODE || node !== markerEnd) {
-				node.parentNode.removeChild(node);
-			}
-
-			if (node === markerEnd) {
-				break;
-			}
-		}
-	}
-
-	// =========================================================================
-	//
-	// Body
-	//
-	// =========================================================================
-
-	function createLoopIndexComment(index) {
-		return '{h5loopidx value="' + index + '"/}';
-	}
-
 	/**
-	 * 指定されたインデックスを持つ、data-loop-contextで動的生成された子要素のインデックスマーカー（コメントノード）を返します。
+	 * データバインドの指定（data-bind属性の値）をパースします。
 	 *
-	 * @params {Element} endElement 探索終了エレメント
-	 * @returns {Element} インデックスマーカー、見つからない場合はnull
+	 * @param {String} bindDesc バインド指定（data-bind属性の値）
+	 * @returns {Object} パース済みのバインド指定
 	 */
-	function findLoopMarker(idx, parentElement, endElement) {
-		var marker = createLoopIndexComment(idx);
-
-		if (!endElement) {
-			endElement = null;
-		}
-
-		//TODO 高速化。エレメントにはidxをdata属性で入れておき、現在位置を検出するのを高速化、その後二分木などで探索する、など
-		for ( var elem = parentElement.firstChild; elem; elem = elem.nextSibling) {
-			if (elem.nodeType === Node.COMMENT_NODE && elem.nodeValue === marker) {
-				return elem;
-			}
-
-			if (elem === endElement) {
-				return null;
-			}
-		}
-		return null;
-	}
-
-	function isLoopMarker(node) {
-		if (node.nodeType !== Node.COMMENT_NODE) {
-			return false;
-		}
-		return node.nodeValue.indexOf('{h5loopidx ') === 0;
-	}
-
-	function getLoopMarkerIndex(node) {
-		if (node.nodeType !== Node.COMMENT_NODE) {
-			return -1;
-		}
-
-		var index = /{h5loopidx value="(\d+)"\/}/.exec(node.nodeValue);
-		if (index == null) {
-			return -1;
-		}
-		return index[1];
-	}
-
-	function removeLoopElements(parentElement, start, count) {
-		var startMarker = findLoopMarker(start, parentElement);
-		var stopMarker = findLoopMarker(start + count, parentElement); //nullなら最後まで削除する
-
-		//TODO 高速化を考える
-		var nodeToRemove = startMarker;
-		while (nodeToRemove !== stopMarker) {
-			var nextNode = nodeToRemove.nextSibling;
-			parentElement.removeChild(nextNode);
-			nodeToRemove = nextNode;
-		}
-	}
-
-	function updateLoopIndex(parentElement) {
-		var index = 0;
-
-		for ( var elem = parentElement.firstChild; elem; elem = elem.nextSibling) {
-			if (elem.nodeType === Node.COMMENT_NODE && elem.nodeValue === marker) {
-				return elem;
-			}
-
-			if (elem === endElement) {
-				return null;
-			}
-		}
-	}
-
 	function parseBindDesc(bindDesc) {
 		var splitDescs = bindDesc.split(BIND_DESC_SEPARATOR);
 		var target = [];
@@ -572,6 +476,7 @@
 		return ret;
 	}
 
+
 	/**
 	 * 指定されたエレメントに対して、data-bindで指示された方法で値をセットします。
 	 */
@@ -597,7 +502,7 @@
 			}
 
 			if (target == null) {
-				//自動ターゲット
+				//自動指定は、inputタグならvalue属性、それ以外ならテキストノードをターゲットとする
 				if (element.tagName === 'input') {
 					target = 'attr';
 					detail = 'value';
@@ -634,52 +539,59 @@
 		}
 	}
 
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+
+	/**
+	 * バインディングを管理します。
+	 *
+	 * @private
+	 * @name Binding
+	 * @class
+	 */
 	function Binding(target, dataContext) {
-
-		this._parent = target.parentNode;
-
-		this._marker = document.createComment(h5.u.str.format(BIND_BEGIN_MARKER, markerUid++));
-
-		//Endマーカーをターゲットの後ろに入れる
-		this._markerEnd = document.createComment(BIND_END_MARKER);
-		this._parent.insertBefore(this._markerEnd, target.nextSibling);
-
 		if (target.nodeType !== undefined) {
-			if (target.nodeType === Node.ELEMENT_NODE) {
+			if (target.nodeType === NODE_TYPE_ELEMENT) {
 				//エレメントノード
 
-				//ターゲットの前にマーカーコメントノードを追加する。
-				//これにより、バインディングの結果ターゲットノード自体がなくなってしまうような場合でも
-				//どこにノードを追加すればよいか追跡し続けることができる
-				this._parent.insertBefore(this._marker, target);
-				this._src = [target.cloneNode(true)];
-				$(target).remove();
+				this._srces = [target.cloneNode(true)];
+				this._targets = [target];
+
+				//バインドターゲットの親要素
+				this._parent = target.parentNode;
 			} else {
-				//コメントノード
+				//インラインコメントテンプレート（前段でクローンしてしまう？）
 				var tempParent = document.createElement('div');
 				tempParent.innerHTML = target;
 
 				//TODO
 
-				this._marker = target;
-				this._src = target;
+				//this._parent = parentNode;
+				//				this._marker = target;
+				//				this._srces = target;
+				//				this._targets = [target];
 			}
 		} else {
 			//複数のノード
+
+			//バインドターゲットの親要素
+			this._parent = target[0].parentNode;
+
 			var srcList = [];
 			for ( var i = 0, len = target.length; i < len; i++) {
 				srcList.push(target[i].cloneNode(true));
 			}
-			this._parent.insertBefore(this._marker, target[0]);
-			this._src = srcList;
+			this._srces = srcList;
+			this._targets = toArray(target);
 		}
 
-		this._bindingId = contextUid++;
-
-		//this._srcは常に配列
-		//初期状態のノードに、コンテキストごとに固有のIDを振っておく
-		for ( var i = 0, len = this._src.length; i < len; i++) {
-			var $src = $(this._src[i]);
+		//this._srcesは常に配列
+		//クローンした初期状態のビューに、コンテキストごとに固有のIDを振っておく
+		for ( var i = 0, len = this._srces.length; i < len; i++) {
+			var $src = $(this._srces[i]);
 
 			if ($src.attr('data-h5-context') || $src.attr('data-h5-loop-context')) {
 				$src.attr(DATA_H5_DYN_CTX, contextUid++);
@@ -690,38 +602,91 @@
 			});
 		}
 
-		this._context = dataContext;
+		/**
+		 * loop-contextの各インデックスがもつ要素（配列）を保持。 キー：viewUid、値：配列の配列。
+		 * 値は、「あるviewUidのloop-contextのi番目（＝ここが1段目）の要素の配列（＝2段目）」になっている。
+		 */
+		this._loopElementsMap = {};
+
+		/**
+		 * このバインディングのルートデータコンテキスト
+		 */
+		this._rootContext = dataContext;
+
+		/**
+		 * 現在適用中のデータコンテキストを入れる配列。同じインスタンスは1つしか入らない。 この配列のインデックスをキーにしてビューを探す<br>
+		 * TODO インデックスをキーとして使うため、使用しなくなったオブジェクトの場所にはnullが入り、次第にスパースな配列になってしまう。<br>
+		 * 二重ポインタのようにして管理すればよいが、パフォーマンスに重大な影響が出るほどスパースになることはまれと考え、Deferredする。
+		 */
+		this._usingContexts = [];
+
+		/**
+		 * ソースオブジェクト -> ビュー のマップ。1:many。 キーは_usingContextsのインデックス。 値はさらにマップで、キー：viewUid,
+		 * 値：ビューインスタンス（配列）。
+		 */
+		this._srcToViewMap = {};
+
+		/**
+		 * バインドUID（現在表示されているDOM）にひもづけているリスナー。キー：uid, 値：リスナー関数
+		 */
+		this._listeners = {};
+
+		//TODO ルートが配列（LoopContext）の場合を考える
+		//バインディングの初期実行
+		applyBinding(this, this._targets, this._rootContext);
 	}
 	$.extend(Binding.prototype, {
+		/**
+		 * バインディングを再実行します。既存のビューは一度すべて削除されます。
+		 *
+		 * @memberOf Binding
+		 * @private
+		 */
 		refresh: function() {
-			clearContents(this._marker, this._markerEnd);
-
+			//保存しておいたビューをクローン
 			var fragment = document.createDocumentFragment();
-
-			for ( var i = 0, len = this._src.length; i < len; i++) {
-				var src = this._src[i].cloneNode(true);
-				fragment.appendChild(src);
-				if (src.nodeType === Node.ELEMENT_NODE) {
-					applyBinding(this, src, this._context);
-				}
+			for ( var i = 0, len = this._srces.length; i < len; i++) {
+				fragment.appendChild(this._srces[i].cloneNode(true));
 			}
-			this._parent.insertBefore(fragment, this._markerEnd);
+
+			//fragmentをappendする前にノードリストをコピーしておく
+			var newTargets = toArray(fragment.childNodes);
+
+			//新しいターゲットに対してバインディングを実行
+			//TODO ルートが配列（LoopContext）の場合を考える
+			applyBinding(this, newTargets, this._rootContext);
+
+			//生成したノードを今のターゲット（の最初のノード）の直前に追加して
+			this._parent.insertBefore(fragment, this._targets[0]);
+
+			//既存のターゲットを削除
+			for ( var i = 0, len = this._targets.length; i < len; i++) {
+				this._parent.removeChild(this._targets[i]);
+			}
+
+			//ターゲットのポインタを更新
+			this._targets = newTargets;
 		},
 
+		/**
+		 * ObservableArrayの変更に基づいて、自分が管理するビューを更新します。
+		 *
+		 * @memberOf Binding
+		 * @private
+		 * @param event
+		 */
 		_observableArray_observeListener: function(event) {
 			if (!event.isDestructive) {
 				return;
 			}
 
-			var orgViews = getViewsFromSrc(event.target);
+			var orgViews = this._getViewsFromSrc(event.target);
 			if (!orgViews) {
 				return;
 			}
 
-			var views = orgViews.slice(0);
-
-			for ( var i = 0, len = views.length; i < len; i++) {
-				$view = $(views[i]);
+			for ( var vid in orgViews) {
+				var $view = $(orgViews[vid]);
 
 				switch (event.method) {
 				case 'shift':
@@ -733,12 +698,13 @@
 				var contextId = $view.attr(DATA_H5_DYN_CTX);
 				var contextSrc;
 
+				//contextIdがない＝特定の要素によるループではない＝ルート全体以外の場合はあり得ない
 				if (contextId == null) {
-					contextSrc = this._src;
+					contextSrc = this._srces;
 				} else {
-					for ( var j = 0, srcLen = this._src.length; j < srcLen; j++) {
+					for ( var j = 0, srcLen = this._srces.length; j < srcLen; j++) {
 						contextSrc = $('[' + DATA_H5_DYN_CTX + '="' + contextId + '"]',
-								this._src[i])[0];
+								this._srces[i])[0];
 						if (contextSrc) {
 							break;
 						}
@@ -751,7 +717,7 @@
 					$view[0].parentNode.insertBefore(newView, $view[0]);
 
 					var oldUid = $view.attr('data-h5-dyn-bind');
-					event.target.removeEventListener('change', listeners[oldUid]);
+					event.target.removeEventListener('change', this._listeners[oldUid]);
 					removeBindingEntry(event.target, $view[0], oldUid);
 
 					$view.remove();
@@ -761,32 +727,107 @@
 			}
 		},
 
-		_dataItem_changeListener: function(event) {
-			var views = getViewsFromSrc(event.target);
+		/**
+		 * データアイテムまたはObservableItemのchangeイベントハンドラ
+		 */
+		_observableItem_changeListener: function(event) {
+			var views = this._getViewsFromSrc(event.target);
 			if (!views) {
 				return;
 			}
 
-			for ( var i = 0, len = views.length; i < len; i++) {
-				var rootElement = views[i];
-
-				//自分のコンテキストに属しているバインディング対象要素を探す。
-				var $bindElements = $getBindElementInContext(rootElement);
-
-				//rootElement自体もバインド対象になり得る
-				if ($(rootElement).attr('data-h5-bind') != null) {
-					//add()は元のjQueryオブジェクトを変更せず、新しいセットを返す
-					$bindElements = $bindElements.add(rootElement);
+			for ( var vuid in views) {
+				if (!views.hasOwnProperty(vuid)) {
+					continue;
 				}
+
+				var view = views[vuid];
+
+				//自分のコンテキストに属しているバインディング対象要素を探す
+				var $bindElements = $getBindElementInContext(view);
 
 				//各要素についてバインドする
 				$bindElements.each(function() {
 					doBind(this, event.target, true);
 
+					//TODO oldValueがObsArray/ObsItemでnewValueが別インスタンスの場合はremoveListenerが必要
+
 					//TODO newValueがobj/arrayでnot observableの場合はつぶしてapply
 				});
 			}
+		},
+
+		_isWatching: function(ctx) {
+			var idx = this._getContextIndex(ctx);
+			if (idx === -1) {
+				return false;
+			}
+			return this._listeners[idx] != null;
+		},
+
+		_getContextIndex: function(ctx) {
+			return $.inArray(ctx, this._usingContexts);
+		},
+
+		/**
+		 * ソースオブジェクト -> ビュー(配列) のマップエントリ、ビューUID -> ソースオブジェクト のマップエントリを追加。
+		 * エントリが存在する場合は上書き（ただし、そもそも二重登録は想定外）。
+		 */
+		_addBindingEntry: function(src, view, viewUid) {
+			var srcIndex = this._getContextIndex(src);
+			if (srcIndex === -1) {
+				//ソースエントリ追加
+				this._usingContexts.push(src);
+				srcIndex = this._usingContexts.length - 1;
+			}
+
+			viewToSrcMap[viewUid] = src;
+
+			var srcViewMap = this._srcToViewMap[srcIndex];
+			if (!srcViewMap) {
+				//マップオブジェクトを新規作成し、エントリ追加
+				var mapObj = {};
+				mapObj[viewUid] = view;
+				this._srcToViewMap[srcIndex] = mapObj;
+				return;
+			}
+			//マップエントリ追加
+			srcViewMap[viewUid] = view;
+		},
+
+		/**
+		 * ソースオブジェクト -> ビュー のマップエントリを削除（特定のビューへのマップのみを削除）
+		 */
+		_removeBindingEntry: function(src, viewUid) {
+			var srcIndex = this._getContextIndex(src);
+			if (srcIndex === -1) {
+				return;
+			}
+
+			if (viewToSrcMap[viewUid]) {
+				//viewUid -> ソースオブジェクト のマップエントリを削除
+				delete viewToSrcMap[viewUid];
+			}
+
+			var viewMap = this._srcToViewMap[srcIndex];
+			//			if (!viewMap) {
+			//				return;
+			//			}
+
+			if (viewMap[viewUid]) {
+				//ソースオブジェクト -> ビュー（viewUid経由） のマップエントリを削除
+				delete viewMap[viewUid];
+			}
+		},
+
+		_getViewsFromSrc: function(src) {
+			var srcIndex = this._getContextIndex(src);
+			if (srcIndex === -1) {
+				return null;
+			}
+			return this._srcToViewMap[srcIndex];
 		}
+
 	});
 
 	function createBinding(elements, context) {

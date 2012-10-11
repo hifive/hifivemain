@@ -832,7 +832,6 @@
 				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
 			}
 			var binding = h5internal.view.createBinding(targetDOM, context);
-			binding.refresh();
 		}
 	});
 
