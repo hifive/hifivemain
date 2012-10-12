@@ -383,9 +383,7 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		$('#dataBindTest li').each(function(i) {
-			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
-		});
+		checkLiTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
 	});
 
 	test('空配列をバインドできること', 1, function() {
@@ -436,9 +434,7 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		$('#dataBindTest li').each(function(i) {
-			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
-		});
+		checkLiTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
 	});
 
 	test('空のObservableArrayをバインドできること', function() {
@@ -471,10 +467,7 @@ $(function() {
 				}]
 			});
 
-			var $lis = $('#dataBindTest li');
-			strictEqual($lis.length, 2, 'オブジェクトでない要素は無視されていること');
-			strictEqual($lis[0].innerText, 'a', 'オブジェクトである要素はバインドされていること');
-			strictEqual($lis[1].innerText, 'b', 'オブジェクトである要素はバインドされていること');
+			checkLiTexts(['a', 'b'], 'オブジェクトでない要素は無視され、オブジェクトである要素だけがバインドされていること');
 
 			$fixture.children().remove();
 		}
@@ -499,9 +492,7 @@ $(function() {
 		});
 
 		var result = ['aa', 'bb'];
-		$('#dataBindTest li').each(function(i) {
-			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
-		});
+		checkLiTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
 	});
 
 	//=============================
@@ -661,35 +652,29 @@ $(function() {
 	});
 
 
-	test(
-			'バインドされているObservableArrayの中のObservableItemを変更すると、表示も書き変わること',
-			function() {
-				var schema = {
-					test: null
-				};
-				var item1 = h5.u.obj.createObservableItem(schema);
-				var item2 = h5.u.obj.createObservableItem(schema);
-				item1.set('test', 'a');
-				item2.set('test', 'b');
+	test('バインドされているObservableArrayの中のObservableItemを変更すると、表示も書き変わること', function() {
+		var schema = {
+			test: null
+		};
+		var item1 = h5.u.obj.createObservableItem(schema);
+		var item2 = h5.u.obj.createObservableItem(schema);
+		item1.set('test', 'a');
+		item2.set('test', 'b');
 
-				oAry.push(item1);
-				strictEqual($('#dataBindTest li').length, 1,
-						'ObservableArrayにObservableItemをpushすると、ビューへ反映されること');
-				strictEqual($('#dataBindTest li').text(), 'a', 'ObservableItemの中身がビューへ反映されていること');
+		oAry.push(item1);
+		checkLiTexts(['a'], 'ObservableArrayにObservableItemをpushすると、ビューへ反映されること');
 
-				oAry.push(item2);
-				strictEqual($('#dataBindTest li')[1].innerText(), 'b',
-						'ObservableItemの中身がビューへ反映されていること');
+		oAry.push(item2);
+		checkLiTexts(['a', 'b'], 'ObservableItemの中身がビューへ反映されていること');
 
-				oAry.push({
-					test: 'c'
-				});
-				strictEqual($('#dataBindTest li')[2].innerText(), 'c', '通常のオブジェクトの中身もビューへ反映されていること');
+		oAry.push({
+			test: 'c'
+		});
+		checkLiTexts(['a', 'b', 'c'], '通常のオブジェクトの中身もビューへ反映されていること');
 
-				item1.set('test', 'A');
-				strictEqual($('#dataBindTest li')[0].innerText(), 'A',
-						'ObservableItemの中身の変更がビューへ反映されていること');
-			});
+		item1.set('test', 'A');
+		checkLiTexts(['A', 'b', 'c'], 'ObservableItemの中身の変更がビューへ反映されていること');
+	});
 
 	//=============================
 	// Definition
