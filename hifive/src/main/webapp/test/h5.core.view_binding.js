@@ -111,6 +111,17 @@ $(function() {
 		func(dataItem);
 	}
 
+	/**
+	 * #dataBindTest li の中のテキストを配列化したものと、引数に渡されたexpectAryが正しいかどうかテストする関数。 配列のバインドのテストで使用する
+	 */
+	function checkLiTexts(expectAry, message) {
+		var liTexts = [];
+		$('#dataBindTest li').each(function(i) {
+			liTexts.push(this.innerText);
+		});
+		deepEqual(liTexts, expectAry, message);
+	}
+
 	// =========================================================================
 	//
 	// Test Module
@@ -500,7 +511,9 @@ $(function() {
 	module('ObservableArrayの変更検知', {
 		setup: function() {
 			oAry = h5.u.obj.createObservableArray();
-
+			oAry.copyFrom([{
+				test: '初期値'
+			}]);
 			$fixture.append(simpleLoopElm);
 			view.bind($('#dataBindTest'), {
 				items: oAry
@@ -511,50 +524,142 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
-	test('バインドされているObservableArrayの中身を変更すると、表示も書き変わること', function() {
+	test('copyFrom', function() {
 		oAry.copyFrom([{
 			test: 'a'
 		}, {
 			test: 'b'
 		}]);
 		var result = ['a', 'b'];
-		$('#dataBindTest li').each(function(i) {
-			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
-		});
+		checkLiTexts(result, '変更が反映されること');
 
 		oAry.copyFrom([]);
-		strictEqual($('#dataBindTest li').length, 0, '中身を空にすると、繰り返し要素がなくなること');
+		checkLiTexts([], '中身を空にすると繰り返し要素がなくなること');
 
 		oAry.copyFrom([{
 			test: 'AA'
-		}, {
-			test: 'BB'
-		}, {
-			test: 'CC'
 		}]);
-		result = ['AA', 'BB', 'CC'];
-		$('#dataBindTest li').each(function(i) {
-			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
+		checkLiTexts(['AA'], '空の状態から、空でない状態に変更した時、ビューに変更が反映されること');
+	});
+
+	test('push', function() {
+		oAry.push({
+			test: 'a'
 		});
+		var result = ['初期値', 'a'];
+		checkLiTexts(result, '変更が反映されること');
 
 		oAry.push({
-			test: 'DD'
+			test: 'b'
+		}, {
+			test: 'c'
 		});
-		oAry.splice(1, 2, {
-			test: 'BBB'
-		});
-		oAry.unshift({
-			test: 'aa'
-		});
-		oAry.reverse();
-		result = ['DD', 'BBB', 'AA', 'aa'];
-		$('#dataBindTest li').each(
-				function(i) {
-					strictEqual(this.innerText, result[i], 'ObservableArrayの中身通りの順番で値がバインドされていること'
-							+ result[i]);
-				});
+		result.push('b', 'c');
+		checkLiTexts(result, '複数要素を引数に渡した場合も、変更が反映されること');
 	});
+
+	test('pop', function() {
+		oAry.pop();
+		checkLiTexts([], '変更が反映されること');
+
+		oAry.copyFrom([{
+			test: 'a'
+		}, {
+			test: 'b'
+		}, {
+			test: 'c'
+		}]);
+		oAry.pop();
+		checkLiTexts(['a', 'b'], '変更が反映されること');
+	});
+
+	test('shift', function() {
+		oAry.shift();
+		checkLiTexts([], '変更が反映されること');
+
+		oAry.copyFrom([{
+			test: 'a'
+		}, {
+			test: 'b'
+		}, {
+			test: 'c'
+		}]);
+		oAry.shift();
+		checkLiTexts(['b', 'c'], '変更が反映されること');
+	});
+
+	test('unshift', function() {
+		oAry.unshift({
+			test: 'a'
+		});
+		var result = ['a'];
+		checkLiTexts(result, '変更が反映されること');
+
+		oAry.unshift({
+			test: 'c'
+		}, {
+			test: 'b'
+		});
+		result.unshift('c', 'b');
+		checkLiTexts(result, '複数要素を引数に渡した場合も、変更が反映されること');
+	});
+
+	test('splice', function() {
+		oAry.splice(0, 0, {
+			test: 'a'
+		});
+		var result = ['a'];
+		checkLiTexts(result, '変更が反映されること');
+
+		oAry.splice(0, 1, {
+			test: 'a'
+		}, {
+			test: 'b'
+		}, {
+			test: 'c'
+		});
+		result.splice(0, 1, 'a', 'b', 'c');
+		checkLiTexts(result, '変更が反映されること');
+
+		oAry.splice(1, 2, {
+			test: 'B'
+		}, {
+			test: 'C'
+		});
+		result.splice(1, 2, 'B', 'C');
+		checkLiTexts(result, '変更が反映されること');
+
+		oAry.splice(0, 1);
+		result.splice(0, 1);
+		checkLiTexts(result, '変更が反映されること');
+	});
+
+	test('sort', function() {
+		oAry.copyFrom([{
+			test: 'b'
+		}, {
+			test: 'a'
+		}, {
+			test: 'c'
+		}]);
+		oAry.sort(function(a, b) {
+			return a.test > b.test ? 1 : -1;
+		});
+		checkLiTexts(result, '変更が反映されること');
+	});
+
+	test('reverce', function() {
+		oAry.copyFrom([{
+			test: 'a'
+		}, {
+			test: 'b'
+		}, {
+			test: 'c'
+		}]);
+		oAry.reverce();
+		checkLiTexts(['c', 'b', 'a'], '変更が反映されること');
+	});
+
 
 	test(
 			'バインドされているObservableArrayの中のObservableItemを変更すると、表示も書き変わること',
