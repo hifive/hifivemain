@@ -539,11 +539,107 @@
 		}
 	}
 
+	function removeNodes(parent, nodesToRemove) {
+		for ( var i = 0, len = nodesToRemove.length; i < len; i++) {
+			parent.removeChild(nodesToRemove[i]);
+		}
+	}
+
+	function cloneChildNodes(parentNode) {
+		var childNodes = parentNode.childNodes;
+		var ret = [];
+
+		for ( var i = 0, len = childNodes.length; i < len; i++) {
+			ret.push(childNodes[i].cloneNode(true));
+		}
+
+		return ret;
+	}
+
+	function addLoopChildren(binding, loopElements, srcCtxRootNode, method, methodArgs) {
+		var newLoopNodes = [];
+		for ( var i = 0, argsLen = methodArgs.length; i < argsLen; i++) {
+			var newChildrenNodes = cloneChildNodes(srcCtxRootNode);
+			newLoopNodes[i] = newChildrenNodes;
+			applyBinding(binding, newChildrenNodes, methodArgs[i]);
+		}
+		Array.prototype[method].apply(loopElements, newLoopNodes);
+		return newLoopNodes;
+	}
+
+
 	// =========================================================================
 	//
 	// Body
 	//
 	// =========================================================================
+
+	function Binding__observableArray_observeListener(event) {
+		if (!event.isDestructive) {
+			return;
+		}
+
+		var orgViews = this._getViewsFromSrc(event.target);
+		if (!orgViews) {
+			return;
+		}
+
+		//(3)loop-contextの各要素と対応する（要素ごとの）ビュー：
+		//binding._loopElementsMap[viewUid] = loopElementsArray;
+		//loopElementsArrayのi番目にはビューのノードの配列が入っていて、ソース配列のi番目と対応。
+
+
+		for ( var viewUid in orgViews) {
+			var loopRootNode = orgViews[viewUid];
+			var $view = $(loopRootNode);
+			var $loopRootNode = $view; //TODO 統一
+
+			var dynCtxId = $loopRootNode.attr(DATA_H5_DYN_CTX);
+
+			var loopElements = this._loopElementsMap[viewUid];
+
+			switch (event.method) {
+			case 'shift':
+			case 'pop':
+				var nodesToRemove = loopElements[event.method]();
+				if (nodesToRemove) {
+					//要素数0の配列に対してshift,popすると戻り値はundefined
+					removeNodes(loopRootNode, nodesToRemove);
+				}
+				break;
+			case 'unshift':
+				var nodesToAdd = addLoopChildren(this, loopElements, this._getSrcCtxNode(dynCtxId),
+						event.method, event.args);
+				//新規追加ノードを、後ろから順に、parentの先頭に追加
+				for ( var i = nodesToAdd.length; i >= 0; i--) {
+					var nodesPerElem = nodesToAdd[i];
+					for ( var j = nodesPerElem.length; j >= 0; j--) {
+						loopRootNode.insertBefore(nodesPerElem[j], loopRootNode.firstChild);
+					}
+				}
+				break;
+			case 'push':
+				var nodesToAdd = addLoopChildren(this, loopElements, this._getSrcCtxNode(dynCtxId),
+						event.method, event.args);
+				//新規追加ノードを、先頭から順に、parentの末尾に追加
+				for ( var i = 0, nodesToAddLen = nodesToAdd.length; i < nodesToAddLen; i++) {
+					var nodesPerElem = nodesToAdd[i];
+					for ( var j = 0, nodesPerElemLen = nodesPerElem.length; j < nodesPerElemLen; j++) {
+						loopRootNode.insertBefore(nodesPerElem[j], null);
+					}
+				}
+				break;
+			case 'splice':
+				break;
+			case 'reverse':
+				//TODO DOM的にリバースする
+				break;
+			case 'sort':
+				//TODO sortは全部作り直すしかない・・・
+				break;
+			}
+		}
+	}
 
 	/**
 	 * バインディングを管理します。
@@ -557,7 +653,6 @@
 			if (target.nodeType === NODE_TYPE_ELEMENT) {
 				//エレメントノード
 
-				this._srces = [target.cloneNode(true)];
 				this._targets = [target];
 
 				//バインドターゲットの親要素
@@ -580,27 +675,33 @@
 			//バインドターゲットの親要素
 			this._parent = target[0].parentNode;
 
-			var srcList = [];
-			for ( var i = 0, len = target.length; i < len; i++) {
-				srcList.push(target[i].cloneNode(true));
-			}
-			this._srces = srcList;
 			this._targets = toArray(target);
 		}
 
-		//this._srcesは常に配列
-		//クローンした初期状態のビューに、コンテキストごとに固有のIDを振っておく
-		for ( var i = 0, len = this._srces.length; i < len; i++) {
-			var $src = $(this._srces[i]);
+		var clonedSrc = [];
 
-			if ($src.attr('data-h5-context') || $src.attr('data-h5-loop-context')) {
-				$src.attr(DATA_H5_DYN_CTX, contextUid++);
+		//this._targetsは常に配列
+		//初期状態のビューに、コンテキストごとに固有のIDを振っておく
+		for ( var i = 0, len = this._targets.length; i < len; i++) {
+			var targetNode = this._targets[i];
+			var $original = $(targetNode);
+
+			if ($original.attr('data-h5-context') || $original.attr('data-h5-loop-context')) {
+				$original.attr(DATA_H5_DYN_CTX, contextUid++);
 			}
 
-			$src.find('[data-h5-context],[data-h5-loop-context]').each(function() {
+			$original.find('[data-h5-context],[data-h5-loop-context]').each(function() {
 				$(this).attr(DATA_H5_DYN_CTX, contextUid++);
 			});
+
+			//保存用にクローン
+			clonedSrc.push(targetNode.cloneNode(true));
 		}
+
+		/**
+		 * クローンした初期状態のテンプレート
+		 */
+		this._srces = clonedSrc;
 
 		/**
 		 * loop-contextの各インデックスがもつ要素（配列）を保持。 キー：viewUid、値：配列の配列。
@@ -669,63 +770,14 @@
 		},
 
 		/**
-		 * ObservableArrayの変更に基づいて、自分が管理するビューを更新します。
+		 * ObservableArrayの変更に基づいて、自分が管理するビューを更新します。<br>
+		 * MEMO フォーマッタが過剰にインデントしてしまうので分離している
 		 *
 		 * @memberOf Binding
 		 * @private
 		 * @param event
 		 */
-		_observableArray_observeListener: function(event) {
-			if (!event.isDestructive) {
-				return;
-			}
-
-			var orgViews = this._getViewsFromSrc(event.target);
-			if (!orgViews) {
-				return;
-			}
-
-			for ( var vid in orgViews) {
-				var $view = $(orgViews[vid]);
-
-				switch (event.method) {
-				case 'shift':
-					break;
-				case 'pop':
-					break;
-				}
-
-				var contextId = $view.attr(DATA_H5_DYN_CTX);
-				var contextSrc;
-
-				//contextIdがない＝特定の要素によるループではない＝ルート全体以外の場合はあり得ない
-				if (contextId == null) {
-					contextSrc = this._srces;
-				} else {
-					for ( var j = 0, srcLen = this._srces.length; j < srcLen; j++) {
-						contextSrc = $('[' + DATA_H5_DYN_CTX + '="' + contextId + '"]',
-								this._srces[i])[0];
-						if (contextSrc) {
-							break;
-						}
-					}
-				}
-
-				contextSrc = wrapInArray(contextSrc);
-				for ( var j = 0, ctxSrcLen = contextSrc.length; j < ctxSrcLen; j++) {
-					var newView = contextSrc[j].cloneNode(true);
-					$view[0].parentNode.insertBefore(newView, $view[0]);
-
-					var oldUid = $view.attr('data-h5-dyn-bind');
-					event.target.removeEventListener('change', this._listeners[oldUid]);
-					removeBindingEntry(event.target, $view[0], oldUid);
-
-					$view.remove();
-
-					applyBinding(this, newView, event.target, true);
-				}
-			}
-		},
+		_observableArray_observeListener: Binding__observableArray_observeListener,
 
 		/**
 		 * データアイテムまたはObservableItemのchangeイベントハンドラ
@@ -755,6 +807,23 @@
 					//TODO newValueがobj/arrayでnot observableの場合はつぶしてapply
 				});
 			}
+		},
+
+		_getSrcCtxNode: function(ctxId) {
+			for ( var i = 0, len = this._srces.length; i < len; i++) {
+				var $root = $(this._srces[i]);
+				//ルート要素にdata-dyn-ctxがついているかチェック
+				if ($root.attr(DATA_H5_DYN_CTX) === ctxId) {
+					return $root[0];
+				}
+
+				//このルート要素の子要素に当該ctxIdを持つ要素がないかチェック
+				var $child = $root.find('[' + DATA_H5_DYN_CTX + '="' + ctxId + '"]');
+				if ($child.length > 0) {
+					return $child[0];
+				}
+			}
+			return null;
 		},
 
 		_isWatching: function(ctx) {
