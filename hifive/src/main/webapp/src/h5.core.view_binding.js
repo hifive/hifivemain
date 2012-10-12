@@ -557,16 +557,129 @@
 	}
 
 	function addLoopChildren(binding, loopElements, srcCtxRootNode, method, methodArgs) {
+		//追加される全てのノードを持つフラグメント。
+		//Element.insertBeforeでフラグメントを挿入対象にすると、フラグメントに入っているノードの順序を保って
+		//指定した要素の前に挿入できる。従って、unshift()の際insertBeforeを一度呼ぶだけで済む。
+		var fragment = document.createDocumentFragment();
+
 		var newLoopNodes = [];
 		for ( var i = 0, argsLen = methodArgs.length; i < argsLen; i++) {
-			var newChildrenNodes = cloneChildNodes(srcCtxRootNode);
-			newLoopNodes[i] = newChildrenNodes;
-			applyBinding(binding, newChildrenNodes, methodArgs[i]);
+			var newChildNodes = cloneChildNodes(srcCtxRootNode);
+			newLoopNodes[i] = newChildNodes;
+
+			for ( var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
+				fragment.appendChild(newChildNodes[j]);
+			}
+
+			applyBinding(binding, newChildNodes, methodArgs[i]);
 		}
 		Array.prototype[method].apply(loopElements, newLoopNodes);
-		return newLoopNodes;
+
+		return fragment;
 	}
 
+	/**
+	 * 配列のビューをリバースします。loopNodesはリバース前の配列であることを前提とします。<br>
+	 */
+	function reverseLoopNodes(parent, loopNodes) {
+		//一旦すべてのノードをparentから外す
+		while (parent.firstChild) {
+			parent.removeChild(parent.firstChild);
+		}
+
+		//配列要素をリバースしたのと同等になるようにノードを再挿入する
+		for ( var i = 0, len = loopNodes.length; i < len; i++) {
+			var nodesPerIndex = loopNodes[i];
+			for ( var j = nodesPerIndex.length - 1; j >= 0; j--) {
+				parent.insertBefore(nodesPerIndex[j], parent.firstChild);
+			}
+		}
+	}
+
+	function spliceLoopNodes(binding, parent, srcArray, methodArgs, loopNodes, srcCtxRootNode) {
+		var methodArgsLen = methodArgs.length;
+
+		if (methodArgsLen === 0) {
+			return;
+		}
+
+		var startPos = methodArgs[0];
+
+		var removePos = startPos;
+
+		var removeEnd;
+		if (methodArgsLen === 1) {
+			//spliceの第2引数省略時は、start以降すべての要素を削除
+			removeEnd = srcArray.length;
+		} else {
+			//spliceの第2引数は削除する個数
+			removeEnd = removePos + methodArgs[1];
+		}
+
+		//指定されたインデックスに対応するDOMノードを削除
+		for (; removePos < removeEnd; removePos++) {
+			var nodesPerIndex = loopNodes[removePos];
+			//配列がスパースである場合やsplice()で実際の要素数以上の個数を削除しようとしている場合、
+			//ループノードがない場合が考えられるのでチェックする
+			if (nodesPerIndex) {
+				removeNodes(parent, nodesPerIndex);
+			}
+		}
+
+		//まず、削除のみを行う
+		loopNodes.splice(startPos, methodArgs[1]);
+
+		if (methodArgsLen <= 2) {
+			//追加する要素がなければ削除だけ行って終了
+			return;
+		}
+
+		var insertionMarkerNode;
+
+		var loopNodesLen = loopNodes.length;
+		if (loopNodesLen === 0 || startPos === 0) {
+			//全ての要素が削除された場合、またはstartが0の場合は先頭に追加する
+			//全要素が削除されている場合firstChildはnullになっているはず
+			insertionMarkerNode = parent.firstChild;
+		} else if (startPos >= loopNodesLen) {
+			//startPosがloopNodesの長さより大きい場合はノードは末尾に挿入
+			//insertBefore()は、挿入位置がnullの場合は末尾挿入
+			insertionMarkerNode = null;
+		} else {
+			//要素が残っている場合は、startの前に追加する
+			insertionMarkerNode = loopNodes[startPos][0];
+		}
+
+		//以下は要素の挿入がある場合
+		//spliceの挙動(on Chrome22)：
+		//・startがlengthを超えている場合：要素の削除は起こらない、要素は末尾に挿入される、lengthは挿入した分だけ（startで指定したインデックスに入るわけではない）
+		//・countが省略された場合：start以降の全要素を削除
+		//・countがlengthを超えている場合：start以降の全要素が削除される
+		//・挿入要素がある場合：startの位置にinsertBefore（startがlengthを超えている場合は末尾に挿入）
+
+		var fragment = document.createDocumentFragment();
+
+		//loopNodesに対するspliceのパラメータ。要素の挿入を行うため、あらかじめstartPosと削除数0を入れておく
+		var spliceArgs = [startPos, 0];
+
+		//新たに挿入される要素に対応するノードを生成
+		for ( var i = 2, len = methodArgsLen; i < len; i++) {
+			var newChildNodes = cloneChildNodes(srcCtxRootNode);
+
+			for ( var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
+				fragment.appendChild(newChildNodes[j]);
+			}
+
+			applyBinding(binding, newChildNodes, methodArgs[i]);
+			spliceArgs.push(newChildNodes);
+		}
+
+		//DOMツリーの該当位置にノードを追加
+		parent.insertBefore(fragment, insertionMarkerNode);
+
+		//指定された位置に要素を挿入する
+		Array.prototype.splice.apply(loopNodes, spliceArgs);
+	}
 
 	// =========================================================================
 	//
@@ -591,51 +704,48 @@
 
 		for ( var viewUid in orgViews) {
 			var loopRootNode = orgViews[viewUid];
-			var $view = $(loopRootNode);
-			var $loopRootNode = $view; //TODO 統一
+			var $loopRootNode = $(loopRootNode);
 
 			var dynCtxId = $loopRootNode.attr(DATA_H5_DYN_CTX);
 
-			var loopElements = this._loopElementsMap[viewUid];
+			var loopNodes = this._loopElementsMap[viewUid];
 
 			switch (event.method) {
 			case 'shift':
 			case 'pop':
-				var nodesToRemove = loopElements[event.method]();
+				var nodesToRemove = loopNodes[event.method]();
 				if (nodesToRemove) {
 					//要素数0の配列に対してshift,popすると戻り値はundefined
 					removeNodes(loopRootNode, nodesToRemove);
 				}
 				break;
 			case 'unshift':
-				var nodesToAdd = addLoopChildren(this, loopElements, this._getSrcCtxNode(dynCtxId),
+				var fragment = addLoopChildren(this, loopNodes, this._getSrcCtxNode(dynCtxId),
 						event.method, event.args);
-				//新規追加ノードを、後ろから順に、parentの先頭に追加
-				for ( var i = nodesToAdd.length; i >= 0; i--) {
-					var nodesPerElem = nodesToAdd[i];
-					for ( var j = nodesPerElem.length; j >= 0; j--) {
-						loopRootNode.insertBefore(nodesPerElem[j], loopRootNode.firstChild);
-					}
-				}
+				//新規追加ノードを先頭に追加
+				loopRootNode.insertBefore(fragment, loopRootNode.firstChild);
 				break;
 			case 'push':
-				var nodesToAdd = addLoopChildren(this, loopElements, this._getSrcCtxNode(dynCtxId),
+				var fragment = addLoopChildren(this, loopNodes, this._getSrcCtxNode(dynCtxId),
 						event.method, event.args);
-				//新規追加ノードを、先頭から順に、parentの末尾に追加
-				for ( var i = 0, nodesToAddLen = nodesToAdd.length; i < nodesToAddLen; i++) {
-					var nodesPerElem = nodesToAdd[i];
-					for ( var j = 0, nodesPerElemLen = nodesPerElem.length; j < nodesPerElemLen; j++) {
-						loopRootNode.insertBefore(nodesPerElem[j], null);
-					}
-				}
+				//新規追加ノードを末尾に追加
+				loopRootNode.appendChild(fragment);
 				break;
 			case 'splice':
+				spliceLoopNodes(this, loopRootNode, event.target, event.args, loopNodes, this
+						._getSrcCtxNode(dynCtxId));
 				break;
 			case 'reverse':
-				//TODO DOM的にリバースする
+				//DOMツリー側をリバース
+				reverseLoopNodes(loopRootNode, loopNodes);
+				//保持している配列をリバース
+				loopNodes.reverse();
 				break;
 			case 'sort':
-				//TODO sortは全部作り直すしかない・・・
+				//TODO sortはsplice(0, len, ...)で実装
+				break;
+			case 'copyFrom':
+				//TODO copyFromはsplice(0, len, ...)で実装
 				break;
 			}
 		}
