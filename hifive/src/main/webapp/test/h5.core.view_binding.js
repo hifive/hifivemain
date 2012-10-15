@@ -47,12 +47,12 @@ $(function() {
 	/**
 	 * data-h5-bind="test"を持つdiv#dataBindTest
 	 */
-	var simpleElm = $('<div id="dataBindTest"><span data-h5-bind="test">aaaa</span></div>');
+	var simpleElm = '<div id="dataBindTest"><span data-h5-bind="test">aaaa</span></div>';
 
 	/**
 	 * data-h5-loop-contex="items"を持つdiv#dataBindTest
 	 */
-	var simpleLoopElm = $('<div id="dataBindTest"><ul data-h5-loop-context="items"><li data-h5-bind="test"></div>');
+	var simpleLoopElm = '<div id="dataBindTest"><ul data-h5-loop-context="items"><li data-h5-bind="test"></div>';
 
 	/**
 	 * エラーコード
@@ -375,7 +375,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('配列をバインドできること', 2, function() {
+	test('配列をバインドできること', 1, function() {
 		var items = [{
 			test: 'a'
 		}, {
@@ -400,20 +400,61 @@ $(function() {
 		strictEqual($('#dataBindTest li').length, 0, '繰り返される要素が一つもないこと');
 	});
 
-	test('data-h5-loop-contextに配列、ObservableArray以外のものをバインドした場合、繰り返し要素は表示されないこと', function() {
+	test('data-h5-loop-contextに配列、ObservableArray以外のものをバインドした場合はエラーになること', function() {
 		var noArys = [null, undefined, 1, 'a'];
 		var l = noArys.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
 			$fixture.append(simpleLoopElm);
-			view.bind($('#dataBindTest'), {
-				test: 'aaa',
-				items: noArys[i]
-			});
+			try {
+				view.bind($('#dataBindTest'), {
+					test: 'aaa',
+					items: noArys[i]
+				});
+				ok(false, 'テスト失敗。エラーが発生してません' + noArys[i]);
+			} catch (e) {
+				//TODO エラーコード確認
+				strictEqual(e.code, 0, 'エラーになること ' + noArys[i]);
+			}
 			$fixture.find('div').remove();
 		}
-		strictEqual($('#dataBindTest li').length, 0,
-				'配列以外のものを渡しているので、data-h5-loop-contextのなかは空であること');
+		try {
+			view.bind($('#dataBindTest'), {
+				test: 'aaa'
+			});
+			ok(false, 'テスト失敗。指定無しでエラーが発生してません');
+		} catch (e) {
+			//TODO エラーコード確認
+			strictEqual(e.code, 0, '指定無しでエラーになること');
+		}
+	});
+
+	test('配列の要素のオブジェクトがさらに配列を持つ場合バインドできること', function() {
+		var ary = [{
+			test: 'A',
+			ary: [{
+				test: 'A-A'
+			}]
+		}, {
+			test: 'B',
+			ary: [{
+				test: 'B-A'
+			}, {
+				test: 'B-B'
+			}]
+		}];
+		$fixture.append(simpleLoopElm);
+		$innerUl = $('<ul data-h5-loop-context="ary">').append('<li data-h5-bind="test">');
+		$fixture.find('ul').append($innerUl);
+		view.bind($('#dataBindTest'), {
+			items: ary
+		});
+
+		strictEqual($('#dataBindTest>ul>li:first').text(), 'A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li').text(), 'A-A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>li:eq(1)').text(), 'B', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:first').text(), 'B-A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:eq(1)').text(), 'B-B', 'バインドされていること');
 	});
 
 	test('循環参照を持つ配列をバインドできること', function() {
@@ -433,7 +474,7 @@ $(function() {
 		$innerUl = $('<ul data-h5-loop-context="ary">').append('<li data-h5-bind="test">');
 		$fixture.find('ul').append($innerUl);
 		view.bind($('#dataBindTest'), {
-			items: oAry
+			items: ary
 		});
 
 		strictEqual($('#dataBindTest>ul>li:first').text(), 'A', 'バインドされていること');
