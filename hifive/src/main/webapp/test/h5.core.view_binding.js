@@ -113,10 +113,15 @@ $(function() {
 
 	/**
 	 * #dataBindTest li の中のテキストを配列化したものと、引数に渡されたexpectAryが正しいかどうかテストする関数。 配列のバインドのテストで使用する
+	 *
+	 * @param {Array} expectAry 結果予想配列
+	 * @param {String} message テストメッセージ
+	 * @param {String} [selector='li'] チェックする要素のセレクタ。デフォルトはli。
 	 */
-	function checkLiTexts(expectAry, message) {
+	function checkTexts(expectAry, message, selector) {
+		var sel = selector ? selector : 'li';
 		var liTexts = [];
-		$('#dataBindTest li').each(function(i) {
+		$('#dataBindTest ' + sel).each(function(i) {
 			liTexts.push(this.innerText);
 		});
 		deepEqual(liTexts, expectAry, message);
@@ -383,7 +388,7 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		checkLiTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
+		checkTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
 	});
 
 	test('空配列をバインドできること', 1, function() {
@@ -411,6 +416,34 @@ $(function() {
 				'配列以外のものを渡しているので、data-h5-loop-contextのなかは空であること');
 	});
 
+	test('循環参照を持つ配列をバインドできること', function() {
+		var ary = [{
+			test: 'A',
+			ary: []
+		}, {
+			test: 'B',
+			ary: [{
+				test: 'B-A'
+			}, {
+				test: 'B-B'
+			}]
+		}];
+		ary[0].ary = ary;
+		$fixture.append(simpleLoopElm);
+		$innerUl = $('<ul data-h5-loop-context="ary">').append('<li data-h5-bind="test">');
+		$fixture.find('ul').append($innerUl);
+		view.bind($('#dataBindTest'), {
+			items: oAry
+		});
+
+		strictEqual($('#dataBindTest>ul>li:first').text(), 'A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li:first').text(), 'A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li:eq(1)').text(), 'B', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>li:eq(1)').text(), 'B', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:first').text(), 'B-A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:eq(1)').text(), 'B-B', 'バインドされていること');
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -434,7 +467,7 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		checkLiTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
+		checkTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
 	});
 
 	test('空のObservableArrayをバインドできること', function() {
@@ -467,7 +500,7 @@ $(function() {
 				}]
 			});
 
-			checkLiTexts(['a', 'b'], 'オブジェクトでない要素は無視され、オブジェクトである要素だけがバインドされていること');
+			checkTexts(['a', 'b'], 'オブジェクトでない要素は無視され、オブジェクトである要素だけがバインドされていること');
 
 			$fixture.children().remove();
 		}
@@ -492,14 +525,44 @@ $(function() {
 		});
 
 		var result = ['aa', 'bb'];
-		checkLiTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
+		checkTexts(result, 'data-h5-bind指定した要素に値が表示されていること');
+	});
+
+	test('循環参照を持つObservableArrayをバインドできること', function() {
+		var ary = [{
+			test: 'A',
+			ary: []
+		}, {
+			test: 'B',
+			ary: [{
+				test: 'B-A'
+			}, {
+				test: 'B-B'
+			}]
+		}];
+		var oAry = h5.u.obj.createObservableArray();
+		oAry.copyFrom(ary);
+		oAry[0].ary = oAry;
+		$fixture.append(simpleLoopElm);
+		$innerUl = $('<ul data-h5-loop-context="ary">').append('<li data-h5-bind="test">');
+		$fixture.find('ul').append($innerUl);
+		view.bind($('#dataBindTest'), {
+			items: oAry
+		});
+
+		strictEqual($('#dataBindTest>ul>li:first').text(), 'A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li:first').text(), 'A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li:eq(1)').text(), 'B', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>li:eq(1)').text(), 'B', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:first').text(), 'B-A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:eq(1)').text(), 'B-B', 'バインドされていること');
 	});
 
 	//=============================
 	// Definition
 	//=============================
 	var oAry = null;
-	module('ObservableArrayの変更検知', {
+	module('ObservableArrayの変更検知 各メソッド', {
 		setup: function() {
 			oAry = h5.u.obj.createObservableArray();
 			oAry.copyFrom([{
@@ -509,6 +572,9 @@ $(function() {
 			view.bind($('#dataBindTest'), {
 				items: oAry
 			});
+		},
+		teardown: function() {
+			oAry = null;
 		}
 	});
 
@@ -522,15 +588,15 @@ $(function() {
 			test: 'b'
 		}]);
 		var result = ['a', 'b'];
-		checkLiTexts(result, '変更が反映されること');
+		checkTexts(result, '変更が反映されること');
 
 		oAry.copyFrom([]);
-		checkLiTexts([], '中身を空にすると繰り返し要素がなくなること');
+		checkTexts([], '中身を空にすると繰り返し要素がなくなること');
 
 		oAry.copyFrom([{
 			test: 'AA'
 		}]);
-		checkLiTexts(['AA'], '空の状態から、空でない状態に変更した時、ビューに変更が反映されること');
+		checkTexts(['AA'], '空の状態から、空でない状態に変更した時、ビューに変更が反映されること');
 	});
 
 	test('push', function() {
@@ -538,7 +604,7 @@ $(function() {
 			test: 'a'
 		});
 		var result = ['初期値', 'a'];
-		checkLiTexts(result, '変更が反映されること');
+		checkTexts(result, '変更が反映されること');
 
 		oAry.push({
 			test: 'b'
@@ -546,12 +612,12 @@ $(function() {
 			test: 'c'
 		});
 		result.push('b', 'c');
-		checkLiTexts(result, '複数要素を引数に渡した場合も、変更が反映されること');
+		checkTexts(result, '複数要素を引数に渡した場合も、変更が反映されること');
 	});
 
 	test('pop', function() {
 		oAry.pop();
-		checkLiTexts([], '変更が反映されること');
+		checkTexts([], '変更が反映されること');
 
 		oAry.copyFrom([{
 			test: 'a'
@@ -561,12 +627,12 @@ $(function() {
 			test: 'c'
 		}]);
 		oAry.pop();
-		checkLiTexts(['a', 'b'], '変更が反映されること');
+		checkTexts(['a', 'b'], '変更が反映されること');
 	});
 
 	test('shift', function() {
 		oAry.shift();
-		checkLiTexts([], '変更が反映されること');
+		checkTexts([], '変更が反映されること');
 
 		oAry.copyFrom([{
 			test: 'a'
@@ -576,7 +642,7 @@ $(function() {
 			test: 'c'
 		}]);
 		oAry.shift();
-		checkLiTexts(['b', 'c'], '変更が反映されること');
+		checkTexts(['b', 'c'], '変更が反映されること');
 	});
 
 	test('unshift', function() {
@@ -584,7 +650,7 @@ $(function() {
 			test: 'a'
 		});
 		var result = ['a'];
-		checkLiTexts(result, '変更が反映されること');
+		checkTexts(result, '変更が反映されること');
 
 		oAry.unshift({
 			test: 'c'
@@ -592,7 +658,7 @@ $(function() {
 			test: 'b'
 		});
 		result.unshift('c', 'b');
-		checkLiTexts(result, '複数要素を引数に渡した場合も、変更が反映されること');
+		checkTexts(result, '複数要素を引数に渡した場合も、変更が反映されること');
 	});
 
 	test('splice', function() {
@@ -600,7 +666,7 @@ $(function() {
 			test: 'a'
 		});
 		var result = ['a'];
-		checkLiTexts(result, '変更が反映されること');
+		checkTexts(result, '変更が反映されること');
 
 		oAry.splice(0, 1, {
 			test: 'a'
@@ -610,7 +676,7 @@ $(function() {
 			test: 'c'
 		});
 		result.splice(0, 1, 'a', 'b', 'c');
-		checkLiTexts(result, '変更が反映されること');
+		checkTexts(result, '変更が反映されること');
 
 		oAry.splice(1, 2, {
 			test: 'B'
@@ -618,11 +684,11 @@ $(function() {
 			test: 'C'
 		});
 		result.splice(1, 2, 'B', 'C');
-		checkLiTexts(result, '変更が反映されること');
+		checkTexts(result, '変更が反映されること');
 
 		oAry.splice(0, 1);
 		result.splice(0, 1);
-		checkLiTexts(result, '変更が反映されること');
+		checkTexts(result, '変更が反映されること');
 	});
 
 	test('sort', function() {
@@ -636,10 +702,10 @@ $(function() {
 		oAry.sort(function(a, b) {
 			return a.test > b.test ? 1 : -1;
 		});
-		checkLiTexts(result, '変更が反映されること');
+		checkTexts(['a', 'b', 'c'], '変更が反映されること');
 	});
 
-	test('reverce', function() {
+	test('reverse', function() {
 		oAry.copyFrom([{
 			test: 'a'
 		}, {
@@ -647,8 +713,8 @@ $(function() {
 		}, {
 			test: 'c'
 		}]);
-		oAry.reverce();
-		checkLiTexts(['c', 'b', 'a'], '変更が反映されること');
+		oAry.reverse();
+		checkTexts(['c', 'b', 'a'], '変更が反映されること');
 	});
 
 
@@ -662,20 +728,91 @@ $(function() {
 		item2.set('test', 'b');
 
 		oAry.push(item1);
-		checkLiTexts(['a'], 'ObservableArrayにObservableItemをpushすると、ビューへ反映されること');
+		checkTexts(['a'], 'ObservableArrayにObservableItemをpushすると、ビューへ反映されること');
 
 		oAry.push(item2);
-		checkLiTexts(['a', 'b'], 'ObservableItemの中身がビューへ反映されていること');
+		checkTexts(['a', 'b'], 'ObservableItemの中身がビューへ反映されていること');
 
 		oAry.push({
 			test: 'c'
 		});
-		checkLiTexts(['a', 'b', 'c'], '通常のオブジェクトの中身もビューへ反映されていること');
+		checkTexts(['a', 'b', 'c'], '通常のオブジェクトの中身もビューへ反映されていること');
 
 		item1.set('test', 'A');
-		checkLiTexts(['A', 'b', 'c'], 'ObservableItemの中身の変更がビューへ反映されていること');
+		checkTexts(['A', 'b', 'c'], 'ObservableItemの中身の変更がビューへ反映されていること');
 	});
 
+	test('循環参照を持つObservableArrayの中身を変更した時にビューへ反映されること', function() {
+		var ary = [{
+			test: 'A',
+			ary: []
+		}, {
+			test: 'B',
+			ary: [{
+				test: 'B-A'
+			}, {
+				test: 'B-B'
+			}]
+		}];
+		var oAry = h5.u.obj.createObservableArray();
+		oAry.copyFrom(ary);
+		oAry[0].ary = oAry;
+		$fixture.append(simpleLoopElm);
+		$innerUl = $('<ul data-h5-loop-context="ary">').append('<li data-h5-bind="test">');
+		$fixture.find('ul').append($innerUl);
+		view.bind($('#dataBindTest'), {
+			items: oAry
+		});
+
+		oAry.splice(1, 1, {
+			test: 'BB',
+			ary: oAry
+		});
+
+		strictEqual($('#dataBindTest>ul>li:first').text(), 'A', '変更が反映されていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li:first').text(), 'A', '変更が反映されていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li:eq(1)').text(), 'BB', '変更が反映されていること');
+		strictEqual($('#dataBindTest>ul>li:eq(1)').text(), 'BB', '変更が反映されていること');
+		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:first').text(), 'A', '変更が反映されていること');
+		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:eq(1)').text(), 'BB', '変更が反映されていること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ObservableArrayの変更検知');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('循環参照を持つObservableArrayの変更を検知できること', function() {
+		var ary = [{
+			test: 'a'
+		}];
+		var oAry = h5.u.obj.createObservableArray();
+		oAry.copyFrom(ary);
+		oAry[0].ary = oAry;
+		$fixture.append(simpleLoopElm);
+		$innerUl = $('<ul data-h5-loop-context="ary">').append('<li data-h5-bind="test">');
+		$fixture.find('ul').append($innerUl);
+		view.bind($('#dataBindTest'), {
+			items: oAry
+		});
+
+		oAry.copyFrom([{
+			test: 'A'
+		}, {
+			test: 'B'
+		}]);
+		strictEqual($('#dataBindTest>ul>li:first').text(), 'A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li:first').text(), 'A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:first>li:nth-child(2)').text(), 'B', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>li:nth-child(2)').text(), 'B', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:nth-child(2)>li:first').text(), 'A', 'バインドされていること');
+		strictEqual($('#dataBindTest>ul>ul:nth-child(2)>li:nth-child(2)').text(), 'B',
+				'バインドされていること');
+	});
 	//=============================
 	// Definition
 	//=============================
@@ -822,101 +959,176 @@ $(function() {
 	// Body
 	//=============================
 
-	test('バインドされているObserbableItem/DataItemの中身を変更すると、表示も書き変わること', 13, function() {
+	test('ObserbableItem/DataItemの中身を変更すると、ビューに反映されること', 13, function() {
 		testDataItemObsItem(function(item, isDataItem) {
 			var itemType = isDataItem ? 'DataItem' : 'ObservableItem';
 
 			item.set({
 				str: 'AA',
-				num: 11,
-				ary: [{
-					a: 'ary[0]'
-				}, {
-					a: 'ary[1]'
-				}],
-				any: [{
-					test: 'any[0]'
-				}]
+				num: 11
 			});
 
 			// バインド先の設定
 			var $dataBindTest = $('<div id="dataBindTest">');
 			$dataBindTest.append(createBindSpan('str'));
 			$dataBindTest.append(createBindSpan('num'));
-			$loopContext1 = $('<div data-h5-loop-context="ary">');
-			$loopContext1.append(createBindSpan('a'));
-			$loopContext2 = $('<div data-h5-loop-context="ary">');
-			$loopContext2.append(createBindSpan('test'));
-			$fixture.append($dataBindTest.append($loopContext1).append($loopContext2));
+			$fixture.append($dataBindTest);
 
 			view.bind($('#dataBindTest'), item);
-			var result = ['AA', '11', 'ary[0]', 'ary[1]', 'any[0]'];
-			$('#dataBindTest span').each(
-					function(i) {
-						strictEqual(this.innerText, result[i], itemType
-								+ ' data-h5-bind指定した要素に値が表示されていること。' + result[i]);
-					});
-
-			//イベントリスナの登録
-			var changed = 0;
-			item.addEventListener('change', function() {
-				changed++;
-			});
+			var result = ['AA', '11'];
+			checkTexts(result, itemType + ' data-h5-bind指定した要素に値が表示されていること', 'span');
 
 			item.set({
 				str: 'BB',
-				num: 22,
+				num: 22
+			});
+			result = ['BB', '22'];
+			checkTexts(result, itemType + ' 変更が反映されていること', 'span');
+		}, testSchema);
+	});
+
+	test('ObserbableItem/DataItemが持つObservableArray要素の中身を変更すると、ビューに反映されること', 13, function() {
+		testDataItemObsItem(function(item, isDataItem) {
+			var itemType = isDataItem ? 'DataItem' : 'ObservableItem';
+
+			item.set({
+				ary: [{
+					a: 'ary[0]'
+				}, {
+					a: 'ary[1]'
+				}]
+			});
+
+			// バインド先の設定
+			var $dataBindTest = $('<div id="dataBindTest">');
+			$loopContext1 = $('<div data-h5-loop-context="ary">');
+			$loopContext1.append(createBindSpan('a'));
+			$fixture.append($dataBindTest.append($loopContext1));
+
+			view.bind($('#dataBindTest'), item);
+			var result = ['ary[0]', 'ary[1]'];
+			checkTexts(result, itemType + ' data-h5-bind指定した要素に値が表示されていること', 'span');
+
+			item.set({
 				ary: [{
 					a: 'newAry[0]'
 				}]
 			});
-			result = ['BB', '22', 'newAry[0]'];
-			$('#dataBindTest span').each(function(i) {
-				strictEqual(this.innerText, result[i], itemType + ' 変更が反映されていること' + result[i]);
-			});
-			strictEqual(changed--, 1, 'イベントリスナが動作していること');
+			result = ['newAry[0]'];
+			checkTexts(result, itemType + ' setで変更した時に反映されていること', 'span');
 
 			// ObservableArrayのメソッドで配列を変更
 			item.get('ary').push({
 				a: 'newAry[1]'
 			});
 			result.push('newAry[1]');
-			$('#dataBindTest span').each(
-					function(i) {
-						strictEqual(this.innerText, result[i], itemType
-								+ ' type:[]の中身に変更があった時に反映されていること' + result[i]);
-					});
-			strictEqual(changed--, 1, 'イベントリスナが動作していること');
-
-			// type:anyに配列を持たせる
-			item.set('any', [{
-				test: 'any[0]'
-			}, {
-				test: 'any[1]'
-			}]);
-			result.push('any[0]');
-			result.push('any[1]');
-			$('#dataBindTest span').each(
-					function(i) {
-						strictEqual(this.innerText, result[i], itemType
-								+ ' type:anyに配列を持たせたときに、その配列がh5-data-loop-contextにバインドされること。'
-								+ result[i]);
-					});
-			strictEqual(changed--, 1, 'イベントリスナが動作していること');
-
-			// type:anyが持つ配列インスタンスを別の配列インスタンスに変更
-			item.set('any', [{
-				test: 'newAny[0]'
-			}]);
-			result.splice(result.length - 2, 2, 'newAny[0]');
-			$('#dataBindTest span').each(
-					function(i) {
-						strictEqual(this.innerText, result[i], itemType
-								+ ' type:anyの配列のインスタンスが変更されたとき、変更が反映されること' + result[i]);
-					});
-			strictEqual(changed--, 1, 'イベントリスナが動作していること');
+			checkTexts(result, itemType + ' メソッド操作による変更があった時に反映されていること', 'span');
 		}, testSchema);
 	});
+
+	test('ObserbableItem/DataItemが持つtype:anyの要素に格納されたObservableItem/DataItemが、ビューに反映されること', 13,
+			function() {
+				testDataItemObsItem(function(item, isDataItem) {
+					var itemType = isDataItem ? 'DataItem' : 'ObservableItem';
+
+					var item2 = {};
+					if (isDataItem) {
+						item2 = item.getModel().create({
+							id: 'item2',
+							str: 'a2',
+							num: 2
+						});
+					} else {
+						item2 = h5.u.obj.createObservableItem(testSchema);
+						item2.set({
+							str: 'a2',
+							num: 2
+						});
+					}
+					item.set({
+						str: 'a',
+						num: 1,
+						any: item2
+					});
+
+					// バインド先の設定
+					var $dataBindTest = $('<div id="dataBindTest">');
+					$loopContext1 = $('<div data-h5-context="any">');
+					$loopContext1.append(createBindSpan('str'));
+					$loopContext1.append(createBindSpan('num'));
+					$fixture.append($dataBindTest.append($loopContext1));
+
+					view.bind($('#dataBindTest'), item);
+					var result = ['a2', '2'];
+					checkTexts(result, itemType + ' data-h5-bind指定した要素に値が表示されていること', 'span');
+
+					// バインドしたアイテムが持つアイテムを変更
+					item2.set({
+						str: 'aa2',
+						num: 22
+					});
+					result = ['aa2', '22'];
+					checkTexts(result, itemType + ' setで変更した時に反映されていること', 'span');
+
+					// バインドしたアイテムが持つアイテムを変更
+					item.set('any', item);
+					result = ['a', '1'];
+					checkTexts(result, itemType + ' setで変更した時に反映されていること', 'span');
+				}, testSchema);
+			});
+
+	test('ObserbableItem/DataItemが持つtype:anyの要素に格納された配列、ObservableArrayが、ビューに反映されること', 13,
+			function() {
+
+				testDataItemObsItem(function(item, isDataItem) {
+					var itemType = isDataItem ? 'DataItem' : 'ObservableItem';
+
+					var obsArray = h5.u.obj.createObservableArray();
+					obsArray.copyFrom([{
+						a: 'ary[0]'
+					}, {
+						a: 'ary[1]'
+					}]);
+					item.set({
+						any: obsArray
+					});
+
+					// バインド先の設定
+					var $dataBindTest = $('<div id="dataBindTest">');
+					$loopContext1 = $('<div data-h5-loop-context="any">');
+					$loopContext1.append(createBindSpan('a'));
+					$fixture.append($dataBindTest.append($loopContext1));
+
+					view.bind($('#dataBindTest'), item);
+					var result = ['ary[0]', 'ary[1]'];
+					checkTexts(result, itemType + ' data-h5-bind指定した要素に値が表示されていること', 'span');
+
+					// ObservableArrayのメソッドで配列を変更
+					item.get('any').push({
+						a: 'newAry[1]'
+					});
+					result.push('newAry[1]');
+					checkTexts(result, itemType + ' メソッド操作による変更があった時に反映されていること', 'span');
+
+					// 別の配列インスタンスに変更
+					item.set('any', [{
+						a: 'otherAry[0]'
+					}, {
+						a: 'otherAry[1]'
+					}]);
+					result = ['otherAry[0]', 'otherArray[1]'];
+					checkTexts(result, itemType + ' メソッド操作による変更があった時に反映されていること', 'span');
+
+					// 別のObservableArrayインスタンスに変更
+					var oAry = h5.u.obj.createObservableArray();
+					oAry.copyFrom([{
+						a: 'otherOArray[0]'
+					}]);
+					item.set('any', oAry);
+					result = ['otherOAry[0]'];
+					checkTexts(result, itemType + ' メソッド操作による変更があった時に反映されていること', 'span');
+				}, testSchema);
+			});
 
 	//=============================
 	// Definition
