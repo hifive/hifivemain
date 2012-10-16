@@ -44,8 +44,6 @@
 
 	var DATA_H5_DYN_VID = 'data-h5-dyn-vid';
 
-	/** インラインコメントテンプレートのコメントノードの開始文字列 */
-	var COMMENT_BINDING_TARGET_MARKER = '{h5bind ';
 
 	/** 1つのバインド指定のターゲットとソースのセパレータ（「text:prop」の「:」） */
 	var BIND_DESC_TARGET_SEPARATOR = ':';
@@ -132,52 +130,6 @@
 		return viewUid++;
 	}
 
-
-	/**
-	 * インラインコメントテンプレートノードを探す
-	 *
-	 * @private
-	 * @param {Node} node 探索を開始するルートノード
-	 * @param {String} id テンプレートID
-	 * @retruns {Node} 発見したノード、見つからなかった場合はnull
-	 */
-	function findCommentBindingTarget(rootNode, id) {
-		var childNodes = rootNode.childNodes;
-		for ( var i = 0, len = childNodes.length; i < len; i++) {
-			var n = childNodes[i];
-			if (n.nodeType === NODE_TYPE_ELEMENT) {
-				var ret = findCommentBindingTarget(n, id);
-				if (ret) {
-					//深さ優先で探索して見つかったらそこでリターン
-					return ret;
-				}
-			} else if (n.nodeType === NODE_TYPE_COMMENT) {
-				var nodeValue = n.nodeValue;
-				if (nodeValue.indexOf(COMMENT_BINDING_TARGET_MARKER) !== 0) {
-					//コメントが開始マーカーで始まっていないので探索継続
-					continue;
-				}
-
-				var beginTagCloseBracketIdx = nodeValue.indexOf('}');
-				if (beginTagCloseBracketIdx === -1) {
-					//マーカータグが正しく閉じられていない
-					continue;
-				}
-
-				var beginTag = nodeValue.slice(0, beginTagCloseBracketIdx);
-
-				var id = beginTag.match(/id="([A-Za-z][\w-:\.]*)"/);
-				if (!id) {
-					//idが正しく記述されていない
-					continue;
-				} else if (id[1] === id) {
-					//探しているidを持つインラインコメントテンプレートノードが見つかったのでリターン
-					return n;
-				}
-			}
-		}
-		return null;
-	}
 
 	/**
 	 * 別のコンテキストに属していない（＝現在のコンテキストに属している）バインド対象要素を返します。ネストしたコンテキストの中の対象要素は含まれません。
@@ -760,21 +712,10 @@
 			if (target.nodeType === NODE_TYPE_ELEMENT) {
 				//エレメントノード
 
-				this._targets = [target];
-
 				//バインドターゲットの親要素
 				this._parent = target.parentNode;
-			} else {
-				//インラインコメントテンプレート（前段でクローンしてしまう？）
-				var tempParent = document.createElement('div');
-				tempParent.innerHTML = target;
 
-				//TODO
-
-				//this._parent = parentNode;
-				//				this._marker = target;
-				//				this._srces = target;
-				//				this._targets = [target];
+				this._targets = [target];
 			}
 		} else {
 			//複数のノード
@@ -791,15 +732,18 @@
 		//初期状態のビューに、コンテキストごとに固有のIDを振っておく
 		for ( var i = 0, len = this._targets.length; i < len; i++) {
 			var targetNode = this._targets[i];
-			var $original = $(targetNode);
 
-			if ($original.attr('data-h5-context') || $original.attr('data-h5-loop-context')) {
-				$original.attr(DATA_H5_DYN_CTX, contextUid++);
+			if(targetNode.nodeType === NODE_TYPE_ELEMENT) {
+				var $original = $(targetNode);
+
+				if ($original.attr('data-h5-context') || $original.attr('data-h5-loop-context')) {
+					$original.attr(DATA_H5_DYN_CTX, contextUid++);
+				}
+
+				$original.find('[data-h5-context],[data-h5-loop-context]').each(function() {
+					$(this).attr(DATA_H5_DYN_CTX, contextUid++);
+				});
 			}
-
-			$original.find('[data-h5-context],[data-h5-loop-context]').each(function() {
-				$(this).attr(DATA_H5_DYN_CTX, contextUid++);
-			});
 
 			//保存用にクローン
 			clonedSrc.push(targetNode.cloneNode(true));

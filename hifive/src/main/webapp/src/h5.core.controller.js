@@ -37,6 +37,10 @@
 	var EVENT_NAME_H5_TRACKEND = 'h5trackend';
 	var ROOT_ELEMENT_NAME = 'rootElement';
 
+	/** インラインコメントテンプレートのコメントノードの開始文字列 */
+	var COMMENT_BINDING_TARGET_MARKER = '{h5bind ';
+
+
 	// エラーコード
 	/** エラーコード: テンプレートに渡すセレクタが不正 */
 	var ERR_CODE_INVALID_TEMPLATE_SELECTOR = 6000;
@@ -778,8 +782,7 @@
 
 						// 同じrootControllerを持つ他の子のdisposeによって、
 						// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
-						controller.rootController
-								&& controller.rootController.dispose(arguments);
+						controller.rootController && controller.rootController.dispose(arguments);
 
 						// dispose処理が終わったら例外を投げる
 						throw e;
@@ -1574,6 +1577,54 @@
 		}
 	}
 
+	/**
+	 * インラインコメントテンプレートノードを探す
+	 *
+	 * @private
+	 * @param {Node} node 探索を開始するルートノード
+	 * @param {String} id テンプレートID
+	 * @retruns {Node} 発見したコメントノード、見つからなかった場合はnull
+	 */
+	function findCommentBindingTarget(rootNode, id) {
+		var childNodes = rootNode.childNodes;
+		for ( var i = 0, len = childNodes.length; i < len; i++) {
+			var n = childNodes[i];
+			if (n.nodeType === 1) {
+				//Magic number: 1はNode.ELEMENT_NODE
+				var ret = findCommentBindingTarget(n, id);
+				if (ret) {
+					//深さ優先で探索して見つかったらそこで探索終了
+					return ret;
+				}
+			} else if (n.nodeType === 8) {
+				//Magic Number: 8はNode.COMMENT_NODE
+				var nodeValue = n.nodeValue;
+				if (nodeValue.indexOf(COMMENT_BINDING_TARGET_MARKER) !== 0) {
+					//コメントが開始マーカーで始まっていないので探索継続
+					continue;
+				}
+
+				var beginTagCloseBracketIdx = nodeValue.indexOf('}');
+				if (beginTagCloseBracketIdx === -1) {
+					//マーカータグが正しく閉じられていない
+					continue;
+				}
+
+				var beginTag = nodeValue.slice(0, beginTagCloseBracketIdx);
+
+				var matched = beginTag.match(/id="([A-Za-z][\w-:\.]*)"/);
+				if (!matched) {
+					//idが正しく記述されていない
+					continue;
+				} else if (matched[1] === id) {
+					//探しているidを持つインラインコメントテンプレートノードが見つかったのでリターン
+					return n;
+				}
+			}
+		}
+		return null;
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -1789,8 +1840,47 @@
 		}
 	}
 
-	$.extend(View.prototype, {
+	/**
+	 * JSDTのフォーマッタが過剰にインデントしてしまうので、独立した関数として記述している
+	 *
+	 * @private
+	 */
+	function View_bind(element, context) {
+		var target = element;
 
+		if (isString(element) && element.indexOf('h5bind#') === 0) {
+			//先頭が"h5bind#"で始まっている場合、インラインコメントテンプレートへのバインドとみなす
+			//（「{h5bind id="xxx"}」という記法なので、h5bindタグの特定idをセレクトしているようにみなせる）
+			var inlineCommentNode = findCommentBindingTarget(this.__controller.rootElement, element
+					.slice(7));
+
+			var rawTmpl = inlineCommentNode.nodeValue;
+			var tmpl = rawTmpl.slice(rawTmpl.indexOf('}') + 1);
+
+			//jQueryによる"クリーンな"DOM生成のため、innerHTMLではなくappend()を使う
+			var $dummyRoot = $('<div>').append(tmpl);
+
+			target = [];
+			var childNodes = $dummyRoot[0].childNodes;
+			for ( var i = 0, len = childNodes.length; i < len; i++) {
+				target.push(childNodes[i]);
+			}
+
+			//ダミールートから要素を外し、インラインテンプレートの直後に要素を挿入
+			$dummyRoot.empty();
+			var fragment = document.createDocumentFragment();
+			for ( var i = 0, len = target.length; i < len; i++) {
+				fragment.appendChild(target[i]);
+			}
+
+			inlineCommentNode.parentNode.insertBefore(fragment, inlineCommentNode.nextSibling);
+		}
+
+		//引数チェックはView.bindで行う
+		this.__view.bind(target, context);
+	}
+
+	$.extend(View.prototype, {
 		/**
 		 * パラメータで置換された、指定されたテンプレートIDのテンプレートを取得します。
 		 *
@@ -1924,9 +2014,7 @@
 			this.__view.clear(templateIds);
 		},
 
-		bind: function(target, context) {
-			this.__view.bind(target, context);
-		}
+		bind: View_bind
 	});
 
 	/**
