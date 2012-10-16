@@ -31,9 +31,6 @@
 	/** Node.ELEMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
 	var NODE_TYPE_ELEMENT = 1;
 
-	/** Node.COMMENT_NODE */
-	var NODE_TYPE_COMMENT = 8;
-
 	var DATA_H5_BIND = 'data-h5-bind';
 
 	var DATA_H5_CONTEXT = 'data-h5-context';
@@ -44,6 +41,7 @@
 
 	var DATA_H5_DYN_VID = 'data-h5-dyn-vid';
 
+	var DATA_H5_DYN_BIND_ROOT = 'data-h5-dyn-bind-root';
 
 	/** 1つのバインド指定のターゲットとソースのセパレータ（「text:prop」の「:」） */
 	var BIND_DESC_TARGET_SEPARATOR = ':';
@@ -86,6 +84,11 @@
 	/** viewUidカウンタ */
 	var viewUid = 0;
 
+	/** bindUidカウンタ */
+	var bindRootId = 0;
+
+	/** グローバルなbindRootIdからBindingインスタンスへのマップ */
+	var bindRootIdToBindingMap = {};
 
 	//MEMO バインド関係のマップのたどり方
 	//(1)ソース -> 特定のビュー： srcToViewMap[srcIndex][viewUid] がビュー。
@@ -726,15 +729,25 @@
 			this._targets = toArray(target);
 		}
 
+		/**
+		 * このバインディングのID
+		 */
+		this._bindRootId = bindRootId++;
+
+		//マップにこのインスタンスを登録
+		bindRootIdToBindingMap[this._bindRootId] = this;
+
 		var clonedSrc = [];
 
 		//this._targetsは常に配列
 		//初期状態のビューに、コンテキストごとに固有のIDを振っておく
 		for ( var i = 0, len = this._targets.length; i < len; i++) {
-			var targetNode = this._targets[i];
+			var originalNode = this._targets[i];
 
-			if(targetNode.nodeType === NODE_TYPE_ELEMENT) {
-				var $original = $(targetNode);
+			if (originalNode.nodeType === NODE_TYPE_ELEMENT) {
+				var $original = $(originalNode);
+
+				$original.attr(DATA_H5_DYN_BIND_ROOT, this._bindRootId);
 
 				if ($original.attr('data-h5-context') || $original.attr('data-h5-loop-context')) {
 					$original.attr(DATA_H5_DYN_CTX, contextUid++);
@@ -746,7 +759,7 @@
 			}
 
 			//保存用にクローン
-			clonedSrc.push(targetNode.cloneNode(true));
+			clonedSrc.push(originalNode.cloneNode(true));
 		}
 
 		/**
