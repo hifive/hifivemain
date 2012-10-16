@@ -66,7 +66,7 @@
 	/**
 	 * bindに指定したtargetがDOM要素(又は有効なセレクタ、jQueryオブジェクトでない)ならエラー
 	 */
-	var ERR_CODE_BIND_TARGET_INVALID = 7007;
+	var ERR_CODE_BIND_INVALID_TARGET = 7007;
 
 	/**
 	 * bindに指定したtargetが表すDOM要素が存在しないならエラー
@@ -76,7 +76,7 @@
 	/**
 	 * bindに指定したtargetが表すDOM要素が複数あるならエラー
 	 */
-	var ERR_CODE_BIND_TARGET_TOO_MANY = 7008;
+	var ERR_CODE_TOO_MANY_TARGETS = 7008;
 
 	/**
 	 * bindに指定したcontextがオブジェクトでない
@@ -94,9 +94,9 @@
 	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
-	errMsgMap[ERR_CODE_BIND_TARGET_INVALID] = 'bindの引数に指定されたバインド先の要素の指定が不正です。有効なDOMオブジェクト、セレクタ、jQueryオブジェクトのいずれかを指定してください。';
+	errMsgMap[ERR_CODE_BIND_INVALID_TARGET] = 'bindの引数に指定されたバインド先の要素の指定が不正です。有効なDOMオブジェクト、セレクタ、jQueryオブジェクトのいずれかを指定してください。';
 	errMsgMap[ERR_CODE_BIND_TARGET_NO_EXIST] = 'bindの引数に指定されたバインド先の要素の指定が存在しません。';
-	errMsgMap[ERR_CODE_BIND_TARGET_TOO_MANY] = 'bindの引数に指定されたバインド先の要素が2つ以上存在します。バインド対象は1つのみにしてください。';
+	errMsgMap[ERR_CODE_TOO_MANY_TARGETS] = 'bindの引数に指定されたバインド先の要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_BIND_CONTEXT_INVALID] = 'bindの引数に指定されたバインドオブジェクトが不正です。オブジェクト、またはデータアイテム、ObservableItemを指定してください。';
 
 	// メッセージの登録
@@ -799,39 +799,42 @@
 		bind: function(target, context) {
 			var targetDOM = null;
 
+			if (target == null) {
+				throwFwError(ERR_CODE_BIND_INVALID_TARGET);
+			}
+
 			// targetのチェック
-			if (h5.u.obj.isJQueryObject(target) && target[0] && target[0].nodeType === 1) {
-				if (target.length > 1) {
-					// 複数ある場合はエラー
-					throwFwError(ERR_CODE_BIND_TARGET_TOO_MANY);
-				}
-				// jQueryオブジェクトで、先頭の要素がDOM要素(nodeType===1)なら、その値
-				targetDOM = target[0];
-			} else if (isString(target)) {
-				var $target = $(target);
-				if ($target.length === 0) {
-					// セレクタで指定された場合で、そのセレクタで要素が見つからない場合はエラー
-					throwFwError(ERR_CODE_BIND_TARGET_NO_EXIST);
-				} else if ($target.length > 1) {
-					// 複数ある場合はエラー
-					throwFwError(ERR_CODE_BIND_TARGET_TOO_MANY);
-				}
-				targetDOM = $target[0];
-			} else if (target && typeof target === 'object' && target.nodeType === 1) {
-				// targetがオブジェクトでかつnodeType===1で、DOMオブジェクトかどうか判断している
+			if ($.isArray(target)) {
+				//DOMノードの配列が渡された場合
 				targetDOM = target;
+			} else {
+				//targetがDOM、セレクタ文字列の場合をまとめて扱う
+				var $target = $(target);
+
+				if ($target.length === 0) {
+					// 要素がない、もしくは見つからない場合はエラー
+					throwFwError(ERR_CODE_BIND_TARGET_NO_EXIST);
+				}
+				if ($target.length > 1) {
+					// 複数ある場合はエラー
+					throwFwError(ERR_CODE_TOO_MANY_TARGETS);
+				}
+
+				//Magic number: 1はNode.ELEMENT_NODE (IE8以下にNodeがないので即値で記述)
+				if ($target[0].nodeType !== 1) {
+					//予めノードの配列が渡された場合を除き、ターゲットになれるのは単一のノードに限る
+					throwFwError(ERR_CODE_BIND_INVALID_TARGET);
+				}
+
+				targetDOM = $target[0];
 			}
-			if (!targetDOM) {
-				// targetがDOM要素を表していない場合はエラー
-				throwFwError(ERR_CODE_BIND_TARGET_INVALID);
-			}
-			//TODO targetIdの場合
 
 			// contextのチェック
-			if (!context || typeof context !== 'object' || $.isArray(context)) {
+			if (typeof context !== 'object') {
 				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
 			}
-			var binding = h5internal.view.createBinding(targetDOM, context);
+
+			h5internal.view.createBinding(targetDOM, context);
 		}
 	});
 
