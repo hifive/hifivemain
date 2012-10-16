@@ -2026,7 +2026,8 @@
 		 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
 		 *
 		 * @param {String|Element|jQuery} element インラインテンプレート指定文字列、またはDOM要素(セレクタ文字列, DOM要素,
-		 *            jQueryオブジェクト)
+		 *            jQueryオブジェクト)。インラインテンプレートを指定する場合は、「h5bind#xxx」（xxxはid）と記述してください
+		 *            （id属性がテンプレート名になっているh5bindタグを指定する、ような記法になっています）。
 		 * @param {Object} context データコンテキストオブジェクト
 		 * @function
 		 * @name bind
