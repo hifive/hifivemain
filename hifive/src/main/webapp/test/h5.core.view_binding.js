@@ -1639,13 +1639,48 @@ $(function() {
 		});
 	});
 
-	asyncTest('コメントノードにObservableArrayをバインド', function() {
+	asyncTest('コメントノードに配列をバインド', function() {
 		view.append($fixture, 'comment3');
 
-		var items = h5.u.obj.createObservableArray();
 		var item = h5.u.obj.createObservableItem({
 			test: null
 		});
+
+		item.set('test', 'c');
+
+		var items = [{
+			test: 'a'
+		}, {
+			test: 'b'
+		}, item];
+
+		var c = h5.core.controller($fixture, {
+			__name: 'TestController',
+		});
+
+		c.readyPromise.done(function() {
+			c.view.bind('h5bind#item', {
+				items: items
+			});
+
+			checkTexts(['a', 'b', 'c'], 'コメントノードに書いた箇所にバインドされていること');
+
+			//変更
+			item.set('test', 'cc');
+			checkTexts(['a', 'b', 'cc'], '配列内のObservableItemの変更が反映されること');
+
+			start();
+		});
+	});
+
+
+	asyncTest('コメントノードにObservableArrayをバインド', function() {
+		view.append($fixture, 'comment3');
+
+		var item = h5.u.obj.createObservableItem({
+			test: null
+		});
+		var items = h5.u.obj.createObservableArray();
 
 		item.set('test', 'c');
 
