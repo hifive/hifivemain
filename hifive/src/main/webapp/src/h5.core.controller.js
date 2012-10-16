@@ -1851,6 +1851,7 @@
 		if (isString(element) && element.indexOf('h5bind#') === 0) {
 			//先頭が"h5bind#"で始まっている場合、インラインコメントテンプレートへのバインドとみなす
 			//（「{h5bind id="xxx"}」という記法なので、h5bindタグの特定idをセレクトしているようにみなせる）
+			//Magic number: 7は"h5bind#"の文字数
 			var inlineCommentNode = findCommentBindingTarget(this.__controller.rootElement, element
 					.slice(7));
 
@@ -1874,9 +1875,13 @@
 			}
 
 			inlineCommentNode.parentNode.insertBefore(fragment, inlineCommentNode.nextSibling);
+		} else if (h5.u.obj.isJQueryObject(element)) {
+			//append, prepend等を経由して最初からelementが渡された場合のため、
+			//elementがjQueryであれば持っている要素を配列化してバインドを実行
+			target = element.toArray();
 		}
 
-		//引数チェックはView.bindで行う
+		//詳細な引数チェックはView.bindで行う
 		this.__view.bind(target, context);
 	}
 
@@ -1925,7 +1930,8 @@
 		 */
 		append: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			getView(templateId, this.__controller).append(target, templateId, param);
+			var $view = getView(templateId, this.__controller).append(target, templateId, param);
+			this.bind($view, param);
 		},
 
 		/**
@@ -1941,7 +1947,8 @@
 		 */
 		prepend: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			getView(templateId, this.__controller).prepend(target, templateId, param);
+			var $view = getView(templateId, this.__controller).prepend(target, templateId, param);
+			this.bind($view, param);
 		},
 
 		/**
@@ -2014,6 +2021,18 @@
 			this.__view.clear(templateIds);
 		},
 
+		/**
+		 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 <br />
+		 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
+		 *
+		 * @param {String|Element|jQuery} element インラインテンプレート指定文字列、またはDOM要素(セレクタ文字列, DOM要素,
+		 *            jQueryオブジェクト)
+		 * @param {Object} context データコンテキストオブジェクト
+		 * @function
+		 * @name bind
+		 * @memberOf Controller.view
+		 * @see View.bind
+		 */
 		bind: View_bind
 	});
 
