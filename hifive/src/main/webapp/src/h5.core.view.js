@@ -685,7 +685,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素 (jQueryオブジェクト)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		update: function(element, templateId, param) {
 			return getJQueryObj(element).html(this.get(templateId, param));
@@ -704,7 +704,7 @@
 		 * @param {Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		append: function(element, templateId, param) {
 			return getJQueryObj(element).append(this.get(templateId, param));
@@ -723,7 +723,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素 (jQueryオブジェクト)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		prepend: function(element, templateId, param) {
 			return getJQueryObj(element).prepend(this.get(templateId, param));
