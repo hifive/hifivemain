@@ -793,7 +793,7 @@
 				//ルートのエレメントノードにdata-dyn-bind-rootを付加して、このBindingインスタンスを探せるようにしておく
 				$original.attr(DATA_H5_DYN_BIND_ROOT, this._bindRootId);
 
-				if ($original.attr('data-h5-context') || $original.attr('data-h5-loop-context')) {
+				if ($original.attr(DATA_H5_CONTEXT) || $original.attr(DATA_H5_LOOP_CONTEXT)) {
 					$original.attr(DATA_H5_DYN_CTX, contextUid++);
 				}
 
@@ -1149,7 +1149,7 @@
 	/**
 	 * rootNode、またはその子孫ノードで行われている全てのデータバインドを破棄する。ただし、データバインドはネストしていないことを前提とする。
 	 */
-	function disposeAllBinding(rootNode) {
+	function disposeBindings(rootNode) {
 		/**
 		 * nodeをルートノードとするデータバインドが行われていれば、それを破棄する。
 		 */
@@ -1180,7 +1180,7 @@
 		/**
 		 * h5.core.view側でビューからBindingインスタンスを検索するために公開
 		 */
-		disposeAllBinding: disposeAllBinding
+		disposeBindings: disposeBindings
 	};
 
 })();

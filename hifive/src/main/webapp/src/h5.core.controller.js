@@ -38,7 +38,7 @@
 	var ROOT_ELEMENT_NAME = 'rootElement';
 
 	/** インラインコメントテンプレートのコメントノードの開始文字列 */
-	var COMMENT_BINDING_TARGET_MARKER = '{h5bind ';
+	var COMMENT_BINDING_TARGET_MARKER = '{h5view ';
 
 
 	// エラーコード
@@ -1848,10 +1848,10 @@
 	function View_bind(element, context) {
 		var target = element;
 
-		if (isString(element) && element.indexOf('h5bind#') === 0) {
-			//先頭が"h5bind#"で始まっている場合、インラインコメントテンプレートへのバインドとみなす
-			//（「{h5bind id="xxx"}」という記法なので、h5bindタグの特定idをセレクトしているようにみなせる）
-			//Magic number: 7は"h5bind#"の文字数
+		if (isString(element) && element.indexOf('h5view#') === 0) {
+			//先頭が"h5view#"で始まっている場合、インラインコメントテンプレートへのバインドとみなす
+			//（「{h5view id="xxx"}」という記法なので、h5viewタグの特定idをセレクトしているようにみなせる）
+			//Magic number: 7は"h5view#"の文字数
 			var inlineCommentNode = findCommentBindingTarget(this.__controller.rootElement, element
 					.slice(7));
 
@@ -2020,8 +2020,8 @@
 		 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
 		 *
 		 * @param {String|Element|jQuery} element インラインテンプレート指定文字列、またはDOM要素(セレクタ文字列, DOM要素,
-		 *            jQueryオブジェクト)。インラインテンプレートを指定する場合は、「h5bind#xxx」（xxxはid）と記述してください
-		 *            （id属性がテンプレート名になっているh5bindタグを指定する、ような記法になっています）。
+		 *            jQueryオブジェクト)。インラインテンプレートを指定する場合は、「h5view#xxx」（xxxはid）と記述してください
+		 *            （id属性がテンプレート名になっているh5viewタグを指定する、ような記法になっています）。
 		 * @param {Object} context データコンテキストオブジェクト
 		 * @function
 		 * @name bind

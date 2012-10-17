@@ -689,12 +689,7 @@
 		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		update: function(element, templateId, param) {
-			h5internal.view.disposeAllBinding(element);
-			var $view = getJQueryObj(element).html(this.get(templateId, param));
-			if (typeof param === 'object') {
-				this.bind($view, param);
-			}
-			return $view;
+			return getJQueryObj(element).html(this.get(templateId, param));
 		},
 
 		/**
@@ -713,11 +708,7 @@
 		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		append: function(element, templateId, param) {
-			var $view = getJQueryObj(element).append(this.get(templateId, param));
-			if (typeof param === 'object') {
-				this.bind($view, param);
-			}
-			return $view;
+			return getJQueryObj(element).append(this.get(templateId, param));
 		},
 
 		/**
@@ -736,11 +727,7 @@
 		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		prepend: function(element, templateId, param) {
-			var $view = getJQueryObj(element).prepend(this.get(templateId, param));
-			if (typeof param === 'object') {
-				this.bind($view, param);
-			}
-			return $view;
+			return getJQueryObj(element).prepend(this.get(templateId, param));
 		},
 
 		/**
