@@ -1875,10 +1875,6 @@
 			}
 
 			inlineCommentNode.parentNode.insertBefore(fragment, inlineCommentNode.nextSibling);
-		} else if (h5.u.obj.isJQueryObject(element)) {
-			//append, prepend等を経由して最初からelementが渡された場合のため、
-			//elementがjQueryであれば持っている要素を配列化してバインドを実行
-			target = element.toArray();
 		}
 
 		//詳細な引数チェックはView.bindで行う
