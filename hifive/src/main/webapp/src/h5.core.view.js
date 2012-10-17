@@ -790,31 +790,35 @@
 		},
 
 		/**
-		 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
+		 * データバインドを開始します。
 		 *
+		 * @param {String|Element|Element[]|jQuery} element コメントビュー疑似セレクタ、またはDOM要素(セレクタ文字列, DOM要素,
+		 *            DOM要素の配列, jQueryオブジェクト)。コメントビューを指定する場合は、「h5view#xxx」（xxxはid）と記述してください
+		 *            （id属性がxxxになっているh5viewタグを指定する、ような記法になっています）。
+		 *            DOM要素の配列を指定する場合、全ての要素ノードの親ノードが同じでなければいけません。
+		 * @param {Object} context データコンテキストオブジェクト
 		 * @memberOf View
-		 * @name clear
-		 * @param {String|String[]} templateIds テンプレートID
+		 * @name bind
 		 * @function
 		 */
-		bind: function(target, context) {
+		bind: function(element, context) {
 			var targetNodes = null;
 
-			if (target == null) {
+			if (element == null) {
 				throwFwError(ERR_CODE_BIND_INVALID_TARGET);
 			}
 
 			// targetのチェック
-			if ($.isArray(target)) {
+			if ($.isArray(element)) {
 				//配列はDOMノードの配列であることを仮定
-				targetNodes = target;
+				targetNodes = element;
 			} else {
 				//targetがDOM、セレクタ文字列の場合をまとめて扱う
 				//インラインテンプレートが指定された場合はコントローラ側のview.bindが予めノード化しているので
 				//ここに到達した時にはノードになっている
-				var $target = $(target);
+				var $element = $(element);
 
-				if ($target.length === 0) {
+				if ($element.length === 0) {
 					// 要素がない、もしくは見つからない場合はエラー
 					throwFwError(ERR_CODE_BIND_TARGET_NO_EXIST);
 				}
@@ -823,7 +827,7 @@
 				//ただし、これはappend, prepend等の動作を考慮したものである。
 				//つまり、全ての要素は同じノードを親として持っていることを前提としている。
 				//厳密にはチェックすべきだが、実際に問題になることはほとんどないだろうと考え行っていない。
-				targetNodes = $target.toArray();
+				targetNodes = $element.toArray();
 			}
 
 			// contextのチェック
