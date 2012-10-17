@@ -1926,8 +1926,7 @@
 		 */
 		append: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			var $view = getView(templateId, this.__controller).append(target, templateId, param);
-			this.bind($view, param);
+			getView(templateId, this.__controller).append(target, templateId, param);
 		},
 
 		/**
@@ -1943,8 +1942,7 @@
 		 */
 		prepend: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			var $view = getView(templateId, this.__controller).prepend(target, templateId, param);
-			this.bind($view, param);
+			getView(templateId, this.__controller).prepend(target, templateId, param);
 		},
 
 		/**
