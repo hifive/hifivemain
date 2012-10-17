@@ -1352,7 +1352,7 @@ $(function() {
 		view.append($fixture, 'comment1');
 
 		try {
-			view.bind('h5viewitem', {
+			view.bind('h5view#item', {
 				text: 'a',
 				cls: 'testClass'
 			});
@@ -1369,7 +1369,7 @@ $(function() {
 		h5.core.controller($fixture, {
 			__name: 'TestController',
 			__ready: function() {
-				this.view.bind('h5viewitem', {
+				this.view.bind('h5view#item', {
 					text: 'a',
 					cls: 'testClass'
 				});
@@ -1404,7 +1404,7 @@ $(function() {
 		});
 
 		c.readyPromise.done(function() {
-			c.view.bind('h5viewitem', item);
+			c.view.bind('h5view#item', item);
 
 			var $span = $fixture.find('span');
 			checkTexts(['a', 'b', 'aa', 'bb'], 'コメントノードに書いた箇所にバインドされていること', 'span');
@@ -1441,7 +1441,7 @@ $(function() {
 		});
 
 		c.readyPromise.done(function() {
-			c.view.bind('h5viewitem', {
+			c.view.bind('h5view#item', {
 				items: items
 			});
 
@@ -1477,7 +1477,7 @@ $(function() {
 		});
 
 		c.readyPromise.done(function() {
-			c.view.bind('h5viewitem', {
+			c.view.bind('h5view#item', {
 				items: items
 			});
 
