@@ -463,6 +463,7 @@
 		return h5.u.obj.isJQueryObject(obj) ? obj : $(obj);
 	}
 
+
 	// =========================================================================
 	//
 	// Body
@@ -688,7 +689,10 @@
 		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		update: function(element, templateId, param) {
-			return getJQueryObj(element).html(this.get(templateId, param));
+			h5internal.view.disposeAllBinding(element);
+			var $view = getJQueryObj(element).html(this.get(templateId, param));
+			this.bind($view, param);
+			return $view;
 		},
 
 		/**
@@ -707,7 +711,9 @@
 		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		append: function(element, templateId, param) {
-			return getJQueryObj(element).append(this.get(templateId, param));
+			var $view = getJQueryObj(element).append(this.get(templateId, param));
+			this.bind($view, param);
+			return $view;
 		},
 
 		/**
@@ -726,7 +732,9 @@
 		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		prepend: function(element, templateId, param) {
-			return getJQueryObj(element).prepend(this.get(templateId, param));
+			var $view = getJQueryObj(element).prepend(this.get(templateId, param));
+			this.bind($view, param);
+			return $view;
 		},
 
 		/**
@@ -797,7 +805,7 @@
 		 * @function
 		 */
 		bind: function(target, context) {
-			var targetDOM = null;
+			var targetNodes = null;
 
 			if (target == null) {
 				throwFwError(ERR_CODE_BIND_INVALID_TARGET);
@@ -805,28 +813,24 @@
 
 			// targetのチェック
 			if ($.isArray(target)) {
-				//DOMノードの配列が渡された場合
-				targetDOM = target;
+				//配列はDOMノードの配列であることを仮定
+				targetNodes = target;
 			} else {
 				//targetがDOM、セレクタ文字列の場合をまとめて扱う
+				//インラインテンプレートが指定された場合はコントローラ側のview.bindが予めノード化しているので
+				//ここに到達した時にはノードになっている
 				var $target = $(target);
 
 				if ($target.length === 0) {
 					// 要素がない、もしくは見つからない場合はエラー
 					throwFwError(ERR_CODE_BIND_TARGET_NO_EXIST);
 				}
-				if ($target.length > 1) {
-					// 複数ある場合はエラー
-					throwFwError(ERR_CODE_TOO_MANY_TARGETS);
-				}
 
-				//Magic number: 1はNode.ELEMENT_NODE (IE8以下にNodeがないので即値で記述)
-				if ($target[0].nodeType !== 1) {
-					//予めノードの配列が渡された場合を除き、ターゲットになれるのは単一のノードに限る
-					throwFwError(ERR_CODE_BIND_INVALID_TARGET);
-				}
-
-				targetDOM = $target[0];
+				//bind()はルートノードが複数であることをサポートするので、lengthは1には限定しない
+				//ただし、これはappend, prepend等の動作を考慮したものである。
+				//つまり、全ての要素は同じノードを親として持っていることを前提としている。
+				//厳密にはチェックすべきだが、実際に問題になることはほとんどないだろうと考え行っていない。
+				targetNodes = element.toArray();
 			}
 
 			// contextのチェック
@@ -834,7 +838,7 @@
 				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
 			}
 
-			h5internal.view.createBinding(targetDOM, context);
+			h5internal.view.createBinding(targetNodes, context);
 		}
 	});
 

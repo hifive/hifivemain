@@ -747,6 +747,7 @@
 			if (originalNode.nodeType === NODE_TYPE_ELEMENT) {
 				var $original = $(originalNode);
 
+				//ルートのエレメントノードにdata-dyn-bind-rootを付加して、このBindingインスタンスを探せるようにしておく
 				$original.attr(DATA_H5_DYN_BIND_ROOT, this._bindRootId);
 
 				if ($original.attr('data-h5-context') || $original.attr('data-h5-loop-context')) {
@@ -801,6 +802,16 @@
 		applyBinding(this, this._targets, this._rootContext, false, true);
 	}
 	$.extend(Binding.prototype, {
+		dispose: function() {
+			//全てのバインディングを解除
+			for ( var i = 0, len = this._targets.length; i < len; i++) {
+				this._removeBinding(this._targets[i]);
+			}
+
+			//TODO リソース解放
+			//disposeしたら、ノードは元に戻す？？
+		},
+
 		/**
 		 * バインディングを再実行します。既存のビューは一度すべて削除されます。
 		 *
@@ -1085,12 +1096,45 @@
 		return new Binding(elements, context);
 	}
 
+	function getBinding(bindRootId) {
+		return;
+	}
+
+	/**
+	 * rootNode、またはその子孫ノードで行われている全てのデータバインドを破棄する。ただし、データバインドはネストしていないことを前提とする。
+	 */
+	function disposeAllBinding(rootNode) {
+		/**
+		 * nodeをルートノードとするデータバインドが行われていれば、それを破棄する。
+		 */
+		function dispose(node) {
+			var bindRootId = $(node).attr(DATA_H5_DYN_BIND_ROOT);
+			if (bindRootId != null) {
+				var binding = bindRootIdToBindingMap[bindRootId];
+				if (binding) {
+					binding.dispose();
+				}
+			}
+		}
+
+		dispose(rootNode);
+
+		$('[' + DATA_H5_DYN_BIND_ROOT + ']', rootNode).each(function() {
+			dispose(this);
+		});
+	}
 
 	// =============================
 	// Expose to window
 	// =============================
 
-	h5internal.view = {};
-	h5internal.view.createBinding = createBinding;
+	h5internal.view = {
+		createBinding: createBinding,
+
+		/**
+		 * h5.core.view側でビューからBindingインスタンスを検索するために公開
+		 */
+		disposeAllBinding: disposeAllBinding
+	};
 
 })();
