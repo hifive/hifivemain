@@ -1480,33 +1480,35 @@ $(function() {
 		});
 	});
 
-	test('EJSテンプレートの評価後にデータバインドが実行されること', function() {
-		view.append($fixture, 'ejsBind', {
-			value: 'test',
-			test: 'a'
-		});
-		strictEqual($('#dataBindTest span').text(), 'a', 'EJSテンプレートが評価されて、データバインドされていること');
-		strictEqual($('#dataBindTest p').attr('id'), 'a', 'EJSテンプレートが評価されて、データバインドされていること');
-	});
+	test('EJSテンプレートの評価後にデータバインドが実行されること',
+			function() {
+				view.append($fixture, 'ejsBind', {
+					value: 'ejs',
+					ejs: 'databind'
+				});
+				strictEqual($('#dataBindTest span').text(), 'databind',
+						'EJSテンプレートが評価されてから、データバインドされていること');
+				strictEqual($('#dataBindTest p').attr('id'), 'databind',
+						'EJSテンプレートが評価されてから、データバインドされていること');
+			});
 
 	asyncTest('コントローラ内 EJSテンプレートの評価後にデータバインドが実行されること', function() {
-		h5.core.controller($fixture,
-				{
-					__name: 'TestController',
-					__templates: 'template/data-bind.ejs',
-					__ready: function() {
+		h5.core.controller($fixture, {
+			__name: 'TestController',
+			__templates: 'template/data-bind.ejs',
+			__ready: function() {
 
-						this.view.append($fixture, 'ejsBind', {
-							value: 'test',
-							test: 'a'
-						});
-						strictEqual($('#dataBindTest span').text(), 'a',
-								'EJSテンプレートが評価されて、データバインドされていること');
-						strictEqual($('#dataBindTest p').attr('id'), 'a',
-								'EJSテンプレートが評価されて、データバインドされていること');
-						start();
-					}
+				this.view.append($fixture, 'ejsBind', {
+					value: 'ejs',
+					ejs: 'databind'
 				});
+				strictEqual($('#dataBindTest span').text(), 'databind',
+						'EJSテンプレートが評価されてから、データバインドされていること');
+				strictEqual($('#dataBindTest p').attr('id'), 'databind',
+						'EJSテンプレートが評価されてから、データバインドされていること');
+				start();
+			}
+		});
 	});
 
 	//=============================
