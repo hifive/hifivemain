@@ -830,7 +830,7 @@
 				//ただし、これはappend, prepend等の動作を考慮したものである。
 				//つまり、全ての要素は同じノードを親として持っていることを前提としている。
 				//厳密にはチェックすべきだが、実際に問題になることはほとんどないだろうと考え行っていない。
-				targetNodes = element.toArray();
+				targetNodes = $target.toArray();
 			}
 
 			// contextのチェック

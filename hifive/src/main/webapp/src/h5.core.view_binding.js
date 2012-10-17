@@ -201,11 +201,20 @@
 				continue;
 			}
 
-			//このrootNodesがバインディングのルートノードの場合（＝仮想的なルートノードの子要素の場合）は、
-			//ルートノードでコンテキストが指定されていればそれは必ず直接の子供
-			if ((isBindingRoot === true) && (rootNode.getAttribute(dataContextAttr) != null)) {
-				$childContexts = $childContexts.add(rootNode);
-				continue;
+			if (isBindingRoot === true) {
+				//このrootNodesがバインディングのルートノードの場合（＝仮想的なルートノードの子要素の場合）
+
+				//指定されたコンテキストが設定されていれば必ず直接の子供
+				if (rootNode.getAttribute(dataContextAttr) != null) {
+					$childContexts = $childContexts.add(rootNode);
+					continue;
+				}
+
+				//コンテキストが設定されていれば、その子孫のノードは必ず別のコンテキストに属していることになる
+				if (rootNode.getAttribute(DATA_H5_CONTEXT) != null
+						|| rootNode.getAttribute(DATA_H5_LOOP_CONTEXT) != null) {
+					continue;
+				}
 			}
 
 			//各ルートノードの子孫ノードから、直接の子供であるコンテキストノードを探す
@@ -354,8 +363,11 @@
 	function applyChildBinding(binding, rootNodes, context, isLoopContext, isBindingRoot) {
 		var dataContextAttr = isLoopContext ? 'data-h5-loop-context' : 'data-h5-context';
 
+		//ループコンテキストまたはバインディングルートの場合は、rootNodesは仮想ルート
+		var isVirtualRoot = isBindingRoot;
+
 		//自分のコンテキストに属するdata-contextを探す
-		var $childContexts = $getChildContexts(rootNodes, dataContextAttr, isBindingRoot);
+		var $childContexts = $getChildContexts(rootNodes, dataContextAttr, isVirtualRoot);
 
 		//内部コンテキストについてapplyBindingを再帰的に行う
 		$childContexts.each(function() {
@@ -629,6 +641,37 @@
 		Array.prototype.splice.apply(loopNodes, spliceArgs);
 	}
 
+
+	function refreshLoopContext(binding, srcArray, loopRootNode, loopNodes, srcCtxNode) {
+		//現在のビューのすべての要素を外す
+		for ( var i = 0, len = loopNodes.length; i < len; i++) {
+			removeNodes(binding, loopRootNode, loopNodes[i]);
+		}
+
+		//TODO addLoopChildrenとコード共通化
+
+		//追加される全てのノードを持つフラグメント。
+		//Element.insertBeforeでフラグメントを挿入対象にすると、フラグメントに入っているノードの順序を保って
+		//指定した要素の前に挿入できる。従って、unshift()の際insertBeforeを一度呼ぶだけで済む。
+		var fragment = document.createDocumentFragment();
+
+		var newLoopNodes = [];
+		for ( var i = 0, srcLen = srcArray.length; i < srcLen; i++) {
+			var newChildNodes = cloneChildNodes(srcCtxNode);
+			newLoopNodes[i] = newChildNodes;
+
+			for ( var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
+				fragment.appendChild(newChildNodes[j]);
+			}
+
+			applyBinding(binding, newChildNodes, srcArray[i]);
+		}
+
+		loopRootNode.appendChild(fragment);
+
+		return newLoopNodes;
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -694,10 +737,10 @@
 				loopNodes.reverse();
 				break;
 			case 'sort':
-				//TODO sortはsplice(0, len, ...)で実装
-				break;
 			case 'copyFrom':
-				//TODO copyFromはsplice(0, len, ...)で実装
+				//ループビューをすべて作り直す
+				this._loopElementsMap[viewUid] = refreshLoopContext(this, event.target,
+						loopRootNode, loopNodes, this._getSrcCtxNode(dynCtxId));
 				break;
 			}
 		}
@@ -807,6 +850,9 @@
 			for ( var i = 0, len = this._targets.length; i < len; i++) {
 				this._removeBinding(this._targets[i]);
 			}
+
+			//ビューとこのBindingインスタンスのマップを削除
+			delete bindRootIdToBindingMap[this._bindRootId];
 
 			//TODO リソース解放
 			//disposeしたら、ノードは元に戻す？？
@@ -939,7 +985,7 @@
 
 					//新しいコンテキストソースオブジェクトでバインディングを行う
 					//ループコンテキストなので、ルートノードはそのまま使いまわす
-					applyBinding(that, this, event.props[contextProp].newValue);
+					applyBinding(that, this, event.props[contextProp].newValue, true);
 				});
 			}
 		},
