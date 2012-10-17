@@ -691,7 +691,9 @@
 		update: function(element, templateId, param) {
 			h5internal.view.disposeAllBinding(element);
 			var $view = getJQueryObj(element).html(this.get(templateId, param));
-			this.bind($view, param);
+			if (typeof param === 'object') {
+				this.bind($view, param);
+			}
 			return $view;
 		},
 
@@ -712,7 +714,9 @@
 		 */
 		append: function(element, templateId, param) {
 			var $view = getJQueryObj(element).append(this.get(templateId, param));
-			this.bind($view, param);
+			if (typeof param === 'object') {
+				this.bind($view, param);
+			}
 			return $view;
 		},
 
@@ -733,7 +737,9 @@
 		 */
 		prepend: function(element, templateId, param) {
 			var $view = getJQueryObj(element).prepend(this.get(templateId, param));
-			this.bind($view, param);
+			if (typeof param === 'object') {
+				this.bind($view, param);
+			}
 			return $view;
 		},
 
