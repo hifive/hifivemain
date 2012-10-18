@@ -1660,7 +1660,7 @@ $(function() {
 				bool: {
 					type: 'boolean'
 				},
-				enum: {
+				'enum': {
 					type: 'enum',
 					enumValue: [1, 'a', window]
 				},
@@ -1692,7 +1692,7 @@ $(function() {
 	test('createObservableItem', function() {
 		var item = h5.u.obj.createObservableItem({
 			no: null,
-			name: null,
+			name: null
 		});
 		ok(item, 'ObservableItemが作成できること');
 	});

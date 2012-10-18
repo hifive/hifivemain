@@ -1400,7 +1400,7 @@ $(function() {
 		});
 
 		var c = h5.core.controller($fixture, {
-			__name: 'TestController',
+			__name: 'TestController'
 		});
 
 		c.readyPromise.done(function() {
@@ -1437,7 +1437,7 @@ $(function() {
 		}, item];
 
 		var c = h5.core.controller($fixture, {
-			__name: 'TestController',
+			__name: 'TestController'
 		});
 
 		c.readyPromise.done(function() {
@@ -1473,7 +1473,7 @@ $(function() {
 		}, item]);
 
 		var c = h5.core.controller($fixture, {
-			__name: 'TestController',
+			__name: 'TestController'
 		});
 
 		c.readyPromise.done(function() {

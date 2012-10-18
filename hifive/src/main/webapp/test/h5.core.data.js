@@ -1108,7 +1108,7 @@ $(function() {
 							return 0;
 						}
 					}
-				},
+				}
 			}
 		});
 		strictEqual(m.name, 'TestDependModel', 'データモデルが作成できること');
@@ -1642,7 +1642,7 @@ $(function() {
 		for ( var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: invalidValues[i].type,
-				enum: [1, 'a', 1.1],
+				'enum': [1, 'a', 1.1],
 				constraint: invalidValues[i].constraint
 			}, errCode);
 		}
@@ -2062,35 +2062,35 @@ $(function() {
 		// enum, enum[], enum[][]の場合
 		var invalidEnumValues = [{
 			type: 'enum',
-			enum: [1, 2, 3],
+			'enum': [1, 2, 3],
 			defaultValue: 4
 		}, {
 			type: 'enum',
-			enum: [1, 2, 3],
+			'enum': [1, 2, 3],
 			defaultValue: '1'
 		}, {
 			type: 'enum',
-			enum: [{}, 1, 2],
+			'enum': [{}, 1, 2],
 			defaultValue: {}
 		}, {
 			type: 'enum',
-			enum: [[], 1, 2],
+			'enum': [[], 1, 2],
 			defaultValue: []
 		}, {
 			type: 'enum[]',
-			enum: [1, 2, 3],
+			'enum': [1, 2, 3],
 			defaultValue: 1
 		}, {
 			type: 'enum[]',
-			enum: [1, 2, 3],
+			'enum': [1, 2, 3],
 			defaultValue: [2, 3, 4]
 		}, {
 			type: 'enum[]',
-			enum: [1, 2, 3],
+			'enum': [1, 2, 3],
 			defaultValue: [[1]]
 		}, {
 			type: 'enum[][]',
-			enum: [1, 2, 3],
+			'enum': [1, 2, 3],
 			defaultValue: [1]
 		}];
 		testErrorWhenCreateModelByValueProperty(invalidEnumValues, errCode);
@@ -2362,7 +2362,7 @@ $(function() {
 					dummyProp1: '関係ないプロパティ',
 					dummyProp2: {
 						description: '関係ないプロパティ'
-					},
+					}
 				}
 			}
 		});
@@ -3143,7 +3143,7 @@ $(function() {
 			id: '1'
 		});
 		var item2 = dataModel1.create({
-			id: 'true',
+			id: 'true'
 		});
 		ok(dataModel1.has(item), 'アイテムインすタスを渡してtrueが返ってくること');
 		ok(dataModel1.has(item2), 'アイテムインすタスを渡してtrueが返ってくること');
@@ -4959,7 +4959,7 @@ $(function() {
 			integer: [null, 1, -12],
 			boolean: [null, true, false],
 			string: [null, '', 'ab'],
-			enum: [true, 1, 'ab', item],
+			'enum': [true, 1, 'ab', item],
 			'@Test': [null, item],
 			any: [null, undefined, item, window]
 		};
@@ -9229,7 +9229,7 @@ $(function() {
 			val2: {
 				oldValue: null,
 				newValue: 'ABC2'
-			},
+			}
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
 
 		evObj = {};
@@ -9257,7 +9257,7 @@ $(function() {
 			val2: {
 				oldValue: oldVal2,
 				newValue: 'BBBB'
-			},
+			}
 		}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティについてoldValue,newValueが正しく格納されていること');
 
 
