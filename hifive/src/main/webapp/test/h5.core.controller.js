@@ -2798,7 +2798,7 @@ $(function() {
 
 
 
-asyncTest('this.indicator() ルート要素にインジケータを表示',
+	asyncTest('this.indicator() ルート要素にインジケータを表示',
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -3454,97 +3454,102 @@ asyncTest('this.indicator() ルート要素にインジケータを表示',
 		});
 	});
 
-	asyncTest('h5.ui.indicator()', function() {
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
-			'input[type=button] click': function() {
-				var indicator2 = h5.ui.indicator(document, {
-					message: 'BlockMessageTest2',
-					percent: 20
+	asyncTest('h5.ui.indicator()',
+			function() {
+				var testController = null;
+				var controllerBase = {
+					__name: 'TestController',
+					'input[type=button] click': function() {
+						var indicator2 = h5.ui.indicator(document, {
+							message: 'BlockMessageTest2',
+							percent: 20
+						});
+						indicator2.show();
+
+						strictEqual($(indicator2._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'BlockMessageTest2');
+						strictEqual($(indicator2._target).find('.h5-indicator.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '20',
+								'Indicator#show() インジケータが表示されること');
+
+						strictEqual($(indicator2._target).find('.h5-indicator.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
+
+						setTimeout(function() {
+							indicator2.hide();
+
+							setTimeout(function() {
+								strictEqual($('.h5-indicator', indicator2._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+								testController.unbind();
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
+
+				testController = h5.core.controller('#controllerTest', controllerBase);
+				testController.readyPromise.done(function() {
+					$('#controllerTest input[type=button]').click();
 				});
-				indicator2.show();
+			});
 
-				strictEqual($(indicator2._target).find('.h5-indicator.a.content > .indicator-message')
-						.text(), 'BlockMessageTest2');
-				strictEqual($(indicator2._target).find('.h5-indicator.overlay').length, 1,
-						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator2._target).find('.throbber-percent').text(), '20',
-						'Indicator#show() インジケータが表示されること');
+	asyncTest('h5.ui.indicator() テーマを変更して実行',
+			function() {
 
-				strictEqual($(indicator2._target).find('.h5-indicator.overlay').css('display'),
-						'block', 'オーバーレイが表示されていること');
+				var testController = null;
+				var controllerBase = {
+					__name: 'TestController',
 
-				setTimeout(function() {
-					indicator2.hide();
+					'input[type=button] click': function() {
+						var indicator2 = h5.ui.indicator(document, {
+							message: 'BlockMessageTest2',
+							percent: 20,
+							theme: 'b'
+						});
+						indicator2.show();
 
-					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator2._target).length, 0,
-								'Indicator#hide() インジケータが除去されていること');
-						testController.unbind();
-						start();
-					}, 0);
-				}, 0);
-			}
-		};
+						strictEqual($(indicator2._target).find(
+								'.h5-indicator.b.content > .indicator-message').text(),
+								'BlockMessageTest2');
+						var $percentElem = $(indicator2._target).find(
+								'.h5-indicator.b.content .throbber-percent');
+						strictEqual($percentElem.css('font-size'), '18px',
+								'スロバー:変更したテーマのCSSがインジケータに適用されていること');
+						strictEqual(rgbToHex($percentElem.css('color')), '#c20',
+								'スロバー:変更したテーマのCSSがインジケータに適用されていること');
 
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
+						var $messageElem = $(indicator2._target).find(
+								'.h5-indicator.b.content .indicator-message');
+						strictEqual($messageElem.css('font-size'), '20px',
+								'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
+						strictEqual(rgbToHex($messageElem.css('color')), '#480',
+								'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
 
-	asyncTest('h5.ui.indicator() テーマを変更して実行', function() {
+						var $indicatorB = $(indicator2._target).find('.h5-indicator.b');
+						strictEqual(rgbToHex($indicatorB.css('background-color')), '#409',
+								'インジケータ本体:変更したテーマのCSSがインジケータに適用されていること');
 
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
+						setTimeout(function() {
+							indicator2.hide();
 
-			'input[type=button] click': function() {
-				var indicator2 = h5.ui.indicator(document, {
-					message: 'BlockMessageTest2',
-					percent: 20,
-					theme: 'b'
+							setTimeout(function() {
+								strictEqual($('.h5-indicator').length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+								testController.unbind();
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
+
+				testController = h5.core.controller('#controllerTest', controllerBase);
+				testController.readyPromise.done(function() {
+					$('#controllerTest input[type=button]').click();
 				});
-				indicator2.show();
-
-				strictEqual($(indicator2._target).find('.h5-indicator.b.content > .indicator-message')
-						.text(), 'BlockMessageTest2');
-				var $percentElem = $(indicator2._target).find(
-						'.h5-indicator.b.content .throbber-percent');
-				strictEqual($percentElem.css('font-size'), '18px',
-						'スロバー:変更したテーマのCSSがインジケータに適用されていること');
-				strictEqual(rgbToHex($percentElem.css('color')), '#c20',
-						'スロバー:変更したテーマのCSSがインジケータに適用されていること');
-
-				var $messageElem = $(indicator2._target).find(
-						'.h5-indicator.b.content .indicator-message');
-				strictEqual($messageElem.css('font-size'), '20px',
-						'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
-				strictEqual(rgbToHex($messageElem.css('color')), '#480',
-						'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
-
-				var $indicatorB = $(indicator2._target).find('.h5-indicator.b');
-				strictEqual(rgbToHex($indicatorB.css('background-color')), '#409',
-						'インジケータ本体:変更したテーマのCSSがインジケータに適用されていること');
-
-				setTimeout(function() {
-					indicator2.hide();
-
-					setTimeout(function() {
-						strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
-						testController.unbind();
-						start();
-					}, 0);
-				}, 0);
-			}
-		};
-
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
+			});
 
 	test('プロパティの重複チェック', 1, function() {
 
