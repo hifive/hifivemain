@@ -14,16 +14,32 @@
  * hifive
  */
 
-// jQueryMobileの読み込み
-h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js", {
-	async: false
-});
-
-// JQMがロードされると、readyイベントの約50ms後に$.mobile.silentScroll()が実行されてtop:1pxの位置に移動してしまう。
-// h5.ui.isInView() のテストに影響するためsilentScrollを無効にする
-$.mobile.silentScroll = function() {};
-
 $(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+
+	// jQueryMobileの読み込み
+	h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js", {
+		async: false
+	});
+
+	// JQMがロードされると、readyイベントの約50ms後に$.mobile.silentScroll()が実行されてtop:1pxの位置に移動してしまう。
+	// h5.ui.isInView() のテストに影響するためsilentScrollを無効にする
+	$.mobile.silentScroll = function() {};
+
+	//=============================
+	// Variables
+	//=============================
+
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
@@ -32,6 +48,9 @@ $(function() {
 	 */
 	var isMin = !h5.ui.jqm.manager.__reset;
 
+	//=============================
+	// Functions
+	//=============================
 	/**
 	 * JQMControllerのアンバインド
 	 */
@@ -120,6 +139,15 @@ $(function() {
 
 	var originalPrefix = '';
 
+	// =========================================================================
+	//
+	// Test Module
+	//
+	// =========================================================================
+	//=============================
+	// Definition
+	//=============================
+
 	module('JQMManager - define', {
 		setup: function() {
 			createPage("test1", 'data/testforJQM1.js', true);
@@ -129,6 +157,10 @@ $(function() {
 			resetJQM();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('init()を実行せず、define()を実行する ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
@@ -220,11 +252,19 @@ $(function() {
 		h5.ui.jqm.manager.define('test2', 'css/test2.css', controller2);
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('JQMManager - managed test', {
 		teardown: function() {
 			resetJQM();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('h5.ui.jqm.manager.init() JQMControllerはコントローラマネージャの管理対象に含まれていないこと。', 1, function() {
 		if (!checkDev()) {
@@ -322,13 +362,20 @@ $(function() {
 		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
 	});
 
-
+	//=============================
+	// Definition
+	//=============================
 
 	module("JQMManager - init1", {
 		teardown: function() {
 			resetJQM();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
+
 	test('※要目視確認 init() initを実行するとJQMControllerがバインドされること。  ※min版ではエラーになります', 1, function() {
 		if (!checkDev()) {
 			start();
@@ -354,6 +401,10 @@ $(function() {
 		}, 0);
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module("JQMManager - init2", {
 		setup: function() {
 			createPage("testjs1", 'data/testforJQM1.js', true);
@@ -366,6 +417,11 @@ $(function() {
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
+
 	asyncTest('init()時に存在するページのdata-h5-scriptに指定されているjsがロードされること  ※min版ではエラーになります', 2, function() {
 		if (!checkDev()) {
 			start();
@@ -381,6 +437,10 @@ $(function() {
 				}, 0);
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module("JQMManager - init2", {
 		setup: function() {
 			createPage("testjs3", 'data/testforJQM1.js', true);
@@ -392,6 +452,11 @@ $(function() {
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
+
 	asyncTest('pageinitイベントがページから呼ばれると、そのページのscriptがロードされること  ※min版ではエラーになります', 3, function() {
 		if (!checkDev()) {
 			start();
@@ -412,6 +477,10 @@ $(function() {
 				}, 0);
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module("JQMManager - dataPrefix1", {
 		setup: function() {
 			originalPrefix = h5.ui.jqm.dataPrefix;
@@ -429,6 +498,10 @@ $(function() {
 		}
 	});
 
+	//=============================
+	// Body
+	//=============================
+
 	asyncTest(
 			'h5.ui.jqm.dataPrefixに文字列を指定した場合、data-(指定した文字列)-script属性に指定したjsファイルがロードできること  ※min版ではエラーになります',
 			2, function() {
@@ -444,6 +517,10 @@ $(function() {
 					start();
 				}, 0);
 			});
+
+	//=============================
+	// Definition
+	//=============================
 
 	module("JQMManager - dataPrefix2", {
 		setup: function() {
@@ -462,6 +539,10 @@ $(function() {
 		}
 	});
 
+	//=============================
+	// Body
+	//=============================
+
 	asyncTest(
 			'h5.ui.jqm.dataPrefixがnullの場合は、data-h5-script属性に指定したjsファイルがロードできること  ※min版ではエラーになります',
 			2, function() {
@@ -478,6 +559,10 @@ $(function() {
 				}, 0);
 			});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module("JQMManager - define1", {
 		setup: function() {
 			createPage("test3", null, true);
@@ -490,6 +575,11 @@ $(function() {
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
+
 	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドできること  ※min版ではエラーになります', 4, function() {
 		if (!checkDev()) {
 			start();
@@ -521,6 +611,10 @@ $(function() {
 		}, 0);
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module("JQMManager - define2", {
 		setup: function() {
 			createPage("test4", 'data/testforJQM4.js', true);
@@ -532,6 +626,10 @@ $(function() {
 			resetJQM();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('h5.ui.jqmmanager define() data-h5-scriptに指定したjsからdefine()できること  ※min版ではエラーになります', 1,
 			function() {
@@ -551,6 +649,9 @@ $(function() {
 				});
 			});
 
+	//=============================
+	// Definition
+	//=============================
 
 	module("JQMManager - define3", {
 		setup: function() {
@@ -562,6 +663,10 @@ $(function() {
 			resetJQM();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドし、cssがロードされること  ※min版ではエラーになります', 1,
 			function() {
@@ -592,6 +697,10 @@ $(function() {
 				}, 0);
 			});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('JQMManager - define4', {
 		setup: function() {
 			createPage('test7', null, true);
@@ -603,6 +712,10 @@ $(function() {
 			resetJQM();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('ページ遷移したときにcssが切り替わること  ※min版ではエラーになります', 9, function() {
 		if (!checkDev()) {
@@ -674,6 +787,10 @@ $(function() {
 		h5.ui.jqm.manager.define('test7', 'css/test.css', controller7);
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('JQMManager - define5', {
 		setup: function() {
 			createPage('test9', null, true);
@@ -685,6 +802,10 @@ $(function() {
 			resetJQM();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('ページ遷移したときに遷移先のコントローラがバインドされること  ※min版ではエラーになります', 4, function() {
 		if (!checkDev()) {
@@ -732,6 +853,10 @@ $(function() {
 		h5.ui.jqm.manager.define('test10', null, controller10);
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
 	module('JQMManager - define6', {
 		setup: function() {
 			createPage('test11', null, true);
@@ -743,6 +868,10 @@ $(function() {
 			resetJQM();
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('ページ遷移先がコントローラの無いページの場合でも、遷移できる  ※min版ではエラーになります', 4, function() {
 		if (!checkDev()) {

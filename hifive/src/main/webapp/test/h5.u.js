@@ -17,17 +17,53 @@
  */
 
 $(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+
+	//=============================
+	// Variables
+	//=============================
+
+	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.u;
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
 	var CREATE_NAMESPACE_PASS_REASON = '名前空間オブジェクトを作成したので、undefinedでなくオブジェクトが入っているはず';
 
-	module("h5.u.obj.ns", {
+	//=============================
+	// Functions
+	//=============================
+
+	// =========================================================================
+	//
+	// Test Module
+	//
+	// =========================================================================
+
+	//=============================
+	// Definition
+	//=============================
+
+	module("obj.ns", {
 		teardown: function() {
 			window.com.htmlhifive.test = {};
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('名前空間作成 (h5.u.obj.ns)', 3, function() {
 		var ns = h5.u.obj.ns('htmlhifive');
@@ -40,7 +76,7 @@ $(function() {
 	});
 
 	test(
-			'名前空間作成 (h5.u.obj.ns) 異常系(不正な文字列)',
+			'名前空間作成 異常系(不正な文字列)',
 			8,
 			function() {
 				var invalids = ['', ' ', '.', 'あ', 'a b', 'a/b', '1a', '+a'];
@@ -63,7 +99,7 @@ $(function() {
 				expect(invalids.length + 2);
 			});
 
-	test('名前空間作成 (h5.u.obj.ns) 異常系(文字列以外)', 8, function() {
+	test('名前空間作成 異常系(文字列以外)', 8, function() {
 		try {
 			h5.u.obj.ns();
 			ok(false, 'h5.u.obj()（引数なし）でエラーが発生しませんでした。');
@@ -113,7 +149,8 @@ $(function() {
 			ok(true, '[\'a\']:' + e.message);
 		}
 	});
-	test('名前空間作成-ドット区切りでネスト  (h5.u.obj.ns)', 6, function() {
+
+	test('名前空間作成-ドット区切りでネスト', 6, function() {
 		var ns = h5.u.obj.ns("com.htmlhifive.test.test1");
 
 		strictEqual(ns, com.htmlhifive.test.test1,
@@ -127,7 +164,7 @@ $(function() {
 		strictEqual(window.jp, undefined, '（クリーンアップ）');
 	});
 
-	test('名前空間作成-パラメータにオブジェクトを指定する (h5.u.obj.ns)', 2, function() {
+	test('名前空間作成-パラメータにオブジェクトを指定する', 2, function() {
 		var test = {
 			dummy: 'DUMMY'
 		};
@@ -141,9 +178,16 @@ $(function() {
 		strictEqual(window.dummy, undefined, 'ns()のパラメータにString型以外を指定した場合はエラーとして処理されること。');
 	});
 
-	test('com.htmlhifive.test.test1にオブジェクトを公開する (h5.u.obj.ns)', 4, function() {
+	test('com.htmlhifive.test.test1にオブジェクトを公開する', 4, function() {
 		var comStr = 'COM';
 		var htmlhifiveStr = 'HTMLHIFIVE';
+
+		// window.comのバックアップ
+		// dev版だと、throwFwErrorをwindow.com.htmlhifiveに公開しているため、バックアップを取る必要がある
+		var comHtmlhifive = null;
+		if (window.com && window.com.htmlhifive) {
+			comHtmlhifive = window.com.htmlhifive;
+		}
 
 		window.com = {
 			dummy: comStr
@@ -158,10 +202,27 @@ $(function() {
 		equal(com.htmlhifive.dummy, htmlhifiveStr);
 		strictEqual(test1, com.htmlhifive.test.test1, 'nsの戻り値と作成された名前空間が同一であること。');
 		notStrictEqual(com.htmlhifive.test.test1, undefined, '存在しない分については新規作成されていること。');
+
+		if (comHtmlhifive != null) {
+			window.com.htmlhifive = comHtmlhifive;
+		}
 	});
 
-	module("h5.u.obj.expose");
-	test('h5test1.exposeにオブジェクトを公開する (h5.u.obj.expose)', 5, function() {
+	//=============================
+	// Definition
+	//=============================
+
+	module("obj.expose", {
+		teardown: function() {
+			window.com.htmlhifive.test = {};
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('h5test1.exposeにオブジェクトを公開する', 5, function() {
 		h5.u.obj.expose('h5test1.expose', {
 			test: 1
 		});
@@ -186,7 +247,7 @@ $(function() {
 		window.h5test1 = undefined;
 	});
 
-	test('h5test1.expose.testに1を設定後、expose()でtestに10を設定する (h5.u.obj.expose)', 3, function() {
+	test('h5test1.expose.testに1を設定後、expose()でtestに10を設定する', 3, function() {
 		h5.u.obj.expose('h5test1.expose', {
 			test: 1
 		});
@@ -205,7 +266,7 @@ $(function() {
 		window.h5test1 = undefined;
 	});
 
-	test('expose()の第一引数に、String以外のオブジェクトを指定する。 (h5.u.obj.expose)', 1, function() {
+	test('expose()の第一引数に、String以外のオブジェクトを指定する', 1, function() {
 		function Hoge() {
 		//
 		}
@@ -247,23 +308,19 @@ $(function() {
 		window.com.htmlhifive.test2 = undefined;
 	});
 
-
-	module("h5.u.obj.str");
-
-	test('文字列のフォーマット(h5.u.str.format)', 5, function() {
-		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
-		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
-				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
-
-		strictEqual('', h5.u.str.format(null, 1), 'nullを渡すと空文字列が返るか');
-		strictEqual('', h5.u.str.format(undefined), 'undefinedを渡すと空文字列が返るか');
-		strictEqual('nullが渡されました。', h5.u.str.format('{0}が渡されました。', null),
-				'パラメータとしてnullを渡すと"null"という文字列になっているか');
-		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
-				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
+	//=============================
+	// Definition
+	//=============================
+	module("str.espaceHtml", {
+		teardown: function() {
+			window.com.htmlhifive.test = {};
+		}
 	});
 
-	test('html文字列をエスケープする(h5.u.str.espaceHtml)', 4, function() {
+	//=============================
+	// Body
+	//=============================
+	test('html文字列をエスケープする', 4, function() {
 		var str = '<div>hogehoge<span>TEST</span>hoge.!</script>';
 		var escapeStr = h5.u.str.escapeHtml(str);
 		$('#qunit-fixture').append(escapeStr);
@@ -278,7 +335,40 @@ $(function() {
 		strictEqual(h5.u.str.escapeHtml(obj), obj, '文字列のみエスケープされること。');
 	});
 
-	test('文字列のプレフィックスを判定する (h5.u.str.startsWith)', 2, function() {
+	//=============================
+	// Definition
+	//=============================
+	module('str.format');
+
+	//=============================
+	// Body
+	//=============================
+	test('文字列のフォーマット', 5, function() {
+		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
+		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
+				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
+
+		strictEqual('', h5.u.str.format(null, 1), 'nullを渡すと空文字列が返るか');
+		strictEqual('', h5.u.str.format(undefined), 'undefinedを渡すと空文字列が返るか');
+		strictEqual('nullが渡されました。', h5.u.str.format('{0}が渡されました。', null),
+				'パラメータとしてnullを渡すと"null"という文字列になっているか');
+		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
+				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module("str.startsWidth", {
+		teardown: function() {
+			window.com.htmlhifive.test = {};
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('文字列のプレフィックスを判定する', 2, function() {
 		var str = "abcdefg";
 		var prefix1 = "abc";
 		var prefix2 = "abe";
@@ -287,7 +377,19 @@ $(function() {
 		notStrictEqual(h5.u.str.startsWith(str, prefix2), true, '文字列のプレフィックスが abe ではないこと。');
 	});
 
-	test('文字列のサフィックスをを判定する (h5.u.str.endsWith)', 2, function() {
+	//=============================
+	// Definition
+	//=============================
+	module("str.endsWith", {
+		teardown: function() {
+			window.com.htmlhifive.test = {};
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('文字列のサフィックスをを判定する', 2, function() {
 		var str = "abcdefg";
 		var suffix1 = "efg";
 		var suffix2 = "efa";
@@ -296,89 +398,29 @@ $(function() {
 		notStrictEqual(h5.u.str.endsWith(str, suffix2), true, '文字列のサフィックスが efg 指定したものではないこと。');
 	});
 
+	//=============================
+	// Definition
+	//=============================
 	/**
 	 * 元のwindow.onerror(QUnitが登録しているもの)を一時保存しておく
 	 */
 	var originalOnerror = window.onerror;
-	module('h5.u.loadScript', {
+	module('loadScript', {
 		setup: function() {
 			// window.onerrorを空にする
 			window.onerror = null;
 		},
 		teardown: function() {
+			window.com.htmlhifive.test = {};
 			// テスト終了時にwindow.onerrorを元に戻す
 			window.onerror = originalOnerror;
 		}
 	});
-	test(
-			'スクリプトのロード(h5.u.loadScript) 引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
-			10, function() {
-				try {
-					h5.u.loadScript({
-						async: false
-					});
-					ok(false, '引数なしでエラーが発生していません。');
-				} catch (e) {
-					ok(true, '引数なしでエラーが発生しました。');
-				}
 
-				var vals = [[], null, 0, 1, true, false, {}, '', ' '];
-				var valsStr = ['[]', null, 0, 1, true, false, {}, '""', '" "'];
-				for ( var i = 0, l = vals.length; i < l; i++) {
-					try {
-						h5.u.loadScript(vals[i], {
-							force: true,
-							async: false
-						});
-						ok(false, 'エラーが発生していません。' + valsStr[i]);
-					} catch (e) {
-						ok(ok, 'エラーが発生しました。' + valsStr[i]);
-					}
-				}
-			});
-
-	test(
-			'スクリプトのロード(h5.u.loadScript) 配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
-			16, function() {
-				window.h5samplefunc = undefined
-				var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
-						['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
-						['data/sample.js', {}], ['data/sample.js', ' ']];
-				var valsStr = ["[['data/sample.js']]", "['data/sample.js', null]",
-						"['data/sample.js', 0]", "['data/sample.js', 1]",
-						"['data/sample.js', true]", "['data/sample.js', false]",
-						"['data/sample.js', {}]", "['data/sample.js', ' ']"];
-				for ( var i = 0, l = vals.length; i < l; i++) {
-					try {
-						h5.u.loadScript(vals[i], {
-							force: true,
-							async: false
-						});
-						ok(false, 'エラーが発生していません。' + valsStr[i]);
-					} catch (e) {
-						ok(ok, 'エラーが発生しました。' + valsStr[i]);
-						ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
-					}
-					window.h5samplefunc = undefined;
-				}
-			});
-
-	test('スクリプトのロード(h5.u.loadScript) オプションに プレーンオブジェクト/undefined/null 以外を渡すと、エラーが出ること。', 8,
-			function() {
-				var opts = [[], '', 'data/sample.js', new String(), 0, 1, true, false];
-				for ( var i = 0, l = opts.length; i < l; i++) {
-					try {
-						h5.u.loadScript('data/sample.js', opts[i], {
-							async: false
-						});
-						ok(false, 'エラーが発生していません。');
-					} catch (e) {
-						ok(true, e.code + ': ' + e.message);
-					}
-				}
-			});
-
-	test('スクリプトのロード(h5.u.loadScript)', 3, function() {
+	//=============================
+	// Body
+	//=============================
+	test('スクリプトのロード', 3, function() {
 		window.com.htmlhifive.test.h5samplefunc = undefined;
 		h5.u.loadScript('data/sample.js', {
 			force: true,
@@ -396,32 +438,105 @@ $(function() {
 			async: false
 		});
 		ok(window.com.htmlhifive.test.h5samplefunc, 'forceオプションは有効か');
-		window.com.htmlhifive.test.h5samplefunc = undefined;
 	});
 
-	test(
-			'スクリプトのロード(h5.u.loadScript) 引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
-			2,
-			function() {
-				window.com.htmlhifive.test.sample4loaded = undefined;
-				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1'], {
-					async: false
-				});
-				deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
+	test('引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること', 10, function() {
+		try {
+			h5.u.loadScript({
+				async: false
+			});
+			ok(false, '引数なしでエラーが発生していません。');
+		} catch (e) {
+			ok(true, '引数なしでエラーが発生しました。');
+		}
 
-				window.com.htmlhifive.test.sample4loaded = undefined;
-				h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1'], {
+		var vals = [[], null, 0, 1, true, false, {}, '', ' '];
+		var valsStr = ['[]', null, 0, 1, true, false, {}, '""', '" "'];
+		for ( var i = 0, l = vals.length; i < l; i++) {
+			try {
+				h5.u.loadScript(vals[i], {
 					force: true,
 					async: false
 				});
-				deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
-						'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
+				ok(false, 'エラーが発生していません。' + valsStr[i]);
+			} catch (e) {
+				ok(ok, 'エラーが発生しました。' + valsStr[i]);
+			}
+		}
+	});
 
-				window.com.htmlhifive.test.sample4loaded = undefined;
+	test('配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること', 16, function() {
+		window.h5samplefunc = undefined
+		var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
+				['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
+				['data/sample.js', {}], ['data/sample.js', ' ']];
+		var valsStr = ["[['data/sample.js']]", "['data/sample.js', null]", "['data/sample.js', 0]",
+				"['data/sample.js', 1]", "['data/sample.js', true]", "['data/sample.js', false]",
+				"['data/sample.js', {}]", "['data/sample.js', ' ']"];
+		for ( var i = 0, l = vals.length; i < l; i++) {
+			try {
+				h5.u.loadScript(vals[i], {
+					force: true,
+					async: false
+				});
+				ok(false, 'エラーが発生していません。' + valsStr[i]);
+			} catch (e) {
+				ok(ok, 'エラーが発生しました。' + valsStr[i]);
+				ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
+			}
+			window.h5samplefunc = undefined;
+		}
+	});
 
-			});
+	test('オプションに プレーンオブジェクト/undefined/null 以外を渡すと、エラーが出ること。', 8, function() {
+		var opts = [[], '', 'data/sample.js', new String(), 0, 1, true, false];
+		for ( var i = 0, l = opts.length; i < l; i++) {
+			try {
+				h5.u.loadScript('data/sample.js', opts[i], {
+					async: false
+				});
+				ok(false, 'エラーが発生していません。');
+			} catch (e) {
+				ok(true, e.code + ': ' + e.message);
+			}
+		}
+	});
 
-	test('スクリプトのロード(h5.u.loadScript) リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
+	test('引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること', 2, function() {
+		window.com.htmlhifive.test.sample4loaded = undefined;
+		h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1'], {
+			async: false
+		});
+		deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'sample4.jsが2重読み込みされていないこと。');
+
+		window.com.htmlhifive.test.sample4loaded = undefined;
+		h5.u.loadScript(['data/sample4.js?1', 'data/sample.js', 'data/sample4.js?1'], {
+			force: true,
+			async: false
+		});
+		deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
+				'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
+	});
+
+	test('【同期】 スクリプトが同期的にロードされること', 6, function() {
+		h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
+			force: true,
+			async: false
+		});
+
+		ok(window.com.htmlhifive.test.test1.a, 'スクリプトが同期的にロードされたか1');
+		ok(window.com.htmlhifive.test.test2.b, 'スクリプトが同期的にロードされたか2');
+		ok(window.com.htmlhifive.test.test3.c, 'スクリプトが同期的にロードされたか3');
+
+		strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test2.test1,
+				'スクリプトはシーケンシャルに読み込まれたか1');
+		strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test3.test1,
+				'スクリプトはシーケンシャルに読み込まれたか2');
+		strictEqual(window.com.htmlhifive.test.test2, window.com.htmlhifive.test.test3.test2,
+				'スクリプトはシーケンシャルに読み込まれたか3');
+	});
+
+	test('【同期】 リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
 		window.com.htmlhifive.test.sample4loaded = undefined;
 		h5.u.loadScript('data/sample4.js?s123', {
 			async: false
@@ -439,7 +554,7 @@ $(function() {
 	});
 
 
-	test('スクリプトのロード(h5.u.loadScript) 存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2, function() {
+	test('【同期】 存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2, function() {
 		window.com.htmlhifive.test.sample4loaded = undefined;
 
 		try {
@@ -450,15 +565,16 @@ $(function() {
 			});
 			ok(false, '例外がスローされなかったためテスト失敗');
 		} catch (e) {
-			equal(e.code, 11010, e.message);
+			equal(e.code, ERR.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 			equal(window.com.htmlhifive.test.sample4loaded, 2,
 					'data/sample4.js?existFile2 までは読み込まれていること。');
 		}
 	});
 
-	test('スクリプトの同期ロード(h5.u.loadScript)', 6, function() {
+	test('【同期】  atomicオプション有効', 6, function() {
 		h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
 			force: true,
+			atomic: true,
 			async: false
 		});
 
@@ -472,13 +588,9 @@ $(function() {
 				'スクリプトはシーケンシャルに読み込まれたか2');
 		strictEqual(window.com.htmlhifive.test.test2, window.com.htmlhifive.test.test3.test2,
 				'スクリプトはシーケンシャルに読み込まれたか3');
-
-		window.com.htmlhifive.test.test1 = undefined;
-		window.com.htmlhifive.test.test2 = undefined;
-		window.com.htmlhifive.test.test3 = undefined;
 	});
 
-	test('スクリプトのロード(h5.u.loadScript) (atomicオプション有効)', 3, function() {
+	test('【同期】 (atomicオプション有効) 同一ファイルを2回読みこむ', 3, function() {
 		window.com.htmlhifive.test.h5samplefunc5 = undefined;
 		h5.u.loadScript('data/sample5.js', {
 			atomic: true,
@@ -496,11 +608,10 @@ $(function() {
 			async: false
 		});
 		ok(window.com.htmlhifive.test.h5samplefunc5, 'forceオプションは有効か');
-		window.com.htmlhifive.test.h5samplefunc5 = undefined;
 	});
 
 	test(
-			'スクリプトのロード(h5.u.loadScript) (atomicオプション有効) 引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
+			'【同期】 (atomicオプション有効) 引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
 			2,
 			function() {
 				window.com.htmlhifive.test.sample4loaded = undefined;
@@ -518,35 +629,30 @@ $(function() {
 				});
 				deepEqual(window.com.htmlhifive.test.sample4loaded, 2,
 						'forceオプションをtrueにするとsample4.jsが2重読み込みされたこと。');
-
-				window.com.htmlhifive.test.sample4loaded = undefined;
-
 			});
 
-	test('スクリプトのロード(h5.u.loadScript) (atomicオプション有効) リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3,
+	test('【同期】 (atomicオプション有効) リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
+		window.com.htmlhifive.test.sample4loaded = undefined;
+		h5.u.loadScript('data/sample4.js?atomic123', {
+			atomic: true,
+			async: false
+		});
+		deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
+		h5.u.loadScript('data/sample4.js?atomic1234', {
+			atomic: true,
+			async: false
+		});
+		deepEqual(window.com.htmlhifive.test.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
+		h5.u.loadScript(['data/sample4.js?atomic12345', 'data/sample4.js?atomic123',
+				'data/sample4.js?atomic123456'], {
+			atomic: true,
+			async: false
+		});
+		deepEqual(window.com.htmlhifive.test.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
+	});
+
+	test('【同期】 (atomicオプション有効) 存在しないスクリプトを指定した場合、直前まで読み込みに成功していスクリプトファイルも全て読み込まれないこと。', 2,
 			function() {
-				window.com.htmlhifive.test.sample4loaded = undefined;
-				h5.u.loadScript('data/sample4.js?atomic123', {
-					atomic: true,
-					async: false
-				});
-				deepEqual(window.com.htmlhifive.test.sample4loaded, 1, 'スクリプトが1回読み込まれたこと。');
-				h5.u.loadScript('data/sample4.js?atomic1234', {
-					atomic: true,
-					async: false
-				});
-				deepEqual(window.com.htmlhifive.test.sample4loaded, 2, 'スクリプトが2回読み込まれたこと。');
-				h5.u.loadScript(['data/sample4.js?atomic12345', 'data/sample4.js?atomic123',
-						'data/sample4.js?atomic123456'], {
-					atomic: true,
-					async: false
-				});
-				deepEqual(window.com.htmlhifive.test.sample4loaded, 4, 'スクリプトが4回読み込まれたこと。');
-			});
-
-	test(
-			'スクリプトのロード(h5.u.loadScript) (atomicオプション有効) 存在しないスクリプトを指定した場合、直前まで読み込みに成功していスクリプトファイルも全て読み込まれないこと。',
-			2, function() {
 				window.com.htmlhifive.test.sample4loaded = undefined;
 
 				try {
@@ -558,107 +664,13 @@ $(function() {
 					});
 					ok(false, '例外がスローされなかったためテスト失敗');
 				} catch (e) {
-					equal(e.code, 11010, e.message);
+					equal(e.code, ERR.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 					equal(window.com.htmlhifive.test.sample4loaded, undefined,
 							'全てのスクリプトが読み込まれていないこと。');
 				}
 			});
 
-	test('スクリプトの同期ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
-		h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
-			force: true,
-			atomic: true,
-			async: false
-		});
-
-		ok(window.com.htmlhifive.test.test1.a, 'スクリプトが同期的にロードされたか1');
-		ok(window.com.htmlhifive.test.test2.b, 'スクリプトが同期的にロードされたか2');
-		ok(window.com.htmlhifive.test.test3.c, 'スクリプトが同期的にロードされたか3');
-
-		strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test2.test1,
-				'スクリプトはシーケンシャルに読み込まれたか1');
-		strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test3.test1,
-				'スクリプトはシーケンシャルに読み込まれたか2');
-		strictEqual(window.com.htmlhifive.test.test2, window.com.htmlhifive.test.test3.test2,
-				'スクリプトはシーケンシャルに読み込まれたか3');
-
-		window.com.htmlhifive.test.test1 = undefined;
-		window.com.htmlhifive.test.test2 = undefined;
-		window.com.htmlhifive.test.test3 = undefined;
-	});
-
-
-
-	asyncTest('スクリプトの非同期(parallel=true)ロード(h5.u.loadScript)', 6, function() {
-		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
-			force: true,
-			parallel: true
-		});
-
-		ok(!window.com.htmlhifive.test.test1, 'スクリプトが非同期にロードされたか1');
-		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
-		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
-
-		promise.done(function() {
-			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
-			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
-			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
-
-			window.com.htmlhifive.test.test1 = undefined;
-			window.com.htmlhifive.test.test2 = undefined;
-			window.com.htmlhifive.test.test3 = undefined;
-			start();
-		});
-
-	});
-
-	asyncTest('スクリプトの非同期(parallel=true)ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
-		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
-			force: true,
-			parallel: true,
-			atomic: true
-		});
-
-		ok(!window.com.htmlhifive.test.test1, 'スクリプトが非同期にロードされたか1');
-		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
-		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
-
-		promise.done(function() {
-			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
-			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
-			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
-
-			window.com.htmlhifive.test.test1 = undefined;
-			window.com.htmlhifive.test.test2 = undefined;
-			window.com.htmlhifive.test.test3 = undefined;
-			start();
-		});
-	});
-
-	asyncTest('スクリプトの非同期(parallel=false)ロード(h5.u.loadScript) (atomicオプション有効)', 6, function() {
-		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
-			force: true,
-			parallel: false,
-			atomic: true
-		});
-
-		ok(!window.com.htmlhifive.test.test1, 'スクリプトが非同期にロードされたか1');
-		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
-		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
-
-		promise.done(function() {
-			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
-			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
-			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
-
-			window.com.htmlhifive.test.test1 = undefined;
-			window.com.htmlhifive.test.test2 = undefined;
-			window.com.htmlhifive.test.test3 = undefined;
-			start();
-		});
-	});
-
-	asyncTest('スクリプトの非同期(parallel=false)ロード(h5.u.loadScript)', 9, function() {
+	asyncTest('【非同期】 スクリプトが非同期でロードされること', 9, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
 			force: true,
 			parallel: false
@@ -679,16 +691,50 @@ $(function() {
 					'スクリプトはシーケンシャルに読み込まれたか2');
 			strictEqual(window.com.htmlhifive.test.test2, window.com.htmlhifive.test.test3.test2,
 					'スクリプトはシーケンシャルに読み込まれたか3');
+			start();
+		});
+	});
 
-			window.com.htmlhifive.test.test1 = undefined;
-			window.com.htmlhifive.test.test2 = undefined;
-			window.com.htmlhifive.test.test3 = undefined;
+	asyncTest('【非同期】 parallelオプション有効', 6, function() {
+		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
+			force: true,
+			parallel: true
+		});
+
+		ok(!window.com.htmlhifive.test.test1, 'スクリプトが非同期にロードされたか1');
+		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
+		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
+
+		promise.done(function() {
+			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
+			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
+			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
 			start();
 		});
 
 	});
 
-	asyncTest('スクリプトの非同期ロード(parallel=true)で、force=trueなら既に読み込み済みのパスでも2重に読み込まれること', 2, function() {
+
+	asyncTest('【非同期】 parallelオプション有効、atomicオプション有効', 6, function() {
+		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
+			force: true,
+			parallel: true,
+			atomic: true
+		});
+
+		ok(!window.com.htmlhifive.test.test1, 'スクリプトが非同期にロードされたか1');
+		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
+		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
+
+		promise.done(function() {
+			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
+			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
+			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
+			start();
+		});
+	});
+
+	asyncTest('【非同期】 parallelオプション有効、forceオプション有効の場合、既に読み込み済みのパスでも2重に読み込まれること', 2, function() {
 		// sample4.jsを読み込み済みにする
 		var sample4js = 'data/sample4.js?parallelTrue-forceTrue';
 		h5.u.loadScript(sample4js).done(
@@ -710,7 +756,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('スクリプトの非同期ロード(parallel=true)で、force=falseなら既に読み込み済みのパスは2重に読み込まれないこと', 2, function() {
+	asyncTest('【非同期】 parallelオプション有効、forceオプション無効の場合、既に読み込み済みのパスは2重に読み込まれないこと', 2, function() {
 		// sample4.jsを読み込み済みにする
 		var sample4js = 'data/sample4.js?parallelTrue-forceFalse';
 		h5.u.loadScript(sample4js).done(
@@ -732,7 +778,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
+	asyncTest('【非同期】 リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
 		window.com.htmlhifive.test.sample4loaded = undefined;
 		h5.u.loadScript('data/sample4.js?async123').done(
 				function() {
@@ -753,58 +799,52 @@ $(function() {
 				});
 	});
 
-	test(
-			'スクリプトのロード(h5.u.loadScript) 【非同期】引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
-			10, function() {
-				try {
-					h5.u.loadScript();
-					ok(false, '引数なしでエラーが発生していません。');
-				} catch (e) {
-					ok(true, '引数なしでエラーが発生しました。');
-				}
+	test('【非同期】引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。', 10, function() {
+		try {
+			h5.u.loadScript();
+			ok(false, '引数なしでエラーが発生していません。');
+		} catch (e) {
+			ok(true, '引数なしでエラーが発生しました。');
+		}
 
-				var vals = [[], null, 0, 1, true, false, {}, '', ' '];
-				var valsStr = ['[]', null, 0, 1, true, false, {}, '""', '" "'];
-				for ( var i = 0, l = vals.length; i < l; i++) {
-					try {
-						h5.u.loadScript(vals[i], {
-							force: true
-						});
-						ok(false, 'エラーが発生していません。' + valsStr[i]);
-					} catch (e) {
-						ok(ok, 'エラーが同期で発生する。' + valsStr[i]);
-					}
-				}
-			});
+		var vals = [[], null, 0, 1, true, false, {}, '', ' '];
+		var valsStr = ['[]', null, 0, 1, true, false, {}, '""', '" "'];
+		for ( var i = 0, l = vals.length; i < l; i++) {
+			try {
+				h5.u.loadScript(vals[i], {
+					force: true
+				});
+				ok(false, 'エラーが発生していません。' + valsStr[i]);
+			} catch (e) {
+				ok(ok, 'エラーが同期で発生する。' + valsStr[i]);
+			}
+		}
+	});
 
-	test(
-			'スクリプトのロード(h5.u.loadScript) 【非同期】配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。',
-			16, function() {
-				window.h5samplefunc = undefined
-				var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
-						['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
-						['data/sample.js', {}], ['data/sample.js', ' ']];
-				var valsStr = ["[['data/sample.js']]", "['data/sample.js', null]",
-						"['data/sample.js', 0]", "['data/sample.js', 1]",
-						"['data/sample.js', true]", "['data/sample.js', false]",
-						"['data/sample.js', {}]", "['data/sample.js', ' ']"];
-				for ( var i = 0, l = vals.length; i < l; i++) {
-					try {
-						h5.u.loadScript(vals[i], {
-							force: true
-						});
-						ok(false, 'エラーが発生していません。' + valsStr[i]);
-					} catch (e) {
-						ok(ok, 'エラーが同期で発生する。' + valsStr[i]);
-						ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
-					}
-					window.h5samplefunc = undefined;
-				}
-			});
+	test('【非同期】配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。', 16, function() {
+		window.h5samplefunc = undefined
+		var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
+				['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
+				['data/sample.js', {}], ['data/sample.js', ' ']];
+		var valsStr = ["[['data/sample.js']]", "['data/sample.js', null]", "['data/sample.js', 0]",
+				"['data/sample.js', 1]", "['data/sample.js', true]", "['data/sample.js', false]",
+				"['data/sample.js', {}]", "['data/sample.js', ' ']"];
+		for ( var i = 0, l = vals.length; i < l; i++) {
+			try {
+				h5.u.loadScript(vals[i], {
+					force: true
+				});
+				ok(false, 'エラーが発生していません。' + valsStr[i]);
+			} catch (e) {
+				ok(ok, 'エラーが同期で発生する。' + valsStr[i]);
+				ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
+			}
+			window.h5samplefunc = undefined;
+		}
+	});
 
-	asyncTest(
-			'スクリプトのロード(h5.u.loadScript) 【非同期】引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。',
-			2, function() {
+	asyncTest('【非同期】引数で渡した配列中に同一のpathを指定した場合、2重読み込み防止されること。また、forceオプション指定で2重読み込みされること。', 2,
+			function() {
 				window.com.htmlhifive.test.sample4loaded = undefined;
 				h5.u.loadScript(['data/sample4.js?2', 'data/sample.js', 'data/sample4.js?2']).done(
 						function() {
@@ -825,26 +865,32 @@ $(function() {
 						});
 			});
 
-	asyncTest('スクリプトのロード(h5.u.loadScript) 【非同期】存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2,
-			function() {
-				window.com.htmlhifive.test.sample4loaded = undefined;
-				h5.u.loadScript(
-						['data/sample4.js?existFile1', 'data/noExistFile.js',
-								'data/sample4.js?existFile2', 'data/sample4.js?existFile3'], {
-							force: true
-						}).done(function() {
-					ok(false, 'テスト失敗');
-				}).fail(
-						function(e) {
-							equal(e.code, 11010, e.message);
-							equal(window.com.htmlhifive.test.sample4loaded, 1,
-									'data/sample4.js?existFile1 までは読み込まれていること。');
-						}).always(function() {
-					start();
-				});
-			});
+	asyncTest('【非同期】存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2, function() {
+		window.com.htmlhifive.test.sample4loaded = undefined;
+		h5.u.loadScript(
+				['data/sample4.js?existFile1', 'data/noExistFile.js', 'data/sample4.js?existFile2',
+						'data/sample4.js?existFile3'], {
+					force: true
+				}).done(function() {
+			ok(false, 'テスト失敗');
+		}).fail(
+				function(e) {
+					equal(e.code, 11010, e.message);
+					equal(window.com.htmlhifive.test.sample4loaded, 1,
+							'data/sample4.js?existFile1 までは読み込まれていること。');
+				}).always(function() {
+			start();
+		});
+	});
 
-	module('h5.u.obj.argsToArray');
+	//=============================
+	// Definition
+	//=============================
+	module('obj.argsToArray');
+
+	//=============================
+	// Body
+	//=============================
 	test('argumentsを配列に変換(h5.u.obj.argsToArray)', function() {
 		var func = function(a, b, c, d) {
 			return h5.u.obj.argsToArray(arguments);
@@ -854,7 +900,22 @@ $(function() {
 		deepEqual(result, [1, 2, 3, 4], 'argumentsオブジェクトが配列に変換されていること。');
 	});
 
-	module('h5.u.obj.getByPath');
+	//=============================
+	// Definition
+	//=============================
+	module("obj.getByPath", {
+		teardown: function() {
+			try {
+				delete window.hoge;
+			} catch (e) {
+				window.hoge = undefined;
+			}
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
 	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', 7, function() {
 		window.hoge = {
 			hogehoge: {
@@ -883,8 +944,15 @@ $(function() {
 		}, '文字列以外をパラメータに指定すると例外が発生すること。');
 	});
 
-	module('h5.u.obj.serialize/deserialize');
-	test('serialize/deserialize 文字列', 2, function() {
+	//=============================
+	// Definition
+	//=============================
+	module('obj.serialize/deserialize');
+
+	//=============================
+	// Body
+	//=============================
+	test('文字列', 2, function() {
 		var strs = ["helloWorld", 'o{"str1":"\"string1\""}'];
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
@@ -894,7 +962,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize 数字', 6, function() {
+	test('数字', 6, function() {
 		var nums = [0, 1, -1.123, NaN, Infinity, -Infinity];
 		for ( var i = 0, len = nums.length; i < len; i++) {
 			var num = nums[i];
@@ -904,7 +972,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize 真偽値', 2, function() {
+	test('真偽値', 2, function() {
 		var nums = [true, false];
 		for ( var i = 0, len = nums.length; i < len; i++) {
 			var num = nums[i];
@@ -914,7 +982,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize 日付', 2, function() {
+	test('日付', 2, function() {
 		var dates = [new Date(0), new Date()];
 		for ( var i = 0, len = dates.length; i < len; i++) {
 			var date = dates[i];
@@ -925,7 +993,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize 正規表現', 6,
+	test('正規表現', 6,
 			function() {
 				var regExps = [/hello/, /^o*(.*)[a|b]{0,}?$/, /\\/g, /a|b/i, /x/gi, /\/\\\//img];
 				for ( var i = 0, len = regExps.length; i < len; i++) {
@@ -937,7 +1005,7 @@ $(function() {
 				}
 			});
 
-	test('serialize/deserialize 配列', 3, function() {
+	test('配列', 3, function() {
 		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}']];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
@@ -947,7 +1015,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize 多次元配列', 1, function() {
+	test('多次元配列', 1, function() {
 		var arrays = [[[1, 2, 3], [4, '\\5\\"', ['\\\"6\\\"', [7, '\\\"8\\\"']]], 9]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
@@ -957,7 +1025,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize オブジェクトの配列', 2, function() {
+	test('オブジェクトの配列', 2, function() {
 		var arrays = [[{
 			a: 'A',
 			b: 'B'
@@ -982,7 +1050,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize 連想配列', 22, function() {
+	test('連想配列', 22, function() {
 		var array1 = [];
 		array1['key'] = 'value';
 
@@ -1021,7 +1089,7 @@ $(function() {
 	});
 
 
-	test('serialize/deserialize プリミティブラッパー', 16,
+	test('プリミティブラッパー', 16,
 			function() {
 				var primitives = [new String("hello"), new String(), new Number(123),
 						new Number('NaN'), new Number('Infinity'), new Number('-Infinity'),
@@ -1042,7 +1110,7 @@ $(function() {
 				}
 			});
 
-	test('serialize/deserialize null/undefined', 2, function() {
+	test('null/undefined', 2, function() {
 		var exps = [null, undefined];
 		// IE6用 代入式でundefinedを入れないとhasOwnPropertyがtrueの要素にならない。
 		exps[1] = undefined;
@@ -1055,7 +1123,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize オブジェクト：文字列、数値、日付、正規表現、null、undefined、配列、プリミティブ型各種', 7, function() {
+	test('オブジェクト：文字列、数値、日付、正規表現、null、undefined、配列、プリミティブ型各種', 7, function() {
 		var obj = {
 			str: "string",
 			num: 456,
@@ -1094,7 +1162,7 @@ $(function() {
 		deepEqual(deserialized, obj, "プリミティブ型を除いて、シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
 	});
 
-	test('serialize/deserialize オブジェクトの入れ子', 2, function() {
+	test('オブジェクトの入れ子', 2, function() {
 		var obj1 = {
 			obj2: {},
 			obj3: {
@@ -1153,7 +1221,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize オブジェクト/配列/連想配列：循環参照でエラーが出ること', 8, function() {
+	test('オブジェクト/配列/連想配列：循環参照でエラーが出ること', 8, function() {
 		var a = {};
 		a.obj = a;
 
@@ -1203,78 +1271,75 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize オブジェクト/配列/連想配列：同じインスタンスを内部に重複して持つが、循環参照はしていない時にエラーが出ないこと。', 6,
-			function() {
-				var a = {};
-				a.obj1 = {};
-				a.obj2 = {};
-				a.obj2.obj1 = a.obj1;
+	test('オブジェクト/配列/連想配列：同じインスタンスを内部に重複して持つが、循環参照はしていない時にエラーが出ないこと。', 6, function() {
+		var a = {};
+		a.obj1 = {};
+		a.obj2 = {};
+		a.obj2.obj1 = a.obj1;
 
-				var b = {};
-				b.obj1 = {};
-				b.obj2 = {};
-				b.obj1.obj1 = {};
-				b.obj1.obj2 = {};
-				b.obj1.obj1.obj1 = {};
-				b.obj1.obj1.obj2 = {};
-				b.obj1.obj2.obj1 = {};
-				b.obj1.obj2.obj2 = {};
-				b.obj1.obj2.obj1 = b.obj2;
-				b.obj1.obj2.obj1 = b.obj1.obj1;
+		var b = {};
+		b.obj1 = {};
+		b.obj2 = {};
+		b.obj1.obj1 = {};
+		b.obj1.obj2 = {};
+		b.obj1.obj1.obj1 = {};
+		b.obj1.obj1.obj2 = {};
+		b.obj1.obj2.obj1 = {};
+		b.obj1.obj2.obj2 = {};
+		b.obj1.obj2.obj1 = b.obj2;
+		b.obj1.obj2.obj1 = b.obj1.obj1;
 
-				var c = [];
-				c[1] = a;
-				c['key'] = b;
+		var c = [];
+		c[1] = a;
+		c['key'] = b;
 
-				var d = [];
-				d['key1'] = {};
-				d['key2'] = d['key1'];
+		var d = [];
+		d['key1'] = {};
+		d['key2'] = d['key1'];
 
-				var e = [];
-				e.push([], []);
-				e[0].push([], []);
-				e[0][0].push([], []);
-				e[0][1].push([], []);
-				e[0][1][1] = e[1];
+		var e = [];
+		e.push([], []);
+		e[0].push([], []);
+		e[0][0].push([], []);
+		e[0][1].push([], []);
+		e[0][1][1] = e[1];
 
-				var f = [a, b, c, d, e];
+		var f = [a, b, c, d, e];
 
-				var objs = [a, b, c, d, e, f];
-				for ( var i = 0, len = objs.length; i < len; i++) {
-					var obj = objs[i];
-					try {
-						var serialized = h5.u.obj.serialize(obj);
-						var deserialized = h5.u.obj.deserialize(serialized);
-						deepEqual(deserialized, obj, "シリアライズしてデシリアライズした配列が元の配列と同じ。");
-					} catch (e) {
-						ok(false, "エラーメッセージ：" + e.message);
-					}
-				}
-			});
-
-	test(
-			'serialize/deserialize 値としてのundefinedと、未定義のundefinedを含む配列の各要素のhasOwnProperty()の結果が一致すること。',
-			10, function() {
-				// [,]の長さが1でないとき、最後のカンマを1つ減らす。(IE8以前とそれ以外でテストの数が変わらないようにするため)。
-				var array = ([, ].length === 1) ? [0, , 2, undefined, 4, , undefined, , ] : [0, ,
-						2, undefined, 4, , undefined, ];
-
-				// IE6用 代入式でundefinedを入れないとhasOwnPropertyがtrueの要素にならない。
-				array[3] = undefined;
-				array[6] = undefined;
-
-				var serialized = h5.u.obj.serialize(array);
+		var objs = [a, b, c, d, e, f];
+		for ( var i = 0, len = objs.length; i < len; i++) {
+			var obj = objs[i];
+			try {
+				var serialized = h5.u.obj.serialize(obj);
 				var deserialized = h5.u.obj.deserialize(serialized);
-				deepEqual(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
-				deepEqual(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。"
-						+ array.length);
-				for ( var i = 0, l = array.length; i < l; i++) {
-					strictEqual(deserialized.hasOwnProperty(i), array.hasOwnProperty(i),
-							"シリアライズしてデシリアライズした配列のhasOwnProperty()の値が各要素で同じ。" + i);
-				}
-			});
+				deepEqual(deserialized, obj, "シリアライズしてデシリアライズした配列が元の配列と同じ。");
+			} catch (e) {
+				ok(false, "エラーメッセージ：" + e.message);
+			}
+		}
+	});
 
-	test('serialize/deserialize プロトタイプの中身はシリアライズ化されないこと', 1, function() {
+	test('値としてのundefinedと、未定義のundefinedを含む配列の各要素のhasOwnProperty()の結果が一致すること。', 10, function() {
+		// [,]の長さが1でないとき、最後のカンマを1つ減らす。(IE8以前とそれ以外でテストの数が変わらないようにするため)。
+		var array = ([, ].length === 1) ? [0, , 2, undefined, 4, , undefined, , ] : [0, , 2,
+				undefined, 4, , undefined, ];
+
+		// IE6用 代入式でundefinedを入れないとhasOwnPropertyがtrueの要素にならない。
+		array[3] = undefined;
+		array[6] = undefined;
+
+		var serialized = h5.u.obj.serialize(array);
+		var deserialized = h5.u.obj.deserialize(serialized);
+		deepEqual(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
+		deepEqual(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。"
+				+ array.length);
+		for ( var i = 0, l = array.length; i < l; i++) {
+			strictEqual(deserialized.hasOwnProperty(i), array.hasOwnProperty(i),
+					"シリアライズしてデシリアライズした配列のhasOwnProperty()の値が各要素で同じ。" + i);
+		}
+	});
+
+	test('プロトタイプの中身はシリアライズ化されないこと', 1, function() {
 		var P = function() {};
 		P.prototype = {
 			b: 'b',
@@ -1295,7 +1360,7 @@ $(function() {
 		deepEqual(deserialized, hasOwnObj, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
 	});
 
-	test('serialize/deserialize 関数をserializeするとエラーが出ること。', 1, function() {
+	test('関数をserializeするとエラーが出ること。', 1, function() {
 		var func = function() {
 			return 'hoge';
 		};
@@ -1307,7 +1372,7 @@ $(function() {
 		}
 	});
 
-	test('serialize/deserialize シリアライズしたバージョンの違う文字列をデシリアライズできないこと。', 4, function() {
+	test('シリアライズしたバージョンの違う文字列をデシリアライズできないこと。', 4, function() {
 		var serialized = "2|shello";
 		try {
 			h5.u.obj.deserialize(serialized);
@@ -1469,8 +1534,14 @@ $(function() {
 		}
 	});
 
+	//=============================
+	// Definition
+	//=============================
+	module('createInterceptor');
 
-	module('h5.u.createInterceptor');
+	//=============================
+	// Body
+	//=============================
 	test('h5.u.createInterceptor() インターセプタを作成できること', 5, function() {
 		var count = 0;
 		var count2 = 0;
@@ -1501,7 +1572,141 @@ $(function() {
 		});
 		deepEqual(count, 1, '第二引数省略 関数の初めに実行したい関数が実行されること');
 		deepEqual(ret, 100, '第二引数省略 関数そのものが実行されていること');
-
 	});
 
+	//=============================
+	// Definition
+	//=============================
+	module('ObservableArray');
+
+	//=============================
+	// Body
+	//=============================
+	test('createObservableArray', 3, function() {
+		var o = h5.u.obj.createObservableArray();
+		strictEqual(o.equals([]), true, 'ObservableArrayが作成できること。中身が空であること');
+		strictEqual(o[0], undefined, '0番目にインデックスアクセスすると、undefinedが返ってくること');
+		strictEqual(o.length, 0, 'lengthプロパティに0が入っていること');
+	});
+
+	test('copyFrom', 11, function() {
+		var o = h5.u.obj.createObservableArray();
+		ary = [1, 'a', window];
+		o.copyFrom(ary);
+		deepEqual(o.slice(), ary, 'copyFromで引数に渡した配列の中身がコピーされること');
+		notStrictEqual(o, ary, 'copyFromで渡した通常の配列とインスタンスが異なること');
+		strictEqual(o.length, ary.length, 'lengthが渡した配列と同じであること');
+		strictEqual(o[2], ary[2], 'インデックスアクセスできること');
+
+		o.copyFrom([]);
+		deepEqual(o.slice(), [], 'copyFromで引数に空配列を渡すと、ObservableArrayの中身も空になること');
+		strictEqual(o.length, 0, 'lengthが0になること');
+		strictEqual(o[0], undefined, '0番目にインデックスアクセスするとundefinedが取得できること');
+
+		var o2 = h5.u.obj.createObservableArray();
+		o2.copyFrom(ary);
+		o.copyFrom(o2);
+		deepEqual(o.slice(), ary, 'copyFromで引数にObservableArrayを渡すと、その中身がコピーされること');
+		notStrictEqual(o, ary, 'copyFromで渡したObservableArrayとインスタンスが異なること');
+		strictEqual(o.length, ary.length, 'lengthが更新されること');
+		strictEqual(o[2], ary[2], 'インデックスアクセスできること');
+	});
+
+	test('equals', 6, function() {
+		var o = h5.u.obj.createObservableArray();
+		ary = [1, 'a', window];
+		o.copyFrom(ary);
+		strictEqual(o.equals([1, 'a', window]), true, '引数の配列と中身が同じならequalsの結果がtrueであること');
+
+		var o2 = h5.u.obj.createObservableArray();
+		o2.copyFrom(ary);
+		strictEqual(o.equals(o2), true, '引数のObservableArrayと中身が同じならequalsの結果がtrueであること');
+
+		var o3 = h5.u.obj.createObservableArray();
+		strictEqual(o3.equals([]), true, '空のObservableArrayについて、equalsに空配列を渡されたら結果がtrueであること');
+
+		var o4 = h5.u.obj.createObservableArray();
+		strictEqual(o3.equals(o4), true,
+				'空のObservableArrayについて、equalsに空のObservableArrayを渡されたら結果がtrueであること');
+
+		strictEqual(o2.equals(o2), true, '同一のObservableArrayインスタンスならequalsの結果はtrueであること');
+
+		o2.copyFrom([1, 'a', {}]);
+		strictEqual(o.equals(o2), false, '中身が違うならfalseが返ってくること');
+	});
+
+	//TODO その他Arrayにあるメソッドのテスト
+
+
+
+	//=============================
+	// Definition
+	//=============================
+	var item = null;
+	module('ObservableItem', {
+		setup: function() {
+			item = h5.u.obj.createObservableItem({
+				nul: null,
+				blank: null,
+				str: {
+					type: 'string'
+				},
+				num: {
+					type: 'number'
+				},
+				int: {
+					type: 'integer'
+				},
+				bool: {
+					type: 'boolean'
+				},
+				enum: {
+					type: 'enum',
+					enumValue: [1, 'a', window]
+				},
+				any: {
+					type: 'any'
+				},
+				strA: {
+					type: 'string[]'
+				},
+				numA: {
+					type: 'number[]'
+				},
+				intA: {
+					type: 'integer[]'
+				},
+				anyA: {
+					type: 'any[]'
+				}
+			});
+		},
+		teardown: function() {
+			item = null;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('createObservableItem', function() {
+		var item = h5.u.obj.createObservableItem({
+			no: null,
+			name: null,
+		});
+		ok(item, 'ObservableItemが作成できること');
+	});
+
+	test('createObservableItemの引数にオブジェクト以外を渡すとエラーになること', function() {
+		var invalidValues = ['a', 1, true];
+		for ( var i = 0, l = invalidValues.length; i < l; i++) {
+			try {
+				h5.u.obj.createObservableItem(invalidValues[i]);
+				ok(false, 'テスト失敗。エラーが発生しませんでした。' + invalidValues[i]);
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_REQUIRE_SCHEMA, e.message);
+			}
+		}
+	});
+	//TODO ほぼデータアイテムのテストと同じになるか
 });

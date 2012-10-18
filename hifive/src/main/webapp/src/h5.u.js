@@ -28,6 +28,12 @@
 	// Production
 	// =============================
 
+	var METHOD_NAME_COPY_FROM = 'copyFrom';
+
+	var EVENT_TYPE_OBSERVE_BEFORE = 'observeBefore';
+
+	var EVENT_TYPE_OBSERVE = 'observe';
+
 	/**
 	 * undefinedのタイプ
 	 */
@@ -78,7 +84,6 @@
 	 */
 	var ERR_CODE_INVALID_SCRIPT_PATH = 11007;
 
-
 	/**
 	 * loadScript()に渡されたオプションが不正(プレーンオブジェクト、null、undefined)である時に発生するエラー
 	 */
@@ -95,6 +100,31 @@
 	var ERR_CODE_SCRIPT_FILE_LOAD_FAILD = 11010;
 
 	/**
+	 * createObservableItemに渡された引数がオブジェクトでない
+	 */
+	var ERR_CODE_REQUIRE_SCHEMA = 11011;
+
+	/**
+	 * createObservableItemに指定されたスキーマのエラー
+	 */
+	var ERR_CODE_INVALID_SCHEMA = 11012;
+	/**
+	 * ObservableItemにスキーマ違反の値がセットされた
+	 */
+	var ERR_CODE_INVALID_ITEM_VALUE = 11013;
+
+	/**
+	 * ObservableItemでスキーマで定義されていない値にセットされた
+	 */
+	var ERR_CODE_DEPEND_PROPERTY = 11014;
+
+	/**
+	 * ObservableItemで依存項目にセットされた
+	 */
+	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 11015;
+
+
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
@@ -109,6 +139,11 @@
 	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
 	errMsgMap[ERR_CODE_DESERIALIZE_ARGUMENT] = 'deserialize() 引数の値が不正です。引数には文字列を指定してください。';
 	errMsgMap[ERR_CODE_SCRIPT_FILE_LOAD_FAILD] = 'スクリプトファイルの読み込みに失敗しました。URL:{0}';
+	errMsgMap[ERR_CODE_REQUIRE_SCHEMA] = 'createObservableItemの引数にはスキーマ定義オブジェクトを指定する必要があります。';
+	errMsgMap[ERR_CODE_INVALID_SCHEMA] = 'createObservableItemの引数に指定されたスキーマ定義オブジェクトが不正です。';
+	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'ObservableItemのsetterに渡された値がスキーマで指定された型・制約に違反しています。 違反したプロパティ={0}';
+	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。 違反したプロパティ={0}';
+	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。違反したプロパティ={0}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -258,7 +293,7 @@
 	/**
 	 * ドット区切りで名前空間オブジェクトを生成します。
 	 * （h5.u.obj.ns('sample.namespace')と呼ぶと、window.sample.namespaceとオブジェクトを生成します。）
-	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外が渡された場合はエラーとします。
+	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外、または、識別子として不適切な文字列が渡された場合はエラーとします。
 	 *
 	 * @param {String} namespace 名前空間
 	 * @memberOf h5.u.obj
@@ -272,18 +307,21 @@
 
 		var nsArray = namespace.split('.');
 		var len = nsArray.length;
+
 		for ( var i = 0; i < len; i++) {
 			if (!isValidNamespaceIdentifier(nsArray[i])) {
 				// 名前空間として不正な文字列ならエラー
 				throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
 			}
 		}
+
 		var parentObj = window;
 		for ( var i = 0; i < len; i++) {
-			if (parentObj[nsArray[i]] === undefined) {
-				parentObj[nsArray[i]] = {};
+			var name = nsArray[i];
+			if (parentObj[name] === undefined) {
+				parentObj[name] = {};
 			}
-			parentObj = parentObj[nsArray[i]];
+			parentObj = parentObj[name];
 		}
 
 		// ループが終了しているので、parentObjは一番末尾のオブジェクトを指している
@@ -1129,7 +1167,7 @@
 	 * 指定された名前空間に存在するオブジェクトを取得します。
 	 *
 	 * @param {String} 名前空間
-	 * @return {Any} その名前空間に存在するオブジェクト
+	 * @returns {Any} その名前空間に存在するオブジェクト
 	 * @name getByPath
 	 * @function
 	 * @memberOf h5.u.obj
@@ -1182,7 +1220,7 @@
 	 * 	});
 	 * </pre>
 	 *
-	 * @return {Function} インターセプタ
+	 * @returns {Function} インターセプタ
 	 * @name createInterceptor
 	 * @function
 	 * @memberOf h5.u
@@ -1206,6 +1244,511 @@
 			return ret;
 		};
 	}
+
+	/**
+	 * ObservableArray(オブザーバブルアレイ)とは、配列操作の監視可能な配列です。
+	 * <p>
+	 * h5.u.obj.createObservableArray()で作成します。
+	 * </p>
+	 * <p>
+	 * 通常の配列と同様の操作に加え、要素の追加、削除、変更についての監視ができます。
+	 * </p>
+	 * <p>
+	 * Arrayクラスの持つメソッド(concat, join, pop, push, reverse, shift, slice, sort, splice, unshift,
+	 * indexOf, lastIndexOf, every, filter, forEach, map, some, reduce, reduceRight)が使えます。
+	 * </p>
+	 * <p>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * ObservableArrayは、 配列操作メソッド呼び出し時に'observeBefore'、配列操作メソッド実行後に'observe'イベントが発火します。
+	 * </p>
+	 *
+	 * @class
+	 * @name ObservableArray
+	 */
+	function ObservableArray() {
+		this.length = 0;
+	}
+
+	$.extend(ObservableArray.prototype, EventDispatcher.prototype,
+			{
+				/**
+				 * ObservableArrayまたは配列を２つ引数にとり、中身が同じかどうかを比較します。
+				 *
+				 * @memberOf ObservableArray
+				 * @param {ObservableArray|Array} ary1
+				 * @param {ObservableArray|Array} ary2
+				 * @returns {Boolean} 配列の中身が同じかどうか
+				 */
+				equals: function(ary) {
+					// aryが配列でもObservableArrayでもないならfalse
+					if (!($.isArray(ary) || h5.u.obj.isObservableArray(ary))
+							|| ary.length !== this.length) {
+						return false;
+					}
+
+					// 中身の比較
+					for ( var i = 0, l = ary.length; i < l; i++) {
+						if (ary[i] !== this[i]) {
+							return false;
+						}
+					}
+					if (i === l) {
+						// 中身が全て同じならreturn true
+						return true;
+					}
+					return false;
+				},
+
+				/**
+				 * 指定された配列の要素をこのObservableArrayにシャローコピーします。
+				 * <p>
+				 * 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
+				 * </p>
+				 *
+				 * @memberOf ObservableArray
+				 * @param {Array} src コピー元の配列
+				 * @returns {Array} 削除前の要素を持った配列
+				 */
+				copyFrom: function(src) {
+					var evBefore = {
+						type: EVENT_TYPE_OBSERVE_BEFORE,
+						method: METHOD_NAME_COPY_FROM,
+						args: src,
+						isDestructive: true
+					};
+
+					if (!this.dispatchEvent(evBefore)) {
+						var ret = Array.prototype.slice.call(this, 0);
+
+						var args = src.slice(0);
+						args.unshift(0, this.length);
+						Array.prototype.splice.apply(this, args);
+
+						var evAfter = {
+							type: EVENT_TYPE_OBSERVE,
+							method: METHOD_NAME_COPY_FROM,
+							args: arguments,
+							returnValue: ret,
+							isDestructive: true
+						};
+						this.dispatchEvent(evAfter);
+						return ret;
+					}
+				}
+			});
+
+	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
+			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
+			'some', 'reduce', 'reduceRight'];
+	// 破壊的(副作用のある)メソッド
+	var destructiveMethods = ['sort', 'reverse', 'pop', 'shift', 'unshift', 'push', 'splice'];
+
+	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
+		ObservableArray.prototype[arrayMethods[i]] = (function(method) {
+			//TODO fallback実装の提供
+			return function() {
+				var isDestructive = $.inArray(method, destructiveMethods) !== -1;
+				var evBefore = {
+					type: EVENT_TYPE_OBSERVE_BEFORE,
+					method: method,
+					args: arguments,
+					isDestructive: isDestructive
+				};
+
+				if (!this.dispatchEvent(evBefore)) {
+					//preventDefault()が呼ばれなければ実際に処理を行う
+					var ret = Array.prototype[method].apply(this, arguments);
+					var evAfter = {
+						type: EVENT_TYPE_OBSERVE,
+						method: method,
+						args: arguments,
+						returnValue: ret,
+						isDestructive: isDestructive
+					};
+					this.dispatchEvent(evAfter);
+					return ret;
+				}
+			};
+		})(arrayMethods[i]);
+	}
+
+	/**
+	 * ObservableArrayを作成します。
+	 *
+	 * @memberOf h5.u.obj
+	 * @returns {ObservableArray} ObservableArrayインスタンス
+	 */
+	function createObservableArray() {
+		return new ObservableArray();
+	}
+
+	/**
+	 * ObservableArrayかどうかを判定します。
+	 *
+	 * @memberOf h5.u.obj
+	 * @returns {Boolean} ObservableArrayかどうか
+	 */
+	function isObservableArray(obj) {
+		if (obj && obj.constructor === ObservableArray) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * ObservableItem(オブザーバブルアアイテム)とは、プロパティ操作の監視可能なオブジェクトです。
+	 * <p>
+	 * <a href="h5.u.obj.html#createObservableItem">h5.u.obj.createObservableItem()</a>で作成します。
+	 * </p>
+	 * <p>
+	 * <a href="DataItem.html">データアイテム</a>と同様、get/setで値の読み書きを行います。
+	 * </p>
+	 * <p>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * ObservableItemは、アイテムが持つ値に変更があった場合に'change'イベントが発火します。
+	 * </p>
+	 *
+	 * @class
+	 * @name ObservableItem
+	 */
+	/**
+	 * (コンストラクタは公開していないので、JSDocに@paramが載らないようにしています。)
+	 *
+	 * @private
+	 * @param {Object} schema schemaオブジェクト。データモデルディスクリプタのスキーマと同様のスキーマオブジェクトを指定します。ただしidの指定は不要です。
+	 * @param {Object} itemValueCheckFuncs データモデルのスキーマに適合するかどうかをチェックする関数。キーがプロパティ名で、値がチェック関数の配列
+	 */
+	function ObservableItem(schema, itemValueCheckFuncs) {
+		// 実プロパティと依存プロパティ、配列プロパティを列挙
+		var realProps = [];
+		var dependProps = [];
+		var aryProps = [];
+		for ( var p in schema) {
+			if (schema[p] && schema[p].depend) {
+				dependProps.push(p);
+			} else {
+				realProps.push(p);
+			}
+			if (schema[p] && schema[p].type && schema[p].type.indexOf('[]') !== -1) {
+				aryProps.push(p);
+			}
+		}
+
+		/**
+		 * 値チェックに必要な情報を持つオブジェクト
+		 * <p>
+		 * データアイテムではモデルに持たせていましたが、ObservableItemにはモデルはないので、必要な情報を_contextプロパティに持ちます
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf ObservableItem
+		 * @type Object
+		 */
+		this._context = {
+
+			/**
+			 * プロパティの依存関係マップ
+			 *
+			 * @private
+			 * @type Object
+			 */
+			dependencyMap: createDependencyMap(schema),
+
+			/**
+			 * モデルが持つ依存プロパティ
+			 *
+			 * @private
+			 * @type Array
+			 */
+			dependProps: dependProps,
+
+			/**
+			 * モデルが持つ実プロパティ(依存しないプロパティ)
+			 *
+			 * @private
+			 * @type Array
+			 * @memberOf DataModel
+			 */
+			realProps: realProps,
+
+			/**
+			 * ObservableArrayのプロパティ
+			 *
+			 * @private
+			 * @type Array
+			 */
+			aryProps: aryProps,
+
+			/**
+			 * プロパティの型・制約チェック関数<br>
+			 * プロパティ名をキー、値としてチェック関数を持つ
+			 *
+			 * @private
+			 * @type Object
+			 */
+			itemValueCheckFuncs: itemValueCheckFuncs
+		};
+
+		/**
+		 * 値を保持するオブジェクト
+		 *
+		 * @private
+		 * @memberOf ObservableItem
+		 * @type Object
+		 */
+		this._values = {};
+
+		// this._valuesに値(defaultValue)のセット
+		for ( var p in schema) {
+			if (schema[p] && schema[p].type && schema[p].type.indexOf('[]') !== -1) {
+				this._values[p] = h5.u.obj.createObservableArray();
+
+				if (schema[p].hasOwnProperty('defaultValue')) {
+					this._values[p].copyFrom(schema[p].defaultValue);
+				}
+				continue;
+			}
+			if (schema[p] && schema[p].hasOwnProperty('defaultValue')) {
+				this._values[p] = schema[p].defaultValue;
+				continue;
+			}
+			this._values[p] = null;
+		}
+
+		//-----------------------------------------------------------------------
+		// 配列プロパティについて、イベント管理用のリスナをaddEventListenerする
+		//-----------------------------------------------------------------------
+
+		// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
+		var noAddMethods = ['sort', 'reverse', 'pop'];
+
+		var item = this;
+
+		for ( var i = 0, l = aryProps.length; i < l; i++) {
+			var p = aryProps[i];
+			var obsAry = this._values[p];
+			(function(propName, observableArray) {
+				var oldValue; // プロパティのoldValue
+				function observeBeforeListener(event) {
+					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+					// set内で呼ばれたcopyFromなら何もしない
+					// (checkもevent上げもsetでやっているため)
+					if (!event.isDestructive || item._context.isInSet) {
+						return;
+					}
+
+					var args = argsToArray(event.args);
+
+					var checkFlag = $.inArray(event.method, noAddMethods) === -1;
+
+					if (event.method === 'splice') {
+						if (args.length <= 2) {
+							// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+							checkFlag = false;
+						}
+						checkFlag = false;
+						args.shift();
+						args.shift();
+					}
+
+					if (checkFlag) {
+						var validateResult = itemValueCheckFuncs[propName](args);
+						if (validateResult.length > 0) {
+							throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+						}
+					}
+
+					//oldValueを保存
+					oldValue = item._values[propName].slice(0);
+				}
+
+				function observeListener(event) {
+					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+					// set内で呼ばれたcopyFromなら何もしない(item._context.isInSetにフラグを立てている)
+					if (!event.isDestructive || item._context.isInSet) {
+						return;
+					}
+
+					// 配列の値が変化していないなら何もしない
+					if (observableArray.equals(oldValue)) {
+						return;
+					}
+
+
+					// changeイベントオブジェクトの作成
+					var ev = {
+						type: 'change',
+						target: item,
+						props: {
+							oldValue: oldValue,
+							newValue: observableArray
+						}
+					};
+
+					// newValueは現在の値、oldValueはmanager._oldValueLogsの中なので、ここでpropsを入れる必要ない
+					//					ev.props[propName] = {};
+
+					// TODO ObsItemのイベントを上げる
+					// setにオブジェクトで渡されて、更新される場合があるので、isUpdateSessionとかで判断する必要がある
+					item.dispatchEvent(ev);
+				}
+				observableArray.addEventListener('observeBefore', observeBeforeListener);
+				observableArray.addEventListener('observe', observeListener);
+			})(p, obsAry);
+		}
+	}
+
+	$.extend(ObservableItem.prototype, EventDispatcher.prototype, {
+		/**
+		 * 値をセットします。
+		 * <p>
+		 * <a href="DataItem.html#set">DataItem#set()</a>と同様に値をセットします。
+		 * </p>
+		 *
+		 * @memberOf ObservableItem
+		 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
+		 */
+		set: function(/* var_args */) {
+			var setObj = {};
+			if (arguments.length === 2) {
+				setObj[arguments[0]] = arguments[1];
+			} else {
+				setObj = arguments[0];
+			}
+
+			// item._context.isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
+			this._context.isInSet = true;
+			var props = {};
+
+			// 先に値のチェックを行う
+			for ( var p in setObj) {
+				if ($.inArray(p, this._context.realProps) === -1) {
+					if ($.inArray(p, this._context.dependProps) !== -1) {
+						// 依存プロパティにセットはできないのでエラー
+						throwFwError(ERR_CODE_DEPEND_PROPERTY, p);
+					}
+					// スキーマに定義されていないプロパティにセットはできないのでエラー
+					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, p);
+				}
+				//値のチェック
+				var validateResult = this._context.itemValueCheckFuncs[p](setObj[p]);
+				if (validateResult.length) {
+					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
+				}
+			}
+
+			// 値に変更があればセット
+			var isChanged = false;
+			for ( var p in setObj) {
+				var v = setObj[p];
+				var oldValue = this._values[p];
+
+				// 値に変更があったかどうかチェック
+				if ($.inArray(p, this._context.aryProps) !== -1) {
+					if (this._values[p].equals(v)) {
+						// 変更なし
+						continue;
+					}
+					oldValue = oldValue.slice(0);
+					this._values[p].copyFrom(v);
+				} else {
+					if (v === this._values[p]) {
+						// 変更なし
+						continue;
+					}
+					this._values[p] = v;
+				}
+
+				props[p] = {
+					oldValue: oldValue,
+					newValue: this._values[p]
+				};
+
+				isChanged = true;
+			}
+			this._context.isInSet = false;
+
+			// 変更があればイベントの発火
+			if (isChanged) {
+				this.dispatchEvent({
+					target: this,
+					type: 'change',
+					props: props
+				});
+			}
+		},
+		/**
+		 * 値を取得します。
+		 * <p>
+		 * <a href="DataItem.html#get">DataItem#get()</a>と同様です。
+		 * </p>
+		 *
+		 * @memberOf ObservableItem
+		 * @param {String} [key] プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
+		 * @returns {Any} 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
+		 */
+		get: function(p) {
+			if (arguments.length === 0) {
+				return $.extend({}, this._values);
+			}
+			return this._values[p];
+		}
+	});
+
+	/**
+	 * ObservableItemを作成します。
+	 * <p>
+	 * 引数にはスキーマオブジェクトを指定します。スキーマオブジェクトとは、ディスクリプタオブジェクトのschemaプロパティに指定するオブジェクトのことです。
+	 * </p>
+	 * <p>
+	 * ディスクリプタオブジェクトについては<a
+	 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
+	 * </p>
+	 *
+	 * @memberOf h5.u.obj
+	 * @param {Object} schema スキーマオブジェクト
+	 * @returns {ObservableItem} ObservableItemインスタンス
+	 */
+	function createObservableItem(schema) {
+		if (typeof schema !== 'object') {
+			// schemaがオブジェクトじゃないならエラー
+			throwFwError(ERR_CODE_REQUIRE_SCHEMA);
+		}
+
+		var errorReason = validateSchema(schema, null, true, true);
+		if (errorReason.length > 0) {
+			// schemaのエラー
+			throwFwError(ERR_CODE_INVALID_SCHEMA, null, errorReason);
+		}
+
+		var itemValueCheckFuncs = createCheckValueByDescriptor(schema);
+
+		// defaultValueのチェック
+		var defaultValueErrorReason = validateDefaultValue(schema, itemValueCheckFuncs, true);
+
+		if (defaultValueErrorReason.length > 0) {
+			// defaultValueのエラー
+			throwFwError(ERR_CODE_INVALID_SCHEMA, null, defaultValueErrorReason);
+		}
+
+		return new ObservableItem(schema, itemValueCheckFuncs);
+	}
+
+	/**
+	 * ObserevableItemかどうかを判定します。
+	 *
+	 * @memberOf h5.u.obj
+	 * @returns {Boolean} ObservableItemかどうか
+	 */
+	function isObservableItem(obj) {
+		if (obj instanceof ObservableItem) {
+			return true;
+		}
+		return false;
+	}
+
 
 	// =============================
 	// Expose to window
@@ -1240,7 +1783,10 @@
 		deserialize: deserialize,
 		isJQueryObject: isJQueryObject,
 		argsToArray: argsToArray,
-		getByPath: getByPath
+		getByPath: getByPath,
+		createObservableArray: createObservableArray,
+		createObservableItem: createObservableItem,
+		isObservableArray: isObservableArray,
+		isObservableItem: isObservableItem
 	});
-
 })();

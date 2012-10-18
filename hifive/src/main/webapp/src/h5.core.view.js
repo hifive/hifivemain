@@ -62,6 +62,27 @@
 	 * テンプレートに渡すパラメータに必要なプロパティが設定されていない時に発生するエラー
 	 */
 	var ERR_CODE_TEMPLATE_PROPATY_UNDEFINED = 7006;
+
+	/**
+	 * bindに指定したtargetがDOM要素(又は有効なセレクタ、jQueryオブジェクトでない)ならエラー
+	 */
+	var ERR_CODE_BIND_INVALID_TARGET = 7007;
+
+	/**
+	 * bindに指定したtargetが表すDOM要素が存在しないならエラー
+	 */
+	var ERR_CODE_BIND_TARGET_NO_EXIST = 7007;
+
+	/**
+	 * bindに指定したtargetが表すDOM要素が複数あるならエラー
+	 */
+	var ERR_CODE_TOO_MANY_TARGETS = 7008;
+
+	/**
+	 * bindに指定したcontextがオブジェクトでない
+	 */
+	var ERR_CODE_BIND_CONTEXT_INVALID = 7009;
+
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
@@ -73,6 +94,10 @@
 	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
+	errMsgMap[ERR_CODE_BIND_INVALID_TARGET] = 'bindの引数に指定されたバインド先の要素の指定が不正です。有効なDOMオブジェクト、セレクタ、jQueryオブジェクトのいずれかを指定してください。';
+	errMsgMap[ERR_CODE_BIND_TARGET_NO_EXIST] = 'bindの引数に指定されたバインド先の要素の指定が存在しません。';
+	errMsgMap[ERR_CODE_TOO_MANY_TARGETS] = 'bindの引数に指定されたバインド先の要素が2つ以上存在します。バインド対象は1つのみにしてください。';
+	errMsgMap[ERR_CODE_BIND_CONTEXT_INVALID] = 'bindの引数に指定されたバインドオブジェクトが不正です。オブジェクト、またはデータアイテム、ObservableItemを指定してください。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -438,6 +463,7 @@
 		return h5.u.obj.isJQueryObject(obj) ? obj : $(obj);
 	}
 
+
 	// =========================================================================
 	//
 	// Body
@@ -660,7 +686,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素 (jQueryオブジェクト)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		update: function(element, templateId, param) {
 			return getJQueryObj(element).html(this.get(templateId, param));
@@ -679,7 +705,7 @@
 		 * @param {Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		append: function(element, templateId, param) {
 			return getJQueryObj(element).append(this.get(templateId, param));
@@ -698,7 +724,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素 (jQueryオブジェクト)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		prepend: function(element, templateId, param) {
 			return getJQueryObj(element).prepend(this.get(templateId, param));
@@ -761,6 +787,55 @@
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				delete this.__cachedTemplates[templateIdsArray[i]];
 			}
+		},
+
+		/**
+		 * データバインドを開始します。
+		 *
+		 * @param {String|Element|Element[]|jQuery} element コメントビュー疑似セレクタ、またはDOM要素(セレクタ文字列, DOM要素,
+		 *            DOM要素の配列, jQueryオブジェクト)。コメントビューを指定する場合は、「h5view#xxx」（xxxはid）と記述してください
+		 *            （id属性がxxxになっているh5viewタグを指定する、ような記法になっています）。
+		 *            DOM要素の配列を指定する場合、全ての要素ノードの親ノードが同じでなければいけません。
+		 * @param {Object} context データコンテキストオブジェクト
+		 * @memberOf View
+		 * @name bind
+		 * @function
+		 */
+		bind: function(element, context) {
+			var targetNodes = null;
+
+			if (element == null) {
+				throwFwError(ERR_CODE_BIND_INVALID_TARGET);
+			}
+
+			// targetのチェック
+			if ($.isArray(element)) {
+				//配列はDOMノードの配列であることを仮定
+				targetNodes = element;
+			} else {
+				//targetがDOM、セレクタ文字列の場合をまとめて扱う
+				//インラインテンプレートが指定された場合はコントローラ側のview.bindが予めノード化しているので
+				//ここに到達した時にはノードになっている
+				var $element = $(element);
+
+				if ($element.length === 0) {
+					// 要素がない、もしくは見つからない場合はエラー
+					throwFwError(ERR_CODE_BIND_TARGET_NO_EXIST);
+				}
+
+				//bind()はルートノードが複数であることをサポートするので、lengthは1には限定しない
+				//ただし、これはappend, prepend等の動作を考慮したものである。
+				//つまり、全ての要素は同じノードを親として持っていることを前提としている。
+				//厳密にはチェックすべきだが、実際に問題になることはほとんどないだろうと考え行っていない。
+				targetNodes = $element.toArray();
+			}
+
+			// contextのチェック
+			if (typeof context !== 'object') {
+				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
+			}
+
+			h5internal.view.createBinding(targetNodes, context);
 		}
 	});
 

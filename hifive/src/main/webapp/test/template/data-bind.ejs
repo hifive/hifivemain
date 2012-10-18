@@ -1,0 +1,197 @@
+<script type="text/ejs" id="simple">
+	<div id="dataBindTest">
+		<span data-h5-bind="test">バインド前</span>
+	</div>
+</script>
+
+<script type="text/ejs" id="bindTest1">
+	<div id="dataBindTest">
+		<span data-h5-bind="test"></span>
+		<p data-h5-bind="test2"></p>
+		<div>
+			<pre data-h5-bind="test2"></pre>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="bindSpan">
+	<span data-h5-bind="test"></span>
+</script>
+
+<script type="text/ejs" id="variableType">
+	<div id="dataBindTest">
+		<span data-h5-bind="dataNull"></span>
+		<span data-h5-bind="dataUndef"></span>
+		<span data-h5-bind="dataStr"></span>
+		<span data-h5-bind="dataNum"></span>
+		<span data-h5-bind="dataNaN"></span>
+		<span data-h5-bind="dataInf"></span>
+		<span data-h5-bind="dataMInf"></span>
+		<span data-h5-bind="dataAry"></span>
+		<span data-h5-bind="dataObj"></span>
+		<span data-h5-bind="dataFunc"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="objectNest">
+	<div id="dataBindTest">
+		<span data-h5-bind="test">バインド無し</span>
+		<span data-h5-bind="test2">バインド無し</span>
+		<div data-h5-context="obj">
+			<span data-h5-bind="test">バインド無し</span>
+			<span data-h5-bind="test2">バインド無し</span>
+			<div data-h5-context="obj">
+				<span data-h5-bind="test">バインド無し</span>
+				<span data-h5-bind="test2">バインド無し</span>
+			</div>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="loopContext1">
+	<div id="dataBindTest">
+		<ul data-h5-loop-context="items">
+			<li data-h5-bind="test">
+		</ul>
+	</div>
+</script>
+
+<script type="text/ejs" id="loopContext2">
+	<div id="dataBindTest">
+		<ul data-h5-loop-context="items">
+			<li data-h5-bind="test"></li>
+			<li>
+				<ul data-h5-loop-context="ary">
+					<li data-h5-bind="test"></li>
+				</ul>
+			</li>
+		</ul>
+	</div>"
+</script>
+
+<script type="text/ejs" id="itemBind1">
+	<div id="dataBindTest">
+		<span data-h5-bind="str"></span>
+		<span data-h5-bind="num"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="itemBind2">
+	<div id="dataBindTest">
+		<div data-h5-loop-context="ary">
+			<span data-h5-bind="test"></span>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="itemBind3">
+	<div id="dataBindTest">
+		<span data-h5-bind="str"></span>
+		<span data-h5-bind="num"></span>
+		<div data-h5-context="any">
+			<span data-h5-bind="str"></span>
+			<span data-h5-bind="num"></span>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="itemBind4">
+	<div id="dataBindTest">
+		<div data-h5-loop-context="any">
+			<span data-h5-bind="test"></span>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="itemBind5">
+	<div id="dataBindTest">
+		<span data-h5-bind="str"></span>
+		<span data-h5-bind="num"></span>
+		<div data-h5-context="obj">
+			<span data-h5-bind="a"></span>
+		</div>
+		<div data-h5-context="item">
+			<span data-h5-bind="str"></span>
+			<span data-h5-bind="num"></span>
+		</div>
+		<div data-h5-loop-context="ary">
+			<span data-h5-bind="a"></span>
+		</div>
+		<div data-h5-loop-context="oAry">
+			<span data-h5-bind="a"></span>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="id">
+	<div id="dataBindTest">
+		<span data-h5-bind="attr(id):id">before</span>
+	</div>
+</script>
+
+<script type="text/ejs" id="class">
+	<div id="dataBindTest">
+		<span class="testClass" data-h5-bind="class:cls">test</span>
+	</div>
+</script>
+
+<script type="text/ejs" id="style">
+	<div id="dataBindTest">
+		<span data-h5-bind="style(margin-left):marginLeft" style="color: red;margin-left:22px"></span>
+		<span data-h5-bind="style(margin):margin" style="color: red;margin-left:22px"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="text">
+	<div id="dataBindTest">
+		<span data-h5-bind="text:test"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="html">
+	<div id="dataBindTest">
+		<span data-h5-bind="html:test"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="multiple">
+	<div id="dataBindTest">
+		<span data-h5-bind="html:v5;text:v1;v2;attr(id):v3;style(color):v4;class:v1"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="ejsBind">
+	<div id="dataBindTest">
+		<span data-h5-bind="[%= value %]"></span>
+		<p data-h5-bind="attr(id):ejs" id="[%= value  %]"></p>
+	</div>
+</script>
+
+<script type="text/ejs" id="comment1">
+	<div id="dataBindTest">
+		<!--{h5view id="item"} <span data-h5-bind="text;class:cls"></span> -->
+	</div>
+</script>
+
+<script type="text/ejs" id="comment2">
+	<div id="dataBindTest">
+		<!--{h5view id="item"}
+			<span data-h5-bind="v1"></span>
+			<span data-h5-bind="v2"></span>
+			<div data-h5-context="item">
+				<span data-h5-bind="v1"></span>
+				<span data-h5-bind="v2"></span>
+			</div>
+		 -->
+	</div>
+</script>
+
+<script type="text/ejs" id="comment3">
+	<div id="dataBindTest">
+		<!--{h5view id="item"}
+			<ul data-h5-loop-context="items">
+				<li data-h5-bind="test">
+			</ul>
+		-->
+	</div>
+</script>
