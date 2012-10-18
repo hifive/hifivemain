@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ $(function() {
 
 	/**
 	 * TestLogicクラス
-	 * 
+	 *
 	 * @class
 	 * @name TestLogic
 	 */
@@ -29,7 +29,7 @@ $(function() {
 
 	/**
 	 * 通常のメソッド
-	 * 
+	 *
 	 * @memberOf TestLogic
 	 */
 	TestLogic.prototype.method1 = function() {
@@ -38,7 +38,7 @@ $(function() {
 
 	/**
 	 * プライベートメソッド
-	 * 
+	 *
 	 * @memberOf TestLogic
 	 */
 	TestLogic.prototype._privateMethod1 = function() {
@@ -53,7 +53,7 @@ $(function() {
 
 	/**
 	 * コントローラのドキュメントが正常に出力されるか
-	 * 
+	 *
 	 * @name com.htmlhifive.XxxController
 	 * @namespace
 	 */
@@ -61,35 +61,35 @@ $(function() {
 
 		/**
 		 * コントローラ名
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		__name: 'com.htmlhifive.XxxController',
 
 		/**
 		 * テンプレート
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		__template: ['t1.ejs,', 't2.ejs'],
 
 		/**
 		 * inheritHandler
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		__inheritHandlers: [{}, {}],
 
 		/**
 		 * プロパティ1
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		prop1: 1,
 
 		/**
 		 * 通常のメソッド
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		hoge: function() {
@@ -98,7 +98,7 @@ $(function() {
 
 		/**
 		 * 通常のメソッド(パス間違い)
-		 * 
+		 *
 		 * @memberOf jp.nssol.XxxController
 		 */
 		fuga: function() {
@@ -107,7 +107,7 @@ $(function() {
 
 		/**
 		 * イベントハンドラ(クラスセレクタ)
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		"div.fuga click": function() {
@@ -116,7 +116,7 @@ $(function() {
 
 		/**
 		 * イベントハンドラ(id指定)
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		"#foo click": function() {
@@ -125,7 +125,7 @@ $(function() {
 
 		/**
 		 * シングルクォーテーションでドキュメントが出力されるか
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		'#bar click': function() {
@@ -134,7 +134,7 @@ $(function() {
 
 		/**
 		 * イベントハンドラ(コントローラ外の要素 ＋ bind)
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		"{document} [scroll]": function() {
@@ -145,7 +145,7 @@ $(function() {
 
 	/**
 	 * コントローラのドキュメントが正常に出力されるか(パッケージ違いの同名コントローラ)
-	 * 
+	 *
 	 * @name XxxController
 	 * @namespace
 	 * @memberOf com.htmlhifive.piyo
@@ -154,14 +154,14 @@ $(function() {
 
 		/**
 		 * コントローラ名
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.piyo.XxxController
 		 */
 		__name: 'com.htmlhifive.piyo.XxxController',
 
 		/**
 		 * 通常のメソッド(com.htmlhifive.piyo.XxxController)
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.piyo.XxxController
 		 */
 		hoge: function() {
@@ -170,7 +170,7 @@ $(function() {
 
 		/**
 		 * 他のパスのコントローラをmemberOfに書くとどうなるか
-		 * 
+		 *
 		 * @memberOf com.htmlhifive.XxxController
 		 */
 		piyo: function() {
