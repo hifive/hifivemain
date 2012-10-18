@@ -2798,88 +2798,90 @@ $(function() {
 
 
 
-	asyncTest('this.indicator() ルート要素にインジケータを表示', function() {
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
+asyncTest('this.indicator() ルート要素にインジケータを表示',
+			function() {
+				var testController = null;
+				var controllerBase = {
+					__name: 'TestController',
 
-			'input[type=button] click': function() {
-				var indicator = this.indicator({
-					message: 'BlockMessageTest'
-				}).show();
+					'input[type=button] click': function() {
+						var indicator = this.indicator({
+							message: 'BlockMessageTest'
+						}).show();
 
-				strictEqual($(indicator.target)
-						.find('.h5-indicator.a.content > .indicator-message').text(),
-						'BlockMessageTest');
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
-						'Indicator#show() インジケータが表示されること');
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'BlockMessageTest');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').css('display'),
-						'block', 'オーバーレイが表示されていること');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
 
-				setTimeout(function() {
-					indicator.hide();
+						setTimeout(function() {
+							indicator.hide();
 
-					setTimeout(function() {
-						start();
-						strictEqual($('.h5-indicator', indicator.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること');
+							setTimeout(function() {
+								start();
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
 
-						testController.unbind();
-					}, 0);
-				}, 0);
-			}
-		};
+								testController.unbind();
+							}, 0);
+						}, 0);
+					}
+				};
 
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
+				testController = h5.core.controller('#controllerTest', controllerBase);
+				testController.readyPromise.done(function() {
+					$('#controllerTest input[type=button]').click();
+				});
+			});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()でグローバルインジケータを表示', 5, function() {
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
+	asyncTest('this.triggerIndicator() triggerIndicator()でスクリーンロックでインジケータを表示', 5,
+			function() {
+				var testController = null;
+				var controllerBase = {
+					__name: 'TestController',
 
-			'input[type=button] click': function() {
-				var indicator = this.triggerIndicator({
-					message: 'BlockMessageTest',
-					percent: 20,
-					block: true
-				}).show();
+					'input[type=button] click': function() {
+						var indicator = this.triggerIndicator({
+							message: 'BlockMessageTest',
+							percent: 20,
+							block: true
+						}).show();
 
-				strictEqual($(indicator.target)
-						.find('.h5-indicator.a.content > .indicator-message').text(),
-						'BlockMessageTest');
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
-						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '20',
-						'Indicator#show() 進捗率が表示されること');
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'BlockMessageTest');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+						strictEqual($(indicator._target).find('.throbber-percent').text(), '20',
+								'Indicator#show() 進捗率が表示されること');
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').css('display'),
-						'block', 'オーバーレイが表示されていること');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
 
-				setTimeout(function() {
-					indicator.hide();
+						setTimeout(function() {
+							indicator.hide();
 
-					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator.target).length, 0,
-								'Indicator#hide() インジケータが除去されていること');
+							setTimeout(function() {
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
 
-						testController.unbind();
+								testController.unbind();
 
-						start();
-					}, 0);
-				}, 0);
-			}
-		};
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
 
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
+				testController = h5.core.controller('#controllerTest', controllerBase);
+				testController.readyPromise.done(function() {
+					$('#controllerTest input[type=button]').click();
+				});
+			});
 
 	asyncTest('this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', function() {
 		$('#controllerTest').append('<div id="childDiv"></div>');
@@ -2901,22 +2903,22 @@ $(function() {
 			'{rootElement} click': function() {
 				this.triggerIndicator();
 
-				strictEqual($(indicator.target)
-						.find('.h5-indicator.a.content > .indicator-message').text(),
+				strictEqual($(indicator._target).find(
+						'.h5-indicator.a.content > .indicator-message').text(),
 						'indicator testController');
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '30',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '30',
 						'Indicator#show() インジケータが表示されること');
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').css('display'),
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
 
 				setTimeout(function() {
 					indicator.hide();
 
 					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator.target).length, 0,
+						strictEqual($('.h5-indicator', indicator._target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
 						start();
 					}, 0);
@@ -2943,12 +2945,12 @@ $(function() {
 				}
 				var indicator = this.indicator(new NoPlain()).show();
 
-				deepEqual($(indicator.target).find('.h5-indicator.a.content > .indicator-message')
+				deepEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
 						.text(), '', 'オプションは無視されて、メッセージは表示されていないこと。');
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').css('display'),
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
 
 				setTimeout(function() {
@@ -2956,7 +2958,7 @@ $(function() {
 
 					setTimeout(function() {
 						start();
-						strictEqual($('.h5-indicator', indicator.target).length, 0,
+						strictEqual($('.h5-indicator', indicator._target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
 
 						testController.unbind();
@@ -2982,9 +2984,9 @@ $(function() {
 				});
 				indicator2.show();
 
-				strictEqual($(indicator2.target).find('.indicator-message').text(),
+				strictEqual($(indicator2._target).find('.indicator-message').text(),
 						'BlockMessageTest-child');
-				strictEqual($(indicator2.target).find('.h5-indicator.a.overlay').length, 1);
+				strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1);
 
 				var indicator = this.indicator({
 					target: $(this.rootElement).parent(),
@@ -2992,14 +2994,14 @@ $(function() {
 				});
 				indicator.show();
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 2,
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 2,
 						'親コントローラでインジケータを表示しても、子コントローラのインジケータは除去されないこと。');
 
 				setTimeout(function() {
 					indicator.hide();
 
 					setTimeout(function() {
-						strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 								'Indicator#hide() インジケータが除去されていること');
 
 						that.deferredFunc();
@@ -3014,14 +3016,14 @@ $(function() {
 					promises: df.promise()
 				}).show();
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 2,
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 2,
 						'promiseオブジェクトを渡して、インジケータが表示されること');
 
 				setTimeout(function() {
 					df.resolve();
 
 					setTimeout(function() {
-						strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 								'resolve()が呼ばれると、インジケータが非表示になること');
 						start();
 					}, 0);
@@ -3049,9 +3051,9 @@ $(function() {
 					target: '#child'
 				}).show();
 
-				deepEqual($(indicator.target).find('.h5-indicator.a.content').length, 0,
+				deepEqual($(indicator._target).find('.h5-indicator.a.content').length, 0,
 						'インジケータが表示されていないこと');
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 0,
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 0,
 						'Indicator#show() インジケータ(オーバーレイ)が表示されていないこと。');
 
 				setTimeout(function() {
@@ -3081,37 +3083,37 @@ $(function() {
 				}).show();
 
 
-				strictEqual($(indicator.target).find('.indicator-message').text(),
+				strictEqual($(indicator._target).find('.indicator-message').text(),
 						'BlockMessageTest');
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '10',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '10',
 						'Indicator#show() インジケータが表示されること');
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').css('display'),
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
 				indicator.percent(30);
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '30',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '30',
 						'Indicator#show() インジケータの進捗率表示が30に更新されていること');
 				indicator.percent(100);
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '100',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '100',
 						'Indicator#show() インジケータの進捗率表示が100に更新されていること');
 				indicator.percent(5);
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '5',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
 						'Indicator#show() インジケータの進捗率表示が5に更新されていること');
 				indicator.percent(-1);
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '5',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
 						'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
 				indicator.percent(101);
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '5',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
 						'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
 				indicator.percent(33.3333333);
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '33.3333333',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '33.3333333',
 						'Indicator#show() インジケータの進捗率に小数を指定できること');
 				indicator.hide();
 				var that = this;
 				setTimeout(function() {
-					strictEqual($('.h5-indicator', indicator.target).length, 0,
+					strictEqual($('.h5-indicator', indicator._target).length, 0,
 							'Indicator#hide() インジケータが除去されていること');
 
 					var indicator2 = that.indicator({
@@ -3120,36 +3122,35 @@ $(function() {
 						target: document.body
 					}).show();
 
-					strictEqual($(indicator2.target).find('.indicator-message').text(),
+					strictEqual($(indicator2._target).find('.indicator-message').text(),
 							'BlockMessageTestGrobal');
-					strictEqual($(indicator2.target).find('.h5-indicator.a.overlay').length, 1,
+					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
 							'Indicator#show() インジケータが表示されること');
-					strictEqual($(indicator2.target).find('.throbber-percent').text(), '10',
+					strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
 							'Indicator#show() インジケータの進捗率が表示されること');
-					strictEqual(
-							$(indicator2.target).find('.h5-indicator.a.overlay').css('display'),
-							'block', 'オーバーレイが表示されていること');
+					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
+							.css('display'), 'block', 'オーバーレイが表示されていること');
 					indicator2.percent(30);
-					strictEqual($(indicator2.target).find('.throbber-percent').text(), '30',
+					strictEqual($(indicator2._target).find('.throbber-percent').text(), '30',
 							'Indicator#show() インジケータの進捗率表示が30に更新されていること');
 					indicator2.percent(100);
-					strictEqual($(indicator2.target).find('.throbber-percent').text(), '100',
+					strictEqual($(indicator2._target).find('.throbber-percent').text(), '100',
 							'Indicator#show() インジケータの進捗率表示が100に更新されていること');
 					indicator2.percent(5);
-					strictEqual($(indicator2.target).find('.throbber-percent').text(), '5',
+					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
 							'Indicator#show() インジケータの進捗率表示が5に更新されていること');
 					indicator2.percent(-1);
-					strictEqual($(indicator2.target).find('.throbber-percent').text(), '5',
+					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
 							'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
 					indicator2.percent(101);
-					strictEqual($(indicator2.target).find('.throbber-percent').text(), '5',
+					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
 							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
 					indicator2.percent(33.3333333);
-					strictEqual($(indicator2.target).find('.throbber-percent').text(),
+					strictEqual($(indicator2._target).find('.throbber-percent').text(),
 							'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること');
 					indicator2.hide();
 					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator2.target).length, 0,
+						strictEqual($('.h5-indicator', indicator2._target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
 						testController.readyPromise.done(function() {
 							$('#controllerTest').click();
@@ -3189,44 +3190,44 @@ $(function() {
 					percent: 10
 				}).show();
 
-				strictEqual($(indicator.target).find('.indicator-message').text(),
+				strictEqual($(indicator._target).find('.indicator-message').text(),
 						'BlockMessageTest');
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator.target).find('.throbber-percent').text(), '10',
+				strictEqual($(indicator._target).find('.throbber-percent').text(), '10',
 						'Indicator#show() インジケータが表示されること');
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').css('display'),
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
 
 				indicator.message('changeMessage');
-				strictEqual($(indicator.target).find('.indicator-message').text(), 'changeMessage',
-						'メッセージがに変更されたこと。');
+				strictEqual($(indicator._target).find('.indicator-message').text(),
+						'changeMessage', 'メッセージがに変更されたこと。');
 				indicator.message('  ');
-				strictEqual($(indicator.target).find('.indicator-message').text(), '  ',
+				strictEqual($(indicator._target).find('.indicator-message').text(), '  ',
 						'メッセージが変更されたこと。');
 				indicator.message('');
-				strictEqual($(indicator.target).find('.indicator-message').text(), '',
+				strictEqual($(indicator._target).find('.indicator-message').text(), '',
 						'メッセージが変更されたこと。');
 				indicator.message('abc');
-				strictEqual($(indicator.target).find('.indicator-message').text(), 'abc',
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
 						'メッセージが変更されたこと。');
 				indicator.message();
-				strictEqual($(indicator.target).find('.indicator-message').text(), 'abc',
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
 						'文字列以外ではメッセージは変更されないこと');
 				indicator.message(new String('def'));
-				strictEqual($(indicator.target).find('.indicator-message').text(), 'abc',
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
 						'文字列以外ではメッセージは変更されないこと');
 				indicator.message(null);
-				strictEqual($(indicator.target).find('.indicator-message').text(), 'abc',
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
 						'文字列以外ではメッセージは変更されないこと');
 				indicator.message(undefined);
-				strictEqual($(indicator.target).find('.indicator-message').text(), 'abc',
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
 						'文字列以外ではメッセージは変更されないこと');
 				indicator.hide();
 				var that = this;
 				setTimeout(function() {
-					strictEqual($('.h5-indicator', indicator.target).length, 0,
+					strictEqual($('.h5-indicator', indicator._target).length, 0,
 							'Indicator#hide() インジケータが除去されていること');
 
 					var indicator2 = that.indicator({
@@ -3235,44 +3236,43 @@ $(function() {
 						target: document.body
 					}).show();
 
-					strictEqual($(indicator2.target).find('.indicator-message').text(),
+					strictEqual($(indicator2._target).find('.indicator-message').text(),
 							'BlockMessageTestGrobal');
-					strictEqual($(indicator2.target).find('.h5-indicator.a.overlay').length, 1,
+					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
 							'Indicator#show() インジケータが表示されること');
-					strictEqual($(indicator2.target).find('.throbber-percent').text(), '10',
+					strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
 							'Indicator#show() インジケータが表示されること');
 
-					strictEqual(
-							$(indicator2.target).find('.h5-indicator.a.overlay').css('display'),
-							'block', 'オーバーレイが表示されていること');
+					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
+							.css('display'), 'block', 'オーバーレイが表示されていること');
 
 					indicator2.message('changeMessage');
-					strictEqual($(indicator2.target).find('.indicator-message').text(),
+					strictEqual($(indicator2._target).find('.indicator-message').text(),
 							'changeMessage', 'メッセージがに変更されたこと。');
 					indicator2.message('  ');
-					strictEqual($(indicator2.target).find('.indicator-message').text(), '  ',
+					strictEqual($(indicator2._target).find('.indicator-message').text(), '  ',
 							'メッセージが変更されたこと。');
 					indicator2.message('');
-					strictEqual($(indicator2.target).find('.indicator-message').text(), '',
+					strictEqual($(indicator2._target).find('.indicator-message').text(), '',
 							'メッセージが変更されたこと。');
 					indicator2.message('abc');
-					strictEqual($(indicator2.target).find('.indicator-message').text(), 'abc',
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
 							'メッセージが変更されたこと。');
 					indicator2.message();
-					strictEqual($(indicator2.target).find('.indicator-message').text(), 'abc',
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
 							'文字列以外ではメッセージは変更されないこと');
 					indicator2.message(new String('def'));
-					strictEqual($(indicator2.target).find('.indicator-message').text(), 'abc',
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
 							'文字列以外ではメッセージは変更されないこと');
 					indicator2.message(null);
-					strictEqual($(indicator2.target).find('.indicator-message').text(), 'abc',
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
 							'文字列以外ではメッセージは変更されないこと');
 					indicator2.message(undefined);
-					strictEqual($(indicator2.target).find('.indicator-message').text(), 'abc',
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
 							'文字列以外ではメッセージは変更されないこと');
 					indicator2.hide();
 					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator.target).length, 0,
+						strictEqual($('.h5-indicator', indicator._target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
 
 						testController.unbind();
@@ -3306,18 +3306,18 @@ $(function() {
 					promises: [df.promise(), df2.promise()]
 				}).show();
 
-				strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'promiseオブジェクトを渡して、インジケータが表示されること');
 
 				setTimeout(function() {
-					strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 							'resolve()していないので、インジケータが表示されること');
 
 					df.resolve();
 				}, 100);
 
 				setTimeout(function() {
-					strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 1,
+					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 							'resolve()していないので、インジケータが表示されること');
 
 					df2.resolve();
@@ -3336,7 +3336,7 @@ $(function() {
 
 		dfd.promise().done(
 				function() {
-					strictEqual($(indicator.target).find('.h5-indicator.a.overlay').length, 0,
+					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 0,
 							'全てのresolve()が呼ばれたら、インジケータが非表示になること');
 
 					start();
@@ -3353,15 +3353,20 @@ $(function() {
 					message: 'テストテストテスト'
 				}).show();
 
-				setTimeout(function() {
-					strictEqual($('#controllerTest > .hoge').children('.h5-indicator.a.content').length, 2, '指定したセレクタで複数の要素にマッチした場合は両方にインジケータが表示されること');
-					indicator.hide();
+				setTimeout(
+						function() {
+							strictEqual($('#controllerTest > .hoge').children(
+									'.h5-indicator.a.content').length, 2,
+									'指定したセレクタで複数の要素にマッチした場合は両方にインジケータが表示されること');
+							indicator.hide();
 
-					setTimeout(function() {
-						strictEqual($('#controllerTest > .hoge').children('.h5-indicator.a.content').length, 0, 'Indicator#hide() インジケータが除去されていること');
-						start();
-					}, 0);
-				}, 0);
+							setTimeout(function() {
+								strictEqual($('#controllerTest > .hoge').children(
+										'.h5-indicator.a.content').length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+								start();
+							}, 0);
+						}, 0);
 			}
 		};
 
@@ -3389,11 +3394,13 @@ $(function() {
 				}).show();
 
 				setTimeout(function() {
-					strictEqual($('#controllerTest').children('.h5-indicator.a.content').length, 1, '1つの要素に2つ以上のインジケータは表示されないこと');
+					strictEqual($('#controllerTest').children('.h5-indicator.a.content').length, 1,
+							'1つの要素に2つ以上のインジケータは表示されないこと');
 					indicator.hide();
 
 					setTimeout(function() {
-						strictEqual($('#controllerTes').children('.h5-indicator.a.content').length, 0, 'Indicator#hide() インジケータが除去されていること');
+						strictEqual($('#controllerTes').children('.h5-indicator.a.content').length,
+								0, 'Indicator#hide() インジケータが除去されていること');
 						start();
 					}, 0);
 				}, 0);
@@ -3421,6 +3428,8 @@ $(function() {
 
 				var fired = false;
 
+				indicator.show();
+
 				// _handleResizeEvent()はresizeイベント中1度だけ呼ばれるメソッドなので、このメソッドをフックして呼ばれたことを確認する
 				indicator._handleResizeEvent = function() {
 					ok(true, '1回のresizeイベントのハンドラは1度だけ実行されること');
@@ -3428,7 +3437,6 @@ $(function() {
 					start();
 				};
 
-				indicator.show();
 
 				$(window).trigger('resize');
 				if (!fired) {
@@ -3457,21 +3465,21 @@ $(function() {
 				});
 				indicator2.show();
 
-				strictEqual($(indicator2.target).find('.blockUI.a.blockPage > .indicator-message')
+				strictEqual($(indicator2._target).find('.h5-indicator.a.content > .indicator-message')
 						.text(), 'BlockMessageTest2');
-				strictEqual($(indicator2.target).find('.blockUI.blockOverlay').length, 1,
+				strictEqual($(indicator2._target).find('.h5-indicator.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator2.target).find('.throbber-percent').text(), '20',
+				strictEqual($(indicator2._target).find('.throbber-percent').text(), '20',
 						'Indicator#show() インジケータが表示されること');
 
-				strictEqual($(indicator2.target).find('.blockUI.blockOverlay').css('display'),
+				strictEqual($(indicator2._target).find('.h5-indicator.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
 
 				setTimeout(function() {
 					indicator2.hide();
 
 					setTimeout(function() {
-						strictEqual($('.blockUI', indicator2.target).length, 0,
+						strictEqual($('.h5-indicator', indicator2._target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
 						testController.unbind();
 						start();
@@ -3500,31 +3508,31 @@ $(function() {
 				});
 				indicator2.show();
 
-				strictEqual($(indicator2.target).find('.blockUI.b.blockPage > .indicator-message')
+				strictEqual($(indicator2._target).find('.h5-indicator.b.content > .indicator-message')
 						.text(), 'BlockMessageTest2');
-				var $percentElem = $(indicator2.target).find(
-						'.blockUI.b.blockPage .throbber-percent');
+				var $percentElem = $(indicator2._target).find(
+						'.h5-indicator.b.content .throbber-percent');
 				strictEqual($percentElem.css('font-size'), '18px',
 						'スロバー:変更したテーマのCSSがインジケータに適用されていること');
 				strictEqual(rgbToHex($percentElem.css('color')), '#c20',
 						'スロバー:変更したテーマのCSSがインジケータに適用されていること');
 
-				var $messageElem = $(indicator2.target).find(
-						'.blockUI.b.blockPage .indicator-message');
+				var $messageElem = $(indicator2._target).find(
+						'.h5-indicator.b.content .indicator-message');
 				strictEqual($messageElem.css('font-size'), '20px',
 						'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
 				strictEqual(rgbToHex($messageElem.css('color')), '#480',
 						'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
 
-				var $blockUIb = $(indicator2.target).find('.blockUI.b');
-				strictEqual(rgbToHex($blockUIb.css('background-color')), '#409',
-						'blockUI本体:変更したテーマのCSSがインジケータに適用されていること');
+				var $indicatorB = $(indicator2._target).find('.h5-indicator.b');
+				strictEqual(rgbToHex($indicatorB.css('background-color')), '#409',
+						'インジケータ本体:変更したテーマのCSSがインジケータに適用されていること');
 
 				setTimeout(function() {
 					indicator2.hide();
 
 					setTimeout(function() {
-						strictEqual($('.blockUI').length, 0, 'Indicator#hide() インジケータが除去されていること');
+						strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
 						testController.unbind();
 						start();
 					}, 0);
