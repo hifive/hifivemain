@@ -1,21 +1,18 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation
+ * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  *
  * hifive
  */
-
 $(function() {
 	// =========================================================================
 	//
@@ -32,7 +29,7 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
-
+	
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.ui;
 
@@ -46,15 +43,17 @@ $(function() {
 	//=============================
 
 	function getWindowWidth() {
+		var elem = $.support.boxModel ? document.documentElement : document.body;
 		// window.innerHeightではスクロールバーの幅も入ってしまうため、clientWidthを使う
-		return document.documentElement.clientWidth;
+		return elem.clientWidth;
 	}
 	function getWindowHeight() {
 		// iPhoneの場合、clientHeightだと下のツールバーまで含まれてしまうので、innerHeightを使う
 		if (h5.env.ua.isiPhone) {
 			return window.innerHeight;
 		}
-		return document.documentElement.clientHeight;
+		var elem = $.support.boxModel ? document.documentElement : document.body;
+		return elem.clientHeight;
 	}
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
 	function checkAllMode(fn, expect, message, s1, s2) {
@@ -83,6 +82,34 @@ $(function() {
 		}
 	}
 
+	var supportsCSS3Property = (function() {
+		var fragment = document.createDocumentFragment();
+		var div = fragment.appendChild(document.createElement('div'));
+		var prefixes = 'Webkit Moz O ms Khtml'.split(' ');
+		var len = prefixes.length;
+
+		return function(propName) {
+			// CSSシンタックス(ハイフン区切りの文字列)をキャメルケースに変換
+			var propCamel = $.camelCase(propName);
+
+			// ベンダープレフィックスなしでサポートしているか判定
+			if (propCamel in div.style) {
+				return true;
+			}
+
+			propCamel = propCamel.charAt(0).toUpperCase() + propCamel.slice(1);
+
+			// ベンダープレフィックスありでサポートしているか判定
+			for ( var i = 0; i < len; i++) {
+				if (prefixes[i] + propCamel in div.style) {
+					return true;
+				}
+			}
+
+			return false;
+		};
+	})();
+	
 	// =========================================================================
 	//
 	// Test Module
@@ -92,11 +119,13 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+
 	module(
 			"isInView",
 			{
 				setup: function() {
-					$(fixture)
+					var $fixture = $(fixture);
+					$fixture
 							.append(
 									'<div id="'
 											+ test1.substring(1)
@@ -104,12 +133,12 @@ $(function() {
 							.append(
 									'<div id="'
 											+ test2.substring(1)
-											+ '" style="position:absolute; top:50px; left:50px; margin:5px; padding:5px; width:20px; height:20px"></div>');
-					$(fixture)[0].style.height = '100px';
-					$(fixture)[0].style.width = '200px';
-					$(fixture)[0].style.padding = '10px';
-					$(fixture)[0].style.margin = '10px';
-					$(fixture)[0].style.border = '10px solid';
+											+ '" style="position:absolute; top:50px; left:50px; margin:5px; padding:5px; border:0px; width:20px; height:20px"></div>');
+					$fixture[0].style.height = '100px';
+					$fixture[0].style.width = '200px';
+					$fixture[0].style.padding = '10px';
+					$fixture[0].style.margin = '10px';
+					$fixture[0].style.border = '10px solid';
 				},
 				teardown: function() {
 					$(test1).remove();
@@ -122,7 +151,6 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
 	test('h5.ui.isInView - 親子関係でない要素については、isInView()の結果がundefinedであること。jQuery', 6, function() {
 		check(deepEqual, undefined, '', test1, test2);
 		check(deepEqual, undefined, '', test2, test1);
@@ -135,12 +163,14 @@ $(function() {
 	asyncTest(
 			'h5.ui.isInView - 親子関係である要素について、親のborderの内側に子のborderの外側が見えていればisInView()の結果がtrue、見えてない場合はfalseであること。引数は、セレクタ、DOM、jQueryオブジェクトのどれでも判定できること。',
 			3 * 4 * 9, function() {
-				var test1Dom = $(test1)[0];
+				var $fixture = $(fixture);
+				var $test1 = $(test1);
+				var test1Dom = $test1[0];
 				function testFunc() {
 					var top,left;
-					// 1 - ( 内側の要素のボーダー(上下(左右)の合計) + 内側の要素のパディング(上下(左右)の合計) + 内側の要素の高さ(幅) +
-					// 外側の要素のボーダー)
-					top = left = -40;
+					// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
+					top = 1 - (test1Dom.offsetHeight + parseInt($test1.css('margin-top')));
+					left = 1 - (test1Dom.offsetWidth + parseInt($test1.css('margin-left')));
 
 					test1Dom.style.top = top + 'px';
 					test1Dom.style.left = left + 'px';
@@ -152,8 +182,9 @@ $(function() {
 					test1Dom.style.left = left - 1 + 'px';
 					checkAllMode(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test1Dom, fixture);
 
-					// 外側の要素の幅 + 外側の要素のボーダー + 外側の要素のパディング(左右) - 内側の要素のマージン - 1
-					left = 214;
+					// 外側の要素の幅 + 内側の要素の左マージン - 1
+					left = $fixture[0].clientWidth - parseInt($test1.css('margin-left')) - 1;
+
 					test1Dom.style.top = top + 'px';
 					test1Dom.style.left = left + 'px';
 					checkAllMode(deepEqual, true, '右上1pxが見えている状態', test1Dom, fixture);
@@ -164,8 +195,9 @@ $(function() {
 					test1Dom.style.left = left + 1 + 'px';
 					checkAllMode(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test1Dom, fixture);
 
-					// 外側の要素の高さ + 外側の要素のボーダー + 外側の要素のパディング(上下) - 内側の要素のマージン - 1
-					top = 114;
+					// 外側の要素の高さ + 内側の要素の左マージン - 1
+					top = $fixture[0].clientHeight - parseInt($test1.css('margin-top')) - 1;
+
 					test1Dom.style.top = top + 'px';
 					test1Dom.style.left = left + 'px';
 					checkAllMode(deepEqual, true, '右下1pxが見えている状態', test1Dom, fixture);
@@ -177,7 +209,7 @@ $(function() {
 					checkAllMode(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test1Dom, fixture);
 
 					// leftを左側に戻す
-					left = -40;
+					left = 1 - (test1Dom.offsetWidth + parseInt($test1.css('margin-left')));
 
 					test1Dom.style.top = top + 'px';
 					test1Dom.style.left = left + 'px';
@@ -206,7 +238,6 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-
 	module(
 			"isInView 2",
 			{
@@ -221,7 +252,7 @@ $(function() {
 							.append(
 									'<div id="'
 											+ test2.substring(1)
-											+ '" style="position:absolute; margin:5px; padding:5px; width:10px; height:20px; border:2px solid red"></div>');
+											+ '" style="position:absolute; top:0px; left:0px; margin:5px; padding:5px; width:10px; height:20px; border:2px solid red"></div>');
 
 					$(test1)[0].style.height = '100px';
 					$(test1)[0].style.width = '200px';
@@ -235,19 +266,19 @@ $(function() {
 					$(fixture)[0].style.width = '';
 				}
 			});
-
+			
 	//=============================
 	// Body
 	//=============================
-
 	asyncTest('h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。', 12, function() {
+		var $test1 = $(test1);
+		var $test2 = $(test2);
 		var test2Dom = $(test2)[0];
 		function testFunc() {
 			var top,left;
-			// 1 - ( 内側の要素のボーダー(上下(左右)の合計) + 内側の要素のパディング(上下(左右)の合計) + 内側の要素の高さ(幅) +
-			// 外側の要素のボーダー)
-			top = -38;
-			left = -28;
+			// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
+			top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
+			left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
 
 			test2Dom.style.top = top + 'px';
 			test2Dom.style.left = left + 'px';
@@ -259,8 +290,9 @@ $(function() {
 			test2Dom.style.left = left - 1 + 'px';
 			check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test2, test1);
 
-			// 外側の要素の幅 + 外側の要素のボーダー + 外側の要素のパディング(左右) - 内側の要素のマージン - 1
-			left = 214;
+			// 外側の要素の幅 + 内側の要素の左マージン - 1
+			left = $test1[0].clientWidth - parseInt($test2.css('margin-left')) - 1;
+
 			test2Dom.style.top = top + 'px';
 			test2Dom.style.left = left + 'px';
 			check(deepEqual, true, '右上1pxが見えている状態', test2, test1);
@@ -271,8 +303,9 @@ $(function() {
 			test2Dom.style.left = left + 1 + 'px';
 			check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test2, test1);
 
-			// 外側の要素の高さ + 外側の要素のボーダー + 外側の要素のパディング(上下) - 内側の要素のマージン - 1
-			top = 114;
+			// 外側の要素の高さ + 内側の要素の左マージン - 1
+			top = $test1[0].clientHeight - parseInt($test2.css('margin-top')) - 1;
+
 			test2Dom.style.top = top + 'px';
 			test2Dom.style.left = left + 'px';
 			check(deepEqual, true, '右下1pxが見えている状態', test2, test1);
@@ -284,7 +317,7 @@ $(function() {
 			check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test2, test1);
 
 			// leftを左側に戻す
-			left = -28;
+			left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
 
 			test2Dom.style.top = top + 'px';
 			test2Dom.style.left = left + 'px';
@@ -309,11 +342,10 @@ $(function() {
 		}
 		waitForDom();
 	});
-
+	
 	//=============================
 	// Definition
 	//=============================
-
 	module(
 			"isInView 3",
 			{
@@ -342,19 +374,19 @@ $(function() {
 					$(fixture)[0].style.width = '';
 				}
 			});
-
+			
 	//=============================
 	// Body
 	//=============================
-
 	asyncTest('h5.ui.isInView - 孫要素に対してもisInView()の結果が正しく取得できること。', 12, function() {
-		var test2Dom = $(test2)[0];
+		var $test1 = $(test1);
+		var $test2 = $(test2);
+		var test2Dom = $test2[0];
 		function testFunc() {
 			var top,left;
-			// 1 - ( 内側の要素のボーダー(上下(左右)の合計) + 内側の要素のパディング(上下(左右)の合計) + 内側の要素の高さ(幅) +
-			// 外側の要素のボーダー)
-			top = -38;
-			left = -28;
+			// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
+			top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
+			left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
 
 			test2Dom.style.top = top + 'px';
 			test2Dom.style.left = left + 'px';
@@ -366,8 +398,9 @@ $(function() {
 			test2Dom.style.left = left - 1 + 'px';
 			check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test2, test1);
 
-			// 外側の要素の幅 + 外側の要素のボーダー + 外側の要素のパディング(左右) - 内側の要素のマージン - 1
-			left = 214;
+			// 外側の要素の幅 + 内側の要素の左マージン - 1
+			left = $test1[0].clientWidth - parseInt($test2.css('margin-left')) - 1;
+
 			test2Dom.style.top = top + 'px';
 			test2Dom.style.left = left + 'px';
 			check(deepEqual, true, '右上1pxが見えている状態', test2, test1);
@@ -378,8 +411,9 @@ $(function() {
 			test2Dom.style.left = left + 1 + 'px';
 			check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test2, test1);
 
-			// 外側の要素の高さ + 外側の要素のボーダー + 外側の要素のパディング(上下) - 内側の要素のマージン - 1
-			top = 114;
+			// 外側の要素の高さ + 内側の要素の左マージン - 1
+			top = $test1[0].clientHeight - parseInt($test2.css('margin-top')) - 1;
+
 			test2Dom.style.top = top + 'px';
 			test2Dom.style.left = left + 'px';
 			check(deepEqual, true, '右下1pxが見えている状態', test2, test1);
@@ -391,7 +425,7 @@ $(function() {
 			check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test2, test1);
 
 			// leftを左側に戻す
-			left = -28;
+			left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
 
 			test2Dom.style.top = top + 'px';
 			test2Dom.style.left = left + 'px';
@@ -420,7 +454,6 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-
 	module(
 			"isInView4",
 			{
@@ -452,21 +485,19 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
 	asyncTest(
 			'(Androidのデフォルトブラウザでテストを行う場合は、「設定」-「ページを全体表示で開く」を無効にして下さい)h5.ui.isInView - 第二引数を省略したときはウィンドウ上に見えているかどうかを判定できること。スクロールした状態でも見えているかどうかで判定されること。',
 			24, function() {
 				setTimeout(function() {
 					var testDom = $(test3)[0];
 					function testFunc(scrollTop, scrollLeft) {
-						var viewTop = scrollTop | 0;
-						var viewLeft = scrollLeft | 0;
+						var viewTop = scrollTop || 0;
+						var viewLeft = scrollLeft || 0;
 
 						var top,left;
-						// 1 - 内側の要素のパディング(上下(左右)の合計) + 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
-						// viewTop(viewLeft)
-						top = viewTop - 35;
-						left = viewLeft - 35;
+						// 1 - 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
+						top = viewTop + (1 - testDom.offsetHeight);
+						left = viewLeft + (1 - testDom.offsetWidth);
 
 						testDom.style.top = top + 'px';
 						testDom.style.left = left + 'px';
@@ -489,7 +520,7 @@ $(function() {
 						check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', testDom);
 						testDom.style.top = top + 'px';
 						testDom.style.left = left + 1 + 'px';
-						check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', testDom);
+						check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', testDom); // TODO
 
 						// windowの高さ - 1
 						top = getWindowHeight() + viewTop - 1;
@@ -505,7 +536,7 @@ $(function() {
 						check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', testDom);
 
 						// leftを左側に戻す
-						left = viewLeft - 35;
+						left = viewLeft + (1 - testDom.offsetWidth);
 
 						testDom.style.top = top + 'px';
 						testDom.style.left = left + 'px';
@@ -536,7 +567,141 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module(
+			"isInView 6",
+			{
+				setup: function() {
+					$(fixture)
+							.append(
+									'<div id="'
+											+ test1.substring(1)
+											+ '" style="position:absolute; top:10px; left:-20px; overflow:hidden"></div>');
 
+					$(test1)
+							.append(
+									'<div id="'
+											+ test2.substring(1)
+											+ '" style="position:absolute; top:0px; left:0px; margin:5px; padding:5px; width:10px; height:20px; border:2px solid red"></div>');
+
+					var domTest1 = $(test1)[0];
+					domTest1.style.height = '100px';
+					domTest1.style.width = '200px';
+					domTest1.style.padding = '10px';
+					domTest1.style.margin = '10px';
+					domTest1.style.border = '10px solid';
+				},
+				teardown: function() {
+					$(test1).remove();
+					$(fixture)[0].style.height = '';
+					$(fixture)[0].style.width = '';
+				}
+			});
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。box-sizing:border-boxを適用された要素でも正しく判定されるか。※CSSのbox-sizing属性がサポートされていないブラウザの場合テストは失敗します。',
+			12, function() {
+				if (!supportsCSS3Property('boxSizing')) {
+					expect(1);
+					ok(false, 'CSSのbox-sizing属性がサポートされていないため、テストは実行されません。');
+					start();
+					return;
+				}
+
+				var $test1 = $(test1);
+				var $test2 = $(test2);
+				var test2Dom = $(test2)[0];
+
+				$test1.css({
+					'box-sizing': 'border-box',
+					'-moz-box-sizing': 'border-box',
+					'-webkit-box-sizing': 'border-box',
+					'-ms-box-sizing': 'border-box',
+					'-o-box-sizing': 'border-box'
+				});
+
+				$test2.css({
+					'box-sizing': 'border-box',
+					'-moz-box-sizing': 'border-box',
+					'-webkit-box-sizing': 'border-box',
+					'-ms-box-sizing': 'border-box',
+					'-o-box-sizing': 'border-box'
+				});
+
+
+				function testFunc() {
+					var top,left;
+					// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
+					top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
+					left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
+
+					test2Dom.style.top = top + 'px';
+					test2Dom.style.left = left + 'px';
+					check(deepEqual, true, '左上1pxが見えている状態', test2, test1);
+					test2Dom.style.top = top - 1 + 'px';
+					test2Dom.style.left = left + 'px';
+					check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', test2, test1);
+					test2Dom.style.top = top + 'px';
+					test2Dom.style.left = left - 1 + 'px';
+					check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test2, test1);
+
+					// 外側の要素の幅 + 内側の要素の左マージン - 1
+					left = $test1[0].clientWidth - parseInt($test2.css('margin-left')) - 1;
+
+					test2Dom.style.top = top + 'px';
+					test2Dom.style.left = left + 'px';
+					check(deepEqual, true, '右上1pxが見えている状態', test2, test1);
+					test2Dom.style.top = top - 1 + 'px';
+					test2Dom.style.left = left + 'px';
+					check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', test2, test1);
+					test2Dom.style.top = top + 'px';
+					test2Dom.style.left = left + 1 + 'px';
+					check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test2, test1);
+
+					// 外側の要素の高さ + 内側の要素の左マージン - 1
+					top = $test1[0].clientHeight - parseInt($test2.css('margin-top')) - 1;
+
+					test2Dom.style.top = top + 'px';
+					test2Dom.style.left = left + 'px';
+					check(deepEqual, true, '右下1pxが見えている状態', test2, test1);
+					test2Dom.style.top = top + 1 + 'px';
+					test2Dom.style.left = left + 'px';
+					check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', test2, test1);
+					test2Dom.style.top = top + 'px';
+					test2Dom.style.left = left + 1 + 'px';
+					check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test2, test1);
+
+					// leftを左側に戻す
+					left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
+
+					test2Dom.style.top = top + 'px';
+					test2Dom.style.left = left + 'px';
+					check(deepEqual, true, '左下1pxが見えている状態', test2, test1);
+					test2Dom.style.top = top + 1 + 'px';
+					test2Dom.style.left = left + 'px';
+					check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', test2, test1);
+					test2Dom.style.top = top + 'px';
+					test2Dom.style.left = left - 1 + 'px';
+					check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', test2, test1);
+
+					start();
+				}
+				function waitForDom(i) {
+					if ($(test2).offset()) {
+						testFunc();
+						return;
+					}
+					setTimeout(function() {
+						waitForDom();
+					}, 0);
+				}
+				waitForDom();
+			});
+
+	//=============================
+	// Definition
+	//=============================
 	module('scrollToTop', {
 		setup: function() {
 			// スクロールできるようにするための要素を追加
@@ -554,8 +719,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
-	asyncTest('(0, 1)の地点にスクロール', 1, function() {
+	asyncTest('h5.ui.scrollToTop (0, 1)の地点にスクロール', 1, function() {
 		// scrollToTopで(0,1)にスクロール
 		h5.ui.scrollToTop();
 
