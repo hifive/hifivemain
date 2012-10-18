@@ -103,7 +103,7 @@ $(function() {
 						value: invalidProps[i]
 					}
 				});
-				var errMsg = JSON ? JSON.stringify(invalidProps[i]) : invalidProps;
+				var errMsg = window.JSON ? JSON.stringify(invalidProps[i]) : invalidProps;
 				manager.dropModel('TestDataModel');
 				ok(false, 'エラーが発生していません。' + errMsg);
 			} catch (e) {
@@ -240,7 +240,7 @@ $(function() {
 	test('データモデルマネージャの作成 名前空間指定が空文字の場合はwindow直下ににマネージャを作成できること', 1, function() {
 		manager = h5.core.data.createManager('TestManager', '');
 		ok(manager === window.TestManager, '名前空間指定が空文字の場合はwindow直下ににマネージャを作成できること');
-		delete window.TestManager;
+		window.TestManager = undefined;
 	});
 
 	test('データモデルマネージャの作成 名前空間指定のない場合は同名のにマネージャを作成できること', 1, function() {
@@ -910,6 +910,8 @@ $(function() {
 	});
 
 	test('enumValueに空配列、nullを含む配列、undefinedを含む配列を指定した場合はエラーが出ること', function() {
+		alert(undefined === undefined);
+		alert($.inArray(undefined, [undefined, 1]));
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
 		var noArrays = [[], [null, 1], [undefined, 2]];
 		var l = noArrays.length;
@@ -7889,7 +7891,7 @@ $(function() {
 			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
 		}
 		try {
-			item.addEventListener(new Event('itemsChange'), function() {});
+			item.addEventListener(document.createEventObject ? document.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8084,7 +8086,7 @@ $(function() {
 			strictEqual(e.code, errCode, e.message);
 		}
 		try {
-			dataModel1.addEventListener(new Event('itemsChange'), function() {});
+			dataModel1.addEventListener(document.createEventObject ? document.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8268,7 +8270,7 @@ $(function() {
 			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
 		}
 		try {
-			manager.addEventListener(new Event('itemsChange'), function() {});
+			manager.addEventListener(document.createEventObject ? document.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8766,7 +8768,7 @@ $(function() {
 		order = [];
 		evObj = {};
 		o = item.get('ary');
-		o.splice(0);
+		o.splice(0, o.length); // IE8未満では第二引数endを省略できないので指定する
 		deepEqual(order, ['item', 'model', 'manager'], 'spliceでイベント上がる');
 
 		o.copyFrom([2, 1, 3]);
