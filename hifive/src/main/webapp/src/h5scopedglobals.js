@@ -755,7 +755,7 @@ function unbox(v) {
 		}
 		return ary;
 	}
-	return v && typeof v === 'object' ? v.valueOf && v.valueOf() : v;
+	return v && typeof v === 'object' && v.valueOf ? v.valueOf() : v;
 }
 
 
