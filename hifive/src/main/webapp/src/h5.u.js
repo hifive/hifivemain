@@ -1273,12 +1273,11 @@
 	$.extend(ObservableArray.prototype, EventDispatcher.prototype,
 			{
 				/**
-				 * ObservableArrayまたは配列を２つ引数にとり、中身が同じかどうかを比較します。
+				 * この配列が、引数で指定された配列と同じ内容か比較します。
 				 *
 				 * @memberOf ObservableArray
-				 * @param {ObservableArray|Array} ary1
-				 * @param {ObservableArray|Array} ary2
-				 * @returns {Boolean} 配列の中身が同じかどうか
+				 * @param {ObservableArray|Array} ary
+				 * @returns {Boolean} 判定結果
 				 */
 				equals: function(ary) {
 					// aryが配列でもObservableArrayでもないならfalse
