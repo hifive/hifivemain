@@ -1497,4 +1497,29 @@ $(function() {
 		});
 	});
 
+	asyncTest('inputタグへのバインドはvalue属性に値が設定されること', function() {
+		view.append($fixture, 'inputtext1');
+
+		var items = {
+			txt1: 2000,
+			txt2: 3000
+		};
+
+		var c = h5.core.controller($fixture, {
+			__name: 'TestController'
+		});
+
+		c.readyPromise.done(function() {
+			c.view.bind('h5view#item', {
+				items: items
+			});
+
+			equal($('#txt1').val(), items.txt1, 'value属性に値が設定されていること。');
+			equal($('#txt2').val(), items.txt2, 'value属性に値が設定されていること。');
+			equal($('#txt1').text(), '', 'テキストノードには何も設定されていないこと。');
+			equal($('#txt2').text(), '', 'テキストノードには何も設定されていないこと。');
+
+			start();
+		});
+	});
 });

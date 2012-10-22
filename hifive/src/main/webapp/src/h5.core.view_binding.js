@@ -461,7 +461,7 @@
 
 			if (target == null) {
 				//自動指定は、inputタグならvalue属性、それ以外ならテキストノードをターゲットとする
-				if (element.tagName === 'input') {
+				if (element.tagName.toLowerCase() === 'input') {
 					target = 'attr';
 					detail = 'value';
 				} else {
