@@ -910,10 +910,12 @@ $(function() {
 	});
 
 	test('enumValueに空配列、nullを含む配列、undefinedを含む配列を指定した場合はエラーが出ること', function() {
-		alert(undefined === undefined);
-		alert($.inArray(undefined, [undefined, 1]));
+		// IE6の場合[undefined, 1]と定義するとsparseな配列として処理してしまうため、push()でundefinedを格納する
+		var undefAr = [];
+		undefAr.push(undefined);
+		undefAr.push(1);
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		var noArrays = [[], [null, 1], [undefined, 2]];
+		var noArrays = [[], [null, 1], undefAr];
 		var l = noArrays.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
