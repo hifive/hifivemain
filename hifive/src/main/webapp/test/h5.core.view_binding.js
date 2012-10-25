@@ -125,7 +125,7 @@ $(function() {
 		var sel = selector ? selector : 'li';
 		var liTexts = [];
 		$('#dataBindTest ' + sel).each(function(i) {
-			liTexts.push(this.innerHTML);
+			liTexts.push($(this).text());
 		});
 		deepEqual(liTexts, expectAry, message);
 	}
@@ -325,7 +325,7 @@ $(function() {
 
 		var result = ['TEST', 'バインド無し', 'OBJ.TEST', 'OBJ.TEST2', 'OBJ.OBJ.TEST', 'バインド無し'];
 		$('#dataBindTest span').each(function(i) {
-			strictEqual(this.innerHTML, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
+			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
 	});
 
