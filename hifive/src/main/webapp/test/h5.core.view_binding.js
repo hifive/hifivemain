@@ -59,7 +59,16 @@ $(function() {
 	 */
 	var view = h5.core.view.createView();
 
+
+	$.ajaxSetup({
+		async:false
+	});
+
 	view.load('template/data-bind.ejs');
+
+	$.ajaxSetup({
+		async:true
+	});
 
 	//=============================
 	// Functions
@@ -116,7 +125,7 @@ $(function() {
 		var sel = selector ? selector : 'li';
 		var liTexts = [];
 		$('#dataBindTest ' + sel).each(function(i) {
-			liTexts.push(this.innerText);
+			liTexts.push(this.innerHTML);
 		});
 		deepEqual(liTexts, expectAry, message);
 	}
@@ -316,7 +325,7 @@ $(function() {
 
 		var result = ['TEST', 'バインド無し', 'OBJ.TEST', 'OBJ.TEST2', 'OBJ.OBJ.TEST', 'バインド無し'];
 		$('#dataBindTest span').each(function(i) {
-			strictEqual(this.innerText, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
+			strictEqual(this.innerHTML, result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
 	});
 
