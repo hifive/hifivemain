@@ -290,8 +290,6 @@
 				context.addEventListener('observe', observeListener);
 			}
 
-			var fragment = document.createDocumentFragment();
-
 			//ループルートノードに対応する子ノードリストを保存しているビューソースから取り出す
 			var loopDynCtxId = $(loopRootElement).attr(DATA_H5_DYN_CTX);
 			var srcRootChildNodes = toArray(binding._getSrcCtxNode(loopDynCtxId).childNodes);
@@ -302,6 +300,10 @@
 			//このループコンテキストの各要素に対応するノード（配列）を格納する配列
 			var loopElementsArray = [];
 			binding._loopElementsMap[viewUid] = loopElementsArray;
+
+			//appendChildの呼び出し回数削減。
+			//ループ単位ごとにappendChildしてdocumentにバインドする（＝Fragmentは都度空になる）ので、使いまわしている。
+			var fragment = document.createDocumentFragment();
 
 			for ( var i = 0, len = context.length; i < len; i++) {
 				var loopNodes = [];
@@ -318,12 +320,14 @@
 				//配列1要素分のノードリストを保存
 				loopElementsArray[i] = loopNodes;
 
+				//IE6で、documentツリーにぶら下がっていない状態で属性操作を行うとそれが反映されない場合がある
+				//（例えばinput-checkboxのcheckedを操作してもそれが反映されない）
+				//そのため、先にツリーにappendしてからバインディングを行う
+				loopRootElement.appendChild(fragment);
+
 				//配列1要素分のバインディングを実行
 				applyBinding(binding, loopNodes, context[i]);
 			}
-
-			//最後に、全ループ分のノードをルートに追加
-			loopRootElement.appendChild(fragment);
 
 			return;
 		}
