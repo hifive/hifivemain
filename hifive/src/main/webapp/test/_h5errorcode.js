@@ -130,5 +130,6 @@ h5.u.obj.expose('ERRCODE.h5.core.data', {
 });
 
 h5.u.obj.expose('ERRCODE.h5.core.view_binding', {
-//TODO エラー決まったらここに書く
+	ERR_CODE_REQUIRE_DETAIL: 16000,
+	ERR_CODE_UNKNOWN_BIND_DIRECTION: 16001
 });

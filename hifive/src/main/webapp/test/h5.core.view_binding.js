@@ -34,6 +34,9 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
+
+	var errorCodes = ERRCODE.h5.core.view_binding;
+
 	/**
 	 * #qunit-fixture
 	 */
@@ -1198,6 +1201,18 @@ $(function() {
 		strictEqual($span.text(), 'before', 'テキストノードの値は書き変わっていないこと');
 	});
 
+	test('属性名を指定せずに、属性へバインド', 1, function() {
+		view.append($fixture, 'id2');
+
+		raises(function(enviroment) {
+			view.bind('#dataBindTest', {
+				id: 'bindTest123'
+			});
+		}, function(actual) {
+			return errorCodes.ERR_CODE_REQUIRE_DETAIL === actual.code;
+		}, 'data-h5-bindのattrに属性名を指定していないためエラーになること"');
+	});
+
 	test('classへのバインド', function() {
 		// バインド先の設定
 		view.append($fixture, 'class');
@@ -1230,6 +1245,19 @@ $(function() {
 		strictEqual(span2.style.marginBottom, '20px', 'バインドしたスタイルが適応されていること');
 		strictEqual(span2.style.marginLeft, '30px', 'バインドしたスタイルが適応されていること');
 		strictEqual(span2.style.color, 'red', 'もともと指定していたスタイルがなくなっていないこと');
+	});
+
+	test('プロパティ名を指定せずに、styleへバインド', function() {
+		// バインド先の設定
+		view.append($fixture, 'style2');
+
+		raises(function(enviroment) {
+			view.bind('#dataBindTest', {
+				color: 'red'
+			});
+		}, function(actual) {
+			return errorCodes.ERR_CODE_REQUIRE_DETAIL === actual.code;
+		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
 
 	test('テキストノードへのバインド', function() {
@@ -1270,6 +1298,19 @@ $(function() {
 		var $span = $fixture.find('span');
 		strictEqual($span.text(), 'before', '『:』を含むプロパティはバインドされないこと');
 		strictEqual($span.attr('id'), undefined, '『:』を含むプロパティはバインドされないこと');
+	});
+
+	test('無効なバインド種別を指定', function() {
+		// バインド先の設定
+		view.append($fixture, 'invalidDef');
+
+		raises(function(enviroment) {
+			view.bind('#dataBindTest', {
+				id: 'bindTest123'
+			});
+		}, function(actual) {
+			return errorCodes.ERR_CODE_UNKNOWN_BIND_DIRECTION === actual.code;
+		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
 
 	//=============================

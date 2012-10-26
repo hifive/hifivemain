@@ -129,6 +129,12 @@
 	</div>
 </script>
 
+<script type="text/ejs" id="id2">
+	<div id="dataBindTest">
+		<span data-h5-bind="attr:id">before</span>
+	</div>
+</script>
+
 <script type="text/ejs" id="class">
 	<div id="dataBindTest">
 		<span class="testClass" data-h5-bind="class:cls">test</span>
@@ -142,6 +148,12 @@
 	</div>
 </script>
 
+<script type="text/ejs" id="style2">
+	<div id="dataBindTest">
+		<span data-h5-bind="style:color"></span>
+	</div>
+</script>
+
 <script type="text/ejs" id="text">
 	<div id="dataBindTest">
 		<span data-h5-bind="text:test"></span>
@@ -151,6 +163,18 @@
 <script type="text/ejs" id="html">
 	<div id="dataBindTest">
 		<span data-h5-bind="html:test"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="invalidDef">
+	<div id="dataBindTest">
+		<span data-h5-bind="hoge:id"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="nodata">
+	<div id="dataBindTest">
+		<div data-h5-bind=""></div>
 	</div>
 </script>
 
