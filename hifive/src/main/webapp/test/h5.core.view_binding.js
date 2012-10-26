@@ -1506,7 +1506,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('inputタグへのバインドはvalue属性に値が設定されること', function() {
+	asyncTest('inputタグへのバインドはvalue属性に値が設定されること', 4, function() {
 		view.append($fixture, 'inputtext1');
 
 		var items = {
@@ -1528,6 +1528,29 @@ $(function() {
 			equal($('#txt1').text(), '', 'テキストノードには何も設定されていないこと。');
 			equal($('#txt2').text(), '', 'テキストノードには何も設定されていないこと。');
 
+			start();
+		});
+	});
+
+	asyncTest('input[type="checkbox"]のcheckedプロパティに値が設定されること', 2, function() {
+		view.append($fixture, 'inputcheck1');
+
+		var items = {
+			check1: 'checked',
+			check2: 'checked'
+		};
+
+		var c = h5.core.controller($fixture, {
+			__name: 'TestController'
+		});
+
+		c.readyPromise.done(function() {
+			c.view.bind('h5view#item', {
+				items: items
+			});
+
+			equal($('#txt1').attr('checked'), items.check1, 'value属性に値が設定されていること。');
+			equal($('#txt2').attr('checked'), items.check2, 'value属性に値が設定されていること。');
 			start();
 		});
 	});
