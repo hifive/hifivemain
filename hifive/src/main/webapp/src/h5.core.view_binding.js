@@ -770,14 +770,27 @@
 		} else {
 			//複数のノード
 
-			//バインドターゲットの親要素
+			/**
+			 * バインドターゲットの親要素
+			 *
+			 * @name _parent
+			 * @private
+			 */
 			this._parent = target[0].parentNode;
-
+			/**
+			 * バインドターゲット
+			 *
+			 * @name _targets
+			 * @private
+			 */
 			this._targets = toArray(target);
 		}
 
 		/**
 		 * このバインディングのID
+		 *
+		 * @name _bindRootId
+		 * @private
 		 */
 		this._bindRootId = bindRootId++;
 
@@ -812,17 +825,26 @@
 
 		/**
 		 * クローンした初期状態のテンプレート
+		 *
+		 * @name _srces
+		 * @private
 		 */
 		this._srces = clonedSrc;
 
 		/**
 		 * loop-contextの各インデックスがもつ要素（配列）を保持。 キー：viewUid、値：配列の配列。
 		 * 値は、「あるviewUidのloop-contextのi番目（＝ここが1段目）の要素の配列（＝2段目）」になっている。
+		 *
+		 * @name _loopElementsMap
+		 * @private
 		 */
 		this._loopElementsMap = {};
 
 		/**
 		 * このバインディングのルートデータコンテキスト
+		 *
+		 * @name _rootContext
+		 * @private
 		 */
 		this._rootContext = dataContext;
 
@@ -830,17 +852,26 @@
 		 * 現在適用中のデータコンテキストを入れる配列。同じインスタンスは1つしか入らない。 この配列のインデックスをキーにしてビューを探す<br>
 		 * TODO インデックスをキーとして使うため、使用しなくなったオブジェクトの場所にはnullが入り、次第にスパースな配列になってしまう。<br>
 		 * 二重ポインタのようにして管理すればよいが、パフォーマンスに重大な影響が出るほどスパースになることはまれと考え、Deferredする。
+		 *
+		 * @name _usingContexts
+		 * @private
 		 */
 		this._usingContexts = [];
 
 		/**
 		 * ソースオブジェクト -> ビュー のマップ。1:many。 キーは_usingContextsのインデックス。 値はさらにマップで、キー：viewUid,
 		 * 値：ビューインスタンス（配列）。
+		 *
+		 * @name _srcToViewMap
+		 * @private
 		 */
 		this._srcToViewMap = {};
 
 		/**
 		 * バインドUID（現在表示されているDOM）にひもづけているリスナー。キー：contextIndex, 値：リスナー関数
+		 *
+		 * @name _listeners
+		 * @private
 		 */
 		this._listeners = {};
 
@@ -849,6 +880,12 @@
 		applyBinding(this, this._targets, this._rootContext, false, true);
 	}
 	$.extend(Binding.prototype, {
+		/**
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @function
+		 * @private
+		 */
 		dispose: function() {
 			//全てのバインディングを解除
 			for ( var i = 0, len = this._targets.length; i < len; i++) {
@@ -865,7 +902,9 @@
 		/**
 		 * バインディングを再実行します。既存のビューは一度すべて削除されます。
 		 *
+		 * @since 1.1.0
 		 * @memberOf Binding
+		 * @function
 		 * @private
 		 */
 		refresh: function() {
@@ -899,14 +938,22 @@
 		 * ObservableArrayの変更に基づいて、自分が管理するビューを更新します。<br>
 		 * MEMO フォーマッタが過剰にインデントしてしまうので分離している
 		 *
+		 * @since 1.1.0
 		 * @memberOf Binding
 		 * @private
+		 * @function
 		 * @param event
 		 */
 		_observableArray_observeListener: Binding__observableArray_observeListener,
 
 		/**
 		 * データアイテムまたはObservableItemのchangeイベントハンドラ
+		 *
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param event
 		 */
 		_observableItem_changeListener: function(event) {
 			var views = this._getViewsFromSrc(event.target);
@@ -994,6 +1041,13 @@
 			}
 		},
 
+		/**
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param ctxId
+		 */
 		_getSrcCtxNode: function(ctxId) {
 			for ( var i = 0, len = this._srces.length; i < len; i++) {
 				var $root = $(this._srces[i]);
@@ -1011,6 +1065,13 @@
 			return null;
 		},
 
+		/**
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param ctx
+		 */
 		_isWatching: function(ctx) {
 			var idx = this._getContextIndex(ctx);
 			if (idx === -1) {
@@ -1019,6 +1080,13 @@
 			return this._listeners[idx] != null;
 		},
 
+		/**
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param ctx
+		 */
 		_getContextIndex: function(ctx) {
 			return $.inArray(ctx, this._usingContexts);
 		},
@@ -1026,6 +1094,14 @@
 		/**
 		 * ソースオブジェクト -> ビュー(配列) のマップエントリ、ビューUID -> ソースオブジェクト のマップエントリを追加。
 		 * エントリが存在する場合は上書き（ただし、そもそも二重登録は想定外）。
+		 *
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param ctx
+		 * @param view
+		 * @param viewUid
 		 */
 		_addBindingEntry: function(src, view, viewUid) {
 			var srcIndex = this._getContextIndex(src);
@@ -1049,6 +1125,13 @@
 			srcViewMap[viewUid] = view;
 		},
 
+		/**
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param srcToViewMap
+		 */
 		_hasBindingForSrc: function(srcToViewMap) {
 			//srcToViewMapが自分でキーを持っているということは
 			//ビューへのバインディングエントリがあるということ
@@ -1062,6 +1145,12 @@
 
 		/**
 		 * 特定のビューへのバインディングエントリ（ソースオブジェクト -> ビュー のマップエントリ）を削除
+		 *
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param viewUid
 		 */
 		_removeBindingEntry: function(viewUid) {
 			var src = viewToSrcMap[viewUid];
@@ -1107,6 +1196,12 @@
 
 		/**
 		 * 指定された要素以下のバインディングを全て解除
+		 *
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param rootElem
 		 */
 		_removeBinding: function(rootElem) {
 			if (rootElem.nodeType !== NODE_TYPE_ELEMENT) {
@@ -1132,6 +1227,13 @@
 			});
 		},
 
+		/**
+		 * @since 1.1.0
+		 * @memberOf Binding
+		 * @private
+		 * @function
+		 * @param src
+		 */
 		_getViewsFromSrc: function(src) {
 			var srcIndex = this._getContextIndex(src);
 			if (srcIndex === -1) {

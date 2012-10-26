@@ -2018,6 +2018,7 @@
 		/**
 		 * データバインドを開始します。
 		 *
+		 * @since 1.1.0
 		 * @param {String|Element|Element[]|jQuery} element コメントビュー疑似セレクタ、またはDOM要素(セレクタ文字列, DOM要素,
 		 *            DOM要素の配列, jQueryオブジェクト)。コメントビューを指定する場合は、「h5view#xxx」（xxxはid）と記述してください
 		 *            （id属性がxxxになっているh5viewタグを指定する、ような記法になっています）。
@@ -2114,6 +2115,7 @@
 		/**
 		 * コントローラを要素へバインドします。
 		 *
+		 * @since 1.1.0
 		 * @memberOf Controller
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.<br />
 		 *            セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。

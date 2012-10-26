@@ -35,6 +35,7 @@
 	 * 文字列型を表します。
 	 * </p>
 	 *
+	 * @since 1.1.0
 	 * @memberOf h5.core.data
 	 * @type {Integer}
 	 */
@@ -46,6 +47,7 @@
 	 * 数値型を表します。
 	 * </p>
 	 *
+	 * @since 1.1.0
 	 * @memberOf h5.core.data
 	 * @type {Integer}
 	 */
@@ -700,8 +702,9 @@
 		 * データアイテムは、アイテムが持つ値に変更があった場合に'change'イベントが発火します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @class
-		 * @constructor
+		 * @extends EventDispatcher
 		 * @name DataItem
 		 * @param {Object} userInitialValue ユーザー指定の初期値
 		 */
@@ -710,6 +713,7 @@
 			 * データアイテムが属しているデータモデル
 			 *
 			 * @private
+			 * @since 1.1.0
 			 * @memberOf DataItem
 			 */
 			this._model = model;
@@ -800,6 +804,7 @@
 			 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。
 			 * </p>
 			 *
+			 * @since 1.1.0
 			 * @memberOf DataItem
 			 * @param {String} [key] プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
 			 * @returns Any 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
@@ -825,6 +830,7 @@
 			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
 			 * </p>
 			 *
+			 * @since 1.1.0
 			 * @memberOf DataItem
 			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
 			 */
@@ -872,6 +878,7 @@
 			 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
 			 * </p>
 			 *
+			 * @since 1.1.0
 			 * @memberOf DataItem
 			 * @returns DataModel
 			 */
@@ -1067,6 +1074,7 @@
 	 * のいずれかを指定し、それぞれ文字列型、数値型で返します。デフォルトは数値型です。
 	 * </p>
 	 *
+	 * @since 1.1.0
 	 * @memberOf h5.core.data
 	 * @param {Number} [start=1] 開始番号
 	 * @param {Number} [step=1] ステップ数
@@ -1122,6 +1130,7 @@
 		 * href="h5.core.data.html#createSequence">h5.core.data.createSequence()</a>で作成します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @class Sequence
 		 */
 		function Sequence() {}
@@ -1144,7 +1153,9 @@
 	 * データモデルは、データモデルが管理するデータアイテムに変更があった場合に'itemsChange'イベントが発火します。
 	 * </p>
 	 *
+	 * @since 1.1.0
 	 * @class
+	 * @extends EventDispatcher
 	 * @name DataModel
 	 */
 	function DataModel(descriptor, manager, itemValueCheckFuncs) {
@@ -1154,6 +1165,7 @@
 		 * データアイテムのidをキー、データアイテムインスタンスを値、として保持します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @type Object
 		 * @name items
@@ -1163,6 +1175,7 @@
 		/**
 		 * データモデルが持つデータアイテムの数
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @type Integer
 		 * @name size
@@ -1172,6 +1185,7 @@
 		/**
 		 * データモデル名
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @type String
 		 * @name name
@@ -1182,6 +1196,7 @@
 		 * このデータモデルが属しているデータマネージャインスタンス。<br>
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @type Object
 		 * @name _manager
@@ -1206,6 +1221,7 @@
 		 * スキーマが持つキーを配列で保持します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @type Array
 		 * @name schemaKeys
@@ -1222,6 +1238,7 @@
 				 * createModel時に自動的に設定されます。書き換えないでください。
 				 * </p>
 				 *
+				 * @since 1.1.0
 				 * @memberOf DataModel
 				 * @type String
 				 * @name idKey
@@ -1238,6 +1255,7 @@
 		 * 継承関係を展開した後のスキーマを保持します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @type Object
 		 * @name schema
@@ -1270,6 +1288,7 @@
 		 * プロパティの依存関係マップ
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @type Object
 		 * @memberOf DataModel
 		 */
@@ -1279,6 +1298,7 @@
 		 * モデルが持つ依存プロパティ
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @type Array
 		 * @memberOf DataModel
 		 */
@@ -1288,6 +1308,7 @@
 		 * モデルが持つ実プロパティ(依存しないプロパティ)
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @type Array
 		 * @memberOf DataModel
 		 */
@@ -1298,6 +1319,7 @@
 		 * プロパティ名をキー、値としてチェック関数を持つ
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @type Object
 		 * @memberOf DataModel
 		 */
@@ -1307,6 +1329,7 @@
 		 * このデータモデルに対応するデータアイテムのコンストラクタ関数
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @type function
 		 * @memberOf DataModel
 		 */
@@ -1335,6 +1358,7 @@
 		 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @param {Object|Object[]} objOrArray ディスクリプタオブジェクト、またはその配列
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
@@ -1427,6 +1451,7 @@
 		 * （例：get(['id1', 'id2', 'id3']) でid2のアイテムがない場合、戻り値は [item1, null, item3] のようになる ）
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @param {String|String[]} ID、またはその配列
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
@@ -1451,6 +1476,7 @@
 		 * null, item3]のようになります。） 引数にID(文字列)またはデータアイテム以外を渡した場合はnullを返します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @param {String|DataItem|String[]|DataItem[]} 削除するデータアイテム
 		 * @returns {DataItem|DataItem[]} 削除したデータアイテム
@@ -1521,6 +1547,7 @@
 		 * データアイテムインスタンスを引数に渡した場合に限り（そのインスタンスをこのデータモデルが保持していれば）trueが返ります。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @param {String|Object} idOrObj ID文字列またはデータアイテムオブジェクト
 		 * @returns {Boolean} 指定されたIDのデータアイテムをこのデータモデルが保持しているかどうか
@@ -1543,6 +1570,7 @@
 		 * dropModelされたモデルの場合はnullを返します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @returns {DataManager} このモデルが属しているマネージャ
 		 */
@@ -1554,6 +1582,7 @@
 		 * 引数にプロパティ名と値を指定し、 値がそのプロパティの制約条件を満たすかどうかをチェックします。
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @param {String} プロパティ名
 		 * @value {Any} 値
@@ -1567,6 +1596,7 @@
 		 * 指定されたIDのデータアイテムを返します。 アイテムがない場合はnullを返します。
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @param {String} id データアイテムのID
 		 * @returns {DataItem} データアイテム、存在しない場合はnull
@@ -1580,6 +1610,7 @@
 		 * 引数で指定されたchangeイベントに基づいて、itemsChangeイベントを即座に発火させます。
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @param {Object} event DataItemのchangeイベント
 		 */
@@ -1597,6 +1628,7 @@
 		/**
 		 * データモデルが持つデータアイテムを配列に詰めて返します。 配列中のデータアイテムの順番は不定です。
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModel
 		 * @returns {Array} モデルが持つデータアイテムが格納された配列
 		 */
@@ -1622,7 +1654,9 @@
 	 * データモデルマネージャは、データモデルマネージャが管理するデータモデルに変更があった場合に'itemsChange'イベントが発火します。
 	 * </p>
 	 *
+	 * @since 1.1.0
 	 * @class
+	 * @extends EventDispatcher
 	 * @name DataModelManager
 	 */
 	function DataModelManager(managerName) {
@@ -1639,6 +1673,7 @@
 		 * {モデル名: データモデルインスタンス, ...} の構造を持つオブジェクトです。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @name models
 		 * @type {Object}
 		 * @memberOf DataModelManager
@@ -1651,6 +1686,7 @@
 		 * <a href="h5.core.data.html#createManager">h5.core.data.createManager()</a>の第一引数に指定した値が格納されます。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @name name
 		 * @type {String}
 		 * @memberOf DataModelManager
@@ -1665,6 +1701,7 @@
 		 * </p>
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @name _updateLogs
 		 * @type {Object}
 		 * @memberOf DataModelManager
@@ -1679,6 +1716,7 @@
 		 * 引数にはデータモデルディスクリプタを渡します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @param {Object} descriptor データモデルディスクリプタ
 		 * @param {String} descriptor.name データモデル名。必須。
 		 * @param {String} descriptor.base
@@ -1792,6 +1830,7 @@
 		 * データアイテムを保持している場合、アイテムをこのデータモデルからすべて削除した後 データモデル自体をマネージャから削除します。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @param {String|DataModel} nameOrModel データモデル名またはデータモデルインスタンス
 		 * @memberOf DataModelManager
 		 */
@@ -1816,6 +1855,7 @@
 		 * beginUpdate()が呼ばれてからendUpdate()が呼ばれるまでの間はアップデートセッション中です。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @returns {Boolean} アップデートセッション中かどうか
 		 * @memberOf DataModelManager
 		 */
@@ -1859,6 +1899,7 @@
 		 * // &quot;oldValue: a, newValue: c&quot; とアラートが出る
 		 * </pre>
 		 *
+		 * @since 1.1.0
 		 * @returns {Boolean} アップデートセッション中かどうか
 		 * @memberOf DataModelManager
 		 */
@@ -1876,6 +1917,7 @@
 		 * アップデートセッション中でなければ何もしません。イベントの発火など詳細は<a href="#beginUpdate">beginUpdate()</a>の説明を参照してください。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf DataModelManager
 		 */
 		endUpdate: function() {
@@ -2155,6 +2197,7 @@
 	 * 第2引数が渡された場合、その名前空間に<a href="DataModelManager.html">DataModelManager</a>インスタンスを公開します。
 	 * </p>
 	 *
+	 * @since 1.1.0
 	 * @memberOf h5.core.data
 	 * @param {String} name マネージャ名
 	 * @param {String} [namespace] 公開先名前空間
@@ -2308,6 +2351,7 @@
 	/**
 	 * DataModelの名前空間
 	 *
+	 * @since 1.1.0
 	 * @name data
 	 * @memberOf h5.core
 	 * @namespace

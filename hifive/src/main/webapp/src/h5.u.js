@@ -1166,7 +1166,7 @@
 	/**
 	 * 指定された名前空間に存在するオブジェクトを取得します。
 	 *
-	 * @param {String} 名前空間
+	 * @param {String} namespace 名前空間
 	 * @returns {Any} その名前空間に存在するオブジェクト
 	 * @name getByPath
 	 * @function
@@ -1263,7 +1263,9 @@
 	 * ObservableArrayは、 配列操作メソッド呼び出し時に'observeBefore'、配列操作メソッド実行後に'observe'イベントが発火します。
 	 * </p>
 	 *
+	 * @since 1.1.0
 	 * @class
+	 * @extends EventDispatcher
 	 * @name ObservableArray
 	 */
 	function ObservableArray() {
@@ -1275,8 +1277,9 @@
 				/**
 				 * この配列が、引数で指定された配列と同じ内容か比較します。
 				 *
+				 * @since 1.1.0
 				 * @memberOf ObservableArray
-				 * @param {ObservableArray|Array} ary
+				 * @param {ObservableArray|Array} ary ObservableArrayまたはArray型の配列
 				 * @returns {Boolean} 判定結果
 				 */
 				equals: function(ary) {
@@ -1305,6 +1308,7 @@
 				 * 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
 				 * </p>
 				 *
+				 * @since 1.1.0
 				 * @memberOf ObservableArray
 				 * @param {Array} src コピー元の配列
 				 * @returns {Array} 削除前の要素を持った配列
@@ -1375,6 +1379,7 @@
 	/**
 	 * ObservableArrayを作成します。
 	 *
+	 * @since 1.1.0
 	 * @memberOf h5.u.obj
 	 * @returns {ObservableArray} ObservableArrayインスタンス
 	 */
@@ -1385,6 +1390,7 @@
 	/**
 	 * ObservableArrayかどうかを判定します。
 	 *
+	 * @since 1.1.0
 	 * @memberOf h5.u.obj
 	 * @returns {Boolean} ObservableArrayかどうか
 	 */
@@ -1409,12 +1415,15 @@
 	 * ObservableItemは、アイテムが持つ値に変更があった場合に'change'イベントが発火します。
 	 * </p>
 	 *
+	 * @since 1.1.0
+	 * @extends EventDispatcher
 	 * @class
 	 * @name ObservableItem
 	 */
 	/**
 	 * (コンストラクタは公開していないので、JSDocに@paramが載らないようにしています。)
 	 *
+	 * @since 1.1.0
 	 * @private
 	 * @param {Object} schema schemaオブジェクト。データモデルディスクリプタのスキーマと同様のスキーマオブジェクトを指定します。ただしidの指定は不要です。
 	 * @param {Object} itemValueCheckFuncs データモデルのスキーマに適合するかどうかをチェックする関数。キーがプロパティ名で、値がチェック関数の配列
@@ -1438,10 +1447,12 @@
 		/**
 		 * 値チェックに必要な情報を持つオブジェクト
 		 * <p>
-		 * データアイテムではモデルに持たせていましたが、ObservableItemにはモデルはないので、必要な情報を_contextプロパティに持ちます
+		 * データアイテムではモデルに持たせていましたが、ObservableItemにモデルはないので、必要な情報を_contextプロパティに持ちます
 		 * </p>
 		 *
 		 * @private
+		 * @name _context
+		 * @since 1.1.0
 		 * @memberOf ObservableItem
 		 * @type Object
 		 */
@@ -1451,6 +1462,8 @@
 			 * プロパティの依存関係マップ
 			 *
 			 * @private
+			 * @memberOf ObservableItem._context
+			 * @since 1.1.0
 			 * @type Object
 			 */
 			dependencyMap: createDependencyMap(schema),
@@ -1459,6 +1472,7 @@
 			 * モデルが持つ依存プロパティ
 			 *
 			 * @private
+			 * @since 1.1.0
 			 * @type Array
 			 */
 			dependProps: dependProps,
@@ -1467,6 +1481,7 @@
 			 * モデルが持つ実プロパティ(依存しないプロパティ)
 			 *
 			 * @private
+			 * @since 1.1.0
 			 * @type Array
 			 * @memberOf DataModel
 			 */
@@ -1476,6 +1491,7 @@
 			 * ObservableArrayのプロパティ
 			 *
 			 * @private
+			 * @since 1.1.0
 			 * @type Array
 			 */
 			aryProps: aryProps,
@@ -1485,6 +1501,7 @@
 			 * プロパティ名をキー、値としてチェック関数を持つ
 			 *
 			 * @private
+			 * @since 1.1.0
 			 * @type Object
 			 */
 			itemValueCheckFuncs: itemValueCheckFuncs
@@ -1494,6 +1511,7 @@
 		 * 値を保持するオブジェクト
 		 *
 		 * @private
+		 * @since 1.1.0
 		 * @memberOf ObservableItem
 		 * @type Object
 		 */
@@ -1606,6 +1624,7 @@
 		 * <a href="DataItem.html#set">DataItem#set()</a>と同様に値をセットします。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf ObservableItem
 		 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
 		 */
@@ -1684,6 +1703,7 @@
 		 * <a href="DataItem.html#get">DataItem#get()</a>と同様です。
 		 * </p>
 		 *
+		 * @since 1.1.0
 		 * @memberOf ObservableItem
 		 * @param {String} [key] プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
 		 * @returns {Any} 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
@@ -1706,6 +1726,7 @@
 	 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
 	 * </p>
 	 *
+	 * @since 1.1.0
 	 * @memberOf h5.u.obj
 	 * @param {Object} schema スキーマオブジェクト
 	 * @returns {ObservableItem} ObservableItemインスタンス
@@ -1738,6 +1759,7 @@
 	/**
 	 * ObserevableItemかどうかを判定します。
 	 *
+	 * @since 1.1.0
 	 * @memberOf h5.u.obj
 	 * @returns {Boolean} ObservableItemかどうか
 	 */

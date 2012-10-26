@@ -495,6 +495,7 @@ function getRegex(target) {
  * </ul>
  * </p>
  *
+ * @since 1.1.0
  * @class
  * @name EventDispatcher
  */
@@ -506,6 +507,7 @@ function EventDispatcher() {}
  * 第一引数にイベント名、第二引数にイベントリスナを渡し、指定したイベントに指定したイベントリスナが登録済みかどうかを返します。
  * </p>
  *
+ * @since 1.1.0
  * @memberOf EventDispatcher
  * @param {String} type イベント名
  * @param {Function} listener イベントリスナ
@@ -541,6 +543,7 @@ EventDispatcher.prototype.hasEventListener = function(type, listener) {
  * 同一のイベントに対して複数回addEventListener()を呼び、複数のイベントリスナを登録した場合は、イベント発火時に登録した順番に実行されます。
  * </p>
  *
+ * @since 1.1.0
  * @memberOf EventDispatcher
  * @param {String} type イベント名
  * @param {Function} listener イベントリスナ
@@ -574,6 +577,7 @@ EventDispatcher.prototype.addEventListener = function(type, listener) {
  * 指定したイベント名に指定したイベントリスナが登録されていない場合は何もしません。
  * </p>
  *
+ * @since 1.1.0
  * @memberOf EventDispatcher
  * @param {String} type イベント名
  * @param {Function} listener イベントリスナ
@@ -603,6 +607,7 @@ EventDispatcher.prototype.removeEventListener = function(type, listener) {
  * 戻り値は『イベントリスナ内でpreventDefault()が呼ばれたかどうか』を返します。
  * </p>
  *
+ * @since 1.1.0
  * @memberOf EventDispatcher
  * @param {Object} event イベントオブジェクト
  * @returns {Boolean} イベントリスナ内でpreventDefault()が呼ばれたかどうか。
