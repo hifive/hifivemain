@@ -247,6 +247,14 @@
 		return false;
 	}
 
+	function addViewUid(rootNodes, viewUid) {
+		for ( var i = 0, len = rootNodes.length; i < len; i++) {
+			var n = rootNodes[i];
+			if (n.nodeType === NODE_TYPE_ELEMENT) {
+				$(n).attr(DATA_H5_DYN_VID, viewUid);
+			}
+		}
+	}
 
 	/**
 	 * データバインドを行う。context単位にsrc/viewの対応を保存。可能ならイベントハンドラを設定して、変更伝搬させる
@@ -266,18 +274,20 @@
 
 		var viewUid = getViewUid();
 
-		//エレメントについては、ビュー->ソースをすぐにひけるようdata属性でviewUidを付加しておく
-		for ( var i = 0, len = rootNodes.length; i < len; i++) {
-			var rootElem = rootNodes[i];
-			if (rootElem.nodeType === NODE_TYPE_ELEMENT) {
-				$(rootElem).attr(DATA_H5_DYN_VID, viewUid);
-			}
-		}
-
 		//loop-contextの場合はループ処理して終わり
 		if (isLoopContext) {
 			//loop-contextの場合は、ループのルートノードは必ず単一のノード
 			var loopRootElement = rootNodes[0];
+
+			//ループ前に一旦内部要素をすべて外す
+			$(loopRootElement).empty();
+
+			if (!context) {
+				//contextがない場合はループを一切行わない（BindingEntryもつけない）
+				return;
+			}
+
+			addViewUid(rootNodes, viewUid);
 
 			binding._addBindingEntry(context, loopRootElement, viewUid);
 
@@ -293,9 +303,6 @@
 			//ループルートノードに対応する子ノードリストを保存しているビューソースから取り出す
 			var loopDynCtxId = $(loopRootElement).attr(DATA_H5_DYN_CTX);
 			var srcRootChildNodes = toArray(binding._getSrcCtxNode(loopDynCtxId).childNodes);
-
-			//ループ前に一旦内部要素をすべて外す
-			$(loopRootElement).empty();
 
 			//このループコンテキストの各要素に対応するノード（配列）を格納する配列
 			var loopElementsArray = [];
@@ -334,7 +341,18 @@
 
 		//以下はloop-contextでない場合
 
-		binding._addBindingEntry(context, rootNodes, viewUid);
+		if (context) {
+			//コンテキストが存在する場合
+			//エレメントについては、ビュー->ソースをすぐにひけるようdata属性でviewUidを付加しておく
+			addViewUid(rootNodes, viewUid);
+
+			binding._addBindingEntry(context, rootNodes, viewUid);
+		}
+		//context===nullの場合に子要素のバインディングを解除する必要はない。
+		//現状の実装では、初回はバインディングはまだ行われておらず、
+		//2回目以降Itemのpropが変わった場合などで再バインドされるときは
+		//バインドされていないオリジナルに対してバインドが再実行されるので、
+		//「バインド済みのものに対して別のコンテキストを割り当てる」ことはない。
 
 		var isItem = isObservableItem(context);
 
@@ -354,12 +372,12 @@
 		//（rootElement自体がバインド対象になっている場合もある）
 		var $bindElements = $getBindElementsInContext(rootNodes, isBindingRoot);
 
-		//各要素についてバインドする
+		//自コンテキストに属する各要素のデータバインドを実行
 		$bindElements.each(function() {
 			doBind(this, context, isItem);
 		});
 
-		//data-context, data-loop-contextそれぞれについて、バインディングを実行
+		//ネストした子data-context, data-loop-contextのデータバインドを実行
 		applyChildBinding(binding, rootNodes, context, false, isBindingRoot);
 		applyChildBinding(binding, rootNodes, context, true, isBindingRoot);
 	}
@@ -379,8 +397,11 @@
 			var childContextProp = $this.attr(dataContextAttr);
 			//contextがisObservableItemならgetでchildContextを取得する
 			//TODO getContextValue()などで統一するか
-			var childContext = isObservableItem(context) ? context.get(childContextProp)
-					: context[childContextProp];
+			var childContext = null;
+			if (context) {
+				childContext = isObservableItem(context) ? context.get(childContextProp)
+						: context[childContextProp];
+			}
 
 			applyBinding(binding, this, childContext, isLoopContext);
 		});
@@ -456,11 +477,14 @@
 			var detail = details[i];
 			var prop = props[i];
 
-			var value;
-			if (isItem) {
-				value = context.get(prop);
-			} else {
-				value = context[prop];
+			var value = null;
+			if (context) {
+				//contextが存在する場合は値を取得。（contextがnullの場合は初期化を行う）
+				if (isItem) {
+					value = context.get(prop);
+				} else {
+					value = context[prop];
+				}
 			}
 
 			if (target == null) {
@@ -475,24 +499,27 @@
 
 			switch (target) {
 			case 'text':
-				$element.text(value);
+				context ? $element.text(value) : $element.text('');
 				break;
 			case 'html':
-				$element.html(value);
+				context ? $element.html(value) : $element.html('');
 				break;
 			case 'class':
+				//TODO classの場合はoldValueが必要
 				$element.addClass(value);
 				break;
 			case 'attr':
 				if (!detail) {
 					throwFwError(ERR_CODE_REQUIRE_DETAIL);
 				}
-				$element.attr(detail, value);
+				context ? $element.attr(detail, value) : $element.removeAttr(detail);
 				break;
 			case 'style':
 				if (!detail) {
 					throwFwError(ERR_CODE_REQUIRE_DETAIL);
 				}
+				//contextがnullの場合valueはnull。styleはcontext===nullの場合当該スタイルを削除するので
+				//このコードでスタイルが削除される（よってcontextによる分岐は不要）。
 				$element.css(detail, value);
 				break;
 			default:
@@ -886,7 +913,7 @@
 		 * @function
 		 * @private
 		 */
-		dispose: function() {
+		unbind: function() {
 			//全てのバインディングを解除
 			for ( var i = 0, len = this._targets.length; i < len; i++) {
 				this._removeBinding(this._targets[i]);
@@ -896,7 +923,7 @@
 			delete bindRootIdToBindingMap[this._bindRootId];
 
 			//TODO リソース解放
-			//disposeしたら、ノードは元に戻す？？
+			//unbindしたら、ノードは元に戻す？？
 		},
 
 		/**
@@ -907,33 +934,32 @@
 		 * @function
 		 * @private
 		 */
-		refresh: function() {
-			//保存しておいたビューをクローン
-			var fragment = document.createDocumentFragment();
-			for ( var i = 0, len = this._srces.length; i < len; i++) {
-				fragment.appendChild(this._srces[i].cloneNode(true));
-			}
-
-			//fragmentをappendする前にノードリストをコピーしておく
-			var newTargets = toArray(fragment.childNodes);
-
-			//新しいターゲットに対してバインディングを実行
-			//TODO ルートが配列（LoopContext）の場合を考える
-			applyBinding(this, newTargets, this._rootContext, false, true);
-
-			//生成したノードを今のターゲット（の最初のノード）の直前に追加して
-			this._parent.insertBefore(fragment, this._targets[0]);
-
-			//既存のターゲットを削除
-			for ( var i = 0, len = this._targets.length; i < len; i++) {
-				this._removeBinding(this._targets[i]);
-				this._parent.removeChild(this._targets[i]);
-			}
-
-			//ターゲットのポインタを更新
-			this._targets = newTargets;
-		},
-
+		//		refresh: function() {
+		//			//保存しておいたビューをクローン
+		//			var fragment = document.createDocumentFragment();
+		//			for ( var i = 0, len = this._srces.length; i < len; i++) {
+		//				fragment.appendChild(this._srces[i].cloneNode(true));
+		//			}
+		//
+		//			//fragmentをappendする前にノードリストをコピーしておく
+		//			var newTargets = toArray(fragment.childNodes);
+		//
+		//			//新しいターゲットに対してバインディングを実行
+		//			//TODO ルートが配列（LoopContext）の場合を考える
+		//			applyBinding(this, newTargets, this._rootContext, false, true);
+		//
+		//			//生成したノードを今のターゲット（の最初のノード）の直前に追加して
+		//			this._parent.insertBefore(fragment, this._targets[0]);
+		//
+		//			//既存のターゲットを削除
+		//			for ( var i = 0, len = this._targets.length; i < len; i++) {
+		//				this._removeBinding(this._targets[i]);
+		//				this._parent.removeChild(this._targets[i]);
+		//			}
+		//
+		//			//ターゲットのポインタを更新
+		//			this._targets = newTargets;
+		//		},
 		/**
 		 * ObservableArrayの変更に基づいて、自分が管理するビューを更新します。<br>
 		 * MEMO フォーマッタが過剰にインデントしてしまうので分離している
@@ -1009,12 +1035,13 @@
 					var srcCtxRootNode = that._getSrcCtxNode(dynCtxId);
 					var cloned = srcCtxRootNode.cloneNode(true);
 
-					//新しいコンテキストソースオブジェクトでバインディングを行う
-					applyBinding(that, cloned, event.props[contextProp].newValue);
-
 					//新しくバインドした要素を追加し、古いビューを削除
+					//(IE6は先に要素をdocumentツリーに追加しておかないと属性の変更が反映されないので先にツリーに追加)
 					this.parentNode.insertBefore(cloned, this);
 					this.parentNode.removeChild(this);
+
+					//新しいコンテキストソースオブジェクトでバインディングを行う
+					applyBinding(that, cloned, event.props[contextProp].newValue);
 				});
 
 				//自分の直接の子供のループルートコンテキスト要素を探す
@@ -1156,18 +1183,18 @@
 			var src = viewToSrcMap[viewUid];
 
 			if (!src) {
-				//このviewUidへのバインディングはすでに削除されている
+				//このviewUidが表すバインディングはすでに削除されている
 				return;
 			}
 
 			var ctxIndex = this._getContextIndex(src);
 			if (ctxIndex !== -1) {
-				var viewMap = this._srcToViewMap[ctxIndex];
-				if (viewMap && viewMap[viewUid]) {
+				var svMap = this._srcToViewMap[ctxIndex];
+				if (svMap && svMap[viewUid]) {
 					//ソースオブジェクト -> ビュー（viewUid経由） のマップエントリを削除
-					delete viewMap[viewUid];
+					delete svMap[viewUid];
 
-					if (!this._hasBindingForSrc(viewMap)) {
+					if (!this._hasBindingForSrc(svMap)) {
 						var removed = false;
 						//このオブジェクトの監視が不要（他にバインドされているビューがない）になった場合、リスナーを削除
 						if (isObservableItem(src)) {
@@ -1264,7 +1291,7 @@
 			if (bindRootId != null) {
 				var binding = bindRootIdToBindingMap[bindRootId];
 				if (binding) {
-					binding.dispose();
+					binding.unbind();
 				}
 			}
 		}
