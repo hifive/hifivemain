@@ -97,7 +97,7 @@
 	errMsgMap[ERR_CODE_BIND_INVALID_TARGET] = 'bindの引数に指定されたバインド先の要素の指定が不正です。有効なDOMオブジェクト、セレクタ、jQueryオブジェクトのいずれかを指定してください。';
 	errMsgMap[ERR_CODE_BIND_TARGET_NO_EXIST] = 'bindの引数に指定されたバインド先の要素の指定が存在しません。';
 	errMsgMap[ERR_CODE_TOO_MANY_TARGETS] = 'bindの引数に指定されたバインド先の要素が2つ以上存在します。バインド対象は1つのみにしてください。';
-	errMsgMap[ERR_CODE_BIND_CONTEXT_INVALID] = 'bindの引数に指定されたバインドオブジェクトが不正です。オブジェクト、またはデータアイテム、ObservableItemを指定してください。';
+	errMsgMap[ERR_CODE_BIND_CONTEXT_INVALID] = 'bindの引数に指定されたルートコンテキストが不正です。オブジェクト、データアイテム、またはObservableItemを指定してください。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -834,7 +834,8 @@
 			}
 
 			// contextのチェック
-			if (typeof context !== 'object') {
+			if (context == null || typeof context !== 'object' || $.isArray(context)
+					|| h5.u.obj.isObservableArray(context)) {
 				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
 			}
 

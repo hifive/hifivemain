@@ -52,9 +52,21 @@
 	/** バインドターゲットのカッコ内を取得するための正規表現（「attr(href)」の「href」を取得） */
 	var BIND_TARGET_DETAIL_REGEXP = /\(\s*(\S+)\s*\)/;
 
-
+	/** data-h5-bindでattr, styleバインドを行う場合は、「style(color)」のように具体的なバインド先を指定する必要があります。 */
 	var ERR_CODE_REQUIRE_DETAIL = 16000;
+
+	/** 不明なバインド先が指定されました。html,style等決められたバインド先を指定してください。 */
 	var ERR_CODE_UNKNOWN_BIND_DIRECTION = 16001;
+
+	/** コンテキスト値が不正です。data-h5-contextの場合はオブジェクト、data-h5-loop-contextの場合は配列を指定してください。 */
+	var ERR_CODE_INVALID_CONTEXT_SRC = 16002;
+
+
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_REQUIRE_DETAIL] = 'data-h5-bindでattr, styleバインドを行う場合は、「style(color)」のように具体的なバインド先を指定する必要があります。';
+	errMsgMap[ERR_CODE_UNKNOWN_BIND_DIRECTION] = '不明なバインド先が指定されました。html,style等決められたバインド先を指定してください。';
+	errMsgMap[ERR_CODE_INVALID_CONTEXT_SRC] = 'コンテキスト値が不正です。data-h5-contextの場合はオブジェクト、data-h5-loop-contextの場合は配列を指定してください。';
+	addFwErrorCodeMap(errMsgMap);
 
 
 	// =============================
@@ -240,7 +252,7 @@
 	function isObservableItem(obj) {
 		//TODO 厳密に判定
 		// ObservableItemの場合もtrueを返す
-		if (obj.addEventListener && obj.getModel && !$.isArray(obj)
+		if (obj && obj.addEventListener && obj.getModel && !$.isArray(obj)
 				&& !h5.u.obj.isObservableArray(obj) || h5.u.obj.isObservableItem(obj)) {
 			return true;
 		}
@@ -285,6 +297,11 @@
 			if (!context) {
 				//contextがない場合はループを一切行わない（BindingEntryもつけない）
 				return;
+			}
+
+			if (!($.isArray(context) || h5.u.obj.isObservableArray(context))) {
+				//data-h5-loop-contextの場合contextは配列でなければならない
+				throwFwError(ERR_CODE_INVALID_CONTEXT_SRC);
 			}
 
 			addViewUid(rootNodes, viewUid);
@@ -342,6 +359,14 @@
 		//以下はloop-contextでない場合
 
 		if (context) {
+			//TODO loop-contextにおいて個々のループ単位のコンテキスト自身をcontextやloop-contextにバインドする方法を追加した場合
+			//ここのチェックルーチンは変更になる
+			if (typeof context !== 'object' || $.isArray(context)
+					|| h5.u.obj.isObservableArray(context)) {
+				//data-h5-contextの場合contextはオブジェクトでなければならない（配列は不可）
+				throwFwError(ERR_CODE_INVALID_CONTEXT_SRC);
+			}
+
 			//コンテキストが存在する場合
 			//エレメントについては、ビュー->ソースをすぐにひけるようdata属性でviewUidを付加しておく
 			addViewUid(rootNodes, viewUid);
