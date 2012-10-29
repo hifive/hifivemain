@@ -838,7 +838,7 @@
 				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
 			}
 
-			h5internal.view.createBinding(targetNodes, context);
+			return h5internal.view.createBinding(targetNodes, context);
 		}
 	});
 

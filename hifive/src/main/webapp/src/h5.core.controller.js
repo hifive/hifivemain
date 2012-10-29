@@ -1878,7 +1878,7 @@
 		}
 
 		//詳細な引数チェックはView.bindで行う
-		this.__view.bind(target, context);
+		return this.__view.bind(target, context);
 	}
 
 	$.extend(View.prototype, {
