@@ -34,9 +34,6 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
-
-	var errorCodes = ERRCODE.h5.core.view_binding;
-
 	/**
 	 * #qunit-fixture
 	 */
@@ -50,7 +47,12 @@ $(function() {
 	/**
 	 * データバインディングのエラーコード
 	 */
-	var ERR = ERRCODE.h5.core.view_binding;
+	var ERR_BIND = ERRCODE.h5.core.view_binding;
+
+	/**
+	 * h5.uiのエラーコード
+	 */
+	var ERR_U = ERRCODE.h5.u;
 
 	/**
 	 * viewのエラーコード
@@ -175,13 +177,16 @@ $(function() {
 		strictEqual($('#dataBindTest>span').text(), 'abc', 'data-h5-bind指定した要素の値が書き変わること');
 	});
 
-	test('data-h5-bind属性をしていた要素にバインドされているプロパティがない場合は、中身が変わらないこと', function() {
+	test('data-h5-bind属性をしていた要素にバインドされているプロパティがない場合エラーになること', function() {
 		view.append($fixture, 'simple');
-		view.bind($('#dataBindTest'), {
-			test2: 'abcd'
-		});
 
-		strictEqual($('#dataBindTest>span').text(), 'バインド前', 'data-h5-bind指定した要素の値が書き変わらないこと');
+		raises(function(enviroment) {
+			view.bind($('#dataBindTest'), {
+				test2: 'abcd'
+			});
+		}, function(actual) {
+			return ERR_U.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY === actual.code;
+		}, 'スキーマに存在しないプロパティを指定した場合エラーが発生すること"');
 	});
 
 	test('null, undefined, String, Number, Array, Objectが、それぞれ表示されること', function() {
@@ -208,7 +213,7 @@ $(function() {
 			},
 			dataFunc: func
 		});
-		var exp = ['null', '', 'abc', '-1234.567', 'NaN', 'Infinity', '-Infinity', ary.toString(),
+		var exp = ['', '', 'abc', '-1234.567', 'NaN', 'Infinity', '-Infinity', ary.toString(),
 				obj.toString(), ''];
 		checkTexts(exp, 'data-h5-bind指定した要素に値が表示されていること', 'span');
 	});
@@ -224,18 +229,21 @@ $(function() {
 		strictEqual($fixture.find('a').length, 0, 'バインドした文字列にHTMLタグが含まれていても、テキストノード扱いになっていること');
 	});
 
-	test('バインドする要素が複数ある場合は、エラーになること', 3, function() {
+	test('複数要素にバインドできること', 4, function() {
 		view.append($fixture, 'bindSpan');
 		view.append($fixture, 'bindSpan');
-		var args = [$fixture.find('span'), '#qunit-fixture>span', $([1, 2])];
+		var args = [$fixture.find('span'), '#qunit-fixture>span'];
 		for ( var i = 0, l = args.length; i < l; i++) {
 			try {
 				view.bind(args[i], {
 					test: 'test'
 				});
-				ok(false, 'テスト失敗。エラーが発生していません。');
+
+				var elem = $('#qunit-fixture > span');
+				equal(elem.eq(0).text(), 'test');
+				equal(elem.eq(1).text(), 'test');
 			} catch (e) {
-				strictEqual(e.code, ERR_VIEW.ERR_CODE_BIND_TARGET_TOO_MANY, e.message);
+				ok(false, 'エラーが発生したためテスト失敗。');
 			}
 		}
 	});
@@ -278,9 +286,7 @@ $(function() {
 
 	test('バインドする要素の指定に不正な値を渡すとエラーになること', function() {
 		view.append($fixture, 'bindSpan');
-		var invalids = [1, $([1]), function() {
-			throw {}
-		}, [1], true];
+		var invalids = [$(), null, undefined];
 		for ( var i = 0, l = invalids.length; i < l; i++) {
 			try {
 				view.bind(invalids[i], {
@@ -326,10 +332,32 @@ $(function() {
 			}
 		});
 
-		var result = ['TEST', 'バインド無し', 'OBJ.TEST', 'OBJ.TEST2', 'OBJ.OBJ.TEST', 'バインド無し'];
+		var result = ['TEST', '', 'OBJ.TEST', 'OBJ.TEST2', 'OBJ.OBJ.TEST', ''];
 		$('#dataBindTest span').each(function(i) {
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること。' + result[i]);
 		});
+	});
+
+	test('テキスト・HTML・属性・スタイル・クラスにnullをバインドする', function() {
+		view.append($fixture, 'object1');
+		view.bind('#dataBindTest', {obj: null});
+
+		var $span = $fixture.find('#dataBindTest span');
+		strictEqual($span.text(), '', '空文字が設定されていること');
+		strictEqual($span.attr('id'), undefined, '削除されていること');
+		strictEqual($span[0].style.color, '', '何も設定されていないこと');
+		strictEqual($span.attr('class'), undefined, '何も設定されていないこと');
+	});
+
+	test('値が既に設定されているテキスト・HTML・属性・スタイル・クラスにnullをバインドする', function() {
+		view.append($fixture, 'object2');
+		view.bind('#dataBindTest', {obj: null});
+
+		var $span = $fixture.find('#dataBindTest span');
+		strictEqual($span.text(), '', '空文字が設定されていること');
+		strictEqual($span.attr('id'), undefined, '削除されていること');
+		strictEqual($span[0].style.color, '', '何も設定されていないこと');
+		strictEqual($span.attr('class'), undefined, '何も設定されていないこと');
 	});
 
 	//=============================
@@ -367,7 +395,7 @@ $(function() {
 	});
 
 	test('data-h5-loop-contextに配列、ObservableArray以外のものをバインドした場合はエラーになること', function() {
-		var noArys = [null, undefined, 1, 'a'];
+		var noArys = [{}, $(), function(){}];
 		var l = noArys.length;
 		for ( var i = 0; i < l; i++) {
 			view.append($fixture, 'loopContext1');
@@ -378,20 +406,20 @@ $(function() {
 				});
 				ok(false, 'テスト失敗。エラーが発生してません' + noArys[i]);
 			} catch (e) {
-				//TODO エラーコード確認
-				strictEqual(e.code, 0, e.message);
+				strictEqual(e.code, ERR_BIND.ERR_CODE_INVALID_CONTEXT_SRC, e.message);
 			}
 			$fixture.find('div').remove();
 		}
+
 		try {
 			view.bind($('#dataBindTest'), {
 				test: 'aaa'
 			});
 			ok(false, 'テスト失敗。指定無しでエラーが発生してません');
 		} catch (e) {
-			//TODO エラーコード確認
-			strictEqual(e.code, 0, '指定無しでエラーになること');
+			strictEqual(e.code, ERR_BIND.ERR_CODE_INVALID_CONTEXT_SRC, '指定無しでエラーになること');
 		}
+
 		expect(l + 1);
 	});
 
@@ -608,6 +636,15 @@ $(function() {
 		strictEqual($('#dataBindTest>ul>ul:eq(1)>li:eq(1)').text(), 'B-B', 'バインドされていること');
 	});
 
+	test('h5-data-loop-contextにnulを指定する', 1, function() {
+		view.append($fixture, 'loopContext1');
+		view.bind($('#dataBindTest'), {
+			items: null
+		});
+
+		strictEqual($('#dataBindTest li').length, 0, '繰り返される要素が一つもないこと');
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -807,20 +844,22 @@ $(function() {
 					items: oAry
 				});
 
-				oAry.push([{
+				strictEqual($('#dataBindTest>ul>li:eq(0)').text(), 'a', 'バインドされていること');
+				strictEqual($('#dataBindTest>ul>li:eq(1)>ul>li:eq(0)').text(), 'innerA', 'バインドされていること');
+
+				oAry.push({
 					test: 'b',
 					ary: []
-				}]);
+				});
+
+				strictEqual($('#dataBindTest>ul>li:eq(2)').text(), 'b', 'バインドされていること');
+				strictEqual($('#dataBindTest>ul>li:eq(3)>ui:first-child').length, 0, '空の配列を指定したので要素が生成されていないこと');
 
 				innerOAry.push({
 					test: 'innerB'
 				});
 
-				strictEqual($('#dataBindTest>ul>li:first').text(), 'a', 'バインドされていること');
-				strictEqual($('#dataBindTest>ul>ul:first>li:first').text(), 'innerA', 'バインドされていること');
-				strictEqual($('#dataBindTest>ul>ul:first>li:nth-child(2)').text(), 'innerB',
-						'バインドされていること');
-				strictEqual($('#dataBindTest>ul>li:nth-child(2)').text(), 'b', 'バインドされていること');
+				strictEqual($('#dataBindTest>ul>li:eq(1)>ul>li:eq(1)').text(), 'innerB', 'バインドされていること');
 			});
 
 	test('循環参照を持つObservableArrayの中身を変更した時にビューへ反映されること', function() {
@@ -1209,7 +1248,7 @@ $(function() {
 				id: 'bindTest123'
 			});
 		}, function(actual) {
-			return errorCodes.ERR_CODE_REQUIRE_DETAIL === actual.code;
+			return ERR_BIND.ERR_CODE_REQUIRE_DETAIL === actual.code;
 		}, 'data-h5-bindのattrに属性名を指定していないためエラーになること"');
 	});
 
@@ -1256,7 +1295,7 @@ $(function() {
 				color: 'red'
 			});
 		}, function(actual) {
-			return errorCodes.ERR_CODE_REQUIRE_DETAIL === actual.code;
+			return ERR_BIND.ERR_CODE_REQUIRE_DETAIL === actual.code;
 		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
 
@@ -1264,7 +1303,7 @@ $(function() {
 		// バインド先の設定
 		view.append($fixture, 'text');
 
-		var str = '<a href="#a">a</a>';
+		var str = '<a href="#e">a</a>';
 		view.bind($('#dataBindTest'), {
 			test: str
 		});
@@ -1273,17 +1312,21 @@ $(function() {
 		strictEqual($span.text(), str, '値がテキストノードとしてバインドされていること');
 	});
 
-	test('innerHTMLへのバインド', function() {
+	test('HTMLへのバインド', function() {
+		var e = document.createElement('span');
+		e.innerHTML = '<a href="#e"/>';
+		var url = e.firstChild.href;
+
 		// バインド先の設定
 		view.append($fixture, 'html');
 
-		var str = '<a href="#a">a</a>';
+		var str = '<a href="'+ url +'">a</a>';
 		view.bind($('#dataBindTest'), {
 			test: str
 		});
 
 		var $span = $fixture.find('span');
-		strictEqual($span.html(), str, '値がinnerHTMLとしてバインドされていること');
+		strictEqual($span.html().toLowerCase(), str.toLowerCase(), '値がinnerHTMLとしてバインドされていること');
 		strictEqual($span.find('a').length, 1, 'DOM要素が新しく作成されていること');
 	});
 
@@ -1309,7 +1352,7 @@ $(function() {
 				id: 'bindTest123'
 			});
 		}, function(actual) {
-			return errorCodes.ERR_CODE_UNKNOWN_BIND_DIRECTION === actual.code;
+			return ERR_BIND.ERR_CODE_UNKNOWN_BIND_DIRECTION === actual.code;
 		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
 
@@ -1335,6 +1378,22 @@ $(function() {
 		strictEqual($span.attr('id'), 'v3', '属性値にバインドされていること');
 		strictEqual($span[0].style.color, 'red', 'styleにバインドされていること');
 		strictEqual($span.attr('class'), 'v1', 'classにバインドされていること');
+	});
+
+	test('各プロパティにnullをバインドする', function() {
+		view.append($fixture, 'multiple');
+		view.bind('#dataBindTest', {
+			v1: null,
+			v2: null,
+			v3: null,
+			v4: null,
+			v5: null
+		});
+		var $span = $fixture.find('span');
+		strictEqual($span.text(), '', '空文字が設定されていること');
+		strictEqual($span.attr('id'), undefined, '削除されていること');
+		strictEqual($span[0].style.color, '', '削除されていること');
+		strictEqual($span.attr('class'), undefined, '何も設定されていないこと');
 	});
 
 
@@ -1573,12 +1632,64 @@ $(function() {
 		});
 	});
 
+	asyncTest('inputタグへnullをバインドする', 5, function() {
+		view.append($fixture, 'inputtext1');
+
+		var items = {
+			txt1: null,
+			txt2: null,
+			txt3: null
+		};
+
+		var c = h5.core.controller($fixture, {
+			__name: 'TestController'
+		});
+
+		c.readyPromise.done(function() {
+			c.view.bind('h5view#item', {
+				items: items
+			});
+
+			equal($('#txt1').val(), '', 'value属性に値が設定されていること。');
+			equal($('#txt2').val(), '', 'value属性に値が設定されていること。');
+			equal($('#txt3').val(), '', 'value属性に値が設定されていること。');
+			equal($('#txt1').text(), '', 'テキストノードには何も設定されていないこと。');
+			equal($('#txt2').text(), '', 'テキストノードには何も設定されていないこと。');
+			start();
+		});
+	});
+
 	asyncTest('input[type="checkbox"]のcheckedプロパティに値が設定されること', 2, function() {
 		view.append($fixture, 'inputcheck1');
 
 		var items = {
 			check1: 'checked',
 			check2: 'checked'
+		};
+
+		var c = h5.core.controller($fixture, {
+			__name: 'TestController'
+		});
+
+		c.readyPromise.done(function() {
+			c.view.bind('h5view#item', {
+				items: items
+			});
+
+			equal($('#txt1').attr('checked'), items.check1, 'value属性に値が設定されていること。');
+			equal($('#txt2').attr('checked'), items.check2, 'value属性に値が設定されていること。');
+			start();
+		});
+	});
+
+	asyncTest('ネストしたコンテキストに定義されたinput[type="checkbox"]のcheckedプロパティに値が設定されること', 2, function() {
+		view.append($fixture, 'inputcheck2');
+
+		var items = {
+			check1: 'checked',
+			items2: {
+				check2: 'checked'
+			}
 		};
 
 		var c = h5.core.controller($fixture, {
