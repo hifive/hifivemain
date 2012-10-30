@@ -1461,7 +1461,7 @@
 		 *
 		 * @since 1.1.0
 		 * @memberOf DataModel
-		 * @param {String|String[]} ID、またはその配列
+		 * @param {String|String[]} idOrArray ID、またはその配列
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
 		 */
 		get: function(idOrArray) {
@@ -1486,7 +1486,7 @@
 		 *
 		 * @since 1.1.0
 		 * @memberOf DataModel
-		 * @param {String|DataItem|String[]|DataItem[]} 削除するデータアイテム
+		 * @param {String|DataItem|String[]|DataItem[]} objOrItemIdOrArray 削除するデータアイテム
 		 * @returns {DataItem|DataItem[]} 削除したデータアイテム
 		 */
 		remove: function(objOrItemIdOrArray) {
