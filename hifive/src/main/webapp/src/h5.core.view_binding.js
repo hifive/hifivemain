@@ -524,10 +524,10 @@
 
 			switch (target) {
 			case 'text':
-				context ? $element.text(value) : $element.text('');
+				value ? $element.text(value) : $element.text('');
 				break;
 			case 'html':
-				context ? $element.html(value) : $element.html('');
+				value ? $element.html(value) : $element.html('');
 				break;
 			case 'class':
 				//TODO classの場合はoldValueが必要
@@ -537,7 +537,7 @@
 				if (!detail) {
 					throwFwError(ERR_CODE_REQUIRE_DETAIL);
 				}
-				context ? $element.attr(detail, value) : $element.removeAttr(detail);
+				value ? $element.attr(detail, value) : $element.removeAttr(detail);
 				break;
 			case 'style':
 				if (!detail) {
