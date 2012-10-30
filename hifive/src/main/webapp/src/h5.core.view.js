@@ -64,14 +64,9 @@
 	var ERR_CODE_TEMPLATE_PROPATY_UNDEFINED = 7006;
 
 	/**
-	 * bindに指定したtargetがDOM要素(又は有効なセレクタ、jQueryオブジェクトでない)ならエラー
+	 * bindに指定されたターゲットが不正(非DOM要素またはセレクタで指定された要素が存在しない)な場合に発生するエラー
 	 */
 	var ERR_CODE_BIND_INVALID_TARGET = 7007;
-
-	/**
-	 * bindに指定したtargetが表すDOM要素が存在しないならエラー
-	 */
-	var ERR_CODE_BIND_TARGET_NO_EXIST = 7007;
 
 	/**
 	 * bindに指定したtargetが表すDOM要素が複数あるならエラー
@@ -94,8 +89,7 @@
 	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
 	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
-	errMsgMap[ERR_CODE_BIND_INVALID_TARGET] = 'bindの引数に指定されたバインド先の要素の指定が不正です。有効なDOMオブジェクト、セレクタ、jQueryオブジェクトのいずれかを指定してください。';
-	errMsgMap[ERR_CODE_BIND_TARGET_NO_EXIST] = 'bindの引数に指定されたバインド先の要素の指定が存在しません。';
+	errMsgMap[ERR_CODE_BIND_INVALID_TARGET] = 'bindの引数に指定されたターゲットが存在しないかまたは不正です。';
 	errMsgMap[ERR_CODE_TOO_MANY_TARGETS] = 'bindの引数に指定されたバインド先の要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_BIND_CONTEXT_INVALID] = 'bindの引数に指定されたルートコンテキストが不正です。オブジェクト、データアイテム、またはObservableItemを指定してください。';
 
@@ -823,7 +817,7 @@
 
 				if ($element.length === 0) {
 					// 要素がない、もしくは見つからない場合はエラー
-					throwFwError(ERR_CODE_BIND_TARGET_NO_EXIST);
+					throwFwError(ERR_CODE_BIND_INVALID_TARGET);
 				}
 
 				//bind()はルートノードが複数であることをサポートするので、lengthは1には限定しない
