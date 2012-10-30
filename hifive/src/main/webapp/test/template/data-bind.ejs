@@ -67,7 +67,7 @@
 <script type="text/ejs" id="loopContext1">
 	<div id="dataBindTest">
 		<ul data-h5-loop-context="items">
-			<li data-h5-bind="test">
+			<li data-h5-bind="test"></li>
 		</ul>
 	</div>
 </script>
@@ -269,5 +269,15 @@
 				</div>
 			</div>
 		-->
+	</div>
+</script>
+
+<script type="text/ejs" id="nestloop1">
+	<div id="dataBindTest">
+		<div data-h5-loop-context="items">
+			<div data-h5-loop-context="ar">
+				<span data-h5-bind="val"></span>
+			</div>
+		</div>
 	</div>
 </script>
