@@ -524,10 +524,10 @@
 
 			switch (target) {
 			case 'text':
-				value ? $element.text(value) : $element.text('');
+				value == null ? $element.text(value) : $element.text('');
 				break;
 			case 'html':
-				value ? $element.html(value) : $element.html('');
+				value == null ? $element.html(value) : $element.html('');
 				break;
 			case 'class':
 				//TODO classの場合はoldValueが必要
@@ -537,7 +537,7 @@
 				if (!detail) {
 					throwFwError(ERR_CODE_REQUIRE_DETAIL);
 				}
-				value ? $element.attr(detail, value) : $element.removeAttr(detail);
+				value == null ? $element.attr(detail, value) : $element.removeAttr(detail);
 				break;
 			case 'style':
 				if (!detail) {
@@ -933,10 +933,12 @@
 	}
 	$.extend(Binding.prototype, {
 		/**
+		 * このデータバインドを解除します。解除後は、ソースオブジェクトを変更してもビューには反映されません。<br>
+		 * ビュー（HTML）の状態は、このメソッドを呼んだ時の状態のままです。
+		 *
 		 * @since 1.1.0
 		 * @memberOf Binding
 		 * @function
-		 * @private
 		 */
 		unbind: function() {
 			//全てのバインディングを解除
@@ -951,7 +953,7 @@
 			//unbindしたら、ノードは元に戻す？？
 		},
 
-		/**
+		/*
 		 * バインディングを再実行します。既存のビューは一度すべて削除されます。
 		 *
 		 * @since 1.1.0
