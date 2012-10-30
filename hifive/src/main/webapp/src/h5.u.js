@@ -108,18 +108,19 @@
 	 * createObservableItemに指定されたスキーマのエラー
 	 */
 	var ERR_CODE_INVALID_SCHEMA = 11012;
+
 	/**
 	 * ObservableItemにスキーマ違反の値がセットされた
 	 */
 	var ERR_CODE_INVALID_ITEM_VALUE = 11013;
 
 	/**
-	 * ObservableItemでスキーマで定義されていない値にセットされた
+	 * ObservableItemで依存項目にセットされた
 	 */
 	var ERR_CODE_DEPEND_PROPERTY = 11014;
 
 	/**
-	 * ObservableItemで依存項目にセットされた
+	 * ObservableItemでスキーマで定義されていない値にセットされた
 	 */
 	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 11015;
 
