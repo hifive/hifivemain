@@ -545,7 +545,7 @@
 				}
 				//contextがnullの場合valueはnull。styleはcontext===nullの場合当該スタイルを削除するので
 				//このコードでスタイルが削除される（よってcontextによる分岐は不要）。
-				$element.css(detail, value);
+				value == null ? $element.css(detail, '') : $element.css(detail, value);
 				break;
 			default:
 				throwFwError(ERR_CODE_UNKNOWN_BIND_DIRECTION);
