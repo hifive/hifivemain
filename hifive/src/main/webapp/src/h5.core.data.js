@@ -354,17 +354,25 @@
 				throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, prop]);
 			}
 			if (ignoreProps && ($.inArray(prop, ignoreProps) !== -1)) {
-				//無視すべきプロパティはエラーにする
+				//このpropプロパティは無視する
 				continue;
-			}
-
-			// depend指定されている項目はset禁止
-			if (model.schema[prop] && model.schema[prop].depend) {
-				throwFwError(ERR_CODE_DEPEND_PROPERTY, prop);
 			}
 
 			var oldValue = getValue(item, prop);
 			var newValue = valueObj[prop];
+
+			// depend指定されている項目はset禁止
+			if (model.schema[prop] && model.schema[prop].depend) {
+				if (oldValue === newValue) {
+					//dependなプロパティの場合、現在の値とこれから代入しようとしている値が
+					//厳密等価でtrueになる場合に限り、代入をエラーにせず無視する。
+					//これは、item.get()の戻り値のオブジェクトをそのままset()しようとしたときに
+					//dependのせいでエラーにならないようにするため。
+					continue;
+				}
+				throwFwError(ERR_CODE_DEPEND_PROPERTY, prop);
+			}
+
 
 			var type = model.schema[prop] && model.schema[prop].type;
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
