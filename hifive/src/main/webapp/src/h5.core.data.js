@@ -661,22 +661,7 @@
 					return;
 				}
 
-				// 配列の値が変化していたらitemのイベントを上げる
-				// は、endUpdateのなかでやる
-
-				//				// isAlreadyInUpdateでないならsnapShotと比較して、同じならreturn
-				//				if (!isAlreadyInUpdate && (observableArray.length === snapArray.length)) {
-				//					for ( var i = 0, l = observableArray.length; i < l; i++) {
-				//						if (observableArray[i] !== snapArray[i]) {
-				//							break;
-				//						}
-				//					}
-				//					if (i === l) {
-				//						// 中身が全て同じなら何もしない
-				//						return;
-				//					}
-				//				}
-
+				// 配列の要素が全て同じかどうかのチェックはendUpdateのなかでやる
 
 				// changeイベントオブジェクトの作成
 				var ev = {
@@ -1033,7 +1018,7 @@
 
 		if (!modelLogs[itemId][prop]) {
 			// sliceして保存
-			modelLogs[itemId][prop] = item.get(prop).slice(0);
+			modelLogs[itemId][prop] = Array.prototype.slice.call(getValue(item, prop), 0);
 			return;
 		}
 
@@ -1583,7 +1568,7 @@
 		 * @returns {DataManager} このモデルが属しているマネージャ
 		 */
 		getManager: function() {
-			return this._manager
+			return this._manager;
 		},
 
 		/**
@@ -2054,7 +2039,7 @@
 										if (!model.get(itemId).get(p).equals(oldValue)) {
 											mergedProps[p] = {
 												oldValue: oldValue
-											}
+											};
 										}
 									} else {
 										mergedProps[p] = {
