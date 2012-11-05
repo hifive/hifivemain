@@ -1146,7 +1146,7 @@ $(function() {
 			__dispose: function() {
 				var that = this;
 				setTimeout(function() {
-					child = that.__name === 'ChildController';
+					that.__name === 'ChildController';
 					childDfd.resolve();
 				}, 800);
 				return childDfd.promise();
@@ -1160,7 +1160,7 @@ $(function() {
 			__dispose: function() {
 				var that = this;
 				setTimeout(function() {
-					root = that.__name === 'TestController';
+					that.__name === 'TestController';
 					rootDfd.reject();
 				}, 100);
 				return rootDfd.promise();
@@ -1891,8 +1891,8 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラ内のthis(AOPなし)', 2, function() {
-
+	asyncTest('コントローラ内のthis(AOPなし)', 1, function() {
+		var capturedController = null;
 		var controller = {
 			__name: 'TestController',
 
@@ -1901,7 +1901,7 @@ $(function() {
 			},
 
 			test: function() {
-				window.controller = this;
+				capturedController = this;
 			}
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
@@ -1910,12 +1910,11 @@ $(function() {
 
 					$('#controllerTest input[type=button]').click();
 
-					strictEqual(window.controller.__name, 'TestController',
+					strictEqual(capturedController.__name, 'TestController',
 							'コントローラ内のthisはコントローラ自身を指しているか');
 
 					testController.unbind();
-					window.controller = undefined;
-					strictEqual(window.controller, undefined, '（名前空間のクリーンアップ）');
+					capturedController = undefined;
 					start();
 				});
 	});
@@ -2359,6 +2358,7 @@ $(function() {
 				var html = '';
 				var updateView = 0;
 				var append = '';
+				var append2 = '';
 				var prepend = '';
 				var viewError1 = null;
 				var viewError2 = null;
@@ -2473,7 +2473,8 @@ $(function() {
 
 
 	asyncTest('テンプレートのカスケーディング1', function() {
-		var html = html2 = '';
+		var html = '';
+		var html2 = '';
 		var errorObj = {};
 		var expectErrorObj = {
 			code: 7005,

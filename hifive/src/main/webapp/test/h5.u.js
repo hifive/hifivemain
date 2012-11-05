@@ -1591,7 +1591,7 @@ $(function() {
 
 	test('copyFrom', 11, function() {
 		var o = h5.u.obj.createObservableArray();
-		ary = [1, 'a', window];
+		var ary = [1, 'a', window];
 		o.copyFrom(ary);
 		deepEqual(o.slice(), ary, 'copyFromで引数に渡した配列の中身がコピーされること');
 		notStrictEqual(o, ary, 'copyFromで渡した通常の配列とインスタンスが異なること');
@@ -1614,7 +1614,7 @@ $(function() {
 
 	test('equals', 6, function() {
 		var o = h5.u.obj.createObservableArray();
-		ary = [1, 'a', window];
+		var ary = [1, 'a', window];
 		o.copyFrom(ary);
 		strictEqual(o.equals([1, 'a', window]), true, '引数の配列と中身が同じならequalsの結果がtrueであること');
 

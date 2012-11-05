@@ -1281,7 +1281,7 @@
 				'getAvailableTemplates() LRUでキャッシュされていること。※h5.dev.core.view.cacheManagerがない場合 ※min版ではエラーになります',
 				20, function() {
 					try {
-						cacheManager = h5.dev.core.view.cacheManager;
+						var cacheManager = h5.dev.core.view.cacheManager;
 					} catch (e) {
 						expect(1);
 						ok(false, 'h5.dev.core.view.cacheManagerがありません。');

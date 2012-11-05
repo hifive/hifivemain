@@ -454,6 +454,9 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	var originTop = 0;
+	var originLeft = 0;
+
 	module(
 			"isInView4",
 			{

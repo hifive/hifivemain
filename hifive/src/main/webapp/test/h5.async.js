@@ -546,7 +546,7 @@ $(function() {
 		dfd1.resolve(3, 2, 1);
 		dfd2.reject(1, 2, 3);
 
-		ret = '';
+		var ret = '';
 		dfd1 = h5.async.deferred();
 		dfd2 = h5.async.deferred();
 		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());

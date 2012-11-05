@@ -64,7 +64,7 @@ $(function() {
 		}
 		$.mobile.activePage = undefined;
 		// JQMが生成するbody内をラップするdiv要素を外す
-		$('body>div').children().unwrap();
+		$('body>div:not(#qunit)').children().unwrap();
 		// JQMが生成するloadingのh1要素を削除
 		$('h1:not(#qunit-header)').remove();
 		// test*.cssをheadから削除する
@@ -75,7 +75,7 @@ $(function() {
 			controllers[i].dispose();
 
 		}
-		controllers = [];
+		h5.core.controllerManager.controllers = [];
 	}
 
 	/**
@@ -92,7 +92,7 @@ $(function() {
 	 * idからページを作る。jsが指定されていればdata-h5-script、activFlag=trueなら作成したページをactivePageにする。
 	 */
 	function createPage(id, _js, activeFlag) {
-		js = _js ? ' data-h5-script="' + _js + '?' + new Date().getTime() + '"' : '';
+		var js = _js ? ' data-h5-script="' + _js + '?' + new Date().getTime() + '"' : '';
 		var $page = $('<div id="' + id + '" class="testForJQM" data-role="page"' + js + '></div>');
 		var $header = $('<div id="top_header" class="ui-bar-f ui-header appLogoHeader"><h1>header</h1></div>');
 		var $content = $('<div id="top_content" >content<button id="test"></button></div>');
@@ -126,7 +126,7 @@ $(function() {
 	 */
 	function changePage(to, initialize) {
 		var $from = $.mobile.activePage;
-		$to = $(to);
+		var $to = $(to);
 		if (initialize) {
 			$to.trigger('pageinit');
 		}

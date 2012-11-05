@@ -2749,7 +2749,7 @@ $(function() {
 
 	test('idのtypeの指定がないモデルで、アイテムを作成できること(string指定と同様)', 5, function() {
 		// idのtype:string
-		model = manager.createModel({
+		var model = manager.createModel({
 			name: 'IdNoTypeModel',
 			schema: {
 				id: {
@@ -5014,7 +5014,7 @@ $(function() {
 	/**
 	 * constraintを定義したテスト用のモデル 中身は各constraintのテストのsetupで記述する
 	 */
-	var model;
+	var constraintModel = null;
 
 	module('constraint - notNull', {
 		setup: function() {
@@ -5053,7 +5053,7 @@ $(function() {
 				notNull: true
 			};
 
-			model = createModelFromSchema({
+			constraintModel = createModelFromSchema({
 				id: {
 					id: true
 				},
@@ -5135,7 +5135,7 @@ $(function() {
 		},
 		teardown: function() {
 			dropAllModel(manager);
-			model = null;
+			constraintModel = null;
 			sequence = null;
 			testClass1 = null;
 			itemA = null;
@@ -5163,7 +5163,7 @@ $(function() {
 		// 値を指定せずcreateできること
 		var msg = 'defaultValueで指定した値を持つDataItemが作成できること。';
 
-		var item1 = model.create({
+		var item1 = constraintModel.create({
 			id: sequence.next()
 		});
 		equal(item1.get('test1'), 'aaa', msg);
@@ -5188,7 +5188,7 @@ $(function() {
 		// 値を指定してcreateできること
 		msg = '条件を満たす値を持つDataItemが作成できること';
 
-		var item2 = model.create({
+		var item2 = constraintModel.create({
 			id: sequence.next(),
 			test1: 'bbb',
 			test2: ['A', 'B', 'C'],
@@ -5281,7 +5281,7 @@ $(function() {
 				};
 				desc1['test' + i] = null;
 
-				model.create(desc1);
+				constraintModel.create(desc1);
 			}, 'NotNull制約があるため、値にnullを指定してDataItemを作成できないこと。');
 		}
 
@@ -5324,7 +5324,7 @@ $(function() {
 				notEmpty: true
 			};
 
-			model = createModelFromSchema({
+			constraintModel = createModelFromSchema({
 				id: {
 					id: true
 				},
@@ -5343,7 +5343,7 @@ $(function() {
 		},
 		teardown: function() {
 			dropAllModel(manager);
-			model = null;
+			constraintModel = null;
 			sequence = null;
 			testClass1 = null;
 		}
@@ -5356,7 +5356,7 @@ $(function() {
 	test('制約が適用されているか 正常系', 7, function() {
 		// 値を指定せずcreateできること
 		var msg = 'defaultValueで指定した値を持つDataItemが作成できること。';
-		var item = model.create({
+		var item = constraintModel.create({
 			id: sequence.next()
 		});
 
@@ -5366,7 +5366,7 @@ $(function() {
 		// 値を指定してcreateできること
 		msg = '条件を満たす値を持つDataItemが作成できること';
 
-		item = model.create({
+		item = constraintModel.create({
 			id: sequence.next(),
 			test1: 'bbb',
 			test2: ['A', 'B', 'C']
@@ -5396,7 +5396,7 @@ $(function() {
 			function() {
 				// createでエラー
 				try {
-					model.create({
+					constraintModel.create({
 						id: sequence.next(),
 						test1: ''
 					});
@@ -5406,7 +5406,7 @@ $(function() {
 				}
 
 				try {
-					model.create({
+					constraintModel.create({
 						id: sequence.next(),
 						test2: ['a', '']
 					});
@@ -5416,7 +5416,7 @@ $(function() {
 				}
 
 				try {
-					model.create({
+					constraintModel.create({
 						id: sequence.next(),
 						test1: null
 					});
@@ -5426,7 +5426,7 @@ $(function() {
 				}
 
 				try {
-					model.create({
+					constraintModel.create({
 						id: sequence.next(),
 						test2: ['a', null]
 					});
@@ -5436,7 +5436,7 @@ $(function() {
 					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 				}
 
-				var item = model.create({
+				var item = constraintModel.create({
 					id: sequence.next()
 				});
 
@@ -5471,7 +5471,7 @@ $(function() {
 				};
 
 				// defaultValueなし、notEmpty制約がある場合、create時に値を設定しないとエラー
-				model2 = manager.createModel({
+				var model2 = manager.createModel({
 					name: 'TestModel2',
 					schema: {
 						id: {
@@ -5504,7 +5504,7 @@ $(function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 
-			model = manager.createModel({
+			constraintModel = manager.createModel({
 				name: 'TestDataModel',
 				schema: {
 					id: {
@@ -5555,7 +5555,7 @@ $(function() {
 
 	test('制約が適用されているか 正常系', 22, function() {
 		// 値を指定しないでcreate
-		var item = model.create({
+		var item = constraintModel.create({
 			id: sequence.next()
 		});
 		equal(item.get('num'), -5.5, 'type:num minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
@@ -5566,7 +5566,7 @@ $(function() {
 				'type:int[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 		// create
-		item = model.create({
+		item = constraintModel.create({
 			id: sequence.next(),
 			num: -5.5,
 			numA: [-5.5, 0, 6.6, Infinity],
@@ -5653,7 +5653,7 @@ $(function() {
 	test('制約が適用されているか 異常系', 8, function() {
 		//create
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				num: -5.55
 			});
@@ -5662,7 +5662,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				numA: [4.44, -5.55, 6.66]
 			});
@@ -5671,7 +5671,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				int: 4
 			});
@@ -5680,7 +5680,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				intA: [8, 6, 4]
 			});
@@ -5690,7 +5690,7 @@ $(function() {
 		}
 
 		// set
-		var item = model.create({
+		var item = constraintModel.create({
 			id: sequence.next()
 		});
 		try {
@@ -5736,7 +5736,7 @@ $(function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 
-			model = manager.createModel({
+			constraintModel = manager.createModel({
 				name: 'TestDataModel',
 				schema: {
 					id: {
@@ -5787,7 +5787,7 @@ $(function() {
 
 	test('制約が適用されているか 正常系', 22, function() {
 		// 値を指定しないでcreate
-		var item = model.create({
+		var item = constraintModel.create({
 			id: sequence.next()
 		});
 		equal(item.get('num'), -5.5, 'type:num maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
@@ -5798,7 +5798,7 @@ $(function() {
 				'type:int[] maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 		// create
-		item = model.create({
+		item = constraintModel.create({
 			id: sequence.next(),
 			num: -5.5,
 			numA: [5.5, 0, -5, -Infinity],
@@ -5885,7 +5885,7 @@ $(function() {
 	test('制約が適用されているか 異常系', 8, function() {
 		//create
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				num: -5.45
 			});
@@ -5894,7 +5894,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				numA: [4.44, 5.55]
 			});
@@ -5903,7 +5903,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				int: 6
 			});
@@ -5912,7 +5912,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				intA: [2, 6, 4]
 			});
@@ -5922,7 +5922,7 @@ $(function() {
 		}
 
 		// set
-		var item = model.create({
+		var item = constraintModel.create({
 			id: sequence.next()
 		});
 		try {
@@ -5971,7 +5971,7 @@ $(function() {
 			var constraint = {
 				minLength: 2
 			};
-			model = manager.createModel({
+			constraintModel = manager.createModel({
 				name: 'TestDataModel',
 				schema: {
 					id: {
@@ -6006,7 +6006,7 @@ $(function() {
 			11,
 			function() {
 				// 値を指定しないでcreate
-				var item = model.create({
+				var item = constraintModel.create({
 					id: sequence.next()
 				});
 				equal(item.get('str'), 'ab',
@@ -6015,7 +6015,7 @@ $(function() {
 						'type:num[] minLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 				// create
-				item = model.create({
+				item = constraintModel.create({
 					id: sequence.next(),
 					str: 'AB',
 					strA: ['ABC', 'AB']
@@ -6080,7 +6080,7 @@ $(function() {
 	test('制約が適用されているか 異常系', 4, function() {
 		//create
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				str: 'a'
 			});
@@ -6089,7 +6089,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				strA: ['abc', 'def', 'g']
 			});
@@ -6099,7 +6099,7 @@ $(function() {
 		}
 
 		// set
-		var item = model.create({
+		var item = constraintModel.create({
 			id: sequence.next()
 		});
 		try {
@@ -6132,7 +6132,7 @@ $(function() {
 			var constraint = {
 				maxLength: 2
 			};
-			model = manager.createModel({
+			constraintModel = manager.createModel({
 				name: 'TestDataModel',
 				schema: {
 					id: {
@@ -6169,7 +6169,7 @@ $(function() {
 			11,
 			function() {
 				// 値を指定しないでcreate
-				var item = model.create({
+				var item = constraintModel.create({
 					id: sequence.next()
 				});
 				equal(item.get('str'), 'ab',
@@ -6178,7 +6178,7 @@ $(function() {
 						'type:num[] maxLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 				// create
-				item = model.create({
+				item = constraintModel.create({
 					id: sequence.next(),
 					str: 'AB',
 					strA: ['A', 'AB']
@@ -6242,7 +6242,7 @@ $(function() {
 	test('制約が適用されているか 異常系', 4, function() {
 		//create
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				str: 'abc'
 			});
@@ -6251,7 +6251,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				strA: ['a', 'bcd', 'e']
 			});
@@ -6261,7 +6261,7 @@ $(function() {
 		}
 
 		// set
-		var item = model.create({
+		var item = constraintModel.create({
 			id: sequence.next()
 		});
 		try {
@@ -6294,7 +6294,7 @@ $(function() {
 			var constraint = {
 				pattern: /^h5/i
 			};
-			model = manager.createModel({
+			constraintModel = manager.createModel({
 				name: 'TestDataModel',
 				schema: {
 					id: {
@@ -6329,7 +6329,7 @@ $(function() {
 			11,
 			function() {
 				// 値を指定しないでcreate
-				var item = model.create({
+				var item = constraintModel.create({
 					id: sequence.next()
 				});
 				equal(item.get('str'), 'h5',
@@ -6338,7 +6338,7 @@ $(function() {
 						'type:num[] patternの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 				// create
-				item = model.create({
+				item = constraintModel.create({
 					id: sequence.next(),
 					str: 'H555',
 					strA: ['h555', null, 'h5']
@@ -6402,7 +6402,7 @@ $(function() {
 	test('制約が適用されているか 異常系', 4, function() {
 		//create
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				str: 'ｈ５'
 			});
@@ -6411,7 +6411,7 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 		try {
-			model.create({
+			constraintModel.create({
 				id: sequence.next(),
 				strA: ['a', 'h5', 'e']
 			});
@@ -6421,7 +6421,7 @@ $(function() {
 		}
 
 		// set
-		var item = model.create({
+		var item = constraintModel.create({
 			id: sequence.next()
 		});
 		try {
@@ -6467,7 +6467,7 @@ $(function() {
 			min: -1,
 			max: 2
 		};
-		model = manager.createModel({
+		constraintModel = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
 				id: {
@@ -6510,7 +6510,7 @@ $(function() {
 				var vStr = $.isArray(v) ? '[' + v[0] + ']' : v;
 				var condition = values[i] !== null && -1 <= values[i] && values[i] <= 2;
 				try {
-					model.create(descriptor);
+					constraintModel.create(descriptor);
 					ok(condition, h5.u.str.format(
 							'type:{0}, 値{1} はnotNull, min, max すべての条件を満たすのでエラーでない', propTypes[j],
 							vStr));
@@ -6529,7 +6529,7 @@ $(function() {
 			minLength: 4,
 			maxLength: 6
 		};
-		model = manager.createModel({
+		constraintModel = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
 				id: {
@@ -6561,7 +6561,7 @@ $(function() {
 				var condition = values[i].indexOf('hi') === 0 && 4 <= values[i].length
 						&& values[i].length <= 6;
 				try {
-					model.create(descriptor);
+					constraintModel.create(descriptor);
 					ok(condition, h5.u.str.format(
 							'type:{0}, 値{1} はpattern, minLength, maxLength すべての条件を満たすのでエラーでない',
 							propTypes[j], vStr));
@@ -8708,7 +8708,7 @@ $(function() {
 		var expEvObj = null;
 		order = [];
 		item.addEventListener('change', itemEventListener);
-		o = item.get('ary');
+		var o = item.get('ary');
 		item.set('ary', [1, 2, 3]);
 		deepEqual(order, ['item', 'model', 'manager'], 'setでイベントが上がる');
 
@@ -9462,7 +9462,8 @@ $(function() {
 				}]);
 				var oldItem = items[0];
 				var oldItem2 = items[1];
-				var newItem = newItem2 = null;
+				var newItem = null;
+				var newItem2 = null;
 
 				manager.beginUpdate();
 				// 削除して、そのIDのオブジェクトをまたcreateする
@@ -9526,7 +9527,11 @@ $(function() {
 				var oldItem = items[0];
 				var oldItem2 = items[1];
 				var oldItem3 = items[2];
-				var newItem = newItem2 = newItem3 = newItem4 = newItem5 = null;
+				var newItem = null;
+				var newItem2 = null;
+				var newItem3 = null;
+				var newItem4 = null;
+				var newItem5 = null;
 
 				// changeイベントオブジェクトを格納する
 				var changeArgs = [];

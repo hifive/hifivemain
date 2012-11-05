@@ -262,9 +262,11 @@ $(function() {
 		}
 	});
 
-	test('バインドする要素の指定方法はjQueryオブジェクト、DOM、セレクタのどれでもいいこと', function() {
+	test('バインドする要素の指定方法はjQueryオブジェクト、DOM、セレクタのいずれかであること', function() {
 		view.append($fixture, 'bindSpan');
 		var strs = ['jQueryオブジェクト', 'DOM', 'セレクタ'];
+		var args = null;
+
 		for ( var i = 0, l = strs.length; i < l; i++) {
 			switch (i) {
 			case 0:
