@@ -920,7 +920,7 @@
 
 			return ret;
 		}
-		;
+
 		return CURRENT_SEREALIZER_VERSION + '|' + func(value);
 	}
 
@@ -992,7 +992,7 @@
 				}
 			}
 			val.match(/^(.)(.*)/);
-			type = RegExp.$1;
+			var type = RegExp.$1;
 			ret = (RegExp.$2) ? RegExp.$2 : '';
 			if (type !== undefined && type !== '') {
 				switch (codeToType(type)) {

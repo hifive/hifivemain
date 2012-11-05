@@ -2371,6 +2371,8 @@
 				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
 
+			var error = null;
+
 			if (msgOrErrObj && isString(msgOrErrObj)) {
 				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));
 			} else {
