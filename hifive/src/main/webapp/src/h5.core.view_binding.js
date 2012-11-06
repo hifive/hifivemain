@@ -43,6 +43,9 @@
 
 	var DATA_H5_DYN_BIND_ROOT = 'data-h5-dyn-bind-root';
 
+	/** 初期状態のclassNameを保存しておく属性 */
+	var DATA_H5_DYN_CN = 'data-h5-dyn-cn';
+
 	/** 1つのバインド指定のターゲットとソースのセパレータ（「text:prop」の「:」） */
 	var BIND_DESC_TARGET_SEPARATOR = ':';
 
@@ -530,8 +533,14 @@
 				value == null ? $element.html('') : $element.html(value);
 				break;
 			case 'class':
-				//TODO classの場合はoldValueが必要
-				$element.addClass(value);
+				var origClassName = $element.attr(DATA_H5_DYN_CN);
+				var isOrigClassEmpty = origClassName == null;
+				var space = isOrigClassEmpty ? '' : ' ';
+
+				//初期状態のclassもバインドの値も空の場合は
+				//jQueryのremoveClass()に倣って空文字を代入してclassをクリアする
+				$element[0].className = (isOrigClassEmpty ? '' : origClassName)
+						+ (value == null ? '' : space + value);
 				break;
 			case 'attr':
 				if (!detail) {
@@ -802,6 +811,10 @@
 		}
 	}
 
+	function hasClassBinding(bindDesc) {
+		return /class\s*:/.test(bindDesc);
+	}
+
 	/**
 	 * バインディングを管理します。
 	 *
@@ -868,6 +881,17 @@
 
 				$original.find('[data-h5-context],[data-h5-loop-context]').each(function() {
 					$(this).attr(DATA_H5_DYN_CTX, contextUid++);
+				});
+
+				//data-h5-bindでclassバインドしている場合、オリジナルのclassNameを保存しておく（記述されている場合のみ）
+				if (hasClassBinding($original.attr(DATA_H5_BIND)) && $original[0].className != '') {
+					$original.attr(DATA_H5_DYN_CN, $original[0].className);
+				}
+				$original.find('[' + DATA_H5_BIND + ']').each(function() {
+					var $this = $(this);
+					if (hasClassBinding($this.attr(DATA_H5_BIND)) && this.className != '') {
+						$this.attr(DATA_H5_DYN_CN, this.className);
+					}
 				});
 			}
 
