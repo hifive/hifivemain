@@ -1029,7 +1029,36 @@ $(function() {
 							}
 						},
 						defaultValue: 0
+					}
+				}
+			});
+			ok(false, 'エラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, errCode, e.message);
+		}
+	});
 
+	test('depend指定のあるプロパティにdefaultValueを設定できないこと', function() {
+		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		try {
+			manager.createModel({
+				name: 'TestDataModel',
+				schema: {
+					id: {
+						id: true
+
+					},
+					val: {
+						depend: {
+							on: 'val2',
+							calc: function() {
+								return 0;
+							}
+						},
+						defaultValue: 0
+					},
+					val2: {
+						type: 'number'
 					}
 				}
 			});
@@ -7528,7 +7557,7 @@ $(function() {
 				}
 			},
 			type: 'create'
-		}
+		};
 
 		var item = model.create({
 			id: '1',
@@ -7537,6 +7566,33 @@ $(function() {
 
 		strictEqual(item.get('v'), undefined, 'undefiendが格納されていること');
 		strictEqual(item.get('d'), undefined, 'calcが返した値が依存プロパティに格納されていること');
+	});
+
+	test('厳密比較がtrueであれば、dependが指定されたプロパティに代入できること', 1, function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+
+				},
+				val: {
+					depend: {
+						on: 'id',
+						calc: function() {
+							return 0;
+						}
+					}
+				}
+			}
+		});
+
+		var item = model.create({
+			id: '1'
+		});
+
+		item.set('val', 0);
+		equal(item.get('val'), 0, '設定する値が現在設定されている値と同値であれば代入はエラーにならないこと');
 	});
 
 	//=============================
@@ -8957,8 +9013,9 @@ $(function() {
 		});
 		manager.beginUpdate();
 		item.get().ary.push('a');
+		item.get().ary.unshift('b');
 		// 内部でoldValueを保存するためにsliceが呼ばれる
-		deepEqual(order, ['slice', 'push'], 'begin-endUpdate内でもObservableArrayのイベントは即座に発火する。');
+		deepEqual(order, ['push', 'unshift'], 'begin-endUpdate内でもObservableArrayのイベントは即座に発火する。');
 		manager.endUpdate();
 	});
 
