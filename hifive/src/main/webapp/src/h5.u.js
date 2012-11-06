@@ -1505,7 +1505,25 @@
 			 * @since 1.1.0
 			 * @type Object
 			 */
-			itemValueCheckFuncs: itemValueCheckFuncs
+			itemValueCheckFuncs: itemValueCheckFuncs,
+
+			/**
+			 * 指定されたプロパティがtype:[]かどうかを返します。（type:anyでObservableArrayが入っている場合とtype:[]で最初から
+			 * ObservableArrayが入っている場合を区別するため）
+			 *
+			 * @private
+			 * @memberOf DataItem
+			 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
+			 */
+			_isArrayProp: function(prop) {
+				if (schema[prop] && schema[prop].type && schema[prop].type.indexOf('[]') > -1) {
+					//Bindingにおいて比較的頻繁に使われるので、高速化も検討する
+					//TODO DataItemと同じコードがあるので共通化したい
+					return true;
+				}
+				return false;
+			}
+
 		};
 
 		/**
