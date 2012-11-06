@@ -946,24 +946,6 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('スキーマに定義されていないプロパティをget/setするとエラーになること', 2, function() {
-		testDataItemObsItem(function(item, isDataItem) {
-			var itemType = isDataItem ? 'DataItem' : 'ObservableItem';
-
-			raises(function(enviroment) {
-				item.get('hoge');
-			}, function(actual) {
-				return actual.code === (isDataItem ? ERR_DATA.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY : ERR_U.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY);
-			}, itemType +': スキーマに定義されていないプロパティの値を取得したためエラーになること"');
-
-			raises(function(enviroment) {
-				item.set('hoge', 10);
-			}, function(actual) {
-				return actual.code === (isDataItem ? ERR_DATA.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY : ERR_U.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY);
-			}, itemType +': スキーマに定義されていないプロパティに対して値を設定したためエラーになること"');
-		}, testSchema);
-	});
-
 	test('バインドできること', 2, function() {
 		var exp = ['abc', '-123.45', 'obj.a', 'abc', '-123.45', 'ary.1', 'ary.2', 'oAry.1',
 				'oAry.2'];
@@ -1696,7 +1678,7 @@ $(function() {
 			equal(oar.length, 3, name + ': set()で設定しした値が格納されていること。');
 
 			oar.sort(function(a, b) {
-				return a.test < b.test;
+				return a.test < b.test ? 1 : a.test > b.test ? -1 : 0;
 			});
 			equal($('#dataBindTest span').length, oar.length, name
 					+ ': ObservableArrayの変更がビューに反映されていること');
@@ -1708,7 +1690,7 @@ $(function() {
 					+ ': ObservableArrayの内容がビューに反映されていること');
 
 			oar.sort(function(a, b) {
-				return a.test > b.test;
+				return a.test > b.test ? 1 : a.test < b.test ? -1 : 0;
 			});
 			equal($('#dataBindTest span').length, oar.length, name
 					+ ': ObservableArrayの変更がビューに反映されていること');
@@ -1722,7 +1704,7 @@ $(function() {
 			binding.unbind();
 
 			oar.sort(function(a, b) {
-				return a.test < b.test;
+				return a.test < b.test ? 1 : a.test > b.test ? -1 : 0;
 			});
 			equal($('#dataBindTest span').length, oar.length,
 					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
@@ -2146,7 +2128,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('コメントノードにバインド');
+	module('コメントビューにバインド');
 
 	//=============================
 	// Body
@@ -2163,10 +2145,10 @@ $(function() {
 			strictEqual(e.code, ERR_VIEW.ERR_CODE_BIND_INVALID_TARGET, e.message);
 		}
 		var $span = $fixture.find('span');
-		strictEqual($span.length, 0, 'コメントノードは展開されていないこと');
+		strictEqual($span.length, 0, 'コメントビューは展開されていないこと');
 	});
 
-	asyncTest('コメントノードにバインドできること', function() {
+	asyncTest('コメントビューにバインドできること', function() {
 		view.append($fixture, 'comment1');
 
 		h5.core.controller($fixture, {
@@ -2178,14 +2160,14 @@ $(function() {
 				});
 
 				var $span = $fixture.find('span');
-				strictEqual($span.text(), 'a', 'コメントノードにバインドされていること');
-				strictEqual($span.attr('class'), 'testClass', 'コメントノードにバインドされていること');
+				strictEqual($span.text(), 'a', 'コメントビューにバインドされていること');
+				strictEqual($span.attr('class'), 'testClass', 'コメントビューにバインドされていること');
 				start();
 			}
 		});
 	});
 
-	asyncTest('コメントノードにObservableItemをバインド', 2, function() {
+	asyncTest('コメントビューにObservableItemをバインド', 2, function() {
 
 		view.append($fixture, 'comment2');
 		var item = h5.u.obj.createObservableItem({
@@ -2210,7 +2192,7 @@ $(function() {
 			c.view.bind('h5view#item', item);
 
 			var $span = $fixture.find('span');
-			checkTexts(['a', 'b', 'aa', 'bb'], 'コメントノードに書いた箇所にバインドされていること', 'span');
+			checkTexts(['a', 'b', 'aa', 'bb'], 'コメントビューに書いた箇所にバインドされていること', 'span');
 
 			//値の変更
 			item.set({
@@ -2224,7 +2206,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('コメントノードに配列をバインド', function() {
+	asyncTest('コメントビューに配列をバインド', function() {
 		view.append($fixture, 'comment3');
 
 		var item = h5.u.obj.createObservableItem({
@@ -2248,7 +2230,7 @@ $(function() {
 				items: items
 			});
 
-			checkTexts(['a', 'b', 'c'], 'コメントノードに書いた箇所にバインドされていること');
+			checkTexts(['a', 'b', 'c'], 'コメントビューに書いた箇所にバインドされていること');
 
 			//変更
 			item.set('test', 'cc');
@@ -2259,7 +2241,7 @@ $(function() {
 	});
 
 
-	asyncTest('コメントノードにObservableArrayをバインド', function() {
+	asyncTest('コメントビューにObservableArrayをバインド', function() {
 		view.append($fixture, 'comment3');
 
 		var item = h5.u.obj.createObservableItem({
@@ -2284,7 +2266,7 @@ $(function() {
 				items: items
 			});
 
-			checkTexts(['a', 'b', 'c'], 'コメントノードに書いた箇所にバインドされていること');
+			checkTexts(['a', 'b', 'c'], 'コメントビューに書いた箇所にバインドされていること');
 
 			//変更
 			items.shift();
