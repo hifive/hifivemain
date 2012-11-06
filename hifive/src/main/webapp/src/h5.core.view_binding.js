@@ -537,10 +537,18 @@
 				var isOrigClassEmpty = origClassName == null;
 				var space = isOrigClassEmpty ? '' : ' ';
 
+				var allowPutValue = false;
+				if (value) {
+					//バインドするクラス名がすでに初期状態のclassに書かれている場合は二重にセットしないようにする
+					var classTester = new RegExp('\\s' + value + '\\s');
+					//クラスが１つしか書いていない場合もあるので、正規表現でチェックしやすいよう前後にスペースを付けてチェック
+					allowPutValue = !classTester.test(' ' + origClassName + ' ');
+				}
+
 				//初期状態のclassもバインドの値も空の場合は
 				//jQueryのremoveClass()に倣って空文字を代入してclassをクリアする
 				$element[0].className = (isOrigClassEmpty ? '' : origClassName)
-						+ (value == null ? '' : space + value);
+						+ (allowPutValue ? space + value : '');
 				break;
 			case 'attr':
 				if (!detail) {
