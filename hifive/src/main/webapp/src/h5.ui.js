@@ -163,6 +163,11 @@
 	var isLegacyIE = h5ua.isIE && h5ua.browserVersion <= 6;
 
 	/**
+	 * 対象ブラウザがchromeかどうか (chromeでは、timer + transformでスロバーを回すようにするため)
+	 */
+	var isChrome = h5ua.isChrome;
+
+	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
 	 * <p>
 	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
@@ -362,13 +367,12 @@
 					// client[Width/Height]のほうが大きい場合はこの値を返す
 					return elem['client' + prop] > elem['scroll' + prop] ? elem['client' + prop]
 							: elem['scroll' + prop];
-				} else {
-					return elem['client' + prop];
 				}
-			} else {
-				return Math.max(body['scroll' + prop], docElem['scroll' + prop], body['offset'
-						+ prop], docElem['offset' + prop], docElem['client' + prop]);
+				return elem['client' + prop];
 			}
+			return Math.max(body['scroll' + prop], docElem['scroll' + prop], body['offset' + prop],
+					docElem['offset' + prop], docElem['client' + prop]);
+
 		};
 	}
 
@@ -426,7 +430,10 @@
 	function getOffset(element) {
 		var elem = $(element)[0];
 		var body = document.body;
-		var box = {top: 0, left: 0};
+		var box = {
+			top: 0,
+			left: 0
+		};
 
 		if (elem === body) {
 			return $.offset.bodyOffset(elem);
@@ -658,6 +665,7 @@
 			$(this.baseDiv).remove();
 
 			if (this._runId) {
+				// chromeの場合はsetIntervalでタイマーを回しているが、chromeならclearTimeoutでもタイマーが止まるため、clearIntervalは書いていない
 				clearTimeout(this._runId);
 				this._runId = null;
 			}
@@ -699,6 +707,25 @@
 				highlightPos++;
 			}
 			this.highlightPos = highlightPos;
+
+
+			if (isChrome) {
+				// chrome22で、webkit-animationでアニメーションしている要素を消すと、表示上残ってしまう。(すべてのPCで起きるわけではない)
+				// そのため、chromeの場合はwebkit-animationを使わず、Timer + transform でスロバーを回している
+				//
+				// このwebkit-animationの問題について調べたところ、
+				// chrome23βでも同様の問題が起きたが、
+				// chrome24devとchrome25canaryではきちんと消えることを確認した。(2012/11/06現在)
+				var deg = 0;
+				window.runId = this._runId = setInterval(function() {
+					deg++;
+					canvas.style.webkitTransform = 'rotate(' + deg + 'deg)';
+					if (deg >= 360) {
+						deg -= 360;
+					}
+				}, roundTime / 360);
+				return;
+			}
 
 			if (isCSS3AnimationsSupported) {
 				// CSS3Animationをサポートしている場合は、keyframesでスロバーを描写する
@@ -1060,8 +1087,8 @@
 				}
 			};
 
-			if (!isCSS3AnimationsSupported) {
-				// CSS3Animationをサポートしないブラウザの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
+			if (!isCSS3AnimationsSupported || isChrome) {
+				// CSS3Animationをサポートしないブラウザまたはchromeの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
 				for ( var i = 0, len = this._throbbers.length; i < len; i++) {
 					this._throbbers[i].hide();
 				}
