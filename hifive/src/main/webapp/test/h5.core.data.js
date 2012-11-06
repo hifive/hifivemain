@@ -2499,7 +2499,7 @@ $(function() {
 
 	test('ディスクリプタを配列で指定した時、依存関係に循環参照があったらエラーになること', 1, function() {
 		try {
-			var models = manager.createModel([{
+			manager.createModel([{
 				name: 'Test3',
 				base: '@Test6',
 				schema: {}
@@ -2537,7 +2537,7 @@ $(function() {
 
 	test('ディスクリプタを配列で指定した時、存在しないデータモデル名に依存指定しているディスクリプタがあったらエラーになること', 1, function() {
 		try {
-			var models = manager.createModel([{
+			manager.createModel([{
 				name: 'Test3',
 				base: '@Test6',
 				schema: {}
@@ -2856,7 +2856,7 @@ $(function() {
 	test('idが不正な値の場合はcreateでエラーが発生すること', 18,
 			function() {
 				// idのtype:string
-				model = manager.createModel({
+				var model = manager.createModel({
 					name: 'IdStringModel',
 					schema: {
 						id: {
@@ -3195,13 +3195,13 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-
+	var getSetDataItem = null;
 	module('DataItem.get, set', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
-			model = manager.createModel({
+			dataModel1 = manager.createModel({
 				name: 'TestModel',
 				schema: {
 					id: {
@@ -3211,7 +3211,7 @@ $(function() {
 					val2: {}
 				}
 			});
-			item = model.create({
+			getSetDataItem = dataModel1.create({
 				id: sequence.next()
 			});
 
@@ -3219,6 +3219,7 @@ $(function() {
 		teardown: function() {
 			sequence = null;
 			dataModel1 = null;
+			getSetDataItem = null;
 			dropAllModel(manager);
 		}
 	});
@@ -3226,33 +3227,48 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+	test('スキーマに定義されていないプロパティをget/setするとエラーになること', 2, function() {
+		raises(function(enviroment) {
+			getSetDataItem.get('hoge');
+		}, function(actual) {
+			return actual.code === ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
+		}, 'スキーマに定義されていないプロパティの値を取得したためエラーになること"');
+
+		raises(function(enviroment) {
+			getSetDataItem.set('hoge', 10);
+		}, function(actual) {
+			return actual.code === ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
+		}, 'スキーマに定義されていないプロパティに対して値を設定したためエラーになること"');
+	});
+
 	test('getで値の取得、setで値の格納ができること', 4, function() {
-		item.set('val', 'abc');
-		strictEqual(item.get('val'), 'abc', 'setした値がgetで取得できること');
-		var obj = item.get();
+		getSetDataItem.set('val', 'abc');
+		strictEqual(getSetDataItem.get('val'), 'abc', 'setした値がgetで取得できること');
+		var obj = getSetDataItem.get();
 		deepEqual(obj, {
-			id: item.get('id'),
+			id: getSetDataItem.get('id'),
 			val: 'abc',
 			val2: null
 		}, 'get()を引数なしで呼び出すと、値の格納されたオブジェクトが返ること');
 
-		item.set({
+		getSetDataItem.set({
 			val: 'ABC',
 			val2: 'DEF'
 		});
-		deepEqual(item.get(), {
-			id: item.get('id'),
+		deepEqual(getSetDataItem.get(), {
+			id: getSetDataItem.get('id'),
 			val: 'ABC',
 			val2: 'DEF'
 		}, 'setにオブジェクトを渡して複数のプロパティに同時に設定できること');
 
 		obj.val = 'def';
-		strictEqual(item.get('val'), 'ABC', 'get()で取得した値の格納されたオブジェクト内の値を変更してもデータアイテム内の値は変わらないこと');
+		strictEqual(getSetDataItem.get('val'), 'ABC',
+				'get()で取得した値の格納されたオブジェクト内の値を変更してもデータアイテム内の値は変わらないこと');
 	});
 
 	test('スキーマに定義されていないプロパティに値をセットできないこと', 4, function() {
 		try {
-			model.create({
+			dataModel1.create({
 				id: '000001',
 				val3: 'a'
 			});
@@ -3261,8 +3277,8 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
 		}
 		try {
-			model.create({
-				id: item.get('id'),
+			dataModel1.create({
+				id: getSetDataItem.get('id'),
 				val3: 'a'
 			});
 			ok(false, 'テスト失敗。create(変更)でスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
@@ -3270,13 +3286,13 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
 		}
 		try {
-			item.set('val3', 'c');
+			getSetDataItem.set('val3', 'c');
 			ok(false, 'テスト失敗。setでスキーマに定義されていないプロパティにセットしたのにエラーが発生していない');
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
 		}
 		try {
-			item.set({
+			getSetDataItem.set({
 				val2: 'c',
 				val3: 'd'
 			});
@@ -3375,7 +3391,6 @@ $(function() {
 			}
 		} catch (e) {
 			ok(false, 'エラーが発生しました。『' + e.message + '』');
-			console.log(e.stack)
 		}
 	});
 
@@ -3653,7 +3668,7 @@ $(function() {
 			id: sequence.next(),
 			dataModel1: model1DataItem
 		});
-		var item2 = model.create({
+		model.create({
 			id: sequence.next(),
 			dataModel2: model2DataItem
 		});
@@ -3678,7 +3693,7 @@ $(function() {
 			item1.set('dataModel1', model1DataItem);
 		} catch (e) {
 			ok(true, 'ドロップしたモデルのアイテムは格納できないこと');
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message)
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 	});
 
@@ -3870,7 +3885,7 @@ $(function() {
 			item1.set('dataModel1', [model1DataItem1]);
 		} catch (e) {
 			ok(true, 'ドロップしたモデルのアイテムは格納できないこと');
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message)
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 	});
 
@@ -7384,7 +7399,7 @@ $(function() {
 			min: -1,
 			max: 2
 		};
-		model = manager.createModel({
+		var model = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
 				id: {
@@ -7478,7 +7493,7 @@ $(function() {
 			minLength: 4,
 			maxLength: 6
 		};
-		model = manager.createModel({
+		var model = manager.createModel({
 			name: 'TestDataModel',
 			schema: {
 				id: {
@@ -7747,7 +7762,7 @@ $(function() {
 				val: 1
 			});
 
-			model = manager.createModel({
+			dataModel1 = manager.createModel({
 				name: 'TestModelForObsArray',
 				schema: {
 					id: {
@@ -7791,7 +7806,7 @@ $(function() {
 	//=============================
 	test('配列要素が自動的にObservableArrayに変換されること',
 			function() {
-				var item = model.create({
+				var item = dataModel1.create({
 					id: sequence.next()
 				});
 				var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'any[]', 'enum[]',
@@ -7814,7 +7829,7 @@ $(function() {
 			});
 
 	test('配列の操作に対しても制約チェックが行われること', 6, function() {
-		var item = model.create({
+		var item = dataModel1.create({
 			id: sequence.next()
 		});
 		var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'enum[]',
@@ -7834,7 +7849,7 @@ $(function() {
 	});
 
 	test('配列要素にObservableArrayを格納できること', function() {
-		var item = model.create({
+		dataModel1.create({
 			id: sequence.next()
 		});
 		var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'any[]', 'enum[]',
@@ -7866,7 +7881,7 @@ $(function() {
 					id: sequence.next()
 				};
 				desc[keys[i]] = vals[i];
-				var item = model.create(desc);
+				var item = dataModel1.create(desc);
 				ok(true, h5.u.str.format('type:{0}にObservableArrayを格納できること', types[i]));
 				ok(item.get(keys[i]).equals(vals[i]),
 						'格納するときに渡したObsArrayと、アイテムが持つObsArrayの中身が同じであること');
@@ -7881,7 +7896,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	var item = item2 = null;
+	var item = null;
 	// ハンドラが実行された順番を確認する用の配列
 	var order = [];
 
@@ -7949,7 +7964,8 @@ $(function() {
 			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
 		}
 		try {
-			item.addEventListener(document.createEventObject ? document.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
+			item.addEventListener(document.createEventObject ? document
+					.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8144,7 +8160,8 @@ $(function() {
 			strictEqual(e.code, errCode, e.message);
 		}
 		try {
-			dataModel1.addEventListener(document.createEventObject ? document.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
+			dataModel1.addEventListener(document.createEventObject ? document
+					.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8328,7 +8345,8 @@ $(function() {
 			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
 		}
 		try {
-			manager.addEventListener(document.createEventObject ? document.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
+			manager.addEventListener(document.createEventObject ? document
+					.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
