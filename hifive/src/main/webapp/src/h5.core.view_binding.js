@@ -1078,8 +1078,10 @@
 
 					var contextProp = $this.attr(DATA_H5_LOOP_CONTEXT);
 
-					if (!(contextProp in event.props)) {
+					if (!(contextProp in event.props) || event.target._isArrayProp(contextProp)) {
 						//このループルートコンテキスト要素に対応するソースオブジェクトは変更されていない
+						//または指定されたプロパティはtype:[]なので無視
+						//（ObsArrayのハンドラで処理すればよい）
 						return true;
 					}
 

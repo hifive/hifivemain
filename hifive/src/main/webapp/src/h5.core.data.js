@@ -877,6 +877,22 @@
 			 */
 			getModel: function() {
 				return this._model;
+			},
+
+			/**
+			 * 指定されたプロパティがtype:[]かどうかを返します。（type:anyでObservableArrayが入っている場合とtype:[]で最初から
+			 * ObservableArrayが入っている場合を区別するため）
+			 *
+			 * @private
+			 * @memberOf DataItem
+			 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
+			 */
+			_isArrayProp: function(prop) {
+				if (schema[prop] && schema[prop].type && schema[prop].type.indexOf('[]') > -1) {
+					//Bindingにおいて比較的頻繁に使われるので、高速化も検討する
+					return true;
+				}
+				return false;
 			}
 		});
 		return DataItem;
