@@ -163,9 +163,9 @@
 	var isLegacyIE = h5ua.isIE && h5ua.browserVersion <= 6;
 
 	/**
-	 * 対象ブラウザがchromeかどうか (chromeでは、timer + transformでスロバーを回すようにするため)
+	 * 対象ブラウザがchrome(PC)かどうか (chromeでは、timer + transformでスロバーを回すようにするため)
 	 */
-	var isChrome = h5ua.isChrome;
+	var isChrome = h5ua.isChrome && h5ua.isDesktop;
 
 	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
@@ -665,8 +665,13 @@
 			$(this.baseDiv).remove();
 
 			if (this._runId) {
-				// chromeの場合はsetIntervalでタイマーを回しているが、chromeならclearTimeoutでもタイマーが止まるため、clearIntervalは書いていない
-				clearTimeout(this._runId);
+				// Timerを止める
+				// chromeの場合はsetIntervalでタイマーを回しているため、clearIntervalで止める
+				if (isChrome) {
+					clearInterval(this._runId);
+				} else {
+					clearTimeout(this._runId);
+				}
 				this._runId = null;
 			}
 		},
