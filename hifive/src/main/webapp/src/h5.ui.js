@@ -163,9 +163,9 @@
 	var isLegacyIE = h5ua.isIE && h5ua.browserVersion <= 6;
 
 	/**
-	 * 対象ブラウザがchrome(PC)かどうか (chromeでは、timer + transformでスロバーを回すようにするため)
+	 * timer + transformでスロバーを回すかどうか (PC版chromeでは、timer + transformでスロバーを回すようにするため)
 	 */
-	var isChrome = h5ua.isChrome && h5ua.isDesktop;
+	var useTransformTimerAnimation = h5ua.isChrome && h5ua.isDesktop;
 
 	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
@@ -667,7 +667,7 @@
 			if (this._runId) {
 				// Timerを止める
 				// chromeの場合はsetIntervalでタイマーを回しているため、clearIntervalで止める
-				if (isChrome) {
+				if (useTransformTimerAnimation) {
 					clearInterval(this._runId);
 				} else {
 					clearTimeout(this._runId);
@@ -714,7 +714,7 @@
 			this.highlightPos = highlightPos;
 
 
-			if (isChrome) {
+			if (useTransformTimerAnimation) {
 				// chrome22で、webkit-animationでアニメーションしている要素を消すと、表示上残ってしまう。(すべてのPCで起きるわけではない)
 				// そのため、chromeの場合はwebkit-animationを使わず、Timer + transform でスロバーを回している
 				//
@@ -1092,7 +1092,7 @@
 				}
 			};
 
-			if (!isCSS3AnimationsSupported || isChrome) {
+			if (!isCSS3AnimationsSupported || useTransformTimerAnimation) {
 				// CSS3Animationをサポートしないブラウザまたはchromeの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
 				for ( var i = 0, len = this._throbbers.length; i < len; i++) {
 					this._throbbers[i].hide();
