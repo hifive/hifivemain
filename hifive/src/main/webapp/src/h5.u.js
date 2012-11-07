@@ -1315,6 +1315,7 @@
 				 * <p>
 				 * 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
 				 * </p>
+				 * 引数がnullまたはundefinedの場合は、空配列が渡された場合と同じ挙動をします（自身の要素が全て削除されます）。
 				 *
 				 * @since 1.1.0
 				 * @memberOf ObservableArray
@@ -1330,7 +1331,10 @@
 					};
 
 					if (!this.dispatchEvent(evBefore)) {
-						var ret = Array.prototype.slice.call(this, 0);
+						if (!src) {
+							//srcがnullの場合は空配列と同じ挙動にする
+							src = [];
+						}
 
 						var args = src.slice(0);
 						args.unshift(0, this.length);
@@ -1340,11 +1344,10 @@
 							type: EVENT_TYPE_OBSERVE,
 							method: METHOD_NAME_COPY_FROM,
 							args: arguments,
-							returnValue: ret,
+							returnValue: undefined,
 							isDestructive: true
 						};
 						this.dispatchEvent(evAfter);
-						return ret;
 					}
 				}
 			});
