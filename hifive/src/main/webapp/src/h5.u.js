@@ -126,7 +126,7 @@
 
 	/**
 	 * schemaに定義されていないプロパティを取得した
-	 * */
+	 */
 	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 11016;
 
 
@@ -151,7 +151,6 @@
 	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。 違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティは取得できません。違反したプロパティ={0}';
-
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -1724,7 +1723,8 @@
 				return $.extend({}, this._values);
 			}
 
-			if ($.inArray(key, this._context.realProps) === -1 && $.inArray(key, this._context.dependProps) === -1) {
+			if ($.inArray(key, this._context.realProps) === -1
+					&& $.inArray(key, this._context.dependProps) === -1) {
 				throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, key);
 			}
 
