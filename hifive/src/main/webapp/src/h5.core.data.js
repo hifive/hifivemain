@@ -811,7 +811,7 @@
 					return $.extend({}, this._values);
 				}
 
-				if (schema.hasOwnProperty(key)) {
+				if (!schema.hasOwnProperty(key)) {
 					//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
 					throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [model.name, key]);
 				}
