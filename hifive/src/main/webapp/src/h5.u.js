@@ -1255,7 +1255,6 @@
 	function customSplice(/* var_args */) {
 		var beforeLen = this.length;
 
-		//preventDefault()が呼ばれなければ実際に処理を行う
 		var ret = Array.prototype.splice.apply(this, arguments);
 
 		//splice前より後の方が長さが短くなっていたら、余っている後ろの要素を削除する
