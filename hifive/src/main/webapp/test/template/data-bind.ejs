@@ -51,7 +51,7 @@
 <script type="text/ejs" id="object1">
 	<div id="dataBindTest">
 		<div data-h5-context="obj">
-			<span class="hoge" data-h5-bind="html:v5;text:v1;v2;attr(id):v3;style(color):v4;class:v1"></span>
+			<span data-h5-bind="html:v5;text:v1;v2;attr(id):v3;style(color):v4;class:v1"></span>
 		</div>
 	</div>
 </script>
@@ -61,6 +61,18 @@
 		<div data-h5-context="obj">
 			<span style="color:red;" id="domA" class="hoge" data-h5-bind="html:v5;text:v1;v2;attr(id):v3;style(color):v4;class:v1">testtest</span>
 		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="object3">
+	<div id="dataBindTest">
+		<span data-h5-bind="html:v1;text:v2"></span>
+	</div>
+</script>
+
+<script type="text/ejs" id="object4">
+	<div id="dataBindTest">
+		<span class="c1 c2 c3" data-h5-bind="class:v1"></span>
 	</div>
 </script>
 
@@ -143,7 +155,10 @@
 	<div id="dataBindTest">
 		<div data-h5-context="item">
 			<div data-h5-loop-context="ary">
-				<span data-h5-bind="test"></span>
+				<span class="loop1" data-h5-bind="test"></span>
+			</div>
+			<div data-h5-loop-context="ary2">
+				<span class="loop2" data-h5-bind="test"></span>
 			</div>
 		</div>
 	</div>
@@ -169,7 +184,6 @@
 		</div>
 	</div>
 </script>
-
 
 <script type="text/ejs" id="id">
 	<div id="dataBindTest">
@@ -223,12 +237,6 @@
 <script type="text/ejs" id="nodata">
 	<div id="dataBindTest">
 		<div data-h5-bind=""></div>
-	</div>
-</script>
-
-<script type="text/ejs" id="multiple">
-	<div id="dataBindTest">
-		<span data-h5-bind="html:v5;text:v1;v2;attr(id):v3;style(color):v4;class:v1"></span>
 	</div>
 </script>
 
@@ -308,6 +316,19 @@
 	<div id="dataBindTest">
 		<div data-h5-loop-context="items">
 			<div data-h5-loop-context="ar">
+				<span data-h5-bind="val"></span>
+			</div>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="nestloop2">
+	<div id="dataBindTest">
+		<div data-h5-loop-context="items">
+			<div data-h5-loop-context="ar">
+				<span data-h5-bind="val"></span>
+			</div>
+			<div data-h5-loop-context="ar2">
 				<span data-h5-bind="val"></span>
 			</div>
 		</div>

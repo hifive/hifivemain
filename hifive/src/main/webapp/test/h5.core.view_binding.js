@@ -355,7 +355,7 @@ $(function() {
 		strictEqual($span.text(), '', 'text:空文字が設定されていること');
 		strictEqual($span.attr('id'), undefined, 'attr:削除されていること');
 		strictEqual($span[0].style.color, '', 'style:何も設定されていないこと');
-		strictEqual($span.attr('class'), undefined, 'class:何も設定されていないこと');
+		strictEqual($span.attr('class'), '', 'class:何も設定されていないこと');
 	});
 
 	test('値が既に設定されているテキスト・HTML・属性・スタイル・クラスにnullをバインドする', function() {
@@ -368,7 +368,26 @@ $(function() {
 		strictEqual($span.text(), '', 'text:空文字が設定されていること');
 		strictEqual($span.attr('id'), undefined, 'attr:削除されていること');
 		strictEqual($span[0].style.color, '', 'style:何も設定されていないこと');
-		strictEqual($span.attr('class'), undefined, 'class:何も設定されていないこと');
+		strictEqual($span.attr('class'), 'hoge', 'class:何も設定されていないこと');
+	});
+
+	test('一つの要素にtextとhtmlのプロパティをバインドする', function() {
+		view.append($fixture, 'object3');
+		view.bind('#dataBindTest', {
+			v1: 'v1',
+			v2: 'v2'
+		});
+		var $span = $fixture.find('span');
+		strictEqual($span.html(), 'v2', '複数のプロパティをhtml,textで指定した場合、一番最後に指定したものがバインドされること');
+	});
+
+	test('クラスに既に設定されている値と同じ値をバインドする', function() {
+		view.append($fixture, 'object4');
+		view.bind('#dataBindTest', {
+			v1: 'c2',
+		});
+		var $span = $fixture.find('span');
+		strictEqual($span[0].className, 'c1 c2 c3', '同じクラスが重複して設定されないこと');
 	});
 
 	//=============================
@@ -1035,9 +1054,6 @@ $(function() {
 		oar.push({
 			test: 1
 		});
-		oar.push({
-			test: 2
-		});
 
 		view.append($fixture, 'loopContext1');
 		view.bind($('#dataBindTest'), {
@@ -1047,12 +1063,32 @@ $(function() {
 		var $result = $('#dataBindTest > ul > li');
 		equal($result.length, oar.length, 'ObserbableArrayの要素数分loop-contextを指定した要素にDOMが生成されること');
 		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
+
+		// 値を追加する
+		oar.push({
+			test: 2
+		});
+
+		$result = $('#dataBindTest > ul > li');
+		equal($result.length, oar.length, 'ObserbableArrayの要素数分loop-contextを指定した要素にDOMが生成されること');
+		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
 		equal($result.eq(1).text(), oar[1].test, 'li[1].text() == ObservableArray[1].test');
+
+		// nullを追加する
+		oar.push({
+			test: null
+		});
+
+		$result = $('#dataBindTest > ul > li');
+		equal($result.length, oar.length, 'ObserbableArrayの要素数分loop-contextを指定した要素にDOMが生成されること');
+		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
+		equal($result.eq(1).text(), oar[1].test, 'li[1].text() == ObservableArray[1].test');
+		equal($result.eq(2).text(), '', 'li[2].text() == ObservableArray[2].test');
 
 		// 値を取り出す
 		oar.pop();
-		$result = $('#dataBindTest > ul > li');
 
+		$result = $('#dataBindTest > ul > li');
 		equal($result.length, oar.length,
 				'ObserbableArrayから要素を一つ削除したので、ObserbableArrayをバインドしたビューに反映されていること');
 		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
@@ -1064,7 +1100,6 @@ $(function() {
 
 		oar.pop();
 		$result = $('#dataBindTest > ul > li');
-
 		equal($result.length, oar.length,
 				'observeBeforeイベントをキャンセルしてObservableArrayの中身に変更がないので、ビューは変更されないこと');
 		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
@@ -1272,6 +1307,9 @@ $(function() {
 				},
 				ary: {
 					type: 'any[]'
+				},
+				ary2: {
+					type: 'any'
 				}
 			};
 			var manager = h5.core.data.createManager('TestManager');
@@ -1295,6 +1333,106 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+	test('type:any[]に格納されたObservableArrayをDataItem#set()で更新する', 12,
+			function() {
+				function testFunc(item) {
+					var name = item instanceof testDataItem.constructor ? 'DataItem'
+							: 'ObservableItem';
+					view.append($fixture, 'itemBind7');
+
+					// 初期値を設定
+					var oar = h5.u.obj.createObservableArray();
+					oar.push({
+						test: 'AAAA'
+					});
+					item.set('ary', oar);
+
+					var binding = view.bind($('#dataBindTest'), {
+						item: item
+					});
+
+					item.addEventListener('change', function(ev) {
+						ok(true, 'アイテムのchangeイベントが発生すること');
+					});
+
+					// loop-contextをnullで更新
+					item.set('ary', null);
+					equal($('#dataBindTest .loop1').length, 0, name
+							+ ': ObservableArrayの変更がビューに反映されていること');
+
+					// loop-contextを別のObsArrayで更新
+					var oar2 = h5.u.obj.createObservableArray();
+					oar2.push({
+						test: 10
+					}, {
+						test: 20
+					});
+					item.set('ary', oar2);
+					equal($('#dataBindTest .loop1').length, oar2.length, name
+							+ ': ObservableArrayの変更がビューに反映されていること');
+					equal($('#dataBindTest .loop1').eq(0).text(), oar2[0].test, name
+							+ ': ObservableArrayの内容がビューに反映されていること');
+					equal($('#dataBindTest .loop1').eq(1).text(), oar2[1].test, name
+							+ ': ObservableArrayの内容がビューに反映されていること');
+
+					binding.unbind();
+					$('#dataBindTest').remove();
+				}
+
+				testFunc(testDataItem);
+				testFunc(testObsItem);
+			});
+
+	test('type:anyに格納されたObservableArrayをDataItem#set()で更新する', 12,
+			function() {
+				function testFunc(item) {
+					var name = item instanceof testDataItem.constructor ? 'DataItem'
+							: 'ObservableItem';
+					view.append($fixture, 'itemBind7');
+
+					// 初期値を設定
+					var oar = h5.u.obj.createObservableArray();
+					oar.push({
+						test: 'AAAA'
+					});
+					item.set('ary2', oar);
+
+					var binding = view.bind($('#dataBindTest'), {
+						item: item
+					});
+
+					item.addEventListener('change', function(ev) {
+						ok(true, 'アイテムのchangeイベントが発生すること');
+					});
+
+					// loop-contextをnullで更新
+					item.set('ary2', null);
+					equal($('#dataBindTest .loop2').length, 0, name
+							+ ': ObservableArrayの変更がビューに反映されていること');
+
+					// loop-contextを別のObsArrayで更新
+					var oar2 = h5.u.obj.createObservableArray();
+					oar2.push({
+						test: 10
+					}, {
+						test: 20
+					});
+					item.set('ary2', oar2);
+					equal($('#dataBindTest .loop2').length, oar2.length, name
+							+ ': ObservableArrayの変更がビューに反映されていること');
+					equal($('#dataBindTest .loop2').eq(0).text(), oar2[0].test, name
+							+ ': ObservableArrayの内容がビューに反映されていること');
+					equal($('#dataBindTest .loop2').eq(1).text(), oar2[1].test, name
+							+ ': ObservableArrayの内容がビューに反映されていること');
+
+					binding.unbind();
+					$('#dataBindTest').remove();
+				}
+
+				testFunc(testDataItem);
+				testFunc(testObsItem);
+			});
+
 	test('copyFrom()', function() {
 		function testFunc(item) {
 			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
@@ -1302,6 +1440,10 @@ $(function() {
 
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
+			});
+
+			item.addEventListener('change', function(ev) {
+				ok(true, 'アイテムのchangeイベントが発生すること');
 			});
 
 			var oar = item.get('ary');
@@ -1351,81 +1493,75 @@ $(function() {
 		testFunc(testObsItem);
 	});
 
-	test('push()',
-			function() {
-				function testFunc(item) {
-					var name = item instanceof testDataItem.constructor ? 'DataItem'
-							: 'ObservableItem';
-					view.append($fixture, 'itemBind7');
+	test('push()', function() {
+		function testFunc(item) {
+			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			view.append($fixture, 'itemBind7');
 
-					var binding = view.bind($('#dataBindTest'), {
-						item: item
-					});
-
-					//		item.addEventListener('change', function(ev) {
-					//			console.log("change");
-					//		});
-
-					var oar = item.get('ary');
-
-					//		oar.addEventListener('observe', function(ev){
-					//			console.log("observe");
-					//		});
-
-					equal(oar.length, 0, name + ': ObservableArrayには何も格納されていないこと。');
-					oar.push({
-						test: 'AAA'
-					});
-
-					equal($('#dataBindTest span').length, oar.length, name
-							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest span').eq(0).text(), 'AAA', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-
-					oar.push({
-						test: 'BBB'
-					});
-
-					equal($('#dataBindTest span').length, oar.length, name
-							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest span').eq(0).text(), 'AAA', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-					equal($('#dataBindTest span').eq(1).text(), 'BBB', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-
-					oar.push({
-						test: 'CCC'
-					});
-
-					equal($('#dataBindTest span').length, oar.length, name
-							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest span').eq(0).text(), 'AAA', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-					equal($('#dataBindTest span').eq(1).text(), 'BBB', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-					equal($('#dataBindTest span').eq(2).text(), 'CCC', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-
-					binding.unbind();
-
-					oar.push({
-						test: 'DDD'
-					});
-
-					equal($('#dataBindTest span').length, 3,
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-					equal($('#dataBindTest span').eq(0).text(), 'AAA',
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-					equal($('#dataBindTest span').eq(1).text(), 'BBB',
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-					equal($('#dataBindTest span').eq(2).text(), 'CCC',
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-
-					$('#dataBindTest').remove();
-				}
-				testFunc(testDataItem);
-				testFunc(testObsItem);
+			var binding = view.bind($('#dataBindTest'), {
+				item: item
 			});
+
+			item.addEventListener('change', function(ev) {
+				ok(true, 'アイテムのchangeイベントが発生すること');
+			});
+
+			var oar = item.get('ary');
+
+			equal(oar.length, 0, name + ': ObservableArrayには何も格納されていないこと。');
+			oar.push({
+				test: 'AAA'
+			});
+
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': ObservableArrayの変更がビューに反映されていること');
+			equal($('#dataBindTest span').eq(0).text(), 'AAA', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+
+			oar.push({
+				test: 'BBB'
+			});
+
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': ObservableArrayの変更がビューに反映されていること');
+			equal($('#dataBindTest span').eq(0).text(), 'AAA', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+			equal($('#dataBindTest span').eq(1).text(), 'BBB', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+
+			oar.push({
+				test: 'CCC'
+			});
+
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': ObservableArrayの変更がビューに反映されていること');
+			equal($('#dataBindTest span').eq(0).text(), 'AAA', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+			equal($('#dataBindTest span').eq(1).text(), 'BBB', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+			equal($('#dataBindTest span').eq(2).text(), 'CCC', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+
+			binding.unbind();
+
+			oar.push({
+				test: 'DDD'
+			});
+
+			equal($('#dataBindTest span').length, 3, name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(0).text(), 'AAA', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(1).text(), 'BBB', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(2).text(), 'CCC', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+
+			$('#dataBindTest').remove();
+		}
+		testFunc(testDataItem);
+		testFunc(testObsItem);
+	});
 
 	test('pop()', function() {
 		function testFunc(item) {
@@ -1544,119 +1680,115 @@ $(function() {
 		testFunc(testObsItem);
 	});
 
-	test('unshift()',
-			function() {
-				function testFunc(item) {
-					var name = item instanceof testDataItem.constructor ? 'DataItem'
-							: 'ObservableItem';
-					view.append($fixture, 'itemBind7');
-					var binding = view.bind($('#dataBindTest'), {
-						item: item
-					});
-
-					var oar = item.get('ary');
-
-					equal(oar.length, 0, name + ': ObservableArrayには何も格納されていないこと。');
-					oar.unshift({
-						test: 'a'
-					});
-					equal($('#dataBindTest span').length, oar.length, name
-							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest span').eq(0).text(), 'a', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-
-					oar.unshift({
-						test: 'b'
-					});
-					equal($('#dataBindTest span').length, oar.length, name
-							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest span').eq(0).text(), 'b', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-					equal($('#dataBindTest span').eq(1).text(), 'a', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-
-					oar.unshift({
-						test: 'c'
-					});
-					equal($('#dataBindTest span').length, oar.length, name
-							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest span').eq(0).text(), 'c', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-					equal($('#dataBindTest span').eq(1).text(), 'b', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-					equal($('#dataBindTest span').eq(2).text(), 'a', name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-
-					binding.unbind();
-
-					oar.unshift({
-						test: 'd'
-					});
-					equal($('#dataBindTest span').length, 3,
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-					equal($('#dataBindTest span').eq(0).text(), 'c',
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-					equal($('#dataBindTest span').eq(1).text(), 'b',
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-					equal($('#dataBindTest span').eq(2).text(), 'a',
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-
-					$('#dataBindTest').remove();
-				}
-				testFunc(testDataItem);
-				testFunc(testObsItem);
+	test('unshift()', function() {
+		function testFunc(item) {
+			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			view.append($fixture, 'itemBind7');
+			var binding = view.bind($('#dataBindTest'), {
+				item: item
 			});
 
-	test('splice()',
-			function() {
-				function testFunc(item) {
-					var name = item instanceof testDataItem.constructor ? 'DataItem'
-							: 'ObservableItem';
-					view.append($fixture, 'itemBind7');
-					var binding = view.bind($('#dataBindTest'), {
-						item: item
-					});
+			var oar = item.get('ary');
 
-					var ar = [{
-						test: 'a'
-					}, {
-						test: 'b'
-					}, {
-						test: 'c'
-					}];
-
-					item.set('ary', ar);
-					var oar = item.get('ary');
-
-					equal(oar.length, 3, name + ': set()で設定しした値が格納されていること');
-					oar.splice(1, 2);
-					equal($('#dataBindTest span').length, oar.length, name
-							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest span').eq(0).text(), ar[0].test, name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-
-					var obj = {
-						test: 'AA'
-					};
-					oar.splice(0, 1, obj);
-					equal($('#dataBindTest span').length, oar.length, name
-							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest span').eq(0).text(), obj.test, name
-							+ ': ObservableArrayの内容がビューに反映されていること');
-
-					binding.unbind();
-
-					oar.splice(0, 1);
-					equal($('#dataBindTest span').length, 1,
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-					equal($('#dataBindTest span').eq(0).text(), obj.test,
-							name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-
-					$('#dataBindTest').remove();
-				}
-				testFunc(testDataItem);
-				testFunc(testObsItem);
+			equal(oar.length, 0, name + ': ObservableArrayには何も格納されていないこと。');
+			oar.unshift({
+				test: 'a'
 			});
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': ObservableArrayの変更がビューに反映されていること');
+			equal($('#dataBindTest span').eq(0).text(), 'a', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+
+			oar.unshift({
+				test: 'b'
+			});
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': ObservableArrayの変更がビューに反映されていること');
+			equal($('#dataBindTest span').eq(0).text(), 'b', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+			equal($('#dataBindTest span').eq(1).text(), 'a', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+
+			oar.unshift({
+				test: 'c'
+			});
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': ObservableArrayの変更がビューに反映されていること');
+			equal($('#dataBindTest span').eq(0).text(), 'c', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+			equal($('#dataBindTest span').eq(1).text(), 'b', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+			equal($('#dataBindTest span').eq(2).text(), 'a', name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+
+			binding.unbind();
+
+			oar.unshift({
+				test: 'd'
+			});
+			equal($('#dataBindTest span').length, 3, name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(0).text(), 'c', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(1).text(), 'b', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(2).text(), 'a', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+
+			$('#dataBindTest').remove();
+		}
+		testFunc(testDataItem);
+		testFunc(testObsItem);
+	});
+
+	test('splice()', function() {
+		function testFunc(item) {
+			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			view.append($fixture, 'itemBind7');
+			var binding = view.bind($('#dataBindTest'), {
+				item: item
+			});
+
+			var ar = [{
+				test: 'a'
+			}, {
+				test: 'b'
+			}, {
+				test: 'c'
+			}];
+
+			item.set('ary', ar);
+			var oar = item.get('ary');
+
+			equal(oar.length, 3, name + ': set()で設定しした値が格納されていること');
+			oar.splice(1, 2);
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': ObservableArrayの変更がビューに反映されていること');
+			equal($('#dataBindTest span').eq(0).text(), ar[0].test, name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+
+			var obj = {
+				test: 'AA'
+			};
+			oar.splice(0, 1, obj);
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': ObservableArrayの変更がビューに反映されていること');
+			equal($('#dataBindTest span').eq(0).text(), obj.test, name
+					+ ': ObservableArrayの内容がビューに反映されていること');
+
+			binding.unbind();
+
+			oar.splice(0, 1);
+			equal($('#dataBindTest span').length, 1, name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(0).text(), obj.test, name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+
+			$('#dataBindTest').remove();
+		}
+		testFunc(testDataItem);
+		testFunc(testObsItem);
+	});
 
 	test('sort()', function() {
 		function testFunc(item) {
@@ -1706,14 +1838,14 @@ $(function() {
 			oar.sort(function(a, b) {
 				return a.test < b.test ? 1 : a.test > b.test ? -1 : 0;
 			});
-			equal($('#dataBindTest span').length, oar.length,
-					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-			equal($('#dataBindTest span').eq(0).text(), '1',
-					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-			equal($('#dataBindTest span').eq(1).text(), '3',
-					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-			equal($('#dataBindTest span').eq(2).text(), '5',
-					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(0).text(), '1', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(1).text(), '3', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(2).text(), '5', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
 
 			$('#dataBindTest').remove();
 		}
@@ -1753,20 +1885,22 @@ $(function() {
 			binding.unbind();
 
 			oar.reverse();
-			equal($('#dataBindTest span').length, oar.length,
-					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-			equal($('#dataBindTest span').eq(0).text(), '3',
-					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-			equal($('#dataBindTest span').eq(1).text(), '5',
-					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
-			equal($('#dataBindTest span').eq(2).text(), '1',
-					name +': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').length, oar.length, name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(0).text(), '3', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(1).text(), '5', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
+			equal($('#dataBindTest span').eq(2).text(), '1', name
+					+ ': unbind()後ObservableArrayに変更を加えてもビューは更新されないこと');
 
 			$('#dataBindTest').remove();
 		}
 		testFunc(testDataItem);
 		testFunc(testObsItem);
 	});
+
+
 
 	//=============================
 	// Definition
@@ -1852,45 +1986,50 @@ $(function() {
 						'unbind()後にDataItemを更新してもビューに反映されないこと');
 			});
 
-	test('ビューに表示されているDataItemを別のDataItemに変更する', function() {
-		var item = testBaseDataModel.create({
-			id: '2',
-			test: 500
-		});
-		var item2 = testBaseDataModel.create({
-			id: '3',
-			test: 5000
-		});
-		var item3 = testBaseDataModel.create({
-			id: '4',
-			test: 10000
-		});
+	test('ビューに表示されているDataItemを別のDataItemに変更する',
+			function() {
+				var item = testBaseDataModel.create({
+					id: '2',
+					test: 500
+				});
+				var item2 = testBaseDataModel.create({
+					id: '3',
+					test: 5000
+				});
+				var item3 = testBaseDataModel.create({
+					id: '4',
+					test: 10000
+				});
 
-		view.append($fixture, 'itemBind9');
-		var binding = view.bind($('#dataBindTest'), {
-			item: testDataItem2
-		});
+				view.append($fixture, 'itemBind9');
+				var binding = view.bind($('#dataBindTest'), {
+					item: testDataItem2
+				});
+				equal($('#dataBindTest span').eq(0).text(), '10', 'DataItemの内容がビューに反映されていること');
 
-		equal($('#dataBindTest span').eq(0).text(), '10', 'DataItemの内容がビューに反映されていること');
+				testDataItem2.set({
+					data: item
+				});
+				equal($('#dataBindTest span').eq(0).text(), '500', '更新した値がビューに反映されていること');
 
-		testDataItem2.set({
-			data: item
-		});
-		equal($('#dataBindTest span').eq(0).text(), '' + item.get('test'), '変更した値がビューに反映されていること');
+				testDataItem2.set({
+					data: null
+				});
+				equal($('#dataBindTest span').eq(0).text(), '', '変更した値がビューに反映されていること');
 
-		testDataItem2.set({
-			data: item2
-		});
-		equal($('#dataBindTest span').eq(0).text(), '' + item2.get('test'), '更新した値がビューに反映されていること');
+				testDataItem2.set({
+					data: item2
+				});
+				equal($('#dataBindTest span').eq(0).text(), '5000', '更新した値がビューに反映されていること');
 
-		binding.unbind();
+				binding.unbind();
 
-		testDataItem2.set({
-			data: item3
-		});
-		equal($('#dataBindTest span').eq(0).text(), '' + item2.get('test'),
-				'unbind()後にDataItemを更新してもビューに反映されないこと');
-	});
+				testDataItem2.set({
+					data: item3
+				});
+				equal($('#dataBindTest span').eq(0).text(), '5000',
+						'unbind()後にDataItemを更新してもビューに反映されないこと');
+			});
 
 
 
@@ -2031,47 +2170,6 @@ $(function() {
 			return ERR_BIND.ERR_CODE_UNKNOWN_BIND_DIRECTION === actual.code;
 		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
-
-	//=============================
-	// Definition
-	//=============================
-	module('複数のプロパティを一つの要素にバインド');
-
-	//=============================
-	// Body
-	//=============================
-	test('セミコロンで複数のプロパティを一つの要素にバインドできること', function() {
-		view.append($fixture, 'multiple');
-		view.bind('#dataBindTest', {
-			v1: 'v1',
-			v2: 'v2',
-			v3: 'v3',
-			v4: 'red',
-			v5: 'v5'
-		});
-		var $span = $fixture.find('span');
-		strictEqual($span.text(), 'v2', '複数のプロパティをhtml,textで指定した場合、一番最後に指定したものがバインドされること');
-		strictEqual($span.attr('id'), 'v3', '属性値にバインドされていること');
-		strictEqual($span[0].style.color, 'red', 'styleにバインドされていること');
-		strictEqual($span.attr('class'), 'v1', 'classにバインドされていること');
-	});
-
-	test('各プロパティにnullをバインドする', function() {
-		view.append($fixture, 'multiple');
-		view.bind('#dataBindTest', {
-			v1: null,
-			v2: null,
-			v3: null,
-			v4: null,
-			v5: null
-		});
-		var $span = $fixture.find('span');
-		strictEqual($span.text(), '', '空文字が設定されていること');
-		strictEqual($span.attr('id'), undefined, '削除されていること');
-		strictEqual($span[0].style.color, '', '削除されていること');
-		strictEqual($span.attr('class'), undefined, '何も設定されていないこと');
-	});
-
 
 	//=============================
 	// Definition
@@ -2395,9 +2493,7 @@ $(function() {
 		var ar = [{
 			ar: [{
 				val: 1
-			}]
-		}, {
-			ar: [{
+			}, {
 				val: 2
 			}, {
 				val: 3
@@ -2409,22 +2505,38 @@ $(function() {
 			items: ar
 		});
 
-		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, ar[0].ar.length,
 				'配列の要素数分DOMが生成されること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(0)').text(), '2', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '3', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span').length, ar[1].ar.length,
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '2', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '3', 'バインドされていること');
+	});
+
+	test('loop-contextの子要素にloop-contextがある要素にnullが含まれている配列をバインドする', function() {
+		var ar = [{
+			ar: [{
+				val: 1
+			}, null, {
+				val: 3
+			}]
+		}];
+
+		view.append($fixture, 'nestloop1');
+		view.bind($('#dataBindTest'), {
+			items: ar
+		});
+
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, 2,
 				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '3', 'バインドされていること');
 	});
 
 	test('loop-contextの子要素にloop-contextがある要素にObservableArrayをバインドする', function() {
 		var ar = [{
 			ar: [{
 				val: 1
-			}]
-		}, {
-			ar: [{
+			}, {
 				val: 2
 			}, {
 				val: 3
@@ -2438,13 +2550,33 @@ $(function() {
 			items: oar
 		});
 
-		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar[0].ar.length,
 				'配列の要素数分DOMが生成されること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(0)').text(), '2', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '3', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span').length, oar[1].ar.length,
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '2', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '3', 'バインドされていること');
+	});
+
+	test('loop-contextの子要素にloop-contextがある要素にnullが含まれているObservableArrayをバインドする', function() {
+		var ar = [{
+			ar: [{
+				val: 1
+			}, null, {
+				val: 3
+			}]
+		}];
+		var oar = h5.u.obj.createObservableArray();
+		oar.copyFrom(ar);
+
+		view.append($fixture, 'nestloop1');
+		view.bind($('#dataBindTest'), {
+			items: oar
+		});
+
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, 2,
 				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '3', 'バインドされていること');
 	});
 
 	//=============================
