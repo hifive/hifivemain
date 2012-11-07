@@ -1529,11 +1529,14 @@
 
 		// this._valuesに値(defaultValue)のセット
 		for ( var p in schema) {
-			if (schema[p] && schema[p].type && schema[p].type.indexOf('[]') !== -1) {
+			if ($.inArray(p, aryProps) !== -1) {
 				this._values[p] = h5.u.obj.createObservableArray();
 
 				if (schema[p].hasOwnProperty('defaultValue')) {
-					this._values[p].copyFrom(schema[p].defaultValue);
+					// null,undefなら空配列にする
+					// TODO nullが入っていることが分かるようにisNullフラグを立てる
+					var defVal = schema[p].defaultValue == null ? [] : schema[p].defaultValue;
+					this._values[p].copyFrom(defVal);
 				}
 				continue;
 			}
@@ -1660,8 +1663,14 @@
 					// スキーマに定義されていないプロパティにセットはできないのでエラー
 					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, p);
 				}
+				var val = setObj[p];
+				// type:[]のプロパティにnull,undefが指定されたら、空配列と同様に扱う
+				// TODO nullが入れられたことが分かるようにisNullフラグを立てる
+				if ($.inArray(p, this._internal.aryProps) !== -1 && val == null) {
+					val = [];
+				}
 				//値のチェック
-				var validateResult = this._internal.itemValueCheckFuncs[p](setObj[p]);
+				var validateResult = this._internal.itemValueCheckFuncs[p](val);
 				if (validateResult.length) {
 					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
 				}
