@@ -791,130 +791,120 @@
 				setObservableArrayListeners(model, this, arrayProps[i], this.get(arrayProps[i]));
 			}
 		}
-		$.extend(DataItem.prototype, EventDispatcher.prototype,
-				{
-					/**
-					 * 指定されたキーのプロパティの値を取得します。
-					 * <p>
-					 * 引数にプロパティ名を指定すると、アイテムが持つそのプロパティの値を返します。
-					 * </p>
-					 * <p>
-					 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。
-					 * </p>
-					 *
-					 * @since 1.1.0
-					 * @memberOf DataItem
-					 * @param {String} [key]
-					 *            プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
-					 * @returns Any 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
-					 */
-					get: function(key) {
-						if (arguments.length === 0) {
-							return $.extend({}, this._values);
-						}
+		$.extend(DataItem.prototype, EventDispatcher.prototype, {
+			/**
+			 * 指定されたキーのプロパティの値を取得します。
+			 * <p>
+			 * 引数にプロパティ名を指定すると、アイテムが持つそのプロパティの値を返します。
+			 * </p>
+			 * <p>
+			 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。
+			 * </p>
+			 *
+			 * @since 1.1.0
+			 * @memberOf DataItem
+			 * @param {String} [key] プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
+			 * @returns Any 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
+			 */
+			get: function(key) {
+				if (arguments.length === 0) {
+					return $.extend({}, this._values);
+				}
 
-						// データモデルに所属している場合は、所属しているスキーマを使用してチェックする
-						if (this._model && !this._model.schema.hasOwnProperty(key)) {
-							throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [
-									this._model.name, key]);
-						} else
-						// データモデルに所属していない場合は、データアイテムが保持するプロパティをみる
-						if (!this._values && this._values.hasOwnProperty(key)) {
-							throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [null, key]);
-						}
+				if (schema.hasOwnProperty(key)) {
+					//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
+					throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [model.name, key]);
+				}
 
-						return getValue(this, key);
-					},
+				return getValue(this, key);
+			},
 
-					/**
-					 * 指定されたキーのプロパティに値をセットします。
-					 * <p>
-					 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ...
-					 * }という構造をもつオブジェクトを1つだけ渡してください。
-					 * </p>
-					 * <p>
-					 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。
-					 * </p>
-					 * <p>
-					 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。
-					 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする
-					 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
-					 * </p>
-					 *
-					 * @since 1.1.0
-					 * @memberOf DataItem
-					 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
-					 */
-					set: function(var_args) {
-						// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
-						if (this._model !== model || !this._model._manager) {
-							throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [
-									this._values[model.idKey], 'set'], this);
-						}
-						//引数はオブジェクト1つ、または(key, value)で呼び出せる
-						var valueObj = var_args;
-						if (arguments.length === 2) {
-							valueObj = {};
-							valueObj[arguments[0]] = arguments[1];
-						}
+			/**
+			 * 指定されたキーのプロパティに値をセットします。
+			 * <p>
+			 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ... }という構造をもつオブジェクトを1つだけ渡してください。
+			 * </p>
+			 * <p>
+			 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。
+			 * </p>
+			 * <p>
+			 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。
+			 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする
+			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
+			 * </p>
+			 *
+			 * @since 1.1.0
+			 * @memberOf DataItem
+			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
+			 */
+			set: function(var_args) {
+				// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
+				if (this._model !== model || !this._model._manager) {
+					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [this._values[model.idKey],
+							'set'], this);
+				}
+				//引数はオブジェクト1つ、または(key, value)で呼び出せる
+				var valueObj = var_args;
+				if (arguments.length === 2) {
+					valueObj = {};
+					valueObj[arguments[0]] = arguments[1];
+				}
 
-						if (model.idKey in valueObj) {
-							//IDの上書きは禁止
-							throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
-						}
+				if (model.idKey in valueObj) {
+					//IDの上書きは禁止
+					throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
+				}
 
-						// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
-						// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
-						// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
-						var isAlreadyInUpdate = model._manager ? model._manager.isInUpdate()
-								: false;
-						if (!isAlreadyInUpdate) {
-							model._manager.beginUpdate();
-						}
+				// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
+				// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
+				// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
+				var isAlreadyInUpdate = model._manager ? model._manager.isInUpdate() : false;
+				if (!isAlreadyInUpdate) {
+					model._manager.beginUpdate();
+				}
 
-						var event = itemSetter(model, this, valueObj, null);
+				var event = itemSetter(model, this, valueObj, null);
 
-						if (event) {
-							// 更新した値があればChangeLogを追記
-							addUpdateChangeLog(model, event);
-						}
-						// endUpdateを呼んでイベントを発火
-						if (!isAlreadyInUpdate) {
-							model._manager.endUpdate();
-						}
-					},
+				if (event) {
+					// 更新した値があればChangeLogを追記
+					addUpdateChangeLog(model, event);
+				}
+				// endUpdateを呼んでイベントを発火
+				if (!isAlreadyInUpdate) {
+					model._manager.endUpdate();
+				}
+			},
 
-					/**
-					 * DataItemが属しているDataModelインスタンスを返します。
-					 * <p>
-					 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
-					 * </p>
-					 *
-					 * @since 1.1.0
-					 * @memberOf DataItem
-					 * @returns DataModel
-					 */
-					getModel: function() {
-						return this._model;
-					},
+			/**
+			 * DataItemが属しているDataModelインスタンスを返します。
+			 * <p>
+			 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
+			 * </p>
+			 *
+			 * @since 1.1.0
+			 * @memberOf DataItem
+			 * @returns DataModel
+			 */
+			getModel: function() {
+				return this._model;
+			},
 
-					/**
-					 * 指定されたプロパティがtype:[]かどうかを返します。（type:anyでObservableArrayが入っている場合とtype:[]で最初から
-					 * ObservableArrayが入っている場合を区別するため）
-					 *
-					 * @private
-					 * @memberOf DataItem
-					 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
-					 */
-					_isArrayProp: function(prop) {
-						if (schema[prop] && schema[prop].type
-								&& schema[prop].type.indexOf('[]') > -1) {
-							//Bindingにおいて比較的頻繁に使われるので、高速化も検討する
-							return true;
-						}
-						return false;
-					}
-				});
+			/**
+			 * 指定されたプロパティがtype:[]かどうかを返します。（type:anyでObservableArrayが入っている場合とtype:[]で最初から
+			 * ObservableArrayが入っている場合を区別するため）
+			 *
+			 * @private
+			 * @memberOf DataItem
+			 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
+			 */
+			_isArrayProp: function(prop) {
+				if (schema[prop] && schema[prop].type && schema[prop].type.indexOf('[]') > -1) {
+					//Bindingにおいて比較的頻繁に使われるので、高速化も検討する
+					return true;
+				}
+				return false;
+			}
+		});
 		return DataItem;
 	}
 
