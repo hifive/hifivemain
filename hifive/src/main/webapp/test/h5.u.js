@@ -1713,7 +1713,7 @@ $(function() {
 		raises(function(enviroment) {
 			item.get('hoge');
 		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
+			return actual.code === ERR.ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY;
 		}, 'スキーマに定義されていないプロパティの値を取得したためエラーになること"');
 
 		raises(function(enviroment) {
