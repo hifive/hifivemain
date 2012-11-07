@@ -1252,6 +1252,38 @@
 		};
 	}
 
+	function customSplice(/* var_args */) {
+		var beforeLen = this.length;
+
+		//preventDefault()が呼ばれなければ実際に処理を行う
+		var ret = Array.prototype.splice.apply(this, arguments);
+
+		//splice前より後の方が長さが短くなっていたら、余っている後ろの要素を削除する
+		for ( var i = this.length; i < beforeLen; i++) {
+			delete this[i];
+		}
+
+		return ret;
+	}
+
+	var obsSplice;
+
+	//Objectに対するsplice()の動作を確認
+	var spliceTestObj = {
+		'0': 0,
+		length: 1
+	};
+	Array.prototype.splice.call(spliceTestObj, 0, 1);
+	if (spliceTestObj[0] !== undefined) {
+		//Array.prototype.spliceをビルトインの配列以外に対して適用した時
+		//最終的なlength以降の要素が削除されないので、特別に対応する。
+		//ここに入るのは、検証したブラウザではIE8以下だけ。
+		obsSplice = customSplice;
+	} else {
+		obsSplice = Array.prototype.splice;
+	}
+
+
 	/**
 	 * ObservableArray(オブザーバブルアレイ)とは、配列操作の監視可能な配列です。
 	 * <p>
@@ -1337,7 +1369,7 @@
 
 						var args = src.slice(0);
 						args.unshift(0, this.length);
-						Array.prototype.splice.apply(this, args);
+						obsSplice.apply(this, args);
 
 						var evAfter = {
 							type: EVENT_TYPE_OBSERVE,
@@ -1359,6 +1391,11 @@
 
 	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
 		ObservableArray.prototype[arrayMethods[i]] = (function(method) {
+			var arrayFunc = Array.prototype[method];
+			if (method === 'splice') {
+				arrayFunc = obsSplice;
+			}
+
 			//TODO fallback実装の提供
 			return function() {
 				var isDestructive = $.inArray(method, destructiveMethods) !== -1;
@@ -1371,7 +1408,7 @@
 
 				if (!this.dispatchEvent(evBefore)) {
 					//preventDefault()が呼ばれなければ実際に処理を行う
-					var ret = Array.prototype[method].apply(this, arguments);
+					var ret = arrayFunc.apply(this, arguments);
 					var evAfter = {
 						type: EVENT_TYPE_OBSERVE,
 						method: method,
@@ -1386,48 +1423,6 @@
 		})(arrayMethods[i]);
 	}
 
-	//Objectに対するsplice()の動作を確認
-	var spliceTestObj = {
-		'0': 0,
-		length: 1
-	};
-	Array.prototype.splice.call(spliceTestObj, 0, 1);
-
-	if (spliceTestObj[0] !== undefined) {
-		//Array.prototype.spliceをビルトインの配列以外に対して適用した時
-		//最終的なlength以降の要素が削除されないので、特別に対応する。
-		//ここに入るのは、検証したブラウザではIE8以下だけ。
-		ObservableArray.prototype.splice = function() {
-			var evBefore = {
-				type: EVENT_TYPE_OBSERVE_BEFORE,
-				method: 'splice',
-				args: arguments,
-				isDestructive: true
-			};
-
-			var beforeLen = this.length;
-
-			if (!this.dispatchEvent(evBefore)) {
-				//preventDefault()が呼ばれなければ実際に処理を行う
-				var ret = Array.prototype.splice.apply(this, arguments);
-
-				//splice前より後の方が長さが短くなっていたら、余っている後ろの要素を削除する
-				for ( var i = this.length; i < beforeLen; i++) {
-					delete this[i];
-				}
-
-				var evAfter = {
-					type: EVENT_TYPE_OBSERVE,
-					method: 'splice',
-					args: arguments,
-					returnValue: ret,
-					isDestructive: true
-				};
-				this.dispatchEvent(evAfter);
-				return ret;
-			}
-		};
-	}
 
 	/**
 	 * ObservableArrayを作成します。
