@@ -2508,8 +2508,8 @@ $(function() {
 		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, ar[0].ar.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '2', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '3', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '2', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(2)').text(), '3', 'バインドされていること');
 	});
 
 	test('loop-contextの子要素にloop-contextがある要素にnullが含まれている配列をバインドする', function() {
@@ -2526,10 +2526,100 @@ $(function() {
 			items: ar
 		});
 
-		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, 2,
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, ar[0].ar.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '3', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(2)').text(), '3', 'バインドされていること');
+	});
+
+	test('loop-contextの子要素に複数loop-contextがある要素に配列をバインドする', function() {
+		var ar = [{
+			ar: [{
+				val: 1
+			}, {
+				val: 2
+			}, {
+				val: 3
+			}],
+			ar2: [{
+				val: 10
+			}, {
+				val: 20
+			}, {
+				val: 30
+			}]
+
+		}];
+
+		view.append($fixture, 'nestloop2');
+		view.bind($('#dataBindTest'), {
+			items: ar
+		});
+
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, ar[0].ar.length,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '2', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(2)').text(), '3', 'バインドされていること');
+
+		strictEqual($('#dataBindTest>div>div:eq(1)>span').length, ar[0].ar2.length,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(0)').text(), '10', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '20', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '30', 'バインドされていること');
+	});
+
+	test('loop-contextの子要素に複数loop-contextがある要素にnullが含まれている配列をバインドする', function() {
+		var ar = [{
+			ar: [{
+				val: 1
+			}, {
+				val: 2
+			}, {
+				val: 3
+			}],
+			ar2: [{
+				val: 10
+			}, {
+				val: 20
+			}, {
+				val: 30
+			}]
+		}, {
+			ar: null,
+			ar2: [{
+				val: 100
+			}, {
+				val: 200
+			}, {
+				val: 300
+			}]
+		}];
+
+		view.append($fixture, 'nestloop2');
+		view.bind($('#dataBindTest'), {
+			items: ar
+		});
+
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, ar[0].ar.length,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '2', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(2)').text(), '3', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span').length, ar[0].ar2.length,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(0)').text(), '10', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '20', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '30', 'バインドされていること');
+
+		strictEqual($('#dataBindTest>div>div:eq(2)>span').length, 0,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(3)>span').length, ar[1].ar2.length,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(0)').text(), '100', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(1)').text(), '200', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(2)').text(), '300', 'バインドされていること');
 	});
 
 	test('loop-contextの子要素にloop-contextがある要素にObservableArrayをバインドする', function() {
@@ -2553,8 +2643,8 @@ $(function() {
 		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar[0].ar.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '2', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '3', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '2', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(2)').text(), '3', 'バインドされていること');
 	});
 
 	test('loop-contextの子要素にloop-contextがある要素にnullが含まれているObservableArrayをバインドする', function() {
@@ -2573,10 +2663,66 @@ $(function() {
 			items: oar
 		});
 
-		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, 2,
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar[0].ar.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '3', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(2)').text(), '3', 'バインドされていること');
+	});
+
+	test('loop-contextの子要素に複数loop-contextがある要素にnullが含まれているObservableArrayをバインドする', function() {
+		var ar = [{
+			ar: [{
+				val: 1
+			}, {
+				val: 2
+			}, {
+				val: 3
+			}],
+			ar2: [{
+				val: 10
+			}, {
+				val: 20
+			}, {
+				val: 30
+			}]
+		}, {
+			ar: null,
+			ar2: [{
+				val: 100
+			}, {
+				val: 200
+			}, {
+				val: 300
+			}]
+		}];
+
+		var oar = h5.u.obj.createObservableArray();
+		oar.copyFrom(ar);
+
+		view.append($fixture, 'nestloop2');
+		view.bind($('#dataBindTest'), {
+			items: oar
+		});
+
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar[0].ar.length,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '2', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(2)').text(), '3', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span').length, oar[0].ar2.length,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(0)').text(), '10', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '20', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '30', 'バインドされていること');
+
+		strictEqual($('#dataBindTest>div>div:eq(2)>span').length, 0,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(3)>span').length, oar[1].ar2.length,
+				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(0)').text(), '100', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(1)').text(), '200', 'バインドされていること');
+		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(2)').text(), '300', 'バインドされていること');
 	});
 
 	//=============================
