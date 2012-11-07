@@ -1386,6 +1386,49 @@
 		})(arrayMethods[i]);
 	}
 
+	//Objectに対するsplice()の動作を確認
+	var spliceTestObj = {
+		'0': 0,
+		length: 1
+	};
+	Array.prototype.splice.call(spliceTestObj, 0, 1);
+
+	if (spliceTestObj[0] !== undefined) {
+		//Array.prototype.spliceをビルトインの配列以外に対して適用した時
+		//最終的なlength以降の要素が削除されないので、特別に対応する。
+		//ここに入るのは、検証したブラウザではIE8以下だけ。
+		ObservableArray.prototype.splice = function() {
+			var evBefore = {
+				type: EVENT_TYPE_OBSERVE_BEFORE,
+				method: 'splice',
+				args: arguments,
+				isDestructive: true
+			};
+
+			var beforeLen = this.length;
+
+			if (!this.dispatchEvent(evBefore)) {
+				//preventDefault()が呼ばれなければ実際に処理を行う
+				var ret = Array.prototype.splice.apply(this, arguments);
+
+				//splice前より後の方が長さが短くなっていたら、余っている後ろの要素を削除する
+				for ( var i = this.length; i < beforeLen; i++) {
+					delete this[i];
+				}
+
+				var evAfter = {
+					type: EVENT_TYPE_OBSERVE,
+					method: 'splice',
+					args: arguments,
+					returnValue: ret,
+					isDestructive: true
+				};
+				this.dispatchEvent(evAfter);
+				return ret;
+			}
+		};
+	}
+
 	/**
 	 * ObservableArrayを作成します。
 	 *
