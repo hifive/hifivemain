@@ -3475,7 +3475,7 @@ $(function() {
 			var item2 = null;
 			var sub = [new Array(new String('a'), new String(10)), new Array('x', 'r'),
 					new Array('8', '5'), new Object(['i', 'd']), new Object(['3', '4']), [],
-					[null, undefined]];
+					[null, undefined], null, undefined];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
@@ -3517,9 +3517,8 @@ $(function() {
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
-			var nosub = [1, null, undefined, /[0-9]/, new RegExp(), 'false', '', Infinity,
-					-Infinity, new Number(1), NaN, window, {}, new Object([10, 'v']),
-					new Array(1, 'a'), function() {
+			var nosub = [1, /[0-9]/, new RegExp(), 'false', '', Infinity, -Infinity, new Number(1),
+					NaN, window, {}, new Object([10, 'v']), new Array(1, 'a'), function() {
 						return 10;
 					}];
 			for ( var i = 0; i < nosub.length; i++) {
@@ -4030,7 +4029,7 @@ $(function() {
 			var item2 = null;
 			var sub = [new Array(new Number(10)), new Array(40, 90), new Object([10, 30]), ["10"],
 					[Infinity, -Infinity, NaN], new Array(Infinity, -Infinity, NaN),
-					new Object([Infinity, -Infinity, NaN]), [null, undefined]];
+					new Object([Infinity, -Infinity, NaN]), [null, undefined], null, undefined];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
@@ -4076,9 +4075,9 @@ $(function() {
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
-			var nosub = [1, null, undefined, /[0-9]/, new RegExp(), 'false', new String('[10]'),
-					'', Infinity, -Infinity, new Number(1), NaN, window, {}, new Object(),
-					[1, 'a'], new Object(['a']), new Array(1, 'a'), function() {
+			var nosub = [1, /[0-9]/, new RegExp(), 'false', new String('[10]'), '', Infinity,
+					-Infinity, new Number(1), NaN, window, {}, new Object(), [1, 'a'],
+					new Object(['a']), new Array(1, 'a'), function() {
 						return 10;
 					}];
 			for ( var i = 0; i < nosub.length; i++) {
@@ -4249,7 +4248,7 @@ $(function() {
 					new Array(new Number(10), new Number(20)),
 					new Array(new String('56'), new String('48')),
 					new Array(new Object('30'), new Object('31')),
-					new Array(new Object(20), new Object(20)), [null]];
+					new Array(new Object(20), new Object(20)), [null], null, undefined];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
@@ -4295,7 +4294,7 @@ $(function() {
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
-			var nosub = [1, null, undefined, '1', [1, 'a'], '', /[0-9]/, new RegExp(), {
+			var nosub = [1, '1', [1, 'a'], '', /[0-9]/, new RegExp(), {
 				1: 1
 			}, new Number(10), new String('a3'), new Object('a2'), new Array('A'), new Boolean(1),
 					window, Infinity, -Infinity, NaN, function() {
@@ -4463,7 +4462,8 @@ $(function() {
 			var item2 = null;
 			var sub = [[new Boolean(1), new Boolean(0)], new Array(new Boolean(1), new Boolean(0)),
 					[new Object(true), new Object(false)],
-					new Array(new Object(true), new Object(false)), [null, undefined], []];
+					new Array(new Object(true), new Object(false)), [null, undefined], [], null,
+					undefined];
 			for ( var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
@@ -4509,7 +4509,7 @@ $(function() {
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
-			var nosub = [1, '', null, undefined, [true, 'true'], [1], /[0-9]/, new RegExp(), {
+			var nosub = [1, '', [true, 'true'], [1], /[0-9]/, new RegExp(), {
 				1: 1
 			}, 'false', new String('true'), new Object(), Infinity, -Infinity, new Number(1), NaN,
 					window, function() {
@@ -4605,60 +4605,63 @@ $(function() {
 
 	// 2012/07/27 竹内追記 type:array[]は無い
 	// 2012/08/23 福田追記 type:arrayは廃止。type:any[]を使用する
-	test('type指定 any[]', function() {
-		var model = manager.createModel({
-			name: 'TestDataModel',
-			schema: {
-				id: {
-					id: true
-				},
-				test1: {
-					type: 'any[]',
-					defaultValue: [10]
-				},
-				test2: {
-					type: 'any[]'
-				}
-			}
-		});
-
-		try {
-			var item = model.create({
-				id: sequence.next()
-			});
-
-			// 初期値は正しいか
-			deepEqualObs(item.get('test1'), [10],
-					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
-
-			item = model.create({
-				id: sequence.next(),
-				test1: [30]
-			});
-
-			deepEqualObs(item.get('test1'), [30], 'type:\'any\'のプロパティに値が代入できること。');
-
-			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
-			var item2 = null;
-			var sub = [new Array(10, 8), new Object(['a']), [new Number(1)], [null, undefined]];
-			for ( var i = 0; i < sub.length; i++) {
-				item2 = model.create({
-					id: sequence.next(),
-					test1: sub[i]
+	test('type指定 any[] 正常系',
+			function() {
+				var model = manager.createModel({
+					name: 'TestDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						test1: {
+							type: 'any[]',
+							defaultValue: [10]
+						},
+						test2: {
+							type: 'any[]'
+						}
+					}
 				});
 
-				deepEqualObs(item2.get('test1'), sub[i], 'test1に' + sub[i]
-						+ 'が代入されてDataItemが生成されること。');
+				try {
+					var item = model.create({
+						id: sequence.next()
+					});
 
-				item2.set('test2', sub[i]);
+					// 初期値は正しいか
+					deepEqualObs(item.get('test1'), [10],
+							'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+					deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
-				deepEqualObs(item2.get('test2'), sub[i], 'typeプロパティで指定した型の値が代入できること。');
-			}
-		} catch (e) {
-			ok(false, 'エラーが発生しました。『' + e.message + '』');
-		}
-	});
+					item = model.create({
+						id: sequence.next(),
+						test1: [30]
+					});
+
+					deepEqualObs(item.get('test1'), [30], 'type:\'any\'のプロパティに値が代入できること。');
+
+					// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+					var item2 = null;
+					var sub = [new Array(10, 8), new Object(['a']), [new Number(1)],
+							[null, undefined], null, undefined];
+					for ( var i = 0; i < sub.length; i++) {
+						item2 = model.create({
+							id: sequence.next(),
+							test1: sub[i]
+						});
+
+						var exp = sub[i] == null ? [] : sub[i];
+						deepEqualObs(item2.get('test1'), exp, 'test1に' + sub[i]
+								+ 'が代入されてDataItemが生成されること。');
+
+						item2.set('test2', sub[i]);
+
+						deepEqualObs(item2.get('test2'), exp, 'typeプロパティで指定した型の値が代入できること。');
+					}
+				} catch (e) {
+					ok(false, 'エラーが発生しました。『' + e.message + '』');
+				}
+			});
 
 	test('type指定 any[] 異常系', function() {
 		var model = manager.createModel({
@@ -4688,9 +4691,8 @@ $(function() {
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
-			var nosub = [1, null, undefined, /[0-9]/, new RegExp(), 'false', new String('true'),
-					'', Infinity, -Infinity, new Number(1), NaN, window, {}, new Object(),
-					function() {
+			var nosub = [1, /[0-9]/, new RegExp(), 'false', new String('true'), '', Infinity,
+					-Infinity, new Number(1), NaN, window, {}, new Object(), function() {
 						return 10;
 					}];
 			for ( var i = 0; i < nosub.length; i++) {
@@ -4874,24 +4876,20 @@ $(function() {
 		// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 		var item2 = null;
 		var sub = [['b'], ['b', 'b'], ['b', 20], ['b', 20, false, testClass1, NaN], [NaN], [false],
-				[testClass1], [null], [null, null], []];
+				[testClass1], [null], [null, null], [], null, undefined];
 		for ( var i = 0; i < sub.length; i++) {
-			try {
+			item2 = model.create({
+				id: sequence.next(),
+				test2: sub[i]
+			});
 
-				item2 = model.create({
-					id: sequence.next(),
-					test2: sub[i]
-				});
+			var exp = sub[i] == null ? [] : sub[i];
+			deepEqualObs(item2.get('test2'), exp, 'test2に[' + Array.prototype.toString.call(exp)
+					+ ']が代入されてDataItemが生成されること。');
 
-				deepEqualObs(item2.get('test2'), sub[i], 'test2に['
-						+ Array.prototype.toString.call(sub[i]) + ']が代入されてDataItemが生成されること。');
+			item2.set('test2', sub[i]);
 
-				item2.set('test2', sub[i]);
-
-				deepEqualObs(item2.get('test2'), sub[i], 'typeプロパティで指定した型の値が代入できること。');
-			} catch (e) {
-				ok(false, 'エラーが発生しました。『' + e.message + '』');
-			}
+			deepEqualObs(item2.get('test2'), exp, 'typeプロパティで指定した型の値が代入できること。');
 		}
 	});
 
@@ -4930,9 +4928,9 @@ $(function() {
 			});
 
 			// 代入不可な値を指定した場合は例外が発生するか
-			var nosub = [1, false, 'z', null, undefined, /[0-9]/, new RegExp(), 'true',
-					new String(10), '', Infinity, -Infinity, new Number(1), NaN, window, {},
-					new Object(), new Object(['b']), new Array('b'), ['b'], function() {
+			var nosub = [1, false, 'z', /[0-9]/, new RegExp(), 'true', new String(10), '',
+					Infinity, -Infinity, new Number(1), NaN, window, {}, new Object(),
+					new Object(['b']), new Array('b'), ['b'], function() {
 						return 'a';
 					}, new TestClass1(), new String('a'), new Object('a'), new Number(10),
 					new Object(10), new Boolean(1), new Object(true)];

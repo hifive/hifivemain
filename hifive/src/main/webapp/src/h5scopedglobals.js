@@ -1498,7 +1498,11 @@ function createCheckValueByCheckObj(checkObj) {
 				}
 				return true;
 			}
-			// 指定された配列次元と、渡された値の配列の次元があっていない場合はfalseを返す
+			// 配列指定なのにセットする値が配列でない場合はfalseを返す
+			// ただしnullなら空配列同等の扱いをするので、チェックで弾かない
+			if (v == null) {
+				return true;
+			}
 			if (!$.isArray(v) && !h5.u.obj.isObservableArray(v)) {
 				errorReason.push({
 					dimention: dim

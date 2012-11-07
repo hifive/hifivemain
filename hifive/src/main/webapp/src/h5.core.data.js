@@ -377,8 +377,15 @@
 				throwFwError(ERR_CODE_DEPEND_PROPERTY, prop);
 			}
 
-
 			var type = model.schema[prop] && model.schema[prop].type;
+
+			// 配列でかつnewValueがnullまたはundefinedなら、空配列が渡された時と同様に扱う。
+			// エラーにせず、保持しているObsAryインスタンスを空にする。
+			// TODO nullがセットされているプロパティかどうか分かるようにisNullフラグを立てる
+			if (isTypeArray(type) && newValue == null) {
+				newValue = [];
+			}
+
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
 			if (type && type.match(/string|number|integer|boolean/)) {
 				newValue = unbox(newValue);
