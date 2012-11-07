@@ -155,7 +155,7 @@
 	 * @param {Node|Node[]} rootNodes ルート要素、またはルート要素の配列
 	 * @returns {jQuery} 別のコンテキストに属していないバインド対象要素
 	 */
-	function $getBindElementsInContext(rootNodes, isBindingRoot) {
+	function $getBindElementsInContext(rootNodes, isMultiRoot) {
 		rootNodes = wrapInArray(rootNodes);
 
 		var $bindElements = $();
@@ -171,7 +171,7 @@
 			//バインディングルートの場合は、
 			//rootNodeは「仮想の親要素（バインドルート）」の子要素として考える必要がある。
 			//ルート要素で別のコンテキストが指定されている場合はそれ以下のノードは絶対に含まれない
-			if ((isBindingRoot === true)
+			if ((isMultiRoot === true)
 					&& (rootNode.getAttribute(DATA_H5_CONTEXT) != null || rootNode
 							.getAttribute(DATA_H5_LOOP_CONTEXT) != null)) {
 				continue;
@@ -205,7 +205,7 @@
 	/**
 	 * 自分のコンテキストの直接の子供であるdata-context（またはdata-loop-context）を返します。
 	 */
-	function $getChildContexts(rootNodes, dataContextAttr, isBindingRoot) {
+	function $getChildContexts(rootNodes, dataContextAttr, isMultiRoot) {
 		var $childContexts = $();
 
 		for ( var i = 0, len = rootNodes.length; i < len; i++) {
@@ -216,7 +216,7 @@
 				continue;
 			}
 
-			if (isBindingRoot === true) {
+			if (isMultiRoot === true) {
 				//このrootNodesがバインディングのルートノードの場合（＝仮想的なルートノードの子要素の場合）
 
 				//指定されたコンテキストが設定されていれば必ず直接の子供
@@ -272,6 +272,83 @@
 	}
 
 	/**
+	 * data-loop-contextによるループバインドを行う。（applyBindingの中からのみ呼ばれる）
+	 *
+	 * @param {Binding} binding バインディングインスタンス
+	 * @param {Node|Node[]} rootNodes
+	 *            データコンテキストを持つルートノード、またはルートノードの配列（テキストノードやコメントノードなどELEMENT以外が含まれる場合も有る）
+	 * @param {Object} context データコンテキスト
+	 */
+	function applyLoopBinding(binding, rootNodes, context) {
+		var viewUid = getViewUid();
+
+		//loop-contextの場合は、ループのルートノードは必ず単一のノード
+		var loopRootElement = rootNodes[0];
+
+		//ループ前に一旦内部要素をすべて外す
+		$(loopRootElement).empty();
+
+		if (!context) {
+			//contextがない場合はループを一切行わない（BindingEntryもつけない）
+			return;
+		}
+
+		if (!($.isArray(context) || h5.u.obj.isObservableArray(context))) {
+			//data-h5-loop-contextの場合contextは配列でなければならない
+			throwFwError(ERR_CODE_INVALID_CONTEXT_SRC);
+		}
+
+		addViewUid(rootNodes, viewUid);
+
+		binding._addBindingEntry(context, loopRootElement, viewUid);
+
+		if (h5.u.obj.isObservableArray(context) && !binding._isWatching(context)) {
+			var observeListener = function(event) {
+				binding._observableArray_observeListener(event);
+			};
+			binding._listeners[binding._getContextIndex(context)] = observeListener;
+
+			context.addEventListener('observe', observeListener);
+		}
+
+		//ループルートノードに対応する子ノードリストを、保存しているビューソースから取り出す
+		var loopDynCtxId = $(loopRootElement).attr(DATA_H5_DYN_CTX);
+		var srcRootChildNodes = toArray(binding._getSrcCtxNode(loopDynCtxId).childNodes);
+
+		//このループコンテキストの各要素に対応するノード（配列）を格納する配列
+		var loopElementsArray = [];
+		binding._loopElementsMap[viewUid] = loopElementsArray;
+
+		//appendChildの呼び出し回数削減。
+		//ループ単位ごとにappendChildしてdocumentにバインドする（＝Fragmentは都度空になる）ので、使いまわしている。
+		var fragment = document.createDocumentFragment();
+
+		for ( var i = 0, len = context.length; i < len; i++) {
+			var loopNodes = [];
+
+			//1要素分のノードのクローンを作成
+			for ( var j = 0, childLen = srcRootChildNodes.length; j < childLen; j++) {
+				var clonedInnerNode = srcRootChildNodes[j].cloneNode(true); //deep copy
+
+				loopNodes.push(clonedInnerNode);
+
+				fragment.appendChild(clonedInnerNode);
+			}
+
+			//配列1要素分のノードリストを保存
+			loopElementsArray[i] = loopNodes;
+
+			//IE6で、documentツリーにぶら下がっていない状態で属性操作を行うとそれが反映されない場合がある
+			//（例えばinput-checkboxのcheckedを操作してもそれが反映されない）
+			//そのため、先にツリーにappendしてからバインディングを行う
+			loopRootElement.appendChild(fragment);
+
+			//配列1要素分のバインディングを実行
+			applyBinding(binding, loopNodes, context[i], false, true);
+		}
+	}
+
+	/**
 	 * データバインドを行う。context単位にsrc/viewの対応を保存。可能ならイベントハンドラを設定して、変更伝搬させる
 	 *
 	 * @param {Binding} binding バインディングインスタンス
@@ -280,86 +357,23 @@
 	 * @param {Object} context データコンテキスト
 	 * @param {Boolean} isLoopContext ループコンテキストかどうか
 	 */
-	function applyBinding(binding, rootNodes, context, isLoopContext, isBindingRoot) {
+	function applyBinding(binding, rootNodes, context, isLoopContext, isMultiRoot) {
 		//配列化（要素が直接来た場合のため）
 		rootNodes = wrapInArray(rootNodes);
 
-		//TODO isBindingRoot -> isVirtualRoot。配列のループ要素の場合、バインドルートの場合など
+		//TODO isMultiRoot -> isVirtualRoot。配列のループ要素の場合、バインドルートの場合など
 		//「ノード集合に対して」バインドする場合のケア。
 
-		var viewUid = getViewUid();
-
-		//loop-contextの場合はループ処理して終わり
 		if (isLoopContext) {
-			//loop-contextの場合は、ループのルートノードは必ず単一のノード
-			var loopRootElement = rootNodes[0];
-
-			//ループ前に一旦内部要素をすべて外す
-			$(loopRootElement).empty();
-
-			if (!context) {
-				//contextがない場合はループを一切行わない（BindingEntryもつけない）
-				return;
-			}
-
-			if (!($.isArray(context) || h5.u.obj.isObservableArray(context))) {
-				//data-h5-loop-contextの場合contextは配列でなければならない
-				throwFwError(ERR_CODE_INVALID_CONTEXT_SRC);
-			}
-
-			addViewUid(rootNodes, viewUid);
-
-			binding._addBindingEntry(context, loopRootElement, viewUid);
-
-			if (h5.u.obj.isObservableArray(context) && !binding._isWatching(context)) {
-				var observeListener = function(event) {
-					binding._observableArray_observeListener(event);
-				};
-				binding._listeners[binding._getContextIndex(context)] = observeListener;
-
-				context.addEventListener('observe', observeListener);
-			}
-
-			//ループルートノードに対応する子ノードリストを保存しているビューソースから取り出す
-			var loopDynCtxId = $(loopRootElement).attr(DATA_H5_DYN_CTX);
-			var srcRootChildNodes = toArray(binding._getSrcCtxNode(loopDynCtxId).childNodes);
-
-			//このループコンテキストの各要素に対応するノード（配列）を格納する配列
-			var loopElementsArray = [];
-			binding._loopElementsMap[viewUid] = loopElementsArray;
-
-			//appendChildの呼び出し回数削減。
-			//ループ単位ごとにappendChildしてdocumentにバインドする（＝Fragmentは都度空になる）ので、使いまわしている。
-			var fragment = document.createDocumentFragment();
-
-			for ( var i = 0, len = context.length; i < len; i++) {
-				var loopNodes = [];
-
-				//1要素分のノードのクローンを作成
-				for ( var j = 0, childLen = srcRootChildNodes.length; j < childLen; j++) {
-					var clonedInnerNode = srcRootChildNodes[j].cloneNode(true); //deep copy
-
-					loopNodes.push(clonedInnerNode);
-
-					fragment.appendChild(clonedInnerNode);
-				}
-
-				//配列1要素分のノードリストを保存
-				loopElementsArray[i] = loopNodes;
-
-				//IE6で、documentツリーにぶら下がっていない状態で属性操作を行うとそれが反映されない場合がある
-				//（例えばinput-checkboxのcheckedを操作してもそれが反映されない）
-				//そのため、先にツリーにappendしてからバインディングを行う
-				loopRootElement.appendChild(fragment);
-
-				//配列1要素分のバインディングを実行
-				applyBinding(binding, loopNodes, context[i]);
-			}
-
+			//loop-contextの場合はループ用の処理を行う
+			//loop-contextの場合、ルートノードは必ず単一の要素
+			applyLoopBinding(binding, rootNodes, context);
 			return;
 		}
 
 		//以下はloop-contextでない場合
+
+		var viewUid = getViewUid();
 
 		if (context) {
 			//TODO loop-contextにおいて個々のループ単位のコンテキスト自身をcontextやloop-contextにバインドする方法を追加した場合
@@ -398,7 +412,7 @@
 
 		//自分のコンテキストに属しているバインディング対象要素を探す
 		//（rootElement自体がバインド対象になっている場合もある）
-		var $bindElements = $getBindElementsInContext(rootNodes, isBindingRoot);
+		var $bindElements = $getBindElementsInContext(rootNodes, isMultiRoot);
 
 		//自コンテキストに属する各要素のデータバインドを実行
 		$bindElements.each(function() {
@@ -406,18 +420,15 @@
 		});
 
 		//ネストした子data-context, data-loop-contextのデータバインドを実行
-		applyChildBinding(binding, rootNodes, context, false, isBindingRoot);
-		applyChildBinding(binding, rootNodes, context, true, isBindingRoot);
+		applyChildBinding(binding, rootNodes, context, false, isMultiRoot);
+		applyChildBinding(binding, rootNodes, context, true, isMultiRoot);
 	}
 
-	function applyChildBinding(binding, rootNodes, context, isLoopContext, isBindingRoot) {
+	function applyChildBinding(binding, rootNodes, context, isLoopContext, isMultiRoot) {
 		var dataContextAttr = isLoopContext ? 'data-h5-loop-context' : 'data-h5-context';
 
-		//ループコンテキストまたはバインディングルートの場合は、rootNodesは仮想ルート
-		var isVirtualRoot = isBindingRoot;
-
 		//自分のコンテキストに属するdata-contextを探す
-		var $childContexts = $getChildContexts(rootNodes, dataContextAttr, isVirtualRoot);
+		var $childContexts = $getChildContexts(rootNodes, dataContextAttr, isMultiRoot);
 
 		//内部コンテキストについてapplyBindingを再帰的に行う
 		$childContexts.each(function() {
