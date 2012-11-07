@@ -185,13 +185,11 @@ $(function() {
 	test('コンテキストに定義されていないプロパティ名を持つデータをバインドする', function() {
 		view.append($fixture, 'simple');
 
-		raises(function(enviroment) {
-			view.bind($('#dataBindTest'), {
-				test2: 'abcd'
-			});
-		}, function(actual) {
-			return ERR_U.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY === actual.code;
-		}, 'スキーマに存在しないプロパティを指定した場合エラーが発生すること"');
+		view.bind($('#dataBindTest'), {
+			test2: 'abcd'
+		});
+
+		strictEqual($('#dataBindTest>span').text(), '', 'データが空の状態でバインドされること(nullのときと同じ)');
 	});
 
 	test('null, undefined, String, Number, Array, Objectが、それぞれ表示されること', function() {
@@ -1333,8 +1331,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('type:any[]に格納されたObservableArrayをDataItem#set()で更新する', 12,
-			function() {
+	test('type:any[]に格納されたObservableArrayをDataItem#set()で更新する', function() {
 				function testFunc(item) {
 					var name = item instanceof testDataItem.constructor ? 'DataItem'
 							: 'ObservableItem';
@@ -1349,10 +1346,6 @@ $(function() {
 
 					var binding = view.bind($('#dataBindTest'), {
 						item: item
-					});
-
-					item.addEventListener('change', function(ev) {
-						ok(true, 'アイテムのchangeイベントが発生すること');
 					});
 
 					// loop-contextをnullで更新
@@ -1383,8 +1376,7 @@ $(function() {
 				testFunc(testObsItem);
 			});
 
-	test('type:anyに格納されたObservableArrayをDataItem#set()で更新する', 12,
-			function() {
+	test('type:anyに格納されたObservableArrayをDataItem#set()で更新する', function() {
 				function testFunc(item) {
 					var name = item instanceof testDataItem.constructor ? 'DataItem'
 							: 'ObservableItem';
@@ -1399,10 +1391,6 @@ $(function() {
 
 					var binding = view.bind($('#dataBindTest'), {
 						item: item
-					});
-
-					item.addEventListener('change', function(ev) {
-						ok(true, 'アイテムのchangeイベントが発生すること');
 					});
 
 					// loop-contextをnullで更新
@@ -1440,10 +1428,6 @@ $(function() {
 
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
-			});
-
-			item.addEventListener('change', function(ev) {
-				ok(true, 'アイテムのchangeイベントが発生すること');
 			});
 
 			var oar = item.get('ary');
@@ -1569,6 +1553,10 @@ $(function() {
 			view.append($fixture, 'itemBind7');
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
+			});
+
+			item.addEventListener('change', function(ev) {
+				ok(true, 'アイテムのchangeイベントが発生すること');
 			});
 
 			item.set('ary', [{
