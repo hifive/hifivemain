@@ -1323,8 +1323,6 @@
 					};
 
 					if (!this.dispatchEvent(evBefore)) {
-						var ret = Array.prototype.slice.call(this, 0);
-
 						var args = src.slice(0);
 						args.unshift(0, this.length);
 						Array.prototype.splice.apply(this, args);
@@ -1333,11 +1331,10 @@
 							type: EVENT_TYPE_OBSERVE,
 							method: METHOD_NAME_COPY_FROM,
 							args: arguments,
-							returnValue: ret,
+							returnValue: undefined,
 							isDestructive: true
 						};
 						this.dispatchEvent(evAfter);
-						return ret;
 					}
 				}
 			});
