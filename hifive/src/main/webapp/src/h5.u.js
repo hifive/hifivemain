@@ -1457,22 +1457,22 @@
 		/**
 		 * 値チェックに必要な情報を持つオブジェクト
 		 * <p>
-		 * データアイテムではモデルに持たせていましたが、ObservableItemにモデルはないので、必要な情報を_contextプロパティに持ちます
+		 * データアイテムではモデルに持たせていましたが、ObservableItemにモデルはないので、必要な情報を_internalプロパティに持ちます
 		 * </p>
 		 *
 		 * @private
-		 * @name _context
+		 * @name _internal
 		 * @since 1.1.0
 		 * @memberOf ObservableItem
 		 * @type Object
 		 */
-		this._context = {
+		this._internal = {
 
 			/**
 			 * プロパティの依存関係マップ
 			 *
 			 * @private
-			 * @memberOf ObservableItem._context
+			 * @memberOf ObservableItem._internal
 			 * @since 1.1.0
 			 * @type Object
 			 */
@@ -1562,7 +1562,7 @@
 					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
 					// set内で呼ばれたcopyFromなら何もしない
 					// (checkもevent上げもsetでやっているため)
-					if (!event.isDestructive || item._context.isInSet) {
+					if (!event.isDestructive || item._internal.isInSet) {
 						return;
 					}
 
@@ -1593,8 +1593,8 @@
 
 				function observeListener(event) {
 					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
-					// set内で呼ばれたcopyFromなら何もしない(item._context.isInSetにフラグを立てている)
-					if (!event.isDestructive || item._context.isInSet) {
+					// set内で呼ばれたcopyFromなら何もしない(item._internal.isInSetにフラグを立てている)
+					if (!event.isDestructive || item._internal.isInSet) {
 						return;
 					}
 
@@ -1646,14 +1646,14 @@
 				setObj = arguments[0];
 			}
 
-			// item._context.isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
-			this._context.isInSet = true;
+			// item._internal.isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
+			this._internal.isInSet = true;
 			var props = {};
 
 			// 先に値のチェックを行う
 			for ( var p in setObj) {
-				if ($.inArray(p, this._context.realProps) === -1) {
-					if ($.inArray(p, this._context.dependProps) !== -1) {
+				if ($.inArray(p, this._internal.realProps) === -1) {
+					if ($.inArray(p, this._internal.dependProps) !== -1) {
 						// 依存プロパティにセットはできないのでエラー
 						throwFwError(ERR_CODE_DEPEND_PROPERTY, p);
 					}
@@ -1661,7 +1661,7 @@
 					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, p);
 				}
 				//値のチェック
-				var validateResult = this._context.itemValueCheckFuncs[p](setObj[p]);
+				var validateResult = this._internal.itemValueCheckFuncs[p](setObj[p]);
 				if (validateResult.length) {
 					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
 				}
@@ -1674,7 +1674,7 @@
 				var oldValue = this._values[p];
 
 				// 値に変更があったかどうかチェック
-				if ($.inArray(p, this._context.aryProps) !== -1) {
+				if ($.inArray(p, this._internal.aryProps) !== -1) {
 					if (this._values[p].equals(v)) {
 						// 変更なし
 						continue;
@@ -1696,7 +1696,7 @@
 
 				isChanged = true;
 			}
-			this._context.isInSet = false;
+			this._internal.isInSet = false;
 
 			// 変更があればイベントの発火
 			if (isChanged) {
@@ -1723,8 +1723,8 @@
 				return $.extend({}, this._values);
 			}
 
-			if ($.inArray(key, this._context.realProps) === -1
-					&& $.inArray(key, this._context.dependProps) === -1) {
+			if ($.inArray(key, this._internal.realProps) === -1
+					&& $.inArray(key, this._internal.dependProps) === -1) {
 				throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, key);
 			}
 
@@ -1741,7 +1741,7 @@
 		 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
 		 */
 		_isArrayProp: function(prop) {
-			if ($.inArray(prop, this._context.aryProps) !== -1) {
+			if ($.inArray(prop, this._internal.aryProps) !== -1) {
 				//Bindingにおいて比較的頻繁に使われるので、高速化も検討する
 				return true;
 			}
