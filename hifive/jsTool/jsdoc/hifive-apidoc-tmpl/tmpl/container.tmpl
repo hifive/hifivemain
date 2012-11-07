@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta charset="UTF-8">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Cache-Control" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+	<title>JSDoc: <?js= title ?></title>
+    <!--[if lt IE 9]>
+    <script src="js/modernizr.js"></script>
+    <![endif]-->
+
+    <link type="text/css" rel="stylesheet" href="styles/node-dark.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+
+	<script src="http://shjs.sourceforge.net/sh_main.min.js"> </script>
+    <script src="http://shjs.sourceforge.net/lang/sh_javascript.min.js"> </script>
+    <script src="js/jquery-1.7.min.js"> </script>
+    <script src="js/extension.js"> </script>
+</head>
+
+<body>
+
+<div id="container">
+    <nav>
+    	<div><img src="/res/images/hifive_logo_apidoc.png" style="margin:-9px;width:180px"></div>
+        <?js= nav ?>
+    </nav>
+
+    <div id="main">
+
+        <h1 class="page-title"><?js= title ?></h1>
+
+        <?js
+            docs.forEach(function(doc, i) {
+        ?>
+
+        <section>
+
+        <header>
+            <h2><?js
+                if (doc.ancestors && doc.ancestors.length) {
+                    print('<span class="ancestors">');
+                    print( doc.ancestors.join('') );
+                    print('</span>' + doc.name);
+                }
+                else {
+                    print(doc.name)
+                }
+
+                if (doc.variation) {
+                   print('<sup class="variation">'+doc.variation+'</sup>');
+                }
+
+             ?></h2>
+            <?js
+                if (doc.classdesc) {
+                   print('<p class="class-description">'+doc.classdesc+'</p>');
+                }
+            ?>
+        </header>
+
+        <article>
+            <div class="container-overview">
+            <?js
+            if (doc.kind === 'module' && doc.module) {
+                print(render('method.tmpl', doc.module));
+            }
+
+            if (doc.kind === 'class') {
+                print(render('method.tmpl', doc));
+            }
+            else {
+                if (doc.description) {
+                    print('<p class="description">' + doc.description + '</p>');
+                }
+
+                print(render('details.tmpl', doc));
+
+                if (doc.examples && doc.examples.length) {
+                    print('<h3>Example' + (doc.examples.length > 1? 's':'') + '</h3>');
+                    print( render('examples.tmpl', doc.examples) );
+                }
+            }
+            ?>
+            </div>
+
+            <?js
+                if (doc.augments && doc.augments.length) {
+            ?>
+                <h3 class="subsection-title">Extends</h3>
+
+                <ul><?js
+                    doc.augments.forEach(function(a) {
+                ?>
+                    <li><?js= linkto(a, a) ?></li>
+                <?js
+                    });
+                ?></ul>
+            <?js
+                }
+            ?>
+
+            <?js
+                if (doc.mixes && doc.mixes.length) {
+            ?>
+                <h3 class="subsection-title">Mixes In</h3>
+
+                <ul><?js
+                    doc.mixes.forEach(function(a) {
+                ?>
+                    <li><?js= linkto(a, a) ?></li>
+                <?js
+                    });
+                ?></ul>
+            <?js
+                }
+            ?>
+
+            <?js
+                if (doc.requires && doc.requires.length) {
+            ?>
+                <h3 class="subsection-title">Requires</h3>
+
+                <ul><?js
+                    doc.requires.forEach(function(r) {
+                ?>
+                    <li><?js= linkto(r, r) ?></li>
+                <?js
+                    });
+                ?></ul>
+            <?js
+                }
+            ?>
+
+            <?js
+                var classes = find({kind: 'class', memberof: doc.longname});
+                if (doc.kind !== 'globalobj' && classes && classes.length) {
+            ?>
+
+                <h3 class="subsection-title">Classes</h3>
+
+                <dl><?js
+                    classes.forEach(function(c) {
+                ?>
+                    <dt><?js= linkto(c.longname, c.name) ?></dt>
+                    <dd><?js if (c.summary) print(c.summary); ?></dd>
+                <?js
+                    });
+                ?></dl>
+
+            <?js } ?>
+
+            <?js
+                var namespaces = find({kind: 'namespace', memberof: doc.longname});
+                if (doc.kind !== 'globalobj' && namespaces && namespaces.length) {
+            ?>
+
+                <h3 class="subsection-title">Namespaces</h3>
+
+                <dl><?js
+                    namespaces.forEach(function(n) {
+                ?>
+                    <dt><?js= linkto(n.longname, n.longname) ?></dt>
+                    <dd><?js if (n.summary) print(n.summary); ?></dd>
+                <?js
+                    });
+                ?></dl>
+
+            <?js } ?>
+
+            <?js
+                var members = find({kind: 'member', memberof: doc.longname});
+                if (title === 'Globals') {
+                    members = find({kind: 'member', memberof: {isUndefined: true}});
+                }
+                if (members && members.length && members.forEach) {
+            ?>
+
+                <h3 class="subsection-title">Members</h3>
+
+                <dl><?js
+                    members.forEach(function(p) {
+                        print(render('members.tmpl', p));
+                        print('<hr>');
+                    });
+                ?></dl>
+
+            <?js } ?>
+
+            <?js
+                var methods = find({kind: 'function', memberof: doc.longname});
+                if (title === 'Globals') {
+                    methods = find({kind: 'function', memberof: {isUndefined: true}});
+                }
+                if (methods && methods.length && methods.forEach) {
+            ?>
+
+                <h3 class="subsection-title">Methods</h3>
+
+                <dl><?js
+                    methods.forEach(function(m) {
+                        print(render('method.tmpl', m));
+                        print('<hr>');
+                    });
+                ?></dl>
+
+            <?js } ?>
+
+            <?js
+                var typedefs = find({kind: 'typedef', memberof: doc.longname});
+                if (typedefs && typedefs.length && typedefs.forEach) {
+            ?>
+
+                <h3 class="subsection-title">TypeDefs</h3>
+
+                <dl><?js
+                    typedefs.forEach(function(e) {
+                        print(render('members.tmpl', e));
+                    });
+                ?></dl>
+            <?js } ?>
+
+            <?js
+                var events = find({kind: 'event', memberof: doc.longname});
+                if (events && events.length && events.forEach) {
+            ?>
+
+                <h3 class="subsection-title">Events</h3>
+
+                <dl><?js
+                    events.forEach(function(e) {
+                        print(render('method.tmpl', e));
+                    });
+                ?></dl>
+            <?js } ?>
+        </article>
+
+        </section>
+        <?js }); ?>
+    </div>
+
+    <br clear="both">
+</div>
+
+<footer>
+    Documentation generated by <a href="https://github.com/micmath/jsdoc">JSDoc 3</a> on <?js= (new Date()) ?><br />
+    <small class="footerCopyright">Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.</small>
+</footer>
+
+<script> sh_highlightDocument(); </script>
+</body>
+</html>
