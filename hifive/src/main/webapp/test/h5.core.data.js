@@ -165,7 +165,7 @@ $(function() {
 	module('createManager', {
 		setup: function() {
 			manager = undefined;
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 		},
 		teardown: function() {
 			sequence = null;
@@ -270,7 +270,7 @@ $(function() {
 	module('createModel', {
 		setup: function() {
 			manager = h5.core.data.createManager('TestManager');
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 		},
 		teardown: function() {
 			sequence = null;
@@ -451,7 +451,7 @@ $(function() {
 
 	module('createModel - ディスクリプタのチェック', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -2578,7 +2578,7 @@ $(function() {
 
 	module('dropModel', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -2698,7 +2698,7 @@ $(function() {
 
 	module('DataModel', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
 		},
@@ -3161,7 +3161,7 @@ $(function() {
 
 	module('has', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
 		},
@@ -3198,7 +3198,7 @@ $(function() {
 	var getSetDataItem = null;
 	module('DataItem.get, set', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
 			dataModel1 = manager.createModel({
@@ -3309,7 +3309,7 @@ $(function() {
 
 	module('type', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -4957,7 +4957,7 @@ $(function() {
 
 	module('constraint', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -5060,7 +5060,7 @@ $(function() {
 
 	module('constraint - notNull', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			var model1 = manager.createModel({
 				name: 'DataModel1',
@@ -5358,7 +5358,7 @@ $(function() {
 	//=============================
 	module('constraint - notEmpty', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 
 			// notEmptyをテストする用のモデルを作成
@@ -5543,7 +5543,7 @@ $(function() {
 
 	module('constraint - min', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 
 			constraintModel = manager.createModel({
@@ -5775,7 +5775,7 @@ $(function() {
 
 	module('constraint - max', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 
 			constraintModel = manager.createModel({
@@ -6007,7 +6007,7 @@ $(function() {
 
 	module('constraint - minLength', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 
 			var constraint = {
@@ -6168,7 +6168,7 @@ $(function() {
 
 	module('constraint - maxLength', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 
 			var constraint = {
@@ -6330,7 +6330,7 @@ $(function() {
 
 	module('constraint - pattern', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 
 			var constraint = {
@@ -6489,7 +6489,7 @@ $(function() {
 
 	module('constraint - 複合条件', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -6622,7 +6622,7 @@ $(function() {
 	//=============================
 	module('schemaのプロパティオブジェクトがnull', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -6686,7 +6686,7 @@ $(function() {
 
 	module('depend', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 		},
 		teardown: function() {
@@ -7614,7 +7614,7 @@ $(function() {
 
 	module('自動型変換', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			dataModel1 = manager.createModel({
 				name: 'AutoBoxingDataModel1',
@@ -7752,7 +7752,7 @@ $(function() {
 	// ObservableArray自体のテストはh5.uに記述する
 	module('ObservableArray', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
 			item = dataModel1.create({
@@ -7902,7 +7902,7 @@ $(function() {
 
 	module('DataItem EventListenerの登録・削除', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
 			changeListener = function() {
@@ -8103,7 +8103,7 @@ $(function() {
 
 	module('DataModel EventListenerの登録・削除', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
 			changeListener = function() {
@@ -8296,7 +8296,7 @@ $(function() {
 
 	module('DataManager EventListenerの登録・削除', {
 		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			createDataModel1();
 			changeListener = function() {};
@@ -8488,7 +8488,7 @@ $(function() {
 	module('イベント発火のタイミング', {
 		setup: function() {
 			sequence = h5.core.data
-					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+					.createSequence(100, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			// dataModel1の作成
 			createDataModel1();
@@ -9194,7 +9194,7 @@ $(function() {
 	module('イベントオブジェクトの確認', {
 		setup: function() {
 			sequence = h5.core.data
-					.createSequence(100, 1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+					.createSequence(100, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			// dataModel1の作成
 			createDataModel1();
@@ -9763,24 +9763,24 @@ $(function() {
 			35,
 			function() {
 				var sequence = h5.core.data.createSequence();
-				strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT,
-						'引数なし returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.returnType, h5.core.data.SEQ_INT,
+						'引数なし returnTypeがh5.core.data.SEQ_INTであること');
 				strictEqual(sequence.current(), 1, '引数なし 初期値が1であること');
 				strictEqual(sequence.next(), 1, '引数なし next()でcurrent()の値が取得できること');
 				strictEqual(sequence.current(), 2, '引数なし next()を呼んだのでcurrent()の戻り値が2になっていること');
 				strictEqual(sequence.next(), 2, '引数なし next()でcurrent()の値が取得できること');
 
 				sequence = h5.core.data.createSequence(0);
-				strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT,
-						'引数(0) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.returnType, h5.core.data.SEQ_INT,
+						'引数(0) returnTypeがh5.core.data.SEQ_INTであること');
 				strictEqual(sequence.current(), 0, '引数(0) 初期値が0であること');
 				strictEqual(sequence.next(), 0, '引数(0) next()でcurrent()の値が取得できること');
 				strictEqual(sequence.current(), 1, '引数(0) next()を呼んだのでcurrent()の戻り値が1になっていること');
 				strictEqual(sequence.next(), 1, '引数(0) next()でcurrent()の値が取得できること');
 
 				sequence = h5.core.data.createSequence(null, 100);
-				strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT,
-						'引数(null, 100) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.returnType, h5.core.data.SEQ_INT,
+						'引数(null, 100) returnTypeがh5.core.data.SEQ_INTであること');
 				strictEqual(sequence.current(), 1, '引数(null, 100) 初期値が1であること');
 				strictEqual(sequence.next(), 1, '引数(null, 100) next()でcurrent()の値が取得できること');
 				strictEqual(sequence.current(), 101,
@@ -9788,8 +9788,8 @@ $(function() {
 				strictEqual(sequence.next(), 101, '引数(null, 100) next()でcurrent()の値が取得できること');
 
 				sequence = h5.core.data.createSequence(1000, 100);
-				strictEqual(sequence.returnType, h5.core.data.SEQUENCE_RETURN_TYPE_INT,
-						'引数(1000, 100) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+				strictEqual(sequence.returnType, h5.core.data.SEQ_INT,
+						'引数(1000, 100) returnTypeがh5.core.data.SEQ_INTであること');
 				strictEqual(sequence.current(), 1000, '引数(1000, 100) 初期値が1000であること');
 				strictEqual(sequence.next(), 1000, '引数(1000, 100) next()でcurrent()の値が取得できること');
 				strictEqual(sequence.current(), 1100,
@@ -9797,48 +9797,48 @@ $(function() {
 				strictEqual(sequence.next(), 1100, '引数(1000, 100) next()でcurrent()の値が取得できること');
 
 				sequence = h5.core.data.createSequence(null, null,
-						h5.core.data.SEQUENCE_RETURN_TYPE_INT);
+						h5.core.data.SEQ_INT);
 				strictEqual(
 						sequence.returnType,
-						h5.core.data.SEQUENCE_RETURN_TYPE_INT,
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_INTであること');
+						h5.core.data.SEQ_INT,
+						'引数(null, null, h5.core.data.SEQ_INT) returnTypeがh5.core.data.SEQ_INTであること');
 				strictEqual(sequence.current(), 1,
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) 初期値が1であること');
+						'引数(null, null, h5.core.data.SEQ_INT) 初期値が1であること');
 				strictEqual(sequence.next(), 1,
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()でcurrent()の値が取得できること');
+						'引数(null, null, h5.core.data.SEQ_INT) next()でcurrent()の値が取得できること');
 				strictEqual(sequence.current(), 2,
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()を呼んだのでcurrent()の戻り値が2になっていること');
+						'引数(null, null, h5.core.data.SEQ_INT) next()を呼んだのでcurrent()の戻り値が2になっていること');
 				strictEqual(sequence.next(), 2,
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_INT) next()でcurrent()の値が取得できること');
+						'引数(null, null, h5.core.data.SEQ_INT) next()でcurrent()の値が取得できること');
 
 				sequence = h5.core.data.createSequence(null, null,
-						h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+						h5.core.data.SEQ_STRING);
 				strictEqual(
 						sequence.returnType,
-						h5.core.data.SEQUENCE_RETURN_TYPE_STRING,
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_STRINGであること');
+						h5.core.data.SEQ_STRING,
+						'引数(null, null, h5.core.data.SEQ_STRING) returnTypeがh5.core.data.SEQ_STRINGであること');
 				strictEqual(sequence.current(), "1",
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) 初期値が"1"であること');
+						'引数(null, null, h5.core.data.SEQ_STRING) 初期値が"1"であること');
 				strictEqual(sequence.next(), "1",
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+						'引数(null, null, h5.core.data.SEQ_STRING) next()でcurrent()の値が取得できること');
 				strictEqual(sequence.current(), "2",
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()を呼んだのでcurrent()の戻り値が"2"になっていること');
+						'引数(null, null, h5.core.data.SEQ_STRING) next()を呼んだのでcurrent()の戻り値が"2"になっていること');
 				strictEqual(sequence.next(), "2",
-						'引数(null, null, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+						'引数(null, null, h5.core.data.SEQ_STRING) next()でcurrent()の値が取得できること');
 
 				sequence = h5.core.data.createSequence(500, 5,
-						h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+						h5.core.data.SEQ_STRING);
 				strictEqual(
 						sequence.returnType,
-						h5.core.data.SEQUENCE_RETURN_TYPE_STRING,
-						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) returnTypeがh5.core.data.SEQUENCE_RETURN_TYPE_STRINGであること');
+						h5.core.data.SEQ_STRING,
+						'引数(500, 5, h5.core.data.SEQ_STRING) returnTypeがh5.core.data.SEQ_STRINGであること');
 				strictEqual(sequence.current(), "500",
-						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) 初期値が"500"であること');
+						'引数(500, 5, h5.core.data.SEQ_STRING) 初期値が"500"であること');
 				strictEqual(sequence.next(), "500",
-						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+						'引数(500, 5, h5.core.data.SEQ_STRING) next()でcurrent()の値が取得できること');
 				strictEqual(sequence.current(), "505",
-						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()を呼んだのでcurrent()の戻り値が"505"になっていること');
+						'引数(500, 5, h5.core.data.SEQ_STRING) next()を呼んだのでcurrent()の戻り値が"505"になっていること');
 				strictEqual(sequence.next(), "505",
-						'引数(500, 5, h5.core.dataSEQUENCE_RETURN_TYPE_STRING) next()でcurrent()の値が取得できること');
+						'引数(500, 5, h5.core.data.SEQ_STRING) next()でcurrent()の値が取得できること');
 			});
 });
