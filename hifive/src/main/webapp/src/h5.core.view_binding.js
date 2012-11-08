@@ -130,6 +130,10 @@
 		return node.getAttribute(attr);
 	}
 
+	function setElemAttribute(node, attr, value) {
+		node.setAttribute(attr, value);
+	}
+
 	function toArray(pseudoArray) {
 		if (!pseudoArray) {
 			return null;
@@ -271,7 +275,7 @@
 		for ( var i = 0, len = rootNodes.length; i < len; i++) {
 			var n = rootNodes[i];
 			if (n.nodeType === NODE_TYPE_ELEMENT) {
-				$(n).attr(DATA_H5_DYN_VID, viewUid);
+				setElemAttribute(n, DATA_H5_DYN_VID, viewUid);
 			}
 		}
 	}
@@ -569,7 +573,8 @@
 				if (!detail) {
 					throwFwError(ERR_CODE_REQUIRE_DETAIL);
 				}
-				value == null ? $element.removeAttr(detail) : $element.attr(detail, value);
+				value == null ? $element.removeAttr(detail) : setElemAttribute($element[0], detail,
+						value);
 				break;
 			case 'style':
 				if (!detail) {
@@ -895,28 +900,27 @@
 				var $original = $(originalNode);
 
 				//ルートのエレメントノードにdata-dyn-bind-rootを付加して、このBindingインスタンスを探せるようにしておく
-				$original.attr(DATA_H5_DYN_BIND_ROOT, this._bindRootId);
+				setElemAttribute(originalNode, DATA_H5_DYN_BIND_ROOT, this._bindRootId);
 
 				if (getElemAttribute(originalNode, DATA_H5_CONTEXT)
 						|| getElemAttribute(originalNode, DATA_H5_LOOP_CONTEXT)) {
-					$original.attr(DATA_H5_DYN_CTX, contextUid++);
+					setElemAttribute(originalNode, DATA_H5_DYN_CTX, contextUid++);
 				}
 
 				$original.find('[data-h5-context],[data-h5-loop-context]').each(function() {
-					$(this).attr(DATA_H5_DYN_CTX, contextUid++);
+					setElemAttribute(this, DATA_H5_DYN_CTX, contextUid++);
 				});
 
 				//data-h5-bindでclassバインドしている場合、オリジナルのclassNameを保存しておく（記述されている場合のみ）
 				if (hasClassBinding(getElemAttribute(originalNode, DATA_H5_BIND))
 						&& $original[0].className != '') {
-					$original.attr(DATA_H5_DYN_CN, originalNode.className);
+					setElemAttribute(originalNode, DATA_H5_DYN_CN, originalNode.className);
 				}
 				$original.find('[' + DATA_H5_BIND + ']').each(
 						function() {
-							var $this = $(this);
 							if (hasClassBinding(getElemAttribute(this, DATA_H5_BIND))
 									&& this.className != '') {
-								$this.attr(DATA_H5_DYN_CN, this.className);
+								setElemAttribute(this, DATA_H5_DYN_CN, this.className);
 							}
 						});
 			}
