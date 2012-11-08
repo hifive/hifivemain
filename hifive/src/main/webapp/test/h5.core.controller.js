@@ -1919,7 +1919,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 2, function() {
+	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 1, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
@@ -1927,6 +1927,7 @@ $(function() {
 			return;
 		}
 
+		var controllerContext = null;
 		var controller = {
 			__name: 'TestController',
 
@@ -1935,7 +1936,7 @@ $(function() {
 			},
 
 			test: function() {
-				window.controller = this;
+				controllerContext = this;
 			}
 		};
 
@@ -1963,13 +1964,11 @@ $(function() {
 
 					$('#controllerTest input[type=button]').click();
 
-					strictEqual(window.controller.__name, 'TestController',
+					strictEqual(controllerContext.__name, 'TestController',
 							'コントローラ内のthisはコントローラ自身を指しているか');
 
 					testController.unbind();
 					cleanAspects();
-					window.controller = undefined;
-					strictEqual(window.controller, undefined, '（名前空間のクリーンアップ）');
 					start();
 				});
 	});
@@ -2306,9 +2305,6 @@ $(function() {
 					'セレクタが{window}でイベント名に"[]"がない場合、Controller.unbind()でアンバインドされているか');
 			strictEqual(ret4, null,
 					'セレクタが{window}でイベント名に"[]"がある場合、Controller.unbind()でアンバインドされているか');
-
-			window.controller = undefined;
-			strictEqual(window.controller, undefined, '（名前空間のクリーンアップ）');
 		});
 	});
 
@@ -3074,6 +3070,7 @@ $(function() {
 
 	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', 22, function() {
 		var testController = null;
+		var testController2 = null;
 		var controllerBase = {
 			__name: 'TestController',
 
@@ -3156,7 +3153,7 @@ $(function() {
 						testController.readyPromise.done(function() {
 							$('#controllerTest').click();
 						});
-						testControllerGrobal.unbind();
+						testController2.unbind();
 						start();
 					}, 0);
 
@@ -3174,8 +3171,8 @@ $(function() {
 		};
 
 		testController = h5.core.controller('#controllerTest', controllerBase);
-		testControllerGrobal = h5.core.controller(window, controllerBaseGrobal);
-		testControllerGrobal.readyPromise.done(function() {
+		testController2 = h5.core.controller(window, controllerBaseGrobal);
+		testController2.readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
 		});
 	});

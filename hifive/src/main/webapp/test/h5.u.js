@@ -465,8 +465,7 @@ $(function() {
 		}
 	});
 
-	test('配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること', 16, function() {
-		window.h5samplefunc = undefined
+	test('配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること', 8, function() {
 		var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
 				['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
 				['data/sample.js', {}], ['data/sample.js', ' ']];
@@ -482,9 +481,7 @@ $(function() {
 				ok(false, 'エラーが発生していません。' + valsStr[i]);
 			} catch (e) {
 				ok(ok, 'エラーが発生しました。' + valsStr[i]);
-				ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
 			}
-			window.h5samplefunc = undefined;
 		}
 	});
 
@@ -821,8 +818,7 @@ $(function() {
 		}
 	});
 
-	test('【非同期】配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。', 16, function() {
-		window.h5samplefunc = undefined
+	test('【非同期】配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。', 8, function() {
 		var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
 				['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
 				['data/sample.js', {}], ['data/sample.js', ' ']];
@@ -837,9 +833,7 @@ $(function() {
 				ok(false, 'エラーが発生していません。' + valsStr[i]);
 			} catch (e) {
 				ok(ok, 'エラーが同期で発生する。' + valsStr[i]);
-				ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
 			}
-			window.h5samplefunc = undefined;
 		}
 	});
 
@@ -1635,8 +1629,224 @@ $(function() {
 		strictEqual(o.equals(o2), false, '中身が違うならfalseが返ってくること');
 	});
 
-	//TODO その他Arrayにあるメソッドのテスト
+	test('push', 15, function() {
+		var o = h5.u.obj.createObservableArray();
 
+		o.push('1');
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 1, '正しいサイズであること');
+
+		o.push('2');
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 2, '正しいサイズであること');
+
+		o.push(null);
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], null, '正しい位置に値が格納されていること');
+		strictEqual(o.length, 3, '正しいサイズであること');
+
+		o.push('4', '5');
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], null, '正しい位置に値が格納されていること');
+		strictEqual(o[3], '4', '正しい位置に値が格納されていること');
+		strictEqual(o[4], '5', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 5, '正しいサイズであること');
+	});
+
+	test('pop', 7, function() {
+		var o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.pop();
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 2, '正しいサイズであること');
+
+		o.pop();
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 1, '正しいサイズであること');
+
+		o.pop();
+		strictEqual(o[0], undefined, '何も格納されていないこと');
+		strictEqual(o.length, 0, '正しいサイズであること');
+	});
+
+	test('reverse', 9, function() {
+		var o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.reverse();
+		strictEqual(o[0], '3', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '1', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 3, '正しいサイズであること');
+
+		o.push(null);
+
+		o.reverse();
+		strictEqual(o[0], null, '正しい位置に値が格納されていること');
+		strictEqual(o[1], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[3], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 4, '正しいサイズであること');
+
+	});
+
+	test('shift', 7, function() {
+		var o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.shift();
+		strictEqual(o[0], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 2, '正しいサイズであること');
+
+		o.shift();
+		strictEqual(o[0], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 1, '正しいサイズであること');
+
+		o.shift();
+		strictEqual(o[0], undefined, '何も格納されていないこと');
+		strictEqual(o.length, 0, '正しいサイズであること');
+	});
+
+	test('sort', 9, function() {
+		var o = h5.u.obj.createObservableArray();
+		o.push('1', '3', '2');
+
+		o.sort();
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 3, '正しいサイズであること');
+
+		o.push(null);
+
+		o.sort(function(a, b) {
+			return a < b ? 1 : a > b ? -1 : 0;
+		});
+		strictEqual(o[0], '3', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[3], null, '正しい位置に値が格納されていること');
+		strictEqual(o.length, 4, '正しいサイズであること');
+	});
+
+	test('unshift', 11, function() {
+		var o = h5.u.obj.createObservableArray();
+
+		o.unshift('1');
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 1, '正しいサイズであること');
+
+		o.unshift('2', '3');
+		strictEqual(o[0], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '3', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '1', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 3, '正しいサイズであること');
+
+		o.unshift(null);
+		strictEqual(o[0], null, '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '3', '正しい位置に値が格納されていること');
+		strictEqual(o[3], '1', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 4, '正しいサイズであること');
+	});
+
+	test('splice', 42, function() {
+		var o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice();
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 3, '正しいサイズであること');
+
+		o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice(1, o.length);
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], undefined, '何も格納されていないこと');
+		strictEqual(o[2], undefined, '何も格納されていないこと');
+		strictEqual(o.length, 1, '正しいサイズであること');
+
+		o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice(0, 2);
+		strictEqual(o[0], '3', '正しい位置に値が格納されていること');
+		strictEqual(o[1], undefined, '何も格納されていないこと');
+		strictEqual(o[2], undefined, '何も格納されていないこと');
+		strictEqual(o.length, 1, '正しいサイズであること');
+
+		o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice(0, 4);
+		strictEqual(o[0], undefined, '何も格納されていないこと');
+		strictEqual(o[1], undefined, '何も格納されていないこと');
+		strictEqual(o[2], undefined, '何も格納されていないこと');
+		strictEqual(o.length, 0, '正しいサイズであること');
+
+		o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice(3, 1);
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 3, '正しいサイズであること');
+
+
+		// ----- 値を追加するパターン -------
+		o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice(0, 2, '10', '20');
+		strictEqual(o[0], '10', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '20', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 3, '正しいサイズであること');
+
+		o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice(0, 2, '100', '200', '300');
+		strictEqual(o[0], '100', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '200', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '300', '正しい位置に値が格納されていること');
+		strictEqual(o[3], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 4, '正しいサイズであること');
+
+		o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice(0, null, '100', '200', '300');
+		strictEqual(o[0], '100', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '200', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '300', '正しい位置に値が格納されていること');
+		strictEqual(o[3], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[4], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[5], '3', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 6, '正しいサイズであること');
+
+		o = h5.u.obj.createObservableArray();
+		o.push('1', '2', '3');
+
+		o.splice(2, 1, '100', '200', '300');
+		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
+		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
+		strictEqual(o[2], '100', '正しい位置に値が格納されていること');
+		strictEqual(o[3], '200', '正しい位置に値が格納されていること');
+		strictEqual(o[4], '300', '正しい位置に値が格納されていること');
+		strictEqual(o.length, 5, '正しいサイズであること');
+
+	});
 
 
 	//=============================
