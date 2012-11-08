@@ -550,7 +550,7 @@ EventDispatcher.prototype.hasEventListener = function(type, listener) {
  */
 EventDispatcher.prototype.addEventListener = function(type, listener) {
 	// 引数チェック
-	if (!isString(type) || !$.isFunction(listener)) {
+	if (arguments.length !== 2 || !isString(type) || !$.isFunction(listener)) {
 		throwFwError(G_ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
 	}
 	if (this.hasEventListener(type, listener)) {
