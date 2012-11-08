@@ -3333,7 +3333,7 @@ $(function() {
 					datamodel: {
 						type: '@TestDataModel1'
 					},
-					enum: {
+					'enum': {
 						type: 'enum',
 						enumValue: [1]
 					},
@@ -3391,7 +3391,7 @@ $(function() {
 					},
 					any2: {
 						type: 'any',
-						defaultValue: $([])
+						defaultValue: $('<div></div>')
 					},
 					stringAr2: {
 						type: 'string[]',
