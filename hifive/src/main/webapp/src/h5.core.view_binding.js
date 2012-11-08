@@ -124,8 +124,8 @@
 	// Functions
 	// =============================
 
-	function getBindDesc(elem) {
-		return elem.getAttribute(DATA_H5_BIND);
+	function getElemAttribute(elem, attr) {
+		return elem.getAttribute(attr);
 	}
 
 	function toArray(pseudoArray) {
@@ -175,8 +175,8 @@
 			//rootNodeは「仮想の親要素（バインドルート）」の子要素として考える必要がある。
 			//ルート要素で別のコンテキストが指定されている場合はそれ以下のノードは絶対に含まれない
 			if ((isMultiRoot === true)
-					&& (rootNode.getAttribute(DATA_H5_CONTEXT) != null || rootNode
-							.getAttribute(DATA_H5_LOOP_CONTEXT) != null)) {
+					&& (getElemAttribute(rootNode, DATA_H5_CONTEXT) != null || getElemAttribute(
+							rootNode, DATA_H5_LOOP_CONTEXT) != null)) {
 				continue;
 			}
 
@@ -187,8 +187,8 @@
 								return true;
 							}
 
-							if (node.getAttribute(DATA_H5_CONTEXT) != null
-									|| node.getAttribute(DATA_H5_LOOP_CONTEXT) != null) {
+							if (getElemAttribute(node, DATA_H5_CONTEXT) != null
+									|| getElemAttribute(node, DATA_H5_LOOP_CONTEXT) != null) {
 								return false;
 							}
 						}
@@ -196,7 +196,7 @@
 					});
 			$bindElements = $bindElements.add($filtered);
 
-			if (getBindDesc(rootNode) != null) {
+			if (getElemAttribute(rootNode, DATA_H5_BIND) != null) {
 				//ルートノード自体にdata-bindが書かれていれば、それも対象となる
 				$bindElements = $bindElements.add(rootNode);
 			}
@@ -229,8 +229,8 @@
 				}
 
 				//コンテキストが設定されていれば、その子孫のノードは必ず別のコンテキストに属していることになる
-				if (rootNode.getAttribute(DATA_H5_CONTEXT) != null
-						|| rootNode.getAttribute(DATA_H5_LOOP_CONTEXT) != null) {
+				if (getElemAttribute(rootNode, DATA_H5_CONTEXT) != null
+						|| getElemAttribute(rootNode, DATA_H5_LOOP_CONTEXT) != null) {
 					continue;
 				}
 			}
@@ -315,7 +315,7 @@
 		}
 
 		//ループルートノードに対応する子ノードリストを、保存しているビューソースから取り出す
-		var loopDynCtxId = $(loopRootElement).attr(DATA_H5_DYN_CTX);
+		var loopDynCtxId = getElemAttribute(loopRootElement, DATA_H5_DYN_CTX);
 		var srcRootChildNodes = toArray(binding._getSrcCtxNode(loopDynCtxId).childNodes);
 
 		//このループコンテキストの各要素に対応するノード（配列）を格納する配列
@@ -435,8 +435,7 @@
 
 		//内部コンテキストについてapplyBindingを再帰的に行う
 		$childContexts.each(function() {
-			var $this = $(this);
-			var childContextProp = $this.attr(dataContextAttr);
+			var childContextProp = getElemAttribute(this, dataContextAttr);
 			//contextがisObservableItemならgetでchildContextを取得する
 			//TODO getContextValue()などで統一するか
 			var childContext = null;
@@ -506,7 +505,7 @@
 	 * 指定されたエレメントに対して、data-bindで指示された方法で値をセットします。
 	 */
 	function doBind(element, context, isItem) {
-		var bindDesc = parseBindDesc(getBindDesc(element));
+		var bindDesc = parseBindDesc(getElemAttribute(element, DATA_H5_BIND));
 		var targets = bindDesc.t;
 		var details = bindDesc.d;
 		var props = bindDesc.p;
@@ -547,7 +546,7 @@
 				value == null ? $element.html('') : $element.html(value);
 				break;
 			case 'class':
-				var origClassName = $element.attr(DATA_H5_DYN_CN);
+				var origClassName = getElemAttribute(element, DATA_H5_DYN_CN);
 				var isOrigClassEmpty = origClassName == null;
 				var space = isOrigClassEmpty ? '' : ' ';
 
@@ -786,9 +785,8 @@
 			}
 
 			var loopRootNode = views[viewUid];
-			var $loopRootNode = $(loopRootNode);
 
-			var dynCtxId = $loopRootNode.attr(DATA_H5_DYN_CTX);
+			var dynCtxId = getElemAttribute(loopRootNode, DATA_H5_DYN_CTX);
 
 			var loopNodes = this._loopElementsMap[viewUid];
 
@@ -897,7 +895,8 @@
 				//ルートのエレメントノードにdata-dyn-bind-rootを付加して、このBindingインスタンスを探せるようにしておく
 				$original.attr(DATA_H5_DYN_BIND_ROOT, this._bindRootId);
 
-				if ($original.attr(DATA_H5_CONTEXT) || $original.attr(DATA_H5_LOOP_CONTEXT)) {
+				if (getElemAttribute(originalNode, DATA_H5_CONTEXT)
+						|| getElemAttribute(originalNode, DATA_H5_LOOP_CONTEXT)) {
 					$original.attr(DATA_H5_DYN_CTX, contextUid++);
 				}
 
@@ -906,16 +905,18 @@
 				});
 
 				//data-h5-bindでclassバインドしている場合、オリジナルのclassNameを保存しておく（記述されている場合のみ）
-				if (hasClassBinding(getBindDesc($original[0]))
+				if (hasClassBinding(getElemAttribute(originalNode, DATA_H5_BIND))
 						&& $original[0].className != '') {
-					$original.attr(DATA_H5_DYN_CN, $original[0].className);
+					$original.attr(DATA_H5_DYN_CN, originalNode.className);
 				}
-				$original.find('[' + DATA_H5_BIND + ']').each(function() {
-					var $this = $(this);
-					if (hasClassBinding(getBindDesc(this) && this.className != '') {
-						$this.attr(DATA_H5_DYN_CN, this.className);
-					}
-				});
+				$original.find('[' + DATA_H5_BIND + ']').each(
+						function() {
+							var $this = $(this);
+							if (hasClassBinding(getElemAttribute(this, DATA_H5_BIND))
+									&& this.className != '') {
+								$this.attr(DATA_H5_DYN_CN, this.className);
+							}
+						});
 			}
 
 			//保存用にクローン
@@ -1092,7 +1093,7 @@
 				$childContexts.each(function() {
 					var $this = $(this);
 
-					var contextProp = $this.attr(DATA_H5_CONTEXT);
+					var contextProp = getElemAttribute(this, DATA_H5_CONTEXT);
 
 					if (!(contextProp in event.props)) {
 						//このコンテキスト要素に対応するソースオブジェクトは変更されていない
@@ -1105,7 +1106,7 @@
 					that._removeBinding(this);
 
 					//対応するビューを保存してあるビューからクローンする
-					var dynCtxId = $this.attr(DATA_H5_DYN_CTX);
+					var dynCtxId = getElemAttribute(this, DATA_H5_DYN_CTX);
 					var srcCtxRootNode = that._getSrcCtxNode(dynCtxId);
 					var cloned = srcCtxRootNode.cloneNode(true);
 
@@ -1121,9 +1122,7 @@
 				//自分の直接の子供のループルートコンテキスト要素を探す
 				var $childLoopContexts = $getChildContexts(view, DATA_H5_LOOP_CONTEXT);
 				$childLoopContexts.each(function() {
-					var $this = $(this);
-
-					var contextProp = $this.attr(DATA_H5_LOOP_CONTEXT);
+					var contextProp = getElemAttribute(this, DATA_H5_LOOP_CONTEXT);
 
 					if (!(contextProp in event.props) || event.target._isArrayProp(contextProp)) {
 						//このループルートコンテキスト要素に対応するソースオブジェクトは変更されていない
@@ -1155,7 +1154,7 @@
 			for ( var i = 0, len = this._srces.length; i < len; i++) {
 				var $root = $(this._srces[i]);
 				//ルート要素にdata-dyn-ctxがついているかチェック
-				if ($root.attr(DATA_H5_DYN_CTX) === ctxId) {
+				if (getElemAttribute($root[0], DATA_H5_DYN_CTX) === ctxId) {
 					return $root[0];
 				}
 
@@ -1315,7 +1314,7 @@
 			var $rootElem = $(rootElem);
 
 			//渡された要素自身がviewUidを持っていたら、まずその要素のバインディングエントリを削除
-			var rootVid = $rootElem.attr(DATA_H5_DYN_VID);
+			var rootVid = getElemAttribute(rootElem, DATA_H5_DYN_VID);
 			if (rootVid != null) {
 				this._removeBindingEntry(rootVid);
 				$rootElem.removeAttr(DATA_H5_DYN_VID);
@@ -1325,7 +1324,7 @@
 			var that = this;
 			$rootElem.find('[' + DATA_H5_DYN_VID + ']').each(function() {
 				var $this = $(this);
-				that._removeBindingEntry($this.attr(DATA_H5_DYN_VID));
+				that._removeBindingEntry(getElemAttribute(this, DATA_H5_DYN_VID));
 				$this.removeAttr(DATA_H5_DYN_VID);
 			});
 		},
@@ -1363,7 +1362,7 @@
 		 * nodeをルートノードとするデータバインドが行われていれば、それを破棄する。
 		 */
 		function dispose(node) {
-			var bindRootId = $(node).attr(DATA_H5_DYN_BIND_ROOT);
+			var bindRootId = getElemAttribute(node, DATA_H5_DYN_BIND_ROOT);
 			if (bindRootId != null) {
 				var binding = bindRootIdToBindingMap[bindRootId];
 				if (binding) {
