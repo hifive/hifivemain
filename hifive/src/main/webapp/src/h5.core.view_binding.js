@@ -124,6 +124,10 @@
 	// Functions
 	// =============================
 
+	function getBindDesc(elem) {
+		return elem.getAttribute(DATA_H5_BIND);
+	}
+
 	function toArray(pseudoArray) {
 		if (!pseudoArray) {
 			return null;
@@ -192,7 +196,7 @@
 					});
 			$bindElements = $bindElements.add($filtered);
 
-			if (rootNode.getAttribute(DATA_H5_BIND) != null) {
+			if (getBindDesc(rootNode) != null) {
 				//ルートノード自体にdata-bindが書かれていれば、それも対象となる
 				$bindElements = $bindElements.add(rootNode);
 			}
@@ -502,7 +506,7 @@
 	 * 指定されたエレメントに対して、data-bindで指示された方法で値をセットします。
 	 */
 	function doBind(element, context, isItem) {
-		var bindDesc = parseBindDesc($(element).attr(DATA_H5_BIND));
+		var bindDesc = parseBindDesc(getBindDesc(element));
 		var targets = bindDesc.t;
 		var details = bindDesc.d;
 		var props = bindDesc.p;
@@ -902,12 +906,13 @@
 				});
 
 				//data-h5-bindでclassバインドしている場合、オリジナルのclassNameを保存しておく（記述されている場合のみ）
-				if (hasClassBinding($original.attr(DATA_H5_BIND)) && $original[0].className != '') {
+				if (hasClassBinding(getBindDesc($original[0]))
+						&& $original[0].className != '') {
 					$original.attr(DATA_H5_DYN_CN, $original[0].className);
 				}
 				$original.find('[' + DATA_H5_BIND + ']').each(function() {
 					var $this = $(this);
-					if (hasClassBinding($this.attr(DATA_H5_BIND)) && this.className != '') {
+					if (hasClassBinding(getBindDesc(this) && this.className != '') {
 						$this.attr(DATA_H5_DYN_CN, this.className);
 					}
 				});
