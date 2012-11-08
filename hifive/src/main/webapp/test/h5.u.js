@@ -297,10 +297,8 @@ $(function() {
 			h5.u.obj.expose('com.htmlhifive.test2', {
 				exposedObj: 10
 			});
-		}, function(actual) {
-			return 11001 === actual.code
-					&& h5.u.str.format('名前空間"{0}"には、プロパティ"{1}"が既に存在します。(code={2})',
-							'com.htmlhifive.test2', 'exposedObj', actual.code) === actual.message;
+		}, function(actual) {console.log(actual)
+			return 11001 === actual.code;
 		}, '指定した名前空間が既に存在する場合エラーとなること');
 
 		equal(com.htmlhifive.test2.exposedObj, false, '値が上書きされていないこと。');
