@@ -297,7 +297,7 @@ $(function() {
 			h5.u.obj.expose('com.htmlhifive.test2', {
 				exposedObj: 10
 			});
-		}, function(actual) {console.log(actual)
+		}, function(actual) {
 			return 11001 === actual.code;
 		}, '指定した名前空間が既に存在する場合エラーとなること');
 
