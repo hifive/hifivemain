@@ -1551,7 +1551,9 @@
 			 * @since 1.1.0
 			 * @type Object
 			 */
-			itemValueCheckFuncs: itemValueCheckFuncs
+			itemValueCheckFuncs: itemValueCheckFuncs,
+
+			nullProps: {}
 		};
 
 		/**
@@ -1567,12 +1569,20 @@
 		// this._valuesに値(defaultValue)のセット
 		for ( var p in schema) {
 			if ($.inArray(p, aryProps) !== -1) {
-				this._values[p] = h5.u.obj.createObservableArray();
+				this._values[p] = createObservableArray();
+				this._internal.nullProps[p] = true;
 
 				if (schema[p].hasOwnProperty('defaultValue')) {
 					// null,undefなら空配列にする
-					// TODO nullが入っていることが分かるようにisNullフラグを立てる
-					var defVal = schema[p].defaultValue == null ? [] : schema[p].defaultValue;
+					var defVal;
+
+					if (schema[p].defaultValue == null) {
+						defVal = [];
+					} else {
+						defVal = schema[p].defaultValue;
+						this._internal.nullProps[p] = false;
+					}
+
 					this._values[p].copyFrom(defVal);
 				}
 				continue;
@@ -1702,9 +1712,13 @@
 				}
 				var val = setObj[p];
 				// type:[]のプロパティにnull,undefが指定されたら、空配列と同様に扱う
-				// TODO nullが入れられたことが分かるようにisNullフラグを立てる
-				if ($.inArray(p, this._internal.aryProps) !== -1 && val == null) {
-					val = [];
+				if ($.inArray(p, this._internal.aryProps) !== -1) {
+					if (val == null) {
+						val = [];
+						this._internal.nullProps[p] = true;
+					} else {
+						this._internal.nullProps[p] = false;
+					}
 				}
 				//値のチェック
 				var validateResult = this._internal.itemValueCheckFuncs[p](val);
@@ -1753,6 +1767,7 @@
 				});
 			}
 		},
+
 		/**
 		 * 値を取得します。
 		 * <p>
@@ -1775,6 +1790,25 @@
 			}
 
 			return this._values[key];
+		},
+
+		/**
+		 * type:[]であるプロパティについて、最後にセットされた値がnullかどうかを返します。<br>
+		 * type:[]としたプロパティは常にObservableArrayインスタンスがセットされており、set('array', null);
+		 * と呼ぶと空配列を渡した場合と同じになります。そのため、「実際にはnullをセットしていた（item.set('array',
+		 * null)）」場合と「空配列をセットしていた（item.set('array,' [])）」場合を区別したい場合にこのメソッドを使ってください。<br>
+		 * データアイテムを生成した直後は、スキーマにおいてdefaultValueを書いていないまたはnullをセットした場合はtrue、それ以外の場合はfalseを返します。<br>
+		 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します。
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataItem
+		 * @returns {Boolean} 現在のこのプロパティにセットされているのがnullかどうか
+		 */
+		regardAsNull: function(key) {
+			if (this._isArrayProp(key)) {
+				return this._internal.nullProps[key] === true;
+			}
+			return this.get(key) === null;
 		},
 
 		/**

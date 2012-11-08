@@ -738,7 +738,7 @@
 			//TODO モデルに持たせる
 			var arrayProps = [];
 
-			// userInitailValueの中に、schemaで定義されていないプロパティへの値のセットが含まれていたらエラー
+			// userInitialValueの中に、schemaで定義されていないプロパティへの値のセットが含まれていたらエラー
 			for ( var p in userInitialValue) {
 				if (!schema.hasOwnProperty(p)) {
 					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, p]);
@@ -762,6 +762,7 @@
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					var obsArray = h5.u.obj.createObservableArray(); //TODO cache
 					setValue(this, plainProp, obsArray);
+					this._nullProps[plainProp] = true;
 					arrayProps.push(plainProp);
 				}
 
@@ -907,6 +908,7 @@
 			 * type:[]としたプロパティは常にObservableArrayインスタンスがセットされており、set('array', null);
 			 * と呼ぶと空配列を渡した場合と同じになります。そのため、「実際にはnullをセットしていた（item.set('array',
 			 * null)）」場合と「空配列をセットしていた（item.set('array,' [])）」場合を区別したい場合にこのメソッドを使ってください。<br>
+			 * データアイテムを生成した直後は、スキーマにおいてdefaultValueを書いていないまたはnullをセットした場合はtrue、それ以外の場合はfalseを返します。<br>
 			 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します。
 			 *
 			 * @since 1.1.0
