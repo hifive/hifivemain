@@ -67,53 +67,32 @@
 	/** dependが設定されたプロパティのセッターを呼び出した */
 	var ERR_CODE_DEPEND_PROPERTY = 15002;
 
-	/** イベントのターゲットが指定されていない */
-	var ERR_CODE_NO_EVENT_TARGET = 15003;
-
 	/** ディスプリプタが不正 */
-	var ERR_CODE_INVALID_DESCRIPTOR = 15004;
-
-	/** createDataModelManagerのnamespaceが不正 */
-	var ERR_CODE_INVALID_MANAGER_NAMESPACE = 15005;
-
-	/** データモデル名が不正 */
-	var ERR_CODE_INVALID_DATAMODEL_NAME = 15006;
+	var ERR_CODE_INVALID_DESCRIPTOR = 15003;
 
 	/** データアイテムの生成にはIDが必要なのに指定されていない */
-	var ERR_CODE_NO_ID = 15007;
-
-	/** マネージャの登録先に指定されたnamespaceにはすでにその名前のプロパティが存在する */
-	var ERR_CODE_REGISTER_TARGET_ALREADY_EXIST = 15008;
-
-	/** 内部エラー：更新ログタイプ不正（通常起こらないはず） */
-	var ERR_CODE_INVALID_UPDATE_LOG_TYPE = 15009;
-
-	/** IDは文字列でなければならない */
-	var ERR_CODE_ID_MUST_BE_STRING = 15010;
-
-	/** typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う） */
-	var ERR_CODE_CANNOT_SET_OBSARRAY = 15011;
+	var ERR_CODE_NO_ID = 15004;
 
 	/** DataItem.set()でidをセットすることはできない */
-	var ERR_CODE_CANNOT_SET_ID = 15012;
+	var ERR_CODE_CANNOT_SET_ID = 15005;
 
 	/** depend.calcが制約を満たさない値を返している */
-	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15013;
+	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15006;
 
 	/** createModelに渡された配列内のディスクリプタ同士でtypeやbaseによる依存関係が循環参照している */
-	var ERR_CODE_DESCRIPTOR_CIRCULAR_REF = 15014;
+	var ERR_CODE_DESCRIPTOR_CIRCULAR_REF = 15007;
 
 	/** DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemは変更できない */
-	var ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM = 15015;
+	var ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM = 15008;
 
 	/** DataManagerに属していないDataModelで、create/remove/変更できない */
-	var ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL = 15016;
+	var ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL = 15009;
 
 	/** schemaに定義されていないプロパティにセットしようとした */
-	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 15017;
+	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 15010;
 
 	/** schemaに定義されていないプロパティを取得した */
-	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 15018;
+	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 15011;
 
 	// ---------------------------
 	//ディスクリプタのエラーコード
@@ -168,19 +147,12 @@
 	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
 
 	var ERROR_MESSAGES = [];
-	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
+	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正です。識別子として有効な文字列を指定してください。';
 	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
 	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティに値をセットすることはできません。違反したプロパティ={0}';
-	ERROR_MESSAGES[ERR_CODE_NO_EVENT_TARGET] = 'イベントのターゲットが指定されていない';
-	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAMESPACE] = 'createDataModelManagerのnamespaceが不正';
-	ERROR_MESSAGES[ERR_CODE_INVALID_DATAMODEL_NAME] = 'データモデル名が不正';
-	ERROR_MESSAGES[ERR_CODE_NO_ID] = 'データアイテムの生成にはIDが必要なのに指定されていない';
-	ERROR_MESSAGES[ERR_CODE_REGISTER_TARGET_ALREADY_EXIST] = 'マネージャの登録先に指定されたnamespaceにはすでにその名前のプロパティが存在する';
-	ERROR_MESSAGES[ERR_CODE_INVALID_UPDATE_LOG_TYPE] = '内部エラー：更新ログタイプ不正';
-	ERROR_MESSAGES[ERR_CODE_ID_MUST_BE_STRING] = 'IDは文字列でなければならない';
+	ERROR_MESSAGES[ERR_CODE_NO_ID] = 'id:trueを指定しているプロパティがありません。データアイテムの生成にはid:trueを指定した項目が必須です。';
 	ERROR_MESSAGES[ERR_CODE_INVALID_DESCRIPTOR] = 'データモデルディスクリプタにエラーがあります。';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_OBSARRAY] = 'typeが配列に指定されているプロパティには別のインスタンスを代入できない（空にしたい場合はclear()メソッド、別の配列と同じ状態にしたい場合はcopyFrom()を使う）。 プロパティ名 = {0}';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'DataItem.set()でidをセットすることはできない';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'id指定されたプロパティに値をセットすることはできません。';
 	ERROR_MESSAGES[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'depend.calcが返した値がプロパティの型・制約に違反しています。違反したプロパティ={0}, 違反した値={1}';
 	ERROR_MESSAGES[ERR_CODE_DESCRIPTOR_CIRCULAR_REF] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、baseやtypeによる依存関係が循環参照しています。';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM] = 'DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemの中身は変更できません。データアイテムID={0}, メソッド={1}';
@@ -193,11 +165,11 @@
 	/**
 	 * detailに格納する ディスクリプタのエラーメッセージ
 	 */
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_NOT_OBJECT] = 'DataModelのディスクリプタにはオブジェクトを指定してください';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_NOT_OBJECT] = 'DataModelのディスクリプタにはオブジェクトを指定してください。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_INVALID_NAME] = 'データモデル名が不正です。使用できる文字は、半角英数字、_、$、のみで、先頭は数字以外である必要があります。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_INVALID_BASE] = 'baseの指定が不正です。指定する場合は、継承したいデータモデル名の先頭に"@"を付けた文字列を指定してください。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_NO_EXIST_BASE] = 'baseの指定が不正です。指定されたデータモデル{0}は存在しません。';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_NO_SCHEMA] = 'schemaの指定が不正です。baseの指定がない場合はschemaの指定は必須です';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_NO_SCHEMA] = 'schemaの指定が不正です。baseの指定がない場合はschemaの指定は必須です。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT] = 'schemaの指定が不正です。schemaはオブジェクトで指定してください。';
 	/* del end */
 
