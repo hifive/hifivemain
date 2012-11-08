@@ -465,8 +465,7 @@ $(function() {
 		}
 	});
 
-	test('配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること', 16, function() {
-		window.h5samplefunc = undefined
+	test('配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること', 8, function() {
 		var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
 				['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
 				['data/sample.js', {}], ['data/sample.js', ' ']];
@@ -482,9 +481,7 @@ $(function() {
 				ok(false, 'エラーが発生していません。' + valsStr[i]);
 			} catch (e) {
 				ok(ok, 'エラーが発生しました。' + valsStr[i]);
-				ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
 			}
-			window.h5samplefunc = undefined;
 		}
 	});
 
@@ -821,8 +818,7 @@ $(function() {
 		}
 	});
 
-	test('【非同期】配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。', 16, function() {
-		window.h5samplefunc = undefined
+	test('【非同期】配列、null、文字列以外、空文字、空白文字、その他の型を含む配列を引数に渡した時に、エラーも出ず、何もしないで終了すること。', 8, function() {
 		var vals = [[['data/sample.js']], ['data/sample.js', null], ['data/sample.js', 0],
 				['data/sample.js', 1], ['data/sample.js', true], ['data/sample.js', false],
 				['data/sample.js', {}], ['data/sample.js', ' ']];
@@ -837,9 +833,7 @@ $(function() {
 				ok(false, 'エラーが発生していません。' + valsStr[i]);
 			} catch (e) {
 				ok(ok, 'エラーが同期で発生する。' + valsStr[i]);
-				ok(!window.h5samplefunc, 'スクリプトのロードはされていない');
 			}
-			window.h5samplefunc = undefined;
 		}
 	});
 

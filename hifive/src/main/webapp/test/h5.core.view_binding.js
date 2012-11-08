@@ -268,7 +268,7 @@ $(function() {
 	test('バインドする要素の指定方法はjQueryオブジェクト、DOM、セレクタのいずれかであること', function() {
 		view.append($fixture, 'bindSpan');
 		var strs = ['jQueryオブジェクト', 'DOM', 'セレクタ'];
-		var args = null;
+		var arg = null;
 
 		for ( var i = 0, l = strs.length; i < l; i++) {
 			switch (i) {
@@ -382,7 +382,7 @@ $(function() {
 	test('クラスに既に設定されている値と同じ値をバインドする', function() {
 		view.append($fixture, 'object4');
 		view.bind('#dataBindTest', {
-			v1: 'c2',
+			v1: 'c2'
 		});
 		var $span = $fixture.find('span');
 		strictEqual($span[0].className, 'c1 c2 c3', '同じクラスが重複して設定されないこと');

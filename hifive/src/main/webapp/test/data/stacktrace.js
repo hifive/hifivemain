@@ -15,6 +15,8 @@
  *
  * hifive
  */
-var logger = h5.log.createLogger("テスト h5.u");
-logger.enableStackTrace = true;
-logger.debug("スタックトレース - テスト");
+(function() {
+	var logger = h5.log.createLogger("テスト h5.u");
+	logger.enableStackTrace = true;
+	logger.debug("スタックトレース - テスト");
+})();
