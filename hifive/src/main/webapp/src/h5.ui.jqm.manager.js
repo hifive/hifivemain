@@ -38,7 +38,6 @@
 
 	var fwLogger = h5.log.createLogger('h5.ui.jqm.manager');
 	/* del begin */
-	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = '既にJQMマネージャは初期化されています。';
 	var FW_LOG_CONTROLLER_DEF_ALREADY_DEFINED = '既にコントローラ"{0}"はJQMマネージャに登録されています。';
 	var FW_LOG_CSS_FILE_PATH_ALREADY_DEFINED = '既にCSSファイル"{0}"はJQMマネージャに登録されています。';
@@ -56,7 +55,6 @@
 	// Cache
 	//
 	// =========================================================================
-	// TODO 高速化のために他で定義されている関数などを変数に入れておく場合はここに書く
 	// =========================================================================
 	//
 	// Privates

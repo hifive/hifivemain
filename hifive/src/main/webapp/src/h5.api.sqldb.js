@@ -33,6 +33,10 @@
 	/** DELETE フォーマット */
 	var DELETE_SQL_FORMAT = 'DELETE FROM {0}';
 
+	// =============================
+	// Production
+	// =============================
+
 	/** エラーコード: Insert/Sql/Del/Update/Select オブジェクトのexecute()が複数回実行された */
 	var ERR_CODE_RETRY_SQL = 3000;
 	/** エラーコード: 指定されたテーブル名が不正 */
@@ -57,10 +61,6 @@
 	var ERR_CODE_TRANSACTION_PROCESSING_FAILURE = 3010;
 	/** エラーコード: where句に指定されたカラム名が不正 */
 	var ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE = 3011;
-
-	// =============================
-	// Production
-	// =============================
 
 	// =============================
 	// Development Only
