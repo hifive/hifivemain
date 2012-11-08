@@ -919,7 +919,7 @@
 				if (this._isArrayProp(key)) {
 					return this._nullProps[key] === true;
 				}
-				return getValue(item, key) === null;
+				return getValue(this, key) === null;
 			},
 
 			/**
