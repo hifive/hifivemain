@@ -1348,7 +1348,7 @@
 		asyncTest('テンプレートファイルのURLにクエリパラメータが付いていて、パラメータが異なる場合は別のファイルとしてキャッシュされること ※min版ではエラーになります',
 				4, function() {
 					try {
-						cacheManager = h5.dev.core.view.cacheManager;
+						var cacheManager = h5.dev.core.view.cacheManager;
 					} catch (e) {
 						expect(1);
 						ok(false, 'h5.dev.core.view.cacheManagerがありません。');
@@ -1378,7 +1378,7 @@
 
 		asyncTest('同じテンプレートファイルを並列にロードする ※min版ではエラーになります', 2, function() {
 			try {
-				cacheManager = h5.dev.core.view.cacheManager;
+				var cacheManager = h5.dev.core.view.cacheManager;
 			} catch (e) {
 				expect(1);
 				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
