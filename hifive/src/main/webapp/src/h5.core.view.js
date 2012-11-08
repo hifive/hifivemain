@@ -92,7 +92,7 @@
 	/**
 	 * テンプレートファイルにscriptタグの記述がない
 	 */
-	var ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELMENT = 7011;
+	var ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT = 7011;
 
 	// =============================
 	// Development Only
