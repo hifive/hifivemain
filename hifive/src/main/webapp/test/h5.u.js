@@ -1756,15 +1756,11 @@ $(function() {
 		strictEqual(o.length, 4, '正しいサイズであること');
 	});
 
-	test('splice', 42, function() {
+	test('splice', 38, function() {
 		var o = h5.u.obj.createObservableArray();
 		o.push('1', '2', '3');
 
-		o.splice();
-		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
-		strictEqual(o[1], '2', '正しい位置に値が格納されていること');
-		strictEqual(o[2], '3', '正しい位置に値が格納されていること');
-		strictEqual(o.length, 3, '正しいサイズであること');
+		// 引数を全く指定しないパターンと第二引数を指定しないパターンはブラウザによって挙動が異なるためテストしない
 
 		o = h5.u.obj.createObservableArray();
 		o.push('1', '2', '3');
