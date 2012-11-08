@@ -2531,7 +2531,7 @@ $(function() {
 			}]);
 			ok(false, 'テスト失敗。エラーが発生していません');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_CANNOT_CALC_DEPEND, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_DESCRIPTOR_CIRCULAR_REF, e.message);
 		}
 	});
 
