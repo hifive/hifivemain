@@ -22,6 +22,11 @@
 	// Constants
 	//
 	// =========================================================================
+
+	// =============================
+	// Production
+	// =============================
+
 	/** INSERT フォーマット */
 	var INSERT_SQL_FORMAT = 'INSERT INTO {0} ({1}) VALUES ({2})';
 	/** INSERT フォーマット(VALUES未指定) */
@@ -33,9 +38,6 @@
 	/** DELETE フォーマット */
 	var DELETE_SQL_FORMAT = 'DELETE FROM {0}';
 
-	// =============================
-	// Production
-	// =============================
 
 	/** エラーコード: Insert/Sql/Del/Update/Select オブジェクトのexecute()が複数回実行された */
 	var ERR_CODE_RETRY_SQL = 3000;
