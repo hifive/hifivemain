@@ -39,7 +39,7 @@
 	 * @memberOf h5.core.data
 	 * @type {Integer}
 	 */
-	var SEQUENCE_RETURN_TYPE_STRING = 1;
+	var SEQ_STRING = 1;
 
 	/**
 	 * <a href="#createSequence">createSequence()</a>で使用するための、型指定定数
@@ -51,7 +51,7 @@
 	 * @memberOf h5.core.data
 	 * @type {Integer}
 	 */
-	var SEQUENCE_RETURN_TYPE_INT = 2;
+	var SEQ_INT = 2;
 
 	var ID_TYPE_STRING = 'string';
 	var ID_TYPE_INT = 'number';
@@ -78,7 +78,7 @@
 	/** データモデル名が不正 */
 	var ERR_CODE_INVALID_DATAMODEL_NAME = 15006;
 
-	/** createItemでIDが必要なのに指定されていない */
+	/** データアイテムの生成にはIDが必要なのに指定されていない */
 	var ERR_CODE_NO_ID = 15007;
 
 	/** マネージャの登録先に指定されたnamespaceにはすでにその名前のプロパティが存在する */
@@ -121,7 +121,7 @@
 	ERROR_MESSAGES[ERR_CODE_NO_EVENT_TARGET] = 'イベントのターゲットが指定されていない';
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAMESPACE] = 'createDataModelManagerのnamespaceが不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_DATAMODEL_NAME] = 'データモデル名が不正';
-	ERROR_MESSAGES[ERR_CODE_NO_ID] = 'createItemでIDが必要なのに指定されていない';
+	ERROR_MESSAGES[ERR_CODE_NO_ID] = 'データアイテムの生成にはIDが必要なのに指定されていない';
 	ERROR_MESSAGES[ERR_CODE_REGISTER_TARGET_ALREADY_EXIST] = 'マネージャの登録先に指定されたnamespaceにはすでにその名前のプロパティが存在する';
 	ERROR_MESSAGES[ERR_CODE_INVALID_UPDATE_LOG_TYPE] = '内部エラー：更新ログタイプ不正';
 	ERROR_MESSAGES[ERR_CODE_ID_MUST_BE_STRING] = 'IDは文字列でなければならない';
@@ -381,9 +381,13 @@
 
 			// 配列でかつnewValueがnullまたはundefinedなら、空配列が渡された時と同様に扱う。
 			// エラーにせず、保持しているObsAryインスタンスを空にする。
-			// TODO nullがセットされているプロパティかどうか分かるようにisNullフラグを立てる
-			if (isTypeArray(type) && newValue == null) {
-				newValue = [];
+			if (isTypeArray(type)) {
+				if (newValue == null) {
+					newValue = [];
+					item._nullProps[prop] = true;
+				} else {
+					item._nullProps[prop] = false;
+				}
 			}
 
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
@@ -392,7 +396,6 @@
 			}
 
 			//このプロパティをバリデーションしなくてよいと明示されているならバリデーションを行わない
-			//型が配列（type:[]）の場合に、フラグが立っていたら、値がnull/undefinedでもよいとする
 			if ($.inArray(prop, noValidationProps) === -1) {
 				//型・制約チェック
 				//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
@@ -471,7 +474,7 @@
 				setValue(item, readyProp.p, readyProp.n);
 			}
 
-			// newValueにはgetして持ってきた値（type:[]ならnewValueはObservableArrayになるようにする）
+			//newValueは現在Itemが保持している値（type:[]の場合は常に同じObsArrayインスタンス）
 			changedProps[readyProp.p] = {
 				oldValue: readyProp.o,
 				newValue: item.get(readyProp.p)
@@ -725,6 +728,9 @@
 			// このアイテムが持つ値を格納するオブジェクト
 			this._values = {};
 
+			/** type:[]なプロパティで、最後にset()された値がnullかどうかを格納する。キー：プロパティ名、値：true/false */
+			this._nullProps = {};
+
 			var actualInitialValue = {};
 
 			var noValidationProps = [];
@@ -732,7 +738,7 @@
 			//TODO モデルに持たせる
 			var arrayProps = [];
 
-			// userInitailValueの中に、schemaで定義されていないプロパティへの値のセットが含まれていたらエラー
+			// userInitialValueの中に、schemaで定義されていないプロパティへの値のセットが含まれていたらエラー
 			for ( var p in userInitialValue) {
 				if (!schema.hasOwnProperty(p)) {
 					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, p]);
@@ -756,6 +762,7 @@
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					var obsArray = h5.u.obj.createObservableArray(); //TODO cache
 					setValue(this, plainProp, obsArray);
+					this._nullProps[plainProp] = true;
 					arrayProps.push(plainProp);
 				}
 
@@ -890,10 +897,29 @@
 			 *
 			 * @since 1.1.0
 			 * @memberOf DataItem
-			 * @returns DataModel
+			 * @returns {DataModel} 自分が所属するデータモデル
 			 */
 			getModel: function() {
 				return this._model;
+			},
+
+			/**
+			 * type:[]であるプロパティについて、最後にセットされた値がnullかどうかを返します。<br>
+			 * type:[]としたプロパティは常にObservableArrayインスタンスがセットされており、set('array', null);
+			 * と呼ぶと空配列を渡した場合と同じになります。そのため、「実際にはnullをセットしていた（item.set('array',
+			 * null)）」場合と「空配列をセットしていた（item.set('array,' [])）」場合を区別したい場合にこのメソッドを使ってください。<br>
+			 * データアイテムを生成した直後は、スキーマにおいてdefaultValueを書いていないまたはnullをセットした場合はtrue、それ以外の場合はfalseを返します。<br>
+			 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します。
+			 *
+			 * @since 1.1.0
+			 * @memberOf DataItem
+			 * @returns {Boolean} 現在のこのプロパティにセットされているのがnullかどうか
+			 */
+			regardAsNull: function(key) {
+				if (this._isArrayProp(key)) {
+					return this._nullProps[key] === true;
+				}
+				return getValue(item, key) === null;
 			},
 
 			/**
@@ -915,29 +941,6 @@
 		return DataItem;
 	}
 
-
-	/**
-	 * 指定されたIDのデータアイテムを生成します。
-	 *
-	 * @param {DataModel} model データモデル
-	 * @param {Object} data 初期値
-	 * @param {Function} itemChangeListener modelに対応する、データアイテムチェンジイベントリスナー
-	 * @returns {DataItem} データアイテムオブジェクト
-	 */
-	//	function createItem(model, data, itemChangeListener) {
-	//		//キーが文字列かつ空でない、かどうかのチェックはDataModel.create()で行われている
-	//
-	//		var id = data[model.idKey];
-	//
-	//		var item = new model._itemConstructor(data);
-	//
-	//		model.items[id] = item;
-	//		model.size++;
-	//
-	//		item.addEventListener('change', itemChangeListener);
-	//
-	//		return item;
-	//	}
 	/**
 	 * スキーマの継承関係を展開し、フラットなスキーマを生成します。 同じ名前のプロパティは「後勝ち」です。
 	 *
@@ -1094,8 +1097,8 @@
 	 * <p>
 	 * 第三引数には戻り値の型を指定します。
 	 * <ul>
-	 * <li><a href="#SEQUENCE_RETURN_TYPE_STRING">h5.core.data.SEQUENCE_RETURN_TYPE_STRING</a>
-	 * <li><a href="#SEQUENCE_RETURN_TYPE_INT">h5.core.data.SEQUENCE_RETURN_TYPE_INT</a>
+	 * <li><a href="#SEQ_STRING">h5.core.data.SEQ_STRING</a>
+	 * <li><a href="#SEQ_INT">h5.core.data.SEQ_INT</a>
 	 * </ul>
 	 * のいずれかを指定し、それぞれ文字列型、数値型で返します。デフォルトは数値型です。
 	 * </p>
@@ -1132,17 +1135,17 @@
 		}
 
 		var methods;
-		if (returnType === SEQUENCE_RETURN_TYPE_STRING) {
+		if (returnType === SEQ_STRING) {
 			methods = {
 				current: currentString,
 				next: nextString,
-				returnType: SEQUENCE_RETURN_TYPE_STRING
+				returnType: SEQ_STRING
 			};
 		} else {
 			methods = {
 				current: currentInt,
 				next: nextInt,
-				returnType: SEQUENCE_RETURN_TYPE_INT
+				returnType: SEQ_INT
 			};
 		}
 		methods.setCurrent = function(value) {
@@ -1360,8 +1363,6 @@
 		 * @memberOf DataModel
 		 */
 		this._itemConstructor = createDataItemConstructor(this, descriptor);
-
-		//TODO this.fullname -> managerの名前までを含めた完全修飾名
 	}
 
 	//EventDispatcherの機能を持たせるため、prototypeをコピーし、そのうえでDataModel独自のプロパティを追加する
@@ -2253,124 +2254,6 @@
 	}
 
 
-
-
-	/* -------- validateForm関係ここから -------- */
-
-	/**
-	 * form要素と、managerを引数にとって、validateのチェックを行う関数。 form要素のdata-model="xxx"にmanagerが持つデータモデル名を指定する。
-	 * 各input要素にname="xxx"でプロパティ名を指定する
-	 */
-	function validateForm(form) {
-		//TODO エラーチェック
-
-		var $form = $(form);
-		var matched = $form.attr('data-h5-model').match('^@(.*)$');
-		var modelPath = matched[1];
-		var split = modelPath.split('.');
-		var modelName = split.splice(split.length - 1, 1);
-		var managerName = split.splice(split.length - 1, 1);
-		var manager = (split.length ? h5.u.obj.ns(split.join('.')) : window)[managerName];
-
-		var model = manager.models[modelName];
-		if (!model) {
-			//TODO data-modelに指定されたデータモデル名がないエラー
-			throwFwError();
-			return;
-		}
-
-		var errorReason = [];
-		$form.find('input').each(
-				function() {
-					var $input = $(this);
-					var prop = $input.attr('name');
-					// nameが指定されているinputについてチェック
-					if (!prop) {
-						return;
-					}
-					if (model.itemPropDesc[prop]) {
-						var v = $input.val();
-						if (!model._itemValueCheckFuncs[prop](v)) {
-							errorReason.push(h5.u.str.format(
-									'データモデル"{0}のプロパティ"{1}"に、"{2}"をセットすることはできません', modelName, prop,
-									v));
-						}
-					}
-				});
-
-		return {
-			model: model,
-			properties: [{
-				prop: '',
-				value: '',
-				reasons: errorReason
-			}]
-		};
-	}
-
-	/**
-	 * input要素とモデルから、値のチェック。 modelの指定がない場合は、親のformタグのdata-model指定から求める
-	 */
-	function validateInput(input, model) {
-		//TODO エラーチェック
-
-
-		var resultObj = {
-			reasons: []
-		};
-		var $input = $(input);
-		// とりあえずinput属性の親のform要素を、データモデルのvalidateチェック対象としている
-		if (!model) {
-			var $form = $(input.form);
-			if (!$form.length) {
-				// formがない場合は終了
-				return resultObj;
-			}
-
-			var formModelName = $form.attr('data-h5-model');
-			if (!formModelName) {
-				return resultObj;
-			}
-
-			var matched = $form.attr('data-h5-model').match('^@(.*)$');
-			if (!matched) {
-				return resultObj;
-			}
-
-			var modelPath = matched[1];
-			var split = modelPath.split('.');
-			var modelName = split.splice(split.length - 1, 1);
-			var managerName = split.splice(split.length - 1, 1);
-			var manager = (split.length ? h5.u.obj.ns(split.join('.')) : window)[managerName];
-			model = manager.models[modelName];
-		}
-
-		var v = $input.val();
-		var prop = $input.attr('name');
-		// nameが指定されていない、またはデータ定義にないプロパティ名が指定されていればチェックしない
-		if (!prop || !model.itemPropDesc[prop]) {
-			return resultObj;
-		}
-		var errorReasons = model._itemValueCheckFuncs[prop](v);
-		if (errorReasons === true) {
-			// function(){return true}でチェックしている項目用
-			//TODO チェック関数の戻り値を全て統一する必要がある
-			errorReasons = [];
-		}
-		return {
-			prop: prop,
-			value: v,
-			reasons: errorReasons
-		};
-	}
-
-	/* -------- validateForm関係ここまで -------- */
-
-
-	//TODO Localの場合は、テンポラリなManagerを渡す実装にする予定
-	//	function createLocalDataModel(descriptor) {
-	//		return createDataModel(descriptor);
-	//	}
 	//=============================
 	// Expose to window
 	//=============================
@@ -2384,17 +2267,8 @@
 	 */
 	h5.u.obj.expose('h5.core.data', {
 		createManager: createManager,
-
 		createSequence: createSequence,
-
-		//TODO validateForm,validateInputは、動作確認のためにとりあえず公開しているだけ
-		validateForm: validateForm,
-		validateInput: validateInput,
-
-		SEQUENCE_RETURN_TYPE_STRING: SEQUENCE_RETURN_TYPE_STRING,
-
-		SEQUENCE_RETURN_TYPE_INT: SEQUENCE_RETURN_TYPE_INT
-
-	//		createLocalDataModel: createLocalDataModel,
+		SEQ_STRING: SEQ_STRING,
+		SEQ_INT: SEQ_INT
 	});
 })();
