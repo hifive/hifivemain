@@ -123,8 +123,11 @@
 	// Functions
 	// =============================
 
-	function getElemAttribute(elem, attr) {
-		return elem.getAttribute(attr);
+	function getElemAttribute(node, attr) {
+		if (!node || node.nodeType !== NODE_TYPE_ELEMENT) {
+			return undefined;
+		}
+		return node.getAttribute(attr);
 	}
 
 	function toArray(pseudoArray) {
