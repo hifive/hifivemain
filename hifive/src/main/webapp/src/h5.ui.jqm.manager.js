@@ -28,14 +28,9 @@
 	// Production
 	// =============================
 
+	// エラーコード
 	var ERR_CODE_INVALID_TYPE = 12000;
 	var ERR_CODE_NAME_INVALID_PARAMETER = 12001;
-
-	// エラーコードマップ
-	var errMsgMap = {};
-	errMsgMap[ERR_CODE_INVALID_TYPE] = '引数{0}が不正です。正しい値を指定して下さい。';
-	errMsgMap[ERR_CODE_NAME_INVALID_PARAMETER] = '引数の指定に誤りがあります。第2引数にCSSファイルパス、第3引数にコントローラ定義オブジェクトを指定して下さい。';
-	addFwErrorCodeMap(errMsgMap);
 
 	// =============================
 	// Development Only
@@ -47,6 +42,12 @@
 	var FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED = '既にJQMマネージャは初期化されています。';
 	var FW_LOG_CONTROLLER_DEF_ALREADY_DEFINED = '既にコントローラ"{0}"はJQMマネージャに登録されています。';
 	var FW_LOG_CSS_FILE_PATH_ALREADY_DEFINED = '既にCSSファイル"{0}"はJQMマネージャに登録されています。';
+
+	// エラーコードマップ
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_INVALID_TYPE] = '引数{0}が不正です。正しい値を指定して下さい。';
+	errMsgMap[ERR_CODE_NAME_INVALID_PARAMETER] = '引数の指定に誤りがあります。第2引数にCSSファイルパス、第3引数にコントローラ定義オブジェクトを指定して下さい。';
+	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
 

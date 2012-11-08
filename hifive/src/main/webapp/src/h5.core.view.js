@@ -29,9 +29,15 @@
 	// =============================
 
 	/**
-	 * テンプレート文字列のコンパイル時に発生するエラー
+	 * EJSにスクリプトレットの区切りとして認識させる文字
 	 */
-	var ERR_CODE_TEMPLATE_COMPILE = 7000;
+	var DELIMITER = '[';
+
+	// エラーコード
+	/**
+	 * コンパイルしようとしたテンプレートが文字列でない
+	 */
+	var ERR_CODE_TEMPLATE_COMPILE_NOT_STRING = 7000;
 
 	/**
 	 * テンプレートファイルの内容読み込み時に発生するエラー
@@ -79,11 +85,31 @@
 	var ERR_CODE_BIND_CONTEXT_INVALID = 7009;
 
 	/**
+	 * bindに指定したcontextがオブジェクトでない
+	 */
+	var ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR = 7010;
+
+	/**
+	 * テンプレートファイルにscriptタグの記述がない
+	 */
+	var ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELMENT = 7011;
+
+	// =============================
+	// Development Only
+	// =============================
+
+	var fwLogger = h5.log.createLogger('h5.core.view');
+	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
+	var FW_LOG_TEMPLATE_NOT_REGISTERED = '指定されたIDのテンプレートは登録されていません。"{0}"';
+	var FW_LOG_TEMPLATE_OVERWRITE = 'テンプレートID:{0} は上書きされました。';
+
+	/* del begin */
+	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_TEMPLATE_COMPILE] = 'テンプレートをコンパイルできませんでした。{0}';
-	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。{0}';
+	errMsgMap[ERR_CODE_TEMPLATE_COMPILE_NOT_STRING] = 'テンプレートのコンパイルでエラーが発生しました。テンプレートには文字列を指定してください。';
+	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。';
 	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
 	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
@@ -92,39 +118,11 @@
 	errMsgMap[ERR_CODE_BIND_INVALID_TARGET] = 'bindの引数に指定されたターゲットが存在しないかまたは不正です。';
 	errMsgMap[ERR_CODE_TOO_MANY_TARGETS] = 'bindの引数に指定されたバインド先の要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_BIND_CONTEXT_INVALID] = 'bindの引数に指定されたルートコンテキストが不正です。オブジェクト、データアイテム、またはObservableItemを指定してください。';
+	errMsgMap[ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR] = 'テンプレートのコンパイルでエラーが発生しました。構文エラー：{0} {1}';
+	errMsgMap[ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELMENT] = 'テンプレートファイルに<script>タグの記述がありません。テンプレートは<script>タグで記述してください。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
-
-	/**
-	 * register(id,str)でstrにstring型以外が渡されたときに発生させる例外のdetailに格納するメッセージ。
-	 */
-	var ERR_REASON_TEMPLATE_IS_NOT_STRING = 'テンプレートには文字列を指定してください';
-
-	/**
-	 * scriptタグで囲まれていないテンプレートを読み込んだ時のメッセージ
-	 */
-	var ERR_REASON_SCRIPT_ELEMENT_IS_NOT_EXIST = 'scriptタグが見つかりません。テンプレート文字列はscriptタグで囲って記述して下さい。';
-
-	/**
-	 * テンプレートのコンパイルエラー時に発生するメッセージ
-	 */
-	var ERR_REASON_SYNTAX_ERR = '構文エラー {0}{1}';
-
-	/**
-	 * EJSにスクリプトレットの区切りとして認識させる文字
-	 */
-	var DELIMITER = '[';
-
-	// =============================
-	// Development Only
-	// =============================
-
-	var fwLogger = h5.log.createLogger('h5.core.view');
-	/* del begin */
-	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
-	var FW_LOG_TEMPLATE_NOT_REGISTERED = '指定されたIDのテンプレートは登録されていません。"{0}"';
-	var FW_LOG_TEMPLATE_OVERWRITE = 'テンプレートID:{0} は上書きされました。';
 	/* del end */
 
 	// =========================================================================
@@ -308,8 +306,7 @@
 					} catch (e) {
 						var lineNo = e.lineNumber;
 						var msg = lineNo ? ' line:' + lineNo : '';
-						throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(
-								ERR_REASON_SYNTAX_ERR, msg, e.message)], {
+						throwFwError(ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR, [msg, e.message], {
 							id: templateId,
 							error: e,
 							lineNo: lineNo
@@ -342,8 +339,8 @@
 							var filePath = this.url;
 
 							if ($elements.not('script[type="text/ejs"]').length > 0) {
-								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE,
-										[ERR_REASON_SCRIPT_ELEMENT_IS_NOT_EXIST], {
+								df.reject(createRejectReason(
+										ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT, null, {
 											url: absolutePath,
 											path: filePath
 										}));
@@ -570,7 +567,7 @@
 		 */
 		register: function(templateId, templateString) {
 			if ($.type(templateString) !== 'string') {
-				throwFwError(ERR_CODE_TEMPLATE_COMPILE, [ERR_REASON_TEMPLATE_IS_NOT_STRING], {
+				throwFwError(ERR_CODE_TEMPLATE_COMPILE_NOT_STRING, null, {
 					id: templateId
 				});
 			} else if (!isString(templateId) || !$.trim(templateId)) {
@@ -584,8 +581,7 @@
 			} catch (e) {
 				var lineNo = e.lineNumber;
 				var msg = lineNo ? ' line:' + lineNo : '';
-				throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(ERR_REASON_SYNTAX_ERR,
-						msg, e.message)], {
+				throwFwError(ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR, [msg, e.message], {
 					id: templateId
 				});
 			}

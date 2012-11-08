@@ -57,6 +57,7 @@
 	var ID_TYPE_INT = 'number';
 
 
+	// エラーコード
 	/** マネージャ名が不正 */
 	var ERR_CODE_INVALID_MANAGER_NAME = 15000;
 
@@ -114,6 +115,58 @@
 	/** schemaに定義されていないプロパティを取得した */
 	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 15018;
 
+	// ---------------------------
+	//ディスクリプタのエラーコード
+	// ---------------------------
+	/**
+	 * ディスクリプタがオブジェクトでない
+	 */
+	var DESC_ERR_DETAIL_NOT_OBJECT = 1001;
+
+	/**
+	 * nameが正しく設定されていない
+	 */
+	var DESC_ERR_DETAIL_INVALID_NAME = 1002;
+
+
+	/**
+	 * baseの指定が不正
+	 */
+	var DESC_ERR_DETAIL_INVALID_BASE = 1003;
+
+	/**
+	 * baseに指定されたデータモデルが存在しない
+	 */
+	var DESC_ERR_DETAIL_NO_EXIST_BASE = 1004;
+
+	/**
+	 * schemaもbaseも指定されていない
+	 */
+	var DESC_ERR_DETAIL_NO_SCHEMA = 1005;
+
+	/**
+	 * schemaがオブジェクトでない
+	 */
+	var DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT = 1006;
+
+	var EVENT_ITEMS_CHANGE = 'itemsChange';
+
+	var UPDATE_LOG_TYPE_CREATE = 1;
+	var UPDATE_LOG_TYPE_CHANGE = 2;
+	var UPDATE_LOG_TYPE_REMOVE = 3;
+
+
+
+	//=============================
+	// Development Only
+	//=============================
+
+	var fwLogger = h5.log.createLogger('h5.core.data');
+
+	/* del begin */
+	// ログメッセージ
+	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
+
 	var ERROR_MESSAGES = [];
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正';
 	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
@@ -135,78 +188,17 @@
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。モデル"{0}"のスキーマに"{1}"は定義されていません。';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティを取得することはできません。モデル"{0}"のスキーマに"{1}"は定義されていません。';
 
-	//	ERROR_MESSAGES[] = '';
 	addFwErrorCodeMap(ERROR_MESSAGES);
 
-
-	// ---------------------------
-	//ディスクリプタのエラーコード
-	// ---------------------------
 	/**
-	 * ディスクリプタがオブジェクトでない
+	 * detailに格納する ディスクリプタのエラーメッセージ
 	 */
-	var DESCRIPTOR_ERR_CODE_NOT_OBJECT = 1;
-
-	/**
-	 * nameが正しく設定されていない
-	 */
-	var DESCRIPTOR_ERR_CODE_INVALID_NAME = 2;
-
-
-	/**
-	 * baseの指定が不正
-	 */
-	var DESCRIPTOR_ERR_CODE_INVALID_BASE = 3;
-
-	/**
-	 * baseに指定されたデータモデルが存在しない
-	 */
-	var DESCRIPTOR_ERR_CODE_NO_EXIST_BASE = 4;
-
-	/**
-	 * schemaもbaseも指定されていない
-	 */
-	var DESCRIPTOR_ERR_CODE_NO_SCHEMA = 5;
-
-	/**
-	 * schemaがオブジェクトでない
-	 */
-	var DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT = 6;
-
-	/**
-	 * ディスクリプタのエラーメッセージ
-	 */
-	var DESCRIPTOR_VALIDATION_ERROR_MSGS = [];
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_ERR_CODE_NOT_OBJECT] = 'DataModelのディスクリプタにはオブジェクトを指定してください';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_ERR_CODE_INVALID_NAME] = 'データモデル名が不正です。使用できる文字は、半角英数字、_、$、のみで、先頭は数字以外である必要があります。';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_ERR_CODE_INVALID_BASE] = 'baseの指定が不正です。指定する場合は、継承したいデータモデル名の先頭に"@"を付けた文字列を指定してください。';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_ERR_CODE_NO_EXIST_BASE] = 'baseの指定が不正です。指定されたデータモデル{0}は存在しません。';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_ERR_CODE_NO_SCHEMA] = 'schemaの指定が不正です。baseの指定がない場合はschemaの指定は必須です';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_NOT_OBJECT] = 'DataModelのディスクリプタにはオブジェクトを指定してください';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_INVALID_NAME] = 'データモデル名が不正です。使用できる文字は、半角英数字、_、$、のみで、先頭は数字以外である必要があります。';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_INVALID_BASE] = 'baseの指定が不正です。指定する場合は、継承したいデータモデル名の先頭に"@"を付けた文字列を指定してください。';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_NO_EXIST_BASE] = 'baseの指定が不正です。指定されたデータモデル{0}は存在しません。';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESC_ERR_DETAIL_NO_SCHEMA] = 'schemaの指定が不正です。baseの指定がない場合はschemaの指定は必須です';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT] = 'schemaの指定が不正です。schemaはオブジェクトで指定してください。';
-
-
-	var EVENT_ITEMS_CHANGE = 'itemsChange';
-
-
-	var PROP_CONSTRAINT_REQUIRED = 'required';
-
-
-	var UPDATE_LOG_TYPE_CREATE = 1;
-	var UPDATE_LOG_TYPE_CHANGE = 2;
-	var UPDATE_LOG_TYPE_REMOVE = 3;
-
-
-
-	//=============================
-	// Development Only
-	//=============================
-
-	var fwLogger = h5.log.createLogger('h5.core.data');
-
-	/* del begin */
-
-	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
-
 	/* del end */
 
 
@@ -259,14 +251,14 @@
 		// descriptorがオブジェクトかどうか
 		if (!$.isPlainObject(descriptor)) {
 			// descriptorがオブジェクトじゃなかったら、これ以上チェックしようがないので、stopOnErrorの値に関わらずreturnする
-			errorReason.push(createErrorReason(DESCRIPTOR_ERR_CODE_NOT_OBJECT));
+			errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NOT_OBJECT));
 			return errorReason;
 		}
 
 		// nameのチェック
 		if (!isValidNamespaceIdentifier(descriptor.name)) {
 			// 識別子として不適切な文字列が指定されていたらエラー
-			errorReason.push(DESCRIPTOR_ERR_CODE_INVALID_NAME);
+			errorReason.push(DESC_ERR_DETAIL_INVALID_NAME);
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -279,7 +271,7 @@
 			// nullまたはundefinedならチェックしない
 			if (!isString(base) || base.indexOf('@') !== 0) {
 				// @で始まる文字列（base.indexOf('@')が0）でないならエラー
-				errorReason.push(createErrorReason(DESCRIPTOR_ERR_CODE_INVALID_BASE));
+				errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_INVALID_BASE));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -288,8 +280,8 @@
 				var baseModel = manager.models[baseName];
 				if (!baseModel) {
 					// 指定されたモデルが存在しないならエラー
-					errorReason
-							.push(createErrorReason(DESCRIPTOR_ERR_CODE_NO_EXIST_BASE, baseName));
+					errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NO_EXIST_BASE,
+							baseName));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -303,7 +295,7 @@
 		// baseSchemaがないのに、schemaが指定されていなかったらエラー
 		var schema = descriptor.schema;
 		if (!baseSchema && schema == null) {
-			errorReason.push(createErrorReason(DESCRIPTOR_ERR_CODE_NO_SCHEMA));
+			errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NO_SCHEMA));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -311,7 +303,7 @@
 
 		// schemaが指定されていて、オブジェクトでないならエラー
 		if (!baseSchema && !$.isPlainObject(schema)) {
-			errorReason.push(createErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT));
+			errorReason.push(createItemDescErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT));
 			// schemaがオブジェクトでなかったら、schemaのチェックのしようがないので、stopOnErrorの値に関わらずreturnする
 			return errorReason;
 		}
@@ -919,7 +911,7 @@
 				if (this._isArrayProp(key)) {
 					return this._nullProps[key] === true;
 				}
-				return getValue(item, key) === null;
+				return getValue(this, key) === null;
 			},
 
 			/**
@@ -1757,7 +1749,7 @@
 				if (!l) {
 					//空配列
 					throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
-							[createErrorReason(DESCRIPTOR_ERR_CODE_NOT_OBJECT)]);
+							[createItemDescErrorReason(DESC_ERR_DETAIL_NOT_OBJECT)]);
 				}
 				var dependMap = {};
 				var namesInDescriptors = [];
@@ -1835,8 +1827,8 @@
 							// 循環参照エラー
 							throwFwError(ERR_CODE_DESCRIPTOR_CIRCULAR_REF);
 						}
-						throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, [createErrorReason(
-								DESCRIPTOR_ERR_CODE_NO_EXIST_BASE, modelName)]);
+						throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, [createItemDescErrorReason(
+								DESC_ERR_DETAIL_NO_EXIST_BASE, modelName)]);
 					}
 				}
 				var retAry = [];

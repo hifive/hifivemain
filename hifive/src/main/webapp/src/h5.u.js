@@ -44,6 +44,8 @@
 	 */
 	var CURRENT_SEREALIZER_VERSION = '1';
 
+
+	// エラーコード
 	/**
 	 * ns()、getByPathで引数の名前空間名にstring以外が渡されたときに発生するエラー
 	 */
@@ -129,7 +131,11 @@
 	 */
 	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 11016;
 
+	// =============================
+	// Development Only
+	// =============================
 
+	/* del begin */
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
@@ -154,13 +160,6 @@
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
-
-	// =============================
-	// Development Only
-	// =============================
-
-	/* del begin */
-
 	/* del end */
 
 

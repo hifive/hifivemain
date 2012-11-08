@@ -55,6 +55,7 @@
 	/** バインドターゲットのカッコ内を取得するための正規表現（「attr(href)」の「href」を取得） */
 	var BIND_TARGET_DETAIL_REGEXP = /\(\s*(\S+)\s*\)/;
 
+	// エラーコード
 	/** data-h5-bindでattr, styleバインドを行う場合は、「style(color)」のように具体的なバインド先を指定する必要があります。 */
 	var ERR_CODE_REQUIRE_DETAIL = 16000;
 
@@ -65,13 +66,6 @@
 	var ERR_CODE_INVALID_CONTEXT_SRC = 16002;
 
 
-	var errMsgMap = {};
-	errMsgMap[ERR_CODE_REQUIRE_DETAIL] = 'data-h5-bindでattr, styleバインドを行う場合は、「style(color)」のように具体的なバインド先を指定する必要があります。';
-	errMsgMap[ERR_CODE_UNKNOWN_BIND_DIRECTION] = '不明なバインド先が指定されました。html,style等決められたバインド先を指定してください。';
-	errMsgMap[ERR_CODE_INVALID_CONTEXT_SRC] = 'コンテキスト値が不正です。data-h5-contextの場合はオブジェクト、data-h5-loop-contextの場合は配列を指定してください。';
-	addFwErrorCodeMap(errMsgMap);
-
-
 	// =============================
 	// Development Only
 	// =============================
@@ -79,6 +73,11 @@
 	var fwLogger = h5.log.createLogger('h5.core.view_binding');
 
 	/* del begin */
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_REQUIRE_DETAIL] = 'data-h5-bindでattr, styleバインドを行う場合は、「style(color)」のように具体的なバインド先を指定する必要があります。';
+	errMsgMap[ERR_CODE_UNKNOWN_BIND_DIRECTION] = '不明なバインド先が指定されました。html,style等決められたバインド先を指定してください。';
+	errMsgMap[ERR_CODE_INVALID_CONTEXT_SRC] = 'コンテキスト値が不正です。data-h5-contextの場合はオブジェクト、data-h5-loop-contextの場合は配列を指定してください。';
+	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
 	// =========================================================================

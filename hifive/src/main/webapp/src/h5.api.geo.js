@@ -34,17 +34,16 @@
 	/** エラーコード: 位置情報の取得に失敗 */
 	var ERR_CODE_POSITIONING_FAILURE = 2002;
 
-	var errMsgMap = {};
-	errMsgMap[ERR_CODE_INVALID_COORDS] = '正しい緯度または経度を指定して下さい。';
-	errMsgMap[ERR_CODE_INVALID_GEOSYSTEM_CONSTANT] = '正しい計算モード定数を指定して下さい';
-	errMsgMap[ERR_CODE_POSITIONING_FAILURE] = '位置情報の取得に失敗しました。';
-	addFwErrorCodeMap(errMsgMap);
-
 	// =============================
 	// Development Only
 	// =============================
 
 	/* del begin */
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_INVALID_COORDS] = '正しい緯度または経度を指定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_GEOSYSTEM_CONSTANT] = '正しい計算モード定数を指定して下さい';
+	errMsgMap[ERR_CODE_POSITIONING_FAILURE] = '位置情報の取得に失敗しました。';
+	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
 	// =========================================================================

@@ -33,10 +33,6 @@
 	/** DELETE フォーマット */
 	var DELETE_SQL_FORMAT = 'DELETE FROM {0}';
 
-	// =============================
-	// Production
-	// =============================
-
 	/** エラーコード: Insert/Sql/Del/Update/Select オブジェクトのexecute()が複数回実行された */
 	var ERR_CODE_RETRY_SQL = 3000;
 	/** エラーコード: 指定されたテーブル名が不正 */
@@ -62,6 +58,17 @@
 	/** エラーコード: where句に指定されたカラム名が不正 */
 	var ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE = 3011;
 
+	// =============================
+	// Production
+	// =============================
+
+	// =============================
+	// Development Only
+	// =============================
+
+	var fwLogger = h5.log.createLogger('h5.api.sqldb');
+
+	/* del begin */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_RETRY_SQL] = '同一オブジェクトによるSQLの再実行はできません。';
 	errMsgMap[ERR_CODE_INVALID_TABLE_NAME] = '{0}: テーブル名を指定して下さい。';
@@ -76,13 +83,6 @@
 	errMsgMap[ERR_CODE_TRANSACTION_PROCESSING_FAILURE] = 'トランザクション処理中にエラーが発生しました。{0} {1}';
 	errMsgMap[ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE] = 'where句に指定されたカラム名が空白または空文字です。';
 	addFwErrorCodeMap(errMsgMap);
-
-	// =============================
-	// Development Only
-	// =============================
-
-	var fwLogger = h5.log.createLogger('h5.api.sqldb');
-	/* del begin */
 	/* del end */
 
 	// =========================================================================

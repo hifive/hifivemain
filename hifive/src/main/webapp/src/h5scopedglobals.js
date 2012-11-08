@@ -42,215 +42,217 @@ var errorCodeToMessageMap = {};
  */
 var G_ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 100;
 
+/* del begin */
 var G_ERROR_MESSAGES = [];
 G_ERROR_MESSAGES[G_ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
 
 addFwErrorCodeMap(G_ERROR_MESSAGES);
-
+/* del end */
 
 
 // ---------------------------
 // スキーマのエラーコード
 // ---------------------------
-
 /**
  * ID指定されたプロパティが重複している
  *
  * @private
  */
-var SCHEMA_ERR_CODE_DUPLICATED_ID = 7;
+var SCHEMA_ERR_DETAIL_DUPLICATED_ID = 1;
 
 /**
  * ID指定されたプロパティがない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_NO_ID = 8;
+var SCHEMA_ERR_DETAIL_NO_ID = 2;
 
 /**
  * プロパティ名が不正
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME = 9;
+var SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME = 3;
 
 /**
  * id指定されたプロパティにdependが指定されている
  *
  * @private
  */
-var SCHEMA_ERR_CODE_ID_DEPEND = 10;
+var SCHEMA_ERR_DETAIL_ID_DEPEND = 4;
 
 /**
  * depend.onに指定されたプロパティが存在しない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_DEPEND_ON = 11;
+var SCHEMA_ERR_DETAIL_DEPEND_ON = 5;
 
 /**
  * depend.calcに関数が指定されていない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_DEPEND_CALC = 12;
+var SCHEMA_ERR_DETAIL_DEPEND_CALC = 6;
 
 /**
  * typeに文字列が指定されていない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALID_TYPE = 13;
+var SCHEMA_ERR_DETAIL_INVALID_TYPE = 7;
 
 /**
  * type文字列が不正
  *
  * @private
  */
-var SCHEMA_ERR_CODE_TYPE = 14;
+var SCHEMA_ERR_DETAIL_TYPE = 8;
 
 /**
  * typeに指定されたデータモデルが存在しない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_TYPE_DATAMODEL = 15;
+var SCHEMA_ERR_DETAIL_TYPE_DATAMODEL = 9;
 
 /**
  * type:enumなのにenumValueが指定されていない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_TYPE_ENUM_NO_ENUMVALUE = 16;
+var SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE = 10;
 
 /**
  * constraintにオブジェクトが指定されていない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALID_CONSTRAINT = 17;
+var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT = 11;
 
 /**
  * constraint.notNullの指定が不正
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 18;
+var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 12;
 
 /**
  * min-maxに数値が入力されなかった時のエラー
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX = 20;
+var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX = 13;
 
 /**
  * typeがinteger,numberじゃないのにconstraint.min/max を指定されたときのエラー
  *
  * @private
  */
-var SCHEMA_ERR_CODE_TYPE_CONSTRAINT = 21;
+var SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT = 14;
 
 /**
  * constraint.patternが正規表現じゃない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN = 22;
+var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN = 15;
 
 /**
  * minLength/maxLengthに0以上の整数値以外の値が渡された
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 23;
+var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 16;
 
 /**
  * constraintの指定に矛盾がある場合(mix > maxなど)
  *
  * @private
  */
-var SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT = 24;
+var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT = 17;
 
 /**
  * typeがenumでないのにenumValueが指定されている
  *
  * @private
  */
-var SCHEMA_ERR_CODE_ENUMVALUE_TYPE = 25;
+var SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE = 18;
 
 /**
  * enumValueが配列でない、または空配列
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALID_ENUMVALUE = 26;
+var SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE = 19;
 
 /**
  * id項目にdefaultValueが設定されている
  *
  * @private
  */
-var SCHEMA_ERR_CODE_DEFAULTVALUE_ID = 27;
+var SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID = 20;
 
 /**
  * defaultValueに設定された値がtype,constraintに指定された条件を満たしていない
  *
  * @private
  */
-var SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE = 28;
+var SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE = 21;
 
 /**
  * ID項目のconstraintに不正な指定がある
  *
  * @private
  */
-var SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID = 29;
+var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID = 22;
 
 /**
  * defaultValue指定されたプロパティにdependが指定されている
  *
  * @private
  */
-var SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND = 30;
+var SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND = 23;
 
 /**
  * dependの依存関係が循環している
  *
  * @private
  */
-var SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF = 31;
+var SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF = 24;
 
 /**
  * スキーマのエラーメッセージ
  *
  * @private
  */
-var DESCRIPTOR_VALIDATION_ERROR_MSGS = [];
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_DUPLICATED_ID] = 'ID指定されているプロパティが複数あります。ID指定は1つのプロパティのみに指定してください。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_NO_ID] = 'ID指定されているプロパティがありません。ID指定は必須です。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME] = '{0}をプロパティ名に指定できません。半角英数字,_,$ で構成される文字列で、先頭は数字以外である必要があります。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_ID_DEPEND] = '"{0}"プロパティの定義にエラーがあります。id指定されたプロパティにdependを指定することはできません。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_DEPEND_ON] = '"{0}"プロパティプロパティの定義にエラーがあります。depend.onに指定されたプロパティが存在しません。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_DEPEND_CALC] = '"{0}"プロパティプロパティの定義にエラーがあります。depend.calcには関数を指定する必要があります';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALID_TYPE] = '"{0}"プロパティプロパティの定義にエラーがあります。typeは文字列で指定して下さい。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_TYPE] = 'プロパティの定義にエラーがあります。typeに指定された文字列が不正です "{1}"';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_TYPE_DATAMODEL] = '"{0}"プロパティの定義にエラーがあります。 typeに指定されたデータモデル"{1}"は存在しません';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_TYPE_ENUM_NO_ENUMVALUE] = '"{0}"プロパティの定義にエラーがあります。 タイプにenumを指定する場合はenumValueも指定する必要があります';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALID_CONSTRAINT] = '"{0}"プロパティの定義にエラーがあります。 constraintはオブジェクトで指定してください';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1} の指定が不正です。trueまたはfalseで指定してください。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1} は、数値で指定してください。typeにintegerを指定している場合は整数値で指定する必要があります';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_TYPE_CONSTRAINT] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1} は、type:{2}の項目に対して指定することはできません。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN] = '"{0}"プロパティ constraint.{1}は正規表現オブジェクトで指定してください。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1}には正の整数を指定してください';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT] = '"{0}"プロパティの定義にエラーがあります。 constraintに矛盾する指定があります。{1},{2}';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_ENUMVALUE_TYPE] = '"{0}"プロパティの定義にエラーがあります。 enumValueはtypeに"enum"またはその配列が指定されている場合のみ指定可能です';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALID_ENUMVALUE] = '"{0}"プロパティの定義にエラーがあります。 enumValueは長さ1以上の配列を指定してください';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_DEFAULTVALUE_ID] = '"{0}"プロパティの定義にエラーがあります。id指定した項目にdefaultValueを設定することはできません';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE] = '"{0}"プロパティのdefaultValueに設定された値"{1}"は、typeまたはconstraintに定義された条件を満たしていません';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID] = '"{0}"プロパティの定義にエラーがあります。id指定された項目にconstraint.{1}:{2}を指定することはできません';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND] = '"{0}"プロパティの定義にエラーがあります。dependが指定された項目にdefaultValueを指定することはできません。';
-DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF] = '"{0}"プロパティの定義にエラーがあります。depend.onに指定されたプロパティの依存関係が循環しています';
+var DESCRIPTOR_VALIDATION_ERROR_MSGS = {};
+/* del begin */
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DUPLICATED_ID] = 'ID指定されているプロパティが複数あります。ID指定は1つのプロパティのみに指定してください。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_NO_ID] = 'ID指定されているプロパティがありません。ID指定は必須です。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME] = '{0}をプロパティ名に指定できません。半角英数字,_,$ で構成される文字列で、先頭は数字以外である必要があります。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_ID_DEPEND] = '"{0}"プロパティの定義にエラーがあります。id指定されたプロパティにdependを指定することはできません。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DEPEND_ON] = '"{0}"プロパティプロパティの定義にエラーがあります。depend.onに指定されたプロパティが存在しません。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DEPEND_CALC] = '"{0}"プロパティプロパティの定義にエラーがあります。depend.calcには関数を指定する必要があります';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_TYPE] = '"{0}"プロパティプロパティの定義にエラーがあります。typeは文字列で指定して下さい。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_TYPE] = 'プロパティの定義にエラーがあります。typeに指定された文字列が不正です "{1}"';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_TYPE_DATAMODEL] = '"{0}"プロパティの定義にエラーがあります。 typeに指定されたデータモデル"{1}"は存在しません';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE] = '"{0}"プロパティの定義にエラーがあります。 タイプにenumを指定する場合はenumValueも指定する必要があります';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT] = '"{0}"プロパティの定義にエラーがあります。 constraintはオブジェクトで指定してください';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1} の指定が不正です。trueまたはfalseで指定してください。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1} は、数値で指定してください。typeにintegerを指定している場合は整数値で指定する必要があります';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1} は、type:{2}の項目に対して指定することはできません。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN] = '"{0}"プロパティ constraint.{1}は正規表現オブジェクトで指定してください。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1}には正の整数を指定してください';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT] = '"{0}"プロパティの定義にエラーがあります。 constraintに矛盾する指定があります。{1},{2}';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE] = '"{0}"プロパティの定義にエラーがあります。 enumValueはtypeに"enum"またはその配列が指定されている場合のみ指定可能です';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE] = '"{0}"プロパティの定義にエラーがあります。 enumValueは長さ1以上の配列を指定してください';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID] = '"{0}"プロパティの定義にエラーがあります。id指定した項目にdefaultValueを設定することはできません';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE] = '"{0}"プロパティのdefaultValueに設定された値"{1}"は、typeまたはconstraintに定義された条件を満たしていません';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID] = '"{0}"プロパティの定義にエラーがあります。id指定された項目にconstraint.{1}:{2}を指定することはできません';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND] = '"{0}"プロパティの定義にエラーがあります。dependが指定された項目にdefaultValueを指定することはできません。';
+DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF] = '"{0}"プロパティの定義にエラーがあります。depend.onに指定されたプロパティの依存関係が循環しています';
+/* del end */
 
 /**
  * validateDescriptor, validateDescriptor/Schema/DefaultValueが返すエラー情報の配列に格納するエラーオブジェクトを作成する
@@ -261,15 +263,23 @@ DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF] = '"{0}"�
  * @param {Boolean} stopOnError
  * @returns {Object} エラーオブジェクト
  */
-function createErrorReason(/* var args */) {
+function createItemDescErrorReason(/* var args */) {
 	var args = arguments;
 	var code = args[0];
+	// メッセージがない(min版)ならメッセージを格納しない
 	args[0] = DESCRIPTOR_VALIDATION_ERROR_MSGS[code];
 	var msg = h5.u.str.format.apply(null, args);
+	if (!msg) {
+		return {
+			code: code
+		};
+	}
+	/* del begin */
 	return {
 		code: code,
 		message: msg
 	};
+	/* del end */
 }
 
 
@@ -829,7 +839,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		for ( var p in schema) {
 			if (schema[p] && schema[p].id === true) {
 				if (hasId) {
-					errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DUPLICATED_ID));
+					errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DUPLICATED_ID));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -838,7 +848,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 			}
 		}
 		if (!hasId) {
-			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_NO_ID));
+			errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_NO_ID));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -857,7 +867,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 		// プロパティ名が適切なものかどうかチェック
 		if (!isValidNamespaceIdentifier(schemaProp)) {
-			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_PROPERTY_NAME, schemaProp));
+			errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME,
+					schemaProp));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -870,7 +881,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		if (depend != null) {
 			// id指定されているならエラー
 			if (isId) {
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_ID_DEPEND, schemaProp));
+				errorReason
+						.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_ID_DEPEND, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -878,8 +890,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 			// defaultValueが指定されているならエラー
 			if (propObj.hasOwnProperty('defaultValue')) {
-				errorReason
-						.push(createErrorReason(SCHEMA_ERR_CODE_DEFAULTVALUE_DEPEND, schemaProp));
+				errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND,
+						schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -887,7 +899,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 			// dependが指定されているなら、onが指定されていること
 			if (depend.on == null) {
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_ON, schemaProp));
+				errorReason
+						.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEPEND_ON, schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -895,7 +908,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				var onArray = wrapInArray(depend.on);
 				for ( var i = 0, l = onArray.length; i < l; i++) {
 					if (!schema.hasOwnProperty(onArray[i])) {
-						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_ON, schemaProp));
+						errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEPEND_ON,
+								schemaProp));
 						if (stopOnError) {
 							return errorReason;
 						}
@@ -906,7 +920,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 			// dependが指定されているなら、calcが指定されていること
 			if (typeof depend.calc !== 'function') {
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_CALC, schemaProp));
+				errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEPEND_CALC,
+						schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -930,7 +945,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		var typeObj = {};
 		if (type != null) {
 			if (!isString(type)) {
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_TYPE, schemaProp));
+				errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_INVALID_TYPE,
+						schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -946,7 +962,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 
 			if (!typeObj || !typeObj.elmType) {
 				// パースできない文字列が指定されていたらエラー
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE, schemaProp, type));
+				errorReason
+						.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE, schemaProp, type));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -955,15 +972,15 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				if (typeObj.dataModel) {
 					if (isObsItemSchema) {
 						// ObservableItemのスキーマにはデータモデルを指定できないのでエラー
-						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE, schemaProp,
-								typeObj.dataModel));
+						errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE,
+								schemaProp, typeObj.dataModel));
 						if (stopOnError) {
 							return errorReason;
 						}
 					}
 					if (!manager.models[typeObj.dataModel]) {
-						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_DATAMODEL,
-								schemaProp, typeObj.dataModel));
+						errorReason.push(createItemDescErrorReason(
+								SCHEMA_ERR_DETAIL_TYPE_DATAMODEL, schemaProp, typeObj.dataModel));
 						if (stopOnError) {
 							return errorReason;
 						}
@@ -974,8 +991,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				if (typeObj.elmType === 'enum') {
 					// enumValueが無ければエラー
 					if (propObj.enumValue == null) {
-						errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_ENUM_NO_ENUMVALUE,
-								schemaProp));
+						errorReason.push(createItemDescErrorReason(
+								SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE, schemaProp));
 						if (stopOnError) {
 							return errorReason;
 						}
@@ -992,7 +1009,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		if (constraintObj != null) {
 			if (!$.isPlainObject(constraintObj)) {
 				// constraintがオブジェクトではない場合
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_CONSTRAINT, schemaProp));
+				errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT,
+						schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -1007,16 +1025,16 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 					case 'notNull':
 						if (val !== true && val !== false) {
 							// notNullにtrueまたはfalse以外が指定されていたらエラー
-							errorReason.push(createErrorReason(
-									SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
+							errorReason.push(createItemDescErrorReason(
+									SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
 									schemaProp, p));
 							if (stopOnError) {
 								return errorReason;
 							}
 						} else if (isId && !val) {
 							// id項目にnotNull:falseが指定されていたらエラー
-							errorReason.push(createErrorReason(
-									SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID, schemaProp, p, val));
+							errorReason.push(createItemDescErrorReason(
+									SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID, schemaProp, p, val));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -1028,8 +1046,10 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 						case 'integer':
 							if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)) {
 								// 整数値以外、NaNが指定されていたらエラー
-								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX, schemaProp, p));
+								errorReason
+										.push(createItemDescErrorReason(
+												SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX,
+												schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -1039,8 +1059,10 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							if (isString(val) || isString(val) || !isNumberValue(val)
 									|| val === Infinity || val === -Infinity || isStrictNaN(val)) {
 								// 整数値以外、NaNが指定されていたらエラー
-								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MIN_MAX, schemaProp, p));
+								errorReason
+										.push(createItemDescErrorReason(
+												SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX,
+												schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -1048,8 +1070,9 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							break;
 						default:
 							// typeの指定とconstraintに不整合があったらエラー
-							errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
-									schemaProp, p, typeObj.elmType));
+							errorReason.push(createItemDescErrorReason(
+									SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
+									typeObj.elmType));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -1062,18 +1085,17 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)
 									|| val < 0) {
 								// typeの指定とconstraintに不整合があったらエラー
-								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH,
+								errorReason.push(createItemDescErrorReason(
+										SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH,
 										schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
 							} else if (isId && p === 'maxLength' && val === 0) {
 								// id項目にmaxLength: 0 が指定されていたらエラー
-								errorReason
-										.push(createErrorReason(
-												SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID, schemaProp,
-												p, val));
+								errorReason.push(createItemDescErrorReason(
+										SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID, schemaProp, p,
+										val));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -1081,8 +1103,9 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							break;
 						default:
 							// type:'string'以外の項目にmaxLength,minLengthが指定されていればエラー
-							errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
-									schemaProp, p, typeObj.elmType));
+							errorReason.push(createItemDescErrorReason(
+									SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
+									typeObj.elmType));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -1093,18 +1116,17 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 						case 'string':
 							if (val !== true && val !== false) {
 								// notEmptyにtrue,false以外の指定がされていたらエラー
-								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
+								errorReason.push(createItemDescErrorReason(
+										SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
 										schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
 							} else if (isId && !val) {
 								// id項目にnotEmpty: false が指定されていたらエラー
-								errorReason
-										.push(createErrorReason(
-												SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT_ID, schemaProp,
-												p, val));
+								errorReason.push(createItemDescErrorReason(
+										SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID, schemaProp, p,
+										val));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -1112,8 +1134,9 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							break;
 						default:
 							// type:'string'以外の項目にnotEmptyが指定されていたらエラー
-							errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
-									schemaProp, p, typeObj.elmType));
+							errorReason.push(createItemDescErrorReason(
+									SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
+									typeObj.elmType));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -1124,8 +1147,10 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 						case 'string':
 							if ($.type(val) !== 'regexp') {
 								// patternにRegExpオブジェクト以外のものが指定されていたらエラー
-								errorReason.push(createErrorReason(
-										SCHEMA_ERR_CODE_INVALID_CONSTRAINT_PATTERN, schemaProp, p));
+								errorReason
+										.push(createItemDescErrorReason(
+												SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN,
+												schemaProp, p));
 								if (stopOnError) {
 									return errorReason;
 								}
@@ -1133,8 +1158,9 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 							break;
 						default:
 							// type:'string'以外の項目にpatterが指定されていたらエラー
-							errorReason.push(createErrorReason(SCHEMA_ERR_CODE_TYPE_CONSTRAINT,
-									schemaProp, p, typeObj.elmType));
+							errorReason.push(createItemDescErrorReason(
+									SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
+									typeObj.elmType));
 							if (stopOnError) {
 								return errorReason;
 							}
@@ -1146,8 +1172,9 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				// constraintの中身に矛盾がないかどうかチェック
 				if (constraintObj.notEmpty && constraintObj.maxLength === 0) {
 					// notNullなのにmanLengthが0
-					errorReason.push(createErrorReason(SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT,
-							schemaProp, 'notEmpty', 'maxLength'));
+					errorReason.push(createItemDescErrorReason(
+							SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp, 'notEmpty',
+							'maxLength'));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -1155,8 +1182,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				if (constraintObj.min != null && constraintObj.max != null
 						&& constraintObj.min > constraintObj.max) {
 					// min > max
-					errorReason.push(createErrorReason(SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT,
-							schemaProp, 'min', 'max'));
+					errorReason.push(createItemDescErrorReason(
+							SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp, 'min', 'max'));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -1164,8 +1191,9 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 				if (constraintObj.minLength != null && constraintObj.maxLength != null
 						&& constraintObj.minLength > constraintObj.maxLength) {
 					// minLength > maxLength
-					errorReason.push(createErrorReason(SCHEMA_ERR_CODE_CONSTRAINT_CONFLICT,
-							schemaProp, 'minLength', 'maxLength'));
+					errorReason.push(createItemDescErrorReason(
+							SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp, 'minLength',
+							'maxLength'));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -1178,7 +1206,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		if (enumValue != null) {
 			if (typeObj.elmType !== 'enum') {
 				// type指定がenumでないならエラー
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_ENUMVALUE_TYPE, schemaProp));
+				errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE,
+						schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -1186,7 +1215,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 			if (!$.isArray(enumValue) || enumValue.length === 0 || $.inArray(null, enumValue) > -1
 					|| $.inArray(undefined, enumValue) > -1) {
 				// 配列でない、または空配列、null,undefinedを含む配列ならエラー
-				errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALID_ENUMVALUE, schemaProp));
+				errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE,
+						schemaProp));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -1199,7 +1229,8 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 		// depend指定されている項目にdefaultValueが指定されている場合はエラー(dependのチェック時にエラーにしている)
 		if (isId && propObj.hasOwnProperty('defaultValue')) {
 			// id項目にdefaultValueが設定されていたらエラー
-			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEFAULTVALUE_ID, schemaProp));
+			errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID,
+					schemaProp));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -1212,7 +1243,7 @@ function validateSchema(schema, manager, stopOnError, isObsItemSchema) {
 	// （これ以前のチェックに引っかかっていたら、循環参照のチェックはしない）
 	for ( var prop in dependencyMap) {
 		if (checkDependCircularRef(prop, dependencyMap)) {
-			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_DEPEND_CIRCULAR_REF, p));
+			errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF, p));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -1248,8 +1279,8 @@ function validateDefaultValue(schema, checkFuncs, stopOnError) {
 		}
 		var defaultValue = propObj.defaultValue;
 		if (checkFuncs[p](defaultValue).length) {
-			errorReason.push(createErrorReason(SCHEMA_ERR_CODE_INVALIDATE_DEFAULTVALUE, p,
-					defaultValue));
+			errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE,
+					p, defaultValue));
 			if (stopOnError) {
 				return errorReason;
 			}
