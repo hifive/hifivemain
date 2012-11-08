@@ -7963,7 +7963,8 @@ $(function() {
 		}
 		try {
 			item.addEventListener(document.createEventObject ? document
-					.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
+					.createEventObject('itemsChange') : !!document.createEvent ? document
+					.createEvent('HTMLEvents') : new Event('itemsChange'));
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8159,7 +8160,8 @@ $(function() {
 		}
 		try {
 			dataModel1.addEventListener(document.createEventObject ? document
-					.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
+					.createEventObject('itemsChange') : !!document.createEvent ? document
+							.createEvent('HTMLEvents') : new Event('itemsChange'));
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8344,7 +8346,8 @@ $(function() {
 		}
 		try {
 			manager.addEventListener(document.createEventObject ? document
-					.createEventObject('itemsChange') : new Event('itemsChange'), function() {});
+					.createEventObject('itemsChange') : !!document.createEvent ? document
+							.createEvent('HTMLEvents') : new Event('itemsChange'));
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
