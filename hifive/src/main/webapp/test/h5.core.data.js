@@ -3159,7 +3159,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('has', {
+	module('DataModel.has', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
@@ -3300,8 +3300,266 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, e.message);
 		}
-
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	var regardsTestModel = null;
+	var regardsTestDataItem = null;
+	module('DataItem.regardAsNull', {
+		setup: function() {
+			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
+			manager = h5.core.data.createManager('TestManager');
+			createDataModel1();
+			regardsTestModel = manager.createModel({
+				name: 'TestModel',
+				schema: {
+					id: {
+						id: true
+					},
+					string: {
+						type: 'string'
+					},
+					number: {
+						type: 'number'
+					},
+					integer: {
+						type: 'integer'
+					},
+					boolean: {
+						type: 'boolean'
+					},
+					datamodel: {
+						type: '@TestDataModel1'
+					},
+					enum: {
+						type: 'enum',
+						enumValue: [1]
+					},
+					any: {
+						type: 'any'
+					},
+					stringAr: {
+						type: 'string[]'
+					},
+					numberAr: {
+						type: 'number[]'
+					},
+					integerAr: {
+						type: 'integer[]'
+					},
+					booleanAr: {
+						type: 'boolean[]'
+					},
+					datamodelAr: {
+						type: '@TestDataModel1[]'
+					},
+					enumAr: {
+						type: 'enum[]',
+						enumValue: [1]
+					},
+					anyAr: {
+						type: 'any[]'
+					},
+					string2: {
+						type: 'string',
+						defaultValue: 'a'
+					},
+					number2: {
+						type: 'number',
+						defaultValue: 1.5
+					},
+					integer2: {
+						type: 'integer',
+						defaultValue: 1
+					},
+					boolean2: {
+						type: 'boolean',
+						defaultValue: false
+					},
+					datamodel2: {
+						type: '@TestDataModel1',
+						defaultValue: dataModel1.create({
+							id: sequence.next()
+						})
+					},
+					enum2: {
+						type: 'enum',
+						enumValue: [1],
+						defaultValue: 1
+					},
+					any2: {
+						type: 'any',
+						defaultValue: $([])
+					},
+					stringAr2: {
+						type: 'string[]',
+						defaultValue: ['A', 'B']
+					},
+					numberAr2: {
+						type: 'number[]',
+						defaultValue: [10.2, 3.55]
+					},
+					integerAr2: {
+						type: 'integer[]',
+						defaultValue: [12]
+					},
+					booleanAr2: {
+						type: 'boolean[]',
+						defaultValue: [false, true]
+					},
+					datamodelAr2: {
+						type: '@TestDataModel1[]',
+						defaultValue: [dataModel1.create({
+							id: sequence.next()
+						}), dataModel1.create({
+							id: sequence.next()
+						})]
+					},
+					enumAr2: {
+						type: 'enum[]',
+						enumValue: [1],
+						defaultValue: [1, 1]
+					},
+					anyAr2: {
+						type: 'any[]',
+						defaultValue: [window]
+					}
+				}
+			});
+			regardsTestDataItem = regardsTestModel.create({
+				id: '1'
+			});
+		},
+		teardown: function() {
+			sequence = null;
+			regardsTestModel = null;
+			regardsTestDataItem = null;
+			dropAllModel(manager);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test(
+			'生成直後のDataItemに対してregardAsNull()を実行する',
+			function() {
+				equal(regardsTestDataItem.regardAsNull('string'), true, 'type:string');
+				equal(regardsTestDataItem.regardAsNull('number'), true, 'type:number');
+				equal(regardsTestDataItem.regardAsNull('integer'), true, 'type:integer');
+				equal(regardsTestDataItem.regardAsNull('boolean'), true, 'type:boolean');
+				equal(regardsTestDataItem.regardAsNull('datamodel'), true, 'type:@TestDataModel1');
+				equal(regardsTestDataItem.regardAsNull('enum'), true, 'type:enum');
+				equal(regardsTestDataItem.regardAsNull('any'), true, 'type:any');
+				equal(regardsTestDataItem.regardAsNull('stringAr'), true, 'type:string[]');
+				equal(regardsTestDataItem.regardAsNull('numberAr'), true, 'type:number[]');
+				equal(regardsTestDataItem.regardAsNull('integerAr'), true, 'type:integer[]');
+				equal(regardsTestDataItem.regardAsNull('datamodelAr'), true,
+						'type:@TestDataModel1[]');
+				equal(regardsTestDataItem.regardAsNull('enumAr'), true, 'type:enum[]');
+				equal(regardsTestDataItem.regardAsNull('anyAr'), true, 'type:any[]');
+				equal(regardsTestDataItem.regardAsNull('string2'), false,
+						'type:string defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('number2'), false,
+						'type:number defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('integer2'), false,
+						'type:integer defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('boolean2'), false,
+						'type:boolean defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('datamodel2'), false,
+						'type:@TestDataModel1 defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('enum2'), false, 'type:enum defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('any2'), false, 'type:any defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('stringAr2'), false,
+						'type:string[] defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('numberAr2'), false,
+						'type:number[] defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('integerAr2'), false,
+						'type:integer[] defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('datamodelAr2'), false,
+						'type:@TestDataModel1[] defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('enumAr2'), false,
+						'type:enum[] defaultValueあり');
+				equal(regardsTestDataItem.regardAsNull('anyAr2'), false,
+						'type:any[] defaultValueあり');
+			});
+
+	test(
+			'値を更新したDataItemに対してregardAsNull()を実行する',
+			function() {
+				regardsTestDataItem.set('string', 'A');
+				equal(regardsTestDataItem.regardAsNull('string'), false, 'type:string');
+				regardsTestDataItem.set('number', 8.9);
+				equal(regardsTestDataItem.regardAsNull('number'), false, 'type:number');
+				regardsTestDataItem.set('integer', 80);
+				equal(regardsTestDataItem.regardAsNull('integer'), false, 'type:integer');
+				regardsTestDataItem.set('boolean', false);
+				equal(regardsTestDataItem.regardAsNull('boolean'), false, 'type:boolean');
+				regardsTestDataItem.set('datamodel', dataModel1.create({
+					id: sequence.next()
+				}));
+				equal(regardsTestDataItem.regardAsNull('datamodel'), false, 'type:@TestDataModel1');
+				regardsTestDataItem.set('enum', 1);
+				equal(regardsTestDataItem.regardAsNull('enum'), false, 'type:enum');
+				regardsTestDataItem.set('any', $('<div></div>'));
+				equal(regardsTestDataItem.regardAsNull('any'), false, 'type:any');
+				regardsTestDataItem.set('stringAr', ['A']);
+				equal(regardsTestDataItem.regardAsNull('stringAr'), false, 'type:string[]');
+				regardsTestDataItem.set('numberAr', [10.2]);
+				equal(regardsTestDataItem.regardAsNull('numberAr'), false, 'type:number[]');
+				regardsTestDataItem.set('integerAr', [90]);
+				equal(regardsTestDataItem.regardAsNull('integerAr'), false, 'type:integer[]');
+				regardsTestDataItem.set('datamodelAr', [dataModel1.create({
+					id: sequence.next()
+				})]);
+				equal(regardsTestDataItem.regardAsNull('datamodelAr'), false,
+						'type:@TestDataModel1[]');
+				regardsTestDataItem.set('enumAr', [1, 1]);
+				equal(regardsTestDataItem.regardAsNull('enumAr'), false, 'type:enum[]');
+				regardsTestDataItem.set('anyAr', [document]);
+				equal(regardsTestDataItem.regardAsNull('anyAr'), false, 'type:any[]');
+				regardsTestDataItem.set('string2', null);
+
+				equal(regardsTestDataItem.regardAsNull('string2'), true,
+						'type:string defaultValueあり');
+				regardsTestDataItem.set('number2', null);
+				equal(regardsTestDataItem.regardAsNull('number2'), true,
+						'type:number defaultValueあり');
+				regardsTestDataItem.set('integer2', null);
+				equal(regardsTestDataItem.regardAsNull('integer2'), true,
+						'type:integer defaultValueあり');
+				regardsTestDataItem.set('boolean2', null);
+				equal(regardsTestDataItem.regardAsNull('boolean2'), true,
+						'type:boolean defaultValueあり');
+				regardsTestDataItem.set('datamodel2', null);
+				equal(regardsTestDataItem.regardAsNull('datamodel2'), true,
+						'type:@TestDataModel1 defaultValueあり');
+				regardsTestDataItem.set('enum2', null);
+				equal(regardsTestDataItem.regardAsNull('enum2'), true, 'type:enum defaultValueあり');
+				regardsTestDataItem.set('any2', null);
+				equal(regardsTestDataItem.regardAsNull('any2'), true, 'type:any defaultValueあり');
+				regardsTestDataItem.set('stringAr2', null);
+				equal(regardsTestDataItem.regardAsNull('stringAr2'), true,
+						'type:string[] defaultValueあり');
+				regardsTestDataItem.set('numberAr2', null);
+				equal(regardsTestDataItem.regardAsNull('numberAr2'), true,
+						'type:number[] defaultValueあり');
+				regardsTestDataItem.set('integerAr2', null);
+				equal(regardsTestDataItem.regardAsNull('integerAr2'), true,
+						'type:integer[] defaultValueあり');
+				regardsTestDataItem.set('datamodelAr2', null);
+				equal(regardsTestDataItem.regardAsNull('datamodelAr2'), true,
+						'type:@TestDataModel1[] defaultValueあり');
+				regardsTestDataItem.set('enumAr2', null);
+				equal(regardsTestDataItem.regardAsNull('enumAr2'), true,
+						'type:enum[] defaultValueあり');
+				regardsTestDataItem.set('anyAr2', null);
+				equal(regardsTestDataItem.regardAsNull('anyAr2'), true, 'type:any[] defaultValueあり');
+
+			});
 
 	//=============================
 	// Definition
@@ -8161,7 +8419,7 @@ $(function() {
 		try {
 			dataModel1.addEventListener(document.createEventObject ? document
 					.createEventObject('itemsChange') : !!document.createEvent ? document
-							.createEvent('HTMLEvents') : new Event('itemsChange'));
+					.createEvent('HTMLEvents') : new Event('itemsChange'));
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8347,7 +8605,7 @@ $(function() {
 		try {
 			manager.addEventListener(document.createEventObject ? document
 					.createEventObject('itemsChange') : !!document.createEvent ? document
-							.createEvent('HTMLEvents') : new Event('itemsChange'));
+					.createEvent('HTMLEvents') : new Event('itemsChange'));
 			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
@@ -8487,8 +8745,7 @@ $(function() {
 
 	module('イベント発火のタイミング', {
 		setup: function() {
-			sequence = h5.core.data
-					.createSequence(100, 1, h5.core.data.SEQ_STRING);
+			sequence = h5.core.data.createSequence(100, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			// dataModel1の作成
 			createDataModel1();
@@ -9193,8 +9450,7 @@ $(function() {
 	var evObj = {};
 	module('イベントオブジェクトの確認', {
 		setup: function() {
-			sequence = h5.core.data
-					.createSequence(100, 1, h5.core.data.SEQ_STRING);
+			sequence = h5.core.data.createSequence(100, 1, h5.core.data.SEQ_STRING);
 			manager = h5.core.data.createManager('TestManager');
 			// dataModel1の作成
 			createDataModel1();
@@ -9796,11 +10052,8 @@ $(function() {
 						'引数(1000, 100) next()を呼んだのでcurrent()の戻り値が1100になっていること');
 				strictEqual(sequence.next(), 1100, '引数(1000, 100) next()でcurrent()の値が取得できること');
 
-				sequence = h5.core.data.createSequence(null, null,
-						h5.core.data.SEQ_INT);
-				strictEqual(
-						sequence.returnType,
-						h5.core.data.SEQ_INT,
+				sequence = h5.core.data.createSequence(null, null, h5.core.data.SEQ_INT);
+				strictEqual(sequence.returnType, h5.core.data.SEQ_INT,
 						'引数(null, null, h5.core.data.SEQ_INT) returnTypeがh5.core.data.SEQ_INTであること');
 				strictEqual(sequence.current(), 1,
 						'引数(null, null, h5.core.data.SEQ_INT) 初期値が1であること');
@@ -9811,11 +10064,8 @@ $(function() {
 				strictEqual(sequence.next(), 2,
 						'引数(null, null, h5.core.data.SEQ_INT) next()でcurrent()の値が取得できること');
 
-				sequence = h5.core.data.createSequence(null, null,
-						h5.core.data.SEQ_STRING);
-				strictEqual(
-						sequence.returnType,
-						h5.core.data.SEQ_STRING,
+				sequence = h5.core.data.createSequence(null, null, h5.core.data.SEQ_STRING);
+				strictEqual(sequence.returnType, h5.core.data.SEQ_STRING,
 						'引数(null, null, h5.core.data.SEQ_STRING) returnTypeがh5.core.data.SEQ_STRINGであること');
 				strictEqual(sequence.current(), "1",
 						'引数(null, null, h5.core.data.SEQ_STRING) 初期値が"1"であること');
@@ -9826,11 +10076,8 @@ $(function() {
 				strictEqual(sequence.next(), "2",
 						'引数(null, null, h5.core.data.SEQ_STRING) next()でcurrent()の値が取得できること');
 
-				sequence = h5.core.data.createSequence(500, 5,
-						h5.core.data.SEQ_STRING);
-				strictEqual(
-						sequence.returnType,
-						h5.core.data.SEQ_STRING,
+				sequence = h5.core.data.createSequence(500, 5, h5.core.data.SEQ_STRING);
+				strictEqual(sequence.returnType, h5.core.data.SEQ_STRING,
 						'引数(500, 5, h5.core.data.SEQ_STRING) returnTypeがh5.core.data.SEQ_STRINGであること');
 				strictEqual(sequence.current(), "500",
 						'引数(500, 5, h5.core.data.SEQ_STRING) 初期値が"500"であること');
