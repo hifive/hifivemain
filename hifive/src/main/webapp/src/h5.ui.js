@@ -722,7 +722,7 @@
 				// chrome23βでも同様の問題が起きたが、
 				// chrome24devとchrome25canaryではきちんと消えることを確認した。(2012/11/06現在)
 				var deg = 0;
-				window.runId = this._runId = setInterval(function() {
+				this._runId = setInterval(function() {
 					deg++;
 					canvas.style.webkitTransform = 'rotate(' + deg + 'deg)';
 					if (deg >= 360) {

@@ -1653,7 +1653,6 @@
 						return;
 					}
 
-
 					// changeイベントオブジェクトの作成
 					var ev = {
 						type: 'change',
@@ -1664,10 +1663,6 @@
 						}
 					};
 
-					// newValueは現在の値、oldValueはmanager._oldValueLogsの中なので、ここでpropsを入れる必要ない
-					//					ev.props[propName] = {};
-
-					// TODO ObsItemのイベントを上げる
 					// setにオブジェクトで渡されて、更新される場合があるので、isUpdateSessionとかで判断する必要がある
 					item.dispatchEvent(ev);
 				}
