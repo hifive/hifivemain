@@ -477,7 +477,7 @@
 				ok(e.message, 'エラーからmessageプロパティが取得できること。' + e.message);
 				strictEqual(h5.core.view.isAvailable('test1'), false,
 						'scriptタグで囲まれていないテンプレートはエラーとして処理されること。');
-				equal(e.code, ERR.ERR_CODE_TEMPLATE_FILE, 'エラーからcodeプロパティが取得できること。:' + e.code);
+				equal(e.code, ERR.ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT, 'エラーからcodeプロパティが取得できること。:' + e.code);
 				ok(!!e.detail.url, 'エラーからdetail.urlプロパティが取得できること。:' + e.detail.url);
 				start();
 			});
@@ -562,7 +562,7 @@
 		asyncTest('load() 構文エラーのテンプレートファイルを取得', 5, function() {
 			var p = h5.core.view.load(['./template/test5.ejs']);
 			p.fail(function(e) {
-				equal(e.code, ERR.ERR_CODE_TEMPLATE_COMPILE, 'エラーコード: ' + e.code);
+				equal(e.code, ERR.ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR, 'エラーコード: ' + e.code);
 				ok(e.message, 'エラーメッセージ：' + e.message);
 				ok(e.detail.url.search(/http:\/\//) === 0
 						&& e.detail.url.search(/\/template\/test5\.ejs$/),
@@ -1116,7 +1116,7 @@
 
 		test('register()で、idを指定していない時または、テンプレート文字列に文字列でないものを指定した時に例外が発生すること。', 4, function() {
 			var templateId = 'id1';
-			var templateStringErrorCode = ERR.ERR_CODE_TEMPLATE_COMPILE;
+			var templateStringErrorCode = ERR.ERR_CODE_TEMPLATE_COMPILE_NOT_STRING;
 
 			try {
 				h5.core.view.register(templateId);
@@ -1146,7 +1146,7 @@
 
 		test('register() テンプレート文字列が不正な時にエラーが発生すること。', 1, function() {
 			var templateId = 'id1';
-			var errorCode = ERR.ERR_CODE_TEMPLATE_COMPILE;
+			var errorCode = ERR.ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR;
 			try {
 				h5.core.view.register(templateId, '[%= [%= %]');
 				ok(false, 'エラーが発生していません');
