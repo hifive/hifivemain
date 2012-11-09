@@ -217,22 +217,19 @@ $(function() {
 		strictEqual($fixture.find('a').length, 0, 'バインドした文字列にHTMLタグが含まれていても、テキストノード扱いになっていること');
 	});
 
-	test('複数要素にバインドできること', 4, function() {
+	test('複数要素にバインドできること', 2, function() {
 		view.append($fixture, 'bindSpan');
 		view.append($fixture, 'bindSpan');
-		var args = [$fixture.find('span'), '#qunit-fixture>span'];
-		for ( var i = 0, l = args.length; i < l; i++) {
-			try {
-				view.bind(args[i], {
-					test: 'test'
-				});
+		try {
+			view.bind($fixture.find('span'), {
+				test: 'test'
+			});
 
-				var elem = $('#qunit-fixture > span');
-				equal(elem.eq(0).text(), 'test');
-				equal(elem.eq(1).text(), 'test');
-			} catch (e) {
-				ok(false, 'エラーが発生したためテスト失敗。');
-			}
+			var elem = $('#qunit-fixture > span');
+			equal(elem.eq(0).text(), 'test');
+			equal(elem.eq(1).text(), 'test');
+		} catch (e) {
+			ok(false, 'エラーが発生したためテスト失敗。');
 		}
 	});
 
@@ -1316,7 +1313,8 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('type:any[]に格納されたObservableArrayをDataItem#set()で更新する', function() {
+	test('type:any[]に格納されたObservableArrayをDataItem#set()で更新する',
+			function() {
 				function testFunc(item) {
 					var name = item instanceof testDataItem.constructor ? 'DataItem'
 							: 'ObservableItem';
@@ -1361,7 +1359,8 @@ $(function() {
 				testFunc(testObsItem);
 			});
 
-	test('type:anyに格納されたObservableArrayをDataItem#set()で更新する', function() {
+	test('type:anyに格納されたObservableArrayをDataItem#set()で更新する',
+			function() {
 				function testFunc(item) {
 					var name = item instanceof testDataItem.constructor ? 'DataItem'
 							: 'ObservableItem';
@@ -2586,8 +2585,7 @@ $(function() {
 		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '20', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '30', 'バインドされていること');
 
-		strictEqual($('#dataBindTest>div>div:eq(2)>span').length, 0,
-				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(2)>span').length, 0, '配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(3)>span').length, ar[1].ar2.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(0)').text(), '100', 'バインドされていること');
@@ -2689,8 +2687,7 @@ $(function() {
 		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '20', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '30', 'バインドされていること');
 
-		strictEqual($('#dataBindTest>div>div:eq(2)>span').length, 0,
-				'配列の要素数分DOMが生成されること');
+		strictEqual($('#dataBindTest>div>div:eq(2)>span').length, 0, '配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(3)>span').length, oar[1].ar2.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(0)').text(), '100', 'バインドされていること');
