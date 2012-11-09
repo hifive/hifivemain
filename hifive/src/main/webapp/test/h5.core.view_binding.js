@@ -40,29 +40,14 @@ $(function() {
 	var $fixture = $('#qunit-fixture');
 
 	/**
-	 * viewインスタンス
-	 */
-	var view = h5.core.view;
-
-	/**
 	 * データバインディングのエラーコード定数
 	 */
 	var ERR_BIND = ERRCODE.h5.core.view_binding;
 
 	/**
-	 * h5.uiのエラーコード定数
-	 */
-	var ERR_U = ERRCODE.h5.u;
-
-	/**
 	 * viewのエラーコード定数
 	 */
 	var ERR_VIEW = ERRCODE.h5.core.view;
-
-	/**
-	 * h5.core.dataのエラーコード定数
-	 */
-	var ERR_DATA = ERRCODE.h5.core.data;
 
 	/**
 	 * view
