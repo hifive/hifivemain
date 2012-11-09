@@ -134,6 +134,10 @@
 		node.setAttribute(attr, value);
 	}
 
+	function removeElemAttribute(node, attr) {
+		node.removeAttribute(attr);
+	}
+
 	function toArray(pseudoArray) {
 		if (!pseudoArray) {
 			return null;
@@ -573,8 +577,8 @@
 				if (!detail) {
 					throwFwError(ERR_CODE_REQUIRE_DETAIL);
 				}
-				value == null ? $element.removeAttr(detail) : setElemAttribute($element[0], detail,
-						value);
+				//ここのremoveAttr(), attr()はユーザーによる属性操作なので、jQueryのattr APIを使う
+				value == null ? $element.removeAttr(detail) : $element.attr(detail, value);
 				break;
 			case 'style':
 				if (!detail) {
@@ -1323,15 +1327,14 @@
 			var rootVid = getElemAttribute(rootElem, DATA_H5_DYN_VID);
 			if (rootVid != null) {
 				this._removeBindingEntry(rootVid);
-				$rootElem.removeAttr(DATA_H5_DYN_VID);
+				removeElemAttribute(rootElem, DATA_H5_DYN_VID);
 			}
 
 			//子要素でviewUidを持っている要素を列挙し、全てのバインディングエントリを削除
 			var that = this;
 			$rootElem.find('[' + DATA_H5_DYN_VID + ']').each(function() {
-				var $this = $(this);
 				that._removeBindingEntry(getElemAttribute(this, DATA_H5_DYN_VID));
-				$this.removeAttr(DATA_H5_DYN_VID);
+				removeElemAttribute(this, DATA_H5_DYN_VID);
 			});
 		},
 
