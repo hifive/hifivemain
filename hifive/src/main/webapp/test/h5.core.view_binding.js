@@ -77,6 +77,34 @@ $(function() {
 	// Functions
 	//=============================
 
+	function rgbToHex(rgbStr) {
+		if (/^#\d{3,6}$/.test(rgbStr)) {
+			return rgbStr;
+		}
+
+		var hexStr = '#';
+		var patterns = rgbStr.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+
+		if (!patterns) {
+			return rgbStr;
+		}
+
+		var hexs = [];
+
+		for ( var i = 1; i < patterns.length; i++) {
+			hexs.push(("0" + parseInt(patterns[i]).toString(16)).slice(-2));
+		}
+
+		// #9922ff->#92fのようにショートハンドに変換する
+		if (hexs[0][0] === hexs[0][1] && hexs[1][0] === hexs[1][1] && hexs[2][0] === hexs[2][1]) {
+			hexStr += (hexs[0][0] + hexs[1][0] + hexs[2][0]);
+		} else {
+			hexStr += hexs.join();
+		}
+
+		return hexStr;
+	}
+
 	/**
 	 * 引数に指定された値をdata-h5-bind属性に持つspan要素を作って返す
 	 */
@@ -2075,12 +2103,12 @@ $(function() {
 		var span1 = $span[0];
 		var span2 = $span[1];
 		strictEqual(span1.style.marginLeft, '15px', 'バインドしたスタイルが適応されていること');
-		strictEqual(span1.style.color, 'red', 'もともと指定していたスタイルがなくなっていないこと');
+		strictEqual(rgbToHex($(span1).css('color')), '#f00', '上書きされていないスタイルはそのまま残っていること');
 		strictEqual(span2.style.marginTop, '5px', 'バインドしたスタイルが適応されていること');
 		strictEqual(span2.style.marginRight, '10px', 'バインドしたスタイルが適応されていること');
 		strictEqual(span2.style.marginBottom, '20px', 'バインドしたスタイルが適応されていること');
 		strictEqual(span2.style.marginLeft, '30px', 'バインドしたスタイルが適応されていること');
-		strictEqual(span2.style.color, 'red', 'もともと指定していたスタイルがなくなっていないこと');
+		strictEqual(rgbToHex($(span2).css('color')), '#f00', '上書きされていないスタイルはそのまま残っていること');
 	});
 
 	test('プロパティ名を指定せずに、styleへバインド', function() {
@@ -2908,13 +2936,22 @@ $(function() {
 				id: {
 					id: true
 				},
-				val: {
+				txt: {
 					type: 'string',
 					defaultValue: 'TEST'
 				},
 				cn: {
 					type: 'string',
 					defaultValue: null
+				},
+				at: {
+					type: 'string'
+				},
+				st: {
+					type: 'string'
+				},
+				txt2: {
+					type: 'string'
 				}
 			};
 			var schema2 = {
@@ -2940,8 +2977,11 @@ $(function() {
 			});
 			var testDataItem1_2 = testBaseDataModel.create({
 				id: '2',
-				val: 'BBB',
-				cn: 'hoge'
+				txt: 'BBB',
+				cn: 'hoge',
+				at: 'dynId1',
+				st: 'green',
+				txt2: '<div class="sec">testtest</div>'
 			});
 			var testDataItem2_1 = testDataModel2.create({
 				id: '1',
@@ -2949,7 +2989,7 @@ $(function() {
 			});
 
 			view.append($fixture, 'clone1');
-			cloneTestBinding = h5.core.view.bind($('#dataBindTest'), {
+			cloneTestBinding = h5.core.view.bind('#dataBindTest', {
 				item: testDataItem2_1
 			});
 
@@ -2962,32 +3002,46 @@ $(function() {
 		}
 	});
 
-	test('バインドで生成された要素を検索できるか', function() {
-		equal($('['+ DATA_H5_BIND +']').length, 1, DATA_H5_BIND +'属性でクエリできること');
-		equal($('['+ DATA_H5_CONTEXT +']').length, 2, DATA_H5_CONTEXT +'属性でクエリできること');
-		equal($('['+ DATA_H5_DYN_CTX +']').length, 2, DATA_H5_DYN_CTX +'属性でクエリできること');
-		equal($('['+ DATA_H5_DYN_VID +']').length, 3, DATA_H5_DYN_VID +'属性でクエリできること');
-		equal($('['+ DATA_H5_DYN_BIND_ROOT +']').length, 1, DATA_H5_DYN_BIND_ROOT +'属性でクエリできること');
-		equal($('['+ DATA_H5_DYN_CN +']').length, 1, DATA_H5_DYN_CN +'属性でクエリできること');
+	test('バインドで生成された要素を検索できるか',
+			function() {
+				equal($('[' + DATA_H5_BIND + ']').length, 2, DATA_H5_BIND + '属性でクエリできること');
+				equal($('[' + DATA_H5_CONTEXT + ']').length, 2, DATA_H5_CONTEXT + '属性でクエリできること');
+				equal($('[' + DATA_H5_DYN_CTX + ']').length, 2, DATA_H5_DYN_CTX + '属性でクエリできること');
+				equal($('[' + DATA_H5_DYN_VID + ']').length, 3, DATA_H5_DYN_VID + '属性でクエリできること');
+				equal($('[' + DATA_H5_DYN_BIND_ROOT + ']').length, 1, DATA_H5_DYN_BIND_ROOT
+						+ '属性でクエリできること');
+				equal($('[' + DATA_H5_DYN_CN + ']').length, 1, DATA_H5_DYN_CN + '属性でクエリできること');
 
-		var $dataBindTest = $('#dataBindTest');
+				var $dataBindTest = $('#dataBindTest');
 
-		equal($dataBindTest.find('['+ DATA_H5_BIND +']').length, 1, DATA_H5_BIND +'属性でfindできること');
-		equal($dataBindTest.find('['+ DATA_H5_CONTEXT +']').length, 2, DATA_H5_CONTEXT +'属性でfindできること');
-		equal($dataBindTest.find('['+ DATA_H5_DYN_CTX +']').length, 2, DATA_H5_DYN_CTX +'属性でfindできること');
-		equal($dataBindTest.find('['+ DATA_H5_DYN_VID +']').length, 2, DATA_H5_DYN_VID +'属性でfindできること');
-		equal($dataBindTest.find('['+ DATA_H5_DYN_BIND_ROOT +']').length, 0, DATA_H5_DYN_BIND_ROOT +'属性でfindできること');
-		equal($dataBindTest.find('['+ DATA_H5_DYN_CN +']').length, 1, DATA_H5_DYN_CN +'属性でfindできること');
-	});
+				equal($dataBindTest.find('[' + DATA_H5_BIND + ']').length, 2, DATA_H5_BIND
+						+ '属性でfindできること');
+				equal($dataBindTest.find('[' + DATA_H5_CONTEXT + ']').length, 2, DATA_H5_CONTEXT
+						+ '属性でfindできること');
+				equal($dataBindTest.find('[' + DATA_H5_DYN_CTX + ']').length, 2, DATA_H5_DYN_CTX
+						+ '属性でfindできること');
+				equal($dataBindTest.find('[' + DATA_H5_DYN_VID + ']').length, 2, DATA_H5_DYN_VID
+						+ '属性でfindできること');
+				equal($dataBindTest.find('[' + DATA_H5_DYN_BIND_ROOT + ']').length, 0,
+						DATA_H5_DYN_BIND_ROOT + '属性でfindできること');
+				equal($dataBindTest.find('[' + DATA_H5_DYN_CN + ']').length, 1, DATA_H5_DYN_CN
+						+ '属性でfindできること');
 
-	asyncTest('動的に生成(クローン)された要素でイベントが発火するか', 2, function() {
+				equal($('#dynId1').length, 1, '動的に追加したDOM要素を、IDセレクタで指定して取得できること');
+				equal($('span[style*="green"]').length, 1, '動的に追加したDOM要素を、スタイルをセレクタで指定して取得できること');
+				equal($('.hoge').length, 1, '動的に追加したDOM要素を、クラスセレクタで指定して取得できること');
+				equal($('span:contains("BBB")').length, 1, '動的に追加したDOM要素を、テキストをセレクタで指定して取得できること');
+			});
+
+	asyncTest('動的に生成(クローン)された要素の子要素でイベントが発火するか', 2, function() {
 		var controller = {
 			__name: 'dynElementTestController',
-			'.class1.hoge click': function() {
-				ok('動的に生成された要素からイベントが発生すること');
+			'.class1.hoge click': function(context) {
+				ok(context.event.target.className + ':動的に生成された要素の子要素からイベントが発生すること');
 			},
 			'{body} click': function(context) {
-				equal(context.event.target.className, 'class1 hoge', '動的に生成された要素で発生したイベントがバブリングすること');
+				equal(context.event.target.className, 'class1 hoge',
+						'動的に生成された要素で発生したイベントがバブリングすること');
 				this.dispose();
 			},
 			__dispose: function() {
@@ -3001,4 +3055,30 @@ $(function() {
 		});
 
 	});
+
+	asyncTest('動的に生成(クローン)された要素の子孫要素でイベントが発火するか', 2,
+			function() {
+				var controller = {
+					__name: 'dynElementTestController',
+					'.class1.hoge click': function(context) {
+						ok(false, 'イベント発生元のDOM要素の親要素にあたらないのでイベントは発生しないこと');
+					},
+					'{body} click': function(context) {
+						equal(context.event.target.className, 'sec',
+								'動的に生成された要素の子孫要素で発生したイベントがバブリングすること');
+						this.dispose();
+					},
+					'.sec click': function(context) {
+						ok(true, context.event.target.className + ':動的に生成された要素の子孫要素からイベントが発生すること');
+					},
+					__dispose: function() {
+						start();
+					}
+				};
+
+				var c = h5.core.controller('#dataBindTest', controller);
+				c.readyPromise.done(function() {
+					$('.sec').click();
+				});
+			});
 });
