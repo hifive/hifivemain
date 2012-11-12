@@ -341,7 +341,12 @@
 
 			//1要素分のノードのクローンを作成
 			for ( var j = 0, childLen = srcRootChildNodes.length; j < childLen; j++) {
-				var clonedInnerNode = $(srcRootChildNodes[j].outerHTML)[0]; //.cloneNode(true); //deep copy
+				var clonedInnerNode;
+				if (srcRootChildNodes[j].nodeType === NODE_TYPE_ELEMENT) {
+					clonedInnerNode = $(srcRootChildNodes[j].outerHTML)[0]; //.cloneNode(true); //deep copy
+				} else {
+					clonedInnerNode = srcRootChildNodes[j].cloneNode(true);
+				}
 
 				loopNodes.push(clonedInnerNode);
 
@@ -607,7 +612,12 @@
 		var ret = [];
 
 		for ( var i = 0, len = childNodes.length; i < len; i++) {
-			var cloned = $(childNodes[i].outerHTML)[0]; //.cloneNode(true)
+			var cloned;
+			if (childNodes[i].nodeType === NODE_TYPE_ELEMENT) {
+				cloned = $(childNodes[i].outerHTML)[0]; //.cloneNode(true)
+			} else {
+				cloned = childNodes[i].cloneNode(true);
+			}
 			ret.push(cloned);
 		}
 
