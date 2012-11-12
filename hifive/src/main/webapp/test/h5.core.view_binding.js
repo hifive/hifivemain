@@ -2739,12 +2739,16 @@ $(function() {
 
 		equal($('#dataBindTest span').text(), 'abc', 'strプロパティのdefaultValueがビューに反映されていること');
 
-		var ctx = $('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length;
+		var ctx = $('[' + DATA_H5_BIND + '],[' + DATA_H5_CONTEXT + '],[' + DATA_H5_LOOP_CONTEXT
+				+ ']', '#dataBindTest').length;
 
 		binding.unbind();
 
-		equal($('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length, ctx, 'data-h5-bind, context, loop-contextは削除されていないこと');
-		equal($('['+ DATA_H5_DYN_CTX +'],['+ DATA_H5_DYN_VID +'],['+ DATA_H5_DYN_BIND_ROOT +'],['+ DATA_H5_DYN_CN +']', '#dataBindTest').length, 0, 'data-h5-dyn-*属性が全て削除されていること');
+		equal($('[' + DATA_H5_BIND + '],[' + DATA_H5_CONTEXT + '],[' + DATA_H5_LOOP_CONTEXT + ']',
+				'#dataBindTest').length, ctx, 'data-h5-bind, context, loop-contextは削除されていないこと');
+		equal($('[' + DATA_H5_DYN_CTX + '],[' + DATA_H5_DYN_VID + '],[' + DATA_H5_DYN_BIND_ROOT
+				+ '],[' + DATA_H5_DYN_CN + ']', '#dataBindTest').length, 0,
+				'data-h5-dyn-*属性が全て削除されていること');
 
 		dataItem.set({
 			test: 'AAAA'
@@ -2772,12 +2776,16 @@ $(function() {
 
 		equal($('#dataBindTest span').text(), 'abc', 'strプロパティのdefaultValueがビューに反映されていること');
 
-		var ctx = $('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length;
+		var ctx = $('[' + DATA_H5_BIND + '],[' + DATA_H5_CONTEXT + '],[' + DATA_H5_LOOP_CONTEXT
+				+ ']', '#dataBindTest').length;
 
 		binding.unbind();
 
-		equal($('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length, ctx, 'data-h5-bind, context, loop-contextは削除されていないこと');
-		equal($('['+ DATA_H5_DYN_CTX +'],['+ DATA_H5_DYN_VID +'],['+ DATA_H5_DYN_BIND_ROOT +'],['+ DATA_H5_DYN_CN +']', '#dataBindTest').length, 0, 'data-h5-dyn-*属性が全て削除されていること');
+		equal($('[' + DATA_H5_BIND + '],[' + DATA_H5_CONTEXT + '],[' + DATA_H5_LOOP_CONTEXT + ']',
+				'#dataBindTest').length, ctx, 'data-h5-bind, context, loop-contextは削除されていないこと');
+		equal($('[' + DATA_H5_DYN_CTX + '],[' + DATA_H5_DYN_VID + '],[' + DATA_H5_DYN_BIND_ROOT
+				+ '],[' + DATA_H5_DYN_CN + ']', '#dataBindTest').length, 0,
+				'data-h5-dyn-*属性が全て削除されていること');
 
 		obsItem.set({
 			test: 'AAAA'
@@ -2811,12 +2819,18 @@ $(function() {
 				equal($('#dataBindTest span').eq(1).text(), '2', 'ObservableArrayの内容がビューに表示されていること');
 				equal($('#dataBindTest span').eq(2).text(), '3', 'ObservableArrayの内容がビューに表示されていること');
 
-				var ctx = $('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length;
+				var ctx = $('[' + DATA_H5_BIND + '],[' + DATA_H5_CONTEXT + '],['
+						+ DATA_H5_LOOP_CONTEXT + ']', '#dataBindTest').length;
 
 				binding.unbind();
 
-				equal($('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length, ctx, 'data-h5-bind, context, loop-contextは削除されていないこと');
-				equal($('['+ DATA_H5_DYN_CTX +'],['+ DATA_H5_DYN_VID +'],['+ DATA_H5_DYN_BIND_ROOT +'],['+ DATA_H5_DYN_CN +']', '#dataBindTest').length, 0, 'data-h5-dyn-*属性が全て削除されていること');
+				equal($('[' + DATA_H5_BIND + '],[' + DATA_H5_CONTEXT + '],[' + DATA_H5_LOOP_CONTEXT
+						+ ']', '#dataBindTest').length, ctx,
+						'data-h5-bind, context, loop-contextは削除されていないこと');
+				equal(
+						$('[' + DATA_H5_DYN_CTX + '],[' + DATA_H5_DYN_VID + '],['
+								+ DATA_H5_DYN_BIND_ROOT + '],[' + DATA_H5_DYN_CN + ']',
+								'#dataBindTest').length, 0, 'data-h5-dyn-*属性が全て削除されていること');
 
 				oar.push({
 					test: 1000
@@ -2886,4 +2900,105 @@ $(function() {
 				equal($('#dataBindTest span').eq(1).text(), '2', 'ビューが書き換わっていないこと');
 				equal($('#dataBindTest span').eq(2).text(), '3', 'ビューが書き換わっていないこと');
 			});
+
+	var cloneTestBinding = null;
+	module('動的に生成(クローン)された要素に対する操作', {
+		setup: function() {
+			var schema = {
+				id: {
+					id: true
+				},
+				val: {
+					type: 'string',
+					defaultValue: 'TEST'
+				},
+				cn: {
+					type: 'string',
+					defaultValue: null
+				}
+			};
+			var schema2 = {
+				id: {
+					id: true
+				},
+				data: {
+					type: '@BaseTestModel'
+				}
+			};
+			var manager = h5.core.data.createManager('TestManager');
+			var testBaseDataModel = manager.createModel({
+				name: 'BaseTestModel',
+				schema: schema
+			});
+			var testDataModel2 = manager.createModel({
+				name: 'TestModel',
+				schema: schema2
+			});
+
+			var testDataItem1_1 = testBaseDataModel.create({
+				id: '1'
+			});
+			var testDataItem1_2 = testBaseDataModel.create({
+				id: '2',
+				val: 'BBB',
+				cn: 'hoge'
+			});
+			var testDataItem2_1 = testDataModel2.create({
+				id: '1',
+				data: testDataItem1_1
+			});
+
+			view.append($fixture, 'clone1');
+			cloneTestBinding = h5.core.view.bind($('#dataBindTest'), {
+				item: testDataItem2_1
+			});
+
+			testDataItem2_1.set({
+				data: testDataItem1_2
+			});
+		},
+		teardown: function() {
+			cloneTestBinding.unbind();
+		}
+	});
+
+	test('バインドで生成された要素を検索できるか', function() {
+		equal($('['+ DATA_H5_BIND +']').length, 1, DATA_H5_BIND +'属性でクエリできること');
+		equal($('['+ DATA_H5_CONTEXT +']').length, 2, DATA_H5_CONTEXT +'属性でクエリできること');
+		equal($('['+ DATA_H5_DYN_CTX +']').length, 2, DATA_H5_DYN_CTX +'属性でクエリできること');
+		equal($('['+ DATA_H5_DYN_VID +']').length, 3, DATA_H5_DYN_VID +'属性でクエリできること');
+		equal($('['+ DATA_H5_DYN_BIND_ROOT +']').length, 1, DATA_H5_DYN_BIND_ROOT +'属性でクエリできること');
+		equal($('['+ DATA_H5_DYN_CN +']').length, 1, DATA_H5_DYN_CN +'属性でクエリできること');
+
+		var $dataBindTest = $('#dataBindTest');
+
+		equal($dataBindTest.find('['+ DATA_H5_BIND +']').length, 1, DATA_H5_BIND +'属性でfindできること');
+		equal($dataBindTest.find('['+ DATA_H5_CONTEXT +']').length, 2, DATA_H5_CONTEXT +'属性でfindできること');
+		equal($dataBindTest.find('['+ DATA_H5_DYN_CTX +']').length, 2, DATA_H5_DYN_CTX +'属性でfindできること');
+		equal($dataBindTest.find('['+ DATA_H5_DYN_VID +']').length, 2, DATA_H5_DYN_VID +'属性でfindできること');
+		equal($dataBindTest.find('['+ DATA_H5_DYN_BIND_ROOT +']').length, 0, DATA_H5_DYN_BIND_ROOT +'属性でfindできること');
+		equal($dataBindTest.find('['+ DATA_H5_DYN_CN +']').length, 1, DATA_H5_DYN_CN +'属性でfindできること');
+	});
+
+	asyncTest('動的に生成(クローン)された要素でイベントが発火するか', 2, function() {
+		var controller = {
+			__name: 'dynElementTestController',
+			'.class1.hoge click': function() {
+				ok('動的に生成された要素からイベントが発生すること');
+			},
+			'{body} click': function(context) {
+				equal(context.event.target.className, 'class1 hoge', '動的に生成された要素で発生したイベントがバブリングすること');
+				this.dispose();
+			},
+			__dispose: function() {
+				start();
+			}
+		};
+
+		var c = h5.core.controller('#dataBindTest', controller);
+		c.readyPromise.done(function() {
+			$('.hoge').click();
+		});
+
+	});
 });
