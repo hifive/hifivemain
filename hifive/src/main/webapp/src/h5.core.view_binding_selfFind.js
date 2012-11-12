@@ -127,10 +127,13 @@
 	(function() {
 		var cloneTest = document.createElement('div');
 		cloneTest.h5Dummy = 'a';
-		var cloned = cloneTest.cloneNode();
+		var cloned = cloneTest.cloneNode(false);
 		var useOuterHtmlClone = (cloned.h5Dummy !== undefined);
+		cloneTest.h5Dummy = undefined;
 
 		if (useOuterHtmlClone) {
+			cloned.h5Dummy = undefined;
+
 			//IE7の場合、cloneNodeでノードを複製すると、$().find()でクローンした要素を取得できなくなる場合があった（詳細な原因は不明）。
 			//また、IE8以下、またはIE9でもDocModeが8以下の場合、ノードに付加したJSプロパティやattachEventのイベントがクローン先にもコピーされてしまう。
 			//そのため、cloneNode()した結果JSプロパティがコピーされる環境（== DocMode<=8の環境、を想定）では
