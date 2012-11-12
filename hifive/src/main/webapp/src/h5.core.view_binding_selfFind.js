@@ -123,6 +123,33 @@
 	// Functions
 	// =============================
 
+	var cloneNodeDeeply;
+	(function() {
+		var cloneTest = document.createElement('div');
+		cloneTest.h5Dummy = 'a';
+		var cloned = cloneTest.cloneNode();
+		var useOuterHtmlClone = (cloned.h5Dummy !== undefined);
+
+		if (useOuterHtmlClone) {
+			//IE7の場合、cloneNodeでノードを複製すると、$().find()でクローンした要素を取得できなくなる場合があった（詳細な原因は不明）。
+			//また、IE8以下、またはIE9でもDocModeが8以下の場合、ノードに付加したJSプロパティやattachEventのイベントがクローン先にもコピーされてしまう。
+			//そのため、cloneNode()した結果JSプロパティがコピーされる環境（== DocMode<=8の環境、を想定）では
+			//エレメントのコピーはouterHTMLを基にjQueryによるノード"生成"で行う（!= クローン）ようにしている。
+			cloneNodeDeeply = function(srcNode) {
+				if (srcNode.nodeType === NODE_TYPE_ELEMENT) {
+					return $(srcNode.outerHTML)[0];
+				}
+				return srcNode.cloneNode(true);
+			};
+		} else {
+			//その他のブラウザでは、cloneNodeを使ってノードをクローンする。cloneNodeの方が、通常パフォーマンスは良いため。
+			cloneNodeDeeply = function(srcNode) {
+				return srcNode.cloneNode(true);
+			};
+		}
+	})();
+
+
 	function getElemAttribute(node, attr) {
 		if (!node || node.nodeType !== NODE_TYPE_ELEMENT) {
 			return undefined;
@@ -188,12 +215,19 @@
 
 		for ( var i = 0, len = attrs.length; i < len; i++) {
 			var attrValue = rootNode.getAttribute(attrs[i]);
-			if (value === undefined && attrValue !== null) {
-				ret.push(rootNode);
-				break;
-			} else if (attrValue === value) {
-				ret.push(rootNode);
-				break;
+			if (value === undefined) {
+				if (attrValue !== null) {
+					ret.push(rootNode);
+					break;
+				}
+			} else {
+				//IE7以下では、setAttribute()でdata-*属性に数値を入れると、getAttr()したとき型がNumberになっている。
+				//しかし、outerHTMLでノードをクローンした場合、data-*属性の値は文字列型になっている。
+				//そのため、ここでは厳密等価ではなく通常の等価比較を行っている。
+				if (attrValue !== null && attrValue == value) {
+					ret.push(rootNode);
+					break;
+				}
 			}
 		}
 
@@ -380,7 +414,7 @@
 
 			//1要素分のノードのクローンを作成
 			for ( var j = 0, childLen = srcRootChildNodes.length; j < childLen; j++) {
-				var clonedInnerNode = srcRootChildNodes[j].cloneNode(true); //deep copy
+				var clonedInnerNode = cloneNodeDeeply(srcRootChildNodes[j]); //deep copy
 
 				loopNodes.push(clonedInnerNode);
 
@@ -646,7 +680,7 @@
 		var ret = [];
 
 		for ( var i = 0, len = childNodes.length; i < len; i++) {
-			ret.push(childNodes[i].cloneNode(true));
+			ret.push(cloneNodeDeeply(childNodes[i]));
 		}
 
 		return ret;
@@ -1168,12 +1202,11 @@
 					//対応するビューを保存してあるビューからクローンする
 					var dynCtxId = getElemAttribute(this, DATA_H5_DYN_CTX);
 					var srcCtxRootNode = that._getSrcCtxNode(dynCtxId);
-					var cloned = srcCtxRootNode.cloneNode(true);
+					var cloned = cloneNodeDeeply(srcCtxRootNode);
 
 					//新しくバインドした要素を追加し、古いビューを削除
 					//(IE6は先に要素をdocumentツリーに追加しておかないと属性の変更が反映されないので先にツリーに追加)
-					this.parentNode.insertBefore(cloned, this);
-					this.parentNode.removeChild(this);
+					this.parentNode.replaceChild(cloned, this);
 
 					//新しいコンテキストソースオブジェクトでバインディングを行う
 					applyBinding(that, cloned, event.props[contextProp].newValue);
