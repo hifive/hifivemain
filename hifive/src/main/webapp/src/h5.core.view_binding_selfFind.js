@@ -1044,14 +1044,14 @@
 					//dyn属性削除
 					removeElemAttribute(target, DATA_H5_DYN_BIND_ROOT);
 
-					var cnElems = queryQualifiedElements(target, DATA_H5_DYN_CN, null, true);
+					var cnElems = queryQualifiedElements(target, DATA_H5_DYN_CN, undefined, true);
 					for ( var j = 0, cnLen = cnElems.length; j < cnLen; j++) {
 						removeElemAttribute(cnElems[j], DATA_H5_DYN_CN);
 					}
 
-					var ctxElems = queryQualifiedElements(target, DATA_H5_DYN_CTX, null, true);
-					for ( var j = 0, ctxLen = ctxElems.length; j < ctxLen; j++) {
-						removeElemAttribute(ctxElems[j], DATA_H5_DYN_CTX);
+					var cxElems = queryQualifiedElements(target, DATA_H5_DYN_CTX, undefined, true);
+					for ( var j = 0, cxLen = cxElems.length; j < cxLen; j++) {
+						removeElemAttribute(cxElems[j], DATA_H5_DYN_CTX);
 					}
 				}
 			}
