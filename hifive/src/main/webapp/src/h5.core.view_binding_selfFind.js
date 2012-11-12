@@ -1046,12 +1046,12 @@
 
 					var cnElems = queryQualifiedElements(target, DATA_H5_DYN_CN, null, true);
 					for ( var j = 0, cnLen = cnElems.length; j < cnLen; j++) {
-						removeElemAttribute(cnElems, DATA_H5_DYN_CN);
+						removeElemAttribute(cnElems[j], DATA_H5_DYN_CN);
 					}
 
 					var ctxElems = queryQualifiedElements(target, DATA_H5_DYN_CTX, null, true);
 					for ( var j = 0, ctxLen = ctxElems.length; j < ctxLen; j++) {
-						removeElemAttribute(ctxElems, DATA_H5_DYN_CTX);
+						removeElemAttribute(ctxElems[j], DATA_H5_DYN_CTX);
 					}
 				}
 			}
