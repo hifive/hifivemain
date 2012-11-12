@@ -22,6 +22,14 @@ $(function() {
 	// Constants
 	//
 	// =========================================================================
+	var DATA_H5_BIND = 'data-h5-bind';
+	var DATA_H5_CONTEXT = 'data-h5-context';
+	var DATA_H5_LOOP_CONTEXT = 'data-h5-loop-context';
+
+	var DATA_H5_DYN_CTX = 'data-h5-dyn-ctx';
+	var DATA_H5_DYN_VID = 'data-h5-dyn-vid';
+	var DATA_H5_DYN_BIND_ROOT = 'data-h5-dyn-bind-root';
+	var DATA_H5_DYN_CN = 'data-h5-dyn-cn';
 
 	// =========================================================================
 	//
@@ -264,10 +272,12 @@ $(function() {
 				arg = '#qunit-fixture>span';
 				break;
 			}
-			view.bind(arg, {
+			var binding = view.bind(arg, {
 				test: i
 			});
 			equal($fixture.find('span').text(), i, strs[i] + 'を引数に指定できること');
+
+			binding.unbind();
 		}
 	});
 
@@ -2729,7 +2739,12 @@ $(function() {
 
 		equal($('#dataBindTest span').text(), 'abc', 'strプロパティのdefaultValueがビューに反映されていること');
 
+		var ctx = $('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length;
+
 		binding.unbind();
+
+		equal($('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length, ctx, 'data-h5-bind, context, loop-contextは削除されていないこと');
+		equal($('['+ DATA_H5_DYN_CTX +'],['+ DATA_H5_DYN_VID +'],['+ DATA_H5_DYN_BIND_ROOT +'],['+ DATA_H5_DYN_CN +']', '#dataBindTest').length, 0, 'data-h5-dyn-*属性が全て削除されていること');
 
 		dataItem.set({
 			test: 'AAAA'
@@ -2757,7 +2772,12 @@ $(function() {
 
 		equal($('#dataBindTest span').text(), 'abc', 'strプロパティのdefaultValueがビューに反映されていること');
 
+		var ctx = $('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length;
+
 		binding.unbind();
+
+		equal($('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length, ctx, 'data-h5-bind, context, loop-contextは削除されていないこと');
+		equal($('['+ DATA_H5_DYN_CTX +'],['+ DATA_H5_DYN_VID +'],['+ DATA_H5_DYN_BIND_ROOT +'],['+ DATA_H5_DYN_CN +']', '#dataBindTest').length, 0, 'data-h5-dyn-*属性が全て削除されていること');
 
 		obsItem.set({
 			test: 'AAAA'
@@ -2791,7 +2811,12 @@ $(function() {
 				equal($('#dataBindTest span').eq(1).text(), '2', 'ObservableArrayの内容がビューに表示されていること');
 				equal($('#dataBindTest span').eq(2).text(), '3', 'ObservableArrayの内容がビューに表示されていること');
 
+				var ctx = $('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length;
+
 				binding.unbind();
+
+				equal($('['+ DATA_H5_BIND +'],['+ DATA_H5_CONTEXT +'],['+ DATA_H5_LOOP_CONTEXT +']', '#dataBindTest').length, ctx, 'data-h5-bind, context, loop-contextは削除されていないこと');
+				equal($('['+ DATA_H5_DYN_CTX +'],['+ DATA_H5_DYN_VID +'],['+ DATA_H5_DYN_BIND_ROOT +'],['+ DATA_H5_DYN_CN +']', '#dataBindTest').length, 0, 'data-h5-dyn-*属性が全て削除されていること');
 
 				oar.push({
 					test: 1000
