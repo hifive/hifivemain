@@ -1035,7 +1035,25 @@
 		unbind: function() {
 			//全てのバインディングを解除
 			for ( var i = 0, len = this._targets.length; i < len; i++) {
-				this._removeBinding(this._targets[i]);
+				var target = this._targets[i];
+
+				if (target.nodeType === NODE_TYPE_ELEMENT) {
+					//バインディングを解除
+					this._removeBinding(target);
+
+					//dyn属性削除
+					removeElemAttribute(target, DATA_H5_DYN_BIND_ROOT);
+
+					var cnElems = queryQualifiedElements(target, DATA_H5_DYN_CN, null, true);
+					for ( var j = 0, cnLen = cnElems.length; j < cnLen; j++) {
+						removeElemAttribute(cnElems, DATA_H5_DYN_CN);
+					}
+
+					var ctxElems = queryQualifiedElements(target, DATA_H5_DYN_CTX, null, true);
+					for ( var j = 0, ctxLen = ctxElems.length; j < ctxLen; j++) {
+						removeElemAttribute(ctxElems, DATA_H5_DYN_CTX);
+					}
+				}
 			}
 
 			//ビューとこのBindingインスタンスのマップを削除
@@ -1355,6 +1373,7 @@
 			}
 
 			//渡された要素自身がviewUidを持っていたら、まずその要素のバインディングエントリを削除
+			//ここでは、必ず自分自身のエントリが最初に削除されるように、queryQualifiedElementsを使わず独自に削除している
 			var rootVid = getElemAttribute(rootElem, DATA_H5_DYN_VID);
 			if (rootVid != null) {
 				this._removeBindingEntry(rootVid);
