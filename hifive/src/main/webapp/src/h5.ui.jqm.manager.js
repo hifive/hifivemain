@@ -542,25 +542,25 @@
 				 */
 				define: function(id, cssSrc, controllerDefObject, initParam) {
 					if (!isString(id)) {
-						throw new throwFwError(ERR_CODE_INVALID_TYPE, 'id');
+						throwFwError(ERR_CODE_INVALID_TYPE, 'id');
 					}
 
 					if (cssSrc != null && !isString(cssSrc) && !$.isArray(cssSrc)) {
-						throw new throwFwError(ERR_CODE_INVALID_TYPE, 'cssSrc');
+						throwFwError(ERR_CODE_INVALID_TYPE, 'cssSrc');
 					}
 
 					if (controllerDefObject != null) {
 						if (isString(controllerDefObject) || $.isArray(controllerDefObject)) {
-							throw new throwFwError(ERR_CODE_NAME_INVALID_PARAMETER);
+							throwFwError(ERR_CODE_NAME_INVALID_PARAMETER);
 						}
 
 						if (!$.isPlainObject(controllerDefObject)
 								|| !('__name' in controllerDefObject)) {
-							throw new throwFwError(ERR_CODE_INVALID_TYPE, 'controllerDefObject');
+							throwFwError(ERR_CODE_INVALID_TYPE, 'controllerDefObject');
 						}
 
 						if (initParam != null && !$.isPlainObject(initParam)) {
-							throw new throwFwError(ERR_CODE_INVALID_TYPE, 'initParam');
+							throwFwError(ERR_CODE_INVALID_TYPE, 'initParam');
 						}
 					}
 

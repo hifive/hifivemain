@@ -261,11 +261,11 @@
 		// TODO 長距離の場合も考えて、距離によって誤差が大きくならない『測地線航海算法』で計算するメソッドの追加も要検討
 		getDistance: function(lat1, lng1, lat2, lng2, geoSystem) {
 			if (!isFinite(lat1) || !isFinite(lng1) || !isFinite(lat2) || !isFinite(lng2)) {
-				throw new throwFwError(ERR_CODE_INVALID_COORDS);
+				throwFwError(ERR_CODE_INVALID_COORDS);
 			}
 			var geodeticMode = geoSystem ? geoSystem : GRS80;
 			if (!(geodeticMode instanceof GeodeticSystemEnum)) {
-				throw new throwFwError(ERR_CODE_INVALID_GEOSYSTEM_CONSTANT);
+				throwFwError(ERR_CODE_INVALID_GEOSYSTEM_CONSTANT);
 			}
 			// 長半径(赤道半径)
 			var A = geodeticMode.getSemiMajorAxis();

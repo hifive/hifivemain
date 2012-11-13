@@ -165,7 +165,7 @@
 	 */
 	function checkSqlExecuted(flag) {
 		if (flag) {
-			throw new throwFwError(ERR_CODE_RETRY_SQL);
+			throwFwError(ERR_CODE_RETRY_SQL);
 		}
 	}
 
@@ -176,7 +176,7 @@
 	 */
 	function checkTableName(funcName, tableName) {
 		if (!isString(tableName)) {
-			throw new throwFwError(ERR_CODE_INVALID_TABLE_NAME, funcName);
+			throwFwError(ERR_CODE_INVALID_TABLE_NAME, funcName);
 		}
 	}
 
@@ -187,7 +187,7 @@
 	 */
 	function checkTransaction(funcName, txw) {
 		if (txw != undefined && !(txw instanceof SQLTransactionWrapper)) {
-			throw new throwFwError(ERR_CODE_INVALID_TRANSACTION_TYPE, funcName);
+			throwFwError(ERR_CODE_INVALID_TRANSACTION_TYPE, funcName);
 		}
 	}
 
@@ -201,13 +201,13 @@
 				var param = [];
 
 				if (params[0] === "") {
-					throw new throwFwError(ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE);
+					throwFwError(ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE);
 				} else if (params.length === 1) {
 					param.push(params[0]);
 					param.push('=');
 					param.push('?');
 				} else if (!/^(<=|<|>=|>|=|!=|like)$/i.test(params[1])) {
-					throw new throwFwError(ERR_CODE_INVALID_OPERATOR);
+					throwFwError(ERR_CODE_INVALID_OPERATOR);
 				} else if (params.length === 3 && /^like$/i.test(params[1])) {
 					param.push(params[0]);
 					param.push(params[1]);
@@ -412,7 +412,7 @@
 		 */
 		where: function(whereObj) {
 			if (!$.isPlainObject(whereObj) && !isString(whereObj)) {
-				throw new throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Select', 'where']);
+				throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Select', 'where']);
 			}
 
 			this._where = whereObj;
@@ -444,7 +444,7 @@
 		 */
 		orderBy: function(orderByObj) {
 			if (!$.isPlainObject(orderByObj) && !isString(orderByObj)) {
-				throw new throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Select', 'orderBy']);
+				throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Select', 'orderBy']);
 			}
 
 			this._orderBy = wrapInArray(orderByObj);
@@ -747,7 +747,7 @@
 		 */
 		where: function(whereObj) {
 			if (!$.isPlainObject(whereObj) && !isString(whereObj)) {
-				throw new throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Update', 'where']);
+				throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Update', 'where']);
 			}
 
 			this._where = whereObj;
@@ -918,7 +918,7 @@
 		 */
 		where: function(whereObj) {
 			if (!$.isPlainObject(whereObj) && !isString(whereObj)) {
-				throw new throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Del', 'where']);
+				throwFwError(ERR_CODE_INVALID_PARAM_TYPE, ['Del', 'where']);
 			}
 
 			this._where = whereObj;
@@ -1179,7 +1179,7 @@
 		 */
 		add: function(task) {
 			if (!(task instanceof SqlExecutor)) {
-				throw new throwFwError(ERR_CODE_INVALID_TRANSACTION_TARGET);
+				throwFwError(ERR_CODE_INVALID_TRANSACTION_TARGET);
 			}
 			this._queue.push(task);
 			return this;
@@ -1321,7 +1321,7 @@
 			checkTransaction('select', txw);
 
 			if (!$.isArray(columns) && columns !== '*') {
-				throw new throwFwError(ERR_CODE_INVALID_COLUMN_NAME, 'select');
+				throwFwError(ERR_CODE_INVALID_COLUMN_NAME, 'select');
 			}
 
 			return new Select(txw ? txw : new SQLTransactionWrapper(this._db, null), tableName,
@@ -1385,7 +1385,7 @@
 			checkTransaction('insert', txw);
 
 			if (values != null && !$.isArray(values) && !$.isPlainObject(values)) {
-				throw new throwFwError(ERR_CODE_INVALID_VALUES, 'insert');
+				throwFwError(ERR_CODE_INVALID_VALUES, 'insert');
 			}
 
 			return new Insert(txw ? txw : new SQLTransactionWrapper(this._db, null), tableName,
@@ -1425,7 +1425,7 @@
 			checkTransaction('update', txw);
 
 			if (!$.isPlainObject(values)) {
-				throw new throwFwError(ERR_CODE_INVALID_VALUES, 'update');
+				throwFwError(ERR_CODE_INVALID_VALUES, 'update');
 			}
 
 			return new Update(txw ? txw : new SQLTransactionWrapper(this._db, null), tableName,
@@ -1462,11 +1462,11 @@
 			checkTransaction('sql', txw);
 
 			if (!isString(statement)) {
-				throw new throwFwError(ERR_CODE_INVALID_STATEMENT, 'sql');
+				throwFwError(ERR_CODE_INVALID_STATEMENT, 'sql');
 			}
 
 			if (parameters != null && !$.isArray(parameters)) {
-				throw new throwFwError(ERR_CODE_TYPE_NOT_ARRAY, 'sql');
+				throwFwError(ERR_CODE_TYPE_NOT_ARRAY, 'sql');
 			}
 
 			return new Sql(txw ? txw : new SQLTransactionWrapper(this._db, null), statement,
