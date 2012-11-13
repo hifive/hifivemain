@@ -74,7 +74,6 @@ $(function() {
 	function dummyFunc() {
 	//
 	}
-	;
 
 	module('commonFailHandler', {
 		teardown: function() {
