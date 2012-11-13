@@ -54,3 +54,7 @@ function rgbToHex(rgbStr) {
 
 	return hexStr;
 }
+
+function isDevMode() {
+	return !!h5.dev;
+}

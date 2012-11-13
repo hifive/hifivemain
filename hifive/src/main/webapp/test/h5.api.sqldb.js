@@ -331,10 +331,14 @@ $(function() {
 							.execute().fail(
 									function(e) {
 										strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-												+ (isAbleToGetErrorCode() ? 'データベースエラー '
-														: '構文に誤りがあります。 ') + e.detail.message,
-												'エラーメッセージが格納されていること。');
+										if (isDevMode()) {
+											strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+													+ (isAbleToGetErrorCode() ? 'データベースエラー '
+															: '構文に誤りがあります。 ') + e.detail.message,
+													'エラーメッセージが格納されていること。');
+										} else {
+											strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+										}
 										strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -342,9 +346,14 @@ $(function() {
 						}).fail(
 						function(e) {
 							strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-									+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-									+ e.detail.message, 'エラーメッセージが格納されていること。');
+							if (isDevMode()) {
+								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+										+ (isAbleToGetErrorCode() ? 'データベースエラー '
+												: '構文に誤りがあります。 ') + e.detail.message,
+										'エラーメッセージが格納されていること。');
+							} else {
+								strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+							}
 							strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -637,9 +646,14 @@ $(function() {
 					}, tx).execute().fail(
 							function(e) {
 								strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-										+ e.detail.message, 'エラーメッセージが格納されていること。');
+								if (isDevMode()) {
+									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+											+ (isAbleToGetErrorCode() ? 'データベースエラー '
+													: '構文に誤りがあります。 ') + e.detail.message,
+											'エラーメッセージが格納されていること。');
+								} else {
+									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+								}
 								strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 										'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -648,9 +662,14 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-					strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-							+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-							+ e.detail.message, 'エラーメッセージが格納されていること。');
+					if (isDevMode()) {
+						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+								+ (isAbleToGetErrorCode() ? 'データベースエラー '
+										: '構文に誤りがあります。 ') + e.detail.message,
+								'エラーメッセージが格納されていること。');
+					} else {
+						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+					}
 					strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 							'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1416,9 +1435,14 @@ $(function() {
 					}, tx).execute().fail(
 							function(e) {
 								strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-										+ e.detail.message, 'エラーメッセージが格納されていること。');
+								if (isDevMode()) {
+									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+											+ (isAbleToGetErrorCode() ? 'データベースエラー '
+													: '構文に誤りがあります。 ') + e.detail.message,
+											'エラーメッセージが格納されていること。');
+								} else {
+									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+								}
 								strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 										'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1427,9 +1451,14 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-					strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-							+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-							+ e.detail.message, 'エラーメッセージが格納されていること。');
+					if (isDevMode()) {
+						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+								+ (isAbleToGetErrorCode() ? 'データベースエラー '
+										: '構文に誤りがあります。 ') + e.detail.message,
+								'エラーメッセージが格納されていること。');
+					} else {
+						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+					}
 					strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 							'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1829,10 +1858,14 @@ $(function() {
 								}).execute().fail(
 										function(e) {
 											strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-											strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-													+ (isAbleToGetErrorCode() ? 'データベースエラー '
-															: '構文に誤りがあります。 ') + e.detail.message,
-													'エラーメッセージが格納されていること。');
+											if (isDevMode()) {
+												strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+														+ (isAbleToGetErrorCode() ? 'データベースエラー '
+																: '構文に誤りがあります。 ') + e.detail.message,
+														'エラーメッセージが格納されていること。');
+											} else {
+												strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+											}
 											strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 											ok(e.detail.message,
 													'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1842,9 +1875,14 @@ $(function() {
 							}).fail(
 							function(e) {
 								strictEqual(seqNo++, 3, 'fail2 3番目に実行されること。');
-								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-										+ e.detail.message, 'エラーメッセージが格納されていること。');
+								if (isDevMode()) {
+									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+											+ (isAbleToGetErrorCode() ? 'データベースエラー '
+													: '構文に誤りがあります。 ') + e.detail.message,
+											'エラーメッセージが格納されていること。');
+								} else {
+									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+								}
 								strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -1852,9 +1890,14 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 4, 'fail1 4番目に実行されること。');
-					strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-							+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-							+ e.detail.message, 'エラーメッセージが格納されていること。');
+					if (isDevMode()) {
+						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+								+ (isAbleToGetErrorCode() ? 'データベースエラー '
+										: '構文に誤りがあります。 ') + e.detail.message,
+								'エラーメッセージが格納されていること。');
+					} else {
+						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+					}
 					strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -2545,9 +2588,14 @@ $(function() {
 				}).fail(
 						function(e) {
 							ok(e, 'SQLの実行に失敗してfail()で処理されること。');
-							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-									+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-									+ e.detail.message, 'エラーメッセージが格納されていること。');
+							if (isDevMode()) {
+								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+										+ (isAbleToGetErrorCode() ? 'データベースエラー '
+												: '構文に誤りがあります。 ') + e.detail.message,
+										'エラーメッセージが格納されていること。');
+							} else {
+								strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+							}
 							strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -2879,10 +2927,14 @@ $(function() {
 							})).execute().fail(
 									function(e) {
 										strictEqual(seqNo++, 1, 'fail2: 1番目に実行されること。');
-										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-												+ (isAbleToGetErrorCode() ? 'データベースエラー '
-														: '構文に誤りがあります。 ') + e.detail.message,
-												'エラーメッセージが格納されていること。');
+										if (isDevMode()) {
+											strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+													+ (isAbleToGetErrorCode() ? 'データベースエラー '
+															: '構文に誤りがあります。 ') + e.detail.message,
+													'エラーメッセージが格納されていること。');
+										} else {
+											strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+										}
 										strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 										ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -2891,9 +2943,14 @@ $(function() {
 						}).fail(
 						function(e) {
 							strictEqual(seqNo++, 2, 'fail1: 2番目に実行されること。');
-							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-									+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-									+ e.detail.message, 'エラーメッセージが格納されていること。');
+							if (isDevMode()) {
+								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+										+ (isAbleToGetErrorCode() ? 'データベースエラー '
+												: '構文に誤りがあります。 ') + e.detail.message,
+										'エラーメッセージが格納されていること。');
+							} else {
+								strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+							}
 							strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -3223,8 +3280,14 @@ $(function() {
 			var s = dbDummy.sql('insert into ' + TABLE_NAME + ' values(1,1,1)');
 			s.execute().fail(
 					function(e) {
-						ok(e.message.match(new RegExp('^トランザクション処理中にエラーが発生しました。.*'
-								+ e.detail.message + '$')), 'エラーメッセージが格納されていること。' + e.message);
+						if (isDevMode()) {
+							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+									+ (isAbleToGetErrorCode() ? 'データベースエラー '
+											: '構文に誤りがあります。 ') + e.detail.message,
+									'エラーメッセージが格納されていること。');
+						} else {
+							strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+						}
 						strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 								'エラーコードが格納されていること。');
 						ok(e.detail.code != null, 'エラーコード:' + e.detail.code
