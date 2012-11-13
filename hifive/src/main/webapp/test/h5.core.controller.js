@@ -4964,7 +4964,7 @@ $(function() {
 						try {
 							this.throwCustomError();
 						} catch (e) {
-							strictEqual(e.message, '正しい数の引数を指定して下さい。(code=6005)',
+							strictEqual(e.code, ERR.ERR_CODE_TOO_FEW_ARGUMENTS,
 									'throwCustomError()で必須のパラメータが指定されていない場合、エラーが発生すること。');
 						}
 
