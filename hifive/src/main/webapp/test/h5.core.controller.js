@@ -197,7 +197,7 @@ $(function() {
 	asyncTest('コントローラの作成と要素へのバインド(AOPあり) ※min版ではエラーになります', 3, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -1894,7 +1894,7 @@ $(function() {
 	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 1, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -1948,7 +1948,7 @@ $(function() {
 	asyncTest('アスペクトの動作1 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -1992,7 +1992,7 @@ $(function() {
 	asyncTest('アスペクトの動作2 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -2033,7 +2033,7 @@ $(function() {
 	asyncTest('アスペクトの動作3 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -2082,7 +2082,7 @@ $(function() {
 	asyncTest('アスペクトの動作4 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -2134,7 +2134,7 @@ $(function() {
 	asyncTest('アスペクトの動作5 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -2560,7 +2560,7 @@ $(function() {
 			function() {
 				if (!h5.core.__compileAspects) {
 					expect(1);
-					ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+					ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 					start();
 					return;
 				}
@@ -2606,7 +2606,7 @@ $(function() {
 			function() {
 				if (!h5.core.__compileAspects) {
 					expect(1);
-					ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+					ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 					start();
 					return;
 				}
@@ -2651,7 +2651,7 @@ $(function() {
 	asyncTest('h5.core.interceptor.errorInterceptorの動作 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -3860,7 +3860,7 @@ $(function() {
 	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}

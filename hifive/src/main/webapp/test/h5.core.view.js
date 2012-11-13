@@ -474,7 +474,11 @@
 		asyncTest('EJSファイルに書かれた、scriptタグで囲まれていないテンプレートを取得。', 4, function() {
 			var p = h5.core.view.load(['./template/test1.ejs']);
 			p.fail(function(e) {
-				ok(e.message, 'エラーからmessageプロパティが取得できること。' + e.message);
+				if (isDevMode()) {
+					ok(e.message, 'エラーからmessageプロパティが取得できること。' + e.message);
+				} else {
+					equal(e.message, null, 'リリース版にはエラーメッセージが格納されていないこと');
+				}
 				strictEqual(h5.core.view.isAvailable('test1'), false,
 						'scriptタグで囲まれていないテンプレートはエラーとして処理されること。');
 				equal(e.code, ERR.ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT, 'エラーからcodeプロパティが取得できること。:' + e.code);
@@ -1222,7 +1226,7 @@
 						cacheManager = h5.dev.core.view.cacheManager;
 					} catch (e) {
 						expect(1);
-						ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+						ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 						start();
 						return;
 					}
@@ -1284,7 +1288,7 @@
 						var cacheManager = h5.dev.core.view.cacheManager;
 					} catch (e) {
 						expect(1);
-						ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+						ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 						start();
 						return;
 					}
@@ -1351,7 +1355,7 @@
 						var cacheManager = h5.dev.core.view.cacheManager;
 					} catch (e) {
 						expect(1);
-						ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+						ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 						start();
 						return;
 					}
@@ -1381,7 +1385,7 @@
 				var cacheManager = h5.dev.core.view.cacheManager;
 			} catch (e) {
 				expect(1);
-				ok(false, 'h5.dev.core.view.cacheManagerがありません。');
+				ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 				start();
 				return;
 			}
