@@ -184,7 +184,8 @@ $(function() {
 		strictEqual($('#dataBindTest>span').text(), '', 'データが空の状態でバインドされること(nullのときと同じ)');
 	});
 
-	test('null, undefined, String, Number, Array, Objectが、それぞれ表示されること', function() {
+	// TODO Array型とObject型のバインドに対するテストは後で追加する
+	test('null, undefined, String, Numberが、それぞれ表示されること', function() {
 		var ary = [1, 2, 'aa'];
 		var obj = {
 			a: 'a'
@@ -192,6 +193,7 @@ $(function() {
 		var func = function() {
 			return;
 		};
+
 
 		view.append($fixture, 'variableType');
 		view.bind('#dataBindTest', {
@@ -202,14 +204,9 @@ $(function() {
 			dataNaN: NaN,
 			dataInf: Infinity,
 			dataMInf: -Infinity,
-			dataAry: ary,
-			dataObj: {
-				a: 'a'
-			},
 			dataFunc: func
 		});
-		var exp = ['', '', 'abc', '-1234.567', 'NaN', 'Infinity', '-Infinity', ary.toString(),
-				obj.toString(), ''];
+		var exp = ['', '', 'abc', '-1234.567', 'NaN', 'Infinity', '-Infinity', ''];
 		checkTexts(exp, 'data-h5-bind指定した要素に値が表示されていること', 'span');
 	});
 
