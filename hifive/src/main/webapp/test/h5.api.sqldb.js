@@ -309,61 +309,77 @@ $(function() {
 				});
 	});
 
-	asyncTest('db.sql()を実行後、同一トランザクションで、エラーのdb.sql()を実行', 13, function() {
-		if (!h5.api.sqldb.isSupported) {
-			expect(1);
-			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
-			start();
-			return;
-		}
+	asyncTest(
+			'db.sql()を実行後、同一トランザクションで、エラーのdb.sql()を実行',
+			13,
+			function() {
+				if (!h5.api.sqldb.isSupported) {
+					expect(1);
+					ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+					start();
+					return;
+				}
 
-		var seqNo = 1;
-		var errCode = ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE;
+				var seqNo = 1;
+				var errCode = ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE;
 
-		db.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', [10, "hoge1", 100]).execute()
-				.progress(
-						function(rs, tx) {
-							strictEqual(seqNo++, 1, 'progress 1番目に実行されること。');
-							strictEqual(rs.insertId, 1, '1件登録され、insertid=1を取得できること。');
+				db
+						.sql('insert into ' + TABLE_NAME + ' values(?, ?, ?)', [10, "hoge1", 100])
+						.execute()
+						.progress(
+								function(rs, tx) {
+									strictEqual(seqNo++, 1, 'progress 1番目に実行されること。');
+									strictEqual(rs.insertId, 1, '1件登録され、insertid=1を取得できること。');
 
-							db.sql('insert aaa ' + TABLE_NAME + ' values(?, ?, ?)',
-									[20, "hoge2", 200], tx) // エラーSQL
-							.execute().fail(
-									function(e) {
-										strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-										if (isDevMode()) {
-											strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-													+ (isAbleToGetErrorCode() ? 'データベースエラー '
-															: '構文に誤りがあります。 ') + e.detail.message,
-													'エラーメッセージが格納されていること。');
-										} else {
-											strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-										}
-										strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
-										ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
-										ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
+									db
+											.sql('insert aaa ' + TABLE_NAME + ' values(?, ?, ?)',
+													[20, "hoge2", 200], tx)
+											// エラーSQL
+											.execute()
+											.fail(
+													function(e) {
+														strictEqual(seqNo++, 2,
+																'fail2 2番目に実行されること。');
+														if (isDevMode()) {
+															strictEqual(
+																	e.message,
+																	'トランザクション処理中にエラーが発生しました。'
+																			+ (isAbleToGetErrorCode() ? 'データベースエラー '
+																					: '構文に誤りがあります。 ')
+																			+ e.detail.message,
+																	'エラーメッセージが格納されていること。');
+														} else {
+															strictEqual(e.message, null,
+																	'min版にはエラーメッセージは格納されないこと');
+														}
+														strictEqual(e.code, errCode,
+																'エラーコードが格納されていること。');
+														ok(e.detail.message,
+																'detailにはSQLErrorのメッセージが格納されていること。');
+														ok(e.detail.message,
+																'detailにはSQLErrorのエラーコードが格納されていること。');
+													});
+								}).fail(
+								function(e) {
+									strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
+									if (isDevMode()) {
+										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+												+ (isAbleToGetErrorCode() ? 'データベースエラー '
+														: '構文に誤りがあります。 ') + e.detail.message,
+												'エラーメッセージが格納されていること。');
+									} else {
+										strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+									}
+									strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
+									ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
+									ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
+
+									db.select(TABLE_NAME, '*').execute().done(function(rs) {
+										strictEqual(rs.length, 0, 'ロールバックされているためレコードは0件であること。');
+										start();
 									});
-						}).fail(
-						function(e) {
-							strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-							if (isDevMode()) {
-								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-										+ (isAbleToGetErrorCode() ? 'データベースエラー '
-												: '構文に誤りがあります。 ') + e.detail.message,
-										'エラーメッセージが格納されていること。');
-							} else {
-								strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-							}
-							strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
-							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
-							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
-
-							db.select(TABLE_NAME, '*').execute().done(function(rs) {
-								strictEqual(rs.length, 0, 'ロールバックされているためレコードは0件であること。');
-								start();
-							});
-						});
-	});
+								});
+			});
 
 	asyncTest('execute()を2回呼び出す', 3, function() {
 		if (!h5.api.sqldb.isSupported) {
@@ -664,9 +680,8 @@ $(function() {
 					strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
 					if (isDevMode()) {
 						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー '
-										: '構文に誤りがあります。 ') + e.detail.message,
-								'エラーメッセージが格納されていること。');
+								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
+								+ e.detail.message, 'エラーメッセージが格納されていること。');
 					} else {
 						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
 					}
@@ -1453,9 +1468,8 @@ $(function() {
 					strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
 					if (isDevMode()) {
 						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー '
-										: '構文に誤りがあります。 ') + e.detail.message,
-								'エラーメッセージが格納されていること。');
+								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
+								+ e.detail.message, 'エラーメッセージが格納されていること。');
 					} else {
 						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
 					}
@@ -1861,10 +1875,11 @@ $(function() {
 											if (isDevMode()) {
 												strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
 														+ (isAbleToGetErrorCode() ? 'データベースエラー '
-																: '構文に誤りがあります。 ') + e.detail.message,
-														'エラーメッセージが格納されていること。');
+																: '構文に誤りがあります。 ')
+														+ e.detail.message, 'エラーメッセージが格納されていること。');
 											} else {
-												strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+												strictEqual(e.message, null,
+														'min版にはエラーメッセージは格納されないこと');
 											}
 											strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 											ok(e.detail.message,
@@ -1892,9 +1907,8 @@ $(function() {
 					strictEqual(seqNo++, 4, 'fail1 4番目に実行されること。');
 					if (isDevMode()) {
 						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー '
-										: '構文に誤りがあります。 ') + e.detail.message,
-								'エラーメッセージが格納されていること。');
+								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
+								+ e.detail.message, 'エラーメッセージが格納されていること。');
 					} else {
 						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
 					}
@@ -2590,9 +2604,8 @@ $(function() {
 							ok(e, 'SQLの実行に失敗してfail()で処理されること。');
 							if (isDevMode()) {
 								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-										+ (isAbleToGetErrorCode() ? 'データベースエラー '
-												: '構文に誤りがあります。 ') + e.detail.message,
-										'エラーメッセージが格納されていること。');
+										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
+										+ e.detail.message, 'エラーメッセージが格納されていること。');
 							} else {
 								strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
 							}
@@ -2893,7 +2906,8 @@ $(function() {
 
 	asyncTest(
 			'3件SQLをaddしたdb.transaction()を実行後、同一トランザクションで、2件中1件エラーのあるSQLをaddしたdb.transaction()を実行する。',
-			11, function() {
+			11,
+			function() {
 				if (!h5.api.sqldb.isSupported) {
 					expect(1);
 					ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -2904,62 +2918,82 @@ $(function() {
 				var seqNo = 1;
 				var errorCode = ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE;
 
-				db.transaction().add(
-						db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10,
-								20000])).add(db.insert(TABLE_NAME, {
-					col1: 'txtest2',
-					col2: 'rerere',
-					col3: 777
-				})).add(db.select(TABLE_NAME, ['col1', 'col2']).where({
-					'col3': 20000
-				})).add(db.update(TABLE_NAME, {
-					col1: 'txtest更新'
-				}).where({
-					col2: 'rerere'
-				})).execute().progress(
-						function(rs, tx) {
-							db.transaction(tx).add(db.update(TABLE_NAME, {
-								col1: 'txtest更新2'
-							}).where({
-								col2: 'rerere'
-							})).add(db.select(TABLE_NAME, ['col11', 'col3']).where({ // エラーSQL
-								col2: 'rerere'
-							})).execute().fail(
-									function(e) {
-										strictEqual(seqNo++, 1, 'fail2: 1番目に実行されること。');
-										if (isDevMode()) {
-											strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-													+ (isAbleToGetErrorCode() ? 'データベースエラー '
-															: '構文に誤りがあります。 ') + e.detail.message,
-													'エラーメッセージが格納されていること。');
-										} else {
-											strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-										}
-										strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
-										ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
-										ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
+				db
+						.transaction()
+						.add(
+								db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', [
+										'txtest', 10, 20000]))
+						.add(db.insert(TABLE_NAME, {
+							col1: 'txtest2',
+							col2: 'rerere',
+							col3: 777
+						}))
+						.add(db.select(TABLE_NAME, ['col1', 'col2']).where({
+							'col3': 20000
+						}))
+						.add(db.update(TABLE_NAME, {
+							col1: 'txtest更新'
+						}).where({
+							col2: 'rerere'
+						}))
+						.execute()
+						.progress(
+								function(rs, tx) {
+									db
+											.transaction(tx)
+											.add(db.update(TABLE_NAME, {
+												col1: 'txtest更新2'
+											}).where({
+												col2: 'rerere'
+											}))
+											.add(db.select(TABLE_NAME, ['col11', 'col3']).where({ // エラーSQL
+												col2: 'rerere'
+											}))
+											.execute()
+											.fail(
+													function(e) {
+														strictEqual(seqNo++, 1,
+																'fail2: 1番目に実行されること。');
+														if (isDevMode()) {
+															strictEqual(
+																	e.message,
+																	'トランザクション処理中にエラーが発生しました。'
+																			+ (isAbleToGetErrorCode() ? 'データベースエラー '
+																					: '構文に誤りがあります。 ')
+																			+ e.detail.message,
+																	'エラーメッセージが格納されていること。');
+														} else {
+															strictEqual(e.message, null,
+																	'min版にはエラーメッセージは格納されないこと');
+														}
+														strictEqual(e.code, errorCode,
+																'エラーコードが格納されていること。');
+														ok(e.detail.message,
+																'detailにはSQLErrorのメッセージが格納されていること。');
+														ok(e.detail.message,
+																'detailにはSQLErrorのエラーコードが格納されていること。');
+													});
+
+								}).fail(
+								function(e) {
+									strictEqual(seqNo++, 2, 'fail1: 2番目に実行されること。');
+									if (isDevMode()) {
+										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
+												+ (isAbleToGetErrorCode() ? 'データベースエラー '
+														: '構文に誤りがあります。 ') + e.detail.message,
+												'エラーメッセージが格納されていること。');
+									} else {
+										strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
+									}
+									strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
+									ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
+									ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
+
+									db.select(TABLE_NAME, '*').execute().done(function(rs) {
+										strictEqual(rs.length, 0, 'ロールバックされているためレコードは0件であること。');
+										start();
 									});
-
-						}).fail(
-						function(e) {
-							strictEqual(seqNo++, 2, 'fail1: 2番目に実行されること。');
-							if (isDevMode()) {
-								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-										+ (isAbleToGetErrorCode() ? 'データベースエラー '
-												: '構文に誤りがあります。 ') + e.detail.message,
-										'エラーメッセージが格納されていること。');
-							} else {
-								strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-							}
-							strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
-							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
-							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
-
-							db.select(TABLE_NAME, '*').execute().done(function(rs) {
-								strictEqual(rs.length, 0, 'ロールバックされているためレコードは0件であること。');
-								start();
-							});
-						});
+								});
 			});
 
 	asyncTest('execute()を2回呼び出す', 3, function() {
@@ -3281,10 +3315,8 @@ $(function() {
 			s.execute().fail(
 					function(e) {
 						if (isDevMode()) {
-							strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-									+ (isAbleToGetErrorCode() ? 'データベースエラー '
-											: '構文に誤りがあります。 ') + e.detail.message,
-									'エラーメッセージが格納されていること。');
+							ok(e.message.match(new RegExp('^トランザクション処理中にエラーが発生しました。.*'
+									+ e.detail.message + '$')), 'エラーメッセージが格納されていること。' + e.message);
 						} else {
 							strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
 						}
