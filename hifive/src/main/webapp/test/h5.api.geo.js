@@ -53,7 +53,13 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('H5Api - Geo Location : getCurrentPosition');
+	module('H5Api - Geo Location : getCurrentPosition', {
+		setup: function() {
+			h5.dev.api.geo.watchIntervalTime = 1000;
+			h5.dev.api.geo.dummyPositions = [];
+			h5.dev.api.geo.forceError = false;
+		}
+	});
 
 	//=============================
 	// Body
@@ -69,10 +75,12 @@ $(function() {
 			}).done(function(pos) {
 				start();
 				ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-			}).fail(function(error) {
-				equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-				start();
-			});
+			}).fail(
+					function(error) {
+						equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE,
+								'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+						start();
+					});
 		}
 	});
 
@@ -80,7 +88,13 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('H5Api - Geo Location : watchPosition');
+	module('H5Api - Geo Location : watchPosition', {
+		setup: function() {
+			h5.dev.api.geo.watchIntervalTime = 1000;
+			h5.dev.api.geo.dummyPositions = [];
+			h5.dev.api.geo.forceError = false;
+		}
+	});
 
 	//=============================
 	// Body
@@ -98,10 +112,12 @@ $(function() {
 		}).progress(function(pos) {
 			promise.unwatch();
 			ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-		}).fail(function(error) {
-			equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-			start();
-		}).done(function() {
+		}).fail(
+				function(error) {
+					equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:'
+							+ error.code);
+					start();
+				}).done(function() {
 			ok(true, 'watchPositionが停止すること。');
 			start();
 		});
@@ -130,11 +146,13 @@ $(function() {
 					promise3.progress(function(pos) {
 						promise3.unwatch();
 						ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-					}).fail(function(error) {
-						promise3.unwatch && promise3.unwatch();
-						equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-						start();
-					}).done(function() {
+					}).fail(
+							function(error) {
+								promise3.unwatch && promise3.unwatch();
+								equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE,
+										'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+								start();
+							}).done(function() {
 						ok(true, '3つ目のwatchPositionが停止すること。');
 						start();
 					});
@@ -142,19 +160,23 @@ $(function() {
 				promise1.progress(function(pos) {
 					promise1.unwatch();
 					ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-				}).fail(function(error) {
-					promise1.unwatch && promise1.unwatch();
-					equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-				}).done(function() {
+				}).fail(
+						function(error) {
+							promise1.unwatch && promise1.unwatch();
+							equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE,
+									'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+						}).done(function() {
 					ok(true, '1つ目のwatchPositionが停止すること。');
 				});
 				promise2.progress(function(pos) {
 					promise2.unwatch();
 					ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-				}).fail(function(error) {
-					promise2.unwatch && promise2.unwatch();
-					equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-				}).done(function() {
+				}).fail(
+						function(error) {
+							promise2.unwatch && promise2.unwatch();
+							equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE,
+									'エラーオブジェクトが取得できること。エラーコード:' + error.code);
+						}).done(function() {
 					ok(true, '2つ目のwatchPositionが停止すること。');
 				});
 			});
