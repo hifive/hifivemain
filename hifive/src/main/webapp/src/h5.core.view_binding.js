@@ -328,7 +328,6 @@
 			var candidateContextElems = queryQualifiedElements(rootNode, dataContextAttr,
 					undefined, false);
 			for ( var j = 0, cndCtxElemsLen = candidateContextElems.length; j < cndCtxElemsLen; j++) {
-				//TODO .parentで属性を取るのも危険か(IE7)
 				var contextParent = $(candidateContextElems[j]).parent(
 						'[data-h5-context],[data-h5-loop-context]')[0];
 				if (contextParent === undefined || contextParent === rootNode) {
@@ -449,9 +448,6 @@
 	function applyBinding(binding, rootNodes, context, isLoopContext, isMultiRoot) {
 		//配列化（要素が直接来た場合のため）
 		rootNodes = wrapInArray(rootNodes);
-
-		//TODO isMultiRoot -> isVirtualRoot。配列のループ要素の場合、バインドルートの場合など
-		//「ノード集合に対して」バインドする場合のケア。
 
 		if (isLoopContext) {
 			//loop-contextの場合はループ用の処理を行う
