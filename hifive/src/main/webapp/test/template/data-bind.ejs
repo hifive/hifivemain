@@ -203,8 +203,8 @@
 
 <script type="text/ejs" id="style">
 	<div id="dataBindTest">
-		<span data-h5-bind="style(margin-left):marginLeft" style="color:#f00;margin-left:22px"></span>
-		<span data-h5-bind="style(margin):margin" style="color:#f00;margin-left:22px"></span>
+		<span data-h5-bind="style(margin-left):marginLeft" style="display:block;margin-left:22px"></span>
+		<span data-h5-bind="style(margin):margin" style="display:block;margin-left:22px"></span>
 	</div>
 </script>
 
@@ -337,7 +337,7 @@
 	<div id="dataBindTest">
 		<div data-h5-context="item">
 			<div data-h5-context="data">
-				<span class="class1" data-h5-bind="txt;class:cn;attr(id):at;style(color):st"></span>
+				<span class="class1" data-h5-bind="txt;class:cn;attr(id):at;style(display):st"></span>
 				<div>
 					<div data-h5-bind="html:txt2"></div>
 				</div>
