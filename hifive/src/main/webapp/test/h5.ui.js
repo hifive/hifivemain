@@ -469,9 +469,11 @@ $(function() {
 											+ test3.substring(1)
 											+ '" style="position:absolute; top:50px; left:50px; padding:5px; border:3px solid; width:20px; height:20px;"></div>');
 					// スクロールできるようにするための要素を追加
-					$('body')
-							.append(
-									'<div id="enableScroll" style="width:2000px;height:2000px;visible:hidden;top:0;left:0;position:absolute;"></div>');
+					var width = document.documentElement.clientWidth + 100;
+					var height = document.documentElement.clientHeight + 100;
+					$('body').append(
+							'<div id="enableScroll" style="width:' + width + 'px;height:' + height
+									+ 'px;visible:hidden;top:0;left:0;position:absolute;"></div>');
 
 					// 0,0にスクロールしてテスト
 					window.scrollTo(0, 0);

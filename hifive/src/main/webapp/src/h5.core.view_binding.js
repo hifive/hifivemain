@@ -328,7 +328,6 @@
 			var candidateContextElems = queryQualifiedElements(rootNode, dataContextAttr,
 					undefined, false);
 			for ( var j = 0, cndCtxElemsLen = candidateContextElems.length; j < cndCtxElemsLen; j++) {
-				//TODO .parentで属性を取るのも危険か(IE7)
 				var contextParent = $(candidateContextElems[j]).parent(
 						'[data-h5-context],[data-h5-loop-context]')[0];
 				if (contextParent === undefined || contextParent === rootNode) {
@@ -449,9 +448,6 @@
 	function applyBinding(binding, rootNodes, context, isLoopContext, isMultiRoot) {
 		//配列化（要素が直接来た場合のため）
 		rootNodes = wrapInArray(rootNodes);
-
-		//TODO isMultiRoot -> isVirtualRoot。配列のループ要素の場合、バインドルートの場合など
-		//「ノード集合に対して」バインドする場合のケア。
 
 		if (isLoopContext) {
 			//loop-contextの場合はループ用の処理を行う
@@ -1446,45 +1442,12 @@
 		return new Binding(elements, context);
 	}
 
-	function getBinding(bindRootId) {
-		return;
-	}
-
-	/**
-	 * rootNode、またはその子孫ノードで行われている全てのデータバインドを破棄する。ただし、データバインドはネストしていないことを前提とする。
-	 */
-	function disposeBindings(rootNode) {
-		/**
-		 * nodeをルートノードとするデータバインドが行われていれば、それを破棄する。
-		 */
-		function dispose(node) {
-			var bindRootId = getElemAttribute(node, DATA_H5_DYN_BIND_ROOT);
-			if (bindRootId != null) {
-				var binding = bindRootIdToBindingMap[bindRootId];
-				if (binding) {
-					binding.unbind();
-				}
-			}
-		}
-
-		dispose(rootNode);
-
-		$('[' + DATA_H5_DYN_BIND_ROOT + ']', rootNode).each(function() {
-			dispose(this);
-		});
-	}
-
 	// =============================
 	// Expose to window
 	// =============================
 
 	h5internal.view = {
-		createBinding: createBinding,
-
-		/**
-		 * h5.core.view側でビューからBindingインスタンスを検索するために公開
-		 */
-		disposeBindings: disposeBindings
+		createBinding: createBinding
 	};
 
 })();

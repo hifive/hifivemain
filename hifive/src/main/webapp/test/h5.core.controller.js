@@ -6149,7 +6149,7 @@ $(function() {
 		return id;
 	};
 
-	asyncTest('※IE6～9の場合は要目視確認: __init()で例外をスローする。', 1, function() {
+	asyncTest('※IEの場合は要目視確認: __init()で例外をスローする。', 1, function() {
 		var errorMsg = '__init error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6169,7 +6169,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※IE6～9の場合は要目視確認: __ready()で例外をスローする。', 1, function() {
+	asyncTest('※IEの場合は要目視確認: __ready()で例外をスローする。', 1, function() {
 		var errorMsg = '__ready error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6189,7 +6189,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※IE6～9の場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
+	asyncTest('※IEの場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
 		var errorMsg = '__unbind error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6212,7 +6212,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※IE6～9の場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
+	asyncTest('※IEの場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
 		var errorMsg = '__dispose error.';
 		var id = testTimeoutFunc(errorMsg);
 
