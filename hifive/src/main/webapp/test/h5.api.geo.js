@@ -53,13 +53,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('H5Api - Geo Location : getCurrentPosition', {
-		setup: function() {
-			h5.dev.api.geo.watchIntervalTime = 1000;
-			h5.dev.api.geo.dummyPositions = [];
-			h5.dev.api.geo.forceError = false;
-		}
-	});
+	module('H5Api - Geo Location : getCurrentPosition');
 
 	//=============================
 	// Body
@@ -88,13 +82,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('H5Api - Geo Location : watchPosition', {
-		setup: function() {
-			h5.dev.api.geo.watchIntervalTime = 1000;
-			h5.dev.api.geo.dummyPositions = [];
-			h5.dev.api.geo.forceError = false;
-		}
-	});
+	module('H5Api - Geo Location : watchPosition');
 
 	//=============================
 	// Body
