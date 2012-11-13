@@ -76,35 +76,6 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
-
-	function rgbToHex(rgbStr) {
-		if (/^#\d{3,6}$/.test(rgbStr)) {
-			return rgbStr;
-		}
-
-		var hexStr = '#';
-		var patterns = rgbStr.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-
-		if (!patterns) {
-			return rgbStr;
-		}
-
-		var hexs = [];
-
-		for ( var i = 1; i < patterns.length; i++) {
-			hexs.push(("0" + parseInt(patterns[i]).toString(16)).slice(-2));
-		}
-
-		// #9922ff->#92fのようにショートハンドに変換する
-		if (hexs[0][0] === hexs[0][1] && hexs[1][0] === hexs[1][1] && hexs[2][0] === hexs[2][1]) {
-			hexStr += (hexs[0][0] + hexs[1][0] + hexs[2][0]);
-		} else {
-			hexStr += hexs.join();
-		}
-
-		return hexStr;
-	}
-
 	/**
 	 * 引数に指定された値をdata-h5-bind属性に持つspan要素を作って返す
 	 */
@@ -2103,12 +2074,12 @@ $(function() {
 		var span1 = $span[0];
 		var span2 = $span[1];
 		strictEqual(span1.style.marginLeft, '15px', 'バインドしたスタイルが適応されていること');
-		strictEqual(rgbToHex($(span1).css('color')), '#f00', '上書きされていないスタイルはそのまま残っていること');
+		strictEqual(rgbToHex($(span1).css('display')), 'block', '上書きされていないスタイルはそのまま残っていること');
 		strictEqual(span2.style.marginTop, '5px', 'バインドしたスタイルが適応されていること');
 		strictEqual(span2.style.marginRight, '10px', 'バインドしたスタイルが適応されていること');
 		strictEqual(span2.style.marginBottom, '20px', 'バインドしたスタイルが適応されていること');
 		strictEqual(span2.style.marginLeft, '30px', 'バインドしたスタイルが適応されていること');
-		strictEqual(rgbToHex($(span2).css('color')), '#f00', '上書きされていないスタイルはそのまま残っていること');
+		strictEqual(rgbToHex($(span2).css('display')), 'block', '上書きされていないスタイルはそのまま残っていること');
 	});
 
 	test('プロパティ名を指定せずに、styleへバインド', function() {
@@ -2980,7 +2951,7 @@ $(function() {
 				txt: 'BBB',
 				cn: 'hoge',
 				at: 'dynId1',
-				st: 'green',
+				st: 'block',
 				txt2: '<div class="sec">testtest</div>'
 			});
 			var testDataItem2_1 = testDataModel2.create({
@@ -3028,7 +2999,7 @@ $(function() {
 						+ '属性でfindできること');
 
 				equal($('#dynId1').length, 1, '動的に追加したDOM要素を、IDセレクタで指定して取得できること');
-				equal($('span[style*="green"]').length, 1, '動的に追加したDOM要素を、スタイルをセレクタで指定して取得できること');
+				equal($('span[style*="block"]').length, 1, '動的に追加したDOM要素を、スタイルをセレクタで指定して取得できること');
 				equal($('.hoge').length, 1, '動的に追加したDOM要素を、クラスセレクタで指定して取得できること');
 				equal($('span:contains("BBB")').length, 1, '動的に追加したDOM要素を、テキストをセレクタで指定して取得できること');
 			});

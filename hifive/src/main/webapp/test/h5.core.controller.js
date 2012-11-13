@@ -47,34 +47,6 @@ $(function() {
 	// Functions
 	//=============================
 
-	function rgbToHex(rgbStr) {
-		if (/^#\d{3,6}$/.test(rgbStr)) {
-			return rgbStr;
-		}
-
-		var hexStr = '#';
-		var patterns = rgbStr.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-
-		if (!patterns) {
-			return rgbStr;
-		}
-
-		var hexs = [];
-
-		for ( var i = 1; i < patterns.length; i++) {
-			hexs.push(("0" + parseInt(patterns[i]).toString(16)).slice(-2));
-		}
-
-		// #9922ff->#92fのようにショートハンドに変換する
-		if (hexs[0][0] === hexs[0][1] && hexs[1][0] === hexs[1][1] && hexs[2][0] === hexs[2][1]) {
-			hexStr += (hexs[0][0] + hexs[1][0] + hexs[2][0]);
-		} else {
-			hexStr += hexs.join();
-		}
-
-		return hexStr;
-	}
-
 	// コントローラがdisposeされているかどうかチェックする関数
 	function isDisposed(controller) {
 		var ret = true;
