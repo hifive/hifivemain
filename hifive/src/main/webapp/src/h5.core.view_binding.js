@@ -123,6 +123,36 @@
 	// Functions
 	// =============================
 
+	var cloneNodeDeeply;
+	(function() {
+		var cloneTest = document.createElement('div');
+		cloneTest.h5Dummy = 'a';
+		var cloned = cloneTest.cloneNode(false);
+		var useOuterHtmlClone = (cloned.h5Dummy !== undefined);
+		cloneTest.h5Dummy = undefined;
+
+		if (useOuterHtmlClone) {
+			cloned.h5Dummy = undefined;
+
+			//IE7の場合、cloneNodeでノードを複製すると、$().find()でクローンした要素を取得できなくなる場合があった（詳細な原因は不明）。
+			//また、IE8以下、またはIE9でもDocModeが8以下の場合、ノードに付加したJSプロパティやattachEventのイベントがクローン先にもコピーされてしまう。
+			//そのため、cloneNode()した結果JSプロパティがコピーされる環境（== DocMode<=8の環境、を想定）では
+			//エレメントのコピーはouterHTMLを基にjQueryによるノード"生成"で行う（!= クローン）ようにしている。
+			cloneNodeDeeply = function(srcNode) {
+				if (srcNode.nodeType === NODE_TYPE_ELEMENT) {
+					return $(srcNode.outerHTML)[0];
+				}
+				return srcNode.cloneNode(true);
+			};
+		} else {
+			//その他のブラウザでは、cloneNodeを使ってノードをクローンする。cloneNodeの方が、通常パフォーマンスは良いため。
+			cloneNodeDeeply = function(srcNode) {
+				return srcNode.cloneNode(true);
+			};
+		}
+	})();
+
+
 	function getElemAttribute(node, attr) {
 		if (!node || node.nodeType !== NODE_TYPE_ELEMENT) {
 			return undefined;
@@ -162,6 +192,56 @@
 	}
 
 
+	function queryQualifiedElements(rootNode, attrs, value, includeRoot) {
+		var ret = [];
+
+		var attrArray = wrapInArray(attrs);
+
+		if (includeRoot === true) {
+			//ルートノードを含める場合は、自分をルートとして再帰
+			queryQualifiedElementsInner(ret, rootNode, attrArray, value);
+			return ret;
+		}
+
+		//ルートノードを含めない場合は、子要素をそれぞれルートにして処理
+		var childNodes = rootNode.childNodes;
+		for ( var i = 0, len = childNodes.length; i < len; i++) {
+			queryQualifiedElementsInner(ret, childNodes[i], attrArray, value);
+		}
+		return ret;
+	}
+
+	function queryQualifiedElementsInner(ret, rootNode, attrs, value) {
+		if (rootNode.nodeType !== NODE_TYPE_ELEMENT) {
+			return;
+		}
+
+		for ( var i = 0, len = attrs.length; i < len; i++) {
+			var attrValue = rootNode.getAttribute(attrs[i]);
+			if (value === undefined) {
+				if (attrValue !== null) {
+					ret.push(rootNode);
+					break;
+				}
+			} else {
+				//IE7以下では、setAttribute()でdata-*属性に数値を入れると、getAttr()したとき型がNumberになっている。
+				//しかし、outerHTMLでノードをクローンした場合、data-*属性の値は文字列型になっている。
+				//そのため、ここでは厳密等価ではなく通常の等価比較を行っている。
+				if (attrValue !== null && attrValue == value) {
+					ret.push(rootNode);
+					break;
+				}
+			}
+		}
+
+		if (rootNode.childNodes.length > 0) {
+			var childNodes = rootNode.childNodes;
+			for ( var i = 0, len = childNodes.length; i < len; i++) {
+				queryQualifiedElementsInner(ret, childNodes[i], attrs, value);
+			}
+		}
+	}
+
 	/**
 	 * 別のコンテキストに属していない（＝現在のコンテキストに属している）バインド対象要素を返します。ネストしたコンテキストの中の対象要素は含まれません。
 	 *
@@ -171,7 +251,7 @@
 	function $getBindElementsInContext(rootNodes, isMultiRoot) {
 		rootNodes = wrapInArray(rootNodes);
 
-		var $bindElements = $();
+		var bindElements = [];
 
 		for ( var i = 0, len = rootNodes.length; i < len; i++) {
 			var rootNode = rootNodes[i];
@@ -190,36 +270,36 @@
 				continue;
 			}
 
-			var $filtered = $('[data-h5-bind]', rootNode).filter(
-					function() {
-						for ( var node = this; node != null; node = node.parentNode) {
-							if (node === rootNode) {
-								return true;
-							}
+			var candidateBindElems = queryQualifiedElements(rootNode, DATA_H5_BIND, undefined, true);
+			for ( var j = 0, cndBindElemsLen = candidateBindElems.length; j < cndBindElemsLen; j++) {
+				var isInCurrentContext = true;
 
-							if (getElemAttribute(node, DATA_H5_CONTEXT) != null
-									|| getElemAttribute(node, DATA_H5_LOOP_CONTEXT) != null) {
-								return false;
-							}
-						}
-						return true;
-					});
-			$bindElements = $bindElements.add($filtered);
+				for ( var node = candidateBindElems[j]; node != null; node = node.parentNode) {
+					if (node === rootNode) {
+						break;
+					}
 
-			if (getElemAttribute(rootNode, DATA_H5_BIND) != null) {
-				//ルートノード自体にdata-bindが書かれていれば、それも対象となる
-				$bindElements = $bindElements.add(rootNode);
+					if (getElemAttribute(node, DATA_H5_CONTEXT) != null
+							|| getElemAttribute(node, DATA_H5_LOOP_CONTEXT) != null) {
+						isInCurrentContext = false;
+						break;
+					}
+				}
+
+				if (isInCurrentContext) {
+					bindElements.push(candidateBindElems[j]);
+				}
 			}
 		}
 
-		return $bindElements;
+		return $(bindElements);
 	}
 
 	/**
 	 * 自分のコンテキストの直接の子供であるdata-context（またはdata-loop-context）を返します。
 	 */
 	function $getChildContexts(rootNodes, dataContextAttr, isMultiRoot) {
-		var $childContexts = $();
+		var childContexts = [];
 
 		for ( var i = 0, len = rootNodes.length; i < len; i++) {
 			var rootNode = rootNodes[i];
@@ -234,7 +314,7 @@
 
 				//指定されたコンテキストが設定されていれば必ず直接の子供
 				if (rootNode.getAttribute(dataContextAttr) != null) {
-					$childContexts = $childContexts.add(rootNode);
+					childContexts.push(rootNode);
 					continue;
 				}
 
@@ -245,23 +325,19 @@
 				}
 			}
 
-			//各ルートノードの子孫ノードから、直接の子供であるコンテキストノードを探す
-			var $filtered = $('[' + dataContextAttr + ']', rootNode).filter(function() {
-				var $this = $(this);
-
-				var contextParent = $this.parent('[data-h5-context],[data-h5-loop-context]')[0];
-
+			var candidateContextElems = queryQualifiedElements(rootNode, dataContextAttr,
+					undefined, false);
+			for ( var j = 0, cndCtxElemsLen = candidateContextElems.length; j < cndCtxElemsLen; j++) {
+				//TODO .parentで属性を取るのも危険か(IE7)
+				var contextParent = $(candidateContextElems[j]).parent(
+						'[data-h5-context],[data-h5-loop-context]')[0];
 				if (contextParent === undefined || contextParent === rootNode) {
-					return true;
+					childContexts.push(candidateContextElems[j]);
 				}
-				//直接の親が指定されたルートノードでない（＝別のコンテキストに入っている）場合は除外
-				return false;
-			});
-
-			$childContexts = $childContexts.add($filtered);
+			}
 		}
 
-		return $childContexts;
+		return $(childContexts);
 	}
 
 
@@ -341,7 +417,7 @@
 
 			//1要素分のノードのクローンを作成
 			for ( var j = 0, childLen = srcRootChildNodes.length; j < childLen; j++) {
-				var clonedInnerNode = srcRootChildNodes[j].cloneNode(true); //deep copy
+				var clonedInnerNode = cloneNodeDeeply(srcRootChildNodes[j]); //deep copy
 
 				loopNodes.push(clonedInnerNode);
 
@@ -607,7 +683,7 @@
 		var ret = [];
 
 		for ( var i = 0, len = childNodes.length; i < len; i++) {
-			ret.push(childNodes[i].cloneNode(true));
+			ret.push(cloneNodeDeeply(childNodes[i]));
 		}
 
 		return ret;
@@ -897,36 +973,31 @@
 
 		//this._targetsは常に配列
 		//初期状態のビューに、コンテキストごとに固有のIDを振っておく
-		for ( var i = 0, len = this._targets.length; i < len; i++) {
+		for ( var i = 0, targetsLen = this._targets.length; i < targetsLen; i++) {
 			var originalNode = this._targets[i];
 
 			if (originalNode.nodeType === NODE_TYPE_ELEMENT) {
-				var $original = $(originalNode);
-
-				//ルートのエレメントノードにdata-dyn-bind-rootを付加して、このBindingインスタンスを探せるようにしておく
+				//ルートのエレメントノードにdata-dyn-bind-rootを付与して、このBindingインスタンスを探せるようにしておく
 				setElemAttribute(originalNode, DATA_H5_DYN_BIND_ROOT, this._bindRootId);
 
-				if (getElemAttribute(originalNode, DATA_H5_CONTEXT)
-						|| getElemAttribute(originalNode, DATA_H5_LOOP_CONTEXT)) {
-					setElemAttribute(originalNode, DATA_H5_DYN_CTX, contextUid++);
+				//data-context, data-loop-contextを持つ要素にIDを付与して、オリジナルの要素を探せるようにする
+				var originalContextElems = queryQualifiedElements(originalNode, [DATA_H5_CONTEXT,
+						DATA_H5_LOOP_CONTEXT], undefined, true);
+				for ( var j = 0, orgCtxElemsLen = originalContextElems.length; j < orgCtxElemsLen; j++) {
+					setElemAttribute(originalContextElems[j], DATA_H5_DYN_CTX, contextUid++);
 				}
-
-				$original.find('[data-h5-context],[data-h5-loop-context]').each(function() {
-					setElemAttribute(this, DATA_H5_DYN_CTX, contextUid++);
-				});
 
 				//data-h5-bindでclassバインドしている場合、オリジナルのclassNameを保存しておく（記述されている場合のみ）
-				if (hasClassBinding(getElemAttribute(originalNode, DATA_H5_BIND))
-						&& $original[0].className != '') {
-					setElemAttribute(originalNode, DATA_H5_DYN_CN, originalNode.className);
+				var originalBindElems = queryQualifiedElements(originalNode, DATA_H5_BIND,
+						undefined, true);
+				for ( var j = 0, orgBindElemsLen = originalBindElems.length; j < orgBindElemsLen; j++) {
+					var originalBindElem = originalBindElems[j];
+					if (hasClassBinding(getElemAttribute(originalBindElem, DATA_H5_BIND))
+							&& originalBindElem.className != '') {
+						setElemAttribute(originalBindElem, DATA_H5_DYN_CN,
+								originalBindElem.className);
+					}
 				}
-				$original.find('[' + DATA_H5_BIND + ']').each(
-						function() {
-							if (hasClassBinding(getElemAttribute(this, DATA_H5_BIND))
-									&& this.className != '') {
-								setElemAttribute(this, DATA_H5_DYN_CN, this.className);
-							}
-						});
 			}
 
 			//保存用にクローン
@@ -1001,7 +1072,25 @@
 		unbind: function() {
 			//全てのバインディングを解除
 			for ( var i = 0, len = this._targets.length; i < len; i++) {
-				this._removeBinding(this._targets[i]);
+				var target = this._targets[i];
+
+				if (target.nodeType === NODE_TYPE_ELEMENT) {
+					//バインディングを解除
+					this._removeBinding(target);
+
+					//dyn属性削除
+					removeElemAttribute(target, DATA_H5_DYN_BIND_ROOT);
+
+					var cnElems = queryQualifiedElements(target, DATA_H5_DYN_CN, undefined, true);
+					for ( var j = 0, cnLen = cnElems.length; j < cnLen; j++) {
+						removeElemAttribute(cnElems[j], DATA_H5_DYN_CN);
+					}
+
+					var cxElems = queryQualifiedElements(target, DATA_H5_DYN_CTX, undefined, true);
+					for ( var j = 0, cxLen = cxElems.length; j < cxLen; j++) {
+						removeElemAttribute(cxElems[j], DATA_H5_DYN_CTX);
+					}
+				}
 			}
 
 			//ビューとこのBindingインスタンスのマップを削除
@@ -1101,8 +1190,6 @@
 				//自分の直接の子供のコンテキスト要素を探す
 				var $childContexts = $getChildContexts(view, DATA_H5_CONTEXT);
 				$childContexts.each(function() {
-					var $this = $(this);
-
 					var contextProp = getElemAttribute(this, DATA_H5_CONTEXT);
 
 					if (!(contextProp in event.props)) {
@@ -1118,12 +1205,11 @@
 					//対応するビューを保存してあるビューからクローンする
 					var dynCtxId = getElemAttribute(this, DATA_H5_DYN_CTX);
 					var srcCtxRootNode = that._getSrcCtxNode(dynCtxId);
-					var cloned = srcCtxRootNode.cloneNode(true);
+					var cloned = cloneNodeDeeply(srcCtxRootNode);
 
 					//新しくバインドした要素を追加し、古いビューを削除
 					//(IE6は先に要素をdocumentツリーに追加しておかないと属性の変更が反映されないので先にツリーに追加)
-					this.parentNode.insertBefore(cloned, this);
-					this.parentNode.removeChild(this);
+					this.parentNode.replaceChild(cloned, this);
 
 					//新しいコンテキストソースオブジェクトでバインディングを行う
 					applyBinding(that, cloned, event.props[contextProp].newValue);
@@ -1162,16 +1248,17 @@
 		 */
 		_getSrcCtxNode: function(ctxId) {
 			for ( var i = 0, len = this._srces.length; i < len; i++) {
-				var $root = $(this._srces[i]);
+				var src = this._srces[i];
+
 				//ルート要素にdata-dyn-ctxがついているかチェック
-				if (getElemAttribute($root[0], DATA_H5_DYN_CTX) === ctxId) {
-					return $root[0];
+				if (getElemAttribute(src, DATA_H5_DYN_CTX) === ctxId) {
+					return src;
 				}
 
-				//このルート要素の子要素に当該ctxIdを持つ要素がないかチェック
-				var $child = $root.find('[' + DATA_H5_DYN_CTX + '="' + ctxId + '"]');
-				if ($child.length > 0) {
-					return $child[0];
+				var ctxElems = queryQualifiedElements(src, DATA_H5_DYN_CTX, ctxId);
+				if (ctxElems.length > 0) {
+					//同じctxIdを持つ要素は1つしかない
+					return ctxElems[0];
 				}
 			}
 			return null;
@@ -1321,21 +1408,21 @@
 				return;
 			}
 
-			var $rootElem = $(rootElem);
-
 			//渡された要素自身がviewUidを持っていたら、まずその要素のバインディングエントリを削除
+			//ここでは、必ず自分自身のエントリが最初に削除されるように、queryQualifiedElementsを使わず独自に削除している
 			var rootVid = getElemAttribute(rootElem, DATA_H5_DYN_VID);
 			if (rootVid != null) {
 				this._removeBindingEntry(rootVid);
 				removeElemAttribute(rootElem, DATA_H5_DYN_VID);
 			}
 
-			//子要素でviewUidを持っている要素を列挙し、全てのバインディングエントリを削除
-			var that = this;
-			$rootElem.find('[' + DATA_H5_DYN_VID + ']').each(function() {
-				that._removeBindingEntry(getElemAttribute(this, DATA_H5_DYN_VID));
-				removeElemAttribute(this, DATA_H5_DYN_VID);
-			});
+			//子孫要素のバインディングエントリを削除
+			var vidElems = queryQualifiedElements(rootElem, DATA_H5_DYN_VID);
+			for ( var i = 0, len = vidElems.length; i < len; i++) {
+				var vidElem = vidElems[i];
+				this._removeBindingEntry(getElemAttribute(vidElem, DATA_H5_DYN_VID));
+				removeElemAttribute(vidElem, DATA_H5_DYN_VID);
+			}
 		},
 
 		/**
