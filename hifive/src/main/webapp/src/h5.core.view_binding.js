@@ -1446,45 +1446,12 @@
 		return new Binding(elements, context);
 	}
 
-	function getBinding(bindRootId) {
-		return;
-	}
-
-	/**
-	 * rootNode、またはその子孫ノードで行われている全てのデータバインドを破棄する。ただし、データバインドはネストしていないことを前提とする。
-	 */
-	function disposeBindings(rootNode) {
-		/**
-		 * nodeをルートノードとするデータバインドが行われていれば、それを破棄する。
-		 */
-		function dispose(node) {
-			var bindRootId = getElemAttribute(node, DATA_H5_DYN_BIND_ROOT);
-			if (bindRootId != null) {
-				var binding = bindRootIdToBindingMap[bindRootId];
-				if (binding) {
-					binding.unbind();
-				}
-			}
-		}
-
-		dispose(rootNode);
-
-		$('[' + DATA_H5_DYN_BIND_ROOT + ']', rootNode).each(function() {
-			dispose(this);
-		});
-	}
-
 	// =============================
 	// Expose to window
 	// =============================
 
 	h5internal.view = {
-		createBinding: createBinding,
-
-		/**
-		 * h5.core.view側でビューからBindingインスタンスを検索するために公開
-		 */
-		disposeBindings: disposeBindings
+		createBinding: createBinding
 	};
 
 })();
