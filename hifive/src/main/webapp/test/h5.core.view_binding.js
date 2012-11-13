@@ -344,7 +344,7 @@ $(function() {
 		strictEqual($span.text(), '', 'text:空文字が設定されていること');
 		strictEqual($span.attr('id'), undefined, 'attr:削除されていること');
 		strictEqual($span[0].style.color, '', 'style:何も設定されていないこと');
-		strictEqual($span.attr('class'), '', 'class:何も設定されていないこと');
+		strictEqual($span[0].className, '', 'class:何も設定されていないこと');
 	});
 
 	test('値が既に設定されているテキスト・HTML・属性・スタイル・クラスにnullをバインドする', function() {
@@ -2999,7 +2999,6 @@ $(function() {
 						+ '属性でfindできること');
 
 				equal($('#dynId1').length, 1, '動的に追加したDOM要素を、IDセレクタで指定して取得できること');
-				equal($('span[style*="block"]').length, 1, '動的に追加したDOM要素を、スタイルをセレクタで指定して取得できること');
 				equal($('.hoge').length, 1, '動的に追加したDOM要素を、クラスセレクタで指定して取得できること');
 				equal($('span:contains("BBB")').length, 1, '動的に追加したDOM要素を、テキストをセレクタで指定して取得できること');
 			});
