@@ -2061,8 +2061,8 @@
 	// =============================
 	/**
 	 * @namespace
-	 * @name obj
-	 * @memberOf h5.core.data
+	 * @name data
+	 * @memberOf h5.core
 	 */
 	h5.u.obj.expose('h5.core.data', {
 		createObservableArray: createObservableArray,
