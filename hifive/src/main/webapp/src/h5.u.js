@@ -1241,6 +1241,6 @@
 		deserialize: deserialize,
 		isJQueryObject: isJQueryObject,
 		argsToArray: argsToArray,
-		getByPath: getByPath,
+		getByPath: getByPath
 	});
 })();
