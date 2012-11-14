@@ -1979,12 +1979,11 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 
 	});
@@ -2021,12 +2020,11 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 	});
 
@@ -2070,12 +2068,11 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2;3', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 	});
 
@@ -2118,8 +2115,6 @@ $(function() {
 		var test2Controller = h5.core.controller('#controllerTest', controller2);
 		h5.async.when(testController.readyPromise, test2Controller.readyPromise).done(
 				function() {
-					start();
-
 					ok($.inArray(testController.__name, ret) !== -1,
 							'aspectのtargetとpointCutにマッチするのでインターセプタは動作するはず。');
 					ok($.inArray(test2Controller.__name, ret) === -1,
@@ -2128,6 +2123,7 @@ $(function() {
 					testController.unbind();
 					test2Controller.unbind();
 					cleanAspects();
+					start();
 				});
 	});
 
@@ -2170,8 +2166,6 @@ $(function() {
 		var test2Controller = h5.core.controller('#controllerTest', controller2);
 		h5.async.when(testController.readyPromise, test2Controller.readyPromise).done(
 				function() {
-					start();
-
 					ok($.inArray(testController.__name, ret) !== -1,
 							'aspectのtargetとpointCutにマッチするのでインターセプタは動作するはず。');
 					ok($.inArray(test2Controller.__name, ret) === -1,
@@ -2180,6 +2174,7 @@ $(function() {
 					testController.unbind();
 					test2Controller.unbind();
 					cleanAspects();
+					start();
 				});
 	});
 
@@ -2215,10 +2210,10 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
 			$('#controllerTest').click();
 			ok(isSame, '"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか');
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2249,8 +2244,6 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$(document).click();
 			$(window).click();
 
@@ -2277,6 +2270,7 @@ $(function() {
 					'セレクタが{window}でイベント名に"[]"がない場合、Controller.unbind()でアンバインドされているか');
 			strictEqual(ret4, null,
 					'セレクタが{window}でイベント名に"[]"がある場合、Controller.unbind()でアンバインドされているか');
+			start();
 		});
 	});
 
@@ -2291,11 +2285,10 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(ret, 1000, '__readyは動作しているか');
 
 			testController.unbind();
+			start();
 		});
 
 	});
@@ -2313,10 +2306,10 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
 			$('#controllerTest input[type=button]').click();
 			ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2517,11 +2510,11 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
 			$('#controllerTest input[type=button]').click();
 			var html = $('#template_cascade').html();
 			ok(html != null && html.length > 0, 'ビューがカスケードした場合でもターゲットは自身のrootElementからfindしているか');
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2540,8 +2533,6 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			start();
-
 			var idController = h5.core.controllerManager.getController('#controllerTest');
 			var jqController = h5.core.controllerManager.getController($('#controllerTest'));
 			var domController = h5.core.controllerManager.getController(document
@@ -2552,6 +2543,7 @@ $(function() {
 			ok(domController === testController, 'DOMでコントローラが取得できたか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2585,8 +2577,6 @@ $(function() {
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.readyPromise
 						.done(function() {
-							start();
-
 							$('#controllerTest input[type=button]').click();
 
 							var message = '[ INFO]{timestamp}: TestController "input[type=button] click"が開始されました。 \n';
@@ -2597,6 +2587,7 @@ $(function() {
 
 							testController.unbind();
 							cleanAspects();
+							start();
 						});
 
 			});
@@ -2635,8 +2626,6 @@ $(function() {
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.readyPromise
 						.done(function() {
-							start();
-
 							$('#controllerTest input[type=button]').click();
 
 							var message = '[ INFO]{timestamp}: TestController "input[type=button] click": {time}ms';
@@ -2645,6 +2634,7 @@ $(function() {
 
 							testController.unbind();
 							cleanAspects();
+							start();
 						});
 			});
 
@@ -2675,13 +2665,12 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(errMsg, 'error interceptor test',
 					'errorInterceptorによって例外がcatchされ、commonFailHandlerが呼ばれたか');
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 	});
 
@@ -2697,13 +2686,12 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').click();
 
 			ok(dfd, 'this.deferred();でDeferredオブジェクトが取得できたか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2723,14 +2711,13 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').click();
 
 			ok(element1, 'this.$find();でコントローラ内の要素が取得できたか');
 			ok(!element2, 'this.$find();でコントローラ外の要素が取得できなかったか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2755,13 +2742,13 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
 			$('#controllerTest input[type=button]').click();
 
 			ok(category === 'TestController', 'コントローラのロガーのカテゴリは正しいか');
 			ok(true, 'デバッグコンソールを確認し、ERROR, WARN, INFO, DEBUG, TRACEのレベル順にメッセージが出ていることを確認してください。');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2791,11 +2778,11 @@ $(function() {
 							indicator.hide();
 
 							setTimeout(function() {
-								start();
 								strictEqual($('.h5-indicator', indicator._target).length, 0,
 										'Indicator#hide() インジケータが除去されていること');
 
 								testController.unbind();
+								start();
 							}, 0);
 						}, 0);
 					}
@@ -2938,11 +2925,11 @@ $(function() {
 					indicator.hide();
 
 					setTimeout(function() {
-						start();
 						strictEqual($('.h5-indicator', indicator._target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
 
 						testController.unbind();
+						start();
 					}, 0);
 				}, 0);
 			}
@@ -3250,8 +3237,7 @@ $(function() {
 					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
 
 					if ($percentElem2.length > 0) {
-						strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
-								'Indicator#show() インジケータが表示されること');
+						strictEqual($percentElem2.text(), '10', 'Indicator#show() インジケータが表示されること');
 					} else {
 						ok(false, 'スロバーが描画できないためテスト失敗。');
 					}
@@ -3289,7 +3275,6 @@ $(function() {
 						start();
 					}, 0);
 				}, 0);
-
 			}
 		};
 
@@ -3350,8 +3335,8 @@ $(function() {
 					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 0,
 							'全てのresolve()が呼ばれたら、インジケータが非表示になること');
 
-					start();
 					testController.unbind();
+					start();
 				});
 	});
 
@@ -3623,9 +3608,8 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -3703,8 +3687,6 @@ $(function() {
 				var test2Controller = h5.core.controller('#controllerTest2', controllerBase2);
 				h5.async.when(test1Controller.readyPromise, test2Controller.readyPromise).done(
 						function() {
-							start();
-
 							$('#controllerTest1 input[type=button]').click();
 
 							ok(triggerEvent, 'イベントの送出ができたか');
@@ -3715,6 +3697,7 @@ $(function() {
 							$('#controllerTest1').remove();
 							$('#controllerTest2').remove();
 							ok(!$('#parent').length, '（DOMのクリーンアップ）');
+							start();
 						});
 			});
 
@@ -3892,8 +3875,6 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 
 		testController.readyPromise.done(function() {
-
-			start();
 			$('#controllerTest input[type=button]').click();
 
 			strictEqual(result.join(';'), '0;1', 'xxxControllerが動作しているか');
@@ -3907,6 +3888,7 @@ $(function() {
 			strictEqual(readyResult.join(';'), '0;1;2', '__readyイベントが適切に発火しているか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -3975,8 +3957,6 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').mouseover();
 			$('#controllerTest input[type=button]').click();
 			$('#controllerTest input[type=button]').dblclick();
@@ -4004,6 +3984,7 @@ $(function() {
 			ok(count === result.length && count === 5, '__metaのuserHandlerのunbindは動作したか5');
 
 			cleanAspects();
+			start();
 		});
 	});
 
@@ -4038,8 +4019,6 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').mouseover();
 			$('#controllerTest input[type=button]').trigger('customEvent');
 
@@ -4047,6 +4026,7 @@ $(function() {
 			ok(!rootRet, '親コントローラのイベントハンドラは動作しているか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -4061,8 +4041,6 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$(document).click();
 			ok(msg.length > 0, 'イベントハンドラが動作するか');
 
@@ -4070,6 +4048,7 @@ $(function() {
 			testController.unbind();
 			$(document).click();
 			ok(msg.length === 0, 'イベントハンドラが動作しないことを確認');
+			start();
 		});
 	});
 
@@ -4221,10 +4200,9 @@ $(function() {
 					strictEqual(noir, root, 'テンプレートを使わない場合でも、__initイベントの中でrootElementに触れるか');
 					strictEqual(norr, root, 'テンプレートを使わない場合でも、__readyイベントの中でrootElementに触れるか');
 
-					start();
-
 					testController.unbind();
 					noTemplateController.unbind();
+					start();
 				});
 	});
 
@@ -4291,13 +4269,11 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', rController);
 
 		c.readyPromise.done(function() {
-
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2;3;4;5;6;7;8',
 					'子、孫コントローラがある場合に、__construct, __init, __readyの発火順は正しいか');
 
 			c.unbind();
+			start();
 		});
 	});
 
@@ -4387,13 +4363,11 @@ $(function() {
 
 				c.readyPromise
 						.done(function() {
-
-							start();
-
 							strictEqual(ret.join(';'), '0;1;2;3;4;5;6;7;8',
 									'子、孫コントローラがあり、__init, __readyでPromiseオブジェクトを返している場合、__construct, __init, __readyの発火順は正しいか');
 
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4487,9 +4461,6 @@ $(function() {
 
 				h5.async.when(c.readyPromise, d1.promise(), d2.promise(), d3.promise()).done(
 						function() {
-
-							start();
-
 							strictEqual(cRet.join(';'), '0;1;2',
 									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
 							strictEqual(iRet.join(';'), '0;1;2',
@@ -4501,6 +4472,7 @@ $(function() {
 							c.iController.unbind();
 							c.rController.unbind();
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4603,9 +4575,6 @@ $(function() {
 
 				h5.async.when(c.readyPromise, cp, ip, rp).done(
 						function() {
-
-							start();
-
 							strictEqual(cRet.join(';'), '0;1;2',
 									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
 							strictEqual(iRet.join(';'), '0;1;2',
@@ -4617,6 +4586,7 @@ $(function() {
 							c.iController.unbind();
 							c.rController.unbind();
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4771,8 +4741,6 @@ $(function() {
 
 		var rootController = h5.core.controller('#controllerTest', rController, args);
 		rootController.readyPromise.done(function() {
-			start();
-
 			ok(args !== rConstruct, '__constructでルートコントローラに渡された初期化パラメータの参照は変わっているか');
 			ok(args.param === rConstruct.param, '__constructでルートコントローラに渡された初期化パラメータのプロパティは正しいか');
 			ok(args !== rInit, '__initでルートコントローラに渡された初期化パラメータの参照は変わっているか');
@@ -4796,6 +4764,7 @@ $(function() {
 			ok(args.param === cReady.param, '__readyで孫コントローラに渡された初期化パラメータのプロパティは正しいか');
 
 			rootController.unbind();
+			start();
 		});
 	});
 
@@ -4883,8 +4852,6 @@ $(function() {
 
 		var rootController = h5.core.controller('#controllerTest', rController);
 		rootController.readyPromise.done(function() {
-			start();
-
 			var parentController = rootController.pController;
 
 			ok(cir === rootController, '__initで孫コントローラのrootControllerは正しいか');
@@ -4902,6 +4869,7 @@ $(function() {
 			ok(rrp === null, '__readyでルートコントローラのparentControllerはnullか');
 
 			rootController.unbind();
+			start();
 		});
 	});
 
@@ -4935,8 +4903,6 @@ $(function() {
 
 		var c = h5.core.controller('#controllerTest', pController);
 		c.readyPromise.done(function() {
-			start();
-
 			var root = $('#controllerTest');
 
 			root.trigger('childCustomEvent');
@@ -4967,6 +4933,7 @@ $(function() {
 			ok(ret === 200, '親のenableListeners()によって、イベントハンドラが動作するようになったか');
 
 			c.unbind();
+			start();
 		});
 	});
 
@@ -5066,8 +5033,8 @@ $(function() {
 
 				var c = h5.core.controller('#controllerTest', testController);
 				c.readyPromise.done(function() {
-					start();
 					c.unbind();
+					start();
 				});
 
 			});
@@ -5174,10 +5141,9 @@ $(function() {
 
 		var c = h5.core.controller('#controllerTest', testController);
 		c.readyPromise.done(function() {
-			start();
-
 			ok(c, 'xxxControllerというプロパティの値が設定されていない時にエラーが発生せず処理が終了するか');
 			c.unbind();
+			start();
 		});
 
 	});
