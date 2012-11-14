@@ -92,7 +92,7 @@ $(function() {
 	 */
 	function testDataItemObsItem(func, schema) {
 		// ObservableItemでテスト
-		var obsItem = h5.u.obj.createObservableItem(schema);
+		var obsItem = h5.core.data.createObservableItem(schema);
 		func(obsItem);
 
 		// データアイテムでテスト
@@ -512,7 +512,7 @@ $(function() {
 	// Body
 	//=============================
 	test('ObservableArrayをバインドできること', function() {
-		var items = h5.u.obj.createObservableArray();
+		var items = h5.core.data.createObservableArray();
 		items.copyFrom([{
 			test: 'a'
 		}, {
@@ -530,7 +530,7 @@ $(function() {
 	});
 
 	test('空のObservableArrayをバインドできること', function() {
-		var items = h5.u.obj.createObservableArray();
+		var items = h5.core.data.createObservableArray();
 		items.copyFrom([]);
 
 		view.append($fixture, 'loopContext1');
@@ -543,7 +543,7 @@ $(function() {
 	});
 
 	test('中身がオブジェクトでないObservableArrayをバインドするとエラーになること', function() {
-		var items = h5.u.obj.createObservableArray();
+		var items = h5.core.data.createObservableArray();
 		items.copyFrom([]);
 
 		var noObjs = [1, 'a', [], [{}]];
@@ -570,13 +570,13 @@ $(function() {
 	});
 
 	test('ObservableItemを要素に持つObservableArrayをバインドできること', 1, function() {
-		var items = h5.u.obj.createObservableArray();
+		var items = h5.core.data.createObservableArray();
 		var schema = {
 			test: null
 		};
-		var item1 = h5.u.obj.createObservableItem(schema);
+		var item1 = h5.core.data.createObservableItem(schema);
 		item1.set('test', 'aa');
-		var item2 = h5.u.obj.createObservableItem(schema);
+		var item2 = h5.core.data.createObservableItem(schema);
 		item2.set('test', 'bb');
 
 		items.copyFrom([item1, item2]);
@@ -606,7 +606,7 @@ $(function() {
 			}]
 		}];
 
-		var oAry = h5.u.obj.createObservableArray();
+		var oAry = h5.core.data.createObservableArray();
 		oAry.copyFrom(ary);
 
 		oAry[0].ary = oAry;
@@ -642,7 +642,7 @@ $(function() {
 	var oAry = null;
 	module('ObservableArrayの変更検知 各メソッド', {
 		setup: function() {
-			oAry = h5.u.obj.createObservableArray();
+			oAry = h5.core.data.createObservableArray();
 			oAry.copyFrom([{
 				test: '初期値0'
 			}, {
@@ -786,8 +786,8 @@ $(function() {
 		var schema = {
 			test: null
 		};
-		var item1 = h5.u.obj.createObservableItem(schema);
-		var item2 = h5.u.obj.createObservableItem(schema);
+		var item1 = h5.core.data.createObservableItem(schema);
+		var item2 = h5.core.data.createObservableItem(schema);
 		item1.set('test', 'a');
 		item2.set('test', 'b');
 
@@ -817,7 +817,7 @@ $(function() {
 	// Body
 	//=============================
 	test('ObservableArrayの要素のオブジェクトが持つObservableArrayを変更した時ビューへ反映されること', function() {
-		var innerOAry = h5.u.obj.createObservableArray();
+		var innerOAry = h5.core.data.createObservableArray();
 		innerOAry.copyFrom([{
 			test: 'innerA',
 			ary: []
@@ -826,7 +826,7 @@ $(function() {
 			test: 'a',
 			ary: innerOAry
 		}];
-		var oAry = h5.u.obj.createObservableArray();
+		var oAry = h5.core.data.createObservableArray();
 		oAry.copyFrom(ary);
 		view.append($fixture, 'loopContext2');
 		view.bind($('#dataBindTest'), {
@@ -865,7 +865,7 @@ $(function() {
 						test: 'B-B'
 					}]
 				}];
-				var oAry = h5.u.obj.createObservableArray();
+				var oAry = h5.core.data.createObservableArray();
 				oAry.copyFrom(ary);
 				oAry[0].ary = oAry;
 				view.append($fixture, 'loopContext2');
@@ -910,7 +910,7 @@ $(function() {
 			var obj = {
 				a: 'obj.a'
 			};
-			var oAry = h5.u.obj.createObservableArray();
+			var oAry = h5.core.data.createObservableArray();
 			oAry.copyFrom([1, 'b']);
 			testSchema = {
 				str: {
@@ -1036,7 +1036,7 @@ $(function() {
 	//=============================
 
 	test('ObserbableArrayの中身を変更すると、変更結果がビューに反映されること', function() {
-		var oar = h5.u.obj.createObservableArray();
+		var oar = h5.core.data.createObservableArray();
 		oar.push({
 			test: 1
 		});
@@ -1174,8 +1174,8 @@ $(function() {
 							num: 4
 						});
 					} else {
-						item2 = h5.u.obj.createObservableItem(testSchema);
-						item4 = h5.u.obj.createObservableItem(testSchema);
+						item2 = h5.core.data.createObservableItem(testSchema);
+						item4 = h5.core.data.createObservableItem(testSchema);
 						item2.set({
 							str: 'b',
 							num: 2
@@ -1224,7 +1224,7 @@ $(function() {
 				testDataItemObsItem(function(item, isDataItem) {
 					var itemType = isDataItem ? 'DataItem' : 'ObservableItem';
 
-					var obsArray = h5.u.obj.createObservableArray();
+					var obsArray = h5.core.data.createObservableArray();
 					obsArray.copyFrom([{
 						test: 'ary[0]'
 					}, {
@@ -1259,7 +1259,7 @@ $(function() {
 					checkTexts(result, itemType + ' 別の配列インスタンスに変更した時に反映されていること', 'span');
 
 					// 別のObservableArrayインスタンスに変更
-					var oAry = h5.u.obj.createObservableArray();
+					var oAry = h5.core.data.createObservableArray();
 					oAry.copyFrom([{
 						test: 'otherOAry[0]'
 					}]);
@@ -1307,7 +1307,7 @@ $(function() {
 				id: '1'
 			});
 
-			testObsItem = h5.u.obj.createObservableItem(schema);
+			testObsItem = h5.core.data.createObservableItem(schema);
 		},
 		teardown: function() {
 			$('#dataBindTest').remove();
@@ -1327,7 +1327,7 @@ $(function() {
 					view.append($fixture, 'itemBind7');
 
 					// 初期値を設定
-					var oar = h5.u.obj.createObservableArray();
+					var oar = h5.core.data.createObservableArray();
 					oar.push({
 						test: 'AAAA'
 					});
@@ -1343,7 +1343,7 @@ $(function() {
 							+ ': ObservableArrayの変更がビューに反映されていること');
 
 					// loop-contextを別のObsArrayで更新
-					var oar2 = h5.u.obj.createObservableArray();
+					var oar2 = h5.core.data.createObservableArray();
 					oar2.push({
 						test: 10
 					}, {
@@ -1373,7 +1373,7 @@ $(function() {
 					view.append($fixture, 'itemBind7');
 
 					// 初期値を設定
-					var oar = h5.u.obj.createObservableArray();
+					var oar = h5.core.data.createObservableArray();
 					oar.push({
 						test: 'AAAA'
 					});
@@ -1389,7 +1389,7 @@ $(function() {
 							+ ': ObservableArrayの変更がビューに反映されていること');
 
 					// loop-contextを別のObsArrayで更新
-					var oar2 = h5.u.obj.createObservableArray();
+					var oar2 = h5.core.data.createObservableArray();
 					oar2.push({
 						test: 10
 					}, {
@@ -2152,7 +2152,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	var bindItem = h5.u.obj.createObservableItem({
+	var bindItem = h5.core.data.createObservableItem({
 		test: null
 	});
 	module('get', {
@@ -2246,7 +2246,7 @@ $(function() {
 	asyncTest('コメントビューにObservableItemをバインド', 2, function() {
 
 		view.append($fixture, 'comment2');
-		var item = h5.u.obj.createObservableItem({
+		var item = h5.core.data.createObservableItem({
 			v1: null,
 			v2: null,
 			item: null
@@ -2285,7 +2285,7 @@ $(function() {
 	asyncTest('コメントビューに配列をバインド', function() {
 		view.append($fixture, 'comment3');
 
-		var item = h5.u.obj.createObservableItem({
+		var item = h5.core.data.createObservableItem({
 			test: null
 		});
 
@@ -2320,10 +2320,10 @@ $(function() {
 	asyncTest('コメントビューにObservableArrayをバインド', function() {
 		view.append($fixture, 'comment3');
 
-		var item = h5.u.obj.createObservableItem({
+		var item = h5.core.data.createObservableItem({
 			test: null
 		});
-		var items = h5.u.obj.createObservableArray();
+		var items = h5.core.data.createObservableArray();
 
 		item.set('test', 'c');
 
@@ -2609,7 +2609,7 @@ $(function() {
 				val: 3
 			}]
 		}];
-		var oar = h5.u.obj.createObservableArray();
+		var oar = h5.core.data.createObservableArray();
 		oar.copyFrom(ar);
 
 		view.append($fixture, 'nestloop1');
@@ -2632,7 +2632,7 @@ $(function() {
 				val: 3
 			}]
 		}];
-		var oar = h5.u.obj.createObservableArray();
+		var oar = h5.core.data.createObservableArray();
 		oar.copyFrom(ar);
 
 		view.append($fixture, 'nestloop1');
@@ -2674,7 +2674,7 @@ $(function() {
 			}]
 		}];
 
-		var oar = h5.u.obj.createObservableArray();
+		var oar = h5.core.data.createObservableArray();
 		oar.copyFrom(ar);
 
 		view.append($fixture, 'nestloop2');
@@ -2763,7 +2763,7 @@ $(function() {
 				defaultValue: 'abc'
 			}
 		};
-		var obsItem = h5.u.obj.createObservableItem(schema);
+		var obsItem = h5.core.data.createObservableItem(schema);
 
 		view.append($fixture, 'itemBind8');
 		var binding = view.bind($('#dataBindTest'), {
@@ -2793,7 +2793,7 @@ $(function() {
 	test(
 			'ObservableArrayをバインド後、unbind()を実行する',
 			function() {
-				var oar = h5.u.obj.createObservableArray();
+				var oar = h5.core.data.createObservableArray();
 				oar.copyFrom([{
 					test: 1
 				}, {

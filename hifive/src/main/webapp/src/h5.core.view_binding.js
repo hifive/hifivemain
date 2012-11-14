@@ -344,7 +344,7 @@
 		//TODO 厳密に判定
 		// ObservableItemの場合もtrueを返す
 		if (obj && obj.addEventListener && obj.getModel && !$.isArray(obj)
-				&& !h5.u.obj.isObservableArray(obj) || h5.u.obj.isObservableItem(obj)) {
+				&& !h5.core.data.isObservableArray(obj) || h5.core.data.isObservableItem(obj)) {
 			return true;
 		}
 		return false;
@@ -381,7 +381,7 @@
 			return;
 		}
 
-		if (!($.isArray(context) || h5.u.obj.isObservableArray(context))) {
+		if (!($.isArray(context) || h5.core.data.isObservableArray(context))) {
 			//data-h5-loop-contextの場合contextは配列でなければならない
 			throwFwError(ERR_CODE_INVALID_CONTEXT_SRC);
 		}
@@ -390,7 +390,7 @@
 
 		binding._addBindingEntry(context, loopRootElement, viewUid);
 
-		if (h5.u.obj.isObservableArray(context) && !binding._isWatching(context)) {
+		if (h5.core.data.isObservableArray(context) && !binding._isWatching(context)) {
 			var observeListener = function(event) {
 				binding._observableArray_observeListener(event);
 			};
@@ -464,7 +464,7 @@
 			//TODO loop-contextにおいて個々のループ単位のコンテキスト自身をcontextやloop-contextにバインドする方法を追加した場合
 			//ここのチェックルーチンは変更になる
 			if (typeof context !== 'object' || $.isArray(context)
-					|| h5.u.obj.isObservableArray(context)) {
+					|| h5.core.data.isObservableArray(context)) {
 				//data-h5-contextの場合contextはオブジェクトでなければならない（配列は不可）
 				throwFwError(ERR_CODE_INVALID_CONTEXT_SRC);
 			}
@@ -1368,7 +1368,7 @@
 						if (isObservableItem(src)) {
 							src.removeEventListener('change', this._listeners[ctxIndex]);
 							removed = true;
-						} else if (h5.u.obj.isObservableArray(src)) {
+						} else if (h5.core.data.isObservableArray(src)) {
 							src.removeEventListener('observe', this._listeners[ctxIndex]);
 							removed = true;
 						}

@@ -825,7 +825,7 @@
 
 			// contextのチェック
 			if (context == null || typeof context !== 'object' || $.isArray(context)
-					|| h5.u.obj.isObservableArray(context)) {
+					|| h5.core.data.isObservableArray(context)) {
 				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
 			}
 

@@ -6911,7 +6911,7 @@ $(function() {
 		});
 
 		var vals = [1, 'abc', new String('ABC'), new Number(1), {}, [],
-				h5.u.obj.createObservableArray(), null, undefined];
+				h5.core.data.createObservableArray(), null, undefined];
 
 		for ( var i = 0, l = vals.length; i < l; i++) {
 			item1.set('v', vals[i]);
@@ -8006,7 +8006,7 @@ $(function() {
 	//=============================
 
 	// datamodelがObservableArrayを扱っていることのテスト
-	// h5.u.obj.createObservableArrayで作っているものなので、
+	// h5.core.data.createObservableArrayで作っているものなので、
 	// ObservableArray自体のテストはh5.uに記述する
 	module('ObservableArray', {
 		setup: function() {
@@ -8070,7 +8070,7 @@ $(function() {
 				var keys = ['numA', 'intA', 'strA', 'boolA', 'anyA', 'enumA', 'datamodelA'];
 				var store = [];
 				for ( var i = 0, l = types.length; i < l; i++) {
-					ok(h5.u.obj.isObservableArray(item.get(keys[i])), h5.u.str.format(
+					ok(h5.core.data.isObservableArray(item.get(keys[i])), h5.u.str.format(
 							'type:{0}の要素がObservableArray', types[i]));
 					store.push(item.get(keys[i]));
 
@@ -8111,19 +8111,19 @@ $(function() {
 		var types = ['number[]', 'integer[]', 'string[]', 'boolean[]', 'any[]', 'enum[]',
 				'@' + dataModel1.name + '[]'];
 		var keys = ['numA', 'intA', 'strA', 'boolA', 'anyA', 'enumA', 'datamodelA'];
-		var numOA = h5.u.obj.createObservableArray();
+		var numOA = h5.core.data.createObservableArray();
 		numOA.copyFrom([1.1, 2.2, 3.3]);
-		var intOA = h5.u.obj.createObservableArray();
+		var intOA = h5.core.data.createObservableArray();
 		intOA.copyFrom([1, 2, 3]);
-		var strOA = h5.u.obj.createObservableArray();
+		var strOA = h5.core.data.createObservableArray();
 		strOA.copyFrom(['a', 'b']);
-		var boolOA = h5.u.obj.createObservableArray();
+		var boolOA = h5.core.data.createObservableArray();
 		boolOA.copyFrom([true, false, true]);
-		var anyOA = h5.u.obj.createObservableArray();
+		var anyOA = h5.core.data.createObservableArray();
 		anyOA.copyFrom([1, true, undefined, 'a']);
-		var enumOA = h5.u.obj.createObservableArray();
+		var enumOA = h5.core.data.createObservableArray();
 		enumOA.copyFrom([1, 3, 2]);
-		var datamodelOA = h5.u.obj.createObservableArray();
+		var datamodelOA = h5.core.data.createObservableArray();
 		var item1 = dataModel1.create({
 			id: '1'
 		});
@@ -8200,7 +8200,7 @@ $(function() {
 
 
 	test('addEventListener 異常系', 5, function() {
-		var errCode = ERRCODE.h5scopeglobals.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
+		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
 			item.addEventListener();
 			ok(false, 'エラーが発生していません');
@@ -8397,7 +8397,7 @@ $(function() {
 
 
 	test('addEventListener 異常系', 5, function() {
-		var errCode = ERRCODE.h5scopeglobals.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
+		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
 			dataModel1.addEventListener();
 			ok(false, '引数なしでエラーが発生していません');
@@ -8589,7 +8589,7 @@ $(function() {
 
 
 	test('addEventListener 異常系', function() {
-		var errCode = ERRCODE.h5scopeglobals.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
+		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
 			manager.addEventListener('itemsCnahge');
 			ok(false, 'エラーが発生していません');

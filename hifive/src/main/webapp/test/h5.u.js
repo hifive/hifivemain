@@ -33,8 +33,9 @@ $(function() {
 	// Variables
 	//=============================
 
-	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
-	var ERR = ERRCODE.h5.u;
+	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR_U.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR_U = ERRCODE.h5.u;
+	var ERR_OBS = ERRCODE.h5.core.data_observables;
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -560,7 +561,7 @@ $(function() {
 			});
 			ok(false, '例外がスローされなかったためテスト失敗');
 		} catch (e) {
-			equal(e.code, ERR.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
+			equal(e.code, ERR_U.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 			equal(window.com.htmlhifive.test.sample4loaded, 2,
 					'data/sample4.js?existFile2 までは読み込まれていること。');
 		}
@@ -659,7 +660,7 @@ $(function() {
 					});
 					ok(false, '例外がスローされなかったためテスト失敗');
 				} catch (e) {
-					equal(e.code, ERR.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
+					equal(e.code, ERR_U.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 					equal(window.com.htmlhifive.test.sample4loaded, undefined,
 							'全てのスクリプトが読み込まれていないこと。');
 				}
@@ -1575,14 +1576,14 @@ $(function() {
 	// Body
 	//=============================
 	test('createObservableArray', 3, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 		strictEqual(o.equals([]), true, 'ObservableArrayが作成できること。中身が空であること');
 		strictEqual(o[0], undefined, '0番目にインデックスアクセスすると、undefinedが返ってくること');
 		strictEqual(o.length, 0, 'lengthプロパティに0が入っていること');
 	});
 
 	test('copyFrom', 11, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 		var ary = [1, 'a', window];
 		o.copyFrom(ary);
 		deepEqual(o.slice(), ary, 'copyFromで引数に渡した配列の中身がコピーされること');
@@ -1595,7 +1596,7 @@ $(function() {
 		strictEqual(o.length, 0, 'lengthが0になること');
 		strictEqual(o[0], undefined, '0番目にインデックスアクセスするとundefinedが取得できること');
 
-		var o2 = h5.u.obj.createObservableArray();
+		var o2 = h5.core.data.createObservableArray();
 		o2.copyFrom(ary);
 		o.copyFrom(o2);
 		deepEqual(o.slice(), ary, 'copyFromで引数にObservableArrayを渡すと、その中身がコピーされること');
@@ -1605,19 +1606,19 @@ $(function() {
 	});
 
 	test('equals', 6, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 		var ary = [1, 'a', window];
 		o.copyFrom(ary);
 		strictEqual(o.equals([1, 'a', window]), true, '引数の配列と中身が同じならequalsの結果がtrueであること');
 
-		var o2 = h5.u.obj.createObservableArray();
+		var o2 = h5.core.data.createObservableArray();
 		o2.copyFrom(ary);
 		strictEqual(o.equals(o2), true, '引数のObservableArrayと中身が同じならequalsの結果がtrueであること');
 
-		var o3 = h5.u.obj.createObservableArray();
+		var o3 = h5.core.data.createObservableArray();
 		strictEqual(o3.equals([]), true, '空のObservableArrayについて、equalsに空配列を渡されたら結果がtrueであること');
 
-		var o4 = h5.u.obj.createObservableArray();
+		var o4 = h5.core.data.createObservableArray();
 		strictEqual(o3.equals(o4), true,
 				'空のObservableArrayについて、equalsに空のObservableArrayを渡されたら結果がtrueであること');
 
@@ -1628,7 +1629,7 @@ $(function() {
 	});
 
 	test('push', 15, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 
 		o.push('1');
 		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
@@ -1655,7 +1656,7 @@ $(function() {
 	});
 
 	test('pop', 7, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.pop();
@@ -1673,7 +1674,7 @@ $(function() {
 	});
 
 	test('reverse', 9, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.reverse();
@@ -1694,7 +1695,7 @@ $(function() {
 	});
 
 	test('shift', 7, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.shift();
@@ -1712,7 +1713,7 @@ $(function() {
 	});
 
 	test('sort', 9, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 		o.push('1', '3', '2');
 
 		o.sort();
@@ -1734,7 +1735,7 @@ $(function() {
 	});
 
 	test('unshift', 11, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 
 		o.unshift('1');
 		strictEqual(o[0], '1', '正しい位置に値が格納されていること');
@@ -1755,12 +1756,12 @@ $(function() {
 	});
 
 	test('splice', 38, function() {
-		var o = h5.u.obj.createObservableArray();
+		var o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		// 引数を全く指定しないパターンと第二引数を指定しないパターンはブラウザによって挙動が異なるためテストしない
 
-		o = h5.u.obj.createObservableArray();
+		o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.splice(1, o.length);
@@ -1769,7 +1770,7 @@ $(function() {
 		strictEqual(o[2], undefined, '何も格納されていないこと');
 		strictEqual(o.length, 1, '正しいサイズであること');
 
-		o = h5.u.obj.createObservableArray();
+		o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.splice(0, 2);
@@ -1778,7 +1779,7 @@ $(function() {
 		strictEqual(o[2], undefined, '何も格納されていないこと');
 		strictEqual(o.length, 1, '正しいサイズであること');
 
-		o = h5.u.obj.createObservableArray();
+		o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.splice(0, 4);
@@ -1787,7 +1788,7 @@ $(function() {
 		strictEqual(o[2], undefined, '何も格納されていないこと');
 		strictEqual(o.length, 0, '正しいサイズであること');
 
-		o = h5.u.obj.createObservableArray();
+		o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.splice(3, 1);
@@ -1798,7 +1799,7 @@ $(function() {
 
 
 		// ----- 値を追加するパターン -------
-		o = h5.u.obj.createObservableArray();
+		o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.splice(0, 2, '10', '20');
@@ -1807,7 +1808,7 @@ $(function() {
 		strictEqual(o[2], '3', '正しい位置に値が格納されていること');
 		strictEqual(o.length, 3, '正しいサイズであること');
 
-		o = h5.u.obj.createObservableArray();
+		o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.splice(0, 2, '100', '200', '300');
@@ -1817,7 +1818,7 @@ $(function() {
 		strictEqual(o[3], '3', '正しい位置に値が格納されていること');
 		strictEqual(o.length, 4, '正しいサイズであること');
 
-		o = h5.u.obj.createObservableArray();
+		o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.splice(0, null, '100', '200', '300');
@@ -1829,7 +1830,7 @@ $(function() {
 		strictEqual(o[5], '3', '正しい位置に値が格納されていること');
 		strictEqual(o.length, 6, '正しいサイズであること');
 
-		o = h5.u.obj.createObservableArray();
+		o = h5.core.data.createObservableArray();
 		o.push('1', '2', '3');
 
 		o.splice(2, 1, '100', '200', '300');
@@ -1849,7 +1850,7 @@ $(function() {
 	var item = null;
 	module('ObservableItem', {
 		setup: function() {
-			item = h5.u.obj.createObservableItem({
+			item = h5.core.data.createObservableItem({
 				nul: null,
 				blank: null,
 				str: {
@@ -1894,7 +1895,7 @@ $(function() {
 	// Body
 	//=============================
 	test('createObservableItem', function() {
-		var item = h5.u.obj.createObservableItem({
+		var item = h5.core.data.createObservableItem({
 			no: null,
 			name: null
 		});
@@ -1905,10 +1906,10 @@ $(function() {
 		var invalidValues = ['a', 1, true];
 		for ( var i = 0, l = invalidValues.length; i < l; i++) {
 			try {
-				h5.u.obj.createObservableItem(invalidValues[i]);
+				h5.core.data.createObservableItem(invalidValues[i]);
 				ok(false, 'テスト失敗。エラーが発生しませんでした。' + invalidValues[i]);
 			} catch (e) {
-				strictEqual(e.code, ERR.ERR_CODE_REQUIRE_SCHEMA, e.message);
+				strictEqual(e.code, ERR_OBS.ERR_CODE_REQUIRE_SCHEMA, e.message);
 			}
 		}
 	});
@@ -1917,13 +1918,13 @@ $(function() {
 		raises(function(enviroment) {
 			item.get('hoge');
 		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY;
+			return actual.code === ERR_OBS.ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY;
 		}, 'スキーマに定義されていないプロパティの値を取得したためエラーになること"');
 
 		raises(function(enviroment) {
 			item.set('hoge', 10);
 		}, function(actual) {
-			return actual.code === ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
+			return actual.code === ERR_OBS.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
 		}, 'スキーマに定義されていないプロパティに対して値を設定したためエラーになること"');
 	});
 });
