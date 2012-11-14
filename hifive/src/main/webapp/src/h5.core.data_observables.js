@@ -28,11 +28,6 @@
 	// Production
 	// =============================
 
-	/**
-	 * エラーメッセージオブジェクト(dev版のみ)と、h5.core.data.jsと共通で使用する関数群を保存するオブジェクト
-	 */
-	h5internal.core.data = {};
-
 	var METHOD_NAME_COPY_FROM = 'copyFrom';
 
 	var EVENT_TYPE_OBSERVE_BEFORE = 'observeBefore';
@@ -245,10 +240,6 @@
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID] = '"{0}"プロパティの定義にエラーがあります。id指定された項目にconstraint.{1}:{2}を指定することはできません';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND] = '"{0}"プロパティの定義にエラーがあります。dependが指定された項目にdefaultValueを指定することはできません。';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF] = '"{0}"プロパティの定義にエラーがあります。depend.onに指定されたプロパティの依存関係が循環しています';
-
-	h5internal.core.data = {
-		DESCRIPTOR_VALIDATION_ERROR_MSGS: DESCRIPTOR_VALIDATION_ERROR_MSGS
-	};
 	/* del end */
 
 
@@ -2079,8 +2070,12 @@
 		isObservableItem: isObservableItem
 	});
 
-	// h5.core.dataで使用するための関数をh5internal.core.dataに公開する
-	$.extend(h5internal.core.data, {
+	// h5.core.dataでも共通で使用するエラーメッセージオブジェクトと、関数
+	h5internal.core.data = {
+		/* del begin */
+		// dev版でのみエラーメッセージを使用する
+		DESCRIPTOR_VALIDATION_ERROR_MSGS: DESCRIPTOR_VALIDATION_ERROR_MSGS,
+		/* del end */
 		validateSchema: validateSchema,
 		validateDefaultValue: validateDefaultValue,
 		createCheckValueByDescriptor: createCheckValueByDescriptor,
@@ -2091,5 +2086,5 @@
 		isStringValue: isStringValue,
 		unbox: unbox,
 		EventDispatcher: EventDispatcher
-	});
+	};
 })();
