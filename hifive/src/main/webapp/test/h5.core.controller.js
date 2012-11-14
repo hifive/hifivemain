@@ -2825,8 +2825,14 @@ $(function() {
 								'BlockMessageTest');
 						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 								'Indicator#show() インジケータが表示されること');
-						strictEqual($(indicator._target).find('.throbber-percent').text(), '20',
-								'Indicator#show() 進捗率が表示されること');
+
+						var $percentElem = $(indicator._target).find('.throbber-percent');
+
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.text(), '20', 'Indicator#show() 進捗率が表示されること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
 
 						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
 								'display'), 'block', 'オーバーレイが表示されていること');
@@ -2852,7 +2858,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', function() {
+	asyncTest('this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', 5, function() {
 		$('#controllerTest').append('<div id="childDiv"></div>');
 		var indicator = null;
 		var testController = {
@@ -2877,8 +2883,14 @@ $(function() {
 						'indicator testController');
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '30',
-						'Indicator#show() インジケータが表示されること');
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					strictEqual($percentElem.text(), '30', 'Indicator#show() インジケータが表示されること');
+				} else {
+					ok(false, 'スロバーが描画できないためテスト失敗。');
+				}
 
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
@@ -3040,7 +3052,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', 22, function() {
+	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
 		var testController = null;
 		var testController2 = null;
 		var controllerBase = {
@@ -3057,29 +3069,37 @@ $(function() {
 						'BlockMessageTest');
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '10',
-						'Indicator#show() インジケータが表示されること');
-
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
-				indicator.percent(30);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '30',
-						'Indicator#show() インジケータの進捗率表示が30に更新されていること');
-				indicator.percent(100);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '100',
-						'Indicator#show() インジケータの進捗率表示が100に更新されていること');
-				indicator.percent(5);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
-						'Indicator#show() インジケータの進捗率表示が5に更新されていること');
-				indicator.percent(-1);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
-						'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
-				indicator.percent(101);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
-						'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
-				indicator.percent(33.3333333);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '33.3333333',
-						'Indicator#show() インジケータの進捗率に小数を指定できること');
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					expect(22);
+					strictEqual($percentElem.text(), '10', 'Indicator#show() インジケータが表示されること');
+					indicator.percent(30);
+					strictEqual($percentElem.text(), '30',
+							'Indicator#show() インジケータの進捗率表示が30に更新されていること');
+					indicator.percent(100);
+					strictEqual($percentElem.text(), '100',
+							'Indicator#show() インジケータの進捗率表示が100に更新されていること');
+					indicator.percent(5);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率表示が5に更新されていること');
+					indicator.percent(-1);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
+					indicator.percent(101);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
+					indicator.percent(33.3333333);
+					strictEqual($percentElem.text(), '33.3333333',
+							'Indicator#show() インジケータの進捗率に小数を指定できること');
+				} else {
+					expect(10);
+					ok(false, 'スロバーが描写できないためテスト失敗。');
+				}
+
 				indicator.hide();
 				var that = this;
 				setTimeout(function() {
@@ -3096,28 +3116,36 @@ $(function() {
 							'BlockMessageTestGrobal');
 					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
 							'Indicator#show() インジケータが表示されること');
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
-							'Indicator#show() インジケータの進捗率が表示されること');
 					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
 							.css('display'), 'block', 'オーバーレイが表示されていること');
-					indicator2.percent(30);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '30',
-							'Indicator#show() インジケータの進捗率表示が30に更新されていること');
-					indicator2.percent(100);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '100',
-							'Indicator#show() インジケータの進捗率表示が100に更新されていること');
-					indicator2.percent(5);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-							'Indicator#show() インジケータの進捗率表示が5に更新されていること');
-					indicator2.percent(-1);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-							'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
-					indicator2.percent(101);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
-					indicator2.percent(33.3333333);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(),
-							'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること');
+
+					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
+
+					if ($percentElem2.length > 0) {
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
+								'Indicator#show() インジケータの進捗率が表示されること');
+						indicator2.percent(30);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '30',
+								'Indicator#show() インジケータの進捗率表示が30に更新されていること');
+						indicator2.percent(100);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '100',
+								'Indicator#show() インジケータの進捗率表示が100に更新されていること');
+						indicator2.percent(5);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率表示が5に更新されていること');
+						indicator2.percent(-1);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
+						indicator2.percent(101);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
+						indicator2.percent(33.3333333);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(),
+								'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること');
+					} else {
+						ok(false, 'スロバーが描画できないためテスト失敗。');
+					}
+
 					indicator2.hide();
 					setTimeout(function() {
 						strictEqual($('.h5-indicator', indicator2._target).length, 0,
@@ -3164,11 +3192,17 @@ $(function() {
 						'BlockMessageTest');
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '10',
-						'Indicator#show() インジケータが表示されること');
-
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
+
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					strictEqual($percentElem.text(), '10', 'Indicator#show() インジケータが表示されること');
+				} else {
+					ok(false, 'スロバーが描画できないためテスト失敗。');
+				}
 
 				indicator.message('changeMessage');
 				strictEqual($(indicator._target).find('.indicator-message').text(),
@@ -3210,11 +3244,17 @@ $(function() {
 							'BlockMessageTestGrobal');
 					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
 							'Indicator#show() インジケータが表示されること');
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
-							'Indicator#show() インジケータが表示されること');
-
 					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
 							.css('display'), 'block', 'オーバーレイが表示されていること');
+
+					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
+
+					if ($percentElem2.length > 0) {
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
+								'Indicator#show() インジケータが表示されること');
+					} else {
+						ok(false, 'スロバーが描画できないためテスト失敗。');
+					}
 
 					indicator2.message('changeMessage');
 					strictEqual($(indicator2._target).find('.indicator-message').text(),
@@ -3249,6 +3289,7 @@ $(function() {
 						start();
 					}, 0);
 				}, 0);
+
 			}
 		};
 
@@ -3424,34 +3465,41 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5.ui.indicator()',
+	asyncTest('h5.ui.indicator()', 5,
 			function() {
 				var testController = null;
 				var controllerBase = {
 					__name: 'TestController',
 					'input[type=button] click': function() {
-						var indicator2 = h5.ui.indicator(document, {
+						var indicator = h5.ui.indicator(document, {
 							message: 'BlockMessageTest2',
 							percent: 20
 						});
-						indicator2.show();
+						indicator.show();
 
-						strictEqual($(indicator2._target).find(
+						strictEqual($(indicator._target).find(
 								'.h5-indicator.a.content > .indicator-message').text(),
 								'BlockMessageTest2');
-						strictEqual($(indicator2._target).find('.h5-indicator.overlay').length, 1,
-								'Indicator#show() インジケータが表示されること');
-						strictEqual($(indicator2._target).find('.throbber-percent').text(), '20',
+						strictEqual($(indicator._target).find('.h5-indicator.overlay').length, 1,
 								'Indicator#show() インジケータが表示されること');
 
-						strictEqual($(indicator2._target).find('.h5-indicator.overlay').css(
+						var $percentElem = $(indicator._target).find('.throbber-percent');
+
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.text(), '20',
+									'Indicator#show() インジケータが表示されること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
+
+						strictEqual($(indicator._target).find('.h5-indicator.overlay').css(
 								'display'), 'block', 'オーバーレイが表示されていること');
 
 						setTimeout(function() {
-							indicator2.hide();
+							indicator.hide();
 
 							setTimeout(function() {
-								strictEqual($('.h5-indicator', indicator2._target).length, 0,
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
 										'Indicator#hide() インジケータが除去されていること');
 								testController.unbind();
 								start();
@@ -3484,12 +3532,17 @@ $(function() {
 						strictEqual($(indicator2._target).find(
 								'.h5-indicator.b.content > .indicator-message').text(),
 								'BlockMessageTest2');
+
 						var $percentElem = $(indicator2._target).find(
 								'.h5-indicator.b.content .throbber-percent');
-						strictEqual($percentElem.css('font-size'), '18px',
-								'スロバー:変更したテーマのCSSがインジケータに適用されていること');
-						strictEqual(rgbToHex($percentElem.css('color')), '#c20',
-								'スロバー:変更したテーマのCSSがインジケータに適用されていること');
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.css('font-size'), '18px',
+									'スロバー:変更したテーマのCSSがインジケータに適用されていること');
+							strictEqual(rgbToHex($percentElem.css('color')), '#c20',
+									'スロバー:変更したテーマのCSSがインジケータに適用されていること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
 
 						var $messageElem = $(indicator2._target).find(
 								'.h5-indicator.b.content .indicator-message');
