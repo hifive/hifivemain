@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,42 @@
  * hifive
  */
 
-
 $(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
 
-	var cleanAspects = function() {
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+
+	//=============================
+	// Variables
+	//=============================
+
+	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.core.controller;
+
+	//=============================
+	// Functions
+	//=============================
+
+	function cleanAspects() {
 		h5.settings.aspects = null;
-	};
+	}
+
+	// =========================================================================
+	//
+	// Test Module
+	//
+	// =========================================================================
+	//=============================
+	// Definition
+	//=============================
 
 	module(
 			"Logic",
@@ -35,6 +65,10 @@ $(function() {
 					$('#controllerTest').remove();
 				}
 			});
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('this.deferred()は使用できるか', function() {
 		var innerDfd = null;
@@ -129,7 +163,7 @@ $(function() {
 
 	asyncTest('ロジックのAOPは動作しているか ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -190,7 +224,7 @@ $(function() {
 
 	test('h5.core.logic() の動作 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			return;
 		}
 
@@ -243,8 +277,7 @@ $(function() {
 
 	});
 
-	test('ロジックの循環参照チェックに引っかかるとエラーが発生するか', function() {
-
+	test('ロジックの循環参照チェックに引っかかるとエラーが発生するか', 1, function() {
 		var test1Logic = {
 			__name: 'Test1Logic'
 		};
@@ -253,18 +286,19 @@ $(function() {
 
 			test1Logic: test1Logic
 		};
+
 		test1Logic.test2Logic = test2Logic;
 
 		var testController = {
 			__name: 'TestController',
 			test1Logic: test1Logic
 		};
-		var errMsg = null;
+
 		try {
 			h5.core.controller('#controllerTest', testController);
 		} catch (e) {
-			errMsg = e.message;
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, 'エラーが発生したか');
 		}
-		strictEqual(errMsg, 'コントローラ"TestController"のロジックで、参照が循環しているため、ロジックを生成できません。(code=6010)', 'エラーが発生したか');
+
 	});
 });

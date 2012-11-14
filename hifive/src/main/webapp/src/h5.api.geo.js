@@ -34,17 +34,16 @@
 	/** エラーコード: 位置情報の取得に失敗 */
 	var ERR_CODE_POSITIONING_FAILURE = 2002;
 
-	var errMsgMap = {};
-	errMsgMap[ERR_CODE_INVALID_COORDS] = '正しい緯度または経度を指定して下さい。';
-	errMsgMap[ERR_CODE_INVALID_GEOSYSTEM_CONSTANT] = '正しい計算モード定数を指定して下さい';
-	errMsgMap[ERR_CODE_POSITIONING_FAILURE] = '位置情報の取得に失敗しました。';
-	addFwErrorCodeMap(errMsgMap);
-
 	// =============================
 	// Development Only
 	// =============================
 
 	/* del begin */
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_INVALID_COORDS] = '正しい緯度または経度を指定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_GEOSYSTEM_CONSTANT] = '正しい計算モード定数を指定して下さい';
+	errMsgMap[ERR_CODE_POSITIONING_FAILURE] = '位置情報の取得に失敗しました。';
+	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
 	// =========================================================================
@@ -262,11 +261,11 @@
 		// TODO 長距離の場合も考えて、距離によって誤差が大きくならない『測地線航海算法』で計算するメソッドの追加も要検討
 		getDistance: function(lat1, lng1, lat2, lng2, geoSystem) {
 			if (!isFinite(lat1) || !isFinite(lng1) || !isFinite(lat2) || !isFinite(lng2)) {
-				throw new throwFwError(ERR_CODE_INVALID_COORDS);
+				throwFwError(ERR_CODE_INVALID_COORDS);
 			}
 			var geodeticMode = geoSystem ? geoSystem : GRS80;
 			if (!(geodeticMode instanceof GeodeticSystemEnum)) {
-				throw new throwFwError(ERR_CODE_INVALID_GEOSYSTEM_CONSTANT);
+				throwFwError(ERR_CODE_INVALID_GEOSYSTEM_CONSTANT);
 			}
 			// 長半径(赤道半径)
 			var A = geodeticMode.getSemiMajorAxis();

@@ -27,6 +27,7 @@
 	// =============================
 	// Production
 	// =============================
+
 	var TEMPLATE_LOAD_RETRY_COUNT = 3;
 	var TEMPLATE_LOAD_RETRY_INTERVAL = 3000;
 	var TYPE_OF_UNDEFINED = 'undefined';
@@ -36,6 +37,9 @@
 	var EVENT_NAME_H5_TRACKMOVE = 'h5trackmove';
 	var EVENT_NAME_H5_TRACKEND = 'h5trackend';
 	var ROOT_ELEMENT_NAME = 'rootElement';
+
+	/** インラインコメントテンプレートのコメントノードの開始文字列 */
+	var COMMENT_BINDING_TARGET_MARKER = '{h5view ';
 
 	// エラーコード
 	/** エラーコード: テンプレートに渡すセレクタが不正 */
@@ -83,6 +87,21 @@
 	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
 	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
 
+	// =============================
+	// Development Only
+	// =============================
+
+	var fwLogger = h5.log.createLogger('h5.core');
+	/* del begin */
+
+	// ログメッセージ
+	var FW_LOG_TEMPLATE_LOADED = 'コントローラ"{0}"のテンプレートの読み込みに成功しました。';
+	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
+	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
+	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
+	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ{0}の初期化が正常に完了しました。';
+	var FW_LOG_INIT_CONTROLLER_THROWN_ERROR = 'コントローラ{0}の{1}内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。';
+
 	// エラーコードマップ
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
@@ -109,20 +128,6 @@
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
 
 	addFwErrorCodeMap(errMsgMap);
-
-	// =============================
-	// Development Only
-	// =============================
-
-	var fwLogger = h5.log.createLogger('h5.core');
-	/* del begin */
-	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
-	var FW_LOG_TEMPLATE_LOADED = 'コントローラ"{0}"のテンプレートの読み込みに成功しました。';
-	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
-	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
-	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
-	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ{0}の初期化が正常に完了しました。';
-	var FW_LOG_INIT_CONTROLLER_THROWN_ERROR = 'コントローラ{0}の{1}内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。';
 	/* del end */
 
 	// =========================================================================
@@ -862,6 +867,7 @@
 			var initDfd = controller.__controllerContext.initDfd;
 			// FW、ユーザともに使用しないので削除
 			delete controller.__controllerContext.templatePromise;
+			delete controller.__controllerContext.preinitDfd;
 			delete controller.__controllerContext.initDfd;
 			initDfd.resolve();
 
@@ -1572,6 +1578,54 @@
 		}
 	}
 
+	/**
+	 * インラインコメントテンプレートノードを探す
+	 *
+	 * @private
+	 * @param {Node} node 探索を開始するルートノード
+	 * @param {String} id テンプレートID
+	 * @retruns {Node} 発見したコメントノード、見つからなかった場合はnull
+	 */
+	function findCommentBindingTarget(rootNode, id) {
+		var childNodes = rootNode.childNodes;
+		for ( var i = 0, len = childNodes.length; i < len; i++) {
+			var n = childNodes[i];
+			if (n.nodeType === 1) {
+				//Magic number: 1はNode.ELEMENT_NODE
+				var ret = findCommentBindingTarget(n, id);
+				if (ret) {
+					//深さ優先で探索して見つかったらそこで探索終了
+					return ret;
+				}
+			} else if (n.nodeType === 8) {
+				//Magic Number: 8はNode.COMMENT_NODE
+				var nodeValue = n.nodeValue;
+				if (nodeValue.indexOf(COMMENT_BINDING_TARGET_MARKER) !== 0) {
+					//コメントが開始マーカーで始まっていないので探索継続
+					continue;
+				}
+
+				var beginTagCloseBracketIdx = nodeValue.indexOf('}');
+				if (beginTagCloseBracketIdx === -1) {
+					//マーカータグが正しく閉じられていない
+					continue;
+				}
+
+				var beginTag = nodeValue.slice(0, beginTagCloseBracketIdx);
+
+				var matched = beginTag.match(/id="([A-Za-z][\w-:\.]*)"/);
+				if (!matched) {
+					//idが正しく記述されていない
+					continue;
+				} else if (matched[1] === id) {
+					//探しているidを持つインラインコメントテンプレートノードが見つかったのでリターン
+					return n;
+				}
+			}
+		}
+		return null;
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -1787,8 +1841,48 @@
 		}
 	}
 
-	$.extend(View.prototype, {
+	/**
+	 * JSDTのフォーマッタが過剰にインデントしてしまうので、独立した関数として記述している
+	 *
+	 * @private
+	 */
+	function View_bind(element, context) {
+		var target = element;
 
+		if (isString(element) && element.indexOf('h5view#') === 0) {
+			//先頭が"h5view#"で始まっている場合、インラインコメントテンプレートへのバインドとみなす
+			//（「{h5view id="xxx"}」という記法なので、h5viewタグの特定idをセレクトしているようにみなせる）
+			//Magic number: 7は"h5view#"の文字数
+			var inlineCommentNode = findCommentBindingTarget(this.__controller.rootElement, element
+					.slice(7));
+
+			var rawTmpl = inlineCommentNode.nodeValue;
+			var tmpl = rawTmpl.slice(rawTmpl.indexOf('}') + 1);
+
+			//jQueryによる"クリーンな"DOM生成のため、innerHTMLではなくappend()を使う
+			var $dummyRoot = $('<div>').append(tmpl);
+
+			target = [];
+			var childNodes = $dummyRoot[0].childNodes;
+			for ( var i = 0, len = childNodes.length; i < len; i++) {
+				target.push(childNodes[i]);
+			}
+
+			//ダミールートから要素を外し、インラインテンプレートの直後に要素を挿入
+			$dummyRoot.empty();
+			var fragment = document.createDocumentFragment();
+			for ( var i = 0, len = target.length; i < len; i++) {
+				fragment.appendChild(target[i]);
+			}
+
+			inlineCommentNode.parentNode.insertBefore(fragment, inlineCommentNode.nextSibling);
+		}
+
+		//詳細な引数チェックはView.bindで行う
+		return this.__view.bind(target, context);
+	}
+
+	$.extend(View.prototype, {
 		/**
 		 * パラメータで置換された、指定されたテンプレートIDのテンプレートを取得します。
 		 *
@@ -1920,7 +2014,23 @@
 		 */
 		clear: function(templateIds) {
 			this.__view.clear(templateIds);
-		}
+		},
+
+		/**
+		 * データバインドを開始します。
+		 *
+		 * @since 1.1.0
+		 * @param {String|Element|Element[]|jQuery} element コメントビュー疑似セレクタ、またはDOM要素(セレクタ文字列, DOM要素,
+		 *            DOM要素の配列, jQueryオブジェクト)。コメントビューを指定する場合は、「h5view#xxx」（xxxはid）と記述してください
+		 *            （id属性がxxxになっているh5viewタグを指定する、ような記法になっています）。
+		 *            DOM要素の配列を指定する場合、全ての要素ノードの親ノードが同じでなければいけません。
+		 * @param {Object} context データコンテキストオブジェクト
+		 * @function
+		 * @name bind
+		 * @memberOf Controller.view
+		 * @see View.bind
+		 */
+		bind: View_bind
 	});
 
 	/**
@@ -2006,6 +2116,7 @@
 		/**
 		 * コントローラを要素へバインドします。
 		 *
+		 * @since 1.1.0
 		 * @memberOf Controller
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.<br />
 		 *            セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。
@@ -2178,12 +2289,18 @@
 		 * }, 4000);
 		 * </pre>
 		 *
-		 * @param {Object} [opt]
-		 * @param {String} [opt.message] メッセージ
-		 * @param {Number} [opt.percent] 進捗を0～100の値で指定する。
-		 * @param {Boolean} [opt.block] 操作できないよう画面をブロックするか (true:する/false:しない) デフォルト:true
-		 * @param {Promise|Promise[]} [opt.promises] Promiseオブジェクト (Promiseの状態と合わせてインジケータの表示・非表示する)
-		 * @param {String} [opt.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルをする場合に使用する)
+		 * @param {Object} [opt] オプション
+		 * @param {String|Object} [opt.target] インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
+		 * @param {String} [opt.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
+		 * @param {Number} [opt.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
+		 * @param {Boolean} [opt.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
+		 * @param {Number} [opt.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
+		 * @param {Number} [opt.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
+		 * @param {Promise|Promise[]} [opt.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
+		 * @param {String} [opt.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
+		 * @param {String} [opt.throbber.lines] スロバーの線の本数 (デフォルト:12)
+		 * @param {String} [opt.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
+		 *            (このオプションはCSS3Animationを未サポートブラウザのみ有効) (デフォルト:1000)
 		 * @returns {Indicator} インジケータオブジェクト
 		 * @memberOf Controller
 		 * @see Indicator
@@ -2254,6 +2371,8 @@
 			if (arguments.length < 2) {
 				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
+
+			var error = null;
 
 			if (msgOrErrObj && isString(msgOrErrObj)) {
 				error = new Error(format.apply(null, argsToArray(arguments).slice(1)));

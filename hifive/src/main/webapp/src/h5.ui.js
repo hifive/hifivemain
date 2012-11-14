@@ -23,6 +23,10 @@
 	//
 	// =========================================================================
 
+	// =============================
+	// Production
+	// =============================
+
 	/**
 	 * メッセージを表示する要素のクラス名
 	 */
@@ -95,9 +99,6 @@
 	 */
 	var WAIT_MILLIS = 500;
 
-	// =============================
-	// Production
-	// =============================
 
 	// =============================
 	// Development Only
@@ -163,6 +164,11 @@
 	var isLegacyIE = h5ua.isIE && h5ua.browserVersion <= 6;
 
 	/**
+	 * timer + transformでスロバーを回すかどうか (PC版chromeでは、timer + transformでスロバーを回すようにするため)
+	 */
+	var useTransformTimerAnimation = h5ua.isChrome && h5ua.isDesktop;
+
+	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
 	 * <p>
 	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
@@ -212,6 +218,11 @@
 	 * Y方向のスクロール値を取得するメソッド
 	 */
 	var scrollTop = null;
+
+	/**
+	 * Y方向のスクロール値を取得するメソッド
+	 */
+	var scrollLeft = null;
 
 	// =============================
 	// Functions
@@ -357,18 +368,17 @@
 					// client[Width/Height]のほうが大きい場合はこの値を返す
 					return elem['client' + prop] > elem['scroll' + prop] ? elem['client' + prop]
 							: elem['scroll' + prop];
-				} else {
-					return elem['client' + prop];
 				}
-			} else {
-				return Math.max(body['scroll' + prop], docElem['scroll' + prop], body['offset'
-						+ prop], docElem['offset' + prop], docElem['client' + prop]);
+				return elem['client' + prop];
 			}
+			return Math.max(body['scroll' + prop], docElem['scroll' + prop], body['offset' + prop],
+					docElem['offset' + prop], docElem['client' + prop]);
+
 		};
 	}
 
 	/**
-	 * ウィンドウの幅と高さを取得します。
+	 * スクロールバーの幅も含めた、ウィンドウ幅または高さを取得します。
 	 * <p>
 	 * ウィンドウの高さを取得したい場合は引数に"Height"を、 ウィンドウの幅を取得したい場合は引数に"Width"を指定して下さい。
 	 * <p>
@@ -404,6 +414,48 @@
 	}
 
 	/**
+	 * スクロールバーの幅を含めない、ウィンドウ幅または高さを取得します。
+	 */
+	function getDisplayArea(prop) {
+		var e = compatMode ? document.body : document.documentElement;
+		return h5ua.isiOS ? window['inner' + prop] : e['client' + prop];
+	}
+
+	/**
+	 * 指定された要素の絶対座標を取得します。
+	 * <p>
+	 * 1.8.xのjQuery.offset()は、Quirksモードでのスクロール量の計算が正しく行われないため自前で計算する。
+	 * <p>
+	 * BODY要素が指定された場合は、jQuery.offset.bodyOffset()から値を取得する。
+	 */
+	function getOffset(element) {
+		var elem = $(element)[0];
+		var body = document.body;
+		var box = {
+			top: 0,
+			left: 0
+		};
+
+		if (elem === body) {
+			return $.offset.bodyOffset(elem);
+		}
+
+		if (typeof elem.getBoundingClientRect !== "undefined") {
+			box = elem.getBoundingClientRect();
+		}
+
+		var docElem = compatMode ? body : document.documentElement;
+		var clientTop = docElem.clientTop || 0;
+		var clientLeft = docElem.clientLeft || 0;
+
+		return {
+			top: box.top + scrollTop() - clientTop,
+			left: box.left + scrollLeft() - clientLeft
+		};
+
+	}
+
+	/**
 	 * 指定された要素で発生したイベントを無効にする
 	 */
 	function disableEventOnIndicator(/* var_args */) {
@@ -434,6 +486,7 @@
 	documentHeight = documentSize('Height');
 	documentWidth = documentSize('Width');
 	scrollTop = scrollPosition('Top');
+	scrollLeft = scrollPosition('Left');
 
 	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
 	if (!isCanvasSupported && isVMLSupported) {
@@ -613,7 +666,13 @@
 			$(this.baseDiv).remove();
 
 			if (this._runId) {
-				clearTimeout(this._runId);
+				// Timerを止める
+				// chromeの場合はsetIntervalでタイマーを回しているため、clearIntervalで止める
+				if (useTransformTimerAnimation) {
+					clearInterval(this._runId);
+				} else {
+					clearTimeout(this._runId);
+				}
 				this._runId = null;
 			}
 		},
@@ -655,6 +714,25 @@
 			}
 			this.highlightPos = highlightPos;
 
+
+			if (useTransformTimerAnimation) {
+				// chrome22で、webkit-animationでアニメーションしている要素を消すと、表示上残ってしまう。(すべてのPCで起きるわけではない)
+				// そのため、chromeの場合はwebkit-animationを使わず、Timer + transform でスロバーを回している
+				//
+				// このwebkit-animationの問題について調べたところ、
+				// chrome23βでも同様の問題が起きたが、
+				// chrome24devとchrome25canaryではきちんと消えることを確認した。(2012/11/06現在)
+				var deg = 0;
+				this._runId = setInterval(function() {
+					deg++;
+					canvas.style.webkitTransform = 'rotate(' + deg + 'deg)';
+					if (deg >= 360) {
+						deg -= 360;
+					}
+				}, roundTime / 360);
+				return;
+			}
+
 			if (isCSS3AnimationsSupported) {
 				// CSS3Animationをサポートしている場合は、keyframesでスロバーを描写する
 				canvas.className = CLASS_THROBBER_CANVAS;
@@ -683,15 +761,18 @@
 	 *
 	 * @class
 	 * @name Indicator
-	 * @param {String|Object} target インジケータを表示する対象のDOMオブジェクトまたはセレクタ
+	 * @param {String|Object} target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
 	 * @param {Object} [option] オプション
-	 * @param {String} [option.message] スロバーの右側に表示する文字列
-	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する
-	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない)
-	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
-	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
+	 * @param {String} [option.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
+	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
+	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
+	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
+	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
 	 * @param {Promise|Promise[]} [option.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
-	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
+	 * @param {String} [option.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
+	 * @param {String} [option.throbber.lines] スロバーの線の本数 (デフォルト:12)
+	 * @param {String} [option.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
+	 *            (このオプションはCSS3Animationを未サポートブラウザのみ有効) (デフォルト:1000)
 	 */
 	function Indicator(target, option) {
 		var that = this;
@@ -1012,8 +1093,8 @@
 				}
 			};
 
-			if (!isCSS3AnimationsSupported) {
-				// CSS3Animationをサポートしないブラウザの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
+			if (!isCSS3AnimationsSupported || useTransformTimerAnimation) {
+				// CSS3Animationをサポートしないブラウザまたはchromeの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
 				for ( var i = 0, len = this._throbbers.length; i < len; i++) {
 					this._throbbers[i].hide();
 				}
@@ -1206,15 +1287,18 @@
 	 * @memberOf h5.ui
 	 * @name indicator
 	 * @function
-	 * @param {String|Object} target インジケータを表示する対象のDOMオブジェクトまたはセレクタ
-	 * @param {String} [option.message] スロバーの右側に表示する文字列
-	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する
-	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない)
-	 * @param {Object} [option.style] スタイルオプション (詳細はIndicatorクラスのドキュメントを参照)
-	 * @param {String} [option.theme] インジケータの基点となるクラス名 (CSSでテーマごとにスタイルを変更する場合に使用する)
-	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
-	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:-1)
+	 * @param {String|Object} target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
+	 * @param {Object} [option] オプション
+	 * @param {String} [option.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
+	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
+	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
+	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
+	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
 	 * @param {Promise|Promise[]} [option.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
+	 * @param {String} [option.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
+	 * @param {String} [option.throbber.lines] スロバーの線の本数 (デフォルト:12)
+	 * @param {String} [option.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
+	 *            (このオプションはCSS3Animationを未サポートブラウザのみ有効) (デフォルト:1000)
 	 * @see Indicator
 	 * @see Controller.indicator
 	 */
@@ -1249,22 +1333,23 @@
 		var viewTop,viewBottom,viewLeft,viewRight;
 		var $element = $(element);
 		var height,width;
-		var $container;
+
 		// containerの位置を取得。borderの内側の位置で判定する。
 		if (container === undefined) {
 			// containerが指定されていないときは、画面表示範囲内にあるかどうか判定する
-			height = h5ua.isiOS ? window.innerHeight : $(window).height();
-			width = h5ua.isiOS ? window.innerWidth : $(window).width();
-			viewTop = $(window).scrollTop();
-			viewLeft = $(window).scrollLeft();
+			height = getDisplayArea('Height');
+			width = getDisplayArea('Width');
+			viewTop = scrollTop();
+			viewLeft = scrollLeft();
 		} else {
-			$container = $(container);
+			var $container = $(container);
 			if ($container.find($element).length === 0) {
 				// elementとcontaienrが親子関係でなければundefinedを返す
 				return undefined;
 			}
-			viewTop = $container.offset().top + parseInt($container.css('border-top-width'));
-			viewLeft = $container.offset().left + parseInt($container.css('border-left-width'));
+			var containerOffset = getOffset($container);
+			viewTop = containerOffset.top + parseInt($container.css('border-top-width'));
+			viewLeft = containerOffset.left + parseInt($container.css('border-left-width'));
 			height = $container.innerHeight();
 			width = $container.innerWidth();
 		}
@@ -1272,8 +1357,9 @@
 		viewRight = viewLeft + width;
 
 		// elementの位置を取得。borderの外側の位置で判定する。
-		var positionTop = $element.offset().top;
-		var positionLeft = $element.offset().left;
+		var elementOffset = getOffset($element);
+		var positionTop = elementOffset.top;
+		var positionLeft = elementOffset.left;
 		var positionBottom = positionTop + $element.outerHeight();
 		var positionRight = positionLeft + $element.outerWidth();
 		return ((viewTop <= positionTop && positionTop < viewBottom) || (viewTop < positionBottom && positionBottom <= viewBottom))
