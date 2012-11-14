@@ -33,6 +33,15 @@
 	 */
 	var ERR_CODE_NOT_ARRAY = 5000;
 
+	// =============================
+	// Development Only
+	// =============================
+
+	var fwLogger = h5.log.createLogger('h5.async');
+
+	/* del begin */
+	var FW_LOG_H5_WHEN_INVALID_PARAMETER = 'h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。';
+
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
@@ -41,14 +50,6 @@
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
-
-	// =============================
-	// Development Only
-	// =============================
-
-	var fwLogger = h5.log.createLogger('h5.async');
-	/* del begin */
-	var FW_LOG_H5_WHEN_INVALID_PARAMETER = 'h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。';
 	/* del end */
 
 

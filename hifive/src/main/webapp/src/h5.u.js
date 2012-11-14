@@ -38,6 +38,7 @@
 	 */
 	var CURRENT_SEREALIZER_VERSION = '1';
 
+	// エラーコード
 	/**
 	 * ns()、getByPathで引数の名前空間名にstring以外が渡されたときに発生するエラー
 	 */
@@ -78,7 +79,6 @@
 	 */
 	var ERR_CODE_INVALID_SCRIPT_PATH = 11007;
 
-
 	/**
 	 * loadScript()に渡されたオプションが不正(プレーンオブジェクト、null、undefined)である時に発生するエラー
 	 */
@@ -94,6 +94,11 @@
 	 */
 	var ERR_CODE_SCRIPT_FILE_LOAD_FAILD = 11010;
 
+	// =============================
+	// Development Only
+	// =============================
+
+	/* del begin */
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
@@ -112,13 +117,6 @@
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
-
-	// =============================
-	// Development Only
-	// =============================
-
-	/* del begin */
-
 	/* del end */
 
 
@@ -258,7 +256,7 @@
 	/**
 	 * ドット区切りで名前空間オブジェクトを生成します。
 	 * （h5.u.obj.ns('sample.namespace')と呼ぶと、window.sample.namespaceとオブジェクトを生成します。）
-	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外が渡された場合はエラーとします。
+	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外、または、識別子として不適切な文字列が渡された場合はエラーとします。
 	 *
 	 * @param {String} namespace 名前空間
 	 * @memberOf h5.u.obj
@@ -272,18 +270,21 @@
 
 		var nsArray = namespace.split('.');
 		var len = nsArray.length;
+
 		for ( var i = 0; i < len; i++) {
 			if (!isValidNamespaceIdentifier(nsArray[i])) {
 				// 名前空間として不正な文字列ならエラー
 				throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
 			}
 		}
+
 		var parentObj = window;
 		for ( var i = 0; i < len; i++) {
-			if (parentObj[nsArray[i]] === undefined) {
-				parentObj[nsArray[i]] = {};
+			var name = nsArray[i];
+			if (parentObj[name] === undefined) {
+				parentObj[name] = {};
 			}
-			parentObj = parentObj[nsArray[i]];
+			parentObj = parentObj[name];
 		}
 
 		// ループが終了しているので、parentObjは一番末尾のオブジェクトを指している
@@ -881,7 +882,7 @@
 
 			return ret;
 		}
-		;
+
 		return CURRENT_SEREALIZER_VERSION + '|' + func(value);
 	}
 
@@ -953,7 +954,7 @@
 				}
 			}
 			val.match(/^(.)(.*)/);
-			type = RegExp.$1;
+			var type = RegExp.$1;
 			ret = (RegExp.$2) ? RegExp.$2 : '';
 			if (type !== undefined && type !== '') {
 				switch (codeToType(type)) {
@@ -1128,8 +1129,8 @@
 	/**
 	 * 指定された名前空間に存在するオブジェクトを取得します。
 	 *
-	 * @param {String} 名前空間
-	 * @return {Any} その名前空間に存在するオブジェクト
+	 * @param {String} namespace 名前空間
+	 * @returns {Any} その名前空間に存在するオブジェクト
 	 * @name getByPath
 	 * @function
 	 * @memberOf h5.u.obj
@@ -1182,7 +1183,7 @@
 	 * 	});
 	 * </pre>
 	 *
-	 * @return {Function} インターセプタ
+	 * @returns {Function} インターセプタ
 	 * @name createInterceptor
 	 * @function
 	 * @memberOf h5.u
@@ -1242,5 +1243,4 @@
 		argsToArray: argsToArray,
 		getByPath: getByPath
 	});
-
 })();

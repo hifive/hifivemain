@@ -32,6 +32,9 @@
  */
 var errorCodeToMessageMap = {};
 
+//=============================
+// Errors
+//=============================
 // =============================
 // Misc Functions
 // =============================
@@ -235,6 +238,7 @@ function getRegex(target) {
 	return new RegExp('^' + str + '$');
 }
 
+//TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る
 var h5internal = {
 	core: {
 		controllerInternal: null

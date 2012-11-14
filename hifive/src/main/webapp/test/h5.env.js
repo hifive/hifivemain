@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,50 @@
  */
 
 $(function() {
-
 	// min版ではh5.env.__checkがプリプロセッサによって削除される
 	if (!h5.env.__check) {
 		return;
 	}
 
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+
+	//=============================
+	// Variables
+	//=============================
+
+	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.env;
+
+	//=============================
+	// Functions
+	//=============================
+
+	// =========================================================================
+	//
+	// Test Module
+	//
+	// =========================================================================
+
+	//=============================
+	// Definition
+	//=============================
+
 	module("h5.env");
+
+	//=============================
+	// Body
+	//=============================
+
 	test(
 			'uaの確認(Android 4.0.1, Chrome for Android 16.0.912.75)',
 			function() {
@@ -374,6 +411,7 @@ $(function() {
 		strictEqual(ret.isDesktop, true, 'デスクトップか');
 		strictEqual(ret.isWebkit, false, 'Webkitか');
 	});
+
 
 	test('uaの確認(Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10)',
 			function() {

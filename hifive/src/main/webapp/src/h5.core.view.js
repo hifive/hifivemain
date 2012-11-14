@@ -29,9 +29,15 @@
 	// =============================
 
 	/**
-	 * テンプレート文字列のコンパイル時に発生するエラー
+	 * EJSにスクリプトレットの区切りとして認識させる文字
 	 */
-	var ERR_CODE_TEMPLATE_COMPILE = 7000;
+	var DELIMITER = '[';
+
+	// エラーコード
+	/**
+	 * コンパイルしようとしたテンプレートが文字列でない
+	 */
+	var ERR_CODE_TEMPLATE_COMPILE_NOT_STRING = 7000;
 
 	/**
 	 * テンプレートファイルの内容読み込み時に発生するエラー
@@ -62,50 +68,61 @@
 	 * テンプレートに渡すパラメータに必要なプロパティが設定されていない時に発生するエラー
 	 */
 	var ERR_CODE_TEMPLATE_PROPATY_UNDEFINED = 7006;
-	/**
-	 * 各エラーコードに対応するメッセージ
-	 */
-	var errMsgMap = {};
-	errMsgMap[ERR_CODE_TEMPLATE_COMPILE] = 'テンプレートをコンパイルできませんでした。{0}';
-	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。{0}';
-	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
-	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
-	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
-	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
-	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
-
-	// メッセージの登録
-	addFwErrorCodeMap(errMsgMap);
 
 	/**
-	 * register(id,str)でstrにstring型以外が渡されたときに発生させる例外のdetailに格納するメッセージ。
+	 * bindに指定されたターゲットが不正(非DOM要素またはセレクタで指定された要素が存在しない)な場合に発生するエラー
 	 */
-	var ERR_REASON_TEMPLATE_IS_NOT_STRING = 'テンプレートには文字列を指定してください';
+	var ERR_CODE_BIND_INVALID_TARGET = 7007;
 
 	/**
-	 * scriptタグで囲まれていないテンプレートを読み込んだ時のメッセージ
+	 * bindに指定したtargetが表すDOM要素が複数あるならエラー
 	 */
-	var ERR_REASON_SCRIPT_ELEMENT_IS_NOT_EXIST = 'scriptタグが見つかりません。テンプレート文字列はscriptタグで囲って記述して下さい。';
+	var ERR_CODE_TOO_MANY_TARGETS = 7008;
 
 	/**
-	 * テンプレートのコンパイルエラー時に発生するメッセージ
+	 * bindに指定したcontextがオブジェクトでない
 	 */
-	var ERR_REASON_SYNTAX_ERR = '構文エラー {0}{1}';
+	var ERR_CODE_BIND_CONTEXT_INVALID = 7009;
 
 	/**
-	 * EJSにスクリプトレットの区切りとして認識させる文字
+	 * bindに指定したcontextがオブジェクトでない
 	 */
-	var DELIMITER = '[';
+	var ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR = 7010;
+
+	/**
+	 * テンプレートファイルにscriptタグの記述がない
+	 */
+	var ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT = 7011;
 
 	// =============================
 	// Development Only
 	// =============================
 
 	var fwLogger = h5.log.createLogger('h5.core.view');
+
 	/* del begin */
-	// TODO Minify時にプリプロセッサで削除されるべきものはこの中に書く
 	var FW_LOG_TEMPLATE_NOT_REGISTERED = '指定されたIDのテンプレートは登録されていません。"{0}"';
 	var FW_LOG_TEMPLATE_OVERWRITE = 'テンプレートID:{0} は上書きされました。';
+
+	/**
+	 * 各エラーコードに対応するメッセージ
+	 */
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_TEMPLATE_COMPILE_NOT_STRING] = 'テンプレートのコンパイルでエラーが発生しました。テンプレートには文字列を指定してください。';
+	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。';
+	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
+	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
+	errMsgMap[ERR_CODE_INVALID_FILE_PATH] = 'テンプレートファイルの指定が不正です。空や空白でない文字列、または文字列の配列で指定してください。';
+	errMsgMap[ERR_CODE_TEMPLATE_ID_UNAVAILABLE] = 'テンプレートID:{0} テンプレートがありません。';
+	errMsgMap[ERR_CODE_TEMPLATE_PROPATY_UNDEFINED] = '{0} テンプレートにパラメータが設定されていません。';
+	errMsgMap[ERR_CODE_BIND_INVALID_TARGET] = 'bindの引数に指定されたターゲットが存在しないかまたは不正です。';
+	errMsgMap[ERR_CODE_TOO_MANY_TARGETS] = 'bindの引数に指定されたバインド先の要素が2つ以上存在します。バインド対象は1つのみにしてください。';
+	errMsgMap[ERR_CODE_BIND_CONTEXT_INVALID] = 'bindの引数に指定されたルートコンテキストが不正です。オブジェクト、データアイテム、またはObservableItemを指定してください。';
+	errMsgMap[ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR] = 'テンプレートのコンパイルでエラーが発生しました。構文エラー：{0} {1}';
+	errMsgMap[ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT] = 'テンプレートファイルに<script>タグの記述がありません。テンプレートは<script>タグで記述してください。';
+
+	// メッセージの登録
+	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
 	// =========================================================================
@@ -289,8 +306,7 @@
 					} catch (e) {
 						var lineNo = e.lineNumber;
 						var msg = lineNo ? ' line:' + lineNo : '';
-						throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(
-								ERR_REASON_SYNTAX_ERR, msg, e.message)], {
+						throwFwError(ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR, [msg, e.message], {
 							id: templateId,
 							error: e,
 							lineNo: lineNo
@@ -323,8 +339,8 @@
 							var filePath = this.url;
 
 							if ($elements.not('script[type="text/ejs"]').length > 0) {
-								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE,
-										[ERR_REASON_SCRIPT_ELEMENT_IS_NOT_EXIST], {
+								df.reject(createRejectReason(
+										ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT, null, {
 											url: absolutePath,
 											path: filePath
 										}));
@@ -438,6 +454,7 @@
 		return h5.u.obj.isJQueryObject(obj) ? obj : $(obj);
 	}
 
+
 	// =========================================================================
 	//
 	// Body
@@ -550,7 +567,7 @@
 		 */
 		register: function(templateId, templateString) {
 			if ($.type(templateString) !== 'string') {
-				throwFwError(ERR_CODE_TEMPLATE_COMPILE, [ERR_REASON_TEMPLATE_IS_NOT_STRING], {
+				throwFwError(ERR_CODE_TEMPLATE_COMPILE_NOT_STRING, null, {
 					id: templateId
 				});
 			} else if (!isString(templateId) || !$.trim(templateId)) {
@@ -564,8 +581,7 @@
 			} catch (e) {
 				var lineNo = e.lineNumber;
 				var msg = lineNo ? ' line:' + lineNo : '';
-				throwFwError(ERR_CODE_TEMPLATE_COMPILE, [h5.u.str.format(ERR_REASON_SYNTAX_ERR,
-						msg, e.message)], {
+				throwFwError(ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR, [msg, e.message], {
 					id: templateId
 				});
 			}
@@ -660,7 +676,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素 (jQueryオブジェクト)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		update: function(element, templateId, param) {
 			return getJQueryObj(element).html(this.get(templateId, param));
@@ -679,7 +695,7 @@
 		 * @param {Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		append: function(element, templateId, param) {
 			return getJQueryObj(element).append(this.get(templateId, param));
@@ -698,7 +714,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ
-		 * @returns {Object} テンプレートが適用されたDOM要素 (jQueryオブジェクト)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 */
 		prepend: function(element, templateId, param) {
 			return getJQueryObj(element).prepend(this.get(templateId, param));
@@ -761,6 +777,59 @@
 			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
 				delete this.__cachedTemplates[templateIdsArray[i]];
 			}
+		},
+
+		/**
+		 * データバインドを開始します。
+		 * <p>
+		 * 注意:<br>
+		 * このメソッドではバインド対象にコメントビューを指定できません。<br>
+		 * コメントビューを使用したデータバインドは、コントローラが持つViewインスタンスから実行して下さい。
+		 *
+		 * @since 1.1.0
+		 * @param {String|Element|Element[]|jQuery} element コメントビュー疑似セレクタ、またはDOM要素(セレクタ文字列, DOM要素,
+		 *            DOM要素の配列, jQueryオブジェクト)。 DOM要素の配列を指定する場合、全ての要素ノードの親ノードが同じでなければいけません。
+		 * @param {Object} context データコンテキストオブジェクト
+		 * @memberOf View
+		 * @name bind
+		 * @function
+		 */
+		bind: function(element, context) {
+			var targetNodes = null;
+
+			if (element == null) {
+				throwFwError(ERR_CODE_BIND_INVALID_TARGET);
+			}
+
+			// targetのチェック
+			if ($.isArray(element)) {
+				//配列はDOMノードの配列であることを仮定
+				targetNodes = element;
+			} else {
+				//targetがDOM、セレクタ文字列の場合をまとめて扱う
+				//インラインテンプレートが指定された場合はコントローラ側のview.bindが予めノード化しているので
+				//ここに到達した時にはノードになっている
+				var $element = $(element);
+
+				if ($element.length === 0) {
+					// 要素がない、もしくは見つからない場合はエラー
+					throwFwError(ERR_CODE_BIND_INVALID_TARGET);
+				}
+
+				//bind()はルートノードが複数であることをサポートするので、lengthは1には限定しない
+				//ただし、これはappend, prepend等の動作を考慮したものである。
+				//つまり、全ての要素は同じノードを親として持っていることを前提としている。
+				//厳密にはチェックすべきだが、実際に問題になることはほとんどないだろうと考え行っていない。
+				targetNodes = $element.toArray();
+			}
+
+			// contextのチェック
+			if (context == null || typeof context !== 'object' || $.isArray(context)
+					|| h5.core.data.isObservableArray(context)) {
+				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
+			}
+
+			return h5internal.view.createBinding(targetNodes, context);
 		}
 	});
 

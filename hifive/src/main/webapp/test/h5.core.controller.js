@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation, All Rights Reserved.
+ * Copyright (C) 2012 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -13,7 +13,28 @@
  *
  * hifive
  */
+
 $(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+
+	//=============================
+	// Variables
+	//=============================
+
+	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.core.controller;
+	var ERR_VIEW = ERRCODE.h5.core.view;
+
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
@@ -22,33 +43,9 @@ $(function() {
 			&& $
 					.isFunction(document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect);
 
-	var rgbToHex = function(rgbStr) {
-		if (/^#\d{3,6}$/.test(rgbStr)) {
-			return rgbStr;
-		}
-
-		var hexStr = '#';
-		var patterns = rgbStr.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-
-		if (!patterns) {
-			return rgbStr;
-		}
-
-		var hexs = [];
-
-		for ( var i = 1; i < patterns.length; i++) {
-			hexs.push(("0" + parseInt(patterns[i]).toString(16)).slice(-2));
-		}
-
-		// #9922ff->#92fのようにショートハンドに変換する
-		if (hexs[0][0] === hexs[0][1] && hexs[1][0] === hexs[1][1] && hexs[2][0] === hexs[2][1]) {
-			hexStr += (hexs[0][0] + hexs[1][0] + hexs[2][0]);
-		} else {
-			hexStr += hexs.join();
-		}
-
-		return hexStr;
-	};
+	//=============================
+	// Functions
+	//=============================
 
 	// コントローラがdisposeされているかどうかチェックする関数
 	function isDisposed(controller) {
@@ -62,11 +59,21 @@ $(function() {
 	}
 
 
-	var cleanAspects = function() {
+	function cleanAspects() {
 		h5.settings.aspects = null;
-	};
+	}
+
+	// =========================================================================
+	//
+	// Test Module
+	//
+	// =========================================================================
+
+	//=============================
+	// Definition
+	//=============================
 	module(
-			"Controller",
+			"Controller - expose",
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -79,7 +86,11 @@ $(function() {
 				}
 			});
 
-	test('h5.core.expose()', function() {
+	//=============================
+	// Body
+	//=============================
+
+	test('h5.core.expose()を実行', function() {
 
 		var c1 = {
 			__name: 'TestController'
@@ -96,20 +107,42 @@ $(function() {
 		h5.core.expose(c2);
 		strictEqual(c2, window.com.htmlhifive.test.controller.TestController,
 				'"."を含む__nameの場合、window以下に名前空間が作られて紐付けられたか');
-		var errMsg = null;
+
 		try {
 			h5.core.expose(c3);
 		} catch (e) {
-			errMsg = e.message;
+			strictEqual(e.code, ERR.ERR_CODE_EXPOSE_NAME_REQUIRED,
+					'コントローラ、ロジック以外(__nameプロパティがない)のオブジェクトをh5.core.expose()に渡すとエラーが発生するか');
 		}
-		strictEqual(errMsg, 'コントローラ、もしくはロジックの __name が設定されていません。(code=6019)',
-				'コントローラ、ロジック以外(__nameプロパティがない)のオブジェクトをh5.core.expose()に渡すとエラーが発生するか');
 
 		window.TestController = undefined;
 		window.jp = undefined;
 		strictEqual(undefined, window.TestController, '（名前空間のクリーンアップ1）');
 		strictEqual(undefined, window.jp, '（名前空間のクリーンアップ2）');
 	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module(
+			"Controller",
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+				},
+				teardown: function() {
+					$('#controllerTest').remove();
+					h5.settings.commonFailHandler = undefined;
+				}
+			});
+
+
+	//=============================
+	// Body
+	//=============================
 
 	asyncTest('コントローラの作成と要素へのバインド(AOPなし)', 3, function() {
 		var cc = null;
@@ -164,7 +197,7 @@ $(function() {
 	asyncTest('コントローラの作成と要素へのバインド(AOPあり) ※min版ではエラーになります', 3, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -220,7 +253,6 @@ $(function() {
 	});
 
 	asyncTest('コントローラの作成と要素へのバインド セレクタ、イベントの前後にスペースがあってもイベントハンドリングできること', 9, function() {
-		var cc = null;
 		var controller = {
 
 			__name: 'TestController',
@@ -288,32 +320,32 @@ $(function() {
 		try {
 			h5.core.controller(null, controller);
 		} catch (e) {
-			strictEqual(e.code, 6001, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 		}
 		try {
 			h5.core.controller(undefined, controller);
 		} catch (e) {
-			strictEqual(e.code, 6001, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 		}
 		try {
 			h5.core.controller('#noexist', controller);
 		} catch (e) {
-			strictEqual(e.code, 6003, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 		}
 		try {
 			h5.core.controller('', controller);
 		} catch (e) {
-			strictEqual(e.code, 6003, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 		}
 		try {
 			h5.core.controller('.test', controller);
 		} catch (e) {
-			strictEqual(e.code, 6004, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, e.message);
 		}
 		try {
 			h5.core.controller(1, controller);
 		} catch (e) {
-			strictEqual(e.code, 6030, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
 		}
 	});
 
@@ -329,38 +361,38 @@ $(function() {
 					try {
 						testController.bind();
 					} catch (e) {
-						strictEqual(e.code, 6001, e.message);
+						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 					}
 					try {
 						testController.bind(null);
 					} catch (e) {
-						strictEqual(e.code, 6001, e.message);
+						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 					}
 					try {
 						var bind = testController.bind;
 						bind('#controllerTest');
 					} catch (e) {
-						strictEqual(e.code, 6002, e.message);
+						strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_CONTROLLER, e.message);
 					}
 					try {
 						testController.bind('#noexist');
 					} catch (e) {
-						strictEqual(e.code, 6003, e.message);
+						strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 					}
 					try {
 						testController.bind('');
 					} catch (e) {
-						strictEqual(e.code, 6003, e.message);
+						strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 					}
 					try {
 						testController.bind('.test');
 					} catch (e) {
-						strictEqual(e.code, 6004, e.message);
+						strictEqual(e.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, e.message);
 					}
 					try {
 						testController.bind(1);
 					} catch (e) {
-						strictEqual(e.code, 6030, e.message);
+						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
 					}
 					testController.dispose().done(function() {
 						start();
@@ -393,7 +425,7 @@ $(function() {
 	});
 
 	test('__name属性のないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
-		var errorCode = 6006;
+		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
 		var controller = {
 			name: 'TestController'
 		};
@@ -409,7 +441,7 @@ $(function() {
 		var names = ['', '   ', 1, {}, ["MyController"]];
 		var l = names.length;
 		expect(l);
-		var errorCode = 6006;
+		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
 		for ( var i = 0; i < l; i++) {
 			try {
 				h5.core.controller('#controllerTest', {
@@ -424,7 +456,7 @@ $(function() {
 
 
 	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
-		var errorCode = 6017;
+		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
 		var controller = {
 			__name: 'TestController',
 			myLogic: {
@@ -444,7 +476,7 @@ $(function() {
 		var names = ['', '   ', 1, {}, ["MyLogic"]];
 		var l = names.length;
 		expect(l);
-		var errorCode = 6017;
+		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
 		for ( var i = 0; i < l; i++) {
 			try {
 				h5.core.controller('#controllerTest', {
@@ -479,11 +511,8 @@ $(function() {
 			err2 = e;
 		}
 
-		strictEqual(err1.message, 'コントローラ"TestController"のバインド対象となる要素が存在しません。(code=6003)',
-				'バインド対象がない場合エラーとなるか');
-		strictEqual(err2.message,
-				'コントローラ"TestController"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。(code=6004)',
-				'バインド対象が複数ある場合エラーとなるか');
+		strictEqual(err1.code, ERR.ERR_CODE_BIND_NO_TARGET, 'バインド対象がない場合エラーとなるか');
+		strictEqual(err2.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, 'バインド対象が複数ある場合エラーとなるか');
 	});
 
 	asyncTest('コントローラのアンバインド', function() {
@@ -666,9 +695,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートが存在しない時のコントローラの動作 2', 21, function() {
-		// TODO エラーコードも確認する
-		var errorCode = 7003;
+	asyncTest('テンプレートが存在しない時のコントローラの動作 2', 23, function() {
 		var disposedController = {};
 		var bController = {
 			__name: 'BController',
@@ -784,12 +811,14 @@ $(function() {
 		});
 		testController.initPromise.done(function() {
 			ok(false, 'テスト失敗。親コントローラのinitPromiseのdoneハンドラが呼ばれた。');
-		}).fail(function() {
+		}).fail(function(result) {
+			equal(result.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX);
 			ok(true, '親コントローラのinitPromiseのfailハンドラが呼ばれる。');
 		});
 		testController.readyPromise.done(function() {
 			ok(false, 'テスト失敗。親コントローラのreadyPromiseのdoneハンドラが呼ばれた。');
-		}).fail(function() {
+		}).fail(function(result) {
+			equal(result.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX);
 			ok(true, '親コントローラのreadyPromiseのfailハンドラが呼ばれる。');
 		});
 	});
@@ -991,7 +1020,7 @@ $(function() {
 	});
 
 	test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', 1, function() {
-		var errorCode = 6029;
+		var errorCode = ERR.ERR_CODE_NOT_VIEW;
 		var view = h5.core.view;
 		h5.core.view = null;
 		var controller = {
@@ -1089,7 +1118,7 @@ $(function() {
 			__dispose: function() {
 				var that = this;
 				setTimeout(function() {
-					child = that.__name === 'ChildController';
+					that.__name === 'ChildController';
 					childDfd.resolve();
 				}, 800);
 				return childDfd.promise();
@@ -1103,7 +1132,7 @@ $(function() {
 			__dispose: function() {
 				var that = this;
 				setTimeout(function() {
-					root = that.__name === 'TestController';
+					that.__name === 'TestController';
 					rootDfd.reject();
 				}, 100);
 				return rootDfd.promise();
@@ -1430,7 +1459,7 @@ $(function() {
 						start();
 					}
 				};
-				var c = h5.core.controller('#controllerTest', controller);
+				h5.core.controller('#controllerTest', controller);
 			});
 
 	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __initでpromiseを返してrejectする場合 2', 2,
@@ -1460,7 +1489,7 @@ $(function() {
 						start();
 					}
 				};
-				var c = h5.core.controller('#controllerTest', controller);
+				h5.core.controller('#controllerTest', controller);
 			});
 
 
@@ -1487,7 +1516,7 @@ $(function() {
 						start();
 					}
 				};
-				var c = h5.core.controller('#controllerTest', controller);
+				h5.core.controller('#controllerTest', controller);
 			});
 
 	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 __readyでpromiseを返してrejectする場合 2', 2,
@@ -1517,7 +1546,7 @@ $(function() {
 						start();
 					}
 				};
-				var c = h5.core.controller('#controllerTest', controller);
+				h5.core.controller('#controllerTest', controller);
 			});
 
 	asyncTest('コントローラの初期化処理中にエラーが起きた時のcommonFailHandlerの動作 ルートコントローラのreadyPromiseにfailハンドラを登録した場合',
@@ -1834,8 +1863,8 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラ内のthis(AOPなし)', 2, function() {
-
+	asyncTest('コントローラ内のthis(AOPなし)', 1, function() {
+		var capturedController = null;
 		var controller = {
 			__name: 'TestController',
 
@@ -1844,7 +1873,7 @@ $(function() {
 			},
 
 			test: function() {
-				window.controller = this;
+				capturedController = this;
 			}
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
@@ -1853,24 +1882,24 @@ $(function() {
 
 					$('#controllerTest input[type=button]').click();
 
-					strictEqual(window.controller.__name, 'TestController',
+					strictEqual(capturedController.__name, 'TestController',
 							'コントローラ内のthisはコントローラ自身を指しているか');
 
 					testController.unbind();
-					window.controller = undefined;
-					strictEqual(window.controller, undefined, '（名前空間のクリーンアップ）');
+					capturedController = undefined;
 					start();
 				});
 	});
 
-	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 2, function() {
+	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 1, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
 
+		var controllerContext = null;
 		var controller = {
 			__name: 'TestController',
 
@@ -1879,7 +1908,7 @@ $(function() {
 			},
 
 			test: function() {
-				window.controller = this;
+				controllerContext = this;
 			}
 		};
 
@@ -1907,13 +1936,11 @@ $(function() {
 
 					$('#controllerTest input[type=button]').click();
 
-					strictEqual(window.controller.__name, 'TestController',
+					strictEqual(controllerContext.__name, 'TestController',
 							'コントローラ内のthisはコントローラ自身を指しているか');
 
 					testController.unbind();
 					cleanAspects();
-					window.controller = undefined;
-					strictEqual(window.controller, undefined, '（名前空間のクリーンアップ）');
 					start();
 				});
 	});
@@ -1921,7 +1948,7 @@ $(function() {
 	asyncTest('アスペクトの動作1 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -1952,12 +1979,11 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 
 	});
@@ -1965,7 +1991,7 @@ $(function() {
 	asyncTest('アスペクトの動作2 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -1994,19 +2020,18 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 	});
 
 	asyncTest('アスペクトの動作3 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -2043,19 +2068,18 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2;3', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 	});
 
 	asyncTest('アスペクトの動作4 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -2091,8 +2115,6 @@ $(function() {
 		var test2Controller = h5.core.controller('#controllerTest', controller2);
 		h5.async.when(testController.readyPromise, test2Controller.readyPromise).done(
 				function() {
-					start();
-
 					ok($.inArray(testController.__name, ret) !== -1,
 							'aspectのtargetとpointCutにマッチするのでインターセプタは動作するはず。');
 					ok($.inArray(test2Controller.__name, ret) === -1,
@@ -2101,13 +2123,14 @@ $(function() {
 					testController.unbind();
 					test2Controller.unbind();
 					cleanAspects();
+					start();
 				});
 	});
 
 	asyncTest('アスペクトの動作5 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -2143,8 +2166,6 @@ $(function() {
 		var test2Controller = h5.core.controller('#controllerTest', controller2);
 		h5.async.when(testController.readyPromise, test2Controller.readyPromise).done(
 				function() {
-					start();
-
 					ok($.inArray(testController.__name, ret) !== -1,
 							'aspectのtargetとpointCutにマッチするのでインターセプタは動作するはず。');
 					ok($.inArray(test2Controller.__name, ret) === -1,
@@ -2153,6 +2174,7 @@ $(function() {
 					testController.unbind();
 					test2Controller.unbind();
 					cleanAspects();
+					start();
 				});
 	});
 
@@ -2179,25 +2201,19 @@ $(function() {
 			}
 		};
 
-		var errMsg = null;
 		try {
 			h5.core.controller('body', errorController);
 		} catch (e) {
-			errMsg = e.message;
+			strictEqual(e.code, ERR.ERR_CODE_EVENT_HANDLER_SELECTOR_THIS,
+					'セレクタに{this}が指定された時にエラーが発生するか');
 		}
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest').click();
-
-			strictEqual(errMsg, 'コントローラ"ErrorController"でセレクタ名にthisが指定されています。'
-					+ 'コントローラをバインドした要素自身を指定したい時はrootElementを指定してください。(code=6012)',
-					'セレクタに{this}が指定された時にエラーが発生するか');
 			ok(isSame, '"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか');
-
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2228,8 +2244,6 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$(document).click();
 			$(window).click();
 
@@ -2256,9 +2270,7 @@ $(function() {
 					'セレクタが{window}でイベント名に"[]"がない場合、Controller.unbind()でアンバインドされているか');
 			strictEqual(ret4, null,
 					'セレクタが{window}でイベント名に"[]"がある場合、Controller.unbind()でアンバインドされているか');
-
-			window.controller = undefined;
-			strictEqual(window.controller, undefined, '（名前空間のクリーンアップ）');
+			start();
 		});
 	});
 
@@ -2273,11 +2285,10 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(ret, 1000, '__readyは動作しているか');
 
 			testController.unbind();
+			start();
 		});
 
 	});
@@ -2295,10 +2306,10 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
 			$('#controllerTest input[type=button]').click();
 			ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2308,6 +2319,7 @@ $(function() {
 				var html = '';
 				var updateView = 0;
 				var append = '';
+				var append2 = '';
 				var prepend = '';
 				var viewError1 = null;
 				var viewError2 = null;
@@ -2375,14 +2387,14 @@ $(function() {
 							strictEqual(prepend, 'test',
 									'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
 
-							var errMsg = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。(code=6000)';
-							strictEqual(viewError1.message, errMsg,
+							var errorCode = ERR.ERR_CODE_INVALID_TEMPLATE_SELECTOR;
+							strictEqual(viewError1.code, errorCode,
 									'this.update/append/prependで、"{window}"を指定するとエラーになるか');
-							strictEqual(viewError2.message, errMsg,
+							strictEqual(viewError2.code, errorCode,
 									'this.update/append/prependで、"{window.xxx}"を指定するとエラーになるか');
-							strictEqual(viewError3.message, errMsg,
+							strictEqual(viewError3.code, errorCode,
 									'this.update/append/prependで、"{navigator}"を指定するとエラーになるか');
-							strictEqual(viewError4.message, errMsg,
+							strictEqual(viewError4.code, errorCode,
 									'this.update/append/prependで、"{navigator.xxx}"を指定するとエラーになるか');
 
 							testController.unbind();
@@ -2422,7 +2434,8 @@ $(function() {
 
 
 	asyncTest('テンプレートのカスケーディング1', function() {
-		var html = html2 = '';
+		var html = '';
+		var html2 = '';
 		var errorObj = {};
 		var expectErrorObj = {
 			code: 7005,
@@ -2456,9 +2469,8 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 			ok(html.length > 0, '指定されたテンプレートIDを自身のビューが扱っていない場合、親コントローラのビューへカスケードされること');
 			ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
-			deepEqual(errorObj.code, expectErrorObj.code,
+			strictEqual(errorObj.code, ERR_VIEW.ERR_CODE_TEMPLATE_ID_UNAVAILABLE,
 					'指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
-			deepEqual(errorObj.message, expectErrorObj.message, 'エラーメッセージが取得できること');
 			testController.unbind();
 			start();
 		});
@@ -2498,11 +2510,11 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
 			$('#controllerTest input[type=button]').click();
 			var html = $('#template_cascade').html();
 			ok(html != null && html.length > 0, 'ビューがカスケードした場合でもターゲットは自身のrootElementからfindしているか');
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2521,8 +2533,6 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			start();
-
 			var idController = h5.core.controllerManager.getController('#controllerTest');
 			var jqController = h5.core.controllerManager.getController($('#controllerTest'));
 			var domController = h5.core.controllerManager.getController(document
@@ -2533,6 +2543,7 @@ $(function() {
 			ok(domController === testController, 'DOMでコントローラが取得できたか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2541,7 +2552,7 @@ $(function() {
 			function() {
 				if (!h5.core.__compileAspects) {
 					expect(1);
-					ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+					ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 					start();
 					return;
 				}
@@ -2566,8 +2577,6 @@ $(function() {
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.readyPromise
 						.done(function() {
-							start();
-
 							$('#controllerTest input[type=button]').click();
 
 							var message = '[ INFO]{timestamp}: TestController "input[type=button] click"が開始されました。 \n';
@@ -2578,6 +2587,7 @@ $(function() {
 
 							testController.unbind();
 							cleanAspects();
+							start();
 						});
 
 			});
@@ -2587,7 +2597,7 @@ $(function() {
 			function() {
 				if (!h5.core.__compileAspects) {
 					expect(1);
-					ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+					ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 					start();
 					return;
 				}
@@ -2616,8 +2626,6 @@ $(function() {
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.readyPromise
 						.done(function() {
-							start();
-
 							$('#controllerTest input[type=button]').click();
 
 							var message = '[ INFO]{timestamp}: TestController "input[type=button] click": {time}ms';
@@ -2626,13 +2634,14 @@ $(function() {
 
 							testController.unbind();
 							cleanAspects();
+							start();
 						});
 			});
 
 	asyncTest('h5.core.interceptor.errorInterceptorの動作 ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -2656,13 +2665,12 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			strictEqual(errMsg, 'error interceptor test',
 					'errorInterceptorによって例外がcatchされ、commonFailHandlerが呼ばれたか');
 
 			testController.unbind();
 			cleanAspects();
+			start();
 		});
 	});
 
@@ -2678,13 +2686,12 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').click();
 
 			ok(dfd, 'this.deferred();でDeferredオブジェクトが取得できたか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2704,14 +2711,13 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').click();
 
 			ok(element1, 'this.$find();でコントローラ内の要素が取得できたか');
 			ok(!element2, 'this.$find();でコントローラ外の要素が取得できなかったか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -2736,16 +2742,15 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
 			$('#controllerTest input[type=button]').click();
 
 			ok(category === 'TestController', 'コントローラのロガーのカテゴリは正しいか');
 			ok(true, 'デバッグコンソールを確認し、ERROR, WARN, INFO, DEBUG, TRACEのレベル順にメッセージが出ていることを確認してください。');
 
 			testController.unbind();
+			start();
 		});
 	});
-
 
 
 
@@ -2773,11 +2778,11 @@ $(function() {
 							indicator.hide();
 
 							setTimeout(function() {
-								start();
 								strictEqual($('.h5-indicator', indicator._target).length, 0,
 										'Indicator#hide() インジケータが除去されていること');
 
 								testController.unbind();
+								start();
 							}, 0);
 						}, 0);
 					}
@@ -2789,7 +2794,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()でグローバルインジケータを表示', 5,
+	asyncTest('this.triggerIndicator() triggerIndicator()でスクリーンロックでインジケータを表示', 5,
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -2807,8 +2812,14 @@ $(function() {
 								'BlockMessageTest');
 						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 								'Indicator#show() インジケータが表示されること');
-						strictEqual($(indicator._target).find('.throbber-percent').text(), '20',
-								'Indicator#show() 進捗率が表示されること');
+
+						var $percentElem = $(indicator._target).find('.throbber-percent');
+
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.text(), '20', 'Indicator#show() 進捗率が表示されること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
 
 						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
 								'display'), 'block', 'オーバーレイが表示されていること');
@@ -2834,7 +2845,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', function() {
+	asyncTest('this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', 5, function() {
 		$('#controllerTest').append('<div id="childDiv"></div>');
 		var indicator = null;
 		var testController = {
@@ -2859,8 +2870,14 @@ $(function() {
 						'indicator testController');
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '30',
-						'Indicator#show() インジケータが表示されること');
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					strictEqual($percentElem.text(), '30', 'Indicator#show() インジケータが表示されること');
+				} else {
+					ok(false, 'スロバーが描画できないためテスト失敗。');
+				}
 
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
@@ -2908,11 +2925,11 @@ $(function() {
 					indicator.hide();
 
 					setTimeout(function() {
-						start();
 						strictEqual($('.h5-indicator', indicator._target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
 
 						testController.unbind();
+						start();
 					}, 0);
 				}, 0);
 			}
@@ -3022,8 +3039,9 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', 22, function() {
+	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
 		var testController = null;
+		var testController2 = null;
 		var controllerBase = {
 			__name: 'TestController',
 
@@ -3038,29 +3056,37 @@ $(function() {
 						'BlockMessageTest');
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '10',
-						'Indicator#show() インジケータが表示されること');
-
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
-				indicator.percent(30);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '30',
-						'Indicator#show() インジケータの進捗率表示が30に更新されていること');
-				indicator.percent(100);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '100',
-						'Indicator#show() インジケータの進捗率表示が100に更新されていること');
-				indicator.percent(5);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
-						'Indicator#show() インジケータの進捗率表示が5に更新されていること');
-				indicator.percent(-1);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
-						'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
-				indicator.percent(101);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '5',
-						'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
-				indicator.percent(33.3333333);
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '33.3333333',
-						'Indicator#show() インジケータの進捗率に小数を指定できること');
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					expect(22);
+					strictEqual($percentElem.text(), '10', 'Indicator#show() インジケータが表示されること');
+					indicator.percent(30);
+					strictEqual($percentElem.text(), '30',
+							'Indicator#show() インジケータの進捗率表示が30に更新されていること');
+					indicator.percent(100);
+					strictEqual($percentElem.text(), '100',
+							'Indicator#show() インジケータの進捗率表示が100に更新されていること');
+					indicator.percent(5);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率表示が5に更新されていること');
+					indicator.percent(-1);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
+					indicator.percent(101);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
+					indicator.percent(33.3333333);
+					strictEqual($percentElem.text(), '33.3333333',
+							'Indicator#show() インジケータの進捗率に小数を指定できること');
+				} else {
+					expect(10);
+					ok(false, 'スロバーが描写できないためテスト失敗。');
+				}
+
 				indicator.hide();
 				var that = this;
 				setTimeout(function() {
@@ -3077,28 +3103,36 @@ $(function() {
 							'BlockMessageTestGrobal');
 					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
 							'Indicator#show() インジケータが表示されること');
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
-							'Indicator#show() インジケータの進捗率が表示されること');
 					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
 							.css('display'), 'block', 'オーバーレイが表示されていること');
-					indicator2.percent(30);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '30',
-							'Indicator#show() インジケータの進捗率表示が30に更新されていること');
-					indicator2.percent(100);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '100',
-							'Indicator#show() インジケータの進捗率表示が100に更新されていること');
-					indicator2.percent(5);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-							'Indicator#show() インジケータの進捗率表示が5に更新されていること');
-					indicator2.percent(-1);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-							'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
-					indicator2.percent(101);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
-					indicator2.percent(33.3333333);
-					strictEqual($(indicator2._target).find('.throbber-percent').text(),
-							'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること');
+
+					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
+
+					if ($percentElem2.length > 0) {
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
+								'Indicator#show() インジケータの進捗率が表示されること');
+						indicator2.percent(30);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '30',
+								'Indicator#show() インジケータの進捗率表示が30に更新されていること');
+						indicator2.percent(100);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '100',
+								'Indicator#show() インジケータの進捗率表示が100に更新されていること');
+						indicator2.percent(5);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率表示が5に更新されていること');
+						indicator2.percent(-1);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
+						indicator2.percent(101);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
+						indicator2.percent(33.3333333);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(),
+								'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること');
+					} else {
+						ok(false, 'スロバーが描画できないためテスト失敗。');
+					}
+
 					indicator2.hide();
 					setTimeout(function() {
 						strictEqual($('.h5-indicator', indicator2._target).length, 0,
@@ -3106,7 +3140,7 @@ $(function() {
 						testController.readyPromise.done(function() {
 							$('#controllerTest').click();
 						});
-						testControllerGrobal.unbind();
+						testController2.unbind();
 						start();
 					}, 0);
 
@@ -3124,8 +3158,8 @@ $(function() {
 		};
 
 		testController = h5.core.controller('#controllerTest', controllerBase);
-		testControllerGrobal = h5.core.controller(window, controllerBaseGrobal);
-		testControllerGrobal.readyPromise.done(function() {
+		testController2 = h5.core.controller(window, controllerBaseGrobal);
+		testController2.readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
 		});
 	});
@@ -3145,11 +3179,17 @@ $(function() {
 						'BlockMessageTest');
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator._target).find('.throbber-percent').text(), '10',
-						'Indicator#show() インジケータが表示されること');
-
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
+
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					strictEqual($percentElem.text(), '10', 'Indicator#show() インジケータが表示されること');
+				} else {
+					ok(false, 'スロバーが描画できないためテスト失敗。');
+				}
 
 				indicator.message('changeMessage');
 				strictEqual($(indicator._target).find('.indicator-message').text(),
@@ -3191,11 +3231,16 @@ $(function() {
 							'BlockMessageTestGrobal');
 					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
 							'Indicator#show() インジケータが表示されること');
-					strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
-							'Indicator#show() インジケータが表示されること');
-
 					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
 							.css('display'), 'block', 'オーバーレイが表示されていること');
+
+					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
+
+					if ($percentElem2.length > 0) {
+						strictEqual($percentElem2.text(), '10', 'Indicator#show() インジケータが表示されること');
+					} else {
+						ok(false, 'スロバーが描画できないためテスト失敗。');
+					}
 
 					indicator2.message('changeMessage');
 					strictEqual($(indicator2._target).find('.indicator-message').text(),
@@ -3290,8 +3335,8 @@ $(function() {
 					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 0,
 							'全てのresolve()が呼ばれたら、インジケータが非表示になること');
 
-					start();
 					testController.unbind();
+					start();
 				});
 	});
 
@@ -3405,41 +3450,138 @@ $(function() {
 		});
 	});
 
-
-
-
-	test(
-			'プロパティの重複チェック',
+	asyncTest('h5.ui.indicator()', 5,
 			function() {
-
-
-				var testController = {
-					/**
-					 * コントローラ名
-					 */
+				var testController = null;
+				var controllerBase = {
 					__name: 'TestController',
+					'input[type=button] click': function() {
+						var indicator = h5.ui.indicator(document, {
+							message: 'BlockMessageTest2',
+							percent: 20
+						});
+						indicator.show();
 
-					indicator: function() {
-					// 何もしない
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'BlockMessageTest2');
+						strictEqual($(indicator._target).find('.h5-indicator.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+
+						var $percentElem = $(indicator._target).find('.throbber-percent');
+
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.text(), '20',
+									'Indicator#show() インジケータが表示されること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
+
+						strictEqual($(indicator._target).find('.h5-indicator.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
+
+						setTimeout(function() {
+							indicator.hide();
+
+							setTimeout(function() {
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+								testController.unbind();
+								start();
+							}, 0);
+						}, 0);
 					}
 				};
 
-				var errMsg = null;
-				try {
-					h5.core.controller('#controllerTest', testController);
-				} catch (e) {
-					errMsg = e.message;
-				}
-
-				strictEqual(
-						errMsg,
-						'コントローラ"TestController"のプロパティ"indicator"はコントローラ化によって追加されるプロパティと名前が重複しています。(code=6011)',
-						'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
+				testController = h5.core.controller('#controllerTest', controllerBase);
+				testController.readyPromise.done(function() {
+					$('#controllerTest input[type=button]').click();
+				});
 			});
 
+	asyncTest('h5.ui.indicator() テーマを変更して実行',
+			function() {
+
+				var testController = null;
+				var controllerBase = {
+					__name: 'TestController',
+
+					'input[type=button] click': function() {
+						var indicator2 = h5.ui.indicator(document, {
+							message: 'BlockMessageTest2',
+							percent: 20,
+							theme: 'b'
+						});
+						indicator2.show();
+
+						strictEqual($(indicator2._target).find(
+								'.h5-indicator.b.content > .indicator-message').text(),
+								'BlockMessageTest2');
+
+						var $percentElem = $(indicator2._target).find(
+								'.h5-indicator.b.content .throbber-percent');
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.css('font-size'), '18px',
+									'スロバー:変更したテーマのCSSがインジケータに適用されていること');
+							strictEqual(rgbToHex($percentElem.css('color')), '#c20',
+									'スロバー:変更したテーマのCSSがインジケータに適用されていること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
+
+						var $messageElem = $(indicator2._target).find(
+								'.h5-indicator.b.content .indicator-message');
+						strictEqual($messageElem.css('font-size'), '20px',
+								'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
+						strictEqual(rgbToHex($messageElem.css('color')), '#480',
+								'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
+
+						var $indicatorB = $(indicator2._target).find('.h5-indicator.b');
+						strictEqual(rgbToHex($indicatorB.css('background-color')), '#409',
+								'インジケータ本体:変更したテーマのCSSがインジケータに適用されていること');
+
+						setTimeout(function() {
+							indicator2.hide();
+
+							setTimeout(function() {
+								strictEqual($('.h5-indicator').length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+								testController.unbind();
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
+
+				testController = h5.core.controller('#controllerTest', controllerBase);
+				testController.readyPromise.done(function() {
+					$('#controllerTest input[type=button]').click();
+				});
+			});
+
+	test('プロパティの重複チェック', 1, function() {
+
+
+		var testController = {
+			/**
+			 * コントローラ名
+			 */
+			__name: 'TestController',
+
+			indicator: function() {
+			// 何もしない
+			}
+		};
+
+		try {
+			h5.core.controller('#controllerTest', testController);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_SAME_PROPERTY,
+					'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
+		}
+	});
+
 	asyncTest('this.own()の動作', function() {
-
-
 		function Test(callback) {
 			this.callback = callback;
 		}
@@ -3466,15 +3608,12 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			testController.unbind();
+			start();
 		});
 	});
 
 	asyncTest('this.ownWithOrg()の動作', function() {
-
-
 		function Test(callback) {
 			this.callback = callback;
 		}
@@ -3548,8 +3687,6 @@ $(function() {
 				var test2Controller = h5.core.controller('#controllerTest2', controllerBase2);
 				h5.async.when(test1Controller.readyPromise, test2Controller.readyPromise).done(
 						function() {
-							start();
-
 							$('#controllerTest1 input[type=button]').click();
 
 							ok(triggerEvent, 'イベントの送出ができたか');
@@ -3560,6 +3697,7 @@ $(function() {
 							$('#controllerTest1').remove();
 							$('#controllerTest2').remove();
 							ok(!$('#parent').length, '（DOMのクリーンアップ）');
+							start();
 						});
 			});
 
@@ -3737,8 +3875,6 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 
 		testController.readyPromise.done(function() {
-
-			start();
 			$('#controllerTest input[type=button]').click();
 
 			strictEqual(result.join(';'), '0;1', 'xxxControllerが動作しているか');
@@ -3752,13 +3888,14 @@ $(function() {
 			strictEqual(readyResult.join(';'), '0;1;2', '__readyイベントが適切に発火しているか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
 	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか ※min版ではエラーになります', function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
-			ok(false, 'h5.core.__compileAspectsが公開されていないため、h5.jsでは失敗します。');
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
 			return;
 		}
@@ -3820,8 +3957,6 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').mouseover();
 			$('#controllerTest input[type=button]').click();
 			$('#controllerTest input[type=button]').dblclick();
@@ -3849,6 +3984,7 @@ $(function() {
 			ok(count === result.length && count === 5, '__metaのuserHandlerのunbindは動作したか5');
 
 			cleanAspects();
+			start();
 		});
 	});
 
@@ -3883,8 +4019,6 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').mouseover();
 			$('#controllerTest input[type=button]').trigger('customEvent');
 
@@ -3892,6 +4026,7 @@ $(function() {
 			ok(!rootRet, '親コントローラのイベントハンドラは動作しているか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -3906,8 +4041,6 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$(document).click();
 			ok(msg.length > 0, 'イベントハンドラが動作するか');
 
@@ -3915,6 +4048,7 @@ $(function() {
 			testController.unbind();
 			$(document).click();
 			ok(msg.length === 0, 'イベントハンドラが動作しないことを確認');
+			start();
 		});
 	});
 
@@ -4066,10 +4200,9 @@ $(function() {
 					strictEqual(noir, root, 'テンプレートを使わない場合でも、__initイベントの中でrootElementに触れるか');
 					strictEqual(norr, root, 'テンプレートを使わない場合でも、__readyイベントの中でrootElementに触れるか');
 
-					start();
-
 					testController.unbind();
 					noTemplateController.unbind();
+					start();
 				});
 	});
 
@@ -4136,13 +4269,11 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', rController);
 
 		c.readyPromise.done(function() {
-
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2;3;4;5;6;7;8',
 					'子、孫コントローラがある場合に、__construct, __init, __readyの発火順は正しいか');
 
 			c.unbind();
+			start();
 		});
 	});
 
@@ -4232,13 +4363,11 @@ $(function() {
 
 				c.readyPromise
 						.done(function() {
-
-							start();
-
 							strictEqual(ret.join(';'), '0;1;2;3;4;5;6;7;8',
 									'子、孫コントローラがあり、__init, __readyでPromiseオブジェクトを返している場合、__construct, __init, __readyの発火順は正しいか');
 
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4332,9 +4461,6 @@ $(function() {
 
 				h5.async.when(c.readyPromise, d1.promise(), d2.promise(), d3.promise()).done(
 						function() {
-
-							start();
-
 							strictEqual(cRet.join(';'), '0;1;2',
 									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
 							strictEqual(iRet.join(';'), '0;1;2',
@@ -4346,6 +4472,7 @@ $(function() {
 							c.iController.unbind();
 							c.rController.unbind();
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4448,9 +4575,6 @@ $(function() {
 
 				h5.async.when(c.readyPromise, cp, ip, rp).done(
 						function() {
-
-							start();
-
 							strictEqual(cRet.join(';'), '0;1;2',
 									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
 							strictEqual(iRet.join(';'), '0;1;2',
@@ -4462,6 +4586,7 @@ $(function() {
 							c.iController.unbind();
 							c.rController.unbind();
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4616,8 +4741,6 @@ $(function() {
 
 		var rootController = h5.core.controller('#controllerTest', rController, args);
 		rootController.readyPromise.done(function() {
-			start();
-
 			ok(args !== rConstruct, '__constructでルートコントローラに渡された初期化パラメータの参照は変わっているか');
 			ok(args.param === rConstruct.param, '__constructでルートコントローラに渡された初期化パラメータのプロパティは正しいか');
 			ok(args !== rInit, '__initでルートコントローラに渡された初期化パラメータの参照は変わっているか');
@@ -4641,6 +4764,7 @@ $(function() {
 			ok(args.param === cReady.param, '__readyで孫コントローラに渡された初期化パラメータのプロパティは正しいか');
 
 			rootController.unbind();
+			start();
 		});
 	});
 
@@ -4728,8 +4852,6 @@ $(function() {
 
 		var rootController = h5.core.controller('#controllerTest', rController);
 		rootController.readyPromise.done(function() {
-			start();
-
 			var parentController = rootController.pController;
 
 			ok(cir === rootController, '__initで孫コントローラのrootControllerは正しいか');
@@ -4747,6 +4869,7 @@ $(function() {
 			ok(rrp === null, '__readyでルートコントローラのparentControllerはnullか');
 
 			rootController.unbind();
+			start();
 		});
 	});
 
@@ -4780,8 +4903,6 @@ $(function() {
 
 		var c = h5.core.controller('#controllerTest', pController);
 		c.readyPromise.done(function() {
-			start();
-
 			var root = $('#controllerTest');
 
 			root.trigger('childCustomEvent');
@@ -4812,24 +4933,25 @@ $(function() {
 			ok(ret === 200, '親のenableListeners()によって、イベントハンドラが動作するようになったか');
 
 			c.unbind();
+			start();
 		});
 	});
 
 	asyncTest(
 			'throwError() / throwCustomError() の動作',
+			14,
 			function() {
 				var testController = {
 					__name: 'TestController',
 
 					__ready: function(context) {
-						var err1 = null;
 						try {
 							this.throwError();
 						} catch (e) {
-							err1 = e.message;
+							equal(e.code, ERR.ERR_CODE_TOO_FEW_ARGUMENTS,
+									'codeプロパティにエラーコードを保持していること。');
 						}
-						equal(err1, '正しい数の引数を指定して下さい。(code=6005)',
-								'引数なしでthrowErrorメソッドを実行すると、エラーが投げられているか');
+
 						try {
 							this.throwError('コントローラ"{0}"における{1}のテスト', this.__name, 'throwError');
 						} catch (e) {
@@ -4862,7 +4984,7 @@ $(function() {
 						try {
 							this.throwCustomError();
 						} catch (e) {
-							strictEqual(e.message, '正しい数の引数を指定して下さい。(code=6005)',
+							strictEqual(e.code, ERR.ERR_CODE_TOO_FEW_ARGUMENTS,
 									'throwCustomError()で必須のパラメータが指定されていない場合、エラーが発生すること。');
 						}
 
@@ -4911,13 +5033,13 @@ $(function() {
 
 				var c = h5.core.controller('#controllerTest', testController);
 				c.readyPromise.done(function() {
-					start();
 					c.unbind();
+					start();
 				});
 
 			});
 
-	test('コントローラの循環参照チェックに引っかかるとエラーが発生するか', function() {
+	test('コントローラの循環参照チェックに引っかかるとエラーが発生するか', 1, function() {
 		var test2Controller = {
 			__name: 'Test2Controller'
 		};
@@ -4929,14 +5051,11 @@ $(function() {
 		};
 		test2Controller.test1Controller = test1Controller;
 
-		var errMsg = null;
 		try {
 			h5.core.controller('#controllerTest', test1Controller);
 		} catch (e) {
-			errMsg = e.message;
+			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_CIRCULAR_REF, 'エラーが発生したか');
 		}
-		strictEqual(errMsg, 'コントローラ"Test1Controller"で、参照が循環しているため、コントローラを生成できません。(code=6009)',
-				'エラーが発生したか');
 	});
 
 	asyncTest('mousewheelイベントの動作', function() {
@@ -4967,70 +5086,51 @@ $(function() {
 		});
 	});
 
-	test(
-			'コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作',
-			function() {
-				var testController = {
-					__name: 'TestController'
-				};
+	test('コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作', 1, function() {
+		var testController = {
+			__name: 'TestController'
+		};
 
-				var errMsg = null;
-				try {
-					h5.core.controller('#controllerTest', testController, '初期化パラメータ');
-				} catch (e) {
-					errMsg = e.message;
-				}
+		try {
+			h5.core.controller('#controllerTest', testController, '初期化パラメータ');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_INVALID_INIT_PARAM,
+					'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
+		}
+	});
 
-				strictEqual(
-						errMsg,
-						'コントローラ"TestController"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。(code=6007)',
-						'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
-			});
-
-	asyncTest('h5.core.controller()にコントローラ化済みのオブジェクトを渡した時の動作', function() {
+	asyncTest('h5.core.controller()にコントローラ化済みのオブジェクトを渡した時の動作', 1, function() {
 		var testController = {
 			__name: 'TestController'
 		};
 		var c = h5.core.controller('#controllerTest', testController);
-		c.readyPromise.done(function() {
-			start();
 
-			var errMsg = null;
+		c.readyPromise.done(function() {
 			try {
 				h5.core.controller('#controllerTest', c);
 			} catch (e) {
-				errMsg = e.message;
+				equal(e.code, ERR.ERR_CODE_CONTROLLER_ALREADY_CREATED,
+						'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 			}
 
-			strictEqual(errMsg, '指定されたオブジェクトは既にコントローラ化されています。(code=6008)',
-					'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 			c.unbind();
-
+			start();
 		});
 	});
 
-	test(
-			'あるセレクタに対して重複するイベントハンドラを設定した時の動作',
-			function() {
-				var testController = {
-					__name: 'TestController',
+	test('あるセレクタに対して重複するイベントハンドラを設定した時の動作', 1, function() {
+		var testController = {
+			__name: 'TestController',
+			' {rootElement}   click': function(context) {},
+			'{rootElement} click': function(context) {}
+		};
 
-					' {rootElement}   click': function(context) {},
-
-					'{rootElement} click': function(context) {}
-				};
-				var errMsg = null;
-				try {
-					h5.core.controller('#controllerTest', testController);
-				} catch (e) {
-					errMsg = e.message;
-				}
-
-				strictEqual(
-						errMsg,
-						'コントローラ"TestController"のセレクタ"{rootElement}"に対して"click"というイベントハンドラが重複して設定されています。(code=6013)',
-						'重複するイベントハンドラを設定した時にエラーが発生したか');
-			});
+		try {
+			h5.core.controller('#controllerTest', testController);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_SAME_EVENT_HANDLER, '重複するイベントハンドラを設定した時にエラーが発生したか');
+		}
+	});
 
 	asyncTest('xxxControllerというプロパティの値が設定されていない時にエラーにならないか', function() {
 		var testController = {
@@ -5041,15 +5141,14 @@ $(function() {
 
 		var c = h5.core.controller('#controllerTest', testController);
 		c.readyPromise.done(function() {
-			start();
-
 			ok(c, 'xxxControllerというプロパティの値が設定されていない時にエラーが発生せず処理が終了するか');
 			c.unbind();
+			start();
 		});
 
 	});
 
-	test('__metaのチェック1', function() {
+	test('__metaのチェック1', 1, function() {
 		var testController = {
 			__name: 'TestController',
 
@@ -5059,71 +5158,56 @@ $(function() {
 				}
 			}
 		};
-		var errMsg = null;
+
 		try {
 			h5.core.controller('#controllerTest', testController);
 		} catch (e) {
-			errMsg = e.message;
+			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_META_KEY_INVALID,
+					'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがundefinedの場合にエラーが発生するか');
 		}
-
-		strictEqual(errMsg,
-				'コントローラ"TestController"には__metaで指定されたプロパティ"childController"がありません。(code=6014)',
-				'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがundefinedの場合にエラーが発生するか');
 	});
 
-	test(
-			'__metaのチェック2',
-			function() {
-				var testController = {
-					__name: 'TestController',
+	test('__metaのチェック2', 1, function() {
+		var testController = {
+			__name: 'TestController',
 
-					childController: null,
+			childController: null,
 
-					__meta: {
-						childController: {
-							useHandlers: true
-						}
-					}
-				};
-				var errMsg = null;
-				try {
-					h5.core.controller('#controllerTest', testController);
-				} catch (e) {
-					errMsg = e.message;
+			__meta: {
+				childController: {
+					useHandlers: true
 				}
+			}
+		};
 
-				strictEqual(
-						errMsg,
-						'コントローラ"TestController"の__metaに指定されたキー"childController"の値がnullです。コントローラを持つプロパティキー名を指定してください。(code=6015)',
-						'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがnullの場合にエラーが発生するか');
-			});
+		try {
+			h5.core.controller('#controllerTest', testController);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_META_KEY_NULL,
+					'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがnullの場合にエラーが発生するか');
+		}
+	});
 
-	test(
-			'__metaのチェック3',
-			function() {
-				var testController = {
-					__name: 'TestController',
+	test('__metaのチェック3', 1, function() {
+		var testController = {
+			__name: 'TestController',
 
-					child: {},
+			child: {},
 
-					__meta: {
-						child: {
-							useHandlers: true
-						}
-					}
-				};
-				var errMsg = null;
-				try {
-					h5.core.controller('#controllerTest', testController);
-				} catch (e) {
-					errMsg = e.message;
+			__meta: {
+				child: {
+					useHandlers: true
 				}
+			}
+		};
 
-				equal(
-						errMsg,
-						'コントローラ"TestController"の__metaに指定されたキー"child"の値はコントローラではありません。コントローラを持つプロパティキー名を指定してください。(code=6016)',
-						'__metaに設定された名前と一致するプロパティの値がコントローラではないときにエラーが発生するか');
-			});
+		try {
+			h5.core.controller('#controllerTest', testController);
+		} catch (e) {
+			equal(e.code, ERR.ERR_CODE_CONTROLLER_META_KEY_NOT_CONTROLLER,
+					'__metaに設定された名前と一致するプロパティの値がコントローラではないときにエラーが発生するか');
+		}
+	});
 
 	asyncTest(
 			'h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',
@@ -6029,6 +6113,10 @@ $(function() {
 				});
 			});
 
+
+	//=============================
+	// Definition
+	//=============================
 	/**
 	 * window.onerrorを保管しておく変数
 	 */
@@ -6051,6 +6139,10 @@ $(function() {
 					window.onerror = onerrorHandler;
 				}
 			});
+
+	//=============================
+	// Body
+	//=============================
 	test('__construct()で例外をスローする。', 1, function() {
 		var controller = {
 			__name: 'TestController',
@@ -6076,7 +6168,7 @@ $(function() {
 		return id;
 	};
 
-	asyncTest('※IE6～9の場合は要目視確認: __init()で例外をスローする。', 1, function() {
+	asyncTest('※IEの場合は要目視確認: __init()で例外をスローする。', 1, function() {
 		var errorMsg = '__init error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6096,7 +6188,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※IE6～9の場合は要目視確認: __ready()で例外をスローする。', 1, function() {
+	asyncTest('※IEの場合は要目視確認: __ready()で例外をスローする。', 1, function() {
 		var errorMsg = '__ready error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6116,8 +6208,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-
-	asyncTest('※IE6～9の場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
+	asyncTest('※IEの場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
 		var errorMsg = '__unbind error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6140,7 +6231,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※IE6～9の場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
+	asyncTest('※IEの場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
 		var errorMsg = '__dispose error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6330,6 +6421,4 @@ $(function() {
 					ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
 				});
 			});
-
-
 });

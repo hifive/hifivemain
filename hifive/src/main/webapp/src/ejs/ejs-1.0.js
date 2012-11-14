@@ -174,8 +174,8 @@ EJS.Scanner.to_text = function(input){
 
 EJS.Scanner.prototype = {
   scan: function(block) {
-     scanline = this.scanline;
-	 regex = this.SplitRegexp;
+     var scanline = this.scanline;
+	 var regex = this.SplitRegexp;
 	 if (! this.source == '')
 	 {
 	 	 var source_split = rsplit(this.source, /\n/);
@@ -231,7 +231,7 @@ EJS.Buffer.prototype = {
 			this.push(pre_cmd[i]);
 		}
 		this.script = this.script + this.line.join('; ');
-		line = null;
+		this.line = null;
 	}
   }
 
