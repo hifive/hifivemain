@@ -3875,8 +3875,6 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 
 		testController.readyPromise.done(function() {
-
-			start();
 			$('#controllerTest input[type=button]').click();
 
 			strictEqual(result.join(';'), '0;1', 'xxxControllerが動作しているか');
@@ -3890,6 +3888,7 @@ $(function() {
 			strictEqual(readyResult.join(';'), '0;1;2', '__readyイベントが適切に発火しているか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -3958,8 +3957,6 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').mouseover();
 			$('#controllerTest input[type=button]').click();
 			$('#controllerTest input[type=button]').dblclick();
@@ -3987,6 +3984,7 @@ $(function() {
 			ok(count === result.length && count === 5, '__metaのuserHandlerのunbindは動作したか5');
 
 			cleanAspects();
+			start();
 		});
 	});
 
@@ -4021,8 +4019,6 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			start();
-
 			$('#controllerTest input[type=button]').mouseover();
 			$('#controllerTest input[type=button]').trigger('customEvent');
 
@@ -4030,6 +4026,7 @@ $(function() {
 			ok(!rootRet, '親コントローラのイベントハンドラは動作しているか');
 
 			testController.unbind();
+			start();
 		});
 	});
 
@@ -4044,8 +4041,6 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			start();
-
 			$(document).click();
 			ok(msg.length > 0, 'イベントハンドラが動作するか');
 
@@ -4053,6 +4048,7 @@ $(function() {
 			testController.unbind();
 			$(document).click();
 			ok(msg.length === 0, 'イベントハンドラが動作しないことを確認');
+			start();
 		});
 	});
 
@@ -4204,10 +4200,9 @@ $(function() {
 					strictEqual(noir, root, 'テンプレートを使わない場合でも、__initイベントの中でrootElementに触れるか');
 					strictEqual(norr, root, 'テンプレートを使わない場合でも、__readyイベントの中でrootElementに触れるか');
 
-					start();
-
 					testController.unbind();
 					noTemplateController.unbind();
+					start();
 				});
 	});
 
@@ -4274,13 +4269,11 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', rController);
 
 		c.readyPromise.done(function() {
-
-			start();
-
 			strictEqual(ret.join(';'), '0;1;2;3;4;5;6;7;8',
 					'子、孫コントローラがある場合に、__construct, __init, __readyの発火順は正しいか');
 
 			c.unbind();
+			start();
 		});
 	});
 
@@ -4370,13 +4363,11 @@ $(function() {
 
 				c.readyPromise
 						.done(function() {
-
-							start();
-
 							strictEqual(ret.join(';'), '0;1;2;3;4;5;6;7;8',
 									'子、孫コントローラがあり、__init, __readyでPromiseオブジェクトを返している場合、__construct, __init, __readyの発火順は正しいか');
 
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4470,9 +4461,6 @@ $(function() {
 
 				h5.async.when(c.readyPromise, d1.promise(), d2.promise(), d3.promise()).done(
 						function() {
-
-							start();
-
 							strictEqual(cRet.join(';'), '0;1;2',
 									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
 							strictEqual(iRet.join(';'), '0;1;2',
@@ -4484,6 +4472,7 @@ $(function() {
 							c.iController.unbind();
 							c.rController.unbind();
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4586,9 +4575,6 @@ $(function() {
 
 				h5.async.when(c.readyPromise, cp, ip, rp).done(
 						function() {
-
-							start();
-
 							strictEqual(cRet.join(';'), '0;1;2',
 									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
 							strictEqual(iRet.join(';'), '0;1;2',
@@ -4600,6 +4586,7 @@ $(function() {
 							c.iController.unbind();
 							c.rController.unbind();
 							c.unbind();
+							start();
 						});
 			});
 
@@ -4754,8 +4741,6 @@ $(function() {
 
 		var rootController = h5.core.controller('#controllerTest', rController, args);
 		rootController.readyPromise.done(function() {
-			start();
-
 			ok(args !== rConstruct, '__constructでルートコントローラに渡された初期化パラメータの参照は変わっているか');
 			ok(args.param === rConstruct.param, '__constructでルートコントローラに渡された初期化パラメータのプロパティは正しいか');
 			ok(args !== rInit, '__initでルートコントローラに渡された初期化パラメータの参照は変わっているか');
@@ -4779,6 +4764,7 @@ $(function() {
 			ok(args.param === cReady.param, '__readyで孫コントローラに渡された初期化パラメータのプロパティは正しいか');
 
 			rootController.unbind();
+			start();
 		});
 	});
 
@@ -4866,8 +4852,6 @@ $(function() {
 
 		var rootController = h5.core.controller('#controllerTest', rController);
 		rootController.readyPromise.done(function() {
-			start();
-
 			var parentController = rootController.pController;
 
 			ok(cir === rootController, '__initで孫コントローラのrootControllerは正しいか');
@@ -4885,6 +4869,7 @@ $(function() {
 			ok(rrp === null, '__readyでルートコントローラのparentControllerはnullか');
 
 			rootController.unbind();
+			start();
 		});
 	});
 
@@ -4918,8 +4903,6 @@ $(function() {
 
 		var c = h5.core.controller('#controllerTest', pController);
 		c.readyPromise.done(function() {
-			start();
-
 			var root = $('#controllerTest');
 
 			root.trigger('childCustomEvent');
@@ -4950,6 +4933,7 @@ $(function() {
 			ok(ret === 200, '親のenableListeners()によって、イベントハンドラが動作するようになったか');
 
 			c.unbind();
+			start();
 		});
 	});
 
@@ -5049,8 +5033,8 @@ $(function() {
 
 				var c = h5.core.controller('#controllerTest', testController);
 				c.readyPromise.done(function() {
-					start();
 					c.unbind();
+					start();
 				});
 
 			});
@@ -5157,10 +5141,9 @@ $(function() {
 
 		var c = h5.core.controller('#controllerTest', testController);
 		c.readyPromise.done(function() {
-			start();
-
 			ok(c, 'xxxControllerというプロパティの値が設定されていない時にエラーが発生せず処理が終了するか');
 			c.unbind();
+			start();
 		});
 
 	});
