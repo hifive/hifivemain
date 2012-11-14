@@ -733,10 +733,10 @@ $(function() {
 
 				var count = 0;
 				function waitForScroll() {
-					var scrollX = window.pageXOffset || $.support.boxModel ? document.documentElement.scrollLeft
-							: document.body.scrollLeft;
-					var scrollY = window.pageYOffset || $.support.boxModel ? document.documentElement.scrollTop
-							: document.body.scrollTop;
+					var scrollX = window.pageXOffset || ($.support.boxModel ? document.documentElement.scrollLeft
+							: document.body.scrollLeft);
+					var scrollY = window.pageYOffset || ($.support.boxModel ? document.documentElement.scrollTop
+							: document.body.scrollTop);
 					if (scrollY === 1 && scrollX === 0) {
 						ok(true, '(0,1)にスクロールされた');
 						start();
