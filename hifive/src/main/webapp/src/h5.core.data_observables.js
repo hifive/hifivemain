@@ -1253,9 +1253,21 @@
 		return ret;
 	}
 
-	var obsSplice;
+	function customShift(/* var_args */) {
+		var beforeLen = this.length;
+
+		var ret = Array.prototype.shift.apply(this, arguments);
+
+		if (beforeLen > 0) {
+			//shift()で最後の要素がひとつ前に"シフト"するが、一部環境では元の位置の要素が削除されないので独自に削除
+			delete this[beforeLen - 1];
+		}
+
+		return ret;
+	}
 
 	//Objectに対するsplice()の動作を確認
+	var obsSplice;
 	var spliceTestObj = {
 		'0': 0,
 		length: 1
@@ -1269,6 +1281,23 @@
 	} else {
 		obsSplice = Array.prototype.splice;
 	}
+	spliceTestObj = null;
+
+	//Objectに対するshift()の動作を確認
+	var obsShift;
+	var shiftTestObj = {
+		'0': 0,
+		length: 1
+	};
+	Array.prototype.shift.call(shiftTestObj);
+	if (shiftTestObj[0] !== undefined) {
+		//shiftもspliceと同様要素が残る環境がある（IE8のIE7モード）ので差し替える。
+		obsShift = customShift;
+	} else {
+		obsShift = Array.prototype.shift;
+	}
+	shiftTestObj = null;
+
 
 	//-------------------------------------------
 	// イベントディスパッチャのコードここから
@@ -1542,6 +1571,8 @@
 			var arrayFunc = Array.prototype[method];
 			if (method === 'splice') {
 				arrayFunc = obsSplice;
+			} else if (method === 'shift') {
+				arrayFunc = obsShift;
 			}
 
 			//TODO fallback実装の提供
