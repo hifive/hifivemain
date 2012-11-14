@@ -724,23 +724,30 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('h5.ui.scrollToTop (0, 1)の地点にスクロール', 1, function() {
-		// scrollToTopで(0,1)にスクロール
-		h5.ui.scrollToTop();
+	asyncTest(
+			'h5.ui.scrollToTop (0, 1)の地点にスクロール',
+			1,
+			function() {
+				// scrollToTopで(0,1)にスクロール
+				h5.ui.scrollToTop();
 
-		var count = 0;
-		function waitForScroll() {
-			if ($(window).scrollTop() === 1 && $(window).scrollLeft() === 0) {
-				ok(true, '(0,1)にスクロールされた');
-				start();
-				return;
-			} else if (count++ === 3) {
-				ok(false, 'スクロールされませんでした。');
-				start();
-				return;
-			}
-			setTimeout(waitForScroll, 200);
-		}
-		waitForScroll();
-	});
+				var count = 0;
+				function waitForScroll() {
+					var scrollX = window.pageXOffset || $.support.boxModel ? document.documentElement.scrollLeft
+							: document.body.scrollLeft;
+					var scrollY = window.pageYOffset || $.support.boxModel ? document.documentElement.scrollTop
+							: document.body.scrollTop;
+					if (scrollY === 1 && scrollX === 0) {
+						ok(true, '(0,1)にスクロールされた');
+						start();
+						return;
+					} else if (count++ === 3) {
+						ok(false, 'スクロールされませんでした。');
+						start();
+						return;
+					}
+					setTimeout(waitForScroll, 200);
+				}
+				waitForScroll();
+			});
 });
