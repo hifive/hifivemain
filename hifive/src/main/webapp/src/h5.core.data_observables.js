@@ -1463,7 +1463,8 @@
 	/**
 	 * ObservableArray(オブザーバブルアレイ)とは、配列操作の監視可能な配列です。
 	 * <p>
-	 * h5.core.data.createObservableArray()で作成します。
+	 * <a
+	 * href="h5.core.data.html#createObservableArray">h5.core.data.createObservableArray()</a>で作成します。
 	 * </p>
 	 * <p>
 	 * 通常の配列と同様の操作に加え、要素の追加、削除、変更についての監視ができます。
@@ -1628,7 +1629,7 @@
 	 * ObservableItem(オブザーバブルアアイテム)とは、プロパティ操作の監視可能なオブジェクトです。
 	 * <p>
 	 * <a
-	 * href="h5.core.data_observables.html#createObservableItem">h5.core.data.createObservableItem()</a>で作成します。
+	 * href="h5.core.data.html#createObservableItem">h5.core.data.createObservableItem()</a>で作成します。
 	 * </p>
 	 * <p>
 	 * <a href="DataItem.html">データアイテム</a>と同様、get/setで値の読み書きを行います。
