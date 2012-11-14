@@ -281,14 +281,14 @@
 		var args = arguments;
 		var code = args[0];
 		// メッセージがない(min版)ならメッセージを格納しない
-		args[0] = DESCRIPTOR_VALIDATION_ERROR_MSGS[code];
-		var msg = h5.u.str.format.apply(null, args);
-		if (!msg) {
+		if (!h5internal.core.data.DESCRIPTOR_VALIDATION_ERROR_MSGS) {
 			return {
 				code: code
 			};
 		}
 		/* del begin */
+		args[0] = DESCRIPTOR_VALIDATION_ERROR_MSGS[code];
+		var msg = h5.u.str.format.apply(null, args);
 		return {
 			code: code,
 			message: msg
