@@ -876,7 +876,8 @@
 			 *
 			 * @since 1.1.0
 			 * @memberOf DataItem
-			 * @returns {Boolean} 現在のこのプロパティにセットされているのがnullかどうか
+			 * @param {String} key プロパティ名
+			 * @returns {Boolean} 現在指定したプロパティにセットされているのがnullかどうか
 			 */
 			regardAsNull: function(key) {
 				if (this._isArrayProp(key)) {
