@@ -1974,7 +1974,7 @@
 		 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します。
 		 *
 		 * @since 1.1.0
-		 * @memberOf DataItem
+		 * @memberOf ObservableItem
 		 * @returns {Boolean} 現在のこのプロパティにセットされているのがnullかどうか
 		 */
 		regardAsNull: function(key) {
@@ -1990,7 +1990,7 @@
 		 *
 		 * @since 1.1.0
 		 * @private
-		 * @memberOf DataItem
+		 * @memberOf ObservableItem
 		 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
 		 */
 		_isArrayProp: function(prop) {
