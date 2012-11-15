@@ -354,7 +354,7 @@ $(function() {
 		strictEqual($span.text(), '', 'text:空文字が設定されていること');
 		strictEqual($span.attr('id'), undefined, 'attr:削除されていること');
 		strictEqual($span[0].style.color, '', 'style:何も設定されていないこと');
-		strictEqual($span.attr('class'), 'hoge', 'class:何も設定されていないこと');
+		strictEqual($span.attr('class'), 'hoge', 'バインド開始前に設定されていた値に戻ること');
 	});
 
 	test('一つの要素にtextとhtmlのプロパティをバインドする', function() {
