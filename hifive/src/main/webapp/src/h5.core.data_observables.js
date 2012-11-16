@@ -297,7 +297,7 @@
 	 *
 	 * @private
 	 * @param {String} type
-	 * @returns elmType:タイプから配列部分を除いた文字列。dataModel:データモデル名。dimention:配列の深さ(配列指定でない場合は0)
+	 * @returns {Object} typeをパースした結果オブジェクト。 elmType:タイプから配列部分を除いた文字列。dataModel:データモデル名。dimension:配列の深さ(配列指定でない場合は0)
 	 */
 	function getTypeObjFromString(type) {
 		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
@@ -307,7 +307,7 @@
 		return matched && {
 			elmType: matched[1],
 			dataModel: matched[2],
-			dimention: matched[3] ? 1 : 0
+			dimension: matched[3] ? 1 : 0
 		};
 	}
 
@@ -909,7 +909,7 @@
 		for ( var p in schema) {
 			var propObj = schema[p];
 			if (!propObj || !propObj.hasOwnProperty('defaultValue') && propObj.type
-					&& (propObj.type === 'array' || getTypeObjFromString(propObj.type).dimention)) {
+					&& (propObj.type === 'array' || getTypeObjFromString(propObj.type).dimension)) {
 				// defaultValueが指定されていないかつ、type指定が配列指定であれば、
 				// 初期値は空のOvservableArrayになる。
 				// 空のOvservableArrayがチェックに引っかかることはないので、チェック関数でチェックしない。
@@ -946,7 +946,7 @@
 		var propObj = propertyObject || {};
 		var checkFuncArray = [];
 		var elmType = null;
-		var dimention = 0;
+		var dimension = 0;
 		var type = propObj.type;
 		var constraint = propObj.constraint;
 
@@ -967,7 +967,7 @@
 
 			elmType = typeObj.elmType;
 			// 配列の次元(0か1のみ)。配列でないなら0
-			dimention = typeObj.dimention;
+			dimension = typeObj.dimension;
 
 			// type指定を元に値を(配列は考慮せずに)チェックする関数を作成してcheckFuncArrayに追加
 			checkFuncArray.push(createTypeCheckFunction(elmType, {
@@ -981,7 +981,7 @@
 		}
 		return createCheckValueByCheckObj({
 			checkFuncs: checkFuncArray,
-			dimention: dimention
+			dimension: dimension
 		});
 	}
 
@@ -1140,8 +1140,8 @@
 	 * @param {object} checkObj
 	 * @param {array} [checkObj.checkFuncs] チェックする関数の配列。配列の先頭の関数から順番にチェックする。指定のない場合は、return
 	 *            true;するだけの関数を作成して返す
-	 * @param {integer} [checkObj.dimention]
-	 *            チェックする値の配列の次元。配列のdimention次元目が全てcheckFuncsを満たすことと、dimention-1次元目まではすべて配列であることを確認する関数を作成して返す。
+	 * @param {integer} [checkObj.dimension]
+	 *            チェックする値の配列の次元。配列のdimension次元目が全てcheckFuncsを満たすことと、dimension-1次元目まではすべて配列であることを確認する関数を作成して返す。
 	 *            0、または指定無しの場合は配列でないことを表す
 	 * @returns {Function} 値をチェックする関数を返す。戻り値の関数はエラー理由を返す。length;0ならエラーでない。
 	 */
@@ -1152,7 +1152,7 @@
 				return [];
 			};
 		}
-		var dim = checkObj.dimention || 0;
+		var dim = checkObj.dimension || 0;
 		/**
 		 * 値のチェックを行う関数
 		 *
@@ -1180,7 +1180,7 @@
 				}
 				if (!$.isArray(v) && !h5.core.data.isObservableArray(v)) {
 					errorReason.push({
-						dimention: dim
+						dimension: dim
 					});
 					return false;
 				}
