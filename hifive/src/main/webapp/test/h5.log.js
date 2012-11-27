@@ -486,7 +486,7 @@ $(function() {
 		}
 	});
 
-	test('categoryに重複したものをとうろくしてconfigure()するとエラーが発生すること。', 1, function() {
+	test('categoryに重複したものを登録してconfigure()するとエラーが発生すること。', 1, function() {
 		h5.settings.log = {
 			target: {
 				myTarget: {
