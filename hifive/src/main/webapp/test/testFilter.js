@@ -4,8 +4,9 @@ $(function() {
 	var env = {};
 
 	var ua = h5.env.ua;
-	var name = "";
 
+	// ブラウザ名
+	var name = "";
 	// androidなら、"android"がブラウザ名の先頭につく
 	if (ua.isAndroid) {
 		name = "android";
@@ -29,11 +30,19 @@ $(function() {
 	} else if (ua.isWindowsPhone) {
 		name += "windowsPhone";
 	}
-
 	env.browser = name;
 
+	// ブラウザのメジャーバージョン
 	env.version = ua.browserVersion;
+
+	// ブラウザのフルバージョン(配列)
 	env.versionFull = ua.browserVersionFull.split('.');
+
+	// jQueryのバージョン
+	env.jquery = $.fn.jquery;
+
+	// min版かどうか
+	env.build = !$('script[src$="h5.js"]').length ? 'dev' : 'min';
 
 	// リクエストパラメータに書かれていればそっちを優先する
 	for ( var i = 0, l = paramsArray.length; i < l; i++) {
@@ -43,7 +52,7 @@ $(function() {
 
 	function matchVersion(version) {
 		// 範囲指定
-		if (version.indexOf('-')) {
+		if (version.indexOf('-') !== -1) {
 			var tmp = version.split('-');
 			var min = tmp[0];
 			var max = tmp[1];
@@ -81,8 +90,49 @@ $(function() {
 	}
 
 	function throughFilter(filtersArray) {
-		// []を外して、"|"で結合する。余分についた両端の"|"は削除。"|"を区切り記号にして分割し、配列にする。
-		var filters = filtersArray.join('|').replace(/\[|\]|^\||$\|/g, '').split('|');
+		var buildFilters = [];
+		var browserFilters = [];
+
+		// []を外して、";"で結合する。余分についた両端の";"は削除。";"を区切り記号にして分割し、配列にする。
+		var filters = filtersArray.join(';').replace(/\[|\]|^;|$;|;;/g, '').split(';');
+		for ( var i = 0, l = filters.length; i < l; i++) {
+			var filter = $.trim(filters[i]);
+
+			// 判定種別が省略されていたらbrowser
+			if (filter.indexOf('#') === -1) {
+				filter = 'browser#' + filter;
+			}
+
+			// タグと条件文を分離
+			var tmp = filter.match(/^(.*?)#(.*)/);
+			var tag = $.trim(tmp[1]);
+			var conditionStr = $.trim(tmp[2]);
+
+			// 各タグについて条件をまとめる
+			switch (tag) {
+			case "browser":
+				browserFilters.push(conditionStr);
+				break;
+			case "build":
+				buildFilters.push(conditionStr);
+			}
+		}
+		return checkBuildFilter(buildFilters) || checkBrowserFilter(browserFilters);
+	}
+
+	// build#xxx 指定されたxxxが現環境(env.build)にマッチするかどうかを返す。
+	function checkBuildFilter(buildFilters){
+		for(var i = 0, l = buildFilters.length; i < l; i++){
+			if(env.build === buildFilters[i]){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function checkBrowserFilter(filtersArray) {
+		// "|"で結合する。余分についた両端の"|"は削除。"|"を区切り記号にして分割し、配列にする。
+		var filters = filtersArray.join('|').replace(/^\||$\|/g, '').split('|');
 		for ( var i = 0, l = filters.length; i < l; i++) {
 			var filter = filters[i].split(':');
 			if ($.trim(filter[0]) !== env.browser) {
@@ -108,7 +158,7 @@ $(function() {
 				}
 			}
 			// opitionが全てマッチしたらtrueを返す
-			if(j === len){
+			if (j === len) {
 				return true;
 			}
 		}
