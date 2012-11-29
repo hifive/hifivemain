@@ -220,11 +220,6 @@ $(function() {
 					+ '</span>: <span class="test-name">[テストをスキップしました] ' + stats.name + '</span>';
 		}
 	});
-	QUnit.config.moduleStart.push(function(stats) {
-		if (QUnit.config.currentModuleTestEnvironment) {
-			console.log(QUnit.config.currentModuleTestEnvironment)
-		}
-	});
 
 
 
