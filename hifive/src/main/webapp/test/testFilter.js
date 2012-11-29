@@ -50,7 +50,7 @@ $(function() {
 		env[keyVal[0]] = keyVal[1];
 	}
 
-	function matchVersion(version) {
+	function matchVersion(version, envVersion, envVersionFull) {
 		// 範囲指定
 		if (version.indexOf('-') !== -1) {
 			var tmp = version.split('-');
@@ -59,28 +59,39 @@ $(function() {
 			if (min.indexOf('.') !== -1) {
 				min = min.split('.');
 				max = max.split('.');
+				var minOK = false;
+				var maxOK = false;
 				// min-max指定時に、マイナーバージョンも含む場合は、有効桁数を揃えて書いてある前提で処理する(2.3.1-3.2のような書き方はダメ)
 				for ( var i = 0, l = min.length; i < l; i++) {
-					if (parseInt(min[i]) <= parseInt(env.versionFull[i])
-							&& parseInt(env.versionFull[i]) <= parseInt(max[i])) {
+					var curMin = parseInt(min[i]);
+					var curMax = parseInt(max[i]);
+					var curVersion = parseInt(envVersionFull[i]);
+
+					if (!minOK && curMin < curVersion) {
+						minOK = true;
+					}
+					if (!maxOK && curVersion < curMax) {
+						maxOK = true;
+					}
+					if ((minOK || curMin <= curVersion) && (maxOK || curVersion <= curMax)) {
 						continue;
 					}
 					return false;
 				}
 				return true;
 			}
-			return parseInt(min) <= env.version && env.version <= parseInt(max);
+			return parseInt(min) <= envVersion && envVersion <= parseInt(max);
 		}
 
 		// 単一指定または複数指定
 		var versions = version.split(',');
 		for ( var i = 0, l = versions.length; i < l; i++) {
 			if (versions[i].indexOf('.') !== -1) {
-				if (env.versionFull.indexOf(versions[i]) === 0) {
+				if (envVersionFull.join('.').indexOf(versions[i]) === 0) {
 					return true;
 				}
 			} else {
-				if (env.version === versions[i]) {
+				if (envVersion === versions[i]) {
 					return true;
 				}
 			}
@@ -90,8 +101,7 @@ $(function() {
 	}
 
 	function throughFilter(filtersArray) {
-		var buildFilters = [];
-		var browserFilters = [];
+		var filtersObj = {};
 
 		// []を外して、";"で結合する。余分についた両端の";"は削除。";"を区切り記号にして分割し、配列にする。
 		var filters = filtersArray.join(';').replace(/\[|\]|^;|$;|;;/g, '').split(';');
@@ -109,36 +119,54 @@ $(function() {
 			var conditionStr = $.trim(tmp[2]);
 
 			// 各タグについて条件をまとめる
-			switch (tag) {
-			case "browser":
-				browserFilters.push(conditionStr);
-				break;
-			case "build":
-				buildFilters.push(conditionStr);
+			if (!filtersObj[tag]) {
+				filtersObj[tag] = [];
 			}
+			filtersObj[tag].push(conditionStr);
 		}
-		return checkBuildFilter(buildFilters) || checkBrowserFilter(browserFilters);
+		return checkBuildFilter(filtersObj['build']) || checkjQueryFilter(filtersObj['jquery'])
+				|| checkBrowserFilter(filtersObj['browser']);
 	}
 
 	// build#xxx 指定されたxxxが現環境(env.build)にマッチするかどうかを返す。
-	function checkBuildFilter(buildFilters){
-		for(var i = 0, l = buildFilters.length; i < l; i++){
-			if(env.build === buildFilters[i]){
+	function checkBuildFilter(buildFilters) {
+		if (!buildFilters) {
+			return false;
+		}
+		for ( var i = 0, l = buildFilters.length; i < l; i++) {
+			if (env.build === buildFilters[i]) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	function checkBrowserFilter(filtersArray) {
+	function checkjQueryFilter(jqueryFilters) {
+		if (!jqueryFilters) {
+			return false;
+		}
+		for ( var i = 0, l = jqueryFilters.length; i < l; i++) {
+			var filter = jqueryFilters[i];
+			if (matchVersion($.trim(filter), env.jquery.substring(0, env.jquery.indexOf('.')),
+					env.jquery.split('.'))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function checkBrowserFilter(browserFilters) {
+		if (!browserFilters) {
+			return false;
+		}
 		// "|"で結合する。余分についた両端の"|"は削除。"|"を区切り記号にして分割し、配列にする。
-		var filters = filtersArray.join('|').replace(/^\||$\|/g, '').split('|');
+		var filters = browserFilters.join('|').replace(/^\||$\|/g, '').split('|');
 		for ( var i = 0, l = filters.length; i < l; i++) {
 			var filter = filters[i].split(':');
 			if ($.trim(filter[0]) !== env.browser) {
 				continue;
 			}
-			if (!matchVersion($.trim(filter[1]))) {
+			if (!matchVersion($.trim(filter[1])), env.version, env.versionFull) {
 				continue;
 			}
 
