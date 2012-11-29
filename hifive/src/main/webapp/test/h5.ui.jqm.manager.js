@@ -54,9 +54,7 @@ $(function() {
 			$(this).trigger('pageremove');
 		});
 		$('body>div.testForJQM').remove();
-		if (!isMin) {
-			h5.ui.jqm.manager.__reset();
-		}
+		h5.ui.jqm.manager.__reset();
 		$.mobile.activePage = undefined;
 		// JQMが生成するbody内をラップするdiv要素を外す
 		$('body>div:not(#qunit)').children().unwrap();
@@ -146,11 +144,6 @@ $(function() {
 	//=============================
 
 	asyncTest('init()を実行せず、define()を実行する', 1, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-
 		var controllerDefObj = {
 			__name: 'DefineTestController',
 			__ready: function() {
@@ -163,11 +156,6 @@ $(function() {
 	});
 
 	asyncTest('init()を実行せずにdefine()を実行して、遷移を行う', 9, function() {
-		if (!checkDev()) {
-			start();
-			return;
-		}
-
 		var controller1 = {
 			__name: 'Test1Controller',
 
@@ -450,9 +438,8 @@ $(function() {
 	// Body
 	//=============================
 
-	asyncTest(
-			'h5.ui.jqm.dataPrefixに文字列を指定した場合、data-(指定した文字列)-script属性に指定したjsファイルがロードできること',
-			2, function() {
+	asyncTest('h5.ui.jqm.dataPrefixに文字列を指定した場合、data-(指定した文字列)-script属性に指定したjsファイルがロードできること', 2,
+			function() {
 				setTimeout(function() {
 					ok(window.com.htmlhifive.test.loadedTestForJQM1,
 							'data-h5-scriptに指定したjsファイルがロードされていること');
@@ -487,17 +474,16 @@ $(function() {
 	// Body
 	//=============================
 
-	asyncTest(
-			'h5.ui.jqm.dataPrefixがnullの場合は、data-h5-script属性に指定したjsファイルがロードできること',
-			2, function() {
-				setTimeout(function() {
+	asyncTest('h5.ui.jqm.dataPrefixがnullの場合は、data-h5-script属性に指定したjsファイルがロードできること', 2, function() {
+		setTimeout(
+				function() {
 					ok(window.com.htmlhifive.test.loadedTestForJQM1,
 							'data-h5-scriptに指定したjsファイルがロードされていること');
 					ok(window.com.htmlhifive.test.loadedTestForJQM2,
 							'data-h5-scriptに指定したjsファイルがロードされていること');
 					start();
 				}, 0);
-			});
+	});
 
 	//=============================
 	// Definition
@@ -567,18 +553,17 @@ $(function() {
 	// Body
 	//=============================
 
-	asyncTest('h5.ui.jqmmanager define() data-h5-scriptに指定したjsからdefine()できること', 1,
-			function() {
-				// コントローラの__ready()で、テスト用イベント'controllerReadyDone'をトリガーしている。
-				$('#test4').bind('controllerReadyDone', function() {
-					ok(true, 'define()でactivePageにバインドしたコントローラの__readyが実行された');
-					start();
-				});
-				$('#test5').bind('controllerReadyDone', function() {
-					ok(false, 'テスト失敗。define()しても、activePageでない要素にはコントローラはバインドされない');
-					start();
-				});
-			});
+	asyncTest('h5.ui.jqmmanager define() data-h5-scriptに指定したjsからdefine()できること', 1, function() {
+		// コントローラの__ready()で、テスト用イベント'controllerReadyDone'をトリガーしている。
+		$('#test4').bind('controllerReadyDone', function() {
+			ok(true, 'define()でactivePageにバインドしたコントローラの__readyが実行された');
+			start();
+		});
+		$('#test5').bind('controllerReadyDone', function() {
+			ok(false, 'テスト失敗。define()しても、activePageでない要素にはコントローラはバインドされない');
+			start();
+		});
+	});
 
 	//=============================
 	// Definition
@@ -599,30 +584,29 @@ $(function() {
 	// Body
 	//=============================
 
-	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドし、cssがロードされること', 1,
-			function() {
-				setTimeout(function() {
-					var controller = {
-						__name: 'Test6Controller',
-						__ready: function() {
-							var count = 50;
-							function checkCSS() {
-								if (--count === 0 || $('#test6 h1').css('font-size') === '111px') {
-									deepEqual($('#test6 h1').css('font-size'), '111px',
-											'CSSが適応されている。(※CSSファイルが5秒経っても取得できない場合、失敗します)');
-									start();
-								} else {
-									setTimeout(function() {
-										checkCSS();
-									}, 100);
-								}
-							}
-							checkCSS();
+	asyncTest('h5.ui.jqmmanager define() コントローラがdefineでバインドし、cssがロードされること', 1, function() {
+		setTimeout(function() {
+			var controller = {
+				__name: 'Test6Controller',
+				__ready: function() {
+					var count = 50;
+					function checkCSS() {
+						if (--count === 0 || $('#test6 h1').css('font-size') === '111px') {
+							deepEqual($('#test6 h1').css('font-size'), '111px',
+									'CSSが適応されている。(※CSSファイルが5秒経っても取得できない場合、失敗します)');
+							start();
+						} else {
+							setTimeout(function() {
+								checkCSS();
+							}, 100);
 						}
-					};
-					h5.ui.jqm.manager.define('test6', 'css/test.css', controller);
-				}, 0);
-			});
+					}
+					checkCSS();
+				}
+			};
+			h5.ui.jqm.manager.define('test6', 'css/test.css', controller);
+		}, 0);
+	});
 
 	//=============================
 	// Definition
@@ -1096,20 +1080,25 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('CSSファイルのパスのみ指定してdefine()を実行する。※min版ではエラーになります', 4, function() {
-		h5.core.controller('body', {
-			__name: 'BodyController',
-			__ready: function() {
-				h5.ui.jqm.manager.define('test19', './css/test.css');
-				h5.ui.jqm.manager.define('test20', './css/test2.css');
+		h5.core.controller('body',
+				{
+					__name: 'BodyController',
+					__ready: function() {
+						h5.ui.jqm.manager.define('test19', './css/test.css');
+						h5.ui.jqm.manager.define('test20', './css/test2.css');
 
-				equal($('head > link[href*="test.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
-				equal($('head > link[href*="test2.css"]').length, 0, 'define()で指定したCSSが読み込まれていること');
-				changePage('#test20', true);
+						equal($('head > link[href*="test.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						equal($('head > link[href*="test2.css"]').length, 0,
+								'define()で指定したCSSが読み込まれていること');
+						changePage('#test20', true);
 
-				equal($('head > link[href*="test.css"]').length, 0, 'define()で指定したCSSが読み込まれていること');
-				equal($('head > link[href*="test2.css"]').length, 1, 'define()で指定したCSSが読み込まれていること');
-				start();
-			}
-		});
+						equal($('head > link[href*="test.css"]').length, 0,
+								'define()で指定したCSSが読み込まれていること');
+						equal($('head > link[href*="test2.css"]').length, 1,
+								'define()で指定したCSSが読み込まれていること');
+						start();
+					}
+				});
 	});
 });
