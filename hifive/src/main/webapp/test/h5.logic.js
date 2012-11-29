@@ -161,13 +161,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('ロジックのAOPは動作しているか ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
+	asyncTest('[build#min]ロジックのAOPは動作しているか', function() {
 		var result = [];
 		function TestLogic() {
 		//
@@ -222,12 +216,7 @@ $(function() {
 		});
 	});
 
-	test('h5.core.logic() の動作 ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			return;
-		}
-
+	test('[build#min]h5.core.logic() の動作', function() {
 		var dfd = null;
 		var logger = null;
 		var result = [];

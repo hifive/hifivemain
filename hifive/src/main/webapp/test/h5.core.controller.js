@@ -194,7 +194,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラの作成と要素へのバインド(AOPあり) ※min版ではエラーになります', 3, function() {
+	asyncTest('[build#min]コントローラの作成と要素へのバインド(AOPあり)', 3, function() {
 		if (!h5.core.__compileAspects) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
@@ -1891,14 +1891,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('コントローラ内のthis(AOPあり) ※min版ではエラーになります', 1, function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
+	asyncTest('[build#min]コントローラ内のthis(AOPあり)', 1, function() {
 		var controllerContext = null;
 		var controller = {
 			__name: 'TestController',
@@ -1945,14 +1938,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('アスペクトの動作1 ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
+	asyncTest('[build#min]アスペクトの動作1', function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -1988,14 +1974,7 @@ $(function() {
 
 	});
 
-	asyncTest('アスペクトの動作2 ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
+	asyncTest('[build#min]アスペクトの動作2', function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -2028,14 +2007,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('アスペクトの動作3 ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
+	asyncTest('[build#min]アスペクトの動作3', function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -2076,14 +2048,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('アスペクトの動作4 ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
+	asyncTest('[build#min]アスペクトの動作4', function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -2127,14 +2092,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('アスペクトの動作5 ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
+	asyncTest('[build#min]アスペクトの動作5', function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -2548,15 +2506,8 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5.core.interceptor.logInterceptorの動作 ※min版ではエラーになります',
+			'[build#min]h5.core.interceptor.logInterceptorの動作',
 			function() {
-				if (!h5.core.__compileAspects) {
-					expect(1);
-					ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-					start();
-					return;
-				}
-
 				var log = {
 					interceptors: h5.core.interceptor.logInterceptor
 				};
@@ -2593,15 +2544,8 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5.core.interceptor.lapInterceptorの動作 ※min版ではエラーになります',
+			'[build#min]h5.core.interceptor.lapInterceptorの動作',
 			function() {
-				if (!h5.core.__compileAspects) {
-					expect(1);
-					ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-					start();
-					return;
-				}
-
 				var lap = {
 					interceptors: h5.core.interceptor.lapInterceptor
 				};
@@ -2638,14 +2582,7 @@ $(function() {
 						});
 			});
 
-	asyncTest('h5.core.interceptor.errorInterceptorの動作 ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
+	asyncTest('[build#min]h5.core.interceptor.errorInterceptorの動作', function() {
 		var errorInterceptor = {
 			interceptors: h5.core.interceptor.errorInterceptor
 		};
@@ -3892,15 +3829,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('__metaのuseHandlersオプションはデフォルトでtrueになっているか ※min版ではエラーになります', function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
-
+	asyncTest('[build#min]__metaのuseHandlersオプションはデフォルトでtrueになっているか', function() {
 		var count = 0;
 
 		var countAspects = {
@@ -3989,8 +3918,6 @@ $(function() {
 	});
 
 	asyncTest('__metaのuseHandlersオプションをfalseにすると子コントローラのイベントハンドラはバインドされないか', function() {
-
-
 		var childRet = true;
 		var importController = {
 			__name: 'ImportController',
