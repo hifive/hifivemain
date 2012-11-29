@@ -12,11 +12,14 @@ $(function() {
 		name = "android";
 	}
 	if (ua.isAndroidDefaultBrowser) {
-		name += "default"
+		// デフォルトなら"android"だけ
+		//		name += "default"
 	} else if (ua.isChrome) {
 		name += "chrome";
 	} else if (ua.isFirefox) {
 		name += "firefox";
+	} else if (ua.isWindowsPhone) {
+		name += "windowsPhone";
 	} else if (ua.isIE) {
 		name += "ie";
 	} else if (ua.isiPad) {
@@ -27,8 +30,6 @@ $(function() {
 		name += "opera";
 	} else if (ua.isSafari) {
 		name += "safari";
-	} else if (ua.isWindowsPhone) {
-		name += "windowsPhone";
 	}
 	env.browser = name;
 
@@ -91,7 +92,7 @@ $(function() {
 					return true;
 				}
 			} else {
-				if (envVersion === versions[i]) {
+				if (envVersion == versions[i]) {
 					return true;
 				}
 			}
@@ -147,6 +148,7 @@ $(function() {
 		}
 		for ( var i = 0, l = jqueryFilters.length; i < l; i++) {
 			var filter = jqueryFilters[i];
+
 			if (matchVersion($.trim(filter), env.jquery.substring(0, env.jquery.indexOf('.')),
 					env.jquery.split('.'))) {
 				return true;
@@ -166,7 +168,7 @@ $(function() {
 			if ($.trim(filter[0]) !== env.browser) {
 				continue;
 			}
-			if (!matchVersion($.trim(filter[1])), env.version, env.versionFull) {
+			if (!matchVersion($.trim(filter[1]), env.version, env.versionFull)) {
 				continue;
 			}
 
@@ -176,7 +178,7 @@ $(function() {
 				return true;
 			}
 			var options = filter[2].split(',');
-			// optionによるフィルタ(IEのmodeなど)
+			// optionによるフィルタ(IEのdocmodeなど)
 			for ( var j = 0, len = options.length; j < len; j++) {
 				var tmp = options[j].split('=');
 				var key = $.trim(tmp[0]);
