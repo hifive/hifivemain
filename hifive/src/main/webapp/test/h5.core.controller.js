@@ -5210,15 +5210,9 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',
+			'[browser#iPhone:4-6;android:0-4]h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
-				if (document.ontouchstart !== undefined) {
-					expect(1);
-					ok(false, 'タブレット、スマートフォンでは失敗します');
-					start();
-					return;
-				}
 				var controller = {
 
 					__name: 'TestController',
@@ -5341,13 +5335,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('h5trackイベント(touchstart, touchmove, touchend) ※PCブラウザでは失敗します。', 26, function() {
-		if (document.ontouchstart === undefined) {
-			expect(1);
-			ok(false, 'PCブラウザでは失敗します');
-			start();
-			return;
-		}
+	asyncTest('[browser#ie:6-9|chrome:0-23|firefox:0-17|safari:0-5|opera:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) ※touchイベントをサポートしていないブラウザでは失敗します。', 26, function() {
 
 		var controller = {
 			__name: 'TestController',
@@ -5456,15 +5444,8 @@ $(function() {
 	});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合もh5trackイベントが発生するか ※PCブラウザでは失敗します。',
+			'[browser#ie:6-9|chrome:0-23|firefox:0-17|safari:0-5|opera:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合もh5trackイベントが発生するか ※touchイベントをサポートしていないブラウザでは失敗します。',
 			27, function() {
-				if (document.ontouchstart === undefined) {
-					expect(1);
-					ok(false, 'PCブラウザでは失敗します');
-					start();
-					return;
-				}
-
 				var controller = {
 					__name: 'TestController',
 					__ready: function() {
@@ -5538,21 +5519,9 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) SVG ※タブレット、スマートフォン、IE8-では失敗します',
+			'[browser#iPhone:4-6|android:0-4|ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8]h5trackイベント(mousedown, mousemove, mouseup) SVG ※タッチのあるブラウザ、SVGを動的に追加できないブラウザでは失敗します。',
 			26,
 			function() {
-				if (document.ontouchstart !== undefined) {
-					expect(1);
-					ok(false, 'タブレット、スマートフォンでは失敗します');
-					start();
-					return;
-				}
-				if (!isSupportSVG) {
-					expect(1);
-					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
-					start();
-					return;
-				}
 				var controller = {
 
 					__name: 'TestController',
@@ -5690,22 +5659,9 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) SVG ※PCブラウザでは失敗します',
+			'[browser#ie:6-9|chrome:0-23|firefox:0-17|safari:0-5|opera:0-12|windowsPhone:9|android:0-2]h5trackイベント(touchstart, touchmove, touchend) SVG ※タッチのないブラウザ、SVG要素を動的に追加できないブラウザは失敗します。',
 			26,
 			function() {
-				if (document.ontouchstart === undefined) {
-					expect(1);
-					ok(false, 'PCブラウザでは失敗します');
-					start();
-					return;
-				}
-
-				if (!isSupportSVG) {
-					expect(1);
-					ok(false, 'このブラウザはSVG要素を動的に追加できません。このテストケースは実行できません。');
-					start();
-					return;
-				}
 				var controller = {
 					__name: 'TestController',
 
@@ -5844,15 +5800,9 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(mousedown, mousemove, mouseup) window ※タブレット、スマートフォンでは失敗します',
+			'[browser#iPhone:4-6|android:0-4]h5trackイベント(mousedown, mousemove, mouseup) window ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
-				if (document.ontouchstart !== undefined) {
-					expect(1);
-					ok(false, 'タブレット、スマートフォンでは失敗します');
-					start();
-					return;
-				}
 				var controller = {
 
 					__name: 'TestController',
@@ -5978,16 +5928,9 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5trackイベント(touchstart, touchmove, touchend) window ※PCブラウザでは失敗します',
+			'[browser#ie:6-9|chrome:0-23|firefox:0-17|safari:0-5|opera:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) window ※タッチイベントのないブラウザでは失敗します',
 			26,
 			function() {
-				if (document.ontouchstart === undefined) {
-					expect(1);
-					ok(false, 'PCブラウザでは失敗します');
-					start();
-					return;
-				}
-
 				var controller = {
 					__name: 'TestController',
 
@@ -6168,7 +6111,7 @@ $(function() {
 		return id;
 	};
 
-	asyncTest('※IEの場合は要目視確認: __init()で例外をスローする。', 1, function() {
+	asyncTest('[browser#ie:6-10|windowsPhone:9]※IEの場合は要目視確認: __init()で例外をスローする。', 1, function() {
 		var errorMsg = '__init error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6188,7 +6131,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※IEの場合は要目視確認: __ready()で例外をスローする。', 1, function() {
+	asyncTest('[browser#ie:6-10|windowsPhone:9]※IEの場合は要目視確認: __ready()で例外をスローする。', 1, function() {
 		var errorMsg = '__ready error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6208,7 +6151,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※IEの場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
+	asyncTest('[browser#ie:6-10|windowsPhone:9]※IEの場合は要目視確認: __unbind()で例外をスローする。', 1, function() {
 		var errorMsg = '__unbind error.';
 		var id = testTimeoutFunc(errorMsg);
 
@@ -6231,7 +6174,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('※IEの場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
+	asyncTest('[browser#ie:6-10|windowsPhone:9]※IEの場合は要目視確認: __dispose()で例外をスローする。', 1, function() {
 		var errorMsg = '__dispose error.';
 		var id = testTimeoutFunc(errorMsg);
 
