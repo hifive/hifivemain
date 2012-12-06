@@ -1,9 +1,12 @@
 $(function() {
-	var env = window.FILTER_ENV;
-	if(!env){
-		// FILTER_ENVが定義されていない場合はフィルタをかけずに全テスト実行する
+	// テストフィルタ用オブジェクト
+	if (window.FILTER_ENV) {
+		env = window.FILTER_ENV;
+	} else {
+		// フィルタオブジェクトのない場合は全てのテストを実行するため、フィルタは掛けない
 		return;
 	}
+	env.version = env.version || env.versionFull.split('.')[0];
 
 	function matchVersion(version, envVersion, envVersionFull) {
 		// 範囲指定
