@@ -1,54 +1,8 @@
 $(function() {
-	// リクエストパラメータがあるならその値を使う
-	var paramsArray = window.location.search.substring(1).split('&');
-	var env = {};
-
-	var ua = h5.env.ua;
-
-	// ブラウザ名
-	var name = "";
-	// androidなら、"android"がブラウザ名の先頭につく
-	if (ua.isAndroid) {
-		name = "android";
-	}
-	if (ua.isAndroidDefaultBrowser) {
-		// デフォルトなら"android"だけ
-		//		name += "default"
-	} else if (ua.isChrome) {
-		name += "chrome";
-	} else if (ua.isFirefox) {
-		name += "firefox";
-	} else if (ua.isWindowsPhone) {
-		name += "windowsPhone";
-	} else if (ua.isIE) {
-		name += "ie";
-	} else if (ua.isiPad) {
-		name += "iPad";
-	} else if (ua.isiPhone) {
-		name += "iPhone";
-	} else if (ua.isOpera) {
-		name += "opera";
-	} else if (ua.isSafari) {
-		name += "safari";
-	}
-	env.browser = name;
-
-	// ブラウザのメジャーバージョン
-	env.version = ua.browserVersion;
-
-	// ブラウザのフルバージョン(配列)
-	env.versionFull = ua.browserVersionFull.split('.');
-
-	// jQueryのバージョン
-	env.jquery = $.fn.jquery;
-
-	// min版かどうか
-	env.build = !$('script[src$="h5.js"]').length ? 'dev' : 'min';
-
-	// リクエストパラメータに書かれていればそっちを優先する
-	for ( var i = 0, l = paramsArray.length; i < l; i++) {
-		var keyVal = paramsArray[i].split('=');
-		env[keyVal[0]] = keyVal[1];
+	var env = window.FILTER_ENV;
+	if(!env){
+		// FILTER_ENVが定義されていない場合はフィルタをかけずに全テスト実行する
+		return;
 	}
 
 	function matchVersion(version, envVersion, envVersionFull) {
