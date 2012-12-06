@@ -6,6 +6,7 @@ $(function() {
 		// フィルタオブジェクトのない場合は全てのテストを実行するため、フィルタは掛けない
 		return;
 	}
+	env.versionFull = env.versionFull || h5.env.ua.browserVersionFull;
 	env.version = env.version || env.versionFull.split('.')[0];
 
 	function matchVersion(version, envVersion, envVersionFull) {
