@@ -2118,8 +2118,12 @@ $(function() {
 			test: str
 		});
 
+		// strに"&"が含まれる場合、bind(内部的には$.html())で値をセットした時に"&amp;"にエスケープされる
+		// (element.innerHTML = '&' でも同じ)
+		// URL中の文字がエスケープされていても正しいURLと解釈されてリンクを踏めるので問題ない。
+
 		var $span = $fixture.find('span');
-		strictEqual($span.html().toLowerCase(), str.toLowerCase(), '値がinnerHTMLとしてバインドされていること');
+		strictEqual($span.html().toLowerCase().replace(/&amp;/g, '&'), str.toLowerCase(), '値がinnerHTMLとしてバインドされていること');
 		strictEqual($span.find('a').length, 1, 'DOM要素が新しく作成されていること');
 	});
 

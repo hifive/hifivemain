@@ -1,15 +1,28 @@
 $(function() {
+	var env = {};
 	// テストフィルタ用オブジェクト
 	if (window.FILTER_ENV) {
 		env = window.FILTER_ENV;
 	} else {
-		// フィルタオブジェクトのない場合は全てのテストを実行するため、フィルタは掛けない
-		return;
-	}
-	env.versionFull = env.versionFull || h5.env.ua.browserVersionFull;
-	env.version = env.version || env.versionFull.split('.')[0];
+		// フィルタオブジェクトのない場合はリクエストパラメータから取得して生成
+		// リクエストパラメータがあるならその値を使う
+		var paramsArray = window.location.search.substring(1).split('&');
 
-	function matchVersion(version, envVersion, envVersionFull) {
+		var l = paramsArray.length;
+		if (l === 0) {
+			// FILTER_ENVもリクエストパラメータも無ければ全テストを実行するので、フィルタは掛けない。
+			return;
+		}
+		// リクエストパラメータの値を使用する
+		for ( var i = 0; i < l; i++) {
+			var keyVal = paramsArray[i].split('=');
+			env[keyVal[0]] = keyVal[1];
+		}
+	}
+
+	function matchVersion(version, envVersionFull) {
+		var envVersionFullAry =  envVersionFull.split('.');
+		var envMajorVersion = envVersionFullAry[0];
 		// 範囲指定
 		if (version.indexOf('-') !== -1) {
 			var tmp = version.split('-');
@@ -24,7 +37,7 @@ $(function() {
 				for ( var i = 0, l = min.length; i < l; i++) {
 					var curMin = parseInt(min[i]);
 					var curMax = parseInt(max[i]);
-					var curVersion = parseInt(envVersionFull[i]);
+					var curVersion = parseInt(envVersionFullAry[i]);
 
 					if (!minOK && curMin < curVersion) {
 						minOK = true;
@@ -39,7 +52,7 @@ $(function() {
 				}
 				return true;
 			}
-			return parseInt(min) <= envVersion && envVersion <= parseInt(max);
+			return parseInt(min) <= envMajorVersion && envMajorVersion <= parseInt(max);
 		}
 
 		// 単一指定または複数指定
@@ -107,8 +120,7 @@ $(function() {
 		for ( var i = 0, l = jqueryFilters.length; i < l; i++) {
 			var filter = jqueryFilters[i];
 
-			if (matchVersion($.trim(filter), env.jquery.substring(0, env.jquery.indexOf('.')),
-					env.jquery.split('.'))) {
+			if (matchVersion($.trim(filter), env.jquery)) {
 				return true;
 			}
 		}
@@ -123,10 +135,10 @@ $(function() {
 		var filters = browserFilters.join('|').replace(/^\||$\|/g, '').split('|');
 		for ( var i = 0, l = filters.length; i < l; i++) {
 			var filter = filters[i].split(':');
-			if ($.trim(filter[0]) !== env.browser) {
+			if ($.trim(filter[0]) !== env.browserprefix) {
 				continue;
 			}
-			if (!matchVersion($.trim(filter[1]), env.version, env.versionFull)) {
+			if (!matchVersion($.trim(filter[1]), env.version)) {
 				continue;
 			}
 
@@ -158,7 +170,11 @@ $(function() {
 
 		var testConditionDesc = stats.name.match(/^\[.*?\]/);
 		testConditionDesc = testConditionDesc && testConditionDesc[0];
-		var moduleConditionDesc = current.module.match(/^\[.*?\]/);
+		if (current.module == null) {
+			// TODO 暫定的処理。モジュール名が空の場合にalertを出して気づくようにしている。
+			alert('モジュール名が空です。' + 'テスト名：' + stats.name);
+		}
+		var moduleConditionDesc = current.module ? current.module.match(/^\[.*?\]/) : '';
 		moduleConditionDesc = moduleConditionDesc && moduleConditionDesc[0];
 
 		// 条件が書かれていないなら何もしない
