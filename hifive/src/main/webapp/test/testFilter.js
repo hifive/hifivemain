@@ -158,7 +158,7 @@ $(function() {
 
 		var testConditionDesc = stats.name.match(/^\[.*?\]/);
 		testConditionDesc = testConditionDesc && testConditionDesc[0];
-		var moduleConditionDesc = current.module.match(/^\[.*?\]/);
+		var moduleConditionDesc = current.module? current.module.match(/^\[.*?\]/) : '';
 		moduleConditionDesc = moduleConditionDesc && moduleConditionDesc[0];
 
 		// 条件が書かれていないなら何もしない
