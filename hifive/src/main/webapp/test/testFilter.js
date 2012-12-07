@@ -138,7 +138,7 @@ $(function() {
 			if ($.trim(filter[0]) !== env.browserprefix) {
 				continue;
 			}
-			if (!matchVersion($.trim(filter[1]), env.version)) {
+			if (!matchVersion($.trim(filter[1]), env.browserversion)) {
 				continue;
 			}
 
