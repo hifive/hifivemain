@@ -5262,7 +5262,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('[browser#ie:6-9|ch:0-25|ff:0-17|sa:0-5|op:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) ※touchイベントをサポートしていないブラウザでは失敗します。', 26, function() {
+	asyncTest('[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) ※touchイベントをサポートしていないブラウザでは失敗します。', 26, function() {
 
 		var controller = {
 			__name: 'TestController',
@@ -5371,7 +5371,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'[browser#ie:6-9|ch:0-25|ff:0-17|sa:0-5|op:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合もh5trackイベントが発生するか ※touchイベントをサポートしていないブラウザでは失敗します。',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合もh5trackイベントが発生するか ※touchイベントをサポートしていないブラウザでは失敗します。',
 			27, function() {
 				var controller = {
 					__name: 'TestController',
@@ -5586,7 +5586,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-9|ch:0-25|ff:0-17|sa:0-5|op:0-12|windowsPhone:9|android:0-2]h5trackイベント(touchstart, touchmove, touchend) SVG ※タッチのないブラウザ、SVG要素を動的に追加できないブラウザは失敗します。',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|windowsPhone:9|android:0-2]h5trackイベント(touchstart, touchmove, touchend) SVG ※タッチのないブラウザ、SVG要素を動的に追加できないブラウザは失敗します。',
 			26,
 			function() {
 				var controller = {
@@ -5855,7 +5855,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-9|ch:0-25|ff:0-17|sa:0-5|op:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) window ※タッチイベントのないブラウザでは失敗します',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|windowsPhone:9]h5trackイベント(touchstart, touchmove, touchend) window ※タッチイベントのないブラウザでは失敗します',
 			26,
 			function() {
 				var controller = {

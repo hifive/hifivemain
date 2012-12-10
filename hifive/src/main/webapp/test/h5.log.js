@@ -573,7 +573,7 @@ $(function() {
 
 		if (!window.console) {
 			expect(1);
-			ok(false, 'このブラウザはconsoleをサポートしていません。IE9の場合は、開発者ツールを開いてからテストを実行して下さい。');
+			ok(true, 'このブラウザはconsoleをサポートしていません。IE9の場合は、開発者ツールを開いてからテストを実行して下さい。');
 			return;
 		}
 

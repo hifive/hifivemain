@@ -605,7 +605,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest(
-			'h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。box-sizing:border-boxを適用された要素でも正しく判定されるか。※CSSのbox-sizing属性がサポートされていないブラウザの場合テストは失敗します。',
+			'[browser#ie:6-7]h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。box-sizing:border-boxを適用された要素でも正しく判定されるか。※CSSのbox-sizing属性がサポートされていないブラウザの場合テストは失敗します。',
 			12, function() {
 				if (!supportsCSS3Property('boxSizing')) {
 					expect(1);
