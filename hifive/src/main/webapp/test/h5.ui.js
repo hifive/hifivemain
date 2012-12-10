@@ -42,8 +42,10 @@ $(function() {
 	// Functions
 	//=============================
 
+	var supportBoxModel = (document.compatMode === "CSS1Compat");
+
 	function getWindowWidth() {
-		var elem = $.support.boxModel ? document.documentElement : document.body;
+		var elem = supportBoxModel ? document.documentElement : document.body;
 		// window.innerHeightではスクロールバーの幅も入ってしまうため、clientWidthを使う
 		return elem.clientWidth;
 	}
@@ -52,7 +54,7 @@ $(function() {
 		if (h5.env.ua.isiPhone) {
 			return window.innerHeight;
 		}
-		var elem = $.support.boxModel ? document.documentElement : document.body;
+		var elem = supportBoxModel ? document.documentElement : document.body;
 		return elem.clientHeight;
 	}
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
@@ -724,30 +726,29 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest(
-			'h5.ui.scrollToTop (0, 1)の地点にスクロール',
-			1,
-			function() {
-				// scrollToTopで(0,1)にスクロール
-				h5.ui.scrollToTop();
+	asyncTest('h5.ui.scrollToTop (0, 1)の地点にスクロール', 1, function() {
+		// scrollToTopで(0,1)にスクロール
+		h5.ui.scrollToTop();
 
-				var count = 0;
-				function waitForScroll() {
-					var scrollX = window.pageXOffset || ($.support.boxModel ? document.documentElement.scrollLeft
+		var count = 0;
+		function waitForScroll() {
+			var scrollX = window.pageXOffset
+					|| (supportBoxModel ? document.documentElement.scrollLeft
 							: document.body.scrollLeft);
-					var scrollY = window.pageYOffset || ($.support.boxModel ? document.documentElement.scrollTop
+			var scrollY = window.pageYOffset
+					|| (supportBoxModel ? document.documentElement.scrollTop
 							: document.body.scrollTop);
-					if (scrollY === 1 && scrollX === 0) {
-						ok(true, '(0,1)にスクロールされた');
-						start();
-						return;
-					} else if (count++ === 3) {
-						ok(false, 'スクロールされませんでした。');
-						start();
-						return;
-					}
-					setTimeout(waitForScroll, 200);
-				}
-				waitForScroll();
-			});
+			if (scrollY === 1 && scrollX === 0) {
+				ok(true, '(0,1)にスクロールされた');
+				start();
+				return;
+			} else if (count++ === 3) {
+				ok(false, 'スクロールされませんでした。');
+				start();
+				return;
+			}
+			setTimeout(waitForScroll, 200);
+		}
+		waitForScroll();
+	});
 });
