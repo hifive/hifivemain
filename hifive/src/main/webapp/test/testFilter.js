@@ -1,27 +1,14 @@
 $(function() {
-	var env = {};
+	var env;
 	// テストフィルタ用オブジェクト
-	if (window.FILTER_ENV) {
-		env = window.FILTER_ENV;
+	if (window.H5_TEST_ENV && window.H5_TEST_ENV.filter) {
+		env = window.H5_TEST_ENV.filter;
 	} else {
-		// フィルタオブジェクトのない場合はリクエストパラメータから取得して生成
-		// リクエストパラメータがあるならその値を使う
-		var paramsArray = window.location.search.substring(1).split('&');
-
-		var l = paramsArray.length;
-		if (l === 0) {
-			// FILTER_ENVもリクエストパラメータも無ければ全テストを実行するので、フィルタは掛けない。
-			return;
-		}
-		// リクエストパラメータの値を使用する
-		for ( var i = 0; i < l; i++) {
-			var keyVal = paramsArray[i].split('=');
-			env[keyVal[0]] = keyVal[1];
-		}
+		// H5_TEST_ENV.filterもリクエストパラメータも無ければ全テストを実行するので、フィルタは掛けない。
+		return;
 	}
-
 	function matchVersion(version, envVersionFull) {
-		var envVersionFullAry =  envVersionFull.split('.');
+		var envVersionFullAry = envVersionFull.split('.');
 		var envMajorVersion = envVersionFullAry[0];
 		// 範囲指定
 		if (version.indexOf('-') !== -1) {
