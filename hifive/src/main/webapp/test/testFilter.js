@@ -157,10 +157,6 @@ $(function() {
 
 		var testConditionDesc = stats.name.match(/^\[.*?\]/);
 		testConditionDesc = testConditionDesc && testConditionDesc[0];
-		if (current.module == null) {
-			// TODO 暫定的処理。モジュール名が空の場合にalertを出して気づくようにしている。
-			alert('モジュール名が空です。' + 'テスト名：' + stats.name);
-		}
 		var moduleConditionDesc = current.module ? current.module.match(/^\[.*?\]/) : '';
 		moduleConditionDesc = moduleConditionDesc && moduleConditionDesc[0];
 
