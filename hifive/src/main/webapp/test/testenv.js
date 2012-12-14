@@ -28,6 +28,12 @@ $(function() {
 		}
 	}
 
+	// H5_TEST_ENV_ADDがあればマージ。
+	// H5_TEST_ENV_ADDは、リクエストパラメータとオブジェクト両方で指定したい時に記述するオブジェクト。
+	if (window.H5_TEST_ENV_ADD) {
+		$.extend(window.H5_TEST_ENV, window.H5_TEST_ENV_ADD);
+	}
+
 	// 環境設定
 	// dummygeoが設定されていればnavigator.geolocationの持つメソッドをダミーで上書く(オリジナルはprototypeメソッドなので、メンバとして上書く)
 	if (H5_TEST_ENV.geo && H5_TEST_ENV.geo.impresonate) {
