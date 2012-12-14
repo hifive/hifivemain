@@ -50,7 +50,7 @@ $(function() {
 					return true;
 				}
 			} else {
-				if (envVersion == versions[i]) {
+				if (version == versions[i]) {
 					return true;
 				}
 			}
