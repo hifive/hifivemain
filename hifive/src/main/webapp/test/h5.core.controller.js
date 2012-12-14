@@ -5137,7 +5137,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4]h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
 				var controller = {
@@ -5446,7 +5446,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4|ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8]h5trackイベント(mousedown, mousemove, mouseup) SVG ※タッチのあるブラウザ、SVGを動的に追加できないブラウザでは失敗します。',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23|ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8]h5trackイベント(mousedown, mousemove, mouseup) SVG ※タッチのあるブラウザ、SVGを動的に追加できないブラウザでは失敗します。',
 			26,
 			function() {
 				var controller = {
@@ -5727,7 +5727,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4]h5trackイベント(mousedown, mousemove, mouseup) window ※タブレット、スマートフォンでは失敗します',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5trackイベント(mousedown, mousemove, mouseup) window ※タブレット、スマートフォンでは失敗します',
 			26,
 			function() {
 				var controller = {
