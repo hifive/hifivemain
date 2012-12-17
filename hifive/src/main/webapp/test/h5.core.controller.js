@@ -38,11 +38,6 @@ $(function() {
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
-	// svgをサポートしているか
-	var isSupportSVG = document.createElementNS
-			&& $
-					.isFunction(document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect);
-
 	//=============================
 	// Functions
 	//=============================
