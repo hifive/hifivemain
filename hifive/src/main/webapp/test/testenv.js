@@ -12,6 +12,9 @@ $(function() {
 		for ( var i = 0; i < l; i++) {
 			var keyVal = paramsArray[i].split('=');
 			var namespace = keyVal[0];
+			if(namespace = 'testNumber'){
+				continue;
+			}
 			var val = keyVal[1];
 
 			var names = namespace.split('.');
