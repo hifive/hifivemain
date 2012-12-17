@@ -3730,9 +3730,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('コントローラ内のxxxControllerが動作しているか(テンプレート使用)', function() {
-
-
+	asyncTest('多重にネストしたコントローラで一番下の子がテンプレートを保持している場合に正しい順番で初期化処理が行われること', function() {
 		var result = [];
 		var root1 = null;
 		var root2 = null;
