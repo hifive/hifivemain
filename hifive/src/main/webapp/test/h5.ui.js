@@ -42,10 +42,10 @@ $(function() {
 	// Functions
 	//=============================
 
-	var supportBoxModel = (document.compatMode === "CSS1Compat");
+	var isQuirksMode = (document.compatMode === "CSS1Compat");
 
 	function getWindowWidth() {
-		var elem = supportBoxModel ? document.documentElement : document.body;
+		var elem = isQuirksMode ? document.documentElement : document.body;
 		// window.innerHeightではスクロールバーの幅も入ってしまうため、clientWidthを使う
 		return elem.clientWidth;
 	}
@@ -54,7 +54,7 @@ $(function() {
 		if (h5.env.ua.isiPhone) {
 			return window.innerHeight;
 		}
-		var elem = supportBoxModel ? document.documentElement : document.body;
+		var elem = isQuirksMode ? document.documentElement : document.body;
 		return elem.clientHeight;
 	}
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
@@ -733,10 +733,10 @@ $(function() {
 		var count = 0;
 		function waitForScroll() {
 			var scrollX = window.pageXOffset
-					|| (supportBoxModel ? document.documentElement.scrollLeft
+					|| (isQuirksMode ? document.documentElement.scrollLeft
 							: document.body.scrollLeft);
 			var scrollY = window.pageYOffset
-					|| (supportBoxModel ? document.documentElement.scrollTop
+					|| (isQuirksMode ? document.documentElement.scrollTop
 							: document.body.scrollTop);
 			if (scrollY === 1 && scrollX === 0) {
 				ok(true, '(0,1)にスクロールされた');
