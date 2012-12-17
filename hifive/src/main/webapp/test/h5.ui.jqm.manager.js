@@ -129,7 +129,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[build#min]JQMManager - define', {
+	module('[build#min;browser#ie:6]JQMManager - define', {
 		setup: function() {
 			createPage("test1", 'data/testforJQM1.js', true);
 			createPage("test2", 'data/testforJQM2.js');
@@ -227,7 +227,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[build#min]JQMManager - managed test', {
+	module('[build#min;browser#ie:6]JQMManager - managed test', {
 		teardown: function() {
 			resetJQM();
 		}
@@ -318,7 +318,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("[build#min]JQMManager - init1", {
+	module("[build#min;browser#ie:6]JQMManager - init1", {
 		teardown: function() {
 			resetJQM();
 		}
@@ -349,7 +349,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("[build#min]JQMManager - init2", {
+	module("[build#min;browser#ie:6]JQMManager - init2", {
 		setup: function() {
 			createPage("testjs1", 'data/testforJQM1.js', true);
 			createPage("testjs2", 'data/testforJQM2.js');
@@ -381,7 +381,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("[build#min]JQMManager - init2", {
+	module("[build#min;browser#ie:6]JQMManager - init2", {
 		setup: function() {
 			createPage("testjs3", 'data/testforJQM1.js', true);
 			h5.ui.jqm.manager.init();
@@ -417,7 +417,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("[build#min]JQMManager - dataPrefix1", {
+	module("[build#min;browser#ie:6]JQMManager - dataPrefix1", {
 		setup: function() {
 			originalPrefix = h5.ui.jqm.dataPrefix;
 			h5.ui.jqm.dataPrefix = 'hifive';
@@ -453,7 +453,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("[build#min]JQMManager - dataPrefix2", {
+	module("[build#min;browser#ie:6]JQMManager - dataPrefix2", {
 		setup: function() {
 			originalPrefix = h5.ui.jqm.dataPrefix;
 			h5.ui.jqm.dataPrefix = null;
@@ -489,7 +489,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("[build#min]JQMManager - define1", {
+	module("[build#min;browser#ie:6]JQMManager - define1", {
 		setup: function() {
 			createPage("test3", null, true);
 			createPage("test4");
@@ -537,7 +537,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("[build#min]JQMManager - define2", {
+	module("[build#min;browser#ie:6]JQMManager - define2", {
 		setup: function() {
 			createPage("test4", 'data/testforJQM4.js', true);
 			createPage("test5", 'data/testforJQM5.js');
@@ -569,7 +569,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("[build#min]JQMManager - define3", {
+	module("[build#min;browser#ie:6]JQMManager - define3", {
 		setup: function() {
 			createPage("test6", null, true);
 
@@ -612,7 +612,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[build#min]JQMManager - define4', {
+	module('[build#min;browser#ie:6]JQMManager - define4', {
 		setup: function() {
 			createPage('test7', null, true);
 			createPage('test8');
@@ -698,7 +698,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[build#min]JQMManager - define5', {
+	module('[build#min;browser#ie:6]JQMManager - define5', {
 		setup: function() {
 			createPage('test9', null, true);
 			createPage('test10');
@@ -760,7 +760,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[build#min]JQMManager - define6', {
+	module('[build#min;browser#ie:6]JQMManager - define6', {
 		setup: function() {
 			createPage('test11', null, true);
 			createPage('test12');
@@ -803,7 +803,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[build#min]JQMManager - define6', {
+	module('[build#min;browser#ie:6]JQMManager - define6', {
 		setup: function() {
 			createPage('test12', null, true);
 			createPage('test13');
@@ -874,7 +874,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[build#min]JQMManager - define7', {
+	module('[build#min;browser#ie:6]JQMManager - define7', {
 		setup: function() {
 			createPage('test14', null, true);
 			createPage('test15');
@@ -936,7 +936,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[build#min]JQMManager - define8', {
+	module('[build#min;browser#ie:6]JQMManager - define8', {
 		setup: function() {
 			createPage('test16', null, true);
 			createPage('test17');
@@ -977,7 +977,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[build#min]JQMManager - define9', {
+	module('[build#min;browser#ie:6]JQMManager - define9', {
 		setup: function() {
 			createPage('test18', null, true);
 		},
@@ -1014,7 +1014,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[build#min]JQMManager - define10', {
+	module('[build#min;browser#ie:6]JQMManager - define10', {
 		teardown: function() {
 			resetJQM();
 		}
@@ -1064,7 +1064,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[build#min]JQMManager - define11', {
+	module('[build#min;browser#ie:6]JQMManager - define11', {
 		setup: function() {
 			h5.ui.jqm.manager.init();
 			createPage('test19', null, true);
