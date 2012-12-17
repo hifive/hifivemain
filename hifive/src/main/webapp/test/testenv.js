@@ -1,31 +1,31 @@
 $(function() {
 	// テスト環境オブジェクトの作成。
 	// リクエストパラメータから取得して生成
-	var paramsArray = window.location.search.substring(1).split('&');
+	var paramsStr = window.location.search;
 
-	// リクエストパラメータから取得したオブジェクト
+	// リクエストパラメータからオブジェクトを生成する
 	var envByParam = {};
+	if (paramsStr !== "") {
+		var paramsArray = paramsStr.substring(1).split('&');
 
-	var l = paramsArray.length;
-	if (l === 0) {
-		// FILTER_ENVもリクエストパラメータも無ければ全テストを実行するので、フィルタは掛けない。
-		return;
-	}
-	for ( var i = 0; i < l; i++) {
-		var keyVal = paramsArray[i].split('=');
-		var namespace = keyVal[0];
-		var val = keyVal[1];
+		var l = paramsArray.length;
+		for ( var i = 0; i < l; i++) {
+			var keyVal = paramsArray[i].split('=');
+			var namespace = keyVal[0];
+			var val = keyVal[1];
 
-		var names = namespace.split('.');
-		var ret = envByParam;
-		for ( var j = 0, len = names.length; j < len - 1; j++) {
-			if (ret[names[j]] == null) { // nullまたはundefjnedだったら辿らない
-				ret[names[j]] = {};
+			var names = namespace.split('.');
+			var ret = envByParam;
+			for ( var j = 0, len = names.length; j < len - 1; j++) {
+				if (ret[names[j]] == null) { // nullまたはundefjnedだったら辿らない
+					ret[names[j]] = {};
+				}
+				ret = ret[names[j]];
 			}
-			ret = ret[names[j]];
+			ret[names[len - 1]] = val;
 		}
-		ret[names[len - 1]] = val;
 	}
+
 	// H5_TEST_ENVが既に定義されていれば、定義オブジェクト優先でマージする
 	// 定義されていない場合はリクエストパラメータから取得したオブジェクトをそのまま使用する
 	window.H5_TEST_ENV = window.H5_TEST_ENV ? $.extend(envByParam, window.H5_TEST_ENV) : envByParam;
@@ -37,7 +37,8 @@ $(function() {
 			// そのためsetTimeout(0)でDOM追加が終わってから、H5_TEST_ENVの表示を行う
 			setTimeout(function() {
 				$('#qunit-header').after(
-						'<p>H5_TEST_ENV</p><pre id="#h5-testenv">' + QUnit.jsDump.parse(H5_TEST_ENV) + '</pre>');
+						'<p>H5_TEST_ENV</p><pre id="#h5-testenv">'
+								+ QUnit.jsDump.parse(H5_TEST_ENV) + '</pre>');
 			}, 0);
 		});
 	}
