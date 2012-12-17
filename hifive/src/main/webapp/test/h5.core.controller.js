@@ -5586,7 +5586,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9|android:0-2]h5trackイベント(touchstart, touchmove, touchend) SVG ※タッチのないブラウザ、SVG要素を動的に追加できないブラウザは失敗します。',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9|and-and:0-2]h5trackイベント(touchstart, touchmove, touchend) SVG ※タッチのないブラウザ、SVG要素を動的に追加できないブラウザは失敗します。',
 			26,
 			function() {
 				var controller = {
