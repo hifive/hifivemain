@@ -30,6 +30,19 @@ $(function() {
 	// 定義されていない場合はリクエストパラメータから取得したオブジェクトをそのまま使用する
 	window.H5_TEST_ENV = window.H5_TEST_ENV ? $.extend(envByParam, window.H5_TEST_ENV) : envByParam;
 
+	// テスト環境を表示する
+	if (!$.isEmptyObject(H5_TEST_ENV)) {
+		QUnit.config.begin.push(function() {
+			// beginはQUnit.loadの先頭で呼ばれるコールバックなので、DOMの追加等が終わっていない
+			// そのためsetTimeout(0)でDOM追加が終わってから、H5_TEST_ENVの表示を行う
+			setTimeout(function() {
+				$('#qunit-header').after(
+						'<p>H5_TEST_ENV</p><pre id="#h5-testenv">' + QUnit.jsDump.parse(H5_TEST_ENV) + '</pre>');
+			}, 0);
+		});
+	}
+
+
 
 	// 環境設定
 	// dummygeoが設定されていればnavigator.geolocationの持つメソッドをダミーで上書く(オリジナルはprototypeメソッドなので、メンバとして上書く)
