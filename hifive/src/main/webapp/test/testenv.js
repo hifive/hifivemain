@@ -3,6 +3,9 @@ $(function() {
 	// リクエストパラメータから取得して生成
 	var paramsStr = window.location.search;
 
+	// H5_TEST_ENVに格納するパラメータキーのプレフィックス
+	var PARAM_PREFIX = 'h5testenv.';
+
 	// リクエストパラメータからオブジェクトを生成する
 	var envByParam = {};
 	if (paramsStr !== "") {
@@ -12,14 +15,13 @@ $(function() {
 		for ( var i = 0; i < l; i++) {
 			var keyVal = paramsArray[i].split('=');
 			var namespace = keyVal[0];
-			// QUnitが使用するパラメータはH5_ENV_TESTには格納しない
-			var qunitParams = ['testNumber', 'noglobals', 'notrycatch', 'module'];
-			if ($.inArray(namespace, qunitParams) != -1) {
+			// h5env.で始まるものについてだけ
+			if (namespace.indexOf(PARAM_PREFIX) != 0) {
 				continue;
 			}
 			var val = keyVal[1];
 
-			var names = namespace.split('.');
+			var names = namespace.substring(PARAM_PREFIX.length).split('.');
 			var ret = envByParam;
 			for ( var j = 0, len = names.length; j < len - 1; j++) {
 				if (ret[names[j]] == null) { // nullまたはundefjnedだったら辿らない
