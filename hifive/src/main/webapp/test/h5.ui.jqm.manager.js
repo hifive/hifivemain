@@ -168,7 +168,7 @@ $(function() {
 			__ready: function() {
 				ok(true, '__readyが実行される');
 
-				var count = 50;
+				var count = 40;
 				function checkCSS() {
 					if (--count === 0 || $('#test1 h1').css('font-size') === '111px') {
 						deepEqual($('#test1 h1').css('font-size'), '111px',
@@ -177,7 +177,7 @@ $(function() {
 					} else {
 						setTimeout(function() {
 							checkCSS();
-						}, 100);
+						}, 500);
 					}
 				}
 				checkCSS();
@@ -199,7 +199,7 @@ $(function() {
 			__ready: function() {
 				ok(true, '__readyが実行される');
 
-				var count = 50;
+				var count = 40;
 				function checkCSS() {
 					if (--count === 0 || $('#test2 h1').css('margin-left') === '33px') {
 						deepEqual($('#test2 h1').css('margin-left'), '33px',
@@ -209,7 +209,7 @@ $(function() {
 					} else {
 						setTimeout(function() {
 							checkCSS();
-						}, 100);
+						}, 500);
 					}
 				}
 				checkCSS();
@@ -589,16 +589,16 @@ $(function() {
 			var controller = {
 				__name: 'Test6Controller',
 				__ready: function() {
-					var count = 50;
+					var count = 40;
 					function checkCSS() {
 						if (--count === 0 || $('#test6 h1').css('font-size') === '111px') {
 							deepEqual($('#test6 h1').css('font-size'), '111px',
-									'CSSが適応されている。(※CSSファイルが5秒経っても取得できない場合、失敗します)');
+									'CSSが適応されている。(※CSSファイルが20秒経っても取得できない場合、失敗します)');
 							start();
 						} else {
 							setTimeout(function() {
 								checkCSS();
-							}, 100);
+							}, 500);
 						}
 					}
 					checkCSS();
@@ -641,7 +641,7 @@ $(function() {
 			__ready: function() {
 				ok(true, '__readyが実行される');
 
-				var count = 50;
+				var count = 40;
 				function checkCSS() {
 					if (--count === 0 || $('#test7 h1').css('font-size') === '111px') {
 						deepEqual($('#test7 h1').css('font-size'), '111px',
@@ -651,7 +651,7 @@ $(function() {
 					} else {
 						setTimeout(function() {
 							checkCSS();
-						}, 100);
+						}, 500);
 					}
 				}
 				checkCSS();
@@ -672,7 +672,7 @@ $(function() {
 			__ready: function() {
 				ok(true, '__readyが実行される');
 
-				var count = 50;
+				var count = 40;
 				function checkCSS() {
 					if (--count === 0 || $('#test8 h1').css('margin-left') === '33px') {
 						deepEqual($('#test8 h1').css('margin-left'), '33px',
@@ -682,7 +682,7 @@ $(function() {
 					} else {
 						setTimeout(function() {
 							checkCSS();
-						}, 100);
+						}, 500);
 					}
 				}
 				checkCSS();
