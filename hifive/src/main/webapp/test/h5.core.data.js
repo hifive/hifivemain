@@ -915,7 +915,7 @@ $(function() {
 		undefAr.push(undefined);
 		undefAr.push(1);
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		var noArrays = [ [null, 1], undefAr];
+		var noArrays = [[null, 1], undefAr];
 		var l = noArrays.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
@@ -3138,7 +3138,7 @@ $(function() {
 				}
 			});
 
-	test('id指定の項目にsetできないこと', 2, function() {
+	test('id指定の項目にsetできないこと', 1, function() {
 		var item = dataModel1.create({
 			id: sequence.next(),
 			val: 'item1'
@@ -3148,10 +3148,18 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
 		}
+	});
+
+	test('id指定の項目へ厳密等価な値をsetした時は無視されること', 1, function() {
+		var item = dataModel1.create({
+			id: sequence.next(),
+			val: 'item1'
+		});
 		try {
 			item.set('id', item.get('id'));
+			ok(true);
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
+			ok(false, e.message);
 		}
 	});
 
