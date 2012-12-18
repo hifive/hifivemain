@@ -12,7 +12,9 @@ $(function() {
 		for ( var i = 0; i < l; i++) {
 			var keyVal = paramsArray[i].split('=');
 			var namespace = keyVal[0];
-			if (namespace === 'testNumber') {
+			// QUnitが使用するパラメータはH5_ENV_TESTには格納しない
+			var qunitParams = ['testNumber', 'noglobals', 'notrycatch', 'module'];
+			if ($.inArray(namespace, qunitParams) != -1) {
 				continue;
 			}
 			var val = keyVal[1];
