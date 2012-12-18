@@ -2743,6 +2743,20 @@ $(function() {
 		strictEqual(items[2].get('id'), '5', '戻り値の配列の中身が正しいこと');
 	});
 
+	test('createの引数が配列でもオブジェクトでもない時、エラーが出ること', function() {
+		var invalidArgs = ['', 'aa', 1, 0, true, false];
+		var l = l = invalidArgs.length;
+		expect(l);
+		for ( var i = 0; i < l; i++) {
+			try {
+				dataModel1.create(invalidArgs[i]);
+				ok(false, 'エラーが発生しませんでした。' + invalidArgs[i]);
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_INVALID_CREATE_ARGS, e.message);
+			}
+		}
+	});
+
 	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 8, function() {
 		var item = dataModel1.create({
 			id: '1',

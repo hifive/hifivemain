@@ -92,6 +92,9 @@
 	/** schemaに定義されていないプロパティを取得した */
 	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 15011;
 
+	/** createの引数がオブジェクトでも配列でもない */
+	var ERR_CODE_INVALID_CREATE_ARGS = 15012;
+
 	// ---------------------------
 	//ディスクリプタのエラーコード
 	// ---------------------------
@@ -156,6 +159,7 @@
 	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL] = 'DataManagerに属していないDataModelの中身は変更できません。モデル名={0}, メソッド={1}';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。モデル"{0}"のスキーマに"{1}"は定義されていません。';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティを取得することはできません。モデル"{0}"のスキーマに"{1}"は定義されていません。';
+	ERROR_MESSAGES[ERR_CODE_INVALID_CREATE_ARGS] = 'DataModel.createに渡された引数が不正です。オブジェクトまたは、配列を指定してください。';
 
 	addFwErrorCodeMap(ERROR_MESSAGES);
 
