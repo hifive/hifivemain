@@ -1252,7 +1252,13 @@
 		var evArg = null;
 		if (args) {
 			event = args[0];
-			evArg = args[1];
+			if (args.length < 3) {
+				// 引数部分が1つ以下ならargs[1]をevArgに格納（引数なしならevArgはundefined)
+				evArg = args[1];
+			} else {
+				// 引数が2つ以上なら配列にしてevArgに格納
+				evArg = argsToArray(args).slice(1);
+			}
 		}
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
@@ -2074,13 +2080,17 @@
 
 		/**
 		 * ルート要素を起点に指定されたイベントを実行します。
+		 * <p>
+		 * 第2引数に指定したparameterオブジェクトは、コントローラのイベントハンドラで受け取るcontext.evArgに格納されます。<br>
+		 * parameterに配列を指定した場合は、context.evArgに渡した配列が格納されます。<br>
+		 * </p>
 		 *
 		 * @param {String} eventName イベント名
 		 * @param {Object} [parameter] パラメータ
 		 * @memberOf Controller
 		 */
 		trigger: function(eventName, parameter) {
-			$(this.rootElement).trigger(eventName, [parameter]);
+			$(this.rootElement).trigger(eventName, parameter);
 		},
 
 		/**
