@@ -2083,7 +2083,7 @@
 		 * <p>
 		 * 第2引数に指定したparameterオブジェクトは、コントローラのイベントハンドラで受け取るcontext.evArgに格納されます。<br>
 		 * parameterに配列を指定した場合は、context.evArgに渡した配列が格納されます。<br>
-		 * ただし、 <pre>trigger('click', ['a']);</pre> のように、１要素だけの配列を渡した場合は、その中身がcontextevArgに入ります。<br>
+		 * ただし、 <pre>trigger('click', ['a']);</pre> のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。<br>
 		 * (jQueryのtriggerと同様です。)
 		 * </p>
 		 *
