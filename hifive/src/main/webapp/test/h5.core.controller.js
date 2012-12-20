@@ -6026,6 +6026,211 @@ $(function() {
 				});
 			});
 
+	asyncTest(
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]親コントローラと子コントローラがh5trackイベントをバインドしているときにイベントが正しい回数発生すること(thouch系) ※タッチイベントのないブラウザでは失敗します',
+			7, function() {
+				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
+				if(!hasTouchEvent){
+					ok(false, 'touch系イベントのないブラウザでは失敗します');
+					start();
+					return;
+				}
+				var events = [];
+				var $elm = $('#controllerTest');
+				var h5TrackTestController = h5.core.controller($elm, {
+					__name: 'h5TrackTestController',
+					childController: {
+						__name: 'child',
+						'{rootElement} h5trackstart': function() {
+							events.push('child-h5trackstart');
+						},
+						'{rootElement} h5trackmove': function() {
+							events.push('child-h5trackmove');
+						},
+						'{rootElement} h5trackend': function() {
+							events.push('child-h5trackend');
+						}
+					},
+					'{rootElement} h5trackstart': function() {
+						events.push('parent-h5trackstart');
+					},
+					'{rootElement} h5trackmove': function() {
+						events.push('parent-h5trackmove');
+					},
+					'{rootElement} h5trackend': function() {
+						events.push('parent-h5trackend');
+					}
+				});
+
+				h5TrackTestController.readyPromise.done(function() {
+					var setPos = function(ev, pos, isEnd) {
+						var touch = {};
+						touch.pageX = pos;
+						touch.pageY = pos;
+						touch.screenX = pos;
+						touch.screenY = pos;
+						touch.clientX = pos;
+						touch.clientY = pos;
+						var originalEvent = {};
+						originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
+						ev.originalEvent = originalEvent;
+						return ev;
+					};
+
+					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
+					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
+					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
+
+					// ドラッグ中じゃないので実行されない
+					$elm.trigger(moveMouseEvent);
+					deepEqual(events, [], 'h5trackstart前なので、touchmoveでイベントは発生しない');
+					events = [];
+
+					$elm.trigger(endMouseEvent);
+					deepEqual(events, [], 'h5trackstart前なので、touchendでイベントは発生しない');
+					events = [];
+
+					// ドラッグ開始
+					$elm.trigger(startMouseEvent);
+					deepEqual(events, ['parent-h5trackstart', 'child-h5trackstart'],
+							'h5trackstartイベントが発火すること');
+					events = [];
+
+					// ドラッグ
+					$elm.trigger(moveMouseEvent);
+					deepEqual(events, ['parent-h5trackmove', 'child-h5trackmove'],
+							'h5trackmoveイベントが発火すること');
+					events = [];
+
+					// ドラッグ終了
+					$elm.trigger(endMouseEvent);
+					deepEqual(events, ['parent-h5trackend', 'child-h5trackend'],
+							'h5trackendイベントが発火すること');
+					events = [];
+
+					// ドラッグ中じゃないので実行されない
+					$elm.trigger(moveMouseEvent);
+					deepEqual(events, [], 'h5trackend後なので、touchmoveでイベントは発生しない');
+					events = [];
+
+					$elm.trigger(endMouseEvent);
+					deepEqual(events, [], 'h5trackend後なので、touchendでイベントは発生しない');
+					events = [];
+
+					h5TrackTestController.unbind();
+
+					// ちゃんとアンバインドされているかどうかを確認。
+					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+					$elm.trigger(startMouseEvent);
+					$elm.trigger(moveMouseEvent);
+					$elm.trigger(endMouseEvent);
+					start();
+				});
+			});
+
+	asyncTest(
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]親コントローラと子コントローラがh5trackイベントをバインドしているときにイベントが正しい回数発生すること(mouse系) ※マウスイベントのないブラウザでは失敗します',
+			7, function() {
+				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
+				if(hasTouchEvent){
+					ok(false, 'touch系イベントのあるブラウザでは失敗します');
+					start();
+					return;
+				}
+				var events = [];
+				var $elm = $('#controllerTest');
+				var h5TrackTestController = h5.core.controller($elm, {
+					__name: 'h5TrackTestController',
+					childController: {
+						__name: 'child',
+						'{rootElement} h5trackstart': function() {
+							events.push('child-h5trackstart');
+						},
+						'{rootElement} h5trackmove': function() {
+							events.push('child-h5trackmove');
+						},
+						'{rootElement} h5trackend': function() {
+							events.push('child-h5trackend');
+						}
+					},
+					'{rootElement} h5trackstart': function() {
+						events.push('parent-h5trackstart');
+					},
+					'{rootElement} h5trackmove': function() {
+						events.push('parent-h5trackmove');
+					},
+					'{rootElement} h5trackend': function() {
+						events.push('parent-h5trackend');
+					}
+				});
+
+				h5TrackTestController.readyPromise.done(function() {
+					var setPos = function(ev, pos, isEnd) {
+						var touch = {};
+						touch.pageX = pos;
+						touch.pageY = pos;
+						touch.screenX = pos;
+						touch.screenY = pos;
+						touch.clientX = pos;
+						touch.clientY = pos;
+						var originalEvent = {};
+						originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
+						ev.originalEvent = originalEvent;
+						return ev;
+					};
+
+					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
+					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
+					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
+
+
+					// ドラッグ中じゃないので実行されない
+					$elm.trigger(moveMouseEvent);
+					deepEqual(events, [], 'h5trackstart前なので、touchmoveでイベントは発生しない');
+					events = [];
+
+					$elm.trigger(endMouseEvent);
+					deepEqual(events, [], 'h5trackstart前なので、touchendでイベントは発生しない');
+					events = [];
+
+					// ドラッグ開始
+					$elm.trigger(startMouseEvent);
+					deepEqual(events, ['parent-h5trackstart', 'child-h5trackstart'],
+							'h5trackstartイベントが発火すること');
+					events = [];
+
+					// ドラッグ
+					$elm.trigger(moveMouseEvent);
+					deepEqual(events, ['parent-h5trackmove', 'child-h5trackmove'],
+							'h5trackmoveイベントが発火すること');
+					events = [];
+
+					// ドラッグ終了
+					$elm.trigger(endMouseEvent);
+					deepEqual(events, ['parent-h5trackend', 'child-h5trackend'],
+							'h5trackendイベントが発火すること');
+					events = [];
+
+					// ドラッグ中じゃないので実行されない
+					$elm.trigger(moveMouseEvent);
+					deepEqual(events, [], 'h5trackend後なので、touchmoveでイベントは発生しない');
+					events = [];
+
+					$elm.trigger(endMouseEvent);
+					deepEqual(events, [], 'h5trackend後なので、touchendでイベントは発生しない');
+					events = [];
+
+					h5TrackTestController.unbind();
+
+					// ちゃんとアンバインドされているかどうかを確認。
+					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+					$elm.trigger(startMouseEvent);
+					$elm.trigger(moveMouseEvent);
+					$elm.trigger(endMouseEvent);
+					start();
+				});
+			});
+
 
 	//=============================
 	// Definition
