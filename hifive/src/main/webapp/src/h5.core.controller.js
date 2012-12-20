@@ -1113,7 +1113,7 @@
 					// マウス/タッチイベントがh5track*にトリガされていたらトリガしない
 					if ($.inArray(type, context.event.h5CustomEventTriggered) === -1
 							&& (!hasTouchEvent || execute || isStart)) {
-						// トリガ済みフラグを建てる
+						// トリガ済みフラグを立てる
 						if (!context.event.h5CustomEventTriggered) {
 							context.event.h5CustomEventTriggered = [];
 						}
