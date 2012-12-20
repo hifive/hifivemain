@@ -1094,6 +1094,7 @@
 					var type = getEventType(en);
 					var isStart = type === EVENT_NAME_H5_TRACKSTART;
 					if (isStart && execute) {
+						// スタートイベントが起きた時に実行中 = マルチタッチされた時なので、何もしない
 						return;
 					}
 					if (hasTouchEvent) {
@@ -1110,9 +1111,12 @@
 						setup(newEvent);
 					}
 
-					// マウス/タッチイベントがh5track*にトリガされていたらトリガしない
 					if ($.inArray(type, context.event.h5CustomEventTriggered) === -1
 							&& (!hasTouchEvent || execute || isStart)) {
+						// マウス/タッチイベントがh5track*にトリガ済みではない時にトリガする。
+						// h5track中でないのにmoveやmouseupが起きた時は何もしない。
+						// (touchイベント時はstart無しにmove,endは起こせないので、touchイベントなら必ずトリガする。
+
 						// トリガ済みフラグを立てる
 						if (!context.event.h5CustomEventTriggered) {
 							context.event.h5CustomEventTriggered = [];
@@ -1123,6 +1127,9 @@
 						execute = true;
 					}
 					if (isStart && execute) {
+						// スタートイベント、かつ今h5trackstartをトリガしたところなら、
+						// h5trackmove,endを登録
+
 						newEvent.h5DelegatingEvent.preventDefault();
 						var nt = newEvent.target;
 
@@ -1160,14 +1167,28 @@
 						removeHandlers = function() {
 							$bindTarget.unbind(move, moveHandlerWrapped);
 							$bindTarget.unbind(end, upHandlerWrapped);
+							if (controller.rootElement !== document) {
+								$(controller.rootElement).unbind(move, moveHandlerWrapped);
+								$(controller.rootElement).unbind(end, upHandlerWrapped);
+							}
 						};
 						// h5trackmoveとh5trackendのbindを行う
 						$bindTarget.bind(move, moveHandlerWrapped);
 						$bindTarget.bind(end, upHandlerWrapped);
-					}
 
-					// h5trackend時にmoveとendのハンドラをunbindする
-					if (type === EVENT_NAME_H5_TRACKEND) {
+						// コントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
+						// タッチイベントのない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
+						// stopPropagationされたときに、h5trackイベントを発火することができなくなる。
+						// コントローラのルートエレメント外でstopPropagationされていた場合を考慮して、
+						// ルートエレメントにもmove,endをバインドする。
+						// (ルートエレメントの内側でstopPropagationしている場合は考慮しない)
+						if (controller.rootElement !== document) {
+							// h5trackmoveとh5trackendのbindを行う
+							$(controller.rootElement).bind(move, moveHandlerWrapped);
+							$(controller.rootElement).bind(end, upHandlerWrapped);
+						}
+					} else if (type === EVENT_NAME_H5_TRACKEND) {
+						// touchend,mousup時(=h5trackend時)にmoveとendのイベントをunbindする
 						removeHandlers();
 						execute = false;
 					}
