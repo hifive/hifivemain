@@ -1115,7 +1115,6 @@
 							&& (!hasTouchEvent || execute || isStart)) {
 						// マウス/タッチイベントがh5track*にトリガ済みではない時にトリガする。
 						// h5track中でないのにmoveやmouseupが起きた時は何もしない。
-						// (touchイベント時はstart無しにmove,endは起こせないので、touchイベントなら必ずトリガする。
 
 						// トリガ済みフラグを立てる
 						if (!context.event.h5CustomEventTriggered) {
