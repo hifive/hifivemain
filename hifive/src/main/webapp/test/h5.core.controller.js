@@ -690,7 +690,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートが存在しない時のコントローラの動作 2', 23, function() {
+	asyncTest('テンプレートが存在しない時のコントローラの動作 2', 22, function() {
 		var disposedController = {};
 		var bController = {
 			__name: 'BController',
@@ -799,9 +799,11 @@ $(function() {
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
-		testController.preinitPromise.done(function() {
-			ok(true, '親コントローラのpreinitPromiseのdoneハンドラが呼ばれる。');
-		}).fail(function() {
+		testController.preinitPromise.fail(function() {
+			// 親のpreinitPromiseのfailが呼ばれたらテスト失敗。
+			// doneについては、呼ばれるか呼ばれないか不定であるため、チェックしない。
+			//   子のテンプレートロードが失敗する前に親のテンプレートロードが始まっていればdoneは実行されるが、
+			//   そうでない時は親はテンプレートをロードしないため、doneもfailも実行されない。
 			ok(false, 'テスト失敗。親コントローラのpreinitPromiseのfailハンドラが呼ばれた。');
 		});
 		testController.initPromise.done(function() {
@@ -6030,7 +6032,7 @@ $(function() {
 			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]親コントローラと子コントローラがh5trackイベントをバインドしているときにイベントが正しい回数発生すること(thouch系) ※タッチイベントのないブラウザでは失敗します',
 			7, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
-				if(!hasTouchEvent){
+				if (!hasTouchEvent) {
 					ok(false, 'touch系イベントのないブラウザでは失敗します');
 					start();
 					return;
@@ -6132,7 +6134,7 @@ $(function() {
 			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]親コントローラと子コントローラがh5trackイベントをバインドしているときにイベントが正しい回数発生すること(mouse系) ※マウスイベントのないブラウザでは失敗します',
 			7, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
-				if(hasTouchEvent){
+				if (hasTouchEvent) {
 					ok(false, 'touch系イベントのあるブラウザでは失敗します');
 					start();
 					return;
