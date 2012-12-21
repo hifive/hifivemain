@@ -1148,16 +1148,14 @@
 						// コンテキストをとるように関数をラップして、bindする。
 						var moveHandler = getHandler(move, nt, setupDPos);
 						var upHandler = getHandler(end, nt);
-						var moveHandlerWrapped = function(e, args) {
-							// イベントオブジェクトと引数のみ差し替える
-							// controller, rootElement, selector はh5trackstart開始時と同じなので、差し替える必要はない
+						var moveHandlerWrapped = function(e) {
 							context.event = e;
-							context.evArg = args;
+							context.evArg = handlerArgumentsToContextEvArg(arguments);
 							moveHandler(context);
 						};
-						var upHandlerWrapped = function(e, args) {
+						var upHandlerWrapped = function(e) {
 							context.event = e;
-							context.evArg = args;
+							context.evArg = handlerArgumentsToContextEvArg(arguments);
 							upHandler(context);
 						};
 
@@ -1271,6 +1269,39 @@
 	}
 
 	/**
+	 * イベントハンドラに渡された、イベントオブジェクト以降の引数を、context.evArgに格納する形に変換します
+	 *
+	 * <pre>
+	 * 例:
+	 * $elm.trigger('mouseup', [1, 2, 3]);
+	 * なら、イベントハンドラに渡されるイベントは、[event, 1, 2, 3]です。
+	 * この[1,2,3]の部分をcontext.evArgに格納してコントローラでバインドしたハンドラに渡す必要があるため、変換が必要になります。
+	 * </pre>
+	 *
+	 * 引数が複数(イベントオブジェクトは除く)ある場合は配列、1つしかない場合はそれをそのまま、無い場合はundefinedを返します。
+	 *
+	 * @private
+	 * @param {argumentsObject} イベントハンドラに渡されたargumentsオブジェクト
+	 * @returns {Any} context.evArgに格納する形式のオブジェクト
+	 */
+	function handlerArgumentsToContextEvArg(args) {
+		// 1番目はイベントオブジェクトが入っているので無視して、2番目以降からをevArgに格納する形にする
+		// 格納するものがないならundefined
+		// 1つだけあるならそれ
+		// 2つ以上あるなら配列を返す
+
+		var evArg;
+		if (args.length < 3) {
+			// 引数部分が1つ以下ならargs[1]をevArgに格納（引数なしならevArgはundefined)
+			evArg = args[1];
+		} else {
+			// 引数が2つ以上なら配列にしてevArgに格納
+			evArg = argsToArray(args).slice(1);
+		}
+		return evArg;
+	}
+
+	/**
 	 * イベントコンテキストを作成します。
 	 *
 	 * @param {Object} bindObj バインドオブジェクト
@@ -1281,13 +1312,7 @@
 		var evArg = null;
 		if (args) {
 			event = args[0];
-			if (args.length < 3) {
-				// 引数部分が1つ以下ならargs[1]をevArgに格納（引数なしならevArgはundefined)
-				evArg = args[1];
-			} else {
-				// 引数が2つ以上なら配列にしてevArgに格納
-				evArg = argsToArray(args).slice(1);
-			}
+			evArg = handlerArgumentsToContextEvArg(args);
 		}
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
