@@ -84,122 +84,122 @@
 	/**
 	 * ID指定されたプロパティが重複している
 	 */
-	var SCHEMA_ERR_DETAIL_DUPLICATED_ID = 0;
+	var SCHEMA_ERR_DETAIL_DUPLICATED_ID = 15800;
 
 	/**
 	 * ID指定されたプロパティがない
 	 */
-	var SCHEMA_ERR_DETAIL_NO_ID = 1;
+	var SCHEMA_ERR_DETAIL_NO_ID = 15801;
 
 	/**
 	 * プロパティ名が不正
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME = 2;
+	var SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME = 15802;
 
 	/**
 	 * id指定されたプロパティにdependが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_ID_DEPEND = 3;
+	var SCHEMA_ERR_DETAIL_ID_DEPEND = 15803;
 
 	/**
 	 * depend.onに指定されたプロパティが存在しない
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_ON = 4;
+	var SCHEMA_ERR_DETAIL_DEPEND_ON = 15804;
 
 	/**
 	 * depend.calcに関数が指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_CALC = 5;
+	var SCHEMA_ERR_DETAIL_DEPEND_CALC = 15805;
 
 	/**
 	 * typeに文字列が指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_TYPE = 6;
+	var SCHEMA_ERR_DETAIL_INVALID_TYPE = 15806;
 
 	/**
 	 * type文字列が不正
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE = 7;
+	var SCHEMA_ERR_DETAIL_TYPE = 15807;
 
 	/**
 	 * typeに指定されたデータモデルが存在しない
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_DATAMODEL = 8;
+	var SCHEMA_ERR_DETAIL_TYPE_DATAMODEL = 15808;
 
 	/**
 	 * type:enumなのにenumValueが指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE = 9;
+	var SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE = 15809;
 
 	/**
 	 * constraintにオブジェクトが指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT = 10;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT = 15810;
 
 	/**
 	 * constraint.notNullの指定が不正
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 11;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 15811;
 
 	/**
 	 * min-maxに数値が入力されなかった時のエラー
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX = 12;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX = 15812;
 
 	/**
 	 * typeがinteger,numberじゃないのにconstraint.min/max を指定されたときのエラー
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT = 13;
+	var SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT = 15813;
 
 	/**
 	 * constraint.patternが正規表現じゃない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN = 14;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN = 15814;
 
 	/**
 	 * minLength/maxLengthに0以上の整数値以外の値が渡された
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 15;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 15815;
 
 	/**
 	 * constraintの指定に矛盾がある場合(mix > maxなど)
 	 */
-	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT = 16;
+	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT = 15816;
 
 	/**
 	 * typeがenumでないのにenumValueが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE = 17;
+	var SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE = 15817;
 
 	/**
 	 * enumValueが配列でない、または空配列
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE = 18;
+	var SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE = 15818;
 
 	/**
 	 * id項目にdefaultValueが設定されている
 	 */
-	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID = 19;
+	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID = 15819;
 
 	/**
 	 * defaultValueに設定された値がtype,constraintに指定された条件を満たしていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE = 20;
+	var SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE = 15820;
 
 	/**
 	 * ID項目のconstraintに不正な指定がある
 	 */
-	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID = 21;
+	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID = 15821;
 
 	/**
 	 * defaultValue指定されたプロパティにdependが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND = 22;
+	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND = 15822;
 
 	/**
 	 * dependの依存関係が循環している
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF = 23;
+	var SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF = 15823;
 
 	// =============================
 	// Development Only
