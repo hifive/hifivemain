@@ -37,165 +37,169 @@
 	/**
 	 * createObservableItemに渡された引数がオブジェクトでない
 	 */
-	var ERR_CODE_REQUIRE_SCHEMA = 17001;
+	var ERR_CODE_REQUIRE_SCHEMA = 15100;
 
 	/**
 	 * createObservableItemに指定されたスキーマのエラー
 	 */
-	var ERR_CODE_INVALID_SCHEMA = 17002;
+	var ERR_CODE_INVALID_SCHEMA = 15101;
 
 	/**
-	 * ObservableItemにスキーマ違反の値がセットされた
+	 * スキーマ違反の値がセットされた
 	 */
-	var ERR_CODE_INVALID_ITEM_VALUE = 17003;
+	var ERR_CODE_INVALID_ITEM_VALUE = 15102;
 
 	/**
-	 * ObservableItemで依存項目にセットされた
+	 * 依存項目にセットされた
 	 */
-	var ERR_CODE_DEPEND_PROPERTY = 17004;
+	var ERR_CODE_DEPEND_PROPERTY = 15103;
 
 	/**
 	 * ObservableItemでスキーマで定義されていない値にセットされた
 	 */
-	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 17005;
+	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 15104;
 
 	/**
 	 * schemaに定義されていないプロパティを取得した
 	 */
-	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 17006;
+	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 15105;
 
 	/**
-	 * schemaに定義されていないプロパティを取得した
+	 * addEventListenerに不正な引数が渡された
 	 */
-	var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 17007;
+	var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 15106;
 
 	/**
 	 * depend.calcが制約を満たさない値を返している
 	 */
-	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 17008;
+	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15107;
+
 
 	// ---------------------------
 	// スキーマのエラーコード(detailに入れるメッセージID)
 	// ---------------------------
+
+	// このメッセージはDataModelで共通で使用するためh5scopeにexposeしています
+	// h5internal.core.data.DESCRIPTOR_VALIDTATION_ERROR
 	/**
 	 * ID指定されたプロパティが重複している
 	 */
-	var SCHEMA_ERR_DETAIL_DUPLICATED_ID = 1;
+	var SCHEMA_ERR_DETAIL_DUPLICATED_ID = 0;
 
 	/**
 	 * ID指定されたプロパティがない
 	 */
-	var SCHEMA_ERR_DETAIL_NO_ID = 2;
+	var SCHEMA_ERR_DETAIL_NO_ID = 1;
 
 	/**
 	 * プロパティ名が不正
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME = 3;
+	var SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME = 2;
 
 	/**
 	 * id指定されたプロパティにdependが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_ID_DEPEND = 4;
+	var SCHEMA_ERR_DETAIL_ID_DEPEND = 3;
 
 	/**
 	 * depend.onに指定されたプロパティが存在しない
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_ON = 5;
+	var SCHEMA_ERR_DETAIL_DEPEND_ON = 4;
 
 	/**
 	 * depend.calcに関数が指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_CALC = 6;
+	var SCHEMA_ERR_DETAIL_DEPEND_CALC = 5;
 
 	/**
 	 * typeに文字列が指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_TYPE = 7;
+	var SCHEMA_ERR_DETAIL_INVALID_TYPE = 6;
 
 	/**
 	 * type文字列が不正
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE = 8;
+	var SCHEMA_ERR_DETAIL_TYPE = 7;
 
 	/**
 	 * typeに指定されたデータモデルが存在しない
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_DATAMODEL = 9;
+	var SCHEMA_ERR_DETAIL_TYPE_DATAMODEL = 8;
 
 	/**
 	 * type:enumなのにenumValueが指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE = 10;
+	var SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE = 9;
 
 	/**
 	 * constraintにオブジェクトが指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT = 11;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT = 10;
 
 	/**
 	 * constraint.notNullの指定が不正
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 12;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 11;
 
 	/**
 	 * min-maxに数値が入力されなかった時のエラー
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX = 13;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX = 12;
 
 	/**
 	 * typeがinteger,numberじゃないのにconstraint.min/max を指定されたときのエラー
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT = 14;
+	var SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT = 13;
 
 	/**
 	 * constraint.patternが正規表現じゃない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN = 15;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN = 14;
 
 	/**
 	 * minLength/maxLengthに0以上の整数値以外の値が渡された
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 16;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 15;
 
 	/**
 	 * constraintの指定に矛盾がある場合(mix > maxなど)
 	 */
-	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT = 17;
+	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT = 16;
 
 	/**
 	 * typeがenumでないのにenumValueが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE = 18;
+	var SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE = 17;
 
 	/**
 	 * enumValueが配列でない、または空配列
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE = 19;
+	var SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE = 18;
 
 	/**
 	 * id項目にdefaultValueが設定されている
 	 */
-	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID = 20;
+	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID = 19;
 
 	/**
 	 * defaultValueに設定された値がtype,constraintに指定された条件を満たしていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE = 21;
+	var SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE = 20;
 
 	/**
 	 * ID項目のconstraintに不正な指定がある
 	 */
-	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID = 22;
+	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID = 21;
 
 	/**
 	 * defaultValue指定されたプロパティにdependが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND = 23;
+	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND = 22;
 
 	/**
 	 * dependの依存関係が循環している
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF = 24;
+	var SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF = 23;
 
 	// =============================
 	// Development Only
@@ -208,7 +212,7 @@
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_REQUIRE_SCHEMA] = 'createObservableItemの引数にはスキーマ定義オブジェクトを指定する必要があります。';
 	errMsgMap[ERR_CODE_INVALID_SCHEMA] = 'createObservableItemの引数に指定されたスキーマ定義オブジェクトが不正です。';
-	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'ObservableItemのsetterに渡された値がスキーマで指定された型・制約に違反しています。 違反したプロパティ={0}';
+	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'Itemのsetterに渡された値がスキーマで指定された型・制約に違反しています。 違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。 違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティは取得できません。違反したプロパティ={0}';
@@ -1524,7 +1528,7 @@
 	EventDispatcher.prototype.addEventListener = function(type, listener) {
 		// 引数チェック
 		if (arguments.length !== 2 || !isString(type) || !$.isFunction(listener)) {
-			throwFwError(G_ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
+			throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
 		}
 		if (this.hasEventListener(type, listener)) {
 			return;
@@ -2293,6 +2297,12 @@
 		calcDependencies: calcDependencies,
 		getValue: getValue,
 		setValue: setValue,
-		isTypeArray: isTypeArray
+		isTypeArray: isTypeArray,
+		ITEM_ERRORS: {
+			ERR_CODE_INVALID_ITEM_VALUE: ERR_CODE_INVALID_ITEM_VALUE,
+			ERR_CODE_DEPEND_PROPERTY: ERR_CODE_DEPEND_PROPERTY,
+			ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY: ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY,
+			ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY: ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY
+		}
 	};
 })();

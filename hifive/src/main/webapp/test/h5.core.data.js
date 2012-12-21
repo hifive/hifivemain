@@ -45,7 +45,6 @@ $(function() {
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.data;
-	var ERR_U = ERRCODE.h5.u;
 
 	/**
 	 * データモデルマネージャ
@@ -222,7 +221,7 @@ $(function() {
 	});
 
 	test('データモデルマネージャの作成 名前空間指定が不正な時にエラーが出ること', function() {
-		var errCode = ERR_U.ERR_CODE_NAMESPACE_INVALID;
+		var errCode = ERRCODE.h5.u.ERR_CODE_NAMESPACE_INVALID;
 		var invalidNs = [0, 1, true, false, [], {}, '.com.htmlhifive', 'あ', 'com htmlhifive',
 				'com.htmlhifive.'];
 		var l = invalidNs.length;
@@ -250,7 +249,7 @@ $(function() {
 	});
 
 	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', 1, function() {
-		var errCode = ERR_U.ERR_CODE_NAMESPACE_EXIST;
+		var errCode = ERRCODE.h5.u.ERR_CODE_NAMESPACE_EXIST;
 		h5.u.obj.expose('com.htmlhifive.test', {
 			TestModel: 0
 		});

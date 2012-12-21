@@ -35,7 +35,6 @@ $(function() {
 
 	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR_U.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.data;
-	var ERR_OBS = ERRCODE.h5.core.data_observables;
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -392,7 +391,7 @@ $(function() {
 				h5.core.data.createObservableItem(invalidValues[i]);
 				ok(false, 'テスト失敗。エラーが発生しませんでした。' + invalidValues[i]);
 			} catch (e) {
-				strictEqual(e.code, ERR_OBS.ERR_CODE_REQUIRE_SCHEMA, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_REQUIRE_SCHEMA, e.message);
 			}
 		}
 	});
@@ -401,13 +400,13 @@ $(function() {
 		raises(function(enviroment) {
 			item.get('hoge');
 		}, function(actual) {
-			return actual.code === ERR_OBS.ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY;
+			return actual.code === ERR.ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY;
 		}, 'スキーマに定義されていないプロパティの値を取得したためエラーになること"');
 
 		raises(function(enviroment) {
 			item.set('hoge', 10);
 		}, function(actual) {
-			return actual.code === ERR_OBS.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
+			return actual.code === ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
 		}, 'スキーマに定義されていないプロパティに対して値を設定したためエラーになること"');
 	});
 
