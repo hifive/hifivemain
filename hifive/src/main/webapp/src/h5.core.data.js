@@ -90,27 +90,27 @@
 	/**
 	 * ディスクリプタがオブジェクトでない
 	 */
-	var DESC_ERR_DETAIL_NOT_OBJECT = 1000;
+	var DESC_ERR_DETAIL_NOT_OBJECT = 15900;
 
 	/**
 	 * nameが正しく設定されていない
 	 */
-	var DESC_ERR_DETAIL_INVALID_NAME = 1001;
+	var DESC_ERR_DETAIL_INVALID_NAME = 15901;
 
 	/**
 	 * baseの指定が不正
 	 */
-	var DESC_ERR_DETAIL_INVALID_BASE = 1002;
+	var DESC_ERR_DETAIL_INVALID_BASE = 15902;
 
 	/**
 	 * baseに指定されたデータモデルが存在しない
 	 */
-	var DESC_ERR_DETAIL_NO_EXIST_BASE = 1003;
+	var DESC_ERR_DETAIL_NO_EXIST_BASE = 15903;
 
 	/**
 	 * schemaもbaseも指定されていない
 	 */
-	var DESC_ERR_DETAIL_NO_SCHEMA = 1004;
+	var DESC_ERR_DETAIL_NO_SCHEMA = 15904;
 
 	/**
 	 * schemaがオブジェクトでない
@@ -305,7 +305,8 @@
 		for ( var prop in valueObj) {
 			if (!(prop in model.schema)) {
 				// schemaに定義されていないプロパティ名が入っていたらエラー
-				throwFwError(ITEM_ERRORS.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, prop]);
+				throwFwError(ITEM_ERRORS.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name,
+						prop]);
 			}
 			if (ignoreProps && ($.inArray(prop, ignoreProps) !== -1)) {
 				//このpropプロパティは無視する
@@ -591,7 +592,8 @@
 			// userInitialValueの中に、schemaで定義されていないプロパティへの値のセットが含まれていたらエラー
 			for ( var p in userInitialValue) {
 				if (!schema.hasOwnProperty(p)) {
-					throwFwError(ITEM_ERRORS.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, p]);
+					throwFwError(ITEM_ERRORS.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name,
+							p]);
 				}
 			}
 
@@ -2112,12 +2114,7 @@
 	// Expose to window
 	//=============================
 	/**
-	 * DataModelの名前空間
-	 *
-	 * @since 1.1.0
-	 * @name data
-	 * @memberOf h5.core
-	 * @namespace
+	 * dataの名前空間にデータモデルのものを公開 (名前空間はh5.core.data_observableですでに作成されてます)
 	 */
 	h5.u.obj.expose('h5.core.data', {
 		createManager: createManager,
