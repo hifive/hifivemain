@@ -184,6 +184,21 @@
 	// =========================================================================
 	var argsToArray = h5.u.obj.argsToArray;
 
+	// h5internal.core.dataのものを変数にキャッシュする
+	var validateSchema = h5internal.core.data.validateSchema;
+	var validateDefaultValue = h5internal.core.data.validateDefaultValue;
+	var createCheckValueByDescriptor = h5internal.core.data.createCheckValueByDescriptor;
+	var createItemDescErrorReason = h5internal.core.data.createItemDescErrorReason;
+	var createDependencyMap = h5internal.core.data.createDependencyMap;
+	var isIntegerValue = h5internal.core.data.isIntegerValue;
+	var isNumberValue = h5internal.core.data.isNumberValue;
+	var isStringValue = h5internal.core.data.isStringValue;
+	var unbox = h5internal.core.data.unbox;
+	var EventDispatcher = h5internal.core.data.EventDispatcher;
+	var calcDependencies = h5internal.core.data.calcDependencies;
+	var getValue = h5internal.core.data.getValue;
+	var setValue = h5internal.core.data.setValue;
+	var isTypeArray = h5internal.core.data.isTypeArray;
 
 	// =========================================================================
 	//
@@ -213,14 +228,13 @@
 	//========================================================
 
 	/**
-	 * データモデルのディスクリプタとして正しいオブジェクトかどうかチェックする。
-	 * schema以外をチェックしたあと、h5internal.core.data.validateSchemaを呼び出して結果をマージして返す。
+	 * データモデルのディスクリプタとして正しいオブジェクトかどうかチェックする。 schema以外をチェックしたあと、validateSchemaを呼び出して結果をマージして返す。
 	 *
 	 * @private
 	 * @param {Object} descriptor オブジェクト
 	 * @param {Object} DataManagerオブジェクト
 	 * @param {Boolean} stopOnErro エラーが発生した時に、即座にreturnするかどうか
-	 * @returns {Array} schemaのチェック結果。h5internal.core.data.validateSchemaの戻り値をそのまま返す
+	 * @returns {Array} schemaのチェック結果。validateSchemaの戻り値をそのまま返す
 	 */
 	function validateDescriptor(descriptor, manager, stopOnError) {
 		var errorReason = [];
@@ -258,8 +272,8 @@
 				var baseModel = manager.models[baseName];
 				if (!baseModel) {
 					// 指定されたモデルが存在しないならエラー
-					errorReason.push(h5internal.core.data.createItemDescErrorReason(
-							DESC_ERR_DETAIL_NO_EXIST_BASE, baseName));
+					errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NO_EXIST_BASE,
+							baseName));
 					if (stopOnError) {
 						return errorReason;
 					}
@@ -292,8 +306,7 @@
 		schema = $.extend(baseSchema, schema);
 
 		// errorReasonにschemaのチェック結果を追加して返す
-		return errorReason
-				.concat(h5internal.core.data.validateSchema(schema, manager, stopOnError));
+		return errorReason.concat(validateSchema(schema, manager, stopOnError));
 	}
 
 	//========================================================
@@ -301,24 +314,6 @@
 	// バリデーション関係コードここまで
 	//
 	//========================================================
-
-
-
-	function isTypeArray(typeStr) {
-		if (!typeStr) {
-			return false;
-		}
-		return typeStr.indexOf('[]') !== -1;
-	}
-
-	function getValue(item, prop) {
-		return item._values[prop];
-	}
-
-	function setValue(item, prop, value) {
-		item._values[prop] = value;
-	}
-
 
 	function itemSetter(model, item, valueObj, noValidationProps, ignoreProps, isCreate) {
 		// valueObjから整合性チェックに通ったものを整形して格納する配列
@@ -365,7 +360,7 @@
 
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
 			if (type && type.match(/string|number|integer|boolean/)) {
-				newValue = h5internal.core.data.unbox(newValue);
+				newValue = unbox(newValue);
 			}
 
 			//このプロパティをバリデーションしなくてよいと明示されているならバリデーションを行わない
@@ -387,7 +382,7 @@
 					for ( var i = 0, l = newValue.length; i < l; i++) {
 						// スパースな配列の場合、undefinedが入っている可能性があるので、!= で比較
 						// parseFloatできる値(isNumberValueに渡してtrueになる値)ならparseFloatする
-						if (newValue[i] != null && h5internal.core.data.isNumberValue(newValue[i])) {
+						if (newValue[i] != null && isNumberValue(newValue[i])) {
 							newValue[i] = parseFloat(newValue[i]);
 						}
 					}
@@ -474,107 +469,6 @@
 		$.extend(changedProps, changedDependProps);
 
 		return event;
-	}
-
-	/**
-	 * 依存プロパティの再計算を行います。再計算後の値はitemの各依存プロパティに代入されます。
-	 *
-	 * @param {DataModel} model データモデル
-	 * @param {DataItem} item データアイテム
-	 * @param {Object} event プロパティ変更イベント
-	 * @param {String|String[]} changedProps 今回変更されたプロパティ
-	 * @param {Boolean} isCreate create時に呼ばれたものかどうか。createなら値の変更を見ずに無条件でcalcを実行する
-	 * @returns {Object} { dependProp1: { oldValue, newValue }, ... } という構造のオブジェクト
-	 */
-	function calcDependencies(model, item, event, changedProps, isCreate) {
-		// 今回の変更に依存する、未計算のプロパティ
-		var targets = [];
-
-		var dependsMap = model._dependencyMap;
-
-		/**
-		 * この依存プロパティが計算可能（依存するすべてのプロパティの再計算が完了している）かどうかを返します。
-		 * 依存しているプロパティが依存プロパティでない場合は常にtrue(計算済み)を返します
-		 * 依存しているプロパティが依存プロパティが今回の変更されたプロパティに依存していないならtrue(計算済み)を返します
-		 */
-		function isReady(dependProp) {
-			var deps = wrapInArray(model.schema[dependProp].depend.on);
-			for ( var i = 0, len = deps.length; i < len; i++) {
-				if ($.inArray(deps[i], model._realProperty) === -1
-						&& $.inArray(deps[i], targets) !== -1) {
-					// 依存先が実プロパティでなく、未計算のプロパティであればfalseを返す
-					return false;
-				}
-			}
-			return true;
-		}
-
-		/**
-		 * changedPropsで指定されたプロパティに依存するプロパティをtargetArrayに追加する
-		 */
-		function addDependencies(targetArray, srcProps) {
-			for ( var i = 0, len = srcProps.length; i < len; i++) {
-				var depends = dependsMap[srcProps[i]];
-
-				if (!depends) {
-					continue;
-				}
-
-				for ( var j = 0, jlen = depends.length; j < jlen; j++) {
-					var dprop = depends[j];
-					if ($.inArray(dprop, targetArray) === -1) {
-						targetArray.push(dprop);
-					}
-				}
-			}
-		}
-
-		var ret = {};
-
-		if (isCreate) {
-			// createならすべての実プロパティに依存するプロパティを列挙する
-			// create時にundefinedがセットされた場合、変更なしなのでchangedPropsに入らないが、calcは計算させる
-			targets = model._dependProps.slice();
-		} else {
-			//今回変更された実プロパティに依存するプロパティを列挙
-			addDependencies(targets, wrapInArray(changedProps));
-		}
-
-		while (targets.length !== 0) {
-			var restTargets = [];
-
-			//各依存プロパティについて、計算可能（依存するすべてのプロパティが計算済み）なら計算する
-			for ( var i = 0, len = targets.length; i < len; i++) {
-				var dp = targets[i];
-
-				if (isReady(dp)) {
-					var newValue = model.schema[dp].depend.calc.call(item, event);
-
-					// 型変換を行わない厳密チェックで、戻り値をチェックする
-					var errReason = model._itemValueCheckFuncs[dp](newValue, true);
-					if (errReason.length !== 0) {
-						// calcの返した値が型・制約違反ならエラー
-						throwFwError(ERR_CODE_CALC_RETURNED_INVALID_VALUE, [dp, newValue]);
-					}
-					ret[dp] = {
-						oldValue: getValue(item, dp),
-						newValue: newValue
-					};
-
-					setValue(item, dp, newValue);
-				} else {
-					restTargets.push(dp);
-				}
-			}
-
-			//今回計算対象となったプロパティに（再帰的に）依存するプロパティをrestに追加
-			//restTargetsは「今回計算できなかったプロパティ＋新たに依存関係が発見されたプロパティ」が含まれる
-			addDependencies(restTargets, targets);
-
-			targets = restTargets;
-		}
-
-		return ret;
 	}
 
 	/**
@@ -722,6 +616,14 @@
 			for ( var plainProp in schema) {
 				var propDesc = schema[plainProp];
 
+				if (propDesc && isTypeArray(propDesc.type)) {
+					//配列の場合は最初にObservableArrayのインスタンスを入れる
+					var obsArray = h5.core.data.createObservableArray(); //TODO cache
+					setValue(this, plainProp, obsArray);
+					this._nullProps[plainProp] = true;
+					arrayProps.push(plainProp);
+				}
+
 				if (propDesc && propDesc.depend) {
 					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
 					if (plainProp in userInitialValue) {
@@ -731,20 +633,12 @@
 					continue;
 				}
 
-				if (propDesc && isTypeArray(propDesc.type)) {
-					//配列の場合は最初にObservableArrayのインスタンスを入れる
-					var obsArray = h5.core.data.createObservableArray(); //TODO cache
-					setValue(this, plainProp, obsArray);
-					this._nullProps[plainProp] = true;
-					arrayProps.push(plainProp);
-				}
-
 				var initValue = null;
 
 				if (plainProp in userInitialValue) {
 					//create時に初期値が与えられていた場合
 
-					// depend指定プロパティにはdefaultValueを指定できないが、h5internal.core.data.validateSchemaでチェック済みなので
+					// depend指定プロパティにはdefaultValueを指定できないが、validateSchemaでチェック済みなので
 					// ここでチェックは行わない
 
 					// 与えられた初期値を代入
@@ -778,7 +672,7 @@
 				setObservableArrayListeners(model, this, arrayProps[i], this.get(arrayProps[i]));
 			}
 		}
-		$.extend(DataItem.prototype, h5internal.core.data.EventDispatcher.prototype, {
+		$.extend(DataItem.prototype, EventDispatcher.prototype, {
 			/**
 			 * 指定されたキーのプロパティの値を取得します。
 			 * <p>
@@ -1297,7 +1191,7 @@
 		 * @type Object
 		 * @memberOf DataModel
 		 */
-		this._dependencyMap = h5internal.core.data.createDependencyMap(schema);
+		this._dependencyMap = createDependencyMap(schema);
 
 		/**
 		 * モデルが持つ依存プロパティ
@@ -1342,321 +1236,308 @@
 	}
 
 	//EventDispatcherの機能を持たせるため、prototypeをコピーし、そのうえでDataModel独自のプロパティを追加する
-	$
-			.extend(DataModel.prototype, h5internal.core.data.EventDispatcher.prototype,
-					{
-						/**
-						 * 指定されたIDと初期値がセットされたデータアイテムを生成します。
-						 * <p>
-						 * データアイテムはこのデータモデルに紐づけられた状態になっています。
-						 * </p>
-						 * <p>
-						 * 指定されたIDのデータアイテムがすでにこのデータモデルに存在した場合は、
-						 * 既に存在するデータアイテムを返します（新しいインスタンスは生成されません）。
-						 * </p>
-						 * <p>
-						 * 従って、1つのデータモデルは、1IDにつき必ず1つのインスタンスだけを保持します。
-						 * なお、ここでIDの他に初期値も渡された場合は、既存のインスタンスに初期値をセットしてから返します。
-						 * このとき、当該インスタンスにイベントハンドラが設定されていれば、changeイベントが（通常の値更新と同様に）発生します。
-						 * </p>
-						 * <p>
-						 * 引数にはディスクリプタオブジェクトまたはその配列を指定します。ディスクリプタオブジェクトについては<a
-						 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
-						 * </p>
-						 *
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @param {Object|Object[]} objOrArray ディスクリプタオブジェクト、またはその配列
-						 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
-						 */
-						create: function(objOrArray) {
-							// modelがmanagerを持たない(dropModelされた)ならエラー
-							if (!this._manager) {
-								throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name,
-										'create']);
-							}
+	$.extend(DataModel.prototype, EventDispatcher.prototype, {
+		/**
+		 * 指定されたIDと初期値がセットされたデータアイテムを生成します。
+		 * <p>
+		 * データアイテムはこのデータモデルに紐づけられた状態になっています。
+		 * </p>
+		 * <p>
+		 * 指定されたIDのデータアイテムがすでにこのデータモデルに存在した場合は、 既に存在するデータアイテムを返します（新しいインスタンスは生成されません）。
+		 * </p>
+		 * <p>
+		 * 従って、1つのデータモデルは、1IDにつき必ず1つのインスタンスだけを保持します。
+		 * なお、ここでIDの他に初期値も渡された場合は、既存のインスタンスに初期値をセットしてから返します。
+		 * このとき、当該インスタンスにイベントハンドラが設定されていれば、changeイベントが（通常の値更新と同様に）発生します。
+		 * </p>
+		 * <p>
+		 * 引数にはディスクリプタオブジェクトまたはその配列を指定します。ディスクリプタオブジェクトについては<a
+		 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
+		 * </p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @param {Object|Object[]} objOrArray ディスクリプタオブジェクト、またはその配列
+		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
+		 */
+		create: function(objOrArray) {
+			// modelがmanagerを持たない(dropModelされた)ならエラー
+			if (!this._manager) {
+				throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'create']);
+			}
 
-							// objOrArrayがobjでもArrayでもなかったらエラー
-							if (typeof objOrArray !== 'object' && !$.isArray(objOrArray)) {
-								throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
-							}
+			// objOrArrayがobjでもArrayでもなかったらエラー
+			if (typeof objOrArray !== 'object' && !$.isArray(objOrArray)) {
+				throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
+			}
 
-							var ret = [];
-							var idKey = this.idKey;
+			var ret = [];
+			var idKey = this.idKey;
 
-							//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
-							//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
-							//入っていない場合は一時的にセッションを作成する。
-							var isAlreadyInUpdate = this._manager ? this._manager.isInUpdate()
-									: false;
+			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
+			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
+			//入っていない場合は一時的にセッションを作成する。
+			var isAlreadyInUpdate = this._manager ? this._manager.isInUpdate() : false;
 
-							if (!isAlreadyInUpdate) {
-								this._manager.beginUpdate();
-							}
+			if (!isAlreadyInUpdate) {
+				this._manager.beginUpdate();
+			}
 
-							var actualNewItems = [];
+			var actualNewItems = [];
 
-							var items = wrapInArray(objOrArray);
-							for ( var i = 0, len = items.length; i < len; i++) {
-								var valueObj = items[i];
+			var items = wrapInArray(objOrArray);
+			for ( var i = 0, len = items.length; i < len; i++) {
+				var valueObj = items[i];
 
-								var itemId = valueObj[idKey];
-								//idが空文字、null、undefined、はid指定エラー
-								if (itemId === '' || itemId == null) {
-									throwFwError(ERR_CODE_NO_ID);
-								}
-								//idがstringでもintegerでもない場合は制約違反エラー
-								if (!h5internal.core.data.isIntegerValue(itemId, true)
-										&& !isString(itemId)) {
-									throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
-								}
+				var itemId = valueObj[idKey];
+				//idが空文字、null、undefined、はid指定エラー
+				if (itemId === '' || itemId == null) {
+					throwFwError(ERR_CODE_NO_ID);
+				}
+				//idがstringでもintegerでもない場合は制約違反エラー
+				if (!isIntegerValue(itemId, true) && !isString(itemId)) {
+					throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
+				}
 
-								var storedItem = this._findById(itemId);
-								if (storedItem) {
-									//返す値にstoredItemを追加
-									ret.push(storedItem);
+				var storedItem = this._findById(itemId);
+				if (storedItem) {
+					//返す値にstoredItemを追加
+					ret.push(storedItem);
 
-									// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
-									var event = itemSetter(this, storedItem, valueObj, null,
-											[idKey]);
-									if (!event) {
-										//itemSetterが何も返さなかった = 更新する値が何もない
-										continue;
-									}
+					// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
+					var event = itemSetter(this, storedItem, valueObj, null, [idKey]);
+					if (!event) {
+						//itemSetterが何も返さなかった = 更新する値が何もない
+						continue;
+					}
 
-									addUpdateChangeLog(this, event);
-								} else {
-									var newItem = new this._itemConstructor(valueObj);
+					addUpdateChangeLog(this, event);
+				} else {
+					var newItem = new this._itemConstructor(valueObj);
 
-									this.items[itemId] = newItem;
-									this.size++;
+					this.items[itemId] = newItem;
+					this.size++;
 
-									actualNewItems.push(newItem);
-									ret.push(newItem);
-								}
-							}
+					actualNewItems.push(newItem);
+					ret.push(newItem);
+				}
+			}
 
-							if (actualNewItems.length > 0) {
-								addUpdateLog(this, UPDATE_LOG_TYPE_CREATE, actualNewItems);
-							}
+			if (actualNewItems.length > 0) {
+				addUpdateLog(this, UPDATE_LOG_TYPE_CREATE, actualNewItems);
+			}
 
-							if (!isAlreadyInUpdate) {
-								//既存のアイテムが変更されていればアイテムのイベントを上げる
-								this._manager.endUpdate();
-							}
+			if (!isAlreadyInUpdate) {
+				//既存のアイテムが変更されていればアイテムのイベントを上げる
+				this._manager.endUpdate();
+			}
 
-							if ($.isArray(objOrArray)) {
-								return ret;
-							}
-							return ret[0];
-						},
+			if ($.isArray(objOrArray)) {
+				return ret;
+			}
+			return ret[0];
+		},
 
-						/**
-						 * 指定されたIDのデータアイテムを返します。
-						 * <p>
-						 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。
-						 * 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、 戻り値の配列の対応位置にnullが入ります。
-						 * </p>
-						 * <p>
-						 * （例：get(['id1', 'id2', 'id3']) でid2のアイテムがない場合、戻り値は [item1, null, item3]
-						 * のようになる ）
-						 * </p>
-						 *
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @param {String|String[]} idOrArray ID、またはその配列
-						 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
-						 */
-						get: function(idOrArray) {
-							if ($.isArray(idOrArray) || h5.core.data.isObservableArray(idOrArray)) {
-								var ret = [];
-								for ( var i = 0, len = idOrArray.length; i < len; i++) {
-									ret.push(this._findById(idOrArray[i]));
-								}
-								return ret;
-							}
-							//引数の型チェックはfindById内で行われる
-							return this._findById(idOrArray);
-						},
+		/**
+		 * 指定されたIDのデータアイテムを返します。
+		 * <p>
+		 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、
+		 * 戻り値の配列の対応位置にnullが入ります。
+		 * </p>
+		 * <p>
+		 * （例：get(['id1', 'id2', 'id3']) でid2のアイテムがない場合、戻り値は [item1, null, item3] のようになる ）
+		 * </p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @param {String|String[]} idOrArray ID、またはその配列
+		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
+		 */
+		get: function(idOrArray) {
+			if ($.isArray(idOrArray) || h5.core.data.isObservableArray(idOrArray)) {
+				var ret = [];
+				for ( var i = 0, len = idOrArray.length; i < len; i++) {
+					ret.push(this._findById(idOrArray[i]));
+				}
+				return ret;
+			}
+			//引数の型チェックはfindById内で行われる
+			return this._findById(idOrArray);
+		},
 
-						/**
-						 * 指定されたIDのデータアイテムをこのデータモデルから削除します。
-						 * <p>
-						 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。
-						 * 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、 戻り値の配列の対応位置にnullが入ります。
-						 * （例：remove(['id1', 'id2', 'id3']) でid2のアイテムがない場合、 戻り値は [item1, null,
-						 * item3]のようになります。） 引数にID(文字列)またはデータアイテム以外を渡した場合はnullを返します。
-						 * </p>
-						 *
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @param {String|DataItem|String[]|DataItem[]} objOrItemIdOrArray
-						 *            削除するデータアイテム
-						 * @returns {DataItem|DataItem[]} 削除したデータアイテム
-						 */
-						remove: function(objOrItemIdOrArray) {
-							// modelがmanagerを持たない(dropModelされた)ならエラー
-							if (!this._manager) {
-								throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name,
-										'remove']);
-							}
+		/**
+		 * 指定されたIDのデータアイテムをこのデータモデルから削除します。
+		 * <p>
+		 * 当該IDを持つアイテムをこのデータモデルが保持していない場合はnullを返します。 引数にIDの配列を渡した場合に一部のIDのデータアイテムが存在しなかった場合、
+		 * 戻り値の配列の対応位置にnullが入ります。 （例：remove(['id1', 'id2', 'id3']) でid2のアイテムがない場合、 戻り値は [item1,
+		 * null, item3]のようになります。） 引数にID(文字列)またはデータアイテム以外を渡した場合はnullを返します。
+		 * </p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @param {String|DataItem|String[]|DataItem[]} objOrItemIdOrArray 削除するデータアイテム
+		 * @returns {DataItem|DataItem[]} 削除したデータアイテム
+		 */
+		remove: function(objOrItemIdOrArray) {
+			// modelがmanagerを持たない(dropModelされた)ならエラー
+			if (!this._manager) {
+				throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'remove']);
+			}
 
-							//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
-							//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
-							//入っていない場合は一時的にセッションを作成する。
-							var isAlreadyInUpdate = this._manager ? this._manager.isInUpdate()
-									: false;
-							if (!isAlreadyInUpdate) {
-								this._manager.beginUpdate();
-							}
+			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
+			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
+			//入っていない場合は一時的にセッションを作成する。
+			var isAlreadyInUpdate = this._manager ? this._manager.isInUpdate() : false;
+			if (!isAlreadyInUpdate) {
+				this._manager.beginUpdate();
+			}
 
-							var idKey = this.idKey;
-							var ids = wrapInArray(objOrItemIdOrArray);
+			var idKey = this.idKey;
+			var ids = wrapInArray(objOrItemIdOrArray);
 
-							var actualRemovedItems = [];
-							var ret = [];
+			var actualRemovedItems = [];
+			var ret = [];
 
-							for ( var i = 0, len = ids.length; i < len; i++) {
-								if (!this.has(ids[i])) {
-									//指定されたアイテムが存在しない場合はnull
-									ret.push(null);
-									continue;
-								}
+			for ( var i = 0, len = ids.length; i < len; i++) {
+				if (!this.has(ids[i])) {
+					//指定されたアイテムが存在しない場合はnull
+					ret.push(null);
+					continue;
+				}
 
-								var id = (isString(ids[i]) || h5internal.core.data.isIntegerValue(
-										ids[i], true)) ? ids[i] : ids[i]._values[idKey];
+				var id = (isString(ids[i]) || isIntegerValue(ids[i], true)) ? ids[i]
+						: ids[i]._values[idKey];
 
-								var item = this.items[id];
+				var item = this.items[id];
 
-								delete this.items[id];
+				delete this.items[id];
 
-								this.size--;
+				this.size--;
 
-								ret.push(item);
-								item._model = null;
-								actualRemovedItems.push(item);
-							}
+				ret.push(item);
+				item._model = null;
+				actualRemovedItems.push(item);
+			}
 
-							if (actualRemovedItems.length > 0) {
-								addUpdateLog(this, UPDATE_LOG_TYPE_REMOVE, actualRemovedItems);
-							}
+			if (actualRemovedItems.length > 0) {
+				addUpdateLog(this, UPDATE_LOG_TYPE_REMOVE, actualRemovedItems);
+			}
 
-							if (!isAlreadyInUpdate) {
-								this._manager.endUpdate();
-							}
+			if (!isAlreadyInUpdate) {
+				this._manager.endUpdate();
+			}
 
-							if ($.isArray(objOrItemIdOrArray)) {
-								return ret;
-							}
-							return ret[0];
-						},
+			if ($.isArray(objOrItemIdOrArray)) {
+				return ret;
+			}
+			return ret[0];
+		},
 
-						/**
-						 * 指定されたデータアイテムを保持しているかどうかを返します。
-						 * <p>
-						 * 文字列または整数値が渡された場合はIDとみなし、 オブジェクトが渡された場合はデータアイテムとみなします。
-						 * オブジェクトが渡された場合、自分が保持しているデータアイテムインスタンスかどうかをチェックします。
-						 * </p>
-						 * <p>
-						 * 従って、同じ構造を持つ別のインスタンスを引数に渡した場合はfalseが返ります。
-						 * データアイテムインスタンスを引数に渡した場合に限り（そのインスタンスをこのデータモデルが保持していれば）trueが返ります。
-						 * </p>
-						 *
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @param {String|Object} idOrObj ID文字列またはデータアイテムオブジェクト
-						 * @returns {Boolean} 指定されたIDのデータアイテムをこのデータモデルが保持しているかどうか
-						 */
-						has: function(idOrObj) {
-							if (isString(idOrObj)
-									|| h5internal.core.data.isIntegerValue(idOrObj, true)) {
-								return !!this._findById(idOrObj);
-							} else if (typeof idOrObj === 'object') {
-								//型の厳密性はitemsとの厳密等価比較によってチェックできるので、if文ではtypeofで充分
-								return idOrObj != null && $.isFunction(idOrObj.get)
-										&& idOrObj === this.items[idOrObj.get(this.idKey)];
-							} else {
-								return false;
-							}
-						},
+		/**
+		 * 指定されたデータアイテムを保持しているかどうかを返します。
+		 * <p>
+		 * 文字列または整数値が渡された場合はIDとみなし、 オブジェクトが渡された場合はデータアイテムとみなします。
+		 * オブジェクトが渡された場合、自分が保持しているデータアイテムインスタンスかどうかをチェックします。
+		 * </p>
+		 * <p>
+		 * 従って、同じ構造を持つ別のインスタンスを引数に渡した場合はfalseが返ります。
+		 * データアイテムインスタンスを引数に渡した場合に限り（そのインスタンスをこのデータモデルが保持していれば）trueが返ります。
+		 * </p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @param {String|Object} idOrObj ID文字列またはデータアイテムオブジェクト
+		 * @returns {Boolean} 指定されたIDのデータアイテムをこのデータモデルが保持しているかどうか
+		 */
+		has: function(idOrObj) {
+			if (isString(idOrObj) || isIntegerValue(idOrObj, true)) {
+				return !!this._findById(idOrObj);
+			} else if (typeof idOrObj === 'object') {
+				//型の厳密性はitemsとの厳密等価比較によってチェックできるので、if文ではtypeofで充分
+				return idOrObj != null && $.isFunction(idOrObj.get)
+						&& idOrObj === this.items[idOrObj.get(this.idKey)];
+			} else {
+				return false;
+			}
+		},
 
-						/**
-						 * このモデルが属しているマネージャを返します。
-						 * <p>
-						 * dropModelされたモデルの場合はnullを返します。
-						 * </p>
-						 *
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @returns {DataManager} このモデルが属しているマネージャ
-						 */
-						getManager: function() {
-							return this._manager;
-						},
+		/**
+		 * このモデルが属しているマネージャを返します。
+		 * <p>
+		 * dropModelされたモデルの場合はnullを返します。
+		 * </p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @returns {DataManager} このモデルが属しているマネージャ
+		 */
+		getManager: function() {
+			return this._manager;
+		},
 
-						/**
-						 * 引数にプロパティ名と値を指定し、 値がそのプロパティの制約条件を満たすかどうかをチェックします。
-						 *
-						 * @private
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @param {String} プロパティ名
-						 * @value {Any} 値
-						 * @returns {Boolean} 値がプロパティの制約条件を満たすならtrue
-						 */
-						_validateItemValue: function(prop, value) {
-							return this._itemValueCheckFuncs[prop](value);
-						},
+		/**
+		 * 引数にプロパティ名と値を指定し、 値がそのプロパティの制約条件を満たすかどうかをチェックします。
+		 *
+		 * @private
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @param {String} プロパティ名
+		 * @value {Any} 値
+		 * @returns {Boolean} 値がプロパティの制約条件を満たすならtrue
+		 */
+		_validateItemValue: function(prop, value) {
+			return this._itemValueCheckFuncs[prop](value);
+		},
 
-						/**
-						 * 指定されたIDのデータアイテムを返します。 アイテムがない場合はnullを返します。
-						 *
-						 * @private
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @param {String} id データアイテムのID
-						 * @returns {DataItem} データアイテム、存在しない場合はnull
-						 */
-						_findById: function(id) {
-							var item = this.items[id];
-							return item === undefined ? null : item;
-						},
+		/**
+		 * 指定されたIDのデータアイテムを返します。 アイテムがない場合はnullを返します。
+		 *
+		 * @private
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @param {String} id データアイテムのID
+		 * @returns {DataItem} データアイテム、存在しない場合はnull
+		 */
+		_findById: function(id) {
+			var item = this.items[id];
+			return item === undefined ? null : item;
+		},
 
-						/**
-						 * 引数で指定されたchangeイベントに基づいて、itemsChangeイベントを即座に発火させます。
-						 *
-						 * @private
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @param {Object} event DataItemのchangeイベント
-						 */
-						_dispatchItemsChangeEvent: function(event) {
-							var modelEvent = createDataModelItemsChangeEvent([], [], [], [event]);
-							this.dispatchEvent(modelEvent);
+		/**
+		 * 引数で指定されたchangeイベントに基づいて、itemsChangeイベントを即座に発火させます。
+		 *
+		 * @private
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @param {Object} event DataItemのchangeイベント
+		 */
+		_dispatchItemsChangeEvent: function(event) {
+			var modelEvent = createDataModelItemsChangeEvent([], [], [], [event]);
+			this.dispatchEvent(modelEvent);
 
-							// managerがあれば(dropされたモデルでなければ)managerのイベントを発火
-							if (this._manager) {
-								modelEvent.target = this;
-								this._manager._dataModelItemsChangeListener(modelEvent);
-							}
-						},
+			// managerがあれば(dropされたモデルでなければ)managerのイベントを発火
+			if (this._manager) {
+				modelEvent.target = this;
+				this._manager._dataModelItemsChangeListener(modelEvent);
+			}
+		},
 
-						/**
-						 * データモデルが持つデータアイテムを配列に詰めて返します。 配列中のデータアイテムの順番は不定です。
-						 *
-						 * @since 1.1.0
-						 * @memberOf DataModel
-						 * @returns {Array} モデルが持つデータアイテムが格納された配列
-						 */
-						toArray: function() {
-							var ret = [];
-							var items = this.items;
-							for ( var id in items) {
-								ret.push(items[id]);
-							}
-							return ret;
-						}
-					});
+		/**
+		 * データモデルが持つデータアイテムを配列に詰めて返します。 配列中のデータアイテムの順番は不定です。
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataModel
+		 * @returns {Array} モデルが持つデータアイテムが格納された配列
+		 */
+		toArray: function() {
+			var ret = [];
+			var items = this.items;
+			for ( var id in items) {
+				ret.push(items[id]);
+			}
+			return ret;
+		}
+	});
 
 	/**
 	 * データモデルマネージャ
@@ -1724,7 +1605,7 @@
 		 */
 		this._updateLogs = null;
 	}
-	DataModelManager.prototype = new h5internal.core.data.EventDispatcher();
+	DataModelManager.prototype = new EventDispatcher();
 	$.extend(DataModelManager.prototype, {
 		/**
 		 * データモデルを作成します。
@@ -1824,9 +1705,8 @@
 							// 循環参照エラー
 							throwFwError(ERR_CODE_DESCRIPTOR_CIRCULAR_REF);
 						}
-						throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
-								[h5internal.core.data.createItemDescErrorReason(
-										DESC_ERR_DETAIL_NO_EXIST_BASE, modelName)]);
+						throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, [createItemDescErrorReason(
+								DESC_ERR_DETAIL_NO_EXIST_BASE, modelName)]);
 					}
 				}
 				var retAry = [];
@@ -2182,11 +2062,10 @@
 		var extendedSchema = {};
 		extendSchema(extendedSchema, manager, descriptor);
 
-		var itemValueCheckFuncs = h5internal.core.data.createCheckValueByDescriptor(extendedSchema,
-				manager);
+		var itemValueCheckFuncs = createCheckValueByDescriptor(extendedSchema, manager);
 
-		var defaultValueErrorReason = h5internal.core.data.validateDefaultValue(extendedSchema,
-				itemValueCheckFuncs, true);
+		var defaultValueErrorReason = validateDefaultValue(extendedSchema, itemValueCheckFuncs,
+				true);
 		if (defaultValueErrorReason.length > 0) {
 			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, defaultValueErrorReason);
 		}
