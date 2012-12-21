@@ -7061,7 +7061,6 @@ $(function() {
 				strictEqual(item.get('v2'), 'v1a', 'depend指定したプロパティに、計算済みの値が入っていること');
 			});
 
-
 	test('set,createで値の変更があった場合にdpend.calcが実行され、値が更新されること', 8, function() {
 		var expectEvObj = {};
 		var checkEvFlag = false;
@@ -7197,6 +7196,199 @@ $(function() {
 		});
 		strictEqual(item.get('v2'), 'test111V3', 'depend先の項目を変えると値が反映されること');
 	});
+
+	test(
+			'type[]指定されているときにcalcが配列を返したら、ObservableArrayとして格納されること',
+			34,
+			function() {
+				// 型指定とdependのあるモデルを作成
+				var model = manager.createModel({
+					name: 'AutoBoxingDependDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						testSA: {
+							type: 'string[]',
+							depend: {
+								on: 'sa',
+								calc: function() {
+									return this.get('sa');
+								}
+							}
+						},
+						sa: {
+							type: 'string[]'
+						},
+						testIA: {
+							type: 'integer[]',
+							depend: {
+								on: 'ia',
+								calc: function() {
+									return this.get('ia');
+								}
+							}
+						},
+						ia: {},
+						testNA: {
+							type: 'number[]',
+							depend: {
+								on: 'na',
+								calc: function() {
+									return this.get('na');
+								}
+							}
+						},
+						na: {},
+						testBA: {
+							type: 'boolean[]',
+							depend: {
+								on: 'ba',
+								calc: function() {
+									return this.get('ba');
+								}
+							}
+						},
+						ba: {},
+						testAA: {
+							type: 'any[]',
+							depend: {
+								on: 'aa',
+								calc: function() {
+									return this.get('aa');
+								}
+							}
+						},
+						aa: {}
+					}
+				});
+
+				// create
+				var item = model.create({
+					id: sequence.next()
+				});
+
+				// string
+				ok(h5.core.data.isObservableArray(item.get('testSA')),
+						'【type:string[]】calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testSA').equals([]), '中身は空であること');
+
+				item.set('sa', []);
+				ok(h5.core.data.isObservableArray(item.get('testSA')),
+						'calcが[]を返したらObservableArrayに変換されること');
+
+				var instance = item.get('testSA');
+
+				item.set('sa', ['ABCDE', 'abcde']);
+				ok(item.get('testSA').equals(['ABCDE', 'abcde']),
+						'calcが["ABCDE", "abcde"]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testSA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('sa', [null]);
+				ok(item.get('testSA').equals([null]),
+						'calcが[null]を返した時、ObservableArrayに変換されて格納されること');
+
+				item.set('sa', undefined);
+				ok(item.get('testSA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+				// integer
+				ok(h5.core.data.isObservableArray(item.get('testIA')),
+						'【type:integer[]】 calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testIA').equals([]), '中身は空であること');
+
+				item.set('ia', []);
+				ok(h5.core.data.isObservableArray(item.get('testIA')),
+						'integer[] calcが[]を返したらObservableArrayに変換されること');
+
+				instance = item.get('testIA');
+
+				item.set('ia', [1, 2, 3]);
+				ok(item.get('testIA').equals([1, 2, 3]),
+						'calcが[1, 2, 3]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testIA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('ia', [null]);
+				ok(item.get('testIA').equals([null]),
+						'calcが[null]を返した時、ObservableArrayに変換されて格納されること');
+
+				item.set('ia', undefined);
+				ok(item.get('testIA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+				// number
+				ok(h5.core.data.isObservableArray(item.get('testNA')),
+						'【type:number[]】 calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testIA').equals([]), '中身は空であること');
+
+				item.set('na', []);
+				ok(h5.core.data.isObservableArray(item.get('testNA')),
+						'calcが[]を返したらObservableArrayに変換されること');
+
+				instance = item.get('testIA');
+
+				item.set('na', [1, 2.2, 3, Infinity]);
+				ok(item.get('testNA').equals([1, 2.2, 3, Infinity]),
+						'calcが[1, 2.2, 3, Infinity]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testIA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('na', [null, null]);
+				ok(item.get('testNA').equals([null, null]),
+						'calcが[null,null]を返した時、ObservableArrayに変換されて格納されること');
+
+				item.set('na', undefined);
+				ok(item.get('testNA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+				// boolean
+				ok(h5.core.data.isObservableArray(item.get('testBA')),
+						'【type:boolean[]】 calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testBA').equals([]), '中身は空であること');
+
+				item.set('ba', []);
+				ok(h5.core.data.isObservableArray(item.get('testBA')),
+						'calcが[]を返したらObservableArrayに変換されること');
+
+				instance = item.get('testIA');
+
+				item.set('ba', [true, false]);
+				ok(item.get('testBA').equals([true, false]),
+						'calcが[true, false]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testIA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('ba', [null, true]);
+				ok(item.get('testBA').equals([null, true]),
+						'calcが[null,true]を返した時、ObservableArrayに変換されて格納されること');
+
+				item.set('ba', undefined);
+				ok(item.get('testBA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+				// any
+				ok(h5.core.data.isObservableArray(item.get('testAA')),
+						'【type:any[]】 calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testAA').equals([]), '中身は空であること');
+
+				item.set('aa', []);
+				ok(h5.core.data.isObservableArray(item.get('testAA')),
+						'calcが[]を返したらObservableArrayに変換されること');
+
+				instance = item.get('testIA');
+
+				var ary = [3, {
+					a: 3
+				}, true, null, new Date(), item];
+
+				item.set('aa', ary);
+				ok(item.get('testAA').equals(ary),
+						'calcが[3, {a: 3}, true, null, new Date(), object]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testIA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('aa', undefined);
+				ok(item.get('testAA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+			});
 
 	test('set,createで値の変更がない場合はdpend.calcは実行されないこと', 4, function() {
 		var eventObj;
@@ -7478,7 +7670,7 @@ $(function() {
 		}
 	});
 
-	test('depend.calcが指定された型と違う値を返したら、エラーになること（自動型変換もされないこと）', 15, function() {
+	test('calcが返す値の型チェックが行われること（自動型変換はされません）', 15, function() {
 		// 型指定とdependのあるモデルを作成
 		var model = manager.createModel({
 			name: 'AutoBoxingDependDataModel',

@@ -69,6 +69,11 @@
 	 */
 	var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 17007;
 
+	/**
+	 * depend.calcが制約を満たさない値を返している
+	 */
+	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 17008;
+
 	// ---------------------------
 	// スキーマのエラーコード(detailに入れるメッセージID)
 	// ---------------------------
@@ -260,6 +265,44 @@
 	// Functions
 	// =============================
 	/**
+	 * Itemとプロパティ名を引数にとり、_valuesに格納されている値を返す
+	 *
+	 * @private
+	 * @param {DataItem|ObservableItem} item DataItemまたはObservableItem
+	 * @param {String} prop プロパティ名
+	 * @returns {Any} Item._values[prop]
+	 */
+	function getValue(item, prop) {
+		return item._values[prop];
+	}
+
+	/**
+	 * Itemとプロパティ名と値引数にとり、Item._valuesに値を格納する
+	 *
+	 * @private
+	 * @param {DataItem|ObservableItem} item DataItemまたはObservableItem
+	 * @param {String} prop プロパティ名
+	 * @param {Any} value 値
+	 */
+	function setValue(item, prop, value) {
+		item._values[prop] = value;
+	}
+
+	/**
+	 * 渡されたタイプ指定文字が配列かどうかを返します
+	 *
+	 * @private
+	 * @param {String} typeStr タイプ指定文字列
+	 * @returns {Boolean} タイプ指定文字列が配列指定かどうか
+	 */
+	function isTypeArray(typeStr) {
+		if (!typeStr) {
+			return false;
+		}
+		return typeStr.indexOf('[]') !== -1;
+	}
+
+	/**
 	 * validateDescriptor, validateDescriptor/Schema/DefaultValueが返すエラー情報の配列に格納するエラーオブジェクトを作成する
 	 *
 	 * @private
@@ -287,6 +330,116 @@
 		/* del end */
 	}
 
+	/**
+	 * 依存プロパティの再計算を行います。再計算後の値はitemの各依存プロパティに代入されます。
+	 *
+	 * @param {DataModel} model データモデル
+	 * @param {DataItem} item データアイテム
+	 * @param {Object} event プロパティ変更イベント
+	 * @param {String|String[]} changedProps 今回変更されたプロパティ
+	 * @param {Boolean} isCreate create時に呼ばれたものかどうか。createなら値の変更を見ずに無条件でcalcを実行する
+	 * @returns {Object} { dependProp1: { oldValue, newValue }, ... } という構造のオブジェクト
+	 */
+	function calcDependencies(model, item, event, changedProps, isCreate) {
+		// 今回の変更に依存する、未計算のプロパティ
+		var targets = [];
+
+		var dependsMap = model._dependencyMap;
+
+		/**
+		 * この依存プロパティが計算可能（依存するすべてのプロパティの再計算が完了している）かどうかを返します。
+		 * 依存しているプロパティが依存プロパティでない場合は常にtrue(計算済み)を返します
+		 * 依存しているプロパティが依存プロパティが今回の変更されたプロパティに依存していないならtrue(計算済み)を返します
+		 */
+		function isReady(dependProp) {
+			var deps = wrapInArray(model.schema[dependProp].depend.on);
+			for ( var i = 0, len = deps.length; i < len; i++) {
+				if ($.inArray(deps[i], model._realProperty) === -1
+						&& $.inArray(deps[i], targets) !== -1) {
+					// 依存先が実プロパティでなく、未計算のプロパティであればfalseを返す
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/**
+		 * changedPropsで指定されたプロパティに依存するプロパティをtargetArrayに追加する
+		 */
+		function addDependencies(targetArray, srcProps) {
+			for ( var i = 0, len = srcProps.length; i < len; i++) {
+				var depends = dependsMap[srcProps[i]];
+
+				if (!depends) {
+					continue;
+				}
+
+				for ( var j = 0, jlen = depends.length; j < jlen; j++) {
+					var dprop = depends[j];
+					if ($.inArray(dprop, targetArray) === -1) {
+						targetArray.push(dprop);
+					}
+				}
+			}
+		}
+
+		var ret = {};
+
+		if (isCreate) {
+			// createならすべての実プロパティに依存するプロパティを列挙する
+			// create時にundefinedがセットされた場合、変更なしなのでchangedPropsに入らないが、calcは計算させる
+			targets = model._dependProps.slice();
+		} else {
+			//今回変更された実プロパティに依存するプロパティを列挙
+			addDependencies(targets, wrapInArray(changedProps));
+		}
+
+		while (targets.length !== 0) {
+			var restTargets = [];
+
+			//各依存プロパティについて、計算可能（依存するすべてのプロパティが計算済み）なら計算する
+			for ( var i = 0, len = targets.length; i < len; i++) {
+				var dp = targets[i];
+
+				if (isReady(dp)) {
+					var newValue = model.schema[dp].depend.calc.call(item, event);
+
+					// 型変換を行わない厳密チェックで、戻り値をチェックする
+					var errReason = model._itemValueCheckFuncs[dp](newValue, true);
+					if (errReason.length !== 0) {
+						// calcの返した値が型・制約違反ならエラー
+						throwFwError(ERR_CODE_CALC_RETURNED_INVALID_VALUE, [dp, newValue]);
+					}
+					ret[dp] = {
+						oldValue: getValue(item, dp),
+						newValue: newValue
+					};
+					// calcの結果をセット
+					if (model.schema[dp] && isTypeArray(model.schema[dp].type)) {
+						//配列の場合は値のコピーを行う。ただし、コピー元がnullの場合があり得る(type:[]はnullable)
+						//その場合は空配列をコピー
+						if (newValue) {
+							getValue(item, dp).copyFrom(newValue);
+						} else {
+							getValue(item, dp).copyFrom([]);
+						}
+					} else {
+						setValue(item, dp, newValue);
+					}
+				} else {
+					restTargets.push(dp);
+				}
+			}
+
+			//今回計算対象となったプロパティに（再帰的に）依存するプロパティをrestに追加
+			//restTargetsは「今回計算できなかったプロパティ＋新たに依存関係が発見されたプロパティ」が含まれる
+			addDependencies(restTargets, targets);
+
+			targets = restTargets;
+		}
+
+		return ret;
+	}
 	//========================================================
 	//
 	// バリデーション関係コードここから
@@ -297,7 +450,8 @@
 	 *
 	 * @private
 	 * @param {String} type
-	 * @returns {Object} typeをパースした結果オブジェクト。 elmType:タイプから配列部分を除いた文字列。dataModel:データモデル名。dimension:配列の深さ(配列指定でない場合は0)
+	 * @returns {Object} typeをパースした結果オブジェクト。
+	 *          elmType:タイプから配列部分を除いた文字列。dataModel:データモデル名。dimension:配列の深さ(配列指定でない場合は0)
 	 */
 	function getTypeObjFromString(type) {
 		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
@@ -1463,8 +1617,7 @@
 	/**
 	 * ObservableArray(オブザーバブルアレイ)とは、配列操作の監視可能な配列です。
 	 * <p>
-	 * <a
-	 * href="h5.core.data.html#createObservableArray">h5.core.data.createObservableArray()</a>で作成します。
+	 * <a href="h5.core.data.html#createObservableArray">h5.core.data.createObservableArray()</a>で作成します。
 	 * </p>
 	 * <p>
 	 * 通常の配列と同様の操作に加え、要素の追加、削除、変更についての監視ができます。
@@ -1628,8 +1781,7 @@
 	/**
 	 * ObservableItem(オブザーバブルアアイテム)とは、プロパティ操作の監視可能なオブジェクトです。
 	 * <p>
-	 * <a
-	 * href="h5.core.data.html#createObservableItem">h5.core.data.createObservableItem()</a>で作成します。
+	 * <a href="h5.core.data.html#createObservableItem">h5.core.data.createObservableItem()</a>で作成します。
 	 * </p>
 	 * <p>
 	 * <a href="DataItem.html">データアイテム</a>と同様、get/setで値の読み書きを行います。
@@ -1684,6 +1836,15 @@
 		this._internal = {
 
 			/**
+			 * スキーマオブジェクト
+			 *
+			 * @memberOf ObservableItem._internal
+			 * @since 1.1.1
+			 * @type Object
+			 */
+			schema: schema,
+
+			/**
 			 * プロパティの依存関係マップ
 			 *
 			 * @private
@@ -1691,7 +1852,7 @@
 			 * @since 1.1.0
 			 * @type Object
 			 */
-			dependencyMap: createDependencyMap(schema),
+			_dependencyMap: createDependencyMap(schema),
 
 			/**
 			 * モデルが持つ依存プロパティ
@@ -1729,7 +1890,7 @@
 			 * @since 1.1.0
 			 * @type Object
 			 */
-			itemValueCheckFuncs: itemValueCheckFuncs,
+			_itemValueCheckFuncs: itemValueCheckFuncs,
 
 			nullProps: {}
 		};
@@ -1744,6 +1905,15 @@
 		 */
 		this._values = {};
 
+		// 値に変更があったプロパティ(最初なので、全てのプロパティ)
+		var changedProps = [];
+
+		// イベントオブジェクト(最初なのでtype:'create', propsには全ての実プロパティ。
+		var event = {
+			props: {},
+			target: this,
+			type: 'create'
+		};
 		// this._valuesに値(defaultValue)のセット
 		for ( var p in schema) {
 			if ($.inArray(p, aryProps) !== -1) {
@@ -1751,26 +1921,56 @@
 				this._internal.nullProps[p] = true;
 
 				if (schema[p].hasOwnProperty('defaultValue')) {
-					// null,undefなら空配列にする
-					var defVal;
-
-					if (schema[p].defaultValue == null) {
-						defVal = [];
-					} else {
-						defVal = schema[p].defaultValue;
+					// null,undefなら空ObservableArrayにする
+					if (schema[p].defaultValue != null) {
+						this._values[p].copyFrom(schema[p].defaultValue);
 						this._internal.nullProps[p] = false;
 					}
+				}
 
-					this._values[p].copyFrom(defVal);
+				if ($.inArray(p, realProps) !== -1) {
+					// 実プロパティの場合はeventに格納
+					changedProps.push(p);
+					event.props[p] = {
+						newValue: this._values[p],
+						oldValue: undefined
+					};
 				}
 				continue;
 			}
-			if (schema[p] && schema[p].hasOwnProperty('defaultValue')) {
-				this._values[p] = schema[p].defaultValue;
+
+			if ($.inArray(p, dependProps) !== -1) {
+				// 依存プロパティでかつ配列でもないなら何もしない
 				continue;
 			}
-			this._values[p] = null;
+			changedProps.push(p);
+
+			if (schema[p] && schema[p].hasOwnProperty('defaultValue')) {
+				var defVal = schema[p].defaultValue;
+				this._values[p] = defVal;
+				event.props[p] = {
+					newValue: defVal,
+					oldValue: undefined
+				};
+
+				continue;
+			}
+
+			// 実プロパティの初期値はnull, 依存プロパティの初期値はundefinedでevent.propsには入れない
+			if ($.inArray(p, realProps) !== -1) {
+				var defVal = null;
+				this._values[p] = defVal;
+				event.props[p] = {
+					newValue: defVal,
+					oldValue: undefined
+				}
+			} else {
+				this._values[p] = undefined;
+			}
 		}
+
+		// 依存項目の計算
+		calcDependencies(this._internal, this, event, changedProps);
 
 		//-----------------------------------------------------------------------
 		// 配列プロパティについて、イベント管理用のリスナをaddEventListenerする
@@ -1894,14 +2094,14 @@
 					}
 				}
 				//値のチェック
-				var validateResult = this._internal.itemValueCheckFuncs[p](val);
+				var validateResult = this._internal._itemValueCheckFuncs[p](val);
 				if (validateResult.length) {
 					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
 				}
 			}
 
 			// 値に変更があればセット
-			var isChanged = false;
+			var changedProps = [];
 			for ( var p in setObj) {
 				var v = setObj[p];
 				var oldValue = this._values[p];
@@ -1927,17 +2127,20 @@
 					newValue: this._values[p]
 				};
 
-				isChanged = true;
+				changedProps.push(p);
 			}
 			this._internal.isInSet = false;
 
-			// 変更があればイベントの発火
-			if (isChanged) {
-				this.dispatchEvent({
+			if (changedProps.length != 0) {
+				// 変更があれば依存項目の計算とイベントの発火
+				var event = {
 					target: this,
 					type: 'change',
 					props: props
-				});
+				};
+				// 依存項目の計算
+				calcDependencies(this._internal, this, event, changedProps);
+				this.dispatchEvent(event);
 			}
 		},
 
@@ -2086,6 +2289,10 @@
 		isNumberValue: isNumberValue,
 		isStringValue: isStringValue,
 		unbox: unbox,
-		EventDispatcher: EventDispatcher
+		EventDispatcher: EventDispatcher,
+		calcDependencies: calcDependencies,
+		getValue: getValue,
+		setValue: setValue,
+		isTypeArray: isTypeArray
 	};
 })();
