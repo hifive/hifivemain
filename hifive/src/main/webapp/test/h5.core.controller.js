@@ -6304,7 +6304,8 @@ $(function() {
 
 	asyncTest(
 			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]mouse系とh5track系のイベントを両方バインドした場合、両方のハンドラが動作すること(mouse系) ※マウスイベントのないブラウザでは失敗します',
-			6, function() {
+			6,
+			function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (hasTouchEvent) {
 					ok(false, 'touch系イベントのあるブラウザでは失敗します');
@@ -6316,81 +6317,111 @@ $(function() {
 				var startMouseEvent = 'mousedown';
 				var endMouseEvent = 'mouseup';
 
-				var trackEvents = [];
-				var mouseEvents = [];
+				var trackEvents = {};
+				var mouseEvents = {};
 				var $elm = $('#controllerTest');
 				$elm.append('<div id="divInControllerTest"></div>');
 				$inElm = $('#divInControllerTest');
-				var aController = h5.core.controller($elm, {
-					__name: 'aController',
+				var aController = h5.core
+						.controller(
+								$elm,
+								{
+									__name: 'aController',
 
-					'{rootElement} h5trackstart': function(context) {
-						trackEvents.push('p-h5trackstart');
-					},
-					'{rootElement} h5trackmove': function(context) {
-						trackEvents.push('p-h5trackmove');
-					},
-					'{rootElement} h5trackend': function(context) {
-						trackEvents.push('p-h5trackend');
-					},
-					'{rootElement} mousedown': function(context) {
-						mouseEvents.push('p-mousedown');
-					},
-					'{rootElement} mousemove': function(context) {
-						mouseEvents.push('p-mousemove');
-					},
-					'{rootElement} mouseup': function(context) {
-						mouseEvents.push('p-mouseup');
-					},
+									'{rootElement} h5trackstart': function(context) {
+										trackEvents.p_h5trackstart = trackEvents.p_h5trackstart ? trackEvents.p_h5trackstart + 1
+												: 1;
+									},
+									'{rootElement} h5trackmove': function(context) {
+										trackEvents.p_h5trackmove = trackEvents.p_h5trackmove ? trackEvents.p_h5trackmove + 1
+												: 1;
+									},
+									'{rootElement} h5trackend': function(context) {
+										trackEvents.p_h5trackend = trackEvents.p_h5trackend ? trackEvents.p_h5trackend + 1
+												: 1;
+									},
+									'{rootElement} mousedown': function(context) {
+										mouseEvents.p_mousedown = mouseEvents.p_mousedown ? mouseEvents.p_mousedown + 1
+												: 1;
+									},
+									'{rootElement} mousemove': function(context) {
+										mouseEvents.p_mousemove = mouseEvents.p_mousemove ? mouseEvents.p_mousemove + 1
+												: 1;
+									},
+									'{rootElement} mouseup': function(context) {
+										mouseEvents.p_mouseup = mouseEvents.p_mouseup ? mouseEvents.p_mouseup + 1
+												: 1;
+									},
 
-					'#divInControllerTest h5trackstart': function(context) {
-						trackEvents.push('c-h5trackstart');
-					},
-					'#divInControllerTest h5trackmove': function(context) {
-						trackEvents.push('c-h5trackmove');
-					},
-					'#divInControllerTest h5trackend': function(context) {
-						trackEvents.push('c-h5trackend');
-					},
-					'#divInControllerTest mousedown': function(context) {
-						mouseEvents.push('c-mousedown');
-					},
-					'#divInControllerTest mousemove': function(context) {
-						mouseEvents.push('c-mousemove');
-					},
-					'#divInControllerTest mouseup': function(context) {
-						mouseEvents.push('c-mouseup');
-					}
-				});
+									'#divInControllerTest h5trackstart': function(context) {
+										trackEvents.c_h5trackstart = trackEvents.c_h5trackstart ? trackEvents.c_h5trackstart + 1
+												: 1;
+									},
+									'#divInControllerTest h5trackmove': function(context) {
+										trackEvents.c_h5trackmove = trackEvents.c_h5trackmove ? trackEvents.c_h5trackmove + 1
+												: 1;
+									},
+									'#divInControllerTest h5trackend': function(context) {
+										trackEvents.c_h5trackend = trackEvents.c_h5trackend ? trackEvents.c_h5trackend + 1
+												: 1;
+									},
+									'#divInControllerTest mousedown': function(context) {
+										mouseEvents.c_mousedown = mouseEvents.c_mousedown ? mouseEvents.c_mousedown + 1
+												: 1;
+									},
+									'#divInControllerTest mousemove': function(context) {
+										mouseEvents.c_mousemove = mouseEvents.c_mousemove ? mouseEvents.c_mousemove + 1
+												: 1;
+									},
+									'#divInControllerTest mouseup': function(context) {
+										mouseEvents.c_mouseup = mouseEvents.c_mouseup ? mouseEvents.c_mouseup + 1
+												: 1;
+									}
+								});
 
 				aController.readyPromise.done(function() {
+					var exp = {};
+
 					// ドラッグ開始
 					$inElm.trigger(startMouseEvent);
-					deepEqual(trackEvents, ['c-h5trackstart', 'p-h5trackstart'],
-							'h5trackstartイベントハンドラが実行されていること');
-					deepEqual(mouseEvents, ['c-' + startMouseEvent, 'p-' + startMouseEvent],
-							'mousedownイベントハンドラが実行されていること');
-					trackEvents = [];
-					mouseEvents = [];
+					deepEqual(trackEvents, {
+						c_h5trackstart: 1,
+						p_h5trackstart: 1
+					}, 'h5trackstartイベントハンドラが実行されていること');
+					exp = {};
+					exp['c_' + startMouseEvent] = 1;
+					exp['p_' + startMouseEvent] = 1;
+					deepEqual(mouseEvents, exp, 'mousedownイベントハンドラが実行されていること');
+					trackEvents = {};
+					mouseEvents = {};
 
 					// ドラッグ
 					$inElm.trigger(moveMouseEvent);
-					deepEqual(trackEvents, ['c-h5trackmove', 'p-h5trackmove'],
-							'h5trackmoveイベントハンドラが実行されていること');
-					deepEqual(mouseEvents, ['c-' + moveMouseEvent, 'p-' + moveMouseEvent],
-							'mousemoveイベントハンドラが実行されていること');
-					trackEvents = [];
-					mouseEvents = [];
+					deepEqual(trackEvents, {
+						c_h5trackmove: 1,
+						p_h5trackmove: 1
+					}, 'h5trackmoveイベントハンドラが実行されていること');
+
+					exp = {};
+					exp['c_' + moveMouseEvent] = 1;
+					exp['p_' + moveMouseEvent] = 1;
+					deepEqual(mouseEvents, exp, 'mousemoveイベントハンドラが実行されていること');
+					trackEvents = {};
+					mouseEvents = {};
 
 
 					// ドラッグ終了
 					$inElm.trigger(endMouseEvent);
-					deepEqual(trackEvents, ['c-h5trackend', 'p-h5trackend'],
-							'h5trackendイベントハンドラが実行されていること');
-					deepEqual(mouseEvents, ['c-' + endMouseEvent, 'p-' + endMouseEvent],
-							'mouseupイベントハンドラが実行されていること');
-					trackEvents = [];
-					mouseEvents = [];
+					deepEqual(trackEvents, {
+						c_h5trackend: 1,
+						p_h5trackend: 1
+					}, 'h5trackendイベントハンドラが実行されていること');
+					exp = {};
+					exp['c_' + endMouseEvent] = 1;
+					exp['p_' + endMouseEvent] = 1;
+					deepEqual(mouseEvents, exp, 'mouseupイベントハンドラが実行されていること');
+					trackEvents = {};
+					mouseEvents = {};
 
 					aController.unbind();
 					$elm.remove();
@@ -6399,8 +6430,9 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]mouse系とh5track系のイベントを両方バインドした場合、両方のハンドラが動作すること(touch系) ※タッチイベントのないブラウザでは失敗します',
-			6, function() {
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]touch系とh5track系のイベントを両方バインドした場合、両方のハンドラが動作すること(touch系) ※タッチイベントのないブラウザでは失敗します',
+			6,
+			function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (!hasTouchEvent) {
 					ok(false, 'touch系イベントのないブラウザでは失敗します');
@@ -6412,81 +6444,111 @@ $(function() {
 				var startMouseEvent = 'touchstart';
 				var endMouseEvent = 'touchend';
 
-				var trackEvents = [];
-				var mouseEvents = [];
+				var trackEvents = {};
+				var mouseEvents = {};
 				var $elm = $('#controllerTest');
 				$elm.append('<div id="divInControllerTest"></div>');
 				$inElm = $('#divInControllerTest');
-				var aController = h5.core.controller($elm, {
-					__name: 'aController',
+				var aController = h5.core
+						.controller(
+								$elm,
+								{
+									__name: 'aController',
 
-					'{rootElement} h5trackstart': function(context) {
-						trackEvents.push('p-h5trackstart');
-					},
-					'{rootElement} h5trackmove': function(context) {
-						trackEvents.push('p-h5trackmove');
-					},
-					'{rootElement} h5trackend': function(context) {
-						trackEvents.push('p-h5trackend');
-					},
-					'{rootElement} mousedown': function(context) {
-						mouseEvents.push('p-mousedown');
-					},
-					'{rootElement} mousemove': function(context) {
-						mouseEvents.push('p-mousemove');
-					},
-					'{rootElement} mouseup': function(context) {
-						mouseEvents.push('p-mouseup');
-					},
+									'{rootElement} h5trackstart': function(context) {
+										trackEvents.p_h5trackstart = trackEvents.p_h5trackstart ? trackEvents.p_h5trackstart + 1
+												: 1;
+									},
+									'{rootElement} h5trackmove': function(context) {
+										trackEvents.p_h5trackmove = trackEvents.p_h5trackmove ? trackEvents.p_h5trackmove + 1
+												: 1;
+									},
+									'{rootElement} h5trackend': function(context) {
+										trackEvents.p_h5trackend = trackEvents.p_h5trackend ? trackEvents.p_h5trackend + 1
+												: 1;
+									},
+									'{rootElement} touchstart': function(context) {
+										mouseEvents.p_touchstart = mouseEvents.p_touchstart ? mouseEvents.p_touchstart + 1
+												: 1;
+									},
+									'{rootElement} touchmove': function(context) {
+										mouseEvents.p_touchmove = mouseEvents.p_touchmove ? mouseEvents.p_touchmove + 1
+												: 1;
+									},
+									'{rootElement} touchend': function(context) {
+										mouseEvents.p_touchend = mouseEvents.p_touchend ? mouseEvents.p_touchend + 1
+												: 1;
+									},
 
-					'#divInControllerTest h5trackstart': function(context) {
-						trackEvents.push('c-h5trackstart');
-					},
-					'#divInControllerTest h5trackmove': function(context) {
-						trackEvents.push('c-h5trackmove');
-					},
-					'#divInControllerTest h5trackend': function(context) {
-						trackEvents.push('c-h5trackend');
-					},
-					'#divInControllerTest touchstart': function(context) {
-						mouseEvents.push('c-mousedown');
-					},
-					'#divInControllerTest touchmove': function(context) {
-						mouseEvents.push('c-mousemove');
-					},
-					'#divInControllerTest touchend': function(context) {
-						mouseEvents.push('c-mouseup');
-					}
-				});
+									'#divInControllerTest h5trackstart': function(context) {
+										trackEvents.c_h5trackstart = trackEvents.c_h5trackstart ? trackEvents.c_h5trackstart + 1
+												: 1;
+									},
+									'#divInControllerTest h5trackmove': function(context) {
+										trackEvents.c_h5trackmove = trackEvents.c_h5trackmove ? trackEvents.c_h5trackmove + 1
+												: 1;
+									},
+									'#divInControllerTest h5trackend': function(context) {
+										trackEvents.c_h5trackend = trackEvents.c_h5trackend ? trackEvents.c_h5trackend + 1
+												: 1;
+									},
+									'#divInControllerTest touchstart': function(context) {
+										mouseEvents.c_touchstart = mouseEvents.c_touchstart ? mouseEvents.c_touchstart + 1
+												: 1;
+									},
+									'#divInControllerTest touchmove': function(context) {
+										mouseEvents.c_touchmove = mouseEvents.c_touchmove ? mouseEvents.c_touchmove + 1
+												: 1;
+									},
+									'#divInControllerTest touchend': function(context) {
+										mouseEvents.c_touchend = mouseEvents.c_touchend ? mouseEvents.c_touchend + 1
+												: 1;
+									}
+								});
 
 				aController.readyPromise.done(function() {
+					var exp = {};
+
 					// ドラッグ開始
 					$inElm.trigger(startMouseEvent);
-					deepEqual(trackEvents, ['c-h5trackstart', 'p-h5trackstart'],
-							'h5trackstartイベントハンドラが実行されていること');
-					deepEqual(mouseEvents, ['c-' + startMouseEvent, 'p-' + startMouseEvent],
-							'mousedownイベントハンドラが実行されていること');
-					trackEvents = [];
-					mouseEvents = [];
+					deepEqual(trackEvents, {
+						c_h5trackstart: 1,
+						p_h5trackstart: 1
+					}, 'h5trackstartイベントハンドラが実行されていること');
+					exp = {};
+					exp['c_' + startMouseEvent] = 1;
+					exp['p_' + startMouseEvent] = 1;
+					deepEqual(mouseEvents, exp, 'touchstartイベントハンドラが実行されていること');
+					trackEvents = {};
+					mouseEvents = {};
 
 					// ドラッグ
 					$inElm.trigger(moveMouseEvent);
-					deepEqual(trackEvents, ['c-h5trackmove', 'p-h5trackmove'],
-							'h5trackmoveイベントハンドラが実行されていること');
-					deepEqual(mouseEvents, ['c-' + moveMouseEvent, 'p-' + moveMouseEvent],
-							'mousemoveイベントハンドラが実行されていること');
-					trackEvents = [];
-					mouseEvents = [];
+					deepEqual(trackEvents, {
+						c_h5trackmove: 1,
+						p_h5trackmove: 1
+					}, 'h5trackmoveイベントハンドラが実行されていること');
+
+					exp = {};
+					exp['c_' + moveMouseEvent] = 1;
+					exp['p_' + moveMouseEvent] = 1;
+					deepEqual(mouseEvents, exp, 'touchmoveイベントハンドラが実行されていること');
+					trackEvents = {};
+					mouseEvents = {};
 
 
 					// ドラッグ終了
 					$inElm.trigger(endMouseEvent);
-					deepEqual(trackEvents, ['c-h5trackend', 'p-h5trackend'],
-							'h5trackendイベントハンドラが実行されていること');
-					deepEqual(mouseEvents, ['c-' + endMouseEvent, 'p-' + endMouseEvent],
-							'mouseupイベントハンドラが実行されていること');
-					trackEvents = [];
-					mouseEvents = [];
+					deepEqual(trackEvents, {
+						c_h5trackend: 1,
+						p_h5trackend: 1
+					}, 'h5trackendイベントハンドラが実行されていること');
+					exp = {};
+					exp['c_' + endMouseEvent] = 1;
+					exp['p_' + endMouseEvent] = 1;
+					deepEqual(mouseEvents, exp, 'touchendイベントハンドラが実行されていること');
+					trackEvents = {};
+					mouseEvents = {};
 
 					aController.unbind();
 					$elm.remove();
