@@ -48,11 +48,6 @@ $(function() {
 	var $fixture = $('#qunit-fixture');
 
 	/**
-	 * データバインディングのエラーコード定数
-	 */
-	var ERR_BIND = ERRCODE.h5.core.view_binding;
-
-	/**
 	 * viewのエラーコード定数
 	 */
 	var ERR_VIEW = ERRCODE.h5.core.view;
@@ -422,7 +417,7 @@ $(function() {
 				});
 				ok(false, 'テスト失敗。エラーが発生してません' + noArys[i]);
 			} catch (e) {
-				strictEqual(e.code, ERR_BIND.ERR_CODE_INVALID_CONTEXT_SRC, e.message);
+				strictEqual(e.code, ERR_VIEW.ERR_CODE_INVALID_CONTEXT_SRC, e.message);
 			}
 			$fixture.find('div').remove();
 		}
@@ -561,7 +556,7 @@ $(function() {
 					}]
 				});
 			}, function(actual) {
-				return ERR_BIND.ERR_CODE_INVALID_CONTEXT_SRC === actual.code;
+				return ERR_VIEW.ERR_CODE_INVALID_CONTEXT_SRC === actual.code;
 			}, 'コンテキストにArrayまたはObservableArrayを指定していないためエラーになること"');
 
 			$fixture.children().remove();
@@ -2041,7 +2036,7 @@ $(function() {
 				id: 'bindTest123'
 			});
 		}, function(actual) {
-			return ERR_BIND.ERR_CODE_REQUIRE_DETAIL === actual.code;
+			return ERR_VIEW.ERR_CODE_REQUIRE_DETAIL === actual.code;
 		}, 'data-h5-bindのattrに属性名を指定していないためエラーになること"');
 	});
 
@@ -2088,7 +2083,7 @@ $(function() {
 				color: 'red'
 			});
 		}, function(actual) {
-			return ERR_BIND.ERR_CODE_REQUIRE_DETAIL === actual.code;
+			return ERR_VIEW.ERR_CODE_REQUIRE_DETAIL === actual.code;
 		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
 
@@ -2149,7 +2144,7 @@ $(function() {
 				id: 'bindTest123'
 			});
 		}, function(actual) {
-			return ERR_BIND.ERR_CODE_UNKNOWN_BIND_DIRECTION === actual.code;
+			return ERR_VIEW.ERR_CODE_UNKNOWN_BIND_DIRECTION === actual.code;
 		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
 

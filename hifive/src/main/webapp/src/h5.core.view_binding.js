@@ -56,13 +56,13 @@
 
 	// エラーコード
 	/** data-h5-bindでattr, styleバインドを行う場合は、「style(color)」のように具体的なバインド先を指定する必要があります。 */
-	var ERR_CODE_REQUIRE_DETAIL = 16000;
+	var ERR_CODE_REQUIRE_DETAIL = 7100;
 
 	/** 不明なバインド先が指定されました。html,style等決められたバインド先を指定してください。 */
-	var ERR_CODE_UNKNOWN_BIND_DIRECTION = 16001;
+	var ERR_CODE_UNKNOWN_BIND_DIRECTION = 7101;
 
 	/** コンテキスト値が不正です。data-h5-contextの場合はオブジェクト、data-h5-loop-contextの場合は配列を指定してください。 */
-	var ERR_CODE_INVALID_CONTEXT_SRC = 16002;
+	var ERR_CODE_INVALID_CONTEXT_SRC = 7102;
 
 
 	// =============================
