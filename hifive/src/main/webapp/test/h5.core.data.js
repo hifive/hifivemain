@@ -3582,6 +3582,256 @@ $(function() {
 
 			});
 
+
+	test('depend項目に対してregardAsNull()を実行する。calcがnullを返すときはtrue、calcがnull以外を返すときはfalseを返すこと', 42,
+			function() {
+				// calcが返す値
+				var regardsTestReturnValue = {};
+				// schema
+				var regardsTestDependSchema = {
+					id: {
+						id: true
+					},
+					dS: {
+						type: 'string',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dS;
+							}
+						}
+					},
+					dI: {
+						type: 'integer',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dI;
+							}
+						}
+					},
+					dN: {
+						type: 'number',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dN;
+							}
+						}
+					},
+					dB: {
+						type: 'boolean',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dB;
+							}
+						}
+					},
+					dE: {
+						type: 'enum',
+						enumValue: [1, 2],
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dE;
+							}
+						}
+					},
+					dD: {
+						type: '@TestDataModel1',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dD;
+							}
+						}
+					},
+					dA: {
+						type: 'any',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dA;
+							}
+						},
+					},
+					dSA: {
+						type: 'string[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dSA;
+							}
+						}
+					},
+					dIA: {
+						type: 'integer[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dIA;
+							}
+						}
+					},
+					dNA: {
+						type: 'number[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dNA;
+							}
+						}
+					},
+					dBA: {
+						type: 'boolean[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dBA;
+							}
+						}
+					},
+					dEA: {
+						type: 'enum[]',
+						enumValue: [1, 2],
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dEA;
+							}
+						}
+					},
+					dDA: {
+						type: '@TestDataModel1[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dDA;
+							}
+						}
+					},
+					dAA: {
+						type: 'any[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dAA;
+							}
+						}
+					},
+					on: null
+				};
+				var model = manager.createModel({
+					name: 'RegardsTestDependModel',
+					schema: regardsTestDependSchema
+				});
+
+				regardsTestReturnValue = {
+					dS: null,
+					dN: null,
+					dI: null,
+					dB: null,
+					dE: null,
+					dD: null,
+					dA: null,
+					dSA: null,
+					dNA: null,
+					dIA: null,
+					dBA: null,
+					dEA: null,
+					dDA: null,
+					dAA: null,
+				};
+				var item = model.create({
+					id: '1'
+				});
+				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
+				equal(item.regardAsNull('dN'), true, 'calcがnullをreturn type:number');
+				equal(item.regardAsNull('dI'), true, 'calcがnullをreturn type:integer');
+				equal(item.regardAsNull('dB'), true, 'calcがnullをreturn type:boolean');
+				equal(item.regardAsNull('dE'), true, 'calcがnullをreturn type:enum');
+				equal(item.regardAsNull('dD'), true, 'calcがnullをreturn type:@DataModel');
+				equal(item.regardAsNull('dA'), true, 'calcがnullをreturn type:any');
+				equal(item.regardAsNull('dSA'), true, 'calcがnullをreturn type:string[]');
+				equal(item.regardAsNull('dNA'), true, 'calcがnullをreturn type:number[]');
+				equal(item.regardAsNull('dIA'), true, 'calcがnullをreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), true, 'calcがnullをreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), true, 'calcがnullをreturn type:enum[]');
+				equal(item.regardAsNull('dDA'), true, 'calcがnullをreturn type:@DataModel[]');
+				equal(item.regardAsNull('dAA'), true, 'calcがnullをreturn type:any[]');
+
+				var dataModel1Item = dataModel1.create({
+					id: '1'
+				});
+				regardsTestReturnValue = {
+					dS: 'a',
+					dN: 1,
+					dI: 1,
+					dB: true,
+					dE: 1,
+					dD: dataModel1Item,
+					dA: 1,
+					dSA: ['a'],
+					dNA: [1],
+					dIA: [1],
+					dBA: [true],
+					dEA: [1],
+					dDA: [dataModel1Item],
+					dAA: [1],
+				};
+				item.set('on', 1);
+				equal(item.regardAsNull('dS'), false, 'calcがnull以外をreturn type:string');
+				equal(item.regardAsNull('dN'), false, 'calcがnull以外をreturn type:number');
+				equal(item.regardAsNull('dI'), false, 'calcがnull以外をreturn type:integer');
+				equal(item.regardAsNull('dB'), false, 'calcがnull以外をreturn type:boolean');
+				equal(item.regardAsNull('dE'), false, 'calcがnull以外をreturn type:enum');
+				equal(item.regardAsNull('dD'), false, 'calcがnull以外をreturn type:@DataModel');
+				equal(item.regardAsNull('dA'), false, 'calcがnull以外をreturn type:any');
+				equal(item.regardAsNull('dSA'), false, 'calcがnull以外をreturn type:string[]');
+				equal(item.regardAsNull('dNA'), false, 'calcがnull以外をreturn type:number[]');
+				equal(item.regardAsNull('dIA'), false, 'calcがnull以外をreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), false, 'calcがnull以外をreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), false, 'calcがnull以外をreturn type:enum[]');
+				equal(item.regardAsNull('dDA'), false, 'calcがnull以外をreturn type:@DataModel[]');
+				equal(item.regardAsNull('dAA'), false, 'calcがnull以外をreturn type:any[]');
+
+				// regardAsNullの結果が切り替わるかどうか、再度nullをreturnさせてテスト
+				regardsTestReturnValue = {
+					dS: null,
+					dN: null,
+					dI: null,
+					dB: null,
+					dE: null,
+					dD: null,
+					dA: null,
+					dSA: null,
+					dNA: null,
+					dIA: null,
+					dBA: null,
+					dEA: null,
+					dDA: null,
+					dAA: null,
+				};
+				item.set('on', 2);
+				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
+				equal(item.regardAsNull('dN'), true, 'calcがnullをreturn type:number');
+				equal(item.regardAsNull('dI'), true, 'calcがnullをreturn type:integer');
+				equal(item.regardAsNull('dB'), true, 'calcがnullをreturn type:boolean');
+				equal(item.regardAsNull('dE'), true, 'calcがnullをreturn type:enum');
+				equal(item.regardAsNull('dD'), true, 'calcがnullをreturn type:@DataModel');
+				equal(item.regardAsNull('dA'), true, 'calcがnullをreturn type:any');
+				equal(item.regardAsNull('dSA'), true, 'calcがnullをreturn type:string[]');
+				equal(item.regardAsNull('dNA'), true, 'calcがnullをreturn type:number[]');
+				equal(item.regardAsNull('dIA'), true, 'calcがnullをreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), true, 'calcがnullをreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), true, 'calcがnullをreturn type:enum[]');
+				equal(item.regardAsNull('dDA'), true, 'calcがnullをreturn type:@DataModel[]');
+				equal(item.regardAsNull('dAA'), true, 'calcがnullをreturn type:any[]');
+
+				dropAllModel(manager);
+			});
+
 	//=============================
 	// Definition
 	//=============================

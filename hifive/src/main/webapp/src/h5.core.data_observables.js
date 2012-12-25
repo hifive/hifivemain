@@ -422,10 +422,18 @@
 					if (model.schema[dp] && isTypeArray(model.schema[dp].type)) {
 						//配列の場合は値のコピーを行う。ただし、コピー元がnullの場合があり得る(type:[]はnullable)
 						//その場合は空配列をコピー
+
+						// DataItemの場合はimte._nullProps, ObsItemの場合はitem._internal._nullPropsにnullかどうかを保持する
+						// TODO 実装をObsItemとDataItemで統一する
+						var internal = item._internal || item;
 						if (newValue) {
 							getValue(item, dp).copyFrom(newValue);
+							// newValueがnullでないならregardAsNull()がtrueを返すようにする
+							internal._nullProps[dp] = false;
 						} else {
 							getValue(item, dp).copyFrom([]);
+							// newValueがnullまたはundefinedならregardAsNull()がtrueを返すようにする
+							internal._nullProps[dp] = true
 						}
 					} else {
 						setValue(item, dp, newValue);
@@ -1896,7 +1904,7 @@
 			 */
 			_itemValueCheckFuncs: itemValueCheckFuncs,
 
-			nullProps: {}
+			_nullProps: {}
 		};
 
 		/**
@@ -1922,13 +1930,13 @@
 		for ( var p in schema) {
 			if ($.inArray(p, aryProps) !== -1) {
 				this._values[p] = createObservableArray();
-				this._internal.nullProps[p] = true;
+				this._internal._nullProps[p] = true;
 
 				if (schema[p].hasOwnProperty('defaultValue')) {
 					// null,undefなら空ObservableArrayにする
 					if (schema[p].defaultValue != null) {
 						this._values[p].copyFrom(schema[p].defaultValue);
-						this._internal.nullProps[p] = false;
+						this._internal._nullProps[p] = false;
 					}
 				}
 
@@ -2092,9 +2100,9 @@
 				if ($.inArray(p, this._internal.aryProps) !== -1) {
 					if (val == null) {
 						val = [];
-						this._internal.nullProps[p] = true;
+						this._internal._nullProps[p] = true;
 					} else {
-						this._internal.nullProps[p] = false;
+						this._internal._nullProps[p] = false;
 					}
 				}
 				//値のチェック
@@ -2186,7 +2194,7 @@
 		 */
 		regardAsNull: function(key) {
 			if (this._isArrayProp(key)) {
-				return this._internal.nullProps[key] === true;
+				return this._internal._nullProps[key] === true;
 			}
 			return this.get(key) === null;
 		},

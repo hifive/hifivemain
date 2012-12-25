@@ -1231,4 +1231,412 @@ $(function() {
 			}
 		}
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	var regardsTestReturnValue = null;
+	module('DataItem.regardAsNull', {
+		regardsTestSchema: {
+			string: {
+				type: 'string'
+			},
+			number: {
+				type: 'number'
+			},
+			integer: {
+				type: 'integer'
+			},
+			boolean: {
+				type: 'boolean'
+			},
+			'enum': {
+				type: 'enum',
+				enumValue: [1]
+			},
+			any: {
+				type: 'any'
+			},
+			stringAr: {
+				type: 'string[]'
+			},
+			numberAr: {
+				type: 'number[]'
+			},
+			integerAr: {
+				type: 'integer[]'
+			},
+			booleanAr: {
+				type: 'boolean[]'
+			},
+			enumAr: {
+				type: 'enum[]',
+				enumValue: [1]
+			},
+			anyAr: {
+				type: 'any[]'
+			},
+			string2: {
+				type: 'string',
+				defaultValue: 'a'
+			},
+			number2: {
+				type: 'number',
+				defaultValue: 1.5
+			},
+			integer2: {
+				type: 'integer',
+				defaultValue: 1
+			},
+			boolean2: {
+				type: 'boolean',
+				defaultValue: false
+			},
+			enum2: {
+				type: 'enum',
+				enumValue: [1],
+				defaultValue: 1
+			},
+			any2: {
+				type: 'any',
+				defaultValue: $('<div></div>')
+			},
+			stringAr2: {
+				type: 'string[]',
+				defaultValue: ['A', 'B']
+			},
+			numberAr2: {
+				type: 'number[]',
+				defaultValue: [10.2, 3.55]
+			},
+			integerAr2: {
+				type: 'integer[]',
+				defaultValue: [12]
+			},
+			booleanAr2: {
+				type: 'boolean[]',
+				defaultValue: [false, true]
+			},
+			enumAr2: {
+				type: 'enum[]',
+				enumValue: [1],
+				defaultValue: [1, 1]
+			},
+			anyAr2: {
+				type: 'any[]',
+				defaultValue: [window]
+			}
+		},
+		regardsTestDependSchema: {
+			dS: {
+				type: 'string',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dS;
+					}
+				}
+			},
+			dI: {
+				type: 'integer',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dI;
+					}
+				}
+			},
+			dN: {
+				type: 'number',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dN;
+					}
+				}
+			},
+			dB: {
+				type: 'boolean',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dB;
+					}
+				}
+			},
+			dE: {
+				type: 'enum',
+				enumValue: [1, 2],
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dE;
+					}
+				}
+			},
+			dA: {
+				type: 'any',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dA;
+					}
+				},
+			},
+			dSA: {
+				type: 'string[]',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dSA;
+					}
+				}
+			},
+			dIA: {
+				type: 'integer[]',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dIA;
+					}
+				}
+			},
+			dNA: {
+				type: 'number[]',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dNA;
+					}
+				}
+			},
+			dBA: {
+				type: 'boolean[]',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dBA;
+					}
+				}
+			},
+			dEA: {
+				type: 'enum[]',
+				enumValue: [1, 2],
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dEA;
+					}
+				}
+			},
+			dAA: {
+				type: 'any[]',
+				depend: {
+					on: 'on',
+					calc: function() {
+						return regardsTestReturnValue.dAA;
+					}
+				}
+			},
+			on: null
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('生成直後のObservableItemに対してregardAsNull()を実行する', 22, function() {
+		var item = h5.core.data.createObservableItem(this.regardsTestSchema);
+		equal(item.regardAsNull('string'), true, 'type:string');
+		equal(item.regardAsNull('number'), true, 'type:number');
+		equal(item.regardAsNull('integer'), true, 'type:integer');
+		equal(item.regardAsNull('boolean'), true, 'type:boolean');
+		equal(item.regardAsNull('enum'), true, 'type:enum');
+		equal(item.regardAsNull('any'), true, 'type:any');
+		equal(item.regardAsNull('stringAr'), true, 'type:string[]');
+		equal(item.regardAsNull('numberAr'), true, 'type:number[]');
+		equal(item.regardAsNull('integerAr'), true, 'type:integer[]');
+		equal(item.regardAsNull('enumAr'), true, 'type:enum[]');
+		equal(item.regardAsNull('anyAr'), true, 'type:any[]');
+		equal(item.regardAsNull('string2'), false, 'type:string defaultValueあり');
+		equal(item.regardAsNull('number2'), false, 'type:number defaultValueあり');
+		equal(item.regardAsNull('integer2'), false, 'type:integer defaultValueあり');
+		equal(item.regardAsNull('boolean2'), false, 'type:boolean defaultValueあり');
+		equal(item.regardAsNull('enum2'), false, 'type:enum defaultValueあり');
+		equal(item.regardAsNull('any2'), false, 'type:any defaultValueあり');
+		equal(item.regardAsNull('stringAr2'), false, 'type:string[] defaultValueあり');
+		equal(item.regardAsNull('numberAr2'), false, 'type:number[] defaultValueあり');
+		equal(item.regardAsNull('integerAr2'), false, 'type:integer[] defaultValueあり');
+		equal(item.regardAsNull('enumAr2'), false, 'type:enum[] defaultValueあり');
+		equal(item.regardAsNull('anyAr2'), false, 'type:any[] defaultValueあり');
+	});
+
+	test('値を更新したObservableItemに対してregardAsNull()を実行する', 22, function() {
+		var item = h5.core.data.createObservableItem(this.regardsTestSchema);
+		item.set('string', 'A');
+		equal(item.regardAsNull('string'), false, 'type:string');
+		item.set('number', 8.9);
+		equal(item.regardAsNull('number'), false, 'type:number');
+		item.set('integer', 80);
+		equal(item.regardAsNull('integer'), false, 'type:integer');
+		item.set('boolean', false);
+		equal(item.regardAsNull('boolean'), false, 'type:boolean');
+		item.set('enum', 1);
+		equal(item.regardAsNull('enum'), false, 'type:enum');
+		item.set('any', $('<div></div>'));
+		equal(item.regardAsNull('any'), false, 'type:any');
+		item.set('stringAr', ['A']);
+		equal(item.regardAsNull('stringAr'), false, 'type:string[]');
+		item.set('numberAr', [10.2]);
+		equal(item.regardAsNull('numberAr'), false, 'type:number[]');
+		item.set('integerAr', [90]);
+		equal(item.regardAsNull('integerAr'), false, 'type:integer[]');
+		item.set('enumAr', [1, 1]);
+		equal(item.regardAsNull('enumAr'), false, 'type:enum[]');
+		item.set('anyAr', [document]);
+		equal(item.regardAsNull('anyAr'), false, 'type:any[]');
+		item.set('string2', null);
+
+		equal(item.regardAsNull('string2'), true, 'type:string defaultValueあり');
+		item.set('number2', null);
+		equal(item.regardAsNull('number2'), true, 'type:number defaultValueあり');
+		item.set('integer2', null);
+		equal(item.regardAsNull('integer2'), true, 'type:integer defaultValueあり');
+		item.set('boolean2', null);
+		equal(item.regardAsNull('boolean2'), true, 'type:boolean defaultValueあり');
+		item.set('enum2', null);
+		equal(item.regardAsNull('enum2'), true, 'type:enum defaultValueあり');
+		item.set('any2', null);
+		equal(item.regardAsNull('any2'), true, 'type:any defaultValueあり');
+		item.set('stringAr2', null);
+		equal(item.regardAsNull('stringAr2'), true, 'type:string[] defaultValueあり');
+		item.set('numberAr2', null);
+		equal(item.regardAsNull('numberAr2'), true, 'type:number[] defaultValueあり');
+		item.set('integerAr2', null);
+		equal(item.regardAsNull('integerAr2'), true, 'type:integer[] defaultValueあり');
+		item.set('enumAr2', null);
+		equal(item.regardAsNull('enumAr2'), true, 'type:enum[] defaultValueあり');
+		item.set('anyAr2', null);
+		equal(item.regardAsNull('anyAr2'), true, 'type:any[] defaultValueあり');
+	});
+
+	test('depend項目に対してcalcがnullを返すとき、regardAsNull()はtrueを返すこと', 12, function() {
+		regardsTestReturnValue = {
+			dS: null,
+			dN: null,
+			dI: null,
+			dB: null,
+			dE: null,
+			dA: null,
+			dSA: null,
+			dNA: null,
+			dIA: null,
+			dBA: null,
+			dEA: null,
+			dAA: null,
+		};
+		var item = h5.core.data.createObservableItem(this.regardsTestDependSchema);
+		equal(item.regardAsNull('dS'), true, 'type:string');
+		equal(item.regardAsNull('dN'), true, 'type:number');
+		equal(item.regardAsNull('dI'), true, 'type:integer');
+		equal(item.regardAsNull('dB'), true, 'type:boolean');
+		equal(item.regardAsNull('dE'), true, 'type:enum');
+		equal(item.regardAsNull('dA'), true, 'type:any');
+		equal(item.regardAsNull('dSA'), true, 'type:string[]');
+		equal(item.regardAsNull('dNA'), true, 'type:number[]');
+		equal(item.regardAsNull('dIA'), true, 'type:integer[]');
+		equal(item.regardAsNull('dBA'), true, 'type:boolean[]');
+		equal(item.regardAsNull('dEA'), true, 'type:enum[]');
+		equal(item.regardAsNull('dAA'), true, 'type:any[]');
+	});
+
+	test('depend項目に対してregardAsNull()を実行する。calcがnullを返すときはtrue、calcがnull以外を返すときはfalseを返すこと', 36,
+			function() {
+
+				regardsTestReturnValue = {
+					dS: null,
+					dN: null,
+					dI: null,
+					dB: null,
+					dE: null,
+					dA: null,
+					dSA: null,
+					dNA: null,
+					dIA: null,
+					dBA: null,
+					dEA: null,
+					dAA: null,
+				};
+				var item = h5.core.data.createObservableItem(this.regardsTestDependSchema);
+				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
+				equal(item.regardAsNull('dN'), true, 'calcがnullをreturn type:number');
+				equal(item.regardAsNull('dI'), true, 'calcがnullをreturn type:integer');
+				equal(item.regardAsNull('dB'), true, 'calcがnullをreturn type:boolean');
+				equal(item.regardAsNull('dE'), true, 'calcがnullをreturn type:enum');
+				equal(item.regardAsNull('dA'), true, 'calcがnullをreturn type:any');
+				equal(item.regardAsNull('dSA'), true, 'calcがnullをreturn type:string[]');
+				equal(item.regardAsNull('dNA'), true, 'calcがnullをreturn type:number[]');
+				equal(item.regardAsNull('dIA'), true, 'calcがnullをreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), true, 'calcがnullをreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), true, 'calcがnullをreturn type:enum[]');
+				equal(item.regardAsNull('dAA'), true, 'calcがnullをreturn type:any[]');
+
+				regardsTestReturnValue = {
+					dS: 'a',
+					dN: 1,
+					dI: 1,
+					dB: true,
+					dE: 1,
+					dA: 1,
+					dSA: ['a'],
+					dNA: [1],
+					dIA: [1],
+					dBA: [true],
+					dEA: [1],
+					dAA: [1],
+				};
+				item.set('on', 1);
+				equal(item.regardAsNull('dS'), false, 'calcがnull以外をreturn type:string');
+				equal(item.regardAsNull('dN'), false, 'calcがnull以外をreturn type:number');
+				equal(item.regardAsNull('dI'), false, 'calcがnull以外をreturn type:integer');
+				equal(item.regardAsNull('dB'), false, 'calcがnull以外をreturn type:boolean');
+				equal(item.regardAsNull('dE'), false, 'calcがnull以外をreturn type:enum');
+				equal(item.regardAsNull('dA'), false, 'calcがnull以外をreturn type:any');
+				equal(item.regardAsNull('dSA'), false, 'calcがnull以外をreturn type:string[]');
+				equal(item.regardAsNull('dNA'), false, 'calcがnull以外をreturn type:number[]');
+				equal(item.regardAsNull('dIA'), false, 'calcがnull以外をreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), false, 'calcがnull以外をreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), false, 'calcがnull以外をreturn type:enum[]');
+				equal(item.regardAsNull('dAA'), false, 'calcがnull以外をreturn type:any[]');
+
+				// regardAsNullの結果が切り替わるかどうか、再度nullをreturnさせてテスト
+				regardsTestReturnValue = {
+					dS: null,
+					dN: null,
+					dI: null,
+					dB: null,
+					dE: null,
+					dA: null,
+					dSA: null,
+					dNA: null,
+					dIA: null,
+					dBA: null,
+					dEA: null,
+					dAA: null,
+				};
+				item.set('on', 2);
+				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
+				equal(item.regardAsNull('dN'), true, 'calcがnullをreturn type:number');
+				equal(item.regardAsNull('dI'), true, 'calcがnullをreturn type:integer');
+				equal(item.regardAsNull('dB'), true, 'calcがnullをreturn type:boolean');
+				equal(item.regardAsNull('dE'), true, 'calcがnullをreturn type:enum');
+				equal(item.regardAsNull('dA'), true, 'calcがnullをreturn type:any');
+				equal(item.regardAsNull('dSA'), true, 'calcがnullをreturn type:string[]');
+				equal(item.regardAsNull('dNA'), true, 'calcがnullをreturn type:number[]');
+				equal(item.regardAsNull('dIA'), true, 'calcがnullをreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), true, 'calcがnullをreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), true, 'calcがnullをreturn type:enum[]');
+				equal(item.regardAsNull('dAA'), true, 'calcがnullをreturn type:any[]');
+			});
 });
