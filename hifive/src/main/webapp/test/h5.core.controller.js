@@ -3667,6 +3667,161 @@ $(function() {
 			}
 		});
 	});
+
+	asyncTest(
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5track*イベントハンドラを、mouseイベントのトリガで発火させたときにcontext.evArgに引数が格納されること。(touchイベントのあるブラウザでは失敗します)',
+			6, function() {
+				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
+				if (hasTouchEvent) {
+					ok(false, 'touch系イベントのあるブラウザでは失敗します');
+					start();
+					return;
+				}
+
+				var moveMouseEvent = 'mousemove';
+				var startMouseEvent = 'mousedown';
+				var endMouseEvent = 'mouseup';
+
+				var evArg = null;
+				var $elm = $('#controllerTest');
+				var h5TrackTestController = h5.core.controller($elm, {
+					__name: 'h5TrackTestController',
+					'{rootElement} h5trackstart': function(context) {
+						evArg = context.evArg;
+					},
+					'{rootElement} h5trackmove': function(context) {
+						evArg = context.evArg;
+					},
+					'{rootElement} h5trackend': function(context) {
+						evArg = context.evArg;
+					}
+				});
+
+				h5TrackTestController.readyPromise.done(function() {
+					var obj = {
+						a: 1,
+						b: 2
+					};
+					var ary = [1, 'a'];
+					// ドラッグ開始
+					$elm.trigger(startMouseEvent, obj);
+					strictEqual(evArg, obj, startMouseEvent
+							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// ドラッグ
+					$elm.trigger(moveMouseEvent, 1);
+					strictEqual(evArg, 1, moveMouseEvent
+							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// ドラッグ終了
+					$elm.trigger(endMouseEvent, 'a');
+					strictEqual(evArg, 'a', endMouseEvent
+							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// 配列で複数渡した場合
+					// ドラッグ開始
+					$elm.trigger(startMouseEvent, [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], startMouseEvent
+							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// ドラッグ
+					$elm.trigger(moveMouseEvent, [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], moveMouseEvent
+							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// ドラッグ終了
+					$elm.trigger(endMouseEvent, [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], endMouseEvent
+							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					h5TrackTestController.unbind();
+					start();
+				});
+			});
+
+	asyncTest(
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]h5track*イベントハンドラを、touchイベントのトリガで発火させたときにcontext.evArgに引数が格納されること。(touchイベントのないブラウザでは失敗します)',
+			6, function() {
+				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
+				if (!hasTouchEvent) {
+					ok(false, 'touch系イベントのないブラウザでは失敗します');
+					start();
+					return;
+				}
+
+				var moveMouseEvent = 'touchmove';
+				var startMouseEvent = 'touchstart';
+				var endMouseEvent = 'touchend';
+
+				var evArg = null;
+				var $elm = $('#controllerTest');
+				var h5TrackTestController = h5.core.controller($elm, {
+					__name: 'h5TrackTestController',
+					'{rootElement} h5trackstart': function(context) {
+						evArg = context.evArg;
+					},
+					'{rootElement} h5trackmove': function(context) {
+						evArg = context.evArg;
+					},
+					'{rootElement} h5trackend': function(context) {
+						evArg = context.evArg;
+					}
+				});
+
+				h5TrackTestController.readyPromise.done(function() {
+					var obj = {
+						a: 1,
+						b: 2
+					};
+					var ary = [1, 'a'];
+					// ドラッグ開始
+					$elm.trigger(startMouseEvent, obj);
+					strictEqual(evArg, obj, startMouseEvent
+							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// ドラッグ
+					$elm.trigger(moveMouseEvent, 1);
+					strictEqual(evArg, 1, moveMouseEvent
+							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// ドラッグ終了
+					$elm.trigger(endMouseEvent, 'a');
+					strictEqual(evArg, 'a', endMouseEvent
+							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// 配列で複数渡した場合
+					// ドラッグ開始
+					$elm.trigger(startMouseEvent, [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], startMouseEvent
+							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// ドラッグ
+					$elm.trigger(moveMouseEvent, [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], moveMouseEvent
+							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					// ドラッグ終了
+					$elm.trigger(endMouseEvent, [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], endMouseEvent
+							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
+					evArg = null;
+
+					h5TrackTestController.unbind();
+					start();
+				});
+			});
+
 	asyncTest(
 			'context.selectorが取得できること',
 			20,
