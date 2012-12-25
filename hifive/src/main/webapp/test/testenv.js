@@ -54,7 +54,7 @@ $(function() {
 
 	// 環境設定
 	// dummygeoが設定されていればnavigator.geolocationの持つメソッドをダミーで上書く(オリジナルはprototypeメソッドなので、メンバとして上書く)
-	if (H5_TEST_ENV.geo && H5_TEST_ENV.geo.impresonate) {
+	if (H5_TEST_ENV.geo && H5_TEST_ENV.geo.impersonate) {
 		if (!navigator.geolocation) {
 			// geolocationが無ければ何もしない
 			return;
