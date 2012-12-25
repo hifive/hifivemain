@@ -435,7 +435,7 @@ $(function() {
 	// Body
 	//=============================
 	test(
-			'ObservableItem生成時にdpend.calcが実行されてdepend指定項目の値が計算されること',
+			'ObservableItem生成時にdepend.calcが実行されてdepend指定項目の値が計算されること',
 			8,
 			function() {
 				var eventObj;
@@ -502,7 +502,7 @@ $(function() {
 			});
 
 
-	test('setで値の変更があった場合にdpend.calcが実行され、値が更新されること', 4, function() {
+	test('setで値の変更があった場合にdepend.calcが実行され、値が更新されること', 4, function() {
 		var expectEvObj = {};
 		var checkEvFlag = false;
 		var item = h5.core.data.createObservableItem({
@@ -781,7 +781,7 @@ $(function() {
 						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
 
 			});
-	test('setで値の変更がない場合はdpend.calcは実行されないこと', 2, function() {
+	test('setで値の変更がない場合はdepend.calcは実行されないこと', 2, function() {
 		var item = h5.core.data.createObservableItem({
 			id: {
 				id: true

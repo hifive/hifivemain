@@ -6979,7 +6979,7 @@ $(function() {
 	//=============================
 
 	test(
-			'DataItem生成時にdpend.calcが実行されてdepend指定項目の値が計算されること',
+			'DataItem生成時にdepend.calcが実行されてdepend指定項目の値が計算されること',
 			8,
 			function() {
 				var eventObj;
@@ -7060,7 +7060,7 @@ $(function() {
 				strictEqual(item.get('v2'), 'v1a', 'depend指定したプロパティに、計算済みの値が入っていること');
 			});
 
-	test('set,createで値の変更があった場合にdpend.calcが実行され、値が更新されること', 8, function() {
+	test('set,createで値の変更があった場合にdepend.calcが実行され、値が更新されること', 8, function() {
 		var expectEvObj = {};
 		var checkEvFlag = false;
 		var model1 = manager.createModel({
@@ -7389,7 +7389,7 @@ $(function() {
 
 			});
 
-	test('set,createで値の変更がない場合はdpend.calcは実行されないこと', 4, function() {
+	test('set,createで値の変更がない場合はdepend.calcは実行されないこと', 4, function() {
 		var eventObj;
 		var count = 0;
 		var model1 = manager.createModel({
@@ -7556,7 +7556,7 @@ $(function() {
 		strictEqual(item.get('v2'), 'v1v1v44v55', '正しく値が計算されて格納されていること');
 	});
 
-	test('set,createで値の変更がない場合はdpend.calcは実行されないこと', 4, function() {
+	test('set,createで値の変更がない場合はdepend.calcは実行されないこと', 4, function() {
 		var eventObj;
 		var count = 0;
 		var model1 = manager.createModel({
