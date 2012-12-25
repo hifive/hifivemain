@@ -44,7 +44,7 @@ $(function() {
 			// そのためsetTimeout(0)でDOM追加が終わってから、H5_TEST_ENVの表示を行う
 			setTimeout(function() {
 				$('#qunit-header').after(
-						'<p>H5_TEST_ENV</p><pre id="#h5-testenv">'
+						'<p>H5_TEST_ENV</p><pre id="h5-testenv">'
 								+ QUnit.jsDump.parse(H5_TEST_ENV) + '</pre>');
 			}, 0);
 		});
