@@ -3654,7 +3654,7 @@ $(function() {
 							calc: function() {
 								return regardsTestReturnValue.dA;
 							}
-						},
+						}
 					},
 					dSA: {
 						type: 'string[]',
