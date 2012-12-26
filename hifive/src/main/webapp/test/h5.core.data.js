@@ -3741,7 +3741,7 @@ $(function() {
 					dBA: null,
 					dEA: null,
 					dDA: null,
-					dAA: null,
+					dAA: null
 				};
 				var item = model.create({
 					id: '1'
@@ -3778,7 +3778,7 @@ $(function() {
 					dBA: [true],
 					dEA: [1],
 					dDA: [dataModel1Item],
-					dAA: [1],
+					dAA: [1]
 				};
 				item.set('on', 1);
 				equal(item.regardAsNull('dS'), false, 'calcがnull以外をreturn type:string');
@@ -3811,7 +3811,7 @@ $(function() {
 					dBA: null,
 					dEA: null,
 					dDA: null,
-					dAA: null,
+					dAA: null
 				};
 				item.set('on', 2);
 				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
