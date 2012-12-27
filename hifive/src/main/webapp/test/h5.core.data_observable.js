@@ -1381,7 +1381,7 @@ $(function() {
 					calc: function() {
 						return regardsTestReturnValue.dA;
 					}
-				},
+				}
 			},
 			dSA: {
 				type: 'string[]',
@@ -1534,7 +1534,7 @@ $(function() {
 			dIA: null,
 			dBA: null,
 			dEA: null,
-			dAA: null,
+			dAA: null
 		};
 		var item = h5.core.data.createObservableItem(this.regardsTestDependSchema);
 		equal(item.regardAsNull('dS'), true, 'type:string');
@@ -1566,7 +1566,7 @@ $(function() {
 					dIA: null,
 					dBA: null,
 					dEA: null,
-					dAA: null,
+					dAA: null
 				};
 				var item = h5.core.data.createObservableItem(this.regardsTestDependSchema);
 				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
@@ -1594,7 +1594,7 @@ $(function() {
 					dIA: [1],
 					dBA: [true],
 					dEA: [1],
-					dAA: [1],
+					dAA: [1]
 				};
 				item.set('on', 1);
 				equal(item.regardAsNull('dS'), false, 'calcがnull以外をreturn type:string');
@@ -1623,7 +1623,7 @@ $(function() {
 					dIA: null,
 					dBA: null,
 					dEA: null,
-					dAA: null,
+					dAA: null
 				};
 				item.set('on', 2);
 				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
