@@ -50,7 +50,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('H5Api - localStorage', {
+	module('[browser#ie:6-7]H5Api - localStorage', {
 		setup: function() {
 			if (!h5.api.storage.isSupported) {
 				return;
@@ -367,7 +367,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('H5Api - localStorage', {
+	module('[browser#ie:6-7]H5Api - sessionStorage', {
 		setup: function() {
 			if (!h5.api.storage.isSupported) {
 				return;

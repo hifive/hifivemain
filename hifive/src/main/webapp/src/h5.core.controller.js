@@ -1094,6 +1094,7 @@
 					var type = getEventType(en);
 					var isStart = type === EVENT_NAME_H5_TRACKSTART;
 					if (isStart && execute) {
+						// スタートイベントが起きた時に実行中 = マルチタッチされた時なので、何もしない
 						return;
 					}
 					if (hasTouchEvent) {
@@ -1109,11 +1110,25 @@
 					if (setup) {
 						setup(newEvent);
 					}
-					if (!hasTouchEvent || (execute || isStart)) {
+
+					if ($.inArray(type, context.event.h5CustomEventTriggered) === -1
+							&& (!hasTouchEvent || execute || isStart)) {
+						// マウス/タッチイベントがh5track*にトリガ済みではない時にトリガする。
+						// h5track中でないのにmoveやmouseupが起きた時は何もしない。
+
+						// トリガ済みフラグを立てる
+						if (!context.event.h5CustomEventTriggered) {
+							context.event.h5CustomEventTriggered = [];
+						}
+						context.event.h5CustomEventTriggered.push(type);
+						// h5track*イベントをトリガ
 						$(target).trigger(newEvent, context.evArg);
 						execute = true;
 					}
 					if (isStart && execute) {
+						// スタートイベント、かつ今h5trackstartをトリガしたところなら、
+						// h5trackmove,endを登録
+
 						newEvent.h5DelegatingEvent.preventDefault();
 						var nt = newEvent.target;
 
@@ -1133,16 +1148,14 @@
 						// コンテキストをとるように関数をラップして、bindする。
 						var moveHandler = getHandler(move, nt, setupDPos);
 						var upHandler = getHandler(end, nt);
-						var moveHandlerWrapped = function(e, args) {
-							// イベントオブジェクトと引数のみ差し替える
-							// controller, rootElement, selector はh5trackstart開始時と同じなので、差し替える必要はない
+						var moveHandlerWrapped = function(e) {
 							context.event = e;
-							context.evArg = args;
+							context.evArg = handlerArgumentsToContextEvArg(arguments);
 							moveHandler(context);
 						};
-						var upHandlerWrapped = function(e, args) {
+						var upHandlerWrapped = function(e) {
 							context.event = e;
-							context.evArg = args;
+							context.evArg = handlerArgumentsToContextEvArg(arguments);
 							upHandler(context);
 						};
 
@@ -1151,14 +1164,28 @@
 						removeHandlers = function() {
 							$bindTarget.unbind(move, moveHandlerWrapped);
 							$bindTarget.unbind(end, upHandlerWrapped);
+							if (controller.rootElement !== document) {
+								$(controller.rootElement).unbind(move, moveHandlerWrapped);
+								$(controller.rootElement).unbind(end, upHandlerWrapped);
+							}
 						};
 						// h5trackmoveとh5trackendのbindを行う
 						$bindTarget.bind(move, moveHandlerWrapped);
 						$bindTarget.bind(end, upHandlerWrapped);
-					}
 
-					// h5trackend時にmoveとendのハンドラをunbindする
-					if (type === EVENT_NAME_H5_TRACKEND) {
+						// コントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
+						// タッチイベントのない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
+						// stopPropagationされたときに、h5trackイベントを発火することができなくなる。
+						// コントローラのルートエレメント外でstopPropagationされていた場合を考慮して、
+						// ルートエレメントにもmove,endをバインドする。
+						// (ルートエレメントの内側でstopPropagationしている場合は考慮しない)
+						if (controller.rootElement !== document) {
+							// h5trackmoveとh5trackendのbindを行う
+							$(controller.rootElement).bind(move, moveHandlerWrapped);
+							$(controller.rootElement).bind(end, upHandlerWrapped);
+						}
+					} else if (type === EVENT_NAME_H5_TRACKEND) {
+						// touchend,mousup時(=h5trackend時)にmoveとendのイベントをunbindする
 						removeHandlers();
 						execute = false;
 					}
@@ -1242,6 +1269,39 @@
 	}
 
 	/**
+	 * イベントハンドラに渡された、イベントオブジェクト以降の引数を、context.evArgに格納する形に変換します
+	 *
+	 * <pre>
+	 * 例:
+	 * $elm.trigger('mouseup', [1, 2, 3]);
+	 * なら、イベントハンドラに渡されるイベントは、[event, 1, 2, 3]です。
+	 * この[1,2,3]の部分をcontext.evArgに格納してコントローラでバインドしたハンドラに渡す必要があるため、変換が必要になります。
+	 * </pre>
+	 *
+	 * 引数が複数(イベントオブジェクトは除く)ある場合は配列、1つしかない場合はそれをそのまま、無い場合はundefinedを返します。
+	 *
+	 * @private
+	 * @param {argumentsObject} イベントハンドラに渡されたargumentsオブジェクト
+	 * @returns {Any} context.evArgに格納する形式のオブジェクト
+	 */
+	function handlerArgumentsToContextEvArg(args) {
+		// 1番目はイベントオブジェクトが入っているので無視して、2番目以降からをevArgに格納する形にする
+		// 格納するものがないならundefined
+		// 1つだけあるならそれ
+		// 2つ以上あるなら配列を返す
+
+		var evArg;
+		if (args.length < 3) {
+			// 引数部分が1つ以下ならargs[1]をevArgに格納（引数なしならevArgはundefined)
+			evArg = args[1];
+		} else {
+			// 引数が2つ以上なら配列にしてevArgに格納
+			evArg = argsToArray(args).slice(1);
+		}
+		return evArg;
+	}
+
+	/**
 	 * イベントコンテキストを作成します。
 	 *
 	 * @param {Object} bindObj バインドオブジェクト
@@ -1252,7 +1312,7 @@
 		var evArg = null;
 		if (args) {
 			event = args[0];
-			evArg = args[1];
+			evArg = handlerArgumentsToContextEvArg(args);
 		}
 		// イベントオブジェクトの正規化
 		normalizeEventObjext(event);
@@ -2074,13 +2134,25 @@
 
 		/**
 		 * ルート要素を起点に指定されたイベントを実行します。
+		 * <p>
+		 * 第2引数に指定したparameterオブジェクトは、コントローラのイベントハンドラで受け取るcontext.evArgに格納されます。<br>
+		 * parameterに配列を指定した場合は、context.evArgに渡した配列が格納されます。<br>
+		 * ただし、
+		 *
+		 * <pre>
+		 * trigger('click', ['a']);
+		 * </pre>
+		 *
+		 * のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。<br>
+		 * (jQueryのtriggerと同様です。)
+		 * </p>
 		 *
 		 * @param {String} eventName イベント名
 		 * @param {Object} [parameter] パラメータ
 		 * @memberOf Controller
 		 */
 		trigger: function(eventName, parameter) {
-			$(this.rootElement).trigger(eventName, [parameter]);
+			$(this.rootElement).trigger(eventName, parameter);
 		},
 
 		/**

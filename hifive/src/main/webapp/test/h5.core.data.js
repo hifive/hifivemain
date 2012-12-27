@@ -45,7 +45,6 @@ $(function() {
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.data;
-	var ERR_U = ERRCODE.h5.u;
 
 	/**
 	 * データモデルマネージャ
@@ -222,7 +221,7 @@ $(function() {
 	});
 
 	test('データモデルマネージャの作成 名前空間指定が不正な時にエラーが出ること', function() {
-		var errCode = ERR_U.ERR_CODE_NAMESPACE_INVALID;
+		var errCode = ERRCODE.h5.u.ERR_CODE_NAMESPACE_INVALID;
 		var invalidNs = [0, 1, true, false, [], {}, '.com.htmlhifive', 'あ', 'com htmlhifive',
 				'com.htmlhifive.'];
 		var l = invalidNs.length;
@@ -250,7 +249,7 @@ $(function() {
 	});
 
 	test('データモデルマネージャの作成 指定した名前空間にマネージャ名に指定したプロパティがすでに存在する時にエラーが出ること', 1, function() {
-		var errCode = ERR_U.ERR_CODE_NAMESPACE_EXIST;
+		var errCode = ERRCODE.h5.u.ERR_CODE_NAMESPACE_EXIST;
 		h5.u.obj.expose('com.htmlhifive.test', {
 			TestModel: 0
 		});
@@ -909,13 +908,13 @@ $(function() {
 		}
 	});
 
-	test('enumValueに空配列、nullを含む配列、undefinedを含む配列を指定した場合はエラーが出ること', function() {
+	test('enumValueにnullを含む配列、undefinedを含む配列を指定した場合はエラーが出ること', function() {
 		// IE6の場合[undefined, 1]と定義するとsparseな配列として処理してしまうため、push()でundefinedを格納する
 		var undefAr = [];
 		undefAr.push(undefined);
 		undefAr.push(1);
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
-		var noArrays = [[], [null, 1], undefAr];
+		var noArrays = [[null, 1], undefAr];
 		var l = noArrays.length;
 		expect(l);
 		for ( var i = 0; i < l; i++) {
@@ -2743,6 +2742,20 @@ $(function() {
 		strictEqual(items[2].get('id'), '5', '戻り値の配列の中身が正しいこと');
 	});
 
+	test('createの引数が配列でもオブジェクトでもない時、エラーが出ること', function() {
+		var invalidArgs = ['', 'aa', 1, 0, true, false];
+		var l = l = invalidArgs.length;
+		expect(l);
+		for ( var i = 0; i < l; i++) {
+			try {
+				dataModel1.create(invalidArgs[i]);
+				ok(false, 'エラーが発生しませんでした。' + invalidArgs[i]);
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_INVALID_CREATE_ARGS, e.message);
+			}
+		}
+	});
+
 	test('idの重複するオブジェクトを登録すると、後から登録したもので上書かれること', 8, function() {
 		var item = dataModel1.create({
 			id: '1',
@@ -3138,7 +3151,7 @@ $(function() {
 				}
 			});
 
-	test('id指定の項目にsetできないこと', 2, function() {
+	test('id指定の項目にsetできないこと', 1, function() {
 		var item = dataModel1.create({
 			id: sequence.next(),
 			val: 'item1'
@@ -3148,10 +3161,18 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
 		}
+	});
+
+	test('id指定の項目へ厳密等価な値をsetした時は無視されること', 1, function() {
+		var item = dataModel1.create({
+			id: sequence.next(),
+			val: 'item1'
+		});
 		try {
 			item.set('id', item.get('id'));
+			ok(true);
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_CANNOT_SET_ID, e.message);
+			ok(false, e.message);
 		}
 	});
 
@@ -3559,6 +3580,256 @@ $(function() {
 				regardsTestDataItem.set('anyAr2', null);
 				equal(regardsTestDataItem.regardAsNull('anyAr2'), true, 'type:any[] defaultValueあり');
 
+			});
+
+
+	test('depend項目に対してregardAsNull()を実行する。calcがnullを返すときはtrue、calcがnull以外を返すときはfalseを返すこと', 42,
+			function() {
+				// calcが返す値
+				var regardsTestReturnValue = {};
+				// schema
+				var regardsTestDependSchema = {
+					id: {
+						id: true
+					},
+					dS: {
+						type: 'string',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dS;
+							}
+						}
+					},
+					dI: {
+						type: 'integer',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dI;
+							}
+						}
+					},
+					dN: {
+						type: 'number',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dN;
+							}
+						}
+					},
+					dB: {
+						type: 'boolean',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dB;
+							}
+						}
+					},
+					dE: {
+						type: 'enum',
+						enumValue: [1, 2],
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dE;
+							}
+						}
+					},
+					dD: {
+						type: '@TestDataModel1',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dD;
+							}
+						}
+					},
+					dA: {
+						type: 'any',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dA;
+							}
+						}
+					},
+					dSA: {
+						type: 'string[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dSA;
+							}
+						}
+					},
+					dIA: {
+						type: 'integer[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dIA;
+							}
+						}
+					},
+					dNA: {
+						type: 'number[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dNA;
+							}
+						}
+					},
+					dBA: {
+						type: 'boolean[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dBA;
+							}
+						}
+					},
+					dEA: {
+						type: 'enum[]',
+						enumValue: [1, 2],
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dEA;
+							}
+						}
+					},
+					dDA: {
+						type: '@TestDataModel1[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dDA;
+							}
+						}
+					},
+					dAA: {
+						type: 'any[]',
+						depend: {
+							on: 'on',
+							calc: function() {
+								return regardsTestReturnValue.dAA;
+							}
+						}
+					},
+					on: null
+				};
+				var model = manager.createModel({
+					name: 'RegardsTestDependModel',
+					schema: regardsTestDependSchema
+				});
+
+				regardsTestReturnValue = {
+					dS: null,
+					dN: null,
+					dI: null,
+					dB: null,
+					dE: null,
+					dD: null,
+					dA: null,
+					dSA: null,
+					dNA: null,
+					dIA: null,
+					dBA: null,
+					dEA: null,
+					dDA: null,
+					dAA: null
+				};
+				var item = model.create({
+					id: '1'
+				});
+				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
+				equal(item.regardAsNull('dN'), true, 'calcがnullをreturn type:number');
+				equal(item.regardAsNull('dI'), true, 'calcがnullをreturn type:integer');
+				equal(item.regardAsNull('dB'), true, 'calcがnullをreturn type:boolean');
+				equal(item.regardAsNull('dE'), true, 'calcがnullをreturn type:enum');
+				equal(item.regardAsNull('dD'), true, 'calcがnullをreturn type:@DataModel');
+				equal(item.regardAsNull('dA'), true, 'calcがnullをreturn type:any');
+				equal(item.regardAsNull('dSA'), true, 'calcがnullをreturn type:string[]');
+				equal(item.regardAsNull('dNA'), true, 'calcがnullをreturn type:number[]');
+				equal(item.regardAsNull('dIA'), true, 'calcがnullをreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), true, 'calcがnullをreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), true, 'calcがnullをreturn type:enum[]');
+				equal(item.regardAsNull('dDA'), true, 'calcがnullをreturn type:@DataModel[]');
+				equal(item.regardAsNull('dAA'), true, 'calcがnullをreturn type:any[]');
+
+				var dataModel1Item = dataModel1.create({
+					id: '1'
+				});
+				regardsTestReturnValue = {
+					dS: 'a',
+					dN: 1,
+					dI: 1,
+					dB: true,
+					dE: 1,
+					dD: dataModel1Item,
+					dA: 1,
+					dSA: ['a'],
+					dNA: [1],
+					dIA: [1],
+					dBA: [true],
+					dEA: [1],
+					dDA: [dataModel1Item],
+					dAA: [1]
+				};
+				item.set('on', 1);
+				equal(item.regardAsNull('dS'), false, 'calcがnull以外をreturn type:string');
+				equal(item.regardAsNull('dN'), false, 'calcがnull以外をreturn type:number');
+				equal(item.regardAsNull('dI'), false, 'calcがnull以外をreturn type:integer');
+				equal(item.regardAsNull('dB'), false, 'calcがnull以外をreturn type:boolean');
+				equal(item.regardAsNull('dE'), false, 'calcがnull以外をreturn type:enum');
+				equal(item.regardAsNull('dD'), false, 'calcがnull以外をreturn type:@DataModel');
+				equal(item.regardAsNull('dA'), false, 'calcがnull以外をreturn type:any');
+				equal(item.regardAsNull('dSA'), false, 'calcがnull以外をreturn type:string[]');
+				equal(item.regardAsNull('dNA'), false, 'calcがnull以外をreturn type:number[]');
+				equal(item.regardAsNull('dIA'), false, 'calcがnull以外をreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), false, 'calcがnull以外をreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), false, 'calcがnull以外をreturn type:enum[]');
+				equal(item.regardAsNull('dDA'), false, 'calcがnull以外をreturn type:@DataModel[]');
+				equal(item.regardAsNull('dAA'), false, 'calcがnull以外をreturn type:any[]');
+
+				// regardAsNullの結果が切り替わるかどうか、再度nullをreturnさせてテスト
+				regardsTestReturnValue = {
+					dS: null,
+					dN: null,
+					dI: null,
+					dB: null,
+					dE: null,
+					dD: null,
+					dA: null,
+					dSA: null,
+					dNA: null,
+					dIA: null,
+					dBA: null,
+					dEA: null,
+					dDA: null,
+					dAA: null
+				};
+				item.set('on', 2);
+				equal(item.regardAsNull('dS'), true, 'calcがnullをreturn type:string');
+				equal(item.regardAsNull('dN'), true, 'calcがnullをreturn type:number');
+				equal(item.regardAsNull('dI'), true, 'calcがnullをreturn type:integer');
+				equal(item.regardAsNull('dB'), true, 'calcがnullをreturn type:boolean');
+				equal(item.regardAsNull('dE'), true, 'calcがnullをreturn type:enum');
+				equal(item.regardAsNull('dD'), true, 'calcがnullをreturn type:@DataModel');
+				equal(item.regardAsNull('dA'), true, 'calcがnullをreturn type:any');
+				equal(item.regardAsNull('dSA'), true, 'calcがnullをreturn type:string[]');
+				equal(item.regardAsNull('dNA'), true, 'calcがnullをreturn type:number[]');
+				equal(item.regardAsNull('dIA'), true, 'calcがnullをreturn type:integer[]');
+				equal(item.regardAsNull('dBA'), true, 'calcがnullをreturn type:boolean[]');
+				equal(item.regardAsNull('dEA'), true, 'calcがnullをreturn type:enum[]');
+				equal(item.regardAsNull('dDA'), true, 'calcがnullをreturn type:@DataModel[]');
+				equal(item.regardAsNull('dAA'), true, 'calcがnullをreturn type:any[]');
+
+				dropAllModel(manager);
 			});
 
 	//=============================
@@ -6958,7 +7229,7 @@ $(function() {
 	//=============================
 
 	test(
-			'DataItem生成時にdpend.calcが実行されてdepend指定項目の値が計算されること',
+			'DataItem生成時にdepend.calcが実行されてdepend指定項目の値が計算されること',
 			8,
 			function() {
 				var eventObj;
@@ -7039,8 +7310,7 @@ $(function() {
 				strictEqual(item.get('v2'), 'v1a', 'depend指定したプロパティに、計算済みの値が入っていること');
 			});
 
-
-	test('set,createで値の変更があった場合にdpend.calcが実行され、値が更新されること', 8, function() {
+	test('set,createで値の変更があった場合にdepend.calcが実行され、値が更新されること', 8, function() {
 		var expectEvObj = {};
 		var checkEvFlag = false;
 		var model1 = manager.createModel({
@@ -7176,7 +7446,200 @@ $(function() {
 		strictEqual(item.get('v2'), 'test111V3', 'depend先の項目を変えると値が反映されること');
 	});
 
-	test('set,createで値の変更がない場合はdpend.calcは実行されないこと', 4, function() {
+	test(
+			'type[]指定されているときにcalcが配列を返したら、ObservableArrayとして格納されること',
+			34,
+			function() {
+				// 型指定とdependのあるモデルを作成
+				var model = manager.createModel({
+					name: 'AutoBoxingDependDataModel',
+					schema: {
+						id: {
+							id: true
+						},
+						testSA: {
+							type: 'string[]',
+							depend: {
+								on: 'sa',
+								calc: function() {
+									return this.get('sa');
+								}
+							}
+						},
+						sa: {
+							type: 'string[]'
+						},
+						testIA: {
+							type: 'integer[]',
+							depend: {
+								on: 'ia',
+								calc: function() {
+									return this.get('ia');
+								}
+							}
+						},
+						ia: {},
+						testNA: {
+							type: 'number[]',
+							depend: {
+								on: 'na',
+								calc: function() {
+									return this.get('na');
+								}
+							}
+						},
+						na: {},
+						testBA: {
+							type: 'boolean[]',
+							depend: {
+								on: 'ba',
+								calc: function() {
+									return this.get('ba');
+								}
+							}
+						},
+						ba: {},
+						testAA: {
+							type: 'any[]',
+							depend: {
+								on: 'aa',
+								calc: function() {
+									return this.get('aa');
+								}
+							}
+						},
+						aa: {}
+					}
+				});
+
+				// create
+				var item = model.create({
+					id: sequence.next()
+				});
+
+				// string
+				ok(h5.core.data.isObservableArray(item.get('testSA')),
+						'【type:string[]】calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testSA').equals([]), '中身は空であること');
+
+				item.set('sa', []);
+				ok(h5.core.data.isObservableArray(item.get('testSA')),
+						'calcが[]を返したらObservableArrayに変換されること');
+
+				var instance = item.get('testSA');
+
+				item.set('sa', ['ABCDE', 'abcde']);
+				ok(item.get('testSA').equals(['ABCDE', 'abcde']),
+						'calcが["ABCDE", "abcde"]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testSA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('sa', [null]);
+				ok(item.get('testSA').equals([null]),
+						'calcが[null]を返した時、ObservableArrayに変換されて格納されること');
+
+				item.set('sa', undefined);
+				ok(item.get('testSA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+				// integer
+				ok(h5.core.data.isObservableArray(item.get('testIA')),
+						'【type:integer[]】 calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testIA').equals([]), '中身は空であること');
+
+				item.set('ia', []);
+				ok(h5.core.data.isObservableArray(item.get('testIA')),
+						'integer[] calcが[]を返したらObservableArrayに変換されること');
+
+				instance = item.get('testIA');
+
+				item.set('ia', [1, 2, 3]);
+				ok(item.get('testIA').equals([1, 2, 3]),
+						'calcが[1, 2, 3]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testIA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('ia', [null]);
+				ok(item.get('testIA').equals([null]),
+						'calcが[null]を返した時、ObservableArrayに変換されて格納されること');
+
+				item.set('ia', undefined);
+				ok(item.get('testIA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+				// number
+				ok(h5.core.data.isObservableArray(item.get('testNA')),
+						'【type:number[]】 calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testIA').equals([]), '中身は空であること');
+
+				item.set('na', []);
+				ok(h5.core.data.isObservableArray(item.get('testNA')),
+						'calcが[]を返したらObservableArrayに変換されること');
+
+				instance = item.get('testIA');
+
+				item.set('na', [1, 2.2, 3, Infinity]);
+				ok(item.get('testNA').equals([1, 2.2, 3, Infinity]),
+						'calcが[1, 2.2, 3, Infinity]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testIA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('na', [null, null]);
+				ok(item.get('testNA').equals([null, null]),
+						'calcが[null,null]を返した時、ObservableArrayに変換されて格納されること');
+
+				item.set('na', undefined);
+				ok(item.get('testNA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+				// boolean
+				ok(h5.core.data.isObservableArray(item.get('testBA')),
+						'【type:boolean[]】 calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testBA').equals([]), '中身は空であること');
+
+				item.set('ba', []);
+				ok(h5.core.data.isObservableArray(item.get('testBA')),
+						'calcが[]を返したらObservableArrayに変換されること');
+
+				instance = item.get('testIA');
+
+				item.set('ba', [true, false]);
+				ok(item.get('testBA').equals([true, false]),
+						'calcが[true, false]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testIA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('ba', [null, true]);
+				ok(item.get('testBA').equals([null, true]),
+						'calcが[null,true]を返した時、ObservableArrayに変換されて格納されること');
+
+				item.set('ba', undefined);
+				ok(item.get('testBA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+				// any
+				ok(h5.core.data.isObservableArray(item.get('testAA')),
+						'【type:any[]】 calcがnullを返した時、ObservableArrayであること');
+				ok(item.get('testAA').equals([]), '中身は空であること');
+
+				item.set('aa', []);
+				ok(h5.core.data.isObservableArray(item.get('testAA')),
+						'calcが[]を返したらObservableArrayに変換されること');
+
+				instance = item.get('testIA');
+
+				var ary = [3, {
+					a: 3
+				}, true, null, new Date(), item];
+
+				item.set('aa', ary);
+				ok(item.get('testAA').equals(ary),
+						'calcが[3, {a: 3}, true, null, new Date(), object]を返した時、ObservableArrayに変換されて格納されること');
+				ok(item.get('testIA') === instance, 'インスタンスは変わっていないこと');
+
+				item.set('aa', undefined);
+				ok(item.get('testAA').equals([]),
+						'calcがundefinedを返した時、空のObservableArrayに変換されて格納されること');
+
+			});
+
+	test('set,createで値の変更がない場合はdepend.calcは実行されないこと', 4, function() {
 		var eventObj;
 		var count = 0;
 		var model1 = manager.createModel({
@@ -7343,7 +7806,7 @@ $(function() {
 		strictEqual(item.get('v2'), 'v1v1v44v55', '正しく値が計算されて格納されていること');
 	});
 
-	test('set,createで値の変更がない場合はdpend.calcは実行されないこと', 4, function() {
+	test('set,createで値の変更がない場合はdepend.calcは実行されないこと', 4, function() {
 		var eventObj;
 		var count = 0;
 		var model1 = manager.createModel({
@@ -7456,7 +7919,7 @@ $(function() {
 		}
 	});
 
-	test('depend.calcが指定された型と違う値を返したら、エラーになること（自動型変換もされないこと）', 15, function() {
+	test('calcが返す値の型チェックが行われること（自動型変換はされません）', 15, function() {
 		// 型指定とdependのあるモデルを作成
 		var model = manager.createModel({
 			name: 'AutoBoxingDependDataModel',

@@ -48,11 +48,6 @@ $(function() {
 	var $fixture = $('#qunit-fixture');
 
 	/**
-	 * データバインディングのエラーコード定数
-	 */
-	var ERR_BIND = ERRCODE.h5.core.view_binding;
-
-	/**
 	 * viewのエラーコード定数
 	 */
 	var ERR_VIEW = ERRCODE.h5.core.view;
@@ -354,7 +349,7 @@ $(function() {
 		strictEqual($span.text(), '', 'text:空文字が設定されていること');
 		strictEqual($span.attr('id'), undefined, 'attr:削除されていること');
 		strictEqual($span[0].style.color, '', 'style:何も設定されていないこと');
-		strictEqual($span.attr('class'), 'hoge', 'class:何も設定されていないこと');
+		strictEqual($span.attr('class'), 'hoge', 'バインド開始前に設定されていた値に戻ること');
 	});
 
 	test('一つの要素にtextとhtmlのプロパティをバインドする', function() {
@@ -422,7 +417,7 @@ $(function() {
 				});
 				ok(false, 'テスト失敗。エラーが発生してません' + noArys[i]);
 			} catch (e) {
-				strictEqual(e.code, ERR_BIND.ERR_CODE_INVALID_CONTEXT_SRC, e.message);
+				strictEqual(e.code, ERR_VIEW.ERR_CODE_INVALID_CONTEXT_SRC, e.message);
 			}
 			$fixture.find('div').remove();
 		}
@@ -561,7 +556,7 @@ $(function() {
 					}]
 				});
 			}, function(actual) {
-				return ERR_BIND.ERR_CODE_INVALID_CONTEXT_SRC === actual.code;
+				return ERR_VIEW.ERR_CODE_INVALID_CONTEXT_SRC === actual.code;
 			}, 'コンテキストにArrayまたはObservableArrayを指定していないためエラーになること"');
 
 			$fixture.children().remove();
@@ -2041,7 +2036,7 @@ $(function() {
 				id: 'bindTest123'
 			});
 		}, function(actual) {
-			return ERR_BIND.ERR_CODE_REQUIRE_DETAIL === actual.code;
+			return ERR_VIEW.ERR_CODE_REQUIRE_DETAIL === actual.code;
 		}, 'data-h5-bindのattrに属性名を指定していないためエラーになること"');
 	});
 
@@ -2088,7 +2083,7 @@ $(function() {
 				color: 'red'
 			});
 		}, function(actual) {
-			return ERR_BIND.ERR_CODE_REQUIRE_DETAIL === actual.code;
+			return ERR_VIEW.ERR_CODE_REQUIRE_DETAIL === actual.code;
 		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
 
@@ -2118,8 +2113,12 @@ $(function() {
 			test: str
 		});
 
+		// strに"&"が含まれる場合、bind(内部的には$.html())で値をセットした時に"&amp;"にエスケープされる
+		// (element.innerHTML = '&' でも同じ)
+		// URL中の文字がエスケープされていても正しいURLと解釈されてリンクを踏めるので問題ない。
+
 		var $span = $fixture.find('span');
-		strictEqual($span.html().toLowerCase(), str.toLowerCase(), '値がinnerHTMLとしてバインドされていること');
+		strictEqual($span.html().toLowerCase().replace(/&amp;/g, '&'), str.toLowerCase(), '値がinnerHTMLとしてバインドされていること');
 		strictEqual($span.find('a').length, 1, 'DOM要素が新しく作成されていること');
 	});
 
@@ -2145,7 +2144,7 @@ $(function() {
 				id: 'bindTest123'
 			});
 		}, function(actual) {
-			return ERR_BIND.ERR_CODE_UNKNOWN_BIND_DIRECTION === actual.code;
+			return ERR_VIEW.ERR_CODE_UNKNOWN_BIND_DIRECTION === actual.code;
 		}, 'data-h5-bindのstyleにプロパティ名を指定していないためエラーになること"');
 	});
 

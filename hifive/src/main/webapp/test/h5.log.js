@@ -33,7 +33,6 @@ $(function() {
 	// Variables
 	//=============================
 
-	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.log;
 
 	//=============================
@@ -486,7 +485,7 @@ $(function() {
 		}
 	});
 
-	test('categoryに重複したものをとうろくしてconfigure()するとエラーが発生すること。', 1, function() {
+	test('categoryに重複したものを登録してconfigure()するとエラーが発生すること。', 1, function() {
 		h5.settings.log = {
 			target: {
 				myTarget: {
@@ -574,7 +573,7 @@ $(function() {
 
 		if (!window.console) {
 			expect(1);
-			ok(false, 'このブラウザはconsoleをサポートしていません。IE9の場合は、開発者ツールを開いてからテストを実行して下さい。');
+			ok(true, 'このブラウザはconsoleをサポートしていません。IE9の場合は、開発者ツールを開いてからテストを実行して下さい。');
 			return;
 		}
 

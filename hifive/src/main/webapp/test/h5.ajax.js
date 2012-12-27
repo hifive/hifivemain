@@ -33,9 +33,21 @@ $(function() {
 	// Variables
 	//=============================
 
+	/**
+	 * commonFailHandlerが実行されるかどうかを待機する時間
+	 */
+	var timeoutTime = 5000;
+
 	//=============================
 	// Functions
 	//=============================
+
+	/**
+	 * コールバックに指定するダミー関数
+	 */
+	function dummyFunc() {
+	//
+	}
 
 	// =========================================================================
 	//
@@ -60,23 +72,20 @@ $(function() {
 		ok($.isFunction(jqXHR.progress), 'h5.async.ajax() の戻り値のオブジェクトにprogressメソッドが追加されているか');
 	});
 
-	/**
-	 * commonFailHandlerが実行されるかどうかを待機する時間
-	 */
-	var timeoutTime = 5000;
 
-	/**
-	 * コールバックに指定するダミー関数
-	 */
-	function dummyFunc() {
-	//
-	}
+	//=============================
+	// Definition
+	//=============================
 
 	module('commonFailHandler', {
 		teardown: function() {
 			h5.settings.commonFailHandler = null;
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('commonFailHandlerが設定されている時、jqXHR#then()でprogressCallbackを登録しようとしてもエラーにならないか', function() {
 

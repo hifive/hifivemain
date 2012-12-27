@@ -474,6 +474,7 @@
 		/**
 		 * キャッシュしたテンプレートを保持するオブジェクト
 		 *
+		 * @private
 		 * @name __cachedTemplates
 		 * @memberOf View
 		 */
@@ -874,7 +875,13 @@
 	// =============================
 
 	/**
+	 * <p>
 	 * グローバルに公開されているViewクラスのインスタンスです。
+	 * </p>
+	 * <p>
+	 * h5.core.viewは、Viewクラスであり、Viewクラスのメソッドを持ちます。<br>
+	 * ただし、h5.core.viewはViewクラスを生成するためのcreateViewメソッドを持ち、生成されたViewクラスはcreateViewメソッドを持ちません。
+	 * </p>
 	 *
 	 * @name view
 	 * @memberOf h5.core

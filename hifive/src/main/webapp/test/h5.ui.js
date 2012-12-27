@@ -42,8 +42,10 @@ $(function() {
 	// Functions
 	//=============================
 
+	var isQuirksMode = (document.compatMode === "CSS1Compat");
+
 	function getWindowWidth() {
-		var elem = $.support.boxModel ? document.documentElement : document.body;
+		var elem = isQuirksMode ? document.documentElement : document.body;
 		// window.innerHeightではスクロールバーの幅も入ってしまうため、clientWidthを使う
 		return elem.clientWidth;
 	}
@@ -52,7 +54,7 @@ $(function() {
 		if (h5.env.ua.isiPhone) {
 			return window.innerHeight;
 		}
-		var elem = $.support.boxModel ? document.documentElement : document.body;
+		var elem = isQuirksMode ? document.documentElement : document.body;
 		return elem.clientHeight;
 	}
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
@@ -605,7 +607,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest(
-			'h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。box-sizing:border-boxを適用された要素でも正しく判定されるか。※CSSのbox-sizing属性がサポートされていないブラウザの場合テストは失敗します。',
+			'[browser#ie:6-7]h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。box-sizing:border-boxを適用された要素でも正しく判定されるか。※CSSのbox-sizing属性がサポートされていないブラウザの場合テストは失敗します。',
 			12, function() {
 				if (!supportsCSS3Property('boxSizing')) {
 					expect(1);
@@ -724,30 +726,29 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest(
-			'h5.ui.scrollToTop (0, 1)の地点にスクロール',
-			1,
-			function() {
-				// scrollToTopで(0,1)にスクロール
-				h5.ui.scrollToTop();
+	asyncTest('h5.ui.scrollToTop (0, 1)の地点にスクロール', 1, function() {
+		// scrollToTopで(0,1)にスクロール
+		h5.ui.scrollToTop();
 
-				var count = 0;
-				function waitForScroll() {
-					var scrollX = window.pageXOffset || ($.support.boxModel ? document.documentElement.scrollLeft
+		var count = 0;
+		function waitForScroll() {
+			var scrollX = window.pageXOffset
+					|| (isQuirksMode ? document.documentElement.scrollLeft
 							: document.body.scrollLeft);
-					var scrollY = window.pageYOffset || ($.support.boxModel ? document.documentElement.scrollTop
+			var scrollY = window.pageYOffset
+					|| (isQuirksMode ? document.documentElement.scrollTop
 							: document.body.scrollTop);
-					if (scrollY === 1 && scrollX === 0) {
-						ok(true, '(0,1)にスクロールされた');
-						start();
-						return;
-					} else if (count++ === 3) {
-						ok(false, 'スクロールされませんでした。');
-						start();
-						return;
-					}
-					setTimeout(waitForScroll, 200);
-				}
-				waitForScroll();
-			});
+			if (scrollY === 1 && scrollX === 0) {
+				ok(true, '(0,1)にスクロールされた');
+				start();
+				return;
+			} else if (count++ === 3) {
+				ok(false, 'スクロールされませんでした。');
+				start();
+				return;
+			}
+			setTimeout(waitForScroll, 200);
+		}
+		waitForScroll();
+	});
 });
