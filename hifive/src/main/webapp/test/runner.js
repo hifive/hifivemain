@@ -21,9 +21,9 @@ $(function() {
 		return;
 	}
 
-	QUnit.done = function() {
+	QUnit.config.done.push(function() {
 		$('<input type="button" value="カバレッジを表示" />').prependTo('body').click(function() {
 			window.open("../jscoverage.html");
 		});
-	};
+	});
 });

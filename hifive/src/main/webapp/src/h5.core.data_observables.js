@@ -37,160 +37,169 @@
 	/**
 	 * createObservableItemに渡された引数がオブジェクトでない
 	 */
-	var ERR_CODE_REQUIRE_SCHEMA = 17001;
+	var ERR_CODE_REQUIRE_SCHEMA = 15100;
 
 	/**
 	 * createObservableItemに指定されたスキーマのエラー
 	 */
-	var ERR_CODE_INVALID_SCHEMA = 17002;
+	var ERR_CODE_INVALID_SCHEMA = 15101;
 
 	/**
-	 * ObservableItemにスキーマ違反の値がセットされた
+	 * スキーマ違反の値がセットされた
 	 */
-	var ERR_CODE_INVALID_ITEM_VALUE = 17003;
+	var ERR_CODE_INVALID_ITEM_VALUE = 15102;
 
 	/**
-	 * ObservableItemで依存項目にセットされた
+	 * 依存項目にセットされた
 	 */
-	var ERR_CODE_DEPEND_PROPERTY = 17004;
+	var ERR_CODE_DEPEND_PROPERTY = 15103;
 
 	/**
 	 * ObservableItemでスキーマで定義されていない値にセットされた
 	 */
-	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 17005;
+	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 15104;
 
 	/**
 	 * schemaに定義されていないプロパティを取得した
 	 */
-	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 17006;
+	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 15105;
 
 	/**
-	 * schemaに定義されていないプロパティを取得した
+	 * addEventListenerに不正な引数が渡された
 	 */
-	var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 17007;
+	var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 15106;
+
+	/**
+	 * depend.calcが制約を満たさない値を返している
+	 */
+	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15107;
+
 
 	// ---------------------------
 	// スキーマのエラーコード(detailに入れるメッセージID)
 	// ---------------------------
+
+	// このメッセージはDataModelで共通で使用するためh5scopeにexposeしています
+	// h5internal.core.data.DESCRIPTOR_VALIDTATION_ERROR
 	/**
 	 * ID指定されたプロパティが重複している
 	 */
-	var SCHEMA_ERR_DETAIL_DUPLICATED_ID = 1;
+	var SCHEMA_ERR_DETAIL_DUPLICATED_ID = 15800;
 
 	/**
 	 * ID指定されたプロパティがない
 	 */
-	var SCHEMA_ERR_DETAIL_NO_ID = 2;
+	var SCHEMA_ERR_DETAIL_NO_ID = 15801;
 
 	/**
 	 * プロパティ名が不正
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME = 3;
+	var SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME = 15802;
 
 	/**
 	 * id指定されたプロパティにdependが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_ID_DEPEND = 4;
+	var SCHEMA_ERR_DETAIL_ID_DEPEND = 15803;
 
 	/**
 	 * depend.onに指定されたプロパティが存在しない
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_ON = 5;
+	var SCHEMA_ERR_DETAIL_DEPEND_ON = 15804;
 
 	/**
 	 * depend.calcに関数が指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_CALC = 6;
+	var SCHEMA_ERR_DETAIL_DEPEND_CALC = 15805;
 
 	/**
 	 * typeに文字列が指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_TYPE = 7;
+	var SCHEMA_ERR_DETAIL_INVALID_TYPE = 15806;
 
 	/**
 	 * type文字列が不正
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE = 8;
+	var SCHEMA_ERR_DETAIL_TYPE = 15807;
 
 	/**
 	 * typeに指定されたデータモデルが存在しない
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_DATAMODEL = 9;
+	var SCHEMA_ERR_DETAIL_TYPE_DATAMODEL = 15808;
 
 	/**
 	 * type:enumなのにenumValueが指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE = 10;
+	var SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE = 15809;
 
 	/**
 	 * constraintにオブジェクトが指定されていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT = 11;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT = 15810;
 
 	/**
 	 * constraint.notNullの指定が不正
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 12;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY = 15811;
 
 	/**
 	 * min-maxに数値が入力されなかった時のエラー
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX = 13;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX = 15812;
 
 	/**
 	 * typeがinteger,numberじゃないのにconstraint.min/max を指定されたときのエラー
 	 */
-	var SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT = 14;
+	var SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT = 15813;
 
 	/**
 	 * constraint.patternが正規表現じゃない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN = 15;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN = 15814;
 
 	/**
 	 * minLength/maxLengthに0以上の整数値以外の値が渡された
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 16;
+	var SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH = 15815;
 
 	/**
 	 * constraintの指定に矛盾がある場合(mix > maxなど)
 	 */
-	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT = 17;
+	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT = 15816;
 
 	/**
 	 * typeがenumでないのにenumValueが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE = 18;
+	var SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE = 15817;
 
 	/**
 	 * enumValueが配列でない、または空配列
 	 */
-	var SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE = 19;
+	var SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE = 15818;
 
 	/**
 	 * id項目にdefaultValueが設定されている
 	 */
-	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID = 20;
+	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID = 15819;
 
 	/**
 	 * defaultValueに設定された値がtype,constraintに指定された条件を満たしていない
 	 */
-	var SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE = 21;
+	var SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE = 15820;
 
 	/**
 	 * ID項目のconstraintに不正な指定がある
 	 */
-	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID = 22;
+	var SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID = 15821;
 
 	/**
 	 * defaultValue指定されたプロパティにdependが指定されている
 	 */
-	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND = 23;
+	var SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND = 15822;
 
 	/**
 	 * dependの依存関係が循環している
 	 */
-	var SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF = 24;
+	var SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF = 15823;
 
 	// =============================
 	// Development Only
@@ -203,7 +212,7 @@
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_REQUIRE_SCHEMA] = 'createObservableItemの引数にはスキーマ定義オブジェクトを指定する必要があります。';
 	errMsgMap[ERR_CODE_INVALID_SCHEMA] = 'createObservableItemの引数に指定されたスキーマ定義オブジェクトが不正です。';
-	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'ObservableItemのsetterに渡された値がスキーマで指定された型・制約に違反しています。 違反したプロパティ={0}';
+	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'Itemのsetterに渡された値がスキーマで指定された型・制約に違反しています。 違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。 違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティは取得できません。違反したプロパティ={0}';
@@ -234,7 +243,7 @@
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH] = '"{0}"プロパティの定義にエラーがあります。 constraint.{1}には正の整数を指定してください';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT] = '"{0}"プロパティの定義にエラーがあります。 constraintに矛盾する指定があります。{1},{2}';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE] = '"{0}"プロパティの定義にエラーがあります。 enumValueはtypeに"enum"またはその配列が指定されている場合のみ指定可能です';
-	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE] = '"{0}"プロパティの定義にエラーがあります。 enumValueは長さ1以上の配列を指定してください';
+	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE] = '"{0}"プロパティの定義にエラーがあります。 enumValueはnull,undefinedを含まない長さ1以上の配列を指定してください';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID] = '"{0}"プロパティの定義にエラーがあります。id指定した項目にdefaultValueを設定することはできません';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE] = '"{0}"プロパティのdefaultValueに設定された値"{1}"は、typeまたはconstraintに定義された条件を満たしていません';
 	DESCRIPTOR_VALIDATION_ERROR_MSGS[SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID] = '"{0}"プロパティの定義にエラーがあります。id指定された項目にconstraint.{1}:{2}を指定することはできません';
@@ -259,6 +268,44 @@
 	// =============================
 	// Functions
 	// =============================
+	/**
+	 * Itemとプロパティ名を引数にとり、_valuesに格納されている値を返す
+	 *
+	 * @private
+	 * @param {DataItem|ObservableItem} item DataItemまたはObservableItem
+	 * @param {String} prop プロパティ名
+	 * @returns {Any} Item._values[prop]
+	 */
+	function getValue(item, prop) {
+		return item._values[prop];
+	}
+
+	/**
+	 * Itemとプロパティ名と値引数にとり、Item._valuesに値を格納する
+	 *
+	 * @private
+	 * @param {DataItem|ObservableItem} item DataItemまたはObservableItem
+	 * @param {String} prop プロパティ名
+	 * @param {Any} value 値
+	 */
+	function setValue(item, prop, value) {
+		item._values[prop] = value;
+	}
+
+	/**
+	 * 渡されたタイプ指定文字が配列かどうかを返します
+	 *
+	 * @private
+	 * @param {String} typeStr タイプ指定文字列
+	 * @returns {Boolean} タイプ指定文字列が配列指定かどうか
+	 */
+	function isTypeArray(typeStr) {
+		if (!typeStr) {
+			return false;
+		}
+		return typeStr.indexOf('[]') !== -1;
+	}
+
 	/**
 	 * validateDescriptor, validateDescriptor/Schema/DefaultValueが返すエラー情報の配列に格納するエラーオブジェクトを作成する
 	 *
@@ -287,6 +334,124 @@
 		/* del end */
 	}
 
+	/**
+	 * 依存プロパティの再計算を行います。再計算後の値はitemの各依存プロパティに代入されます。
+	 *
+	 * @param {DataModel} model データモデル
+	 * @param {DataItem} item データアイテム
+	 * @param {Object} event プロパティ変更イベント
+	 * @param {String|String[]} changedProps 今回変更されたプロパティ
+	 * @param {Boolean} isCreate create時に呼ばれたものかどうか。createなら値の変更を見ずに無条件でcalcを実行する
+	 * @returns {Object} { dependProp1: { oldValue, newValue }, ... } という構造のオブジェクト
+	 */
+	function calcDependencies(model, item, event, changedProps, isCreate) {
+		// 今回の変更に依存する、未計算のプロパティ
+		var targets = [];
+
+		var dependsMap = model._dependencyMap;
+
+		/**
+		 * この依存プロパティが計算可能（依存するすべてのプロパティの再計算が完了している）かどうかを返します。
+		 * 依存しているプロパティが依存プロパティでない場合は常にtrue(計算済み)を返します
+		 * 依存しているプロパティが依存プロパティが今回の変更されたプロパティに依存していないならtrue(計算済み)を返します
+		 */
+		function isReady(dependProp) {
+			var deps = wrapInArray(model.schema[dependProp].depend.on);
+			for ( var i = 0, len = deps.length; i < len; i++) {
+				if ($.inArray(deps[i], model._realProperty) === -1
+						&& $.inArray(deps[i], targets) !== -1) {
+					// 依存先が実プロパティでなく、未計算のプロパティであればfalseを返す
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/**
+		 * changedPropsで指定されたプロパティに依存するプロパティをtargetArrayに追加する
+		 */
+		function addDependencies(targetArray, srcProps) {
+			for ( var i = 0, len = srcProps.length; i < len; i++) {
+				var depends = dependsMap[srcProps[i]];
+
+				if (!depends) {
+					continue;
+				}
+
+				for ( var j = 0, jlen = depends.length; j < jlen; j++) {
+					var dprop = depends[j];
+					if ($.inArray(dprop, targetArray) === -1) {
+						targetArray.push(dprop);
+					}
+				}
+			}
+		}
+
+		var ret = {};
+
+		if (isCreate) {
+			// createならすべての実プロパティに依存するプロパティを列挙する
+			// create時にundefinedがセットされた場合、変更なしなのでchangedPropsに入らないが、calcは計算させる
+			targets = model._dependProps.slice();
+		} else {
+			//今回変更された実プロパティに依存するプロパティを列挙
+			addDependencies(targets, wrapInArray(changedProps));
+		}
+
+		while (targets.length !== 0) {
+			var restTargets = [];
+
+			//各依存プロパティについて、計算可能（依存するすべてのプロパティが計算済み）なら計算する
+			for ( var i = 0, len = targets.length; i < len; i++) {
+				var dp = targets[i];
+
+				if (isReady(dp)) {
+					var newValue = model.schema[dp].depend.calc.call(item, event);
+
+					// 型変換を行わない厳密チェックで、戻り値をチェックする
+					var errReason = model._itemValueCheckFuncs[dp](newValue, true);
+					if (errReason.length !== 0) {
+						// calcの返した値が型・制約違反ならエラー
+						throwFwError(ERR_CODE_CALC_RETURNED_INVALID_VALUE, [dp, newValue]);
+					}
+					ret[dp] = {
+						oldValue: getValue(item, dp),
+						newValue: newValue
+					};
+					// calcの結果をセット
+					if (model.schema[dp] && isTypeArray(model.schema[dp].type)) {
+						//配列の場合は値のコピーを行う。ただし、コピー元がnullの場合があり得る(type:[]はnullable)
+						//その場合は空配列をコピー
+
+						// DataItemの場合はimte._nullProps, ObsItemの場合はitem._internal._nullPropsにnullかどうかを保持する
+						// TODO 実装をObsItemとDataItemで統一する
+						var internal = item._internal || item;
+						if (newValue) {
+							getValue(item, dp).copyFrom(newValue);
+							// newValueがnullでないならregardAsNull()がtrueを返すようにする
+							internal._nullProps[dp] = false;
+						} else {
+							getValue(item, dp).copyFrom([]);
+							// newValueがnullまたはundefinedならregardAsNull()がtrueを返すようにする
+							internal._nullProps[dp] = true
+						}
+					} else {
+						setValue(item, dp, newValue);
+					}
+				} else {
+					restTargets.push(dp);
+				}
+			}
+
+			//今回計算対象となったプロパティに（再帰的に）依存するプロパティをrestに追加
+			//restTargetsは「今回計算できなかったプロパティ＋新たに依存関係が発見されたプロパティ」が含まれる
+			addDependencies(restTargets, targets);
+
+			targets = restTargets;
+		}
+
+		return ret;
+	}
 	//========================================================
 	//
 	// バリデーション関係コードここから
@@ -297,7 +462,8 @@
 	 *
 	 * @private
 	 * @param {String} type
-	 * @returns elmType:タイプから配列部分を除いた文字列。dataModel:データモデル名。dimention:配列の深さ(配列指定でない場合は0)
+	 * @returns {Object} typeをパースした結果オブジェクト。
+	 *          elmType:タイプから配列部分を除いた文字列。dataModel:データモデル名。dimension:配列の深さ(配列指定でない場合は0)
 	 */
 	function getTypeObjFromString(type) {
 		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
@@ -307,7 +473,7 @@
 		return matched && {
 			elmType: matched[1],
 			dataModel: matched[2],
-			dimention: matched[3] ? 1 : 0
+			dimension: matched[3] ? 1 : 0
 		};
 	}
 
@@ -909,7 +1075,7 @@
 		for ( var p in schema) {
 			var propObj = schema[p];
 			if (!propObj || !propObj.hasOwnProperty('defaultValue') && propObj.type
-					&& (propObj.type === 'array' || getTypeObjFromString(propObj.type).dimention)) {
+					&& (propObj.type === 'array' || getTypeObjFromString(propObj.type).dimension)) {
 				// defaultValueが指定されていないかつ、type指定が配列指定であれば、
 				// 初期値は空のOvservableArrayになる。
 				// 空のOvservableArrayがチェックに引っかかることはないので、チェック関数でチェックしない。
@@ -946,7 +1112,7 @@
 		var propObj = propertyObject || {};
 		var checkFuncArray = [];
 		var elmType = null;
-		var dimention = 0;
+		var dimension = 0;
 		var type = propObj.type;
 		var constraint = propObj.constraint;
 
@@ -967,7 +1133,7 @@
 
 			elmType = typeObj.elmType;
 			// 配列の次元(0か1のみ)。配列でないなら0
-			dimention = typeObj.dimention;
+			dimension = typeObj.dimension;
 
 			// type指定を元に値を(配列は考慮せずに)チェックする関数を作成してcheckFuncArrayに追加
 			checkFuncArray.push(createTypeCheckFunction(elmType, {
@@ -981,7 +1147,7 @@
 		}
 		return createCheckValueByCheckObj({
 			checkFuncs: checkFuncArray,
-			dimention: dimention
+			dimension: dimension
 		});
 	}
 
@@ -1140,8 +1306,8 @@
 	 * @param {object} checkObj
 	 * @param {array} [checkObj.checkFuncs] チェックする関数の配列。配列の先頭の関数から順番にチェックする。指定のない場合は、return
 	 *            true;するだけの関数を作成して返す
-	 * @param {integer} [checkObj.dimention]
-	 *            チェックする値の配列の次元。配列のdimention次元目が全てcheckFuncsを満たすことと、dimention-1次元目まではすべて配列であることを確認する関数を作成して返す。
+	 * @param {integer} [checkObj.dimension]
+	 *            チェックする値の配列の次元。配列のdimension次元目が全てcheckFuncsを満たすことと、dimension-1次元目まではすべて配列であることを確認する関数を作成して返す。
 	 *            0、または指定無しの場合は配列でないことを表す
 	 * @returns {Function} 値をチェックする関数を返す。戻り値の関数はエラー理由を返す。length;0ならエラーでない。
 	 */
@@ -1152,7 +1318,7 @@
 				return [];
 			};
 		}
-		var dim = checkObj.dimention || 0;
+		var dim = checkObj.dimension || 0;
 		/**
 		 * 値のチェックを行う関数
 		 *
@@ -1180,7 +1346,7 @@
 				}
 				if (!$.isArray(v) && !h5.core.data.isObservableArray(v)) {
 					errorReason.push({
-						dimention: dim
+						dimension: dim
 					});
 					return false;
 				}
@@ -1370,7 +1536,7 @@
 	EventDispatcher.prototype.addEventListener = function(type, listener) {
 		// 引数チェック
 		if (arguments.length !== 2 || !isString(type) || !$.isFunction(listener)) {
-			throwFwError(G_ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
+			throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
 		}
 		if (this.hasEventListener(type, listener)) {
 			return;
@@ -1463,8 +1629,7 @@
 	/**
 	 * ObservableArray(オブザーバブルアレイ)とは、配列操作の監視可能な配列です。
 	 * <p>
-	 * <a
-	 * href="h5.core.data.html#createObservableArray">h5.core.data.createObservableArray()</a>で作成します。
+	 * <a href="h5.core.data.html#createObservableArray">h5.core.data.createObservableArray()</a>で作成します。
 	 * </p>
 	 * <p>
 	 * 通常の配列と同様の操作に加え、要素の追加、削除、変更についての監視ができます。
@@ -1628,8 +1793,7 @@
 	/**
 	 * ObservableItem(オブザーバブルアアイテム)とは、プロパティ操作の監視可能なオブジェクトです。
 	 * <p>
-	 * <a
-	 * href="h5.core.data.html#createObservableItem">h5.core.data.createObservableItem()</a>で作成します。
+	 * <a href="h5.core.data.html#createObservableItem">h5.core.data.createObservableItem()</a>で作成します。
 	 * </p>
 	 * <p>
 	 * <a href="DataItem.html">データアイテム</a>と同様、get/setで値の読み書きを行います。
@@ -1684,6 +1848,15 @@
 		this._internal = {
 
 			/**
+			 * スキーマオブジェクト
+			 *
+			 * @memberOf ObservableItem._internal
+			 * @since 1.1.1
+			 * @type Object
+			 */
+			schema: schema,
+
+			/**
 			 * プロパティの依存関係マップ
 			 *
 			 * @private
@@ -1691,7 +1864,7 @@
 			 * @since 1.1.0
 			 * @type Object
 			 */
-			dependencyMap: createDependencyMap(schema),
+			_dependencyMap: createDependencyMap(schema),
 
 			/**
 			 * モデルが持つ依存プロパティ
@@ -1729,9 +1902,9 @@
 			 * @since 1.1.0
 			 * @type Object
 			 */
-			itemValueCheckFuncs: itemValueCheckFuncs,
+			_itemValueCheckFuncs: itemValueCheckFuncs,
 
-			nullProps: {}
+			_nullProps: {}
 		};
 
 		/**
@@ -1744,33 +1917,72 @@
 		 */
 		this._values = {};
 
+		// 値に変更があったプロパティ(最初なので、全てのプロパティ)
+		var changedProps = [];
+
+		// イベントオブジェクト(最初なのでtype:'create', propsには全ての実プロパティ。
+		var event = {
+			props: {},
+			target: this,
+			type: 'create'
+		};
 		// this._valuesに値(defaultValue)のセット
 		for ( var p in schema) {
 			if ($.inArray(p, aryProps) !== -1) {
 				this._values[p] = createObservableArray();
-				this._internal.nullProps[p] = true;
+				this._internal._nullProps[p] = true;
 
 				if (schema[p].hasOwnProperty('defaultValue')) {
-					// null,undefなら空配列にする
-					var defVal;
-
-					if (schema[p].defaultValue == null) {
-						defVal = [];
-					} else {
-						defVal = schema[p].defaultValue;
-						this._internal.nullProps[p] = false;
+					// null,undefなら空ObservableArrayにする
+					if (schema[p].defaultValue != null) {
+						this._values[p].copyFrom(schema[p].defaultValue);
+						this._internal._nullProps[p] = false;
 					}
+				}
 
-					this._values[p].copyFrom(defVal);
+				if ($.inArray(p, realProps) !== -1) {
+					// 実プロパティの場合はeventに格納
+					changedProps.push(p);
+					event.props[p] = {
+						newValue: this._values[p],
+						oldValue: undefined
+					};
 				}
 				continue;
 			}
-			if (schema[p] && schema[p].hasOwnProperty('defaultValue')) {
-				this._values[p] = schema[p].defaultValue;
+
+			if ($.inArray(p, dependProps) !== -1) {
+				// 依存プロパティでかつ配列でもないなら何もしない
 				continue;
 			}
-			this._values[p] = null;
+			changedProps.push(p);
+
+			if (schema[p] && schema[p].hasOwnProperty('defaultValue')) {
+				var defVal = schema[p].defaultValue;
+				this._values[p] = defVal;
+				event.props[p] = {
+					newValue: defVal,
+					oldValue: undefined
+				};
+
+				continue;
+			}
+
+			// 実プロパティの初期値はnull, 依存プロパティの初期値はundefinedでevent.propsには入れない
+			if ($.inArray(p, realProps) !== -1) {
+				var defVal = null;
+				this._values[p] = defVal;
+				event.props[p] = {
+					newValue: defVal,
+					oldValue: undefined
+				}
+			} else {
+				this._values[p] = undefined;
+			}
 		}
+
+		// 依存項目の計算
+		calcDependencies(this._internal, this, event, changedProps);
 
 		//-----------------------------------------------------------------------
 		// 配列プロパティについて、イベント管理用のリスナをaddEventListenerする
@@ -1888,20 +2100,20 @@
 				if ($.inArray(p, this._internal.aryProps) !== -1) {
 					if (val == null) {
 						val = [];
-						this._internal.nullProps[p] = true;
+						this._internal._nullProps[p] = true;
 					} else {
-						this._internal.nullProps[p] = false;
+						this._internal._nullProps[p] = false;
 					}
 				}
 				//値のチェック
-				var validateResult = this._internal.itemValueCheckFuncs[p](val);
+				var validateResult = this._internal._itemValueCheckFuncs[p](val);
 				if (validateResult.length) {
 					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
 				}
 			}
 
 			// 値に変更があればセット
-			var isChanged = false;
+			var changedProps = [];
 			for ( var p in setObj) {
 				var v = setObj[p];
 				var oldValue = this._values[p];
@@ -1927,17 +2139,20 @@
 					newValue: this._values[p]
 				};
 
-				isChanged = true;
+				changedProps.push(p);
 			}
 			this._internal.isInSet = false;
 
-			// 変更があればイベントの発火
-			if (isChanged) {
-				this.dispatchEvent({
+			if (changedProps.length != 0) {
+				// 変更があれば依存項目の計算とイベントの発火
+				var event = {
 					target: this,
 					type: 'change',
 					props: props
-				});
+				};
+				// 依存項目の計算
+				calcDependencies(this._internal, this, event, changedProps);
+				this.dispatchEvent(event);
 			}
 		},
 
@@ -1974,12 +2189,12 @@
 		 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します。
 		 *
 		 * @since 1.1.0
-		 * @memberOf DataItem
+		 * @memberOf ObservableItem
 		 * @returns {Boolean} 現在のこのプロパティにセットされているのがnullかどうか
 		 */
 		regardAsNull: function(key) {
 			if (this._isArrayProp(key)) {
-				return this._internal.nullProps[key] === true;
+				return this._internal._nullProps[key] === true;
 			}
 			return this.get(key) === null;
 		},
@@ -1990,7 +2205,7 @@
 		 *
 		 * @since 1.1.0
 		 * @private
-		 * @memberOf DataItem
+		 * @memberOf ObservableItem
 		 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
 		 */
 		_isArrayProp: function(prop) {
@@ -2061,8 +2276,8 @@
 	// =============================
 	/**
 	 * @namespace
-	 * @name obj
-	 * @memberOf h5.core.data
+	 * @name data
+	 * @memberOf h5.core
 	 */
 	h5.u.obj.expose('h5.core.data', {
 		createObservableArray: createObservableArray,
@@ -2086,6 +2301,16 @@
 		isNumberValue: isNumberValue,
 		isStringValue: isStringValue,
 		unbox: unbox,
-		EventDispatcher: EventDispatcher
+		EventDispatcher: EventDispatcher,
+		calcDependencies: calcDependencies,
+		getValue: getValue,
+		setValue: setValue,
+		isTypeArray: isTypeArray,
+		ITEM_ERRORS: {
+			ERR_CODE_INVALID_ITEM_VALUE: ERR_CODE_INVALID_ITEM_VALUE,
+			ERR_CODE_DEPEND_PROPERTY: ERR_CODE_DEPEND_PROPERTY,
+			ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY: ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY,
+			ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY: ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY
+		}
 	};
 })();

@@ -53,47 +53,37 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('H5Api - Geo Location : getCurrentPosition');
+	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7]H5Api - Geo Location : getCurrentPosition');
 
 	//=============================
 	// Body
 	//=============================
 
 	asyncTest('座標情報またはエラー情報が取得できること。', function() {
-		if (!isSupported) {
-			ok(false, 'このブラウザはGeolocation APIをサポートしていません。');
+		h5.api.geo.getCurrentPosition({
+			timeout: 5000
+		}).done(function(pos) {
 			start();
-		} else {
-			h5.api.geo.getCurrentPosition({
-				timeout: 5000
-			}).done(function(pos) {
-				start();
-				ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-			}).fail(
-					function(error) {
-						equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE,
-								'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-						start();
-					});
-		}
+			ok(true, pos.coords.latitude + "," + pos.coords.longitude);
+		}).fail(
+				function(error) {
+					equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:'
+							+ error.code);
+					start();
+				});
 	});
 
 	//=============================
 	// Definition
 	//=============================
 
-	module('H5Api - Geo Location : watchPosition');
+	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7]H5Api - Geo Location : watchPosition');
 
 	//=============================
 	// Body
 	//=============================
 
 	asyncTest('watchPosition 座標情報またはエラー情報が取得できること。', function() {
-		if (!isSupported) {
-			ok(false, 'このブラウザはGeolocation APIをサポートしていません。');
-			start();
-			return;
-		}
 		var promise = null;
 		promise = h5.api.geo.watchPosition({
 			timeout: 5000
@@ -113,11 +103,6 @@ $(function() {
 
 	asyncTest('watchPosition を3回呼び、unwatch()をして、すべてのwatchPosition()が終了すること。またはエラー情報が取得できること。',
 			function() {
-				if (!isSupported) {
-					ok(false, 'このブラウザはGeolocation APIをサポートしていません。');
-					start();
-					return;
-				}
 				// 1つ目
 				var promise1 = h5.api.geo.watchPosition({
 					timeout: 10000

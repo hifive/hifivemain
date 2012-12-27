@@ -56,74 +56,66 @@
 	var ID_TYPE_INT = 'number';
 
 	// エラーコード
+
 	/** マネージャ名が不正 */
 	var ERR_CODE_INVALID_MANAGER_NAME = 15000;
 
-	/** DataItemのsetterに渡された値、またはcreateで渡された値がDescriptorで指定された型・制約に違反している */
-	var ERR_CODE_INVALID_ITEM_VALUE = 15001;
-
-	/** dependが設定されたプロパティのセッターを呼び出した */
-	var ERR_CODE_DEPEND_PROPERTY = 15002;
-
 	/** ディスプリプタが不正 */
-	var ERR_CODE_INVALID_DESCRIPTOR = 15003;
+	var ERR_CODE_INVALID_DESCRIPTOR = 15001;
 
 	/** データアイテムの生成にはIDが必要なのに指定されていない */
-	var ERR_CODE_NO_ID = 15004;
+	var ERR_CODE_NO_ID = 15002;
 
 	/** DataItem.set()でidをセットすることはできない */
-	var ERR_CODE_CANNOT_SET_ID = 15005;
-
-	/** depend.calcが制約を満たさない値を返している */
-	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15006;
+	var ERR_CODE_CANNOT_SET_ID = 15003;
 
 	/** createModelに渡された配列内のディスクリプタ同士でtypeやbaseによる依存関係が循環参照している */
-	var ERR_CODE_DESCRIPTOR_CIRCULAR_REF = 15007;
+	var ERR_CODE_DESCRIPTOR_CIRCULAR_REF = 15004;
 
 	/** DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemは変更できない */
-	var ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM = 15008;
+	var ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM = 15005;
 
 	/** DataManagerに属していないDataModelで、create/remove/変更できない */
-	var ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL = 15009;
+	var ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL = 15006;
 
-	/** schemaに定義されていないプロパティにセットしようとした */
-	var ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY = 15010;
-
-	/** schemaに定義されていないプロパティを取得した */
-	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 15011;
+	/** createの引数がオブジェクトでも配列でもない */
+	var ERR_CODE_INVALID_CREATE_ARGS = 15007;
 
 	// ---------------------------
 	//ディスクリプタのエラーコード
 	// ---------------------------
+
+	// ObservableItemと共通のものは0番台なので、1000番台で登録する
+	// この番号自体は外に公開しているものではないので、ObserevableItemのメッセージIDと被らなければよい
 	/**
 	 * ディスクリプタがオブジェクトでない
 	 */
-	var DESC_ERR_DETAIL_NOT_OBJECT = 1001;
+	var DESC_ERR_DETAIL_NOT_OBJECT = 15900;
 
 	/**
 	 * nameが正しく設定されていない
 	 */
-	var DESC_ERR_DETAIL_INVALID_NAME = 1002;
+	var DESC_ERR_DETAIL_INVALID_NAME = 15901;
 
 	/**
 	 * baseの指定が不正
 	 */
-	var DESC_ERR_DETAIL_INVALID_BASE = 1003;
+	var DESC_ERR_DETAIL_INVALID_BASE = 15902;
 
 	/**
 	 * baseに指定されたデータモデルが存在しない
 	 */
-	var DESC_ERR_DETAIL_NO_EXIST_BASE = 1004;
+	var DESC_ERR_DETAIL_NO_EXIST_BASE = 15903;
 
 	/**
 	 * schemaもbaseも指定されていない
 	 */
-	var DESC_ERR_DETAIL_NO_SCHEMA = 1005;
+	var DESC_ERR_DETAIL_NO_SCHEMA = 15904;
 
 	/**
 	 * schemaがオブジェクトでない
 	 */
-	var DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT = 1006;
+	var DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT = 6;
 
 	var EVENT_ITEMS_CHANGE = 'itemsChange';
 
@@ -145,17 +137,13 @@
 
 	var ERROR_MESSAGES = {};
 	ERROR_MESSAGES[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正です。識別子として有効な文字列を指定してください。';
-	ERROR_MESSAGES[ERR_CODE_INVALID_ITEM_VALUE] = 'DataItemのsetterに渡された値がDescriptorで指定された型・制約に違反しています。 違反したプロパティ={0}';
-	ERROR_MESSAGES[ERR_CODE_DEPEND_PROPERTY] = 'dependが設定されたプロパティに値をセットすることはできません。違反したプロパティ={0}';
 	ERROR_MESSAGES[ERR_CODE_NO_ID] = 'id:trueを指定しているプロパティがありません。データアイテムの生成にはid:trueを指定した項目が必須です。';
 	ERROR_MESSAGES[ERR_CODE_INVALID_DESCRIPTOR] = 'データモデルディスクリプタにエラーがあります。';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'id指定されたプロパティに値をセットすることはできません。';
-	ERROR_MESSAGES[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'depend.calcが返した値がプロパティの型・制約に違反しています。違反したプロパティ={0}, 違反した値={1}';
+	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_ID] = 'id指定されたプロパティを変更することはできません。';
 	ERROR_MESSAGES[ERR_CODE_DESCRIPTOR_CIRCULAR_REF] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、baseやtypeによる依存関係が循環参照しています。';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM] = 'DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemの中身は変更できません。データアイテムID={0}, メソッド={1}';
 	ERROR_MESSAGES[ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL] = 'DataManagerに属していないDataModelの中身は変更できません。モデル名={0}, メソッド={1}';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。モデル"{0}"のスキーマに"{1}"は定義されていません。';
-	ERROR_MESSAGES[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティを取得することはできません。モデル"{0}"のスキーマに"{1}"は定義されていません。';
+	ERROR_MESSAGES[ERR_CODE_INVALID_CREATE_ARGS] = 'DataModel.createに渡された引数が不正です。オブジェクトまたは、配列を指定してください。';
 
 	addFwErrorCodeMap(ERROR_MESSAGES);
 
@@ -180,6 +168,23 @@
 	// =========================================================================
 	var argsToArray = h5.u.obj.argsToArray;
 
+	// h5internal.core.dataのものを変数にキャッシュする
+	var validateSchema = h5internal.core.data.validateSchema;
+	var validateDefaultValue = h5internal.core.data.validateDefaultValue;
+	var createCheckValueByDescriptor = h5internal.core.data.createCheckValueByDescriptor;
+	var createItemDescErrorReason = h5internal.core.data.createItemDescErrorReason;
+	var createDependencyMap = h5internal.core.data.createDependencyMap;
+	var isIntegerValue = h5internal.core.data.isIntegerValue;
+	var isNumberValue = h5internal.core.data.isNumberValue;
+	var unbox = h5internal.core.data.unbox;
+	var EventDispatcher = h5internal.core.data.EventDispatcher;
+	var calcDependencies = h5internal.core.data.calcDependencies;
+	var getValue = h5internal.core.data.getValue;
+	var setValue = h5internal.core.data.setValue;
+	var isTypeArray = h5internal.core.data.isTypeArray;
+
+	// DataItemと共通のエラーコード
+	var ITEM_ERRORS = h5internal.core.data.ITEM_ERRORS;
 
 	// =========================================================================
 	//
@@ -209,20 +214,20 @@
 	//========================================================
 
 	/**
-	 * データモデルのディスクリプタとして正しいオブジェクトかどうかチェックする。 schema以外をチェックしたあと、h5internal.core.data.validateSchemaを呼び出して結果をマージして返す。
+	 * データモデルのディスクリプタとして正しいオブジェクトかどうかチェックする。 schema以外をチェックしたあと、validateSchemaを呼び出して結果をマージして返す。
 	 *
 	 * @private
 	 * @param {Object} descriptor オブジェクト
 	 * @param {Object} DataManagerオブジェクト
 	 * @param {Boolean} stopOnErro エラーが発生した時に、即座にreturnするかどうか
-	 * @returns {Array} schemaのチェック結果。h5internal.core.data.validateSchemaの戻り値をそのまま返す
+	 * @returns {Array} schemaのチェック結果。validateSchemaの戻り値をそのまま返す
 	 */
 	function validateDescriptor(descriptor, manager, stopOnError) {
 		var errorReason = [];
 		// descriptorがオブジェクトかどうか
 		if (!$.isPlainObject(descriptor)) {
 			// descriptorがオブジェクトじゃなかったら、これ以上チェックしようがないので、stopOnErrorの値に関わらずreturnする
-			errorReason.push(h5internal.core.data.createItemDescErrorReason(DESC_ERR_DETAIL_NOT_OBJECT));
+			errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NOT_OBJECT));
 			return errorReason;
 		}
 
@@ -242,7 +247,7 @@
 			// nullまたはundefinedならチェックしない
 			if (!isString(base) || base.indexOf('@') !== 0) {
 				// @で始まる文字列（base.indexOf('@')が0）でないならエラー
-				errorReason.push(h5internal.core.data.createItemDescErrorReason(DESC_ERR_DETAIL_INVALID_BASE));
+				errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_INVALID_BASE));
 				if (stopOnError) {
 					return errorReason;
 				}
@@ -251,7 +256,7 @@
 				var baseModel = manager.models[baseName];
 				if (!baseModel) {
 					// 指定されたモデルが存在しないならエラー
-					errorReason.push(h5internal.core.data.createItemDescErrorReason(DESC_ERR_DETAIL_NO_EXIST_BASE,
+					errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NO_EXIST_BASE,
 							baseName));
 					if (stopOnError) {
 						return errorReason;
@@ -266,7 +271,7 @@
 		// baseSchemaがないのに、schemaが指定されていなかったらエラー
 		var schema = descriptor.schema;
 		if (!baseSchema && schema == null) {
-			errorReason.push(h5internal.core.data.createItemDescErrorReason(DESC_ERR_DETAIL_NO_SCHEMA));
+			errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NO_SCHEMA));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -274,7 +279,7 @@
 
 		// schemaが指定されていて、オブジェクトでないならエラー
 		if (!baseSchema && !$.isPlainObject(schema)) {
-			errorReason.push(h5internal.core.data.createItemDescErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT));
+			errorReason.push(createItemDescErrorReason(DESCRIPTOR_SCHEMA_ERR_CODE_NOT_OBJECT));
 			// schemaがオブジェクトでなかったら、schemaのチェックのしようがないので、stopOnErrorの値に関わらずreturnする
 			return errorReason;
 		}
@@ -283,7 +288,7 @@
 		schema = $.extend(baseSchema, schema);
 
 		// errorReasonにschemaのチェック結果を追加して返す
-		return errorReason.concat(h5internal.core.data.validateSchema(schema, manager, stopOnError));
+		return errorReason.concat(validateSchema(schema, manager, stopOnError));
 	}
 
 	//========================================================
@@ -291,24 +296,6 @@
 	// バリデーション関係コードここまで
 	//
 	//========================================================
-
-
-
-	function isTypeArray(typeStr) {
-		if (!typeStr) {
-			return false;
-		}
-		return typeStr.indexOf('[]') !== -1;
-	}
-
-	function getValue(item, prop) {
-		return item._values[prop];
-	}
-
-	function setValue(item, prop, value) {
-		item._values[prop] = value;
-	}
-
 
 	function itemSetter(model, item, valueObj, noValidationProps, ignoreProps, isCreate) {
 		// valueObjから整合性チェックに通ったものを整形して格納する配列
@@ -318,7 +305,8 @@
 		for ( var prop in valueObj) {
 			if (!(prop in model.schema)) {
 				// schemaに定義されていないプロパティ名が入っていたらエラー
-				throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, prop]);
+				throwFwError(ITEM_ERRORS.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name,
+						prop]);
 			}
 			if (ignoreProps && ($.inArray(prop, ignoreProps) !== -1)) {
 				//このpropプロパティは無視する
@@ -337,7 +325,7 @@
 					//dependのせいでエラーにならないようにするため。
 					continue;
 				}
-				throwFwError(ERR_CODE_DEPEND_PROPERTY, prop);
+				throwFwError(ITEM_ERRORS.ERR_CODE_DEPEND_PROPERTY, prop);
 			}
 
 			var type = model.schema[prop] && model.schema[prop].type;
@@ -355,7 +343,7 @@
 
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
 			if (type && type.match(/string|number|integer|boolean/)) {
-				newValue = h5internal.core.data.unbox(newValue);
+				newValue = unbox(newValue);
 			}
 
 			//このプロパティをバリデーションしなくてよいと明示されているならバリデーションを行わない
@@ -364,7 +352,7 @@
 				//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
 				var validateResult = model._validateItemValue(prop, newValue);
 				if (validateResult.length > 0) {
-					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
+					throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
 				}
 			}
 
@@ -377,7 +365,7 @@
 					for ( var i = 0, l = newValue.length; i < l; i++) {
 						// スパースな配列の場合、undefinedが入っている可能性があるので、!= で比較
 						// parseFloatできる値(isNumberValueに渡してtrueになる値)ならparseFloatする
-						if (newValue[i] != null && h5internal.core.data.isNumberValue(newValue[i])) {
+						if (newValue[i] != null && isNumberValue(newValue[i])) {
 							newValue[i] = parseFloat(newValue[i]);
 						}
 					}
@@ -467,107 +455,6 @@
 	}
 
 	/**
-	 * 依存プロパティの再計算を行います。再計算後の値はitemの各依存プロパティに代入されます。
-	 *
-	 * @param {DataModel} model データモデル
-	 * @param {DataItem} item データアイテム
-	 * @param {Object} event プロパティ変更イベント
-	 * @param {String|String[]} changedProps 今回変更されたプロパティ
-	 * @param {Boolean} isCreate create時に呼ばれたものかどうか。createなら値の変更を見ずに無条件でcalcを実行する
-	 * @returns {Object} { dependProp1: { oldValue, newValue }, ... } という構造のオブジェクト
-	 */
-	function calcDependencies(model, item, event, changedProps, isCreate) {
-		// 今回の変更に依存する、未計算のプロパティ
-		var targets = [];
-
-		var dependsMap = model._dependencyMap;
-
-		/**
-		 * この依存プロパティが計算可能（依存するすべてのプロパティの再計算が完了している）かどうかを返します。
-		 * 依存しているプロパティが依存プロパティでない場合は常にtrue(計算済み)を返します
-		 * 依存しているプロパティが依存プロパティが今回の変更されたプロパティに依存していないならtrue(計算済み)を返します
-		 */
-		function isReady(dependProp) {
-			var deps = wrapInArray(model.schema[dependProp].depend.on);
-			for ( var i = 0, len = deps.length; i < len; i++) {
-				if ($.inArray(deps[i], model._realProperty) === -1
-						&& $.inArray(deps[i], targets) !== -1) {
-					// 依存先が実プロパティでなく、未計算のプロパティであればfalseを返す
-					return false;
-				}
-			}
-			return true;
-		}
-
-		/**
-		 * changedPropsで指定されたプロパティに依存するプロパティをtargetArrayに追加する
-		 */
-		function addDependencies(targetArray, srcProps) {
-			for ( var i = 0, len = srcProps.length; i < len; i++) {
-				var depends = dependsMap[srcProps[i]];
-
-				if (!depends) {
-					continue;
-				}
-
-				for ( var j = 0, jlen = depends.length; j < jlen; j++) {
-					var dprop = depends[j];
-					if ($.inArray(dprop, targetArray) === -1) {
-						targetArray.push(dprop);
-					}
-				}
-			}
-		}
-
-		var ret = {};
-
-		if (isCreate) {
-			// createならすべての実プロパティに依存するプロパティを列挙する
-			// create時にundefinedがセットされた場合、変更なしなのでchangedPropsに入らないが、calcは計算させる
-			targets = model._dependProps.slice();
-		} else {
-			//今回変更された実プロパティに依存するプロパティを列挙
-			addDependencies(targets, wrapInArray(changedProps));
-		}
-
-		while (targets.length !== 0) {
-			var restTargets = [];
-
-			//各依存プロパティについて、計算可能（依存するすべてのプロパティが計算済み）なら計算する
-			for ( var i = 0, len = targets.length; i < len; i++) {
-				var dp = targets[i];
-
-				if (isReady(dp)) {
-					var newValue = model.schema[dp].depend.calc.call(item, event);
-
-					// 型変換を行わない厳密チェックで、戻り値をチェックする
-					var errReason = model._itemValueCheckFuncs[dp](newValue, true);
-					if (errReason.length !== 0) {
-						// calcの返した値が型・制約違反ならエラー
-						throwFwError(ERR_CODE_CALC_RETURNED_INVALID_VALUE, [dp, newValue]);
-					}
-					ret[dp] = {
-						oldValue: getValue(item, dp),
-						newValue: newValue
-					};
-
-					setValue(item, dp, newValue);
-				} else {
-					restTargets.push(dp);
-				}
-			}
-
-			//今回計算対象となったプロパティに（再帰的に）依存するプロパティをrestに追加
-			//restTargetsは「今回計算できなかったプロパティ＋新たに依存関係が発見されたプロパティ」が含まれる
-			addDependencies(restTargets, targets);
-
-			targets = restTargets;
-		}
-
-		return ret;
-	}
-
-	/**
 	 * propで指定されたプロパティのプロパティソースを作成します。
 	 *
 	 * @private
@@ -618,7 +505,8 @@
 				if (checkFlag) {
 					var validateResult = model._validateItemValue(propName, args);
 					if (validateResult.length > 0) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+						throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, propName,
+								validateResult);
 					}
 				}
 
@@ -704,22 +592,14 @@
 			// userInitialValueの中に、schemaで定義されていないプロパティへの値のセットが含まれていたらエラー
 			for ( var p in userInitialValue) {
 				if (!schema.hasOwnProperty(p)) {
-					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name, p]);
+					throwFwError(ITEM_ERRORS.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [model.name,
+							p]);
 				}
 			}
 
 			//デフォルト値を代入する
 			for ( var plainProp in schema) {
 				var propDesc = schema[plainProp];
-
-				if (propDesc && propDesc.depend) {
-					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
-					if (plainProp in userInitialValue) {
-						// 依存プロパティが与えられていた場合はエラー
-						throwFwError(ERR_CODE_DEPEND_PROPERTY, plainProp);
-					}
-					continue;
-				}
 
 				if (propDesc && isTypeArray(propDesc.type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
@@ -729,12 +609,21 @@
 					arrayProps.push(plainProp);
 				}
 
+				if (propDesc && propDesc.depend) {
+					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
+					if (plainProp in userInitialValue) {
+						// 依存プロパティが与えられていた場合はエラー
+						throwFwError(ITEM_ERRORS.ERR_CODE_DEPEND_PROPERTY, plainProp);
+					}
+					continue;
+				}
+
 				var initValue = null;
 
 				if (plainProp in userInitialValue) {
 					//create時に初期値が与えられていた場合
 
-					// depend指定プロパティにはdefaultValueを指定できないが、h5internal.core.data.validateSchemaでチェック済みなので
+					// depend指定プロパティにはdefaultValueを指定できないが、validateSchemaでチェック済みなので
 					// ここでチェックは行わない
 
 					// 与えられた初期値を代入
@@ -768,7 +657,7 @@
 				setObservableArrayListeners(model, this, arrayProps[i], this.get(arrayProps[i]));
 			}
 		}
-		$.extend(DataItem.prototype, h5internal.core.data.EventDispatcher.prototype, {
+		$.extend(DataItem.prototype, EventDispatcher.prototype, {
 			/**
 			 * 指定されたキーのプロパティの値を取得します。
 			 * <p>
@@ -790,7 +679,8 @@
 
 				if (!schema.hasOwnProperty(key)) {
 					//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
-					throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [model.name, key]);
+					throwFwError(ITEM_ERRORS.ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [model.name,
+							key]);
 				}
 
 				return getValue(this, key);
@@ -815,10 +705,12 @@
 			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
 			 */
 			set: function(var_args) {
+				var idKey = model.idKey;
+
 				// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
 				if (this._model !== model || !this._model._manager) {
-					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [this._values[model.idKey],
-							'set'], this);
+					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM,
+							[getValue(this, idKey), 'set'], this);
 				}
 				//引数はオブジェクト1つ、または(key, value)で呼び出せる
 				var valueObj = var_args;
@@ -827,8 +719,8 @@
 					valueObj[arguments[0]] = arguments[1];
 				}
 
-				if (model.idKey in valueObj) {
-					//IDの上書きは禁止
+				if ((idKey in valueObj) && (valueObj[idKey] !== getValue(this, idKey))) {
+					//IDの変更は禁止
 					throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
 				}
 
@@ -876,7 +768,8 @@
 			 *
 			 * @since 1.1.0
 			 * @memberOf DataItem
-			 * @returns {Boolean} 現在のこのプロパティにセットされているのがnullかどうか
+			 * @param {String} key プロパティ名
+			 * @returns {Boolean} 現在指定したプロパティにセットされているのがnullかどうか
 			 */
 			regardAsNull: function(key) {
 				if (this._isArrayProp(key)) {
@@ -1284,7 +1177,7 @@
 		 * @type Object
 		 * @memberOf DataModel
 		 */
-		this._dependencyMap = h5internal.core.data.createDependencyMap(schema);
+		this._dependencyMap = createDependencyMap(schema);
 
 		/**
 		 * モデルが持つ依存プロパティ
@@ -1329,7 +1222,7 @@
 	}
 
 	//EventDispatcherの機能を持たせるため、prototypeをコピーし、そのうえでDataModel独自のプロパティを追加する
-	$.extend(DataModel.prototype, h5internal.core.data.EventDispatcher.prototype, {
+	$.extend(DataModel.prototype, EventDispatcher.prototype, {
 		/**
 		 * 指定されたIDと初期値がセットされたデータアイテムを生成します。
 		 * <p>
@@ -1388,8 +1281,8 @@
 					throwFwError(ERR_CODE_NO_ID);
 				}
 				//idがstringでもintegerでもない場合は制約違反エラー
-				if (!h5internal.core.data.isIntegerValue(itemId, true) && !isString(itemId)) {
-					throwFwError(ERR_CODE_INVALID_ITEM_VALUE);
+				if (!isIntegerValue(itemId, true) && !isString(itemId)) {
+					throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE);
 				}
 
 				var storedItem = this._findById(itemId);
@@ -1498,7 +1391,7 @@
 					continue;
 				}
 
-				var id = (isString(ids[i]) || h5internal.core.data.isIntegerValue(ids[i], true)) ? ids[i]
+				var id = (isString(ids[i]) || isIntegerValue(ids[i], true)) ? ids[i]
 						: ids[i]._values[idKey];
 
 				var item = this.items[id];
@@ -1543,7 +1436,7 @@
 		 * @returns {Boolean} 指定されたIDのデータアイテムをこのデータモデルが保持しているかどうか
 		 */
 		has: function(idOrObj) {
-			if (isString(idOrObj) || h5internal.core.data.isIntegerValue(idOrObj, true)) {
+			if (isString(idOrObj) || isIntegerValue(idOrObj, true)) {
 				return !!this._findById(idOrObj);
 			} else if (typeof idOrObj === 'object') {
 				//型の厳密性はitemsとの厳密等価比較によってチェックできるので、if文ではtypeofで充分
@@ -1698,7 +1591,7 @@
 		 */
 		this._updateLogs = null;
 	}
-	DataModelManager.prototype = new h5internal.core.data.EventDispatcher();
+	DataModelManager.prototype = new EventDispatcher();
 	$.extend(DataModelManager.prototype, {
 		/**
 		 * データモデルを作成します。
@@ -1720,7 +1613,7 @@
 				if (!l) {
 					//空配列
 					throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null,
-							[h5internal.core.data.createItemDescErrorReason(DESC_ERR_DETAIL_NOT_OBJECT)]);
+							[createItemDescErrorReason(DESC_ERR_DETAIL_NOT_OBJECT)]);
 				}
 				var dependMap = {};
 				var namesInDescriptors = [];
@@ -1798,7 +1691,7 @@
 							// 循環参照エラー
 							throwFwError(ERR_CODE_DESCRIPTOR_CIRCULAR_REF);
 						}
-						throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, [h5internal.core.data.createItemDescErrorReason(
+						throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, [createItemDescErrorReason(
 								DESC_ERR_DETAIL_NO_EXIST_BASE, modelName)]);
 					}
 				}
@@ -2155,9 +2048,9 @@
 		var extendedSchema = {};
 		extendSchema(extendedSchema, manager, descriptor);
 
-		var itemValueCheckFuncs = h5internal.core.data.createCheckValueByDescriptor(extendedSchema, manager);
+		var itemValueCheckFuncs = createCheckValueByDescriptor(extendedSchema, manager);
 
-		var defaultValueErrorReason = h5internal.core.data.validateDefaultValue(extendedSchema, itemValueCheckFuncs,
+		var defaultValueErrorReason = validateDefaultValue(extendedSchema, itemValueCheckFuncs,
 				true);
 		if (defaultValueErrorReason.length > 0) {
 			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, defaultValueErrorReason);
@@ -2221,12 +2114,7 @@
 	// Expose to window
 	//=============================
 	/**
-	 * DataModelの名前空間
-	 *
-	 * @since 1.1.0
-	 * @name data
-	 * @memberOf h5.core
-	 * @namespace
+	 * dataの名前空間にデータモデルのものを公開 (名前空間はh5.core.data_observableですでに作成されてます)
 	 */
 	h5.u.obj.expose('h5.core.data', {
 		createManager: createManager,
