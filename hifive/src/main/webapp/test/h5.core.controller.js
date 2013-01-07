@@ -5388,6 +5388,134 @@ $(function() {
 				});
 			});
 
+	asyncTest(
+			'[browser#ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8|ie-wp:9:docmode=7|and-and:0-2]SVG内要素にバインドしたh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。',
+			26,
+			function() {
+				var controller = {
+
+					__name: 'TestController',
+
+					'#svgElem rect h5trackstart': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 10,
+								'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 10,
+								'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 10,
+								'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
+					},
+
+					'#svgElem rect h5trackmove': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 15,
+								'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 15,
+								'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
+						strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
+						strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
+					},
+
+					'#svgElem rect h5trackend': function(context) {
+						context.evArg
+								&& ok(false,
+										'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+						var event = context.event;
+						strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
+						strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
+						strictEqual(event.screenX, 20,
+								'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
+						strictEqual(event.screenY, 20,
+								'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
+						strictEqual(event.clientX, 20,
+								'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
+						strictEqual(event.clientY, 20,
+								'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
+						ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
+						ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
+					}
+				};
+
+				var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				svg.setAttribute('id', 'svgElem');
+				svg.setAttribute('width', '50');
+				svg.setAttribute('height', '50');
+				var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				rect.setAttribute('x', '50');
+				rect.setAttribute('y', '50');
+				rect.setAttribute('width', '50');
+				rect.setAttribute('height', '50');
+				svg.appendChild(rect);
+				document.getElementById('controllerTest').appendChild(svg);
+
+				var testController = h5.core.controller('#controllerTest', controller);
+
+				testController.readyPromise.done(function() {
+					var startTrackEvent = createDummyTrackEvent(startTrackEventName, 10);
+					var moveTrackEvent = createDummyTrackEvent(moveTrackEventName, 15);
+					var endTrackEvent = createDummyTrackEvent(endTrackEventName, 20);
+
+					// ドラッグ中じゃないので実行されない
+					$('#svgElem rect').trigger(moveTrackEvent, {
+						aa: "実行されない"
+					});
+					$('#svgElem rect').trigger(endTrackEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ開始
+					$('#svgElem rect').trigger(startTrackEvent);
+
+					// ドラッグ中なので実行されない
+					$('#svgElem rect').trigger(startTrackEvent, {
+						aa: "実行されない"
+					});
+
+					// ドラッグ
+					$('#svgElem rect').trigger(moveTrackEvent);
+
+					// ドラッグ終了
+					$('#svgElem rect').trigger(endTrackEvent);
+
+					// ドラッグ中じゃないので実行されない
+					$('#svgElem rect').trigger(moveTrackEvent, {
+						aa: "実行されない"
+					});
+					$('#svgElem rect').trigger(endTrackEvent, {
+						aa: "実行されない"
+					});
+
+					testController.unbind();
+
+					// ちゃんとアンバインドされているかどうかを確認。
+					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+					$('#svgElem rect').trigger(startTrackEvent);
+					$('#svgElem rect').trigger(moveTrackEvent);
+					$('#svgElem rect').trigger(endTrackEvent);
+
+					start();
+				});
+			});
 	asyncTest('親コントローラと子コントローラがh5trackイベントをバインドしているときにイベントが正しい回数発生すること', 3, function() {
 		var startTrackEvent = createDummyTrackEvent(startTrackEventName, 0);
 		var moveTrackEvent = createDummyTrackEvent(moveTrackEventName, 10);
