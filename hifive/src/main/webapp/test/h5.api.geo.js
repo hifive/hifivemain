@@ -36,9 +36,6 @@ $(function() {
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.api.geo;
 
-	// IE9でドキュメントモードを8以下にしている場合はisSupportedをfalseにして、テストを飛ばす。
-	var isSupported = h5.api.geo.isSupported && navigator.geolocation;
-
 	//=============================
 	// Functions
 	//=============================
@@ -53,7 +50,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7|ie-wp:9:docmode=8]H5Api - Geo Location : getCurrentPosition');
+	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7]H5Api - Geo Location : getCurrentPosition');
 
 	//=============================
 	// Body

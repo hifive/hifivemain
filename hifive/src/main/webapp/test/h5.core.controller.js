@@ -2763,7 +2763,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()でスクリーンロックでインジケータを表示', 5,
+	asyncTest('[browser#ie-wp:9:docmode=7]this.triggerIndicator() triggerIndicator()でスクリーンロックでインジケータを表示', 5,
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -2814,7 +2814,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', 5, function() {
+	asyncTest('[browser#ie-wp:9:docmode=7]this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', 5, function() {
 		$('#controllerTest').append('<div id="childDiv"></div>');
 		var indicator = null;
 		var testController = {
@@ -3008,7 +3008,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
+	asyncTest('[browser#ie-wp:9:docmode=7]this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
 		var testController = null;
 		var testController2 = null;
 		var controllerBase = {
@@ -3133,7 +3133,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() Indicator#message()で指定したメッセージに更新されること', 26, function() {
+	asyncTest('[browser#ie-wp:9:docmode=7]this.indicator() Indicator#message()で指定したメッセージに更新されること', 26, function() {
 		var testController = null;
 		var controllerBase = {
 			__name: 'TestController',
@@ -3419,7 +3419,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5.ui.indicator()', 5,
+	asyncTest('[browser#ie-wp:9:docmode=7]h5.ui.indicator()', 5,
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -5656,7 +5656,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23|ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8|ie-wp:9:docmode=7|ie-wp:9:docmode=8]h5trackイベント(mousedown, mousemove, mouseup) SVG ※タッチイベントのあるブラウザ、SVGを動的に追加できないブラウザでは失敗します。',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23|ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8|ie-wp:9:docmode=7]h5trackイベント(mousedown, mousemove, mouseup) SVG ※タッチイベントのあるブラウザ、SVGを動的に追加できないブラウザでは失敗します。',
 			26,
 			function() {
 				var controller = {
