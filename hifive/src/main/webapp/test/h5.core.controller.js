@@ -3697,11 +3697,11 @@ $(function() {
 	});
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5track*イベントハンドラを、mouseイベントのトリガで発火させたときにcontext.evArgに引数が格納されること。(touchイベントのあるブラウザでは失敗します)',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5track*イベントハンドラを、mouseイベントのトリガで発火させたときにcontext.evArgに引数が格納されること。(タッチイベントのあるブラウザでは失敗します)',
 			6, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (hasTouchEvent) {
-					ok(false, 'touch系イベントのあるブラウザでは失敗します');
+					ok(false, 'タッチイベントのあるブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -3774,11 +3774,11 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]h5track*イベントハンドラを、touchイベントのトリガで発火させたときにcontext.evArgに引数が格納されること。(touchイベントのないブラウザでは失敗します)',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]h5track*イベントハンドラを、タッチイベントのトリガで発火させたときにcontext.evArgに引数が格納されること。(タッチイベントのないブラウザでは失敗します)',
 			6, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (!hasTouchEvent) {
-					ok(false, 'touch系イベントのないブラウザでは失敗します');
+					ok(false, 'タッチイベントのないブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -5346,7 +5346,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5trackイベント(mousedown, mousemove, mouseup) ※タブレット、スマートフォンでは失敗します',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5trackイベント(mousedown, mousemove, mouseup) ※タッチイベントのあるブラウザでは失敗します',
 			26,
 			function() {
 				var controller = {
@@ -5462,7 +5462,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]h5trackイベント(touchstart, touchmove, touchend) ※touchイベントをサポートしていないブラウザでは失敗します。',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]h5trackイベント(touchstart, touchmove, touchend) ※タッチイベントのないブラウザでは失敗します。',
 			26,
 			function() {
 
@@ -5574,7 +5574,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合もh5trackイベントが発生するか ※touchイベントをサポートしていないブラウザでは失敗します。',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]h5trackイベント(touchstart, touchmove, touchend) touchstart/move/end をtriggerした場合もh5trackイベントが発生するか ※タッチイベントのないブラウザでは失敗します。',
 			27, function() {
 				var controller = {
 					__name: 'TestController',
@@ -5778,7 +5778,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9|and-and:0-2]h5trackイベント(touchstart, touchmove, touchend) SVG ※タッチのないブラウザ、SVG要素を動的に追加できないブラウザは失敗します。',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9|and-and:0-2]h5trackイベント(touchstart, touchmove, touchend) SVG ※タッチイベントのないブラウザ、SVG要素を動的に追加できないブラウザは失敗します。',
 			26,
 			function() {
 				var controller = {
@@ -5905,7 +5905,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5trackイベント(mousedown, mousemove, mouseup) window ※タブレット、スマートフォンでは失敗します',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]h5trackイベント(mousedown, mousemove, mouseup) window ※タッチイベントのあるブラウザでは失敗します',
 			26,
 			function() {
 				var controller = {
@@ -6141,7 +6141,7 @@ $(function() {
 			3, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (hasTouchEvent) {
-					ok(false, 'touch系イベントのあるブラウザでは失敗します');
+					ok(false, 'タッチイベントのあるブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -6206,7 +6206,7 @@ $(function() {
 			3, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (!hasTouchEvent) {
-					ok(false, 'touch系イベントのないブラウザでは失敗します');
+					ok(false, 'タッチイベントのないブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -6270,7 +6270,7 @@ $(function() {
 			3, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (hasTouchEvent) {
-					ok(false, 'touch系イベントのあるブラウザでは失敗します');
+					ok(false, 'タッチイベントのあるブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -6342,7 +6342,7 @@ $(function() {
 			3, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (!hasTouchEvent) {
-					ok(false, 'touch系イベントのないブラウザでは失敗します');
+					ok(false, 'タッチイベントのないブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -6411,12 +6411,12 @@ $(function() {
 
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]mouse系とh5track系のイベントを両方バインドした場合、両方のハンドラが動作すること(mouse系) ※マウスイベントのないブラウザでは失敗します',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23]mouse系とh5track系のイベントを両方バインドした場合、両方のハンドラが動作すること(mouse系) ※タッチイベントのあるブラウザでは失敗します',
 			6,
 			function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (hasTouchEvent) {
-					ok(false, 'touch系イベントのあるブラウザでは失敗します');
+					ok(false, 'タッチイベントのあるブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -6543,7 +6543,7 @@ $(function() {
 			function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (!hasTouchEvent) {
-					ok(false, 'touch系イベントのないブラウザでは失敗します');
+					ok(false, 'タッチイベントのないブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -6669,7 +6669,7 @@ $(function() {
 			3, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (hasTouchEvent) {
-					ok(false, 'touch系イベントのあるブラウザでは失敗します');
+					ok(false, 'タッチイベントのあるブラウザでは失敗します');
 					start();
 					return;
 				}
@@ -6732,11 +6732,11 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]ルートエレメントより外のエレメントでtouch系イベントがstopPropagation()されていて、documentまでtouch系イベントがバブリングしない状態でも、h5trackイベントハンドラは実行されること ※touch系イベントのないブラウザでは失敗します',
+			'[browser#ie:6-10|ch:0-25|ff:0-17|sa:0-5|op:0-12|ie-wp:9]ルートエレメントより外のエレメントでタッチイベントがstopPropagation()されていて、documentまでタッチイベントがバブリングしない状態でも、h5trackイベントハンドラは実行されること ※タッチイベントのないブラウザでは失敗します',
 			3, function() {
 				var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
 				if (!hasTouchEvent) {
-					ok(false, 'touch系イベントのないブラウザでは失敗します');
+					ok(false, 'タッチイベントのないブラウザでは失敗します');
 					start();
 					return;
 				}
