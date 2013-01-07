@@ -2763,7 +2763,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('[browser#ie-wp:9:docmode=7]this.triggerIndicator() triggerIndicator()でスクリーンロックでインジケータを表示', 5,
+	asyncTest('this.triggerIndicator() triggerIndicator()でスクリーンロックでインジケータを表示', 5,
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -2814,7 +2814,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('[browser#ie-wp:9:docmode=7]this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', 5, function() {
+	asyncTest('this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', 5, function() {
 		$('#controllerTest').append('<div id="childDiv"></div>');
 		var indicator = null;
 		var testController = {
@@ -3008,7 +3008,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('[browser#ie-wp:9:docmode=7]this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
+	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
 		var testController = null;
 		var testController2 = null;
 		var controllerBase = {
@@ -3133,7 +3133,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('[browser#ie-wp:9:docmode=7]this.indicator() Indicator#message()で指定したメッセージに更新されること', 26, function() {
+	asyncTest('this.indicator() Indicator#message()で指定したメッセージに更新されること', 26, function() {
 		var testController = null;
 		var controllerBase = {
 			__name: 'TestController',
@@ -3419,7 +3419,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('[browser#ie-wp:9:docmode=7]h5.ui.indicator()', 5,
+	asyncTest('h5.ui.indicator()', 5,
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -3468,7 +3468,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('[browser#ie-wp:9:docmode=7]h5.ui.indicator() テーマを変更して実行',
+	asyncTest('h5.ui.indicator() テーマを変更して実行',
 			function() {
 
 				var testController = null;
