@@ -86,6 +86,13 @@ $(function() {
 		return ev;
 	}
 
+	// h5trackイベントをtriggerさせるためのイベントを作成する
+	function createDummyTrackEvent(eventName, pos, isEnd) {
+		var ev = new $.Event(eventName);
+		return setPos(ev, pos, isEnd);
+
+	}
+
 	// =========================================================================
 	//
 	// Test Module
@@ -3705,10 +3712,9 @@ $(function() {
 					start();
 					return;
 				}
-
-				var moveMouseEvent = 'mousemove';
-				var startMouseEvent = 'mousedown';
-				var endMouseEvent = 'mouseup';
+				var startMouseEventName = 'mousedown';
+				var moveMouseEventName = 'mousemove';
+				var endMouseEventName = 'mouseup';
 
 				var evArg = null;
 				var $elm = $('#controllerTest');
@@ -3732,39 +3738,39 @@ $(function() {
 					};
 					var ary = [1, 'a'];
 					// ドラッグ開始
-					$elm.trigger(startMouseEvent, obj);
-					strictEqual(evArg, obj, startMouseEvent
+					$elm.trigger(createDummyTrackEvent(startMouseEventName, 0), obj);
+					strictEqual(evArg, obj, startMouseEventName
 							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ
-					$elm.trigger(moveMouseEvent, 1);
-					strictEqual(evArg, 1, moveMouseEvent
+					$elm.trigger(createDummyTrackEvent(moveMouseEventName, 10), 1);
+					strictEqual(evArg, 1, moveMouseEventName
 							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ終了
-					$elm.trigger(endMouseEvent, 'a');
-					strictEqual(evArg, 'a', endMouseEvent
+					$elm.trigger(createDummyTrackEvent(endMouseEventName, 10), 'a');
+					strictEqual(evArg, 'a', endMouseEventName
 							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// 配列で複数渡した場合
 					// ドラッグ開始
-					$elm.trigger(startMouseEvent, [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], startMouseEvent
+					$elm.trigger(createDummyTrackEvent(startMouseEventName, 0), [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], startMouseEventName
 							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ
-					$elm.trigger(moveMouseEvent, [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], moveMouseEvent
+					$elm.trigger(createDummyTrackEvent(moveMouseEventName, 10), [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], moveMouseEventName
 							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ終了
-					$elm.trigger(endMouseEvent, [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], endMouseEvent
+					$elm.trigger(createDummyTrackEvent(endMouseEventName, 10), [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], endMouseEventName
 							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
@@ -3782,9 +3788,10 @@ $(function() {
 					start();
 					return;
 				}
-				var moveMouseEvent = 'touchmove';
-				var startMouseEvent = 'touchstart';
-				var endMouseEvent = 'touchend';
+
+				var startMouseEventName = 'touchstart';
+				var moveMouseEventName = 'touchmove';
+				var endMouseEventName = 'touchend';
 
 				var evArg = null;
 				var $elm = $('#controllerTest');
@@ -3808,39 +3815,39 @@ $(function() {
 					};
 					var ary = [1, 'a'];
 					// ドラッグ開始
-					$elm.trigger(setPos(new $.Event(startMouseEvent), 0), obj);
-					strictEqual(evArg, obj, startMouseEvent
+					$elm.trigger(createDummyTrackEvent(startMouseEventName, 0), obj);
+					strictEqual(evArg, obj, startMouseEventName
 							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ
-					$elm.trigger(setPos(new $.Event(moveMouseEvent), 10), 1);
-					strictEqual(evArg, 1, moveMouseEvent
+					$elm.trigger(createDummyTrackEvent(moveMouseEventName, 10), 1);
+					strictEqual(evArg, 1, moveMouseEventName
 							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ終了
-					$elm.trigger(setPos(new $.Event(endMouseEvent), 10, true), 'a');
-					strictEqual(evArg, 'a', endMouseEvent
+					$elm.trigger(createDummyTrackEvent(endMouseEventName, 10, true), 'a');
+					strictEqual(evArg, 'a', endMouseEventName
 							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// 配列で複数渡した場合
 					// ドラッグ開始
-					$elm.trigger(setPos(new $.Event(startMouseEvent), 10), [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], startMouseEvent
+					$elm.trigger(createDummyTrackEvent(startMouseEventName, 0), [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], startMouseEventName
 							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ
-					$elm.trigger(setPos(new $.Event(moveMouseEvent), 0), [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], moveMouseEvent
+					$elm.trigger(createDummyTrackEvent(moveMouseEventName, 10), [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], moveMouseEventName
 							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ終了
-					$elm.trigger(setPos(new $.Event(endMouseEvent), 0, true), [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], endMouseEvent
+					$elm.trigger(createDummyTrackEvent(endMouseEventName, 10, true), [1, obj, ary]);
+					deepEqual(evArg, [1, obj, ary], endMouseEventName
 							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
@@ -5415,9 +5422,9 @@ $(function() {
 
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.readyPromise.done(function() {
-					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
-					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
-					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
+					var startMouseEvent = createDummyTrackEvent('mousedown', 10);
+					var moveMouseEvent = createDummyTrackEvent('mousemove', 15);
+					var endMouseEvent = createDummyTrackEvent('mouseup', 20);
 
 					// ドラッグ中じゃないので実行されない
 					$('#controllerResult').trigger(moveMouseEvent, {
@@ -5528,9 +5535,9 @@ $(function() {
 
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.readyPromise.done(function() {
-					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
-					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
-					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
+					var startMouseEvent = createDummyTrackEvent('touchstart', 10);
+					var moveMouseEvent = createDummyTrackEvent('touchmove', 15);
+					var endMouseEvent = createDummyTrackEvent('touchend', 20, true);
 
 					// ドラッグ中じゃないので実行されない
 					$('#controllerResult').trigger(moveMouseEvent, {
@@ -5649,7 +5656,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23|ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8|ie-wp:9:docmode=7|ie-wp:9:docmode=8]h5trackイベント(mousedown, mousemove, mouseup) SVG ※タッチのあるブラウザ、SVGを動的に追加できないブラウザでは失敗します。',
+			'[browser#sa-ios:4-6|and-and:0-4|ch-and:0-18|ff-and:0-17|op-and:0-12|ch-ios:0-23|ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8|ie-wp:9:docmode=7|ie-wp:9:docmode=8]h5trackイベント(mousedown, mousemove, mouseup) SVG ※タッチイベントのあるブラウザ、SVGを動的に追加できないブラウザでは失敗します。',
 			26,
 			function() {
 				var controller = {
@@ -5731,9 +5738,9 @@ $(function() {
 				var testController = h5.core.controller('#controllerTest', controller);
 
 				testController.readyPromise.done(function() {
-					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
-					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
-					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
+					var startMouseEvent = createDummyTrackEvent('mousedown', 10);
+					var moveMouseEvent = createDummyTrackEvent('mousemove', 15);
+					var endMouseEvent = createDummyTrackEvent('mouseup', 20);
 
 					// ドラッグ中じゃないので実行されない
 					$('#svgElem rect').trigger(moveMouseEvent, {
@@ -5859,9 +5866,9 @@ $(function() {
 				var testController = h5.core.controller('#controllerTest', controller);
 
 				testController.readyPromise.done(function() {
-					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
-					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
-					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
+					var startMouseEvent = createDummyTrackEvent('touchstart', 10);
+					var moveMouseEvent = createDummyTrackEvent('touchmove', 15);
+					var endMouseEvent = createDummyTrackEvent('touchend', 20, true);
 
 					// ドラッグ中じゃないので実行されない
 					$('#svgElem rect').trigger(moveMouseEvent, {
@@ -5975,9 +5982,9 @@ $(function() {
 				var testController = h5.core.controller(window, controller);
 
 				testController.readyPromise.done(function() {
-					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
-					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
-					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
+					var startMouseEvent = createDummyTrackEvent('mousedown', 10);
+					var moveMouseEvent = createDummyTrackEvent('mousemove', 15);
+					var endMouseEvent = createDummyTrackEvent('mouseup', 20);
 
 					// ドラッグ中じゃないので実行されない
 					$('body').trigger(moveMouseEvent, {
@@ -6091,9 +6098,9 @@ $(function() {
 				var testController = h5.core.controller(window, controller);
 
 				testController.readyPromise.done(function() {
-					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
-					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
-					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
+					var startMouseEvent = createDummyTrackEvent('touchstart', 10);
+					var moveMouseEvent = createDummyTrackEvent('touchmove', 15);
+					var endMouseEvent = createDummyTrackEvent('touchend', 20, true);
 
 					// ドラッグ中じゃないので実行されない
 					$(window).trigger(moveMouseEvent, {
@@ -6145,10 +6152,9 @@ $(function() {
 					start();
 					return;
 				}
-
-				var moveMouseEvent = 'mousemove';
-				var startMouseEvent = 'mousedown';
-				var endMouseEvent = 'mouseup';
+				var startMouseEvent = createDummyTrackEvent('mousedown', 0);
+				var moveMouseEvent = createDummyTrackEvent('mousemove', 10);
+				var endMouseEvent = createDummyTrackEvent('mouseup', 10);
 
 				var events = [];
 				var $elm = $('#controllerTest');
@@ -6210,9 +6216,9 @@ $(function() {
 					start();
 					return;
 				}
-				var startMouseEvent = setPos(new $.Event('touchstart'), 0);
-				var moveMouseEvent = setPos(new $.Event('touchmove'), 10);
-				var endMouseEvent = setPos(new $.Event('touchend'), 10, true);
+				var startMouseEvent = createDummyTrackEvent('touchstart', 0);
+				var moveMouseEvent = createDummyTrackEvent('touchmove', 10);
+				var endMouseEvent = createDummyTrackEvent('touchend', 10, true);
 
 				var events = [];
 				var $elm = $('#controllerTest');
@@ -6274,10 +6280,9 @@ $(function() {
 					start();
 					return;
 				}
-
-				var moveMouseEvent = 'mousemove';
-				var startMouseEvent = 'mousedown';
-				var endMouseEvent = 'mouseup';
+				var startMouseEvent = createDummyTrackEvent('mousedown', 0);
+				var moveMouseEvent = createDummyTrackEvent('mousemove', 10);
+				var endMouseEvent = createDummyTrackEvent('mouseup', 10);
 
 				var events = [];
 				var $elm = $('#controllerTest');
@@ -6346,10 +6351,9 @@ $(function() {
 					start();
 					return;
 				}
-
-				var moveMouseEvent = 'touchmove';
-				var startMouseEvent = 'touchstart';
-				var endMouseEvent = 'touchend';
+				var startMouseEvent = createDummyTrackEvent('touchstart', 0);
+				var moveMouseEvent = createDummyTrackEvent('touchmove', 10);
+				var endMouseEvent = createDummyTrackEvent('touchend', 10, true);
 
 				var events = [];
 				var $elm = $('#controllerTest');
@@ -6420,10 +6424,9 @@ $(function() {
 					start();
 					return;
 				}
-
-				var moveMouseEvent = 'mousemove';
-				var startMouseEvent = 'mousedown';
-				var endMouseEvent = 'mouseup';
+				var startMouseEvent = createDummyTrackEvent('mousedown', 0);
+				var moveMouseEvent = createDummyTrackEvent('mousemove', 10);
+				var endMouseEvent = createDummyTrackEvent('mouseup', 10);
 
 				var trackEvents = {};
 				var mouseEvents = {};
@@ -6497,8 +6500,8 @@ $(function() {
 						p_h5trackstart: 1
 					}, 'h5trackstartイベントハンドラが実行されていること');
 					exp = {};
-					exp['c_' + startMouseEvent] = 1;
-					exp['p_' + startMouseEvent] = 1;
+					exp['c_' + startMouseEvent.type] = 1;
+					exp['p_' + startMouseEvent.type] = 1;
 					deepEqual(mouseEvents, exp, 'mousedownイベントハンドラが実行されていること');
 					trackEvents = {};
 					mouseEvents = {};
@@ -6511,8 +6514,8 @@ $(function() {
 					}, 'h5trackmoveイベントハンドラが実行されていること');
 
 					exp = {};
-					exp['c_' + moveMouseEvent] = 1;
-					exp['p_' + moveMouseEvent] = 1;
+					exp['c_' + moveMouseEvent.type] = 1;
+					exp['p_' + moveMouseEvent.type] = 1;
 					deepEqual(mouseEvents, exp, 'mousemoveイベントハンドラが実行されていること');
 					trackEvents = {};
 					mouseEvents = {};
@@ -6525,8 +6528,8 @@ $(function() {
 						p_h5trackend: 1
 					}, 'h5trackendイベントハンドラが実行されていること');
 					exp = {};
-					exp['c_' + endMouseEvent] = 1;
-					exp['p_' + endMouseEvent] = 1;
+					exp['c_' + endMouseEvent.type] = 1;
+					exp['p_' + endMouseEvent.type] = 1;
 					deepEqual(mouseEvents, exp, 'mouseupイベントハンドラが実行されていること');
 					trackEvents = {};
 					mouseEvents = {};
@@ -6547,10 +6550,9 @@ $(function() {
 					start();
 					return;
 				}
-
-				var moveMouseEvent = 'touchmove';
-				var startMouseEvent = 'touchstart';
-				var endMouseEvent = 'touchend';
+				var startMouseEvent = createDummyTrackEvent('touchstart', 0);
+				var moveMouseEvent = createDummyTrackEvent('touchmove', 10);
+				var endMouseEvent = createDummyTrackEvent('touchend', 10, true);
 
 				var trackEvents = {};
 				var mouseEvents = {};
@@ -6624,8 +6626,8 @@ $(function() {
 						p_h5trackstart: 1
 					}, 'h5trackstartイベントハンドラが実行されていること');
 					exp = {};
-					exp['c_' + startMouseEvent] = 1;
-					exp['p_' + startMouseEvent] = 1;
+					exp['c_' + startMouseEvent.type] = 1;
+					exp['p_' + startMouseEvent.type] = 1;
 					deepEqual(mouseEvents, exp, 'touchstartイベントハンドラが実行されていること');
 					trackEvents = {};
 					mouseEvents = {};
@@ -6638,8 +6640,8 @@ $(function() {
 					}, 'h5trackmoveイベントハンドラが実行されていること');
 
 					exp = {};
-					exp['c_' + moveMouseEvent] = 1;
-					exp['p_' + moveMouseEvent] = 1;
+					exp['c_' + moveMouseEvent.type] = 1;
+					exp['p_' + moveMouseEvent.type] = 1;
 					deepEqual(mouseEvents, exp, 'touchmoveイベントハンドラが実行されていること');
 					trackEvents = {};
 					mouseEvents = {};
@@ -6652,8 +6654,8 @@ $(function() {
 						p_h5trackend: 1
 					}, 'h5trackendイベントハンドラが実行されていること');
 					exp = {};
-					exp['c_' + endMouseEvent] = 1;
-					exp['p_' + endMouseEvent] = 1;
+					exp['c_' + endMouseEvent.type] = 1;
+					exp['p_' + endMouseEvent.type] = 1;
 					deepEqual(mouseEvents, exp, 'touchendイベントハンドラが実行されていること');
 					trackEvents = {};
 					mouseEvents = {};
@@ -6673,10 +6675,9 @@ $(function() {
 					start();
 					return;
 				}
-
-				var moveMouseEvent = 'mousemove';
-				var startMouseEvent = 'mousedown';
-				var endMouseEvent = 'mouseup';
+				var startMouseEvent = createDummyTrackEvent('mousedown', 0);
+				var moveMouseEvent = createDummyTrackEvent('mousemove', 10);
+				var endMouseEvent = createDummyTrackEvent('mouseup', 10);
 
 				var trackEvents = [];
 				var $elm = $('#controllerTest');
@@ -6740,10 +6741,9 @@ $(function() {
 					start();
 					return;
 				}
-
-				var moveMouseEvent = 'touchmove';
-				var startMouseEvent = 'touchstart';
-				var endMouseEvent = 'touchend';
+				var startMouseEvent = createDummyTrackEvent('touchstart', 0);
+				var moveMouseEvent = createDummyTrackEvent('touchmove', 10);
+				var endMouseEvent = createDummyTrackEvent('touchend', 10, true);
 
 				var trackEvents = [];
 				var $elm = $('#controllerTest');
