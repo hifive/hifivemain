@@ -58,6 +58,34 @@ $(function() {
 		h5.settings.aspects = null;
 	}
 
+	// タッチイベントの位置を設定する関数
+	function setPos(ev, pos, isEnd) {
+		if (ev.type.indexOf('touch') != -1) {
+			// タッチイベントの場合
+			var touch = {};
+			touch.pageX = pos;
+			touch.pageY = pos;
+			touch.screenX = pos;
+			touch.screenY = pos;
+			touch.clientX = pos;
+			touch.clientY = pos;
+			// isEndならchangedTouches、そうでないならtouchesにtouch情報を格納する
+			// touchendの場合は通常changedTouchesに入る
+			var originalEvent = {};
+			originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
+			ev.originalEvent = originalEvent;
+		} else {
+			// それ以外(マウスイベントの場合)
+			ev.pageX = pos;
+			ev.pageY = pos;
+			ev.screenX = pos;
+			ev.screenY = pos;
+			ev.clientX = pos;
+			ev.clientY = pos;
+		}
+		return ev;
+	}
+
 	// =========================================================================
 	//
 	// Test Module
@@ -3754,7 +3782,6 @@ $(function() {
 					start();
 					return;
 				}
-
 				var moveMouseEvent = 'touchmove';
 				var startMouseEvent = 'touchstart';
 				var endMouseEvent = 'touchend';
@@ -3781,38 +3808,38 @@ $(function() {
 					};
 					var ary = [1, 'a'];
 					// ドラッグ開始
-					$elm.trigger(startMouseEvent, obj);
+					$elm.trigger(setPos(new $.Event(startMouseEvent), 0), obj);
 					strictEqual(evArg, obj, startMouseEvent
 							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ
-					$elm.trigger(moveMouseEvent, 1);
+					$elm.trigger(setPos(new $.Event(moveMouseEvent), 10), 1);
 					strictEqual(evArg, 1, moveMouseEvent
 							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ終了
-					$elm.trigger(endMouseEvent, 'a');
+					$elm.trigger(setPos(new $.Event(endMouseEvent), 10, true), 'a');
 					strictEqual(evArg, 'a', endMouseEvent
 							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// 配列で複数渡した場合
 					// ドラッグ開始
-					$elm.trigger(startMouseEvent, [1, obj, ary]);
+					$elm.trigger(setPos(new $.Event(startMouseEvent), 10), [1, obj, ary]);
 					deepEqual(evArg, [1, obj, ary], startMouseEvent
 							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ
-					$elm.trigger(moveMouseEvent, [1, obj, ary]);
+					$elm.trigger(setPos(new $.Event(moveMouseEvent), 0), [1, obj, ary]);
 					deepEqual(evArg, [1, obj, ary], moveMouseEvent
 							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
 					evArg = null;
 
 					// ドラッグ終了
-					$elm.trigger(endMouseEvent, [1, obj, ary]);
+					$elm.trigger(setPos(new $.Event(endMouseEvent), 0, true), [1, obj, ary]);
 					deepEqual(evArg, [1, obj, ary], endMouseEvent
 							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
 					evArg = null;
@@ -5388,16 +5415,6 @@ $(function() {
 
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.readyPromise.done(function() {
-					var setPos = function(ev, pos) {
-						ev.pageX = pos;
-						ev.pageY = pos;
-						ev.screenX = pos;
-						ev.screenY = pos;
-						ev.clientX = pos;
-						ev.clientY = pos;
-						return ev;
-					};
-
 					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
 					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
 					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
@@ -5511,20 +5528,6 @@ $(function() {
 
 				var testController = h5.core.controller('#controllerTest', controller);
 				testController.readyPromise.done(function() {
-					var setPos = function(ev, pos, isEnd) {
-						var touch = {};
-						touch.pageX = pos;
-						touch.pageY = pos;
-						touch.screenX = pos;
-						touch.screenY = pos;
-						touch.clientX = pos;
-						touch.clientY = pos;
-						var originalEvent = {};
-						originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
-						ev.originalEvent = originalEvent;
-						return ev;
-					};
-
 					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
 					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
@@ -5728,17 +5731,6 @@ $(function() {
 				var testController = h5.core.controller('#controllerTest', controller);
 
 				testController.readyPromise.done(function() {
-					var setPos = function(ev, pos) {
-						ev.pageX = pos;
-						ev.pageY = pos;
-						ev.screenX = pos;
-						ev.screenY = pos;
-						ev.clientX = pos;
-						ev.clientY = pos;
-						return ev;
-					};
-
-
 					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
 					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
 					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
@@ -5867,20 +5859,6 @@ $(function() {
 				var testController = h5.core.controller('#controllerTest', controller);
 
 				testController.readyPromise.done(function() {
-					var setPos = function(ev, pos, isEnd) {
-						var touch = {};
-						touch.pageX = pos;
-						touch.pageY = pos;
-						touch.screenX = pos;
-						touch.screenY = pos;
-						touch.clientX = pos;
-						touch.clientY = pos;
-						var originalEvent = {};
-						originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
-						ev.originalEvent = originalEvent;
-						return ev;
-					};
-
 					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
 					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
@@ -5997,17 +5975,6 @@ $(function() {
 				var testController = h5.core.controller(window, controller);
 
 				testController.readyPromise.done(function() {
-					var setPos = function(ev, pos) {
-						ev.pageX = pos;
-						ev.pageY = pos;
-						ev.screenX = pos;
-						ev.screenY = pos;
-						ev.clientX = pos;
-						ev.clientY = pos;
-						return ev;
-					};
-
-
 					var moveMouseEvent = setPos(new $.Event('mousemove'), 15);
 					var startMouseEvent = setPos(new $.Event('mousedown'), 10);
 					var endMouseEvent = setPos(new $.Event('mouseup'), 20);
@@ -6124,20 +6091,6 @@ $(function() {
 				var testController = h5.core.controller(window, controller);
 
 				testController.readyPromise.done(function() {
-					var setPos = function(ev, pos, isEnd) {
-						var touch = {};
-						touch.pageX = pos;
-						touch.pageY = pos;
-						touch.screenX = pos;
-						touch.screenY = pos;
-						touch.clientX = pos;
-						touch.clientY = pos;
-						var originalEvent = {};
-						originalEvent[isEnd ? 'changedTouches' : 'touches'] = [touch];
-						ev.originalEvent = originalEvent;
-						return ev;
-					};
-
 					var startMouseEvent = setPos(new $.Event('touchstart'), 10);
 					var moveMouseEvent = setPos(new $.Event('touchmove'), 15);
 					var endMouseEvent = setPos(new $.Event('touchend'), 20, true);
@@ -6257,9 +6210,9 @@ $(function() {
 					start();
 					return;
 				}
-				var startMouseEvent = 'touchstart';
-				var moveMouseEvent = 'touchmove';
-				var endMouseEvent = 'touchend';
+				var startMouseEvent = setPos(new $.Event('touchstart'), 0);
+				var moveMouseEvent = setPos(new $.Event('touchmove'), 10);
+				var endMouseEvent = setPos(new $.Event('touchend'), 10, true);
 
 				var events = [];
 				var $elm = $('#controllerTest');
