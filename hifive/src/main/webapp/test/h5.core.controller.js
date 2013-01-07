@@ -3468,7 +3468,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('h5.ui.indicator() テーマを変更して実行',
+	asyncTest('[browser#ie-wp:9:docmode=7]h5.ui.indicator() テーマを変更して実行',
 			function() {
 
 				var testController = null;
