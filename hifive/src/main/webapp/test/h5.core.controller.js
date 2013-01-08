@@ -3477,65 +3477,72 @@ $(function() {
 				});
 			});
 
-	asyncTest('h5.ui.indicator() テーマを変更して実行',
-			function() {
+	asyncTest('h5.ui.indicator() テーマを変更して実行', 5, function() {
 
-				var testController = null;
-				var controllerBase = {
-					__name: 'TestController',
+		var testController = null;
+		var controllerBase = {
+			__name: 'TestController',
 
-					'input[type=button] click': function() {
-						var indicator2 = h5.ui.indicator(document, {
-							message: 'BlockMessageTest2',
-							percent: 20,
-							theme: 'b'
-						});
-						indicator2.show();
+			'input[type=button] click': function() {
+				var indicator2 = h5.ui.indicator(document, {
+					message: 'BlockMessageTest2',
+					percent: 20,
+					theme: 'b'
+				});
+				indicator2.show();
 
-						strictEqual($(indicator2._target).find(
-								'.h5-indicator.b.content > .indicator-message').text(),
-								'BlockMessageTest2');
 
-						var $percentElem = $(indicator2._target).find(
-								'.h5-indicator.b.content .throbber-percent');
-						if ($percentElem.length > 0) {
-							strictEqual($percentElem.css('font-size'), '18px',
-									'スロバー:変更したテーマのCSSがインジケータに適用されていること');
-							strictEqual(rgbToHex($percentElem.css('color')), '#c20',
-									'スロバー:変更したテーマのCSSがインジケータに適用されていること');
-						} else {
-							ok(false, 'スロバーが描画できないためテスト失敗。');
-						}
+				// IEで、$().css()で参照されるcurrentStyleオブジェクトは非同期であるため、
+				// スタイルが適用されているかどうかを非同期でチェックしています。
+				//
+				// - currentStyle Object
+				//    MSDN: http://msdn.microsoft.com/en-us/library/ie/ms535231(v=vs.85).aspx
+				//    日本語訳: http://homepage3.nifty.com/rains/makeweb/dhtml/currentstyle.html
 
-						var $messageElem = $(indicator2._target).find(
-								'.h5-indicator.b.content .indicator-message');
-						strictEqual($messageElem.css('font-size'), '20px',
-								'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
-						strictEqual(rgbToHex($messageElem.css('color')), '#480',
-								'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
+				setTimeout(function() {
 
-						var $indicatorB = $(indicator2._target).find('.h5-indicator.b');
-						strictEqual(rgbToHex($indicatorB.css('background-color')), '#409',
-								'インジケータ本体:変更したテーマのCSSがインジケータに適用されていること');
+					strictEqual($(indicator2._target).find(
+							'.h5-indicator.b.content > .indicator-message').text(),
+							'BlockMessageTest2');
+
+					var $percentElem = $(indicator2._target).find(
+							'.h5-indicator.b.content .throbber-percent');
+					if ($percentElem.length > 0) {
+
+						strictEqual(rgbToHex($percentElem.css('color')), '#c20',
+								'スロバー:変更したテーマのCSSがインジケータに適用されていること');
+					} else {
+						ok(false, 'スロバーが描画できないためテスト失敗。');
+					}
+
+					var $messageElem = $(indicator2._target).find(
+							'.h5-indicator.b.content .indicator-message');
+					strictEqual(rgbToHex($messageElem.css('color')), '#480',
+							'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
+
+					var $indicatorB = $(indicator2._target).find('.h5-indicator.b');
+					strictEqual(rgbToHex($indicatorB.css('background-color')), '#409',
+							'インジケータ本体:変更したテーマのCSSがインジケータに適用されていること');
+
+					setTimeout(function() {
+						indicator2.hide();
 
 						setTimeout(function() {
-							indicator2.hide();
-
-							setTimeout(function() {
-								strictEqual($('.h5-indicator').length, 0,
-										'Indicator#hide() インジケータが除去されていること');
-								testController.unbind();
-								start();
-							}, 0);
+							strictEqual($('.h5-indicator').length, 0,
+									'Indicator#hide() インジケータが除去されていること');
+							testController.unbind();
+							start();
 						}, 0);
-					}
-				};
+					}, 0);
+				}, 100);
+			}
+		};
 
-				testController = h5.core.controller('#controllerTest', controllerBase);
-				testController.readyPromise.done(function() {
-					$('#controllerTest input[type=button]').click();
-				});
-			});
+		testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
 
 	test('プロパティの重複チェック', 1, function() {
 
