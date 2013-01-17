@@ -102,6 +102,71 @@ $(function() {
 
 	}
 
+	// イベントを生成し、dispatchEvent(fireEvent)を使ってイベントをディスパッチする関数
+	function eventDispatch($elm, eventName, x, y) {
+		var elm = $elm[0] || $elm;
+		var ev = {};
+		if (elm.dispatchEvent) {
+			if (hasTouchEvent) {
+				//android 1-3
+				if (/Android\s+[123]\./i.test(navigator.userAgent)) {
+					ev = document.createEvent('MouseEvents');
+					ev.initMouseEvent(eventName, true, true, window, 0, x, y, x, y, false, false,
+							false, false, 0, null);
+					var touches = [];
+					if (document.createTouch) {
+						// android2.3.6はcreateTouchあるが、2.2.1にはなかった
+						touches = [document.createTouch(window, elm, 0, x, y, x, y)];
+					} else {
+						touches = [{
+							clientX: x,
+							clientY: y,
+							pageX: x,
+							pageY: y,
+							identifier: 1,
+							screenX: x,
+							screenY: y,
+							target: elm
+						}];
+					}
+					ev.touches = touches;
+					ev.changedTouches = touches;
+					ev.scale = 1;
+					ev.rotation = 0;
+				} else {
+					ev = document.createEvent('TouchEvent');
+					var touch = document.createTouch(window, elm, 0, x, y, x, y);
+					var touches = document.createTouchList(touch);
+
+					// android4
+					if (/Android\s+4\./i.test(navigator.userAgent)) {
+						alert('android4');
+						ev.initTouchEvent(touches, touches, touches, eventName, window, x, y, x, y,
+								false, false, false, false);
+					} else {
+						// iOS
+						ev = document.createEvent('TouchEvent');
+
+						ev.initTouchEvent(eventName, true, true, window, 0, x, y, x, y, false,
+								false, false, false, touches, touches, touches, 1, 0);
+					}
+				}
+			} else {
+				ev = document.createEvent('MouseEvent');
+				ev.initMouseEvent(eventName, true, true, window, 0, x, y, x, y, false, false,
+						false, false, 0, null);
+			}
+			elm.dispatchEvent(ev);
+		} else {
+			ev = document.createEventObject();
+			ev.clientX = x;
+			ev.clientY = y;
+			ev.screenX = x;
+			ev.screenY = y;
+			elm.fireEvent('on' + eventName, ev);
+		}
+	}
+
 	// =========================================================================
 	//
 	// Test Module
@@ -3778,6 +3843,64 @@ $(function() {
 					deepEqual(evArg, [1, obj, ary], endTrackEventName
 							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
 					evArg = null;
+
+					h5TrackTestController.unbind();
+					start();
+				});
+			});
+
+
+	asyncTest(
+			'h5track*イベントを、mouse(touch)イベントのdispatchEvent(またはfireEvent)で発火させたときにh5track*ハンドラが動作し、dx,dyも計算されて格納されていること',
+			8, function() {
+				var fired = [];
+				var ev = {};
+				var $elm = $('#controllerTest');
+				var h5TrackTestController = h5.core.controller($elm, {
+					__name: 'h5TrackTestController',
+					'{rootElement} h5trackstart': function(context) {
+						fired.push('start');
+						ev = context.event;
+					},
+					'{rootElement} h5trackmove': function(context) {
+						fired.push('move');
+						ev = context.event;
+					},
+					'{rootElement} h5trackend': function(context) {
+						fired.push('end');
+						ev = context.event;
+					}
+				});
+
+				h5TrackTestController.readyPromise.done(function() {
+					var elm = $elm[0];
+					// ドラッグ開始
+					eventDispatch(elm, startTrackEventName, 10, 10);
+					deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
+					fired = [];
+					ev = {};
+
+					// ドラッグ
+					eventDispatch(elm, moveTrackEventName, 11, 12);
+					deepEqual(fired, ['move'], 'h5trackstartのハンドラが1度だけ実行されていること');
+					strictEqual(ev.dx, 1, 'dxの値が計算されていること');
+					strictEqual(ev.dy, 2, 'dyの値が計算されていること');
+					fired = [];
+					ev = {};
+
+					// ドラッグ
+					eventDispatch(elm, moveTrackEventName, 9, 15);
+					deepEqual(fired, ['move'], 'h5trackstartのハンドラが1度だけ実行されていること');
+					strictEqual(ev.dx, -2, 'dxの値が計算されていること');
+					strictEqual(ev.dy, 3, 'dyの値が計算されていること');
+					fired = [];
+					ev = {};
+
+					// ドラッグ終了
+					eventDispatch(elm, endTrackEventName, 9, 15);
+					deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
+					fired = [];
+					ev = {};
 
 					h5TrackTestController.unbind();
 					start();
