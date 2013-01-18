@@ -140,7 +140,6 @@ $(function() {
 
 					// android4
 					if (/Android\s+4\./i.test(navigator.userAgent)) {
-						alert('android4');
 						ev.initTouchEvent(touches, touches, touches, eventName, window, x, y, x, y,
 								false, false, false, false);
 					} else {
@@ -3849,26 +3848,21 @@ $(function() {
 				});
 			});
 
-
 	asyncTest(
-			'h5track*イベントを、mouse(touch)イベントのdispatchEvent(またはfireEvent)で発火させたときにh5track*ハンドラが動作し、dx,dyも計算されて格納されていること',
-			8, function() {
+			'h5track*イベントを、mouse(touch)イベントのdispatchEvent(またはfireEvent)で発火させたときにh5track*ハンドラが正しい回数動作すること',
+			3, function() {
 				var fired = [];
-				var ev = {};
 				var $elm = $('#controllerTest');
 				var h5TrackTestController = h5.core.controller($elm, {
 					__name: 'h5TrackTestController',
 					'{rootElement} h5trackstart': function(context) {
 						fired.push('start');
-						ev = context.event;
 					},
 					'{rootElement} h5trackmove': function(context) {
 						fired.push('move');
-						ev = context.event;
 					},
 					'{rootElement} h5trackend': function(context) {
 						fired.push('end');
-						ev = context.event;
 					}
 				});
 
@@ -3878,28 +3872,60 @@ $(function() {
 					eventDispatch(elm, startTrackEventName, 10, 10);
 					deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
 					fired = [];
-					ev = {};
 
 					// ドラッグ
 					eventDispatch(elm, moveTrackEventName, 11, 12);
-					deepEqual(fired, ['move'], 'h5trackstartのハンドラが1度だけ実行されていること');
-					strictEqual(ev.dx, 1, 'dxの値が計算されていること');
-					strictEqual(ev.dy, 2, 'dyの値が計算されていること');
+					deepEqual(fired, ['move'], 'h5trackmoveのハンドラが1度だけ実行されていること');
 					fired = [];
-					ev = {};
-
-					// ドラッグ
-					eventDispatch(elm, moveTrackEventName, 9, 15);
-					deepEqual(fired, ['move'], 'h5trackstartのハンドラが1度だけ実行されていること');
-					strictEqual(ev.dx, -2, 'dxの値が計算されていること');
-					strictEqual(ev.dy, 3, 'dyの値が計算されていること');
-					fired = [];
-					ev = {};
 
 					// ドラッグ終了
 					eventDispatch(elm, endTrackEventName, 9, 15);
 					deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
 					fired = [];
+
+					h5TrackTestController.unbind();
+					start();
+				});
+			});
+
+	asyncTest(
+			'h5track*イベントを、mouse(touch)イベントのdispatchEvent(またはfireEvent)で発火させたときにh5track*ハンドラに渡されるイベントオブジェクトにdx,dyが計算されて格納されていること',
+			4, function() {
+				var ev = {};
+				var $elm = $('#controllerTest');
+				var h5TrackTestController = h5.core.controller($elm, {
+					__name: 'h5TrackTestController',
+					'{rootElement} h5trackstart': function(context) {
+						ev = context.event;
+					},
+					'{rootElement} h5trackmove': function(context) {
+						ev = context.event;
+					},
+					'{rootElement} h5trackend': function(context) {
+						ev = context.event;
+					}
+				});
+
+				h5TrackTestController.readyPromise.done(function() {
+					var elm = $elm[0];
+					// ドラッグ開始
+					eventDispatch(elm, startTrackEventName, 10, 10);
+					ev = {};
+
+					// ドラッグ
+					eventDispatch(elm, moveTrackEventName, 11, 12);
+					strictEqual(ev.dx, 1, 'dxの値が計算されていること');
+					strictEqual(ev.dy, 2, 'dyの値が計算されていること');
+					ev = {};
+
+					// ドラッグ
+					eventDispatch(elm, moveTrackEventName, 9, 15);
+					strictEqual(ev.dx, -2, 'dxの値が計算されていること');
+					strictEqual(ev.dy, 3, 'dyの値が計算されていること');
+					ev = {};
+
+					// ドラッグ終了
+					eventDispatch(elm, endTrackEventName, 9, 15);
 					ev = {};
 
 					h5TrackTestController.unbind();
