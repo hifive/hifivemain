@@ -3849,11 +3849,11 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5track*イベントを、mouse(touch)イベントのdispatchEvent(またはfireEvent)で発火させたときにh5track*ハンドラが正しい回数動作すること',
+			'dispatchEvent(またはfireEvent)でmouse(touch)イベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントが正しい回数実行されること',
 			3, function() {
 				var fired = [];
-				var $elm = $('#controllerTest');
-				var h5TrackTestController = h5.core.controller($elm, {
+				var elm = $('#controllerTest')[0];
+				var h5TrackTestController = h5.core.controller(elm, {
 					__name: 'h5TrackTestController',
 					'{rootElement} h5trackstart': function(context) {
 						fired.push('start');
@@ -3867,7 +3867,6 @@ $(function() {
 				});
 
 				h5TrackTestController.readyPromise.done(function() {
-					var elm = $elm[0];
 					// ドラッグ開始
 					eventDispatch(elm, startTrackEventName, 10, 10);
 					deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
@@ -3889,11 +3888,11 @@ $(function() {
 			});
 
 	asyncTest(
-			'h5track*イベントを、mouse(touch)イベントのdispatchEvent(またはfireEvent)で発火させたときにh5track*ハンドラに渡されるイベントオブジェクトにdx,dyが計算されて格納されていること',
+			'dispatchEvent(またはfireEvent)でmouse(touch)イベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
 			4, function() {
 				var ev = {};
-				var $elm = $('#controllerTest');
-				var h5TrackTestController = h5.core.controller($elm, {
+				var elm = $('#controllerTest')[0];
+				var h5TrackTestController = h5.core.controller(elm, {
 					__name: 'h5TrackTestController',
 					'{rootElement} h5trackstart': function(context) {
 						ev = context.event;
@@ -3907,7 +3906,91 @@ $(function() {
 				});
 
 				h5TrackTestController.readyPromise.done(function() {
-					var elm = $elm[0];
+					// ドラッグ開始
+					eventDispatch(elm, startTrackEventName, 10, 10);
+					ev = {};
+
+					// ドラッグ
+					eventDispatch(elm, moveTrackEventName, 11, 12);
+					strictEqual(ev.dx, 1, 'dxの値が計算されていること');
+					strictEqual(ev.dy, 2, 'dyの値が計算されていること');
+					ev = {};
+
+					// ドラッグ
+					eventDispatch(elm, moveTrackEventName, 9, 15);
+					strictEqual(ev.dx, -2, 'dxの値が計算されていること');
+					strictEqual(ev.dy, 3, 'dyの値が計算されていること');
+					ev = {};
+
+					// ドラッグ終了
+					eventDispatch(elm, endTrackEventName, 9, 15);
+					ev = {};
+
+					h5TrackTestController.unbind();
+					start();
+				});
+			});
+
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でmouse(touch)イベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントが正しい回数実行されること',
+			3, function() {
+				var fired = [];
+				var elm = $('<div id="h5track-target"></div>')[0];
+				$('#controllerTest').append(elm);
+				var h5TrackTestController = h5.core.controller('#controllerTest', {
+					__name: 'h5TrackTestController',
+					'#h5track-target h5trackstart': function(context) {
+						fired.push('start');
+					},
+					'#h5track-target h5trackmove': function(context) {
+						fired.push('move');
+					},
+					'#h5track-target h5trackend': function(context) {
+						fired.push('end');
+					}
+				});
+
+				h5TrackTestController.readyPromise.done(function() {
+					// ドラッグ開始
+					eventDispatch(elm, startTrackEventName, 10, 10);
+					deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
+					fired = [];
+
+					// ドラッグ
+					eventDispatch(elm, moveTrackEventName, 11, 12);
+					deepEqual(fired, ['move'], 'h5trackmoveのハンドラが1度だけ実行されていること');
+					fired = [];
+
+					// ドラッグ終了
+					eventDispatch(elm, endTrackEventName, 9, 15);
+					deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
+					fired = [];
+
+					h5TrackTestController.unbind();
+					start();
+				});
+			});
+
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でmouse(touch)イベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
+			4, function() {
+				var ev = {};
+				var elm = $('<div id="h5track-target"></div>')[0];
+				$('#controllerTest').append(elm);
+				var h5TrackTestController = h5.core.controller('#controllerTest', {
+					__name: 'h5TrackTestController',
+					'#h5track-target h5trackstart': function(context) {
+						ev = context.event;
+					},
+					'#h5track-target h5trackmove': function(context) {
+						ev = context.event;
+					},
+					'#h5track-target h5trackend': function(context) {
+						ev = context.event;
+					}
+				});
+
+				h5TrackTestController.readyPromise.done(function() {
 					// ドラッグ開始
 					eventDispatch(elm, startTrackEventName, 10, 10);
 					ev = {};
