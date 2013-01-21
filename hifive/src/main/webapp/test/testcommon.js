@@ -58,3 +58,13 @@ function rgbToHex(rgbStr) {
 function isDevMode() {
 	return !!h5.dev;
 }
+
+function isDisposed(controller) {
+	var ret = true;
+	for ( var p in controller) {
+		if (controller.hasOwnProperty(p) && controller[p] !== null) {
+			ret = false;
+		}
+	}
+	return ret;
+}

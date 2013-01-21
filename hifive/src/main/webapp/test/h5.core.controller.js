@@ -51,18 +51,6 @@ $(function() {
 	// Functions
 	//=============================
 
-	// コントローラがdisposeされているかどうかチェックする関数
-	function isDisposed(controller) {
-		var ret = true;
-		for ( var p in controller) {
-			if (controller.hasOwnProperty(p) && controller[p] !== null) {
-				ret = false;
-			}
-		}
-		return ret;
-	}
-
-
 	function cleanAspects() {
 		h5.settings.aspects = null;
 	}
