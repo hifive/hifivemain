@@ -1213,7 +1213,7 @@
 							h5trackTriggeredFlags = [];
 							$bindTarget.unbind(move, moveHandlerWrapped);
 							$bindTarget.unbind(end, upHandlerWrapped);
-							if (controller.rootElement !== document) {
+							if (!hasTouchEvent && controller.rootElement !== document) {
 								$(controller.rootElement).unbind(move, moveHandlerWrapped);
 								$(controller.rootElement).unbind(end, upHandlerWrapped);
 							}
@@ -1222,13 +1222,14 @@
 						$bindTarget.bind(move, moveHandlerWrapped);
 						$bindTarget.bind(end, upHandlerWrapped);
 
-						// コントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
+						// タッチでなく、かつコントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
 						// タッチイベントのない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
 						// stopPropagationされたときに、h5trackイベントを発火することができなくなる。
 						// コントローラのルートエレメント外でstopPropagationされていた場合を考慮して、
 						// ルートエレメントにもmove,endをバインドする。
 						// (ルートエレメントの内側でstopPropagationしている場合は考慮しない)
-						if (controller.rootElement !== document) {
+						// (タッチの場合はターゲットはstart時の要素なので2重にバインドする必要はない)
+						if (!hasTouchEvent && controller.rootElement !== document) {
 							// h5trackmoveとh5trackendのbindを行う
 							$(controller.rootElement).bind(move, moveHandlerWrapped);
 							$(controller.rootElement).bind(end, upHandlerWrapped);
