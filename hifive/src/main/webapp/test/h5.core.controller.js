@@ -5821,7 +5821,7 @@ $(function() {
 		var events = [];
 		var $elm = $('#controllerTest');
 		$elm.append('<div id="divInControllerTest"></div>');
-		$inElm = $('#divInControllerTest');
+		var $inElm = $('#divInControllerTest');
 		var aController = h5.core.controller('body', {
 			__name: 'aController',
 
@@ -5884,7 +5884,7 @@ $(function() {
 				var mouseEvents = {};
 				var $elm = $('#controllerTest');
 				$elm.append('<div id="divInControllerTest"></div>');
-				$inElm = $('#divInControllerTest');
+				var $inElm = $('#divInControllerTest');
 				var aController = h5.core
 						.controller(
 								$elm,
@@ -6025,7 +6025,7 @@ $(function() {
 				var trackEvents = [];
 				var $elm = $('#controllerTest');
 				$elm.append('<div id="divInControllerTest"></div>');
-				$inElm = $('#divInControllerTest');
+				var $inElm = $('#divInControllerTest');
 				var aController = h5.core.controller($elm, {
 					__name: 'aController',
 					'{rootElement} mousedown': function(context) {
