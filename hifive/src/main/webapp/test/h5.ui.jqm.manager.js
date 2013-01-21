@@ -1156,17 +1156,20 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('動的コントローラをバインド後unbindを実行し、別ページに遷移する', 1, function() {
+	asyncTest('動的コントローラをバインド後unbindを実行し、別ページに遷移する', 2, function() {
 		h5.core.controller('#test23', {
 			__name: 'Test23Controller',
 			__ready: function() {
 				try {
 					this.unbind();
 					changePage('#test24', true);
+					pageremove('test23');
 					ok(true, '動的に生成したコントローラをunbind後、ページ遷移を実行してもエラーが発生しないこと。');
 				} catch (e) {
 					ok(false, 'テスト失敗');
 				}
+
+				equal(isDisposed(c), false, 'unbindしたコントローラはjQMManagerの管理対象から除外されるのでdisposeされないこと');
 				start();
 			}
 		});
