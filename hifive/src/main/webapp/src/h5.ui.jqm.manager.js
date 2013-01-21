@@ -336,9 +336,9 @@
 		 * @memberOf JQMController
 		 */
 		'{rootElement} h5controllerunbound': function(context) {
-		    var unboundController = context.evArg;
-		    var id = $.mobile.activePage.attr('id');
-		    var index = $.inArray(unboundController, dynamicControllerInstanceMap[id]);
+			var unboundController = context.evArg;
+			var id = $.mobile.activePage.attr('id');
+			var index = $.inArray(unboundController, dynamicControllerInstanceMap[id]);
 
 			if (index === -1) {
 				return;
