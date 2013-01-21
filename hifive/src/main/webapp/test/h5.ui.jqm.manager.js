@@ -1103,4 +1103,72 @@ $(function() {
 					}
 				});
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - define12', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			createPage('test21', null, true);
+			createPage('test22');
+
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('動的コントローラをバインド後disposeを実行し、別ページに遷移する', 1, function() {
+		h5.core.controller('#test21', {
+			__name: 'Test21Controller',
+			__ready: function() {
+				try {
+					this.dispose();
+					changePage('#test22', true);
+					ok(true, '動的に生成したコントローラをdipose後、ページ遷移を実行してもエラーが発生しないこと。');
+				} catch (e) {
+					ok(false, 'テスト失敗');
+				}
+				start();
+			}
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - define13', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			createPage('test23', null, true);
+			createPage('test24');
+
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('動的コントローラをバインド後unbindを実行し、別ページに遷移する', 1, function() {
+		h5.core.controller('#test23', {
+			__name: 'Test23Controller',
+			__ready: function() {
+				try {
+					this.unbind();
+					changePage('#test24', true);
+					ok(true, '動的に生成したコントローラをunbind後、ページ遷移を実行してもエラーが発生しないこと。');
+				} catch (e) {
+					ok(false, 'テスト失敗');
+				}
+				start();
+			}
+		});
+	});
 });
