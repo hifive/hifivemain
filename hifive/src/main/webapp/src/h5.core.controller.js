@@ -2281,7 +2281,7 @@
 					});
 
 			// h5controllerunboundイベントをトリガ
-			$(this.rootElement).trigger('h5controllerunbound');
+			$(this.rootElement).trigger('h5controllerunbound', this);
 
 			// rootElemetnのアンバインド
 			this.rootElement = null;
