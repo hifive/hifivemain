@@ -1123,7 +1123,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('動的コントローラをバインド後disposeを実行し、別ページに遷移する', 1, function() {
-		h5.core.controller('#test21', {
+		var c = h5.core.controller('#test21', {
 			__name: 'Test21Controller',
 			__ready: function() {
 				try {
@@ -1157,7 +1157,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('動的コントローラをバインド後unbindを実行し、別ページに遷移する', 2, function() {
-		h5.core.controller('#test23', {
+		var c = h5.core.controller('#test23', {
 			__name: 'Test23Controller',
 			__ready: function() {
 				try {
