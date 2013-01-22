@@ -39,14 +39,11 @@ function Sequence() {
 		},
 
 		/**
-		 * このSequenceオブジェクトが返す番号の型
-		 * <p>
+		 * このSequenceオブジェクトが返す番号の型です。値は以下のいずれかです。
 		 * <ul>
-		 * <li><a href="h5.core.data.html#SEQUENCE_RETURN_TYPE_STRING">h5.core.data.SEQUENCE_RETURN_TYPE_STRING</a>
-		 * <li><a href="h5.core.data.html#SEQUENCE_RETURN_TYPE_INT">h5.core.data.SEQUENCE_RETURN_TYPE_INT</a>
+		 * <li><a href="h5.core.data.html#SEQ_INT">h5.core.data.SEQ_INT</a>
+		 * <li><a href="h5.core.data.html#SEQ_STRING">h5.core.data.SEQ_STRING</a>
 		 * </ul>
-		 * のいずれかです。
-		 * </p>
 		 *
 		 * @memberOf Sequence
 		 */
