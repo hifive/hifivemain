@@ -1627,7 +1627,8 @@
 	//--------------------------------------------
 
 	/**
-	 * ObservableArray(オブザーバブルアレイ)とは、配列操作の監視可能な配列です。
+	 * ObservableArray(オブザーバブルアレイ)とは、通常の配列と同じAPIを持ち操作を外部から監視できる、配列とほぼ同じように利用可能なクラスです。
+	 * DOM要素のようにaddEventListenerでリスナーをセットすることで、配列に対するメソッド呼び出しをフックすることができます。
 	 * <p>
 	 * <a href="h5.core.data.html#createObservableArray">h5.core.data.createObservableArray()</a>で作成します。
 	 * </p>
