@@ -1478,7 +1478,7 @@
 		// managed=falseの場合、コントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない
 		if (managed !== false) {
 			// h5controllerboundイベントをトリガ.
-			$(controller.rootElement).trigger('h5controllerbound', [controller]);
+			$(controller.rootElement).trigger('h5controllerbound', controller);
 		}
 
 		// コントローラの__ready処理を実行
