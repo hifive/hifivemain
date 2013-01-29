@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation
+ * Copyright (C) 2012-2013 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,6 +164,18 @@
 		SELECTOR_TYPE_GLOBAL: 2,
 		SELECTOR_TYPE_OBJECT: 3
 	};
+
+	/**
+	 * マウス/タッチイベントについてh5track*イベントをトリガしたかどうかを管理するため、イベントを格納する配列
+	 */
+	var storedEvents = [];
+
+	/**
+	 * あるマウス/タッチイベントについてh5track*イベントをトリガ済みかのフラグを保持する配列<br>
+	 * storedEventsに格納されているイベントオブジェクトに対応して、<br>
+	 * [true, false, false] のように格納されている。
+	 */
+	var h5trackTriggeredFlags = [];
 
 	// =============================
 	// Functions
@@ -1020,6 +1032,7 @@
 			}
 		};
 	}
+
 	/**
 	 * hifiveの独自イベント"h5trackstart", "h5trackmove", "h5trackend"のためのバインドオブジェクトを返します。
 	 *
@@ -1111,20 +1124,54 @@
 						setup(newEvent);
 					}
 
-					if ($.inArray(type, context.event.h5CustomEventTriggered) === -1
-							&& (!hasTouchEvent || execute || isStart)) {
+					// ------------- h5track*のトリガ処理 -------------
+					// originalEventがあればoriginalEvent、なければjQueryEventオブジェクトでh5track*をトリガしたかどうかのフラグを管理する
+					var triggeredFlagEvent = context.event.originalEvent || context.event;
+
+					if (isStart && $.inArray(triggeredFlagEvent, storedEvents) === -1) {
+						// スタート時で、かつこのスタートイベントがstoredEventsに入っていないなら
+						// トリガする前にトリガフラグ保管イベントのリセット(storedEventsに不要なイベントオブジェクトを残さないため)
+						storedEvents = [];
+						h5trackTriggeredFlags = [];
+					}
+
+					var index = $.inArray(triggeredFlagEvent, storedEvents);
+					if (index === -1) {
+						// storedEventsにイベントが登録されていなければ追加し、トリガ済みフラグにfalseをセットする
+						index = storedEvents.push(triggeredFlagEvent) - 1;
+						h5trackTriggeredFlags[index] = false;
+					}
+					// sotredEventsにイベントが登録されていれば、そのindexからトリガ済みフラグを取得する
+					var triggeredFlag = h5trackTriggeredFlags[index];
+
+					if (!triggeredFlag && (!hasTouchEvent || execute || isStart)) {
 						// マウス/タッチイベントがh5track*にトリガ済みではない時にトリガする。
 						// h5track中でないのにmoveやmouseupが起きた時は何もしない。
 
 						// トリガ済みフラグを立てる
-						if (!context.event.h5CustomEventTriggered) {
-							context.event.h5CustomEventTriggered = [];
-						}
-						context.event.h5CustomEventTriggered.push(type);
+						h5trackTriggeredFlags[index] = true;
 						// h5track*イベントをトリガ
 						$(target).trigger(newEvent, context.evArg);
 						execute = true;
 					}
+
+					// 不要なイベントオブジェクトを残さないため、
+					// documentだったら現在のイベントとそのフラグをstoredEvents/h5trackTriggeredFlagsから外す
+					// h5trackend時ならstoredEvents/h5trackTtriggeredFlagsをリセットする
+					// (※ documentまでバブリングすればイベントオブジェクトを保管しておく必要がなくなるため)
+					if (context.event.currentTarget === document) {
+						if (type === EVENT_NAME_H5_TRACKEND) {
+							storedEvents = [];
+							h5trackTriggeredFlags = [];
+						}
+						var storedIndex = $.inArray(triggeredFlagEvent, storedEvents);
+						if (storedIndex !== -1) {
+							storedEvents.splice(index, 1);
+							h5trackTriggeredFlags.splice(index, 1);
+						}
+					}
+					// ------------- h5track*のトリガ処理 ここまで -------------
+
 					if (isStart && execute) {
 						// スタートイベント、かつ今h5trackstartをトリガしたところなら、
 						// h5trackmove,endを登録
@@ -1162,9 +1209,11 @@
 						var $bindTarget = hasTouchEvent ? $(nt) : $document;
 						// moveとendのunbindをする関数
 						removeHandlers = function() {
+							storedEvents = [];
+							h5trackTriggeredFlags = [];
 							$bindTarget.unbind(move, moveHandlerWrapped);
 							$bindTarget.unbind(end, upHandlerWrapped);
-							if (controller.rootElement !== document) {
+							if (!hasTouchEvent && controller.rootElement !== document) {
 								$(controller.rootElement).unbind(move, moveHandlerWrapped);
 								$(controller.rootElement).unbind(end, upHandlerWrapped);
 							}
@@ -1173,13 +1222,14 @@
 						$bindTarget.bind(move, moveHandlerWrapped);
 						$bindTarget.bind(end, upHandlerWrapped);
 
-						// コントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
+						// タッチでなく、かつコントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
 						// タッチイベントのない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
 						// stopPropagationされたときに、h5trackイベントを発火することができなくなる。
 						// コントローラのルートエレメント外でstopPropagationされていた場合を考慮して、
 						// ルートエレメントにもmove,endをバインドする。
 						// (ルートエレメントの内側でstopPropagationしている場合は考慮しない)
-						if (controller.rootElement !== document) {
+						// (タッチの場合はターゲットはstart時の要素なので2重にバインドする必要はない)
+						if (!hasTouchEvent && controller.rootElement !== document) {
 							// h5trackmoveとh5trackendのbindを行う
 							$(controller.rootElement).bind(move, moveHandlerWrapped);
 							$(controller.rootElement).bind(end, upHandlerWrapped);
@@ -1428,7 +1478,7 @@
 		// managed=falseの場合、コントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない
 		if (managed !== false) {
 			// h5controllerboundイベントをトリガ.
-			$(controller.rootElement).trigger('h5controllerbound', [controller]);
+			$(controller.rootElement).trigger('h5controllerbound', controller);
 		}
 
 		// コントローラの__ready処理を実行
@@ -2231,7 +2281,7 @@
 					});
 
 			// h5controllerunboundイベントをトリガ
-			$(this.rootElement).trigger('h5controllerunbound');
+			$(this.rootElement).trigger('h5controllerunbound', this);
 
 			// rootElemetnのアンバインド
 			this.rootElement = null;

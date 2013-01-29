@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation
+ * Copyright (C) 2012-2013 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,6 @@ $(function() {
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.api.geo;
 
-	// IE9でドキュメントモードを8以下にしている場合はisSupportedをfalseにして、テストを飛ばす。
-	var isSupported = h5.api.geo.isSupported && navigator.geolocation;
-
 	//=============================
 	// Functions
 	//=============================
@@ -53,7 +50,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7]H5Api - Geo Location : getCurrentPosition');
+	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7]H5Api - Geo Location : getCurrentPosition');
 
 	//=============================
 	// Body
@@ -77,7 +74,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7]H5Api - Geo Location : watchPosition');
+	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7]H5Api - Geo Location : watchPosition');
 
 	//=============================
 	// Body

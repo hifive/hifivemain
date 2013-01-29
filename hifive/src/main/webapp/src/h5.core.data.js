@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation
+ * Copyright (C) 2012-2013 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -951,12 +951,13 @@
 	 * 第一引数に開始番号(デフォルト1)、第二引数にステップ数(デフォルト1)、を指定します。
 	 * </p>
 	 * <p>
-	 * 第三引数には戻り値の型を指定します。
+	 * 第三引数には戻り値の型を指定します。デフォルトはSEQ_INT（数値型）です。
 	 * <ul>
 	 * <li><a href="#SEQ_STRING">h5.core.data.SEQ_STRING</a>
 	 * <li><a href="#SEQ_INT">h5.core.data.SEQ_INT</a>
 	 * </ul>
-	 * のいずれかを指定し、それぞれ文字列型、数値型で返します。デフォルトは数値型です。
+	 * のいずれかを指定可能です。 SEQ_STRINGを指定した場合、<a href="Sequence.html#current">current()</a>や<a
+	 * href="Sequence.html#next">next()<a> を呼ぶと、"1", "123"のような数字文字列が返ります。SEQ_INTの場合は数値が返ります。
 	 * </p>
 	 *
 	 * @since 1.1.0

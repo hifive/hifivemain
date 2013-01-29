@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation
+ * Copyright (C) 2012-2013 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,14 +125,25 @@
 	// =============================
 
 	/**
+	 * アクティブページに設定されているID属性の値を取得します。
+	 * <p>
+	 * アクティブページが存在しない、またはIDが1文字以上の文字列ではない場合nullを取得します。
+	 */
+	function getActivePageId() {
+		var $ap = $.mobile.activePage;
+		var id = $ap && $ap[0].id;
+		return isString(id) && id.length > 0 ? id : null;
+	}
+
+	/**
 	 * 現在のアクティブページにコントローラをバインドします。
 	 */
 	function bindToActivePage() {
-		var activePage = $.mobile.activePage;
-		if (!activePage) {
+		var id = getActivePageId();
+
+		if (id === null) {
 			return;
 		}
-		var id = activePage.attr('id');
 
 		jqmControllerInstance.addCSS(id);
 		jqmControllerInstance.bindController(id);
@@ -307,26 +318,47 @@
 				return;
 			}
 
-			if (!$.mobile.activePage) {
+			var id = getActivePageId();
+
+			if (id === null) {
 				return;
 			}
 
-			var id = $.mobile.activePage.attr('id');
-
-			if (isString(id) && id.length > 0) {
-				// define()でバインドしたコントローラも、h5controllerboundイベントを発火するので、
-				// このイベントを発生させたコントローラが、define()によってバインドしたコントローラか判定する
-				// ↑がtrue = 「既にJQMManagerの管理対象になっているコントローラ」なので、dynamicControllerInstanceMapに含めない
-				if ($.inArray(boundController, controllerInstanceMap[id]) !== -1) {
-					return;
-				}
-
-				if (!dynamicControllerInstanceMap[id]) {
-					dynamicControllerInstanceMap[id] = [];
-				}
-
-				dynamicControllerInstanceMap[id].push(boundController);
+			// define()でバインドしたコントローラも、h5controllerboundイベントを発火するので、
+			// このイベントを発生させたコントローラが、define()によってバインドしたコントローラか判定する
+			// ↑がtrue = 「既にJQMManagerの管理対象になっているコントローラ」なので、dynamicControllerInstanceMapに含めない
+			if ($.inArray(boundController, controllerInstanceMap[id]) !== -1) {
+				return;
 			}
+
+			if (!dynamicControllerInstanceMap[id]) {
+				dynamicControllerInstanceMap[id] = [];
+			}
+
+			dynamicControllerInstanceMap[id].push(boundController);
+		},
+
+		/**
+		 * 動的に生成されたコントローラがunbindまたはdisposeされた場合、JQMManagerの管理対象から除外します
+		 *
+		 * @param context コンテキスト
+		 * @memberOf JQMController
+		 */
+		'{rootElement} h5controllerunbound': function(context) {
+			var unboundController = context.evArg;
+			var id = getActivePageId();
+
+			if (id === null) {
+				return;
+			}
+
+			var index = $.inArray(unboundController, dynamicControllerInstanceMap[id]);
+
+			if (index === -1) {
+				return;
+			}
+
+			dynamicControllerInstanceMap[id].splice(index, 1);
 		},
 
 		/**
@@ -338,13 +370,16 @@
 		loadScript: function(id) {
 			var page = $('#' + id);
 			var script = $.trim(page.data(this.getDataAttribute('script')));
+
 			if (script.length === 0) {
 				return;
 			}
+
 			var src = $.map(script.split(','), function(n) {
 				return $.trim(n);
 			});
 			var async = page.data(this.getDataAttribute('async')) == true;
+
 			return h5.u.loadScript(src, {
 				async: async
 			});
@@ -450,8 +485,13 @@
 				return;
 			}
 
-			var activeId = $.mobile.activePage.attr('id');
-			var toPageCSS = cssMap[activeId];
+			var id = getActivePageId();
+
+			if (id === null) {
+				return;
+			}
+
+			var toPageCSS = cssMap[id];
 
 			$('link').filter(function() {
 				var href = $(this).attr('href');
@@ -594,8 +634,7 @@
 						}
 					}
 
-					if ($.mobile.activePage && $.mobile.activePage.attr('id') === id
-							&& jqmControllerInstance) {
+					if (getActivePageId() !== null && jqmControllerInstance) {
 						bindToActivePage();
 					} else {
 						this.init();
