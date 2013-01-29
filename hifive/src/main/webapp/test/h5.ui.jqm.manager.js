@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2012 NS Solutions Corporation
+ * Copyright (C) 2012-2013 NS Solutions Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  * hifive
  */
@@ -1100,5 +1102,76 @@ $(function() {
 						start();
 					}
 				});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - define12', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			createPage('test21', null, true);
+			createPage('test22');
+
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('動的コントローラをバインド後disposeを実行し、別ページに遷移する', 1, function() {
+		var c = h5.core.controller('#test21', {
+			__name: 'Test21Controller',
+			__ready: function() {
+				try {
+					this.dispose();
+					changePage('#test22', true);
+					ok(true, '動的に生成したコントローラをdipose後、ページ遷移を実行してもエラーが発生しないこと。');
+				} catch (e) {
+					ok(false, 'テスト失敗');
+				}
+				start();
+			}
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - define13', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			createPage('test23', null, true);
+			createPage('test24');
+
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('動的コントローラをバインド後unbindを実行し、別ページに遷移する', 2, function() {
+		var c = h5.core.controller('#test23', {
+			__name: 'Test23Controller',
+			__ready: function() {
+				try {
+					this.unbind();
+					changePage('#test24', true);
+					pageremove('test23');
+					ok(true, '動的に生成したコントローラをunbind後、ページ遷移を実行してもエラーが発生しないこと。');
+				} catch (e) {
+					ok(false, 'テスト失敗');
+				}
+
+				equal(isDisposed(c), false, 'unbindしたコントローラはjQMManagerの管理対象から除外されるのでdisposeされないこと');
+				start();
+			}
+		});
 	});
 });

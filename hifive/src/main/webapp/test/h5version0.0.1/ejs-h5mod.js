@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Edward Benson
- * Copyright (C) 2012 NS Solutions Corporation
+ * Copyright (C) 2012-2013 NS Solutions Corporation
  *
  * Licensed under the MIT license.
  * http://www.opensource.org/licenses/mit-license.php
