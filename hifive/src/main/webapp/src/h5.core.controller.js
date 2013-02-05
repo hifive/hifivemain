@@ -2535,9 +2535,9 @@
 
 	}
 	$.extend(ControllerManager.prototype, {
-
 		/**
-		 * すべてのコントローラのインスタンスの配列を返します。
+		 * 現在動作しているすべてのコントローラのインスタンスの配列を返します。<br>
+		 * 子コントローラは含まれません。すなわち、ルートコントローラのみが含まれます。
 		 *
 		 * @returns {Controller[]} コントローラ配列
 		 * @memberOf ControllerManager
@@ -2547,20 +2547,23 @@
 		},
 
 		/**
-		 * 指定した要素にバインドされているコントローラを返します。
+		 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
+		 * 子コントローラは含まれません。
 		 *
 		 * @param {String|Element|jQuery} rootElement 要素
-		 * @returns {Controller} コントローラ
+		 * @returns {Controller[]} バインドされているコントローラの配列
 		 * @memberOf ControllerManager
 		 */
-		getController: function(rootElement) {
-			var target = $(rootElement).get(0);
+		getControllers: function(rootElement) {
+			var target = $(rootElement)[0];
 			var controllers = this.controllers;
+			var ret = [];
 			for ( var i = 0, len = controllers.length; i < len; i++) {
 				if (target === controllers[i].rootElement) {
-					return controllers[i];
+					ret.push(controllers[i]);
 				}
 			}
+			return ret;
 		}
 	});
 

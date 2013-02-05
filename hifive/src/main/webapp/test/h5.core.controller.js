@@ -2582,7 +2582,14 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラの取得', function() {
+	//TODO モジュールに分割する
+	test('コントローラの取得（getControllers）、コントローラをバインドしていない場合', function() {
+		var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+		strictEqual($.isArray(controllers), true, 'コントローラをバインドしていないときも配列が返る');
+		strictEqual(controllers.length, 0, '配列の要素数は0');
+	});
+
+	asyncTest('コントローラの取得（getControllers）、コントローラを1つバインドした場合、および引数のパターンへの対応', function() {
 		var array = [];
 		var controllerBase = {
 			__name: 'TestController',
@@ -2597,18 +2604,111 @@ $(function() {
 		};
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			var idController = h5.core.controllerManager.getController('#controllerTest');
-			var jqController = h5.core.controllerManager.getController($('#controllerTest'));
-			var domController = h5.core.controllerManager.getController(document
-					.getElementById('controllerTest'));
+			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+			strictEqual($.isArray(controllers), true, '配列が返る');
+			strictEqual(controllers.length, 1, '配列の要素数は1');
+			strictEqual(controllers[0], testController, '配列の要素はバインドしたコントローラインスタンスである');
+
+			var idController = h5.core.controllerManager.getControllers('#controllerTest')[0];
+			var jqController = h5.core.controllerManager.getControllers($('#controllerTest'))[0];
+			var domController = h5.core.controllerManager.getControllers(document
+					.getElementById('controllerTest'))[0];
 			// strictEqualを使うと何故かスタックオーバーフローが発生する.
 			ok(idController === testController, 'セレクタでコントローラが取得できたか');
 			ok(jqController === testController, 'jQueryオブジェクトでコントローラが取得できたか');
 			ok(domController === testController, 'DOMでコントローラが取得できたか');
 
-			testController.unbind();
+			testController.dispose();
 			start();
 		});
+	});
+
+	asyncTest('コントローラの取得（getControllers）、同じ要素にバインドする子コントローラが存在する場合', function() {
+		var child = {
+			__name: 'ChildController'
+		};
+
+		var parent = {
+			__name: 'ParentController',
+			childController: child
+		};
+
+		var pInst = h5.core.controller('#controllerTest', parent);
+
+		pInst.readyPromise.done(function() {
+			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+			strictEqual(controllers.length, 1, '子コントローラは含まれないので戻り値に含まれるコントローラは1つ');
+			notStrictEqual($.inArray(pInst, controllers), -1, '親コントローラが含まれている');
+			strictEqual($.inArray(pInst.childController, controllers), -1, '子コントローラは含まれていない');
+
+			pInst.dispose();
+		}).fail(function() {
+			ok(false, 'コントローラの初期化に失敗した');
+		}).always(function() {
+			start();
+		});
+
+	});
+
+	asyncTest('コントローラの取得（getControllers）、内包する子コントローラをmeta指定で親と別の要素にバインドする場合', function() {
+		var child = {
+			__name: 'ChildController'
+		};
+
+		var CHILD_BIND_TARGET = '#a';
+
+		var parent = {
+			__name: 'ParentController',
+			__meta: {
+				childController: {
+					rootElement: CHILD_BIND_TARGET
+				}
+			},
+			childController: child
+		};
+
+		var pInst = h5.core.controller('#controllerTest', parent);
+
+		pInst.readyPromise.done(function() {
+			var controllers = h5.core.controllerManager.getControllers(CHILD_BIND_TARGET);
+
+			strictEqual(controllers.length, 0, '子コントローラはgetControllersでは取得できない');
+
+			pInst.dispose();
+		}).fail(function() {
+			ok(false, 'コントローラの初期化に失敗した');
+		}).always(function() {
+			start();
+		});
+
+	});
+
+	asyncTest('コントローラの取得（getControllers）、同一要素に独立した複数のコントローラがバインドされている場合', function() {
+		var c1 = {
+			__name: 'TestController1'
+		};
+		var c2 = {
+			__name: 'TestController2'
+		};
+
+		var cInst1 = h5.core.controller('#controllerTest', c1);
+		var cInst2 = h5.core.controller('#controllerTest', c2);
+
+		h5.async.when(cInst1.readyPromise, cInst2.readyPromise).done(function() {
+			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+
+			strictEqual(controllers.length, 2, '独立してバインドした場合はそれぞれ独立して存在する');
+			notStrictEqual($.inArray(cInst1, controllers), -1, 'コントローラ1が含まれているか');
+			notStrictEqual($.inArray(cInst2, controllers), -1, 'コントローラ2が含まれているか');
+
+			cInst1.dispose();
+			cInst2.dispose();
+		}).fail(function() {
+			ok(false, '2つのコントローラが正しく初期化されなかった');
+		}).always(function() {
+			start();
+		});
+
 	});
 
 	asyncTest(
