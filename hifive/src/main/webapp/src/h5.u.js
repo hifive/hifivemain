@@ -334,8 +334,11 @@
 	 *
 	 * @param {String|String[]} path ソースパス
 	 * @param {Object} [opt] オプション
-	 * @param {Boolean} [opt.async] 非同期で読み込むかどうかを指定します。デフォルトはfalse(同期)です。<br>
-	 *            trueの場合、戻り値としてPromiseオブジェクトを返します。
+	 * @param {Boolean} [opt.async] 非同期で読み込むかどうかを指定します。デフォルトはtrue(非同期)です。<br>
+	 *            trueの場合、戻り値としてPromiseオブジェクトを返します。<br>
+	 *            falseを指定すると同期的に読み込みます（loadScript関数からリターンしたタイミングで、スクリプトは読み込み済みになります）。<br>
+	 *            falseの場合、戻り値はありません。<br>
+	 *            なお、同期読み込みにすると場合によってはブラウザが固まる等の問題が発生する場合がありますので注意してください。
 	 * @param {Boolean} [opt.force] 既に読み込み済みのスクリプトを再度読み込むかどうかを指定します。<br>
 	 *            trueの場合、サーバーから最新のスクリプトファイルを取得します。デフォルトはfalse(読み込まない)です。
 	 * @param {Boolean} [opt.parallel] 非同期で読み込む場合にパラレルに読み込むかどうかを指定します。<br>
