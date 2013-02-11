@@ -2578,20 +2578,23 @@
 		controllerManager: new ControllerManager()
 	});
 
-	// プロパティ重複チェック用のコントローラプロパティマップ
+	// プロパティ重複チェック用のコントローラプロパティマップを作成
 	var controllerPropertyMap = {};
-	var c = new Controller(null, 'a');
-	for ( var p in c) {
-		if (c.hasOwnProperty(p) && p !== '__name' && p !== '__templates' && p !== '__meta') {
+	var tempInstance = new Controller(null, 'a');
+	for ( var p in tempInstance) {
+		if (tempInstance.hasOwnProperty(p) && p !== '__name' && p !== '__templates'
+				&& p !== '__meta') {
 			controllerPropertyMap[p] = 1;
 		}
 	}
+	tempInstance = null;
 	var proto = Controller.prototype;
 	for ( var p in proto) {
 		if (proto.hasOwnProperty(p)) {
 			controllerPropertyMap[p] = 1;
 		}
 	}
+	proto = null;
 
 	/**
 	 * コントローラのファクトリ
