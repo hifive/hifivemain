@@ -415,12 +415,18 @@ $(function() {
 		});
 	});
 
-	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 6, function() {
+	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 7, function() {
 		$('#controllerTest').append('<div class="test">a</div>');
 		$('#controllerTest').append('<div class="test">b</div>');
 		var controller = {
 			__name: 'TestController'
 		};
+
+		try {
+			h5.core.controller(controller);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_TOO_FEW_ARGS, e.message);
+		}
 		try {
 			h5.core.controller(null, controller);
 		} catch (e) {
@@ -452,57 +458,6 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
 		}
 	});
-
-	asyncTest('bind() 引数が不正、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 7,
-			function() {
-				$('#controllerTest').append('<div class="test">a</div>');
-				$('#controllerTest').append('<div class="test">b</div>');
-				var controller = {
-					__name: 'TestController'
-				};
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.readyPromise.done(function() {
-					try {
-						testController.bind();
-					} catch (e) {
-						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
-					}
-					try {
-						testController.bind(null);
-					} catch (e) {
-						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
-					}
-					try {
-						var bind = testController.bind;
-						bind('#controllerTest');
-					} catch (e) {
-						strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_CONTROLLER, e.message);
-					}
-					try {
-						testController.bind('#noexist');
-					} catch (e) {
-						strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
-					}
-					try {
-						testController.bind('');
-					} catch (e) {
-						strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
-					}
-					try {
-						testController.bind('.test');
-					} catch (e) {
-						strictEqual(e.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, e.message);
-					}
-					try {
-						testController.bind(1);
-					} catch (e) {
-						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
-					}
-					testController.dispose().done(function() {
-						start();
-					});
-				});
-			});
 
 	asyncTest('イベントハンドラの{}記法でオブジェクトを指定する時に2階層以上下のオブジェクトを指定できるか', function() {
 		window.test1 = {
@@ -619,7 +574,54 @@ $(function() {
 		strictEqual(err2.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, 'バインド対象が複数ある場合エラーとなるか');
 	});
 
-	asyncTest('コントローラのアンバインド', function() {
+	asyncTest('bind: 引数が不正、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 6,
+			function() {
+				$('#controllerTest').append('<div class="test">a</div>');
+				$('#controllerTest').append('<div class="test">b</div>');
+				var controller = {
+					__name: 'TestController'
+				};
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.readyPromise.done(function() {
+					testController.unbind();
+
+					try {
+						testController.bind();
+					} catch (e) {
+						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
+					}
+					try {
+						testController.bind(null);
+					} catch (e) {
+						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
+					}
+					try {
+						testController.bind('#noexist');
+					} catch (e) {
+						strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
+					}
+					try {
+						testController.bind('');
+					} catch (e) {
+						strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
+					}
+					try {
+						testController.bind('.test');
+					} catch (e) {
+						strictEqual(e.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, e.message);
+					}
+					try {
+						testController.bind(1);
+					} catch (e) {
+						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
+					}
+					testController.dispose().done(function() {
+						start();
+					});
+				});
+			});
+
+	asyncTest('unbind: コントローラのアンバインド、再バインド', function() {
 		var disposeRet = null;
 		var disposeRoot = null;
 		var rebind = null;
@@ -709,6 +711,29 @@ $(function() {
 				testController.unbind();
 				start();
 			});
+		});
+	});
+
+	asyncTest('bind: 子コントローラではbind()はできない', function() {
+		var parentController = {
+			__name: 'Parent',
+			childController: {
+				__name: 'Child'
+			}
+		};
+
+		var parentInst = h5.core.controller('#controllerResult', parentController);
+		parentInst.readyPromise.done(function() {
+			parentInst.unbind();
+			try {
+				parentInst.childController.bind();
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_BIND_ROOT_ONLY, e.message);
+			}
+
+			parentInst.dispose();
+
+			start();
 		});
 	});
 

@@ -46,8 +46,8 @@
 	var ERR_CODE_INVALID_TEMPLATE_SELECTOR = 6000;
 	/** エラーコード: バインド対象が指定されていない */
 	var ERR_CODE_BIND_TARGET_REQUIRED = 6001;
-	/** エラーコード: bindControllerメソッドにコントローラではないオブジェクトが渡された */
-	var ERR_CODE_BIND_NOT_CONTROLLER = 6002;
+	/** エラーコード: bindControllerメソッドにコントローラではないオブジェクトが渡された（このエラーはver.1.1.3時点では通常発生しないので削除） */
+	//var ERR_CODE_BIND_NOT_CONTROLLER = 6002;
 	/** エラーコード: バインド対象となるDOMがない */
 	var ERR_CODE_BIND_NO_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
@@ -88,6 +88,8 @@
 	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
 	/** エラーコード：ルートコントローラ以外ではcontroller.bind()はできない */
 	var ERR_CODE_BIND_ROOT_ONLY = 6031;
+	/** エラーコード：コントローラメソッドは最低2つの引数が必要 */
+	var ERR_CODE_CONTROLLER_TOO_FEW_ARGS = 6032;
 
 	// =============================
 	// Development Only
@@ -109,7 +111,7 @@
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'コントローラ"{0}"のバインド対象となる要素を指定して下さい。';
-	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
+	//errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NO_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
 	errMsgMap[ERR_CODE_BIND_TOO_MANY_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
@@ -130,6 +132,7 @@
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
 	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind()メソッドはルートコントローラでのみ使用可能です。';
+	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
 
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
@@ -1434,9 +1437,7 @@
 	 * @returns {DOM} コントローラのバインド対象である要素
 	 */
 	function getBindTarget(element, rootElement, controller) {
-		if (!controller || !controller.__controllerContext) {
-			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
-		} else if (element == null) {
+		if (element == null) {
 			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controller.__name]);
 		}
 		var $targets;
@@ -2944,6 +2945,10 @@
 		 * @memberOf h5.core
 		 */
 		controller: function(targetElement, controllerDefObj, param) {
+			if (arguments.length < 2) {
+				throwFwError(ERR_CODE_CONTROLLER_TOO_FEW_ARGS);
+			}
+
 			return createAndBindController(targetElement, controllerDefObj, param);
 		},
 
