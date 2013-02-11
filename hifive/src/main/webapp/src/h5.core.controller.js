@@ -2239,7 +2239,6 @@
 		/**
 		 * コントローラを要素へバインドします。
 		 *
-		 * @since 1.1.0
 		 * @memberOf Controller
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.<br />
 		 *            セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。
