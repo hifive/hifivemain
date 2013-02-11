@@ -715,23 +715,45 @@ $(function() {
 	});
 
 	asyncTest('bind: 子コントローラではbind()はできない', function() {
-		var parentController = {
-			__name: 'Parent',
+		var rootController = {
+			__name: 'Root',
 			childController: {
 				__name: 'Child'
 			}
 		};
 
-		var parentInst = h5.core.controller('#controllerResult', parentController);
-		parentInst.readyPromise.done(function() {
-			parentInst.unbind();
+		var root = h5.core.controller('#controllerResult', rootController);
+		root.readyPromise.done(function() {
+			root.unbind();
 			try {
-				parentInst.childController.bind();
+				root.childController.bind();
 			} catch (e) {
 				strictEqual(e.code, ERR.ERR_CODE_BIND_ROOT_ONLY, e.message);
 			}
 
-			parentInst.dispose();
+			root.dispose();
+
+			start();
+		});
+	});
+
+	asyncTest('unbind: 子コントローラではunbind()はできない', function() {
+		var rootController = {
+			__name: 'Root',
+			childController: {
+				__name: 'Child'
+			}
+		};
+
+		var root = h5.core.controller('#controllerResult', rootController);
+		root.readyPromise.done(function() {
+			try {
+				root.childController.unbind();
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_BIND_ROOT_ONLY, e.message);
+			}
+
+			root.dispose();
 
 			start();
 		});

@@ -131,7 +131,7 @@
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
-	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind()メソッドはルートコントローラでのみ使用可能です。';
+	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind(), unbind()はルートコントローラでのみ使用可能です。';
 	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
 
 	addFwErrorCodeMap(errMsgMap);
@@ -2241,7 +2241,7 @@
 		},
 
 		/**
-		 * コントローラを要素へバインドします。
+		 * コントローラを要素へ再度バインドします。子コントローラでは使用できません。
 		 *
 		 * @memberOf Controller
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.<br />
@@ -2268,11 +2268,15 @@
 		},
 
 		/**
-		 * コントローラのバインドを解除します。
+		 * コントローラのバインドを解除します。子コントローラでは使用できません。
 		 *
 		 * @memberOf Controller
 		 */
 		unbind: function() {
+			if (!this.__controllerContext.isRoot) {
+				throwFwError(ERR_CODE_BIND_ROOT_ONLY);
+			}
+
 			executeLifeEndChain(this, '__unbind');
 
 			unbindByBindMap(this);
