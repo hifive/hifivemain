@@ -86,6 +86,8 @@
 	var ERR_CODE_NOT_VIEW = 6029;
 	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
 	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
+	/** エラーコード：ルートコントローラ以外ではcontroller.bind()はできない */
+	var ERR_CODE_BIND_ROOT_ONLY = 6031;
 
 	// =============================
 	// Development Only
@@ -127,6 +129,7 @@
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
+	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind()メソッドはルートコントローラでのみ使用可能です。';
 
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
@@ -2247,6 +2250,10 @@
 		 * @returns {Controller} コントローラ.
 		 */
 		bind: function(targetElement, param) {
+			if (!this.__controllerContext.isRoot) {
+				throwFwError(ERR_CODE_BIND_ROOT_ONLY);
+			}
+
 			var target = getBindTarget(targetElement, null, this);
 			this.rootElement = target;
 			this.view.__controller = this;
