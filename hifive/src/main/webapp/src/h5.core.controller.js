@@ -2291,7 +2291,7 @@
 			// h5controllerunboundイベントをトリガ
 			$(this.rootElement).trigger('h5controllerunbound', this);
 
-			// rootElemetnのアンバインド
+			// rootElementのアンバインド
 			this.rootElement = null;
 			this.view.__controller = null;
 			unbindRootElement(this);
