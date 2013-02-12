@@ -603,7 +603,7 @@
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
 
-				$(selectTarget).live(event, handler);
+				$(document).delegate(selectTarget, event, handler);
 			}
 			// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を格納する
 			// selectorがオブジェクト指定(rootElement, window, document)の場合はオブジェクトを格納する
@@ -701,7 +701,7 @@
 					if (isSelf || useBind || needBind) {
 						$(selectTarget).unbind(event, handler);
 					} else {
-						$(selectTarget).die(event, handler);
+						$(document).undelegate(selectTarget, event, handler);
 					}
 				} else {
 					if (useBind) {
