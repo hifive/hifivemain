@@ -38,6 +38,8 @@
 	var EVENT_NAME_H5_TRACKEND = 'h5trackend';
 	var ROOT_ELEMENT_NAME = 'rootElement';
 
+	var EVENT_NAME_TRIGGER_INDICATOR = 'triggerIndicator';
+
 	/** インラインコメントテンプレートのコメントノードの開始文字列 */
 	var COMMENT_BINDING_TARGET_MARKER = '{h5view ';
 
@@ -2330,26 +2332,31 @@
 		},
 
 		/**
-		 * コントローラのインジケータイベントを実行します。
+		 * インジケータの生成を上位コントローラまたはフレームワークに移譲します。<br>
+		 * 例えば、子コントローラにおいてインジケータのカバー範囲を親コントローラ全体（または画面全体）にしたい場合などに使用します。<br>
+		 * このメソッドを実行すると、「triggerIndicator」という名前のイベントが発生します。また、イベント引数としてオプションパラメータを含んだオブジェクトが渡されます。<br>
+		 * イベントがdocumentまで到達した場合、フレームワークが自動的にインジケータを生成します。<br>
+		 * 途中のコントローラでインジケータを生成した場合はevent.stopPropagation()を呼んでイベントの伝搬を停止し、イベント引数で渡されたオブジェクトの
+		 * <code>indicator</code>プロパティに生成したインジケータインスタンスを代入してください。<br>
+		 * indicatorプロパティの値がこのメソッドの戻り値となります。<br>
 		 *
 		 * @param {Object} opt オプション
 		 * @param {String} [opt.message] メッセージ
 		 * @param {Number} [opt.percent] 進捗を0～100の値で指定する。
 		 * @param {Boolean} [opt.block] 操作できないよう画面をブロックするか (true:する/false:しない)
-		 * @param {String} ev イベント名
 		 * @returns {Indicator} インジケータオブジェクト
 		 * @memberOf Controller
 		 */
-		triggerIndicator: function(opt, evName) {
-			var option = $.extend(true, {}, opt);
-			var ev = evName;
-
-			if (!ev || ev.length === 0) {
-				ev = 'triggerIndicator';
+		triggerIndicator: function(opt) {
+			var args = {
+				indicator: null
+			};
+			if (opt) {
+				$.extend(args, opt);
 			}
 
-			$(this.rootElement).trigger(ev, [option]);
-			return option.indicator;
+			$(this.rootElement).trigger(EVENT_NAME_TRIGGER_INDICATOR, [args]);
+			return args.indicator;
 		},
 
 		/**
@@ -2537,7 +2544,7 @@
 		 * @memberOf ControllerManager
 		 * @private
 		 */
-		$(document).bind('triggerIndicator', function(event, opt) {
+		$(document).bind(EVENT_NAME_TRIGGER_INDICATOR, function(event, opt) {
 			if (opt.target == null) {
 				opt.target = document;
 			}
