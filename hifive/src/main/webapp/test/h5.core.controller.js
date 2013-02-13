@@ -2984,7 +2984,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() FWがtriggerIndicatorイベントを受け取りインジケータを表示', 6,
+	asyncTest('this.triggerIndicator() FWがtriggerIndicatorイベントを受け取りインジケータを表示', 7,
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -2997,11 +2997,12 @@ $(function() {
 							block: true
 						}).show();
 
+						notEqual(indicator, null, 'FWが生成したインジケータオブジェクトが返ってくること');
 						strictEqual(indicator._target, document.body, 'FWがスクリーンロックでインジケータを表示');
 
 						strictEqual($(indicator._target).find(
 								'.h5-indicator.a.content > .indicator-message').text(),
-								'BlockMessageTest');
+								'BlockMessageTest', 'オプションで指定したメッセージが表示されること');
 						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 								'Indicator#show() インジケータが表示されること');
 
@@ -3037,18 +3038,21 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() 親要素にバインドしたコントローラがtriggerIndicatorイベントを受け取りインジケータを表示', 8, function() {
+	asyncTest('this.triggerIndicator() 親要素にバインドしたコントローラがtriggerIndicatorイベントを受け取りインジケータを表示', 6, function() {
 		$('#controllerTest').append('<div id="childDiv"></div>');
+
+		var parentIndicator = null;
 
 		var testController = {
 			__name: 'TestController',
 			'{rootElement} triggerIndicator': function(context) {
 				context.event.stopPropagation();
-				context.evArg.indicator = this.indicator({
+				parentIndicator = this.indicator({
 					target: this.rootElement,
 					percent: 30,
 					message: 'indicator testController'
 				}).show();
+				context.evArg.indicator = parentIndicator;
 			}
 		};
 		var childController = {
@@ -3074,9 +3078,7 @@ $(function() {
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
 
-				strictEqual(indicator._target, $('#controllerTest')[0], 'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
-				strictEqual(indicator._settings.percent, 30, 'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
-				strictEqual(indicator._settings.message, 'indicator testController', 'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
+				strictEqual(indicator, parentIndicator, 'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
 
 				setTimeout(function() {
 					indicator.hide();
