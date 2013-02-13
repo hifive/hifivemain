@@ -373,7 +373,7 @@
 	}
 
 	/**
-	 * 指定されたセレクタがwindow, window., document, document., navidator, navigator. で
+	 * 指定されたセレクタがwindow, window., document, document., navigator, navigator. で
 	 * 始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します。
 	 *
 	 * @param {String} selector セレクタ
