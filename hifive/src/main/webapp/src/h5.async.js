@@ -206,6 +206,8 @@
 		}
 		// failコールバックが1つ以上登録されたかどうかのフラグ
 		var existFailHandler = false;
+		//commonFailHandlerが発火済みかどうかのフラグ
+		var isCommonFailHandlerFired = false;
 
 		var originalFail = dfd.fail;
 		var fail = function(/* var_args */) {
@@ -243,8 +245,9 @@
 		var reject = function(/* var_args */) {
 			var commonFailHandler = h5.settings.commonFailHandler;
 			// failコールバックが1つもない、かつcommonFailHandlerがある場合は、commonFailHandlerを登録する
-			if (!existFailHandler && commonFailHandler) {
+			if (!existFailHandler && commonFailHandler && !isCommonFailHandlerFired) {
 				originalFail.call(this, commonFailHandler);
+				isCommonFailHandlerFired = true;
 			}
 			return originalReject.apply(this, arguments);
 		};
@@ -253,8 +256,9 @@
 		var rejectWith = function(/* var_args */) {
 			var commonFailHandler = h5.settings.commonFailHandler;
 			// failコールバックが1つもない、かつcommonFailHandlerがある場合は、commonFailHandlerを登録する
-			if (!existFailHandler && commonFailHandler) {
-				this.fail(commonFailHandler);
+			if (!existFailHandler && commonFailHandler && !isCommonFailHandlerFired) {
+				originalFail.call(this, commonFailHandler);
+				isCommonFailHandlerFired = true;
 			}
 			return originalRejectWith.apply(this, arguments);
 		};
