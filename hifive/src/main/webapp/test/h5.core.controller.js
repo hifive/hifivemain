@@ -2984,7 +2984,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()でスクリーンロックでインジケータを表示', 5,
+	asyncTest('this.triggerIndicator() FWがtriggerIndicatorイベントを受け取りインジケータを表示', 6,
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -2996,6 +2996,8 @@ $(function() {
 							percent: 20,
 							block: true
 						}).show();
+
+						strictEqual(indicator._target, document.body, 'FWがスクリーンロックでインジケータを表示');
 
 						strictEqual($(indicator._target).find(
 								'.h5-indicator.a.content > .indicator-message').text(),
@@ -3035,14 +3037,14 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() triggerIndicator()で親要素が定義したインジケータを表示', 5, function() {
+	asyncTest('this.triggerIndicator() 親要素にバインドしたコントローラがtriggerIndicatorイベントを受け取りインジケータを表示', 8, function() {
 		$('#controllerTest').append('<div id="childDiv"></div>');
-		var indicator = null;
+
 		var testController = {
 			__name: 'TestController',
 			'{rootElement} triggerIndicator': function(context) {
 				context.event.stopPropagation();
-				indicator = this.indicator({
+				context.evArg.indicator = this.indicator({
 					target: this.rootElement,
 					percent: 30,
 					message: 'indicator testController'
@@ -3053,7 +3055,7 @@ $(function() {
 			__name: 'TestController',
 
 			'{rootElement} click': function() {
-				this.triggerIndicator();
+				var indicator = this.triggerIndicator();
 
 				strictEqual($(indicator._target).find(
 						'.h5-indicator.a.content > .indicator-message').text(),
@@ -3071,6 +3073,10 @@ $(function() {
 
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
+
+				strictEqual(indicator._target, $('#controllerTest')[0], 'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
+				strictEqual(indicator._settings.percent, 30, 'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
+				strictEqual(indicator._settings.message, 'indicator testController', 'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
 
 				setTimeout(function() {
 					indicator.hide();
