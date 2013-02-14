@@ -1815,10 +1815,8 @@
 			unbindMap: {}
 		};
 
-		// 初期化パラメータがあれば、クローンしてコントローラコンテキストに格納
-		if (param) {
-			controller.__controllerContext.args = $.extend(true, {}, param);
-		}
+		// 初期化パラメータをセット（クローンはしない #163）
+		controller.__controllerContext.args = param ? param : null;
 
 		/**
 		 * コントローラのライフサイクルイベント__initが終了したかどうかを返します。
@@ -2260,10 +2258,7 @@
 			var target = getBindTarget(targetElement, null, this);
 			this.rootElement = target;
 			this.view.__controller = this;
-			var args = null;
-			if (param) {
-				args = $.extend(true, {}, param);
-			}
+			var args = param ? param : null;
 			initInternalProperty(this, args);
 			setRootAndTriggerInit(this);
 			return this;
