@@ -627,6 +627,9 @@
 				if (propDesc && isTypeArray(propDesc.type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					var obsArray = h5.core.data.createObservableArray(); //TODO cache
+					//DataItemに属するObsArrayには、Item自身への参照を入れておく。
+					//これによりイベントハンドラ内でこのItemを参照することができる
+					obsArray.relatedItem = this;
 					setValue(this, plainProp, obsArray);
 					this._nullProps[plainProp] = true;
 					arrayProps.push(plainProp);
