@@ -132,6 +132,30 @@
 	var fwLogger = h5.log.createLogger('h5.core.data');
 
 	/* del begin */
+
+	function formatDescriptorError(code, msgSrc, msgParam, detail) {
+		var msg = h5.u.str.format.apply(null, [msgSrc].concat(msgParam)) + ' 詳細：';
+
+		for ( var i = 0, len = detail.length; i < len; i++) {
+			if (i !== 0) {
+				msg += ', ';
+			}
+
+			msg += (i + 1) + ':';
+
+			var reason = detail[i];
+			if (reason.message) {
+				msg += reason.message;
+			} else {
+				msg += 'code=' + reason.code;
+			}
+		}
+
+		return msg;
+	}
+	addFwErrorCustomFormatter(ERR_CODE_INVALID_DESCRIPTOR, formatDescriptorError);
+	addFwErrorCustomFormatter(h5internal.core.data.ERR_CODE_INVALID_SCHEMA, formatDescriptorError);
+
 	// ログメッセージ
 	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
 
@@ -234,7 +258,7 @@
 		// nameのチェック
 		if (!isValidNamespaceIdentifier(descriptor.name)) {
 			// 識別子として不適切な文字列が指定されていたらエラー
-			errorReason.push(DESC_ERR_DETAIL_INVALID_NAME);
+			errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_INVALID_NAME));
 			if (stopOnError) {
 				return errorReason;
 			}

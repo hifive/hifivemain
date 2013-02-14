@@ -26,11 +26,16 @@
 // Misc Variables
 // =============================
 /**
- * { (エラーコード): (フォーマット文字列) } なマップ
+ * { (エラーコード): (フォーマット文字列) } マップ
  *
  * @private
  */
 var errorCodeToMessageMap = {};
+
+/**
+ * { (エラーコード)： (フォーマッタ関数) } マップ
+ */
+var errorCodeToCustomFormatterMap = {};
 
 //=============================
 // Errors
@@ -51,9 +56,19 @@ function throwFwError(code, msgParam, detail) {
 	var msg = null;
 	var msgSrc = errorCodeToMessageMap[code];
 
-	if (msgSrc) {
+	var customFormatter = errorCodeToCustomFormatterMap[code];
+	if (customFormatter) {
+		msg = customFormatter(code, msgSrc, msgParam, detail);
+	}
+
+	//カスタムフォーマッタがnull/undefinedを返した場合も標準フォーマッタにかける
+	if (!msg && msgSrc) {
 		msg = h5.u.str.format.apply(null, [msgSrc].concat(msgParam));
-		msg += '(code=' + code + ')';
+	}
+
+	if (msg) {
+		//最後に必ずエラーコードを付ける
+		msg += ' (code=' + code + ')';
 	}
 
 	var e = msg ? new Error(msg) : new Error('FwError: code = ' + code);
@@ -90,6 +105,17 @@ function addFwErrorCodeMap(mapObj) {
 			errorCodeToMessageMap[code] = mapObj[code];
 		}
 	}
+}
+
+/**
+ * エラーコードとカスタムメッセージフォーマッタのマップを追加します。
+ *
+ * @private
+ * @param errorCode エラーコード
+ * @param formatter カスタムメッセージフォーマッタ
+ */
+function addFwErrorCustomFormatter(errorCode, formatter) {
+	errorCodeToCustomFormatterMap[errorCode] = formatter;
 }
 
 /**
