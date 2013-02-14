@@ -1720,6 +1720,21 @@
 				};
 				this.dispatchEvent(evAfter);
 			}
+		},
+
+		get: function(index) {
+			//TODO delegation
+			return this[index];
+		},
+
+		set: function(index, value) {
+			//TODO splice使わないようにする
+			this.splice(index, 1, value);
+		},
+
+		toArray: function() {
+			//TODO
+			return Array.prototype.slice.call(this, 0);
 		}
 	});
 
