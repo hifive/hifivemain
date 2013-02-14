@@ -68,7 +68,7 @@ function throwFwError(code, msgParam, detail) {
 
 	if (msg) {
 		//最後に必ずエラーコードを付ける
-		msg += ' (code=' + code + ')';
+		msg += '(code=' + code + ')';
 	}
 
 	var e = msg ? new Error(msg) : new Error('FwError: code = ' + code);
