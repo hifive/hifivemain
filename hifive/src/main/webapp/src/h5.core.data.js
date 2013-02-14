@@ -514,19 +514,18 @@
 
 				var args = argsToArray(event.args);
 
-				var checkFlag = $.inArray(event.method, noAddMethods) === -1;
+				var isValidateRequired = $.inArray(event.method, noAddMethods) === -1;
 
 				if (event.method === 'splice') {
 					if (args.length <= 2) {
 						// spliceに引数が2つなら要素追加はないので、validateチェックはしない
-						checkFlag = false;
+						isValidateRequired = false;
 					}
-					checkFlag = false;
 					args.shift();
 					args.shift();
 				}
 
-				if (checkFlag) {
+				if (isValidateRequired) {
 					var validateResult = model._validateItemValue(propName, args);
 					if (validateResult.length > 0) {
 						throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, propName,
