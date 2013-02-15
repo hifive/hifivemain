@@ -2984,93 +2984,31 @@ $(function() {
 				});
 			});
 
-	asyncTest('this.triggerIndicator() FWがtriggerIndicatorイベントを受け取りインジケータを表示', 7,
-			function() {
-				var testController = null;
-				var controllerBase = {
-					__name: 'TestController',
-
-					'input[type=button] click': function() {
-						var indicator = this.triggerIndicator({
-							message: 'BlockMessageTest',
-							percent: 20,
-							block: true
-						}).show();
-
-						notEqual(indicator, null, 'FWが生成したインジケータオブジェクトが返ってくること');
-						strictEqual(indicator._target, document.body, 'FWがスクリーンロックでインジケータを表示');
-
-						strictEqual($(indicator._target).find(
-								'.h5-indicator.a.content > .indicator-message').text(),
-								'BlockMessageTest', 'オプションで指定したメッセージが表示されること');
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-								'Indicator#show() インジケータが表示されること');
-
-						var $percentElem = $(indicator._target).find('.throbber-percent');
-
-						if ($percentElem.length > 0) {
-							strictEqual($percentElem.text(), '20', 'Indicator#show() 進捗率が表示されること');
-						} else {
-							ok(false, 'スロバーが描画できないためテスト失敗。');
-						}
-
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
-								'display'), 'block', 'オーバーレイが表示されていること');
-
-						setTimeout(function() {
-							indicator.hide();
-
-							setTimeout(function() {
-								strictEqual($('.h5-indicator', indicator._target).length, 0,
-										'Indicator#hide() インジケータが除去されていること');
-
-								testController.unbind();
-
-								start();
-							}, 0);
-						}, 0);
-					}
-				};
-
-				testController = h5.core.controller('#controllerTest', controllerBase);
-				testController.readyPromise.done(function() {
-					$('#controllerTest input[type=button]').click();
-				});
-			});
-
-	asyncTest('this.triggerIndicator() 親要素にバインドしたコントローラがtriggerIndicatorイベントを受け取りインジケータを表示', 6, function() {
-		$('#controllerTest').append('<div id="childDiv"></div>');
-
-		var parentIndicator = null;
-
-		var testController = {
+	asyncTest('this.triggerIndicator() FWがtriggerIndicatorイベントを受け取りインジケータを表示', 7, function() {
+		var testController = null;
+		var controllerBase = {
 			__name: 'TestController',
-			'{rootElement} triggerIndicator': function(context) {
-				context.event.stopPropagation();
-				parentIndicator = this.indicator({
-					target: this.rootElement,
-					percent: 30,
-					message: 'indicator testController'
+
+			'input[type=button] click': function() {
+				var indicator = this.triggerIndicator({
+					message: 'BlockMessageTest',
+					percent: 20,
+					block: true
 				}).show();
-				context.evArg.indicator = parentIndicator;
-			}
-		};
-		var childController = {
-			__name: 'TestController',
 
-			'{rootElement} click': function() {
-				var indicator = this.triggerIndicator();
+				notEqual(indicator, null, 'FWが生成したインジケータオブジェクトが返ってくること');
+				strictEqual(indicator._target, document.body, 'FWがスクリーンロックでインジケータを表示');
 
 				strictEqual($(indicator._target).find(
-						'.h5-indicator.a.content > .indicator-message').text(),
-						'indicator testController');
+						'.h5-indicator.a.content > .indicator-message').text(), 'BlockMessageTest',
+						'オプションで指定したメッセージが表示されること');
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 						'Indicator#show() インジケータが表示されること');
 
 				var $percentElem = $(indicator._target).find('.throbber-percent');
 
 				if ($percentElem.length > 0) {
-					strictEqual($percentElem.text(), '30', 'Indicator#show() インジケータが表示されること');
+					strictEqual($percentElem.text(), '20', 'Indicator#show() 進捗率が表示されること');
 				} else {
 					ok(false, 'スロバーが描画できないためテスト失敗。');
 				}
@@ -3078,27 +3016,91 @@ $(function() {
 				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
 						'block', 'オーバーレイが表示されていること');
 
-				strictEqual(indicator, parentIndicator, 'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
-
 				setTimeout(function() {
 					indicator.hide();
 
 					setTimeout(function() {
 						strictEqual($('.h5-indicator', indicator._target).length, 0,
 								'Indicator#hide() インジケータが除去されていること');
+
+						testController.unbind();
+
 						start();
 					}, 0);
 				}, 0);
 			}
 		};
 
-		testController = h5.core.controller('#controllerTest', testController);
-
-		testController = h5.core.controller('#childDiv', childController);
+		testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
-			$('#childDiv').click();
+			$('#controllerTest input[type=button]').click();
 		});
 	});
+
+	asyncTest('this.triggerIndicator() 親要素にバインドしたコントローラがtriggerIndicatorイベントを受け取りインジケータを表示', 6,
+			function() {
+				$('#controllerTest').append('<div id="childDiv"></div>');
+
+				var parentIndicator = null;
+
+				var testController = {
+					__name: 'TestController',
+					'{rootElement} triggerIndicator': function(context) {
+						context.event.stopPropagation();
+						parentIndicator = this.indicator({
+							target: this.rootElement,
+							percent: 30,
+							message: 'indicator testController'
+						}).show();
+						context.evArg.indicator = parentIndicator;
+					}
+				};
+				var childController = {
+					__name: 'TestController',
+
+					'{rootElement} click': function() {
+						var indicator = this.triggerIndicator();
+
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'indicator testController');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+
+						var $percentElem = $(indicator._target).find('.throbber-percent');
+
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.text(), '30',
+									'Indicator#show() インジケータが表示されること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
+
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
+
+						strictEqual(indicator, parentIndicator,
+								'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
+
+						setTimeout(function() {
+							indicator.hide();
+
+							setTimeout(function() {
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
+
+				testController = h5.core.controller('#controllerTest', testController);
+
+				testController = h5.core.controller('#childDiv', childController);
+				testController.readyPromise.done(function() {
+					$('#childDiv').click();
+				});
+			});
 
 	asyncTest('this.indicator() オプションにプレーンオブジェクト以外を渡した時は無視されること', 4, function() {
 		var testController = null;
@@ -5131,12 +5133,6 @@ $(function() {
 	});
 
 	asyncTest('初期化パラメータを渡せるか', function() {
-
-
-		var args = {
-			param: 100
-		};
-
 		var cConstruct = null;
 		var cInit = null;
 		var cReady = null;
@@ -5198,31 +5194,34 @@ $(function() {
 			}
 		};
 
+		var args = {
+			param: 100
+		};
+
 		var rootController = h5.core.controller('#controllerTest', rController, args);
 		rootController.readyPromise.done(function() {
-			ok(args !== rConstruct, '__constructでルートコントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === rConstruct.param, '__constructでルートコントローラに渡された初期化パラメータのプロパティは正しいか');
-			ok(args !== rInit, '__initでルートコントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === rInit.param, '__initでルートコントローラに渡された初期化パラメータのプロパティは正しいか');
-			ok(args !== rReady, '__readyでルートコントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === rReady.param, '__readyでルートコントローラに渡された初期化パラメータのプロパティは正しいか');
+			strictEqual(rConstruct, args, '__constructでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(rConstruct.param, args.param, '__constructでルートに渡された初期化パラメータのプロパティは正しいか');
+			strictEqual(rInit, args, '__initでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(rInit.param, args.param, '__initでルートに渡された初期化パラメータのプロパティは正しいか');
+			strictEqual(rReady, args, '__readyでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(rReady.param, args.param, '__readyでルートに渡された初期化パラメータのプロパティは正しいか');
 
-			ok(args !== pConstruct, '__constructで子コントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === pConstruct.param, '__constructで子コントローラに渡された初期化パラメータのプロパティは正しいか');
-			ok(args !== pInit, '__initで子コントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === pInit.param, '__initで子コントローラに渡された初期化パラメータのプロパティは正しいか');
-			ok(args !== pReady, '__readyで子コントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === pReady.param, '__readyで子コントローラに渡された初期化パラメータのプロパティは正しいか');
+			strictEqual(pConstruct, args, '__constructで子に渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(pConstruct.param, args.param, '__constructで子に渡された初期化パラメータのプロパティは正しいか');
+			strictEqual(pInit, args, '__initで子に渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(pInit.param, args.param, '__initで子に渡された初期化パラメータのプロパティは正しいか');
+			strictEqual(pReady, args, '__readyで子に渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(pReady.param, args.param, '__readyで子に渡された初期化パラメータのプロパティは正しいか');
 
+			strictEqual(cConstruct, args, '__constructで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(cConstruct.param, args.param, '__constructで孫に渡された初期化パラメータのプロパティは正しいか');
+			strictEqual(cInit, args, '__initで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(cInit.param, args.param, '__initで孫に渡された初期化パラメータのプロパティは正しいか');
+			strictEqual(cReady, args, '__readyで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
+			strictEqual(cReady.param, args.param, '__readyで孫に渡された初期化パラメータのプロパティは正しいか');
 
-			ok(args !== cConstruct, '__constructで孫コントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === cConstruct.param, '__constructで孫コントローラに渡された初期化パラメータのプロパティは正しいか');
-			ok(args !== cInit, '__initで孫コントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === cInit.param, '__initで孫コントローラに渡された初期化パラメータのプロパティは正しいか');
-			ok(args !== cReady, '__readyで孫コントローラに渡された初期化パラメータの参照は変わっているか');
-			ok(args.param === cReady.param, '__readyで孫コントローラに渡された初期化パラメータのプロパティは正しいか');
-
-			rootController.unbind();
+			rootController.dispose();
 			start();
 		});
 	});
