@@ -468,7 +468,7 @@
 	 */
 	function getTypeObjFromString(type) {
 		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
-		// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
+		// "string[]"のとき、matched = ["string[]", "string", undefined, "[]", "[]"]
 		// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
 		var matched = type.match(/^(string|number|integer|boolean|any|enum|@(.+?))((\[\]){0,1})$/);
 		return matched ? {
