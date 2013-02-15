@@ -459,7 +459,7 @@
 	//
 	//========================================================
 	/**
-	 * schemaオブジェクトのtype指定の文字列を、パースした結果を返す
+	 * schemaオブジェクトのtype指定の文字列を、パースした結果を返す。 正しくパースできなかった場合は空オブジェクトを返す。
 	 *
 	 * @private
 	 * @param {String} type
@@ -471,11 +471,11 @@
 		// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
 		// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
 		var matched = type.match(/^(string|number|integer|boolean|any|enum|@(.+?))((\[\]){0,1})$/);
-		return matched && {
+		return matched ? {
 			elmType: matched[1],
 			dataModel: matched[2],
 			dimension: matched[3] ? 1 : 0
-		};
+		} : {};
 	}
 
 	/**
@@ -743,7 +743,6 @@
 			// defaultValueとの矛盾はないか
 			// constraintにそのtypeで使えない指定がないか
 			// enumの時は、enumValueが指定されているか
-			var elmType = null;
 			var type = propObj.type;
 			if (isId && type == null) {
 				// id項目で、typeが指定されていない場合は、type:stringにする
@@ -757,53 +756,54 @@
 					if (stopOnError) {
 						return errorReason;
 					}
-				}
-
-				if (isId && type !== 'string' && type !== 'integer') {
-					// id指定されているプロパティで、string,integer以外だった場合はエラー
-					errorReason.push('id指定されたプロパティにtypeを指定することはできません');
-				}
-
-				// "string", "number[]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
-				typeObj = getTypeObjFromString(type);
-
-				if (!typeObj || !typeObj.elmType) {
-					// パースできない文字列が指定されていたらエラー
-					errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE, schemaProp,
-							type));
-					if (stopOnError) {
-						return errorReason;
-					}
 				} else {
-					// データモデルの場合
-					if (typeObj.dataModel) {
-						if (isObsItemSchema) {
-							// ObservableItemのスキーマにはデータモデルを指定できないのでエラー
-							errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE,
-									schemaProp, typeObj.dataModel));
-							if (stopOnError) {
-								return errorReason;
-							}
-						}
-						if (!manager.models[typeObj.dataModel]) {
-							errorReason
-									.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE_DATAMODEL, schemaProp,
-											typeObj.dataModel));
-							if (stopOnError) {
-								return errorReason;
-							}
-						}
+
+					if (isId && type !== 'string' && type !== 'integer') {
+						// id指定されているプロパティで、string,integer以外だった場合はエラー
+						errorReason.push('id指定されたプロパティにtypeを指定することはできません');
 					}
 
-					// enumの場合
-					if (typeObj.elmType === 'enum') {
-						// enumValueが無ければエラー
-						if (propObj.enumValue == null) {
-							errorReason.push(createItemDescErrorReason(
-									SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE, schemaProp));
-							if (stopOnError) {
-								return errorReason;
+					// "string", "number[]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
+					// 正しくパースできなかった場合は空オブジェクトが返ってくる
+					typeObj = getTypeObjFromString(type);
+
+					if (!typeObj.elmType) {
+						// パースできない文字列が指定されていたらエラー
+						errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE,
+								schemaProp, type));
+						if (stopOnError) {
+							return errorReason;
+						}
+					} else {
+						// データモデルの場合
+						if (typeObj.dataModel) {
+							if (isObsItemSchema) {
+								// ObservableItemのスキーマにはデータモデルを指定できないのでエラー
+								errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE,
+										schemaProp, typeObj.dataModel));
+								if (stopOnError) {
+									return errorReason;
+								}
+							}
+							if (!manager.models[typeObj.dataModel]) {
+								errorReason.push(createItemDescErrorReason(
+										SCHEMA_ERR_DETAIL_TYPE_DATAMODEL, schemaProp,
+										typeObj.dataModel));
+								if (stopOnError) {
+									return errorReason;
+								}
+							}
+						}
+
+						// enumの場合
+						if (typeObj.elmType === 'enum') {
+							// enumValueが無ければエラー
+							if (propObj.enumValue == null) {
+								errorReason.push(createItemDescErrorReason(
+										SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE, schemaProp));
+								if (stopOnError) {
+									return errorReason;
+								}
 							}
 						}
 					}
