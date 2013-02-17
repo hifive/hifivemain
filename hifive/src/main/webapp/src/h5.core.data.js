@@ -1447,6 +1447,21 @@
 		},
 
 		/**
+		 * 保持しているすべてのデータアイテムを削除します。
+		 *
+		 * @since 1.1.3
+		 * @memberOf DataModel
+		 * @returns {DataItem[]} 削除されたデータアイテム。順序は不定です。
+		 */
+		removeAll: function() {
+			var items = this.toArray();
+			if (items.length > 0) {
+				this.remove(items);
+			}
+			return items;
+		},
+
+		/**
 		 * 指定されたデータアイテムを保持しているかどうかを返します。
 		 * <p>
 		 * 文字列または整数値が渡された場合はIDとみなし、 オブジェクトが渡された場合はデータアイテムとみなします。
@@ -1546,7 +1561,9 @@
 			var ret = [];
 			var items = this.items;
 			for ( var id in items) {
-				ret.push(items[id]);
+				if (items.hasOwnProperty(id)) {
+					ret.push(items[id]);
+				}
 			}
 			return ret;
 		}
