@@ -2744,9 +2744,9 @@ $(function() {
 
 	test('createの引数が配列でもオブジェクトでもない時、エラーが出ること', function() {
 		var invalidArgs = ['', 'aa', 1, 0, true, false];
-		var l = l = invalidArgs.length;
-		expect(l);
-		for ( var i = 0; i < l; i++) {
+		var len = invalidArgs.length;
+		expect(len);
+		for ( var i = 0; i < len; i++) {
 			try {
 				dataModel1.create(invalidArgs[i]);
 				ok(false, 'エラーが発生しませんでした。' + invalidArgs[i]);
@@ -3035,6 +3035,34 @@ $(function() {
 		strictEqual(dataModel1.size, 0, 'すべて削除したので、model.sizeが0になっていること');
 	});
 
+	test('removeAll: すべてのデータアイテムを削除できること', function() {
+		var item1 = dataModel1.create({
+			id: '1',
+			val: 1
+		});
+		var item2 = dataModel1.create({
+			id: '2',
+			val: 2
+		});
+
+		strictEqual(dataModel1.has('1'), true, '削除前はアイテム1が存在する');
+		strictEqual(dataModel1.has('2'), true, '削除前はアイテム2が存在する');
+
+		var removedItems = dataModel1.removeAll();
+
+		strictEqual(dataModel1.size, 0, 'モデルのサイズは0');
+		strictEqual(removedItems.length, 2, '戻り値の長さはcreateした数と同じ');
+		notStrictEqual($.inArray(item1, removedItems), -1, '作成したアイテム1が削除されている');
+		notStrictEqual($.inArray(item2, removedItems), -1, '作成したアイテム2が削除されている');
+
+		try {
+			var emptyRemovedItems = dataModel1.removeAll();
+			strictEqual(emptyRemovedItems.length, 0, '空のデータモデルでremoveAllしたとき、戻り値の配列は空（長さ0）');
+		} catch (e) {
+			ok(false, '空のデータモデルでremoveAllを呼んだとき、例外が発生してはならない');
+		}
+	});
+
 	test(
 			'データモデルから削除されたアイテムの項目について、getはできるがsetできないこと。ObsevableArrayのプロパティについて、副作用のあるメソッドは使用できないこと。',
 			8, function() {
@@ -3191,6 +3219,10 @@ $(function() {
 			dropAllModel(manager);
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('hasでデータモデルがアイテムを持っているかどうか判別できること', 8, function() {
 		var item = dataModel1.create({
