@@ -377,16 +377,22 @@
 	 * 始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します。
 	 *
 	 * @param {String} selector セレクタ
-	 * @returns {DOM|String} DOM要素、もしくはセレクタ
+	 * @returns {Object|String} パスで指定されたオブジェクト、もしくは未変換の文字列
 	 */
 	function getGlobalSelectorTarget(selector) {
-		var retSelector = selector;
-		if (startsWith(selector, 'window') || startsWith(selector, 'document')
-				|| startsWith(selector, 'navigator')) {
-			// セレクタではなく、オブジェクトがターゲットの場合
-			return getByPath(selector);
+		var specialObj = ['window', 'document', 'navigator'];
+		for ( var i = 0, len = specialObj.length; i < len; i++) {
+			var s = specialObj[i];
+			if (selector === s) {
+				//特殊オブジェクトそのものを指定された場合
+				return getByPath(selector);
+			}
+			if (startsWith(selector, s + '.')) {
+				//window. などドット区切りで続いている場合
+				return getByPath(selector);
+			}
 		}
-		return retSelector;
+		return selector;
 	}
 
 	/**
@@ -582,7 +588,6 @@
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
 
-
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
 			var selectorTrimmed = trimGlobalSelectorBracket(selector);
@@ -594,9 +599,9 @@
 			} else {
 				selectTarget = getGlobalSelectorTarget(selectorTrimmed);
 			}
-			// バインド対象がdocument, windowの場合、live, delegateではイベントが拾えないことへの対応
-			var needBind = selectTarget === document || selectTarget === window;
-			if (isSelf || useBind || needBind) {
+
+			// バインド対象がオブジェクトの場合、必ず直接バインドする
+			if (isSelf || useBind || !isString(selectTarget)) {
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
 
@@ -699,8 +704,8 @@
 					} else {
 						selectTarget = getGlobalSelectorTarget(selectTarget);
 					}
-					var needBind = selectTarget === document || selectTarget === window;
-					if (isSelf || useBind || needBind) {
+
+					if (isSelf || useBind || !isString(selectTarget)) {
 						$(selectTarget).unbind(event, handler);
 					} else {
 						$(document).undelegate(selectTarget, event, handler);
