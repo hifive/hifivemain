@@ -3868,6 +3868,50 @@ $(function() {
 	// Definition
 	//=============================
 
+	module('DataItem.relatedItem');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('relatedItem: 内部で保持しているObservableArrayからDataItemを参照できる', function() {
+		var manager = h5.core.data.createManager('TestManager');
+
+		var modelDesc = {
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				obs: {
+					type: 'string[]'
+				}
+			}
+		};
+
+		var model = manager.createModel(modelDesc);
+
+		var item = model.create({
+			id: '1'
+		});
+
+		var obs = item.get('obs');
+
+		strictEqual(obs.relatedItem, item, 'relatedItemプロパティでアイテムを参照できる');
+
+		obs.addEventListener('observe', function(ev) {
+			strictEqual(this.relatedItem, item, '内部ObsArrayからもrelatedItemでアイテムを参照できる');
+		});
+
+		obs.push('A'); //メソッドを実行してイベントハンドラを実行
+
+		dropAllModel(manager);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
 	module('type', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
