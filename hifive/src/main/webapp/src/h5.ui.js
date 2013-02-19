@@ -422,11 +422,12 @@
 	}
 
 	/**
-	 * 指定された要素の絶対座標を取得します。
+	 * 指定された要素の表示領域の左上からの絶対座標を取得します。
 	 * <p>
 	 * 1.8.xのjQuery.offset()は、Quirksモードでのスクロール量の計算が正しく行われないため自前で計算する。
 	 * <p>
-	 * BODY要素が指定された場合は、jQuery.offset.bodyOffset()から値を取得する。
+	 * getBoundingClinetRectの値+スクロール量-clientTop/Leftの値を返します。
+	 * IE6では、BODY要素についてgetBoundingClientRectの値が正しく取得できないため、スクロール量とbodyのマージンを元に算出しています
 	 */
 	function getOffset(element) {
 		var elem = $(element)[0];
@@ -436,8 +437,11 @@
 			left: 0
 		};
 
-		if (elem === body) {
-			return $.offset.bodyOffset(elem);
+		if (elem === body && (!body.getBoundingClientRect || isLegacyIE)) {
+			return {
+				top: -scrollTop() + parseFloat(body.style.marginTop),
+				left: -scrollLeft() + parseFloat(body.style.marginLeft)
+			}
 		}
 
 		if (typeof elem.getBoundingClientRect !== "undefined") {
