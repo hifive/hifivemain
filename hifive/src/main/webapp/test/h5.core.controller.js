@@ -6547,7 +6547,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('h5controllerreadyイベントが発火すること - __ready: resolve', 4, function() {
+	asyncTest('h5controllerreadyイベントのevArgにコントローラが渡されること', 4, function() {
 		var order = 1;
 		var conIns = null;
 
@@ -6568,7 +6568,7 @@ $(function() {
 		conIns = h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('h5controllerreadyイベントが発火すること - __ready: reject', 1, function() {
+	asyncTest('__readyで返したPromiseがrejectされた場合、h5controllerreadyイベントは発生しないこと', 1, function() {
 		var conIns = null;
 
 		var controller = {
