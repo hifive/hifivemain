@@ -6546,4 +6546,48 @@ $(function() {
 					ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
 				});
 			});
+
+	asyncTest('h5controllerreadyイベントが発火すること - __ready: resolve', 4, function() {
+		var order = 1;
+		var conIns = null;
+
+		var controller = {
+			__name: 'TestController',
+			'{rootElement} h5controllerready': function(context) {
+				equal(order, 2, '__readyのあとに発火すること');
+				strictEqual(context.evArg, conIns, '引数にコントローラが返ってくること');
+				equal(context.evArg.isReady, true, 'isReadyはtrueであること');
+				start();
+			},
+			__ready: function() {
+				equal(conIns.isReady, false, 'isReadyはfalseであること');
+				order++;
+			}
+		};
+
+		conIns = h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('h5controllerreadyイベントが発火すること - __ready: reject', 1, function() {
+		var conIns = null;
+
+		var controller = {
+			__name: 'TestController',
+			'{rootElement} h5controllerready': function(context) {
+				ok(false, 'h5controllerreadyイベントが発生したためテスト失敗');
+			},
+			__ready: function() {
+				var df = this.deferred();
+				df.reject();
+
+				return df.promise();
+			},
+			__dispose: function() {
+				equal(conIns.isReady, false, 'isReadyはfalseであること');
+				start();
+			}
+		};
+
+		conIns = h5.core.controller('#controllerTest', controller);
+	});
 });

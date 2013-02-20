@@ -927,7 +927,7 @@
 				if (!controller.rootElement || !controller.isInit || !controller.isReady) {
 					return;
 				}
-				$(controller.rootElement).trigger('h5controllerready', [controller]);
+				$(controller.rootElement).trigger('h5controllerready', controller);
 			}
 		};
 	}
