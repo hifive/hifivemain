@@ -725,12 +725,16 @@ $(function() {
 				position: 'absolute'
 			});
 			var $html = $('html');
+			var htmlElm = $html[0];
 			var $body = $(document.body);
 
 			this.originHtmlCss = {
-				position: $html.css('position'),
-				top: $html.css('top'),
-				left: $html.css('left')
+				margin: htmlElm.style.margin,
+				padding: htmlElm.style.padding,
+				position: htmlElm.style.position,
+				border: htmlElm.style.border,
+				top: htmlElm.style.top,
+				left: htmlElm.style.left
 			};
 			$html.css({
 				position: 'relative',
@@ -739,12 +743,12 @@ $(function() {
 			});
 
 			this.originBodyCss = {
-				margin: $body.css('margin'),
-				border: $body.css('border'),
-				padding: $body.css('padding'),
-				position: $body.css('position'),
-				top: $body.css('top'),
-				left: $body.css('left')
+				margin: document.body.style.margin,
+				border: document.body.style.border,
+				padding: document.body.style.padding,
+				position: document.body.style.position,
+				top: document.body.style.top,
+				left: document.body.style.left
 			};
 			$body.css({
 				margin: '20px',
