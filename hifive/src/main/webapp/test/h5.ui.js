@@ -775,7 +775,14 @@ $(function() {
 			document.body.style.top = this.originBodyCss.top;
 			document.body.style.left = this.originBodyCss.left;
 
-			$('html').css(this.originHtmlCss);
+			var htmlElm = $('html')[0];
+			htmlElm.style.margin = this.originHtmlCss.margin;
+			htmlElm.style.border = this.originHtmlCss.border;
+			htmlElm.style.padding = this.originHtmlCss.padding;
+			htmlElm.style.position = this.originHtmlCss.position;
+			htmlElm.style.top = this.originHtmlCss.top;
+			htmlElm.style.left = this.originHtmlCss.left;
+
 			this.$test.remove();
 			$('#enableScroll').remove();
 			window.scrollTo(0, 0);
