@@ -26,6 +26,7 @@
 
 	var EV_NAME_H5_JQM_PAGE_HIDE = 'h5jqmpagehide';
 	var EV_NAME_H5_JQM_PAGE_SHOW = 'h5jqmpageshow';
+	var EV_NAME_EMULATE_PAGE_SHOW = 'h5controllerready.emulatepageshow';
 
 	// =============================
 	// Production
@@ -135,7 +136,7 @@
 	 *
 	 * @type Boolean
 	 */
-	var showEventFired = false;
+	var showEventFiredBeforeReady = false;
 
 	// =============================
 	// Functions
@@ -269,14 +270,14 @@
 				that.loadScript(this.id);
 			});
 
-			var $activePage = this.$find('#' + activePageId);
+			var $page = this.$find('#' + activePageId);
 
 			// 初期表示時、トランジションにアニメーションが適用されていない場合、
 			// JQMコントローラがreadyになる前にpageshowが発火してしまいJQMコントローラが拾うことができないため、
 			// 既にpageshowが発火されていたら、h5controllerreadyのタイミングで、h5jqmpageshowをトリガする
-			$activePage.one('h5controllerready', function() {
-				if (showEventFired) {
-					$activePage.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
+			$page.one(EV_NAME_EMULATE_PAGE_SHOW, function() {
+				if (showEventFiredBeforeReady && $page[0] === $.mobile.activePage[0]) {
+					$page.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
 						prevPage: $('')
 					});
 				}
@@ -373,6 +374,7 @@
 		 * @memberOf JQMController
 		 */
 		'{rootElement} pageshow': function(context) {
+			var emulatePageShow = false;
 			var $target = $(context.event.target);
 			var $fromPage = context.evArg ? context.evArg.prevPage : $('');
 			var conAr = controllerInstanceMap[$target[0].id];
@@ -384,19 +386,25 @@
 					// JQMマネージャが管理する静的コントローラがイベントを受け取れない状態なので、h5controllerready後にh5jqmpageshowをトリガするようにする
 					// トランジションのアニメーションが無効(同期でJQMのイベントが発生する)場合のみここに到達する
 					if (!controllerInstance.isReady) {
-						$target.one('h5controllerready', function() {
-							$target.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
-								prevPage: $fromPage
-							});
-						});
+						$target.unbind(EV_NAME_EMULATE_PAGE_SHOW).one(EV_NAME_EMULATE_PAGE_SHOW,
+								function() {
+									if ($.mobile.activePage[0] === $target[0]) {
+										$target.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
+											prevPage: $fromPage
+										});
+									}
+								});
+						emulatePageShow = true;
 						break;
 					}
 				}
 			}
 
-			$target.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
-				prevPage: $fromPage
-			});
+			if (!emulatePageShow) {
+				$target.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
+					prevPage: $fromPage
+				});
+			}
 		},
 		/**
 		 * h5controllerboundイベントを監視しコントローラインスタンスを管理するためのイベントハンドラ
@@ -637,7 +645,7 @@
 
 					// 初期表示時、JQMマネージャがreadyになる前にpageshowイベントが発火したかをチェックする
 					$(document).one('pageshow', function() {
-						showEventFired = true;
+						showEventFiredBeforeReady = true;
 					});
 
 					$(function() {
@@ -758,7 +766,7 @@
 					cssMap = {};
 					initCalled = false;
 					hideEventFired = false;
-					showEventFired = false;
+					showEventFiredBeforeReady = false;
 				}
 			/* del end */
 			});
