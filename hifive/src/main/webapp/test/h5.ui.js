@@ -797,21 +797,30 @@ $(function() {
 					var body = document.body;
 					var html = $('html')[0];
 					var test = that.$test[0];
-					var htmlMargin = parseFloat($(html).css('margin'));
-					var htmlBorder = parseFloat($(html).css('borderWidth'));
-					var htmlPadding = parseFloat($(html).css('padding'));
-					var bodyMargin = parseFloat($(body).css('margin'));
-					var bodyBorder = parseFloat($(body).css('borderWidth'));
-					//					var bodyPadding = parseFloat($(body).css('padding'));
 
-					var offset = htmlPadding + bodyMargin + bodyBorder;
+					var htmlMarginX = parseFloat($(html).css('marginLeft'));
+					var htmlBorderX = parseFloat($(html).css('borderLeftWidth'));
+					var htmlPaddingX = parseFloat($(html).css('paddingLeft'));
+					var bodyMarginX = parseFloat($(body).css('marginLeft'));
+					var bodyBorderX = parseFloat($(body).css('borderLeftWidth'));
+
+					var htmlMarginY = parseFloat($(html).css('marginTop'));
+					var htmlBorderY = parseFloat($(html).css('borderTopWidth'));
+					var htmlPaddingY = parseFloat($(html).css('paddingTop'));
+					var bodyMarginY = parseFloat($(body).css('marginTop'));
+					var bodyBorderY = parseFloat($(body).css('borderTopWidth'));
+
+
+					var offsetX = htmlPaddingX + bodyMarginX + bodyBorderX;
+					var offsetY = htmlPaddingY + bodyMarginY + bodyBorderY;
 					if (!(h5.env.ua.isIE && h5.env.ua.browserVersion <= 6)) {
-						offset += htmlMargin + htmlBorder;
+						offsetX += htmlMarginX + htmlBorderX;
+						offsetY += htmlMarginY + htmlBorderY;
 					}
 
 					// 1 - (内側の要素 border-width*2 + width)
-					top = offset + 1 - (10 * 2 + 20);
-					left = offset + 1 - (10 * 2 + 20);
+					top = offsetY + 1 - (10 * 2 + 20);
+					left = offsetX + 1 - (10 * 2 + 20);
 
 					test.style.top = top + 'px';
 					test.style.left = left + 'px';
@@ -824,7 +833,7 @@ $(function() {
 					check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test, body);
 
 					// 外側の要素の幅 - 1
-					left = offset + body.clientWidth - 1;
+					left = offsetX + body.clientWidth - 1;
 
 					test.style.top = top + 'px';
 					test.style.left = left + 'px';
@@ -837,7 +846,7 @@ $(function() {
 					check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test, body);
 
 					// 外側の要素の高さ - 1
-					top = offset + body.clientHeight - 1;
+					top = offsetY + body.clientHeight - 1;
 
 					test.style.top = top + 'px';
 					test.style.left = left + 'px';
@@ -850,7 +859,7 @@ $(function() {
 					check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test, body);
 
 					// leftを左側に戻す
-					left = offset + 1 - (10 * 2 + 20);
+					left = offsetX + 1 - (10 * 2 + 20);
 
 					test.style.top = top + 'px';
 					test.style.left = left + 'px';
