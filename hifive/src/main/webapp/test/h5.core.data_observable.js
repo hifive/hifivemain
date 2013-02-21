@@ -522,6 +522,35 @@ $(function() {
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
+	test('join', 6, function() {
+		var o = h5.core.data.createObservableArray();
+		var a = [1, 2, 3, 4];
+		o.copyFrom(a);
+
+		var originAry = o.toArray();
+		var originLength = o.length;
+
+		var retO = o.join();
+		var retA = a.join();
+		strictEqual(retO, retA, '戻り値が正しいこと');
+		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
+
+		retO = o.join('-');
+		retA = a.join('-');
+		strictEqual(retO, retA, '戻り値が正しいこと');
+		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7]ObservableArray Arrayメソッド 非破壊系(JavaScript1.6以降)');
+
+	//=============================
+	// Body
+	//=============================
 	test('every', 6, function() {
 		var o = h5.core.data.createObservableArray();
 		var a = [1, 2, 3, 4];
@@ -715,27 +744,6 @@ $(function() {
 
 		var retO = o.indexOf(2);
 		var retA = a.indexOf(2);
-		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
-		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
-	});
-
-	test('join', 6, function() {
-		var o = h5.core.data.createObservableArray();
-		var a = [1, 2, 3, 4];
-		o.copyFrom(a);
-
-		var originAry = o.toArray();
-		var originLength = o.length;
-
-		var retO = o.join();
-		var retA = a.join();
-		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
-		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
-
-		retO = o.join('-');
-		retA = a.join('-');
 		strictEqual(retO, retA, '戻り値が正しいこと');
 		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
