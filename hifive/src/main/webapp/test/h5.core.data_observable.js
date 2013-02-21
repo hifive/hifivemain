@@ -734,7 +734,7 @@ $(function() {
 	});
 
 
-	test('lastIndexOf', function() {
+	test('lastIndexOf', 3, function() {
 		var o = h5.core.data.createObservableArray();
 		var a = [1, 2, 1, 2];
 		o.copyFrom(a);
@@ -742,8 +742,8 @@ $(function() {
 		var originAry = o.toArray();
 		var originLength = o.length;
 
-		var retO = o.indexOf(2);
-		var retA = a.indexOf(2);
+		var retO = o.lastIndexOf(2);
+		var retA = a.lastIndexOf(2);
 		strictEqual(retO, retA, '戻り値が正しいこと');
 		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
