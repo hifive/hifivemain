@@ -456,7 +456,7 @@
 			var pValues = new Array(len);
 			var firstParam = args[0];
 
-			dfd = len <= 1 && firstParam && jQuery.isFunction(firstParam.promise) ? firstParam
+			dfd = len <= 1 && firstParam && $.isFunction(firstParam.promise) ? firstParam
 					: getDeferred();
 
 			// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
