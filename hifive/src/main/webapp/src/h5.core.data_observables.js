@@ -434,7 +434,7 @@
 						} else {
 							getValue(item, dp).copyFrom([]);
 							// newValueがnullまたはundefinedならregardAsNull()がtrueを返すようにする
-							internal._nullProps[dp] = true
+							internal._nullProps[dp] = true;
 						}
 					} else {
 						setValue(item, dp, newValue);
@@ -1992,7 +1992,7 @@
 				event.props[p] = {
 					newValue: defVal,
 					oldValue: undefined
-				}
+				};
 			} else {
 				this._values[p] = undefined;
 			}
