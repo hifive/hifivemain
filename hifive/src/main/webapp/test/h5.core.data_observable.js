@@ -68,30 +68,31 @@ $(function() {
 		var o = h5.core.data.createObservableArray();
 		var ary = [1, 'a', window];
 		o.copyFrom(ary);
-		deepEqual(o.toArray(), ary, 'copyFromで引数に渡した配列の中身がコピーされること');
+		ok(o.equals(ary), 'copyFromで引数に渡した配列の中身がコピーされること');
 		notStrictEqual(o, ary, 'copyFromで渡した通常の配列とインスタンスが異なること');
 		strictEqual(o.length, ary.length, 'lengthが渡した配列と同じであること');
 		strictEqual(o.get(2), ary[2], 'getで値を取得できること');
 
 		o.copyFrom([]);
-		deepEqual(o.toArray(), [], 'copyFromで引数に空配列を渡すと、ObservableArrayの中身も空になること');
+		ok(o.equals([]), 'copyFromで引数に空配列を渡すと、ObservableArrayの中身も空になること');
 		strictEqual(o.length, 0, 'lengthが0になること');
 		strictEqual(o.get(0), undefined, 'get(0)するとundefinedが取得できること');
 
 		var o2 = h5.core.data.createObservableArray();
 		o2.copyFrom(ary);
 		o.copyFrom(o2);
-		deepEqual(o.toArray(), ary, 'copyFromで引数にObservableArrayを渡すと、その中身がコピーされること');
+		ok(o.equals(ary), 'copyFromで引数にObservableArrayを渡すと、その中身がコピーされること');
 		notStrictEqual(o, ary, 'copyFromで渡したObservableArrayとインスタンスが異なること');
 		strictEqual(o.length, ary.length, 'lengthが更新されること');
 		strictEqual(o.get(2), ary[2], 'getで値を取得できること');
 	});
 
-	test('equals', 6, function() {
+	test('equals', 13, function() {
 		var o = h5.core.data.createObservableArray();
-		var ary = [1, 'a', window];
+		var obj = {};
+		var ary = [1, '2', obj];
 		o.copyFrom(ary);
-		strictEqual(o.equals([1, 'a', window]), true, '引数の配列と中身が同じならequalsの結果がtrueであること');
+		strictEqual(o.equals([1, '2', obj]), true, '引数の配列と中身が同じならequalsの結果がtrueであること');
 
 		var o2 = h5.core.data.createObservableArray();
 		o2.copyFrom(ary);
@@ -106,21 +107,38 @@ $(function() {
 
 		strictEqual(o2.equals(o2), true, '同一のObservableArrayインスタンスならequalsの結果はtrueであること');
 
-		o2.copyFrom([1, 'a', {}]);
+		o2.copyFrom([1, '2', {}]);
 		strictEqual(o.equals(o2), false, '中身が違うならfalseが返ってくること');
+
+		o2.copyFrom([1, 2, obj]);
+		strictEqual(o.equals(o2), false, '中身が違うならfalseが返ってくること');
+
+		o2.copyFrom([1, '2']);
+		strictEqual(o.equals(o2), false, '中身が違うならfalseが返ってくること');
+
+		o2.copyFrom([1, '2', obj, 3]);
+		strictEqual(o.equals(o2), false, '中身が違うならfalseが返ってくること');
+
+		strictEqual(o.equals([1, '2', {}]), false, '中身が違うならfalseが返ってくること');
+
+		strictEqual(o.equals([1, 2, obj]), false, '中身が違うならfalseが返ってくること');
+
+		strictEqual(o.equals([1, '2']), false, '中身が違うならfalseが返ってくること');
+
+		strictEqual(o.equals([1, '2', obj, 3]), false, '中身が違うならfalseが返ってくること');
 	});
 
 	test('toArray', 3, function() {
 		var o = h5.core.data.createObservableArray();
 
 		deepEqual($.type(o.toArray()), 'array', 'toArray()の戻り値は通常の配列であること');
-		deepEqual(o.toArray(), [], 'toArrayの戻り値は、中身の同じ配列であること');
+		ok(o.equals([]), 'toArrayの戻り値は、中身の同じ配列であること');
 
 		var obj = {
 			a: 1
 		};
 		o.copyFrom([1, 2, obj]);
-		deepEqual(o.toArray(), [1, 2, obj], 'toArrayの戻り値は、中身の同じ配列であること');
+		ok(o.equals([1, 2, obj]), 'toArrayの戻り値は、中身の同じ配列であること');
 	});
 
 	test('get', 5, function() {
@@ -141,12 +159,12 @@ $(function() {
 
 		o.set(0, 1);
 
-		deepEqual(o.toArray(), [1], 'setで指定したindexに指定した要素を格納できること');
-		deepEqual(o.get(0), 1, 'setしたものをgetで取得できること');
-		deepEqual(o.length, 1, 'lengthが正しく更新されること');
+		ok(o.equals([1]), 'setで指定したindexに指定した要素を格納できること');
+		strictEqual(o.get(0), 1, 'setしたものをgetで取得できること');
+		strictEqual(o.length, 1, 'lengthが正しく更新されること');
 		o.set(0, 2);
 		o.set(1, 3);
-		deepEqual(o.toArray(), [2, 3], 'setで指定したindexに指定した要素を格納できること');
+		ok(o.equals([2, 3]), 'setで指定したindexに指定した要素を格納できること');
 
 		o = h5.core.data.createObservableArray();
 		o.set(1, 5);
@@ -154,9 +172,9 @@ $(function() {
 		var ary = [];
 		ary[1] = 5;
 		ary[3] = 7;
-		strictEqual(o.toArray(), ary, 'setで指定したindexに指定した要素を格納できること');
-		deepEqual(o.get(1), 5, 'setしたものをgetで取得できること');
-		deepEqual(o.get(3), 7, 'setしたものをgetで取得できること');
+		ok(o.equals(ary), 'setで指定したindexに指定した要素を格納できること');
+		strictEqual(o.get(1), 5, 'setしたものをgetで取得できること');
+		strictEqual(o.get(3), 7, 'setしたものをgetで取得できること');
 		strictEqual(o.length, ary.length, 'lengthが正しく更新されること');
 	});
 
@@ -175,25 +193,25 @@ $(function() {
 		var retO = o.push(1);
 		var retA = a.push(1);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.push(2);
 		retA = a.push(2);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.push(null);
 		retA = a.push(null);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.push(4, 5);
 		retA = a.push(4, 5);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 	});
 
@@ -205,25 +223,25 @@ $(function() {
 		var retO = o.pop();
 		var retA = a.pop();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.pop();
 		retA = a.pop();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.pop();
 		retA = a.pop();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.pop();
 		retA = a.pop();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 	});
 
@@ -235,7 +253,7 @@ $(function() {
 		var retO = o.reverse();
 		a.reverse();
 		strictEqual(retO, o, '戻り値がObservableArrayのインスタンスであること');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 	});
 
@@ -247,25 +265,25 @@ $(function() {
 		var retO = o.shift();
 		var retA = a.shift();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.shift();
 		retA = a.shift();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.shift();
 		retA = a.shift();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.shift();
 		retA = a.shift();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 	});
 
@@ -277,7 +295,7 @@ $(function() {
 		var retO = o.sort();
 		a.sort();
 		strictEqual(retO, o, '戻り値がObservableArrayのインスタンスであること');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		o.push(null);
@@ -289,7 +307,7 @@ $(function() {
 		retO = o.sort(f);
 		a.sort(f);
 		strictEqual(retO, o, '戻り値がObservableArrayのインスタンスであること');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 	});
 
@@ -301,19 +319,19 @@ $(function() {
 		var retO = o.unshift('1');
 		var retA = a.unshift('1');
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.unshift('2', '3');
 		retA = a.unshift('2', '3');
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		retO = o.unshift(null);
 		retA = a.unshift(null);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 	});
 
@@ -326,9 +344,9 @@ $(function() {
 		var retA = a.splice(1, a.length);
 
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		o = h5.core.data.createObservableArray();
@@ -338,9 +356,9 @@ $(function() {
 		retO = o.splice(0, 2);
 		retA = a.splice(0, 2);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		o = h5.core.data.createObservableArray();
@@ -350,9 +368,9 @@ $(function() {
 		retO = o.splice(0, 4);
 		retA = a.splice(0, 4);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		o = h5.core.data.createObservableArray();
@@ -362,9 +380,9 @@ $(function() {
 		retO = o.splice(3, 1);
 		retA = a.splice(3, 1);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		// ----- 値を追加するパターン -------
@@ -379,9 +397,9 @@ $(function() {
 		retO = o.splice(2, 1, '10', '20', inAry, inObsAry);
 		retA = a.splice(2, 1, '10', '20', inAry, inObsAry);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		o = h5.core.data.createObservableArray();
@@ -391,9 +409,9 @@ $(function() {
 		retO = o.splice(0, null, '100', '200', '300');
 		retA = a.splice(0, null, '100', '200', '300');
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		// --- 引数なしのパターン ---
@@ -404,18 +422,18 @@ $(function() {
 		retO = o.splice();
 		retA = a.splice();
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 
 		// -- 第1引数のみのパターン
 		retO = o.splice(1);
 		retA = a.splice(1);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), a, 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
+		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 	});
 
@@ -438,33 +456,33 @@ $(function() {
 		var retO = o.concat('a');
 		var retA = a.concat('a');
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		retO = o.concat('2', '3');
 		retA = a.concat('2', '3');
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		retO = o.concat(['2', '3']);
 		retA = a.concat(['2', '3']);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		retO = o.concat(['2', '3'], ['4', '5']);
 		retA = a.concat(['2', '3'], ['4', '5']);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		// 引数にObservableArrayを取る場合
@@ -475,17 +493,17 @@ $(function() {
 		retO = o.concat(inObsAry);
 		retA = a.concat(inAry);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		retO = o.concat(o, inObsAry);
 		retA = a.concat(a, inAry);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -500,25 +518,25 @@ $(function() {
 		var retO = o.slice(0);
 		var retA = a.slice(0);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		retO = o.slice(1);
 		retA = a.slice(1);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		retO = o.slice(1, 3);
 		retA = a.slice(1, 3);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -533,13 +551,13 @@ $(function() {
 		var retO = o.join();
 		var retA = a.join();
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		retO = o.join('-');
 		retA = a.join('-');
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -565,7 +583,7 @@ $(function() {
 		var retO = o.every(f);
 		var retA = a.every(f);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		f = function(d) {
@@ -574,7 +592,7 @@ $(function() {
 		retO = o.every(f);
 		retA = a.every(f);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -592,7 +610,7 @@ $(function() {
 		var retO = o.some(f);
 		var retA = a.some(f);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		f = function(d) {
@@ -601,7 +619,7 @@ $(function() {
 		retO = o.some(f);
 		retA = a.some(f);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -620,9 +638,9 @@ $(function() {
 		var retO = o.filter(f);
 		var retA = a.filter(f);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		f = function(d) {
@@ -631,9 +649,9 @@ $(function() {
 		retO = o.filter(f);
 		retA = a.filter(f);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -658,7 +676,7 @@ $(function() {
 			ret: retA
 		});
 		deepEqual(retO, retA, 'forEachに渡したコールバックが実行されること');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -676,9 +694,9 @@ $(function() {
 		var retO = o.map(f);
 		var retA = a.map(f);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		deepEqual(retO.toArray(), retA, '戻り値の中身が正しいこと');
+		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -696,7 +714,7 @@ $(function() {
 		var retO = o.reduce(f);
 		var retA = a.reduce(f);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -714,7 +732,7 @@ $(function() {
 		var retO = o.reduceRight(f);
 		var retA = a.reduceRight(f);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -729,7 +747,7 @@ $(function() {
 		var retO = o.indexOf(2);
 		var retA = a.indexOf(2);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
@@ -745,7 +763,7 @@ $(function() {
 		var retO = o.lastIndexOf(2);
 		var retA = a.lastIndexOf(2);
 		strictEqual(retO, retA, '戻り値が正しいこと');
-		deepEqual(o.toArray(), originAry, 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
+		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
 
