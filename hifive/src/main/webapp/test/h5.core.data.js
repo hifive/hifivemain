@@ -4362,14 +4362,14 @@ $(function() {
 					dataModel2: [model2DataItem1, model2DataItem2]
 				});
 
-				equal(item1.get('dataModel1')[0].get('test1'), 'aaa',
+				equal(item1.get('dataModel1').get(0).get('test1'), 'aaa',
 						'create時に指定したモデルの値が、DataItemから取得できること。');
-				equal(item1.get('dataModel1')[1].get('test1'), 'bbb',
+				equal(item1.get('dataModel1').get(1).get('test1'), 'bbb',
 						'create時に指定したモデルの値が、DataItemから取得できること。');
 				ok(item1.get('dataModel2').equals([]), 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
-				equal(item2.get('dataModel2')[0].get('test1'), 20,
+				equal(item2.get('dataModel2').get(0).get('test1'), 20,
 						'create時に指定したモデルの値が、DataItemから取得できること。');
-				equal(item2.get('dataModel2')[1].get('test1'), 30,
+				equal(item2.get('dataModel2').get(1).get('test1'), 30,
 						'create時に指定したモデルの値が、DataItemから取得できること。');
 				ok(item2.get('dataModel1').equals([]), 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
 
@@ -9293,18 +9293,19 @@ $(function() {
 				order.push('manager');
 				evObj = evObj || {};
 				evObj['manager'] = ev;
-			}
+			};
+
 			modelEventListener = function(ev) {
 				order.push('model');
 				evObj = evObj || {};
 				evObj['model'] = ev;
-			}
+			};
 
 			itemEventListener = function(ev) {
 				order.push('item');
 				evObj = evObj || {};
 				evObj['item'] = ev;
-			}
+			};
 
 			manager.addEventListener('itemsChange', managerEventListener);
 			dataModel1.addEventListener('itemsChange', modelEventListener);
