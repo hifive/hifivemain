@@ -1403,63 +1403,7 @@
 	// Body
 	//
 	// =========================================================================
-	function customSplice(/* var_args */) {
-		var beforeLen = this.length;
 
-		var ret = Array.prototype.splice.apply(this, arguments);
-
-		//splice前より後の方が長さが短くなっていたら、余っている後ろの要素を削除する
-		for ( var i = this.length; i < beforeLen; i++) {
-			delete this[i];
-		}
-
-		return ret;
-	}
-
-	function customShift(/* var_args */) {
-		var beforeLen = this.length;
-
-		var ret = Array.prototype.shift.apply(this, arguments);
-
-		if (beforeLen > 0) {
-			//shift()で最後の要素がひとつ前に"シフト"するが、一部環境では元の位置の要素が削除されないので独自に削除
-			delete this[beforeLen - 1];
-		}
-
-		return ret;
-	}
-
-	//Objectに対するsplice()の動作を確認
-	var obsSplice;
-	var spliceTestObj = {
-		'0': 0,
-		length: 1
-	};
-	Array.prototype.splice.call(spliceTestObj, 0, 1);
-	if (spliceTestObj[0] !== undefined) {
-		//Array.prototype.spliceをビルトインの配列以外に対して適用した時
-		//最終的なlength以降の要素が削除されないので、特別に対応する。
-		//ここに入るのは、検証したブラウザではIE8以下だけ。
-		obsSplice = customSplice;
-	} else {
-		obsSplice = Array.prototype.splice;
-	}
-	spliceTestObj = null;
-
-	//Objectに対するshift()の動作を確認
-	var obsShift;
-	var shiftTestObj = {
-		'0': 0,
-		length: 1
-	};
-	Array.prototype.shift.call(shiftTestObj);
-	if (shiftTestObj[0] !== undefined) {
-		//shiftもspliceと同様要素が残る環境がある（IE8のIE7モード）ので差し替える。
-		obsShift = customShift;
-	} else {
-		obsShift = Array.prototype.shift;
-	}
-	shiftTestObj = null;
 
 
 	//-------------------------------------------
@@ -1754,9 +1698,12 @@
 		},
 
 		/**
-		 * concatのラッパー関数。引数にObservableArrayが渡された場合にも正しく動作するようにラップする。
+		 * 動作は通常の配列のconcatと同じです。<br>
+		 * 引数にObservableArrayが渡された場合にそれを通常の配列とみなして動作するようラップされています。
 		 *
-		 * @private
+		 * @since 1.1.3
+		 * @memberOf ObservableArray
+		 * @returns 要素を連結したObservableArrayインスタンス
 		 */
 		concat: function() {
 			var args = h5.u.obj.argsToArray(arguments);
@@ -1769,6 +1716,8 @@
 		}
 	};
 
+	//Array.prototypeのメンバーはfor-inで列挙されないためここで列挙。
+	//プロパティアクセスのProxyingが可能になれば不要になるかもしれない。
 	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
 			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
 			'some', 'reduce', 'reduceRight'];
