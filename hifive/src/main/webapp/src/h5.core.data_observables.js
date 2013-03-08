@@ -1750,9 +1750,33 @@
 		ObservableArray.prototype[arrayMethod] = (function(method) {
 			var func = obsFuncs[method] ? obsFuncs[method] : Array.prototype[method];
 
+			function doProcess() {
+				var ret = func.apply(this._src, arguments);
+
+				if ($.inArray(method, returnsSelfMethods) !== -1) {
+					//自分自身を返すメソッドの場合
+					ret = this;
+				} else if ($.inArray(method, creationMethods) !== -1) {
+					//新しい配列を生成するメソッドの場合
+					var wrapper = createObservableArray();
+					wrapper.copyFrom(ret);
+					ret = wrapper;
+				}
+
+				return ret;
+			}
+
+			var isDestructive = $.inArray(method, destructiveMethods) !== -1;
+
+			if (!isDestructive) {
+				//非破壊メソッドの場合
+				return doProcess;
+			}
+
+			//破壊メソッドの場合は、changeBefore/changeイベントを出す
+
 			//TODO fallback実装の提供?(優先度低)
 			return function() {
-				var isDestructive = $.inArray(method, destructiveMethods) !== -1;
 				var evBefore = {
 					type: EVENT_TYPE_OBSERVE_BEFORE,
 					method: method,
@@ -1762,21 +1786,9 @@
 
 				if (!this.dispatchEvent(evBefore)) {
 					//preventDefault()が呼ばれなければ実際に処理を行う
-					var ret = func.apply(this._src, arguments);
+					var ret = doProcess.apply(this, arguments);
 
-					if (isDestructive) {
-						this.length = this._src.length;
-					}
-
-					if ($.inArray(method, returnsSelfMethods) !== -1) {
-						//自分自身を返すメソッドの場合
-						ret = this;
-					} else if ($.inArray(method, creationMethods) !== -1) {
-						//新しい配列を生成するメソッドの場合
-						var wrapper = createObservableArray();
-						wrapper.copyFrom(ret);
-						ret = wrapper;
-					}
+					this.length = this._src.length;
 
 					var evAfter = {
 						type: EVENT_TYPE_OBSERVE,
