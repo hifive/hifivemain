@@ -411,6 +411,12 @@
 		//ループ単位ごとにappendChildしてdocumentにバインドする（＝Fragmentは都度空になる）ので、使いまわしている。
 		var fragment = document.createDocumentFragment();
 
+		var getContextElement = context.get ? function(idx) {
+			return context.get(idx);
+		} : function(idx) {
+			return context[idx];
+		};
+
 		for ( var i = 0, len = context.length; i < len; i++) {
 			var loopNodes = [];
 
@@ -432,7 +438,7 @@
 			loopRootElement.appendChild(fragment);
 
 			//配列1要素分のバインディングを実行
-			applyBinding(binding, loopNodes, context[i], false, true);
+			applyBinding(binding, loopNodes, getContextElement(i), false, true);
 		}
 	}
 
@@ -666,7 +672,10 @@
 		}
 	}
 
-	function removeNodes(binding, parent, nodesToRemove) {
+	/**
+	 * 指定されたノードをDOMツリーから削除し、同時にアンバインドします。
+	 */
+	function removeDomNodes(binding, parent, nodesToRemove) {
 		for ( var i = 0, len = nodesToRemove.length; i < len; i++) {
 			var n = nodesToRemove[i];
 			parent.removeChild(n);
@@ -751,7 +760,7 @@
 			//配列がスパースである場合やsplice()で実際の要素数以上の個数を削除しようとしている場合、
 			//ループノードがない場合が考えられるのでチェックする
 			if (nodesPerIndex) {
-				removeNodes(binding, parent, nodesPerIndex);
+				removeDomNodes(binding, parent, nodesPerIndex);
 			}
 		}
 
@@ -814,7 +823,7 @@
 	function refreshLoopContext(binding, srcArray, loopRootNode, loopNodes, srcCtxNode) {
 		//現在のビューのすべての要素を外す
 		for ( var i = 0, len = loopNodes.length; i < len; i++) {
-			removeNodes(binding, loopRootNode, loopNodes[i]);
+			removeDomNodes(binding, loopRootNode, loopNodes[i]);
 		}
 
 		//TODO addLoopChildrenとコード共通化
@@ -869,34 +878,38 @@
 
 			var loopRootNode = views[viewUid];
 
-			var dynCtxId = getElemAttribute(loopRootNode, DATA_H5_DYN_CTX);
+			var srcCtxNode = this._getSrcCtxNode(getElemAttribute(loopRootNode, DATA_H5_DYN_CTX));
 
 			var loopNodes = this._loopElementsMap[viewUid];
 
 			switch (event.method) {
+			case 'set':
+				console.log(event);
+				spliceLoopNodes(this, loopRootNode, event.target,
+						[event.args[0], 1, event.args[1]], loopNodes, srcCtxNode);
+				break;
 			case 'shift':
 			case 'pop':
 				var nodesToRemove = loopNodes[event.method]();
 				if (nodesToRemove) {
 					//要素数0の配列に対してshift,popすると戻り値はundefined
-					removeNodes(this, loopRootNode, nodesToRemove);
+					removeDomNodes(this, loopRootNode, nodesToRemove);
 				}
 				break;
 			case 'unshift':
-				var fragment = addLoopChildren(this, loopNodes, this._getSrcCtxNode(dynCtxId),
-						event.method, event.args);
+				var fragment = addLoopChildren(this, loopNodes, srcCtxNode, event.method,
+						event.args);
 				//新規追加ノードを先頭に追加
 				loopRootNode.insertBefore(fragment, loopRootNode.firstChild);
 				break;
 			case 'push':
-				var fragment = addLoopChildren(this, loopNodes, this._getSrcCtxNode(dynCtxId),
-						event.method, event.args);
+				var fragment = addLoopChildren(this, loopNodes, srcCtxNode, event.method,
+						event.args);
 				//新規追加ノードを末尾に追加
 				loopRootNode.appendChild(fragment);
 				break;
 			case 'splice':
-				spliceLoopNodes(this, loopRootNode, event.target, event.args, loopNodes, this
-						._getSrcCtxNode(dynCtxId));
+				spliceLoopNodes(this, loopRootNode, event.target, event.args, loopNodes, srcCtxNode);
 				break;
 			case 'reverse':
 				//DOMツリー側をリバース
@@ -908,7 +921,7 @@
 			case 'copyFrom':
 				//ループビューをすべて作り直す
 				this._loopElementsMap[viewUid] = refreshLoopContext(this, event.target,
-						loopRootNode, loopNodes, this._getSrcCtxNode(dynCtxId));
+						loopRootNode, loopNodes, srcCtxNode);
 				break;
 			}
 		}
