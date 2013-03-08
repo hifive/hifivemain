@@ -206,6 +206,7 @@
 	var getValue = h5internal.core.data.getValue;
 	var setValue = h5internal.core.data.setValue;
 	var isTypeArray = h5internal.core.data.isTypeArray;
+	var isStrictNaN = h5internal.core.data.isStrictNaN;
 
 	// DataItemと共通のエラーコード
 	var ITEM_ERRORS = h5internal.core.data.ITEM_ERRORS;
@@ -1993,11 +1994,14 @@
 						//TODO oldValueは配列ならmanager._oldValueLogsにある
 						var changedProps = false;
 						for ( var p in mergedProps) {
-							if (mergedProps[p].oldValue !== model.get(itemId).get(p)) {
+							var oldValue = mergedProps[p].oldValue;
+							var currentValue = model.get(itemId).get(p);
+							if (oldValue === currentValue
+									|| (isStrictNaN(oldValue) && isStrictNaN(currentValue))) {
+								delete mergedProps[p];
+							} else {
 								mergedProps[p].newValue = model.get(itemId).get(p);
 								changedProps = true;
-							} else {
-								delete mergedProps[p];
 							}
 						}
 						if (changedProps) {

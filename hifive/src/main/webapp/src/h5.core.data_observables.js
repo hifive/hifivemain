@@ -2186,7 +2186,7 @@
 					oldValue = oldValue.slice(0);
 					this._values[p].copyFrom(v);
 				} else {
-					if (v === this._values[p]) {
+					if (v === this._values[p] || isStrictNaN(v) && isStrictNaN(this._values[p])) {
 						// 変更なし
 						continue;
 					}
@@ -2359,6 +2359,7 @@
 		isIntegerValue: isIntegerValue,
 		isNumberValue: isNumberValue,
 		isStringValue: isStringValue,
+		isStrictNaN: isStrictNaN,
 		unbox: unbox,
 		EventDispatcher: EventDispatcher,
 		calcDependencies: calcDependencies,
