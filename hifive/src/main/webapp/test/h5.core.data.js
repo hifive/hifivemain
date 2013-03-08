@@ -4292,99 +4292,98 @@ $(function() {
 		}
 	});
 
-	test('type指定 DataModel[] 正常系', 8,
-			function() {
-				var descriptor1 = {
-					name: 'DataModel1',
-					schema: {
-						id: {
-							id: true
-						},
-						test1: {
-							type: 'string'
-						}
-					}
-				};
-				var desc1Model = manager.createModel(descriptor1);
-				var model1DataItem1 = desc1Model.create({
-					id: sequence.next(),
-					test1: 'aaa'
-				});
-				var model1DataItem2 = desc1Model.create({
-					id: sequence.next(),
-					test1: 'bbb'
-				});
+	test('type指定 DataModel[] 正常系', 8, function() {
+		var descriptor1 = {
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string'
+				}
+			}
+		};
+		var desc1Model = manager.createModel(descriptor1);
+		var model1DataItem1 = desc1Model.create({
+			id: sequence.next(),
+			test1: 'aaa'
+		});
+		var model1DataItem2 = desc1Model.create({
+			id: sequence.next(),
+			test1: 'bbb'
+		});
 
-				var descriptor2 = {
-					name: 'DataModel2',
-					schema: {
-						id: {
-							id: true
-						},
-						test1: {
-							type: 'number'
-						}
-					}
-				};
+		var descriptor2 = {
+			name: 'DataModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'number'
+				}
+			}
+		};
 
-				var descModel2 = manager.createModel(descriptor2);
-				var model2DataItem1 = descModel2.create({
-					id: sequence.next(),
-					test1: 20
-				});
-				var model2DataItem2 = descModel2.create({
-					id: sequence.next(),
-					test1: 30
-				});
+		var descModel2 = manager.createModel(descriptor2);
+		var model2DataItem1 = descModel2.create({
+			id: sequence.next(),
+			test1: 20
+		});
+		var model2DataItem2 = descModel2.create({
+			id: sequence.next(),
+			test1: 30
+		});
 
-				var model = manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						dataModel1: {
-							type: '@DataModel1[]'
-						},
-						dataModel2: {
-							type: '@DataModel2[]'
-						}
-					}
-				});
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				dataModel1: {
+					type: '@DataModel1[]'
+				},
+				dataModel2: {
+					type: '@DataModel2[]'
+				}
+			}
+		});
 
-				// DataItemでcreateできるか
-				var item1 = model.create({
-					id: sequence.next(),
-					dataModel1: [model1DataItem1, model1DataItem2]
-				});
-				var item2 = model.create({
-					id: sequence.next(),
-					dataModel2: [model2DataItem1, model2DataItem2]
-				});
+		// DataItemでcreateできるか
+		var item1 = model.create({
+			id: sequence.next(),
+			dataModel1: [model1DataItem1, model1DataItem2]
+		});
+		var item2 = model.create({
+			id: sequence.next(),
+			dataModel2: [model2DataItem1, model2DataItem2]
+		});
 
-				equal(item1.get('dataModel1').get(0).get('test1'), 'aaa',
-						'create時に指定したモデルの値が、DataItemから取得できること。');
-				equal(item1.get('dataModel1').get(1).get('test1'), 'bbb',
-						'create時に指定したモデルの値が、DataItemから取得できること。');
-				ok(item1.get('dataModel2').equals([]), 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
-				equal(item2.get('dataModel2').get(0).get('test1'), 20,
-						'create時に指定したモデルの値が、DataItemから取得できること。');
-				equal(item2.get('dataModel2').get(1).get('test1'), 30,
-						'create時に指定したモデルの値が、DataItemから取得できること。');
-				ok(item2.get('dataModel1').equals([]), 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
+		equal(item1.get('dataModel1').get(0).get('test1'), 'aaa',
+				'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item1.get('dataModel1').get(1).get('test1'), 'bbb',
+				'create時に指定したモデルの値が、DataItemから取得できること。');
+		ok(item1.get('dataModel2').equals([]), 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
+		equal(item2.get('dataModel2').get(0).get('test1'), 20,
+				'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item2.get('dataModel2').get(1).get('test1'), 30,
+				'create時に指定したモデルの値が、DataItemから取得できること。');
+		ok(item2.get('dataModel1').equals([]), 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
 
-				// 指定無し、null,空配列でcreateできるか
-				ok(model.create({
-					id: sequence.next(),
-					dataModel1: [null]
-				}).get('dataModel1').equals([null]), 'create時に[null]を指定した場合、[null]が取得できること。');
+		// 指定無し、null,空配列でcreateできるか
+		ok(model.create({
+			id: sequence.next(),
+			dataModel1: [null]
+		}).get('dataModel1').equals([null]), 'create時に[null]を指定した場合、[null]が取得できること。');
 
-				ok(model.create({
-					id: sequence.next(),
-					dataModel1: []
-				}).get('dataModel1').equals([]), 'create時に空配列を指定した場合、空のObsArrayが取得できること。');
+		ok(model.create({
+			id: sequence.next(),
+			dataModel1: []
+		}).get('dataModel1').equals([]), 'create時に空配列を指定した場合、空のObsArrayが取得できること。');
 
-			});
+	});
 
 	test('type指定 DataModel[] 異常系', 6, function() {
 		var descriptor1 = {
@@ -5731,7 +5730,7 @@ $(function() {
 				},
 				test9: {
 					type: 'any[]',
-					defaultValue: [30, 'ZZZ', /[0-9]/],
+					defaultValue: [30, 'ZZZ', this.regex],
 					constraint: constraint
 				},
 				test10: {
@@ -5753,13 +5752,13 @@ $(function() {
 				},
 				test13: {
 					type: 'enum',
-					enumValue: [10.8, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemB],
+					enumValue: [10.8, 'a', 5, true, [1, 2, 3], this.regex, testClass1, itemB],
 					defaultValue: 10.8,
 					constraint: constraint
 				},
 				test14: {
 					type: 'enum[]',
-					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 5, 'YYY', 10.8],
+					enumValue: [itemB, testClass1, this.regex, [10, 20, 30], true, 5, 'YYY', 10.8],
 					defaultValue: [testClass1],
 					constraint: constraint
 				}
@@ -5772,7 +5771,8 @@ $(function() {
 			testClass1 = null;
 			itemA = null;
 			itemB = null;
-		}
+		},
+		regex: /[0-9]/
 	});
 
 	//=============================
@@ -5806,7 +5806,7 @@ $(function() {
 		ok(item1.get('test6').equals([7, 8, 9]), msg);
 		equal(item1.get('test7'), true, msg);
 		ok(item1.get('test8').equals([true, false]), msg);
-		ok(item1.get('test9').equals([30, 'ZZZ', /[0-9]/]), msg);
+		ok(item1.get('test9').equals([30, 'ZZZ', this.regex]), msg);
 		deepEqual(item1.get('test10'), {
 			hoge: 1
 		}, msg);
@@ -5879,8 +5879,9 @@ $(function() {
 		item2.set('test8', [true, true, false]);
 		ok(item2.get('test8').equals([true, true, false]), msg);
 
-		item2.set('test9', [[1], 2, 'aaa']);
-		ok(item2.get('test9').equals([[1], 2, 'aaa']), msg);
+		var ary = [1];
+		item2.set('test9', [ary, 2, 'aaa']);
+		ok(item2.get('test9').equals([ary, 2, 'aaa']), msg);
 
 		item2.set('test10', {
 			a: 'b'
