@@ -498,7 +498,7 @@
 			var isAlreadyInUpdate = false;
 
 			// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
-			var noAddMethods = ['sort', 'reverse', 'pop'];
+			var noAddMethods = ['sort', 'reverse', 'pop', 'shift'];
 
 			function changeBeforeListener(event) {
 				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
@@ -513,26 +513,42 @@
 				}
 
 				var args = argsToArray(event.args);
+				if ($.inArray(event.method, noAddMethods) === -1) {
+					var isValidateRequired = true;
 
-				var isValidateRequired = $.inArray(event.method, noAddMethods) === -1;
-
-				if (event.method === 'splice') {
-					if (args.length <= 2) {
-						// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+					// チェックするメソッドは unshift, push, splice, copyFrom, set
+					// そのうち、メソッドの引数をそのままチェックすればいいのはunshift, push
+					switch (event.method) {
+					case 'splice':
+						if (args.length <= 2) {
+							// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+							isValidateRequired = false;
+						}
 						isValidateRequired = false;
-					}
-					args.shift();
-					args.shift();
-				}
+						// spliceの場合追加要素は第3引数以降のため2回shiftする
+						args.shift();
+						args.shift();
+						break;
 
-				if (isValidateRequired) {
-					var validateResult = model._validateItemValue(propName, args);
-					if (validateResult.length > 0) {
-						throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, propName,
-								validateResult);
+					case 'copyFrom':
+						// copyFromの場合は引数が配列であるため、外側の配列を外す
+						args = args[0];
+						break;
+
+					case 'set':
+						// setの場合は第1引数はindexなので、shift()したものをチェックする
+						args.shift();
+
+					}
+
+					if (isValidateRequired) {
+						var validateResult = model._validateItemValue(propName, args);
+						if (validateResult.length > 0) {
+							throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, propName,
+									validateResult);
+						}
 					}
 				}
-
 				// oldValueが登録されていなければ登録
 				addObsArrayOldValue(model, item, propName);
 
