@@ -1968,6 +1968,7 @@
 					//従って、あとはchangeのイベントオブジェクトをマージすればよい。
 					if (isChangeOnly && changeEventStack.length > 0) {
 						var mergedProps = {};
+						//changeEventStackはより「古い」イベントが「後ろ」に入っている。
 						for ( var i = changeEventStack.length - 1; i >= 0; i--) {
 							for ( var p in changeEventStack[i].props) {
 								if (!mergedProps[p]) {
@@ -1978,6 +1979,8 @@
 												&& oldValueLogs[model.name][itemId]
 												&& oldValueLogs[model.name][itemId][p];
 										if (!model.get(itemId).get(p).equals(oldValue)) {
+											//プロパティがObservableArrayの場合、equalsの結果がfalseの場合のみ
+											//mergedPropsにセットする。つまり、equalsがtrueの場合は「変更がなかった」ことになる。
 											mergedProps[p] = {
 												oldValue: oldValue
 											};
