@@ -1636,11 +1636,7 @@
 				var myVal = this[i];
 				var targetVal = target[i];
 
-				if (!isString(myVal) && isNaN(myVal)) {
-					if (isString(targetVal) || !isNaN(targetVal)) {
-						return false;
-					}
-				} else if (myVal !== targetVal) {
+				if (!(myVal === targetVal || isStrictNaN(myVal) && isStrictNaN(targetVal))) {
 					return false;
 				}
 			}
