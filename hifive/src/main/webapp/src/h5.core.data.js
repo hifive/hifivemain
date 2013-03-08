@@ -501,11 +501,6 @@
 			var noAddMethods = ['sort', 'reverse', 'pop', 'shift'];
 
 			function changeBeforeListener(event) {
-				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
-				if (!event.isDestructive) {
-					return;
-				}
-
 				// itemがmodelに属していない又は、itemが属しているmodelがmanagerに属していないならエラー
 				if (item._model !== model || !model._manager) {
 					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [item._values[model.idKey],
@@ -560,11 +555,6 @@
 			}
 
 			function changeListener(event) {
-				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
-				if (!event.isDestructive) {
-					return;
-				}
-
 				// 配列の要素が全て同じかどうかのチェックはendUpdateのなかでやる
 
 				// changeイベントオブジェクトの作成

@@ -1762,9 +1762,7 @@
 				return ret;
 			}
 
-			var isDestructive = $.inArray(method, destructiveMethods) !== -1;
-
-			if (!isDestructive) {
+			if ($.inArray(method, destructiveMethods) === -1) {
 				//非破壊メソッドの場合
 				return doProcess;
 			}
@@ -1776,8 +1774,7 @@
 				var evBefore = {
 					type: 'changeBefore',
 					method: method,
-					args: arguments,
-					isDestructive: isDestructive
+					args: arguments
 				};
 
 				if (!this.dispatchEvent(evBefore)) {
@@ -1790,8 +1787,7 @@
 						type: 'change',
 						method: method,
 						args: arguments,
-						returnValue: ret,
-						isDestructive: isDestructive
+						returnValue: ret
 					};
 					this.dispatchEvent(evAfter);
 					return ret;
@@ -2035,10 +2031,9 @@
 			(function(propName, observableArray) {
 				var oldValue; // プロパティのoldValue
 				function changeBeforeListener(event) {
-					// 非破壊的メソッドなら何もしない
 					// set内で呼ばれたcopyFromなら何もしない
 					// (checkもevent上げもsetでやっているため)
-					if (!event.isDestructive || item._internal.isInSet) {
+					if (item._internal.isInSet) {
 						return;
 					}
 
@@ -2088,9 +2083,8 @@
 				}
 
 				function changeListener(event) {
-					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
 					// set内で呼ばれたcopyFromなら何もしない(item._internal.isInSetにフラグを立てている)
-					if (!event.isDestructive || item._internal.isInSet) {
+					if (item._internal.isInSet) {
 						return;
 					}
 

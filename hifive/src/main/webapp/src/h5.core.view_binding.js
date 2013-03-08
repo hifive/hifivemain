@@ -860,10 +860,6 @@
 	// =========================================================================
 
 	function Binding__observableArray_changeListener(event) {
-		if (!event.isDestructive) {
-			return;
-		}
-
 		var views = this._getViewsFromSrc(event.target);
 		if (!views) {
 			return;
