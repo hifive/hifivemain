@@ -951,8 +951,7 @@
 		}
 
 		if (!modelLogs[itemId][prop]) {
-			// sliceして保存
-			modelLogs[itemId][prop] = Array.prototype.slice.call(getValue(item, prop), 0);
+			modelLogs[itemId][prop] = getValue(item, prop).toArray();
 			return;
 		}
 
