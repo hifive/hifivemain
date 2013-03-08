@@ -819,7 +819,10 @@
 		Array.prototype.splice.apply(loopNodes, spliceArgs);
 	}
 
-
+	/**
+	 * 指定されたループコンテキスト以下のDOMツリーを再構築します。既存のDOMノードは削除されます。
+	 * このメソッドはObservableArrayの更新時のみ呼び出されることを想定しています。
+	 */
 	function refreshLoopContext(binding, srcArray, loopRootNode, loopNodes, srcCtxNode) {
 		//現在のビューのすべての要素を外す
 		for ( var i = 0, len = loopNodes.length; i < len; i++) {
@@ -842,7 +845,7 @@
 				fragment.appendChild(newChildNodes[j]);
 			}
 
-			applyBinding(binding, newChildNodes, srcArray[i]);
+			applyBinding(binding, newChildNodes, srcArray.get(i));
 		}
 
 		loopRootNode.appendChild(fragment);
