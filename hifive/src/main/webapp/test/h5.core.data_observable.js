@@ -1689,8 +1689,42 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	var itemEventOrder = [];
+	module('ObservableItem EventListener',{
+		itemEventListener: function(e){
+			itemEventOrder.push(e);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('setでNaNのものにNaNをセットした時にはイベントハンドラは実行されないこと', 2, function() {
+		var item = h5.core.data.createObservableItem({
+			val: {
+				defaultValue: NaN
+			},
+			ary: {
+				type: 'any[]',
+				defaultValue: [1, NaN, 3]
+			}
+		});
+		item.addEventListener('change', this.itemEventListener);
+
+		itemEventOrder = [];
+		item.set('val', NaN);
+		deepEqual(itemEventOrder, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		itemEventOrder = [];
+		item.set('ary', [1, NaN, 3]);
+		deepEqual(itemEventOrder, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	var regardsTestReturnValue = null;
-	module('DataItem.regardAsNull', {
+	module('ObservableItem.regardAsNull', {
 		regardsTestSchema: {
 			string: {
 				type: 'string'
