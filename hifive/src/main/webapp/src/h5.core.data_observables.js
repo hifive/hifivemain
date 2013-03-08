@@ -520,7 +520,7 @@
 	 * @param {Any} val2 判定する値
 	 * @returns {Boolean} 引数が2つともNaNかどうか
 	 */
-	function isStrictBothNaN(val1, val2) {
+	function isBothStrictNaN(val1, val2) {
 		return isStrictNaN(val1) && isStrictNaN(val2);
 	}
 
@@ -1648,7 +1648,7 @@
 				var myVal = this[i];
 				var targetVal = target[i];
 
-				if (!(myVal === targetVal || isStrictBothNaN(myVal, targetVal))) {
+				if (!(myVal === targetVal || isBothStrictNaN(myVal, targetVal))) {
 					return false;
 				}
 			}
@@ -2194,7 +2194,7 @@
 					oldValue = oldValue.slice(0);
 					this._values[p].copyFrom(v);
 				} else {
-					if (v === this._values[p] || isStrictBothNaN(v, this._values[p])) {
+					if (v === this._values[p] || isBothStrictNaN(v, this._values[p])) {
 						// 変更なし
 						continue;
 					}
@@ -2368,7 +2368,7 @@
 		isNumberValue: isNumberValue,
 		isStringValue: isStringValue,
 		isStrictNaN: isStrictNaN,
-		isStrictBothNaN: isStrictBothNaN,
+		isBothStrictNaN: isBothStrictNaN,
 		unbox: unbox,
 		EventDispatcher: EventDispatcher,
 		calcDependencies: calcDependencies,

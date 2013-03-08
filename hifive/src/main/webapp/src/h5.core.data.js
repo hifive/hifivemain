@@ -207,7 +207,7 @@
 	var setValue = h5internal.core.data.setValue;
 	var isTypeArray = h5internal.core.data.isTypeArray;
 	var isStrictNaN = h5internal.core.data.isStrictNaN;
-	var isStrictBothNaN = h5internal.core.data.isStrictBothNaN;
+	var isBothStrictNaN = h5internal.core.data.isBothStrictNaN;
 
 	// DataItemと共通のエラーコード
 	var ITEM_ERRORS = h5internal.core.data.ITEM_ERRORS;
@@ -1998,7 +1998,7 @@
 							var oldValue = mergedProps[p].oldValue;
 							var currentValue = model.get(itemId).get(p);
 							if (oldValue === currentValue
-									|| isStrictBothNaN(oldValue, currentValue)) {
+									|| isBothStrictNaN(oldValue, currentValue)) {
 								delete mergedProps[p];
 							} else {
 								mergedProps[p].newValue = model.get(itemId).get(p);
