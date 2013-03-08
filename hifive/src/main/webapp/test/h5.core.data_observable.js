@@ -87,7 +87,7 @@ $(function() {
 		strictEqual(o.get(2), ary[2], 'getで値を取得できること');
 	});
 
-	test('equals', 13, function() {
+	test('equals', 17, function() {
 		var o = h5.core.data.createObservableArray();
 		var obj = {};
 		var ary = [1, '2', obj];
@@ -106,6 +106,14 @@ $(function() {
 				'空のObservableArrayについて、equalsに空のObservableArrayを渡されたら結果がtrueであること');
 
 		strictEqual(o2.equals(o2), true, '同一のObservableArrayインスタンスならequalsの結果はtrueであること');
+
+		var nanAry = [1, NaN];
+		var nanObsAry = h5.core.data.createObservableArray();
+		var nanObsAry2 = h5.core.data.createObservableArray();
+		nanObsAry.copyFrom(nanAry);
+		nanObsAry2.copyFrom(nanAry);
+		strictEqual(nanObsAry.equals(nanAry), true, 'NaNを含む配列でも場合equalsの結果はtrueであること');
+		strictEqual(nanObsAry.equals(nanObsAry2), true, 'NaNを含むObs配列でも場合equalsの結果はtrueであること');
 
 		o2.copyFrom([1, '2', {}]);
 		strictEqual(o.equals(o2), false, '中身が違うならfalseが返ってくること');
@@ -126,6 +134,11 @@ $(function() {
 		strictEqual(o.equals([1, '2']), false, '中身が違うならfalseが返ってくること');
 
 		strictEqual(o.equals([1, '2', obj, 3]), false, '中身が違うならfalseが返ってくること');
+
+		nanObsAry.copyFrom([1, NaN, 3]);
+		nanObsAry2.copyFrom([1, NaN]);
+		strictEqual(nanObsAry.equals([1, NaN]), false, '中身が違うならfalseが返ってくること');
+		strictEqual(nanObsAry.equals(nanObsAry2), false, '中身が違うならfalseが返ってくること');
 	});
 
 	test('toArray', 3, function() {
