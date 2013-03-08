@@ -28,8 +28,6 @@
 	// Production
 	// =============================
 
-	var METHOD_NAME_COPY_FROM = 'copyFrom';
-
 	var EVENT_TYPE_OBSERVE_BEFORE = 'observeBefore';
 
 	var EVENT_TYPE_OBSERVE = 'observe';
@@ -74,6 +72,10 @@
 	 */
 	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15107;
 
+	/**
+	 * 引数が不正
+	 */
+	var ERR_CODE_INVALID_ARGUMENT = 15108;
 
 	// ---------------------------
 	// スキーマのエラーコード(detailに入れるメッセージID)
@@ -218,6 +220,7 @@
 	errMsgMap[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティは取得できません。違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
 	errMsgMap[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'calcで返却された値が、スキーマで指定された型・制約に違反しています。プロパティ={0}、返却値={1}';
+	errMsgMap[ERR_CODE_INVALID_ARGUMENT] = '引数が不正です。引数位置={0}、値={1}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -1657,6 +1660,11 @@
 			}
 
 			src = isObservableArray(src) ? src._src : src;
+
+			if (!$.isArray(src)) {
+				//引数が配列でない場合はエラー
+				throwFwError(ERR_CODE_INVALID_ARGUMENT, [0, src]);
+			}
 
 			var args = src.slice(0);
 			args.unshift(0, this.length);
