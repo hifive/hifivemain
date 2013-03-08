@@ -2025,7 +2025,7 @@
 		//-----------------------------------------------------------------------
 
 		// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
-		var noAddMethods = ['sort', 'reverse', 'pop'];
+		var noAddMethods = ['sort', 'reverse', 'pop', 'shift'];
 
 		var item = this;
 
@@ -2035,7 +2035,7 @@
 			(function(propName, observableArray) {
 				var oldValue; // プロパティのoldValue
 				function changeBeforeListener(event) {
-					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+					// 非破壊的メソッドなら何もしない
 					// set内で呼ばれたcopyFromなら何もしない
 					// (checkもevent上げもsetでやっているため)
 					if (!event.isDestructive || item._internal.isInSet) {
@@ -2044,22 +2044,42 @@
 
 					var args = h5.u.obj.argsToArray(event.args);
 
-					var checkFlag = $.inArray(event.method, noAddMethods) === -1;
+					// 破壊メソッドだけど要素を追加しないメソッド(削除やソート)
+					// の場合はチェックはせずにoldValueの保存だけ行う
 
-					if (event.method === 'splice') {
-						if (args.length <= 2) {
-							// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+					if ($.inArray(event.method, noAddMethods) === -1) {
+						var checkFlag = true;
+
+						// チェックするメソッドは unshift, push, splice, copyFrom, set
+						// そのうち、メソッドの引数をそのままチェックすればいいのはunshift, push
+						switch (event.method) {
+						case 'splice':
+							if (args.length <= 2) {
+								// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+								checkFlag = false;
+							}
 							checkFlag = false;
-						}
-						checkFlag = false;
-						args.shift();
-						args.shift();
-					}
+							// spliceの場合追加要素は第3引数以降のため2回shiftする
+							args.shift();
+							args.shift();
+							break;
 
-					if (checkFlag) {
-						var validateResult = itemValueCheckFuncs[propName](args);
-						if (validateResult.length > 0) {
-							throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+						case 'copyFrom':
+							// copyFromの場合は引数が配列であるため、外側の配列を外す
+							args = args[0];
+							break;
+
+						case 'set':
+							// setの場合は第1引数はindexなので、shift()したものをチェックする
+							args.shift();
+
+						}
+
+						if (checkFlag) {
+							var validateResult = itemValueCheckFuncs[propName](args);
+							if (validateResult.length > 0) {
+								throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+							}
 						}
 					}
 
