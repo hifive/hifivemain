@@ -513,6 +513,18 @@
 	}
 
 	/**
+	 * 引数を2つ取り、両方ともisStrictNaNかどうか判定する
+	 *
+	 * @private
+	 * @param {Any} val1 判定する値
+	 * @param {Any} val2 判定する値
+	 * @returns {Boolean} 引数が2つともNaNかどうか
+	 */
+	function isStrictBothNaN(val1, val2) {
+		return isStrictNaN(val1) && isStrictNaN(val2);
+	}
+
+	/**
 	 * type:'number' 指定のプロパティに代入できるかのチェック null,undefined,NaN,parseFloatしてNaNにならないもの
 	 * に当てはまる引数についてtrueを返す
 	 *
@@ -1636,7 +1648,7 @@
 				var myVal = this[i];
 				var targetVal = target[i];
 
-				if (!(myVal === targetVal || isStrictNaN(myVal) && isStrictNaN(targetVal))) {
+				if (!(myVal === targetVal || isStrictBothNaN(myVal, targetVal))) {
 					return false;
 				}
 			}
@@ -2182,7 +2194,7 @@
 					oldValue = oldValue.slice(0);
 					this._values[p].copyFrom(v);
 				} else {
-					if (v === this._values[p] || isStrictNaN(v) && isStrictNaN(this._values[p])) {
+					if (v === this._values[p] || isStrictBothNaN(v, this._values[p])) {
 						// 変更なし
 						continue;
 					}
@@ -2356,6 +2368,7 @@
 		isNumberValue: isNumberValue,
 		isStringValue: isStringValue,
 		isStrictNaN: isStrictNaN,
+		isStrictBothNaN: isStrictBothNaN,
 		unbox: unbox,
 		EventDispatcher: EventDispatcher,
 		calcDependencies: calcDependencies,
