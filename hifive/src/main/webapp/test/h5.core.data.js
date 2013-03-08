@@ -9441,6 +9441,37 @@ $(function() {
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 	});
 
+	test('DataItemの値set時で、NaNのものにNaNをセットした時にはイベントハンドラは実行されないこと', 2, function() {
+		var model = manager.createModel({
+			name: 'NaNTestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {
+					defaultValue: NaN
+				},
+				ary: {
+					type: 'any[]',
+					defaultValue: [1, NaN, 3]
+				}
+			}
+		});
+		item = model.create({
+			id: '1'
+		});
+
+		item.addEventListener('change', itemEventListener);
+
+		order = [];
+		item.set('val', NaN);
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		order = [];
+		item.set('ary', [1, NaN, 3]);
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+	});
+
 	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること', 9, function() {
 		var id = item.get('id');
 		dataModel1.create({
