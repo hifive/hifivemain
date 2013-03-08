@@ -3083,7 +3083,7 @@ $(function() {
 				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
 				ok(item.get('ary').equals([1, 2, 3]),
 						'削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
-				strictEqua(item.get('ary').slice(0).equals([1, 2, 3]),
+				ok(item.get('ary').slice(0).equals([1, 2, 3]),
 						'削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
 
 				try {
