@@ -391,12 +391,12 @@
 		binding._addBindingEntry(context, loopRootElement, viewUid);
 
 		if (h5.core.data.isObservableArray(context) && !binding._isWatching(context)) {
-			var observeListener = function(event) {
-				binding._observableArray_observeListener(event);
+			var changeListener = function(event) {
+				binding._observableArray_changeListener(event);
 			};
-			binding._listeners[binding._getContextIndex(context)] = observeListener;
+			binding._listeners[binding._getContextIndex(context)] = changeListener;
 
-			context.addEventListener('observe', observeListener);
+			context.addEventListener('change', changeListener);
 		}
 
 		//ループルートノードに対応する子ノードリストを、保存しているビューソースから取り出す
@@ -859,7 +859,7 @@
 	//
 	// =========================================================================
 
-	function Binding__observableArray_observeListener(event) {
+	function Binding__observableArray_changeListener(event) {
 		if (!event.isDestructive) {
 			return;
 		}
@@ -1156,7 +1156,7 @@
 		 * @function
 		 * @param event
 		 */
-		_observableArray_observeListener: Binding__observableArray_observeListener,
+		_observableArray_changeListener: Binding__observableArray_changeListener,
 
 		/**
 		 * データアイテムまたはObservableItemのchangeイベントハンドラ
@@ -1385,7 +1385,7 @@
 							src.removeEventListener('change', this._listeners[ctxIndex]);
 							removed = true;
 						} else if (h5.core.data.isObservableArray(src)) {
-							src.removeEventListener('observe', this._listeners[ctxIndex]);
+							src.removeEventListener('change', this._listeners[ctxIndex]);
 							removed = true;
 						}
 

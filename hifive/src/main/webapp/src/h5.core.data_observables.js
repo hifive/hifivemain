@@ -28,10 +28,6 @@
 	// Production
 	// =============================
 
-	var EVENT_TYPE_OBSERVE_BEFORE = 'observeBefore';
-
-	var EVENT_TYPE_OBSERVE = 'observe';
-
 	/**
 	 * createObservableItemに渡された引数がオブジェクトでない
 	 */
@@ -1590,7 +1586,7 @@
 	 * <p>
 	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
 	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
-	 * ObservableArrayは、 配列操作メソッド呼び出し時に'observeBefore'、配列操作メソッド実行後に'observe'イベントが発火します。
+	 * ObservableArrayは、自身の内容が変更されるメソッドが呼び出される時、実行前に'changeBefore'、実行後に'change'イベントを発生させます。
 	 * </p>
 	 *
 	 * @since 1.1.0
@@ -1778,7 +1774,7 @@
 			//TODO fallback実装の提供?(優先度低)
 			return function() {
 				var evBefore = {
-					type: EVENT_TYPE_OBSERVE_BEFORE,
+					type: 'changeBefore',
 					method: method,
 					args: arguments,
 					isDestructive: isDestructive
@@ -1791,7 +1787,7 @@
 					this.length = this._src.length;
 
 					var evAfter = {
-						type: EVENT_TYPE_OBSERVE,
+						type: 'change',
 						method: method,
 						args: arguments,
 						returnValue: ret,
@@ -2038,7 +2034,7 @@
 			var obsAry = this._values[p];
 			(function(propName, observableArray) {
 				var oldValue; // プロパティのoldValue
-				function observeBeforeListener(event) {
+				function changeBeforeListener(event) {
 					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
 					// set内で呼ばれたcopyFromなら何もしない
 					// (checkもevent上げもsetでやっているため)
@@ -2071,7 +2067,7 @@
 					oldValue = item._values[propName].slice(0);
 				}
 
-				function observeListener(event) {
+				function changeListener(event) {
 					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
 					// set内で呼ばれたcopyFromなら何もしない(item._internal.isInSetにフラグを立てている)
 					if (!event.isDestructive || item._internal.isInSet) {
@@ -2096,8 +2092,8 @@
 					// setにオブジェクトで渡されて、更新される場合があるので、isUpdateSessionとかで判断する必要がある
 					item.dispatchEvent(ev);
 				}
-				observableArray.addEventListener('observeBefore', observeBeforeListener);
-				observableArray.addEventListener('observe', observeListener);
+				observableArray.addEventListener('changeBefore', changeBeforeListener);
+				observableArray.addEventListener('change', changeListener);
 			})(p, obsAry);
 		}
 	}

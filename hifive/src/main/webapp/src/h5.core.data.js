@@ -492,7 +492,7 @@
 			//DataItem&&property名ごとに作るようにして数を減らしたい(DataItemのprototypeとして持たせればよい？)
 
 			// 配列操作前と操作後で使う共通の変数
-			// 配列操作が同期のため、必ずobserveBeforeListener→配列操作→observeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
+			// 配列操作が同期のため、必ずchangeBeforeListener→配列操作→changeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
 
 			// アップデートセッション中かどうか
 			var isAlreadyInUpdate = false;
@@ -500,7 +500,7 @@
 			// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
 			var noAddMethods = ['sort', 'reverse', 'pop'];
 
-			function observeBeforeListener(event) {
+			function changeBeforeListener(event) {
 				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
 				if (!event.isDestructive) {
 					return;
@@ -543,7 +543,7 @@
 				}
 			}
 
-			function observeListener(event) {
+			function changeListener(event) {
 				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
 				if (!event.isDestructive) {
 					return;
@@ -568,8 +568,8 @@
 				}
 			}
 
-			observableArray.addEventListener('observeBefore', observeBeforeListener);
-			observableArray.addEventListener('observe', observeListener);
+			observableArray.addEventListener('changeBefore', changeBeforeListener);
+			observableArray.addEventListener('change', changeListener);
 		}
 
 		/**

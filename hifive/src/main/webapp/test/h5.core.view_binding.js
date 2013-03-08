@@ -1075,14 +1075,14 @@ $(function() {
 		equal($result.eq(0).text(), oar.get(0).test, 'li[0].text() == ObservableArray[0].test');
 
 		// 値の変更をキャンセルする
-		oar.addEventListener('observeBefore', function(ev) {
+		oar.addEventListener('changeBefore', function(ev) {
 			ev.preventDefault();
 		});
 
 		oar.pop();
 		$result = $('#dataBindTest > ul > li');
 		equal($result.length, oar.length,
-				'observeBeforeイベントをキャンセルしてObservableArrayの中身に変更がないので、ビューは変更されないこと');
+				'changeBeforeイベントをキャンセルしてObservableArrayの中身に変更がないので、ビューは変更されないこと');
 		equal($result.eq(0).text(), oar.get(0).test, 'li[0].text() == ObservableArray[0].test');
 	});
 

@@ -3081,8 +3081,7 @@ $(function() {
 				model.remove(item);
 				strictEqual(item.getModel(), null, 'モデルから削除したアイテムのgetModel()がnullを返すこと');
 				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
-				ok(item.get('ary').equals([1, 2, 3]),
-						'削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
+				ok(item.get('ary').equals([1, 2, 3]), '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
 				strictEqua(item.get('ary').slice(0).equals([1, 2, 3]),
 						'削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
 
@@ -3139,8 +3138,7 @@ $(function() {
 				manager.dropModel(model.name);
 				strictEqual(model.getManager(), null, 'model.getManager()がnull');
 				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
-				ok(item.get('ary').equals([1, 2, 3]),
-						'削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
+				ok(item.get('ary').equals([1, 2, 3]), '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
 				ok(item.get('ary').slice(0).equals([1, 2, 3]),
 						'削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
 
@@ -3892,7 +3890,7 @@ $(function() {
 
 		strictEqual(obs.relatedItem, item, 'relatedItemプロパティでアイテムを参照できる');
 
-		obs.addEventListener('observe', function(ev) {
+		obs.addEventListener('change', function(ev) {
 			strictEqual(this.relatedItem, item, '内部ObsArrayからもrelatedItemでアイテムを参照できる');
 		});
 
@@ -4294,9 +4292,7 @@ $(function() {
 		}
 	});
 
-	test(
-			'type指定 DataModel[] 正常系',
-			8,
+	test('type指定 DataModel[] 正常系', 8,
 			function() {
 				var descriptor1 = {
 					name: 'DataModel1',
@@ -5053,8 +5049,7 @@ $(function() {
 				test1: [false, true, false]
 			});
 
-			ok(item.get('test1').equals([false, true, false]),
-					'type:boolean[] のプロパティに値が代入できること。');
+			ok(item.get('test1').equals([false, true, false]), 'type:boolean[] のプロパティに値が代入できること。');
 
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
@@ -5203,63 +5198,61 @@ $(function() {
 
 	// 2012/07/27 竹内追記 type:array[]は無い
 	// 2012/08/23 福田追記 type:arrayは廃止。type:any[]を使用する
-	test('type指定 any[] 正常系',
-			function() {
-				var model = manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						test1: {
-							type: 'any[]',
-							defaultValue: [10]
-						},
-						test2: {
-							type: 'any[]'
-						}
-					}
+	test('type指定 any[] 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'any[]',
+					defaultValue: [10]
+				},
+				test2: {
+					type: 'any[]'
+				}
+			}
+		});
+
+		try {
+			var item = model.create({
+				id: sequence.next()
+			});
+
+			// 初期値は正しいか
+			ok(item.get('test1').equals([10]),
+					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: sequence.next(),
+				test1: [30]
+			});
+
+			ok(item.get('test1').equals([30]), 'type:\'any\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Array(10, 8), new Object(['a']), [new Number(1)], [null, undefined],
+					null, undefined];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: sequence.next(),
+					test1: sub[i]
 				});
 
-				try {
-					var item = model.create({
-						id: sequence.next()
-					});
+				var exp = sub[i] == null ? [] : sub[i];
+				ok(item2.get('test1').equals(exp), 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
 
-					// 初期値は正しいか
-					ok(item.get('test1').equals([10]),
-							'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-					ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+				item2.set('test2', sub[i]);
 
-					item = model.create({
-						id: sequence.next(),
-						test1: [30]
-					});
-
-					ok(item.get('test1').equals([30]), 'type:\'any\'のプロパティに値が代入できること。');
-
-					// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
-					var item2 = null;
-					var sub = [new Array(10, 8), new Object(['a']), [new Number(1)],
-							[null, undefined], null, undefined];
-					for ( var i = 0; i < sub.length; i++) {
-						item2 = model.create({
-							id: sequence.next(),
-							test1: sub[i]
-						});
-
-						var exp = sub[i] == null ? [] : sub[i];
-						ok(item2.get('test1').equals(exp), 'test1に' + sub[i]
-								+ 'が代入されてDataItemが生成されること。');
-
-						item2.set('test2', sub[i]);
-
-						ok(item2.get('test2').equals(exp), 'typeプロパティで指定した型の値が代入できること。');
-					}
-				} catch (e) {
-					ok(false, 'エラーが発生しました。『' + e.message + '』');
-				}
-			});
+				ok(item2.get('test2').equals(exp), 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
 
 	test('type指定 any[] 異常系', function() {
 		var model = manager.createModel({
@@ -5460,8 +5453,7 @@ $(function() {
 		});
 
 		// 初期値は正しいか
-		ok(item.get('test1').equals([10]),
-				'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+		ok(item.get('test1').equals([10]), 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
 		ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 		item = model.create({
@@ -6193,102 +6185,104 @@ $(function() {
 	// Body
 	//=============================
 
-	test('制約が適用されているか 正常系', 22, function() {
-		// 値を指定しないでcreate
-		var item = constraintModel.create({
-			id: sequence.next()
-		});
-		equal(item.get('num'), -5.5, 'type:num minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-		ok(item.get('numA').equals([55, -5.5]),
-				'type:num[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-		equal(item.get('int'), 5, 'type:int minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-		ok(item.get('intA').equals([5, 6, 7]),
-				'type:int[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+	test('制約が適用されているか 正常系', 22,
+			function() {
+				// 値を指定しないでcreate
+				var item = constraintModel.create({
+					id: sequence.next()
+				});
+				equal(item.get('num'), -5.5,
+						'type:num minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				ok(item.get('numA').equals([55, -5.5]),
+						'type:num[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				equal(item.get('int'), 5, 'type:int minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				ok(item.get('intA').equals([5, 6, 7]),
+						'type:int[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
-		// create
-		item = constraintModel.create({
-			id: sequence.next(),
-			num: -5.5,
-			numA: [-5.5, 0, 6.6, Infinity],
-			int: 5,
-			intA: [5, 10]
-		});
+				// create
+				item = constraintModel.create({
+					id: sequence.next(),
+					num: -5.5,
+					numA: [-5.5, 0, 6.6, Infinity],
+					int: 5,
+					intA: [5, 10]
+				});
 
-		equal(item.get('num'), -5.5, 'type:num minの条件を満たす値でcreateできること');
-		ok(item.get('numA').equals([-5.5, 0, 6.6, Infinity]),
-				'type:num[] minの条件を満たす値でcreateできること');
-		equal(item.get('int'), 5, 'type:intでminの条件を満たす値でcreateできること');
-		ok(item.get('intA').equals([5, 10]), 'type:int[] minの条件を満たす値でcreateできること');
+				equal(item.get('num'), -5.5, 'type:num minの条件を満たす値でcreateできること');
+				ok(item.get('numA').equals([-5.5, 0, 6.6, Infinity]),
+						'type:num[] minの条件を満たす値でcreateできること');
+				equal(item.get('int'), 5, 'type:intでminの条件を満たす値でcreateできること');
+				ok(item.get('intA').equals([5, 10]), 'type:int[] minの条件を満たす値でcreateできること');
 
-		// set
-		item.set({
-			num: Infinity,
-			numA: [123.456],
-			int: 6,
-			intA: [5, 6, 7]
-		});
-		equal(item.get('num'), Infinity, 'type:num minの条件を満たす値をsetできること');
-		ok(item.get('numA').equals([123.456]), 'type:num[] minの条件を満たす値をsetできること');
-		equal(item.get('int'), 6, 'type:int minの条件を満たす値をsetできること');
-		ok(item.get('intA').equals([5, 6, 7]), 'type:int[] minの条件を満たす値をsetできること');
+				// set
+				item.set({
+					num: Infinity,
+					numA: [123.456],
+					int: 6,
+					intA: [5, 6, 7]
+				});
+				equal(item.get('num'), Infinity, 'type:num minの条件を満たす値をsetできること');
+				ok(item.get('numA').equals([123.456]), 'type:num[] minの条件を満たす値をsetできること');
+				equal(item.get('int'), 6, 'type:int minの条件を満たす値をsetできること');
+				ok(item.get('intA').equals([5, 6, 7]), 'type:int[] minの条件を満たす値をsetできること');
 
-		// nullをset
-		item.set({
-			num: null,
-			numA: [null, null],
-			int: null,
-			intA: [null, null]
-		});
-		equal(item.get('num'), null, 'type:num nullをsetできること');
-		ok(item.get('numA').equals([null, null]), 'type:num[] [null, null]をsetできること');
-		equal(item.get('int'), null, 'type:int nullをsetできること');
-		ok(item.get('intA').equals([null, null]), 'type:int[] [null, null]をsetできること');
+				// nullをset
+				item.set({
+					num: null,
+					numA: [null, null],
+					int: null,
+					intA: [null, null]
+				});
+				equal(item.get('num'), null, 'type:num nullをsetできること');
+				ok(item.get('numA').equals([null, null]), 'type:num[] [null, null]をsetできること');
+				equal(item.get('int'), null, 'type:int nullをsetできること');
+				ok(item.get('intA').equals([null, null]), 'type:int[] [null, null]をsetできること');
 
-		// 空配列をset
-		item.set({
-			numA: [],
-			intA: []
-		});
-		ok(item.get('numA').equals([]), 'type:num[] []をsetできること');
-		ok(item.get('intA').equals([]), 'type:int[] []をsetできること');
+				// 空配列をset
+				item.set({
+					numA: [],
+					intA: []
+				});
+				ok(item.get('numA').equals([]), 'type:num[] []をsetできること');
+				ok(item.get('intA').equals([]), 'type:int[] []をsetできること');
 
-		// defaultValueが設定されていない場合
-		var constraint = {
-			min: 10
-		};
-		var model2 = manager.createModel({
-			name: 'TestModel2',
-			schema: {
-				id: {
-					id: true
-				},
-				num: {
-					type: 'number',
-					constraint: constraint
-				},
-				numA: {
-					type: 'number[]',
-					constraint: constraint
-				},
-				int: {
-					type: 'integer',
-					constraint: constraint
-				},
-				intA: {
-					type: 'integer[]',
-					constraint: constraint
-				}
-			}
-		});
-		item = model2.create({
-			id: sequence.next()
-		});
-		strictEqual(item.get('num'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-		ok(item.get('numA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
-		strictEqual(item.get('int'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-		ok(item.get('intA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+				// defaultValueが設定されていない場合
+				var constraint = {
+					min: 10
+				};
+				var model2 = manager.createModel({
+					name: 'TestModel2',
+					schema: {
+						id: {
+							id: true
+						},
+						num: {
+							type: 'number',
+							constraint: constraint
+						},
+						numA: {
+							type: 'number[]',
+							constraint: constraint
+						},
+						int: {
+							type: 'integer',
+							constraint: constraint
+						},
+						intA: {
+							type: 'integer[]',
+							constraint: constraint
+						}
+					}
+				});
+				item = model2.create({
+					id: sequence.next()
+				});
+				strictEqual(item.get('num'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+				ok(item.get('numA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+				strictEqual(item.get('int'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+				ok(item.get('intA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
 
-	});
+			});
 
 	test('制約が適用されているか 異常系', 8, function() {
 		//create
@@ -6447,8 +6441,7 @@ $(function() {
 		});
 
 		equal(item.get('num'), -5.5, 'type:num maxの条件を満たす値でcreateできること');
-		ok(item.get('numA').equals([5.5, 0, -5, -Infinity]),
-				'type:num[] maxの条件を満たす値でcreateできること');
+		ok(item.get('numA').equals([5.5, 0, -5, -Infinity]), 'type:num[] maxの条件を満たす値でcreateできること');
 		equal(item.get('int'), 5, 'type:intでmaxの条件を満たす値でcreateできること');
 		ok(item.get('intA').equals([5, -100]), 'type:int[] maxの条件を満たす値でcreateできること');
 
@@ -6641,9 +6634,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test(
-			'制約が適用されているか 正常系',
-			11,
+	test('制約が適用されているか 正常系', 11,
 			function() {
 				// 値を指定しないでcreate
 				var item = constraintModel.create({
@@ -6825,8 +6816,7 @@ $(function() {
 				});
 
 				equal(item.get('str'), 'AB', 'type:string maxLengthの条件を満たす値でcreateできること');
-				ok(item.get('strA').equals(['A', 'AB']),
-						'type:num[] maxLengthの条件を満たす値でcreateできること');
+				ok(item.get('strA').equals(['A', 'AB']), 'type:num[] maxLengthの条件を満たす値でcreateできること');
 
 				// set
 				item.set({
@@ -6964,9 +6954,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test(
-			'制約が適用されているか 正常系',
-			11,
+	test('制約が適用されているか 正常系', 11,
 			function() {
 				// 値を指定しないでcreate
 				var item = constraintModel.create({
@@ -9816,7 +9804,7 @@ $(function() {
 		});
 
 		var order = [];
-		item.get('ary').addEventListener('observe', function(ev) {
+		item.get('ary').addEventListener('change', function(ev) {
 			order.push(ev.method);
 		});
 		manager.beginUpdate();
