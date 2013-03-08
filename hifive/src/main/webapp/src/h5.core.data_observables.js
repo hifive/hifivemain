@@ -1611,7 +1611,9 @@
 	//ObservableArrayの関数はフックされるので、直接prototypeに置かない
 	var obsFuncs = {
 		/**
-		 * この配列が、引数で指定された配列と同じ内容か比較します。
+		 * この配列が、引数で指定された配列と同じ内容か比較します。<br>
+		 * 要素にNaN定数が入っている場合、同一位置にともにNaNが入っているかどうかをisNaN()関数でチェックします。
+		 * （obsArrayの内容が[NaN]のとき、obsArray.equals([NaN])）はtrueになります。）
 		 *
 		 * @since 1.1.0
 		 * @memberOf ObservableArray
@@ -1631,7 +1633,14 @@
 
 			// 中身の比較
 			for ( var i = 0; i < len; i++) {
-				if (target[i] !== this[i]) {
+				var myVal = this[i];
+				var targetVal = target[i];
+
+				if (!isString(myVal) && isNaN(myVal)) {
+					if (isString(targetVal) || !isNaN(targetVal)) {
+						return false;
+					}
+				} else if (myVal !== targetVal) {
 					return false;
 				}
 			}
