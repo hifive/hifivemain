@@ -1652,10 +1652,21 @@
 	 * @name ObservableArray
 	 */
 	function ObservableArray() {
+		/**
+		 * 配列の長さを表します。このプロパティは読み取り専用で使用してください。
+		 *
+		 * @since 1.1.0
+		 * @memberOf ObservableArray
+		 * @type Number
+		 */
 		this.length = 0;
-	}
 
-	$.extend(ObservableArray.prototype, EventDispatcher.prototype, {
+		this._src = [];
+	}
+	$.extend(ObservableArray.prototype, EventDispatcher.prototype);
+
+	//ObservableArrayの関数はフックされるので、直接prototypeに置かない
+	var obsFuncs = {
 		/**
 		 * この配列が、引数で指定された配列と同じ内容か比較します。
 		 *
@@ -1665,96 +1676,124 @@
 		 * @returns {Boolean} 判定結果
 		 */
 		equals: function(ary) {
+			var len = this.length;
+
 			// aryが配列でもObservableArrayでもないならfalse
-			if (!($.isArray(ary) || isObservableArray(ary)) || ary.length !== this.length) {
+			//サイズが異なる場合もfalse
+			if (!($.isArray(ary) || isObservableArray(ary)) || ary.length !== len) {
 				return false;
 			}
 
+			var target = isObservableArray(ary) ? ary._src : ary;
+
 			// 中身の比較
-			for ( var i = 0, l = ary.length; i < l; i++) {
-				if (ary[i] !== this[i]) {
+			for ( var i = 0; i < len; i++) {
+				if (target[i] !== this[i]) {
 					return false;
 				}
 			}
-			if (i === l) {
-				// 中身が全て同じならreturn true
-				return true;
-			}
-			return false;
+			return true;
 		},
 
 		/**
 		 * 指定された配列の要素をこのObservableArrayにシャローコピーします。
 		 * <p>
-		 * 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
+		 * 元々入っていた値は全て削除され、呼び出し後は引数で指定された配列と同じ要素を持ちます。
 		 * </p>
 		 * 引数がnullまたはundefinedの場合は、空配列が渡された場合と同じ挙動をします（自身の要素が全て削除されます）。
 		 *
 		 * @since 1.1.0
 		 * @memberOf ObservableArray
 		 * @param {Array} src コピー元の配列
-		 * @returns {Array} 削除前の要素を持った配列
 		 */
 		copyFrom: function(src) {
-			var evBefore = {
-				type: EVENT_TYPE_OBSERVE_BEFORE,
-				method: METHOD_NAME_COPY_FROM,
-				args: src,
-				isDestructive: true
-			};
-			if (!this.dispatchEvent(evBefore)) {
-				if (!src) {
-					//srcがnullの場合は空配列と同じ挙動にする
-					src = [];
-				}
-
-				var args = src.slice(0);
-				args.unshift(0, this.length);
-				obsSplice.apply(this, args);
-
-				var evAfter = {
-					type: EVENT_TYPE_OBSERVE,
-					method: METHOD_NAME_COPY_FROM,
-					args: arguments,
-					returnValue: undefined,
-					isDestructive: true
-				};
-				this.dispatchEvent(evAfter);
+			if (!src) {
+				//srcがnullの場合は空配列と同じ挙動にする
+				src = [];
 			}
+
+			src = isObservableArray(src) ? src._src : src;
+
+			var args = src.slice(0);
+			args.unshift(0, this.length);
+			Array.prototype.splice.apply(this, args);
 		},
 
+		/**
+		 * 値を取得します。
+		 *
+		 * @since 1.1.3
+		 * @memberOf ObservableArray
+		 * @param {Number} index 取得する要素のインデックス
+		 * @returns 要素の値
+		 */
 		get: function(index) {
-			//TODO delegation
 			return this[index];
 		},
 
+		/**
+		 * 値をセットします。
+		 *
+		 * @since 1.1.3
+		 * @memberOf ObservableArray
+		 * @param {Number} index 値をセットする要素のインデックス
+		 */
 		set: function(index, value) {
-			//TODO splice使わないようにする
-			this.splice(index, 1, value);
+			this[index] = value;
 		},
 
+		/**
+		 * 現在のObservableArrayインスタンスと同じ要素を持ったネイティブ配列インスタンスを返します。
+		 *
+		 * @since 1.1.3
+		 * @memberOf ObservableArray
+		 * @returns ネイティブ配列インスタンス
+		 */
 		toArray: function() {
-			//TODO
-			return Array.prototype.slice.call(this, 0);
+			return this.slice(0);
+		},
+
+		/**
+		 * concatのラッパー関数。引数にObservableArrayが渡された場合にも正しく動作するようにラップする。
+		 *
+		 * @private
+		 */
+		concat: function() {
+			var args = h5.u.obj.argsToArray(arguments);
+			for ( var i = 0, len = args.length; i < len; i++) {
+				if (isObservableArray(args[i])) {
+					args[i] = args[i].toArray();
+				}
+			}
+			return this.concat.apply(this, args);
 		}
-	});
+	};
 
 	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
 			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
 			'some', 'reduce', 'reduceRight'];
+	for ( var obsFuncName in obsFuncs) {
+		if (obsFuncs.hasOwnProperty(obsFuncName) && $.inArray(obsFuncName, arrayMethods) === -1) {
+			arrayMethods.push(obsFuncName);
+		}
+	}
+
+	// 戻り値として配列を返すので戻り値をラップする必要があるメソッド（従ってtoArrayは含めない）
+	var creationMethods = ['concat', 'slice', 'splice', 'filter', 'map'];
+
+	//戻り値として自分自身を返すメソッド
+	var returnsSelfMethods = ['reverse', 'sort'];
+
 	// 破壊的(副作用のある)メソッド
-	var destructiveMethods = ['sort', 'reverse', 'pop', 'shift', 'unshift', 'push', 'splice'];
+	var destructiveMethods = ['sort', 'reverse', 'pop', 'shift', 'unshift', 'push', 'splice',
+			'copyFrom', 'set'];
 
 	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
-		ObservableArray.prototype[arrayMethods[i]] = (function(method) {
-			var arrayFunc = Array.prototype[method];
-			if (method === 'splice') {
-				arrayFunc = obsSplice;
-			} else if (method === 'shift') {
-				arrayFunc = obsShift;
-			}
+		var arrayMethod = arrayMethods[i];
+		ObservableArray.prototype[arrayMethod] = (function(method) {
+			var func = obsFuncs[method] ? obsFuncs[method] : Array.prototype[method];
 
-			//TODO fallback実装の提供
+			//TODO fallback実装の提供?(優先度低)
 			return function() {
 				var isDestructive = $.inArray(method, destructiveMethods) !== -1;
 				var evBefore = {
@@ -1766,7 +1805,22 @@
 
 				if (!this.dispatchEvent(evBefore)) {
 					//preventDefault()が呼ばれなければ実際に処理を行う
-					var ret = arrayFunc.apply(this, arguments);
+					var ret = func.apply(this._src, arguments);
+
+					if (isDestructive) {
+						this.length = this._src.length;
+					}
+
+					if ($.inArray(method, returnsSelfMethods) !== -1) {
+						//自分自身を返すメソッドの場合
+						ret = this;
+					} else if ($.inArray(method, creationMethods) !== -1) {
+						//新しい配列を生成するメソッドの場合
+						var wrapper = createObservableArray();
+						wrapper.copyFrom(ret);
+						ret = wrapper;
+					}
+
 					var evAfter = {
 						type: EVENT_TYPE_OBSERVE,
 						method: method,
@@ -1778,7 +1832,7 @@
 					return ret;
 				}
 			};
-		})(arrayMethods[i]);
+		})(arrayMethod);
 	}
 
 
