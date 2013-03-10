@@ -911,7 +911,6 @@
 		var ret = RegExp.$2;
 
 		function func(val) {
-			var originValue = val;
 			/**
 			 * 型情報のコードを文字列に変換します。
 			 *
