@@ -181,14 +181,9 @@ $(function() {
 
 	// TODO Array型とObject型のバインドに対するテストは後で追加する
 	test('null, undefined, String, Numberが、それぞれ表示されること', function() {
-		var ary = [1, 2, 'aa'];
-		var obj = {
-			a: 'a'
-		};
 		var func = function() {
 			return;
 		};
-
 
 		view.append($fixture, 'variableType');
 		view.bind('#dataBindTest', {
@@ -289,6 +284,7 @@ $(function() {
 
 	test('バインド指定するものがオブジェクトでない場合はエラーになること', function() {
 		view.append($fixture, 'bindSpan');
+		/** @type Any */
 		var args = [null, undefined, [{}], 1, 'abc', true];
 		for ( var i = 0, l = args.length; i < l; i++) {
 			try {
@@ -541,6 +537,7 @@ $(function() {
 		var items = h5.core.data.createObservableArray();
 		items.copyFrom([]);
 
+		/** @type Any */
 		var noObjs = [1, 'a', [], [{}]];
 
 		var l = noObjs.length;
@@ -2267,7 +2264,6 @@ $(function() {
 		c.readyPromise.done(function() {
 			c.view.bind('h5view#item', item);
 
-			var $span = $fixture.find('span');
 			checkTexts(['a', 'b', 'aa', 'bb'], 'コメントビューに書いた箇所にバインドされていること', 'span');
 
 			//値の変更
@@ -2276,7 +2272,6 @@ $(function() {
 				v2: 'bbb'
 			});
 
-			var $span = $fixture.find('span');
 			checkTexts(['aaa', 'bbb', 'aa', 'bb'], '変更が反映されること', 'span');
 			start();
 		});
