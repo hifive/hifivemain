@@ -140,7 +140,9 @@
 			//エレメントのコピーはouterHTMLを基にjQueryによるノード"生成"で行う（!= クローン）ようにしている。
 			cloneNodeDeeply = function(srcNode) {
 				if (srcNode.nodeType === NODE_TYPE_ELEMENT) {
-					return $(srcNode.outerHTML)[0];
+					//IE8以下で<li>等のouterHTMLを取得するとタグの前に改行が入る場合がある
+					//（<li>タグの前の空白文字が改行になる模様）
+					return $($.trim(srcNode.outerHTML))[0];
 				}
 				return srcNode.cloneNode(true);
 			};
