@@ -206,7 +206,6 @@
 	var getValue = h5internal.core.data.getValue;
 	var setValue = h5internal.core.data.setValue;
 	var isTypeArray = h5internal.core.data.isTypeArray;
-	var isStrictNaN = h5internal.core.data.isStrictNaN;
 	var isBothStrictNaN = h5internal.core.data.isBothStrictNaN;
 
 	// DataItemと共通のエラーコード
