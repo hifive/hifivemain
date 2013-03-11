@@ -348,7 +348,7 @@ $(function() {
 		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
 	});
 
-	test('splice', 40, function() {
+	test('splice', 30, function() {
 		var o = h5.core.data.createObservableArray();
 		var a = ['1', '2', '3'];
 		o.copyFrom(a);
@@ -421,28 +421,6 @@ $(function() {
 
 		retO = o.splice(0, null, '100', '200', '300');
 		retA = a.splice(0, null, '100', '200', '300');
-		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		ok(retO.equals(retA), '戻り値の中身が正しいこと');
-		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
-		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
-
-		// --- 引数なしのパターン ---
-		o = h5.core.data.createObservableArray();
-		a = ['1', '2', '3'];
-		o.copyFrom(a);
-
-		retO = o.splice();
-		retA = a.splice();
-		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
-		ok(retO.equals(retA), '戻り値の中身が正しいこと');
-		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
-		ok(o.equals(a), 'メソッド呼び出し後のObservableArrayの中身が正しいこと');
-		strictEqual(o.length, a.length, 'メソッド呼び出し後のObservableArrayのlengthが正しいこと');
-
-		// -- 第1引数のみのパターン
-		retO = o.splice(1);
-		retA = a.splice(1);
 		ok(h5.core.data.isObservableArray(retO), '戻り値がObservableArrayであること');
 		ok(retO.equals(retA), '戻り値の中身が正しいこと');
 		strictEqual(retO.length, retA.length, '戻り値のlengthが正しいこと');
