@@ -38,6 +38,8 @@
 	var EVENT_NAME_H5_TRACKEND = 'h5trackend';
 	var ROOT_ELEMENT_NAME = 'rootElement';
 
+	var EVENT_NAME_TRIGGER_INDICATOR = 'triggerIndicator';
+
 	/** インラインコメントテンプレートのコメントノードの開始文字列 */
 	var COMMENT_BINDING_TARGET_MARKER = '{h5view ';
 
@@ -46,8 +48,8 @@
 	var ERR_CODE_INVALID_TEMPLATE_SELECTOR = 6000;
 	/** エラーコード: バインド対象が指定されていない */
 	var ERR_CODE_BIND_TARGET_REQUIRED = 6001;
-	/** エラーコード: bindControllerメソッドにコントローラではないオブジェクトが渡された */
-	var ERR_CODE_BIND_NOT_CONTROLLER = 6002;
+	/** エラーコード: bindControllerメソッドにコントローラではないオブジェクトが渡された（このエラーはver.1.1.3時点では通常発生しないので削除） */
+	//var ERR_CODE_BIND_NOT_CONTROLLER = 6002;
 	/** エラーコード: バインド対象となるDOMがない */
 	var ERR_CODE_BIND_NO_TARGET = 6003;
 	/** エラーコード: バインド対象となるDOMが複数存在する */
@@ -86,6 +88,10 @@
 	var ERR_CODE_NOT_VIEW = 6029;
 	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
 	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
+	/** エラーコード：ルートコントローラ以外ではcontroller.bind()はできない */
+	var ERR_CODE_BIND_ROOT_ONLY = 6031;
+	/** エラーコード：コントローラメソッドは最低2つの引数が必要 */
+	var ERR_CODE_CONTROLLER_TOO_FEW_ARGS = 6032;
 
 	// =============================
 	// Development Only
@@ -99,14 +105,15 @@
 	var FW_LOG_TEMPLATE_LOAD_FAILED = 'コントローラ"{0}"のテンプレートの読み込みに失敗しました。URL：{1}';
 	var FW_LOG_INIT_CONTROLLER_REJECTED = 'コントローラ"{0}"の{1}で返されたPromiseがfailしたため、コントローラの初期化を中断しdisposeしました。';
 	var FW_LOG_INIT_CONTROLLER_ERROR = 'コントローラ"{0}"の初期化中にエラーが発生しました。{0}はdisposeされました。';
-	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ{0}の初期化が正常に完了しました。';
-	var FW_LOG_INIT_CONTROLLER_THROWN_ERROR = 'コントローラ{0}の{1}内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。';
+	var FW_LOG_INIT_CONTROLLER_BEGIN = 'コントローラ"{0}"の初期化を開始しました。';
+	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ"{0}"の初期化が正常に完了しました。';
+	var FW_LOG_INIT_CONTROLLER_THROWN_ERROR = 'コントローラ"{0}"の{1}内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。';
 
 	// エラーコードマップ
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'コントローラ"{0}"のバインド対象となる要素を指定して下さい。';
-	errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
+	//errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NO_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
 	errMsgMap[ERR_CODE_BIND_TOO_MANY_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が2つ以上存在します。バインド対象は1つのみにしてください。';
 	errMsgMap[ERR_CODE_TOO_FEW_ARGUMENTS] = '正しい数の引数を指定して下さい。';
@@ -126,6 +133,8 @@
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
+	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind(), unbind()はルートコントローラでのみ使用可能です。';
+	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
 
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
@@ -364,20 +373,26 @@
 	}
 
 	/**
-	 * 指定されたセレクタがwindow, window., document, document., navidator, navigator. で
+	 * 指定されたセレクタがwindow, window., document, document., navigator, navigator. で
 	 * 始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します。
 	 *
 	 * @param {String} selector セレクタ
-	 * @returns {DOM|String} DOM要素、もしくはセレクタ
+	 * @returns {Object|String} パスで指定されたオブジェクト、もしくは未変換の文字列
 	 */
 	function getGlobalSelectorTarget(selector) {
-		var retSelector = selector;
-		if (startsWith(selector, 'window') || startsWith(selector, 'document')
-				|| startsWith(selector, 'navigator')) {
-			// セレクタではなく、オブジェクトがターゲットの場合
-			return getByPath(selector);
+		var specialObj = ['window', 'document', 'navigator'];
+		for ( var i = 0, len = specialObj.length; i < len; i++) {
+			var s = specialObj[i];
+			if (selector === s) {
+				//特殊オブジェクトそのものを指定された場合
+				return getByPath(selector);
+			}
+			if (startsWith(selector, s + '.')) {
+				//window. などドット区切りで続いている場合
+				return getByPath(selector);
+			}
 		}
-		return retSelector;
+		return selector;
 	}
 
 	/**
@@ -573,7 +588,6 @@
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
 
-
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
 			var selectorTrimmed = trimGlobalSelectorBracket(selector);
@@ -585,9 +599,9 @@
 			} else {
 				selectTarget = getGlobalSelectorTarget(selectorTrimmed);
 			}
-			// バインド対象がdocument, windowの場合、live, delegateではイベントが拾えないことへの対応
-			var needBind = selectTarget === document || selectTarget === window;
-			if (isSelf || useBind || needBind) {
+
+			// バインド対象がオブジェクトの場合、必ず直接バインドする
+			if (isSelf || useBind || !isString(selectTarget)) {
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
 
@@ -596,7 +610,7 @@
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
 
-				$(selectTarget).live(event, handler);
+				$(document).delegate(selectTarget, event, handler);
 			}
 			// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を格納する
 			// selectorがオブジェクト指定(rootElement, window, document)の場合はオブジェクトを格納する
@@ -690,11 +704,11 @@
 					} else {
 						selectTarget = getGlobalSelectorTarget(selectTarget);
 					}
-					var needBind = selectTarget === document || selectTarget === window;
-					if (isSelf || useBind || needBind) {
+
+					if (isSelf || useBind || !isString(selectTarget)) {
 						$(selectTarget).unbind(event, handler);
 					} else {
-						$(selectTarget).die(event, handler);
+						$(document).undelegate(selectTarget, event, handler);
 					}
 				} else {
 					if (useBind) {
@@ -913,7 +927,7 @@
 				if (!controller.rootElement || !controller.isInit || !controller.isReady) {
 					return;
 				}
-				$(controller.rootElement).trigger('h5controllerready', [controller]);
+				$(controller.rootElement).trigger('h5controllerready', controller);
 			}
 		};
 	}
@@ -1430,9 +1444,7 @@
 	 * @returns {DOM} コントローラのバインド対象である要素
 	 */
 	function getBindTarget(element, rootElement, controller) {
-		if (!controller || !controller.__controllerContext) {
-			throwFwError(ERR_CODE_BIND_NOT_CONTROLLER);
-		} else if (element == null) {
+		if (element == null) {
 			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controller.__name]);
 		}
 		var $targets;
@@ -1808,10 +1820,8 @@
 			unbindMap: {}
 		};
 
-		// 初期化パラメータがあれば、クローンしてコントローラコンテキストに格納
-		if (param) {
-			controller.__controllerContext.args = $.extend(true, {}, param);
-		}
+		// 初期化パラメータをセット（クローンはしない #163）
+		controller.__controllerContext.args = param ? param : null;
 
 		/**
 		 * コントローラのライフサイクルイベント__initが終了したかどうかを返します。
@@ -2236,9 +2246,8 @@
 		},
 
 		/**
-		 * コントローラを要素へバインドします。
+		 * コントローラを要素へ再度バインドします。子コントローラでは使用できません。
 		 *
-		 * @since 1.1.0
 		 * @memberOf Controller
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.<br />
 		 *            セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。
@@ -2247,24 +2256,29 @@
 		 * @returns {Controller} コントローラ.
 		 */
 		bind: function(targetElement, param) {
+			if (!this.__controllerContext.isRoot) {
+				throwFwError(ERR_CODE_BIND_ROOT_ONLY);
+			}
+
 			var target = getBindTarget(targetElement, null, this);
 			this.rootElement = target;
 			this.view.__controller = this;
-			var args = null;
-			if (param) {
-				args = $.extend(true, {}, param);
-			}
+			var args = param ? param : null;
 			initInternalProperty(this, args);
 			setRootAndTriggerInit(this);
 			return this;
 		},
 
 		/**
-		 * コントローラのバインドを解除します。
+		 * コントローラのバインドを解除します。子コントローラでは使用できません。
 		 *
 		 * @memberOf Controller
 		 */
 		unbind: function() {
+			if (!this.__controllerContext.isRoot) {
+				throwFwError(ERR_CODE_BIND_ROOT_ONLY);
+			}
+
 			executeLifeEndChain(this, '__unbind');
 
 			unbindByBindMap(this);
@@ -2283,7 +2297,7 @@
 			// h5controllerunboundイベントをトリガ
 			$(this.rootElement).trigger('h5controllerunbound', this);
 
-			// rootElemetnのアンバインド
+			// rootElementのアンバインド
 			this.rootElement = null;
 			this.view.__controller = null;
 			unbindRootElement(this);
@@ -2318,26 +2332,31 @@
 		},
 
 		/**
-		 * コントローラのインジケータイベントを実行します。
+		 * インジケータの生成を上位コントローラまたはフレームワークに移譲します。<br>
+		 * 例えば、子コントローラにおいてインジケータのカバー範囲を親コントローラ全体（または画面全体）にしたい場合などに使用します。<br>
+		 * このメソッドを実行すると、「triggerIndicator」という名前のイベントが発生します。また、イベント引数としてオプションパラメータを含んだオブジェクトが渡されます。<br>
+		 * イベントがdocumentまで到達した場合、フレームワークが自動的にインジケータを生成します。<br>
+		 * 途中のコントローラでインジケータを生成した場合はevent.stopPropagation()を呼んでイベントの伝搬を停止し、イベント引数で渡されたオブジェクトの
+		 * <code>indicator</code>プロパティに生成したインジケータインスタンスを代入してください。<br>
+		 * indicatorプロパティの値がこのメソッドの戻り値となります。<br>
 		 *
 		 * @param {Object} opt オプション
 		 * @param {String} [opt.message] メッセージ
 		 * @param {Number} [opt.percent] 進捗を0～100の値で指定する。
 		 * @param {Boolean} [opt.block] 操作できないよう画面をブロックするか (true:する/false:しない)
-		 * @param {String} ev イベント名
 		 * @returns {Indicator} インジケータオブジェクト
 		 * @memberOf Controller
 		 */
-		triggerIndicator: function(opt, evName) {
-			var option = $.extend(true, {}, opt);
-			var ev = evName;
-
-			if (!ev || ev.length === 0) {
-				ev = 'triggerIndicator';
+		triggerIndicator: function(opt) {
+			var args = {
+				indicator: null
+			};
+			if (opt) {
+				$.extend(args, opt);
 			}
 
-			$(this.rootElement).trigger(ev, [option]);
-			return option.indicator;
+			$(this.rootElement).trigger(EVENT_NAME_TRIGGER_INDICATOR, [args]);
+			return args.indicator;
 		},
 
 		/**
@@ -2525,7 +2544,7 @@
 		 * @memberOf ControllerManager
 		 * @private
 		 */
-		$(document).bind('triggerIndicator', function(event, opt) {
+		$(document).bind(EVENT_NAME_TRIGGER_INDICATOR, function(event, opt) {
 			if (opt.target == null) {
 				opt.target = document;
 			}
@@ -2535,9 +2554,9 @@
 
 	}
 	$.extend(ControllerManager.prototype, {
-
 		/**
-		 * すべてのコントローラのインスタンスの配列を返します。
+		 * 現在動作しているすべてのコントローラのインスタンスの配列を返します。<br>
+		 * 子コントローラは含まれません。すなわち、ルートコントローラのみが含まれます。
 		 *
 		 * @returns {Controller[]} コントローラ配列
 		 * @memberOf ControllerManager
@@ -2547,20 +2566,23 @@
 		},
 
 		/**
-		 * 指定した要素にバインドされているコントローラを返します。
+		 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
+		 * 子コントローラは含まれません。
 		 *
 		 * @param {String|Element|jQuery} rootElement 要素
-		 * @returns {Controller} コントローラ
+		 * @returns {Controller[]} バインドされているコントローラの配列
 		 * @memberOf ControllerManager
 		 */
-		getController: function(rootElement) {
-			var target = $(rootElement).get(0);
+		getControllers: function(rootElement) {
+			var target = $(rootElement)[0];
 			var controllers = this.controllers;
+			var ret = [];
 			for ( var i = 0, len = controllers.length; i < len; i++) {
 				if (target === controllers[i].rootElement) {
-					return controllers[i];
+					ret.push(controllers[i]);
 				}
 			}
+			return ret;
 		}
 	});
 
@@ -2575,20 +2597,23 @@
 		controllerManager: new ControllerManager()
 	});
 
-	// プロパティ重複チェック用のコントローラプロパティマップ
+	// プロパティ重複チェック用のコントローラプロパティマップを作成
 	var controllerPropertyMap = {};
-	var c = new Controller(null, 'a');
-	for ( var p in c) {
-		if (c.hasOwnProperty(p) && p !== '__name' && p !== '__templates' && p !== '__meta') {
+	var tempInstance = new Controller(null, 'a');
+	for ( var p in tempInstance) {
+		if (tempInstance.hasOwnProperty(p) && p !== '__name' && p !== '__templates'
+				&& p !== '__meta') {
 			controllerPropertyMap[p] = 1;
 		}
 	}
+	tempInstance = null;
 	var proto = Controller.prototype;
 	for ( var p in proto) {
 		if (proto.hasOwnProperty(p)) {
 			controllerPropertyMap[p] = 1;
 		}
 	}
+	proto = null;
 
 	/**
 	 * コントローラのファクトリ
@@ -2609,6 +2634,8 @@
 				controllerDefObj: controllerDefObj
 			});
 		}
+
+		fwLogger.debug(FW_LOG_INIT_CONTROLLER_BEGIN, controllerName);
 
 		// 初期化パラメータがオブジェクトかどうかチェック
 		if (param && !$.isPlainObject(param)) {
@@ -2929,6 +2956,10 @@
 		 * @memberOf h5.core
 		 */
 		controller: function(targetElement, controllerDefObj, param) {
+			if (arguments.length < 2) {
+				throwFwError(ERR_CODE_CONTROLLER_TOO_FEW_ARGS);
+			}
+
 			return createAndBindController(targetElement, controllerDefObj, param);
 		},
 

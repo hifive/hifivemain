@@ -29,8 +29,14 @@ $(function() {
 	//
 	// =========================================================================
 
+	$(document).bind('mobileinit', function() {
+		// テストページのリンクが押下できなくなるため無効にする
+		$.mobile.linkBindingEnabled = false;
+		$.mobile.loadingMessage = false;
+	});
+
 	// jQueryMobileの読み込み
-	h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.1.0/jquery.mobile-1.1.0.js", {
+	h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.2.0/jquery.mobile-1.2.0.js", {
 		async: false
 	});
 
@@ -1157,21 +1163,23 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('動的コントローラをバインド後unbindを実行し、別ページに遷移する', 2, function() {
-		var c = h5.core.controller('#test23', {
-			__name: 'Test23Controller',
-			__ready: function() {
-				try {
-					this.unbind();
-					changePage('#test24', true);
-					pageremove('test23');
-					ok(true, '動的に生成したコントローラをunbind後、ページ遷移を実行してもエラーが発生しないこと。');
-				} catch (e) {
-					ok(false, 'テスト失敗');
-				}
+		var c = h5.core.controller('#test23',
+				{
+					__name: 'Test23Controller',
+					__ready: function() {
+						try {
+							this.unbind();
+							changePage('#test24', true);
+							pageremove('test23');
+							ok(true, '動的に生成したコントローラをunbind後、ページ遷移を実行してもエラーが発生しないこと。');
+						} catch (e) {
+							ok(false, 'テスト失敗');
+						}
 
-				equal(isDisposed(c), false, 'unbindしたコントローラはjQMManagerの管理対象から除外されるのでdisposeされないこと');
-				start();
-			}
-		});
+						equal(isDisposed(c), false,
+								'unbindしたコントローラはjQMManagerの管理対象から除外されるのでdisposeされないこと');
+						start();
+					}
+				});
 	});
 });

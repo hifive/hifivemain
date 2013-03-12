@@ -158,7 +158,7 @@ $(function() {
 				var tmp = options[j].split('=');
 				var key = $.trim(tmp[0]);
 				var val = $.trim(tmp[1]);
-				if (env[key] !== val) {
+				if (new String(env[key]).toLowerCase() !== val.toLowerCase()) {
 					break;
 				}
 			}
