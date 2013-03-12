@@ -105,7 +105,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-17|ie-wp:9]H5Api - Web SQL Database - Sql', {
+	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Sql', {
 		setup: setupFunc
 	});
 
@@ -435,7 +435,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-17|ie-wp:9]H5Api - Web SQL Database - Insert', {
+	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Insert', {
 		setup: setupFunc
 	});
 
@@ -1041,7 +1041,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-17|ie-wp:9]H5Api - Web SQL Database - Update', {
+	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Update', {
 		setup: setupFunc2
 	});
 
@@ -1553,7 +1553,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-17|ie-wp:9]H5Api - Web SQL Database - Del', {
+	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Del', {
 		setup: setupFunc2
 	});
 
@@ -1983,7 +1983,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-17|ie-wp:9]H5Api - Web SQL Database - Select', {
+	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Select', {
 		setup: setupFunc2
 	});
 
@@ -2445,7 +2445,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-17|ie-wp:9]H5Api - Web SQL Database - Transaction', {
+	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Transaction', {
 		setup: setupFunc
 	});
 
@@ -3064,7 +3064,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-17|ie-wp:9]H5Api - Web SQL Database', {
+	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database', {
 		setup: setupFunc
 	});
 

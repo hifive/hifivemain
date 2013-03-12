@@ -132,6 +132,30 @@
 	var fwLogger = h5.log.createLogger('h5.core.data');
 
 	/* del begin */
+
+	function formatDescriptorError(code, msgSrc, msgParam, detail) {
+		var msg = h5.u.str.format.apply(null, [msgSrc].concat(msgParam)) + ' 詳細：';
+
+		for ( var i = 0, len = detail.length; i < len; i++) {
+			if (i !== 0) {
+				msg += ', ';
+			}
+
+			msg += (i + 1) + ':';
+
+			var reason = detail[i];
+			if (reason.message) {
+				msg += reason.message;
+			} else {
+				msg += 'code=' + reason.code;
+			}
+		}
+
+		return msg;
+	}
+	addFwErrorCustomFormatter(ERR_CODE_INVALID_DESCRIPTOR, formatDescriptorError);
+	addFwErrorCustomFormatter(h5internal.core.data.ERR_CODE_INVALID_SCHEMA, formatDescriptorError);
+
 	// ログメッセージ
 	var MSG_ERROR_DUP_REGISTER = '同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は {0}, 登録しようとしたデータモデル名は {1} です。';
 
@@ -182,6 +206,7 @@
 	var getValue = h5internal.core.data.getValue;
 	var setValue = h5internal.core.data.setValue;
 	var isTypeArray = h5internal.core.data.isTypeArray;
+	var isBothStrictNaN = h5internal.core.data.isBothStrictNaN;
 
 	// DataItemと共通のエラーコード
 	var ITEM_ERRORS = h5internal.core.data.ITEM_ERRORS;
@@ -234,7 +259,7 @@
 		// nameのチェック
 		if (!isValidNamespaceIdentifier(descriptor.name)) {
 			// 識別子として不適切な文字列が指定されていたらエラー
-			errorReason.push(DESC_ERR_DETAIL_INVALID_NAME);
+			errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_INVALID_NAME));
 			if (stopOnError) {
 				return errorReason;
 			}
@@ -468,20 +493,15 @@
 			//DataItem&&property名ごとに作るようにして数を減らしたい(DataItemのprototypeとして持たせればよい？)
 
 			// 配列操作前と操作後で使う共通の変数
-			// 配列操作が同期のため、必ずobserveBeforeListener→配列操作→observeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
+			// 配列操作が同期のため、必ずchangeBeforeListener→配列操作→changeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
 
 			// アップデートセッション中かどうか
 			var isAlreadyInUpdate = false;
 
 			// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
-			var noAddMethods = ['sort', 'reverse', 'pop'];
+			var noAddMethods = ['sort', 'reverse', 'pop', 'shift'];
 
-			function observeBeforeListener(event) {
-				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
-				if (!event.isDestructive) {
-					return;
-				}
-
+			function changeBeforeListener(event) {
 				// itemがmodelに属していない又は、itemが属しているmodelがmanagerに属していないならエラー
 				if (item._model !== model || !model._manager) {
 					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [item._values[model.idKey],
@@ -489,27 +509,42 @@
 				}
 
 				var args = argsToArray(event.args);
+				if ($.inArray(event.method, noAddMethods) === -1) {
+					var isValidateRequired = true;
 
-				var checkFlag = $.inArray(event.method, noAddMethods) === -1;
+					// チェックするメソッドは unshift, push, splice, copyFrom, set
+					// そのうち、メソッドの引数をそのままチェックすればいいのはunshift, push
+					switch (event.method) {
+					case 'splice':
+						if (args.length <= 2) {
+							// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+							isValidateRequired = false;
+						}
+						isValidateRequired = false;
+						// spliceの場合追加要素は第3引数以降のため2回shiftする
+						args.shift();
+						args.shift();
+						break;
 
-				if (event.method === 'splice') {
-					if (args.length <= 2) {
-						// spliceに引数が2つなら要素追加はないので、validateチェックはしない
-						checkFlag = false;
+					case 'copyFrom':
+						// copyFromの場合は引数が配列であるため、外側の配列を外す
+						args = args[0];
+						break;
+
+					case 'set':
+						// setの場合は第1引数はindexなので、shift()したものをチェックする
+						args.shift();
+
 					}
-					checkFlag = false;
-					args.shift();
-					args.shift();
-				}
 
-				if (checkFlag) {
-					var validateResult = model._validateItemValue(propName, args);
-					if (validateResult.length > 0) {
-						throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, propName,
-								validateResult);
+					if (isValidateRequired) {
+						var validateResult = model._validateItemValue(propName, args);
+						if (validateResult.length > 0) {
+							throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, propName,
+									validateResult);
+						}
 					}
 				}
-
 				// oldValueが登録されていなければ登録
 				addObsArrayOldValue(model, item, propName);
 
@@ -520,12 +555,7 @@
 				}
 			}
 
-			function observeListener(event) {
-				// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
-				if (!event.isDestructive) {
-					return;
-				}
-
+			function changeListener(event) {
 				// 配列の要素が全て同じかどうかのチェックはendUpdateのなかでやる
 
 				// changeイベントオブジェクトの作成
@@ -545,8 +575,8 @@
 				}
 			}
 
-			observableArray.addEventListener('observeBefore', observeBeforeListener);
-			observableArray.addEventListener('observe', observeListener);
+			observableArray.addEventListener('changeBefore', changeBeforeListener);
+			observableArray.addEventListener('change', changeListener);
 		}
 
 		/**
@@ -604,6 +634,9 @@
 				if (propDesc && isTypeArray(propDesc.type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					var obsArray = h5.core.data.createObservableArray(); //TODO cache
+					//DataItemに属するObsArrayには、Item自身への参照を入れておく。
+					//これによりイベントハンドラ内でこのItemを参照することができる
+					obsArray.relatedItem = this;
 					setValue(this, plainProp, obsArray);
 					this._nullProps[plainProp] = true;
 					arrayProps.push(plainProp);
@@ -909,8 +942,7 @@
 		}
 
 		if (!modelLogs[itemId][prop]) {
-			// sliceして保存
-			modelLogs[itemId][prop] = Array.prototype.slice.call(getValue(item, prop), 0);
+			modelLogs[itemId][prop] = getValue(item, prop).toArray();
 			return;
 		}
 
@@ -1421,6 +1453,21 @@
 		},
 
 		/**
+		 * 保持しているすべてのデータアイテムを削除します。
+		 *
+		 * @since 1.1.3
+		 * @memberOf DataModel
+		 * @returns {DataItem[]} 削除されたデータアイテム。順序は不定です。
+		 */
+		removeAll: function() {
+			var items = this.toArray();
+			if (items.length > 0) {
+				this.remove(items);
+			}
+			return items;
+		},
+
+		/**
 		 * 指定されたデータアイテムを保持しているかどうかを返します。
 		 * <p>
 		 * 文字列または整数値が渡された場合はIDとみなし、 オブジェクトが渡された場合はデータアイテムとみなします。
@@ -1520,7 +1567,9 @@
 			var ret = [];
 			var items = this.items;
 			for ( var id in items) {
-				ret.push(items[id]);
+				if (items.hasOwnProperty(id)) {
+					ret.push(items[id]);
+				}
 			}
 			return ret;
 		}
@@ -1918,6 +1967,7 @@
 					//従って、あとはchangeのイベントオブジェクトをマージすればよい。
 					if (isChangeOnly && changeEventStack.length > 0) {
 						var mergedProps = {};
+						//changeEventStackはより「古い」イベントが「後ろ」に入っている。
 						for ( var i = changeEventStack.length - 1; i >= 0; i--) {
 							for ( var p in changeEventStack[i].props) {
 								if (!mergedProps[p]) {
@@ -1928,6 +1978,8 @@
 												&& oldValueLogs[model.name][itemId]
 												&& oldValueLogs[model.name][itemId][p];
 										if (!model.get(itemId).get(p).equals(oldValue)) {
+											//プロパティがObservableArrayの場合、equalsの結果がfalseの場合のみ
+											//mergedPropsにセットする。つまり、equalsがtrueの場合は「変更がなかった」ことになる。
 											mergedProps[p] = {
 												oldValue: oldValue
 											};
@@ -1945,11 +1997,14 @@
 						//TODO oldValueは配列ならmanager._oldValueLogsにある
 						var changedProps = false;
 						for ( var p in mergedProps) {
-							if (mergedProps[p].oldValue !== model.get(itemId).get(p)) {
+							var oldValue = mergedProps[p].oldValue;
+							var currentValue = model.get(itemId).get(p);
+							if (oldValue === currentValue
+									|| isBothStrictNaN(oldValue, currentValue)) {
+								delete mergedProps[p];
+							} else {
 								mergedProps[p].newValue = model.get(itemId).get(p);
 								changedProps = true;
-							} else {
-								delete mergedProps[p];
 							}
 						}
 						if (changedProps) {

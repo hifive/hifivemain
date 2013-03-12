@@ -28,12 +28,6 @@
 	// Production
 	// =============================
 
-	var METHOD_NAME_COPY_FROM = 'copyFrom';
-
-	var EVENT_TYPE_OBSERVE_BEFORE = 'observeBefore';
-
-	var EVENT_TYPE_OBSERVE = 'observe';
-
 	/**
 	 * createObservableItemに渡された引数がオブジェクトでない
 	 */
@@ -74,6 +68,10 @@
 	 */
 	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15107;
 
+	/**
+	 * 引数が不正
+	 */
+	var ERR_CODE_INVALID_ARGUMENT = 15108;
 
 	// ---------------------------
 	// スキーマのエラーコード(detailに入れるメッセージID)
@@ -217,6 +215,8 @@
 	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティは取得できません。違反したプロパティ={0}';
 	errMsgMap[ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
+	errMsgMap[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'calcで返却された値が、スキーマで指定された型・制約に違反しています。プロパティ={0}、返却値={1}';
+	errMsgMap[ERR_CODE_INVALID_ARGUMENT] = '引数が不正です。引数位置={0}、値={1}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -433,7 +433,7 @@
 						} else {
 							getValue(item, dp).copyFrom([]);
 							// newValueがnullまたはundefinedならregardAsNull()がtrueを返すようにする
-							internal._nullProps[dp] = true
+							internal._nullProps[dp] = true;
 						}
 					} else {
 						setValue(item, dp, newValue);
@@ -458,7 +458,7 @@
 	//
 	//========================================================
 	/**
-	 * schemaオブジェクトのtype指定の文字列を、パースした結果を返す
+	 * schemaオブジェクトのtype指定の文字列を、パースした結果を返す。 正しくパースできなかった場合は空オブジェクトを返す。
 	 *
 	 * @private
 	 * @param {String} type
@@ -467,14 +467,14 @@
 	 */
 	function getTypeObjFromString(type) {
 		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
-		// "string[][][]"のとき、matched = ["string[][][]", "string", undefined, "[][][]", "[]"]
+		// "string[]"のとき、matched = ["string[]", "string", undefined, "[]", "[]"]
 		// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
 		var matched = type.match(/^(string|number|integer|boolean|any|enum|@(.+?))((\[\]){0,1})$/);
-		return matched && {
+		return matched ? {
 			elmType: matched[1],
 			dataModel: matched[2],
 			dimension: matched[3] ? 1 : 0
-		};
+		} : {};
 	}
 
 	/**
@@ -510,6 +510,18 @@
 	 */
 	function isStrictNaN(val) {
 		return typeof val === 'number' && isNaN(val);
+	}
+
+	/**
+	 * 引数を2つ取り、両方ともisStrictNaNかどうか判定する
+	 *
+	 * @private
+	 * @param {Any} val1 判定する値
+	 * @param {Any} val2 判定する値
+	 * @returns {Boolean} 引数が2つともNaNかどうか
+	 */
+	function isBothStrictNaN(val1, val2) {
+		return isStrictNaN(val1) && isStrictNaN(val2);
 	}
 
 	/**
@@ -742,7 +754,6 @@
 			// defaultValueとの矛盾はないか
 			// constraintにそのtypeで使えない指定がないか
 			// enumの時は、enumValueが指定されているか
-			var elmType = null;
 			var type = propObj.type;
 			if (isId && type == null) {
 				// id項目で、typeが指定されていない場合は、type:stringにする
@@ -756,53 +767,54 @@
 					if (stopOnError) {
 						return errorReason;
 					}
-				}
-
-				if (isId && type !== 'string' && type !== 'integer') {
-					// id指定されているプロパティで、string,integer以外だった場合はエラー
-					errorReason.push('id指定されたプロパティにtypeを指定することはできません');
-				}
-
-				// "string", "number[]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
-				typeObj = getTypeObjFromString(type);
-
-				if (!typeObj || !typeObj.elmType) {
-					// パースできない文字列が指定されていたらエラー
-					errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE, schemaProp,
-							type));
-					if (stopOnError) {
-						return errorReason;
-					}
 				} else {
-					// データモデルの場合
-					if (typeObj.dataModel) {
-						if (isObsItemSchema) {
-							// ObservableItemのスキーマにはデータモデルを指定できないのでエラー
-							errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE,
-									schemaProp, typeObj.dataModel));
-							if (stopOnError) {
-								return errorReason;
-							}
-						}
-						if (!manager.models[typeObj.dataModel]) {
-							errorReason
-									.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE_DATAMODEL, schemaProp,
-											typeObj.dataModel));
-							if (stopOnError) {
-								return errorReason;
-							}
-						}
+
+					if (isId && type !== 'string' && type !== 'integer') {
+						// id指定されているプロパティで、string,integer以外だった場合はエラー
+						errorReason.push('id指定されたプロパティにtypeを指定することはできません');
 					}
 
-					// enumの場合
-					if (typeObj.elmType === 'enum') {
-						// enumValueが無ければエラー
-						if (propObj.enumValue == null) {
-							errorReason.push(createItemDescErrorReason(
-									SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE, schemaProp));
-							if (stopOnError) {
-								return errorReason;
+					// "string", "number[]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
+					// 正しくパースできなかった場合は空オブジェクトが返ってくる
+					typeObj = getTypeObjFromString(type);
+
+					if (!typeObj.elmType) {
+						// パースできない文字列が指定されていたらエラー
+						errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE,
+								schemaProp, type));
+						if (stopOnError) {
+							return errorReason;
+						}
+					} else {
+						// データモデルの場合
+						if (typeObj.dataModel) {
+							if (isObsItemSchema) {
+								// ObservableItemのスキーマにはデータモデルを指定できないのでエラー
+								errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE,
+										schemaProp, typeObj.dataModel));
+								if (stopOnError) {
+									return errorReason;
+								}
+							}
+							if (!manager.models[typeObj.dataModel]) {
+								errorReason.push(createItemDescErrorReason(
+										SCHEMA_ERR_DETAIL_TYPE_DATAMODEL, schemaProp,
+										typeObj.dataModel));
+								if (stopOnError) {
+									return errorReason;
+								}
+							}
+						}
+
+						// enumの場合
+						if (typeObj.elmType === 'enum') {
+							// enumValueが無ければエラー
+							if (propObj.enumValue == null) {
+								errorReason.push(createItemDescErrorReason(
+										SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE, schemaProp));
+								if (stopOnError) {
+									return errorReason;
+								}
 							}
 						}
 					}
@@ -1402,63 +1414,7 @@
 	// Body
 	//
 	// =========================================================================
-	function customSplice(/* var_args */) {
-		var beforeLen = this.length;
 
-		var ret = Array.prototype.splice.apply(this, arguments);
-
-		//splice前より後の方が長さが短くなっていたら、余っている後ろの要素を削除する
-		for ( var i = this.length; i < beforeLen; i++) {
-			delete this[i];
-		}
-
-		return ret;
-	}
-
-	function customShift(/* var_args */) {
-		var beforeLen = this.length;
-
-		var ret = Array.prototype.shift.apply(this, arguments);
-
-		if (beforeLen > 0) {
-			//shift()で最後の要素がひとつ前に"シフト"するが、一部環境では元の位置の要素が削除されないので独自に削除
-			delete this[beforeLen - 1];
-		}
-
-		return ret;
-	}
-
-	//Objectに対するsplice()の動作を確認
-	var obsSplice;
-	var spliceTestObj = {
-		'0': 0,
-		length: 1
-	};
-	Array.prototype.splice.call(spliceTestObj, 0, 1);
-	if (spliceTestObj[0] !== undefined) {
-		//Array.prototype.spliceをビルトインの配列以外に対して適用した時
-		//最終的なlength以降の要素が削除されないので、特別に対応する。
-		//ここに入るのは、検証したブラウザではIE8以下だけ。
-		obsSplice = customSplice;
-	} else {
-		obsSplice = Array.prototype.splice;
-	}
-	spliceTestObj = null;
-
-	//Objectに対するshift()の動作を確認
-	var obsShift;
-	var shiftTestObj = {
-		'0': 0,
-		length: 1
-	};
-	Array.prototype.shift.call(shiftTestObj);
-	if (shiftTestObj[0] !== undefined) {
-		//shiftもspliceと同様要素が残る環境がある（IE8のIE7モード）ので差し替える。
-		obsShift = customShift;
-	} else {
-		obsShift = Array.prototype.shift;
-	}
-	shiftTestObj = null;
 
 
 	//-------------------------------------------
@@ -1642,7 +1598,7 @@
 	 * <p>
 	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
 	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
-	 * ObservableArrayは、 配列操作メソッド呼び出し時に'observeBefore'、配列操作メソッド実行後に'observe'イベントが発火します。
+	 * ObservableArrayは、自身の内容が変更されるメソッドが呼び出される時、実行前に'changeBefore'、実行後に'change'イベントを発生させます。
 	 * </p>
 	 *
 	 * @since 1.1.0
@@ -1651,12 +1607,25 @@
 	 * @name ObservableArray
 	 */
 	function ObservableArray() {
-		this.length = 0;
-	}
-
-	$.extend(ObservableArray.prototype, EventDispatcher.prototype, {
 		/**
-		 * この配列が、引数で指定された配列と同じ内容か比較します。
+		 * 配列の長さを表します。このプロパティは読み取り専用で使用してください。
+		 *
+		 * @since 1.1.0
+		 * @memberOf ObservableArray
+		 * @type Number
+		 */
+		this.length = 0;
+
+		this._src = [];
+	}
+	$.extend(ObservableArray.prototype, EventDispatcher.prototype);
+
+	//ObservableArrayの関数はフックされるので、直接prototypeに置かない
+	var obsFuncs = {
+		/**
+		 * この配列が、引数で指定された配列と同じ内容か比較します。<br>
+		 * 要素にNaN定数が入っている場合、同一位置にともにNaNが入っているかどうかをisNaN()関数でチェックします。
+		 * （obsArrayの内容が[NaN]のとき、obsArray.equals([NaN])）はtrueになります。）
 		 *
 		 * @since 1.1.0
 		 * @memberOf ObservableArray
@@ -1664,105 +1633,184 @@
 		 * @returns {Boolean} 判定結果
 		 */
 		equals: function(ary) {
+			var len = this.length;
+
 			// aryが配列でもObservableArrayでもないならfalse
-			if (!($.isArray(ary) || isObservableArray(ary)) || ary.length !== this.length) {
+			//サイズが異なる場合もfalse
+			if (!($.isArray(ary) || isObservableArray(ary)) || ary.length !== len) {
 				return false;
 			}
 
+			var target = isObservableArray(ary) ? ary._src : ary;
+
 			// 中身の比較
-			for ( var i = 0, l = ary.length; i < l; i++) {
-				if (ary[i] !== this[i]) {
+			for ( var i = 0; i < len; i++) {
+				var myVal = this[i];
+				var targetVal = target[i];
+
+				if (!(myVal === targetVal || isBothStrictNaN(myVal, targetVal))) {
 					return false;
 				}
 			}
-			if (i === l) {
-				// 中身が全て同じならreturn true
-				return true;
-			}
-			return false;
+			return true;
 		},
 
 		/**
 		 * 指定された配列の要素をこのObservableArrayにシャローコピーします。
 		 * <p>
-		 * 元々入っていた値は全て削除されます。従って、コピー後は引数で指定された配列と同じ要素を持ちます。
+		 * 元々入っていた値は全て削除され、呼び出し後は引数で指定された配列と同じ要素を持ちます。
 		 * </p>
 		 * 引数がnullまたはundefinedの場合は、空配列が渡された場合と同じ挙動をします（自身の要素が全て削除されます）。
 		 *
 		 * @since 1.1.0
 		 * @memberOf ObservableArray
 		 * @param {Array} src コピー元の配列
-		 * @returns {Array} 削除前の要素を持った配列
 		 */
 		copyFrom: function(src) {
-			var evBefore = {
-				type: EVENT_TYPE_OBSERVE_BEFORE,
-				method: METHOD_NAME_COPY_FROM,
-				args: src,
-				isDestructive: true
-			};
-			if (!this.dispatchEvent(evBefore)) {
-				if (!src) {
-					//srcがnullの場合は空配列と同じ挙動にする
-					src = [];
-				}
-
-				var args = src.slice(0);
-				args.unshift(0, this.length);
-				obsSplice.apply(this, args);
-
-				var evAfter = {
-					type: EVENT_TYPE_OBSERVE,
-					method: METHOD_NAME_COPY_FROM,
-					args: arguments,
-					returnValue: undefined,
-					isDestructive: true
-				};
-				this.dispatchEvent(evAfter);
+			if (!src) {
+				//srcがnullの場合は空配列と同じ挙動にする
+				src = [];
 			}
-		}
-	});
 
+			src = isObservableArray(src) ? src._src : src;
+
+			if (!$.isArray(src)) {
+				//引数が配列でない場合はエラー
+				throwFwError(ERR_CODE_INVALID_ARGUMENT, [0, src]);
+			}
+
+			var args = src.slice(0);
+			args.unshift(0, this.length);
+			Array.prototype.splice.apply(this, args);
+		},
+
+		/**
+		 * 値を取得します。
+		 *
+		 * @since 1.1.3
+		 * @memberOf ObservableArray
+		 * @param {Number} index 取得する要素のインデックス
+		 * @returns 要素の値
+		 */
+		get: function(index) {
+			return this[index];
+		},
+
+		/**
+		 * 値をセットします。
+		 *
+		 * @since 1.1.3
+		 * @memberOf ObservableArray
+		 * @param {Number} index 値をセットする要素のインデックス
+		 */
+		set: function(index, value) {
+			this[index] = value;
+		},
+
+		/**
+		 * 現在のObservableArrayインスタンスと同じ要素を持ったネイティブ配列インスタンスを返します。
+		 *
+		 * @since 1.1.3
+		 * @memberOf ObservableArray
+		 * @returns ネイティブ配列インスタンス
+		 */
+		toArray: function() {
+			return this.slice(0);
+		},
+
+		/**
+		 * 動作は通常の配列のconcatと同じです。<br>
+		 * 引数にObservableArrayが渡された場合にそれを通常の配列とみなして動作するようラップされています。
+		 *
+		 * @since 1.1.3
+		 * @memberOf ObservableArray
+		 * @returns 要素を連結したObservableArrayインスタンス
+		 */
+		concat: function() {
+			var args = h5.u.obj.argsToArray(arguments);
+			for ( var i = 0, len = args.length; i < len; i++) {
+				if (isObservableArray(args[i])) {
+					args[i] = args[i].toArray();
+				}
+			}
+			return this.concat.apply(this, args);
+		}
+	};
+
+	//Array.prototypeのメンバーはfor-inで列挙されないためここで列挙。
+	//プロパティアクセスのProxyingが可能になれば不要になるかもしれない。
 	var arrayMethods = ['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'slice', 'sort',
 			'splice', 'unshift', 'indexOf', 'lastIndexOf', 'every', 'filter', 'forEach', 'map',
 			'some', 'reduce', 'reduceRight'];
+	for ( var obsFuncName in obsFuncs) {
+		if (obsFuncs.hasOwnProperty(obsFuncName) && $.inArray(obsFuncName, arrayMethods) === -1) {
+			arrayMethods.push(obsFuncName);
+		}
+	}
+
+	// 戻り値として配列を返すので戻り値をラップする必要があるメソッド（従ってtoArrayは含めない）
+	var creationMethods = ['concat', 'slice', 'splice', 'filter', 'map'];
+
+	//戻り値として自分自身を返すメソッド
+	var returnsSelfMethods = ['reverse', 'sort'];
+
 	// 破壊的(副作用のある)メソッド
-	var destructiveMethods = ['sort', 'reverse', 'pop', 'shift', 'unshift', 'push', 'splice'];
+	var destructiveMethods = ['sort', 'reverse', 'pop', 'shift', 'unshift', 'push', 'splice',
+			'copyFrom', 'set'];
 
 	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
-		ObservableArray.prototype[arrayMethods[i]] = (function(method) {
-			var arrayFunc = Array.prototype[method];
-			if (method === 'splice') {
-				arrayFunc = obsSplice;
-			} else if (method === 'shift') {
-				arrayFunc = obsShift;
+		var arrayMethod = arrayMethods[i];
+		ObservableArray.prototype[arrayMethod] = (function(method) {
+			var func = obsFuncs[method] ? obsFuncs[method] : Array.prototype[method];
+
+			function doProcess() {
+				var ret = func.apply(this._src, arguments);
+
+				if ($.inArray(method, returnsSelfMethods) !== -1) {
+					//自分自身を返すメソッドの場合
+					ret = this;
+				} else if ($.inArray(method, creationMethods) !== -1) {
+					//新しい配列を生成するメソッドの場合
+					var wrapper = createObservableArray();
+					wrapper.copyFrom(ret);
+					ret = wrapper;
+				}
+
+				return ret;
 			}
 
-			//TODO fallback実装の提供
+			if ($.inArray(method, destructiveMethods) === -1) {
+				//非破壊メソッドの場合
+				return doProcess;
+			}
+
+			//破壊メソッドの場合は、changeBefore/changeイベントを出す
+
+			//TODO fallback実装の提供?(優先度低)
 			return function() {
-				var isDestructive = $.inArray(method, destructiveMethods) !== -1;
 				var evBefore = {
-					type: EVENT_TYPE_OBSERVE_BEFORE,
+					type: 'changeBefore',
 					method: method,
-					args: arguments,
-					isDestructive: isDestructive
+					args: arguments
 				};
 
 				if (!this.dispatchEvent(evBefore)) {
 					//preventDefault()が呼ばれなければ実際に処理を行う
-					var ret = arrayFunc.apply(this, arguments);
+					var ret = doProcess.apply(this, arguments);
+
+					this.length = this._src.length;
+
 					var evAfter = {
-						type: EVENT_TYPE_OBSERVE,
+						type: 'change',
 						method: method,
 						args: arguments,
-						returnValue: ret,
-						isDestructive: isDestructive
+						returnValue: ret
 					};
 					this.dispatchEvent(evAfter);
 					return ret;
 				}
 			};
-		})(arrayMethods[i]);
+		})(arrayMethod);
 	}
 
 
@@ -1976,7 +2024,7 @@
 				event.props[p] = {
 					newValue: defVal,
 					oldValue: undefined
-				}
+				};
 			} else {
 				this._values[p] = undefined;
 			}
@@ -1990,7 +2038,7 @@
 		//-----------------------------------------------------------------------
 
 		// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
-		var noAddMethods = ['sort', 'reverse', 'pop'];
+		var noAddMethods = ['sort', 'reverse', 'pop', 'shift'];
 
 		var item = this;
 
@@ -1999,32 +2047,51 @@
 			var obsAry = this._values[p];
 			(function(propName, observableArray) {
 				var oldValue; // プロパティのoldValue
-				function observeBeforeListener(event) {
-					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+				function changeBeforeListener(event) {
 					// set内で呼ばれたcopyFromなら何もしない
 					// (checkもevent上げもsetでやっているため)
-					if (!event.isDestructive || item._internal.isInSet) {
+					if (item._internal.isInSet) {
 						return;
 					}
 
 					var args = h5.u.obj.argsToArray(event.args);
 
-					var checkFlag = $.inArray(event.method, noAddMethods) === -1;
+					// 破壊メソッドだけど要素を追加しないメソッド(削除やソート)
+					// の場合はチェックはせずにoldValueの保存だけ行う
 
-					if (event.method === 'splice') {
-						if (args.length <= 2) {
-							// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+					if ($.inArray(event.method, noAddMethods) === -1) {
+						var checkFlag = true;
+
+						// チェックするメソッドは unshift, push, splice, copyFrom, set
+						// そのうち、メソッドの引数をそのままチェックすればいいのはunshift, push
+						switch (event.method) {
+						case 'splice':
+							if (args.length <= 2) {
+								// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+								checkFlag = false;
+							}
 							checkFlag = false;
-						}
-						checkFlag = false;
-						args.shift();
-						args.shift();
-					}
+							// spliceの場合追加要素は第3引数以降のため2回shiftする
+							args.shift();
+							args.shift();
+							break;
 
-					if (checkFlag) {
-						var validateResult = itemValueCheckFuncs[propName](args);
-						if (validateResult.length > 0) {
-							throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+						case 'copyFrom':
+							// copyFromの場合は引数が配列であるため、外側の配列を外す
+							args = args[0];
+							break;
+
+						case 'set':
+							// setの場合は第1引数はindexなので、shift()したものをチェックする
+							args.shift();
+
+						}
+
+						if (checkFlag) {
+							var validateResult = itemValueCheckFuncs[propName](args);
+							if (validateResult.length > 0) {
+								throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+							}
 						}
 					}
 
@@ -2032,10 +2099,9 @@
 					oldValue = item._values[propName].slice(0);
 				}
 
-				function observeListener(event) {
-					// 追加も削除もソートもしないメソッド(非破壊的メソッド)なら何もしない
+				function changeListener(event) {
 					// set内で呼ばれたcopyFromなら何もしない(item._internal.isInSetにフラグを立てている)
-					if (!event.isDestructive || item._internal.isInSet) {
+					if (item._internal.isInSet) {
 						return;
 					}
 
@@ -2057,8 +2123,8 @@
 					// setにオブジェクトで渡されて、更新される場合があるので、isUpdateSessionとかで判断する必要がある
 					item.dispatchEvent(ev);
 				}
-				observableArray.addEventListener('observeBefore', observeBeforeListener);
-				observableArray.addEventListener('observe', observeListener);
+				observableArray.addEventListener('changeBefore', changeBeforeListener);
+				observableArray.addEventListener('change', changeListener);
 			})(p, obsAry);
 		}
 	}
@@ -2128,7 +2194,7 @@
 					oldValue = oldValue.slice(0);
 					this._values[p].copyFrom(v);
 				} else {
-					if (v === this._values[p]) {
+					if (v === this._values[p] || isBothStrictNaN(v, this._values[p])) {
 						// 変更なし
 						continue;
 					}
@@ -2301,6 +2367,8 @@
 		isIntegerValue: isIntegerValue,
 		isNumberValue: isNumberValue,
 		isStringValue: isStringValue,
+		isStrictNaN: isStrictNaN,
+		isBothStrictNaN: isBothStrictNaN,
 		unbox: unbox,
 		EventDispatcher: EventDispatcher,
 		calcDependencies: calcDependencies,
@@ -2312,6 +2380,7 @@
 			ERR_CODE_DEPEND_PROPERTY: ERR_CODE_DEPEND_PROPERTY,
 			ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY: ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY,
 			ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY: ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY
-		}
+		},
+		ERR_CODE_INVALID_SCHEMA: ERR_CODE_INVALID_SCHEMA
 	};
 })();

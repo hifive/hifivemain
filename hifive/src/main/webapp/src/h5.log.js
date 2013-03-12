@@ -749,8 +749,9 @@
 		_traceFunctionName: function(fn) {
 			var e = new Error();
 			var errMsg = e.stack || e.stacktrace;
-			var result = {};
 			var traces = [];
+			/** @type Object */
+			var result = {};
 
 			if (errMsg) {
 				// トレースされたログのうち、トレースの基点から3メソッド分(_traceFunction、_log、

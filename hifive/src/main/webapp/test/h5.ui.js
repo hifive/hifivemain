@@ -155,7 +155,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('h5.ui.isInView - 親子関係でない要素については、isInView()の結果がundefinedであること。jQuery', 6, function() {
+	test('h5.ui.isInView - 親子関係でない要素については、isInView()の結果がundefinedであること。jQuery', function() {
 		check(deepEqual, undefined, '', test1, test2);
 		check(deepEqual, undefined, '', test2, test1);
 		check(deepEqual, undefined, '', 'body', test1);
@@ -275,6 +275,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('h5.ui.isInView - 親要素がbodyの直下でない場合でもisInView()の結果が正しく取得できること。', 12, function() {
+
 		var $test1 = $(test1);
 		var $test2 = $(test2);
 		var test2Dom = $(test2)[0];
@@ -497,78 +498,82 @@ $(function() {
 	asyncTest(
 			'(Androidのデフォルトブラウザでテストを行う場合は、「設定」-「ページを全体表示で開く」を無効にして下さい)h5.ui.isInView - 第二引数を省略したときはウィンドウ上に見えているかどうかを判定できること。スクロールした状態でも見えているかどうかで判定されること。',
 			24, function() {
-				setTimeout(function() {
-					var testDom = $(test3)[0];
-					function testFunc(scrollTop, scrollLeft) {
-						var viewTop = scrollTop || 0;
-						var viewLeft = scrollLeft || 0;
+				var testDom = $(test3)[0];
+				// スクロール量
+				var scrollVal = 3;
 
-						var top,left;
-						// 1 - 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
-						top = viewTop + (1 - testDom.offsetHeight);
-						left = viewLeft + (1 - testDom.offsetWidth);
+				function testFunc(scrollTop, scrollLeft) {
+					var viewTop = scrollTop || 0;
+					var viewLeft = scrollLeft || 0;
 
-						testDom.style.top = top + 'px';
-						testDom.style.left = left + 'px';
-						check(deepEqual, true, '左上1pxが見えている状態', testDom);
-						testDom.style.top = top - 1 + 'px';
-						testDom.style.left = left + 'px';
-						check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', testDom);
-						testDom.style.top = top + 'px';
-						testDom.style.left = left - 1 + 'px';
-						check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', testDom);
+					var top,left;
+					// 1 - 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
+					top = viewTop + (1 - testDom.offsetHeight);
+					left = viewLeft + (1 - testDom.offsetWidth);
 
-						// window幅 - 1
-						left = getWindowWidth() + viewLeft - 1;
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 'px';
+					check(deepEqual, true, '左上1pxが見えている状態', testDom);
+					testDom.style.top = top - 1 + 'px';
+					testDom.style.left = left + 'px';
+					check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', testDom);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left - 1 + 'px';
+					check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', testDom);
 
-						testDom.style.top = top + 'px';
-						testDom.style.left = left + 'px';
-						check(deepEqual, true, '右上1pxが見えている状態', testDom);
-						testDom.style.top = top - 1 + 'px';
-						testDom.style.left = left + 'px';
-						check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', testDom);
-						testDom.style.top = top + 'px';
-						testDom.style.left = left + 1 + 'px';
-						check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', testDom); // TODO
+					// window幅 - 1
+					left = getWindowWidth() + viewLeft - 1;
 
-						// windowの高さ - 1
-						top = getWindowHeight() + viewTop - 1;
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 'px';
+					check(deepEqual, true, '右上1pxが見えている状態', testDom);
+					testDom.style.top = top - 1 + 'px';
+					testDom.style.left = left + 'px';
+					check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', testDom);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 1 + 'px';
+					check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', testDom); // TODO
 
-						testDom.style.top = top + 'px';
-						testDom.style.left = left + 'px';
-						check(deepEqual, true, '右下1pxが見えている状態', testDom);
-						testDom.style.top = top + 1 + 'px';
-						testDom.style.left = left + 'px';
-						check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', testDom);
-						testDom.style.top = top + 'px';
-						testDom.style.left = left + 1 + 'px';
-						check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', testDom);
+					// windowの高さ - 1
+					top = getWindowHeight() + viewTop - 1;
 
-						// leftを左側に戻す
-						left = viewLeft + (1 - testDom.offsetWidth);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 'px';
+					check(deepEqual, true, '右下1pxが見えている状態', testDom);
+					testDom.style.top = top + 1 + 'px';
+					testDom.style.left = left + 'px';
+					check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', testDom);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 1 + 'px';
+					check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', testDom);
 
-						testDom.style.top = top + 'px';
-						testDom.style.left = left + 'px';
-						check(deepEqual, true, '左下1pxが見えている状態', testDom);
-						testDom.style.top = top + 1 + 'px';
-						testDom.style.left = left + 'px';
-						check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', testDom);
-						testDom.style.top = top + 'px';
-						testDom.style.left = left - 1 + 'px';
-						check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', testDom);
+					// leftを左側に戻す
+					left = viewLeft + (1 - testDom.offsetWidth);
 
-						if (!(scrollTop && scrollLeft)) {
-							window.scrollTo(100, 100);
-						} else {
-							return;
-						}
-						setTimeout(function() {
-							// 100, 100にスクロールされた状態でテスト
-							testFunc(100, 100);
-							start();
-						}, 1000);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left + 'px';
+					check(deepEqual, true, '左下1pxが見えている状態', testDom);
+					testDom.style.top = top + 1 + 'px';
+					testDom.style.left = left + 'px';
+					check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', testDom);
+					testDom.style.top = top + 'px';
+					testDom.style.left = left - 1 + 'px';
+					check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', testDom);
 
+					if (!(scrollTop && scrollLeft)) {
+						window.scrollTo(scrollVal, scrollVal);
+					} else {
+						return;
 					}
+					setTimeout(function() {
+						// スクロールされた状態でテスト
+						testFunc(scrollVal, scrollVal);
+						start();
+					}, 1000);
+
+				}
+				setTimeout(function() {
+					// 0,0 にスクロールされるまで待ってからテスト実行
 					testFunc();
 				}, 1000);
 			});
@@ -711,6 +716,189 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module("isInView 7", {
+		setup: function() {
+			this.$test.css({
+				border: '10px solid red',
+				width: '20px',
+				height: '20px',
+				position: 'absolute'
+			});
+			var $html = $('html');
+			var htmlElm = $html[0];
+			var $body = $(document.body);
+
+			// html,body要素のスタイル(指定値)を変更する。
+			// (ブラウザによってデフォルト指定されている値が違うため)
+			// teardownで戻せるように保存しておく。
+			this.originHtmlCss = {
+				margin: htmlElm.style.margin,
+				padding: htmlElm.style.padding,
+				border: htmlElm.style.border
+			};
+			$html.css({
+				margin: '1px',
+				border: '2px solid #ccc',
+				padding: '4px'
+			});
+
+			this.originBodyCss = {
+				margin: document.body.style.margin,
+				border: document.body.style.border,
+				padding: document.body.style.padding
+			};
+			$body.css({
+				margin: '8px',
+				border: '16px solid #ccc',
+				padding: '32px'
+			});
+			$body.append(this.$test);
+
+			// スクロールできるようにするための要素を追加
+			var width = getWindowWidth() + 100;
+			var height = getWindowHeight() + 100;
+			$('body').append(
+					'<div id="enableScroll" style="width:' + width + 'px;height:' + height
+							+ 'px;visible:hidden;top:0;left:0;position:absolute;"></div>');
+
+			// 0,0にスクロールしてテスト
+			window.scrollTo(0, 0);
+
+		},
+		teardown: function() {
+			document.body.style.margin = this.originBodyCss.margin;
+			document.body.style.border = this.originBodyCss.border;
+			document.body.style.padding = this.originBodyCss.padding;
+
+			var htmlElm = $('html')[0];
+			htmlElm.style.margin = this.originHtmlCss.margin;
+			htmlElm.style.border = this.originHtmlCss.border;
+			htmlElm.style.padding = this.originHtmlCss.padding;
+
+			this.$test.remove();
+			$('#enableScroll').remove();
+			window.scrollTo(0, 0);
+		},
+		$test: $('<div>a</div>​'),
+		originHtmlCss: {},
+		originBodyCss: {}
+	});
+	//=============================
+	// Body
+	//=============================
+	asyncTest('h5.ui.isInView - 第2引数がbodyの場合に正しく判定できること。スクロールされてもbodyの位置が正しく取得できて判定できること。', 24,
+			function() {
+				var that = this;
+				// スクロール量
+				var scrollVal = 3;
+
+				function testFunc() {
+					var top,left;
+					var body = document.body;
+					var html = $('html')[0];
+					var test = that.$test[0];
+
+					var htmlMarginX = parseFloat($(html).css('marginLeft'));
+					var htmlBorderX = parseFloat($(html).css('borderLeftWidth'));
+					var htmlPaddingX = parseFloat($(html).css('paddingLeft'));
+					var bodyMarginX = parseFloat($(body).css('marginLeft'));
+					var bodyBorderX = parseFloat($(body).css('borderLeftWidth'));
+
+					var htmlMarginY = parseFloat($(html).css('marginTop'));
+					var htmlBorderY = parseFloat($(html).css('borderTopWidth'));
+					var htmlPaddingY = parseFloat($(html).css('paddingTop'));
+					var bodyMarginY = parseFloat($(body).css('marginTop'));
+					var bodyBorderY = parseFloat($(body).css('borderTopWidth'));
+
+
+					var offsetX = htmlPaddingX + bodyMarginX + bodyBorderX;
+					var offsetY = htmlPaddingY + bodyMarginY + bodyBorderY;
+					if (!(h5.env.ua.isIE && h5.env.ua.browserVersion <= 6)) {
+						offsetX += htmlMarginX + htmlBorderX;
+						offsetY += htmlMarginY + htmlBorderY;
+					}
+
+					// 1 - (内側の要素 border-width*2 + width)
+					top = offsetY + 1 - (10 * 2 + 20);
+					left = offsetX + 1 - (10 * 2 + 20);
+
+					test.style.top = top + 'px';
+					test.style.left = left + 'px';
+					check(deepEqual, true, '左上1pxが見えている状態', test, body);
+					test.style.top = top - 1 + 'px';
+					test.style.left = left + 'px';
+					check(deepEqual, false, '左上1pxが見えている状態から上に1px移動', test, body);
+					test.style.top = top + 'px';
+					test.style.left = left - 1 + 'px';
+					check(deepEqual, false, '左上1pxが見えている状態から左に1px移動', test, body);
+
+					// 外側の要素の幅 - 1
+					left = offsetX + body.clientWidth - 1;
+
+					test.style.top = top + 'px';
+					test.style.left = left + 'px';
+					check(deepEqual, true, '右上1pxが見えている状態', test, body);
+					test.style.top = top - 1 + 'px';
+					test.style.left = left + 'px';
+					check(deepEqual, false, '右上1pxが見えている状態から上に1px移動', test, body);
+					test.style.top = top + 'px';
+					test.style.left = left + 1 + 'px';
+					check(deepEqual, false, '右上1pxが見えている状態から右に1px移動', test, body);
+
+					// 外側の要素の高さ - 1
+					top = offsetY + body.clientHeight - 1;
+
+					test.style.top = top + 'px';
+					test.style.left = left + 'px';
+					check(deepEqual, true, '右下1pxが見えている状態', test, body);
+					test.style.top = top + 1 + 'px';
+					test.style.left = left + 'px';
+					check(deepEqual, false, '右下1pxが見えている状態から下に1px移動', test, body);
+					test.style.top = top + 'px';
+					test.style.left = left + 1 + 'px';
+					check(deepEqual, false, '右下1pxが見えている状態から右に1px移動', test, body);
+
+					// leftを左側に戻す
+					left = offsetX + 1 - (10 * 2 + 20);
+
+					test.style.top = top + 'px';
+					test.style.left = left + 'px';
+					check(deepEqual, true, '左下1pxが見えている状態', test, body);
+					test.style.top = top + 1 + 'px';
+					test.style.left = left + 'px';
+					check(deepEqual, false, '左下1pxが見えている状態から下に1px移動', test, body);
+					test.style.top = top + 'px';
+					test.style.left = left - 1 + 'px';
+					check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', test, body);
+				}
+				function waitForDom(isScroll) {
+					if (!isScroll && $(that.$test).offset()) {
+						testFunc();
+						// スクロールしてテスト
+						window.scrollTo(scrollVal, scrollVal);
+						setTimeout(function() {
+							waitForDom(true);
+						}, 1000);
+						return;
+					}
+					if (isScroll) {
+						testFunc();
+						start();
+						return;
+					}
+					setTimeout(function() {
+						waitForDom(isScroll);
+					}, 0);
+				}
+				setTimeout(function() {
+					// 0,0にスクロールされるのを待ってからテスト実行
+					waitForDom();
+				}, 1000);
+			});
+
+	//=============================
+	// Definition
+	//=============================
 	module('scrollToTop', {
 		setup: function() {
 			// スクロールできるようにするための要素を追加
@@ -728,29 +916,30 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('h5.ui.scrollToTop (0, 1)の地点にスクロール', 1, function() {
-		// scrollToTopで(0,1)にスクロール
-		h5.ui.scrollToTop();
+	asyncTest('h5.ui.scrollToTop (0, 1)の地点にスクロール', 1,
+			function() {
+				// scrollToTopで(0,1)にスクロール
+				h5.ui.scrollToTop();
 
-		var count = 0;
-		function waitForScroll() {
-			var scrollX = window.pageXOffset
-					|| (isQuirksMode ? document.documentElement.scrollLeft
-							: document.body.scrollLeft);
-			var scrollY = window.pageYOffset
-					|| (isQuirksMode ? document.documentElement.scrollTop
-							: document.body.scrollTop);
-			if (scrollY === 1 && scrollX === 0) {
-				ok(true, '(0,1)にスクロールされた');
-				start();
-				return;
-			} else if (count++ === 3) {
-				ok(false, 'スクロールされませんでした。');
-				start();
-				return;
-			}
-			setTimeout(waitForScroll, 200);
-		}
-		waitForScroll();
-	});
+				var count = 0;
+				function waitForScroll() {
+					var scrollX = window.pageXOffset
+							|| (isQuirksMode ? document.documentElement.scrollLeft
+									: document.body.scrollLeft);
+					var scrollY = window.pageYOffset
+							|| (isQuirksMode ? document.documentElement.scrollTop
+									: document.body.scrollTop);
+					if (scrollY === 1 && scrollX === 0) {
+						ok(true, '(0,1)にスクロールされた');
+						start();
+						return;
+					} else if (count++ === 3) {
+						ok(false, 'スクロールされませんでした。');
+						start();
+						return;
+					}
+					setTimeout(waitForScroll, 200);
+				}
+				waitForScroll();
+			});
 });

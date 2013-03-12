@@ -63,8 +63,7 @@
 	var invalidTemplate2 = '[%= for(var i = 0; i < 10; i++){} %]';
 	var invalidTemplate3 = '<div>[% vaar hoge %]</div>';
 
-	// #qunit-fixtureのバックアップ
-	var backupFixture = $('#qunit-fixture').html();
+	var preparedHtml = '<div>TEST</div>';
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -154,10 +153,7 @@
 
 		module('View1', {
 			setup: function() {
-				backupFixture = $('#qunit-fixture').html();
-			},
-			teardown: function() {
-				$('#qunit-fixture').html(backupFixture);
+				$('#qunit-fixture').html('');
 			}
 		});
 
@@ -240,11 +236,10 @@
 
 		module('View2', {
 			setup: function() {
-				backupFixture = $('#qunit-fixture').html();
+				$('#qunit-fixture').html('');
 			},
 			teardown: function() {
 				clearCachedTemplate();
-				$('#qunit-fixture').html(backupFixture);
 			}
 		});
 
@@ -367,19 +362,13 @@
 		});
 
 		test('画面HTMLに書かれた、置換要素有りテンプレートを取得。view.update ', function() {
-			h5.core.view.update(document.getElementById('aaaaa'), 'view3', {
-				val1: 'AA',
-				val2: 'BB'
-			});
-			assertElement($('#qunit-fixture').html(), 'test markup, will be hidden');
-
 			h5.core.view.update(document.getElementById('qunit-fixture'), 'view3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
 			assertElement($('#qunit-fixture').html(), validTemplate3Result);
 
-			$('#qunit-fixture').html('test markup, will be hidden');
+			//updateなのでfixture内をクリーンアップする必要はない
 
 			h5.core.view.update($('#qunit-fixture'), 'view3', {
 				val1: 'AA',
@@ -387,82 +376,63 @@
 			});
 			assertElement($('#qunit-fixture').html(), validTemplate3Result);
 
-			$('#qunit-fixture').html('test markup, will be hidden');
-
 			h5.core.view.update('#qunit-fixture', 'view3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
 			assertElement($('#qunit-fixture').html(), validTemplate3Result);
-
 		});
 
 		test('画面HTMLに書かれた、置換要素有りテンプレートを取得。view.prepend ', function() {
-			h5.core.view.prepend(document.getElementById('aaaaa'), 'view3', {
-				val1: 'AA',
-				val2: 'BB'
-			});
-			assertElement($('#qunit-fixture').html(), 'test markup, will be hidden');
+			$('#qunit-fixture').html(preparedHtml);
 
 			h5.core.view.prepend(document.getElementById('qunit-fixture'), 'view3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
-			assertElement($('#qunit-fixture').html(), validTemplate3Result
-					+ 'test markup, will be hidden');
+			assertElement($('#qunit-fixture').html(), validTemplate3Result + preparedHtml);
 
-			$('#qunit-fixture').html('test markup, will be hidden');
+			$('#qunit-fixture').html(preparedHtml);
 
 			h5.core.view.prepend($('#qunit-fixture'), 'view3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
-			assertElement($('#qunit-fixture').html(), validTemplate3Result
-					+ 'test markup, will be hidden');
+			assertElement($('#qunit-fixture').html(), validTemplate3Result + preparedHtml);
 
-			$('#qunit-fixture').html('test markup, will be hidden');
+			$('#qunit-fixture').html(preparedHtml);
 
 			h5.core.view.prepend('#qunit-fixture', 'view3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
-			assertElement($('#qunit-fixture').html(), validTemplate3Result
-					+ 'test markup, will be hidden');
-
+			assertElement($('#qunit-fixture').html(), validTemplate3Result + preparedHtml);
 		});
 
 		test('画面HTMLに書かれた、置換要素有りテンプレートを取得。view.append ', function() {
-			h5.core.view.append(document.getElementById('aaaaa'), 'view3', {
-				val1: 'AA',
-				val2: 'BB'
-			});
-			assertElement($('#qunit-fixture').html(), 'test markup, will be hidden');
-
+			$('#qunit-fixture').html(preparedHtml);
 
 			h5.core.view.append(document.getElementById('qunit-fixture'), 'view3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
-			assertElement($('#qunit-fixture').html(), 'test markup, will be hidden'
-					+ validTemplate3Result);
+			assertElement($('#qunit-fixture').html(), preparedHtml + validTemplate3Result);
 
-			$('#qunit-fixture').html('test markup, will be hidden');
+			$('#qunit-fixture').html(preparedHtml);
 
 			h5.core.view.append($('#qunit-fixture'), 'view3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
-			assertElement($('#qunit-fixture').html(), 'test markup, will be hidden'
-					+ validTemplate3Result);
+			assertElement($('#qunit-fixture').html(), preparedHtml + validTemplate3Result);
 
-			$('#qunit-fixture').html('test markup, will be hidden');
+			$('#qunit-fixture').html(preparedHtml);
 
 			h5.core.view.append('#qunit-fixture', 'view3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
-			assertElement($('#qunit-fixture').html(), 'test markup, will be hidden'
-					+ validTemplate3Result);
+			assertElement($('#qunit-fixture').html(), preparedHtml + validTemplate3Result);
 		});
 
 		test('置換要素有りテンプレートで置換要素を指定しないで取得。', 1, function() {
@@ -1207,7 +1177,7 @@
 
 		module('View3', {
 			setup: function() {
-				backupFixture = $('#qunit-fixture').html();
+				$('#qunit-fixture').html('');
 				if (!h5.dev) {
 					return;
 				}
@@ -1216,7 +1186,6 @@
 			},
 			teardown: function() {
 				clearCachedTemplate();
-				$('#qunit-fixture').html(backupFixture);
 			}
 		});
 

@@ -181,14 +181,9 @@ $(function() {
 
 	// TODO Array型とObject型のバインドに対するテストは後で追加する
 	test('null, undefined, String, Numberが、それぞれ表示されること', function() {
-		var ary = [1, 2, 'aa'];
-		var obj = {
-			a: 'a'
-		};
 		var func = function() {
 			return;
 		};
-
 
 		view.append($fixture, 'variableType');
 		view.bind('#dataBindTest', {
@@ -289,6 +284,7 @@ $(function() {
 
 	test('バインド指定するものがオブジェクトでない場合はエラーになること', function() {
 		view.append($fixture, 'bindSpan');
+		/** @type Any */
 		var args = [null, undefined, [{}], 1, 'abc', true];
 		for ( var i = 0, l = args.length; i < l; i++) {
 			try {
@@ -541,6 +537,7 @@ $(function() {
 		var items = h5.core.data.createObservableArray();
 		items.copyFrom([]);
 
+		/** @type Any */
 		var noObjs = [1, 'a', [], [{}]];
 
 		var l = noObjs.length;
@@ -604,7 +601,7 @@ $(function() {
 		var oAry = h5.core.data.createObservableArray();
 		oAry.copyFrom(ary);
 
-		oAry[0].ary = oAry;
+		oAry.get(0).ary = oAry;
 		view.append($fixture, 'loopContext2');
 		view.bind($('#dataBindTest'), {
 			items: oAry
@@ -862,7 +859,7 @@ $(function() {
 				}];
 				var oAry = h5.core.data.createObservableArray();
 				oAry.copyFrom(ary);
-				oAry[0].ary = oAry;
+				oAry.get(0).ary = oAry;
 				view.append($fixture, 'loopContext2');
 				view.bind($('#dataBindTest'), {
 					items: oAry
@@ -1043,7 +1040,7 @@ $(function() {
 
 		var $result = $('#dataBindTest > ul > li');
 		equal($result.length, oar.length, 'ObserbableArrayの要素数分loop-contextを指定した要素にDOMが生成されること');
-		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
+		equal($result.eq(0).text(), oar.get(0).test, 'li[0].text() == ObservableArray[0].test');
 
 		// 値を追加する
 		oar.push({
@@ -1052,8 +1049,8 @@ $(function() {
 
 		$result = $('#dataBindTest > ul > li');
 		equal($result.length, oar.length, 'ObserbableArrayの要素数分loop-contextを指定した要素にDOMが生成されること');
-		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
-		equal($result.eq(1).text(), oar[1].test, 'li[1].text() == ObservableArray[1].test');
+		equal($result.eq(0).text(), oar.get(0).test, 'li[0].text() == ObservableArray[0].test');
+		equal($result.eq(1).text(), oar.get(1).test, 'li[1].text() == ObservableArray[1].test');
 
 		// nullを追加する
 		oar.push({
@@ -1062,8 +1059,8 @@ $(function() {
 
 		$result = $('#dataBindTest > ul > li');
 		equal($result.length, oar.length, 'ObserbableArrayの要素数分loop-contextを指定した要素にDOMが生成されること');
-		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
-		equal($result.eq(1).text(), oar[1].test, 'li[1].text() == ObservableArray[1].test');
+		equal($result.eq(0).text(), oar.get(0).test, 'li[0].text() == ObservableArray[0].test');
+		equal($result.eq(1).text(), oar.get(1).test, 'li[1].text() == ObservableArray[1].test');
 		equal($result.eq(2).text(), '', 'li[2].text() == ObservableArray[2].test');
 
 		// 値を取り出す
@@ -1072,18 +1069,18 @@ $(function() {
 		$result = $('#dataBindTest > ul > li');
 		equal($result.length, oar.length,
 				'ObserbableArrayから要素を一つ削除したので、ObserbableArrayをバインドしたビューに反映されていること');
-		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
+		equal($result.eq(0).text(), oar.get(0).test, 'li[0].text() == ObservableArray[0].test');
 
 		// 値の変更をキャンセルする
-		oar.addEventListener('observeBefore', function(ev) {
+		oar.addEventListener('changeBefore', function(ev) {
 			ev.preventDefault();
 		});
 
 		oar.pop();
 		$result = $('#dataBindTest > ul > li');
 		equal($result.length, oar.length,
-				'observeBeforeイベントをキャンセルしてObservableArrayの中身に変更がないので、ビューは変更されないこと');
-		equal($result.eq(0).text(), oar[0].test, 'li[0].text() == ObservableArray[0].test');
+				'changeBeforeイベントをキャンセルしてObservableArrayの中身に変更がないので、ビューは変更されないこと');
+		equal($result.eq(0).text(), oar.get(0).test, 'li[0].text() == ObservableArray[0].test');
 	});
 
 	test('ObserbableItem/DataItemの中身を変更すると、ビューに反映されること', 4, function() {
@@ -1347,9 +1344,9 @@ $(function() {
 					item.set('ary', oar2);
 					equal($('#dataBindTest .loop1').length, oar2.length, name
 							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest .loop1').eq(0).text(), oar2[0].test, name
+					equal($('#dataBindTest .loop1').eq(0).text(), oar2.get(0).test, name
 							+ ': ObservableArrayの内容がビューに反映されていること');
-					equal($('#dataBindTest .loop1').eq(1).text(), oar2[1].test, name
+					equal($('#dataBindTest .loop1').eq(1).text(), oar2.get(1).test, name
 							+ ': ObservableArrayの内容がビューに反映されていること');
 
 					binding.unbind();
@@ -1393,9 +1390,9 @@ $(function() {
 					item.set('ary2', oar2);
 					equal($('#dataBindTest .loop2').length, oar2.length, name
 							+ ': ObservableArrayの変更がビューに反映されていること');
-					equal($('#dataBindTest .loop2').eq(0).text(), oar2[0].test, name
+					equal($('#dataBindTest .loop2').eq(0).text(), oar2.get(0).test, name
 							+ ': ObservableArrayの内容がビューに反映されていること');
-					equal($('#dataBindTest .loop2').eq(1).text(), oar2[1].test, name
+					equal($('#dataBindTest .loop2').eq(1).text(), oar2.get(1).test, name
 							+ ': ObservableArrayの内容がビューに反映されていること');
 
 					binding.unbind();
@@ -1427,11 +1424,11 @@ $(function() {
 			}]);
 			equal($('#dataBindTest span').length, oar.length, name
 					+ ': ObservableArrayの変更がビューに反映されていること');
-			equal($('#dataBindTest span').eq(0).text(), oar[0].test, name
+			equal($('#dataBindTest span').eq(0).text(), oar.get(0).test, name
 					+ ': ObservableArrayの内容がビューに反映されていること');
-			equal($('#dataBindTest span').eq(1).text(), oar[1].test, name
+			equal($('#dataBindTest span').eq(1).text(), oar.get(1).test, name
 					+ ': ObservableArrayの内容がビューに反映されていること');
-			equal($('#dataBindTest span').eq(2).text(), oar[2].test, name
+			equal($('#dataBindTest span').eq(2).text(), oar.get(2).test, name
 					+ ': ObservableArrayの内容がビューに反映されていること');
 
 			oar.copyFrom([{
@@ -1439,7 +1436,7 @@ $(function() {
 			}]);
 			equal($('#dataBindTest span').length, oar.length, name
 					+ ': ObservableArrayの変更がビューに反映されていること');
-			equal($('#dataBindTest span').eq(0).text(), oar[0].test, name
+			equal($('#dataBindTest span').eq(0).text(), oar.get(0).test, name
 					+ ': ObservableArrayの内容がビューに反映されていること');
 
 			binding.unbind();
@@ -2118,7 +2115,8 @@ $(function() {
 		// URL中の文字がエスケープされていても正しいURLと解釈されてリンクを踏めるので問題ない。
 
 		var $span = $fixture.find('span');
-		strictEqual($span.html().toLowerCase().replace(/&amp;/g, '&'), str.toLowerCase(), '値がinnerHTMLとしてバインドされていること');
+		strictEqual($span.html().toLowerCase().replace(/&amp;/g, '&'), str.toLowerCase(),
+				'値がinnerHTMLとしてバインドされていること');
 		strictEqual($span.find('a').length, 1, 'DOM要素が新しく作成されていること');
 	});
 
@@ -2266,7 +2264,6 @@ $(function() {
 		c.readyPromise.done(function() {
 			c.view.bind('h5view#item', item);
 
-			var $span = $fixture.find('span');
 			checkTexts(['a', 'b', 'aa', 'bb'], 'コメントビューに書いた箇所にバインドされていること', 'span');
 
 			//値の変更
@@ -2275,7 +2272,6 @@ $(function() {
 				v2: 'bbb'
 			});
 
-			var $span = $fixture.find('span');
 			checkTexts(['aaa', 'bbb', 'aa', 'bb'], '変更が反映されること', 'span');
 			start();
 		});
@@ -2616,7 +2612,7 @@ $(function() {
 			items: oar
 		});
 
-		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar[0].ar.length,
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar.get(0).ar.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '2', 'バインドされていること');
@@ -2639,7 +2635,7 @@ $(function() {
 			items: oar
 		});
 
-		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar[0].ar.length,
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar.get(0).ar.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '', 'バインドされていること');
@@ -2681,19 +2677,19 @@ $(function() {
 			items: oar
 		});
 
-		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar[0].ar.length,
+		strictEqual($('#dataBindTest>div>div:eq(0)>span').length, oar.get(0).ar.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(0)').text(), '1', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(1)').text(), '2', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(0)>span:eq(2)').text(), '3', 'バインドされていること');
-		strictEqual($('#dataBindTest>div>div:eq(1)>span').length, oar[0].ar2.length,
+		strictEqual($('#dataBindTest>div>div:eq(1)>span').length, oar.get(0).ar2.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(0)').text(), '10', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(1)').text(), '20', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(1)>span:eq(2)').text(), '30', 'バインドされていること');
 
 		strictEqual($('#dataBindTest>div>div:eq(2)>span').length, 0, '配列の要素数分DOMが生成されること');
-		strictEqual($('#dataBindTest>div>div:eq(3)>span').length, oar[1].ar2.length,
+		strictEqual($('#dataBindTest>div>div:eq(3)>span').length, oar.get(1).ar2.length,
 				'配列の要素数分DOMが生成されること');
 		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(0)').text(), '100', 'バインドされていること');
 		strictEqual($('#dataBindTest>div>div:eq(3)>span:eq(1)').text(), '200', 'バインドされていること');
@@ -3022,29 +3018,27 @@ $(function() {
 
 	});
 
-	asyncTest('動的に生成(クローン)された要素の子孫要素でイベントが発火するか', 2,
-			function() {
-				var controller = {
-					__name: 'dynElementTestController',
-					'.class1.hoge click': function(context) {
-						ok(false, 'イベント発生元のDOM要素の親要素にあたらないのでイベントは発生しないこと');
-					},
-					'{body} click': function(context) {
-						equal(context.event.target.className, 'sec',
-								'動的に生成された要素の子孫要素で発生したイベントがバブリングすること');
-						this.dispose();
-					},
-					'.sec click': function(context) {
-						ok(true, context.event.target.className + ':動的に生成された要素の子孫要素からイベントが発生すること');
-					},
-					__dispose: function() {
-						start();
-					}
-				};
+	asyncTest('動的に生成(クローン)された要素の子孫要素でイベントが発火するか', 2, function() {
+		var controller = {
+			__name: 'dynElementTestController',
+			'.class1.hoge click': function(context) {
+				ok(false, 'イベント発生元のDOM要素の親要素にあたらないのでイベントは発生しないこと');
+			},
+			'{body} click': function(context) {
+				equal(context.event.target.className, 'sec', '動的に生成された要素の子孫要素で発生したイベントがバブリングすること');
+				this.dispose();
+			},
+			'.sec click': function(context) {
+				ok(true, context.event.target.className + ':動的に生成された要素の子孫要素からイベントが発生すること');
+			},
+			__dispose: function() {
+				start();
+			}
+		};
 
-				var c = h5.core.controller('#dataBindTest', controller);
-				c.readyPromise.done(function() {
-					$('.sec').click();
-				});
-			});
+		var c = h5.core.controller('#dataBindTest', controller);
+		c.readyPromise.done(function() {
+			$('.sec').click();
+		});
+	});
 });

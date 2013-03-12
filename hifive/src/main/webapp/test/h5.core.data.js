@@ -144,13 +144,6 @@ $(function() {
 		ok(true, msg);
 	}
 
-	/**
-	 * ObservalArrayと普通の配列をdeepEqualで比較する
-	 */
-	function deepEqualObs(ary1, ary2, msg) {
-		deepEqual(ary1 && ary1.slice(0), ary2 && ary2.slice(0), msg);
-	}
-
 	// =========================================================================
 	//
 	// Test Module
@@ -2744,9 +2737,9 @@ $(function() {
 
 	test('createの引数が配列でもオブジェクトでもない時、エラーが出ること', function() {
 		var invalidArgs = ['', 'aa', 1, 0, true, false];
-		var l = l = invalidArgs.length;
-		expect(l);
-		for ( var i = 0; i < l; i++) {
+		var len = invalidArgs.length;
+		expect(len);
+		for ( var i = 0; i < len; i++) {
 			try {
 				dataModel1.create(invalidArgs[i]);
 				ok(false, 'エラーが発生しませんでした。' + invalidArgs[i]);
@@ -3035,6 +3028,34 @@ $(function() {
 		strictEqual(dataModel1.size, 0, 'すべて削除したので、model.sizeが0になっていること');
 	});
 
+	test('removeAll: すべてのデータアイテムを削除できること', function() {
+		var item1 = dataModel1.create({
+			id: '1',
+			val: 1
+		});
+		var item2 = dataModel1.create({
+			id: '2',
+			val: 2
+		});
+
+		strictEqual(dataModel1.has('1'), true, '削除前はアイテム1が存在する');
+		strictEqual(dataModel1.has('2'), true, '削除前はアイテム2が存在する');
+
+		var removedItems = dataModel1.removeAll();
+
+		strictEqual(dataModel1.size, 0, 'モデルのサイズは0');
+		strictEqual(removedItems.length, 2, '戻り値の長さはcreateした数と同じ');
+		notStrictEqual($.inArray(item1, removedItems), -1, '作成したアイテム1が削除されている');
+		notStrictEqual($.inArray(item2, removedItems), -1, '作成したアイテム2が削除されている');
+
+		try {
+			var emptyRemovedItems = dataModel1.removeAll();
+			strictEqual(emptyRemovedItems.length, 0, '空のデータモデルでremoveAllしたとき、戻り値の配列は空（長さ0）');
+		} catch (e) {
+			ok(false, '空のデータモデルでremoveAllを呼んだとき、例外が発生してはならない');
+		}
+	});
+
 	test(
 			'データモデルから削除されたアイテムの項目について、getはできるがsetできないこと。ObsevableArrayのプロパティについて、副作用のあるメソッドは使用できないこと。',
 			8, function() {
@@ -3060,9 +3081,8 @@ $(function() {
 				model.remove(item);
 				strictEqual(item.getModel(), null, 'モデルから削除したアイテムのgetModel()がnullを返すこと');
 				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
-				deepEqualObs(item.get('ary'), [1, 2, 3],
-						'削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
-				deepEqual(item.get('ary').slice(0), [1, 2, 3],
+				ok(item.get('ary').equals([1, 2, 3]), '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
+				ok(item.get('ary').slice(0).equals([1, 2, 3]),
 						'削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
 
 				try {
@@ -3118,9 +3138,8 @@ $(function() {
 				manager.dropModel(model.name);
 				strictEqual(model.getManager(), null, 'model.getManager()がnull');
 				strictEqual(item.get('v'), 'a', '削除されたアイテムが持つプロパティの値をgetで取得できること');
-				deepEqualObs(item.get('ary'), [1, 2, 3],
-						'削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
-				deepEqual(item.get('ary').slice(0), [1, 2, 3],
+				ok(item.get('ary').equals([1, 2, 3]), '削除されたアイテムが持つプロパティの値(ObsArray)をgetで取得できること');
+				ok(item.get('ary').slice(0).equals([1, 2, 3]),
 						'削除されたアイテムが持つプロパティの値(ObsArray)に対してslice(0)できること');
 
 				try {
@@ -3191,6 +3210,10 @@ $(function() {
 			dropAllModel(manager);
 		}
 	});
+
+	//=============================
+	// Body
+	//=============================
 
 	test('hasでデータモデルがアイテムを持っているかどうか判別できること', 8, function() {
 		var item = dataModel1.create({
@@ -3836,6 +3859,50 @@ $(function() {
 	// Definition
 	//=============================
 
+	module('DataItem.relatedItem');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('relatedItem: 内部で保持しているObservableArrayからDataItemを参照できる', function() {
+		var manager = h5.core.data.createManager('TestManager');
+
+		var modelDesc = {
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				obs: {
+					type: 'string[]'
+				}
+			}
+		};
+
+		var model = manager.createModel(modelDesc);
+
+		var item = model.create({
+			id: '1'
+		});
+
+		var obs = item.get('obs');
+
+		strictEqual(obs.relatedItem, item, 'relatedItemプロパティでアイテムを参照できる');
+
+		obs.addEventListener('change', function(ev) {
+			strictEqual(this.relatedItem, item, '内部ObsArrayからもrelatedItemでアイテムを参照できる');
+		});
+
+		obs.push('A'); //メソッドを実行してイベントハンドラを実行
+
+		dropAllModel(manager);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
 	module('type', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
@@ -3989,16 +4056,16 @@ $(function() {
 			});
 
 			// 初期値は正しいか
-			deepEqualObs(item.get('test1'), ['a'],
+			ok(item.get('test1').equals(['a']),
 					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+			ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
 				test1: ['c', 'z']
 			});
 
-			deepEqualObs(item.get('test1'), ['c', 'z'], 'type:\'string[]\'のプロパティに値が代入できること。');
+			ok(item.get('test1').equals(['c', 'z']), 'type:\'string[]\'のプロパティに値が代入できること。');
 
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
@@ -4225,101 +4292,98 @@ $(function() {
 		}
 	});
 
-	test(
-			'type指定 DataModel[] 正常系',
-			8,
-			function() {
-				var descriptor1 = {
-					name: 'DataModel1',
-					schema: {
-						id: {
-							id: true
-						},
-						test1: {
-							type: 'string'
-						}
-					}
-				};
-				var desc1Model = manager.createModel(descriptor1);
-				var model1DataItem1 = desc1Model.create({
-					id: sequence.next(),
-					test1: 'aaa'
-				});
-				var model1DataItem2 = desc1Model.create({
-					id: sequence.next(),
-					test1: 'bbb'
-				});
+	test('type指定 DataModel[] 正常系', 8, function() {
+		var descriptor1 = {
+			name: 'DataModel1',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'string'
+				}
+			}
+		};
+		var desc1Model = manager.createModel(descriptor1);
+		var model1DataItem1 = desc1Model.create({
+			id: sequence.next(),
+			test1: 'aaa'
+		});
+		var model1DataItem2 = desc1Model.create({
+			id: sequence.next(),
+			test1: 'bbb'
+		});
 
-				var descriptor2 = {
-					name: 'DataModel2',
-					schema: {
-						id: {
-							id: true
-						},
-						test1: {
-							type: 'number'
-						}
-					}
-				};
+		var descriptor2 = {
+			name: 'DataModel2',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'number'
+				}
+			}
+		};
 
-				var descModel2 = manager.createModel(descriptor2);
-				var model2DataItem1 = descModel2.create({
-					id: sequence.next(),
-					test1: 20
-				});
-				var model2DataItem2 = descModel2.create({
-					id: sequence.next(),
-					test1: 30
-				});
+		var descModel2 = manager.createModel(descriptor2);
+		var model2DataItem1 = descModel2.create({
+			id: sequence.next(),
+			test1: 20
+		});
+		var model2DataItem2 = descModel2.create({
+			id: sequence.next(),
+			test1: 30
+		});
 
-				var model = manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						dataModel1: {
-							type: '@DataModel1[]'
-						},
-						dataModel2: {
-							type: '@DataModel2[]'
-						}
-					}
-				});
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				dataModel1: {
+					type: '@DataModel1[]'
+				},
+				dataModel2: {
+					type: '@DataModel2[]'
+				}
+			}
+		});
 
-				// DataItemでcreateできるか
-				var item1 = model.create({
-					id: sequence.next(),
-					dataModel1: [model1DataItem1, model1DataItem2]
-				});
-				var item2 = model.create({
-					id: sequence.next(),
-					dataModel2: [model2DataItem1, model2DataItem2]
-				});
+		// DataItemでcreateできるか
+		var item1 = model.create({
+			id: sequence.next(),
+			dataModel1: [model1DataItem1, model1DataItem2]
+		});
+		var item2 = model.create({
+			id: sequence.next(),
+			dataModel2: [model2DataItem1, model2DataItem2]
+		});
 
-				equal(item1.get('dataModel1')[0].get('test1'), 'aaa',
-						'create時に指定したモデルの値が、DataItemから取得できること。');
-				equal(item1.get('dataModel1')[1].get('test1'), 'bbb',
-						'create時に指定したモデルの値が、DataItemから取得できること。');
-				deepEqualObs(item1.get('dataModel2'), [], 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
-				equal(item2.get('dataModel2')[0].get('test1'), 20,
-						'create時に指定したモデルの値が、DataItemから取得できること。');
-				equal(item2.get('dataModel2')[1].get('test1'), 30,
-						'create時に指定したモデルの値が、DataItemから取得できること。');
-				deepEqualObs(item2.get('dataModel1'), [], 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
+		equal(item1.get('dataModel1').get(0).get('test1'), 'aaa',
+				'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item1.get('dataModel1').get(1).get('test1'), 'bbb',
+				'create時に指定したモデルの値が、DataItemから取得できること。');
+		ok(item1.get('dataModel2').equals([]), 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
+		equal(item2.get('dataModel2').get(0).get('test1'), 20,
+				'create時に指定したモデルの値が、DataItemから取得できること。');
+		equal(item2.get('dataModel2').get(1).get('test1'), 30,
+				'create時に指定したモデルの値が、DataItemから取得できること。');
+		ok(item2.get('dataModel1').equals([]), 'create時に何も値を指定しない場合、空のObsArrayが取得できること。');
 
-				// 指定無し、null,空配列でcreateできるか
-				deepEqualObs(model.create({
-					id: sequence.next(),
-					dataModel1: [null]
-				}).get('dataModel1'), [null], 'create時に[null]を指定した場合、[null]が取得できること。');
+		// 指定無し、null,空配列でcreateできるか
+		ok(model.create({
+			id: sequence.next(),
+			dataModel1: [null]
+		}).get('dataModel1').equals([null]), 'create時に[null]を指定した場合、[null]が取得できること。');
 
-				deepEqualObs(model.create({
-					id: sequence.next(),
-					dataModel1: []
-				}).get('dataModel1'), [], 'create時に空配列を指定した場合、空のObsArrayが取得できること。');
+		ok(model.create({
+			id: sequence.next(),
+			dataModel1: []
+		}).get('dataModel1').equals([]), 'create時に空配列を指定した場合、空のObsArrayが取得できること。');
 
-			});
+	});
 
 	test('type指定 DataModel[] 異常系', 6, function() {
 		var descriptor1 = {
@@ -4543,16 +4607,16 @@ $(function() {
 			});
 
 			// 初期値は正しいか
-			deepEqualObs(item.get('test1'), [20],
+			ok(item.get('test1').equals([20]),
 					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+			ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
 				test1: [30, 10]
 			});
 
-			deepEqualObs(item.get('test1'), [30, 10], 'type:\'number[]\'のプロパティcreateで値が代入できること。');
+			ok(item.get('test1').equals([30, 10]), 'type:\'number[]\'のプロパティcreateで値が代入できること。');
 
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
@@ -4758,16 +4822,16 @@ $(function() {
 			});
 
 			// 初期値は正しいか
-			deepEqualObs(item.get('test1'), [50, 15],
+			ok(item.get('test1').equals([50, 15]),
 					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、空のObsArrayが代入されていること。');
+			ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、空のObsArrayが代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
 				test1: [10, 30]
 			});
 
-			deepEqualObs(item.get('test1'), [10, 30], 'type:integer[] のプロパティに値が代入できること。');
+			ok(item.get('test1').equals([10, 30]), 'type:integer[] のプロパティに値が代入できること。');
 
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
@@ -4975,17 +5039,16 @@ $(function() {
 			});
 
 			// 初期値は正しいか
-			deepEqualObs(item.get('test1'), [true, false],
+			ok(item.get('test1').equals([true, false]),
 					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-			deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+			ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 			item = model.create({
 				id: sequence.next(),
 				test1: [false, true, false]
 			});
 
-			deepEqualObs(item.get('test1'), [false, true, false],
-					'type:boolean[] のプロパティに値が代入できること。');
+			ok(item.get('test1').equals([false, true, false]), 'type:boolean[] のプロパティに値が代入できること。');
 
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
@@ -5134,63 +5197,61 @@ $(function() {
 
 	// 2012/07/27 竹内追記 type:array[]は無い
 	// 2012/08/23 福田追記 type:arrayは廃止。type:any[]を使用する
-	test('type指定 any[] 正常系',
-			function() {
-				var model = manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						test1: {
-							type: 'any[]',
-							defaultValue: [10]
-						},
-						test2: {
-							type: 'any[]'
-						}
-					}
+	test('type指定 any[] 正常系', function() {
+		var model = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				test1: {
+					type: 'any[]',
+					defaultValue: [10]
+				},
+				test2: {
+					type: 'any[]'
+				}
+			}
+		});
+
+		try {
+			var item = model.create({
+				id: sequence.next()
+			});
+
+			// 初期値は正しいか
+			ok(item.get('test1').equals([10]),
+					'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+			ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+
+			item = model.create({
+				id: sequence.next(),
+				test1: [30]
+			});
+
+			ok(item.get('test1').equals([30]), 'type:\'any\'のプロパティに値が代入できること。');
+
+			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
+			var item2 = null;
+			var sub = [new Array(10, 8), new Object(['a']), [new Number(1)], [null, undefined],
+					null, undefined];
+			for ( var i = 0; i < sub.length; i++) {
+				item2 = model.create({
+					id: sequence.next(),
+					test1: sub[i]
 				});
 
-				try {
-					var item = model.create({
-						id: sequence.next()
-					});
+				var exp = sub[i] == null ? [] : sub[i];
+				ok(item2.get('test1').equals(exp), 'test1に' + sub[i] + 'が代入されてDataItemが生成されること。');
 
-					// 初期値は正しいか
-					deepEqualObs(item.get('test1'), [10],
-							'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-					deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+				item2.set('test2', sub[i]);
 
-					item = model.create({
-						id: sequence.next(),
-						test1: [30]
-					});
-
-					deepEqualObs(item.get('test1'), [30], 'type:\'any\'のプロパティに値が代入できること。');
-
-					// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
-					var item2 = null;
-					var sub = [new Array(10, 8), new Object(['a']), [new Number(1)],
-							[null, undefined], null, undefined];
-					for ( var i = 0; i < sub.length; i++) {
-						item2 = model.create({
-							id: sequence.next(),
-							test1: sub[i]
-						});
-
-						var exp = sub[i] == null ? [] : sub[i];
-						deepEqualObs(item2.get('test1'), exp, 'test1に' + sub[i]
-								+ 'が代入されてDataItemが生成されること。');
-
-						item2.set('test2', sub[i]);
-
-						deepEqualObs(item2.get('test2'), exp, 'typeプロパティで指定した型の値が代入できること。');
-					}
-				} catch (e) {
-					ok(false, 'エラーが発生しました。『' + e.message + '』');
-				}
-			});
+				ok(item2.get('test2').equals(exp), 'typeプロパティで指定した型の値が代入できること。');
+			}
+		} catch (e) {
+			ok(false, 'エラーが発生しました。『' + e.message + '』');
+		}
+	});
 
 	test('type指定 any[] 異常系', function() {
 		var model = manager.createModel({
@@ -5391,16 +5452,15 @@ $(function() {
 		});
 
 		// 初期値は正しいか
-		deepEqualObs(item.get('test1'), [10],
-				'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
-		deepEqualObs(item.get('test2'), [], 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
+		ok(item.get('test1').equals([10]), 'DefaultValueが指定されている場合、defaultValueに指定した値が代入されていること。');
+		ok(item.get('test2').equals([]), 'DefaultValueが未指定の場合、型に応じた初期値が代入されていること。');
 
 		item = model.create({
 			id: sequence.next(),
 			test1: ['a']
 		});
 
-		deepEqualObs(item.get('test1'), ['a'], 'type:\'enum[]\'のプロパティに値が代入できること。');
+		ok(item.get('test1').equals(['a']), 'type:\'enum[]\'のプロパティに値が代入できること。');
 
 		// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 		var item2 = null;
@@ -5413,12 +5473,12 @@ $(function() {
 			});
 
 			var exp = sub[i] == null ? [] : sub[i];
-			deepEqualObs(item2.get('test2'), exp, 'test2に[' + Array.prototype.toString.call(exp)
+			ok(item2.get('test2').equals(exp), 'test2に[' + Array.prototype.toString.call(exp)
 					+ ']が代入されてDataItemが生成されること。');
 
 			item2.set('test2', sub[i]);
 
-			deepEqualObs(item2.get('test2'), exp, 'typeプロパティで指定した型の値が代入できること。');
+			ok(item2.get('test2').equals(exp), 'typeプロパティで指定した型の値が代入できること。');
 		}
 	});
 
@@ -5670,7 +5730,7 @@ $(function() {
 				},
 				test9: {
 					type: 'any[]',
-					defaultValue: [30, 'ZZZ', /[0-9]/],
+					defaultValue: [30, 'ZZZ', this.regex],
 					constraint: constraint
 				},
 				test10: {
@@ -5692,13 +5752,13 @@ $(function() {
 				},
 				test13: {
 					type: 'enum',
-					enumValue: [10.8, 'a', 5, true, [1, 2, 3], /[0-9]/, testClass1, itemB],
+					enumValue: [10.8, 'a', 5, true, [1, 2, 3], this.regex, testClass1, itemB],
 					defaultValue: 10.8,
 					constraint: constraint
 				},
 				test14: {
 					type: 'enum[]',
-					enumValue: [itemB, testClass1, /[0-9]/, [10, 20, 30], true, 5, 'YYY', 10.8],
+					enumValue: [itemB, testClass1, this.regex, [10, 20, 30], true, 5, 'YYY', 10.8],
 					defaultValue: [testClass1],
 					constraint: constraint
 				}
@@ -5711,7 +5771,8 @@ $(function() {
 			testClass1 = null;
 			itemA = null;
 			itemB = null;
-		}
+		},
+		regex: /[0-9]/
 	});
 
 	//=============================
@@ -5738,21 +5799,21 @@ $(function() {
 			id: sequence.next()
 		});
 		equal(item1.get('test1'), 'aaa', msg);
-		deepEqualObs(item1.get('test2'), ['a', 'b', 'c'], msg);
+		ok(item1.get('test2').equals(['a', 'b', 'c']), msg);
 		equal(item1.get('test3'), 10.5, msg);
-		deepEqualObs(item1.get('test4'), [20.1, 20.2, 20.3], msg);
+		ok(item1.get('test4').equals([20.1, 20.2, 20.3]), msg);
 		equal(item1.get('test5'), 6, msg);
-		deepEqualObs(item1.get('test6'), [7, 8, 9], msg);
+		ok(item1.get('test6').equals([7, 8, 9]), msg);
 		equal(item1.get('test7'), true, msg);
-		deepEqualObs(item1.get('test8'), [true, false], msg);
-		deepEqualObs(item1.get('test9'), [30, 'ZZZ', /[0-9]/], msg);
+		ok(item1.get('test8').equals([true, false]), msg);
+		ok(item1.get('test9').equals([30, 'ZZZ', this.regex]), msg);
 		deepEqual(item1.get('test10'), {
 			hoge: 1
 		}, msg);
 		equal(item1.get('test11'), itemA, msg);
-		deepEqualObs(item1.get('test12'), [itemB, itemA], msg);
+		ok(item1.get('test12').equals([itemB, itemA]), msg);
 		equal(item1.get('test13'), 10.8, msg);
-		deepEqualObs(item1.get('test14'), [testClass1], msg);
+		ok(item1.get('test14').equals([testClass1]), msg);
 
 		var $div = $('<div></div>');
 
@@ -5777,19 +5838,19 @@ $(function() {
 			test14: [5]
 		});
 		strictEqual(item2.get('test1'), 'bbb', msg);
-		deepEqualObs(item2.get('test2'), ['A', 'B', 'C'], msg);
+		ok(item2.get('test2').equals(['A', 'B', 'C']), msg);
 		strictEqual(item2.get('test3'), 120.1, msg);
-		deepEqualObs(item2.get('test4'), [81.1, 81.2, 81.3], msg);
+		ok(item2.get('test4').equals([81.1, 81.2, 81.3]), msg);
 		strictEqual(item2.get('test5'), 3000, msg);
-		deepEqualObs(item2.get('test6'), [4000, 5000, 6000], msg);
+		ok(item2.get('test6').equals([4000, 5000, 6000]), msg);
 		strictEqual(item2.get('test7'), false, msg);
-		deepEqualObs(item2.get('test8'), [false, false], msg);
-		deepEqualObs(item2.get('test9'), [true, '9999', 70.5], msg);
+		ok(item2.get('test8').equals([false, false]), msg);
+		ok(item2.get('test9').equals([true, '9999', 70.5]), msg);
 		strictEqual(item2.get('test10'), $div, msg);
 		strictEqual(item2.get('test11'), itemB, msg);
-		deepEqualObs(item2.get('test12'), [itemA], msg);
+		ok(item2.get('test12').equals([itemA]), msg);
 		strictEqual(item2.get('test13'), true, msg);
-		deepEqualObs(item2.get('test14'), [5], msg);
+		ok(item2.get('test14').equals([5]), msg);
 
 		// setできること
 		msg = '条件を満たす値をsetできること';
@@ -5798,28 +5859,29 @@ $(function() {
 		strictEqual(item2.get('test1'), 'ccc', msg);
 
 		item2.set('test2', ['aa', 'bb', 'cc']);
-		deepEqualObs(item2.get('test2'), ['aa', 'bb', 'cc'], msg);
+		ok(item2.get('test2').equals(['aa', 'bb', 'cc']), msg);
 
 		item2.set('test3', 0);
 		strictEqual(item2.get('test3'), 0, msg);
 
 		item2.set('test4', [1, 2, 3]);
-		deepEqualObs(item2.get('test4'), [1, 2, 3], msg);
+		ok(item2.get('test4').equals([1, 2, 3]), msg);
 
 		item2.set('test5', -3000);
 		strictEqual(item2.get('test5'), -3000, msg);
 
 		item2.set('test6', [1, 2, 3]);
-		deepEqualObs(item2.get('test6'), [1, 2, 3], msg);
+		ok(item2.get('test6').equals([1, 2, 3]), msg);
 
 		item2.set('test7', true);
 		strictEqual(item2.get('test7'), true, msg);
 
 		item2.set('test8', [true, true, false]);
-		deepEqualObs(item2.get('test8'), [true, true, false], msg);
+		ok(item2.get('test8').equals([true, true, false]), msg);
 
-		item2.set('test9', [[1], 2, 'aaa']);
-		deepEqualObs(item2.get('test9'), [[1], 2, 'aaa'], msg);
+		var ary = [1];
+		item2.set('test9', [ary, 2, 'aaa']);
+		ok(item2.get('test9').equals([ary, 2, 'aaa']), msg);
 
 		item2.set('test10', {
 			a: 'b'
@@ -5832,13 +5894,13 @@ $(function() {
 		strictEqual(item2.get('test11'), itemA, msg);
 
 		item2.set('test12', [itemA, itemB, itemB]);
-		deepEqualObs(item2.get('test12'), [itemA, itemB, itemB], msg);
+		ok(item2.get('test12').equals([itemA, itemB, itemB]), msg);
 
 		item2.set('test13', 10.8);
 		strictEqual(item2.get('test13'), 10.8, msg);
 
 		item2.set('test14', [testClass1, 'YYY', true, true]);
-		deepEqualObs(item2.get('test14'), [testClass1, 'YYY', true, true], msg);
+		ok(item2.get('test14').equals([testClass1, 'YYY', true, true]), msg);
 
 
 	});
@@ -5932,7 +5994,7 @@ $(function() {
 		});
 
 		equal(item.get('test1'), 'test1', msg);
-		deepEqualObs(item.get('test2'), ['a', 'b', 'c'], msg);
+		ok(item.get('test2').equals(['a', 'b', 'c']), msg);
 
 		// 値を指定してcreateできること
 		msg = '条件を満たす値を持つDataItemが作成できること';
@@ -5944,7 +6006,7 @@ $(function() {
 		});
 
 		equal(item.get('test1'), 'bbb', msg);
-		deepEqualObs(item.get('test2'), ['A', 'B', 'C'], msg);
+		ok(item.get('test2').equals(['A', 'B', 'C']), msg);
 
 
 		// setできること
@@ -5954,11 +6016,11 @@ $(function() {
 		strictEqual(item.get('test1'), 'bbb', msg);
 
 		item.set('test2', ['aa', 'bb', 'cc']);
-		deepEqualObs(item.get('test2'), ['aa', 'bb', 'cc'], msg);
+		ok(item.get('test2').equals(['aa', 'bb', 'cc']), msg);
 
 		// string[]に[]をsetできること
 		item.set('test2', []);
-		deepEqualObs(item.get('test2'), [], msg);
+		ok(item.get('test2').equals([]), msg);
 	});
 
 	test(
@@ -6124,102 +6186,104 @@ $(function() {
 	// Body
 	//=============================
 
-	test('制約が適用されているか 正常系', 22, function() {
-		// 値を指定しないでcreate
-		var item = constraintModel.create({
-			id: sequence.next()
-		});
-		equal(item.get('num'), -5.5, 'type:num minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-		deepEqualObs(item.get('numA'), [55, -5.5],
-				'type:num[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-		equal(item.get('int'), 5, 'type:int minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-		deepEqualObs(item.get('intA'), [5, 6, 7],
-				'type:int[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+	test('制約が適用されているか 正常系', 22,
+			function() {
+				// 値を指定しないでcreate
+				var item = constraintModel.create({
+					id: sequence.next()
+				});
+				equal(item.get('num'), -5.5,
+						'type:num minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				ok(item.get('numA').equals([55, -5.5]),
+						'type:num[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				equal(item.get('int'), 5, 'type:int minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
+				ok(item.get('intA').equals([5, 6, 7]),
+						'type:int[] minの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
-		// create
-		item = constraintModel.create({
-			id: sequence.next(),
-			num: -5.5,
-			numA: [-5.5, 0, 6.6, Infinity],
-			int: 5,
-			intA: [5, 10]
-		});
+				// create
+				item = constraintModel.create({
+					id: sequence.next(),
+					num: -5.5,
+					numA: [-5.5, 0, 6.6, Infinity],
+					int: 5,
+					intA: [5, 10]
+				});
 
-		equal(item.get('num'), -5.5, 'type:num minの条件を満たす値でcreateできること');
-		deepEqualObs(item.get('numA'), [-5.5, 0, 6.6, Infinity],
-				'type:num[] minの条件を満たす値でcreateできること');
-		equal(item.get('int'), 5, 'type:intでminの条件を満たす値でcreateできること');
-		deepEqualObs(item.get('intA'), [5, 10], 'type:int[] minの条件を満たす値でcreateできること');
+				equal(item.get('num'), -5.5, 'type:num minの条件を満たす値でcreateできること');
+				ok(item.get('numA').equals([-5.5, 0, 6.6, Infinity]),
+						'type:num[] minの条件を満たす値でcreateできること');
+				equal(item.get('int'), 5, 'type:intでminの条件を満たす値でcreateできること');
+				ok(item.get('intA').equals([5, 10]), 'type:int[] minの条件を満たす値でcreateできること');
 
-		// set
-		item.set({
-			num: Infinity,
-			numA: [123.456],
-			int: 6,
-			intA: [5, 6, 7]
-		});
-		equal(item.get('num'), Infinity, 'type:num minの条件を満たす値をsetできること');
-		deepEqualObs(item.get('numA'), [123.456], 'type:num[] minの条件を満たす値をsetできること');
-		equal(item.get('int'), 6, 'type:int minの条件を満たす値をsetできること');
-		deepEqualObs(item.get('intA'), [5, 6, 7], 'type:int[] minの条件を満たす値をsetできること');
+				// set
+				item.set({
+					num: Infinity,
+					numA: [123.456],
+					int: 6,
+					intA: [5, 6, 7]
+				});
+				equal(item.get('num'), Infinity, 'type:num minの条件を満たす値をsetできること');
+				ok(item.get('numA').equals([123.456]), 'type:num[] minの条件を満たす値をsetできること');
+				equal(item.get('int'), 6, 'type:int minの条件を満たす値をsetできること');
+				ok(item.get('intA').equals([5, 6, 7]), 'type:int[] minの条件を満たす値をsetできること');
 
-		// nullをset
-		item.set({
-			num: null,
-			numA: [null, null],
-			int: null,
-			intA: [null, null]
-		});
-		equal(item.get('num'), null, 'type:num nullをsetできること');
-		deepEqualObs(item.get('numA'), [null, null], 'type:num[] [null, null]をsetできること');
-		equal(item.get('int'), null, 'type:int nullをsetできること');
-		deepEqualObs(item.get('intA'), [null, null], 'type:int[] [null, null]をsetできること');
+				// nullをset
+				item.set({
+					num: null,
+					numA: [null, null],
+					int: null,
+					intA: [null, null]
+				});
+				equal(item.get('num'), null, 'type:num nullをsetできること');
+				ok(item.get('numA').equals([null, null]), 'type:num[] [null, null]をsetできること');
+				equal(item.get('int'), null, 'type:int nullをsetできること');
+				ok(item.get('intA').equals([null, null]), 'type:int[] [null, null]をsetできること');
 
-		// 空配列をset
-		item.set({
-			numA: [],
-			intA: []
-		});
-		deepEqualObs(item.get('numA'), [], 'type:num[] []をsetできること');
-		deepEqualObs(item.get('intA'), [], 'type:int[] []をsetできること');
+				// 空配列をset
+				item.set({
+					numA: [],
+					intA: []
+				});
+				ok(item.get('numA').equals([]), 'type:num[] []をsetできること');
+				ok(item.get('intA').equals([]), 'type:int[] []をsetできること');
 
-		// defaultValueが設定されていない場合
-		var constraint = {
-			min: 10
-		};
-		var model2 = manager.createModel({
-			name: 'TestModel2',
-			schema: {
-				id: {
-					id: true
-				},
-				num: {
-					type: 'number',
-					constraint: constraint
-				},
-				numA: {
-					type: 'number[]',
-					constraint: constraint
-				},
-				int: {
-					type: 'integer',
-					constraint: constraint
-				},
-				intA: {
-					type: 'integer[]',
-					constraint: constraint
-				}
-			}
-		});
-		item = model2.create({
-			id: sequence.next()
-		});
-		strictEqual(item.get('num'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-		deepEqualObs(item.get('numA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
-		strictEqual(item.get('int'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-		deepEqualObs(item.get('intA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+				// defaultValueが設定されていない場合
+				var constraint = {
+					min: 10
+				};
+				var model2 = manager.createModel({
+					name: 'TestModel2',
+					schema: {
+						id: {
+							id: true
+						},
+						num: {
+							type: 'number',
+							constraint: constraint
+						},
+						numA: {
+							type: 'number[]',
+							constraint: constraint
+						},
+						int: {
+							type: 'integer',
+							constraint: constraint
+						},
+						intA: {
+							type: 'integer[]',
+							constraint: constraint
+						}
+					}
+				});
+				item = model2.create({
+					id: sequence.next()
+				});
+				strictEqual(item.get('num'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+				ok(item.get('numA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+				strictEqual(item.get('int'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+				ok(item.get('intA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
 
-	});
+			});
 
 	test('制約が適用されているか 異常系', 8, function() {
 		//create
@@ -6362,10 +6426,10 @@ $(function() {
 			id: sequence.next()
 		});
 		equal(item.get('num'), -5.5, 'type:num maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-		deepEqualObs(item.get('numA'), [-55, 5.5],
+		ok(item.get('numA').equals([-55, 5.5]),
 				'type:num[] maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 		equal(item.get('int'), 5, 'type:int maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-		deepEqualObs(item.get('intA'), [3, 4, 5],
+		ok(item.get('intA').equals([3, 4, 5]),
 				'type:int[] maxの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 		// create
@@ -6378,10 +6442,9 @@ $(function() {
 		});
 
 		equal(item.get('num'), -5.5, 'type:num maxの条件を満たす値でcreateできること');
-		deepEqualObs(item.get('numA'), [5.5, 0, -5, -Infinity],
-				'type:num[] maxの条件を満たす値でcreateできること');
+		ok(item.get('numA').equals([5.5, 0, -5, -Infinity]), 'type:num[] maxの条件を満たす値でcreateできること');
 		equal(item.get('int'), 5, 'type:intでmaxの条件を満たす値でcreateできること');
-		deepEqualObs(item.get('intA'), [5, -100], 'type:int[] maxの条件を満たす値でcreateできること');
+		ok(item.get('intA').equals([5, -100]), 'type:int[] maxの条件を満たす値でcreateできること');
 
 		// set
 		item.set({
@@ -6391,9 +6454,9 @@ $(function() {
 			intA: [0, 1, 2]
 		});
 		equal(item.get('num'), -Infinity, 'type:num maxの条件を満たす値をsetできること');
-		deepEqualObs(item.get('numA'), [5.5], 'type:num[] maxの条件を満たす値をsetできること');
+		ok(item.get('numA').equals([5.5]), 'type:num[] maxの条件を満たす値をsetできること');
 		equal(item.get('int'), 4, 'type:int maxの条件を満たす値をsetできること');
-		deepEqualObs(item.get('intA'), [0, 1, 2], 'type:int[] maxの条件を満たす値をsetできること');
+		ok(item.get('intA').equals([0, 1, 2]), 'type:int[] maxの条件を満たす値をsetできること');
 
 		// nullをset
 		item.set({
@@ -6403,17 +6466,17 @@ $(function() {
 			intA: [null, null]
 		});
 		equal(item.get('num'), null, 'type:num nullをsetできること');
-		deepEqualObs(item.get('numA'), [null, null], 'type:num[] [null, null]をsetできること');
+		ok(item.get('numA').equals([null, null]), 'type:num[] [null, null]をsetできること');
 		equal(item.get('int'), null, 'type:int nullをsetできること');
-		deepEqualObs(item.get('intA'), [null, null], 'type:int[] [null, null]をsetできること');
+		ok(item.get('intA').equals([null, null]), 'type:int[] [null, null]をsetできること');
 
 		// 空配列をset
 		item.set({
 			numA: [],
 			intA: []
 		});
-		deepEqualObs(item.get('numA'), [], 'type:num[] []をsetできること');
-		deepEqualObs(item.get('intA'), [], 'type:int[] []をsetできること');
+		ok(item.get('numA').equals([]), 'type:num[] []をsetできること');
+		ok(item.get('intA').equals([]), 'type:int[] []をsetできること');
 
 		// defaultValueが設定されていない場合
 		var constraint = {
@@ -6447,9 +6510,9 @@ $(function() {
 			id: sequence.next()
 		});
 		strictEqual(item.get('num'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-		deepEqualObs(item.get('numA'), [], 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+		ok(item.get('numA').equals([]), 'defaultValue指定無しで、値nullのアイテムがcreateできること');
 		strictEqual(item.get('int'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-		deepEqualObs(item.get('intA'), [], 'defaultValue指定無しで、値nullのアイテムがcreateできること');
+		ok(item.get('intA').equals([]), 'defaultValue指定無しで、値nullのアイテムがcreateできること');
 
 	});
 
@@ -6572,9 +6635,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test(
-			'制約が適用されているか 正常系',
-			11,
+	test('制約が適用されているか 正常系', 11,
 			function() {
 				// 値を指定しないでcreate
 				var item = constraintModel.create({
@@ -6582,7 +6643,7 @@ $(function() {
 				});
 				equal(item.get('str'), 'ab',
 						'type:string minLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-				deepEqualObs(item.get('strA'), ['ab', 'abc'],
+				ok(item.get('strA').equals(['ab', 'abc']),
 						'type:num[] minLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 				// create
@@ -6594,7 +6655,7 @@ $(function() {
 
 				equal(item.get('str'), 'AB',
 						'type:string minLengthの条件を満たす値でcreateした時、値を指定しないでcreateできること');
-				deepEqualObs(item.get('strA'), ['ABC', 'AB'],
+				ok(item.get('strA').equals(['ABC', 'AB']),
 						'type:num[] minLengthの条件を満たす値でcreate時、値を指定しないでcreateできること');
 
 				// set
@@ -6604,7 +6665,7 @@ $(function() {
 				});
 				equal(item.get('str'), 'CD',
 						'type:string minLengthの条件を満たす値でcreateした時、値を指定しないでcreateできること');
-				deepEqualObs(item.get('strA'), ['CDE', 'CD'],
+				ok(item.get('strA').equals(['CDE', 'CD']),
 						'type:num[] minLengthの条件を満たす値でcreate時、値を指定しないでcreateできること');
 
 				// nullをset
@@ -6613,13 +6674,13 @@ $(function() {
 					strA: [null, null]
 				});
 				equal(item.get('str'), null, 'type:string nullをsetできること');
-				deepEqualObs(item.get('strA'), [null, null], 'type:string[] [null, null]をsetできること');
+				ok(item.get('strA').equals([null, null]), 'type:string[] [null, null]をsetできること');
 
 				// []をset
 				item.set({
 					strA: []
 				});
-				deepEqualObs(item.get('strA'), [], 'type:string[] 空配列をsetできること');
+				ok(item.get('strA').equals([]), 'type:string[] 空配列をsetできること');
 
 				// defaultValueが設定されていない場合
 				var constraint = {
@@ -6645,7 +6706,7 @@ $(function() {
 					id: sequence.next()
 				});
 				strictEqual(item.get('str'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-				deepEqualObs(item.get('strA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+				ok(item.get('strA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
 			});
 
 	test('制約が適用されているか 異常系', 4, function() {
@@ -6745,7 +6806,7 @@ $(function() {
 				});
 				equal(item.get('str'), 'ab',
 						'type:string maxLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-				deepEqualObs(item.get('strA'), ['ab', 'a'],
+				ok(item.get('strA').equals(['ab', 'a']),
 						'type:num[] maxLengthの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 				// create
@@ -6756,8 +6817,7 @@ $(function() {
 				});
 
 				equal(item.get('str'), 'AB', 'type:string maxLengthの条件を満たす値でcreateできること');
-				deepEqualObs(item.get('strA'), ['A', 'AB'],
-						'type:num[] maxLengthの条件を満たす値でcreateできること');
+				ok(item.get('strA').equals(['A', 'AB']), 'type:num[] maxLengthの条件を満たす値でcreateできること');
 
 				// set
 				item.set({
@@ -6766,7 +6826,7 @@ $(function() {
 				});
 				equal(item.get('str'), 'CD',
 						'type:string maxLengthの条件を満たす値でcreateした時、値を指定しないでcreateできること');
-				deepEqualObs(item.get('strA'), ['', null, 'C', 'CD'],
+				ok(item.get('strA').equals(['', null, 'C', 'CD']),
 						'type:num[] maxLengthの条件を満たす値でcreate時、値を指定しないでcreateできること');
 
 				// nullをset
@@ -6775,13 +6835,13 @@ $(function() {
 					strA: [null, null]
 				});
 				equal(item.get('str'), null, 'type:string nullをsetできること');
-				deepEqualObs(item.get('strA'), [null, null], 'type:string[] [null, null]をsetできること');
+				ok(item.get('strA').equals([null, null]), 'type:string[] [null, null]をsetできること');
 
 				// []をset
 				item.set({
 					strA: []
 				});
-				deepEqualObs(item.get('strA'), [], 'type:string[] 空配列をsetできること');
+				ok(item.get('strA').equals([]), 'type:string[] 空配列をsetできること');
 
 				// defaultValueが設定されていない場合
 				var constraint = {
@@ -6807,7 +6867,7 @@ $(function() {
 					id: sequence.next()
 				});
 				strictEqual(item.get('str'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-				deepEqualObs(item.get('strA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+				ok(item.get('strA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
 			});
 
 	test('制約が適用されているか 異常系', 4, function() {
@@ -6895,9 +6955,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test(
-			'制約が適用されているか 正常系',
-			11,
+	test('制約が適用されているか 正常系', 11,
 			function() {
 				// 値を指定しないでcreate
 				var item = constraintModel.create({
@@ -6905,7 +6963,7 @@ $(function() {
 				});
 				equal(item.get('str'), 'h5',
 						'type:string patternの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
-				deepEqualObs(item.get('strA'), ['H5aa', 'h5'],
+				ok(item.get('strA').equals(['H5aa', 'h5']),
 						'type:num[] patternの条件をdefaultValueが満たす時、値を指定しないでcreateできること');
 
 				// create
@@ -6916,7 +6974,7 @@ $(function() {
 				});
 
 				equal(item.get('str'), 'H555', 'type:string patternの条件を満たす値でcreateできること');
-				deepEqualObs(item.get('strA'), ['h555', null, 'h5'],
+				ok(item.get('strA').equals(['h555', null, 'h5']),
 						'type:num[] patternの条件を満たす値でcreateできること');
 
 				// set
@@ -6926,7 +6984,7 @@ $(function() {
 				});
 				equal(item.get('str'), 'h5',
 						'type:string patternの条件を満たす値でcreateした時、値を指定しないでcreateできること');
-				deepEqualObs(item.get('strA'), ['h5', null],
+				ok(item.get('strA').equals(['h5', null]),
 						'type:num[] patternの条件を満たす値でcreate時、値を指定しないでcreateできること');
 
 				// nullをset
@@ -6935,13 +6993,13 @@ $(function() {
 					strA: [null, null]
 				});
 				equal(item.get('str'), null, 'type:string nullをsetできること');
-				deepEqualObs(item.get('strA'), [null, null], 'type:string[] [null, null]をsetできること');
+				ok(item.get('strA').equals([null, null]), 'type:string[] [null, null]をsetできること');
 
 				// 空配列をset
 				item.set({
 					strA: []
 				});
-				deepEqualObs(item.get('strA'), [], 'type:string[] 空配列をsetできること');
+				ok(item.get('strA').equals([]), 'type:string[] 空配列をsetできること');
 
 				// defaultValueが設定されていない場合
 				var constraint = {
@@ -6967,7 +7025,7 @@ $(function() {
 					id: sequence.next()
 				});
 				strictEqual(item.get('str'), null, 'defaultValue指定無しで、値nullのアイテムがcreateできること');
-				deepEqualObs(item.get('strA'), [], 'defaultValue指定無しで、値[]のアイテムがcreateできること');
+				ok(item.get('strA').equals([]), 'defaultValue指定無しで、値[]のアイテムがcreateできること');
 			});
 
 	test('制約が適用されているか 異常系', 4, function() {
@@ -8417,13 +8475,13 @@ $(function() {
 		strictEqual(item.get('testN3'), 20.1,
 				'type:numberでdefaultValueがパース可能な文字列のStringラッパークラスの場合、自動的に数値に変換されること。');
 
-		deepEqualObs(item.get('testSA1'), ['ABC'],
+		ok(item.get('testSA1').equals(['ABC']),
 				'type:string[]でdefaultValueが型変換可能な値を要素に持つ配列の場合、自動的に変換されること。');
 
-		deepEqualObs(item.get('testIA1'), [30, 30, 30],
+		ok(item.get('testIA1').equals([30, 30, 30]),
 				'type:numberでdefaultValueが型変換可能な値を要素に持つ配列の場合、自動的に変換されること。');
 
-		deepEqualObs(item.get('testNA1'), [40.1, 40.1, 40.1],
+		ok(item.get('testNA1').equals([40.1, 40.1, 40.1]),
 				'type:numberでdefaultValueが型変換可能な値を要素に持つ配列の場合、自動的に変換されること。');
 
 	});
@@ -8459,9 +8517,9 @@ $(function() {
 						'type:numberのプロパティにパース可能な文字列(整数)をsetすると、自動的に数値に変換されること。');
 				strictEqual(item.get('testN3'), -50.1,
 						'type:numberのプロパティにパース可能な文字列(整数)をsetすると、自動的に数値に変換されること。');
-				deepEqualObs(item.get('testSA1'), ['A', 'B', 'C']);
-				deepEqualObs(item.get('testIA1'), [60, 60, 60]);
-				deepEqualObs(item.get('testNA1'), [70.1, 70.1, 70.1]);
+				ok(item.get('testSA1').equals(['A', 'B', 'C']));
+				ok(item.get('testIA1').equals([60, 60, 60]));
+				ok(item.get('testNA1').equals([70.1, 70.1, 70.1]));
 			});
 
 	//=============================
@@ -9236,18 +9294,19 @@ $(function() {
 				order.push('manager');
 				evObj = evObj || {};
 				evObj['manager'] = ev;
-			}
+			};
+
 			modelEventListener = function(ev) {
 				order.push('model');
 				evObj = evObj || {};
 				evObj['model'] = ev;
-			}
+			};
 
 			itemEventListener = function(ev) {
 				order.push('item');
 				evObj = evObj || {};
 				evObj['item'] = ev;
-			}
+			};
 
 			manager.addEventListener('itemsChange', managerEventListener);
 			dataModel1.addEventListener('itemsChange', modelEventListener);
@@ -9379,6 +9438,37 @@ $(function() {
 
 		order = [];
 		item.set('testBA1', [new Boolean(true), new Boolean(false), new Boolean(true)]);
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+	});
+
+	test('DataItemの値set時で、NaNのものにNaNをセットした時にはイベントハンドラは実行されないこと', 2, function() {
+		var model = manager.createModel({
+			name: 'NaNTestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {
+					defaultValue: NaN
+				},
+				ary: {
+					type: 'any[]',
+					defaultValue: [1, NaN, 3]
+				}
+			}
+		});
+		item = model.create({
+			id: '1'
+		});
+
+		item.addEventListener('change', itemEventListener);
+
+		order = [];
+		item.set('val', NaN);
+		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
+
+		order = [];
+		item.set('ary', [1, NaN, 3]);
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 	});
 
@@ -9747,7 +9837,7 @@ $(function() {
 		});
 
 		var order = [];
-		item.get('ary').addEventListener('observe', function(ev) {
+		item.get('ary').addEventListener('change', function(ev) {
 			order.push(ev.method);
 		});
 		manager.beginUpdate();
@@ -10110,7 +10200,7 @@ $(function() {
 		strictEqual(ev.target, item2, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
 		deepEqual(ev.props.ary.oldValue, [], 'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
 		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
-		deepEqualObs(ev.props.ary.newValue, ['a', 'b'],
+		ok(ev.props.ary.newValue.equals(['a', 'b']),
 				'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
 		strictEqual(ev.props.ary.newValue, item2.get('ary'),
 				'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
@@ -10132,7 +10222,7 @@ $(function() {
 		deepEqual(ev.props.ary.oldValue, ['a', 'b'],
 				'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
 		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
-		deepEqualObs(ev.props.ary.newValue, ['A', 'B'],
+		ok(ev.props.ary.newValue.equals(['A', 'B']),
 				'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
 		strictEqual(ev.props.ary.newValue, item2.get('ary'),
 				'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
@@ -10153,12 +10243,12 @@ $(function() {
 		deepEqual(ev.props.ary.oldValue, ['A', 'B'],
 				'changeイベントオブジェクトのpropsプロパティに、oldValueが正しく格納されていること');
 		ok($.isArray(ev.props.ary.oldValue), 'oldValueはArrayクラスであること');
-		deepEqualObs(ev.props.ary.newValue, ['B'],
+		ok(ev.props.ary.newValue.equals(['B']),
 				'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
 		strictEqual(ev.props.ary.newValue, item2.get('ary'),
 				'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
 		ok($.isArray(ev.props.ary2.oldValue), 'oldValueはArrayクラスであること');
-		deepEqualObs(ev.props.ary2.newValue, ['C', 'D'],
+		ok(ev.props.ary2.newValue.equals(['C', 'D']),
 				'changeイベントオブジェクトのpropsプロパティに、newValueが正しく格納されていること');
 		strictEqual(ev.props.ary2.newValue, item2.get('ary2'),
 				'newValueはObservalArrayで、アイテムが持つものと同じインスタンスであること');
