@@ -240,6 +240,7 @@
 	 * @returns {Function[]} AOP用関数配列.
 	 */
 	function getInterceptors(targetName, pcName) {
+		/** @type Any */
 		var ret = [];
 		var aspects = h5.settings.aspects;
 		// 織り込むべきアスペクトがない場合はそのまま空の配列を返す
@@ -642,8 +643,12 @@
 		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
 		// unbindMapにラップしたものが登録されるように、このタイミングで行う必要がある
 		var handler = bindObj.handler;
+
 		bindObj.handler = function(/* var args */) {
-			handler.call(bindObj.controller, createEventContext(bindObj, arguments));
+			var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(arguments[0].currentTarget)
+					: arguments[0].currentTarget;
+			handler.call(bindObj.controller, createEventContext(bindObj, arguments),
+					currentTargetShortcut);
 		};
 		// アンバインドマップにハンドラを追加
 		registerUnbindMap(bindObj.controller, bindObj.selector, bindObj.eventName, bindObj.handler);

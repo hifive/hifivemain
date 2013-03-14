@@ -91,7 +91,7 @@
 	h5.settings = {
 
 		/**
-		 * failコールバックが設定されていない時にrejectされた場合に発動する共通ハンドラ.
+		 * failコールバックが設定されていない時にrejectされた場合に発動する共通ハンドラをセットします。
 		 *
 		 * @memberOf h5.settings
 		 * @type Function
@@ -112,7 +112,16 @@
 		 * @memberOf h5.settings
 		 * @type Object
 		 */
-		log: null
+		log: null,
+
+		/**
+		 * コントローラのイベントリスナーのターゲット要素（第2引数）をどの形式で渡すかを設定します。<br>
+		 * <ul>
+		 * <li>1 (default) : jQueryオブジェクト
+		 * <li>0 : ネイティブ形式（DOM要素そのもの）
+		 * </ul>
+		 */
+		listenerElementType: 1
 	};
 
 	// h5preinitでglobalAspectsの設定をしている関係上、別ファイルではなく、ここに置いている。
