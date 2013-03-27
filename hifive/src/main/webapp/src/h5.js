@@ -91,7 +91,61 @@
 	h5.settings = {
 
 		/**
-		 * failコールバックが設定されていない時にrejectされた場合に発動する共通ハンドラをセットします。
+		 * failコールバックの設定されていないDeferred/Promiseオブジェクトの共通のエラー処理
+		 * <p>
+		 * failコールバックが一つも設定されていないDeferredオブジェクトがrejectされたときにcommonFailHandlerに設定した関数が実行されます。
+		 * <p>
+		 * <p>
+		 * commonFailHandlerが実行されるDeferredオブジェクトは、h5.async.deferred()で作成したDeferredオブジェクトかhifive内部で生成されているDeferredオブジェクトだけです。
+		 * jQuery.Deferred()で生成したDeferredオブジェクトは対象ではありません。
+		 * </p>
+		 * <p>
+		 * commonFailHandlerの引数と関数内のthisは通常のfailハンドラと同様で、それぞれ、rejectで渡された引数、rejectの呼ばれたDefferedオブジェクト、です。
+		 * </p>
+		 * <h4>サンプル</h4>
+		 * <pre>
+		 * // commonFailHandlerの登録
+		 * h5.settings.commonFailHandler = function(e) {
+		 * 	alert(e);
+		 * };
+		 *
+		 * // Deferredオブジェクトの生成
+		 * var dfd1 = h5.async.deferred();
+		 * var dfd2 = h5.async.deferred();
+		 * var dfd3 = h5.async.deferred();
+		 *
+		 * dfd1.reject(1);
+		 * // alert(1); が実行される
+		 *
+		 * dfd2.fail(function() {});
+		 * dfd2.reject(2);
+		 * // failコールバックが登録されているので、commonFailHandlerは実行されない
+		 *
+		 * var promise3 = dfd3.promise();
+		 * promise3.fail(function() {});
+		 * dfd3.reject(3);
+		 * // promiseオブジェクトからfailコールバックを登録した場合も、commonFailHandlerは実行されない
+		 *
+		 * h5.ajax('hoge');
+		 * // 'hoge'へのアクセスがエラーになる場合、commonFailHandlerが実行される。
+		 * // エラーオブジェクトが引数に渡され、[object Object]がalertで表示される。
+		 * // h5.ajax()の戻り値であるDeferredオブジェクトが内部で生成されており、
+		 * // そのDeferredオブジェクトにfailハンドラが登録されていないためである。
+		 *
+		 * var d = h5.ajax('hoge');
+		 * d.fail(function() {});
+		 * // failハンドラが登録されているため、commonFailHandlerは実行されない
+		 * </pre>
+		 *
+		 * <h4>デフォルトの設定</h4>
+		 * <p>
+		 * h5.settings.commonFailHandlerのデフォルト値はnullです。共通のエラー処理はデフォルトでは何も実行されません。
+		 * commonFailHandlerでの処理を止めたい場合は、nullを代入して設定をクリアしてください。
+		 * </p>
+		 *
+		 * <pre>
+		 * h5.settings.commonFailHandler = null;
+		 * </pre>
 		 *
 		 * @memberOf h5.settings
 		 * @type Function
