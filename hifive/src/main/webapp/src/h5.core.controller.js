@@ -2572,19 +2572,38 @@
 
 		/**
 		 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
-		 * 子コントローラは含まれません。
+		 * オプションを指定すると、子孫要素も検索対象に含めたり、特定の名前のコントローラだけを検索対象にしたりすることができます。<br>
+		 * なお、戻り値に含まれるのはルートコントローラのみです。
 		 *
-		 * @param {String|Element|jQuery} rootElement 要素
+		 * @param {String|Element|jQuery} rootElement 検索対象の要素
+		 * @param {Object} [option] オプション
+		 * @param {Boolean} [option.deep=false] 子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.4以降)
+		 * @param {Boolean} [option.initing=false] 初期化中（ready状態になる前）のコントローラも含めるかどうか(ver.1.1.4以降)
+		 * @param {String|String[]} [option.name=null]
+		 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.4以降)
 		 * @returns {Controller[]} バインドされているコントローラの配列
 		 * @memberOf ControllerManager
 		 */
-		getControllers: function(rootElement) {
-			var target = $(rootElement)[0];
+		getControllers: function(rootElement, option) {
+			var deep = option && option.deep;
+			var initing = option && option.initing; //TODO initingは未実装
+			var names = option && option.name ? wrapInArray(option.name) : null;
+
+			var seekRoot = $(rootElement)[0];
 			var controllers = this.controllers;
 			var ret = [];
 			for ( var i = 0, len = controllers.length; i < len; i++) {
-				if (target === controllers[i].rootElement) {
-					ret.push(controllers[i]);
+				var controller = controllers[i];
+
+				if (names && $.inArray(controller.__name, names) === -1) {
+					continue;
+				}
+
+				if (seekRoot === controller.rootElement) {
+					ret.push(controller);
+				} else if (deep && $.contains(seekRoot, controller.rootElement)) {
+					//$.contains()は自分と比較した場合はfalse
+					ret.push(controller);
 				}
 			}
 			return ret;
