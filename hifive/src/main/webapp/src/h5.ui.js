@@ -427,7 +427,12 @@
 	 * 1.8.xのjQuery.offset()は、Quirksモードでのスクロール量の計算が正しく行われないため自前で計算する。
 	 * </p>
 	 * <p>
-	 * 絶対座標は、<pre>getBoundingClinetRectの値+スクロール量-clientTop/Left</pre>
+	 * 絶対座標は、
+	 *
+	 * <pre>
+	 * getBoundingClinetRectの値 + スクロール量 - clientTop / Left
+	 * </pre>
+	 *
 	 * で計算します。
 	 * </p>
 	 * <p>
@@ -1248,9 +1253,7 @@
 	 * <b>スクリーンロックとして表示する</b><br>
 	 *
 	 * <pre>
-	 * var indicator = h5.ui.indicator({
-	 * 	target: document,
-	 * }).show();
+	 * var indicator = h5.ui.indicator(document).show();
 	 * </pre>
 	 *
 	 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
