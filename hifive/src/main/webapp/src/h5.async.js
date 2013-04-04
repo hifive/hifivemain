@@ -81,7 +81,7 @@
 	//
 	// =========================================================================
 	/**
-	 * 登録された共通のエラー処理を実行できるDeferredオブジェクトを返します。<br>
+	 * 登録された共通のエラー処理(<a href="h5.settings.html#commonFailHandler">h5.settings.commonFailHandler</a>)を実行できるDeferredオブジェクトを返します。<br>
 	 * Deferredに notify() / notifyWith() / progress() メソッドがない場合は、追加したオブジェクトを返します。
 	 *
 	 * @returns {Deferred} Deferredオブジェクト
