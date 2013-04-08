@@ -1610,7 +1610,7 @@
 		var targets = [];
 		var dispose = function(parentController) {
 			targets.push(parentController);
-			if (getByPath('h5.core.view')) {
+			if (parentController.view.__view) {
 				parentController.view.clear();
 			}
 			for ( var prop in parentController) {
