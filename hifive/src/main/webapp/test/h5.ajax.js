@@ -65,7 +65,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('h5.async.ajax()', function() {
+	test('jqXHRにprogressメソッドが追加されているか', function() {
 
 		var jqXHR = h5.ajax();
 
@@ -77,7 +77,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('then', {
+	module('progressCallbackの登録', {
 		teardown: function() {
 			h5.settings.commonFailHandler = null;
 		}
