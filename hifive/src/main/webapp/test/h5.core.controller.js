@@ -240,7 +240,11 @@ $(function() {
 				teardown: function() {
 					$('#controllerTest').remove();
 					h5.settings.commonFailHandler = undefined;
-				}
+					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
+					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
+				},
+				originalRetryInterval: h5.settings.dynamicLoading.retryInterval,
+				originalRetryCount: h5.settings.dynamicLoading.retryCount
 			});
 
 
@@ -976,7 +980,55 @@ $(function() {
 		});
 	});
 
+	
+	// 
+	asyncTest('h5.settings.dynamicLoading.retryCountでテンプレートのロードのリトライ回数を設定できること', function() {
+
+		// テンプレートロードのリトライ時のインターバルを0msに設定
+		h5.settings.dynamicLoading.retryInterval = 0;
+		// リトライ回数を2回に設定
+		h5.settings.dynamicLoading.retryCount = 2;
+		// view.load()をスタブに差し替え
+		var loadCount = 0;
+		var load = function() {
+			loadCount++;
+			var dfd = h5.async.deferred();
+			var e = {
+				detail: {
+					error: {
+						status: h5.env.ua.isIE ? 0 : 12029
+					}
+				}
+			};
+			dfd.reject(e);
+			return dfd.promise();
+		};
+		var originalCreateView = h5.core.view.createView;
+		h5.core.view.createView = function() {
+			var view = originalCreateView();
+			view.load = load;
+			return view;
+		};
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./noExistPath']
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.initPromise.done(function(a) {
+			ok(false, 'ロードできないテンプレートを指定してコントローラのバインドが失敗しませんでした');
+			h5.core.view.createView = originalCreateView;
+			start();
+		}).fail(function(e, opt) {
+			strictEqual(loadCount, 3, 'リトライ回数2回なのでロードを試みた回数は3回になっていること');
+			h5.core.view.createView = originalCreateView;
+			start();
+		});
+	});
+
 	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること', 5, function() {
+		// テンプレートロードのリトライ時のインターバルを0msに設定
+		h5.settings.dynamicLoading.retryInterval = 0;
 		// view.load()をスタブに差し替え
 		var retryCount = 0;
 		var retryLimit = 3;
@@ -1030,11 +1082,12 @@ $(function() {
 		});
 	});
 
-
 	asyncTest(
 			'テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreinitPromiseのfailが呼ばれること',
 			11,
 			function() {
+				// テンプレートロードのリトライ時のインターバルを0msに設定
+				h5.settings.dynamicLoading.retryInterval = 0;
 				// view.load()をスタブに差し替え
 				var retryCount = 0;
 				var retryLimit = 3;
