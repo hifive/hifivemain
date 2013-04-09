@@ -99,59 +99,6 @@ $(function() {
 		});
 	});
 
-	asyncTest('watchPosition を3回呼び、unwatch()をして、すべてのwatchPosition()が終了すること。またはエラー情報が取得できること。',
-			function() {
-				// 1つ目
-				var promise1 = h5.api.geo.watchPosition({
-					timeout: 10000
-				});
-				// 2つ目
-				var promise2 = h5.api.geo.watchPosition({
-					timeout: 10000
-				});
-				// 3つ目(非同期で実行)
-				setTimeout(function() {
-					var promise3 = h5.api.geo.watchPosition({
-						timeout: 10000
-					});
-					promise3.progress(function(pos) {
-						promise3.unwatch();
-						ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-					}).fail(
-							function(error) {
-								promise3.unwatch && promise3.unwatch();
-								equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE,
-										'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-								start();
-							}).done(function() {
-						ok(true, '3つ目のwatchPositionが停止すること。');
-						start();
-					});
-				}, 0);
-				promise1.progress(function(pos) {
-					promise1.unwatch();
-					ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-				}).fail(
-						function(error) {
-							promise1.unwatch && promise1.unwatch();
-							equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE,
-									'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-						}).done(function() {
-					ok(true, '1つ目のwatchPositionが停止すること。');
-				});
-				promise2.progress(function(pos) {
-					promise2.unwatch();
-					ok(true, pos.coords.latitude + "," + pos.coords.longitude);
-				}).fail(
-						function(error) {
-							promise2.unwatch && promise2.unwatch();
-							equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE,
-									'エラーオブジェクトが取得できること。エラーコード:' + error.code);
-						}).done(function() {
-					ok(true, '2つ目のwatchPositionが停止すること。');
-				});
-			});
-
 	//=============================
 	// Definition
 	//=============================
