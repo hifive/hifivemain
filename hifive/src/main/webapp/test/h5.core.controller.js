@@ -1230,7 +1230,7 @@ $(function() {
 			__dispose: function() {
 				setTimeout(function() {
 					childDfd.resolve();
-				}, 400);
+				}, 0);
 				return childDfd.promise();
 			}
 		};
@@ -1242,7 +1242,7 @@ $(function() {
 			__dispose: function() {
 				setTimeout(function() {
 					rootDfd.resolve();
-				}, 100);
+				}, 0);
 				return rootDfd.promise();
 			}
 		};
@@ -1273,7 +1273,7 @@ $(function() {
 				setTimeout(function() {
 					that.__name === 'ChildController';
 					childDfd.resolve();
-				}, 800);
+				}, 0);
 				return childDfd.promise();
 			}
 		};
@@ -1287,7 +1287,7 @@ $(function() {
 				setTimeout(function() {
 					that.__name === 'TestController';
 					rootDfd.reject();
-				}, 100);
+				}, 0);
 				return rootDfd.promise();
 			}
 		};
@@ -1604,7 +1604,7 @@ $(function() {
 					__init: function() {
 						setTimeout(function() {
 							dfd.reject();
-						});
+						}, 0);
 						return dfd.promise();
 					},
 					__dispose: function() {
@@ -1630,7 +1630,7 @@ $(function() {
 					__init: function() {
 						setTimeout(function() {
 							dfd.reject();
-						});
+						}, 0);
 						var p = dfd.promise();
 						p.fail(function() {
 							ok(true, '__initが返すpromiseのfailハンドラが実行される');
@@ -1661,7 +1661,7 @@ $(function() {
 					__ready: function() {
 						setTimeout(function() {
 							dfd.reject();
-						});
+						}, 0);
 						return dfd.promise();
 					},
 					__dispose: function() {
@@ -1687,7 +1687,7 @@ $(function() {
 					__ready: function() {
 						setTimeout(function() {
 							dfd.reject();
-						});
+						}, 0);
 						var p = dfd.promise();
 						p.fail(function() {
 							ok(true, '__readyが返すpromiseのfailハンドラが実行される');
@@ -2637,17 +2637,8 @@ $(function() {
 	});
 
 	asyncTest('コントローラの取得（getControllers）、コントローラを1つバインドした場合、および引数のパターンへの対応', function() {
-		var array = [];
 		var controllerBase = {
-			__name: 'TestController',
-
-			'input[type=button] click': function(promise, resolve, reject) {
-				setTimeout(function() {
-					array.push('eventCallback');
-					resolve();
-				}, 1000);
-				return promise();
-			}
+			__name: 'TestController'
 		};
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
@@ -2660,7 +2651,8 @@ $(function() {
 			var jqController = h5.core.controllerManager.getControllers($('#controllerTest'))[0];
 			var domController = h5.core.controllerManager.getControllers(document
 					.getElementById('controllerTest'))[0];
-			// strictEqualを使うと何故かスタックオーバーフローが発生する.
+			// strictEqualを使うと循環参照しているオブジェジェクトを出力しようとするため、
+			// ok(hoge === fuga) で判定。
 			ok(idController === testController, 'セレクタでコントローラが取得できたか');
 			ok(jqController === testController, 'jQueryオブジェクトでコントローラが取得できたか');
 			ok(domController === testController, 'DOMでコントローラが取得できたか');
@@ -2671,16 +2663,16 @@ $(function() {
 	});
 
 	asyncTest('コントローラの取得（getControllers）、同じ要素にバインドする子コントローラが存在する場合', function() {
-		var child = {
+		var childController = {
 			__name: 'ChildController'
 		};
 
-		var parent = {
+		var parentController = {
 			__name: 'ParentController',
-			childController: child
+			childController: childController
 		};
 
-		var pInst = h5.core.controller('#controllerTest', parent);
+		var pInst = h5.core.controller('#controllerTest', parentController);
 
 		pInst.readyPromise.done(function() {
 			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
@@ -2759,7 +2751,8 @@ $(function() {
 	});
 
 	asyncTest(
-			'[build#min]h5.core.interceptor.logInterceptorの動作',
+			'[build#min]h5.core.interceptor.logInterceptorの動作 (※要目視確認)',
+			1,
 			function() {
 				var log = {
 					interceptors: h5.core.interceptor.logInterceptor
@@ -2797,7 +2790,8 @@ $(function() {
 			});
 
 	asyncTest(
-			'[build#min]h5.core.interceptor.lapInterceptorの動作',
+			'[build#min]h5.core.interceptor.lapInterceptorの動作 (※要目視確認)',
+			1,
 			function() {
 				var lap = {
 					interceptors: h5.core.interceptor.lapInterceptor
@@ -2808,12 +2802,7 @@ $(function() {
 					__name: 'TestController',
 
 					'input[type=button] click': function(context) {
-						// this.test();
-						var dfd = this.deferred();
-						setTimeout(function() {
-							dfd.resolve();
-						}, 2000);
-						return dfd.promise();
+					//
 					},
 
 					test: function() {
@@ -3485,7 +3474,6 @@ $(function() {
 	});
 
 	asyncTest('this.indicator() promises', function() {
-		var dfd = h5.async.deferred();
 		var indicator = null;
 		var controllerBase = {
 			__name: 'TestController',
@@ -3510,19 +3498,26 @@ $(function() {
 							'resolve()していないので、インジケータが表示されること');
 
 					df.resolve();
-				}, 100);
+				}, 0);
 
 				setTimeout(function() {
 					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 							'resolve()していないので、インジケータが表示されること');
 
 					df2.resolve();
-				}, 200);
-				h5.async.when(df.promise(), df2.promise()).done(function() {
-					setTimeout(function() {
-						dfd.resolve();
-					}, 0);
-				});
+				}, 0);
+				h5.async.when(df.promise(), df2.promise()).done(
+						function() {
+							setTimeout(
+									function() {
+										strictEqual($(indicator._target).find(
+												'.h5-indicator.a.overlay').length, 0,
+												'全てのresolve()が呼ばれたら、インジケータが非表示になること');
+
+										testController.unbind();
+										start();
+									}, 0);
+						});
 			}
 		};
 		var testController = h5.core.controller('#controllerTest', controllerBase);
@@ -3530,14 +3525,6 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 		});
 
-		dfd.promise().done(
-				function() {
-					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 0,
-							'全てのresolve()が呼ばれたら、インジケータが非表示になること');
-
-					testController.unbind();
-					start();
-				});
 	});
 
 	asyncTest('this.indicator() 複数要素にマッチするセレクタをtargetに指定する', function() {
@@ -3756,7 +3743,7 @@ $(function() {
 							start();
 						}, 0);
 					}, 0);
-				}, 100);
+				}, 0);
 			}
 		};
 
@@ -4755,10 +4742,11 @@ $(function() {
 
 					__init: function(context) {
 						var dfd = this.deferred();
+						// 100ms待機させて、この間に親の__initは実行されないことを確認
 						setTimeout(function() {
 							ret.push(3);
 							dfd.resolve();
-						}, 200);
+						}, 100);
 						return dfd.promise();
 					},
 
@@ -4781,7 +4769,7 @@ $(function() {
 						setTimeout(function() {
 							ret.push(4);
 							dfd.resolve();
-						}, 120);
+						}, 0);
 						return dfd.promise();
 					},
 
@@ -4790,7 +4778,7 @@ $(function() {
 						setTimeout(function() {
 							ret.push(7);
 							dfd.resolve();
-						}, 100);
+						}, 0);
 						return dfd.promise();
 					}
 				};
@@ -4811,7 +4799,7 @@ $(function() {
 						setTimeout(function() {
 							ret.push(5);
 							dfd.resolve();
-						}, 70);
+						}, 0);
 						return dfd.promise();
 					},
 
