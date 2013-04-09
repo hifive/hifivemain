@@ -89,7 +89,6 @@ $(function() {
 			ok(true, pos.coords.latitude + "," + pos.coords.longitude);
 		}).fail(
 				function(error) {
-					promise.unwatch();
 					equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:'
 							+ error.code);
 					start();

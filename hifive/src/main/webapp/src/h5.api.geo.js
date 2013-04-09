@@ -199,6 +199,7 @@
 			var id = getGeo().watchPosition(function(pos) {
 				dfd.notify(pos);
 			}, function(e) {
+				getGeo().clearWatch(id);
 				dfd.reject(createRejectReason(ERR_CODE_POSITIONING_FAILURE, null, e));
 			}, option);
 			/**
