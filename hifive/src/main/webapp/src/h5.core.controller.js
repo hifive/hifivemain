@@ -28,8 +28,6 @@
 	// Production
 	// =============================
 
-	var TEMPLATE_LOAD_RETRY_COUNT = 3;
-	var TEMPLATE_LOAD_RETRY_INTERVAL = 3000;
 	var TYPE_OF_UNDEFINED = 'undefined';
 	var SUFFIX_CONTROLLER = 'Controller';
 	var SUFFIX_LOGIC = 'Logic';
@@ -2773,7 +2771,7 @@
 					// http://support.microsoft.com/kb/193625/ja
 					var errorObj = result.detail.error;
 					var jqXhrStatus = errorObj ? errorObj.status : null;
-					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
+					if (count === h5.settings.dynamicLoading.retryCount || jqXhrStatus !== 0
 							&& jqXhrStatus !== 12029) {
 						fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
 								result.detail.url);
@@ -2785,7 +2783,7 @@
 					}
 					setTimeout(function() {
 						viewLoad(++count);
-					}, TEMPLATE_LOAD_RETRY_INTERVAL);
+					}, h5.settings.dynamicLoading.retryInterval);
 				});
 			};
 			viewLoad(0);

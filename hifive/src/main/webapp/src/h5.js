@@ -103,6 +103,7 @@
 		 * commonFailHandlerの引数と関数内のthisは通常のfailハンドラと同様で、それぞれ、rejectで渡された引数、rejectの呼ばれたDefferedオブジェクト、です。
 		 * </p>
 		 * <h4>サンプル</h4>
+		 *
 		 * <pre>
 		 * // commonFailHandlerの登録
 		 * h5.settings.commonFailHandler = function(e) {
@@ -153,7 +154,7 @@
 		commonFailHandler: null,
 
 		/**
-		 * コントローラ、ロジックへのアスペクト
+		 * コントローラ、ロジックへのアスペクトを設定します。
 		 *
 		 * @memberOf h5.settings
 		 * @type Aspect|Aspect[]
@@ -174,8 +175,33 @@
 		 * <li>1 (default) : jQueryオブジェクト
 		 * <li>0 : ネイティブ形式（DOM要素そのもの）
 		 * </ul>
+		 *
+		 * @since 1.1.4
+		 * @memberOf h5.settings
+		 * @type Number
 		 */
-		listenerElementType: 1
+		listenerElementType: 1,
+
+		/**
+		 * コントローラに記述されたテンプレートの読み込み等、動的リソース読み込み時の設定を行います。<br>
+		 * このプロパティはオブジェクトで、<code>h5.settings.dynamicLoading.retryCount = 3;</code>のようにして設定します。<br>
+		 * dynamicLoadingで指定できるプロパティ：
+		 * <dl>
+		 * <dt>retryCount</dt>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライする回数（デフォルト：3）</dd>
+		 * <dt>retryInterval</dt>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。（デフォルト：5000）</dd>
+		 * <li>
+		 * </dl>
+		 *
+		 * @since 1.1.4
+		 * @memberOf h5.settings
+		 * @type Object
+		 */
+		dynamicLoading: {
+			retryCount: 3,
+			retryInterval: 5000
+		}
 	};
 
 	// h5preinitでglobalAspectsの設定をしている関係上、別ファイルではなく、ここに置いている。
