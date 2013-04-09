@@ -450,8 +450,11 @@
 
 		var dfd = $.Deferred();
 
-		// jQueryのバージョンが1.6.xの場合、progress/notifyが使用できるよう機能を追加する
 		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
+			// jQueryのバージョンが1.6.xの場合、progress/notifyが使用できるよう機能を追加する
+			// $.when()を使いながら機能追加ができないため、
+			// $.when自体の機能をここで実装している。
+
 			var len = args.length;
 			var count = len;
 			var pValues = new Array(len);
@@ -491,6 +494,7 @@
 				dfd.resolveWith(dfd, len ? [firstParam] : []);
 			}
 		} else {
+			// jQuery1.7以上なら戻り値をh5.async.deferredにして、$.whenをラップする
 			dfd = getDeferred();
 
 			$.when.apply($, args).done(function(/* var_args */) {

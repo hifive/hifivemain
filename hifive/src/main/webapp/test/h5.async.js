@@ -154,7 +154,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'[jquery#1.7-]pipeのdoneコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか (jQuery1.6.x用テスト)',
+			'[jquery#1.7-]pipeのdoneコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか',
 			6, function() {
 				var count = 1;
 
@@ -196,7 +196,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[jquery#1.7-]pipeのfailコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか (jQuery1.6.x用テスト)',
+			'[jquery#1.7-]pipeのfailコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか',
 			6, function() {
 				var count = 1;
 
@@ -301,12 +301,14 @@ $(function() {
 	//=============================
 
 	module("Async - when");
+	// h5.async.whenは、jQuery1.7以上の場合は$.whenをラップしているが、
+	// jQuery1.6.xの場合はhifiveが$.when相当のものを独自実装しているため、whenの機能全般をここでテストする。
 
 	//=============================
 	// Body
 	//=============================
 
-	test('$.Deferred()のPromiseを引数に指定して実行 - done() (jQuery1.6.x用テスト)', 1, function() {
+	test('$.Deferred()のPromiseを引数に指定して実行 - done()', 1, function() {
 		var df1 = $.Deferred();
 		var df2 = $.Deferred();
 
@@ -318,7 +320,7 @@ $(function() {
 		df2.resolve();
 	});
 
-	test('$.Deferred()のPromiseを引数に指定して実行 - fail() (jQuery1.6.x用テスト)', 1, function() {
+	test('$.Deferred()のPromiseを引数に指定して実行 - fail()', 1, function() {
 		var df1 = $.Deferred();
 		var df2 = $.Deferred();
 
@@ -332,7 +334,7 @@ $(function() {
 		df2.resolve();
 	});
 
-	test('Promiseを引数に指定して実行 - done() (jQuery1.6.x用テスト)', 1, function() {
+	test('Promiseを引数に指定して実行 - done()', 1, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -344,7 +346,7 @@ $(function() {
 		df2.resolve();
 	});
 
-	test('Promiseを引数に指定して実行 - fail() (jQuery1.6.x用テスト)', 1, function() {
+	test('Promiseを引数に指定して実行 - fail()', 1, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -358,7 +360,7 @@ $(function() {
 		df2.resolve();
 	});
 
-	test('値を指定してh5.async.deferred().resolve()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定してh5.async.deferred().resolve()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -371,7 +373,7 @@ $(function() {
 		df2.resolve('df2');
 	});
 
-	test('値を指定してh5.async.deferred().resolveWith()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定してh5.async.deferred().resolveWith()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -384,7 +386,7 @@ $(function() {
 		df2.resolveWith(null, ['df2']);
 	});
 
-	test('値を指定してh5.async.deferred().reject()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定してh5.async.deferred().reject()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -397,7 +399,7 @@ $(function() {
 		df2.reject('df2');
 	});
 
-	test('値を指定してh5.async.deferred().rejectWith()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定してh5.async.deferred().rejectWith()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -410,7 +412,7 @@ $(function() {
 		df2.rejectWith(null, ['df2']);
 	});
 
-	test('値を指定して h5.async.deferred().notify()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定して h5.async.deferred().notify()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -426,7 +428,7 @@ $(function() {
 		df2.notify('df2');
 	});
 
-	test('値を指定して h5.async.deferred().notifyWith()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定して h5.async.deferred().notifyWith()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
