@@ -89,6 +89,7 @@ $(function() {
 			ok(true, pos.coords.latitude + "," + pos.coords.longitude);
 		}).fail(
 				function(error) {
+					promise.unwatch();
 					equal(error.code, ERR.ERR_CODE_POSITIONING_FAILURE, 'エラーオブジェクトが取得できること。エラーコード:'
 							+ error.code);
 					start();
@@ -108,7 +109,7 @@ $(function() {
 				var promise2 = h5.api.geo.watchPosition({
 					timeout: 10000
 				});
-				// 3つ目(500ms後に実行)
+				// 3つ目(非同期で実行)
 				setTimeout(function() {
 					var promise3 = h5.api.geo.watchPosition({
 						timeout: 10000
@@ -126,7 +127,7 @@ $(function() {
 						ok(true, '3つ目のwatchPositionが停止すること。');
 						start();
 					});
-				}, 500);
+				}, 0);
 				promise1.progress(function(pos) {
 					promise1.unwatch();
 					ok(true, pos.coords.latitude + "," + pos.coords.longitude);
