@@ -460,27 +460,25 @@
 			dfd = len <= 1 && firstParam && $.isFunction(firstParam.promise) ? firstParam
 					: getDeferred();
 
-			// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
-
-			function resolveFunc(index) {
-				return function(value) {
-					args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-					if (!(--count)) {
-						dfd.resolveWith(dfd, args);
-					}
-				};
-			}
-
-			function progressFunc(index) {
-				return function(value) {
-					pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-					dfd.notifyWith(dfd.promise(), pValues);
-				};
-			}
 
 			if (len > 1) {
+				// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
+				function resolveFunc(index) {
+					return function(value) {
+						args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
+						if (!(--count)) {
+							dfd.resolveWith(dfd, args);
+						}
+					};
+				}
+				function progressFunc(index) {
+					return function(value) {
+						pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
+						dfd.notifyWith(dfd.promise(), pValues);
+					};
+				}
 				for ( var i = 0; i < len; i++) {
-					if (args[i] && args[i].promise && $.isFunction(args[i].promise)) {
+					if (args[i] && $.isFunction(args[i].promise)) {
 						args[i].promise().then(resolveFunc(i), dfd.reject, progressFunc(i));
 					} else {
 						--count;
