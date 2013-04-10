@@ -16,7 +16,7 @@
  * hifive
  */
 
-$(function() {
+(function() {
 	// テスト環境オブジェクトの作成。
 	// リクエストパラメータから取得して生成
 	var paramsStr = window.location.search;
@@ -107,4 +107,4 @@ $(function() {
 			clearInterval(watchId);
 		};
 	}
-});
+})();
