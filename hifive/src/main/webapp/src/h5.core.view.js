@@ -534,7 +534,7 @@
 				$.extend(that.__cachedTemplates, result);
 				dfd.resolve(datas);
 			}).fail(function(e) {
-				fwLogger.warn(e.message);
+				fwLogger.error(e.message);
 				dfd.reject(e);
 			});
 			return dfd.promise();
