@@ -35,7 +35,6 @@ $(function() {
 
 	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR_U.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR_U = ERRCODE.h5.u;
-	var ERR_OBS = ERRCODE.h5.core.data_observables;
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -676,17 +675,21 @@ $(function() {
 		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
 		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
 
-		promise.done(function() {
-			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
-			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
-			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
+		promise.done(
+				function() {
+					ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
+					ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
+					ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
 
-			strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test2.test1,
-					'スクリプトはシーケンシャルに読み込まれたか1');
-			strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test3.test1,
-					'スクリプトはシーケンシャルに読み込まれたか2');
-			strictEqual(window.com.htmlhifive.test.test2, window.com.htmlhifive.test.test3.test2,
-					'スクリプトはシーケンシャルに読み込まれたか3');
+					strictEqual(window.com.htmlhifive.test.test1,
+							window.com.htmlhifive.test.test2.test1, 'スクリプトはシーケンシャルに読み込まれたか1');
+					strictEqual(window.com.htmlhifive.test.test1,
+							window.com.htmlhifive.test.test3.test1, 'スクリプトはシーケンシャルに読み込まれたか2');
+					strictEqual(window.com.htmlhifive.test.test2,
+							window.com.htmlhifive.test.test3.test2, 'スクリプトはシーケンシャルに読み込まれたか3');
+					start();
+				}).fail(function(e) {
+			ok(false, 'テスト失敗');
 			start();
 		});
 	});
@@ -706,10 +709,11 @@ $(function() {
 			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
 			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
 			start();
+		}).fail(function(e) {
+			ok(false, 'テスト失敗');
+			start();
 		});
-
 	});
-
 
 	asyncTest('【非同期】 parallelオプション有効、atomicオプション有効', 6, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
@@ -726,6 +730,9 @@ $(function() {
 			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
 			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
 			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
+			start();
+		}).fail(function(e) {
+			ok(false, 'テスト失敗');
 			start();
 		});
 	});
@@ -748,8 +755,14 @@ $(function() {
 										'force=trueなので、既に読み込み済みでも読み込むこと');
 								window.com.htmlhifive.test.sample4loaded = undefined;
 								start();
-							});
-				});
+							}).fail(function(e) {
+						ok(false, 'テスト失敗');
+						start();
+					});
+				}).fail(function(e) {
+			ok(false, 'テスト失敗');
+			start();
+		});
 	});
 
 	asyncTest('【非同期】 parallelオプション有効、forceオプション無効の場合、既に読み込み済みのパスは2重に読み込まれないこと', 2, function() {
@@ -770,8 +783,14 @@ $(function() {
 										'force=falseなので、既に読み込み済みのスクリプトは読み込まないこと。');
 								window.com.htmlhifive.test.sample4loaded = undefined;
 								start();
-							});
-				});
+							}).fail(function(e) {
+						ok(false, 'テスト失敗');
+						start();
+					});
+				}).fail(function(e) {
+			ok(false, 'テスト失敗');
+			start();
+		});
 	});
 
 	asyncTest('【非同期】 リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
@@ -790,9 +809,18 @@ $(function() {
 											deepEqual(window.com.htmlhifive.test.sample4loaded, 4,
 													'スクリプトが4回読み込まれたこと。');
 											start();
-										});
-							});
-				});
+										}).fail(function(e) {
+									ok(false, 'テスト失敗');
+									start();
+								});
+							}).fail(function(e) {
+						ok(false, 'テスト失敗');
+						start();
+					});
+				}).fail(function(e) {
+			ok(false, 'テスト失敗');
+			start();
+		});
 	});
 
 	test('【非同期】引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。', 10, function() {
@@ -854,8 +882,14 @@ $(function() {
 
 										window.com.htmlhifive.test.sample4loaded = undefined;
 										start();
-									});
-						});
+									}).fail(function(e) {
+								ok(false, 'テスト失敗');
+								start();
+							});
+						}).fail(function(e) {
+					ok(false, 'テスト失敗');
+					start();
+				});
 			});
 
 	asyncTest('【非同期】存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2, function() {
