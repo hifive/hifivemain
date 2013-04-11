@@ -67,7 +67,12 @@ $(function() {
 
 	test('jqXHRにprogressメソッドが追加されているか', function() {
 
-		var jqXHR = h5.ajax();
+		// 戻り値をチェックするだけなのでurlは何でもOK。
+		// ただし指定しない場合、現在のページへのリクエストが飛ぶので、
+		// リクエストの負荷を無くすためにdummyURLにする
+		var jqXHR = h5.ajax({
+			url: 'dummyURL'
+		});
 
 		ok($.isFunction(jqXHR.progress), 'h5.async.ajax() の戻り値のオブジェクトにprogressメソッドが追加されているか');
 	});
@@ -92,7 +97,9 @@ $(function() {
 		h5.settings.commonFailHandler = function() {
 		// 何もしない
 		};
-		var jqXHR = h5.ajax();
+		var jqXHR = h5.ajax({
+			url: 'dummyURL'
+		});
 
 		var error = false;
 		try {
