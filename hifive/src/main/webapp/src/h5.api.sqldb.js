@@ -510,8 +510,10 @@
 							df.notify(resultSet, txw);
 						});
 					}, function(e) {
+						txw._tx = null;
 						transactionErrorCallback(txw, e);
 					}, function() {
+						txw._tx = null;
 						transactionSuccessCallback(txw);
 					});
 				}
@@ -648,8 +650,10 @@
 								txw._tx = tx;
 								executeSql();
 							}, function(e) {
+								txw._tx = null;
 								transactionErrorCallback(txw, e);
 							}, function() {
+								txw._tx = null;
 								transactionSuccessCallback(txw);
 							});
 						}
@@ -827,8 +831,10 @@
 							df.notify(resultSet, txw);
 						});
 					}, function(e) {
+						txw._tx = null;
 						transactionErrorCallback(txw, e);
 					}, function() {
+						txw._tx = null;
 						transactionSuccessCallback(txw);
 					});
 				}
@@ -990,8 +996,10 @@
 							df.notify(resultSet, txw);
 						});
 					}, function(e) {
+						txw._tx = null;
 						transactionErrorCallback(txw, e);
 					}, function() {
+						txw._tx = null;
 						transactionSuccessCallback(txw);
 					});
 				}
@@ -1128,8 +1136,10 @@
 							df.notify(resultSet, txw);
 						});
 					}, function(e) {
+						txw._tx = null;
 						transactionErrorCallback(txw, e);
 					}, function() {
+						txw._tx = null;
 						transactionSuccessCallback(txw);
 					});
 				}
@@ -1273,8 +1283,10 @@
 						txw._tx = tx;
 						executeSql();
 					}, function(e) {
+						txw._tx = null;
 						transactionErrorCallback(txw, e);
 					}, function() {
+						txw._tx = null;
 						transactionSuccessCallback(txw);
 					});
 				}
