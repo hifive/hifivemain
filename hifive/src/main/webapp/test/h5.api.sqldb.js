@@ -37,6 +37,7 @@ $(function() {
 	var ERR = ERRCODE.h5.api.sqldb;
 
 	var db = h5.api.sqldb.open('hcdb', '1', 'hcdb', 2 * 1024 * 1024);
+	dropTable();
 	var TABLE_NAME = 'TBL_WEB_SQL_DB_TEST1';
 
 	//=============================
@@ -54,45 +55,52 @@ $(function() {
 	// テストメソッド実行毎に処理する関数 sql/insert/transaction/
 	function setupFunc() {
 		if (!h5.api.sqldb.isSupported) {
-			expect(1);
 			return;
 		}
 		stop();
 
-		db.sql('DROP TABLE ' + TABLE_NAME).execute().always(
-				function() {
-					db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute()
-							.progress(function(rs, tx) {
-								start();
-							});
+		db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute().done(
+				function(rs, tx) {
+					start();
+				}).fail(function(e){
+					throw(e);
 				});
 	}
 
 	// テストメソッド実行毎に処理する関数 update/del
 	function setupFunc2() {
 		if (!h5.api.sqldb.isSupported) {
-			expect(1);
 			return;
 		}
 		stop();
 
-		db.sql('DROP TABLE ' + TABLE_NAME).execute().always(
-				function() {
-					db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute()
-							.progress(function(rs, tx) {
-								db.insert(TABLE_NAME, [{
-									col1: 10,
-									col2: 'hoge1',
-									col3: 'test%%b'
-								}, {
-									col1: 20,
-									col2: 'hoge2',
-									col3: 'test%%a'
-								}]).execute().done(function() {
-									start();
-								});
-							});
+		db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute().done(
+				function(rs, tx) {
+					db.insert(TABLE_NAME, [{
+						col1: 10,
+						col2: 'hoge1',
+						col3: 'test%%b'
+					}, {
+						col1: 20,
+						col2: 'hoge2',
+						col3: 'test%%a'
+					}]).execute().done(function() {
+						start();
+					});
+				}).fail(function(e){
+					throw(e);
 				});
+	}
+
+	function dropTable() {
+		if (!h5.api.sqldb.isSupported) {
+			return;
+		}
+		stop();
+
+		db.sql('DROP TABLE IF EXISTS ' + TABLE_NAME).execute().always(function() {
+			start();
+		});
 	}
 
 	// =========================================================================
@@ -106,7 +114,8 @@ $(function() {
 	//=============================
 
 	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Sql', {
-		setup: setupFunc
+		setup: setupFunc,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -436,7 +445,8 @@ $(function() {
 	//=============================
 
 	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Insert', {
-		setup: setupFunc
+		setup: setupFunc,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -1042,7 +1052,8 @@ $(function() {
 	//=============================
 
 	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Update', {
-		setup: setupFunc2
+		setup: setupFunc2,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -1554,7 +1565,8 @@ $(function() {
 	//=============================
 
 	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Del', {
-		setup: setupFunc2
+		setup: setupFunc2,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -1984,7 +1996,8 @@ $(function() {
 	//=============================
 
 	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Select', {
-		setup: setupFunc2
+		setup: setupFunc2,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -2446,7 +2459,8 @@ $(function() {
 	//=============================
 
 	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Transaction', {
-		setup: setupFunc
+		setup: setupFunc,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -3065,7 +3079,8 @@ $(function() {
 	//=============================
 
 	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database', {
-		setup: setupFunc
+		setup: setupFunc,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -3330,7 +3345,4 @@ $(function() {
 		}
 		loop(0);
 	});
-
-
-
 });
