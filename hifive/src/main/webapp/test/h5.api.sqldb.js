@@ -37,7 +37,6 @@ $(function() {
 	var ERR = ERRCODE.h5.api.sqldb;
 
 	var db = h5.api.sqldb.open('hcdb', '1', 'hcdb', 2 * 1024 * 1024);
-	dropTable();
 	var TABLE_NAME = 'TBL_WEB_SQL_DB_TEST1';
 
 	//=============================
@@ -59,12 +58,16 @@ $(function() {
 		}
 		stop();
 
-		db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute().done(
-				function(rs, tx) {
-					start();
-				}).fail(function(e){
-					throw(e);
-				});
+		db.sql('DROP TABLE IF EXISTS ' + TABLE_NAME).execute().done(
+				function() {
+					db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute().done(
+							function(rs, tx) {
+								start();
+							});
+				}).fail(function(e) {
+			throw (e);
+			start();
+		});
 	}
 
 	// テストメソッド実行毎に処理する関数 update/del
@@ -73,23 +76,26 @@ $(function() {
 			return;
 		}
 		stop();
-
-		db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute().done(
-				function(rs, tx) {
-					db.insert(TABLE_NAME, [{
-						col1: 10,
-						col2: 'hoge1',
-						col3: 'test%%b'
-					}, {
-						col1: 20,
-						col2: 'hoge2',
-						col3: 'test%%a'
-					}]).execute().done(function() {
-						start();
-					});
-				}).fail(function(e){
-					throw(e);
-				});
+		db.sql('DROP TABLE IF EXISTS ' + TABLE_NAME).execute().done(
+				function() {
+					db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute().done(
+							function(rs, tx) {
+								db.insert(TABLE_NAME, [{
+									col1: 10,
+									col2: 'hoge1',
+									col3: 'test%%b'
+								}, {
+									col1: 20,
+									col2: 'hoge2',
+									col3: 'test%%a'
+								}]).execute().done(function() {
+									start();
+								});
+							});
+				}).fail(function(e) {
+			throw (e);
+			start();
+		});
 	}
 
 	function dropTable() {
