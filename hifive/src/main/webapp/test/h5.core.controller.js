@@ -980,8 +980,8 @@ $(function() {
 		});
 	});
 
-	
-	// 
+
+	//
 	asyncTest('h5.settings.dynamicLoading.retryCountでテンプレートのロードのリトライ回数を設定できること', function() {
 
 		// テンプレートロードのリトライ時のインターバルを0msに設定
@@ -6330,7 +6330,7 @@ $(function() {
 		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
 	});
 
-	asyncTest('[browser#and-and:-3]__init()で例外をスローする。', 1, function() {
+	asyncTest('[browser#and-and:-3;sa-ios:-4]__init()で例外をスローする。', 1, function() {
 		var errorMsg = '__init error.';
 		var id = this.testTimeoutFunc(errorMsg);
 
@@ -6350,7 +6350,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('[browser#and-and:-3]__ready()で例外をスローする。', 1, function() {
+	asyncTest('[browser#and-and:-3;sa-ios:-4]__ready()で例外をスローする。', 1, function() {
 		var errorMsg = '__ready error.';
 		var id = this.testTimeoutFunc(errorMsg);
 
@@ -6370,7 +6370,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('[browser#and-and:-3]__unbind()で例外をスローする。', 1, function() {
+	asyncTest('[browser#and-and:-3;sa-ios:-4]__unbind()で例外をスローする。', 1, function() {
 		var errorMsg = '__unbind error.';
 		var id = this.testTimeoutFunc(errorMsg);
 
@@ -6393,7 +6393,7 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('[browser#and-and:-3]__dispose()で例外をスローする。', 1, function() {
+	asyncTest('[browser#and-and:-3;sa-ios:-4]__dispose()で例外をスローする。', 1, function() {
 		var errorMsg = '__dispose error.';
 		var id = this.testTimeoutFunc(errorMsg);
 
