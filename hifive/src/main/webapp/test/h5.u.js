@@ -979,8 +979,9 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('文字列', 2, function() {
-		var strs = ["helloWorld", 'o{"str1":"\"string1\""}'];
+	test('文字列', 6, function() {
+		var strs = ["helloWorld", 'o{"str1":"\"string1\""}', '改行\r\nnewLine', 'タブ\ttab', 'その他特殊文字\b\"\/\r\\\n',
+				'\\r\\n\\t'];
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			var serialized = h5.u.obj.serialize(str, true);
@@ -1020,20 +1021,22 @@ $(function() {
 		}
 	});
 
-	test('正規表現', 6,
+	test('正規表現', 8,
 			function() {
-				var regExps = [/hello/, /^o*(.*)[a|b]{0,}?$/, /\\/g, /a|b/i, /x/gi, /\/\\\//img];
+				var regExps = [/hello/, /^o*(.*)[a|b]{0,}?$/, /\\/g, /a|b/i, /x/gi, /\/\\\//img,
+						new RegExp('newLine\r\nnewLine'), new RegExp('tab\ttab')];
 				for ( var i = 0, len = regExps.length; i < len; i++) {
 					var regExp = regExps[i];
 					var serialized = h5.u.obj.serialize(regExp);
+					if(i==6)console.log(serialized)
 					var deserialized = h5.u.obj.deserialize(serialized);
 					deepEqual(deserialized, regExp, "シリアライズしてデシリアライズした正規表現が元の正規表現と同じ。"
 							+ regExp.toString());
 				}
 			});
 
-	test('配列', 3, function() {
-		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}']];
+	test('配列', 4, function() {
+		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}'], ['a\r\nb', '\t', new RegExp('\r\n'), new RegExp('\t')]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
@@ -1042,8 +1045,8 @@ $(function() {
 		}
 	});
 
-	test('多次元配列', 1, function() {
-		var arrays = [[[1, 2, 3], [4, '\\5\\"', ['\\\"6\\\"', [7, '\\\"8\\\"']]], 9]];
+	test('多次元配列', 2, function() {
+		var arrays = [[[1, 2, 3], [4, '\\5\\"', ['\\\"6\\\"', [7, '\\\"8\\\"']]], 9],['a\r\nb', ['\t', new RegExp('\r\n[\b]')], new RegExp('\t')]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
@@ -1052,7 +1055,7 @@ $(function() {
 		}
 	});
 
-	test('オブジェクトの配列', 2, function() {
+	test('オブジェクトの配列', 3, function() {
 		var arrays = [[{
 			a: 'A',
 			b: 'B'
@@ -1068,6 +1071,10 @@ $(function() {
 		}, 3]], {
 			e: 'E',
 			f: 'F'
+		}],[{
+			a: '\r\n',
+			b: '\t',
+			c: '\b\"\/\r\\\n'
 		}]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
@@ -1077,7 +1084,7 @@ $(function() {
 		}
 	});
 
-	test('連想配列', 22, function() {
+	test('連想配列', 30, function() {
 		var array1 = [];
 		array1['key'] = 'value';
 
@@ -1095,7 +1102,12 @@ $(function() {
 			b: b
 		};
 
-		var arrays = [array1, array2];
+		var array3 = [];
+		array3['a'] = '\r\n';
+		array3['c'] = new RegExp('\r\n');
+		array3['\r\n'] = 'new line';
+
+		var arrays = [array1, array2, array3];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
@@ -1116,11 +1128,11 @@ $(function() {
 	});
 
 
-	test('プリミティブラッパー', 16,
+	test('プリミティブラッパー', 18,
 			function() {
-				var primitives = [new String("hello"), new String(), new Number(123),
+				var primitives = [new String('hello'), new String(), new Number(123),
 						new Number('NaN'), new Number('Infinity'), new Number('-Infinity'),
-						new Boolean(true), new Boolean(false)];
+						new Boolean(true), new Boolean(false), new String('\b\"\/\r\\\n\t\r\n')];
 				for ( var i = 0, len = primitives.length; i < len; i++) {
 					var primitive = primitives[i];
 					var serialized = h5.u.obj.serialize(primitive);
@@ -1400,7 +1412,7 @@ $(function() {
 	});
 
 	test('シリアライズしたバージョンの違う文字列をデシリアライズできないこと。', 4, function() {
-		var serialized = "2|shello";
+		var serialized = "0|shello";
 		try {
 			h5.u.obj.deserialize(serialized);
 			ok(false, 'エラーが投げられていません。' + serialized);
