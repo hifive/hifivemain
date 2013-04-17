@@ -340,6 +340,39 @@
 	}
 
 	/**
+	 * 任意要素のスクロールサイズ(scrollWidth/Height：見た目でなくコンテンツ全体のサイズ)を取得します。
+	 * IE6は内包する要素の方が小さい場合にscrollサイズがclientサイズより小さくなってしまうバグがあります（本来はscroll == clientでなければならない）。
+	 * そこで、IE6の場合はscrollとclientのうち大きい方のサイズを返します。
+	 * また、scrollW/Hは整数を返しますが、内部的にはサイズが小数になっている場合があります（IE9等で現象を確認）。
+	 * サイズが小数の場合、scrollW/Hの大きさでオーバーレイのサイズを設定すると意図しないスクロールバーが出てしまう場合があります。
+	 * さらに、CSSで小数値を指定した場合などで、内部値(小数)を取得する方法がない場合があります（jQuery等でも整数でしかとれない）。
+	 * そこで、通常の利用においては、縦方向のずれよりも横スクロールバーが(急に)出てしまう方が見た目への影響が大きいと考え、以下のように対処しています。
+	 * 幅方向については常に-0.5することで意図しない横スクロールバーが出ない、かつ隙間が気にならないようにし、高さ方向については小数誤差を検出できた場合のみ減算することとしています。
+	 * 高さ方向を一律に引き算するとChrome26,Firefox20等ではサブピクセルが計算され最後までスクロールした時にわずかな隙間ができてしまうので、一律の減算は行わない。
+	 *
+	 * @private
+	 * @param elem {jQuery} jQueryオブジェクト
+	 */
+	function getScrollSize($elem) {
+		var elem = $elem[0];
+
+		var eH = $elem.height();
+		var fracH = eH - parseInt(eH);
+
+		var retW = elem.scrollWidth;
+		var retH = elem.scrollHeight;
+		if (isLegacyIE) {
+			retW = Math.max(retW, elem.clientWidth);
+			retH = Math.max(retH, elem.clientHeight);
+		}
+
+		return {
+			w: retW - 0.5,
+			h: retH - fracH
+		};
+	}
+
+	/**
 	 * ドキュメント(コンテンツ全体)の高さまたは幅を取得します。
 	 * <p>
 	 * ウィンドウの高さを取得したい場合は引数に"Height"を、 ウィンドウの幅を取得したい場合は引数に"Width"を指定して下さい。
@@ -883,8 +916,8 @@
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
 		// オーバーレイ・コンテンツにpositionを設定する
-		$.each([this._$overlay, this._$content], function(i, e) {
-			e.css('position', position);
+		$.each([this._$overlay, this._$content], function() {
+			this.css('position', position);
 		});
 
 		var promises = settings.promises;
@@ -995,7 +1028,7 @@
 		 * @private
 		 */
 		_resizeOverlay: function() {
-			if (usePositionFixed) {
+			if (this._isScreenLock && usePositionFixed) {
 				return;
 			}
 
@@ -1004,18 +1037,21 @@
 				var _$overlay = this._$overlay.eq(i);
 				var _$skin = this._$skin.eq(i);
 
-				var w = this._isScreenLock ? documentWidth() : _$target.outerWidth(true);
-				var h = this._isScreenLock ? documentHeight() : _$target.outerHeight(true);
+				var w,h;
+
+				//オーバーレイはターゲット要素全体の大きさ(スクロールサイズ)にする
+				if (this._isScreenLock) {
+					w = documentWidth();
+					h = documentHeight();
+				} else {
+					var scrSize = getScrollSize(_$target);
+					w = scrSize.w;
+					h = scrSize.h;
+				}
+				_$overlay.width(w).height(h);
 
 				if (isLegacyIE || compatMode) {
-					// IE6はwidthにバグがあるため、heightに加えてwidthも自前で計算を行う。
-					// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
-					$.each([_$overlay, _$skin], function(i, e) {
-						e.width(w).height(h);
-					});
-				} else if (!usePositionFixed) {
-					// heightは100%で自動計算されるので何もしない
-					_$overlay.height(h);
+					_$skin.width(w).height(h);
 				}
 			}
 		},
@@ -1045,15 +1081,16 @@
 								((scrollTop() + (wh / 2)) - (_$content.outerHeight() / 2)) + 'px');
 					}
 				} else {
-					_$content.css('top', ((_$target.outerHeight() - _$content.outerHeight()) / 2)
-							+ 'px');
+					//オーバーレイの計算はスクロールサイズを基準にしている。これに倣い、中央揃え計算の基準はinnerHeight()にする(＝paddingを含める)。leftも同様
+					_$content.css('top', _$target.scrollTop()
+							+ (_$target.innerHeight() - _$content.outerHeight()) / 2);
 				}
 
 				var blockElementPadding = _$content.innerWidth() - _$content.width();
 				var totalWidth = 0;
 
-				_$content.children().each(function(i, e) {
-					var $e = $(e);
+				_$content.children().each(function() {
+					var $e = $(this);
 					// IE9にて不可視要素に対してouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
 					if ($e.css('display') === 'none') {
 						return true;
@@ -1061,7 +1098,8 @@
 					totalWidth += $e.outerWidth(true);
 				});
 				_$content.width(totalWidth + blockElementPadding);
-				_$content.css('left', ((_$target.width() - _$content.outerWidth()) / 2) + 'px');
+				_$content.css('left', _$target.scrollLeft()
+						+ (_$target.innerWidth() - _$content.outerWidth()) / 2);
 			}
 		},
 		/**
