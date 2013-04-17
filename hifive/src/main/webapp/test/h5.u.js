@@ -1533,8 +1533,8 @@ $(function() {
 	});
 
 	test('deserialize 要素に不正な値を含む配列やオブジェクト文字列をデシリアライズしようとしたときはエラーが発生すること。', 10, function() {
-		var objStrs = ['1|a["n1","q"]', '1|o{"key":"qq"}', '1|o{"key":"a[\\\"1\\\"]"}',
-				'1|o{"key":"@[\\\"n1\\\"]"}', '1|a["@{\\\"key\\\":\\\"1\\\"}"]'];
+		var objStrs = ['2|a["n1","q"]', '2|o{"key":"qq"}', '2|o{"key":"a[\\\"1\\\"]"}',
+				'2|o{"key":"@[\\\"n1\\\"]"}', '2|a["@{\\\"key\\\":\\\"1\\\"}"]'];
 		var errorCode = 11004;
 		for ( var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
@@ -1545,8 +1545,8 @@ $(function() {
 				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
-		objStrs = ['1|a["n1","nq"]', '1|o{"key":"b2"}', '1|o{"key":"a[\\\"nNaN\\\"]"}',
-				'1|o{"key":"a[\\\"ll\\\"]"}', '1|a["@{\\\"key\\\":\\\"xx\\\"}"]'];
+		objStrs = ['2|a["n1","nq"]', '2|o{"key":"b2"}', '2|o{"key":"a[\\\"nNaN\\\"]"}',
+				'2|o{"key":"a[\\\"ll\\\"]"}', '2|a["@{\\\"key\\\":\\\"xx\\\"}"]'];
 		var errorCode = 11006;
 		for ( var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
@@ -1571,6 +1571,10 @@ $(function() {
 				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
+	});
+
+	test('deserialize バージョン1との後方互換',1,function(){
+		strictEqual(h5.u.obj.deserialize('1|s\\\\\t'), '\\\\\t', 'バージョン1でシリアライズした文字列を正しくデシリアライズできること');
 	});
 
 	//=============================
