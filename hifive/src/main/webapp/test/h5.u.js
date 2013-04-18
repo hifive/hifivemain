@@ -980,8 +980,8 @@ $(function() {
 	// Body
 	//=============================
 	test('文字列', 6, function() {
-		var strs = ["helloWorld", 'o{"str1":"\"string1\""}', '改行\r\nnewLine', 'タブ\ttab', 'その他特殊文字\b\"\/\r\\\n',
-				'\\r\\n\\t'];
+		var strs = ["helloWorld", 'o{"str1":"\"string1\""}', '改行\r\nnewLine', 'タブ\ttab',
+				'その他特殊文字\b\"\/\r\\\n', '\\r\\n\\t'];
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			var serialized = h5.u.obj.serialize(str, true);
@@ -1028,7 +1028,6 @@ $(function() {
 				for ( var i = 0, len = regExps.length; i < len; i++) {
 					var regExp = regExps[i];
 					var serialized = h5.u.obj.serialize(regExp);
-					if(i==6)console.log(serialized)
 					var deserialized = h5.u.obj.deserialize(serialized);
 					deepEqual(deserialized, regExp, "シリアライズしてデシリアライズした正規表現が元の正規表現と同じ。"
 							+ regExp.toString());
@@ -1036,7 +1035,8 @@ $(function() {
 			});
 
 	test('配列', 4, function() {
-		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}'], ['a\r\nb', '\t', new RegExp('\r\n'), new RegExp('\t')]];
+		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}'],
+				['a\r\nb', '\t', new RegExp('\r\n'), new RegExp('\t')]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
@@ -1046,7 +1046,8 @@ $(function() {
 	});
 
 	test('多次元配列', 2, function() {
-		var arrays = [[[1, 2, 3], [4, '\\5\\"', ['\\\"6\\\"', [7, '\\\"8\\\"']]], 9],['a\r\nb', ['\t', new RegExp('\r\n[\b]')], new RegExp('\t')]];
+		var arrays = [[[1, 2, 3], [4, '\\5\\"', ['\\\"6\\\"', [7, '\\\"8\\\"']]], 9],
+				['a\r\nb', ['\t', new RegExp('\r\n[\b]')], new RegExp('\t')]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
@@ -1071,7 +1072,7 @@ $(function() {
 		}, 3]], {
 			e: 'E',
 			f: 'F'
-		}],[{
+		}], [{
 			a: '\r\n',
 			b: '\t',
 			c: '\b\"\/\r\\\n'
@@ -1383,7 +1384,7 @@ $(function() {
 		P.prototype = {
 			b: 'b',
 			c: function() {
-				console.log(this);
+			//
 			}
 		};
 		var obj = new P();
@@ -1573,8 +1574,9 @@ $(function() {
 		}
 	});
 
-	test('deserialize バージョン1との後方互換',1,function(){
-		strictEqual(h5.u.obj.deserialize('1|s\\\\\t'), '\\\\\t', 'バージョン1でシリアライズした文字列を正しくデシリアライズできること');
+	test('deserialize バージョン1との後方互換', 1, function() {
+		strictEqual(h5.u.obj.deserialize('1|s\\\\\t'), '\\\\\t',
+				'バージョン1でシリアライズした文字列を正しくデシリアライズできること');
 	});
 
 	//=============================
