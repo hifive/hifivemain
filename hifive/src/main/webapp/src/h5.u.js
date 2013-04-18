@@ -251,7 +251,7 @@
 			return ret;
 		}
 		if (str instanceof String) {
-			return new String(escape(str.toString()));
+			return new String(escape(str.toString()), nlEscaped);
 		}
 		return str;
 	}
@@ -261,11 +261,11 @@
 	 *
 	 * @private
 	 * @param {String} str
-	 * @param {Boolean} [isVersion1] バージョン1対応。シリアライザver1でシリアライズされた文字列はunescapeしない。
+	 * @param {String} version デシリアライズ対象の文字列がシリアライズされた時のバージョン。'1'ならunescapeしない。
 	 * @returns {String} エスケープ後の文字列
 	 */
-	function unescape(str, isVersion1) {
-		if (isVersion1) {
+	function unescape(str, version) {
+		if (version === '1') {
 			return str;
 		}
 		if (isString(str)) {
@@ -914,9 +914,8 @@
 					if (indexStack[key]) {
 						continue;
 					}
-					var escapedKey = escape(key);
 					if ($.type(val[key]) !== 'function') {
-						hash += '"' + escapedKey + '":"'
+						hash += '"' + escape(key) + '":"'
 								+ (func(val[key])).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 								+ '",';
 					}
@@ -978,14 +977,9 @@
 
 		value.match(/^(.)\|(.*)/);
 		var version = RegExp.$1;
+		// version1の場合はエラーにせず、現在のバージョンでunescapeをしない方法で対応している。
 		if (version !== '1' && version !== CURRENT_SEREALIZER_VERSION) {
 			throwFwError(ERR_CODE_SERIALIZE_VERSION, [version, CURRENT_SEREALIZER_VERSION]);
-		}
-
-		// version1の場合は現在のバージョンでunescapeをしない方法で対応し、後方互換を持たせる。
-		var isVersion1;
-		if(version === '1'){
-			isVersion1 = true;
 		}
 		var ret = RegExp.$2;
 
@@ -1040,7 +1034,7 @@
 			if (type !== undefined && type !== '') {
 				switch (codeToType(type)) {
 				case 'String':
-					ret = new String(unescape(ret, isVersion1));
+					ret = new String(unescape(ret, version));
 					break;
 				case 'string':
 					break;
@@ -1149,7 +1143,7 @@
 				case 'regexp':
 					try {
 						var matchResult = ret.match(/^\/(.*)\/(.*)$/);
-						var regStr = unescape(matchResult[1], isVersion1);
+						var regStr = unescape(matchResult[1], version);
 						var flg = matchResult[2];
 						ret = new RegExp(regStr, flg);
 					} catch (e) {
@@ -1173,7 +1167,7 @@
 				}
 			}
 
-			return unescape(ret, isVersion1);
+			return unescape(ret, version);
 		}
 		return func(ret);
 	}
