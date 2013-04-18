@@ -402,7 +402,7 @@ $(function() {
 	});
 
 	test('data-h5-loop-contextに配列、ObservableArray以外のものをバインドした場合はエラーになること', function() {
-		var noArys = [{}, $(), function() {}];
+		var noArys = [{}, $(), function() {/* no code */}];
 		var l = noArys.length;
 		for ( var i = 0; i < l; i++) {
 			view.append($fixture, 'loopContext1');
@@ -632,16 +632,19 @@ $(function() {
 	// Definition
 	//=============================
 	var oAry = null;
+
+	var oAryInitValue = [{
+		test: '初期値0'
+	}, {
+		test: '初期値1'
+	}, {
+		test: '初期値2'
+	}];
+
 	module('ObservableArrayの変更検知 各メソッド', {
 		setup: function() {
 			oAry = h5.core.data.createObservableArray();
-			oAry.copyFrom([{
-				test: '初期値0'
-			}, {
-				test: '初期値1'
-			}, {
-				test: '初期値2'
-			}]);
+			oAry.copyFrom(oAryInitValue);
 			view.append($fixture, 'loopContext1');
 			view.bind($('#dataBindTest'), {
 				items: oAry
@@ -655,6 +658,33 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+
+	test('set', function() {
+		//TODO テストケース改善
+
+		oAry.set(0, {
+			test: 'a'
+		});
+		checkTexts(['a', '初期値1', '初期値2'], '既存値の上書きが反映されること');
+
+		oAry.set(0, {
+			test: 'A'
+		});
+		oAry.set(1, {
+			test: 'B'
+		});
+		oAry.set(3, {
+			test: 'C'
+		});
+		checkTexts(['A', 'B', '初期値2', 'C'], '末尾にセットしてサイズが拡張された場合');
+
+		oAry.copyFrom([]);
+		oAry.set(0, {
+			test: 'x'
+		});
+		checkTexts(['x'], '空にした状態からセットした場合');
+	});
+
 	test('copyFrom', function() {
 		oAry.copyFrom([{
 			test: 'a'

@@ -885,7 +885,6 @@
 
 			switch (event.method) {
 			case 'set':
-				console.log(event);
 				spliceLoopNodes(this, loopRootNode, event.target,
 						[event.args[0], 1, event.args[1]], loopNodes, srcCtxNode);
 				break;
