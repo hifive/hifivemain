@@ -1117,7 +1117,8 @@ $(function() {
 			deepEqual(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。");
 			for ( var key in array) {
 				var compFunction = strictEqual;
-				if (typeof array[key] === 'object') {
+				if (typeof array[key] === 'object' || array[key] instanceof RegExp) {
+					// AndroidではRegExpのtypeofは'function'であるため
 					compFunction = deepEqual;
 				}
 				compFunction(deserialized[key], array[key], "シリアライズしてデシリアライズした配列の値が各要素で同じ。 key = "
