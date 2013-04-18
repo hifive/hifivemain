@@ -341,34 +341,44 @@
 
 	/**
 	 * 任意要素のスクロールサイズ(scrollWidth/Height：見た目でなくコンテンツ全体のサイズ)を取得します。
-	 * IE6は内包する要素の方が小さい場合にscrollサイズがclientサイズより小さくなってしまうバグがあります（本来はscroll == clientでなければならない）。
-	 * そこで、IE6の場合はscrollとclientのうち大きい方のサイズを返します。
-	 * また、scrollW/Hは整数を返しますが、内部的にはサイズが小数になっている場合があります（IE9等で現象を確認）。
-	 * サイズが小数の場合、scrollW/Hの大きさでオーバーレイのサイズを設定すると意図しないスクロールバーが出てしまう場合があります。
-	 * さらに、CSSで小数値を指定した場合などで、内部値(小数)を取得する方法がない場合があります（jQuery等でも整数でしかとれない）。
-	 * そこで、通常の利用においては、縦方向のずれよりも横スクロールバーが(急に)出てしまう方が見た目への影響が大きいと考え、以下のように対処しています。
-	 * 幅方向については常に-0.5することで意図しない横スクロールバーが出ない、かつ隙間が気にならないようにし、高さ方向については小数誤差を検出できた場合のみ減算することとしています。
-	 * 高さ方向を一律に引き算するとChrome26,Firefox20等ではサブピクセルが計算され最後までスクロールした時にわずかな隙間ができてしまうので、一律の減算は行わない。
+	 * IE6は内包する要素の方が小さい場合にscrollサイズがclientサイズより小さくなってしまうバグがあります（本来はscroll===client）。
+	 * そこで、IE6の場合はscrollとclientのうち大きい方のサイズを返します。<br>
+	 * また、scrollW/Hは整数を返しますが、内部的にはサイズが小数になっている場合があります。Chrome22, Firefox20,
+	 * Opera12ではscrollサイズをセットしても問題ありませんが、IEの場合
+	 * (内部サイズが小数のときに)scrollW/Hの大きさでオーバーレイのサイズを設定すると意図しないスクロールバーが出てしまう場合があります。
+	 * このメソッドは、IEかつ内部に小数を取り得る環境と判断した場合この誤差を調整してこの問題を回避します。
 	 *
 	 * @private
-	 * @param elem {jQuery} jQueryオブジェクト
+	 * @param elem {Element} DOM要素
 	 */
-	function getScrollSize($elem) {
-		var elem = $elem[0];
-
-		var eH = $elem.height();
-		var fracH = eH - parseInt(eH);
-
+	function getScrollSize(elem) {
 		var retW = elem.scrollWidth;
 		var retH = elem.scrollHeight;
+
 		if (isLegacyIE) {
 			retW = Math.max(retW, elem.clientWidth);
 			retH = Math.max(retH, elem.clientHeight);
+		} else if (h5ua.isIE && getComputedStyle) {
+			//IE9以上(かつIE9モード以上)。この場合、ボックスサイズが小数になる可能性がある
+			//(IE8orIE8モード以下の場合常に整数で計算されるので、scrollサイズを使えばよい)。
+			//ComputedStyleで厳密なサイズを取得し、その分を調整することで
+			//意図しないスクロールバーが出ないようにする。
+			//-1しているのは四捨五入させるため(描画の際はピクセルにスナップされるようなので)。
+
+			var comStyle = getComputedStyle(elem, null);
+
+			var eW = parseFloat(comStyle.width) + parseFloat(comStyle.paddingLeft)
+					+ parseFloat(comStyle.paddingRight);
+			retW += eW - parseInt(eW) - 1;
+
+			var eH = parseFloat(comStyle.height) + parseFloat(comStyle.paddingTop)
+					+ parseFloat(comStyle.paddingBottom);
+			retH += eH - parseInt(eH) - 1;
 		}
 
 		return {
-			w: retW - 0.5,
-			h: retH - fracH
+			w: retW,
+			h: retH
 		};
 	}
 
@@ -1044,7 +1054,7 @@
 					w = documentWidth();
 					h = documentHeight();
 				} else {
-					var scrSize = getScrollSize(_$target);
+					var scrSize = getScrollSize(_$target[0]);
 					w = scrSize.w;
 					h = scrSize.h;
 				}
