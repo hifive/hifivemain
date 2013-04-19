@@ -329,7 +329,6 @@
 
 		/**
 		 * このSQLTransactionWrapperに紐づいているTransactionオブジェクトの_disposeを呼びます
-		 *
 		 * <p>
 		 * トランザクションオブジェクトへの参照をトランザクションが終わった後に破棄するためのメソッドです。(issue #192)
 		 * </p>
@@ -564,7 +563,6 @@
 			return df.promise();
 		}
 	});
-
 
 
 	/**
@@ -1218,6 +1216,7 @@
 		this._queue = [];
 		this._df = getDeferred();
 		this._executed = false;
+		this._tasks = [];
 	}
 
 	Transaction.prototype = new SqlExecutor();
@@ -1280,13 +1279,11 @@
 		 * @returns {Promise} Promiseオブジェクト
 		 */
 		execute: function() {
-			this._txw && this._txw._addTransaction(this);
 			var that = this;
 			var df = this._df;
 			var queue = this._queue;
 			var executed = this._executed;
 			var index = 0;
-			var tasks = [];
 
 			function createTransactionTask(_tasks, txObj) {
 				function TransactionTask(tx) {
@@ -1300,11 +1297,11 @@
 			}
 
 			function executeSql() {
-				if (tasks.length === index) {
+				if (that._tasks.length === index) {
 					var results = [];
 
-					for ( var j = 0, len = tasks.length; j < len; j++) {
-						var result = tasks[j]._txw._tasks;
+					for ( var j = 0, len = that._tasks.length; j < len; j++) {
+						var result = that._tasks[j]._txw._tasks;
 						results.push(result[0].result);
 					}
 
@@ -1313,7 +1310,7 @@
 					return;
 				}
 
-				tasks[index].execute().progress(function(rs, innerTx) {
+				that._tasks[index].execute().progress(function(rs, innerTx) {
 					index++;
 					executeSql();
 				});
@@ -1323,20 +1320,22 @@
 				that._txw._addTask(df);
 				checkSqlExecuted(executed);
 
+				// executedじゃなければ自身を_txw._transactionsに追加
+				this._txw && this._txw._addTransaction(this);
+
 				if (that._txw._runTransaction()) {
-					createTransactionTask(tasks, that._txw._tx);
+					createTransactionTask(that._tasks, that._txw._tx);
 					executeSql();
 				} else {
 					that._txw._execute(function(tx) {
-						createTransactionTask(tasks, tx);
+						createTransactionTask(that._tasks, tx);
 						that._txw._tx = tx;
 						executeSql();
 					}, function(e) {
-						that._txw._tx = null;
 						transactionErrorCallback(that._txw, e);
+						// 自分自身の_txw._txの参照は_dispose()で消されるので、ここでthat._txw._tx=nullはする必要ない
 						that._txw._dispose();
 					}, function() {
-						that._txw._tx = null;
 						transactionSuccessCallback(that._txw);
 						that._txw._dispose();
 					});
@@ -1348,25 +1347,27 @@
 			this._df = getDeferred();
 			this._executed = true;
 
-			/**
-			 * Transaction#execute内(このメソッド)の変数からトランザクションオブジェクトtxへの参照を破棄します。
-			 *
-			 * @private
-			 * @name _dispose
-			 * @memberOf Transaction
-			 * @function
-			 */
-			this._dispose = function() {
-				for ( var i = 0, l = tasks.length; i < l; i++) {
-					tasks[i]._txw._tx = null;
-				}
-				that = null;
-			};
-
 			return df.promise();
 		},
 		promise: function() {
 			return this._df.promise();
+		},
+
+		/**
+		 * Transaction#execute内(このメソッド)の変数からトランザクションオブジェクトtxへの参照を破棄します。
+		 *
+		 * @private
+		 * @name _dispose
+		 * @memberOf Transaction
+		 * @function
+		 */
+		_dispose: function() {
+			for ( var i = 0, l = this._tasks.length; i < l; i++) {
+				this._tasks[i]._txw._tx = null;
+				this._tasks[i]._txw = null;
+			}
+			this._txw._tx = null;
+			this._txw = null;
 		}
 	});
 
@@ -1562,7 +1563,7 @@
 		 */
 		transaction: function(txw) {
 			checkTransaction('sql', txw);
-			return new Transaction(txw ? txw : new SQLTransactionWrapper(this._db, null, true));
+			return new Transaction(txw ? txw : new SQLTransactionWrapper(this._db, null));
 		}
 	});
 
