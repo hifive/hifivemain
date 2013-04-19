@@ -358,7 +358,9 @@
 		if (isLegacyIE) {
 			retW = Math.max(retW, elem.clientWidth);
 			retH = Math.max(retH, elem.clientHeight);
-		} else if (h5ua.isIE && getComputedStyle) {
+		} else if (h5ua.isIE && typeof getComputedStyle === 'function') {
+			//getComputedStyleが未定義な環境(IE)でエラーにならないように、typeofを使って判定
+
 			//IE9以上(かつIE9モード以上)。この場合、ボックスサイズが小数になる可能性がある
 			//(IE8orIE8モード以下の場合常に整数で計算されるので、scrollサイズを使えばよい)。
 			//ComputedStyleで厳密なサイズを取得し、その分を調整することで
