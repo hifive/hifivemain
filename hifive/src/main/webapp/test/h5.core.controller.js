@@ -6763,7 +6763,7 @@ $(function() {
 				// contentの場所は見えている箇所の真ん中
 				var $content = $('.h5-indicator.content');
 				var content = $content[0];
-				var $scrollable = $('#scrollable');alert($scrollable.scrollLeft());
+				var $scrollable = $('#scrollable');
 				var expectContentLeft = $scrollable.scrollLeft()
 						+ ($scrollable.innerWidth() - $content.outerWidth()) / 2;
 				var expectContentTop = $scrollable.scrollTop()
