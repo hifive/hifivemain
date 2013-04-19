@@ -2986,826 +2986,6 @@ $(function() {
 
 
 
-	asyncTest('this.indicator() ルート要素にインジケータを表示',
-			function() {
-				var testController = null;
-				var controllerBase = {
-					__name: 'TestController',
-
-					'input[type=button] click': function() {
-						var indicator = this.indicator({
-							message: 'BlockMessageTest'
-						}).show();
-
-						strictEqual($(indicator._target).find(
-								'.h5-indicator.a.content > .indicator-message').text(),
-								'BlockMessageTest');
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-								'Indicator#show() インジケータが表示されること');
-
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
-								'display'), 'block', 'オーバーレイが表示されていること');
-
-						setTimeout(function() {
-							indicator.hide();
-
-							setTimeout(function() {
-								strictEqual($('.h5-indicator', indicator._target).length, 0,
-										'Indicator#hide() インジケータが除去されていること');
-
-								testController.unbind();
-								start();
-							}, 0);
-						}, 0);
-					}
-				};
-
-				testController = h5.core.controller('#controllerTest', controllerBase);
-				testController.readyPromise.done(function() {
-					$('#controllerTest input[type=button]').click();
-				});
-			});
-
-	asyncTest('this.triggerIndicator() FWがtriggerIndicatorイベントを受け取りインジケータを表示', 7, function() {
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
-
-			'input[type=button] click': function() {
-				var indicator = this.triggerIndicator({
-					message: 'BlockMessageTest',
-					percent: 20,
-					block: true
-				}).show();
-
-				notEqual(indicator, null, 'FWが生成したインジケータオブジェクトが返ってくること');
-				strictEqual(indicator._target, document.body, 'FWがスクリーンロックでインジケータを表示');
-
-				strictEqual($(indicator._target).find(
-						'.h5-indicator.a.content > .indicator-message').text(), 'BlockMessageTest',
-						'オプションで指定したメッセージが表示されること');
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-						'Indicator#show() インジケータが表示されること');
-
-				var $percentElem = $(indicator._target).find('.throbber-percent');
-
-				if ($percentElem.length > 0) {
-					strictEqual($percentElem.text(), '20', 'Indicator#show() 進捗率が表示されること');
-				} else {
-					ok(false, 'スロバーが描画できないためテスト失敗。');
-				}
-
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
-						'block', 'オーバーレイが表示されていること');
-
-				setTimeout(function() {
-					indicator.hide();
-
-					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator._target).length, 0,
-								'Indicator#hide() インジケータが除去されていること');
-
-						testController.unbind();
-
-						start();
-					}, 0);
-				}, 0);
-			}
-		};
-
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
-
-	asyncTest('this.triggerIndicator() 親要素にバインドしたコントローラがtriggerIndicatorイベントを受け取りインジケータを表示', 6,
-			function() {
-				$('#controllerTest').append('<div id="childDiv"></div>');
-
-				var parentIndicator = null;
-
-				var testController = {
-					__name: 'TestController',
-					'{rootElement} triggerIndicator': function(context) {
-						context.event.stopPropagation();
-						parentIndicator = this.indicator({
-							target: this.rootElement,
-							percent: 30,
-							message: 'indicator testController'
-						}).show();
-						context.evArg.indicator = parentIndicator;
-					}
-				};
-				var childController = {
-					__name: 'TestController',
-
-					'{rootElement} click': function() {
-						var indicator = this.triggerIndicator();
-
-						strictEqual($(indicator._target).find(
-								'.h5-indicator.a.content > .indicator-message').text(),
-								'indicator testController');
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-								'Indicator#show() インジケータが表示されること');
-
-						var $percentElem = $(indicator._target).find('.throbber-percent');
-
-						if ($percentElem.length > 0) {
-							strictEqual($percentElem.text(), '30',
-									'Indicator#show() インジケータが表示されること');
-						} else {
-							ok(false, 'スロバーが描画できないためテスト失敗。');
-						}
-
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
-								'display'), 'block', 'オーバーレイが表示されていること');
-
-						strictEqual(indicator, parentIndicator,
-								'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
-
-						setTimeout(function() {
-							indicator.hide();
-
-							setTimeout(function() {
-								strictEqual($('.h5-indicator', indicator._target).length, 0,
-										'Indicator#hide() インジケータが除去されていること');
-								start();
-							}, 0);
-						}, 0);
-					}
-				};
-
-				testController = h5.core.controller('#controllerTest', testController);
-
-				testController = h5.core.controller('#childDiv', childController);
-				testController.readyPromise.done(function() {
-					$('#childDiv').click();
-				});
-			});
-
-	asyncTest('this.indicator() オプションにプレーンオブジェクト以外を渡した時は無視されること', 4, function() {
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
-
-			'input[type=button] click': function() {
-				function NoPlain() {
-					this.message = 'Test';
-				}
-				var indicator = this.indicator(new NoPlain()).show();
-
-				deepEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
-						.text(), '', 'オプションは無視されて、メッセージは表示されていないこと。');
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-						'Indicator#show() インジケータが表示されること');
-
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
-						'block', 'オーバーレイが表示されていること');
-
-				setTimeout(function() {
-					indicator.hide();
-
-					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator._target).length, 0,
-								'Indicator#hide() インジケータが除去されていること');
-
-						testController.unbind();
-						start();
-					}, 0);
-				}, 0);
-			}
-		};
-
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
-
-	asyncTest('this.indicator() 親要素と子要素でインジケータを表示する', function() {
-		var controllerBase = {
-			__name: 'TestController',
-			'input[type=button] click': function() {
-				var that = this;
-				var indicator2 = this.indicator({
-					target: '#controllerResult',
-					message: 'BlockMessageTest-child'
-				});
-				indicator2.show();
-
-				strictEqual($(indicator2._target).find('.indicator-message').text(),
-						'BlockMessageTest-child');
-				strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1);
-
-				var indicator = this.indicator({
-					target: $(this.rootElement).parent(),
-					message: 'BlockMessageTest-parent'
-				});
-				indicator.show();
-
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 2,
-						'親コントローラでインジケータを表示しても、子コントローラのインジケータは除去されないこと。');
-
-				setTimeout(function() {
-					indicator.hide();
-
-					setTimeout(function() {
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-								'Indicator#hide() インジケータが除去されていること');
-
-						that.deferredFunc();
-					}, 0);
-				}, 0);
-			},
-
-			deferredFunc: function() {
-				var df = this.deferred();
-				var indicator = this.indicator({
-					target: document,
-					promises: df.promise()
-				}).show();
-
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 2,
-						'promiseオブジェクトを渡して、インジケータが表示されること');
-
-				setTimeout(function() {
-					df.resolve();
-
-					setTimeout(function() {
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-								'resolve()が呼ばれると、インジケータが非表示になること');
-						start();
-					}, 0);
-				}, 0);
-
-				return df.promise();
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-
-			testController.unbind();
-		});
-	});
-
-	asyncTest('this.indicator() 存在しないターゲットを指定したときはインジケータが表示されないこと', function() {
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
-
-			'input[type=button] click': function() {
-				var indicator = this.indicator({
-					message: 'BlockMessageTest',
-					target: '#child'
-				}).show();
-
-				deepEqual($(indicator._target).find('.h5-indicator.a.content').length, 0,
-						'インジケータが表示されていないこと');
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 0,
-						'Indicator#show() インジケータ(オーバーレイ)が表示されていないこと。');
-
-				setTimeout(function() {
-					indicator.hide();
-					ok(true, 'Indicator#hide() hide()を呼んでもエラーにならないこと。');
-					testController.unbind();
-					start();
-				}, 0);
-			}
-		};
-
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
-
-	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
-		var testController = null;
-		var testController2 = null;
-		var controllerBase = {
-			__name: 'TestController',
-
-			'input[type=button] click': function() {
-				var indicator = this.indicator({
-					message: 'BlockMessageTest',
-					percent: 10
-				}).show();
-
-
-				strictEqual($(indicator._target).find('.indicator-message').text(),
-						'BlockMessageTest');
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
-						'block', 'オーバーレイが表示されていること');
-
-				var $percentElem = $(indicator._target).find('.throbber-percent');
-
-				if ($percentElem.length > 0) {
-					expect(22);
-					strictEqual($percentElem.text(), '10', 'Indicator#show() インジケータが表示されること');
-					indicator.percent(30);
-					strictEqual($percentElem.text(), '30',
-							'Indicator#show() インジケータの進捗率表示が30に更新されていること');
-					indicator.percent(100);
-					strictEqual($percentElem.text(), '100',
-							'Indicator#show() インジケータの進捗率表示が100に更新されていること');
-					indicator.percent(5);
-					strictEqual($percentElem.text(), '5',
-							'Indicator#show() インジケータの進捗率表示が5に更新されていること');
-					indicator.percent(-1);
-					strictEqual($percentElem.text(), '5',
-							'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
-					indicator.percent(101);
-					strictEqual($percentElem.text(), '5',
-							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
-					indicator.percent(33.3333333);
-					strictEqual($percentElem.text(), '33.3333333',
-							'Indicator#show() インジケータの進捗率に小数を指定できること');
-				} else {
-					expect(10);
-					ok(false, 'スロバーが描写できないためテスト失敗。');
-				}
-
-				indicator.hide();
-				var that = this;
-				setTimeout(function() {
-					strictEqual($('.h5-indicator', indicator._target).length, 0,
-							'Indicator#hide() インジケータが除去されていること');
-
-					var indicator2 = that.indicator({
-						message: 'BlockMessageTestGrobal',
-						percent: 10,
-						target: document.body
-					}).show();
-
-					strictEqual($(indicator2._target).find('.indicator-message').text(),
-							'BlockMessageTestGrobal');
-					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
-							'Indicator#show() インジケータが表示されること');
-					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
-							.css('display'), 'block', 'オーバーレイが表示されていること');
-
-					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
-
-					if ($percentElem2.length > 0) {
-						strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
-								'Indicator#show() インジケータの進捗率が表示されること');
-						indicator2.percent(30);
-						strictEqual($(indicator2._target).find('.throbber-percent').text(), '30',
-								'Indicator#show() インジケータの進捗率表示が30に更新されていること');
-						indicator2.percent(100);
-						strictEqual($(indicator2._target).find('.throbber-percent').text(), '100',
-								'Indicator#show() インジケータの進捗率表示が100に更新されていること');
-						indicator2.percent(5);
-						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-								'Indicator#show() インジケータの進捗率表示が5に更新されていること');
-						indicator2.percent(-1);
-						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-								'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
-						indicator2.percent(101);
-						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
-								'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
-						indicator2.percent(33.3333333);
-						strictEqual($(indicator2._target).find('.throbber-percent').text(),
-								'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること');
-					} else {
-						ok(false, 'スロバーが描画できないためテスト失敗。');
-					}
-
-					indicator2.hide();
-					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator2._target).length, 0,
-								'Indicator#hide() インジケータが除去されていること');
-						testController.readyPromise.done(function() {
-							$('#controllerTest').click();
-						});
-						testController2.unbind();
-						start();
-					}, 0);
-
-					testController.unbind();
-				}, 0);
-			}
-		};
-
-		var controllerBaseGrobal = {
-			__name: 'TestGrobalController',
-
-			'input[type=button] test': function() {
-			//
-			}
-		};
-
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController2 = h5.core.controller(window, controllerBaseGrobal);
-		testController2.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
-
-	asyncTest('this.indicator() Indicator#message()で指定したメッセージに更新されること', 26, function() {
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
-
-			'input[type=button] click': function() {
-				var indicator = this.indicator({
-					message: 'BlockMessageTest',
-					percent: 10
-				}).show();
-
-				strictEqual($(indicator._target).find('.indicator-message').text(),
-						'BlockMessageTest');
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-						'Indicator#show() インジケータが表示されること');
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
-						'block', 'オーバーレイが表示されていること');
-
-
-				var $percentElem = $(indicator._target).find('.throbber-percent');
-
-				if ($percentElem.length > 0) {
-					strictEqual($percentElem.text(), '10', 'Indicator#show() インジケータが表示されること');
-				} else {
-					ok(false, 'スロバーが描画できないためテスト失敗。');
-				}
-
-				indicator.message('changeMessage');
-				strictEqual($(indicator._target).find('.indicator-message').text(),
-						'changeMessage', 'メッセージがに変更されたこと。');
-				indicator.message('  ');
-				strictEqual($(indicator._target).find('.indicator-message').text(), '  ',
-						'メッセージが変更されたこと。');
-				indicator.message('');
-				strictEqual($(indicator._target).find('.indicator-message').text(), '',
-						'メッセージが変更されたこと。');
-				indicator.message('abc');
-				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
-						'メッセージが変更されたこと。');
-				indicator.message();
-				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
-						'文字列以外ではメッセージは変更されないこと');
-				indicator.message(new String('def'));
-				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
-						'文字列以外ではメッセージは変更されないこと');
-				indicator.message(null);
-				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
-						'文字列以外ではメッセージは変更されないこと');
-				indicator.message(undefined);
-				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
-						'文字列以外ではメッセージは変更されないこと');
-				indicator.hide();
-				var that = this;
-				setTimeout(function() {
-					strictEqual($('.h5-indicator', indicator._target).length, 0,
-							'Indicator#hide() インジケータが除去されていること');
-
-					var indicator2 = that.indicator({
-						message: 'BlockMessageTestGrobal',
-						percent: 10,
-						target: document.body
-					}).show();
-
-					strictEqual($(indicator2._target).find('.indicator-message').text(),
-							'BlockMessageTestGrobal');
-					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
-							'Indicator#show() インジケータが表示されること');
-					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
-							.css('display'), 'block', 'オーバーレイが表示されていること');
-
-					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
-
-					if ($percentElem2.length > 0) {
-						strictEqual($percentElem2.text(), '10', 'Indicator#show() インジケータが表示されること');
-					} else {
-						ok(false, 'スロバーが描画できないためテスト失敗。');
-					}
-
-					indicator2.message('changeMessage');
-					strictEqual($(indicator2._target).find('.indicator-message').text(),
-							'changeMessage', 'メッセージがに変更されたこと。');
-					indicator2.message('  ');
-					strictEqual($(indicator2._target).find('.indicator-message').text(), '  ',
-							'メッセージが変更されたこと。');
-					indicator2.message('');
-					strictEqual($(indicator2._target).find('.indicator-message').text(), '',
-							'メッセージが変更されたこと。');
-					indicator2.message('abc');
-					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
-							'メッセージが変更されたこと。');
-					indicator2.message();
-					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
-							'文字列以外ではメッセージは変更されないこと');
-					indicator2.message(new String('def'));
-					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
-							'文字列以外ではメッセージは変更されないこと');
-					indicator2.message(null);
-					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
-							'文字列以外ではメッセージは変更されないこと');
-					indicator2.message(undefined);
-					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
-							'文字列以外ではメッセージは変更されないこと');
-					indicator2.hide();
-					setTimeout(function() {
-						strictEqual($('.h5-indicator', indicator._target).length, 0,
-								'Indicator#hide() インジケータが除去されていること');
-
-						testController.unbind();
-						start();
-					}, 0);
-				}, 0);
-			}
-		};
-
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
-
-	asyncTest('this.indicator() promises', function() {
-		var indicator = null;
-		var controllerBase = {
-			__name: 'TestController',
-
-			'input[type=button] click': function() {
-				this.deferredFunc();
-			},
-
-			deferredFunc: function() {
-				var df = this.deferred();
-				var df2 = this.deferred();
-				indicator = this.indicator({
-					target: document,
-					promises: [df.promise(), df2.promise()]
-				}).show();
-
-				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-						'promiseオブジェクトを渡して、インジケータが表示されること');
-
-				setTimeout(function() {
-					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-							'resolve()していないので、インジケータが表示されること');
-
-					df.resolve();
-				}, 0);
-
-				setTimeout(function() {
-					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-							'resolve()していないので、インジケータが表示されること');
-
-					df2.resolve();
-				}, 0);
-				h5.async.when(df.promise(), df2.promise()).done(
-						function() {
-							setTimeout(
-									function() {
-										strictEqual($(indicator._target).find(
-												'.h5-indicator.a.overlay').length, 0,
-												'全てのresolve()が呼ばれたら、インジケータが非表示になること');
-
-										testController.unbind();
-										start();
-									}, 0);
-						});
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-
-	});
-
-	asyncTest('this.indicator() 複数要素にマッチするセレクタをtargetに指定する', function() {
-		var controllerBase = {
-			__name: 'TestController',
-			'input[type=button] click': function() {
-				var indicator = this.indicator({
-					target: '.hoge',
-					message: 'テストテストテスト'
-				}).show();
-
-				setTimeout(
-						function() {
-							strictEqual($('#controllerTest > .hoge').children(
-									'.h5-indicator.a.content').length, 2,
-									'指定したセレクタで複数の要素にマッチした場合は両方にインジケータが表示されること');
-							indicator.hide();
-
-							setTimeout(function() {
-								strictEqual($('#controllerTest > .hoge').children(
-										'.h5-indicator.a.content').length, 0,
-										'Indicator#hide() インジケータが除去されていること');
-								start();
-							}, 0);
-						}, 0);
-			}
-		};
-
-		$('#controllerTest').append('<li class="hoge"></li>').append('<li class="hoge"></li>');
-
-		var testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-			testController.unbind();
-		});
-	});
-
-	asyncTest('this.indicator() 同一要素に２つのインジケータを表示する', function() {
-		var controllerBase = {
-			__name: 'TestController',
-			'input[type=button] click': function() {
-				var indicator = this.indicator({
-					target: this.rootElement,
-					message: 'テストテストテスト1'
-				}).show();
-
-				this.indicator({
-					target: this.rootElement,
-					message: 'テストテストテスト2'
-				}).show();
-
-				setTimeout(function() {
-					strictEqual($('#controllerTest').children('.h5-indicator.a.content').length, 1,
-							'1つの要素に2つ以上のインジケータは表示されないこと');
-					indicator.hide();
-
-					setTimeout(function() {
-						strictEqual($('#controllerTes').children('.h5-indicator.a.content').length,
-								0, 'Indicator#hide() インジケータが除去されていること');
-						start();
-					}, 0);
-				}, 0);
-			}
-		};
-
-		$('#controllerTest').append('<li class="hoge"></li>').append('<li class="hoge"></li>');
-
-		var testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-			testController.unbind();
-		});
-	});
-
-	asyncTest('this.indicator() orientation/resizeイベントの発生につき1度だけハンドラが実行されているか', 1, function() {
-		var controllerBase = {
-			__name: 'TestController',
-			'input[type=button] click': function() {
-
-				var indicator = this.indicator({
-					target: this.rootElement,
-					message: 'テストテストテスト1'
-				});
-
-				var fired = false;
-
-				indicator.show();
-
-				// _handleResizeEvent()はresizeイベント中1度だけ呼ばれるメソッドなので、このメソッドをフックして呼ばれたことを確認する
-				indicator._handleResizeEvent = function() {
-					ok(true, '1回のresizeイベントのハンドラは1度だけ実行されること');
-					fired = true;
-					start();
-				};
-
-
-				$(window).trigger('resize');
-				if (!fired) {
-					$(window).trigger('orientationchange');
-				}
-
-				indicator.hide();
-			}
-		};
-
-		var testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-			testController.unbind();
-		});
-	});
-
-	asyncTest('h5.ui.indicator()', 5,
-			function() {
-				var testController = null;
-				var controllerBase = {
-					__name: 'TestController',
-					'input[type=button] click': function() {
-						var indicator = h5.ui.indicator(document, {
-							message: 'BlockMessageTest2',
-							percent: 20
-						});
-						indicator.show();
-
-						strictEqual($(indicator._target).find(
-								'.h5-indicator.a.content > .indicator-message').text(),
-								'BlockMessageTest2');
-						strictEqual($(indicator._target).find('.h5-indicator.overlay').length, 1,
-								'Indicator#show() インジケータが表示されること');
-
-						var $percentElem = $(indicator._target).find('.throbber-percent');
-
-						if ($percentElem.length > 0) {
-							strictEqual($percentElem.text(), '20',
-									'Indicator#show() インジケータが表示されること');
-						} else {
-							ok(false, 'スロバーが描画できないためテスト失敗。');
-						}
-
-						strictEqual($(indicator._target).find('.h5-indicator.overlay').css(
-								'display'), 'block', 'オーバーレイが表示されていること');
-
-						setTimeout(function() {
-							indicator.hide();
-
-							setTimeout(function() {
-								strictEqual($('.h5-indicator', indicator._target).length, 0,
-										'Indicator#hide() インジケータが除去されていること');
-								testController.unbind();
-								start();
-							}, 0);
-						}, 0);
-					}
-				};
-
-				testController = h5.core.controller('#controllerTest', controllerBase);
-				testController.readyPromise.done(function() {
-					$('#controllerTest input[type=button]').click();
-				});
-			});
-
-	asyncTest('h5.ui.indicator() テーマを変更して実行', 5, function() {
-
-		var testController = null;
-		var controllerBase = {
-			__name: 'TestController',
-
-			'input[type=button] click': function() {
-				var indicator2 = h5.ui.indicator(document, {
-					message: 'BlockMessageTest2',
-					percent: 20,
-					theme: 'b'
-				});
-				indicator2.show();
-
-
-				// IEで、$().css()で参照されるcurrentStyleオブジェクトは非同期であるため、
-				// スタイルが適用されているかどうかを非同期でチェックしています。
-				//
-				// - currentStyle Object
-				//    MSDN: http://msdn.microsoft.com/en-us/library/ie/ms535231(v=vs.85).aspx
-				//    日本語訳: http://homepage3.nifty.com/rains/makeweb/dhtml/currentstyle.html
-
-				setTimeout(function() {
-
-					strictEqual($(indicator2._target).find(
-							'.h5-indicator.b.content > .indicator-message').text(),
-							'BlockMessageTest2');
-
-					var $percentElem = $(indicator2._target).find(
-							'.h5-indicator.b.content .throbber-percent');
-					if ($percentElem.length > 0) {
-
-						strictEqual(rgbToHex($percentElem.css('color')), '#c20',
-								'スロバー:変更したテーマのCSSがインジケータに適用されていること');
-					} else {
-						ok(false, 'スロバーが描画できないためテスト失敗。');
-					}
-
-					var $messageElem = $(indicator2._target).find(
-							'.h5-indicator.b.content .indicator-message');
-					strictEqual(rgbToHex($messageElem.css('color')), '#480',
-							'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
-
-					var $indicatorB = $(indicator2._target).find('.h5-indicator.b');
-					strictEqual(rgbToHex($indicatorB.css('background-color')), '#409',
-							'インジケータ本体:変更したテーマのCSSがインジケータに適用されていること');
-
-					setTimeout(function() {
-						indicator2.hide();
-
-						setTimeout(function() {
-							strictEqual($('.h5-indicator').length, 0,
-									'Indicator#hide() インジケータが除去されていること');
-							testController.unbind();
-							start();
-						}, 0);
-					}, 0);
-				}, 0);
-			}
-		};
-
-		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-		});
-	});
-
 	test('プロパティの重複チェック', 1, function() {
 
 
@@ -6608,51 +5788,1004 @@ $(function() {
 				originalListenerElementType: h5.settings.listenerElementType,
 			});
 
-	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 2, function(){
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 2, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var controller = {
-				__name: 'TestController',
-				'#parent click': function(context, $el){
-					ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-					strictEqual($el[0], parentElm, '第二引数がバインド先の要素であること');
-				}
+			__name: 'TestController',
+			'#parent click': function(context, $el) {
+				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+				strictEqual($el[0], parentElm, '第二引数がバインド先の要素であること');
+			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
-		c.readyPromise.done(function(){
+		c.readyPromise.done(function() {
 			$('#parent').click();
 			start();
 		});
 	});
 
-	asyncTest('子要素でイベントが発生した場合、バインド指定した要素が第二引数に渡されること', 2, function(){
+	asyncTest('子要素でイベントが発生した場合、バインド指定した要素が第二引数に渡されること', 2, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var controller = {
-				__name: 'TestController',
-				'#parent click': function(context, $el){
-					ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-					strictEqual($el[0], parentElm, '第二引数がバインド先の要素であること');
-				}
+			__name: 'TestController',
+			'#parent click': function(context, $el) {
+				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+				strictEqual($el[0], parentElm, '第二引数がバインド先の要素であること');
+			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
-		c.readyPromise.done(function(){
+		c.readyPromise.done(function() {
 			$('#child').click();
 			start();
 		});
 	});
 
-	asyncTest('listenerElementTypeの変更', 1, function(){
+	asyncTest('listenerElementTypeの変更', 1, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var controller = {
-				__name: 'TestController',
-				'#parent click': function(context, el){
-					strictEqual(el, parentElm, 'listenerElementType = 0 の時、第二引数がバンド先のDOM要素であること');
-				}
+			__name: 'TestController',
+			'#parent click': function(context, el) {
+				strictEqual(el, parentElm, 'listenerElementType = 0 の時、第二引数がバンド先のDOM要素であること');
+			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
-		c.readyPromise.done(function(){
+		c.readyPromise.done(function() {
 			h5.settings.listenerElementType = 0;
 			$('#parent').click();
 			start();
+		});
+	});
+
+
+	module(
+			'indicator',
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+
+					$('#qunit-fixture')
+							.append(
+									'<div id="scrollable" style="width:400px; height:300px; overflow:scroll"><div id="for-scroll" style="height:888px; width:777px;"></div></div>');
+				},
+				teardown: function() {
+					$('#controllerTest').remove();
+					$('#scrollable').remove();
+					h5.settings.commonFailHandler = undefined;
+					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
+					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
+				},
+				originalRetryInterval: h5.settings.dynamicLoading.retryInterval,
+				originalRetryCount: h5.settings.dynamicLoading.retryCount
+			});
+
+
+	asyncTest('this.indicator() ルート要素にインジケータを表示',
+			function() {
+				var testController = null;
+				var controllerBase = {
+					__name: 'TestController',
+
+					'input[type=button] click': function() {
+						var indicator = this.indicator({
+							message: 'BlockMessageTest'
+						}).show();
+
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'BlockMessageTest');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
+
+						setTimeout(function() {
+							indicator.hide();
+
+							setTimeout(function() {
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+
+								testController.unbind();
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
+
+				testController = h5.core.controller('#controllerTest', controllerBase);
+				testController.readyPromise.done(function() {
+					$('#controllerTest input[type=button]').click();
+				});
+			});
+
+	asyncTest('this.triggerIndicator() FWがtriggerIndicatorイベントを受け取りインジケータを表示', 7, function() {
+		var testController = null;
+		var controllerBase = {
+			__name: 'TestController',
+
+			'input[type=button] click': function() {
+				var indicator = this.triggerIndicator({
+					message: 'BlockMessageTest',
+					percent: 20,
+					block: true
+				}).show();
+
+				notEqual(indicator, null, 'FWが生成したインジケータオブジェクトが返ってくること');
+				strictEqual(indicator._target, document.body, 'FWがスクリーンロックでインジケータを表示');
+
+				strictEqual($(indicator._target).find(
+						'.h5-indicator.a.content > .indicator-message').text(), 'BlockMessageTest',
+						'オプションで指定したメッセージが表示されること');
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+						'Indicator#show() インジケータが表示されること');
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					strictEqual($percentElem.text(), '20', 'Indicator#show() 進捗率が表示されること');
+				} else {
+					ok(false, 'スロバーが描画できないためテスト失敗。');
+				}
+
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
+						'block', 'オーバーレイが表示されていること');
+
+				setTimeout(function() {
+					indicator.hide();
+
+					setTimeout(function() {
+						strictEqual($('.h5-indicator', indicator._target).length, 0,
+								'Indicator#hide() インジケータが除去されていること');
+
+						testController.unbind();
+
+						start();
+					}, 0);
+				}, 0);
+			}
+		};
+
+		testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
+
+	asyncTest('this.triggerIndicator() 親要素にバインドしたコントローラがtriggerIndicatorイベントを受け取りインジケータを表示', 6,
+			function() {
+				$('#controllerTest').append('<div id="childDiv"></div>');
+
+				var parentIndicator = null;
+
+				var testController = {
+					__name: 'TestController',
+					'{rootElement} triggerIndicator': function(context) {
+						context.event.stopPropagation();
+						parentIndicator = this.indicator({
+							target: this.rootElement,
+							percent: 30,
+							message: 'indicator testController'
+						}).show();
+						context.evArg.indicator = parentIndicator;
+					}
+				};
+				var childController = {
+					__name: 'TestController',
+
+					'{rootElement} click': function() {
+						var indicator = this.triggerIndicator();
+
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'indicator testController');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+
+						var $percentElem = $(indicator._target).find('.throbber-percent');
+
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.text(), '30',
+									'Indicator#show() インジケータが表示されること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
+
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
+
+						strictEqual(indicator, parentIndicator,
+								'triggerIndicatorイベントを受け取ったハンドラで生成されたインジケータであること');
+
+						setTimeout(function() {
+							indicator.hide();
+
+							setTimeout(function() {
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
+
+				testController = h5.core.controller('#controllerTest', testController);
+
+				testController = h5.core.controller('#childDiv', childController);
+				testController.readyPromise.done(function() {
+					$('#childDiv').click();
+				});
+			});
+
+	asyncTest('this.indicator() オプションにプレーンオブジェクト以外を渡した時は無視されること', 4, function() {
+		var testController = null;
+		var controllerBase = {
+			__name: 'TestController',
+
+			'input[type=button] click': function() {
+				function NoPlain() {
+					this.message = 'Test';
+				}
+				var indicator = this.indicator(new NoPlain()).show();
+
+				deepEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+						.text(), '', 'オプションは無視されて、メッセージは表示されていないこと。');
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+						'Indicator#show() インジケータが表示されること');
+
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
+						'block', 'オーバーレイが表示されていること');
+
+				setTimeout(function() {
+					indicator.hide();
+
+					setTimeout(function() {
+						strictEqual($('.h5-indicator', indicator._target).length, 0,
+								'Indicator#hide() インジケータが除去されていること');
+
+						testController.unbind();
+						start();
+					}, 0);
+				}, 0);
+			}
+		};
+
+		testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
+
+	asyncTest('this.indicator() 親要素と子要素でインジケータを表示する', function() {
+		var controllerBase = {
+			__name: 'TestController',
+			'input[type=button] click': function() {
+				var that = this;
+				var indicator2 = this.indicator({
+					target: '#controllerResult',
+					message: 'BlockMessageTest-child'
+				});
+				indicator2.show();
+
+				strictEqual($(indicator2._target).find('.indicator-message').text(),
+						'BlockMessageTest-child');
+				strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1);
+
+				var indicator = this.indicator({
+					target: $(this.rootElement).parent(),
+					message: 'BlockMessageTest-parent'
+				});
+				indicator.show();
+
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 2,
+						'親コントローラでインジケータを表示しても、子コントローラのインジケータは除去されないこと。');
+
+				setTimeout(function() {
+					indicator.hide();
+
+					setTimeout(function() {
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'Indicator#hide() インジケータが除去されていること');
+
+						that.deferredFunc();
+					}, 0);
+				}, 0);
+			},
+
+			deferredFunc: function() {
+				var df = this.deferred();
+				var indicator = this.indicator({
+					target: document,
+					promises: df.promise()
+				}).show();
+
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 2,
+						'promiseオブジェクトを渡して、インジケータが表示されること');
+
+				setTimeout(function() {
+					df.resolve();
+
+					setTimeout(function() {
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'resolve()が呼ばれると、インジケータが非表示になること');
+						start();
+					}, 0);
+				}, 0);
+
+				return df.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+
+			testController.unbind();
+		});
+	});
+
+	asyncTest('this.indicator() 存在しないターゲットを指定したときはインジケータが表示されないこと', function() {
+		var testController = null;
+		var controllerBase = {
+			__name: 'TestController',
+
+			'input[type=button] click': function() {
+				var indicator = this.indicator({
+					message: 'BlockMessageTest',
+					target: '#child'
+				}).show();
+
+				deepEqual($(indicator._target).find('.h5-indicator.a.content').length, 0,
+						'インジケータが表示されていないこと');
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 0,
+						'Indicator#show() インジケータ(オーバーレイ)が表示されていないこと。');
+
+				setTimeout(function() {
+					indicator.hide();
+					ok(true, 'Indicator#hide() hide()を呼んでもエラーにならないこと。');
+					testController.unbind();
+					start();
+				}, 0);
+			}
+		};
+
+		testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
+
+	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
+		var testController = null;
+		var testController2 = null;
+		var controllerBase = {
+			__name: 'TestController',
+
+			'input[type=button] click': function() {
+				var indicator = this.indicator({
+					message: 'BlockMessageTest',
+					percent: 10
+				}).show();
+
+
+				strictEqual($(indicator._target).find('.indicator-message').text(),
+						'BlockMessageTest');
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+						'Indicator#show() インジケータが表示されること');
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
+						'block', 'オーバーレイが表示されていること');
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					expect(22);
+					strictEqual($percentElem.text(), '10', 'Indicator#show() インジケータが表示されること');
+					indicator.percent(30);
+					strictEqual($percentElem.text(), '30',
+							'Indicator#show() インジケータの進捗率表示が30に更新されていること');
+					indicator.percent(100);
+					strictEqual($percentElem.text(), '100',
+							'Indicator#show() インジケータの進捗率表示が100に更新されていること');
+					indicator.percent(5);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率表示が5に更新されていること');
+					indicator.percent(-1);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
+					indicator.percent(101);
+					strictEqual($percentElem.text(), '5',
+							'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
+					indicator.percent(33.3333333);
+					strictEqual($percentElem.text(), '33.3333333',
+							'Indicator#show() インジケータの進捗率に小数を指定できること');
+				} else {
+					expect(10);
+					ok(false, 'スロバーが描写できないためテスト失敗。');
+				}
+
+				indicator.hide();
+				var that = this;
+				setTimeout(function() {
+					strictEqual($('.h5-indicator', indicator._target).length, 0,
+							'Indicator#hide() インジケータが除去されていること');
+
+					var indicator2 = that.indicator({
+						message: 'BlockMessageTestGrobal',
+						percent: 10,
+						target: document.body
+					}).show();
+
+					strictEqual($(indicator2._target).find('.indicator-message').text(),
+							'BlockMessageTestGrobal');
+					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
+							'Indicator#show() インジケータが表示されること');
+					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
+							.css('display'), 'block', 'オーバーレイが表示されていること');
+
+					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
+
+					if ($percentElem2.length > 0) {
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '10',
+								'Indicator#show() インジケータの進捗率が表示されること');
+						indicator2.percent(30);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '30',
+								'Indicator#show() インジケータの進捗率表示が30に更新されていること');
+						indicator2.percent(100);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '100',
+								'Indicator#show() インジケータの進捗率表示が100に更新されていること');
+						indicator2.percent(5);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率表示が5に更新されていること');
+						indicator2.percent(-1);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率に負の数を指定したときは値が変わらないこと。');
+						indicator2.percent(101);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(), '5',
+								'Indicator#show() インジケータの進捗率に100より大きい数を指定したときは値が変わらないこと。');
+						indicator2.percent(33.3333333);
+						strictEqual($(indicator2._target).find('.throbber-percent').text(),
+								'33.3333333', 'Indicator#show() インジケータの進捗率に小数を指定できること');
+					} else {
+						ok(false, 'スロバーが描画できないためテスト失敗。');
+					}
+
+					indicator2.hide();
+					setTimeout(function() {
+						strictEqual($('.h5-indicator', indicator2._target).length, 0,
+								'Indicator#hide() インジケータが除去されていること');
+						testController.readyPromise.done(function() {
+							$('#controllerTest').click();
+						});
+						testController2.unbind();
+						start();
+					}, 0);
+
+					testController.unbind();
+				}, 0);
+			}
+		};
+
+		var controllerBaseGrobal = {
+			__name: 'TestGrobalController',
+
+			'input[type=button] test': function() {
+			//
+			}
+		};
+
+		testController = h5.core.controller('#controllerTest', controllerBase);
+		testController2 = h5.core.controller(window, controllerBaseGrobal);
+		testController2.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
+
+	asyncTest('this.indicator() Indicator#message()で指定したメッセージに更新されること', 26, function() {
+		var testController = null;
+		var controllerBase = {
+			__name: 'TestController',
+
+			'input[type=button] click': function() {
+				var indicator = this.indicator({
+					message: 'BlockMessageTest',
+					percent: 10
+				}).show();
+
+				strictEqual($(indicator._target).find('.indicator-message').text(),
+						'BlockMessageTest');
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+						'Indicator#show() インジケータが表示されること');
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'),
+						'block', 'オーバーレイが表示されていること');
+
+
+				var $percentElem = $(indicator._target).find('.throbber-percent');
+
+				if ($percentElem.length > 0) {
+					strictEqual($percentElem.text(), '10', 'Indicator#show() インジケータが表示されること');
+				} else {
+					ok(false, 'スロバーが描画できないためテスト失敗。');
+				}
+
+				indicator.message('changeMessage');
+				strictEqual($(indicator._target).find('.indicator-message').text(),
+						'changeMessage', 'メッセージがに変更されたこと。');
+				indicator.message('  ');
+				strictEqual($(indicator._target).find('.indicator-message').text(), '  ',
+						'メッセージが変更されたこと。');
+				indicator.message('');
+				strictEqual($(indicator._target).find('.indicator-message').text(), '',
+						'メッセージが変更されたこと。');
+				indicator.message('abc');
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
+						'メッセージが変更されたこと。');
+				indicator.message();
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
+						'文字列以外ではメッセージは変更されないこと');
+				indicator.message(new String('def'));
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
+						'文字列以外ではメッセージは変更されないこと');
+				indicator.message(null);
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
+						'文字列以外ではメッセージは変更されないこと');
+				indicator.message(undefined);
+				strictEqual($(indicator._target).find('.indicator-message').text(), 'abc',
+						'文字列以外ではメッセージは変更されないこと');
+				indicator.hide();
+				var that = this;
+				setTimeout(function() {
+					strictEqual($('.h5-indicator', indicator._target).length, 0,
+							'Indicator#hide() インジケータが除去されていること');
+
+					var indicator2 = that.indicator({
+						message: 'BlockMessageTestGrobal',
+						percent: 10,
+						target: document.body
+					}).show();
+
+					strictEqual($(indicator2._target).find('.indicator-message').text(),
+							'BlockMessageTestGrobal');
+					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay').length, 1,
+							'Indicator#show() インジケータが表示されること');
+					strictEqual($(indicator2._target).find('.h5-indicator.a.overlay')
+							.css('display'), 'block', 'オーバーレイが表示されていること');
+
+					var $percentElem2 = $(indicator2._target).find('.throbber-percent');
+
+					if ($percentElem2.length > 0) {
+						strictEqual($percentElem2.text(), '10', 'Indicator#show() インジケータが表示されること');
+					} else {
+						ok(false, 'スロバーが描画できないためテスト失敗。');
+					}
+
+					indicator2.message('changeMessage');
+					strictEqual($(indicator2._target).find('.indicator-message').text(),
+							'changeMessage', 'メッセージがに変更されたこと。');
+					indicator2.message('  ');
+					strictEqual($(indicator2._target).find('.indicator-message').text(), '  ',
+							'メッセージが変更されたこと。');
+					indicator2.message('');
+					strictEqual($(indicator2._target).find('.indicator-message').text(), '',
+							'メッセージが変更されたこと。');
+					indicator2.message('abc');
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
+							'メッセージが変更されたこと。');
+					indicator2.message();
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
+							'文字列以外ではメッセージは変更されないこと');
+					indicator2.message(new String('def'));
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
+							'文字列以外ではメッセージは変更されないこと');
+					indicator2.message(null);
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
+							'文字列以外ではメッセージは変更されないこと');
+					indicator2.message(undefined);
+					strictEqual($(indicator2._target).find('.indicator-message').text(), 'abc',
+							'文字列以外ではメッセージは変更されないこと');
+					indicator2.hide();
+					setTimeout(function() {
+						strictEqual($('.h5-indicator', indicator._target).length, 0,
+								'Indicator#hide() インジケータが除去されていること');
+
+						testController.unbind();
+						start();
+					}, 0);
+				}, 0);
+			}
+		};
+
+		testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
+
+	asyncTest('this.indicator() promises', function() {
+		var indicator = null;
+		var controllerBase = {
+			__name: 'TestController',
+
+			'input[type=button] click': function() {
+				this.deferredFunc();
+			},
+
+			deferredFunc: function() {
+				var df = this.deferred();
+				var df2 = this.deferred();
+				indicator = this.indicator({
+					target: document,
+					promises: [df.promise(), df2.promise()]
+				}).show();
+
+				strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+						'promiseオブジェクトを渡して、インジケータが表示されること');
+
+				setTimeout(function() {
+					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+							'resolve()していないので、インジケータが表示されること');
+
+					df.resolve();
+				}, 0);
+
+				setTimeout(function() {
+					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+							'resolve()していないので、インジケータが表示されること');
+
+					df2.resolve();
+				}, 0);
+				h5.async.when(df.promise(), df2.promise()).done(
+						function() {
+							setTimeout(
+									function() {
+										strictEqual($(indicator._target).find(
+												'.h5-indicator.a.overlay').length, 0,
+												'全てのresolve()が呼ばれたら、インジケータが非表示になること');
+
+										testController.unbind();
+										start();
+									}, 0);
+						});
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+
+	});
+
+	asyncTest('this.indicator() 複数要素にマッチするセレクタをtargetに指定する', function() {
+		var controllerBase = {
+			__name: 'TestController',
+			'input[type=button] click': function() {
+				var indicator = this.indicator({
+					target: '.hoge',
+					message: 'テストテストテスト'
+				}).show();
+
+				setTimeout(
+						function() {
+							strictEqual($('#controllerTest > .hoge').children(
+									'.h5-indicator.a.content').length, 2,
+									'指定したセレクタで複数の要素にマッチした場合は両方にインジケータが表示されること');
+							indicator.hide();
+
+							setTimeout(function() {
+								strictEqual($('#controllerTest > .hoge').children(
+										'.h5-indicator.a.content').length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+								start();
+							}, 0);
+						}, 0);
+			}
+		};
+
+		$('#controllerTest').append('<li class="hoge"></li>').append('<li class="hoge"></li>');
+
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+			testController.unbind();
+		});
+	});
+
+	asyncTest('this.indicator() 同一要素に２つのインジケータを表示する', function() {
+		var controllerBase = {
+			__name: 'TestController',
+			'input[type=button] click': function() {
+				var indicator = this.indicator({
+					target: this.rootElement,
+					message: 'テストテストテスト1'
+				}).show();
+
+				this.indicator({
+					target: this.rootElement,
+					message: 'テストテストテスト2'
+				}).show();
+
+				setTimeout(function() {
+					strictEqual($('#controllerTest').children('.h5-indicator.a.content').length, 1,
+							'1つの要素に2つ以上のインジケータは表示されないこと');
+					indicator.hide();
+
+					setTimeout(function() {
+						strictEqual($('#controllerTes').children('.h5-indicator.a.content').length,
+								0, 'Indicator#hide() インジケータが除去されていること');
+						start();
+					}, 0);
+				}, 0);
+			}
+		};
+
+		$('#controllerTest').append('<li class="hoge"></li>').append('<li class="hoge"></li>');
+
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+			testController.unbind();
+		});
+	});
+
+	asyncTest('this.indicator() orientation/resizeイベントの発生につき1度だけハンドラが実行されているか', 1, function() {
+		var controllerBase = {
+			__name: 'TestController',
+			'input[type=button] click': function() {
+
+				var indicator = this.indicator({
+					target: this.rootElement,
+					message: 'テストテストテスト1'
+				});
+
+				var fired = false;
+
+				indicator.show();
+
+				// _handleResizeEvent()はresizeイベント中1度だけ呼ばれるメソッドなので、このメソッドをフックして呼ばれたことを確認する
+				indicator._handleResizeEvent = function() {
+					ok(true, '1回のresizeイベントのハンドラは1度だけ実行されること');
+					fired = true;
+					start();
+				};
+
+
+				$(window).trigger('resize');
+				if (!fired) {
+					$(window).trigger('orientationchange');
+				}
+
+				indicator.hide();
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+			testController.unbind();
+		});
+	});
+
+	asyncTest('h5.ui.indicator()', 5,
+			function() {
+				var testController = null;
+				var controllerBase = {
+					__name: 'TestController',
+					'input[type=button] click': function() {
+						var indicator = h5.ui.indicator(document, {
+							message: 'BlockMessageTest2',
+							percent: 20
+						});
+						indicator.show();
+
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'BlockMessageTest2');
+						strictEqual($(indicator._target).find('.h5-indicator.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+
+						var $percentElem = $(indicator._target).find('.throbber-percent');
+
+						if ($percentElem.length > 0) {
+							strictEqual($percentElem.text(), '20',
+									'Indicator#show() インジケータが表示されること');
+						} else {
+							ok(false, 'スロバーが描画できないためテスト失敗。');
+						}
+
+						strictEqual($(indicator._target).find('.h5-indicator.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
+
+						indicator.hide();
+
+						setTimeout(function() {
+							strictEqual($('.h5-indicator', indicator._target).length, 0,
+									'Indicator#hide() インジケータが除去されていること');
+							testController.unbind();
+							start();
+						}, 0);
+					}
+				};
+
+				testController = h5.core.controller('#controllerTest', controllerBase);
+				testController.readyPromise.done(function() {
+					$('#controllerTest input[type=button]').click();
+				});
+			});
+
+	asyncTest('h5.ui.indicator() テーマを変更して実行', 5, function() {
+
+		var testController = null;
+		var controllerBase = {
+			__name: 'TestController',
+
+			'input[type=button] click': function() {
+				var indicator2 = h5.ui.indicator(document, {
+					message: 'BlockMessageTest2',
+					percent: 20,
+					theme: 'b'
+				});
+				indicator2.show();
+
+
+				// IEで、$().css()で参照されるcurrentStyleオブジェクトは非同期であるため、
+				// スタイルが適用されているかどうかを非同期でチェックしています。
+				//
+				// - currentStyle Object
+				//    MSDN: http://msdn.microsoft.com/en-us/library/ie/ms535231(v=vs.85).aspx
+				//    日本語訳: http://homepage3.nifty.com/rains/makeweb/dhtml/currentstyle.html
+
+				setTimeout(function() {
+
+					strictEqual($(indicator2._target).find(
+							'.h5-indicator.b.content > .indicator-message').text(),
+							'BlockMessageTest2');
+
+					var $percentElem = $(indicator2._target).find(
+							'.h5-indicator.b.content .throbber-percent');
+					if ($percentElem.length > 0) {
+
+						strictEqual(rgbToHex($percentElem.css('color')), '#c20',
+								'スロバー:変更したテーマのCSSがインジケータに適用されていること');
+					} else {
+						ok(false, 'スロバーが描画できないためテスト失敗。');
+					}
+
+					var $messageElem = $(indicator2._target).find(
+							'.h5-indicator.b.content .indicator-message');
+					strictEqual(rgbToHex($messageElem.css('color')), '#480',
+							'メッセージ:変更したテーマのCSSがインジケータに適用されていること');
+
+					var $indicatorB = $(indicator2._target).find('.h5-indicator.b');
+					strictEqual(rgbToHex($indicatorB.css('background-color')), '#409',
+							'インジケータ本体:変更したテーマのCSSがインジケータに適用されていること');
+
+					indicator2.hide();
+
+					setTimeout(function() {
+						strictEqual($('.h5-indicator').length, 0,
+								'Indicator#hide() インジケータが除去されていること');
+						testController.unbind();
+						start();
+					}, 0);
+				}, 0);
+			}
+		};
+
+		testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
+
+	asyncTest('overflow:scrollな要素へのインジケータ', 7, function() {
+		var testController = null;
+		var controllerBase = {
+			__name: 'TestController',
+			__ready: function() {
+				var indicator = h5.ui.indicator(this.rootElement, {
+					message: 'a',
+					percent: 20
+				});
+				indicator.show();
+
+				strictEqual($(indicator._target).find(
+						'.h5-indicator.a.content > .indicator-message').text(), 'a');
+				strictEqual($(indicator._target).find('.h5-indicator.overlay').length, 1,
+						'Indicator#show() インジケータが表示されること');
+
+				// overlayの大きさはスクロールで見えている箇所だけではなく、見えてない箇所も含む
+				var $overlay = $('.h5-indicator.overlay');
+				var overlayWidth = $overlay.width();
+				var overlayHeight = $overlay.height();
+				ok(Math.abs(overlayWidth - $('#for-scroll').width()) <= 2,
+						'オーバレイの幅がscroll要素の中身の大きさと同じ(誤差2px以内)');
+				ok(Math.abs(overlayHeight - $('#for-scroll').height()) <= 2,
+						'オーバレイの高さがscroll要素の中身の大きさと同じ(誤差2px以内)');
+
+				// contentの場所は見えている箇所の真ん中
+				var $content = $('.h5-indicator.content');
+				var content = $content[0];
+				var $scrollable = $('#scrollable');
+				var expectContentLeft = ($scrollable.innerWidth() - $content.outerWidth()) / 2;
+				var expectContentTop = ($scrollable.innerHeight() - $content.outerHeight()) / 2;
+				ok(Math.abs(content.offsetLeft - expectContentLeft) <= 2,
+						'コンテントのleftがscroll要素の見えている位置の真ん中(誤差2px以内)');
+				ok(Math.abs(content.offsetTop - expectContentTop) <= 2,
+						'コンテントのtopがscroll要素の見えている位置の真ん中(誤差2px以内)');
+
+				indicator.hide();
+				setTimeout(function() {
+					strictEqual($('.h5-indicator', indicator._target).length, 0,
+							'Indicator#hide() インジケータが除去されていること');
+					testController.unbind();
+					start();
+				}, 0);
+			}
+		};
+
+		testController = h5.core.controller('#scrollable', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+		});
+	});
+
+
+	asyncTest('overflow:scrollな要素がスクロールされている場合', 7, function() {
+		var testController = null;
+		// 10,20へスクロール
+		var scrollable = $('#scrollable')[0];
+		scrollable.scrollLeft = 10;
+		scrollable.scrollTop = 20;
+
+		var controllerBase = {
+			__name: 'TestController',
+			__ready: function() {
+				var indicator = h5.ui.indicator(this.rootElement, {
+					message: 'a',
+					percent: 20
+				});
+				indicator.show();
+
+				strictEqual($(indicator._target).find(
+						'.h5-indicator.a.content > .indicator-message').text(), 'a');
+				strictEqual($(indicator._target).find('.h5-indicator.overlay').length, 1,
+						'Indicator#show() インジケータが表示されること');
+
+				// overlayの大きさはスクロールで見えている箇所だけではなく、見えてない箇所も含む
+				var $overlay = $('.h5-indicator.overlay');
+				var overlayWidth = $overlay.width();
+				var overlayHeight = $overlay.height();
+				ok(Math.abs(overlayWidth - $('#for-scroll').width()) <= 2,
+						'オーバレイの幅がscroll要素の中身の大きさと同じ(誤差2px以内)');
+				ok(Math.abs(overlayHeight - $('#for-scroll').height()) <= 2,
+						'オーバレイの高さがscroll要素の中身の大きさと同じ(誤差2px以内)');
+
+				// contentの場所は見えている箇所の真ん中
+				var $content = $('.h5-indicator.content');
+				var content = $content[0];
+				var $scrollable = $('#scrollable');alert($scrollable.scrollLeft());
+				var expectContentLeft = $scrollable.scrollLeft()
+						+ ($scrollable.innerWidth() - $content.outerWidth()) / 2;
+				var expectContentTop = $scrollable.scrollTop()
+						+ ($scrollable.innerHeight() - $content.outerHeight()) / 2;
+				ok(Math.abs(content.offsetLeft - expectContentLeft) <= 2,
+						'コンテントのleftがscroll要素の見えている位置の真ん中(誤差2px以内)');
+				ok(Math.abs(content.offsetTop - expectContentTop) <= 2,
+						'コンテントのtopがscroll要素の見えている位置の真ん中(誤差2px以内)');
+
+				indicator.hide();
+				setTimeout(function() {
+					strictEqual($('.h5-indicator', indicator._target).length, 0,
+							'Indicator#hide() インジケータが除去されていること');
+					testController.unbind();
+					start();
+				}, 0);
+			}
+		};
+
+		testController = h5.core.controller('#scrollable', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
 		});
 	});
 });
