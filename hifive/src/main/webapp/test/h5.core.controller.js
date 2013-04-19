@@ -6592,4 +6592,67 @@ $(function() {
 
 		conIns = h5.core.controller('#controllerTest', controller);
 	});
+
+	module(
+			'イベントハンドラの第2引数',
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest" style="display: none;"><div id="parent"><div id="child"></div></div></div>');
+				},
+				teardown: function() {
+					$('#controllerTest').remove();
+					h5.settings.listenerElementType = this.originalListenerElementType;
+				},
+				originalListenerElementType: h5.settings.listenerElementType,
+			});
+
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 2, function(){
+		var parentElm = $('#controllerTest #parent')[0];
+		var controller = {
+				__name: 'TestController',
+				'#parent click': function(context, $el){
+					ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+					strictEqual($el[0], parentElm, '第二引数がバインド先の要素であること');
+				}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function(){
+			$('#parent').click();
+			start();
+		});
+	});
+
+	asyncTest('子要素でイベントが発生した場合、バインド指定した要素が第二引数に渡されること', 2, function(){
+		var parentElm = $('#controllerTest #parent')[0];
+		var controller = {
+				__name: 'TestController',
+				'#parent click': function(context, $el){
+					ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+					strictEqual($el[0], parentElm, '第二引数がバインド先の要素であること');
+				}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function(){
+			$('#child').click();
+			start();
+		});
+	});
+
+	asyncTest('listenerElementTypeの変更', 1, function(){
+		var parentElm = $('#controllerTest #parent')[0];
+		var controller = {
+				__name: 'TestController',
+				'#parent click': function(context, el){
+					strictEqual(el, parentElm, 'listenerElementType = 0 の時、第二引数がバンド先のDOM要素であること');
+				}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function(){
+			h5.settings.listenerElementType = 0;
+			$('#parent').click();
+			start();
+		});
+	});
 });
