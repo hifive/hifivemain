@@ -85,6 +85,24 @@
 	errMsgMap[ERR_CODE_TRANSACTION_PROCESSING_FAILURE] = 'トランザクション処理中にエラーが発生しました。{0} {1}';
 	errMsgMap[ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE] = 'where句に指定されたカラム名が空白または空文字です。';
 	addFwErrorCodeMap(errMsgMap);
+
+	//SQLExceptionの例外メッセージ定義。dev版のみ出力。定数がない環境では定義しない。
+	//typeof SQLExceptionは、Android2-4, iOS4はundefined、iOS5-6はobject、PCのChrome26はfunctionになる。
+	//このため、定数が定義されている環境でのみメッセージを出力することとする。
+	//また、Android2、iOS4は実際にエラーが発生した時codeが必ず1になるためすべて"データベースエラー"扱いになる。
+	var SQL_EX_MSG = null;
+	if (typeof SQLException !== 'undefined' && SQLException.DATABASE_ERR) {
+		SQL_EX_MSG = {};
+		SQL_EX_MSG[SQLException.DATABASE_ERR] = 'データベースエラー';
+		SQL_EX_MSG[SQLException.CONSTRAINT_ERR] = '一意制約に反しています。';
+		SQL_EX_MSG[SQLException.QUOTA_ERR] = '空き容量が不足しています。';
+		SQL_EX_MSG[SQLException.SYNTAX_ERR] = '構文に誤りがあります。';
+		SQL_EX_MSG[SQLException.TIMEOUT_ERR] = 'ロック要求がタイムアウトしました。';
+		SQL_EX_MSG[SQLException.TOO_LARGE_ERR] = '取得結果の行が多すぎます。';
+		SQL_EX_MSG[SQLException.VERSION_ERR] = 'データベースのバージョンが一致しません。';
+		SQL_EX_MSG[SQLException.UNKNOWN_ERR] = 'トランザクション内で不明なエラーが発生、または例外がスローされました。';
+	}
+
 	/* del end */
 
 	// =========================================================================
@@ -101,32 +119,17 @@
 	// =========================================================================
 
 	/**
-	 * SQLErrorのエラーコードに対応するメッセージを取得します。
+	 * SQLExceptionのエラーコードに対応するメッセージを取得します。
 	 */
 	function getTransactionErrorMsg(e) {
-		if (!e.DATABASE_ERR) {
-			// Android2系、iOS4はエラーオブジェクトに定数メンバが無いのでここを通る。
-			// また、codeが1固定であるため、"データベースエラー"として扱う。
-			return 'データベースエラー';
+		/* del begin */
+		//min版では変数自体が未定義になるのでtypeofを使用(delによってコード自体削られるが、一応エラーにならないコードにする)
+		if (typeof SQL_EX_MSG === 'object') {
+			return SQL_EX_MSG[e.code];
 		}
-		switch (e.code) {
-		case e.CONSTRAINT_ERR:
-			return '一意制約に反しています。';
-		case e.DATABASE_ERR:
-			return 'データベースエラー';
-		case e.QUOTA_ERR:
-			return '空き容量が不足しています。';
-		case e.SYNTAX_ERR:
-			return '構文に誤りがあります。';
-		case e.TIMEOUT_ERR:
-			return 'ロック要求がタイムアウトしました。';
-		case e.TOO_LARGE_ERR:
-			return '取得結果の行が多すぎます。';
-		case e.UNKNOWN_ERR:
-			return 'トランザクション内で例外がスローされました。';
-		case e.VERSION_ERR:
-			return 'データベースのバージョンが一致しません。';
-		}
+		/* del end */
+		// Android2系、iOS4など一部の環境ではdev版でもこちらに来る
+		return 'SQLDB ERR(code=' + e.code + ')';
 	}
 
 	// =============================
