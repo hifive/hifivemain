@@ -1223,8 +1223,8 @@
 												}
 											}
 										} else if (path === "./template/test3.ejs") {
-											deepEqual(cache.path, './template/test3.ejs', 'キャッシュ'
-													+ path);
+											deepEqual(cache.path, './template/test3.ejs',
+													'相対パス(指定したパス)が取得できる - ' + path);
 											ok(cache.absoluteUrl
 													.match(/http.*\/template\/test3\.ejs/),
 													'URLが取得できる - ' + cache.absoluteUrl);
