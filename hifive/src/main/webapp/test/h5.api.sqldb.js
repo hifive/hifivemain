@@ -326,7 +326,7 @@ $(function() {
 
 	asyncTest(
 			'db.sql()を実行後、同一トランザクションで、エラーのdb.sql()を実行',
-			13,
+			11,
 			function() {
 				if (!h5.api.sqldb.isSupported) {
 					expect(1);
@@ -355,18 +355,6 @@ $(function() {
 													function(e) {
 														strictEqual(seqNo++, 2,
 																'fail2 2番目に実行されること。');
-														if (isDevMode()) {
-															strictEqual(
-																	e.message,
-																	'トランザクション処理中にエラーが発生しました。'
-																			+ (isAbleToGetErrorCode() ? 'データベースエラー '
-																					: '構文に誤りがあります。 ')
-																			+ e.detail.message,
-																	'エラーメッセージが格納されていること。');
-														} else {
-															strictEqual(e.message, null,
-																	'min版にはエラーメッセージは格納されないこと');
-														}
 														strictEqual(e.code, errCode,
 																'エラーコードが格納されていること。');
 														ok(e.detail.message,
@@ -377,14 +365,6 @@ $(function() {
 								}).fail(
 								function(e) {
 									strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-									if (isDevMode()) {
-										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-												+ (isAbleToGetErrorCode() ? 'データベースエラー '
-														: '構文に誤りがあります。 ') + e.detail.message,
-												'エラーメッセージが格納されていること。');
-									} else {
-										strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-									}
 									strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -652,7 +632,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('db.insert()を実行後、同一トランザクションで、エラーのdb.insert()を実行', 13, function() {
+	asyncTest('db.insert()を実行後、同一トランザクションで、エラーのdb.insert()を実行', 11, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -678,14 +658,6 @@ $(function() {
 					}, tx).execute().fail(
 							function(e) {
 								strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-								if (isDevMode()) {
-									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-											+ (isAbleToGetErrorCode() ? 'データベースエラー '
-													: '構文に誤りがあります。 ') + e.detail.message,
-											'エラーメッセージが格納されていること。');
-								} else {
-									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-								}
 								strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 										'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -694,13 +666,6 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-					if (isDevMode()) {
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-								+ e.detail.message, 'エラーメッセージが格納されていること。');
-					} else {
-						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-					}
 					strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 							'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1443,7 +1408,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('db.update()を実行後、同一トランザクションで、エラーのdb.update()を実行', 19, function() {
+	asyncTest('db.update()を実行後、同一トランザクションで、エラーのdb.update()を実行', 17, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -1467,14 +1432,6 @@ $(function() {
 					}, tx).execute().fail(
 							function(e) {
 								strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-								if (isDevMode()) {
-									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-											+ (isAbleToGetErrorCode() ? 'データベースエラー '
-													: '構文に誤りがあります。 ') + e.detail.message,
-											'エラーメッセージが格納されていること。');
-								} else {
-									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-								}
 								strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 										'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1483,13 +1440,6 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-					if (isDevMode()) {
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-								+ e.detail.message, 'エラーメッセージが格納されていること。');
-					} else {
-						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-					}
 					strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 							'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1865,7 +1815,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('db.del()を実行後、同一トランザクションで、エラーのdb.del()を実行', 18, function() {
+	asyncTest('db.del()を実行後、同一トランザクションで、エラーのdb.del()を実行', 15, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -1890,15 +1840,7 @@ $(function() {
 								}).execute().fail(
 										function(e) {
 											strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-											if (isDevMode()) {
-												strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-														+ (isAbleToGetErrorCode() ? 'データベースエラー '
-																: '構文に誤りがあります。 ')
-														+ e.detail.message, 'エラーメッセージが格納されていること。');
-											} else {
-												strictEqual(e.message, null,
-														'min版にはエラーメッセージは格納されないこと');
-											}
+
 											strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 											ok(e.detail.message,
 													'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1908,14 +1850,6 @@ $(function() {
 							}).fail(
 							function(e) {
 								strictEqual(seqNo++, 3, 'fail2 3番目に実行されること。');
-								if (isDevMode()) {
-									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-											+ (isAbleToGetErrorCode() ? 'データベースエラー '
-													: '構文に誤りがあります。 ') + e.detail.message,
-											'エラーメッセージが格納されていること。');
-								} else {
-									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-								}
 								strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -1923,13 +1857,6 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 4, 'fail1 4番目に実行されること。');
-					if (isDevMode()) {
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-								+ e.detail.message, 'エラーメッセージが格納されていること。');
-					} else {
-						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-					}
 					strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -2592,7 +2519,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('3件中1件不正なSQLをaddして実行', 6, function() {
+	asyncTest('3件中1件不正なSQLをaddして実行', 5, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -2622,13 +2549,6 @@ $(function() {
 				}).fail(
 						function(e) {
 							ok(e, 'SQLの実行に失敗してfail()で処理されること。');
-							if (isDevMode()) {
-								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-										+ e.detail.message, 'エラーメッセージが格納されていること。');
-							} else {
-								strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-							}
 							strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -2926,7 +2846,7 @@ $(function() {
 
 	asyncTest(
 			'3件SQLをaddしたdb.transaction()を実行後、同一トランザクションで、2件中1件エラーのあるSQLをaddしたdb.transaction()を実行する。',
-			11,
+			9,
 			function() {
 				if (!h5.api.sqldb.isSupported) {
 					expect(1);
@@ -2974,18 +2894,7 @@ $(function() {
 													function(e) {
 														strictEqual(seqNo++, 1,
 																'fail2: 1番目に実行されること。');
-														if (isDevMode()) {
-															strictEqual(
-																	e.message,
-																	'トランザクション処理中にエラーが発生しました。'
-																			+ (isAbleToGetErrorCode() ? 'データベースエラー '
-																					: '構文に誤りがあります。 ')
-																			+ e.detail.message,
-																	'エラーメッセージが格納されていること。');
-														} else {
-															strictEqual(e.message, null,
-																	'min版にはエラーメッセージは格納されないこと');
-														}
+
 														strictEqual(e.code, errorCode,
 																'エラーコードが格納されていること。');
 														ok(e.detail.message,
@@ -2997,14 +2906,6 @@ $(function() {
 								}).fail(
 								function(e) {
 									strictEqual(seqNo++, 2, 'fail1: 2番目に実行されること。');
-									if (isDevMode()) {
-										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-												+ (isAbleToGetErrorCode() ? 'データベースエラー '
-														: '構文に誤りがあります。 ') + e.detail.message,
-												'エラーメッセージが格納されていること。');
-									} else {
-										strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-									}
 									strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -3282,7 +3183,7 @@ $(function() {
 				}
 			});
 
-	asyncTest('スタブを使ったテスト。各エラーを取得する', 32, function() {
+	asyncTest('スタブを使ったテスト。各エラーを取得する', 24, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -3335,12 +3236,6 @@ $(function() {
 			var s = dbDummy.sql('insert into ' + TABLE_NAME + ' values(1,1,1)');
 			s.execute().fail(
 					function(e) {
-						if (isDevMode()) {
-							ok(e.message.match(new RegExp('^トランザクション処理中にエラーが発生しました。.*'
-									+ e.detail.message + '$')), 'エラーメッセージが格納されていること。' + e.message);
-						} else {
-							strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-						}
 						strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 								'エラーコードが格納されていること。');
 						ok(e.detail.code != null, 'エラーコード:' + e.detail.code
