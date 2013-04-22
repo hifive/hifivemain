@@ -2575,10 +2575,10 @@
 		 *
 		 * @param {String|Element|jQuery} rootElement 検索対象の要素
 		 * @param {Object} [option] オプション（ver.1.1.4以降）
-		 * @param {Boolean} [option.deep=false] 子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.4以降)
-		 * @param {Boolean} [option.initing=false] 初期化中（ready状態になる前）のコントローラも含めるかどうか(ver.1.1.4以降)
+		 * @param {Boolean} [option.deep=false] 子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.5以降)
+		 * @param {Boolean} [option.initing=false] 初期化中（ready状態になる前）のコントローラも含めるかどうか(ver.1.1.5以降)
 		 * @param {String|String[]} [option.name=null]
-		 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.4以降)
+		 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.5以降)
 		 * @returns {Controller[]} バインドされているコントローラの配列
 		 * @memberOf ControllerManager
 		 */
