@@ -5785,7 +5785,7 @@ $(function() {
 					$('#controllerTest').remove();
 					h5.settings.listenerElementType = this.originalListenerElementType;
 				},
-				originalListenerElementType: h5.settings.listenerElementType,
+				originalListenerElementType: h5.settings.listenerElementType
 			});
 
 	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 2, function() {
