@@ -87,9 +87,11 @@
 	addFwErrorCodeMap(errMsgMap);
 
 	//SQLExceptionの例外メッセージ定義。dev版のみ出力。定数がない環境では定義しない。
-	//また、Android2、iOS4はcodeが1固定であるためすべて"データベースエラー"扱いになる。
+	//typeof SQLExceptionは、Android2-4, iOS4はundefined、iOS5-6はobject、PCのChrome26はfunctionになる。
+	//このため、定数が定義されている環境でのみメッセージを出力することとする。
+	//また、Android2、iOS4は実際にエラーが発生した時codeが必ず1になるためすべて"データベースエラー"扱いになる。
 	var SQL_EX_MSG = null;
-	if (typeof SQLException === 'function' && SQLException.DATABASE_ERR) {
+	if (typeof SQLException !== 'undefined' && SQLException.DATABASE_ERR) {
 		SQL_EX_MSG = {};
 		SQL_EX_MSG[SQLException.DATABASE_ERR] = 'データベースエラー';
 		SQL_EX_MSG[SQLException.CONSTRAINT_ERR] = '一意制約に反しています。';
@@ -126,7 +128,7 @@
 			return SQL_EX_MSG[e.code];
 		}
 		/* del end */
-		// Android2系、iOS4はエラーオブジェクトに定数メンバが無いのでdev版でもこちらに来る
+		// Android2系、iOS4など一部の環境ではdev版でもこちらに来る
 		return 'SQLDB ERR(code=' + e.code + ')';
 	}
 
