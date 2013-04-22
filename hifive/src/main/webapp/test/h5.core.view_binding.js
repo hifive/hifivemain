@@ -125,6 +125,7 @@ $(function() {
 		function makeTextList(root) {
 			var node = root.firstChild;
 			while (node) {
+				//1 === NodeType.ELEMENT_NODE
 				if (node.nodeType === 1) {
 					if ($(node).is(sel)) {
 						textList.push($(node).text());
