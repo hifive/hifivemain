@@ -161,8 +161,7 @@
 	var existScriptOnload = document.createElement('script').onload !== undefined;
 
 	/**
-	 * RegExp#toStringで改行文字がエスケープされるかどうか。
-	 * IEはtrue
+	 * RegExp#toStringで改行文字がエスケープされるかどうか。 IEはtrue
 	 *
 	 * @private
 	 */
@@ -232,7 +231,9 @@
 	 *
 	 * @private
 	 * @param {String} str
-	 * @param {Boolean} nlEscaped 改行コードがすでにエスケープ済みかどうか。
+	 * @param {Boolean} nlEscaped 改行コードがすでにエスケープ済みかどうか。正規表現をtoString()した文字列をエスケープする場合に使用する。
+	 *            正規表現をtoString()した場合に改行がエスケープされるブラウザとそうでないブラウザがあるため、改行がescape済みかどうかを引数で取り、
+	 *            trueが指定されていた場合は改行以外をエスケープする。
 	 * @returns {String} エスケープ後の文字列
 	 */
 	function escape(str, nlEscaped) {
@@ -251,7 +252,7 @@
 			return ret;
 		}
 		if (str instanceof String) {
-			return new String(escape(str.toString()), nlEscaped);
+			return new String(escape(str.toString()));
 		}
 		return str;
 	}
