@@ -53,7 +53,7 @@
 
 	// H5_TEST_ENVが既に定義されていれば、定義オブジェクト優先でマージする
 	// 定義されていない場合はリクエストパラメータから取得したオブジェクトをそのまま使用する
-	window.H5_TEST_ENV = window.H5_TEST_ENV ? $.extend(envByParam, window.H5_TEST_ENV) : envByParam;
+	window.H5_TEST_ENV = window.H5_TEST_ENV ? $.extend(window.H5_TEST_ENV, envByParam) : envByParam;
 
 	// テスト環境を表示する
 	if (!$.isEmptyObject(H5_TEST_ENV)) {
