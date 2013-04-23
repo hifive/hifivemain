@@ -53,7 +53,12 @@
 
 	// H5_TEST_ENVが既に定義されていれば、定義オブジェクト優先でマージする
 	// 定義されていない場合はリクエストパラメータから取得したオブジェクトをそのまま使用する
-	window.H5_TEST_ENV = window.H5_TEST_ENV ? $.extend(window.H5_TEST_ENV, envByParam) : envByParam;
+	window.H5_TEST_ENV = window.H5_TEST_ENV ? {
+		ci: $.extend(window.H5_TEST_ENV.ci, envByParam.ci),
+		filter: $.extend(window.H5_TEST_ENV.filter, envByParam.filter),
+		geo: $.extend(window.H5_TEST_ENV.geo, envByParam.geo),
+		qunit: $.extend(window.H5_TEST_ENV.qunit, envByParam.qunit)
+	} : envByParam;
 
 	// テスト環境を表示する
 	if (!$.isEmptyObject(H5_TEST_ENV)) {
@@ -62,8 +67,8 @@
 			// そのためsetTimeout(0)でDOM追加が終わってから、H5_TEST_ENVの表示を行う
 			setTimeout(function() {
 				$('#qunit-header').after(
-						'<p>H5_TEST_ENV</p><pre id="h5-testenv">'
-								+ QUnit.jsDump.parse(H5_TEST_ENV) + '</pre>');
+						'<p>H5_TEST_ENV</p><pre id="h5-testenv">' + QUnit.jsDump.parse(H5_TEST_ENV)
+								+ '</pre>');
 			}, 0);
 		});
 	}
