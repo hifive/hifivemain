@@ -91,7 +91,62 @@
 	h5.settings = {
 
 		/**
-		 * failコールバックが設定されていない時にrejectされた場合に発動する共通ハンドラ.
+		 * failコールバックの設定されていないDeferred/Promiseオブジェクトの共通のエラー処理
+		 * <p>
+		 * failコールバックが一つも設定されていないDeferredオブジェクトがrejectされたときにcommonFailHandlerに設定した関数が実行されます。
+		 * <p>
+		 * <p>
+		 * commonFailHandlerが実行されるDeferredオブジェクトは、h5.async.deferred()で作成したDeferredオブジェクトかhifive内部で生成されているDeferredオブジェクトだけです。
+		 * jQuery.Deferred()で生成したDeferredオブジェクトは対象ではありません。
+		 * </p>
+		 * <p>
+		 * commonFailHandlerの引数と関数内のthisは通常のfailハンドラと同様で、それぞれ、rejectで渡された引数、rejectの呼ばれたDefferedオブジェクト、です。
+		 * </p>
+		 * <h4>サンプル</h4>
+		 *
+		 * <pre>
+		 * // commonFailHandlerの登録
+		 * h5.settings.commonFailHandler = function(e) {
+		 * 	alert(e);
+		 * };
+		 *
+		 * // Deferredオブジェクトの生成
+		 * var dfd1 = h5.async.deferred();
+		 * var dfd2 = h5.async.deferred();
+		 * var dfd3 = h5.async.deferred();
+		 *
+		 * dfd1.reject(1);
+		 * // alert(1); が実行される
+		 *
+		 * dfd2.fail(function() {});
+		 * dfd2.reject(2);
+		 * // failコールバックが登録されているので、commonFailHandlerは実行されない
+		 *
+		 * var promise3 = dfd3.promise();
+		 * promise3.fail(function() {});
+		 * dfd3.reject(3);
+		 * // promiseオブジェクトからfailコールバックを登録した場合も、commonFailHandlerは実行されない
+		 *
+		 * h5.ajax('hoge');
+		 * // 'hoge'へのアクセスがエラーになる場合、commonFailHandlerが実行される。
+		 * // エラーオブジェクトが引数に渡され、[object Object]がalertで表示される。
+		 * // h5.ajax()の戻り値であるDeferredオブジェクトが内部で生成されており、
+		 * // そのDeferredオブジェクトにfailハンドラが登録されていないためである。
+		 *
+		 * var d = h5.ajax('hoge');
+		 * d.fail(function() {});
+		 * // failハンドラが登録されているため、commonFailHandlerは実行されない
+		 * </pre>
+		 *
+		 * <h4>デフォルトの設定</h4>
+		 * <p>
+		 * h5.settings.commonFailHandlerのデフォルト値はnullです。共通のエラー処理はデフォルトでは何も実行されません。
+		 * commonFailHandlerでの処理を止めたい場合は、nullを代入して設定をクリアしてください。
+		 * </p>
+		 *
+		 * <pre>
+		 * h5.settings.commonFailHandler = null;
+		 * </pre>
 		 *
 		 * @memberOf h5.settings
 		 * @type Function
@@ -99,7 +154,7 @@
 		commonFailHandler: null,
 
 		/**
-		 * コントローラ、ロジックへのアスペクト
+		 * コントローラ、ロジックへのアスペクトを設定します。
 		 *
 		 * @memberOf h5.settings
 		 * @type Aspect|Aspect[]
@@ -112,12 +167,47 @@
 		 * @memberOf h5.settings
 		 * @type Object
 		 */
-		log: null
+		log: null,
+
+		/**
+		 * コントローラのイベントリスナーのターゲット要素（第2引数）をどの形式で渡すかを設定します。<br>
+		 * <ul>
+		 * <li>1 (default) : jQueryオブジェクト
+		 * <li>0 : ネイティブ形式（DOM要素そのもの）
+		 * </ul>
+		 *
+		 * @since 1.1.4
+		 * @memberOf h5.settings
+		 * @type Number
+		 */
+		listenerElementType: 1,
+
+		/**
+		 * コントローラに記述されたテンプレートの読み込み等、動的リソース読み込み時の設定を行います。<br>
+		 * このプロパティはオブジェクトで、<code>h5.settings.dynamicLoading.retryCount = 3;</code>のようにして設定します。<br>
+		 * dynamicLoadingで指定できるプロパティ：
+		 * <dl>
+		 * <dt>retryCount</dt>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライする回数（デフォルト：3）</dd>
+		 * <dt>retryInterval</dt>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。（デフォルト：5000）</dd>
+		 * <li>
+		 * </dl>
+		 *
+		 * @since 1.1.4
+		 * @memberOf h5.settings
+		 * @type Object
+		 */
+		dynamicLoading: {
+			retryCount: 3,
+			retryInterval: 5000
+		}
 	};
 
 	// h5preinitでglobalAspectsの設定をしている関係上、別ファイルではなく、ここに置いている。
 	/**
-	 * 実行時間の計測を行うインターセプタ。
+	 * メソッドの実行時間を計測するインターセプタです。<br>
+	 * このインターセプタはコントローラまたはロジックに対して設定してください。
 	 *
 	 * @function
 	 * @param {Function} invocation 次に実行する関数
@@ -137,7 +227,8 @@
 	});
 
 	/**
-	 * イベントコンテキストに格納されているものをコンソールに出力するインターセプタ。
+	 * メソッド呼び出し時に、コントローラまたはロジック名、メソッド名、引数をログ出力するインターセプタです。<br>
+	 * このインターセプタはコントローラまたはロジックに対して設定してください。
 	 *
 	 * @function
 	 * @param {Function} invocation 次に実行する関数
@@ -153,7 +244,9 @@
 	});
 
 	/**
-	 * invocationからあがってきたエラーを受け取りcommonFailHandlerに処理を任せるインターセプタ。
+	 * 例外発生時にcommonFailHandlerを呼び出すインターセプタです。<br>
+	 * このインターセプタをかけたメソッド内で例外がスローされメソッド内でキャッチされなかった場合、
+	 * その例外オブジェクトを引数にしてcommonFailHandlerを呼びだします（commonFailHandlerがない場合はなにもしません）。
 	 *
 	 * @param {Function} invocation 次に実行する関数
 	 * @returns {Any} invocationの戻り値

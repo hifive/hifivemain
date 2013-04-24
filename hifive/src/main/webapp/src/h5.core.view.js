@@ -483,7 +483,8 @@
 
 	$.extend(View.prototype, {
 		/**
-		 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします。
+		 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします。<br>
+		 * このメソッドでは、通信エラー発生時に自動リトライは行いません（ver.1.1.4現在。将来この動作は変更される可能性があります）。
 		 *
 		 * @memberOf View
 		 * @name load
@@ -533,7 +534,7 @@
 				$.extend(that.__cachedTemplates, result);
 				dfd.resolve(datas);
 			}).fail(function(e) {
-				fwLogger.warn(e.message);
+				fwLogger.error(e.message);
 				dfd.reject(e);
 			});
 			return dfd.promise();

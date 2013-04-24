@@ -81,7 +81,7 @@
 	//
 	// =========================================================================
 	/**
-	 * 登録された共通のエラー処理を実行できるDeferredオブジェクトを返します。<br>
+	 * 登録された共通のエラー処理(<a href="h5.settings.html#commonFailHandler">h5.settings.commonFailHandler</a>)を実行できるDeferredオブジェクトを返します。<br>
 	 * Deferredに notify() / notifyWith() / progress() メソッドがない場合は、追加したオブジェクトを返します。
 	 *
 	 * @returns {Deferred} Deferredオブジェクト
@@ -289,7 +289,8 @@
 	};
 
 	/**
-	 * 指定された回数ごとにループを抜けブラウザに制御を戻すユーティリティメソッドです。
+	 * 指定された回数ごとにループを抜けブラウザに制御を戻すユーティリティメソッドです。<br>
+	 * また、callbackで渡された関数が{Promise}を返した場合、その{Promise}が終了するまで次のループの実行を待機します。
 	 *
 	 * @param {Any[]} array 配列
 	 * @param {Function} callback コールバック関数。<br />
@@ -449,8 +450,11 @@
 
 		var dfd = $.Deferred();
 
-		// jQueryのバージョンが1.6.xの場合、progress/notifyが使用できるよう機能を追加する
 		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
+			// jQueryのバージョンが1.6.xの場合、progress/notifyが使用できるよう機能を追加する
+			// $.when()を使いながら機能追加ができないため、
+			// $.when自体の機能をここで実装している。
+
 			var len = args.length;
 			var count = len;
 			var pValues = new Array(len);
@@ -459,27 +463,25 @@
 			dfd = len <= 1 && firstParam && $.isFunction(firstParam.promise) ? firstParam
 					: getDeferred();
 
-			// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
-
-			function resolveFunc(index) {
-				return function(value) {
-					args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-					if (!(--count)) {
-						dfd.resolveWith(dfd, args);
-					}
-				};
-			}
-
-			function progressFunc(index) {
-				return function(value) {
-					pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-					dfd.notifyWith(dfd.promise(), pValues);
-				};
-			}
 
 			if (len > 1) {
+				// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
+				function resolveFunc(index) {
+					return function(value) {
+						args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
+						if (!(--count)) {
+							dfd.resolveWith(dfd, args);
+						}
+					};
+				}
+				function progressFunc(index) {
+					return function(value) {
+						pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
+						dfd.notifyWith(dfd.promise(), pValues);
+					};
+				}
 				for ( var i = 0; i < len; i++) {
-					if (args[i] && args[i].promise && $.isFunction(args[i].promise)) {
+					if (args[i] && $.isFunction(args[i].promise)) {
 						args[i].promise().then(resolveFunc(i), dfd.reject, progressFunc(i));
 					} else {
 						--count;
@@ -492,6 +494,7 @@
 				dfd.resolveWith(dfd, len ? [firstParam] : []);
 			}
 		} else {
+			// jQuery1.7以上なら戻り値をh5.async.deferredにして、$.whenをラップする
 			dfd = getDeferred();
 
 			$.when.apply($, args).done(function(/* var_args */) {

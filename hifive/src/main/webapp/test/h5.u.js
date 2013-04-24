@@ -35,7 +35,6 @@ $(function() {
 
 	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR_U.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR_U = ERRCODE.h5.u;
-	var ERR_OBS = ERRCODE.h5.core.data_observables;
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -676,17 +675,21 @@ $(function() {
 		ok(!window.com.htmlhifive.test.test2, 'スクリプトが非同期にロードされたか2');
 		ok(!window.com.htmlhifive.test.test3, 'スクリプトが非同期にロードされたか3');
 
-		promise.done(function() {
-			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
-			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
-			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
+		promise.done(
+				function() {
+					ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
+					ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
+					ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
 
-			strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test2.test1,
-					'スクリプトはシーケンシャルに読み込まれたか1');
-			strictEqual(window.com.htmlhifive.test.test1, window.com.htmlhifive.test.test3.test1,
-					'スクリプトはシーケンシャルに読み込まれたか2');
-			strictEqual(window.com.htmlhifive.test.test2, window.com.htmlhifive.test.test3.test2,
-					'スクリプトはシーケンシャルに読み込まれたか3');
+					strictEqual(window.com.htmlhifive.test.test1,
+							window.com.htmlhifive.test.test2.test1, 'スクリプトはシーケンシャルに読み込まれたか1');
+					strictEqual(window.com.htmlhifive.test.test1,
+							window.com.htmlhifive.test.test3.test1, 'スクリプトはシーケンシャルに読み込まれたか2');
+					strictEqual(window.com.htmlhifive.test.test2,
+							window.com.htmlhifive.test.test3.test2, 'スクリプトはシーケンシャルに読み込まれたか3');
+					start();
+				}).fail(function(e) {
+			ok(false, 'テスト失敗');
 			start();
 		});
 	});
@@ -706,10 +709,11 @@ $(function() {
 			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
 			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
 			start();
+		}).fail(function(e) {
+			ok(false, 'テスト失敗');
+			start();
 		});
-
 	});
-
 
 	asyncTest('【非同期】 parallelオプション有効、atomicオプション有効', 6, function() {
 		var promise = h5.u.loadScript(['data/test1.js', 'data/test2.js', 'data/test3.js'], {
@@ -726,6 +730,9 @@ $(function() {
 			ok(window.com.htmlhifive.test.test1.a, 'スクリプトが非同期にロードされたか4');
 			ok(window.com.htmlhifive.test.test2.b, 'スクリプトが非同期にロードされたか5');
 			ok(window.com.htmlhifive.test.test3.c, 'スクリプトが非同期にロードされたか6');
+			start();
+		}).fail(function(e) {
+			ok(false, 'テスト失敗');
 			start();
 		});
 	});
@@ -748,8 +755,14 @@ $(function() {
 										'force=trueなので、既に読み込み済みでも読み込むこと');
 								window.com.htmlhifive.test.sample4loaded = undefined;
 								start();
-							});
-				});
+							}).fail(function(e) {
+						ok(false, 'テスト失敗');
+						start();
+					});
+				}).fail(function(e) {
+			ok(false, 'テスト失敗');
+			start();
+		});
 	});
 
 	asyncTest('【非同期】 parallelオプション有効、forceオプション無効の場合、既に読み込み済みのパスは2重に読み込まれないこと', 2, function() {
@@ -770,8 +783,14 @@ $(function() {
 										'force=falseなので、既に読み込み済みのスクリプトは読み込まないこと。');
 								window.com.htmlhifive.test.sample4loaded = undefined;
 								start();
-							});
-				});
+							}).fail(function(e) {
+						ok(false, 'テスト失敗');
+						start();
+					});
+				}).fail(function(e) {
+			ok(false, 'テスト失敗');
+			start();
+		});
 	});
 
 	asyncTest('【非同期】 リクエストパラメータが違えば、同一のパスでも2重に読み込まれること。', 3, function() {
@@ -790,9 +809,18 @@ $(function() {
 											deepEqual(window.com.htmlhifive.test.sample4loaded, 4,
 													'スクリプトが4回読み込まれたこと。');
 											start();
-										});
-							});
-				});
+										}).fail(function(e) {
+									ok(false, 'テスト失敗');
+									start();
+								});
+							}).fail(function(e) {
+						ok(false, 'テスト失敗');
+						start();
+					});
+				}).fail(function(e) {
+			ok(false, 'テスト失敗');
+			start();
+		});
 	});
 
 	test('【非同期】引数なし、空配列、null、文字列以外、空文字、空白文字、その他の型を引数に渡した時に、エラーも出ず、何もしないで終了すること。', 10, function() {
@@ -854,8 +882,14 @@ $(function() {
 
 										window.com.htmlhifive.test.sample4loaded = undefined;
 										start();
-									});
-						});
+									}).fail(function(e) {
+								ok(false, 'テスト失敗');
+								start();
+							});
+						}).fail(function(e) {
+					ok(false, 'テスト失敗');
+					start();
+				});
 			});
 
 	asyncTest('【非同期】存在しないスクリプトを指定した場合、以降のスクリプトは読み込まれないこと。', 2, function() {
@@ -945,8 +979,9 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('文字列', 2, function() {
-		var strs = ["helloWorld", 'o{"str1":"\"string1\""}'];
+	test('文字列', 6, function() {
+		var strs = ["helloWorld", 'o{"str1":"\"string1\""}', '改行\r\nnewLine', 'タブ\ttab',
+				'その他特殊文字\b\"\/\r\\\n', '\\r\\n\\t'];
 		for ( var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			var serialized = h5.u.obj.serialize(str, true);
@@ -986,9 +1021,10 @@ $(function() {
 		}
 	});
 
-	test('正規表現', 6,
+	test('正規表現', 8,
 			function() {
-				var regExps = [/hello/, /^o*(.*)[a|b]{0,}?$/, /\\/g, /a|b/i, /x/gi, /\/\\\//img];
+				var regExps = [/hello/, /^o*(.*)[a|b]{0,}?$/, /\\/g, /a|b/i, /x/gi, /\/\\\//img,
+						new RegExp('newLine\r\nnewLine'), new RegExp('tab\ttab')];
 				for ( var i = 0, len = regExps.length; i < len; i++) {
 					var regExp = regExps[i];
 					var serialized = h5.u.obj.serialize(regExp);
@@ -998,8 +1034,9 @@ $(function() {
 				}
 			});
 
-	test('配列', 3, function() {
-		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}']];
+	test('配列', 4, function() {
+		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}'],
+				['a\r\nb', '\t', new RegExp('\r\n'), new RegExp('\t')]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
@@ -1008,8 +1045,9 @@ $(function() {
 		}
 	});
 
-	test('多次元配列', 1, function() {
-		var arrays = [[[1, 2, 3], [4, '\\5\\"', ['\\\"6\\\"', [7, '\\\"8\\\"']]], 9]];
+	test('多次元配列', 2, function() {
+		var arrays = [[[1, 2, 3], [4, '\\5\\"', ['\\\"6\\\"', [7, '\\\"8\\\"']]], 9],
+				['a\r\nb', ['\t', new RegExp('\r\n[\b]')], new RegExp('\t')]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
@@ -1018,7 +1056,7 @@ $(function() {
 		}
 	});
 
-	test('オブジェクトの配列', 2, function() {
+	test('オブジェクトの配列', 3, function() {
 		var arrays = [[{
 			a: 'A',
 			b: 'B'
@@ -1034,6 +1072,10 @@ $(function() {
 		}, 3]], {
 			e: 'E',
 			f: 'F'
+		}], [{
+			a: '\r\n',
+			b: '\t',
+			c: '\b\"\/\r\\\n'
 		}]];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
@@ -1043,7 +1085,7 @@ $(function() {
 		}
 	});
 
-	test('連想配列', 22, function() {
+	test('連想配列', 30, function() {
 		var array1 = [];
 		array1['key'] = 'value';
 
@@ -1061,7 +1103,12 @@ $(function() {
 			b: b
 		};
 
-		var arrays = [array1, array2];
+		var array3 = [];
+		array3['a'] = '\r\n';
+		array3['c'] = new RegExp('\r\n');
+		array3['\r\n'] = 'new line';
+
+		var arrays = [array1, array2, array3];
 		for ( var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
@@ -1070,7 +1117,8 @@ $(function() {
 			deepEqual(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。");
 			for ( var key in array) {
 				var compFunction = strictEqual;
-				if (typeof array[key] === 'object') {
+				if (typeof array[key] === 'object' || array[key] instanceof RegExp) {
+					// AndroidではRegExpのtypeofは'function'であるため
 					compFunction = deepEqual;
 				}
 				compFunction(deserialized[key], array[key], "シリアライズしてデシリアライズした配列の値が各要素で同じ。 key = "
@@ -1082,11 +1130,11 @@ $(function() {
 	});
 
 
-	test('プリミティブラッパー', 16,
+	test('プリミティブラッパー', 18,
 			function() {
-				var primitives = [new String("hello"), new String(), new Number(123),
+				var primitives = [new String('hello'), new String(), new Number(123),
 						new Number('NaN'), new Number('Infinity'), new Number('-Infinity'),
-						new Boolean(true), new Boolean(false)];
+						new Boolean(true), new Boolean(false), new String('\b\"\/\r\\\n\t\r\n')];
 				for ( var i = 0, len = primitives.length; i < len; i++) {
 					var primitive = primitives[i];
 					var serialized = h5.u.obj.serialize(primitive);
@@ -1337,7 +1385,7 @@ $(function() {
 		P.prototype = {
 			b: 'b',
 			c: function() {
-				console.log(this);
+			//
 			}
 		};
 		var obj = new P();
@@ -1366,7 +1414,7 @@ $(function() {
 	});
 
 	test('シリアライズしたバージョンの違う文字列をデシリアライズできないこと。', 4, function() {
-		var serialized = "2|shello";
+		var serialized = "0|shello";
 		try {
 			h5.u.obj.deserialize(serialized);
 			ok(false, 'エラーが投げられていません。' + serialized);
@@ -1487,8 +1535,8 @@ $(function() {
 	});
 
 	test('deserialize 要素に不正な値を含む配列やオブジェクト文字列をデシリアライズしようとしたときはエラーが発生すること。', 10, function() {
-		var objStrs = ['1|a["n1","q"]', '1|o{"key":"qq"}', '1|o{"key":"a[\\\"1\\\"]"}',
-				'1|o{"key":"@[\\\"n1\\\"]"}', '1|a["@{\\\"key\\\":\\\"1\\\"}"]'];
+		var objStrs = ['2|a["n1","q"]', '2|o{"key":"qq"}', '2|o{"key":"a[\\\"1\\\"]"}',
+				'2|o{"key":"@[\\\"n1\\\"]"}', '2|a["@{\\\"key\\\":\\\"1\\\"}"]'];
 		var errorCode = 11004;
 		for ( var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
@@ -1499,8 +1547,8 @@ $(function() {
 				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
-		objStrs = ['1|a["n1","nq"]', '1|o{"key":"b2"}', '1|o{"key":"a[\\\"nNaN\\\"]"}',
-				'1|o{"key":"a[\\\"ll\\\"]"}', '1|a["@{\\\"key\\\":\\\"xx\\\"}"]'];
+		objStrs = ['2|a["n1","nq"]', '2|o{"key":"b2"}', '2|o{"key":"a[\\\"nNaN\\\"]"}',
+				'2|o{"key":"a[\\\"ll\\\"]"}', '2|a["@{\\\"key\\\":\\\"xx\\\"}"]'];
 		var errorCode = 11006;
 		for ( var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
@@ -1525,6 +1573,11 @@ $(function() {
 				deepEqual(e.code, errorCode, e.message + ' ' + str);
 			}
 		}
+	});
+
+	test('deserialize バージョン1との後方互換', 1, function() {
+		strictEqual(h5.u.obj.deserialize('1|s\\\\\t'), '\\\\\t',
+				'バージョン1でシリアライズした文字列を正しくデシリアライズできること');
 	});
 
 	//=============================

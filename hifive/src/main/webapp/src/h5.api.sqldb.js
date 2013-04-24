@@ -85,6 +85,19 @@
 	errMsgMap[ERR_CODE_TRANSACTION_PROCESSING_FAILURE] = 'トランザクション処理中にエラーが発生しました。{0} {1}';
 	errMsgMap[ERR_CODE_INVALID_COLUMN_NAME_IN_WHERE] = 'where句に指定されたカラム名が空白または空文字です。';
 	addFwErrorCodeMap(errMsgMap);
+
+	//SQLExceptionの例外メッセージ定義。dev版のみ出力される。
+	//typeof SQLExceptionは、Android2-4, iOS4はundefined、iOS5-6はobject、PCのChrome26はfunctionになる。
+	//このため、定数が定義されている環境でのみメッセージを出力することとする。
+	var SQL_ERR_DATABASE = 'データベースエラー';
+	var SQL_ERR_CONSTRAINT = '一意制約に反しています。';
+	var SQL_ERR_QUOTA = '空き容量が不足しています。';
+	var SQL_ERR_SYNTAX = '構文に誤りがあります。';
+	var SQL_ERR_TIMEOUT = 'ロック要求がタイムアウトしました。';
+	var SQL_ERR_TOO_LARGE = '取得結果の行が多すぎます。';
+	var SQL_ERR_VERSION = 'データベースのバージョンが一致しません。';
+	var SQL_ERR_UNKNOWN = 'トランザクション内で不明なエラーが発生、または例外がスローされました。';
+
 	/* del end */
 
 	// =========================================================================
@@ -101,32 +114,48 @@
 	// =========================================================================
 
 	/**
-	 * SQLErrorのエラーコードに対応するメッセージを取得します。
+	 * SQLExceptionのエラーコードに対応するメッセージを取得します。
 	 */
 	function getTransactionErrorMsg(e) {
-		if (!e.DATABASE_ERR) {
-			// Android2系、iOS4はエラーオブジェクトに定数メンバが無いのでここを通る。
-			// また、codeが1固定であるため、"データベースエラー"として扱う。
-			return 'データベースエラー';
+		var msg = 'SQLDB ERROR';
+
+		/* del begin */
+		if (e.DATABASE_ERR !== 'undefined') {
+			//OperaやAndroid4系等、SQLExceptionがグローバルに公開されておらず
+			//エラーオブジェクトを生成しないと定数が見えない環境があるので
+			//実行時に定数の有無を判定してメッセージを入れる。
+			//Android2、iOS4等実行時にも定数が存在しない場合はdev版でも汎用メッセージになる。
+			//注：Android2、iOS4は実際にエラーが発生した時codeが必ず1になる
+			switch (e.code) {
+			case e.DATABASE_ERR:
+				msg = SQL_ERR_DATABASE;
+				break;
+			case e.CONSTRAINT_ERR:
+				msg = SQL_ERR_CONSTRAINT;
+				break;
+			case e.QUOTA_ERR:
+				msg = SQL_ERR_QUOTA;
+				break;
+			case e.SYNTAX_ERR:
+				msg = SQL_ERR_SYNTAX;
+				break;
+			case e.TIMEOUT_ERR:
+				msg = SQL_ERR_TIMEOUT;
+				break;
+			case e.TOO_LARGE_ERR:
+				msg = SQL_ERR_TOO_LARGE;
+				break;
+			case e.VERSION_ERR:
+				msg = SQL_ERR_VERSION;
+				break;
+			case e.UNKNOWN_ERR:
+				msg = SQL_ERR_UNKNOWN;
+				break;
+			}
 		}
-		switch (e.code) {
-		case e.CONSTRAINT_ERR:
-			return '一意制約に反しています。';
-		case e.DATABASE_ERR:
-			return 'データベースエラー';
-		case e.QUOTA_ERR:
-			return '空き容量が不足しています。';
-		case e.SYNTAX_ERR:
-			return '構文に誤りがあります。';
-		case e.TIMEOUT_ERR:
-			return 'ロック要求がタイムアウトしました。';
-		case e.TOO_LARGE_ERR:
-			return '取得結果の行が多すぎます。';
-		case e.UNKNOWN_ERR:
-			return 'トランザクション内で例外がスローされました。';
-		case e.VERSION_ERR:
-			return 'データベースのバージョンが一致しません。';
-		}
+		/* del end */
+
+		return msg + '(code=' + e.code + ')';
 	}
 
 	// =============================
@@ -254,6 +283,10 @@
 		this._db = db;
 		this._tx = tx;
 		this._tasks = [];
+		/**
+		 * Transactionオブジェクト管理用
+		 */
+		this._transactions = [];
 	}
 
 	$.extend(SQLTransactionWrapper.prototype, {
@@ -306,6 +339,37 @@
 		 */
 		_setResult: function(result) {
 			this._tasks[this._tasks.length - 1].result = result;
+		},
+
+		/**
+		 * このSQLTransactionWrapperに紐づくTransactionオブジェクトを格納します
+		 * <p>
+		 * トランザクションオブジェクトへの参照をトランザクションが終わった後に切るためにここで管理しています。(issue #192)
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf SQLTransactionWrapper
+		 * @function
+		 * @param {Transaction} transaction Transactionオブジェクト
+		 */
+		_addTransaction: function(transaction) {
+			this._transactions.push(transaction);
+		},
+
+		/**
+		 * このSQLTransactionWrapperに紐づいているTransactionオブジェクトの_disposeを呼びます
+		 * <p>
+		 * トランザクションオブジェクトへの参照をトランザクションが終わった後に破棄するためのメソッドです。(issue #192)
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf SQLTransactionWrapper
+		 * @function
+		 */
+		_dispose: function() {
+			for ( var i = 0, l = this._transactions.length; i < l; i++) {
+				this._transactions[i]._dispose();
+			}
 		}
 	});
 
@@ -485,34 +549,39 @@
 						that._columns, that._where, that._orderBy);
 			};
 			var df = getDeferred();
-			var txw = this._txw;
 			var executed = this._executed;
 			var resultSet = null;
 
 			try {
-				txw._addTask(df);
+				that._txw._addTask(df);
 				checkSqlExecuted(executed);
 				build();
 				fwLogger.debug(['Select: ' + this._statement], this._params);
 
-				if (txw._runTransaction()) {
-					txw._execute(this._statement, this._params, function(innerTx, rs) {
+				if (that._txw._runTransaction()) {
+					that._txw._execute(this._statement, this._params, function(innerTx, rs) {
 						resultSet = rs.rows;
-						txw._setResult(resultSet);
-						df.notify(resultSet, txw);
+						that._txw._setResult(resultSet);
+						df.notify(resultSet, that._txw);
 					});
 				} else {
-					txw._execute(function(tx) {
-						txw._tx = tx;
+					that._txw._execute(function(tx) {
+						that._txw._tx = tx;
 						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
 							resultSet = rs.rows;
-							txw._setResult(resultSet);
-							df.notify(resultSet, txw);
+							that._txw._setResult(resultSet);
+							df.notify(resultSet, that._txw);
 						});
 					}, function(e) {
-						transactionErrorCallback(txw, e);
+						that._txw._tx = null;
+						transactionErrorCallback(that._txw, e);
+						that._txw._dispose();
+						that = null;
 					}, function() {
-						transactionSuccessCallback(txw);
+						that._txw._tx = null;
+						transactionSuccessCallback(that._txw);
+						that._txw._dispose();
+						that = null;
 					});
 				}
 			} catch (e) {
@@ -523,7 +592,6 @@
 			return df.promise();
 		}
 	});
-
 
 
 	/**
@@ -613,7 +681,6 @@
 						}
 					};
 					var df = getDeferred();
-					var txw = this._txw;
 					var executed = this._executed;
 					var resultSet = null;
 					var insertRowIds = [];
@@ -622,14 +689,14 @@
 					function executeSql() {
 						if (that._statement.length === index) {
 							resultSet = insertRowIds;
-							txw._setResult(resultSet);
-							df.notify(resultSet, txw);
+							that._txw._setResult(resultSet);
+							df.notify(resultSet, that._txw);
 							return;
 						}
 
 						fwLogger.debug(['Insert: ' + that._statement[index]], that._params[index]);
-						txw._execute(that._statement[index], that._params[index], function(innerTx,
-								rs) {
+						that._txw._execute(that._statement[index], that._params[index], function(
+								innerTx, rs) {
 							index++;
 							insertRowIds.push(rs.insertId);
 							executeSql();
@@ -637,20 +704,26 @@
 					}
 
 					try {
-						txw._addTask(df);
+						that._txw._addTask(df);
 						checkSqlExecuted(executed);
 						build();
 
-						if (txw._runTransaction()) {
+						if (that._txw._runTransaction()) {
 							executeSql();
 						} else {
-							txw._execute(function(tx) {
-								txw._tx = tx;
+							that._txw._execute(function(tx) {
+								that._txw._tx = tx;
 								executeSql();
 							}, function(e) {
-								transactionErrorCallback(txw, e);
+								that._txw._tx = null;
+								transactionErrorCallback(that._txw, e);
+								that._txw._dispose();
+								that = null;
 							}, function() {
-								transactionSuccessCallback(txw);
+								that._txw._tx = null;
+								transactionSuccessCallback(that._txw);
+								that._txw._dispose();
+								that = null;
 							});
 						}
 					} catch (e) {
@@ -802,34 +875,39 @@
 				}
 			};
 			var df = getDeferred();
-			var txw = this._txw;
 			var executed = this._executed;
 			var resultSet = null;
 
 			try {
-				txw._addTask(df);
+				that._txw._addTask(df);
 				checkSqlExecuted(executed);
 				build();
 				fwLogger.debug(['Update: ' + this._statement], this._params);
 
-				if (txw._runTransaction()) {
-					txw._execute(this._statement, this._params, function(innerTx, rs) {
+				if (that._txw._runTransaction()) {
+					that._txw._execute(this._statement, this._params, function(innerTx, rs) {
 						resultSet = rs.rowsAffected;
-						txw._setResult(resultSet);
-						df.notify(resultSet, txw);
+						that._txw._setResult(resultSet);
+						df.notify(resultSet, that._txw);
 					});
 				} else {
-					txw._execute(function(tx) {
-						txw._tx = tx;
+					that._txw._execute(function(tx) {
+						that._txw._tx = tx;
 						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
 							resultSet = rs.rowsAffected;
-							txw._setResult(resultSet);
-							df.notify(resultSet, txw);
+							that._txw._setResult(resultSet);
+							df.notify(resultSet, that._txw);
 						});
 					}, function(e) {
-						transactionErrorCallback(txw, e);
+						that._txw._tx = null;
+						transactionErrorCallback(that._txw, e);
+						that._txw._dispose();
+						that = null;
 					}, function() {
-						transactionSuccessCallback(txw);
+						that._txw._tx = null;
+						transactionSuccessCallback(that._txw);
+						that._txw._dispose();
+						that = null;
 					});
 				}
 			} catch (e) {
@@ -965,34 +1043,39 @@
 				}
 			};
 			var df = getDeferred();
-			var txw = this._txw;
 			var executed = this._executed;
 			var resultSet = null;
 
 			try {
-				txw._addTask(df);
+				that._txw._addTask(df);
 				checkSqlExecuted(executed);
 				build();
 				fwLogger.debug(['Del: ' + this._statement], this._params);
 
-				if (txw._runTransaction()) {
-					txw._execute(this._statement, this._params, function(innerTx, rs) {
+				if (that._txw._runTransaction()) {
+					that._txw._execute(this._statement, this._params, function(innerTx, rs) {
 						resultSet = rs.rowsAffected;
-						txw._setResult(resultSet);
-						df.notify(resultSet, txw);
+						that._txw._setResult(resultSet);
+						df.notify(resultSet, that._txw);
 					});
 				} else {
-					txw._execute(function(tx) {
-						txw._tx = tx;
+					that._txw._execute(function(tx) {
+						that._txw._tx = tx;
 						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
 							resultSet = rs.rowsAffected;
-							txw._setResult(resultSet);
-							df.notify(resultSet, txw);
+							that._txw._setResult(resultSet);
+							df.notify(resultSet, that._txw);
 						});
 					}, function(e) {
-						transactionErrorCallback(txw, e);
+						that._txw._tx = null;
+						transactionErrorCallback(that._txw, e);
+						that._txw._dispose();
+						that = null;
 					}, function() {
-						transactionSuccessCallback(txw);
+						that._txw._tx = null;
+						transactionSuccessCallback(that._txw);
+						that._txw._dispose();
+						that = null;
 					});
 				}
 			} catch (e) {
@@ -1101,36 +1184,42 @@
 		 * @returns {Promise} Promiseオブジェクト
 		 */
 		execute: function() {
+			var that = this;
 			var df = getDeferred();
-			var txw = this._txw;
 			var executed = this._executed;
 			var statement = this._statement;
 			var params = this._params;
 			var resultSet = null;
 
 			try {
-				txw._addTask(df);
+				that._txw._addTask(df);
 				checkSqlExecuted(executed);
 				fwLogger.debug(['Sql: ' + statement], params);
 
-				if (txw._runTransaction()) {
-					txw._execute(statement, params, function(tx, rs) {
+				if (that._txw._runTransaction()) {
+					that._txw._execute(statement, params, function(tx, rs) {
 						resultSet = rs;
-						txw._setResult(resultSet);
-						df.notify(resultSet, txw);
+						that._txw._setResult(resultSet);
+						df.notify(resultSet, that._txw);
 					});
 				} else {
-					txw._execute(function(tx) {
-						txw._tx = tx;
+					that._txw._execute(function(tx) {
+						that._txw._tx = tx;
 						tx.executeSql(statement, params, function(innerTx, rs) {
 							resultSet = rs;
-							txw._setResult(resultSet);
-							df.notify(resultSet, txw);
+							that._txw._setResult(resultSet);
+							df.notify(resultSet, that._txw);
 						});
 					}, function(e) {
-						transactionErrorCallback(txw, e);
+						that._txw._tx = null;
+						transactionErrorCallback(that._txw, e);
+						that._txw._dispose();
+						that = null;
 					}, function() {
-						transactionSuccessCallback(txw);
+						that._txw._tx = null;
+						transactionSuccessCallback(that._txw);
+						that._txw._dispose();
+						that = null;
 					});
 				}
 			} catch (e) {
@@ -1156,6 +1245,7 @@
 		this._queue = [];
 		this._df = getDeferred();
 		this._executed = false;
+		this._tasks = [];
 	}
 
 	Transaction.prototype = new SqlExecutor();
@@ -1218,64 +1308,65 @@
 		 * @returns {Promise} Promiseオブジェクト
 		 */
 		execute: function() {
+			var that = this;
 			var df = this._df;
-			var txw = this._txw;
 			var queue = this._queue;
 			var executed = this._executed;
 			var index = 0;
-			var tasks = null;
 
-			function createTransactionTask(txObj) {
+			function createTransactionTask(_tasks, txObj) {
 				function TransactionTask(tx) {
 					this._txw = new SQLTransactionWrapper(null, tx);
 				}
 
-				var ret = [];
-
 				for ( var i = 0, len = queue.length; i < len; i++) {
 					TransactionTask.prototype = queue[i];
-					ret.push(new TransactionTask(txObj));
+					_tasks.push(new TransactionTask(txObj));
 				}
-
-				return ret;
 			}
 
 			function executeSql() {
-				if (tasks.length === index) {
+				if (that._tasks.length === index) {
 					var results = [];
 
-					for ( var j = 0, len = tasks.length; j < len; j++) {
-						var result = tasks[j]._txw._tasks;
+					for ( var j = 0, len = that._tasks.length; j < len; j++) {
+						var result = that._tasks[j]._txw._tasks;
 						results.push(result[0].result);
 					}
 
-					txw._setResult(results);
-					df.notify(results, txw);
+					that._txw._setResult(results);
+					df.notify(results, that._txw);
 					return;
 				}
 
-				tasks[index].execute().progress(function(rs, innerTx) {
+				that._tasks[index].execute().progress(function(rs, innerTx) {
 					index++;
 					executeSql();
 				});
 			}
 
 			try {
-				txw._addTask(df);
+				that._txw._addTask(df);
 				checkSqlExecuted(executed);
 
-				if (txw._runTransaction()) {
-					tasks = createTransactionTask(txw._tx);
+				// executedじゃなければ自身を_txw._transactionsに追加
+				this._txw && this._txw._addTransaction(this);
+
+				if (that._txw._runTransaction()) {
+					createTransactionTask(that._tasks, that._txw._tx);
 					executeSql();
 				} else {
-					txw._execute(function(tx) {
-						tasks = createTransactionTask(tx);
-						txw._tx = tx;
+					that._txw._execute(function(tx) {
+						createTransactionTask(that._tasks, tx);
+						that._txw._tx = tx;
 						executeSql();
 					}, function(e) {
-						transactionErrorCallback(txw, e);
+						transactionErrorCallback(that._txw, e);
+						// 自分自身の_txw._txの参照は_dispose()で消されるので、ここでthat._txw._tx=nullはする必要ない
+						that._txw._dispose();
 					}, function() {
-						transactionSuccessCallback(txw);
+						transactionSuccessCallback(that._txw);
+						that._txw._dispose();
 					});
 				}
 			} catch (e) {
@@ -1284,10 +1375,28 @@
 
 			this._df = getDeferred();
 			this._executed = true;
+
 			return df.promise();
 		},
 		promise: function() {
 			return this._df.promise();
+		},
+
+		/**
+		 * Transaction#execute内(このメソッド)の変数からトランザクションオブジェクトtxへの参照を破棄します。
+		 *
+		 * @private
+		 * @name _dispose
+		 * @memberOf Transaction
+		 * @function
+		 */
+		_dispose: function() {
+			for ( var i = 0, l = this._tasks.length; i < l; i++) {
+				this._tasks[i]._txw._tx = null;
+				this._tasks[i]._txw = null;
+			}
+			this._txw._tx = null;
+			this._txw = null;
 		}
 	});
 

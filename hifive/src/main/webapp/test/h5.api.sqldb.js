@@ -54,32 +54,32 @@ $(function() {
 	// テストメソッド実行毎に処理する関数 sql/insert/transaction/
 	function setupFunc() {
 		if (!h5.api.sqldb.isSupported) {
-			expect(1);
 			return;
 		}
 		stop();
 
-		db.sql('DROP TABLE ' + TABLE_NAME).execute().always(
+		db.sql('DROP TABLE IF EXISTS ' + TABLE_NAME).execute().done(
 				function() {
-					db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute()
-							.progress(function(rs, tx) {
+					db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute().done(
+							function(rs, tx) {
 								start();
 							});
-				});
+				}).fail(function(e) {
+			throw (e);
+			start();
+		});
 	}
 
 	// テストメソッド実行毎に処理する関数 update/del
 	function setupFunc2() {
 		if (!h5.api.sqldb.isSupported) {
-			expect(1);
 			return;
 		}
 		stop();
-
-		db.sql('DROP TABLE ' + TABLE_NAME).execute().always(
+		db.sql('DROP TABLE IF EXISTS ' + TABLE_NAME).execute().done(
 				function() {
-					db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute()
-							.progress(function(rs, tx) {
+					db.sql('CREATE TABLE ' + TABLE_NAME + ' (col1, col2, col3)').execute().done(
+							function(rs, tx) {
 								db.insert(TABLE_NAME, [{
 									col1: 10,
 									col2: 'hoge1',
@@ -92,7 +92,21 @@ $(function() {
 									start();
 								});
 							});
-				});
+				}).fail(function(e) {
+			throw (e);
+			start();
+		});
+	}
+
+	function dropTable() {
+		if (!h5.api.sqldb.isSupported) {
+			return;
+		}
+		stop();
+
+		db.sql('DROP TABLE IF EXISTS ' + TABLE_NAME).execute().always(function() {
+			start();
+		});
 	}
 
 	// =========================================================================
@@ -105,8 +119,9 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Sql', {
-		setup: setupFunc
+	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Sql', {
+		setup: setupFunc,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -311,7 +326,7 @@ $(function() {
 
 	asyncTest(
 			'db.sql()を実行後、同一トランザクションで、エラーのdb.sql()を実行',
-			13,
+			11,
 			function() {
 				if (!h5.api.sqldb.isSupported) {
 					expect(1);
@@ -340,18 +355,6 @@ $(function() {
 													function(e) {
 														strictEqual(seqNo++, 2,
 																'fail2 2番目に実行されること。');
-														if (isDevMode()) {
-															strictEqual(
-																	e.message,
-																	'トランザクション処理中にエラーが発生しました。'
-																			+ (isAbleToGetErrorCode() ? 'データベースエラー '
-																					: '構文に誤りがあります。 ')
-																			+ e.detail.message,
-																	'エラーメッセージが格納されていること。');
-														} else {
-															strictEqual(e.message, null,
-																	'min版にはエラーメッセージは格納されないこと');
-														}
 														strictEqual(e.code, errCode,
 																'エラーコードが格納されていること。');
 														ok(e.detail.message,
@@ -362,14 +365,6 @@ $(function() {
 								}).fail(
 								function(e) {
 									strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-									if (isDevMode()) {
-										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-												+ (isAbleToGetErrorCode() ? 'データベースエラー '
-														: '構文に誤りがあります。 ') + e.detail.message,
-												'エラーメッセージが格納されていること。');
-									} else {
-										strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-									}
 									strictEqual(e.code, errCode, 'エラーコードが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -435,8 +430,9 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Insert', {
-		setup: setupFunc
+	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Insert', {
+		setup: setupFunc,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -636,7 +632,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('db.insert()を実行後、同一トランザクションで、エラーのdb.insert()を実行', 13, function() {
+	asyncTest('db.insert()を実行後、同一トランザクションで、エラーのdb.insert()を実行', 11, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -662,14 +658,6 @@ $(function() {
 					}, tx).execute().fail(
 							function(e) {
 								strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-								if (isDevMode()) {
-									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-											+ (isAbleToGetErrorCode() ? 'データベースエラー '
-													: '構文に誤りがあります。 ') + e.detail.message,
-											'エラーメッセージが格納されていること。');
-								} else {
-									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-								}
 								strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 										'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -678,13 +666,6 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-					if (isDevMode()) {
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-								+ e.detail.message, 'エラーメッセージが格納されていること。');
-					} else {
-						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-					}
 					strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 							'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1041,8 +1022,9 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Update', {
-		setup: setupFunc2
+	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Update', {
+		setup: setupFunc2,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -1426,7 +1408,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('db.update()を実行後、同一トランザクションで、エラーのdb.update()を実行', 19, function() {
+	asyncTest('db.update()を実行後、同一トランザクションで、エラーのdb.update()を実行', 17, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -1450,14 +1432,6 @@ $(function() {
 					}, tx).execute().fail(
 							function(e) {
 								strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-								if (isDevMode()) {
-									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-											+ (isAbleToGetErrorCode() ? 'データベースエラー '
-													: '構文に誤りがあります。 ') + e.detail.message,
-											'エラーメッセージが格納されていること。');
-								} else {
-									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-								}
 								strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 										'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1466,13 +1440,6 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 3, 'fail1 3番目に実行されること。');
-					if (isDevMode()) {
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-								+ e.detail.message, 'エラーメッセージが格納されていること。');
-					} else {
-						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-					}
 					strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 							'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1553,8 +1520,9 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Del', {
-		setup: setupFunc2
+	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Del', {
+		setup: setupFunc2,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -1847,7 +1815,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('db.del()を実行後、同一トランザクションで、エラーのdb.del()を実行', 18, function() {
+	asyncTest('db.del()を実行後、同一トランザクションで、エラーのdb.del()を実行', 15, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -1872,15 +1840,7 @@ $(function() {
 								}).execute().fail(
 										function(e) {
 											strictEqual(seqNo++, 2, 'fail2 2番目に実行されること。');
-											if (isDevMode()) {
-												strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-														+ (isAbleToGetErrorCode() ? 'データベースエラー '
-																: '構文に誤りがあります。 ')
-														+ e.detail.message, 'エラーメッセージが格納されていること。');
-											} else {
-												strictEqual(e.message, null,
-														'min版にはエラーメッセージは格納されないこと');
-											}
+
 											strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 											ok(e.detail.message,
 													'detailにはSQLErrorのメッセージが格納されていること。');
@@ -1890,14 +1850,6 @@ $(function() {
 							}).fail(
 							function(e) {
 								strictEqual(seqNo++, 3, 'fail2 3番目に実行されること。');
-								if (isDevMode()) {
-									strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-											+ (isAbleToGetErrorCode() ? 'データベースエラー '
-													: '構文に誤りがあります。 ') + e.detail.message,
-											'エラーメッセージが格納されていること。');
-								} else {
-									strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-								}
 								strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 								ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -1905,13 +1857,6 @@ $(function() {
 				}).fail(
 				function(e) {
 					strictEqual(seqNo++, 4, 'fail1 4番目に実行されること。');
-					if (isDevMode()) {
-						strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-								+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-								+ e.detail.message, 'エラーメッセージが格納されていること。');
-					} else {
-						strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-					}
 					strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 					ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -1983,8 +1928,9 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Select', {
-		setup: setupFunc2
+	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Select', {
+		setup: setupFunc2,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -2445,8 +2391,9 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database - Transaction', {
-		setup: setupFunc
+	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Transaction', {
+		setup: setupFunc,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -2572,7 +2519,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('3件中1件不正なSQLをaddして実行', 6, function() {
+	asyncTest('3件中1件不正なSQLをaddして実行', 5, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -2602,13 +2549,6 @@ $(function() {
 				}).fail(
 						function(e) {
 							ok(e, 'SQLの実行に失敗してfail()で処理されること。');
-							if (isDevMode()) {
-								strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-										+ (isAbleToGetErrorCode() ? 'データベースエラー ' : '構文に誤りがあります。 ')
-										+ e.detail.message, 'エラーメッセージが格納されていること。');
-							} else {
-								strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-							}
 							strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 							ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -2906,7 +2846,7 @@ $(function() {
 
 	asyncTest(
 			'3件SQLをaddしたdb.transaction()を実行後、同一トランザクションで、2件中1件エラーのあるSQLをaddしたdb.transaction()を実行する。',
-			11,
+			9,
 			function() {
 				if (!h5.api.sqldb.isSupported) {
 					expect(1);
@@ -2954,18 +2894,7 @@ $(function() {
 													function(e) {
 														strictEqual(seqNo++, 1,
 																'fail2: 1番目に実行されること。');
-														if (isDevMode()) {
-															strictEqual(
-																	e.message,
-																	'トランザクション処理中にエラーが発生しました。'
-																			+ (isAbleToGetErrorCode() ? 'データベースエラー '
-																					: '構文に誤りがあります。 ')
-																			+ e.detail.message,
-																	'エラーメッセージが格納されていること。');
-														} else {
-															strictEqual(e.message, null,
-																	'min版にはエラーメッセージは格納されないこと');
-														}
+
 														strictEqual(e.code, errorCode,
 																'エラーコードが格納されていること。');
 														ok(e.detail.message,
@@ -2977,14 +2906,6 @@ $(function() {
 								}).fail(
 								function(e) {
 									strictEqual(seqNo++, 2, 'fail1: 2番目に実行されること。');
-									if (isDevMode()) {
-										strictEqual(e.message, 'トランザクション処理中にエラーが発生しました。'
-												+ (isAbleToGetErrorCode() ? 'データベースエラー '
-														: '構文に誤りがあります。 ') + e.detail.message,
-												'エラーメッセージが格納されていること。');
-									} else {
-										strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-									}
 									strictEqual(e.code, errorCode, 'エラーコードが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのメッセージが格納されていること。');
 									ok(e.detail.message, 'detailにはSQLErrorのエラーコードが格納されていること。');
@@ -3064,8 +2985,9 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-10|ie-wp:9|ff:0-19|ie-wp:9]H5Api - Web SQL Database', {
-		setup: setupFunc
+	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database', {
+		setup: setupFunc,
+		teardown: dropTable
 	});
 
 	//=============================
@@ -3261,7 +3183,7 @@ $(function() {
 				}
 			});
 
-	asyncTest('スタブを使ったテスト。各エラーを取得する', 32, function() {
+	asyncTest('スタブを使ったテスト。各エラーを取得する', 24, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
 			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
@@ -3314,12 +3236,6 @@ $(function() {
 			var s = dbDummy.sql('insert into ' + TABLE_NAME + ' values(1,1,1)');
 			s.execute().fail(
 					function(e) {
-						if (isDevMode()) {
-							ok(e.message.match(new RegExp('^トランザクション処理中にエラーが発生しました。.*'
-									+ e.detail.message + '$')), 'エラーメッセージが格納されていること。' + e.message);
-						} else {
-							strictEqual(e.message, null, 'min版にはエラーメッセージは格納されないこと');
-						}
 						strictEqual(e.code, ERR.ERR_CODE_TRANSACTION_PROCESSING_FAILURE,
 								'エラーコードが格納されていること。');
 						ok(e.detail.code != null, 'エラーコード:' + e.detail.code
@@ -3330,7 +3246,4 @@ $(function() {
 		}
 		loop(0);
 	});
-
-
-
 });

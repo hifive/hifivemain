@@ -153,90 +153,86 @@ $(function() {
 		strictEqual(ret, 3, 'then()で登録したprogressCallbackは動作するか');
 	});
 
-	asyncTest('pipeのdoneコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか (jQuery1.6.x用テスト)', 6,
-			function() {
+	asyncTest(
+			'[jquery#1.7-]pipeのdoneコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか',
+			6, function() {
 				var count = 1;
 
 				h5.async.deferred().resolve().pipe(function() {
 					var dfd = $.Deferred();
-					var time = 1200;
 
 					setTimeout(function() {
-						equal(count++, 1, '1番目に実行されること。');
+						equal(count++, 1, '1番目に実行されること。(pipe1)');
 						dfd.resolve();
-					}, time);
+					}, 0);
 
 					return dfd.promise();
 				}).done(function() {
-					equal(count++, 2, '1番目のpipeが返すPromiseがresolveされたので、doneコールバックが実行されること。');
+					equal(count++, 2, '2番目に実行されること。(pipe1のdoneハンドラ)');
 				}).pipe(function() {
 					var dfd = $.Deferred();
-					var time = 600;
 
 					setTimeout(function() {
-						equal(count++, 3, '3番目に実行されること。');
+						equal(count++, 3, '3番目に実行されること。(pipe2)');
 						dfd.resolve();
-					}, time);
+					}, 0);
 
 					return dfd.promise();
 				}).done(function() {
-					equal(count++, 4, '2番目のpipeが返すPromiseがresolveされたので、doneコールバックが実行されること。');
+					equal(count++, 4, '4番目に実行されること。(pipe2のdoneハンドラ)');
 				}).pipe(function() {
 					var dfd = $.Deferred();
-					var time = 800;
 
 					setTimeout(function() {
-						equal(count++, 5, '5番目に実行されること。');
+						equal(count++, 5, '5番目に実行されること。(pipe3)');
 						dfd.resolve();
-					}, time);
+					}, 0);
 
 					return dfd.promise();
 				}).done(function() {
-					equal(count++, 6, '3番目のpipeが返すPromiseがresolveされたので、doneコールバックが実行されること。');
+					equal(count++, 6, '6番目に実行されること。(pipe3のdoneハンドラ)');
 					start();
 				});
 			});
 
-	asyncTest('pipeのfailコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか (jQuery1.6.x用テスト)', 6,
-			function() {
+	asyncTest(
+			'[jquery#1.7-]pipeのfailコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか',
+			6, function() {
 				var count = 1;
 
 				h5.async.deferred().reject().pipe(null, function() {
 					var dfd = $.Deferred();
-					var time = 1200;
 
 					setTimeout(function() {
-						equal(count++, 1, '1番目に実行されること。');
+						equal(count++, 1, '1番目に実行されること。(pipe1)');
 						dfd.reject();
-					}, time);
+					}, 0);
 
 					return dfd.promise();
 				}).fail(function() {
-					equal(count++, 2, '1番目のpipeが返すPromiseがrejectされたので、failコールバックが実行されること。');
+					equal(count++, 2, '2番目に実行されること。(pipe1のfailハンドラ)');
 				}).pipe(null, function() {
 					var dfd = $.Deferred();
-					var time = 600;
 
 					setTimeout(function() {
-						equal(count++, 3, '3番目に実行されること。');
+						equal(count++, 3, '3番目に実行されること。(pipe2)');
 						dfd.reject();
-					}, time);
+					}, 0);
 
 					return dfd.promise();
 				}).fail(function() {
-					equal(count++, 4, '2番目のpipeが返すPromiseがrejectされたので、failコールバックが実行されること。');
+					equal(count++, 4, '4番目に実行されること。(pipe2のfailハンドラ)');
 				}).pipe(null, function() {
 					var dfd = $.Deferred();
-					var time = 800;
 
 					setTimeout(function() {
-						equal(count++, 5, '5番目に実行されること。');
+						equal(count++, 5, '5番目に実行されること。(pipe3)');
 						dfd.reject();
-					}, time);
+					}, 0);
 
 					return dfd.promise();
 				}).fail(function() {
-					equal(count++, 6, '3番目のpipeが返すPromiseがrejectされたので、failコールバックが実行されること。');
+					equal(count++, 6, '6番目に実行されること。(pipe3のfailハンドラ)');
 					start();
 				});
 			});
@@ -305,12 +301,14 @@ $(function() {
 	//=============================
 
 	module("Async - when");
+	// h5.async.whenは、jQuery1.7以上の場合は$.whenをラップしているが、
+	// jQuery1.6.xの場合はhifiveが$.when相当のものを独自実装しているため、whenの機能全般をここでテストする。
 
 	//=============================
 	// Body
 	//=============================
 
-	test('$.Deferred()のPromiseを引数に指定して実行 - done() (jQuery1.6.x用テスト)', 1, function() {
+	test('$.Deferred()のPromiseを引数に指定して実行 - done()', 1, function() {
 		var df1 = $.Deferred();
 		var df2 = $.Deferred();
 
@@ -322,7 +320,7 @@ $(function() {
 		df2.resolve();
 	});
 
-	test('$.Deferred()のPromiseを引数に指定して実行 - fail() (jQuery1.6.x用テスト)', 1, function() {
+	test('$.Deferred()のPromiseを引数に指定して実行 - fail()', 1, function() {
 		var df1 = $.Deferred();
 		var df2 = $.Deferred();
 
@@ -336,7 +334,7 @@ $(function() {
 		df2.resolve();
 	});
 
-	test('Promiseを引数に指定して実行 - done() (jQuery1.6.x用テスト)', 1, function() {
+	test('Promiseを引数に指定して実行 - done()', 1, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -348,7 +346,7 @@ $(function() {
 		df2.resolve();
 	});
 
-	test('Promiseを引数に指定して実行 - fail() (jQuery1.6.x用テスト)', 1, function() {
+	test('Promiseを引数に指定して実行 - fail()', 1, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -362,7 +360,7 @@ $(function() {
 		df2.resolve();
 	});
 
-	test('値を指定してh5.async.deferred().resolve()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定してh5.async.deferred().resolve()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -375,7 +373,7 @@ $(function() {
 		df2.resolve('df2');
 	});
 
-	test('値を指定してh5.async.deferred().resolveWith()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定してh5.async.deferred().resolveWith()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -388,7 +386,7 @@ $(function() {
 		df2.resolveWith(null, ['df2']);
 	});
 
-	test('値を指定してh5.async.deferred().reject()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定してh5.async.deferred().reject()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -401,7 +399,7 @@ $(function() {
 		df2.reject('df2');
 	});
 
-	test('値を指定してh5.async.deferred().rejectWith()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定してh5.async.deferred().rejectWith()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -414,7 +412,7 @@ $(function() {
 		df2.rejectWith(null, ['df2']);
 	});
 
-	test('値を指定して h5.async.deferred().notify()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定して h5.async.deferred().notify()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -430,7 +428,7 @@ $(function() {
 		df2.notify('df2');
 	});
 
-	test('値を指定して h5.async.deferred().notifyWith()を実行 (jQuery1.6.x用テスト)', 2, function() {
+	test('値を指定して h5.async.deferred().notifyWith()を実行', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
@@ -712,7 +710,7 @@ $(function() {
 	// Body
 	//=============================
 
-	asyncTest('loop', 1, function() {
+	asyncTest('同期', 1, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -720,27 +718,33 @@ $(function() {
 		}, 2);
 		p.always(function() {
 			start();
-			strictEqual(ret.join(';'), '0;1;2;3;4;5', 'ちゃんとループしているか');
+			strictEqual(ret.join(';'), '0;1;2;3;4;5', '順番に関数が実行されていること');
 		});
 	});
-	asyncTest('loop 2', 1, function() {
+
+	asyncTest('非同期', 1, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
 			var dfd = h5.async.deferred();
-			var time = index % 2 === 0 ? 200 : 10;
-			setTimeout(function() {
-				ret.push(value);
-				dfd.resolve();
-			}, time);
-			return dfd.promise();
+			// 奇数なら非同期
+			if (index % 2) {
+				setTimeout(function() {
+					ret.push(value);
+					dfd.resolve();
+				}, 0);
+				return dfd.promise();
+			}
+			// 偶数なら同期
+			ret.push(value);
 		}, 2);
 		p.always(function() {
 			start();
-			strictEqual(ret.join(';'), '0;1;2;3;4;5', 'promiseを返した時に処理を待っているか');
+			strictEqual(ret.join(';'), '0;1;2;3;4;5', '順番に関数が実行されていること');
 		});
 	});
-	asyncTest('loop 3', 2, function() {
+
+	asyncTest('loopControl#stop', 2, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -758,21 +762,49 @@ $(function() {
 			ok(false, 'loopControl.stop()でdoneコールバックが呼ばれるか');
 		});
 	});
-	asyncTest('loop 4', 2, function() {
+
+	asyncTest('done', 2, function() {
+		var ret = [];
+		var array = [0, 1, 2, 3, 4, 5];
+		var time = 2;
+		var p = h5.async.loop(array, function(index, value, loopControl) {
+			loopControl.pause();
+			setTimeout(function() {
+				ret.push(value);
+				if (index === 3) {
+					loopControl.stop();
+				} else {
+					loopControl.resume();
+				}
+			}, 0);
+		}, time);
+		p.done(function(data) {
+			start();
+			ok(true, 'loopControl.stop()でdoneコールバックが呼ばれるか');
+			strictEqual(ret.join(';'), '0;1;2;3', 'loopControler.stop()で処理が中断しているか');
+		}).fail(function(data) {
+			start();
+			ok(false, 'loopControl.stop()でdoneコールバックが呼ばれるか');
+		});
+	});
+
+	asyncTest('fail', 2, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
 			var dfd = h5.async.deferred();
-			var time = index % 2 === 0 ? 200 : 10;
-			setTimeout(function() {
-				ret.push(value);
-				if (index === 3) {
-					dfd.reject();
-				} else {
-					dfd.resolve();
-				}
-			}, time);
-			return dfd.promise();
+			if (index % 2) {
+				setTimeout(function() {
+					ret.push(value);
+					if (index === 3) {
+						dfd.reject();
+					} else {
+						dfd.resolve();
+					}
+				}, 0);
+				return dfd.promise();
+			}
+			ret.push(value);
 		}, 2);
 		p.fail(function() {
 			start();
@@ -783,7 +815,8 @@ $(function() {
 			ok(false, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
 		});
 	});
-	asyncTest('loop 5', 1, function() {
+
+	asyncTest('pause(),resume()', 1, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -791,14 +824,15 @@ $(function() {
 			setTimeout(function() {
 				ret.push(value);
 				loopControl.resume();
-			}, 100);
+			}, 0);
 		}, 2);
 		p.always(function(data) {
 			start();
 			strictEqual(ret.join(';'), '0;1;2;3;4;5', 'loopControlは動作しているか');
 		});
 	});
-	asyncTest('loop 6', 10, function() {
+
+	asyncTest('progress 同期', 10, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var time = 2;
@@ -816,7 +850,7 @@ $(function() {
 			strictEqual(ret.join(';'), '0;1;2;3;4;5', '基本動作の確認');
 		});
 	});
-	asyncTest('loop 7', 10, function() {
+	asyncTest('progress 非同期', 10, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var time = 2;
@@ -825,7 +859,7 @@ $(function() {
 			setTimeout(function() {
 				ret.push(value);
 				loopControl.resume();
-			}, 100);
+			}, 0);
 		}, time);
 		var count = 1;
 		p.progress(function(status) {
@@ -838,36 +872,14 @@ $(function() {
 			strictEqual(ret.join(';'), '0;1;2;3;4;5', '基本動作の確認');
 		});
 	});
-	asyncTest('loop 8', 2, function() {
-		var ret = [];
-		var array = [0, 1, 2, 3, 4, 5];
-		var time = 2;
-		var p = h5.async.loop(array, function(index, value, loopControl) {
-			loopControl.pause();
-			setTimeout(function() {
-				ret.push(value);
-				if (index === 3) {
-					loopControl.stop();
-				} else {
-					loopControl.resume();
-				}
-			}, 100);
-		}, time);
-		p.done(function(data) {
-			start();
-			ok(true, 'loopControl.stop()でdoneコールバックが呼ばれるか');
-			strictEqual(ret.join(';'), '0;1;2;3', 'loopControler.stop()で処理が中断しているか');
-		}).fail(function(data) {
-			start();
-			ok(false, 'loopControl.stop()でdoneコールバックが呼ばれるか');
-		});
-	});
-	asyncTest('loop 9', 3, function() {
+
+	asyncTest('引数チェック', 3, function() {
 		var noArrayObjs = [1, {}, 'aaa'];
-		var time = 2;
 		for ( var i = 0, len = noArrayObjs.length; i < len; i++) {
 			try {
-				h5.async.loop(noArrayObjs[i], function(index, value, loopControl) {}, time);
+				h5.async.loop(noArrayObjs[i], function() {
+				//
+				}, 2);
 			} catch (e) {
 				ok(true, e.message);
 			}

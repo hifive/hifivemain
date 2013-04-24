@@ -29,42 +29,54 @@ $(function() {
 		var envVersionFullAry = envVersionFull.split('.');
 		var envMajorVersion = envVersionFullAry[0];
 		// 範囲指定
+		if (version === 'all') {
+			version = '0-';
+		}
 		if (version.indexOf('-') !== -1) {
 			var tmp = version.split('-');
 			var min = tmp[0];
 			var max = tmp[1];
+			var maxNoCheck = max === '';
+			var minNoCheck = min === '';
+			if (maxNoCheck && minNoCheck) {
+				return true;
+			}
 			if (min.indexOf('.') !== -1) {
 				min = min.split('.');
 				max = max.split('.');
-				var minOK = false;
-				var maxOK = false;
 				// min-max指定時に、マイナーバージョンも含む場合は、有効桁数を揃えて書いてある前提で処理する(2.3.1-3.2のような書き方はダメ)
 				for ( var i = 0, l = min.length; i < l; i++) {
 					var curMin = parseInt(min[i]);
 					var curMax = parseInt(max[i]);
 					var curVersion = parseInt(envVersionFullAry[i]);
 
-					if (!minOK && curMin < curVersion) {
-						minOK = true;
-					}
-					if (!maxOK && curVersion < curMax) {
-						maxOK = true;
-					}
-					if ((minOK || curMin <= curVersion) && (maxOK || curVersion <= curMax)) {
+					var minOK = minNoCheck || curMin <= curVersion;
+					var maxOK = maxNoCheck || curVersion <= curMax;
+					if (minOK && maxOK) {
+						if (curMin < curVersion) {
+							minNoCheck = true;
+						}
+						if (curVersion < curMax) {
+							maxNoCheck = true;
+						}
+						if (maxNoCheck && minNoCheck) {
+							return true;
+						}
 						continue;
 					}
 					return false;
 				}
 				return true;
 			}
-			return parseInt(min) <= envMajorVersion && envMajorVersion <= parseInt(max);
+			return (minNoCheck || parseInt(min) <= envMajorVersion)
+					&& (maxNoCheck || envMajorVersion <= parseInt(max));
 		}
 
 		// 単一指定または複数指定
 		var versions = version.split(',');
 		for ( var i = 0, l = versions.length; i < l; i++) {
 			if (versions[i].indexOf('.') !== -1) {
-				if (envVersionFull.join('.').indexOf(versions[i]) === 0) {
+				if (envVersionFull.indexOf(versions[i]) === 0) {
 					return true;
 				}
 			} else {

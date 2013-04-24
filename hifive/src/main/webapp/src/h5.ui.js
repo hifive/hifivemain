@@ -340,6 +340,51 @@
 	}
 
 	/**
+	 * 任意要素のスクロールサイズ(scrollWidth/Height：見た目でなくコンテンツ全体のサイズ)を取得します。
+	 * IE6は内包する要素の方が小さい場合にscrollサイズがclientサイズより小さくなってしまうバグがあります（本来はscroll===client）。
+	 * そこで、IE6の場合はscrollとclientのうち大きい方のサイズを返します。<br>
+	 * また、scrollW/Hは整数を返しますが、内部的にはサイズが小数になっている場合があります。Chrome22, Firefox20,
+	 * Opera12ではscrollサイズをセットしても問題ありませんが、IEの場合
+	 * (内部サイズが小数のときに)scrollW/Hの大きさでオーバーレイのサイズを設定すると意図しないスクロールバーが出てしまう場合があります。
+	 * このメソッドは、IEかつ内部に小数を取り得る環境と判断した場合この誤差を調整してこの問題を回避します。
+	 *
+	 * @private
+	 * @param elem {Element} DOM要素
+	 */
+	function getScrollSize(elem) {
+		var retW = elem.scrollWidth;
+		var retH = elem.scrollHeight;
+
+		if (isLegacyIE) {
+			retW = Math.max(retW, elem.clientWidth);
+			retH = Math.max(retH, elem.clientHeight);
+		} else if (h5ua.isIE && typeof getComputedStyle === 'function') {
+			//getComputedStyleが未定義な環境(IE)でエラーにならないように、typeofを使って判定
+
+			//IE9以上(かつIE9モード以上)。この場合、ボックスサイズが小数になる可能性がある
+			//(IE8orIE8モード以下の場合常に整数で計算されるので、scrollサイズを使えばよい)。
+			//ComputedStyleで厳密なサイズを取得し、その分を調整することで
+			//意図しないスクロールバーが出ないようにする。
+			//-1しているのは四捨五入させるため(描画の際はピクセルにスナップされるようなので)。
+
+			var comStyle = getComputedStyle(elem, null);
+
+			var eW = parseFloat(comStyle.width) + parseFloat(comStyle.paddingLeft)
+					+ parseFloat(comStyle.paddingRight);
+			retW += eW - parseInt(eW) - 1;
+
+			var eH = parseFloat(comStyle.height) + parseFloat(comStyle.paddingTop)
+					+ parseFloat(comStyle.paddingBottom);
+			retH += eH - parseInt(eH) - 1;
+		}
+
+		return {
+			w: retW,
+			h: retH
+		};
+	}
+
+	/**
 	 * ドキュメント(コンテンツ全体)の高さまたは幅を取得します。
 	 * <p>
 	 * ウィンドウの高さを取得したい場合は引数に"Height"を、 ウィンドウの幅を取得したい場合は引数に"Width"を指定して下さい。
@@ -427,7 +472,12 @@
 	 * 1.8.xのjQuery.offset()は、Quirksモードでのスクロール量の計算が正しく行われないため自前で計算する。
 	 * </p>
 	 * <p>
-	 * 絶対座標は、<pre>getBoundingClinetRectの値+スクロール量-clientTop/Left</pre>
+	 * 絶対座標は、
+	 *
+	 * <pre>
+	 * getBoundingClinetRectの値 + スクロール量 - clientTop / Left
+	 * </pre>
+	 *
 	 * で計算します。
 	 * </p>
 	 * <p>
@@ -878,8 +928,8 @@
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
 		// オーバーレイ・コンテンツにpositionを設定する
-		$.each([this._$overlay, this._$content], function(i, e) {
-			e.css('position', position);
+		$.each([this._$overlay, this._$content], function() {
+			this.css('position', position);
 		});
 
 		var promises = settings.promises;
@@ -990,7 +1040,7 @@
 		 * @private
 		 */
 		_resizeOverlay: function() {
-			if (usePositionFixed) {
+			if (this._isScreenLock && usePositionFixed) {
 				return;
 			}
 
@@ -999,18 +1049,21 @@
 				var _$overlay = this._$overlay.eq(i);
 				var _$skin = this._$skin.eq(i);
 
-				var w = this._isScreenLock ? documentWidth() : _$target.outerWidth(true);
-				var h = this._isScreenLock ? documentHeight() : _$target.outerHeight(true);
+				var w,h;
+
+				//オーバーレイはターゲット要素全体の大きさ(スクロールサイズ)にする
+				if (this._isScreenLock) {
+					w = documentWidth();
+					h = documentHeight();
+				} else {
+					var scrSize = getScrollSize(_$target[0]);
+					w = scrSize.w;
+					h = scrSize.h;
+				}
+				_$overlay.width(w).height(h);
 
 				if (isLegacyIE || compatMode) {
-					// IE6はwidthにバグがあるため、heightに加えてwidthも自前で計算を行う。
-					// http://webdesigner00.blog11.fc2.com/blog-entry-56.html
-					$.each([_$overlay, _$skin], function(i, e) {
-						e.width(w).height(h);
-					});
-				} else if (!usePositionFixed) {
-					// heightは100%で自動計算されるので何もしない
-					_$overlay.height(h);
+					_$skin.width(w).height(h);
 				}
 			}
 		},
@@ -1040,15 +1093,16 @@
 								((scrollTop() + (wh / 2)) - (_$content.outerHeight() / 2)) + 'px');
 					}
 				} else {
-					_$content.css('top', ((_$target.outerHeight() - _$content.outerHeight()) / 2)
-							+ 'px');
+					//オーバーレイの計算はスクロールサイズを基準にしている。これに倣い、中央揃え計算の基準はinnerHeight()にする(＝paddingを含める)。leftも同様
+					_$content.css('top', _$target.scrollTop()
+							+ (_$target.innerHeight() - _$content.outerHeight()) / 2);
 				}
 
 				var blockElementPadding = _$content.innerWidth() - _$content.width();
 				var totalWidth = 0;
 
-				_$content.children().each(function(i, e) {
-					var $e = $(e);
+				_$content.children().each(function() {
+					var $e = $(this);
 					// IE9にて不可視要素に対してouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
 					if ($e.css('display') === 'none') {
 						return true;
@@ -1056,7 +1110,8 @@
 					totalWidth += $e.outerWidth(true);
 				});
 				_$content.width(totalWidth + blockElementPadding);
-				_$content.css('left', ((_$target.width() - _$content.outerWidth()) / 2) + 'px');
+				_$content.css('left', _$target.scrollLeft()
+						+ (_$target.innerWidth() - _$content.outerWidth()) / 2);
 			}
 		},
 		/**
@@ -1248,9 +1303,7 @@
 	 * <b>スクリーンロックとして表示する</b><br>
 	 *
 	 * <pre>
-	 * var indicator = h5.ui.indicator({
-	 * 	target: document,
-	 * }).show();
+	 * var indicator = h5.ui.indicator(document).show();
 	 * </pre>
 	 *
 	 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
