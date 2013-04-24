@@ -36,7 +36,7 @@
 	/**
 	 * シリアライザのバージョン
 	 */
-	var CURRENT_SEREALIZER_VERSION = '1';
+	var CURRENT_SEREALIZER_VERSION = '2';
 
 	// エラーコード
 	/**
@@ -160,6 +160,13 @@
 	 */
 	var existScriptOnload = document.createElement('script').onload !== undefined;
 
+	/**
+	 * RegExp#toStringで改行文字がエスケープされるかどうか。 IEはtrue
+	 *
+	 * @private
+	 */
+	var regToStringEscapeNewLine = new RegExp('\r\n').toString().indexOf('\r\n') === -1;
+
 	// =============================
 	// Functions
 	// =============================
@@ -208,6 +215,72 @@
 			return '@';
 		}
 	}
+
+	/**
+	 * 文字列中の\(エスケープ文字)とその他特殊文字をエスケープ
+	 * <p>
+	 * \\, \b, \f, \n, \r, \t をエスケープする
+	 * </p>
+	 * <p>
+	 * http://json.org/json-ja.html に載っているうちの \/ と \" 以外。
+	 * </p>
+	 * <p>
+	 * \/はJSON.stringifyでもエスケープされず、$.parseJSONでは\/も\\/も\/に復元されるので、エスケープしなくてもしてもどちらでもよい。
+	 * \"はserialize文字列組立時にエスケープするのでここではエスケープしない。
+	 * </p>
+	 *
+	 * @private
+	 * @param {String} str
+	 * @param {Boolean} nlEscaped 改行コードがすでにエスケープ済みかどうか。正規表現をtoString()した文字列をエスケープする場合に使用する。
+	 *            正規表現をtoString()した場合に改行がエスケープされるブラウザとそうでないブラウザがあるため、改行がescape済みかどうかを引数で取り、
+	 *            trueが指定されていた場合は改行以外をエスケープする。
+	 * @returns {String} エスケープ後の文字列
+	 */
+	function escape(str, nlEscaped) {
+		if (isString(str)) {
+			var ret = str;
+
+			if (nlEscaped) {
+				// 改行コードがすでにエスケープ済みの文字列なら、一旦通常の改行コードに戻して、再度エスケープ
+				// IEの場合、RegExp#toString()が改行コードをエスケープ済みの文字列を返すため。
+				ret = ret.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+			}
+			// \b は、バックスペース。正規表現で\bを使うと単語境界を表すが、[\b]と書くとバックスペースとして扱える
+			ret = ret.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(
+					/[\b]/g, '\\b').replace(/\f/g, '\\f').replace(/\t/g, '\\t');
+
+			return ret;
+		}
+		if (str instanceof String) {
+			return new String(escape(str.toString()));
+		}
+		return str;
+	}
+
+	/**
+	 * エスケープされた改行とタブと\(エスケープ文字)をアンエスケープ
+	 *
+	 * @private
+	 * @param {String} str
+	 * @param {String} version デシリアライズ対象の文字列がシリアライズされた時のバージョン。'1'ならunescapeしない。
+	 * @returns {String} エスケープ後の文字列
+	 */
+	function unescape(str, version) {
+		if (version === '1') {
+			return str;
+		}
+		if (isString(str)) {
+			// \に変換する\\は一度'\-'にしてから、改行とタブを元に戻す。
+			// '\-'を元に戻す。
+			return str.replace(/\\\\/g, '\\-').replace(/\\b/g, '\b').replace(/\\f/g, '\f').replace(
+					/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t').replace(/\\-/g, '\\');
+		}
+		if (str instanceof String) {
+			return new String(unescape(str.toString()));
+		}
+		return str;
+	}
+
 
 	/**
 	 * 指定されたスクリプトファイルをロードして、スクリプト文字列を取得します。(loadScriptメソッド用)
@@ -776,7 +849,7 @@
 			switch (type) {
 			case 'String':
 			case 'string':
-				ret = typeToCode(type) + ret;
+				ret = typeToCode(type) + escape(ret);
 				break;
 			case 'Boolean':
 				ret = ret.valueOf();
@@ -810,7 +883,7 @@
 				}
 				break;
 			case 'regexp':
-				ret = typeToCode(type) + ret.toString();
+				ret = typeToCode(type) + escape(ret.toString(), regToStringEscapeNewLine);
 				break;
 			case 'date':
 				ret = typeToCode(type) + (+ret);
@@ -843,7 +916,7 @@
 						continue;
 					}
 					if ($.type(val[key]) !== 'function') {
-						hash += '"' + key + '":"'
+						hash += '"' + escape(key) + '":"'
 								+ (func(val[key])).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 								+ '",';
 					}
@@ -905,7 +978,8 @@
 
 		value.match(/^(.)\|(.*)/);
 		var version = RegExp.$1;
-		if (version !== CURRENT_SEREALIZER_VERSION) {
+		// version1の場合はエラーにせず、現在のバージョンでunescapeをしない方法で対応している。
+		if (version !== '1' && version !== CURRENT_SEREALIZER_VERSION) {
 			throwFwError(ERR_CODE_SERIALIZE_VERSION, [version, CURRENT_SEREALIZER_VERSION]);
 		}
 		var ret = RegExp.$2;
@@ -961,7 +1035,7 @@
 			if (type !== undefined && type !== '') {
 				switch (codeToType(type)) {
 				case 'String':
-					ret = new String(ret);
+					ret = new String(unescape(ret, version));
 					break;
 				case 'string':
 					break;
@@ -1068,10 +1142,10 @@
 					ret = new Date(parseInt(ret, 10));
 					break;
 				case 'regexp':
-					ret.match(/^\/(.*)\/(.*)$/);
-					var regStr = RegExp.$1;
-					var flg = RegExp.$2;
 					try {
+						var matchResult = ret.match(/^\/(.*)\/(.*)$/);
+						var regStr = unescape(matchResult[1], version);
+						var flg = matchResult[2];
 						ret = new RegExp(regStr, flg);
 					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
@@ -1094,7 +1168,7 @@
 				}
 			}
 
-			return ret;
+			return unescape(ret, version);
 		}
 		return func(ret);
 	}

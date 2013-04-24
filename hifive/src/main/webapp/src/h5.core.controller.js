@@ -28,8 +28,6 @@
 	// Production
 	// =============================
 
-	var TEMPLATE_LOAD_RETRY_COUNT = 3;
-	var TEMPLATE_LOAD_RETRY_INTERVAL = 3000;
 	var TYPE_OF_UNDEFINED = 'undefined';
 	var SUFFIX_CONTROLLER = 'Controller';
 	var SUFFIX_LOGIC = 'Logic';
@@ -240,6 +238,7 @@
 	 * @returns {Function[]} AOP用関数配列.
 	 */
 	function getInterceptors(targetName, pcName) {
+		/** @type Any */
 		var ret = [];
 		var aspects = h5.settings.aspects;
 		// 織り込むべきアスペクトがない場合はそのまま空の配列を返す
@@ -642,8 +641,12 @@
 		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
 		// unbindMapにラップしたものが登録されるように、このタイミングで行う必要がある
 		var handler = bindObj.handler;
+
 		bindObj.handler = function(/* var args */) {
-			handler.call(bindObj.controller, createEventContext(bindObj, arguments));
+			var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(arguments[0].currentTarget)
+					: arguments[0].currentTarget;
+			handler.call(bindObj.controller, createEventContext(bindObj, arguments),
+					currentTargetShortcut);
 		};
 		// アンバインドマップにハンドラを追加
 		registerUnbindMap(bindObj.controller, bindObj.selector, bindObj.eventName, bindObj.handler);
@@ -1605,7 +1608,7 @@
 		var targets = [];
 		var dispose = function(parentController) {
 			targets.push(parentController);
-			if (getByPath('h5.core.view')) {
+			if (parentController.view.__view) {
 				parentController.view.clear();
 			}
 			for ( var prop in parentController) {
@@ -2567,19 +2570,38 @@
 
 		/**
 		 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
-		 * 子コントローラは含まれません。
+		 * オプションを指定すると、子孫要素も検索対象に含めたり、特定の名前のコントローラだけを検索対象にしたりすることができます。<br>
+		 * なお、戻り値に含まれるのはルートコントローラのみです。
 		 *
-		 * @param {String|Element|jQuery} rootElement 要素
+		 * @param {String|Element|jQuery} rootElement 検索対象の要素
+		 * @param {Object} [option] オプション（ver.1.1.5以降）
+		 * @param {Boolean} [option.deep=false] 子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.5以降)
+		 * @param {Boolean} [option.initing=false] 初期化中（ready状態になる前）のコントローラも含めるかどうか(ver.1.1.5以降)
+		 * @param {String|String[]} [option.name=null]
+		 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.5以降)
 		 * @returns {Controller[]} バインドされているコントローラの配列
 		 * @memberOf ControllerManager
 		 */
-		getControllers: function(rootElement) {
-			var target = $(rootElement)[0];
+		getControllers: function(rootElement, option) {
+			var deep = option && option.deep;
+			var initing = option && option.initing; //TODO initingは未実装
+			var names = option && option.name ? wrapInArray(option.name) : null;
+
+			var seekRoot = $(rootElement)[0];
 			var controllers = this.controllers;
 			var ret = [];
 			for ( var i = 0, len = controllers.length; i < len; i++) {
-				if (target === controllers[i].rootElement) {
-					ret.push(controllers[i]);
+				var controller = controllers[i];
+
+				if (names && $.inArray(controller.__name, names) === -1) {
+					continue;
+				}
+
+				if (seekRoot === controller.rootElement) {
+					ret.push(controller);
+				} else if (deep && $.contains(seekRoot, controller.rootElement)) {
+					//$.contains()は自分と比較した場合はfalse
+					ret.push(controller);
 				}
 			}
 			return ret;
@@ -2749,7 +2771,7 @@
 					// http://support.microsoft.com/kb/193625/ja
 					var errorObj = result.detail.error;
 					var jqXhrStatus = errorObj ? errorObj.status : null;
-					if (count === TEMPLATE_LOAD_RETRY_COUNT || jqXhrStatus !== 0
+					if (count === h5.settings.dynamicLoading.retryCount || jqXhrStatus !== 0
 							&& jqXhrStatus !== 12029) {
 						fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
 								result.detail.url);
@@ -2761,7 +2783,7 @@
 					}
 					setTimeout(function() {
 						viewLoad(++count);
-					}, TEMPLATE_LOAD_RETRY_INTERVAL);
+					}, h5.settings.dynamicLoading.retryInterval);
 				});
 			};
 			viewLoad(0);
