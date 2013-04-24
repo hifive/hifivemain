@@ -51,8 +51,8 @@
 		}
 	}
 
-	// H5_TEST_ENVが既に定義されていれば、定義オブジェクト優先でマージする
-	// 定義されていない場合はリクエストパラメータから取得したオブジェクトをそのまま使用する
+	// リクエストパラメータからH5_TEST_ENVを生成する
+	// H5_TEST_ENVが既に定義されていれば、リクエストパラメータ優先でマージする
 	window.H5_TEST_ENV = window.H5_TEST_ENV ? {
 		ci: $.extend(window.H5_TEST_ENV.ci, envByParam.ci),
 		filter: $.extend(window.H5_TEST_ENV.filter, envByParam.filter),
