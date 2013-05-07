@@ -309,8 +309,8 @@
 			return errorReason;
 		}
 
-		// base指定されていた場合は、後勝ちでextendする
-		schema = $.extend(baseSchema, schema);
+		// base指定されていた場合は、後勝ちでextendする(元のbaseSchemaは上書かないようにする)
+		schema = $.extend({}, baseSchema, schema);
 
 		// errorReasonにschemaのチェック結果を追加して返す
 		return errorReason.concat(validateSchema(schema, manager, stopOnError));

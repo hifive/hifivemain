@@ -508,6 +508,39 @@ $(function() {
 				strictEqual(item.get('val'), 2, 'baseを指定している側にしかないプロパティの値に指定したdefaultValueが入っていること');
 			});
 
+	test('baseにデータモデルを指定した時、継承元のスキーマは変わらないこと', function() {
+		// parentModel
+		var manager = h5.core.data.createManager('DataManager', 'model');
+
+		var parentModel = manager.createModel({
+			name: 'ParentModel',
+			schema: {
+				id: {
+					id: true,
+					type: 'integer',
+				}
+			}
+		});
+
+		// childModel
+		manager.createModel({
+			name: 'ChildModel',
+			base: '@ParentModel',
+			schema: {
+				val: {
+					type: 'string',
+				}
+			}
+		});
+
+		var item = parentModel.create({
+			id: 0
+		});
+		raises(function() {
+			item.get('val');
+		}, '継承元には継承先のスキーマで定義したスキーマは存在しないこと');
+	});
+
 	test('baseにデータモデルを指定し、schemaに指定したデータモデルと同名のid:trueな属性がある場合は、上書きされてモデルが作成されること', function() {
 		manager.createModel({
 			name: 'TestDataModel',
