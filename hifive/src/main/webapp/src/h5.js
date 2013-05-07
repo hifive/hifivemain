@@ -74,6 +74,10 @@
 	}
 
 
+	function defaultAjaxRetryFilter() {
+	//TODO #199
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -201,6 +205,12 @@
 		dynamicLoading: {
 			retryCount: 3,
 			retryInterval: 500
+		},
+
+		ajax: {
+			retryCount: 0,
+			retryInterval: 500,
+			retryFilter: defaultAjaxRetryFilter
 		}
 	};
 
