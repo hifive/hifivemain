@@ -517,7 +517,7 @@ $(function() {
 			schema: {
 				id: {
 					id: true,
-					type: 'integer',
+					type: 'integer'
 				}
 			}
 		});
@@ -528,7 +528,7 @@ $(function() {
 			base: '@ParentModel',
 			schema: {
 				val: {
-					type: 'string',
+					type: 'string'
 				}
 			}
 		});
