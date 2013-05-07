@@ -855,8 +855,9 @@
 			// base指定されたモデルのschemaを取得
 			baseSchema = baseModel.schema;
 		}
-		// extendした結果を返す。base指定されていない場合は渡されたdesc.schemaをシャローコピーしたもの。
-		$.extend(schema, baseSchema);
+		// baseSchemaとschemaをschema優先でマージした結果をschemaに格納する。
+		// baseSchemaは上書かない。
+		$.extend(schema, $.extend({}, baseSchema, schema));
 	}
 
 
@@ -1126,8 +1127,8 @@
 
 		//継承元がある場合はそのプロパティディスクリプタを先にコピーする。
 		//継承元と同名のプロパティを自分で定義している場合は
-		//自分が持っている定義を優先するため。
-		var schema = {};
+		//自分が持っている定義を優先する。
+		var schema = descriptor.schema || {};
 
 
 		//継承を考慮してスキーマを作成
@@ -2101,7 +2102,7 @@
 			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, errorReason);
 		}
 
-		var extendedSchema = {};
+		var extendedSchema = descriptor.schema || {};
 		extendSchema(extendedSchema, manager, descriptor);
 
 		var itemValueCheckFuncs = createCheckValueByDescriptor(extendedSchema, manager);
