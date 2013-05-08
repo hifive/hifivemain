@@ -59,6 +59,19 @@
 	//
 	// =========================================================================
 	/**
+	 * jqXHRWrapper
+	 * <p>
+	 * jQuery.ajaxが生成するjqXHRをラップするクラス。 h5.ajax()の戻り値で使用します。
+	 * </p>
+	 *
+	 * @private
+	 * @class
+	 */
+	function JqXHRWrapper() {
+	// 空コンストラクタ
+	}
+
+	/**
 	 * HTTP通信を行います。<br />
 	 * 基本的に使い方は、<a href="http://api.jquery.com/jQuery.ajax/">jQuery.ajax()</a>と同じです。<br />
 	 * jQuery.ajax()と異なる点は共通のエラーハンドラが定義できることです。<br/>
@@ -67,14 +80,165 @@
 	 * h5.settings.commonFailHandlerに設定した関数が呼ばれます。
 	 *
 	 * @param {Any} var_args jQuery.ajaxに渡す引数
-	 * @returns {Promise} Promiseオブジェクト
+	 * @returns {JqXHRWrapper} jqXHRWrapperオブジェクト
 	 * @name ajax
 	 * @function
 	 * @memberOf h5
 	 */
-	var ajax = function(var_args) {
-		var opt = isString(arguments[0]) ? arguments[1] : arguments[0];
-		var hasFailCallback = opt && (opt.error || opt.fail || opt.complete || opt.always);
+	function ajax(var_args) {
+		// $.ajax(settings)での呼び出しに統一する。
+		var settings = {};
+		if (isString(arguments[0])) {
+			// ajax(url,[settings]) での呼び出しなら、settings.urlを追加する。
+			$.extend(settings, arguments[1]);
+			// 第1引数のurlがsettings.urlより優先される($.ajaxと同じ)
+			settings.url = arguments[0];
+		} else {
+			// 第一引数がurlでないならsettingsにsettingsをクローン
+			$.extend(settings, arguments[0]);
+		}
+		// settings.ajaxとマージ
+		$.extend(settings, h5.settings.ajax);
+
+		// リトライについてのパラメータ取得
+		var retryCount = settings.retryCount || 0;
+		var retryInterval = settings.retryInterval;
+		var retryFilter = settings.retryFilter;
+
+		var jqXHR = _ajax(settings);
+		$.extend(JqXHRWrapper.prototype, jqXHR);
+		var jqXHRWrapper = new JqXHRWrapper();
+
+		// リトライ(POST指定ならリトライしない)
+		// jQuery1.9からtypeよりmethodオプションを優先。http://bugs.jquery.com/ticket/12004
+		var type = $().jquery.match(/\d*\.\d*/)[0] <= 1.8 ? settings.type : settings.method
+				|| settings.type;
+		if (retryCount && (!type || type.toUpperCase() !== 'POST')) {
+			// リトライ指定がある場合、コールバック登録関数をフックして
+			// 引数をストックしておく
+			// リトライの途中で成功した場合はその時のjqXHRに登録する。
+			// 最後まで成功しなかった場合はリトライのjqXHRにまとめて登録する
+			var stockRegistCallbacks = [];
+			var registCallbackChain = ['done', 'fail', 'pipe', 'always', 'then', 'success',
+					'error', 'complete'];
+			for ( var i = 0, l = registCallbackChain.length; i < l; i++) {
+				var method = registCallbackChain[i];
+				jqXHRWrapper[method] = function(handler) {
+					stockRegistCallbacks.push({
+						method: method,
+						args: arguments
+					});
+				};
+			}
+			// settingsに指定されたコールバックもストックする
+			// success -> done, error -> fail, complete -> always に登録する
+			// (success,error,completeメソッドはjQuery1.8で非推奨になったため)
+			var propCallbacks = ['success', 'error', 'complete'];
+			var propToMethod = {
+				success: 'done',
+				error: 'fail',
+				complete: 'always'
+			};
+			for ( var i = 0, l = propCallbacks.length; i < l; i++) {
+				var prop = propCallbacks[i];
+				if (settings[prop]) {
+					stockRegistCallbacks.shift({
+						method: propToMethod[prop],
+						args: settings[prop]
+					});
+					settings[prop] = undefined;
+				}
+			}
+
+			/**
+			 * ストックしたコールバック登録を引数に指定されたjqXHRに対して行う関数<br>
+			 * jqXHRWrapperから登録されたコールバックはストックされている。
+			 * ストックされたコールバックを現在見ているjqXHRオブジェクトに登録することでコールバックが実行される。
+			 *
+			 * @private
+			 * @param {jqXHR} _jqXHR
+			 */
+			function registCallback(_jqXHR) {
+				// ストックしたコールバックを登録
+				for ( var i = 0, l = stockRegistCallbacks.length; i < l; i++) {
+					_jqXHR[stockRegistCallbacks[i].method].call(_jqXHR,
+							stockRegistCallbacks[i].args);
+				}
+			}
+
+			/**
+			 * リトライ時のdoneハンドラ。 成功時はリトライせずに登録されたdoneハンドラを呼び出す。
+			 * 現在のjqXHRに対してjqXHRWrapperから登録されたストック済みの関数を
+			 */
+			function retryDone() {
+				// ストックしたコールバックを今回のjqXHRに登録
+				registCallback(_jqXHR);
+			}
+
+			/**
+			 * リトライ時のfailハンドラ。 ステータスコードを見て、リトライするかどうかを決める。
+			 * リトライしないなら、registCallbackを呼んで、現在のjqXHRへコールバックを登録する。
+			 */
+			function retryFail(_jqXHR, _textStatus, _errorThrown) {
+				// settings.timeoutに指定した時間が経過するとjQueryが通信をabortしてstatusに0を入れてfailを呼ぶ
+				// IEでコネクションが繋がらない時のコードが12029
+				// 上記のステータスコードならリトライする
+				var status = _jqXHR.status;
+				if (status === 0 || status === 12029) {
+					retryCount--;
+					// リトライする前にretryFilterの呼び出し
+					retryFilter.call(null, arguments);
+
+					// retryInterval待ってリトライ
+					setTimeout(function() {
+						retry(settings);
+					}, retryInterval);
+				} else {
+					// エラーコードが0でも12029でもないならリトライしない
+					registCallback(_jqXHR);
+				}
+			}
+
+			/**
+			 * リトライする関数 リトライする度にajaxを呼ぶのでjqXHRオブジェクトが生成される
+			 * リトライ回数が残っていればjqXHRにretryDone,retryFailを登録。 残っていないならjqXHRにストックしてあるコールバックを登録。
+			 */
+			function retry(_settings) {
+				var _jqXHR = _ajax(_settings);
+				if (retryCount === 0) {
+					// これが最後のリトライなので、
+					// ストックしたコールバックを今回のjqXHRに登録
+					registCallback(_jqXHR);
+					return;
+				}
+				retryCount--;
+				_jqXHR.done(var_args).done(retryDone).fail(retryFail);
+			}
+			jqXHR.done(retryDone).fail(retryFail);
+		}
+		// リトライ指定がない場合
+		return jqXHRWrapper;
+	}
+
+	/**
+	 * HTTP通信を行います。<br />
+	 * 基本的に使い方は、<a href="http://api.jquery.com/jQuery.ajax/">jQuery.ajax()</a>と同じです。<br />
+	 * jQuery.ajax()と異なる点は共通のエラーハンドラが定義できることです。<br/>
+	 * h5.settings.commonFailHandlerに関数を設定し、h5.ajax()に引数として渡すオプションにerror/completeコールバックが設定されていない、<br />
+	 * もしくは戻り値のPromiseオブジェクトに対するfail/alwaysコールバックが設定されていない場合にエラーが発生すると <br />
+	 * h5.settings.commonFailHandlerに設定した関数が呼ばれます。
+	 *
+	 * @param {Object} settings jQuery.ajaxに渡すオブジェクト
+	 * @returns {jqXHR} jqXHRオブジェクト
+	 * @name ajax
+	 * @function
+	 * @memberOf h5
+	 */
+	function _ajax(settings) {
+		var hasFailCallback = settings.hasFailCallback || !!(settings.error || settings.complete);
+		// settings.hasFailCallbackに覚えさせておく。retry時はsettings.hasFailCallbackを参照する。
+		settings.hasFailCallback = hasFailCallback;
+
 		var jqXHR = $.ajax.apply($, arguments);
 
 		if (!jqXHR.progress) {
@@ -119,8 +283,7 @@
 			};
 		}
 		return jqXHR;
-	};
-
+	}
 
 	// =============================
 	// Expose to window

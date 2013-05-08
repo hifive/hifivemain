@@ -207,6 +207,23 @@
 			retryInterval: 500
 		},
 
+		/**
+		 * h5.ajaxの設定<br>
+		 * このプロパティはオブジェクトで、<code>h5.settings.ajax.retryCount = 3;</code>のようにして設定します。<br>
+		 * <dl>
+		 * <dt>retryCount</dt>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライする回数（デフォルト：0）</dd>
+		 * <dt>retryInterval</dt>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。（デフォルト：500）</dd>
+		 * <dt>retryFilter</dt>
+		 * <dd>リトライ時に実行する関数を登録できます。リトライする毎(リトライする直前)に呼ばれます。</dd>
+		 * <li>
+		 * </dl>
+		 *
+		 * @since 1.1.5
+		 * @memberOf h5.settings
+		 * @type Object
+		 */
 		ajax: {
 			retryCount: 0,
 			retryInterval: 500,
