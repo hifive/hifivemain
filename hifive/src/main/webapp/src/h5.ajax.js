@@ -114,7 +114,23 @@
 		var type = $().jquery.match(/\d*\.\d*/)[0] <= 1.8 ? settings.type : settings.method
 				|| settings.type;
 		if (retryCount && (!type || type.toUpperCase() !== 'POST')) {
-			// リトライ指定がある場合、コールバック登録関数をフックして
+			// リトライ指定があって同期の場合は単純にその回数文だけ繰り返す。
+			if (settings.async === false) {
+				// リトライ指定回数回すか、途中で成功(status===200)になったらその時のjqXHRをラップしたjqXHRWrapperを返す
+				return (function syncRetry() {
+					if (jqXHR.status === 200 || retryCount === 0) {
+						return jqXHRWrapper;
+					} else {
+						retryCount--;
+						jqXHR = _ajax(settings);
+						$.extend(JqXHRWrapper.prototype, jqXHR);
+						jqXHRWrapper = new JqXHRWrapper();
+						return syncRetry();
+					}
+				})();
+			}
+
+			// 非同期の場合、コールバック登録関数をフックして
 			// 引数をストックしておく
 			// リトライの途中で成功した場合はその時のjqXHRに登録する。
 			// 最後まで成功しなかった場合は最後のリトライ時のjqXHRにまとめて登録する
@@ -123,12 +139,15 @@
 					'error', 'complete'];
 			for ( var i = 0, l = registCallbackChain.length; i < l; i++) {
 				var method = registCallbackChain[i];
-				jqXHRWrapper[method] = function(handler) {
-					stockRegistCallbacks.push({
-						method: method,
-						args: arguments
-					});
-				};
+				jqXHRWrapper[method] = (function(_method) {
+					return function() {
+						stockRegistCallbacks.push({
+							method: _method,
+							args: arguments
+						});
+						return jqXHRWrapper;
+					};
+				})(method);
 			}
 			// settingsに指定されたコールバックもストックする
 			// success -> done, error -> fail, complete -> always に登録する
@@ -170,7 +189,7 @@
 			 * リトライ時のdoneハンドラ。 成功時はリトライせずに登録されたdoneハンドラを呼び出す。
 			 * 現在のjqXHRに対してjqXHRWrapperから登録されたストック済みの関数を
 			 */
-			function retryDone() {
+			function retryDone(_data, _textStatus, _jqXHR) {
 				// ストックしたコールバックを今回のjqXHRに登録
 				registCallback(_jqXHR);
 			}
