@@ -117,7 +117,7 @@
 			// リトライ指定がある場合、コールバック登録関数をフックして
 			// 引数をストックしておく
 			// リトライの途中で成功した場合はその時のjqXHRに登録する。
-			// 最後まで成功しなかった場合はリトライのjqXHRにまとめて登録する
+			// 最後まで成功しなかった場合は最後のリトライ時のjqXHRにまとめて登録する
 			var stockRegistCallbacks = [];
 			var registCallbackChain = ['done', 'fail', 'pipe', 'always', 'then', 'success',
 					'error', 'complete'];
@@ -180,8 +180,8 @@
 			 * リトライしないなら、registCallbackを呼んで、現在のjqXHRへコールバックを登録する。
 			 */
 			function retryFail(_jqXHR, _textStatus, _errorThrown) {
-				// settings.timeoutに指定した時間が経過するとjQueryが通信をabortしてstatusに0を入れてfailを呼ぶ
-				// IEでコネクションが繋がらない時のコードが12029
+				// settings.timeoutに指定した時間が経過してエラーになった場合はステータスコードが0
+				// IEでコネクションが繋がらない時のステータスコードが12029
 				// 上記のステータスコードならリトライする
 				var status = _jqXHR.status;
 				if (status === 0 || status === 12029) {
@@ -216,7 +216,10 @@
 			}
 			jqXHR.done(retryDone).fail(retryFail);
 		}
-		// リトライ指定がない場合
+
+		// 戻り値はjqXHRをラップしたjqXHRWrapperオブジェクト。
+		// リトライの設定がない場合は、fail,doneなどは元のjqXHRのものが呼ばれる。(オリジナルのjqXHRを返しているのとほぼ同じ)
+		// リトライの設定がある場合は、fail,doneなどがフックされている。
 		return jqXHRWrapper;
 	}
 
