@@ -2942,6 +2942,18 @@
 		logic.deferred = getDeferred;
 		logic.log = h5.log.createLogger(logicName);
 		logic.__logicContext = {};
+		logic.own = function(func) {
+			return function(/* var_args */) {
+				func.apply(logic, arguments);
+			};
+		};
+		logic.ownWithOrg = function(func) {
+			return function(/* var_args */) {
+				var args = h5.u.obj.argsToArray(arguments);
+				args.unshift(this);
+				func.apply(logic, args);
+			};
+		};
 
 		for ( var prop in logic) {
 			if (logic.hasOwnProperty(prop) && endsWith(prop, SUFFIX_LOGIC)) {
