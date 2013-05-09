@@ -48,11 +48,7 @@ Logic.prototype.deferred = getDeferred;
  * @return {Function} コンテキスト(this)をロジックに変更した関数
  * @memberOf Logic
  */
-Logic.prototype.own = function(func) {
-	return function(/* var_args */) {
-		func.apply(logic, arguments);
-	};
-};
+Logic.prototype.own = function(func) {};
 
 /**
  * 指定された関数に対して、コンテキスト(this)をロジックに変更し、元々のthisを第1引数に加えて実行する関数を返します。
@@ -61,10 +57,4 @@ Logic.prototype.own = function(func) {
  * @return {Function} コンテキスト(this)をロジックに変更し、元々のthisを第1引数に加えた関数
  * @memberOf Logic
  */
-Logic.prototype.ownWithOrg = function(func) {
-	return function(/* var_args */) {
-		var args = h5.u.obj.argsToArray(arguments);
-		args.unshift(this);
-		func.apply(logic, args);
-	};
-};
+Logic.prototype.ownWithOrg = function(func) {};
