@@ -74,8 +74,30 @@
 	}
 
 
-	function defaultAjaxRetryFilter() {
-	//TODO #199
+	/**
+	 * h5.ajax()でリトライする時のデフォルトのフィルタ<br>
+	 * <p>
+	 * falseを返した場合はリトライしない。リトライする場合はリトライするajaxSettingsオブジェクト($.ajax()に渡すオブジェクト)を返す。
+	 * type===GETかつステータスコードが0(タイムアウト)または12029(IEでコネクションが繋がらない)場合にリトライする。
+	 * </p>
+	 * <p>
+	 * 引数は$.ajaxのfailコールバックに渡されるものが入る。 thisはajaxを呼んだ時の設定パラメータを含むajaxSettingsオブジェクト
+	 * </p>
+	 *
+	 * @param {jqXHR} jqXHR jqXHRオブジェクト
+	 * @param {String} textStatus
+	 * @param {String} thrownError
+	 * @returns {false|Object} リトライしない場合はfalseを返す。する場合はthis(ajaxSettingsオブジェクト)を返す
+	 */
+	function defaultAjaxRetryFilter(jqXHR, textStatus, thrownError) {
+		// type===GETかつステータスコードが0(タイムアウト)または12029(IEでコネクションが繋がらない)場合にリトライする
+		var status = jqXHR.status;
+		// jQuery1.9以降、GET,POSTの設定はtypeではなくmethodで指定することが推奨されているが、
+		// thisにはtypeにtoUpperCase()されたものが格納されている
+		var type = this.type;
+		if (type === 'POST' || !(status === 0 || status === 12029)) {
+			return false;
+		}
 	}
 
 	// =========================================================================
@@ -214,7 +236,9 @@
 		 * <dt>retryCount</dt>
 		 * <dd>一時的な通信エラーが発生した場合に通信をリトライする回数（デフォルト：0）</dd>
 		 * <dt>retryInterval</dt>
-		 * <dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。（デフォルト：500）</dd>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。<br>
+		 * 通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。（デフォルト：500）<br>
+		 * 同期(async:false)でh5.ajaxを呼んだ場合はIntervalは無視され、即座にリトライします。 </dd>
 		 * <dt>retryFilter</dt>
 		 * <dd>リトライ時に実行する関数を登録できます。リトライする毎(リトライする直前)に呼ばれます。</dd>
 		 * <li>

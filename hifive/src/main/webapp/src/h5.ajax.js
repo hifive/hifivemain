@@ -50,9 +50,76 @@
 	// =============================
 	// Variables
 	// =============================
+	/**
+	 * jqXHRをkeyにして、commonFailHandlerを登録する関数を覚えておく配列
+	 */
+	var jqXHRCommonFailHandlerMap = [];
+
+	/**
+	 * フックするjqXHRのコールバック登録関数
+	 */
+	var hookMethods = ['done', 'fail', 'pipe', 'always', 'then', 'success', 'error', 'complete'];
+
 	// =============================
 	// Functions
 	// =============================
+	/**
+	 * コールバック登録関数をフックする
+	 */
+	function hookCallbackRegistMethod(jqXHRWrapper, stockRegistCallbacks) {
+		// 引数をストックしておく
+		// リトライの途中で成功した場合はその時のjqXHRに登録する。
+		// 最後まで成功しなかった場合は最後のリトライ時のjqXHRにまとめて登録する
+		for ( var i = 0, l = hookMethods.length; i < l; i++) {
+			var method = hookMethods[i];
+			jqXHRWrapper[method] = (function(_method) {
+				return function() {
+					stockRegistCallbacks.push({
+						method: _method,
+						args: arguments
+					});
+					return jqXHRWrapper;
+				};
+			})(method);
+		}
+	}
+	/**
+	 * フックしたコールバック登録関数を削除
+	 */
+	function removeHookedMethod(jqXHRWrapper) {
+		for ( var i = 0, l = hookMethods.length; i < l; i++) {
+			var method = hookMethods[i];
+			delete jqXHRWrapper[method];
+		}
+	}
+
+	/**
+	 * ストックしたコールバック登録を引数に指定されたjqXHRに対して行う関数<br>
+	 * jqXHRWrapperから登録されたコールバックはストックされている。
+	 * 既にreject,resolveされたjqXHRにストックされたコールバックを登録すると、即座にコールバックが実行される。
+	 *
+	 * @private
+	 * @param {jqXHR} _jqXHR
+	 * @param {Array} stockRegistCallbacks 登録するコールバックオブジェクトの配列
+	 */
+	function registCallback(_jqXHR, stockRegistCallbacks) {
+		// ストックしたコールバックを登録
+		for ( var i = 0, l = stockRegistCallbacks.length; i < l; i++) {
+			_jqXHR[stockRegistCallbacks[i].method].apply(_jqXHR, stockRegistCallbacks[i].args);
+		}
+		// commonFailHandlerの登録があれば登録
+		for ( var i = 0, l = jqXHRCommonFailHandlerMap.length; i < l; i++) {
+			if (jqXHRCommonFailHandlerMap[i].jqXHR === _jqXHR) {
+				jqXHRCommonFailHandlerMap[i].registCommonFailHandler();
+				break;
+			}
+		}
+		if (i !== l) {
+			// ヒットしたらjqXHRCommonFailHandlerMapから現在の_jqXHRの箇所を削除
+			jqXHRCommonFailHandlerMap.splice(i, 1);
+		}
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -105,136 +172,82 @@
 		var retryInterval = settings.retryInterval;
 		var retryFilter = settings.retryFilter;
 
+		// ajaxの呼び出し。jqXHRを取得してjqXHRWrapperを作成。
 		var jqXHR = _ajax(settings);
-		$.extend(JqXHRWrapper.prototype, jqXHR);
+		JqXHRWrapper.prototype = jqXHR;
 		var jqXHRWrapper = new JqXHRWrapper();
 
-		// リトライ(POST指定ならリトライしない)
-		// jQuery1.9からtypeよりmethodオプションを優先。http://bugs.jquery.com/ticket/12004
-		var type = $().jquery.match(/\d*\.\d*/)[0] <= 1.8 ? settings.type || $.ajaxSettings.type
-				: settings.method || settings.type || $.ajaxSettings.method || $.ajaxSettings.type;
-		if (retryCount && (!type || type.toUpperCase() !== 'POST')) {
-			// リトライ指定があって同期の場合は単純にその回数文だけ繰り返す。
-			if (settings.async === false || !settings.async && $.ajaxSettings.async === false) {
-				// リトライ指定回数回すか、途中で成功(status===200)になったらその時のjqXHRをラップしたjqXHRWrapperを返す
-				return (function syncRetry() {
-					if (jqXHR.status === 200 || retryCount === 0) {
-						return jqXHRWrapper;
-					} else {
-						retryCount--;
-						jqXHR = _ajax(settings);
-						$.extend(JqXHRWrapper.prototype, jqXHR);
-						jqXHRWrapper = new JqXHRWrapper();
-						return syncRetry();
-					}
-				})();
-			}
+		// コールバック登録関数をフックする。
+		// 登録された関数はストックする
+		var stockRegistCallbacks = [];
+		hookCallbackRegistMethod(jqXHRWrapper, stockRegistCallbacks);
 
-			// 非同期の場合、コールバック登録関数をフックして
-			// 引数をストックしておく
-			// リトライの途中で成功した場合はその時のjqXHRに登録する。
-			// 最後まで成功しなかった場合は最後のリトライ時のjqXHRにまとめて登録する
-			var stockRegistCallbacks = [];
-			var registCallbackChain = ['done', 'fail', 'pipe', 'always', 'then', 'success',
-					'error', 'complete'];
-			for ( var i = 0, l = registCallbackChain.length; i < l; i++) {
-				var method = registCallbackChain[i];
-				jqXHRWrapper[method] = (function(_method) {
-					return function() {
-						stockRegistCallbacks.push({
-							method: _method,
-							args: arguments
-						});
-						return jqXHRWrapper;
-					};
-				})(method);
+		// settingsに指定されたコールバックもストックする
+		// success -> done, error -> fail, complete -> always に登録する
+		// (success,error,completeメソッドはjQuery1.8で非推奨になったため)
+		var propCallbacks = ['success', 'error', 'complete'];
+		var propToMethod = {
+			success: 'done',
+			error: 'fail',
+			complete: 'always'
+		};
+		for ( var i = 0, l = propCallbacks.length; i < l; i++) {
+			var prop = propCallbacks[i];
+			if (settings[prop]) {
+				// プロパティで指定されたコールバックはfailやdoneで指定したコールバックより先に実行されるのでshiftでストック
+				stockRegistCallbacks.shift({
+					method: propToMethod[prop],
+					args: settings[prop]
+				});
+				settings[prop] = undefined;
 			}
-			// settingsに指定されたコールバックもストックする
-			// success -> done, error -> fail, complete -> always に登録する
-			// (success,error,completeメソッドはjQuery1.8で非推奨になったため)
-			var propCallbacks = ['success', 'error', 'complete'];
-			var propToMethod = {
-				success: 'done',
-				error: 'fail',
-				complete: 'always'
-			};
-			for ( var i = 0, l = propCallbacks.length; i < l; i++) {
-				var prop = propCallbacks[i];
-				if (settings[prop]) {
-					stockRegistCallbacks.shift({
-						method: propToMethod[prop],
-						args: settings[prop]
-					});
-					settings[prop] = undefined;
-				}
-			}
-
-			/**
-			 * ストックしたコールバック登録を引数に指定されたjqXHRに対して行う関数<br>
-			 * jqXHRWrapperから登録されたコールバックはストックされている。
-			 * ストックされたコールバックを現在見ているjqXHRオブジェクトに登録することでコールバックが実行される。
-			 *
-			 * @private
-			 * @param {jqXHR} _jqXHR
-			 */
-			function registCallback(_jqXHR) {
-				// ストックしたコールバックを登録
-				for ( var i = 0, l = stockRegistCallbacks.length; i < l; i++) {
-					_jqXHR[stockRegistCallbacks[i].method].call(_jqXHR,
-							stockRegistCallbacks[i].args);
-				}
-			}
-
-			/**
-			 * リトライ時のdoneハンドラ。 成功時はリトライせずに登録されたdoneハンドラを呼び出す。
-			 * 現在のjqXHRに対してjqXHRWrapperから登録されたストック済みの関数を
-			 */
-			function retryDone(_data, _textStatus, _jqXHR) {
-				// ストックしたコールバックを今回のjqXHRに登録
-				registCallback(_jqXHR);
-			}
-
-			/**
-			 * リトライ時のfailハンドラ。 ステータスコードを見て、リトライするかどうかを決める。
-			 * リトライしないなら、registCallbackを呼んで、現在のjqXHRへコールバックを登録する。
-			 */
-			function retryFail(_jqXHR, _textStatus, _errorThrown) {
-				// settings.timeoutに指定した時間が経過してエラーになった場合はステータスコードが0
-				// IEでコネクションが繋がらない時のステータスコードが12029
-				// 上記のステータスコードならリトライする
-				var status = _jqXHR.status;
-				if (status === 0 || status === 12029) {
-					retryCount--;
-					// リトライする前にretryFilterの呼び出し
-					retryFilter.call(null, arguments);
-
-					// retryInterval待ってリトライ
-					setTimeout(function() {
-						retry(settings);
-					}, retryInterval);
-				} else {
-					// エラーコードが0でも12029でもないならリトライしない
-					registCallback(_jqXHR);
-				}
-			}
-
-			/**
-			 * リトライする関数 リトライする度にajaxを呼ぶのでjqXHRオブジェクトが生成される
-			 * リトライ回数が残っていればjqXHRにretryDone,retryFailを登録。 残っていないならjqXHRにストックしてあるコールバックを登録。
-			 */
-			function retry(_settings) {
-				var _jqXHR = _ajax(_settings);
-				if (retryCount === 0) {
-					// これが最後のリトライなので、
-					// ストックしたコールバックを今回のjqXHRに登録
-					registCallback(_jqXHR);
-					return;
-				}
-				retryCount--;
-				_jqXHR.done(var_args).done(retryDone).fail(retryFail);
-			}
-			jqXHR.done(retryDone).fail(retryFail);
 		}
+
+		/**
+		 * リトライ時のdoneハンドラ。 成功時はリトライせずに登録されたdoneハンドラを呼び出す。
+		 * jqXHRWrapperのメソッドから登録されたストック済みの関数を登録を現在のjqXHRに登録する
+		 */
+		function retryDone(_data, _textStatus, _jqXHR) {
+			// ストックしたコールバックを今回のjqXHRに登録
+			registCallback(_jqXHR, stockRegistCallbacks);
+			// フックした関数を元に戻す
+			removeHookedMethod(jqXHRWrapper);
+		}
+
+		/**
+		 * リトライ時のfailハンドラ。 ステータスコードを見て、リトライするかどうかを決める。
+		 * リトライしないなら、registCallbackを呼んで、現在のjqXHRへコールバックを登録する。
+		 */
+		function retryFail(_jqXHR, _textStatus, _errorThrown) {
+			if (retryCount === 0 || retryFilter.apply(this, arguments) === false) {
+				// retryFilterがfalseを返した、
+				// またはこれが最後のリトライ、
+				// またはリトライ指定のない場合、
+				// ストックしたコールバックを今回のjqXHRに登録して終了
+				registCallback(_jqXHR, stockRegistCallbacks);
+				// フックした関数を元に戻す
+				removeHookedMethod(jqXHRWrapper);
+				return;
+			}
+			retryCount--;
+			if (this.async) {
+				// 非同期ならretryIntervalミリ秒待機してリトライ
+				var that = this;
+				setTimeout(function() {
+					_ajax(that).done(retryDone).fail(retryFail);
+				}, retryInterval);
+			} else {
+				// 同期なら即リトライする
+				// (同期で呼ばれたらリトライ指定があっても同期になるようにするためretryIntervalは無視する)
+				_ajax(this).done(retryDone).fail(retryFail);
+			}
+		}
+		// retryFailの登録はcommonFailHandlerを実行するかどうかに関係ないので、
+		// 判別するためにフラグを立てておく
+		retryFail.isRetryFailCallback = true;
+
+		// コールバックを登録
+		jqXHR.done(retryDone).fail(retryFail);
 
 		// 戻り値はjqXHRをラップしたjqXHRWrapperオブジェクト。
 		// リトライの設定がない場合は、fail,doneなどは元のjqXHRのものが呼ばれる。(オリジナルのjqXHRを返しているのとほぼ同じ)
@@ -272,14 +285,25 @@
 		var callFail = false;
 		var commonFailHandler = h5.settings.commonFailHandler;
 		if (!hasFailCallback && commonFailHandler) {
-			jqXHR.fail(function(/* var_args */) {
-				if (!callFail) {
-					commonFailHandler.apply(null, arguments);
+			// リトライ機能のために、failハンドラはreject,resolveされてからまとめて登録される。
+			// commonFailHandlerを呼ぶためのfailハンドラの登録は、その後でなければ、commonFailHandlerを呼ぶかどうかの判定ができない。
+			// そのため、まとめて登録の時が終わってから一番最後に登録するために、覚えておく。
+			var originalFail = jqXHR.fail;
+			jqXHRCommonFailHandlerMap.push({
+				jqXHR: jqXHR,
+				registCommonFailHandler: function() {
+					originalFail(function(/* var_args */) {
+						if (!callFail) {
+							commonFailHandler.apply(null, arguments);
+						}
+					});
 				}
 			});
-			var originalFail = jqXHR.fail;
 			jqXHR.fail = function(/* var_args */) {
-				callFail = true;
+				// リトライ用のfailコールバックが登録されるときは、callFailをtrueにしない
+				if (arguments[0] && !arguments[0].isRetryFailCallback) {
+					callFail = true;
+				}
 				return originalFail.apply(jqXHR, arguments);
 			};
 			jqXHR.error = jqXHR.fail;

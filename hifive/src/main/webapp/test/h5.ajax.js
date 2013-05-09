@@ -241,4 +241,91 @@ $(function() {
 			}, 0);
 		});
 	});
+
+
+	//=============================
+	// Definition
+	//=============================
+
+	module("h5.ajax リトライ指定のある場合(非同期)", {
+		setup: function() {
+			// リトライ回数を2回、インターバルを0
+			var that = this;
+			h5.settings.ajax = {
+				retryCount: 2,
+				retryInterval: 0,
+				retryFilter: that.originalSettingsAjax.retryFilter
+			};
+		},
+		teardown: function() {
+			h5.settings.ajax = this.originalSettingsAjax;
+			$.ajax = this.originalAjax;
+		},
+		originalSettingsAjax: $.extend({}, h5.settings.ajax),
+		originalAjax: $.ajax
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	asyncTest('ajaxのタイムアウト時にリトライが実行される', 4, function() {
+		var that = this;
+		// $.ajaxを、タイムアウト時の挙動をする関数に置き換える
+		var callCount = 1;
+		var ajaxCallCount = 0;
+		$.ajax = function() {
+			ajaxCallCount++;
+			strictEqual(callCount++, ajaxCallCount, '$.ajaxの呼び出し ' + ajaxCallCount + '回目');
+			// jqXHRを取得
+			var jqXHR = that.originalAjax('', {
+				async: false
+			});
+			// timeout時のjqXHRを簡単に模倣したものを作成
+			jqXHR.status = 0;
+			jqXHR.statusText = 'timeout';
+			jqXHR.readyState = 0;
+			var dfd = $.Deferred();
+			var promise = dfd.promise(jqXHR);
+			setTimeout(function() {
+				dfd.reject(promise);
+			}, 0);
+			return promise;
+		};
+
+		h5.ajax('').done(function() {
+			ok(false, 'done');
+			start();
+		}).fail(function() {
+			strictEqual(callCount++, 4, 'fail');
+			start();
+		});
+	});
+
+	asyncTest('リトライ前にリトライフィルタが実行される', function() {
+		var callCount = 1;
+		var callRetryFilterCount = 1;
+		h5.settings.ajax.retryFilter = function() {
+			strictEqual(callCount++, callRetryFilterCount++ * 2, 'retryFilter');
+		}
+		// $.ajaxを、タイムアウト時の挙動をする関数に置き換える
+		var callCount = 1;
+
+		var that = this;
+		var ajaxCallCount = 1;
+		$.ajax = function(var_args) {
+			strictEqual(callCount++, ajaxCallCount++ * 2 - 1, '$.ajaxの呼び出し ' + (ajaxCallCount - 1)
+					+ '回目');
+			return that.originalAjax.apply($, arguments);
+		};
+
+		h5.ajax('dummyURL').done(function() {
+			ok(false, 'done');
+			start();
+		}).fail(function() {
+			strictEqual(callCount++, 6, 'fail');
+			start();
+		});
+	});
+
 });
