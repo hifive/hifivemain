@@ -328,7 +328,7 @@
 	});
 
 	// h5preinitイベントをトリガ.
-	$(window.document).trigger('h5preinit');
+	$(document).trigger('h5preinit');
 
 	if (h5.settings.aspects) {
 		compileAspects(h5.settings.aspects);
