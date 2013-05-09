@@ -1756,7 +1756,7 @@
 	 *
 	 * @private
 	 */
-	function commonOwn(func) {
+	function own(func) {
 		var that = this;
 		return function(/* var_args */) {
 			func.apply(that, arguments);
@@ -1768,7 +1768,7 @@
 	 *
 	 * @private
 	 */
-	function commonOwnWithOrg(func) {
+	function ownWithOrg(func) {
 		var that = this;
 		return function(/* var_args */) {
 			var args = h5.u.obj.argsToArray(arguments);
@@ -2250,7 +2250,7 @@
 		 * @return {Function} コンテキスト(this)をコントローラに変更した関数
 		 * @memberOf Controller
 		 */
-		own: commonOwn,
+		own: own,
 
 		/**
 		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えて実行する関数を返します。
@@ -2259,7 +2259,7 @@
 		 * @return {Function} コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えた関数
 		 * @memberOf Controller
 		 */
-		ownWithOrg: commonOwnWithOrg,
+		ownWithOrg: ownWithOrg,
 
 		/**
 		 * コントローラを要素へ再度バインドします。子コントローラでは使用できません。
@@ -2955,8 +2955,8 @@
 		logic.deferred = getDeferred;
 		logic.log = h5.log.createLogger(logicName);
 		logic.__logicContext = {};
-		logic.own = commonOwn;
-		logic.ownWithOrg = commonOwnWithOrg;
+		logic.own = own;
+		logic.ownWithOrg = ownWithOrg;
 
 		for ( var prop in logic) {
 			if (logic.hasOwnProperty(prop) && endsWith(prop, SUFFIX_LOGIC)) {
