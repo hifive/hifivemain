@@ -111,11 +111,11 @@
 
 		// リトライ(POST指定ならリトライしない)
 		// jQuery1.9からtypeよりmethodオプションを優先。http://bugs.jquery.com/ticket/12004
-		var type = $().jquery.match(/\d*\.\d*/)[0] <= 1.8 ? settings.type : settings.method
-				|| settings.type;
+		var type = $().jquery.match(/\d*\.\d*/)[0] <= 1.8 ? settings.type || $.ajaxSettings.type
+				: settings.method || settings.type || $.ajaxSettings.method || $.ajaxSettings.type;
 		if (retryCount && (!type || type.toUpperCase() !== 'POST')) {
 			// リトライ指定があって同期の場合は単純にその回数文だけ繰り返す。
-			if (settings.async === false) {
+			if (settings.async === false || $.ajaxSettings.async === false) {
 				// リトライ指定回数回すか、途中で成功(status===200)になったらその時のjqXHRをラップしたjqXHRWrapperを返す
 				return (function syncRetry() {
 					if (jqXHR.status === 200 || retryCount === 0) {
