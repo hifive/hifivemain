@@ -90,7 +90,7 @@
 		for ( var i = 0, l = hookMethods.length; i < l; i++) {
 			var method = hookMethods[i];
 			jqXHRWrapper[method] = (function(_method) {
-				return function(/* var_args */) {
+				return function() {
 					jqXHRWrapper._jqXHR[_method].apply(thisObject, arguments);
 					return jqXHRWrapper;
 				};
@@ -175,7 +175,7 @@
 			if ($.isFunction(jqXHR[prop])) {
 				if ($.inArray(prop, hookMethods) !== -1) {
 					this[prop] = (function(_method) {
-						return function(/* var_args */) {
+						return function() {
 							stockRegistCallbacks.push({
 								method: _method,
 								args: arguments
