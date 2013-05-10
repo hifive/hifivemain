@@ -84,12 +84,17 @@
 		}
 	}
 	/**
-	 * フックしたコールバック登録関数を削除
+	 * フックしたコールバック登録関数を、オリジナルのjqXHRの関数を呼んでjqXHRWrapperを返すようにする
 	 */
-	function removeHookedMethod(jqXHRWrapper) {
+	function restoreHookedMethod(jqXHRWrapper, thisObject) {
 		for ( var i = 0, l = hookMethods.length; i < l; i++) {
 			var method = hookMethods[i];
-			delete jqXHRWrapper[method];
+			jqXHRWrapper[method] = (function(_method) {
+				return function(/* var_args */) {
+					jqXHRWrapper._jqXHR[_method].apply(thisObject, arguments);
+					return jqXHRWrapper;
+				};
+			})(method);
 		}
 	}
 
@@ -115,11 +120,33 @@
 			}
 		}
 		if (i !== l) {
-			// ヒットしたらjqXHRCommonFailHandlerMapから現在の_jqXHRの箇所を削除
+			// commonFailHandlerを登録したらjqXHRCommonFailHandlerMapから現在の_jqXHRの箇所を削除
 			jqXHRCommonFailHandlerMap.splice(i, 1);
 		}
 	}
 
+	/**
+	 * jqXHRWrapper._jqXHRを差し替えて、ラッパーが持つjqXHRのプロパティも差し替える<br>
+	 * 関数(オリジナルを呼ぶ関数と、フックしている関数)はそのまま
+	 *
+	 * @private
+	 * @param {JqXHRWrapper} jqXHRWrapper
+	 * @param {Object} jqXHR
+	 */
+	function replaceJqXHR(jqXHRWrapper, jqXHR) {
+		if (jqXHRWrapper._jqXHR === jqXHR) {
+			return;
+		}
+		this._jqXHR = jqXHR;
+		for ( var prop in jqXHR) {
+			if (!jqXHR.hasOwnProperty(prop)) {
+				continue;
+			}
+			if (!$.isFunction(jqXHR[prop])) {
+				this[prop] = jqXHR[prop];
+			}
+		}
+	}
 	// =========================================================================
 	//
 	// Body
@@ -128,14 +155,47 @@
 	/**
 	 * jqXHRWrapper
 	 * <p>
-	 * jQuery.ajaxが生成するjqXHRをラップするクラス。 h5.ajax()の戻り値で使用します。
+	 * jQuery.ajaxが生成するjqXHRをラップするクラス。 h5.ajax()の戻り値で使用します。<br>
+	 * jqXHRのプロパティをコピーします。関数プロパティはラップします。コールバック登録をする関数は渡された引数をストックする関数に差し替えます。
 	 * </p>
 	 *
 	 * @private
 	 * @class
+	 * @param {Object} jqXHR
+	 * @param {Array} stockRegistCallbacks 登録するコールバックオブジェクトをストックする配列
 	 */
-	function JqXHRWrapper() {
-	// 空コンストラクタ
+	function JqXHRWrapper(jqXHR, stockRegistCallbacks) {
+		// jqXHRの中身をコピー
+		// 関数プロパティならapplyでオリジナルのjqXHRの関数を呼ぶ関数にする
+		var that = this;
+		for ( var prop in jqXHR) {
+			if (!jqXHR.hasOwnProperty(prop)) {
+				continue;
+			}
+			if ($.isFunction(jqXHR[prop])) {
+				if ($.inArray(prop, hookMethods) !== -1) {
+					this[prop] = (function(_method) {
+						return function(/* var_args */) {
+							stockRegistCallbacks.push({
+								method: _method,
+								args: arguments
+							});
+							return that;
+						};
+					})(prop);
+				} else {
+					this[prop] = function(/* var_args */) {
+						return jqXHR.apply(jqXHR, arguments);
+					};
+				}
+			} else {
+				this[prop] = jqXHR[prop];
+			}
+		}
+		/**
+		 * オリジナルのjqXHR
+		 */
+		this._jqXHR = jqXHR;
 	}
 
 	/**
@@ -174,15 +234,14 @@
 
 		// ajaxの呼び出し。jqXHRを取得してjqXHRWrapperを作成。
 		var jqXHR = _ajax(settings);
-		JqXHRWrapper.prototype = jqXHR;
-		var jqXHRWrapper = new JqXHRWrapper();
 
-		// コールバック登録関数をフックする。
-		// 登録された関数はストックする
+		// jqXHRWrapperの作成
+		// コールバック登録関数はフックして、登録されたコールバック関数をストックする。
 		var stockRegistCallbacks = [];
-		hookCallbackRegistMethod(jqXHRWrapper, stockRegistCallbacks);
+		var jqXHRWrapper = new JqXHRWrapper(jqXHR, stockRegistCallbacks);
 
-		// settingsに指定されたコールバックもストックする
+		// settingsに指定されたコールバックはdone,fail,alwaysで登録し、settingsから削除する
+		// (done,fail,alwaysはフックしているのでストックされる)
 		// success -> done, error -> fail, complete -> always に登録する
 		// (success,error,completeメソッドはjQuery1.8で非推奨になったため)
 		var propCallbacks = ['success', 'error', 'complete'];
@@ -208,10 +267,12 @@
 		 * jqXHRWrapperのメソッドから登録されたストック済みの関数を登録を現在のjqXHRに登録する
 		 */
 		function retryDone(_data, _textStatus, _jqXHR) {
+			// jqXHRの差し替え
+			replaceJqXHR(jqXHRWrapper, _jqXHR);
+			// フックした関数を元に戻す
+			restoreHookedMethod(jqXHRWrapper, this);
 			// ストックしたコールバックを今回のjqXHRに登録
 			registCallback(_jqXHR, stockRegistCallbacks);
-			// フックした関数を元に戻す
-			removeHookedMethod(jqXHRWrapper);
 		}
 
 		/**
@@ -219,14 +280,18 @@
 		 * リトライしないなら、registCallbackを呼んで、現在のjqXHRへコールバックを登録する。
 		 */
 		function retryFail(_jqXHR, _textStatus, _errorThrown) {
+			// jqXHRの差し替え
+			replaceJqXHR(jqXHRWrapper, _jqXHR);
 			if (retryCount === 0 || retryFilter.apply(this, arguments) === false) {
 				// retryFilterがfalseを返した、
 				// またはこれが最後のリトライ、
 				// またはリトライ指定のない場合、
 				// ストックしたコールバックを今回のjqXHRに登録して終了
-				registCallback(_jqXHR, stockRegistCallbacks);
+
 				// フックした関数を元に戻す
-				removeHookedMethod(jqXHRWrapper);
+				restoreHookedMethod(jqXHRWrapper, this);
+				// ストックしたコールバックを今回のjqXHRに登録
+				registCallback(_jqXHR, stockRegistCallbacks);
 				return;
 			}
 			retryCount--;
