@@ -212,7 +212,7 @@
 	 * @function
 	 * @memberOf h5
 	 */
-	function ajax(var_args) {
+	function ajax(/* var_args */) {
 		// $.ajax(settings)での呼び出しに統一する。
 		var settings = {};
 		if (isString(arguments[0])) {
