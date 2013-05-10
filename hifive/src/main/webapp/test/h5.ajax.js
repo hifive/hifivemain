@@ -65,7 +65,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('jqXHRにprogressメソッドが追加されているか', function() {
+	test('jqXHRにprogressメソッドが追加されているか', 1, function() {
 
 		// 戻り値をチェックするだけなのでurlは何でもOK。
 		// ただし指定しない場合、現在のページへのリクエストが飛ぶので、
@@ -134,29 +134,32 @@ $(function() {
 	// Body
 	//=============================
 
-	test('commonFailHandlerが設定されている時、jqXHR#then()でprogressCallbackを登録しようとしてもエラーにならないか', function() {
+	test(
+			'commonFailHandlerが設定されている時、jqXHR#then()でprogressCallbackを登録しようとしてもエラーにならないか',
+			1,
+			function() {
 
-		h5.settings.commonFailHandler = function() {
-		// 何もしない
-		};
-		var jqXHR = h5.ajax({
-			url: 'dummyURL'
-		});
+				h5.settings.commonFailHandler = function() {
+				// 何もしない
+				};
+				var jqXHR = h5.ajax({
+					url: 'dummyURL'
+				});
 
-		var error = false;
-		try {
-			jqXHR.then(function() {
-			// doneCallback
-			}, function() {
-			// failCallback
-			}, function() {
-			// progressCallback
+				var error = false;
+				try {
+					jqXHR.then(function() {
+					// doneCallback
+					}, function() {
+					// failCallback
+					}, function() {
+					// progressCallback
+					});
+				} catch (e) {
+					error = true;
+				}
+				ok(!error, 'h5.async.ajax() の戻り値のオブジェクトのthen()でprogressCallbackを登録しようとしてもエラーにならないか');
 			});
-		} catch (e) {
-			error = true;
-		}
-		ok(!error, 'h5.async.ajax() の戻り値のオブジェクトのthen()でprogressCallbackを登録しようとしてもエラーにならないか');
-	});
 
 
 	//=============================
@@ -204,7 +207,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', function() {
+	asyncTest('オプションでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
 			url: 'dummyURL',
@@ -218,7 +221,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('オプションでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', function() {
+	asyncTest('オプションでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
 			url: 'dummyURL',
@@ -232,7 +235,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('メソッドチェーンでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', function() {
+	asyncTest('メソッドチェーンでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
 			url: 'dummyURL',
@@ -245,7 +248,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('メソッドチェーンでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', function() {
+	asyncTest('メソッドチェーンでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
 			url: 'dummyURL',
@@ -258,7 +261,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('メソッドチェーンでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', function() {
+	asyncTest('メソッドチェーンでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
 			url: 'dummyURL',
@@ -271,7 +274,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('メソッドチェーンでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', function() {
+	asyncTest('メソッドチェーンでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
 			url: 'dummyURL',
@@ -289,7 +292,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("h5.ajax リトライ指定のある場合(非同期)", {
+	module('h5.ajax リトライ指定のある場合(非同期)', {
 		setup: function() {
 			// リトライ回数を2回、インターバルを0
 			var that = this;
@@ -549,7 +552,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('failハンドラを登録していない場合、リトライ時にajaxの通信に成功した場合はcommonFailHandlerは動作しない', function() {
+	asyncTest('failハンドラを登録していない場合、リトライ時にajaxの通信に成功した場合はcommonFailHandlerは動作しない', 2, function() {
 		var ajaxCallCount = 0;
 		h5.settings.ajax.retryFilter = function() {};
 
@@ -574,7 +577,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('failハンドラを登録していない場合、リトライしてもajaxの通信に失敗した場合はcommonFailHandlerは動作する', function() {
+	asyncTest('failハンドラを登録していない場合、リトライしてもajaxの通信に失敗した場合はcommonFailHandlerは動作する', 1, function() {
 		h5.settings.ajax.retryFilter = function() {};
 		h5.ajax('dummyURL', {
 			timeout: 1
@@ -588,7 +591,7 @@ $(function() {
 		}, 50);
 	});
 
-	asyncTest('引数で指定したコールバックが動作すること 失敗時', function() {
+	asyncTest('引数で指定したコールバックが動作すること 失敗時', 1, function() {
 		h5.settings.ajax.retryFilter = function() {};
 		var result = '';
 		var expect = 'error, complete, ';
@@ -609,7 +612,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('引数で指定したコールバックが動作すること 成功時', function() {
+	asyncTest('引数で指定したコールバックが動作すること 成功時', 1, function() {
 		h5.settings.ajax.retryFilter = function() {};
 		var result = '';
 		var expect = 'success, complete, ';
@@ -633,7 +636,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("h5.ajax リトライ指定のある場合(同期)", {
+	module('h5.ajax リトライ指定のある場合(同期)', {
 		setup: function() {
 			// リトライ回数を2回、インターバルを0
 			var that = this;
@@ -724,7 +727,7 @@ $(function() {
 		strictEqual(jqXHR.status, 200, '同期で結果が返ってきていること');
 	});
 
-	test('リトライして失敗した場合commonFailHandlerが実行されること', function() {
+	test('リトライして失敗した場合commonFailHandlerが実行されること', 1, function() {
 		h5.settings.ajax.retryFilter = function() {};
 		h5.ajax('dummyURL', {
 			timeout: 1,
@@ -733,8 +736,9 @@ $(function() {
 		ok(this.cfhFlag);
 	});
 
-	test('リトライ途中で成功した場合commonFailHandlerは実行されないこと', function() {
-		h5.settings.ajax.retryFilter = function() {};		// $.ajaxをラップ
+	test('リトライ途中で成功した場合commonFailHandlerは実行されないこと', 1, function() {
+		h5.settings.ajax.retryFilter = function() {};
+		// $.ajaxをラップ
 		var that = this;
 		var ajaxCallCount = 0;
 		$.ajax = function(var_args) {
@@ -756,13 +760,22 @@ $(function() {
 		ok(!this.cfhFlag);
 	});
 
-	test('error,completeでコールバックを渡していた場合は失敗してもcommonFailHandlerは実行されないこと', function() {
+	test('error,completeでコールバックを渡していた場合は失敗してもcommonFailHandlerは実行されないこと', 2, function() {
 		h5.settings.ajax.retryFilter = function() {};
 		h5.ajax('dummyURL', {
 			timeout: 1,
 			cache: false,
-			error:function(){}
+			error: function() {}
 		});
-		ok(!this.cfhFlag);
+		ok(!this.cfhFlag, 'errorを指定しているのでcommonFailHandlerは実行されていない');
+		this.cfhFlag = false;
+
+		h5.settings.ajax.retryFilter = function() {};
+		h5.ajax('dummyURL', {
+			timeout: 1,
+			cache: false,
+			complete: function() {}
+		});
+		ok(!this.cfhFlag, 'completeを指定しているのでcommonFailHandlerは実行されていない');
 	});
 });
