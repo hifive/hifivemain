@@ -857,7 +857,7 @@
 		}
 		// baseSchemaとschemaをschema優先でマージした結果をschemaに格納する。
 		// baseSchemaは上書かない。
-		$.extend(schema, $.extend({}, baseSchema, schema));
+		$.extend(schema, baseSchema, desc.schema);
 	}
 
 
@@ -1125,13 +1125,12 @@
 		//TODO sequence対応は後日
 		//this.idSequence = 0;
 
+		var schema = {};
+
+		//継承を考慮してスキーマを作成
 		//継承元がある場合はそのプロパティディスクリプタを先にコピーする。
 		//継承元と同名のプロパティを自分で定義している場合は
 		//自分が持っている定義を優先する。
-		var schema = descriptor.schema || {};
-
-
-		//継承を考慮してスキーマを作成
 		extendSchema(schema, manager, descriptor);
 
 		/**
@@ -2102,7 +2101,7 @@
 			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, errorReason);
 		}
 
-		var extendedSchema = descriptor.schema || {};
+		var extendedSchema = {};
 		extendSchema(extendedSchema, manager, descriptor);
 
 		var itemValueCheckFuncs = createCheckValueByDescriptor(extendedSchema, manager);
