@@ -839,7 +839,7 @@
 	 */
 	function extendSchema(schema, manager, desc) {
 		var base = desc.base;
-		var baseSchema = desc.schema;
+		var baseSchema;
 
 		if (base) {
 			if (!manager) {
@@ -854,9 +854,11 @@
 
 			// base指定されたモデルのschemaを取得
 			baseSchema = baseModel.schema;
+		} else {
+			//baseが指定されていない場合は"親"は存在しない＝プロパティを持たない
+			baseSchema = {};
 		}
-		// baseSchemaとschemaをschema優先でマージした結果をschemaに格納する。
-		// baseSchemaは上書かない。
+		// baseSchemaとschemaをschema優先でマージした結果をschemaに格納する。baseSchemaは上書きしない。
 		$.extend(schema, baseSchema, desc.schema);
 	}
 
