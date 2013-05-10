@@ -60,6 +60,11 @@
 	 */
 	var hookMethods = ['done', 'fail', 'pipe', 'always', 'then', 'success', 'error', 'complete'];
 
+	/**
+	 * ajaxの引数のオブジェクトでコールバックが記述されるプロパティ unshiftしてストックしていくので、最後に実行されるcompleteが先頭。
+	 */
+	var propCallbacks = ['complete', 'error', 'success'];
+
 	// =============================
 	// Functions
 	// =============================
@@ -83,6 +88,7 @@
 			})(method);
 		}
 	}
+
 	/**
 	 * フックしたコールバック登録関数を、オリジナルのjqXHRの関数を呼んでjqXHRWrapperを返すようにする
 	 */
@@ -225,26 +231,21 @@
 			$.extend(settings, arguments[0]);
 		}
 		// settings.ajaxとマージ
-		$.extend(settings, h5.settings.ajax);
+		settings = $.extend({}, h5.settings.ajax, settings);
 
 		// リトライについてのパラメータ取得
 		var retryCount = settings.retryCount || 0;
 		var retryInterval = settings.retryInterval;
 		var retryFilter = settings.retryFilter;
 
-		// ajaxの呼び出し。jqXHRを取得してjqXHRWrapperを作成。
-		var jqXHR = _ajax(settings);
-
-		// jqXHRWrapperの作成
-		// コールバック登録関数はフックして、登録されたコールバック関数をストックする。
-		var stockRegistCallbacks = [];
-		var jqXHRWrapper = new JqXHRWrapper(jqXHR, stockRegistCallbacks);
+		// errorコールバックが設定されているか
+		settings.isSetErrorCallback = !!(settings.error || settings.complete);
 
 		// settingsに指定されたコールバックはdone,fail,alwaysで登録し、settingsから削除する
 		// (done,fail,alwaysはフックしているのでストックされる)
 		// success -> done, error -> fail, complete -> always に登録する
 		// (success,error,completeメソッドはjQuery1.8で非推奨になったため)
-		var propCallbacks = ['success', 'error', 'complete'];
+		var stockRegistCallbacks = [];
 		var propToMethod = {
 			success: 'done',
 			error: 'fail',
@@ -254,13 +255,20 @@
 			var prop = propCallbacks[i];
 			if (settings[prop]) {
 				// プロパティで指定されたコールバックはfailやdoneで指定したコールバックより先に実行されるのでshiftでストック
-				stockRegistCallbacks.shift({
+				stockRegistCallbacks.unshift({
 					method: propToMethod[prop],
-					args: settings[prop]
+					args: wrapInArray(settings[prop])
 				});
 				settings[prop] = undefined;
 			}
 		}
+
+		// ajaxの呼び出し。jqXHRを取得してjqXHRWrapperを作成。
+		var jqXHR = _ajax(settings);
+
+		// jqXHRWrapperの作成
+		// コールバック登録関数はフックして、登録されたコールバック関数をストックする。
+		var jqXHRWrapper = new JqXHRWrapper(jqXHR, stockRegistCallbacks);
 
 		/**
 		 * リトライ時のdoneハンドラ。 成功時はリトライせずに登録されたdoneハンドラを呼び出す。
@@ -335,10 +343,7 @@
 	 * @memberOf h5
 	 */
 	function _ajax(settings) {
-		var hasFailCallback = settings.hasFailCallback || !!(settings.error || settings.complete);
-		// settings.hasFailCallbackに覚えさせておく。retry時はsettings.hasFailCallbackを参照する。
-		settings.hasFailCallback = hasFailCallback;
-
+		var isSetErrorCallback = settings.isSetErrorCallback;
 		var jqXHR = $.ajax.apply($, arguments);
 
 		if (!jqXHR.progress) {
@@ -349,7 +354,7 @@
 
 		var callFail = false;
 		var commonFailHandler = h5.settings.commonFailHandler;
-		if (!hasFailCallback && commonFailHandler) {
+		if (!isSetErrorCallback && commonFailHandler) {
 			// リトライ機能のために、failハンドラはreject,resolveされてからまとめて登録される。
 			// commonFailHandlerを呼ぶためのfailハンドラの登録は、その後でなければ、commonFailHandlerを呼ぶかどうかの判定ができない。
 			// そのため、まとめて登録の時が終わってから一番最後に登録するために、覚えておく。
