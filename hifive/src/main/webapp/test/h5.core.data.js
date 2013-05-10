@@ -509,9 +509,9 @@ $(function() {
 			});
 
 	test('baseにデータモデルを指定した時、継承元のスキーマは変わらないこと', function() {
-		// parentModel
 		var manager = h5.core.data.createManager('DataManager', 'model');
 
+		// parentModel
 		var parentModel = manager.createModel({
 			name: 'ParentModel',
 			schema: {
