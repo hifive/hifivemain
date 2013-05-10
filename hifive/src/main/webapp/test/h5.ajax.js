@@ -77,6 +77,48 @@ $(function() {
 		ok($.isFunction(jqXHR.progress), 'h5.async.ajax() の戻り値のオブジェクトにprogressメソッドが追加されているか');
 	});
 
+	asyncTest('$.ajaxSettingsの設定が有効であること', 1, function() {
+		// 同期に設定
+		$.ajaxSettings.async = false;
+		var promise = h5.ajax({
+			url: 'data/sample.data',
+			cache: false
+		});
+		var a = false;
+		promise.done(function() {
+			ok(!a, '$.ajaxSettingsの設定が有効であること');
+			$.ajaxSettings.async = true;
+			start();
+		}).fail(function() {
+			ok(false, 'fail');
+			$.ajaxSettings.async = true;
+			start();
+		});
+		a = true;
+	});
+
+	asyncTest('$.ajaxSettingsの設定より引数で渡した値が優先されていること', 1, function() {
+		// 同期に設定
+		$.ajaxSettings.async = false;
+		// 非同期で呼び出し
+		var promise = h5.ajax({
+			url: 'data/sample.data',
+			cache: false,
+			async: true
+		});
+		var a = false;
+		promise.done(function() {
+			ok(a, '引数で渡した設定が優先されて非同期で実行されること');
+			$.ajaxSettings.async = true;
+			start();
+		}).fail(function() {
+			ok(false, 'fail');
+			$.ajaxSettings.async = true;
+			start();
+		});
+		a = true;
+	});
+
 
 	//=============================
 	// Definition
@@ -256,27 +298,31 @@ $(function() {
 				retryInterval: 0,
 				retryFilter: that.originalSettingsAjax.retryFilter
 			};
+			h5.settings.commonFailHandler = function() {
+				// フラグを立てる
+				that.cfhFlag = true;
+			};
 		},
 		teardown: function() {
 			h5.settings.ajax = this.originalSettingsAjax;
 			$.ajax = this.originalAjax;
+			h5.settings.commonFailHandler = null;
 		},
 		originalSettingsAjax: $.extend({}, h5.settings.ajax),
-		originalAjax: $.ajax
+		originalAjax: $.ajax,
+		cfhFlag: false
 	});
 
 	//=============================
 	// Body
 	//=============================
 
-	asyncTest('ajaxのタイムアウト時にリトライが実行される', 4, function() {
+	asyncTest('status=0(タイムアウト)の場合にリトライが実行されること。', 1, function() {
 		var that = this;
 		// $.ajaxを、タイムアウト時の挙動をする関数に置き換える
-		var callCount = 1;
 		var ajaxCallCount = 0;
 		$.ajax = function() {
 			ajaxCallCount++;
-			strictEqual(callCount++, ajaxCallCount, '$.ajaxの呼び出し ' + ajaxCallCount + '回目');
 			// jqXHRを取得
 			var jqXHR = that.originalAjax('', {
 				async: false
@@ -297,25 +343,73 @@ $(function() {
 			ok(false, 'done');
 			start();
 		}).fail(function() {
-			strictEqual(callCount++, 4, 'fail');
+			strictEqual(ajaxCallCount, 3, '$.ajaxは計3回実行されること');
 			start();
 		});
 	});
 
-	asyncTest('リトライ前にリトライフィルタが実行される', function() {
+	asyncTest('status=12029(ERROR_INTERNET_CANNOT_CONNECT)の場合にリトライが実行されること', 1, function() {
+		var that = this;
+		// $.ajaxを、satet=12029で失敗をする関数に置き換える
+		var ajaxCallCount = 0;
+		$.ajax = function() {
+			ajaxCallCount++;
+			// jqXHRを取得
+			var jqXHR = that.originalAjax('', {
+				async: false
+			});
+			// timeout時のjqXHRを簡単に模倣したものを作成
+			jqXHR.status = 12029;
+			jqXHR.readyState = 0;
+			var dfd = $.Deferred();
+			var promise = dfd.promise(jqXHR);
+			setTimeout(function() {
+				dfd.reject(promise);
+			}, 0);
+			return promise;
+		};
+
+		h5.ajax('').done(function() {
+			ok(false, 'done');
+			start();
+		}).fail(function() {
+			strictEqual(ajaxCallCount, 3, '$.ajaxは計3回実行されること');
+			start();
+		});
+	});
+
+	asyncTest('status=404(Not Found)の場合はリトライが実行されないこと', 1, function() {
+		var that = this;
+		var ajaxCallCount = 0;
+		// $.ajaxをラップ
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			return that.originalAjax.apply($, arguments);
+		};
+		h5.ajax('dummyURL').done(function() {
+			ok(false, 'done');
+			start();
+		}).fail(function() {
+			strictEqual(ajaxCallCount, 1, '$.ajaxは計1回実行されること');
+			start();
+		});
+	});
+
+	asyncTest('リトライ前にリトライフィルタが実行されること', 6, function() {
 		var callCount = 1;
-		var callRetryFilterCount = 1;
+		var ajaxCallCount = 0;
+		var callRetryFilterCount = 0;
 		h5.settings.ajax.retryFilter = function() {
-			strictEqual(callCount++, callRetryFilterCount++ * 2, 'retryFilter');
-		}
-		// $.ajaxを、タイムアウト時の挙動をする関数に置き換える
+			callRetryFilterCount++;
+			strictEqual(callCount++, callRetryFilterCount * 2, 'retryFilter');
+		};
 		var callCount = 1;
 
 		var that = this;
-		var ajaxCallCount = 1;
+		// $.ajaxをラップ
 		$.ajax = function(var_args) {
-			strictEqual(callCount++, ajaxCallCount++ * 2 - 1, '$.ajaxの呼び出し ' + (ajaxCallCount - 1)
-					+ '回目');
+			ajaxCallCount++;
+			strictEqual(callCount++, ajaxCallCount * 2 - 1, '$.ajaxの呼び出し ' + ajaxCallCount + '回目');
 			return that.originalAjax.apply($, arguments);
 		};
 
@@ -328,4 +422,347 @@ $(function() {
 		});
 	});
 
+	asyncTest('リトライフィルタがfalseを返した時はリトライが中止されること', 1, function() {
+		var ajaxCallCount = 0;
+		var retryFilterCount = 0;
+		h5.settings.ajax.retryFilter = function() {
+			if (++retryFilterCount == 2) {
+				// 2回目でfalseを返す。ajaxは2回だけ呼ばれるはず。
+				return false;
+			}
+		};
+		var that = this;
+		// $.ajaxをラップ
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			return that.originalAjax.apply($, arguments);
+		};
+
+		h5.ajax('dummyURL').done(function() {
+			ok(false, 'done');
+			start();
+		}).fail(function() {
+			strictEqual(ajaxCallCount, 2, '$.ajaxは計2回実行されること');
+			start();
+		});
+	});
+
+	asyncTest('リトライ回数をh5.ajaxに渡す引数で指定できること', 1, function() {
+		var ajaxCallCount = 0;
+		h5.settings.ajax.retryFilter = function() {};
+		var that = this;
+		// $.ajaxをラップ
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			return that.originalAjax.apply($, arguments);
+		};
+
+		h5.ajax('dummyURL', {
+			retryCount: 5
+		}).done(function() {
+			ok(false, 'done');
+			start();
+		}).fail(function() {
+			strictEqual(ajaxCallCount, 6, '$.ajaxは計6回実行されること');
+			start();
+		});
+	});
+
+	asyncTest('リトライインターバルをh5.ajaxに渡す引数で指定できること', 1, function() {
+		var ajaxCallCount = 0;
+		var retryFilterCount = 0;
+		var intervalCheckFlag = false;
+		h5.settings.ajax.retryFilter = function() {
+			retryFilterCount++;
+			if (retryFilterCount === 2) {
+				return false;
+			}
+			setTimeout(function() {
+				intervalCheckFlag = true;
+			}, 10);
+		};
+		var that = this;
+		// $.ajaxをラップ
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			if (ajaxCallCount === 2) {
+				ok(intervalCheckFlag, 'retryFilter実行から指定したretryInterval時間が経過していること');
+			}
+			return that.originalAjax.apply($, arguments);
+		};
+
+		h5.ajax('dummyURL', {
+			retryInterval: 50
+		}).done(function() {
+			ok(false, 'done');
+			start();
+		}).fail(function() {
+			start();
+		});
+	});
+
+	asyncTest('ajaxの通信に成功したらリトライはしない', 1, function() {
+		var ajaxCallCount = 0;
+		h5.settings.ajax.retryFilter = function() {
+			ok(false, 'retryFilterが実行されました');
+		};
+
+		// $.ajaxをラップ
+		var that = this;
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			return that.originalAjax.apply($, arguments);
+		};
+
+		h5.ajax('data/sample.data').done(function() {
+			strictEqual(ajaxCallCount, 1, 'doneに入る。$.ajaxは一度しか呼ばれていない');
+			start();
+		}).fail(function() {
+			ok(false, 'fail');
+			start();
+		});
+	});
+
+	asyncTest('リトライしてajaxの通信に成功した場合の動作', 1, function() {
+		var ajaxCallCount = 0;
+		h5.settings.ajax.retryFilter = function() {};
+
+		// $.ajaxをラップ
+		var that = this;
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			if (ajaxCallCount < 3) {
+				return that.originalAjax.apply($, ['dummyURL'], {
+					timeout: 1
+				});
+			}
+			// 3回目(2回目のリトライ)で成功
+			return that.originalAjax.apply($, ['data/sample.data']);
+		};
+
+		h5.ajax('data/sample.data').done(function() {
+			strictEqual(ajaxCallCount, 3, 'doneにはいる。$.ajaxは3回(リトライ2回)呼ばれる。');
+			start();
+		}).fail(function() {
+			ok(false, 'fail');
+			start();
+		});
+	});
+
+	asyncTest('failハンドラを登録していない場合、リトライ時にajaxの通信に成功した場合はcommonFailHandlerは動作しない', function() {
+		var ajaxCallCount = 0;
+		h5.settings.ajax.retryFilter = function() {};
+
+		// $.ajaxをラップ
+		var that = this;
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			if (ajaxCallCount < 3) {
+				return that.originalAjax.apply($, [{
+					url: 'dummyURL',
+					timeout: 1
+				}]);
+			}
+			// 3回目(2回目のリトライ)で成功
+			return that.originalAjax.apply($, ['data/sample.data']);
+		};
+
+		h5.ajax('data/sample.data').done(function() {
+			strictEqual(ajaxCallCount, 3, 'doneにはいる。$.ajaxは3回(リトライ2回)呼ばれる。');
+			strictEqual(that.cfhFlag, false, 'commonFailHandlerは実行されない');
+			start();
+		});
+	});
+
+	asyncTest('failハンドラを登録していない場合、リトライしてもajaxの通信に失敗した場合はcommonFailHandlerは動作する', function() {
+		h5.settings.ajax.retryFilter = function() {};
+		h5.ajax('dummyURL', {
+			timeout: 1
+		});
+		var that = this;
+
+		// timeout:1で3回ajaxを投げるから最低3ms秒待つ必要がある。多めに50ms待機。
+		setTimeout(function() {
+			ok(that.cfhFlag, 'commonFailHandlerが動作した');
+			start();
+		}, 50);
+	});
+
+	asyncTest('引数で指定したコールバックが動作すること 失敗時', function() {
+		h5.settings.ajax.retryFilter = function() {};
+		var result = '';
+		var expect = 'error, complete, ';
+		h5.ajax('dummyURL', {
+			timeout: 1,
+			success: function() {
+				result += 'success, ';
+			},
+			error: function() {
+				result += 'error, ';
+			},
+			complete: function() {
+				result += 'complete, ';
+			}
+		}).fail(function() {
+			strictEqual(result, expect, expect + 'が実行される');
+			start();
+		});
+	});
+
+	asyncTest('引数で指定したコールバックが動作すること 成功時', function() {
+		h5.settings.ajax.retryFilter = function() {};
+		var result = '';
+		var expect = 'success, complete, ';
+		h5.ajax('data/sample.data', {
+			success: function() {
+				result += 'success, ';
+			},
+			error: function() {
+				result += 'error, ';
+			},
+			complete: function() {
+				result += 'complete, ';
+			}
+		}).done(function() {
+			strictEqual(result, expect, expect + 'が実行される');
+			start();
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module("h5.ajax リトライ指定のある場合(同期)", {
+		setup: function() {
+			// リトライ回数を2回、インターバルを0
+			var that = this;
+			h5.settings.ajax = {
+				retryCount: 2,
+				retryInterval: 0,
+				retryFilter: that.originalSettingsAjax.retryFilter
+			};
+			h5.settings.commonFailHandler = function() {
+				// フラグを立てる
+				that.cfhFlag = true;
+			};
+			$.ajaxSettings.async = false;
+		},
+		teardown: function() {
+			h5.settings.ajax = this.originalSettingsAjax;
+			$.ajax = this.originalAjax;
+			h5.settings.commonFailHandler = null;
+			$.ajaxSettings.async = true;
+		},
+		originalSettingsAjax: $.extend({}, h5.settings.ajax),
+		originalAjax: $.ajax,
+		cfhFlag: false
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('リトライしても失敗する場合', 3, function() {
+		h5.settings.ajax.retryFilter = function() {};
+		var jqXHR = h5.ajax('dummyURL', {
+			timeout: 1,
+			cache: false
+		}).done(function() {
+			ok(false, 'doneで登録したハンドラ');
+		}).fail(function() {
+			ok(true, 'failで登録したハンドラ');
+		}).always(function() {
+			ok(true, 'alwaysで登録したハンドラ');
+		});
+		strictEqual(jqXHR.status, 404, '同期で結果が返ってきていること');
+	});
+
+	test('1回目で成功した場合', 3, function() {
+		var jqXHR = h5.ajax('data/sample.data', {
+			timeout: 1,
+			cache: false
+		}).done(function() {
+			ok(true, 'doneで登録したハンドラ');
+		}).fail(function() {
+			ok(false, 'failで登録したハンドラ');
+		}).always(function() {
+			ok(true, 'alwaysで登録したハンドラ');
+		});
+		strictEqual(jqXHR.status, 200, '同期で結果が返ってきていること');
+	});
+
+	test('リトライ途中で成功した場合', 3, function() {
+		h5.settings.ajax.retryFilter = function() {};
+		var ajaxCallCount = 0;
+
+		// $.ajaxをラップ
+		var that = this;
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			if (ajaxCallCount < 3) {
+				return that.originalAjax.apply($, ['dummyURL', {
+					timeout: 1
+				}]);
+			}
+			// 3回目(2回目のリトライ)で成功
+			return that.originalAjax.apply($, ['data/sample.data', {
+				timeout: 1,
+				cache: false
+			}]);
+		};
+		var jqXHR = h5.ajax('data/sample.data', {
+			timeout: 1,
+			cache: false
+		}).done(function() {
+			ok(true, 'doneで登録したハンドラ');
+		}).fail(function() {
+			ok(false, 'failで登録したハンドラ');
+		}).always(function() {
+			ok(true, 'alwaysで登録したハンドラ');
+		});
+		strictEqual(jqXHR.status, 200, '同期で結果が返ってきていること');
+	});
+
+	test('リトライして失敗した場合commonFailHandlerが実行されること', function() {
+		h5.settings.ajax.retryFilter = function() {};
+		h5.ajax('dummyURL', {
+			timeout: 1,
+			cache: false
+		});
+		ok(this.cfhFlag);
+	});
+
+	test('リトライ途中で成功した場合commonFailHandlerは実行されないこと', function() {
+		h5.settings.ajax.retryFilter = function() {};		// $.ajaxをラップ
+		var that = this;
+		var ajaxCallCount = 0;
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			if (ajaxCallCount < 3) {
+				return that.originalAjax.apply($, ['dummyURL', {
+					timeout: 1
+				}]);
+			}
+			// 3回目(2回目のリトライ)で成功
+			return that.originalAjax.apply($, ['data/sample.data', {
+				cache: false
+			}]);
+		};
+		h5.ajax('dummyURL', {
+			timeout: 1,
+			cache: false
+		});
+		ok(!this.cfhFlag);
+	});
+
+	test('error,completeでコールバックを渡していた場合は失敗してもcommonFailHandlerは実行されないこと', function() {
+		h5.settings.ajax.retryFilter = function() {};
+		h5.ajax('dummyURL', {
+			timeout: 1,
+			cache: false,
+			error:function(){}
+		});
+		ok(!this.cfhFlag);
+	});
 });

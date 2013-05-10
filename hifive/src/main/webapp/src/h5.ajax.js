@@ -143,13 +143,13 @@
 		if (jqXHRWrapper._jqXHR === jqXHR) {
 			return;
 		}
-		this._jqXHR = jqXHR;
+		jqXHRWrapper._jqXHR = jqXHR;
 		for ( var prop in jqXHR) {
 			if (!jqXHR.hasOwnProperty(prop)) {
 				continue;
 			}
 			if (!$.isFunction(jqXHR[prop])) {
-				this[prop] = jqXHR[prop];
+				jqXHRWrapper[prop] = jqXHR[prop];
 			}
 		}
 	}
