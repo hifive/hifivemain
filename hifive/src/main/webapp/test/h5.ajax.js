@@ -577,18 +577,29 @@ $(function() {
 		});
 	});
 
-	asyncTest('failハンドラを登録していない場合、リトライしてもajaxの通信に失敗した場合はcommonFailHandlerは動作する', 1, function() {
-		h5.settings.ajax.retryFilter = function() {};
+	asyncTest('failハンドラを登録していない場合、リトライしてもajaxの通信に失敗した場合はcommonFailHandlerは動作する', 2, function() {
+		var retryFilterCount = 0;
+		h5.settings.ajax.retryFilter = function() {
+			retryFilterCount++;
+		};
 		h5.ajax('dummyURL', {
 			timeout: 1
 		});
-		var that = this;
 
-		// timeout:1で3回ajaxを投げるから最低3ms秒待つ必要がある。多めに50ms待機。
-		setTimeout(function() {
-			ok(that.cfhFlag, 'commonFailHandlerが動作した');
+		var timerId = setTimeout(function() {
+			// timerが止められてない = commonFailHandlerに入ってないので失敗
+			ok(false);
 			start();
-		}, 50);
+		}, timeoutTime);
+
+		h5.settings.commonFailHandler = function() {
+			// タイマーを止める
+			clearTimeout(timerId);
+			// テスト成功
+			ok(true, 'commonFailHandlerは動作した');
+			strictEqual(retryFilterCount, 2, 'リトライは指定回数回実行されている');
+			start();
+		};
 	});
 
 	asyncTest('引数で指定したコールバックが動作すること 失敗時', 1, function() {
