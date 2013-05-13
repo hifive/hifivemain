@@ -30,7 +30,7 @@
 	}
 
 	/**
-	 * フィルタ実行オブジェクト 追加のフィルタがある場合はここに追加する
+	 * フィルタ実行オブジェクト 追加のフィルタがある場合はここに追加する checkに指定された関数がtrueを返したらテストをスキップ
 	 */
 	var filters = {
 		build: {
@@ -44,24 +44,28 @@
 		}
 	};
 
+	/**
+	 * モジュール名でのフィルタチェック結果を覚えておく key: module名, 値：マッチしたかどうか(スキップするかどうか)
+	 */
+	var moduleCondition = {};
 	//------------------------------------------------------------------------------------
 	// チェック関数で使用する共通関数・変数
 	//------------------------------------------------------------------------------------
 	/**
 	 * バージョンがマッチするかどうか判定する。
 	 */
-	function matchVersion(version, envVersionFull) {
+	function matchVersions(versions, envVersionFull) {
 		// ','区切りで複数指定されている場合はorでチェック
-		var versions = version.split(',');
-		for ( var i = 0, l = versions.length; i < l; i++) {
-			if (_matchVersion(versions[i], envVersionFull)) {
+		var versionsAry = versions.split(',');
+		for ( var i = 0, l = versionsAry.length; i < l; i++) {
+			if (matchVersion(versionsAry[i], envVersionFull)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	function _matchVersion(version, envVersionFull) {
+	function matchVersion(version, envVersionFull) {
 		version = $.trim(version);
 		var envVersionFullAry = envVersionFull.split('.');
 		var envMajorVersion = envVersionFullAry[0];
@@ -145,7 +149,7 @@
 		for ( var i = 0, l = jqueryFilters.length; i < l; i++) {
 			var desc = jqueryFilters[i];
 
-			if (matchVersion(desc, env.jquery)) {
+			if (matchVersions(desc, env.jquery)) {
 				return true;
 			}
 		}
@@ -166,7 +170,7 @@
 			if ($.trim(desc[0]) !== env.browserprefix) {
 				continue;
 			}
-			if (!matchVersion(desc[1], env.browserversion)) {
+			if (!matchVersions(desc[1], env.browserversion)) {
 				continue;
 			}
 
@@ -183,7 +187,7 @@
 				var val = $.trim(tmp[1]);
 				if (key === 'docmode') {
 					// docmodeなら数値で比較
-					if (!matchVersion(val, env.docmode)) {
+					if (!matchVersions(val, env.docmode)) {
 						break;
 					}
 				} else if (new String(env[key]).toLowerCase() !== val.toLowerCase()) {
@@ -203,13 +207,20 @@
 	// body
 	//------------------------------------------------------------------------------------
 	/**
-	 * filterの記述からオブジェクトを生成して返す
+	 * テスト名からフィルタタグ部分をパースしてオブジェクトにして返す。
+	 * フィルタタグの指定がない場合はnullを返す
 	 */
-	function createFilterObj(filtersArray) {
+	function createFilterObj(name) {
+		var testConditionDesc = name.match(/^\[.*?\]/);
+		if (testConditionDesc === null) {
+			return null;
+		}
+		testConditionDesc = testConditionDesc && testConditionDesc[0];
+
 		var filtersObj = {};
 
-		// []を外して、";"で結合する。余分についた両端の";"は削除。";"を区切り記号にして分割し、配列にする。
-		var filters = filtersArray.join(';').replace(/\[|\]|^;|$;|;;/g, '').split(';');
+		// ";"を区切り記号にして分割し、配列にする。余分についた両端の";"は削除。
+		var filters = testConditionDesc.replace(/\[|\]|^;|$;|;;/g, '').split(';');
 		for ( var i = 0, l = filters.length; i < l; i++) {
 			var filter = $.trim(filters[i]);
 			if (filter === '') {
@@ -248,41 +259,63 @@
 	}
 
 	/**
-	 * testStartにpushする、テストフィルタを実行するための関数
+	 * テストをスキップする
 	 */
-	function doFilter(stats) {
-		var current = QUnit.config.current;
+	function skipTest(current, stats) {
+		current.testEnvironment.setup = function() {};
+		current.testEnvironment.teardown = function() {};
+		current.callback = function() {
+			expect(0);
+			if (current.async) {
+				start();
+			}
+		};
+		current.name = '<span class="module-name">' + stats.module
+				+ '</span>: <span class="test-name">[テストをスキップしました] ' + stats.name + '</span>';
+	}
 
-		var testConditionDesc = stats.name.match(/^\[.*?\]/);
-		testConditionDesc = testConditionDesc && testConditionDesc[0];
-		var moduleConditionDesc = stats.module ? stats.module.match(/^\[.*?\]/) : '';
-		moduleConditionDesc = moduleConditionDesc && moduleConditionDesc[0];
-
-		// 条件が書かれていないなら何もしない
-		if (!testConditionDesc && !moduleConditionDesc) {
-			return;
-		}
-
+	/**
+	 * moduleStartにpushする、関数。
+	 * スキップするかどうかを判定し、moduleConditionに判定結果を覚えておく
+	 */
+	function checkModuleFilterTag(stats) {
 		// パースしたオブジェクトの生成
-		var descriptedFilterObj = createFilterObj([testConditionDesc, moduleConditionDesc]);
+		var descriptedFilterObj = createFilterObj(stats.name);
 
-		// 条件が、現在の環境でマッチするならテストをスルー
+		// 条件が、現在の環境でマッチするなら覚えておく
 		if (check(descriptedFilterObj, stats)) {
-			current.testEnvironment.setup = function() {};
-			current.testEnvironment.teardown = function() {};
-			current.callback = function() {
-				expect(0);
-				if (current.async) {
-					start();
-				}
-			};
-			current.name = '<span class="module-name">' + stats.module
-					+ '</span>: <span class="test-name">[テストをスキップしました] ' + stats.name + '</span>';
+			moduleCondition[stats.name] = true;
 		}
 	}
 
 	/**
-	 * フィルタをtestStartに追加
+	 * testStartにpushする、テストフィルタを実行するための関数
 	 */
-	QUnit.config.testStart.push(doFilter);
+	function checkTestFilterTag(stats) {
+		var current = QUnit.config.current;
+
+		// 既にモジュールのフィルタでテストがスキップ指定されていたらスキップ
+		if (moduleCondition[stats.module]) {
+			skipTest(current, stats);
+			return;
+		}
+
+		// パースしたオブジェクトの生成
+		var descriptedFilterObj = createFilterObj(stats.name);
+
+		// 条件が、現在の環境でマッチするならテストをスルー
+		if (check(descriptedFilterObj, stats)) {
+			skipTest(current, stats);
+		}
+	}
+
+	/**
+	 * モジュール実行時にモジュール名からフィルタタグを判定する
+	 */
+	QUnit.config.moduleStart.push(checkModuleFilterTag);
+
+	/**
+	 * テスト実行時にフィルタタグの判定をする
+	 */
+	QUnit.config.testStart.push(checkTestFilterTag);
 })();
