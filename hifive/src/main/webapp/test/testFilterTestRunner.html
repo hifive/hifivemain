@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+
+<link rel="stylesheet" href="./lib/qunit/qunit.css" type="text/css"
+	media="screen" />
+
+<script src="../res/js/lib/jquery/jquery.js"></script>
+<script type="text/javascript" src="./lib/qunit/qunit.js"></script>
+<script>
+	(function() {
+		H5_TEST_ENV = {
+			filter: {}
+		};
+	})();
+</script>
+<script src="testFilter.js"></script>
+
+<!-- テストフィルタをテストするjs -->
+<script src="testFilterTest.js"></script>
+
+<title>hifive テストフィルタテスト</title>
+</head>
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture">test markup, will be hidden</div>
+</body>
+</html>
