@@ -125,6 +125,10 @@
 	 * バージョンがマッチするかどうか判定する。
 	 */
 	function matchVersion(versionDescs, envVersionFull) {
+		if (!envVersionFull && envVersionFull != 0) {
+			// 0でなくてfalse(未定義の場合や空文字)ならfalseを返す(テストをスキップさせない)
+			return false;
+		}
 		versionDescs = $.trim(versionDescs);
 		// カンマ指定で複数指定されたいずれかにマッチしたらtrueを返す
 		var versionsDescsAry = versionDescs.split(',');

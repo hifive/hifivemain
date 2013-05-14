@@ -70,7 +70,7 @@ $(function() {
 	/**
 	 * 指定されたテスト名でテストがスキップされるかどうかチェックする
 	 */
-	function checkTestSkips(filterDescs, result, each, moduleName) {
+	function checkTestSkips(filterDescs, result, each, moduleName, message) {
 		var stats = {
 			module: moduleName || ''
 		};
@@ -83,7 +83,7 @@ $(function() {
 			};
 			checkTestFilterTag(stats);
 			QUnit.config.current = this.originalCurrent;
-			ok(isSkipped(current) === result, filterDesc + (result ? ' スキップすること' : ' スキップしないこと'));
+			ok(isSkipped(current) === result, filterDesc + (result ? ' スキップされること' : ' スキップされないこと'));
 		}
 	}
 
@@ -92,6 +92,32 @@ $(function() {
 	// Test Module
 	//
 	// =========================================================================
+
+	//=============================
+	// Definition
+	//=============================
+	module('フィルタタグの記述', {
+		originalCurrent: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('フィルタタグを記述していない場合はテストはスキップされないこと', function() {
+		this.originalCurrent = QUnit.config.current;
+		checkTestSkips.call(this, '', false, this.createDesc);
+	});
+
+	test('フィルタタグが正しくパースされること', function() {
+		this.originalCurrent = QUnit.config.current;
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'ie',
+			browserversion: '8'
+		});
+		checkTestSkips.call(this, ['[browser#ie:8]',
+				'[build#min;browser#ff:14,15|ch:-25|ie:0-;jquery#1.7-1.8,1.9.1]'], true,
+				this.createDesc);
+	});
 
 	//=============================
 	// Definition
@@ -106,7 +132,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('ブラウザ名 (ie)', function() {
+	test('ブラウザ名(ie)にフィルタタグがマッチする場合、テストがスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
 		$.extend(H5_TEST_ENV.filter, {
 			browserprefix: 'ie'
@@ -115,7 +141,7 @@ $(function() {
 		checkTestSkips.call(this, 'ff', false, this.createDesc);
 	});
 
-	test('ブラウザ名、バージョン (ie, 8)', function() {
+	test('ブラウザ名(ie)、バージョン(8)にフィルタタグがマッチする場合、テストがスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
 		$.extend(H5_TEST_ENV.filter, {
 			browserprefix: 'ie',
@@ -125,7 +151,7 @@ $(function() {
 		checkTestSkips.call(this, ['ie:7', 'ff:8'], false, this.createDesc);
 	});
 
-	test('ブラウザ名、バージョン、docmode (ie, 8, 7)', function() {
+	test('ブラウザ名(ie)、バージョン(8)、docmode(7)にフィルタタグがマッチする場合、テストがスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
 		$.extend(H5_TEST_ENV.filter, {
 			browserprefix: 'ie',
@@ -138,14 +164,15 @@ $(function() {
 		checkTestSkips.call(this, ['ie:8:docmode=8', 'ie:9:docmode=7'], false, this.createDesc);
 	});
 
-	test('ブラウザ名、バージョン、docmode (ie, 8, Edge)', function() {
+	test('ブラウザ名(ie)、バージョン(8)、docmode(Edge)にフィルタタグがマッチする場合、テストがスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
 		$.extend(H5_TEST_ENV.filter, {
 			browserprefix: 'ie',
 			browserversion: '8',
 			docmode: 'Edge'
 		});
-		checkTestSkips.call(this, ['ie:8:docmode=Edge'], true, this.createDesc);
+		checkTestSkips.call(this, ['ie:8:docmode=Edge', 'ie:8:docmode=-7,Edge'], true,
+				this.createDesc);
 
 		checkTestSkips.call(this, ['ie:8:docmode=8', 'ie:8:docmode=8-', 'ie:8:docmode=-6'], false,
 				this.createDesc);
@@ -169,7 +196,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('jQuery (1.8.2)', function() {
+	test('jQueryのバージョン(1.8.2)にフィルタタグがマッチする場合、テストがスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
 		checkTestSkips.call(this, ['1.8.2', '-1.8.2', '1.8.2-'], true, this.createDesc);
 		checkTestSkips.call(this, ['1.8.1'], false, this.createDesc);
@@ -193,7 +220,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('buildモード (min)', function() {
+	test('buildモード(min)にフィルタタグがマッチする場合、テストがスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
 		checkTestSkips.call(this, ['min'], true, this.createDesc);
 		checkTestSkips.call(this, ['dev'], false, this.createDesc);
@@ -202,7 +229,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('バージョンの範囲指定', {
+	module('バージョンの範囲指定・複数指定', {
 		originalCurrent: null,
 		createDesc: function(desc) {
 			return '[browser#and-and:' + desc + ']';
@@ -212,7 +239,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('メジャーバージョンのみの場合', function() {
+	test('フィルタタグでのブラウザバージョンの範囲指定がマッチする場合、テストがスキップされること (メジャーバージョンのみの場合)', function() {
 		this.originalCurrent = QUnit.config.current;
 		$.extend(H5_TEST_ENV.filter, {
 			browserprefix: 'and-and',
@@ -223,7 +250,7 @@ $(function() {
 		checkTestSkips.call(this, ['22', '3-', '-1', '0-1'], false, this.createDesc);
 	});
 
-	test('マイナーバージョン以降を含む場合', function() {
+	test('フィルタタグでのブラウザバージョンの範囲指定がマッチする場合、テストがスキップされること (マイナーバージョン以降を含む場合)', function() {
 		this.originalCurrent = QUnit.config.current;
 		$.extend(H5_TEST_ENV.filter, {
 			browserprefix: 'and-and',
@@ -235,7 +262,7 @@ $(function() {
 				this.createDesc);
 	});
 
-	test('カンマ区切りで複数指定した場合はいずれかに一致したらスキップされること', function() {
+	test('カンマ区切りでバージョン指定を複数記述した場合はいずれかに一致したらスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
 		$.extend(H5_TEST_ENV.filter, {
 			browserprefix: 'and-and',
@@ -284,7 +311,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('モジュール名のフィルタタグが条件を満たす場合はテスト名に関わらずスキップ', function() {
+	test('モジュール名のフィルタタグが条件を満たす場合はテスト名に関わらずスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
 		var moduleName = '[build#min]';
 		var stats = {
@@ -294,7 +321,7 @@ $(function() {
 		checkTestSkips.call(this, '', true, null, moduleName);
 	});
 
-	test('モジュール名のフィルタタグが条件を満たさない場合はテスト名で判定される', function() {
+	test('モジュール名のフィルタタグが条件を満たさない場合はテスト名でスキップするかどうか判定されること', function() {
 		this.originalCurrent = QUnit.config.current;
 		var moduleName = '[build#dev]';
 		var stats = {
