@@ -74,6 +74,7 @@ $(function() {
 		var stats = {
 			module: moduleName || ''
 		};
+		filterDescs = $.isArray(filterDescs) ? filterDescs : [filterDescs];
 		for ( var i = 0, l = filterDescs.length; i < l; i++) {
 			var filterDesc = each ? each(filterDescs[i]) : filterDescs[i];
 			stats.name = filterDesc;
@@ -82,7 +83,7 @@ $(function() {
 			};
 			checkTestFilterTag(stats);
 			QUnit.config.current = this.originalCurrent;
-			ok(isSkipped(current) === result, filterDesc);
+			ok(isSkipped(current) === result, filterDesc + (result ? ' スキップすること' : ' スキップしないこと'));
 		}
 	}
 
@@ -92,183 +93,162 @@ $(function() {
 	//
 	// =========================================================================
 
-	// TODO moduleに書いたテストフィルタが優先されることを確認するテスト
-
-	// TODO ブラウザ(docmodeあり、なし、Edge)、jQueryのバージョン、build のテスト
-
 	//=============================
 	// Definition
 	//=============================
-	module('browser#ie8:docmode=Edge', {
-		setup: function() {
-			$.extend(H5_TEST_ENV.filter, {
-				browserprefix: 'ie',
-				browserversion: '8',
-				docmode: 'Edge'
-			});
-		},
-		originalCurrent: null
+	module('ブラウザに対するフィルタ', {
+		originalCurrent: null,
+		createDesc: function(desc) {
+			return '[browser#' + desc + ']';
+		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	test('スキップされるもの', function() {
+	test('ブラウザ名 (ie)', function() {
 		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['ie:8', 'ie', 'ie:7-', 'ie:8-', 'ie:-8', 'ie:-8.1', 'ie:-9', 'ie:8-9',
-				'ie:7-9', 'ie:6,8', 'ie:8|ff:10', 'ie:all', 'ie:8:docmode=Edge'];
-		checkTestSkips.call(this, filterDescs, true, function(name) {
-			return '[browser#' + name + ']';
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'ie'
 		});
+		checkTestSkips.call(this, 'ie', true, this.createDesc);
+		checkTestSkips.call(this, 'ff', false, this.createDesc);
 	});
 
-	test('スキップされないもの', function() {
+	test('ブラウザ名、バージョン (ie, 8)', function() {
 		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['ie:7', 'ie:88', 'ie:9-', 'ie:-7', 'ie:8.1-', 'ie-wp:all', 'ie:7,9',
-				'ff:8'];
-		checkTestSkips.call(this, filterDescs, false, function(name) {
-			return '[browser#' + name + ']';
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'ie',
+			browserversion: '8'
 		});
+		checkTestSkips.call(this, ['ie:8', 'ie:8-', 'ie:-8', 'ie'], true, this.createDesc);
+		checkTestSkips.call(this, ['ie:7', 'ff:8'], false, this.createDesc);
+	});
+
+	test('ブラウザ名、バージョン、docmode (ie, 8, 7)', function() {
+		this.originalCurrent = QUnit.config.current;
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'ie',
+			browserversion: '8',
+			docmode: '7'
+		});
+		checkTestSkips.call(this, ['ie:8:docmode=7', 'ie:8:docmode=7-', 'ie:8:docmode=-7', 'ie:8',
+				'ie'], true, this.createDesc);
+
+		checkTestSkips.call(this, ['ie:8:docmode=8', 'ie:9:docmode=7'], false, this.createDesc);
+	});
+
+	test('ブラウザ名、バージョン、docmode (ie, 8, Edge)', function() {
+		this.originalCurrent = QUnit.config.current;
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'ie',
+			browserversion: '8',
+			docmode: 'Edge'
+		});
+		checkTestSkips.call(this, ['ie:8:docmode=Edge'], true, this.createDesc);
+
+		checkTestSkips.call(this, ['ie:8:docmode=8', 'ie:8:docmode=8-', 'ie:8:docmode=-6'], false,
+				this.createDesc);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('browser#ie8:docmode=7', {
+	module('jQueryのバージョンに対するフィルタ', {
 		setup: function() {
 			$.extend(H5_TEST_ENV.filter, {
-				browserprefix: 'ie',
-				browserversion: '8',
-				docmode: '7'
+				jquery: '1.8.2'
 			});
 		},
-		originalCurrent: null
+		originalCurrent: null,
+		createDesc: function(desc) {
+			return '[jquery#' + desc + ']';
+		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	test('スキップされるもの', function() {
+	test('jQuery (1.8.2)', function() {
 		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['ie:8:docmode=7', 'ie:7-9:docmode=7', 'ie:8:docmode=7-',
-				'ie:8:docmode=-9'];
-		checkTestSkips.call(this, filterDescs, true, function(name) {
-			return '[browser#' + name + ']';
-		});
-	});
-
-	test('スキップされないもの',
-			function() {
-				this.originalCurrent = QUnit.config.current;
-				var filterDescs = ['ie:8:docmode=6', 'ie:9:docmode=7', 'ie:8:docmode=8-',
-						'ie:8:docmode=-6'];
-				checkTestSkips.call(this, filterDescs, false, function(name) {
-					return '[browser#' + name + ']';
-				});
-			});
-
-	//=============================
-	// Definition
-	//=============================
-	module('browser#and-and:2.3', {
-		setup: function() {
-			$.extend(H5_TEST_ENV.filter, {
-				browserprefix: 'and-and',
-				browserversion: '2.3'
-			});
-		},
-		originalCurrent: null
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('スキップされるもの', function() {
-		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['2.3', '2', '-2', '-3', '-2.4', '-2.3', '-2.10', '-2.3.0', '2.3-',
-				'2.1-', '2-', '1-', '2.1.10-', '2.1.1-2.3.3'];
-		checkTestSkips.call(this, filterDescs, true, function(name) {
-			return '[browser#and-and:' + name + ']';
-		});
-	});
-
-	test('スキップされないもの',
-			function() {
-				this.originalCurrent = QUnit.config.current;
-				var filterDescs = ['2.2', '2.3.4', '-2.2', '-2.2.3', '2.4-', '2.3.1-', '3-',
-						'2.3.1-2.3.3'];
-				checkTestSkips.call(this, filterDescs, false, function(name) {
-					return '[browser#and-and:' + name + ']';
-				});
-			});
-
-	//=============================
-	// Definition
-	//=============================
-	module('jquery#1.8.0', {
-		setup: function() {
-			$.extend(H5_TEST_ENV.filter, {
-				jquery: '1.8.0'
-			});
-		},
-		originalCurrent: null
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('スキップされるもの', function() {
-		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['1.8.0', '1.8', '1', '-1.8.0', '1.8.0-', '1.8-', '-2', '-1.8.1', '-1.8',
-				'2,1.8'];
-		checkTestSkips.call(this, filterDescs, true, function(name) {
-			return '[jquery#' + name + ']';
-		});
-	});
-
-	test('スキップされないもの', function() {
-		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['1.8.1-', '-1.7.9', '-1.7.9,1.8.1-'];
-		checkTestSkips.call(this, filterDescs, false, function(name) {
-			return '[jquery#' + name + ']';
-		});
+		checkTestSkips.call(this, ['1.8.2', '-1.8.2', '1.8.2-'], true, this.createDesc);
+		checkTestSkips.call(this, ['1.8.1'], false, this.createDesc);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('build#min', {
+	module('buildモードに対するフィルタ', {
 		setup: function() {
 			$.extend(H5_TEST_ENV.filter, {
 				build: 'min'
 			});
 		},
-		originalCurrent: null
+		originalCurrent: null,
+		createDesc: function(desc) {
+			return '[build#' + desc + ']';
+		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	test('スキップされるもの', function() {
+	test('buildモード (min)', function() {
 		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['min'];
-		checkTestSkips.call(this, filterDescs, true, function(name) {
-			return '[build#' + name + ']';
-		});
-	});
-
-	test('スキップされないもの', function() {
-		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['dev'];
-		checkTestSkips.call(this, filterDescs, false, function(name) {
-			return '[build#' + name + ']';
-		});
+		checkTestSkips.call(this, ['min'], true, this.createDesc);
+		checkTestSkips.call(this, ['dev'], false, this.createDesc);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('複数条件 build#min;browser#ie:8', {
+	module('バージョンの範囲指定', {
+		originalCurrent: null,
+		createDesc: function(desc) {
+			return '[browser#and-and:' + desc + ']';
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('メジャーバージョンのみの場合', function() {
+		this.originalCurrent = QUnit.config.current;
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'and-and',
+			browserversion: '2'
+		});
+		checkTestSkips.call(this, ['2', '2-', '-2', '1-', '-3', '2-3', '1-2', '1-3', 'all'], true,
+				this.createDesc);
+		checkTestSkips.call(this, ['22', '3-', '-1', '0-1'], false, this.createDesc);
+	});
+
+	test('マイナーバージョン以降を含む場合', function() {
+		this.originalCurrent = QUnit.config.current;
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'and-and',
+			browserversion: '2.3.4'
+		});
+		checkTestSkips.call(this, ['2.3.4', '2.3', '2', '2.3.4.0', '2.3.4-', '-2.3.4', '-2.3',
+				'-2', '2.3-', '2-', '-2.10', 'all'], true, this.createDesc);
+		checkTestSkips.call(this, ['2.3.44', '-2.3.3', '2.3.5-', '2.3.4.5', '2.10-'], false,
+				this.createDesc);
+	});
+
+	test('カンマ区切りで複数指定した場合はいずれかに一致したらスキップされること', function() {
+		this.originalCurrent = QUnit.config.current;
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'and-and',
+			browserversion: '2'
+		});
+		checkTestSkips.call(this, ['2,4', '3-,2'], true, this.createDesc);
+		checkTestSkips.call(this, ['1,3,4'], false, this.createDesc);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('カンマ区切りで複数条件を記述', {
 		setup: function() {
 			$.extend(H5_TEST_ENV.filter, {
 				build: 'min',
@@ -282,26 +262,16 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('いずれかにマッチしたらスキップ', function() {
+	test('いずれかにマッチしたらスキップされること', function() {
 		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['build#min;browser#ie:9', 'build#dev;browser#ie:8'];
-		checkTestSkips.call(this, filterDescs, true, function(name) {
-			return '[' + name + ']';
-		});
-	});
-
-	test('いずれにもマッチしないならスキップしない', function() {
-		this.originalCurrent = QUnit.config.current;
-		var filterDescs = ['build#dev;browser#ie:9'];
-		checkTestSkips.call(this, filterDescs, false, function(name) {
-			return '[' + name + ']';
-		});
+		checkTestSkips.call(this, ['[build#min;browser#ie:9]', '[build#dev;browser#ie:8]'], true);
+		checkTestSkips.call(this, ['[build#dev;browser#ie:9]'], false);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('module名のフィルタタグ', {
+	module('モジュール名のフィルタタグ', {
 		setup: function() {
 			$.extend(H5_TEST_ENV.filter, {
 				build: 'min',
@@ -314,36 +284,24 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('モジュール名のフィルタタグが条件を満たす場合', function() {
+	test('モジュール名のフィルタタグが条件を満たす場合はテスト名に関わらずスキップ', function() {
 		this.originalCurrent = QUnit.config.current;
 		var moduleName = '[build#min]';
 		var stats = {
 			name: moduleName
 		};
 		checkModuleFilterTag(stats);
-		var filterDescs = ['スキップされる'];
-		checkTestSkips.call(this, filterDescs, true, null, moduleName);
+		checkTestSkips.call(this, '', true, null, moduleName);
 	});
 
-	test('モジュール名のフィルタタグが条件を満たさない場合', function() {
+	test('モジュール名のフィルタタグが条件を満たさない場合はテスト名で判定される', function() {
 		this.originalCurrent = QUnit.config.current;
 		var moduleName = '[build#dev]';
 		var stats = {
 			name: moduleName
 		};
 		checkModuleFilterTag(stats);
-		var filterDescs = ['スキップされない'];
-		checkTestSkips.call(this, filterDescs, false, null, moduleName);
-	});
-
-	test('モジュール名のフィルタタグが条件を満たさない場合でもテスト名のフィルタタグが条件を満たす場合', function() {
-		this.originalCurrent = QUnit.config.current;
-		var moduleName = '[build#dev]';
-		var stats = {
-			name: moduleName
-		};
-		checkModuleFilterTag(stats);
-		var filterDescs = ['[browser#ie] スキップされる'];
-		checkTestSkips.call(this, filterDescs, true, null, moduleName);
+		checkTestSkips.call(this, '', false, null, moduleName);
+		checkTestSkips.call(this, '[browser#ie]', true, null, moduleName);
 	});
 });
