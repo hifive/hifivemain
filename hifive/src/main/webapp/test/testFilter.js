@@ -309,10 +309,10 @@
 	 */
 	function skipTest(current, stats) {
 		current.testEnvironment.setup = function() {
-		//
+		// テストをスキップするときは、setup,teardownを実行しないので空のfunctionを代入
 		};
 		current.testEnvironment.teardown = function() {
-		//
+		// 空のfunctionを代入
 		};
 		current.callback = function() {
 			expect(0);
