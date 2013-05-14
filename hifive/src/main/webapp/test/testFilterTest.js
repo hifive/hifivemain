@@ -146,6 +146,7 @@ $(function() {
 		});
 		checkTestSkips.call(this, 'ie', true, this.createDesc);
 	});
+
 	test('ブラウザ名(ie)にフィルタタグがマッチしない場合、テストがスキップされないこと', function() {
 		this.originalCurrent = QUnit.config.current;
 		$.extend(H5_TEST_ENV.filter, {
@@ -213,6 +214,28 @@ $(function() {
 		});
 		checkTestSkips.call(this, ['ie:8:docmode=8', 'ie:8:docmode=8-', 'ie:8:docmode=-6'], false,
 				this.createDesc);
+	});
+
+	test('複数のブラウザ条件指定を"|"区切りで記述した場合、いずれかがマッチすればテストがスキップされること', function() {
+		this.originalCurrent = QUnit.config.current;
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'ie',
+			browserversion: '8',
+			docmode: '7'
+		});
+		checkTestSkips.call(this, ['ff|ie|ch', 'ie:7|ie:8', 'ie:8:docmode=7|ie:8:docmode=Edge'],
+				true, this.createDesc);
+	});
+
+	test('複数のブラウザ指定を"|"区切りで記述した場合、いずれもマッチしなければテストがスキップされないこと', function() {
+		this.originalCurrent = QUnit.config.current;
+		$.extend(H5_TEST_ENV.filter, {
+			browserprefix: 'ie',
+			browserversion: '8',
+			docmode: '7'
+		});
+		checkTestSkips.call(this, ['ff|sa|ch', 'ie:7|ie:9', 'ie:8:docmode=6|ie:8:docmode=Edge'],
+				false, this.createDesc);
 	});
 
 	//=============================
@@ -348,13 +371,14 @@ $(function() {
 		}
 	});
 
-	test('カンマ区切りでバージョン指定を複数記述した場合、いずれかに一致したらmatchVersion()がtrueを返すこと', function() {
-		var descs = ['2,4', '3-,2'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
-			strictEqual(h5testFilterTest.matchVersion(descs[i], '2'), true, descs[i]
-					+ 'は"2"にマッチする');
-		}
-	});
+	test('カンマ区切りでバージョン指定を複数記述した場合、いずれかに一致したらmatchVersion()がtrueを返すこと',
+			function() {
+				var descs = ['2,4', '3-,2'];
+				for ( var i = 0, l = descs.length; i < l; i++) {
+					strictEqual(h5testFilterTest.matchVersion(descs[i], '2'), true, descs[i]
+							+ 'は"2"にマッチする');
+				}
+			});
 
 	test('カンマ区切りでバージョン指定を複数記述した場合、いずれにも一致しなかったらmatchVersion()がfalseを返すこと', function() {
 		var descs = ['1,3,4'];
@@ -383,7 +407,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('カンマ区切りで複数条件を記述', {
+	module('セミコロン区切りで複数条件を記述', {
 		setup: function() {
 			$.extend(H5_TEST_ENV.filter, {
 				build: 'min',
