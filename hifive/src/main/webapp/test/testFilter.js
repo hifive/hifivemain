@@ -52,72 +52,137 @@
 	// チェック関数で使用する共通関数・変数
 	//------------------------------------------------------------------------------------
 	/**
+	 * バージョンの範囲指定記述をパースする
+	 */
+	function parseVersion(version) {
+		version = $.trim(version);
+
+		// allは0-のショートカット
+		if (version === 'all') {
+			version = '0-';
+		}
+
+		// 範囲指定
+		if (version.indexOf('-') !== -1) {
+			var tmp = version.split('-');
+			var min = tmp[0];
+			var max = tmp[1];
+			var parsedMin = min ? min.split('.') : null;
+			var parsedMax = max ? max.split('.') : null;
+			if (!parsedMin && !parsedMax) {
+				return null;
+			}
+			return {
+				min: parsedMin,
+				max: parsedMax
+			};
+		} else {
+			return {
+				eq: version.split('.')
+			};
+		}
+	}
+
+	/**
+	 * バージョンが範囲に入っているかどうか
+	 */
+	function isIncluded(version, versionRange) {
+		var versionAry = version.split('.');
+
+		var eq = versionRange.eq;
+		if (eq) {
+			// 範囲指定でない場合
+			// versionRange.eq が versionに一致するかどうか。
+			// 12.3が'12.3.4'に前方で一致するような場合もtrueを返す。
+			for ( var i = 0, l = eq.length; i < l; i++) {
+				if (eq[i] !== versionAry[i]) {
+					return false;
+				}
+			}
+			return true;
+		} else {
+			// 範囲指定
+			var min = versionRange.min;
+			var max = versionRange.max;
+			var minNoCheck = !min;
+			var maxNoCheck = !max;
+
+			// 各桁について範囲内に入っているかどうか比較
+			// minとmaxの有効桁数は揃えてある、または片方が指定無しを想定している
+			// 11-12.3 のような指定はできない
+			var l = minNoCheck ? max.length : min.length;
+			for ( var i = 0; i < l; i++) {
+				var curMin = minNoCheck ? 0 : parseInt(min[i]);
+				var curMax = maxNoCheck ? 0 : parseInt(max[i]);
+				var curVersion = parseInt(versionAry[i] || 0);
+
+				var minOK = minNoCheck || curMin <= curVersion;
+				var maxOK = maxNoCheck || curVersion <= curMax;
+				if (minOK && maxOK) {
+					if (curMin < curVersion) {
+						minNoCheck = true;
+					}
+					if (curVersion < curMax) {
+						maxNoCheck = true;
+					}
+					if (maxNoCheck && minNoCheck) {
+						return true;
+					}
+					continue;
+				}
+				return false;
+			}
+			return true;
+		}
+	}
+
+
+	/**
 	 * バージョンがマッチするかどうか判定する。
 	 */
-	function matchVersions(versions, envVersionFull) {
-		// ','区切りで複数指定されている場合はorでチェック
-		var versionsAry = versions.split(',');
-		for ( var i = 0, l = versionsAry.length; i < l; i++) {
-			if (matchVersion(versionsAry[i], envVersionFull)) {
+	function matchVersion(versionDescs, envVersionFull) {
+		versionDescs = $.trim(versionDescs);
+		if (!envVersionFull || !versionDescs) {
+			return false;
+		}
+		// カンマ指定で複数指定されたいずれかにマッチしたらtrueを返す
+		var versionsDescsAry = versionDescs.split(',');
+		for ( var i = 0, l = versionsDescsAry.length; i < l; i++) {
+			// パースして、範囲内に入っているかどうか判定
+			var version = versionsDescsAry[i];
+			var versionRange = parseVersion(version);
+			if (isIncluded(envVersionFull, versionRange)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	function matchVersion(version, envVersionFull) {
-		version = $.trim(version);
-		var envVersionFullAry = envVersionFull.split('.');
-		var envMajorVersion = envVersionFullAry[0];
-		// 範囲指定
-		if (version === 'all') {
-			version = '0-';
+	/**
+	 * docmodeがマッチするかどうか判定する
+	 */
+	function matchDocmode(docmodeDescs, envDocmode) {
+		docmodeDescs = $.trim(docmodeDescs);
+		if (!envDocmode || !docmodeDescs) {
+			return false;
 		}
-		if (version.indexOf('-') !== -1) {
-			var tmp = version.split('-');
-			var min = tmp[0];
-			var max = tmp[1];
-			var maxNoCheck = max === '';
-			var minNoCheck = min === '';
-			if (maxNoCheck && minNoCheck) {
-				return true;
-			}
-			if (min.indexOf('.') !== -1) {
-				min = min.split('.');
-				max = max.split('.');
-				// min-max指定時に、マイナーバージョンも含む場合は、有効桁数を揃えて書いてある前提で処理する(2.3.1-3.2のような書き方はダメ)
-				for ( var i = 0, l = min.length; i < l; i++) {
-					var curMin = parseInt(min[i]);
-					var curMax = parseInt(max[i]);
-					var curVersion = parseInt(envVersionFullAry[i]);
-
-					var minOK = minNoCheck || curMin <= curVersion;
-					var maxOK = maxNoCheck || curVersion <= curMax;
-					if (minOK && maxOK) {
-						if (curMin < curVersion) {
-							minNoCheck = true;
-						}
-						if (curVersion < curMax) {
-							maxNoCheck = true;
-						}
-						if (maxNoCheck && minNoCheck) {
-							return true;
-						}
-						continue;
-					}
-					return false;
+		// カンマ指定で複数指定されたいずれかにマッチしたらtrueを返す
+		var docmodesDescsAry = docmodeDescs.split(',');
+		for ( var i = 0, l = docmodesDescsAry.length; i < l; i++) {
+			var docmode = docmodesDescsAry[i];
+			if (docmode && docmode.toLowerCase() === 'edge') {
+				// edge指定ならパースせずに判定
+				if (envDocmode.toLowerCase() === 'edge') {
+					return true;
 				}
+				continue;
+			}
+			// パースして、範囲内に入っているかどうか判定
+			var docmodeRange = parseVersion(docmode);
+			if (isIncluded(envDocmode, docmodeRange)) {
 				return true;
 			}
-			return (minNoCheck || parseInt(min) <= envMajorVersion)
-					&& (maxNoCheck || envMajorVersion <= parseInt(max));
 		}
-
-		// 単一指定または複数指定
-		if (envVersionFull.indexOf(version) === 0) {
-			return true;
-		}
-
 		return false;
 	}
 
@@ -149,7 +214,7 @@
 		for ( var i = 0, l = jqueryFilters.length; i < l; i++) {
 			var desc = jqueryFilters[i];
 
-			if (matchVersions(desc, env.jquery)) {
+			if (matchVersion(desc, env.jquery)) {
 				return true;
 			}
 		}
@@ -170,7 +235,7 @@
 			if ($.trim(desc[0]) !== env.browserprefix) {
 				continue;
 			}
-			if (!matchVersions(desc[1], env.browserversion)) {
+			if (!matchVersion(desc[1], env.browserversion)) {
 				continue;
 			}
 
@@ -187,7 +252,7 @@
 				var val = $.trim(tmp[1]);
 				if (key === 'docmode') {
 					// docmodeなら数値で比較
-					if (!matchVersions(val, env.docmode)) {
+					if (!matchDocmode(val, env.docmode)) {
 						break;
 					}
 				} else if (new String(env[key]).toLowerCase() !== val.toLowerCase()) {
@@ -207,8 +272,7 @@
 	// body
 	//------------------------------------------------------------------------------------
 	/**
-	 * テスト名からフィルタタグ部分をパースしてオブジェクトにして返す。
-	 * フィルタタグの指定がない場合はnullを返す
+	 * テスト名からフィルタタグ部分をパースしてオブジェクトにして返す。 フィルタタグの指定がない場合はnullを返す
 	 */
 	function createFilterObj(name) {
 		var testConditionDesc = name.match(/^\[.*?\]/);
@@ -275,8 +339,7 @@
 	}
 
 	/**
-	 * moduleStartにpushする、関数。
-	 * スキップするかどうかを判定し、moduleConditionに判定結果を覚えておく
+	 * moduleStartにpushする、関数。 スキップするかどうかを判定し、moduleConditionに判定結果を覚えておく
 	 */
 	function checkModuleFilterTag(stats) {
 		// パースしたオブジェクトの生成

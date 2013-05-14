@@ -33,13 +33,22 @@ $(function() {
 	// Variables
 	//=============================
 
-	// testFilter関数の取り出し
-	// testFilterがtestStartの何番目に入っているか。環境が変わったらここを変更する。
-	var testFilterFunctionIndex = 0;
-	var doFilter = QUnit.config.testStart[testFilterFunctionIndex];
+	// checkTestFilterTag関数の取り出し
+	// checkTestFilterTagがtestStartの何番目に入っているか。環境が変わったらここを変更する。
+	var testStartIndex = 0;
+	var checkTestFilterTag = QUnit.config.testStart[testStartIndex];
 
 	// testFilter関数の削除
-	QUnit.config.testStart.splice(testFilterFunctionIndex, 1);
+	QUnit.config.testStart.splice(testStartIndex, 1);
+
+
+	// checkModuleFilterTag関数の取り出し
+	// checkTestFilterTagがmoduleStartの何番目に入っているか。環境が変わったらここを変更する。
+	var moduleStartIndex = 0;
+	var checkModuleFilterTag = QUnit.config.testStart[moduleStartIndex];
+	// testFilter関数の削除
+	QUnit.config.moduleStart.splice(moduleStartIndex, 1);
+
 
 	// もともと設定してあるfilterのパラメータを削除(H5_TEST_ENV.filterが指す参照先は変えないようにする)
 	if (H5_TEST_ENV && H5_TEST_ENV.filter) {
@@ -61,7 +70,7 @@ $(function() {
 	/**
 	 * 指定された記述でテストがスキップされるかどうかチェックする
 	 */
-	function checkSkips(filterDescs, result, each) {
+	function checkTestSkips(filterDescs, result, each) {
 		var stats = {
 			module: ''
 		};
@@ -71,7 +80,7 @@ $(function() {
 			var current = QUnit.config.current = {
 				testEnvironment: {}
 			};
-			doFilter(stats);
+			checkTestFilterTag(stats);
 			QUnit.config.current = this.originalCurrent;
 			ok(isSkipped(current) === result, filterDesc);
 		}
@@ -83,14 +92,18 @@ $(function() {
 	//
 	// =========================================================================
 
+	// TODO moduleに書いたテストフィルタが優先されることを確認するテスト
+
+	// TODO ブラウザ(docmodeあり、なし、Edge)、jQueryのバージョン、build のテスト
+
 	//=============================
 	// Definition
 	//=============================
-	module('ie6', {
+	module('ie8', {
 		setup: function() {
 			$.extend(H5_TEST_ENV.filter, {
 				browserprefix: 'ie',
-				browserversion: '6',
+				browserversion: '8',
 				docmode: 'Edge'
 			});
 		},
@@ -103,9 +116,53 @@ $(function() {
 	test('スキップされるもの', function() {
 		try {
 			this.originalCurrent = QUnit.config.current;
-			var filterDescs = ['ie:6', 'ie:6-', 'ie:-6', 'ie:-7', 'ie:6-7', 'ie:6,7', 'ie:7,6',
-					'ie:all'];
-			checkSkips.call(this, filterDescs, true, function(name) {
+			var filterDescs = ['ie:8', 'ie:7-', 'ie:8-', 'ie:-8', 'ie:-8.1', 'ie:-9', 'ie:8-9',
+					'ie:7-9', 'ie:6,8', 'ie:8|ff:10', 'ie:all', 'ie:8:docmode=Edge'];
+			checkTestSkips.call(this, filterDescs, true, function(name) {
+				return '[browser#' + name + ']';
+			});
+		} finally {
+			QUnit.config.current = this.originalCurrent;
+		}
+	});
+
+	test('スキップされないもの',
+			function() {
+				try {
+					this.originalCurrent = QUnit.config.current;
+					var filterDescs = ['ie:7', 'ie:88', 'ie:9-', 'ie:-7', 'ie:8.1-', 'ie-wp:all',
+							'ie:7,9'];
+					checkTestSkips.call(this, filterDescs, false, function(name) {
+						return '[browser#' + name + ']';
+					});
+				} finally {
+					QUnit.config.current = this.originalCurrent;
+				}
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ie8:docmode=7', {
+		setup: function() {
+			$.extend(H5_TEST_ENV.filter, {
+				browserprefix: 'ie',
+				browserversion: '8',
+				docmode: '7'
+			});
+		},
+		originalCurrent: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('スキップされるもの', function() {
+		try {
+			this.originalCurrent = QUnit.config.current;
+			var filterDescs = ['ie:8:docmode=7', 'ie:7-9:docmode=7', 'ie:8:docmode=7-',
+					'ie:8:docmode=-9'];
+			checkTestSkips.call(this, filterDescs, true, function(name) {
 				return '[browser#' + name + ']';
 			});
 		} finally {
@@ -116,8 +173,9 @@ $(function() {
 	test('スキップされないもの', function() {
 		try {
 			this.originalCurrent = QUnit.config.current;
-			var filterDescs = ['ie:7', 'ie:7-', 'ie:-5', 'ie-wp:all', 'ie:5,7'];
-			checkSkips.call(this, filterDescs, false, function(name) {
+			var filterDescs = ['ie:8:docmode=6', 'ie:9:docmode=7', 'ie:8:docmode=8-',
+					'ie:8:docmode=-6'];
+			checkTestSkips.call(this, filterDescs, false, function(name) {
 				return '[browser#' + name + ']';
 			});
 		} finally {
