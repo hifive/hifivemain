@@ -50,19 +50,21 @@
 	// チェック関数で使用する共通関数・変数
 	//------------------------------------------------------------------------------------
 	/**
-	 * バージョンの範囲指定記述をパースする
+	 * バージョンの範囲指定記述をパースする<br>
+	 * min,maxを持つオブジェクトを返す。min,maxはバージョン表記を配列化したものを返す<br>
+	 * ex. '2.3-3.4' -> {min:['2','3'], max:['3','4']}
 	 */
-	function parseRange(version) {
-		version = $.trim(version);
+	function parseRange(rangeDesc) {
+		rangeDesc = $.trim(rangeDesc);
 
 		// allは0-のショートカット
-		if (version === 'all') {
-			version = '0-';
+		if (rangeDesc === 'all') {
+			rangeDesc = '0-';
 		}
 
 		// 範囲指定
-		if (version.indexOf('-') !== -1) {
-			var tmp = version.split('-');
+		if (rangeDesc.indexOf('-') !== -1) {
+			var tmp = rangeDesc.split('-');
 			var min = tmp[0];
 			var max = tmp[1];
 			var parsedMin = min ? min.split('.') : null;
@@ -76,18 +78,18 @@
 			};
 		}
 		return {
-			min: version.split('.'),
-			max: version.split('.')
+			min: rangeDesc.split('.'),
+			max: rangeDesc.split('.')
 		};
 	}
 
 	/**
-	 * バージョンが範囲に入っているかどうか
+	 * 指定された値が範囲に含まれているかどうか
 	 */
-	function isIncluded(version, versionRange) {
-		var versionAry = version.split('.');
-		var min = versionRange.min;
-		var max = versionRange.max;
+	function isIncluded(value, rangeCondition) {
+		var valueAry = value.split('.');
+		var min = rangeCondition.min;
+		var max = rangeCondition.max;
 		var minNoCheck = !min;
 		var maxNoCheck = !max;
 
@@ -98,7 +100,7 @@
 		for ( var i = 0; i < l; i++) {
 			var curMin = minNoCheck ? 0 : parseInt(min[i]);
 			var curMax = maxNoCheck ? 0 : parseInt(max[i]);
-			var curVersion = parseInt(versionAry[i] || 0);
+			var curVersion = parseInt(valueAry[i] || 0);
 
 			var minOK = minNoCheck || curMin <= curVersion;
 			var maxOK = maxNoCheck || curVersion <= curMax;
@@ -151,16 +153,18 @@
 		if (!envDocmode || !docmodeDescs) {
 			return false;
 		}
+		var isEdge = envDocmode.toLowerCase() === 'edge';
 		// カンマ指定で複数指定されたいずれかにマッチしたらtrueを返す
 		var docmodesDescsAry = docmodeDescs.split(',');
 		for ( var i = 0, l = docmodesDescsAry.length; i < l; i++) {
 			var docmode = docmodesDescsAry[i];
-			if (docmode && docmode.toLowerCase() === 'edge') {
-				// edge指定ならパースせずに判定
-				if (envDocmode.toLowerCase() === 'edge') {
-					return true;
-				}
-				continue;
+			// edge指定ならパースせずに判定
+			if (isEdge && docmode.toLowerCase() === 'edge') {
+				return true;
+			}
+			// all指定ならtrue。パースせずにここで判定する。(Edgeの場合もtrueを返すため)
+			if (docmode.toLowerCase() === 'all') {
+				return true;
 			}
 			// パースして、範囲内に入っているかどうか判定
 			var docmodeRange = parseRange(docmode);
@@ -371,4 +375,14 @@
 	 * テスト実行時にフィルタタグの判定をする
 	 */
 	QUnit.config.testStart.push(checkTestFilterTag);
+
+	if (H5_TEST_ENV.testFilterTestFlag) {
+		// テストフィルタのテストのために、フラグが立っていたらテストで使用する関数をexposeする
+		window.h5testFilterTest = window.h5testFilterTest || {};
+		$.extend(window.h5testFilterTest, {
+			parseConditions: parseConditions,
+			matchVersion: matchVersion,
+			matchDocmode: matchDocmode
+		});
+	}
 })();
