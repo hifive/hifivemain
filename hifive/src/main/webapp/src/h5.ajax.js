@@ -55,7 +55,7 @@
 	 *
 	 * @type {Array}
 	 */
-	var hookMethods = ['done', 'fail', 'pipe', 'always', 'then', 'success', 'error', 'complete'];
+	var HOOK_METHODS = ['done', 'fail', 'pipe', 'always', 'then', 'success', 'error', 'complete'];
 
 	/**
 	 * ajaxの引数のオブジェクトでコールバックが記述されるプロパティ<br>
@@ -63,7 +63,7 @@
 	 *
 	 * @type {Array}
 	 */
-	var propCallbacks = ['complete', 'error', 'success'];
+	var CALLBACK_REGISTER_DELEGATE_MAP = ['complete', 'error', 'success'];
 
 	/**
 	 * コールバック指定プロパティと、コールバック登録関数を対応させるオブジェクト
@@ -75,7 +75,7 @@
 	 *
 	 * @type Object
 	 */
-	var propToMethod = {
+	var PROP_TO_METHOD_MAP = {
 		success: 'done',
 		error: 'fail',
 		complete: 'always'
@@ -83,25 +83,6 @@
 	// =============================
 	// Functions
 	// =============================
-	/**
-	 * フックしたコールバック登録関数を、オリジナルのjqXHRの関数を呼んでjqXHRWrapperを返すようにする
-	 *
-	 * @private
-	 * @param {JqXHRWrapper} jqXHRWrapper
-	 * @param {Object} thisObject コールバック内のthisにするオブジェクト
-	 */
-	function restoreHookedMethod(jqXHRWrapper, thisObject) {
-		for ( var i = 0, l = hookMethods.length; i < l; i++) {
-			var method = hookMethods[i];
-			jqXHRWrapper[method] = (function(_method) {
-				return function() {
-					jqXHRWrapper._jqXHR[_method].apply(thisObject, arguments);
-					return jqXHRWrapper;
-				};
-			})(method);
-		}
-	}
-
 	/**
 	 * ストックしたコールバック登録を引数に指定されたjqXHRに対して行う関数<br>
 	 * jqXHRWrapperから登録されたコールバックはストックされている。
@@ -151,29 +132,6 @@
 	}
 
 	/**
-	 * jqXHRWrapper._jqXHRを差し替えて、ラッパーが持つjqXHRのプロパティも差し替える<br>
-	 * 関数(オリジナルを呼ぶ関数と、フックしている関数)はそのまま
-	 *
-	 * @private
-	 * @param {JqXHRWrapper} jqXHRWrapper
-	 * @param {Object} jqXHR
-	 */
-	function replaceJqXHR(jqXHRWrapper, jqXHR) {
-		if (jqXHRWrapper._jqXHR === jqXHR) {
-			return;
-		}
-		jqXHRWrapper._jqXHR = jqXHR;
-		for ( var prop in jqXHR) {
-			if (!jqXHR.hasOwnProperty(prop)) {
-				continue;
-			}
-			if (!$.isFunction(jqXHR[prop])) {
-				jqXHRWrapper[prop] = jqXHR[prop];
-			}
-		}
-	}
-
-	/**
 	 * ajaxの引数に指定されたコールバックを指定するプロパティを外し、ストックする
 	 *
 	 * @private
@@ -181,19 +139,65 @@
 	 * @param {Array} stockedCallbacks コールバック関数をストックする配列
 	 */
 	function stockPropertyCallbacks(settings, stockedCallbacks) {
-		for ( var i = 0, l = propCallbacks.length; i < l; i++) {
-			var prop = propCallbacks[i];
+		for ( var i = 0, l = CALLBACK_REGISTER_DELEGATE_MAP.length; i < l; i++) {
+			var prop = CALLBACK_REGISTER_DELEGATE_MAP[i];
 			if (settings[prop]) {
 				// プロパティで指定されたコールバックはfailやdoneで指定したコールバックより先に実行されるのでunshiftでストック
-				// (propCallbacksは実行されるタイミングと逆順で記述しているので、unshiftによる追加で順番通りになる)
+				// (CALLBACK_REGISTER_DELEGATE_MAPは実行されるタイミングと逆順で記述しているので、unshiftによる追加で順番通りになる)
 				stockedCallbacks.unshift({
-					method: propToMethod[prop],
+					method: PROP_TO_METHOD_MAP[prop],
 					args: wrapInArray(settings[prop])
 				});
 				settings[prop] = undefined;
 			}
 		}
 	}
+
+	/**
+	 * jqXHRのプロパティをjqXHRWrapperにコピーする
+	 * <p>
+	 * hookEnableがtrueならコールバック登録関数をフックして呼び出しをストックするようにする。ストック先はstockedCallbacksに指定する。
+	 * </p>
+	 *
+	 * @private
+	 * @param {JqXHRWrapper} jqXHRWrapper
+	 * @param {Object} jqXHR
+	 * @param {Boolean} enableHookMethods コールバック登録関数をフックするか
+	 * @param {Array} stockedCallbacks フックしたコールバック関数呼び出しをストックしておく配列
+	 */
+	function copyJqXHRProperty(jqXHRWrapper, jqXHR, enableHookMethods, stockedCallbacks) {
+		// jqXHRの中身をコピー
+		// 関数プロパティならapplyでオリジナルのjqXHRの関数を呼ぶ関数にする
+		for ( var prop in jqXHR) {
+			if (jqXHR.hasOwnProperty(prop)) {
+				if (enableHookMethods && $.inArray(prop, HOOK_METHODS) !== -1) {
+					// コールバック登録関数をフックして、コールバックをストックする関数に差し替え
+					jqXHRWrapper[prop] = (function(_method) {
+						return function() {
+							stockedCallbacks.push({
+								method: _method,
+								args: arguments
+							});
+							return jqXHRWrapper;
+						};
+					})(prop);
+				} else {
+					// フックしないプロパティなら値をコピー
+					jqXHRWrapper[prop] = jqXHR[prop];
+				}
+			}
+		}
+		/**
+		 * オリジナルのjqXHR
+		 *
+		 * @private
+		 * @memberOf JqXHRWrapper
+		 * @type jqXHR
+		 * @name _jqXHR
+		 */
+		jqXHRWrapper._jqXHR = jqXHR;
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -210,44 +214,8 @@
 	 * @name JqXHRWrapper
 	 */
 	function JqXHRWrapper(jqXHR, stockedCallbacks) {
-		// jqXHRの中身をコピー
-		// 関数プロパティならapplyでオリジナルのjqXHRの関数を呼ぶ関数にする
-		var that = this;
-		for ( var prop in jqXHR) {
-			if (jqXHR.hasOwnProperty(prop)) {
-				if ($.isFunction(jqXHR[prop])) {
-					if ($.inArray(prop, hookMethods) !== -1) {
-						// コールバック登録関数をフックして、コールバックをストックする関数に差し替え
-						this[prop] = (function(_method) {
-							return function() {
-								stockedCallbacks.push({
-									method: _method,
-									args: arguments
-								});
-								return that;
-							};
-						})(prop);
-					} else {
-						// コールバック登録関数以外の関数は、オリジナルを呼ぶ関数に差し替え
-						this[prop] = function(/* var_args */) {
-							return jqXHR.apply(jqXHR, arguments);
-						};
-					}
-				} else {
-					// 関数でないプロパティなら値をコピー
-					this[prop] = jqXHR[prop];
-				}
-			}
-		}
-		/**
-		 * オリジナルのjqXHR
-		 *
-		 * @private
-		 * @memberOf JqXHRWrapper
-		 * @type jqXHR
-		 * @name _jqXHR
-		 */
-		this._jqXHR = jqXHR;
+		// オリジナルのjqXHRから値をコピー
+		copyJqXHRProperty(this, jqXHR, true, stockedCallbacks);
 	}
 
 	/**
@@ -266,7 +234,7 @@
 	 * <h3>リトライオプション</h3>
 	 * <p>
 	 * <a href="h5.settings.html#ajax">h5.settings.ajax</a>でリトライをする設定がしてあれば、リトライを行います(デフォルトはリトライを行わない)。<br>
-	 * また、引数でretryCountとretryIntervalを指定することができ、h5.settings.ajaxの設定よりも優先します。
+	 * また、引数からもリトライの設定を指定することができ、h5.settings.ajaxの設定よりも優先します。
 	 * </p>
 	 * <code><pre>
 	 * h5.ajax({
@@ -274,6 +242,7 @@
 	 * 	cache: false		// jQuery.ajaxのオプション
 	 * 	retryCount: 3,		// h5.ajaxで追加しているオプション。リトライ回数。
 	 * 	retryInterval: 200	// h5.ajaxで追加しているオプション。リトライ間のインターバル。
+	 * 	retryFilter: function()		// h5.ajaxで追加しているオプション。リトライ毎に実行される関数。
 	 * });
 	 * </pre></code>
 	 * <p>
@@ -292,25 +261,18 @@
 	function ajax(/* var_args */) {
 		// $.ajax(settings)での呼び出しに統一する。
 		var settings = {};
-		if (isString(arguments[0])) {
+		var args = arguments;
+		if (isString(args[0])) {
 			// ajax(url,[settings]) での呼び出しなら、settings.urlを追加する。
-			$.extend(settings, arguments[1]);
+			$.extend(settings, args[1]);
 			// 第1引数のurlがsettings.urlより優先される($.ajaxと同じ)
-			settings.url = arguments[0];
+			settings.url = args[0];
 		} else {
 			// 第一引数がurlでないならsettingsにsettingsをクローン
-			$.extend(settings, arguments[0]);
+			$.extend(settings, args[0]);
 		}
-		// settings.ajaxとマージ
+		// h5.settings.ajaxとマージ
 		settings = $.extend({}, h5.settings.ajax, settings);
-
-		// リトライについてのパラメータ取得
-		var retryCount = settings.retryCount || 0;
-		var retryInterval = settings.retryInterval;
-		var retryFilter = settings.retryFilter;
-
-		// errorコールバックが設定されているか
-		settings.isSetErrorCallback = !!(settings.error || settings.complete);
 
 		// settingsに指定されたコールバックを外して、ストックする
 		var stockedCallbacks = [];
@@ -329,9 +291,7 @@
 		 */
 		function retryDone(_data, _textStatus, _jqXHR) {
 			// jqXHRの差し替え
-			replaceJqXHR(jqXHRWrapper, _jqXHR);
-			// フックした関数を元に戻す
-			restoreHookedMethod(jqXHRWrapper, this);
+			copyJqXHRProperty(jqXHRWrapper, _jqXHR);
 			// ストックしたコールバックを今回のjqXHRに登録
 			registCallback(_jqXHR, stockedCallbacks);
 		}
@@ -342,26 +302,24 @@
 		 */
 		function retryFail(_jqXHR, _textStatus, _errorThrown) {
 			// jqXHRの差し替え
-			replaceJqXHR(jqXHRWrapper, _jqXHR);
-			if (retryCount === 0 || retryFilter.apply(this, arguments) === false) {
+			copyJqXHRProperty(jqXHRWrapper, _jqXHR);
+			if (settings.retryCount === 0 || settings.retryFilter.apply(this, arguments) === false) {
 				// retryFilterがfalseを返した、
 				// またはこれが最後のリトライ、
 				// またはリトライ指定のない場合、
 				// ストックしたコールバックを今回のjqXHRに登録して終了
 
-				// フックした関数を元に戻す
-				restoreHookedMethod(jqXHRWrapper, this);
 				// ストックしたコールバックを今回のjqXHRに登録
 				registCallback(_jqXHR, stockedCallbacks);
 				return;
 			}
-			retryCount--;
+			settings.retryCount--;
 			if (this.async) {
 				// 非同期ならretryIntervalミリ秒待機してリトライ
 				var that = this;
 				setTimeout(function() {
 					_ajax(that).done(retryDone).fail(retryFail);
-				}, retryInterval);
+				}, settings.retryInterval);
 			} else {
 				// 同期なら即リトライする
 				// (同期で呼ばれたらリトライ指定があっても同期になるようにするためretryIntervalは無視する)
