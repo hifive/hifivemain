@@ -36,7 +36,7 @@ $(function() {
 	/**
 	 * commonFailHandlerが実行されるかどうかを待機する時間
 	 */
-	var timeoutTime = 5000;
+	var COMMON_FAIL_HANDLER_WAIT = 5000;
 
 	//=============================
 	// Functions
@@ -189,7 +189,7 @@ $(function() {
 			// timerが止められてない = commonFailHandlerに入ってないので失敗
 			ok(false);
 			start();
-		}, timeoutTime);
+		}, COMMON_FAIL_HANDLER_WAIT);
 
 		h5.settings.commonFailHandler = function() {
 			// タイマーを止める
@@ -590,7 +590,7 @@ $(function() {
 			// timerが止められてない = commonFailHandlerに入ってないので失敗
 			ok(false);
 			start();
-		}, timeoutTime);
+		}, COMMON_FAIL_HANDLER_WAIT);
 
 		h5.settings.commonFailHandler = function() {
 			// タイマーを止める
