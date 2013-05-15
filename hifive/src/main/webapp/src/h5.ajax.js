@@ -36,7 +36,6 @@
 
 	/* del end */
 
-
 	// =========================================================================
 	//
 	// Cache
@@ -51,19 +50,26 @@
 	// Variables
 	// =============================
 	/**
-	 * フックするjqXHRのコールバック登録関数
+	 * JqXHRWrapperに持たせる、deferredからコピーするプロパティ(コールバック登録関数、promise)
 	 *
 	 * @type {Array}
 	 */
-	var HOOK_METHODS = ['done', 'fail', 'pipe', 'always', 'then', 'success', 'error', 'complete'];
+	var DEFERRED_METHODS = ['done', 'fail', 'pipe', 'always', 'then', 'promise'];
+
+	/**
+	 * jqXHRからJqXHRWrapperにコピーしないプロパティ jqXHRのメソッドで非推奨であるもの。(deferredにないもの)
+	 *
+	 * @type {Array}
+	 */
+	var PROP_NO_COPY = ['error', 'success', 'complete'];
 
 	/**
 	 * ajaxの引数のオブジェクトでコールバックが記述されるプロパティ<br>
-	 * コールバックの実行されるタイミング順と逆順で記述(completeが一番遅いタイミングで実行されるので、先頭に記述)
+	 * コールバックの実行されるタイミング順に記述(completeが一番遅いタイミングで実行されるので最後)
 	 *
 	 * @type {Array}
 	 */
-	var CALLBACK_REGISTER_DELEGATE_MAP = ['complete', 'error', 'success'];
+	var CALLBACK_REGISTER_DELEGATE_MAP = ['error', 'success', 'complete'];
 
 	/**
 	 * コールバック指定プロパティと、コールバック登録関数を対応させるオブジェクト
@@ -84,70 +90,17 @@
 	// Functions
 	// =============================
 	/**
-	 * ストックしたコールバック登録を引数に指定されたjqXHRに対して行う関数<br>
-	 * jqXHRWrapperから登録されたコールバックはストックされている。
-	 * 既にreject,resolveされたjqXHRにストックされたコールバックを登録すると、即座にコールバックが実行される。
-	 * commonFailHandlerが定義されていてかつエラーコールバックが登録されていないならcommonFailHandlerを登録する
-	 *
-	 * @private
-	 * @param {jqXHR} _jqXHR
-	 * @param {Array} stockedCallbacks 登録するコールバックオブジェクトの配列
-	 */
-	function registCallback(_jqXHR, stockedCallbacks) {
-		var hasErrorCallback = false;
-		var commonFailHandler = h5.settings.commonFailHandler;
-
-		// ストックしたコールバックを登録
-		for ( var i = 0, l = stockedCallbacks.length; i < l; i++) {
-			var method = stockedCallbacks[i].method;
-			var args = stockedCallbacks[i].args;
-			// commonFailHandlerがあるなら、エラーコールバックへの登録があるかどうかチェック
-			if (commonFailHandler && !hasErrorCallback) {
-				switch (method) {
-				case 'fail':
-				case 'error':
-				case 'always':
-				case 'complete':
-					hasErrorCallback = true;
-					hasErrorCallback = true;
-					break;
-				case 'pipe':
-				case 'then':
-					// pipeとthenによる登録なら第2引数を見る
-					if (!!args[1]) {
-						hasErrorCallback = true;
-					}
-					break;
-				}
-			}
-			// オリジナルのjqXHRに関数を登録。resolve,reject済みなら即発火する。
-			_jqXHR[method].apply(_jqXHR, args);
-		}
-		// commonFailHandlerがあって、エラーコールバックへの登録がないならcommonFailHandlerを登録する
-		if (commonFailHandler && !hasErrorCallback) {
-			_jqXHR.fail(function(/* var_args */) {
-				commonFailHandler.apply(this, arguments);
-			});
-		}
-	}
-
-	/**
-	 * ajaxの引数に指定されたコールバックを指定するプロパティを外し、ストックする
+	 * ajaxの引数に指定されたコールバックを指定するプロパティを外して、deferredに登録する
 	 *
 	 * @private
 	 * @param {Object} settings ajaxに渡すオブジェクト
-	 * @param {Array} stockedCallbacks コールバック関数をストックする配列
+	 * @param {Deferred} dfd
 	 */
-	function stockPropertyCallbacks(settings, stockedCallbacks) {
+	function stockPropertyCallbacks(settings, dfd) {
 		for ( var i = 0, l = CALLBACK_REGISTER_DELEGATE_MAP.length; i < l; i++) {
 			var prop = CALLBACK_REGISTER_DELEGATE_MAP[i];
 			if (settings[prop]) {
-				// プロパティで指定されたコールバックはfailやdoneで指定したコールバックより先に実行されるのでunshiftでストック
-				// (CALLBACK_REGISTER_DELEGATE_MAPは実行されるタイミングと逆順で記述しているので、unshiftによる追加で順番通りになる)
-				stockedCallbacks.unshift({
-					method: PROP_TO_METHOD_MAP[prop],
-					args: wrapInArray(settings[prop])
-				});
+				dfd[PROP_TO_METHOD_MAP[prop]](settings[prop]);
 				settings[prop] = undefined;
 			}
 		}
@@ -156,33 +109,21 @@
 	/**
 	 * jqXHRのプロパティをjqXHRWrapperにコピーする
 	 * <p>
-	 * hookEnableがtrueならコールバック登録関数をフックして呼び出しをストックするようにする。ストック先はstockedCallbacksに指定する。
+	 * コールバック登録関数はコピーしない
 	 * </p>
 	 *
 	 * @private
 	 * @param {JqXHRWrapper} jqXHRWrapper
 	 * @param {Object} jqXHR
-	 * @param {Boolean} enableHookMethods コールバック登録関数をフックするか
-	 * @param {Array} stockedCallbacks フックしたコールバック関数呼び出しをストックしておく配列
 	 */
-	function copyJqXHRProperty(jqXHRWrapper, jqXHR, enableHookMethods, stockedCallbacks) {
+	function copyJqXHRProperty(jqXHRWrapper, jqXHR) {
 		// jqXHRの中身をコピー
 		// 関数プロパティならapplyでオリジナルのjqXHRの関数を呼ぶ関数にする
 		for ( var prop in jqXHR) {
 			if (jqXHR.hasOwnProperty(prop)) {
-				if (enableHookMethods && $.inArray(prop, HOOK_METHODS) !== -1) {
-					// コールバック登録関数をフックして、コールバックをストックする関数に差し替え
-					jqXHRWrapper[prop] = (function(_method) {
-						return function() {
-							stockedCallbacks.push({
-								method: _method,
-								args: arguments
-							});
-							return jqXHRWrapper;
-						};
-					})(prop);
-				} else {
-					// フックしないプロパティなら値をコピー
+				// deferredからコピーするプロパティ、及び非推奨なプロパティはコピーしない
+				if ($.inArray(prop, DEFERRED_METHODS) === -1 && $.inArray(prop, PROP_NO_COPY) === -1) {
+					// 値をコピー
 					jqXHRWrapper[prop] = jqXHR[prop];
 				}
 			}
@@ -198,6 +139,21 @@
 		jqXHRWrapper._jqXHR = jqXHR;
 	}
 
+	/**
+	 * コールバック登録関数をdeferredから取得して、jqXHRWrapperにコピーする
+	 *
+	 * @private
+	 * @param {JqXHRWrapper} jqXHRWrapper
+	 * @param {Deferred} dfd
+	 */
+	function copyDeferredProperties(jqXHRWrapper, dfd) {
+		for ( var i = 0, l = DEFERRED_METHODS.length; i < l; i++) {
+			var prop = DEFERRED_METHODS[i];
+			// 値をコピー
+			jqXHRWrapper[prop] = dfd[prop];
+		}
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -209,26 +165,35 @@
 	 * このクラスは自分でnewすることはありません。 h5.ajax()の戻り値がこのクラスです。
 	 * jqXHRをラップしているクラスで、jqXHRのメソッド、プロパティを使用することができます。
 	 * </p>
+	 * <p>
+	 * <strong>注意：</strong>jqXHRオブジェクトと違い、success, error, complete メソッドはありません(非推奨であるため)。 それぞれ、done,
+	 * fail, always を使用して下さい。
+	 * </p>
 	 *
 	 * @class
 	 * @name JqXHRWrapper
 	 */
-	function JqXHRWrapper(jqXHR, stockedCallbacks) {
+	function JqXHRWrapper(jqXHR, dfd) {
 		// オリジナルのjqXHRから値をコピー
-		copyJqXHRProperty(this, jqXHR, true, stockedCallbacks);
+		copyJqXHRProperty(this, jqXHR);
+		// deferredからコールバック登録関数をコピー
+		copyDeferredProperties(this, dfd);
 	}
 
 	/**
 	 * HTTP通信を行います。
 	 * <p>
-	 * 基本的な使い方は、<a href="http://api.jquery.com/jQuery.ajax/">jQuery.ajax()</a>と同じです。
+	 * 基本的な使い方は、<a href="http://api.jquery.com/jQuery.ajax/">jQuery.ajax()</a>と同じです。戻り値はjqXHRをラップした
+	 * <a href="JqXHRWrapper.html">JqXHRWrapper</a>クラスです。
+	 * <p>
+	 * <p>
 	 * jQuery.ajax()と異なる点は共通のエラーハンドラが定義できることと、リトライオプションを指定できることです。
 	 * </p>
 	 * <br>
 	 * <h3>共通のエラーハンドラ</h3>
 	 * <p>
 	 * <a href="h5.settings.html#commonFailHandler">h5.settings.commonFailHandler</a>に関数が設定されている場合、
-	 * エラーコールバックがjqXHRに登録されずにajaxが失敗すると、h5.settings.commonFailHandlerに設定した関数が呼ばれます。
+	 * エラーコールバックが登録されないままajaxが失敗すると、h5.settings.commonFailHandlerに設定した関数が呼ばれます。
 	 * </p>
 	 * <br>
 	 * <h3>リトライオプション</h3>
@@ -274,16 +239,18 @@
 		// h5.settings.ajaxとマージ
 		settings = $.extend({}, h5.settings.ajax, settings);
 
-		// settingsに指定されたコールバックを外して、ストックする
-		var stockedCallbacks = [];
-		stockPropertyCallbacks(settings, stockedCallbacks);
+		// deferredオブジェクトの作成
+		var dfd = h5.async.deferred();
+
+		// settingsに指定されたコールバックを外して、deferredに登録する
+		stockPropertyCallbacks(settings, dfd);
 
 		// _ajaxの呼び出し。jqXHRを取得してjqXHRWrapperを作成。
 		var jqXHR = _ajax(settings);
 
 		// jqXHRWrapperの作成
 		// コールバック登録関数はフックして、登録されたコールバック関数をストックする。
-		var jqXHRWrapper = new JqXHRWrapper(jqXHR, stockedCallbacks);
+		var jqXHRWrapper = new JqXHRWrapper(jqXHR, dfd);
 
 		/**
 		 * リトライ時のdoneハンドラ。 成功時はリトライせずに登録されたdoneハンドラを呼び出す。
@@ -292,13 +259,11 @@
 		function retryDone(_data, _textStatus, _jqXHR) {
 			// jqXHRの差し替え
 			copyJqXHRProperty(jqXHRWrapper, _jqXHR);
-			// ストックしたコールバックを今回のjqXHRに登録
-			registCallback(_jqXHR, stockedCallbacks);
+			dfd.resolve.apply(this, arguments);
 		}
 
 		/**
-		 * リトライ時のfailハンドラ。 ステータスコードを見て、リトライするかどうかを決める。
-		 * リトライしないなら、registCallbackを呼んで、現在のjqXHRへコールバックを登録する。
+		 * リトライ時のfailハンドラ。 ステータスコードを見て、リトライするかどうかを決める。 リトライしないなら、dfd.reject()を呼んで終了。
 		 */
 		function retryFail(_jqXHR, _textStatus, _errorThrown) {
 			// jqXHRの差し替え
@@ -309,8 +274,7 @@
 				// またはリトライ指定のない場合、
 				// ストックしたコールバックを今回のjqXHRに登録して終了
 
-				// ストックしたコールバックを今回のjqXHRに登録
-				registCallback(_jqXHR, stockedCallbacks);
+				dfd.reject.apply(this, arguments);
 				return;
 			}
 			settings.retryCount--;

@@ -235,19 +235,6 @@ $(function() {
 		});
 	});
 
-	asyncTest('メソッドチェーンでerrorを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
-		var that = this;
-		h5.ajax({
-			url: 'dummyURL',
-			timeout: 1
-		}).error(function() {
-			setTimeout(function() {
-				ok(!that.cfhFlag);
-				start();
-			}, 0);
-		});
-	});
-
 	asyncTest('メソッドチェーンでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
@@ -261,25 +248,12 @@ $(function() {
 		});
 	});
 
-	asyncTest('メソッドチェーンでcompleteを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
-		var that = this;
-		h5.ajax({
-			url: 'dummyURL',
-			timeout: 1
-		}).complete(function() {
-			setTimeout(function() {
-				ok(!that.cfhFlag);
-				start();
-			}, 0);
-		});
-	});
-
 	asyncTest('メソッドチェーンでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
 			url: 'dummyURL',
 			timeout: 1
-		}).complete(function() {
+		}).always(function() {
 			setTimeout(function() {
 				ok(!that.cfhFlag);
 				start();
