@@ -153,13 +153,6 @@
 		// (jqXHRのdoneやfailは使用しない。promise化で上書かれる。)
 		dfd.promise(this);
 
-		// promiseをオーバーライド
-		// JqXHRWrapper.promise()はthisをdfdにして呼ぶ必要がある。
-		// (でないと、h5.async.deferredでフックしているfailが使用されない)
-		this.promise = function(obj) {
-			return dfd.promise.apply(this, arguments);
-		};
-
 		// alwaysをオーバーライド
 		// jQuery1.7.0のバグ(alwaysがjqXHRではなくpromiseを返すバグ)の対応
 		// http://bugs.jquery.com/ticket/10723  "JQXHR.ALWAYS() RETURNS A PROMISE INSTEAD OF A JQXHR OBJECT"
@@ -245,7 +238,8 @@
 		 * リトライ時のdoneハンドラ。 成功時はリトライせずにresolveして終了
 		 */
 		function retryDone(_data, _textStatus, _jqXHR) {
-			// jqXHRの差し替え
+			// jqXHRのプロパティの値をラッパーにコピーする
+			// ラッパーは最終的なjqXHRの値を持てばいいので、resolveを呼ぶ直前で新しいjqXHRの値に変更する
 			copyJqXHRProperties(jqXHRWrapper, _jqXHR);
 			dfd.resolveWith(this, arguments);
 		}
@@ -260,7 +254,8 @@
 				// またはリトライ指定のない場合、
 				// rejectして終了
 
-				// jqXHRの差し替え
+				// jqXHRのプロパティの値をラッパーにコピー
+				// ラッパーは最終的なjqXHRの値を持てばいいので、rejectを呼ぶ直前で新しいjqXHRの値に変更する
 				copyJqXHRProperties(jqXHRWrapper, _jqXHR);
 				dfd.rejectWith(this, arguments);
 				return;
