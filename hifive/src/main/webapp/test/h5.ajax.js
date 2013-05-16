@@ -65,7 +65,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('jqXHRにprogressメソッドが追加されているか', 1, function() {
+	test('h5.ajax()の戻り値にprogressメソッドが追加されているか', 1, function() {
 
 		// 戻り値をチェックするだけなのでurlは何でもOK。
 		// ただし指定しない場合、現在のページへのリクエストが飛ぶので、
@@ -101,13 +101,13 @@ $(function() {
 		// 同期に設定
 		$.ajaxSettings.async = false;
 		// 非同期で呼び出し
-		var promise = h5.ajax({
+		var jqXHR = h5.ajax({
 			url: 'data/sample.data',
 			cache: false,
 			async: true
 		});
 		var a = false;
-		promise.done(function() {
+		jqXHR.done(function() {
 			ok(a, '引数で渡した設定が優先されて非同期で実行されること');
 			$.ajaxSettings.async = true;
 			start();
@@ -119,6 +119,48 @@ $(function() {
 		a = true;
 	});
 
+	asyncTest('failコールバックに渡される引数とthis', function() {
+		h5.ajax('dummyURL').fail(function(jqXHR, textStatus, errorThrown) {
+			strictEqual(arguments.length, 3, '引数は3つ渡されること');
+			strictEqual(jqXHR.status, 404, '第一引数がjqXHRであり、statusが格納されていること');
+			strictEqual(textStatus, 'error', '第二引数にtextStatusが格納されていること');
+			strictEqual(errorThrown, 'Not Found', '第三引数にerrorThrownが格納されていること');
+			strictEqual(this.url, 'dummyURL', 'thisはajaxの設定オブジェクトであること');
+			start();
+		});
+	});
+
+	asyncTest('doneコールバックに渡される引数とthis', function() {
+		h5.ajax('data/sample.data').done(function(data, textStatus, jqXHR) {
+			strictEqual(arguments.length, 3, '引数は3つ渡されること');
+			strictEqual(data, 'sample', '第一引数に取得した文字列であること');
+			strictEqual(textStatus, 'success', '第二引数にtextStatusであること');
+			strictEqual(jqXHR.status, 200, '第三引数がjqXHRであり、statusが格納されていること');
+			strictEqual(this.url, 'data/sample.data', 'thisはajaxの設定オブジェクトであること');
+			start();
+		});
+	});
+
+	asyncTest('h5.ajax().promise()がpromiseオブジェクトを返すこと', function() {
+		var p = h5.ajax('dummyURL').promise();
+		ok(h5.async.isPromise(p), '戻り値がpromiseオブジェクトであること');
+		p.always(function() {
+			ok(true, 'コールバックが動作すること');
+			start();
+		});
+	});
+
+	asyncTest('h5.ajax().promise(target)でtargetをpromise化でき、コールバックを登録できること', function() {
+		var p = h5.ajax('dummyURL').promise({
+			customProp: true
+		});
+		ok(h5.async.isPromise(p), '戻り値がpromiseオブジェクトであること');
+		ok(p.customProp, '引数をpromise化できていること');
+		p.always(function() {
+			ok(true, 'コールバックが動作すること');
+			start();
+		});
+	})
 
 	//=============================
 	// Definition
@@ -260,6 +302,35 @@ $(function() {
 		});
 	});
 
+	asyncTest('promise()で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと', function() {
+		var that = this;
+		h5.ajax({
+			url: 'dummyURL',
+			timeout: 1
+		}).promise().fail(function() {
+			setTimeout(function() {
+				ok(!that.cfhFlag);
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest('promise(target)で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと',
+			function() {
+				var that = this;
+				var promise = h5.ajax({
+					url: 'dummyURL',
+					timeout: 1
+				}).promise({
+					a: 1
+				});
+				promise.fail(function() {
+					setTimeout(function() {
+						ok(!that.cfhFlag);
+						start();
+					}, 0);
+				});
+			});
 	//=============================
 	// Definition
 	//=============================
@@ -483,13 +554,37 @@ $(function() {
 
 		h5.ajax('dummyURL', {
 			retryCount: 1,
-			retryFilter: function(){
+			retryFilter: function() {
 				ok(true, '引数で指定したretryFilterが実行される');
 			}
 		}).done(function() {
 			ok(false, 'done');
 			start();
 		}).fail(function() {
+			start();
+		});
+	});
+
+	asyncTest('リトライフィルタに渡される引数とthis', function() {
+		h5.settings.ajax.retryFilter = function(jqXHR, textStatus, errorThrown) {
+			strictEqual(arguments.length, 3, '引数は3つ渡されること');
+			strictEqual(jqXHR.status, 404, '第一引数がjqXHRであり、statusが格納されていること');
+			strictEqual(textStatus, 'error', '第二引数にtextStatusが格納されていること');
+			strictEqual(errorThrown, 'Not Found', '第三引数にerrorThrownが格納されていること');
+			strictEqual(this.url, 'dummyURL', 'thisはajaxの設定オブジェクトであること');
+		};
+		// $.ajaxをラップ
+		var that = this;
+		var ajaxCallCount = 0;
+		$.ajax = function(var_args) {
+			ajaxCallCount++;
+			if (ajaxCallCount < 3) {
+				return that.originalAjax.apply($, ['dummyURL']);
+			}
+			// 3回目(2回目のリトライ)で成功
+			return that.originalAjax.apply($, ['data/sample.data']);
+		};
+		h5.ajax('dummyURL').always(function() {
 			start();
 		});
 	});
@@ -592,7 +687,7 @@ $(function() {
 		};
 	});
 
-	asyncTest('引数で指定したコールバックが動作すること 失敗時', 1, function() {
+	asyncTest('引数で指定したコールバックは1度だけ動作すること 失敗時', 1, function() {
 		h5.settings.ajax.retryFilter = emptyFunc;
 		var result = '';
 		var expect = 'error, complete, ';
@@ -613,7 +708,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('引数で指定したコールバックが動作すること 成功時', 1, function() {
+	asyncTest('引数で指定したコールバックは1度だけ動作すること 成功時', 1, function() {
 		h5.settings.ajax.retryFilter = emptyFunc;
 		var result = '';
 		var expect = 'success, complete, ';
@@ -667,7 +762,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('リトライしても失敗する場合', 3, function() {
+	test('リトライしても失敗する場合、同期で結果が返ってくること', 3, function() {
 		h5.settings.ajax.retryFilter = emptyFunc;
 		var jqXHR = h5.ajax('dummyURL', {
 			timeout: 1,
@@ -682,7 +777,7 @@ $(function() {
 		strictEqual(jqXHR.status, 404, '同期で結果が返ってきていること');
 	});
 
-	test('1回目で成功した場合', 3, function() {
+	test('1回目で成功した場合、同期で結果が返ってくること', 3, function() {
 		var jqXHR = h5.ajax('data/sample.data', {
 			timeout: 1,
 			cache: false
@@ -696,7 +791,7 @@ $(function() {
 		strictEqual(jqXHR.status, 200, '同期で結果が返ってきていること');
 	});
 
-	test('リトライ途中で成功した場合', 3, function() {
+	test('リトライ途中で成功した場合、同期で結果が返ってくること', 3, function() {
 		h5.settings.ajax.retryFilter = emptyFunc;
 		var ajaxCallCount = 0;
 
@@ -726,6 +821,17 @@ $(function() {
 			ok(true, 'alwaysで登録したハンドラ');
 		});
 		strictEqual(jqXHR.status, 200, '同期で結果が返ってきていること');
+	});
+
+	test('リトライフィルタが同期で実行されること', 2, function() {
+		var flag = false;
+		h5.ajax('dummyURL', {
+			timeout: 1,
+			retryFilter: function() {
+				ok(!flag, 'retryFilterは同期で実行されている');
+			}
+		});
+		flag = true;
 	});
 
 	test('リトライして失敗した場合commonFailHandlerが実行されること', 1, function() {
