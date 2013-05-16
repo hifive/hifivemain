@@ -119,7 +119,7 @@ $(function() {
 		a = true;
 	});
 
-	asyncTest('failコールバックに渡される引数とthis', function() {
+	asyncTest('failコールバックに渡される引数とthis', 5, function() {
 		h5.ajax('dummyURL').fail(function(jqXHR, textStatus, errorThrown) {
 			strictEqual(arguments.length, 3, '引数は3つ渡されること');
 			strictEqual(jqXHR.status, 404, '第一引数がjqXHRであり、statusが格納されていること');
@@ -130,7 +130,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('doneコールバックに渡される引数とthis', function() {
+	asyncTest('doneコールバックに渡される引数とthis', 5, function() {
 		h5.ajax('data/sample.data').done(function(data, textStatus, jqXHR) {
 			strictEqual(arguments.length, 3, '引数は3つ渡されること');
 			strictEqual(data, 'sample', '第一引数に取得した文字列であること');
@@ -141,7 +141,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5.ajax().promise()がpromiseオブジェクトを返すこと', function() {
+	asyncTest('h5.ajax().promise()がpromiseオブジェクトを返すこと', 2, function() {
 		var p = h5.ajax('dummyURL').promise();
 		ok(h5.async.isPromise(p), '戻り値がpromiseオブジェクトであること');
 		p.always(function() {
@@ -150,12 +150,14 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5.ajax().promise(target)でtargetをpromise化でき、コールバックを登録できること', function() {
-		var p = h5.ajax('dummyURL').promise({
+	asyncTest('h5.ajax().promise(target)でtargetをpromise化でき、コールバックを登録できること', 4, function() {
+		var p = {
 			customProp: true
-		});
+		};
+		var ret = h5.ajax('dummyURL').promise(p);
 		ok(h5.async.isPromise(p), '戻り値がpromiseオブジェクトであること');
 		ok(p.customProp, '引数をpromise化できていること');
+		strictEqual(ret, p, 'promise化した引数が戻り値であること');
 		p.always(function() {
 			ok(true, 'コールバックが動作すること');
 			start();
@@ -302,7 +304,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('promise()で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと', function() {
+	asyncTest('promise()で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと', 1, function() {
 		var that = this;
 		h5.ajax({
 			url: 'dummyURL',
@@ -565,8 +567,14 @@ $(function() {
 		});
 	});
 
-	asyncTest('リトライフィルタに渡される引数とthis', function() {
+	asyncTest('リトライフィルタに渡される引数とthis', 6, function() {
+		var stockJqXHR = null;
 		h5.settings.ajax.retryFilter = function(jqXHR, textStatus, errorThrown) {
+			if(stockJqXHR){
+				ok(stockJqXHR != jqXHR, '引数のjqXHRはretryFilterの直前に実行した$.ajaxの戻り値であること');
+				return;
+			}
+			stockJqXHR = jqXHR;
 			strictEqual(arguments.length, 3, '引数は3つ渡されること');
 			strictEqual(jqXHR.status, 404, '第一引数がjqXHRであり、statusが格納されていること');
 			strictEqual(textStatus, 'error', '第二引数にtextStatusが格納されていること');
