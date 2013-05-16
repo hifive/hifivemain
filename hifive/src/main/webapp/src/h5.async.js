@@ -264,11 +264,14 @@
 		};
 		dfd.rejectWith = rejectWith;
 		var p = dfd.promise;
-		dfd.promise = function(obj) {
-			var promise = p.call(this, obj);
+		dfd.promise = function(/* var_args */) {
+			var promise = p.apply(this, arguments);
+			// commonFailHandlerのためにフックしたもので上書き
 			promise.always = always;
 			promise.then = then;
 			promise.fail = fail;
+			// dfd.promise().promise === dfd.promise にする
+			promise.promise = dfd.promise;
 			return promise;
 		};
 		return dfd;
