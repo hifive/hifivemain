@@ -124,15 +124,6 @@
 				jqXHRWrapper[prop] = jqXHR[prop];
 			}
 		}
-		/**
-		 * オリジナルのjqXHR
-		 *
-		 * @private
-		 * @memberOf JqXHRWrapper
-		 * @type jqXHR
-		 * @name _jqXHR
-		 */
-		jqXHRWrapper._jqXHR = jqXHR;
 	}
 
 	/**
