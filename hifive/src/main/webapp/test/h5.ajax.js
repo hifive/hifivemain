@@ -43,10 +43,10 @@ $(function() {
 	//=============================
 
 	/**
-	 * コールバックに指定するダミー関数
+	 * 何もしない空の関数。コールバックやリトライフィルタの指定で使用する。
 	 */
-	function dummyFunc() {
-	//
+	function emptyFunc() {
+	// 何もしない
 	}
 
 	// =========================================================================
@@ -161,7 +161,6 @@ $(function() {
 				ok(!error, 'h5.async.ajax() の戻り値のオブジェクトのthen()でprogressCallbackを登録しようとしてもエラーにならないか');
 			});
 
-
 	//=============================
 	// Definition
 	//=============================
@@ -260,7 +259,6 @@ $(function() {
 			}, 0);
 		});
 	});
-
 
 	//=============================
 	// Definition
@@ -426,7 +424,7 @@ $(function() {
 
 	asyncTest('リトライ回数をh5.ajaxに渡す引数で指定できること', 1, function() {
 		var ajaxCallCount = 0;
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		var that = this;
 		// $.ajaxをラップ
 		$.ajax = function(var_args) {
@@ -478,6 +476,24 @@ $(function() {
 		});
 	});
 
+	asyncTest('リトライフィルタをh5.ajaxに渡す引数で指定できること', 1, function() {
+		h5.settings.ajax.retryFilter = function() {
+			ok(false, 'h5.settings.ajax.retryFilterは実行されないこと');
+		};
+
+		h5.ajax('dummyURL', {
+			retryCount: 1,
+			retryFilter: function(){
+				ok(true, '引数で指定したretryFilterが実行される');
+			}
+		}).done(function() {
+			ok(false, 'done');
+			start();
+		}).fail(function() {
+			start();
+		});
+	});
+
 	asyncTest('ajaxの通信に成功したらリトライはしない', 1, function() {
 		var ajaxCallCount = 0;
 		h5.settings.ajax.retryFilter = function() {
@@ -502,7 +518,7 @@ $(function() {
 
 	asyncTest('リトライしてajaxの通信に成功した場合の動作', 1, function() {
 		var ajaxCallCount = 0;
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 
 		// $.ajaxをラップ
 		var that = this;
@@ -528,7 +544,7 @@ $(function() {
 
 	asyncTest('failハンドラを登録していない場合、リトライ時にajaxの通信に成功した場合はcommonFailHandlerは動作しない', 2, function() {
 		var ajaxCallCount = 0;
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 
 		// $.ajaxをラップ
 		var that = this;
@@ -577,7 +593,7 @@ $(function() {
 	});
 
 	asyncTest('引数で指定したコールバックが動作すること 失敗時', 1, function() {
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		var result = '';
 		var expect = 'error, complete, ';
 		h5.ajax('dummyURL', {
@@ -598,7 +614,7 @@ $(function() {
 	});
 
 	asyncTest('引数で指定したコールバックが動作すること 成功時', 1, function() {
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		var result = '';
 		var expect = 'success, complete, ';
 		h5.ajax('data/sample.data', {
@@ -652,7 +668,7 @@ $(function() {
 	//=============================
 
 	test('リトライしても失敗する場合', 3, function() {
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		var jqXHR = h5.ajax('dummyURL', {
 			timeout: 1,
 			cache: false
@@ -681,7 +697,7 @@ $(function() {
 	});
 
 	test('リトライ途中で成功した場合', 3, function() {
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		var ajaxCallCount = 0;
 
 		// $.ajaxをラップ
@@ -713,7 +729,7 @@ $(function() {
 	});
 
 	test('リトライして失敗した場合commonFailHandlerが実行されること', 1, function() {
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		h5.ajax('dummyURL', {
 			timeout: 1,
 			cache: false
@@ -722,7 +738,7 @@ $(function() {
 	});
 
 	test('リトライ途中で成功した場合commonFailHandlerは実行されないこと', 1, function() {
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		// $.ajaxをラップ
 		var that = this;
 		var ajaxCallCount = 0;
@@ -746,20 +762,20 @@ $(function() {
 	});
 
 	test('error,completeでコールバックを渡していた場合は失敗してもcommonFailHandlerは実行されないこと', 2, function() {
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		h5.ajax('dummyURL', {
 			timeout: 1,
 			cache: false,
-			error: function() {}
+			error: emptyFunc
 		});
 		ok(!this.cfhFlag, 'errorを指定しているのでcommonFailHandlerは実行されていない');
 		this.cfhFlag = false;
 
-		h5.settings.ajax.retryFilter = function() {};
+		h5.settings.ajax.retryFilter = emptyFunc;
 		h5.ajax('dummyURL', {
 			timeout: 1,
 			cache: false,
-			complete: function() {}
+			complete: emptyFunc
 		});
 		ok(!this.cfhFlag, 'completeを指定しているのでcommonFailHandlerは実行されていない');
 	});
