@@ -50,18 +50,11 @@
 	// Variables
 	// =============================
 	/**
-	 * JqXHRWrapperに持たせる、deferredからコピーするプロパティ(コールバック登録関数、promise)
-	 *
-	 * @type {Array}
-	 */
-	var DEFERRED_METHODS = ['done', 'fail', 'pipe', 'always', 'then', 'promise'];
-
-	/**
 	 * jqXHRからJqXHRWrapperにコピーしないプロパティ jqXHRのメソッドで非推奨であるもの。(deferredにないもの)
 	 *
 	 * @type {Array}
 	 */
-	var PROP_NO_COPY = ['error', 'success', 'complete'];
+	var DUPLICATED_METHODS = ['error', 'success', 'complete'];
 
 	/**
 	 * ajaxの引数のオブジェクトでコールバックが記述されるプロパティ<br>
@@ -96,7 +89,7 @@
 	 * @param {Object} settings ajaxに渡すオブジェクト
 	 * @param {Deferred} dfd
 	 */
-	function stockPropertyCallbacks(settings, dfd) {
+	function removeCallbackPropAndRegistToDfd(settings, dfd) {
 		for ( var i = 0, l = CALLBACK_REGISTER_DELEGATE_MAP.length; i < l; i++) {
 			var prop = CALLBACK_REGISTER_DELEGATE_MAP[i];
 			if (settings[prop]) {
@@ -109,23 +102,26 @@
 	/**
 	 * jqXHRのプロパティをjqXHRWrapperにコピーする
 	 * <p>
-	 * コールバック登録関数はコピーしない
+	 * copyFunctionProp==trueなら関数プロパティはコピーしない。promiseからコピーする関数及び非推奨な関数はコピーしない。
 	 * </p>
 	 *
 	 * @private
 	 * @param {JqXHRWrapper} jqXHRWrapper
-	 * @param {Object} jqXHR
+	 * @param {Object} jqXHR コピー元のjqXHR
+	 * @param {Boolean} copyFunction 関数プロパティをコピーするかどうか(trueならコピー)
+	 * @param {Promise} promise promiseが持つプロパティはコピーしない
 	 */
-	function copyJqXHRProperty(jqXHRWrapper, jqXHR) {
+	function copyJqXHRProperty(jqXHRWrapper, jqXHR, copyFunction, promise) {
 		// jqXHRの中身をコピー
 		// 関数プロパティならapplyでオリジナルのjqXHRの関数を呼ぶ関数にする
 		for ( var prop in jqXHR) {
-			if (jqXHR.hasOwnProperty(prop)) {
-				// deferredからコピーするプロパティ、及び非推奨なプロパティはコピーしない
-				if ($.inArray(prop, DEFERRED_METHODS) === -1 && $.inArray(prop, PROP_NO_COPY) === -1) {
-					// 値をコピー
-					jqXHRWrapper[prop] = jqXHR[prop];
-				}
+			// copyFunction=falseの場合は関数はコピーしない。
+			// copyFunction=trueの場合、
+			// promiseが持つプロパティ、及び非推奨なプロパティはコピーしない
+			if (jqXHR.hasOwnProperty(prop) && (copyFunction || !$.isFunction(jqXHR[prop]))
+					&& !(promise && promise[prop]) && $.inArray(prop, DUPLICATED_METHODS) === -1) {
+				// 値をコピー
+				jqXHRWrapper[prop] = jqXHR[prop];
 			}
 		}
 		/**
@@ -140,17 +136,16 @@
 	}
 
 	/**
-	 * コールバック登録関数をdeferredから取得して、jqXHRWrapperにコピーする
+	 * コールバック登録関数をpromiseから取得して、jqXHRWrapperにコピーする
 	 *
 	 * @private
 	 * @param {JqXHRWrapper} jqXHRWrapper
-	 * @param {Deferred} dfd
+	 * @param {Promise} promise
 	 */
-	function copyDeferredProperties(jqXHRWrapper, dfd) {
-		for ( var i = 0, l = DEFERRED_METHODS.length; i < l; i++) {
-			var prop = DEFERRED_METHODS[i];
-			// 値をコピー
-			jqXHRWrapper[prop] = dfd[prop];
+	function copyPromiseProperties(jqXHRWrapper, promise) {
+		// promiseが持つメソッドをjqXHRWrapperにコピー
+		for ( var prop in promise) {
+			jqXHRWrapper[prop] = promise[prop];
 		}
 	}
 
@@ -174,10 +169,21 @@
 	 * @name JqXHRWrapper
 	 */
 	function JqXHRWrapper(jqXHR, dfd) {
+		// promiseオブジェクトを生成しておく
+		var promise = dfd.promise();
+
 		// オリジナルのjqXHRから値をコピー
-		copyJqXHRProperty(this, jqXHR);
-		// deferredからコールバック登録関数をコピー
-		copyDeferredProperties(this, dfd);
+		copyJqXHRProperty(this, jqXHR, true, promise);
+		// promiseからコールバック登録関数をコピー
+		copyPromiseProperties(this, promise);
+
+		// alwaysをラップする。
+		// jQuery1.7.0のバグ(alwaysがjqXHRではなくpromiseを返すバグ)対応のため
+		// http://bugs.jquery.com/ticket/10723  "JQXHR.ALWAYS() RETURNS A PROMISE INSTEAD OF A JQXHR OBJECT"
+		this.always = function(/* var_args */) {
+			dfd.always.apply(this, arguments);
+			return this;
+		};
 	}
 
 	/**
@@ -243,38 +249,36 @@
 		var dfd = h5.async.deferred();
 
 		// settingsに指定されたコールバックを外して、deferredに登録する
-		stockPropertyCallbacks(settings, dfd);
+		removeCallbackPropAndRegistToDfd(settings, dfd);
 
-		// _ajaxの呼び出し。jqXHRを取得してjqXHRWrapperを作成。
-		var jqXHR = _ajax(settings);
+		// $.ajaxの呼び出し。jqXHRを取得してjqXHRWrapperを作成。
+		var jqXHR = $.ajax(settings);
 
 		// jqXHRWrapperの作成
-		// コールバック登録関数はフックして、登録されたコールバック関数をストックする。
 		var jqXHRWrapper = new JqXHRWrapper(jqXHR, dfd);
 
 		/**
-		 * リトライ時のdoneハンドラ。 成功時はリトライせずに登録されたdoneハンドラを呼び出す。
-		 * jqXHRWrapperのメソッドから登録されたストック済みの関数を登録を現在のjqXHRに登録する
+		 * リトライ時のdoneハンドラ。 成功時はリトライせずにresolveして終了
 		 */
 		function retryDone(_data, _textStatus, _jqXHR) {
 			// jqXHRの差し替え
 			copyJqXHRProperty(jqXHRWrapper, _jqXHR);
-			dfd.resolve.apply(this, arguments);
+			dfd.resolveWith(this, arguments);
 		}
 
 		/**
 		 * リトライ時のfailハンドラ。 ステータスコードを見て、リトライするかどうかを決める。 リトライしないなら、dfd.reject()を呼んで終了。
 		 */
 		function retryFail(_jqXHR, _textStatus, _errorThrown) {
-			// jqXHRの差し替え
-			copyJqXHRProperty(jqXHRWrapper, _jqXHR);
 			if (settings.retryCount === 0 || settings.retryFilter.apply(this, arguments) === false) {
 				// retryFilterがfalseを返した、
 				// またはこれが最後のリトライ、
 				// またはリトライ指定のない場合、
-				// ストックしたコールバックを今回のjqXHRに登録して終了
+				// rejectして終了
 
-				dfd.reject.apply(this, arguments);
+				// jqXHRの差し替え
+				copyJqXHRProperty(jqXHRWrapper, _jqXHR);
+				dfd.rejectWith(this, arguments);
 				return;
 			}
 			settings.retryCount--;
@@ -282,12 +286,12 @@
 				// 非同期ならretryIntervalミリ秒待機してリトライ
 				var that = this;
 				setTimeout(function() {
-					_ajax(that).done(retryDone).fail(retryFail);
+					$.ajax(that).done(retryDone).fail(retryFail);
 				}, settings.retryInterval);
 			} else {
 				// 同期なら即リトライする
 				// (同期で呼ばれたらリトライ指定があっても同期になるようにするためretryIntervalは無視する)
-				_ajax(this).done(retryDone).fail(retryFail);
+				$.ajax(this).done(retryDone).fail(retryFail);
 			}
 		}
 
@@ -296,30 +300,6 @@
 
 		// 戻り値はjqXHRをラップしたjqXHRWrapperオブジェクト
 		return jqXHRWrapper;
-	}
-
-	/**
-	 * HTTP通信を行います。
-	 * <p>
-	 * h5.ajaxから呼び出される関数です。progressメソッドを追加します。
-	 * </p>
-	 *
-	 * @private
-	 * @param {Object} settings jQuery.ajaxに渡すオブジェクト
-	 * @returns {jqXHR} jqXHRオブジェクト
-	 * @name _ajax
-	 * @function
-	 * @memberOf h5
-	 */
-	function _ajax(settings) {
-		var jqXHR = $.ajax.apply($, arguments);
-
-		if (!jqXHR.progress) {
-			jqXHR.progress = function() {
-			// notifyされることはないので空にしている
-			};
-		}
-		return jqXHR;
 	}
 
 	// =============================
