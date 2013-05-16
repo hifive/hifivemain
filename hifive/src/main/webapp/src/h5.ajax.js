@@ -62,7 +62,7 @@
 	 *
 	 * @type {Array}
 	 */
-	var CALLBACK_REGISTER_DELEGATE_MAP = ['error', 'success', 'complete'];
+	var CALLBACK_REGISTER_DELEGATE_METHODS = ['error', 'success', 'complete'];
 
 	/**
 	 * コールバック指定プロパティと、コールバック登録関数を対応させるオブジェクト
@@ -90,8 +90,8 @@
 	 * @param {Deferred} dfd
 	 */
 	function removeCallbackPropAndRegistToDfd(settings, dfd) {
-		for ( var i = 0, l = CALLBACK_REGISTER_DELEGATE_MAP.length; i < l; i++) {
-			var prop = CALLBACK_REGISTER_DELEGATE_MAP[i];
+		for ( var i = 0, l = CALLBACK_REGISTER_DELEGATE_METHODS.length; i < l; i++) {
+			var prop = CALLBACK_REGISTER_DELEGATE_METHODS[i];
 			if (settings[prop]) {
 				dfd[PROP_TO_METHOD_MAP[prop]](settings[prop]);
 				settings[prop] = undefined;
