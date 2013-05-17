@@ -131,7 +131,10 @@ $(function() {
 	});
 
 	asyncTest('doneコールバックに渡される引数とthis', 5, function() {
-		h5.ajax('data/sample.data').done(function(data, textStatus, jqXHR) {
+		h5.ajax('data/sample.data', {
+			dataType: 'text'
+		}).done(function(data, textStatus, jqXHR) {
+			console.log(data);
 			strictEqual(arguments.length, 3, '引数は3つ渡されること');
 			strictEqual(data, 'sample', '第一引数に取得した文字列であること');
 			strictEqual(textStatus, 'success', '第二引数にtextStatusであること');
@@ -304,18 +307,19 @@ $(function() {
 		});
 	});
 
-	asyncTest('promise()で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと', 1, function() {
-		var that = this;
-		h5.ajax({
-			url: 'dummyURL',
-			timeout: 1
-		}).promise().fail(function() {
-			setTimeout(function() {
-				ok(!that.cfhFlag);
-				start();
-			}, 0);
-		});
-	});
+	asyncTest('promise()で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと', 1,
+			function() {
+				var that = this;
+				h5.ajax({
+					url: 'dummyURL',
+					timeout: 1
+				}).promise().fail(function() {
+					setTimeout(function() {
+						ok(!that.cfhFlag);
+						start();
+					}, 0);
+				});
+			});
 
 	asyncTest('promise(target)で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと',
 			function() {
@@ -570,7 +574,7 @@ $(function() {
 	asyncTest('リトライフィルタに渡される引数とthis', 6, function() {
 		var stockJqXHR = null;
 		h5.settings.ajax.retryFilter = function(jqXHR, textStatus, errorThrown) {
-			if(stockJqXHR){
+			if (stockJqXHR) {
 				ok(stockJqXHR != jqXHR, '引数のjqXHRはretryFilterの直前に実行した$.ajaxの戻り値であること');
 				return;
 			}
