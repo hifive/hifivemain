@@ -1728,7 +1728,7 @@ $(function() {
 			}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティ(depend.calcで変更されたプロパティを含む)についてoldValue,newValueが正しく格納されていること');
 		};
 		item.addEventListener('change', listener);
-		item.set('val', 'test');
+		item.set('v1', 'test');
 	});
 
 	//=============================
