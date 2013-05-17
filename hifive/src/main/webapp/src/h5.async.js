@@ -220,7 +220,7 @@
 			}
 			var originalFunc = promise[method];
 			promise[method] = (function(_method) {
-				return function(/* var_args */) {
+				return function() {
 					if (!existFailHandler) {
 						// failコールバックが渡されたかどうかチェック
 						var arg = argsToArray(arguments);
