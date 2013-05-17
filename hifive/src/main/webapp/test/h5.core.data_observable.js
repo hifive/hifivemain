@@ -1698,6 +1698,39 @@ $(function() {
 		deepEqual(itemEventOrder, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 	});
 
+	test('DataItemインスタンスの"change"に登録したハンドラが受け取る引数に正しく情報が格納されていること', 3, function() {
+		var item = h5.core.data.createObservableItem({
+			v1: {
+				defaultValue: 'default'
+			},
+			v2: {
+				depend: {
+					on: 'v1',
+					calc: function() {
+						return this.get('v1');
+					}
+				}
+			}
+		});
+
+		var listener = function(ev) {
+			strictEqual(ev.type, 'change', 'changeイベントオブジェクトのtypeプロパティは"change"であること');
+			strictEqual(ev.target, item, 'changeイベントオブジェクトのtargetプロパティはDataItemインスタンスであること');
+			deepEqual(ev.props, {
+				v1: {
+					oldValue: 'default',
+					newValue: 'test'
+				},
+				v2: {
+					oldValue: 'default',
+					newValue: 'test'
+				}
+			}, 'changeイベントオブジェクトのpropsプロパティに、変更されたプロパティ(depend.calcで変更されたプロパティを含む)についてoldValue,newValueが正しく格納されていること');
+		};
+		item.addEventListener('change', listener);
+		item.set('val', 'test');
+	});
+
 	//=============================
 	// Definition
 	//=============================
