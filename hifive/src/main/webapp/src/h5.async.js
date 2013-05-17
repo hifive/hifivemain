@@ -90,6 +90,11 @@
 	 * @param {Deferred} dfd
 	 */
 	function addProgressFeatureForCompatibility(dfd) {
+		// deferredじゃなくてpromiseなら何もしない
+		if(isPromise(promise)){
+			return;
+		}
+
 		// 既にnorify/notifyWithが呼ばれたかどうかのフラグ
 		var notified = false;
 		// 最後に指定された実行コンテキスト
@@ -101,7 +106,8 @@
 		// progressCallbacksに対応したprogressFilterの配列を格納するための配列
 		dfd.__h5__progressFilters = [];
 
-		var progress = function(progressCallback) {
+		// progress,notify,notifyWithを追加
+		dfd.progress = function(progressCallback) {
 			// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7以降の仕様と同じにするためにコールバックの登録と同時に実行する必要がある
 			var filters = this.__h5__progressPipeFilters;
 			if (notified) {
@@ -122,7 +128,7 @@
 			return this;
 		};
 
-		var notify = function(/* var_args */) {
+		function notify(/* var_args */) {
 			notified = true;
 			if (arguments.length !== -1) {
 				lastNotifyContext = this;
@@ -152,24 +158,18 @@
 				}
 			}
 			return dfd;
-		};
-
-		var notifyWith = function(context, args) {
+		}
+		dfd.notify = notify;
+		dfd.notifyWith = function(context, args) {
 			return notify.apply(context, args);
 		};
-
-		// progress,notify,notifyWithを追加
-		dfd.progress = progress;
-		dfd.notify = notify;
-		dfd.notifyWith = notifyWith;
 	}
 
 	/**
-	 * コールバック関数が含まれているか
+	 * 引数に関数が含まれているか
 	 *
 	 * @private
-	 * @param {Arguments} arg コールバック登録関数に渡された引数
-	 * @param {String} method 関数名
+	 * @param {Any} arg コールバック登録関数に渡された引数
 	 */
 	function hasValidCallback(arg) {
 		if (!arg) {
@@ -185,24 +185,6 @@
 	}
 
 	/**
-	 * コールバック登録関数に引数を指定して呼んだ時に、その引数でエラーコールバックが登録されるか。 関数でないものが指定されてエラーコールバックへの登録がされない場合はfalse。
-	 *
-	 * @private
-	 * @param {Arguments} arg コールバック登録関数に渡された引数
-	 * @param {String} method 関数名
-	 */
-	function hasArgumentsValidCallback(arg, method) {
-		if (!arg) {
-			return false;
-		}
-		if (arg === 'then' || arg === 'pipe') {
-			// thenまたはpipeならargの第2引数を見る
-			arg = arg[1];
-		}
-		return hasValidCallback(argsToArray(arg));
-	}
-
-	/**
 	 * 引数に指定されたpromiseまたはdeferredオブジェクトに対してコールバック登録関数をフックし、commonFailHandlerの機能を追加する。
 	 * 既にフック済みのもの(prev)があればprevが持っているものに差し替える
 	 *
@@ -215,9 +197,10 @@
 		// progressを持っているか
 		var hasNativeProgress = !!promise.progress;
 
+		// 引数がDeferredオブジェクト(!=プロミスオブジェクト)の場合、
 		// progress/notify/notifyWithがないなら追加。
 		// jQuery1.6.x でもprogress/notify/notifyWithを使えるようにする。
-		if (!hasNativeProgress && !promise.notify && !promise.notifyWith) {
+		if (!hasNativeProgress) {
 			addProgressFeatureForCompatibility(promise);
 		}
 		// rootDfdにprogressがあればそれに書き換え
@@ -242,10 +225,16 @@
 			var originalFunc = promise[method];
 			promise[method] = (function(_method) {
 				return function(/* var_args */) {
-					// failコールバックが渡されたかどうかチェック
-					if (!existFailHandler
-							&& hasArgumentsValidCallback(argsToArray(arguments), _method)) {
-						existFailHandler = true;
+					if (!existFailHandler) {
+						// failコールバックが渡されたかどうかチェック
+						var arg = argsToArray(arguments);
+						if (method === 'then' || method === 'pipe') {
+							// thenまたはpipeならargの第2引数を見る
+							arg = arg[1];
+						}
+						if (hasValidCallback(arg)) {
+							existFailHandler = true;
+						}
 					}
 					return originalFunc.apply(this, arguments);
 				};
