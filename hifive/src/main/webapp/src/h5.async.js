@@ -78,7 +78,7 @@
 	 * @private
 	 * @type {Array}
 	 */
-	var OVERRIDE_FOR_CFH_METHODS = ['fail', 'always', 'pipe', 'then'];
+	var CFH_HOOK_METHODS = ['fail', 'always', 'pipe', 'then'];
 
 	// =============================
 	// Functions
@@ -253,8 +253,8 @@
 		}
 
 		// failコールバックを登録する可能性のある関数を上書き
-		for ( var i = 0, l = OVERRIDE_FOR_CFH_METHODS.length; i < l; i++) {
-			var prop = OVERRIDE_FOR_CFH_METHODS[i];
+		for ( var i = 0, l = CFH_HOOK_METHODS.length; i < l; i++) {
+			var prop = CFH_HOOK_METHODS[i];
 			if (promise[prop]) {
 				override(prop);
 			}
