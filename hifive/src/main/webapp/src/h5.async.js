@@ -91,7 +91,7 @@
 	 */
 	function addProgressFeatureForCompatibility(dfd) {
 		// deferredじゃなくてpromiseなら何もしない
-		if(isPromise(promise)){
+		if(isPromise(dfd)){
 			return;
 		}
 
@@ -562,12 +562,11 @@
 			// ( $.when()を使いながら機能追加ができないため、$.when自体の機能をここで実装している。)
 			var len = args.length;
 			var count = len;
-			var pValues = new Array(len);
+			var pValues = [];
 			var firstParam = args[0];
 
 			dfd = len <= 1 && firstParam && $.isFunction(firstParam.promise) ? firstParam
 					: getDeferred();
-
 
 			if (len > 1) {
 				// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
