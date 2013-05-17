@@ -54,7 +54,7 @@
 	 *
 	 * @type {Array}
 	 */
-	var DUPLICATED_METHODS = ['error', 'success', 'complete'];
+	var DEPRECATED_METHODS = ['error', 'success', 'complete'];
 
 	/**
 	 * ajaxの引数のオブジェクトでコールバックが記述されるプロパティ<br>
@@ -119,7 +119,7 @@
 			// includeFunction=trueの場合、
 			// 非推奨なプロパティ以外をコピー
 			if (jqXHR.hasOwnProperty(prop) && (includeFunction || !$.isFunction(jqXHR[prop]))
-					&& $.inArray(prop, DUPLICATED_METHODS) === -1) {
+					&& $.inArray(prop, DEPRECATED_METHODS) === -1) {
 				// 値をコピー
 				jqXHRWrapper[prop] = jqXHR[prop];
 			}
