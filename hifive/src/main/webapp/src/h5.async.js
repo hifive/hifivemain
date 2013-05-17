@@ -90,11 +90,6 @@
 	 * @param {Deferred} dfd
 	 */
 	function addProgressFeatureForCompatibility(dfd) {
-		// deferredじゃなくてpromiseなら何もしない
-		if(isPromise(dfd)){
-			return;
-		}
-
 		// 既にnorify/notifyWithが呼ばれたかどうかのフラグ
 		var notified = false;
 		// 最後に指定された実行コンテキスト
@@ -200,7 +195,7 @@
 		// 引数がDeferredオブジェクト(!=プロミスオブジェクト)の場合、
 		// progress/notify/notifyWithがないなら追加。
 		// jQuery1.6.x でもprogress/notify/notifyWithを使えるようにする。
-		if (!hasNativeProgress) {
+		if (!hasNativeProgress && !isPromise(promise)) {
 			addProgressFeatureForCompatibility(promise);
 		}
 		// rootDfdにprogressがあればそれに書き換え
