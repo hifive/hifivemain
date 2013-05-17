@@ -63,18 +63,289 @@
 	// Privates
 	//
 	// =========================================================================
+	// =============================
+	// Variables
+	// =============================
 	/**
 	 * jQueryのDeferred関数
 	 *
 	 * @private
 	 */
 	var jQueryDeferred = $.Deferred;
-	// =============================
-	// Variables
-	// =============================
+
+	/**
+	 * argsToArrayのショートカット
+	 *
+	 * @private
+	 */
+	var argsToArray = h5.u.obj.argsToArray;
 	// =============================
 	// Functions
 	// =============================
+	/**
+	 * progres,notify,notifyWithが無ければそれらを追加する
+	 *
+	 * @private
+	 * @param {Deferred} dfd
+	 */
+	function addFunctionsForProgress(dfd) {
+		// 既にnorify/notifyWithが呼ばれたかどうかのフラグ
+		var notified = false;
+		// 最後に指定された実行コンテキスト
+		var lastNotifyContext = null;
+		// 最後に指定されたパラメータ
+		var lastNotifyParam = null;
+		// progressCallbacksを格納するための配列
+		dfd.__h5__progressCallbacks = [];
+		// progressCallbacksに対応したprogressFilterの配列を格納するための配列
+		dfd.__h5__progressFilters = [];
+
+		var progress = function(progressCallback) {
+			// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7以降の仕様と同じにするためにコールバックの登録と同時に実行する必要がある
+			var filters = this.__h5__progressPipeFilters;
+			if (notified) {
+				var params = lastNotifyParam;
+				// pipe()でprogressFilterが登録されいたら値をフィルタに通す
+				if (filters && filters.length > 0) {
+					for ( var i = 0, fLen = filters.length; i < fLen; i++) {
+						params = filters[i].apply(this, wrapInArray(params));
+					}
+				}
+				if (params !== lastNotifyParam) {
+					params = wrapInArray(params);
+				}
+				progressCallback.apply(lastNotifyContext, params);
+			}
+			dfd.__h5__progressCallbacks.push(progressCallback);
+			dfd.__h5__progressFilters.push(filters);
+			return this;
+		};
+
+		var notify = function(/* var_args */) {
+			notified = true;
+			if (arguments.length !== -1) {
+				lastNotifyContext = this;
+				lastNotifyParam = argsToArray(arguments);
+			}
+			var callbacks = dfd.__h5__progressCallbacks;
+			var filters = dfd.__h5__progressFilters;
+			var args = argsToArray(arguments);
+			// progressコールバックが登録されていたら全て実行する
+			if (callbacks.length > 0) {
+				for ( var i = 0, callbackLen = callbacks.length; i < callbackLen; i++) {
+					var params = args;
+					// pipe()でprogressFilterが登録されいたら値をフィルタに通す
+					if (filters[i] && filters[i].length > 0) {
+						for ( var j = 0, fLen = filters[i].length; j < fLen; j++) {
+							params = filters[i][j].apply(this, wrapInArray(params));
+						}
+					}
+					if (params !== arguments) {
+						params = wrapInArray(params);
+					}
+					callbacks[i].apply(this, params);
+				}
+			}
+			return this;
+		};
+
+		var notifyWith = function(context, args) {
+			notified = true;
+			lastNotifyContext = context;
+			lastNotifyParam = args;
+			var callbacks = this.__h5__progressCallbacks;
+			var filters = this.__h5__progressFilters;
+			// progressコールバックが登録されていたら全て実行する
+			if (callbacks.length > 0) {
+				for ( var i = 0, callbackLen = callbacks.length; i < callbackLen; i++) {
+					var params = args;
+					// pipe()でprogressFilterが登録されいたら値をフィルタに通す
+					if (filters[i] && filters[i].length > 0) {
+						for ( var j = 0, fLen = filters[i].length; j < fLen; j++) {
+							params = filters[i][j].apply(this, wrapInArray(params));
+						}
+					}
+					if (params !== args) {
+						params = wrapInArray(params);
+					}
+					callbacks[i].apply(context, params);
+				}
+			}
+			return this;
+		};
+
+		// progress,notify,notifyWithを追加
+		dfd.progress = progress;
+		dfd.nitify = notify;
+		dfd.notifyWith = notifyWith;
+	}
+
+	/**
+	 * 引数が関数を含んでいるか。コールバック登録関数に渡された引数が正しく関数を含んでいるかどうかを返す
+	 *
+	 * @private
+	 * @param {Any} arg
+	 */
+	function hasValidCallback(arg) {
+		if (!arg) {
+			return false;
+		}
+		arg = wrapInArray(arg);
+		for ( var i = 0, l = arg.length; i < l; i++) {
+			if ($.isFunction(arg[i])) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 引数に指定されたpromiseまたはdeferredオブジェクトに対してコールバック登録関数をフックし、commonFailHandlerの機能を追加する。
+	 * 既にフック済みのもの(prev)があればprevが持っているものに差し替える
+	 *
+	 * @private
+	 * @param {Deferred|Promise} promise
+	 * @param {Deferred} originalDfd
+	 *            既にフック済みのDeferredオブジェクト。第一引数がPromiseで、元のdeferredでフック済みならそっちのメソッドに差し替える
+	 */
+	function toCFHAware(promise, originalDfd) {
+		// 第一引数がdeferredオブジェクトで、progress/notify/notifyWithがないなら追加。
+		// jQuery1.6.x でもprogress/notify/notifyWithを使えるようにする。
+		if (!isPromise(promise) && !promise.progress && !promise.notify && !promise.notifyWith) {
+			addFunctionsForProgress(promise);
+		} else if (isPromise(promise) && !promise.progress && originalDfd && originalDfd.progress) {
+			// promiseがPromiseオブジェクトで、promise.progressがない場合、Promise生成元のdfdからprogressを追加
+			promise.progress = originalDfd.progress;
+		}
+
+		// failコールバックが1つ以上登録されたかどうかのフラグ
+		var existFailHandler = false;
+		//commonFailHandlerが発火済みかどうかのフラグ
+		var isCommonFailHandlerFired = false;
+
+		// 以下書き換える必要のある関数を書き換える
+
+		// fail
+		if (promise.fail) {
+			if (originalDfd && originalDfd.fail) {
+				promise.fail = originalDfd.fail;
+			} else {
+				var originalFail = promise.fail;
+				promise.fail = function(/* var_args */) {
+					// failコールバックが渡されたかどうかチェック
+					if (!existFailHandler && hasValidCallback(argsToArray(arguments))) {
+						existFailHandler = true;
+					}
+					return originalFail.apply(this, arguments);
+				};
+			}
+		}
+
+		// always
+		if (promise.always) {
+			if (originalDfd && originalDfd.always) {
+				promise.always = originalDfd.always;
+			} else {
+				if (originalDfd && originalDfd.always) {
+					promise.always = originalDfd.always;
+				} else {
+					var originalAlways = promise.always;
+					promise.always = function(/* var_args */) {
+						// failコールバックが渡されたかどうかチェック
+						if (!existFailHandler && hasValidCallback(argsToArray(arguments))) {
+							existFailHandler = true;
+						}
+						return originalAlways.apply(this, arguments);
+					};
+				}
+			}
+		}
+
+		// pipe
+		if (promise.pipe) {
+			if (originalDfd && originalDfd.pipe) {
+				promise.pipe = originalDfd.pipe;
+			} else {
+				var originalPipe = promise.pipe;
+				promise.pipe = function(/* var_args */) {
+					// failコールバックが渡されたかどうかチェック
+					if (!existFailHandler && hasValidCallback(arguments[1])) {
+						existFailHandler = true;
+					}
+					// pipe()の戻り値であるfilteredは元のDeferredオブジェクトとはインスタンスが異なる
+					return originalPipe.apply(this, arguments);
+				};
+			}
+		}
+
+		// then
+		if (promise.then) {
+			if (originalDfd && originalDfd.then) {
+				promise.then = originalDfd.then;
+			} else {
+				var originalThen = promise.then;
+				promise.then = function(/* var_args */) {
+					// failコールバックが渡されたかどうかチェック
+					if (!existFailHandler && hasValidCallback(arguments[1])) {
+						existFailHandler = true;
+					}
+					// then()の戻り値であるfilteredは元のDeferredオブジェクトとはインスタンスが異なる
+					return originalThen.apply(this, arguments);
+				};
+			}
+		}
+
+		// reject
+		if (promise.reject) {
+			if (originalDfd && originalDfd.reject) {
+				promise.reject = originalDfd.reject;
+			} else {
+				var originalReject = promise.reject;
+				promise.reject = function(/* var_args */) {
+					var commonFailHandler = h5.settings.commonFailHandler;
+					// failコールバックが1つもない、かつcommonFailHandlerがある場合は、commonFailHandlerを登録する
+					if (!existFailHandler && commonFailHandler && !isCommonFailHandlerFired) {
+						promise.fail.call(this, commonFailHandler);
+						isCommonFailHandlerFired = true;
+					}
+					return originalReject.apply(this, arguments);
+				};
+			}
+		}
+
+		// rejectWith
+		if (promise.rejectWith) {
+			if (originalDfd && originalDfd.rejectWith) {
+				promise.rejectWith = originalDfd.rejectWith;
+			} else {
+				var originalRejectWith = promise.rejectWith;
+				promise.rejectWith = function(/* var_args */) {
+					var commonFailHandler = h5.settings.commonFailHandler;
+					// failコールバックが1つもない、かつcommonFailHandlerがある場合は、commonFailHandlerを登録する
+					if (!existFailHandler && commonFailHandler && !isCommonFailHandlerFired) {
+						promise.fail.call(this, commonFailHandler);
+						isCommonFailHandlerFired = true;
+					}
+					return originalRejectWith.apply(this, arguments);
+				};
+			}
+		}
+
+		// promise
+		if (promise.promise) {
+			if (originalDfd && originalDfd.promise) {
+				promise.promise = originalDfd.promise;
+			} else {
+				var originalPromise = promise.promise;
+				promise.promise = function(/* var_args */) {
+					//TODO toCFHAwareで上書く必要のある関数を上書いてから返す
+					return toCFHAware(originalPromise.apply(this, arguments), promise);
+				};
+			}
+		}
+		return promise;
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -90,191 +361,9 @@
 	 * @memberOf h5.async
 	 */
 	var deferred = function() {
-		var dfd = jQueryDeferred();
-		// jQuery1.6.xにはDeferred.notify/notifyWith/progressがない
-		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
-			// 既にnorify/notifyWithが呼ばれたかどうかのフラグ
-			var notified = false;
-			// 最後に指定された実行コンテキスト
-			var lastNotifyContext = null;
-			// 最後に指定されたパラメータ
-			var lastNotifyParam = null;
-			// progressCallbacksを格納するための配列
-			dfd.__h5__progressCallbacks = [];
-			// progressCallbacksに対応したprogressFilterの配列を格納するための配列
-			dfd.__h5__progressFilters = [];
+		var rawDfd = jQueryDeferred();
+		return toCFHAware(rawDfd);
 
-			var progress = function(progressCallback) {
-				// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7.xの仕様と同じにするためにコールバックの登録と同時に実行する必要がある
-				var filters = this.__h5__progressPipeFilters;
-				if (notified) {
-					var params = lastNotifyParam;
-					// pipe()でprogressFilterが登録されいたら値をフィルタに通す
-					if (filters && filters.length > 0) {
-						for ( var i = 0, fLen = filters.length; i < fLen; i++) {
-							params = filters[i].apply(this, wrapInArray(params));
-						}
-					}
-					if (params !== lastNotifyParam) {
-						params = wrapInArray(params);
-					}
-					progressCallback.apply(lastNotifyContext, params);
-				}
-				dfd.__h5__progressCallbacks.push(progressCallback);
-				dfd.__h5__progressFilters.push(filters);
-				return this;
-			};
-			dfd.progress = progress;
-			var originalPromise = dfd.promise;
-			dfd.promise = function(obj) {
-				var promise = originalPromise.call(this, obj);
-				// プロミスにprogress()を追加
-				promise.progress = progress;
-				return promise;
-			};
-
-			dfd.notify = function(/* var_args */) {
-				notified = true;
-				if (arguments.length !== -1) {
-					lastNotifyContext = this;
-					lastNotifyParam = h5.u.obj.argsToArray(arguments);
-				}
-				var callbacks = dfd.__h5__progressCallbacks;
-				var filters = dfd.__h5__progressFilters;
-				var args = h5.u.obj.argsToArray(arguments);
-				// progressコールバックが登録されていたら全て実行する
-				if (callbacks.length > 0) {
-					for ( var i = 0, callbackLen = callbacks.length; i < callbackLen; i++) {
-						var params = args;
-						// pipe()でprogressFilterが登録されいたら値をフィルタに通す
-						if (filters[i] && filters[i].length > 0) {
-							for ( var j = 0, fLen = filters[i].length; j < fLen; j++) {
-								params = filters[i][j].apply(this, wrapInArray(params));
-							}
-						}
-						if (params !== arguments) {
-							params = wrapInArray(params);
-						}
-						callbacks[i].apply(this, params);
-					}
-				}
-				return this;
-			};
-
-			dfd.notifyWith = function(context, args) {
-				notified = true;
-				lastNotifyContext = context;
-				lastNotifyParam = args;
-				var callbacks = this.__h5__progressCallbacks;
-				var filters = this.__h5__progressFilters;
-				// progressコールバックが登録されていたら全て実行する
-				if (callbacks.length > 0) {
-					for ( var i = 0, callbackLen = callbacks.length; i < callbackLen; i++) {
-						var params = args;
-						// pipe()でprogressFilterが登録されいたら値をフィルタに通す
-						if (filters[i] && filters[i].length > 0) {
-							for ( var j = 0, fLen = filters[i].length; j < fLen; j++) {
-								params = filters[i][j].apply(this, wrapInArray(params));
-							}
-						}
-						if (params !== args) {
-							params = wrapInArray(params);
-						}
-						callbacks[i].apply(context, params);
-					}
-				}
-				return this;
-			};
-
-			var lastPointPipe = dfd.pipe;
-			dfd.pipe = function(doneFilter, failFilter, progressFilter) {
-				// pipe()の戻り値であるfilteredは元のDeferredオブジェクトとはインスタンスが異なる
-				var filtered = lastPointPipe.call(this, doneFilter, failFilter);
-				if (progressFilter) {
-					if (!this.__h5__progressPipeFilters) {
-						filtered.__h5__progressPipeFilters = [progressFilter];
-					} else {
-						filtered.__h5__progressPipeFilters = this.__h5__progressPipeFilters
-								.concat([progressFilter]);
-					}
-				}
-				lastPointPipe = filtered.pipe;
-				filtered.pipe = dfd.pipe;
-				filtered.progress = dfd.progress;
-				return filtered;
-			};
-		}
-		// failコールバックが1つ以上登録されたかどうかのフラグ
-		var existFailHandler = false;
-		//commonFailHandlerが発火済みかどうかのフラグ
-		var isCommonFailHandlerFired = false;
-
-		var originalFail = dfd.fail;
-		var fail = function(/* var_args */) {
-			if (arguments.length > 0) {
-				existFailHandler = true;
-			}
-			return originalFail.apply(this, arguments);
-		};
-		dfd.fail = fail;
-
-		var originalAlways = dfd.always;
-		var always = function(/* var_args */) {
-			if (arguments.length > 0) {
-				existFailHandler = true;
-			}
-			return originalAlways.apply(this, arguments);
-		};
-		dfd.always = always;
-
-		var then = function(doneCallbacks, failCallbacks, progressCallbacks) {
-			if (doneCallbacks) {
-				this.done.apply(this, wrapInArray(doneCallbacks));
-			}
-			if (failCallbacks) {
-				this.fail.apply(this, wrapInArray(failCallbacks));
-			}
-			if (progressCallbacks) {
-				this.progress.apply(this, wrapInArray(progressCallbacks));
-			}
-			return this;
-		};
-		dfd.then = then;
-
-		var originalReject = dfd.reject;
-		var reject = function(/* var_args */) {
-			var commonFailHandler = h5.settings.commonFailHandler;
-			// failコールバックが1つもない、かつcommonFailHandlerがある場合は、commonFailHandlerを登録する
-			if (!existFailHandler && commonFailHandler && !isCommonFailHandlerFired) {
-				originalFail.call(this, commonFailHandler);
-				isCommonFailHandlerFired = true;
-			}
-			return originalReject.apply(this, arguments);
-		};
-		dfd.reject = reject;
-		var originalRejectWith = dfd.rejectWith;
-		var rejectWith = function(/* var_args */) {
-			var commonFailHandler = h5.settings.commonFailHandler;
-			// failコールバックが1つもない、かつcommonFailHandlerがある場合は、commonFailHandlerを登録する
-			if (!existFailHandler && commonFailHandler && !isCommonFailHandlerFired) {
-				originalFail.call(this, commonFailHandler);
-				isCommonFailHandlerFired = true;
-			}
-			return originalRejectWith.apply(this, arguments);
-		};
-		dfd.rejectWith = rejectWith;
-		var p = dfd.promise;
-		dfd.promise = function(/* var_args */) {
-			var promise = p.apply(this, arguments);
-			// commonFailHandlerのためにフックしたもので上書き
-			promise.always = always;
-			promise.then = then;
-			promise.fail = fail;
-			// dfd.promise().promise === dfd.promise にする
-			promise.promise = dfd.promise;
-			return promise;
-		};
-		return dfd;
 	};
 
 	/**
@@ -430,7 +519,6 @@
 	 * @memberOf h5.async
 	 */
 	var when = function(/* var_args */) {
-		var argsToArray = h5.u.obj.argsToArray;
 		var getDeferred = h5.async.deferred;
 
 		var args = argsToArray(arguments);
@@ -454,13 +542,11 @@
 		var dfd = $.Deferred();
 
 		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
-			// jQueryのバージョンが1.6.xの場合、progress/notifyが使用できるよう機能を追加する
-			// $.when()を使いながら機能追加ができないため、
-			// $.when自体の機能をここで実装している。
-
+			// progress/notify/notifyWithがない(jQueryのバージョンが1.6.x)場合、
+			// progress/notifyが使用できるように、機能拡張したwhenをここで実装する
+			// ( $.when()を使いながら機能追加ができないため、$.when自体の機能をここで実装している。)
 			var len = args.length;
 			var count = len;
-			var pValues = new Array(len);
 			var firstParam = args[0];
 
 			dfd = len <= 1 && firstParam && $.isFunction(firstParam.promise) ? firstParam
