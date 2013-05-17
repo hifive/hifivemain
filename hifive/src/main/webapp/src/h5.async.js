@@ -33,6 +33,14 @@
 	 */
 	var ERR_CODE_NOT_ARRAY = 5000;
 
+	/**
+	 * h5.async.deferredがcommonFailHandlerの管理のために上書くjQuery.Deferredのメソッド (failコールバックを登録する可能性のある関数)
+	 *
+	 * @private
+	 * @type {Array}
+	 */
+	var CFH_HOOK_METHODS = ['fail', 'always', 'pipe', 'then'];
+
 	// =============================
 	// Development Only
 	// =============================
@@ -64,14 +72,6 @@
 	 * @private
 	 */
 	var argsToArray = h5.u.obj.argsToArray;
-
-	/**
-	 * h5.async.deferredがcommonFailHandlerの管理のために上書くjQuery.Deferredのメソッド (failコールバックを登録する可能性のある関数)
-	 *
-	 * @private
-	 * @type {Array}
-	 */
-	var CFH_HOOK_METHODS = ['fail', 'always', 'pipe', 'then'];
 	// =========================================================================
 	//
 	// Privates
@@ -197,9 +197,8 @@
 		// jQuery1.6.x でもprogress/notify/notifyWithを使えるようにする。
 		if (!hasNativeProgress && !isPromise(promise)) {
 			addProgressFeatureForCompatibility(promise);
-		} else if (rootDfd && rootDfd.progress) {
-			// rootDfdにprogressがあればそれに書き換え
-			// promiseがプロミスオブジェクトなら、Promise生成元のdfdからprogressを追加
+		} else if (rootDfd) {
+			// rootDfdが指定されていればrootDfd.progressでpromise.progressを上書き
 			promise.progress = rootDfd.progress;
 		}
 
