@@ -97,9 +97,9 @@
 		// 最後に指定されたパラメータ
 		var lastNotifyParam = null;
 		// progressCallbacksを格納するための配列
-		dfd.__h5__progressCallbacks = [];
+		var progressCallbacks = [];
 		// progressCallbacksに対応したprogressFilterの配列を格納するための配列
-		dfd.__h5__progressFilters = [];
+		var progressFilters = [];
 
 		// progress,notify,notifyWithを追加
 		dfd.progress = function(progressCallback) {
@@ -118,8 +118,8 @@
 				}
 				progressCallback.apply(lastNotifyContext, params);
 			}
-			dfd.__h5__progressCallbacks.push(progressCallback);
-			dfd.__h5__progressFilters.push(filters);
+			progressCallbacks.push(progressCallback);
+			progressFilters.push(filters);
 			return this;
 		};
 
@@ -133,23 +133,21 @@
 				// resolve済みまたはreject済みならprogressコールバックは実行しない
 				return dfd;
 			}
-			var callbacks = dfd.__h5__progressCallbacks;
-			var filters = dfd.__h5__progressFilters;
 			var args = argsToArray(arguments);
 			// progressコールバックが登録されていたら全て実行する
-			if (callbacks.length > 0) {
-				for ( var i = 0, callbackLen = callbacks.length; i < callbackLen; i++) {
+			if (progressCallbacks.length > 0) {
+				for ( var i = 0, callbackLen = progressCallbacks.length; i < callbackLen; i++) {
 					var params = args;
 					// pipe()でprogressFilterが登録されいたら値をフィルタに通す
-					if (filters[i] && filters[i].length > 0) {
-						for ( var j = 0, fLen = filters[i].length; j < fLen; j++) {
-							params = filters[i][j].apply(this, wrapInArray(params));
+					if (progressFilters[i] && progressFilters[i].length > 0) {
+						for ( var j = 0, fLen = progressFilters[i].length; j < fLen; j++) {
+							params = progressFilters[i][j].apply(this, wrapInArray(params));
 						}
 					}
 					if (params !== arguments) {
 						params = wrapInArray(params);
 					}
-					callbacks[i].apply(this, params);
+					progressCallbacks[i].apply(this, params);
 				}
 			}
 			return dfd;
