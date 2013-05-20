@@ -134,7 +134,6 @@ $(function() {
 		h5.ajax('data/sample.data', {
 			dataType: 'text'
 		}).done(function(data, textStatus, jqXHR) {
-			console.log(data);
 			strictEqual(arguments.length, 3, '引数は3つ渡されること');
 			strictEqual(data, 'sample', '第一引数に取得した文字列であること');
 			strictEqual(textStatus, 'success', '第二引数にtextStatusであること');
