@@ -280,62 +280,6 @@ $(function() {
 		});
 	});
 
-	asyncTest('メソッドチェーンでfailを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
-		var that = this;
-		h5.ajax({
-			url: 'dummyURL',
-			timeout: 1
-		}).fail(function() {
-			setTimeout(function() {
-				ok(!that.cfhFlag);
-				start();
-			}, 0);
-		});
-	});
-
-	asyncTest('メソッドチェーンでalwaysを登録した場合に、h5.ajax() でcommonFailHandlerは動作しないこと', 1, function() {
-		var that = this;
-		h5.ajax({
-			url: 'dummyURL',
-			timeout: 1
-		}).always(function() {
-			setTimeout(function() {
-				ok(!that.cfhFlag);
-				start();
-			}, 0);
-		});
-	});
-
-	asyncTest('promise()で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと', 1,
-			function() {
-				var that = this;
-				h5.ajax({
-					url: 'dummyURL',
-					timeout: 1
-				}).promise().fail(function() {
-					setTimeout(function() {
-						ok(!that.cfhFlag);
-						start();
-					}, 0);
-				});
-			});
-
-	asyncTest('promise(target)で取得したプロミスオブジェクトにエラーコールバック関数を登録したとき、commonFailHandlerは動作しないこと',
-			function() {
-				var that = this;
-				var promise = h5.ajax({
-					url: 'dummyURL',
-					timeout: 1
-				}).promise({
-					a: 1
-				});
-				promise.fail(function() {
-					setTimeout(function() {
-						ok(!that.cfhFlag);
-						start();
-					}, 0);
-				});
-			});
 	//=============================
 	// Definition
 	//=============================
@@ -648,7 +592,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('failハンドラを登録していない場合、リトライ時にajaxの通信に成功した場合はcommonFailHandlerは動作しない', 2, function() {
+	asyncTest('failハンドラを登録していない場合、リトライしてajaxの通信に成功した場合はcommonFailHandlerは動作しない', 2, function() {
 		var ajaxCallCount = 0;
 		h5.settings.ajax.retryFilter = emptyFunc;
 

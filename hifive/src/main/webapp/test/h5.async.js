@@ -444,7 +444,7 @@ $(function() {
 		dfd = h5.async.deferred();
 		dfd.fail(function() {
 			var args = Array.prototype.slice.call(arguments);
-			deepEqual(args, [[1], 2, null], 'reject()で渡した引数がcommonFailHandlerに渡されていること');
+			deepEqual(args, [[1], 2, null], 'reject()で渡した引数がfailコールバックに渡されていること');
 			strictEqual(this, obj, 'rejectWith()の第一引数に指定したオブジェクトがcommonFailHandler内のthisであること');
 		}).rejectWith(obj, [[1], 2, null]);
 	});
@@ -494,6 +494,16 @@ $(function() {
 		cfhFlag: false
 	});
 
+	//=============================
+	// Body
+	//=============================
+
+	test('deferred.resolve()が呼ばれた時、commonFailHandlerは動作しないこと', 1, function() {
+		var dfd = h5.async.deferred();
+		dfd.resolve();
+		strictEqual(this.cfhFlag, false, 'commonFailHandlerは動作しないこと');
+	});
+
 	test('failハンドラが登録されていない時、reject()を呼んだ時にcommonFailHandlerが1回だけ動作すること', 1, function() {
 		var count = 0;
 		h5.settings.commonFailHandler = function() {
@@ -514,7 +524,27 @@ $(function() {
 		strictEqual(count, 1, 'commonFailHandlerが1度だけ実行されたこと');
 	});
 
+	test('doneコールバックが登録されていて、failコールバックが登録されていない時、reject()でcommonFailHandlerが動作すること', 1, function() {
+		var dfd = h5.async.deferred().done(emptyFunc);
+		dfd.reject();
+		strictEqual(this.cfhFlag, true, 'commonFailHandlerが動作していること');
+	});
+
+	test('progressコールバックが登録されていて、failコールバックが登録されていない時、reject()でcommonFailHandlerが動作すること', 1, function() {
+		var dfd = h5.async.deferred().progress(emptyFunc);
+		dfd.reject();
+		strictEqual(this.cfhFlag, true, 'commonFailHandlerが動作していること');
+	});
+
 	test('pipeでfailコールバックを登録してreject()された場合、commonFailHandlerが呼ばれないこと', 1, function() {
+		var dfd = h5.async.deferred();
+		dfd.promise().pipe(null, emptyFunc);
+		dfd.reject();
+		ok(!this.cfhFlag, 'deferred.pipe() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないか');
+		this.cfhFlag = false;
+	});
+
+	test('pipeでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
 		var dfd = h5.async.deferred();
 		dfd.promise().pipe(null, emptyFunc);
 		dfd.reject();
@@ -530,27 +560,19 @@ $(function() {
 		this.cfhFlag = false;
 	});
 
-	test('alwaysでfailコールバックを登録してreject()された場合、commonFailHandlerが呼ばれないこと', 1, function() {
-		dfd = h5.async.deferred();
-		dfd.promise().always(emptyFunc);
-		dfd.reject();
-		ok(!this.cfhFlag, 'deferred.always() でコールバックを指定した時に、commonFailHandlerが呼ばれないか');
-	});
-
-	test('pipeでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
-		var dfd = h5.async.deferred();
-		dfd.promise().pipe(null, emptyFunc);
-		dfd.reject();
-		ok(!this.cfhFlag, 'deferred.pipe() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないか');
-		this.cfhFlag = false;
-	});
-
 	test('thenでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
 		var dfd = h5.async.deferred();
 		dfd.promise().then(null, emptyFunc, null);
 		dfd.reject();
 		ok(!this.cfhFlag, 'deferred.then() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないか');
 		this.cfhFlag = false;
+	});
+
+	test('alwaysでfailコールバックを登録してreject()された場合、commonFailHandlerが呼ばれないこと', 1, function() {
+		dfd = h5.async.deferred();
+		dfd.promise().always(emptyFunc);
+		dfd.reject();
+		ok(!this.cfhFlag, 'deferred.always() でコールバックを指定した時に、commonFailHandlerが呼ばれないか');
 	});
 
 	test('alwaysでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
