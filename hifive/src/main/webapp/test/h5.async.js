@@ -290,17 +290,29 @@ $(function() {
 		ok(promise !== p, 'then()の戻り値はdeferred.promise()の戻り値とは別のPromiseであること');
 	});
 
-	test('[jquery#1.8-]thenはpromiseを返し、deferred.promise()の返すpromiseと同じであること', 1, function() {
+	test('[jquery#1.8-]thenはthenを呼んだ時のthisを返すこと。', 2, function() {
 		var dfd = h5.async.deferred();
 		var promise = dfd.promise();
 		var p = promise.then();
-		ok(dfd.promise() === p, 'then()の戻り値はdeferred.promise()の戻り値と同じであること');
+		ok(dfd.promise() === p, 'promise.then()の戻り値はpromiseであること');
+		p = dfd.then();
+		ok(dfd === p, 'deferred.then()の戻り値はdeferredであること');
 	});
 
-	test('thenの第3引数にprogressCallbackを渡して、動作すること', 1, function() {
+	test('deferred.thenの第3引数にprogressCallbackを渡して、動作すること', 1, function() {
 		var dfd = h5.async.deferred();
 		var ret = null;
 		dfd.then(null, null, function(value) {
+			ret = value;
+		});
+		dfd.notify(3);
+		strictEqual(ret, 3, 'then()で登録したprogressCallbackは動作するか');
+	});
+
+	test('promise.thenの第3引数にprogressCallbackを渡して、動作すること', 1, function() {
+		var dfd = h5.async.deferred();
+		var ret = null;
+		dfd.promise().then(null, null, function(value) {
 			ret = value;
 		});
 		dfd.notify(3);
@@ -404,7 +416,7 @@ $(function() {
 			var dfd = $.Deferred();
 			return dfd.promise();
 		}).then(null, function() {
-			failCalled=true;
+			failCalled = true;
 		});
 		dfd.reject();
 		ok(failCalled, 'thenで2つ目に登録したコールバックがpromiseを返していても、関係なく次のfailコールバックが実行されること');
@@ -524,17 +536,19 @@ $(function() {
 		strictEqual(count, 1, 'commonFailHandlerが1度だけ実行されたこと');
 	});
 
-	test('doneコールバックが登録されていて、failコールバックが登録されていない時、reject()でcommonFailHandlerが動作すること', 1, function() {
-		var dfd = h5.async.deferred().done(emptyFunc);
-		dfd.reject();
-		strictEqual(this.cfhFlag, true, 'commonFailHandlerが動作していること');
-	});
+	test('doneコールバックが登録されていて、failコールバックが登録されていない時、reject()でcommonFailHandlerが動作すること', 1,
+			function() {
+				var dfd = h5.async.deferred().done(emptyFunc);
+				dfd.reject();
+				strictEqual(this.cfhFlag, true, 'commonFailHandlerが動作していること');
+			});
 
-	test('progressコールバックが登録されていて、failコールバックが登録されていない時、reject()でcommonFailHandlerが動作すること', 1, function() {
-		var dfd = h5.async.deferred().progress(emptyFunc);
-		dfd.reject();
-		strictEqual(this.cfhFlag, true, 'commonFailHandlerが動作していること');
-	});
+	test('progressコールバックが登録されていて、failコールバックが登録されていない時、reject()でcommonFailHandlerが動作すること', 1,
+			function() {
+				var dfd = h5.async.deferred().progress(emptyFunc);
+				dfd.reject();
+				strictEqual(this.cfhFlag, true, 'commonFailHandlerが動作していること');
+			});
 
 	test('pipeでfailコールバックを登録してreject()された場合、commonFailHandlerが呼ばれないこと', 1, function() {
 		var dfd = h5.async.deferred();

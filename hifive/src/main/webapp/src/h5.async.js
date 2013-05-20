@@ -246,7 +246,8 @@
 		// pipeは戻り値が呼び出したpromise(またはdeferred)と違うので、
 		// そのdeferred/promiseが持つメソッドの上書きをして返す関数にする。
 		// jQuery1.6以下にない第3引数でのprogressコールバックの登録にも対応する。
-		if (promise.pipe) {
+		// rootDfdがあればrootDfd.pipeを持たせてあるので何もしない。
+		if (promise.pipe && !rootDfd) {
 			var pipe = promise.pipe;
 			promise.pipe = function() {
 				var ret = toCFHAware(pipe.apply(this, arguments));
@@ -285,26 +286,26 @@
 		// thenは戻り値が呼び出したpromise(またはdeferred)と違う(jQuery1.8以降)なら、
 		// そのdeferred/promiseが持つメソッドの上書きをして返す関数にする
 		// jQuery1.6対応で、第3引数にprogressFilterが指定されていればそれを登録する
-		if (promise.then) {
+		// rootDfdがあればrootDfd.thenを持たせてあるので何もしない
+		if (promise.then && !rootDfd) {
 			var then = promise.then;
 			promise.then = function(/* var_args */) {
 				var args = arguments;
 				var ret = then.apply(this, args);
-				if (ret !== promise) {
-
-					// 別のpromiseを生成して返ってくる(=jQuery1.8以降)なら、promiseの関数を上書いてから返す
+				if (ret !== this) {
+					// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
+					// jQuery1.8以降は、thenが別のdeferredに基づくpromiseを生成して返ってくる。
+					// 1.8以降であれば、progressの追加なら、promiseの関数を上書いてから返す
 					return toCFHAware(ret);
 				}
 
-				// thenが同じpromiseを返した場合(jQuery1.7以前)ならそのままretを返す
-
-				// progressFilterが引数で指定されてかつprogressメソッドがjQueryにない(1.6以前)場合
+				// 第3引数にprogressFilterが指定されていて、かつprogressメソッドがjQueryにない(1.6以前)場合
 				// promise.progressに登録する
 				if (!hasNativeProgress && hasValidCallback(args[2])) {
 					promise.progress.call(promise, args[2]);
 				}
-				// progressメソッドがもともとjQueryにある(jQuery1.7以降)なら、originalThenで登録されている。
-				// progressFilterの指定がないなら何もする必要がない。
+
+				// thenがthisを返した場合(jQuery1.7以前)ならそのままret(=this)を返す
 				return ret;
 			};
 		}
