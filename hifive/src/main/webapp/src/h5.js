@@ -217,7 +217,6 @@
 		 * <dd>一時的な通信エラーが発生した場合に通信をリトライする回数（デフォルト：3）</dd>
 		 * <dt>retryInterval</dt>
 		 * <dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。（デフォルト：500）</dd>
-		 * <li>
 		 * </dl>
 		 *
 		 * @since 1.1.4
@@ -231,18 +230,62 @@
 
 		/**
 		 * h5.ajaxの設定<br>
-		 * このプロパティはオブジェクトで、<code>h5.settings.ajax.retryCount = 3;</code>のようにして設定します。<br>
+		 * <p>
+		 * このパラメータはオブジェクトで、以下のプロパティを持ちます
+		 * </p>
 		 * <dl>
 		 * <dt>retryCount</dt>
-		 * <dd>一時的な通信エラーが発生した場合に通信をリトライする回数（デフォルト：0）</dd>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライする回数。デフォルトは0で、リトライを行いません。</dd>
 		 * <dt>retryInterval</dt>
-		 * <dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。<br>
-		 * 通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。（デフォルト：500）<br>
-		 * 同期(async:false)でh5.ajaxを呼んだ場合はIntervalは無視され、即座にリトライします。 </dd>
+		 * <dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。
+		 * <p>
+		 * 通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。デフォルトは500msです。
+		 * 同期(async:false)でh5.ajaxを呼んだ場合はretryIntervalは無視され、即座にリトライします。 (同期で呼んだ場合は必ず結果が同期で返ってきます。)
+		 * </p>
+		 * </dd>
 		 * <dt>retryFilter</dt>
-		 * <dd>リトライ時に実行する関数を登録できます。リトライする毎(リトライする直前)に呼ばれます。</dd>
-		 * <li>
+		 * <dd> リトライ時に実行する関数を登録できます。
+		 * <p>
+		 * リトライが有効な場合、呼び出しが失敗した場合に呼ばれます。 (失敗か成功かは、jQuery.ajaxの結果に基づく。200番台、304番なら成功、それ以外は失敗。)
+		 * </p>
+		 * <p>
+		 * retryFilterに設定した関数がfalseを返した場合はリトライを中止し、それ以外を返した場合はリトライを継続します。
+		 * (retryCountに設定した回数だけリトライをしたら、retryFilterの戻り値に関わらずリトライを中止します。)
+		 * </p>
+		 * <p>
+		 * デフォルトで設定してあるretryFilterは、「メソッドがGET、かつ、コネクションタイムアウトで失敗した場合のみリトライする」 ようになっています。
+		 * </p>
+		 * <p>
+		 * この挙動を変えたい場合は、以下のようにしてretryFilter関数を差し替えます。
+		 * </p>
+		 * <code><pre>
+		 * h5.settings.ajax.retryFilter = function(jqXHR, textStatus, thrownError) {
+		 * 	// この関数のthisはh5.ajax()呼び出し時のパラメータオブジェクトです。
+		 * 	// thisを見ると、メソッドがGETかPOSTか、等も分かります。
+		 * 	console.log('Ajax呼び出し失敗。textStatus = ' + textStatus);
+		 * 	return false; // 明示的にfalseを返した場合のみリトライを中止する
+		 * }
+		 * </pre></code> </dd>
 		 * </dl>
+		 * h5preinitのタイミングで設定すると、ユーザコード内のh5.ajaxの呼び出し全てに反映されます。 <code><pre>
+		 * $(document).bind('h5preinit', function() {
+		 * 	h5.settings.ajax = {
+		 * 		retryCount: 3,
+		 * 		retryInterval: 500,
+		 * 		retryFilter: function(){...}
+		 * 	};
+		 * });
+		 * </pre></code>
+		 * <p>
+		 * また、h5.ajax()の呼び出しパラメータで指定すると、呼び出しごとに設定を変えることもできます。 指定しなかったパラメータは<code>h5.settings.ajax</code>のパラメータが使われます。
+		 * </p>
+		 * <code><pre>
+		 * h5.ajax({
+		 * 	url: 'hoge',
+		 * 	retryCount: 1
+		 * });
+		 * // この場合、retryCountだけ1になり、retryIntervalとretryFilterはsettingsのものが使われます。
+		 * </pre></code>
 		 *
 		 * @since 1.1.5
 		 * @memberOf h5.settings
