@@ -98,28 +98,18 @@
 		var lastNotifyParam = null;
 		// progressCallbacksを格納するための配列
 		var progressCallbacks = [];
-		// progressCallbacksに対応したprogressFilterの配列を格納するための配列
-		var progressFilters = [];
 
 		// progress,notify,notifyWithを追加
 		dfd.progress = function(progressCallback) {
 			// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7以降の仕様と同じにするためにコールバックの登録と同時に実行する必要がある
-			var filters = this.__h5__progressPipeFilters;
 			if (notified) {
 				var params = lastNotifyParam;
-				// pipe()でprogressFilterが登録されいたら値をフィルタに通す
-				if (filters && filters.length > 0) {
-					for ( var i = 0, fLen = filters.length; i < fLen; i++) {
-						params = filters[i].apply(this, wrapInArray(params));
-					}
-				}
 				if (params !== lastNotifyParam) {
 					params = wrapInArray(params);
 				}
 				progressCallback.apply(lastNotifyContext, params);
 			}
 			progressCallbacks.push(progressCallback);
-			progressFilters.push(filters);
 			return this;
 		};
 
@@ -138,12 +128,6 @@
 			if (progressCallbacks.length > 0) {
 				for ( var i = 0, callbackLen = progressCallbacks.length; i < callbackLen; i++) {
 					var params = args;
-					// pipe()でprogressFilterが登録されいたら値をフィルタに通す
-					if (progressFilters[i] && progressFilters[i].length > 0) {
-						for ( var j = 0, fLen = progressFilters[i].length; j < fLen; j++) {
-							params = progressFilters[i][j].apply(this, wrapInArray(params));
-						}
-					}
 					if (params !== arguments) {
 						params = wrapInArray(params);
 					}
