@@ -62,7 +62,7 @@
 
 	// テスト環境を表示する
 	if (!$.isEmptyObject(H5_TEST_ENV)) {
-		QUnit.config.begin.push(function() {
+		$(function() {
 			// beginはQUnit.loadの先頭で呼ばれるコールバックなので、DOMの追加等が終わっていない
 			// そのためsetTimeout(0)でDOM追加が終わってから、H5_TEST_ENVの表示を行う
 			setTimeout(function() {
