@@ -33,21 +33,14 @@ $(function() {
 	// Variables
 	//=============================
 
-	// checkTestFilterTag関数の取り出し
-	// checkTestFilterTagがtestStartの何番目に入っているか。環境が変わったらここを変更する。
-	var testStartIndex = 0;
-	var checkTestFilterTag = QUnit.config.testStart[testStartIndex];
+	var checkTestFilterTag = h5testFilterTest.checkTestFilterTag;
+	var checkModuleFilterTag = h5testFilterTest.checkModuleFilterTag;
 
-	// testFilter関数の削除
-	QUnit.config.testStart.splice(testStartIndex, 1);
+	// testStartからフィルタ関数を削除
+	QUnit.config.testStart.splice(0, 1);
 
-
-	// checkModuleFilterTag関数の取り出し
-	// checkTestFilterTagがmoduleStartの何番目に入っているか。環境が変わったらここを変更する。
-	var moduleStartIndex = 0;
-	var checkModuleFilterTag = QUnit.config.moduleStart[moduleStartIndex];
-	// testFilter関数の削除
-	QUnit.config.moduleStart.splice(moduleStartIndex, 1);
+	// testModuleからフィルタ関数を削除
+	QUnit.config.moduleStart.splice(0, 1);
 
 
 	// もともと設定してあるfilterのパラメータを削除(H5_TEST_ENV.filterが指す参照先は変えないようにする)

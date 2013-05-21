@@ -382,7 +382,9 @@
 		$.extend(window.h5testFilterTest, {
 			parseConditions: parseConditions,
 			matchVersion: matchVersion,
-			matchDocmode: matchDocmode
+			matchDocmode: matchDocmode,
+			checkTestFilterTag: checkTestFilterTag,
+			checkModuleFilterTag: checkModuleFilterTag
 		});
 	}
 })();
