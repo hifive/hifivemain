@@ -1032,7 +1032,7 @@
 			deepEqual(obj, obj_clone, 'view.getに渡したオブジェクトが変化しない。');
 		});
 
-		test('[%:= %]内はエスケープされないこと。', 1, function() {
+		test('テンプレート中の[%:= %]内はエスケープされないこと。', 1, function() {
 			var view = h5.core.view.createView();
 			view.register('v1', 'エスケープあり[%= str %]\tエスケープなし[%:= str %]');
 			strictEqual(view.get('v1', {

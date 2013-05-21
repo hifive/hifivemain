@@ -848,12 +848,18 @@
 			// オブジェクトや配列の場合、JSON.stringify()を使って書けるが、json2.jsのJSON.stringify()を使った場合に不具合があるため自分で実装した。
 			switch (type) {
 			case 'String':
+				// stringの場合と同じ処理を行うため、breakしない
 			case 'string':
+				// String、string、両方の場合について同じ処理を行う
+				// typeToCodeはStringなら'S'、stringなら's'を返し、区別される
 				ret = typeToCode(type) + escape(ret);
 				break;
 			case 'Boolean':
+				// String/stringの場合と同様に、Boolean/booleanでも同じ処理を行うためbreakしていないが、
+				// Boolean型の場合はvalueOfで真偽値を取得する
 				ret = ret.valueOf();
 			case 'boolean':
+				// Booleanの場合は'B0','B1'。booleanの場合は'b0','b1'に変換する
 				ret = typeToCode(type) + ((ret) ? 1 : 0);
 				break;
 			case 'Number':

@@ -39,3 +39,22 @@ function Logic() {
  * @memberOf Logic
  */
 Logic.prototype.deferred = getDeferred;
+
+
+/**
+ * 指定された関数に対して、コンテキスト(this)をロジックに変更して実行する関数を返します。
+ *
+ * @param {Function} func 関数
+ * @return {Function} コンテキスト(this)をロジックに変更した関数
+ * @memberOf Logic
+ */
+Logic.prototype.own = function(func) {};
+
+/**
+ * 指定された関数に対して、コンテキスト(this)をロジックに変更し、元々のthisを第1引数に加えて実行する関数を返します。
+ *
+ * @param {Function} func 関数
+ * @return {Function} コンテキスト(this)をロジックに変更し、元々のthisを第1引数に加えた関数
+ * @memberOf Logic
+ */
+Logic.prototype.ownWithOrg = function(func) {};
