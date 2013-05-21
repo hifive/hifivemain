@@ -1962,6 +1962,10 @@
 
 		/**
 		 * コントローラのロガーを返します。
+		 * <p>
+		 * コントローラ内のメソッドで<code>this.log.debug('debug message');</code>のように記述して使用します。ロガーの使い方の詳細は<a
+		 * href="Log.html">Log</a>をご覧ください。
+		 * </p>
 		 *
 		 * @type Log
 		 * @memberOf Controller
