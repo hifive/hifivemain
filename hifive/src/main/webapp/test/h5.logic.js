@@ -290,4 +290,79 @@ $(function() {
 		}
 
 	});
+
+	asyncTest('own()の動作', function() {
+		function Test(callback) {
+			this.callback = callback;
+		}
+
+		Test.prototype.execute = function() {
+			this.callback(100, 200);
+		};
+
+		var myLogic = {
+			__name: 'MyLogic',
+			test: function() {
+				new Test(this.own(this.callback)).execute();
+			},
+			callback: function(arg1, arg2) {
+				ok(this.__name === 'MyLogic', 'thisがロジックになっているか');
+				strictEqual(arg1, 100, '引数は渡されているか1');
+				strictEqual(arg2, 200, '引数は渡されているか2');
+			}
+		};
+
+		var controller = {
+			__name: 'TestController',
+			myLogic: myLogic,
+			__ready: function() {
+				this.myLogic.test();
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			testController.unbind();
+			start();
+		});
+	});
+
+	asyncTest('ownWithOrg()の動作', function() {
+		function Test(callback) {
+			this.callback = callback;
+		}
+
+		Test.prototype.execute = function() {
+			this.callback(100, 200);
+		};
+		var org;
+		var myLogic = {
+			__name: 'MyLogic',
+			test: function() {
+				org = new Test(this.ownWithOrg(this.callback));
+				org.execute();
+			},
+			callback: function(originalThis, arg1, arg2) {
+				ok(originalThis === org, '元々のthisは第1引数に追加されているか');
+				ok(this.__name === 'MyLogic', 'thisがロジックになっているか');
+				strictEqual(arg1, 100, '引数は渡されているか1');
+				strictEqual(arg2, 200, '引数は渡されているか2');
+			}
+		};
+
+		var controller = {
+			__name: 'TestController',
+			myLogic: myLogic,
+			__ready: function() {
+				this.myLogic.test();
+			}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			testController.unbind();
+			start();
+		});
+	});
+
 });

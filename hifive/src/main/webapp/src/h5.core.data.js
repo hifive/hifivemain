@@ -309,8 +309,8 @@
 			return errorReason;
 		}
 
-		// base指定されていた場合は、後勝ちでextendする
-		schema = $.extend(baseSchema, schema);
+		// base指定されていた場合は、後勝ちでextendする(元のbaseSchemaは上書かないようにする)
+		schema = $.extend({}, baseSchema, schema);
 
 		// errorReasonにschemaのチェック結果を追加して返す
 		return errorReason.concat(validateSchema(schema, manager, stopOnError));
@@ -839,7 +839,7 @@
 	 */
 	function extendSchema(schema, manager, desc) {
 		var base = desc.base;
-		var baseSchema = desc.schema;
+		var baseSchema;
 
 		if (base) {
 			if (!manager) {
@@ -854,9 +854,12 @@
 
 			// base指定されたモデルのschemaを取得
 			baseSchema = baseModel.schema;
+		} else {
+			//baseが指定されていない場合は"親"は存在しない＝プロパティを持たない
+			baseSchema = {};
 		}
-		// extendした結果を返す。base指定されていない場合は渡されたdesc.schemaをシャローコピーしたもの。
-		$.extend(schema, baseSchema);
+		// baseSchemaとschemaをschema優先でマージした結果をschemaに格納する。baseSchemaは上書きしない。
+		$.extend(schema, baseSchema, desc.schema);
 	}
 
 
@@ -1124,13 +1127,12 @@
 		//TODO sequence対応は後日
 		//this.idSequence = 0;
 
-		//継承元がある場合はそのプロパティディスクリプタを先にコピーする。
-		//継承元と同名のプロパティを自分で定義している場合は
-		//自分が持っている定義を優先するため。
 		var schema = {};
 
-
 		//継承を考慮してスキーマを作成
+		//継承元がある場合はそのプロパティディスクリプタを先にコピーする。
+		//継承元と同名のプロパティを自分で定義している場合は
+		//自分が持っている定義を優先する。
 		extendSchema(schema, manager, descriptor);
 
 		/**

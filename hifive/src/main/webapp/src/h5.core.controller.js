@@ -1751,6 +1751,31 @@
 		return null;
 	}
 
+	/**
+	 * ロジック、コントローラが持つown
+	 *
+	 * @private
+	 */
+	function own(func) {
+		var that = this;
+		return function(/* var_args */) {
+			func.apply(that, arguments);
+		};
+	}
+
+	/**
+	 * ロジック、コントローラが持つownWithOrg
+	 *
+	 * @private
+	 */
+	function ownWithOrg(func) {
+		var that = this;
+		return function(/* var_args */) {
+			var args = h5.u.obj.argsToArray(arguments);
+			args.unshift(this);
+			func.apply(that, args);
+		};
+	}
 	// =========================================================================
 	//
 	// Body
@@ -2225,12 +2250,7 @@
 		 * @return {Function} コンテキスト(this)をコントローラに変更した関数
 		 * @memberOf Controller
 		 */
-		own: function(func) {
-			var that = this;
-			return function(/* var_args */) {
-				func.apply(that, arguments);
-			};
-		},
+		own: own,
 
 		/**
 		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えて実行する関数を返します。
@@ -2239,14 +2259,7 @@
 		 * @return {Function} コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えた関数
 		 * @memberOf Controller
 		 */
-		ownWithOrg: function(func) {
-			var that = this;
-			return function(/* var_args */) {
-				var args = h5.u.obj.argsToArray(arguments);
-				args.unshift(this);
-				func.apply(that, args);
-			};
-		},
+		ownWithOrg: ownWithOrg,
 
 		/**
 		 * コントローラを要素へ再度バインドします。子コントローラでは使用できません。
@@ -2942,6 +2955,8 @@
 		logic.deferred = getDeferred;
 		logic.log = h5.log.createLogger(logicName);
 		logic.__logicContext = {};
+		logic.own = own;
+		logic.ownWithOrg = ownWithOrg;
 
 		for ( var prop in logic) {
 			if (logic.hasOwnProperty(prop) && endsWith(prop, SUFFIX_LOGIC)) {
