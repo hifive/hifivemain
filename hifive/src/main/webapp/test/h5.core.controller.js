@@ -2412,9 +2412,9 @@ $(function() {
 			$(window).click();
 
 			strictEqual(ret1, 1, 'セレクタが{document}の場合、イベント名に"[]"がなくてもbindが使用されているか');
-			strictEqual(ret2, 2, 'セレクタが{document}の場合、イベント名に"[]"がってもbindが使用されているか');
+			strictEqual(ret2, 2, 'セレクタが{document}の場合、イベント名に"[]"があってもbindが使用されているか');
 			strictEqual(ret1, 1, 'セレクタが{window}の場合、イベント名に"[]"がなくてもbindが使用されているか');
-			strictEqual(ret2, 2, 'セレクタが{window}の場合、イベント名に"[]"がってもbindが使用されているか');
+			strictEqual(ret2, 2, 'セレクタが{window}の場合、イベント名に"[]"があってもbindが使用されているか');
 
 			testController.unbind();
 
