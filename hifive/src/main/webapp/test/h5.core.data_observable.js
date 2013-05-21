@@ -555,7 +555,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7]ObservableArray Arrayメソッド 非破壊系(JavaScript1.6以降)');
+	module('[browser#ie:-8|ie:9-10:docmode=7-9|ie-wp:9:docmode=7]ObservableArray Arrayメソッド 非破壊系(JavaScript1.6以降)');
 
 	//=============================
 	// Body
