@@ -32,8 +32,8 @@
 // 					// jQueryのバージョン
 // 					jquery: "1.8.0",
 
-// 					// h5.jsのbuildの種別 (min|dev)
-// 					build: "min",
+					// h5.jsのbuildの種別 (min|dev)
+					build: "min",
 
 // 					// ブラウザプレフィックス
 // 					// ie(IE),ff(Firefox),ch(Chrome),sa(Safari iOSのSafariも同様),op(Opera),
@@ -96,7 +96,7 @@
 			});
 
 			QUnit.config.done.push(function(){
-				$('#qunit-testresult').html('スキップしたテスト：' + skipCount);
+				$('#qunit-testresult').html('スキップされるテスト：' + skipCount);
 			});
 		</script>
 
