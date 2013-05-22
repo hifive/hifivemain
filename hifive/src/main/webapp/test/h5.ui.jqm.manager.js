@@ -36,7 +36,7 @@ $(function() {
 	});
 
 	// jQueryMobileの読み込み
-	h5.u.loadScript("../res/lib/jqplugins/jqm/1.2.0/jquery.mobile-1.2.0.js", {
+	h5.u.loadScript("../res/lib/jqplugins/jqm/1.3.1/jquery.mobile-1.3.1.js", {
 		async: false
 	});
 
