@@ -469,12 +469,10 @@
 			props: changedProps
 		};
 
-		//依存プロパティを再計算する
-		var changedDependProps = calcDependencies(model, item, event, changedPropNameArray,
-				isCreate);
-
-		//依存プロパティの変更をchangeイベントに含める
-		$.extend(changedProps, changedDependProps);
+		// 依存プロパティを再計算し、変更があったらchangeイベントに含める
+		$
+				.extend(changedProps, calcDependencies(model, item, event, changedPropNameArray,
+						isCreate));
 
 		return event;
 	}
