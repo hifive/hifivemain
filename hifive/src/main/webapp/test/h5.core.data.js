@@ -8036,7 +8036,6 @@ $(function() {
 			id: '1'
 		});
 		item.addEventListener('change', function(ev) {
-			console.log(ev);
 			deepEqual(ev.props.num, {
 				oldValue: 2,
 				newValue: 4
