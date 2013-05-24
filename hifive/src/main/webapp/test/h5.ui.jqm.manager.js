@@ -36,7 +36,11 @@ $(function() {
 	});
 
 	// jQueryMobileの読み込み
-	h5.u.loadScript("../res/lib/jqplugins/jqm/1.3.1/jquery.mobile-1.3.1.js", {
+	// jQueryのバージョンを見て読み込むjqmのバージョンを変える。
+	// 1.7以上なら1.3.1、1.6以下なら1.2.1。
+	var jqmVersion = parseFloat($().jquery.match(/\d\.\d/)[0]) < 1.7 ? '1.2.1' : '1.3.1';
+	h5.u.loadScript('../res/lib/jqplugins/jqm/' + jqmVersion + '/jquery.mobile-' + jqmVersion
+			+ '.js', {
 		async: false
 	});
 
