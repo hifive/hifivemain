@@ -38,7 +38,8 @@ $(function() {
 	// jQueryMobileの読み込み
 	// jQueryのバージョンを見て読み込むjqmのバージョンを変える。
 	// 1.7以上なら1.3.1、1.6以下なら1.2.1。
-	var jqmVersion = parseFloat($().jquery.match(/\d\.\d/)[0]) < 1.7 ? '1.2.1' : '1.3.1';
+	var jqVersionAry = $().jquery.split('.');
+	var jqmVersion = jqVersionAry[0] < 2 && jqVersionAry[1] < 7 ? '1.2.1' : '1.3.1';
 	h5.u.loadScript('../res/lib/jqplugins/jqm/' + jqmVersion + '/jquery.mobile-' + jqmVersion
 			+ '.js', {
 		async: false
