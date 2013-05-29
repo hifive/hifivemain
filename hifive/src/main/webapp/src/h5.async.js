@@ -198,30 +198,24 @@
 		// フックしたメソッドを保持するオブジェクト
 		var hookMethods = {};
 
-		// フックされた関数を元に戻してから引数に指定された関数を実行する関数
-		function callWithUnwrapPromise(func, args) {
-			// originalに戻す
-			$.extend(promise, originalMethods);
-			var ret = func.apply(this, args);
-			// フックされたものに戻す
-			$.extend(promise, hookMethods);
-			return ret;
-		}
-
 		/**
 		 * 指定されたメソッドを、フックされたコールバック登録関数を元に戻してから呼ぶ
 		 *
 		 * @private
 		 * @memberOf Deferred
+		 * @param {String} method メソッド名
+		 * @param {Array|Any} メソッドに渡す引数。Arrayで複数渡せる。引数1つならそのまま渡せる。
 		 */
-		promise.__fwInternalCall = function(method) {
-			// methodに渡す引数の取得
-			var args = argsToArray(arguments).splice(1);
+		promise._h5UnwrappedCall = function(method, args) {
+			args = wrapInArray(args);
+			// originalに戻す
+			$.extend(promise, originalMethods);
+			// originalに戻した状態でmethodを実行
+			var ret = promise[method].apply(this, args);
+			// フックされたものに戻す
+			$.extend(promise, hookMethods);
 
-			var that = this;
-			return callWithUnwrapPromise(function() {
-				return promise[method].apply(that, arguments);
-			}, args);
+			return ret;
 		};
 
 
@@ -250,7 +244,7 @@
 						}
 					}
 					// オリジナルのコールバック登録メソッドを呼ぶ
-					return promise.__fwInternalCall.apply(this, [method, arguments]);
+					return promise._h5UnwrappedCall.call(this, method, argsToArray(arguments));
 				};
 			})(method);
 			hookMethods[method] = promise[method];
