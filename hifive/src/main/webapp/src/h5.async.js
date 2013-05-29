@@ -546,8 +546,6 @@
 	 * @memberOf h5.async
 	 */
 	var when = function(/* var_args */) {
-		var getDeferred = h5.async.deferred;
-
 		var args = argsToArray(arguments);
 
 		if (args.length === 1 && $.isArray(args[0])) {
@@ -566,62 +564,60 @@
 		}
 		/* del end */
 
-		var dfd = $.Deferred();
+		var dfd = h5.async.deferred();
 
-		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
-			// progress/notify/notifyWithがない(jQueryのバージョンが1.6.x)場合、
-			// progress/notifyが使用できるように、機能拡張したwhenをここで実装する
-			// ( $.when()を使いながら機能追加ができないため、$.when自体の機能をここで実装している。)
-			var len = args.length;
-			var count = len;
-			var pValues = [];
-			var firstParam = args[0];
+		// $.when相当の機能を実装する。
+		// $.whenは引数が一つだった場合はそのpromiseをそのまま返し、新しいdeferredを作らないが、
+		// h5.async.whenでは必ず呼ばれたときにCFHAwareなdeferredを作ってそのpromiseを返す。
+		var len = args.length;
+		var count = len;
+		var pValues = [];
 
-			dfd = len <= 1 && firstParam && $.isFunction(firstParam.promise) ? firstParam
-					: getDeferred();
-
-			if (len > 1) {
-				// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
-				function resolveFunc(index) {
-					return function(value) {
-						args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-						if (!(--count)) {
-							dfd.resolveWith(dfd, args);
-						}
-					};
-				}
-				function progressFunc(index) {
-					return function(value) {
-						pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-						dfd.notifyWith(dfd.promise(), pValues);
-					};
-				}
-				for ( var i = 0; i < len; i++) {
-					if (args[i] && $.isFunction(args[i].promise)) {
-						args[i].promise().then(resolveFunc(i), dfd.reject, progressFunc(i));
-					} else {
-						--count;
-					}
-				}
-				if (!count) {
-					dfd.resolveWith(dfd, args);
-				}
-			} else if (dfd !== firstParam) {
-				dfd.resolveWith(dfd, len ? [firstParam] : []);
+		// argsからpromiseオブジェクトだけを取り出す。
+		var promiseArgs = [];
+		for ( var i = 0; i < len; i++) {
+			if ($.isFunction(args[i] && args[i].promise)) {
+				promiseArgs.push(args[i]);
 			}
-		} else {
-			// jQuery1.7以上なら戻り値をh5.async.deferredにして、$.whenをラップする
-			dfd = getDeferred();
+		}
+		count = len = promiseArgs.length;
 
-			$.when.apply($, args).done(function(/* var_args */) {
-				dfd.resolveWith(dfd, argsToArray(arguments));
-			}).fail(function(/* var_args */) {
-				dfd.rejectWith(dfd, argsToArray(arguments));
-			}).progress(function(/* ver_args */) {
-				dfd.notifyWith(dfd, argsToArray(arguments));
-			});
+		if (len === 0) {
+			// dfd/promiseオブジェクトが一つもなかったらすぐにresolve
+			dfd.resolveWith(dfd, args);
 		}
 
+		// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
+		function resolveFunc(index) {
+			return function(value) {
+				args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
+				if (!(--count)) {
+					dfd.resolveWith(dfd, args);
+				}
+			};
+		}
+		function progressFunc(index) {
+			return function(value) {
+				pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
+				dfd.notifyWith(dfd.promise(), pValues);
+			};
+		}
+		for ( var i = 0; i < len; i++) {
+			var p = promiseArgs[i];
+			if (p._h5UnwrapedCall) {
+				p._h5UnwrapedCall('done', resolveFunc(i));
+				p._h5UnwrapedCall('fail', dfd.reject);
+				p._h5UnwrapedCall('progress', progressFunc(i));
+			} else {
+				p.done(resolveFunc(i));
+				p.fail(dfd.reject);
+				// progressはjQuery1.6だとないので、あるかどうかチェックして呼び出す
+				p.progress && p.progress(progressFunc(i));
+			}
+		}
+		if (!count) {
+			dfd.resolveWith(dfd, args);
+		}
 		return dfd.promise();
 	};
 
