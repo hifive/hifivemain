@@ -214,7 +214,10 @@
 		 * @private
 		 * @memberOf Deferred
 		 */
-		promise.__fwInternalCall = function(method, args) {
+		promise.__fwInternalCall = function(method) {
+			// methodに渡す引数の取得
+			var args = argsToArray(arguments).splice(1);
+
 			var that = this;
 			return callWithUnwrapPromise(function() {
 				return promise[method].apply(that, arguments);
