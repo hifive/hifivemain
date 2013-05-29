@@ -189,7 +189,38 @@
 		//commonFailHandlerが発火済みかどうかのフラグ
 		var isCommonFailHandlerFired = false;
 
-		// 以下書き換える必要のある関数を書き換える
+		// ---------------------------------------------
+		// 以下書き換える(フックする)必要のある関数を書き換える
+		// ---------------------------------------------
+
+		// jQueryが持っているもともとのコールバック登録メソッドを保持するオブジェクト
+		var originalMethods = {};
+		// フックしたメソッドを保持するオブジェクト
+		var hookMethods = {};
+
+		// フックされた関数を元に戻してから引数に指定された関数を実行する関数
+		function callWithUnwrapPromise(func, args) {
+			// originalに戻す
+			$.extend(promise, originalMethods);
+			var ret = func.apply(this, args);
+			// フックされたものに戻す
+			$.extend(promise, hookMethods);
+			return ret;
+		}
+
+		/**
+		 * 指定されたメソッドを、フックされたコールバック登録関数を元に戻してから呼ぶ
+		 *
+		 * @private
+		 * @memberOf Deferred
+		 */
+		promise.__fwInternalCall = function(method, args) {
+			var that = this;
+			return callWithUnwrapPromise(function() {
+				return promise[method].apply(that, arguments);
+			}, args);
+		};
+
 
 		// commonFailHandlerのフラグ管理のために関数を上書きするための関数
 		function override(method) {
@@ -201,6 +232,7 @@
 				return;
 			}
 			var originalFunc = promise[method];
+			originalMethods[method] = originalFunc;
 			promise[method] = (function(_method) {
 				return function() {
 					if (!existFailHandler) {
@@ -214,15 +246,18 @@
 							existFailHandler = true;
 						}
 					}
-					return originalFunc.apply(this, arguments);
+					// オリジナルのコールバック登録メソッドを呼ぶ
+					return promise.__fwInternalCall.apply(this, [method, arguments]);
 				};
 			})(method);
+			hookMethods[method] = promise[method];
 		}
 
 		// failコールバックを登録する可能性のある関数を上書き
 		for ( var i = 0, l = CFH_HOOK_METHODS.length; i < l; i++) {
 			var prop = CFH_HOOK_METHODS[i];
 			if (promise[prop]) {
+				// cfhの管理をするための関数でオーバーライド
 				override(prop);
 			}
 		}
@@ -238,7 +273,6 @@
 
 				// もともとprogressを持っている(=pipeが第三引数でのprogressFilter登録に対応している)
 				// または、第3引数がない(=progressFilterの登録がない)ならそのままretを返す
-				// ならそのままretを返す
 				// pipeで指定するprogressFilterは、単数で一つのみ登録できるので、それがそのまま関数かどうか判定すればいい。
 				if (hasNativeProgress || !$.isFunction(arguments[2])) {
 					return ret;
@@ -265,6 +299,7 @@
 				});
 				return ret;
 			};
+			hookMethods.pipe = promise.pipe;
 		}
 
 		// thenは戻り値が呼び出したpromise(またはdeferred)と違う(jQuery1.8以降)なら、
@@ -279,7 +314,7 @@
 				if (ret !== this) {
 					// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
 					// jQuery1.8以降は、thenが別のdeferredに基づくpromiseを生成して返ってくる。
-					// 1.8以降であれば、progressの追加なら、promiseの関数を上書いてから返す
+					// 1.8以降であれば、promiseの関数を上書いてから返す
 					return toCFHAware(ret);
 				}
 
@@ -289,9 +324,10 @@
 					promise.progress.call(promise, args[2]);
 				}
 
-				// thenがthisを返した場合(jQuery1.7以前)ならそのままret(=this)を返す
+				// thenがthisを返した場合(jQuery1.7以前)ならそのままthis(=ret)を返す
 				return ret;
 			};
+			hookMethods.then = promise.then;
 		}
 
 		// reject/rejectWith
