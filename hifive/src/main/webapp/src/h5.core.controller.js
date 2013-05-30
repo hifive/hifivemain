@@ -905,7 +905,7 @@
 			delete controller.__controllerContext.templatePromise;
 			delete controller.__controllerContext.preinitDfd;
 			delete controller.__controllerContext.initDfd;
-			initDfd.resolve();
+			initDfd.resolveWith(controller);
 
 			if (controller.__controllerContext && controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば次の処理(イベントハンドラのバインドと__readyの実行)へ進む
@@ -930,7 +930,7 @@
 			var readyDfd = controller.__controllerContext.readyDfd;
 			// FW、ユーザともに使用しないので削除
 			delete controller.__controllerContext.readyDfd;
-			readyDfd.resolve();
+			readyDfd.resolveWith(controller);
 
 			if (controller.__controllerContext && controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば全ての処理が終了したことを表すイベント"h5controllerready"をトリガ
