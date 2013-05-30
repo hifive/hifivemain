@@ -1629,6 +1629,7 @@ $(function() {
 		var testInterceptor = h5.u.createInterceptor(function(invocation, data) {
 			invocation();
 		},function(){
+			// 何もしない
 		});
 		testInterceptor(function() {
 			return dfd.promise();
