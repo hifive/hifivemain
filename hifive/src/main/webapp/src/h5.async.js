@@ -584,14 +584,6 @@
 		var count = len;
 		var pValues = [];
 
-		// argsからpromiseオブジェクトだけを取り出す。
-		var promiseArgs = [];
-		for ( var i = 0; i < len; i++) {
-			if ($.isFunction(args[i] && args[i].promise)) {
-				promiseArgs.push(args[i]);
-			}
-		}
-		count = len = promiseArgs.length;
 
 		if (len === 0) {
 			// dfd/promiseオブジェクトが一つもなかったらすぐにresolve
@@ -603,22 +595,28 @@
 			return function(value) {
 				args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
 				if (!(--count)) {
+					// 全てのpromiseがresolveされたらdfdをresolve()
 					dfd.resolveWith(dfd, args);
 				}
 			};
 		}
 		function progressFunc(index) {
+			// args中の該当するindexに値を格納した配列をprogressコールバックに渡す
 			return function(value) {
 				pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
 				dfd.notifyWith(dfd.promise(), pValues);
 			};
 		}
 		for ( var i = 0; i < len; i++) {
-			var p = promiseArgs[i];
-			p.done(resolveFunc(i));
-			p.fail(dfd.reject);
-			// progressはjQuery1.6だとないので、あるかどうかチェックして呼び出す
-			p.progress && p.progress(progressFunc(i));
+			var p = args[i];
+			if (p && $.isFunction(p.promise)) {
+				p.done(resolveFunc(i));
+				p.fail(dfd.reject);
+				// progressはjQuery1.6だとないので、あるかどうかチェックして呼び出す
+				p.progress && p.progress(progressFunc(i));
+			} else {
+				--count;
+			}
 		}
 		if (!count) {
 			dfd.resolveWith(dfd, args);
