@@ -312,14 +312,14 @@
 	 * @returns {Any} invocationの戻り値
 	 * @memberOf h5.core.interceptor
 	 */
-	var logInterceptor = h5.u.createInterceptor(function(invocation) {
+	var logInterceptor = h5.u.createInterceptor(function(invocation, data) {
 		this.log.info('{0}.{1}が開始されました。', this.__name, invocation.funcName);
 		this.log.info(invocation.args);
 
 		data.start = new Date();
 
 		return invocation.proceed();
-	}, function(invocation) {
+	}, function(invocation, data) {
 		var end = new Date();
 		var time = end.getTime() - data.start.getTime();
 
