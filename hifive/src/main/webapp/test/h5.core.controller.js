@@ -836,7 +836,7 @@ $(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()された');
 		}).fail(function(e) {
 			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			strictEqual(e.controllerDefObject, controller, 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+			strictEqual(this, testController, 'failハンドラのthisはコントローラインスタンス');
 		});
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()された');
@@ -1143,15 +1143,13 @@ $(function() {
 					ok(false, 'テスト失敗。preinitPromiseがresolve()された');
 					h5.core.view.createView = originalCreateView;
 					start();
-				}).fail(
-						function(e) {
-							// createViewを元に戻す
-							h5.core.view.createView = originalCreateView;
-							errorObj = e;
-							deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-							strictEqual(e.controllerDefObject, controller,
-									'エラーオブジェクトからコントローラオブジェクトが取得できること');
-						});
+				}).fail(function(e) {
+					// createViewを元に戻す
+					h5.core.view.createView = originalCreateView;
+					errorObj = e;
+					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+					strictEqual(this, testController, 'thisはコントローラインスタンスであること');
+				});
 				testController.initPromise
 						.done(function(a) {
 							ok(false, 'テスト失敗。initPromiseがresolve()された');
@@ -1160,8 +1158,7 @@ $(function() {
 						.fail(
 								function(e) {
 									deepEqual(++count, 3, 'initPromiseがreject()された');
-									strictEqual(e.controllerDefObject, controller,
-											'エラーオブジェクトからコントローラオブジェクトが取得できること');
+									strictEqual(this, testController, 'thisはコントローラインスタンスであること');
 									strictEqual(e, errorObj,
 											'preinitPromiseのfailで取得したエラーオブジェクトとinitPromiseのfailで取得したエラーオブジェクトが同じであること');
 								});
@@ -1173,8 +1170,7 @@ $(function() {
 						.fail(
 								function(e) {
 									strictEqual(++count, 4, 'readyPromiseがreject()された');
-									strictEqual(e.controllerDefObject, controller,
-											'エラーオブジェクトからコントローラオブジェクトが取得できること');
+									strictEqual(this, testController, 'thisはコントローラインスタンスであること');
 									strictEqual(e, errorObj,
 											'preinitPromiseのfailで取得したエラーオブジェクトとreadyPromiseのfailで取得したエラーオブジェクトが同じであること');
 									start();
@@ -1209,7 +1205,7 @@ $(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()された');
 		}).fail(function(e) {
 			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			strictEqual(e.controllerDefObject, controller, 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+			strictEqual(this, testController, 'thisはコントローラインスタンスであること');
 		});
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()された');

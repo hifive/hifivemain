@@ -90,6 +90,8 @@
 	var ERR_CODE_BIND_ROOT_ONLY = 6031;
 	/** エラーコード：コントローラメソッドは最低2つの引数が必要 */
 	var ERR_CODE_CONTROLLER_TOO_FEW_ARGS = 6032;
+	/** エラーコード：コントローラの初期化処理がユーザーコードによって中断された(__initや__readyで返したプロミスがrejectした) */
+	var ERR_CODE_CONTROLLER_REJECTED_BY_USER = 6033;
 
 	// =============================
 	// Development Only
@@ -133,6 +135,7 @@
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
 	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind(), unbind()はルートコントローラでのみ使用可能です。';
 	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
+	errMsgMap[ERR_CODE_CONTROLLER_REJECTED_BY_USER] = 'コントローラ"{0}"の初期化処理がユーザによって中断されました。';
 
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
@@ -821,7 +824,7 @@
 				// ライフサイクルイベント実行後に呼ぶべきコールバック関数を作成
 				var callback = isInitEvent ? createCallbackForInit(controllerInstance)
 						: createCallbackForReady(controllerInstance);
-				if (h5.async.isPromise(ret)) {
+				if (ret && $.isFunction(ret.promise)) {
 					// __init, __ready がpromiseを返している場合
 					ret.done(function() {
 						callback();
@@ -833,10 +836,14 @@
 								fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR,
 										controller.rootController.__name);
 
+								var failReason = createRejectReason(
+										ERR_CODE_CONTROLLER_REJECTED_BY_USER, controllerName,
+										argsToArray(arguments));
+
 								// 同じrootControllerを持つ他の子のdisposeによって、
 								// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
 								controller.rootController
-										&& controller.rootController.dispose(arguments);
+										&& controller.rootController.dispose(failReason);
 							});
 				} else {
 					callback();
@@ -1683,7 +1690,8 @@
 			var dfd = con.__controllerContext[property];
 			if (dfd) {
 				if (!isRejected(dfd) && !isResolved(dfd)) {
-					dfd.reject(errorObj);
+					// thisをDfdを持つコントローラにしてreject
+					dfd.rejectWith(con, [errorObj]);
 				}
 			}
 			if (con.parentController) {
@@ -2771,37 +2779,36 @@
 					throwFwError(ERR_CODE_NOT_VIEW);
 				}
 				var vp = controller.view.load(templates);
-				vp.then(function(result) {
+				vp.done(function(result) {
 					/* del begin */
 					if (templates && templates.length > 0) {
 						fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
 					}
 					/* del end */
 					templateDfd.resolve();
-				}, function(result) {
-					// テンプレートのロードをリトライする条件は、リトライ回数が上限回数未満、かつ
-					// jqXhr.statusが"0"、もしくは"12029"であること。
-					// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に"0"になっていること、
-					// IEの場合は、コネクションが繋がらない時のコードが"12029"であること。
-					// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
-					// WinInet のエラーコード(12001 - 12156):
-					// http://support.microsoft.com/kb/193625/ja
-					var errorObj = result.detail.error;
-					var jqXhrStatus = errorObj ? errorObj.status : null;
-					if (count === h5.settings.dynamicLoading.retryCount || jqXhrStatus !== 0
-							&& jqXhrStatus !== 12029) {
-						fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
-								result.detail.url);
-						result.controllerDefObject = controllerDefObj;
-						setTimeout(function() {
-							templateDfd.reject(result);
-						}, 0);
-						return;
-					}
-					setTimeout(function() {
-						viewLoad(++count);
-					}, h5.settings.dynamicLoading.retryInterval);
-				});
+				}).fail(
+						function(result) {
+							// テンプレートのロードをリトライする条件は、リトライ回数が上限回数未満、かつ
+							// jqXhr.statusが"0"、もしくは"12029"であること。
+							// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に"0"になっていること、
+							// IEの場合は、コネクションが繋がらない時のコードが"12029"であること。
+							// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
+							// WinInet のエラーコード(12001 - 12156):
+							// http://support.microsoft.com/kb/193625/ja
+							var jqXhrStatus = result.detail.error.status;
+							if (count === h5.settings.dynamicLoading.retryCount
+									|| jqXhrStatus !== 0 && jqXhrStatus !== 12029) {
+								fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
+										result.detail.url);
+								setTimeout(function() {
+									templateDfd.reject(result);
+								}, 0);
+								return;
+							}
+							setTimeout(function() {
+								viewLoad(++count);
+							}, h5.settings.dynamicLoading.retryInterval);
+						});
 			};
 			viewLoad(0);
 		} else {
@@ -2812,13 +2819,20 @@
 		// テンプレートプロミスのハンドラ登録
 		templatePromise.done(function() {
 			if (!isDisposing(controller)) {
-				preinitDfd.resolve();
+				// thisをコントローラにしてresolve
+				preinitDfd.resolveWith(controller);
 			}
 		}).fail(function(e) {
-			preinitDfd.reject(e);
+			// eはview.load()のfailに渡されたエラーオブジェクト
+			// thisをコントローラにしてreject
+			preinitDfd.rejectWith(controller, [e]);
+
+			/* del begin */
 			if (controller.rootController && !isDisposing(controller.rootController)) {
 				fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR, controller.rootController.__name);
 			}
+			/* del end */
+
 			// 同じrootControllerを持つ他の子のdisposeによって、
 			// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
 			controller.rootController && controller.rootController.dispose(e);
