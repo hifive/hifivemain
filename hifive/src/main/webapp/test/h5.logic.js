@@ -216,6 +216,41 @@ $(function() {
 		});
 	});
 
+	test('[build#min]]Promiseを返す関数にインターセプタが適用されているとき、CommonFailHandlerの動作が阻害されていないこと', 1,
+			function() {
+				var dfd = h5.async.deferred();
+				var cfhFlag = false;
+				h5.settings.commonFailHandler = function() {
+					cfhFlag = true;
+				};
+				var testLogic = {
+					__name: 'TestLogic',
+					test: function() {
+						return dfd.promise();
+					}
+				};
+				var logicAspect = {
+					target: /TestLogic/,
+					interceptors: function(invocation) {
+						invocation.proceed();
+					},
+					pointCut: 'test*'
+				};
+				h5.core.__compileAspects(logicAspect);
+
+				var c = h5.core.controller('#qunit-fixture',{
+					testLogic: testLogic,
+					__name: 'TestController',
+					__ready: function(){
+						this.testLogic.test();
+					}
+				});
+				dfd.reject();
+				ok(cfhFlag, 'commonFailHandlerが実行された');
+				h5.settings.commonFailHandler = undefined;
+			});
+
+
 	test('[build#min]h5.core.logic() の動作', function() {
 		var dfd = null;
 		var logger = null;
