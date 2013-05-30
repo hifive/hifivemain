@@ -271,11 +271,12 @@ function getRegex(target) {
  * @param {Deferred|Promise} promise
  * @param {String} method
  * @param {Array|Any} args 複数の引数があるときは配列で渡します。
+ * @returns {Any} メソッドの実行結果
  */
 function registerCallbacksSilently(promise, method, args) {
 	if (promise) {
-		return promise._h5UnwrapedCall ? promise._h5UnwrapedCall(method, wrapInArray(args)) : promise[method].apply(
-				promise, wrapInArray(args));
+		return promise._h5UnwrappedCall ? promise._h5UnwrappedCall(method, args) : promise[method].apply(
+				promise, args);
 	}
 }
 
