@@ -558,7 +558,7 @@
 		for ( var i = 0, l = args.length; i < l; i++) {
 			// DeferredもPromiseも、promiseメソッドを持つので、
 			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
-			if (args[i] != null && !args[i].promise && !$.isFunction(args[i].promise)) {
+			if (!args[i] || !(args[i].promise && $.isFunction(args[i].promise))) {
 				fwLogger.info(FW_LOG_H5_WHEN_INVALID_PARAMETER);
 				break;
 			}
@@ -579,47 +579,46 @@
 			}
 			return dfd;
 		}
+
+		// whenのdfd
 		dfd = h5.async.deferred();
 
-		var count = len;
-		var pValues = [];
+		// $.whenを呼び出して、dfdと紐づける
+		var ret = $.when.apply($, args).done(function(/* var_args */) {
+			dfd.resolveWith(this, argsToArray(arguments));
+		}).fail(function(/* var_args */) {
+			dfd.rejectWith(this, argsToArray(arguments));
+		});
 
+		// progressがある(jQuery1.7以降)ならそのままprogressも登録
+		if (ret.progress) {
+			ret.progress(function(/* ver_args */) {
+				dfd.notifyWith(dfd, argsToArray(arguments));
+			});
+		} else {
+			// progressがない(=jQuery1.6.x)なら、progress機能を追加
 
-		if (len === 0) {
-			// dfd/promiseオブジェクトが一つもなかったらすぐにresolve
-			dfd.resolveWith(dfd, args);
-		}
-
-		// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
-		function resolveFunc(index) {
-			return function(value) {
-				args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-				if (!(--count)) {
-					// 全てのpromiseがresolveされたらdfdをresolve()
-					dfd.resolveWith(dfd, args);
-				}
-			};
-		}
-		function progressFunc(index) {
-			// args中の該当するindexに値を格納した配列をprogressコールバックに渡す
-			return function(value) {
-				pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-				dfd.notifyWith(dfd.promise(), pValues);
-			};
-		}
-		for ( var i = 0; i < len; i++) {
-			var p = args[i];
-			if (p && $.isFunction(p.promise)) {
-				p.done(resolveFunc(i));
-				p.fail(dfd.reject);
-				// progressはjQuery1.6だとないので、あるかどうかチェックして呼び出す
-				p.progress && p.progress(progressFunc(i));
-			} else {
-				--count;
+			// progressの引数になる配列。
+			// pValuesにはあらかじめundefinedを入れておく($.whenと同じ。progressフィルタ内のarguments.lengthは常にargs.lengthと同じ)
+			var pValues = [];
+			for ( var i = 0; i < l; i++) {
+				pValues[i] = undefined;
 			}
-		}
-		if (!count) {
-			dfd.resolveWith(dfd, args);
+			function progressFunc(index) {
+				// args中の該当するindexに値を格納した配列をprogressコールバックに渡す
+				return function(value) {
+					pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
+					// TODO notify/notifyWithの時のthisは？
+					dfd.notifyWith(dfd.promise(), pValues);
+				};
+			}
+			for ( var i = 0; i < len; i++) {
+				var p = args[i];
+				if (p && $.isFunction(p.promise)) {
+					// progressはjQuery1.6で作られたdeferred/promiseだとないので、あるかどうかチェックして呼び出す
+					p.progress && p.progress(progressFunc(i));
+				}
+			}
 		}
 		return dfd.promise();
 	};
