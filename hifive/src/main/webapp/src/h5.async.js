@@ -513,7 +513,8 @@
 	 * <h4>jQuery.when()と相違点</h4>
 	 * <ul>
 	 * <li>failコールバックが未指定の場合、共通のエラー処理(<a
-	 * href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行します。</li>
+	 * href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行します。(※
+	 * whenに渡したpromiseについてのcommonFailHandlerは動作しなくなります。)</li>
 	 * <li>jQuery1.6.xを使用している場合、jQuery.when()では使用できないnotify/progressの機能を使用することができます。ただし、この機能を使用するには<a
 	 * href="h5.async.html#deferred">h5.async.deferred()</a>によって生成されたDeferredのPromiseオブジェクトを引数に指定する必要があります。<br>
 	 * </li>
@@ -564,12 +565,22 @@
 		}
 		/* del end */
 
-		var dfd = h5.async.deferred();
-
 		// $.when相当の機能を実装する。
-		// $.whenは引数が一つだった場合はそのpromiseをそのまま返し、新しいdeferredを作らないが、
-		// h5.async.whenでは必ず呼ばれたときにCFHAwareなdeferredを作ってそのpromiseを返す。
+		// 引数が一つでそれがプロミスだった場合はそのpromiseをそのまま返し、新しいdeferredを作らない
+		// そのプロミスがCFHAwareでなければCFHAware化して返す
 		var len = args.length;
+		var dfd;
+		// 引数が1つで、それがdeferred/promiseオブジェクトならそのpromiseを返します。
+		// awareでないdeferred/promiseなら、aware化して返します。
+		if (len == 1 && args[0] && $.isFunction(args[0].promise)) {
+			dfd = args[0].promise();
+			if (!dfd._h5UnwrappedCall) {
+				dfd = toCFHAware(dfd);
+			}
+			return dfd;
+		}
+		dfd = h5.async.deferred();
+
 		var count = len;
 		var pValues = [];
 
@@ -604,16 +615,10 @@
 		}
 		for ( var i = 0; i < len; i++) {
 			var p = promiseArgs[i];
-			if (p._h5UnwrapedCall) {
-				p._h5UnwrapedCall('done', resolveFunc(i));
-				p._h5UnwrapedCall('fail', dfd.reject);
-				p._h5UnwrapedCall('progress', progressFunc(i));
-			} else {
-				p.done(resolveFunc(i));
-				p.fail(dfd.reject);
-				// progressはjQuery1.6だとないので、あるかどうかチェックして呼び出す
-				p.progress && p.progress(progressFunc(i));
-			}
+			p.done(resolveFunc(i));
+			p.fail(dfd.reject);
+			// progressはjQuery1.6だとないので、あるかどうかチェックして呼び出す
+			p.progress && p.progress(progressFunc(i));
 		}
 		if (!count) {
 			dfd.resolveWith(dfd, args);
