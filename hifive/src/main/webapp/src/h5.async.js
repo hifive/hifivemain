@@ -234,12 +234,12 @@
 				return function() {
 					if (!existFailHandler) {
 						// failコールバックが渡されたかどうかチェック
-						var arg = argsToArray(arguments);
+						var failArgs = argsToArray(arguments);
 						if (method === 'then' || method === 'pipe') {
 							// thenまたはpipeならargの第2引数を見る
-							arg = arg[1];
+							failArgs = failArgs[1];
 						}
-						if (hasValidCallback(arg)) {
+						if (hasValidCallback(failArgs)) {
 							existFailHandler = true;
 						}
 					}
