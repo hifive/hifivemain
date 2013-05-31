@@ -1263,6 +1263,29 @@ $(function() {
 				});
 			});
 
+	asyncTest('テンプレートのロードが失敗したとき、commonFailHandlerのthisはコントローラインスタンス、引数はview.loadのエラーオブジェクトであること',
+			2, function() {
+				var childControllerDef = {
+					__name: 'ChildController',
+					__templates: 'dummy'
+				};
+				var c;
+				h5.settings.commonFailHandler = function(arg) {
+					strictEqual(this, c, 'commonFailHandlerのthisはルートコントローラのインスタンスであること');
+					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
+							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
+					h5.settings.commonFailHandler = undefined;
+					start();
+				};
+				c = h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					__construct: function() {
+						child = this.childController;
+					},
+					childController: childControllerDef
+				});
+			});
+
 	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 6, function() {
 		var count = 0;
 		var controller = {
