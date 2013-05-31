@@ -548,6 +548,7 @@
 	 */
 	var when = function(/* var_args */) {
 		var args = argsToArray(arguments);
+		var len = args.length;
 
 		if (args.length === 1 && $.isArray(args[0])) {
 			args = args[0];
@@ -555,7 +556,7 @@
 
 		/* del begin */
 		// 引数にpromise・deferredオブジェクト以外があった場合はログを出力します。
-		for ( var i = 0, l = args.length; i < l; i++) {
+		for ( var i = 0; i < len; i++) {
 			// DeferredもPromiseも、promiseメソッドを持つので、
 			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
 			if (!args[i] || !(args[i].promise && $.isFunction(args[i].promise))) {
@@ -568,7 +569,6 @@
 		// $.when相当の機能を実装する。
 		// 引数が一つでそれがプロミスだった場合はそのpromiseをそのまま返し、新しいdeferredを作らない
 		// そのプロミスがCFHAwareでなければCFHAware化して返す
-		var len = args.length;
 		var dfd;
 		// 引数が1つで、それがdeferred/promiseオブジェクトならそのpromiseを返します。
 		// awareでないdeferred/promiseなら、aware化して返します。
@@ -601,7 +601,7 @@
 			// progressの引数になる配列。
 			// pValuesにはあらかじめundefinedを入れておく($.whenと同じ。progressフィルタ内のarguments.lengthは常にargs.lengthと同じ)
 			var pValues = [];
-			for ( var i = 0; i < l; i++) {
+			for ( var i = 0; i < len; i++) {
 				pValues[i] = undefined;
 			}
 			function progressFunc(index) {
