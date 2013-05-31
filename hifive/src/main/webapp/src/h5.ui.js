@@ -939,14 +939,17 @@
 
 		if ($.isArray(promises)) {
 			$.map(promises, function(item, idx) {
-				return isPromise(item) ? item : null;
+				return item && $.isFunction(item.promise) ? item : null;
 			});
 
 			if (promises.length > 0) {
-				h5.async.when(promises).pipe(promiseCallback, promiseCallback);
+				// CFHの発火を阻害しないように_h5UnwrappedCallを使ってpipeを呼び出し。
+				h5.async.when(promises)
+						._h5UnwrappedCall('pipe', [promiseCallback, promiseCallback]);
 			}
-		} else if (isPromise(promises)) {
-			promises.pipe(promiseCallback, promiseCallback);
+		} else if (promises && $.isFunction(promises.promise)) {
+			// CFHの発火を阻害しないようにpipeを呼び出し。
+			registerCallbacksSilently(promises, 'pipe', [promiseCallback, promiseCallback]);
 		}
 	}
 
