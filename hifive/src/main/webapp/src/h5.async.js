@@ -567,33 +567,31 @@
 		/* del end */
 
 		// $.when相当の機能を実装する。
-		// 引数が一つでそれがプロミスだった場合はそのpromiseをそのまま返し、新しいdeferredを作らない
-		// そのプロミスがCFHAwareでなければCFHAware化して返す
-		var dfd;
-		// 引数が1つで、それがdeferred/promiseオブジェクトならそのpromiseを返します。
-		// awareでないdeferred/promiseなら、aware化して返します。
-		if (len == 1 && args[0] && $.isFunction(args[0].promise)) {
-			dfd = args[0].promise();
-			if (!dfd._h5UnwrappedCall) {
-				dfd = toCFHAware(dfd);
-			}
-			return dfd;
-		}
-
-		// whenのdfd
-		dfd = h5.async.deferred();
+		// 引数が一つでそれがプロミスだった場合は$.whenはそれをそのまま返しているが、
+		// h5.async.whenではCFHAwareでprogressメソッドを持つpromiseを返す必要があるため、
+		// 引数がいくつであろうと、新しくCFHAwareなdeferredオブジェクトを生成してそのpromiseを返す。
+		var dfd = h5.async.deferred();
+		var whenPromise = dfd.promise();
 
 		// $.whenを呼び出して、dfdと紐づける
-		var ret = $.when.apply($, args).done(function(/* var_args */) {
-			dfd.resolveWith(this, argsToArray(arguments));
-		}).fail(function(/* var_args */) {
+		var ret = $.when.apply($, args).done(
+				function(/* var_args */) {
+					// jQuery1.7以下では、thisが$.whenの戻り値の元のdeferredになる。
+					// (resolveWithで呼んでも同様。指定したコンテキストは無視される。)
+					// そうなっていたら、thisを$.whenに紐づいたdeferredではなく、h5.async.whenのdeferredに差し替える
+					dfd.resolveWith(this && this.promise && this.promise() === ret ? dfd : this,
+							argsToArray(arguments));
+				}).fail(function(/* var_args */) {
 			dfd.rejectWith(this, argsToArray(arguments));
 		});
 
 		// progressがある(jQuery1.7以降)ならそのままprogressも登録
 		if (ret.progress) {
 			ret.progress(function(/* ver_args */) {
-				dfd.notifyWith(dfd, argsToArray(arguments));
+				// jQuery1.7では、thisが$.whenの戻り値と同じインスタンス(プロミス)になる。
+				// (notifyWithで呼んでも同様。指定したコンテキストは無視される。)
+				// thisが$.whenの戻り値なら、h5.async.whenの戻り値のプロミスに差し替える
+				dfd.notifyWith(this === ret ? whenPromise : this, argsToArray(arguments));
 			});
 		} else {
 			// progressがない(=jQuery1.6.x)なら、progress機能を追加
@@ -608,19 +606,28 @@
 				// args中の該当するindexに値を格納した配列をprogressコールバックに渡す
 				return function(value) {
 					pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-					// TODO notify/notifyWithの時のthisは？
-					dfd.notifyWith(dfd.promise(), pValues);
+					// jQuery1.6では、jQuery1.7と同様の動作をするようにする。
+					// thisはh5.async.whenの戻り値と同じ。
+					dfd.notifyWith(whenPromise, pValues);
 				};
 			}
 			for ( var i = 0; i < len; i++) {
 				var p = args[i];
-				if (p && $.isFunction(p.promise)) {
-					// progressはjQuery1.6で作られたdeferred/promiseだとないので、あるかどうかチェックして呼び出す
-					p.progress && p.progress(progressFunc(i));
+				// progressはjQuery1.6で作られたdeferred/promiseだとないので、あるかどうかチェックして呼び出す
+				if (p && $.isFunction(p.promise) && p.progress) {
+					if (len > 1) {
+						p.progress(progressFunc(i));
+					} else {
+						// 引数が1つなら、notifyで渡された引数は配列化せず、そのままwhenのprogressへスルーさせる
+						p.progress(function(/* var_args */) {
+							// thisはh5.async.whenの戻り値と同じ。
+							dfd.notifyWith(whenPromise, argsToArray(arguments));
+						});
+					}
 				}
 			}
 		}
-		return dfd.promise();
+		return whenPromise;
 	};
 
 	// =============================
