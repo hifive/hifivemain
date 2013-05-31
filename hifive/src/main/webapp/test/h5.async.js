@@ -208,7 +208,7 @@ $(function() {
 
 			return dfd.promise();
 		}).done(function() {
-			equal(count++, 2, '2番目に実行されること。(pipe1のdoneハンドラ)');
+			equal(count++, 2, '2番目に実行されること。(pipe1のdoneコールバック)');
 		}).pipe(function() {
 			var dfd = $.Deferred();
 
@@ -219,7 +219,7 @@ $(function() {
 
 			return dfd.promise();
 		}).done(function() {
-			equal(count++, 4, '4番目に実行されること。(pipe2のdoneハンドラ)');
+			equal(count++, 4, '4番目に実行されること。(pipe2のdoneコールバック)');
 		}).pipe(function() {
 			var dfd = $.Deferred();
 
@@ -230,7 +230,7 @@ $(function() {
 
 			return dfd.promise();
 		}).done(function() {
-			equal(count++, 6, '6番目に実行されること。(pipe3のdoneハンドラ)');
+			equal(count++, 6, '6番目に実行されること。(pipe3のdoneコールバック)');
 			start();
 		});
 	});
@@ -255,7 +255,7 @@ $(function() {
 
 			return dfd.promise();
 		}).fail(function() {
-			equal(count++, 2, '2番目に実行されること。(pipe1のfailハンドラ)');
+			equal(count++, 2, '2番目に実行されること。(pipe1のfailコールバック)');
 		}).pipe(null, function() {
 			var dfd = $.Deferred();
 
@@ -266,7 +266,7 @@ $(function() {
 
 			return dfd.promise();
 		}).fail(function() {
-			equal(count++, 4, '4番目に実行されること。(pipe2のfailハンドラ)');
+			equal(count++, 4, '4番目に実行されること。(pipe2のfailコールバック)');
 		}).pipe(null, function() {
 			var dfd = $.Deferred();
 
@@ -277,7 +277,7 @@ $(function() {
 
 			return dfd.promise();
 		}).fail(function() {
-			equal(count++, 6, '6番目に実行されること。(pipe3のfailハンドラ)');
+			equal(count++, 6, '6番目に実行されること。(pipe3のfailコールバック)');
 			start();
 		});
 	});
@@ -332,7 +332,7 @@ $(function() {
 
 			return dfd.promise();
 		}).done(function() {
-			equal(count++, 2, '2番目に実行されること。(then1のdoneハンドラ)');
+			equal(count++, 2, '2番目に実行されること。(then1のdoneコールバック)');
 		}).then(function() {
 			var dfd = $.Deferred();
 
@@ -343,7 +343,7 @@ $(function() {
 
 			return dfd.promise();
 		}).done(function() {
-			equal(count++, 4, '4番目に実行されること。(then2のdoneハンドラ)');
+			equal(count++, 4, '4番目に実行されること。(then2のdoneコールバック)');
 		}).then(function() {
 			var dfd = $.Deferred();
 
@@ -354,7 +354,7 @@ $(function() {
 
 			return dfd.promise();
 		}).done(function() {
-			equal(count++, 6, '6番目に実行されること。(then3のdoneハンドラ)');
+			equal(count++, 6, '6番目に実行されること。(then3のdoneコールバック)');
 			start();
 		});
 	});
@@ -372,7 +372,7 @@ $(function() {
 
 			return dfd.promise();
 		}).fail(function() {
-			equal(count++, 2, '2番目に実行されること。(then1のfailハンドラ)');
+			equal(count++, 2, '2番目に実行されること。(then1のfailコールバック)');
 		}).then(null, function() {
 			var dfd = $.Deferred();
 
@@ -383,7 +383,7 @@ $(function() {
 
 			return dfd.promise();
 		}).fail(function() {
-			equal(count++, 4, '4番目に実行されること。(then2のfailハンドラ)');
+			equal(count++, 4, '4番目に実行されること。(then2のfailコールバック)');
 		}).then(null, function() {
 			var dfd = $.Deferred();
 
@@ -394,7 +394,7 @@ $(function() {
 
 			return dfd.promise();
 		}).fail(function() {
-			equal(count++, 6, '6番目に実行されること。(then3のfailハンドラ)');
+			equal(count++, 6, '6番目に実行されること。(then3のfailコールバック)');
 			start();
 		});
 	});
@@ -440,7 +440,7 @@ $(function() {
 					var args = Array.prototype.slice.call(arguments);
 					deepEqual(args, [[1], 2, null], 'reject()で渡した引数がfailコールバックに渡されていること');
 					ok(this === dfd || this === dfd.promise(),
-							'deferredからrejectを読んだので、thisはdeferredであること');
+							'deferredからrejectを呼んだので、thisはdeferredであること');
 				}).reject([1], 2, null);
 
 		var obj = {};
@@ -516,7 +516,7 @@ $(function() {
 		strictEqual(this.cfhFlag, false, 'commonFailHandlerは動作しないこと');
 	});
 
-	test('failハンドラが登録されていない時、reject()を呼んだ時にcommonFailHandlerが1回だけ動作すること', 1, function() {
+	test('failコールバックが登録されていない時、reject()を呼んだ時にcommonFailHandlerが1回だけ動作すること', 1, function() {
 		var count = 0;
 		h5.settings.commonFailHandler = function() {
 			count++;
@@ -526,7 +526,7 @@ $(function() {
 		strictEqual(count, 1, 'commonFailHandlerが1度だけ実行されたこと');
 	});
 
-	test('failハンドラが登録されていない時、rejectWith()を呼んだ時にcommonFailHandlerが1回だけ動作すること', 1, function() {
+	test('failコールバックが登録されていない時、rejectWith()を呼んだ時にcommonFailHandlerが1回だけ動作すること', 1, function() {
 		var count = 0;
 		h5.settings.commonFailHandler = function() {
 			count++;
@@ -554,15 +554,15 @@ $(function() {
 		var dfd = h5.async.deferred();
 		dfd.promise().pipe(null, emptyFunc);
 		dfd.reject();
-		ok(!this.cfhFlag, 'deferred.pipe() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないか');
+		ok(!this.cfhFlag, 'deferred.pipe() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないこと');
 		this.cfhFlag = false;
 	});
 
 	test('pipeでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
 		var dfd = h5.async.deferred();
-		dfd.promise().pipe(null, emptyFunc);
+		dfd.promise().pipe();
 		dfd.reject();
-		ok(!this.cfhFlag, 'deferred.pipe() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないか');
+		ok(this.cfhFlag, 'deferred.pipe() でfailコールバックを登録しなければ、commonFailHandlerは呼ばれること');
 		this.cfhFlag = false;
 	});
 
@@ -570,15 +570,15 @@ $(function() {
 		var dfd = h5.async.deferred();
 		dfd.promise().then(null, emptyFunc, null);
 		dfd.reject();
-		ok(!this.cfhFlag, 'deferred.then() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないか');
+		ok(!this.cfhFlag, 'deferred.then() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないこと');
 		this.cfhFlag = false;
 	});
 
 	test('thenでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
 		var dfd = h5.async.deferred();
-		dfd.promise().then(null, emptyFunc, null);
+		dfd.promise().then(emptyFunc, null, emptyFunc);
 		dfd.reject();
-		ok(!this.cfhFlag, 'deferred.then() で第2引数(failCallback)を指定した時に、commonFailHandlerが呼ばれないか');
+		ok(this.cfhFlag, 'deferred.then() でfailコールバックを登録しなければ、commonFailHandlerは呼ばれること');
 		this.cfhFlag = false;
 	});
 
@@ -586,14 +586,14 @@ $(function() {
 		dfd = h5.async.deferred();
 		dfd.promise().always(emptyFunc);
 		dfd.reject();
-		ok(!this.cfhFlag, 'deferred.always() でコールバックを指定した時に、commonFailHandlerが呼ばれないか');
+		ok(!this.cfhFlag, 'deferred.always() でコールバックを指定した時に、commonFailHandlerが呼ばれないこと');
 	});
 
 	test('alwaysでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
 		dfd = h5.async.deferred();
-		dfd.always(emptyFunc);
+		dfd.always();
 		dfd.reject();
-		ok(!this.cfhFlag, 'deferred.always() でコールバックを指定した時に、commonFailHandlerが呼ばれないか');
+		ok(this.cfhFlag, 'deferred.always() でコールバックを登録しなければ、commonFailHandlerは呼ばれること');
 	});
 
 	test('fail()の引数に有効なコールバックを指定せずに呼び出した場合、commonFailHandlerは動作すること', 4, function() {
@@ -625,7 +625,7 @@ $(function() {
 					var args = Array.prototype.slice.call(arguments);
 					deepEqual(args, [[1], 2, null], 'reject()で渡した引数がcommonFailHandlerに渡されていること');
 					ok(this === dfd || this === dfd.promise(),
-							'deferredからrejectを読んだので、thisはdeferredであること');
+							'deferredからrejectを呼んだので、thisはdeferredであること');
 				};
 				dfd = h5.async.deferred();
 				dfd.reject([1], 2, null);
@@ -654,151 +654,278 @@ $(function() {
 	//=============================
 
 	module("Async - when");
-	// h5.async.whenは、jQuery1.7以上の場合は$.whenをラップしているが、
-	// jQuery1.6.xの場合はhifiveが$.when相当のものを独自実装しているため、whenの機能全般をここでテストする。
+	// h5.async.whenは、jQuery1.7以上の場合はh5.async.whenをラップしているが、
+	// jQuery1.6.xの場合はhifiveがh5.async.when相当のものを独自実装しているため、whenの機能全般をここでテストする。
 
 	//=============================
 	// Body
 	//=============================
 
-	test('$.Deferred()のPromiseを引数に指定して実行 - done()', 1, function() {
+	test('戻り値にprogressメソッドがあること', 1, function() {
+		var df1 = $.Deferred();
+		ok(h5.async.when(df1.promise()).progress);
+	});
+
+	test('引数に配列で複数のpromiseを渡してwhenの動作をすること', 3, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+		var doneCount = 0;
+
+		h5.async.when([df1.promise(), df2.promise()]).done(function() {
+			doneCount++;
+		});
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df2.resolve(2);
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df1.resolve(1);
+		strictEqual(doneCount, 1, '全てresolveされたのでdoneコールバックは1度だけ実行されていること');
+	});
+
+	test('引数に可変長で複数のpromiseを渡してwhenの動作をすること', 3, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+		var doneCount = 0;
+
+		h5.async.when(df1.promise(), df2.promise()).done(function() {
+			doneCount++;
+		});
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df2.resolve(2);
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df1.resolve(1);
+		strictEqual(doneCount, 1, '全てresolveされたのでdoneコールバックは1度だけ実行されていること');
+	});
+
+	test('jQuery.Deferred()、そのプロミス、h5.async.deferred()、そのプロミス、を引数で受け取れること', 5, function() {
+		var df1 = $.Deferred();
+		var df2 = $.Deferred();
+		var df3 = h5.async.deferred();
+		var df4 = h5.async.deferred();
+
+		var doneCount = 0;
+
+		h5.async.when(df1, df2.promise(), df3, df4.promise()).done(function() {
+			doneCount++;
+		});
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df1.resolve();
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df2.resolve();
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df3.resolve();
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df4.resolve();
+		strictEqual(doneCount, 1, '全てresolveされたのでdoneコールバックは1度だけ実行されていること');
+	});
+
+	test('プロミスオブジェクトでないものは無視されること', 3, function() {
+		var df1 = h5.async.deferred();
+
+		var doneCount = 0;
+
+		h5.async.when(df1, 3, {}).done(function() {
+			doneCount++;
+		});
+		ok(!doneCount, '全てresolveされるまでdoneコールバックは実行されないこと');
+		df1.resolve();
+		strictEqual(doneCount, 1, 'プロミスオブジェクトが全てresolveされたのでdoneコールバックは1度だけ実行されていること');
+
+		doneCount = 0;
+		h5.async.when(3, {}).done(function() {
+			doneCount++;
+		});
+		strictEqual(doneCount, 1, 'プロミスオブジェクトが引数に一つもない場合、即座にdoneコールバックが1度だけ実行されること');
+	});
+
+	test('resolveされた時のdoneコールバックの動作', 3, function() {
 		var df1 = $.Deferred();
 		var df2 = $.Deferred();
 
-		h5.async.when([df1, df2]).done(function() {
-			ok(true, '$.Deferred()のPromiseがresolveされたので、doneコールバックが実行されること。');
-		});
-
-		df1.resolve();
-		df2.resolve();
+		var doneCount = 0;
+		h5.async.when(df1, df2).done(
+				function() {
+					doneCount++;
+					ok(true, '$.Deferred()のPromiseがresolveされたので、doneコールバックが実行されること。');
+					deepEqual([1, 2], h5.u.obj.argsToArray(arguments),
+							'引数にそれぞれのdeferredのresolveで渡された値が格納されていること');
+				});
+		df2.resolve(2);
+		strictEqual(doneCount, 0, 'doneコールバックはすべてのプロミスがresolveされるまで実行されていないこと');
+		df1.resolve(1);
 	});
 
-	test('$.Deferred()のPromiseを引数に指定して実行 - fail()', 1, function() {
+	test('rejectされた時のfailコールバックの動作', 3, function() {
 		var df1 = $.Deferred();
 		var df2 = $.Deferred();
 
-		h5.async.when([df1, df2]).done(function() {
+		var failCount = 0;
+		h5.async.when(df1, df2).done(function() {
 			ok(false, 'テスト失敗');
-		}).fail(function() {
+		}).fail(function(args) {
+			failCount++;
 			ok(true, '$.Deferred()のPromiseの一つがrejectされたので、failコールバックが実行されること。');
+			deepEqual(h5.u.obj.argsToArray(arguments), [1, 2, 3], 'rejectで渡された値が引数で受け取れていること');
 		});
-
-		df1.reject();
-		df2.resolve();
+		df1.resolve(11);
+		strictEqual(failCount, 0, 'failコールバックはいずれかのプロミスがrejectされるまで実行されていないこと');
+		df2.reject(1, 2, 3);
 	});
 
-	test('Promiseを引数に指定して実行 - done()', 1, function() {
+	test('notifyされた時のprogressコールバックの動作', 3, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
 
-		h5.async.when([df1, df2]).done(function() {
-			ok(true, '$.Deferred()のPromiseがresolveされたので、doneコールバックが実行されること。');
-		});
-
-		df1.resolve();
-		df2.resolve();
-	});
-
-	test('Promiseを引数に指定して実行 - fail()', 1, function() {
-		var df1 = h5.async.deferred();
-		var df2 = h5.async.deferred();
-
-		h5.async.when([df1, df2]).done(function() {
-			ok(false, 'テスト失敗');
-		}).fail(function() {
-			ok(true, '$.Deferred()のPromiseの一つがrejectされたので、failコールバックが実行されること。');
-		});
-
-		df1.reject();
-		df2.resolve();
-	});
-
-	test('値を指定してh5.async.deferred().resolve()を実行', 2, function() {
-		var df1 = h5.async.deferred();
-		var df2 = h5.async.deferred();
-
-		h5.async.when([df1, df2]).done(function(name, name2) {
-			equal(name, 'df1', 'df1のresolve()が実行され、doneコールバックが実行されること。');
-			equal(name2, 'df2', 'df2のresolve()が実行され、doneコールバックが実行されること。');
-		});
-
-		df1.resolve('df1');
-		df2.resolve('df2');
-	});
-
-	test('値を指定してh5.async.deferred().resolveWith()を実行', 2, function() {
-		var df1 = h5.async.deferred();
-		var df2 = h5.async.deferred();
-
-		h5.async.when([df1, df2]).done(function(name, name2) {
-			equal(name, 'df1', 'df1のresolveWith()が実行され、doneコールバックが実行されること。');
-			equal(name2, 'df2', 'df2のresolveWith()が実行され、doneコールバックが実行されること。');
-		});
-
-		df1.resolveWith(null, ['df1']);
-		df2.resolveWith(null, ['df2']);
-	});
-
-	test('値を指定してh5.async.deferred().reject()を実行', 2, function() {
-		var df1 = h5.async.deferred();
-		var df2 = h5.async.deferred();
-
-		h5.async.when([df1, df2]).fail(function(name, name2) {
-			equal(name, 'df1', 'df1のreject()が実行され、doneコールバックが実行されること。');
-			equal(name2, undefined, 'df1のreject()が実行されたので、第二引数のname2には何も入っていないこと。');
-		});
-
-		df1.reject('df1');
-		df2.reject('df2');
-	});
-
-	test('値を指定してh5.async.deferred().rejectWith()を実行', 2, function() {
-		var df1 = h5.async.deferred();
-		var df2 = h5.async.deferred();
-
-		h5.async.when([df1, df2]).fail(function(name, name2) {
-			equal(name, 'df1', 'df1のrejectWith()が実行され、doneコールバックが実行されること。');
-			equal(name2, undefined, 'df1のrejectWith()が実行されたので、第二引数のname2には何も入っていないこと。');
-		});
-
-		df1.rejectWith(null, ['df1']);
-		df2.rejectWith(null, ['df2']);
-	});
-
-	test('値を指定して h5.async.deferred().notify()を実行', 2, function() {
-		var df1 = h5.async.deferred();
-		var df2 = h5.async.deferred();
-
+		var expectArgs;
 		h5.async.when([df1, df2]).progress(function(name, name2) {
-			if (name == 'df1' && name2 == undefined) {
-				ok(true, 'df1のnotifyが実行され、progressコールバックが実行されること。');
-			} else if (name == 'df1' && name2 == 'df2') {
-				ok(true, 'df2のnotifyが実行され、progressコールバックが実行されること。');
-			}
+			deepEqual(expectArgs, h5.u.obj.argsToArray(arguments), '引数にnotifyで渡された値が格納されていること');
 		});
 
+		expectArgs = ['df1', undefined];
 		df1.notify('df1');
+		expectArgs = ['df1', 'df2'];
 		df2.notify('df2');
+		expectArgs = [['df1-1', 'df1-2'], 'df2'];
+		df1.notify('df1-1', 'df1-2');
 	});
 
-	test('値を指定して h5.async.deferred().notifyWith()を実行', 2, function() {
+	test('[jquery#1.8-]resolve/resolveWithした時のdoneコールバックのthis', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
-
-		h5.async.when([df1, df2]).progress(function(name, name2) {
-			if (name == 'df1' && name2 == undefined) {
-				ok(true, 'df1のnotifyが実行され、progressコールバックが実行されること。');
-			} else if (name == 'df1' && name2 == 'df2') {
-				ok(true, 'df2のnotifyが実行され、progressコールバックが実行されること。');
-			}
+		var obj = {
+			a: 1
+		};
+		var expectThis = null;
+		var p = h5.async.when(df1, df2).done(function() {
+			ok(this && this.resolve, 'thisはdeferredオブジェクトであること');
+			strictEqual(this.promise(), expectThis, 'this.promise()はwhenの戻り値であるプロミスであること');
 		});
 
-		df1.notifyWith(df1, ['df1']);
-		df2.notifyWith(df2, ['df2']);
+		expectThis = p;
+		df1.resolve(1, 2);
+		df2.resolveWith(obj, [3, 4]);
 	});
 
+	test(
+			'[jquery#-1.7,1.9-]resolve/resolveWithした時のdoneコールバックのthis',
+			1,
+			function() {
+				var df1 = h5.async.deferred();
+				var df2 = h5.async.deferred();
+				var obj = {
+					a: 1
+				};
+				var p = h5.async
+						.when(df1, df2)
+						.done(
+								function() {
+									deepEqual(this, [df1, obj],
+											'thisはresolveを呼んだdeferredのpromiseと、resolveWithで指定したものがそれぞれ格納されている配列であること');
+								});
 
-	test('commonFailHandlerの動作確認 1', 4, function() {
+				df1.resolve(1, 2);
+				df2.resolveWith(obj, [3, 4]);
+			});
+
+	test('[jquery#-1.8]resolve/resolveWithした時のdoneコールバックのthis', 1, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+		var obj = {
+			a: 1
+		};
+		var p = h5.async.when(df1, df2).done(
+				function() {
+					deepEqual(this, [df1.promise(), obj],
+							'thisはresolveを呼んだdeferredと、resolveWithで指定したものがそれぞれ格納されている配列であること');
+				});
+
+		df1.resolve(1, 2);
+		df2.resolveWith(obj, [3, 4]);
+	});
+
+	test('[jquery#1.9-]reject/rejectWithした時のprogressコールバックのthis', 2, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+		h5.async.when(df1, df2).fail(function() {
+			strictEqual(this, df2, 'thisはreject()を呼んだdeferred');
+		});
+		df1.resolve();
+		df2.reject();
+
+		var df3 = h5.async.deferred();
+		var obj = {
+			a: 1
+		};
+		h5.async.when(df3).fail(function() {
+			strictEqual(this, obj, 'thisはrejectWith()第1引数');
+		});
+		df3.rejectWith(obj);
+	});
+
+	test('[jquery#-1.8]reject/rejectWithした時のprogressコールバックのthis', 2, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+		h5.async.when(df1, df2).fail(function() {
+			strictEqual(this, df2.promise(), 'thisはreject()を呼んだdeferredのpromise');
+		});
+		df1.resolve();
+		df2.reject();
+
+		var df3 = h5.async.deferred();
+		var obj = {
+			a: 1
+		};
+		h5.async.when(df3).fail(function() {
+			strictEqual(this, obj, 'thisはrejectWith()第1引数');
+		});
+		df3.rejectWith(obj);
+	});
+
+	test('[jquery#1.8-]notify/notifyWithした時のprogressコールバックのthis', 2, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+		var obj = {
+			a: 1
+		};
+		var p = h5.async.when(df1, df2).progress(function() {
+			strictEqual(this, p, 'thisはwhenの戻り値であるプロミスであること');
+		});
+		df1.notify();
+		df2.notifyWith(obj);
+	});
+
+	test('[jquery#-1.7,1.9-]notify/notifyWithした時のprogressコールバックのthis', 2, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+		var obj = {
+			a: 1
+		};
+		var expectThis = null;
+		var p = h5.async.when(df1, df2).progress(function() {
+			deepEqual(this, expectThis, 'thisはwhenの戻り値であるプロミスであること');
+		});
+		var expectThis = [df1, undefined];
+		df1.notify();
+		var expectThis = [df1, obj];
+		df2.notifyWith(obj);
+	});
+
+	test('[jquery#-1.8]notify/notifyWithした時のprogressコールバックのthis', 2, function() {
+		var df1 = h5.async.deferred();
+		var df2 = h5.async.deferred();
+		var obj = {
+			a: 1
+		};
+		var expectThis = null;
+		var p = h5.async.when(df1, df2).progress(function() {
+			deepEqual(this, expectThis, 'thisはwhenの戻り値であるプロミスであること');
+		});
+		var expectThis = [df1.promise(), undefined];
+		df1.notify();
+		var expectThis = [df1.promise(), obj];
+		df2.notifyWith(obj);
+	});
+
+	test('commonFailHandlerの動作確認 rejectされなければCFHは動作しないこと', 4, function() {
 		var ret = '';
 		var cfhm = 'commonFailHandler';
 		h5.settings.commonFailHandler = function() {
@@ -818,7 +945,7 @@ $(function() {
 		ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
 	});
 
-	test('commonFailHandlerの動作確認 2', 3, function() {
+	test('commonFailHandlerの動作確認 failコールバックを指定していればCFHは動作しないこと', 3, function() {
 		var ret = '';
 		var cfhm = 'commonFailHandler';
 		h5.settings.commonFailHandler = function() {
@@ -841,7 +968,7 @@ $(function() {
 	});
 
 	test(
-			'commonFailHandlerの動作確認 3',
+			'commonFailHandlerの動作確認 failコールバックを指定していない場合、whenの引数のプロミスについてのCFHは動作はしないが、whenで作成されたpromiseについてのCFHが動作すること。',
 			4,
 			function() {
 				var ret = '';
@@ -883,7 +1010,7 @@ $(function() {
 				ok(!h5.settings.commonFailHandler, '（設定のクリーンアップ）');
 			});
 
-	test('done/failハンドラでresolve/reject時に渡した引数が受け取れること', 7, function() {
+	test('done/failコールバックでresolve/reject時に渡した引数が受け取れること', 7, function() {
 		var dfd1 = h5.async.deferred();
 		var dfd2 = h5.async.deferred();
 		var whenPromise = h5.async.when(dfd1.promise(), dfd2.promise());
@@ -943,7 +1070,7 @@ $(function() {
 	test('※要目視確認：引数なしの場合は、即実行されること。ログは出力されないこと。', 2, function() {
 		var count = 0;
 		h5.async.when().done(function() {
-			strictEqual(++count, 1, '引数なしの場合、即doneハンドラが実行されること');
+			strictEqual(++count, 1, '引数なしの場合、即doneコールバックが実行されること');
 			ok(true, '※要目視確認：引数なしの場合はログが出力されないこと。');
 		});
 		++count;
@@ -953,13 +1080,13 @@ $(function() {
 	test('※要目視確認：引数にnull/undefinedを渡した場合は、即実行されること。ログは出力されないこと。', 3, function() {
 		var count = 0;
 		h5.async.when(undefined).done(function() {
-			strictEqual(count, 0, '引数undefinedの場合、即doneハンドラが実行されること');
+			strictEqual(count, 0, '引数undefinedの場合、即doneコールバックが実行されること');
 		});
 		count++;
 
 		count = 0;
 		h5.async.when(null).done(function() {
-			strictEqual(count, 0, '引数undefinedの場合、即doneハンドラが実行されること');
+			strictEqual(count, 0, '引数undefinedの場合、即doneコールバックが実行されること');
 		});
 		count++;
 
@@ -972,10 +1099,10 @@ $(function() {
 		for ( var i = 0, l = argArray.length; i < l; i++) {
 			var count = 0;
 			h5.async.when(argArray[i]).done(function() {
-				equal(count++, 0, '引数が' + argArray[i].toString() + 'の場合、doneハンドラが同期的に実行されること。');
+				equal(count++, 0, '引数が' + argArray[i].toString() + 'の場合、doneコールバックが同期的に実行されること。');
 			});
 
-			equal(count, 1, 'h5.async.whenのdoneハンドラの実行が同期的に行われること。');
+			equal(count, 1, 'h5.async.whenのdoneコールバックの実行が同期的に行われること。');
 		}
 		ok(true, '※要目視確認：次のようなログが' + argArray.length
 				+ '回出力されていること。『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
@@ -991,7 +1118,7 @@ $(function() {
 					dfd1 = h5.async.deferred();
 
 					h5.async.when(dfd1.promise(), argArray).done(function() {
-						ok(true, 'doneハンドラが実行されること');
+						ok(true, 'doneコールバックが実行されること');
 						ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 
 					});
@@ -1010,7 +1137,7 @@ $(function() {
 				dfd1 = h5.async.deferred();
 				dfd2 = h5.async.deferred();
 				h5.async.when(dfd1, [dfd2]).done(function() {
-					ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneハンドラが実行されること');
+					ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneコールバックが実行されること');
 					ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 				});
 				dfd1.resolve();
@@ -1021,7 +1148,7 @@ $(function() {
 				dfd2 = h5.async.deferred();
 				dfd3 = h5.async.deferred();
 				h5.async.when(dfd1, [dfd2, dfd3]).done(function() {
-					ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneハンドラが実行されること');
+					ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneコールバックが実行されること');
 					ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 				});
 				dfd2.resolve();
@@ -1042,7 +1169,7 @@ $(function() {
 				var whenPromise = h5.async.when([dfd1.promise(), [dfd2.promise(), dfd3.promise()]]);
 				whenPromise
 						.done(function() {
-							ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneハンドラが実行されること');
+							ok(true, '入れ子になった配列の中のプロミスオブジェクトがrejectされても関係なく、doneコールバックが実行されること');
 							ok(isResolved(dfd1), '1番目の引数のプロミスオブジェクトがresolveされていること');
 							ok(true,
 									'※要目視確認：次のようなログが、INFOレベルで出力されていること 『h5.async.when: 引数にpromiseオブジェクトでないものが含まれています。 』');
