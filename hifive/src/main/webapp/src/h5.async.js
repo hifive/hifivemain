@@ -218,7 +218,6 @@
 			return ret;
 		};
 
-
 		// commonFailHandlerのフラグ管理のために関数を上書きするための関数
 		function override(method) {
 			if (rootDfd) {
@@ -574,24 +573,24 @@
 		var whenPromise = dfd.promise();
 
 		// $.whenを呼び出して、dfdと紐づける
-		var ret = $.when.apply($, args).done(
+		var jqWhenRet = $.when.apply($, args).done(
 				function(/* var_args */) {
 					// jQuery1.7以下では、thisが$.whenの戻り値の元のdeferredになる。
 					// (resolveWithで呼んでも同様。指定したコンテキストは無視される。)
 					// そうなっていたら、thisを$.whenに紐づいたdeferredではなく、h5.async.whenのdeferredに差し替える
-					dfd.resolveWith(this && this.promise && this.promise() === ret ? dfd : this,
+					dfd.resolveWith(this && this.promise && this.promise() === jqWhenRet ? dfd : this,
 							argsToArray(arguments));
 				}).fail(function(/* var_args */) {
 			dfd.rejectWith(this, argsToArray(arguments));
 		});
 
 		// progressがある(jQuery1.7以降)ならそのままprogressも登録
-		if (ret.progress) {
-			ret.progress(function(/* ver_args */) {
+		if (jqWhenRet.progress) {
+			jqWhenRet.progress(function(/* ver_args */) {
 				// jQuery1.7では、thisが$.whenの戻り値と同じインスタンス(プロミス)になる。
 				// (notifyWithで呼んでも同様。指定したコンテキストは無視される。)
 				// thisが$.whenの戻り値なら、h5.async.whenの戻り値のプロミスに差し替える
-				dfd.notifyWith(this === ret ? whenPromise : this, argsToArray(arguments));
+				dfd.notifyWith(this === jqWhenRet ? whenPromise : this, argsToArray(arguments));
 			});
 		} else {
 			// progressがない(=jQuery1.6.x)なら、progress機能を追加
