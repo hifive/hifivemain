@@ -206,7 +206,7 @@
 		 * @param {String} method メソッド名
 		 * @param {Array|Any} メソッドに渡す引数。Arrayで複数渡せる。引数1つならそのまま渡せる。
 		 */
-		promise._h5UnwrappedCall = function(method, args) {
+		promise._h5UnwrappedCall = rootDfd ? rootDfd._h5UnwrappedCall : function(method, args) {
 			args = wrapInArray(args);
 			// originalに戻す
 			$.extend(promise, originalMethods);
