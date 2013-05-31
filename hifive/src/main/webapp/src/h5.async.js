@@ -548,11 +548,11 @@
 	 */
 	var when = function(/* var_args */) {
 		var args = argsToArray(arguments);
-		var len = args.length;
 
 		if (args.length === 1 && $.isArray(args[0])) {
 			args = args[0];
 		}
+		var len = args.length;
 
 		/* del begin */
 		// 引数にpromise・deferredオブジェクト以外があった場合はログを出力します。
