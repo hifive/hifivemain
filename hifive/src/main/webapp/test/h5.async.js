@@ -788,6 +788,10 @@ $(function() {
 		df1.notify('df1-1', 'df1-2');
 	});
 
+	// jQuery1.7以下、jQuery1.8、jQuery1.9以上でdoneコールバックのthisの値が違うのでテストケースを分けています
+	// 1.7以下では、resolve/resolveWithに関わらず、thisはwhenの戻り値のpromiseオブジェクト
+	// 1.8では、resolveを呼んだdeferredと、resolveWithで指定したcontextの配列
+	// 1.9以降では、resolveを呼んだdeferredのpromiseと、resolveWithで指定したcontextの配列
 	test('[jquery#1.8-]resolve/resolveWithした時のdoneコールバックのthis', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
@@ -821,27 +825,33 @@ $(function() {
 									deepEqual(this, [df1, obj],
 											'thisはresolveを呼んだdeferredのpromiseと、resolveWithで指定したものがそれぞれ格納されている配列であること');
 								});
-
 				df1.resolve(1, 2);
 				df2.resolveWith(obj, [3, 4]);
 			});
 
-	test('[jquery#-1.8]resolve/resolveWithした時のdoneコールバックのthis', 1, function() {
-		var df1 = h5.async.deferred();
-		var df2 = h5.async.deferred();
-		var obj = {
-			a: 1
-		};
-		var p = h5.async.when(df1, df2).done(
-				function() {
-					deepEqual(this, [df1.promise(), obj],
-							'thisはresolveを呼んだdeferredと、resolveWithで指定したものがそれぞれ格納されている配列であること');
-				});
+	test(
+			'[jquery#-1.8]resolve/resolveWithした時のdoneコールバックのthis',
+			1,
+			function() {
+				var df1 = h5.async.deferred();
+				var df2 = h5.async.deferred();
+				var obj = {
+					a: 1
+				};
+				var p = h5.async
+						.when(df1, df2)
+						.done(
+								function() {
+									deepEqual(this, [df1.promise(), obj],
+											'thisはresolveを呼んだdeferredのpromiseと、resolveWithで指定したものがそれぞれ格納されている配列であること');
+								});
+				df1.resolve(1, 2);
+				df2.resolveWith(obj, [3, 4]);
+			});
 
-		df1.resolve(1, 2);
-		df2.resolveWith(obj, [3, 4]);
-	});
-
+	// jQuery1.8以下とjQuery1.9以上でrejectを呼んだ時のfailコールバックのthisの値が違うのでテストケースを分けています
+	// 1.8以下では、rejectを呼んだdeferred
+	// 1.9以降では、rejectされたdeferredのpromise
 	test('[jquery#1.9-]reject/rejectWithした時のprogressコールバックのthis', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
@@ -880,6 +890,10 @@ $(function() {
 		df3.rejectWith(obj);
 	});
 
+	// jQuery1.7以下、jQuery1.8、jQuery1.9以上でprogressコールバックのthisの値が違うのでテストケースを分けています
+	// 1.7以下では、notify/notifyWithに関わらず、thisはwhenの戻り値のpromiseオブジェクト
+	// 1.8では、notifyを呼んだdeferredと、resolveWithで指定したcontextの配列
+	// 1.9以降では、notifyを呼んだdeferredのpromiseと、resolveWithで指定したcontextの配列
 	test('[jquery#1.8-]notify/notifyWithした時のprogressコールバックのthis', 2, function() {
 		var df1 = h5.async.deferred();
 		var df2 = h5.async.deferred();
