@@ -914,12 +914,12 @@ $(function() {
 			a: 1
 		};
 		var expectThis = null;
-		var p = h5.async.when(df1, df2).progress(function() {
+		h5.async.when(df1, df2).progress(function() {
 			deepEqual(this, expectThis, 'thisはwhenの戻り値であるプロミスであること');
 		});
-		var expectThis = [df1, undefined];
+		expectThis = [df1, undefined];
 		df1.notify();
-		var expectThis = [df1, obj];
+		expectThis = [df1, obj];
 		df2.notifyWith(obj);
 	});
 
@@ -933,9 +933,9 @@ $(function() {
 		var p = h5.async.when(df1, df2).progress(function() {
 			deepEqual(this, expectThis, 'thisはwhenの戻り値であるプロミスであること');
 		});
-		var expectThis = [df1.promise(), undefined];
+		expectThis = [df1.promise(), undefined];
 		df1.notify();
-		var expectThis = [df1.promise(), obj];
+		expectThis = [df1.promise(), obj];
 		df2.notifyWith(obj);
 	});
 
