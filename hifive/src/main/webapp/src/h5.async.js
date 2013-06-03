@@ -243,7 +243,7 @@
 						}
 					}
 					// オリジナルのコールバック登録メソッドを呼ぶ
-					return registerCallbacksSilently.call(this, promise, method, argsToArray(arguments));
+					return promise._h5UnwrappedCall.call(this, method, argsToArray(arguments));
 				};
 			})(method);
 			hookMethods[method] = promise[method];

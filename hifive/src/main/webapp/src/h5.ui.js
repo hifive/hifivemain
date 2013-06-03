@@ -945,7 +945,8 @@
 			if (promises.length > 0) {
 				// whenを呼んで、pipeにコールバックを登録。
 				// CFHの発火を阻害しないようにSilentlyでpipeコールバックを登録する。
-				registerCallbacksSilently(h5.async.when(promises), 'pipe', [promiseCallback, promiseCallback]);
+				registerCallbacksSilently(h5.async.when(promises), 'pipe', [promiseCallback,
+						promiseCallback]);
 			}
 		} else if (promises && $.isFunction(promises.promise)) {
 			// CFHの発火を阻害しないようにpipeを呼び出し。
