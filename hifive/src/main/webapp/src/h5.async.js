@@ -138,7 +138,7 @@
 		}
 		dfd.notify = notify;
 		dfd.notifyWith = function(context, args) {
-			return notify.apply(context, args);
+			return arguments.length < 2 ? notify.apply(context) : notify.apply(context, args);
 		};
 	}
 
@@ -578,8 +578,8 @@
 					// jQuery1.7以下では、thisが$.whenの戻り値の元のdeferredになる。
 					// (resolveWithで呼んでも同様。指定したコンテキストは無視される。)
 					// そうなっていたら、thisを$.whenに紐づいたdeferredではなく、h5.async.whenのdeferredに差し替える
-					dfd.resolveWith(this && this.promise && this.promise() === jqWhenRet ? dfd : this,
-							argsToArray(arguments));
+					dfd.resolveWith(this && this.promise && this.promise() === jqWhenRet ? dfd
+							: this, argsToArray(arguments));
 				}).fail(function(/* var_args */) {
 			dfd.rejectWith(this, argsToArray(arguments));
 		});
