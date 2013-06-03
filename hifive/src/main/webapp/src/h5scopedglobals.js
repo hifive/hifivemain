@@ -275,8 +275,8 @@ function getRegex(target) {
  */
 function registerCallbacksSilently(promise, method, args) {
 	if (promise) {
-		return promise._h5UnwrappedCall ? promise._h5UnwrappedCall(method, args) : promise[method].apply(
-				promise, args);
+		return promise._h5UnwrappedCall ? promise._h5UnwrappedCall.call(this, method, args)
+				: promise[method].apply(this, args);
 	}
 }
 

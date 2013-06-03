@@ -943,9 +943,9 @@
 			});
 
 			if (promises.length > 0) {
-				// CFHの発火を阻害しないように_h5UnwrappedCallを使ってpipeを呼び出し。
-				h5.async.when(promises)
-						._h5UnwrappedCall('pipe', [promiseCallback, promiseCallback]);
+				// whenを呼んで、pipeにコールバックを登録。
+				// CFHの発火を阻害しないようにSilentlyでpipeコールバックを登録する。
+				registerCallbacksSilently(h5.async.when(promises), 'pipe', [promiseCallback, promiseCallback]);
 			}
 		} else if (promises && $.isFunction(promises.promise)) {
 			// CFHの発火を阻害しないようにpipeを呼び出し。
