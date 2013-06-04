@@ -2217,8 +2217,11 @@
 					type: 'change',
 					props: props
 				};
-				// 依存項目の計算
-				calcDependencies(this._internal, this, event, changedProps);
+
+				// 依存プロパティを再計算し、変更があったらchangeイベントに含める
+				$.extend(props, calcDependencies(this._internal, this, event, changedProps));
+
+				// changeイベントの発火
 				this.dispatchEvent(event);
 			}
 		},

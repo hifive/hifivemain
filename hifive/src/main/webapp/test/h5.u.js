@@ -1619,4 +1619,41 @@ $(function() {
 		deepEqual(count, 1, '第二引数省略 関数の初めに実行したい関数が実行されること');
 		deepEqual(ret, 100, '第二引数省略 関数そのものが実行されていること');
 	});
+
+	test('[build#min]インターセプタがpromiseを返した時、そのpromiseについてCommonFailHandlerの動作が阻害されていないこと', 1,
+			function() {
+				var dfd = h5.async.deferred();
+				var cfhFlag = false;
+				h5.settings.commonFailHandler = function() {
+					cfhFlag = true;
+				};
+				var testLogic = {
+					__name: 'TestLogic',
+					test: function() {
+						return dfd.promise();
+					}
+				};
+				var testInterceptor = h5.u.createInterceptor(function(invocation, data) {
+					return invocation.proceed();
+				}, function(invocation, data) {
+				//
+				});
+				var logicAspect = {
+					target: /TestLogic/,
+					interceptors: testInterceptor,
+					pointCut: 'test*'
+				};
+				h5.core.__compileAspects(logicAspect);
+
+				h5.core.controller('#qunit-fixture', {
+					testLogic: testLogic,
+					__name: 'TestController',
+					__ready: function() {
+						this.testLogic.test();
+					}
+				});
+				dfd.reject();
+				ok(cfhFlag, 'commonFailHandlerが実行された');
+				h5.settings.commonFailHandler = undefined;
+			});
 });

@@ -100,25 +100,34 @@
 		var progressCallbacks = [];
 
 		// progress,notify,notifyWithを追加
-		dfd.progress = function(progressCallback) {
-			// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7以降の仕様と同じにするためにコールバックの登録と同時に実行する必要がある
-			if (notified) {
-				var params = lastNotifyParam;
-				if (params !== lastNotifyParam) {
-					params = wrapInArray(params);
+		dfd.progress = function(/* var_args */) {
+			// progressの引数は、配列でも可変長でも、配列を含む可変長でも渡すことができる
+			// 再帰で処理する
+			var callbacks = argsToArray(arguments);
+			for ( var i = 0, l = callbacks.length; i < l; i++) {
+				var elem = callbacks[i];
+				if ($.isArray(elem)) {
+					dfd.progress.apply(this, elem);
+				} else if ($.isFunction(elem)) {
+					if (notified) {
+						// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7以降の仕様と同じにするためにコールバックの登録と同時に実行する必要がある
+						var params = lastNotifyParam;
+						if (params !== lastNotifyParam) {
+							params = wrapInArray(params);
+						}
+						elem.apply(lastNotifyContext, params);
+					} else {
+						progressCallbacks.push(elem);
+					}
 				}
-				progressCallback.apply(lastNotifyContext, params);
 			}
-			progressCallbacks.push(progressCallback);
 			return this;
 		};
 
 		function notify(/* var_args */) {
 			notified = true;
-			if (arguments.length !== -1) {
-				lastNotifyContext = this;
-				lastNotifyParam = argsToArray(arguments);
-			}
+			lastNotifyContext = this;
+			lastNotifyParam = argsToArray(arguments);
 			if (isRejected(dfd) || isResolved(dfd)) {
 				// resolve済みまたはreject済みならprogressコールバックは実行しない
 				return dfd;
@@ -131,14 +140,22 @@
 					if (params !== arguments) {
 						params = wrapInArray(params);
 					}
-					progressCallbacks[i].apply(this, params);
+					// 関数を実行。関数以外は無視。
+					$.isFunction(progressCallbacks[i]) && progressCallbacks[i].apply(this, params);
 				}
 			}
 			return dfd;
 		}
 		dfd.notify = notify;
+
+		/**
+		 * jQueryの公式Doc(2013/6/4時点)だとnotifyWithの第2引数はObjectと書かれているが、
+		 * 実際は配列で渡す(jQuery1.7+のnotifyWithと同じ。resolveWith, rejectWithも同じ)。
+		 * notifyは可変長で受け取る(公式Docにはオブジェクトと書かれているが、resolve、rejectと同じ可変長)。
+		 */
 		dfd.notifyWith = function(context, args) {
-			return notify.apply(context, args);
+			// 第2引数がない(falseに評価される)なら、引数は渡さずに呼ぶ
+			return !args ? notify.apply(context) : notify.apply(context, args);
 		};
 	}
 
@@ -189,7 +206,34 @@
 		//commonFailHandlerが発火済みかどうかのフラグ
 		var isCommonFailHandlerFired = false;
 
-		// 以下書き換える必要のある関数を書き換える
+		// ---------------------------------------------
+		// 以下書き換える(フックする)必要のある関数を書き換える
+		// ---------------------------------------------
+
+		// jQueryが持っているもともとのコールバック登録メソッドを保持するオブジェクト
+		var originalMethods = {};
+		// フックしたメソッドを保持するオブジェクト
+		var hookMethods = {};
+
+		/**
+		 * 指定されたメソッドを、フックされたコールバック登録関数を元に戻してから呼ぶ
+		 *
+		 * @private
+		 * @memberOf Deferred
+		 * @param {String} method メソッド名
+		 * @param {Array|Any} メソッドに渡す引数。Arrayで複数渡せる。引数1つならそのまま渡せる。
+		 */
+		promise._h5UnwrappedCall = rootDfd ? rootDfd._h5UnwrappedCall : function(method, args) {
+			args = wrapInArray(args);
+			// originalに戻す
+			$.extend(promise, originalMethods);
+			// originalに戻した状態でmethodを実行
+			var ret = promise[method].apply(this, args);
+			// フックされたものに戻す
+			$.extend(promise, hookMethods);
+
+			return ret;
+		};
 
 		// commonFailHandlerのフラグ管理のために関数を上書きするための関数
 		function override(method) {
@@ -201,28 +245,32 @@
 				return;
 			}
 			var originalFunc = promise[method];
+			originalMethods[method] = originalFunc;
 			promise[method] = (function(_method) {
 				return function() {
 					if (!existFailHandler) {
 						// failコールバックが渡されたかどうかチェック
-						var arg = argsToArray(arguments);
+						var failArgs = argsToArray(arguments);
 						if (method === 'then' || method === 'pipe') {
 							// thenまたはpipeならargの第2引数を見る
-							arg = arg[1];
+							failArgs = failArgs[1];
 						}
-						if (hasValidCallback(arg)) {
+						if (hasValidCallback(failArgs)) {
 							existFailHandler = true;
 						}
 					}
-					return originalFunc.apply(this, arguments);
+					// オリジナルのコールバック登録メソッドを呼ぶ
+					return promise._h5UnwrappedCall.call(this, method, argsToArray(arguments));
 				};
 			})(method);
+			hookMethods[method] = promise[method];
 		}
 
 		// failコールバックを登録する可能性のある関数を上書き
 		for ( var i = 0, l = CFH_HOOK_METHODS.length; i < l; i++) {
 			var prop = CFH_HOOK_METHODS[i];
 			if (promise[prop]) {
+				// cfhの管理をするための関数でオーバーライド
 				override(prop);
 			}
 		}
@@ -238,7 +286,6 @@
 
 				// もともとprogressを持っている(=pipeが第三引数でのprogressFilter登録に対応している)
 				// または、第3引数がない(=progressFilterの登録がない)ならそのままretを返す
-				// ならそのままretを返す
 				// pipeで指定するprogressFilterは、単数で一つのみ登録できるので、それがそのまま関数かどうか判定すればいい。
 				if (hasNativeProgress || !$.isFunction(arguments[2])) {
 					return ret;
@@ -265,6 +312,7 @@
 				});
 				return ret;
 			};
+			hookMethods.pipe = promise.pipe;
 		}
 
 		// thenは戻り値が呼び出したpromise(またはdeferred)と違う(jQuery1.8以降)なら、
@@ -279,7 +327,7 @@
 				if (ret !== this) {
 					// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
 					// jQuery1.8以降は、thenが別のdeferredに基づくpromiseを生成して返ってくる。
-					// 1.8以降であれば、progressの追加なら、promiseの関数を上書いてから返す
+					// 1.8以降であれば、promiseの関数を上書いてから返す
 					return toCFHAware(ret);
 				}
 
@@ -289,9 +337,10 @@
 					promise.progress.call(promise, args[2]);
 				}
 
-				// thenがthisを返した場合(jQuery1.7以前)ならそのままret(=this)を返す
+				// thenがthisを返した場合(jQuery1.7以前)ならそのままthis(=ret)を返す
 				return ret;
 			};
+			hookMethods.then = promise.then;
 		}
 
 		// reject/rejectWith
@@ -480,7 +529,8 @@
 	 * <h4>jQuery.when()と相違点</h4>
 	 * <ul>
 	 * <li>failコールバックが未指定の場合、共通のエラー処理(<a
-	 * href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行します。</li>
+	 * href="./h5.settings.html#commonFailHandler">commonFailHandler</a>)を実行します。(※
+	 * whenに渡したpromiseについてのcommonFailHandlerは動作しなくなります。)</li>
 	 * <li>jQuery1.6.xを使用している場合、jQuery.when()では使用できないnotify/progressの機能を使用することができます。ただし、この機能を使用するには<a
 	 * href="h5.async.html#deferred">h5.async.deferred()</a>によって生成されたDeferredのPromiseオブジェクトを引数に指定する必要があります。<br>
 	 * </li>
@@ -513,83 +563,87 @@
 	 * @memberOf h5.async
 	 */
 	var when = function(/* var_args */) {
-		var getDeferred = h5.async.deferred;
-
 		var args = argsToArray(arguments);
 
 		if (args.length === 1 && $.isArray(args[0])) {
 			args = args[0];
 		}
+		var len = args.length;
 
 		/* del begin */
 		// 引数にpromise・deferredオブジェクト以外があった場合はログを出力します。
-		for ( var i = 0, l = args.length; i < l; i++) {
+		for ( var i = 0; i < len; i++) {
 			// DeferredもPromiseも、promiseメソッドを持つので、
 			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
-			if (args[i] != null && !args[i].promise && !$.isFunction(args[i].promise)) {
+			if (!args[i] || !(args[i].promise && $.isFunction(args[i].promise))) {
 				fwLogger.info(FW_LOG_H5_WHEN_INVALID_PARAMETER);
 				break;
 			}
 		}
 		/* del end */
 
-		var dfd = $.Deferred();
+		// $.when相当の機能を実装する。
+		// 引数が一つでそれがプロミスだった場合は$.whenはそれをそのまま返しているが、
+		// h5.async.whenではCFHAwareでprogressメソッドを持つpromiseを返す必要があるため、
+		// 引数がいくつであろうと、新しくCFHAwareなdeferredオブジェクトを生成してそのpromiseを返す。
+		var dfd = h5.async.deferred();
+		var whenPromise = dfd.promise();
 
-		if (!dfd.notify && !dfd.notifyWith && !dfd.progress) {
-			// progress/notify/notifyWithがない(jQueryのバージョンが1.6.x)場合、
-			// progress/notifyが使用できるように、機能拡張したwhenをここで実装する
-			// ( $.when()を使いながら機能追加ができないため、$.when自体の機能をここで実装している。)
-			var len = args.length;
-			var count = len;
+		// $.whenを呼び出して、dfdと紐づける
+		var jqWhenRet = $.when.apply($, args).done(
+				function(/* var_args */) {
+					// jQuery1.7以下では、thisが$.whenの戻り値の元のdeferredになる。
+					// (resolveWithで呼んでも同様。指定したコンテキストは無視される。)
+					// そうなっていたら、thisを$.whenに紐づいたdeferredではなく、h5.async.whenのdeferredに差し替える
+					dfd.resolveWith(this && this.promise && this.promise() === jqWhenRet ? dfd
+							: this, argsToArray(arguments));
+				}).fail(function(/* var_args */) {
+			dfd.rejectWith(this, argsToArray(arguments));
+		});
+
+		// progressがある(jQuery1.7以降)ならそのままprogressも登録
+		if (jqWhenRet.progress) {
+			jqWhenRet.progress(function(/* ver_args */) {
+				// jQuery1.7では、thisが$.whenの戻り値と同じインスタンス(プロミス)になる。
+				// (notifyWithで呼んでも同様。指定したコンテキストは無視される。)
+				// thisが$.whenの戻り値なら、h5.async.whenの戻り値のプロミスに差し替える
+				dfd.notifyWith(this === jqWhenRet ? whenPromise : this, argsToArray(arguments));
+			});
+		} else {
+			// progressがない(=jQuery1.6.x)なら、progress機能を追加
+
+			// progressの引数になる配列。
+			// pValuesにはあらかじめundefinedを入れておく($.whenと同じ。progressフィルタ内のarguments.lengthは常にargs.lengthと同じ)
 			var pValues = [];
-			var firstParam = args[0];
-
-			dfd = len <= 1 && firstParam && $.isFunction(firstParam.promise) ? firstParam
-					: getDeferred();
-
-			if (len > 1) {
-				// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
-				function resolveFunc(index) {
-					return function(value) {
-						args[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-						if (!(--count)) {
-							dfd.resolveWith(dfd, args);
-						}
-					};
-				}
-				function progressFunc(index) {
-					return function(value) {
-						pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
-						dfd.notifyWith(dfd.promise(), pValues);
-					};
-				}
-				for ( var i = 0; i < len; i++) {
-					if (args[i] && $.isFunction(args[i].promise)) {
-						args[i].promise().then(resolveFunc(i), dfd.reject, progressFunc(i));
+			for ( var i = 0; i < len; i++) {
+				pValues[i] = undefined;
+			}
+			function progressFunc(index) {
+				// args中の該当するindexに値を格納した配列をprogressコールバックに渡す
+				return function(value) {
+					pValues[index] = arguments.length > 1 ? argsToArray(arguments) : value;
+					// jQuery1.6では、jQuery1.7と同様の動作をするようにする。
+					// thisはh5.async.whenの戻り値と同じ。
+					dfd.notifyWith(whenPromise, pValues);
+				};
+			}
+			for ( var i = 0; i < len; i++) {
+				var p = args[i];
+				// progressはjQuery1.6で作られたdeferred/promiseだとないので、あるかどうかチェックして呼び出す
+				if (p && $.isFunction(p.promise) && p.progress) {
+					if (len > 1) {
+						p.progress(progressFunc(i));
 					} else {
-						--count;
+						// 引数が1つなら、notifyで渡された引数は配列化せず、そのままwhenのprogressへスルーさせる
+						p.progress(function(/* var_args */) {
+							// thisはh5.async.whenの戻り値と同じ。
+							dfd.notifyWith(whenPromise, argsToArray(arguments));
+						});
 					}
 				}
-				if (!count) {
-					dfd.resolveWith(dfd, args);
-				}
-			} else if (dfd !== firstParam) {
-				dfd.resolveWith(dfd, len ? [firstParam] : []);
 			}
-		} else {
-			// jQuery1.7以上なら戻り値をh5.async.deferredにして、$.whenをラップする
-			dfd = getDeferred();
-
-			$.when.apply($, args).done(function(/* var_args */) {
-				dfd.resolveWith(dfd, argsToArray(arguments));
-			}).fail(function(/* var_args */) {
-				dfd.rejectWith(dfd, argsToArray(arguments));
-			}).progress(function(/* ver_args */) {
-				dfd.notifyWith(dfd, argsToArray(arguments));
-			});
 		}
-
-		return dfd.promise();
+		return whenPromise;
 	};
 
 	// =============================

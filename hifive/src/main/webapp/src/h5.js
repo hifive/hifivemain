@@ -299,43 +299,44 @@
 	};
 
 	// h5preinitでglobalAspectsの設定をしている関係上、別ファイルではなく、ここに置いている。
+
+	/**
+	 * メソッド呼び出し時に、コントローラまたはロジック名、メソッド名、引数をログ出力するインターセプタです。<br>
+	 * このインターセプタはコントローラまたはロジックに対して設定してください。<br>
+	 * ver.1.1.6以降、このインターセプタは処理時間も出力します。<br>
+	 * 「処理時間」とは、メソッドの戻り値がPromiseでない場合は呼び出し～returnされるまでの時間、<br>
+	 * 戻り値がPromiseだった場合は呼び出し～そのPromiseがresolveまたはrejectされるまでの時間です。
+	 *
+	 * @function
+	 * @param {Function} invocation 次に実行する関数
+	 * @returns {Any} invocationの戻り値
+	 * @memberOf h5.core.interceptor
+	 */
+	var logInterceptor = h5.u.createInterceptor(function(invocation, data) {
+		this.log.info('{0}.{1}が開始されました。', this.__name, invocation.funcName);
+		this.log.info(invocation.args);
+
+		data.start = new Date();
+
+		return invocation.proceed();
+	}, function(invocation, data) {
+		var end = new Date();
+		var time = end.getTime() - data.start.getTime();
+
+		this.log.info('{0}.{1}が終了しました。 Time={2}ms', this.__name, invocation.funcName, time);
+	});
+
 	/**
 	 * メソッドの実行時間を計測するインターセプタです。<br>
 	 * このインターセプタはコントローラまたはロジックに対して設定してください。
 	 *
+	 * @deprecated ※このメソッドの代わりに、logInterceptorを使用してください。ver.1.1.6以降、lapInterceptorはlogInterceptorと同じになりました。
 	 * @function
 	 * @param {Function} invocation 次に実行する関数
 	 * @returns {Any} invocationの戻り値
 	 * @memberOf h5.core.interceptor
 	 */
-	var lapInterceptor = h5.u.createInterceptor(function(invocation, data) {
-		// 開始時間をdataオブジェクトに格納
-		data.start = new Date();
-		// invocationを実行
-		return invocation.proceed();
-	}, function(invocation, data) {
-		// 終了時間を取得
-		var end = new Date();
-		// ログ出力
-		this.log.info('{0} "{1}": {2}ms', this.__name, invocation.funcName, (end - data.start));
-	});
-
-	/**
-	 * メソッド呼び出し時に、コントローラまたはロジック名、メソッド名、引数をログ出力するインターセプタです。<br>
-	 * このインターセプタはコントローラまたはロジックに対して設定してください。
-	 *
-	 * @function
-	 * @param {Function} invocation 次に実行する関数
-	 * @returns {Any} invocationの戻り値
-	 * @memberOf h5.core.interceptor
-	 */
-	var logInterceptor = h5.u.createInterceptor(function(invocation) {
-		this.log.info('{0} "{1}"が開始されました。', this.__name, invocation.funcName);
-		this.log.info(invocation.args);
-		return invocation.proceed();
-	}, function(invocation) {
-		this.log.info('{0} "{1}"が終了しました。', this.__name, invocation.funcName);
-	});
+	var lapInterceptor = logInterceptor;
 
 	/**
 	 * 例外発生時にcommonFailHandlerを呼び出すインターセプタです。<br>

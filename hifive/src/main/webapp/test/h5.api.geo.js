@@ -50,7 +50,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7]H5Api - Geo Location : getCurrentPosition');
+	module('[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7]H5Api - Geo Location : getCurrentPosition');
 
 	//=============================
 	// Body
@@ -74,7 +74,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7]H5Api - Geo Location : watchPosition');
+	module('[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7]H5Api - Geo Location : watchPosition');
 
 	//=============================
 	// Body

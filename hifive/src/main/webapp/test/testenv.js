@@ -24,6 +24,9 @@
 	// H5_TEST_ENVに格納するパラメータキーのプレフィックス
 	var PARAM_PREFIX = 'h5testenv.';
 
+	// H5_TEST_ENVとリクエストパラメータでマージするプロパティ
+	var MARGE_PROP_NAMES = ['ci', 'filter', 'geo', 'qunit'];
+
 	// リクエストパラメータからオブジェクトを生成する
 	var envByParam = {};
 	if (paramsStr !== "") {
@@ -53,16 +56,20 @@
 
 	// リクエストパラメータからH5_TEST_ENVを生成する
 	// H5_TEST_ENVが既に定義されていれば、リクエストパラメータ優先でマージする
-	window.H5_TEST_ENV = window.H5_TEST_ENV ? {
-		ci: $.extend(window.H5_TEST_ENV.ci, envByParam.ci),
-		filter: $.extend(window.H5_TEST_ENV.filter, envByParam.filter),
-		geo: $.extend(window.H5_TEST_ENV.geo, envByParam.geo),
-		qunit: $.extend(window.H5_TEST_ENV.qunit, envByParam.qunit)
-	} : envByParam;
+	if (window.H5_TEST_ENV) {
+		for ( var i = 0, l = MARGE_PROP_NAMES.length; i < l; i++) {
+			var prop = MARGE_PROP_NAMES[i];
+			if (envByParam[prop]) {
+				H5_TEST_ENV[prop] = $.extend(H5_TEST_ENV[prop], envByParam[prop]);
+			}
+		}
+	} else{
+		window.H5_TEST_ENV = envByParam;
+	}
 
 	// テスト環境を表示する
 	if (!$.isEmptyObject(H5_TEST_ENV)) {
-		QUnit.config.begin.push(function() {
+		$(function() {
 			// beginはQUnit.loadの先頭で呼ばれるコールバックなので、DOMの追加等が終わっていない
 			// そのためsetTimeout(0)でDOM追加が終わってから、H5_TEST_ENVの表示を行う
 			setTimeout(function() {

@@ -4,7 +4,7 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta charset="UTF-8">
 		<meta name="viewport" content="initial-scale=1.0">
-		<script src="../res/js/lib/jquery/jquery.js"></script>
+		<script src="../res/lib/jquery/jquery.js"></script>
 
 		<script src="../archives/current/ejs-h5mod.js"></script>
 
@@ -16,17 +16,50 @@
 
 		<link rel="stylesheet" href="css/indicator-theme-b.css"/>
 		<script type="text/javascript" src="./lib/qunit/qunit.js"></script>
+<!--
+		<script>
+			// -----------------------
+			// テストフィルタ設定
+			// -----------------------
+			//
+			// テストフィルタを有効にすると、そのフィルタに該当するタグのついたテストケースをスキップします。
+			// 実際にテストを行う環境に設定することで、その環境で失敗するテストをスキップさせることができます。
+
+			(function(){
+				var filter = {
+						// jQueryのバージョン
+						jquery: $().jquery,
+
+						// h5.jsのbuildの種別 (min|dev)
+						build: "min",
+
+						// ブラウザプレフィックス
+						// ie(IE),ff(Firefox),ch(Chrome),sa(Safari iOSのSafariも同様),op(Opera),
+						// and-and(Androidデフォルトブラウザ), ie-wp(WindowsPhone IE)
+						browserprefix: "ie",
+
+						// ドキュメントモード。IEの場合のみ有効。(7,8,9,Edge)
+						docmode: "Edge",
+
+						// ブラウザのバージョン。iOSのSafari、Androidのデフォルトブラウザの場合はOSのバージョン。
+						browserversion: "9.0.12"
+				};
+				H5_TEST_ENV = window.H5_TEST_ENV || {};
+				H5_TEST_ENV.filter = filter;
+			})();
+		</script>
+ -->
+		<!-- テスト環境の指定をリクエストパラメータから読み込む -->
+		<script src="testenv.js"></script>
+		<script src="qunit_config.js"></script>
+
 		<script src="testcommon.js"></script>
 
 		<script src="h5preinit.js"></script>
 
 		<!-- 各モジュールのソースJSを読み込む（h5.jsは必ず最初に読み込む必要がある） -->
 		<script src="runner.js"></script>
-		<script type="text/javascript">
-			$(document).bind('h5preinit', function() {
-				h5.settings.log = {defaultOut: {level: 'all', targets: 'console'}};
-			});
-		</script>
+
 		<script src="../archives/current/h5.js"></script>
 <!-- 		<script src="../src/h5scopedglobals.js"></script> -->
 <!-- 		<script src="../src/h5.u.js"></script> -->
@@ -45,20 +78,19 @@
 <!-- 		<script src="../src/h5.api.geo.js"></script> -->
 <!-- 		<script src="../src/h5.api.sqldb.js"></script> -->
 <!-- 		<script src="../src/h5.api.storage.js"></script> -->
-<!-- 		<script src="../src/h5.init.js"></script> -->
 
-<!-- 		<script src="../src/h5.dev.js"></script> -->
+<!-- 		<script src="../src/h5.dev.api.geo.js"></script> -->
 		<script src="_h5errorcode.js"></script>
 
-		<!-- ブラウザによって失敗するテストをスルーさせる -->
+		<!-- ブラウザによって失敗するテストをスキップさせる -->
 		<script src="testFilter.js"></script>
 
 		<!-- 各モジュールのテストケースJSを読み込む -->
 		<script src="h5.env.js"></script>
-	 	<script src="h5.u.js"></script>
+		<script src="h5.u.js"></script>
 		<script src="h5.log.js"></script>
 		<script src="h5.async.js"></script>
-	 	<script src="h5.ui.js"></script>
+		<script src="h5.ui.js"></script>
 		<script src="h5.ui.jqm.manager.js"></script>
 		<script src="h5.ajax.js"></script>
 		<script src="h5.core.controller.js"></script>
@@ -66,10 +98,9 @@
 		<script src="h5.core.data.js"></script>
 		<script src="h5.logic.js"></script>
 		<script src="h5.core.view_binding.js"></script>
-<!-- 		<script src="h5.core.view_binding_append.js"></script> -->
 		<script src="h5.core.view.js"></script>
-        <script src="h5.api.storage.js"></script>
-        <script src="h5.api.geo.js"></script>
+		<script src="h5.api.storage.js"></script>
+		<script src="h5.api.geo.js"></script>
 		<script src="h5.api.sqldb.js"></script>
 		<script src="h5.coexist.js"></script>
 		<script src="h5scopedglobals.js"></script>

@@ -939,14 +939,18 @@
 
 		if ($.isArray(promises)) {
 			$.map(promises, function(item, idx) {
-				return isPromise(item) ? item : null;
+				return item && $.isFunction(item.promise) ? item : null;
 			});
 
 			if (promises.length > 0) {
-				h5.async.when(promises).pipe(promiseCallback, promiseCallback);
+				// whenを呼んで、pipeにコールバックを登録。
+				// CFHの発火を阻害しないようにSilentlyでpipeコールバックを登録する。
+				registerCallbacksSilently(h5.async.when(promises), 'pipe', [promiseCallback,
+						promiseCallback]);
 			}
-		} else if (isPromise(promises)) {
-			promises.pipe(promiseCallback, promiseCallback);
+		} else if (promises && $.isFunction(promises.promise)) {
+			// CFHの発火を阻害しないようにpipeを呼び出し。
+			registerCallbacksSilently(promises, 'pipe', [promiseCallback, promiseCallback]);
 		}
 	}
 

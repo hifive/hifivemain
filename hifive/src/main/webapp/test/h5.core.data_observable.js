@@ -555,7 +555,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#ie:6-8|ie:9-10:docmode=8|ie:9-10:docmode=7|ie-wp:9:docmode=7]ObservableArray Arrayメソッド 非破壊系(JavaScript1.6以降)');
+	module('[browser#ie:-8|ie:9-10:docmode=7-9|ie-wp:9:docmode=7]ObservableArray Arrayメソッド 非破壊系(JavaScript1.6以降)');
 
 	//=============================
 	// Body
@@ -1664,12 +1664,37 @@ $(function() {
 		}
 	});
 
+	test('depend指定された項目の値が変更された場合、changeイベントオブジェクトから古い値と新しい値を取得できること', 1, function() {
+		var item = h5.core.data.createObservableItem({
+			num: {
+				type: 'number',
+				depend: {
+					on: 'n',
+					calc: function() {
+						return this.get('n') * 2;
+					}
+				}
+			},
+			n: {
+				type: 'number',
+				defaultValue: 1
+			}
+		});
+		item.addEventListener('change', function(ev) {
+			deepEqual(ev.props.num, {
+				oldValue: 2,
+				newValue: 4
+			});
+		});
+		item.set('n', 2);
+	});
+
 	//=============================
 	// Definition
 	//=============================
 	var itemEventOrder = [];
-	module('ObservableItem EventListener',{
-		itemEventListener: function(e){
+	module('ObservableItem EventListener', {
+		itemEventListener: function(e) {
 			itemEventOrder.push(e);
 		}
 	});

@@ -24,21 +24,28 @@
  */
 function Logic() {
 	/**
-	 * ロガー
+	 * ロジックのロガーを返します。
+	 * <p>
+	 * ロジック内のメソッドで<code>this.log.debug('debug message');</code>のように記述して使用します。ロガーの使い方の詳細は<a
+	 * href="Log.html">Log</a>をご覧ください。
+	 * </p>
 	 *
 	 * @type Log
 	 * @memberOf Logic
 	 * @name log
 	 */
-	this.log = h5.log.createLogger(baseObj.__name);
+	this.log = log;
 }
 /**
- * Deferredオブジェクトを返します。
+ * Deferredオブジェクトを生成するメソッドです。
+ * <p>
+ * 詳細は<a href="h5.async.html#deferred">h5.async.deferred</a>をご覧ください。
+ * </p>
  *
  * @returns {Deferred} Deferredオブジェクト
  * @memberOf Logic
  */
-Logic.prototype.deferred = getDeferred;
+Logic.prototype.deferred = function() {};
 
 
 /**
