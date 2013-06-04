@@ -149,6 +149,57 @@ $(function() {
 		dfd2.notify(10);
 	});
 
+	test('progressの引数は配列、多重配列、可変長、配列を含む可変長で渡せること', 7, function() {
+		var dfd = h5.async.deferred();
+		var count = 0;
+		dfd.promise().progress(function() {
+			strictEqual(++count, 1, '1番目に渡した関数');
+		}, [function() {
+			strictEqual(++count, 2, '2番目に渡した関数');
+		}, function() {
+			strictEqual(++count, 3, '3番目に渡した関数');
+		}, [function() {
+			strictEqual(++count, 4, '4番目に渡した関数');
+		}], function() {
+			strictEqual(++count, 5, '5番目に渡した関数');
+		}], function() {
+			strictEqual(++count, 6, '6番目に渡した関数');
+		});
+		strictEqual(count, 0, 'notifyする前には実行されていないこと');
+		dfd.notify();
+	});
+
+	test('progressの引数で、関数以外は無視されること', 4, function() {
+		var dfd = h5.async.deferred();
+		var count = 0;
+		dfd.promise().progress(function() {
+			strictEqual(++count, 1, '1番目に渡した関数');
+		}, [1, 2, null, function() {
+			strictEqual(++count, 2, '2番目に渡した関数');
+		}], {}, function() {
+			strictEqual(++count, 3, '3番目に渡した関数');
+		});
+		strictEqual(count, 0, 'notifyする前には実行されていないこと');
+		dfd.notify();
+	});
+
+	test('notifyWithの第2引数を省略した時、progressコールバックに引数は渡されないこと', 1, function() {
+		var dfd = h5.async.deferred();
+		dfd.promise().progress(function() {
+			strictEqual(arguments.length, 0, '引数なしで実行された');
+		});
+		dfd.notifyWith(dfd);
+	});
+
+	test('notifyWithの第2引数がnull,undefinedの時、無視されてprogressコールバックに引数は渡されないこと', 2, function() {
+		var dfd = h5.async.deferred();
+		dfd.promise().progress(function() {
+			strictEqual(arguments.length, 0, '引数なしで実行された');
+		});
+		dfd.notifyWith(dfd, null);
+		dfd.notifyWith(dfd, undefined);
+	});
+
 	test('pipeからprogressFilterの登録', function() {
 		var dfd = h5.async.deferred();
 

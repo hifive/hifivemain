@@ -100,25 +100,34 @@
 		var progressCallbacks = [];
 
 		// progress,notify,notifyWithを追加
-		dfd.progress = function(progressCallback) {
-			// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7以降の仕様と同じにするためにコールバックの登録と同時に実行する必要がある
-			if (notified) {
-				var params = lastNotifyParam;
-				if (params !== lastNotifyParam) {
-					params = wrapInArray(params);
+		dfd.progress = function(/* var_args */) {
+			// progressの引数は、配列でも可変長でも、配列を含む可変長でも渡すことができる
+			// 再帰で処理する
+			var callbacks = argsToArray(arguments);
+			for ( var i = 0, l = callbacks.length; i < l; i++) {
+				var elem = callbacks[i];
+				if ($.isArray(elem)) {
+					dfd.progress.apply(this, elem);
+				} else if ($.isFunction(elem)) {
+					if (notified) {
+						// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7以降の仕様と同じにするためにコールバックの登録と同時に実行する必要がある
+						var params = lastNotifyParam;
+						if (params !== lastNotifyParam) {
+							params = wrapInArray(params);
+						}
+						elem.apply(lastNotifyContext, params);
+					} else {
+						progressCallbacks.push(elem);
+					}
 				}
-				progressCallback.apply(lastNotifyContext, params);
 			}
-			progressCallbacks.push(progressCallback);
 			return this;
 		};
 
 		function notify(/* var_args */) {
 			notified = true;
-			if (arguments.length !== -1) {
-				lastNotifyContext = this;
-				lastNotifyParam = argsToArray(arguments);
-			}
+			lastNotifyContext = this;
+			lastNotifyParam = argsToArray(arguments);
 			if (isRejected(dfd) || isResolved(dfd)) {
 				// resolve済みまたはreject済みならprogressコールバックは実行しない
 				return dfd;
@@ -131,14 +140,22 @@
 					if (params !== arguments) {
 						params = wrapInArray(params);
 					}
-					progressCallbacks[i].apply(this, params);
+					// 関数を実行。関数以外は無視。
+					$.isFunction(progressCallbacks[i]) && progressCallbacks[i].apply(this, params);
 				}
 			}
 			return dfd;
 		}
 		dfd.notify = notify;
+
+		/**
+		 * jQueryの公式Doc(2013/6/4時点)だとnotifyWithの第2引数はObjectと書かれているが、
+		 * 実際は配列で渡す(jQuery1.7+のnotifyWithと同じ。resolveWith, rejectWithも同じ)。
+		 * notifyは可変長で受け取る(公式Docにはオブジェクトと書かれているが、resolve、rejectと同じ可変長)。
+		 */
 		dfd.notifyWith = function(context, args) {
-			return arguments.length < 2 ? notify.apply(context) : notify.apply(context, args);
+			// 第2引数がない(falseに評価される)なら、引数は渡さずに呼ぶ
+			return !args ? notify.apply(context) : notify.apply(context, args);
 		};
 	}
 
