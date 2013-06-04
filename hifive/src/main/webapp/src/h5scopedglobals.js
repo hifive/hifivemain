@@ -264,6 +264,20 @@ function getRegex(target) {
 	return new RegExp('^' + str + '$');
 }
 
+/**
+ * promiseのメソッド呼び出しを_h5UnwrappedCallを使って行います。 jQueryのpromiseが渡されたらそのまま実行します。
+ *
+ * @private
+ * @param {Deferred|Promise} promise
+ * @param {String} method
+ * @param {Array|Any} args 複数の引数があるときは配列で渡します。
+ */
+function registerCallbacksSilently(promise, method, args) {
+	if (promise) {
+		promise._h5UnwrappedCall ? promise._h5UnwrappedCall(method, args) : promise[method](args);
+	}
+}
+
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る
 var h5internal = {
 	core: {

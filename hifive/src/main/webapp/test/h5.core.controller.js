@@ -836,7 +836,7 @@ $(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()された');
 		}).fail(function(e) {
 			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			strictEqual(e.controllerDefObject, controller, 'エラーオブジェクトからコントローラオブジェクトが取得できる');
+			strictEqual(this, testController, 'failハンドラのthisはコントローラインスタンス');
 		});
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()された');
@@ -1143,15 +1143,13 @@ $(function() {
 					ok(false, 'テスト失敗。preinitPromiseがresolve()された');
 					h5.core.view.createView = originalCreateView;
 					start();
-				}).fail(
-						function(e) {
-							// createViewを元に戻す
-							h5.core.view.createView = originalCreateView;
-							errorObj = e;
-							deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-							strictEqual(e.controllerDefObject, controller,
-									'エラーオブジェクトからコントローラオブジェクトが取得できること');
-						});
+				}).fail(function(e) {
+					// createViewを元に戻す
+					h5.core.view.createView = originalCreateView;
+					errorObj = e;
+					deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
+					strictEqual(this, testController, 'thisはコントローラインスタンスであること');
+				});
 				testController.initPromise
 						.done(function(a) {
 							ok(false, 'テスト失敗。initPromiseがresolve()された');
@@ -1160,8 +1158,7 @@ $(function() {
 						.fail(
 								function(e) {
 									deepEqual(++count, 3, 'initPromiseがreject()された');
-									strictEqual(e.controllerDefObject, controller,
-											'エラーオブジェクトからコントローラオブジェクトが取得できること');
+									strictEqual(this, testController, 'thisはコントローラインスタンスであること');
 									strictEqual(e, errorObj,
 											'preinitPromiseのfailで取得したエラーオブジェクトとinitPromiseのfailで取得したエラーオブジェクトが同じであること');
 								});
@@ -1173,15 +1170,123 @@ $(function() {
 						.fail(
 								function(e) {
 									strictEqual(++count, 4, 'readyPromiseがreject()された');
-									strictEqual(e.controllerDefObject, controller,
-											'エラーオブジェクトからコントローラオブジェクトが取得できること');
+									strictEqual(this, testController, 'thisはコントローラインスタンスであること');
 									strictEqual(e, errorObj,
 											'preinitPromiseのfailで取得したエラーオブジェクトとreadyPromiseのfailで取得したエラーオブジェクトが同じであること');
 									start();
 								});
 			});
 
-	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 7, function() {
+	asyncTest('preinitPromise,initPromise,readyPromiseのdoneに登録したハンドラのthisはコントローラインスタンスであること', 6,
+			function() {
+				var childControllerDef = {
+					__name: 'ChildController'
+				};
+				var child = null;
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					__construct: function() {
+						child = this.childController;
+					},
+					childController: childControllerDef
+				});
+				c.preinitPromise.done(function() {
+					strictEqual(this, c, 'root preinit');
+				});
+				c.initPromise.done(function() {
+					strictEqual(this, c, 'root init');
+				});
+				c.readyPromise.done(function() {
+					strictEqual(this, c, 'root ready');
+					start();
+				});
+				child.preinitPromise.done(function() {
+					strictEqual(this, child, 'child preinit');
+				});
+				child.initPromise.done(function() {
+					strictEqual(this, child, 'child init');
+				});
+				child.readyPromise.done(function() {
+					strictEqual(this, child, 'child ready');
+				});
+			});
+
+	asyncTest(
+			'preinitPromise,initPromise,readyPromise.failに登録したハンドラのthisはコントローラインスタンス、引数はview.loadのエラーオブジェクトであること',
+			12, function() {
+				var childControllerDef = {
+					__name: 'ChildController',
+					__templates: 'dummy'
+				};
+				var child = null;
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					__templates: 'dummy',
+					__construct: function() {
+						child = this.childController;
+					},
+					childController: childControllerDef
+				});
+				c.preinitPromise.fail(function(arg) {
+					strictEqual(this, c, 'preinitPromiseのfailハンドラ:thisはコントローラインスタンスであること');
+					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
+							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
+				});
+				c.initPromise.fail(function(arg) {
+					strictEqual(this, c, 'initPromiseのfailハンドラ:thisはコントローラインスタンスであること');
+					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
+							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
+				});
+				c.readyPromise.fail(function(arg) {
+					strictEqual(this, c, 'readyPromiseのfailハンドラ:thisはコントローラインスタンスであること');
+					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
+							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
+					start();
+				});
+				child.preinitPromise.fail(function(arg) {
+					strictEqual(this, child,
+							'子コントローラのpreinitPromiseのfailハンドラ:thisは子コントローラのインスタンスであること');
+					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
+							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
+				});
+				child.initPromise.fail(function(arg) {
+					strictEqual(this, child,
+							'子コントローラのinitPromiseのfailハンドラ:thisは子コントローラのインスタンスであること');
+					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
+							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
+				});
+				child.readyPromise.fail(function(arg) {
+					strictEqual(this, child,
+							'子コントローラのreadyPromiseのfailハンドラ:thisは子コントローラのインスタンスであること');
+					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
+							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
+				});
+			});
+
+	asyncTest('テンプレートのロードが失敗したとき、commonFailHandlerのthisはコントローラインスタンス、引数はview.loadのエラーオブジェクトであること',
+			2, function() {
+				var childControllerDef = {
+					__name: 'ChildController',
+					__templates: 'dummy'
+				};
+				var c;
+				h5.settings.commonFailHandler = function(arg) {
+					strictEqual(this, c, 'commonFailHandlerのthisはルートコントローラのインスタンスであること');
+					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
+							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
+					h5.settings.commonFailHandler = undefined;
+					start();
+				};
+				c = h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					__construct: function() {
+						child = this.childController;
+					},
+					childController: childControllerDef
+				});
+			});
+
+	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 6, function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
@@ -1209,7 +1314,6 @@ $(function() {
 			ok(false, 'テスト失敗。preinitPromiseがresolve()された');
 		}).fail(function(e) {
 			deepEqual(++count, 2, 'preinitPromiseのfailハンドラが実行される。');
-			strictEqual(e.controllerDefObject, controller, 'エラーオブジェクトからコントローラオブジェクトが取得できる');
 		});
 		testController.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()された');
@@ -1994,7 +2098,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__initが返すpromiseがrejectされる時の挙動', 4, function() {
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__initが返すpromiseがrejectされる時の挙動', 5, function() {
 		var dfd = h5.async.deferred();
 		var controller = {
 			__name: 'TestController',
@@ -2006,7 +2110,7 @@ $(function() {
 				__init: function() {
 					ok(true, '子コントローラの__initが実行されること');
 					setTimeout(function() {
-						dfd.reject();
+						dfd.reject(1, 2);
 					}, 0);
 					return dfd.promise();
 				}
@@ -2025,14 +2129,14 @@ $(function() {
 		c.initPromise.done(function() {
 			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのdoneが実行された');
 			start();
-		}).fail(function() {
+		}).fail(function(e) {
 			ok(true, 'ルートコントローラのinitPromiseのfailハンドラが実行されること');
+			deepEqual(e.detail, [1, 2], 'reject時の引数が取得できること');
 			ok(isRejected(dfd), '子コントローラの__initが返したpromiseがrejectされていること');
 		});
 	});
 
-
-	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__readyが返すpromiseがrejectされる時の挙動', 4, function() {
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__readyが返すpromiseがrejectされる時の挙動', 5, function() {
 		var dfd = h5.async.deferred();
 		var controller = {
 			__name: 'TestController',
@@ -2044,7 +2148,7 @@ $(function() {
 				__ready: function() {
 					ok(true, '子コントローラの__initが実行されること');
 					setTimeout(function() {
-						dfd.reject();
+						dfd.reject(1, 2);
 					}, 0);
 					return dfd.promise();
 				}
@@ -2063,8 +2167,9 @@ $(function() {
 		c.readyPromise.done(function() {
 			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
 			start();
-		}).fail(function() {
+		}).fail(function(e) {
 			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+			deepEqual(e.detail, [1, 2], 'reject時の引数が取得できること');
 			ok(isRejected(dfd), '子コントローラの__readyが返したpromiseがrejectされていること');
 		});
 	});
@@ -2412,9 +2517,9 @@ $(function() {
 			$(window).click();
 
 			strictEqual(ret1, 1, 'セレクタが{document}の場合、イベント名に"[]"がなくてもbindが使用されているか');
-			strictEqual(ret2, 2, 'セレクタが{document}の場合、イベント名に"[]"がってもbindが使用されているか');
+			strictEqual(ret2, 2, 'セレクタが{document}の場合、イベント名に"[]"があってもbindが使用されているか');
 			strictEqual(ret1, 1, 'セレクタが{window}の場合、イベント名に"[]"がなくてもbindが使用されているか');
-			strictEqual(ret2, 2, 'セレクタが{window}の場合、イベント名に"[]"がってもbindが使用されているか');
+			strictEqual(ret2, 2, 'セレクタが{window}の場合、イベント名に"[]"があってもbindが使用されているか');
 
 			testController.unbind();
 
@@ -5005,7 +5110,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:0-8|ie:8-10:docmode=7|ie:8-10:docmode=8|ie-wp:9:docmode=7|and-and:0-2]SVG内要素にバインドしたh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。',
+			'[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7|and-and:0-2]SVG内要素にバインドしたh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。',
 			26,
 			function() {
 				var controller = {

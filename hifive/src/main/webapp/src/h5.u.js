@@ -1278,11 +1278,13 @@
 			if (!post) {
 				return ret;
 			}
-			if (h5.async.isPromise(ret)) {
+			if (ret && $.isFunction(ret.promise)) {
 				var that = this;
-				ret.always(function() {
+
+				registerCallbacksSilently(ret, 'always', function() {
 					post.call(that, invocation, data);
 				});
+
 				return ret;
 			}
 			post.call(this, invocation, data);

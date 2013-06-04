@@ -942,4 +942,37 @@ $(function() {
 				}
 				waitForScroll();
 			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('indicator');
+
+	//=============================
+	// Body
+	//=============================
+	test('プロミスオブジェクトを指定した時、commonFailHandlerの動作は阻害されない', 2, function() {
+		var cfhCount = 0;
+		h5.settings.commonFailHandler = function() {
+			cfhCount++;
+		}
+		var dfd = h5.async.deferred();
+		var indicator = h5.ui.indicator(document, {
+			promises: dfd.promise()
+		});
+		dfd.reject();
+		strictEqual(cfhCount, 1, 'commonFailHandlerが実行されたこと');
+
+		cfhCount = 0;
+		var dfd1 = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		indicator = h5.ui.indicator(document, {
+			promises: [dfd1.promise(), dfd2.promise()]
+		});
+		dfd1.reject();
+		dfd2.reject();
+		strictEqual(cfhCount, 1, '複数のプロミスを渡したとき、まとめて1回だけcommonFailHandlerが実行されること');
+	});
+
+
 });
