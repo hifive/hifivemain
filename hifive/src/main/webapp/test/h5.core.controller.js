@@ -3223,6 +3223,25 @@ $(function() {
 		});
 	});
 
+	asyncTest('Controller.triggerの戻り値はイベントオブジェクトであること', 3, function() {
+		var clickEvent = '';
+		h5.core.controller('#controllerTest', {
+			__name: 'test',
+			__ready: function() {
+				var e = this.trigger('click');
+				strictEqual(e, clickEvent, 'triggerの戻り値はイベントオブジェクトで、イベントハンドラに渡されるイベントオブジェクトと同一インスタンスであること');
+				var jqev = $.Event('click');
+				e = this.trigger(jqev);
+				strictEqual(e, jqev, 'jQueryEventオブジェクトをtriggerに渡すと、戻り値はそのjQueryEventオブジェクトインスタンスであること');
+				strictEqual(e, clickEvent, 'triggerの戻り値はイベントオブジェクトで、イベントハンドラに渡されるイベントオブジェクトと同一インスタンスであること');
+				start();
+			},
+			'{rootElement} click': function(context) {
+				clickEvent = context.event;
+			}
+		});
+	});
+
 	asyncTest('jQueryのtriggerによるイベントのトリガで、context.evArgに引数が格納されること', 6, function() {
 		var init = function() {
 			$('#qunit-fixture').append('<div id="controllerTest1"></div>');
