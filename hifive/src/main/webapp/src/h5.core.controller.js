@@ -2243,13 +2243,15 @@
 		 * trigger('click', ['a']);
 		 * </pre>
 		 *
-		 * のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。<br>
-		 * (jQueryのtriggerと同様です。)
+		 * のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。(jQuery.triggerと同様です。)
+		 * </p>
+		 * <p>
+		 * 戻り値は、jQueryEventオブジェクトを返します。
 		 * </p>
 		 *
 		 * @param {String|jQueryEvent} event イベント名またはjQueryEventオブジェクト
 		 * @param {Object} [parameter] パラメータ
-		 * @returns {Object} event イベントオブジェクト
+		 * @returns {jQueryEvent} event イベントオブジェクト
 		 * @memberOf Controller
 		 */
 		trigger: function(event, parameter) {
