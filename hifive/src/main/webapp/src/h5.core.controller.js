@@ -1717,7 +1717,7 @@
 	 * @private
 	 * @param {Node} node 探索を開始するルートノード
 	 * @param {String} id テンプレートID
-	 * @retruns {Node} 発見したコメントノード、見つからなかった場合はnull
+	 * @returns {Node} 発見したコメントノード、見つからなかった場合はnull
 	 */
 	function findCommentBindingTarget(rootNode, id) {
 		var childNodes = rootNode.childNodes;
