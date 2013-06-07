@@ -1515,8 +1515,8 @@
 		 * @private
 		 * @since 1.1.0
 		 * @memberOf DataModel
-		 * @param {String} プロパティ名
-		 * @value {Any} 値
+		 * @param {String} prop プロパティ名
+		 * @param {Any} value 値
 		 * @returns {Boolean} 値がプロパティの制約条件を満たすならtrue
 		 */
 		_validateItemValue: function(prop, value) {
