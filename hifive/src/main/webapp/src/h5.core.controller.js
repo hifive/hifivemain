@@ -2247,12 +2247,17 @@
 		 * (jQueryのtriggerと同様です。)
 		 * </p>
 		 *
-		 * @param {String} eventName イベント名
+		 * @param {String|jQueryEvent} event イベント名またはjQueryEventオブジェクト
 		 * @param {Object} [parameter] パラメータ
+		 * @returns {Object} event イベントオブジェクト
 		 * @memberOf Controller
 		 */
-		trigger: function(eventName, parameter) {
-			$(this.rootElement).trigger(eventName, parameter);
+		trigger: function(event, parameter) {
+			// eventNameが文字列ならイベントを作って投げる
+			// オブジェクトの場合はそのまま渡す。
+			var ev = isString(event) ? $.Event(event) : event;
+			$(this.rootElement).trigger(ev, parameter);
+			return ev;
 		},
 
 		/**
