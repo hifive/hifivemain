@@ -1243,7 +1243,25 @@
 	 * @param {Function} pre インターセプト先関数の実行前に呼ばれる関数です。
 	 * @param {Function} post インターセプト先関数の実行後に呼ばれる関数です。<br />
 	 *            <ul>
-	 *            <li>pre(), post()には引数としてinvocationとdata(preからpostへ値を渡すための入れ物オブジェクト)が渡されます。</li>
+	 *            <li><code>pre(),post()には引数としてinvocation(インターセプト対象の関数についてのオブジェクト)と
+	 *            data(preからpostへ値を渡すための入れ物オブジェクト)が渡されます。</li>
+	 *            <li>invocationは以下のプロパティを持つオブジェクトです。
+	 *            <dl>
+	 *            <dt>target</dt>
+	 *            <dd>インターセプト対象の関数が属しているコントローラまたはロジック</dd>
+	 *            <dt>func</dt>
+	 *            <dd>インターセプト対象の関数</dd>
+	 *            <dt>funcName</dt>
+	 *            <dd>インターセプト対象の関数名</dd>
+	 *            <dt>args</dt>
+	 *            <dd>関数が呼ばれたときに渡された引数(argumentsオブジェクト)</dd>
+	 *            <dt>proceed</dt>
+	 *            <dd>インターセプト対象の関数を実行する関数。インターセプト対象の関数は自動では実行されません。 インターセプト先の関数を実行するには、
+	 *            <code>pre</code>に指定した関数内で<code>invocation.proceed()</code>を呼んでください。
+	 *            <code>proceed()</code>を呼ぶと対象の関数(<code>invocation.func</code>)を呼び出し時の引数(<code>invocation.args</code>)で実行します。
+	 *            <code>proceed</code>自体は引数を取りません。</dd>
+	 *            </dl>
+	 *            </li>
 	 *            <li>post()は、呼び出した関数の戻り値がPromiseオブジェクトかどうかをチェックし、Promiseオブジェクトの場合は対象のDeferredが完了した後に呼ばれます。</li>
 	 *            <li>pre()の中でinvocation.proceed()が呼ばれなかった場合、post()は呼ばれません。</li>
 	 *            <li>invocation.resultプロパティに呼び出した関数の戻り値が格納されます。</li>
@@ -1253,7 +1271,7 @@
 	 *
 	 * <pre>
 	 * var lapInterceptor = h5.u.createInterceptor(function(invocation, data) {
-	 * 	// 開始時間をdataオブジェクトに格納
+	 * 		// 開始時間をdataオブジェクトに格納
 	 * 		data.start = new Date();
 	 * 		// invocationを実行
 	 * 		return invocation.proceed();
