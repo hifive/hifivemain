@@ -202,11 +202,11 @@ $(function() {
 
 	test('notifyの第1引数が、null,undefinedの時、null,undefinedがprogressコールバックに渡されること', 4, function() {
 		var dfd = h5.async.deferred();
+		var expectArg = null;
 		dfd.promise().progress(function(arg) {
 			strictEqual(arguments.length, 1, '引数は1つ');
-			strictEqual(arg, expectArg, expectArg + 'が引数で渡されていること')
+			strictEqual(arg, expectArg, expectArg + 'が引数で渡されていること');
 		});
-		var expectArg = null;
 		dfd.notify(null);
 		expectArg = undefined;
 		dfd.notify(undefined);
