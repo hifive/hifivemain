@@ -2064,6 +2064,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name update
 		 * @memberOf Controller.view
@@ -2071,7 +2072,7 @@
 		 */
 		update: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			getView(templateId, this.__controller).update(target, templateId, param);
+			return getView(templateId, this.__controller).update(target, templateId, param);
 		},
 
 		/**
@@ -2080,6 +2081,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name append
 		 * @memberOf Controller.view
@@ -2087,7 +2089,7 @@
 		 */
 		append: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			getView(templateId, this.__controller).append(target, templateId, param);
+			return getView(templateId, this.__controller).append(target, templateId, param);
 		},
 
 		/**
@@ -2096,6 +2098,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name prepend
 		 * @memberOf Controller.view
@@ -2103,7 +2106,7 @@
 		 */
 		prepend: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			getView(templateId, this.__controller).prepend(target, templateId, param);
+			return getView(templateId, this.__controller).prepend(target, templateId, param);
 		},
 
 		/**
