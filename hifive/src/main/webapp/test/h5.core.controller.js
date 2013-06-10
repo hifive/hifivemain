@@ -2562,114 +2562,148 @@ $(function() {
 
 	});
 
-	asyncTest('テンプレートを使用できるか1', function() {
-		var html = '';
+	asyncTest('this.view.get()', 1, function() {
+		var controller = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: ['./template/test8.ejs'],
+			__ready: function() {
+				strictEqual(this.view.get('template8'), '<span class="test">test</span>',
+						'this.view.getでテンプレートからHTML文字列を取得できたか');
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			start();
+		});
+	});
+
+	asyncTest('this.view.append()', 2, function() {
+		var controller = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: ['./template/test8.ejs'],
+			__ready: function() {
+				var $result = $('#controllerResult');
+				$result.append('<div id="viewTest"></div>');
+				var ret = this.view.append($result, 'template8');
+				ok($('#viewTest').next().hasClass('test'),
+						'view.appendでテンプレートから取得したHTMLを追加できること');
+				strictEqual(ret.get(0), $result.get(0), '戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			start();
+		});
+	});
+
+	asyncTest('this.view.prepend()', 2, function() {
+		var controller = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: ['./template/test8.ejs'],
+			__ready: function() {
+				var $result = $('#controllerResult');
+				$result.prepend('<div id="viewTest"></div>');
+				var ret = this.view.prepend($result, 'template8');
+				ok($('#viewTest').prev().hasClass('test'),
+						'view.prependでテンプレートから取得したHTMLを追加できること');
+				strictEqual(ret.get(0), $result.get(0), '戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			start();
+		});
+	});
+
+	asyncTest('this.view.update()', 3, function() {
+		var controller = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: ['./template/test8.ejs'],
+			__ready: function() {
+				var $result = $('#controllerResult');
+				$result.append('<div id="viewTest"><span class="original-span"></span></div>');
+				var ret = this.view.update('#viewTest', 'template8');
+				ok(!$('#viewTest').children().hasClass('original-span'),
+				'view.updateで指定した要素がもともと持っていた子要素は無くなっていること');
+				ok($('#viewTest').children().hasClass('test'),
+				'view.updateでテンプレートから取得したHTMLが指定した要素の子要素になること');
+				strictEqual(ret.get(0), $('#viewTest').get(0), '戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			start();
+		});
+	});
+
+	asyncTest('view.append()に指定されたDOM要素が{window*},{document*}である時にエラーが発生すること', 7, function() {
+		var append = '';
+		var append2 = '';
+		var prepend = '';
+		var viewError1 = null;
+		var viewError2 = null;
+		var viewError3 = null;
+		var viewError4 = null;
 		var controller = {
 			__name: 'TestController',
 
-			__templates: ['./template/test2.ejs'],
+			__templates: ['./template/test2.ejs', './template/test3.ejs', './template/test8.ejs'],
 
 			'input[type=button] click': function(context) {
-				html = this.view.get('template2');
+				$('#controllerResult').append(
+						'<div id="appendViewTest"><span class="abc">abc</span></div>');
+				$('#controllerResult').append(
+						'<div id="appendViewTest2"><span class="abc">abc</span></div>');
+				$('#controllerResult').append(
+						'<div id="prependViewTest"><span class="abc">abc</span></div>');
+				this.view.append('#appendViewTest', 'template8', {});
+				this.view.append('{#appendViewTest2}', 'template8', {});
+				this.view.prepend('#prependViewTest', 'template8', {});
+
+				append = $(this.$find('#appendViewTest').children('span')[1]).text();
+				append2 = $(this.$find('#appendViewTest2').children('span')[1]).text();
+				prepend = $(this.$find('#prependViewTest').children('span')[0]).text();
+				try {
+					this.view.append('{window}', 'template8', {});
+				} catch (e) {
+					viewError1 = e;
+				}
+				try {
+					this.view.update('{window.a}', 'template8', {});
+				} catch (e) {
+					viewError2 = e;
+				}
+				try {
+					this.view.prepend('{navigator}', 'template8', {});
+				} catch (e) {
+					viewError3 = e;
+				}
+				try {
+					this.view.append('{navigator.userAgent}', 'template8', {});
+				} catch (e) {
+					viewError4 = e;
+				}
+
 			}
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
-			ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
+			strictEqual(append, 'test', 'this.view.appendでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
+			strictEqual(append2, 'test',
+					'this.view.appendでテンプレートからHTML文字列を取得し、グローバルセレクタで指定した要素に出力できたか');
+			strictEqual(prepend, 'test', 'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
+
+			var errorCode = ERR.ERR_CODE_INVALID_TEMPLATE_SELECTOR;
+			strictEqual(viewError1.code, errorCode,
+					'this.update/append/prependで、"{window}"を指定するとエラーになるか');
+			strictEqual(viewError2.code, errorCode,
+					'this.update/append/prependで、"{window.xxx}"を指定するとエラーになるか');
+			strictEqual(viewError3.code, errorCode,
+					'this.update/append/prependで、"{navigator}"を指定するとエラーになるか');
+			strictEqual(viewError4.code, errorCode,
+					'this.update/append/prependで、"{navigator.xxx}"を指定するとエラーになるか');
+
 			testController.unbind();
 			start();
 		});
 	});
-
-	asyncTest(
-			'テンプレートを使用できるか2 view.append()に指定されたDOM要素が{window*},{document*}である時にエラーが発生すること',
-			function() {
-				var html = '';
-				var updateView = 0;
-				var append = '';
-				var append2 = '';
-				var prepend = '';
-				var viewError1 = null;
-				var viewError2 = null;
-				var viewError3 = null;
-				var viewError4 = null;
-				var controller = {
-					__name: 'TestController',
-
-					__templates: ['./template/test2.ejs', './template/test3.ejs',
-							'./template/test8.ejs'],
-
-					'input[type=button] click': function(context) {
-						html = this.view.get('template2', {});
-						this.view.update('#controllerResult', 'template3', {
-							ar: 2
-						});
-						updateView = $('#controllerResult').find('table').length;
-
-						$('#controllerResult').append(
-								'<div id="appendViewTest"><span class="abc">abc</span></div>');
-						$('#controllerResult').append(
-								'<div id="appendViewTest2"><span class="abc">abc</span></div>');
-						$('#controllerResult').append(
-								'<div id="prependViewTest"><span class="abc">abc</span></div>');
-						this.view.append('#appendViewTest', 'template8', {});
-						this.view.append('{#appendViewTest2}', 'template8', {});
-						this.view.prepend('#prependViewTest', 'template8', {});
-
-						append = $(this.$find('#appendViewTest').children('span')[1]).text();
-						append2 = $(this.$find('#appendViewTest2').children('span')[1]).text();
-						prepend = $(this.$find('#prependViewTest').children('span')[0]).text();
-						try {
-							this.view.append('{window}', 'template8', {});
-						} catch (e) {
-							viewError1 = e;
-						}
-						try {
-							this.view.update('{window.a}', 'template8', {});
-						} catch (e) {
-							viewError2 = e;
-						}
-						try {
-							this.view.prepend('{navigator}', 'template8', {});
-						} catch (e) {
-							viewError3 = e;
-						}
-						try {
-							this.view.append('{navigator.userAgent}', 'template8', {});
-						} catch (e) {
-							viewError4 = e;
-						}
-
-					}
-				};
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.readyPromise
-						.done(function() {
-							$('#controllerTest input[type=button]').click();
-							ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
-							ok(updateView, 'this.view.updateでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
-							strictEqual(append, 'test',
-									'this.view.appendでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
-							strictEqual(append2, 'test',
-									'this.view.appendでテンプレートからHTML文字列を取得し、グローバルセレクタで指定した要素に出力できたか');
-							strictEqual(prepend, 'test',
-									'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
-
-							var errorCode = ERR.ERR_CODE_INVALID_TEMPLATE_SELECTOR;
-							strictEqual(viewError1.code, errorCode,
-									'this.update/append/prependで、"{window}"を指定するとエラーになるか');
-							strictEqual(viewError2.code, errorCode,
-									'this.update/append/prependで、"{window.xxx}"を指定するとエラーになるか');
-							strictEqual(viewError3.code, errorCode,
-									'this.update/append/prependで、"{navigator}"を指定するとエラーになるか');
-							strictEqual(viewError4.code, errorCode,
-									'this.update/append/prependで、"{navigator.xxx}"を指定するとエラーになるか');
-
-							testController.unbind();
-							start();
-						});
-			});
 
 	asyncTest('view操作', function() {
 		var controller = {
@@ -3229,11 +3263,14 @@ $(function() {
 			__name: 'test',
 			__ready: function() {
 				var e = this.trigger('click');
-				strictEqual(e, clickEvent, 'triggerの戻り値はイベントオブジェクトで、イベントハンドラに渡されるイベントオブジェクトと同一インスタンスであること');
+				strictEqual(e, clickEvent,
+						'triggerの戻り値はイベントオブジェクトで、イベントハンドラに渡されるイベントオブジェクトと同一インスタンスであること');
 				var jqev = $.Event('click');
 				e = this.trigger(jqev);
-				strictEqual(e, jqev, 'jQueryEventオブジェクトをtriggerに渡すと、戻り値はそのjQueryEventオブジェクトインスタンスであること');
-				strictEqual(e, clickEvent, 'triggerの戻り値はイベントオブジェクトで、イベントハンドラに渡されるイベントオブジェクトと同一インスタンスであること');
+				strictEqual(e, jqev,
+						'jQueryEventオブジェクトをtriggerに渡すと、戻り値はそのjQueryEventオブジェクトインスタンスであること');
+				strictEqual(e, clickEvent,
+						'triggerの戻り値はイベントオブジェクトで、イベントハンドラに渡されるイベントオブジェクトと同一インスタンスであること');
 				start();
 			},
 			'{rootElement} click': function(context) {
