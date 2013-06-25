@@ -2584,8 +2584,7 @@ $(function() {
 				var $result = $('#controllerResult');
 				$result.append('<div id="viewTest"></div>');
 				var ret = this.view.append($result, 'template8');
-				ok($('#viewTest').next().hasClass('test'),
-						'view.appendでテンプレートから取得したHTMLを追加できること');
+				ok($('#viewTest').next().hasClass('test'), 'view.appendでテンプレートから取得したHTMLを追加できること');
 				strictEqual(ret.get(0), $result.get(0), '戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
 			}
 		}).readyPromise.done(function() {
@@ -2595,18 +2594,21 @@ $(function() {
 	});
 
 	asyncTest('this.view.prepend()', 2, function() {
-		var controller = h5.core.controller('#controllerTest', {
-			__name: 'TestController',
-			__templates: ['./template/test8.ejs'],
-			__ready: function() {
-				var $result = $('#controllerResult');
-				$result.prepend('<div id="viewTest"></div>');
-				var ret = this.view.prepend($result, 'template8');
-				ok($('#viewTest').prev().hasClass('test'),
-						'view.prependでテンプレートから取得したHTMLを追加できること');
-				strictEqual(ret.get(0), $result.get(0), '戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
-			}
-		}).readyPromise.done(function() {
+		var controller = h5.core
+				.controller('#controllerTest',
+						{
+							__name: 'TestController',
+							__templates: ['./template/test8.ejs'],
+							__ready: function() {
+								var $result = $('#controllerResult');
+								$result.prepend('<div id="viewTest"></div>');
+								var ret = this.view.prepend($result, 'template8');
+								ok($('#viewTest').prev().hasClass('test'),
+										'view.prependでテンプレートから取得したHTMLを追加できること');
+								strictEqual(ret.get(0), $result.get(0),
+										'戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
+							}
+						}).readyPromise.done(function() {
 			this.unbind();
 			start();
 		});
@@ -2621,9 +2623,9 @@ $(function() {
 				$result.append('<div id="viewTest"><span class="original-span"></span></div>');
 				var ret = this.view.update('#viewTest', 'template8');
 				ok(!$('#viewTest').children().hasClass('original-span'),
-				'view.updateで指定した要素がもともと持っていた子要素は無くなっていること');
+						'view.updateで指定した要素がもともと持っていた子要素は無くなっていること');
 				ok($('#viewTest').children().hasClass('test'),
-				'view.updateでテンプレートから取得したHTMLが指定した要素の子要素になること');
+						'view.updateでテンプレートから取得したHTMLが指定した要素の子要素になること');
 				strictEqual(ret.get(0), $('#viewTest').get(0), '戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
 			}
 		}).readyPromise.done(function() {
@@ -4898,33 +4900,49 @@ $(function() {
 		}
 	});
 
-	asyncTest('mousewheelイベントの動作', function() {
-		var type = null;
-		var testController = {
-			__name: 'TestController',
+	asyncTest(
+			'[browser#ie:all|ie-wp:all||op:all|ch:all|sa:all|sa-ios:all|and-and:all]firefoxで、DOMMouseScrollイベントが起きた時、mousewheelイベントハンドラが動作すること',
+			1,
+			function() {
+				var testController = {
+					__name: 'TestController',
 
-			'{rootElement} mousewheel': function(context) {
-				type = context.event.type;
-			}
-		};
-
-		var eventName = h5.env.ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
-		var c = h5.core.controller('#controllerTest', testController);
-		c.readyPromise.done(function() {
-			var event = new $.Event(eventName);
-			if (h5.env.ua.isFirefox) {
-				event.originalEvent = {
-					detail: 3
+					'{rootElement} mousewheel': function(context) {
+						strictEqual(context.event.type, eventName, 'DOMMouseScrollイベントにバインドされているか');
+					}
 				};
-			}
-			$('#controllerTest').trigger(event);
+				var eventName = 'DOMMouseScroll';
+				var c = h5.core.controller('#controllerTest', testController);
+				c.readyPromise.done(function() {
+					$('#controllerTest').trigger($.Event(eventName));
+					c.unbind();
+					start();
+				});
+			});
 
-			strictEqual(type, eventName,
-					'mousewheelイベントがあればmousewheelイベントに、なければDOMMouseScrollイベントにバインドされているか');
-			c.unbind();
-			start();
-		});
-	});
+	asyncTest(
+			'[browser#ie:all|ie-wp:all||op:all|ch:all|sa:all|sa-ios:all|and-and:all]firefoxで、DOMMouseScrollイベントが起きた時、wheelDeltaにdetailから計算した値が入っていること',
+			1, function() {
+				var testController = {
+					__name: 'TestController',
+
+					'{rootElement} mousewheel': function(context) {
+						strictEqual(context.event.wheelDelta, -120, 'wheelDeltaが格納されていること');
+					}
+				};
+
+				var eventName = 'DOMMouseScroll';
+				var c = h5.core.controller('#controllerTest', testController);
+				c.readyPromise.done(function() {
+					var event = new $.Event(eventName);
+					event.originalEvent = {
+						detail: 3
+					};
+					$('#controllerTest').trigger(event);
+					c.unbind();
+					start();
+				});
+			});
 
 	test('コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作', 1, function() {
 		var testController = {

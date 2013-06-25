@@ -1050,7 +1050,7 @@
 				var event = context.event;
 				// Firefox
 				if (event.originalEvent && event.originalEvent.detail) {
-					event.wheelDelta = -event.detail * 40;
+					event.wheelDelta = -event.originalEvent.detail * 40;
 				}
 				func.call(controller, context);
 			}
