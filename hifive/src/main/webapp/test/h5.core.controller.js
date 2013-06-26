@@ -7140,7 +7140,7 @@ $(function() {
 				var c5 = h5.core.controller('#controllerTest-g1', {
 					__name: 'name2'
 				});
-				h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise)
+				h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise, c5.readyPromise)
 						.done(
 								function() {
 									var controllers = h5.core.controllerManager.getControllers(
