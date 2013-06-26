@@ -51,9 +51,22 @@ $(function() {
 	// Functions
 	//=============================
 
+	// aspectのリセット
 	function cleanAspects() {
 		h5.settings.aspects = null;
 	}
+
+	// テストでバインドしたコントローラのdispose
+	// #qunit-fixture以下にバインドされているコントローラを全てdisposeする。
+	function disposeQUnitFixtureController() {
+		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
+			deep: true
+		});
+		for ( var i = controllers.length - 1; i >= 0; i--) {
+			controllers[i].dispose();
+		}
+	}
+
 
 	// タッチイベントの位置を設定する関数
 	function setPos(ev, pos) {
@@ -185,6 +198,7 @@ $(function() {
 									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#controllerTest').remove();
 					h5.settings.commonFailHandler = undefined;
 				}
@@ -238,6 +252,7 @@ $(function() {
 									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#controllerTest').remove();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
@@ -5604,7 +5619,7 @@ $(function() {
 				});
 
 				var bController = h5.core.controller('#divInControllerTest', {
-					__name: 'aController',
+					__name: 'bController',
 					'{rootElement} h5trackstart': function(context) {
 						trackEvents.push('c-h5trackstart');
 					},
@@ -5627,14 +5642,10 @@ $(function() {
 					deepEqual(trackEvents, ['c-h5trackmove'], 'h5trackmoveイベントが伝播していないこと');
 					trackEvents = [];
 
-
 					// ドラッグ終了
 					$inElm.trigger(endTrackEvent);
 					deepEqual(trackEvents, ['c-h5trackend'], 'h5trackendイベントが伝播していないこと');
 					trackEvents = [];
-
-					aController.unbind();
-					$elm.remove();
 					start();
 				});
 			});
@@ -5658,8 +5669,8 @@ $(function() {
 					onerrorHandler = window.onerror;
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#qunit-fixture #controllerTest').remove();
-					h5.core.controllerManager.controllers = [];
 					// window.onerrorを元に戻す
 					window.onerror = onerrorHandler;
 				},
@@ -5736,20 +5747,22 @@ $(function() {
 		window.onerror = function(ev) {
 			clearTimeout(id);
 			ok(ev.indexOf(errorMsg) != -1, '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			// テストが終わってunbindするときにエラーが出ないようにする。
+			c.__unbind = undefined;
 			start();
 		};
 
 		var controller = {
 			__name: 'TestController',
-			__ready: function() {
-				this.unbind();
-			},
 			__unbind: function() {
 				throw new Error(errorMsg);
 			}
 		};
 
-		h5.core.controller('#controllerTest', controller);
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			c.unbind();
+		});
 	});
 
 	asyncTest('[browser#and-and:-3|sa-ios:-4]__dispose()で例外をスローする。', 1, function() {
@@ -5759,20 +5772,22 @@ $(function() {
 		window.onerror = function(ev) {
 			clearTimeout(id);
 			ok(ev.indexOf(errorMsg) != -1, '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			// テストが終わってdisposeするときにエラーが出ないようにする。
+			c.__dispose = undefined;
 			start();
 		};
 
 		var controller = {
 			__name: 'TestController',
-			__ready: function() {
-				this.dispose();
-			},
 			__dispose: function() {
 				throw new Error(errorMsg);
 			}
 		};
 
-		h5.core.controller('#controllerTest', controller);
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			c.dispose();
+		});
 	});
 
 	asyncTest('__init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。', 11, function() {
@@ -5961,6 +5976,7 @@ $(function() {
 									'<div id="controllerTest" style="display: none;"><div id="parent"><div id="child"></div></div></div>');
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#controllerTest').remove();
 					h5.settings.listenerElementType = this.originalListenerElementType;
 				},
@@ -6029,6 +6045,7 @@ $(function() {
 									'<div id="scrollable" style="width:400px; height:300px; overflow:scroll"><div id="for-scroll" style="height:888px; width:777px;"></div></div>');
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#controllerTest').remove();
 					$('#scrollable').remove();
 					h5.settings.commonFailHandler = undefined;
