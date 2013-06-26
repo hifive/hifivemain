@@ -1048,8 +1048,10 @@
 					: eventName,
 			handler: function(context) {
 				var event = context.event;
-				// Firefox
-				if (event.originalEvent && event.originalEvent.detail) {
+				// Firefox用
+				// wheelDeltaが無く、かつdetailに値がセットされているならwheelDeltaにdetailから計算した値を入れる
+				if (event.wheelDelta == null && event.originalEvent
+						&& event.originalEvent.detail != null) {
 					event.wheelDelta = -event.originalEvent.detail * 40;
 				}
 				func.call(controller, context);
