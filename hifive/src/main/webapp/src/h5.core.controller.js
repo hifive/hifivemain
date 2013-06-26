@@ -2066,7 +2066,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
-		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name update
 		 * @memberOf Controller.view
@@ -2083,7 +2083,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
-		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name append
 		 * @memberOf Controller.view
@@ -2100,7 +2100,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
-		 * @returns {Object} テンプレートが適用されたDOM要素(jQueryオブジェクト)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name prepend
 		 * @memberOf Controller.view
