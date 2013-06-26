@@ -778,34 +778,6 @@ $(function() {
 		});
 	});
 
-	asyncTest(
-			'h5.core.controllerManager.getAllControllers() で現在バインドされているすべてのコントローラを取得できること',
-			function() {
-				// 現在バインドされているコントローラを全てunbindする
-				for ( var i = 0, controllers = h5.core.controllerManager.getAllControllers(), l = controllers.length; i < l; i++) {
-					controllers[i].unbind();
-				}
-				var names = ['Test1Controller', 'Test2Controller', 'Test3Controller'];
-				var p = [];
-				for ( var i = 0, l = names.length; i < l; i++) {
-					p[i] = h5.core.controller('#controllerTest', {
-						__name: names[i]
-					});
-				}
-				p[0].readyPromise.done(function() {
-					p[1].readyPromise.done(function() {
-						p[2].readyPromise.done(function() {
-							var controllers = h5.core.controllerManager.getAllControllers();
-							for ( var i = 0, l = controllers.length; i < l; i++) {
-								controllers[i] = controllers[i].__name;
-							}
-							deepEqual(controllers, names, '3つバインドしたコントローラが取得できること');
-							start();
-						});
-					});
-				});
-			});
-
 	asyncTest('h5.core.viewがない時のコントローラの動作', function() {
 		var index = h5.core.controllerManager.getAllControllers().length;
 		var view = h5.core.view;
@@ -6984,4 +6956,206 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 		});
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module(
+			"controllerManager",
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest-r"><div id="controllerTest-c"><div id="controllerTest-g1"></div><div id="controllerTest-g2"></div></div></div>');
+
+					$('#qunit-fixture').append('<div id="controllerTest2"></div>');
+				},
+				teardown: function() {
+					disposeQUnitFixtureController();
+				}
+			});
+
+	//=============================
+	// Body
+	//=============================
+
+	asyncTest('getAllControllersで全てのバインドされているコントローラが取得できること', 5, function() {
+		var c1 = h5.core.controller('#controllerTest-r', {
+			__name: 'c1'
+		});
+		var c2 = h5.core.controller('#controllerTest-r', {
+			__name: 'c2'
+		});
+		var c3 = h5.core.controller('#controllerTest-c', {
+			__name: 'c3'
+		});
+		var c4 = h5.core.controller('#controllerTest2', {
+			__name: 'c4'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise).done(
+				function() {
+					var controllers = h5.core.controllerManager.getAllControllers();
+					var expects = [c1, c2, c3, c4];
+					strictEqual(controllers.length, expects.length, 'バインドしたコントローラの数分だけ取得できていること');
+					for ( var i = 0, l = expects.length; i < l; i++) {
+						ok($.inArray(expects[i], controllers) != -1, 'バインドしたコントローラが取得できること');
+					}
+					start();
+				});
+	});
+
+	asyncTest('getControllersで引数で指定した要素にバインドしたコントローラが取得できること', 3, function() {
+		var c1 = h5.core.controller('#controllerTest-r', {
+			__name: 'c1'
+		});
+		var c2 = h5.core.controller('#controllerTest-r', {
+			__name: 'c2'
+		});
+		var c3 = h5.core.controller('#controllerTest-c', {
+			__name: 'c3'
+		});
+		var c4 = h5.core.controller('#controllerTest2', {
+			__name: 'c4'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise)
+				.done(
+						function() {
+							var controllers = h5.core.controllerManager
+									.getControllers('#controllerTest-r');
+							var expects = [c1, c2];
+							strictEqual(controllers.length, expects.length,
+									'指定した要素にバインドした、コントローラの数分だけ取得できていること');
+							for ( var i = 0, l = expects.length; i < l; i++) {
+								ok($.inArray(expects[i], controllers) != -1,
+										'バインドされているコントローラが取得できること');
+							}
+							start();
+						});
+	});
+
+	asyncTest('getControllers deep:true を指定すると子要素にバインドしたコントローラも取得できること', 5, function() {
+		var c1 = h5.core.controller('#controllerTest-r', {
+			__name: 'c1'
+		});
+		var c2 = h5.core.controller('#controllerTest-c', {
+			__name: 'c2'
+		});
+		var c3 = h5.core.controller('#controllerTest-g1', {
+			__name: 'c3'
+		});
+		var c4 = h5.core.controller('#controllerTest-g2', {
+			__name: 'c4'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise).done(
+				function() {
+					var controllers = h5.core.controllerManager.getControllers('#controllerTest-r',
+							{
+								deep: true
+							});
+					var expects = [c1, c2, c3, c4];
+					strictEqual(controllers.length, expects.length,
+							'指定した要素以下にバインドしたコントローラの数分だけ取得できていること');
+					for ( var i = 0, l = expects.length; i < l; i++) {
+						ok($.inArray(expects[i], controllers) != -1, 'バインドされているコントローラが取得できること');
+					}
+					start();
+				});
+	});
+
+	asyncTest('getControllers name指定 指定した要素にバインドされた指定した名前のコントローラが取得できること', 3, function() {
+		var c1 = h5.core.controller('#controllerTest-r', {
+			__name: 'name1'
+		});
+		var c2 = h5.core.controller('#controllerTest-r', {
+			__name: 'name2'
+		});
+		var c3 = h5.core.controller('#controllerTest-r', {
+			__name: 'name1'
+		});
+		var c4 = h5.core.controller('#controllerTest-c', {
+			__name: 'name1'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise).done(
+				function() {
+					var controllers = h5.core.controllerManager.getControllers('#controllerTest-r',
+							{
+								name: 'name1'
+							});
+					var expects = [c1, c3];
+					strictEqual(controllers.length, expects.length,
+							'name指定された名前を持つコントローラの数分だけ取得できていること');
+					for ( var i = 0, l = expects.length; i < l; i++) {
+						ok($.inArray(expects[i], controllers) != -1, 'バインドされているコントローラが取得できること');
+					}
+					start();
+				});
+	});
+
+	asyncTest('getControllers name指定 配列で複数のコントローラ名を指定でき、いずれかにマッチする名前のコントローラが取得できること', 3,
+			function() {
+				var c1 = h5.core.controller('#controllerTest-r', {
+					__name: 'name1'
+				});
+				var c2 = h5.core.controller('#controllerTest-r', {
+					__name: 'name2'
+				});
+				var c3 = h5.core.controller('#controllerTest-r', {
+					__name: 'name3'
+				});
+				var c4 = h5.core.controller('#controllerTest-c', {
+					__name: 'name1'
+				});
+				h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise)
+						.done(
+								function() {
+									var controllers = h5.core.controllerManager.getControllers(
+											'#controllerTest-r', {
+												name: ['name1', 'name2']
+											});
+									var expects = [c1, c2];
+									strictEqual(controllers.length, expects.length,
+											'name指定された名前を持つコントローラの数分だけ取得できていること');
+									for ( var i = 0, l = expects.length; i < l; i++) {
+										ok($.inArray(expects[i], controllers) != -1,
+												'バインドされているコントローラが取得できること');
+									}
+									start();
+								});
+			});
+
+	asyncTest('getControllers deep:trueかつname指定 指定した要素以下の要素にバインドされた指定した名前のコントローラが取得できること', 4,
+			function() {
+				var c1 = h5.core.controller('#controllerTest-r', {
+					__name: 'name1'
+				});
+				var c2 = h5.core.controller('#controllerTest-r', {
+					__name: 'name2'
+				});
+				var c3 = h5.core.controller('#controllerTest-c', {
+					__name: 'name1'
+				});
+				var c4 = h5.core.controller('#controllerTest-g1', {
+					__name: 'name1'
+				});
+				var c5 = h5.core.controller('#controllerTest-g1', {
+					__name: 'name2'
+				});
+				h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise)
+						.done(
+								function() {
+									var controllers = h5.core.controllerManager.getControllers(
+											'#controllerTest-r', {
+												name: 'name1',
+												deep: true
+											});
+									var expects = [c1, c3, c4];
+									strictEqual(controllers.length, expects.length,
+											'name指定された名前を持つコントローラの数分だけ取得できていること');
+									for ( var i = 0, l = expects.length; i < l; i++) {
+										ok($.inArray(expects[i], controllers) != -1,
+												'バインドされているコントローラが取得できること');
+									}
+									start();
+								});
+			});
 });
