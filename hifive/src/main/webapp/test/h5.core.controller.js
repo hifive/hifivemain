@@ -126,11 +126,18 @@ $(function() {
 		var ev;
 		if (typeof document.onmousewheel !== 'undefined') {
 			if (elm.dispatchEvent) {
+
+				function createUIEvent() {
+					// opera, android2
+					// wheelDeltaが負ならdetailを3、正なら-3のイベントを作成。
+					ev = document.createEvent('UIEvent');
+					ev.initUIEvent('mousewheel', false, false, window, wheelDelta < 0 ? 3 : -3);
+				}
 				try {
 					ev = document.createEvent('WheelEvent');
 
 					if (ev.initWebKitWheelEvent) {
-						// chrome,safari,android
+						// chrome,safari,android3+
 						// wheelDeltaが正ならwheelDeltaYを正、負なら負のイベントを作成。
 						ev.initWebKitWheelEvent(0, wheelDelta > 0 ? 1 : -1, window, 0, 0, 0, 0,
 								false, false, false, false);
@@ -140,12 +147,13 @@ $(function() {
 						ev.initWheelEvent('mousewheel', false, false, window, wheelDelta < 0 ? 3
 								: -3, 0, 0, 0, 0, 0, null, null, 0, 0, 0, 0);
 
+					} else {
+						// android2
+						createUIEvent();
 					}
 				} catch (e) {
 					// opera
-					// wheelDeltaが負ならdetailを3、正なら-3のイベントを作成。
-					ev = document.createEvent('UIEvent');
-					ev.initUIEvent('mousewheel', false, false, window, wheelDelta < 0 ? 3 : -3);
+					createUIEvent();
 				}
 				elm.dispatchEvent(ev);
 			} else {
@@ -4947,26 +4955,28 @@ $(function() {
 		});
 	});
 
-	asyncTest('[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること', 2, function() {
-		var isPositiveValue = false;
-		var testController = {
-			__name: 'TestController',
+	asyncTest(
+			'[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること',
+			2, function() {
+				var isPositiveValue = false;
+				var testController = {
+					__name: 'TestController',
 
-			'{rootElement} mousewheel': function(context) {
-				ok(isPositiveValue ? context.event.wheelDelta > 0 : context.event.wheelDelta < 0,
-						'wheelDeltaに値格納されていて、正負が正しいこと');
-			}
-		};
-		var c = h5.core.controller('#controllerTest', testController);
-		c.readyPromise.done(function() {
-			isPositiveValue = true;
-			dispatchMouseWheelEvent($('#controllerTest')[0], 120);
-			isPositiveValue = false;
-			dispatchMouseWheelEvent($('#controllerTest')[0], -120);
-			c.unbind();
-			start();
-		});
-	});
+					'{rootElement} mousewheel': function(context) {
+						ok(isPositiveValue ? context.event.wheelDelta > 0
+								: context.event.wheelDelta < 0, 'wheelDeltaに値格納されていて、正負が正しいこと');
+					}
+				};
+				var c = h5.core.controller('#controllerTest', testController);
+				c.readyPromise.done(function() {
+					isPositiveValue = true;
+					dispatchMouseWheelEvent($('#controllerTest')[0], 120);
+					isPositiveValue = false;
+					dispatchMouseWheelEvent($('#controllerTest')[0], -120);
+					c.unbind();
+					start();
+				});
+			});
 
 	test('コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作', 1, function() {
 		var testController = {
@@ -5686,6 +5696,13 @@ $(function() {
 				testTimeoutFunc: function(msg) {
 					var id = setTimeout(function() {
 						ok(false, 'window.onerrorが実行されませんでした。');
+						// __unbind, __disposeにundefinedを代入して、teardown時にdisposeするときエラーが出ないようにする
+						var controllers = h5.core.controllerManager
+								.getControllers('#controllerTest');
+						for ( var i = 0, l = controllers.length; i < l; i++) {
+							controllers[i].__unbind = undefined;
+							controllers[i].__dispose = undefined;
+						}
 						start();
 					}, 5000);
 					return id;
@@ -7017,6 +7034,7 @@ $(function() {
 	//=============================
 
 	asyncTest('getAllControllersで全てのバインドされているコントローラが取得できること', 5, function() {
+
 		var c1 = h5.core.controller('#controllerTest-r', {
 			__name: 'c1'
 		});
