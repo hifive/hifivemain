@@ -1048,6 +1048,11 @@
 					: eventName,
 			handler: function(context) {
 				var event = context.event;
+				// jQuery1.7以降ではwheelDeltaとdetailがjQueryEventにコピーされない。
+				// hifive側でoriginalEventから取った値をコピーする
+				if (event.wheelDelta == null && event.originalEvent && event.originalEvent.wheelDelta != null) {
+					event.wheelDelta = event.originalEvent.wheelDelta;
+				}
 				// Firefox用
 				// wheelDeltaが無く、かつdetailに値がセットされているならwheelDeltaにdetailから計算した値を入れる
 				if (event.wheelDelta == null && event.originalEvent
