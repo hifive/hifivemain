@@ -4947,7 +4947,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('[browser#ie:-8]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること', 2, function() {
+	asyncTest('[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること', 2, function() {
 		var isPositiveValue = false;
 		var testController = {
 			__name: 'TestController',
