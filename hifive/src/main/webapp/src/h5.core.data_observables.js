@@ -199,6 +199,11 @@
 	 */
 	var SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF = 15823;
 
+	/**
+	 * データモデルは存在しないことを表す文字列(n/a) エラーメッセージで使用。
+	 */
+	var NOT_AVAILABLE = 'n/a';
+
 	// =============================
 	// Development Only
 	// =============================
@@ -210,12 +215,12 @@
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_REQUIRE_SCHEMA] = 'createObservableItemの引数にはスキーマ定義オブジェクトを指定する必要があります。';
 	errMsgMap[ERR_CODE_INVALID_SCHEMA] = 'createObservableItemの引数に指定されたスキーマ定義オブジェクトが不正です。';
-	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'Itemのsetterに渡された値がスキーマで指定された型・制約に違反しています。 違反したプロパティ={0}';
-	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。 違反したプロパティ={0}';
-	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。違反したプロパティ={0}';
-	errMsgMap[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティは取得できません。違反したプロパティ={0}';
+	errMsgMap[ERR_CODE_INVALID_ITEM_VALUE] = 'Itemのsetterに渡された値がスキーマで指定された型・制約に違反しています。データモデル={0} 違反したプロパティ={1}';
+	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。データモデル={0} 違反したプロパティ={1}';
+	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。データモデル={0} 違反したプロパティ={1}';
+	errMsgMap[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティは取得できません。データモデル={0} 違反したプロパティ={1}';
 	errMsgMap[ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
-	errMsgMap[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'calcで返却された値が、スキーマで指定された型・制約に違反しています。プロパティ={0}、返却値={1}';
+	errMsgMap[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'calcで返却された値が、スキーマで指定された型・制約に違反しています。データモデル={0} プロパティ={1} 返却値={2}';
 	errMsgMap[ERR_CODE_INVALID_ARGUMENT] = '引数が不正です。引数位置={0}、値={1}';
 
 	// メッセージの登録
@@ -412,7 +417,8 @@
 					var errReason = model._itemValueCheckFuncs[dp](newValue, true);
 					if (errReason.length !== 0) {
 						// calcの返した値が型・制約違反ならエラー
-						throwFwError(ERR_CODE_CALC_RETURNED_INVALID_VALUE, [dp, newValue]);
+						throwFwError(ERR_CODE_CALC_RETURNED_INVALID_VALUE, [
+								model.name ? model.name : NOT_AVAILABLE, dp, newValue]);
 					}
 					ret[dp] = {
 						oldValue: getValue(item, dp),
@@ -2090,7 +2096,8 @@
 						if (checkFlag) {
 							var validateResult = itemValueCheckFuncs[propName](args);
 							if (validateResult.length > 0) {
-								throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+								throwFwError(ERR_CODE_INVALID_ITEM_VALUE,
+										[NOT_AVAILABLE, propName], validateResult);
 							}
 						}
 					}
@@ -2157,10 +2164,10 @@
 				if ($.inArray(p, this._internal.realProps) === -1) {
 					if ($.inArray(p, this._internal.dependProps) !== -1) {
 						// 依存プロパティにセットはできないのでエラー
-						throwFwError(ERR_CODE_DEPEND_PROPERTY, p);
+						throwFwError(ERR_CODE_DEPEND_PROPERTY, [NOT_AVAILABLE, p]);
 					}
 					// スキーマに定義されていないプロパティにセットはできないのでエラー
-					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, p);
+					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [NOT_AVAILABLE, p]);
 				}
 				var val = setObj[p];
 				// type:[]のプロパティにnull,undefが指定されたら、空配列と同様に扱う
@@ -2175,7 +2182,7 @@
 				//値のチェック
 				var validateResult = this._internal._itemValueCheckFuncs[p](val);
 				if (validateResult.length) {
-					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, p, validateResult);
+					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, [NOT_AVAILABLE, p], validateResult);
 				}
 			}
 
@@ -2244,7 +2251,7 @@
 
 			if ($.inArray(key, this._internal.realProps) === -1
 					&& $.inArray(key, this._internal.dependProps) === -1) {
-				throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, key);
+				throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [NOT_AVAILABLE, key]);
 			}
 
 			return this._values[key];

@@ -350,7 +350,7 @@
 					//dependのせいでエラーにならないようにするため。
 					continue;
 				}
-				throwFwError(ITEM_ERRORS.ERR_CODE_DEPEND_PROPERTY, prop);
+				throwFwError(ITEM_ERRORS.ERR_CODE_DEPEND_PROPERTY, [model.name, prop]);
 			}
 
 			var type = model.schema[prop] && model.schema[prop].type;
@@ -377,7 +377,7 @@
 				//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
 				var validateResult = model._validateItemValue(prop, newValue);
 				if (validateResult.length > 0) {
-					throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, prop, validateResult);
+					throwFwError(ITEM_ERRORS.ERR_CODE_INVALID_ITEM_VALUE, [model.name, prop], validateResult);
 				}
 			}
 
@@ -644,7 +644,7 @@
 					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
 					if (plainProp in userInitialValue) {
 						// 依存プロパティが与えられていた場合はエラー
-						throwFwError(ITEM_ERRORS.ERR_CODE_DEPEND_PROPERTY, plainProp);
+						throwFwError(ITEM_ERRORS.ERR_CODE_DEPEND_PROPERTY, [model.name, plainProp]);
 					}
 					continue;
 				}
