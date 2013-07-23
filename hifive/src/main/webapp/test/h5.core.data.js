@@ -829,7 +829,7 @@ $(function() {
 	});
 
 	test('schemaがプロパティを持たないオブジェクト(空オブジェクト)の場合エラーが発生すること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -841,7 +841,7 @@ $(function() {
 	});
 
 	test('schemaの持つプロパティ名が不正な場合エラーが発生すること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidPropNames = ['', ' ', '1a', ' abc', 'a bc'];
 		for ( var i = 0, l = invalidPropNames.length; i < l; i++) {
 			try {
@@ -863,7 +863,7 @@ $(function() {
 	});
 
 	test('id指定されているプロパティがない場合・複数ある場合はエラーが出ること', 2, function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -892,7 +892,7 @@ $(function() {
 	});
 
 	test('typeに文字列以外を指定した場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var noStrs = [['string'], 1, true, {}];
 		var l = noStrs.length;
 		expect(l);
@@ -905,7 +905,7 @@ $(function() {
 	});
 
 	test('typeに不正な文字列を指定した場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		// TODO 不正になる文字列を確認する
 		var invalidStrs = ['string|number', 'string number', 'int', 'num', 'null', 'String',
 				'Number', 'Boolean', 'Object', 'Array', 'Null', 'Any', 'undefined', 'string[][]',
@@ -921,7 +921,7 @@ $(function() {
 	});
 
 	test('enumValueに配列以外を指定した場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var noArrays = ['A', 'A,B', {
 			a: {}
 		}];
@@ -939,7 +939,7 @@ $(function() {
 		var undefAr = [];
 		undefAr.push(undefined);
 		undefAr.push(1);
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var noArrays = [[null, 1], undefAr];
 		var l = noArrays.length;
 		expect(l);
@@ -952,7 +952,7 @@ $(function() {
 	});
 
 	test('enumValueに空配列(lengthが0の配列)を指定した場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var ary = [];
 		ary['a'] = 1;
 		var invalidArrays = [[], ary];
@@ -967,7 +967,7 @@ $(function() {
 	});
 
 	test('type:enumでないのにenumValueを指定した場合はエラーが出ること', 6, function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var ary = [];
 		ary['a'] = 1;
 		manager.createModel({
@@ -990,7 +990,7 @@ $(function() {
 	});
 
 	test('enhanceにboolean以外を指定した場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidValues = [1, 'true', [], {}];
 		var l = invalidValues.length;
 		expect(l);
@@ -1002,7 +1002,7 @@ $(function() {
 	});
 
 	test('dependに不正な値を指定した場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidValues = ['a', true, false, 1, {}, {
 			on: ['val2'],
 			calc: function() {}
@@ -1037,7 +1037,7 @@ $(function() {
 	});
 
 	test('depend指定のあるプロパティにdefaultValueを設定できないこと', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -1064,7 +1064,7 @@ $(function() {
 	});
 
 	test('depend指定のあるプロパティにdefaultValueを設定できないこと', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -1094,7 +1094,7 @@ $(function() {
 	});
 
 	test('id指定のプロパティにdependを設定できないこと', 1, function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -1193,7 +1193,7 @@ $(function() {
 			});
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_SCHEMA, e.message);
 		}
 		try {
 			manager.createModel({
@@ -1223,7 +1223,7 @@ $(function() {
 			});
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_SCHEMA, e.message);
 		}
 		try {
 			manager.createModel({
@@ -1262,13 +1262,13 @@ $(function() {
 			});
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_INVALID_DESCRIPTOR, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_SCHEMA, e.message);
 		}
 	});
 
 
 	test('constraintにオブジェクトでない値を指定した場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidValues = ['notNull', 1, true, false];
 		var l = invalidValues.length;
 		expect(l);
@@ -1281,7 +1281,7 @@ $(function() {
 	});
 
 	test('constraintの各プロパティについて正しく値を指定していない場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidValues = [];
 		// type:numberで、constraint.minの値が不正な場合
 		var invalidNumMin = ['10', NaN, -Infinity, Infinity, [], {}, true];
@@ -1421,7 +1421,7 @@ $(function() {
 	});
 
 	test('constraintの指定とtypeの指定に不整合がある場合はエラーが出ること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidValues = [{
 			type: 'string',
 			constraint: {
@@ -1709,7 +1709,7 @@ $(function() {
 	});
 
 	test('id:trueの項目にtype:"string" または "integer"以外を指定するとエラーになること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidIdTypes = ['number', 'boolean', 'array', 'any', '@ParentModel', 'string[]',
 				'integer[]'];
 		var l = invalidIdTypes.length;
@@ -1742,7 +1742,7 @@ $(function() {
 	});
 
 	test('id:trueの項目にnotNull:false, notEmpty:false, maxLength:0 を指定できないこと', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidConstraint = [{
 			notNull: false
 		}, {
@@ -1770,7 +1770,7 @@ $(function() {
 	});
 
 	test('id:trueの項目にdefaultValueが設定されている場合はエラーになること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		try {
 			manager.createModel({
 				name: 'TestDataModel',
@@ -2053,7 +2053,7 @@ $(function() {
 	});
 
 	test('defaultValueがtypeに指定されている型を満たさない場合はエラーになること', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		// @ParentModelのテスト用にモデルを2つのマネージャで作成する
 		var manager2 = h5.core.data.createManager('TestDataModel');
 		var parentModelDesc = {
@@ -2156,7 +2156,7 @@ $(function() {
 	});
 
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること number', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = 'number';
 		var invalidProps = [{
 			type: type,
@@ -2182,7 +2182,7 @@ $(function() {
 	});
 
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = 'string';
 		var invalidProps = [{
 			type: type,
@@ -2221,7 +2221,7 @@ $(function() {
 
 
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること integer', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = 'integer';
 		var invalidProps = [{
 			type: type,
@@ -2248,7 +2248,7 @@ $(function() {
 
 
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること boolean', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = 'boolean';
 		var invalidProps = [{
 			type: type,
@@ -2262,7 +2262,7 @@ $(function() {
 	});
 
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること array', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = 'array';
 		var invalidProps = [{
 			type: type,
@@ -2282,7 +2282,7 @@ $(function() {
 	});
 
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること any', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = 'any';
 		var invalidProps = [{
 			type: type,
@@ -2295,7 +2295,7 @@ $(function() {
 		testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 	});
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること @DataModelName', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = '@ParentModel';
 		var invalidProps = [{
 			type: type,
@@ -2318,7 +2318,7 @@ $(function() {
 		testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 	});
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string[]', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = 'string[]';
 		var invalidProps = [{
 			type: type,
@@ -2361,7 +2361,7 @@ $(function() {
 		testErrorWhenCreateModelByValueProperty(invalidProps, errCode);
 	});
 	test('defaultValueがconstraintに指定されている条件を満たさない場合はエラーになること string[][]', function() {
-		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
+		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var type = 'string[]';
 		var invalidProps = [{
 			type: type,
