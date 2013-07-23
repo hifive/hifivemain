@@ -188,10 +188,10 @@
 	}
 
 	/**
-	 * Insert/Select/Update/Del/Sql/Transactionオブジェクトのexecute()が二度を呼び出された場合、例外をスローします
+	 * 既にexecuteSql()の実行が完了した、またはexecute()が実行中の場合はエラーをスローします
 	 */
-	function sqlExecuted(flag) {
-		if (flag) {
+	function executeCalled(recentTask) {
+		if (recentTask && (recentTask.deferred.state() !== 'pending' || !recentTask.result)) {
 			throwFwError(ERR_CODE_RETRY_SQL);
 		}
 	}
@@ -222,7 +222,7 @@
 	/**
 	 * 条件を保持するオブジェクトから、SQLのプレースホルダを含むWHERE文とパラメータの配列を生成します
 	 */
-	function createConditionAndParameters(whereObj, conditions, parameters) {
+	function setConditionAndParameters(whereObj, conditions, parameters) {
 		if ($.isPlainObject(whereObj)) {
 			for ( var prop in whereObj) {
 				var params = $.trim(prop).replace(/ +/g, ' ').split(' ');
@@ -279,6 +279,15 @@
 		this._multiple = false;
 	}
 
+	$.extend(Statement.prototype, {
+		/**
+		 * SQL文を実行します
+		 */
+		execute: function() {
+			return this._executor.add(this).execute();
+		}
+	});
+
 	// =========================================================================
 	//
 	// Body
@@ -300,7 +309,6 @@
 		this._tx = null;
 		this._tasks = [];
 		this._queue = [];
-		this._executed = false;
 	}
 
 	$.extend(TransactionalExecutor.prototype, {
@@ -338,19 +346,18 @@
 		 * @param {Any} resul SQL実行結果
 		 */
 		_setResult: function(result) {
-			this._tasks[this._tasks.length - 1].result = result;
+			this._getRecentTask().result = result;
 		},
 		/**
-		 * 二重実行防止フラグを解除したTransactionalExecutorオブジェクトを取得します
+		 * 現在実行中のタスク情報を取得します
 		 *
 		 * @private
 		 * @memberOf TransactionalExecutor
 		 * @function
-		 * @return {Transaction} TransactionalExecutorオブジェクト
+		 * @return {Any} タスク
 		 */
-		_getUnlockedExecutor: function() {
-			this._executed = false;
-			return this;
+		_getRecentTask: function() {
+			return this._tasks[this._tasks.length - 1];
 		},
 		/**
 		 * 1トランザクションで処理したいSQLをタスクに追加します。
@@ -374,8 +381,10 @@
 				throwFwError(ERR_CODE_INVALID_TRANSACTION_TARGET);
 			}
 
-			// execute()実行後はadd()できない
-			if (!this._executed) {
+			var recentTask = this._getRecentTask();
+
+			// execute()実行中はadd()できない
+			if (!recentTask || !!recentTask.result) {
 				this._queue.push(statement);
 			}
 
@@ -430,7 +439,6 @@
 			var that = this;
 			var df = this._df;
 			var queue = this._queue;
-			var executed = this._executed;
 			var results = [];
 
 			function executeSql() {
@@ -474,8 +482,8 @@
 			}
 
 			try {
+				executeCalled(this._getRecentTask());
 				this._addTask(df);
-				sqlExecuted(executed);
 
 				// トランザクション内で_buildStatementAndParameters()を実行すると、
 				// SQL構文エラーがクライアントに返せないため、ここでステートメントとパラメータを生成する
@@ -490,11 +498,11 @@
 						that._tx = tx;
 						executeSql();
 					}, function(e) {
+						that._tx = null;
 						transactionErrorCallback(that._tasks, e);
-						that._tx = null;
 					}, function() {
-						transactionSuccessCallback(that._tasks);
 						that._tx = null;
+						transactionSuccessCallback(that._tasks);
 					});
 				}
 			} catch (e) {
@@ -502,7 +510,6 @@
 			}
 
 			this._df = getDeferred();
-			this._executed = true;
 			return df.promise();
 		},
 		/**
@@ -636,37 +643,6 @@
 			return this;
 		},
 		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
-		 * <p>
-		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>検索結果を保持するインスタンス</b>が返されます。
-		 * <p>
-		 * 検索結果へのアクセスは以下のように実行します。
-		 *
-		 * <pre>
-		 *  db.insert('USER', {ID:10, NAME:'TANAKA'}).execute().done(function(rows) {
-		 * 　rows.item(0).ID     // 検索にマッチした1件目のレコードのID
-		 * 　rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
-		 *  });
-		 * </pre>
-		 *
-		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 *
-		 * <pre>
-		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
-		 * 　db.update('STOCK', {PRICE: 2000}, tx).where({ID: rs.item(0).ID}).execute();
-		 *  });
-		 * </pre>
-		 *
-		 * db.select().execute()で返ってきたトランザクションを、db.update()の第三引数に指定することで、db.selec()とdb.update()は同一トランザクションで実行されます。
-		 *
-		 * @function
-		 * @memberOf Select
-		 * @returns {Promise} Promiseオブジェクト
-		 */
-		execute: function() {
-			return this._executor.add(this).execute();
-		},
-		/**
 		 * SQLの構文とパラメータを生成します
 		 *
 		 * @private
@@ -681,7 +657,7 @@
 
 			if ($.isPlainObject(where)) {
 				var conditions = [];
-				createConditionAndParameters(where, conditions, this._parameters);
+				setConditionAndParameters(where, conditions, this._parameters);
 				statement += (' WHERE ' + conditions.join(' AND '));
 			} else if (isString(where)) {
 				statement += (' WHERE ' + where);
@@ -731,37 +707,6 @@
 
 	Insert.prototype = new Statement();
 	$.extend(Insert.prototype, {
-		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
-		 * <p>
-		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>登録に成功したレコードのIDを持つ配列</b>が返されます。
-		 * <p>
-		 * 検索結果へのアクセスは以下のように実行します。
-		 *
-		 * <pre>
-		 *  db.insert('USER', {ID:10, NAME:'TANAKA'}).execute().done(function(rows) {
-		 * 　rows.item(0).ID     // 検索にマッチした1件目のレコードのID
-		 * 　rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
-		 *  });
-		 * </pre>
-		 *
-		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 *
-		 * <pre>
-		 *  db.select('STOCK', {ID:10, NAME:'ballA'}).execute().progress(function(rs, tx) { // ※1
-		 * 　db.insert('STOCK', {ID:11, NAME:'ballB'}, tx).execute(); // ※2
-		 *  });
-		 * </pre>
-		 *
-		 * ※1のprogress()で返ってきたトランザクション(tx)を、※2のinsert()の第三引数に指定することで、2つのdb.insert()は同一トランザクションで実行されます。
-		 *
-		 * @function
-		 * @memberOf Insert
-		 * @returns {Promise} Promiseオブジェクト
-		 */
-		execute: function() {
-			return this._executor.add(this).execute();
-		},
 		/**
 		 * SQLの構文とパラメータを生成します
 		 *
@@ -907,34 +852,6 @@
 			return this;
 		},
 		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
-		 * <p>
-		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>更新されたレコードの件数</b>が返されます。
-		 *
-		 * <pre>
-		 *  db.update('USER', {NAME:TANAKA}).where({ID:10}).execute().done(function(rowsAffected) {
-		 *  　rowsAffected // 更新されたレコードの行数(Number型)
-		 *  });
-		 * </pre>
-		 *
-		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 *
-		 * <pre>
-		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
-		 * 　db.update('STOCK', {PRICE: 2000}, tx).where({ID: rs.item(0).ID}).execute();
-		 *  });
-		 * </pre>
-		 *
-		 * db.select().execute()で返ってきたトランザクションを、db.update()の第三引数に指定することで、db.select()とdb.update()は同一トランザクションで実行されます。
-		 *
-		 * @function
-		 * @memberOf Update
-		 * @returns {Promise} Promiseオブジェクト
-		 */
-		execute: function() {
-			return this._executor.add(this).execute();
-		},
-		/**
 		 * SQLの構文とパラメータを生成します
 		 *
 		 * @private
@@ -956,7 +873,7 @@
 
 			if ($.isPlainObject(where)) {
 				var conditions = [];
-				createConditionAndParameters(where, conditions, this._parameters);
+				setConditionAndParameters(where, conditions, this._parameters);
 				statement += (' WHERE ' + conditions.join(' AND '));
 			} else if (isString(where)) {
 				statement += (' WHERE ' + where);
@@ -1061,34 +978,6 @@
 			return this;
 		},
 		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
-		 * <p>
-		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>削除されたレコードの件数</b>が返されます。
-		 *
-		 * <pre>
-		 *  db.del('USER').where({ID:10}).execute().done(function(rowsAffected) {
-		 *  　rowsAffected // 削除されたレコードの行数(Number型)
-		 *  });
-		 * </pre>
-		 *
-		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 *
-		 * <pre>
-		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
-		 *  　db.del('STOCK', tx).where({ID: rs.item(0).ID}).execute();
-		 *  });
-		 * </pre>
-		 *
-		 * db.select().execute()で返ってきたトランザクションを、db.del()の第二引数に指定することで、db.select()とdb.del()は同一トランザクションで実行されます。
-		 *
-		 * @function
-		 * @memberOf Del
-		 * @returns {Promise} Promiseオブジェクト
-		 */
-		execute: function() {
-			return this._executor.add(this).execute();
-		},
-		/**
 		 * SQLの構文とパラメータを生成します
 		 *
 		 * @private
@@ -1103,7 +992,7 @@
 
 			if ($.isPlainObject(where)) {
 				var conditions = [];
-				createConditionAndParameters(where, conditions, this._parameters);
+				setConditionAndParameters(where, conditions, this._parameters);
 				statement += (' WHERE ' + conditions.join(' AND '));
 			} else if (isString(where)) {
 				statement += (' WHERE ' + where);
@@ -1145,86 +1034,6 @@
 
 	Sql.prototype = new Statement();
 	$.extend(Sql.prototype, {
-		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
-		 * <p>
-		 * 実行結果は、戻り値であるPromiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>実行結果を保持するオブジェクト</b>が返されます。
-		 * <p>
-		 * 実行結果オブジェクトは、以下のプロパティを持っています。<br>
-		 * <table border="1">
-		 * <tr>
-		 * <td>プロパティ名</td>
-		 * <td>説明</td>
-		 * </tr>
-		 * <tr>
-		 * <td>rows</td>
-		 * <td>検索(SELECT)を実行した場合、このプロパティに結果が格納されます。</td>
-		 * </tr>
-		 * <tr>
-		 * <td>insertId</td>
-		 * <td>登録(INSERT)を実行した場合、このプロパティに登録したレコードのIDが格納されます。</td>
-		 * </tr>
-		 * <tr>
-		 * <td>rowsAffected</td>
-		 * <td>削除(DELETE)や更新(UPDATE)した場合、このプロパティに変更のあったレコードの件数が格納されます。</td>
-		 * </tr>
-		 * </table>
-		 * <p>
-		 * 例.検索結果の取得
-		 *
-		 * <pre>
-		 *  db.sql('SELECT * FROM USER').execute().done(function(rs) {
-		 *  　rs.rows          // SQLResultSetRowList
-		 *  　rs.insertId      // Number
-		 *  　rs.rowsAffected  // Number
-		 *  });
-		 * </pre>
-		 *
-		 * <p>
-		 * <b>SQLResultSetRowList</b>は、以下のプロパティを持っています。<br>
-		 * <table border="1">
-		 * <tr>
-		 * <td>プロパティ名</td>
-		 * <td>説明</td>
-		 * </tr>
-		 * <tr>
-		 * <td>length</td>
-		 * <td>検索にマッチしたレコードの件数</td>
-		 * </tr>
-		 * <tr>
-		 * <td>rows</td>
-		 * <td>検索結果</td>
-		 * </tr>
-		 * </table>
-		 * <p>
-		 * 例.検索結果の取得する
-		 *
-		 * <pre>
-		 *  db.sql('SELECT ID, NAME FROM USER').execute().done(function(rs) {
-		 * 　rs.rows.item(0).ID     // 検索にマッチした1件目のレコードのID
-		 * 　rs.rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
-		 *  });
-		 * </pre>
-		 *
-		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 * <p>
-		 * 例.同一トランザクションでdb.insert()とdb.sql()を実行する
-		 *
-		 * <pre>
-		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
-		 * 　db.sql('UPDATE STOCK SET PRICE = 2000', tx).where({ID: rs.item(0).ID}).execute();
-		 *  });
-		 * </pre>
-		 *
-		 * db.select().execute()で返ってきたトランザクションを、db.sql()の第三引数に指定することで、db.select()とdb.sql()は同一トランザクションで実行されます。
-		 *
-		 * @function
-		 * @memberOf Sql
-		 * @returns {Promise} Promiseオブジェクト
-		 */
-		execute: function() {
-			return this._executor.add(this).execute();
-		},
 		/**
 		 * SQLの構文とパラメータを生成します
 		 *
@@ -1436,7 +1245,7 @@
 		 */
 		transaction: function(txe) {
 			isTransactionalExecutor('transaction', txe);
-			return txe ? txe._getUnlockedExecutor() : new TransactionalExecutor(this._db);
+			return txe ? txe : new TransactionalExecutor(this._db);
 		}
 	});
 

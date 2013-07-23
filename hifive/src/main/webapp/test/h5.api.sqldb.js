@@ -386,6 +386,38 @@ $(function() {
 		});
 	});
 
+	asyncTest('execute()を3回呼び出す', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var sql = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10, 20000]);
+		sql.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+			sql.execute().fail(function(e) {
+				ok(true, '二回目のexecute()は、エラーとして処理されること');
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+
+				sql.execute().fail(function(e2) {
+					ok(true, '三回目のexecute()は、エラーとして処理されること');
+					equal(e2.code, ERR.ERR_CODE_RETRY_SQL, e2.code + ': ' + e2.message);
+					start();
+				}).done(function() {
+					ok(false, 'エラーが発生していないためテスト失敗');
+				});
+			}).done(function() {
+				ok(false, 'エラーが発生していないためテスト失敗');
+			});
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+			start();
+		});
+	});
+
 	asyncTest('execute()を2回呼び出す 2', 3, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
@@ -405,6 +437,38 @@ $(function() {
 
 		sql.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	});
+
+	asyncTest('execute()を3回呼び出す 2', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var sql = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['abc', 10, 20000]);
+		sql.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+			start();
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+			start();
+		});
+
+		sql.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+
+		sql.execute().fail(function(e) {
+			ok(true, '三回目のexecute()は、エラーとして処理されること');
 			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
@@ -971,6 +1035,42 @@ $(function() {
 		});
 	});
 
+	asyncTest('execute()を3回呼び出す', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var insert = db.insert(TABLE_NAME, {
+			col1: 20,
+			col2: 'hoge1',
+			col3: 111
+		});
+		insert.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+			insert.execute().fail(function(e) {
+				ok(true, '二回目のexecute()は、エラーとして処理されること');
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+
+				insert.execute().fail(function(e2) {
+					ok(true, '三回目のexecute()は、エラーとして処理されること');
+					equal(e2.code, ERR.ERR_CODE_RETRY_SQL, e2.code + ': ' + e2.message);
+					start();
+				}).done(function() {
+					ok(false, 'エラーが発生していないためテスト失敗');
+				});
+			}).done(function() {
+				ok(false, 'エラーが発生していないためテスト失敗');
+			});
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+			start();
+		});
+	});
+
 	asyncTest('db.insert() - execute()を2回呼び出す 2', 3, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
@@ -995,6 +1095,43 @@ $(function() {
 
 		insert.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	});
+
+	asyncTest('db.insert() - execute()を3回呼び出す 2', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var insert = db.insert(TABLE_NAME, {
+			col1: 20,
+			col2: 'hoge1',
+			col3: 111
+		});
+
+		insert.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+			start();
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+			start();
+		});
+
+		insert.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+
+		insert.execute().fail(function(e) {
+			ok(true, '三回目のexecute()は、エラーとして処理されること');
 			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
@@ -1468,6 +1605,42 @@ $(function() {
 		});
 	});
 
+	asyncTest('execute()を3回呼び出す', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var update = db.update(TABLE_NAME, {
+			col2: 'hoge',
+			col3: 100
+		});
+
+		update.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+			update.execute().fail(function(e) {
+				ok(true, '二回目のexecute()は、エラーとして処理されること');
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+
+				update.execute().fail(function(e2) {
+					ok(true, '三回目のexecute()は、エラーとして処理されること');
+					equal(e2.code, ERR.ERR_CODE_RETRY_SQL, e2.code + ': ' + e2.message);
+					start();
+				}).done(function() {
+					ok(false, 'エラーが発生していないためテスト失敗');
+				});
+			}).done(function() {
+				ok(false, 'エラーが発生していないためテスト失敗');
+			});
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+			start();
+		});
+	});
+
 	asyncTest('db.update() - execute()を2回呼び出す 2', 3, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
@@ -1491,6 +1664,42 @@ $(function() {
 
 		update.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	});
+
+	asyncTest('db.update() - execute()を3回呼び出す 2', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var update = db.update(TABLE_NAME, {
+			col2: 'hoge',
+			col3: 100
+		});
+
+		update.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+			start();
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+			start();
+		});
+
+		update.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+
+		update.execute().fail(function(e) {
+			ok(true, '三回目のexecute()は、エラーとして処理されること');
 			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
@@ -1870,6 +2079,41 @@ $(function() {
 		});
 	});
 
+	asyncTest('execute()を3回呼び出す', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var del = db.del(TABLE_NAME).where({
+			col1: 10
+		});
+
+		del.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+			del.execute().fail(function(e) {
+				ok(true, '二回目のexecute()は、エラーとして処理されること');
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+
+				del.execute().fail(function(e2) {
+					ok(true, '三回目のexecute()は、エラーとして処理されること');
+					equal(e2.code, ERR.ERR_CODE_RETRY_SQL, e2.code + ': ' + e2.message);
+					start();
+				}).done(function() {
+					ok(false, 'エラーが発生していないためテスト失敗');
+				});
+			}).done(function() {
+				ok(false, 'エラーが発生していないためテスト失敗');
+			});
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+			start();
+		});
+	});
+
 	asyncTest('db.update() - execute()を2回呼び出す 2', 3, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
@@ -1892,6 +2136,41 @@ $(function() {
 
 		del.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			ok(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	});
+
+	asyncTest('db.update() - execute()を3回呼び出す 2', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var del = db.del(TABLE_NAME).where({
+			col1: 10
+		});
+
+		del.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+			start();
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+			start();
+		});
+
+		del.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			ok(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+
+		del.execute().fail(function(e) {
+			ok(true, '三回目のexecute()は、エラーとして処理されること');
 			ok(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
@@ -2333,6 +2612,41 @@ $(function() {
 		});
 	});
 
+	asyncTest('execute()を3回呼び出す', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var select = db.select(TABLE_NAME, '*').where({
+			col1: 10
+		});
+
+		select.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+			select.execute().fail(function(e) {
+				ok(true, '二回目のexecute()は、エラーとして処理されること');
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+
+				select.execute().fail(function(e2) {
+					ok(true, '三回目のexecute()は、エラーとして処理されること');
+					equal(e2.code, ERR.ERR_CODE_RETRY_SQL, e2.code + ': ' + e2.message);
+					start();
+				}).done(function() {
+					ok(false, 'エラーが発生していないためテスト失敗');
+				});
+			}).done(function() {
+				ok(false, 'エラーが発生していないためテスト失敗');
+			});
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+			start();
+		});
+	});
+
 	asyncTest('execute()を2回呼び出す 2', 3, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
@@ -2355,6 +2669,41 @@ $(function() {
 
 		select.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	});
+
+	asyncTest('execute()を3回呼び出す 2', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var select = db.select(TABLE_NAME, '*').where({
+			col1: 10
+		});
+
+		select.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+			start();
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+			start();
+		});
+
+		select.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+
+		select.execute().fail(function(e) {
+			ok(true, '三回目のexecute()は、エラーとして処理されること');
 			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
@@ -2438,6 +2787,88 @@ $(function() {
 					ok(false, 'db.transaction()テスト失敗。');
 				});
 	});
+
+	asyncTest(
+			'progressのtxにSQLをaddして実行',
+			13,
+			function() {
+				if (!h5.api.sqldb.isSupported) {
+					expect(1);
+					ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+					start();
+					return;
+				}
+
+				db
+						.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)',
+								['txtest', 10, 20000])
+						.execute()
+						.progress(
+								function(rs, tx) {
+									var sql = db.sql('INSERT INTO ' + TABLE_NAME
+											+ ' VALUES (?, ?, ?)', ['txtest', 10, 20000]);
+									var ins = db.insert(TABLE_NAME, {
+										col1: 'txtest2',
+										col2: 'rerere',
+										col3: 777
+									});
+									var sel = db.select(TABLE_NAME, ['col1', 'col2']).where({
+										'col3': 20000
+									});
+									var upd = db.update(TABLE_NAME, {
+										col1: 'txtest更新'
+									}).where({
+										col2: 'rerere'
+									});
+									tx
+											.add(sql)
+											.add(ins)
+											.add(sel)
+											.add(upd)
+											.execute()
+											.progress(
+													function(rs2, tx2) {
+														strictEqual(rs2[0].rows.length, 0,
+																'配列の0番目に、db.sql()の実行結果(ResultSet)が格納されていること。');
+														strictEqual(rs2[0].insertId, 2,
+																'配列の0番目に、db.sql()の実行結果(insertId)が格納されていること。');
+														strictEqual(rs2[0].rowsAffected, 1,
+																'配列の0番目に、db.sql()の実行結果(rowsAffected)が格納されていること。');
+														deepEqual(rs2[1], [3],
+																'配列の1番目に、db.insert()の実行結果(insertIdを保持する配列)が格納されていること。');
+														deepEqual(rs2[2].item(0), {
+															col1: 'txtest',
+															col2: 10
+														},
+																'配列の2番目に、db.select()の実行結果(rows)が格納されていること。');
+														strictEqual(rs2[3], 1,
+																'配列の3番目に、db.update()の実行結果(rowsAffected)が格納されていること。');
+														ok(tx._db && tx._tx && tx._tasks,
+																'第二引数はトランザクションであること。');
+													})
+											.done(
+													function(rs2) {
+														strictEqual(rs2[0].rows.length, 0,
+																'配列の0番目に、db.sql()の実行結果(ResultSet)が格納されていること。');
+														strictEqual(rs2[0].insertId, 2,
+																'配列の0番目に、db.sql()の実行結果(insertId)が格納されていること。');
+														strictEqual(rs2[0].rowsAffected, 1,
+																'配列の0番目に、db.sql()の実行結果(rowsAffected)が格納されていること。');
+														deepEqual(rs2[1], [3],
+																'配列の1番目に、db.insert()の実行結果(insertIdを保持する配列)が格納されていること。');
+														deepEqual(rs2[2].item(0), {
+															col1: 'txtest',
+															col2: 10
+														},
+																'配列の2番目に、db.select()の実行結果(rows)が格納されていること。');
+														strictEqual(rs2[3], 1,
+																'配列の3番目に、db.update()の実行結果(rowsAffected)が格納されていること。');
+														start();
+													});
+								}).fail(function() {
+							ok(false, 'db.transaction()テスト失敗。');
+						});
+			});
 
 	asyncTest('promise()で、execute()を呼ぶ前にpromiseオブジェクトを受け取れること。', 2, function() {
 		if (!h5.api.sqldb.isSupported) {
@@ -2903,6 +3334,45 @@ $(function() {
 		});
 	});
 
+	asyncTest('execute()を3回呼び出す', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var transaction = db.transaction().add(
+				db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000]))
+				.add(db.insert(TABLE_NAME, {
+					col1: 'txtest2',
+					col2: 'rerere',
+					col3: 777
+				}));
+
+		transaction.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+
+			transaction.execute().fail(function(e) {
+				ok(true, '二回目のexecute()は、エラーとして処理されること');
+				equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+
+				transaction.execute().fail(function(e2) {
+					ok(true, '三回目のexecute()は、エラーとして処理されること');
+					equal(e2.code, ERR.ERR_CODE_RETRY_SQL, e2.code + ': ' + e2.message);
+					start();
+				}).done(function() {
+					ok(false, 'エラーが発生していないためテスト失敗');
+				});
+			}).done(function() {
+				ok(false, 'エラーが発生していないためテスト失敗');
+			});
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生しました。' + e.code + ': ' + e.message);
+			start();
+		});
+	});
+
 	asyncTest('execute()を2回呼び出す 2', 3, function() {
 		if (!h5.api.sqldb.isSupported) {
 			expect(1);
@@ -2929,6 +3399,45 @@ $(function() {
 
 		transaction.execute().fail(function(e) {
 			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	});
+
+	asyncTest('execute()を3回呼び出す 2', 5, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var transaction = db.transaction().add(
+				db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000]))
+				.add(db.insert(TABLE_NAME, {
+					col1: 'txtest2',
+					col2: 'rerere',
+					col3: 777
+				}));
+
+		transaction.execute().done(function() {
+			ok(true, '一回目のexecute()ではエラーが発生しないこと');
+			start();
+		}).fail(function(e) {
+			ok(false, '一回目のexecute()でエラーが発生したため、テスト失敗。' + e.code + ': ' + e.message);
+			start();
+		});
+
+		transaction.execute().fail(function(e) {
+			ok(true, '二回目のexecute()は、エラーとして処理されること');
+			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
+		}).done(function() {
+			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+
+		transaction.execute().fail(function(e) {
+			ok(true, '三回目のexecute()は、エラーとして処理されること');
 			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
