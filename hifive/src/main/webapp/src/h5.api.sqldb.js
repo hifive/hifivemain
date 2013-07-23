@@ -168,10 +168,9 @@
 	/**
 	 * トランザクションエラー時に実行する共通処理
 	 */
-	function transactionErrorCallback(txw, e) {
-		var results = txw._tasks;
-		for ( var i = results.length - 1; i >= 0; i--) {
-			var result = results[i];
+	function transactionErrorCallback(tasks, e) {
+		for ( var i = tasks.length - 1; i >= 0; i--) {
+			var result = tasks[i];
 			var msgParam = getTransactionErrorMsg(e);
 			result.deferred.reject(createRejectReason(ERR_CODE_TRANSACTION_PROCESSING_FAILURE, [
 					msgParam, e.message], e));
@@ -181,18 +180,17 @@
 	/**
 	 * トランザクション完了時に実行する共通処理
 	 */
-	function transactionSuccessCallback(txw) {
-		var results = txw._tasks;
-		for ( var i = results.length - 1; i >= 0; i--) {
-			var result = results[i];
+	function transactionSuccessCallback(tasks) {
+		for ( var i = tasks.length - 1; i >= 0; i--) {
+			var result = tasks[i];
 			result.deferred.resolve(result.result);
 		}
 	}
 
 	/**
-	 * Insert/Select/Update/Del/Sql/Transactionオブジェクトのexecute()が二度を呼び出された場合、例外をスローする
+	 * Insert/Select/Update/Del/Sql/Transactionオブジェクトのexecute()が二度を呼び出された場合、例外をスローします
 	 */
-	function checkSqlExecuted(flag) {
+	function sqlExecuted(flag) {
 		if (flag) {
 			throwFwError(ERR_CODE_RETRY_SQL);
 		}
@@ -203,7 +201,7 @@
 	 * <p>
 	 * tableNameが未指定またはString型以外の型の値が指定された場合、例外をスローします。
 	 */
-	function checkTableName(funcName, tableName) {
+	function validTableName(funcName, tableName) {
 		if (!isString(tableName)) {
 			throwFwError(ERR_CODE_INVALID_TABLE_NAME, funcName);
 		}
@@ -212,16 +210,17 @@
 	/**
 	 * DatabaseWrapper.select()/insert()/update()/del()/sql()/transaction() のパラメータチェック
 	 * <p>
-	 * txwがTransactionWrapper型ではない場合、例外をスローします。 null,undefinedの場合は例外をスローしません。
+	 * txeがTransactionalExecutor型ではない場合、例外をスローします。<br>
+	 * null,undefinedの場合は例外をスローしません。
 	 */
-	function checkTransaction(funcName, txw) {
-		if (txw != undefined && !(txw instanceof SQLTransactionWrapper)) {
+	function isTransactionalExecutor(funcName, txe) {
+		if (txe != undefined && !(txe instanceof TransactionalExecutor)) {
 			throwFwError(ERR_CODE_INVALID_TRANSACTION_TYPE, funcName);
 		}
 	}
 
 	/**
-	 * 条件を保持するオブジェクトから、SQLのプレースホルダを含むWHERE文とパラメータの配列を生成します。
+	 * 条件を保持するオブジェクトから、SQLのプレースホルダを含むWHERE文とパラメータの配列を生成します
 	 */
 	function createConditionAndParameters(whereObj, conditions, parameters) {
 		if ($.isPlainObject(whereObj)) {
@@ -256,12 +255,28 @@
 	}
 
 	/**
-	 * マーカークラス
+	 * Web SQL Databaseクラス
+	 *
+	 * @class
+	 * @name WebSqlDatabase
+	 */
+	function WebSqlDatabase() {
+	// 空コンストラクタ
+	}
+
+	/**
+	 * Statementクラス
 	 * <p>
 	 * このクラスを継承しているクラスはTransaction.add()で追加できる。
+	 *
+	 * @class
+	 * @name Statement
 	 */
-	function SqlExecutor() {
-	// 空コンストラクタ
+	function Statement() {
+		/**
+		 * 1インスタンスで複数のステートメントを実行するか判定するフラグ このフラグがtrueの場合、execute()の実行結果を配列で返します
+		 */
+		this._multiple = false;
 	}
 
 	// =========================================================================
@@ -277,24 +292,23 @@
 	 * Insert/Select/Update/Del/Sql/Transactionオブジェクトのexecute()が返す、Promiseオブジェクトのprogress()の引数に存在します。
 	 *
 	 * @class
-	 * @name SQLTransactionWrapper
+	 * @name TransactionalExecutor
 	 */
-	function SQLTransactionWrapper(db, tx) {
+	function TransactionalExecutor(db) {
 		this._db = db;
-		this._tx = tx;
+		this._df = getDeferred();
+		this._tx = null;
 		this._tasks = [];
-		/**
-		 * Transactionオブジェクト管理用
-		 */
-		this._transactions = [];
+		this._queue = [];
+		this._executed = false;
 	}
 
-	$.extend(SQLTransactionWrapper.prototype, {
+	$.extend(TransactionalExecutor.prototype, {
 		/**
-		 * トランザクション処理中か判定します。
+		 * トランザクション処理中か判定します
 		 *
 		 * @private
-		 * @memberOf SQLTransactionWrapper
+		 * @memberOf TransactionalExecutor
 		 * @function
 		 * @returns {Boolean} true:実行中 / false: 未実行
 		 */
@@ -302,24 +316,10 @@
 			return this._tx != null;
 		},
 		/**
-		 * トランザクション処理中か判定し、未処理の場合はトランザクションの開始を、処理中の場合はSQLの実行を行います。
-		 *
-		 * @private
-		 * @memberOf SQLTransactionWrapper
-		 * @function
-		 * @param {String|Function} param1 パラメータ1
-		 * @param {String|Function} param2 パラメータ2
-		 * @param {Function} param3 パラメータ3
-		 */
-		_execute: function(param1, param2, param3) {
-			this._runTransaction() ? this._tx.executeSql(param1, param2, param3) : this._db
-					.transaction(param1, param2, param3);
-		},
-		/**
 		 * トランザクション内で実行中のDeferredオブジェクトを管理対象として追加します。
 		 *
 		 * @private
-		 * @memberOf SQLTransactionWrapper
+		 * @memberOf TransactionalExecutor
 		 * @function
 		 * @param {Deferred} df Deferredオブジェクト
 		 */
@@ -330,72 +330,195 @@
 			});
 		},
 		/**
-		 * SQLの実行結果を設定します。
+		 * SQLの実行結果を設定します
 		 *
 		 * @private
-		 * @memberOf SQLTransactionWrapper
+		 * @memberOf TransactionalExecutor
 		 * @function
 		 * @param {Any} resul SQL実行結果
 		 */
 		_setResult: function(result) {
 			this._tasks[this._tasks.length - 1].result = result;
 		},
-
 		/**
-		 * このSQLTransactionWrapperに紐づくTransactionオブジェクトを格納します
-		 * <p>
-		 * トランザクションオブジェクトへの参照をトランザクションが終わった後に切るためにここで管理しています。(issue #192)
-		 * </p>
+		 * 二重実行防止フラグを解除したTransactionalExecutorオブジェクトを取得します
 		 *
 		 * @private
-		 * @memberOf SQLTransactionWrapper
+		 * @memberOf TransactionalExecutor
 		 * @function
-		 * @param {Transaction} transaction Transactionオブジェクト
+		 * @return {Transaction} TransactionalExecutorオブジェクト
 		 */
-		_addTransaction: function(transaction) {
-			this._transactions.push(transaction);
+		_getUnlockedExecutor: function() {
+			this._executed = false;
+			return this;
 		},
-
 		/**
-		 * このSQLTransactionWrapperに紐づいているTransactionオブジェクトの_disposeを呼びます
+		 * 1トランザクションで処理したいSQLをタスクに追加します。
 		 * <p>
-		 * トランザクションオブジェクトへの参照をトランザクションが終わった後に破棄するためのメソッドです。(issue #192)
-		 * </p>
+		 * このメソッドには、以下のクラスのインスタンスを追加することができます。
+		 * <ul>
+		 * <li><a href="Insert.html">Insert</a></li>
+		 * <li><a href="Update.html">Update</a></li>
+		 * <li><a href="Del.html">Del</a></li>
+		 * <li><a href="Select.html">Select</a></li>
+		 * <li><a href="Sql.html">Sql</a></li>
+		 * </ul>
 		 *
-		 * @private
-		 * @memberOf SQLTransactionWrapper
 		 * @function
+		 * @memberOf Transaction
+		 * @param {Insert|Update|Del|Select|Sql} statement Statementクラスのインスタンス
+		 * @return {Transaction} Transactionオブジェクト
 		 */
-		_dispose: function() {
-			for ( var i = 0, l = this._transactions.length; i < l; i++) {
-				this._transactions[i]._dispose();
+		add: function(statement) {
+			if (!(statement instanceof Statement)) {
+				throwFwError(ERR_CODE_INVALID_TRANSACTION_TARGET);
 			}
+
+			// execute()実行後はadd()できない
+			if (!this._executed) {
+				this._queue.push(statement);
+			}
+
+			return this;
+		},
+		/**
+		 * add()で追加された順にSQLを実行します
+		 * <p>
+		 * 実行結果は、戻り値であるPromiseオブジェクトのprogress()に指定したコールバック関数、またはdone()に指定したコールバック関数に返されます。
+		 *
+		 * <pre>
+		 *  db.transaction()
+		 *   .add(db.insert('USER', {ID:10, NAME:TANAKA}))
+		 *   .add(db.insert('USER', {ID:11, NAME:YOSHIDA}))
+		 *   .add(db.insert('USER', {ID:12, NAME:SUZUKI})).execute().done(function(rs) {
+		 *  　rs // 第一引数: 実行結果
+		 *  });
+		 * </pre>
+		 *
+		 * 実行結果は<b>配列(Array)</b>で返され、結果の格納順序は、<b>add()で追加した順序</b>に依存します。<br>
+		 * 上記例の場合、3件 db.insert()をadd()で追加しているので、実行結果rsには3つのROWIDが格納されています。( [1, 2, 3]のような構造になっている )
+		 * <p>
+		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
+		 *
+		 * <pre>
+		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
+		 * 　db.transaction(tx)
+		 * 　　.add(db.update('UPDATE STOCK SET PRICE = 2000').where({ID: rs.item(0).ID}))
+		 * 　　.execute();
+		 *  });
+		 * </pre>
+		 *
+		 * select().execute()で返ってきたトランザクションを、db.transaction()の引数に指定することで、db.select()とdb.transaction()は同一トランザクションで実行されます。 *
+		 * <p>
+		 * <h5>1.1.8からの仕様変更</h5>
+		 * execute()が返すPromiseオブジェクトのコールバックが持つ第二引数<b>TransactionalExecutor</b>インスタンスに、
+		 * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+		 * <p>
+		 * 下記のサンプルコードは、Statementインスタンスをtx.add()することにより、db.select()と同一トランザクションでSQLを実行しています。
+		 *
+		 * <pre>
+		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
+		 * 　　tx.add(db.update('UPDATE STOCK SET PRICE = 2000').where({ID: rs.item(0).ID})).execute();
+		 *  });
+		 * </pre>
+		 *
+		 * @function
+		 * @memberOf TransactionalExecutor
+		 * @returns {Promise} Promiseオブジェクト
+		 */
+		execute: function() {
+			var that = this;
+			var df = this._df;
+			var queue = this._queue;
+			var executed = this._executed;
+			var results = [];
+
+			function executeSql() {
+				if (queue.length === 0) {
+					var unwrapedResult = results.length === 1 ? results[0] : results;
+					that._setResult.apply(that, [unwrapedResult]);
+					df.notify(unwrapedResult, that);
+					return;
+				}
+
+				var statementObj = queue.shift();
+				var statements = statementObj._statements;
+				var parameters = statementObj._parameters;
+				var p = getDeferred().resolve().promise();
+				var ret = [];
+
+				for ( var i = 0, iLen = statements.length; i < iLen; i++) {
+					(function(statement, parameter) {
+						fwLogger.debug(wrapInArray(statement), wrapInArray(parameter));
+
+						p = p.then(function() {
+							var thenDf = getDeferred();
+
+							that._tx.executeSql(statement, parameter, function(innerTx, rs) {
+								ret.push(statementObj._onComplete(rs));
+								thenDf.resolve();
+							});
+
+							return thenDf.promise();
+						});
+
+					})(statements[i], parameters[i]);
+				}
+
+				p.then(function() {
+					// _multipleフラグがtrueの場合は実行結果を配列として返す
+					var unwrapedRet = statementObj._multiple ? ret : ret[0];
+					results.push(unwrapedRet);
+					executeSql();
+				});
+			}
+
+			try {
+				this._addTask(df);
+				sqlExecuted(executed);
+
+				// トランザクション内で_buildStatementAndParameters()を実行すると、
+				// SQL構文エラーがクライアントに返せないため、ここでステートメントとパラメータを生成する
+				for ( var j = 0, jLen = queue.length; j < jLen; j++) {
+					queue[j]._buildStatementAndParameters();
+				}
+
+				if (this._runTransaction()) {
+					executeSql();
+				} else {
+					this._db.transaction(function(tx) {
+						that._tx = tx;
+						executeSql();
+					}, function(e) {
+						transactionErrorCallback(that._tasks, e);
+						that._tx = null;
+					}, function() {
+						transactionSuccessCallback(that._tasks);
+						that._tx = null;
+					});
+				}
+			} catch (e) {
+				df.reject(e);
+			}
+
+			this._df = getDeferred();
+			this._executed = true;
+			return df.promise();
+		},
+		/**
+		 * SQLの実行結果を受け取ることができる、Promiseオブジェクトを取得します
+		 *
+		 * @function
+		 * @memberOf TransactionalExecutor
+		 * @returns {Promise} Promiseオブジェクト
+		 */
+		promise: function() {
+			return this._df.promise();
 		}
 	});
 
 	/**
-	 * SELECT文とパラメータ配列を生成します。
-	 */
-	function createSelectStatementAndParameters(params, tableName, column, where, orderBy) {
-		var statement = h5.u.str.format(SELECT_SQL_FORMAT, column, tableName);
-
-		if ($.isPlainObject(where)) {
-			var conditions = [];
-			createConditionAndParameters(where, conditions, params);
-			statement += (' WHERE ' + conditions.join(' AND '));
-		} else if (isString(where)) {
-			statement += (' WHERE ' + where);
-		}
-
-		if ($.isArray(orderBy)) {
-			statement += (' ORDER BY ' + orderBy.join(', '));
-		}
-
-		return statement;
-	}
-
-	/**
-	 * 指定されたテーブルに対して、検索処理(SELECT)を行うクラス。
+	 * 指定されたテーブルに対して、検索処理(SELECT)を行うクラス
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().select()</b>を呼び出すと、このクラスのインスタンスが返されます。
@@ -403,22 +526,20 @@
 	 * @class
 	 * @name Select
 	 */
-	function Select(txw, tableName, columns) {
-		this._txw = txw;
+	function Select(executor, tableName, columns) {
+		this._statements = [];
+		this._parameters = [];
+		this._executor = executor;
 		this._tableName = tableName;
 		this._columns = $.isArray(columns) ? columns.join(', ') : '*';
 		this._where = null;
 		this._orderBy = null;
-		this._statement = null;
-		this._params = [];
-		this._df = getDeferred();
-		this._executed = false;
 	}
 
-	Select.prototype = new SqlExecutor();
+	Select.prototype = new Statement();
 	$.extend(Select.prototype, {
 		/**
-		 * WHERE句を設定します。
+		 * WHERE句を設定します
 		 * <p>
 		 * <b>条件は以下の方法で設定できます。</b><br>
 		 * <ul>
@@ -483,7 +604,7 @@
 			return this;
 		},
 		/**
-		 * ORDER BY句を設定します。
+		 * ORDER BY句を設定します
 		 * <p>
 		 * ソート対象のカラムが一つの場合は<b>文字列</b>、複数の場合は<b>配列</b>で指定します。
 		 * <p>
@@ -515,7 +636,7 @@
 			return this;
 		},
 		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します。
+		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
 		 * <p>
 		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>検索結果を保持するインスタンス</b>が返されます。
 		 * <p>
@@ -543,59 +664,53 @@
 		 * @returns {Promise} Promiseオブジェクト
 		 */
 		execute: function() {
-			var that = this;
-			var build = function() {
-				that._statement = createSelectStatementAndParameters(that._params, that._tableName,
-						that._columns, that._where, that._orderBy);
-			};
-			var df = getDeferred();
-			var executed = this._executed;
-			var resultSet = null;
+			return this._executor.add(this).execute();
+		},
+		/**
+		 * SQLの構文とパラメータを生成します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Select
+		 */
+		_buildStatementAndParameters: function() {
+			var statement = '';
+			var where = this._where;
 
-			try {
-				that._txw._addTask(df);
-				checkSqlExecuted(executed);
-				build();
-				fwLogger.debug(['Select: ' + this._statement], this._params);
+			statement = h5.u.str.format(SELECT_SQL_FORMAT, this._columns, this._tableName);
 
-				if (that._txw._runTransaction()) {
-					that._txw._execute(this._statement, this._params, function(innerTx, rs) {
-						resultSet = rs.rows;
-						that._txw._setResult(resultSet);
-						df.notify(resultSet, that._txw);
-					});
-				} else {
-					that._txw._execute(function(tx) {
-						that._txw._tx = tx;
-						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
-							resultSet = rs.rows;
-							that._txw._setResult(resultSet);
-							df.notify(resultSet, that._txw);
-						});
-					}, function(e) {
-						that._txw._tx = null;
-						transactionErrorCallback(that._txw, e);
-						that._txw._dispose();
-						that = null;
-					}, function() {
-						that._txw._tx = null;
-						transactionSuccessCallback(that._txw);
-						that._txw._dispose();
-						that = null;
-					});
-				}
-			} catch (e) {
-				df.reject(e);
+			if ($.isPlainObject(where)) {
+				var conditions = [];
+				createConditionAndParameters(where, conditions, this._parameters);
+				statement += (' WHERE ' + conditions.join(' AND '));
+			} else if (isString(where)) {
+				statement += (' WHERE ' + where);
 			}
 
-			this._executed = true;
-			return df.promise();
+			if ($.isArray(this._orderBy)) {
+				statement += (' ORDER BY ' + this._orderBy.join(', '));
+			}
+
+			this._statements.push([statement]);
+			this._parameters = [this._parameters];
+		},
+		/**
+		 * executeSql成功時の処理を実行します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Select
+		 * @param {ResultSet} rs SQL実行結果
+		 * @return {Any} クライアントが取得するSQL実行結果
+		 */
+		_onComplete: function(rs) {
+			return rs.rows;
 		}
 	});
 
 
 	/**
-	 * 指定されたテーブルに対して、登録処理(INSERT)を行うクラス。
+	 * 指定されたテーブルに対して、登録処理(INSERT)を行うクラス
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().insert()</b>を呼び出すと、このクラスのインスタンスが返されます。
@@ -603,140 +718,107 @@
 	 * @class
 	 * @name Insert
 	 */
-	function Insert(txw, tableName, values) {
-		this._txw = txw;
+	function Insert(executor, tableName, values) {
+		this._statements = [];
+		this._parameters = [];
+		this._executor = executor;
 		this._tableName = tableName;
 		this._values = values ? wrapInArray(values) : [];
-		this._statement = [];
-		this._params = [];
 		this._df = getDeferred();
-		this._executed = false;
+		// 1インスタンスで複数のSQLを実行するのでフラグを立てる
+		this._multiple = true;
 	}
 
-	Insert.prototype = new SqlExecutor();
-	$.extend(Insert.prototype,
-			{
-				/**
-				 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します。
-				 * <p>
-				 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>登録に成功したレコードのIDを持つ配列</b>が返されます。
-				 * <p>
-				 * 検索結果へのアクセスは以下のように実行します。
-				 *
-				 * <pre>
-				 *  db.insert('USER', {ID:10, NAME:'TANAKA'}).execute().done(function(rows) {
-				 * 　rows.item(0).ID     // 検索にマッチした1件目のレコードのID
-				 * 　rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
-				 *  });
-				 * </pre>
-				 *
-				 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-				 *
-				 * <pre>
-				 *  db.select('STOCK', {ID:10, NAME:'ballA'}).execute().progress(function(rs, tx) { // ※1
-				 * 　db.insert('STOCK', {ID:11, NAME:'ballB'}, tx).execute(); // ※2
-				 *  });
-				 * </pre>
-				 *
-				 * ※1のprogress()で返ってきたトランザクション(tx)を、※2のinsert()の第三引数に指定することで、2つのdb.insert()は同一トランザクションで実行されます。
-				 *
-				 * @function
-				 * @memberOf Insert
-				 * @returns {Promise} Promiseオブジェクト
-				 */
-				execute: function() {
-					var that = this;
-					var build = function() {
-						var valueObjs = that._values;
+	Insert.prototype = new Statement();
+	$.extend(Insert.prototype, {
+		/**
+		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
+		 * <p>
+		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>登録に成功したレコードのIDを持つ配列</b>が返されます。
+		 * <p>
+		 * 検索結果へのアクセスは以下のように実行します。
+		 *
+		 * <pre>
+		 *  db.insert('USER', {ID:10, NAME:'TANAKA'}).execute().done(function(rows) {
+		 * 　rows.item(0).ID     // 検索にマッチした1件目のレコードのID
+		 * 　rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
+		 *  });
+		 * </pre>
+		 *
+		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
+		 *
+		 * <pre>
+		 *  db.select('STOCK', {ID:10, NAME:'ballA'}).execute().progress(function(rs, tx) { // ※1
+		 * 　db.insert('STOCK', {ID:11, NAME:'ballB'}, tx).execute(); // ※2
+		 *  });
+		 * </pre>
+		 *
+		 * ※1のprogress()で返ってきたトランザクション(tx)を、※2のinsert()の第三引数に指定することで、2つのdb.insert()は同一トランザクションで実行されます。
+		 *
+		 * @function
+		 * @memberOf Insert
+		 * @returns {Promise} Promiseオブジェクト
+		 */
+		execute: function() {
+			return this._executor.add(this).execute();
+		},
+		/**
+		 * SQLの構文とパラメータを生成します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Insert
+		 */
+		_buildStatementAndParameters: function() {
+			var values = this._values;
+			var statements = this._statements;
+			var parameters = this._parameters;
 
-						if (valueObjs.length === 0) {
-							that._statement.push(h5.u.str.format(INSERT_SQL_EMPTY_VALUES,
-									that._tableName));
-							that._params.push([]);
-							return;
-						}
+			if (values.length === 0) {
+				statements.push(h5.u.str.format(INSERT_SQL_EMPTY_VALUES, this._tableName));
+				parameters.push([]);
+				return;
+			}
 
-						for ( var i = 0, len = valueObjs.length; i < len; i++) {
-							var valueObj = valueObjs[i];
+			for ( var i = 0, len = values.length; i < len; i++) {
+				var valueObj = values[i];
 
-							if (valueObj == null) {
-								that._statement.push(h5.u.str.format(INSERT_SQL_EMPTY_VALUES,
-										that._tableName));
-								that._params.push([]);
-							} else if ($.isPlainObject(valueObj)) {
-								var values = [];
-								var columns = [];
-								var params = [];
+				if (valueObj == null) {
+					statements.push(h5.u.str.format(INSERT_SQL_EMPTY_VALUES, this._tableName));
+					parameters.push([]);
+				} else if ($.isPlainObject(valueObj)) {
+					var value = [];
+					var column = [];
+					var param = [];
 
-								for ( var prop in valueObj) {
-									values.push('?');
-									columns.push(prop);
-									params.push(valueObj[prop]);
-								}
-
-								that._statement.push(h5.u.str.format(INSERT_SQL_FORMAT,
-										that._tableName, columns.join(', '), values.join(', ')));
-								that._params.push(params);
-							}
-						}
-					};
-					var df = getDeferred();
-					var executed = this._executed;
-					var resultSet = null;
-					var insertRowIds = [];
-					var index = 0;
-
-					function executeSql() {
-						if (that._statement.length === index) {
-							resultSet = insertRowIds;
-							that._txw._setResult(resultSet);
-							df.notify(resultSet, that._txw);
-							return;
-						}
-
-						fwLogger.debug(['Insert: ' + that._statement[index]], that._params[index]);
-						that._txw._execute(that._statement[index], that._params[index], function(
-								innerTx, rs) {
-							index++;
-							insertRowIds.push(rs.insertId);
-							executeSql();
-						});
+					for ( var prop in valueObj) {
+						value.push('?');
+						column.push(prop);
+						param.push(valueObj[prop]);
 					}
 
-					try {
-						that._txw._addTask(df);
-						checkSqlExecuted(executed);
-						build();
-
-						if (that._txw._runTransaction()) {
-							executeSql();
-						} else {
-							that._txw._execute(function(tx) {
-								that._txw._tx = tx;
-								executeSql();
-							}, function(e) {
-								that._txw._tx = null;
-								transactionErrorCallback(that._txw, e);
-								that._txw._dispose();
-								that = null;
-							}, function() {
-								that._txw._tx = null;
-								transactionSuccessCallback(that._txw);
-								that._txw._dispose();
-								that = null;
-							});
-						}
-					} catch (e) {
-						df.reject(e);
-					}
-
-					this._executed = true;
-					return df.promise();
+					statements.push(h5.u.str.format(INSERT_SQL_FORMAT, this._tableName, column
+							.join(', '), value.join(', ')));
+					parameters.push(param);
 				}
-			});
+			}
+		},
+		/**
+		 * executeSql成功時の処理を実行します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Insert
+		 * @param {ResultSet} rs SQL実行結果
+		 * @return {Any} クライアントが取得するSQL実行結果
+		 */
+		_onComplete: function(rs) {
+			return rs.insertId;
+		}
+	});
 
 	/**
-	 * 指定されたテーブルに対して、更新処理(UPDATE)を行うクラス。
+	 * 指定されたテーブルに対して、更新処理(UPDATE)を行うクラス
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().update()</b>を呼び出すと、このクラスのインスタンスが返されます。
@@ -744,21 +826,19 @@
 	 * @class
 	 * @name Update
 	 */
-	function Update(txw, tableName, value) {
-		this._txw = txw;
+	function Update(executor, tableName, values) {
+		this._statements = [];
+		this._parameters = [];
+		this._executor = executor;
 		this._tableName = tableName;
-		this._value = value;
+		this._values = values;
 		this._where = null;
-		this._statement = null;
-		this._params = [];
-		this._df = getDeferred();
-		this._executed = false;
 	}
 
-	Update.prototype = new SqlExecutor();
+	Update.prototype = new Statement();
 	$.extend(Update.prototype, {
 		/**
-		 * WHERE句を設定します。
+		 * WHERE句を設定します
 		 * <p>
 		 * <b>条件は以下の方法で設定できます。</b><br>
 		 * <ul>
@@ -827,7 +907,7 @@
 			return this;
 		},
 		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します。
+		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
 		 * <p>
 		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>更新されたレコードの件数</b>が返されます。
 		 *
@@ -852,70 +932,50 @@
 		 * @returns {Promise} Promiseオブジェクト
 		 */
 		execute: function() {
-			var that = this;
-			var build = function() {
-				var whereObj = that._where;
-				var valueObj = that._value;
-				var columns = [];
+			return this._executor.add(this).execute();
+		},
+		/**
+		 * SQLの構文とパラメータを生成します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Update
+		 */
+		_buildStatementAndParameters: function() {
+			var statement = '';
+			var where = this._where;
+			var values = this._values;
+			var columns = [];
 
-				for ( var prop in valueObj) {
-					columns.push(prop + ' = ?');
-					that._params.push(valueObj[prop]);
-				}
-
-				that._statement = h5.u.str.format(UPDATE_SQL_FORMAT, that._tableName, columns
-						.join(', '));
-
-				if ($.isPlainObject(whereObj)) {
-					var conditions = [];
-					createConditionAndParameters(whereObj, conditions, that._params);
-					that._statement += (' WHERE ' + conditions.join(' AND '));
-				} else if (isString(whereObj)) {
-					that._statement += (' WHERE ' + whereObj);
-				}
-			};
-			var df = getDeferred();
-			var executed = this._executed;
-			var resultSet = null;
-
-			try {
-				that._txw._addTask(df);
-				checkSqlExecuted(executed);
-				build();
-				fwLogger.debug(['Update: ' + this._statement], this._params);
-
-				if (that._txw._runTransaction()) {
-					that._txw._execute(this._statement, this._params, function(innerTx, rs) {
-						resultSet = rs.rowsAffected;
-						that._txw._setResult(resultSet);
-						df.notify(resultSet, that._txw);
-					});
-				} else {
-					that._txw._execute(function(tx) {
-						that._txw._tx = tx;
-						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
-							resultSet = rs.rowsAffected;
-							that._txw._setResult(resultSet);
-							df.notify(resultSet, that._txw);
-						});
-					}, function(e) {
-						that._txw._tx = null;
-						transactionErrorCallback(that._txw, e);
-						that._txw._dispose();
-						that = null;
-					}, function() {
-						that._txw._tx = null;
-						transactionSuccessCallback(that._txw);
-						that._txw._dispose();
-						that = null;
-					});
-				}
-			} catch (e) {
-				df.reject(e);
+			for ( var prop in values) {
+				columns.push(prop + ' = ?');
+				this._parameters.push(values[prop]);
 			}
 
-			this._executed = true;
-			return df.promise();
+			statement = h5.u.str.format(UPDATE_SQL_FORMAT, this._tableName, columns.join(', '));
+
+			if ($.isPlainObject(where)) {
+				var conditions = [];
+				createConditionAndParameters(where, conditions, this._parameters);
+				statement += (' WHERE ' + conditions.join(' AND '));
+			} else if (isString(where)) {
+				statement += (' WHERE ' + where);
+			}
+
+			this._statements.push([statement]);
+			this._parameters = [this._parameters];
+		},
+		/**
+		 * executeSql成功時の処理を実行します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Update
+		 * @param {ResultSet} rs SQL実行結果
+		 * @return {Any} クライアントが取得するSQL実行結果
+		 */
+		_onComplete: function(rs) {
+			return rs.rowsAffected;
 		}
 	});
 
@@ -930,20 +990,18 @@
 	 * @class
 	 * @name Del
 	 */
-	function Del(txw, tableName) {
-		this._txw = txw;
+	function Del(executor, tableName) {
+		this._statements = [];
+		this._parameters = [];
+		this._executor = executor;
 		this._tableName = tableName;
 		this._where = null;
-		this._statement = null;
-		this._params = [];
-		this._df = getDeferred();
-		this._executed = false;
 	}
 
-	Del.prototype = new SqlExecutor();
+	Del.prototype = new Statement();
 	$.extend(Del.prototype, {
 		/**
-		 * WHERE句を設定します。
+		 * WHERE句を設定します
 		 * <p>
 		 * <b>条件は以下の方法で設定できます。</b><br>
 		 * <ul>
@@ -1003,7 +1061,7 @@
 			return this;
 		},
 		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します。
+		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
 		 * <p>
 		 * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>削除されたレコードの件数</b>が返されます。
 		 *
@@ -1028,67 +1086,48 @@
 		 * @returns {Promise} Promiseオブジェクト
 		 */
 		execute: function() {
-			var that = this;
-			var build = function() {
-				var whereObj = that._where;
+			return this._executor.add(this).execute();
+		},
+		/**
+		 * SQLの構文とパラメータを生成します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Del
+		 */
+		_buildStatementAndParameters: function() {
+			var statement = '';
+			var where = this._where;
 
-				that._statement = h5.u.str.format(DELETE_SQL_FORMAT, that._tableName);
+			statement = h5.u.str.format(DELETE_SQL_FORMAT, this._tableName);
 
-				if ($.isPlainObject(whereObj)) {
-					var conditions = [];
-					createConditionAndParameters(whereObj, conditions, that._params);
-					that._statement += (' WHERE ' + conditions.join(' AND '));
-				} else if (isString(whereObj)) {
-					that._statement += (' WHERE ' + whereObj);
-				}
-			};
-			var df = getDeferred();
-			var executed = this._executed;
-			var resultSet = null;
-
-			try {
-				that._txw._addTask(df);
-				checkSqlExecuted(executed);
-				build();
-				fwLogger.debug(['Del: ' + this._statement], this._params);
-
-				if (that._txw._runTransaction()) {
-					that._txw._execute(this._statement, this._params, function(innerTx, rs) {
-						resultSet = rs.rowsAffected;
-						that._txw._setResult(resultSet);
-						df.notify(resultSet, that._txw);
-					});
-				} else {
-					that._txw._execute(function(tx) {
-						that._txw._tx = tx;
-						tx.executeSql(that._statement, that._params, function(innerTx, rs) {
-							resultSet = rs.rowsAffected;
-							that._txw._setResult(resultSet);
-							df.notify(resultSet, that._txw);
-						});
-					}, function(e) {
-						that._txw._tx = null;
-						transactionErrorCallback(that._txw, e);
-						that._txw._dispose();
-						that = null;
-					}, function() {
-						that._txw._tx = null;
-						transactionSuccessCallback(that._txw);
-						that._txw._dispose();
-						that = null;
-					});
-				}
-			} catch (e) {
-				df.reject(e);
+			if ($.isPlainObject(where)) {
+				var conditions = [];
+				createConditionAndParameters(where, conditions, this._parameters);
+				statement += (' WHERE ' + conditions.join(' AND '));
+			} else if (isString(where)) {
+				statement += (' WHERE ' + where);
 			}
 
-			this._executed = true;
-			return df.promise();
+			this._statements.push([statement]);
+			this._parameters = [this._parameters];
+		},
+		/**
+		 * executeSql成功時の処理を実行します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Del
+		 * @param {ResultSet} rs SQL実行結果
+		 * @return {Any} クライアントが取得するSQL実行結果
+		 */
+		_onComplete: function(rs) {
+			return rs.rowsAffected;
 		}
 	});
 
 	/**
-	 * 指定されたSQLステートメントを実行するクラス。
+	 * 指定されたSQLステートメントを実行するクラス
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
 	 * <b>h5.api.sqldb.open().sql()</b>を呼び出すと、このクラスのインスタンスが返されます。
@@ -1096,18 +1135,18 @@
 	 * @class
 	 * @name Sql
 	 */
-	function Sql(txw, statement, params) {
-		this._txw = txw;
-		this._statement = statement;
-		this._params = params || [];
-		this._df = getDeferred();
-		this._executed = false;
+	function Sql(executor, statement, params) {
+		this._statements = [];
+		this._parameters = [];
+		this._executor = executor;
+		this._statements.push(statement);
+		this._parameters.push(params || []);
 	}
 
-	Sql.prototype = new SqlExecutor();
+	Sql.prototype = new Statement();
 	$.extend(Sql.prototype, {
 		/**
-		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します。
+		 * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
 		 * <p>
 		 * 実行結果は、戻り値であるPromiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、<b>実行結果を保持するオブジェクト</b>が返されます。
 		 * <p>
@@ -1184,219 +1223,29 @@
 		 * @returns {Promise} Promiseオブジェクト
 		 */
 		execute: function() {
-			var that = this;
-			var df = getDeferred();
-			var executed = this._executed;
-			var statement = this._statement;
-			var params = this._params;
-			var resultSet = null;
-
-			try {
-				that._txw._addTask(df);
-				checkSqlExecuted(executed);
-				fwLogger.debug(['Sql: ' + statement], params);
-
-				if (that._txw._runTransaction()) {
-					that._txw._execute(statement, params, function(tx, rs) {
-						resultSet = rs;
-						that._txw._setResult(resultSet);
-						df.notify(resultSet, that._txw);
-					});
-				} else {
-					that._txw._execute(function(tx) {
-						that._txw._tx = tx;
-						tx.executeSql(statement, params, function(innerTx, rs) {
-							resultSet = rs;
-							that._txw._setResult(resultSet);
-							df.notify(resultSet, that._txw);
-						});
-					}, function(e) {
-						that._txw._tx = null;
-						transactionErrorCallback(that._txw, e);
-						that._txw._dispose();
-						that = null;
-					}, function() {
-						that._txw._tx = null;
-						transactionSuccessCallback(that._txw);
-						that._txw._dispose();
-						that = null;
-					});
-				}
-			} catch (e) {
-				df.reject(e);
-			}
-
-			this._executed = true;
-			return df.promise();
-		}
-	});
-
-	/**
-	 * 指定された複数のSQLを同一トランザクションで実行するクラス。
-	 * <p>
-	 * このオブジェクトは自分でnewすることはありません。<br>
-	 * <b>h5.api.sqldb.open().transaction()</b>を呼び出すと、このクラスのインスタンスが返されます。
-	 *
-	 * @class
-	 * @name Transaction
-	 */
-	function Transaction(txw) {
-		this._txw = txw;
-		this._queue = [];
-		this._df = getDeferred();
-		this._executed = false;
-		this._tasks = [];
-	}
-
-	Transaction.prototype = new SqlExecutor();
-	$.extend(Transaction.prototype, {
-		/**
-		 * 1トランザクションで処理したいSQLをタスクに追加します。
-		 * <p>
-		 * このメソッドには、以下のクラスのインスタンスを追加することができます。
-		 * <ul>
-		 * <li><a href="Insert.html">Insert</a></li>
-		 * <li><a href="Update.html">Update</a></li>
-		 * <li><a href="Del.html">Del</a></li>
-		 * <li><a href="Select.html">Select</a></li>
-		 * <li><a href="Sql.html">Sql</a></li>
-		 * </ul>
-		 *
-		 * @function
-		 * @memberOf Transaction
-		 * @param {Any} task Insert/Update/Del/Select/Sqlクラスのインスタンス
-		 * @return {Transaction} Transactionオブジェクト
-		 */
-		add: function(task) {
-			if (!(task instanceof SqlExecutor)) {
-				throwFwError(ERR_CODE_INVALID_TRANSACTION_TARGET);
-			}
-			this._queue.push(task);
-			return this;
+			return this._executor.add(this).execute();
 		},
 		/**
-		 * add()で追加された順にSQLを実行します。
-		 * <p>
-		 * 実行結果は、戻り値であるPromiseオブジェクトのprogress()に指定したコールバック関数、またはdone()に指定したコールバック関数に返されます。
-		 *
-		 * <pre>
-		 *  db.transaction()
-		 *   .add(db.insert('USER', {ID:10, NAME:TANAKA}))
-		 *   .add(db.insert('USER', {ID:11, NAME:YOSHIDA}))
-		 *   .add(db.insert('USER', {ID:12, NAME:SUZUKI})).execute().done(function(rs) {
-		 *  　rs // 第一引数: 実行結果
-		 *  });
-		 * </pre>
-		 *
-		 * 実行結果は<b>配列(Array)</b>で返され、結果の格納順序は、<b>add()で追加した順序</b>に依存します。<br>
-		 * 上記例の場合、3件 db.insert()をadd()で追加しているので、実行結果rsには3つのROWIDが格納されています。( [1, 2, 3]のような構造になっている )
-		 * <p>
-		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 *
-		 * <pre>
-		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
-		 * 　db.transaction(tx)
-		 * 　　.add(db.update('UPDATE STOCK SET PRICE = 2000').where({ID: rs.item(0).ID}))
-		 * 　　.execute();
-		 *  });
-		 * </pre>
-		 *
-		 * select().execute()で返ってきたトランザクションを、db.transaction()の引数に指定することで、db.select()とdb.transaction()は同一トランザクションで実行されます。
-		 *
-		 * @function
-		 * @memberOf Transaction
-		 * @returns {Promise} Promiseオブジェクト
-		 */
-		execute: function() {
-			var that = this;
-			var df = this._df;
-			var queue = this._queue;
-			var executed = this._executed;
-			var index = 0;
-
-			function createTransactionTask(_tasks, txObj) {
-				function TransactionTask(tx) {
-					this._txw = new SQLTransactionWrapper(null, tx);
-				}
-
-				for ( var i = 0, len = queue.length; i < len; i++) {
-					TransactionTask.prototype = queue[i];
-					_tasks.push(new TransactionTask(txObj));
-				}
-			}
-
-			function executeSql() {
-				if (that._tasks.length === index) {
-					var results = [];
-
-					for ( var j = 0, len = that._tasks.length; j < len; j++) {
-						var result = that._tasks[j]._txw._tasks;
-						results.push(result[0].result);
-					}
-
-					that._txw._setResult(results);
-					df.notify(results, that._txw);
-					return;
-				}
-
-				that._tasks[index].execute().progress(function(rs, innerTx) {
-					index++;
-					executeSql();
-				});
-			}
-
-			try {
-				that._txw._addTask(df);
-				checkSqlExecuted(executed);
-
-				// executedじゃなければ自身を_txw._transactionsに追加
-				this._txw && this._txw._addTransaction(this);
-
-				if (that._txw._runTransaction()) {
-					createTransactionTask(that._tasks, that._txw._tx);
-					executeSql();
-				} else {
-					that._txw._execute(function(tx) {
-						createTransactionTask(that._tasks, tx);
-						that._txw._tx = tx;
-						executeSql();
-					}, function(e) {
-						transactionErrorCallback(that._txw, e);
-						// 自分自身の_txw._txの参照は_dispose()で消されるので、ここでthat._txw._tx=nullはする必要ない
-						that._txw._dispose();
-					}, function() {
-						transactionSuccessCallback(that._txw);
-						that._txw._dispose();
-					});
-				}
-			} catch (e) {
-				df.reject(e);
-			}
-
-			this._df = getDeferred();
-			this._executed = true;
-
-			return df.promise();
-		},
-		promise: function() {
-			return this._df.promise();
-		},
-
-		/**
-		 * Transaction#execute内(このメソッド)の変数からトランザクションオブジェクトtxへの参照を破棄します。
+		 * SQLの構文とパラメータを生成します
 		 *
 		 * @private
-		 * @name _dispose
-		 * @memberOf Transaction
 		 * @function
+		 * @memberOf Sql
 		 */
-		_dispose: function() {
-			for ( var i = 0, l = this._tasks.length; i < l; i++) {
-				this._tasks[i]._txw._tx = null;
-				this._tasks[i]._txw = null;
-			}
-			this._txw._tx = null;
-			this._txw = null;
+		_buildStatementAndParameters: function() {
+		// 既にコンストラクタで渡されているため何もしない
+		},
+		/**
+		 * executeSql成功時の処理を実行します
+		 *
+		 * @private
+		 * @function
+		 * @memberOf Sql
+		 * @param {ResultSet} rs SQL実行結果
+		 * @return {Any} クライアントが取得するSQL実行結果
+		 */
+		_onComplete: function(rs) {
+			return rs;
 		}
 	});
 
@@ -1416,28 +1265,27 @@
 
 	$.extend(DatabaseWrapper.prototype, {
 		/**
-		 * 指定されたテーブルに対して、検索処理(SELECT)を行うためのオブジェクトを生成します。
+		 * 指定されたテーブルに対して、検索処理(SELECT)を行うためのオブジェクトを生成します
 		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} tableName テーブル名
 		 * @param {Array} columns カラム
-		 * @param {SQLTransactionWrapper} [txw] トランザクション
+		 * @param {TransactionalExecutor} [txe] TransactionalExecutorクラス
 		 * @returns {Select} SELECTオブジェクト
 		 */
-		select: function(tableName, columns, txw) {
-			checkTableName('select', tableName);
-			checkTransaction('select', txw);
+		select: function(tableName, columns, txe) {
+			validTableName('select', tableName);
+			isTransactionalExecutor('select', txe);
 
 			if (!$.isArray(columns) && columns !== '*') {
 				throwFwError(ERR_CODE_INVALID_COLUMN_NAME, 'select');
 			}
 
-			return new Select(txw ? txw : new SQLTransactionWrapper(this._db, null), tableName,
-					columns);
+			return new Select(this.transaction(txe), tableName, columns);
 		},
 		/**
-		 * 指定されたテーブルに対して、登録処理(INSERT)を行うためのオブジェクトを生成します。
+		 * 指定されたテーブルに対して、登録処理(INSERT)を行うためのオブジェクトを生成します
 		 * <p>
 		 * <b>第二引数valuesの指定方法</b>
 		 * <p>
@@ -1486,22 +1334,21 @@
 		 * @function
 		 * @param {String} tableName テーブル名
 		 * @param {Object|Array} values 値(登録情報を保持するオブジェクトまたは、登録情報のオブジェクトを複数保持する配列)
-		 * @param {SQLTransactionWrapper} [txw] トランザクション
+		 * @param {TransactionalExecutor} [txe] TransactionalExecutorクラス
 		 * @returns {Insert} INSERTオブジェクト
 		 */
-		insert: function(tableName, values, txw) {
-			checkTableName('insert', tableName);
-			checkTransaction('insert', txw);
+		insert: function(tableName, values, txe) {
+			validTableName('insert', tableName);
+			isTransactionalExecutor('insert', txe);
 
 			if (values != null && !$.isArray(values) && !$.isPlainObject(values)) {
 				throwFwError(ERR_CODE_INVALID_VALUES, 'insert');
 			}
 
-			return new Insert(txw ? txw : new SQLTransactionWrapper(this._db, null), tableName,
-					values);
+			return new Insert(this.transaction(txe), tableName, values);
 		},
 		/**
-		 * 指定されたテーブルに対して、更新処理(UPDATE)を行うためのオブジェクトを生成します。
+		 * 指定されたテーブルに対して、更新処理(UPDATE)を行うためのオブジェクトを生成します
 		 * <p>
 		 * <b>第二引数valuesの指定方法</b>
 		 * <p>
@@ -1526,49 +1373,48 @@
 		 * @function
 		 * @param {String} tableName テーブル名
 		 * @param {Object} values カラム
-		 * @param {SQLTransactionWrapper} [txw] トランザクション
+		 * @param {TransactionalExecutor} [txe] TransactionalExecutorクラス
 		 * @returns {Update} Updateオブジェクト
 		 */
-		update: function(tableName, values, txw) {
-			checkTableName('update', tableName);
-			checkTransaction('update', txw);
+		update: function(tableName, values, txe) {
+			validTableName('update', tableName);
+			isTransactionalExecutor('update', txe);
 
 			if (!$.isPlainObject(values)) {
 				throwFwError(ERR_CODE_INVALID_VALUES, 'update');
 			}
 
-			return new Update(txw ? txw : new SQLTransactionWrapper(this._db, null), tableName,
-					values);
+			return new Update(this.transaction(txe), tableName, values);
 		},
 		/**
-		 * 指定されたテーブルに対して、削除処理(DELETE)を行うためのオブジェクトを生成します。
+		 * 指定されたテーブルに対して、削除処理(DELETE)を行うためのオブジェクトを生成します
 		 * <p>
 		 * <i>deleteは予約語なため、delとしています。</i>
 		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} tableName テーブル名
-		 * @param {SQLTransactionWrapper} [txw] トランザクション
+		 * @param {TransactionalExecutor} [txe] TransactionalExecutorクラス
 		 * @returns {Del} Delオブジェクト
 		 */
-		del: function(tableName, txw) {
-			checkTableName('del', tableName);
-			checkTransaction('del', txw);
+		del: function(tableName, txe) {
+			validTableName('del', tableName);
+			isTransactionalExecutor('del', txe);
 
-			return new Del(txw ? txw : new SQLTransactionWrapper(this._db, null), tableName);
+			return new Del(this.transaction(txe), tableName);
 		},
 		/**
-		 * 指定されたステートメントとパラメータから、SQLを実行するためのオブジェクトを生成します。
+		 * 指定されたステートメントとパラメータから、SQLを実行するためのオブジェクトを生成します
 		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
 		 * @param {String} statement SQLステートメント
 		 * @param {Array} parameters パラメータ
-		 * @param {SQLTransactionWrapper} [txw] トランザクション
+		 * @param {TransactionalExecutor} [txe] TransactionalExecutorクラス
 		 * @returns {Sql} Sqlオブジェクト
 		 */
-		sql: function(statement, parameters, txw) {
-			checkTransaction('sql', txw);
+		sql: function(statement, parameters, txe) {
+			isTransactionalExecutor('sql', txe);
 
 			if (!isString(statement)) {
 				throwFwError(ERR_CODE_INVALID_STATEMENT, 'sql');
@@ -1578,27 +1424,21 @@
 				throwFwError(ERR_CODE_TYPE_NOT_ARRAY, 'sql');
 			}
 
-			return new Sql(txw ? txw : new SQLTransactionWrapper(this._db, null), statement,
-					parameters);
+			return new Sql(this.transaction(txe), statement, parameters);
 		},
 		/**
-		 * 指定された複数のSQLを同一トランザクションで実行するためのオブジェクトを生成します。
+		 * 指定された複数のSQLを同一トランザクションで実行するためのオブジェクトを生成します
 		 *
 		 * @memberOf DatabaseWrapper
 		 * @function
-		 * @param {String} statement テーブル名
-		 * @param {Array} parameters パラメータ
-		 * @returns {Transaction} Transactionオブジェクト
+		 * @param {TransactionalExecutor} [txe] TransactionalExecutorクラス
+		 * @returns {TransactionalExecutor} TransactionalExecutorオブジェクト
 		 */
-		transaction: function(txw) {
-			checkTransaction('sql', txw);
-			return new Transaction(txw ? txw : new SQLTransactionWrapper(this._db, null));
+		transaction: function(txe) {
+			isTransactionalExecutor('transaction', txe);
+			return txe ? txe._getUnlockedExecutor() : new TransactionalExecutor(this._db);
 		}
 	});
-
-	function WebSqlDatabase() {
-	// 空コンストラクタ
-	}
 
 	/**
 	 * Web SQL Database
