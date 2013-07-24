@@ -1085,7 +1085,6 @@
 		 */
 		select: function(tableName, columns, txe) {
 			validTableName('select', tableName);
-			isTransactionalExecutor('select', txe);
 
 			if (!$.isArray(columns) && columns !== '*') {
 				throwFwError(ERR_CODE_INVALID_COLUMN_NAME, 'select');
@@ -1148,7 +1147,6 @@
 		 */
 		insert: function(tableName, values, txe) {
 			validTableName('insert', tableName);
-			isTransactionalExecutor('insert', txe);
 
 			if (values != null && !$.isArray(values) && !$.isPlainObject(values)) {
 				throwFwError(ERR_CODE_INVALID_VALUES, 'insert');
@@ -1187,7 +1185,6 @@
 		 */
 		update: function(tableName, values, txe) {
 			validTableName('update', tableName);
-			isTransactionalExecutor('update', txe);
 
 			if (!$.isPlainObject(values)) {
 				throwFwError(ERR_CODE_INVALID_VALUES, 'update');
@@ -1208,7 +1205,6 @@
 		 */
 		del: function(tableName, txe) {
 			validTableName('del', tableName);
-			isTransactionalExecutor('del', txe);
 
 			return new Del(this.transaction(txe), tableName);
 		},
@@ -1223,8 +1219,6 @@
 		 * @returns {Sql} Sqlオブジェクト
 		 */
 		sql: function(statement, parameters, txe) {
-			isTransactionalExecutor('sql', txe);
-
 			if (!isString(statement)) {
 				throwFwError(ERR_CODE_INVALID_STATEMENT, 'sql');
 			}
