@@ -3653,17 +3653,18 @@
 	}
 
 	/**
-	 * ObserevableItemかどうかを判定します。
+	 * ObserevableItem(createObservableItemで作成したオブジェクト)かどうかを判定します。
+	 * <p>
+	 * DataModelから作成したDataItemの場合はfalseを返します。
+	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @memberOf h5.core.data
 	 * @returns {Boolean} ObservableItemかどうか
 	 */
 	function isObservableItem(obj) {
-		if (obj instanceof ObservableItem) {
-			return true;
-		}
-		return false;
+		// コンストラクタ名が'DataItem'かつ、getModelメソッドがない場合はObservableItemと判定する。
+		return !!(obj && obj.constructor && obj.constructor.name === 'DataItem' && !$.isFunction(obj.getModel));
 	}
 
 	//--------------------------------------------
