@@ -2790,7 +2790,7 @@ $(function() {
 
 	asyncTest(
 			'progressのtxにSQLをaddして実行',
-			13,
+			19,
 			function() {
 				if (!h5.api.sqldb.isSupported) {
 					expect(1);
@@ -2828,6 +2828,7 @@ $(function() {
 											.execute()
 											.progress(
 													function(rs2, tx2) {
+														ok(rs2 instanceof Array, '実行結果は配列で返ってくること');
 														strictEqual(rs2[0].rows.length, 0,
 																'配列の0番目に、db.sql()の実行結果(ResultSet)が格納されていること。');
 														strictEqual(rs2[0].insertId, 2,
@@ -2845,6 +2846,36 @@ $(function() {
 																'配列の3番目に、db.update()の実行結果(rowsAffected)が格納されていること。');
 														ok(tx._db && tx._tx && tx._tasks,
 																'第二引数はトランザクションであること。');
+
+														var ins2 = db.insert(TABLE_NAME, {
+															col1: 'txtest3',
+															col2: 'rerere2',
+															col3: 888
+														});
+
+														tx2
+																.add(ins2)
+																.execute()
+																.done(
+																		function(rs3) {
+																			ok(
+																					rs3 instanceof Array,
+																					'実行したStatementが結果が1件のみでも、実行結果は配列で返ってくること');
+																			deepEqual(rs3[0], [4],
+																					'配列の1番目に、db.insert()の実行結果(insertIdを保持する配列)が格納されていること。');
+																			start();
+																		})
+																.progress(
+																		function(rs3, tx3) {
+																			ok(
+																					rs3 instanceof Array,
+																					'実行したStatementが結果が1件のみでも、実行結果は配列で返ってくること');
+																			deepEqual(rs3[0], [4],
+																					'配列の1番目に、db.insert()の実行結果(insertIdを保持する配列)が格納されていること。');
+																			ok(tx._db && tx._tx
+																					&& tx._tasks,
+																					'第二引数はトランザクションであること。');
+																		});
 													})
 											.done(
 													function(rs2) {
@@ -2863,7 +2894,6 @@ $(function() {
 																'配列の2番目に、db.select()の実行結果(rows)が格納されていること。');
 														strictEqual(rs2[3], 1,
 																'配列の3番目に、db.update()の実行結果(rowsAffected)が格納されていること。');
-														start();
 													});
 								}).fail(function() {
 							ok(false, 'db.transaction()テスト失敗。');
@@ -3441,6 +3471,36 @@ $(function() {
 			equal(e.code, ERR.ERR_CODE_RETRY_SQL, e.code + ': ' + e.message);
 		}).done(function() {
 			ok(false, 'エラーが発生していないためテスト失敗');
+		});
+	});
+
+	asyncTest('progress()で返ってきたtxを変数で保存しトランザクションのスコープ外でtx.execute()を実行する', 1, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var sql = db.sql('INSERT INTO ' + TABLE_NAME + ' VALUES (?, ?, ?)', ['txtest', 10, 20000]);
+		var ins = db.insert(TABLE_NAME, {
+			col1: 'txtest2',
+			col2: 'rerere',
+			col3: 777
+		});
+		var transaction = db.transaction().add(sql);
+		var txe = null;
+
+		transaction.execute().progress(function(rs, tx) {
+			txe = tx;
+		}).done(function() {
+			txe.add(ins).execute().fail(function(e) {
+				ok(true, 'トランザクションのスコープ外でexecute()を実行したのでエラーが発生すること。' + e.code + ': ' + e.message);
+				start();
+			}).done(function() {
+				ok(false, 'エラーが発生していないためテスト失敗');
+				start();
+			});
 		});
 	});
 

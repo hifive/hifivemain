@@ -106,6 +106,7 @@
 	//
 	// =========================================================================
 	var getDeferred = h5.async.deferred;
+	var format = h5.u.str.format;
 
 	// =========================================================================
 	//
@@ -191,7 +192,13 @@
 	 * 既にexecuteSql()の実行が完了した、またはexecute()が実行中の場合はエラーをスローします
 	 */
 	function executeCalled(recentTask) {
-		if (recentTask && (recentTask.deferred.state() !== 'pending' || !recentTask.result)) {
+		if (!recentTask) {
+			return;
+		}
+
+		var dfd = recentTask.deferred;
+
+		if (isRejected(dfd) || isResolved(dfd) || !recentTask.result) {
 			throwFwError(ERR_CODE_RETRY_SQL);
 		}
 	}
@@ -267,7 +274,7 @@
 	/**
 	 * Statementクラス
 	 * <p>
-	 * このクラスを継承しているクラスはTransaction.add()で追加できる。
+	 * このクラスを継承しているクラスはTransactionalExecutor.add()で追加できる。
 	 *
 	 * @class
 	 * @name Statement
@@ -284,7 +291,9 @@
 		 * SQL文を実行します
 		 */
 		execute: function() {
-			return this._executor.add(this).execute();
+			return this._executor.add(this)._execute(function(results) {
+				return results[0]; // 配列に包まれていない実行結果を返す
+			});
 		}
 	});
 
@@ -372,9 +381,9 @@
 		 * </ul>
 		 *
 		 * @function
-		 * @memberOf Transaction
+		 * @memberOf TransactionalExecutor
 		 * @param {Insert|Update|Del|Select|Sql} statement Statementクラスのインスタンス
-		 * @return {Transaction} Transactionオブジェクト
+		 * @return {TransactionalExecutor} Transactionオブジェクト
 		 */
 		add: function(statement) {
 			if (!(statement instanceof Statement)) {
@@ -384,58 +393,22 @@
 			var recentTask = this._getRecentTask();
 
 			// execute()実行中はadd()できない
-			if (!recentTask || !!recentTask.result) {
+			if (!recentTask || recentTask.result) {
 				this._queue.push(statement);
 			}
 
 			return this;
 		},
 		/**
-		 * add()で追加された順にSQLを実行します
-		 * <p>
-		 * 実行結果は、戻り値であるPromiseオブジェクトのprogress()に指定したコールバック関数、またはdone()に指定したコールバック関数に返されます。
+		 * SQLを実行します
 		 *
-		 * <pre>
-		 *  db.transaction()
-		 *   .add(db.insert('USER', {ID:10, NAME:TANAKA}))
-		 *   .add(db.insert('USER', {ID:11, NAME:YOSHIDA}))
-		 *   .add(db.insert('USER', {ID:12, NAME:SUZUKI})).execute().done(function(rs) {
-		 *  　rs // 第一引数: 実行結果
-		 *  });
-		 * </pre>
-		 *
-		 * 実行結果は<b>配列(Array)</b>で返され、結果の格納順序は、<b>add()で追加した順序</b>に依存します。<br>
-		 * 上記例の場合、3件 db.insert()をadd()で追加しているので、実行結果rsには3つのROWIDが格納されています。( [1, 2, 3]のような構造になっている )
-		 * <p>
-		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
-		 *
-		 * <pre>
-		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
-		 * 　db.transaction(tx)
-		 * 　　.add(db.update('UPDATE STOCK SET PRICE = 2000').where({ID: rs.item(0).ID}))
-		 * 　　.execute();
-		 *  });
-		 * </pre>
-		 *
-		 * select().execute()で返ってきたトランザクションを、db.transaction()の引数に指定することで、db.select()とdb.transaction()は同一トランザクションで実行されます。 *
-		 * <p>
-		 * <h5>1.1.8からの仕様変更</h5>
-		 * execute()が返すPromiseオブジェクトのコールバックが持つ第二引数<b>TransactionalExecutor</b>インスタンスに、
-		 * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
-		 * <p>
-		 * 下記のサンプルコードは、Statementインスタンスをtx.add()することにより、db.select()と同一トランザクションでSQLを実行しています。
-		 *
-		 * <pre>
-		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
-		 * 　　tx.add(db.update('UPDATE STOCK SET PRICE = 2000').where({ID: rs.item(0).ID})).execute();
-		 *  });
-		 * </pre>
-		 *
+		 * @private
 		 * @function
 		 * @memberOf TransactionalExecutor
-		 * @returns {Promise} Promiseオブジェクト
+		 * @param {Function(Array)} completeCallback SQLの実行が全て完了し、notifyが呼ばれる直前に実行されるコールバック関数
+		 * @return {TransactionalExecutor} TransactionalExecutorオブジェクト
 		 */
-		execute: function() {
+		_execute: function(completeCallback) {
 			var that = this;
 			var df = this._df;
 			var queue = this._queue;
@@ -443,9 +416,9 @@
 
 			function executeSql() {
 				if (queue.length === 0) {
-					var unwrapedResult = results.length === 1 ? results[0] : results;
-					that._setResult.apply(that, [unwrapedResult]);
-					df.notify(unwrapedResult, that);
+					var ret = completeCallback(results);
+					that._setResult.apply(that, [ret]);
+					df.notify(ret, that);
 					return;
 				}
 
@@ -511,6 +484,56 @@
 
 			this._df = getDeferred();
 			return df.promise();
+		},
+		/**
+		 * add()で追加された順にSQLを実行します
+		 * <p>
+		 * 実行結果は、戻り値であるPromiseオブジェクトのprogress()に指定したコールバック関数、またはdone()に指定したコールバック関数に返されます。
+		 *
+		 * <pre>
+		 *  db.transaction()
+		 *   .add(db.insert('USER', {ID:10, NAME:TANAKA}))
+		 *   .add(db.insert('USER', {ID:11, NAME:YOSHIDA}))
+		 *   .add(db.insert('USER', {ID:12, NAME:SUZUKI})).execute().done(function(rs) {
+		 *  　rs // 第一引数: 実行結果
+		 *  });
+		 * </pre>
+		 *
+		 * 実行結果は<b>配列(Array)</b>で返され、結果の格納順序は、<b>add()で追加した順序</b>に依存します。<br>
+		 * 上記例の場合、3件 db.insert()をadd()で追加しているので、実行結果rsには3つのROWIDが格納されています。( [1, 2, 3]のような構造になっている )
+		 * <p>
+		 * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
+		 *
+		 * <pre>
+		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
+		 * 　db.transaction(tx)
+		 * 　　.add(db.update('UPDATE STOCK SET PRICE = 2000').where({ID: rs.item(0).ID}))
+		 * 　　.execute();
+		 *  });
+		 * </pre>
+		 *
+		 * select().execute()で返ってきたトランザクションを、db.transaction()の引数に指定することで、db.select()とdb.transaction()は同一トランザクションで実行されます。 *
+		 * <p>
+		 * <h5>1.1.8からの仕様変更</h5>
+		 * execute()が返すPromiseオブジェクトのコールバックが持つ第二引数<b>TransactionalExecutor</b>インスタンスに、
+		 * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+		 * <p>
+		 * 下記のサンプルコードは、Statementインスタンスをtx.add()することにより、db.select()と同一トランザクションでSQLを実行しています。
+		 *
+		 * <pre>
+		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
+		 * 　　tx.add(db.update('UPDATE STOCK SET PRICE = 2000').where({ID: rs.item(0).ID})).execute();
+		 *  });
+		 * </pre>
+		 *
+		 * @function
+		 * @memberOf TransactionalExecutor
+		 * @returns {Promise} Promiseオブジェクト
+		 */
+		execute: function() {
+			return this._execute(function(results) {
+				return results; // add()されたStatementの数に関係なく、結果は配列に包んで返す
+			});
 		},
 		/**
 		 * SQLの実行結果を受け取ることができる、Promiseオブジェクトを取得します
@@ -653,7 +676,7 @@
 			var statement = '';
 			var where = this._where;
 
-			statement = h5.u.str.format(SELECT_SQL_FORMAT, this._columns, this._tableName);
+			statement = format(SELECT_SQL_FORMAT, this._columns, this._tableName);
 
 			if ($.isPlainObject(where)) {
 				var conditions = [];
@@ -720,7 +743,7 @@
 			var parameters = this._parameters;
 
 			if (values.length === 0) {
-				statements.push(h5.u.str.format(INSERT_SQL_EMPTY_VALUES, this._tableName));
+				statements.push(format(INSERT_SQL_EMPTY_VALUES, this._tableName));
 				parameters.push([]);
 				return;
 			}
@@ -729,7 +752,7 @@
 				var valueObj = values[i];
 
 				if (valueObj == null) {
-					statements.push(h5.u.str.format(INSERT_SQL_EMPTY_VALUES, this._tableName));
+					statements.push(format(INSERT_SQL_EMPTY_VALUES, this._tableName));
 					parameters.push([]);
 				} else if ($.isPlainObject(valueObj)) {
 					var value = [];
@@ -742,8 +765,8 @@
 						param.push(valueObj[prop]);
 					}
 
-					statements.push(h5.u.str.format(INSERT_SQL_FORMAT, this._tableName, column
-							.join(', '), value.join(', ')));
+					statements.push(format(INSERT_SQL_FORMAT, this._tableName, column.join(', '),
+							value.join(', ')));
 					parameters.push(param);
 				}
 			}
@@ -869,7 +892,7 @@
 				this._parameters.push(values[prop]);
 			}
 
-			statement = h5.u.str.format(UPDATE_SQL_FORMAT, this._tableName, columns.join(', '));
+			statement = format(UPDATE_SQL_FORMAT, this._tableName, columns.join(', '));
 
 			if ($.isPlainObject(where)) {
 				var conditions = [];
@@ -988,7 +1011,7 @@
 			var statement = '';
 			var where = this._where;
 
-			statement = h5.u.str.format(DELETE_SQL_FORMAT, this._tableName);
+			statement = format(DELETE_SQL_FORMAT, this._tableName);
 
 			if ($.isPlainObject(where)) {
 				var conditions = [];
