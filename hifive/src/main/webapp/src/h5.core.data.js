@@ -605,7 +605,7 @@
 	 * schemaが正しいかどうか判定する。正しくない場合はエラーを投げる。
 	 *
 	 * @private
-	 * @param {Object} schema schemaオブジェクト
+	 * @param {Object} schema schemaオブジェクト。データモデルのディスクリプタに指定されたスキーマなら継承関係は計算済み。
 	 * @param {Boolean} [isDataModelSchema]
 	 *            データモデルのスキーマかどうか。データモデルのスキーマならidチェックが必要で、type指定に@データモデル指定が可能。
 	 * @param {Object} [manager] DataManagerオブジェクト。データモデルのスキーマチェック時には必須。
@@ -617,6 +617,7 @@
 			// schemaがオブジェクトじゃないならエラー
 			throwFwError(ERR_CODE_REQUIRE_SCHEMA);
 		}
+
 		var errorReason = [];
 
 		// try-catchで囲うことで、必ずERR_CODE_INVALID_SCHEMAエラーを投げられるようにしている。
@@ -2150,7 +2151,7 @@
 	 * @name EventDispatcher
 	 */
 	function EventDispatcher() {
-		// 空コンストラクタ
+	// 空コンストラクタ
 	}
 
 	/**
@@ -2780,7 +2781,7 @@
 		 * @class Sequence
 		 */
 		function Sequence() {
-			// 空コンストラクタ
+		// 空コンストラクタ
 		}
 		$.extend(Sequence.prototype, methods);
 
@@ -3676,9 +3677,8 @@
 	 * @returns {Boolean} ObservableItemかどうか
 	 */
 	function isObservableItem(obj) {
-		// コンストラクタ名が'DataItem'かつ、getModelメソッドがない場合はObservableItemと判定する。
-		return !!(obj && obj.constructor && obj.constructor.name === 'DataItem' && !$
-				.isFunction(obj.getModel));
+		// _itemValueCheckFuncsを持っているかつ、getModelメソッドがない場合はObservableItemと判定する。
+		return !!(obj && obj.constructor && obj._itemValueCheckFuncs && !$.isFunction(obj.getModel));
 	}
 
 	//--------------------------------------------
