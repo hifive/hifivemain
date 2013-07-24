@@ -17,19 +17,19 @@
  */
 
 function Select() {
-	//
+//
 }
 function Insert() {
-	//
+//
 }
 function Update() {
-	//
+//
 }
 function Del() {
-	//
+//
 }
 function Sql() {
-	//
+//
 }
 
 /**
@@ -55,13 +55,27 @@ function Sql() {
  * </pre>
  *
  * db.select().execute()で返ってきたトランザクションを、db.update()の第三引数に指定することで、db.selec()とdb.update()は同一トランザクションで実行されます。
+ * <p>
+ * <h5>ver1.1.8からの変更点</h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(<b>TransactionalExecutor</b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * <p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.select()と同一トランザクションでSQLを実行します。
+ *
+ * <pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME:'ballA'}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.select('STOCK', ['COUNT']).where({ID: rs.item(0).ID})).execute().done(function(rows) {
+ * 　　　alert(rows.item(0).COUNT);
+ * 　　});
+ *  });
+ * </pre>
  *
  * @function
  * @memberOf Select
  * @returns {Promise} Promiseオブジェクト
  */
 Select.prototype.execute = function() {
-	//
+//
 };
 
 /**
@@ -86,14 +100,28 @@ Select.prototype.execute = function() {
  *  });
  * </pre>
  *
- * ※1のprogress()で返ってきたトランザクション(tx)を、※2のinsert()の第三引数に指定することで、2つのdb.insert()は同一トランザクションで実行されます。
+ * ※1のprogress()で返ってきたトランザクション(tx)を、※2のinsert()の第三引数に指定することで、2つのdb.insert()は同一トランザクションで実行されます。 *
+ * <p>
+ * <h5>ver1.1.8からの変更点</h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(<b>TransactionalExecutor</b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * <p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.insert()と同一トランザクションでSQLを実行します。
+ *
+ * <pre>
+ *  db.insert('PRODUCT', {ID:11, NAME:'ballA'}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.insert('PRODUCT', {ID:12, NAME:'ballB'})).execute().done(function() {
+ * 　　　alert('success');
+ * 　　});
+ *  });
+ * </pre>
  *
  * @function
  * @memberOf Insert
  * @returns {Promise} Promiseオブジェクト
  */
 Insert.prototype.execute = function() {
-	//
+//
 };
 
 /**
@@ -116,13 +144,27 @@ Insert.prototype.execute = function() {
  * </pre>
  *
  * db.select().execute()で返ってきたトランザクションを、db.update()の第三引数に指定することで、db.select()とdb.update()は同一トランザクションで実行されます。
+ * <p>
+ * <h5>ver1.1.8からの変更点</h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(<b>TransactionalExecutor</b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * <p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.select()と同一トランザクションでSQLを実行します。
+ *
+ * <pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME: 'ballA'}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.update('STOCK', {COUNT: 10}).where({ID: rs.item(0).ID})).execute().done(function() {
+ * 　　　alert('success');
+ * 　　});
+ *  });
+ * </pre>
  *
  * @function
  * @memberOf Update
  * @returns {Promise} Promiseオブジェクト
  */
 Update.prototype.execute = function() {
-	//
+//
 };
 
 /**
@@ -144,14 +186,28 @@ Update.prototype.execute = function() {
  *  });
  * </pre>
  *
- * db.select().execute()で返ってきたトランザクションを、db.del()の第二引数に指定することで、db.select()とdb.del()は同一トランザクションで実行されます。
+ * db.select().execute()で返ってきたトランザクションを、db.del()の第二引数に指定することで、db.select()とdb.del()は同一トランザクションで実行されます。 *
+ * <p>
+ * <h5>ver1.1.8からの変更点</h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(<b>TransactionalExecutor</b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * <p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.del()と同一トランザクションでSQLを実行します。
+ *
+ * <pre>
+ *  db.del('USER').where({ID:1}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.del('ROLE').where({ID:1})).execute().done(function() {
+ * 　　　alert('success');
+ * 　　});
+ *  });
+ * </pre>
  *
  * @function
  * @memberOf Del
  * @returns {Promise} Promiseオブジェクト
  */
 Del.prototype.execute = function() {
-	//
+//
 };
 
 /**
@@ -225,14 +281,26 @@ Del.prototype.execute = function() {
  *  });
  * </pre>
  *
- * db.select().execute()で返ってきたトランザクションを、db.sql()の第三引数に指定することで、db.select()とdb.sql()は同一トランザクションで実行されます。
+ * db.select().execute()で返ってきたトランザクションを、db.sql()の第三引数に指定することで、db.select()とdb.sql()は同一トランザクションで実行されます。 *
+ * <p>
+ * <h5>ver1.1.8からの変更点</h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(<b>TransactionalExecutor</b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * <p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.select()と同一トランザクションでSQLを実行します。
+ *
+ * <pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME:'ballA'}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.sql('SELECT COUNT FROM STOCK WHERE ID = '+ rs.item(0).ID')).execute().done(function(rs2) {
+ * 　　　alert(rs2.rows.item(0).COUNT);
+ * 　　});
+ *  });
+ * </pre>
  *
  * @function
  * @memberOf Sql
  * @returns {Promise} Promiseオブジェクト
  */
 Sql.prototype.execute = function() {
-	//
+//
 };
-
-
