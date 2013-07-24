@@ -304,10 +304,15 @@
 	// =========================================================================
 
 	/**
-	 * SQLTransaction拡張クラス
+	 * SQLTransaction管理・実行クラス
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。<br>
-	 * Insert/Select/Update/Del/Sql/Transactionオブジェクトのexecute()が返す、Promiseオブジェクトのprogress()の引数に存在します。
+	 * <b>h5.api.sqldb.open().transaction()</b>を呼び出した場合と、
+	 * Insert/Select/Update/Del/Sqlオブジェクトのexecute()が返すPromiseオブジェクトの、progressコールバックの引数に存在します。
+	 * <p>
+	 * ver1.1.7までは<b>Transaction</b>クラスと<b>TransactionWrapper</b>クラスが別々に存在していましたが、 ver1.1.8からは<b>TransactionalExecutor</b>クラスに統合されました。
+	 * <p>
+	 * 本クラスに存在する<b>execute()</b>と<b>add()</b>の使用方法は、Transactionクラスのexecute()とadd()と同じです。
 	 *
 	 * @class
 	 * @name TransactionalExecutor
@@ -512,17 +517,17 @@
 		 *  });
 		 * </pre>
 		 *
-		 * select().execute()で返ってきたトランザクションを、db.transaction()の引数に指定することで、db.select()とdb.transaction()は同一トランザクションで実行されます。 *
+		 * select().execute()で返ってきたトランザクションを、db.transaction()の引数に指定することで、db.select()とdb.transaction()は同一トランザクションで実行されます。
 		 * <p>
-		 * <h5>1.1.8からの仕様変更</h5>
-		 * execute()が返すPromiseオブジェクトのコールバックが持つ第二引数<b>TransactionalExecutor</b>インスタンスに、
+		 * <h5>ver1.1.8からの変更点</h5>
+		 * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(<b>TransactionalExecutor</b>インスタンス)に、
 		 * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
 		 * <p>
 		 * 下記のサンプルコードは、Statementインスタンスをtx.add()することにより、db.select()と同一トランザクションでSQLを実行しています。
 		 *
 		 * <pre>
-		 *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
-		 * 　　tx.add(db.update('UPDATE STOCK SET PRICE = 2000').where({ID: rs.item(0).ID})).execute();
+		 *  db.transaction().add(db.select('PRODUCT', ['ID']).where({NAME: 'ballA'})).execute().progress(function(rsArray, tx) {
+		 * 　　tx.add(db.sql(' STOCK', {COUNT:20}).where({ID: rsArray[0].item(0).ID})).execute();
 		 *  });
 		 * </pre>
 		 *
