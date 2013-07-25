@@ -3504,6 +3504,30 @@ $(function() {
 		});
 	});
 
+	asyncTest('何もaddせずにexecute()を実行', 4, function() {
+		if (!h5.api.sqldb.isSupported) {
+			expect(1);
+			ok(false, 'このブラウザはWeb SQL Databaseをサポートしていません。');
+			start();
+			return;
+		}
+
+		var transaction = db.transaction();
+		var seqNo = 1;
+
+		transaction.execute().progress(function(rs, tx) {
+			strictEqual(seqNo++, 1, '1番目に実行されること。');
+			deepEqual(rs, [], 'SQLを実行しておらず結果が存在しないため、空の配列が返ってくること。');
+		}).done(function(rs) {
+			strictEqual(seqNo++, 2, '2番目に実行されること。');
+			deepEqual(rs, [], 'SQLを実行しておらず結果が存在しないため、空の配列が返ってくること。');
+			start();
+		}).fail(function() {
+			ok(false, 'エラーが発生したためテスト失敗');
+			start();
+		});
+	});
+
 	//=============================
 	// Definition
 	//=============================
