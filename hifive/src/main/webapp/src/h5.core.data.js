@@ -3713,6 +3713,7 @@
 		 * 配列の長さを表します。このプロパティは読み取り専用で使用してください。
 		 *
 		 * @since 1.1.0
+		 * @name length
 		 * @memberOf ObservableArray
 		 * @type Number
 		 */
