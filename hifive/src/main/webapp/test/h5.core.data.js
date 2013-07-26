@@ -9539,6 +9539,48 @@ $(function() {
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 	});
 
+	test('DateItemのセット時にエラーが発生した時、その後の正常な操作についてイベントが発火すること', 3, function() {
+		var model = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				v: null,
+				ary: {
+					type: 'string[]'
+				}
+			}
+		});
+		var item = model.create({
+			id: '001'
+		});
+		model.addEventListener('itemsChange', modelEventListener);
+		item.addEventListener('change', itemEventListener);
+
+		order = [];
+		try {
+			item.set('ary', 0);
+		} catch (e) {
+			// error
+		}
+		deepEqual(order, [], 'set時にエラーが発生した場合はイベントは発火しないこと');
+
+		order = [];
+		item.set('v', 'a');
+		deepEqual(order, ['item', 'model', 'manager'], 'set時にイベントが発火すること');
+
+		try {
+			item.set('ary', 0);
+		} catch (e) {
+			// error
+		}
+		order = [];
+		item.get('ary').copyFrom(['a', 'b']);
+		deepEqual(order, ['item', 'model', 'manager'], 'aryプロパティ操作時にイベントが発火すること');
+
+	});
+
 	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること', 9, function() {
 		var id = item.get('id');
 		dataModel1.create({

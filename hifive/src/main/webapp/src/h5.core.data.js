@@ -3501,9 +3501,6 @@
 			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
 			 */
 			set: function(var_args) {
-				// isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
-				this._isInSet = true;
-
 				var isAlreadyInUpdate = false;
 				//引数はオブジェクト1つ、または(key, value)で呼び出せる
 				var valueObj = var_args;
@@ -3530,29 +3527,42 @@
 					// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
 					// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
 					// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
-					isAlreadyInUpdate = model._manager ? model._manager.isInUpdate() : false;
+					isAlreadyInUpdate = model._manager.isInUpdate();
 					if (!isAlreadyInUpdate) {
 						model._manager.beginUpdate();
 					}
 				}
+				// isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
+				this._isInSet = true;
 
-				var event = itemSetter(this, valueObj, null);
+				try {
+					var event = itemSetter(this, valueObj, null);
 
-				this._isInSet = false;
+					this._isInSet = false;
 
-				if (model) {
-					// データアイテムの場合は、モデルにイベントを渡す
-					if (event) {
-						// 更新した値があればChangeLogを追記
-						addUpdateChangeLog(model, event);
+					if (model) {
+						// データアイテムの場合は、モデルにイベントを渡す
+						if (event) {
+							// 更新した値があればChangeLogを追記
+							addUpdateChangeLog(model, event);
+						}
+						// endUpdateを呼んでイベントを発火
+						if (!isAlreadyInUpdate) {
+							model._manager.endUpdate();
+						}
+					} else if (event) {
+						// ObservableItemなら即発火
+						this.dispatchEvent(event);
 					}
-					// endUpdateを呼んでイベントを発火
-					if (!isAlreadyInUpdate) {
+				} catch (e) {
+					// セット中にエラーが発生した時、
+					// _isInSetフラグをfalseにする
+					// updateセッションをset時に張ったなら解除する。
+					this._isInSet = false;
+					if (!isAlreadyInUpdate && model && model._manager) {
 						model._manager.endUpdate();
 					}
-				} else if (event) {
-					// ObservableItemなら即発火
-					this.dispatchEvent(event);
+					throw e;
 				}
 			},
 
