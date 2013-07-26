@@ -3535,25 +3535,9 @@
 				// isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
 				this._isInSet = true;
 
+				var event = null;
 				try {
-					var event = itemSetter(this, valueObj, null);
-
-					this._isInSet = false;
-
-					if (model) {
-						// データアイテムの場合は、モデルにイベントを渡す
-						if (event) {
-							// 更新した値があればChangeLogを追記
-							addUpdateChangeLog(model, event);
-						}
-						// endUpdateを呼んでイベントを発火
-						if (!isAlreadyInUpdate) {
-							model._manager.endUpdate();
-						}
-					} else if (event) {
-						// ObservableItemなら即発火
-						this.dispatchEvent(event);
-					}
+					event = itemSetter(this, valueObj, null);
 				} catch (e) {
 					// セット中にエラーが発生した時、
 					// _isInSetフラグをfalseにする
@@ -3563,6 +3547,23 @@
 						model._manager.endUpdate();
 					}
 					throw e;
+				}
+
+				this._isInSet = false;
+
+				if (model) {
+					// データアイテムの場合は、モデルにイベントを渡す
+					if (event) {
+						// 更新した値があればChangeLogを追記
+						addUpdateChangeLog(model, event);
+					}
+					// endUpdateを呼んでイベントを発火
+					if (!isAlreadyInUpdate) {
+						model._manager.endUpdate();
+					}
+				} else if (event) {
+					// ObservableItemなら即発火
+					this.dispatchEvent(event);
 				}
 			},
 
