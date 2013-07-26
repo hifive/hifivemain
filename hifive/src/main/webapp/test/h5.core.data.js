@@ -9581,6 +9581,40 @@ $(function() {
 
 	});
 
+	test('DataModel.create時にエラーが発生した時、その後の正常な操作についてイベントが発火すること', 2, function() {
+		var model = manager.createModel({
+			name: 'TestModel',
+			schema: {
+				id: {
+					id: true
+				},
+				v: null,
+				ary: {
+					type: 'string[]'
+				}
+			}
+		});
+		model.addEventListener('itemsChange', modelEventListener);
+
+		order = [];
+		try {
+			model.create({
+				id: '001',
+				ary: 0
+			});
+		} catch (e) {
+			// error
+		}
+		deepEqual(order, [], 'create時にエラーが発生した場合はイベントは発火しないこと');
+
+		order = [];
+		model.create({
+			id: '001',
+			ary: ['a']
+		});
+		deepEqual(order, ['model', 'manager'], 'create時にイベントが発火すること');
+	});
+
 	test('DataItemのcreateで値の変更があった時にchangeイベントハンドラが実行されること', 9, function() {
 		var id = item.get('id');
 		dataModel1.create({
@@ -9660,7 +9694,7 @@ $(function() {
 				val: 'aaaa'
 			});
 		} catch (e) {
-
+			// error
 		} finally {
 			deepEqual(order, [], 'プロパティset時にエラーが発生た場合は、ハンドラは実行されないこと');
 		}
@@ -9699,7 +9733,6 @@ $(function() {
 
 		item.addEventListener('change', itemEventListener);
 
-		var expEvObj = null;
 		order = [];
 		item.addEventListener('change', itemEventListener);
 		var o = item.get('ary');

@@ -2952,49 +2952,57 @@
 			if (!isAlreadyInUpdate) {
 				this._manager.beginUpdate();
 			}
+			try {
+				var actualNewItems = [];
 
-			var actualNewItems = [];
+				var items = wrapInArray(objOrArray);
+				for ( var i = 0, len = items.length; i < len; i++) {
+					var valueObj = items[i];
 
-			var items = wrapInArray(objOrArray);
-			for ( var i = 0, len = items.length; i < len; i++) {
-				var valueObj = items[i];
-
-				var itemId = valueObj[idKey];
-				//idが空文字、null、undefined、はid指定エラー
-				if (itemId === '' || itemId == null) {
-					throwFwError(ERR_CODE_NO_ID);
-				}
-				//idがstringでもintegerでもない場合は制約違反エラー
-				if (!isIntegerValue(itemId, true) && !isString(itemId)) {
-					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, [this.name, idKey]);
-				}
-
-				var storedItem = this._findById(itemId);
-				if (storedItem) {
-					//返す値にstoredItemを追加
-					ret.push(storedItem);
-
-					// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
-					var event = itemSetter(storedItem, valueObj, null, [idKey]);
-					if (!event) {
-						//itemSetterが何も返さなかった = 更新する値が何もない
-						continue;
+					var itemId = valueObj[idKey];
+					//idが空文字、null、undefined、はid指定エラー
+					if (itemId === '' || itemId == null) {
+						throwFwError(ERR_CODE_NO_ID);
+					}
+					//idがstringでもintegerでもない場合は制約違反エラー
+					if (!isIntegerValue(itemId, true) && !isString(itemId)) {
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, [this.name, idKey]);
 					}
 
-					addUpdateChangeLog(this, event);
-				} else {
-					var newItem = new this._itemConstructor(valueObj);
+					var storedItem = this._findById(itemId);
+					if (storedItem) {
+						//返す値にstoredItemを追加
+						ret.push(storedItem);
 
-					this.items[itemId] = newItem;
-					this.size++;
+						// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
+						var event = itemSetter(storedItem, valueObj, null, [idKey]);
+						if (!event) {
+							//itemSetterが何も返さなかった = 更新する値が何もない
+							continue;
+						}
 
-					actualNewItems.push(newItem);
-					ret.push(newItem);
+						addUpdateChangeLog(this, event);
+					} else {
+						var newItem = new this._itemConstructor(valueObj);
+
+						this.items[itemId] = newItem;
+						this.size++;
+
+						actualNewItems.push(newItem);
+						ret.push(newItem);
+					}
 				}
-			}
 
-			if (actualNewItems.length > 0) {
-				addUpdateLog(this, UPDATE_LOG_TYPE_CREATE, actualNewItems);
+				if (actualNewItems.length > 0) {
+					addUpdateLog(this, UPDATE_LOG_TYPE_CREATE, actualNewItems);
+				}
+			} catch (e) {
+				// 途中でエラーが起きた場合も、変更された場合があるので、イベントを上げる。
+				if (!isAlreadyInUpdate) {
+					//既存のアイテムが変更されていればアイテムのイベントを上げる
+					this._manager.endUpdate();
+				}
+				throw e;
 			}
 
 			if (!isAlreadyInUpdate) {
