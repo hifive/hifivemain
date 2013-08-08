@@ -636,10 +636,6 @@
 		get: function(templateId, param) {
 			var cache = this.__cachedTemplates;
 
-			if ($.isEmptyObject(cache)) {
-				return null;
-			}
-
 			if (!isString(templateId) || !$.trim(templateId)) {
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
