@@ -955,7 +955,7 @@ $(function() {
 		var cfhCount = 0;
 		h5.settings.commonFailHandler = function() {
 			cfhCount++;
-		}
+		};
 		var dfd = h5.async.deferred();
 		var indicator = h5.ui.indicator(document, {
 			promises: dfd.promise()
@@ -973,6 +973,4 @@ $(function() {
 		dfd2.reject();
 		strictEqual(cfhCount, 1, '複数のプロミスを渡したとき、まとめて1回だけcommonFailHandlerが実行されること');
 	});
-
-
 });

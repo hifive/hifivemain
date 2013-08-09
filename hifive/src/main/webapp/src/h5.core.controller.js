@@ -1048,9 +1048,16 @@
 					: eventName,
 			handler: function(context) {
 				var event = context.event;
-				// Firefox
-				if (event.originalEvent && event.originalEvent.detail) {
-					event.wheelDelta = -event.detail * 40;
+				// jQuery1.7以降ではwheelDeltaとdetailがjQueryEventにコピーされない。
+				// hifive側でoriginalEventから取った値をコピーする
+				if (event.wheelDelta == null && event.originalEvent && event.originalEvent.wheelDelta != null) {
+					event.wheelDelta = event.originalEvent.wheelDelta;
+				}
+				// Firefox用
+				// wheelDeltaが無く、かつdetailに値がセットされているならwheelDeltaにdetailから計算した値を入れる
+				if (event.wheelDelta == null && event.originalEvent
+						&& event.originalEvent.detail != null) {
+					event.wheelDelta = -event.originalEvent.detail * 40;
 				}
 				func.call(controller, context);
 			}
@@ -1717,7 +1724,7 @@
 	 * @private
 	 * @param {Node} node 探索を開始するルートノード
 	 * @param {String} id テンプレートID
-	 * @retruns {Node} 発見したコメントノード、見つからなかった場合はnull
+	 * @returns {Node} 発見したコメントノード、見つからなかった場合はnull
 	 */
 	function findCommentBindingTarget(rootNode, id) {
 		var childNodes = rootNode.childNodes;
@@ -2064,6 +2071,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name update
 		 * @memberOf Controller.view
@@ -2071,7 +2079,7 @@
 		 */
 		update: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			getView(templateId, this.__controller).update(target, templateId, param);
+			return getView(templateId, this.__controller).update(target, templateId, param);
 		},
 
 		/**
@@ -2080,6 +2088,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name append
 		 * @memberOf Controller.view
@@ -2087,7 +2096,7 @@
 		 */
 		append: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			getView(templateId, this.__controller).append(target, templateId, param);
+			return getView(templateId, this.__controller).append(target, templateId, param);
 		},
 
 		/**
@@ -2096,6 +2105,7 @@
 		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
 		 * @param {String} templateId テンプレートID
 		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
 		 * @function
 		 * @name prepend
 		 * @memberOf Controller.view
@@ -2103,7 +2113,7 @@
 		 */
 		prepend: function(element, templateId, param) {
 			var target = getTarget(element, this.__controller.rootElement, true);
-			getView(templateId, this.__controller).prepend(target, templateId, param);
+			return getView(templateId, this.__controller).prepend(target, templateId, param);
 		},
 
 		/**
@@ -2243,16 +2253,23 @@
 		 * trigger('click', ['a']);
 		 * </pre>
 		 *
-		 * のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。<br>
-		 * (jQueryのtriggerと同様です。)
+		 * のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。(jQuery.triggerと同様です。)
+		 * </p>
+		 * <p>
+		 * 戻り値は、jQueryEventオブジェクトを返します。
 		 * </p>
 		 *
-		 * @param {String} eventName イベント名
+		 * @param {String|jQueryEvent} event イベント名またはjQueryEventオブジェクト
 		 * @param {Object} [parameter] パラメータ
+		 * @returns {jQueryEvent} event イベントオブジェクト
 		 * @memberOf Controller
 		 */
-		trigger: function(eventName, parameter) {
-			$(this.rootElement).trigger(eventName, parameter);
+		trigger: function(event, parameter) {
+			// eventNameが文字列ならイベントを作って投げる
+			// オブジェクトの場合はそのまま渡す。
+			var ev = isString(event) ? $.Event(event) : event;
+			$(this.rootElement).trigger(ev, parameter);
+			return ev;
 		},
 
 		/**
@@ -2599,17 +2616,15 @@
 		 * なお、戻り値に含まれるのはルートコントローラのみです。
 		 *
 		 * @param {String|Element|jQuery} rootElement 検索対象の要素
-		 * @param {Object} [option] オプション（ver.1.1.5以降）
-		 * @param {Boolean} [option.deep=false] 子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.5以降)
-		 * @param {Boolean} [option.initing=false] 初期化中（ready状態になる前）のコントローラも含めるかどうか(ver.1.1.5以降)
+		 * @param {Object} [option] オプション（ver.1.1.7以降）
+		 * @param {Boolean} [option.deep=false] 子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.7以降)
 		 * @param {String|String[]} [option.name=null]
-		 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.5以降)
+		 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.7以降)
 		 * @returns {Controller[]} バインドされているコントローラの配列
 		 * @memberOf ControllerManager
 		 */
 		getControllers: function(rootElement, option) {
 			var deep = option && option.deep;
-			var initing = option && option.initing; //TODO initingは未実装
 			var names = option && option.name ? wrapInArray(option.name) : null;
 
 			var seekRoot = $(rootElement)[0];

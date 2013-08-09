@@ -568,7 +568,7 @@
 		});
 
 		asyncTest(
-				'存在しないテンプレートを読み込む。出力されるログも確認する ※要目視確認',
+				'存在しないテンプレートを読み込む。出力されるログも確認する',
 				20,
 				function() {
 					var errCode = ERR.ERR_CODE_TEMPLATE_AJAX;
@@ -656,7 +656,7 @@
 
 		test('get() 存在しないテンプレートIDを指定してテンプレート取得。', function() {
 			try {
-				h5.core.view.get('aaa');
+				h5.core.view.createView().get('aaa');
 				ok(false, '例外は発生しませんでした。');
 			} catch (e) {
 				ok(true, '存在しないテンプレートIDでgetしたので例外が発生すること。');
@@ -754,7 +754,7 @@
 			});
 		});
 
-		asyncTest('clear() テンプレートをキャッシュから全て削除。', 8, function() {
+		asyncTest('clear() テンプレートをキャッシュから全て削除。', 12, function() {
 			var loadedIds = ['template2', 'template3', 'template4', 'template5'];
 			var view = h5.core.view.createView();
 			var p = view.load(['./template/test2.ejs', './template/test3.ejs',
@@ -771,6 +771,7 @@
 					ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。');
 					try {
 						view.get(id);
+						ok(false, '削除したテンプレートに対してgetView()を行ったのに例外が発生していません。');
 					} catch (e) {
 						ok(true, '削除したテンプレートに対してgetView()を行うと例外が発生すること。' + e.message);
 					}
@@ -1260,7 +1261,6 @@
 					}).fail(function(e) {
 				ok(false, e.message);
 			});
-			;
 		});
 
 		asyncTest('[build#min]getAvailableTemplates() LRUでキャッシュされていること', 20, function() {

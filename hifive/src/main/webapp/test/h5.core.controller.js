@@ -51,8 +51,20 @@ $(function() {
 	// Functions
 	//=============================
 
+	// aspectのリセット
 	function cleanAspects() {
 		h5.settings.aspects = null;
+	}
+
+	// テストでバインドしたコントローラのdispose
+	// #qunit-fixture以下にバインドされているコントローラを全てdisposeする。
+	function disposeQUnitFixtureController() {
+		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
+			deep: true
+		});
+		for ( var i = controllers.length - 1; i >= 0; i--) {
+			controllers[i].dispose();
+		}
 	}
 
 	// タッチイベントの位置を設定する関数
@@ -105,6 +117,59 @@ $(function() {
 			ev.screenX = x;
 			ev.screenY = y;
 			elm.fireEvent('on' + eventName, ev);
+		}
+	}
+
+	// マウスホイールイベントをディスパッチする関数
+	// IE8-ではwheelDeltaをセットできない(createEventObjectでwheelDeltaに値をセットできないため)
+	function dispatchMouseWheelEvent(elm, wheelDelta) {
+		var ev;
+		if (typeof document.onmousewheel !== 'undefined') {
+			if (elm.dispatchEvent) {
+
+				function createUIEvent() {
+					// opera, android2
+					// wheelDeltaが負ならdetailを3、正なら-3のイベントを作成。
+					ev = document.createEvent('UIEvent');
+					ev.initUIEvent('mousewheel', false, false, window, wheelDelta < 0 ? 3 : -3);
+				}
+				try {
+					ev = document.createEvent('WheelEvent');
+
+					if (ev.initWebKitWheelEvent) {
+						// chrome,safari,android3+
+						// wheelDeltaが正ならwheelDeltaYを正、負なら負のイベントを作成。
+						ev.initWebKitWheelEvent(0, wheelDelta > 0 ? 1 : -1, window, 0, 0, 0, 0,
+								false, false, false, false);
+					} else if (ev.initWheelEvent) {
+						// IE9+
+						// wheelDeltaが負ならdetailを3、正なら-3のイベントを作成。
+						ev.initWheelEvent('mousewheel', false, false, window, wheelDelta < 0 ? 3
+								: -3, 0, 0, 0, 0, 0, null, null, 0, 0, 0, 0);
+
+					} else {
+						// android2
+						createUIEvent();
+					}
+				} catch (e) {
+					// opera
+					createUIEvent();
+				}
+				elm.dispatchEvent(ev);
+			} else {
+				// dispatchEventがない場合(IE8-)
+				ev = document.createEventObject();
+				elm.fireEvent('onmousewheel', ev);
+			}
+		} else {
+			// Firefoxの場合
+			ev = document.createEvent('MouseScrollEvents');
+			// wheelDeltaが負ならdetailを3、正なら-3のイベントを作成。
+			ev.initMouseScrollEvent('DOMMouseScroll', ev.canBubble, ev.cancelable, ev.view,
+					wheelDelta < 0 ? 3 : -3, ev.screenX, ev.screenY, ev.clientX, ev.clientY,
+					ev.ctrlKey, ev.altKey, ev.shiftKey, ev.metaKey, ev.button, ev.relatedTarget,
+					ev.axis);
+			elm.dispatchEvent(ev);
 		}
 	}
 
@@ -185,6 +250,7 @@ $(function() {
 									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#controllerTest').remove();
 					h5.settings.commonFailHandler = undefined;
 				}
@@ -238,6 +304,7 @@ $(function() {
 									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#controllerTest').remove();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
@@ -762,34 +829,6 @@ $(function() {
 			start();
 		});
 	});
-
-	asyncTest(
-			'h5.core.controllerManager.getAllControllers() で現在バインドされているすべてのコントローラを取得できること',
-			function() {
-				// 現在バインドされているコントローラを全てunbindする
-				for ( var i = 0, controllers = h5.core.controllerManager.getAllControllers(), l = controllers.length; i < l; i++) {
-					controllers[i].unbind();
-				}
-				var names = ['Test1Controller', 'Test2Controller', 'Test3Controller'];
-				var p = [];
-				for ( var i = 0, l = names.length; i < l; i++) {
-					p[i] = h5.core.controller('#controllerTest', {
-						__name: names[i]
-					});
-				}
-				p[0].readyPromise.done(function() {
-					p[1].readyPromise.done(function() {
-						p[2].readyPromise.done(function() {
-							var controllers = h5.core.controllerManager.getAllControllers();
-							for ( var i = 0, l = controllers.length; i < l; i++) {
-								controllers[i] = controllers[i].__name;
-							}
-							deepEqual(controllers, names, '3つバインドしたコントローラが取得できること');
-							start();
-						});
-					});
-				});
-			});
 
 	asyncTest('h5.core.viewがない時のコントローラの動作', function() {
 		var index = h5.core.controllerManager.getAllControllers().length;
@@ -2562,114 +2601,150 @@ $(function() {
 
 	});
 
-	asyncTest('テンプレートを使用できるか1', function() {
-		var html = '';
+	asyncTest('this.view.get()', 1, function() {
+		var controller = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: ['./template/test8.ejs'],
+			__ready: function() {
+				strictEqual(this.view.get('template8'), '<span class="test">test</span>',
+						'this.view.getでテンプレートからHTML文字列を取得できたか');
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			start();
+		});
+	});
+
+	asyncTest('this.view.append()', 2, function() {
+		var controller = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: ['./template/test8.ejs'],
+			__ready: function() {
+				var $result = $('#controllerResult');
+				$result.append('<div id="viewTest"></div>');
+				var ret = this.view.append($result, 'template8');
+				ok($('#viewTest').next().hasClass('test'), 'view.appendでテンプレートから取得したHTMLを追加できること');
+				strictEqual(ret.get(0), $result.get(0), '戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			start();
+		});
+	});
+
+	asyncTest('this.view.prepend()', 2, function() {
+		var controller = h5.core
+				.controller('#controllerTest',
+						{
+							__name: 'TestController',
+							__templates: ['./template/test8.ejs'],
+							__ready: function() {
+								var $result = $('#controllerResult');
+								$result.prepend('<div id="viewTest"></div>');
+								var ret = this.view.prepend($result, 'template8');
+								ok($('#viewTest').prev().hasClass('test'),
+										'view.prependでテンプレートから取得したHTMLを追加できること');
+								strictEqual(ret.get(0), $result.get(0),
+										'戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
+							}
+						}).readyPromise.done(function() {
+			this.unbind();
+			start();
+		});
+	});
+
+	asyncTest('this.view.update()', 3, function() {
+		var controller = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: ['./template/test8.ejs'],
+			__ready: function() {
+				var $result = $('#controllerResult');
+				$result.append('<div id="viewTest"><span class="original-span"></span></div>');
+				var ret = this.view.update('#viewTest', 'template8');
+				ok(!$('#viewTest').children().hasClass('original-span'),
+						'view.updateで指定した要素がもともと持っていた子要素は無くなっていること');
+				ok($('#viewTest').children().hasClass('test'),
+						'view.updateでテンプレートから取得したHTMLが指定した要素の子要素になること');
+				strictEqual(ret.get(0), $('#viewTest').get(0), '戻り値は追加先のDOM要素(jQueryオブジェクトであること)');
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			start();
+		});
+	});
+
+	asyncTest('view.append()に指定されたDOM要素が{window*},{document*}である時にエラーが発生すること', 7, function() {
+		var append = '';
+		var append2 = '';
+		var prepend = '';
+		var viewError1 = null;
+		var viewError2 = null;
+		var viewError3 = null;
+		var viewError4 = null;
 		var controller = {
 			__name: 'TestController',
 
-			__templates: ['./template/test2.ejs'],
+			__templates: ['./template/test2.ejs', './template/test3.ejs', './template/test8.ejs'],
 
 			'input[type=button] click': function(context) {
-				html = this.view.get('template2');
+				$('#controllerResult').append(
+						'<div id="appendViewTest"><span class="abc">abc</span></div>');
+				$('#controllerResult').append(
+						'<div id="appendViewTest2"><span class="abc">abc</span></div>');
+				$('#controllerResult').append(
+						'<div id="prependViewTest"><span class="abc">abc</span></div>');
+				this.view.append('#appendViewTest', 'template8', {});
+				this.view.append('{#appendViewTest2}', 'template8', {});
+				this.view.prepend('#prependViewTest', 'template8', {});
+
+				append = $(this.$find('#appendViewTest').children('span')[1]).text();
+				append2 = $(this.$find('#appendViewTest2').children('span')[1]).text();
+				prepend = $(this.$find('#prependViewTest').children('span')[0]).text();
+				try {
+					this.view.append('{window}', 'template8', {});
+				} catch (e) {
+					viewError1 = e;
+				}
+				try {
+					this.view.update('{window.a}', 'template8', {});
+				} catch (e) {
+					viewError2 = e;
+				}
+				try {
+					this.view.prepend('{navigator}', 'template8', {});
+				} catch (e) {
+					viewError3 = e;
+				}
+				try {
+					this.view.append('{navigator.userAgent}', 'template8', {});
+				} catch (e) {
+					viewError4 = e;
+				}
+
 			}
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
-			ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
+			strictEqual(append, 'test', 'this.view.appendでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
+			strictEqual(append2, 'test',
+					'this.view.appendでテンプレートからHTML文字列を取得し、グローバルセレクタで指定した要素に出力できたか');
+			strictEqual(prepend, 'test', 'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
+
+			var errorCode = ERR.ERR_CODE_INVALID_TEMPLATE_SELECTOR;
+			strictEqual(viewError1.code, errorCode,
+					'this.update/append/prependで、"{window}"を指定するとエラーになるか');
+			strictEqual(viewError2.code, errorCode,
+					'this.update/append/prependで、"{window.xxx}"を指定するとエラーになるか');
+			strictEqual(viewError3.code, errorCode,
+					'this.update/append/prependで、"{navigator}"を指定するとエラーになるか');
+			strictEqual(viewError4.code, errorCode,
+					'this.update/append/prependで、"{navigator.xxx}"を指定するとエラーになるか');
+
 			testController.unbind();
 			start();
 		});
 	});
-
-	asyncTest(
-			'テンプレートを使用できるか2 view.append()に指定されたDOM要素が{window*},{document*}である時にエラーが発生すること',
-			function() {
-				var html = '';
-				var updateView = 0;
-				var append = '';
-				var append2 = '';
-				var prepend = '';
-				var viewError1 = null;
-				var viewError2 = null;
-				var viewError3 = null;
-				var viewError4 = null;
-				var controller = {
-					__name: 'TestController',
-
-					__templates: ['./template/test2.ejs', './template/test3.ejs',
-							'./template/test8.ejs'],
-
-					'input[type=button] click': function(context) {
-						html = this.view.get('template2', {});
-						this.view.update('#controllerResult', 'template3', {
-							ar: 2
-						});
-						updateView = $('#controllerResult').find('table').length;
-
-						$('#controllerResult').append(
-								'<div id="appendViewTest"><span class="abc">abc</span></div>');
-						$('#controllerResult').append(
-								'<div id="appendViewTest2"><span class="abc">abc</span></div>');
-						$('#controllerResult').append(
-								'<div id="prependViewTest"><span class="abc">abc</span></div>');
-						this.view.append('#appendViewTest', 'template8', {});
-						this.view.append('{#appendViewTest2}', 'template8', {});
-						this.view.prepend('#prependViewTest', 'template8', {});
-
-						append = $(this.$find('#appendViewTest').children('span')[1]).text();
-						append2 = $(this.$find('#appendViewTest2').children('span')[1]).text();
-						prepend = $(this.$find('#prependViewTest').children('span')[0]).text();
-						try {
-							this.view.append('{window}', 'template8', {});
-						} catch (e) {
-							viewError1 = e;
-						}
-						try {
-							this.view.update('{window.a}', 'template8', {});
-						} catch (e) {
-							viewError2 = e;
-						}
-						try {
-							this.view.prepend('{navigator}', 'template8', {});
-						} catch (e) {
-							viewError3 = e;
-						}
-						try {
-							this.view.append('{navigator.userAgent}', 'template8', {});
-						} catch (e) {
-							viewError4 = e;
-						}
-
-					}
-				};
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.readyPromise
-						.done(function() {
-							$('#controllerTest input[type=button]').click();
-							ok(html.length > 0, 'this.view.getでテンプレートからHTML文字列を取得できたか');
-							ok(updateView, 'this.view.updateでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
-							strictEqual(append, 'test',
-									'this.view.appendでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
-							strictEqual(append2, 'test',
-									'this.view.appendでテンプレートからHTML文字列を取得し、グローバルセレクタで指定した要素に出力できたか');
-							strictEqual(prepend, 'test',
-									'this.view.prependでテンプレートからHTML文字列を取得し、指定要素に出力できたか');
-
-							var errorCode = ERR.ERR_CODE_INVALID_TEMPLATE_SELECTOR;
-							strictEqual(viewError1.code, errorCode,
-									'this.update/append/prependで、"{window}"を指定するとエラーになるか');
-							strictEqual(viewError2.code, errorCode,
-									'this.update/append/prependで、"{window.xxx}"を指定するとエラーになるか');
-							strictEqual(viewError3.code, errorCode,
-									'this.update/append/prependで、"{navigator}"を指定するとエラーになるか');
-							strictEqual(viewError4.code, errorCode,
-									'this.update/append/prependで、"{navigator.xxx}"を指定するとエラーになるか');
-
-							testController.unbind();
-							start();
-						});
-			});
 
 	asyncTest('view操作', function() {
 		var controller = {
@@ -3219,6 +3294,28 @@ $(function() {
 			'{rootElement} click': function(context) {
 				triggered = true;
 				evArg = context.evArg;
+			}
+		});
+	});
+
+	asyncTest('Controller.triggerの戻り値はイベントオブジェクトであること', 3, function() {
+		var clickEvent = '';
+		h5.core.controller('#controllerTest', {
+			__name: 'test',
+			__ready: function() {
+				var e = this.trigger('click');
+				strictEqual(e, clickEvent,
+						'triggerの戻り値はイベントオブジェクトで、イベントハンドラに渡されるイベントオブジェクトと同一インスタンスであること');
+				var jqev = $.Event('click');
+				e = this.trigger(jqev);
+				strictEqual(e, jqev,
+						'jQueryEventオブジェクトをtriggerに渡すと、戻り値はそのjQueryEventオブジェクトインスタンスであること');
+				strictEqual(e, clickEvent,
+						'triggerの戻り値はイベントオブジェクトで、イベントハンドラに渡されるイベントオブジェクトと同一インスタンスであること');
+				start();
+			},
+			'{rootElement} click': function(context) {
+				clickEvent = context.event;
 			}
 		});
 	});
@@ -4842,33 +4939,44 @@ $(function() {
 		}
 	});
 
-	asyncTest('mousewheelイベントの動作', function() {
-		var type = null;
+	asyncTest('mousewheelイベントハンドラが動作すること', 1, function() {
 		var testController = {
 			__name: 'TestController',
 
 			'{rootElement} mousewheel': function(context) {
-				type = context.event.type;
+				ok(true, 'mousewheelハンドラが動作すること');
 			}
 		};
-
-		var eventName = h5.env.ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
 		var c = h5.core.controller('#controllerTest', testController);
 		c.readyPromise.done(function() {
-			var event = new $.Event(eventName);
-			if (h5.env.ua.isFirefox) {
-				event.originalEvent = {
-					detail: 3
-				};
-			}
-			$('#controllerTest').trigger(event);
-
-			strictEqual(type, eventName,
-					'mousewheelイベントがあればmousewheelイベントに、なければDOMMouseScrollイベントにバインドされているか');
+			dispatchMouseWheelEvent($('#controllerTest')[0], 120);
 			c.unbind();
 			start();
 		});
 	});
+
+	asyncTest(
+			'[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること',
+			2, function() {
+				var isPositiveValue = false;
+				var testController = {
+					__name: 'TestController',
+
+					'{rootElement} mousewheel': function(context) {
+						ok(isPositiveValue ? context.event.wheelDelta > 0
+								: context.event.wheelDelta < 0, 'wheelDeltaに値格納されていて、正負が正しいこと');
+					}
+				};
+				var c = h5.core.controller('#controllerTest', testController);
+				c.readyPromise.done(function() {
+					isPositiveValue = true;
+					dispatchMouseWheelEvent($('#controllerTest')[0], 120);
+					isPositiveValue = false;
+					dispatchMouseWheelEvent($('#controllerTest')[0], -120);
+					c.unbind();
+					start();
+				});
+			});
 
 	test('コントローラに渡す初期化パラメータがプレーンオブジェクトではない時の動作', 1, function() {
 		var testController = {
@@ -5530,7 +5638,7 @@ $(function() {
 				});
 
 				var bController = h5.core.controller('#divInControllerTest', {
-					__name: 'aController',
+					__name: 'bController',
 					'{rootElement} h5trackstart': function(context) {
 						trackEvents.push('c-h5trackstart');
 					},
@@ -5553,14 +5661,10 @@ $(function() {
 					deepEqual(trackEvents, ['c-h5trackmove'], 'h5trackmoveイベントが伝播していないこと');
 					trackEvents = [];
 
-
 					// ドラッグ終了
 					$inElm.trigger(endTrackEvent);
 					deepEqual(trackEvents, ['c-h5trackend'], 'h5trackendイベントが伝播していないこと');
 					trackEvents = [];
-
-					aController.unbind();
-					$elm.remove();
 					start();
 				});
 			});
@@ -5584,14 +5688,21 @@ $(function() {
 					onerrorHandler = window.onerror;
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#qunit-fixture #controllerTest').remove();
-					h5.core.controllerManager.controllers = [];
 					// window.onerrorを元に戻す
 					window.onerror = onerrorHandler;
 				},
 				testTimeoutFunc: function(msg) {
 					var id = setTimeout(function() {
 						ok(false, 'window.onerrorが実行されませんでした。');
+						// __unbind, __disposeにundefinedを代入して、teardown時にdisposeするときエラーが出ないようにする
+						var controllers = h5.core.controllerManager
+								.getControllers('#controllerTest');
+						for ( var i = 0, l = controllers.length; i < l; i++) {
+							controllers[i].__unbind = undefined;
+							controllers[i].__dispose = undefined;
+						}
 						start();
 					}, 5000);
 					return id;
@@ -5662,20 +5773,22 @@ $(function() {
 		window.onerror = function(ev) {
 			clearTimeout(id);
 			ok(ev.indexOf(errorMsg) != -1, '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			// テストが終わってunbindするときにエラーが出ないようにする。
+			c.__unbind = undefined;
 			start();
 		};
 
 		var controller = {
 			__name: 'TestController',
-			__ready: function() {
-				this.unbind();
-			},
 			__unbind: function() {
 				throw new Error(errorMsg);
 			}
 		};
 
-		h5.core.controller('#controllerTest', controller);
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			c.unbind();
+		});
 	});
 
 	asyncTest('[browser#and-and:-3|sa-ios:-4]__dispose()で例外をスローする。', 1, function() {
@@ -5685,20 +5798,22 @@ $(function() {
 		window.onerror = function(ev) {
 			clearTimeout(id);
 			ok(ev.indexOf(errorMsg) != -1, '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			// テストが終わってdisposeするときにエラーが出ないようにする。
+			c.__dispose = undefined;
 			start();
 		};
 
 		var controller = {
 			__name: 'TestController',
-			__ready: function() {
-				this.dispose();
-			},
 			__dispose: function() {
 				throw new Error(errorMsg);
 			}
 		};
 
-		h5.core.controller('#controllerTest', controller);
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			c.dispose();
+		});
 	});
 
 	asyncTest('__init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。', 11, function() {
@@ -5887,6 +6002,7 @@ $(function() {
 									'<div id="controllerTest" style="display: none;"><div id="parent"><div id="child"></div></div></div>');
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#controllerTest').remove();
 					h5.settings.listenerElementType = this.originalListenerElementType;
 				},
@@ -5955,6 +6071,7 @@ $(function() {
 									'<div id="scrollable" style="width:400px; height:300px; overflow:scroll"><div id="for-scroll" style="height:888px; width:777px;"></div></div>');
 				},
 				teardown: function() {
+					disposeQUnitFixtureController();
 					$('#controllerTest').remove();
 					$('#scrollable').remove();
 					h5.settings.commonFailHandler = undefined;
@@ -6893,4 +7010,207 @@ $(function() {
 			$('#controllerTest input[type=button]').click();
 		});
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module(
+			"controllerManager",
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest-r"><div id="controllerTest-c"><div id="controllerTest-g1"></div><div id="controllerTest-g2"></div></div></div>');
+
+					$('#qunit-fixture').append('<div id="controllerTest2"></div>');
+				},
+				teardown: function() {
+					disposeQUnitFixtureController();
+				}
+			});
+
+	//=============================
+	// Body
+	//=============================
+
+	asyncTest('getAllControllersで全てのバインドされているコントローラが取得できること', 5, function() {
+
+		var c1 = h5.core.controller('#controllerTest-r', {
+			__name: 'c1'
+		});
+		var c2 = h5.core.controller('#controllerTest-r', {
+			__name: 'c2'
+		});
+		var c3 = h5.core.controller('#controllerTest-c', {
+			__name: 'c3'
+		});
+		var c4 = h5.core.controller('#controllerTest2', {
+			__name: 'c4'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise).done(
+				function() {
+					var controllers = h5.core.controllerManager.getAllControllers();
+					var expects = [c1, c2, c3, c4];
+					strictEqual(controllers.length, expects.length, 'バインドしたコントローラの数分だけ取得できていること');
+					for ( var i = 0, l = expects.length; i < l; i++) {
+						ok($.inArray(expects[i], controllers) != -1, 'バインドしたコントローラが取得できること');
+					}
+					start();
+				});
+	});
+
+	asyncTest('getControllersで引数で指定した要素にバインドしたコントローラが取得できること', 3, function() {
+		var c1 = h5.core.controller('#controllerTest-r', {
+			__name: 'c1'
+		});
+		var c2 = h5.core.controller('#controllerTest-r', {
+			__name: 'c2'
+		});
+		var c3 = h5.core.controller('#controllerTest-c', {
+			__name: 'c3'
+		});
+		var c4 = h5.core.controller('#controllerTest2', {
+			__name: 'c4'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise)
+				.done(
+						function() {
+							var controllers = h5.core.controllerManager
+									.getControllers('#controllerTest-r');
+							var expects = [c1, c2];
+							strictEqual(controllers.length, expects.length,
+									'指定した要素にバインドした、コントローラの数分だけ取得できていること');
+							for ( var i = 0, l = expects.length; i < l; i++) {
+								ok($.inArray(expects[i], controllers) != -1,
+										'バインドされているコントローラが取得できること');
+							}
+							start();
+						});
+	});
+
+	asyncTest('getControllers deep:true を指定すると子要素にバインドしたコントローラも取得できること', 5, function() {
+		var c1 = h5.core.controller('#controllerTest-r', {
+			__name: 'c1'
+		});
+		var c2 = h5.core.controller('#controllerTest-c', {
+			__name: 'c2'
+		});
+		var c3 = h5.core.controller('#controllerTest-g1', {
+			__name: 'c3'
+		});
+		var c4 = h5.core.controller('#controllerTest-g2', {
+			__name: 'c4'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise).done(
+				function() {
+					var controllers = h5.core.controllerManager.getControllers('#controllerTest-r',
+							{
+								deep: true
+							});
+					var expects = [c1, c2, c3, c4];
+					strictEqual(controllers.length, expects.length,
+							'指定した要素以下にバインドしたコントローラの数分だけ取得できていること');
+					for ( var i = 0, l = expects.length; i < l; i++) {
+						ok($.inArray(expects[i], controllers) != -1, 'バインドされているコントローラが取得できること');
+					}
+					start();
+				});
+	});
+
+	asyncTest('getControllers name指定 指定した要素にバインドされた指定した名前のコントローラが取得できること', 3, function() {
+		var c1 = h5.core.controller('#controllerTest-r', {
+			__name: 'name1'
+		});
+		var c2 = h5.core.controller('#controllerTest-r', {
+			__name: 'name2'
+		});
+		var c3 = h5.core.controller('#controllerTest-r', {
+			__name: 'name1'
+		});
+		var c4 = h5.core.controller('#controllerTest-c', {
+			__name: 'name1'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise).done(
+				function() {
+					var controllers = h5.core.controllerManager.getControllers('#controllerTest-r',
+							{
+								name: 'name1'
+							});
+					var expects = [c1, c3];
+					strictEqual(controllers.length, expects.length,
+							'name指定された名前を持つコントローラの数分だけ取得できていること');
+					for ( var i = 0, l = expects.length; i < l; i++) {
+						ok($.inArray(expects[i], controllers) != -1, 'バインドされているコントローラが取得できること');
+					}
+					start();
+				});
+	});
+
+	asyncTest('getControllers name指定 配列で複数のコントローラ名を指定でき、いずれかにマッチする名前のコントローラが取得できること', 3,
+			function() {
+				var c1 = h5.core.controller('#controllerTest-r', {
+					__name: 'name1'
+				});
+				var c2 = h5.core.controller('#controllerTest-r', {
+					__name: 'name2'
+				});
+				var c3 = h5.core.controller('#controllerTest-r', {
+					__name: 'name3'
+				});
+				var c4 = h5.core.controller('#controllerTest-c', {
+					__name: 'name1'
+				});
+				h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise)
+						.done(
+								function() {
+									var controllers = h5.core.controllerManager.getControllers(
+											'#controllerTest-r', {
+												name: ['name1', 'name2']
+											});
+									var expects = [c1, c2];
+									strictEqual(controllers.length, expects.length,
+											'name指定された名前を持つコントローラの数分だけ取得できていること');
+									for ( var i = 0, l = expects.length; i < l; i++) {
+										ok($.inArray(expects[i], controllers) != -1,
+												'バインドされているコントローラが取得できること');
+									}
+									start();
+								});
+			});
+
+	asyncTest('getControllers deep:trueかつname指定 指定した要素以下の要素にバインドされた指定した名前のコントローラが取得できること', 4,
+			function() {
+				var c1 = h5.core.controller('#controllerTest-r', {
+					__name: 'name1'
+				});
+				var c2 = h5.core.controller('#controllerTest-r', {
+					__name: 'name2'
+				});
+				var c3 = h5.core.controller('#controllerTest-c', {
+					__name: 'name1'
+				});
+				var c4 = h5.core.controller('#controllerTest-g1', {
+					__name: 'name1'
+				});
+				var c5 = h5.core.controller('#controllerTest-g1', {
+					__name: 'name2'
+				});
+				h5.async.when(c1.readyPromise, c2.readyPromise, c3.readyPromsie, c4.readyPromise,
+						c5.readyPromise).done(
+						function() {
+							var controllers = h5.core.controllerManager.getControllers(
+									'#controllerTest-r', {
+										name: 'name1',
+										deep: true
+									});
+							var expects = [c1, c3, c4];
+							strictEqual(controllers.length, expects.length,
+									'name指定された名前を持つコントローラの数分だけ取得できていること');
+							for ( var i = 0, l = expects.length; i < l; i++) {
+								ok($.inArray(expects[i], controllers) != -1,
+										'バインドされているコントローラが取得できること');
+							}
+							start();
+						});
+			});
 });
