@@ -11014,6 +11014,8 @@ $(function() {
 		strictEqual(this.item.validateSet('str', 'aa'), null);
 	});
 	test('スキーマ違反になるオブジェクトを渡した時はエラーオブジェクトが返ってくること', 1, function() {
+		// ここにはデータアイテム(≠ObservableItem)特有のエラーが発生するようなオブジェクトのテストを記述する
+		// validateSetはObservableItemにもあるため、共通のエラーが発生するようなテストはObservableItemのテストの方に記述する。
 		var ret = this.item.validateSet('id', '0001');
 		strictEqual(ret && ret.code, ERR.ERR_CODE_CANNOT_SET_ID, ret && ret.message);
 	});
