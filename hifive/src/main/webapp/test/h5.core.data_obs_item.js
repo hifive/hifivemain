@@ -181,4 +181,67 @@ $(function() {
 			ary: [2]
 		});
 	});
+
+
+	//=============================
+	// Definition
+	//=============================
+	module('validateSet', {
+		item: null,
+		setup: function() {
+			this.item = h5.core.data.createObservableItem({
+				str: {
+					type: 'string'
+				},
+				notnull: {
+					constraint: {
+						notNull: true
+					},
+					defaultValue: false
+				},
+				ary: {
+					type: 'string[]'
+				},
+				dep: {
+					type: 'string',
+					depend: {
+						on: 'd',
+						calc: function() {
+							return this.get('d');
+						}
+					}
+				},
+				d: null
+			});
+		},
+		teardown: function() {
+			this.item = null;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('スキーマ違反でないオブジェクトを渡した時はnullが返ってくること', 2, function() {
+		strictEqual(this.item.validateSet({
+			str: 'a',
+			notnull: 0,
+			ary: null
+		}), null);
+		strictEqual(this.item.validateSet('str', 'aa'), null);
+	});
+	test('スキーマ違反になるオブジェクトを渡した時はエラーオブジェクトが返ってくること', 4, function() {
+		var ret = this.item.validateSet({
+			str: 'a',
+			notnull: null
+		});
+		strictEqual(ret && ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
+		ret = this.item.validateSet('str', 1);
+		strictEqual(ret && ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
+		ret = this.item.validateSet('dep', '1');
+		strictEqual(ret && ret.code, ERR.ERR_CODE_DEPEND_PROPERTY, ret && ret.message);
+		ret = this.item.validateSet('id', '0001');
+		strictEqual(ret && ret.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, ret
+				&& ret.message);
+	});
 });

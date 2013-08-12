@@ -10834,4 +10834,187 @@ $(function() {
 				strictEqual(sequence.next(), "505",
 						'引数(500, 5, h5.core.data.SEQ_STRING) next()でcurrent()の値が取得できること');
 			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('validateCreate', {
+		model: null,
+		manager: null,
+		sequence: null,
+		setup: function() {
+			this.sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
+			this.manager = h5.core.data.createManager('ValidateCreateTestManager');
+			this.model = this.manager.createModel({
+				name: 'ValidateCreateTestModel',
+				schema: {
+					id: {
+						id: true,
+					},
+					str: {
+						type: 'string'
+					},
+					notnull: {
+						constraint: {
+							notNull: true
+						}
+					},
+					ary: {
+						type: 'string[]'
+					},
+					dep: {
+						type: 'string',
+						depend: {
+							on: 'd',
+							calc: function() {
+								return this.get('d');
+							}
+						}
+					},
+					d: null
+				}
+			});
+		},
+		teardown: function() {
+			this.sequence = null;
+			this.manager.dropModel(this.model.name);
+			this.manager = undefined;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('スキーマ違反でないオブジェクトを渡した時はnullが返ってくること', 3, function() {
+		strictEqual(this.model.validateCreate({
+			id: this.sequence.next(),
+			str: 'a',
+			notnull: 0,
+			ary: null
+		}), null);
+		strictEqual(this.model.validateCreate([{
+			id: this.sequence.next(),
+			str: 'aa',
+			notnull: 11
+		}, {
+			id: this.sequence.next(),
+			str: 'b',
+			notnull: 22
+		}, {
+			id: this.sequence.next(),
+			str: 'c',
+			notnull: 33
+		}]), null);
+
+		this.model.create({
+			id: '1',
+			notnull: 3
+		});
+		strictEqual(this.model.validateCreate({
+			id: '1'
+		}), null);
+	});
+	test('スキーマ違反になるオブジェクトを渡した時はエラーオブジェクトが返ってくること', 5, function() {
+		var ret = this.model.validateCreate({
+			str: 'a',
+			notnull: 0
+		});
+		strictEqual(ret && ret.code, ERR.ERR_CODE_NO_ID, ret && ret.message);
+		ret = this.model.validateCreate({
+			id: '1',
+			str: 'a',
+			notnull: 0,
+			ary: [1]
+		});
+		ret = this.model.validateCreate([{
+			id: '2',
+			str: 'b',
+			notnull: 22
+		}, {
+			id: '3',
+			str: 'c'
+		}]);
+		strictEqual(ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
+		strictEqual(ret && ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
+		ret = this.model.validateCreate({
+			id: '1',
+			str: 'a',
+			notnull: 0,
+			dep: null
+		});
+		strictEqual(ret && ret.code, ERR.ERR_CODE_DEPEND_PROPERTY, ret && ret.message);
+		ret = this.model.validateCreate({
+			id: '1',
+			str: 'a',
+			notnull: 0,
+			noexistProp: null
+		});
+		strictEqual(ret && ret.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, ret
+				&& ret.message);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('validateSet', {
+		model: null,
+		manager: null,
+		item: null,
+		setup: function() {
+			this.manager = h5.core.data.createManager('ValidateSetTestManager');
+			this.model = this.manager.createModel({
+				name: 'ValidateSetTestModel',
+				schema: {
+					id: {
+						id: true,
+					},
+					str: {
+						type: 'string'
+					},
+					notnull: {
+						constraint: {
+							notNull: true
+						}
+					},
+					ary: {
+						type: 'string[]'
+					},
+					dep: {
+						type: 'string',
+						depend: {
+							on: 'd',
+							calc: function() {
+								return this.get('d');
+							}
+						}
+					},
+					d: null
+				}
+			});
+			this.item = this.model.create({
+				id: '1',
+				notnull: 1
+			});
+		},
+		teardown: function() {
+			this.manager.dropModel(this.model.name);
+			this.manager = undefined;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('スキーマ違反でないオブジェクトを渡した時はnullが返ってくること', 2, function() {
+		strictEqual(this.item.validateSet({
+			str: 'a',
+			notnull: 0,
+			ary: null
+		}), null);
+		strictEqual(this.item.validateSet('str', 'aa'), null);
+	});
+	test('スキーマ違反になるオブジェクトを渡した時はエラーオブジェクトが返ってくること', 1, function() {
+		var ret = this.item.validateSet('id', '0001');
+		strictEqual(ret && ret.code, ERR.ERR_CODE_CANNOT_SET_ID, ret && ret.message);
+	});
 });

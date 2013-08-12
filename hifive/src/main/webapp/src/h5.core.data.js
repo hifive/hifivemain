@@ -272,7 +272,7 @@
 	errMsgMap[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正です。識別子として有効な文字列を指定してください。';
 	errMsgMap[ERR_CODE_NO_ID] = 'id:trueを指定しているプロパティがありません。データアイテムの生成にはid:trueを指定した項目が必須です。';
 	errMsgMap[ERR_CODE_INVALID_DESCRIPTOR] = 'データモデルディスクリプタにエラーがあります。';
-	errMsgMap[ERR_CODE_CANNOT_SET_ID] = 'id指定されたプロパティを変更することはできません。';
+	errMsgMap[ERR_CODE_CANNOT_SET_ID] = 'id指定されたプロパティを変更することはできません。データモデル={0} プロパティ={1}';
 	errMsgMap[ERR_CODE_DESCRIPTOR_CIRCULAR_REF] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、baseやtypeによる依存関係が循環参照しています。';
 	errMsgMap[ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM] = 'DataModelに属していないDataItem、またはDataManagerに属していないDataModelのDataItemの中身は変更できません。データアイテムID={0}, メソッド={1}';
 	errMsgMap[ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL] = 'DataManagerに属していないDataModelの中身は変更できません。モデル名={0}, メソッド={1}';
@@ -3110,7 +3110,7 @@
 					}
 				}
 			} catch (e) {
-				throw e;
+				return e;
 			}
 
 			return null;
@@ -3633,10 +3633,10 @@
 						}
 						if ((idKey in valueObj) && (valueObj[idKey] !== getValue(this, idKey))) {
 							//IDの変更は禁止
-							throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
+							throwFwError(ERR_CODE_CANNOT_SET_ID, [model.name, idKey]);
 						}
 					}
-					validateValueObj(this, valueObj, this);
+					validateValueObj(this, valueObj, this, model);
 				} catch (e) {
 					return e;
 				}
