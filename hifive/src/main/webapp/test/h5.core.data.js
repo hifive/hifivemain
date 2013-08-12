@@ -78,7 +78,10 @@ $(function() {
 				},
 				val: {},
 				val2: {},
-				val3: {}
+				val3: {},
+				str: {
+					type: 'string'
+				}
 			}
 		});
 	}
@@ -321,54 +324,49 @@ $(function() {
 	});
 
 
-	test(
-			'※要目視確認 同名のデータモデルを同じマネージャに登録すると無視されて、戻り値が登録済みのデータモデルであること。ログが出力されること',
-			4,
-			function() {
-				var model1 = manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {
-							defaultValue: 1
-						}
-					}
-				});
-				var model2 = manager.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {
-							defaultValue: 2
-						}
-					}
-				});
-				strictEqual(model2, model1, '同名のデータモデルを登録しようとすると戻り値が登録済みのデータモデルであること');
-				ok(
-						true,
-						'※要目視確認 以下のようなログが出力されていること。『 同じ名前のデータモデルを登録しようとしました。同名のデータモデルの2度目以降の登録は無視されます。マネージャ名は TestManager, 登録しようとしたデータモデル名は TestDataModel です。 』');
-				var item = model1.create({
-					id: sequence.next()
-				});
-				strictEqual(item.get('val'), 1, '最初に作成したモデルのスキーマでアイテムが生成されること');
-				var manager2 = h5.core.data.createManager('TestManager');
-				var model3 = manager2.createModel({
-					name: 'TestDataModel',
-					schema: {
-						id: {
-							id: true
-						},
-						val: {
-							defaultValue: 3
-						}
-					}
-				});
-				ok(model3, '別マネージャであれば同名のモデルを登録できること');
-			});
+	test('同名のデータモデルを同じマネージャに登録すると無視されて、戻り値が登録済みのデータモデルであること。', 3, function() {
+		var model1 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {
+					defaultValue: 1
+				}
+			}
+		});
+		var model2 = manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {
+					defaultValue: 2
+				}
+			}
+		});
+		strictEqual(model2, model1, '同名のデータモデルを登録しようとすると戻り値が登録済みのデータモデルであること');
+
+		var item = model1.create({
+			id: sequence.next()
+		});
+		strictEqual(item.get('val'), 1, '最初に作成したモデルのスキーマでアイテムが生成されること');
+		var manager2 = h5.core.data.createManager('TestManager');
+		var model3 = manager2.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				val: {
+					defaultValue: 3
+				}
+			}
+		});
+		ok(model3, '別マネージャであれば同名のモデルを登録できること');
+	});
 
 	test('データモデルの登録 descriptorがオブジェクトでない場合はエラーが発生すること', function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;
@@ -2965,25 +2963,81 @@ $(function() {
 		equalsArrayIgnoreOrder(dataModel1.toArray(), items, 'toArrayでモデルが持つアイテムが配列で取得できること');
 	});
 
-	test('createに配列を渡して、その要素のいずれかが原因でエラーが起きた場合、エラーが起きるまでの要素までは生成され、残りは生成されないこと', function() {
-		try {
-			dataModel1.create([{
-				id: sequence.next()
-			}, {
-				id: null
-			}, {
-				id: sequence.next()
-			}]);
-			ok(false, 'エラーが発生していません。');
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_NO_ID, e.message);
-		} finally {
-			// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない(TODO 確認する)
-			ok(dataModel1.has('1'), '配列で渡した場合にエラーが発生したら、その要素より前のアイテムは生成されること');
-			ok(!dataModel1.has('2'), '配列で渡した場合にエラーが発生したら、その要素以降のアイテムは生成されないこと');
-			strictEqual(dataModel1.size, 1, 'sizeが1であること');
-		}
-	});
+	test('createに配列を渡して、その要素のいずれかがid違反のオブジェクトで例外が発生する場合、データアイテムは全て作成も変更もされず、イベントも発生しないこと。', 6,
+			function() {
+				var events = [];
+				function evListener() {
+					events.push(arguments);
+				}
+				var item = dataModel1.create({
+					id: '0000'
+				});
+				manager.addEventListener('itemsChange', evListener);
+				dataModel1.addEventListener('itemsChange', evListener);
+				try {
+					dataModel1.create([{
+						id: '0000',
+						val: 1
+					}, {
+						id: '0001'
+					}, {
+						id: null
+					}, {
+						id: '0002'
+					}]);
+					ok(false, 'エラーが発生していません。');
+				} catch (e) {
+					strictEqual(e.code, ERR.ERR_CODE_NO_ID, e.message);
+				} finally {
+					// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない
+					strictEqual(item.get('val'), null, '配列で渡した場合にエラーが発生したら、アイテムは変更されないこと');
+					ok(!dataModel1.has('0001'), '配列で渡した場合にエラーが発生したら、アイテムは生成されないこと');
+					ok(!dataModel1.has('0002'), '配列で渡した場合にエラーが発生したら、アイテムは生成されないこと');
+					strictEqual(dataModel1.size, 1, 'sizeが増えていないこと');
+					deepEqual(events, [], 'イベントは発生しないこと');
+					manager.removeEventListener('itemsChange', evListener);
+					dataModel1.removeEventListener('itemsChange', evListener);
+				}
+			});
+
+	test('createに配列を渡して、その要素のいずれかがスキーマ違反のオブジェクトで例外が発生する場合、データアイテムは全て作成も変更もされず、イベントも発生しないこと。', 7,
+			function() {
+				var events = [];
+				function evListener() {
+					events.push(arguments);
+				}
+				var item = dataModel1.create({
+					id: '0000'
+				});
+				manager.addEventListener('itemsChange', evListener);
+				dataModel1.addEventListener('itemsChange', evListener);
+				try {
+					dataModel1.create([{
+						id: '0000',
+						val: 1
+					}, {
+						id: '0001'
+					}, {
+						id: '0002',
+						str: 1
+					}, {
+						id: '0003'
+					}]);
+					ok(false, 'エラーが発生していません。');
+				} catch (e) {
+					strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
+				} finally {
+					// 配列で渡した場合、一つでもエラーが発生したら、配列中の要素全てをアイテム化しない
+					strictEqual(item.get('val'), null, '配列で渡した場合にエラーが発生したら、アイテムは変更されないこと');
+					ok(!dataModel1.has('0001'), '配列で渡した場合にエラーが発生したら、アイテムは生成されないこと');
+					ok(!dataModel1.has('0002'), '配列で渡した場合にエラーが発生したら、アイテムは生成されないこと');
+					ok(!dataModel1.has('0003'), '配列で渡した場合にエラーが発生したら、アイテムは生成されないこと');
+					strictEqual(dataModel1.size, 1, 'sizeが増えていないこと');
+					deepEqual(events, [], 'イベントは発生しないこと');
+					manager.removeEventListener('itemsChange', evListener);
+					dataModel1.removeEventListener('itemsChange', evListener);
+				}
+			});
 
 	test('getでアイテムが取得できること。引数に配列を指定した場合は戻り値も配列になること。', function() {
 		var item1 = dataModel1.create({
@@ -4235,8 +4289,6 @@ $(function() {
 				equal(item2.get('dataModel1'), null, 'create時に何も値を指定しない場合、nullが取得できること。');
 				equal(item2.get('dataModel2').get('test1'), 20,
 						'create時に指定したモデルの値が、DataItemから取得できること。');
-
-				//TODO null,undefinedでcreateできること、代入できることを確認する
 			});
 
 	test('type指定 DataModel 異常系', 4, function() {
@@ -5972,7 +6024,6 @@ $(function() {
 			});
 			ok(false, 'テスト失敗。notNullの項目に値を設定しないでcreateした時にエラーが発生していません。');
 		} catch (e) {
-			//TODO エラーコード確認する(以降のconstraintチェック異常系のテストも同様)
 			strictEqual(e.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, e.message);
 		}
 	});

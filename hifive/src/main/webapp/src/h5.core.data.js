@@ -1571,9 +1571,43 @@
 		return ret;
 	}
 
+	function validateValueObj(schemaInfo, valueObj, item, model) {
+		var schema = schemaInfo._schema;
+		for ( var prop in valueObj) {
+			if (!(prop in schema)) {
+				// schemaに定義されていないプロパティ名が入っていたらエラー
+				throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [
+						model ? model.name : NOT_AVAILABLE, prop]);
+			}
+			var newValue = valueObj[prop];
 
-	function itemSetter(item, valueObj, noValidationProps, ignoreProps, isCreate) {
-		var model = item._model instanceof DataModel ? item._model : null;
+			// depend指定されている項目はset禁止
+			if (schema[prop] && schema[prop].depend && (!item || (item.get(prop) !== newValue))) {
+				//dependなプロパティの場合、現在の値とこれから代入しようとしている値が
+				//厳密等価でtrueになる場合に限り、代入を例外にせず無視する。
+				//これは、item.get()の戻り値のオブジェクトをそのままset()しようとしたときに
+				//dependのせいでエラーにならないようにするため。
+				throwFwError(ERR_CODE_DEPEND_PROPERTY, [model ? model.name : NOT_AVAILABLE, prop]);
+			}
+
+			//type:[]で、代入指定無しの場合はvalidationを行わない
+			if (schema[prop] && isTypeArray(schema[prop].type) && !valueObj.hasOwnProperty(prop)) {
+				continue;
+			}
+			//型・制約チェック
+			//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
+			var validateResult = schemaInfo._validateItemValue(prop, newValue);
+			if (validateResult.length > 0) {
+				throwFwError(ERR_CODE_INVALID_ITEM_VALUE,
+						[model ? model.name : NOT_AVAILABLE, prop], validateResult);
+			}
+		}
+	}
+
+	/**
+	 * アイテムに値をセットする
+	 */
+	function itemSetter(item, valueObj, ignoreProps, isCreate) {
 		var schema = item._schema;
 
 		// valueObjから整合性チェックに通ったものを整形して格納する配列
@@ -1581,11 +1615,6 @@
 
 		//先に、すべてのプロパティの整合性チェックを行う
 		for ( var prop in valueObj) {
-			if (!(prop in schema)) {
-				// schemaに定義されていないプロパティ名が入っていたらエラー
-				throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [
-						model ? model.name : NOT_AVAILABLE, prop]);
-			}
 			if (ignoreProps && ($.inArray(prop, ignoreProps) !== -1)) {
 				//このpropプロパティは無視する
 				continue;
@@ -1594,16 +1623,11 @@
 			var oldValue = getValue(item, prop);
 			var newValue = valueObj[prop];
 
-			// depend指定されている項目はset禁止
+			// depend指定されている項目はsetしない
 			if (schema[prop] && schema[prop].depend) {
-				if (oldValue === newValue) {
-					//dependなプロパティの場合、現在の値とこれから代入しようとしている値が
-					//厳密等価でtrueになる場合に限り、代入をエラーにせず無視する。
-					//これは、item.get()の戻り値のオブジェクトをそのままset()しようとしたときに
-					//dependのせいでエラーにならないようにするため。
-					continue;
-				}
-				throwFwError(ERR_CODE_DEPEND_PROPERTY, [model ? model.name : NOT_AVAILABLE, prop]);
+				// itemSetterにはvalidate済みのものが渡されるので、depend項目が設定されている場合は必ずoldValue==newValue
+				// なので、イベントは上がらないようにする
+				continue;
 			}
 
 			var type = schema[prop] && schema[prop].type;
@@ -1622,17 +1646,6 @@
 			// typeがstring,number,integer,boolean、またはその配列なら、値がラッパークラスの場合にunboxする
 			if (type && type.match(/string|number|integer|boolean/)) {
 				newValue = unbox(newValue);
-			}
-
-			//このプロパティをバリデーションしなくてよいと明示されているならバリデーションを行わない
-			if ($.inArray(prop, noValidationProps) === -1) {
-				//型・制約チェック
-				//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
-				var validateResult = item._validateItemValue(prop, newValue);
-				if (validateResult.length > 0) {
-					throwFwError(ERR_CODE_INVALID_ITEM_VALUE, [model ? model.name : NOT_AVAILABLE,
-							prop], validateResult);
-				}
 			}
 
 			//値がnull以外なら中身の型変換行う
@@ -2082,6 +2095,40 @@
 		// 依存プロパティのマップ
 		var dependencyMap = createDependencyMap(schema);
 
+		function validateItemValue(p, value) {
+			return itemValueCheckFuncs[p](value);
+		}
+
+
+		function createInitialValueObj(userInitialValue) {
+			var actualInitialValue = [];
+			for ( var plainProp in schema) {
+				var propDesc = schema[plainProp];
+
+				if (propDesc && propDesc.depend) {
+					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
+					continue;
+				}
+
+				var initValue = null;
+
+				if (userInitialValue && plainProp in userInitialValue) {
+					// 与えられた初期値を代入
+					initValue = userInitialValue[plainProp];
+				} else if (propDesc && propDesc.defaultValue !== undefined) {
+					//DescriptorのdefaultValueがあれば代入
+					initValue = propDesc.defaultValue;
+				} else {
+					//どちらでもない場合はnull
+					initValue = null;
+
+				}
+
+				actualInitialValue[plainProp] = initValue;
+			}
+			return actualInitialValue;
+		}
+
 		return {
 			_itemValueCheckFuncs: itemValueCheckFuncs,
 			_schemaKeys: schemaKeys,
@@ -2089,7 +2136,18 @@
 			_realProps: realProps,
 			_dependProps: dependProps,
 			_aryProps: aryProps,
-			_dependencyMap: dependencyMap
+			_dependencyMap: dependencyMap,
+			_createInitialValueObj: createInitialValueObj,
+			/**
+			 * 引数にプロパティ名と値を指定し、 値がそのプロパティの制約条件を満たすかどうかをチェックします。
+			 *
+			 * @private
+			 * @memberOf DataItem
+			 * @param {String} prop プロパティ名
+			 * @param {Any} value 値
+			 * @returns {Boolean} 値がプロパティの制約条件を満たすならtrue
+			 */
+			_validateItemValue: validateItemValue
 		};
 	}
 
@@ -2612,7 +2670,7 @@
 						}
 						// 今のアイテムがoldValueと違う値を持っていたらmergedPropsにnewValueをセット
 						// 最終的に値が変わっているかどうかも同時にチェックする
-						//TODO oldValueは配列ならmanager._oldValueLogsにある
+						//oldValueは配列ならmanager._oldValueLogsにある
 						var changedProps = false;
 						for ( var p in mergedProps) {
 							var oldValue = mergedProps[p].oldValue;
@@ -2931,18 +2989,15 @@
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
 		 */
 		create: function(objOrArray) {
-			// modelがmanagerを持たない(dropModelされた)ならエラー
-			if (!this._manager) {
-				throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'create']);
+			var error = this.validateCreate(objOrArray);
+			if (error) {
+				throw error;
 			}
 
-			// objOrArrayがobjでもArrayでもなかったらエラー
-			if (typeof objOrArray !== 'object' && !$.isArray(objOrArray)) {
-				throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
-			}
+			var idKey = this.idKey;
+			var items = wrapInArray(objOrArray);
 
 			var ret = [];
-			var idKey = this.idKey;
 
 			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
 			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
@@ -2952,57 +3007,38 @@
 			if (!isAlreadyInUpdate) {
 				this._manager.beginUpdate();
 			}
-			try {
-				var actualNewItems = [];
+			var actualNewItems = [];
 
-				var items = wrapInArray(objOrArray);
-				for ( var i = 0, len = items.length; i < len; i++) {
-					var valueObj = items[i];
+			for ( var i = 0, len = items.length; i < len; i++) {
+				var valueObj = items[i];
+				var itemId = valueObj[idKey];
 
-					var itemId = valueObj[idKey];
-					//idが空文字、null、undefined、はid指定エラー
-					if (itemId === '' || itemId == null) {
-						throwFwError(ERR_CODE_NO_ID);
+				var storedItem = this._findById(itemId);
+				if (storedItem) {
+					//返す値にstoredItemを追加
+					ret.push(storedItem);
+
+					// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
+					var event = itemSetter(storedItem, valueObj, [idKey]);
+					if (!event) {
+						//itemSetterが何も返さなかった = 更新する値が何もない
+						continue;
 					}
-					//idがstringでもintegerでもない場合は制約違反エラー
-					if (!isIntegerValue(itemId, true) && !isString(itemId)) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, [this.name, idKey]);
-					}
 
-					var storedItem = this._findById(itemId);
-					if (storedItem) {
-						//返す値にstoredItemを追加
-						ret.push(storedItem);
+					addUpdateChangeLog(this, event);
+				} else {
+					var newItem = new this._itemConstructor(valueObj);
 
-						// 既に存在するオブジェクトの場合は値を更新。ただし、valueObjのIDフィールドは無視（上書きなので問題はない）
-						var event = itemSetter(storedItem, valueObj, null, [idKey]);
-						if (!event) {
-							//itemSetterが何も返さなかった = 更新する値が何もない
-							continue;
-						}
+					this.items[itemId] = newItem;
+					this.size++;
 
-						addUpdateChangeLog(this, event);
-					} else {
-						var newItem = new this._itemConstructor(valueObj);
-
-						this.items[itemId] = newItem;
-						this.size++;
-
-						actualNewItems.push(newItem);
-						ret.push(newItem);
-					}
+					actualNewItems.push(newItem);
+					ret.push(newItem);
 				}
+			}
 
-				if (actualNewItems.length > 0) {
-					addUpdateLog(this, UPDATE_LOG_TYPE_CREATE, actualNewItems);
-				}
-			} catch (e) {
-				// 途中でエラーが起きた場合も、変更された場合があるので、イベントを上げる。
-				if (!isAlreadyInUpdate) {
-					//既存のアイテムが変更されていればアイテムのイベントを上げる
-					this._manager.endUpdate();
-				}
-				throw e;
+			if (actualNewItems.length > 0) {
+				addUpdateLog(this, UPDATE_LOG_TYPE_CREATE, actualNewItems);
 			}
 
 			if (!isAlreadyInUpdate) {
@@ -3014,6 +3050,70 @@
 				return ret;
 			}
 			return ret[0];
+		},
+
+		/**
+		 * createに渡す引数のチェックを行います。
+		 * <p>
+		 * DataModel#create()に渡しても例外が発生しないようなデータアイテム定義を渡された場合はnullを返します。
+		 * </p>
+		 * <p>
+		 * DataModel#create()に渡した時に例外が発生するようなデータアイテム定義を渡された場合は、エラーオブジェクトを返します。
+		 * </p>
+		 *
+		 * @since 1.1.9
+		 * @memberOf DataModel
+		 * @param {Object|Object[]} arg createに渡す引数でオブジェクトまたはオブジェクトの配列
+		 */
+		validateCreate: function(arg) {
+			try {
+				// modelがmanagerを持たない(dropModelされた)ならエラー
+				if (!this._manager) {
+					throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'create']);
+				}
+
+				// objctでもArrayでもなかったらエラー
+				if (typeof arg !== 'object' && !$.isArray(arg)) {
+					throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
+				}
+				var idKey = this.idKey;
+				var items = wrapInArray(arg);
+
+				// 最初に引数のスキーマチェックを行う
+				for ( var i = 0, len = items.length; i < len; i++) {
+					var valueObj = items[i];
+					var itemId = valueObj[idKey];
+					//idが空文字、null、undefined、はid指定エラー
+					if (itemId === '' || itemId == null) {
+						throwFwError(ERR_CODE_NO_ID);
+					}
+					//idがstringでもintegerでもない場合は制約違反エラー
+					if (!isIntegerValue(itemId, true) && !isString(itemId)) {
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, [this.name, idKey]);
+					}
+
+					// 既存のアイテムがあれば取得
+					var storedItem = this._findById(itemId);
+
+					// validateする
+					var error = null;
+					if (storedItem) {
+						// 既に存在するアイテムへのセットなら、セット時のvalidateチェックを実行
+						error = storedItem.validateSet.call(storedItem, valueObj);
+					} else {
+						// 新規作成であれば、初期値の設定したオブジェクトと、ユーザ指定オブジェクトをマージした結果を使ってvalidateValueObjでチェック
+						error = validateValueObj(this._schemaInfo, $.extend({}, valueObj,
+								this._schemaInfo._createInitialValueObj(valueObj)), null, this);
+					}
+					if (error) {
+						throw error;
+					}
+				}
+			} catch (e) {
+				throw e;
+			}
+
+			return null;
 		},
 
 		/**
@@ -3236,7 +3336,13 @@
 	 * @param {DataModel} [model] データモデルオブジェクト。データモデルのitemConstructorを作る場合必須
 	 */
 	function createDataItemConstructor(schema, itemValueCheckFuncs, model) {
+		// スキーマ情報の作成。アイテムのプロトタイプに持たせる。モデルにも持たせる。
 		var schemaInfo = createSchemaInfoChache(schema, itemValueCheckFuncs);
+		if (model) {
+			model._schemaInfo = schemaInfo;
+		}
+
+		// スキーマのプロパティにObservableArrayがある場合、リスナを登録する。
 		function setObservableArrayListeners(item, propName, observableArray) {
 			// 配列操作前と操作後で使う共通の変数
 			// 配列操作が同期のため、必ずchangeBeforeListener→配列操作→changeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
@@ -3354,6 +3460,7 @@
 			observableArray.addEventListener('change', changeListener);
 		}
 
+
 		/**
 		 * データアイテムクラス
 		 * <p>
@@ -3376,32 +3483,17 @@
 		 * @param {Object} userInitialValue ユーザー指定の初期値
 		 */
 		function DataItem(userInitialValue) {
+			// 初期値の設定
+			var actualInitialValue = schemaInfo._createInitialValueObj(userInitialValue);
 
 			// このアイテムが持つ値を格納するオブジェクト
 			this._values = {};
 
+			// nullPropsの設定
 			/** type:[]なプロパティで、最後にset()された値がnullかどうかを格納する。キー：プロパティ名、値：true/false */
 			this._nullProps = {};
-
-			var actualInitialValue = {};
-
-			var noValidationProps = [];
-
-			var arrayProps = schemaInfo._aryProps;
-
-			// userInitialValueの中に、schemaで定義されていないプロパティへの値のセットが含まれていたらエラー
-			for ( var p in userInitialValue) {
-				if (!schema.hasOwnProperty(p)) {
-					throwFwError(ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, [
-							model ? model.name : NOT_AVAILABLE, p]);
-				}
-			}
-
-			//デフォルト値を代入する
 			for ( var plainProp in schema) {
-				var propDesc = schema[plainProp];
-
-				if (propDesc && isTypeArray(propDesc.type)) {
+				if (schema[plainProp] && isTypeArray(schema[plainProp].type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
 					var obsArray = createObservableArray();
 					//DataItemに属するObsArrayには、Item自身への参照を入れておく。
@@ -3410,50 +3502,13 @@
 					setValue(this, plainProp, obsArray);
 					this._nullProps[plainProp] = true;
 				}
-
-				if (propDesc && propDesc.depend) {
-					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
-					if (userInitialValue && plainProp in userInitialValue) {
-						// 依存プロパティが与えられていた場合はエラー
-						throwFwError(ERR_CODE_DEPEND_PROPERTY, [model ? model.name : NOT_AVAILABLE,
-								plainProp]);
-					}
-					continue;
-				}
-
-				var initValue = null;
-
-				if (userInitialValue && plainProp in userInitialValue) {
-					//create時に初期値が与えられていた場合
-
-					// depend指定プロパティにはdefaultValueを指定できないが、validateSchemaでチェック済みなので
-					// ここでチェックは行わない
-
-					// 与えられた初期値を代入
-					initValue = userInitialValue[plainProp];
-				} else if (propDesc && propDesc.defaultValue !== undefined) {
-					//DescriptorのdefaultValueがあれば代入
-					initValue = propDesc.defaultValue;
-
-					if (isTypeArray(propDesc.type)) {
-						//type:[]の場合、defaultValueは事前に制約チェック済みなので改めてvalidationしなくてよい
-						noValidationProps.push(plainProp);
-					}
-				} else {
-					//どちらでもない場合はnull
-					//ただし、notNull制約などがついている場合はセッターで例外が発生する
-					initValue = null;
-
-					if (propDesc && isTypeArray(propDesc.type)) {
-						//type:[]で、userInitValueもdefaultValueも与えられなかった場合はvalidationを行わない
-						noValidationProps.push(plainProp);
-					}
-				}
-
-				actualInitialValue[plainProp] = initValue;
 			}
 
-			itemSetter(this, actualInitialValue, noValidationProps, null, true);
+			// arrayPropsの設定
+			var arrayProps = schemaInfo._aryProps;
+
+			validateValueObj(this, actualInitialValue, this, model);
+			itemSetter(this, actualInitialValue, null, true);
 
 			for ( var i = 0, l = arrayProps.length; i < l; i++) {
 				setObservableArrayListeners(this, arrayProps[i], this.get(arrayProps[i]));
@@ -3468,8 +3523,7 @@
 			 * 引数にプロパティ名を指定すると、アイテムが持つそのプロパティの値を返します。
 			 * </p>
 			 * <p>
-			 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。
-			 * </p>
+			 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。 </p
 			 *
 			 * @since 1.1.0
 			 * @memberOf DataItem
@@ -3501,62 +3555,35 @@
 			 * <p>
 			 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。
 			 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする
-			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
-			 * </p>
+			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。 </p
 			 *
 			 * @since 1.1.0
 			 * @memberOf DataItem
 			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
 			 */
 			set: function(var_args) {
-				var isAlreadyInUpdate = false;
 				//引数はオブジェクト1つ、または(key, value)で呼び出せる
 				var valueObj = var_args;
 				if (arguments.length === 2) {
 					valueObj = {};
 					valueObj[arguments[0]] = arguments[1];
 				}
-				if (model) {
-					// データモデルから作られたアイテムなら
-					// モデルに属しているか、idKeyへの変更じゃないことのチェックと、
-					// イベント管理を行う
-					var idKey = model.idKey;
 
-					// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
-					if (this._model !== model || !this._model._manager) {
-						throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [getValue(this, idKey),
-								'set'], this);
-					}
-					if ((idKey in valueObj) && (valueObj[idKey] !== getValue(this, idKey))) {
-						//IDの変更は禁止
-						throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
-					}
-
-					// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
-					// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
-					// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
-					isAlreadyInUpdate = model._manager.isInUpdate();
-					if (!isAlreadyInUpdate) {
-						model._manager.beginUpdate();
-					}
+				var event = null;
+				var error = this.validateSet.apply(this, arguments);
+				if (error) {
+					throw error;
+				}
+				// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
+				// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
+				// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
+				var isAlreadyInUpdate = model ? model._manager.isInUpdate() : false;
+				if (model && !isAlreadyInUpdate) {
+					model._manager.beginUpdate();
 				}
 				// isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
 				this._isInSet = true;
-
-				var event = null;
-				try {
-					event = itemSetter(this, valueObj, null);
-				} catch (e) {
-					// セット中にエラーが発生した時、
-					// _isInSetフラグをfalseにする
-					// updateセッションをset時に張ったなら解除する。
-					this._isInSet = false;
-					if (!isAlreadyInUpdate && model && model._manager) {
-						model._manager.endUpdate();
-					}
-					throw e;
-				}
-
+				event = itemSetter(this, valueObj);
 				this._isInSet = false;
 
 				if (model) {
@@ -3576,12 +3603,53 @@
 			},
 
 			/**
+			 * setに渡す引数で例外が発生するかどうかチェックします。
+			 * <p>
+			 * 例外が発生する場合は例外オブジェクトを返します。例外が発生しない場合はnullを返します。
+			 * </p>
+			 *
+			 * @since 1.1.9
+			 * @memberOf DataItem
+			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
+			 */
+			validateSet: function(var_args) {
+				//引数はオブジェクト1つ、または(key, value)で呼び出せる
+				var valueObj = var_args;
+				if (arguments.length === 2) {
+					valueObj = {};
+					valueObj[arguments[0]] = arguments[1];
+				}
+				try {
+					if (model) {
+						// データモデルから作られたアイテムなら
+						// モデルに属しているか、idKeyへの変更じゃないことのチェックと、
+						// イベント管理を行う
+						var idKey = model.idKey;
+
+						// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
+						if (this._model !== model || !this._model._manager) {
+							throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [
+									getValue(this, idKey), 'set'], this);
+						}
+						if ((idKey in valueObj) && (valueObj[idKey] !== getValue(this, idKey))) {
+							//IDの変更は禁止
+							throwFwError(ERR_CODE_CANNOT_SET_ID, null, this);
+						}
+					}
+					validateValueObj(this, valueObj, this);
+				} catch (e) {
+					return e;
+				}
+				return null;
+			},
+
+			/**
 			 * type:[]であるプロパティについて、最後にセットされた値がnullかどうかを返します。<br>
 			 * type:[]としたプロパティは常にObservableArrayインスタンスがセットされており、set('array', null);
 			 * と呼ぶと空配列を渡した場合と同じになります。そのため、「実際にはnullをセットしていた（item.set('array',
 			 * null)）」場合と「空配列をセットしていた（item.set('array,' [])）」場合を区別したい場合にこのメソッドを使ってください。<br>
 			 * データアイテムを生成した直後は、スキーマにおいてdefaultValueを書いていないまたはnullをセットした場合はtrue、それ以外の場合はfalseを返します。<br>
-			 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します。
+			 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します
 			 *
 			 * @since 1.1.0
 			 * @memberOf DataItem
@@ -3597,7 +3665,7 @@
 
 			/**
 			 * 指定されたプロパティがtype:[]かどうかを返します。（type:anyでObservableArrayが入っている場合とtype:[]で最初から
-			 * ObservableArrayが入っている場合を区別するため）
+			 * ObservableArrayが入っている場合を区別するため
 			 *
 			 * @private
 			 * @memberOf DataItem
@@ -3609,26 +3677,13 @@
 					return true;
 				}
 				return false;
-			},
-
-			/**
-			 * 引数にプロパティ名と値を指定し、 値がそのプロパティの制約条件を満たすかどうかをチェックします。
-			 *
-			 * @private
-			 * @memberOf DataItem
-			 * @param {String} prop プロパティ名
-			 * @param {Any} value 値
-			 * @returns {Boolean} 値がプロパティの制約条件を満たすならtrue
-			 */
-			_validateItemValue: function(prop, value) {
-				return this._itemValueCheckFuncs[prop](value);
-			},
+			}
 		});
 		if (model) {
 			$.extend(DataItem.prototype, {
 
 				/**
-				 * データアイテムが属しているデータモデル
+				 * データアイテムが属しているデータモデ
 				 *
 				 * @private
 				 * @since 1.1.0
@@ -3640,8 +3695,7 @@
 				 * DataItemが属しているDataModelインスタンスを返します。
 				 * <p>
 				 * このメソッドは、DataModelから作成したDataItemのみが持ちます。createObservableItemで作成したアイテムにはこのメソッドはありません。
-				 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
-				 * </p>
+				 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。 </p
 				 *
 				 * @since 1.1.0
 				 * @memberOf DataItem
@@ -3669,7 +3723,7 @@
 	 * <p>
 	 * ディスクリプタオブジェクトについては<a
 	 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
-	 * </p>
+	 * </p
 	 *
 	 * @since 1.1.0
 	 * @memberOf h5.core.data
@@ -3688,8 +3742,7 @@
 	/**
 	 * ObserevableItem(createObservableItemで作成したオブジェクト)かどうかを判定します。
 	 * <p>
-	 * DataModelから作成したDataItemの場合はfalseを返します。
-	 * </p>
+	 * DataModelから作成したDataItemの場合はfalseを返します。 </p
 	 *
 	 * @since 1.1.0
 	 * @memberOf h5.core.data
@@ -3719,8 +3772,7 @@
 	 * <p>
 	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
 	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
-	 * ObservableArrayは、自身の内容が変更されるメソッドが呼び出される時、実行前に'changeBefore'、実行後に'change'イベントを発生させます。
-	 * </p>
+	 * ObservableArrayは、自身の内容が変更されるメソッドが呼び出される時、実行前に'changeBefore'、実行後に'change'イベントを発生させます。 </p
 	 *
 	 * @since 1.1.0
 	 * @class
@@ -3729,7 +3781,7 @@
 	 */
 	function ObservableArray() {
 		/**
-		 * 配列の長さを表します。このプロパティは読み取り専用で使用してください。
+		 * 配列の長さを表します。このプロパティは読み取り専用で使用してください
 		 *
 		 * @since 1.1.0
 		 * @name length
@@ -3747,7 +3799,7 @@
 		/**
 		 * この配列が、引数で指定された配列と同じ内容か比較します。<br>
 		 * 要素にNaN定数が入っている場合、同一位置にともにNaNが入っているかどうかをisNaN()関数でチェックします。
-		 * （obsArrayの内容が[NaN]のとき、obsArray.equals([NaN])）はtrueになります。）
+		 * （obsArrayの内容が[NaN]のとき、obsArray.equals([NaN])）はtrueになります。
 		 *
 		 * @since 1.1.0
 		 * @memberOf ObservableArray
@@ -3782,7 +3834,7 @@
 		 * <p>
 		 * 元々入っていた値は全て削除され、呼び出し後は引数で指定された配列と同じ要素を持ちます。
 		 * </p>
-		 * 引数がnullまたはundefinedの場合は、空配列が渡された場合と同じ挙動をします（自身の要素が全て削除されます）。
+		 * 引数がnullまたはundefinedの場合は、空配列が渡された場合と同じ挙動をします（自身の要素が全て削除されます）
 		 *
 		 * @since 1.1.0
 		 * @memberOf ObservableArray
@@ -3807,7 +3859,7 @@
 		},
 
 		/**
-		 * 値を取得します。
+		 * 値を取得します
 		 *
 		 * @since 1.1.3
 		 * @memberOf ObservableArray
@@ -3819,7 +3871,7 @@
 		},
 
 		/**
-		 * 値をセットします。
+		 * 値をセットします
 		 *
 		 * @since 1.1.3
 		 * @memberOf ObservableArray
@@ -3830,7 +3882,7 @@
 		},
 
 		/**
-		 * 現在のObservableArrayインスタンスと同じ要素を持ったネイティブ配列インスタンスを返します。
+		 * 現在のObservableArrayインスタンスと同じ要素を持ったネイティブ配列インスタンスを返します
 		 *
 		 * @since 1.1.3
 		 * @memberOf ObservableArray
@@ -3842,7 +3894,7 @@
 
 		/**
 		 * 動作は通常の配列のconcatと同じです。<br>
-		 * 引数にObservableArrayが渡された場合にそれを通常の配列とみなして動作するようラップされています。
+		 * 引数にObservableArrayが渡された場合にそれを通常の配列とみなして動作するようラップされています
 		 *
 		 * @since 1.1.3
 		 * @memberOf ObservableArray
@@ -3937,7 +3989,7 @@
 
 
 	/**
-	 * ObservableArrayを作成します。
+	 * ObservableArrayを作成します
 	 *
 	 * @since 1.1.0
 	 * @memberOf h5.core.data
@@ -3948,7 +4000,7 @@
 	}
 
 	/**
-	 * ObservableArrayかどうかを判定します。
+	 * ObservableArrayかどうかを判定します
 	 *
 	 * @since 1.1.0
 	 * @memberOf h5.core.data
