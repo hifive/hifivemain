@@ -10838,7 +10838,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('validateCreate', {
+	module('validate', {
 		model: null,
 		manager: null,
 		sequence: null,
@@ -10885,14 +10885,14 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('スキーマ違反でないオブジェクトを渡した時はnullが返ってくること', 3, function() {
-		strictEqual(this.model.validateCreate({
+	test('asCreate=trueで、create時に例外の発生しないオブジェクトまたはオブジェクトの配列を渡した時はnullが返ってくること', 3, function() {
+		strictEqual(this.model.validate({
 			id: this.sequence.next(),
 			str: 'a',
 			notnull: 0,
 			ary: null
-		}), null);
-		strictEqual(this.model.validateCreate([{
+		}, true), null);
+		strictEqual(this.model.validate([{
 			id: this.sequence.next(),
 			str: 'aa',
 			notnull: 11
@@ -10904,119 +10904,68 @@ $(function() {
 			id: this.sequence.next(),
 			str: 'c',
 			notnull: 33
-		}]), null);
+		}], true), null);
 
 		this.model.create({
 			id: '1',
 			notnull: 3
 		});
-		strictEqual(this.model.validateCreate({
+		strictEqual(this.model.validate({
 			id: '1'
-		}), null);
+		}, true), null);
 	});
-	test('スキーマ違反になるオブジェクトを渡した時はエラーオブジェクトが返ってくること', 5, function() {
-		var ret = this.model.validateCreate({
+	test('asCreate=trueで、create時に例外の発生するオブジェクトを渡した時はエラーオブジェクトが返ってくること', 4, function() {
+		var ret = this.model.validate({
 			str: 'a',
 			notnull: 0
-		});
+		}, true);
 		strictEqual(ret && ret.code, ERR.ERR_CODE_NO_ID, ret && ret.message);
-		ret = this.model.validateCreate({
+		ret = this.model.validate({
 			id: '1',
 			str: 'a',
 			notnull: 0,
 			ary: [1]
-		});
-		ret = this.model.validateCreate([{
+		}, true);
+		strictEqual(ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
+		ret = this.model.validate([{
 			id: '2',
 			str: 'b',
 			notnull: 22
 		}, {
 			id: '3',
 			str: 'c'
-		}]);
-		strictEqual(ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
+		}], true);
 		strictEqual(ret && ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
-		ret = this.model.validateCreate({
-			id: '1',
-			str: 'a',
-			notnull: 0,
-			dep: null
-		});
-		strictEqual(ret && ret.code, ERR.ERR_CODE_DEPEND_PROPERTY, ret && ret.message);
-		ret = this.model.validateCreate({
+		ret = this.model.validate({
 			id: '1',
 			str: 'a',
 			notnull: 0,
 			noexistProp: null
-		});
+		}, true);
 		strictEqual(ret && ret.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, ret
 				&& ret.message);
 	});
 
-	//=============================
-	// Definition
-	//=============================
-	module('validateSet', {
-		model: null,
-		manager: null,
-		item: null,
-		setup: function() {
-			this.manager = h5.core.data.createManager('ValidateSetTestManager');
-			this.model = this.manager.createModel({
-				name: 'ValidateSetTestModel',
-				schema: {
-					id: {
-						id: true,
-					},
-					str: {
-						type: 'string'
-					},
-					notnull: {
-						constraint: {
-							notNull: true
-						}
-					},
-					ary: {
-						type: 'string[]'
-					},
-					dep: {
-						type: 'string',
-						depend: {
-							on: 'd',
-							calc: function() {
-								return this.get('d');
-							}
-						}
-					},
-					d: null
-				}
-			});
-			this.item = this.model.create({
-				id: '1',
-				notnull: 1
-			});
-		},
-		teardown: function() {
-			this.manager.dropModel(this.model.name);
-			this.manager = undefined;
-		}
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('スキーマ違反でないオブジェクトを渡した時はnullが返ってくること', 2, function() {
-		strictEqual(this.item.validateSet({
+	test('asCreate=falseで、スキーマ違反でないオブジェクトを渡した時はnullが返ってくること', 2, function() {
+		strictEqual(this.model.validate({
 			str: 'a',
 			notnull: 0,
 			ary: null
 		}), null);
-		strictEqual(this.item.validateSet('str', 'aa'), null);
+		strictEqual(this.model.validate({
+			str: 'aa'
+		}), null);
 	});
-	test('スキーマ違反になるオブジェクトを渡した時はエラーオブジェクトが返ってくること', 1, function() {
+	test('asCreate=falseで、スキーマ違反になるオブジェクトを渡した時はエラーオブジェクトが返ってくること', 2, function() {
 		// ここにはデータアイテム(≠ObservableItem)特有のエラーが発生するようなオブジェクトのテストを記述する
-		// validateSetはObservableItemにもあるため、共通のエラーが発生するようなテストはObservableItemのテストの方に記述する。
-		var ret = this.item.validateSet('id', '0001');
-		strictEqual(ret && ret.code, ERR.ERR_CODE_CANNOT_SET_ID, ret && ret.message);
+		// validateはObservableItemにもあるため、共通のエラーが発生するようなテストはObservableItemのテストの方に記述する。
+		var ret = this.model.validate({
+			id: 0
+		});
+		strictEqual(ret && ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
+		var ret = this.model.validate({
+			id: null
+		});
+		strictEqual(ret && ret.code, ERR.ERR_CODE_INVALID_ITEM_VALUE, ret && ret.message);
 	});
 });

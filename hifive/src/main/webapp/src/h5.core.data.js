@@ -1118,13 +1118,12 @@
 		var elmType = null;
 		var dimension = 0;
 		var type = propObj.type;
-		var constraint = propObj.constraint;
+		var constraint = propObj.constraint || {};
 
 		// id:true の場合 type指定がない場合はtype:string,
 		// notNull(type:stringならnotEmpty)をtrueにする(データモデルの場合のみ)
 		if (isDataModel && propObj.id) {
 			type = type || 'string';
-			constraint = constraint || {};
 			constraint.notNull = true;
 			if (type === 'string') {
 				constraint.notEmpty = true;
@@ -1145,8 +1144,8 @@
 			}));
 		}
 		// constraintを値が満たすかどうかチェックする関数を作成してcheckFuncArrayに追加
-		if (propObj.constraint) {
-			checkFuncArray.push(createConstraintCheckFunction(propObj.constraint));
+		if (constraint) {
+			checkFuncArray.push(createConstraintCheckFunction(constraint));
 		}
 		return createCheckValueByCheckObj({
 			checkFuncs: checkFuncArray,
@@ -1528,7 +1527,7 @@
 					var newValue = item._schema[dp].depend.calc.call(item, event);
 
 					// 型変換を行わない厳密チェックで、戻り値をチェックする
-					var errReason = item._itemValueCheckFuncs[dp](newValue, true);
+					var errReason = item._validateItemValue(dp, newValue, true);
 					if (errReason.length !== 0) {
 						// calcの返した値が型・制約違反ならエラー
 						throwFwError(ERR_CODE_CALC_RETURNED_INVALID_VALUE, [
@@ -1571,7 +1570,15 @@
 		return ret;
 	}
 
-	function validateValueObj(schemaInfo, valueObj, item, model) {
+	/**
+	 * 渡されたオブジェクトがスキーマを満たすかどうかをチェックする 満たさない場合は例外を投げる。
+	 * depend項目のセットはここではエラーにならない。現在の値と厳密等価な値のセットはOKなため、validate時のアイテムの値が分からない限り判定できないため。
+	 * depend.calcの計算も行わない。calcの結果がセット時のアイテムの状態によって変わったり、副作用のある関数の可能性もあるため。
+	 * そのため、depend項目のスキーマチェックも行われない。
+	 *
+	 * @private
+	 */
+	function validateValueObj(schemaInfo, valueObj, model) {
 		var schema = schemaInfo._schema;
 		for ( var prop in valueObj) {
 			if (!(prop in schema)) {
@@ -1581,22 +1588,19 @@
 			}
 			var newValue = valueObj[prop];
 
-			// depend指定されている項目はset禁止
-			if (schema[prop] && schema[prop].depend && (!item || (item.get(prop) !== newValue))) {
-				//dependなプロパティの場合、現在の値とこれから代入しようとしている値が
-				//厳密等価でtrueになる場合に限り、代入を例外にせず無視する。
-				//これは、item.get()の戻り値のオブジェクトをそのままset()しようとしたときに
-				//dependのせいでエラーにならないようにするため。
-				throwFwError(ERR_CODE_DEPEND_PROPERTY, [model ? model.name : NOT_AVAILABLE, prop]);
-			}
-
 			//type:[]で、代入指定無しの場合はvalidationを行わない
 			if (schema[prop] && isTypeArray(schema[prop].type) && !valueObj.hasOwnProperty(prop)) {
 				continue;
 			}
-			//型・制約チェック
-			//配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
-			var validateResult = schemaInfo._validateItemValue(prop, newValue);
+
+			// modelがある場合はプロパティがidKeyかどうかを調べる
+			var isId = model && model.idKey === prop;
+
+			// 型・制約チェック
+			// 配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
+			// idKeyの場合は、isStrictをtrueにしてvalidateItemValueを呼び出す。
+			// (idの場合はtype:'string'でもnew Strng()で作ったラッパークラスのものは入らない)
+			var validateResult = schemaInfo._validateItemValue(prop, newValue, isId);
 			if (validateResult.length > 0) {
 				throwFwError(ERR_CODE_INVALID_ITEM_VALUE,
 						[model ? model.name : NOT_AVAILABLE, prop], validateResult);
@@ -1625,8 +1629,16 @@
 
 			// depend指定されている項目はsetしない
 			if (schema[prop] && schema[prop].depend) {
-				// itemSetterにはvalidate済みのものが渡されるので、depend項目が設定されている場合は必ずoldValue==newValue
-				// なので、イベントは上がらないようにする
+				// dependなプロパティの場合、現在の値とこれから代入しようとしている値が
+				// 厳密等価でtrueになる場合に限り、代入を例外にせず無視する。
+				// これは、item.get()の戻り値のオブジェクトをそのままset()しようとしたときに
+				// dependのせいでエラーにならないようにするため。
+				if (oldValue !== newValue) {
+					throwFwError(ERR_CODE_DEPEND_PROPERTY, [
+							item._model ? item._model.name : NOT_AVAILABLE, prop]);
+				}
+
+				// 厳密等価な場合は無視
 				continue;
 			}
 
@@ -2095,13 +2107,13 @@
 		// 依存プロパティのマップ
 		var dependencyMap = createDependencyMap(schema);
 
-		function validateItemValue(p, value) {
-			return itemValueCheckFuncs[p](value);
+		function validateItemValue(p, value, isStrict) {
+			return itemValueCheckFuncs[p](value, isStrict);
 		}
 
 
 		function createInitialValueObj(userInitialValue) {
-			var actualInitialValue = [];
+			var actualInitialValue = {};
 			for ( var plainProp in schema) {
 				var propDesc = schema[plainProp];
 
@@ -2126,11 +2138,10 @@
 
 				actualInitialValue[plainProp] = initValue;
 			}
-			return actualInitialValue;
+			return $.extend({}, actualInitialValue, userInitialValue);
 		}
 
 		return {
-			_itemValueCheckFuncs: itemValueCheckFuncs,
 			_schemaKeys: schemaKeys,
 			_schema: schema,
 			_realProps: realProps,
@@ -2989,15 +3000,14 @@
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
 		 */
 		create: function(objOrArray) {
-			var error = this.validateCreate(objOrArray);
+			// modelがmanagerを持たない(dropModelされた)ならエラー
+			if (!this._manager) {
+				throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'create']);
+			}
+			var error = this.validate(objOrArray, true);
 			if (error) {
 				throw error;
 			}
-
-			var idKey = this.idKey;
-			var items = wrapInArray(objOrArray);
-
-			var ret = [];
 
 			//removeで同時に複数のアイテムが指定された場合、イベントは一度だけ送出する。
 			//そのため、事前にアップデートセッションに入っている場合はそのセッションを引き継ぎ、
@@ -3008,7 +3018,9 @@
 				this._manager.beginUpdate();
 			}
 			var actualNewItems = [];
-
+			var items = wrapInArray(objOrArray);
+			var ret = [];
+			var idKey = this.idKey;
 			for ( var i = 0, len = items.length; i < len; i++) {
 				var valueObj = items[i];
 				var itemId = valueObj[idKey];
@@ -3053,66 +3065,76 @@
 		},
 
 		/**
-		 * createに渡す引数のチェックを行います。
+		 * このモデルのスキーマに違反しないかどうかオブジェクトをチェックします。
 		 * <p>
-		 * DataModel#create()に渡しても例外が発生しないようなデータアイテム定義を渡された場合はnullを返します。
+		 * 第一引数にはチェックしたいオブジェクト、またはチェックしたいオブジェクトの配列を渡してください。
 		 * </p>
 		 * <p>
-		 * DataModel#create()に渡した時に例外が発生するようなデータアイテム定義を渡された場合は、エラーオブジェクトを返します。
+		 * 例：
+		 *
+		 * <pre>
+		 * dataModel.validate({
+		 * 	prop1: 5,
+		 * 	prop2: 'abc'
+		 * });
+		 * </pre>
+		 *
+		 * </p>
+		 * <p>
+		 * チェックが通らなかった場合は例外オブジェクト、チェックが通った場合はnullを返します
+		 * </p>
+		 * <p>
+		 * 第二引数にtrueを指定した場合は、create()時相当のバリデーションを行います。create()時相当のバリデーションではidの重複チェックをし、
+		 * 引数に未指定のプロパティがあれば初期値の設定をしてからバリデーションを行います。デフォルトはfalseで、set()時相当のスキーマチェックのみを行います。
 		 * </p>
 		 *
 		 * @since 1.1.9
 		 * @memberOf DataModel
-		 * @param {Object|Object[]} arg createに渡す引数でオブジェクトまたはオブジェクトの配列
+		 * @param {Object|Object[]} arg チェックしたいオブジェクトまたはオブジェクトの配列
+		 * @param {Boolean} [asCreate=false] create()時相当のバリデーションを行うかどうか
 		 */
-		validateCreate: function(arg) {
+		validate: function(arg, asCreate) {
 			try {
-				// modelがmanagerを持たない(dropModelされた)ならエラー
-				if (!this._manager) {
-					throwFwError(ERR_CODE_CANNOT_CHANGE_DROPPED_MODEL, [this.name, 'create']);
-				}
-
+				var idKey = this.idKey;
+				var items = wrapInArray(arg);
 				// objctでもArrayでもなかったらエラー
 				if (typeof arg !== 'object' && !$.isArray(arg)) {
 					throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
 				}
-				var idKey = this.idKey;
-				var items = wrapInArray(arg);
+				if (asCreate) {
+					for ( var i = 0, len = items.length; i < len; i++) {
+						var valueObj = items[i];
+						var itemId = valueObj[idKey];
+						//idが空文字、null、undefined、はid指定エラー
+						if (itemId === '' || itemId == null) {
+							throwFwError(ERR_CODE_NO_ID);
+						}
 
-				// 最初に引数のスキーマチェックを行う
-				for ( var i = 0, len = items.length; i < len; i++) {
-					var valueObj = items[i];
-					var itemId = valueObj[idKey];
-					//idが空文字、null、undefined、はid指定エラー
-					if (itemId === '' || itemId == null) {
-						throwFwError(ERR_CODE_NO_ID);
+						// validateする
+						var error = null;
+						var obj = null;
+						if (this.has(itemId)) {
+							// 既に存在するアイテムへのセットなら、idを無視してチェックを実行(既に存在するIDなのでIDは合っている)
+							obj = $.extend({}, valueObj);
+							delete obj[idKey];
+						} else {
+							// 新規作成時のチェックなら初期値をセットしてからチェックを実行
+							obj = this._schemaInfo._createInitialValueObj(valueObj);
+						}
+						error = validateValueObj(this._schemaInfo, obj, this);
+						if (error) {
+							throw error;
+						}
 					}
-					//idがstringでもintegerでもない場合は制約違反エラー
-					if (!isIntegerValue(itemId, true) && !isString(itemId)) {
-						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, [this.name, idKey]);
-					}
-
-					// 既存のアイテムがあれば取得
-					var storedItem = this._findById(itemId);
-
-					// validateする
-					var error = null;
-					if (storedItem) {
-						// 既に存在するアイテムへのセットなら、セット時のvalidateチェックを実行
-						error = storedItem.validateSet.call(storedItem, valueObj);
-					} else {
-						// 新規作成であれば、初期値の設定したオブジェクトと、ユーザ指定オブジェクトをマージした結果を使ってvalidateValueObjでチェック
-						error = validateValueObj(this._schemaInfo, $.extend({}, valueObj,
-								this._schemaInfo._createInitialValueObj(valueObj)), null, this);
-					}
-					if (error) {
-						throw error;
+				} else {
+					for ( var i = 0, l = items.length; i < l; i++) {
+						var valueObj = items[i];
+						validateValueObj(this._schemaInfo, valueObj, this);
 					}
 				}
 			} catch (e) {
 				return e;
 			}
-
 			return null;
 		},
 
@@ -3507,7 +3529,7 @@
 			// arrayPropsの設定
 			var arrayProps = schemaInfo._aryProps;
 
-			validateValueObj(this, actualInitialValue, this, model);
+			validateValueObj(this, actualInitialValue, model);
 			itemSetter(this, actualInitialValue, null, true);
 
 			for ( var i = 0, l = arrayProps.length; i < l; i++) {
@@ -3569,11 +3591,34 @@
 					valueObj[arguments[0]] = arguments[1];
 				}
 
-				var event = null;
-				var error = this.validateSet.apply(this, arguments);
-				if (error) {
-					throw error;
+
+				// データモデルから作られたアイテムなら、アイテムがモデルに属しているか、モデルがマネージャに属しているかのチェック
+				// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
+				if (model && (this._model !== model || !this._model._manager)) {
+					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [getValue(this, model.idKey),
+							'set'], this);
 				}
+
+				// バリデーション
+				if (model) {
+					// idの変更がされてるかどうかチェック
+					if ((model.idKey in valueObj)
+							&& (valueObj[model.idKey] !== getValue(this, model.idKey))) {
+						//IDの変更は禁止
+						throwFwError(ERR_CODE_CANNOT_SET_ID, [model.name, this.idKey]);
+					}
+					// スキーマの条件を満たすかどうかチェック
+					validateValueObj(this, valueObj, model);
+				} else {
+					// モデルが無い場合はthisはObserbableItem。(モデルが無いDataItemはチェック済みのため)
+					// ObsItem.validateを呼んでスキーマの条件を満たすかどうかチェック
+					var error = this.validate(valueObj);
+					if (error) {
+						throw error;
+					}
+				}
+
+				var event = null;
 				// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
 				// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
 				// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
@@ -3600,47 +3645,6 @@
 					// ObservableItemなら即発火
 					this.dispatchEvent(event);
 				}
-			},
-
-			/**
-			 * setに渡す引数で例外が発生するかどうかチェックします。
-			 * <p>
-			 * 例外が発生する場合は例外オブジェクトを返します。例外が発生しない場合はnullを返します。
-			 * </p>
-			 *
-			 * @since 1.1.9
-			 * @memberOf DataItem
-			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
-			 */
-			validateSet: function(var_args) {
-				//引数はオブジェクト1つ、または(key, value)で呼び出せる
-				var valueObj = var_args;
-				if (arguments.length === 2) {
-					valueObj = {};
-					valueObj[arguments[0]] = arguments[1];
-				}
-				try {
-					if (model) {
-						// データモデルから作られたアイテムなら
-						// モデルに属しているか、idKeyへの変更じゃないことのチェックと、
-						// イベント管理を行う
-						var idKey = model.idKey;
-
-						// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
-						if (this._model !== model || !this._model._manager) {
-							throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [
-									getValue(this, idKey), 'set'], this);
-						}
-						if ((idKey in valueObj) && (valueObj[idKey] !== getValue(this, idKey))) {
-							//IDの変更は禁止
-							throwFwError(ERR_CODE_CANNOT_SET_ID, [model.name, idKey]);
-						}
-					}
-					validateValueObj(this, valueObj, this, model);
-				} catch (e) {
-					return e;
-				}
-				return null;
 			},
 
 			/**
@@ -3705,6 +3709,38 @@
 					return this._model;
 				}
 			});
+		} else {
+			$.extend(DataItem.prototype, {
+				/**
+				 * ObservableItemのスキーマに違反しないかどうか引数をチェックします。
+				 * <p>
+				 * チェックが通らなかった場合は例外オブジェクト、チェックが通った場合はnullを返します
+				 * </p>
+				 * <p>
+				 * このメソッドはh5.core.data.createObservableItem()で作成したObservableItemのみが持ちます。DataModelから作成したDataItemにはこのメソッドはありません。
+				 * DataModelから作成したDataItemの値チェックは、<a
+				 * href="DataModel.html#validate">DataModel#validate</a>を使用してください。
+				 * </p>
+				 *
+				 * @since 1.1.9
+				 * @memberOf DataItem
+				 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
+				 */
+				validate: function(var_args) {
+					try {
+						//引数はオブジェクト1つ、または(key, value)で呼び出せる
+						var valueObj = var_args;
+						if (arguments.length === 2) {
+							valueObj = {};
+							valueObj[arguments[0]] = arguments[1];
+						}
+						validateValueObj(this, valueObj);
+					} catch (e) {
+						return e;
+					}
+					return null;
+				}
+			});
 		}
 		return DataItem;
 	}
@@ -3749,8 +3785,8 @@
 	 * @returns {Boolean} ObservableItemかどうか
 	 */
 	function isObservableItem(obj) {
-		// _itemValueCheckFuncsを持っているかつ、getModelメソッドがない場合はObservableItemと判定する。
-		return !!(obj && obj.constructor && obj._itemValueCheckFuncs && !$.isFunction(obj.getModel));
+		// _validateItemValueを持っているかつ、getModelメソッドがない場合はObservableItemと判定する。
+		return !!(obj && obj.constructor && obj._validateItemValue && !$.isFunction(obj.getModel));
 	}
 
 	//--------------------------------------------
