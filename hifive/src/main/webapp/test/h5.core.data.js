@@ -10885,7 +10885,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('asCreate=trueで、create時に例外の発生しないオブジェクトまたはオブジェクトの配列を渡した時はnullが返ってくること', 3, function() {
+	test('asCreate=trueで、create時に例外の発生しないオブジェクトまたはオブジェクトの配列を渡した時はnullが返ってくること', 2, function() {
 		strictEqual(this.model.validate({
 			id: this.sequence.next(),
 			str: 'a',
@@ -10894,7 +10894,7 @@ $(function() {
 		}, true), null);
 		strictEqual(this.model.validate([{
 			id: this.sequence.next(),
-			str: 'aa',
+			str: 'a',
 			notnull: 11
 		}, {
 			id: this.sequence.next(),
@@ -10905,14 +10905,6 @@ $(function() {
 			str: 'c',
 			notnull: 33
 		}], true), null);
-
-		this.model.create({
-			id: '1',
-			notnull: 3
-		});
-		strictEqual(this.model.validate({
-			id: '1'
-		}, true), null);
 	});
 	test('asCreate=trueで、create時に例外の発生するオブジェクトを渡した時はエラーオブジェクトが返ってくること', 4, function() {
 		var ret = this.model.validate({

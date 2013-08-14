@@ -270,7 +270,7 @@
 	errMsgMap[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'calcで返却された値が、スキーマで指定された型・制約に違反しています。データモデル={0} プロパティ={1} 返却値={2}';
 	errMsgMap[ERR_CODE_INVALID_COPYFROM_ARGUMENT] = 'copyFromの引数が不正です。配列を指定してください。引数位置={0}、値={1}';
 	errMsgMap[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正です。識別子として有効な文字列を指定してください。';
-	errMsgMap[ERR_CODE_NO_ID] = 'id:trueを指定しているプロパティがありません。データアイテムの生成にはid:trueを指定した項目が必須です。';
+	errMsgMap[ERR_CODE_NO_ID] = 'データアイテムの生成にはID項目の値の設定が必須です。データモデル={0} IDプロパティ={1}';
 	errMsgMap[ERR_CODE_INVALID_DESCRIPTOR] = 'データモデルディスクリプタにエラーがあります。';
 	errMsgMap[ERR_CODE_CANNOT_SET_ID] = 'id指定されたプロパティを変更することはできません。データモデル={0} プロパティ={1}';
 	errMsgMap[ERR_CODE_DESCRIPTOR_CIRCULAR_REF] = 'Datamaneger.createModelに渡された配列内のディスクリプタについて、baseやtypeによる依存関係が循環参照しています。';
@@ -3084,8 +3084,13 @@
 		 * チェックが通らなかった場合は例外オブジェクト、チェックが通った場合はnullを返します
 		 * </p>
 		 * <p>
-		 * 第二引数にtrueを指定した場合は、create()時相当のバリデーションを行います。create()時相当のバリデーションではidの重複チェックをし、
+		 * 第二引数にtrueを指定した場合は、create()時相当のバリデーションを行います。create()時相当のバリデーションではid指定があるかどうかのチェックがあり、
 		 * 引数に未指定のプロパティがあれば初期値の設定をしてからバリデーションを行います。デフォルトはfalseで、set()時相当のスキーマチェックのみを行います。
+		 * </p>
+		 * <p>
+		 * id項目へのセット、depend項目へのセットのチェック及び、depend項目の計算結果のチェック(depend.calcの実行)は行いません。
+		 * id項目、depend項目はセットできるかどうかは、セット時のデータアイテムの値に依存するため、validate時にはチェックしません。
+		 * depend.calcはその時のデータアイテムに依存したり、副作用のある関数が指定されている場合を考慮し、validate時には実行しません。
 		 * </p>
 		 *
 		 * @since 1.1.9
@@ -3107,24 +3112,13 @@
 						var itemId = valueObj[idKey];
 						//idが空文字、null、undefined、はid指定エラー
 						if (itemId === '' || itemId == null) {
-							throwFwError(ERR_CODE_NO_ID);
+							throwFwError(ERR_CODE_NO_ID, [this.name, idKey]);
 						}
 
 						// validateする
-						var error = null;
-						var obj = null;
-						if (this.has(itemId)) {
-							// 既に存在するアイテムへのセットなら、idを無視してチェックを実行(既に存在するIDなのでIDは合っている)
-							obj = $.extend({}, valueObj);
-							delete obj[idKey];
-						} else {
-							// 新規作成時のチェックなら初期値をセットしてからチェックを実行
-							obj = this._schemaInfo._createInitialValueObj(valueObj);
-						}
-						error = validateValueObj(this._schemaInfo, obj, this);
-						if (error) {
-							throw error;
-						}
+						// 新規作成時のチェックなら初期値をセットしてからチェックを実行
+						obj = this._schemaInfo._createInitialValueObj(valueObj);
+						validateValueObj(this._schemaInfo, obj, this);
 					}
 				} else {
 					for ( var i = 0, l = items.length; i < l; i++) {
