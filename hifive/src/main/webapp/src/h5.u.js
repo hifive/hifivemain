@@ -1296,7 +1296,7 @@
 			if (!post) {
 				return ret;
 			}
-			if (ret && $.isFunction(ret.promise)) {
+			if (ret && $.isFunction(ret.promise) && !isJQueryObject(ret)) {
 				var that = this;
 
 				registerCallbacksSilently(ret, 'always', function() {

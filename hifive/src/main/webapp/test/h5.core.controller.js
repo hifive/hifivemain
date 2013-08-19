@@ -2213,6 +2213,61 @@ $(function() {
 		});
 	});
 
+	asyncTest(
+			'ライフサイクルイベントがjQueryオブジェクトを返す時の挙動 jQueryオブジェクトを返した場合にpromiseを返したとは判定されずに何も返していない時と同じ挙動になること',
+			10, function() {
+				var jQueryObj = $(document.body);
+				function returnjQueryObjFunc() {
+					return jQueryObj;
+				}
+				var dfd = h5.async.deferred();
+				var order = 1;
+				var controller = {
+					__name: 'TestController',
+					child1Controller: {
+						__name: 'child1Controller',
+						__construct: function() {
+							strictEqual(order++, 1, '子コントローラの___constructが1番目に実行されること');
+						},
+						__init: function() {
+							strictEqual(order++, 3, '子コントローラの___initが3番目に実行されること');
+						},
+						__ready: function() {
+							strictEqual(order++, 5, '子コントローラの___readyが5番目に実行されること');
+						},
+						__unbind: function() {
+							strictEqual(order++, 7, '子コントローラの___unbindが7番目に実行されること');
+						},
+						__dispose: function() {
+							strictEqual(order++, 9, '子コントローラの___disposeが9番目に実行されること');
+						}
+					},
+					__construct: function() {
+						strictEqual(order++, 2, 'ルートコントローラの___constructが2番目に実行されること');
+					},
+					__init: function() {
+						strictEqual(order++, 4, 'ルートコントローラの___initが4番目に実行されること');
+					},
+					__ready: function() {
+						strictEqual(order++, 6, 'ルートコントローラの___readyが6番目に実行されること');
+					},
+					__unbind: function() {
+						strictEqual(order++, 8, 'ルートコントローラの___unbindが8番目に実行されること');
+					},
+					__dispose: function() {
+						strictEqual(order++, 10, 'ルートコントローラの___disposeが10番目に実行されること');
+					}
+				};
+				var c = h5.core.controller('#controllerTest', controller);
+				c.readyPromise.done(function() {
+					c.dispose().done(function() {
+						start();
+					});
+				}).fail(function(e) {
+					ok(false, 'ルートコントローラのreadyPromiseのfailハンドラが実行された');
+				});
+			});
+
 	asyncTest('コントローラ内のthis(AOPなし)', 1, function() {
 		var capturedController = null;
 		var controller = {
@@ -2485,6 +2540,37 @@ $(function() {
 					start();
 				});
 	});
+
+	asyncTest(
+			'[build#min]アスペクト対象のメソッドがjQueryオブジェクトを返した時にpromiseオブジェクトと判定されずにreject/resolveを待たないこと',
+			4, function() {
+				var order = 1;
+				var ic = h5.u.createInterceptor(function(invocation) {
+					strictEqual(order++, 1, 'pre()が1番目に実行されること');
+					return invocation.proceed();
+				}, function(invocation, data) {
+					strictEqual(order++, 3, 'post()が3番目に実行されること');
+				});
+				var logicAspect = {
+					target: '*',
+					interceptors: ic,
+					pointCut: 'f'
+				};
+				h5.core.__compileAspects(logicAspect);
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					f: function() {
+						strictEqual(order++, 2, 'アスペクト対象のメソッドが2番目に実行されること');
+						return $('body');
+					}
+				});
+				c.readyPromise.done(function() {
+					c.f();
+					strictEqual(order++, 4, 'インターセプタが同期で実行されていること');
+					cleanAspects();
+					start();
+				});
+			});
 
 	asyncTest('"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか', function() {
 

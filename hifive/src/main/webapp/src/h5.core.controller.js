@@ -824,7 +824,7 @@
 				// ライフサイクルイベント実行後に呼ぶべきコールバック関数を作成
 				var callback = isInitEvent ? createCallbackForInit(controllerInstance)
 						: createCallbackForReady(controllerInstance);
-				if (ret && $.isFunction(ret.promise)) {
+				if (ret && $.isFunction(ret.promise) && !h5.u.obj.isJQueryObject(ret)) {
 					// __init, __ready がpromiseを返している場合
 					ret.done(function() {
 						callback();
