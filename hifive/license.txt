@@ -8,7 +8,7 @@ src/main/webapp/res/lib/jquery
 jQuery
 URL:http://jquery.com/
 License:
-	(before ver.1.7.2) Dual licensed under the MIT and GPL licenses.
+	(before ver.1.8) Dual licensed under the MIT and GPL licenses.
 		https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt
 		https://github.com/jquery/jquery/blob/master/GPL-LICENSE.txt
 	(ver.1.8 and later versions) MIT license
