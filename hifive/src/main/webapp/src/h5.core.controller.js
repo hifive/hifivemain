@@ -612,7 +612,7 @@
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
 
-				$(document).delegate(selectTarget, event, handler);
+				$(bindObj.controller.rootElement.ownerDocument).delegate(selectTarget, event, handler);
 			}
 			// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を格納する
 			// selectorがオブジェクト指定(rootElement, window, document)の場合はオブジェクトを格納する
@@ -714,7 +714,7 @@
 					if (isSelf || useBind || !isString(selectTarget)) {
 						$(selectTarget).unbind(event, handler);
 					} else {
-						$(document).undelegate(selectTarget, event, handler);
+						$(controller.rootElement.ownerDocument).undelegate(selectTarget, event, handler);
 					}
 				} else {
 					if (useBind) {
@@ -1128,7 +1128,7 @@
 		var start = hasTouchEvent ? 'touchstart' : 'mousedown';
 		var move = hasTouchEvent ? 'touchmove' : 'mousemove';
 		var end = hasTouchEvent ? 'touchend' : 'mouseup';
-		var $document = $(document);
+		var $document = $(controller.rootElement.ownerDocument);
 		var getBindObjects = function() {
 			// h5trackendイベントの最後でハンドラの除去を行う関数を格納するための変数
 			var removeHandlers = null;
