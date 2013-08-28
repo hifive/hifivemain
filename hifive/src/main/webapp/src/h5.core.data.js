@@ -2787,7 +2787,7 @@
 	 * <li><a href="#SEQ_INT">h5.core.data.SEQ_INT</a>
 	 * </ul>
 	 * のいずれかを指定可能です。 SEQ_STRINGを指定した場合、<a href="Sequence.html#current">current()</a>や<a
-	 * href="Sequence.html#next">next()<a> を呼ぶと、"1", "123"のような数字文字列が返ります。SEQ_INTの場合は数値が返ります。
+	 * href="Sequence.html#next">next()</a> を呼ぶと、"1", "123"のような数字文字列が返ります。SEQ_INTの場合は数値が返ります。
 	 * </p>
 	 *
 	 * @since 1.1.0
@@ -3539,7 +3539,8 @@
 			 * 引数にプロパティ名を指定すると、アイテムが持つそのプロパティの値を返します。
 			 * </p>
 			 * <p>
-			 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。 </p
+			 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。
+			 * </p>
 			 *
 			 * @since 1.1.0
 			 * @memberOf DataItem
@@ -3571,7 +3572,8 @@
 			 * <p>
 			 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。
 			 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする
-			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。 </p
+			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
+			 * </p>
 			 *
 			 * @since 1.1.0
 			 * @memberOf DataItem
@@ -3693,7 +3695,8 @@
 				 * DataItemが属しているDataModelインスタンスを返します。
 				 * <p>
 				 * このメソッドは、DataModelから作成したDataItemのみが持ちます。createObservableItemで作成したアイテムにはこのメソッドはありません。
-				 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。 </p
+				 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
+				 * </p>
 				 *
 				 * @since 1.1.0
 				 * @memberOf DataItem
@@ -3753,7 +3756,7 @@
 	 * <p>
 	 * ディスクリプタオブジェクトについては<a
 	 * href="/conts/web/view/tutorial-data-model/descriptor">チュートリアル(データモデル編)&gt;&gt;ディスクリプタの書き方</a>をご覧ください。
-	 * </p
+	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @memberOf h5.core.data
@@ -3772,7 +3775,8 @@
 	/**
 	 * ObserevableItem(createObservableItemで作成したオブジェクト)かどうかを判定します。
 	 * <p>
-	 * DataModelから作成したDataItemの場合はfalseを返します。 </p
+	 * DataModelから作成したDataItemの場合はfalseを返します。
+	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @memberOf h5.core.data
@@ -3802,7 +3806,8 @@
 	 * <p>
 	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
 	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
-	 * ObservableArrayは、自身の内容が変更されるメソッドが呼び出される時、実行前に'changeBefore'、実行後に'change'イベントを発生させます。 </p
+	 * ObservableArrayは、自身の内容が変更されるメソッドが呼び出される時、実行前に'changeBefore'、実行後に'change'イベントを発生させます。
+	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @class
