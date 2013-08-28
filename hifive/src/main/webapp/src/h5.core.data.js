@@ -1594,7 +1594,7 @@
 			}
 
 			// modelがある場合はプロパティがidKeyかどうかを調べる
-			var isId = model && model.idKey === prop;
+			var isId = model && model._idKey === prop;
 
 			// 型・制約チェック
 			// 配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
@@ -1785,7 +1785,7 @@
 
 		for ( var i = 0, len = items.length; i < len; i++) {
 			var item = items[i];
-			var itemId = item._values[model.idKey];
+			var itemId = item._values[model._idKey];
 
 			if (!modelLogs[itemId]) {
 				modelLogs[itemId] = [];
@@ -1807,7 +1807,7 @@
 
 		var modelLogs = getModelUpdateLogObj(model);
 
-		var itemId = ev.target._values[model.idKey];
+		var itemId = ev.target._values[model._idKey];
 
 		if (!modelLogs[itemId]) {
 			modelLogs[itemId] = [];
@@ -1829,7 +1829,7 @@
 
 		var modelLogs = getModelOldValueLogObj(model);
 
-		var itemId = item._values[model.idKey];
+		var itemId = item._values[model._idKey];
 
 		if (!modelLogs[itemId]) {
 			modelLogs[itemId] = {};
@@ -2080,15 +2080,10 @@
 	 * ObsItem,DataItemの生成に必要なスキーマ情報のキャッシュデータを作成します。
 	 *
 	 * @param {Object} schema validate済みでかつ継承先の項目も拡張済みのスキーマ
+	 * @param {Object} itemValueCheckFuncs プロパティの値をチェックする関数を持つオブジェクト
 	 * @returns {Object} ObsItem,DataItemの生成に必要なスキーマのキャッシュデータ
 	 */
 	function createSchemaInfoChache(schema, itemValueCheckFuncs) {
-		// スキーマのキーリストを作成
-		var schemaKeys = [];
-		for ( var prop in schema) {
-			schemaKeys.push(prop);
-		}
-
 		// 実プロパティ・依存プロパティ・配列プロパティを列挙
 		var realProps = [];
 		var dependProps = [];
@@ -2142,15 +2137,24 @@
 		}
 
 		return {
-			_schemaKeys: schemaKeys,
-			schema: schema,
 			_realProps: realProps,
 			_dependProps: dependProps,
 			_aryProps: aryProps,
 			_dependencyMap: dependencyMap,
 			_createInitialValueObj: createInitialValueObj,
 			/**
-			 * 引数にプロパティ名と値を指定し、 値がそのプロパティの制約条件を満たすかどうかをチェックします。
+			 * データモデルのスキーマ定義オブジェクト。
+			 * <p>
+			 * ObservableItemの場合のみアイテムインスタンスが持ちます。DataModelから生成したDataItemはschemaプロパティは持ちません。
+			 * DataModelから生成したDataItemのスキーマ定義は<a href="DataModel.html#schema">DataModel#schema</a>を参照してください。
+			 * </p>
+			 *
+			 * @memberOf DataItem
+			 * @type {Object}
+			 */
+			schema: schema,
+			/**
+			 * 引数にプロパティ名と値を指定し、値がそのプロパティの制約条件を満たすかどうかをチェックします。
 			 *
 			 * @private
 			 * @memberOf DataItem
@@ -2936,10 +2940,10 @@
 		// スキーマはチェック済みなのでid指定されているプロパティは必ず一つだけある。
 		for ( var p in schema) {
 			if (schema[p] && schema[p].id) {
-				this.idKey = p;
+				this._idKey = p;
 			}
 		}
-		var schemaIdType = schema[this.idKey].type;
+		var schemaIdType = schema[this._idKey].type;
 		if (schemaIdType) {
 			if (schemaIdType === 'string') {
 				this._idType = ID_TYPE_STRING;
@@ -3019,7 +3023,7 @@
 			var actualNewItems = [];
 			var items = wrapInArray(objOrArray);
 			var ret = [];
-			var idKey = this.idKey;
+			var idKey = this._idKey;
 			for ( var i = 0, len = items.length; i < len; i++) {
 				var valueObj = items[i];
 				var itemId = valueObj[idKey];
@@ -3099,7 +3103,7 @@
 		 */
 		validate: function(arg, asCreate) {
 			try {
-				var idKey = this.idKey;
+				var idKey = this._idKey;
 				var items = wrapInArray(arg);
 				// objctでもArrayでもなかったらエラー
 				if (typeof arg !== 'object' && !$.isArray(arg)) {
@@ -3185,7 +3189,7 @@
 				this._manager.beginUpdate();
 			}
 
-			var idKey = this.idKey;
+			var idKey = this._idKey;
 			var ids = wrapInArray(objOrItemIdOrArray);
 
 			var actualRemovedItems = [];
@@ -3263,7 +3267,7 @@
 			} else if (typeof idOrObj === 'object') {
 				//型の厳密性はitemsとの厳密等価比較によってチェックできるので、if文ではtypeofで充分
 				return idOrObj != null && $.isFunction(idOrObj.get)
-						&& idOrObj === this.items[idOrObj.get(this.idKey)];
+						&& idOrObj === this.items[idOrObj.get(this._idKey)];
 			} else {
 				return false;
 			}
@@ -3374,7 +3378,7 @@
 			function changeBeforeListener(event) {
 				// データモデルの場合、itemがmodelに属していない又は、itemが属しているmodelがmanagerに属していないならエラー
 				if (model && (item._model !== model || !model._manager)) {
-					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [item._values[model.idKey],
+					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [item._values[model._idKey],
 							event.method]);
 				}
 
@@ -3590,17 +3594,17 @@
 				// データモデルから作られたアイテムなら、アイテムがモデルに属しているか、モデルがマネージャに属しているかのチェック
 				// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
 				if (model && (this._model !== model || !this._model._manager)) {
-					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [getValue(this, model.idKey),
-							'set'], this);
+					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [
+							getValue(this, model._idKey), 'set'], this);
 				}
 
 				// バリデーション
 				if (model) {
 					// idの変更がされてるかどうかチェック
-					if ((model.idKey in valueObj)
-							&& (valueObj[model.idKey] !== getValue(this, model.idKey))) {
+					if ((model._idKey in valueObj)
+							&& (valueObj[model._idKey] !== getValue(this, model._idKey))) {
 						//IDの変更は禁止
-						throwFwError(ERR_CODE_CANNOT_SET_ID, [model.name, this.idKey]);
+						throwFwError(ERR_CODE_CANNOT_SET_ID, [model.name, this._idKey]);
 					}
 					// スキーマの条件を満たすかどうかチェック
 					validateValueObj(this, valueObj, model);
@@ -3682,7 +3686,7 @@
 			$.extend(DataItem.prototype, {
 
 				/**
-				 * データアイテムが属しているデータモデ
+				 * データアイテムが属しているデータモデル
 				 *
 				 * @private
 				 * @since 1.1.0
