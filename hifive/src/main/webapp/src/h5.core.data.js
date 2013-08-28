@@ -343,6 +343,17 @@
 	//
 	//========================================================
 	/**
+	 * ObservableItem, DataItem, DataModelから計算済みのschemaオブジェクトを取得する
+	 *
+	 * @private
+	 * @param {ObservableItem|DataItem|DataModel}
+	 */
+	function getSchema(itemOrModel) {
+		// ObsItem,DataModelはschemaプロパティを持つが、DataItemはschemaを持たないので、modelから取得して返す
+		return itemOrModel.schema || itemOrModel._model.schema;
+	}
+
+	/**
 	 * schemaオブジェクトのtype指定の文字列を、パースした結果を返す。 正しくパースできなかった場合は空オブジェクトを返す。
 	 *
 	 * @private
@@ -1466,6 +1477,7 @@
 		// 今回の変更に依存する、未計算のプロパティ
 		var targets = [];
 
+		var schema = getSchema(item);
 		var dependsMap = item._dependencyMap;
 
 		/**
@@ -1474,7 +1486,7 @@
 		 * 依存しているプロパティが依存プロパティが今回の変更されたプロパティに依存していないならtrue(計算済み)を返します
 		 */
 		function isReady(dependProp) {
-			var deps = wrapInArray(item.schema[dependProp].depend.on);
+			var deps = wrapInArray(schema[dependProp].depend.on);
 			for ( var i = 0, len = deps.length; i < len; i++) {
 				if ($.inArray(deps[i], item._realProperty) === -1
 						&& $.inArray(deps[i], targets) !== -1) {
@@ -1524,7 +1536,7 @@
 				var dp = targets[i];
 
 				if (isReady(dp)) {
-					var newValue = item.schema[dp].depend.calc.call(item, event);
+					var newValue = schema[dp].depend.calc.call(item, event);
 
 					// 型変換を行わない厳密チェックで、戻り値をチェックする
 					var errReason = item._validateItemValue(dp, newValue, true);
@@ -1538,7 +1550,7 @@
 						newValue: newValue
 					};
 					// calcの結果をセット
-					if (item.schema[dp] && isTypeArray(item.schema[dp].type)) {
+					if (schema[dp] && isTypeArray(schema[dp].type)) {
 						//配列の場合は値のコピーを行う。ただし、コピー元がnullの場合があり得る(type:[]はnullable)
 						//その場合は空配列をコピー
 
@@ -1578,8 +1590,7 @@
 	 *
 	 * @private
 	 */
-	function validateValueObj(schemaInfo, valueObj, model) {
-		var schema = schemaInfo.schema;
+	function validateValueObj(schema, validateItemValue, valueObj, model) {
 		for ( var prop in valueObj) {
 			if (!(prop in schema)) {
 				// schemaに定義されていないプロパティ名が入っていたらエラー
@@ -1600,7 +1611,7 @@
 			// 配列が渡された場合、その配列の要素が制約を満たすかをチェックしている
 			// idKeyの場合は、isStrictをtrueにしてvalidateItemValueを呼び出す。
 			// (idの場合はtype:'string'でもnew Strng()で作ったラッパークラスのものは入らない)
-			var validateResult = schemaInfo._validateItemValue(prop, newValue, isId);
+			var validateResult = validateItemValue(prop, newValue, isId);
 			if (validateResult.length > 0) {
 				throwFwError(ERR_CODE_INVALID_ITEM_VALUE,
 						[model ? model.name : NOT_AVAILABLE, prop], validateResult);
@@ -1612,7 +1623,7 @@
 	 * アイテムに値をセットする
 	 */
 	function itemSetter(item, valueObj, ignoreProps, isCreate) {
-		var schema = item.schema;
+		var schema = getSchema(item);
 
 		// valueObjから整合性チェックに通ったものを整形して格納する配列
 		var readyProps = [];
@@ -2081,9 +2092,10 @@
 	 *
 	 * @param {Object} schema validate済みでかつ継承先の項目も拡張済みのスキーマ
 	 * @param {Object} itemValueCheckFuncs プロパティの値をチェックする関数を持つオブジェクト
+	 * @param {DataModel} [model] データアイテムが属するモデル。ObservableItemの場合はundefined
 	 * @returns {Object} ObsItem,DataItemの生成に必要なスキーマのキャッシュデータ
 	 */
-	function createSchemaInfoChache(schema, itemValueCheckFuncs) {
+	function createSchemaInfoChache(schema, itemValueCheckFuncs, model) {
 		// 実プロパティ・依存プロパティ・配列プロパティを列挙
 		var realProps = [];
 		var dependProps = [];
@@ -2136,23 +2148,12 @@
 			return $.extend({}, actualInitialValue, userInitialValue);
 		}
 
-		return {
+		var ret = {
 			_realProps: realProps,
 			_dependProps: dependProps,
 			_aryProps: aryProps,
 			_dependencyMap: dependencyMap,
 			_createInitialValueObj: createInitialValueObj,
-			/**
-			 * データモデルのスキーマ定義オブジェクト。
-			 * <p>
-			 * ObservableItemの場合のみアイテムインスタンスが持ちます。DataModelから生成したDataItemはschemaプロパティは持ちません。
-			 * DataModelから生成したDataItemのスキーマ定義は<a href="DataModel.html#schema">DataModel#schema</a>を参照してください。
-			 * </p>
-			 *
-			 * @memberOf DataItem
-			 * @type {Object}
-			 */
-			schema: schema,
 			/**
 			 * 引数にプロパティ名と値を指定し、値がそのプロパティの制約条件を満たすかどうかをチェックします。
 			 *
@@ -2162,8 +2163,9 @@
 			 * @param {Any} value 値
 			 * @returns {Boolean} 値がプロパティの制約条件を満たすならtrue
 			 */
-			_validateItemValue: validateItemValue
+			_validateItemValue: validateItemValue,
 		};
+		return ret;
 	}
 
 	/**
@@ -3121,12 +3123,14 @@
 						// validateする
 						// 新規作成時のチェックなら初期値をセットしてからチェックを実行
 						obj = this._schemaInfo._createInitialValueObj(valueObj);
-						validateValueObj(this._schemaInfo, obj, this);
+						validateValueObj(this.schema, this._schemaInfo._validateItemValue, obj,
+								this);
 					}
 				} else {
 					for ( var i = 0, l = items.length; i < l; i++) {
 						var valueObj = items[i];
-						validateValueObj(this._schemaInfo, valueObj, this);
+						validateValueObj(this.schema, this._schemaInfo._validateItemValue,
+								valueObj, this);
 					}
 				}
 			} catch (e) {
@@ -3356,7 +3360,7 @@
 	 */
 	function createDataItemConstructor(schema, itemValueCheckFuncs, model) {
 		// スキーマ情報の作成。アイテムのプロトタイプに持たせる。モデルにも持たせる。
-		var schemaInfo = createSchemaInfoChache(schema, itemValueCheckFuncs);
+		var schemaInfo = createSchemaInfoChache(schema, itemValueCheckFuncs, model);
 		if (model) {
 			model._schemaInfo = schemaInfo;
 		}
@@ -3526,7 +3530,7 @@
 			// arrayPropsの設定
 			var arrayProps = schemaInfo._aryProps;
 
-			validateValueObj(this, actualInitialValue, model);
+			validateValueObj(schema, this._validateItemValue, actualInitialValue, model);
 			itemSetter(this, actualInitialValue, null, true);
 
 			for ( var i = 0, l = arrayProps.length; i < l; i++) {
@@ -3607,7 +3611,8 @@
 						throwFwError(ERR_CODE_CANNOT_SET_ID, [model.name, this._idKey]);
 					}
 					// スキーマの条件を満たすかどうかチェック
-					validateValueObj(this, valueObj, model);
+					validateValueObj(model.schema, model._schemaInfo._validateItemValue, valueObj,
+							model);
 				} else {
 					// モデルが無い場合はthisはObserbableItem。(モデルが無いDataItemはチェック済みのため)
 					// ObsItem.validateを呼んでスキーマの条件を満たすかどうかチェック
@@ -3734,12 +3739,24 @@
 							valueObj = {};
 							valueObj[arguments[0]] = arguments[1];
 						}
-						validateValueObj(this, valueObj);
+						validateValueObj(this.schema, this._validateItemValue, valueObj);
 					} catch (e) {
 						return e;
 					}
 					return null;
-				}
+				},
+
+				/**
+				 * データモデルのスキーマ定義オブジェクト
+				 * <p>
+				 * このプロパティはh5.core.data.createObservableItem()で作成したObservableItemのみが持ちます。DataModelから生成したDataItemはschemaプロパティは持ちません。
+				 * DataModelから生成したDataItemのスキーマ定義は<a href="DataModel.html#schema">DataModel#schema</a>を参照してください。
+				 * </p>
+				 *
+				 * @memberOf DataItem
+				 * @type {Object}
+				 */
+				schema: schema
 			});
 		}
 		return DataItem;
