@@ -7299,4 +7299,84 @@ $(function() {
 							start();
 						});
 			});
+
+	module(
+			'iframe内の要素にコントローラをバインド',
+			{
+				setup: function() {
+					this.$iframe = $('<iframe id="test-iframe"></iframe>');
+					$('#qunit-fixture').append(this.$iframe);
+					this.ifDoc = this.$iframe[0].contentWindow.document;
+					$(this.ifDoc.body)
+							.append(
+									'<div id="parent-div"><div id="controllerTest-1"><button>a</button></div></div>');
+				},
+				teardown: function() {
+					disposeQUnitFixtureController();
+					this.$iframe.remove();
+					this.ifWin = null;
+				},
+				$iframe: null,
+				ifDoc: null
+			});
+
+	asyncTest('イベントハンドラが動作すること', 1, function() {
+		var result = '';
+		var c = {
+			__name: 'InIframeController',
+			'button click': function() {
+				result = 'button click';
+			}
+		};
+		var that = this;
+		h5.core.controller($(this.ifDoc).find('#controllerTest-1'), c).readyPromise
+				.done(function() {
+					$(that.ifDoc).find('button').trigger('click');
+					strictEqual(result, 'button click', 'イベントハンドラが動作すること');
+					start();
+				});
+	});
+	asyncTest('グローバルセレクタで指定したイベントハンドラが動作すること', 1, function() {
+		var result = '';
+		var c = {
+			__name: 'InIframeController',
+			'{#parent-div} click': function() {
+				result = '{#parent-div} click';
+			}
+		};
+		var that = this;
+		h5.core.controller($(this.ifDoc).find('#controllerTest-1'), c).readyPromise
+				.done(function() {
+					$(that.ifDoc).find('button').trigger('click');
+					strictEqual(result, '{#parent-div} click', 'イベントハンドラが動作すること');
+					start();
+				});
+	});
+	asyncTest(
+			'{window},{document}にバインドしたイベントハンドラがiframeのもつwindow,documentに対して動作すること',
+			2,
+			function() {
+				var result = [];
+				var c = {
+					__name: 'InIframeController',
+					'{window} click': function() {
+						result.push('{window} click');
+					},
+					'{document} click': function() {
+						result.push('{document} click');
+					}
+				};
+				var that = this;
+				h5.core.controller($(this.ifDoc).find('#controllerTest-1'), c).readyPromise
+						.done(function() {
+							$(that.ifDoc).find('button').trigger('click');
+							deepEqual(result, ['{document} click', '{window} click'],
+									'iframe内のイベントがバブリングして、iframeの{document},{window}のイベントハンドラが動作すること');
+							result = [];
+							$(document).trigger('click');
+							deepEqual(result, [],
+									'iframeのdocumentでない元のページのdocumentのイベントを呼んでも、ハンドラは動作しないこと');
+							start();
+						});
+			});
 });

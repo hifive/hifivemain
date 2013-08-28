@@ -165,7 +165,7 @@
 	var endsWith = h5.u.str.endsWith;
 	var format = h5.u.str.format;
 	var argsToArray = h5.u.obj.argsToArray;
-	var getByPath = h5.u.obj.getByPath;
+
 	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
@@ -190,6 +190,31 @@
 	// =============================
 	// Functions
 	// =============================
+
+	/**
+	 * h5.u.obj.getByPathに、documentオブジェクトを第2引数にとるようにしたもの。
+	 * iframeやwindow.openなど、windowオブジェクトが違う場合は第2引数のdocumentからwindowオブジェクトを取り出してそこから辿る。
+	 */
+	function getByPath(namespace, doc) {
+		if (!isString(namespace)) {
+			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
+		}
+
+		var names = namespace.split('.');
+		if (names[0] === 'window') {
+			names.unshift();
+		}
+		// IE8-ではdocument.parentWindow、それ以外はdoc.parentWindowでwindowオブジェクトを取得
+		var ret = !doc ? window : doc.defaultView || doc.parentWindow;
+		for ( var i = 0, len = names.length; i < len; i++) {
+			ret = ret[names[i]];
+			if (ret == null) { // nullまたはundefinedだったら辿らない
+				break;
+			}
+		}
+
+		return ret;
+	}
 
 	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
@@ -381,17 +406,17 @@
 	 * @param {String} selector セレクタ
 	 * @returns {Object|String} パスで指定されたオブジェクト、もしくは未変換の文字列
 	 */
-	function getGlobalSelectorTarget(selector) {
+	function getGlobalSelectorTarget(selector, doc) {
 		var specialObj = ['window', 'document', 'navigator'];
 		for ( var i = 0, len = specialObj.length; i < len; i++) {
 			var s = specialObj[i];
 			if (selector === s) {
 				//特殊オブジェクトそのものを指定された場合
-				return getByPath(selector);
+				return getByPath(selector, doc);
 			}
 			if (startsWith(selector, s + '.')) {
 				//window. などドット区切りで続いている場合
-				return getByPath(selector);
+				return getByPath(selector, doc);
 			}
 		}
 		return selector;
@@ -589,6 +614,7 @@
 		var handler = bindObj.handler;
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
+		var doc = controller.__controllerContext.ownerDocument;
 
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
@@ -599,7 +625,7 @@
 				selectTarget = rootElement;
 				isSelf = true;
 			} else {
-				selectTarget = getGlobalSelectorTarget(selectorTrimmed);
+				selectTarget = getGlobalSelectorTarget(selectorTrimmed, doc);
 			}
 
 			// バインド対象がオブジェクトの場合、必ず直接バインドする
@@ -612,7 +638,7 @@
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
 
-				$(bindObj.controller.rootElement.ownerDocument).delegate(selectTarget, event, handler);
+				$(doc).delegate(selectTarget, event, handler);
 			}
 			// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を格納する
 			// selectorがオブジェクト指定(rootElement, window, document)の場合はオブジェクトを格納する
@@ -696,6 +722,7 @@
 	function unbindByBindMap(controller) {
 		var rootElement = controller.rootElement;
 		var unbindMap = controller.__controllerContext.unbindMap;
+		var doc = controller.__controllerContext.ownerDocument;
 		for ( var selector in unbindMap) {
 			for ( var eventName in unbindMap[selector]) {
 				var handler = unbindMap[selector][eventName];
@@ -708,13 +735,13 @@
 						selectTarget = rootElement;
 						isSelf = true;
 					} else {
-						selectTarget = getGlobalSelectorTarget(selectTarget);
+						selectTarget = getGlobalSelectorTarget(selectTarget, doc);
 					}
 
 					if (isSelf || useBind || !isString(selectTarget)) {
 						$(selectTarget).unbind(event, handler);
 					} else {
-						$(controller.rootElement.ownerDocument).undelegate(selectTarget, event, handler);
+						$(doc).undelegate(selectTarget, event, handler);
 					}
 				} else {
 					if (useBind) {
@@ -978,7 +1005,7 @@
 			if (isTemplate && !isCorrectTemplatePrefix(s)) {
 				throwFwError(ERR_CODE_INVALID_TEMPLATE_SELECTOR);
 			}
-			$targets = $(getGlobalSelectorTarget(s));
+			$targets = $(getGlobalSelectorTarget(s, rootElement.ownerDocument));
 		} else {
 			$targets = $(rootElement).find(element);
 		}
@@ -1050,7 +1077,8 @@
 				var event = context.event;
 				// jQuery1.7以降ではwheelDeltaとdetailがjQueryEventにコピーされない。
 				// hifive側でoriginalEventから取った値をコピーする
-				if (event.wheelDelta == null && event.originalEvent && event.originalEvent.wheelDelta != null) {
+				if (event.wheelDelta == null && event.originalEvent
+						&& event.originalEvent.wheelDelta != null) {
 					event.wheelDelta = event.originalEvent.wheelDelta;
 				}
 				// Firefox用
@@ -1128,7 +1156,7 @@
 		var start = hasTouchEvent ? 'touchstart' : 'mousedown';
 		var move = hasTouchEvent ? 'touchmove' : 'mousemove';
 		var end = hasTouchEvent ? 'touchend' : 'mouseup';
-		var $document = $(controller.rootElement.ownerDocument);
+		var $document = $(controller.__controllerContext.ownerDocument);
 		var getBindObjects = function() {
 			// h5trackendイベントの最後でハンドラの除去を行う関数を格納するための変数
 			var removeHandlers = null;
@@ -1860,7 +1888,13 @@
 			 *
 			 * @type Object
 			 */
-			unbindMap: {}
+			unbindMap: {},
+
+			/**
+			 * ルートエレメントが属するdocument
+			 * @type Object
+			 */
+			ownerDocument: rootElement? rootElement.ownerDocument: document
 		};
 
 		// 初期化パラメータをセット（クローンはしない #163）
