@@ -646,6 +646,30 @@ $(function() {
 		strictEqual(item.get('data3'), 3, '継承先にないデータはそのモデルで指定したdefaultValueの値が格納されていること');
 	});
 
+	test('baseにデータモデルが指定されている場合は、schemaを指定しなくてもデータモデルが作成できること', 3, function() {
+		manager.createModel({
+			name: 'TestDataModel',
+			schema: {
+				id: {
+					id: true
+				},
+				value: {
+					defaultValue: 1
+				}
+			}
+		});
+		var model = manager.createModel({
+			name: 'TestDataModel2',
+			base: '@TestDataModel'
+		});
+		ok(model, 'baseにデータモデルが指定されている場合は、schemaを指定しなくてもデータモデルが作成できること');
+		var item = model.create({
+			id: '1'
+		});
+		strictEqual(item.get('value'), 1, '継承元のモデルで定義したプロパティにdefaultValueの値が格納されていること');
+		item.set('value', 2);
+		strictEqual(item.get('value'), 2, '継承元のモデルで定義したプロパティに値をsetできること');
+	});
 
 	test('baseの指定が文字列でない場合はエラーが発生すること', function() {
 		var errCode = ERR.ERR_CODE_INVALID_DESCRIPTOR;

@@ -1474,7 +1474,7 @@
 		 * 依存しているプロパティが依存プロパティが今回の変更されたプロパティに依存していないならtrue(計算済み)を返します
 		 */
 		function isReady(dependProp) {
-			var deps = wrapInArray(item._schema[dependProp].depend.on);
+			var deps = wrapInArray(item.schema[dependProp].depend.on);
 			for ( var i = 0, len = deps.length; i < len; i++) {
 				if ($.inArray(deps[i], item._realProperty) === -1
 						&& $.inArray(deps[i], targets) !== -1) {
@@ -1524,7 +1524,7 @@
 				var dp = targets[i];
 
 				if (isReady(dp)) {
-					var newValue = item._schema[dp].depend.calc.call(item, event);
+					var newValue = item.schema[dp].depend.calc.call(item, event);
 
 					// 型変換を行わない厳密チェックで、戻り値をチェックする
 					var errReason = item._validateItemValue(dp, newValue, true);
@@ -1538,7 +1538,7 @@
 						newValue: newValue
 					};
 					// calcの結果をセット
-					if (item._schema[dp] && isTypeArray(item._schema[dp].type)) {
+					if (item.schema[dp] && isTypeArray(item.schema[dp].type)) {
 						//配列の場合は値のコピーを行う。ただし、コピー元がnullの場合があり得る(type:[]はnullable)
 						//その場合は空配列をコピー
 
@@ -1579,7 +1579,7 @@
 	 * @private
 	 */
 	function validateValueObj(schemaInfo, valueObj, model) {
-		var schema = schemaInfo._schema;
+		var schema = schemaInfo.schema;
 		for ( var prop in valueObj) {
 			if (!(prop in schema)) {
 				// schemaに定義されていないプロパティ名が入っていたらエラー
@@ -1612,7 +1612,7 @@
 	 * アイテムに値をセットする
 	 */
 	function itemSetter(item, valueObj, ignoreProps, isCreate) {
-		var schema = item._schema;
+		var schema = item.schema;
 
 		// valueObjから整合性チェックに通ったものを整形して格納する配列
 		var readyProps = [];
@@ -2143,7 +2143,7 @@
 
 		return {
 			_schemaKeys: schemaKeys,
-			_schema: schema,
+			schema: schema,
 			_realProps: realProps,
 			_dependProps: dependProps,
 			_aryProps: aryProps,
@@ -2181,7 +2181,7 @@
 			var baseModel = manager.models[base.slice(1)];
 
 			// base指定されたモデルのschemaを取得
-			baseSchema = baseModel._schema;
+			baseSchema = baseModel.schema;
 		} else {
 			//baseが指定されていない場合は"親"は存在しない＝プロパティを持たない
 			baseSchema = {};
@@ -2951,14 +2951,13 @@
 		}
 
 		/**
-		 * 計算済みスキーマをモデルに持たせる。
-		 * <p>
-		 * データアイテムがプロトタイプで持っているが、継承時などアイテムを作っていないモデルからも取得できるようにする必要があるため。
-		 * </p>
+		 * 継承関係計算済みのスキーマ
 		 *
-		 * @private
+		 * @since 1.1.0
+		 * @type {Object}
+		 * @memberOf DataModel
 		 */
-		this._schema = schema;
+		this.schema = schema;
 
 		/**
 		 * このデータモデルに対応するデータアイテムのコンストラクタ関数
