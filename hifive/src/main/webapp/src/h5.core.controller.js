@@ -1839,7 +1839,8 @@
 	// Body
 	//
 	// =========================================================================
-	function controllerFactory(controller, rootElement, controllerName, param, isRoot) {
+	function controllerFactory(controller, rootElement, controllerName, controllerDef, param,
+			isRoot) {
 
 		/**
 		 * コントローラ名.
@@ -1903,7 +1904,14 @@
 			 * 
 			 * @type Object
 			 */
-			unbindMap: {}
+			unbindMap: {},
+
+			/**
+			 * コントローラ定義オブジェクト
+			 * 
+			 * @type {Object}
+			 */
+			controllerDef: controllerDef
 		};
 
 		// 初期化パラメータをセット（クローンはしない #163）
@@ -2256,13 +2264,14 @@
 	 * @param {Document} doc コントローラをバインドした要素が属するdocumentノード
 	 * @param {Element} rootElement コントローラをバインドした要素
 	 * @param {String} controllerName コントローラ名
+	 * @param {Object} controllerDef コントローラ定義オブジェクト
 	 * @param {Object} param 初期化パラメータ
 	 * @param {Boolean} isRoot ルートコントローラかどうか
 	 * @name Controller
 	 * @class
 	 */
-	function Controller(rootElement, controllerName, param, isRoot) {
-		return controllerFactory(this, rootElement, controllerName, param, isRoot);
+	function Controller(rootElement, controllerName, controllerDef, param, isRoot) {
+		return controllerFactory(this, rootElement, controllerName, controllerDef, param, isRoot);
 	}
 	$.extend(Controller.prototype, {
 		/**
@@ -2800,7 +2809,7 @@
 
 		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
-				controllerName, param, isRoot);
+				controllerName, clonedControllerDef, param, isRoot);
 
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
