@@ -416,18 +416,15 @@
 	 * 始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します。
 	 * 
 	 * @param {String} selector セレクタ
+	 * @param {Document} doc
 	 * @returns {Object|String} パスで指定されたオブジェクト、もしくは未変換の文字列
 	 */
 	function getGlobalSelectorTarget(selector, doc) {
 		var specialObj = ['window', 'document', 'navigator'];
 		for ( var i = 0, len = specialObj.length; i < len; i++) {
 			var s = specialObj[i];
-			if (selector === s) {
-				//特殊オブジェクトそのものを指定された場合
-				return getByPath(selector, doc);
-			}
-			if (startsWith(selector, s + '.')) {
-				//window. などドット区切りで続いている場合
+			if (selector === s || startsWith(selector, s + '.')) {
+				//特殊オブジェクトそのものを指定された場合またはwindow. などドット区切りで続いている場合
 				return getByPath(selector, doc);
 			}
 		}
