@@ -217,6 +217,18 @@
 	}
 
 	/**
+	 * エレメントからドキュメントを取得。
+	 * <p>
+	 * エレメント自体がdocumentノードならエレメントをそのまま返す。そうでなければエレメントのownerDocumentを返す。
+	 * </p>
+	 * 
+	 * @param {DOM} elm
+	 */
+	function getDocumentByElement(elm) {
+		return elm.nodeType === document.DOCUMENT_NODE ? elm : elm.ownerDocument;
+	}
+
+	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
 	function EventContext(controller, event, evArg, selector, selectorType) {
@@ -614,7 +626,7 @@
 		var handler = bindObj.handler;
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
-		var doc = controller.__controllerContext.ownerDocument;
+		var doc = getDocumentByElement(rootElement);
 
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
@@ -721,8 +733,14 @@
 	 */
 	function unbindByBindMap(controller) {
 		var rootElement = controller.rootElement;
+		if (!rootElement) {
+			// ルートエレメントが設定される前のunbind(=イベントハンドリング前)なら何もしない
+			return;
+		}
+		// ドキュメントはrootElementのownerDocument。rootElement自体がdocumentノードならrootElement。
+		var doc = getDocumentByElement(rootElement);
 		var unbindMap = controller.__controllerContext.unbindMap;
-		var doc = controller.__controllerContext.ownerDocument;
+
 		for ( var selector in unbindMap) {
 			for ( var eventName in unbindMap[selector]) {
 				var handler = unbindMap[selector][eventName];
@@ -1005,7 +1023,7 @@
 			if (isTemplate && !isCorrectTemplatePrefix(s)) {
 				throwFwError(ERR_CODE_INVALID_TEMPLATE_SELECTOR);
 			}
-			$targets = $(getGlobalSelectorTarget(s, rootElement.ownerDocument));
+			$targets = $(getGlobalSelectorTarget(s, getDocumentByElement(rootElement.ownerDocument)));
 		} else {
 			$targets = $(rootElement).find(element);
 		}
@@ -1156,7 +1174,7 @@
 		var start = hasTouchEvent ? 'touchstart' : 'mousedown';
 		var move = hasTouchEvent ? 'touchmove' : 'mousemove';
 		var end = hasTouchEvent ? 'touchend' : 'mouseup';
-		var $document = $(controller.__controllerContext.ownerDocument);
+		var $document = $(getDocumentByElement(controller.rootElement));
 		var getBindObjects = function() {
 			// h5trackendイベントの最後でハンドラの除去を行う関数を格納するための変数
 			var removeHandlers = null;
@@ -1474,9 +1492,6 @@
 				} else {
 					c.rootElement = rootElement;
 				}
-				// ownerDocuemntを設定する。rootElementがdocumentノードなら、rootElementとownerDocumentは同じ
-				c.__controllerContext.ownerDocument = c.rootElement.nodeType === document.DOCUMENT_NODE ? c.rootElement
-						: c.rootElement.ownerDocument;
 				c.view.__controller = c;
 				copyAndSetRootElement(c);
 			}
@@ -1891,14 +1906,7 @@
 			 * 
 			 * @type Object
 			 */
-			unbindMap: {},
-
-			/**
-			 * ルートエレメントが属するdocument ルートエレメントがない場合は後で設定
-			 * 
-			 * @type Object
-			 */
-			ownerDocument: rootElement ? rootElement.ownerDocument : null
+			unbindMap: {}
 		};
 
 		// 初期化パラメータをセット（クローンはしない #163）
@@ -2794,12 +2802,8 @@
 		}
 
 		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
-		// documentは親コントローラから渡されたもの、バインドターゲットに指定されたエレメントのownerDocument、document、の順で探す
-		var rootDoc = (fwOpt && fwOpt.doc) || (targetElement && $(targetElement)[0].ownerDocument)
-				|| document;
-		// ルートエレメントがdocumentならそのまま、そうでないならrootDocから探す
-		var controller = new Controller(rootDoc === $(targetElement)[0] ? rootDoc : $(rootDoc)
-				.find(targetElement)[0], controllerName, param, isRoot);
+		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
+				controllerName, param, isRoot);
 
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
@@ -2940,7 +2944,6 @@
 				// 子コントローラをバインドする。fwOpt.isInternalを指定して、子コントローラであるかどうか分かるようにする
 				var c = createAndBindController(null,
 						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
-							doc: controller.__controllerContext.ownerDocument,
 							isInternal: true
 						}, fwOpt));
 				controller[prop] = c;
