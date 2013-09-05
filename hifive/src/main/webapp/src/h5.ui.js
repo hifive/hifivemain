@@ -1460,7 +1460,7 @@
 		}
 
 		window.scrollTo(0, 1);
-		if ($(window).scrollTop !== 1) {
+		if ($(window).scrollTop() !== 1) {
 			setTimeout(fnScroll, WAIT_MILLIS);
 		}
 	};
