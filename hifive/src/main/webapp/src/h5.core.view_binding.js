@@ -411,7 +411,7 @@
 
 		//appendChildの呼び出し回数削減。
 		//ループ単位ごとにappendChildしてdocumentにバインドする（＝Fragmentは都度空になる）ので、使いまわしている。
-		var fragment = document.createDocumentFragment();
+		var fragment = loopRootElement.ownerDocument.createDocumentFragment();
 
 		var getContextElement = context.get ? function(idx) {
 			return context.get(idx);
@@ -700,7 +700,7 @@
 		//追加される全てのノードを持つフラグメント。
 		//Element.insertBeforeでフラグメントを挿入対象にすると、フラグメントに入っているノードの順序を保って
 		//指定した要素の前に挿入できる。従って、unshift()の際insertBeforeを一度呼ぶだけで済む。
-		var fragment = document.createDocumentFragment();
+		var fragment = srcCtxRootNode.ownerDocument.createDocumentFragment();
 
 		var newLoopNodes = [];
 		for ( var i = 0, argsLen = methodArgs.length; i < argsLen; i++) {
@@ -797,7 +797,7 @@
 		//・countがlengthを超えている場合：start以降の全要素が削除される
 		//・挿入要素がある場合：startの位置にinsertBefore（startがlengthを超えている場合は末尾に挿入）
 
-		var fragment = document.createDocumentFragment();
+		var fragment = srcCtxRootNode.ownerDocument.createDocumentFragment();
 
 		//loopNodesに対するspliceのパラメータ。要素の挿入を行うため、あらかじめstartPosと削除数0を入れておく
 		var spliceArgs = [startPos, 0];
@@ -836,7 +836,7 @@
 		//追加される全てのノードを持つフラグメント。
 		//Element.insertBeforeでフラグメントを挿入対象にすると、フラグメントに入っているノードの順序を保って
 		//指定した要素の前に挿入できる。従って、unshift()の際insertBeforeを一度呼ぶだけで済む。
-		var fragment = document.createDocumentFragment();
+		var fragment = srcCtxNode.ownerDocument.createDocumentFragment();
 
 		var newLoopNodes = [];
 		for ( var i = 0, srcLen = srcArray.length; i < srcLen; i++) {
