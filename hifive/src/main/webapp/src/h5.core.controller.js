@@ -224,7 +224,7 @@
 	 *
 	 * @param {DOM} elm
 	 */
-	function getDocumentByElement(elm) {
+	function getDocumentOf(elm) {
 		return elm.nodeType === document.DOCUMENT_NODE ? elm : elm.ownerDocument;
 	}
 
@@ -623,7 +623,7 @@
 		var handler = bindObj.handler;
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
-		var doc = getDocumentByElement(rootElement);
+		var doc = getDocumentOf(rootElement);
 
 		if (isGlobalSelector(selector)) {
 			// グローバルなセレクタの場合
@@ -735,7 +735,7 @@
 			return;
 		}
 		// ドキュメントはrootElementのownerDocument。rootElement自体がdocumentノードならrootElement。
-		var doc = getDocumentByElement(rootElement);
+		var doc = getDocumentOf(rootElement);
 		var unbindMap = controller.__controllerContext.unbindMap;
 
 		for ( var selector in unbindMap) {
@@ -1020,7 +1020,7 @@
 			if (isTemplate && !isCorrectTemplatePrefix(s)) {
 				throwFwError(ERR_CODE_INVALID_TEMPLATE_SELECTOR);
 			}
-			$targets = $(getGlobalSelectorTarget(s, getDocumentByElement(rootElement.ownerDocument)));
+			$targets = $(getGlobalSelectorTarget(s, getDocumentOf(rootElement.ownerDocument)));
 		} else {
 			$targets = $(rootElement).find(element);
 		}
@@ -1171,7 +1171,7 @@
 		var start = hasTouchEvent ? 'touchstart' : 'mousedown';
 		var move = hasTouchEvent ? 'touchmove' : 'mousemove';
 		var end = hasTouchEvent ? 'touchend' : 'mouseup';
-		var $document = $(getDocumentByElement(controller.rootElement));
+		var $document = $(getDocumentOf(controller.rootElement));
 		var getBindObjects = function() {
 			// h5trackendイベントの最後でハンドラの除去を行う関数を格納するための変数
 			var removeHandlers = null;
