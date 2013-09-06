@@ -836,7 +836,7 @@
 		//追加される全てのノードを持つフラグメント。
 		//Element.insertBeforeでフラグメントを挿入対象にすると、フラグメントに入っているノードの順序を保って
 		//指定した要素の前に挿入できる。従って、unshift()の際insertBeforeを一度呼ぶだけで済む。
-		var fragment = srcCtxNode.ownerDocument.createDocumentFragment();
+		var fragment = loopRootNode.ownerDocument.createDocumentFragment();
 
 		var newLoopNodes = [];
 		for ( var i = 0, srcLen = srcArray.length; i < srcLen; i++) {
