@@ -7300,83 +7300,112 @@ $(function() {
 						});
 			});
 
-	module(
-			'iframe内の要素にコントローラをバインド',
-			{
-				setup: function() {
-					this.$iframe = $('<iframe id="test-iframe"></iframe>');
-					$('#qunit-fixture').append(this.$iframe);
-					this.ifDoc = this.$iframe[0].contentWindow.document;
-					$(this.ifDoc.body)
-							.append(
-									'<div id="parent-div"><div id="controllerTest-1"><button>a</button></div></div>');
-				},
-				teardown: function() {
-					disposeQUnitFixtureController();
-					this.$iframe.remove();
-					this.ifWin = null;
-				},
-				$iframe: null,
-				ifDoc: null
+	module('iframe内の要素にコントローラをバインド', {
+		setup: function() {
+			this._readyDfd = h5.async.deferred();
+			this.iframe = document.createElement("iframe");
+			$('#qunit-fixture').append(this.iframe);
+			this.ifDoc = this.iframe.contentWindow.document;
+			var that = this;
+			// chromeの場合はすぐにbodyにアクセスできる
+			if (this.ifDoc.body) {
+				this.appendElement(this.ifDoc);
+				this._readyDfd.resolve();
+				return;
+			}
+			var that = this;
+			// Firefox,IEの場合はbodyにすぐにアクセスできないので、loadイベントを拾って要素の追加
+			$(this.iframe).load(function() {
+				that.appendElement(that.ifDoc);
+				that._readyDfd.resolve();
 			});
+		},
+		teardown: function() {
+			disposeQUnitFixtureController();
+			$(this.iframe).remove();
+		},
+		appendElement: function(doc) {
+			var div = doc.createElement('div');
+			div.id = 'parent-div';
+			var childDiv = doc.createElement('div');
+			childDiv.id = 'controllerTest-1';
+			var btn = doc.createElement('button');
+			childDiv.appendChild(btn);
+			div.appendChild(childDiv);
+			doc.body.appendChild(div);
+		},
+		_readyDfd: null,
+		iframe: null,
+		ifDoc: null
+	});
 
 	asyncTest('イベントハンドラが動作すること', 1, function() {
-		var result = '';
-		var c = {
-			__name: 'InIframeController',
-			'button click': function() {
-				result = 'button click';
-			}
-		};
 		var that = this;
-		h5.core.controller($(this.ifDoc).find('#controllerTest-1'), c).readyPromise
-				.done(function() {
-					$(that.ifDoc).find('button').trigger('click');
-					strictEqual(result, 'button click', 'イベントハンドラが動作すること');
-					start();
-				});
+		// iframeの準備が終わるまで待機
+		this._readyDfd.done(function() {
+			var result = '';
+			var c = {
+				__name: 'InIframeController',
+				'button click': function() {
+					result = 'button click';
+				}
+			};
+			h5.core.controller($(that.ifDoc.body).find('#controllerTest-1'), c).readyPromise
+					.done(function() {
+						$(that.ifDoc.body).find('button').trigger('click');
+						strictEqual(result, 'button click', 'イベントハンドラが動作すること');
+						start();
+					});
+		});
 	});
 	asyncTest('グローバルセレクタで指定したイベントハンドラが動作すること', 1, function() {
-		var result = '';
-		var c = {
-			__name: 'InIframeController',
-			'{#parent-div} click': function() {
-				result = '{#parent-div} click';
-			}
-		};
 		var that = this;
-		h5.core.controller($(this.ifDoc).find('#controllerTest-1'), c).readyPromise
-				.done(function() {
-					$(that.ifDoc).find('button').trigger('click');
-					strictEqual(result, '{#parent-div} click', 'イベントハンドラが動作すること');
-					start();
-				});
+		// iframeの準備が終わるまで待機
+		this._readyDfd.done(function() {
+			var result = '';
+			var c = {
+				__name: 'InIframeController',
+				'{#parent-div} click': function() {
+					result = '{#parent-div} click';
+				}
+			};
+			h5.core.controller($(that.ifDoc.body).find('#controllerTest-1'), c).readyPromise
+					.done(function() {
+						$(that.ifDoc.body).find('button').trigger('click');
+						strictEqual(result, '{#parent-div} click', 'イベントハンドラが動作すること');
+						start();
+					});
+		});
 	});
 	asyncTest(
 			'{window},{document}にバインドしたイベントハンドラがiframeのもつwindow,documentに対して動作すること',
 			2,
 			function() {
-				var result = [];
-				var c = {
-					__name: 'InIframeController',
-					'{window} click': function() {
-						result.push('{window} click');
-					},
-					'{document} click': function() {
-						result.push('{document} click');
-					}
-				};
 				var that = this;
-				h5.core.controller($(this.ifDoc).find('#controllerTest-1'), c).readyPromise
+				// iframeの準備が終わるまで待機
+				this._readyDfd
 						.done(function() {
-							$(that.ifDoc).find('button').trigger('click');
-							deepEqual(result, ['{document} click', '{window} click'],
-									'iframe内のイベントがバブリングして、iframeの{document},{window}のイベントハンドラが動作すること');
-							result = [];
-							$(document).trigger('click');
-							deepEqual(result, [],
-									'iframeのdocumentでない元のページのdocumentのイベントを呼んでも、ハンドラは動作しないこと');
-							start();
+							var result = [];
+							var c = {
+								__name: 'InIframeController',
+								'{window} click': function() {
+									result.push('{window} click');
+								},
+								'{document} click': function() {
+									result.push('{document} click');
+								}
+							};
+							h5.core.controller($(that.ifDoc.body).find('#controllerTest-1'), c).readyPromise
+									.done(function() {
+										$(that.ifDoc.body).find('button').trigger('click');
+										deepEqual(result, ['{document} click', '{window} click'],
+												'iframe内のイベントがバブリングして、iframeの{document},{window}のイベントハンドラが動作すること');
+										result = [];
+										$(document).trigger('click');
+										deepEqual(result, [],
+												'iframeのdocumentでない元のページのdocumentのイベントを呼んでも、ハンドラは動作しないこと');
+										start();
+									});
 						});
 			});
 });
