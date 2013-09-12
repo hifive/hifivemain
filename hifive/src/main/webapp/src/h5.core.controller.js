@@ -196,6 +196,7 @@
 	 * iframeやwindow.openなど、windowオブジェクトが違う場合は第2引数のdocumentからwindowオブジェクトを取り出してそこから辿る。
 	 */
 	function getByPath(namespace, doc) {
+		doc = doc || document;
 		if (!isString(namespace)) {
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
 		}
@@ -204,8 +205,8 @@
 		if (names[0] === 'window') {
 			names.unshift();
 		}
-		// IE8-ではdocument.parentWindow、それ以外はdoc.parentWindowでwindowオブジェクトを取得
-		var ret = !doc ? window : doc.defaultView || doc.parentWindow;
+		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
+		var ret = doc.defaultView || doc.parentWindow;
 		for ( var i = 0, len = names.length; i < len; i++) {
 			ret = ret[names[i]];
 			if (ret == null) { // nullまたはundefinedだったら辿らない
@@ -750,6 +751,10 @@
 						selectTarget = rootElement;
 						isSelf = true;
 					} else {
+						if ((doc.defaultView || doc.parentWindow) == null) {
+							// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
+							continue;
+						}
 						selectTarget = getGlobalSelectorTarget(selectTarget, doc);
 					}
 
