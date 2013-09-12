@@ -1433,20 +1433,15 @@
 	function createItemDescErrorReason(/* var args */) {
 		var args = arguments;
 		var code = args[0];
-		// メッセージがない(min版)ならメッセージを格納しない
-		if (!DESCRIPTOR_VALIDATION_ERROR_MSGS) {
-			return {
-				code: code
-			};
-		}
+		var ret = {
+			code: code
+		};
 		/* del begin */
 		args[0] = DESCRIPTOR_VALIDATION_ERROR_MSGS[code];
-		var msg = h5.u.str.format.apply(null, args);
-		return {
-			code: code,
-			message: msg
-		};
+		ret.message = h5.u.str.format.apply(null, args);
 		/* del end */
+		// min版はメッセージがないので格納しない
+		return ret;
 	}
 
 	/**
@@ -2140,7 +2135,6 @@
 				} else {
 					//どちらでもない場合はnull
 					initValue = null;
-
 				}
 
 				actualInitialValue[plainProp] = initValue;
@@ -2163,7 +2157,7 @@
 			 * @param {Any} value 値
 			 * @returns {Boolean} 値がプロパティの制約条件を満たすならtrue
 			 */
-			_validateItemValue: validateItemValue,
+			_validateItemValue: validateItemValue
 		};
 		return ret;
 	}

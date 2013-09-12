@@ -10873,7 +10873,7 @@ $(function() {
 				name: 'ValidateCreateTestModel',
 				schema: {
 					id: {
-						id: true,
+						id: true
 					},
 					str: {
 						type: 'string'
