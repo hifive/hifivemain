@@ -537,7 +537,8 @@
 		 */
 		execute: function() {
 			return this._execute(function(results) {
-				return results; // add()されたStatementの数に関係なく、結果は配列に包んで返す
+				// add()されたStatementの数に関係なく、結果は配列に包んで返す
+				return results;
 			});
 		},
 		/**
