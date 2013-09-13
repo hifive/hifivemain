@@ -7397,11 +7397,11 @@ $(function() {
 							};
 							h5.core.controller($(that.ifDoc.body).find('#controllerTest-1'), c).readyPromise
 									.done(function() {
-										$(that.ifDoc.body).find('button').trigger('click');
+										dispatchMouseEvent(this.$find('button')[0], 'click');
 										deepEqual(result, ['{document} click', '{window} click'],
 												'iframe内のイベントがバブリングして、iframeの{document},{window}のイベントハンドラが動作すること');
 										result = [];
-										$(document).trigger('click');
+										dispatchMouseEvent(document, 'click');
 										deepEqual(result, [],
 												'iframeのdocumentでない元のページのdocumentのイベントを呼んでも、ハンドラは動作しないこと');
 										start();
