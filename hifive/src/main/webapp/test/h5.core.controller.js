@@ -107,6 +107,8 @@ $(function() {
 		var ev = {};
 		if (elm.dispatchEvent) {
 			ev = document.createEvent('MouseEvent');
+			x = x || 0;
+			y = y || 0;
 			ev.initMouseEvent(eventName, true, true, window, 0, x, y, x, y, false, false, false,
 					false, 0, null);
 			elm.dispatchEvent(ev);
