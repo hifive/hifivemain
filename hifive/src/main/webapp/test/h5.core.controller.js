@@ -7388,28 +7388,53 @@ $(function() {
 	});
 	asyncTest(
 			'{window},{document}にバインドしたイベントハンドラがiframeのもつwindow,documentに対して動作すること',
-			2,
+			4,
 			function() {
 				// iframeの準備が終わるまで待機
 				var result = [];
 				var c = {
 					__name: 'InIframeController',
-					'{window} click': function() {
-						result.push('{window} click');
+					'{window} myEvent': function() {
+						result.push('{window} myEvent');
 					},
-					'{window.document} click': function() {
+					'{document} click': function() {
 						result.push('{document} click');
 					}
 				};
+				// ルートのwindow側にバインドしたイベントハンドラが実行されないことを確認
+				function winHandler(event) {
+					result.push('root window ' + event.type);
+				}
+				function docHandler(event) {
+					result.push('root document ' + event.type);
+				}
+				$(window).bind('myEvent', winHandler);
+				$(document).bind('click', docHandler);
+				var that = this;
 				h5.core.controller($(this.ifDoc.body).find('#controllerTest-1'), c).readyPromise
 						.done(function() {
 							dispatchMouseEvent(this.$find('button')[0], 'click');
-							deepEqual(result, ['{document} click', '{window} click'],
-									'iframe内のイベントがバブリングして、iframeの{document},{window}のイベントハンドラが動作すること');
+							deepEqual(result, ['{document} click'],
+									'iframe内のイベントがバブリングして、iframeの{document}のイベントハンドラが動作すること');
+
+							result = [];
+							$(that.iframe.contentWindow).trigger('myEvent');
+							deepEqual(result, ['{window} myEvent'],
+									'iframeのwindowにバインドしたイベントハンドラが、iframeのwindowでtriggerした時に動作すること');
+
 							result = [];
 							dispatchMouseEvent(document, 'click');
-							deepEqual(result, [],
-									'iframeのdocumentでない元のページのdocumentのイベントを呼んでも、ハンドラは動作しないこと');
+							deepEqual(result, ['root document click'],
+									'元ページのdocumentでイベントを実行しても、iframeのdocumentにバインドしたハンドラは動作しないこと');
+
+							result = [];
+							$(window).trigger('myEvent');
+							deepEqual(result, ['root window myEvent'],
+									'元ページのwindowでイベントを実行しても、iframeのdocumentにバインドしたハンドラは動作しないこと');
+
+							// unbind
+							$(window).unbind('myEvent', winHandler);
+							$(document).unbind('click', docHandler);
 							start();
 						});
 			});
