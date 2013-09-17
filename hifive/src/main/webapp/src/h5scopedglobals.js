@@ -278,6 +278,22 @@ function registerCallbacksSilently(promise, method, args) {
 	}
 }
 
+/**
+ * 使用しているjQueryのバージョンで推奨されている、Deferredをフィルタリングまたはチェーンするメソッドを実行します。
+ * <p>
+ * deferred.pipe()がjQuery1.8から非推奨となったため1.8以上の場合then()を、1.7以下の場合はpipe()を実行します。
+ *
+ * @param {Promise} promise Promiseオブジェクト
+ * @param {Function} doneFilter doneコールバック
+ * @param {Function} failFilter failコールバック
+ * @param {Function} progressFilter progressコールバック
+ * @returns {Promise} Promiseオブジェクト
+ */
+function thenCompat(promise, doneFilter, failFilter, progressFilter) {
+	return promise[$.hasOwnProperty('curCSS') ? 'pipe' : 'then'](doneFilter, failFilter,
+			progressFilter);
+}
+
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る
 var h5internal = {
 	core: {

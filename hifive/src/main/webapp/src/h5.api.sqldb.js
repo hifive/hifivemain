@@ -437,7 +437,7 @@
 					(function(statement, parameter) {
 						fwLogger.debug(wrapInArray(statement), wrapInArray(parameter));
 
-						p = p.pipe(function() {
+						p = thenCompat(p, function() {
 							var thenDf = getDeferred();
 
 							that._tx.executeSql(statement, parameter, function(innerTx, rs) {
@@ -451,7 +451,7 @@
 					})(statements[i], parameters[i]);
 				}
 
-				p.pipe(function() {
+				thenCompat(p, function() {
 					// _multipleフラグがtrueの場合は実行結果を配列として返す
 					var unwrapedRet = statementObj._multiple ? ret : ret[0];
 					results.push(unwrapedRet);

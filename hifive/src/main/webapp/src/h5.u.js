@@ -510,17 +510,17 @@
 						promises.push(scriptLoad(url));
 					});
 
-					h5.async.when(promises).then(function() {
+					h5.async.when(promises).done(function() {
 						retDf.resolve();
-					}, retDfFailCallback);
+					}).fail(retDfFailCallback);
 				} else {
 					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
-					var secDf = getDeferred().resolve().pipe(asyncFunc);
+					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
 
 					$.each(resources, function() {
 						var url = toAbsoluteUrl(this);
 
-						secDf = secDf.pipe(function() {
+						seq = thenCompat(seq, function() {
 							if (!force && url in addedJS) {
 								return;
 							}
@@ -528,7 +528,7 @@
 						}, retDfFailCallback);
 					});
 
-					secDf.pipe(function() {
+					thenCompat(seq, function() {
 						retDf.resolve();
 					}, retDfFailCallback);
 				}
@@ -592,21 +592,22 @@
 						};
 					}
 
-					h5.async.when(promises).then(doneCallback, retDfFailCallback, progressCallback);
+					h5.async.when(promises).done(doneCallback).fail(retDfFailCallback).progress(
+							progressCallback);
 				} else {
 					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
-					var secDf = getDeferred().resolve().pipe(asyncFunc);
+					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
 
 					$.each(resources, function() {
 						var url = toAbsoluteUrl(this);
 
-						secDf = secDf.pipe(function() {
+						seq = thenCompat(seq, function() {
 							var df = getDeferred();
 
 							if (!force && (url in addedJS || url in loadedUrl)) {
 								df.resolve();
 							} else {
-								getScriptString(url, async, cache).then(
+								getScriptString(url, async, cache).done(
 										function(text, status, xhr) {
 											if (atomic) {
 												scriptData.push(text);
@@ -617,16 +618,16 @@
 											}
 
 											df.resolve();
-										}, function() {
-											df.reject(this.url);
-										});
+										}).fail(function() {
+									df.reject(this.url);
+								});
 							}
 
 							return df.promise();
 						}, retDfFailCallback);
 					});
 
-					secDf.pipe(function() {
+					thenCompat(seq, function() {
 						if (atomic) {
 							$.each(scriptData, function(i, e) {
 								$.globalEval(e);
@@ -649,7 +650,7 @@
 					return true;
 				}
 
-				getScriptString(url, async, cache).then(function(text, status, xhr) {
+				getScriptString(url, async, cache).done(function(text, status, xhr) {
 					if (atomic) {
 						scriptData.push(text);
 						loadedUrl[url] = url;
@@ -658,7 +659,7 @@
 						addedJS[url] = url;
 					}
 
-				}, function() {
+				}).fail(function() {
 					throwFwError(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]);
 				});
 			});
@@ -1271,7 +1272,7 @@
 	 *
 	 * <pre>
 	 * var lapInterceptor = h5.u.createInterceptor(function(invocation, data) {
-	 * 		// 開始時間をdataオブジェクトに格納
+	 * 	// 開始時間をdataオブジェクトに格納
 	 * 		data.start = new Date();
 	 * 		// invocationを実行
 	 * 		return invocation.proceed();
