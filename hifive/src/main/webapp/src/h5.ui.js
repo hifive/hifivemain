@@ -578,12 +578,6 @@
 	scrollTop = scrollPosition('Top');
 	scrollLeft = scrollPosition('Left');
 
-	// TODO VML表示時にやればいい
-	//	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
-	//	if (!isCanvasSupported && isVMLSupported) {
-	//		defineVMLNamespaceAndStyle(document);
-	//	}
-
 	// CSS3 Animationのサポート判定
 	isCSS3AnimationsSupported = supportsCSS3Property('animationName');
 
