@@ -294,6 +294,18 @@ function thenCompat(promise, doneFilter, failFilter, progressFilter) {
 			progressFilter);
 }
 
+/**
+ * エレメントからドキュメントを取得。
+ * <p>
+ * エレメント自体がdocumentノードならエレメントをそのまま返す。そうでなければエレメントのownerDocumentを返す。
+ * </p>
+ *
+ * @param {DOM} elm
+ */
+function getDocumentOf(elm) {
+	return elm.nodeType === document.DOCUMENT_NODE ? elm : elm.ownerDocument;
+}
+
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る
 var h5internal = {
 	core: {

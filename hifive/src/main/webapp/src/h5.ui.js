@@ -859,8 +859,12 @@
 	function Indicator(target, option) {
 		var that = this;
 		var $t = $(target);
+		// ターゲットが存在しない場合は何もしない
+		if(!$t.length){
+			return;
+		}
 		// documentの取得
-		var doc = $t[0].ownerDocument;
+		var doc = getDocumentOf($t[0]);
 
 		// デフォルトオプション
 		var defaultOption = {
@@ -986,7 +990,7 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		show: function() {
-			if (this._displayed || this._$target.children('.' + CLASS_INDICATOR_ROOT).length > 0) {
+			if (this._displayed || !this._$target || this._$target.children('.' + CLASS_INDICATOR_ROOT).length > 0) {
 				return this;
 			}
 
@@ -1029,7 +1033,7 @@
 						zoom: '1'
 					});
 				}
-				var doc = _$target[0].ownerDocument;
+				var doc = getDocumentOf(_$target[0]);
 				var throbber = isCanvasSupported ? new ThrobberCanvas(this._styles, doc)
 						: isVMLSupported ? new ThrobberVML(this._styles, doc) : null;
 

@@ -218,18 +218,6 @@
 	}
 
 	/**
-	 * エレメントからドキュメントを取得。
-	 * <p>
-	 * エレメント自体がdocumentノードならエレメントをそのまま返す。そうでなければエレメントのownerDocumentを返す。
-	 * </p>
-	 *
-	 * @param {DOM} elm
-	 */
-	function getDocumentOf(elm) {
-		return elm.nodeType === document.DOCUMENT_NODE ? elm : elm.ownerDocument;
-	}
-
-	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
 	function EventContext(controller, event, evArg, selector, selectorType) {
