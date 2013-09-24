@@ -68,3 +68,27 @@ function isDisposed(controller) {
 	}
 	return ret;
 }
+
+// iframeを作成
+function createIFrameElement() {
+	var dfd = h5.async.deferred();
+	var iframe = document.createElement('iframe');
+	$('#qunit-fixture').append(iframe);
+	// chrome,safari,operaの場合、iframeをappendした瞬間にreadystatechange='complete'になっている
+	// ie,firefoxの場合はuninitializedなので、readyStateが'complete'になるのを待つ必要があるので、
+	// 共通で待機できるようsetTimeout()でチェックして完了するまで待っている。
+	// # onreadystatechangeはfirefoxの場合だと使えない。
+	// # firefoxでは、iframeの準備ができたらcontentDocumentが指し替わる。
+	// # 指し替わる前のdocumentのreadystateはずっとuninitializedのままなので、ハンドラを引っかけても発火しない
+	function check() {
+		// ifrae.contentDocumentはIE7-で使えないので、contentWindowからdocumentを取得
+		var doc = iframe.contentWindow.document;
+		if (doc.readyState !== 'complete') {
+			setTimeout(check, 10);
+			return;
+		}
+		dfd.resolve(iframe, doc);
+	}
+	setTimeout(check, 10);
+	return dfd.promise();
+}

@@ -234,29 +234,6 @@ $(function() {
 		}
 	}
 
-	// iframeを作成。
-	function createIFrameElement() {
-		var dfd = h5.async.deferred();
-		var iframe = document.createElement('iframe');
-		$('#qunit-fixture').append(iframe);
-		// chrome,safari,operaの場合、iframeをappendした瞬間にreadystatechange='complete'になっている
-		// ie,firefoxの場合はuninitializedなので、readyStateが'complete'になるのを待つ必要があるので、
-		// 共通で待機できるようsetTimeout()でチェックして完了するまで待っている。
-		// # onreadystatechangeはfirefoxの場合だと使えない。
-		// # firefoxでは、iframeの準備ができたらcontentDocumentが指し替わる。
-		// # 指し替わる前のdocumentのreadystateはずっとuninitializedのままなので、ハンドラを引っかけても発火しない
-		function check() {
-			// ifrae.contentDocumentはIE7-で使えないので、contentWindowからdocumentを取得
-			var doc = iframe.contentWindow.document;
-			if (doc.readyState !== 'complete') {
-				setTimeout(check, 10);
-				return;
-			}
-			dfd.resolve(iframe, doc);
-		}
-		setTimeout(check, 10);
-		return dfd.promise();
-	}
 	// =========================================================================
 	//
 	// Test Module
@@ -7122,6 +7099,54 @@ $(function() {
 		});
 	});
 
+	asyncTest('iframe内の要素にバインドしたコントローラでルート要素にインジケータを表示', 4,
+			function() {
+				var controllerBase = {
+					__name: 'TestController',
+
+					'button click': function() {
+						var indicator = this.indicator({
+							message: 'BlockMessageTest'
+						}).show();
+
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'BlockMessageTest');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
+
+						var that = this;
+						setTimeout(function() {
+							indicator.hide();
+
+							setTimeout(function() {
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+
+								that.unbind();
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
+				// iframeを追加
+				createIFrameElement().done(function(iframe, doc) {
+					// 要素の追加
+					var div = doc.createElement('div');
+					div.id = 'parent-div';
+					var btn = doc.createElement('button');
+					div.appendChild(btn);
+					doc.body.appendChild(div);
+
+					h5.core.controller(div, controllerBase).readyPromise.done(function() {
+						$(btn).click();
+					});
+
+				});
+			});
 	//=============================
 	// Definition
 	//=============================

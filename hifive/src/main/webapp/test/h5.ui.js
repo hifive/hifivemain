@@ -973,4 +973,36 @@ $(function() {
 		dfd2.reject();
 		strictEqual(cfhCount, 1, '複数のプロミスを渡したとき、まとめて1回だけcommonFailHandlerが実行されること');
 	});
+
+	asyncTest('iframe内の要素にインジケータを表示できること', 5, function() {
+		// iframeの作成
+		createIFrameElement().done(
+				function(iframe, doc) {
+
+					var indicator = h5.ui.indicator(doc.body, {
+						message: 'BlockMessageTest'
+					}).show();
+					ok(indicator._target === doc.body, 'ターゲットがiframe内の要素であること');
+
+					strictEqual($(indicator._target).find(
+							'.h5-indicator.a.content > .indicator-message').text(),
+							'BlockMessageTest', 'メッセージが表示されていること');
+					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+							'Indicator#show() インジケータが表示されること');
+
+					strictEqual(
+							$(indicator._target).find('.h5-indicator.a.overlay').css('display'),
+							'block', 'オーバーレイが表示されていること');
+
+					setTimeout(function() {
+						indicator.hide();
+
+						setTimeout(function() {
+							strictEqual($('.h5-indicator', indicator._target).length, 0,
+									'Indicator#hide() インジケータが除去されていること');
+							start();
+						}, 0);
+					}, 0);
+				});
+	});
 });
