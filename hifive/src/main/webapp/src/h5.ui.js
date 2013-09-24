@@ -558,12 +558,12 @@
 		doc.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
 		// メモリリークとIE9で動作しない問題があるため、document.createStyleSheet()は使用しない
 		var vmlStyle = doc.createElement('style');
-		vmlStyle.id = 'h5';
+		vmlStyle.id = ID_VML_STYLE;
 		var styleDef = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
 				+ ' { behavior:url(#default#VML); }';
 		vmlStyle.setAttribute('type', 'text/css');
 		vmlStyle.styleSheet.cssText = styleDef;
-		head.appendChild(vmlStyle);
+		doc.getElementsByTagName('head')[0].appendChild(vmlStyle);
 	}
 
 	// =========================================================================
