@@ -75,6 +75,11 @@
 	var CLASS_VML_ROOT = 'vml-root';
 
 	/**
+	 * VMLのスタイル定義要素(style要素)のid
+	 */
+	var ID_VML_STYLE = 'h5-vmlstyle';
+
+	/**
 	 * メッセージに要素に表示する文字列のフォーマット
 	 */
 	var FORMAT_THROBBER_MESSAGE_AREA = '<span class="' + CLASS_INDICATOR_THROBBER
@@ -302,8 +307,8 @@
 	/**
 	 * VML要素を生成します。
 	 */
-	function createVMLElement(tagName, opt) {
-		var elem = window.document.createElement('v:' + tagName);
+	function createVMLElement(tagName, doc, opt) {
+		var elem = doc.createElement('v:' + tagName);
 
 		for ( var prop in opt) {
 			elem.style[prop] = opt[prop];
@@ -540,6 +545,27 @@
 		return e === window || e === document || e === document.body;
 	}
 
+	/**
+	 * VMLが機能するよう名前空間とVML要素用のスタイルを定義する(VML用)
+	 */
+	function defineVMLNamespaceAndStyle(doc) {
+		// 既に定義済みなら何もしない
+		if (doc.getElementById(ID_VML_STYLE)) {
+			return;
+		}
+		var head = doc.getElementsByTagName('head')[0];
+
+		doc.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
+		// メモリリークとIE9で動作しない問題があるため、document.createStyleSheet()は使用しない
+		var vmlStyle = doc.createElement('style');
+		vmlStyle.id = 'h5';
+		var styleDef = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
+				+ ' { behavior:url(#default#VML); }';
+		vmlStyle.setAttribute('type', 'text/css');
+		vmlStyle.styleSheet.cssText = styleDef;
+		head.appendChild(vmlStyle);
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -552,17 +578,11 @@
 	scrollTop = scrollPosition('Top');
 	scrollLeft = scrollPosition('Left');
 
-	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
-	if (!isCanvasSupported && isVMLSupported) {
-		document.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
-		// メモリリークとIE9で動作しない問題があるため、document.createStyleSheet()は使用しない
-		var vmlStyle = document.createElement('style');
-		var styleDef = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
-				+ ' { behavior:url(#default#VML); }';
-		vmlStyle.setAttribute('type', 'text/css');
-		vmlStyle.styleSheet.cssText = styleDef;
-		document.getElementsByTagName('head')[0].appendChild(vmlStyle);
-	}
+	// TODO VML表示時にやればいい
+	//	// Canvasは非サポートだがVMLがサポートされているブラウザの場合、VMLが機能するよう名前空間とVML要素用のスタイルを定義する
+	//	if (!isCanvasSupported && isVMLSupported) {
+	//		defineVMLNamespaceAndStyle(document);
+	//	}
 
 	// CSS3 Animationのサポート判定
 	isCSS3AnimationsSupported = supportsCSS3Property('animationName');
@@ -570,13 +590,16 @@
 	/**
 	 * VML版スロバー (IE 6,7,8)用
 	 */
-	function ThrobberVML(opt) {
+	function ThrobberVML(opt, doc) {
 		this.style = $.extend(true, {}, opt);
+
+		// documentにVMLの名前空間とスタイルが定義されていなかったら、定義する
+		defineVMLNamespaceAndStyle(doc);
 
 		var w = this.style.throbber.width;
 		var h = this.style.throbber.height;
 
-		this.group = createVMLElement('group', {
+		this.group = createVMLElement('group', doc, {
 			width: w + 'px',
 			height: h + 'px'
 		});
@@ -590,19 +613,19 @@
 			var pos = positions[i];
 			var from = pos.from;
 			var to = pos.to;
-			var e = createVMLElement('line');
+			var e = createVMLElement('line', doc);
 			e.strokeweight = lineWidth;
 			e.strokecolor = lineColor;
 			e.fillcolor = lineColor;
 			e.from = from.x + ',' + from.y;
 			e.to = to.x + ',' + to.y;
-			var ce = createVMLElement('stroke');
+			var ce = createVMLElement('stroke', doc);
 			ce.opacity = 1;
 			e.appendChild(ce);
 			this.group.appendChild(e);
 		}
 
-		this._createPercentArea();
+		this._createPercentArea(doc);
 	}
 
 	ThrobberVML.prototype = {
@@ -665,9 +688,10 @@
 				that._run.call(that);
 			}, perMills);
 		},
-		_createPercentArea: function() {
-			var textPath = createVMLElement('textbox');
-			var $table = $('<table><tr><td></td></tr></table>');
+		_createPercentArea: function(doc) {
+			var textPath = createVMLElement('textbox', doc);
+			var $table = $(doc.createElement('table'));
+			$table.append('<tr><td></td></tr>');
 			var $td = $table.find('td');
 			$td.width(this.group.style.width);
 			$td.height(this.group.style.height);
@@ -685,11 +709,11 @@
 	/**
 	 * Canvas版スロバー
 	 */
-	var ThrobberCanvas = function(opt) {
+	var ThrobberCanvas = function(opt, doc) {
 		this.style = $.extend(true, {}, opt);
-		this.canvas = document.createElement('canvas');
-		this.baseDiv = document.createElement('div');
-		this.percentDiv = document.createElement('div');
+		this.canvas = doc.createElement('canvas');
+		this.baseDiv = doc.createElement('div');
+		this.percentDiv = doc.createElement('div');
 
 		var canvas = this.canvas;
 		var baseDiv = this.baseDiv;
@@ -841,6 +865,9 @@
 	function Indicator(target, option) {
 		var that = this;
 		var $t = $(target);
+		// documentの取得
+		var doc = $t[0].ownerDocument;
+
 		// デフォルトオプション
 		var defaultOption = {
 			message: '',
@@ -916,14 +943,16 @@
 		var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
 
 		for ( var i = 0, len = this._$target.length; i < len; i++) {
-			this._$content = this._$content.add($('<div></div>').append(contentElem).addClass(
-					CLASS_INDICATOR_ROOT).addClass(settings.theme)
-					.addClass(CLASS_INDICATOR_CONTENT).hide());
-			this._$overlay = this._$overlay.add((settings.block ? $('<div></div>') : $()).addClass(
-					CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(CLASS_OVERLAY).hide());
-			this._$skin = this._$skin.add(((isLegacyIE || compatMode) ? $('<iframe></iframe>')
-					: $()).attr('src', srcVal).addClass(CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN)
-					.hide());
+			this._$content = this._$content.add($(doc.createElement('div')).append(contentElem)
+					.addClass(CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(
+							CLASS_INDICATOR_CONTENT).hide());
+			this._$overlay = this._$overlay
+					.add((settings.block ? $(doc.createElement('div')) : $()).addClass(
+							CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(CLASS_OVERLAY)
+							.hide());
+			this._$skin = this._$skin.add(((isLegacyIE || compatMode) ? $(doc
+					.createElement('iframe')) : $()).attr('src', srcVal).addClass(
+					CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).hide());
 		}
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
@@ -1006,9 +1035,9 @@
 						zoom: '1'
 					});
 				}
-
-				var throbber = isCanvasSupported ? new ThrobberCanvas(this._styles)
-						: isVMLSupported ? new ThrobberVML(this._styles) : null;
+				var doc = _$target[0].ownerDocument;
+				var throbber = isCanvasSupported ? new ThrobberCanvas(this._styles, doc)
+						: isVMLSupported ? new ThrobberVML(this._styles, doc) : null;
 
 				if (throbber) {
 					that._throbbers.push(throbber);
