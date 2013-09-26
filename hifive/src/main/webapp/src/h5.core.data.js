@@ -3758,7 +3758,10 @@
 			});
 		} else {
 			$.extend(DataItem.prototype, {
-				schema: schema
+				// ObservableItemの場合、プロトタイプとしてじゃなくプロパティにschemaとschemaInfoの中の値を持たせる
+				// コンストラクタのプロトタイプに持たせることで、ObservableItem生成時に参照できるようにする
+				schema: schema,
+				schemaInfo: schemaInfo
 			});
 		}
 		return DataItem;
@@ -3785,12 +3788,17 @@
 	function ObservableItem(item) {
 		// DataItemのコンストラクタが持つもので、ObservableItemのprototypeには持たないもの
 		// (ObservableItemのインスタンスごとに異なるもの)をコピーする
-		var obsProps = ['_values', '_nullProps', '_realProps', '_dependProps', '_aryProps',
-				'_dependencyMap', '__listeners', '_validateItemValue', 'schema'];
 		for ( var p in item) {
-			if ($.inArray(p, obsProps) !== -1) {
+			if (item.hasOwnProperty(p)) {
 				this[p] = item[p];
+				console.log(p);
 			}
+		}
+		// schemaを持たせる
+		this.schema = item.schema;
+		// schemaInfoの中身を持たせる
+		for ( var p in item.schemaInfo) {
+			this[p] = item.schemaInfo[p];
 		}
 		// ObservableArrayのアイテムについてリスナの設定
 		for ( var i = 0, l = this._aryProps.length; i < l; i++) {
