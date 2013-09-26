@@ -3791,7 +3791,6 @@
 		for ( var p in item) {
 			if (item.hasOwnProperty(p)) {
 				this[p] = item[p];
-				console.log(p);
 			}
 		}
 		// schemaを持たせる
