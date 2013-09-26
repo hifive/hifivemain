@@ -37,6 +37,9 @@ var errorCodeToMessageMap = {};
  */
 var errorCodeToCustomFormatterMap = {};
 
+/** Node.DOCUMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
+var NODE_TYPE_DOCUMENT = 9;
+
 //=============================
 // Errors
 //=============================
@@ -303,7 +306,7 @@ function thenCompat(promise, doneFilter, failFilter, progressFilter) {
  * @param {DOM} elm
  */
 function getDocumentOf(elm) {
-	return elm.nodeType === document.DOCUMENT_NODE ? elm : elm.ownerDocument;
+	return elm.nodeType === NODE_TYPE_DOCUMENT ? elm : elm.ownerDocument;
 }
 
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る
