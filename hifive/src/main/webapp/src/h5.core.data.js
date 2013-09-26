@@ -358,8 +358,8 @@
 			}
 
 			// DataItemの場合はモデルから、ObsItemの場合はObsItemのインスタンスからschemaを取得
-			// getはDataModelから削除されたDataItemも使用可能なので、_originModel(生成時のデータモデル)からスキーマを取得する
-			var schema = this._originModel ? this._originModel.schema : this.schema;
+			var model = this._model;
+			var schema = model ? model.schema : this.schema;
 			if (!schema.hasOwnProperty(key)) {
 				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
 				throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [
@@ -398,9 +398,9 @@
 			// データモデルから作られたアイテムなら、アイテムがモデルに属しているか、モデルがマネージャに属しているかのチェック
 			// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
 			var model = this._model;
-			if (this._originModel && (!model || !model._manager)) {
+			if (model && (this._isRemoved || !model._manager)) {
 				throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [
-						getValue(this, this._originModel._idKey), 'set'], this);
+						getValue(this, this._model._idKey), 'set'], this);
 			}
 
 			// バリデーション
@@ -2382,7 +2382,7 @@
 
 		function changeBeforeListener(event) {
 			// データモデルの場合、itemがmodelに属していない又は、itemが属しているmodelがmanagerに属していないならエラー
-			if (model && (item._model !== model || !model._manager)) {
+			if (model && (item._isRemoved || !model._manager)) {
 				throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [item._values[model._idKey],
 						event.method]);
 			}
@@ -3505,7 +3505,10 @@
 				this.size--;
 
 				ret.push(item);
-				item._model = null;
+				if (item._model) {
+					// 削除されたフラグを立てる
+					item._isRemoved = true;
+				}
 				actualRemovedItems.push(item);
 			}
 
@@ -3731,15 +3734,12 @@
 				_model: model,
 
 				/**
-				 * データアイテムが生成されたた時に属していたモデル
-				 * <p>
-				 * データモデルからデータアイテムが削除されても、create時のモデルを保持する
-				 * </p>
+				 * データアイテムがモデルからremoveされたかどうか
 				 *
 				 * @private
 				 * @memberOf DataItem
 				 */
-				_originModel: model,
+				_isRemoved: false,
 
 				/**
 				 * DataItemが属しているDataModelインスタンスを返します。
@@ -3753,7 +3753,7 @@
 				 * @returns {DataModel} 自分が所属するデータモデル
 				 */
 				getModel: function() {
-					return this._model;
+					return this._isRemoved ? null : this._model;
 				}
 			});
 		} else {
