@@ -334,6 +334,174 @@
 	// =============================
 	// Variables
 	// =============================
+	/**
+	 * DataItem, ObservableItem共通
+	 */
+	var itemProto = {
+		/**
+		 * 指定されたキーのプロパティの値を取得します。
+		 * <p>
+		 * 引数にプロパティ名を指定すると、アイテムが持つそのプロパティの値を返します。
+		 * </p>
+		 * <p>
+		 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。
+		 * </p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataItem
+		 * @param {String} [key] プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
+		 * @returns Any 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
+		 */
+		get: function(key) {
+			if (arguments.length === 0) {
+				return $.extend({}, this._values);
+			}
+
+			// DataItemの場合はモデルから、ObsItemの場合はObsItemのインスタンスからschemaを取得
+			// getはDataModelから削除されたDataItemも使用可能なので、_originModel(生成時のデータモデル)からスキーマを取得する
+			var schema = this._originModel ? this._originModel.schema : this.schema;
+			if (!schema.hasOwnProperty(key)) {
+				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
+				throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [
+						model ? model.name : NOT_AVAILABLE, key]);
+			}
+
+			return getValue(this, key);
+		},
+
+		/**
+		 * 指定されたキーのプロパティに値をセットします。
+		 * <p>
+		 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ... }という構造をもつオブジェクトを1つだけ渡してください。
+		 * </p>
+		 * <p>
+		 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。
+		 * </p>
+		 * <p>
+		 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。
+		 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする
+		 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
+		 * </p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataItem
+		 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
+		 */
+		set: function(var_args) {
+			//引数はオブジェクト1つ、または(key, value)で呼び出せる
+			var valueObj = var_args;
+			if (arguments.length === 2) {
+				valueObj = {};
+				valueObj[arguments[0]] = arguments[1];
+			}
+
+			// データモデルから作られたアイテムなら、アイテムがモデルに属しているか、モデルがマネージャに属しているかのチェック
+			// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
+			var model = this._model;
+			if (this._originModel && (!model || !model._manager)) {
+				throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [
+						getValue(this, this._originModel._idKey), 'set'], this);
+			}
+
+			// バリデーション
+			if (model) {
+				// idの変更がされてるかどうかチェック
+				if ((model._idKey in valueObj)
+						&& (valueObj[model._idKey] !== getValue(this, model._idKey))) {
+					//IDの変更は禁止
+					throwFwError(ERR_CODE_CANNOT_SET_ID, [model.name, this._idKey]);
+				}
+				// スキーマの条件を満たすかどうかチェック
+
+				// DataItemの場合はモデルから、ObsItemの場合はObsItemのインスタンスからschemaを取得
+				validateValueObj(model.schema, model._schemaInfo._validateItemValue, valueObj,
+						model);
+			} else {
+				// モデルが無い場合はthisはObserbableItem。(モデルが無いDataItemはチェック済みのため)
+				// ObsItem.validateを呼んでスキーマの条件を満たすかどうかチェック
+				var error = this.validate(valueObj);
+				if (error) {
+					throw error;
+				}
+			}
+
+			var event = null;
+			// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
+			// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
+			// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
+			var isAlreadyInUpdate = model ? model._manager.isInUpdate() : false;
+			if (model && !isAlreadyInUpdate) {
+				model._manager.beginUpdate();
+			}
+			// isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
+			this._isInSet = true;
+			event = itemSetter(this, valueObj);
+			this._isInSet = false;
+
+			if (model) {
+				// データアイテムの場合は、モデルにイベントを渡す
+				if (event) {
+					// 更新した値があればChangeLogを追記
+					addUpdateChangeLog(model, event);
+				}
+				// endUpdateを呼んでイベントを発火
+				if (!isAlreadyInUpdate) {
+					model._manager.endUpdate();
+				}
+			} else if (event) {
+				// ObservableItemなら即発火
+				this.dispatchEvent(event);
+			}
+		},
+
+		/**
+		 * type:[]であるプロパティについて、最後にセットされた値がnullかどうかを返します。
+		 * <p>
+		 * type:[]としたプロパティは常にObservableArrayインスタンスがセットされており、set('array', null);
+		 * と呼ぶと空配列を渡した場合と同じになります。
+		 * </p>
+		 * <p>
+		 * そのため、「実際にはnullをセットしていた（item.set('array', null)）」場合と「空配列をセットしていた（item.set('array,'
+		 * [])）」場合を区別したい場合にこのメソッドを使ってください。
+		 * </p>
+		 * <p>
+		 * データアイテムを生成した直後は、スキーマにおいてdefaultValueを書いていないまたはnullをセットした場合はtrue、それ以外の場合はfalseを返します。
+		 * </p>
+		 * <p>
+		 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します。
+		 * </p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf DataItem
+		 * @param {String} key プロパティ名
+		 * @returns {Boolean} 現在指定したプロパティにセットされているのがnullかどうか
+		 */
+		regardAsNull: function(key) {
+			if (this._isArrayProp(key)) {
+				return this._nullProps[key] === true;
+			}
+			return getValue(this, key) === null;
+		},
+
+		/**
+		 * 指定されたプロパティがtype:[]かどうかを返します。（type:anyでObservableArrayが入っている場合とtype:[]で最初から
+		 * ObservableArrayが入っている場合を区別するため
+		 *
+		 * @private
+		 * @memberOf DataItem
+		 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
+		 */
+		_isArrayProp: function(prop) {
+			// DataItemの場合はモデルから、ObsItemの場合はObsItemのインスタンスからschemaを取得
+			var schema = this._model ? this._model.schema : this.schema;
+			// DataItemの場合はモデルから、ObsItemの場合はObsItemのインスタンスからschemaを取得
+			if (schema[prop] && schema[prop].type && schema[prop].type.indexOf('[]') > -1) {
+				//Bindingにおいて比較的頻繁に使われるので、高速化も検討する
+				return true;
+			}
+			return false;
+		}
+	};
 	// =============================
 	// Functions
 	// =============================
@@ -2190,6 +2358,132 @@
 		return $.extend({}, baseSchema, desc.schema);
 	}
 
+	/**
+	 * DataItem、ObservableItemのが持つObservableArrayのプロパティに対して、リスナを登録します
+	 *
+	 * @private
+	 * @param {DataItem||ObservableItem} item
+	 * @param {String} propName プロパティ名
+	 * @param {ObservableArray} リスナ登録をするObservableArray
+	 * @param {DataModel} [model] モデル(DataItemの場合)
+	 */
+	function setObservableArrayListeners(item, propName, observableArray, model) {
+		// 配列操作前と操作後で使う共通の変数
+		// 配列操作が同期のため、必ずchangeBeforeListener→配列操作→changeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
+
+		// アップデートセッション中かどうか
+		var isAlreadyInUpdate = false;
+
+		// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
+		var noAddMethods = ['sort', 'reverse', 'pop', 'shift'];
+
+		// changeBefore時に配列の変更前の値を覚えておく
+		var oldValue = null;
+
+		function changeBeforeListener(event) {
+			// データモデルの場合、itemがmodelに属していない又は、itemが属しているmodelがmanagerに属していないならエラー
+			if (model && (item._model !== model || !model._manager)) {
+				throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [item._values[model._idKey],
+						event.method]);
+			}
+
+			var args = h5.u.obj.argsToArray(event.args);
+			if ($.inArray(event.method, noAddMethods) === -1) {
+				var isValidateRequired = true;
+
+				// チェックするメソッドは unshift, push, splice, copyFrom, set
+				// そのうち、メソッドの引数をそのままチェックすればいいのはunshift, push
+				switch (event.method) {
+				case 'splice':
+					if (args.length <= 2) {
+						// spliceに引数が2つなら要素追加はないので、validateチェックはしない
+						isValidateRequired = false;
+					}
+					isValidateRequired = false;
+					// spliceの場合追加要素は第3引数以降のため2回shiftする
+					args.shift();
+					args.shift();
+					break;
+
+				case 'copyFrom':
+					// copyFromの場合は引数が配列であるため、外側の配列を外す
+					args = args[0];
+					break;
+
+				case 'set':
+					// setの場合は第1引数はindexなので、shift()したものをチェックする
+					args.shift();
+
+				}
+
+				if (isValidateRequired) {
+					var validateResult = item._validateItemValue(propName, args);
+					if (validateResult.length > 0) {
+						throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
+					}
+				}
+			}
+			// データアイテムの場合はイベント管理
+			if (model) {
+				// oldValueが登録されていなければ登録
+				addObsArrayOldValue(model, item, propName);
+
+				// 配列操作前にbeginUpdateして、配列操作後にendUpdateする
+				isAlreadyInUpdate = model._manager ? model._manager.isInUpdate() : false;
+				if (!isAlreadyInUpdate) {
+					model._manager.beginUpdate();
+				}
+			} else {
+				//oldValueを保存
+				oldValue = item._values[propName].toArray();
+			}
+		}
+
+		function changeListener(event) {
+			// set内で呼ばれていたら何もしない
+			if (item._isInSet) {
+				return;
+			}
+
+			// 配列の要素が全て同じかどうかのチェックはendUpdateのなかでやる
+
+			// changeイベントオブジェクトの作成
+			var ev = {
+				type: 'change',
+				target: item,
+				props: {}
+			};
+
+			// newValueは現在の値、oldValueはmanager._oldValueLogsの中なので、ここでpropsを入れる必要ない
+			ev.props[propName] = {};
+
+			// データアイテムの場合はモデルにイベントを伝播
+			if (model) {
+				addUpdateChangeLog(model, ev);
+				// アップデートセッション中じゃなければendUpdate()
+				if (!isAlreadyInUpdate) {
+					model._manager.endUpdate();
+				}
+			} else {
+				// ObservableItemの場合は、配列の値が変更されていたら即イベント発火する
+				// 配列の値が変化していないなら何もしない
+				if (observableArray.equals(oldValue)) {
+					return;
+				}
+
+				// ObservableItemの場合は即発火
+				ev.props[propName] = {
+					oldValue: oldValue,
+					newValue: getValue(item, propName)
+				};
+				item.dispatchEvent(ev);
+			}
+		}
+
+		observableArray.addEventListener('changeBefore', changeBeforeListener);
+		observableArray.addEventListener('change', changeListener);
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -3360,130 +3654,10 @@
 			model._schemaInfo = schemaInfo;
 		}
 
-		// スキーマのプロパティにObservableArrayがある場合、リスナを登録する。
-		function setObservableArrayListeners(item, propName, observableArray) {
-			// 配列操作前と操作後で使う共通の変数
-			// 配列操作が同期のため、必ずchangeBeforeListener→配列操作→changeListenerになるので、ここのクロージャ変数を両関数で共通して使用できる
-
-			// アップデートセッション中かどうか
-			var isAlreadyInUpdate = false;
-
-			// 破壊的メソッドだが、追加しないメソッド。validateする必要がない。
-			var noAddMethods = ['sort', 'reverse', 'pop', 'shift'];
-
-			// changeBefore時に配列の変更前の値を覚えておく
-			var oldValue = null;
-
-			function changeBeforeListener(event) {
-				// データモデルの場合、itemがmodelに属していない又は、itemが属しているmodelがmanagerに属していないならエラー
-				if (model && (item._model !== model || !model._manager)) {
-					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [item._values[model._idKey],
-							event.method]);
-				}
-
-				var args = h5.u.obj.argsToArray(event.args);
-				if ($.inArray(event.method, noAddMethods) === -1) {
-					var isValidateRequired = true;
-
-					// チェックするメソッドは unshift, push, splice, copyFrom, set
-					// そのうち、メソッドの引数をそのままチェックすればいいのはunshift, push
-					switch (event.method) {
-					case 'splice':
-						if (args.length <= 2) {
-							// spliceに引数が2つなら要素追加はないので、validateチェックはしない
-							isValidateRequired = false;
-						}
-						isValidateRequired = false;
-						// spliceの場合追加要素は第3引数以降のため2回shiftする
-						args.shift();
-						args.shift();
-						break;
-
-					case 'copyFrom':
-						// copyFromの場合は引数が配列であるため、外側の配列を外す
-						args = args[0];
-						break;
-
-					case 'set':
-						// setの場合は第1引数はindexなので、shift()したものをチェックする
-						args.shift();
-
-					}
-
-					if (isValidateRequired) {
-						var validateResult = item._validateItemValue(propName, args);
-						if (validateResult.length > 0) {
-							throwFwError(ERR_CODE_INVALID_ITEM_VALUE, propName, validateResult);
-						}
-					}
-				}
-				// データアイテムの場合はイベント管理
-				if (model) {
-					// oldValueが登録されていなければ登録
-					addObsArrayOldValue(model, item, propName);
-
-					// 配列操作前にbeginUpdateして、配列操作後にendUpdateする
-					isAlreadyInUpdate = model._manager ? model._manager.isInUpdate() : false;
-					if (!isAlreadyInUpdate) {
-						model._manager.beginUpdate();
-					}
-				} else {
-					//oldValueを保存
-					oldValue = item._values[propName].toArray();
-				}
-			}
-
-			function changeListener(event) {
-				// set内で呼ばれていたら何もしない
-				if (item._isInSet) {
-					return;
-				}
-
-				// 配列の要素が全て同じかどうかのチェックはendUpdateのなかでやる
-
-				// changeイベントオブジェクトの作成
-				var ev = {
-					type: 'change',
-					target: item,
-					props: {}
-				};
-
-				// newValueは現在の値、oldValueはmanager._oldValueLogsの中なので、ここでpropsを入れる必要ない
-				ev.props[propName] = {};
-
-				// データアイテムの場合はモデルにイベントを伝播
-				if (model) {
-					addUpdateChangeLog(model, ev);
-					// アップデートセッション中じゃなければendUpdate()
-					if (!isAlreadyInUpdate) {
-						model._manager.endUpdate();
-					}
-				} else {
-					// ObservableItemの場合は、配列の値が変更されていたら即イベント発火する
-					// 配列の値が変化していないなら何もしない
-					if (observableArray.equals(oldValue)) {
-						return;
-					}
-
-					// ObservableItemの場合は即発火
-					ev.props[propName] = {
-						oldValue: oldValue,
-						newValue: getValue(item, propName)
-					};
-					item.dispatchEvent(ev);
-				}
-			}
-
-			observableArray.addEventListener('changeBefore', changeBeforeListener);
-			observableArray.addEventListener('change', changeListener);
-		}
-
-
 		/**
 		 * データアイテムクラス
 		 * <p>
-		 * データアイテムは<a href="DataModel.html#create">DataModel#create()</a>または<a
-		 * href="h5.core.data.html#createObservableItem">h5.core.data.html#createObservableItem</a>で作成します。
+		 * データアイテムは<a href="DataModel.html#create">DataModel#create()</a>で作成します。
 		 * </p>
 		 * <p>
 		 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
@@ -3528,180 +3702,44 @@
 			validateValueObj(schema, this._validateItemValue, actualInitialValue, model);
 			itemSetter(this, actualInitialValue, null, true);
 
-			for ( var i = 0, l = arrayProps.length; i < l; i++) {
-				setObservableArrayListeners(this, arrayProps[i], this.get(arrayProps[i]));
+			if (model) {
+				// DataItemの場合はここでObservableArrayのイベントリスナの設定を行う
+				// ObservableItemの場合は、このDataItemコンストラクタが呼ばれた後に
+				// ObservableItemクラスのインスタンスを生成するので、
+				// setObservableArrayListenersにObservableItemクラスのインスタンスにしなければならないため、ここではできない
+				for ( var i = 0, l = arrayProps.length; i < l; i++) {
+					setObservableArrayListeners(this, arrayProps[i], this.get(arrayProps[i]), model);
+				}
 			}
 		}
 
 		// EventDispatcherと、schemaInfoもprototypeに追加
-		$.extend(DataItem.prototype, EventDispatcher.prototype, schemaInfo, {
-			/**
-			 * 指定されたキーのプロパティの値を取得します。
-			 * <p>
-			 * 引数にプロパティ名を指定すると、アイテムが持つそのプロパティの値を返します。
-			 * </p>
-			 * <p>
-			 * 引数の指定がない場合は、{id: '001', value: 'hoge'} のような、そのデータアイテムが持つ値を格納したオブジェクトを返します。
-			 * </p>
-			 *
-			 * @since 1.1.0
-			 * @memberOf DataItem
-			 * @param {String} [key] プロパティキー。指定のない場合は、アイテムの持つプロパティ名をキーに、そのプロパティの値を持つオブジェクトを返します。
-			 * @returns Any 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
-			 */
-			get: function(key) {
-				if (arguments.length === 0) {
-					return $.extend({}, this._values);
-				}
-
-				if (!schema.hasOwnProperty(key)) {
-					//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
-					throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [
-							model ? model.name : NOT_AVAILABLE, key]);
-				}
-
-				return getValue(this, key);
-			},
-
-			/**
-			 * 指定されたキーのプロパティに値をセットします。
-			 * <p>
-			 * 複数のプロパティに対して値を一度にセットしたい場合は、{ キー1: 値1, キー2: 値2, ... }という構造をもつオブジェクトを1つだけ渡してください。
-			 * </p>
-			 * <p>
-			 * 1つのプロパティに対して値をセットする場合は、 item.set(key, value); のように2つの引数でキーと値を個別に渡すこともできます。
-			 * </p>
-			 * <p>
-			 * このメソッドを呼ぶと、再計算が必要と判断された依存プロパティは自動的に再計算されます。
-			 * 再計算によるパフォーマンス劣化を最小限にするには、1つのアイテムへのset()の呼び出しはできるだけ少なくする
-			 * （引数をオブジェクト形式にして一度に複数のプロパティをセットし、呼び出し回数を最小限にする）ようにしてください。
-			 * </p>
-			 *
-			 * @since 1.1.0
-			 * @memberOf DataItem
-			 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
-			 */
-			set: function(var_args) {
-				//引数はオブジェクト1つ、または(key, value)で呼び出せる
-				var valueObj = var_args;
-				if (arguments.length === 2) {
-					valueObj = {};
-					valueObj[arguments[0]] = arguments[1];
-				}
-
-
-				// データモデルから作られたアイテムなら、アイテムがモデルに属しているか、モデルがマネージャに属しているかのチェック
-				// アイテムがモデルに属していない又は、アイテムが属しているモデルがマネージャに属していないならエラー
-				if (model && (this._model !== model || !this._model._manager)) {
-					throwFwError(ERR_CODE_CANNOT_CHANGE_REMOVED_ITEM, [
-							getValue(this, model._idKey), 'set'], this);
-				}
-
-				// バリデーション
-				if (model) {
-					// idの変更がされてるかどうかチェック
-					if ((model._idKey in valueObj)
-							&& (valueObj[model._idKey] !== getValue(this, model._idKey))) {
-						//IDの変更は禁止
-						throwFwError(ERR_CODE_CANNOT_SET_ID, [model.name, this._idKey]);
-					}
-					// スキーマの条件を満たすかどうかチェック
-					validateValueObj(model.schema, model._schemaInfo._validateItemValue, valueObj,
-							model);
-				} else {
-					// モデルが無い場合はthisはObserbableItem。(モデルが無いDataItemはチェック済みのため)
-					// ObsItem.validateを呼んでスキーマの条件を満たすかどうかチェック
-					var error = this.validate(valueObj);
-					if (error) {
-						throw error;
-					}
-				}
-
-				var event = null;
-				// updateセッション中かどうか。updateセッション中ならこのsetの中ではbeginUpdateもendUpdateしない
-				// updateセッション中でなければ、begin-endで囲って、最後にイベントが発火するようにする
-				// このbegin-endの間にObsArrayでイベントが上がっても(内部でcopyFromを使ったりなど)、itemにイベントは上がらない
-				var isAlreadyInUpdate = model ? model._manager.isInUpdate() : false;
-				if (model && !isAlreadyInUpdate) {
-					model._manager.beginUpdate();
-				}
-				// isInSetフラグを立てて、set内の変更でObsAry.copyFromを呼んだ時にイベントが上がらないようにする
-				this._isInSet = true;
-				event = itemSetter(this, valueObj);
-				this._isInSet = false;
-
-				if (model) {
-					// データアイテムの場合は、モデルにイベントを渡す
-					if (event) {
-						// 更新した値があればChangeLogを追記
-						addUpdateChangeLog(model, event);
-					}
-					// endUpdateを呼んでイベントを発火
-					if (!isAlreadyInUpdate) {
-						model._manager.endUpdate();
-					}
-				} else if (event) {
-					// ObservableItemなら即発火
-					this.dispatchEvent(event);
-				}
-			},
-
-			/**
-			 * type:[]であるプロパティについて、最後にセットされた値がnullかどうかを返します。
-			 * <p>
-			 * type:[]としたプロパティは常にObservableArrayインスタンスがセットされており、set('array', null);
-			 * と呼ぶと空配列を渡した場合と同じになります。
-			 * </p>
-			 * <p>
-			 * そのため、「実際にはnullをセットしていた（item.set('array', null)）」場合と「空配列をセットしていた（item.set('array,'
-			 * [])）」場合を区別したい場合にこのメソッドを使ってください。
-			 * </p>
-			 * <p>
-			 * データアイテムを生成した直後は、スキーマにおいてdefaultValueを書いていないまたはnullをセットした場合はtrue、それ以外の場合はfalseを返します。
-			 * </p>
-			 * <p>
-			 * なお、引数に配列指定していないプロパティを渡した場合は、現在の値がnullかどうかを返します。
-			 * </p>
-			 *
-			 * @since 1.1.0
-			 * @memberOf DataItem
-			 * @param {String} key プロパティ名
-			 * @returns {Boolean} 現在指定したプロパティにセットされているのがnullかどうか
-			 */
-			regardAsNull: function(key) {
-				if (this._isArrayProp(key)) {
-					return this._nullProps[key] === true;
-				}
-				return getValue(this, key) === null;
-			},
-
-			/**
-			 * 指定されたプロパティがtype:[]かどうかを返します。（type:anyでObservableArrayが入っている場合とtype:[]で最初から
-			 * ObservableArrayが入っている場合を区別するため
-			 *
-			 * @private
-			 * @memberOf DataItem
-			 * @returns {Boolean} 指定されたプロパティがtype:[]なプロパティかどうか
-			 */
-			_isArrayProp: function(prop) {
-				if (schema[prop] && schema[prop].type && schema[prop].type.indexOf('[]') > -1) {
-					//Bindingにおいて比較的頻繁に使われるので、高速化も検討する
-					return true;
-				}
-				return false;
-			}
-		});
+		$.extend(DataItem.prototype, EventDispatcher.prototype, schemaInfo, itemProto);
 		if (model) {
 			$.extend(DataItem.prototype, {
 
 				/**
 				 * データアイテムが属しているデータモデル
+				 * <p>
+				 * データモデルからデータアイテムが削除された場合、このプロパティはnullになる
+				 * </p>
 				 *
 				 * @private
 				 * @since 1.1.0
 				 * @memberOf DataItem
 				 */
 				_model: model,
+
+				/**
+				 * データアイテムが生成されたた時に属していたモデル
+				 * <p>
+				 * データモデルからデータアイテムが削除されても、create時のモデルを保持する
+				 * </p>
+				 *
+				 * @private
+				 * @memberOf DataItem
+				 */
+				_originModel: model,
 
 				/**
 				 * DataItemが属しているDataModelインスタンスを返します。
@@ -3720,46 +3758,6 @@
 			});
 		} else {
 			$.extend(DataItem.prototype, {
-				/**
-				 * ObservableItemのスキーマに違反しないかどうか引数をチェックします。
-				 * <p>
-				 * チェックが通らなかった場合は例外オブジェクト、チェックが通った場合はnullを返します
-				 * </p>
-				 * <p>
-				 * このメソッドはh5.core.data.createObservableItem()で作成したObservableItemのみが持ちます。DataModelから作成したDataItemにはこのメソッドはありません。
-				 * DataModelから作成したDataItemの値チェックは、<a
-				 * href="DataModel.html#validate">DataModel#validate</a>を使用してください。
-				 * </p>
-				 *
-				 * @since 1.1.9
-				 * @memberOf DataItem
-				 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
-				 */
-				validate: function(var_args) {
-					try {
-						//引数はオブジェクト1つ、または(key, value)で呼び出せる
-						var valueObj = var_args;
-						if (arguments.length === 2) {
-							valueObj = {};
-							valueObj[arguments[0]] = arguments[1];
-						}
-						validateValueObj(this.schema, this._validateItemValue, valueObj);
-					} catch (e) {
-						return e;
-					}
-					return null;
-				},
-
-				/**
-				 * データモデルのスキーマ定義オブジェクト
-				 * <p>
-				 * このプロパティはh5.core.data.createObservableItem()で作成したObservableItemのみが持ちます。DataModelから生成したDataItemはschemaプロパティは持ちません。
-				 * DataModelから生成したDataItemのスキーマ定義は<a href="DataModel.html#schema">DataModel#schema</a>を参照してください。
-				 * </p>
-				 *
-				 * @memberOf DataItem
-				 * @type {Object}
-				 */
 				schema: schema
 			});
 		}
@@ -3769,6 +3767,67 @@
 	// ------------------------
 	// ObservableItem
 	// ------------------------
+	/**
+	 * オブザーバブルアイテムクラス
+	 * <p>
+	 * オブザーバブルアイテムは<a
+	 * href="h5.core.data.html#createObservableItem">h5.core.data.html#createObservableItem</a>で作成します。
+	 * </p>
+	 * <p>
+	 * このクラスは<a href="DataItem.html">DataItemクラス</a>のメソッドを持ちます。
+	 * </p>
+	 *
+	 * @since 1.1.0
+	 * @class
+	 * @extends EventDispatcher
+	 * @name ObservableItem
+	 */
+	function ObservableItem(item) {
+		// DataItemのコンストラクタが持つもので、ObservableItemのprototypeには持たないもの
+		// (ObservableItemのインスタンスごとに異なるもの)をコピーする
+		var obsProps = ['_values', '_nullProps', '_realProps', '_dependProps', '_aryProps',
+				'_dependencyMap', '__listeners', '_validateItemValue', 'schema'];
+		for ( var p in item) {
+			if ($.inArray(p, obsProps) !== -1) {
+				this[p] = item[p];
+			}
+		}
+		// ObservableArrayのアイテムについてリスナの設定
+		for ( var i = 0, l = this._aryProps.length; i < l; i++) {
+			setObservableArrayListeners(this, this._aryProps[i], this.get(this._aryProps[i]));
+		}
+	}
+	$.extend(ObservableItem.prototype, EventDispatcher.prototype, itemProto, {
+		/**
+		 * ObservableItemのスキーマに違反しないかどうか引数をチェックします。
+		 * <p>
+		 * チェックが通らなかった場合は例外オブジェクト、チェックが通った場合はnullを返します
+		 * </p>
+		 * <p>
+		 * このメソッドはh5.core.data.createObservableItem()で作成したObservableItemのみが持ちます。DataModelから作成したDataItemにはこのメソッドはありません。
+		 * DataModelから作成したDataItemの値チェックは、<a href="DataModel.html#validate">DataModel#validate</a>を使用してください。
+		 * </p>
+		 *
+		 * @since 1.1.9
+		 * @memberOf ObservableItem
+		 * @param {Any} var_args 複数のキー・値のペアからなるオブジェクト、または1組の(キー, 値)を2つの引数で取ります。
+		 */
+		validate: function(var_args) {
+			try {
+				//引数はオブジェクト1つ、または(key, value)で呼び出せる
+				var valueObj = var_args;
+				if (arguments.length === 2) {
+					valueObj = {};
+					valueObj[arguments[0]] = arguments[1];
+				}
+				validateValueObj(this.schema, this._validateItemValue, valueObj);
+			} catch (e) {
+				return e;
+			}
+			return null;
+		}
+	});
+
 	/**
 	 * ObservableItemを作成します。
 	 * <p>
@@ -3785,7 +3844,7 @@
 	 * @since 1.1.0
 	 * @memberOf h5.core.data
 	 * @param {Object} schema スキーマオブジェクト
-	 * @returns {DataItem} DataItemインスタンス
+	 * @returns {ObservableItem} ObservableItemインスタンス
 	 */
 	function createObservableItem(schema) {
 		// 値チェックに必要な情報を取得してitemに持たせる
@@ -3793,7 +3852,9 @@
 		var itemValueCheckFuncs = createValueCheckFuncsBySchema(schema);
 		validateDefaultValue(schema, itemValueCheckFuncs, true);
 
-		return new (createDataItemConstructor(schema, itemValueCheckFuncs))();
+		// objから必要なプロパティを取り出す
+		//		return new (createDataItemConstructor(schema, itemValueCheckFuncs))();
+		return new ObservableItem(new (createDataItemConstructor(schema, itemValueCheckFuncs))());
 	}
 
 	/**
