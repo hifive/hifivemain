@@ -1392,6 +1392,8 @@
 
 						//このソースを監視する必要がなくなったので、マップそのものを削除
 						delete this._srcToViewMap[ctxIndex];
+						this._usingContexts[ctxIndex] = null;
+
 					}
 				}
 			}
