@@ -3676,17 +3676,32 @@
 		/**
 		 * @private
 		 * @param {Object} userInitialValue ユーザー指定の初期値
+		 * @param {ObservableItem} [obsItem] ObservableItemの場合はそのインスタンスを渡す
 		 */
-		function DataItem(userInitialValue) {
+		function DataItem(userInitialValue, obsItem) {
 			// 初期値の設定
 			var actualInitialValue = schemaInfo._createInitialValueObj(userInitialValue);
 
-			// このアイテムが持つ値を格納するオブジェクト
-			this._values = {};
+			// itemインスタンス(DataItemの場合はthis、ObservableItemの場合は引数に渡されたobsItemを使用する)
+			var item = null;
+			if (obsItem) {
+				item = obsItem;
+				// schemaを持たせる
+				item.schema = schema;
+				// schemaInfoの中身を持たせる
+				for ( var p in schemaInfo) {
+					item[p] = schemaInfo[p];
+				}
+			} else {
+				item = this;
+			}
+
+			// アイテムが持つ値を格納するオブジェクト
+			item._values = {};
 
 			// nullPropsの設定
 			/** type:[]なプロパティで、最後にset()された値がnullかどうかを格納する。キー：プロパティ名、値：true/false */
-			this._nullProps = {};
+			item._nullProps = {};
 			for ( var plainProp in schema) {
 				if (schema[plainProp] && isTypeArray(schema[plainProp].type)) {
 					//配列の場合は最初にObservableArrayのインスタンスを入れる
@@ -3694,16 +3709,16 @@
 					//DataItemに属するObsArrayには、Item自身への参照を入れておく。
 					//これによりイベントハンドラ内でこのItemを参照することができる
 					obsArray.relatedItem = this;
-					setValue(this, plainProp, obsArray);
-					this._nullProps[plainProp] = true;
+					setValue(item, plainProp, obsArray);
+					item._nullProps[plainProp] = true;
 				}
 			}
 
 			// arrayPropsの設定
 			var arrayProps = schemaInfo._aryProps;
 
-			validateValueObj(schema, this._validateItemValue, actualInitialValue, model);
-			itemSetter(this, actualInitialValue, null, true);
+			validateValueObj(schema, schemaInfo._validateItemValue, actualInitialValue, model);
+			itemSetter(item, actualInitialValue, null, true);
 
 			if (model) {
 				// DataItemの場合はここでObservableArrayのイベントリスナの設定を行う
@@ -3711,7 +3726,7 @@
 				// ObservableItemクラスのインスタンスを生成するので、
 				// setObservableArrayListenersにObservableItemクラスのインスタンスにしなければならないため、ここではできない
 				for ( var i = 0, l = arrayProps.length; i < l; i++) {
-					setObservableArrayListeners(this, arrayProps[i], this.get(arrayProps[i]), model);
+					setObservableArrayListeners(item, arrayProps[i], item.get(arrayProps[i]), model);
 				}
 			}
 		}
@@ -3756,13 +3771,6 @@
 					return this._isRemoved ? null : this._model;
 				}
 			});
-		} else {
-			$.extend(DataItem.prototype, {
-				// ObservableItemの場合、プロトタイプとしてじゃなくプロパティにschemaとschemaInfoの中の値を持たせる
-				// コンストラクタのプロトタイプに持たせることで、ObservableItem生成時に参照できるようにする
-				schema: schema,
-				schemaInfo: schemaInfo
-			});
 		}
 		return DataItem;
 	}
@@ -3786,23 +3794,7 @@
 	 * @name ObservableItem
 	 */
 	function ObservableItem(item) {
-		// DataItemのコンストラクタが持つもので、ObservableItemのprototypeには持たないもの
-		// (ObservableItemのインスタンスごとに異なるもの)をコピーする
-		for ( var p in item) {
-			if (item.hasOwnProperty(p)) {
-				this[p] = item[p];
-			}
-		}
-		// schemaを持たせる
-		this.schema = item.schema;
-		// schemaInfoの中身を持たせる
-		for ( var p in item.schemaInfo) {
-			this[p] = item.schemaInfo[p];
-		}
-		// ObservableArrayのアイテムについてリスナの設定
-		for ( var i = 0, l = this._aryProps.length; i < l; i++) {
-			setObservableArrayListeners(this, this._aryProps[i], this.get(this._aryProps[i]));
-		}
+	// 空コンストラクタ
 	}
 	$.extend(ObservableItem.prototype, EventDispatcher.prototype, itemProto, {
 		/**
@@ -3860,8 +3852,15 @@
 		validateDefaultValue(schema, itemValueCheckFuncs, true);
 
 		// objから必要なプロパティを取り出す
-		//		return new (createDataItemConstructor(schema, itemValueCheckFuncs))();
-		return new ObservableItem(new (createDataItemConstructor(schema, itemValueCheckFuncs))());
+		var obsItem = new ObservableItem();
+		new (createDataItemConstructor(schema, itemValueCheckFuncs))(null, obsItem);
+
+		// ObservableArrayのアイテムについてリスナの設定
+		for ( var i = 0, l = obsItem._aryProps.length; i < l; i++) {
+			setObservableArrayListeners(obsItem, obsItem._aryProps[i], obsItem
+					.get(obsItem._aryProps[i]));
+		}
+		return obsItem;
 	}
 
 	/**

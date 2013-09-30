@@ -182,7 +182,6 @@ $(function() {
 		});
 	});
 
-
 	//=============================
 	// Definition
 	//=============================
@@ -245,5 +244,38 @@ $(function() {
 		ret = this.item.validate('id', '0001');
 		strictEqual(ret && ret.code, ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY, ret
 				&& ret.message);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('depend');
+	//=============================
+	// Body
+	//=============================
+	test('depend.calc内のthisはObservableItemのインスタンスであること', 2, function() {
+		var context = null;
+		var item = h5.core.data.createObservableItem({
+			v1: {
+				defaultValue: 'v1'
+			},
+			v2: {
+				type: 'string',
+				depend: {
+					on: 'v1',
+					calc: function(ev) {
+						context = this;
+						return this.get('v1') + 'a';
+					}
+				}
+			}
+		});
+
+		// thisのチェック
+		strictEqual(context, item,
+				'ObservableItem生成時に実行されるcalcのthisは生成されるObservableitemインスタンスと同じインスタンスであること');
+
+		item.set('v1', 'v1!');
+		strictEqual(context, item, 'set時に実行されるcalc内のthisは生成されるObservableitemインスタンスと同じインスタンスであること');
 	});
 });
