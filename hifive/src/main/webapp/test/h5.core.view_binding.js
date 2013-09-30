@@ -2708,6 +2708,129 @@ $(function() {
 						'reverse: unbind後にObservableArrayの内容を変更してもビューに反映されないこと', 'span');
 			});
 
+	test('複数要素にObservableArray[ObseItem]をバインド、unbind()を実行', 8, function() {
+		var $el1 = $('<div data-h5-loop-context="data"></div>');
+		$el1.append('<div data-h5-bind="str"></div>');
+		$fixture.append($el1);
+		var $el2 = $('<div data-h5-loop-context="data"></div>');
+		$el2.append('<div data-h5-bind="str"></div>');
+		$fixture.append($el2);
+
+		try {
+			var ar = h5.core.data.createObservableArray();
+			var data = {
+				data: ar
+			};
+
+			var binding1 = h5.core.view.bind($el1, data);
+			var binding2 = h5.core.view.bind($el2, data);
+
+			var item = h5.core.data.createObservableItem({
+				str: {
+					type: 'string'
+				}
+			});
+
+			ar.push(item);
+
+			var expected1 = 'AAA';
+			item.set('str', expected1);
+
+			var $el1child = $el1.children();
+			var $el2child = $el2.children();
+
+			equal($el1child.length, 1, 'ObsItemをObsArrayに追加したので、1件ビューに反映されていること');
+			equal($el2child.length, 1, 'ObsItemをObsArrayに追加したので、1件ビューに反映されていること');
+			equal($el1child.eq(0).html(), expected1, 'ObsItemに設定した値が複数のビューにされていること');
+			equal($el2child.eq(0).html(), expected1, 'ObsItemに設定した値が複数のビューにされていること');
+
+			binding1.unbind();
+
+			var expected2 = 'BBB';
+			item.set('str', expected2);
+
+			equal($el1child.eq(0).html(), expected1, 'unbindしたビューは更新されないこと');
+			equal($el2child.eq(0).html(), expected2, 'unbindしていないビューは更新されていること');
+
+			binding2.unbind();
+
+			var expected3 = 'CCC';
+			item.set('str', expected3);
+
+			equal($el1child.eq(0).html(), expected1, 'unbindしたビューは更新されないこと');
+			equal($el2child.eq(0).html(), expected2, 'unbindしたビューは更新されないこと');
+		} catch (e) {
+			ok(false, 'エラーが発生したためテスト失敗。');
+		}
+	});
+
+	test('複数要素にObservableArray[DataItem]をバインド後、unbind()を実行', 8, function() {
+		var $el1 = $('<div data-h5-loop-context="data"></div>');
+		$el1.append('<div data-h5-bind="str"></div>');
+		$fixture.append($el1);
+		var $el2 = $('<div data-h5-loop-context="data"></div>');
+		$el2.append('<div data-h5-bind="str"></div>');
+		$fixture.append($el2);
+
+		try {
+			var ar = h5.core.data.createObservableArray();
+			var data = {
+				data: ar
+			};
+
+			var binding1 = h5.core.view.bind($el1, data);
+			var binding2 = h5.core.view.bind($el2, data);
+
+			var manager = h5.core.data.createManager('TestManager1');
+			var model = manager.createModel({
+				name: 'BaseTestModel1',
+				schema: {
+					id: {
+						id: true
+					},
+					str: {
+						type: 'string'
+					}
+				}
+			});
+			var item = model.create({
+				id: '1'
+			});
+
+			ar.push(item);
+
+			var expected1 = 'AAA';
+			item.set('str', expected1);
+
+			var $el1child = $el1.children();
+			var $el2child = $el2.children();
+
+			equal($el1child.length, 1, 'DataItemをObsArrayに追加したので、1件ビューに反映されていること');
+			equal($el2child.length, 1, 'DataItemをObsArrayに追加したので、1件ビューに反映されていること');
+			equal($el1child.eq(0).html(), expected1, 'DataItemに設定した値が複数のビューにされていること');
+			equal($el2child.eq(0).html(), expected1, 'DataItemに設定した値が複数のビューにされていること');
+
+			binding1.unbind();
+
+			var expected2 = 'BBB';
+			item.set('str', expected2);
+
+			equal($el1child.eq(0).html(), expected1, 'unbindしたビューは更新されないこと');
+			equal($el2child.eq(0).html(), expected2, 'unbindしていないビューは更新されていること');
+
+			binding2.unbind();
+
+			var expected3 = 'CCC';
+			item.set('str', expected3);
+
+			equal($el1child.eq(0).html(), expected1, 'unbindしたビューは更新されないこと');
+			equal($el2child.eq(0).html(), expected2, 'unbindしたビューは更新されないこと');
+
+		} catch (e) {
+			ok(false, 'エラーが発生したためテスト失敗。');
+		}
+	});
+
 	var cloneTestBinding = null;
 	module('動的に生成(クローン)された要素に対する操作', {
 		setup: function() {
