@@ -188,8 +188,18 @@
 	 *            既にフック済みのDeferredオブジェクト。第一引数がPromiseで、元のdeferredでフック済みならそっちのメソッドに差し替える
 	 */
 	function toCFHAware(promise, rootDfd) {
+		// すでにtoCFHAware済みなら何もしないでpromiseを返す
+		if (promise._h5UnwrappedCall) {
+			return promise;
+		}
+
 		// progressを持っているか
 		var hasNativeProgress = !!promise.progress;
+
+		// thenが新しいプロミス(deferred)を返す(jQuery1.8以降)かどうか
+		// jQuery.thenの挙動の確認
+		var tempDfd = $.Deferred();
+		var thenReturnsNewPromise = tempDfd !== tempDfd.then();
 
 		// 引数がDeferredオブジェクト(!=プロミスオブジェクト)の場合、
 		// progress/notify/notifyWithがないなら追加。
@@ -280,65 +290,79 @@
 		// jQuery1.6以下にない第3引数でのprogressコールバックの登録にも対応する。
 		// rootDfdがあればrootDfd.pipeを持たせてあるので何もしない。
 		if (promise.pipe && !rootDfd) {
-			var pipe = promise.pipe;
 			promise.pipe = function() {
-				var ret = toCFHAware(pipe.apply(this, arguments));
+				// pipeを呼ぶとpipeに登録した関数がプロミスを返した時にfailハンドラが内部で登録され、
+				// そのプロミスについてのCommonFailHandlerが動作しなくなる (issue #250)
+				// (1.8以降の動作の場合thenも同じ)
+				// そのため、pipeはFW側で実装する
 
-				// もともとprogressを持っている(=pipeが第三引数でのprogressFilter登録に対応している)
-				// または、第3引数がない(=progressFilterの登録がない)ならそのままretを返す
-				// pipeで指定するprogressFilterは、単数で一つのみ登録できるので、それがそのまま関数かどうか判定すればいい。
-				if (hasNativeProgress || !$.isFunction(arguments[2])) {
-					return ret;
-				}
-				var progressFilter = arguments[2];
+				// 新しくプロミスを生成する
+				var newDefer = h5.async.deferred();
 
-				// pipe用のdfd作成
-				var pipeDfd = deferred();
-				ret.progress = function(func) {
-					pipeDfd.progress(func);
-				};
+				// コールバックの登録
+				var fns = argsToArray(arguments);
+				var methods = ['done', 'fail', 'progress'];
+				var actions = ['resolve', 'reject', 'notify'];
 
-				promise.progress(function() {
-					var ret = progressFilter.apply(this, arguments);
-					if (!(ret && $.isFunction(ret.promise))) {
-						// promise関数を持っていない(deferred or promise じゃない)なら次のprogressFilterを呼ぶ
-						pipeDfd.notify.call(this, ret);
-					} else {
-						// promiseを返した場合(promise or deferred)
-						ret.progress(function() {
-							pipeDfd.notify.apply(this, arguments);
+				for ( var i = 0, l = methods.length; i < l; i++) {
+					var that = this;
+					(function(fn, method, action) {
+						if (!$.isFunction(fn)) {
+							// 引数が関数で無かったら何もしない
+							return;
+						}
+						// コールバックを登録
+						that[method](function(/* var_args */) {
+							var ret = fn.apply(this, arguments);
+							if (ret && $.isFunction(ret.promise)) {
+								toCFHAware(ret);
+								if (method === 'fail') {
+									// failの場合は_h5UnwrappedCallを使って、CFHの挙動を阻害しないようにfailハンドラを登録
+									ret._h5UnwrappedCall(method, newDefer[action]);
+								} else {
+									// done, progressの場合はCFHAwareなプロミスにそのまま登録
+									// (jQuery1.6以前でもCFHAwareなプロミスならprogressメソッドがある)
+									ret[method](newDefer[action]);
+								}
+							} else {
+								// 戻り値を次のコールバックに渡す
+								newDefer[action + 'With'](this, [ret]);
+							}
 						});
-					}
-				});
-				return ret;
+					})(fns[i], methods[i], actions[i]);
+				}
+				return toCFHAware(newDefer.promise());
 			};
 			hookMethods.pipe = promise.pipe;
 		}
 
-		// thenは戻り値が呼び出したpromise(またはdeferred)と違う(jQuery1.8以降)なら、
+		// thenは戻り値が呼び出したpromise(またはdeferred)と違う場合(jQuery1.8以降)、
 		// そのdeferred/promiseが持つメソッドの上書きをして返す関数にする
 		// jQuery1.6対応で、第3引数にprogressFilterが指定されていればそれを登録する
 		// rootDfdがあればrootDfd.thenを持たせてあるので何もしない
 		if (promise.then && !rootDfd) {
 			var then = promise.then;
 			promise.then = function(/* var_args */) {
+				// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
+				// jQuery1.8以降は、thenが別のdeferredに基づくpromiseを生成して返ってくる(pipeと同じ)。
+
+				if (thenReturnsNewPromise) {
+					// 1.8以降の場合 thenはpipeと同じ挙動。
+					return hookMethods.pipe.apply(this, arguments);
+				}
+
+				// 1.7以前の場w合
 				var args = arguments;
 				var ret = then.apply(this, args);
-				if (ret !== this) {
-					// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
-					// jQuery1.8以降は、thenが別のdeferredに基づくpromiseを生成して返ってくる。
-					// 1.8以降であれば、promiseの関数を上書いてから返す
-					return toCFHAware(ret);
-				}
 
 				// 第3引数にprogressFilterが指定されていて、かつprogressメソッドがjQueryにない(1.6以前)場合
 				// promise.progressに登録する
 				if (!hasNativeProgress && hasValidCallback(args[2])) {
 					promise.progress.call(promise, args[2]);
 				}
-
-				// thenがthisを返した場合(jQuery1.7以前)ならそのままthis(=ret)を返す
+				// そのままthis(=ret)を返す
 				return ret;
+
 			};
 			hookMethods.then = promise.then;
 		}
