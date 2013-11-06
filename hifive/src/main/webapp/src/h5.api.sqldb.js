@@ -1095,6 +1095,8 @@
 	 *
 	 * @class
 	 * @name DatabaseWrapper
+	 */
+	/**
 	 * @param {Database} db openDatabase()が返すネイティブのDatabaseオブジェクト
 	 */
 	function DatabaseWrapper(db) {

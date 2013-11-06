@@ -2254,14 +2254,16 @@
 	 * href="h5.core.html#controller">h5.core.controller()</a>を使用してください。
 	 * </p>
 	 *
+	 * @name Controller
+	 * @class
+	 */
+	/**
 	 * @param {Document} doc コントローラをバインドした要素が属するdocumentノード
 	 * @param {Element} rootElement コントローラをバインドした要素
 	 * @param {String} controllerName コントローラ名
 	 * @param {Object} controllerDef コントローラ定義オブジェクト
 	 * @param {Object} param 初期化パラメータ
 	 * @param {Boolean} isRoot ルートコントローラかどうか
-	 * @name Controller
-	 * @class
 	 */
 	function Controller(rootElement, controllerName, controllerDef, param, isRoot) {
 		return controllerFactory(this, rootElement, controllerName, controllerDef, param, isRoot);
