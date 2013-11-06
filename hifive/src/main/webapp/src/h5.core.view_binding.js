@@ -145,7 +145,7 @@
 					//IE8以下で<li>等のouterHTMLを取得するとタグの前に改行が入る場合がある
 					//（<li>タグの前の空白文字が改行になる模様)
 					// scriptタグはクローンしない(parseHTMLの第3引数指定無し(false)でscriptはコピーしない)
-					return $.parseHTML($.trim(srcNode.outerHTML), doc)[0];
+					return $($.trim(srcNode.outerHTML), doc)[0];
 				}
 				return srcNode.cloneNode(true);
 			};
