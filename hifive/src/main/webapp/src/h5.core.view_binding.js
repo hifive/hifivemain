@@ -138,11 +138,14 @@
 			//また、IE8以下、またはIE9でもDocModeが8以下の場合、ノードに付加したJSプロパティやattachEventのイベントがクローン先にもコピーされてしまう。
 			//そのため、cloneNode()した結果JSプロパティがコピーされる環境（== DocMode<=8の環境、を想定）では
 			//エレメントのコピーはouterHTMLを基にjQueryによるノード"生成"で行う（!= クローン）ようにしている。
+			//ノードの生成は、srcNodeのownerDocumentから生成し、documentが異なっても対応できるようにしている
 			cloneNodeDeeply = function(srcNode) {
+				var doc = srcNode.ownerDocument;
 				if (srcNode.nodeType === NODE_TYPE_ELEMENT) {
 					//IE8以下で<li>等のouterHTMLを取得するとタグの前に改行が入る場合がある
-					//（<li>タグの前の空白文字が改行になる模様）
-					return $($.trim(srcNode.outerHTML))[0];
+					//（<li>タグの前の空白文字が改行になる模様)
+					// scriptタグはクローンしない(parseHTMLの第3引数指定無し(false)でscriptはコピーしない)
+					return $.parseHTML($.trim(srcNode.outerHTML), doc)[0];
 				}
 				return srcNode.cloneNode(true);
 			};
@@ -411,6 +414,7 @@
 
 		//appendChildの呼び出し回数削減。
 		//ループ単位ごとにappendChildしてdocumentにバインドする（＝Fragmentは都度空になる）ので、使いまわしている。
+		//対象要素のdocumentオブジェクトを使用する
 		var fragment = loopRootElement.ownerDocument.createDocumentFragment();
 
 		var getContextElement = context.get ? function(idx) {
@@ -796,7 +800,6 @@
 		//・countが省略された場合：start以降の全要素を削除
 		//・countがlengthを超えている場合：start以降の全要素が削除される
 		//・挿入要素がある場合：startの位置にinsertBefore（startがlengthを超えている場合は末尾に挿入）
-
 		var fragment = srcCtxRootNode.ownerDocument.createDocumentFragment();
 
 		//loopNodesに対するspliceのパラメータ。要素の挿入を行うため、あらかじめstartPosと削除数0を入れておく

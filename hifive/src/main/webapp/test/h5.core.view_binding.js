@@ -2980,4 +2980,211 @@ $(function() {
 			$('.sec').click();
 		});
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('iframeのドキュメント内の要素へのバインド', {
+		setup: function() {
+			stop();
+			var that = this;
+			createIFrameElement().done(function(iframe, doc) {
+				that.iframe = iframe;
+				that.ifDoc = doc;
+
+				start();
+			});
+		},
+		teardown: function() {
+			$(this.iframe).remove();
+		},
+		iframe: null,
+		ifDoc: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('要素へバインドできること', 3, function() {
+		var $bindTarget = $(this.ifDoc.body);
+		view.append($bindTarget, 'bindTest1');
+		view.bind($bindTarget, {
+			test: 'abc',
+			test2: 'abcd'
+		});
+		strictEqual($bindTarget.find('#dataBindTest>span').text(), 'abc',
+				'data-h5-bind指定した要素に値が表示されていること');
+		strictEqual($bindTarget.find('#dataBindTest>p').text(), 'abcd',
+				'data-h5-bind指定した要素に値が表示されていること');
+		strictEqual($bindTarget.find('#dataBindTest>div>pre').text(), 'abcd',
+				'data-h5-bind指定した要素に値が表示されていること');
+		$bindTarget.html('');
+	});
+
+	test('配列をバインドできること', 2, function() {
+		var $bindTarget = $(this.ifDoc.body);
+		view.append($bindTarget, 'loopContext1');
+		var items = h5.core.data.createObservableArray();
+		items.copyFrom([{
+			test: 'a'
+		}, {
+			test: 'b'
+		}]);
+		view.bind($bindTarget, {
+			items: items
+		});
+
+		var result = ['a', 'b'];
+		$bindTarget.find('li').each(function(i) {
+			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
+		});
+		$bindTarget.html('');
+	});
+
+	test('ObservableArrayをバインドできること', 6, function() {
+		var $bindTarget = $(this.ifDoc.body);
+		var items = h5.core.data.createObservableArray();
+		items.copyFrom([{
+			test: 'a'
+		}, {
+			test: 'b'
+		}]);
+		view.append($bindTarget, 'loopContext1');
+		view.bind($bindTarget, {
+			items: items
+		});
+
+		var result = ['a', 'b'];
+		$bindTarget.find('li').each(function(i) {
+			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
+		});
+
+		items.copyFrom([]);
+		strictEqual($bindTarget.find('li').length, 0, 'ObservableArrayが空になった時、繰り返し要素は無くなること');
+
+		items.copyFrom([{
+			test: 'A'
+		}, {
+			test: 'B'
+		}, {
+			test: 'C'
+		}]);
+		result = ['A', 'B', 'C'];
+		$bindTarget.find('li').each(function(i) {
+			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
+		});
+		$bindTarget.html('');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いたドキュメント内の要素へのバインド', {
+		setup: function() {
+			stop();
+			var that = this;
+			createIFrameElement().done(function(iframe, doc) {
+				that.iframe = iframe;
+				that.ifDoc = doc;
+
+				// 要素の追加
+				var div = doc.createElement('div');
+				div.id = 'bindTest1';
+				var childDiv = doc.createElement('div');
+				childDiv.id = 'controllerTest-1';
+				var btn = doc.createElement('button');
+				childDiv.appendChild(btn);
+				div.appendChild(childDiv);
+				doc.body.appendChild(div);
+
+				start();
+			});
+		},
+		teardown: function() {
+			$(this.iframe).remove();
+			this.win && this.win.close();
+		},
+		iframe: null,
+		ifDoc: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('要素へバインドできること', 3, function() {
+		var w = window.open('about:blank');
+		this.win = w;
+		var $bindTarget = $(w.document.body);
+		view.append($bindTarget, 'bindTest1');
+		view.bind($bindTarget, {
+			test: 'abc',
+			test2: 'abcd'
+		});
+		strictEqual($bindTarget.find('#dataBindTest>span').text(), 'abc',
+				'data-h5-bind指定した要素に値が表示されていること');
+		strictEqual($bindTarget.find('#dataBindTest>p').text(), 'abcd',
+				'data-h5-bind指定した要素に値が表示されていること');
+		strictEqual($bindTarget.find('#dataBindTest>div>pre').text(), 'abcd',
+				'data-h5-bind指定した要素に値が表示されていること');
+		$bindTarget.html('');
+	});
+
+	test('配列をバインドできること', 2, function() {
+		var w = window.open('about:blank');
+		this.win = w;
+		var $bindTarget = $(w.document.body);
+		view.append($bindTarget, 'loopContext1');
+		var items = h5.core.data.createObservableArray();
+		items.copyFrom([{
+			test: 'a'
+		}, {
+			test: 'b'
+		}]);
+		view.bind($bindTarget, {
+			items: items
+		});
+
+		var result = ['a', 'b'];
+		$bindTarget.find('li').each(function(i) {
+			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
+		});
+		$bindTarget.html('');
+	});
+
+	test('ObservableArrayをバインドできること', 6, function() {
+		var w = window.open('about:blank');
+		this.win = w;
+		var $bindTarget = $(w.document.body);
+		var items = h5.core.data.createObservableArray();
+		items.copyFrom([{
+			test: 'a'
+		}, {
+			test: 'b'
+		}]);
+		view.append($bindTarget, 'loopContext1');
+		view.bind($bindTarget, {
+			items: items
+		});
+
+		var result = ['a', 'b'];
+		$bindTarget.find('li').each(function(i) {
+			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
+		});
+
+		items.copyFrom([]);
+		strictEqual($bindTarget.find('li').length, 0, 'ObservableArrayが空になった時、繰り返し要素は無くなること');
+
+		items.copyFrom([{
+			test: 'A'
+		}, {
+			test: 'B'
+		}, {
+			test: 'C'
+		}]);
+		result = ['A', 'B', 'C'];
+		$bindTarget.find('li').each(function(i) {
+			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
+		});
+		$bindTarget.html('');
+	});
 });
