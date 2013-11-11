@@ -3079,41 +3079,21 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いたドキュメント内の要素へのバインド', {
+	module('[browser#and-and:all|sa-ios:all|ie-wp:all]window.openで開いたポップアップウィンドウドキュメント内の要素へのバインド', {
 		setup: function() {
-			stop();
-			var that = this;
-			createIFrameElement().done(function(iframe, doc) {
-				that.iframe = iframe;
-				that.ifDoc = doc;
-
-				// 要素の追加
-				var div = doc.createElement('div');
-				div.id = 'bindTest1';
-				var childDiv = doc.createElement('div');
-				childDiv.id = 'controllerTest-1';
-				var btn = doc.createElement('button');
-				childDiv.appendChild(btn);
-				div.appendChild(childDiv);
-				doc.body.appendChild(div);
-
-				start();
-			});
+			// 空のページを開く
+			this.win = window.open('about:blank');
 		},
 		teardown: function() {
-			$(this.iframe).remove();
-			this.win && this.win.close();
+			this.win.close();
 		},
-		iframe: null,
-		ifDoc: null
 	});
 
 	//=============================
 	// Body
 	//=============================
 	test('要素へバインドできること', 3, function() {
-		var w = window.open('about:blank');
-		this.win = w;
+		var w = this.win;
 		var $bindTarget = $(w.document.body);
 		view.append($bindTarget, 'bindTest1');
 		view.bind($bindTarget, {
@@ -3130,8 +3110,7 @@ $(function() {
 	});
 
 	test('配列をバインドできること', 2, function() {
-		var w = window.open('about:blank');
-		this.win = w;
+		var w = this.win;
 		var $bindTarget = $(w.document.body);
 		view.append($bindTarget, 'loopContext1');
 		var items = h5.core.data.createObservableArray();
@@ -3152,8 +3131,7 @@ $(function() {
 	});
 
 	test('ObservableArrayをバインドできること', 6, function() {
-		var w = window.open('about:blank');
-		this.win = w;
+		var w = this.win;
 		var $bindTarget = $(w.document.body);
 		var items = h5.core.data.createObservableArray();
 		items.copyFrom([{
