@@ -2950,127 +2950,6 @@ $(function() {
 		});
 	});
 
-	//TODO モジュールに分割する
-	test('コントローラの取得（getControllers）、コントローラをバインドしていない場合', function() {
-		var controllers = h5.core.controllerManager.getControllers('#controllerTest');
-		strictEqual($.isArray(controllers), true, 'コントローラをバインドしていないときも配列が返る');
-		strictEqual(controllers.length, 0, '配列の要素数は0');
-	});
-
-	asyncTest('コントローラの取得（getControllers）、コントローラを1つバインドした場合、および引数のパターンへの対応', function() {
-		var controllerBase = {
-			__name: 'TestController'
-		};
-		var testController = h5.core.controller('#controllerTest', controllerBase);
-		testController.readyPromise.done(function() {
-			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
-			strictEqual($.isArray(controllers), true, '配列が返る');
-			strictEqual(controllers.length, 1, '配列の要素数は1');
-			strictEqual(controllers[0], testController, '配列の要素はバインドしたコントローラインスタンスである');
-
-			var idController = h5.core.controllerManager.getControllers('#controllerTest')[0];
-			var jqController = h5.core.controllerManager.getControllers($('#controllerTest'))[0];
-			var domController = h5.core.controllerManager.getControllers(document
-					.getElementById('controllerTest'))[0];
-			// strictEqualを使うと循環参照しているオブジェジェクトを出力しようとするため、
-			// ok(hoge === fuga) で判定。
-			ok(idController === testController, 'セレクタでコントローラが取得できたか');
-			ok(jqController === testController, 'jQueryオブジェクトでコントローラが取得できたか');
-			ok(domController === testController, 'DOMでコントローラが取得できたか');
-
-			testController.dispose();
-			start();
-		});
-	});
-
-	asyncTest('コントローラの取得（getControllers）、同じ要素にバインドする子コントローラが存在する場合', function() {
-		var childController = {
-			__name: 'ChildController'
-		};
-
-		var parentController = {
-			__name: 'ParentController',
-			childController: childController
-		};
-
-		var pInst = h5.core.controller('#controllerTest', parentController);
-
-		pInst.readyPromise.done(function() {
-			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
-			strictEqual(controllers.length, 1, '子コントローラは含まれないので戻り値に含まれるコントローラは1つ');
-			notStrictEqual($.inArray(pInst, controllers), -1, '親コントローラが含まれている');
-			strictEqual($.inArray(pInst.childController, controllers), -1, '子コントローラは含まれていない');
-
-			pInst.dispose();
-		}).fail(function() {
-			ok(false, 'コントローラの初期化に失敗した');
-		}).always(function() {
-			start();
-		});
-
-	});
-
-	asyncTest('コントローラの取得（getControllers）、内包する子コントローラをmeta指定で親と別の要素にバインドする場合', function() {
-		var child = {
-			__name: 'ChildController'
-		};
-
-		var CHILD_BIND_TARGET = '#a';
-
-		var parent = {
-			__name: 'ParentController',
-			__meta: {
-				childController: {
-					rootElement: CHILD_BIND_TARGET
-				}
-			},
-			childController: child
-		};
-
-		var pInst = h5.core.controller('#controllerTest', parent);
-
-		pInst.readyPromise.done(function() {
-			var controllers = h5.core.controllerManager.getControllers(CHILD_BIND_TARGET);
-
-			strictEqual(controllers.length, 0, '子コントローラはgetControllersでは取得できない');
-
-			pInst.dispose();
-		}).fail(function() {
-			ok(false, 'コントローラの初期化に失敗した');
-		}).always(function() {
-			start();
-		});
-
-	});
-
-	asyncTest('コントローラの取得（getControllers）、同一要素に独立した複数のコントローラがバインドされている場合', function() {
-		var c1 = {
-			__name: 'TestController1'
-		};
-		var c2 = {
-			__name: 'TestController2'
-		};
-
-		var cInst1 = h5.core.controller('#controllerTest', c1);
-		var cInst2 = h5.core.controller('#controllerTest', c2);
-
-		h5.async.when(cInst1.readyPromise, cInst2.readyPromise).done(function() {
-			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
-
-			strictEqual(controllers.length, 2, '独立してバインドした場合はそれぞれ独立して存在する');
-			notStrictEqual($.inArray(cInst1, controllers), -1, 'コントローラ1が含まれているか');
-			notStrictEqual($.inArray(cInst2, controllers), -1, 'コントローラ2が含まれているか');
-
-			cInst1.dispose();
-			cInst2.dispose();
-		}).fail(function() {
-			ok(false, '2つのコントローラが正しく初期化されなかった');
-		}).always(function() {
-			start();
-		});
-
-	});
-
 	asyncTest(
 			'[build#min]h5.core.interceptor.logInterceptorの動作 (※要目視確認)',
 			1,
@@ -5756,6 +5635,168 @@ $(function() {
 					start();
 				});
 			});
+	//=============================
+	// Definition
+	//=============================
+
+	module(
+			"getControllers",
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+				},
+				teardown: function() {
+					disposeQUnitFixtureController();
+					$('#controllerTest').remove();
+				}
+			});
+
+
+	//=============================
+	// Body
+	//=============================
+	test('コントローラの取得（getControllers）、コントローラをバインドしていない場合', function() {
+		var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+		strictEqual($.isArray(controllers), true, 'コントローラをバインドしていないときも配列が返る');
+		strictEqual(controllers.length, 0, '配列の要素数は0');
+	});
+
+	asyncTest('コントローラの取得（getControllers）、コントローラを1つバインドした場合、および引数のパターンへの対応', function() {
+		var controllerBase = {
+			__name: 'TestController'
+		};
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+			strictEqual($.isArray(controllers), true, '配列が返る');
+			strictEqual(controllers.length, 1, '配列の要素数は1');
+			strictEqual(controllers[0], testController, '配列の要素はバインドしたコントローラインスタンスである');
+
+			var idController = h5.core.controllerManager.getControllers('#controllerTest')[0];
+			var jqController = h5.core.controllerManager.getControllers($('#controllerTest'))[0];
+			var domController = h5.core.controllerManager.getControllers(document
+					.getElementById('controllerTest'))[0];
+			// strictEqualを使うと循環参照しているオブジェジェクトを出力しようとするため、
+			// ok(hoge === fuga) で判定。
+			ok(idController === testController, 'セレクタでコントローラが取得できたか');
+			ok(jqController === testController, 'jQueryオブジェクトでコントローラが取得できたか');
+			ok(domController === testController, 'DOMでコントローラが取得できたか');
+
+			testController.dispose();
+			start();
+		});
+	});
+
+	asyncTest('コントローラの取得（getControllers）、同じ要素にバインドする子コントローラが存在する場合', function() {
+		var childController = {
+			__name: 'ChildController'
+		};
+
+		var parentController = {
+			__name: 'ParentController',
+			childController: childController
+		};
+
+		var pInst = h5.core.controller('#controllerTest', parentController);
+
+		pInst.readyPromise.done(function() {
+			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+			strictEqual(controllers.length, 1, '子コントローラは含まれないので戻り値に含まれるコントローラは1つ');
+			notStrictEqual($.inArray(pInst, controllers), -1, '親コントローラが含まれている');
+			strictEqual($.inArray(pInst.childController, controllers), -1, '子コントローラは含まれていない');
+
+			pInst.dispose();
+		}).fail(function() {
+			ok(false, 'コントローラの初期化に失敗した');
+		}).always(function() {
+			start();
+		});
+
+	});
+
+	asyncTest('コントローラの取得（getControllers）、内包する子コントローラをmeta指定で親と別の要素にバインドする場合', function() {
+		var child = {
+			__name: 'ChildController'
+		};
+
+		var CHILD_BIND_TARGET = '#a';
+
+		var parent = {
+			__name: 'ParentController',
+			__meta: {
+				childController: {
+					rootElement: CHILD_BIND_TARGET
+				}
+			},
+			childController: child
+		};
+
+		var pInst = h5.core.controller('#controllerTest', parent);
+
+		pInst.readyPromise.done(function() {
+			var controllers = h5.core.controllerManager.getControllers(CHILD_BIND_TARGET);
+
+			strictEqual(controllers.length, 0, '子コントローラはgetControllersでは取得できない');
+
+			pInst.dispose();
+		}).fail(function() {
+			ok(false, 'コントローラの初期化に失敗した');
+		}).always(function() {
+			start();
+		});
+
+	});
+
+	asyncTest('コントローラの取得（getControllers）、同一要素に独立した複数のコントローラがバインドされている場合', function() {
+		var c1 = {
+			__name: 'TestController1'
+		};
+		var c2 = {
+			__name: 'TestController2'
+		};
+
+		var cInst1 = h5.core.controller('#controllerTest', c1);
+		var cInst2 = h5.core.controller('#controllerTest', c2);
+
+		h5.async.when(cInst1.readyPromise, cInst2.readyPromise).done(function() {
+			var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+
+			strictEqual(controllers.length, 2, '独立してバインドした場合はそれぞれ独立して存在する');
+			notStrictEqual($.inArray(cInst1, controllers), -1, 'コントローラ1が含まれているか');
+			notStrictEqual($.inArray(cInst2, controllers), -1, 'コントローラ2が含まれているか');
+
+			cInst1.dispose();
+			cInst2.dispose();
+		}).fail(function() {
+			ok(false, '2つのコントローラが正しく初期化されなかった');
+		}).always(function() {
+			start();
+		});
+
+	});
+
+	asyncTest('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること', function() {
+		var w = window.open();
+		var div = w.document.createElement('div');
+		w.document.body.appendChild(div);
+		var c = h5.core.controller(div, {
+			__name: 'popupWindowController',
+			__dispose: function(){
+				w.close();
+				start();
+			}
+		});
+		c.readyPromise.done(function() {
+			strictEqual(h5.core.controllerManager.getControllers(div)[0], c,
+					'ポップアップウィンドウ内の要素のコントローラを取得できること');
+			strictEqual(h5.core.controllerManager.getControllers(w.document.body, {
+				deep: true
+			})[0], c, 'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
+			c.dispose();
+		});
+	});
 
 	//=============================
 	// Definition

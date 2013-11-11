@@ -2687,8 +2687,13 @@
 
 				if (seekRoot === controller.rootElement) {
 					ret.push(controller);
-				} else if (deep && $.contains(seekRoot, controller.rootElement)) {
-					//$.contains()は自分と比較した場合はfalse
+				} else if (deep
+						&& getDocumentOf(seekRoot) === getDocumentOf(controller.rootElement)
+						&& $.contains(seekRoot, controller.rootElement)) {
+					// ownerDocumentが同じ場合に$.contais()の判定を行う
+					// (IE8でwindow.open()で開いたポップアップウィンドウ内の要素と
+					// 元ページ内の要素で$.contains()の判定を行うとエラーになるため。)
+					// また、$.contains()は自分と比較した場合はfalse
 					ret.push(controller);
 				}
 			}
