@@ -291,7 +291,7 @@ $(function() {
 
 	});
 
-	asyncTest('own()の動作', function() {
+	asyncTest('own()の動作', 4, function() {
 		function Test(callback) {
 			this.callback = callback;
 		}
@@ -309,6 +309,10 @@ $(function() {
 				ok(this.__name === 'MyLogic', 'thisがロジックになっているか');
 				strictEqual(arg1, 100, '引数は渡されているか1');
 				strictEqual(arg2, 200, '引数は渡されているか2');
+				var returnVal = this.own(function() {
+					return 1;
+				})();
+				strictEqual(returnVal, 1, 'this.ownで作成した関数を呼び出して戻り値が返ってくること');
 			}
 		};
 
@@ -327,7 +331,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('ownWithOrg()の動作', function() {
+	asyncTest('ownWithOrg()の動作', 5, function() {
 		function Test(callback) {
 			this.callback = callback;
 		}
@@ -347,6 +351,10 @@ $(function() {
 				ok(this.__name === 'MyLogic', 'thisがロジックになっているか');
 				strictEqual(arg1, 100, '引数は渡されているか1');
 				strictEqual(arg2, 200, '引数は渡されているか2');
+				var returnVal = this.ownWithOrg(function() {
+					return 1;
+				})();
+				strictEqual(returnVal, 1, 'this.ownWithOrgで作成した関数を呼び出して戻り値が返ってくること');
 			}
 		};
 

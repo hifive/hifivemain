@@ -1810,7 +1810,7 @@
 	function own(func) {
 		var that = this;
 		return function(/* var_args */) {
-			func.apply(that, arguments);
+			return func.apply(that, arguments);
 		};
 	}
 
@@ -1824,7 +1824,7 @@
 		return function(/* var_args */) {
 			var args = h5.u.obj.argsToArray(arguments);
 			args.unshift(this);
-			func.apply(that, args);
+			return func.apply(that, args);
 		};
 	}
 	// =========================================================================

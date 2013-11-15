@@ -3155,7 +3155,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('this.own()の動作', function() {
+	asyncTest('this.own()の動作', 4, function() {
 		function Test(callback) {
 			this.callback = callback;
 		}
@@ -3177,6 +3177,10 @@ $(function() {
 				ok(this.__name === 'TestController', 'thisがコントローラになっているか');
 				strictEqual(arg1, 100, '引数は渡されているか1');
 				strictEqual(arg2, 200, '引数は渡されているか2');
+				var returnVal = this.own(function() {
+					return 1;
+				})();
+				strictEqual(returnVal, 1, 'this.ownで作成した関数を呼び出して戻り値が返ってくること');
 			}
 		};
 
@@ -3187,7 +3191,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.ownWithOrg()の動作', function() {
+	asyncTest('this.ownWithOrg()の動作', 5, function() {
 		function Test(callback) {
 			this.callback = callback;
 		}
@@ -3211,6 +3215,11 @@ $(function() {
 				ok(this.__name === 'TestController', 'thisがコントローラになっているか');
 				strictEqual(arg1, 100, '引数は渡されているか1');
 				strictEqual(arg2, 200, '引数は渡されているか2');
+
+				var returnVal = this.ownWithOrg(function() {
+					return 1;
+				})();
+				strictEqual(returnVal, 1, 'this.ownWithOrgで作成した関数を呼び出して戻り値が返ってくること');
 			}
 		};
 
@@ -5777,26 +5786,27 @@ $(function() {
 
 	});
 
-	asyncTest('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること', function() {
-		var w = window.open();
-		var div = w.document.createElement('div');
-		w.document.body.appendChild(div);
-		var c = h5.core.controller(div, {
-			__name: 'popupWindowController',
-			__dispose: function(){
-				w.close();
-				start();
-			}
-		});
-		c.readyPromise.done(function() {
-			strictEqual(h5.core.controllerManager.getControllers(div)[0], c,
-					'ポップアップウィンドウ内の要素のコントローラを取得できること');
-			strictEqual(h5.core.controllerManager.getControllers(w.document.body, {
-				deep: true
-			})[0], c, 'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
-			c.dispose();
-		});
-	});
+	asyncTest('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
+			function() {
+				var w = window.open();
+				var div = w.document.createElement('div');
+				w.document.body.appendChild(div);
+				var c = h5.core.controller(div, {
+					__name: 'popupWindowController',
+					__dispose: function() {
+						w.close();
+						start();
+					}
+				});
+				c.readyPromise.done(function() {
+					strictEqual(h5.core.controllerManager.getControllers(div)[0], c,
+							'ポップアップウィンドウ内の要素のコントローラを取得できること');
+					strictEqual(h5.core.controllerManager.getControllers(w.document.body, {
+						deep: true
+					})[0], c, 'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
+					c.dispose();
+				});
+			});
 
 	//=============================
 	// Definition
