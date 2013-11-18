@@ -1366,7 +1366,6 @@ $(function() {
 			start();
 		}).fail(function(e, opt) {
 			deepEqual(++count, 4, 'readyPromiseがreject()された');
-			start();
 		});
 	});
 
