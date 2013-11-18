@@ -319,8 +319,12 @@
 								for ( var j = 0; j < l; j++) {
 									// コールバックが返したプロミスについてコールバックを登録する
 									// _h5UnwrappedCallを使って、CFHの挙動を阻害しないようにfailハンドラを登録
-									// (jQuery1.6以前でもCFHAwareなプロミスならprogressメソッドがある)
-									ret._h5UnwrappedCall(methods[j], newDefer[actions[j]]);
+									if (methods[j] === 'fail') {
+										ret._h5UnwrappedCall(methods[j], newDefer[actions[j]]);
+									} else {
+										// jQuery1.6以前でもCFHAwareなプロミスならprogressメソッドがある
+										ret[methods[j]](newDefer[actions[j]]);
+									}
 								}
 							} else {
 								// 戻り値を次のコールバックに渡す
