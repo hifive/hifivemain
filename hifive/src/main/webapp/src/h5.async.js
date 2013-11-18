@@ -316,16 +316,13 @@
 							var ret = fn.apply(this, arguments);
 							if (ret && $.isFunction(ret.promise)) {
 								toCFHAware(ret);
-								for ( var j = 0; j < l; j++) {
-									// コールバックが返したプロミスについてコールバックを登録する
-									// _h5UnwrappedCallを使って、CFHの挙動を阻害しないようにfailハンドラを登録
-									if (methods[j] === 'fail') {
-										ret._h5UnwrappedCall(methods[j], newDefer[actions[j]]);
-									} else {
-										// jQuery1.6以前でもCFHAwareなプロミスならprogressメソッドがある
-										ret[methods[j]](newDefer[actions[j]]);
-									}
-								}
+								// コールバックが返したプロミスについてコールバックを登録する
+								ret.done(newDefer.resolve);
+								// _h5UnwrappedCallを使って、CFHの挙動を阻害しないようにfailハンドラを登録
+								ret._h5UnwrappedCall('fail', newDefer.reject);
+								// jQuery1.6以下でh5を使わずに生成されたプロミスならprogressはないので、
+								// progressメソッドがあるかチェックしてからprogressハンドラを登録
+								$.isFunction(ret.progress) && ret.progress(newDefer.notify);
 							} else {
 								// 戻り値を次のコールバックに渡す
 								newDefer[action + 'With'](this, [ret]);
@@ -353,7 +350,7 @@
 					return hookMethods.pipe.apply(this, arguments);
 				}
 
-				// 1.7以前の場w合
+				// 1.7以前の場合
 				var args = arguments;
 				var ret = then.apply(this, args);
 
