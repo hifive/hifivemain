@@ -316,13 +316,11 @@
 							var ret = fn.apply(this, arguments);
 							if (ret && $.isFunction(ret.promise)) {
 								toCFHAware(ret);
-								if (method === 'fail') {
-									// failの場合は_h5UnwrappedCallを使って、CFHの挙動を阻害しないようにfailハンドラを登録
-									ret._h5UnwrappedCall(method, newDefer[action]);
-								} else {
-									// done, progressの場合はCFHAwareなプロミスにそのまま登録
+								for ( var j = 0; j < l; j++) {
+									// コールバックが返したプロミスについてコールバックを登録する
+									// _h5UnwrappedCallを使って、CFHの挙動を阻害しないようにfailハンドラを登録
 									// (jQuery1.6以前でもCFHAwareなプロミスならprogressメソッドがある)
-									ret[method](newDefer[action]);
+									ret._h5UnwrappedCall(methods[j], newDefer[actions[j]]);
 								}
 							} else {
 								// 戻り値を次のコールバックに渡す
@@ -331,7 +329,7 @@
 						});
 					})(fns[i], methods[i], actions[i]);
 				}
-				return toCFHAware(newDefer.promise());
+				return newDefer.promise();
 			};
 			hookMethods.pipe = promise.pipe;
 		}

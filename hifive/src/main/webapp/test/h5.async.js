@@ -463,6 +463,60 @@ $(function() {
 		});
 	});
 
+	test(
+			'[jquery#-1.7]thenで登録した関数がpromiseを返した時、そのpromiseがreject/resolveされたらthenの戻り値もreject/resolveされること',
+			2,
+			function() {
+				var dfd = h5.async.deferred();
+				var p = dfd.then(function() {
+					return h5.async.deferred().reject().promise();
+				});
+				dfd.resolve();
+				p
+						.fail(function() {
+							ok(true,
+									'thenで登録した関数が返したpromiseがreject()された時に、thenの戻り値に登録したfailコールバックが実行されること');
+						});
+
+				dfd = h5.async.deferred();
+				p = dfd.then(function() {
+					return h5.async.deferred().resolve().promise();
+				});
+				dfd.resolve();
+				p
+						.done(function() {
+							ok(true,
+									'thenで登録した関数が返したpromiseがresolve()された時に、thenの戻り値に登録したdoneコールバックが実行されること');
+						});
+			});
+
+	test(
+			'pipeで登録した関数がpromiseを返した時、そのpromiseがreject/resolveされたらthenの戻り値もreject/resolveされること',
+			2,
+			function() {
+				var dfd = h5.async.deferred();
+				var p = dfd.pipe(function() {
+					return h5.async.deferred().reject().promise();
+				});
+				dfd.resolve();
+				p
+						.fail(function() {
+							ok(true,
+									'pipeで登録した関数が返したpromiseがreject()された時に、pipeの戻り値に登録したfailコールバックが実行されること');
+						});
+
+				dfd = h5.async.deferred();
+				p = dfd.pipe(function() {
+					return h5.async.deferred().resolve().promise();
+				});
+				dfd.resolve();
+				p
+						.done(function() {
+							ok(true,
+									'pipeで登録した関数が返したpromiseがresolve()された時に、pipeの戻り値に登録したdoneコールバックが実行されること');
+						});
+			});
+
 	test('[jquery#1.8-]thenはpipeとはことなり、登録した関数がpromiseを返しても無視して次のコールバックが呼ばれること。', 3, function() {
 		var doneCalled = failCalled = progressCalled = false;
 		var dfd = h5.async.deferred();
