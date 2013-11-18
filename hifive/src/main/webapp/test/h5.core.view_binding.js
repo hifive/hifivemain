@@ -3086,7 +3086,7 @@ $(function() {
 		},
 		teardown: function() {
 			this.win.close();
-		},
+		}
 	});
 
 	//=============================
