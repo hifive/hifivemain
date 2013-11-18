@@ -164,7 +164,7 @@ $(function() {
 			ok(true, 'コールバックが動作すること');
 			start();
 		});
-	})
+	});
 
 	//=============================
 	// Definition
@@ -180,11 +180,10 @@ $(function() {
 	// Body
 	//=============================
 
-	test(
+	asyncTest(
 			'commonFailHandlerが設定されている時、jqXHR#then()でprogressCallbackを登録しようとしてもエラーにならないか',
 			1,
 			function() {
-
 				h5.settings.commonFailHandler = function() {
 				// 何もしない
 				};
@@ -197,7 +196,8 @@ $(function() {
 					jqXHR.then(function() {
 					// doneCallback
 					}, function() {
-					// failCallback
+						// failCallback
+						start();
 					}, function() {
 					// progressCallback
 					});
