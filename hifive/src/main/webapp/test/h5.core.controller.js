@@ -4931,7 +4931,7 @@ $(function() {
 	});
 
 	asyncTest(
-			'[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること',
+			'[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること',
 			2, function() {
 				var isPositiveValue = false;
 				var testController = {
@@ -5193,7 +5193,7 @@ $(function() {
 			});
 
 	asyncTest(
-			'[browser#ie:-8|ie:9-10:docmode=7-8|ie-wp:9:docmode=7|and-and:0-2]SVG内要素にバインドしたh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。',
+			'[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7|and-and:0-2]SVG内要素にバインドしたh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。',
 			26,
 			function() {
 				var controller = {
