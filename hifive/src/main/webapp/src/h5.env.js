@@ -106,7 +106,7 @@
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
-		var isIE = !!ua.match(/MSIE/);
+		var isIE = !!ua.match(/MSIE/) || !!ua.match(/Trident/);
 
 		/**
 		 * ブラウザがFirefoxであるかどうかを表します。 モバイル端末のFirefoxでもtrueです。
@@ -242,19 +242,26 @@
 			return $.trim(ua.match(r));
 		};
 
-		var spaceSplit = function(target, ignoreCase) {
+		function spaceSplit(target, ignoreCase) {
 			var v = getVersion(target, '[^;)]*', ignoreCase).split(' ');
 			if (v.length === 1)
 				return '';
 			return v[v.length - 1];
-		};
+		}
 
-		var slashSplit = function(target, ignoreCase) {
+		function slashSplit(target, ignoreCase) {
 			var v = getVersion(target, '[^;) ]*', ignoreCase).split('/');
 			if (v.length === 1)
 				return '';
 			return v[v.length - 1];
-		};
+		}
+
+		function colonSplit(target, ignoreCase) {
+			var v = getVersion(target, '[^;) ]*', ignoreCase).split(':');
+			if (v.length === 1)
+				return '';
+			return v[v.length - 1];
+		}
 
 		var getMainVersion = function(target) {
 			return parseInt(target.split('.')[0]);
@@ -313,7 +320,7 @@
 		} else {
 			var version = null;
 			if (isIE) {
-				version = spaceSplit('MSIE', false);
+				version = spaceSplit('MSIE', false) || colonSplit('rv');
 			} else if (isChrome) {
 				version = slashSplit('Chrome', false);
 				if (!version) {
