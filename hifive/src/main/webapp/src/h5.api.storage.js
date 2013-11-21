@@ -193,7 +193,18 @@
 		 */
 		// APIはlocalStorageとsessionStorageに分かれており、本来であればそれぞれサポート判定する必要があるが、
 		// 仕様ではStorage APIとして一つに扱われておりかつ、テストした限りでは片方のみ使用できるブラウザが見つからない為、一括りに判定している。
-		isSupported: !!window.localStorage,
+		// safari(PC,iOS)のプライベートブラウズモードでは、localStorageオブジェクトはあるがsetItem()を使用すると例外が発生するため、
+		// try-catchでチェックして、例外が発生するかどうかをチェックし、例外が発生した場合はisSupported===falseにする。issue
+		isSupported: window.localStorage ? (function() {
+			try {
+				var checkKey = '__H5_WEB_STORAGE_CHECK__';
+				window.localStorage.setItem(checkKey, 1);
+				window.localStorage.getItem(checkKey);
+				return true;
+			} catch (e) {
+				return false;
+			}
+		})() : false,
 		/**
 		 * ローカルストレージ
 		 *
