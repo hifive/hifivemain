@@ -3088,9 +3088,14 @@ $(function() {
 					openPopupWindow().done(function(win){
 						that.win = win;
 						start();
+					}).fail(function(){
+						start();
 					});
 				},
 				teardown: function() {
+					if(!this.win){
+						return;
+					}
 					var that = this;
 					closePopupWindow(this.win).done(function(){
 						that.win = null;
@@ -3104,6 +3109,10 @@ $(function() {
 	//=============================
 	test('要素へバインドできること', 3, function() {
 		var w = this.win;
+		if(!w){
+			skipCurrentTest();
+			return;
+		}
 		var $bindTarget = $(w.document.body);
 		view.append($bindTarget, 'bindTest1');
 		view.bind($bindTarget, {
@@ -3121,6 +3130,10 @@ $(function() {
 
 	test('配列をバインドできること', 2, function() {
 		var w = this.win;
+		if(!w){
+			skipCurrentTest();
+			return;
+		}
 		var $bindTarget = $(w.document.body);
 		view.append($bindTarget, 'loopContext1');
 		var items = h5.core.data.createObservableArray();
@@ -3142,6 +3155,10 @@ $(function() {
 
 	test('ObservableArrayをバインドできること', 6, function() {
 		var w = this.win;
+		if(!w){
+			skipCurrentTest();
+			return;
+		}
 		var $bindTarget = $(w.document.body);
 		var items = h5.core.data.createObservableArray();
 		items.copyFrom([{

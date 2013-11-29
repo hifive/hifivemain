@@ -97,6 +97,10 @@ function createIFrameElement() {
 function openPopupWindow() {
 	var dfd = h5.async.deferred();
 	var w = window.open();
+	if (w == null) {
+		// ポップアップブロックされていた場合はrejectして終了
+		return dfd.reject().promise();
+	}
 	function load() {
 		dfd.resolve(w);
 	}
@@ -125,4 +129,21 @@ function closePopupWindow(w) {
 	});
 	w.close();
 	return dfd.promise();
+}
+
+// 現在実行中のテストをスキップする。テストケース内(test,asyncTest)から呼ばれることを想定している
+function skipCurrentTest() {
+	// テストが成功するようにする
+	ok(true, 'テストをスキップしました');
+	QUnit.config.current.expected = null;
+
+	// テスト名の先頭に[テストをスキップしました]を付けて表示する
+	var replace = '';
+	$(QUnit.config.current.nameHtml).each(function() {
+		if ($(this).hasClass('test-name')) {
+			$(this).text('[テストをスキップしました]' + $(this).text());
+		}
+		replace += this.outerHTML || this.nodeValue;
+	});
+	QUnit.config.current.nameHtml = replace;
 }
