@@ -2949,108 +2949,108 @@ $(function() {
 		});
 	});
 
-	asyncTest(
-			'[build#min]h5.core.interceptor.logInterceptorの動作 (※要目視確認)',
-			1,
-			function() {
-				var log = {
-					interceptors: h5.core.interceptor.logInterceptor
-				};
-				h5.core.__compileAspects([log]);
-
-				var controller = {
-					__name: 'TestController',
-
-					'input[type=button] click': function(context) {
-						this.test();
-					},
-
-					test: function() {
-						$('#controllerResult').empty().text('ok');
-					}
-				};
-
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.readyPromise
-						.done(function() {
-							$('#controllerTest input[type=button]').click();
-
-							var message = '[ INFO]{timestamp}: TestController "input[type=button] click"が開始されました。 \n';
-							message += '    (中略) \n';
-							message += '[ INFO]{timestamp}: TestController "input[type=button] click"が終了しました。 \n';
-							message += 'というメッセージがデバッグコンソールに表示されていることを確認してください。';
-							ok(true, message);
-
-							testController.unbind();
-							cleanAspects();
-							start();
-						});
-
-			});
-
-	asyncTest(
-			'[build#min]h5.core.interceptor.lapInterceptorの動作 (※要目視確認)',
-			1,
-			function() {
-				var lap = {
-					interceptors: h5.core.interceptor.lapInterceptor
-				};
-				h5.core.__compileAspects([lap]);
-
-				var controller = {
-					__name: 'TestController',
-
-					'input[type=button] click': function(context) {
-					//
-					},
-
-					test: function() {
-						$('#controllerResult').empty().text('ok');
-					}
-				};
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.readyPromise
-						.done(function() {
-							$('#controllerTest input[type=button]').click();
-
-							var message = '[ INFO]{timestamp}: TestController "input[type=button] click": {time}ms';
-							message += 'というメッセージがデバッグコンソールに表示されていることを確認してください。';
-							ok(true, message);
-
-							testController.unbind();
-							cleanAspects();
-							start();
-						});
-			});
-
-	asyncTest('[build#min]h5.core.interceptor.errorInterceptorの動作', function() {
-		var errorInterceptor = {
-			interceptors: h5.core.interceptor.errorInterceptor
-		};
-		h5.core.__compileAspects([errorInterceptor]);
-
-		var errMsg = null;
-		h5.settings.commonFailHandler = function(e) {
-			errMsg = e.message;
-		};
-
-		var controller = {
-			__name: 'TestController',
-
-			__init: function() {
-				throw new Error('error interceptor test');
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			strictEqual(errMsg, 'error interceptor test',
-					'errorInterceptorによって例外がcatchされ、commonFailHandlerが呼ばれたか');
-
-			testController.unbind();
-			cleanAspects();
-			start();
-		});
-	});
+//	asyncTest(
+//			'[build#min]h5.core.interceptor.logInterceptorの動作 (※要目視確認)',
+//			1,
+//			function() {
+//				var log = {
+//					interceptors: h5.core.interceptor.logInterceptor
+//				};
+//				h5.core.__compileAspects([log]);
+//
+//				var controller = {
+//					__name: 'TestController',
+//
+//					'input[type=button] click': function(context) {
+//						this.test();
+//					},
+//
+//					test: function() {
+//						$('#controllerResult').empty().text('ok');
+//					}
+//				};
+//
+//				var testController = h5.core.controller('#controllerTest', controller);
+//				testController.readyPromise
+//						.done(function() {
+//							$('#controllerTest input[type=button]').click();
+//
+//							var message = '[ INFO]{timestamp}: TestController "input[type=button] click"が開始されました。 \n';
+//							message += '    (中略) \n';
+//							message += '[ INFO]{timestamp}: TestController "input[type=button] click"が終了しました。 \n';
+//							message += 'というメッセージがデバッグコンソールに表示されていることを確認してください。';
+//							ok(true, message);
+//
+//							testController.unbind();
+//							cleanAspects();
+//							start();
+//						});
+//
+//			});
+//
+//	asyncTest(
+//			'[build#min]h5.core.interceptor.lapInterceptorの動作 (※要目視確認)',
+//			1,
+//			function() {
+//				var lap = {
+//					interceptors: h5.core.interceptor.lapInterceptor
+//				};
+//				h5.core.__compileAspects([lap]);
+//
+//				var controller = {
+//					__name: 'TestController',
+//
+//					'input[type=button] click': function(context) {
+//					//
+//					},
+//
+//					test: function() {
+//						$('#controllerResult').empty().text('ok');
+//					}
+//				};
+//				var testController = h5.core.controller('#controllerTest', controller);
+//				testController.readyPromise
+//						.done(function() {
+//							$('#controllerTest input[type=button]').click();
+//
+//							var message = '[ INFO]{timestamp}: TestController "input[type=button] click": {time}ms';
+//							message += 'というメッセージがデバッグコンソールに表示されていることを確認してください。';
+//							ok(true, message);
+//
+//							testController.unbind();
+//							cleanAspects();
+//							start();
+//						});
+//			});
+//
+//	asyncTest('[build#min]h5.core.interceptor.errorInterceptorの動作', function() {
+//		var errorInterceptor = {
+//			interceptors: h5.core.interceptor.errorInterceptor
+//		};
+//		h5.core.__compileAspects([errorInterceptor]);
+//
+//		var errMsg = null;
+//		h5.settings.commonFailHandler = function(e) {
+//			errMsg = e.message;
+//		};
+//
+//		var controller = {
+//			__name: 'TestController',
+//
+//			__init: function() {
+//				throw new Error('error interceptor test');
+//			}
+//		};
+//		var testController = h5.core.controller('#controllerTest', controller);
+//		testController.readyPromise.done(function() {
+//			strictEqual(errMsg, 'error interceptor test',
+//					'errorInterceptorによって例外がcatchされ、commonFailHandlerが呼ばれたか');
+//
+//			testController.unbind();
+//			cleanAspects();
+//			start();
+//		});
+//	});
 
 	asyncTest('this.deferred()は動作しているか', function() {
 
@@ -5787,24 +5787,32 @@ $(function() {
 
 	asyncTest('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
 			function() {
-				var w = window.open();
-				var div = w.document.createElement('div');
-				w.document.body.appendChild(div);
-				var c = h5.core.controller(div, {
-					__name: 'popupWindowController',
-					__dispose: function() {
-						w.close();
-						start();
-					}
-				});
-				c.readyPromise.done(function() {
-					strictEqual(h5.core.controllerManager.getControllers(div)[0], c,
-							'ポップアップウィンドウ内の要素のコントローラを取得できること');
-					strictEqual(h5.core.controllerManager.getControllers(w.document.body, {
-						deep: true
-					})[0], c, 'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
-					c.dispose();
-				});
+				// 空のページを開く
+				openPopupWindow().done(
+						function(w) {
+							var div = w.document.createElement('div');
+							w.document.body.appendChild(div);
+							var c = h5.core.controller(div, {
+								__name: 'popupWindowController',
+								__dispose: function() {
+									closePopupWindow(w).done(function() {
+										start();
+									});
+								}
+							});
+							c.readyPromise
+									.done(function() {
+										strictEqual(
+												h5.core.controllerManager.getControllers(div)[0],
+												c, 'ポップアップウィンドウ内の要素のコントローラを取得できること');
+										strictEqual(h5.core.controllerManager.getControllers(
+												w.document.body, {
+													deep: true
+												})[0], c,
+												'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
+										c.dispose();
+									});
+						});
 			});
 
 	//=============================

@@ -3079,15 +3079,25 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#and-and:all|sa-ios:all|ie-wp:all]window.openで開いたポップアップウィンドウドキュメント内の要素へのバインド', {
-		setup: function() {
-			// 空のページを開く
-			this.win = window.open('about:blank');
-		},
-		teardown: function() {
-			this.win.close();
-		}
-	});
+	module('[browser#and-and:all|sa-ios:all|ie-wp:all]window.openで開いたポップアップウィンドウドキュメント内の要素へのバインド',
+			{
+				setup: function() {
+					// 空のページを開く
+					var that = this;
+					stop();
+					openPopupWindow().done(function(win){
+						that.win = win;
+						start();
+					});
+				},
+				teardown: function() {
+					var that = this;
+					closePopupWindow(this.win).done(function(){
+						that.win = null;
+					});
+				},
+				seq: 0
+			});
 
 	//=============================
 	// Body

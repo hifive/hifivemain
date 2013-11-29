@@ -92,3 +92,37 @@ function createIFrameElement() {
 	setTimeout(check, 10);
 	return dfd.promise();
 }
+
+// ポップアップウィンドウを開く
+function openPopupWindow() {
+	var dfd = h5.async.deferred();
+	var w = window.open();
+	function load() {
+		dfd.resolve(w);
+	}
+	if (w.document && w.document.readyState === 'complete') {
+		load();
+	} else {
+		// openしたウィンドウの状態は、こちらのスクリプト実行中に変わる可能性があるので、
+		// loadイベントを拾うのではなく、setIntervalで監視する
+		console.log(w.document && w.document.readyState);
+		var timer = setInterval(function() {
+			console.log(w.document && w.document.readyState);
+			if (w.document && w.document.readyState === 'complete') {
+				clearInterval(timer);
+				load();
+			}
+		}, 100);
+	}
+	return dfd.promise();
+}
+
+// ポップアップウィンドウを閉じる
+function closePopupWindow(w) {
+	var dfd = h5.async.deferred();
+	$(w).bind('unload', function() {
+		dfd.resolve(w);
+	});
+	w.close();
+	return dfd.promise();
+}
