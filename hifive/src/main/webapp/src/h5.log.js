@@ -454,19 +454,15 @@
 				// IEでは、console.log/error/info/warnにapplyがない。
 				// IE11ではapplyを参照しただけでエラーが発生するので、
 				// try-catchの中でfunc.applyがあるかどうか確認する
-				if(func.apply){
+				if (func.apply) {
+					// IE以外では、applyを使って呼び出さないと『TypeError:Illegal invocation』が発生する
 					func.apply(console, args);
 					return;
 				}
-			} catch(e){
-				func(args);
+			} catch (e) {
+				// 何もしない
 			}
-			if (!func.apply) {
-				func(args);
-				return;
-			}
-			// IE以外では、applyを使って呼び出さないと『TypeError:Illegal invocation』が発生する
-			func.apply(console, args);
+			func(args);
 		}
 	};
 
