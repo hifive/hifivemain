@@ -450,8 +450,18 @@
 		},
 
 		_output: function(func, args) {
-			if (!func.apply) {
+			try {
 				// IEでは、console.log/error/info/warnにapplyがない。
+				// IE11ではapplyを参照しただけでエラーが発生するので、
+				// try-catchの中でfunc.applyがあるかどうか確認する
+				if(func.apply){
+					func.apply(console, args);
+					return;
+				}
+			} catch(e){
+				func(args);
+			}
+			if (!func.apply) {
 				func(args);
 				return;
 			}
