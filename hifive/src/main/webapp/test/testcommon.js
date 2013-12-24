@@ -104,14 +104,14 @@ function openPopupWindow() {
 	function load() {
 		dfd.resolve(w);
 	}
-	if (w.document && w.document.readyState === 'complete') {
+
+	// Firefoxの場合は、window.openで新しいwindowが同期で開き、readyStateは'complete'にならないのでここでload()を呼ぶ
+	if (w.document && w.document.readyState === 'complete' || h5.env.ua.isFirefox) {
 		load();
 	} else {
 		// openしたウィンドウの状態は、こちらのスクリプト実行中に変わる可能性があるので、
 		// loadイベントを拾うのではなく、setIntervalで監視する
-		console.log(w.document && w.document.readyState);
 		var timer = setInterval(function() {
-			console.log(w.document && w.document.readyState);
 			if (w.document && w.document.readyState === 'complete') {
 				clearInterval(timer);
 				load();
