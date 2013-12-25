@@ -124,9 +124,17 @@ function openPopupWindow() {
 // ポップアップウィンドウを閉じる
 function closePopupWindow(w) {
 	var dfd = h5.async.deferred();
-	$(w).bind('unload', function() {
+	function unloadFunc() {
 		dfd.resolve(w);
-	});
+	}
+	// jQueryのbindでバインドすると、バインド対象に対してdeleteを使ってjQueryキャッシュを消す処理が非同期で走り、
+	// close済みのwindowオブジェクトに対する操作IEでエラーになる。
+	// そのため、jQueryを使わずにバインドしている
+	if(w.addEventListener){
+		w.addEventListener('unload', unloadFunc);
+	} else{
+		w.attachEvent('onunload', unloadFunc);
+	}
 	w.close();
 	return dfd.promise();
 }
