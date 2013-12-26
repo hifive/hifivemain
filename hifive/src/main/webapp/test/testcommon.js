@@ -105,7 +105,7 @@ function openPopupWindow() {
 		dfd.resolve(w);
 	}
 
-	// Firefoxの場合は、window.openで新しいwindowが同期で開き、readyStateは'complete'にならないのでここでload()を呼ぶ
+	// Firefoxの場合は、window.openで新しいwindowが同期で開き、readyStateが取得できないので、compelteでなくても同期でload()を呼ぶ
 	if (w.document && w.document.readyState === 'complete' || h5.env.ua.isFirefox) {
 		load();
 	} else {

@@ -3097,8 +3097,10 @@ $(function() {
 						return;
 					}
 					var that = this;
+					stop();
 					closePopupWindow(this.win).done(function(){
 						that.win = null;
+						start();
 					});
 				},
 				seq: 0
@@ -3147,7 +3149,10 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		$bindTarget.find('li').each(function(i) {
+		// 別ウィンドウ内の要素をfindで取得すると、IE7,8、jQuery1.9.0, 1.10.1でエラーになるので、findを使わないように要素を取得している
+		// # 取得結果が複数ある時に限ってエラーになる。
+		// # w.document.body.append(li1);w.document.body.append(li2);$(w.document.body).find('li'); で再現する
+		$(w.document.getElementsByTagName('li')).each(function(i) {
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 		$bindTarget.html('');
@@ -3172,7 +3177,7 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		$bindTarget.find('li').each(function(i) {
+		$(w.document.getElementsByTagName('li')).each(function(i) {
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 
@@ -3187,7 +3192,7 @@ $(function() {
 			test: 'C'
 		}]);
 		result = ['A', 'B', 'C'];
-		$bindTarget.find('li').each(function(i) {
+		$(w.document.getElementsByTagName('li')).each(function(i) {
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 		$bindTarget.html('');
