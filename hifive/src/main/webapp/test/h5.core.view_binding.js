@@ -3035,7 +3035,9 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		$bindTarget.find('li').each(function(i) {
+		// IE7,8のjQuery1.9.0, 1.10.1だと、別ドキュメント要素のfindが順番通りに取得できないので
+		// $bindTarget.find('li')ではなく、ulのchildNodesで順番通りにliを取得している
+		$($bindTarget.find('ul')[0].childNodes).each(function(i) {
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 		$bindTarget.html('');
@@ -3055,7 +3057,7 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		$bindTarget.find('li').each(function(i) {
+		$($bindTarget.find('ul')[0].childNodes).each(function(i) {
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 
@@ -3070,7 +3072,7 @@ $(function() {
 			test: 'C'
 		}]);
 		result = ['A', 'B', 'C'];
-		$bindTarget.find('li').each(function(i) {
+		$($bindTarget.find('ul')[0].childNodes).each(function(i) {
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 		$bindTarget.html('');
