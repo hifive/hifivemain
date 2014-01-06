@@ -3035,11 +3035,10 @@ $(function() {
 		});
 
 		var result = ['a', 'b'];
-		var index = 0;
 		// IE7,8のjQuery1.9.0, 1.10.1だと、別ドキュメント要素のfindが順番通りに取得できないので
 		// $bindTarget.find('li')ではなく、getElementsByTagNameを使ってliを取得している
-		$($bindTarget[0].getElementsByTagName('li')).each(function() {
-			strictEqual($(this).text(), result[index++], 'data-h5-bind指定した要素に値が表示されていること');
+		$($bindTarget[0].getElementsByTagName('li')).each(function(i) {
+			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 		$bindTarget.html('');
 	});
