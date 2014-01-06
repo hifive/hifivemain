@@ -3038,6 +3038,10 @@ $(function() {
 		// IE7,8のjQuery1.9.0, 1.10.1だと、別ドキュメント要素のfindが順番通りに取得できないので
 		// $bindTarget.find('li')ではなく、ulのchildNodesで順番通りにliを取得している
 		$($bindTarget.find('ul')[0].childNodes).each(function(i) {
+			if (this.nodeType !== 1) {
+				// LI要素だけチェックしたいので、ELEMENT_NODEじゃなかったらチェックしない
+				return;
+			}
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 		$bindTarget.html('');
@@ -3058,6 +3062,9 @@ $(function() {
 
 		var result = ['a', 'b'];
 		$($bindTarget.find('ul')[0].childNodes).each(function(i) {
+			if (this.nodeType !== 1) {
+				return;
+			}
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 
@@ -3073,6 +3080,9 @@ $(function() {
 		}]);
 		result = ['A', 'B', 'C'];
 		$($bindTarget.find('ul')[0].childNodes).each(function(i) {
+			if (this.nodeType !== 1) {
+				return;
+			}
 			strictEqual($(this).text(), result[i], 'data-h5-bind指定した要素に値が表示されていること');
 		});
 		$bindTarget.html('');
@@ -3087,20 +3097,20 @@ $(function() {
 					// 空のページを開く
 					var that = this;
 					stop();
-					openPopupWindow().done(function(win){
+					openPopupWindow().done(function(win) {
 						that.win = win;
 						start();
-					}).fail(function(){
+					}).fail(function() {
 						start();
 					});
 				},
 				teardown: function() {
-					if(!this.win){
+					if (!this.win) {
 						return;
 					}
 					var that = this;
 					stop();
-					closePopupWindow(this.win).done(function(){
+					closePopupWindow(this.win).done(function() {
 						that.win = null;
 						start();
 					});
@@ -3113,7 +3123,7 @@ $(function() {
 	//=============================
 	test('要素へバインドできること', 3, function() {
 		var w = this.win;
-		if(!w){
+		if (!w) {
 			skipCurrentTest();
 			return;
 		}
@@ -3134,7 +3144,7 @@ $(function() {
 
 	test('配列をバインドできること', 2, function() {
 		var w = this.win;
-		if(!w){
+		if (!w) {
 			skipCurrentTest();
 			return;
 		}
@@ -3162,7 +3172,7 @@ $(function() {
 
 	test('ObservableArrayをバインドできること', 6, function() {
 		var w = this.win;
-		if(!w){
+		if (!w) {
 			skipCurrentTest();
 			return;
 		}
