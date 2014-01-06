@@ -104,16 +104,14 @@ function openPopupWindow() {
 	function load() {
 		// IE8-の場合、w.frameElementにアクセスするとエラーになる。
 		// jQuery1.10.1で、別ウィンドウの要素にappendで要素を追加すると、内部(setDocument内)でownerDocument.parentWindow.frameElementエラーになる。
+		// setDocumentではjQuery内部の変数の変更処理があり、一度呼ばれるとsetDocumentは呼ばれなくなる。
 		// テストで、append()を使用したいので、以下のように対策している。
-		// setDocumentのエラー箇所前での処理でjQuery内部の変数の書き換え処理まで進んだ後は、setDocumentを通らなくなるので、
-		// 一度append()を呼んで、エラーが出た後はappendを読んでもエラーが出なくなる。
-		// そのため、append()を一度try-catch内で呼んでからプロミスを返すようにしている
+		// 一度contains経由でsetDocumentを呼ぶ。エラーが出るが、その後はappendを呼んでもsetDocumentは通らなくなり、エラーは出ない。
+		// そのため、append()を一度try-catch内で呼んでからプロミスを返すようにしている。
 		try {
-			$(w.document.body).append('a');
+			$.contains(w.document.body, w.document.body);
 		} catch (e) {
 			// 何もしない
-		} finally {
-			$(w.document.body).html('');
 		}
 		dfd.resolve(w);
 	}
