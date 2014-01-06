@@ -102,22 +102,35 @@ function openPopupWindow() {
 		return dfd.reject().promise();
 	}
 	function load() {
+		// IE8-の場合、w.frameElementにアクセスするとエラーになる。
+		// jQuery1.10.1で、別ウィンドウの要素にappendで要素を追加すると、内部(setDocument内)でownerDocument.parentWindow.frameElementエラーになる。
+		// テストで、append()を使用したいので、以下のように対策している。
+		// setDocumentのエラー箇所前での処理でjQuery内部の変数の書き換え処理まで進んだ後は、setDocumentを通らなくなるので、
+		// 一度append()を呼んで、エラーが出た後はappendを読んでもエラーが出なくなる。
+		// そのため、append()を一度try-catch内で呼んでからプロミスを返すようにしている
+		try {
+			$(w.document.body).append('a');
+		} catch (e) {
+			// 何もしない
+		} finally {
+			$(w.document.body).html('');
+		}
 		dfd.resolve(w);
 	}
 
 	// Firefoxの場合は、window.openで新しいwindowが同期で開き、readyStateが取得できないので、compelteでなくても同期でload()を呼ぶ
 	if (w.document && w.document.readyState === 'complete' || h5.env.ua.isFirefox) {
 		load();
-	} else {
-		// openしたウィンドウの状態は、こちらのスクリプト実行中に変わる可能性があるので、
-		// loadイベントを拾うのではなく、setIntervalで監視する
-		var timer = setInterval(function() {
-			if (w.document && w.document.readyState === 'complete') {
-				clearInterval(timer);
-				load();
-			}
-		}, 100);
+		return dfd.promise();
 	}
+	// openしたウィンドウの状態は、こちらのスクリプト実行中に変わる可能性があるので、
+	// loadイベントを拾うのではなく、setIntervalで監視する
+	var timer = setInterval(function() {
+		if (w.document && w.document.readyState === 'complete') {
+			clearInterval(timer);
+			load();
+		}
+	}, 100);
 	return dfd.promise();
 }
 
@@ -130,9 +143,9 @@ function closePopupWindow(w) {
 	// jQueryのbindでバインドすると、バインド対象に対してdeleteを使ってjQueryキャッシュを消す処理が非同期で走り、
 	// close済みのwindowオブジェクトに対する操作IEでエラーになる。
 	// そのため、jQueryを使わずにバインドしている
-	if(w.addEventListener){
+	if (w.addEventListener) {
 		w.addEventListener('unload', unloadFunc);
-	} else{
+	} else {
 		w.attachEvent('onunload', unloadFunc);
 	}
 	w.close();

@@ -3062,7 +3062,7 @@ $(function() {
 		});
 
 		items.copyFrom([]);
-		strictEqual($bindTarget.find('li').length, 0, 'ObservableArrayが空になった時、繰り返し要素は無くなること');
+		strictEqual($($bindTarget[0].getElementsByTagName('li')).length, 0, 'ObservableArrayが空になった時、繰り返し要素は無くなること');
 
 		items.copyFrom([{
 			test: 'A'
@@ -3184,7 +3184,7 @@ $(function() {
 		});
 
 		items.copyFrom([]);
-		strictEqual($bindTarget.find('li').length, 0, 'ObservableArrayが空になった時、繰り返し要素は無くなること');
+		strictEqual($(w.document.getElementsByTagName('li')).length, 0, 'ObservableArrayが空になった時、繰り返し要素は無くなること');
 
 		items.copyFrom([{
 			test: 'A'
