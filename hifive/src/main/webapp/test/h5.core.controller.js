@@ -5802,6 +5802,12 @@ $(function() {
 							});
 							c.readyPromise
 									.done(function() {
+										// jQuery1.10.1対応
+										try {
+											$.find.setDocument(w.document);
+										} catch (e) {
+											// 何もしない
+										}
 										strictEqual(
 												h5.core.controllerManager.getControllers(div)[0],
 												c, 'ポップアップウィンドウ内の要素のコントローラを取得できること');
