@@ -87,6 +87,15 @@ function createIFrameElement() {
 			setTimeout(check, 10);
 			return;
 		}
+		if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11 && $().jquery === '1.10.1') {
+			// IE11でjQuery1.10.1の場合、iframe内の要素をjQueryで操作するとき、
+			// jQuery内部のsetDocumentでattachEventが呼ばれてエラーになる
+			// (IE11にはattachEventがないため)
+			// エラー回避のため、addEventListenerを呼ぶ関数をattachEventに設定しておく
+			iframe.contentWindow.attachEvent = function(ev, func) {
+				this.addEventListener(ev.slice(ev.indexOf('on') ? 0 : 2), func);
+			};
+		}
 		dfd.resolve(iframe, doc);
 	}
 	setTimeout(check, 10);
