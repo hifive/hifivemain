@@ -337,8 +337,8 @@
 				// jQuery1.10.1でのエラー回避のためjQueryを使わないで親ノードを取得している
 				var contextElem = $(candidateContextElems[j])[0];
 				var contextParent = contextElem.parentNode;
-				if (getElemAttribute(contextParent, DATA_H5_CONTEXT) == null
-						|| getElemAttribute(contextParent, DATA_H5_LOOP_CONTEXT) == null
+				if ((getElemAttribute(contextParent, DATA_H5_CONTEXT) == null
+						&& getElemAttribute(contextParent, DATA_H5_LOOP_CONTEXT) == null)
 						|| contextParent === rootNode) {
 					childContexts.push(contextElem);
 				}
