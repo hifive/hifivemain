@@ -3062,7 +3062,8 @@ $(function() {
 		});
 
 		items.copyFrom([]);
-		strictEqual($($bindTarget[0].getElementsByTagName('li')).length, 0, 'ObservableArrayが空になった時、繰り返し要素は無くなること');
+		strictEqual($($bindTarget[0].getElementsByTagName('li')).length, 0,
+				'ObservableArrayが空になった時、繰り返し要素は無くなること');
 
 		items.copyFrom([{
 			test: 'A'
@@ -3117,6 +3118,20 @@ $(function() {
 			skipCurrentTest();
 			return;
 		}
+		// IE8-の場合、w.frameElementにアクセスするとエラーになる。
+		// jQuery1.10.1で、別ウィンドウの要素にappendで要素を追加すると、内部(setDocument内)でownerDocument.parentWindow.frameElementエラーになる。
+		// setDocumentはjQueryのDOM選択対象のドキュメントを設定する処理が走る。(内部変数の変更がある)
+		// setDocumentは一度呼ばれると、同一ドキュメントを対象とした操作ではsetDocumentは呼ばれなくなる。
+		// テストで、append()を使用したいので、以下のように対策している。
+		// 一度setDocumentを呼ぶ。エラーが出るが、その後はappendを呼んでもsetDocumentは通らなくなり、エラーは出ない。
+		// そのため、append()を一度try-catch内で呼んでからプロミスを返すようにしている。
+		// jQuery.mobileを読み込んでいる場合、非同期で20ms毎に$関数が呼ばれるため、try-catchでcontainsを呼ぶ処理をテスト内に記述している
+		// (setup内に書いた場合非同期になり、テスト前にjQuery.mobileによって親ドキュメントsetDocumentが呼ばれてしまうことがあるため)
+		try {
+			$.find.setDocument(w.document);
+		} catch (e) {
+			// 何もしない
+		}
 		var $bindTarget = $(w.document.body);
 		view.append($bindTarget, 'bindTest1');
 		view.bind($bindTarget, {
@@ -3137,6 +3152,11 @@ $(function() {
 		if (!w) {
 			skipCurrentTest();
 			return;
+		}
+		try {
+			$.find.setDocument(w.document);
+		} catch (e) {
+			// 何もしない
 		}
 		var $bindTarget = $(w.document.body);
 		view.append($bindTarget, 'loopContext1');
@@ -3166,6 +3186,11 @@ $(function() {
 			skipCurrentTest();
 			return;
 		}
+		try {
+			$.find.setDocument(w.document);
+		} catch (e) {
+			// 何もしない
+		}
 		var $bindTarget = $(w.document.body);
 		var items = h5.core.data.createObservableArray();
 		items.copyFrom([{
@@ -3184,7 +3209,8 @@ $(function() {
 		});
 
 		items.copyFrom([]);
-		strictEqual($(w.document.getElementsByTagName('li')).length, 0, 'ObservableArrayが空になった時、繰り返し要素は無くなること');
+		strictEqual($(w.document.getElementsByTagName('li')).length, 0,
+				'ObservableArrayが空になった時、繰り返し要素は無くなること');
 
 		items.copyFrom([{
 			test: 'A'

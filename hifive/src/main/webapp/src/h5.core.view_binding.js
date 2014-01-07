@@ -333,10 +333,14 @@
 			var candidateContextElems = queryQualifiedElements(rootNode, dataContextAttr,
 					undefined, false);
 			for ( var j = 0, cndCtxElemsLen = candidateContextElems.length; j < cndCtxElemsLen; j++) {
-				var contextParent = $(candidateContextElems[j]).parent(
-						'[data-h5-context],[data-h5-loop-context]')[0];
-				if (contextParent === undefined || contextParent === rootNode) {
-					childContexts.push(candidateContextElems[j]);
+				// jQuery1.10.1で、ポップアップウィンドウ先の要素をセレクタで取得すると、jQuery内部(setDocument箇所)でエラーになる
+				// jQuery1.10.1でのエラー回避のためjQueryを使わないで親ノードを取得している
+				var contextElem = $(candidateContextElems[j])[0];
+				var contextParent = contextElem.parentNode;
+				if (getElemAttribute(contextParent, DATA_H5_CONTEXT) == null
+						|| getElemAttribute(contextParent, DATA_H5_LOOP_CONTEXT) == null
+						|| contextParent === rootNode) {
+					childContexts.push(contextElem);
 				}
 			}
 		}
