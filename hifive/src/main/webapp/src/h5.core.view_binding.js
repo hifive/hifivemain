@@ -179,7 +179,7 @@
 		}
 
 		var ret = [];
-		for (var i = 0, len = pseudoArray.length; i < len; i++) {
+		for ( var i = 0, len = pseudoArray.length; i < len; i++) {
 			ret.push(pseudoArray[i]);
 		}
 		return ret;
@@ -210,7 +210,7 @@
 
 		//ルートノードを含めない場合は、子要素をそれぞれルートにして処理
 		var childNodes = rootNode.childNodes;
-		for (var i = 0, len = childNodes.length; i < len; i++) {
+		for ( var i = 0, len = childNodes.length; i < len; i++) {
 			queryQualifiedElementsInner(ret, childNodes[i], attrArray, value);
 		}
 		return ret;
@@ -221,7 +221,7 @@
 			return;
 		}
 
-		for (var i = 0, len = attrs.length; i < len; i++) {
+		for ( var i = 0, len = attrs.length; i < len; i++) {
 			var attrValue = rootNode.getAttribute(attrs[i]);
 			if (value === undefined) {
 				if (attrValue !== null) {
@@ -241,7 +241,7 @@
 
 		if (rootNode.childNodes.length > 0) {
 			var childNodes = rootNode.childNodes;
-			for (var i = 0, len = childNodes.length; i < len; i++) {
+			for ( var i = 0, len = childNodes.length; i < len; i++) {
 				queryQualifiedElementsInner(ret, childNodes[i], attrs, value);
 			}
 		}
@@ -258,7 +258,7 @@
 
 		var bindElements = [];
 
-		for (var i = 0, len = rootNodes.length; i < len; i++) {
+		for ( var i = 0, len = rootNodes.length; i < len; i++) {
 			var rootNode = rootNodes[i];
 
 			//ルート要素がエレメントでない場合は何もしない
@@ -276,10 +276,10 @@
 			}
 
 			var candidateBindElems = queryQualifiedElements(rootNode, DATA_H5_BIND, undefined, true);
-			for (var j = 0, cndBindElemsLen = candidateBindElems.length; j < cndBindElemsLen; j++) {
+			for ( var j = 0, cndBindElemsLen = candidateBindElems.length; j < cndBindElemsLen; j++) {
 				var isInCurrentContext = true;
 
-				for (var node = candidateBindElems[j]; node != null; node = node.parentNode) {
+				for ( var node = candidateBindElems[j]; node != null; node = node.parentNode) {
 					if (node === rootNode) {
 						break;
 					}
@@ -306,7 +306,7 @@
 	function $getChildContexts(rootNodes, dataContextAttr, isMultiRoot) {
 		var childContexts = [];
 
-		for (var i = 0, len = rootNodes.length; i < len; i++) {
+		for ( var i = 0, len = rootNodes.length; i < len; i++) {
 			var rootNode = rootNodes[i];
 
 			//ルート要素がエレメントでない場合は別のコンテキストである可能性はない
@@ -332,7 +332,7 @@
 
 			var candidateContextElems = queryQualifiedElements(rootNode, dataContextAttr,
 					undefined, false);
-			for (var j = 0, cndCtxElemsLen = candidateContextElems.length; j < cndCtxElemsLen; j++) {
+			for ( var j = 0, cndCtxElemsLen = candidateContextElems.length; j < cndCtxElemsLen; j++) {
 				// jQuery1.10.1で、ポップアップウィンドウ先の要素をセレクタで取得すると、jQuery内部(setDocument箇所)でエラーになる
 				// jQuery1.10.1でのエラー回避のためjQueryを使わないで親ノードを取得している
 				var contextElem = $(candidateContextElems[j])[0];
@@ -360,7 +360,7 @@
 	}
 
 	function addViewUid(rootNodes, viewUid) {
-		for (var i = 0, len = rootNodes.length; i < len; i++) {
+		for ( var i = 0, len = rootNodes.length; i < len; i++) {
 			var n = rootNodes[i];
 			if (n.nodeType === NODE_TYPE_ELEMENT) {
 				setElemAttribute(n, DATA_H5_DYN_VID, viewUid);
@@ -427,11 +427,11 @@
 			return context[idx];
 		};
 
-		for (var i = 0, len = context.length; i < len; i++) {
+		for ( var i = 0, len = context.length; i < len; i++) {
 			var loopNodes = [];
 
 			//1要素分のノードのクローンを作成
-			for (var j = 0, childLen = srcRootChildNodes.length; j < childLen; j++) {
+			for ( var j = 0, childLen = srcRootChildNodes.length; j < childLen; j++) {
 				var clonedInnerNode = cloneNodeDeeply(srcRootChildNodes[j]); //deep copy
 
 				loopNodes.push(clonedInnerNode);
@@ -558,7 +558,7 @@
 		var targetDetail = [];
 		var prop = [];
 
-		for (var i = 0, len = splitDescs.length; i < len; i++) {
+		for ( var i = 0, len = splitDescs.length; i < len; i++) {
 			var desc = splitDescs[i];
 			if (desc.indexOf(BIND_DESC_TARGET_SEPARATOR) === -1) {
 				var trimmed = $.trim(desc);
@@ -612,7 +612,7 @@
 		var $element = $(element);
 
 		//targetsとpropsのlengthは必ず同じ
-		for (var i = 0, len = targets.length; i < len; i++) {
+		for ( var i = 0, len = targets.length; i < len; i++) {
 			var target = targets[i];
 			var detail = details[i];
 			var prop = props[i];
@@ -693,7 +693,7 @@
 	 * 指定されたノードをDOMツリーから削除し、同時にアンバインドします。
 	 */
 	function removeDomNodes(binding, parent, nodesToRemove) {
-		for (var i = 0, len = nodesToRemove.length; i < len; i++) {
+		for ( var i = 0, len = nodesToRemove.length; i < len; i++) {
 			var n = nodesToRemove[i];
 			parent.removeChild(n);
 			binding._removeBinding(n);
@@ -704,7 +704,7 @@
 		var childNodes = parentNode.childNodes;
 		var ret = [];
 
-		for (var i = 0, len = childNodes.length; i < len; i++) {
+		for ( var i = 0, len = childNodes.length; i < len; i++) {
 			ret.push(cloneNodeDeeply(childNodes[i]));
 		}
 
@@ -718,11 +718,11 @@
 		var fragment = srcCtxRootNode.ownerDocument.createDocumentFragment();
 
 		var newLoopNodes = [];
-		for (var i = 0, argsLen = methodArgs.length; i < argsLen; i++) {
+		for ( var i = 0, argsLen = methodArgs.length; i < argsLen; i++) {
 			var newChildNodes = cloneChildNodes(srcCtxRootNode);
 			newLoopNodes[i] = newChildNodes;
 
-			for (var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
+			for ( var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
 				fragment.appendChild(newChildNodes[j]);
 			}
 
@@ -743,9 +743,9 @@
 		}
 
 		//配列要素をリバースしたのと同等になるようにノードを再挿入する
-		for (var i = 0, len = loopNodes.length; i < len; i++) {
+		for ( var i = 0, len = loopNodes.length; i < len; i++) {
 			var nodesPerIndex = loopNodes[i];
-			for (var j = nodesPerIndex.length - 1; j >= 0; j--) {
+			for ( var j = nodesPerIndex.length - 1; j >= 0; j--) {
 				parent.insertBefore(nodesPerIndex[j], parent.firstChild);
 			}
 		}
@@ -817,10 +817,10 @@
 		var spliceArgs = [startPos, 0];
 
 		//新たに挿入される要素に対応するノードを生成
-		for (var i = 2, len = methodArgsLen; i < len; i++) {
+		for ( var i = 2, len = methodArgsLen; i < len; i++) {
 			var newChildNodes = cloneChildNodes(srcCtxRootNode);
 
-			for (var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
+			for ( var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
 				fragment.appendChild(newChildNodes[j]);
 			}
 
@@ -841,7 +841,7 @@
 	 */
 	function refreshLoopContext(binding, srcArray, loopRootNode, loopNodes, srcCtxNode) {
 		//現在のビューのすべての要素を外す
-		for (var i = 0, len = loopNodes.length; i < len; i++) {
+		for ( var i = 0, len = loopNodes.length; i < len; i++) {
 			removeDomNodes(binding, loopRootNode, loopNodes[i]);
 		}
 
@@ -853,11 +853,11 @@
 		var fragment = loopRootNode.ownerDocument.createDocumentFragment();
 
 		var newLoopNodes = [];
-		for (var i = 0, srcLen = srcArray.length; i < srcLen; i++) {
+		for ( var i = 0, srcLen = srcArray.length; i < srcLen; i++) {
 			var newChildNodes = cloneChildNodes(srcCtxNode);
 			newLoopNodes[i] = newChildNodes;
 
-			for (var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
+			for ( var j = 0, newChildNodesLen = newChildNodes.length; j < newChildNodesLen; j++) {
 				fragment.appendChild(newChildNodes[j]);
 			}
 
@@ -996,7 +996,7 @@
 
 		//this._targetsは常に配列
 		//初期状態のビューに、コンテキストごとに固有のIDを振っておく
-		for (var i = 0, targetsLen = this._targets.length; i < targetsLen; i++) {
+		for ( var i = 0, targetsLen = this._targets.length; i < targetsLen; i++) {
 			var originalNode = this._targets[i];
 
 			if (originalNode.nodeType === NODE_TYPE_ELEMENT) {
@@ -1006,14 +1006,14 @@
 				//data-context, data-loop-contextを持つ要素にIDを付与して、オリジナルの要素を探せるようにする
 				var originalContextElems = queryQualifiedElements(originalNode, [DATA_H5_CONTEXT,
 						DATA_H5_LOOP_CONTEXT], undefined, true);
-				for (var j = 0, orgCtxElemsLen = originalContextElems.length; j < orgCtxElemsLen; j++) {
+				for ( var j = 0, orgCtxElemsLen = originalContextElems.length; j < orgCtxElemsLen; j++) {
 					setElemAttribute(originalContextElems[j], DATA_H5_DYN_CTX, contextUid++);
 				}
 
 				//data-h5-bindでclassバインドしている場合、オリジナルのclassNameを保存しておく（記述されている場合のみ）
 				var originalBindElems = queryQualifiedElements(originalNode, DATA_H5_BIND,
 						undefined, true);
-				for (var j = 0, orgBindElemsLen = originalBindElems.length; j < orgBindElemsLen; j++) {
+				for ( var j = 0, orgBindElemsLen = originalBindElems.length; j < orgBindElemsLen; j++) {
 					var originalBindElem = originalBindElems[j];
 					if (hasClassBinding(getElemAttribute(originalBindElem, DATA_H5_BIND))
 							&& originalBindElem.className != '') {
@@ -1094,7 +1094,7 @@
 		 */
 		unbind: function() {
 			//全てのバインディングを解除
-			for (var i = 0, len = this._targets.length; i < len; i++) {
+			for ( var i = 0, len = this._targets.length; i < len; i++) {
 				var target = this._targets[i];
 
 				if (target.nodeType === NODE_TYPE_ELEMENT) {
@@ -1105,12 +1105,12 @@
 					removeElemAttribute(target, DATA_H5_DYN_BIND_ROOT);
 
 					var cnElems = queryQualifiedElements(target, DATA_H5_DYN_CN, undefined, true);
-					for (var j = 0, cnLen = cnElems.length; j < cnLen; j++) {
+					for ( var j = 0, cnLen = cnElems.length; j < cnLen; j++) {
 						removeElemAttribute(cnElems[j], DATA_H5_DYN_CN);
 					}
 
 					var cxElems = queryQualifiedElements(target, DATA_H5_DYN_CTX, undefined, true);
-					for (var j = 0, cxLen = cxElems.length; j < cxLen; j++) {
+					for ( var j = 0, cxLen = cxElems.length; j < cxLen; j++) {
 						removeElemAttribute(cxElems[j], DATA_H5_DYN_CTX);
 					}
 				}
@@ -1270,7 +1270,7 @@
 		 * @param ctxId
 		 */
 		_getSrcCtxNode: function(ctxId) {
-			for (var i = 0, len = this._srces.length; i < len; i++) {
+			for ( var i = 0, len = this._srces.length; i < len; i++) {
 				var src = this._srces[i];
 
 				//ルート要素にdata-dyn-ctxがついているかチェック
@@ -1443,7 +1443,7 @@
 
 			//子孫要素のバインディングエントリを削除
 			var vidElems = queryQualifiedElements(rootElem, DATA_H5_DYN_VID);
-			for (var i = 0, len = vidElems.length; i < len; i++) {
+			for ( var i = 0, len = vidElems.length; i < len; i++) {
 				var vidElem = vidElems[i];
 				this._removeBindingEntry(getElemAttribute(vidElem, DATA_H5_DYN_VID));
 				removeElemAttribute(vidElem, DATA_H5_DYN_VID);
