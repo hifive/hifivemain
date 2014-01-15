@@ -547,8 +547,8 @@ $(function() {
 				});
 				ok(
 						true,
-						'Chrome,Firefoxではトレース結果が出力されていること(chromeだと、[DEBUG]16:39:3,213: スタックトレース - テスト [eval <anonymous> () <- eval (native) <- {anonymous} ...])'
-								+ 'IE,Safariではトレースできないため、[DEBUG]16:39:3,213: スタックトレース - テスト [undefined] のように表示されていることを確認してください。');
+						'Chrome,Firefox,IE11ではトレース結果が出力されていること(chromeだと、[DEBUG]16:39:3,213: スタックトレース - テスト [eval <anonymous> () <- eval (native) <- {anonymous} ...])'
+								+ 'IE10-,Safariではトレースできないため、[DEBUG]16:39:3,213: スタックトレース - テスト [undefined] のように表示されていることを確認してください。');
 			});
 	test('※要目視確認：スタックトレース', 0, function() {
 

@@ -292,7 +292,6 @@
 		return result.join(', ');
 	}
 
-
 	// =========================================================================
 	//
 	// Body
@@ -785,7 +784,19 @@
 						.slice(0, this.maxStackSize));
 			} else {
 				// IE, Safari
-				var currentCaller = fn.caller;
+
+				// 呼び出された関数を辿って行ったときに"use strict"宣言を含む関数がある場合、
+				// IE11だとcallerプロパティへアクセスすると以下のようにエラーが発生する
+				// 『strict モードでは、関数または arguments オブジェクトの 'caller' プロパティを使用できません』
+				// (例えばjQuery1.9.0は"use strict"宣言がされており、jQuery1.9.0内の関数を経由して呼ばれた関数は全てstrictモード扱いとなり、
+				// callerプロパティにアクセスできない)
+				// そのため、try-catchで囲んで、取得できなかった場合は{unable to trace}を出力する
+				var currentCaller = null;
+				try {
+					currentCaller = fn.caller;
+				} catch (e) {
+					// 何もしない
+				}
 				var index = 0;
 
 				if (!currentCaller) {
@@ -795,22 +806,25 @@
 						var argStr = parseArgs(currentCaller.arguments);
 						var funcName = getFunctionName(currentCaller);
 
+						var nextCaller = currentCaller.caller;
 						if (funcName) {
+							// 関数名が取得できているときは関数名を表示
 							traces.push('{' + funcName + '}(' + argStr + ')');
 						} else {
-							if (!currentCaller.caller) {
+							if (!nextCaller) {
+								// nullの場合はルートからの呼び出し
 								traces.push('{root}(' + argStr + ')');
 							} else {
 								traces.push('{anonymous}(' + argStr + ')');
 							}
 						}
 
-						if (!currentCaller.caller || index >= this.maxStackSize) {
+						if (!nextCaller || index >= this.maxStackSize) {
 							result = getTraceResult(traces, traces);
 							break;
 						}
 
-						currentCaller = currentCaller.caller;
+						currentCaller = nextCaller;
 						index++;
 					}
 				}
