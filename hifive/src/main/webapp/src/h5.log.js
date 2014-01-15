@@ -800,7 +800,7 @@
 				var index = 0;
 
 				if (!currentCaller) {
-					getTraceResult('{unable to trace}', '{unable to trace}');
+					result = getTraceResult('{unable to trace}', '{unable to trace}');
 				} else {
 					while (true) {
 						var argStr = parseArgs(currentCaller.arguments);
