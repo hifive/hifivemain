@@ -806,7 +806,15 @@
 						var argStr = parseArgs(currentCaller.arguments);
 						var funcName = getFunctionName(currentCaller);
 
-						var nextCaller = currentCaller.caller;
+						var nextCaller = null;
+						try {
+							nextCaller = currentCaller.caller;
+						} catch (e) {
+							// エラーが発生してトレースできなくなったら終了
+							traces.push('{unable to trace}');
+							result = getTraceResult(traces, traces);
+							break;
+						}
 						if (funcName) {
 							// 関数名が取得できているときは関数名を表示
 							traces.push('{' + funcName + '}(' + argStr + ')');
