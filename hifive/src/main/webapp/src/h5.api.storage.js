@@ -28,8 +28,6 @@
 	// Production
 	// =============================
 
-	/** ストレージが使用可能か判定するのに使用するキー名 */
-	var CHECK_KEY = '__H5_WEB_STORAGE_CHECK__';
 	// =============================
 	// Development Only
 	// =============================
@@ -199,8 +197,9 @@
 		// try-catchでチェックして、例外が発生するかどうかをチェックし、例外が発生した場合はisSupported===falseにする。issue
 		isSupported: window.localStorage ? (function() {
 			try {
-				window.localStorage.setItem(CHECK_KEY, 1);
-				window.localStorage.getItem(CHECK_KEY);
+				var checkKey = '__H5_WEB_STORAGE_CHECK__';
+				window.localStorage.setItem(checkKey, 1);
+				window.localStorage.getItem(checkKey);
 				return true;
 			} catch (e) {
 				return false;
