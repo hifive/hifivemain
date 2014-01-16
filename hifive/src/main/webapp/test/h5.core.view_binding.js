@@ -2248,13 +2248,16 @@ $(function() {
 		});
 	});
 
-	asyncTest('inputタグへのバインドはvalue属性に値が設定されること', 4, function() {
+	asyncTest('inputタグへのバインドはvalueに値が設定されること', 6, function() {
 		view.append($fixture, 'inputtext1');
 
-		var items = {
-			txt1: 2000,
-			txt2: 3000
-		};
+		var item = h5.core.data.createObservableItem({
+			txt1: null,
+			txt2: null,
+			txt3: null
+		});
+		item.set('txt2', 'hoge2');
+		item.set('txt3', 'hoge3');
 
 		var c = h5.core.controller($fixture, {
 			__name: 'TestController'
@@ -2262,14 +2265,22 @@ $(function() {
 
 		c.readyPromise.done(function() {
 			c.view.bind('h5view#item', {
-				items: items
+				items: item
 			});
 
-			equal($('#txt1').val(), items.txt1, 'value属性に値が設定されていること。');
-			equal($('#txt2').val(), items.txt2, 'value属性に値が設定されていること。');
-			equal($('#txt1').text(), '', 'テキストノードには何も設定されていないこと。');
+			equal($('#txt2').val(), 'hoge2', 'valueに値が設定されていること。');
+			equal($('#txt3').val(), 'hoge3', 'valueに値が設定されていること。attr(value)指定');
 			equal($('#txt2').text(), '', 'テキストノードには何も設定されていないこと。');
+			equal($('#txt3').text(), '', 'テキストノードには何も設定されていないこと。※attr(value)指定');
 
+			$('#txt2')[0].value = 'ユーザー入力';
+			$('#txt3')[0].value = 'ユーザー入力';
+			item.set('txt2', 'fuga2');
+			item.set('txt3', 'fuga3');
+			equal($('#txt2').val(), 'fuga2',
+					'ユーザ入力があった後(valueの変更後)でも、バインドされている値が更新されるとvalueが更新されること');
+			equal($('#txt3').val(), 'fuga3',
+					'ユーザ入力があった後(valueの変更後)でも、バインドされている値が更新されるとvalueが更新されること ※attr(value)指定');
 			start();
 		});
 	});
