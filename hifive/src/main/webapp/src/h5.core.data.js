@@ -3708,7 +3708,8 @@
 					var obsArray = createObservableArray();
 					//DataItemに属するObsArrayには、Item自身への参照を入れておく。
 					//これによりイベントハンドラ内でこのItemを参照することができる
-					obsArray.relatedItem = this;
+					obsArray.relatedItem = item;
+					// 値のセット
 					setValue(item, plainProp, obsArray);
 					item._nullProps[plainProp] = true;
 				}

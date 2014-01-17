@@ -278,4 +278,25 @@ $(function() {
 		item.set('v1', 'v1!');
 		strictEqual(context, item, 'set時に実行されるcalc内のthisは生成されるObservableitemインスタンスと同じインスタンスであること');
 	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('ObservableItem.relatedItem');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('relatedItem: 内部で保持しているObservableArrayからObservableItemを参照できる', 1, function() {
+		var item = h5.core.data.createObservableItem({
+			obs: {
+				type: 'any[]'
+			}
+		});
+		var obs = item.get('obs');
+		strictEqual(obs.relatedItem, item, 'relatedItemプロパティでアイテムを参照できる');
+	});
+
 });
