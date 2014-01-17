@@ -1552,6 +1552,48 @@
 	//
 	//========================================================
 	/**
+	 * 初期化プロパティとObservableItemまたはDataItemのインスタンスを引数にとり、 ObservableItemとDataItemで共通するセットアップを行います
+	 *
+	 * @private
+	 * @param {DataItem|ObservableItem} item
+	 * @param {Object} schema スキーマ
+	 * @param {Object} schemaInfo schemaInfo
+	 * @param {Object} userInitialValue 初期値としてsetする値が格納されたオブジェクト
+	 */
+	function itemSetup(item, schema, schemaInfo, userInitialValue) {
+		// アイテムが持つ値を格納するオブジェクト
+		item._values = {};
+
+		// nullPropsの設定
+		/** type:[]なプロパティで、最後にset()された値がnullかどうかを格納する。キー：プロパティ名、値：true/false */
+		item._nullProps = {};
+
+		// 配列のプロパティを設定
+		for ( var plainProp in schema) {
+			if (schema[plainProp] && isTypeArray(schema[plainProp].type)) {
+				//配列の場合は最初にObservableArrayのインスタンスを入れる
+				var obsArray = createObservableArray();
+				//DataItemまたはObsItemに属するObsArrayには、Item自身への参照を入れておく。
+				//これによりイベントハンドラ内でこのItemを参照することができる
+				/**
+				 * ObservableArrayが所属しているDataItemまたはObservableItemのインスタンス
+				 * <p>
+				 * ObservableArrayがDataItemまたはObservableItemが持つインスタンスである場合、このプロパティにそのアイテムのインスタンスが格納されています。
+				 * </p>
+				 *
+				 * @name relatedItem
+				 * @memberOf ObservableArray
+				 * @type {DataItem|ObservableItem}
+				 */
+				obsArray.relatedItem = item;
+				// 値のセット
+				setValue(item, plainProp, obsArray);
+				item._nullProps[plainProp] = true;
+			}
+		}
+	}
+
+	/**
 	 * Itemとプロパティ名を引数にとり、_valuesに格納されている値を返す
 	 *
 	 * @private
@@ -3640,22 +3682,17 @@
 	//------------------------------------------
 
 	/**
-	 * propで指定されたプロパティのプロパティソースを作成します。
-	 * <p>
-	 * データモデル、データアイテム共通です。
-	 * </p>
+	 * propで指定されたプロパティのプロパティソース(データアイテムのコンストラクタ)を作成します。
 	 *
 	 * @private
-	 * @param {Object} schema スキーマオブジェクト。チェック済みかつ継承項目計算済み。
+	 * @param {Object} schemaInfo チェック済みスキーマ
 	 * @param {Object} itemValuCheckFuncs 値チェック関数を持つオブジェクト。
-	 * @param {DataModel} [model] データモデルオブジェクト。データモデルのitemConstructorを作る場合必須
+	 * @param {DataModel} [model] データモデルオブジェクト
 	 */
 	function createDataItemConstructor(schema, itemValueCheckFuncs, model) {
-		// スキーマ情報の作成。アイテムのプロトタイプに持たせる。モデルにも持たせる。
+		// スキーマ情報の作成。アイテムのプロトタイプとモデルに持たせる。
 		var schemaInfo = createSchemaInfoChache(schema, itemValueCheckFuncs, model);
-		if (model) {
-			model._schemaInfo = schemaInfo;
-		}
+		model._schemaInfo = schemaInfo;
 
 		/**
 		 * データアイテムクラス
@@ -3676,103 +3713,63 @@
 		/**
 		 * @private
 		 * @param {Object} userInitialValue ユーザー指定の初期値
-		 * @param {ObservableItem} [obsItem] ObservableItemの場合はそのインスタンスを渡す
 		 */
-		function DataItem(userInitialValue, obsItem) {
+		function DataItem(userInitialValue) {
+			itemSetup(this, schema, schemaInfo, userInitialValue);
+
 			// 初期値の設定
 			var actualInitialValue = schemaInfo._createInitialValueObj(userInitialValue);
-
-			// itemインスタンス(DataItemの場合はthis、ObservableItemの場合は引数に渡されたobsItemを使用する)
-			var item = null;
-			if (obsItem) {
-				item = obsItem;
-				// schemaを持たせる
-				item.schema = schema;
-				// schemaInfoの中身を持たせる
-				for ( var p in schemaInfo) {
-					item[p] = schemaInfo[p];
-				}
-			} else {
-				item = this;
-			}
-
-			// アイテムが持つ値を格納するオブジェクト
-			item._values = {};
-
-			// nullPropsの設定
-			/** type:[]なプロパティで、最後にset()された値がnullかどうかを格納する。キー：プロパティ名、値：true/false */
-			item._nullProps = {};
-			for ( var plainProp in schema) {
-				if (schema[plainProp] && isTypeArray(schema[plainProp].type)) {
-					//配列の場合は最初にObservableArrayのインスタンスを入れる
-					var obsArray = createObservableArray();
-					//DataItemに属するObsArrayには、Item自身への参照を入れておく。
-					//これによりイベントハンドラ内でこのItemを参照することができる
-					obsArray.relatedItem = item;
-					// 値のセット
-					setValue(item, plainProp, obsArray);
-					item._nullProps[plainProp] = true;
-				}
-			}
+			validateValueObj(schema, schemaInfo._validateItemValue, actualInitialValue, model);
+			itemSetter(this, actualInitialValue, null, true);
 
 			// arrayPropsの設定
 			var arrayProps = schemaInfo._aryProps;
 
-			validateValueObj(schema, schemaInfo._validateItemValue, actualInitialValue, model);
-			itemSetter(item, actualInitialValue, null, true);
-
-			if (model) {
-				// DataItemの場合はここでObservableArrayのイベントリスナの設定を行う
-				// ObservableItemの場合は、このDataItemコンストラクタが呼ばれた後に
-				// ObservableItemクラスのインスタンスを生成するので、
-				// setObservableArrayListenersにObservableItemクラスのインスタンスにしなければならないため、ここではできない
-				for ( var i = 0, l = arrayProps.length; i < l; i++) {
-					setObservableArrayListeners(item, arrayProps[i], item.get(arrayProps[i]), model);
-				}
+			// ObservableArrayのイベントリスナの設定を行う
+			for ( var i = 0, l = arrayProps.length; i < l; i++) {
+				setObservableArrayListeners(this, arrayProps[i], this.get(arrayProps[i]), model);
 			}
 		}
 
 		// EventDispatcherと、schemaInfoもprototypeに追加
 		$.extend(DataItem.prototype, EventDispatcher.prototype, schemaInfo, itemProto);
-		if (model) {
-			$.extend(DataItem.prototype, {
+		$.extend(DataItem.prototype, {
 
-				/**
-				 * データアイテムが属しているデータモデル
-				 * <p>
-				 * データモデルからデータアイテムが削除された場合、このプロパティはnullになる
-				 * </p>
-				 *
-				 * @private
-				 * @since 1.1.0
-				 * @memberOf DataItem
-				 */
-				_model: model,
+			/**
+			 * データアイテムが属しているデータモデル
+			 * <p>
+			 * データモデルからデータアイテムが削除された場合、このプロパティはnullになる
+			 * </p>
+			 *
+			 * @private
+			 * @since 1.1.0
+			 * @memberOf DataItem
+			 */
+			_model: model,
 
-				/**
-				 * データアイテムがモデルからremoveされたかどうか
-				 *
-				 * @private
-				 * @memberOf DataItem
-				 */
-				_isRemoved: false,
+			/**
+			 * データアイテムがモデルからremoveされたかどうか
+			 *
+			 * @private
+			 * @memberOf DataItem
+			 */
+			_isRemoved: false,
 
-				/**
-				 * DataItemが属しているDataModelインスタンスを返します。
-				 * <p>
-				 * このメソッドは、DataModelから作成したDataItemのみが持ちます。createObservableItemで作成したアイテムにはこのメソッドはありません。
-				 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
-				 * </p>
-				 *
-				 * @since 1.1.0
-				 * @memberOf DataItem
-				 * @returns {DataModel} 自分が所属するデータモデル
-				 */
-				getModel: function() {
-					return this._isRemoved ? null : this._model;
-				}
-			});
-		}
+			/**
+			 * DataItemが属しているDataModelインスタンスを返します。
+			 * <p>
+			 * このメソッドは、DataModelから作成したDataItemのみが持ちます。createObservableItemで作成したアイテムにはこのメソッドはありません。
+			 * DataModelに属していないDataItem(removeされたDataItem)から呼ばれた場合はnullを返します。
+			 * </p>
+			 *
+			 * @since 1.1.0
+			 * @memberOf DataItem
+			 * @returns {DataModel} 自分が所属するデータモデル
+			 */
+			getModel: function() {
+				return this._isRemoved ? null : this._model;
+			}
+		});
 		return DataItem;
 	}
 
@@ -3852,15 +3849,31 @@
 		var itemValueCheckFuncs = createValueCheckFuncsBySchema(schema);
 		validateDefaultValue(schema, itemValueCheckFuncs, true);
 
-		// objから必要なプロパティを取り出す
 		var obsItem = new ObservableItem();
-		new (createDataItemConstructor(schema, itemValueCheckFuncs))(null, obsItem);
+
+		// スキーマ情報の作成。アイテムに持たせる。
+		var schemaInfo = createSchemaInfoChache(schema, itemValueCheckFuncs);
+
+		// obsItemのセットアップ
+		itemSetup(obsItem, schema, schemaInfo);
+
+		// schemaを持たせる
+		obsItem.schema = schema;
+		// schemaInfoの中身を持たせる
+		for ( var p in schemaInfo) {
+			obsItem[p] = schemaInfo[p];
+		}
+		// 初期値の設定
+		var actualInitialValue = schemaInfo._createInitialValueObj();
+		validateValueObj(schema, schemaInfo._validateItemValue, actualInitialValue);
+		itemSetter(obsItem, actualInitialValue, null, true);
 
 		// ObservableArrayのアイテムについてリスナの設定
 		for ( var i = 0, l = obsItem._aryProps.length; i < l; i++) {
 			setObservableArrayListeners(obsItem, obsItem._aryProps[i], obsItem
 					.get(obsItem._aryProps[i]));
 		}
+
 		return obsItem;
 	}
 
