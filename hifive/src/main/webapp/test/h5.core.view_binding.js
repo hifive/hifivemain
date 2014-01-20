@@ -1306,9 +1306,6 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	var testDataModel = null;
-	var testDataItem = null;
-	var testObsItem = null;
 	module('DataItem/ObservableItemが保持するObservableArrayに対する変更', {
 		setup: function() {
 			var schema = {
@@ -1322,22 +1319,29 @@ $(function() {
 					type: 'any'
 				}
 			};
-			var manager = h5.core.data.createManager('TestManager');
-			testDataModel = manager.createModel({
+			this.testDataModelManager = h5.core.data.createManager('TestManager');
+			this.testDataModel = this.testDataModelManager.createModel({
 				name: 'TestModel',
 				schema: schema
 			});
-			testDataItem = testDataModel.create({
+			this.testDataItem = this.testDataModel.create({
 				id: '1'
 			});
 
-			testObsItem = h5.core.data.createObservableItem(schema);
+			this.testObsItem = h5.core.data.createObservableItem(schema);
 		},
 		teardown: function() {
 			$('#dataBindTest').remove();
-			testDataModel.remove('1');
-			testDataModel = null;
-		}
+			this.testDataModel.remove('1');
+			this.testDataModelManager.dropModel(this.testDataModel);
+			this.testDataModel = null;
+			this.testDataItem = null;
+			this.testObsItem = null;
+		},
+		testDataModelManager: null,
+		testDataModel: null,
+		testDataItem: null,
+		testObsItem: null
 	});
 
 	//=============================
@@ -1347,8 +1351,7 @@ $(function() {
 			'type:any[]に格納されたObservableArrayをDataItem#set()で更新する',
 			function() {
 				function testFunc(item) {
-					var name = item instanceof testDataItem.constructor ? 'DataItem'
-							: 'ObservableItem';
+					var name = item.getModel ? 'DataItem' : 'ObservableItem';
 					view.append($fixture, 'itemBind7');
 
 					// 初期値を設定
@@ -1381,16 +1384,15 @@ $(function() {
 					$('#dataBindTest').remove();
 				}
 
-				testFunc(testDataItem);
-				testFunc(testObsItem);
+				testFunc(this.testDataItem);
+				testFunc(this.testObsItem);
 			});
 
 	test(
 			'type:anyに格納されたObservableArrayをDataItem#set()で更新する',
 			function() {
 				function testFunc(item) {
-					var name = item instanceof testDataItem.constructor ? 'DataItem'
-							: 'ObservableItem';
+					var name = item.getModel ? 'DataItem' : 'ObservableItem';
 					view.append($fixture, 'itemBind7');
 
 					// 初期値を設定
@@ -1423,13 +1425,13 @@ $(function() {
 					$('#dataBindTest').remove();
 				}
 
-				testFunc(testDataItem);
-				testFunc(testObsItem);
+				testFunc(this.testDataItem);
+				testFunc(this.testObsItem);
 			});
 
 	test('copyFrom()', function() {
 		function testFunc(item) {
-			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			var name = item.getModel ? 'DataItem' : 'ObservableItem';
 			view.append($fixture, 'itemBind7');
 
 			var binding = view.bind($('#dataBindTest'), {
@@ -1468,13 +1470,13 @@ $(function() {
 
 			$('#dataBindTest').remove();
 		}
-		testFunc(testDataItem);
-		testFunc(testObsItem);
+		testFunc(this.testDataItem);
+		testFunc(this.testObsItem);
 	});
 
 	test('push()', function() {
 		function testFunc(item) {
-			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			var name = item.getModel ? 'DataItem' : 'ObservableItem';
 			view.append($fixture, 'itemBind7');
 
 			var binding = view.bind($('#dataBindTest'), {
@@ -1518,13 +1520,13 @@ $(function() {
 
 			$('#dataBindTest').remove();
 		}
-		testFunc(testDataItem);
-		testFunc(testObsItem);
+		testFunc(this.testDataItem);
+		testFunc(this.testObsItem);
 	});
 
 	test('pop()', function() {
 		function testFunc(item) {
-			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			var name = item.getModel ? 'DataItem' : 'ObservableItem';
 			view.append($fixture, 'itemBind7');
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
@@ -1563,13 +1565,13 @@ $(function() {
 
 			$('#dataBindTest').remove();
 		}
-		testFunc(testDataItem);
-		testFunc(testObsItem);
+		testFunc(this.testDataItem);
+		testFunc(this.testObsItem);
 	});
 
 	test('shift()', function() {
 		function testFunc(item) {
-			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			var name = item.getModel ? 'DataItem' : 'ObservableItem';
 			view.append($fixture, 'itemBind7');
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
@@ -1604,13 +1606,13 @@ $(function() {
 
 			$('#dataBindTest').remove();
 		}
-		testFunc(testDataItem);
-		testFunc(testObsItem);
+		testFunc(this.testDataItem);
+		testFunc(this.testObsItem);
 	});
 
 	test('unshift()', function() {
 		function testFunc(item) {
-			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			var name = item.getModel ? 'DataItem' : 'ObservableItem';
 			view.append($fixture, 'itemBind7');
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
@@ -1643,13 +1645,13 @@ $(function() {
 
 			$('#dataBindTest').remove();
 		}
-		testFunc(testDataItem);
-		testFunc(testObsItem);
+		testFunc(this.testDataItem);
+		testFunc(this.testObsItem);
 	});
 
 	test('splice()', function() {
 		function testFunc(item) {
-			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			var name = item.getModel ? 'DataItem' : 'ObservableItem';
 			view.append($fixture, 'itemBind7');
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
@@ -1684,13 +1686,13 @@ $(function() {
 
 			$('#dataBindTest').remove();
 		}
-		testFunc(testDataItem);
-		testFunc(testObsItem);
+		testFunc(this.testDataItem);
+		testFunc(this.testObsItem);
 	});
 
 	test('sort()', function() {
 		function testFunc(item) {
-			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			var name = item.getModel ? 'DataItem' : 'ObservableItem';
 			view.append($fixture, 'itemBind7');
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
@@ -1728,13 +1730,13 @@ $(function() {
 
 			$('#dataBindTest').remove();
 		}
-		testFunc(testDataItem);
-		testFunc(testObsItem);
+		testFunc(this.testDataItem);
+		testFunc(this.testObsItem);
 	});
 
 	test('reverse()', function() {
 		function testFunc(item) {
-			var name = item instanceof testDataItem.constructor ? 'DataItem' : 'ObservableItem';
+			var name = item.getModel ? 'DataItem' : 'ObservableItem';
 			view.append($fixture, 'itemBind7');
 			var binding = view.bind($('#dataBindTest'), {
 				item: item
@@ -1762,10 +1764,36 @@ $(function() {
 
 			$('#dataBindTest').remove();
 		}
-		testFunc(testDataItem);
-		testFunc(testObsItem);
+		testFunc(this.testDataItem);
+		testFunc(this.testObsItem);
 	});
 
+	test('beginUpdate/endUpdateでイベント制御されているときに、DataItemに属するObservableArrayを変更する', 2, function() {
+		var item = this.testDataItem;
+		view.append($fixture, 'itemBind7');
+
+		// 初期値を設定
+		var oar = h5.core.data.createObservableArray();
+		oar.push({
+			test: 'A'
+		});
+		item.set('ary', oar);
+
+		var binding = view.bind($('#dataBindTest'), {
+			item: item
+		});
+
+		this.testDataModelManager.beginUpdate();
+		item.get('ary').push({
+			test: 'B'
+		});
+		checkTexts(['A'], 'beginUpdate()後の更新はObservableArrayの変更はビューに反映されないこと', '.loop1');
+		this.testDataModelManager.endUpdate();
+		checkTexts(['A', 'B'], 'endUpdateのタイミングでビューに反映されること', '.loop1');
+
+		binding.unbind();
+		$('#dataBindTest').remove();
+	});
 
 
 	//=============================

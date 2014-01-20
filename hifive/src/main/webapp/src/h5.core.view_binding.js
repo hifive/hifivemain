@@ -933,7 +933,8 @@
 				break;
 			case 'sort':
 			case 'copyFrom':
-				//ループビューをすべて作り直す
+			case null:
+				// sort, copyFrom またはnull(endUpdate時にdispatchEventで呼ばれた)ときはループビューをすべて作り直す
 				this._loopElementsMap[viewUid] = refreshLoopContext(this, event.target,
 						loopRootNode, loopNodes, srcCtxNode);
 				break;

@@ -10036,34 +10036,47 @@ $(function() {
 		manager.endUpdate();
 	});
 
-	test('beginUpdate-endUpdateの間でもObservableArrayのイベントは即座に上がること', 1, function() {
-		var model = manager.createModel({
-			name: 'AryModel',
-			schema: {
-				id: {
-					id: true
-				},
-				ary: {
-					type: 'any[]'
-				}
-			}
-		});
+	test('beginUpdate-endUpdateの間、DataItemに属しているObservableArrayのイベントはendUpdateのタイミングで上がること', 6,
+			function() {
+				var model = manager.createModel({
+					name: 'AryModel',
+					schema: {
+						id: {
+							id: true
+						},
+						ary: {
+							type: 'any[]',
+							defaultValue: ['default']
+						}
+					}
+				});
 
-		var item = model.create({
-			id: sequence.next()
-		});
+				var item = model.create({
+					id: sequence.next()
+				});
 
-		var order = [];
-		item.get('ary').addEventListener('change', function(ev) {
-			order.push(ev.method);
-		});
-		manager.beginUpdate();
-		item.get().ary.push('a');
-		item.get().ary.unshift('b');
-		// 内部でoldValueを保存するためにsliceが呼ばれる
-		deepEqual(order, ['push', 'unshift'], 'begin-endUpdate内でもObservableArrayのイベントは即座に発火する。');
-		manager.endUpdate();
-	});
+				var aryEv = null;
+				var itemEv = null;
+				item.addEventListener('change', function(ev) {
+					itemEv = ev;
+				});
+				item.get('ary').addEventListener('change', function(ev) {
+					aryEv = ev;
+				});
+				manager.beginUpdate();
+				var ary = item.get('ary');
+				ary.push('a');
+				ary.copyFrom(['hoge', 'fuga']);
+				strictEqual(aryEv, null, 'begin-endUpdate内ではObservableArrayのイベントは発火しないこと');
+				strictEqual(itemEv, null, 'begin-endUpdate内ではDataItemのイベントは発火しないこと');
+				manager.endUpdate();
+				ok(aryEv, 'endUpdateのタイミングでObservableArrayのイベントが発火すること');
+				ok(itemEv, 'endUpdateのタイミングでDataItemのイベントが発火すること');
+				deepEqual(itemEv && itemEv.props.ary.oldValue, ['default'],
+						'oldValueにbeginUpdate前の値が格納されていること');
+				deepEqual(itemEv && itemEv.props.ary.newValue.toArray(), ['hoge', 'fuga'],
+						'newValueに現在の値が格納されていること');
+			});
 
 
 	test('DataItemで、型の自動変換が行われるものについて、変更後が代入前と同じ値ならchangeイベントは発火しないこと', 2, function() {

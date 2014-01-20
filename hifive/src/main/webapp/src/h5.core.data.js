@@ -2482,8 +2482,8 @@
 		}
 
 		function changeListener(event) {
-			// set内で呼ばれていたら何もしない
-			if (item._isInSet) {
+			// Itemのset内で呼ばれた、または、method===null(endUpdate時にdispatchEventで呼ばれた場合)なら何もしない
+			if (item._isInSet || event.method === null) {
 				return;
 			}
 
@@ -2501,10 +2501,19 @@
 
 			// データアイテムの場合はモデルにイベントを伝播
 			if (model) {
+				// アップデートログを追加
 				addUpdateChangeLog(model, ev);
-				// アップデートセッション中じゃなければendUpdate()
+
 				if (!isAlreadyInUpdate) {
-					model._manager.endUpdate();
+					// アップデートセッション中じゃなければすぐにendUpdate()
+					// ただし、引数を指定してndUpdate()時にdispatchされてしまうのを防ぐ
+					model._manager.endUpdate({
+						_dispatchObservableArrayChange: false
+					});
+				} else {
+					// アップデートセッション中であればendUpdate()が呼ばれたときに、endUpdate()がchangeを発火させるので、
+					// ObservableArrayのchangeをここでストップする。
+					event.stopImmediatePropagation();
 				}
 			} else {
 				// ObservableItemの場合は、配列の値が変更されていたら即イベント発火する
@@ -2689,7 +2698,13 @@
 			isDefaultPrevented = true;
 		};
 
-		for ( var i = 0, count = l.length; i < count; i++) {
+		var isImmediatePropagationStopped = false;
+		event.stopImmediatePropagation = function() {
+			isImmediatePropagationStopped = true;
+		};
+
+		// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
+		for ( var i = 0, count = l.length; i < count && !isImmediatePropagationStopped; i++) {
 			l[i].call(event.target, event);
 		}
 
@@ -2876,10 +2891,16 @@
 		 * @since 1.1.0
 		 * @memberOf DataModelManager
 		 */
-		endUpdate: function() {
+		/**
+		 * @private
+		 * @param {Boolean} [_opt._dispatchObservableArrayChange=true]
+		 *            マネージャ下に属しているObservableArrayのchangeイベントをdispatchするかどうか
+		 */
+		endUpdate: function(_opt) {
 			if (!this.isInUpdate()) {
 				return;
 			}
+			var dispatchObsAryChange = _opt ? _opt._dispatchObservableArrayChange !== false : true;
 
 			var updateLogs = this._updateLogs;
 			var oldValueLogs = this._oldValueLogs;
@@ -2996,7 +3017,7 @@
 								if (!mergedProps[p]) {
 									// oldValueのセット
 									// type:[]ならmanager._oldValueLogsから持ってくる
-									if (h5.core.data.isObservableArray(model.get(itemId).get(p))) {
+									if (isObservableArray(model.get(itemId).get(p))) {
 										var oldValue = oldValueLogs && oldValueLogs[model.name]
 												&& oldValueLogs[model.name][itemId]
 												&& oldValueLogs[model.name][itemId][p];
@@ -3026,7 +3047,17 @@
 									|| isBothStrictNaN(oldValue, currentValue)) {
 								delete mergedProps[p];
 							} else {
-								mergedProps[p].newValue = model.get(itemId).get(p);
+								var newValue = model.get(itemId).get(p);
+								if (dispatchObsAryChange && isObservableArray(newValue)) {
+									// ObservableArrayのイベントを上げる
+									newValue.dispatchEvent({
+										type: 'change',
+										method: null,
+										args: null,
+										returnValue: null
+									});
+								}
+								mergedProps[p].newValue = newValue;
 								changedProps = true;
 							}
 						}
