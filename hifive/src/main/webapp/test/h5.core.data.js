@@ -9614,6 +9614,40 @@ $(function() {
 		deepEqual(order, [], 'setしても値が変わっていない場合はchangeイベントが発火しないこと');
 	});
 
+	test('DataItem内のObservableArrayのchangeBeforeハンドラでpreventDefault()して値の変更がなかった時はイベントは発火しないこと', 2,
+			function() {
+				var model = manager.createModel({
+					name: 'AryModel',
+					schema: {
+						id: {
+							id: true
+						},
+						ary: {
+							type: 'any[]'
+						}
+					}
+				});
+				var item = model.create({
+					id: '1'
+				});
+				var itemEv = null;
+				item.addEventListener('change', function(ev) {
+					itemEv = ev;
+				});
+				var o = item.get('ary');
+				o.addEventListener('changeBefore', function(ev) {
+					if(ev.method==='push')
+					ev.preventDefault();
+				});
+				o.push('a');
+				strictEqual(itemEv, null, 'DataItemのchangeイベントは起きていないこと');
+				manager.beginUpdate();
+				o.push('b');
+				o.push('c');
+				manager.endUpdate();
+				strictEqual(itemEv, null, 'DataItemのchangeイベントは起きていないこと');
+			});
+
 	test('DateItemのセット時にエラーが発生した時、その後の正常な操作についてイベントが発火すること', 3, function() {
 		var model = manager.createModel({
 			name: 'TestModel',
@@ -9905,6 +9939,35 @@ $(function() {
 		deepEqual(order, [], 'beginUpdate-endUpdateで囲んでいて、最終的に配列の中身が変わらない時(sort)はイベントは上がらない');
 	});
 
+	test('DataItemが持つObservableArrayの操作をするとき、changeBeforeイベントが上がること', 2, function() {
+		var model = manager.createModel({
+			name: 'AryModel',
+			schema: {
+				id: {
+					id: true
+				},
+				ary: {
+					type: 'any[]',
+					defaultValue: ['default']
+				}
+			}
+		});
+		var item = model.create({
+			id: sequence.next()
+		});
+		var evObj = null;
+		var changeBeforeArray = null;
+		function listener(ev) {
+			evObj = ev;
+			changeBeforeArray = item.get('ary').toArray();
+		}
+		item.get('ary').addEventListener('changeBefore', listener);
+		item.get('ary').push('a');
+		ok(evObj, 'changeBeforeイベントハンドラが実行され、イベントオブジェクトが渡されること');
+		deepEqual(changeBeforeArray, ['default'],
+				'changeBeforeイベントハンドラ実行時は、ObservableArrayの中身が変更前であること');
+	});
+
 	test('beginUpdate-endUpdateの間で値の変更があった時に、endUpdate時にchangeイベントハンドラが実行されること', 11, function() {
 		manager.beginUpdate();
 		item.set('val', 'aaaa');
@@ -10036,7 +10099,38 @@ $(function() {
 		manager.endUpdate();
 	});
 
-	test('beginUpdate-endUpdateの間、DataItemに属しているObservableArrayのイベントはendUpdateのタイミングで上がること', 6,
+	test('beginUpdate-endUpdateの間、DataItemに属しているObservableArrayのchangeイベントはendUpdateのタイミングで上がること',
+			2, function() {
+				var model = manager.createModel({
+					name: 'AryModel',
+					schema: {
+						id: {
+							id: true
+						},
+						ary: {
+							type: 'any[]',
+							defaultValue: ['default']
+						}
+					}
+				});
+
+				var aryChangeEv = null;
+				var item = model.create({
+					id: sequence.next()
+				});
+				item.get('ary').addEventListener('change', function(ev) {
+					aryChangeEv = ev;
+				});
+				manager.beginUpdate();
+				var ary = item.get('ary');
+				ary.push('a');
+				ary.copyFrom(['hoge', 'fuga']);
+				strictEqual(aryChangeEv, null, 'begin-endUpdate内ではObservableArrayのイベントは発火しないこと');
+				manager.endUpdate();
+				ok(aryChangeEv, 'endUpdateのタイミングでObservableArrayのchangeイベントが発火すること');
+			});
+
+	test('beginUpdate-endUpdateの間でも、DataItemに属しているObservableArrayのchangeBeforeイベントは即座に上がること', 2,
 			function() {
 				var model = manager.createModel({
 					name: 'AryModel',
@@ -10055,29 +10149,54 @@ $(function() {
 					id: sequence.next()
 				});
 
-				var aryEv = null;
-				var itemEv = null;
-				item.addEventListener('change', function(ev) {
-					itemEv = ev;
+				var aryChangeBeforeEv = null;
+				item.get('ary').addEventListener('changeBefore', function(ev) {
+					aryChangeBeforeEv = ev;
 				});
+				manager.beginUpdate();
+				var ary = item.get('ary');
+				ary.push('a');
+				ok(aryChangeBeforeEv, 'begin-endUpdate内でもObservableArrayのchangeBeforeイベントは発火すること');
+				aryChangeBeforeEv = null;
+				manager.endUpdate();
+				strictEqual(aryChangeBeforeEv, null,
+						'endUpdateのタイミングでObservableArrayのchangeBeforeイベントは発火しないこと');
+			});
+
+	test(
+			'beginUpdate時とendUpdate時で、DataItemに属しているObservableArrayの変更がなかった場合ObservableArrayのchangeイベントは上がらないこと',
+			3, function() {
+				var model = manager.createModel({
+					name: 'AryModel',
+					schema: {
+						id: {
+							id: true
+						},
+						ary: {
+							type: 'any[]',
+							defaultValue: ['default']
+						}
+					}
+				});
+
+				var item = model.create({
+					id: sequence.next()
+				});
+
+				var aryEv = null;
 				item.get('ary').addEventListener('change', function(ev) {
 					aryEv = ev;
 				});
 				manager.beginUpdate();
 				var ary = item.get('ary');
 				ary.push('a');
-				ary.copyFrom(['hoge', 'fuga']);
 				strictEqual(aryEv, null, 'begin-endUpdate内ではObservableArrayのイベントは発火しないこと');
-				strictEqual(itemEv, null, 'begin-endUpdate内ではDataItemのイベントは発火しないこと');
+				ary.copyFrom(['default']);
+				strictEqual(aryEv, null, 'begin-endUpdate内ではObservableArrayのイベントは発火しないこと');
 				manager.endUpdate();
-				ok(aryEv, 'endUpdateのタイミングでObservableArrayのイベントが発火すること');
-				ok(itemEv, 'endUpdateのタイミングでDataItemのイベントが発火すること');
-				deepEqual(itemEv && itemEv.props.ary.oldValue, ['default'],
-						'oldValueにbeginUpdate前の値が格納されていること');
-				deepEqual(itemEv && itemEv.props.ary.newValue.toArray(), ['hoge', 'fuga'],
-						'newValueに現在の値が格納されていること');
+				strictEqual(aryEv, null,
+						'beginUpdate時とendUpdate時でObservableArrayの値が変わっていない場合はイベントは発火しないこと');
 			});
-
 
 	test('DataItemで、型の自動変換が行われるものについて、変更後が代入前と同じ値ならchangeイベントは発火しないこと', 2, function() {
 		var model = manager.createModel({
@@ -10789,6 +10908,49 @@ $(function() {
 											prop));
 				}
 			});
+
+
+	// ------------------------------------ DataItemに属するObservableArrayのイベントテスト------------------------------------
+	test('DataItemに属するObservableArrayがbegin-endUpdate()内で更新された時のObservableArrayのchangeイベントオブジェクト',
+			8, function() {
+				var model = manager.createModel({
+					name: 'AryModel',
+					schema: {
+						id: {
+							id: true
+						},
+						ary: {
+							type: 'any[]'
+						}
+					}
+				});
+				var item = model.create({
+					id: '1'
+				});
+				var o = item.get('ary');
+				var evObj = null;
+				var context = null;
+				var current = null;
+				function change(ev) {
+					evObj = ev;
+					context = this;
+					current = this.toArray();
+				}
+				o.addEventListener('change', change);
+				manager.beginUpdate();
+				o.push('a');
+				o.push('b');
+				manager.endUpdate();
+				ok(evObj, 'changeイベントハンドラが実行されること');
+				strictEqual(evObj.type, 'change', 'イベントオブジェクトのtypeがchangeであること');
+				strictEqual(evObj.method, null, 'イベントオブジェクトのtypeがnullであること');
+				strictEqual(evObj.target, o, 'イベントオブジェクトのtargetがObservableArrayであること');
+				strictEqual(evObj.args, null, 'イベントオブジェクトのargsがnullであること');
+				strictEqual(evObj.returnValue, null, 'イベントオブジェクトのreturnValueがnullであること');
+				strictEqual(context, o, 'イベントハンドラ内のthisはObservableArrayであること');
+				deepEqual(current, ['a', 'b'], 'イベントハンドラ内でObservableArrayの中身はすでに変更されていること');
+			});
+
 	//=============================
 	// Definition
 	//=============================

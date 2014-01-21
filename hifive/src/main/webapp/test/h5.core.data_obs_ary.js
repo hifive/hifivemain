@@ -751,4 +751,72 @@ $(function() {
 		ok(o.equals(originAry), 'メソッド呼び出し後のObservableArrayの中身は変化していないこと');
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ObservableArrayのイベント');
+
+	//=============================
+	// Body
+	//=============================
+	test('changeBeforeイベント', 7, function() {
+		var o = h5.core.data.createObservableArray();
+		var evObj = null;
+		var context = null;
+		var current = null;
+		function l(ev) {
+			evObj = ev;
+			context = this;
+			current = this.toArray();
+		}
+		o.addEventListener('changeBefore', l);
+		o.push('a');
+		ok(evObj, 'changeBeforeイベントハンドラが実行されること');
+		strictEqual(evObj.type, 'changeBefore', 'イベントオブジェクトのtypeがchangeBeforeであること');
+		strictEqual(evObj.method, 'push', 'イベントオブジェクトのtypeがpsuhであること');
+		strictEqual(evObj.target, o, 'イベントオブジェクトのtargetがObservableArrayであること');
+		strictEqual(evObj.args[0], 'a', 'イベントオブジェクトのargsが引数であること');
+		strictEqual(context, o, 'イベントハンドラ内のthisはObservableArrayであること');
+		deepEqual(current, [], 'イベントハンドラ内ではまだObservableArrayの中身に変更はないこと');
+	});
+
+	test('changeイベント', 8, function() {
+		var o = h5.core.data.createObservableArray();
+		var evObj = null;
+		var context = null;
+		var current = null;
+		function l(ev) {
+			evObj = ev;
+			context = this;
+			current = this.toArray();
+		}
+		o.addEventListener('change', l);
+		var ret = o.push('a');
+		ok(evObj, 'changeイベントハンドラが実行されること');
+		strictEqual(evObj.type, 'change', 'イベントオブジェクトのtypeがchangeであること');
+		strictEqual(evObj.method, 'push', 'イベントオブジェクトのtypeがpsuhであること');
+		strictEqual(evObj.target, o, 'イベントオブジェクトのtargetがObservableArrayであること');
+		strictEqual(evObj.args[0], 'a', 'イベントオブジェクトのargsが引数であること');
+		strictEqual(evObj.returnValue, ret, 'イベントオブジェクトのreturnValueがメソッドの戻り値' + ret + 'であること');
+		strictEqual(context, o, 'イベントハンドラ内のthisはObservableArrayであること');
+		deepEqual(current, ['a'], 'イベントハンドラ内でObservableArrayの中身はすでに変更されていること');
+	});
+
+	test('changeBeforeイベント内でのpreventDefault', 3, function() {
+		var o = h5.core.data.createObservableArray();
+		var changeEv = null;
+		function changeBefore(ev) {
+			ev.preventDefault();
+		}
+		function change(ev) {
+			changeEv = ev;
+		}
+		o.addEventListener('changeBefore', changeBefore);
+		o.addEventListener('change', change);
+		var ret = o.push('a');
+		deepEqual(o.toArray(), [], 'changeBeforeイベントハンドラでpreventDefaultした場合は中身が変更されないこと');
+		strictEqual(changeEv, null, 'changeBeforeイベントハンドラでpreventDefaultした場合はchangeイベントは起きないこと');
+		strictEqual(ret, undefined, 'changeBeforeイベントハンドラでpreventDefaultした場合、戻り値はundefinedであること');
+	});
 });
