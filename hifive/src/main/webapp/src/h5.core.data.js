@@ -2506,7 +2506,7 @@
 
 				if (!isAlreadyInUpdate) {
 					// アップデートセッション中じゃなければすぐにendUpdate()
-					// ただし、引数を指定してndUpdate()時にdispatchされてしまうのを防ぐ
+					// ただし、引数を指定してendUpdate()時にdispatchされてしまうのを防ぐ
 					model._manager.endUpdate({
 						_dispatchObservableArrayChange: false
 					});
