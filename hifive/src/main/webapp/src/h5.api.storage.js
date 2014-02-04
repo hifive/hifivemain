@@ -199,7 +199,7 @@
 			try {
 				var checkKey = '__H5_WEB_STORAGE_CHECK__';
 				window.localStorage.setItem(checkKey, 1);
-				window.localStorage.getItem(checkKey);
+				window.localStorage.removeItem(checkKey);
 				return true;
 			} catch (e) {
 				return false;
