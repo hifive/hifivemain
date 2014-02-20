@@ -2300,7 +2300,7 @@
 	 * @param {DataModel} [model] データアイテムが属するモデル。ObservableItemの場合はundefined
 	 * @returns {Object} ObsItem,DataItemの生成に必要なスキーマのキャッシュデータ
 	 */
-	function createSchemaInfoChache(schema, itemValueCheckFuncs, model) {
+	function createSchemaInfoCache(schema, itemValueCheckFuncs, model) {
 		// 実プロパティ・依存プロパティ・配列プロパティを列挙
 		var realProps = [];
 		var dependProps = [];
@@ -2323,33 +2323,39 @@
 			return itemValueCheckFuncs[p](value, isStrict);
 		}
 
+		var defaultInitialValue = {};
+		for ( var plainProp in schema) {
+			var propDesc = schema[plainProp];
+
+			if (propDesc && propDesc.depend) {
+				//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
+				continue;
+			}
+
+			var initValue = null;
+
+			if (propDesc && propDesc.defaultValue !== undefined) {
+				//DescriptorのdefaultValueがあれば代入
+				initValue = propDesc.defaultValue;
+			} else {
+				//どちらでもない場合はnull
+				initValue = null;
+			}
+
+			defaultInitialValue[plainProp] = initValue;
+		}
 
 		function createInitialValueObj(userInitialValue) {
-			var actualInitialValue = {};
-			for ( var plainProp in schema) {
-				var propDesc = schema[plainProp];
-
-				if (propDesc && propDesc.depend) {
-					//依存プロパティにはデフォルト値はない（最後にrefresh()で計算される）
-					continue;
-				}
-
-				var initValue = null;
-
-				if (userInitialValue && plainProp in userInitialValue) {
-					// 与えられた初期値を代入
-					initValue = userInitialValue[plainProp];
-				} else if (propDesc && propDesc.defaultValue !== undefined) {
-					//DescriptorのdefaultValueがあれば代入
-					initValue = propDesc.defaultValue;
-				} else {
-					//どちらでもない場合はnull
-					initValue = null;
-				}
-
-				actualInitialValue[plainProp] = initValue;
+			if (!userInitialValue) {
+				return $.extend({}, defaultInitialValue);
 			}
-			return $.extend({}, actualInitialValue, userInitialValue);
+			// 単に$.extend({}, defaultInitialValue, userInitialValue)だとundefinedの値で上書きできないので、
+			// for文でuserInitialValueに指定されたものを代入する
+			var actualInitialValue = $.extend({}, defaultInitialValue);
+			for ( var p in userInitialValue) {
+				actualInitialValue[p] = userInitialValue[p];
+			}
+			return actualInitialValue;
 		}
 
 		var ret = {
@@ -3462,15 +3468,15 @@
 		 *
 		 * @since 1.1.9
 		 * @memberOf DataModel
-		 * @param {Object|Object[]} arg チェックしたいオブジェクトまたはオブジェクトの配列
+		 * @param {Object|Object[]} value チェックしたいオブジェクトまたはオブジェクトの配列
 		 * @param {Boolean} [asCreate=false] create()時相当のバリデーションを行うかどうか
 		 */
-		validate: function(arg, asCreate) {
+		validate: function(value, asCreate) {
 			try {
 				var idKey = this._idKey;
-				var items = wrapInArray(arg);
+				var items = wrapInArray(value);
 				// objctでもArrayでもなかったらエラー
-				if (typeof arg !== 'object' && !$.isArray(arg)) {
+				if (typeof value !== 'object' && !$.isArray(value)) {
 					throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
 				}
 				if (asCreate) {
@@ -3722,7 +3728,7 @@
 	 */
 	function createDataItemConstructor(schema, itemValueCheckFuncs, model) {
 		// スキーマ情報の作成。アイテムのプロトタイプとモデルに持たせる。
-		var schemaInfo = createSchemaInfoChache(schema, itemValueCheckFuncs, model);
+		var schemaInfo = createSchemaInfoCache(schema, itemValueCheckFuncs, model);
 		model._schemaInfo = schemaInfo;
 
 		/**
@@ -3883,7 +3889,7 @@
 		var obsItem = new ObservableItem();
 
 		// スキーマ情報の作成。アイテムに持たせる。
-		var schemaInfo = createSchemaInfoChache(schema, itemValueCheckFuncs);
+		var schemaInfo = createSchemaInfoCache(schema, itemValueCheckFuncs);
 
 		// obsItemのセットアップ
 		itemSetup(obsItem, schema, schemaInfo);
