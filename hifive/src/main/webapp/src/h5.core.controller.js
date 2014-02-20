@@ -207,7 +207,7 @@
 		}
 		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
 		var ret = doc.defaultView || doc.parentWindow;
-		for ( var i = 0, len = names.length; i < len; i++) {
+		for (var i = 0, len = names.length; i < len; i++) {
 			ret = ret[names[i]];
 			if (ret == null) { // nullまたはundefinedだったら辿らない
 				break;
@@ -275,7 +275,7 @@
 			return ret;
 		}
 		aspects = wrapInArray(aspects);
-		for ( var i = aspects.length - 1; -1 < i; i--) {
+		for (var i = aspects.length - 1; -1 < i; i--) {
 			var aspect = aspects[i];
 			if (aspect.target && !aspect.compiledTarget.test(targetName)) {
 				continue;
@@ -288,7 +288,7 @@
 				ret.push(interceptors);
 				continue;
 			}
-			for ( var j = interceptors.length - 1; -1 < j; j--) {
+			for (var j = interceptors.length - 1; -1 < j; j--) {
 				ret = ret.concat(interceptors[j]);
 			}
 		}
@@ -322,7 +322,7 @@
 		};
 
 		var f = base;
-		for ( var i = 0, l = aspects.length; i < l; i++) {
+		for (var i = 0, l = aspects.length; i < l; i++) {
 			f = weave(f, funcName, aspects[i]);
 		}
 		return f;
@@ -410,7 +410,7 @@
 	 */
 	function getGlobalSelectorTarget(selector, doc) {
 		var specialObj = ['window', 'document', 'navigator'];
-		for ( var i = 0, len = specialObj.length; i < len; i++) {
+		for (var i = 0, len = specialObj.length; i < len; i++) {
 			var s = specialObj[i];
 			if (selector === s || startsWith(selector, s + '.')) {
 				//特殊オブジェクトそのものを指定された場合またはwindow. などドット区切りで続いている場合
@@ -594,7 +594,7 @@
 			useBindObj(bindObj, bindRequested);
 			return;
 		}
-		for ( var i = 0, l = bindObj.length; i < l; i++) {
+		for (var i = 0, l = bindObj.length; i < l; i++) {
 			useBindObj(bindObj[i], bindRequested);
 		}
 	}
@@ -859,7 +859,7 @@
 				// ライフサイクルイベント実行後に呼ぶべきコールバック関数を作成
 				var callback = isInitEvent ? createCallbackForInit(controllerInstance)
 						: createCallbackForReady(controllerInstance);
-				if (ret && $.isFunction(ret.promise) && !h5.u.obj.isJQueryObject(ret)) {
+				if (ret && $.isFunction(ret.done) && $.isFunction(ret.fail)) {
 					// __init, __ready がpromiseを返している場合
 					ret.done(function() {
 						callback();
@@ -1743,13 +1743,13 @@
 				// readyDfdまでrejectしたら終了
 				if (propertyIndex < propertyArray.length - 1) {
 					// ルートコントローラまで辿ったら、末裔のコントローラに対して次のdfdをrejectさせる
-					for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+					for (var i = 0, l = descendantControllers.length; i < l; i++) {
 						rejectControllerDfdLoop(descendantControllers[i], propertyIndex + 1);
 					}
 				}
 			}
 		}
-		for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+		for (var i = 0, l = descendantControllers.length; i < l; i++) {
 			rejectControllerDfdLoop(descendantControllers[i], 0);
 		}
 	}
@@ -1764,7 +1764,7 @@
 	 */
 	function findCommentBindingTarget(rootNode, id) {
 		var childNodes = rootNode.childNodes;
-		for ( var i = 0, len = childNodes.length; i < len; i++) {
+		for (var i = 0, len = childNodes.length; i < len; i++) {
 			var n = childNodes[i];
 			if (n.nodeType === 1) {
 				//Magic number: 1はNode.ELEMENT_NODE
@@ -2075,14 +2075,14 @@
 
 			target = [];
 			var childNodes = $dummyRoot[0].childNodes;
-			for ( var i = 0, len = childNodes.length; i < len; i++) {
+			for (var i = 0, len = childNodes.length; i < len; i++) {
 				target.push(childNodes[i]);
 			}
 
 			//ダミールートから要素を外し、インラインテンプレートの直後に要素を挿入
 			$dummyRoot.empty();
 			var fragment = document.createDocumentFragment();
-			for ( var i = 0, len = target.length; i < len; i++) {
+			for (var i = 0, len = target.length; i < len; i++) {
 				fragment.appendChild(target[i]);
 			}
 
@@ -2678,7 +2678,7 @@
 			var seekRoot = $(rootElement)[0];
 			var controllers = this.controllers;
 			var ret = [];
-			for ( var i = 0, len = controllers.length; i < len; i++) {
+			for (var i = 0, len = controllers.length; i < len; i++) {
 				var controller = controllers[i];
 
 				if (names && $.inArray(controller.__name, names) === -1) {
