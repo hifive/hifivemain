@@ -192,29 +192,11 @@
 	// =============================
 
 	/**
-	 * h5.u.obj.getByPathに、documentオブジェクトを第2引数にとるようにしたもの。
-	 * iframeやwindow.openなど、windowオブジェクトが違う場合は第2引数のdocumentからwindowオブジェクトを取り出してそこから辿る。
+	 * documentオブジェクトからwindowオブジェクトを取得
 	 */
-	function getByPath(namespace, doc) {
-		doc = doc || document;
-		if (!isString(namespace)) {
-			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
-		}
-
-		var names = namespace.split('.');
-		if (names[0] === 'window') {
-			names.unshift();
-		}
+	function getWindowByDocument(doc){
 		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
-		var ret = doc.defaultView || doc.parentWindow;
-		for (var i = 0, len = names.length; i < len; i++) {
-			ret = ret[names[i]];
-			if (ret == null) { // nullまたはundefinedだったら辿らない
-				break;
-			}
-		}
-
-		return ret;
+		return doc.defaultView || doc.parentWindow;
 	}
 
 	/**
@@ -414,7 +396,7 @@
 			var s = specialObj[i];
 			if (selector === s || startsWith(selector, s + '.')) {
 				//特殊オブジェクトそのものを指定された場合またはwindow. などドット区切りで続いている場合
-				return getByPath(selector, doc);
+				return h5.u.obj.getByPath(selector, getWindowByDocument(doc));
 			}
 		}
 		return selector;
@@ -739,7 +721,7 @@
 						selectTarget = rootElement;
 						isSelf = true;
 					} else {
-						if ((doc.defaultView || doc.parentWindow) == null) {
+						if (getWindowByDocument(doc) == null) {
 							// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
 							continue;
 						}
@@ -2047,7 +2029,7 @@
 		// 利便性のために循環参照になってしまうがコントローラの参照を持つ
 		this.__controller = controller;
 		// Viewモジュールがなければインスタンスを作成しない(できない)
-		if (getByPath('h5.core.view')) {
+		if (h5.u.obj.getByPath('h5.core.view')) {
 			this.__view = h5.core.view.createView();
 		}
 	}
@@ -2843,7 +2825,7 @@
 			// テンプレートがあればロード
 			var viewLoad = function(count) {
 				// Viewモジュールがない場合、この直後のloadでエラーが発生してしまうためここでエラーを投げる。
-				if (!getByPath('h5.core.view')) {
+				if (!h5.u.obj.getByPath('h5.core.view')) {
 					throwFwError(ERR_CODE_NOT_VIEW);
 				}
 				var vp = controller.view.load(templates);

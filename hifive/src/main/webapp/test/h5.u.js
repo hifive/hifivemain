@@ -943,7 +943,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', 7, function() {
+	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', 8, function() {
 		window.hoge = {
 			hogehoge: {
 				test: 10
@@ -955,20 +955,58 @@ $(function() {
 		};
 
 		var objs = h5.u.obj.getByPath('hoge.hogehoge.test');
-		deepEqual(objs, window.hoge.hogehoge.test, '10を取得できること。');
+		strictEqual(objs, window.hoge.hogehoge.test, '10を取得できること。');
 		objs = h5.u.obj.getByPath('hoge.hogehoge2');
-		deepEqual(objs, window.hoge.hogehoge2, 'nullが取得できること。');
+		strictEqual(objs, window.hoge.hogehoge2, 'nullが取得できること。');
 		objs = h5.u.obj.getByPath('hoge');
-		deepEqual(objs, window.hoge, 'window.hogeオブジェクトが取得できること。');
+		strictEqual(objs, window.hoge, 'window.hogeオブジェクトが取得できること。');
+		objs = h5.u.obj.getByPath('window.hoge.hogehoge');
+		strictEqual(objs, window.hoge.hogehoge,
+				'"window."で始まる名前空間を指定した時にwindowオブジェクトから辿った値が取得できること');
 		objs = h5.u.obj.getByPath('hoge.hogehoge4');
-		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
+		strictEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 		objs = h5.u.obj.getByPath('hoge.hogehoge4.hoge2');
-		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
+		strictEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 		objs = h5.u.obj.getByPath('hoge2');
-		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
+		strictEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 		raises(function() {
 			h5.u.obj.getByPath(window.hoge);
 		}, '文字列以外をパラメータに指定すると例外が発生すること。');
+	});
+
+	test('第2引数にルートオブジェクトを指定して、名前空間上のオブジェクトを取得。(h5.u.obj.getByPath)', 7, function() {
+		var root = {
+			hoge: {
+				hogehoge: {
+					test: 10
+				},
+				hogehoge2: null,
+				hogehoge3: {
+
+				}
+			},
+			window: {
+				hoge: {
+					hogehoge: 'a'
+				}
+			}
+		};
+
+		var objs = h5.u.obj.getByPath('hoge.hogehoge.test', root);
+		deepEqual(objs, root.hoge.hogehoge.test, '10を取得できること。');
+		objs = h5.u.obj.getByPath('hoge.hogehoge2', root);
+		deepEqual(objs, root.hoge.hogehoge2, 'nullが取得できること。');
+		objs = h5.u.obj.getByPath('hoge', root);
+		deepEqual(objs, root.hoge, 'window.hogeオブジェクトが取得できること。');
+		objs = h5.u.obj.getByPath('window.hoge', root);
+		strictEqual(objs, root.window.hoge,
+				'"window."で始まる名前空間を指定した時にルートオブジェクトの"window"プロパティから辿った値が取得できること');
+		objs = h5.u.obj.getByPath('hoge.hogehoge4', root);
+		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
+		objs = h5.u.obj.getByPath('hoge.hogehoge4.hoge2', root);
+		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
+		objs = h5.u.obj.getByPath('hoge2', root);
+		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 	});
 
 	//=============================

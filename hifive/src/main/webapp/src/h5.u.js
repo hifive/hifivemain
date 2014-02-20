@@ -1213,28 +1213,28 @@
 	 * 指定された名前空間に存在するオブジェクトを取得します。
 	 *
 	 * @param {String} namespace 名前空間
+	 * @param {Object} [rootObj=window] 名前空間のルートとなるオブジェクト。デフォルトはwindowオブジェクト。
 	 * @returns {Any} その名前空間に存在するオブジェクト
 	 * @name getByPath
 	 * @function
 	 * @memberOf h5.u.obj
 	 */
-	function getByPath(namespace) {
+	function getByPath(namespace, rootObj) {
 		if (!isString(namespace)) {
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
 		}
 
 		var names = namespace.split('.');
-		if (names[0] === 'window') {
+		if (!rootObj && names[0] === 'window') {
 			names.unshift();
 		}
-		var ret = window;
+		var ret = rootObj || window;
 		for ( var i = 0, len = names.length; i < len; i++) {
 			ret = ret[names[i]];
 			if (ret == null) { // nullまたはundefinedだったら辿らない
 				break;
 			}
 		}
-
 		return ret;
 	}
 
