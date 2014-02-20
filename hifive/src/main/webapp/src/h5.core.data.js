@@ -2297,10 +2297,9 @@
 	 *
 	 * @param {Object} schema validate済みでかつ継承先の項目も拡張済みのスキーマ
 	 * @param {Object} itemValueCheckFuncs プロパティの値をチェックする関数を持つオブジェクト
-	 * @param {DataModel} [model] データアイテムが属するモデル。ObservableItemの場合はundefined
 	 * @returns {Object} ObsItem,DataItemの生成に必要なスキーマのキャッシュデータ
 	 */
-	function createSchemaInfoCache(schema, itemValueCheckFuncs, model) {
+	function createSchemaInfoCache(schema, itemValueCheckFuncs) {
 		// 実プロパティ・依存プロパティ・配列プロパティを列挙
 		var realProps = [];
 		var dependProps = [];
@@ -3728,7 +3727,7 @@
 	 */
 	function createDataItemConstructor(schema, itemValueCheckFuncs, model) {
 		// スキーマ情報の作成。アイテムのプロトタイプとモデルに持たせる。
-		var schemaInfo = createSchemaInfoCache(schema, itemValueCheckFuncs, model);
+		var schemaInfo = createSchemaInfoCache(schema, itemValueCheckFuncs);
 		model._schemaInfo = schemaInfo;
 
 		/**
