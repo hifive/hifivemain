@@ -194,7 +194,7 @@
 	/**
 	 * documentオブジェクトからwindowオブジェクトを取得
 	 */
-	function getWindowByDocument(doc){
+	function getWindowOfDocument(doc){
 		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
 		return doc.defaultView || doc.parentWindow;
 	}
@@ -396,7 +396,7 @@
 			var s = specialObj[i];
 			if (selector === s || startsWith(selector, s + '.')) {
 				//特殊オブジェクトそのものを指定された場合またはwindow. などドット区切りで続いている場合
-				return h5.u.obj.getByPath(selector, getWindowByDocument(doc));
+				return h5.u.obj.getByPath(selector, getWindowOfDocument(doc));
 			}
 		}
 		return selector;
@@ -721,7 +721,7 @@
 						selectTarget = rootElement;
 						isSelf = true;
 					} else {
-						if (getWindowByDocument(doc) == null) {
+						if (getWindowOfDocument(doc) == null) {
 							// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
 							continue;
 						}
