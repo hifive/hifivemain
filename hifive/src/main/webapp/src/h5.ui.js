@@ -117,7 +117,7 @@
 	// Cache
 	//
 	// =========================================================================
-	var isPromise = h5.async.isPromise;
+
 	var h5ua = h5.env.ua;
 	var isJQueryObject = h5.u.obj.isJQueryObject;
 	var argsToArray = h5.u.obj.argsToArray;
@@ -553,17 +553,17 @@
 		if (doc.getElementById(ID_VML_STYLE)) {
 			return;
 		}
-		var head = doc.getElementsByTagName('head')[0];
 
 		doc.namespaces.add('v', 'urn:schemas-microsoft-com:vml');
 		// メモリリークとIE9で動作しない問題があるため、document.createStyleSheet()は使用しない
 		var vmlStyle = doc.createElement('style');
+		doc.getElementsByTagName('head')[0].appendChild(vmlStyle);
+
 		vmlStyle.id = ID_VML_STYLE;
 		var styleDef = ['v\\:stroke', 'v\\:line', 'v\\:textbox'].join(',')
 				+ ' { behavior:url(#default#VML); }';
 		vmlStyle.setAttribute('type', 'text/css');
 		vmlStyle.styleSheet.cssText = styleDef;
-		doc.getElementsByTagName('head')[0].appendChild(vmlStyle);
 	}
 
 	// =========================================================================
