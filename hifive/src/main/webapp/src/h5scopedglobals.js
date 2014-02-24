@@ -293,6 +293,7 @@ function registerCallbacksSilently(promise, method, args) {
  * @returns {Promise} Promiseオブジェクト
  */
 function thenCompat(promise, doneFilter, failFilter, progressFilter) {
+	//curCSS()はjQuery1.8.0で削除されたメソッド。これの有無で1.8以上かどうかの判定を代理している
 	return promise[$.hasOwnProperty('curCSS') ? 'pipe' : 'then'](doneFilter, failFilter,
 			progressFilter);
 }
