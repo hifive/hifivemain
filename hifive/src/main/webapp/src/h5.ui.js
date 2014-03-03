@@ -860,7 +860,7 @@
 		var that = this;
 		var $t = $(target);
 		// ターゲットが存在しない場合は何もしない
-		if(!$t.length){
+		if (!$t.length) {
 			return;
 		}
 		// documentの取得
@@ -964,20 +964,23 @@
 			that.hide();
 		};
 
+		// jQuery1.7以下ならpipe、1.8以降ならthenを使ってコールバックを登録
+		var pipeMethod = $.hasOwnProperty('curCSS') ? 'pipe' : 'then';
 		if ($.isArray(promises)) {
-			$.map(promises, function(item, idx) {
+			// プロミスでないものを除去
+			promises = $.map(promises, function(item, idx) {
 				return item && $.isFunction(item.promise) ? item : null;
 			});
 
 			if (promises.length > 0) {
 				// whenを呼んで、pipeにコールバックを登録。
 				// CFHの発火を阻害しないようにSilentlyでpipeコールバックを登録する。
-				registerCallbacksSilently(h5.async.when(promises), 'pipe', [promiseCallback,
+				registerCallbacksSilently(h5.async.when(promises), pipeMethod, [promiseCallback,
 						promiseCallback]);
 			}
 		} else if (promises && $.isFunction(promises.promise)) {
 			// CFHの発火を阻害しないようにpipeを呼び出し。
-			registerCallbacksSilently(promises, 'pipe', [promiseCallback, promiseCallback]);
+			registerCallbacksSilently(promises, pipeMethod, [promiseCallback, promiseCallback]);
 		}
 	}
 
@@ -990,7 +993,8 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 */
 		show: function() {
-			if (this._displayed || !this._$target || this._$target.children('.' + CLASS_INDICATOR_ROOT).length > 0) {
+			if (this._displayed || !this._$target
+					|| this._$target.children('.' + CLASS_INDICATOR_ROOT).length > 0) {
 				return this;
 			}
 
