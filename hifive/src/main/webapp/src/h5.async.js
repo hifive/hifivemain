@@ -41,6 +41,22 @@
 	 */
 	var CFH_HOOK_METHODS = ['fail', 'always', 'pipe', 'then'];
 
+	/**
+	 * pipeを実装するために使用するコールバック登録メソッド
+	 *
+	 * @private
+	 * @type {Array}
+	 */
+	var PIPE_CREATE_METHODS = ['done', 'fail', 'progress'];
+
+	/**
+	 * pipeを実装するために使用するコールバック登録メソッドに対応するDeferredのコールバック呼び出しメソッド
+	 *
+	 * @private
+	 * @type {Array}
+	 */
+	var PIPE_CREATE_ACTIONS = ['resolve', 'reject', 'notify'];
+
 	// =============================
 	// Development Only
 	// =============================
@@ -296,15 +312,13 @@
 				// (1.8以降の動作の場合thenも同じ)
 				// そのため、pipeはFW側で実装する
 
-				// 新しくプロミスを生成する
-				var newDefer = h5.async.deferred();
+				// 新しくDeferredを生成する
+				var newDeferred = h5.async.deferred();
 
 				// コールバックの登録
 				var fns = argsToArray(arguments);
-				var methods = ['done', 'fail', 'progress'];
-				var actions = ['resolve', 'reject', 'notify'];
 
-				for ( var i = 0, l = methods.length; i < l; i++) {
+				for ( var i = 0, l = PIPE_CREATE_METHODS.length; i < l; i++) {
 					var that = this;
 					(function(fn, method, action) {
 						if (!$.isFunction(fn)) {
@@ -317,20 +331,20 @@
 							if (ret && $.isFunction(ret.promise)) {
 								toCFHAware(ret);
 								// コールバックが返したプロミスについてコールバックを登録する
-								ret.done(newDefer.resolve);
+								ret.done(newDeferred.resolve);
 								// _h5UnwrappedCallを使って、CFHの挙動を阻害しないようにfailハンドラを登録
-								ret._h5UnwrappedCall('fail', newDefer.reject);
+								ret._h5UnwrappedCall('fail', newDeferred.reject);
 								// jQuery1.6以下でh5を使わずに生成されたプロミスならprogressはないので、
 								// progressメソッドがあるかチェックしてからprogressハンドラを登録
-								$.isFunction(ret.progress) && ret.progress(newDefer.notify);
+								$.isFunction(ret.progress) && ret.progress(newDeferred.notify);
 							} else {
 								// 戻り値を次のコールバックに渡す
-								newDefer[action + 'With'](this, [ret]);
+								newDeferred[action + 'With'](this, [ret]);
 							}
 						});
-					})(fns[i], methods[i], actions[i]);
+					})(fns[i], PIPE_CREATE_METHODS[i], PIPE_CREATE_ACTIONS[i]);
 				}
-				return newDefer.promise();
+				return newDeferred.promise();
 			};
 			hookMethods.pipe = promise.pipe;
 		}
