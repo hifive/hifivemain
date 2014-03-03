@@ -16,6 +16,9 @@
  * hifive
  */
 
+// skipCurrentModuleが呼ばれたときに、スキップするモジュールを覚えておく
+var skipModules = {};
+
 // resolve済みかどうかをチェックする関数
 function isResolved(dfd) {
 	return dfd.isResolved ? dfd.isResolved() : dfd.state() === 'resolved';
@@ -70,6 +73,9 @@ function isDisposed(controller) {
 }
 
 // iframeを作成
+// IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
+// jQuery内部のsetDocumentでattachEventが呼ばれてエラーになる(IE11にはattachEventがないため)
+// ので、IE11&&(jQuery1.10.1||2.0.2)の場合は、この関数を使ったテスト=iframeを使ったテストは行わない。
 function createIFrameElement() {
 	var dfd = h5.async.deferred();
 	var iframe = document.createElement('iframe');
@@ -81,20 +87,11 @@ function createIFrameElement() {
 	// # firefoxでは、iframeの準備ができたらcontentDocumentが指し替わる。
 	// # 指し替わる前のdocumentのreadystateはずっとuninitializedのままなので、ハンドラを引っかけても発火しない
 	function check() {
-		// ifrae.contentDocumentはIE7-で使えないので、contentWindowからdocumentを取得
+		// iframe.contentDocumentはIE7-で使えないので、contentWindowからdocumentを取得
 		var doc = iframe.contentWindow.document;
 		if (doc.readyState !== 'complete') {
 			setTimeout(check, 10);
 			return;
-		}
-		if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11 && ($().jquery === '1.10.1' || $().jquery === '2.0.2' )) {
-			// IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
-			// jQuery内部のsetDocumentでattachEventが呼ばれてエラーになる
-			// (IE11にはattachEventがないため)
-			// エラー回避のため、addEventListenerを呼ぶ関数をattachEventに設定しておく
-			iframe.contentWindow.attachEvent = function(ev, func) {
-				this.addEventListener(ev.slice(ev.indexOf('on') ? 0 : 2), func);
-			};
 		}
 		dfd.resolve(iframe, doc);
 	}
@@ -114,7 +111,7 @@ function openPopupWindow() {
 		dfd.resolve(w);
 	}
 
-	// Firefoxの場合は、window.openで新しいwindowが同期で開き、readyStateが取得できないので、compelteでなくても同期でload()を呼ぶ
+	// Firefoxの場合は、window.openで新しいwindowが同期で開き、readyStateが取得できないので、completeでなくても同期でload()を呼ぶ
 	if (w.document && w.document.readyState === 'complete' || h5.env.ua.isFirefox) {
 		load();
 		return dfd.promise();
@@ -148,8 +145,9 @@ function closePopupWindow(w) {
 	return dfd.promise();
 }
 
-// 現在実行中のテストをスキップする。テストケース内(test,asyncTest)から呼ばれることを想定している
+// 現在実行中のテストをスキップする。テストケース内(test,asyncTest)またはmoduleのsetupから呼ばれることを想定している
 function skipCurrentTest() {
+	// test,asyncTest内から呼ばれた場合
 	// テストが成功するようにする
 	ok(true, 'テストをスキップしました');
 	QUnit.config.current.expected = null;
@@ -163,4 +161,16 @@ function skipCurrentTest() {
 		replace += this.outerHTML || this.nodeValue;
 	});
 	QUnit.config.current.nameHtml = replace;
+}
+
+// 次に実行されるテストをスキップする。モジュールのsetup内で呼ばれることを想定している
+function skipCallback() {
+	// モジュールのsetupから呼ばれた場合
+	QUnit.config.current.callback = function() {
+		skipCurrentTest.apply(this);
+		if (QUnit.config.current.async) {
+			start();
+		}
+	};
+	return;
 }

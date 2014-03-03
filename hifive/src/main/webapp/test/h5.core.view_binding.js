@@ -3025,6 +3025,12 @@ $(function() {
 	//=============================
 	module('iframeのドキュメント内の要素へのバインド', {
 		setup: function() {
+			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
+			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
+					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
+				skipCallback();
+				return;
+			}
 			stop();
 			var that = this;
 			createIFrameElement().done(function(iframe, doc) {
@@ -3131,6 +3137,8 @@ $(function() {
 						that.win = win;
 						start();
 					}).fail(function() {
+						// 失敗したらテストは実行しない
+						skipCallback();
 						start();
 					});
 				},
@@ -3153,10 +3161,6 @@ $(function() {
 	//=============================
 	test('要素へバインドできること', 3, function() {
 		var w = this.win;
-		if (!w) {
-			skipCurrentTest();
-			return;
-		}
 		// IE8-の場合、w.frameElementにアクセスするとエラーになる。
 		// jQuery1.10.1で、別ウィンドウの要素にappendで要素を追加すると、内部(setDocument内)でownerDocument.parentWindow.frameElementエラーになる。
 		// setDocumentはjQueryのDOM選択対象のドキュメントを設定する処理が走る。(内部変数の変更がある)
@@ -3188,10 +3192,6 @@ $(function() {
 
 	test('配列をバインドできること', 2, function() {
 		var w = this.win;
-		if (!w) {
-			skipCurrentTest();
-			return;
-		}
 		try {
 			$.find.setDocument(w.document);
 		} catch (e) {
@@ -3221,10 +3221,6 @@ $(function() {
 
 	test('ObservableArrayをバインドできること', 6, function() {
 		var w = this.win;
-		if (!w) {
-			skipCurrentTest();
-			return;
-		}
 		try {
 			$.find.setDocument(w.document);
 		} catch (e) {

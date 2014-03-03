@@ -2949,108 +2949,108 @@ $(function() {
 		});
 	});
 
-//	asyncTest(
-//			'[build#min]h5.core.interceptor.logInterceptorの動作 (※要目視確認)',
-//			1,
-//			function() {
-//				var log = {
-//					interceptors: h5.core.interceptor.logInterceptor
-//				};
-//				h5.core.__compileAspects([log]);
-//
-//				var controller = {
-//					__name: 'TestController',
-//
-//					'input[type=button] click': function(context) {
-//						this.test();
-//					},
-//
-//					test: function() {
-//						$('#controllerResult').empty().text('ok');
-//					}
-//				};
-//
-//				var testController = h5.core.controller('#controllerTest', controller);
-//				testController.readyPromise
-//						.done(function() {
-//							$('#controllerTest input[type=button]').click();
-//
-//							var message = '[ INFO]{timestamp}: TestController "input[type=button] click"が開始されました。 \n';
-//							message += '    (中略) \n';
-//							message += '[ INFO]{timestamp}: TestController "input[type=button] click"が終了しました。 \n';
-//							message += 'というメッセージがデバッグコンソールに表示されていることを確認してください。';
-//							ok(true, message);
-//
-//							testController.unbind();
-//							cleanAspects();
-//							start();
-//						});
-//
-//			});
-//
-//	asyncTest(
-//			'[build#min]h5.core.interceptor.lapInterceptorの動作 (※要目視確認)',
-//			1,
-//			function() {
-//				var lap = {
-//					interceptors: h5.core.interceptor.lapInterceptor
-//				};
-//				h5.core.__compileAspects([lap]);
-//
-//				var controller = {
-//					__name: 'TestController',
-//
-//					'input[type=button] click': function(context) {
-//					//
-//					},
-//
-//					test: function() {
-//						$('#controllerResult').empty().text('ok');
-//					}
-//				};
-//				var testController = h5.core.controller('#controllerTest', controller);
-//				testController.readyPromise
-//						.done(function() {
-//							$('#controllerTest input[type=button]').click();
-//
-//							var message = '[ INFO]{timestamp}: TestController "input[type=button] click": {time}ms';
-//							message += 'というメッセージがデバッグコンソールに表示されていることを確認してください。';
-//							ok(true, message);
-//
-//							testController.unbind();
-//							cleanAspects();
-//							start();
-//						});
-//			});
-//
-//	asyncTest('[build#min]h5.core.interceptor.errorInterceptorの動作', function() {
-//		var errorInterceptor = {
-//			interceptors: h5.core.interceptor.errorInterceptor
-//		};
-//		h5.core.__compileAspects([errorInterceptor]);
-//
-//		var errMsg = null;
-//		h5.settings.commonFailHandler = function(e) {
-//			errMsg = e.message;
-//		};
-//
-//		var controller = {
-//			__name: 'TestController',
-//
-//			__init: function() {
-//				throw new Error('error interceptor test');
-//			}
-//		};
-//		var testController = h5.core.controller('#controllerTest', controller);
-//		testController.readyPromise.done(function() {
-//			strictEqual(errMsg, 'error interceptor test',
-//					'errorInterceptorによって例外がcatchされ、commonFailHandlerが呼ばれたか');
-//
-//			testController.unbind();
-//			cleanAspects();
-//			start();
-//		});
-//	});
+	//	asyncTest(
+	//			'[build#min]h5.core.interceptor.logInterceptorの動作 (※要目視確認)',
+	//			1,
+	//			function() {
+	//				var log = {
+	//					interceptors: h5.core.interceptor.logInterceptor
+	//				};
+	//				h5.core.__compileAspects([log]);
+	//
+	//				var controller = {
+	//					__name: 'TestController',
+	//
+	//					'input[type=button] click': function(context) {
+	//						this.test();
+	//					},
+	//
+	//					test: function() {
+	//						$('#controllerResult').empty().text('ok');
+	//					}
+	//				};
+	//
+	//				var testController = h5.core.controller('#controllerTest', controller);
+	//				testController.readyPromise
+	//						.done(function() {
+	//							$('#controllerTest input[type=button]').click();
+	//
+	//							var message = '[ INFO]{timestamp}: TestController "input[type=button] click"が開始されました。 \n';
+	//							message += '    (中略) \n';
+	//							message += '[ INFO]{timestamp}: TestController "input[type=button] click"が終了しました。 \n';
+	//							message += 'というメッセージがデバッグコンソールに表示されていることを確認してください。';
+	//							ok(true, message);
+	//
+	//							testController.unbind();
+	//							cleanAspects();
+	//							start();
+	//						});
+	//
+	//			});
+	//
+	//	asyncTest(
+	//			'[build#min]h5.core.interceptor.lapInterceptorの動作 (※要目視確認)',
+	//			1,
+	//			function() {
+	//				var lap = {
+	//					interceptors: h5.core.interceptor.lapInterceptor
+	//				};
+	//				h5.core.__compileAspects([lap]);
+	//
+	//				var controller = {
+	//					__name: 'TestController',
+	//
+	//					'input[type=button] click': function(context) {
+	//					//
+	//					},
+	//
+	//					test: function() {
+	//						$('#controllerResult').empty().text('ok');
+	//					}
+	//				};
+	//				var testController = h5.core.controller('#controllerTest', controller);
+	//				testController.readyPromise
+	//						.done(function() {
+	//							$('#controllerTest input[type=button]').click();
+	//
+	//							var message = '[ INFO]{timestamp}: TestController "input[type=button] click": {time}ms';
+	//							message += 'というメッセージがデバッグコンソールに表示されていることを確認してください。';
+	//							ok(true, message);
+	//
+	//							testController.unbind();
+	//							cleanAspects();
+	//							start();
+	//						});
+	//			});
+	//
+	//	asyncTest('[build#min]h5.core.interceptor.errorInterceptorの動作', function() {
+	//		var errorInterceptor = {
+	//			interceptors: h5.core.interceptor.errorInterceptor
+	//		};
+	//		h5.core.__compileAspects([errorInterceptor]);
+	//
+	//		var errMsg = null;
+	//		h5.settings.commonFailHandler = function(e) {
+	//			errMsg = e.message;
+	//		};
+	//
+	//		var controller = {
+	//			__name: 'TestController',
+	//
+	//			__init: function() {
+	//				throw new Error('error interceptor test');
+	//			}
+	//		};
+	//		var testController = h5.core.controller('#controllerTest', controller);
+	//		testController.readyPromise.done(function() {
+	//			strictEqual(errMsg, 'error interceptor test',
+	//					'errorInterceptorによって例外がcatchされ、commonFailHandlerが呼ばれたか');
+	//
+	//			testController.unbind();
+	//			cleanAspects();
+	//			start();
+	//		});
+	//	});
 
 	asyncTest('this.deferred()は動作しているか', function() {
 
@@ -5818,11 +5818,11 @@ $(function() {
 												'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
 										c.dispose();
 									});
-						}).fail(function(){
-							// ウィンドウが開けない(=ポップアップブロックされている)場合はテストをスキップ
-							skipCurrentTest();
-							start();
-						});
+						}).fail(function() {
+					// ウィンドウが開けない(=ポップアップブロックされている)場合はテストをスキップ
+					skipCurrentTest();
+					start();
+				});
 			});
 
 	//=============================
@@ -7167,54 +7167,6 @@ $(function() {
 		});
 	});
 
-	asyncTest('iframe内の要素にバインドしたコントローラでルート要素にインジケータを表示', 4,
-			function() {
-				var controllerBase = {
-					__name: 'TestController',
-
-					'button click': function() {
-						var indicator = this.indicator({
-							message: 'BlockMessageTest'
-						}).show();
-
-						strictEqual($(indicator._target).find(
-								'.h5-indicator.a.content > .indicator-message').text(),
-								'BlockMessageTest');
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-								'Indicator#show() インジケータが表示されること');
-
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
-								'display'), 'block', 'オーバーレイが表示されていること');
-
-						var that = this;
-						setTimeout(function() {
-							indicator.hide();
-
-							setTimeout(function() {
-								strictEqual($('.h5-indicator', indicator._target).length, 0,
-										'Indicator#hide() インジケータが除去されていること');
-
-								that.unbind();
-								start();
-							}, 0);
-						}, 0);
-					}
-				};
-				// iframeを追加
-				createIFrameElement().done(function(iframe, doc) {
-					// 要素の追加
-					var div = doc.createElement('div');
-					div.id = 'parent-div';
-					var btn = doc.createElement('button');
-					div.appendChild(btn);
-					doc.body.appendChild(div);
-
-					h5.core.controller(div, controllerBase).readyPromise.done(function() {
-						$(btn).click();
-					});
-
-				});
-			});
 	//=============================
 	// Definition
 	//=============================
@@ -7418,8 +7370,17 @@ $(function() {
 						});
 			});
 
+	//=============================
+	// Definition
+	//=============================
 	module('iframe内の要素にコントローラをバインド', {
 		setup: function() {
+			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
+			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
+					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
+				skipCallback();
+				return;
+			}
 			stop();
 			var that = this;
 			createIFrameElement().done(function(iframe, doc) {
@@ -7435,7 +7396,8 @@ $(function() {
 				childDiv.appendChild(btn);
 				div.appendChild(childDiv);
 				doc.body.appendChild(div);
-
+				that.parentDiv = div;
+				that.childDiv = childDiv;
 				start();
 			});
 		},
@@ -7443,10 +7405,15 @@ $(function() {
 			disposeQUnitFixtureController();
 			$(this.iframe).remove();
 		},
+		parentDiv: null,
+		childDiv: null,
 		iframe: null,
 		ifDoc: null
 	});
 
+	//=============================
+	// Body
+	//=============================
 	asyncTest('イベントハンドラが動作すること', 1, function() {
 		var that = this;
 		// iframeの準備が終わるまで待機
@@ -7532,5 +7499,43 @@ $(function() {
 							$(document).unbind('click', docHandler);
 							start();
 						});
+			});
+	asyncTest(
+			'iframe内の要素にバインドしたコントローラでルート要素にインジケータを表示',
+			4, function() {
+				var controllerBase = {
+					__name: 'TestController',
+
+					'button click': function() {
+						var indicator = this.indicator({
+							message: 'BlockMessageTest'
+						}).show();
+
+						strictEqual($(indicator._target).find(
+								'.h5-indicator.a.content > .indicator-message').text(),
+								'BlockMessageTest');
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+								'Indicator#show() インジケータが表示されること');
+
+						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
+								'display'), 'block', 'オーバーレイが表示されていること');
+
+						var that = this;
+						setTimeout(function() {
+							indicator.hide();
+
+							setTimeout(function() {
+								strictEqual($('.h5-indicator', indicator._target).length, 0,
+										'Indicator#hide() インジケータが除去されていること');
+
+								that.unbind();
+								start();
+							}, 0);
+						}, 0);
+					}
+				};
+				h5.core.controller(this.parentDiv, controllerBase).readyPromise.done(function() {
+					this.$find('button').click();
+				});
 			});
 });

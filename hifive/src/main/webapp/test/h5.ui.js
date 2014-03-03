@@ -974,35 +974,57 @@ $(function() {
 		strictEqual(cfhCount, 1, '複数のプロミスを渡したとき、まとめて1回だけcommonFailHandlerが実行されること');
 	});
 
+	//=============================
+	// Definition
+	//=============================
+	module('iframe内の要素', {
+		setup: function() {
+			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
+			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
+					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
+				skipCallback();
+				return;
+			}
+			stop();
+			var that = this;
+			createIFrameElement().done(function(iframe, doc) {
+				that.doc = doc;
+				start();
+			});
+		},
+		teardown: function() {
+			this.doc = null;
+		},
+		doc: null
+	});
+
+	//=============================
+	// Body
+	//=============================
 	asyncTest('iframe内の要素にインジケータを表示できること', 5, function() {
 		// iframeの作成
-		createIFrameElement().done(
-				function(iframe, doc) {
+		var doc = this.doc;
+		var indicator = h5.ui.indicator(doc.body, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === doc.body, 'ターゲットがiframe内の要素であること');
 
-					var indicator = h5.ui.indicator(doc.body, {
-						message: 'BlockMessageTest'
-					}).show();
-					ok(indicator._target === doc.body, 'ターゲットがiframe内の要素であること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
 
-					strictEqual($(indicator._target).find(
-							'.h5-indicator.a.content > .indicator-message').text(),
-							'BlockMessageTest', 'メッセージが表示されていること');
-					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-							'Indicator#show() インジケータが表示されること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
 
-					strictEqual(
-							$(indicator._target).find('.h5-indicator.a.overlay').css('display'),
-							'block', 'オーバーレイが表示されていること');
+		setTimeout(function() {
+			indicator.hide();
 
-					setTimeout(function() {
-						indicator.hide();
-
-						setTimeout(function() {
-							strictEqual($('.h5-indicator', indicator._target).length, 0,
-									'Indicator#hide() インジケータが除去されていること');
-							start();
-						}, 0);
-					}, 0);
-				});
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
 	});
 });
