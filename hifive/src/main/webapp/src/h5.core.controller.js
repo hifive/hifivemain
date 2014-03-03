@@ -3023,7 +3023,7 @@
 		logic.deferred = getDeferred;
 		logic.log = h5.log.createLogger(logicName);
 		logic.__logicContext = {
-			logicDef: $.extend(true, {}, logicDefObj)
+			logicDef: logicDefObj
 		};
 		logic.own = own;
 		logic.ownWithOrg = ownWithOrg;
