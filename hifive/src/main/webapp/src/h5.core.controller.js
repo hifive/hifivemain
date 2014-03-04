@@ -194,7 +194,7 @@
 	/**
 	 * documentオブジェクトからwindowオブジェクトを取得
 	 */
-	function getWindowOfDocument(doc){
+	function getWindowOfDocument(doc) {
 		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
 		return doc.defaultView || doc.parentWindow;
 	}
@@ -257,7 +257,7 @@
 			return ret;
 		}
 		aspects = wrapInArray(aspects);
-		for (var i = aspects.length - 1; -1 < i; i--) {
+		for ( var i = aspects.length - 1; -1 < i; i--) {
 			var aspect = aspects[i];
 			if (aspect.target && !aspect.compiledTarget.test(targetName)) {
 				continue;
@@ -270,7 +270,7 @@
 				ret.push(interceptors);
 				continue;
 			}
-			for (var j = interceptors.length - 1; -1 < j; j--) {
+			for ( var j = interceptors.length - 1; -1 < j; j--) {
 				ret = ret.concat(interceptors[j]);
 			}
 		}
@@ -304,7 +304,7 @@
 		};
 
 		var f = base;
-		for (var i = 0, l = aspects.length; i < l; i++) {
+		for ( var i = 0, l = aspects.length; i < l; i++) {
 			f = weave(f, funcName, aspects[i]);
 		}
 		return f;
@@ -392,7 +392,7 @@
 	 */
 	function getGlobalSelectorTarget(selector, doc) {
 		var specialObj = ['window', 'document', 'navigator'];
-		for (var i = 0, len = specialObj.length; i < len; i++) {
+		for ( var i = 0, len = specialObj.length; i < len; i++) {
 			var s = specialObj[i];
 			if (selector === s || startsWith(selector, s + '.')) {
 				//特殊オブジェクトそのものを指定された場合またはwindow. などドット区切りで続いている場合
@@ -576,7 +576,7 @@
 			useBindObj(bindObj, bindRequested);
 			return;
 		}
-		for (var i = 0, l = bindObj.length; i < l; i++) {
+		for ( var i = 0, l = bindObj.length; i < l; i++) {
 			useBindObj(bindObj[i], bindRequested);
 		}
 	}
@@ -1725,13 +1725,13 @@
 				// readyDfdまでrejectしたら終了
 				if (propertyIndex < propertyArray.length - 1) {
 					// ルートコントローラまで辿ったら、末裔のコントローラに対して次のdfdをrejectさせる
-					for (var i = 0, l = descendantControllers.length; i < l; i++) {
+					for ( var i = 0, l = descendantControllers.length; i < l; i++) {
 						rejectControllerDfdLoop(descendantControllers[i], propertyIndex + 1);
 					}
 				}
 			}
 		}
-		for (var i = 0, l = descendantControllers.length; i < l; i++) {
+		for ( var i = 0, l = descendantControllers.length; i < l; i++) {
 			rejectControllerDfdLoop(descendantControllers[i], 0);
 		}
 	}
@@ -1746,7 +1746,7 @@
 	 */
 	function findCommentBindingTarget(rootNode, id) {
 		var childNodes = rootNode.childNodes;
-		for (var i = 0, len = childNodes.length; i < len; i++) {
+		for ( var i = 0, len = childNodes.length; i < len; i++) {
 			var n = childNodes[i];
 			if (n.nodeType === 1) {
 				//Magic number: 1はNode.ELEMENT_NODE
@@ -2057,14 +2057,14 @@
 
 			target = [];
 			var childNodes = $dummyRoot[0].childNodes;
-			for (var i = 0, len = childNodes.length; i < len; i++) {
+			for ( var i = 0, len = childNodes.length; i < len; i++) {
 				target.push(childNodes[i]);
 			}
 
 			//ダミールートから要素を外し、インラインテンプレートの直後に要素を挿入
 			$dummyRoot.empty();
 			var fragment = document.createDocumentFragment();
-			for (var i = 0, len = target.length; i < len; i++) {
+			for ( var i = 0, len = target.length; i < len; i++) {
 				fragment.appendChild(target[i]);
 			}
 
@@ -2660,7 +2660,7 @@
 			var seekRoot = $(rootElement)[0];
 			var controllers = this.controllers;
 			var ret = [];
-			for (var i = 0, len = controllers.length; i < len; i++) {
+			for ( var i = 0, len = controllers.length; i < len; i++) {
 				var controller = controllers[i];
 
 				if (names && $.inArray(controller.__name, names) === -1) {
@@ -2789,9 +2789,12 @@
 			});
 		}
 
+		// new Controllerで渡すコントローラ定義オブジェクトはクローンしたものではなくオリジナルなものを渡す。
+		// コントローラが持つコントローラ定義オブジェクトはオリジナルのものになる。
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
 				controllerName, controllerDefObj, param, isRoot);
 
+		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
 		var templatePromise = templateDfd.promise();
@@ -2887,15 +2890,15 @@
 			controller.rootController && controller.rootController.dispose(e);
 		});
 
-		for ( var prop in controllerDefObj) {
+		for ( var prop in clonedControllerDef) {
 			if (controllerPropertyMap[prop]) {
 				throwFwError(ERR_CODE_CONTROLLER_SAME_PROPERTY, [controllerName, prop], {
 					controllerDefObj: controllerDefObj
 				});
-			} else if (isLifecycleProperty(controllerDefObj, prop)) {
+			} else if (isLifecycleProperty(clonedControllerDef, prop)) {
 				// ライフサイクルイベント
-				controller[prop] = weaveControllerAspect(controllerDefObj, prop);
-			} else if (isEventHandler(controllerDefObj, prop)) {
+				controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
+			} else if (isEventHandler(clonedControllerDef, prop)) {
 				// イベントハンドラ
 				var propTrimmed = $.trim(prop);
 				var lastIndex = propTrimmed.lastIndexOf(' ');
@@ -2923,29 +2926,31 @@
 								controllerDefObj: controllerDefObj
 							});
 				}
-				var weavedFunc = weaveControllerAspect(controllerDefObj, prop, true);
+				var weavedFunc = weaveControllerAspect(clonedControllerDef, prop, true);
 				bindMap[selector][eventName] = weavedFunc;
 				controller[prop] = weavedFunc;
-			} else if (endsWith(prop, SUFFIX_CONTROLLER) && controllerDefObj[prop]
-					&& !$.isFunction(controllerDefObj[prop])) {
+			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
+					&& !$.isFunction(clonedControllerDef[prop])) {
 				// 子コントローラをバインドする。fwOpt.isInternalを指定して、子コントローラであるかどうか分かるようにする
 				var c = createAndBindController(null,
-						$.extend(true, {}, controllerDefObj[prop]), param, $.extend({
+						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
 							isInternal: true
 						}, fwOpt));
 				controller[prop] = c;
-			} else if (endsWith(prop, SUFFIX_LOGIC) && controllerDefObj[prop]
-					&& !$.isFunction(controllerDefObj[prop])) {
+			} else if (endsWith(prop, SUFFIX_LOGIC) && clonedControllerDef[prop]
+					&& !$.isFunction(clonedControllerDef[prop])) {
 				// ロジック
+				// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
+				// コントローラが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
 				var logicTarget = controllerDefObj[prop];
 				var logic = createLogic(logicTarget);
 				controller[prop] = logic;
-			} else if ($.isFunction(controllerDefObj[prop])) {
+			} else if ($.isFunction(clonedControllerDef[prop])) {
 				// イベントハンドラではないメソッド
-				controller[prop] = weaveControllerAspect(controllerDefObj, prop);
+				controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
 			} else {
 				// その他プロパティ
-				controller[prop] = controllerDefObj[prop];
+				controller[prop] = clonedControllerDef[prop];
 			}
 		}
 
