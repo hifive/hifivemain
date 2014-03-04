@@ -2941,10 +2941,9 @@
 					&& !$.isFunction(clonedControllerDef[prop])) {
 				// ロジック
 				// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
-				// コントローラが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
-				var logicTarget = controllerDefObj[prop];
-				var logic = createLogic(logicTarget);
-				controller[prop] = logic;
+				// ロジックが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
+				var logicDef = controllerDefObj[prop];
+				controller[prop] = createLogic(logicDef);
 			} else if ($.isFunction(clonedControllerDef[prop])) {
 				// イベントハンドラではないメソッド
 				controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
@@ -3013,20 +3012,28 @@
 	 */
 	function createLogic(logicDefObj) {
 		var logicName = logicDefObj.__name;
+
+		// エラーチェック
 		if (!isString(logicName) || $.trim(logicName).length === 0) {
+			// __nameが不正
 			throwFwError(ERR_CODE_INVALID_LOGIC_NAME, null, {
 				logicDefObj: logicDefObj
 			});
 		}
 		if (logicDefObj.__logicContext) {
+			// すでにロジックがインスタンス化されている
 			throwFwError(ERR_CODE_LOGIC_ALREADY_CREATED, null, {
 				logicDefObj: logicDefObj
 			});
 		}
-		var logic = weaveLogicAspect($.extend(true, {}, logicDefObj));
+
+		// クローンしたものをロジック化する
+		var clonedLogicDef = $.extend(true, {}, logicDefObj);
+		var logic = weaveLogicAspect(clonedLogicDef);
 		logic.deferred = getDeferred;
 		logic.log = h5.log.createLogger(logicName);
 		logic.__logicContext = {
+			// ロジック定義オブジェクトはクローンしたものではなくオリジナルのものを持たせる
 			logicDef: logicDefObj
 		};
 		logic.own = own;
