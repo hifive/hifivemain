@@ -1552,15 +1552,15 @@
 	//
 	//========================================================
 	/**
-	 * 初期化プロパティとObservableItemまたはDataItemのインスタンスを引数にとり、 ObservableItemとDataItemで共通するセットアップを行います
+	 * ObservableItemまたはDataItemのインスタンスと、初期化プロパティを引数にとり、 アイテムインスタンスの初期化処理を行います。
 	 *
 	 * @private
 	 * @param {DataItem|ObservableItem} item
 	 * @param {Object} schema スキーマ
-	 * @param {Object} schemaInfo schemaInfo
+	 * @param {Object} schemaInfo  チェック済みスキーマ
 	 * @param {Object} userInitialValue 初期値としてsetする値が格納されたオブジェクト
 	 */
-	function itemSetup(item, schema, schemaInfo, userInitialValue) {
+	function initItem(item, schema, schemaInfo, userInitialValue) {
 		// アイテムが持つ値を格納するオブジェクト
 		item._values = {};
 
@@ -3769,7 +3769,7 @@
 		 * @param {Object} userInitialValue ユーザー指定の初期値
 		 */
 		function DataItem(userInitialValue) {
-			itemSetup(this, schema, schemaInfo, userInitialValue);
+			initItem(this, schema, schemaInfo, userInitialValue);
 
 			// 初期値の設定
 			var actualInitialValue = schemaInfo._createInitialValueObj(userInitialValue);
@@ -3791,9 +3791,6 @@
 
 			/**
 			 * データアイテムが属しているデータモデル
-			 * <p>
-			 * データモデルからデータアイテムが削除された場合、このプロパティはnullになる
-			 * </p>
 			 *
 			 * @private
 			 * @since 1.1.0
@@ -3909,7 +3906,7 @@
 		var schemaInfo = createSchemaInfoCache(schema, itemValueCheckFuncs);
 
 		// obsItemのセットアップ
-		itemSetup(obsItem, schema, schemaInfo);
+		initItem(obsItem, schema, schemaInfo);
 
 		// schemaを持たせる
 		obsItem.schema = schema;
