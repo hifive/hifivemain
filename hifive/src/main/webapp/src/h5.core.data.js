@@ -2511,13 +2511,18 @@
 
 				if (!isAlreadyInUpdate) {
 					// アップデートセッション中じゃなければすぐにendUpdate()
-					// ただし、引数を指定してendUpdate()時にdispatchされてしまうのを防ぐ
-					model._manager.endUpdate({
-						_dispatchObservableArrayChange: false
-					});
+					// _isArrayPropChangeSilentlyRequestedをtrueにして、endUpdate()時にdispatchされないようにする
+					model._manager._isArrayPropChangeSilentlyRequested = true;
+					model._manager.endUpdate();
+					// endUpdateが終わったらフラグを元に戻す
+					model._manager._isArrayPropChangeSilentlyRequested = false;
 				} else {
 					// アップデートセッション中であればendUpdate()が呼ばれたときに、endUpdate()がchangeを発火させるので、
 					// ObservableArrayのchangeをここでストップする。
+					// DataItemが持つtype:arrayのプロパティのObservableArrayはDataItem作成時に生成しており、
+					// このchangeListenerがそのObservableArrayの一番最初に登録されたハンドラになります。
+					// ハンドラは登録された順番に実行されるため、ここでstopImmediatePropagation()することで
+					// 登録されたすべてのハンドラの実行をストップすることができます。
 					event.stopImmediatePropagation();
 				}
 			} else {
@@ -2785,6 +2790,21 @@
 		 * @memberOf DataModelManager
 		 */
 		this._updateLogs = null;
+
+		/**
+		 * endUpdate時に配列プロパティについてイベントをあげないかどうか。
+		 * <p>
+		 * デフォルトではfalseで、endUpdate時にイベントをあげます。 <br>
+		 * DataItem作成時にFW内部で登録したchangeListenerからendUpdateを呼ぶ場合にこのフラグはtrueになり、<br>
+		 * endUpdate時に配列プロパティのイベントは上がりません。<br>
+		 * </p>
+		 *
+		 * @private
+		 * @name _isArrayPropChangeSilentlyRequested
+		 * @type {Boolean}
+		 * @memberOf DataModelManager
+		 */
+		this._isArrayPropChangeSilentlyRequested = false;
 	}
 	DataModelManager.prototype = new EventDispatcher();
 	$.extend(DataModelManager.prototype, {
@@ -2896,16 +2916,15 @@
 		 * @since 1.1.0
 		 * @memberOf DataModelManager
 		 */
-		/**
-		 * @private
-		 * @param {Boolean} [_opt._dispatchObservableArrayChange=true]
-		 *            マネージャ下に属しているObservableArrayのchangeイベントをdispatchするかどうか
-		 */
 		endUpdate: function(_opt) {
 			if (!this.isInUpdate()) {
 				return;
 			}
-			var dispatchObsAryChange = _opt ? _opt._dispatchObservableArrayChange !== false : true;
+			// ObsArrayのchangeイベントをこのendUpdate内でdispatchするかどうか。
+			// 変更があったObsArrayのイベントがbeginUpdateにより制御されていた場合はここでObsArrayのイベントをdispatchする必要がある。
+			// 変更があったObsArrayのイベントがすでに実行されている場合はここで改めてdispatchする必要はい。
+			// マネージャの_isArrayPropChangeSilentlyRequestedがtrueの場合は後者なので、ObsArrayのchangeイベントは上げない。
+			var dispatchObsAryChange = !this._isArrayPropChangeSilentlyRequested;
 
 			var updateLogs = this._updateLogs;
 			var oldValueLogs = this._oldValueLogs;
@@ -2922,7 +2941,6 @@
 				}
 				return null;
 			}
-
 
 			/**
 			 * 内部でDataItemごとのイベントを発火させます。 変更が1つでもあればモデルイベントオブジェクト(のひな形)を返しますが、変更がない場合はfalseを返します
