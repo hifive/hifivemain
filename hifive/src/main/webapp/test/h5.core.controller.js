@@ -7392,7 +7392,7 @@ $(function() {
 									});
 						}).fail(function() {
 					// ウィンドウが開けない(=ポップアップブロックされている)場合はテストをスキップ
-					abortAndSuccess();
+					abortTest();
 					start();
 				});
 			});

@@ -147,7 +147,7 @@ function closePopupWindow(w) {
 
 // 現在実行中のテストを中断して、成功扱いにする。
 // テストケース内(test,asyncTest)から呼んで使用する。
-function abortAndSuccess() {
+function abortTest() {
 	// test,asyncTest内から呼ばれた場合
 	// テストが成功するようにする
 	ok(true, 'テストをスキップしました');
@@ -169,7 +169,7 @@ function abortAndSuccess() {
 function skipTest() {
 	// モジュールのsetupから呼ばれた場合
 	QUnit.config.current.callback = function() {
-		abortAndSuccess.apply(this);
+		abortTest();
 		if (QUnit.config.current.async) {
 			start();
 		}
