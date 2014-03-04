@@ -2789,9 +2789,8 @@
 			});
 		}
 
-		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
-				controllerName, clonedControllerDef, param, isRoot);
+				controllerName, controllerDefObj, param, isRoot);
 
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
@@ -2888,15 +2887,15 @@
 			controller.rootController && controller.rootController.dispose(e);
 		});
 
-		for ( var prop in clonedControllerDef) {
+		for ( var prop in controllerDefObj) {
 			if (controllerPropertyMap[prop]) {
 				throwFwError(ERR_CODE_CONTROLLER_SAME_PROPERTY, [controllerName, prop], {
 					controllerDefObj: controllerDefObj
 				});
-			} else if (isLifecycleProperty(clonedControllerDef, prop)) {
+			} else if (isLifecycleProperty(controllerDefObj, prop)) {
 				// ライフサイクルイベント
-				controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
-			} else if (isEventHandler(clonedControllerDef, prop)) {
+				controller[prop] = weaveControllerAspect(controllerDefObj, prop);
+			} else if (isEventHandler(controllerDefObj, prop)) {
 				// イベントハンドラ
 				var propTrimmed = $.trim(prop);
 				var lastIndex = propTrimmed.lastIndexOf(' ');
@@ -2924,29 +2923,29 @@
 								controllerDefObj: controllerDefObj
 							});
 				}
-				var weavedFunc = weaveControllerAspect(clonedControllerDef, prop, true);
+				var weavedFunc = weaveControllerAspect(controllerDefObj, prop, true);
 				bindMap[selector][eventName] = weavedFunc;
 				controller[prop] = weavedFunc;
-			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
-					&& !$.isFunction(clonedControllerDef[prop])) {
+			} else if (endsWith(prop, SUFFIX_CONTROLLER) && controllerDefObj[prop]
+					&& !$.isFunction(controllerDefObj[prop])) {
 				// 子コントローラをバインドする。fwOpt.isInternalを指定して、子コントローラであるかどうか分かるようにする
 				var c = createAndBindController(null,
-						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
+						$.extend(true, {}, controllerDefObj[prop]), param, $.extend({
 							isInternal: true
 						}, fwOpt));
 				controller[prop] = c;
-			} else if (endsWith(prop, SUFFIX_LOGIC) && clonedControllerDef[prop]
-					&& !$.isFunction(clonedControllerDef[prop])) {
+			} else if (endsWith(prop, SUFFIX_LOGIC) && controllerDefObj[prop]
+					&& !$.isFunction(controllerDefObj[prop])) {
 				// ロジック
-				var logicTarget = clonedControllerDef[prop];
+				var logicTarget = controllerDefObj[prop];
 				var logic = createLogic(logicTarget);
 				controller[prop] = logic;
-			} else if ($.isFunction(clonedControllerDef[prop])) {
+			} else if ($.isFunction(controllerDefObj[prop])) {
 				// イベントハンドラではないメソッド
-				controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
+				controller[prop] = weaveControllerAspect(controllerDefObj, prop);
 			} else {
 				// その他プロパティ
-				controller[prop] = clonedControllerDef[prop];
+				controller[prop] = controllerDefObj[prop];
 			}
 		}
 
