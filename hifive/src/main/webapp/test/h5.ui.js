@@ -982,7 +982,7 @@ $(function() {
 			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
 			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
 					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
-				skipCallback();
+				skipTest();
 				return;
 			}
 			stop();

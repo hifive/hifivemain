@@ -3028,7 +3028,7 @@ $(function() {
 			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
 			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
 					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
-				skipCallback();
+				skipTest();
 				return;
 			}
 			stop();
@@ -3130,6 +3130,19 @@ $(function() {
 	module('[browser#and-and:all|sa-ios:all|ie-wp:all]window.openで開いたポップアップウィンドウドキュメント内の要素へのバインド',
 			{
 				setup: function() {
+					// (IE8-またはIE11)かつ(jQuery1.10.1または2.0.2)の場合はポップアップウィンドウを使用するテストは行わずにスキップする。
+					// いずれの場合もポップアップウィンドウのDOM操作をjQueryで行う時にエラーになるからである。
+					// IE8-の場合、jQuery1.10.1,2.0.2で、ポップアップウィンドウ内の要素をjQueryを使って操作すると、
+					// 内部(setDocument内)でownerDocument.parentWindow.frameElementが参照されるが、
+					// IE8-ではポップアップウィンドウのframeElementにアクセスするとエラーになる。、
+					// また、IE11の場合でjQuery1.10.1,2.0.2の場合setDocument内でattachEventが呼ばれるがIE11にはattachEventはなくエラーになる
+					if (h5.env.ua.isIE
+							&& (h5.env.ua.browserVersion === 11 || h5.env.ua.browserVersion <= 8)
+							&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
+						skipTest();
+						return;
+					}
+
 					// 空のページを開く
 					var that = this;
 					stop();
@@ -3138,7 +3151,7 @@ $(function() {
 						start();
 					}).fail(function() {
 						// 失敗したらテストは実行しない
-						skipCallback();
+						skipTest();
 						start();
 					});
 				},
@@ -3161,20 +3174,7 @@ $(function() {
 	//=============================
 	test('要素へバインドできること', 3, function() {
 		var w = this.win;
-		// IE8-の場合、w.frameElementにアクセスするとエラーになる。
-		// jQuery1.10.1で、別ウィンドウの要素にappendで要素を追加すると、内部(setDocument内)でownerDocument.parentWindow.frameElementエラーになる。
-		// setDocumentはjQueryのDOM選択対象のドキュメントを設定する処理が走る。(内部変数の変更がある)
-		// setDocumentは一度呼ばれると、同一ドキュメントを対象とした操作ではsetDocumentは呼ばれなくなる。
-		// テストで、append()を使用したいので、以下のように対策している。
-		// 一度setDocumentを呼ぶ。エラーが出るが、その後はappendを呼んでもsetDocumentは通らなくなり、エラーは出ない。
-		// そのため、append()を一度try-catch内で呼んでからプロミスを返すようにしている。
-		// jQuery.mobileを読み込んでいる場合、非同期で20ms毎に$関数が呼ばれるため、try-catchでcontainsを呼ぶ処理をテスト内に記述している
-		// (setup内に書いた場合非同期になり、テスト前にjQuery.mobileによって親ドキュメントsetDocumentが呼ばれてしまうことがあるため)
-		try {
-			$.find.setDocument(w.document);
-		} catch (e) {
-			// 何もしない
-		}
+
 		var $bindTarget = $(w.document.body);
 		view.append($bindTarget, 'bindTest1');
 		view.bind($bindTarget, {
@@ -3192,11 +3192,7 @@ $(function() {
 
 	test('配列をバインドできること', 2, function() {
 		var w = this.win;
-		try {
-			$.find.setDocument(w.document);
-		} catch (e) {
-			// 何もしない
-		}
+
 		var $bindTarget = $(w.document.body);
 		view.append($bindTarget, 'loopContext1');
 		var items = h5.core.data.createObservableArray();
@@ -3221,11 +3217,7 @@ $(function() {
 
 	test('ObservableArrayをバインドできること', 6, function() {
 		var w = this.win;
-		try {
-			$.find.setDocument(w.document);
-		} catch (e) {
-			// 何もしない
-		}
+
 		var $bindTarget = $(w.document.body);
 		var items = h5.core.data.createObservableArray();
 		items.copyFrom([{

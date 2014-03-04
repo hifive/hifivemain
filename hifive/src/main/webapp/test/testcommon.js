@@ -145,8 +145,9 @@ function closePopupWindow(w) {
 	return dfd.promise();
 }
 
-// 現在実行中のテストをスキップする。テストケース内(test,asyncTest)またはmoduleのsetupから呼ばれることを想定している
-function skipCurrentTest() {
+// 現在実行中のテストを中断して、成功扱いにする。
+// テストケース内(test,asyncTest)から呼んで使用する。
+function abortAndSuccess() {
 	// test,asyncTest内から呼ばれた場合
 	// テストが成功するようにする
 	ok(true, 'テストをスキップしました');
@@ -163,11 +164,12 @@ function skipCurrentTest() {
 	QUnit.config.current.nameHtml = replace;
 }
 
-// 次に実行されるテストをスキップする。モジュールのsetup内で呼ばれることを想定している
-function skipCallback() {
+// 次に実行されるテストを実行せずにスキップする。
+// モジュールのsetup内で呼んで使用する。
+function skipTest() {
 	// モジュールのsetupから呼ばれた場合
 	QUnit.config.current.callback = function() {
-		skipCurrentTest.apply(this);
+		abortAndSuccess.apply(this);
 		if (QUnit.config.current.async) {
 			start();
 		}

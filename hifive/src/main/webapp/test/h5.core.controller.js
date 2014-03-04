@@ -5643,10 +5643,10 @@ $(function() {
 					start();
 				});
 			});
+
 	//=============================
 	// Definition
 	//=============================
-
 	module(
 			"getControllers",
 			{
@@ -5784,46 +5784,6 @@ $(function() {
 		});
 
 	});
-
-	asyncTest('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
-			function() {
-				// 空のページを開く
-				openPopupWindow().done(
-						function(w) {
-							var div = w.document.createElement('div');
-							w.document.body.appendChild(div);
-							var c = h5.core.controller(div, {
-								__name: 'popupWindowController',
-								__dispose: function() {
-									closePopupWindow(w).done(function() {
-										start();
-									});
-								}
-							});
-							c.readyPromise
-									.done(function() {
-										// jQuery1.10.1対応
-										try {
-											$.find.setDocument(w.document);
-										} catch (e) {
-											// 何もしない
-										}
-										strictEqual(
-												h5.core.controllerManager.getControllers(div)[0],
-												c, 'ポップアップウィンドウ内の要素のコントローラを取得できること');
-										strictEqual(h5.core.controllerManager.getControllers(
-												w.document.body, {
-													deep: true
-												})[0], c,
-												'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
-										c.dispose();
-									});
-						}).fail(function() {
-					// ウィンドウが開けない(=ポップアップブロックされている)場合はテストをスキップ
-					skipCurrentTest();
-					start();
-				});
-			});
 
 	//=============================
 	// Definition
@@ -7373,12 +7333,79 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module(
+			"window.open()で開いたウィンドウの要素にコントローラをバインド",
+			{
+				setup: function() {
+					// (IE8-またはIE11)かつ(jQuery1.10.1または2.0.2)の場合はポップアップウィンドウを使用するテストは行わずにスキップする。
+					// いずれの場合もポップアップウィンドウのDOM操作をjQueryで行う時にエラーになるからである。
+					// IE8-の場合、jQuery1.10.1,2.0.2で、ポップアップウィンドウ内の要素をjQueryを使って操作すると、
+					// 内部(setDocument内)でownerDocument.parentWindow.frameElementが参照されるが、
+					// IE8-ではポップアップウィンドウのframeElementにアクセスするとエラーになる。、
+					// また、IE11の場合でjQuery1.10.1,2.0.2の場合setDocument内でattachEventが呼ばれるがIE11にはattachEventはなくエラーになる
+					if (h5.env.ua.isIE
+							&& (h5.env.ua.browserVersion === 11 || h5.env.ua.browserVersion <= 8)
+							&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
+						skipTest();
+						return;
+					}
+
+					$('#qunit-fixture')
+							.append(
+									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+				},
+				teardown: function() {
+					disposeQUnitFixtureController();
+					$('#controllerTest').remove();
+				}
+			});
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
+			function() {
+				// 空のページを開く
+				openPopupWindow().done(
+						function(w) {
+							var div = w.document.createElement('div');
+							w.document.body.appendChild(div);
+							var c = h5.core.controller(div, {
+								__name: 'popupWindowController',
+								__dispose: function() {
+									closePopupWindow(w).done(function() {
+										start();
+									});
+								}
+							});
+							c.readyPromise
+									.done(function() {
+										strictEqual(
+												h5.core.controllerManager.getControllers(div)[0],
+												c, 'ポップアップウィンドウ内の要素のコントローラを取得できること');
+										strictEqual(h5.core.controllerManager.getControllers(
+												w.document.body, {
+													deep: true
+												})[0], c,
+												'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
+										c.dispose();
+									});
+						}).fail(function() {
+					// ウィンドウが開けない(=ポップアップブロックされている)場合はテストをスキップ
+					abortAndSuccess();
+					start();
+				});
+			});
+
+	//=============================
+	// Definition
+	//=============================
 	module('iframe内の要素にコントローラをバインド', {
 		setup: function() {
 			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
 			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
 					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
-				skipCallback();
+				skipTest();
 				return;
 			}
 			stop();
@@ -7500,9 +7527,8 @@ $(function() {
 							start();
 						});
 			});
-	asyncTest(
-			'iframe内の要素にバインドしたコントローラでルート要素にインジケータを表示',
-			4, function() {
+	asyncTest('iframe内の要素にバインドしたコントローラでルート要素にインジケータを表示', 4,
+			function() {
 				var controllerBase = {
 					__name: 'TestController',
 
