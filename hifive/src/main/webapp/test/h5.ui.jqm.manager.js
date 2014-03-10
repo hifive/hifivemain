@@ -36,12 +36,7 @@ $(function() {
 	});
 
 	// jQueryMobileの読み込み
-	// jQueryのバージョンを見て読み込むjqmのバージョンを変える。
-	// 1.7以上なら1.3.1、1.6以下なら1.2.1。
-	var jqVersionAry = $().jquery.split('.');
-	var jqmVersion = jqVersionAry[0] < 2 && jqVersionAry[1] < 7 ? '1.2.1' : '1.3.1';
-	h5.u.loadScript('../res/lib/jqplugins/jqm/' + jqmVersion + '/jquery.mobile-' + jqmVersion
-			+ '.js', {
+	h5.u.loadScript("../res/js/lib/jqplugins/jqm/1.2.0/jquery.mobile-1.2.0.js", {
 		async: false
 	});
 
@@ -85,16 +80,6 @@ $(function() {
 	}
 
 	/**
-	 * テスト用に作成したページの削除
-	 */
-	function pageremove(id) {
-		$('#' + id).each(function() {
-			$(this).trigger('pageremove');
-		});
-		$('#' + id).remove();
-	}
-
-	/**
 	 * idからページを作る。jsが指定されていればdata-h5-script、activFlag=trueなら作成したページをactivePageにする。
 	 */
 	function createPage(id, _js, activeFlag) {
@@ -116,9 +101,11 @@ $(function() {
 	 * 擬似的にページ遷移を行う
 	 *
 	 * @param {selector} to 遷移先のページ
-	 * @param {boolean} [initialize] pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
+	 * @param {boolean} initialize pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
+	 * @param {boolean} transition トランジション遷移をエミュレートするか
+	 * @prama {boolean} fromPageRemove 遷移元のページに対してpageremoveイベントをトリガするか
 	 */
-	function changePage(to, initialize) {
+	function changePage(to, initialize, transition, fromPageRemove) {
 		var $from = $.mobile.activePage;
 		var $to = $(to);
 		if (initialize) {
@@ -127,8 +114,26 @@ $(function() {
 		$.mobile.activePage = $to;
 		$from && $from.trigger('pagebeforehide');
 		$to.trigger('pagebeforeshow');
-		$from && $from.trigger('pagehide');
-		$to.trigger('pageshow');
+
+		function func() {
+			if (fromPageRemove) {
+				$from && $from.trigger('pageremove');
+			}
+			$from && $from.trigger('pagehide', {
+				nextPage: $to
+			});
+			$to.trigger('pageshow', {
+				prevPage: $from || $('')
+			});
+		}
+
+		if (transition) {
+			setTimeout(function() {
+				func();
+			});
+		} else {
+			func();
+		}
 	}
 
 	var originalPrefix = '';
@@ -916,7 +921,7 @@ $(function() {
 					__name: 'Test14BController',
 					__ready: function() {
 						ok(true, 'Test14BController.__readyが実行されること');
-						changePage('#test15', true);
+						changePage('#test15', true, false, false);
 					},
 					'button#test click': function() {
 						ok(true, '#test14内のbutton#test click が実行されること');
@@ -933,8 +938,7 @@ $(function() {
 								'define()でCSSを何も指定していないので、test.cssは削除されていること');
 						equal($('head > link[href*="test2.css"]').length, 0,
 								'define()でCSSを何も指定していないので、test2.cssは削除されていること');
-						pageremove('test15');
-						changePage('#test14');
+						changePage('#test14', false, false, true);
 						// test14ページでボタンを押下した操作を想定
 						$('#test14 button').click();
 					}
@@ -1174,8 +1178,7 @@ $(function() {
 					__ready: function() {
 						try {
 							this.unbind();
-							changePage('#test24', true);
-							pageremove('test23');
+							changePage('#test24', true, false, true);
 							ok(true, '動的に生成したコントローラをunbind後、ページ遷移を実行してもエラーが発生しないこと。');
 						} catch (e) {
 							ok(false, 'テスト失敗');
@@ -1186,5 +1189,507 @@ $(function() {
 						start();
 					}
 				});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			this.pageA = createPage('test25', null, true)[0];
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'初期表示後A->Bと遷移するとき、pageshowのタイミングでh5jqmpageshowイベントが、pagehideのタイミングでh5jqmpageshowイベントが発生すること(トランジションなし)',
+			8, function() {
+				var order = 1;
+				var pageA = this.pageA;
+				var pageB = null;
+
+				h5.ui.jqm.manager.define('test25', null, {
+					__name: 'Test25Controller',
+					__ready: function() {
+						equal(order++, 1, '初期表示時、1番目にAの__readyが実行されること');
+					},
+					'{rootElement} h5jqmpageshow': function(context) {
+						equal(order++, 2, '初期表示時、2番目にAのh5jqmpageshowイベントが実行されること');
+						equal(context.evArg.prevPage.length, 0, '前ページはないので何も要素を持っていないこと');
+
+						order = 1;
+						pageB = createPage('test26')[0];
+						changePage('#test26', true, false, false);
+					},
+					'{rootElement} h5jqmpagehide': function(context) {
+						equal(order++, 1, 'A -> B遷移時、1番目にAのh5jqmpagehideイベントが実行されること');
+						strictEqual(context.evArg.nextPage[0], pageB, '遷移先のページが引数で返ってくること');
+					}
+				});
+
+				h5.ui.jqm.manager.define('test26', null, {
+					__name: 'Test26Controller',
+					__ready: function() {
+						equal(order++, 2, 'A -> B遷移時、2番目にBの__readyが実行されること');
+					},
+					'{rootElement} h5jqmpageshow': function(context) {
+						equal(order++, 3, 'A -> B遷移時、3番目にBのh5jqmpageshowイベントが実行されること');
+						strictEqual(context.evArg.prevPage[0], pageA, '遷移元ページが引数で返ってくること');
+						start();
+					}
+				});
+
+				// 初期表示イベントをエミュレート
+				changePage('#test25', true, false, false);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 2', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			this.pageA = createPage('test27', null, true)[0];
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'A->B->Aと遷移するとき、pageshowのタイミングでh5jqmpageshowイベントが、pagehideのタイミングでh5jqmpageshowイベントが発生すること(トランジションなし)',
+			5, function() {
+				var order = 1;
+				var pageB = null;
+				var pageA = this.pageA;
+
+				h5.ui.jqm.manager.define('test27', null, {
+					__name: 'Test27Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						if (context.evArg.prevPage.length === 0) {
+							pageB = createPage('test28')[0];
+							changePage('#test28', true, false, false);
+						} else {
+							equal(order++, 3, 'B->A遷移時、3番目にAのh5jqmpageshowイベントがトリガされること');
+							strictEqual(context.evArg.prevPage[0], pageB, '遷移元ページが引数で返ってくること');
+							start();
+						}
+					}
+				});
+
+				h5.ui.jqm.manager.define('test28', null, {
+					__name: 'Test28Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						// B->Aに遷移
+						changePage('#test27', false, false, true);
+					},
+					__dispose: function() {
+						equal(order++, 2, 'B->A遷移時、2番目にBの__disposeが実行されること');
+					},
+					'{rootElement} h5jqmpagehide': function(context) {
+						equal(order++, 1, 'B->A遷移時、1番目にBのh5jqmpagehideイベントが実行されること');
+						strictEqual(context.evArg.nextPage[0], pageA, '遷移先のページが引数で返ってくること');
+					}
+				});
+
+				changePage('#test27', true, false, false);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 3', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			this.pageA = createPage('test29', null, true)[0];
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'A->B->Cと遷移するとき、pageshowのタイミングでh5jqmpageshowイベントが、pagehideのタイミングでh5jqmpageshowイベントが発生すること(トランジションなし)',
+			7, function() {
+				var order = 1;
+				var pageA = this.pageA;
+				var pageB = null;
+				var pageC = null;
+
+				h5.ui.jqm.manager.define('test29', null, {
+					__name: 'Test29Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						pageB = createPage('test30')[0];
+						changePage('#test30', true, false, false);
+					}
+				});
+
+				h5.ui.jqm.manager.define('test30', null, {
+					__name: 'Test30Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						strictEqual(context.evArg.prevPage[0], pageA, '遷移元ページが引数で返ってくること');
+						pageC = createPage('test31')[0];
+						// B->Aに遷移
+						changePage('#test31', true, false, true);
+					},
+					__dispose: function() {
+						equal(order++, 2, 'B->C遷移時、2番目にBの__disposeが実行されること');
+					},
+					'{rootElement} h5jqmpagehide': function(context) {
+						equal(order++, 1, 'B->C遷移時、1番目にBのh5jqmpagehideイベントが実行されること');
+						strictEqual(context.evArg.nextPage[0], pageC, '遷移先のページが引数で返ってくること');
+					}
+				});
+
+				h5.ui.jqm.manager.define('test31', null, {
+					__name: 'Test31Controller',
+					__ready: function() {
+						equal(order++, 3, 'B->C遷移時、3番目にCの__readyが実行されること');
+					},
+					'{rootElement} h5jqmpageshow': function(context) {
+						equal(order++, 4, 'B->D遷移時、4番目にCのh5jqmpageshowイベントが実行されること');
+						strictEqual(context.evArg.prevPage[0], pageB, '遷移元ページが引数で返ってくること');
+						start();
+					}
+				});
+
+				changePage('#test29', true, false, false);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 4', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			this.pageA = createPage('test25', null, true)[0];
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'初期表示後A->Bと遷移するとき、pageshowのタイミングでh5jqmpageshowイベントが、pagehideのタイミングでh5jqmpageshowイベントが発生すること(トランジションあり)',
+			8, function() {
+				var order = 1;
+				var pageA = this.pageA;
+				var pageB = null;
+
+				h5.ui.jqm.manager.define('test25', null, {
+					__name: 'Test25Controller',
+					__ready: function() {
+						equal(order++, 1, '初期表示時、1番目にAの__readyが実行されること');
+					},
+					'{rootElement} h5jqmpageshow': function(context) {
+						equal(order++, 2, '初期表示時、2番目にAのh5jqmpageshowイベントが実行されること');
+						equal(context.evArg.prevPage.length, 0, '前ページはないので何も要素を持っていないこと');
+
+						order = 1;
+						pageB = createPage('test26')[0];
+						changePage('#test26', true, true, false);
+					},
+					'{rootElement} h5jqmpagehide': function(context) {
+						equal(order++, 2, 'A -> B遷移時、1番目にAのh5jqmpagehideイベントが実行されること');
+						strictEqual(context.evArg.nextPage[0], pageB, '遷移先のページが引数で返ってくること');
+					}
+				});
+
+				h5.ui.jqm.manager.define('test26', null, {
+					__name: 'Test26Controller',
+					__ready: function() {
+						equal(order++, 1, 'A -> B遷移時、2番目にBの__readyが実行されること');
+					},
+					'{rootElement} h5jqmpageshow': function(context) {
+						equal(order++, 3, 'A -> B遷移時、3番目にBのh5jqmpageshowイベントが実行されること');
+						strictEqual(context.evArg.prevPage[0], pageA, '遷移元ページが引数で返ってくること');
+						start();
+					}
+				});
+
+				// 初期表示イベントをエミュレート
+				changePage('#test25', true, false, false);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 5', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			this.pageA = createPage('test27', null, true)[0];
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'A->B->Aと遷移するとき、pageshowのタイミングでh5jqmpageshowイベントが、pagehideのタイミングでh5jqmpageshowイベントが発生すること(トランジションあり)',
+			5, function() {
+				var order = 1;
+				var pageB = null;
+				var pageA = this.pageA;
+
+				h5.ui.jqm.manager.define('test27', null, {
+					__name: 'Test27Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						if (context.evArg.prevPage.length === 0) {
+							pageB = createPage('test28')[0];
+							changePage('#test28', true, true, false);
+						} else {
+							equal(order++, 3, 'B->A遷移時、3番目にAのh5jqmpageshowイベントがトリガされること');
+							strictEqual(context.evArg.prevPage[0], pageB, '遷移元ページが引数で返ってくること');
+							start();
+						}
+					}
+				});
+
+				h5.ui.jqm.manager.define('test28', null, {
+					__name: 'Test28Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						// B->Aに遷移
+						changePage('#test27', false, true, true);
+					},
+					__dispose: function() {
+						equal(order++, 2, 'B->A遷移時、2番目にBの__disposeが実行されること');
+					},
+					'{rootElement} h5jqmpagehide': function(context) {
+						equal(order++, 1, 'B->A遷移時、1番目にBのh5jqmpagehideイベントが実行されること');
+						strictEqual(context.evArg.nextPage[0], pageA, '遷移先のページが引数で返ってくること');
+					}
+				});
+
+				changePage('#test27', true, false, false);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 6', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			this.pageA = createPage('test29', null, true)[0];
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'A->B->Cと遷移するとき、pageshowのタイミングでh5jqmpageshowイベントが、pagehideのタイミングでh5jqmpageshowイベントが発生すること(トランジションあり)',
+			7, function() {
+				var order = 1;
+				var pageA = this.pageA;
+				var pageB = null;
+				var pageC = null;
+
+				h5.ui.jqm.manager.define('test29', null, {
+					__name: 'Test29Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						pageB = createPage('test30')[0];
+						changePage('#test30', true, true, false);
+					}
+				});
+
+				h5.ui.jqm.manager.define('test30', null, {
+					__name: 'Test30Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						strictEqual(context.evArg.prevPage[0], pageA, '遷移元ページが引数で返ってくること');
+						pageC = createPage('test31')[0];
+						// B->Cに遷移
+						changePage('#test31', true, true, true);
+					},
+					__dispose: function() {
+						equal(order++, 3, 'B->C遷移時、3番目にBの__disposeが実行されること');
+					},
+					'{rootElement} h5jqmpagehide': function(context) {
+						equal(order++, 2, 'B->C遷移時、2番目にBのh5jqmpagehideイベントが実行されること');
+						strictEqual(context.evArg.nextPage[0], pageC, '遷移先のページが引数で返ってくること');
+					}
+				});
+
+				h5.ui.jqm.manager.define('test31', null, {
+					__name: 'Test31Controller',
+					__ready: function() {
+						equal(order++, 1, 'B->C遷移時、1番目にCの__readyが実行されること');
+					},
+					'{rootElement} h5jqmpageshow': function(context) {
+						equal(order++, 4, 'B->D遷移時、4番目にCのh5jqmpageshowイベントが実行されること');
+						strictEqual(context.evArg.prevPage[0], pageB, '遷移元ページが引数で返ってくること');
+						start();
+					}
+				});
+
+				changePage('#test29', true, false, false);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 7', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			createPage('test32', null, true);
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('Aのコントローラがreadyでない状態でA->B->Aと遷移したとき、Aでh5jqmpageshowが2回発火しないこと(トランジションなし)', 2,
+			function() {
+				h5.ui.jqm.manager.define('test32', null, {
+					__name: 'Test32Controller',
+					__ready: function() {
+						var df = this.deferred();
+
+						setTimeout(function() {
+							df.resolve();
+						}, 200);
+
+						createPage('test33');
+						changePage('#test33', true, false, false);
+						return df.promise();
+					},
+					'{rootElement} h5jqmpageshow': function(context) {
+						ok(true, 'h5jqmpageshowが1回実行されること');
+						start();
+					}
+				});
+
+				h5.ui.jqm.manager.define('test33', null, {
+					__name: 'Test33Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						ok(true, 'Bのh5jqmpageshowが実行されること');
+						// B->Aに遷移
+						changePage('#test32', false, false, true);
+					}
+				});
+
+				changePage('#test32', true, false, false);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 8', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			createPage('test34', null, true);
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('Aのコントローラがreadyでない状態でA->B->Aと遷移したとき、Aでh5jqmpageshowが2回発火しないこと(トランジションあり)', 2,
+			function() {
+				h5.ui.jqm.manager.define('test34', null, {
+					__name: 'Test34Controller',
+					__ready: function() {
+						var df = this.deferred();
+
+						setTimeout(function() {
+							df.resolve();
+						}, 500);
+
+						createPage('test35');
+						changePage('#test35', true, true, false);
+						return df.promise();
+					},
+					'{rootElement} h5jqmpageshow': function(context) {
+						ok(true, 'h5jqmpageshowが1回実行されること');
+						start();
+					}
+				});
+
+				h5.ui.jqm.manager.define('test35', null, {
+					__name: 'Test35Controller',
+					'{rootElement} h5jqmpageshow': function(context) {
+						ok(true, 'Bのh5jqmpageshowが実行されること');
+						// B->Aに遷移
+						changePage('#test34', false, true, true);
+					}
+				});
+
+				changePage('#test34', true, false, false);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 9', {
+		setup: function() {
+			h5.ui.jqm.manager.init();
+			createPage('test36', null, true);
+		},
+		teardown: function() {
+			resetJQM();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('A->Bと遷移したとき、BでAのh5jqmpageshowが実行されないこと', 1, function() {
+		h5.ui.jqm.manager.define('test36', null, {
+			__name: 'Test36Controller',
+			__ready: function() {
+				var df = this.deferred();
+
+				setTimeout(function() {
+					df.resolve();
+					start();
+				}, 200);
+
+				createPage('test37');
+				changePage('#test37', true, true, false);
+				return df.promise();
+			},
+			'{rootElement} h5jqmpageshow': function(context) {
+				ok(false, 'h5jqmpageshowが実行されたためテスト失敗');
+			}
+		});
+
+		h5.ui.jqm.manager.define('test37', null, {
+			__name: 'Test37Controller',
+			'{rootElement} h5jqmpageshow': function(context) {
+				ok(true, 'Bのh5jqmpageshowが実行されること');
+			}
+		});
+
+		$('#test36').one('h5jqmpageshow', function() {
+			ok(false, 'h5jqmpageshowが実行されたためテスト失敗');
+		});
+
+		changePage('#test36', true, false, false);
 	});
 });

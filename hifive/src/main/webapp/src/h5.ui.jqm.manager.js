@@ -24,6 +24,10 @@
 	//
 	// =========================================================================
 
+	var EV_NAME_H5_JQM_PAGE_HIDE = 'h5jqmpagehide';
+	var EV_NAME_H5_JQM_PAGE_SHOW = 'h5jqmpageshow';
+	var EV_NAME_EMULATE_PAGE_SHOW = 'h5controllerready.emulatepageshow';
+
 	// =============================
 	// Production
 	// =============================
@@ -120,6 +124,20 @@
 	 */
 	var initCalled = false;
 
+	/**
+	 * pagehideイベントが発生したかを判定するフラグ
+	 *
+	 * @type Boolean
+	 */
+	var hideEventFired = false;
+
+	/**
+	 * 初期表示時、アクティブページにバインドしたコントローラがreadyになるよりも前に、 pageshowが発火したかを判定するフラグ
+	 *
+	 * @type Boolean
+	 */
+	var showEventFiredBeforeReady = false;
+
 	// =============================
 	// Functions
 	// =============================
@@ -169,6 +187,40 @@
 		return ret;
 	}
 
+	/**
+	 * JQMマネージャが管理する動的または静的コントローラが持つイベントハンドラの有効・無効化を行います
+	 *
+	 * @param {String} id ページID
+	 * @param {Boolean} flag (true: ハンドラを有効化する / false: ハンドラを無効化する)
+	 */
+	function changeListenerState(id, flag) {
+		for (prop in controllerInstanceMap) {
+			var controllers = controllerInstanceMap[prop];
+			var pageControllerEnabled = id === prop;
+
+			for ( var i = 0, len = controllers.length; i < len; i++) {
+				var controller = controllers[i];
+
+				if (pageControllerEnabled) {
+					controller[(flag ? 'enable' : 'disable') + 'Listeners']();
+				}
+			}
+		}
+
+		for (prop in dynamicControllerInstanceMap) {
+			var dynamicControllers = dynamicControllerInstanceMap[prop];
+			var dynamicControllerEnabled = id === prop;
+
+			for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
+				var dynamicController = dynamicControllers[i];
+
+				if (dynamicControllerEnabled) {
+					dynamicController[(flag ? 'enable' : 'disable') + 'Listeners']();
+				}
+			}
+		}
+	}
+
 	// 関数は関数式ではなく function myFunction(){} のように関数定義で書く
 
 	// =========================================================================
@@ -204,20 +256,33 @@
 		 * @memberOf JQMController
 		 */
 		__name: 'JQMController',
-
 		/**
 		 * __readyイベントのハンドラ
 		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
-		__ready: function(context) {
+		__ready: function() {
 			var that = this;
+			var activePageId = getActivePageId();
+
 			$(':jqmData(role="page"), :jqmData(role="dialog")').each(function() {
 				that.loadScript(this.id);
 			});
-		},
 
+			var $page = this.$find('#' + activePageId);
+
+			// 初期表示時、トランジションにアニメーションが適用されていない場合、
+			// JQMコントローラがreadyになる前にpageshowが発火してしまいJQMコントローラが拾うことができないため、
+			// 既にpageshowが発火されていたら、h5controllerreadyのタイミングで、h5jqmpageshowをトリガする
+			$page.one(EV_NAME_EMULATE_PAGE_SHOW, function() {
+				if (showEventFiredBeforeReady && $page[0] === $.mobile.activePage[0]) {
+					$page.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
+						prevPage: $('')
+					});
+				}
+			});
+		},
 		/**
 		 * pageinitイベントのハンドラ
 		 *
@@ -230,14 +295,23 @@
 			this.addCSS(id);
 			this.bindController(id);
 		},
-
 		/**
 		 * pageremoveイベントのハンドラ
 		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
-		'{document} pageremove': function(context) {
+		'{rootElement} pageremove': function(context) {
+			// pagehide -> pageremoveの順でイベントは発火するので、pagehideのタイミングでh5jqmpagehideをトリガすればよいが、
+			// 別ページに遷移する際、JQMがpagebeforeloadからpageloadの間のタイミングで、pageremoveをトリガするハンドラをpagehide.removeにバインドしてしまう為、
+			// これ以降にpagehideに対して登録したハンドラは全てpageremoveの後に発火してしまう
+			// 上記の理由により、pageremoveが発生する場合は、このタイミングでh5jqmpagehideイベントをトリガし、
+			// pagehideイベントではh5jqmpagehideイベントを発火しないようフラグで制御する
+			$(context.event.target).trigger(EV_NAME_H5_JQM_PAGE_HIDE, {
+				nextPage: $.mobile.activePage
+			});
+			hideEventFired = true;
+
 			var id = context.event.target.id;
 			var controllers = controllerInstanceMap[id];
 			var dynamicControllers = dynamicControllerInstanceMap[id];
@@ -258,53 +332,80 @@
 				dynamicControllerInstanceMap[id] = [];
 			}
 		},
-
 		/**
 		 * pagebeforeshowイベントのハンドラ
 		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
-		'{document} pagebeforeshow': function(context) {
+		'{rootElement} pagebeforeshow': function(context) {
 			var id = context.event.target.id;
-			var prop = null;
 
 			this.addCSS(id);
-
-			// リスナーの有効・無効の切り替え
-			for (prop in controllerInstanceMap) {
-				var controllers = controllerInstanceMap[prop];
-				var pageControllerEnabled = id === prop;
-
-				for ( var i = 0, len = controllers.length; i < len; i++) {
-					var controller = controllers[i];
-					pageControllerEnabled ? controller.enableListeners() : controller
-							.disableListeners();
-				}
-			}
-
-			for (prop in dynamicControllerInstanceMap) {
-				var dynamicControllers = dynamicControllerInstanceMap[prop];
-				var dynamicControllerEnabled = id === prop;
-
-				for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
-					var dynamicController = dynamicControllers[i];
-					dynamicControllerEnabled ? dynamicController.enableListeners()
-							: dynamicController.disableListeners();
-				}
-			}
+			changeListenerState(id, true);
 		},
-
 		/**
-		 * pagehideイベントのハンドラ
+		 * pagehideイベントのハンドラ コントローラでもページ非表示時のイベントを拾えるようにするため、
+		 * JQMのpagehideイベントと同じタイミングで、JQMマネージャが管理しているコントローラのルート要素に対してh5jqmpagehideイベントをトリガします
+		 * h5jqmpagehideイベントをトリガ後アクティブページ以外のページに対して、コントローラのイベントハンドラの無効化と、 CSSの定義をHEADタグから削除を行います
 		 *
 		 * @param {Object} context コンテキスト
 		 * @memberOf JQMController
 		 */
-		'{document} pagehide': function(context) {
-			this.removeCSS(context.event.target.id);
-		},
+		'{rootElement} pagehide': function(context) {
+			if (!hideEventFired) {
+				$(context.event.target).trigger(EV_NAME_H5_JQM_PAGE_HIDE, {
+					nextPage: context.evArg.nextPage
+				});
+			}
 
+			hideEventFired = false;
+
+			var id = context.event.target.id;
+
+			changeListenerState(id, false);
+			this.removeCSS(id);
+		},
+		/**
+		 * コントローラでもページ表示時のイベントを拾えるようにするため、 JQMのpageshowイベントと同じタイミングで、JQMマネージャが管理しているコントローラのルート要素に対して
+		 * h5jqmpageshowイベントをトリガします
+		 *
+		 * @param {Object} context コンテキスト
+		 * @memberOf JQMController
+		 */
+		'{rootElement} pageshow': function(context) {
+			var emulatePageShow = false;
+			var $target = $(context.event.target);
+			var $fromPage = context.evArg ? context.evArg.prevPage : $('');
+			var conAr = controllerInstanceMap[$target[0].id];
+
+			if (conAr) {
+				for ( var i = 0, len = conAr.length; i < len; i++) {
+					var controllerInstance = conAr[i];
+					// isReady=falseであるときコントローラのイベントハンドラは無効であり、
+					// JQMマネージャが管理する静的コントローラがイベントを受け取れない状態なので、h5controllerready後にh5jqmpageshowをトリガするようにする
+					// トランジションのアニメーションが無効(同期でJQMのイベントが発生する)場合のみここに到達する
+					if (!controllerInstance.isReady) {
+						$target.unbind(EV_NAME_EMULATE_PAGE_SHOW).one(EV_NAME_EMULATE_PAGE_SHOW,
+								function() {
+									if ($.mobile.activePage[0] === $target[0]) {
+										$target.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
+											prevPage: $fromPage
+										});
+									}
+								});
+						emulatePageShow = true;
+						break;
+					}
+				}
+			}
+
+			if (!emulatePageShow) {
+				$target.trigger(EV_NAME_H5_JQM_PAGE_SHOW, {
+					prevPage: $fromPage
+				});
+			}
+		},
 		/**
 		 * h5controllerboundイベントを監視しコントローラインスタンスを管理するためのイベントハンドラ
 		 *
@@ -337,7 +438,6 @@
 
 			dynamicControllerInstanceMap[id].push(boundController);
 		},
-
 		/**
 		 * 動的に生成されたコントローラがunbindまたはdisposeされた場合、JQMManagerの管理対象から除外します
 		 *
@@ -360,7 +460,6 @@
 
 			dynamicControllerInstanceMap[id].splice(index, 1);
 		},
-
 		/**
 		 * 指定されたページIDに紐付くスクリプトをロードする。
 		 *
@@ -528,7 +627,6 @@
 	 */
 	h5.u.obj.expose('h5.ui.jqm.manager',
 			{
-
 				/**
 				 * jQuery Mobile用hifiveコントローラマネージャを初期化します。
 				 * <p>
@@ -544,6 +642,12 @@
 						return;
 					}
 					initCalled = true;
+
+					// 初期表示時、JQMマネージャがreadyになる前にpageshowイベントが発火したかをチェックする
+					$(document).one('pageshow', function() {
+						showEventFiredBeforeReady = true;
+					});
+
 					$(function() {
 						jqmControllerInstance = h5internal.core.controllerInternal('body',
 								jqmController, null, {
@@ -661,6 +765,8 @@
 					initParamMap = {};
 					cssMap = {};
 					initCalled = false;
+					hideEventFired = false;
+					showEventFiredBeforeReady = false;
 				}
 			/* del end */
 			});
