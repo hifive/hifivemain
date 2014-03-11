@@ -213,12 +213,19 @@
 	$.extend(EventContext.prototype, selectorTypeConst);
 
 	/**
-	 * コントローラのexecuteListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
+	 * コントローラがdisposeされていないことと、executeListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
 	 *
 	 * @param {Object} invocation インヴォケーション.
 	 */
 	function executeListenersInterceptor(invocation) {
-		if (!this.__controllerContext.executeListeners) {
+		// disposeされていたら何もしない
+		// disposeされているのにイベントハンドラが起きることがあるのでチェックしている。
+		// jQueryはイベント発生時に探索したハンドラを実行しようとするので、
+		// 途中のイベントハンドラでunbindしたハンドラも実行される。
+		// あるイベントについて、コントローラでバインドしたイベントハンドラより先に実行されるイベントハンドラの中で
+		// コントローラがdisposeされた場合、unbindしたコントローラのハンドラも実行され、ここの関数が実行される。
+		// そのため、コントローラがdisposeされているかどうかのチェックが必要。
+		if (!this.__controllerContext || !this.__controllerContext.executeListeners) {
 			return;
 		}
 		return invocation.proceed();
