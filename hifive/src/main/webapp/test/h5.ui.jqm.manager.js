@@ -35,11 +35,19 @@ $(function() {
 		$.mobile.loadingMessage = false;
 	});
 
-	// jQueryMobileの読み込み
 	// jQueryのバージョンを見て読み込むjqmのバージョンを変える。
-	// 1.7以上なら1.3.1、1.6以下なら1.2.1。
+	// 1.8以上なら1.4.2、1.7.Xなら1.3.1、1.6以下なら1.2.1。
 	var jqVersionAry = $().jquery.split('.');
-	var jqmVersion = jqVersionAry[0] < 2 && jqVersionAry[1] < 7 ? '1.2.1' : '1.3.1';
+	var jqmVersion = '1.4.2';
+	if (jqVersionAry[0] < 2 && jqVersionAry[1] < 8) {
+		if (jqVersionAry[1] === '7') {
+			jqmVersion = '1.3.1';
+		} else {
+			jqmVersion = '1.2.1';
+		}
+	}
+
+	// jQueryMobileの読み込み
 	h5.u.loadScript('../res/lib/jqplugins/jqm/' + jqmVersion + '/jquery.mobile-' + jqmVersion
 			+ '.js', {
 		async: false
