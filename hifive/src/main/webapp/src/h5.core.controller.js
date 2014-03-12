@@ -225,7 +225,7 @@
 		// あるイベントについて、コントローラでバインドしたイベントハンドラより先に実行されるイベントハンドラの中で
 		// コントローラがdisposeされた場合、unbindしたコントローラのハンドラも実行され、ここの関数が実行される。
 		// そのため、コントローラがdisposeされているかどうかのチェックが必要。
-		if (!this.__controllerContext || !this.__controllerContext.executeListeners) {
+		if (!isDisposed(this) || !this.__controllerContext.executeListeners) {
 			return;
 		}
 		return invocation.proceed();
@@ -931,7 +931,7 @@
 			delete controller.__controllerContext.initDfd;
 			initDfd.resolveWith(controller);
 
-			if (controller.__controllerContext && controller.__controllerContext.isRoot) {
+			if (!isDisposed(controller) && controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば次の処理(イベントハンドラのバインドと__readyの実行)へ進む
 				bindAndTriggerReady(controller);
 			}
@@ -956,7 +956,7 @@
 			delete controller.__controllerContext.readyDfd;
 			readyDfd.resolveWith(controller);
 
-			if (controller.__controllerContext && controller.__controllerContext.isRoot) {
+			if (!isDisposed(controller) && controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば全ての処理が終了したことを表すイベント"h5controllerready"をトリガ
 				if (!controller.rootElement || !controller.isInit || !controller.isReady) {
 					return;
@@ -1683,12 +1683,31 @@
 	}
 
 	/**
-	 * 指定されたコントローラがdispose済みかどうか、(非同期の場合はdispose中かどうか)を返します。
+	 * 指定されたコントローラがdispose済みかどうかを返します
+	 * <p>
+	 * dispose処理の途中でまだdisposeが完了していない場合はfalseを返します
+	 * </p>
 	 *
+	 * @private
 	 * @param {Controller} controller コントローラ
+	 * @returns {Boolean}
+	 */
+	function isDisposed(controller) {
+		return !controller.__controllerContext;
+	}
+
+	/**
+	 * 指定されたコントローラがdispose処理中またはdispose済みかどうかを返します
+	 * <p>
+	 * isDisposedと違い、dispose処理の途中でまだdisposeが完了していない場合にtrueを返します
+	 * </p>
+	 *
+	 * @private
+	 * @param {Controller} controller コントローラ
+	 * @returns {Boolean}
 	 */
 	function isDisposing(controller) {
-		return !controller.__controllerContext || controller.__controllerContext.isDisposing;
+		return isDisposed(controller) || controller.__controllerContext.isDisposing;
 	}
 
 	/**
