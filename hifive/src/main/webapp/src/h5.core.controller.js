@@ -225,7 +225,7 @@
 		// あるイベントについて、コントローラでバインドしたイベントハンドラより先に実行されるイベントハンドラの中で
 		// コントローラがdisposeされた場合、unbindしたコントローラのハンドラも実行され、ここの関数が実行される。
 		// そのため、コントローラがdisposeされているかどうかのチェックが必要。
-		if (!isDisposed(this) || !this.__controllerContext.executeListeners) {
+		if (isDisposed(this) || !this.__controllerContext.executeListeners) {
 			return;
 		}
 		return invocation.proceed();
