@@ -68,6 +68,23 @@
 	// Variables
 	// =============================
 	/**
+	 * ページをの初期化処理呼び出しをpagecreateイベントハンドラで行うかどうか
+	 * <p>
+	 * このフラグがtrueの場合はpagecreateイベントハンドラでページの初期化処理を呼び出します。
+	 * falseの場合はpageinitイベントハンドラでページの初期化処理を呼び出します。
+	 * </p>
+	 * <p>
+	 * jqm1.4より前ではpagecreateイベントはページのDOM拡張前、pageinitイベントはページのDOM拡張後に上がりますが、
+	 * jqm1.4以降ではDOM拡張後にpagecreateが上がり、pageinitイベントはdeprecatedになりました。
+	 * jqm1.4以降ではdeprecatedなpageinitではなくpagecreateイベントハンドラで初期化処理を行うようにします。
+	 * </p>
+	 * <p>
+	 * フラグの値はh5.ui.jqm.manager.init時に設定します。
+	 * </p>
+	 */
+	var shouldHandlePagecreateEvent;
+
+	/**
 	 * JQMControllerのインスタンス(シングルトン)
 	 */
 	var jqmControllerInstance = null;
@@ -290,11 +307,37 @@
 		 * @memberOf JQMController
 		 */
 		':jqmData(role="page"), :jqmData(role="dialog") pageinit': function(context) {
-			var id = context.event.target.id;
+			// pagecreateイベントを使うべきである場合はpagecreateハンドラ、そうでない時はpageinitハンドラで初期化処理を行う。
+			if (!shouldHandlePagecreateEvent) {
+				this._initPage(context.event.target.id);
+			}
+		},
+
+		/**
+		 * pagecreateイベントのハンドラ
+		 *
+		 * @param {Object} context コンテキスト
+		 * @memberOf JQMController
+		 */
+		':jqmData(role="page"), :jqmData(role="dialog") pagecreate': function(context) {
+			if (shouldHandlePagecreateEvent) {
+				this._initPage(context.event.target.id);
+			}
+		},
+
+		/**
+		 * ページの初期化処理を行う
+		 *
+		 * @private
+		 * @param {String} id
+		 * @memberOf JQMController
+		 */
+		_initPage: function(id) {
 			this.loadScript(id);
 			this.addCSS(id);
 			this.bindController(id);
 		},
+
 		/**
 		 * pageremoveイベントのハンドラ
 		 *
@@ -643,6 +686,12 @@
 					}
 					initCalled = true;
 
+					// jqmのバージョンを見てpagecreateイベントのタイミングで初期化するべきかどうかのフラグの値をセットする
+					// (initが呼ばれるタイミングではjqmが読み込まれている前提)
+					var versionAry = $.mobile.version.split('.');
+					shouldHandlePagecreateEvent = versionAry[0] > 1 || versionAry[1] > 3 ? true
+							: false;
+
 					// 初期表示時、JQMマネージャがreadyになる前にpageshowイベントが発火したかをチェックする
 					$(document).one('pageshow', function() {
 						showEventFiredBeforeReady = true;
@@ -738,7 +787,7 @@
 						}
 					}
 
-					if (getActivePageId() !== null && jqmControllerInstance) {
+					if (jqmControllerInstance && getActivePageId() !== null) {
 						bindToActivePage();
 					} else {
 						this.init();
