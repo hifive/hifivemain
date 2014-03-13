@@ -274,9 +274,10 @@
 				return 0;
 			}
 			if (a[i] === b[i]) {
+				// 同じなら次以降のindexで比較
 				return versionAryCompare(a, b, ++i);
 			}
-			// 片方が数値、片方が文字列の場合は比較される
+			// 片方が数値、片方が文字列の場合は数値で比較される
 			// 比較してaが小さいなら-1、bが小さいなら-1を返す
 			return parseInt(a[i]) < b[i] ? -1 : 1;
 		}
