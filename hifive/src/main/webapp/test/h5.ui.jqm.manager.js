@@ -41,7 +41,7 @@ $(function() {
 	var jqmVersion;
 	if (compareVersion(jqueryVersion, '1.8') >= 0) {
 		jqmVersion = '1.4.2';
-	} else if (versionCompare(jqueryVersion, '1.7') < 0) {
+	} else if (compareVersion(jqueryVersion, '1.7') < 0) {
 		jqmVersion = '1.2.1';
 	} else {
 		jqmVersion = '1.3.1';
