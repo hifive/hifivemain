@@ -122,6 +122,7 @@ $(function() {
 		var $from = $.mobile.activePage;
 		var $to = $(to);
 		if (initialize) {
+			$to.trigger('pagecreate');
 			$to.trigger('pageinit');
 		}
 		$.mobile.activePage = $to;
@@ -428,21 +429,22 @@ $(function() {
 	// Body
 	//=============================
 
-	asyncTest('pageinitイベントがページから呼ばれると、そのページのscriptがロードされること', 3, function() {
-		// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
-		setTimeout(
-				function() {
+	asyncTest('pageinit(jqm1.4以上の場合はpagecreate)イベントがページから呼ばれると、そのページのscriptがロードされること', 3,
+			function() {
+				// initが終わって、__readyが呼ばれるのが非同期なので、テストを非同期にする
+				setTimeout(function() {
 					createPage("testjs4", 'data/testforJQM2.js');
 					ok(window.com.htmlhifive.test.loadedTestForJQM1,
 							'data-h5-scriptに指定したjsファイルがロードされていること');
 					ok(!window.com.htmlhifive.test.loadedTestForJQM2,
 							'init()時になかったページについてはjsファイルがロードされないこと');
+					$('#testjs4').trigger('pagecreate');
 					$('#testjs4').trigger('pageinit');
 					ok(window.com.htmlhifive.test.loadedTestForJQM2,
-							'pageinitイベントが発生するとjsファイルがロードされる。');
+							'pageinit(またはpagecreate)イベントが発生するとjsファイルがロードされる。');
 					start();
 				}, 0);
-	});
+			});
 
 	//=============================
 	// Definition
