@@ -264,7 +264,8 @@
 		var aAry = a.split('.');
 		var bAry = b.split('.');
 
-		for ( var i = 0, l = aAry.length; i < l; i++) {
+		var aAryLen = aAry.length;
+		for ( var i = 0; i < aAryLen; i++) {
 			if (bAry[i] == null) {
 				// bAryが先にnullになった=aAryの方が有効桁数が多い場合、
 				// '.0'が末尾にならないようにしてあるので、有効桁数の多い方がバージョンが大きい
@@ -277,7 +278,7 @@
 			// 比較してaが小さいなら-1、bが小さいなら-1を返す
 			return parseInt(aAry[i], 10) < parseInt(bAry[i], 10) ? -1 : 1;
 		}
-		if (bAry[l] != null) {
+		if (bAry[aAryLen] != null) {
 			// aAryよりbAryの方が有効桁数が多い場合はbの方が有効桁数が多いのでバージョンが大きい
 			return -1;
 		}
