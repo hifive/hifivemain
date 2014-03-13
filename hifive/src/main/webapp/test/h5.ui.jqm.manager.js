@@ -37,14 +37,14 @@ $(function() {
 
 	// jQueryのバージョンを見て読み込むjqmのバージョンを変える。
 	// 1.8以上なら1.4.2、1.7.Xなら1.3.1、1.6以下なら1.2.1。
-	var jqVersionAry = $().jquery.split('.');
-	var jqmVersion = '1.4.2';
-	if (jqVersionAry[0] < 2 && jqVersionAry[1] < 8) {
-		if (jqVersionAry[1] === '7') {
-			jqmVersion = '1.3.1';
-		} else {
-			jqmVersion = '1.2.1';
-		}
+	var jqueryVersion = $().jquery;
+	var jqmVersion;
+	if (versionCompare(jqueryVersion, '1.8') >= 0) {
+		jqmVersion = '1.4.2';
+	} else if (versionCompare(jqueryVersion, '1.7') < 0) {
+		jqmVersion = '1.2.1';
+	} else {
+		jqmVersion = '1.3.1';
 	}
 
 	// jQueryMobileの読み込み
@@ -55,7 +55,9 @@ $(function() {
 
 	// JQMがロードされると、readyイベントの約50ms後に$.mobile.silentScroll()が実行されてtop:1pxの位置に移動してしまう。
 	// h5.ui.isInView() のテストに影響するためsilentScrollを無効にする
-	$.mobile.silentScroll = function() {};
+	$.mobile.silentScroll = function() {
+	// 何もしない
+	};
 
 	//=============================
 	// Variables

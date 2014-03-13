@@ -204,3 +204,45 @@ function skipTest() {
 	};
 	return;
 }
+
+/**
+ * バージョン文字列の大小を比較する関数(hifive[h5.ui.jqm.manager.js]から引用)
+ * <p>
+ * '1.11.0', '1.9.9'のような'.'区切りのバージョン文字列を比較して、第1引数の方が小さければ-1、同じなら0、第2引数の方が小さければ1 を返す。
+ * </p>
+ *
+ * @param {String} a バージョン文字列
+ * @param {String} b バージョン文字列
+ * @returns {Integer} 比較結果。aがbより小さいなら-1、同じなら0、aがbより大きいなら1 を返す
+ */
+function versionCompare(a, b) {
+	if (a === b) {
+		// aとbが同じなら比較せずに0を返す
+		return 0;
+	}
+	var aAry = a.split('.');
+	var bAry = b.split('.');
+	if (aAry.length !== bAry.length) {
+		// 有効桁数が違う場合は'0'で埋めて合わせる
+		var shortAry = aAry.length < bAry.length ? aAry : bAry;
+		while (aAry.length !== bAry.length) {
+			shortAry.push('0');
+		}
+	}
+	// i番目以降の値でバージョン比較
+	function versionAryCompare(a, b, i) {
+		if (a[i] == null) {
+			// 有効桁数は合わせてあるのでa[i]がnullならb[i]もnull
+			// どちらもnullになるまで比較した場合は同じversionなので0を返す
+			return 0;
+		}
+		if (a[i] === b[i]) {
+			// 同じなら次以降のindexで比較
+			return versionAryCompare(a, b, ++i);
+		}
+		// 片方が数値、片方が文字列の場合は数値で比較される
+		// 比較してaが小さいなら-1、bが小さいなら-1を返す
+		return parseInt(a[i]) < b[i] ? -1 : 1;
+	}
+	return versionAryCompare(aAry, bAry, 0);
+}
