@@ -242,19 +242,21 @@ function compareVersion(a, b) {
 	var aAryLen = aAry.length;
 	for ( var i = 0; i < aAryLen; i++) {
 		if (bAry[i] == null) {
-			// bAryが先にnullになった=aAryの方が有効桁数が多い場合、
-			// '.0'が末尾にならないようにしてあるので、有効桁数の多い方がバージョンが大きい
+			// bAryが先にnullになった=aAryの方が桁数(バージョン文字列の.の数)が多い場合、
+			// '.0'が末尾にならないようにしてあるので、桁数の多い方がバージョンが大きい
 			return 1;
 		}
-		if (parseInt(aAry[i], 10) === parseInt(bAry[i], 10)) {
+		var aVal = parseInt(aAry[i], 10);
+		var bVal = parseInt(bAry[i], 10);
+		if (aVal === bVal) {
 			// 同じなら次以降のindexで比較
 			continue;
 		}
 		// 比較してaが小さいなら-1、bが小さいなら-1を返す
-		return parseInt(aAry[i], 10) < parseInt(bAry[i], 10) ? -1 : 1;
+		return aVal < bVal ? -1 : 1;
 	}
 	if (bAry[aAryLen] != null) {
-		// aAryよりbAryの方が有効桁数が多い場合はbの方が有効桁数が多いのでバージョンが大きい
+		// aAryよりbAryの方が桁数が多い場合はbの方が桁数が多いのでバージョンが大きい
 		return -1;
 	}
 	// 最後まで比較して同じなら同じバージョンなので0を返す
