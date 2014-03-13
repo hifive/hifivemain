@@ -179,9 +179,13 @@
 		if (id === null) {
 			return;
 		}
-
-		jqmControllerInstance.addCSS(id);
-		jqmControllerInstance.bindController(id);
+		// jqmControllerInstanceにインスタンスが格納されるのはinitの中で$(function(){})で囲って行っているため、
+		// bindAToActivePageがdocument.readyより前に呼ばれた場合はjqmControllerInstanceに値がまだ入っていない場合がある。
+		// そのためjqmControllerInstanceのメソッド呼び出しは$(function(){})で囲って行っている。
+		$(function() {
+			jqmControllerInstance.addCSS(id);
+			jqmControllerInstance.bindController(id);
+		});
 	}
 
 	/**
@@ -787,7 +791,7 @@
 						}
 					}
 
-					if (jqmControllerInstance && getActivePageId() !== null) {
+					if (initCalled && getActivePageId() !== null) {
 						bindToActivePage();
 					} else {
 						this.init();
