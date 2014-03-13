@@ -39,7 +39,7 @@ $(function() {
 	// 1.8以上なら1.4.2、1.7.Xなら1.3.1、1.6以下なら1.2.1。
 	var jqueryVersion = $().jquery;
 	var jqmVersion;
-	if (versionCompare(jqueryVersion, '1.8') >= 0) {
+	if (compareVersion(jqueryVersion, '1.8') >= 0) {
 		jqmVersion = '1.4.2';
 	} else if (versionCompare(jqueryVersion, '1.7') < 0) {
 		jqmVersion = '1.2.1';
