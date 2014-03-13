@@ -58,10 +58,20 @@ function rgbToHex(rgbStr) {
 	return hexStr;
 }
 
+/**
+ * 読み込んでいるhifiveがdev版かどうか
+ * @memberOf
+ * @returns
+ */
 function isDevMode() {
 	return !!h5.dev;
 }
 
+/**
+ * コントローラがdisposeされているかどうかチェックします
+ * @param controller
+ * @returns {Boolean}
+ */
 function isDisposed(controller) {
 	var ret = true;
 	for ( var p in controller) {
@@ -72,10 +82,14 @@ function isDisposed(controller) {
 	return ret;
 }
 
-// iframeを作成
-// IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
-// jQuery内部のsetDocumentでattachEventが呼ばれてエラーになる(IE11にはattachEventがないため)
-// ので、IE11&&(jQuery1.10.1||2.0.2)の場合は、この関数を使ったテスト=iframeを使ったテストは行わない。
+/**
+ * iframeを作成 IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
+ * jQuery内部のsetDocumentでattachEventが呼ばれてエラーになる(IE11にはattachEventがないため)
+ * ので、IE11&&(jQuery1.10.1||2.0.2)の場合は、この関数を使ったテスト=iframeを使ったテストは行わない。
+ *
+ * @memberOf
+ * @returns
+ */
 function createIFrameElement() {
 	var dfd = h5.async.deferred();
 	var iframe = document.createElement('iframe');
@@ -99,7 +113,15 @@ function createIFrameElement() {
 	return dfd.promise();
 }
 
-// ポップアップウィンドウを開く
+/**
+ * ポップアップウィンドウを開く
+ * <p>
+ * IE8でjQuery1.10.1,2.0.2の場合、ポップアップ内の要素をjQueryで操作するとき、
+ * </p>
+ *
+ * @returns {Promise} ポップアップウィンドウが開くまで待機するプロミスオブジェクト。<br>
+ *          doneハンドラにはポップアップウィンドウのwindowオブジェクトが第1引数で渡される。
+ */
 function openPopupWindow() {
 	var dfd = h5.async.deferred();
 	var w = window.open();
@@ -127,7 +149,11 @@ function openPopupWindow() {
 	return dfd.promise();
 }
 
-// ポップアップウィンドウを閉じる
+/**
+ * ポップアップウィンドウを閉じる
+ *
+ * @param {Window} w ポップアップウィンドウのwindowオブジェクト
+ */
 function closePopupWindow(w) {
 	var dfd = h5.async.deferred();
 	function unloadFunc() {
@@ -145,8 +171,9 @@ function closePopupWindow(w) {
 	return dfd.promise();
 }
 
-// 現在実行中のテストを中断して、成功扱いにする。
-// テストケース内(test,asyncTest)から呼んで使用する。
+/**
+ * 現在実行中のテストを中断して、成功扱いにする。 テストケース内(test,asyncTest)から呼んで使用する。
+ */
 function abortTest() {
 	// test,asyncTest内から呼ばれた場合
 	// テストが成功するようにする
@@ -164,8 +191,9 @@ function abortTest() {
 	QUnit.config.current.nameHtml = replace;
 }
 
-// 次に実行されるテストを実行せずにスキップする。
-// モジュールのsetup内で呼んで使用する。
+/**
+ * 次に実行されるテストを実行せずにスキップする。 モジュールのsetup内で呼んで使用する。
+ */
 function skipTest() {
 	// モジュールのsetupから呼ばれた場合
 	QUnit.config.current.callback = function() {
