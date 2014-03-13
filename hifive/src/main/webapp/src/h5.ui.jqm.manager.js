@@ -252,37 +252,39 @@
 	 * @param {String} b バージョン文字列
 	 * @returns {Integer} 比較結果。aがbより小さいなら-1、同じなら0、aがbより大きいなら1 を返す
 	 */
-	function versionCompare(a, b) {
+	function compareVersion(a, b) {
+		// '.0'が末尾にならない様にする
+		a = a.replace(/(\.0+)+$/, '');
+		b = b.replace(/(\.0+)+$/, '');
+
 		if (a === b) {
-			// aとbが同じなら比較せずに0を返す
+			// aとbが同じならループで比較せずに0を返す
 			return 0;
 		}
 		var aAry = a.split('.');
 		var bAry = b.split('.');
-		if (aAry.length !== bAry.length) {
-			// 有効桁数が違う場合は'0'で埋めて合わせる
-			var shortAry = aAry.length < bAry.length ? aAry : bAry;
-			while (aAry.length !== bAry.length) {
-				shortAry.push('0');
+
+		for ( var i = 0, l = aAry.length; i < l; i++) {
+			if (bAry[i] == null) {
+				// bAryが先にnullになった=aAryの方が有効桁数が多い場合、
+				// '.0'が末尾にならないようにしてあるので、有効桁数の多い方がバージョンが大きい
+				return 1;
 			}
-		}
-		// i番目以降の値でバージョン比較
-		function versionAryCompare(a, b, i) {
-			if (a[i] == null) {
-				// 有効桁数は合わせてあるのでa[i]がnullならb[i]もnull
-				// どちらもnullになるまで比較した場合は同じversionなので0を返す
-				return 0;
-			}
-			if (a[i] === b[i]) {
+			if (parseInt(aAry[i], 10) === parseInt(bAry[i], 10)) {
 				// 同じなら次以降のindexで比較
-				return versionAryCompare(a, b, ++i);
+				continue;
 			}
-			// 片方が数値、片方が文字列の場合は数値で比較される
 			// 比較してaが小さいなら-1、bが小さいなら-1を返す
-			return parseInt(a[i]) < b[i] ? -1 : 1;
+			return parseInt(aAry[i], 10) < parseInt(bAry[i], 10) ? -1 : 1;
 		}
-		return versionAryCompare(aAry, bAry, 0);
+		if (bAry[l] != null) {
+			// aAryよりbAryの方が有効桁数が多い場合はbの方が有効桁数が多いのでバージョンが大きい
+			return -1;
+		}
+		// 最後まで比較して同じなら同じバージョンなので0を返す
+		return 0;
 	}
+	h5.u.obj.expose('c', {compareVersion:compareVersion})
 
 	// =========================================================================
 	//
@@ -732,7 +734,7 @@
 
 					// jqmのバージョンを見てpagecreateイベントのタイミングで初期化するべきかどうかのフラグの値をセットする
 					// (initが呼ばれるタイミングではjqmが読み込まれている前提)
-					shouldHandlePagecreateEvent = versionCompare($.mobile.version, '1.4') >= 0;
+					shouldHandlePagecreateEvent = compareVersion($.mobile.version, '1.4') >= 0;
 
 					// 初期表示時、JQMマネージャがreadyになる前にpageshowイベントが発火したかをチェックする
 					$(document).one('pageshow', function() {
