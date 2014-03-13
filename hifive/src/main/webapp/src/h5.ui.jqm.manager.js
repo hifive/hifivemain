@@ -139,7 +139,7 @@
 	 *
 	 * @type Boolean
 	 */
-	var initCalled = false;
+	var isInitCalled = false;
 
 	/**
 	 * pagehideイベントが発生したかを判定するフラグ
@@ -180,7 +180,7 @@
 			return;
 		}
 		// jqmControllerInstanceにインスタンスが格納されるのはinitの中で$(function(){})で囲って行っているため、
-		// bindAToActivePageがdocument.readyより前に呼ばれた場合はjqmControllerInstanceに値がまだ入っていない場合がある。
+		// bindToActivePageがdocument.readyより前に呼ばれた場合はjqmControllerInstanceに値がまだ入っていない場合がある。
 		// そのためjqmControllerInstanceのメソッド呼び出しは$(function(){})で囲って行っている。
 		$(function() {
 			jqmControllerInstance.addCSS(id);
@@ -724,11 +724,11 @@
 				 * @name init
 				 */
 				init: function() {
-					if (initCalled) {
+					if (isInitCalled) {
 						fwLogger.info(FW_LOG_JQM_CONTROLLER_ALREADY_INITIALIZED);
 						return;
 					}
-					initCalled = true;
+					isInitCalled = true;
 
 					// jqmのバージョンを見てpagecreateイベントのタイミングで初期化するべきかどうかのフラグの値をセットする
 					// (initが呼ばれるタイミングではjqmが読み込まれている前提)
@@ -829,7 +829,7 @@
 						}
 					}
 
-					if (initCalled && getActivePageId() !== null) {
+					if (isInitCalled && getActivePageId() !== null) {
 						bindToActivePage();
 					} else {
 						this.init();
@@ -855,7 +855,7 @@
 					dynamicControllerInstanceMap = {};
 					initParamMap = {};
 					cssMap = {};
-					initCalled = false;
+					isInitCalled = false;
 					hideEventFired = false;
 					showEventFiredBeforeReady = false;
 				}
