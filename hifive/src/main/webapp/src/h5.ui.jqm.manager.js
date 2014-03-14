@@ -166,7 +166,7 @@
 	 */
 	function getActivePageId() {
 		var $ap = $.mobile.activePage;
-		var id = $ap[0] && $ap[0].id;
+		var id = $ap && $ap[0] && $ap[0].id;
 		return isString(id) && id.length > 0 ? id : null;
 	}
 
