@@ -29,11 +29,141 @@ $(function() {
 	//
 	// =========================================================================
 
-	$(document).bind('mobileinit', function() {
-		// テストページのリンクが押下できなくなるため無効にする
-		$.mobile.linkBindingEnabled = false;
-		$.mobile.loadingMessage = false;
-	});
+	// jQueryMobileを実際に読み込むことはせず、jQueryMobileをシミュレートする
+	h5.u.obj
+			.expose(
+					'h5test.jqm',
+					{
+						createSimulator: function(version) {
+							// jQueryMobileから引用
+							var urlParseRE = /^(((([^:\/#\?]+:)?(?:(\/\/)((?:(([^:@\/#\?]+)(?:\:([^:@\/#\?]+))?)@)?(([^:\/#\?\]\[]+|\[[^\/\]@#?]+\])(?:\:([0-9]+))?))?)?)?((\/?(?:[^\/\?#]+\/+)*)([^\?#]*)))?(\?[^#]+)?)(#.*)?/;
+							var oldFind = $.find;
+							var oldMatches = $.find.matches
+							var oldMatchesSelector = $.find.matchesSelector;
+							var jqmDataRE = /:jqmData\(([^)]*)\)/g;
+							var path = {
+								// jQueryMobileから引用
+								parseUrl: function(url) {
+									// If we're passed an object, we'll assume that it is
+									// a parsed url object and just return it back to the caller.
+									if ($.type(url) === "object") {
+										return url;
+									}
+
+									var matches = urlParseRE.exec(url || "") || [];
+
+									// Create an object that allows the caller to access the sub-matches
+									// by name. Note that IE returns an empty string instead of undefined,
+									// like all other browsers do, so we normalize everything so its consistent
+									// no matter what browser we're running on.
+									return {
+										href: matches[0] || "",
+										hrefNoHash: matches[1] || "",
+										hrefNoSearch: matches[2] || "",
+										domain: matches[3] || "",
+										protocol: matches[4] || "",
+										doubleSlash: matches[5] || "",
+										authority: matches[6] || "",
+										username: matches[8] || "",
+										password: matches[9] || "",
+										host: matches[10] || "",
+										hostname: matches[11] || "",
+										port: matches[12] || "",
+										pathname: matches[13] || "",
+										directory: matches[14] || "",
+										filename: matches[15] || "",
+										search: matches[16] || "",
+										hash: matches[17] || ""
+									};
+								}
+							};
+
+							return {
+								init: function() {
+									// $.findの拡張
+									$.find = function(selector, context, ret, extra) {
+										if (selector.indexOf(":jqmData") > -1) {
+											selector = selector.replace(jqmDataRE, "[data-"
+													+ ($.mobile.ns || "") + "$1]");
+										}
+										return oldFind.call(this, selector, context, ret, extra);
+									};
+									$.extend($.find, oldFind);
+
+									if (compareVersion(version, '1.4') < 0) {
+										// シミュレートするjQMのバージョンが1.2、1.3なら$.find.matches、$.find.matchesSelectorも$.find()を使うようにする
+										// (実際のJQMのコードがそうなっているため。1.4の場合は$.findのみ拡張している)
+										$.find.matches = function(expr, set) {
+											return $.find(expr, null, null, set);
+										};
+
+										$.find.matchesSelector = function(node, expr) {
+											return $.find(expr, null, null, [node]).length > 0;
+										};
+									}
+
+									// $.mobileにJQMManagerが使用するapiを公開
+									h5.u.obj.expose('$.mobile', {
+										version: version,
+										// initした時点でのactivePageを登録
+										activePage: $('.ui-page-active'),
+										path: path,
+										ns: ''
+									});
+								},
+
+								dispose: function() {
+									$.find = oldFind;
+									try {
+										delete $.mobile
+									} catch (e) {
+										$.mobile = undefined;
+									}
+								},
+
+								/**
+								 * 擬似的にページ遷移を行う
+								 *
+								 * @param {selector} to 遷移先のページ
+								 * @param {boolean} initialize
+								 *            pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
+								 * @param {boolean} transition トランジション遷移をエミュレートするか
+								 * @prama {boolean} fromPageRemove 遷移元のページに対してpageremoveイベントをトリガするか
+								 */
+								changePage: function(to, initialize, transition, fromPageRemove) {
+									var $from = $.mobile.activePage;
+									var $to = $(to);
+									if (initialize) {
+										$to.trigger('pagecreate');
+										$to.trigger('pageinit');
+									}
+									$.mobile.activePage = $to;
+									$from && $from.trigger('pagebeforehide');
+									$to.trigger('pagebeforeshow');
+
+									function func() {
+										if (fromPageRemove) {
+											$from && $from.trigger('pageremove');
+										}
+										$from && $from.trigger('pagehide', {
+											nextPage: $to
+										});
+										$to.trigger('pageshow', {
+											prevPage: $from || $('')
+										});
+									}
+
+									if (transition) {
+										setTimeout(function() {
+											func();
+										});
+									} else {
+										func();
+									}
+								}
+							};
+						}
+					});
 
 	// jQueryのバージョンを見て読み込むjqmのバージョンを変える。
 	// 1.8以上なら1.4.2、1.7.Xなら1.3.1、1.6以下なら1.2.1。
@@ -46,18 +176,7 @@ $(function() {
 	} else {
 		jqmVersion = '1.3.1';
 	}
-
-	// jQueryMobileの読み込み
-	h5.u.loadScript('../res/lib/jqplugins/jqm/' + jqmVersion + '/jquery.mobile-' + jqmVersion
-			+ '.js', {
-		async: false
-	});
-
-	// JQMがロードされると、readyイベントの約50ms後に$.mobile.silentScroll()が実行されてtop:1pxの位置に移動してしまう。
-	// h5.ui.isInView() のテストに影響するためsilentScrollを無効にする
-	$.mobile.silentScroll = function() {
-	// 何もしない
-	};
+	var jqmSimulator = h5test.jqm.createSimulator(jqmVersion);
 
 	//=============================
 	// Variables
@@ -72,30 +191,24 @@ $(function() {
 	/**
 	 * JQMControllerのアンバインド
 	 */
-	function resetJQM() {
+	function resetJQMManager() {
 		$('body>div.testForJQM').each(function() {
 			$(this).trigger('pageremove');
 		});
 		$('body>div.testForJQM').remove();
 		h5.ui.jqm.manager.__reset();
-		$.mobile.activePage = undefined;
-		// JQMが生成するbody内をラップするdiv要素を外す
-		$('body>div:not(#qunit)').children().unwrap();
-		// JQMが生成するloadingのh1要素を削除
-		$('h1:not(#qunit-header)').remove();
 		// test*.cssをheadから削除する
 		$('head > link[href*="test"]').remove();
 
 		var controllers = h5.core.controllerManager.controllers;
 		for ( var i = 0, len = controllers.length; i < len; i++) {
 			controllers[i].dispose();
-
 		}
 		h5.core.controllerManager.controllers = [];
 	}
 
 	/**
-	 * idからページを作る。jsが指定されていればdata-h5-script、activFlag=trueなら作成したページをactivePageにする。
+	 * idからページを作る。jsが指定されていればdata-h5-script、activFlag=trueなら作成したページをactiveにする
 	 */
 	function createPage(id, _js, activeFlag) {
 		var js = _js ? ' data-h5-script="' + _js + '?' + new Date().getTime() + '"' : '';
@@ -106,50 +219,14 @@ $(function() {
 		$page.append($header).append($content).append($footer);
 		$('body').append($page);
 		if (activeFlag) {
-			$.mobile.activePage = $page;
+			// activeなページにはクラスを追加する
 			$page.addClass('ui-page ui-body-c ui-page-active');
+			// jqmSimulator実行中ならactivePageを設定
+			if ($.mobile) {
+				$.mobile.activePage = $page;
+			}
 		}
 		return $page;
-	}
-
-	/**
-	 * 擬似的にページ遷移を行う
-	 *
-	 * @param {selector} to 遷移先のページ
-	 * @param {boolean} initialize pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
-	 * @param {boolean} transition トランジション遷移をエミュレートするか
-	 * @prama {boolean} fromPageRemove 遷移元のページに対してpageremoveイベントをトリガするか
-	 */
-	function changePage(to, initialize, transition, fromPageRemove) {
-		var $from = $.mobile.activePage;
-		var $to = $(to);
-		if (initialize) {
-			$to.trigger('pagecreate');
-			$to.trigger('pageinit');
-		}
-		$.mobile.activePage = $to;
-		$from && $from.trigger('pagebeforehide');
-		$to.trigger('pagebeforeshow');
-
-		function func() {
-			if (fromPageRemove) {
-				$from && $from.trigger('pageremove');
-			}
-			$from && $from.trigger('pagehide', {
-				nextPage: $to
-			});
-			$to.trigger('pageshow', {
-				prevPage: $from || $('')
-			});
-		}
-
-		if (transition) {
-			setTimeout(function() {
-				func();
-			});
-		} else {
-			func();
-		}
 	}
 
 	var originalPrefix = '';
@@ -167,9 +244,11 @@ $(function() {
 		setup: function() {
 			createPage("test1", 'data/testforJQM1.js', true);
 			createPage("test2", 'data/testforJQM2.js');
+			jqmSimulator.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -207,7 +286,7 @@ $(function() {
 					if (--count === 0 || $('#test1 h1').css('font-size') === '111px') {
 						deepEqual($('#test1 h1').css('font-size'), '111px',
 								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
-						changePage('#test2', true);
+						jqmSimulator.changePage('#test2', true);
 					} else {
 						setTimeout(function() {
 							checkCSS();
@@ -262,8 +341,12 @@ $(function() {
 	//=============================
 
 	module('[build#min;browser#ie:6]JQMManager - managed test', {
+		setup: function() {
+			jqmSimulator.init();
+		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -353,8 +436,12 @@ $(function() {
 	//=============================
 
 	module("[build#min;browser#ie:6]JQMManager - init1", {
+		setup: function() {
+			jqmSimulator.init();
+		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -387,10 +474,12 @@ $(function() {
 		setup: function() {
 			createPage("testjs1", 'data/testforJQM1.js', true);
 			createPage("testjs2", 'data/testforJQM2.js');
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
@@ -418,10 +507,12 @@ $(function() {
 	module("[build#min;browser#ie:6]JQMManager - init2", {
 		setup: function() {
 			createPage("testjs3", 'data/testforJQM1.js', true);
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
@@ -459,10 +550,12 @@ $(function() {
 			createPage("test1").attr('data-hifive-script', 'data/testforJQM1.js');
 			createPage("test2", '', true).attr('data-hifive-script', 'data/testforJQM2.js');
 
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 			h5.ui.jqm.dataPrefix = originalPrefix;
 			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
@@ -495,10 +588,12 @@ $(function() {
 			createPage("test1", 'data/testforJQM1.js');
 			createPage("test2", 'data/testforJQM2.js', true);
 
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 			h5.ui.jqm.dataPrefix = originalPrefix;
 			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
@@ -528,10 +623,12 @@ $(function() {
 		setup: function() {
 			createPage("test3", null, true);
 			createPage("test4");
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 			window.com.htmlhifive.test.loadedTestForJQM1 = undefined;
 			window.com.htmlhifive.test.loadedTestForJQM2 = undefined;
 		}
@@ -577,10 +674,12 @@ $(function() {
 			createPage("test4", 'data/testforJQM4.js', true);
 			createPage("test5", 'data/testforJQM5.js');
 
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -608,10 +707,12 @@ $(function() {
 		setup: function() {
 			createPage("test6", null, true);
 
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -652,10 +753,12 @@ $(function() {
 			createPage('test7', null, true);
 			createPage('test8');
 
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -682,7 +785,7 @@ $(function() {
 						deepEqual($('#test7 h1').css('font-size'), '111px',
 								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
 						h5.ui.jqm.manager.define('test8', 'css/test2.css', controller8);
-						changePage('#test8', true);
+						jqmSimulator.changePage('#test8', true);
 					} else {
 						setTimeout(function() {
 							checkCSS();
@@ -738,10 +841,12 @@ $(function() {
 			createPage('test9', null, true);
 			createPage('test10');
 
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -767,7 +872,7 @@ $(function() {
 					return;
 				}
 				ok(true, '#test9内のbutton#test click が実行される');
-				changePage('#test10', true);
+				jqmSimulator.changePage('#test10', true);
 			}
 		};
 		var controller10 = {
@@ -800,10 +905,12 @@ $(function() {
 			createPage('test11', null, true);
 			createPage('test12');
 
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -829,7 +936,7 @@ $(function() {
 					ok(true, 'test12のpageshowが呼ばれた。');
 					start();
 				});
-				changePage('#test12', true);
+				jqmSimulator.changePage('#test12', true);
 			}
 		};
 		h5.ui.jqm.manager.define('test11', null, controller11);
@@ -843,10 +950,12 @@ $(function() {
 			createPage('test12', null, true);
 			createPage('test13');
 
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -877,7 +986,7 @@ $(function() {
 					__name: 'Test12BController',
 					__ready: function() {
 						ok(true, 'Test12BController.__readyが実行されること');
-						changePage('#test13', true);
+						jqmSimulator.changePage('#test13', true);
 					}
 				};
 
@@ -913,9 +1022,11 @@ $(function() {
 		setup: function() {
 			createPage('test14', null, true);
 			createPage('test15');
+			jqmSimulator.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -938,7 +1049,7 @@ $(function() {
 					__name: 'Test14BController',
 					__ready: function() {
 						ok(true, 'Test14BController.__readyが実行されること');
-						changePage('#test15', true, false, false);
+						jqmSimulator.changePage('#test15', true, false, false);
 					},
 					'button#test click': function() {
 						ok(true, '#test14内のbutton#test click が実行されること');
@@ -955,7 +1066,7 @@ $(function() {
 								'define()でCSSを何も指定していないので、test.cssは削除されていること');
 						equal($('head > link[href*="test2.css"]').length, 0,
 								'define()でCSSを何も指定していないので、test2.cssは削除されていること');
-						changePage('#test14', false, false, true);
+						jqmSimulator.changePage('#test14', false, false, true);
 						// test14ページでボタンを押下した操作を想定
 						$('#test14 button').click();
 					}
@@ -974,9 +1085,11 @@ $(function() {
 		setup: function() {
 			createPage('test16', null, true);
 			createPage('test17');
+			jqmSimulator.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -988,7 +1101,7 @@ $(function() {
 			__name: 'Test16Controller',
 			__ready: function(context) {
 				ok(true, 'Test16Controller.__readyが実行されること');
-				changePage('#test17', true);
+				jqmSimulator.changePage('#test17', true);
 			},
 			'{rootElement} click': function() {
 				ok(false, 'イベントハンドラが無効になっていないためテスト失敗。');
@@ -1014,9 +1127,11 @@ $(function() {
 	module('[build#min;browser#ie:6]JQMManager - define9', {
 		setup: function() {
 			createPage('test18', null, true);
+			jqmSimulator.init();
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1049,8 +1164,12 @@ $(function() {
 	// Definition
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - define10', {
+		setup: function() {
+			jqmSimulator.init();
+		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1100,13 +1219,15 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - define11', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			createPage('test19', null, true);
 			createPage('test20');
 
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1125,7 +1246,7 @@ $(function() {
 								'define()で指定したCSSが読み込まれていること');
 						equal($('head > link[href*="test2.css"]').length, 0,
 								'define()で指定したCSSが読み込まれていること');
-						changePage('#test20', true);
+						jqmSimulator.changePage('#test20', true);
 
 						equal($('head > link[href*="test.css"]').length, 0,
 								'define()で指定したCSSが読み込まれていること');
@@ -1141,13 +1262,15 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - define12', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			createPage('test21', null, true);
 			createPage('test22');
 
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1160,7 +1283,7 @@ $(function() {
 			__ready: function() {
 				try {
 					this.dispose();
-					changePage('#test22', true);
+					jqmSimulator.changePage('#test22', true);
 					ok(true, '動的に生成したコントローラをdipose後、ページ遷移を実行してもエラーが発生しないこと。');
 				} catch (e) {
 					ok(false, 'テスト失敗');
@@ -1175,13 +1298,15 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - define13', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			createPage('test23', null, true);
 			createPage('test24');
 
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1195,7 +1320,7 @@ $(function() {
 					__ready: function() {
 						try {
 							this.unbind();
-							changePage('#test24', true, false, true);
+							jqmSimulator.changePage('#test24', true, false, true);
 							ok(true, '動的に生成したコントローラをunbind後、ページ遷移を実行してもエラーが発生しないこと。');
 						} catch (e) {
 							ok(false, 'テスト失敗');
@@ -1213,11 +1338,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			this.pageA = createPage('test25', null, true)[0];
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1242,7 +1369,7 @@ $(function() {
 
 						order = 1;
 						pageB = createPage('test26')[0];
-						changePage('#test26', true, false, false);
+						jqmSimulator.changePage('#test26', true, false, false);
 					},
 					'{rootElement} h5jqmpagehide': function(context) {
 						equal(order++, 1, 'A -> B遷移時、1番目にAのh5jqmpagehideイベントが実行されること');
@@ -1263,7 +1390,7 @@ $(function() {
 				});
 
 				// 初期表示イベントをエミュレート
-				changePage('#test25', true, false, false);
+				jqmSimulator.changePage('#test25', true, false, false);
 			});
 
 	//=============================
@@ -1271,11 +1398,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 2', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			this.pageA = createPage('test27', null, true)[0];
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1294,7 +1423,7 @@ $(function() {
 					'{rootElement} h5jqmpageshow': function(context) {
 						if (context.evArg.prevPage.length === 0) {
 							pageB = createPage('test28')[0];
-							changePage('#test28', true, false, false);
+							jqmSimulator.changePage('#test28', true, false, false);
 						} else {
 							equal(order++, 3, 'B->A遷移時、3番目にAのh5jqmpageshowイベントがトリガされること');
 							strictEqual(context.evArg.prevPage[0], pageB, '遷移元ページが引数で返ってくること');
@@ -1307,7 +1436,7 @@ $(function() {
 					__name: 'Test28Controller',
 					'{rootElement} h5jqmpageshow': function(context) {
 						// B->Aに遷移
-						changePage('#test27', false, false, true);
+						jqmSimulator.changePage('#test27', false, false, true);
 					},
 					__dispose: function() {
 						equal(order++, 2, 'B->A遷移時、2番目にBの__disposeが実行されること');
@@ -1318,7 +1447,7 @@ $(function() {
 					}
 				});
 
-				changePage('#test27', true, false, false);
+				jqmSimulator.changePage('#test27', true, false, false);
 			});
 
 	//=============================
@@ -1326,11 +1455,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 3', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			this.pageA = createPage('test29', null, true)[0];
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1349,7 +1480,7 @@ $(function() {
 					__name: 'Test29Controller',
 					'{rootElement} h5jqmpageshow': function(context) {
 						pageB = createPage('test30')[0];
-						changePage('#test30', true, false, false);
+						jqmSimulator.changePage('#test30', true, false, false);
 					}
 				});
 
@@ -1359,7 +1490,7 @@ $(function() {
 						strictEqual(context.evArg.prevPage[0], pageA, '遷移元ページが引数で返ってくること');
 						pageC = createPage('test31')[0];
 						// B->Aに遷移
-						changePage('#test31', true, false, true);
+						jqmSimulator.changePage('#test31', true, false, true);
 					},
 					__dispose: function() {
 						equal(order++, 2, 'B->C遷移時、2番目にBの__disposeが実行されること');
@@ -1382,7 +1513,7 @@ $(function() {
 					}
 				});
 
-				changePage('#test29', true, false, false);
+				jqmSimulator.changePage('#test29', true, false, false);
 			});
 
 	//=============================
@@ -1390,11 +1521,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 4', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			this.pageA = createPage('test25', null, true)[0];
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1419,7 +1552,7 @@ $(function() {
 
 						order = 1;
 						pageB = createPage('test26')[0];
-						changePage('#test26', true, true, false);
+						jqmSimulator.changePage('#test26', true, true, false);
 					},
 					'{rootElement} h5jqmpagehide': function(context) {
 						equal(order++, 2, 'A -> B遷移時、1番目にAのh5jqmpagehideイベントが実行されること');
@@ -1440,7 +1573,7 @@ $(function() {
 				});
 
 				// 初期表示イベントをエミュレート
-				changePage('#test25', true, false, false);
+				jqmSimulator.changePage('#test25', true, false, false);
 			});
 
 	//=============================
@@ -1448,11 +1581,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 5', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			this.pageA = createPage('test27', null, true)[0];
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1471,7 +1606,7 @@ $(function() {
 					'{rootElement} h5jqmpageshow': function(context) {
 						if (context.evArg.prevPage.length === 0) {
 							pageB = createPage('test28')[0];
-							changePage('#test28', true, true, false);
+							jqmSimulator.changePage('#test28', true, true, false);
 						} else {
 							equal(order++, 3, 'B->A遷移時、3番目にAのh5jqmpageshowイベントがトリガされること');
 							strictEqual(context.evArg.prevPage[0], pageB, '遷移元ページが引数で返ってくること');
@@ -1484,7 +1619,7 @@ $(function() {
 					__name: 'Test28Controller',
 					'{rootElement} h5jqmpageshow': function(context) {
 						// B->Aに遷移
-						changePage('#test27', false, true, true);
+						jqmSimulator.changePage('#test27', false, true, true);
 					},
 					__dispose: function() {
 						equal(order++, 2, 'B->A遷移時、2番目にBの__disposeが実行されること');
@@ -1495,7 +1630,7 @@ $(function() {
 					}
 				});
 
-				changePage('#test27', true, false, false);
+				jqmSimulator.changePage('#test27', true, false, false);
 			});
 
 	//=============================
@@ -1503,11 +1638,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 6', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			this.pageA = createPage('test29', null, true)[0];
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1526,7 +1663,7 @@ $(function() {
 					__name: 'Test29Controller',
 					'{rootElement} h5jqmpageshow': function(context) {
 						pageB = createPage('test30')[0];
-						changePage('#test30', true, true, false);
+						jqmSimulator.changePage('#test30', true, true, false);
 					}
 				});
 
@@ -1536,7 +1673,7 @@ $(function() {
 						strictEqual(context.evArg.prevPage[0], pageA, '遷移元ページが引数で返ってくること');
 						pageC = createPage('test31')[0];
 						// B->Cに遷移
-						changePage('#test31', true, true, true);
+						jqmSimulator.changePage('#test31', true, true, true);
 					},
 					__dispose: function() {
 						equal(order++, 3, 'B->C遷移時、3番目にBの__disposeが実行されること');
@@ -1559,7 +1696,7 @@ $(function() {
 					}
 				});
 
-				changePage('#test29', true, false, false);
+				jqmSimulator.changePage('#test29', true, false, false);
 			});
 
 	//=============================
@@ -1567,11 +1704,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 7', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			createPage('test32', null, true);
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1590,7 +1729,7 @@ $(function() {
 						}, 200);
 
 						createPage('test33');
-						changePage('#test33', true, false, false);
+						jqmSimulator.changePage('#test33', true, false, false);
 						return df.promise();
 					},
 					'{rootElement} h5jqmpageshow': function(context) {
@@ -1604,11 +1743,11 @@ $(function() {
 					'{rootElement} h5jqmpageshow': function(context) {
 						ok(true, 'Bのh5jqmpageshowが実行されること');
 						// B->Aに遷移
-						changePage('#test32', false, false, true);
+						jqmSimulator.changePage('#test32', false, false, true);
 					}
 				});
 
-				changePage('#test32', true, false, false);
+				jqmSimulator.changePage('#test32', true, false, false);
 			});
 
 	//=============================
@@ -1616,11 +1755,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 8', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			createPage('test34', null, true);
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1639,7 +1780,7 @@ $(function() {
 						}, 500);
 
 						createPage('test35');
-						changePage('#test35', true, true, false);
+						jqmSimulator.changePage('#test35', true, true, false);
 						return df.promise();
 					},
 					'{rootElement} h5jqmpageshow': function(context) {
@@ -1653,11 +1794,11 @@ $(function() {
 					'{rootElement} h5jqmpageshow': function(context) {
 						ok(true, 'Bのh5jqmpageshowが実行されること');
 						// B->Aに遷移
-						changePage('#test34', false, true, true);
+						jqmSimulator.changePage('#test34', false, true, true);
 					}
 				});
 
-				changePage('#test34', true, false, false);
+				jqmSimulator.changePage('#test34', true, false, false);
 			});
 
 	//=============================
@@ -1665,11 +1806,13 @@ $(function() {
 	//=============================
 	module('[build#min;browser#ie:6]JQMManager - h5jqmpageshow/h5jqmpagehide 9', {
 		setup: function() {
+			jqmSimulator.init();
 			h5.ui.jqm.manager.init();
 			createPage('test36', null, true);
 		},
 		teardown: function() {
-			resetJQM();
+			resetJQMManager();
+			jqmSimulator.dispose();
 		}
 	});
 
@@ -1688,7 +1831,7 @@ $(function() {
 				}, 200);
 
 				createPage('test37');
-				changePage('#test37', true, true, false);
+				jqmSimulator.changePage('#test37', true, true, false);
 				return df.promise();
 			},
 			'{rootElement} h5jqmpageshow': function(context) {
@@ -1707,6 +1850,6 @@ $(function() {
 			ok(false, 'h5jqmpageshowが実行されたためテスト失敗');
 		});
 
-		changePage('#test36', true, false, false);
+		jqmSimulator.changePage('#test36', true, false, false);
 	});
 });
