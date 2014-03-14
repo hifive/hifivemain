@@ -30,138 +30,155 @@ $(function() {
 	// =========================================================================
 
 	// jQueryMobileを実際に読み込むことはせず、jQueryMobileをシミュレートする
-	h5.u.obj
-			.expose(
-					'h5test.jqm',
-					{
-						createSimulator: function(version) {
-							// jQueryMobileから引用
-							var urlParseRE = /^(((([^:\/#\?]+:)?(?:(\/\/)((?:(([^:@\/#\?]+)(?:\:([^:@\/#\?]+))?)@)?(([^:\/#\?\]\[]+|\[[^\/\]@#?]+\])(?:\:([0-9]+))?))?)?)?((\/?(?:[^\/\?#]+\/+)*)([^\?#]*)))?(\?[^#]+)?)(#.*)?/;
-							var oldFind = $.find;
-							var jqmDataRE = /:jqmData\(([^)]*)\)/g;
-							var path = {
-								// jQueryMobileから引用
-								parseUrl: function(url) {
-									// If we're passed an object, we'll assume that it is
-									// a parsed url object and just return it back to the caller.
-									if ($.type(url) === "object") {
-										return url;
-									}
+	/**
+	 * JQMSimulatorクラス
+	 *
+	 * @param {String} version シミュレートするjQueryMobileのバージョン
+	 * @param {Object} mobileObject $.mobileに持たせるオブジェクト
+	 */
+	function JQMSimulator(version, mobileObject) {
+		this._mobileObject = mobileObject;
+		this._version = version;
+	}
+	$.extend(JQMSimulator.prototype, {
+		init: function() {
+			// $.findの拡張
+			var oldFind = $.find;
+			this._oldFind = oldFind;
+			var jqmDataRE = /:jqmData\(([^)]*)\)/g;
+			$.find = function(selector, context, ret, extra) {
+				if (selector.indexOf(":jqmData") > -1) {
+					selector = selector.replace(jqmDataRE, "[data-" + ($.mobile.ns || "") + "$1]");
+				}
+				return oldFind.call(this, selector, context, ret, extra);
+			};
+			$.extend($.find, oldFind);
 
-									var matches = urlParseRE.exec(url || "") || [];
+			if (compareVersion(this._version, '1.4') < 0) {
+				// シミュレートするjQMのバージョンが1.2、1.3なら$.find.matches、$.find.matchesSelectorも$.find()を使うようにする
+				// (実際のJQMのコードがそうなっているため。1.4の場合は$.findのみ拡張している)
+				$.find.matches = function(expr, set) {
+					return $.find(expr, null, null, set);
+				};
 
-									// Create an object that allows the caller to access the sub-matches
-									// by name. Note that IE returns an empty string instead of undefined,
-									// like all other browsers do, so we normalize everything so its consistent
-									// no matter what browser we're running on.
-									return {
-										href: matches[0] || "",
-										hrefNoHash: matches[1] || "",
-										hrefNoSearch: matches[2] || "",
-										domain: matches[3] || "",
-										protocol: matches[4] || "",
-										doubleSlash: matches[5] || "",
-										authority: matches[6] || "",
-										username: matches[8] || "",
-										password: matches[9] || "",
-										host: matches[10] || "",
-										hostname: matches[11] || "",
-										port: matches[12] || "",
-										pathname: matches[13] || "",
-										directory: matches[14] || "",
-										filename: matches[15] || "",
-										search: matches[16] || "",
-										hash: matches[17] || ""
-									};
-								}
-							};
+				$.find.matchesSelector = function(node, expr) {
+					return $.find(expr, null, null, [node]).length > 0;
+				};
+			}
 
-							return {
-								init: function() {
-									// $.findの拡張
-									$.find = function(selector, context, ret, extra) {
-										if (selector.indexOf(":jqmData") > -1) {
-											selector = selector.replace(jqmDataRE, "[data-"
-													+ ($.mobile.ns || "") + "$1]");
-										}
-										return oldFind.call(this, selector, context, ret, extra);
-									};
-									$.extend($.find, oldFind);
+			// $.mobileにJQMManagerが使用するapiを公開
+			h5.u.obj.expose('$.mobile', this._mobileObject);
+			// initした時点でのactivePageを登録
+			$.mobile.activePage = $('.ui-page-active');
+		},
 
-									if (compareVersion(version, '1.4') < 0) {
-										// シミュレートするjQMのバージョンが1.2、1.3なら$.find.matches、$.find.matchesSelectorも$.find()を使うようにする
-										// (実際のJQMのコードがそうなっているため。1.4の場合は$.findのみ拡張している)
-										$.find.matches = function(expr, set) {
-											return $.find(expr, null, null, set);
-										};
+		dispose: function() {
+			$.find = this._oldFind;
+			try {
+				delete $.mobile;
+			} catch (e) {
+				$.mobile = undefined;
+			}
+		},
 
-										$.find.matchesSelector = function(node, expr) {
-											return $.find(expr, null, null, [node]).length > 0;
-										};
-									}
+		/**
+		 * 擬似的にページ遷移を行う
+		 *
+		 * @param {selector} to 遷移先のページ
+		 * @param {boolean} initialize
+		 *            pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
+		 * @param {boolean} transition トランジション遷移をエミュレートするか
+		 * @prama {boolean} fromPageRemove 遷移元のページに対してpageremoveイベントをトリガするか
+		 */
+		changePage: function(to, initialize, transition, fromPageRemove) {
+			var $from = $.mobile.activePage;
+			var $to = $(to);
+			if (initialize) {
+				$to.trigger('pagecreate');
+				$to.trigger('pageinit');
+			}
+			$.mobile.activePage = $to;
+			$from && $from.trigger('pagebeforehide');
+			$to.trigger('pagebeforeshow');
 
-									// $.mobileにJQMManagerが使用するapiを公開
-									h5.u.obj.expose('$.mobile', {
-										version: version,
-										// initした時点でのactivePageを登録
-										activePage: $('.ui-page-active'),
-										path: path,
-										ns: ''
-									});
-								},
+			function func() {
+				if (fromPageRemove) {
+					$from && $from.trigger('pageremove');
+				}
+				$from && $from.trigger('pagehide', {
+					nextPage: $to
+				});
+				$to.trigger('pageshow', {
+					prevPage: $from || $('')
+				});
+			}
 
-								dispose: function() {
-									$.find = oldFind;
-									try {
-										delete $.mobile
-									} catch (e) {
-										$.mobile = undefined;
-									}
-								},
+			if (transition) {
+				setTimeout(function() {
+					func();
+				});
+			} else {
+				func();
+			}
+		}
+	});
 
-								/**
-								 * 擬似的にページ遷移を行う
-								 *
-								 * @param {selector} to 遷移先のページ
-								 * @param {boolean} initialize
-								 *            pageinitをトリガーするかどうか。(JQMによって遷移先のページがページ化されるときにpageinitがトリガーされる)
-								 * @param {boolean} transition トランジション遷移をエミュレートするか
-								 * @prama {boolean} fromPageRemove 遷移元のページに対してpageremoveイベントをトリガするか
-								 */
-								changePage: function(to, initialize, transition, fromPageRemove) {
-									var $from = $.mobile.activePage;
-									var $to = $(to);
-									if (initialize) {
-										$to.trigger('pagecreate');
-										$to.trigger('pageinit');
-									}
-									$.mobile.activePage = $to;
-									$from && $from.trigger('pagebeforehide');
-									$to.trigger('pagebeforeshow');
+	/**
+	 * JQMシミュレータの作成
+	 *
+	 * @param {String} version
+	 */
+	function createSimulator(version) {
+		// jQueryMobileから引用
+		var urlParseRE = /^(((([^:\/#\?]+:)?(?:(\/\/)((?:(([^:@\/#\?]+)(?:\:([^:@\/#\?]+))?)@)?(([^:\/#\?\]\[]+|\[[^\/\]@#?]+\])(?:\:([0-9]+))?))?)?)?((\/?(?:[^\/\?#]+\/+)*)([^\?#]*)))?(\?[^#]+)?)(#.*)?/;
+		var path = {
+			// jQueryMobileから引用
+			parseUrl: function(url) {
+				// If we're passed an object, we'll assume that it is
+				// a parsed url object and just return it back to the caller.
+				if ($.type(url) === "object") {
+					return url;
+				}
 
-									function func() {
-										if (fromPageRemove) {
-											$from && $from.trigger('pageremove');
-										}
-										$from && $from.trigger('pagehide', {
-											nextPage: $to
-										});
-										$to.trigger('pageshow', {
-											prevPage: $from || $('')
-										});
-									}
+				var matches = urlParseRE.exec(url || "") || [];
 
-									if (transition) {
-										setTimeout(function() {
-											func();
-										});
-									} else {
-										func();
-									}
-								}
-							};
-						}
-					});
+				// Create an object that allows the caller to access the sub-matches
+				// by name. Note that IE returns an empty string instead of undefined,
+				// like all other browsers do, so we normalize everything so its consistent
+				// no matter what browser we're running on.
+				return {
+					href: matches[0] || "",
+					hrefNoHash: matches[1] || "",
+					hrefNoSearch: matches[2] || "",
+					domain: matches[3] || "",
+					protocol: matches[4] || "",
+					doubleSlash: matches[5] || "",
+					authority: matches[6] || "",
+					username: matches[8] || "",
+					password: matches[9] || "",
+					host: matches[10] || "",
+					hostname: matches[11] || "",
+					port: matches[12] || "",
+					pathname: matches[13] || "",
+					directory: matches[14] || "",
+					filename: matches[15] || "",
+					search: matches[16] || "",
+					hash: matches[17] || ""
+				};
+			}
+		};
+		var mobileObject = {
+			version: version,
+			path: path,
+			ns: ''
+		};
+
+		return new JQMSimulator(version, mobileObject);
+	}
+
+	h5.u.obj.expose('h5test.jqm', {
+		createSimulator: createSimulator
+	});
 
 	// jQueryのバージョンを見て読み込むjqmのバージョンを変える。
 	// 1.8以上なら1.4.2、1.7.Xなら1.3.1、1.6以下なら1.2.1。
