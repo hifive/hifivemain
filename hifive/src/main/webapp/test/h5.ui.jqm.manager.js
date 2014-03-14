@@ -38,8 +38,6 @@ $(function() {
 							// jQueryMobileから引用
 							var urlParseRE = /^(((([^:\/#\?]+:)?(?:(\/\/)((?:(([^:@\/#\?]+)(?:\:([^:@\/#\?]+))?)@)?(([^:\/#\?\]\[]+|\[[^\/\]@#?]+\])(?:\:([0-9]+))?))?)?)?((\/?(?:[^\/\?#]+\/+)*)([^\?#]*)))?(\?[^#]+)?)(#.*)?/;
 							var oldFind = $.find;
-							var oldMatches = $.find.matches
-							var oldMatchesSelector = $.find.matchesSelector;
 							var jqmDataRE = /:jqmData\(([^)]*)\)/g;
 							var path = {
 								// jQueryMobileから引用
