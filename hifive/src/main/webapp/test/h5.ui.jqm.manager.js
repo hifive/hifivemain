@@ -41,6 +41,11 @@ $(function() {
 		this._version = version;
 	}
 	$.extend(JQMSimulator.prototype, {
+		/**
+		 * jQueryMobileをロードした時に行われるシミュレートする
+		 *
+		 * @memberOf JQMSimulator
+		 */
 		init: function() {
 			// $.findの拡張
 			var oldFind = $.find;
@@ -54,17 +59,14 @@ $(function() {
 			};
 			$.extend($.find, oldFind);
 
-			if (compareVersion(this._version, '1.4') < 0) {
-				// シミュレートするjQMのバージョンが1.2、1.3なら$.find.matches、$.find.matchesSelectorも$.find()を使うようにする
-				// (実際のJQMのコードがそうなっているため。1.4の場合は$.findのみ拡張している)
-				$.find.matches = function(expr, set) {
-					return $.find(expr, null, null, set);
-				};
+			// $.find.matchesと$.find.matchesSelectorの拡張。差し替えた$.findを使用するようにする
+			$.find.matches = function(expr, set) {
+				return $.find(expr, null, null, set);
+			};
 
-				$.find.matchesSelector = function(node, expr) {
-					return $.find(expr, null, null, [node]).length > 0;
-				};
-			}
+			$.find.matchesSelector = function(node, expr) {
+				return $.find(expr, null, null, [node]).length > 0;
+			};
 
 			// $.mobileにJQMManagerが使用するapiを公開
 			h5.u.obj.expose('$.mobile', this._mobileObject);
@@ -72,6 +74,11 @@ $(function() {
 			$.mobile.activePage = $('.ui-page-active');
 		},
 
+		/**
+		 * initで変更したものを元に戻す
+		 *
+		 * @memberOf JQMSimulator
+		 */
 		dispose: function() {
 			$.find = this._oldFind;
 			try {
