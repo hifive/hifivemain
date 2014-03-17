@@ -62,7 +62,6 @@ $(function() {
 		}
 		script.type = 'text/javascript';
 		script.src = src + '?' + getUniqueString();
-		script.className = 'h5test-script';
 		$('head')[0].appendChild(script);
 		return dfd.promise();
 	}
@@ -79,7 +78,6 @@ $(function() {
 	module("h5.coexist", {
 		teardown: function() {
 			window.h5 = originalH5;
-			$('.h5test-script').remove();
 		}
 	});
 
@@ -132,7 +130,6 @@ $(function() {
 		},
 		teardown: function() {
 			h5 = originalH5;
-			$('.h5test-script').remove();
 		}
 	});
 
