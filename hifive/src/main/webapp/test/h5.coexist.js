@@ -76,7 +76,6 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-
 	module("h5.coexist", {
 		teardown: function() {
 			window.h5 = originalH5;
@@ -87,7 +86,6 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
 	test('h5.coexist()', function() {
 		var savedH5 = h5.coexist();
 		strictEqual(h5, undefined, 'h5を二重に読み込んでいない状態でh5.coexist()をするとh5がundefinedになる');
@@ -114,6 +112,10 @@ $(function() {
 		});
 	});
 
+
+	//=============================
+	// Definition
+	//=============================
 	module('バージョンが違うh5を2重読み込み', {
 		setup: function() {
 			// コントローラを全部アンバインド
@@ -130,9 +132,13 @@ $(function() {
 		},
 		teardown: function() {
 			h5 = originalH5;
+			$('.h5test-script').remove();
 		}
 	});
 
+	//=============================
+	// Body
+	//=============================
 	test('h5.coexist()で読み込む前のh5が取得できること。', 3, function() {
 		strictEqual(h5.env.version, '0.0.1', 'h5がバージョン0.0.1のものに上書きされていること。');
 
