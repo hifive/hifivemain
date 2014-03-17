@@ -40,6 +40,15 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
+	/**
+	 * coexistのテストのためにjsファイルを読み込む関数
+	 */
+	function loadScript(src) {
+		// キャッシュから読み込まれないようにタイムスタンプをパラメータに追加
+		$('head').append(
+				'<script type="text/javascript" src="' + src + '?' + new Date().getTime()
+						+ '"></script>');
+	}
 
 	// =========================================================================
 	//
@@ -69,10 +78,7 @@ $(function() {
 	});
 
 	test('バージョンが同じものを2重読み込みする。', function() {
-		h5.u.loadScript(h5jsPath, {
-			force: true,
-			async: false
-		});
+		loadScript(h5jsPath);
 
 		var savedH5 = h5.coexist();
 		strictEqual(h5, undefined, 'バージョンが同じものをh5.coexist()をするとh5がundefinedになる');
@@ -82,10 +88,8 @@ $(function() {
 
 	test('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.jsを読み込む。', function() {
 		h5 = {};
-		originalH5.u.loadScript(h5jsPath, {
-			force: true,
-			async: false
-		});
+		loadScript(h5jsPath);
+
 		var savedH5 = h5.coexist();
 		deepEqual(h5, {}, 'coexistすると、window.h5はもともと入っていたオブジェクトになる');
 		strictEqual(savedH5.env.version, originalH5.env.version, 'h5.coexist()の戻り値が元のh5と同じ。');
@@ -94,10 +98,8 @@ $(function() {
 	module('バージョンが違うh5を2重読み込み', {
 		setup: function() {
 			// vesion0.0.1のjsファイルをインクルードする
-			h5.u.loadScript(oldh5jsPath, {
-				force: true,
-				async: false
-			});
+			loadScript(oldh5jsPath);
+
 			// コントローラを全部アンバインド
 			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0;) {
 				var controller = h5.core.controllerManager.controllers[l];
