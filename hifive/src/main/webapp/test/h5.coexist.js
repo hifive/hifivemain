@@ -41,13 +41,30 @@ $(function() {
 	// Functions
 	//=============================
 	/**
+	 * 現在時刻と乱数からユニークな文字列を作成する
+	 */
+	function getUniqueString() {
+		var val = new Date().getTime().toString();
+		var rand = parseInt(10000 * Math.random(), 10);
+		return val + rand.toString();
+	}
+	/**
 	 * coexistのテストのためにjsファイルを読み込む関数
 	 */
 	function loadScript(src) {
+		// h5が無い状態でも呼べるように$.Deferred()を使う
+		var dfd = $.Deferred();
 		// キャッシュから読み込まれないようにタイムスタンプをパラメータに追加
-		$('head').append(
-				'<script type="text/javascript" src="' + src + '?' + new Date().getTime()
-						+ '"></script>');
+		var script = document.createElement('script');
+		script.onload = function() {
+			script.onload = null;
+			dfd.resolve();
+		}
+		script.type = 'text/javascript';
+		script.src = src + '?' + getUniqueString();
+		script.className = 'h5test-script';
+		$('head')[0].appendChild(script);
+		return dfd.promise();
 	}
 
 	// =========================================================================
@@ -63,6 +80,7 @@ $(function() {
 	module("h5.coexist", {
 		teardown: function() {
 			window.h5 = originalH5;
+			$('.h5test-script').remove();
 		}
 	});
 
@@ -77,34 +95,38 @@ $(function() {
 		ok(savedH5 === originalH5, 'h5.coexist()の戻り値が元のh5と同じインスタンス。');
 	});
 
-	test('バージョンが同じものを2重読み込みする。', function() {
-		loadScript(h5jsPath);
-
-		var savedH5 = h5.coexist();
-		strictEqual(h5, undefined, 'バージョンが同じものをh5.coexist()をするとh5がundefinedになる');
-		ok(savedH5 === originalH5, 'h5.coexist()の戻り値が元のh5と同じ。');
-
+	asyncTest('バージョンが同じものを2重読み込みする。', function() {
+		loadScript(h5jsPath).done(function() {
+			var savedH5 = h5.coexist();
+			strictEqual(h5, undefined, 'バージョンが同じものをh5.coexist()をするとh5がundefinedになる');
+			ok(savedH5 === originalH5, 'h5.coexist()の戻り値が元のh5と同じ。');
+			start();
+		});
 	});
 
-	test('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.jsを読み込む。', function() {
+	asyncTest('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.jsを読み込む。', function() {
 		h5 = {};
-		loadScript(h5jsPath);
-
-		var savedH5 = h5.coexist();
-		deepEqual(h5, {}, 'coexistすると、window.h5はもともと入っていたオブジェクトになる');
-		strictEqual(savedH5.env.version, originalH5.env.version, 'h5.coexist()の戻り値が元のh5と同じ。');
+		loadScript(h5jsPath).done(function() {
+			var savedH5 = h5.coexist();
+			deepEqual(h5, {}, 'coexistすると、window.h5はもともと入っていたオブジェクトになる');
+			strictEqual(savedH5.env.version, originalH5.env.version, 'h5.coexist()の戻り値が元のh5と同じ。');
+			start();
+		});
 	});
 
 	module('バージョンが違うh5を2重読み込み', {
 		setup: function() {
-			// vesion0.0.1のjsファイルをインクルードする
-			loadScript(oldh5jsPath);
-
 			// コントローラを全部アンバインド
 			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0;) {
 				var controller = h5.core.controllerManager.controllers[l];
 				controller.unbind();
 			}
+
+			// vesion0.0.1のjsファイルをインクルードする
+			stop();
+			loadScript(oldh5jsPath).done(function() {
+				start();
+			});
 		},
 		teardown: function() {
 			h5 = originalH5;
