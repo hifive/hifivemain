@@ -197,7 +197,7 @@
 	function equalsControllerName(controllerInstances, controllerDefObj) {
 		var ret = false;
 
-		for ( var i = 0, len = controllerInstances.length; i < len; i++) {
+		for (var i = 0, len = controllerInstances.length; i < len; i++) {
 			var ci = controllerInstances[i];
 			if (ci && ci.__name === controllerDefObj.__name) {
 				ret = true;
@@ -219,7 +219,7 @@
 			var controllers = controllerInstanceMap[prop];
 			var pageControllerEnabled = id === prop;
 
-			for ( var i = 0, len = controllers.length; i < len; i++) {
+			for (var i = 0, len = controllers.length; i < len; i++) {
 				var controller = controllers[i];
 
 				if (pageControllerEnabled) {
@@ -232,7 +232,7 @@
 			var dynamicControllers = dynamicControllerInstanceMap[prop];
 			var dynamicControllerEnabled = id === prop;
 
-			for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
+			for (var i = 0, len = dynamicControllers.length; i < len; i++) {
 				var dynamicController = dynamicControllers[i];
 
 				if (dynamicControllerEnabled) {
@@ -265,7 +265,7 @@
 		var bAry = b.split('.');
 
 		var aAryLen = aAry.length;
-		for ( var i = 0; i < aAryLen; i++) {
+		for (var i = 0; i < aAryLen; i++) {
 			if (bAry[i] == null) {
 				// bAryが先にnullになった=aAryの方が桁数(バージョン文字列の.の数)が多い場合、
 				// '.0'が末尾にならないようにしてあるので、桁数の多い方がバージョンが大きい
@@ -408,7 +408,7 @@
 			var dynamicControllers = dynamicControllerInstanceMap[id];
 
 			if (controllers) {
-				for ( var i = 0, len = controllers.length; i < len; i++) {
+				for (var i = 0, len = controllers.length; i < len; i++) {
 					controllers[i].dispose();
 				}
 
@@ -416,7 +416,7 @@
 			}
 
 			if (dynamicControllers) {
-				for ( var i = 0, len = dynamicControllers.length; i < len; i++) {
+				for (var i = 0, len = dynamicControllers.length; i < len; i++) {
 					dynamicControllers[i].dispose();
 				}
 
@@ -471,7 +471,7 @@
 			var conAr = controllerInstanceMap[$target[0].id];
 
 			if (conAr) {
-				for ( var i = 0, len = conAr.length; i < len; i++) {
+				for (var i = 0, len = conAr.length; i < len; i++) {
 					var controllerInstance = conAr[i];
 					// isReady=falseであるときコントローラのイベントハンドラは無効であり、
 					// JQMマネージャが管理する静的コントローラがイベントを受け取れない状態なので、h5controllerready後にh5jqmpageshowをトリガするようにする
@@ -609,7 +609,7 @@
 
 			var ci = controllerInstanceMap[id];
 
-			for ( var i = 0, len = controllerDefs.length; i < len; i++) {
+			for (var i = 0, len = controllerDefs.length; i < len; i++) {
 				var defObj = controllerDefs[i];
 
 				if (equalsControllerName(ci, defObj)) {
@@ -637,11 +637,11 @@
 			var linkTags = head.getElementsByTagName('link');
 			var linkLen = linkTags.length;
 
-			for ( var i = 0, srcLen = src.length; i < srcLen; i++) {
+			for (var i = 0, srcLen = src.length; i < srcLen; i++) {
 				var path = $.mobile.path.parseUrl(src[i]).filename;
 				var isLoaded = false;
 
-				for ( var j = 0; j < linkLen; j++) {
+				for (var j = 0; j < linkLen; j++) {
 					var loadedPath = $.mobile.path.parseUrl(linkTags[j].href).filename;
 
 					if (loadedPath === path) {

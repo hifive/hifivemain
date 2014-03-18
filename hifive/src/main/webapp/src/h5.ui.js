@@ -117,7 +117,6 @@
 	// Cache
 	//
 	// =========================================================================
-
 	var h5ua = h5.env.ua;
 	var isJQueryObject = h5.u.obj.isJQueryObject;
 	var argsToArray = h5.u.obj.argsToArray;
@@ -268,7 +267,7 @@
 			propCamel = propCamel.charAt(0).toUpperCase() + propCamel.slice(1);
 
 			// ベンダープレフィックスありでサポートしているか判定
-			for ( var i = 0; i < len; i++) {
+			for (var i = 0; i < len; i++) {
 				if (prefixes[i] + propCamel in div.style) {
 					return true;
 				}
@@ -326,7 +325,7 @@
 		var radius = size * 0.8 / 2;
 		var eachRadian = 360 / line * Math.PI / 180;
 
-		for ( var j = 1; j <= line; j++) {
+		for (var j = 1; j <= line; j++) {
 			var rad = eachRadian * j;
 			var cosRad = Math.cos(rad),sinRad = Math.sin(rad);
 			positions.push({
@@ -603,7 +602,7 @@
 		var lineColor = this.style.throbberLine.color;
 		var lineWidth = this.style.throbberLine.width;
 
-		for ( var i = 0, len = positions.length; i < len; i++) {
+		for (var i = 0, len = positions.length; i < len; i++) {
 			var pos = positions[i];
 			var from = pos.from;
 			var to = pos.to;
@@ -648,7 +647,7 @@
 			var highlightPos = this.highlightPos;
 			var lines = this.group.childNodes;
 
-			for ( var i = 0, len = lines.length; i < len; i++) {
+			for (var i = 0, len = lines.length; i < len; i++) {
 				var child = lines[i];
 
 				if (child.nodeName === 'textbox') {
@@ -770,7 +769,7 @@
 
 			canvas.width = canvas.width;
 
-			for ( var i = 0, len = positions.length; i < len; i++) {
+			for (var i = 0, len = positions.length; i < len; i++) {
 				ctx.beginPath();
 				ctx.strokeStyle = lineColor;
 				ctx.lineWidth = lineWidth;
@@ -940,7 +939,7 @@
 		// http://www.ninxit.com/blog/2008/04/07/ie6-https-iframe/
 		var srcVal = 'https' === document.location.protocol ? 'return:false' : 'about:blank';
 
-		for ( var i = 0, len = this._$target.length; i < len; i++) {
+		for (var i = 0, len = this._$target.length; i < len; i++) {
 			this._$content = this._$content.add($(doc.createElement('div')).append(contentElem)
 					.addClass(CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(
 							CLASS_INDICATOR_CONTENT).hide());
@@ -1019,7 +1018,7 @@
 				$window.bind('resize', that._resizeHandler);
 			};
 
-			for ( var i = 0, len = this._$target.length; i < len; i++) {
+			for (var i = 0, len = this._$target.length; i < len; i++) {
 				var _$target = this._$target.eq(i);
 				var _$content = this._$content.eq(i);
 				var _$skin = this._$skin.eq(i);
@@ -1079,7 +1078,7 @@
 				return;
 			}
 
-			for ( var i = 0, len = this._$target.length; i < len; i++) {
+			for (var i = 0, len = this._$target.length; i < len; i++) {
 				var _$target = this._$target.eq(i);
 				var _$overlay = this._$overlay.eq(i);
 				var _$skin = this._$skin.eq(i);
@@ -1110,7 +1109,7 @@
 		 * @private
 		 */
 		_reposition: function() {
-			for ( var i = 0, len = this._$target.length; i < len; i++) {
+			for (var i = 0, len = this._$target.length; i < len; i++) {
 				var _$target = this._$target.eq(i);
 				var _$content = this._$content.eq(i);
 
@@ -1199,7 +1198,7 @@
 
 			if (!isCSS3AnimationsSupported || useTransformTimerAnimation) {
 				// CSS3Animationをサポートしないブラウザまたはchromeの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
-				for ( var i = 0, len = this._throbbers.length; i < len; i++) {
+				for (var i = 0, len = this._throbbers.length; i < len; i++) {
 					this._throbbers[i].hide();
 				}
 			}
@@ -1231,7 +1230,7 @@
 				return this;
 			}
 
-			for ( var i = 0, len = this._throbbers.length; i < len; i++) {
+			for (var i = 0, len = this._throbbers.length; i < len; i++) {
 				this._throbbers[i].setPercent(percent);
 			}
 

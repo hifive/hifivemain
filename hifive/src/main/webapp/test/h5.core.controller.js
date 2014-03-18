@@ -62,7 +62,7 @@ $(function() {
 		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
 			deep: true
 		});
-		for ( var i = controllers.length - 1; i >= 0; i--) {
+		for (var i = controllers.length - 1; i >= 0; i--) {
 			controllers[i].dispose();
 		}
 	}
@@ -480,7 +480,7 @@ $(function() {
 			$('#controllerTest input[type=button]').dblclick();
 			strictEqual($result.text(), 'dblok', 'コントローラが要素にバインドされているか');
 
-			for ( var i = 1; i <= 7; i++) {
+			for (var i = 1; i <= 7; i++) {
 				$('#controllerTest #a .b').trigger('click' + i);
 				strictEqual($result.text(), '' + i, 'コントローラが要素にバインドされているか');
 			}
@@ -574,7 +574,7 @@ $(function() {
 		var l = names.length;
 		expect(l);
 		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				h5.core.controller('#controllerTest', {
 					__name: names[i]
@@ -609,7 +609,7 @@ $(function() {
 		var l = names.length;
 		expect(l);
 		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				h5.core.controller('#controllerTest', {
 					__name: 'TestController',
@@ -986,7 +986,7 @@ $(function() {
 				ok(true, '親コントローラの__disposeが実行される。');
 				disposedController.test = this;
 				setTimeout(function() {
-					for ( var i = 0; i < 3; i++) {
+					for (var i = 0; i < 3; i++) {
 						var prop = ['b', 'a', 'test'][i];
 						var str = ['孫', '子', '親'][i];
 						ok(isDisposed(disposedController[prop]), str + 'コントローラがdisposeされていること');
@@ -5815,7 +5815,7 @@ $(function() {
 						// __unbind, __disposeにundefinedを代入して、teardown時にdisposeするときエラーが出ないようにする
 						var controllers = h5.core.controllerManager
 								.getControllers('#controllerTest');
-						for ( var i = 0, l = controllers.length; i < l; i++) {
+						for (var i = 0, l = controllers.length; i < l; i++) {
 							controllers[i].__unbind = undefined;
 							controllers[i].__dispose = undefined;
 						}
@@ -7168,7 +7168,7 @@ $(function() {
 					var controllers = h5.core.controllerManager.getAllControllers();
 					var expects = [c1, c2, c3, c4];
 					strictEqual(controllers.length, expects.length, 'バインドしたコントローラの数分だけ取得できていること');
-					for ( var i = 0, l = expects.length; i < l; i++) {
+					for (var i = 0, l = expects.length; i < l; i++) {
 						ok($.inArray(expects[i], controllers) != -1, 'バインドしたコントローラが取得できること');
 					}
 					start();
@@ -7196,7 +7196,7 @@ $(function() {
 							var expects = [c1, c2];
 							strictEqual(controllers.length, expects.length,
 									'指定した要素にバインドした、コントローラの数分だけ取得できていること');
-							for ( var i = 0, l = expects.length; i < l; i++) {
+							for (var i = 0, l = expects.length; i < l; i++) {
 								ok($.inArray(expects[i], controllers) != -1,
 										'バインドされているコントローラが取得できること');
 							}
@@ -7226,7 +7226,7 @@ $(function() {
 					var expects = [c1, c2, c3, c4];
 					strictEqual(controllers.length, expects.length,
 							'指定した要素以下にバインドしたコントローラの数分だけ取得できていること');
-					for ( var i = 0, l = expects.length; i < l; i++) {
+					for (var i = 0, l = expects.length; i < l; i++) {
 						ok($.inArray(expects[i], controllers) != -1, 'バインドされているコントローラが取得できること');
 					}
 					start();
@@ -7255,7 +7255,7 @@ $(function() {
 					var expects = [c1, c3];
 					strictEqual(controllers.length, expects.length,
 							'name指定された名前を持つコントローラの数分だけ取得できていること');
-					for ( var i = 0, l = expects.length; i < l; i++) {
+					for (var i = 0, l = expects.length; i < l; i++) {
 						ok($.inArray(expects[i], controllers) != -1, 'バインドされているコントローラが取得できること');
 					}
 					start();
@@ -7286,7 +7286,7 @@ $(function() {
 									var expects = [c1, c2];
 									strictEqual(controllers.length, expects.length,
 											'name指定された名前を持つコントローラの数分だけ取得できていること');
-									for ( var i = 0, l = expects.length; i < l; i++) {
+									for (var i = 0, l = expects.length; i < l; i++) {
 										ok($.inArray(expects[i], controllers) != -1,
 												'バインドされているコントローラが取得できること');
 									}
@@ -7322,7 +7322,7 @@ $(function() {
 							var expects = [c1, c3, c4];
 							strictEqual(controllers.length, expects.length,
 									'name指定された名前を持つコントローラの数分だけ取得できていること');
-							for ( var i = 0, l = expects.length; i < l; i++) {
+							for (var i = 0, l = expects.length; i < l; i++) {
 								ok($.inArray(expects[i], controllers) != -1,
 										'バインドされているコントローラが取得できること');
 							}
@@ -7362,8 +7362,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest(
-			'[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
+	asyncTest('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
 			function() {
 				// 空のページを開く
 				openPopupWindow().done(

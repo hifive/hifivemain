@@ -2487,7 +2487,7 @@ $(function() {
 			strictEqual(rows.length, 2, '2件取得できること。');
 
 			var expected = ['hoge2', 'hoge1'];
-			for ( var i = 0; i < rows.length; i++) {
+			for (var i = 0; i < rows.length; i++) {
 				strictEqual(rows.item(i).col2, expected[i], '降順でソートされていること。');
 			}
 			start();
@@ -3006,7 +3006,7 @@ $(function() {
 		var args = [, undefined, null, 0, 1, '', 'a', new String(), {}, db.transaction()];
 		expect(args.length);
 
-		for ( var i = 0; i < args.length; i++) {
+		for (var i = 0; i < args.length; i++) {
 			try {
 				db.transaction().add(args[i]);
 			} catch (e) {

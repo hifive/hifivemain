@@ -236,7 +236,7 @@
 	function formatDescriptorError(code, msgSrc, msgParam, detail) {
 		var msg = h5.u.str.format.apply(null, [msgSrc].concat(msgParam)) + ' 詳細：';
 
-		for ( var i = 0, len = detail.length; i < len; i++) {
+		for (var i = 0, len = detail.length; i < len; i++) {
 			if (i !== 0) {
 				msg += ', ';
 			}
@@ -555,7 +555,7 @@
 			if (!map[p]) {
 				return false;
 			}
-			for ( var i = 0, l = map[p].length; i < l; i++) {
+			for (var i = 0, l = map[p].length; i < l; i++) {
 				if ($.inArray(map[p][i], ancestors) > -1
 						|| checkCircular(map[p][i], ancestors.concat([p]))) {
 					return true;
@@ -643,7 +643,7 @@
 	function unbox(v) {
 		if ($.isArray(v)) {
 			var ary = v.slice(0);
-			for ( var i = 0, l = ary.length; i < l; i++) {
+			for (var i = 0, l = ary.length; i < l; i++) {
 				// aryalueOfメソッドのあるオブジェクトならその値を入れる
 				ary[i] = ary[i] && typeof ary[i] === 'object' ? ary[i] && ary[i].valueOf
 						&& ary[i].valueOf() : ary[i];
@@ -689,7 +689,7 @@
 	function isEnumValue(v, enumValue) {
 		if (isStrictNaN(v)) {
 			// NaN の時は、NaN===NaNにならない(inArrayでも判定できない)ので、enumValueの中身を見て判定する
-			for ( var i = 0, l = enumValue.length; i < l; i++) {
+			for (var i = 0, l = enumValue.length; i < l; i++) {
 				if (isStrictNaN(enumValue[i])) {
 					return true;
 				}
@@ -878,7 +878,7 @@
 						}
 					} else {
 						var onArray = wrapInArray(depend.on);
-						for ( var i = 0, l = onArray.length; i < l; i++) {
+						for (var i = 0, l = onArray.length; i < l; i++) {
 							if (!schema.hasOwnProperty(onArray[i])) {
 								errorReason.push(createItemDescErrorReason(
 										SCHEMA_ERR_DETAIL_DEPEND_ON, schemaProp));
@@ -1512,7 +1512,7 @@
 			function _checkValue(v, d) {
 				if (!d) {
 					// チェック関数を順番に適用して、falseが返ってきたらチェック終了してfalseを返す
-					for ( var i = 0, l = funcs.length; i < l; i++) {
+					for (var i = 0, l = funcs.length; i < l; i++) {
 						var result = funcs[i](v, isStrict);
 						if (result.length) {
 							errorReason = errorReason.concat(result);
@@ -1532,7 +1532,7 @@
 					});
 					return false;
 				}
-				for ( var i = 0, l = v.length; i < l; i++) {
+				for (var i = 0, l = v.length; i < l; i++) {
 					// 配列の各要素について、次元を一つ減らして再帰的にチェックする
 					if (!_checkValue(v[i], d - 1)) {
 						return false;
@@ -1557,7 +1557,7 @@
 	 * @private
 	 * @param {DataItem|ObservableItem} item
 	 * @param {Object} schema スキーマ
-	 * @param {Object} schemaInfo  チェック済みスキーマ
+	 * @param {Object} schemaInfo チェック済みスキーマ
 	 * @param {Object} userInitialValue 初期値としてsetする値が格納されたオブジェクト
 	 */
 	function initItem(item, schema, schemaInfo, userInitialValue) {
@@ -1692,7 +1692,7 @@
 		 */
 		function isReady(dependProp) {
 			var deps = wrapInArray(schema[dependProp].depend.on);
-			for ( var i = 0, len = deps.length; i < len; i++) {
+			for (var i = 0, len = deps.length; i < len; i++) {
 				if ($.inArray(deps[i], item._realProperty) === -1
 						&& $.inArray(deps[i], targets) !== -1) {
 					// 依存先が実プロパティでなく、未計算のプロパティであればfalseを返す
@@ -1706,14 +1706,14 @@
 		 * changedPropsで指定されたプロパティに依存するプロパティをtargetArrayに追加する
 		 */
 		function addDependencies(targetArray, srcProps) {
-			for ( var i = 0, len = srcProps.length; i < len; i++) {
+			for (var i = 0, len = srcProps.length; i < len; i++) {
 				var depends = dependsMap[srcProps[i]];
 
 				if (!depends) {
 					continue;
 				}
 
-				for ( var j = 0, jlen = depends.length; j < jlen; j++) {
+				for (var j = 0, jlen = depends.length; j < jlen; j++) {
 					var dprop = depends[j];
 					if ($.inArray(dprop, targetArray) === -1) {
 						targetArray.push(dprop);
@@ -1737,7 +1737,7 @@
 			var restTargets = [];
 
 			//各依存プロパティについて、計算可能（依存するすべてのプロパティが計算済み）なら計算する
-			for ( var i = 0, len = targets.length; i < len; i++) {
+			for (var i = 0, len = targets.length; i < len; i++) {
 				var dp = targets[i];
 
 				if (isReady(dp)) {
@@ -1882,7 +1882,7 @@
 			if (newValue != null && type && type.match(/number|integer/)
 					&& typeof newValue !== 'number') {
 				if ($.isArray(newValue) || h5.core.data.isObservableArray(newValue)) {
-					for ( var i = 0, l = newValue.length; i < l; i++) {
+					for (var i = 0, l = newValue.length; i < l; i++) {
 						// スパースな配列の場合、undefinedが入っている可能性があるので、!= で比較
 						// parseFloatできる値(isNumberValueに渡してtrueになる値)ならparseFloatする
 						if (newValue[i] != null && isNumberValue(newValue[i])) {
@@ -1930,7 +1930,7 @@
 		var changedPropNameArray = [];
 
 		//値の変更が起こる全てのプロパティについて整合性チェックが通ったら、実際に値を代入する
-		for ( var i = 0, len = readyProps.length; i < len; i++) {
+		for (var i = 0, len = readyProps.length; i < len; i++) {
 			var readyProp = readyProps[i];
 
 			//TODO 判定文改良
@@ -1999,7 +1999,7 @@
 
 		var modelLogs = getModelUpdateLogObj(model);
 
-		for ( var i = 0, len = items.length; i < len; i++) {
+		for (var i = 0, len = items.length; i < len; i++) {
 			var item = items[i];
 			var itemId = item._values[model._idKey];
 
@@ -2094,7 +2094,7 @@
 				var dependency = schema[prop] ? schema[prop].depend : null;
 				if (dependency) {
 					var dependOn = wrapInArray(dependency.on);
-					for ( var i = 0, len = dependOn.length; i < len; i++) {
+					for (var i = 0, len = dependOn.length; i < len; i++) {
 						var dependSrcPropName = dependOn[i];
 
 						if (!dependencyMap[dependSrcPropName]) {
@@ -2184,7 +2184,7 @@
 		var namesInDescriptors = [];
 		// 依存関係のチェック
 		// 要素がオブジェクトであり、name、schemaプロパティを持っていない場合はcatch節で、ディスクリプタのエラーを投げる
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 
 			// 既に同名のモデルがあるかどうかチェックし、それらは新規登録しない
 			var name = descriptor[i].name;
@@ -2233,10 +2233,10 @@
 			var registed = false;
 
 			// descriptorでループさせて、依存関係が解決された居たらデータモデルを登録
-			for ( var i = 0; i < l; i++) {
+			for (var i = 0; i < l; i++) {
 				if (!dependMap[i].registed) {
 					var depends = dependMap[i].depends;
-					for ( var j = 0, len = depends.length; j < len; j++) {
+					for (var j = 0, len = depends.length; j < len; j++) {
 						if (!this.models[depends[j]]) {
 							noExistModels[depends[j]] = true;
 							break;
@@ -2270,7 +2270,7 @@
 			}
 		}
 		var retAry = [];
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			retAry.push(retObj[i]);
 		}
 		return retAry;
@@ -2599,7 +2599,7 @@
 			return false;
 		}
 
-		for ( var i = 0, count = l.length; i < count; i++) {
+		for (var i = 0, count = l.length; i < count; i++) {
 			if (l[i] === listener) {
 				return true;
 			}
@@ -2666,7 +2666,7 @@
 
 		var l = this.__listeners[type];
 
-		for ( var i = 0, count = l.length; i < count; i++) {
+		for (var i = 0, count = l.length; i < count; i++) {
 			if (l[i] === listener) {
 				l.splice(i, 1);
 				return;
@@ -2714,7 +2714,7 @@
 		};
 
 		// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
-		for ( var i = 0, count = l.length; i < count && !isImmediatePropagationStopped; i++) {
+		for (var i = 0, count = l.length; i < count && !isImmediatePropagationStopped; i++) {
 			l[i].call(event.target, event);
 		}
 
@@ -2933,7 +2933,7 @@
 			this._oldValueLogs = null;
 
 			function getFirstCRLog(itemLogs, lastPos) {
-				for ( var i = 0; i < lastPos; i++) {
+				for (var i = 0; i < lastPos; i++) {
 					var type = itemLogs[i].type;
 					if ((type === UPDATE_LOG_TYPE_CREATE || type === UPDATE_LOG_TYPE_REMOVE)) {
 						return itemLogs[i];
@@ -2958,7 +2958,7 @@
 					var changeEventStack = [];
 
 					//新しい変更が後ろに入っているので、降順で履歴をチェックする
-					for ( var i = itemLogs.length - 1; i >= 0; i--) {
+					for (var i = itemLogs.length - 1; i >= 0; i--) {
 						var log = itemLogs[i]; //あるitemについてのログ
 						var logType = log.type; //当該ログの種類
 
@@ -3035,7 +3035,7 @@
 					if (isChangeOnly && changeEventStack.length > 0) {
 						var mergedProps = {};
 						//changeEventStackはより「古い」イベントが「後ろ」に入っている。
-						for ( var i = changeEventStack.length - 1; i >= 0; i--) {
+						for (var i = changeEventStack.length - 1; i >= 0; i--) {
 							for ( var p in changeEventStack[i].props) {
 								if (!mergedProps[p]) {
 									// oldValueのセット
@@ -3411,7 +3411,7 @@
 			var items = wrapInArray(objOrArray);
 			var ret = [];
 			var idKey = this._idKey;
-			for ( var i = 0, len = items.length; i < len; i++) {
+			for (var i = 0, len = items.length; i < len; i++) {
 				var valueObj = items[i];
 				var itemId = valueObj[idKey];
 
@@ -3497,7 +3497,7 @@
 					throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
 				}
 				if (asCreate) {
-					for ( var i = 0, len = items.length; i < len; i++) {
+					for (var i = 0, len = items.length; i < len; i++) {
 						var valueObj = items[i];
 						var itemId = valueObj[idKey];
 						//idが空文字、null、undefined、はid指定エラー
@@ -3512,7 +3512,7 @@
 								this);
 					}
 				} else {
-					for ( var i = 0, l = items.length; i < l; i++) {
+					for (var i = 0, l = items.length; i < l; i++) {
 						var valueObj = items[i];
 						validateValueObj(this.schema, this._schemaInfo._validateItemValue,
 								valueObj, this);
@@ -3542,7 +3542,7 @@
 		get: function(idOrArray) {
 			if ($.isArray(idOrArray) || h5.core.data.isObservableArray(idOrArray)) {
 				var ret = [];
-				for ( var i = 0, len = idOrArray.length; i < len; i++) {
+				for (var i = 0, len = idOrArray.length; i < len; i++) {
 					ret.push(this._findById(idOrArray[i]));
 				}
 				return ret;
@@ -3584,7 +3584,7 @@
 			var actualRemovedItems = [];
 			var ret = [];
 
-			for ( var i = 0, len = ids.length; i < len; i++) {
+			for (var i = 0, len = ids.length; i < len; i++) {
 				if (!this.has(ids[i])) {
 					//指定されたアイテムが存在しない場合はnull
 					ret.push(null);
@@ -3780,7 +3780,7 @@
 			var arrayProps = schemaInfo._aryProps;
 
 			// ObservableArrayのイベントリスナの設定を行う
-			for ( var i = 0, l = arrayProps.length; i < l; i++) {
+			for (var i = 0, l = arrayProps.length; i < l; i++) {
 				setObservableArrayListeners(this, arrayProps[i], this.get(arrayProps[i]), model);
 			}
 		}
@@ -3920,7 +3920,7 @@
 		itemSetter(obsItem, actualInitialValue, null, true);
 
 		// ObservableArrayのアイテムについてリスナの設定
-		for ( var i = 0, l = obsItem._aryProps.length; i < l; i++) {
+		for (var i = 0, l = obsItem._aryProps.length; i < l; i++) {
 			setObservableArrayListeners(obsItem, obsItem._aryProps[i], obsItem
 					.get(obsItem._aryProps[i]));
 		}
@@ -4009,7 +4009,7 @@
 			var target = isObservableArray(ary) ? ary._src : ary;
 
 			// 中身の比較
-			for ( var i = 0; i < len; i++) {
+			for (var i = 0; i < len; i++) {
 				var myVal = this[i];
 				var targetVal = target[i];
 
@@ -4093,7 +4093,7 @@
 		 */
 		concat: function() {
 			var args = h5.u.obj.argsToArray(arguments);
-			for ( var i = 0, len = args.length; i < len; i++) {
+			for (var i = 0, len = args.length; i < len; i++) {
 				if (isObservableArray(args[i])) {
 					args[i] = args[i].toArray();
 				}
@@ -4123,7 +4123,7 @@
 	var destructiveMethods = ['sort', 'reverse', 'pop', 'shift', 'unshift', 'push', 'splice',
 			'copyFrom', 'set'];
 
-	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
+	for (var i = 0, len = arrayMethods.length; i < len; i++) {
 		var arrayMethod = arrayMethods[i];
 		ObservableArray.prototype[arrayMethod] = (function(method) {
 			var func = obsFuncs[method] ? obsFuncs[method] : Array.prototype[method];

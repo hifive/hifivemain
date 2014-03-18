@@ -223,7 +223,7 @@ $(function() {
 		$('head > link[href*="test"]').remove();
 
 		var controllers = h5.core.controllerManager.controllers;
-		for ( var i = 0, len = controllers.length; i < len; i++) {
+		for (var i = 0, len = controllers.length; i < len; i++) {
 			controllers[i].dispose();
 		}
 		h5.core.controllerManager.controllers = [];

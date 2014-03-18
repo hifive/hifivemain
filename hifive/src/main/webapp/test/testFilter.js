@@ -97,7 +97,7 @@
 		// minとmaxの有効桁数は揃えてある、または片方が指定無しを想定している
 		// 11-12.3 のような指定はできない
 		var l = minNoCheck ? max.length : min.length;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			var curMin = minNoCheck ? 0 : parseInt(min[i]);
 			var curMax = maxNoCheck ? 0 : parseInt(max[i]);
 			var curVersion = parseInt(valueAry[i] || 0);
@@ -134,7 +134,7 @@
 		versionDescs = $.trim(versionDescs);
 		// カンマ指定で複数指定されたいずれかにマッチしたらtrueを返す
 		var versionsDescsAry = versionDescs.split(',');
-		for ( var i = 0, l = versionsDescsAry.length; i < l; i++) {
+		for (var i = 0, l = versionsDescsAry.length; i < l; i++) {
 			// パースして、範囲内に入っているかどうか判定
 			var version = versionsDescsAry[i];
 			var versionRange = parseRange(version);
@@ -156,7 +156,7 @@
 		var isEdge = envDocmode.toLowerCase() === 'edge';
 		// カンマ指定で複数指定されたいずれかにマッチしたらtrueを返す
 		var docmodesDescsAry = docmodeDescs.split(',');
-		for ( var i = 0, l = docmodesDescsAry.length; i < l; i++) {
+		for (var i = 0, l = docmodesDescsAry.length; i < l; i++) {
 			var docmode = docmodesDescsAry[i];
 			// edge指定ならパースせずに判定
 			if (isEdge && docmode.toLowerCase() === 'edge') {
@@ -185,7 +185,7 @@
 		if (!buildFilters) {
 			return false;
 		}
-		for ( var i = 0, l = buildFilters.length; i < l; i++) {
+		for (var i = 0, l = buildFilters.length; i < l; i++) {
 			if (env.build === buildFilters[i]) {
 				return true;
 			}
@@ -200,7 +200,7 @@
 		if (!jqueryFilters) {
 			return false;
 		}
-		for ( var i = 0, l = jqueryFilters.length; i < l; i++) {
+		for (var i = 0, l = jqueryFilters.length; i < l; i++) {
 			var desc = jqueryFilters[i];
 
 			if (matchVersion(desc, env.jquery)) {
@@ -219,7 +219,7 @@
 		}
 		// "|"で結合する。余分についた両端の"|"は削除。"|"を区切り記号にして分割し、配列にする。
 		var descs = browserFilters.join('|').replace(/^\||$\|/g, '').split('|');
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			var desc = descs[i].split(':');
 			if ($.trim(desc[0]) !== env.browserprefix) {
 				continue;
@@ -241,7 +241,7 @@
 			}
 			var options = desc[2].split('&');
 			// optionによるフィルタ(IEのdocmodeなど)
-			for ( var j = 0, len = options.length; j < len; j++) {
+			for (var j = 0, len = options.length; j < len; j++) {
 				var tmp = options[j].split('=');
 				var key = $.trim(tmp[0]);
 				var val = $.trim(tmp[1]);
@@ -280,7 +280,7 @@
 
 		// ";"を区切り記号にして分割し、配列にする。余分についた両端の";"は削除。
 		var filters = testConditionDesc.replace(/\[|\]|^;|$;|;;/g, '').split(';');
-		for ( var i = 0, l = filters.length; i < l; i++) {
+		for (var i = 0, l = filters.length; i < l; i++) {
 			var filter = $.trim(filters[i]);
 			if (filter === '') {
 				continue;

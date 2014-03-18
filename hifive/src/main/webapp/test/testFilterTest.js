@@ -68,7 +68,7 @@ $(function() {
 			module: moduleName || ''
 		};
 		filterDescs = $.isArray(filterDescs) ? filterDescs : [filterDescs];
-		for ( var i = 0, l = filterDescs.length; i < l; i++) {
+		for (var i = 0, l = filterDescs.length; i < l; i++) {
 			var filterDesc = each ? each(filterDescs[i]) : filterDescs[i];
 			stats.name = filterDesc;
 			var current = QUnit.config.current = {
@@ -303,7 +303,7 @@ $(function() {
 	test('バージョンの値が範囲指定記述にマッチするとき、matchVersion()がtrueを返すこと (メジャーバージョンのみの場合)',
 			function() {
 				var descs = ['2', '2-', '-2', '1-', '-3', '2-3', '1-2', '1-3', 'all'];
-				for ( var i = 0, l = descs.length; i < l; i++) {
+				for (var i = 0, l = descs.length; i < l; i++) {
 					strictEqual(h5testFilterTest.matchVersion(descs[i], '2'), true, descs[i]
 							+ 'は"2"にマッチする');
 				}
@@ -311,7 +311,7 @@ $(function() {
 
 	test('バージョンの値が範囲指定記述にマッチしないとき、matchVersion()がfalseを返すこと (メジャーバージョンのみの場合)', function() {
 		var descs = ['22', '3-', '-1', '0-1'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchVersion(descs[i], '2'), false, descs[i]
 					+ 'は"2"にマッチしない');
 		}
@@ -320,7 +320,7 @@ $(function() {
 	test('バージョンの値が範囲指定記述にマッチするとき、matchVersion()がtrueを返すこと (マイナーバージョン以降を含む場合)', function() {
 		var descs = ['2.3.4', '2.3', '2', '2.3.4.0', '2.3.4-', '-2.3.4', '-2.3', '-2', '2.3-',
 				'2-', '-2.10', 'all'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchVersion(descs[i], '2.3.4'), true, descs[i]
 					+ 'は"2.3.4"にマッチする');
 		}
@@ -328,7 +328,7 @@ $(function() {
 
 	test('バージョンの値が範囲指定記述にマッチしないとき、matchVersion()がfalseを返すこと (マイナーバージョン以降を含む場合)', function() {
 		var descs = ['2.3.44', '-2.3.3', '2.3.5-', '2.3.4.5', '2.10-'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchVersion(descs[i], '2.3.4'), false, descs[i]
 					+ 'は"2.3.4"にマッチしない');
 		}
@@ -336,21 +336,21 @@ $(function() {
 
 	test('docmodeの値が範囲指定記述にマッチするとき、matchDocmode()がtrueを返すこと', function() {
 		var descs = ['8', '8-', '-8', '7-', '-9', '8-9', '7-8', 'all'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchDocmode(descs[i], '8'), true, descs[i]);
 		}
 	});
 
 	test('docmodeの値が範囲指定記述にマッチしないとき、matchDocmode()がfalseを返すこと', function() {
 		var descs = ['7', 'Edge', '9-', '-7', '0-1'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchDocmode(descs[i], '8'), false, descs[i]);
 		}
 	});
 
 	test('docmodeの値が範囲指定記述にマッチするとき、matchDocmode()がtrueを返すこと (docmode=Edgeの場合)', function() {
 		var descs = ['Edge', 'edge', 'EDGE', 'all'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchDocmode(descs[i], 'Edge'), true, descs[i]
 					+ 'は"Edge"にマッチする');
 		}
@@ -358,7 +358,7 @@ $(function() {
 
 	test('docmodeの値が範囲指定記述にマッチしないとき、matchDocmode()がfalseを返すこと (docmode=Edgeの場合)', function() {
 		var descs = ['7', '0-'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchDocmode(descs[i], 'Edge'), false, descs[i]
 					+ 'は"Edge"にマッチしない');
 		}
@@ -367,7 +367,7 @@ $(function() {
 	test('カンマ区切りでバージョン指定を複数記述した場合、いずれかに一致したらmatchVersion()がtrueを返すこと',
 			function() {
 				var descs = ['2,4', '3-,2'];
-				for ( var i = 0, l = descs.length; i < l; i++) {
+				for (var i = 0, l = descs.length; i < l; i++) {
 					strictEqual(h5testFilterTest.matchVersion(descs[i], '2'), true, descs[i]
 							+ 'は"2"にマッチする');
 				}
@@ -375,7 +375,7 @@ $(function() {
 
 	test('カンマ区切りでバージョン指定を複数記述した場合、いずれにも一致しなかったらmatchVersion()がfalseを返すこと', function() {
 		var descs = ['1,3,4'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchVersion(descs[i], '2'), false, descs[i]
 					+ 'は"2"にマッチしない');
 		}
@@ -383,7 +383,7 @@ $(function() {
 
 	test('カンマ区切りでdocmode指定を複数記述した場合、いずれかに一致したらmatchDocmode()がtrueを返すこと', function() {
 		var descs = ['7,Edge', '7,all'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchDocmode(descs[i], 'Edge'), true, descs[i]
 					+ 'は"Edge"にマッチする');
 		}
@@ -391,7 +391,7 @@ $(function() {
 
 	test('カンマ区切りでdocmode指定を複数記述した場合、いずれにも一致しなかったらmatchDocmode()がfalseを返すこと', function() {
 		var descs = ['0-,-10'];
-		for ( var i = 0, l = descs.length; i < l; i++) {
+		for (var i = 0, l = descs.length; i < l; i++) {
 			strictEqual(h5testFilterTest.matchDocmode(descs[i], 'Edge'), false, descs[i]
 					+ 'は"Edge"にマッチしない');
 		}

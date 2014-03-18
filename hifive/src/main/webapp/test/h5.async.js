@@ -1264,7 +1264,7 @@ $(function() {
 	test('※要目視確認：引数にプロミスオブジェクトと配列以外のものを渡した場合は、同期実行されること。ログが出力されること。', 11, function() {
 		var argArray = [0, 1, true, false, {}];
 
-		for ( var i = 0, l = argArray.length; i < l; i++) {
+		for (var i = 0, l = argArray.length; i < l; i++) {
 			var count = 0;
 			h5.async.when(argArray[i]).done(function() {
 				equal(count++, 0, '引数が' + argArray[i].toString() + 'の場合、doneコールバックが同期的に実行されること。');
@@ -1281,7 +1281,7 @@ $(function() {
 				var dfd1;
 				var argArray = [0, 1, true, false, {}, []];
 
-				for ( var i = 0, l = argArray.length; i < l; i++) {
+				for (var i = 0, l = argArray.length; i < l; i++) {
 					// deferredを初期化する
 					dfd1 = h5.async.deferred();
 
@@ -1523,7 +1523,7 @@ $(function() {
 
 	asyncTest('引数チェック', 3, function() {
 		var noArrayObjs = [1, {}, 'aaa'];
-		for ( var i = 0, len = noArrayObjs.length; i < len; i++) {
+		for (var i = 0, len = noArrayObjs.length; i < len; i++) {
 			try {
 				h5.async.loop(noArrayObjs[i], function() {
 				//

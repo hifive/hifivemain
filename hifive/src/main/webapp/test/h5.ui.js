@@ -68,8 +68,8 @@ $(function() {
 			obj2 = [s2, $(s2), $(s2)[0]];
 		}
 		var indexMes = ['セレクタ', 'jQuery', 'DOM'];
-		for ( var i = 0; i < obj1.length; i++) {
-			for ( var j = 0; j < obj2.length; j++) {
+		for (var i = 0; i < obj1.length; i++) {
+			for (var j = 0; j < obj2.length; j++) {
 				footer = s1 + ',' + s2 + '  (' + indexMes[i] + '/' + indexMes[j] + ')  ';
 				check(fn, expect, message + ' ' + footer, obj1[i], obj2[j]);
 			}
@@ -104,7 +104,7 @@ $(function() {
 			propCamel = propCamel.charAt(0).toUpperCase() + propCamel.slice(1);
 
 			// ベンダープレフィックスありでサポートしているか判定
-			for ( var i = 0; i < len; i++) {
+			for (var i = 0; i < len; i++) {
 				if (prefixes[i] + propCamel in div.style) {
 					return true;
 				}

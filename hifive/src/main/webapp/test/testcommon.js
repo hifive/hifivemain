@@ -44,7 +44,7 @@ function rgbToHex(rgbStr) {
 
 	var hexs = [];
 
-	for ( var i = 1; i < patterns.length; i++) {
+	for (var i = 1; i < patterns.length; i++) {
 		hexs.push(("0" + parseInt(patterns[i]).toString(16)).slice(-2));
 	}
 
@@ -240,7 +240,7 @@ function compareVersion(a, b) {
 	var bAry = b.split('.');
 
 	var aAryLen = aAry.length;
-	for ( var i = 0; i < aAryLen; i++) {
+	for (var i = 0; i < aAryLen; i++) {
 		if (bAry[i] == null) {
 			// bAryが先にnullになった=aAryの方が桁数(バージョン文字列の.の数)が多い場合、
 			// '.0'が末尾にならないようにしてあるので、桁数の多い方がバージョンが大きい

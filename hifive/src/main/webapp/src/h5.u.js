@@ -344,7 +344,7 @@
 		var nsArray = namespace.split('.');
 		var len = nsArray.length;
 
-		for ( var i = 0; i < len; i++) {
+		for (var i = 0; i < len; i++) {
 			if (!isValidNamespaceIdentifier(nsArray[i])) {
 				// 名前空間として不正な文字列ならエラー
 				throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
@@ -352,7 +352,7 @@
 		}
 
 		var parentObj = window;
-		for ( var i = 0; i < len; i++) {
+		for (var i = 0; i < len; i++) {
 			var name = nsArray[i];
 			if (parentObj[name] === undefined) {
 				parentObj[name] = {};
@@ -432,7 +432,7 @@
 			throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
 		}
 
-		for ( var i = 0, l = resources.length; i < l; i++) {
+		for (var i = 0, l = resources.length; i < l; i++) {
 			var path = resources[i];
 			if (!isString(path) || !$.trim(path)) {
 				throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
@@ -574,7 +574,7 @@
 						progressCallback = function() {
 							var results = argsToArray(arguments);
 
-							for ( var i = 0; i < loadedScripts.length; i++) {
+							for (var i = 0; i < loadedScripts.length; i++) {
 								var result = results[i];
 
 								if (!result) {
@@ -815,7 +815,7 @@
 		// 循環参照チェック用配列
 		var objStack = [];
 		function existStack(obj) {
-			for ( var i = 0, len = objStack.length; i < len; i++) {
+			for (var i = 0, len = objStack.length; i < len; i++) {
 				if (obj === objStack[i]) {
 					return true;
 				}
@@ -824,7 +824,7 @@
 		}
 
 		function popStack(obj) {
-			for ( var i = 0, len = objStack.length; i < len; i++) {
+			for (var i = 0, len = objStack.length; i < len; i++) {
 				if (obj === objStack[i]) {
 					objStack.splice(i, 1);
 				}
@@ -902,7 +902,7 @@
 				objStack.push(val);
 				var indexStack = [];
 				ret = typeToCode(type) + '[';
-				for ( var i = 0, len = val.length; i < len; i++) {
+				for (var i = 0, len = val.length; i < len; i++) {
 					indexStack[i.toString()] = true;
 					var elm;
 					if (!val.hasOwnProperty(i)) {
@@ -1108,7 +1108,7 @@
 					if (!$.isArray(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					for ( var i = 0; i < obj.length; i++) {
+					for (var i = 0; i < obj.length; i++) {
 						switch (codeToType(obj[i].substring(0, 1))) {
 						case 'undefElem':
 							delete obj[i];
@@ -1116,7 +1116,7 @@
 						case 'objElem':
 							var extendObj = func(typeToCode('object') + obj[i].substring(1));
 							var tempObj = [];
-							for ( var i = 0, l = obj.length - 1; i < l; i++) {
+							for (var i = 0, l = obj.length - 1; i < l; i++) {
 								tempObj[i] = obj[i];
 							}
 							obj = tempObj;
@@ -1229,7 +1229,7 @@
 			names.unshift();
 		}
 		var ret = rootObj || window;
-		for ( var i = 0, len = names.length; i < len; i++) {
+		for (var i = 0, len = names.length; i < len; i++) {
 			ret = ret[names[i]];
 			if (ret == null) { // nullまたはundefinedだったら辿らない
 				break;

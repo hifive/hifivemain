@@ -132,7 +132,7 @@ $(function() {
 	module('バージョンが違うh5を2重読み込み', {
 		setup: function() {
 			// コントローラを全部アンバインド
-			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0;) {
+			for (var l = h5.core.controllerManager.controllers.length; l-- > 0;) {
 				var controller = h5.core.controllerManager.controllers[l];
 				controller.unbind();
 			}
@@ -166,7 +166,7 @@ $(function() {
 			__name: name
 		};
 		function inControllers(controller, controllers) {
-			for ( var l = controllers.length; l-- > 0;) {
+			for (var l = controllers.length; l-- > 0;) {
 				if (controllers[l] === controller) {
 					return true;
 				}

@@ -234,7 +234,7 @@
 			if (!isOnlyUrls) {
 				delete this.cache[url];
 			}
-			for ( var i = 0, len = this.cacheUrls.length; i < len; i++) {
+			for (var i = 0, len = this.cacheUrls.length; i < len; i++) {
 				if (this.cacheUrls[i] === url) {
 					this.cacheUrls.splice(i, 1);
 					break;
@@ -396,7 +396,7 @@
 			}
 
 			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
-			for ( var i = 0; i < resourcePaths.length; i++) {
+			for (var i = 0; i < resourcePaths.length; i++) {
 				var path = resourcePaths[i];
 				var absolutePath = toAbsoluteUrl(path);
 
@@ -426,7 +426,7 @@
 				var args = h5.u.obj.argsToArray(arguments);
 
 				// loadされたものを、キャッシュから持ってきたものとマージする
-				for ( var i = 0, l = args.length; i < l; i++) {
+				for (var i = 0, l = args.length; i < l; i++) {
 					$.extend(ret, args[i].ret);
 					datas.push(args[i].data);
 				}
@@ -511,7 +511,7 @@
 				if (paths.length === 0) {
 					throwFwError(ERR_CODE_INVALID_FILE_PATH);
 				}
-				for ( var i = 0, len = paths.length; i < len; i++) {
+				for (var i = 0, len = paths.length; i < len; i++) {
 					if (!isString(paths[i])) {
 						throwFwError(ERR_CODE_INVALID_FILE_PATH);
 					} else if (!$.trim(paths[i])) {
@@ -760,7 +760,7 @@
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
 			}
 
-			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
+			for (var i = 0, len = templateIdsArray.length; i < len; i++) {
 				var id = templateIdsArray[i];
 				if (!isString(id) || !$.trim(id)) {
 					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID);
@@ -772,7 +772,7 @@
 				/* del end */
 			}
 
-			for ( var i = 0, len = templateIdsArray.length; i < len; i++) {
+			for (var i = 0, len = templateIdsArray.length; i < len; i++) {
 				delete this.__cachedTemplates[templateIdsArray[i]];
 			}
 		},

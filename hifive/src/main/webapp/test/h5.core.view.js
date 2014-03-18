@@ -101,7 +101,7 @@
 			if ($a.children().length > 0) {
 				func($a.children(), $b.children());
 			} else {
-				for ( var i = 0; i < $a.length; i++) {
+				for (var i = 0; i < $a.length; i++) {
 					aElem = $($a[i]);
 					bElem = $($b[i]);
 
@@ -112,7 +112,7 @@
 				}
 			}
 
-			for ( var j = 0; j < $a.length; j++) {
+			for (var j = 0; j < $a.length; j++) {
 				aElem = $($a[j]);
 				bElem = $($b[j]);
 
@@ -302,7 +302,7 @@
 			var p = view.load(['./template/test8.ejs?' + param, './template/test4.ejs?' + param]);
 			p.done(
 					function(result) {
-						for ( var i = 0, l = result.length; i < l; i++) {
+						for (var i = 0, l = result.length; i < l; i++) {
 							var obj = result[i];
 							if (obj.path === './template/test8.ejs?' + param) {
 								ok(true, 'pathが取得できること');
@@ -739,14 +739,14 @@
 		asyncTest('isAvailable() ロードしたテンプレートIDがキャッシュに存在することを確認。', 8, function() {
 			var loadedIds = ['template2', 'template3', 'template4', 'template5'];
 			var view = h5.core.view.createView();
-			for ( var i = 0, l = loadedIds.length; i < l; i++) {
+			for (var i = 0, l = loadedIds.length; i < l; i++) {
 				var id = loadedIds[i];
 				ok(!view.isAvailable(id), 'テンプレートをロードする前はisAvailable(id)の結果がfalseであること。');
 			}
 			var p = view.load(['./template/test2.ejs', './template/test3.ejs',
 					'./template/test4.ejs']);
 			p.done(function(result) {
-				for ( var i = 0, l = loadedIds.length; i < l; i++) {
+				for (var i = 0, l = loadedIds.length; i < l; i++) {
 					var id = loadedIds[i];
 					ok(view.isAvailable(id), 'テンプレートをロードした後はisAvailable(id)の結果がtrueであること。');
 				}
@@ -761,12 +761,12 @@
 					'./template/test4.ejs']);
 
 			p.done(function(result) {
-				for ( var i = 0, l = loadedIds.length; i < l; i++) {
+				for (var i = 0, l = loadedIds.length; i < l; i++) {
 					var id = loadedIds[i];
 					ok(view.isAvailable(id), 'テンプレートを削除する前はisAvailable(id)の結果がtrueであること。');
 				}
 				view.clear();
-				for ( var i = 0, l = loadedIds.length; i < l; i++) {
+				for (var i = 0, l = loadedIds.length; i < l; i++) {
 					var id = loadedIds[i];
 					ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。');
 					try {
@@ -789,13 +789,13 @@
 					'./template/test4.ejs']);
 
 			p.done(function(result) {
-				for ( var i = 0, l = loadedIds.length; i < l; i++) {
+				for (var i = 0, l = loadedIds.length; i < l; i++) {
 					var id = loadedIds[i];
 					ok(view.isAvailable(id), 'テンプレートを削除する前はisAvailable(id)の結果がtrueであること。');
 				}
 				view.clear('template2');
 				view.clear(['template3', 'template4']);
-				for ( var i = 0, l = deletedIds.length; i < l; i++) {
+				for (var i = 0, l = deletedIds.length; i < l; i++) {
 					var id = deletedIds[i];
 					ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。' + id);
 					try {
@@ -804,7 +804,7 @@
 						ok(true, '削除したテンプレートに対してgetView()を行うと例外が発生すること。：' + e.message);
 					}
 				}
-				for ( var i = 0, l = existIds.length; i < l; i++) {
+				for (var i = 0, l = existIds.length; i < l; i++) {
 					var id = existIds[i];
 					ok(view.isAvailable(id), '削除されていないテンプレートはisAvailable(id)の結果がfalseであること。' + id);
 					try {
@@ -1207,7 +1207,7 @@
 						p2.done(
 								function() {
 									var cacheInfo = cacheManager.getCacheInfo();
-									for ( var i = 0; i < cacheInfo.length; i++) {
+									for (var i = 0; i < cacheInfo.length; i++) {
 										var cache = cacheInfo[i];
 										var path = cache.path;
 										if (path === "./template/test2.ejs") {
@@ -1216,7 +1216,7 @@
 											ok(cache.absoluteUrl
 													.match(/http.*\/template\/test2\.ejs/),
 													'URLが取得できる - ' + cache.absoluteUrl);
-											for ( var j = 0; j < cache.ids.length; j++) {
+											for (var j = 0; j < cache.ids.length; j++) {
 												var id = cache.ids[j];
 												if (id === 'template2') {
 													ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:'
@@ -1229,7 +1229,7 @@
 											ok(cache.absoluteUrl
 													.match(/http.*\/template\/test3\.ejs/),
 													'URLが取得できる - ' + cache.absoluteUrl);
-											for ( var j = 0; j < cache.ids.length; j++) {
+											for (var j = 0; j < cache.ids.length; j++) {
 												var id = cache.ids[j];
 												if (id === 'template3') {
 													ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:'
@@ -1242,7 +1242,7 @@
 											ok(cache.absoluteUrl
 													.match(/http.*\/template\/test4\.ejs/),
 													'URLが取得できる - ' + cache.absoluteUrl);
-											for ( var j = 0; j < cache.ids.length; j++) {
+											for (var j = 0; j < cache.ids.length; j++) {
 												var id = cache.ids[j];
 												if (id === 'template4') {
 													ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:'
@@ -1287,7 +1287,7 @@
 						var cacheUrls = cacheManager.cacheUrls;
 						var cache = cacheManager.cache;
 
-						for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+						for (var i = 0, l = cacheUrls.length; i < l; i++) {
 							var url = cacheUrls[i];
 							ok($.inArray(cache[url].path, expectArray) != -1,
 									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
@@ -1303,7 +1303,7 @@
 							var cacheUrls2 = cacheManager.cacheUrls;
 							var cache2 = cacheManager.cache;
 
-							for ( var i = 0, l = cacheUrls2.length; i < l; i++) {
+							for (var i = 0, l = cacheUrls2.length; i < l; i++) {
 								var url2 = cacheUrls2[i];
 								ok($.inArray(cache2[url2].path, expectArray2) != -1,
 										'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
@@ -1344,7 +1344,7 @@
 								var cacheUrls = cacheManager.cacheUrls;
 								var cache = cacheManager.cache;
 
-								for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+								for (var i = 0, l = cacheUrls.length; i < l; i++) {
 									var url = cacheUrls[i];
 									ok($.inArray(cache[url].path, expectArray1) != -1,
 											'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
@@ -1372,7 +1372,7 @@
 								equal(cacheUrls.length, 1,
 										'1ファイルのみキャッシュされていること。同じファイルが重複してキャッシュされていないこと。');
 
-								for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+								for (var i = 0, l = cacheUrls.length; i < l; i++) {
 									var url = cacheUrls[i];
 									equal(cache[url].path, './template/test_cache1.ejs',
 											'test_cache1.ejsがキャッシュされていること。');

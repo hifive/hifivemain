@@ -285,7 +285,7 @@
 		var argArray = h5.u.obj.argsToArray(args);
 		var result = [];
 
-		for ( var i = 0, len = argArray.length; i < len; i++) {
+		for (var i = 0, len = argArray.length; i < len; i++) {
 			result.push($.type(argArray[i]));
 		}
 
@@ -554,7 +554,7 @@
 					throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
 				}
 				targets = wrapInArray(targets);
-				for ( var i = 0, len = targets.length; i < len; i++) {
+				for (var i = 0, len = targets.length; i < len; i++) {
 					if (!(targets[i] == null || (isString(targets[i]) && $.trim(targets[i]).length))) {
 						throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
 					}
@@ -576,7 +576,7 @@
 					var defaultTargets = _dOut.targets;
 					if (defaultTargets != null) {
 						defaultTargets = wrapInArray(defaultTargets);
-						for ( var i = 0, len = defaultTargets.length; i < len; i++) {
+						for (var i = 0, len = defaultTargets.length; i < len; i++) {
 							var targetName = defaultTargets[i];
 							if ($.inArray(targetName, targetNames) === -1) {
 								compiledTargets.push(_dOut.compiledTargets[i]);
@@ -607,7 +607,7 @@
 		var outs = compiledLogSettings.out;
 		if (outs) {
 			outs = wrapInArray(outs);
-			for ( var i = 0, len = outs.length; i < len; i++) {
+			for (var i = 0, len = outs.length; i < len; i++) {
 				compileOutput(logTarget, outs[i], dOut);
 			}
 		}
@@ -867,7 +867,7 @@
 			var targetOut = null;
 			if (outs) {
 				outs = wrapInArray(outs);
-				for ( var i = 0, len = outs.length; i < len; i++) {
+				for (var i = 0, len = outs.length; i < len; i++) {
 					var out = outs[i];
 					if (!out.compiledCategory.test(this.category)) {
 						continue;
@@ -894,7 +894,7 @@
 				return;
 			}
 
-			for ( var i = 0, len = logTarget.length; i < len; i++) {
+			for (var i = 0, len = logTarget.length; i < len; i++) {
 				logTarget[i].log(logObj);
 			}
 		},

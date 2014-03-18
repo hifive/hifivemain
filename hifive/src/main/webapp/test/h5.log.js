@@ -179,7 +179,7 @@ $(function() {
 			level: 'debug'
 		}];
 		var levelsStr = ["'debag'", "''", "' '", "[]", "{level: 'debug'}"];
-		for ( var i = 0, l = levels.length; i < l; i++) {
+		for (var i = 0, l = levels.length; i < l; i++) {
 			try {
 				h5.settings.log = {
 					defaultOut: {
@@ -288,7 +288,7 @@ $(function() {
 			8, function() {
 				var categorys = ['', ' ', {}, [], 0, 1, true, false];
 				var categorysStr = ["''", "' '", "{}", "[]", "0", "1", "true", "false"];
-				for ( var i = 0, l = categorys.length; i < l; i++) {
+				for (var i = 0, l = categorys.length; i < l; i++) {
 					try {
 						h5.log.createLogger(categorys[i]);
 						ok(false, 'エラーが発生していません');
@@ -302,7 +302,7 @@ $(function() {
 		var categorys = ['', ' ', {}, [], 0, 1, true, false];
 		var categorysStr = ["''", "' '", "{}", "[]", "0", "1", "true", "false"];
 
-		for ( var i = 0, l = categorys.length; i < l; i++) {
+		for (var i = 0, l = categorys.length; i < l; i++) {
 			h5.settings.log = {
 				target: {
 					myTarget: {
@@ -467,7 +467,7 @@ $(function() {
 	test('target.typeに、オブジェクト, "console"以外を指定するとエラーになること。', 6, function() {
 		var vals = [[], '', 'remote', 1, true, false];
 
-		for ( var i = 0, l = vals.length; i < l; i++) {
+		for (var i = 0, l = vals.length; i < l; i++) {
 			h5.settings.log = {
 				target: {
 					myTarget: {
@@ -633,7 +633,7 @@ $(function() {
 		var categorysStr = [window.console ? "window.console" : 'function(){}', "''", "' '", "{}",
 				"0", "1", "true", "false"];
 
-		for ( var i = 0, l = categorys.length; i < l; i++) {
+		for (var i = 0, l = categorys.length; i < l; i++) {
 			try {
 				h5.settings.log = {
 					defaultOut: {
@@ -692,7 +692,7 @@ $(function() {
 			'ログターゲットの設定 (h5.log.createLogger)  配列の中に(null/undefined/文字列)以外、空文字、空白文字、を指定したときはエラーが出ること。',
 			7, function() {
 				var vals = [{}, [], '', ' ', 1, true, false];
-				for ( var i = 0, l = vals.length; i < l; i++) {
+				for (var i = 0, l = vals.length; i < l; i++) {
 					h5.settings.log = {
 						defaultOut: {
 							targets: ['console', vals[i]]

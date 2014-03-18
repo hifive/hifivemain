@@ -120,7 +120,7 @@
 			// progressの引数は、配列でも可変長でも、配列を含む可変長でも渡すことができる
 			// 再帰で処理する
 			var callbacks = argsToArray(arguments);
-			for ( var i = 0, l = callbacks.length; i < l; i++) {
+			for (var i = 0, l = callbacks.length; i < l; i++) {
 				var elem = callbacks[i];
 				if ($.isArray(elem)) {
 					dfd.progress.apply(this, elem);
@@ -151,7 +151,7 @@
 			var args = argsToArray(arguments);
 			// progressコールバックが登録されていたら全て実行する
 			if (progressCallbacks.length > 0) {
-				for ( var i = 0, callbackLen = progressCallbacks.length; i < callbackLen; i++) {
+				for (var i = 0, callbackLen = progressCallbacks.length; i < callbackLen; i++) {
 					var params = args;
 					if (params !== arguments) {
 						params = wrapInArray(params);
@@ -186,7 +186,7 @@
 			return false;
 		}
 		arg = wrapInArray(arg);
-		for ( var i = 0, l = arg.length; i < l; i++) {
+		for (var i = 0, l = arg.length; i < l; i++) {
 			if ($.isFunction(arg[i])) {
 				return true;
 			}
@@ -293,7 +293,7 @@
 		}
 
 		// failコールバックを登録する可能性のある関数を上書き
-		for ( var i = 0, l = CFH_HOOK_METHODS.length; i < l; i++) {
+		for (var i = 0, l = CFH_HOOK_METHODS.length; i < l; i++) {
 			var prop = CFH_HOOK_METHODS[i];
 			if (promise[prop]) {
 				// cfhの管理をするための関数でオーバーライド
@@ -318,7 +318,7 @@
 				// コールバックの登録
 				var fns = argsToArray(arguments);
 
-				for ( var i = 0, l = PIPE_CREATE_METHODS.length; i < l; i++) {
+				for (var i = 0, l = PIPE_CREATE_METHODS.length; i < l; i++) {
 					var that = this;
 					(function(fn, method, action) {
 						if (!$.isFunction(fn)) {
@@ -609,7 +609,7 @@
 
 		/* del begin */
 		// 引数にpromise・deferredオブジェクト以外があった場合はログを出力します。
-		for ( var i = 0; i < len; i++) {
+		for (var i = 0; i < len; i++) {
 			// DeferredもPromiseも、promiseメソッドを持つので、
 			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
 			if (!args[i] || !(args[i].promise && $.isFunction(args[i].promise))) {
@@ -652,7 +652,7 @@
 			// progressの引数になる配列。
 			// pValuesにはあらかじめundefinedを入れておく($.whenと同じ。progressフィルタ内のarguments.lengthは常にargs.lengthと同じ)
 			var pValues = [];
-			for ( var i = 0; i < len; i++) {
+			for (var i = 0; i < len; i++) {
 				pValues[i] = undefined;
 			}
 			function progressFunc(index) {
@@ -664,7 +664,7 @@
 					dfd.notifyWith(whenPromise, pValues);
 				};
 			}
-			for ( var i = 0; i < len; i++) {
+			for (var i = 0; i < len; i++) {
 				var p = args[i];
 				// progressはjQuery1.6で作られたdeferred/promiseだとないので、あるかどうかチェックして呼び出す
 				if (p && $.isFunction(p.promise) && p.progress) {

@@ -89,7 +89,7 @@ $(function() {
 
 	test('createObservableItemの引数にオブジェクト以外を渡すとエラーになること', function() {
 		var invalidValues = ['a', 1, true];
-		for ( var i = 0, l = invalidValues.length; i < l; i++) {
+		for (var i = 0, l = invalidValues.length; i < l; i++) {
 			try {
 				h5.core.data.createObservableItem(invalidValues[i]);
 				ok(false, 'テスト失敗。エラーが発生しませんでした。' + invalidValues[i]);

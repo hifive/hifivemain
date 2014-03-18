@@ -241,7 +241,7 @@ $(function() {
 
 	test('バインドする要素が存在しない場合は、エラーになること', 3, function() {
 		var args = [$fixture.find('#noExist'), '#noExist', $([])];
-		for ( var i = 0, l = args.length; i < l; i++) {
+		for (var i = 0, l = args.length; i < l; i++) {
 			try {
 				view.bind(args[i], {
 					test: 'test'
@@ -258,7 +258,7 @@ $(function() {
 		var strs = ['jQueryオブジェクト', 'DOM', 'セレクタ'];
 		var arg = null;
 
-		for ( var i = 0, l = strs.length; i < l; i++) {
+		for (var i = 0, l = strs.length; i < l; i++) {
 			switch (i) {
 			case 0:
 				arg = $fixture.find('span');
@@ -282,7 +282,7 @@ $(function() {
 	test('バインドする要素の指定に不正な値を渡すとエラーになること', function() {
 		view.append($fixture, 'bindSpan');
 		var invalids = [$(), null, undefined];
-		for ( var i = 0, l = invalids.length; i < l; i++) {
+		for (var i = 0, l = invalids.length; i < l; i++) {
 			try {
 				view.bind(invalids[i], {
 					test: i
@@ -298,7 +298,7 @@ $(function() {
 		view.append($fixture, 'bindSpan');
 		/** @type Any */
 		var args = [null, undefined, [{}], 1, 'abc', true];
-		for ( var i = 0, l = args.length; i < l; i++) {
+		for (var i = 0, l = args.length; i < l; i++) {
 			try {
 				view.bind($fixture.find('span'), args[i]);
 				ok(false, 'テスト失敗。エラーが発生していません。' + args[i]);
@@ -416,7 +416,7 @@ $(function() {
 	test('data-h5-loop-contextに配列、ObservableArray以外のものをバインドした場合はエラーになること', function() {
 		var noArys = [{}, $(), function() {/* no code */}];
 		var l = noArys.length;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			view.append($fixture, 'loopContext1');
 			try {
 				view.bind($('#dataBindTest'), {
@@ -553,7 +553,7 @@ $(function() {
 		var noObjs = [1, 'a', [], [{}]];
 
 		var l = noObjs.length;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			view.append($fixture, 'loopContext1');
 
 			raises(function(enviroment) {
@@ -1072,7 +1072,7 @@ $(function() {
 	test('ObserbableArrayの中身を変更すると、変更結果がビューに反映されること', function() {
 		function createExpAry(oary) {
 			var ret = [];
-			for ( var i = 0, l = oary.length; i < l; i++) {
+			for (var i = 0, l = oary.length; i < l; i++) {
 				var val = oary.get(i).test;
 				ret.push(val != null ? val.toString() : '');
 			}
@@ -2085,7 +2085,7 @@ $(function() {
 		},
 		teardown: function() {
 			var controllers = h5.core.controllerManager.controllers;
-			for ( var i = 0, l = controllers.length; i < l; i++) {
+			for (var i = 0, l = controllers.length; i < l; i++) {
 				controllers[i] && controllers[i].dispose && controllers[i].dispose();
 			}
 		}

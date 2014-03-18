@@ -80,7 +80,7 @@ $(function() {
 			8,
 			function() {
 				var invalids = ['', ' ', '.', 'あ', 'a b', 'a/b', '1a', '+a'];
-				for ( var i = 0, l = invalids.length; i < l; i++) {
+				for (var i = 0, l = invalids.length; i < l; i++) {
 					try {
 						h5.u.obj.ns(invalids[i]);
 						ok(false, h5.u.str.format('h5.u.obj() {0}でエラーが発生しませんでした。', invalids[i]));
@@ -450,7 +450,7 @@ $(function() {
 
 		var vals = [[], null, 0, 1, true, false, {}, '', ' '];
 		var valsStr = ['[]', null, 0, 1, true, false, {}, '""', '" "'];
-		for ( var i = 0, l = vals.length; i < l; i++) {
+		for (var i = 0, l = vals.length; i < l; i++) {
 			try {
 				h5.u.loadScript(vals[i], {
 					force: true,
@@ -470,7 +470,7 @@ $(function() {
 		var valsStr = ["[['data/sample.js']]", "['data/sample.js', null]", "['data/sample.js', 0]",
 				"['data/sample.js', 1]", "['data/sample.js', true]", "['data/sample.js', false]",
 				"['data/sample.js', {}]", "['data/sample.js', ' ']"];
-		for ( var i = 0, l = vals.length; i < l; i++) {
+		for (var i = 0, l = vals.length; i < l; i++) {
 			try {
 				h5.u.loadScript(vals[i], {
 					force: true,
@@ -485,7 +485,7 @@ $(function() {
 
 	test('オプションに プレーンオブジェクト/undefined/null 以外を渡すと、エラーが出ること。', 8, function() {
 		var opts = [[], '', 'data/sample.js', new String(), 0, 1, true, false];
-		for ( var i = 0, l = opts.length; i < l; i++) {
+		for (var i = 0, l = opts.length; i < l; i++) {
 			try {
 				h5.u.loadScript('data/sample.js', opts[i], {
 					async: false
@@ -833,7 +833,7 @@ $(function() {
 
 		var vals = [[], null, 0, 1, true, false, {}, '', ' '];
 		var valsStr = ['[]', null, 0, 1, true, false, {}, '""', '" "'];
-		for ( var i = 0, l = vals.length; i < l; i++) {
+		for (var i = 0, l = vals.length; i < l; i++) {
 			try {
 				h5.u.loadScript(vals[i], {
 					force: true
@@ -852,7 +852,7 @@ $(function() {
 		var valsStr = ["[['data/sample.js']]", "['data/sample.js', null]", "['data/sample.js', 0]",
 				"['data/sample.js', 1]", "['data/sample.js', true]", "['data/sample.js', false]",
 				"['data/sample.js', {}]", "['data/sample.js', ' ']"];
-		for ( var i = 0, l = vals.length; i < l; i++) {
+		for (var i = 0, l = vals.length; i < l; i++) {
 			try {
 				h5.u.loadScript(vals[i], {
 					force: true
@@ -1020,7 +1020,7 @@ $(function() {
 	test('文字列', 6, function() {
 		var strs = ["helloWorld", 'o{"str1":"\"string1\""}', '改行\r\nnewLine', 'タブ\ttab',
 				'その他特殊文字\b\"\/\r\\\n', '\\r\\n\\t'];
-		for ( var i = 0, len = strs.length; i < len; i++) {
+		for (var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			var serialized = h5.u.obj.serialize(str, true);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1030,7 +1030,7 @@ $(function() {
 
 	test('数字', 6, function() {
 		var nums = [0, 1, -1.123, NaN, Infinity, -Infinity];
-		for ( var i = 0, len = nums.length; i < len; i++) {
+		for (var i = 0, len = nums.length; i < len; i++) {
 			var num = nums[i];
 			var serialized = h5.u.obj.serialize(num);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1040,7 +1040,7 @@ $(function() {
 
 	test('真偽値', 2, function() {
 		var nums = [true, false];
-		for ( var i = 0, len = nums.length; i < len; i++) {
+		for (var i = 0, len = nums.length; i < len; i++) {
 			var num = nums[i];
 			var serialized = h5.u.obj.serialize(num);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1050,7 +1050,7 @@ $(function() {
 
 	test('日付', 2, function() {
 		var dates = [new Date(0), new Date()];
-		for ( var i = 0, len = dates.length; i < len; i++) {
+		for (var i = 0, len = dates.length; i < len; i++) {
 			var date = dates[i];
 			var serialized = h5.u.obj.serialize(date);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1063,7 +1063,7 @@ $(function() {
 			function() {
 				var regExps = [/hello/, /^o*(.*)[a|b]{0,}?$/, /\\/g, /a|b/i, /x/gi, /\/\\\//img,
 						new RegExp('newLine\r\nnewLine'), new RegExp('tab\ttab')];
-				for ( var i = 0, len = regExps.length; i < len; i++) {
+				for (var i = 0, len = regExps.length; i < len; i++) {
 					var regExp = regExps[i];
 					var serialized = h5.u.obj.serialize(regExp);
 					var deserialized = h5.u.obj.deserialize(serialized);
@@ -1075,7 +1075,7 @@ $(function() {
 	test('配列', 4, function() {
 		var arrays = [[1, 2, null, undefined, 'a[b]c,[][', new Date(), /ar*ay/i], [], ['@{}'],
 				['a\r\nb', '\t', new RegExp('\r\n'), new RegExp('\t')]];
-		for ( var i = 0, len = arrays.length; i < len; i++) {
+		for (var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1086,7 +1086,7 @@ $(function() {
 	test('多次元配列', 2, function() {
 		var arrays = [[[1, 2, 3], [4, '\\5\\"', ['\\\"6\\\"', [7, '\\\"8\\\"']]], 9],
 				['a\r\nb', ['\t', new RegExp('\r\n[\b]')], new RegExp('\t')]];
-		for ( var i = 0, len = arrays.length; i < len; i++) {
+		for (var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1115,7 +1115,7 @@ $(function() {
 			b: '\t',
 			c: '\b\"\/\r\\\n'
 		}]];
-		for ( var i = 0, len = arrays.length; i < len; i++) {
+		for (var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1147,7 +1147,7 @@ $(function() {
 		array3['\r\n'] = 'new line';
 
 		var arrays = [array1, array2, array3];
-		for ( var i = 0, len = arrays.length; i < len; i++) {
+		for (var i = 0, len = arrays.length; i < len; i++) {
 			var array = arrays[i];
 			var serialized = h5.u.obj.serialize(array);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1173,7 +1173,7 @@ $(function() {
 				var primitives = [new String('hello'), new String(), new Number(123),
 						new Number('NaN'), new Number('Infinity'), new Number('-Infinity'),
 						new Boolean(true), new Boolean(false), new String('\b\"\/\r\\\n\t\r\n')];
-				for ( var i = 0, len = primitives.length; i < len; i++) {
+				for (var i = 0, len = primitives.length; i < len; i++) {
 					var primitive = primitives[i];
 					var serialized = h5.u.obj.serialize(primitive);
 					var deserialized = h5.u.obj.deserialize(serialized);
@@ -1194,7 +1194,7 @@ $(function() {
 		// IE6用 代入式でundefinedを入れないとhasOwnPropertyがtrueの要素にならない。
 		exps[1] = undefined;
 
-		for ( var i = 0, len = exps.length; i < len; i++) {
+		for (var i = 0, len = exps.length; i < len; i++) {
 			var exp = exps[i];
 			var serialized = h5.u.obj.serialize(exp);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1292,7 +1292,7 @@ $(function() {
 
 		obj2.obj2.hashArray = hashArray1;
 		var objs = [obj1, obj2];
-		for ( var i = 0, len = objs.length; i < len; i++) {
+		for (var i = 0, len = objs.length; i < len; i++) {
 			var obj = objs[i];
 			var serialized = h5.u.obj.serialize(obj);
 			var deserialized = h5.u.obj.deserialize(serialized);
@@ -1339,7 +1339,7 @@ $(function() {
 		h['roop'] = f;
 
 		var objs = [a, b, c, d, e, f, g, h];
-		for ( var i = 0, len = objs.length; i < len; i++) {
+		for (var i = 0, len = objs.length; i < len; i++) {
 			var obj = objs[i];
 			try {
 				var serialized = h5.u.obj.serialize(obj);
@@ -1386,7 +1386,7 @@ $(function() {
 		var f = [a, b, c, d, e];
 
 		var objs = [a, b, c, d, e, f];
-		for ( var i = 0, len = objs.length; i < len; i++) {
+		for (var i = 0, len = objs.length; i < len; i++) {
 			var obj = objs[i];
 			try {
 				var serialized = h5.u.obj.serialize(obj);
@@ -1412,7 +1412,7 @@ $(function() {
 		deepEqual(deserialized, array, "シリアライズしてデシリアライズした配列が元の配列と同じ。" + array.toString());
 		deepEqual(deserialized.length, array.length, "シリアライズしてデシリアライズした配列のlengthが元の配列と同じ。"
 				+ array.length);
-		for ( var i = 0, l = array.length; i < l; i++) {
+		for (var i = 0, l = array.length; i < l; i++) {
 			strictEqual(deserialized.hasOwnProperty(i), array.hasOwnProperty(i),
 					"シリアライズしてデシリアライズした配列のhasOwnProperty()の値が各要素で同じ。" + i);
 		}
@@ -1504,7 +1504,7 @@ $(function() {
 			b: 'B'
 		}, noFuncArray, hashNoFunction];
 
-		for ( var i = 0, len = objs.length; i < len; i++) {
+		for (var i = 0, len = objs.length; i < len; i++) {
 			var obj = objs[i];
 			var objNoFunction = objsNoFunction[i];
 			var serialized = h5.u.obj.serialize(obj);
@@ -1521,7 +1521,7 @@ $(function() {
 		var strs = ['1|', '1| ', '1|_', '1|@{}', '1|"abc"', '1|A', '1|O'];
 		var errorCode = 11004;
 		var deserialized;
-		for ( var i = 0, len = strs.length; i < len; i++) {
+		for (var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			try {
 				deserialized = h5.u.obj.deserialize(str);
@@ -1538,7 +1538,7 @@ $(function() {
 		var strs = ['1|n1px', '1|nNaN', '1|NNaN', '1|aary', '1|a{}', '1|o["n1"]', '1|o{"n1"}',
 				'1|o1', '1|b2', '1|B2', '1|xx', '1|ii', '1|II', '1|ll', '1|uu'];
 		var errorCode = 11006;
-		for ( var i = 0, len = strs.length; i < len; i++) {
+		for (var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			try {
 				var deserialized = h5.u.obj.deserialize(str);
@@ -1556,7 +1556,7 @@ $(function() {
 		var expect = h5.env.ua.isFirefox ? ['/r/', '/a/y', '/a/gy', '/a/m', '/a/i'] : ['/r/',
 				'/a/', '/a/g', '/a/m', '/a/i'];
 		var errorCode = 11006;
-		for ( var i = 0, len = strs.length; i < len; i++) {
+		for (var i = 0, len = strs.length; i < len; i++) {
 			var str = strs[i];
 			try {
 				var deserialized = h5.u.obj.deserialize(str);
@@ -1576,7 +1576,7 @@ $(function() {
 		var objStrs = ['2|a["n1","q"]', '2|o{"key":"qq"}', '2|o{"key":"a[\\\"1\\\"]"}',
 				'2|o{"key":"@[\\\"n1\\\"]"}', '2|a["@{\\\"key\\\":\\\"1\\\"}"]'];
 		var errorCode = 11004;
-		for ( var i = 0, len = objStrs.length; i < len; i++) {
+		for (var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
 			try {
 				var deserialized = h5.u.obj.deserialize(str);
@@ -1588,7 +1588,7 @@ $(function() {
 		objStrs = ['2|a["n1","nq"]', '2|o{"key":"b2"}', '2|o{"key":"a[\\\"nNaN\\\"]"}',
 				'2|o{"key":"a[\\\"ll\\\"]"}', '2|a["@{\\\"key\\\":\\\"xx\\\"}"]'];
 		var errorCode = 11006;
-		for ( var i = 0, len = objStrs.length; i < len; i++) {
+		for (var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
 			try {
 				var deserialized = h5.u.obj.deserialize(str);
@@ -1602,7 +1602,7 @@ $(function() {
 	test('deserialize 文字列以外をデシリアライズしようとしたときはエラーが発生すること。', 8, function() {
 		var objStrs = [[], {}, true, false, 1, 2, undefined, null];
 		var errorCode = 11009;
-		for ( var i = 0, len = objStrs.length; i < len; i++) {
+		for (var i = 0, len = objStrs.length; i < len; i++) {
 			var str = objStrs[i];
 			try {
 				var deserialized = h5.u.obj.deserialize(str);
