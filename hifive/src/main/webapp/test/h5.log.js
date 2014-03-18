@@ -511,7 +511,6 @@ $(function() {
 		}
 	});
 
-
 	test('targetsに重複したターゲットを登録してconfigure()するとエラーが発生すること。', 1, function() {
 		h5.settings.log = {
 			target: {
@@ -531,6 +530,24 @@ $(function() {
 			ok(false, 'エラーが発生していません');
 		} catch (e) {
 			deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES, e.message);
+		}
+	});
+
+	test('configure()でエラーが発生しても、ロガーは使用可能であること', 1, function() {
+		var logger = h5.log.createLogger('hoge');
+		h5.settings.log = {
+			out: [{}]
+		};
+		try {
+			h5.log.configure();
+		} catch (e) {
+			// categoryが未指定なのでエラーが発生する
+		}
+		try {
+			logger.debug('hoge');
+			ok(true, 'configure()でエラーが発生してもロガーは使用可能');
+		} catch (e) {
+			ok(false, 'logger.debug()でエラーが発生');
 		}
 	});
 

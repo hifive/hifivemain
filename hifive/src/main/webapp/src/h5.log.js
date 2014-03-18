@@ -589,28 +589,30 @@
 			out.compiledTargets = compiledTargets;
 		}
 
-		compiledLogSettings = $.extend(true, {}, h5.settings.log ? h5.settings.log : {
+		var settings = $.extend(true, {}, h5.settings.log ? h5.settings.log : {
 			defaultOut: defaultOut
 		});
-		var logTarget = compiledLogSettings.target;
+		var logTarget = settings.target;
 		if (!logTarget) {
 			logTarget = {};
-			compiledLogSettings.target = logTarget;
+			settings.target = logTarget;
 		}
 		compileLogTarget(logTarget);
-		var dOut = compiledLogSettings.defaultOut;
+		var dOut = settings.defaultOut;
 		if (!dOut) {
 			dOut = defaultOut;
-			compiledLogSettings.defaultOut = dOut;
+			settings.defaultOut = dOut;
 		}
 		compileOutput(logTarget, dOut);
-		var outs = compiledLogSettings.out;
+		var outs = settings.out;
 		if (outs) {
 			outs = wrapInArray(outs);
 			for (var i = 0, len = outs.length; i < len; i++) {
 				compileOutput(logTarget, outs[i], dOut);
 			}
 		}
+		// ここまでの処理でエラーが起きなかったら設定を適用する
+		compiledLogSettings = settings;
 	};
 
 	/**
