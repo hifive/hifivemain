@@ -56,10 +56,25 @@ $(function() {
 		var dfd = $.Deferred();
 		// キャッシュから読み込まれないようにタイムスタンプをパラメータに追加
 		var script = document.createElement('script');
-		script.onload = function() {
+
+		function loaded() {
 			script.onload = null;
+			script.onreadystatechange = null;
 			dfd.resolve();
 		}
+		// onloadがある場合
+		if (script.onload !== undefined) {
+			script.onload = loaded;
+		} else {
+			// onloadが無い(IE6,7,8)場合
+			script.onreadystatechange = function() {
+				// キャッシュされているファイルだとcomplete、キャッシュされていないファイルではloadedになる
+				if (this.readyState == 'loaded' || this.readyState == 'complete') {
+					loaded();
+				}
+			};
+		}
+
 		script.type = 'text/javascript';
 		script.src = src + '?' + getUniqueString();
 		$('head')[0].appendChild(script);
