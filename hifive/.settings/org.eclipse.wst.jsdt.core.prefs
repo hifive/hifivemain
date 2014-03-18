@@ -156,7 +156,7 @@ org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_method_declarati
 org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_method_declaration_throws=insert
 org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_method_invocation_arguments=insert
 org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_multiple_field_declarations=insert
-org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_multiple_local_declarations=do not insert
+org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_multiple_local_declarations=insert
 org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_parameterized_type_reference=insert
 org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_superinterfaces=insert
 org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_type_arguments=insert
