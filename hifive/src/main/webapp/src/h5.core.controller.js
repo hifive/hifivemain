@@ -457,20 +457,23 @@
 	}
 
 	/**
-	 * コントローラのプロパティが子コントローラかどうかを返します。
+	 * コントローラのプロパティが自分自身の子コントローラであるかどうかを返します。
 	 *
 	 * @param {Object} controller コントローラ
-	 * @param {String} プロパティ名
-	 * @returns {Boolean} コントローラのプロパティが子コントローラかどうか(true=子コントローラである)
+	 * @param {String} prop プロパティ名
+	 * @returns {Boolean} コントローラのプロパティが第1引数のコントローラの子コントローラかどうか(true=子コントローラである)
 	 */
 	function isChildController(controller, prop) {
 		var target = controller[prop];
 		// プロパティがrootControllerまたはparentControllerの場合はfalse
-		// 自分自身を指している(target===controller)場合はfalse
+		// __controllerContextがない(コントローラインスタンスではないまたはdispose済みコントローラインスタンス)の場合はfalse
 		// 子コントローラでない(isRootがtrue)の場合はfalse
+		// parentControllerを見て、自分の子供ならtrueを返す。
+		// ただし、parentController未設定(コントローラ化処理の途中)の場合はtrueを返す。
 		return endsWith(prop, SUFFIX_CONTROLLER) && prop !== 'rootController'
-				&& prop !== 'parentController' && target && target !== controller
-				&& target.__controllerContext && !target.__controllerContext.isRoot
+				&& prop !== 'parentController' && target && target.__controllerContext
+				&& !target.__controllerContext.isRoot
+				&& (!target.parentController || target.parentController === controller);
 	}
 
 	/**
@@ -1640,6 +1643,18 @@
 		execute(controller);
 		return promises;
 	}
+	/**
+	 * コントローラのリソース解放処理を行います。
+	 *
+	 * @param {Controller} controller コントローラ
+	 */
+	function setNullToControllerProperty(controller) {
+		for ( var prop in controller) {
+			if (controller.hasOwnProperty(prop)) {
+				controller[prop] = null;
+			}
+		}
+	}
 
 	/**
 	 * コントローラのリソース解放処理を行います。
@@ -1648,7 +1663,7 @@
 	 */
 	function disposeController(controller) {
 		var targets = [];
-		var dispose = function(parentController) {
+		function dispose(parentController) {
 			targets.push(parentController);
 			if (parentController.view.__view) {
 				parentController.view.clear();
@@ -1661,10 +1676,11 @@
 							dispose(c);
 						}
 					}
-					parentController[prop] = null;
 				}
 			}
-		};
+			// 子コントローラのdispose処理が終わってからプロパティにnullを代入する
+			setNullToControllerProperty(parentController);
+		}
 		dispose(controller);
 	}
 
