@@ -465,9 +465,12 @@
 	 */
 	function isChildController(controller, prop) {
 		var target = controller[prop];
+		// プロパティがrootControllerまたはparentControllerの場合はfalse
+		// 自分自身を指している(target===controller)場合はfalse
+		// 子コントローラでない(isRootがtrue)の場合はfalse
 		return endsWith(prop, SUFFIX_CONTROLLER) && prop !== 'rootController'
-				&& prop !== 'parentController' && !$.isFunction(target)
-				&& (target && !target.__controllerContext.isRoot);
+				&& prop !== 'parentController' && target && target !== controller
+				&& target.__controllerContext && !target.__controllerContext.isRoot
 	}
 
 	/**
