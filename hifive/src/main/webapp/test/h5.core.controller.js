@@ -7563,4 +7563,171 @@ $(function() {
 					this.$find('button').click();
 				});
 			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('プロパティ"xxxController"に子コントローラでないものを持たせる', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest" style="display: none;"></div>');
+		},
+		teardown: function() {
+			disposeQUnitFixtureController();
+			$('#controllerTest').remove();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('親をdisposeした時、子コントローラでないコントローラはdisposeされないこと', 2, function() {
+		var c1 = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			__ready: function() {
+				this.childController = c2;
+			}
+		});
+		var c2 = h5.core.controller('#controllerTest', {
+			__name: 'C2'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise).done(function() {
+			c1.dispose().done(function() {
+				strictEqual(c2.__name, 'C2', '子コントローラでないコントローラはdisposeされていないこと');
+				strictEqual(c1.childController, null, 'コントローラを持っていたプロパティにはnullが代入されていること');
+				start();
+			}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
+
+	asyncTest('親をdisposeした時、別の親に属する子コントローラはdisposeされないこと', 2, function() {
+		var c1 = h5.core.controller('#controllerTest', {
+			__name: 'C1'
+		});
+		var c2 = h5.core.controller('#controllerTest', {
+			__name: 'C2',
+			childController: {
+				__name: 'C2Child'
+			}
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise).done(
+				function() {
+					c1.childController = c2.childController
+					c1.dispose().done(
+							function() {
+								strictEqual(c2.childController.__name, 'C2Child',
+										'子コントローラでないコントローラはdisposeされていないこと');
+								strictEqual(c1.childController, null,
+										'コントローラを持っていたプロパティにはnullが代入されていること');
+								start();
+							}).fail(function() {
+						ok(false, 'コントローラのdispose中にエラーが起きました');
+						start();
+					});
+				});
+	});
+
+	asyncTest('xxxControllerに自分自身を持っていても正しくdisposeできること', 2, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			__ready: function() {
+				this.childController = this;
+			}
+		});
+		c.readyPromise.done(function() {
+			c.dispose().done(function() {
+				strictEqual(c.__name, null, 'コントローラがdisposeされていること');
+				strictEqual(c.childController, null, 'コントローラを持っていたプロパティにはnullが代入されていること');
+				start();
+			}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
+
+	asyncTest('xxxControllerに親コントローラを持っていても正しくdisposeできること', 3, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			childController: {
+				__name: 'C2',
+				__ready: function() {
+					this.pController = this.parentController;
+				}
+			}
+		});
+		c.readyPromise.done(function() {
+			var childController = c.childController;
+			c.dispose().done(
+					function() {
+						strictEqual(c.__name, null, 'コントローラがdisposeされていること');
+						strictEqual(childController.__name, null, '子コントローラがdisposeされていること');
+						strictEqual(childController.pController, null,
+								'コントローラを持っていたプロパティにはnullが代入されていること');
+						start();
+					}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
+
+	asyncTest('xxxControllerに孫コントローラを持っていても正しくdisposeできること', 4, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			childController: {
+				__name: 'C2',
+				childController: {
+					__name: 'C3',
+					__ready: function() {
+						this.gpController = this.rootController;
+					}
+				}
+
+			}
+		});
+		c.readyPromise.done(function() {
+			var childController = c.childController;
+			var gchildController = c.childController.childController;
+			c.dispose().done(
+					function() {
+						strictEqual(c.__name, null, 'コントローラがdisposeされていること');
+						strictEqual(childController.__name, null, '子コントローラがdisposeされていること');
+						strictEqual(gchildController.__name, null, '子コントローラがdisposeされていること');
+						strictEqual(gchildController.gpController, null,
+								'コントローラを持っていたプロパティにはnullが代入されていること');
+						start();
+					}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
+
+	asyncTest('同じ子コントローラを参照するxxxControllerが複数ある場合、正しくdisposeできること', 4, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			childController: {
+				__name: 'C2'
+			},
+			__ready: function() {
+				this.child2Controller = this.childController;
+			}
+		});
+		c.readyPromise.done(function() {
+			var childController = c.childController;
+			c.dispose().done(function() {
+				strictEqual(c.__name, null, 'コントローラがdisposeされていること');
+				strictEqual(childController.__name, null, '子コントローラがdisposeされていること');
+				strictEqual(c.childController, null, 'コントローラを持っていたプロパティにはnullが代入されていること');
+				strictEqual(c.child2Controller, null, 'コントローラを持っていたプロパティにはnullが代入されていること');
+				start();
+			}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
 });
