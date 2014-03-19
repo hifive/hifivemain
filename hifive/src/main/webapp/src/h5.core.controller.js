@@ -1644,7 +1644,7 @@
 		return promises;
 	}
 	/**
-	 * コントローラのリソース解放処理を行います。
+	 * コントローラのhasOwnPropertyがtrueのプロパティ全てにnullを代入します
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
