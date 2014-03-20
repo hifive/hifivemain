@@ -1649,12 +1649,12 @@
 	 * ネストしたオブジェクトへのnull代入は行いません
 	 * </p>
 	 *
-	 * @param {Controller} controller コントローラ
+	 * @param {Object} obj
 	 */
 	function nullify(obj) {
-		for ( var prop in controller) {
-			if (controller.hasOwnProperty(prop)) {
-				controller[prop] = null;
+		for ( var prop in obj) {
+			if (obj.hasOwnProperty(prop)) {
+				obj[prop] = null;
 			}
 		}
 	}
