@@ -534,7 +534,7 @@ $(function() {
 		var item = parentModel.create({
 			id: 0
 		});
-		raises(function() {
+		throws(function() {
 			item.get('val');
 		}, '継承元には継承先のスキーマで定義したスキーマは存在しないこと');
 	});
@@ -3383,13 +3383,13 @@ $(function() {
 	// Body
 	//=============================
 	test('スキーマに定義されていないプロパティをget/setするとエラーになること', 2, function() {
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			getSetDataItem.get('hoge');
 		}, function(actual) {
 			return actual.code === ERR.ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY;
 		}, 'スキーマに定義されていないプロパティの値を取得したためエラーになること"');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			getSetDataItem.set('hoge', 10);
 		}, function(actual) {
 			return actual.code === ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
@@ -4128,14 +4128,14 @@ $(function() {
 					new Number(1), NaN, window, {}, new Object(1), new Object(['a']),
 					new Array('a'), ['a']];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4229,14 +4229,14 @@ $(function() {
 						return 10;
 					}];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', sub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4378,7 +4378,7 @@ $(function() {
 		});
 
 		// 異なる型を指定してcreateするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			model.create({
 				id: sequence.next(),
 				dataModel2: model1DataItem
@@ -4386,7 +4386,7 @@ $(function() {
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
 
 		// 異なる型をsetするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			item1.set('dataModel1', model2DataItem);
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
 
@@ -4555,7 +4555,7 @@ $(function() {
 		});
 
 		// 異なる型を指定してcreateするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			model.create({
 				id: sequence.next(),
 				dataModel1: [model1DataItem1, model2DataItem1]
@@ -4563,7 +4563,7 @@ $(function() {
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
 
 		// 異なる型を指定してcreateするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			model.create({
 				id: sequence.next(),
 				dataModel2: [model1DataItem1, model2DataItem1]
@@ -4571,12 +4571,12 @@ $(function() {
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
 
 		// 異なる型をsetするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			item1.set('dataModel1', [model1DataItem1, model2DataItem1]);
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
 
 		// 異なる型をsetするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			item1.set('dataModel2', [model1DataItem1, model2DataItem1]);
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
 
@@ -4677,14 +4677,14 @@ $(function() {
 				return 10;
 			}];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4783,14 +4783,14 @@ $(function() {
 						return 10;
 					}];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4892,14 +4892,14 @@ $(function() {
 						return 10;
 					}];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5003,14 +5003,14 @@ $(function() {
 						return 10;
 					}];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5109,14 +5109,14 @@ $(function() {
 						return 10;
 					}];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5217,14 +5217,14 @@ $(function() {
 						return 10;
 					}, ['true', 'false'], [1, 0]];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5395,14 +5395,14 @@ $(function() {
 						return 10;
 					}];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5517,14 +5517,14 @@ $(function() {
 					}, new TestClass1(), new String('a'), new Object('a'), new Number(10),
 					new Object(10), new Boolean(1), new Object(true)];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5633,14 +5633,14 @@ $(function() {
 					}, new TestClass1(), new String('a'), new Object('a'), new Number(10),
 					new Object(10), new Boolean(1), new Object(true)];
 			for (var i = 0; i < nosub.length; i++) {
-				raises(function() {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -6017,7 +6017,7 @@ $(function() {
 	test('制約が適用されているか 異常系', 16, function() {
 		var i = 0;
 		for (i = 0; i < 15; i++) {
-			raises(function() {
+			throws(function() {
 				var desc1 = {
 					id: i
 				};

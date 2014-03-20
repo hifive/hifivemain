@@ -436,7 +436,7 @@
 		});
 
 		test('置換要素有りテンプレートで置換要素を指定しないで取得。', 1, function() {
-			raises(function() {
+			throws(function() {
 				$('#qunit-fixture').html(h5.core.view.get('view3', {}));
 			}, 'パラメータが必要なテンプレートに対して、パラメータを指定しなかったため例外が発生すること。');
 		});

@@ -556,7 +556,7 @@ $(function() {
 		for (var i = 0; i < l; i++) {
 			view.append($fixture, 'loopContext1');
 
-			raises(function(enviroment) {
+			throws(function(enviroment) {
 				view.bind($('#dataBindTest'), {
 					items: [{
 						test: 'a'
@@ -1951,7 +1951,7 @@ $(function() {
 	test('属性名を指定せずに、属性へバインド', 1, function() {
 		view.append($fixture, 'id2');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			view.bind('#dataBindTest', {
 				id: 'bindTest123'
 			});
@@ -1998,7 +1998,7 @@ $(function() {
 		// バインド先の設定
 		view.append($fixture, 'style2');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			view.bind('#dataBindTest', {
 				color: 'red'
 			});
@@ -2060,7 +2060,7 @@ $(function() {
 		// バインド先の設定
 		view.append($fixture, 'invalidDef');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			view.bind('#dataBindTest', {
 				id: 'bindTest123'
 			});

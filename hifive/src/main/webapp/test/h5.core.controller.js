@@ -5837,7 +5837,7 @@ $(function() {
 			}
 		};
 
-		raises(function() {
+		throws(function() {
 			h5.core.controller('#controllerTest', controller);
 		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
 	});

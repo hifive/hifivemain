@@ -2507,7 +2507,7 @@ $(function() {
 			return;
 		}
 
-		raises(function() {
+		throws(function() {
 			db.select(TABLE_NAME, '*').orderBy(10);
 		}, 'orderBy()に不正な型を指定したためエラーが発生すること。');
 	});

@@ -1199,7 +1199,7 @@ $(function() {
 	// Body
 	//=============================
 	test('不正なパラメータを指定してdefine()を実行する ※min版ではエラーになります', 5, function() {
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			h5.ui.jqm.manager.define(10, null, {
 				__name: 'TestController'
 			});
@@ -1207,7 +1207,7 @@ $(function() {
 			return 12000 === actual.code;
 		}, 'idにString型以外の値が指定されたためエラーが発生すること。');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			h5.ui.jqm.manager.define('test', 10, {
 				__name: 'TestController'
 			});
@@ -1215,7 +1215,7 @@ $(function() {
 			return 12000 === actual.code;
 		}, 'CSSファイルのパスにString型またはArray型以外の値が指定されたためエラーが発生すること。');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			h5.ui.jqm.manager.define('test', './css/test.css', {
 				__name: 'TestController'
 			}, 10);
@@ -1223,13 +1223,13 @@ $(function() {
 			return 12000 === actual.code;
 		}, 'パラメータにObject型以外の値が指定されたためエラーが発生すること。');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			h5.ui.jqm.manager.define('test', null, [10]);
 		}, function(actual) {
 			return 12001 === actual.code;
 		}, 'コントローラ定義オブジェクトにObject型以外の値が指定されたたためエラーが発生すること。');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			h5.ui.jqm.manager.define('test', null, {});
 		}, function(actual) {
 			return 12000 === actual.code;

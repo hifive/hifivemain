@@ -293,7 +293,7 @@ $(function() {
 		equal(com.htmlhifive.test2.exposedObj, false,
 				'com.htmlhifive.test2.exposedObjがexposeされていること。');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			h5.u.obj.expose('com.htmlhifive.test2', {
 				exposedObj: 10
 			});
@@ -969,7 +969,7 @@ $(function() {
 		strictEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 		objs = h5.u.obj.getByPath('hoge2');
 		strictEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
-		raises(function() {
+		throws(function() {
 			h5.u.obj.getByPath(window.hoge);
 		}, '文字列以外をパラメータに指定すると例外が発生すること。');
 	});
