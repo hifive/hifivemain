@@ -270,7 +270,7 @@
 	 * テスト名からフィルタタグ部分をパースしてオブジェクトにして返す。 フィルタタグの指定がない場合はnullを返す
 	 */
 	function parseConditions(name) {
-		var testConditionDesc = name.match(/^\[.*?\]/);
+		var testConditionDesc = name ? name.match(/^\[.*?\]/) : null;
 		if (testConditionDesc === null) {
 			return null;
 		}
