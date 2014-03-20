@@ -3507,7 +3507,7 @@
 
 						// validateする
 						// 新規作成時のチェックなら初期値をセットしてからチェックを実行
-						obj = this._schemaInfo._createInitialValueObj(valueObj);
+						var obj = this._schemaInfo._createInitialValueObj(valueObj);
 						validateValueObj(this.schema, this._schemaInfo._validateItemValue, obj,
 								this);
 					}
