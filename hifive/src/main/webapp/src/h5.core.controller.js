@@ -1644,11 +1644,14 @@
 		return promises;
 	}
 	/**
-	 * コントローラのhasOwnPropertyがtrueのプロパティ全てにnullを代入します
+	 * オブジェクトのhasOwnPropertyがtrueのプロパティ全てにnullを代入します。
+	 * <p>
+	 * ネストしたオブジェクトへのnull代入は行いません
+	 * </p>
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
-	function setNullToControllerProperty(controller) {
+	function nullify(obj) {
 		for ( var prop in controller) {
 			if (controller.hasOwnProperty(prop)) {
 				controller[prop] = null;
@@ -1669,17 +1672,16 @@
 				parentController.view.clear();
 			}
 			for ( var prop in parentController) {
-				if (parentController.hasOwnProperty(prop)) {
-					if (isChildController(parentController, prop)) {
-						var c = parentController[prop];
-						if ($.inArray(c, targets) === -1) {
-							dispose(c);
-						}
+				if (parentController.hasOwnProperty(prop)
+						&& isChildController(parentController, prop)) {
+					var c = parentController[prop];
+					if ($.inArray(c, targets) === -1) {
+						dispose(c);
 					}
 				}
 			}
 			// 子コントローラのdispose処理が終わってからプロパティにnullを代入する
-			setNullToControllerProperty(parentController);
+			nullify(parentController);
 		}
 		dispose(controller);
 	}
