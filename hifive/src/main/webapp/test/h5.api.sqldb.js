@@ -779,7 +779,7 @@ $(function() {
 					col1: 20,
 					col2: 'hoge1',
 					col3: 111
-				},obj2 = {
+				}, obj2 = {
 					col1: 10,
 					col2: 'hoge2',
 					col3: 222
@@ -3738,6 +3738,9 @@ $(function() {
 			return;
 		}
 
+		// openDatabaseをwindowオブジェクトがhasOwnで持っているかどうか
+		// (chrome,opera,androidはfalse、safari,ios-safariはtrue)
+		var hasOwnOpenDatabase = window.hasOwnProperty('openDatabase');
 		var origin = window.openDatabase;
 
 		var SQLError = function(code, message) {
@@ -3763,7 +3766,13 @@ $(function() {
 
 		function loop(i) {
 			if (i === errs.length) {
-				window.openDatabase = origin;
+				if (hasOwnOpenDatabase) {
+					// hasOwnで持っていた場合は元に戻す
+					window.openDatabase = origin;
+				} else {
+					// hasOwnでなかった場合はスタブを削除して、元のopenDatabase関数が見えるようにする
+					deleteProperty(window, 'openDatabase');
+				}
 				start();
 				return;
 			}

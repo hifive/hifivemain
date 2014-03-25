@@ -287,10 +287,7 @@ $(function() {
 					'コントローラ、ロジック以外(__nameプロパティがない)のオブジェクトをh5.core.expose()に渡すとエラーが発生するか');
 		}
 
-		window.TestController = undefined;
-		window.jp = undefined;
-		strictEqual(undefined, window.TestController, '（名前空間のクリーンアップ1）');
-		strictEqual(undefined, window.jp, '（名前空間のクリーンアップ2）');
+		deleteProperty(window, 'TestController');
 	});
 
 	//=============================
@@ -552,6 +549,7 @@ $(function() {
 			ok(ret, '{}記法で2階層以上下のオブジェクトを指定できたか');
 
 			testController.unbind();
+			deleteProperty(window, 'test1');
 			start();
 		});
 	});
@@ -1320,9 +1318,6 @@ $(function() {
 				};
 				c = h5.core.controller('#controllerTest', {
 					__name: 'TestController',
-					__construct: function() {
-						child = this.childController;
-					},
 					childController: childControllerDef
 				});
 			});

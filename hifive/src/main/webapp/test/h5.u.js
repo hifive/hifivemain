@@ -65,14 +65,12 @@ $(function() {
 	// Body
 	//=============================
 
-	test('名前空間作成 (h5.u.obj.ns)', 3, function() {
+	test('名前空間作成 (h5.u.obj.ns)', 2, function() {
 		var ns = h5.u.obj.ns('htmlhifive');
 
 		strictEqual(ns, window.htmlhifive, 'ns()の戻り値は作成した名前空間オブジェクト');
 		notStrictEqual(window.htmlhifive, undefined, CREATE_NAMESPACE_PASS_REASON);
-
-		window.htmlhifive = undefined;
-		strictEqual(window.htmlhifive, undefined, '（クリーンアップ）');
+		deleteProperty(window, 'htmlhifive');
 	});
 
 	test(
@@ -150,7 +148,7 @@ $(function() {
 		}
 	});
 
-	test('名前空間作成-ドット区切りでネスト', 6, function() {
+	test('名前空間作成-ドット区切りでネスト', 5, function() {
 		var ns = h5.u.obj.ns("com.htmlhifive.test.test1");
 
 		strictEqual(ns, com.htmlhifive.test.test1,
@@ -159,9 +157,6 @@ $(function() {
 		notStrictEqual(com.htmlhifive, undefined, CREATE_NAMESPACE_PASS_REASON);
 		notStrictEqual(com.htmlhifive.test, undefined, CREATE_NAMESPACE_PASS_REASON);
 		notStrictEqual(com.htmlhifive.test.test1, undefined, CREATE_NAMESPACE_PASS_REASON);
-
-		window.jp = undefined;
-		strictEqual(window.jp, undefined, '（クリーンアップ）');
 	});
 
 	test('名前空間作成-パラメータにオブジェクトを指定する', 2, function() {
@@ -244,7 +239,7 @@ $(function() {
 		strictEqual(window.h5test1.expose.test2, undefined,
 				'window.h5test1.expose.test2 = undefined であること。');
 
-		window.h5test1 = undefined;
+		deleteProperty(window, 'h5test1');
 	});
 
 	test('h5test1.expose.testに1を設定後、expose()でtestに10を設定する', 3, function() {
@@ -263,7 +258,7 @@ $(function() {
 		}
 
 		strictEqual(window.h5test1.expose.test, 1, 'window.h5test1.expose.test = 10 に更新されること。');
-		window.h5test1 = undefined;
+		deleteProperty(window, 'h5test1');
 	});
 
 	test('expose()の第一引数に、String以外のオブジェクトを指定する', 1, function() {
@@ -282,7 +277,7 @@ $(function() {
 			ok(e, 'expose()にString以外を指定するとエラーが発生すること。');
 		}
 
-		window.h5test1 = undefined;
+		deleteProperty(window, 'h5test1');
 	});
 
 	test('h5.u.obj.expose 指定した名前空間に既にオブジェクトが存在する状態でexposeを実行', 3, function() {
@@ -303,7 +298,7 @@ $(function() {
 
 		equal(com.htmlhifive.test2.exposedObj, false, '値が上書きされていないこと。');
 
-		window.com.htmlhifive.test2 = undefined;
+		deleteProperty(window, 'h5test2');
 	});
 
 	//=============================

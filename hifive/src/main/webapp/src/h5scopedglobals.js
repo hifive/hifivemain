@@ -103,7 +103,7 @@ window.com = {
  * @param mapObj {Object} { (エラーコード): (フォーマット文字列) }という構造のオブジェクト
  */
 function addFwErrorCodeMap(mapObj) {
-	for (code in mapObj) {
+	for (var code in mapObj) {
 		if (mapObj.hasOwnProperty(code)) {
 			errorCodeToMessageMap[code] = mapObj[code];
 		}

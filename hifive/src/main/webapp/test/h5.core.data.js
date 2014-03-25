@@ -235,7 +235,7 @@ $(function() {
 	test('データモデルマネージャの作成 名前空間指定が空文字の場合はwindow直下ににマネージャを作成できること', 1, function() {
 		manager = h5.core.data.createManager('TestManager', '');
 		ok(manager === window.TestManager, '名前空間指定が空文字の場合はwindow直下ににマネージャを作成できること');
-		window.TestManager = undefined;
+		deleteProperty(window, 'TestManager');
 	});
 
 	test('データモデルマネージャの作成 名前空間指定のない場合は同名のにマネージャを作成できること', 1, function() {
@@ -507,7 +507,7 @@ $(function() {
 			});
 
 	test('baseにデータモデルを指定した時、継承元のスキーマは変わらないこと', function() {
-		var manager = h5.core.data.createManager('DataManager', 'model');
+		var manager = h5.core.data.createManager('DataManager');
 
 		// parentModel
 		var parentModel = manager.createModel({

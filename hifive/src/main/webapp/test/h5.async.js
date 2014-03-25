@@ -737,14 +737,14 @@ $(function() {
 			});
 
 	test('alwaysでfailコールバックを登録してreject()された場合、commonFailHandlerが呼ばれないこと', 1, function() {
-		dfd = h5.async.deferred();
+		var dfd = h5.async.deferred();
 		dfd.promise().always(emptyFunc);
 		dfd.reject();
 		ok(!this.cfhFlag, 'deferred.always() でコールバックを指定した時に、commonFailHandlerが呼ばれないこと');
 	});
 
 	test('alwaysでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
-		dfd = h5.async.deferred();
+		var dfd = h5.async.deferred();
 		dfd.always();
 		dfd.reject();
 		ok(this.cfhFlag, 'deferred.always() でコールバックを登録しなければ、commonFailHandlerは呼ばれること');
@@ -1300,7 +1300,7 @@ $(function() {
 			'※要目視確認：引数を2つ以上渡して、プロミスの配列がある場合、配列は無視して配列以外のpromiseオブジェクトのresolveだけを待つこと。ログが出力されること。',
 			5,
 			function() {
-				var dfd1,dfd2,dfd3;
+				var dfd1, dfd2, dfd3;
 				// deferredを初期化する
 				dfd1 = h5.async.deferred();
 				dfd2 = h5.async.deferred();

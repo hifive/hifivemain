@@ -215,7 +215,7 @@
 	 * @param {Boolean} flag (true: ハンドラを有効化する / false: ハンドラを無効化する)
 	 */
 	function changeListenerState(id, flag) {
-		for (prop in controllerInstanceMap) {
+		for (var prop in controllerInstanceMap) {
 			var controllers = controllerInstanceMap[prop];
 			var pageControllerEnabled = id === prop;
 
@@ -228,7 +228,7 @@
 			}
 		}
 
-		for (prop in dynamicControllerInstanceMap) {
+		for (var prop in dynamicControllerInstanceMap) {
 			var dynamicControllers = dynamicControllerInstanceMap[prop];
 			var dynamicControllerEnabled = id === prop;
 

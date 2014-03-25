@@ -262,3 +262,18 @@ function compareVersion(a, b) {
 	// 最後まで比較して同じなら同じバージョンなので0を返す
 	return 0;
 }
+
+/**
+ * オブジェクトからプロパティを削除する
+ *
+ * @param {Object} obj
+ * @param {string} prop
+ */
+function deleteProperty(obj, prop) {
+	try {
+		delete obj[prop];
+	} catch (e) {
+		// IE6の場合、windowオブジェクトからdeleteしようとするとエラーになるのでundefinedの代入を行う
+		obj[prop] = undefined;
+	}
+}
