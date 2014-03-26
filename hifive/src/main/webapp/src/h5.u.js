@@ -741,7 +741,7 @@
 	 *
 	 * @param {String} str HTML文字列
 	 * @returns {String} エスケープ済HTML文字列
-	 * @name escapeHTML
+	 * @name escapeHtml
 	 * @function
 	 * @memberOf h5.u.str
 	 */
