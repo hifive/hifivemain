@@ -6823,6 +6823,49 @@ $(function() {
 		});
 	});
 
+	asyncTest('body、document、windowをターゲットにした場合', function() {
+		var controllerBase = {
+			__name: 'TestController',
+			__ready: function() {
+				this._showIndocator(window).done(this.own(function() {
+					this._showIndocator(document).done(this.own(function() {
+						this._showIndocator(document.body).done(start);
+					}));
+				}));
+			},
+
+			_showIndocator: function(target) {
+				var dfd = h5.async.deferred();
+
+				var indicator = this.indicator({
+					target: target,
+					message: 'テストテストテスト2'
+				}).show();
+
+				setTimeout(function() {
+					strictEqual($(document.body).children('.h5-indicator.a.content').length, 1,
+							'body直下に1つインジケータが表示されていること');
+					indicator.hide();
+
+					setTimeout(function() {
+						strictEqual($('#controllerTes').children('.h5-indicator.a.content').length,
+								0, 'Indicator#hide() インジケータが除去されていること');
+						dfd.resolve();
+					}, 0);
+				}, 0);
+				return dfd.promise();
+			}
+		};
+
+		$('#controllerTest').append('<li class="hoge"></li>').append('<li class="hoge"></li>');
+
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+			testController.unbind();
+		});
+	});
+
 	asyncTest('this.indicator() 同一要素に２つのインジケータを表示する', function() {
 		var controllerBase = {
 			__name: 'TestController',
