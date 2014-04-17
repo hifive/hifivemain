@@ -2537,6 +2537,10 @@
 	 * 第一引数にイベント名、第二引数にイベントリスナを渡し、イベントリスナを登録します。指定したイベントが起こった時にイベントリスナが実行されます。
 	 * </p>
 	 * <p>
+	 * イベントリスナは、関数または<a
+	 * href="http://www.w3.org/TR/DOM-Level-2-Events/events.html#Events-EventListener">EventListener</a>
+	 * インタフェースを実装するオブジェクト(handleEventプロパティに関数を持つオブジェクト)で指定できます。
+	 * <p>
 	 * 指定したイベントに、指定したイベントリスナが既に登録されていた場合は何もしません。
 	 * </p>
 	 * <p>
@@ -2546,14 +2550,17 @@
 	 * @since 1.1.0
 	 * @memberOf EventDispatcher
 	 * @param {String} type イベント名
-	 * @param {Function} listener イベントリスナ
+	 * @param {Function|Object} listener イベントリスナまたはhandleEventを持つイベントリスナオブジェクト
 	 */
 	EventDispatcher.prototype.addEventListener = function(type, listener) {
 		// 引数チェック
-		if (arguments.length !== 2 || !isString(type) || !$.isFunction(listener)) {
+		// typeは文字列で、第2引数まで指定されていることをチェックする
+		// listenerが関数またはイベントリスナオブジェクトかどうかは、実行時に判定し、関数でもイベントリスナオブジェクトでもない場合は実行しない
+		if (arguments.length !== 2 || !isString(type)) {
 			throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
 		}
-		if (this.hasEventListener(type, listener)) {
+		if (listener == null || this.hasEventListener(type, listener)) {
+			// nullまたはundefinedが指定されている、または既に登録済みのイベントリスナなら何もしない
 			return;
 		}
 
@@ -2638,7 +2645,13 @@
 
 		// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
 		for (var i = 0, count = l.length; i < count && !isImmediatePropagationStopped; i++) {
-			l[i].call(event.target, event);
+			if ($.isFunction(l[i])) {
+				l[i].call(event.target, event);
+			} else if (l[i].handleEvent) {
+				// イベントリスナオブジェクトの場合はhandleEventを呼ぶ
+				// handleEvent内のコンテキストはイベントリスナオブジェクトなので、callは使わずにそのまま呼び出す
+				l[i].handleEvent(event);
+			}
 		}
 
 		return isDefaultPrevented;
