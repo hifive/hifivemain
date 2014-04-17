@@ -8867,7 +8867,6 @@ $(function() {
 		expect(l);
 	});
 
-
 	test('addEventListener 異常系', 4, function() {
 		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
@@ -9153,6 +9152,31 @@ $(function() {
 				item.removeEventListener('itemsChange', itemsChangeListener);
 				item.removeEventListener('itemsChange', changeListener);
 			});
+
+	test('イベントリスナ内のthis 関数の場合', 1, function() {
+		var context = null;
+		function listener() {
+			context = this;
+		}
+		var ret = item.addEventListener('change', listener);
+		item.set('val', sequence.next());
+		strictEqual(context, item, 'イベントリスナ内のthisはイベントの起きたDataItemであること');
+		item.removeEventListener('change', listener);
+	});
+
+	test('イベントリスナ内のthis イベントリスナオブジェクトの場合', 1, function() {
+		var context = null;
+		var listener = {
+			handleEvent: function() {
+				context = this;
+			}
+		};
+		var ret = item.addEventListener('change', listener);
+		item.set('val', sequence.next());
+		strictEqual(context, listener, 'イベントリスナ内のthisはイベントリスナオブジェクトであること');
+		item.removeEventListener('change', listener);
+	});
+
 	//=============================
 	// Definition
 	//=============================
