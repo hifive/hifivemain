@@ -314,12 +314,12 @@ $(function() {
 	// Body
 	//=============================
 	test('html文字列をエスケープする', 4, function() {
-		var str = '<div>hogehoge<span>TEST</span>hoge.!</script>';
+		var str = '<div id="a" class=\'b\'>hoge&amp;fuga<span>TEST</span>hoge.!</script>';
 		var escapeStr = h5.u.str.escapeHtml(str);
 		$('#qunit-fixture').append(escapeStr);
 		strictEqual(escapeStr,
-				'&lt;div&gt;hogehoge&lt;span&gt;TEST&lt;/span&gt;hoge.!&lt;/script&gt;',
-				'エスケープされること。');
+				'&lt;div id=&quot;a&quot; class=&#39;b&#39;&gt;hoge&amp;amp;fuga&lt;span&gt;TEST&lt;/span&gt;hoge.!&lt;/script&gt;',
+				'エスケープされること。結果：' + escapeStr);
 		strictEqual(h5.u.str.escapeHtml(0), 0, '文字列のみエスケープされること。');
 		strictEqual(h5.u.str.escapeHtml(undefined), undefined, '文字列のみエスケープされること。');
 		var obj = {
