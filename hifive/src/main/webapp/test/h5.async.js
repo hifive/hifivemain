@@ -1436,7 +1436,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('fail', 2, function() {
+	asyncTest('fail loop処理の途中で失敗するコールバックがある場合', 2, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -1458,6 +1458,31 @@ $(function() {
 			start();
 			ok(true, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
 			strictEqual(ret.join(';'), '0;1;2;3', 'promiseを返してrejectすると処理が止まるか');
+		}).done(function() {
+			start();
+			ok(false, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
+		});
+	});
+
+	asyncTest('fail loop処理の最後に失敗するコールバックがある場合', 2, function() {
+		var ret = [];
+		var array = [0, 1, 2, 3, 4, 5];
+		var p = h5.async.loop(array, function(index, value, loopControl) {
+			var dfd = h5.async.deferred();
+			setTimeout(function() {
+				ret.push(value);
+				if (index === 5) {
+					dfd.reject();
+				} else {
+					dfd.resolve();
+				}
+			}, 0);
+			return dfd.promise();
+		}, 2);
+		p.fail(function() {
+			start();
+			ok(true, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
+			strictEqual(ret.join(';'), '0;1;2;3;4;5', 'loop処理は全て実行されていること');
 		}).done(function() {
 			start();
 			ok(false, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');

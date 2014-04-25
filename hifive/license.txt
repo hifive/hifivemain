@@ -53,9 +53,6 @@ src/main/webapp/test/lib/qunit
 
 Qunit
 URL:http://docs.jquery.com/QUnit
-License:Dual licensed under the MIT and GPL licenses
+License:MIT licenses
 	https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt
-	https://github.com/jquery/jquery/blob/master/GPL-LICENSE.txt
 Local Modifications: None.
------
-

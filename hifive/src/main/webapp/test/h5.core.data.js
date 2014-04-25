@@ -123,7 +123,7 @@ $(function() {
 			strictEqual('length:' + result.length, 'length:' + exp.length, msg);
 			return;
 		}
-		var i,l;
+		var i, l;
 		while ((l = exp.length) !== 0) {
 			var elm = result[0];
 			var hasElm = false;
@@ -8821,6 +8821,8 @@ $(function() {
 
 	var changeListener = null;
 
+	// EventListenerの登録削除はEventDispatcherの機能であり、DataItem,DataModel,DataModelManagerで共通である
+	// DataItemを使ってEventDispatcherの機能をテストする
 	module('DataItem EventListenerの登録・削除', {
 		setup: function() {
 			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
@@ -8849,20 +8851,23 @@ $(function() {
 	// Body
 	//=============================
 	test('addEventListener 正常系', 4, function() {
-		// (文字列,関数)ならエラーにならない
+		// (文字列,関数またはEnventListenerオブジェクト)ならエラーにならない
 		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				[' ', changeListener], ['', changeListener]];
+				[' ', changeListener], ['', changeListener], ['change', {
+					handleEvent: changeListener
+				}]];
 		var l = validArgs.length
 		for (var i = 0; i < l; i++) {
 			var ret = item.addEventListener(validArgs[i][0], validArgs[i][1]);
-			strictEqual(ret, undefined, '(文字列、関数)ならエラーにならないこと。戻り値はundefinedであること。' + validArgs[i]);
+			strictEqual(ret, undefined,
+					'(文字列、関数またはEnventListenerオブジェクト))ならエラーにならないこと。戻り値はundefinedであること。'
+							+ validArgs[i]);
 			item.removeEventListener(validArgs[i][0], validArgs[i][1]);
 		}
 		expect(l);
 	});
 
-
-	test('addEventListener 異常系', 5, function() {
+	test('addEventListener 異常系', 4, function() {
 		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
 			item.addEventListener();
@@ -8890,15 +8895,9 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, errCode, e.message);
 		}
-		try {
-			item.addEventListener('itemsChange', {});
-			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
 	});
 
-	test('hasEventListener', 5, function() {
+	test('hasEventListener イベントリスナが関数の場合', 5, function() {
 		var ret = item.hasEventListener('change', changeListener);
 		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
 
@@ -8920,8 +8919,33 @@ $(function() {
 		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
 	});
 
+	test('hasEventListener イベントリスナがイベントリスナオブジェクトの場合', 5, function() {
+		var eventListenerObj = {
+			handleEvent: changeListener
+		};
+		var ret = item.hasEventListener('change', eventListenerObj);
+		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
+
+		item.addEventListener('change', eventListenerObj);
+		ret = item.hasEventListener('change', eventListenerObj);
+		strictEqual(ret, true,
+				'addEventListenerした後、addしたイベントとハンドラのインスタンスをhasEventListenerに渡した時、結果はtrueであること');
+
+		ret = item.hasEventListener('change', function() {});
+		strictEqual(ret, false,
+				'addEventListenerに渡したインスタンスと異なるインスタンスをhasEventListenerに渡した場合、結果はfalseであること');
+
+		ret = item.hasEventListener('itemsChange', eventListenerObj);
+		strictEqual(ret, false,
+				'addEventListenerに渡したイベント名と異なるイベント名をhasEventListenerに渡した場合、結果はfalseであること');
+
+		item.removeEventListener('change', eventListenerObj);
+		ret = item.hasEventListener('change', eventListenerObj);
+		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
+	});
+
 	test(
-			'removeEventListener',
+			'removeEventListener イベントリスナが関数の場合',
 			function() {
 				var ret = item.removeEventListener('change', changeListener);
 				strictEqual(ret, undefined,
@@ -8956,7 +8980,47 @@ $(function() {
 						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
 			});
 
-	test('addEventListenerで"change"イベントに登録したハンドラだけが実行され、removeEventListenerされたハンドラは実行されなくなること。',
+	test(
+			'removeEventListener イベントリスナがイベントリスナオブジェクトの場合',
+			function() {
+				var eventListenerObj = {
+					handleEvent: changeListener
+				};
+				var ret = item.removeEventListener('change', eventListenerObj);
+				strictEqual(ret, undefined,
+						'指定したイベントに指定した関数インスタンスが登録されていない時、removeEventListenerの戻り値はundefinedであること');
+
+				item.addEventListener('change', eventListenerObj);
+
+				item.removeEventListener('itemsChange', eventListenerObj);
+				ret = item.hasEventListener('change', eventListenerObj);
+				strictEqual(
+						ret,
+						true,
+						'addEventListenerに渡したイベント名と異なるイベント名をremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
+
+				item.removeEventListener('change', function() {
+				//
+				});
+				ret = item.hasEventListener('change', eventListenerObj);
+				strictEqual(
+						ret,
+						true,
+						'addEventListenerに渡したハンドラと異なるハンドラをremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
+
+				ret = item.removeEventListener('change', eventListenerObj);
+				strictEqual(ret, undefined,
+						'指定したイベントに指定した関数インスタンスが登録されてる時、removeEventListenerの戻り値はundefinedであること');
+
+				ret = item.hasEventListener('change', eventListenerObj);
+				strictEqual(
+						ret,
+						false,
+						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
+			});
+
+	test(
+			'addEventListenerで"change"イベントに登録したハンドラだけが実行され、removeEventListenerされたハンドラは実行されなくなること。イベントリスナが関数の場合。',
 			function() {
 				// イベントをaddする
 				var managerEventListener = function() {
@@ -9018,384 +9082,100 @@ $(function() {
 				item.removeEventListener('itemsChange', CHANGE);
 			});
 
-	//=============================
-	// Definition
-	//=============================
-
-	module('DataModel EventListenerの登録・削除', {
-		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
-			manager = h5.core.data.createManager('TestManager');
-			createDataModel1();
-			changeListener = function() {
-			//
-			};
-		},
-		teardown: function() {
-			order = [];
-			evObj = {};
-			sequence = null;
-			dataModel1 = null;
-			dropAllModel(manager);
-			changeListener = null;
-		}
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('addEventListener 正常系', function() {
-		// (文字列,関数)ならエラーにならない
-		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				[' ', changeListener], ['', changeListener]];
-		var l = validArgs.length
-		for (var i = 0; i < l; i++) {
-			var ret = dataModel1.addEventListener(validArgs[i][0], validArgs[i][1]);
-			strictEqual(ret, undefined,
-					'addEventListenerの戻り値はundefinedであること。引数が2つ指定されていればエラーにはならないこと');
-			dataModel1.removeEventListener(validArgs[i][0], validArgs[i][1]);
-		}
-		expect(l);
-	});
-
-
-	test('addEventListener 異常系', 5, function() {
-		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
-		try {
-			dataModel1.addEventListener();
-			ok(false, '引数なしでエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			dataModel1.addEventListener('cnahge');
-			ok(false, 'イベント名だけを引数に渡して呼び出した場合に、エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			dataModel1.addEventListener(function() {});
-			ok(false, '関数だけを引数に渡して呼び出した場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			dataModel1.addEventListener(document.createEventObject ? document
-					.createEventObject('itemsChange') : !!document.createEvent ? document
-					.createEvent('HTMLEvents') : new Event('itemsChange'));
-			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			dataModel1.addEventListener('itemsChange', {});
-			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-	});
-
-	test('hasEventListener', 5, function() {
-		var ret = dataModel1.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
-
-		dataModel1.addEventListener('itemsChange', changeListener);
-		ret = dataModel1.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, true,
-				'addEventListenerした後、addしたイベントとハンドラのインスタンスをhasEventListenerに渡した時、結果はtrueであること');
-
-		ret = dataModel1.hasEventListener('itemsChange', function() {});
-		strictEqual(ret, false,
-				'addEventListenerに渡したインスタンスと異なるインスタンスをhasEventListenerに渡した場合、結果はfalseであること');
-
-		ret = dataModel1.hasEventListener('change', changeListener);
-		strictEqual(ret, false,
-				'addEventListenerに渡したイベント名と異なるイベント名をhasEventListenerに渡した場合、結果はfalseであること');
-
-		dataModel1.removeEventListener('change', changeListener);
-		ret = dataModel1.hasEventListener('change', changeListener);
-		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
-	});
-
 	test(
-			'removeEventListener ',
+			'addEventListenerで"change"イベントに登録したハンドラだけが実行され、removeEventListenerされたハンドラは実行されなくなること。イベントリスナがイベントリスナオブジェクトの場合。',
 			function() {
-
-				var ret = dataModel1.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されていない時、removeEventListenerの戻り値はundefinedであること');
-
-				dataModel1.addEventListener('change', changeListener);
-
-				dataModel1.removeEventListener('itemsChange', changeListener);
-				ret = dataModel1.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したイベント名と異なるイベント名をremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				dataModel1.removeEventListener('change', function() {
-				//
-				});
-				ret = dataModel1.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したハンドラと異なるハンドラをremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				ret = dataModel1.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されてる時、removeEventListenerの戻り値はundefinedであること');
-
-				ret = dataModel1.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						false,
-						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
-			});
-
-	test('addEventListenerで"itemsChange"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。', 6,
-			function() {
-				var managerEventListener = function() {
-					order.push('itemsChange');
+				// イベントをaddする
+				var managerEventListener = {
+					handleEvent: function() {
+						order.push('managerEventListener');
+					}
 				};
-				var modelEventListener = function() {
-					order.push('itemsChange2');
+				var modelEventListener = {
+					handleEvent: function() {
+						order.push('modelEventListener');
+					}
 				};
-				dataModel1.addEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
+				item.addEventListener('change', managerEventListener);
 
-				deepEqual(order, ['itemsChange'],
-						'addEventListenerの"itemsChange"にハンドリングした関数が実行されていること');
+				item.set('val', sequence.next());
 
-				order = [];
-				dataModel1.addEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange'],
-						'addEventListenerの"itemsChange"に同じ関数を2度ハンドリングしても一度だけ実行されること');
+				deepEqual(order, ['managerEventListener'],
+						'addEventListenerの"change"にハンドリングした関数が実行されていること');
 
 				order = [];
-				dataModel1.addEventListener('itemsChange', modelEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange', 'itemsChange2'],
-						'addEventListenerの"itemsChange"にさらに別の関数をハンドリングすると、addした順番で実行されること');
+				item.addEventListener('change', managerEventListener);
+				item.set('val', sequence.next());
+
+				deepEqual(order, ['managerEventListener'],
+						'addEventListenerの"change"に同じ関数を2度ハンドリングしても一度だけ実行されること');
 
 				order = [];
-				dataModel1.removeEventListener('itemsChange', modelEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange'], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
+				item.addEventListener('change', modelEventListener);
+				item.set('val', sequence.next());
+
+				deepEqual(order, ['managerEventListener', 'modelEventListener'],
+						'addEventListenerの"change"にさらに別の関数をハンドリングすると、addした順番で実行されること');
 
 				order = [];
-				dataModel1.removeEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
+				item.removeEventListener('change', managerEventListener);
+				item.set('val', sequence.next());
+
+				deepEqual(order, ['modelEventListener'],
+						'removeEventListenerすると、removeしたハンドラは実行されないこと');
+
+				order = [];
+				item.removeEventListener('change', modelEventListener);
+				item.set('val', sequence.next());
+
 				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
 
 				order = [];
-				dataModel1.addEventListener('change', managerEventListener);
-				dataModel1.val = sequence.next();
+				var itemsChangeListener = {
+					handleEvent: function() {
+						order.push('itemsChange');
+					}
+				};
+				var changeListener = {
+					handleEvent: function() {
+						order.push('CHANGE');
+					}
+				};
+				item.addEventListener('itemsChange', itemsChangeListener);
+				item.addEventListener('CHANGE', changeListener);
+				item.set('val', sequence.next());
 
-				deepEqual(order, [], 'addEventListenerの"itemsChange"以外を指定してハンドリングした関数は、実行されないこと');
+				deepEqual(order, [], 'addEventListenerの"change"以外を指定してハンドリングした関数は、実行されないこと');
 
 				// addしたイベントを削除
-				dataModel1.removeEventListener('change', managerEventListener);
-				dataModel1.removeEventListener('change', modelEventListener);
+				item.removeEventListener('itemsChange', managerEventListener);
+				item.removeEventListener('itemsChange', itemsChangeListener);
+				item.removeEventListener('itemsChange', changeListener);
 			});
 
-	//=============================
-	// Definition
-	//=============================
-
-	module('DataManager EventListenerの登録・削除', {
-		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
-			manager = h5.core.data.createManager('TestManager');
-			createDataModel1();
-			changeListener = function() {};
-		},
-		teardown: function() {
-			order = [];
-			evObj = {};
-			sequence = null;
-			dataModel1 = null;
-			changeListener = null;
-			dropAllModel(manager);
+	test('イベントリスナ内のthis 関数の場合', 1, function() {
+		var context = null;
+		function listener() {
+			context = this;
 		}
+		var ret = item.addEventListener('change', listener);
+		item.set('val', sequence.next());
+		strictEqual(context, item, 'イベントリスナ内のthisはイベントの起きたDataItemであること');
+		item.removeEventListener('change', listener);
 	});
 
-
-	//=============================
-	// Body
-	//=============================
-	test('addEventListener 正常系', function() {
-		// (文字列,関数)ならエラーにならない
-		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				[' ', changeListener], ['', changeListener]];
-		var l = validArgs.length
-		for (var i = 0; i < l; i++) {
-			var ret = manager.addEventListener(validArgs[i][0], validArgs[i][1]);
-			strictEqual(ret, undefined,
-					'addEventListenerの戻り値はundefinedであること。引数が2つ指定されていればエラーにはならないこと');
-			manager.removeEventListener(validArgs[i][0], validArgs[i][1]);
-		}
-		expect(l);
+	test('イベントリスナ内のthis イベントリスナオブジェクトの場合', 1, function() {
+		var context = null;
+		var listener = {
+			handleEvent: function() {
+				context = this;
+			}
+		};
+		var ret = item.addEventListener('change', listener);
+		item.set('val', sequence.next());
+		strictEqual(context, listener, 'イベントリスナ内のthisはイベントリスナオブジェクトであること');
+		item.removeEventListener('change', listener);
 	});
-
-
-	test('addEventListener 異常系', function() {
-		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
-		try {
-			manager.addEventListener('itemsCnahge');
-			ok(false, 'エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, 'addEventListenerの引数にイベント名だけ渡した時、エラーになること');
-		}
-		try {
-			manager.addEventListener(function() {});
-			ok(false, 'エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
-		}
-		try {
-			manager.addEventListener(document.createEventObject ? document
-					.createEventObject('itemsChange') : !!document.createEvent ? document
-					.createEvent('HTMLEvents') : new Event('itemsChange'));
-			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			manager.addEventListener('itemsChange', {});
-			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-	});
-
-	test('hasEventListener', 5, function() {
-		var ret = manager.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
-
-		manager.addEventListener('itemsChange', changeListener);
-		ret = manager.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, true,
-				'addEventListenerした後、addしたイベントとハンドラのインスタンスをhasEventListenerに渡した時、結果はtrueであること');
-
-		ret = manager.hasEventListener('itemsChange', function() {});
-		strictEqual(ret, false,
-				'addEventListenerに渡したインスタンスと異なるインスタンスをhasEventListenerに渡した場合、結果はfalseであること');
-
-		ret = manager.hasEventListener('change', changeListener);
-		strictEqual(ret, false,
-				'addEventListenerに渡したイベント名と異なるイベント名をhasEventListenerに渡した場合、結果はfalseであること');
-
-		manager.removeEventListener('change', changeListener);
-		ret = manager.hasEventListener('change', changeListener);
-		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
-	});
-
-	test(
-			'removeEventListener',
-			function() {
-
-				var ret = manager.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されていない時、removeEventListenerの戻り値はundefinedであること');
-
-				manager.addEventListener('change', changeListener);
-
-				manager.removeEventListener('itemsChange', changeListener);
-				ret = manager.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したイベント名と異なるイベント名をremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				manager.removeEventListener('change', function() {
-				//
-				});
-				ret = manager.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したハンドラと異なるハンドラをremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				ret = manager.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されてる時、removeEventListenerの戻り値はundefinedであること');
-
-				ret = manager.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						false,
-						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
-			});
-
-	test('addEventListenerで"itemsChange"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。', 6,
-			function() {
-				var managerEventListener = function() {
-					order.push('itemsChange');
-				};
-				var modelEventListener = function() {
-					order.push('itemsChange2');
-				};
-				manager.addEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-
-				deepEqual(order, ['itemsChange'],
-						'addEventListenerの"itemsChange"にハンドリングした関数が実行されていること');
-
-				order = [];
-				manager.addEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange'],
-						'addEventListenerの"itemsChange"に同じ関数を2度ハンドリングしても一度だけ実行されること');
-
-				order = [];
-				manager.addEventListener('itemsChange', modelEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange', 'itemsChange2'],
-						'addEventListenerの"itemsChange"にさらに別の関数をハンドリングすると、addした順番で実行されること');
-
-				order = [];
-				manager.removeEventListener('itemsChange', modelEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange'], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
-
-				order = [];
-				manager.removeEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
-
-				order = [];
-				manager.addEventListener('change', managerEventListener);
-				dataModel1.val = sequence.next();
-
-				deepEqual(order, [], 'addEventListenerの"itemsChange"以外を指定してハンドリングした関数は、実行されないこと');
-
-				// addしたイベントを削除
-				manager.removeEventListener('change', managerEventListener);
-				manager.removeEventListener('change', modelEventListener);
-			});
 
 	//=============================
 	// Definition

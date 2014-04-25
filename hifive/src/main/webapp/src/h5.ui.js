@@ -327,7 +327,7 @@
 
 		for (var j = 1; j <= line; j++) {
 			var rad = eachRadian * j;
-			var cosRad = Math.cos(rad),sinRad = Math.sin(rad);
+			var cosRad = Math.cos(rad), sinRad = Math.sin(rad);
 			positions.push({
 				from: {
 					x: centerPos + radius / 2 * cosRad,
@@ -862,6 +862,10 @@
 		if (!$t.length) {
 			return;
 		}
+		// スクリーンロックで表示するか判定
+		var isScreenlock = isScreenlockTarget($t);
+		// スクリーンロックで表示する場合はターゲットはbodyにする
+		$t = isScreenlock ? $('body') : $t;
 		// documentの取得
 		var doc = getDocumentOf($t[0]);
 
@@ -897,9 +901,9 @@
 		// スタイル情報
 		this._styles = $.extend(true, {}, defaultStyle, readThrobberStyle(settings.theme));
 		// スクリーンロックで表示するか
-		this._isScreenLock = isScreenlockTarget($t);
+		this._isScreenLock = isScreenlock;
 		// 表示対象であるDOM要素を保持するjQueryオブジェクト
-		this._$target = this._isScreenLock ? $('body') : $t;
+		this._$target = $t;
 		// 表示対象のDOM要素 (旧バージョン互換用)
 		this._target = this._$target.length === 1 ? this._$target[0] : this._$target.toArray();
 		// scroll/touchmoveイベントハンドラで使用するタイマーID
@@ -1083,7 +1087,7 @@
 				var _$overlay = this._$overlay.eq(i);
 				var _$skin = this._$skin.eq(i);
 
-				var w,h;
+				var w, h;
 
 				//オーバーレイはターゲット要素全体の大きさ(スクロールサイズ)にする
 				if (this._isScreenLock) {
@@ -1431,9 +1435,9 @@
 	 * @memberOf h5.ui
 	 */
 	var isInView = function(element, container) {
-		var viewTop,viewBottom,viewLeft,viewRight;
+		var viewTop, viewBottom, viewLeft, viewRight;
 		var $element = $(element);
-		var height,width;
+		var height, width;
 
 		// containerの位置を取得。borderの内側の位置で判定する。
 		if (container === undefined) {

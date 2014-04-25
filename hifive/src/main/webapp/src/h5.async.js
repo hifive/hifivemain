@@ -487,16 +487,12 @@
 		var dfd = deferred();
 		// 何回ごとにループを抜けるか。デフォルトは20回
 		var st = $.type(suspendOnTimes) === 'number' ? suspendOnTimes : 20;
-		var userReject = false;
 		var index = 0;
 		var len = array.length;
-		var execute,loopControl = null;
+		var execute, loopControl = null;
 		var each = function() {
 			if (index === len) {
 				dfd.resolve(array);
-				return;
-			} else if (userReject) {
-				dfd.reject(array);
 				return;
 			}
 			var ret = callback.call(array, index, array[index], loopControl);
@@ -505,8 +501,7 @@
 				ret.done(function() {
 					execute();
 				}).fail(function() {
-					userReject = true;
-					execute();
+					dfd.reject(array);
 				});
 			} else {
 				execute();
