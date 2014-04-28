@@ -3830,6 +3830,8 @@ $(function() {
 			ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
 			strictEqual(errorObj.code, ERR_VIEW.ERR_CODE_TEMPLATE_ID_UNAVAILABLE,
 					'指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
+			// h5.core.viewに追加したテンプレートをクリア
+			h5.core.view.clear('template3');
 			testController.unbind();
 			start();
 		});
@@ -3912,7 +3914,7 @@ $(function() {
 									['000_test_getAvailableTemplates', '001', '002', 'template2',
 											'template3'],
 									'子コントローラView isRecursive===true 親コントローラで利用可能なすべてのテンプレートIDと自身で登録したテンプレートIDを取得できること。');
-							h5.core.view.clear('test_getAvailableTemplates');
+							h5.core.view.clear('000_test_getAvailableTemplates');
 							start();
 						});
 			});
