@@ -1171,6 +1171,8 @@
 			// h5trackendイベントの最後でハンドラの除去を行う関数を格納するための変数
 			var removeHandlers = null;
 			var execute = false;
+			// h5trackendイベントの最後で、style.touchActionを元に戻すため、覚えておく
+			var touchActionStyle = '';
 			function getHandler(en, eventTarget, setup) {
 				return function(context) {
 					var type = getEventType(en);
@@ -1242,6 +1244,7 @@
 							h5trackTriggeredFlags.splice(index, 1);
 						}
 					}
+					var nt = newEvent.target;
 					// ------------- h5track*のトリガ処理 ここまで -------------
 
 					if (isStart && execute) {
@@ -1249,7 +1252,15 @@
 						// h5trackmove,endを登録
 
 						newEvent.h5DelegatingEvent.preventDefault();
-						var nt = newEvent.target;
+
+						// タッチイベントのあるIE10,11のために、IE11ならtouch-action、IE10なら-ms-touch-actionをnoneに設定する
+						if (typeof nt.style.touchAction !== TYPE_OF_UNDEFINED) {
+							touchActionStyle = nt.style.touchAction;
+							nt.style.touchAction = 'none';
+						} else if (typeof nt.style.msTouchAction !== TYPE_OF_UNDEFINED) {
+							touchActionStyle = nt.style.msTouchAction;
+							nt.style.msTouchAction = 'none';
+						}
 
 						// 直前のh5track系イベントとの位置の差分を格納
 						var ox = newEvent.clientX;
@@ -1314,6 +1325,12 @@
 						// touchend,mousup時(=h5trackend時)にmoveとendのイベントをunbindする
 						removeHandlers();
 						execute = false;
+						// タッチイベントのあるIE10,11のために、h5trackstart時に覚えておいた元のタッチアクションに戻す
+						if (typeof nt.style.touchAction !== TYPE_OF_UNDEFINED) {
+							nt.style.touchAction = touchAction;
+						} else if (typeof nt.style.msTouchAction !== TYPE_OF_UNDEFINED) {
+							nt.style.msTouchAction = touchAction;
+						}
 					}
 				};
 			}
