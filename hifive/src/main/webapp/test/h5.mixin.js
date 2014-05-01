@@ -47,7 +47,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("createMixin");
+	module("Mixinクラス");
 
 	//=============================
 	// Body
@@ -152,5 +152,59 @@ $(function() {
 		strictEqual(mixin.hasInstance({
 			a: 1
 		}), false, 'モジュールのプロパティを１つでも持っていないオブジェクトを渡した場合はfalseを返すこと');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+
+	module("eventDispatcher");
+
+	//=============================
+	// Body
+	//=============================
+
+	test('eventDispatcher.mix()', 1, function() {
+		var target = {
+			a: 1
+		};
+		h5.mixin.eventDispatcher.mix(target);
+		// EventDispatcherのプロパティをObservableItemから取得して比較する
+		var item = h5.core.data.createObservableItem({
+			v: null
+		});
+		deepEqual(target, {
+			a: 1,
+			addEventListener: item.addEventListener,
+			removeEventListener: item.removeEventListener,
+			hasEventListener: item.hasEventListener,
+			dispatchEvent: item.dispatchEvent
+		}, 'EventDispatcherのプロパティがオブジェクトに追加されること');
+	});
+	test('EventDispatcherの動作', 5, function() {
+		var target = {};
+		h5.mixin.eventDispatcher.mix(target);
+		var result = '';
+		function handler(e) {
+			result += e.type;
+		}
+		target.addEventListener('hoge', handler);
+		strictEqual(target.hasEventListener('hoge', handler), true,
+				'addEventLisnterで追加したイベントとイベントハンドラについて、hasEventListenerでチェックするとtrueが返ること');
+		strictEqual(target.hasEventListener('fuga', handler), false,
+				'追加していないイベントについてhasEventListenerでチェックするとfalseが返ること');
+		target.dispatchEvent({
+			type: 'hoge'
+		});
+		strictEqual(result, 'hoge', 'dispatchEventで、addEventListenerで追加したイベントハンドラが動作していること');
+
+		result = '';
+		target.removeEventListener('hoge', handler);
+		target.dispatchEvent({
+			type: 'hoge'
+		});
+		strictEqual(result, '', 'removeEventListenerで削除した後はイベントハンドラは動作しないこと');
+		strictEqual(target.hasEventListener('hoge', handler), false,
+				'削除したイベントハンドラについてhasEventListenerはfalseを返すこと');
 	});
 });
