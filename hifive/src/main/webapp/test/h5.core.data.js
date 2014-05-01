@@ -43,9 +43,8 @@ $(function() {
 	// Variables
 	//=============================
 
-	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.data;
-
+	var ERR_MIXIN = ERRCODE.h5.mixin;
 	/**
 	 * データモデルマネージャ
 	 */
@@ -8868,7 +8867,7 @@ $(function() {
 	});
 
 	test('addEventListener 異常系', 4, function() {
-		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
+		var errCode = ERR_MIXIN.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
 		try {
 			item.addEventListener();
 			ok(false, 'エラーが発生していません');
