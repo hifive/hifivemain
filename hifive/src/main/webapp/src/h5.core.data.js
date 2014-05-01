@@ -4157,4 +4157,10 @@
 		SEQ_STRING: SEQ_STRING,
 		SEQ_INT: SEQ_INT
 	});
+	
+	// h5internal.mixinにEventDispatcherを出す
+	// mixinで使用する
+	h5internal.mixin = {
+		EventDispatcher: EventDispatcher
+	};
 })();
