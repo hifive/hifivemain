@@ -102,6 +102,10 @@
 
 		this._hasInterface = function(object) {
 			for ( var p in props) {
+				// プライベートなものはチェックしない
+				if (h5.u.str.startsWith(p, '_')) {
+					continue;
+				}
 				// hasOwnPropertyがtrueかどうかは判定せず、プロトタイプチェーン上にあってもよい
 				// undefinedでなければそのプロパティを持っていると判定する
 				if (object[p] === undefined) {

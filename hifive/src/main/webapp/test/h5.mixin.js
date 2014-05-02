@@ -76,7 +76,8 @@ $(function() {
 			S: new String('a'),
 			N: new Number(1),
 			B: new Boolean(true),
-			r: /a/
+			r: /a/,
+			_p: 'p'
 		};
 		var mixin = h5.mixin.createMixin(moduleObject);
 		var target = {
@@ -95,7 +96,8 @@ $(function() {
 			s2: 's2',
 			o: {
 				hoge: 'hoge'
-			}
+			},
+			_p: 'p'
 		};
 		mixin.mix(target);
 		deepEqual(expect, target,
@@ -104,6 +106,7 @@ $(function() {
 		function A() {
 			this.s1 = 'a';
 			this.s4 = 'd';
+			this._p = 'p';
 		}
 		A.prototype = {
 			s1: 'aa',
@@ -119,30 +122,40 @@ $(function() {
 			s1: 'a',
 			s2: 'B',
 			s3: 'C',
-			s4: 'd'
+			s4: 'd',
+			_p: 'p'
 		};
 		mixin.mix(target);
 		deepEqual(target, expect, 'hasOwnPropertyがtrueのもののみコピーされること');
 	});
 
-	test('createMixin作成したMixinクラスのhasInterfaceメソッド', 4, function() {
+	test('createMixin作成したMixinクラスのhasInterfaceメソッド', 5, function() {
 		var module = {
 			a: 1,
-			n: null
+			n: null,
+			_p: 'p'
 		};
 		mixin = h5.mixin.createMixin(module);
 		strictEqual(mixin.hasInterface({
 			a: 1,
 			b: 1,
-			n: null
+			n: null,
+			_p: 'p'
 		}), true, 'モジュールオブジェクトのプロパティを持っていればhasInterfaceはtrueを返すこと');
+		strictEqual(mixin.hasInterface({
+			a: 1,
+			b: 1,
+			n: null
+		}), true, 'プライベート("_"始まり)のプロパティは持っていなくても、hasInterfaceはtrueを返すこと');
+
 		strictEqual(mixin.hasInterface({
 			a: null,
 			n: false
 		}), true, '値が違っていてもプロパティを持っていればhasInterfaceはtrueを返すこと');
 
-		function A() {}
-		;
+		function A() {
+		// 何もしない
+		}
 		A.prototype = {
 			a: 0,
 			n: 0
@@ -152,6 +165,8 @@ $(function() {
 		strictEqual(mixin.hasInterface({
 			a: 1
 		}), false, 'モジュールのプロパティを１つでも持っていないオブジェクトを渡した場合はfalseを返すこと');
+
+
 	});
 
 	//=============================
