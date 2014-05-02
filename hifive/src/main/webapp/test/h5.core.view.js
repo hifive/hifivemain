@@ -57,7 +57,7 @@
 	var validTemplate3Result = '<table><tbody><tr><td>AA</td><td>BB</td></tr></tbody></table>';
 
 	// template.
-	var validTemplate3Result2 = '<table><tbody><tr><td>&lt;div&gt;div&amp;nbsp;&lt;/div&gt;</td><td>&lt;&gt;&amp;&apos;&quot;</td></tr></tbody></table>';
+	var validTemplate3Result2 = '<table><tbody><tr><td>&lt;div&gt;div&amp;nbsp;&lt;/div&gt;</td><td>&lt;&gt;&amp;&#39;&quot;</td></tr></tbody></table>';
 
 	// template.
 	var validView4 = '<script type="text/ejs" id="h5test-html-template4"><script src="data/sample2.js"></script></script>';
