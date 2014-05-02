@@ -70,7 +70,7 @@
 	 * <p>
 	 * また、h5.mixin以下のMixinオブジェクトがこのクラスを実装しています。
 	 * </p>
-	 * 
+	 *
 	 * @class Mixin
 	 */
 	/**
@@ -162,7 +162,7 @@
 	 * <li><a href="DataItem.html">DataItem</a>
 	 * </ul>
 	 * </p>
-	 * 
+	 *
 	 * @since 1.1.0
 	 * @class
 	 * @name EventDispatcher
@@ -182,11 +182,11 @@
 		 * @returns {Boolean} 第一引数のイベント名に第二引数のイベントリスナが登録されているかどうか
 		 */
 		hasEventListener: function(type, listener) {
-			if (!this.__listeners) {
+			if (!this._eventListeners) {
 				return false;
 			}
-			var l = this.__listeners[type];
-			if (!l || !this.__listeners.hasOwnProperty(type)) {
+			var l = this._eventListeners[type];
+			if (!l || !this._eventListeners.hasOwnProperty(type)) {
 				return false;
 			}
 
@@ -231,15 +231,15 @@
 				return;
 			}
 
-			if (!this.__listeners) {
-				this.__listeners = {};
+			if (!this._eventListeners) {
+				this._eventListeners = {};
 			}
 
-			if (!(this.__listeners.hasOwnProperty(type))) {
-				this.__listeners[type] = [];
+			if (!(this._eventListeners.hasOwnProperty(type))) {
+				this._eventListeners[type] = [];
 			}
 
-			this.__listeners[type].push(listener);
+			this._eventListeners[type].push(listener);
 		},
 
 		/**
@@ -261,7 +261,7 @@
 				return;
 			}
 
-			var l = this.__listeners[type];
+			var l = this._eventListeners[type];
 
 			for (var i = 0, count = l.length; i < count; i++) {
 				if (l[i] === listener) {
@@ -287,10 +287,10 @@
 		 * @returns {Boolean} イベントリスナ内でpreventDefault()が呼ばれたかどうか。
 		 */
 		dispatchEvent: function(event) {
-			if (!this.__listeners) {
+			if (!this._eventListeners) {
 				return;
 			}
-			var l = this.__listeners[event.type];
+			var l = this._eventListeners[event.type];
 			if (!l) {
 				return;
 			}
@@ -335,7 +335,7 @@
 		 * <p>
 		 * 作成したMixinクラスはモジュールオブジェクトとのmixinを行うクラスになります。 Mixinクラスについては<a href="Mixin.html">こちら</a>をご覧ください。
 		 * </p>
-		 * 
+		 *
 		 * @since 1.1.10
 		 * @memberOf h5.mixin
 		 * @param {Object} moduleObject モジュールオブジェクト。mixinの元となるオブジェクト
