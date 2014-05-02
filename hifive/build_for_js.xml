@@ -52,7 +52,7 @@
 				dstDir="${releaseDir}/"
 				version="${versionNumber}"
 				ejsVersion="1.0"
-				moduleNames="util,mixin,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
+				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
@@ -77,7 +77,7 @@
 				dstDir="${releaseDir}/"
 				version="Nightly_${nightly.version}"
 				ejsVersion="1.0"
-				moduleNames="util,mixin,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
+				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
