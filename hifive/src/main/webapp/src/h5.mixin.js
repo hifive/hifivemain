@@ -78,6 +78,7 @@
 	 * @param moduleObject mixinする元となるモジュールオブジェクト
 	 */
 	function Mixin(moduleObject) {
+		// moduleObjectのプロパティキャッシュを作成
 		var props = {};
 		for ( var p in moduleObject) {
 			var v = moduleObject[p];
@@ -90,27 +91,25 @@
 			}
 		}
 
-		this._mix = (function() {
-			return function(target) {
-				for ( var p in props) {
-					// targetがもともと持っていたプロパティがあっても上書き
-					target[p] = props[p];
-				}
-			};
-		})();
+		// mix, hasInstanceはMixinのprototypeに持たせていて、それぞれインスタンスが持つ_mix, _hasInstanceを呼んでいる
+		// _mix, _hasInstanceはmoduleObjectのプロパティキャッシュを参照したいため、Mixinインスタンスごとに定義している
+		this._mix = function(target) {
+			for ( var p in props) {
+				// targetがもともと持っていたプロパティがあっても上書き
+				target[p] = props[p];
+			}
+		};
 
-		this._hasInstance = (function() {
-			return function(object) {
-				for ( var p in props) {
-					// hasOwnPropertyがtrueかどうかは判定せず、プロトタイプチェーン上にあってもよい
-					// undefined出なければそのプロパティを持っていると判定する
-					if (object[p] === undefined) {
-						return false;
-					}
+		this._hasInstance = function(object) {
+			for ( var p in props) {
+				// hasOwnPropertyがtrueかどうかは判定せず、プロトタイプチェーン上にあってもよい
+				// undefinedでなければそのプロパティを持っていると判定する
+				if (object[p] === undefined) {
+					return false;
 				}
-				return true;
-			};
-		})();
+			}
+			return true;
+		};
 	}
 
 	$.extend(Mixin.prototype, {
