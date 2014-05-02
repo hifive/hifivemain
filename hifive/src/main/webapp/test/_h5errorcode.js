@@ -136,5 +136,5 @@ h5.u.obj.expose('ERRCODE.h5.core.data', {
 });
 
 h5.u.obj.expose('ERRCODE.h5.mixin',{
-	ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER: 16000,
+	ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER: 16000
 });
