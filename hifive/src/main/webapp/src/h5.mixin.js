@@ -91,8 +91,8 @@
 			}
 		}
 
-		// mix, hasInstanceはMixinのprototypeに持たせていて、それぞれインスタンスが持つ_mix, _hasInstanceを呼んでいる
-		// _mix, _hasInstanceはmoduleObjectのプロパティキャッシュを参照したいため、Mixinインスタンスごとに定義している
+		// mix, hasInterfaceはMixinのprototypeに持たせていて、それぞれインスタンスが持つ_mix, _hasInterfaceを呼んでいる
+		// _mix, _hasInterfaceはmoduleObjectのプロパティキャッシュを参照したいため、Mixinインスタンスごとに定義している
 		this._mix = function(target) {
 			for ( var p in props) {
 				// targetがもともと持っていたプロパティがあっても上書き
@@ -100,7 +100,7 @@
 			}
 		};
 
-		this._hasInstance = function(object) {
+		this._hasInterface = function(object) {
 			for ( var p in props) {
 				// hasOwnPropertyがtrueかどうかは判定せず、プロトタイプチェーン上にあってもよい
 				// undefinedでなければそのプロパティを持っていると判定する
@@ -124,8 +124,8 @@
 		 * @memberOf Mixin
 		 * @prop {Object} object
 		 */
-		hasInstance: function(object) {
-			return this._hasInstance(object);
+		hasInterface: function(object) {
+			return this._hasInterface(object);
 		}
 	});
 
@@ -162,12 +162,10 @@
 	 * </ul>
 	 * </p>
 	 *
-	 * @since 1.1.0
-	 * @class
+	 * @mixin
 	 * @name EventDispatcher
 	 */
-	// newして作るクラスではないので、コンストラクタは作らずにプロトタイプオブジェクトだけ作成する。
-	var eventDispacherPrototype = {
+	var eventDispatcherModule = {
 		/**
 		 * イベントリスナが登録されているかどうかを返します
 		 * <p>
@@ -358,6 +356,6 @@
 		 * @memberOf h5.mixin
 		 * @name eventDispatcher
 		 */
-		eventDispatcher: createMixin(eventDispacherPrototype)
+		eventDispatcher: createMixin(eventDispatcherModule)
 	});
 })();
