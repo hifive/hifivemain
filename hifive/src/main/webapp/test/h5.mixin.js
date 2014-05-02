@@ -164,23 +164,17 @@ $(function() {
 	// Body
 	//=============================
 
-	test('eventDispatcher.mix()', 1, function() {
+	test('eventDispatcher.mix()', 4, function() {
 		var target = {
 			a: 1
 		};
 		h5.mixin.eventDispatcher.mix(target);
-		// EventDispatcherのプロパティをObservableItemから取得して比較する
-		var item = h5.core.data.createObservableItem({
-			v: null
-		});
-		deepEqual(target, {
-			a: 1,
-			addEventListener: item.addEventListener,
-			removeEventListener: item.removeEventListener,
-			hasEventListener: item.hasEventListener,
-			dispatchEvent: item.dispatchEvent
-		}, 'EventDispatcherのプロパティがオブジェクトに追加されること');
+		ok($.isFunction(target.addEventListener), 'addEventListener関数を持っていること');
+		ok($.isFunction(target.removeEventListener), 'removeEventListener関数を持っていること');
+		ok($.isFunction(target.hasEventListener), 'hasEventListener関数を持っていること');
+		ok($.isFunction(target.dispatchEvent), 'dispatchEvent関数を持っていること');
 	});
+
 	test('EventDispatcherの動作', 5, function() {
 		var target = {};
 		h5.mixin.eventDispatcher.mix(target);
