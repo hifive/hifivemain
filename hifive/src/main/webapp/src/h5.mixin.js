@@ -70,7 +70,7 @@
 	 * @param {Object} target event.targetになるオブジェクト
 	 * @returns {Object} イベントオブジェクト
 	 */
-	function createEventObject(event, target) {
+	function setEventProperties(event, target) {
 		// ターゲットの追加
 		if (!event.target) {
 			event.target = target;
@@ -377,7 +377,7 @@
 			// (あるイベントのイベントリスナの中でadd/removeEventListenerされても、そのイベントが実行するイベントリスナには影響ない)
 			l = l.slice(0);
 
-			createEventObject(event, this);
+			setEventProperties(event, this);
 
 			// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
 			for (var i = 0, count = l.length; i < count && !event.isImmediatePropagationStopped(); i++) {
