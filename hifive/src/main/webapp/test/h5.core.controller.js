@@ -3898,21 +3898,25 @@ $(function() {
 						}
 					}
 				};
+				// h5.core.viewで使用可能なテンプレートを取得
+				// このテストで追加した'000_test_getAvailableTemplates'と、html中に記述されているテンプレートが取得される
+				var coreViewAvailableTemplates = h5.core.view.getAvailableTemplates();
+
 				h5.core.controller('#controllerTest', controller).readyPromise
 						.done(function() {
 							// チェックのためソートする(順不同でdeepEqualでチェック)
 							deepEqual(this.view.getAvailableTemplates().sort(),
 									['001', 'template2'],
 									'親コントローラView isRecursive===false テンプレートファイルとview.registerで登録したテンプレートIDを取得できること。');
-							deepEqual(this.view.getAvailableTemplates(true).sort(), [
-									'000_test_getAvailableTemplates', '001', 'template2'],
+							deepEqual(this.view.getAvailableTemplates(true).sort(), (['001',
+									'template2']).concat(coreViewAvailableTemplates).sort(),
 									'親コントローラView isRecursive===true h5.core.viewで利用可能なテンプレートIDと自身で登録したテンプレートIDを取得できること。');
 							deepEqual(this.childController.view.getAvailableTemplates().sort(), [
 									'002', 'template3'],
 									'子コントローラView isRecursive===true テンプレートファイルとview.registerで登録したテンプレートIDを取得できること。');
 							deepEqual(this.childController.view.getAvailableTemplates(true).sort(),
-									['000_test_getAvailableTemplates', '001', '002', 'template2',
-											'template3'],
+									(['001', '002', 'template2', 'template3']).concat(
+											coreViewAvailableTemplates).sort(),
 									'子コントローラView isRecursive===true 親コントローラで利用可能なすべてのテンプレートIDと自身で登録したテンプレートIDを取得できること。');
 							h5.core.view.clear('000_test_getAvailableTemplates');
 							start();
