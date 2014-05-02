@@ -63,6 +63,52 @@
 	// Functions
 	// =============================
 	/**
+	 * 受け取ったオブジェクトをイベントオブジェクトにする
+	 *
+	 * @private
+	 * @param {Object} event 任意のオブジェクト
+	 * @param {Object} target event.targetになるオブジェクト
+	 * @returns {Object} イベントオブジェクト
+	 */
+	function createEventObject(event, target) {
+		// ターゲットの追加
+		if (!event.target) {
+			event.target = target;
+		}
+		// タイムスタンプの追加
+		if (!event.timeStamp) {
+			event.timeStamp = new Date().getTime();
+		}
+
+		// isDefaultPreventedがないなら、isDefaultPrevented()とpreventDefault()を追加
+		if (!event.isDefaultPrevented) {
+			var _isDefaultPrevented = false;
+			event.isDefaultPrevented = function() {
+				return _isDefaultPrevented;
+			};
+			event.preventDefault = function() {
+				_isDefaultPrevented = true;
+			};
+		}
+
+		// isImmediatePropagationStoppedがないなら、isImmediatePropagationStopped()とstopImmediatePropagation()を追加
+		if (!event.isImmediatePropagationStopped) {
+			var _isImmediatePropagationStopped = false;
+			event.isImmediatePropagationStopped = function() {
+				return _isImmediatePropagationStopped;
+			};
+			event.stopImmediatePropagation = function() {
+				_isImmediatePropagationStopped = true;
+			};
+		}
+	}
+
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+	/**
 	 * Mixinのコンストラクタ
 	 * <p>
 	 * このクラスは自分でnewすることはありません。
@@ -169,12 +215,6 @@
 			return this._hasInterface(object);
 		}
 	});
-
-	// =========================================================================
-	//
-	// Body
-	//
-	// =========================================================================
 
 	function createMixin(moduleObject) {
 		return new Mixin(moduleObject);
@@ -333,24 +373,14 @@
 			if (!l) {
 				return;
 			}
+			// リスナをslice(0)して、dispatchEventを呼んだ瞬間にどのリスナが呼ばれるか確定させる
+			// (あるイベントのイベントリスナの中でadd/removeEventListenerされても、そのイベントが実行するイベントリスナには影響ない)
+			l = l.slice(0);
 
-			if (!event.target) {
-				event.target = this;
-			}
-
-			var isDefaultPrevented = false;
-
-			event.preventDefault = function() {
-				isDefaultPrevented = true;
-			};
-
-			var isImmediatePropagationStopped = false;
-			event.stopImmediatePropagation = function() {
-				isImmediatePropagationStopped = true;
-			};
+			createEventObject(event, this);
 
 			// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
-			for (var i = 0, count = l.length; i < count && !isImmediatePropagationStopped; i++) {
+			for (var i = 0, count = l.length; i < count && !event.isImmediatePropagationStopped(); i++) {
 				if ($.isFunction(l[i])) {
 					l[i].call(event.target, event);
 				} else if (l[i].handleEvent) {
@@ -360,7 +390,7 @@
 				}
 			}
 
-			return isDefaultPrevented;
+			return event.isDefaultPrevented();
 		}
 	};
 
