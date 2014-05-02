@@ -135,7 +135,7 @@ $(function() {
 			n: null,
 			_p: 'p'
 		};
-		mixin = h5.mixin.createMixin(module);
+		var mixin = h5.mixin.createMixin(module);
 		strictEqual(mixin.hasInterface({
 			a: 1,
 			b: 1,
