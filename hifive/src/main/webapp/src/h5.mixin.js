@@ -65,10 +65,32 @@
 	/**
 	 * Mixinのコンストラクタ
 	 * <p>
-	 * このクラスは自分でnewすることはありません。 h5.mixin.createMixin(moduleObject)を呼ぶと渡されたモジュールについてのMixinインスタンスを返します。
+	 * このクラスは自分でnewすることはありません。
+	 * h5.mixin.createMixin(moduleObject)を呼ぶと渡されたモジュールオブジェクトについてのMixinインスタンスを返します。
 	 * </p>
 	 * <p>
-	 * また、h5.mixin以下のMixinオブジェクトがこのクラスを実装しています。
+	 * 作製したインスタンスの<a href="Mixin.html#mix">mix()</a>を呼ぶと、モジュールオブジェクトとmixの引数に渡されたオブジェクトをミックスインしたオブジェクトを返します。
+	 * </p>
+	 *
+	 * <pre><code>
+	 * // set,getメソッドを持つモジュールオブジェクトのmixinを作成する例
+	 * var mixin = h5.mixin.createMixin({
+	 * 	set: function(p, v) {
+	 * 		this[p] = v;
+	 * 	},
+	 * 	get: function(p) {
+	 * 		return this[p];
+	 * 	}
+	 * });
+	 * var target = {
+	 * 	hoge: 'abc'
+	 * };
+	 * mixin.mix(target);
+	 * mixin.get('hoge'); // 'abc'が返る
+	 * </code></pre>
+	 *
+	 * <p>
+	 * <a href="h5.mixin.html">h5.mixin</a>以下にこのクラスを実装したインスタンスを配置しています。
 	 * </p>
 	 *
 	 * @class Mixin
@@ -118,6 +140,11 @@
 
 	$.extend(Mixin.prototype, {
 		/**
+		 * 引数に渡されたオブジェクトと、モジュールオブジェクトとのミックスインを作成します。
+		 * <p>
+		 * 関数、null、文字列リテラル、数値リテラル、真偽値リテラルのいずれかの値を持つプロパティについてのみミックスインを行います。
+		 * </p>
+		 *
 		 * @memberOf Mixin
 		 * @prop {Object} target
 		 */
@@ -125,8 +152,18 @@
 			return this._mix(target);
 		},
 		/**
+		 * 引数に渡されたオブジェクトが、モジュールオブジェクトを実装しているかどうか判定します。
+		 * <p>
+		 * 関数、null、文字列リテラル、数値リテラル、真偽値リテラルのいずれかの値を持つモジュールオブジェクトのプロパティを、
+		 * 引数に渡されたobjectが全て持っているならtrue、そうでないならfalseを返します。
+		 * </p>
+		 * <p>
+		 * ただしモジュールオブジェクトで定義されたプライベートメンバ("_"始まり)のプロパティについてはチェックしません。
+		 * </p>
+		 *
 		 * @memberOf Mixin
 		 * @prop {Object} object
+		 * @returns {Boolean}
 		 */
 		hasInterface: function(object) {
 			return this._hasInterface(object);
@@ -152,8 +189,9 @@
 	 * イベントリスナを管理するクラスです。このクラスはnewできません。
 	 * </p>
 	 * <p>
-	 * このクラスを継承したオブジェクトを作成したい場合は、<a
-	 * href="h5.mixin.eventDispatcher#mixin">h5.mixin.eventDispatcher#mixin</a>を使用してください。
+	 * このモジュールをミックスインしたオブジェクトを作成したい場合は、<a
+	 * href="h5.mixin.html#eventDispatcher">h5.mixin.eventDispatcher</a>の<a
+	 * href="Mixin.html#mix">mix()</a>メソッドを使用してください。
 	 * </p>
 	 * <p>
 	 * 以下のクラスがイベントディスパッチャのメソッドを持ちます。
@@ -330,6 +368,9 @@
 	// Expose to window
 	// =============================
 
+	/**
+	 * @namespace h5.mixin
+	 */
 	h5.u.obj.expose('h5.mixin', {
 		/**
 		 * Mixinクラスを引数に渡されたモジュールオブジェクトから作成します。
@@ -358,6 +399,7 @@
 		 *
 		 * @since 1.1.10
 		 * @memberOf h5.mixin
+		 * @type {Mixin}
 		 * @name eventDispatcher
 		 */
 		eventDispatcher: createMixin(eventDispatcherModule)

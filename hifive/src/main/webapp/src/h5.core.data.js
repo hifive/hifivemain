@@ -2481,14 +2481,14 @@
 	 * href="h5.core.data.html#createManager">h5.core.data.createManager()</a>で作成します。
 	 * </p>
 	 * <p>
-	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
-	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherミックスイン</a>を参照してください。<br>
 	 * データモデルマネージャは、データモデルマネージャが管理するデータモデルに変更があった場合に'itemsChange'イベントが発火します。
 	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @class
-	 * @extends EventDispatcher
+	 * @mixes EventDispatcher
 	 * @name DataModelManager
 	 */
 	function DataModelManager(managerName) {
@@ -3007,14 +3007,14 @@
 	 * <a href="DataModelManager.html#createModel">DataModelManager#createModel()</a>を呼ぶと、DataModelクラスを生成して返します。
 	 * </p>
 	 * <p>
-	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
-	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherミックスイン</a>を参照してください。<br>
 	 * データモデルは、データモデルが管理するデータアイテムに変更があった場合に'itemsChange'イベントが発火します。
 	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @class
-	 * @extends EventDispatcher
+	 * @mixes EventDispatcher
 	 * @name DataModel
 	 */
 	/**
@@ -3506,14 +3506,14 @@
 		 * データアイテムは<a href="DataModel.html#create">DataModel#create()</a>で作成します。
 		 * </p>
 		 * <p>
-		 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
-		 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+		 * このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+		 * href="EventDispatcher.html">EventDispatcherミックスイン</a>を参照してください。<br>
 		 * データアイテムは、アイテムが持つ値に変更があった場合に'change'イベントが発火します。
 		 * </p>
 		 *
 		 * @since 1.1.0
 		 * @class
-		 * @extends EventDispatcher
+		 * @mixes EventDispatcher
 		 * @name DataItem
 		 */
 		/**
@@ -3540,7 +3540,7 @@
 		// EventDispatcherをミックスイン
 		h5.mixin.eventDispatcher.mix(DataItem.prototype);
 		// EventDispatcherと、schemaInfoもprototypeに追加する
-		$.extend(DataItem.prototype, schemaInfo, itemProto,{
+		$.extend(DataItem.prototype, schemaInfo, itemProto, {
 
 			/**
 			 * データアイテムが属しているデータモデル
@@ -3591,8 +3591,7 @@
 	 * </p>
 	 *
 	 * @since 1.1.0
-	 * @class
-	 * @extends EventDispatcher
+	 * @mixes EventDispatcher
 	 * @name ObservableItem
 	 */
 	function ObservableItem(item) {
@@ -3715,14 +3714,14 @@
 	 * indexOf, lastIndexOf, every, filter, forEach, map, some, reduce, reduceRight)が使えます。
 	 * </p>
 	 * <p>
-	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
-	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherミックスイン</a>を参照してください。<br>
 	 * ObservableArrayは、自身の内容が変更されるメソッドが呼び出される時、実行前に'changeBefore'、実行後に'change'イベントを発生させます。
 	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @class
-	 * @extends EventDispatcher
+	 * @mixes EventDispatcher
 	 * @name ObservableArray
 	 */
 	function ObservableArray() {
