@@ -3115,7 +3115,7 @@
 		manager.models[this.name] = this;
 	}
 
-	// MixinでEventDispatcherを継承
+	// EventDispatcherをミックスイン
 	h5.mixin.eventDispatcher.mix(DataModel.prototype);
 	$.extend(DataModel.prototype, {
 		/**
@@ -3537,7 +3537,7 @@
 			}
 		}
 
-		// MixinでEventDispatcherを継承
+		// EventDispatcherをミックスイン
 		h5.mixin.eventDispatcher.mix(DataItem.prototype);
 		// EventDispatcherと、schemaInfoもprototypeに追加する
 		$.extend(DataItem.prototype, schemaInfo, itemProto,{
@@ -3598,7 +3598,7 @@
 	function ObservableItem(item) {
 	// 空コンストラクタ
 	}
-	// MixinでEventDispatcherを継承
+	// EventDispatcherをミックスイン
 	h5.mixin.eventDispatcher.mix(ObservableItem.prototype);
 	$.extend(ObservableItem.prototype, itemProto, {
 		/**
@@ -3738,7 +3738,7 @@
 
 		this._src = [];
 	}
-	// MixinでEventDispatcherを継承
+	// EventDispatcherをミックスイン
 	h5.mixin.eventDispatcher.mix(ObservableArray.prototype);
 
 	//ObservableArrayの関数はフックされるので、直接prototypeに置かない
