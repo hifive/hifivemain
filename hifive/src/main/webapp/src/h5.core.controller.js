@@ -1220,9 +1220,13 @@
 					// sotredEventsにイベントが登録されていれば、そのindexからトリガ済みフラグを取得する
 					var triggeredFlag = h5trackTriggeredFlags[index];
 
-					if (!triggeredFlag && (!hasTouchEvent || execute || isStart)) {
+					if (!triggeredFlag && (!isTouch || execute || isStart)) {
+						// 親子コントローラで複数のイベントハンドラが同じイベントにバインドされているときに、
+						// それぞれがトリガしてイベントハンドラがループしないように制御している。
 						// マウス/タッチイベントがh5track*にトリガ済みではない時にトリガする。
-						// h5track中でないのにmoveやmouseupが起きた時は何もしない。
+						// タッチイベントの場合、h5track中でないのにmoveやtouchendが起きた時は何もしない。
+						// タッチイベントの場合はターゲットにバインドしており(マウスの場合はdocument)、
+						// バブリングによって同じイベントが再度トリガされるのを防ぐためである。
 
 						// トリガ済みフラグを立てる
 						h5trackTriggeredFlags[index] = true;
@@ -1296,14 +1300,15 @@
 							upHandler(context);
 						};
 
-						var $bindTarget = hasTouchEvent ? $(nt) : $document;
+						// タッチならイベントの起きた要素、マウスならdocumentにバインド
+						var $bindTarget = isTouch ? $(nt) : $document;
 						// moveとendのunbindをする関数
 						removeHandlers = function() {
 							storedEvents = [];
 							h5trackTriggeredFlags = [];
 							$bindTarget.unbind(move, moveHandlerWrapped);
 							$bindTarget.unbind(end, upHandlerWrapped);
-							if (!hasTouchEvent && controller.rootElement !== document) {
+							if (!isTouch && controller.rootElement !== document) {
 								$(controller.rootElement).unbind(move, moveHandlerWrapped);
 								$(controller.rootElement).unbind(end, upHandlerWrapped);
 							}
@@ -1313,13 +1318,13 @@
 						$bindTarget.bind(end, upHandlerWrapped);
 
 						// タッチでなく、かつコントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
-						// タッチイベントのない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
+						// タッチイベントでない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
 						// stopPropagationされたときに、h5trackイベントを発火することができなくなる。
 						// コントローラのルートエレメント外でstopPropagationされていた場合を考慮して、
 						// ルートエレメントにもmove,endをバインドする。
 						// (ルートエレメントの内側でstopPropagationしている場合は考慮しない)
 						// (タッチの場合はターゲットはstart時の要素なので2重にバインドする必要はない)
-						if (!hasTouchEvent && controller.rootElement !== document) {
+						if (!isTouch && controller.rootElement !== document) {
 							// h5trackmoveとh5trackendのbindを行う
 							$(controller.rootElement).bind(move, moveHandlerWrapped);
 							$(controller.rootElement).bind(end, upHandlerWrapped);
@@ -1348,7 +1353,7 @@
 			}
 			var bindObjects = [getNormalBindObj(controller, selector, eventName, func)];
 			if (hasTouchEvent) {
-				// タッチがあるならタッチにバインド
+				// タッチがあるならタッチにもバインド
 				bindObjects.push(createBindObj('touchstart'));
 			}
 			bindObjects.push(createBindObj('mousedown'));
