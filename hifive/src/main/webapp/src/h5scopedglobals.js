@@ -103,7 +103,7 @@ window.com = {
  * @param mapObj {Object} { (エラーコード): (フォーマット文字列) }という構造のオブジェクト
  */
 function addFwErrorCodeMap(mapObj) {
-	for ( var code in mapObj) {
+	for (var code in mapObj) {
 		if (mapObj.hasOwnProperty(code)) {
 			errorCodeToMessageMap[code] = mapObj[code];
 		}
@@ -305,30 +305,9 @@ function thenCompat(promise, doneFilter, failFilter, progressFilter) {
  * </p>
  *
  * @param {DOM} elm
- * @returns {Document} documentオブジェクト
  */
 function getDocumentOf(elm) {
-	if (elm.nodeType === NODE_TYPE_DOCUMENT) {
-		// elmがdocumentの場合
-		return elm;
-	}
-	if (elm.document && elm.document.nodeType === NODE_TYPE_DOCUMENT
-			&& getWindowOfDocument(elm.document) === elm) {
-		// elmがwindowの場合
-		return elm.document;
-	}
-	return elm.ownerDocument;
-}
-
-/**
- * documentオブジェクトからwindowオブジェクトを取得
- *
- * @param {Document} doc
- * @returns {Window} windowオブジェクト
- */
-function getWindowOfDocument(doc) {
-	// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
-	return doc.defaultView || doc.parentWindow;
+	return elm.nodeType === NODE_TYPE_DOCUMENT ? elm : elm.ownerDocument;
 }
 
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る
