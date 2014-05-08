@@ -190,15 +190,6 @@
 	// =============================
 	// Functions
 	// =============================
-
-	/**
-	 * documentオブジェクトからwindowオブジェクトを取得
-	 */
-	function getWindowOfDocument(doc) {
-		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
-		return doc.defaultView || doc.parentWindow;
-	}
-
 	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
@@ -213,7 +204,7 @@
 	$.extend(EventContext.prototype, selectorTypeConst);
 
 	/**
-	 * コントローラがdisposeされていないことと、executeListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
+	 * コントローラがdisposeされていないことと、executeListenersを見てリスナーを実行するかどうかを決定するインターセプタ
 	 *
 	 * @param {Object} invocation インヴォケーション.
 	 */
@@ -232,7 +223,7 @@
 	}
 
 	/**
-	 * 指定されたオブジェクトの関数にアスペクトを織り込みます。
+	 * 指定されたオブジェクトの関数にアスペクトを織り込みます
 	 *
 	 * @param {Object} controllerDefObject オブジェクト.
 	 * @param {Object} prop プロパティ名.
@@ -249,7 +240,7 @@
 	}
 
 	/**
-	 * 関数名とポイントカットを比べて、条件に合致すればインターセプタを返す.
+	 * 関数名とポイントカットを比べて、条件に合致すればインターセプタを返す
 	 *
 	 * @param {String} targetName バインドする必要のある関数名.
 	 * @param {Object} pcName ポイントカットで判別する対象名.
@@ -285,7 +276,7 @@
 	}
 
 	/**
-	 * 基本となる関数にアスペクトを織り込んだ関数を返します。
+	 * 基本となる関数にアスペクトを織り込んだ関数を返します
 	 *
 	 * @param {Function} baseFunc 基本関数.
 	 * @param {String} funcName 基本関数名.
@@ -318,7 +309,7 @@
 	}
 
 	/**
-	 * 指定されたオブジェクトの関数にアスペクトを織り込みます。
+	 * 指定されたオブジェクトの関数にアスペクトを織り込みます
 	 *
 	 * @param {Object} logic ロジック.
 	 * @returns {Object} AOPに必要なメソッドを織り込んだロジック.
@@ -336,7 +327,7 @@
 	}
 
 	/**
-	 * コントローラ定義オブジェクトのプロパティがライフサイクルイベントどうかを返します。
+	 * コントローラ定義オブジェクトのプロパティがライフサイクルイベントどうかを返します
 	 *
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
 	 * @param {String} prop プロパティ名
@@ -350,7 +341,7 @@
 
 	/**
 	 * セレクタがコントローラの外側の要素を指しているかどうかを返します。<br>
-	 * (外側の要素 = true)
+	 * (外側の要素 = true
 	 *
 	 * @param {String} selector セレクタ
 	 * @returns {Boolean} コントローラの外側の要素を指しているかどうか
@@ -360,7 +351,7 @@
 	}
 
 	/**
-	 * イベント名がjQuery.bindを使って要素にイベントをバインドするかどうかを返します。
+	 * イベント名がjQuery.bindを使って要素にイベントをバインドするかどうかを返します
 	 *
 	 * @param {String} eventName イベント名
 	 * @returns {Boolean} jQuery.bindを使って要素にイベントをバインドするかどうか
@@ -370,7 +361,7 @@
 	}
 
 	/**
-	 * セレクタから{}を外した文字列を返します。
+	 * セレクタから{}を外した文字列を返します
 	 *
 	 * @param {String} selector セレクタ
 	 * @returns {String} セレクタから{}を外した文字列
@@ -380,7 +371,7 @@
 	}
 
 	/**
-	 * イベント名から[]を外した文字列を返す
+	 * イベント名から[]を外した文字列を返
 	 *
 	 * @param {String} eventName イベント名
 	 * @returns {String} イベント名から[]を外した文字列
@@ -391,7 +382,7 @@
 
 	/**
 	 * 指定されたセレクタがwindow, window., document, document., navigator, navigator. で
-	 * 始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します。
+	 * 始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します
 	 *
 	 * @param {String} selector セレクタ
 	 * @param {Document} doc
@@ -410,7 +401,7 @@
 	}
 
 	/**
-	 * 指定されたプロパティがイベントハンドラかどうかを返します。
+	 * 指定されたプロパティがイベントハンドラかどうかを返します
 	 *
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
 	 * @param {String} prop プロパティ名
@@ -421,7 +412,7 @@
 	}
 
 	/**
-	 * コントローラ定義オブジェクトの子孫コントローラ定義が循環参照になっているかどうかをチェックします。
+	 * コントローラ定義オブジェクトの子孫コントローラ定義が循環参照になっているかどうかをチェックします
 	 *
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
 	 * @returns {Boolean} 循環参照になっているかどうか(true=循環参照)
@@ -439,7 +430,7 @@
 	}
 
 	/**
-	 * コントローラ定義オブジェクトのロジック定義が循環参照になっているかどうかをチェックします。
+	 * コントローラ定義オブジェクトのロジック定義が循環参照になっているかどうかをチェックします
 	 *
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
 	 * @returns {Boolean} 循環参照になっているかどうか(true=循環参照)
@@ -457,7 +448,7 @@
 	}
 
 	/**
-	 * コントローラのプロパティが自分自身の子コントローラであるかどうかを返します。
+	 * コントローラのプロパティが自分自身の子コントローラであるかどうかを返します
 	 *
 	 * @param {Object} controller コントローラ
 	 * @param {String} prop プロパティ名
@@ -477,7 +468,7 @@
 	}
 
 	/**
-	 * 指定されたコントローラの子孫コントローラのPromiseオブジェクトを全て取得します。
+	 * 指定されたコントローラの子孫コントローラのPromiseオブジェクトを全て取得します
 	 *
 	 * @param {Object} controller コントローラ
 	 * @param {String} propertyName プロパティ名(initPromise,readyPromise)
@@ -508,7 +499,7 @@
 	}
 
 	/**
-	 * 子孫コントローラのイベントハンドラをバインドします。
+	 * 子孫コントローラのイベントハンドラをバインドします
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -540,7 +531,7 @@
 	}
 
 	/**
-	 * バインドマップに基づいてイベントハンドラをバインドします。
+	 * バインドマップに基づいてイベントハンドラをバインドします
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -556,7 +547,7 @@
 	}
 
 	/**
-	 * イベントハンドラのバインドを行います。
+	 * イベントハンドラのバインドを行います
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
@@ -595,7 +586,7 @@
 	}
 
 	/**
-	 * バインドオブジェクトに基づいてイベントハンドラをバインドします。
+	 * バインドオブジェクトに基づいてイベントハンドラをバインドします
 	 *
 	 * @param {Object} bindObj バインドオブジェクト
 	 */
@@ -651,7 +642,7 @@
 	}
 
 	/**
-	 * バインドオブジェクトに対して必要であればイベント名を修正し、アンバインドマップにハンドラを追加した後、 実際にバインドを行います。
+	 * バインドオブジェクトに対して必要であればイベント名を修正し、アンバインドマップにハンドラを追加した後、 実際にバインドを行います
 	 *
 	 * @param {Object} bindObj バインドオブジェクト
 	 * @param {Boolean} bindRequested イベントハンドラをバインド([]記法)すべきかどうか
@@ -676,7 +667,7 @@
 	}
 
 	/**
-	 * 子孫コントローラのイベントハンドラをアンバインドします。
+	 * 子孫コントローラのイベントハンドラをアンバインドします
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -708,7 +699,7 @@
 	}
 
 	/**
-	 * バインドマップに基づいてイベントハンドラをアンバインドします。
+	 * バインドマップに基づいてイベントハンドラをアンバインドします
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -758,7 +749,7 @@
 	}
 
 	/**
-	 * 指定されたフラグで子コントローラを含む全てのコントローラのexecuteListenersフラグを変更します。
+	 * 指定されたフラグで子コントローラを含む全てのコントローラのexecuteListenersフラグを変更します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {Boolean} flag フラグ
@@ -782,7 +773,7 @@
 	}
 
 	/**
-	 * rootControllerとparentControllerをセットします。
+	 * rootControllerとparentControllerをセットします
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -805,7 +796,7 @@
 	}
 
 	/**
-	 * __init, __readyイベントを実行する.
+	 * __init, __readyイベントを実行する
 	 *
 	 * @param ｛Object} controller コントローラ.
 	 * @param {Booelan} isInitEvent __initイベントを実行するかどうか.
@@ -894,7 +885,7 @@
 	}
 
 	/**
-	 * __initイベントを実行するために必要なPromiseを返します。
+	 * __initイベントを実行するために必要なPromiseを返します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @returns {Promise[]} Promiseオブジェクト
@@ -908,7 +899,7 @@
 	}
 
 	/**
-	 * __readyイベントを実行するために必要なPromiseを返します。
+	 * __readyイベントを実行するために必要なPromiseを返します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @returns {Promise[]} Promiseオブジェクト
@@ -919,7 +910,7 @@
 	}
 
 	/**
-	 * __initイベントで実行するコールバック関数を返します。
+	 * __initイベントで実行するコールバック関数を返します
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -945,7 +936,7 @@
 	}
 
 	/**
-	 * __readyイベントで実行するコールバック関数を返します。
+	 * __readyイベントで実行するコールバック関数を返します
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -973,7 +964,7 @@
 	}
 
 	/**
-	 * テンプレートに渡すセレクタとして正しいかどうかを返します。
+	 * テンプレートに渡すセレクタとして正しいかどうかを返します
 	 *
 	 * @param {String} selector セレクタ
 	 * @returns {Boolean} テンプレートに渡すセレクタとして正しいかどうか(true=正しい)
@@ -990,7 +981,7 @@
 
 	/**
 	 * 指定された要素が文字列があれば、ルートエレメント、{}記法を考慮した要素をjQueryオブジェクト化して返します。 DOM要素、jQueryオブジェクトであれば、
-	 * jQueryオブジェクト化して(指定要素がjQueryオブジェクトの場合、無駄な処理になるがコスト的には問題ない)返します。
+	 * jQueryオブジェクト化して(指定要素がjQueryオブジェクトの場合、無駄な処理になるがコスト的には問題ない)返します
 	 *
 	 * @param {String|DOM|jQuery} セレクタ、DOM要素、jQueryオブジェクト
 	 * @param {DOM} rootElement ルートエレメント
@@ -1016,7 +1007,7 @@
 	}
 
 	/**
-	 * ハンドラをアンバインドマップに登録します。
+	 * ハンドラをアンバインドマップに登録します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
@@ -1031,7 +1022,7 @@
 	}
 
 	/**
-	 * バインドオブジェクトを返します。
+	 * バインドオブジェクトを返します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
@@ -1055,7 +1046,7 @@
 	}
 
 	/**
-	 * クラスブラウザな"mousewheel"イベントのためのバインドオブジェクトを返します。
+	 * クラスブラウザな"mousewheel"イベントのためのバインドオブジェクトを返します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
@@ -1096,7 +1087,7 @@
 	}
 
 	/**
-	 * hifiveの独自イベント"h5trackstart", "h5trackmove", "h5trackend"のためのバインドオブジェクトを返します。
+	 * hifiveの独自イベント"h5trackstart", "h5trackmove", "h5trackend"のためのバインドオブジェクトを返します
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
@@ -1163,7 +1154,7 @@
 		var $document = $(getDocumentOf(controller.rootElement));
 
 		/**
-		 * トラックイベントの一連のイベントについてのbindObjを作る
+		 * トラックイベントの一連のイベントについてのbindObjを作
 		 *
 		 * @returns {Objects[]}
 		 */
@@ -1365,7 +1356,7 @@
 	/**
 	 * タッチイベントのイベントオブジェクトにpageXやoffsetXといった座標系のプロパティを追加します。
 	 * <p>
-	 * touchstart/touchmove/touchendをjQuery.trigger()で発火させた場合、originalEventプロパティは存在しないので、座標系プロパティのコピーを行いません。
+	 * touchstart/touchmove/touchendをjQuery.trigger()で発火させた場合、originalEventプロパティは存在しないので、座標系プロパティのコピーを行いません
 	 *
 	 * @param {Object} event jQuery.Eventオブジェクト
 	 * @param {String} eventName イベント名
@@ -1403,7 +1394,7 @@
 		}
 	}
 	/**
-	 * イベントオブジェクトを正規化します。
+	 * イベントオブジェクトを正規化します
 	 *
 	 * @param {Object} event jQuery.Eventオブジェクト
 	 */
@@ -1425,20 +1416,21 @@
 	}
 
 	/**
-	 * イベントハンドラに渡された、イベントオブジェクト以降の引数を、context.evArgに格納する形に変換します
+	 * イベントハンドラに渡された、イベントオブジェクト以降の引数を、context.evArgに格納する形に変換しま
 	 *
 	 * <pre>
 	 * 例:
 	 * $elm.trigger('mouseup', [1, 2, 3]);
 	 * なら、イベントハンドラに渡されるイベントは、[event, 1, 2, 3]です。
 	 * この[1,2,3]の部分をcontext.evArgに格納してコントローラでバインドしたハンドラに渡す必要があるため、変換が必要になります。
-	 * </pre>
+	 * &lt;/pre
 	 *
-	 * 引数が複数(イベントオブジェクトは除く)ある場合は配列、1つしかない場合はそれをそのまま、無い場合はundefinedを返します。
+	 *  引数が複数(イベントオブジェクトは除く)ある場合は配列、1つしかない場合はそれをそのまま、無い場合はundefinedを返します
 	 *
-	 * @private
+	 *  @private
 	 * @param {argumentsObject} イベントハンドラに渡されたargumentsオブジェクト
 	 * @returns {Any} context.evArgに格納する形式のオブジェクト
+	 *
 	 */
 	function handlerArgumentsToContextEvArg(args) {
 		// 1番目はイベントオブジェクトが入っているので無視して、2番目以降からをevArgに格納する形にする
@@ -1458,7 +1450,7 @@
 	}
 
 	/**
-	 * イベントコンテキストを作成します。
+	 * イベントコンテキストを作成します
 	 *
 	 * @param {Object} bindObj バインドオブジェクト
 	 * @param {Array} args 1番目にはjQuery.Eventオブジェクト、2番目はjQuery.triggerに渡した引数
@@ -1478,7 +1470,7 @@
 	}
 
 	/**
-	 * 初期化イベントコンテキストをセットアップします。
+	 * 初期化イベントコンテキストをセットアップします
 	 *
 	 * @param {Object} rootController ルートコントローラ
 	 */
@@ -1489,7 +1481,7 @@
 	}
 
 	/**
-	 * コントローラとその子孫コントローラのrootElementにnullをセットします。
+	 * コントローラとその子孫コントローラのrootElementにnullをセットします
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -1505,7 +1497,7 @@
 	}
 
 	/**
-	 * コントローラとその子孫コントローラのrootElementをセットします。
+	 * コントローラとその子孫コントローラのrootElementをセットします
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -1528,7 +1520,7 @@
 	}
 
 	/**
-	 * コントローラをバインドする対象となる要素を返します。
+	 * コントローラをバインドする対象となる要素を返します
 	 *
 	 * @param {String|DOM|jQuery} element セレクタ、DOM要素、もしくはjQueryオブジェクト
 	 * @param {DOM} [rootElement] ルートエレメント
@@ -1562,7 +1554,7 @@
 	}
 
 	/**
-	 * イベントハンドラのバインドと__readyイベントを実行します。
+	 * イベントハンドラのバインドと__readyイベントを実行します
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -1594,7 +1586,7 @@
 	}
 
 	/**
-	 * rootController, parentControllerのセットと__initイベントを実行します。
+	 * rootController, parentControllerのセットと__initイベントを実行します
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -1610,7 +1602,7 @@
 	}
 
 	/**
-	 * h5.core.bindController()のために必要なプロパティをコントローラに追加します。
+	 * h5.core.bindController()のために必要なプロパティをコントローラに追加します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} param 初期化パラメータ
@@ -1634,7 +1626,7 @@
 	}
 
 	/**
-	 * インジケータを呼び出します。
+	 * インジケータを呼び出します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} option インジケータのオプション
@@ -1653,7 +1645,7 @@
 	}
 
 	/**
-	 * __unbind, __disposeイベントを実行します。
+	 * __unbind, __disposeイベントを実行します
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {String} property プロパティ名(__unbind | __dispose)
@@ -1690,8 +1682,7 @@
 	/**
 	 * オブジェクトのhasOwnPropertyがtrueのプロパティ全てにnullを代入します。
 	 * <p>
-	 * ネストしたオブジェクトへのnull代入は行いません
-	 * </p>
+	 * ネストしたオブジェクトへのnull代入は行いません </p
 	 *
 	 * @param {Object} obj
 	 */
@@ -1704,7 +1695,7 @@
 	}
 
 	/**
-	 * コントローラのリソース解放処理を行います。
+	 * コントローラのリソース解放処理を行います
 	 *
 	 * @param {Controller} controller コントローラ
 	 */
@@ -1733,7 +1724,7 @@
 	/**
 	 * 指定されたIDを持つViewインスタンスを返します。 自身が持つViewインスタンスが指定されたIDを持っていない場合、parentControllerのViewインスタンスに対して
 	 * 持っているかどうか問い合わせ、持っていればそのインスタンスを、持っていなければ更に上に問い合わせます。
-	 * ルートコントローラのViewインスタンスも持っていない場合、h5.core.viewに格納された最上位のViewインスタンスを返します。
+	 * ルートコントローラのViewインスタンスも持っていない場合、h5.core.viewに格納された最上位のViewインスタンスを返します
 	 *
 	 * @param {String} templateId テンプレートID
 	 * @param {Controller} controller コントローラ
@@ -1750,8 +1741,7 @@
 	/**
 	 * 指定されたコントローラがdispose済みかどうかを返します
 	 * <p>
-	 * dispose処理の途中でまだdisposeが完了していない場合はfalseを返します
-	 * </p>
+	 * dispose処理の途中でまだdisposeが完了していない場合はfalseを返します </p
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
@@ -1764,8 +1754,7 @@
 	/**
 	 * 指定されたコントローラがdispose処理中またはdispose済みかどうかを返します
 	 * <p>
-	 * isDisposedと違い、dispose処理の途中でまだdisposeが完了していない場合にtrueを返します
-	 * </p>
+	 * isDisposedと違い、dispose処理の途中でまだdisposeが完了していない場合にtrueを返します </p
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
@@ -1776,7 +1765,7 @@
 	}
 
 	/**
-	 * 指定されたコントローラとその子供コントローラのresolve/rejectされていないdeferredをrejectします。
+	 * 指定されたコントローラとその子供コントローラのresolve/rejectされていないdeferredをrejectします
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @param {Any} [errorObj] rejectに渡すオブジェクト
@@ -1828,7 +1817,7 @@
 	}
 
 	/**
-	 * インラインコメントテンプレートノードを探す
+	 * インラインコメントテンプレートノードを探
 	 *
 	 * @private
 	 * @param {Node} node 探索を開始するルートノード
@@ -1876,7 +1865,7 @@
 	}
 
 	/**
-	 * ロジック、コントローラが持つown
+	 * ロジック、コントローラが持つow
 	 *
 	 * @private
 	 */
@@ -1888,7 +1877,7 @@
 	}
 
 	/**
-	 * ロジック、コントローラが持つownWithOrg
+	 * ロジック、コントローラが持つownWithOr
 	 *
 	 * @private
 	 */
@@ -1909,7 +1898,7 @@
 			isRoot) {
 
 		/**
-		 * コントローラ名.
+		 * コントローラ名
 		 *
 		 * @type String
 		 * @name __name
@@ -1918,7 +1907,7 @@
 		controller.__name = controllerName;
 
 		/**
-		 * テンプレート.
+		 * テンプレート
 		 *
 		 * @type String|String[]
 		 * @name __templates
@@ -1927,7 +1916,7 @@
 		controller.__templates = null;
 
 		/**
-		 * コントローラがバインドされた要素.
+		 * コントローラがバインドされた要素
 		 *
 		 * @type Element
 		 * @name rootElement
@@ -1936,7 +1925,7 @@
 		controller.rootElement = rootElement;
 
 		/**
-		 * コントローラコンテキスト.
+		 * コントローラコンテキスト
 		 *
 		 * @private
 		 * @memberOf Controller
@@ -1945,35 +1934,35 @@
 		controller.__controllerContext = {
 
 			/**
-			 * リスナーを実行するかどうかのフラグ
+			 * リスナーを実行するかどうかのフラ
 			 *
 			 * @type Boolean
 			 */
 			executeListeners: true,
 
 			/**
-			 * ルートコントローラかどうか
+			 * ルートコントローラかどう
 			 *
 			 * @type Boolean
 			 */
 			isRoot: isRoot,
 
 			/**
-			 * バインド対象となるイベントハンドラのマップ.
+			 * バインド対象となるイベントハンドラのマップ
 			 *
 			 * @type Object
 			 */
 			bindMap: {},
 
 			/**
-			 * アンバインド対象となるイベントハンドラのマップ.
+			 * アンバインド対象となるイベントハンドラのマップ
 			 *
 			 * @type Object
 			 */
 			unbindMap: {},
 
 			/**
-			 * コントローラ定義オブジェクト
+			 * コントローラ定義オブジェク
 			 *
 			 * @type {Object}
 			 */
@@ -1984,7 +1973,7 @@
 		controller.__controllerContext.args = param ? param : null;
 
 		/**
-		 * コントローラのライフサイクルイベント__initが終了したかどうかを返します。
+		 * コントローラのライフサイクルイベント__initが終了したかどうかを返します
 		 *
 		 * @type Boolean
 		 * @memberOf Controller
@@ -1993,7 +1982,7 @@
 		controller.isInit = false;
 
 		/**
-		 * コントローラのライフサイクルイベント__readyが終了したかどうかを返します。
+		 * コントローラのライフサイクルイベント__readyが終了したかどうかを返します
 		 *
 		 * @type Boolean
 		 * @memberOf Controller
@@ -2002,7 +1991,7 @@
 		controller.isReady = false;
 
 		/**
-		 * 親子関係を持つコントローラ群の一番祖先であるコントローラを返します。祖先がいない場合、自分自身を返します。
+		 * 親子関係を持つコントローラ群の一番祖先であるコントローラを返します。祖先がいない場合、自分自身を返します
 		 *
 		 * @type Controller
 		 * @memberOf Controller
@@ -2011,7 +2000,7 @@
 		controller.rootController = null;
 
 		/**
-		 * 親子関係を持つコントローラの親コントローラを返します。親コントローラがいない場合、nullを返します。
+		 * 親子関係を持つコントローラの親コントローラを返します。親コントローラがいない場合、nullを返します
 		 *
 		 * @type Controller
 		 * @memberOf Controller
@@ -2066,7 +2055,7 @@
 		 * </table>
 		 * <p>
 		 * また、preinitPromise.done()に関数を設定すると読み込み成功時に、
-		 * preinitPromise.fail()に関数を設定すると読み込み失敗時に、設定した関数を実行します。
+		 * preinitPromise.fail()に関数を設定すると読み込み失敗時に、設定した関数を実行します
 		 *
 		 * @type Promise
 		 * @memberOf Controller
@@ -2075,7 +2064,7 @@
 		controller.preinitPromise = null;
 
 		/**
-		 * コントローラのライフサイクルイベント__initについてのPromiseオブジェクトを返します。
+		 * コントローラのライフサイクルイベント__initについてのPromiseオブジェクトを返します
 		 *
 		 * @type Promise
 		 * @memberOf Controller
@@ -2084,7 +2073,7 @@
 		controller.initPromise = null;
 
 		/**
-		 * コントローラのライフサイクルイベント__readyについてのPromiseオブジェクトを返します。
+		 * コントローラのライフサイクルイベント__readyについてのPromiseオブジェクトを返します
 		 *
 		 * @type Promise
 		 * @memberOf Controller
@@ -2096,8 +2085,7 @@
 		 * コントローラのロガーを返します。
 		 * <p>
 		 * コントローラ内のメソッドで<code>this.log.debug('debug message');</code>のように記述して使用します。ロガーの使い方の詳細は<a
-		 * href="Log.html">Log</a>をご覧ください。
-		 * </p>
+		 * href="Log.html">Log</a>をご覧ください。 </p
 		 *
 		 * @type Log
 		 * @memberOf Controller
@@ -2106,7 +2094,7 @@
 		controller.log = h5.log.createLogger(controllerName);
 
 		/**
-		 * ビュー操作に関するメソッドを格納しています。
+		 * ビュー操作に関するメソッドを格納しています
 		 *
 		 * @namespace
 		 * @name view
@@ -2126,7 +2114,7 @@
 	}
 
 	/**
-	 * JSDTのフォーマッタが過剰にインデントしてしまうので、独立した関数として記述している
+	 * JSDTのフォーマッタが過剰にインデントしてしまうので、独立した関数として記述してい
 	 *
 	 * @private
 	 */
@@ -2171,7 +2159,7 @@
 					View.prototype,
 					{
 						/**
-						 * パラメータで置換された、指定されたテンプレートIDのテンプレートを取得します。
+						 * パラメータで置換された、指定されたテンプレートIDのテンプレートを取得します
 						 *
 						 * @param {String} templateId テンプレートID
 						 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
@@ -2186,7 +2174,7 @@
 						},
 
 						/**
-						 * 要素を指定されたIDのテンプレートで書き換えます。
+						 * 要素を指定されたIDのテンプレートで書き換えます
 						 *
 						 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素,
 						 *            jQueryオブジェクト)
@@ -2205,7 +2193,7 @@
 						},
 
 						/**
-						 * 要素の末尾に指定されたIDのテンプレートを挿入します。
+						 * 要素の末尾に指定されたIDのテンプレートを挿入します
 						 *
 						 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素,
 						 *            jQueryオブジェクト)
@@ -2224,7 +2212,7 @@
 						},
 
 						/**
-						 * 要素の先頭に指定されたIDのテンプレートを挿入します。
+						 * 要素の先頭に指定されたIDのテンプレートを挿入します
 						 *
 						 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素,
 						 *            jQueryオブジェクト)
@@ -2243,7 +2231,7 @@
 						},
 
 						/**
-						 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします。
+						 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします
 						 *
 						 * @param {String|String[]} resourcePaths テンプレートファイル(.ejs)のパス (配列で複数指定可能)
 						 * @returns {Promise} Promiseオブジェクト
@@ -2257,7 +2245,7 @@
 						},
 
 						/**
-						 * Viewインスタンスに、指定されたIDとテンプレート文字列からテンプレートを1件登録します。
+						 * Viewインスタンスに、指定されたIDとテンプレート文字列からテンプレートを1件登録します
 						 *
 						 * @param {String} templateId テンプレートID
 						 * @param {String} templateString テンプレート文字列
@@ -2271,7 +2259,7 @@
 						},
 
 						/**
-						 * テンプレート文字列が、コンパイルできるかどうかを返します。
+						 * テンプレート文字列が、コンパイルできるかどうかを返します
 						 *
 						 * @param {String} templateString テンプレート文字列
 						 * @returns {Boolean} 渡されたテンプレート文字列がコンパイル可能かどうか。
@@ -2285,7 +2273,7 @@
 						},
 
 						/**
-						 * 指定されたテンプレートIDのテンプレートが存在するか判定します。
+						 * 指定されたテンプレートIDのテンプレートが存在するか判定します
 						 *
 						 * @param {String} templateId テンプレートID
 						 * @returns {Boolean} 判定結果(存在する: true / 存在しない: false)
@@ -2302,8 +2290,7 @@
 						 * Viewインスタンスに登録されている、利用可能なテンプレートのIDの配列を返します。
 						 * <p>
 						 * 引数isRecursiveにtrueが渡された場合は、親コントローラを再帰的に探索し、
-						 * h5.core.viewで利用可能なIDも含めてこのコントローラviewで利用可能なテンプレートID全てを返します。
-						 * </p>
+						 * h5.core.viewで利用可能なIDも含めてこのコントローラviewで利用可能なテンプレートID全てを返します。 </p
 						 *
 						 * @memberOf View
 						 * @name getAvailableTemplates
@@ -2336,7 +2323,7 @@
 
 						/**
 						 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 <br />
-						 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
+						 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します
 						 *
 						 * @param {String|String[]} [templateId] テンプレートID
 						 * @function
@@ -2349,7 +2336,7 @@
 						},
 
 						/**
-						 * データバインドを開始します。
+						 * データバインドを開始します
 						 *
 						 * @since 1.1.0
 						 * @param {String|Element|Element[]|jQuery} element
@@ -2370,8 +2357,7 @@
 	 * コントローラのコンストラクタ
 	 * <p>
 	 * このオブジェクトは自分でnewすることはありません。 コントローラ化して動作させる場合は<a
-	 * href="h5.core.html#controller">h5.core.controller()</a>を使用してください。
-	 * </p>
+	 * href="h5.core.html#controller">h5.core.controller()</a>を使用してください。 </p
 	 *
 	 * @name Controller
 	 * @class
@@ -2389,7 +2375,7 @@
 	}
 	$.extend(Controller.prototype, {
 		/**
-		 * コントローラがバインドされた要素内から要素を選択します。
+		 * コントローラがバインドされた要素内から要素を選択します
 		 *
 		 * @param {String} selector セレクタ
 		 * @returns {jQuery} セレクタにマッチするjQueryオブジェクト
@@ -2400,7 +2386,7 @@
 		},
 
 		/**
-		 * Deferredオブジェクトを返します。
+		 * Deferredオブジェクトを返します
 		 *
 		 * @returns {Deferred} Deferredオブジェクト
 		 * @memberOf Controller
@@ -2414,22 +2400,23 @@
 		 * <p>
 		 * 第2引数に指定したparameterオブジェクトは、コントローラのイベントハンドラで受け取るcontext.evArgに格納されます。<br>
 		 * parameterに配列を指定した場合は、context.evArgに渡した配列が格納されます。<br>
-		 * ただし、
+		 * ただし
 		 *
 		 * <pre>
 		 * trigger('click', ['a']);
-		 * </pre>
+		 * &lt;/pre
 		 *
-		 * のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。(jQuery.triggerと同様です。)
+		 *  のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。(jQuery.triggerと同様です。)
 		 * </p>
 		 * <p>
 		 * 戻り値は、jQueryEventオブジェクトを返します。
-		 * </p>
+		 * &lt;/p
 		 *
-		 * @param {String|jQueryEvent} event イベント名またはjQueryEventオブジェクト
+		 *  @param {String|jQueryEvent} event イベント名またはjQueryEventオブジェクト
 		 * @param {Object} [parameter] パラメータ
 		 * @returns {jQueryEvent} event イベントオブジェクト
 		 * @memberOf Controller
+		 *
 		 */
 		trigger: function(event, parameter) {
 			// eventNameが文字列ならイベントを作って投げる
@@ -2440,7 +2427,7 @@
 		},
 
 		/**
-		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更して実行する関数を返します。
+		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更して実行する関数を返します
 		 *
 		 * @param {Function} func 関数
 		 * @return {Function} コンテキスト(this)をコントローラに変更した関数
@@ -2449,7 +2436,7 @@
 		own: own,
 
 		/**
-		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えて実行する関数を返します。
+		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えて実行する関数を返します
 		 *
 		 * @param {Function} func 関数
 		 * @return {Function} コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えた関数
@@ -2458,7 +2445,7 @@
 		ownWithOrg: ownWithOrg,
 
 		/**
-		 * コントローラを要素へ再度バインドします。子コントローラでは使用できません。
+		 * コントローラを要素へ再度バインドします。子コントローラでは使用できません
 		 *
 		 * @memberOf Controller
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.<br />
@@ -2482,7 +2469,7 @@
 		},
 
 		/**
-		 * コントローラのバインドを解除します。子コントローラでは使用できません。
+		 * コントローラのバインドを解除します。子コントローラでは使用できません
 		 *
 		 * @memberOf Controller
 		 */
@@ -2517,7 +2504,7 @@
 
 		/**
 		 * コントローラのリソースをすべて削除します。<br />
-		 * Controller#unbind() の処理を包含しています。
+		 * Controller#unbind() の処理を包含しています
 		 *
 		 * @param {Any} [errorObj] disposeの際にrejectするdeferredのpromiseのfailハンドラに渡すオブジェクト
 		 * @returns {Promise} Promiseオブジェクト
@@ -2550,7 +2537,7 @@
 		 * イベントがdocumentまで到達した場合、フレームワークが自動的にインジケータを生成します。<br>
 		 * 途中のコントローラでインジケータを生成した場合はevent.stopPropagation()を呼んでイベントの伝搬を停止し、イベント引数で渡されたオブジェクトの
 		 * <code>indicator</code>プロパティに生成したインジケータインスタンスを代入してください。<br>
-		 * indicatorプロパティの値がこのメソッドの戻り値となります。<br>
+		 * indicatorプロパティの値がこのメソッドの戻り値となります。<br
 		 *
 		 * @param {Object} opt オプション
 		 * @param {String} [opt.message] メッセージ
@@ -2590,27 +2577,28 @@
 		 * <p>
 		 * <b>スクリーンロック</b>とは、コンテンツ領域(スクロールしないと見えない領域も全て含めた領域)全体にオーバーレイを、表示領域(画面に見えている領域)中央にメッセージが表示し、画面を操作できないようにすることです。スマートフォン等タッチ操作に対応する端末の場合、スクロール操作も禁止します。
 		 * <h4>使用例</h4>
-		 * <b>スクリーンロックとして表示する</b><br>
+		 * <b>スクリーンロックとして表示する</b><br
 		 *
 		 * <pre>
 		 * var indicator = this.indicator({
 		 * 	target: document
 		 * }).show();
-		 * </pre>
+		 * &lt;/pre
 		 *
-		 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
+		 *  &lt;b&gt;li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合&lt;/b&gt;&lt;br
 		 *
-		 * <pre>
+		 *  &lt;pre&gt;
 		 * var indicator = this.indicator({
 		 * 	target: 'li',
 		 * 	block: false
 		 * }).show();
-		 * </pre>
+		 * &lt;/pre
 		 *
-		 * <b>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
-		 * resolve() または resolve() が実行されると、画面からインジケータを除去します。
+		 *  &lt;b&gt;パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する&lt;/b&gt;
+		 * <br>
+		 * resolve() または resolve() が実行されると、画面からインジケータを除去します
 		 *
-		 * <pre>
+		 *  &lt;pre
 		 * var df = $.Deferred();
 		 * var indicator = this.indicator({
 		 * 	target: document,
@@ -2620,12 +2608,13 @@
 		 * setTimeout(function() {
 		 * 	df.resolve() // ここでイジケータが除去される
 		 * }, 2000);
-		 * </pre>
+		 *  &lt;/pre
 		 *
-		 * <b>パラメータに複数のPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
-		 * Promiseオブジェクトを配列で複数指定すると、全てのPromiseオブジェクトでresolve()が実行されるか、またはいずれかのPromiseオブジェクトでfail()が実行されるタイミングでインジケータを画面から除去します。
+		 *  &lt;b&gt;パラメータに複数のPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する&lt;/b&gt;
+		 * <br>
+		 * Promiseオブジェクトを配列で複数指定すると、全てのPromiseオブジェクトでresolve()が実行されるか、またはいずれかのPromiseオブジェクトでfail()が実行されるタイミングでインジケータを画面から除去します
 		 *
-		 * <pre>
+		 *  &lt;pre
 		 * var df = $.Deferred();
 		 * var df2 = $.Deferred();
 		 * var indicator = this.indicator({
@@ -2640,9 +2629,9 @@
 		 * setTimeout(function() {
 		 * 	df.resolve() // ここでイジケータが除去される
 		 * }, 4000);
-		 * </pre>
+		 *  &lt;/pre
 		 *
-		 * @param {Object} [opt] オプション
+		 *  @param {Object} [opt] オプション
 		 * @param {String|Object} [opt.target] インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
 		 * @param {String} [opt.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
 		 * @param {Number} [opt.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
@@ -2657,13 +2646,14 @@
 		 * @returns {Indicator} インジケータオブジェクト
 		 * @memberOf Controller
 		 * @see Indicator
+		 *
 		 */
 		indicator: function(opt) {
 			return callIndicator(this, opt);
 		},
 
 		/**
-		 * コントローラに定義されているリスナーの実行を許可します。
+		 * コントローラに定義されているリスナーの実行を許可します
 		 *
 		 * @memberOf Controller
 		 */
@@ -2672,7 +2662,7 @@
 		},
 
 		/**
-		 * コントローラに定義されているリスナーの実行を禁止します。
+		 * コントローラに定義されているリスナーの実行を禁止します
 		 *
 		 * @memberOf Controller
 		 */
@@ -2689,7 +2679,7 @@
 		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
 		 * <p>
 		 * <b>オブジェクトの場合</b><br>
-		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します
 		 *
 		 * @memberOf Controller
 		 * @param {String|Object} msgOrErrObj メッセージ文字列またはオブジェクト
@@ -2713,7 +2703,7 @@
 		 * 文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。
 		 * <p>
 		 * <b>オブジェクトの場合</b><br>
-		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
+		 * Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します
 		 *
 		 * @memberOf Controller
 		 * @param {String} customType 型情報
@@ -2740,7 +2730,7 @@
 	});
 
 	/**
-	 * コントローラマネージャクラス
+	 * コントローラマネージャクラ
 	 *
 	 * @name ControllerManager
 	 * @class
@@ -2750,7 +2740,7 @@
 		this.controllers = [];
 
 		/**
-		 * triggerIndicatorイベントハンドラ
+		 * triggerIndicatorイベントハンド
 		 *
 		 * @param {EventContext} context
 		 * @memberOf ControllerManager
@@ -2768,7 +2758,7 @@
 	$.extend(ControllerManager.prototype, {
 		/**
 		 * 現在動作しているすべてのコントローラのインスタンスの配列を返します。<br>
-		 * 子コントローラは含まれません。すなわち、ルートコントローラのみが含まれます。
+		 * 子コントローラは含まれません。すなわち、ルートコントローラのみが含まれます
 		 *
 		 * @returns {Controller[]} コントローラ配列
 		 * @memberOf ControllerManager
@@ -2780,7 +2770,7 @@
 		/**
 		 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
 		 * オプションを指定すると、子孫要素も検索対象に含めたり、特定の名前のコントローラだけを検索対象にしたりすることができます。<br>
-		 * なお、戻り値に含まれるのはルートコントローラのみです。
+		 * なお、戻り値に含まれるのはルートコントローラのみです
 		 *
 		 * @param {String|Element|jQuery} rootElement 検索対象の要素
 		 * @param {Object} [option] オプション（ver.1.1.7以降）
@@ -2822,7 +2812,7 @@
 
 	h5.u.obj.expose('h5.core', {
 		/**
-		 * コントローラマネージャ
+		 * コントローラマネージ
 		 *
 		 * @name controllerManager
 		 * @type ControllerManager
@@ -2850,7 +2840,7 @@
 	proto = null;
 
 	/**
-	 * コントローラのファクトリ
+	 * コントローラのファクト
 	 *
 	 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.
 	 * @param {Object} controllerDefObj コントローラ定義オブジェクト
@@ -3139,7 +3129,7 @@
 	h5internal.core.controllerInternal = createAndBindController;
 
 	/**
-	 * オブジェクトのロジック化を行います。
+	 * オブジェクトのロジック化を行います
 	 *
 	 * @param {Object} logicDefObj ロジック定義オブジェクト
 	 * @returns {Logic}
@@ -3190,7 +3180,7 @@
 	// =============================
 
 	/**
-	 * Core MVCの名前空間
+	 * Core MVCの名前空
 	 *
 	 * @name core
 	 * @memberOf h5
@@ -3198,7 +3188,7 @@
 	 */
 	h5.u.obj.expose('h5.core', {
 		/**
-		 * オブジェクトのコントローラ化と、要素へのバインドを行います。
+		 * オブジェクトのコントローラ化と、要素へのバインドを行います
 		 *
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト..<br />
 		 *            セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。
@@ -3223,7 +3213,7 @@
 		/**
 		 * コントローラ、ロジックを__nameで公開します。<br />
 		 * 例：__nameが"sample.namespace.controller.TestController"の場合、window.sample.namespace.controller.TestController
-		 * で グローバルから辿れるようにします。
+		 * で グローバルから辿れるようにします
 		 *
 		 * @param {Controller|Logic} obj コントローラ、もしくはロジック
 		 * @name expose
