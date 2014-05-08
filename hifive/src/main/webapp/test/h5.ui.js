@@ -171,7 +171,7 @@ $(function() {
 				var $test1 = $(test1);
 				var test1Dom = $test1[0];
 				function testFunc() {
-					var top,left;
+					var top, left;
 					// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
 					top = 1 - (test1Dom.offsetHeight + parseInt($test1.css('margin-top')));
 					left = 1 - (test1Dom.offsetWidth + parseInt($test1.css('margin-left')));
@@ -280,7 +280,7 @@ $(function() {
 		var $test2 = $(test2);
 		var test2Dom = $(test2)[0];
 		function testFunc() {
-			var top,left;
+			var top, left;
 			// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
 			top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
 			left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
@@ -388,7 +388,7 @@ $(function() {
 		var $test2 = $(test2);
 		var test2Dom = $test2[0];
 		function testFunc() {
-			var top,left;
+			var top, left;
 			// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
 			top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
 			left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
@@ -506,7 +506,7 @@ $(function() {
 					var viewTop = scrollTop || 0;
 					var viewLeft = scrollLeft || 0;
 
-					var top,left;
+					var top, left;
 					// 1 - 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
 					top = viewTop + (1 - testDom.offsetHeight);
 					left = viewLeft + (1 - testDom.offsetWidth);
@@ -645,7 +645,7 @@ $(function() {
 
 
 				function testFunc() {
-					var top,left;
+					var top, left;
 					// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
 					top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
 					left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
@@ -793,7 +793,7 @@ $(function() {
 				var scrollVal = 3;
 
 				function testFunc() {
-					var top,left;
+					var top, left;
 					var body = document.body;
 					var html = $('html')[0];
 					var test = that.$test[0];
@@ -977,7 +977,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('iframe内の要素', {
+	module('iframe内の要素にindicator', {
 		setup: function() {
 			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
 			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
@@ -1008,6 +1008,148 @@ $(function() {
 			message: 'BlockMessageTest'
 		}).show();
 		ok(indicator._target === doc.body, 'ターゲットがiframe内の要素であること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ポップアップウィンドウ内の要素にindicator', {
+		setup: function() {
+			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
+			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
+					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
+				skipTest();
+				return;
+			}
+			stop();
+			var that = this;
+			openPopupWindow().done(function(w) {
+				that.w = w;
+				that.doc = w.document;
+				start();
+			});
+		},
+		teardown: function() {
+			var that = this;
+			stop();
+			closePopupWindow(this.w).done(function() {
+				that.doc = null;
+				that.w = null;
+				start();
+			});
+		},
+		doc: null,
+		w: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('ポップアップウィンドウ内にindicator target:div', 5, function() {
+		var doc = this.doc;
+		var div = doc.createElement('div');
+		div.style.width = '100px';
+		div.style.height = '100px';
+		doc.body.appendChild(div);
+		var indicator = h5.ui.indicator(div, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === div, 'ターゲットがポップアップウィンドウ内のdiv要素であること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	asyncTest('ポップアップウィンドウ内にindicator target:body', 5, function() {
+		var doc = this.doc;
+		var indicator = h5.ui.indicator(doc.body, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === doc.body, 'ターゲットがポップアップウィンドウのbodyであること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	asyncTest('ポップアップウィンドウ内のbodyにindicator  target:document', 5, function() {
+		var doc = this.doc;
+		var indicator = h5.ui.indicator(doc, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === doc.body, 'ターゲットがポップアップウィンドウのbodyであること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	asyncTest('ポップアップウィンドウ内のbodyにindicator  target:popupWindow', 5, function() {
+		var indicator = h5.ui.indicator(this.w, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === this.doc.body, 'ターゲットがポップアップウィンドウのbodyであること');
 
 		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
 				.text(), 'BlockMessageTest', 'メッセージが表示されていること');

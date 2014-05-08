@@ -371,7 +371,8 @@
 			//意図しないスクロールバーが出ないようにする。
 			//-1しているのは四捨五入させるため(描画の際はピクセルにスナップされるようなので)。
 
-			var comStyle = getComputedStyle(elem, null);
+			// エレメントが別ウィンドウの場合もあるので、elemの属するwindowのgetComputedStyleを使用
+			var comStyle = getWindowOfDocument(getDocumentOf(elem)).getComputedStyle(elem, null);
 
 			var eW = parseFloat(comStyle.width) + parseFloat(comStyle.paddingLeft)
 					+ parseFloat(comStyle.paddingRight);
@@ -863,11 +864,17 @@
 			return;
 		}
 		// スクリーンロックで表示するか判定
+		// (自分のwindowのみで、ポップアップウィンドウの場合はスクリーンロックと判定しない)
 		var isScreenlock = isScreenlockTarget($t);
 		// スクリーンロックで表示する場合はターゲットはbodyにする
 		$t = isScreenlock ? $('body') : $t;
 		// documentの取得
 		var doc = getDocumentOf($t[0]);
+
+		// 別ウィンドウのwindow又はdocumentが指定されていた場合は、そのwindow,documentのbodyに出す
+		if (doc !== window.document && ($t[0] === doc || getWindowOfDocument(doc) === $t[0])) {
+			$t = $(doc.body);
+		}
 
 		// デフォルトオプション
 		var defaultOption = {
