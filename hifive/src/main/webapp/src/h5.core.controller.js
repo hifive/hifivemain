@@ -192,14 +192,6 @@
 	// =============================
 
 	/**
-	 * documentオブジェクトからwindowオブジェクトを取得
-	 */
-	function getWindowOfDocument(doc) {
-		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
-		return doc.defaultView || doc.parentWindow;
-	}
-
-	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
 	function EventContext(controller, event, evArg, selector, selectorType) {
