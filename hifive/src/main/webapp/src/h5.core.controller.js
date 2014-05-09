@@ -589,7 +589,7 @@
 		case EVENT_NAME_H5_TRACKSTART:
 		case EVENT_NAME_H5_TRACKMOVE:
 		case EVENT_NAME_H5_TRACKEND:
-			bindObj = getH5TrackBindObj(controller, selector, eventName, func);
+			bindObj = getH5TrackBindObj(controller, selector, event, func);
 			break;
 		default:
 			bindObj = getNormalBindObj(controller, selector, event, func);
