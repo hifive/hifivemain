@@ -189,6 +189,23 @@
 	 */
 	var h5trackTriggeredFlags = [];
 
+	/**
+	 * touch-action(または-ms-touch-action)プロパティがサポートされているか
+	 */
+	var isSupportTouchAction = false;
+	/**
+	 * touch-actionをサポートしているときの、そのプロパティ(touchActionまたはmsTouchAction)
+	 */
+	var touchActionProp = '';
+	var div = document.createElement('div');
+	if (typeof div.style.touchAction !== TYPE_OF_UNDEFINED) {
+		isSupportTouchAction = true;
+		touchActionProp = 'touchAction';
+	} else if (typeof div.style.msTouchAction !== TYPE_OF_UNDEFINED) {
+		isSupportTouchAction = true;
+		touchActionProp = 'msTouchAction';
+	}
+
 	// =============================
 	// Functions
 	// =============================
@@ -645,18 +662,16 @@
 		}
 
 		// h5trackstartのバインド先のstyle.touchActionにh5.settings.trackstartTouchActionの値(デフォルト'none')を設定する
+		// touchActionをサポートしていないなら何もしない
 		// h5.settings.trackstartTouchActionがnullなら何もしない
 		// TODO プラッガブル(どのイベントの時にどういう処理をするか)が設定できるようにする
-		if (event === EVENT_NAME_H5_TRACKSTART && h5.settings.trackstartTouchAction != null) {
-			var trackTarget = isGlobal ? $(bindObj.evSelector)[0] : $(bindObj.evSelector,
-					rootElement)[0];
-			if (trackTarget) {
-				if (typeof trackTarget.style.touchAction !== TYPE_OF_UNDEFINED) {
-					trackTarget.style.touchAction = h5.settings.trackstartTouchAction;
-				} else if (typeof trackTarget.style.msTouchAction !== TYPE_OF_UNDEFINED) {
-					trackTarget.style.msTouchAction = h5.settings.trackstartTouchAction;
-				}
-			}
+		if (isSupportTouchAction && event === EVENT_NAME_H5_TRACKSTART
+				&& h5.settings.trackstartTouchAction != null) {
+			var $trackTarget = isGlobal ? $(bindObj.evSelector, doc) : $(bindObj.evSelector,
+					rootElement);
+			$trackTarget.each(function() {
+				this.style[touchActionProp] = h5.settings.trackstartTouchAction;
+			});
 		}
 	}
 
