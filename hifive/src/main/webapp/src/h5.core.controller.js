@@ -28,7 +28,6 @@
 	// Production
 	// =============================
 
-	var TYPE_OF_UNDEFINED = 'undefined';
 	var SUFFIX_CONTROLLER = 'Controller';
 	var SUFFIX_LOGIC = 'Logic';
 	var EVENT_NAME_H5_TRACKSTART = 'h5trackstart';

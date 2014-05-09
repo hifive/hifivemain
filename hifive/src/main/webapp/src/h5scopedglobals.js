@@ -37,6 +37,9 @@ var errorCodeToMessageMap = {};
  */
 var errorCodeToCustomFormatterMap = {};
 
+/** undefinedかどうかの判定で、typeofで判定する */
+var TYPE_OF_UNDEFINED = 'undefined';
+
 /** Node.ELEMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
 var NODE_TYPE_ELEMENT = 1;
 
@@ -302,25 +305,30 @@ function thenCompat(promise, doneFilter, failFilter, progressFilter) {
 }
 
 /**
- * エレメントからドキュメントを取得。
+ * ノードからドキュメントを取得。
  * <p>
- * 引数がdocumentノードなら引数をそのまま、windowオブジェクトならそのdocument、ノードならownerDocumentを返します。
+ * 引数がdocumentノードなら引数をそのまま、ノードならownerDocument、windowオブジェクトならそのdocumentを返します。nodeがいずれにも該当しない場合はnullを返します。
  * </p>
  *
- * @param {DOM} elm
+ * @param {DOM} node
  * @returns {Document} documentオブジェクト
  */
-function getDocumentOf(elm) {
-	if (elm.nodeType === NODE_TYPE_DOCUMENT) {
-		// elmがdocumentの場合
-		return elm;
+function getDocumentOf(node) {
+	if (typeof node.nodeType === TYPE_OF_UNDEFINED) {
+		// ノードではない
+		if (node.document && node.document.nodeType === NODE_TYPE_DOCUMENT
+				&& getWindowOfDocument(node.document) === node) {
+			// nodeがdocumentを持ち、documentから得られるwindowオブジェクトがnode自身ならnodeをwindowオブジェクトと判定する
+			return node.document;
+		}
+		return null;
 	}
-	if (elm.document && elm.document.nodeType === NODE_TYPE_DOCUMENT
-			&& getWindowOfDocument(elm.document) === elm) {
-		// elmがwindowの場合
-		return elm.document;
+	if (node.nodeType === NODE_TYPE_DOCUMENT) {
+		// nodeがdocumentの場合
+		return node;
 	}
-	return elm.ownerDocument;
+	// nodeがdocument以外(documentツリー属するノード)の場合はそのownerDocumentを返す
+	return node.ownerDocument;
 }
 
 /**
