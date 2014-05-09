@@ -1031,10 +1031,12 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#and-and:all|sa-ios:all|ie-wp:all]ポップアップウィンドウ内の要素にindicator', {
+	module('[browser#ch-and:all|and-and:all|sa-ios:all|ie-wp:all]ポップアップウィンドウ内の要素にindicator', {
 		setup: function() {
-			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
-			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
+			// (IE8-またはIE11)かつ(jQuery1.10.1または2.0.2)の場合はポップアップウィンドウを使用するテストは行わずにスキップする。
+			// いずれの場合もポップアップウィンドウのDOM操作をjQueryで行う時にエラーになるからである。
+			if (h5.env.ua.isIE
+					&& (h5.env.ua.browserVersion === 11 || h5.env.ua.browserVersion <= 8)
 					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
 				skipTest();
 				return;
@@ -1045,16 +1047,24 @@ $(function() {
 				that.w = w;
 				that.doc = w.document;
 				start();
+			}).fail(function() {
+				start();
+				skipTest();
+				return;
 			});
 		},
 		teardown: function() {
 			var that = this;
-			stop();
-			closePopupWindow(this.w).done(function() {
-				that.doc = null;
-				that.w = null;
-				start();
-			});
+			if (this.w) {
+				stop();
+				closePopupWindow(this.w).done(function() {
+					that.doc = null;
+					that.w = null;
+					start();
+				}).fail(function() {
+					start();
+				});
+			}
 		},
 		doc: null,
 		w: null
