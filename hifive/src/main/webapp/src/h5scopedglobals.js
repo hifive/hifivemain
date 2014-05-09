@@ -37,6 +37,9 @@ var errorCodeToMessageMap = {};
  */
 var errorCodeToCustomFormatterMap = {};
 
+/** Node.ELEMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
+var NODE_TYPE_ELEMENT = 1;
+
 /** Node.DOCUMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
 var NODE_TYPE_DOCUMENT = 9;
 

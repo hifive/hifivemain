@@ -92,6 +92,8 @@
 	var ERR_CODE_CONTROLLER_TOO_FEW_ARGS = 6032;
 	/** エラーコード：コントローラの初期化処理がユーザーコードによって中断された(__initや__readyで返したプロミスがrejectした) */
 	var ERR_CODE_CONTROLLER_REJECTED_BY_USER = 6033;
+	/** エラーコード：コントローラのバインド対象がノードじゃない * */
+	var ERR_CODE_BIND_NOT_NODE = 6034;
 
 	// =============================
 	// Development Only
@@ -136,6 +138,7 @@
 	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind(), unbind()はルートコントローラでのみ使用可能です。';
 	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
 	errMsgMap[ERR_CODE_CONTROLLER_REJECTED_BY_USER] = 'コントローラ"{0}"の初期化処理がユーザによって中断されました。';
+	errMsgMap[ERR_CODE_BIND_NOT_NODE] = 'コントローラ"{0}"のバインド対象がノードではありません。バインド対象に指定できるのはノードエレメントかdocumentオブジェクトのみです。';
 
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
@@ -2892,8 +2895,16 @@
 						controllerDefObj: controllerDefObj
 					});
 				}
+				// 要素が複数ある場合はエラー
 				if ($bindTargetElement.length > 1) {
 					throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controllerName], {
+						controllerDefObj: controllerDefObj
+					});
+				}
+				// ノードエレメントでない場合はエラー
+				if ($bindTargetElement[0].nodeType !== NODE_TYPE_DOCUMENT
+						&& $bindTargetElement[0].nodeType !== NODE_TYPE_ELEMENT) {
+					throwFwError(ERR_CODE_BIND_NOT_NODE, [controllerName], {
 						controllerDefObj: controllerDefObj
 					});
 				}

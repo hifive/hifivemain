@@ -27,9 +27,6 @@
 	// Production
 	// =============================
 
-	/** Node.ELEMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
-	var NODE_TYPE_ELEMENT = 1;
-
 	var DATA_H5_BIND = 'data-h5-bind';
 
 	var DATA_H5_CONTEXT = 'data-h5-context';

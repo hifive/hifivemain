@@ -1418,7 +1418,7 @@ $(function() {
 		});
 	});
 
-	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 7, function() {
+	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 9, function() {
 		$('#controllerTest').append('<div class="test">a</div>');
 		$('#controllerTest').append('<div class="test">b</div>');
 		var controller = {
@@ -1459,6 +1459,16 @@ $(function() {
 			h5.core.controller(1, controller);
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
+		}
+		try {
+			h5.core.controller({}, controller);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_NODE, e.message);
+		}
+		try {
+			h5.core.controller(window, controller);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_NODE, e.message);
 		}
 	});
 
@@ -6866,7 +6876,7 @@ $(function() {
 		};
 
 		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController2 = h5.core.controller(window, controllerBaseGrobal);
+		testController2 = h5.core.controller(document, controllerBaseGrobal);
 		testController2.readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
 		});
