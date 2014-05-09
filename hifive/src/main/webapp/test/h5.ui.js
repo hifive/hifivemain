@@ -1031,7 +1031,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('ポップアップウィンドウ内の要素にindicator', {
+	module('[browser#and-and:all|sa-ios:all|ie-wp:all]ポップアップウィンドウ内の要素にindicator', {
 		setup: function() {
 			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
 			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
