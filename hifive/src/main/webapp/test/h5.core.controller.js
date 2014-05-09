@@ -53,6 +53,14 @@ $(function() {
 		end: 'mouseup'
 	};
 
+	// touch-action、-ms-touch-actionプロパティに対応しているかどうか
+	var touchActionProp = null;
+	if (typeof document.body.style.touchAction !== 'undefined') {
+		touchActionProp = 'touchAction';
+	} else if (typeof document.body.style.msTouchAction !== 'undefined') {
+		touchActionProp = 'msTouchAction';
+	}
+
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
@@ -5831,15 +5839,19 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("h5trackイベント", {
-		setup: function() {
-			$('#qunit-fixture').append('<div id="controllerTest"><div id="child1"></div></div>');
-		},
-		teardown: function() {
-			disposeQUnitFixtureController();
-			$('#controllerTest').remove();
-		}
-	});
+	module(
+			"h5trackイベント",
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div class="touch"></div><div id="controllerTest"><div id="child1"></div><div class="touch"></div></div>');
+				},
+				teardown: function() {
+					disposeQUnitFixtureController();
+					$('#controllerTest').remove();
+				}
+			});
 
 
 	//=============================
@@ -5906,6 +5918,131 @@ $(function() {
 	asyncTest(
 			'ルートエレメントより外のエレメントでtouch系イベントがstopPropagation()されていて、documentまでtouch系イベントがバブリングしない状態でも、h5trackイベントハンドラは実行されること',
 			3, getH5trackTestCheckStopPropagation(touchTrackEvents));
+
+	asyncTest(
+			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラを記述した要素にtouch-action(-ms-touch-action)プロパティが設定されること',
+			2, function() {
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'.touch h5trackstart': function() {
+					// 何もしない
+					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], 'none',
+							touchActionProp + 'にnoneが設定されていること');
+					strictEqual($('#qunit-fixture>.touch')[0].style[touchActionProp], '',
+							'コントローラの範囲外(バインドの対象外)には影響がないこと');
+					this.dispose();
+					start();
+				});
+			});
+
+	asyncTest(
+			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラを直接バインド記法で記述した要素にtouch-action(-ms-touch-action)プロパティが設定されること',
+			2, function() {
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'.touch [h5trackstart]': function() {
+					// 何もしない
+					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], 'none',
+							touchActionProp + 'にnoneが設定されていること');
+					strictEqual($('#qunit-fixture>.touch')[0].style[touchActionProp], '',
+							'コントローラの範囲外(バインドの対象外)には影響がないこと');
+					this.dispose();
+					start();
+				});
+			});
+
+	asyncTest(
+			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラをグローバルセレクタを使って記述した要素にtouch-action(-ms-touch-action)プロパティが設定されること',
+			2, function() {
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'{.touch} h5trackstart': function() {
+					// 何もしない
+					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], 'none',
+							touchActionProp + 'にnoneが設定されていること');
+					strictEqual($('#qunit-fixture>.touch')[0].style[touchActionProp], 'none',
+							'コントローラの範囲外でバインドの対象である要素にも' + touchActionProp + 'にnoneが設定されていること');
+					this.dispose();
+					start();
+				});
+			});
+
+	asyncTest(
+			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラを記述した要素のtouch-action(-ms-touch-action)プロパティにh5.settings.trackstartTouchActionの値が設定されること',
+			1, function() {
+				var defaultTouchAction = h5.settings.trackstartTouchAction;
+				h5.settings.trackstartTouchAction = 'pan-x';
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'.touch h5trackstart': function() {
+					// 何もしない
+					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], 'pan-x',
+							touchActionProp + 'にpan-xが設定されていること');
+					this.dispose();
+					h5.settings.trackstartTouchAction = defaultTouchAction;
+					start();
+				});
+			});
+
+	asyncTest(
+			'touch-actionプロパティに対応しているブラウザについて、h5.settings.trackstartTouchActionがnullの時にtouchAction(msTouchAction)プロパティに値は設定されないこと',
+			2, function() {
+				var defaultTouchAction = h5.settings.trackstartTouchAction;
+				h5.settings.trackstartTouchAction = null;
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				$('#qunit-fixture>.touch')[0].style[touchActionProp] = 'pan-y';
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'{.touch} h5trackstart': function() {
+					// 何もしない
+					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], '', touchActionProp
+							+ 'には何も値が設定されていないこと');
+					strictEqual($('#qunit-fixture>.touch')[0].style[touchActionProp], 'pan-y',
+							touchActionProp + 'にもともと値が設定されていた場合、値が変更されていないこと');
+					this.dispose();
+					h5.settings.trackstartTouchAction = defaultTouchAction;
+					start();
+				});
+			});
 
 	//=============================
 	// Definition
