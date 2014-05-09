@@ -602,8 +602,9 @@
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
 		var doc = getDocumentOf(rootElement);
+		var isGlobal = isGlobalSelector(selector);
 
-		if (isGlobalSelector(selector)) {
+		if (isGlobal) {
 			// グローバルなセレクタの場合
 			var selectorTrimmed = trimGlobalSelectorBracket(selector);
 			var isSelf = false;
@@ -643,6 +644,20 @@
 			}
 		}
 
+		// h5trackstartのバインド先のstyle.touchActionにh5.settings.trackstartTouchActionの値(デフォルト'none')を設定する
+		// h5.settings.trackstartTouchActionがnullなら何もしない
+		// TODO プラッガブル(どのイベントの時にどういう処理をするか)が設定できるようにする
+		if (event === EVENT_NAME_H5_TRACKSTART && h5.settings.trackstartTouchAction != null) {
+			var trackTarget = isGlobal ? $(bindObj.evSelector)[0] : $(bindObj.evSelector,
+					rootElement)[0];
+			if (trackTarget) {
+				if (typeof trackTarget.style.touchAction !== TYPE_OF_UNDEFINED) {
+					trackTarget.style.touchAction = h5.settings.trackstartTouchAction;
+				} else if (typeof trackTarget.style.msTouchAction !== TYPE_OF_UNDEFINED) {
+					trackTarget.style.msTouchAction = h5.settings.trackstartTouchAction;
+				}
+			}
+		}
 
 	}
 
