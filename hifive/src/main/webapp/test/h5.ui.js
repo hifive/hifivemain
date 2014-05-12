@@ -120,7 +120,7 @@ $(function() {
 	 * @param {DOM} elm
 	 * @returns computedStyle
 	 */
-	function getComputedStyleWrapper(elm) {
+	function getComputedStyleObject(elm) {
 		var doc = getDocumentOf(elm);
 		var win = getWindowOfDocument(doc);
 		return win.getComputedStyle(elm, null);
@@ -144,7 +144,7 @@ $(function() {
 		if (!window.getComputedStyle) {
 			return $(elm).css(prop);
 		}
-		return getComputedStyleWrapper(elm)[prop];
+		return getComputedStyleObject(elm)[prop];
 	}
 	// =========================================================================
 	//
