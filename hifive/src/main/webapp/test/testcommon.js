@@ -104,12 +104,13 @@ function createIFrameElement() {
 	// # 指し替わる前のdocumentのreadystateはずっとuninitializedのままなので、ハンドラを引っかけても発火しない
 	function check() {
 		// iframe.contentDocumentはIE7-で使えないので、contentWindowからdocumentを取得
-		var doc = iframe.contentWindow.document;
+		var win = iframe.contentWindow;
+		var doc = win.document;
 		if (doc.readyState !== 'complete') {
 			setTimeout(check, 10);
 			return;
 		}
-		dfd.resolve(iframe, doc);
+		dfd.resolve(iframe, doc, win);
 	}
 	setTimeout(check, 10);
 	return dfd.promise();

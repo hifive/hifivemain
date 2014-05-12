@@ -987,27 +987,85 @@ $(function() {
 			}
 			stop();
 			var that = this;
-			createIFrameElement().done(function(iframe, doc) {
+			createIFrameElement().done(function(iframe, doc, win) {
 				that.doc = doc;
+				that.win = win;
 				start();
 			});
 		},
 		teardown: function() {
 			this.doc = null;
+			this.win = null;
 		},
-		doc: null
+		doc: null,
+		win: null
 	});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('iframe内の要素にインジケータを表示できること', 5, function() {
-		// iframeの作成
+	asyncTest('iframe内にindicator target:div', 5, function() {
+		var doc = this.doc;
+		var div = doc.createElement('div');
+		div.style.width = '100px';
+		div.style.height = '100px';
+		doc.body.appendChild(div);
+		var indicator = h5.ui.indicator(div, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === div, 'ターゲットがiframe内のdiv要素であること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	asyncTest('iframe内にindicator target:body', 5, function() {
 		var doc = this.doc;
 		var indicator = h5.ui.indicator(doc.body, {
 			message: 'BlockMessageTest'
 		}).show();
-		ok(indicator._target === doc.body, 'ターゲットがiframe内の要素であること');
+		ok(indicator._target === doc.body, 'ターゲットがiframe要素内のbodyであること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	asyncTest('iframe内のbodyにindicator  target:document', 5, function() {
+		var doc = this.doc;
+		var indicator = h5.ui.indicator(doc, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === doc.body, 'ターゲットがiframe要素内のbodyであること');
 
 		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
 				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
@@ -1044,7 +1102,7 @@ $(function() {
 			stop();
 			var that = this;
 			openPopupWindow().done(function(w) {
-				that.w = w;
+				that.win = w;
 				that.doc = w.document;
 				start();
 			}).fail(function() {
@@ -1055,11 +1113,11 @@ $(function() {
 		},
 		teardown: function() {
 			var that = this;
-			if (this.w) {
+			if (this.win) {
 				stop();
-				closePopupWindow(this.w).done(function() {
+				closePopupWindow(this.win).done(function() {
 					that.doc = null;
-					that.w = null;
+					that.win = null;
 					start();
 				}).fail(function() {
 					start();
@@ -1067,96 +1125,15 @@ $(function() {
 			}
 		},
 		doc: null,
-		w: null
+		win: null
 	});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('ポップアップウィンドウ内にindicator target:div', 5, function() {
-		var doc = this.doc;
-		var div = doc.createElement('div');
-		div.style.width = '100px';
-		div.style.height = '100px';
-		doc.body.appendChild(div);
-		var indicator = h5.ui.indicator(div, {
-			message: 'BlockMessageTest'
-		}).show();
-		ok(indicator._target === div, 'ターゲットがポップアップウィンドウ内のdiv要素であること');
-
-		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
-				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-				'Indicator#show() インジケータが表示されること');
-
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
-				'オーバーレイが表示されていること');
-
-		setTimeout(function() {
-			indicator.hide();
-
-			setTimeout(function() {
-				strictEqual($('.h5-indicator', indicator._target).length, 0,
-						'Indicator#hide() インジケータが除去されていること');
-				start();
-			}, 0);
-		}, 0);
-	});
-
-	asyncTest('ポップアップウィンドウ内にindicator target:body', 5, function() {
-		var doc = this.doc;
-		var indicator = h5.ui.indicator(doc.body, {
-			message: 'BlockMessageTest'
-		}).show();
-		ok(indicator._target === doc.body, 'ターゲットがポップアップウィンドウのbodyであること');
-
-		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
-				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-				'Indicator#show() インジケータが表示されること');
-
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
-				'オーバーレイが表示されていること');
-
-		setTimeout(function() {
-			indicator.hide();
-
-			setTimeout(function() {
-				strictEqual($('.h5-indicator', indicator._target).length, 0,
-						'Indicator#hide() インジケータが除去されていること');
-				start();
-			}, 0);
-		}, 0);
-	});
-
-	asyncTest('ポップアップウィンドウ内のbodyにindicator  target:document', 5, function() {
-		var doc = this.doc;
-		var indicator = h5.ui.indicator(doc, {
-			message: 'BlockMessageTest'
-		}).show();
-		ok(indicator._target === doc.body, 'ターゲットがポップアップウィンドウのbodyであること');
-
-		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
-				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-				'Indicator#show() インジケータが表示されること');
-
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
-				'オーバーレイが表示されていること');
-
-		setTimeout(function() {
-			indicator.hide();
-
-			setTimeout(function() {
-				strictEqual($('.h5-indicator', indicator._target).length, 0,
-						'Indicator#hide() インジケータが除去されていること');
-				start();
-			}, 0);
-		}, 0);
-	});
 
 	asyncTest('ポップアップウィンドウ内のbodyにindicator  target:popupWindow', 5, function() {
-		var indicator = h5.ui.indicator(this.w, {
+		var indicator = h5.ui.indicator(this.win, {
 			message: 'BlockMessageTest'
 		}).show();
 		ok(indicator._target === this.doc.body, 'ターゲットがポップアップウィンドウのbodyであること');
