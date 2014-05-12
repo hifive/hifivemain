@@ -583,7 +583,7 @@
 	 * @param {DOM} elm
 	 * @returns {Style} elmのcomputedStyle
 	 */
-	function getStyle(elm) {
+	function getComputedStyleWrapper(elm) {
 		var doc = getDocumentOf(elm);
 		var win = getWindowOfDocument(doc);
 		return win.getComputedStyle(elm, null);
@@ -607,7 +607,7 @@
 		if (!window.getComputedStyle) {
 			return $(elm).css(prop);
 		}
-		return getStyle(elm)[prop];
+		return getComputedStyleWrapper(elm)[prop];
 	}
 
 	/**
@@ -627,7 +627,7 @@
 		if (!window.getComputedStyle) {
 			return $(elm).height();
 		}
-		var elmStyle = getStyle(elm);
+		var elmStyle = getComputedStyleWrapper(elm);
 		return parseInt(elmStyle.height);
 	}
 
@@ -648,7 +648,7 @@
 		if (!window.getComputedStyle) {
 			return $(elm).width();
 		}
-		var elmStyle = getStyle(elm);
+		var elmStyle = getComputedStyleWrapper(elm);
 		return parseInt(elmStyle.width);
 	}
 
@@ -671,7 +671,7 @@
 			return $(elm).outerWidth();
 		}
 
-		var elmStyle = getStyle(elm);
+		var elmStyle = getComputedStyleWrapper(elm);
 		return parseInt(elmStyle.height)
 				+ parseInt(elmStyle.paddingTop)
 				+ parseInt(elmStyle.paddingBottom)
@@ -698,7 +698,7 @@
 		if (!window.getComputedStyle) {
 			return $(elm).outerWidth();
 		}
-		var elmStyle = getStyle(elm);
+		var elmStyle = getComputedStyleWrapper(elm);
 		return parseInt(elmStyle.width)
 				+ parseInt(elmStyle.paddingLeft)
 				+ parseInt(elmStyle.paddingRight)
@@ -724,7 +724,7 @@
 		if (!window.getComputedStyle) {
 			return $(elm).innerHeight();
 		}
-		var elmStyle = getStyle(elm);
+		var elmStyle = getComputedStyleWrapper(elm);
 		return parseInt(elmStyle.height) + parseInt(elmStyle.paddingTop)
 				+ parseInt(elmStyle.paddingBottom);
 	}
@@ -745,7 +745,7 @@
 		if (!window.getComputedStyle) {
 			return $(elm).innerWidth();
 		}
-		var elmStyle = getStyle(elm);
+		var elmStyle = getComputedStyleWrapper(elm);
 		return parseInt(elmStyle.width) + parseInt(elmStyle.paddingLeft)
 				+ parseInt(elmStyle.paddingRight);
 	}
@@ -770,7 +770,7 @@
 			var prop = props[i];
 			v[i] = {};
 			curProps[i] = {};
-			var curStyle = getStyle($elm[i]);
+			var curStyle = getComputedStyleWrapper($elm[i]);
 			for ( var p in prop) {
 				curProps[i][p] = parseFloat(curStyle[p]);
 				v[i][p] = (parseFloat(prop[p]) - parseFloat(curStyle[p])) * interval / time;
