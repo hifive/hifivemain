@@ -400,6 +400,56 @@ $(function() {
 	}
 
 	/**
+	 * 『dispatchEvent(またはfireEvent)でtouch/mouseイベントを発火させたときに、ルートエレメントに直接バインド記法でバインドしたh5track*イベントが正しい回数実行されること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckDirectBindDispatchEvent(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var fired = [];
+			var elm = $('#controllerTest')[0];
+			var h5TrackTestController = h5.core.controller(elm, {
+				__name: 'h5TrackTestController',
+				'{rootElement} [h5trackstart]': function(context) {
+					fired.push('start');
+				},
+				'{rootElement} [h5trackmove]': function(context) {
+					fired.push('move');
+				},
+				'{rootElement} [h5trackend]': function(context) {
+					fired.push('end');
+				}
+			});
+
+			h5TrackTestController.readyPromise.done(function() {
+				// ドラッグ開始
+				dispatchTrackSrcNativeEvent(elm, events.start, 10, 10);
+				deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				// ドラッグ
+				dispatchTrackSrcNativeEvent(elm, events.move, 11, 12);
+				deepEqual(fired, ['move'], 'h5trackmoveのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				// ドラッグ終了
+				dispatchTrackSrcNativeEvent(elm, events.end, 9, 15);
+				deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				h5TrackTestController.unbind();
+				start();
+			});
+		};
+	}
+
+	/**
 	 * 『dispatchEvent(またはfireEvent)でmouse/touchイベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること』
 	 *
 	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
@@ -5870,6 +5920,12 @@ $(function() {
 	asyncTest(
 			'dispatchEvent(またはfireEvent)でtouchイベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントが正しい回数実行されること',
 			3, getH5trackTestCheckDispatchEvent(touchTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でmouseイベントを発火させたときに、ルートエレメントに直接バインド記法でバインドしたh5track*イベントが正しい回数実行されること',
+			3, getH5trackTestCheckDirectBindDispatchEvent(mouseTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でtouchイベントを発火させたときに、ルートエレメントに直接バインド記法でバインドしたh5track*イベントが正しい回数実行されること',
+			3, getH5trackTestCheckDirectBindDispatchEvent(touchTrackEvents));
 	asyncTest(
 			'dispatchEvent(またはfireEvent)でmouseイベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
 			4, getH5trackTestCheckDispatchEventDxDy(mouseTrackEvents));
