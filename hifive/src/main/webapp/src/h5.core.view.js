@@ -791,6 +791,7 @@
 		 * @memberOf View
 		 * @name bind
 		 * @function
+		 * @returns {Binding}
 		 */
 		bind: function(element, context) {
 			var targetNodes = null;
