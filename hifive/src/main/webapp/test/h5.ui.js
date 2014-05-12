@@ -1060,7 +1060,7 @@ $(function() {
 		}, 0);
 	});
 
-	asyncTest('iframe内のbodyにindicator  target:document', 5, function() {
+	asyncTest('iframe内にindicator  target:document', 5, function() {
 		var doc = this.doc;
 		var indicator = h5.ui.indicator(doc, {
 			message: 'BlockMessageTest'
@@ -1086,6 +1086,30 @@ $(function() {
 		}, 0);
 	});
 
+	asyncTest('iframe内にindicator  target:window', 5, function() {
+		var indicator = h5.ui.indicator(this.win, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === this.doc.body, 'ターゲットがiframe要素内のbodyであること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay')[0].style.display, 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
 	//=============================
 	// Definition
 	//=============================
@@ -1143,7 +1167,7 @@ $(function() {
 		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
 				'Indicator#show() インジケータが表示されること');
 
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay')[0].style.display, 'block',
 				'オーバーレイが表示されていること');
 
 		setTimeout(function() {
