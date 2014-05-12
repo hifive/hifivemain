@@ -677,7 +677,7 @@
 				+ parseInt(elmStyle.paddingBottom)
 				+ parseInt(elmStyle.borderTopWidth)
 				+ parseInt(elmStyle.borderBottomWidth)
-				+ +(includeMargin ? (parseInt(elmStyle.marginTop) + parseInt(elmStyle.marginBottom))
+				+ (includeMargin ? (parseInt(elmStyle.marginTop) + parseInt(elmStyle.marginBottom))
 						: 0);
 	}
 
