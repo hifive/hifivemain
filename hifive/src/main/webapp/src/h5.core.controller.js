@@ -190,21 +190,26 @@
 	var h5trackTriggeredFlags = [];
 
 	/**
-	 * touch-action(または-ms-touch-action)プロパティがサポートされているか
-	 */
-	var isSupportTouchAction = false;
-	/**
 	 * touch-actionをサポートしているときの、そのプロパティ(touchActionまたはmsTouchAction)
 	 */
 	var touchActionProp = '';
-	var div = document.createElement('div');
-	if (typeof div.style.touchAction !== TYPE_OF_UNDEFINED) {
-		isSupportTouchAction = true;
-		touchActionProp = 'touchAction';
-	} else if (typeof div.style.msTouchAction !== TYPE_OF_UNDEFINED) {
-		isSupportTouchAction = true;
-		touchActionProp = 'msTouchAction';
-	}
+
+	/**
+	 * touch-action(または-ms-touch-action)プロパティがサポートされているか
+	 */
+	var isSupportedTouchAction = (function() {
+		// divを作って、styleにtouchActionまたはmsTouchActionがあるか判定する
+		// いずれかがあった場合にtouchActionPropを設定して、trueを返す
+		var div = document.createElement('div');
+		if (typeof div.style.touchAction !== TYPE_OF_UNDEFINED) {
+			touchActionProp = 'touchAction';
+			return true;
+		} else if (typeof div.style.msTouchAction !== TYPE_OF_UNDEFINED) {
+			touchActionProp = 'msTouchAction';
+			return true;
+		}
+		return false;
+	})();
 
 	// =============================
 	// Functions
@@ -665,7 +670,7 @@
 		// touchActionをサポートしていないなら何もしない
 		// h5.settings.trackstartTouchActionがnullなら何もしない
 		// TODO プラッガブル(どのイベントの時にどういう処理をするか)が設定できるようにする
-		if (isSupportTouchAction && event === EVENT_NAME_H5_TRACKSTART
+		if (isSupportedTouchAction && event === EVENT_NAME_H5_TRACKSTART
 				&& h5.settings.trackstartTouchAction != null) {
 			var $trackTarget = isGlobal ? $(bindObj.evSelector, doc) : $(bindObj.evSelector,
 					rootElement);
@@ -2170,169 +2175,159 @@
 		return this.__view.bind(target, context);
 	}
 
-	$
-			.extend(
-					View.prototype,
-					{
-						/**
-						 * パラメータで置換された、指定されたテンプレートIDのテンプレートを取得します。
-						 *
-						 * @param {String} templateId テンプレートID
-						 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
-						 * @returns {String} テンプレート文字列
-						 * @function
-						 * @name get
-						 * @memberOf Controller.view
-						 * @see View.get
-						 */
-						get: function(templateId, param) {
-							return getView(templateId, this.__controller).get(templateId, param);
-						},
+	$.extend(View.prototype, {
+		/**
+		 * パラメータで置換された、指定されたテンプレートIDのテンプレートを取得します。
+		 *
+		 * @param {String} templateId テンプレートID
+		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {String} テンプレート文字列
+		 * @function
+		 * @name get
+		 * @memberOf Controller.view
+		 * @see View.get
+		 */
+		get: function(templateId, param) {
+			return getView(templateId, this.__controller).get(templateId, param);
+		},
 
-						/**
-						 * 要素を指定されたIDのテンプレートで書き換えます。
-						 *
-						 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素,
-						 *            jQueryオブジェクト)
-						 * @param {String} templateId テンプレートID
-						 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
-						 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
-						 * @function
-						 * @name update
-						 * @memberOf Controller.view
-						 * @see View.update
-						 */
-						update: function(element, templateId, param) {
-							var target = getTarget(element, this.__controller.rootElement, true);
-							return getView(templateId, this.__controller).update(target,
-									templateId, param);
-						},
+		/**
+		 * 要素を指定されたIDのテンプレートで書き換えます。
+		 *
+		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
+		 * @param {String} templateId テンプレートID
+		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
+		 * @function
+		 * @name update
+		 * @memberOf Controller.view
+		 * @see View.update
+		 */
+		update: function(element, templateId, param) {
+			var target = getTarget(element, this.__controller.rootElement, true);
+			return getView(templateId, this.__controller).update(target, templateId, param);
+		},
 
-						/**
-						 * 要素の末尾に指定されたIDのテンプレートを挿入します。
-						 *
-						 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素,
-						 *            jQueryオブジェクト)
-						 * @param {String} templateId テンプレートID
-						 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
-						 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
-						 * @function
-						 * @name append
-						 * @memberOf Controller.view
-						 * @see View.append
-						 */
-						append: function(element, templateId, param) {
-							var target = getTarget(element, this.__controller.rootElement, true);
-							return getView(templateId, this.__controller).append(target,
-									templateId, param);
-						},
+		/**
+		 * 要素の末尾に指定されたIDのテンプレートを挿入します。
+		 *
+		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
+		 * @param {String} templateId テンプレートID
+		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
+		 * @function
+		 * @name append
+		 * @memberOf Controller.view
+		 * @see View.append
+		 */
+		append: function(element, templateId, param) {
+			var target = getTarget(element, this.__controller.rootElement, true);
+			return getView(templateId, this.__controller).append(target, templateId, param);
+		},
 
-						/**
-						 * 要素の先頭に指定されたIDのテンプレートを挿入します。
-						 *
-						 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素,
-						 *            jQueryオブジェクト)
-						 * @param {String} templateId テンプレートID
-						 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
-						 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
-						 * @function
-						 * @name prepend
-						 * @memberOf Controller.view
-						 * @see View.prepend
-						 */
-						prepend: function(element, templateId, param) {
-							var target = getTarget(element, this.__controller.rootElement, true);
-							return getView(templateId, this.__controller).prepend(target,
-									templateId, param);
-						},
+		/**
+		 * 要素の先頭に指定されたIDのテンプレートを挿入します。
+		 *
+		 * @param {String|Element|jQuery} element DOM要素(セレクタ文字列, DOM要素, jQueryオブジェクト)
+		 * @param {String} templateId テンプレートID
+		 * @param {Object} [param] パラメータ(オブジェクトリテラルで指定)
+		 * @returns {jQuery} テンプレートが適用されたDOM要素(jQueryオブジェクト)
+		 * @function
+		 * @name prepend
+		 * @memberOf Controller.view
+		 * @see View.prepend
+		 */
+		prepend: function(element, templateId, param) {
+			var target = getTarget(element, this.__controller.rootElement, true);
+			return getView(templateId, this.__controller).prepend(target, templateId, param);
+		},
 
-						/**
-						 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします。
-						 *
-						 * @param {String|String[]} resourcePaths テンプレートファイル(.ejs)のパス (配列で複数指定可能)
-						 * @returns {Promise} Promiseオブジェクト
-						 * @function
-						 * @name load
-						 * @memberOf Controller.view
-						 * @see View.load
-						 */
-						load: function(resourcePaths) {
-							return this.__view.load(resourcePaths);
-						},
+		/**
+		 * 指定されたパスのテンプレートファイルを非同期で読み込みキャッシュします。
+		 *
+		 * @param {String|String[]} resourcePaths テンプレートファイル(.ejs)のパス (配列で複数指定可能)
+		 * @returns {Promise} Promiseオブジェクト
+		 * @function
+		 * @name load
+		 * @memberOf Controller.view
+		 * @see View.load
+		 */
+		load: function(resourcePaths) {
+			return this.__view.load(resourcePaths);
+		},
 
-						/**
-						 * Viewインスタンスに、指定されたIDとテンプレート文字列からテンプレートを1件登録します。
-						 *
-						 * @param {String} templateId テンプレートID
-						 * @param {String} templateString テンプレート文字列
-						 * @function
-						 * @name register
-						 * @memberOf Controller.view
-						 * @see View.register
-						 */
-						register: function(templateId, templateString) {
-							this.__view.register(templateId, templateString);
-						},
+		/**
+		 * Viewインスタンスに、指定されたIDとテンプレート文字列からテンプレートを1件登録します。
+		 *
+		 * @param {String} templateId テンプレートID
+		 * @param {String} templateString テンプレート文字列
+		 * @function
+		 * @name register
+		 * @memberOf Controller.view
+		 * @see View.register
+		 */
+		register: function(templateId, templateString) {
+			this.__view.register(templateId, templateString);
+		},
 
-						/**
-						 * テンプレート文字列が、コンパイルできるかどうかを返します。
-						 *
-						 * @param {String} templateString テンプレート文字列
-						 * @returns {Boolean} 渡されたテンプレート文字列がコンパイル可能かどうか。
-						 * @function
-						 * @name isValid
-						 * @memberOf Controller.view
-						 * @see View.isValid
-						 */
-						isValid: function(templateString) {
-							return this.__view.isValid(templateString);
-						},
+		/**
+		 * テンプレート文字列が、コンパイルできるかどうかを返します。
+		 *
+		 * @param {String} templateString テンプレート文字列
+		 * @returns {Boolean} 渡されたテンプレート文字列がコンパイル可能かどうか。
+		 * @function
+		 * @name isValid
+		 * @memberOf Controller.view
+		 * @see View.isValid
+		 */
+		isValid: function(templateString) {
+			return this.__view.isValid(templateString);
+		},
 
-						/**
-						 * 指定されたテンプレートIDのテンプレートが存在するか判定します。
-						 *
-						 * @param {String} templateId テンプレートID
-						 * @returns {Boolean} 判定結果(存在する: true / 存在しない: false)
-						 * @function
-						 * @name isAvailable
-						 * @memberOf Controller.view
-						 * @see View.isAvailable
-						 */
-						isAvailable: function(templateId) {
-							return getView(templateId, this.__controller).isAvailable(templateId);
-						},
+		/**
+		 * 指定されたテンプレートIDのテンプレートが存在するか判定します。
+		 *
+		 * @param {String} templateId テンプレートID
+		 * @returns {Boolean} 判定結果(存在する: true / 存在しない: false)
+		 * @function
+		 * @name isAvailable
+		 * @memberOf Controller.view
+		 * @see View.isAvailable
+		 */
+		isAvailable: function(templateId) {
+			return getView(templateId, this.__controller).isAvailable(templateId);
+		},
 
-						/**
-						 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 <br />
-						 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
-						 *
-						 * @param {String|String[]} [templateId] テンプレートID
-						 * @function
-						 * @name clear
-						 * @memberOf Controller.view
-						 * @see View.clear
-						 */
-						clear: function(templateIds) {
-							this.__view.clear(templateIds);
-						},
+		/**
+		 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 <br />
+		 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
+		 *
+		 * @param {String|String[]} [templateId] テンプレートID
+		 * @function
+		 * @name clear
+		 * @memberOf Controller.view
+		 * @see View.clear
+		 */
+		clear: function(templateIds) {
+			this.__view.clear(templateIds);
+		},
 
-						/**
-						 * データバインドを開始します。
-						 *
-						 * @since 1.1.0
-						 * @param {String|Element|Element[]|jQuery} element
-						 *            コメントビュー疑似セレクタ、またはDOM要素(セレクタ文字列, DOM要素, DOM要素の配列,
-						 *            jQueryオブジェクト)。コメントビューを指定する場合は、「h5view#xxx」（xxxはid）と記述してください
-						 *            （id属性がxxxになっているh5viewタグを指定する、ような記法になっています）。
-						 *            DOM要素の配列を指定する場合、全ての要素ノードの親ノードが同じでなければいけません。
-						 * @param {Object} context データコンテキストオブジェクト
-						 * @function
-						 * @name bind
-						 * @memberOf Controller.view
-						 * @see View.bind
-						 */
-						bind: View_bind
-					});
+		/**
+		 * データバインドを開始します。
+		 *
+		 * @since 1.1.0
+		 * @param {String|Element|Element[]|jQuery} element コメントビュー疑似セレクタ、またはDOM要素(セレクタ文字列, DOM要素,
+		 *            DOM要素の配列, jQueryオブジェクト)。コメントビューを指定する場合は、「h5view#xxx」（xxxはid）と記述してください
+		 *            （id属性がxxxになっているh5viewタグを指定する、ような記法になっています）。
+		 *            DOM要素の配列を指定する場合、全ての要素ノードの親ノードが同じでなければいけません。
+		 * @param {Object} context データコンテキストオブジェクト
+		 * @function
+		 * @name bind
+		 * @memberOf Controller.view
+		 * @see View.bind
+		 */
+		bind: View_bind
+	});
 
 	/**
 	 * コントローラのコンストラクタ
