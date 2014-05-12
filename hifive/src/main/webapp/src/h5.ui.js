@@ -1060,7 +1060,8 @@
 				_$target.append(_$skin).append(_$overlay).append(_$content);
 			}
 
-			var $elems = $().add(this._$skin).add(this._$content).add(this._$overlay);
+			var $elems = $(this._$skin.toArray().concat(this._$content.toArray()).concat(
+					this._$overlay.toArray()));
 
 			if (fadeInTime < 0) {
 				$elems.show();
@@ -1175,7 +1176,8 @@
 
 			var that = this;
 			var fadeOutTime = this._fadeOutTime;
-			var $elems = $().add(this._$skin).add(this._$content).add(this._$overlay);
+			var $elems = $(this._$skin.toArray().concat(this._$content.toArray()).concat(
+					this._$overlay.toArray()));
 			var cb = function() {
 				var $window = $(window);
 
