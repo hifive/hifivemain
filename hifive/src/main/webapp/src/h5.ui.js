@@ -1314,11 +1314,11 @@
 
 				// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
 				// また、IEのレイアウトバグを回避するためzoom:1を設定する
-				var targetPosition = getComputedStyleValue(_$target[i], 'position');
+				var targetPosition = getComputedStyleValue(_$target[0], 'position');
 				if (!this._isScreenLock && targetPosition === 'static') {
 					// スロバーメッセージ要素に親要素のposition/zoomを記憶させておく
 					_$target.data(DATA_KEY_POSITION, targetPosition);
-					_$target.data(DATA_KEY_ZOOM, getComputedStyleValue(_$target[i], 'zoom'));
+					_$target.data(DATA_KEY_ZOOM, getComputedStyleValue(_$target[0], 'zoom'));
 
 					_$target.css({
 						position: 'relative',
@@ -1387,12 +1387,12 @@
 					w = scrSize.w;
 					h = scrSize.h;
 				}
-				_$overlay[i].style.width = w + 'px';
-				_$overlay[i].style.height = h + 'px';
+				_$overlay[0].style.width = w + 'px';
+				_$overlay[0].style.height = h + 'px';
 
 				if (isLegacyIE || compatMode) {
-					_$skin[i].style.width = w + 'px';
-					_$skin[i].style.height = h + 'px';
+					_$skin[0].style.width = w + 'px';
+					_$skin[0].style.height = h + 'px';
 				}
 			}
 		},
