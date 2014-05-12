@@ -1060,8 +1060,11 @@
 				_$target.append(_$skin).append(_$overlay).append(_$content);
 			}
 
-			var $elems = $(this._$skin.toArray().concat(this._$content.toArray()).concat(
-					this._$overlay.toArray()));
+			// Array.prototype.pushを使って、適用する要素を配列にまとめる
+			var elems = this._$skin.toArray();
+			Array.prototype.push.apply(elems, this._$content.toArray());
+			Array.prototype.push.apply(elems, this._$overlay.toArray());
+			var $elems = $(elems);
 
 			if (fadeInTime < 0) {
 				$elems.show();
@@ -1176,8 +1179,11 @@
 
 			var that = this;
 			var fadeOutTime = this._fadeOutTime;
-			var $elems = $(this._$skin.toArray().concat(this._$content.toArray()).concat(
-					this._$overlay.toArray()));
+			// Array.prototype.pushを使って、適用する要素を配列にまとめる
+			var elems = this._$skin.toArray();
+			Array.prototype.push.apply(elems, this._$content.toArray());
+			Array.prototype.push.apply(elems, this._$overlay.toArray());
+			var $elems = $(elems);
 			var cb = function() {
 				var $window = $(window);
 
