@@ -104,6 +104,14 @@
 	 */
 	var WAIT_MILLIS = 500;
 
+	/**
+	 * アニメーション(fadeIn,fadeOut)するときの1フレームの時間(ms)
+	 * <p>
+	 * jQuery.fx.intervalがデフォルトで13なので、それに倣って13を指定している
+	 * </p>
+	 */
+	var ANIMATION_INTERVAL = 13;
+
 
 	// =============================
 	// Development Only
@@ -565,6 +573,275 @@
 		vmlStyle.setAttribute('type', 'text/css');
 		vmlStyle.styleSheet.cssText = styleDef;
 	}
+	/**
+	 * getComputedStyleがあるブラウザについて、getComputedStyleを呼び出した結果を返します。
+	 * <p>
+	 * 渡されたエレメントが属するdocumentツリーのwindowオブジェクトのgetComputedStyleを使用します
+	 * </p>
+	 *
+	 * @private
+	 * @param {DOM} elm
+	 * @returns {Style} elmのcomputedStyle
+	 */
+	function getStyle(elm) {
+		var doc = getDocumentOf(elm);
+		var win = getWindowOfDocument(doc);
+		return win.getComputedStyle(elm, null);
+	}
+
+	/**
+	 * スタイルを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、jQuery.css()を使って取得した値を返す。
+	 * </p>
+	 *
+	 * @private
+	 * @param elm {DOM}
+	 * @param prop {String} CSSプロパティ
+	 * @returns 第1引数について、computedStyleを取得し、第2引数に指定されたプロパティの値を返す
+	 */
+	function getComputedStyleValue(elm, prop) {
+		if (!window.getComputedStyle) {
+			return $(elm).css(prop);
+		}
+		return getStyle(elm)[prop];
+	}
+
+	/**
+	 * 要素のheightを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、height()で取得した値を返す。
+	 * </p>
+	 *
+	 * @private
+	 * @param {DOM} elm
+	 * @returns {Number} 引数で渡された要素のheight
+	 */
+	function getHeight(elm) {
+		if (!window.getComputedStyle) {
+			return $(elm).height();
+		}
+		var elmStyle = getStyle(elm);
+		return parseInt(elmStyle.height);
+	}
+
+	/**
+	 * 要素のwidthを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、width()で取得した値を返す。
+	 * </p>
+	 *
+	 * @private
+	 * @param {DOM} elm
+	 * @returns {Number} 引数で渡された要素のwidth
+	 */
+	function getWidth(elm) {
+		if (!window.getComputedStyle) {
+			return $(elm).width();
+		}
+		var elmStyle = getStyle(elm);
+		return parseInt(elmStyle.width);
+	}
+
+	/**
+	 * 要素のouterHeightを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、outerHeight()で取得した値を返す。
+	 * </p>
+	 *
+	 * @private
+	 * @param {DOM} elm
+	 * @param {Boolean} [includeMargin=true] maginを含めるかどうか
+	 * @returns {Number} 引数で渡された要素のouterHeight
+	 */
+	function getOuterHeight(elm, includeMargin) {
+		if (!window.getComputedStyle) {
+			return $(elm).outerWidth();
+		}
+
+		var elmStyle = getStyle(elm);
+		return parseInt(elmStyle.height)
+				+ parseInt(elmStyle.paddingTop)
+				+ parseInt(elmStyle.paddingBottom)
+				+ parseInt(elmStyle.borderTopWidth)
+				+ parseInt(elmStyle.borderBottomWidth)
+				+ +(includeMargin ? (parseInt(elmStyle.marginTop) + parseInt(elmStyle.marginBottom))
+						: 0);
+	}
+
+	/**
+	 * 要素のouterWidthを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、outerWidth()で取得した値を返す。
+	 * </p>
+	 *
+	 * @param {DOM} elm
+	 * @param {Boolean} [includeMargin=true] maginを含めるかどうか
+	 * @returns {Number} 引数で渡された要素のouterWidth
+	 */
+	function getOuterWidth(elm, includeMargin) {
+		if (!window.getComputedStyle) {
+			return $(elm).outerWidth();
+		}
+		var elmStyle = getStyle(elm);
+		return parseInt(elmStyle.width)
+				+ parseInt(elmStyle.paddingLeft)
+				+ parseInt(elmStyle.paddingRight)
+				+ parseInt(elmStyle.borderLeftWidth)
+				+ parseInt(elmStyle.borderRightWidth)
+				+ (includeMargin ? (parseInt(elmStyle.marginLeft) + parseInt(elmStyle.marginRight))
+						: 0);
+	}
+
+	/**
+	 * 要素のinnerHeightを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、innerHeight()で取得した値を返す。
+	 * </p>
+	 *
+	 * @param {DOM} elm
+	 * @returns {Number} 引数で渡された要素のinnerHeight
+	 */
+	function getInnerHeight(elm) {
+		if (!window.getComputedStyle) {
+			return $(elm).innerHeight();
+		}
+		var elmStyle = getStyle(elm);
+		return parseInt(elmStyle.height) + parseInt(elmStyle.paddingTop)
+				+ parseInt(elmStyle.paddingBottom);
+	}
+
+	/**
+	 * 要素のinnerWidthを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、innerWidth()で取得した値を返す。
+	 * </p>
+	 *
+	 * @param {DOM} elm
+	 * @returns {Number} 引数で渡された要素のinnerWidth
+	 */
+	function getInnerWidth(elm) {
+		if (!window.getComputedStyle) {
+			return $(elm).innerWidth();
+		}
+		var elmStyle = getStyle(elm);
+		return parseInt(elmStyle.width) + parseInt(elmStyle.paddingLeft)
+				+ parseInt(elmStyle.paddingRight);
+	}
+
+	/**
+	 * fadeIn, fadeOut用のアニメーション関数
+	 *
+	 * @param {Array} props $elmのアニメーション終了時のスタイルの配列。propsの配列のインデックスは$elmのインデックスに対応する。
+	 * @param {jQuery} $elm アニメーションさせる要素
+	 * @param {Number} time アニメーションに掛ける時間
+	 * @param {Function} callback アニメーション終了時に実行するコールバック関数
+	 */
+	function animate(props, $elm, time, callback) {
+		var interval = ANIMATION_INTERVAL;
+		var count = 0;
+		// 現在の値(アニメーションするごとに変化)
+		var curProps = [];
+		// 1インターバルごとに変化する量
+		var v = [];
+		// 現在のスタイルを$elmの最初の要素から取得し、それを基準にアニメーションする
+		$elm.each(function(i) {
+			var prop = props[i];
+			v[i] = {};
+			curProps[i] = {};
+			var curStyle = getStyle($elm[i]);
+			for ( var p in prop) {
+				curProps[i][p] = parseFloat(curStyle[p]);
+				v[i][p] = (parseFloat(prop[p]) - parseFloat(curStyle[p])) * interval / time;
+			}
+		});
+		function fn() {
+			count += interval;
+			if (count > time) {
+				// アニメーション終了
+				clearInterval(timerId);
+				// スタイルを削除して、デフォルト(cssなどで指定されている値)に戻す
+				$elm.each(function(i) {
+					for ( var p in props[i]) {
+						this.style[p] = '';
+					}
+				});
+				callback();
+				return;
+			}
+			$elm.each(function(i) {
+				var curProp = curProps[i];
+				for ( var p in curProp) {
+					curProp[p] += v[i][p];
+				}
+				$(this).css(curProp);
+			});
+		}
+		fn();
+		var timerId = setInterval(fn, interval);
+	}
+
+	/**
+	 * opacityを0から、現在の要素のopacityの値までアニメーションします
+	 *
+	 * @param {jQuery} $elm fadeInさせる要素
+	 * @param {Number} time アニメーションに掛ける時間(ms)
+	 * @param {Function} callback アニメーションが終了した時に呼び出すコールバック関数
+	 */
+	function fadeIn($elm, time, callback) {
+		// 現在のopacityを取得
+		var opacities = [];
+		$elm.each(function() {
+			var opacity = parseFloat(getComputedStyleValue(this, 'opacity'));
+			opacities.push({
+				opacity: opacity
+			});
+		});
+		// opacityを0にして、display:blockにする
+		$elm.css({
+			opacity: 0,
+			display: 'block'
+		});
+		animate(opacities, $elm, time, callback);
+	}
+
+	/**
+	 * opacityを現在の値から、0までアニメーションします
+	 *
+	 * @param {jQuery} $elm fadeOutさせる要素
+	 * @param {Number} time アニメーションに掛ける時間(ms)
+	 * @param {Function} callback アニメーションが終了した時に呼び出すコールバック関数
+	 */
+	function fadeOut($elm, time, callback) {
+		var opacities = [];
+		$elm.each(function() {
+			opacities.push({
+				opacity: 0
+			});
+		});
+		animate(opacities, $elm, time, callback);
+	}
 
 	// =========================================================================
 	//
@@ -953,14 +1230,14 @@
 		for (var i = 0, len = this._$target.length; i < len; i++) {
 			this._$content = this._$content.add($(doc.createElement('div')).append(contentElem)
 					.addClass(CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(
-							CLASS_INDICATOR_CONTENT).hide());
+							CLASS_INDICATOR_CONTENT).css('display', 'none'));
 			this._$overlay = this._$overlay
 					.add((settings.block ? $(doc.createElement('div')) : $()).addClass(
 							CLASS_INDICATOR_ROOT).addClass(settings.theme).addClass(CLASS_OVERLAY)
-							.hide());
+							.css('display', 'none'));
 			this._$skin = this._$skin.add(((isLegacyIE || compatMode) ? $(doc
 					.createElement('iframe')) : $()).attr('src', srcVal).addClass(
-					CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).hide());
+					CLASS_INDICATOR_ROOT).addClass(CLASS_SKIN).css('display', 'none'));
 		}
 
 		var position = this._isScreenLock && usePositionFixed ? 'fixed' : 'absolute';
@@ -1037,10 +1314,11 @@
 
 				// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
 				// また、IEのレイアウトバグを回避するためzoom:1を設定する
-				if (!this._isScreenLock && _$target.css('position') === 'static') {
+				var targetPosition = getComputedStyleValue(_$target[i], 'position');
+				if (!this._isScreenLock && targetPosition === 'static') {
 					// スロバーメッセージ要素に親要素のposition/zoomを記憶させておく
-					_$target.data(DATA_KEY_POSITION, _$target.css('position'));
-					_$target.data(DATA_KEY_ZOOM, _$target.css('zoom'));
+					_$target.data(DATA_KEY_POSITION, targetPosition);
+					_$target.data(DATA_KEY_ZOOM, getComputedStyleValue(_$target[i], 'zoom'));
 
 					_$target.css({
 						position: 'relative',
@@ -1067,10 +1345,10 @@
 			var $elems = $(elems);
 
 			if (fadeInTime < 0) {
-				$elems.show();
+				$elems.css('display', 'block');
 				cb();
 			} else {
-				$elems.fadeIn(fadeInTime, cb);
+				fadeIn($elems, fadeInTime, cb);
 			}
 
 			this._reposition();
@@ -1109,10 +1387,12 @@
 					w = scrSize.w;
 					h = scrSize.h;
 				}
-				_$overlay.width(w).height(h);
+				_$overlay[i].style.width = w + 'px';
+				_$overlay[i].style.height = h + 'px';
 
 				if (isLegacyIE || compatMode) {
-					_$skin.width(w).height(h);
+					_$skin[i].style.width = w + 'px';
+					_$skin[i].style.height = h + 'px';
 				}
 			}
 		},
@@ -1135,32 +1415,34 @@
 
 					if (usePositionFixed) {
 						// 可視領域からtopを計算する
-						_$content.css('top', ((wh - _$content.outerHeight()) / 2) + 'px');
+						_$content.css('top', ((wh - getOuterHeight(_$content[0])) / 2) + 'px');
 					} else {
 						// 可視領域+スクロール領域からtopを計算する
 						_$content.css('top',
-								((scrollTop() + (wh / 2)) - (_$content.outerHeight() / 2)) + 'px');
+								((scrollTop() + (wh / 2)) - (getOuterHeight(_$content[0]) / 2))
+										+ 'px');
 					}
 				} else {
 					//オーバーレイの計算はスクロールサイズを基準にしている。これに倣い、中央揃え計算の基準はinnerHeight()にする(＝paddingを含める)。leftも同様
 					_$content.css('top', _$target.scrollTop()
-							+ (_$target.innerHeight() - _$content.outerHeight()) / 2);
+							+ (getInnerHeight(_$target[0]) - getOuterHeight(_$content[0]) / 2));
 				}
 
-				var blockElementPadding = _$content.innerWidth() - _$content.width();
+				var blockElementPadding = getInnerWidth(_$content[0]) - getWidth(_$content[0]);
+
 				var totalWidth = 0;
 
 				_$content.children().each(function() {
 					var $e = $(this);
 					// IE9にて不可視要素に対してouterWidth(true)を実行すると不正な値が返ってくるため、display:noneの場合は値を取得しない
-					if ($e.css('display') === 'none') {
+					if (getComputedStyleValue($e[0], 'display') === 'none') {
 						return true;
 					}
-					totalWidth += $e.outerWidth(true);
+					totalWidth += getOuterWidth(this, true);
 				});
 				_$content.width(totalWidth + blockElementPadding);
 				_$content.css('left', _$target.scrollLeft()
-						+ (_$target.innerWidth() - _$content.outerWidth()) / 2);
+						+ (getInnerWidth(_$target[0]) - getOuterWidth(_$content[0])) / 2);
 			}
 		},
 		/**
@@ -1223,10 +1505,10 @@
 			}
 
 			if (fadeOutTime < 0) {
-				$elems.hide();
+				$elems.css('display', 'none');
 				cb();
 			} else {
-				$elems.fadeOut(fadeOutTime, cb);
+				fadeOut($elems, fadeOutTime, cb);
 			}
 
 			return this;
