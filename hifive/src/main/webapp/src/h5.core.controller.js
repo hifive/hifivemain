@@ -2303,42 +2303,6 @@
 						},
 
 						/**
-						 * Viewインスタンスに登録されている、利用可能なテンプレートのIDの配列を返します。
-						 * <p>
-						 * 引数isRecursiveにtrueが渡された場合は、親コントローラを再帰的に探索し、
-						 * h5.core.viewで利用可能なIDも含めてこのコントローラviewで利用可能なテンプレートID全てを返します。
-						 * </p>
-						 *
-						 * @memberOf View
-						 * @name getAvailableTemplates
-						 * @function
-						 * @param {Boolean} isRecursive 再帰を
-						 * @returns {Array[String]} テンプレートIDの配列
-						 */
-						getAvailableTemplates: function(isRecursive) {
-							var ids = [];
-							for ( var id in this.__view.__cachedTemplates) {
-								ids.push(id);
-							}
-							if (!isRecursive) {
-								// 再帰探索を行わない場合は終了
-								return ids;
-							}
-							// 親コントローラがあるなら親コントローラのview、無いならh5.core.viewの利用可能IDを取得
-							// 親コントローラのviewからは再帰で取得する
-							var parentIds = this.__controller.parentController ? this.__controller.parentController.view
-									.getAvailableTemplates(true)
-									: h5.core.view.getAvailableTemplates(true);
-							// 親コントローラの利用可能IDとマージ
-							for (var i = 0, l = parentIds.length; i < l; i++) {
-								if ($.inArray(parentIds[i], ids) === -1) {
-									ids.push(parentIds[i]);
-								}
-							}
-							return ids;
-						},
-
-						/**
 						 * 引数に指定されたテンプレートIDをもつテンプレートをキャッシュから削除します。 <br />
 						 * 引数を指定しない場合はキャッシュされている全てのテンプレートを削除します。
 						 *
