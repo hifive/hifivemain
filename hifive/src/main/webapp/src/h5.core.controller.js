@@ -197,7 +197,7 @@
 	/**
 	 * touch-action(または-ms-touch-action)プロパティがサポートされているか
 	 */
-	var isSupportedTouchAction = (function() {
+	var isTouchActionSupported = (function() {
 		// divを作って、styleにtouchActionまたはmsTouchActionがあるか判定する
 		// いずれかがあった場合にtouchActionPropを設定して、trueを返す
 		var div = document.createElement('div');
@@ -670,7 +670,7 @@
 		// touchActionをサポートしていないなら何もしない
 		// h5.settings.trackstartTouchActionがnullなら何もしない
 		// TODO プラッガブル(どのイベントの時にどういう処理をするか)が設定できるようにする
-		if (isSupportedTouchAction && event === EVENT_NAME_H5_TRACKSTART
+		if (isTouchActionSupported && event === EVENT_NAME_H5_TRACKSTART
 				&& h5.settings.trackstartTouchAction != null) {
 			var $trackTarget = isGlobal ? $(bindObj.evSelector, doc) : $(bindObj.evSelector,
 					rootElement);
