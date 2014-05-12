@@ -1296,10 +1296,10 @@
 						// コンテキストをとるように関数をラップして、bindする。
 						// touchstartで発火したならtouchstart,touchendにバインド、
 						// そうでない場合(mousedown)ならmousemove,mousenendにバインド
-						var move = isTouch ? 'touchmove' : 'mousemove';
-						var end = isTouch ? 'touchend' : 'mouseup';
-						var moveHandler = getHandler(move, nt, setupDPos);
-						var upHandler = getHandler(end, nt);
+						var moveEventType = isTouch ? 'touchmove' : 'mousemove';
+						var endEventType = isTouch ? 'touchend' : 'mouseup';
+						var moveHandler = getHandler(moveEventType, nt, setupDPos);
+						var upHandler = getHandler(endEventType, nt);
 						var moveHandlerWrapped = function(e) {
 							context.event = e;
 							context.evArg = handlerArgumentsToContextEvArg(arguments);
@@ -1317,16 +1317,16 @@
 						removeHandlers = function() {
 							storedEvents = [];
 							h5trackTriggeredFlags = [];
-							$bindTarget.unbind(move, moveHandlerWrapped);
-							$bindTarget.unbind(end, upHandlerWrapped);
+							$bindTarget.unbind(moveEventType, moveHandlerWrapped);
+							$bindTarget.unbind(endEventType, upHandlerWrapped);
 							if (!isTouch && controller.rootElement !== document) {
-								$(controller.rootElement).unbind(move, moveHandlerWrapped);
-								$(controller.rootElement).unbind(end, upHandlerWrapped);
+								$(controller.rootElement).unbind(moveEventType, moveHandlerWrapped);
+								$(controller.rootElement).unbind(endEventType, upHandlerWrapped);
 							}
 						};
 						// h5trackmoveとh5trackendのbindを行う
-						$bindTarget.bind(move, moveHandlerWrapped);
-						$bindTarget.bind(end, upHandlerWrapped);
+						$bindTarget.bind(moveEventType, moveHandlerWrapped);
+						$bindTarget.bind(endEventType, upHandlerWrapped);
 
 						// タッチでなく、かつコントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
 						// タッチイベントでない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
@@ -1337,8 +1337,8 @@
 						// (タッチの場合はターゲットはstart時の要素なので2重にバインドする必要はない)
 						if (!isTouch && controller.rootElement !== document) {
 							// h5trackmoveとh5trackendのbindを行う
-							$(controller.rootElement).bind(move, moveHandlerWrapped);
-							$(controller.rootElement).bind(end, upHandlerWrapped);
+							$(controller.rootElement).bind(moveEventType, moveHandlerWrapped);
+							$(controller.rootElement).bind(endEventType, upHandlerWrapped);
 						}
 					} else if (type === EVENT_NAME_H5_TRACKEND) {
 						// touchend,mousup時(=h5trackend時)にmoveとendのイベントをunbindする
