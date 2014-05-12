@@ -114,6 +114,38 @@ $(function() {
 		};
 	})();
 
+	/**
+	 * getComputedStyleで引数に渡されたエレメントのスタイルを取得する
+	 *
+	 * @param {DOM} elm
+	 * @returns computedStyle
+	 */
+	function getComputedStyleWrapper(elm) {
+		var doc = getDocumentOf(elm);
+		var win = getWindowOfDocument(doc);
+		return win.getComputedStyle(elm, null);
+	}
+
+	/**
+	 * スタイルを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、jQuery.css()を使って取得した値を返す。
+	 * </p>
+	 *
+	 * @private
+	 * @param elm {DOM}
+	 * @param prop {String} CSSプロパティ
+	 * @returns 第1引数について、computedStyleを取得し、第2引数に指定されたプロパティの値を返す
+	 */
+	function getComputedStyleValue(elm, prop) {
+		if (!window.getComputedStyle) {
+			return $(elm).css(prop);
+		}
+		return getComputedStyleWrapper(elm)[prop];
+	}
 	// =========================================================================
 	//
 	// Test Module
@@ -1164,12 +1196,9 @@ $(function() {
 
 		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
 				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-				'Indicator#show() インジケータが表示されること');
-
-		strictEqual($(indicator._target).find('.h5-indicator.a.overlay')[0].style.display, 'block',
-				'オーバーレイが表示されていること');
-
+		var $overlay = $(indicator._target).find('.h5-indicator.a.overlay');
+		strictEqual($overlay.length, 1, 'Indicator#show() インジケータが表示されること');
+		strictEqual(getComputedStyleValue($overlay[0], 'display'), 'block', 'オーバーレイが表示されていること');
 		setTimeout(function() {
 			indicator.hide();
 
