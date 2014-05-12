@@ -611,7 +611,7 @@
 	}
 
 	/**
-	 * 要素のheightを取得する
+	 * 要素のheight(offsetHeight)を取得する
 	 * <p>
 	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
 	 * </p>
@@ -628,11 +628,12 @@
 			return $(elm).height();
 		}
 		var elmStyle = getComputedStyleObject(elm);
-		return parseInt(elmStyle.height);
+		return elm.offsetHeight - parseFloat(elmStyle.paddingTop)
+				- parseFloat(elmStyle.paddingBottom);
 	}
 
 	/**
-	 * 要素のwidthを取得する
+	 * 要素のwidth(offsetWidth)を取得する
 	 * <p>
 	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
 	 * </p>
@@ -649,7 +650,8 @@
 			return $(elm).width();
 		}
 		var elmStyle = getComputedStyleObject(elm);
-		return parseInt(elmStyle.width);
+		return elm.offsetWidth - parseFloat(elmStyle.paddingLeft)
+				- parseFloat(elmStyle.paddingRight);
 	}
 
 	/**
@@ -668,16 +670,16 @@
 	 */
 	function getOuterHeight(elm, includeMargin) {
 		if (!window.getComputedStyle) {
-			return $(elm).outerWidth();
+			return $(elm).outerHeight();
 		}
 
 		var elmStyle = getComputedStyleObject(elm);
-		return parseInt(elmStyle.height)
-				+ parseInt(elmStyle.paddingTop)
-				+ parseInt(elmStyle.paddingBottom)
-				+ parseInt(elmStyle.borderTopWidth)
-				+ parseInt(elmStyle.borderBottomWidth)
-				+ (includeMargin ? (parseInt(elmStyle.marginTop) + parseInt(elmStyle.marginBottom))
+		return getHeight(elm)
+				+ parseFloat(elmStyle.paddingTop)
+				+ parseFloat(elmStyle.paddingBottom)
+				+ parseFloat(elmStyle.borderTopWidth)
+				+ parseFloat(elmStyle.borderBottomWidth)
+				+ (includeMargin ? (parseFloat(elmStyle.marginTop) + parseFloat(elmStyle.marginBottom))
 						: 0);
 	}
 
@@ -699,12 +701,12 @@
 			return $(elm).outerWidth();
 		}
 		var elmStyle = getComputedStyleObject(elm);
-		return parseInt(elmStyle.width)
-				+ parseInt(elmStyle.paddingLeft)
-				+ parseInt(elmStyle.paddingRight)
-				+ parseInt(elmStyle.borderLeftWidth)
-				+ parseInt(elmStyle.borderRightWidth)
-				+ (includeMargin ? (parseInt(elmStyle.marginLeft) + parseInt(elmStyle.marginRight))
+		return getWidth(elm)
+				+ parseFloat(elmStyle.paddingLeft)
+				+ parseFloat(elmStyle.paddingRight)
+				+ parseFloat(elmStyle.borderLeftWidth)
+				+ parseFloat(elmStyle.borderRightWidth)
+				+ (includeMargin ? (parseFloat(elmStyle.marginLeft) + parseFloat(elmStyle.marginRight))
 						: 0);
 	}
 
@@ -725,8 +727,8 @@
 			return $(elm).innerHeight();
 		}
 		var elmStyle = getComputedStyleObject(elm);
-		return parseInt(elmStyle.height) + parseInt(elmStyle.paddingTop)
-				+ parseInt(elmStyle.paddingBottom);
+		return getHeight(elm) + parseFloat(elmStyle.paddingTop)
+				+ parseFloat(elmStyle.paddingBottom);
 	}
 
 	/**
@@ -746,8 +748,7 @@
 			return $(elm).innerWidth();
 		}
 		var elmStyle = getComputedStyleObject(elm);
-		return parseInt(elmStyle.width) + parseInt(elmStyle.paddingLeft)
-				+ parseInt(elmStyle.paddingRight);
+		return getWidth(elm) + parseFloat(elmStyle.paddingLeft) + parseFloat(elmStyle.paddingRight);
 	}
 
 	/**
@@ -1425,7 +1426,7 @@
 				} else {
 					//オーバーレイの計算はスクロールサイズを基準にしている。これに倣い、中央揃え計算の基準はinnerHeight()にする(＝paddingを含める)。leftも同様
 					_$content.css('top', _$target.scrollTop()
-							+ (getInnerHeight(_$target[0]) - getOuterHeight(_$content[0]) / 2));
+							+ (getInnerHeight(_$target[0]) - getOuterHeight(_$content[0])) / 2);
 				}
 
 				var blockElementPadding = getInnerWidth(_$content[0]) - getWidth(_$content[0]);
