@@ -175,12 +175,17 @@ function closePopupWindow(w) {
 }
 
 /**
- * 現在実行中のテストを中断して、成功扱いにする。 テストケース内(test,asyncTest)から呼んで使用する。
+ * 現在実行中のテストを中断する。テストケース内(test,asyncTest)から呼んで使用する。
+ * <p>
+ * 第1引数がfalseなら成功扱い、trueなら失敗扱いにする。
+ * </p>
+ *
+ * @param {Boolean} isFail テストを失敗扱いにするかどうか。デフォルトはfalseで、成功扱い。
+ * @param {String} reason アサーションに表示するメッセージ。デフォルトは"テストをスキップしました"
  */
-function abortTest() {
-	// test,asyncTest内から呼ばれた場合
-	// テストが成功するようにする
-	ok(true, 'テストをスキップしました');
+function abortTest(isFail, reason) {
+	// isFailがtrueなら失敗扱い、指定無しやfalseの場合は成功扱いにする
+	ok(!isFail, reason || 'テストをスキップしました');
 	QUnit.config.current.expected = null;
 
 	// テスト名の先頭に[テストをスキップしました]を付けて表示する
@@ -196,11 +201,17 @@ function abortTest() {
 
 /**
  * 次に実行されるテストを実行せずにスキップする。 モジュールのsetup内で呼んで使用する。
+ * <p>
+ * isFailがtrueならスキップするテストを失敗扱いする。
+ * </p>
+ *
+ * @param {Boolean} isFail テストを失敗扱いにするかどうか。デフォルトはfalseで、成功扱い。
+ * @param {String} reason アサーションに表示するメッセージ。デフォルトは"テストをスキップしました"
  */
-function skipTest() {
+function skipTest(isFail, reason) {
 	// モジュールのsetupから呼ばれた場合
 	QUnit.config.current.callback = function() {
-		abortTest();
+		abortTest(isFail, reason);
 		if (QUnit.config.current.async) {
 			start();
 		}
