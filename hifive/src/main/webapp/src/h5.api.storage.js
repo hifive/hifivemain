@@ -172,7 +172,7 @@
 		each: function(callback) {
 			var storage = this._storage;
 
-			for ( var i = 0, len = storage.length; i < len; i++) {
+			for (var i = 0, len = storage.length; i < len; i++) {
 				var k = storage.key(i);
 				callback(i, k, this.getItem(k));
 			}

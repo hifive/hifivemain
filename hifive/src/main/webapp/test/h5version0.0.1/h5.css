@@ -16,63 +16,68 @@
  *
  * hifive css
  *   version 0.0.1
- *   build at 2012/07/17 10:13:50.385 (+0900)
- *   (util,controller,view,ui,api.geo,api.sqldb,api.storage)
+ *   gitCommitId : 587bce5de3d2dcc2e2a7fd62e5c4cdc28074e6eb
+ *   build at 2014/03/25 11:45:35.052 (+0900)
+ *   (util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage)
  */
 
-/** オーバーレイ */
-.blockUI.blockOverlay {
-	background-color: #000;
-	opacity: 0.6;
-	filter:alpha(opacity=60) !important;
-	cursor: wait;
-	height: 100%;
-	width: 100%;
-}
 
-/* blockUI本体 */
-.blockUI {
+/* インジケータ オーバーレイDIV,メッセージDIV 共通設定 */
+.h5-indicator {
 	text-align: center;
 	padding: 5px 10px 5px 10px;
 	white-space: nowarp;
 	cursor: wait;
 }
 
-/* blockUI本体内 スロバー */
-.blockUI .indicator-throbber {
+/* インジケータメッセージDIV - スロバーSPAN */
+.h5-indicator .indicator-throbber {
 	display: inline-block;
-	zoom: 1;
 	vertical-align: middle;
+	zoom: 1;
 }
 
-/* blockUI本体内 メッセージ */
-.blockUI  .indicator-message {
+/* インジケータメッセージDIV - メッセージSPAN */
+.h5-indicator .indicator-message {
 	display: inline-block;
-	zoom: 1;
 	vertical-align: middle;
-	font-size: 12pt;
-	color: #fff;
+	zoom: 1;
 }
 
-/*---- パーセント (IE6,7,8以外) ----*/
-.blockUI  .throbber-percent {
+/*---- インジケータメッセージDIV - パーセントSPAN (IE6,7,8以外) ----*/
+.h5-indicator .throbber-percent {
 	position: absolute;
 	text-align: center;
 }
 
-/*---- パーセント (IE6,7,8用) -----*/
-.blockUI  .vml-root {
+/*---- インジケータメッセージDIV - パーセントSPAN (IE6,7,8用) -----*/
+.h5-indicator .vml-root {
 	display: inline-block;
 	vertical-align: middle;
 	zoom: 1;
 }
 
-.blockUI  .vml-root .throbber-percent {
+.h5-indicator .vml-root .throbber-percent {
 	position: relative;
+	margin: 0;
+	padding: 0;
+	border: none;
+	zoom: 1;
+}
+
+/*---- オーバーレイ(iframe) (IE6用) -----*/
+.h5-indicator.skin {
+	position: absolute;
+	filter: alpha(opacity=0);
+	height: 100%;
+	width: 100%;
+	border: none;
 	margin: 0px;
 	padding: 0px;
-	zoom: 1;
-	border: 0px;
+	top: 0;
+	left: 0;
+	z-index: 1000;
+	overflow: hidden;
 }
 
 /*------------------------ Theme 'a' start ---------------------------*/
@@ -89,28 +94,99 @@ div.a.throbber-line {
 	color: #fff;
 }
 
+/* ----- スロバーの動作 ------*/
+/** Chrome/Safari */
+@-webkit-keyframes rotateThrobber {
+    from {-webkit-transform: rotate(0deg);}
+    to {-webkit-transform: rotate(360deg);}
+}
+
+/** Firefox */
+@-moz-keyframes rotateThrobber {
+    from {-moz-transform: rotate(0deg);}
+    to {-moz-transform: rotate(360deg);}
+}
+
+/** Opera */
+@-o-keyframes rotateThrobber {
+    from {-o-transform: rotate(0deg);}
+    to {-o-transform: rotate(360deg);}
+}
+
+/** no-prefix (IE10) */
+@-keyframes rotateThrobber {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+}
+
+.h5-indicator.a .throbber-canvas {
+	/** Chrome/Safari */
+	-webkit-animation-name: rotateThrobber;
+    -webkit-animation-delay: 0;
+    -webkit-animation-duration: 2s;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-iteration-count: infinite;
+    /** Firefox */
+	-moz-animation-name: rotateThrobber;
+    -moz-animation-delay: 0;
+    -moz-animation-duration: 2s;
+    -moz-animation-timing-function: linear;
+    -moz-animation-iteration-count: infinite;
+    /** Opera */
+    -o-animation-name: rotateThrobber;
+    -o-animation-delay: 0;
+    -o-animation-duration: 2s;
+    -o-animation-timing-function: linear;
+    -o-animation-iteration-count: infinite;
+    /** no-prefix (IE10) */
+    animation-name: rotateThrobber;
+    animation-delay: 0;
+    animation-duration: 2s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
 /*---- パーセント (スロバーの大きさに合わせて修正して下さい) ----*/
-.blockUI.a  .throbber-percent {
+.h5-indicator.a .throbber-percent {
 	font-size: 12px;
 	font-family: ＭＳ ゴシック;
 	color: #fff;
 }
 
 /* メッセージ */
-.blockUI.a  .indicator-message {
+.h5-indicator.a .indicator-message {
 	font-size: 14px;
 	color: #fff;
 }
 
-/* blockUI本体 */
-.blockUI.a {
+/** オーバーレイDIV */
+.h5-indicator.a.overlay {
+	background-color: #000;
+	opacity: 0.6;
+	filter: alpha(opacity=60);
+	height: 100%;
+	width: 100%;
+	border: none;
+	margin: 0px;
+	padding: 0px;
+	top: 0;
+	left: 0;
+	z-index: 1001;
+}
+
+/* メッセージDIV */
+.h5-indicator.a.content {
 	background-color: #333;
+	opacity: 0.7;
+	filter: alpha(opacity=70);
 	color: #fff;
 	border: none;
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
+	-o-border-radius: 10px;
+	-ms-border-radius: 10px;
 	border-radius: 10px;
-	opacity: 0.7;
+	z-index: 1002;
 }
 
 /*------------------------ Theme 'a' end ---------------------------*/

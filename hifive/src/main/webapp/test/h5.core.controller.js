@@ -38,11 +38,28 @@ $(function() {
 
 	// タッチイベントがあるか
 	var hasTouchEvent = typeof document.ontouchstart !== 'undefined';
+	// マウスイベントがあるか
+	var hasMouseEvent = typeof document.onmousedown !== 'undefined';
 
 	// trackするためのイベント
-	var startTrackEventName = hasTouchEvent ? 'touchstart' : 'mousedown';
-	var moveTrackEventName = hasTouchEvent ? 'touchmove' : 'mousemove';
-	var endTrackEventName = hasTouchEvent ? 'touchend' : 'mouseup';
+	var touchTrackEvents = {
+		start: 'touchstart',
+		move: 'touchmove',
+		end: 'touchend'
+	};
+	var mouseTrackEvents = {
+		start: 'mousedown',
+		move: 'mousemove',
+		end: 'mouseup'
+	};
+
+	// touch-action、-ms-touch-actionプロパティに対応しているかどうか
+	var touchActionProp = null;
+	if (typeof document.body.style.touchAction !== 'undefined') {
+		touchActionProp = 'touchAction';
+	} else if (typeof document.body.style.msTouchAction !== 'undefined') {
+		touchActionProp = 'msTouchAction';
+	}
 
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
@@ -62,7 +79,7 @@ $(function() {
 		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
 			deep: true
 		});
-		for ( var i = controllers.length - 1; i >= 0; i--) {
+		for (var i = controllers.length - 1; i >= 0; i--) {
 			controllers[i].dispose();
 		}
 	}
@@ -175,15 +192,18 @@ $(function() {
 		}
 	}
 
-	// タッチイベントをディスパッチする関数
+	/**
+	 * タッチイベントをディスパッチする関数
+	 */
 	function dispatchTouchEvent(elm, eventName, x, y) {
-		var ev = {};
-		//android 1-3
+		var ev = null;
 		if (/Android\s+[123]\./i.test(navigator.userAgent)) {
+			//android 1-3 はcreateEvent('mouseEvents')で作ったイベントにtouchesを持たせてタッチイベントを作成する
 			ev = document.createEvent('MouseEvents');
 			ev.initMouseEvent(eventName, true, true, window, 0, x, y, x, y, false, false, false,
 					false, 0, null);
-			var touches = [];
+			var touches = null;
+			// touchesの作成
 			if (document.createTouch) {
 				// android2.3.6はcreateTouchあるが、2.2.1にはなかった
 				touches = [document.createTouch(window, elm, 0, x, y, x, y)];
@@ -204,20 +224,18 @@ $(function() {
 			ev.scale = 1;
 			ev.rotation = 0;
 		} else {
+			// iOS、android4、またはタッチ対応PCのブラウザ
 			ev = document.createEvent('TouchEvent');
 			var touch = document.createTouch(window, elm, 0, x, y, x, y);
 			var touches = document.createTouchList(touch);
 
-			// android4
-			if (/Android\s+4\./i.test(navigator.userAgent)) {
-				ev.initTouchEvent(touches, touches, touches, eventName, window, x, y, x, y, false,
-						false, false, false);
-			} else {
+			if (h5.env.ua.isiOS) {
 				// iOS
-				ev = document.createEvent('TouchEvent');
-
 				ev.initTouchEvent(eventName, true, true, window, 0, x, y, x, y, false, false,
 						false, false, touches, touches, touches, 1, 0);
+			} else {
+				ev.initTouchEvent(touches, touches, touches, eventName, window, x, y, x, y, false,
+						false, false, false);
 			}
 		}
 		elm.dispatchEvent(ev);
@@ -232,6 +250,979 @@ $(function() {
 		} else if (eventName.indexOf('touch') === 0) {
 			dispatchTouchEvent(elm, eventName, x, y);
 		}
+	}
+
+	/**
+	 * touchTrackEventsまたはmouseTrackEventsを引数にとって、使用しているブラウザにそのイベントがあるか判定する関数
+	 *
+	 * @param {Object} events
+	 */
+	function isExistEvents(events) {
+		if (!hasTouchEvent && events === touchTrackEvents) {
+			ok(true, 'タッチイベントの無い端末で実行できないテストです');
+			return false;
+		}
+		if (!hasMouseEvent && events === mouseTrackEvents) {
+			ok(true, 'マウスイベントの無い端末で実行できないテストです');
+			return false;
+		}
+		return true;
+	}
+
+	//----------- h5trackイベントのテスト関数を、mouseEvents、touchEventsのいずれかを引数にとって生成する関数 --------------//
+
+	/**
+	 * 『h5track*イベントハンドラを、mouse(またはtouch)イベントのトリガで発火させたときにcontext.evArgに引数が格納されること。』 。
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckEvArg(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+
+			var evArg = null;
+			var $elm = $('#controllerTest');
+			var h5TrackTestController = h5.core.controller($elm, {
+				__name: 'h5TrackTestController',
+				'{rootElement} h5trackstart': function(context) {
+					evArg = context.evArg;
+				},
+				'{rootElement} h5trackmove': function(context) {
+					evArg = context.evArg;
+				},
+				'{rootElement} h5trackend': function(context) {
+					evArg = context.evArg;
+				}
+			});
+
+			h5TrackTestController.readyPromise.done(function() {
+				var obj = {
+					a: 1,
+					b: 2
+				};
+				var ary = [1, 'a'];
+				// ドラッグ開始
+				$elm.trigger(createDummyTrackEvent(events.start, 0), obj);
+				strictEqual(evArg, obj, events.start
+						+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
+				evArg = null;
+
+				// ドラッグ
+				$elm.trigger(createDummyTrackEvent(events.move, 10), 1);
+				strictEqual(evArg, 1, events.move
+						+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
+				evArg = null;
+
+				// ドラッグ終了
+				$elm.trigger(createDummyTrackEvent(events.end, 10), 'a');
+				strictEqual(evArg, 'a', events.end
+						+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
+				evArg = null;
+
+				// 配列で複数渡した場合
+				// ドラッグ開始
+				$elm.trigger(createDummyTrackEvent(events.start, 0), [1, obj, ary]);
+				deepEqual(evArg, [1, obj, ary], events.start
+						+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
+				evArg = null;
+
+				// ドラッグ
+				$elm.trigger(createDummyTrackEvent(events.move, 10), [1, obj, ary]);
+				deepEqual(evArg, [1, obj, ary], events.move
+						+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
+				evArg = null;
+
+				// ドラッグ終了
+				$elm.trigger(createDummyTrackEvent(events.end, 10), [1, obj, ary]);
+				deepEqual(evArg, [1, obj, ary], events.end
+						+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
+				evArg = null;
+
+				h5TrackTestController.unbind();
+				start();
+			});
+		};
+	}
+
+	/**
+	 * 『dispatchEvent(またはfireEvent)でtouch/mouseイベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントが正しい回数実行されること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckDispatchEvent(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var fired = [];
+			var elm = $('#controllerTest')[0];
+			var h5TrackTestController = h5.core.controller(elm, {
+				__name: 'h5TrackTestController',
+				'{rootElement} h5trackstart': function(context) {
+					fired.push('start');
+				},
+				'{rootElement} h5trackmove': function(context) {
+					fired.push('move');
+				},
+				'{rootElement} h5trackend': function(context) {
+					fired.push('end');
+				}
+			});
+
+			h5TrackTestController.readyPromise.done(function() {
+				// ドラッグ開始
+				dispatchTrackSrcNativeEvent(elm, events.start, 10, 10);
+				deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				// ドラッグ
+				dispatchTrackSrcNativeEvent(elm, events.move, 11, 12);
+				deepEqual(fired, ['move'], 'h5trackmoveのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				// ドラッグ終了
+				dispatchTrackSrcNativeEvent(elm, events.end, 9, 15);
+				deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				h5TrackTestController.unbind();
+				start();
+			});
+		};
+	}
+
+	/**
+	 * 『dispatchEvent(またはfireEvent)でtouch/mouseイベントを発火させたときに、ルートエレメントに直接バインド記法でバインドしたh5track*イベントが正しい回数実行されること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckDirectBindDispatchEvent(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var fired = [];
+			var elm = $('#controllerTest')[0];
+			var h5TrackTestController = h5.core.controller(elm, {
+				__name: 'h5TrackTestController',
+				'{rootElement} [h5trackstart]': function(context) {
+					fired.push('start');
+				},
+				'{rootElement} [h5trackmove]': function(context) {
+					fired.push('move');
+				},
+				'{rootElement} [h5trackend]': function(context) {
+					fired.push('end');
+				}
+			});
+
+			h5TrackTestController.readyPromise.done(function() {
+				// ドラッグ開始
+				dispatchTrackSrcNativeEvent(elm, events.start, 10, 10);
+				deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				// ドラッグ
+				dispatchTrackSrcNativeEvent(elm, events.move, 11, 12);
+				deepEqual(fired, ['move'], 'h5trackmoveのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				// ドラッグ終了
+				dispatchTrackSrcNativeEvent(elm, events.end, 9, 15);
+				deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				h5TrackTestController.unbind();
+				start();
+			});
+		};
+	}
+
+	/**
+	 * 『dispatchEvent(またはfireEvent)でmouse/touchイベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckDispatchEventDxDy(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var ev = {};
+			var elm = $('#controllerTest')[0];
+			var h5TrackTestController = h5.core.controller(elm, {
+				__name: 'h5TrackTestController',
+				'{rootElement} h5trackstart': function(context) {
+					ev = context.event;
+				},
+				'{rootElement} h5trackmove': function(context) {
+					ev = context.event;
+				},
+				'{rootElement} h5trackend': function(context) {
+					ev = context.event;
+				}
+			});
+
+			h5TrackTestController.readyPromise.done(function() {
+				// ドラッグ開始
+				dispatchTrackSrcNativeEvent(elm, events.start, 10, 10);
+				ev = {};
+
+				// ドラッグ
+				dispatchTrackSrcNativeEvent(elm, events.move, 11, 12);
+				strictEqual(ev.dx, 1, 'dxの値が計算されていること');
+				strictEqual(ev.dy, 2, 'dyの値が計算されていること');
+				ev = {};
+
+				// ドラッグ
+				dispatchTrackSrcNativeEvent(elm, events.move, 9, 15);
+				strictEqual(ev.dx, -2, 'dxの値が計算されていること');
+				strictEqual(ev.dy, 3, 'dyの値が計算されていること');
+				ev = {};
+
+				// ドラッグ終了
+				dispatchTrackSrcNativeEvent(elm, events.end, 9, 15);
+				ev = {};
+
+				h5TrackTestController.unbind();
+				start();
+			});
+		};
+	}
+
+	/**
+	 * 『dispatchEvent(またはfireEvent)でmouse/touchイベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントが正しい回数実行されること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckChildEvent(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var fired = [];
+			var elm = $('<div id="h5track-target"></div>')[0];
+			$('#controllerTest').append(elm);
+			var h5TrackTestController = h5.core.controller('#controllerTest', {
+				__name: 'h5TrackTestController',
+				'#h5track-target h5trackstart': function(context) {
+					fired.push('start');
+				},
+				'#h5track-target h5trackmove': function(context) {
+					fired.push('move');
+				},
+				'#h5track-target h5trackend': function(context) {
+					fired.push('end');
+				}
+			});
+
+			h5TrackTestController.readyPromise.done(function() {
+				// ドラッグ開始
+				dispatchTrackSrcNativeEvent(elm, events.start, 10, 10);
+				deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				// ドラッグ
+				dispatchTrackSrcNativeEvent(elm, events.move, 11, 12);
+				deepEqual(fired, ['move'], 'h5trackmoveのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				// ドラッグ終了
+				dispatchTrackSrcNativeEvent(elm, events.end, 9, 15);
+				deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
+				fired = [];
+
+				h5TrackTestController.unbind();
+				start();
+			});
+		};
+	}
+
+	/**
+	 * 『dispatchEvent(またはfireEvent)でmouseイベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckChildEventDxDy(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var ev = {};
+			var elm = $('<div id="h5track-target"></div>')[0];
+			$('#controllerTest').append(elm);
+			var h5TrackTestController = h5.core.controller('#controllerTest', {
+				__name: 'h5TrackTestController',
+				'#h5track-target h5trackstart': function(context) {
+					ev = context.event;
+				},
+				'#h5track-target h5trackmove': function(context) {
+					ev = context.event;
+				},
+				'#h5track-target h5trackend': function(context) {
+					ev = context.event;
+				}
+			});
+
+			h5TrackTestController.readyPromise.done(function() {
+				// ドラッグ開始
+				dispatchTrackSrcNativeEvent(elm, events.start, 10, 10);
+				ev = {};
+
+				// ドラッグ
+				dispatchTrackSrcNativeEvent(elm, events.move, 11, 12);
+				strictEqual(ev.dx, 1, 'dxの値が計算されていること');
+				strictEqual(ev.dy, 2, 'dyの値が計算されていること');
+				ev = {};
+
+				// ドラッグ
+				dispatchTrackSrcNativeEvent(elm, events.move, 9, 15);
+				strictEqual(ev.dx, -2, 'dxの値が計算されていること');
+				strictEqual(ev.dy, 3, 'dyの値が計算されていること');
+				ev = {};
+
+				// ドラッグ終了
+				dispatchTrackSrcNativeEvent(elm, events.end, 9, 15);
+				ev = {};
+
+				h5TrackTestController.unbind();
+				start();
+			});
+		};
+	}
+
+	/**
+	 * 『h5trackイベントハンドラがmouse/touchイベントのトリガで実行され、h5trackstart、h5trackmove、h5trackendの順で発火し、それぞれのハンドラでポインタの位置情報を取得できること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckPosition(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var controller = {
+
+				__name: 'TestController',
+
+				'{rootElement} h5trackstart': function(context) {
+					context.evArg
+							&& ok(false,
+									'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+					var event = context.event;
+					strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
+					strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
+					strictEqual(event.screenX, 10, 'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
+					strictEqual(event.screenY, 10, 'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
+					strictEqual(event.clientX, 10, 'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
+					strictEqual(event.clientY, 10, 'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
+					ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
+					ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
+				},
+
+				'{rootElement} h5trackmove': function(context) {
+					context.evArg
+							&& ok(false,
+									'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+					var event = context.event;
+					strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
+					strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
+					strictEqual(event.screenX, 15, 'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
+					strictEqual(event.screenY, 15, 'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
+					strictEqual(event.clientX, 15, 'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
+					strictEqual(event.clientY, 15, 'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
+					ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
+					ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
+					strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
+					strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
+				},
+
+				'{rootElement} h5trackend': function(context) {
+					context.evArg
+							&& ok(false,
+									'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+					var event = context.event;
+					strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
+					strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
+					strictEqual(event.screenX, 20, 'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
+					strictEqual(event.screenY, 20, 'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
+					strictEqual(event.clientX, 20, 'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
+					strictEqual(event.clientY, 20, 'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
+					ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
+					ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
+				}
+			};
+
+			var testController = h5.core.controller('#controllerTest', controller);
+			testController.readyPromise.done(function() {
+				var startTrackEvent = createDummyTrackEvent(events.start, 10);
+				var moveTrackEvent = createDummyTrackEvent(events.move, 15);
+				var endTrackEvent = createDummyTrackEvent(events.end, 20);
+
+				// ドラッグ中じゃないので実行されない
+				$('#child1').trigger(moveTrackEvent, {
+					aa: "実行されない"
+				});
+				$('#child1').trigger(endTrackEvent, {
+					aa: "実行されない"
+				});
+
+				// ドラッグ開始
+				$('#child1').trigger(startTrackEvent);
+
+				// ドラッグ中なので実行されない
+				$('#child1').trigger(startTrackEvent, {
+					aa: "実行されない"
+				});
+
+				// ドラッグ
+				$('#child1').trigger(moveTrackEvent);
+
+				// ドラッグ終了
+				$('#child1').trigger(endTrackEvent);
+
+				// ドラッグ中じゃないので実行されない
+				$('#child1').trigger(moveTrackEvent, {
+					aa: "実行されない"
+				});
+				$('#child1').trigger(endTrackEvent, {
+					aa: "実行されない"
+				});
+
+				testController.unbind();
+
+				// ちゃんとアンバインドされているかどうかを確認。
+				// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+				$('#child1').trigger(startTrackEvent);
+				$('#child1').trigger(moveTrackEvent);
+				$('#child1').trigger(endTrackEvent);
+
+				start();
+			});
+		}
+	}
+
+	/**
+	 * 『SVG内要素にバインドしたコントローラでmouse/touchイベントでh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckSVGPosition(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var controller = {
+
+				__name: 'TestController',
+
+				'#svgElem rect h5trackstart': function(context) {
+					context.evArg
+							&& ok(false,
+									'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+					var event = context.event;
+					strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
+					strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
+					strictEqual(event.screenX, 10, 'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
+					strictEqual(event.screenY, 10, 'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
+					strictEqual(event.clientX, 10, 'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
+					strictEqual(event.clientY, 10, 'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
+					ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
+					ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
+				},
+
+				'#svgElem rect h5trackmove': function(context) {
+					context.evArg
+							&& ok(false,
+									'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+					var event = context.event;
+					strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
+					strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
+					strictEqual(event.screenX, 15, 'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
+					strictEqual(event.screenY, 15, 'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
+					strictEqual(event.clientX, 15, 'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
+					strictEqual(event.clientY, 15, 'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
+					ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
+					ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
+					strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
+					strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
+				},
+
+				'#svgElem rect h5trackend': function(context) {
+					context.evArg
+							&& ok(false,
+									'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
+					var event = context.event;
+					strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
+					strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
+					strictEqual(event.screenX, 20, 'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
+					strictEqual(event.screenY, 20, 'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
+					strictEqual(event.clientX, 20, 'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
+					strictEqual(event.clientY, 20, 'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
+					ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
+					ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
+				}
+			};
+
+			var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			svg.setAttribute('id', 'svgElem');
+			svg.setAttribute('width', '50');
+			svg.setAttribute('height', '50');
+			var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+			rect.setAttribute('x', '50');
+			rect.setAttribute('y', '50');
+			rect.setAttribute('width', '50');
+			rect.setAttribute('height', '50');
+			svg.appendChild(rect);
+			document.getElementById('controllerTest').appendChild(svg);
+
+			var testController = h5.core.controller('#controllerTest', controller);
+
+			testController.readyPromise.done(function() {
+				var startTrackEvent = createDummyTrackEvent(events.start, 10);
+				var moveTrackEvent = createDummyTrackEvent(events.move, 15);
+				var endTrackEvent = createDummyTrackEvent(events.end, 20);
+
+				// ドラッグ中じゃないので実行されない
+				$('#svgElem rect').trigger(moveTrackEvent, {
+					aa: "実行されない"
+				});
+				$('#svgElem rect').trigger(endTrackEvent, {
+					aa: "実行されない"
+				});
+
+				// ドラッグ開始
+				$('#svgElem rect').trigger(startTrackEvent);
+
+				// ドラッグ中なので実行されない
+				$('#svgElem rect').trigger(startTrackEvent, {
+					aa: "実行されない"
+				});
+
+				// ドラッグ
+				$('#svgElem rect').trigger(moveTrackEvent);
+
+				// ドラッグ終了
+				$('#svgElem rect').trigger(endTrackEvent);
+
+				// ドラッグ中じゃないので実行されない
+				$('#svgElem rect').trigger(moveTrackEvent, {
+					aa: "実行されない"
+				});
+				$('#svgElem rect').trigger(endTrackEvent, {
+					aa: "実行されない"
+				});
+
+				testController.unbind();
+
+				// ちゃんとアンバインドされているかどうかを確認。
+				// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
+				$('#svgElem rect').trigger(startTrackEvent);
+				$('#svgElem rect').trigger(moveTrackEvent);
+				$('#svgElem rect').trigger(endTrackEvent);
+
+				start();
+			});
+		}
+	}
+
+	/**
+	 * 『親コントローラと子コントローラがh5trackイベントをバインドしているときにtouchイベントでh5grackイベントが正しい回数発生すること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckNumOfRuns(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var startTrackEvent = createDummyTrackEvent(events.start, 0);
+			var moveTrackEvent = createDummyTrackEvent(events.move, 10);
+			var endTrackEvent = createDummyTrackEvent(events.end, 10);
+
+			var results = [];
+			var $elm = $('#controllerTest');
+			var h5TrackTestController = h5.core.controller($elm, {
+				__name: 'h5TrackTestController',
+				childController: {
+					__name: 'child',
+					'{rootElement} h5trackstart': function() {
+						results.push('child-h5trackstart');
+					},
+					'{rootElement} h5trackmove': function() {
+						results.push('child-h5trackmove');
+					},
+					'{rootElement} h5trackend': function() {
+						results.push('child-h5trackend');
+					}
+				},
+				'{rootElement} h5trackstart': function() {
+					results.push('parent-h5trackstart');
+				},
+				'{rootElement} h5trackmove': function() {
+					results.push('parent-h5trackmove');
+				},
+				'{rootElement} h5trackend': function() {
+					results.push('parent-h5trackend');
+				}
+			});
+
+			h5TrackTestController.readyPromise.done(function() {
+				// ドラッグ開始
+				$elm.trigger(startTrackEvent);
+				deepEqual(results, ['parent-h5trackstart', 'child-h5trackstart'],
+						'h5trackstartイベントが発火すること');
+				results = [];
+
+				// ドラッグ
+				$elm.trigger(moveTrackEvent);
+				deepEqual(results, ['parent-h5trackmove', 'child-h5trackmove'],
+						'h5trackmoveイベントが発火すること');
+				results = [];
+
+				// ドラッグ終了
+				$elm.trigger(endTrackEvent);
+				deepEqual(results, ['parent-h5trackend', 'child-h5trackend'],
+						'h5trackendイベントが発火すること');
+
+				h5TrackTestController.unbind();
+				start();
+			});
+		};
+	}
+
+	/**
+	 * 『2つのコントローラが同一要素にh5trackイベントをバインドしているときにmouse/touchイベントでh5trackイベントが正しい回数発生すること』 で実行するテスト』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckNumOfRunsAtSameElement(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var startTrackEvent = createDummyTrackEvent(events.start, 0);
+			var moveTrackEvent = createDummyTrackEvent(events.move, 10);
+			var endTrackEvent = createDummyTrackEvent(events.end, 10);
+
+			var results = [];
+			var $elm = $('#controllerTest');
+			$elm.append('<div id="divInControllerTest"></div>');
+			var $inElm = $('#divInControllerTest');
+			var aController = h5.core.controller('body', {
+				__name: 'aController',
+
+				'#divInControllerTest h5trackstart': function() {
+					results.push('a-h5trackstart');
+				},
+				'#divInControllerTest h5trackmove': function() {
+					results.push('a-h5trackmove');
+				},
+				'#divInControllerTest h5trackend': function() {
+					results.push('a-h5trackend');
+				}
+			});
+			aController.readyPromise.done(function() {
+				var bController = h5.core.controller($elm, {
+					__name: 'bController',
+					'#divInControllerTest h5trackstart': function() {
+						results.push('b-h5trackstart');
+					},
+					'#divInControllerTest h5trackmove': function() {
+						results.push('b-h5trackmove');
+					},
+					'#divInControllerTest h5trackend': function() {
+						results.push('b-h5trackend');
+					}
+				});
+				bController.readyPromise
+						.done(function() {
+							// ドラッグ開始
+							$inElm.trigger(startTrackEvent);
+							deepEqual(results, ['b-h5trackstart', 'a-h5trackstart'],
+									'h5trackstartイベントが発火すること');
+							results = [];
+
+							// ドラッグ
+							$inElm.trigger(moveTrackEvent);
+							deepEqual(results, ['b-h5trackmove', 'a-h5trackmove'],
+									'h5trackmoveイベントが発火すること');
+							results = [];
+
+							// ドラッグ終了
+							$inElm.trigger(endTrackEvent);
+							deepEqual(results, ['b-h5trackend', 'a-h5trackend'],
+									'h5trackendイベントが発火すること');
+							results = [];
+
+							aController.unbind();
+							bController.unbind();
+							$elm.remove();
+							start();
+						});
+			});
+		};
+	}
+
+	/**
+	 * 『touchイベントとh5trackイベントを両方バインドした場合、両方のハンドラが動作すること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckOriginal(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var startTrackEvent = createDummyTrackEvent(events.start, 0);
+			var moveTrackEvent = createDummyTrackEvent(events.move, 10);
+			var endTrackEvent = createDummyTrackEvent(events.end, 10);
+
+			var trackEvents = {};
+			var mouseEvents = {};
+			var $elm = $('#controllerTest');
+			$elm.append('<div id="divInControllerTest"></div>');
+			var $inElm = $('#divInControllerTest');
+			var aController = h5.core
+					.controller(
+							$elm,
+							{
+								__name: 'aController',
+
+								'{rootElement} h5trackstart': function(context) {
+									trackEvents.p_h5trackstart = trackEvents.p_h5trackstart ? trackEvents.p_h5trackstart + 1
+											: 1;
+								},
+								'{rootElement} h5trackmove': function(context) {
+									trackEvents.p_h5trackmove = trackEvents.p_h5trackmove ? trackEvents.p_h5trackmove + 1
+											: 1;
+								},
+								'{rootElement} h5trackend': function(context) {
+									trackEvents.p_h5trackend = trackEvents.p_h5trackend ? trackEvents.p_h5trackend + 1
+											: 1;
+								},
+								'{rootElement} mousedown': function(context) {
+									mouseEvents.p_mousedown = mouseEvents.p_mousedown ? mouseEvents.p_mousedown + 1
+											: 1;
+								},
+								'{rootElement} mousemove': function(context) {
+									mouseEvents.p_mousemove = mouseEvents.p_mousemove ? mouseEvents.p_mousemove + 1
+											: 1;
+								},
+								'{rootElement} mouseup': function(context) {
+									mouseEvents.p_mouseup = mouseEvents.p_mouseup ? mouseEvents.p_mouseup + 1
+											: 1;
+								},
+								'{rootElement} touchstart': function(context) {
+									mouseEvents.p_touchstart = mouseEvents.p_touchstart ? mouseEvents.p_touchstart + 1
+											: 1;
+								},
+								'{rootElement} touchmove': function(context) {
+									mouseEvents.p_touchmove = mouseEvents.p_touchmove ? mouseEvents.p_touchmove + 1
+											: 1;
+								},
+								'{rootElement} touchend': function(context) {
+									mouseEvents.p_touchend = mouseEvents.p_touchend ? mouseEvents.p_touchend + 1
+											: 1;
+								},
+								'#divInControllerTest h5trackstart': function(context) {
+									trackEvents.c_h5trackstart = trackEvents.c_h5trackstart ? trackEvents.c_h5trackstart + 1
+											: 1;
+								},
+								'#divInControllerTest h5trackmove': function(context) {
+									trackEvents.c_h5trackmove = trackEvents.c_h5trackmove ? trackEvents.c_h5trackmove + 1
+											: 1;
+								},
+								'#divInControllerTest h5trackend': function(context) {
+									trackEvents.c_h5trackend = trackEvents.c_h5trackend ? trackEvents.c_h5trackend + 1
+											: 1;
+								},
+								'#divInControllerTest mousedown': function(context) {
+									mouseEvents.c_mousedown = mouseEvents.c_mousedown ? mouseEvents.c_mousedown + 1
+											: 1;
+								},
+								'#divInControllerTest mousemove': function(context) {
+									mouseEvents.c_mousemove = mouseEvents.c_mousemove ? mouseEvents.c_mousemove + 1
+											: 1;
+								},
+								'#divInControllerTest mouseup': function(context) {
+									mouseEvents.c_mouseup = mouseEvents.c_mouseup ? mouseEvents.c_mouseup + 1
+											: 1;
+								},
+								'#divInControllerTest touchstart': function(context) {
+									mouseEvents.c_touchstart = mouseEvents.c_touchstart ? mouseEvents.c_touchstart + 1
+											: 1;
+								},
+								'#divInControllerTest touchmove': function(context) {
+									mouseEvents.c_touchmove = mouseEvents.c_touchmove ? mouseEvents.c_touchmove + 1
+											: 1;
+								},
+								'#divInControllerTest touchend': function(context) {
+									mouseEvents.c_touchend = mouseEvents.c_touchend ? mouseEvents.c_touchend + 1
+											: 1;
+								}
+							});
+
+			aController.readyPromise.done(function() {
+				var exp = {};
+
+				// ドラッグ開始
+				$inElm.trigger(startTrackEvent);
+				deepEqual(trackEvents, {
+					c_h5trackstart: 1,
+					p_h5trackstart: 1
+				}, 'h5trackstartイベントハンドラが実行されていること');
+				exp = {};
+				exp['c_' + events.start] = 1;
+				exp['p_' + events.start] = 1;
+				deepEqual(mouseEvents, exp, events.start + 'イベントハンドラが実行されていること');
+				trackEvents = {};
+				mouseEvents = {};
+
+				// ドラッグ
+				$inElm.trigger(moveTrackEvent);
+				deepEqual(trackEvents, {
+					c_h5trackmove: 1,
+					p_h5trackmove: 1
+				}, 'h5trackmoveイベントハンドラが実行されていること');
+
+				exp = {};
+				exp['c_' + events.move] = 1;
+				exp['p_' + events.move] = 1;
+				deepEqual(mouseEvents, exp, events.move + 'イベントハンドラが実行されていること');
+				trackEvents = {};
+				mouseEvents = {};
+
+
+				// ドラッグ終了
+				$inElm.trigger(endTrackEvent);
+				deepEqual(trackEvents, {
+					c_h5trackend: 1,
+					p_h5trackend: 1
+				}, 'h5trackendイベントハンドラが実行されていること');
+				exp = {};
+				exp['c_' + events.end] = 1;
+				exp['p_' + events.end] = 1;
+				deepEqual(mouseEvents, exp, events.end + 'イベントハンドラが実行されていること');
+				trackEvents = {};
+				mouseEvents = {};
+
+				aController.unbind();
+				$elm.remove();
+				start();
+			});
+		};
+	}
+
+	/**
+	 * 『ルートエレメントより外のエレメントでmouse/touch系イベントがstopPropagation()されていて、documentまでmouse/touch系イベントがバブリングしない状態でも、h5trackイベントハンドラは実行されること』
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestCheckStopPropagation(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var startTrackEvent = createDummyTrackEvent(events.start, 0);
+			var moveTrackEvent = createDummyTrackEvent(events.move, 10);
+			var endTrackEvent = createDummyTrackEvent(events.end, 10);
+
+			var trackEvents = [];
+			var $elm = $('#controllerTest');
+			$elm.append('<div id="divInControllerTest"></div>');
+			var $inElm = $('#divInControllerTest');
+			var aController = h5.core.controller($elm, {
+				__name: 'aController',
+				'{rootElement} mousedown': function(context) {
+					context.event.stopPropagation();
+				},
+				'{rootElement} mousemove': function(context) {
+					context.event.stopPropagation();
+				},
+				'{rootElement} mouseup': function(context) {
+					context.event.stopPropagation();
+				},
+				'{rootElement} touchstart': function(context) {
+					context.event.stopPropagation();
+				},
+				'{rootElement} touchmove': function(context) {
+					context.event.stopPropagation();
+				},
+				'{rootElement} touchend': function(context) {
+					context.event.stopPropagation();
+				}
+			});
+
+			var bController = h5.core.controller('#divInControllerTest', {
+				__name: 'bController',
+				'{rootElement} h5trackstart': function(context) {
+					trackEvents.push('c-h5trackstart');
+				},
+				'{rootElement} h5trackmove': function(context) {
+					trackEvents.push('c-h5trackmove');
+				},
+				'{rootElement} h5trackend': function(context) {
+					trackEvents.push('c-h5trackend');
+				}
+			});
+
+			$.when(aController.readyPromise, bController.readyPromise).done(function() {
+				// ドラッグ開始
+				$inElm.trigger(startTrackEvent);
+				deepEqual(trackEvents, ['c-h5trackstart'], 'h5trackstartイベントが伝播していないこと');
+				trackEvents = [];
+
+				// ドラッグ
+				$inElm.trigger(moveTrackEvent);
+				deepEqual(trackEvents, ['c-h5trackmove'], 'h5trackmoveイベントが伝播していないこと');
+				trackEvents = [];
+
+				// ドラッグ終了
+				$inElm.trigger(endTrackEvent);
+				deepEqual(trackEvents, ['c-h5trackend'], 'h5trackendイベントが伝播していないこと');
+				trackEvents = [];
+				start();
+			});
+		};
 	}
 
 	// =========================================================================
@@ -287,10 +1278,7 @@ $(function() {
 					'コントローラ、ロジック以外(__nameプロパティがない)のオブジェクトをh5.core.expose()に渡すとエラーが発生するか');
 		}
 
-		window.TestController = undefined;
-		window.jp = undefined;
-		strictEqual(undefined, window.TestController, '（名前空間のクリーンアップ1）');
-		strictEqual(undefined, window.jp, '（名前空間のクリーンアップ2）');
+		deleteProperty(window, 'TestController');
 	});
 
 	//=============================
@@ -480,7 +1468,7 @@ $(function() {
 			$('#controllerTest input[type=button]').dblclick();
 			strictEqual($result.text(), 'dblok', 'コントローラが要素にバインドされているか');
 
-			for ( var i = 1; i <= 7; i++) {
+			for (var i = 1; i <= 7; i++) {
 				$('#controllerTest #a .b').trigger('click' + i);
 				strictEqual($result.text(), '' + i, 'コントローラが要素にバインドされているか');
 			}
@@ -488,7 +1476,7 @@ $(function() {
 		});
 	});
 
-	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 7, function() {
+	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 9, function() {
 		$('#controllerTest').append('<div class="test">a</div>');
 		$('#controllerTest').append('<div class="test">b</div>');
 		var controller = {
@@ -530,6 +1518,16 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
 		}
+		try {
+			h5.core.controller({}, controller);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_NODE, e.message);
+		}
+		try {
+			h5.core.controller(window, controller);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_NODE, e.message);
+		}
 	});
 
 	asyncTest('イベントハンドラの{}記法でオブジェクトを指定する時に2階層以上下のオブジェクトを指定できるか', function() {
@@ -552,6 +1550,7 @@ $(function() {
 			ok(ret, '{}記法で2階層以上下のオブジェクトを指定できたか');
 
 			testController.unbind();
+			deleteProperty(window, 'test1');
 			start();
 		});
 	});
@@ -574,7 +1573,7 @@ $(function() {
 		var l = names.length;
 		expect(l);
 		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				h5.core.controller('#controllerTest', {
 					__name: names[i]
@@ -609,7 +1608,7 @@ $(function() {
 		var l = names.length;
 		expect(l);
 		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				h5.core.controller('#controllerTest', {
 					__name: 'TestController',
@@ -986,7 +1985,7 @@ $(function() {
 				ok(true, '親コントローラの__disposeが実行される。');
 				disposedController.test = this;
 				setTimeout(function() {
-					for ( var i = 0; i < 3; i++) {
+					for (var i = 0; i < 3; i++) {
 						var prop = ['b', 'a', 'test'][i];
 						var str = ['孫', '子', '親'][i];
 						ok(isDisposed(disposedController[prop]), str + 'コントローラがdisposeされていること');
@@ -1320,9 +2319,6 @@ $(function() {
 				};
 				c = h5.core.controller('#controllerTest', {
 					__name: 'TestController',
-					__construct: function() {
-						child = this.childController;
-					},
 					childController: childControllerDef
 				});
 			});
@@ -2902,6 +3898,8 @@ $(function() {
 			ok(html2.length > 0, '指定されたテンプレートIDを自身のビューも親も扱っていない場合、h5.core.viewまでカスケードされること');
 			strictEqual(errorObj.code, ERR_VIEW.ERR_CODE_TEMPLATE_ID_UNAVAILABLE,
 					'指定されたテンプレートIDを自身のビューも親もh5.core.viewも扱っていない場合はエラーが発生すること');
+			// h5.core.viewに追加したテンプレートをクリア
+			h5.core.view.clear('template3');
 			testController.unbind();
 			start();
 		});
@@ -3338,239 +4336,6 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5track*イベントハンドラを、mouse(touch)イベントのトリガで発火させたときにcontext.evArgに引数が格納されること。', 6,
-			function() {
-				var evArg = null;
-				var $elm = $('#controllerTest');
-				var h5TrackTestController = h5.core.controller($elm, {
-					__name: 'h5TrackTestController',
-					'{rootElement} h5trackstart': function(context) {
-						evArg = context.evArg;
-					},
-					'{rootElement} h5trackmove': function(context) {
-						evArg = context.evArg;
-					},
-					'{rootElement} h5trackend': function(context) {
-						evArg = context.evArg;
-					}
-				});
-
-				h5TrackTestController.readyPromise.done(function() {
-					var obj = {
-						a: 1,
-						b: 2
-					};
-					var ary = [1, 'a'];
-					// ドラッグ開始
-					$elm.trigger(createDummyTrackEvent(startTrackEventName, 0), obj);
-					strictEqual(evArg, obj, startTrackEventName
-							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
-					evArg = null;
-
-					// ドラッグ
-					$elm.trigger(createDummyTrackEvent(moveTrackEventName, 10), 1);
-					strictEqual(evArg, 1, moveTrackEventName
-							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
-					evArg = null;
-
-					// ドラッグ終了
-					$elm.trigger(createDummyTrackEvent(endTrackEventName, 10), 'a');
-					strictEqual(evArg, 'a', endTrackEventName
-							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
-					evArg = null;
-
-					// 配列で複数渡した場合
-					// ドラッグ開始
-					$elm.trigger(createDummyTrackEvent(startTrackEventName, 0), [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], startTrackEventName
-							+ 'のtriggerで渡した引数がh5trackstartハンドラののcontext.evArgに格納されていること');
-					evArg = null;
-
-					// ドラッグ
-					$elm.trigger(createDummyTrackEvent(moveTrackEventName, 10), [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], moveTrackEventName
-							+ 'のtriggerで渡した引数がh5trackmoveハンドラののcontext.evArgに格納されていること');
-					evArg = null;
-
-					// ドラッグ終了
-					$elm.trigger(createDummyTrackEvent(endTrackEventName, 10), [1, obj, ary]);
-					deepEqual(evArg, [1, obj, ary], endTrackEventName
-							+ 'のtriggerで渡した引数がh5trackendハンドラののcontext.evArgに格納されていること');
-					evArg = null;
-
-					h5TrackTestController.unbind();
-					start();
-				});
-			});
-
-	asyncTest(
-			'dispatchEvent(またはfireEvent)でmouse(touch)イベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントが正しい回数実行されること',
-			3, function() {
-				var fired = [];
-				var elm = $('#controllerTest')[0];
-				var h5TrackTestController = h5.core.controller(elm, {
-					__name: 'h5TrackTestController',
-					'{rootElement} h5trackstart': function(context) {
-						fired.push('start');
-					},
-					'{rootElement} h5trackmove': function(context) {
-						fired.push('move');
-					},
-					'{rootElement} h5trackend': function(context) {
-						fired.push('end');
-					}
-				});
-
-				h5TrackTestController.readyPromise.done(function() {
-					// ドラッグ開始
-					dispatchTrackSrcNativeEvent(elm, startTrackEventName, 10, 10);
-					deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
-					fired = [];
-
-					// ドラッグ
-					dispatchTrackSrcNativeEvent(elm, moveTrackEventName, 11, 12);
-					deepEqual(fired, ['move'], 'h5trackmoveのハンドラが1度だけ実行されていること');
-					fired = [];
-
-					// ドラッグ終了
-					dispatchTrackSrcNativeEvent(elm, endTrackEventName, 9, 15);
-					deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
-					fired = [];
-
-					h5TrackTestController.unbind();
-					start();
-				});
-			});
-
-	asyncTest(
-			'dispatchEvent(またはfireEvent)でmouse(touch)イベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
-			4, function() {
-				var ev = {};
-				var elm = $('#controllerTest')[0];
-				var h5TrackTestController = h5.core.controller(elm, {
-					__name: 'h5TrackTestController',
-					'{rootElement} h5trackstart': function(context) {
-						ev = context.event;
-					},
-					'{rootElement} h5trackmove': function(context) {
-						ev = context.event;
-					},
-					'{rootElement} h5trackend': function(context) {
-						ev = context.event;
-					}
-				});
-
-				h5TrackTestController.readyPromise.done(function() {
-					// ドラッグ開始
-					dispatchTrackSrcNativeEvent(elm, startTrackEventName, 10, 10);
-					ev = {};
-
-					// ドラッグ
-					dispatchTrackSrcNativeEvent(elm, moveTrackEventName, 11, 12);
-					strictEqual(ev.dx, 1, 'dxの値が計算されていること');
-					strictEqual(ev.dy, 2, 'dyの値が計算されていること');
-					ev = {};
-
-					// ドラッグ
-					dispatchTrackSrcNativeEvent(elm, moveTrackEventName, 9, 15);
-					strictEqual(ev.dx, -2, 'dxの値が計算されていること');
-					strictEqual(ev.dy, 3, 'dyの値が計算されていること');
-					ev = {};
-
-					// ドラッグ終了
-					dispatchTrackSrcNativeEvent(elm, endTrackEventName, 9, 15);
-					ev = {};
-
-					h5TrackTestController.unbind();
-					start();
-				});
-			});
-
-	asyncTest(
-			'dispatchEvent(またはfireEvent)でmouse(touch)イベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントが正しい回数実行されること',
-			3, function() {
-				var fired = [];
-				var elm = $('<div id="h5track-target"></div>')[0];
-				$('#controllerTest').append(elm);
-				var h5TrackTestController = h5.core.controller('#controllerTest', {
-					__name: 'h5TrackTestController',
-					'#h5track-target h5trackstart': function(context) {
-						fired.push('start');
-					},
-					'#h5track-target h5trackmove': function(context) {
-						fired.push('move');
-					},
-					'#h5track-target h5trackend': function(context) {
-						fired.push('end');
-					}
-				});
-
-				h5TrackTestController.readyPromise.done(function() {
-					// ドラッグ開始
-					dispatchTrackSrcNativeEvent(elm, startTrackEventName, 10, 10);
-					deepEqual(fired, ['start'], 'h5trackstartのハンドラが1度だけ実行されていること');
-					fired = [];
-
-					// ドラッグ
-					dispatchTrackSrcNativeEvent(elm, moveTrackEventName, 11, 12);
-					deepEqual(fired, ['move'], 'h5trackmoveのハンドラが1度だけ実行されていること');
-					fired = [];
-
-					// ドラッグ終了
-					dispatchTrackSrcNativeEvent(elm, endTrackEventName, 9, 15);
-					deepEqual(fired, ['end'], 'h5trackendのハンドラが1度だけ実行されていること');
-					fired = [];
-
-					h5TrackTestController.unbind();
-					start();
-				});
-			});
-
-	asyncTest(
-			'dispatchEvent(またはfireEvent)でmouse(touch)イベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
-			4, function() {
-				var ev = {};
-				var elm = $('<div id="h5track-target"></div>')[0];
-				$('#controllerTest').append(elm);
-				var h5TrackTestController = h5.core.controller('#controllerTest', {
-					__name: 'h5TrackTestController',
-					'#h5track-target h5trackstart': function(context) {
-						ev = context.event;
-					},
-					'#h5track-target h5trackmove': function(context) {
-						ev = context.event;
-					},
-					'#h5track-target h5trackend': function(context) {
-						ev = context.event;
-					}
-				});
-
-				h5TrackTestController.readyPromise.done(function() {
-					// ドラッグ開始
-					dispatchTrackSrcNativeEvent(elm, startTrackEventName, 10, 10);
-					ev = {};
-
-					// ドラッグ
-					dispatchTrackSrcNativeEvent(elm, moveTrackEventName, 11, 12);
-					strictEqual(ev.dx, 1, 'dxの値が計算されていること');
-					strictEqual(ev.dy, 2, 'dyの値が計算されていること');
-					ev = {};
-
-					// ドラッグ
-					dispatchTrackSrcNativeEvent(elm, moveTrackEventName, 9, 15);
-					strictEqual(ev.dx, -2, 'dxの値が計算されていること');
-					strictEqual(ev.dy, 3, 'dyの値が計算されていること');
-					ev = {};
-
-					// ドラッグ終了
-					dispatchTrackSrcNativeEvent(elm, endTrackEventName, 9, 15);
-					ev = {};
-
-					h5TrackTestController.unbind();
-					start();
-				});
-			});
-
 	asyncTest(
 			'context.selectorが取得できること',
 			20,
@@ -3647,9 +4412,9 @@ $(function() {
 
 					var $innerDiv = $('#controllerTest3 .innerdiv');
 					typeof document.ontouchstart === 'undefined' ? $innerDiv.mousedown()
-							: $innerDiv.trigger(startTrackEventName);
+							: $innerDiv.trigger('touchstart');
 					typeof document.ontouchend === 'undefined' ? $innerDiv.mouseup() : $innerDiv
-							.trigger(endTrackEventName);
+							.trigger('touchend');
 
 					var eventName = ua.isFirefox ? 'DOMMouseScroll' : 'mousewheel';
 					$(document).trigger(new $.Event(eventName), {
@@ -5076,570 +5841,217 @@ $(function() {
 		}
 	});
 
-	asyncTest(
-			'h5trackイベントハンドラがマウス(タッチ)イベントのトリガで実行され、h5trackstart、h5trackmove、h5trackendの順で発火し、それぞれのハンドラでポインタの位置情報を取得できること',
-			26,
-			function() {
-				var controller = {
+	//=============================
+	// Definition
+	//=============================
 
-					__name: 'TestController',
-
-					'{rootElement} h5trackstart': function(context) {
-						context.evArg
-								&& ok(false,
-										'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-						var event = context.event;
-						strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
-						strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
-						strictEqual(event.screenX, 10,
-								'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
-						strictEqual(event.screenY, 10,
-								'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
-						strictEqual(event.clientX, 10,
-								'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
-						strictEqual(event.clientY, 10,
-								'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
-						ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
-						ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
-					},
-
-					'{rootElement} h5trackmove': function(context) {
-						context.evArg
-								&& ok(false,
-										'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-						var event = context.event;
-						strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
-						strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
-						strictEqual(event.screenX, 15,
-								'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
-						strictEqual(event.screenY, 15,
-								'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
-						strictEqual(event.clientX, 15,
-								'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
-						strictEqual(event.clientY, 15,
-								'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
-						ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
-						ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
-						strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
-						strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
-					},
-
-					'{rootElement} h5trackend': function(context) {
-						context.evArg
-								&& ok(false,
-										'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-						var event = context.event;
-						strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
-						strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
-						strictEqual(event.screenX, 20,
-								'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
-						strictEqual(event.screenY, 20,
-								'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
-						strictEqual(event.clientX, 20,
-								'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
-						strictEqual(event.clientY, 20,
-								'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
-						ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
-						ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
-					}
-				};
-
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.readyPromise.done(function() {
-					var startTrackEvent = createDummyTrackEvent(startTrackEventName, 10);
-					var moveTrackEvent = createDummyTrackEvent(moveTrackEventName, 15);
-					var endTrackEvent = createDummyTrackEvent(endTrackEventName, 20);
-
-					// ドラッグ中じゃないので実行されない
-					$('#controllerResult').trigger(moveTrackEvent, {
-						aa: "実行されない"
-					});
-					$('#controllerResult').trigger(endTrackEvent, {
-						aa: "実行されない"
-					});
-
-					// ドラッグ開始
-					$('#controllerResult').trigger(startTrackEvent);
-
-					// ドラッグ中なので実行されない
-					$('#controllerResult').trigger(startTrackEvent, {
-						aa: "実行されない"
-					});
-
-					// ドラッグ
-					$('#controllerResult').trigger(moveTrackEvent);
-
-					// ドラッグ終了
-					$('#controllerResult').trigger(endTrackEvent);
-
-					// ドラッグ中じゃないので実行されない
-					$('#controllerResult').trigger(moveTrackEvent, {
-						aa: "実行されない"
-					});
-					$('#controllerResult').trigger(endTrackEvent, {
-						aa: "実行されない"
-					});
-
-					testController.unbind();
-
-					// ちゃんとアンバインドされているかどうかを確認。
-					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
-					$('#controllerResult').trigger(startTrackEvent);
-					$('#controllerResult').trigger(moveTrackEvent);
-					$('#controllerResult').trigger(endTrackEvent);
-
-					start();
-				});
-			});
-
-	asyncTest(
-			'[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7|and-and:0-2]SVG内要素にバインドしたh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。',
-			26,
-			function() {
-				var controller = {
-
-					__name: 'TestController',
-
-					'#svgElem rect h5trackstart': function(context) {
-						context.evArg
-								&& ok(false,
-										'h5trackstartがトラック中(h5trackstartが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-						var event = context.event;
-						strictEqual(event.pageX, 10, 'h5trackstartイベントのEventオブジェクトにpageXは設定されているか');
-						strictEqual(event.pageY, 10, 'h5trackstartイベントのEventオブジェクトにpageYは設定されているか');
-						strictEqual(event.screenX, 10,
-								'h5trackstartイベントのEventオブジェクトにscreenXは設定されているか');
-						strictEqual(event.screenY, 10,
-								'h5trackstartイベントのEventオブジェクトにscreenYは設定されているか');
-						strictEqual(event.clientX, 10,
-								'h5trackstartイベントのEventオブジェクトにclientXは設定されているか');
-						strictEqual(event.clientY, 10,
-								'h5trackstartイベントのEventオブジェクトにclientYは設定されているか');
-						ok(event.offsetX != null, 'h5trackstartイベントのEventオブジェクトにoffsetXは設定されているか');
-						ok(event.offsetY != null, 'h5trackstartイベントのEventオブジェクトにoffsetYは設定されているか');
-					},
-
-					'#svgElem rect h5trackmove': function(context) {
-						context.evArg
-								&& ok(false,
-										'h5trackmoveがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-						var event = context.event;
-						strictEqual(event.pageX, 15, 'h5trackmoveイベントのEventオブジェクトにpageXは設定されているか');
-						strictEqual(event.pageY, 15, 'h5trackmoveイベントのEventオブジェクトにpageYは設定されているか');
-						strictEqual(event.screenX, 15,
-								'h5trackmoveイベントのEventオブジェクトにscreenXは設定されているか');
-						strictEqual(event.screenY, 15,
-								'h5trackmoveイベントのEventオブジェクトにscreenYは設定されているか');
-						strictEqual(event.clientX, 15,
-								'h5trackmoveイベントのEventオブジェクトにclientXは設定されているか');
-						strictEqual(event.clientY, 15,
-								'h5trackmoveイベントのEventオブジェクトにclientYは設定されているか');
-						ok(event.offsetX != null, 'h5trackmoveイベントのEventオブジェクトにoffsetXは設定されているか');
-						ok(event.offsetY != null, 'h5trackmoveイベントのEventオブジェクトにoffsetYは設定されているか');
-						strictEqual(event.dx, 5, 'h5trackmoveイベントのEventオブジェクトにdxは設定されているか');
-						strictEqual(event.dy, 5, 'h5trackmoveイベントのEventオブジェクトにdyは設定されているか');
-					},
-
-					'#svgElem rect h5trackend': function(context) {
-						context.evArg
-								&& ok(false,
-										'h5trackendがトラック中でないとき(h5trackendが呼ばれた後)に呼ばれても、1度しか実行されないこと。');
-						var event = context.event;
-						strictEqual(event.pageX, 20, 'h5trackendイベントのEventオブジェクトにpageXは設定されているか');
-						strictEqual(event.pageY, 20, 'h5trackendイベントのEventオブジェクトにpageYは設定されているか');
-						strictEqual(event.screenX, 20,
-								'h5trackendイベントのEventオブジェクトにscreenXは設定されているか');
-						strictEqual(event.screenY, 20,
-								'h5trackendイベントのEventオブジェクトにscreenYは設定されているか');
-						strictEqual(event.clientX, 20,
-								'h5trackendイベントのEventオブジェクトにclientXは設定されているか');
-						strictEqual(event.clientY, 20,
-								'h5trackendイベントのEventオブジェクトにclientYは設定されているか');
-						ok(event.offsetX != null, 'h5trackendイベントのEventオブジェクトにoffsetXは設定されているか');
-						ok(event.offsetY != null, 'h5trackendイベントのEventオブジェクトにoffsetYは設定されているか');
-					}
-				};
-
-				var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-				svg.setAttribute('id', 'svgElem');
-				svg.setAttribute('width', '50');
-				svg.setAttribute('height', '50');
-				var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-				rect.setAttribute('x', '50');
-				rect.setAttribute('y', '50');
-				rect.setAttribute('width', '50');
-				rect.setAttribute('height', '50');
-				svg.appendChild(rect);
-				document.getElementById('controllerTest').appendChild(svg);
-
-				var testController = h5.core.controller('#controllerTest', controller);
-
-				testController.readyPromise.done(function() {
-					var startTrackEvent = createDummyTrackEvent(startTrackEventName, 10);
-					var moveTrackEvent = createDummyTrackEvent(moveTrackEventName, 15);
-					var endTrackEvent = createDummyTrackEvent(endTrackEventName, 20);
-
-					// ドラッグ中じゃないので実行されない
-					$('#svgElem rect').trigger(moveTrackEvent, {
-						aa: "実行されない"
-					});
-					$('#svgElem rect').trigger(endTrackEvent, {
-						aa: "実行されない"
-					});
-
-					// ドラッグ開始
-					$('#svgElem rect').trigger(startTrackEvent);
-
-					// ドラッグ中なので実行されない
-					$('#svgElem rect').trigger(startTrackEvent, {
-						aa: "実行されない"
-					});
-
-					// ドラッグ
-					$('#svgElem rect').trigger(moveTrackEvent);
-
-					// ドラッグ終了
-					$('#svgElem rect').trigger(endTrackEvent);
-
-					// ドラッグ中じゃないので実行されない
-					$('#svgElem rect').trigger(moveTrackEvent, {
-						aa: "実行されない"
-					});
-					$('#svgElem rect').trigger(endTrackEvent, {
-						aa: "実行されない"
-					});
-
-					testController.unbind();
-
-					// ちゃんとアンバインドされているかどうかを確認。
-					// もしアンバインドされていなければアサーションが動作し、想定されている数と異なりfailするはず。
-					$('#svgElem rect').trigger(startTrackEvent);
-					$('#svgElem rect').trigger(moveTrackEvent);
-					$('#svgElem rect').trigger(endTrackEvent);
-
-					start();
-				});
-			});
-	asyncTest('親コントローラと子コントローラがh5trackイベントをバインドしているときにイベントが正しい回数発生すること', 3, function() {
-		var startTrackEvent = createDummyTrackEvent(startTrackEventName, 0);
-		var moveTrackEvent = createDummyTrackEvent(moveTrackEventName, 10);
-		var endTrackEvent = createDummyTrackEvent(endTrackEventName, 10);
-
-		var events = [];
-		var $elm = $('#controllerTest');
-		var h5TrackTestController = h5.core.controller($elm, {
-			__name: 'h5TrackTestController',
-			childController: {
-				__name: 'child',
-				'{rootElement} h5trackstart': function() {
-					events.push('child-h5trackstart');
+	module(
+			"h5trackイベント",
+			{
+				setup: function() {
+					$('#qunit-fixture')
+							.append(
+									'<div class="touch"></div><div id="controllerTest"><div id="child1"></div><div class="touch"></div></div>');
 				},
-				'{rootElement} h5trackmove': function() {
-					events.push('child-h5trackmove');
-				},
-				'{rootElement} h5trackend': function() {
-					events.push('child-h5trackend');
-				}
-			},
-			'{rootElement} h5trackstart': function() {
-				events.push('parent-h5trackstart');
-			},
-			'{rootElement} h5trackmove': function() {
-				events.push('parent-h5trackmove');
-			},
-			'{rootElement} h5trackend': function() {
-				events.push('parent-h5trackend');
-			}
-		});
-
-		h5TrackTestController.readyPromise
-				.done(function() {
-					// ドラッグ開始
-					$elm.trigger(startTrackEvent);
-					deepEqual(events, ['parent-h5trackstart', 'child-h5trackstart'],
-							'h5trackstartイベントが発火すること');
-					events = [];
-
-					// ドラッグ
-					$elm.trigger(moveTrackEvent);
-					deepEqual(events, ['parent-h5trackmove', 'child-h5trackmove'],
-							'h5trackmoveイベントが発火すること');
-					events = [];
-
-					// ドラッグ終了
-					$elm.trigger(endTrackEvent);
-					deepEqual(events, ['parent-h5trackend', 'child-h5trackend'],
-							'h5trackendイベントが発火すること');
-					events = [];
-
-					h5TrackTestController.unbind();
-					start();
-				});
-	});
-
-	asyncTest('2つのコントローラが同一要素にh5trackイベントをバインドしているときにイベントが正しい回数発生すること', 3, function() {
-		var startTrackEvent = createDummyTrackEvent(startTrackEventName, 0);
-		var moveTrackEvent = createDummyTrackEvent(moveTrackEventName, 10);
-		var endTrackEvent = createDummyTrackEvent(endTrackEventName, 10);
-
-		var events = [];
-		var $elm = $('#controllerTest');
-		$elm.append('<div id="divInControllerTest"></div>');
-		var $inElm = $('#divInControllerTest');
-		var aController = h5.core.controller('body', {
-			__name: 'aController',
-
-			'#divInControllerTest h5trackstart': function() {
-				events.push('a-h5trackstart');
-			},
-			'#divInControllerTest h5trackmove': function() {
-				events.push('a-h5trackmove');
-			},
-			'#divInControllerTest h5trackend': function() {
-				events.push('a-h5trackend');
-			}
-		});
-		aController.readyPromise.done(function() {
-			var bController = h5.core.controller($elm, {
-				__name: 'bController',
-				'#divInControllerTest h5trackstart': function() {
-					events.push('b-h5trackstart');
-				},
-				'#divInControllerTest h5trackmove': function() {
-					events.push('b-h5trackmove');
-				},
-				'#divInControllerTest h5trackend': function() {
-					events.push('b-h5trackend');
+				teardown: function() {
+					disposeQUnitFixtureController();
+					$('#controllerTest').remove();
 				}
 			});
-			bController.readyPromise.done(function() {
-				// ドラッグ開始
-				$inElm.trigger(startTrackEvent);
-				deepEqual(events, ['b-h5trackstart', 'a-h5trackstart'], 'h5trackstartイベントが発火すること');
-				events = [];
 
-				// ドラッグ
-				$inElm.trigger(moveTrackEvent);
-				deepEqual(events, ['b-h5trackmove', 'a-h5trackmove'], 'h5trackmoveイベントが発火すること');
-				events = [];
 
-				// ドラッグ終了
-				$inElm.trigger(endTrackEvent);
-				deepEqual(events, ['b-h5trackend', 'a-h5trackend'], 'h5trackendイベントが発火すること');
-				events = [];
+	//=============================
+	// Body
+	//=============================
 
-				aController.unbind();
-				bController.unbind();
-				$elm.remove();
-				start();
-			});
-		});
-	});
+	// タッチでのテストとマウスでのテストを両方行う(無い場合はabortTestして、成功扱いでスキップ)。
+	// テスト関数はgetH5trackTestCheckXXXXにマウスイベントかタッチイベントかを引数に渡して取得する
+	asyncTest('h5track*イベントハンドラを、mouseイベントのトリガで発火させたときにcontext.evArgに引数が格納されること。', 6,
+			getH5trackTestCheckEvArg(mouseTrackEvents));
+	asyncTest('h5track*イベントハンドラを、touchイベントのトリガで発火させたときにcontext.evArgに引数が格納されること。', 6,
+			getH5trackTestCheckEvArg(touchTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でmouseイベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントが正しい回数実行されること',
+			3, getH5trackTestCheckDispatchEvent(mouseTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でtouchイベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントが正しい回数実行されること',
+			3, getH5trackTestCheckDispatchEvent(touchTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でmouseイベントを発火させたときに、ルートエレメントに直接バインド記法でバインドしたh5track*イベントが正しい回数実行されること',
+			3, getH5trackTestCheckDirectBindDispatchEvent(mouseTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でtouchイベントを発火させたときに、ルートエレメントに直接バインド記法でバインドしたh5track*イベントが正しい回数実行されること',
+			3, getH5trackTestCheckDirectBindDispatchEvent(touchTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でmouseイベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
+			4, getH5trackTestCheckDispatchEventDxDy(mouseTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でtouchイベントを発火させたときに、ルートエレメントにバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
+			4, getH5trackTestCheckDispatchEventDxDy(touchTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でmouseイベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントが正しい回数実行されること',
+			3, getH5trackTestCheckChildEvent(mouseTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でtouchイベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントが正しい回数実行されること',
+			3, getH5trackTestCheckChildEvent(touchTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でmouseイベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
+			4, getH5trackTestCheckChildEventDxDy(mouseTrackEvents));
+	asyncTest(
+			'dispatchEvent(またはfireEvent)でtouchイベントを発火させたときに、ルートエレメントの子要素にバインドしたh5track*イベントに渡されるイベントオブジェクトのdx,dyに正しい値が格納されていること',
+			4, getH5trackTestCheckChildEventDxDy(touchTrackEvents));
+	asyncTest(
+			'h5trackイベントハンドラがmouseイベントのトリガで実行され、h5trackstart、h5trackmove、h5trackendの順で発火し、それぞれのハンドラでポインタの位置情報を取得できること',
+			26, getH5trackTestCheckPosition(mouseTrackEvents));
+	asyncTest(
+			'h5trackイベントハンドラがtouchイベントのトリガで実行され、h5trackstart、h5trackmove、h5trackendの順で発火し、それぞれのハンドラでポインタの位置情報を取得できること',
+			26, getH5trackTestCheckPosition(touchTrackEvents));
+	asyncTest(
+			'[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7|and-and:0-2]SVG内要素にバインドしたコントローラでmouseイベントでh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。',
+			26, getH5trackTestCheckSVGPosition(mouseTrackEvents));
+	asyncTest(
+			'[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7|and-and:0-2]SVG内要素にバインドしたコントローラでtouchイベントでh5trackイベントが実行されること ※SVGを動的に追加できないブラウザでは失敗します。',
+			26, getH5trackTestCheckSVGPosition(touchTrackEvents));
+	asyncTest('親コントローラと子コントローラがh5trackイベントをバインドしているときにmouseイベントでh5trackイベントが正しい回数発生すること', 3,
+			getH5trackTestCheckNumOfRuns(mouseTrackEvents));
+	asyncTest('親コントローラと子コントローラがh5trackイベントをバインドしているときにtouchイベントでh5grackイベントが正しい回数発生すること', 3,
+			getH5trackTestCheckNumOfRuns(touchTrackEvents));
+	asyncTest('2つのコントローラが同一要素にh5trackイベントをバインドしているときにmouseイベントでh5trackイベントが正しい回数発生すること', 3,
+			getH5trackTestCheckNumOfRunsAtSameElement(mouseTrackEvents));
+	asyncTest('2つのコントローラが同一要素にh5trackイベントをバインドしているときにtouchイベントでh5trackイベントが正しい回数発生すること', 3,
+			getH5trackTestCheckNumOfRunsAtSameElement(touchTrackEvents));
+	asyncTest('mouseイベントとh5trackイベントを両方バインドした場合、両方のハンドラが動作すること', 6,
+			getH5trackTestCheckOriginal(mouseTrackEvents));
+	asyncTest('touchイベントとh5trackイベントを両方バインドした場合、両方のハンドラが動作すること', 6,
+			getH5trackTestCheckOriginal(touchTrackEvents));
+	asyncTest(
+			'ルートエレメントより外のエレメントでmouse系イベントがstopPropagation()されていて、documentまでmouse系イベントがバブリングしない状態でも、h5trackイベントハンドラは実行されること',
+			3, getH5trackTestCheckStopPropagation(mouseTrackEvents));
+	asyncTest(
+			'ルートエレメントより外のエレメントでtouch系イベントがstopPropagation()されていて、documentまでtouch系イベントがバブリングしない状態でも、h5trackイベントハンドラは実行されること',
+			3, getH5trackTestCheckStopPropagation(touchTrackEvents));
 
 	asyncTest(
-			'mouse系(touch系)とh5track系のイベントを両方バインドした場合、両方のハンドラが動作すること',
-			6,
-			function() {
-				var startTrackEvent = createDummyTrackEvent(startTrackEventName, 0);
-				var moveTrackEvent = createDummyTrackEvent(moveTrackEventName, 10);
-				var endTrackEvent = createDummyTrackEvent(endTrackEventName, 10);
-
-				var trackEvents = {};
-				var mouseEvents = {};
-				var $elm = $('#controllerTest');
-				$elm.append('<div id="divInControllerTest"></div>');
-				var $inElm = $('#divInControllerTest');
-				var aController = h5.core
-						.controller(
-								$elm,
-								{
-									__name: 'aController',
-
-									'{rootElement} h5trackstart': function(context) {
-										trackEvents.p_h5trackstart = trackEvents.p_h5trackstart ? trackEvents.p_h5trackstart + 1
-												: 1;
-									},
-									'{rootElement} h5trackmove': function(context) {
-										trackEvents.p_h5trackmove = trackEvents.p_h5trackmove ? trackEvents.p_h5trackmove + 1
-												: 1;
-									},
-									'{rootElement} h5trackend': function(context) {
-										trackEvents.p_h5trackend = trackEvents.p_h5trackend ? trackEvents.p_h5trackend + 1
-												: 1;
-									},
-									'{rootElement} mousedown': function(context) {
-										mouseEvents.p_mousedown = mouseEvents.p_mousedown ? mouseEvents.p_mousedown + 1
-												: 1;
-									},
-									'{rootElement} mousemove': function(context) {
-										mouseEvents.p_mousemove = mouseEvents.p_mousemove ? mouseEvents.p_mousemove + 1
-												: 1;
-									},
-									'{rootElement} mouseup': function(context) {
-										mouseEvents.p_mouseup = mouseEvents.p_mouseup ? mouseEvents.p_mouseup + 1
-												: 1;
-									},
-									'{rootElement} touchstart': function(context) {
-										mouseEvents.p_touchstart = mouseEvents.p_touchstart ? mouseEvents.p_touchstart + 1
-												: 1;
-									},
-									'{rootElement} touchmove': function(context) {
-										mouseEvents.p_touchmove = mouseEvents.p_touchmove ? mouseEvents.p_touchmove + 1
-												: 1;
-									},
-									'{rootElement} touchend': function(context) {
-										mouseEvents.p_touchend = mouseEvents.p_touchend ? mouseEvents.p_touchend + 1
-												: 1;
-									},
-									'#divInControllerTest h5trackstart': function(context) {
-										trackEvents.c_h5trackstart = trackEvents.c_h5trackstart ? trackEvents.c_h5trackstart + 1
-												: 1;
-									},
-									'#divInControllerTest h5trackmove': function(context) {
-										trackEvents.c_h5trackmove = trackEvents.c_h5trackmove ? trackEvents.c_h5trackmove + 1
-												: 1;
-									},
-									'#divInControllerTest h5trackend': function(context) {
-										trackEvents.c_h5trackend = trackEvents.c_h5trackend ? trackEvents.c_h5trackend + 1
-												: 1;
-									},
-									'#divInControllerTest mousedown': function(context) {
-										mouseEvents.c_mousedown = mouseEvents.c_mousedown ? mouseEvents.c_mousedown + 1
-												: 1;
-									},
-									'#divInControllerTest mousemove': function(context) {
-										mouseEvents.c_mousemove = mouseEvents.c_mousemove ? mouseEvents.c_mousemove + 1
-												: 1;
-									},
-									'#divInControllerTest mouseup': function(context) {
-										mouseEvents.c_mouseup = mouseEvents.c_mouseup ? mouseEvents.c_mouseup + 1
-												: 1;
-									},
-									'#divInControllerTest touchstart': function(context) {
-										mouseEvents.c_touchstart = mouseEvents.c_touchstart ? mouseEvents.c_touchstart + 1
-												: 1;
-									},
-									'#divInControllerTest touchmove': function(context) {
-										mouseEvents.c_touchmove = mouseEvents.c_touchmove ? mouseEvents.c_touchmove + 1
-												: 1;
-									},
-									'#divInControllerTest touchend': function(context) {
-										mouseEvents.c_touchend = mouseEvents.c_touchend ? mouseEvents.c_touchend + 1
-												: 1;
-									}
-								});
-
-				aController.readyPromise.done(function() {
-					var exp = {};
-
-					// ドラッグ開始
-					$inElm.trigger(startTrackEvent);
-					deepEqual(trackEvents, {
-						c_h5trackstart: 1,
-						p_h5trackstart: 1
-					}, 'h5trackstartイベントハンドラが実行されていること');
-					exp = {};
-					exp['c_' + startTrackEventName] = 1;
-					exp['p_' + startTrackEventName] = 1;
-					deepEqual(mouseEvents, exp, startTrackEventName + 'イベントハンドラが実行されていること');
-					trackEvents = {};
-					mouseEvents = {};
-
-					// ドラッグ
-					$inElm.trigger(moveTrackEvent);
-					deepEqual(trackEvents, {
-						c_h5trackmove: 1,
-						p_h5trackmove: 1
-					}, 'h5trackmoveイベントハンドラが実行されていること');
-
-					exp = {};
-					exp['c_' + moveTrackEventName] = 1;
-					exp['p_' + moveTrackEventName] = 1;
-					deepEqual(mouseEvents, exp, moveTrackEventName + 'イベントハンドラが実行されていること');
-					trackEvents = {};
-					mouseEvents = {};
-
-
-					// ドラッグ終了
-					$inElm.trigger(endTrackEvent);
-					deepEqual(trackEvents, {
-						c_h5trackend: 1,
-						p_h5trackend: 1
-					}, 'h5trackendイベントハンドラが実行されていること');
-					exp = {};
-					exp['c_' + endTrackEventName] = 1;
-					exp['p_' + endTrackEventName] = 1;
-					deepEqual(mouseEvents, exp, endTrackEventName + 'イベントハンドラが実行されていること');
-					trackEvents = {};
-					mouseEvents = {};
-
-					aController.unbind();
-					$elm.remove();
+			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラを記述した要素にtouch-action(-ms-touch-action)プロパティが設定されること',
+			2, function() {
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'.touch h5trackstart': function() {
+					// 何もしない
+					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], 'none',
+							touchActionProp + 'にnoneが設定されていること');
+					strictEqual($('#qunit-fixture>.touch')[0].style[touchActionProp], '',
+							'コントローラの範囲外(バインドの対象外)には影響がないこと');
+					this.dispose();
 					start();
 				});
 			});
 
 	asyncTest(
-			'ルートエレメントより外のエレメントでmouse系イベント(touch系イベント)がstopPropagation()されていて、documentまでmouse系イベント(touch系イベント)がバブリングしない状態でも、h5trackイベントハンドラは実行されること',
-			3, function() {
-				var startTrackEvent = createDummyTrackEvent(startTrackEventName, 0);
-				var moveTrackEvent = createDummyTrackEvent(moveTrackEventName, 10);
-				var endTrackEvent = createDummyTrackEvent(endTrackEventName, 10);
-
-				var trackEvents = [];
-				var $elm = $('#controllerTest');
-				$elm.append('<div id="divInControllerTest"></div>');
-				var $inElm = $('#divInControllerTest');
-				var aController = h5.core.controller($elm, {
-					__name: 'aController',
-					'{rootElement} mousedown': function(context) {
-						context.event.stopPropagation();
-					},
-					'{rootElement} mousemove': function(context) {
-						context.event.stopPropagation();
-					},
-					'{rootElement} mouseup': function(context) {
-						context.event.stopPropagation();
-					},
-					'{rootElement} touchstart': function(context) {
-						context.event.stopPropagation();
-					},
-					'{rootElement} touchmove': function(context) {
-						context.event.stopPropagation();
-					},
-					'{rootElement} touchend': function(context) {
-						context.event.stopPropagation();
+			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラを直接バインド記法で記述した要素にtouch-action(-ms-touch-action)プロパティが設定されること',
+			2, function() {
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'.touch [h5trackstart]': function() {
+					// 何もしない
 					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], 'none',
+							touchActionProp + 'にnoneが設定されていること');
+					strictEqual($('#qunit-fixture>.touch')[0].style[touchActionProp], '',
+							'コントローラの範囲外(バインドの対象外)には影響がないこと');
+					this.dispose();
+					start();
 				});
+			});
 
-				var bController = h5.core.controller('#divInControllerTest', {
-					__name: 'bController',
-					'{rootElement} h5trackstart': function(context) {
-						trackEvents.push('c-h5trackstart');
-					},
-					'{rootElement} h5trackmove': function(context) {
-						trackEvents.push('c-h5trackmove');
-					},
-					'{rootElement} h5trackend': function(context) {
-						trackEvents.push('c-h5trackend');
+	asyncTest(
+			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラをグローバルセレクタを使って記述した要素にtouch-action(-ms-touch-action)プロパティが設定されること',
+			2, function() {
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'{.touch} h5trackstart': function() {
+					// 何もしない
 					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], 'none',
+							touchActionProp + 'にnoneが設定されていること');
+					strictEqual($('#qunit-fixture>.touch')[0].style[touchActionProp], 'none',
+							'コントローラの範囲外でバインドの対象である要素にも' + touchActionProp + 'にnoneが設定されていること');
+					this.dispose();
+					start();
 				});
+			});
 
-				$.when(aController.readyPromise, bController.readyPromise).done(function() {
-					// ドラッグ開始
-					$inElm.trigger(startTrackEvent);
-					deepEqual(trackEvents, ['c-h5trackstart'], 'h5trackstartイベントが伝播していないこと');
-					trackEvents = [];
+	asyncTest(
+			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラを記述した要素のtouch-action(-ms-touch-action)プロパティにh5.settings.trackstartTouchActionの値が設定されること',
+			1, function() {
+				var defaultTouchAction = h5.settings.trackstartTouchAction;
+				h5.settings.trackstartTouchAction = 'pan-x';
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'.touch h5trackstart': function() {
+					// 何もしない
+					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], 'pan-x',
+							touchActionProp + 'にpan-xが設定されていること');
+					this.dispose();
+					h5.settings.trackstartTouchAction = defaultTouchAction;
+					start();
+				});
+			});
 
-					// ドラッグ
-					$inElm.trigger(moveTrackEvent);
-					deepEqual(trackEvents, ['c-h5trackmove'], 'h5trackmoveイベントが伝播していないこと');
-					trackEvents = [];
-
-					// ドラッグ終了
-					$inElm.trigger(endTrackEvent);
-					deepEqual(trackEvents, ['c-h5trackend'], 'h5trackendイベントが伝播していないこと');
-					trackEvents = [];
+	asyncTest(
+			'touch-actionプロパティに対応しているブラウザについて、h5.settings.trackstartTouchActionがnullの時にtouchAction(msTouchAction)プロパティに値は設定されないこと',
+			2, function() {
+				var defaultTouchAction = h5.settings.trackstartTouchAction;
+				h5.settings.trackstartTouchAction = null;
+				if (!touchActionProp) {
+					// touch-action, -ms-touch-actionに対応していないブラウザなら中断
+					abortTest();
+					start();
+					return;
+				}
+				$('#qunit-fixture>.touch')[0].style[touchActionProp] = 'pan-y';
+				h5.core.controller('#controllerTest', {
+					__name: 'TouchActionTest',
+					'{.touch} h5trackstart': function() {
+					// 何もしない
+					}
+				}).readyPromise.done(function() {
+					strictEqual(this.$find('.touch')[0].style[touchActionProp], '', touchActionProp
+							+ 'には何も値が設定されていないこと');
+					strictEqual($('#qunit-fixture>.touch')[0].style[touchActionProp], 'pan-y',
+							touchActionProp + 'にもともと値が設定されていた場合、値が変更されていないこと');
+					this.dispose();
+					h5.settings.trackstartTouchAction = defaultTouchAction;
 					start();
 				});
 			});
@@ -5815,7 +6227,7 @@ $(function() {
 						// __unbind, __disposeにundefinedを代入して、teardown時にdisposeするときエラーが出ないようにする
 						var controllers = h5.core.controllerManager
 								.getControllers('#controllerTest');
-						for ( var i = 0, l = controllers.length; i < l; i++) {
+						for (var i = 0, l = controllers.length; i < l; i++) {
 							controllers[i].__unbind = undefined;
 							controllers[i].__dispose = undefined;
 						}
@@ -5837,7 +6249,7 @@ $(function() {
 			}
 		};
 
-		raises(function() {
+		throws(function() {
 			h5.core.controller('#controllerTest', controller);
 		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
 	});
@@ -6613,7 +7025,7 @@ $(function() {
 		};
 
 		testController = h5.core.controller('#controllerTest', controllerBase);
-		testController2 = h5.core.controller(window, controllerBaseGrobal);
+		testController2 = h5.core.controller(document, controllerBaseGrobal);
 		testController2.readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
 		});
@@ -6816,6 +7228,49 @@ $(function() {
 								start();
 							}, 0);
 						}, 0);
+			}
+		};
+
+		$('#controllerTest').append('<li class="hoge"></li>').append('<li class="hoge"></li>');
+
+		var testController = h5.core.controller('#controllerTest', controllerBase);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+			testController.unbind();
+		});
+	});
+
+	asyncTest('body、document、windowをターゲットにした場合', function() {
+		var controllerBase = {
+			__name: 'TestController',
+			__ready: function() {
+				this._showIndocator(window).done(this.own(function() {
+					this._showIndocator(document).done(this.own(function() {
+						this._showIndocator(document.body).done(start);
+					}));
+				}));
+			},
+
+			_showIndocator: function(target) {
+				var dfd = h5.async.deferred();
+
+				var indicator = this.indicator({
+					target: target,
+					message: 'テストテストテスト2'
+				}).show();
+
+				setTimeout(function() {
+					strictEqual($(document.body).children('.h5-indicator.a.content').length, 1,
+							'body直下に1つインジケータが表示されていること');
+					indicator.hide();
+
+					setTimeout(function() {
+						strictEqual($('#controllerTes').children('.h5-indicator.a.content').length,
+								0, 'Indicator#hide() インジケータが除去されていること');
+						dfd.resolve();
+					}, 0);
+				}, 0);
+				return dfd.promise();
 			}
 		};
 
@@ -7168,7 +7623,7 @@ $(function() {
 					var controllers = h5.core.controllerManager.getAllControllers();
 					var expects = [c1, c2, c3, c4];
 					strictEqual(controllers.length, expects.length, 'バインドしたコントローラの数分だけ取得できていること');
-					for ( var i = 0, l = expects.length; i < l; i++) {
+					for (var i = 0, l = expects.length; i < l; i++) {
 						ok($.inArray(expects[i], controllers) != -1, 'バインドしたコントローラが取得できること');
 					}
 					start();
@@ -7196,7 +7651,7 @@ $(function() {
 							var expects = [c1, c2];
 							strictEqual(controllers.length, expects.length,
 									'指定した要素にバインドした、コントローラの数分だけ取得できていること');
-							for ( var i = 0, l = expects.length; i < l; i++) {
+							for (var i = 0, l = expects.length; i < l; i++) {
 								ok($.inArray(expects[i], controllers) != -1,
 										'バインドされているコントローラが取得できること');
 							}
@@ -7226,7 +7681,7 @@ $(function() {
 					var expects = [c1, c2, c3, c4];
 					strictEqual(controllers.length, expects.length,
 							'指定した要素以下にバインドしたコントローラの数分だけ取得できていること');
-					for ( var i = 0, l = expects.length; i < l; i++) {
+					for (var i = 0, l = expects.length; i < l; i++) {
 						ok($.inArray(expects[i], controllers) != -1, 'バインドされているコントローラが取得できること');
 					}
 					start();
@@ -7255,7 +7710,7 @@ $(function() {
 					var expects = [c1, c3];
 					strictEqual(controllers.length, expects.length,
 							'name指定された名前を持つコントローラの数分だけ取得できていること');
-					for ( var i = 0, l = expects.length; i < l; i++) {
+					for (var i = 0, l = expects.length; i < l; i++) {
 						ok($.inArray(expects[i], controllers) != -1, 'バインドされているコントローラが取得できること');
 					}
 					start();
@@ -7286,7 +7741,7 @@ $(function() {
 									var expects = [c1, c2];
 									strictEqual(controllers.length, expects.length,
 											'name指定された名前を持つコントローラの数分だけ取得できていること');
-									for ( var i = 0, l = expects.length; i < l; i++) {
+									for (var i = 0, l = expects.length; i < l; i++) {
 										ok($.inArray(expects[i], controllers) != -1,
 												'バインドされているコントローラが取得できること');
 									}
@@ -7322,7 +7777,7 @@ $(function() {
 							var expects = [c1, c3, c4];
 							strictEqual(controllers.length, expects.length,
 									'name指定された名前を持つコントローラの数分だけ取得できていること');
-							for ( var i = 0, l = expects.length; i < l; i++) {
+							for (var i = 0, l = expects.length; i < l; i++) {
 								ok($.inArray(expects[i], controllers) != -1,
 										'バインドされているコントローラが取得できること');
 							}
@@ -7362,8 +7817,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest(
-			'[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
+	asyncTest('[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
 			function() {
 				// 空のページを開く
 				openPopupWindow().done(
@@ -7564,4 +8018,171 @@ $(function() {
 					this.$find('button').click();
 				});
 			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('プロパティ"xxxController"に子コントローラでないものを持たせる', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest" style="display: none;"></div>');
+		},
+		teardown: function() {
+			disposeQUnitFixtureController();
+			$('#controllerTest').remove();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('親をdisposeした時、子コントローラでないコントローラはdisposeされないこと', 2, function() {
+		var c1 = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			__ready: function() {
+				this.childController = c2;
+			}
+		});
+		var c2 = h5.core.controller('#controllerTest', {
+			__name: 'C2'
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise).done(function() {
+			c1.dispose().done(function() {
+				strictEqual(c2.__name, 'C2', '子コントローラでないコントローラはdisposeされていないこと');
+				strictEqual(c1.childController, null, 'コントローラを持っていたプロパティにはnullが代入されていること');
+				start();
+			}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
+
+	asyncTest('親をdisposeした時、別の親に属する子コントローラはdisposeされないこと', 2, function() {
+		var c1 = h5.core.controller('#controllerTest', {
+			__name: 'C1'
+		});
+		var c2 = h5.core.controller('#controllerTest', {
+			__name: 'C2',
+			childController: {
+				__name: 'C2Child'
+			}
+		});
+		h5.async.when(c1.readyPromise, c2.readyPromise).done(
+				function() {
+					c1.childController = c2.childController
+					c1.dispose().done(
+							function() {
+								strictEqual(c2.childController.__name, 'C2Child',
+										'子コントローラでないコントローラはdisposeされていないこと');
+								strictEqual(c1.childController, null,
+										'コントローラを持っていたプロパティにはnullが代入されていること');
+								start();
+							}).fail(function() {
+						ok(false, 'コントローラのdispose中にエラーが起きました');
+						start();
+					});
+				});
+	});
+
+	asyncTest('xxxControllerに自分自身を持っていても正しくdisposeできること', 2, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			__ready: function() {
+				this.childController = this;
+			}
+		});
+		c.readyPromise.done(function() {
+			c.dispose().done(function() {
+				strictEqual(c.__name, null, 'コントローラがdisposeされていること');
+				strictEqual(c.childController, null, 'コントローラを持っていたプロパティにはnullが代入されていること');
+				start();
+			}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
+
+	asyncTest('xxxControllerに親コントローラを持っていても正しくdisposeできること', 3, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			childController: {
+				__name: 'C2',
+				__ready: function() {
+					this.pController = this.parentController;
+				}
+			}
+		});
+		c.readyPromise.done(function() {
+			var childController = c.childController;
+			c.dispose().done(
+					function() {
+						strictEqual(c.__name, null, 'コントローラがdisposeされていること');
+						strictEqual(childController.__name, null, '子コントローラがdisposeされていること');
+						strictEqual(childController.pController, null,
+								'コントローラを持っていたプロパティにはnullが代入されていること');
+						start();
+					}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
+
+	asyncTest('xxxControllerに孫コントローラを持っていても正しくdisposeできること', 4, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			childController: {
+				__name: 'C2',
+				childController: {
+					__name: 'C3',
+					__ready: function() {
+						this.gpController = this.rootController;
+					}
+				}
+
+			}
+		});
+		c.readyPromise.done(function() {
+			var childController = c.childController;
+			var gchildController = c.childController.childController;
+			c.dispose().done(
+					function() {
+						strictEqual(c.__name, null, 'コントローラがdisposeされていること');
+						strictEqual(childController.__name, null, '子コントローラがdisposeされていること');
+						strictEqual(gchildController.__name, null, '子コントローラがdisposeされていること');
+						strictEqual(gchildController.gpController, null,
+								'コントローラを持っていたプロパティにはnullが代入されていること');
+						start();
+					}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
+
+	asyncTest('同じ子コントローラを参照するxxxControllerが複数ある場合、正しくdisposeできること', 4, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'C1',
+			childController: {
+				__name: 'C2'
+			},
+			__ready: function() {
+				this.child2Controller = this.childController;
+			}
+		});
+		c.readyPromise.done(function() {
+			var childController = c.childController;
+			c.dispose().done(function() {
+				strictEqual(c.__name, null, 'コントローラがdisposeされていること');
+				strictEqual(childController.__name, null, '子コントローラがdisposeされていること');
+				strictEqual(c.childController, null, 'コントローラを持っていたプロパティにはnullが代入されていること');
+				strictEqual(c.child2Controller, null, 'コントローラを持っていたプロパティにはnullが代入されていること');
+				start();
+			}).fail(function() {
+				ok(false, 'コントローラのdispose中にエラーが起きました');
+				start();
+			});
+		});
+	});
 });

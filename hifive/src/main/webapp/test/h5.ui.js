@@ -22,6 +22,9 @@ $(function() {
 	//
 	// =========================================================================
 
+	var TYPE_OF_UNDEFINED = 'undefined';
+	var NODE_TYPE_DOCUMENT = 9;
+
 	// =========================================================================
 	//
 	// Privates
@@ -68,8 +71,8 @@ $(function() {
 			obj2 = [s2, $(s2), $(s2)[0]];
 		}
 		var indexMes = ['セレクタ', 'jQuery', 'DOM'];
-		for ( var i = 0; i < obj1.length; i++) {
-			for ( var j = 0; j < obj2.length; j++) {
+		for (var i = 0; i < obj1.length; i++) {
+			for (var j = 0; j < obj2.length; j++) {
 				footer = s1 + ',' + s2 + '  (' + indexMes[i] + '/' + indexMes[j] + ')  ';
 				check(fn, expect, message + ' ' + footer, obj1[i], obj2[j]);
 			}
@@ -104,7 +107,7 @@ $(function() {
 			propCamel = propCamel.charAt(0).toUpperCase() + propCamel.slice(1);
 
 			// ベンダープレフィックスありでサポートしているか判定
-			for ( var i = 0; i < len; i++) {
+			for (var i = 0; i < len; i++) {
 				if (prefixes[i] + propCamel in div.style) {
 					return true;
 				}
@@ -114,6 +117,73 @@ $(function() {
 		};
 	})();
 
+	/**
+	 * ノードからドキュメントを取得。
+	 *
+	 * @param {DOM} node
+	 * @returns {Document} documentオブジェクト
+	 */
+	function getDocumentOf(node) {
+		if (typeof node.nodeType === TYPE_OF_UNDEFINED) {
+			// ノードではない
+			if (node.document && node.document.nodeType === NODE_TYPE_DOCUMENT
+					&& getWindowOfDocument(node.document) === node) {
+				// nodeがdocumentを持ち、documentから得られるwindowオブジェクトがnode自身ならnodeをwindowオブジェクトと判定する
+				return node.document;
+			}
+			return null;
+		}
+		if (node.nodeType === NODE_TYPE_DOCUMENT) {
+			// nodeがdocumentの場合
+			return node;
+		}
+		// nodeがdocument以外(documentツリー属するノード)の場合はそのownerDocumentを返す
+		return node.ownerDocument;
+	}
+
+	/**
+	 * documentオブジェクトからwindowオブジェクトを取得
+	 *
+	 * @param {Document} doc
+	 * @returns {Window} windowオブジェクト
+	 */
+	function getWindowOfDocument(doc) {
+		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
+		return doc.defaultView || doc.parentWindow;
+	}
+
+	/**
+	 * getComputedStyleで引数に渡されたエレメントのスタイルを取得する
+	 *
+	 * @param {DOM} elm
+	 * @returns computedStyle
+	 */
+	function getComputedStyleObject(elm) {
+		var doc = getDocumentOf(elm);
+		var win = getWindowOfDocument(doc);
+		return win.getComputedStyle(elm, null);
+	}
+
+	/**
+	 * スタイルを取得する
+	 * <p>
+	 * IEでjQuery1.8.X～1.10.Xを使用した時、ポップアップウィンドウ内の要素についてスタイルを取得しようとするとエラーになるため、ラップしている。
+	 * </p>
+	 * <p>
+	 * getComputedStyleがないブラウザについては、jQuery.css()を使って取得した値を返す。
+	 * </p>
+	 *
+	 * @private
+	 * @param elm {DOM}
+	 * @param prop {String} CSSプロパティ
+	 * @returns 第1引数について、computedStyleを取得し、第2引数に指定されたプロパティの値を返す
+	 */
+	function getComputedStyleValue(elm, prop) {
+		if (!window.getComputedStyle) {
+			return $(elm).css(prop);
+		}
+		return getComputedStyleObject(elm)[prop];
+	}
 	// =========================================================================
 	//
 	// Test Module
@@ -171,7 +241,7 @@ $(function() {
 				var $test1 = $(test1);
 				var test1Dom = $test1[0];
 				function testFunc() {
-					var top,left;
+					var top, left;
 					// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
 					top = 1 - (test1Dom.offsetHeight + parseInt($test1.css('margin-top')));
 					left = 1 - (test1Dom.offsetWidth + parseInt($test1.css('margin-left')));
@@ -280,7 +350,7 @@ $(function() {
 		var $test2 = $(test2);
 		var test2Dom = $(test2)[0];
 		function testFunc() {
-			var top,left;
+			var top, left;
 			// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
 			top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
 			left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
@@ -388,7 +458,7 @@ $(function() {
 		var $test2 = $(test2);
 		var test2Dom = $test2[0];
 		function testFunc() {
-			var top,left;
+			var top, left;
 			// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
 			top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
 			left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
@@ -506,7 +576,7 @@ $(function() {
 					var viewTop = scrollTop || 0;
 					var viewLeft = scrollLeft || 0;
 
-					var top,left;
+					var top, left;
 					// 1 - 内側の要素のボーダー(上下(左右)の合計) + 内側の要素の高さ(幅))
 					top = viewTop + (1 - testDom.offsetHeight);
 					left = viewLeft + (1 - testDom.offsetWidth);
@@ -645,7 +715,7 @@ $(function() {
 
 
 				function testFunc() {
-					var top,left;
+					var top, left;
 					// 1 - ( 内側の要素の高さ・幅 + 内側の要素のマージン(top(left)の値)
 					top = 1 - (test2Dom.offsetHeight + parseInt($test2.css('margin-top')));
 					left = 1 - (test2Dom.offsetWidth + parseInt($test2.css('margin-left')));
@@ -793,7 +863,7 @@ $(function() {
 				var scrollVal = 3;
 
 				function testFunc() {
-					var top,left;
+					var top, left;
 					var body = document.body;
 					var html = $('html')[0];
 					var test = that.$test[0];
@@ -977,7 +1047,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('iframe内の要素', {
+	module('iframe内の要素にindicator', {
 		setup: function() {
 			// IE11EdgeかつjQuery1.10.1または2.0.2の場合はテストしない
 			if (h5.env.ua.isIE && h5.env.ua.browserVersion === 11
@@ -987,27 +1057,33 @@ $(function() {
 			}
 			stop();
 			var that = this;
-			createIFrameElement().done(function(iframe, doc) {
+			createIFrameElement().done(function(iframe, doc, win) {
 				that.doc = doc;
+				that.win = win;
 				start();
 			});
 		},
 		teardown: function() {
 			this.doc = null;
+			this.win = null;
 		},
-		doc: null
+		doc: null,
+		win: null
 	});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('iframe内の要素にインジケータを表示できること', 5, function() {
-		// iframeの作成
+	asyncTest('iframe内にindicator target:div', 5, function() {
 		var doc = this.doc;
-		var indicator = h5.ui.indicator(doc.body, {
+		var div = doc.createElement('div');
+		div.style.width = '100px';
+		div.style.height = '100px';
+		doc.body.appendChild(div);
+		var indicator = h5.ui.indicator(div, {
 			message: 'BlockMessageTest'
 		}).show();
-		ok(indicator._target === doc.body, 'ターゲットがiframe内の要素であること');
+		ok(indicator._target === div, 'ターゲットがiframe内のdiv要素であること');
 
 		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
 				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
@@ -1017,6 +1093,150 @@ $(function() {
 		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
 				'オーバーレイが表示されていること');
 
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	asyncTest('iframe内にindicator target:body', 5, function() {
+		var doc = this.doc;
+		var indicator = h5.ui.indicator(doc.body, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === doc.body, 'ターゲットがiframe要素内のbodyであること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	asyncTest('iframe内にindicator  target:document', 5, function() {
+		var doc = this.doc;
+		var indicator = h5.ui.indicator(doc, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === doc.body, 'ターゲットがiframe要素内のbodyであること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css('display'), 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+
+	asyncTest('iframe内にindicator  target:window', 5, function() {
+		var indicator = h5.ui.indicator(this.win, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === this.doc.body, 'ターゲットがiframe要素内のbodyであること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+				'Indicator#show() インジケータが表示されること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.overlay')[0].style.display, 'block',
+				'オーバーレイが表示されていること');
+
+		setTimeout(function() {
+			indicator.hide();
+
+			setTimeout(function() {
+				strictEqual($('.h5-indicator', indicator._target).length, 0,
+						'Indicator#hide() インジケータが除去されていること');
+				start();
+			}, 0);
+		}, 0);
+	});
+	//=============================
+	// Definition
+	//=============================
+	module('[browser#ch-and:all|and-and:all|sa-ios:all|ie-wp:all]ポップアップウィンドウ内の要素にindicator', {
+		setup: function() {
+			// (IE8-またはIE11)かつ(jQuery1.10.1または2.0.2)の場合はポップアップウィンドウを使用するテストは行わずにスキップする。
+			// いずれの場合もポップアップウィンドウのDOM操作をjQueryで行う時にエラーになるからである。
+			if (h5.env.ua.isIE
+					&& (h5.env.ua.browserVersion === 11 || h5.env.ua.browserVersion <= 8)
+					&& ($().jquery === '1.10.1' || $().jquery === '2.0.2')) {
+				skipTest();
+				return;
+			}
+			stop();
+			var that = this;
+			openPopupWindow().done(function(w) {
+				that.win = w;
+				that.doc = w.document;
+				start();
+			}).fail(function() {
+				start();
+				skipTest();
+				return;
+			});
+		},
+		teardown: function() {
+			var that = this;
+			if (this.win) {
+				stop();
+				closePopupWindow(this.win).done(function() {
+					that.doc = null;
+					that.win = null;
+					start();
+				}).fail(function() {
+					start();
+				});
+			}
+		},
+		doc: null,
+		win: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	asyncTest('ポップアップウィンドウ内のbodyにindicator  target:popupWindow', 5, function() {
+		var indicator = h5.ui.indicator(this.win, {
+			message: 'BlockMessageTest'
+		}).show();
+		ok(indicator._target === this.doc.body, 'ターゲットがポップアップウィンドウのbodyであること');
+
+		strictEqual($(indicator._target).find('.h5-indicator.a.content > .indicator-message')
+				.text(), 'BlockMessageTest', 'メッセージが表示されていること');
+		var $overlay = $(indicator._target).find('.h5-indicator.a.overlay');
+		strictEqual($overlay.length, 1, 'Indicator#show() インジケータが表示されること');
+		strictEqual(getComputedStyleValue($overlay[0], 'display'), 'block', 'オーバーレイが表示されていること');
 		setTimeout(function() {
 			indicator.hide();
 

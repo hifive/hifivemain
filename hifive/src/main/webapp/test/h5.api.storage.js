@@ -97,7 +97,7 @@ $(function() {
 		// 関数
 		h5.api.storage.local.clear();
 		// 文字列
-		raises(function() {
+		throws(function() {
 			h5.api.storage.local.setItem('function', function() {
 				alert('hello');
 			});
@@ -414,7 +414,7 @@ $(function() {
 		// 関数
 		h5.api.storage.session.clear();
 		// 文字列
-		raises(function() {
+		throws(function() {
 			h5.api.storage.session.setItem('function', function() {
 				alert('hello');
 			});

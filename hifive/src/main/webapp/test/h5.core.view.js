@@ -36,30 +36,37 @@
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.view;
 
+	// h5.js読み込み時にh5.core.viewがキャッシュしているテンプレートが空かどうかを覚えておく
 	var noCache = $.isEmptyObject(h5.core.view.__cachedTemplates);
 
+	// template.
 	var validTemplate1 = '<div>view1 test.</div>';
-	var validView1 = "<script type='text/ejs' id='view1'>" + validTemplate1 + '</script>';
-	// template.
+	var validView1 = "<script type='text/ejs' id='h5test-html-template1'>" + validTemplate1
+			+ '</script>';
 
-	var validTemplate2 = '<table><tbody><tr><td>AAAAAAAAAAAA</td><td>BBBBBBBBBBBB</td></tr></tbody></table>';
-	var validView2 = '<script type="text/ejs" id="view2">' + validTemplate2 + '</script>';
 	// template.
+	var validTemplate2 = '<table><tbody><tr><td>AAAAAAAAAAAA</td><td>BBBBBBBBBBBB</td></tr></tbody></table>';
+	var validView2 = '<script type="text/ejs" id="h5test-html-template2">' + validTemplate2
+			+ '</script>';
 
 	var validTemplate3 = '<table><tbody><tr><td>[%= val1 %]</td><td>[%= val2 %]</td></tr></tbody></table>';
-	var validView3 = '<script type="text/ejs" id="view3">' + validTemplate3 + '</script>';
+	var validView3 = '<script type="text/ejs" id="h5test-html-template3">' + validTemplate3
+			+ '</script>';
+
 	// template.
 	var validTemplate3Result = '<table><tbody><tr><td>AA</td><td>BB</td></tr></tbody></table>';
 
 	// template.
-	var validTemplate3Result2 = '<table><tbody><tr><td>&lt;div&gt;div&amp;nbsp;&lt;/div&gt;</td><td>&lt;&gt;&amp;&apos;&quot;</td></tr></tbody></table>';
+	var validTemplate3Result2 = '<table><tbody><tr><td>&lt;div&gt;div&amp;nbsp;&lt;/div&gt;</td><td>&lt;&gt;&amp;&#39;&quot;</td></tr></tbody></table>';
 
 	// template.
-	var validView4 = '<script type="text/ejs" id="inscript"><script src="data/sample2.js"></script></script>';
+	var validView4 = '<script type="text/ejs" id="h5test-html-template4"><script src="data/sample2.js"></script></script>';
 
+	// template.
 	var invalidTemplate1 = '<div>view3 test.</div>';
 	var invalidView1 = '<script type="text/ejs">' + invalidTemplate1 + '</script>';
 
+	// template.
 	var invalidTemplate2 = '[%= for(var i = 0; i < 10; i++){} %]';
 	var invalidTemplate3 = '<div>[% vaar hoge %]</div>';
 
@@ -68,6 +75,8 @@
 	// window.com.htmlhifiveがない場合は作成して、window.com.htmlhifive.testに空オブジェクトを入れる
 	((window.com = window.com || {}).htmlhifive = window.com.htmlhifive || {}).test = {};
 
+	// h5.jsロード時にhtml中に記述されているテンプレートが読み込まれているかどうか確認するために、headタグにテンプレートのscriptタグを追加
+	// 追加するテンプレートは全て"h5test-html-template"で始まる
 	$('head').append(validView1).append(validView2).append(validView3).append(validView4).append(
 			invalidView1);
 
@@ -79,7 +88,7 @@
 	function clearCachedTemplate() {
 		var cache = h5.core.view.__cachedTemplates;
 		for ( var prop in cache) {
-			if (prop === "view1" || prop === 'view2' || prop === 'view3' || prop === 'inscript') {
+			if (prop.indexOf('h5test-html-template') === 0) {
 				continue;
 			}
 			delete cache[prop];
@@ -88,7 +97,7 @@
 
 	// DOMに追加したテンプレート文字列を比較する
 	function assertElement(base, actual) {
-		var aElem = null,bElem = null;
+		var aElem = null, bElem = null;
 
 		var func = function($a, $b) {
 			if ($a.length !== $b.length) {
@@ -101,7 +110,7 @@
 			if ($a.children().length > 0) {
 				func($a.children(), $b.children());
 			} else {
-				for ( var i = 0; i < $a.length; i++) {
+				for (var i = 0; i < $a.length; i++) {
 					aElem = $($a[i]);
 					bElem = $($b[i]);
 
@@ -112,7 +121,7 @@
 				}
 			}
 
-			for ( var j = 0; j < $a.length; j++) {
+			for (var j = 0; j < $a.length; j++) {
 				aElem = $($a[j]);
 				bElem = $($b[j]);
 
@@ -248,7 +257,7 @@
 		//=============================
 
 		test('画面に書かれた、scriptタグが含まれているテンプレートをロードする。', function() {
-			var template = h5.core.view.get('inscript');
+			var template = h5.core.view.get('h5test-html-template4');
 			strictEqual(window.com.htmlhifive.test.sample2loaded, undefined,
 					'sample2.jsはロードされていないこと。');
 
@@ -256,7 +265,6 @@
 			strictEqual(window.com.htmlhifive.test.sample2loaded, 'sample2.js is loaded.',
 					'DOMツリーに追加した時にsample2.jsがロードされること。');
 			window.com.htmlhifive.test.sample2loaded = undefined;
-			$('#inscript').remove();
 		});
 
 		asyncTest('ejsファイルに書かれた、scriptタグが含まれているテンプレートをロードする。', 2, function() {
@@ -302,7 +310,7 @@
 			var p = view.load(['./template/test8.ejs?' + param, './template/test4.ejs?' + param]);
 			p.done(
 					function(result) {
-						for ( var i = 0, l = result.length; i < l; i++) {
+						for (var i = 0, l = result.length; i < l; i++) {
 							var obj = result[i];
 							if (obj.path === './template/test8.ejs?' + param) {
 								ok(true, 'pathが取得できること');
@@ -346,15 +354,15 @@
 		});
 
 		test('画面HTMLに書かれた、置換要素無しテンプレートを取得。', function() {
-			$('#qunit-fixture').html(h5.core.view.get('view1'));
+			$('#qunit-fixture').html(h5.core.view.get('h5test-html-template1'));
 			assertElement($('#qunit-fixture').html(), validTemplate1);
 
-			$('#qunit-fixture').html(h5.core.view.get('view2'));
+			$('#qunit-fixture').html(h5.core.view.get('h5test-html-template2'));
 			assertElement($('#qunit-fixture').html(), validTemplate2);
 		});
 
 		test('画面HTMLに書かれた、置換要素有りテンプレートを取得。view.get ', function() {
-			$('#qunit-fixture').html(h5.core.view.get('view3', {
+			$('#qunit-fixture').html(h5.core.view.get('h5test-html-template3', {
 				val1: 'AA',
 				val2: 'BB'
 			}));
@@ -362,21 +370,22 @@
 		});
 
 		test('画面HTMLに書かれた、置換要素有りテンプレートを取得。view.update ', function() {
-			h5.core.view.update(document.getElementById('qunit-fixture'), 'view3', {
-				val1: 'AA',
-				val2: 'BB'
-			});
+			h5.core.view.update(document.getElementById('qunit-fixture'), 'h5test-html-template3',
+					{
+						val1: 'AA',
+						val2: 'BB'
+					});
 			assertElement($('#qunit-fixture').html(), validTemplate3Result);
 
 			//updateなのでfixture内をクリーンアップする必要はない
 
-			h5.core.view.update($('#qunit-fixture'), 'view3', {
+			h5.core.view.update($('#qunit-fixture'), 'h5test-html-template3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
 			assertElement($('#qunit-fixture').html(), validTemplate3Result);
 
-			h5.core.view.update('#qunit-fixture', 'view3', {
+			h5.core.view.update('#qunit-fixture', 'h5test-html-template3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
@@ -386,7 +395,16 @@
 		test('画面HTMLに書かれた、置換要素有りテンプレートを取得。view.prepend ', function() {
 			$('#qunit-fixture').html(preparedHtml);
 
-			h5.core.view.prepend(document.getElementById('qunit-fixture'), 'view3', {
+			h5.core.view.prepend(document.getElementById('qunit-fixture'), 'h5test-html-template3',
+					{
+						val1: 'AA',
+						val2: 'BB'
+					});
+			assertElement($('#qunit-fixture').html(), validTemplate3Result + preparedHtml);
+
+			$('#qunit-fixture').html(preparedHtml);
+
+			h5.core.view.prepend($('#qunit-fixture'), 'h5test-html-template3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
@@ -394,15 +412,7 @@
 
 			$('#qunit-fixture').html(preparedHtml);
 
-			h5.core.view.prepend($('#qunit-fixture'), 'view3', {
-				val1: 'AA',
-				val2: 'BB'
-			});
-			assertElement($('#qunit-fixture').html(), validTemplate3Result + preparedHtml);
-
-			$('#qunit-fixture').html(preparedHtml);
-
-			h5.core.view.prepend('#qunit-fixture', 'view3', {
+			h5.core.view.prepend('#qunit-fixture', 'h5test-html-template3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
@@ -412,7 +422,16 @@
 		test('画面HTMLに書かれた、置換要素有りテンプレートを取得。view.append ', function() {
 			$('#qunit-fixture').html(preparedHtml);
 
-			h5.core.view.append(document.getElementById('qunit-fixture'), 'view3', {
+			h5.core.view.append(document.getElementById('qunit-fixture'), 'h5test-html-template3',
+					{
+						val1: 'AA',
+						val2: 'BB'
+					});
+			assertElement($('#qunit-fixture').html(), preparedHtml + validTemplate3Result);
+
+			$('#qunit-fixture').html(preparedHtml);
+
+			h5.core.view.append($('#qunit-fixture'), 'h5test-html-template3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
@@ -420,15 +439,7 @@
 
 			$('#qunit-fixture').html(preparedHtml);
 
-			h5.core.view.append($('#qunit-fixture'), 'view3', {
-				val1: 'AA',
-				val2: 'BB'
-			});
-			assertElement($('#qunit-fixture').html(), preparedHtml + validTemplate3Result);
-
-			$('#qunit-fixture').html(preparedHtml);
-
-			h5.core.view.append('#qunit-fixture', 'view3', {
+			h5.core.view.append('#qunit-fixture', 'h5test-html-template3', {
 				val1: 'AA',
 				val2: 'BB'
 			});
@@ -436,7 +447,7 @@
 		});
 
 		test('置換要素有りテンプレートで置換要素を指定しないで取得。', 1, function() {
-			raises(function() {
+			throws(function() {
 				$('#qunit-fixture').html(h5.core.view.get('view3', {}));
 			}, 'パラメータが必要なテンプレートに対して、パラメータを指定しなかったため例外が発生すること。');
 		});
@@ -620,14 +631,18 @@
 													strictEqual(propCount, 4,
 															'画面HTMLに書かれているテンプレートの件数、3件と一致すること');
 
-													strictEqual(h5.core.view.isAvailable('view1'),
-															true);
-													strictEqual(h5.core.view.isAvailable('view2'),
-															true);
-													strictEqual(h5.core.view.isAvailable('view3'),
+													strictEqual(h5.core.view
+															.isAvailable('h5test-html-template1'),
 															true);
 													strictEqual(h5.core.view
-															.isAvailable('inscript'), true);
+															.isAvailable('h5test-html-template2'),
+															true);
+													strictEqual(h5.core.view
+															.isAvailable('h5test-html-template3'),
+															true);
+													strictEqual(h5.core.view
+															.isAvailable('h5test-html-template4'),
+															true);
 
 													start();
 
@@ -739,14 +754,14 @@
 		asyncTest('isAvailable() ロードしたテンプレートIDがキャッシュに存在することを確認。', 8, function() {
 			var loadedIds = ['template2', 'template3', 'template4', 'template5'];
 			var view = h5.core.view.createView();
-			for ( var i = 0, l = loadedIds.length; i < l; i++) {
+			for (var i = 0, l = loadedIds.length; i < l; i++) {
 				var id = loadedIds[i];
 				ok(!view.isAvailable(id), 'テンプレートをロードする前はisAvailable(id)の結果がfalseであること。');
 			}
 			var p = view.load(['./template/test2.ejs', './template/test3.ejs',
 					'./template/test4.ejs']);
 			p.done(function(result) {
-				for ( var i = 0, l = loadedIds.length; i < l; i++) {
+				for (var i = 0, l = loadedIds.length; i < l; i++) {
 					var id = loadedIds[i];
 					ok(view.isAvailable(id), 'テンプレートをロードした後はisAvailable(id)の結果がtrueであること。');
 				}
@@ -761,12 +776,12 @@
 					'./template/test4.ejs']);
 
 			p.done(function(result) {
-				for ( var i = 0, l = loadedIds.length; i < l; i++) {
+				for (var i = 0, l = loadedIds.length; i < l; i++) {
 					var id = loadedIds[i];
 					ok(view.isAvailable(id), 'テンプレートを削除する前はisAvailable(id)の結果がtrueであること。');
 				}
 				view.clear();
-				for ( var i = 0, l = loadedIds.length; i < l; i++) {
+				for (var i = 0, l = loadedIds.length; i < l; i++) {
 					var id = loadedIds[i];
 					ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。');
 					try {
@@ -789,13 +804,13 @@
 					'./template/test4.ejs']);
 
 			p.done(function(result) {
-				for ( var i = 0, l = loadedIds.length; i < l; i++) {
+				for (var i = 0, l = loadedIds.length; i < l; i++) {
 					var id = loadedIds[i];
 					ok(view.isAvailable(id), 'テンプレートを削除する前はisAvailable(id)の結果がtrueであること。');
 				}
 				view.clear('template2');
 				view.clear(['template3', 'template4']);
-				for ( var i = 0, l = deletedIds.length; i < l; i++) {
+				for (var i = 0, l = deletedIds.length; i < l; i++) {
 					var id = deletedIds[i];
 					ok(!view.isAvailable(id), 'テンプレートを削除した後はisAvailable(id)の結果がfalseであること。' + id);
 					try {
@@ -804,7 +819,7 @@
 						ok(true, '削除したテンプレートに対してgetView()を行うと例外が発生すること。：' + e.message);
 					}
 				}
-				for ( var i = 0, l = existIds.length; i < l; i++) {
+				for (var i = 0, l = existIds.length; i < l; i++) {
 					var id = existIds[i];
 					ok(view.isAvailable(id), '削除されていないテンプレートはisAvailable(id)の結果がfalseであること。' + id);
 					try {
@@ -1161,17 +1176,20 @@
 				});
 
 		asyncTest('getAvailableTemplates() viewインスタンスで利用可能なテンプレートIDを配列で取得できること。', 3, function() {
-			deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2', 'view3',
-					'inscript'].sort(), '画面HTMLに書かれたテンプレートIDが取得できること');
+			deepEqual(h5.core.view.getAvailableTemplates().sort(), ['h5test-html-template1',
+					'h5test-html-template2', 'h5test-html-template3', 'h5test-html-template4']
+					.sort(), '画面HTMLに書かれたテンプレートIDが取得できること');
 			h5.core.view.load(['./template/test2.ejs', './template/test3.ejs']).done(
 					function() {
-						deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2',
-								'view3', 'inscript', 'template2', 'template3'].sort(),
-								'画面HTMLに書かれたテンプレートIDとロードしたテンプレートのIDが取得できること');
+						deepEqual(h5.core.view.getAvailableTemplates().sort(), [
+								'h5test-html-template1', 'h5test-html-template2',
+								'h5test-html-template3', 'h5test-html-template4', 'template2',
+								'template3'].sort(), '画面HTMLに書かれたテンプレートIDとロードしたテンプレートのIDが取得できること');
 						h5.core.view.clear('template2');
-						deepEqual(h5.core.view.getAvailableTemplates().sort(), ['view1', 'view2',
-								'view3', 'inscript', 'template3'].sort(),
-								'clear()で削除したテンプレートIDが利用可能でないこと。');
+						deepEqual(h5.core.view.getAvailableTemplates().sort(), [
+								'h5test-html-template1', 'h5test-html-template2',
+								'h5test-html-template3', 'h5test-html-template4', 'template3']
+								.sort(), 'clear()で削除したテンプレートIDが利用可能でないこと。');
 						start();
 					});
 		});
@@ -1207,7 +1225,7 @@
 						p2.done(
 								function() {
 									var cacheInfo = cacheManager.getCacheInfo();
-									for ( var i = 0; i < cacheInfo.length; i++) {
+									for (var i = 0; i < cacheInfo.length; i++) {
 										var cache = cacheInfo[i];
 										var path = cache.path;
 										if (path === "./template/test2.ejs") {
@@ -1216,7 +1234,7 @@
 											ok(cache.absoluteUrl
 													.match(/http.*\/template\/test2\.ejs/),
 													'URLが取得できる - ' + cache.absoluteUrl);
-											for ( var j = 0; j < cache.ids.length; j++) {
+											for (var j = 0; j < cache.ids.length; j++) {
 												var id = cache.ids[j];
 												if (id === 'template2') {
 													ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:'
@@ -1229,7 +1247,7 @@
 											ok(cache.absoluteUrl
 													.match(/http.*\/template\/test3\.ejs/),
 													'URLが取得できる - ' + cache.absoluteUrl);
-											for ( var j = 0; j < cache.ids.length; j++) {
+											for (var j = 0; j < cache.ids.length; j++) {
 												var id = cache.ids[j];
 												if (id === 'template3') {
 													ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:'
@@ -1242,7 +1260,7 @@
 											ok(cache.absoluteUrl
 													.match(/http.*\/template\/test4\.ejs/),
 													'URLが取得できる - ' + cache.absoluteUrl);
-											for ( var j = 0; j < cache.ids.length; j++) {
+											for (var j = 0; j < cache.ids.length; j++) {
 												var id = cache.ids[j];
 												if (id === 'template4') {
 													ok(true, 'テンプレートのIDが取得できる - ' + path + ', id:'
@@ -1287,7 +1305,7 @@
 						var cacheUrls = cacheManager.cacheUrls;
 						var cache = cacheManager.cache;
 
-						for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+						for (var i = 0, l = cacheUrls.length; i < l; i++) {
 							var url = cacheUrls[i];
 							ok($.inArray(cache[url].path, expectArray) != -1,
 									'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: ' + cache[url].path);
@@ -1303,7 +1321,7 @@
 							var cacheUrls2 = cacheManager.cacheUrls;
 							var cache2 = cacheManager.cache;
 
-							for ( var i = 0, l = cacheUrls2.length; i < l; i++) {
+							for (var i = 0, l = cacheUrls2.length; i < l; i++) {
 								var url2 = cacheUrls2[i];
 								ok($.inArray(cache2[url2].path, expectArray2) != -1,
 										'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
@@ -1344,7 +1362,7 @@
 								var cacheUrls = cacheManager.cacheUrls;
 								var cache = cacheManager.cache;
 
-								for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+								for (var i = 0, l = cacheUrls.length; i < l; i++) {
 									var url = cacheUrls[i];
 									ok($.inArray(cache[url].path, expectArray1) != -1,
 											'キャッシュマネージャにキャッシュしたテンプレートが格納されていること。url: '
@@ -1372,7 +1390,7 @@
 								equal(cacheUrls.length, 1,
 										'1ファイルのみキャッシュされていること。同じファイルが重複してキャッシュされていないこと。');
 
-								for ( var i = 0, l = cacheUrls.length; i < l; i++) {
+								for (var i = 0, l = cacheUrls.length; i < l; i++) {
 									var url = cacheUrls[i];
 									equal(cache[url].path, './template/test_cache1.ejs',
 											'test_cache1.ejsがキャッシュされていること。');

@@ -28,7 +28,6 @@
 	// Production
 	// =============================
 
-	var TYPE_OF_UNDEFINED = 'undefined';
 	var SUFFIX_CONTROLLER = 'Controller';
 	var SUFFIX_LOGIC = 'Logic';
 	var EVENT_NAME_H5_TRACKSTART = 'h5trackstart';
@@ -92,6 +91,8 @@
 	var ERR_CODE_CONTROLLER_TOO_FEW_ARGS = 6032;
 	/** エラーコード：コントローラの初期化処理がユーザーコードによって中断された(__initや__readyで返したプロミスがrejectした) */
 	var ERR_CODE_CONTROLLER_REJECTED_BY_USER = 6033;
+	/** エラーコード：コントローラのバインド対象がノードではない */
+	var ERR_CODE_BIND_NOT_NODE = 6034;
 
 	// =============================
 	// Development Only
@@ -136,6 +137,7 @@
 	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind(), unbind()はルートコントローラでのみ使用可能です。';
 	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
 	errMsgMap[ERR_CODE_CONTROLLER_REJECTED_BY_USER] = 'コントローラ"{0}"の初期化処理がユーザによって中断されました。';
+	errMsgMap[ERR_CODE_BIND_NOT_NODE] = 'コントローラ"{0}"のバインド対象がノードではありません。バインド対象に指定できるのはノードかdocumentオブジェクトのみです。';
 
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
@@ -187,17 +189,31 @@
 	 */
 	var h5trackTriggeredFlags = [];
 
+	/**
+	 * touch-actionをサポートしているときの、そのプロパティ(touchActionまたはmsTouchAction)
+	 */
+	var touchActionProp = '';
+
+	/**
+	 * touch-action(または-ms-touch-action)プロパティがサポートされているか
+	 */
+	var isTouchActionSupported = (function() {
+		// divを作って、styleにtouchActionまたはmsTouchActionがあるか判定する
+		// いずれかがあった場合にtouchActionPropを設定して、trueを返す
+		var div = document.createElement('div');
+		if (typeof div.style.touchAction !== TYPE_OF_UNDEFINED) {
+			touchActionProp = 'touchAction';
+			return true;
+		} else if (typeof div.style.msTouchAction !== TYPE_OF_UNDEFINED) {
+			touchActionProp = 'msTouchAction';
+			return true;
+		}
+		return false;
+	})();
+
 	// =============================
 	// Functions
 	// =============================
-
-	/**
-	 * documentオブジェクトからwindowオブジェクトを取得
-	 */
-	function getWindowOfDocument(doc) {
-		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
-		return doc.defaultView || doc.parentWindow;
-	}
 
 	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
@@ -264,7 +280,7 @@
 			return ret;
 		}
 		aspects = wrapInArray(aspects);
-		for ( var i = aspects.length - 1; -1 < i; i--) {
+		for (var i = aspects.length - 1; -1 < i; i--) {
 			var aspect = aspects[i];
 			if (aspect.target && !aspect.compiledTarget.test(targetName)) {
 				continue;
@@ -277,7 +293,7 @@
 				ret.push(interceptors);
 				continue;
 			}
-			for ( var j = interceptors.length - 1; -1 < j; j--) {
+			for (var j = interceptors.length - 1; -1 < j; j--) {
 				ret = ret.concat(interceptors[j]);
 			}
 		}
@@ -311,7 +327,7 @@
 		};
 
 		var f = base;
-		for ( var i = 0, l = aspects.length; i < l; i++) {
+		for (var i = 0, l = aspects.length; i < l; i++) {
 			f = weave(f, funcName, aspects[i]);
 		}
 		return f;
@@ -399,7 +415,7 @@
 	 */
 	function getGlobalSelectorTarget(selector, doc) {
 		var specialObj = ['window', 'document', 'navigator'];
-		for ( var i = 0, len = specialObj.length; i < len; i++) {
+		for (var i = 0, len = specialObj.length; i < len; i++) {
 			var s = specialObj[i];
 			if (selector === s || startsWith(selector, s + '.')) {
 				//特殊オブジェクトそのものを指定された場合またはwindow. などドット区切りで続いている場合
@@ -457,17 +473,23 @@
 	}
 
 	/**
-	 * コントローラのプロパティが子コントローラかどうかを返します。
+	 * コントローラのプロパティが自分自身の子コントローラであるかどうかを返します。
 	 *
 	 * @param {Object} controller コントローラ
-	 * @param {String} プロパティ名
-	 * @returns {Boolean} コントローラのプロパティが子コントローラかどうか(true=子コントローラである)
+	 * @param {String} prop プロパティ名
+	 * @returns {Boolean} コントローラのプロパティが第1引数のコントローラの子コントローラかどうか(true=子コントローラである)
 	 */
 	function isChildController(controller, prop) {
 		var target = controller[prop];
+		// プロパティがrootControllerまたはparentControllerの場合はfalse
+		// __controllerContextがない(コントローラインスタンスではないまたはdispose済みコントローラインスタンス)の場合はfalse
+		// 子コントローラでない(isRootがtrue)の場合はfalse
+		// parentControllerを見て、自分の子供ならtrueを返す。
+		// ただし、parentController未設定(コントローラ化処理の途中)の場合はtrueを返す。
 		return endsWith(prop, SUFFIX_CONTROLLER) && prop !== 'rootController'
-				&& prop !== 'parentController' && !$.isFunction(target)
-				&& (target && !target.__controllerContext.isRoot);
+				&& prop !== 'parentController' && target && target.__controllerContext
+				&& !target.__controllerContext.isRoot
+				&& (!target.parentController || target.parentController === controller);
 	}
 
 	/**
@@ -572,7 +594,7 @@
 		case EVENT_NAME_H5_TRACKSTART:
 		case EVENT_NAME_H5_TRACKMOVE:
 		case EVENT_NAME_H5_TRACKEND:
-			bindObj = getH5TrackBindObj(controller, selector, eventName, func);
+			bindObj = getH5TrackBindObj(controller, selector, event, func);
 			break;
 		default:
 			bindObj = getNormalBindObj(controller, selector, event, func);
@@ -583,7 +605,7 @@
 			useBindObj(bindObj, bindRequested);
 			return;
 		}
-		for ( var i = 0, l = bindObj.length; i < l; i++) {
+		for (var i = 0, l = bindObj.length; i < l; i++) {
 			useBindObj(bindObj[i], bindRequested);
 		}
 	}
@@ -602,8 +624,9 @@
 		var useBind = isBindRequested(eventName);
 		var event = useBind ? trimBindEventBracket(eventName) : eventName;
 		var doc = getDocumentOf(rootElement);
+		var isGlobal = isGlobalSelector(selector);
 
-		if (isGlobalSelector(selector)) {
+		if (isGlobal) {
 			// グローバルなセレクタの場合
 			var selectorTrimmed = trimGlobalSelectorBracket(selector);
 			var isSelf = false;
@@ -641,6 +664,19 @@
 			} else {
 				$(rootElement).delegate(selector, event, handler);
 			}
+		}
+
+		// h5trackstartのバインド先のstyle.touchActionにh5.settings.trackstartTouchActionの値(デフォルト'none')を設定する
+		// touchActionをサポートしていないなら何もしない
+		// h5.settings.trackstartTouchActionがnullなら何もしない
+		// TODO プラッガブル(どのイベントの時にどういう処理をするか)が設定できるようにする
+		if (isTouchActionSupported && event === EVENT_NAME_H5_TRACKSTART
+				&& h5.settings.trackstartTouchAction != null) {
+			var $trackTarget = isGlobal ? $(bindObj.evSelector, doc) : $(bindObj.evSelector,
+					rootElement);
+			$trackTarget.each(function() {
+				this.style[touchActionProp] = h5.settings.trackstartTouchAction;
+			});
 		}
 	}
 
@@ -1092,9 +1128,10 @@
 	/**
 	 * hifiveの独自イベント"h5trackstart", "h5trackmove", "h5trackend"のためのバインドオブジェクトを返します。
 	 *
+	 * @private
 	 * @param {Controller} controller コントローラ
 	 * @param {String} selector セレクタ
-	 * @param {String} eventName イベント名
+	 * @param {String} eventName イベント名 h5trackstart,h5trackmove,h5trackendのいずれか
 	 * @param {Function} func ハンドラとして登録したい関数
 	 * @returns {Object[]} バインドオブジェクト
 	 *          <ul>
@@ -1108,22 +1145,25 @@
 		// タッチイベントがあるかどうか
 		var hasTouchEvent = typeof document.ontouchstart !== TYPE_OF_UNDEFINED;
 		if (eventName !== EVENT_NAME_H5_TRACKSTART) {
-			if (hasTouchEvent) {
-				return getNormalBindObj(controller, selector, eventName, func);
-			}
-			// イベントオブジェクトの正規化
+			// h5trackmove,h5trackendはh5trackstart時にバインドするのでここでmouseやtouchにバインドするbindObjは作らない
+			// h5trackmoveまたはh5trackendのbindObjのみを返す
 			return getNormalBindObj(controller, selector, eventName, function(context) {
-				var event = context.event;
-				var offset = $(event.currentTarget).offset() || {
-					left: 0,
-					top: 0
-				};
-				event.offsetX = event.pageX - offset.left;
-				event.offsetY = event.pageY - offset.top;
+				// マウスイベントによる発火なら場合はオフセットを正規化する
+				var originalEventType = context.event.h5DelegatingEvent.type;
+				if (originalEventType === 'mousemove' || originalEventType === 'mouseup') {
+					var event = context.event;
+					var offset = $(event.currentTarget).offset() || {
+						left: 0,
+						top: 0
+					};
+					event.offsetX = event.pageX - offset.left;
+					event.offsetY = event.pageY - offset.top;
+				}
 				func.apply(this, arguments);
 			});
 		}
-		var getEventType = function(en) {
+
+		function getEventType(en) {
 			switch (en) {
 			case 'touchstart':
 			case 'mousedown':
@@ -1135,11 +1175,11 @@
 			case 'mouseup':
 				return EVENT_NAME_H5_TRACKEND;
 			}
-		};
+		}
 
 		// jQuery.Eventオブジェクトのプロパティをコピーする。
 		// 1.6.xの場合, "liveFired"というプロパティがあるがこれをコピーしてしまうとtriggerしてもイベントが発火しない。
-		var copyEventObject = function(src, dest) {
+		function copyEventObject(src, dest) {
 			for ( var prop in src) {
 				if (src.hasOwnProperty(prop) && !dest[prop] && prop !== 'target'
 						&& prop !== 'currentTarget' && prop !== 'originalEvent'
@@ -1148,17 +1188,20 @@
 				}
 			}
 			dest.h5DelegatingEvent = src;
-		};
+		}
 
-		var start = hasTouchEvent ? 'touchstart' : 'mousedown';
-		var move = hasTouchEvent ? 'touchmove' : 'mousemove';
-		var end = hasTouchEvent ? 'touchend' : 'mouseup';
 		var $document = $(getDocumentOf(controller.rootElement));
-		var getBindObjects = function() {
+
+		/**
+		 * トラックイベントの一連のイベントについてのbindObjを作る
+		 *
+		 * @returns {Objects[]}
+		 */
+		function getBindObjects() {
 			// h5trackendイベントの最後でハンドラの除去を行う関数を格納するための変数
 			var removeHandlers = null;
 			var execute = false;
-			var getHandler = function(en, eventTarget, setup) {
+			function getHandler(en, eventTarget, setup) {
 				return function(context) {
 					var type = getEventType(en);
 					var isStart = type === EVENT_NAME_H5_TRACKSTART;
@@ -1166,7 +1209,10 @@
 						// スタートイベントが起きた時に実行中 = マルチタッチされた時なので、何もしない
 						return;
 					}
-					if (hasTouchEvent) {
+
+					// タッチイベントかどうか
+					var isTouch = context.event.type.indexOf('touch') === 0;
+					if (isTouch) {
 						// タッチイベントの場合、イベントオブジェクトに座標系のプロパティを付加
 						initTouchEventObject(context.event, en);
 					}
@@ -1200,9 +1246,13 @@
 					// sotredEventsにイベントが登録されていれば、そのindexからトリガ済みフラグを取得する
 					var triggeredFlag = h5trackTriggeredFlags[index];
 
-					if (!triggeredFlag && (!hasTouchEvent || execute || isStart)) {
+					if (!triggeredFlag && (!isTouch || execute || isStart)) {
+						// 親子コントローラで複数のイベントハンドラが同じイベントにバインドされているときに、
+						// それぞれがトリガしてイベントハンドラがループしないように制御している。
 						// マウス/タッチイベントがh5track*にトリガ済みではない時にトリガする。
-						// h5track中でないのにmoveやmouseupが起きた時は何もしない。
+						// タッチイベントの場合、h5track中でないのにmoveやtouchendが起きた時は何もしない。
+						// タッチイベントの場合はターゲットにバインドしており(マウスの場合はdocument)、
+						// バブリングによって同じイベントが再度トリガされるのを防ぐためである。
 
 						// トリガ済みフラグを立てる
 						h5trackTriggeredFlags[index] = true;
@@ -1249,8 +1299,12 @@
 
 						// h5trackstart実行時に、move、upのハンドラを作成して登録する。
 						// コンテキストをとるように関数をラップして、bindする。
-						var moveHandler = getHandler(move, nt, setupDPos);
-						var upHandler = getHandler(end, nt);
+						// touchstartで発火したならtouchstart,touchendにバインド、
+						// そうでない場合(mousedown)ならmousemove,mousenendにバインド
+						var moveEventType = isTouch ? 'touchmove' : 'mousemove';
+						var endEventType = isTouch ? 'touchend' : 'mouseup';
+						var moveHandler = getHandler(moveEventType, nt, setupDPos);
+						var upHandler = getHandler(endEventType, nt);
 						var moveHandlerWrapped = function(e) {
 							context.event = e;
 							context.evArg = handlerArgumentsToContextEvArg(arguments);
@@ -1262,33 +1316,34 @@
 							upHandler(context);
 						};
 
-						var $bindTarget = hasTouchEvent ? $(nt) : $document;
+						// タッチならイベントの起きた要素、マウスならdocumentにバインド
+						var $bindTarget = isTouch ? $(nt) : $document;
 						// moveとendのunbindをする関数
 						removeHandlers = function() {
 							storedEvents = [];
 							h5trackTriggeredFlags = [];
-							$bindTarget.unbind(move, moveHandlerWrapped);
-							$bindTarget.unbind(end, upHandlerWrapped);
-							if (!hasTouchEvent && controller.rootElement !== document) {
-								$(controller.rootElement).unbind(move, moveHandlerWrapped);
-								$(controller.rootElement).unbind(end, upHandlerWrapped);
+							$bindTarget.unbind(moveEventType, moveHandlerWrapped);
+							$bindTarget.unbind(endEventType, upHandlerWrapped);
+							if (!isTouch && controller.rootElement !== document) {
+								$(controller.rootElement).unbind(moveEventType, moveHandlerWrapped);
+								$(controller.rootElement).unbind(endEventType, upHandlerWrapped);
 							}
 						};
 						// h5trackmoveとh5trackendのbindを行う
-						$bindTarget.bind(move, moveHandlerWrapped);
-						$bindTarget.bind(end, upHandlerWrapped);
+						$bindTarget.bind(moveEventType, moveHandlerWrapped);
+						$bindTarget.bind(endEventType, upHandlerWrapped);
 
 						// タッチでなく、かつコントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
-						// タッチイベントのない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
+						// タッチイベントでない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
 						// stopPropagationされたときに、h5trackイベントを発火することができなくなる。
 						// コントローラのルートエレメント外でstopPropagationされていた場合を考慮して、
 						// ルートエレメントにもmove,endをバインドする。
 						// (ルートエレメントの内側でstopPropagationしている場合は考慮しない)
 						// (タッチの場合はターゲットはstart時の要素なので2重にバインドする必要はない)
-						if (!hasTouchEvent && controller.rootElement !== document) {
+						if (!isTouch && controller.rootElement !== document) {
 							// h5trackmoveとh5trackendのbindを行う
-							$(controller.rootElement).bind(move, moveHandlerWrapped);
-							$(controller.rootElement).bind(end, upHandlerWrapped);
+							$(controller.rootElement).bind(moveEventType, moveHandlerWrapped);
+							$(controller.rootElement).bind(endEventType, upHandlerWrapped);
 						}
 					} else if (type === EVENT_NAME_H5_TRACKEND) {
 						// touchend,mousup時(=h5trackend時)にmoveとendのイベントをunbindする
@@ -1296,19 +1351,23 @@
 						execute = false;
 					}
 				};
-			};
-			var createBindObj = function(en) {
+			}
+			function createBindObj(en) {
 				return {
 					controller: controller,
 					selector: selector,
 					eventName: en,
 					handler: getHandler(en)
 				};
-			};
+			}
 			var bindObjects = [getNormalBindObj(controller, selector, eventName, func)];
-			bindObjects.push(createBindObj(start));
+			if (hasTouchEvent) {
+				// タッチがあるならタッチにもバインド
+				bindObjects.push(createBindObj('touchstart'));
+			}
+			bindObjects.push(createBindObj('mousedown'));
 			return bindObjects;
-		};
+		}
 		return getBindObjects();
 	}
 
@@ -1637,6 +1696,21 @@
 		execute(controller);
 		return promises;
 	}
+	/**
+	 * オブジェクトのhasOwnPropertyがtrueのプロパティ全てにnullを代入します。
+	 * <p>
+	 * ネストしたオブジェクトへのnull代入は行いません
+	 * </p>
+	 *
+	 * @param {Object} obj
+	 */
+	function nullify(obj) {
+		for ( var prop in obj) {
+			if (obj.hasOwnProperty(prop)) {
+				obj[prop] = null;
+			}
+		}
+	}
 
 	/**
 	 * コントローラのリソース解放処理を行います。
@@ -1645,23 +1719,23 @@
 	 */
 	function disposeController(controller) {
 		var targets = [];
-		var dispose = function(parentController) {
+		function dispose(parentController) {
 			targets.push(parentController);
 			if (parentController.view.__view) {
 				parentController.view.clear();
 			}
 			for ( var prop in parentController) {
-				if (parentController.hasOwnProperty(prop)) {
-					if (isChildController(parentController, prop)) {
-						var c = parentController[prop];
-						if ($.inArray(c, targets) === -1) {
-							dispose(c);
-						}
+				if (parentController.hasOwnProperty(prop)
+						&& isChildController(parentController, prop)) {
+					var c = parentController[prop];
+					if ($.inArray(c, targets) === -1) {
+						dispose(c);
 					}
-					parentController[prop] = null;
 				}
 			}
-		};
+			// 子コントローラのdispose処理が終わってからプロパティにnullを代入する
+			nullify(parentController);
+		}
 		dispose(controller);
 	}
 
@@ -1751,13 +1825,13 @@
 				// readyDfdまでrejectしたら終了
 				if (propertyIndex < propertyArray.length - 1) {
 					// ルートコントローラまで辿ったら、末裔のコントローラに対して次のdfdをrejectさせる
-					for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+					for (var i = 0, l = descendantControllers.length; i < l; i++) {
 						rejectControllerDfdLoop(descendantControllers[i], propertyIndex + 1);
 					}
 				}
 			}
 		}
-		for ( var i = 0, l = descendantControllers.length; i < l; i++) {
+		for (var i = 0, l = descendantControllers.length; i < l; i++) {
 			rejectControllerDfdLoop(descendantControllers[i], 0);
 		}
 	}
@@ -1772,7 +1846,7 @@
 	 */
 	function findCommentBindingTarget(rootNode, id) {
 		var childNodes = rootNode.childNodes;
-		for ( var i = 0, len = childNodes.length; i < len; i++) {
+		for (var i = 0, len = childNodes.length; i < len; i++) {
 			var n = childNodes[i];
 			if (n.nodeType === 1) {
 				//Magic number: 1はNode.ELEMENT_NODE
@@ -2083,14 +2157,14 @@
 
 			target = [];
 			var childNodes = $dummyRoot[0].childNodes;
-			for ( var i = 0, len = childNodes.length; i < len; i++) {
+			for (var i = 0, len = childNodes.length; i < len; i++) {
 				target.push(childNodes[i]);
 			}
 
 			//ダミールートから要素を外し、インラインテンプレートの直後に要素を挿入
 			$dummyRoot.empty();
 			var fragment = document.createDocumentFragment();
-			for ( var i = 0, len = target.length; i < len; i++) {
+			for (var i = 0, len = target.length; i < len; i++) {
 				fragment.appendChild(target[i]);
 			}
 
@@ -2686,7 +2760,7 @@
 			var seekRoot = $(rootElement)[0];
 			var controllers = this.controllers;
 			var ret = [];
-			for ( var i = 0, len = controllers.length; i < len; i++) {
+			for (var i = 0, len = controllers.length; i < len; i++) {
 				var controller = controllers[i];
 
 				if (names && $.inArray(controller.__name, names) === -1) {
@@ -2789,8 +2863,16 @@
 						controllerDefObj: controllerDefObj
 					});
 				}
+				// 要素が複数ある場合はエラー
 				if ($bindTargetElement.length > 1) {
 					throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controllerName], {
+						controllerDefObj: controllerDefObj
+					});
+				}
+				// ノードエレメントでない場合はエラー
+				if ($bindTargetElement[0].nodeType !== NODE_TYPE_DOCUMENT
+						&& $bindTargetElement[0].nodeType !== NODE_TYPE_ELEMENT) {
+					throwFwError(ERR_CODE_BIND_NOT_NODE, [controllerName], {
 						controllerDefObj: controllerDefObj
 					});
 				}

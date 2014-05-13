@@ -779,7 +779,7 @@ $(function() {
 					col1: 20,
 					col2: 'hoge1',
 					col3: 111
-				},obj2 = {
+				}, obj2 = {
 					col1: 10,
 					col2: 'hoge2',
 					col3: 222
@@ -2487,7 +2487,7 @@ $(function() {
 			strictEqual(rows.length, 2, '2件取得できること。');
 
 			var expected = ['hoge2', 'hoge1'];
-			for ( var i = 0; i < rows.length; i++) {
+			for (var i = 0; i < rows.length; i++) {
 				strictEqual(rows.item(i).col2, expected[i], '降順でソートされていること。');
 			}
 			start();
@@ -2507,7 +2507,7 @@ $(function() {
 			return;
 		}
 
-		raises(function() {
+		throws(function() {
 			db.select(TABLE_NAME, '*').orderBy(10);
 		}, 'orderBy()に不正な型を指定したためエラーが発生すること。');
 	});
@@ -3006,7 +3006,7 @@ $(function() {
 		var args = [, undefined, null, 0, 1, '', 'a', new String(), {}, db.transaction()];
 		expect(args.length);
 
-		for ( var i = 0; i < args.length; i++) {
+		for (var i = 0; i < args.length; i++) {
 			try {
 				db.transaction().add(args[i]);
 			} catch (e) {
@@ -3738,6 +3738,9 @@ $(function() {
 			return;
 		}
 
+		// openDatabaseをwindowオブジェクトがhasOwnで持っているかどうか
+		// (chrome,opera,androidはfalse、safari,ios-safariはtrue)
+		var hasOwnOpenDatabase = window.hasOwnProperty('openDatabase');
 		var origin = window.openDatabase;
 
 		var SQLError = function(code, message) {
@@ -3763,7 +3766,13 @@ $(function() {
 
 		function loop(i) {
 			if (i === errs.length) {
-				window.openDatabase = origin;
+				if (hasOwnOpenDatabase) {
+					// hasOwnで持っていた場合は元に戻す
+					window.openDatabase = origin;
+				} else {
+					// hasOwnでなかった場合はスタブを削除して、元のopenDatabase関数が見えるようにする
+					deleteProperty(window, 'openDatabase');
+				}
 				start();
 				return;
 			}

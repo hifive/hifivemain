@@ -40,6 +40,46 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
+	/**
+	 * 現在時刻と乱数からユニークな文字列を作成する
+	 */
+	function getUniqueString() {
+		var val = new Date().getTime().toString();
+		var rand = parseInt(10000 * Math.random(), 10);
+		return val + rand.toString();
+	}
+	/**
+	 * coexistのテストのためにjsファイルを読み込む関数
+	 */
+	function loadScript(src) {
+		// h5が無い状態でも呼べるように$.Deferred()を使う
+		var dfd = $.Deferred();
+		// キャッシュから読み込まれないようにタイムスタンプをパラメータに追加
+		var script = document.createElement('script');
+
+		function loaded() {
+			script.onload = null;
+			script.onreadystatechange = null;
+			dfd.resolve();
+		}
+		// onloadがある場合
+		if (script.onload !== undefined) {
+			script.onload = loaded;
+		} else {
+			// onloadが無い(IE6,7,8)場合
+			script.onreadystatechange = function() {
+				// キャッシュされているファイルだとcomplete、キャッシュされていないファイルではloadedになる
+				if (this.readyState == 'loaded' || this.readyState == 'complete') {
+					loaded();
+				}
+			};
+		}
+
+		script.type = 'text/javascript';
+		script.src = src + '?' + getUniqueString();
+		$('head')[0].appendChild(script);
+		return dfd.promise();
+	}
 
 	// =========================================================================
 	//
@@ -50,7 +90,6 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-
 	module("h5.coexist", {
 		teardown: function() {
 			window.h5 = originalH5;
@@ -60,7 +99,6 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
 	test('h5.coexist()', function() {
 		var savedH5 = h5.coexist();
 		strictEqual(h5, undefined, 'h5を二重に読み込んでいない状態でh5.coexist()をするとh5がundefinedになる');
@@ -68,47 +106,51 @@ $(function() {
 		ok(savedH5 === originalH5, 'h5.coexist()の戻り値が元のh5と同じインスタンス。');
 	});
 
-	test('バージョンが同じものを2重読み込みする。', function() {
-		h5.u.loadScript(h5jsPath, {
-			force: true,
-			async: false
+	asyncTest('バージョンが同じものを2重読み込みする。', function() {
+		loadScript(h5jsPath).done(function() {
+			var savedH5 = h5.coexist();
+			strictEqual(h5, undefined, 'バージョンが同じものをh5.coexist()をするとh5がundefinedになる');
+			ok(savedH5 === originalH5, 'h5.coexist()の戻り値が元のh5と同じ。');
+			start();
 		});
-
-		var savedH5 = h5.coexist();
-		strictEqual(h5, undefined, 'バージョンが同じものをh5.coexist()をするとh5がundefinedになる');
-		ok(savedH5 === originalH5, 'h5.coexist()の戻り値が元のh5と同じ。');
-
 	});
 
-	test('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.jsを読み込む。', function() {
+	asyncTest('window.h5にhifiveと無関係なオブジェクトがすでに存在するときに、h5.jsを読み込む。', function() {
 		h5 = {};
-		originalH5.u.loadScript(h5jsPath, {
-			force: true,
-			async: false
+		loadScript(h5jsPath).done(function() {
+			var savedH5 = h5.coexist();
+			deepEqual(h5, {}, 'coexistすると、window.h5はもともと入っていたオブジェクトになる');
+			strictEqual(savedH5.env.version, originalH5.env.version, 'h5.coexist()の戻り値が元のh5と同じ。');
+			start();
 		});
-		var savedH5 = h5.coexist();
-		deepEqual(h5, {}, 'coexistすると、window.h5はもともと入っていたオブジェクトになる');
-		strictEqual(savedH5.env.version, originalH5.env.version, 'h5.coexist()の戻り値が元のh5と同じ。');
 	});
 
+
+	//=============================
+	// Definition
+	//=============================
 	module('バージョンが違うh5を2重読み込み', {
 		setup: function() {
-			// vesion0.0.1のjsファイルをインクルードする
-			h5.u.loadScript(oldh5jsPath, {
-				force: true,
-				async: false
-			});
 			// コントローラを全部アンバインド
-			for ( var l = h5.core.controllerManager.controllers.length; l-- > 0;) {
+			for (var l = h5.core.controllerManager.controllers.length; l-- > 0;) {
 				var controller = h5.core.controllerManager.controllers[l];
 				controller.unbind();
 			}
+
+			// vesion0.0.1のjsファイルをインクルードする
+			stop();
+			loadScript(oldh5jsPath).done(function() {
+				start();
+			});
 		},
 		teardown: function() {
 			h5 = originalH5;
 		}
 	});
 
+	//=============================
+	// Body
+	//=============================
 	test('h5.coexist()で読み込む前のh5が取得できること。', 3, function() {
 		strictEqual(h5.env.version, '0.0.1', 'h5がバージョン0.0.1のものに上書きされていること。');
 
@@ -124,7 +166,7 @@ $(function() {
 			__name: name
 		};
 		function inControllers(controller, controllers) {
-			for ( var l = controllers.length; l-- > 0;) {
+			for (var l = controllers.length; l-- > 0;) {
 				if (controllers[l] === controller) {
 					return true;
 				}

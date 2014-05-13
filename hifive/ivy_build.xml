@@ -9,7 +9,7 @@
 	</description>
 
 	<!-- ivy導入バージョン -->
-	<property name="ivy.install.version" value="2.3.0-rc1" />
+	<property name="ivy.install.version" value="2.3.0" />
 	<!-- ivy導入フォルダ -->
 	<property name="ivy.install.dir" location="lib/ivy" />
 	<!-- 取得ライブラリ展開フォルダ -->

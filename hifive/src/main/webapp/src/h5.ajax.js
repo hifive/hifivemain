@@ -90,7 +90,7 @@
 	 * @param {Deferred} dfd
 	 */
 	function delegateCallbackProperties(settings, dfd) {
-		for ( var i = 0, l = CALLBACK_REGISTER_DELEGATE_METHODS.length; i < l; i++) {
+		for (var i = 0, l = CALLBACK_REGISTER_DELEGATE_METHODS.length; i < l; i++) {
 			var prop = CALLBACK_REGISTER_DELEGATE_METHODS[i];
 			if (settings[prop]) {
 				dfd[PROP_TO_METHOD_MAP[prop]](settings[prop]);

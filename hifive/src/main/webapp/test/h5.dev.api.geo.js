@@ -150,7 +150,7 @@ $(function() {
 			longitude: 139.7650095767002
 		}];
 		var promises = [];
-		for ( var i = 0, len = params.length; i < len; i++) {
+		for (var i = 0, len = params.length; i < len; i++) {
 			var param = params[i];
 			h5.dev.api.geo.dummyPositions = param;
 			promises.push(h5.api.geo.getCurrentPosition({
@@ -440,14 +440,14 @@ $(function() {
 								ok(true, '3番目に呼んだwatchPositionが停止すること。');
 								promise1.unwatch();
 								promise2.unwatch();
-								for ( var i = 0; i < 5; i++) {
+								for (var i = 0; i < 5; i++) {
 									deepEqual(positions2[i], positions1[i + 1], "2つ目が" + (i + 1)
 											+ "番目に取得したposiitonオブジェクトと1つ目が" + (i + 2)
 											+ "番目に取得したpositionオブジェクトが同じ");
 									ok(Math.abs(times2[i] - times1[i + 1]) <= 100, "2つ目が" + (i + 1)
 											+ "番目に取得した時間と1つ目が" + (i + 2) + "番目に取得した時間が誤差100ms以内：");
 								}
-								for ( var i = 0; i < 3; i++) {
+								for (var i = 0; i < 3; i++) {
 									deepEqual(positions3[i], positions1[i + 3], "3つ目が" + (i + 1)
 											+ "番目に取得したposiitonオブジェクトと1つ目が" + (i + 4)
 											+ "番目に取得したpositionオブジェクトが同じ");

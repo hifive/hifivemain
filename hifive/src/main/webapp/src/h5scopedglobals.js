@@ -34,10 +34,30 @@ var errorCodeToMessageMap = {};
 
 /**
  * { (エラーコード)： (フォーマッタ関数) } マップ
+ *
+ * @private
  */
 var errorCodeToCustomFormatterMap = {};
 
-/** Node.DOCUMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
+/**
+ * undefinedかどうかの判定で、typeofで判定する
+ *
+ * @private
+ */
+var TYPE_OF_UNDEFINED = 'undefined';
+
+/**
+ * Node.ELEMENT_NODE。IE8-ではNodeがないので自前で定数を作っている
+ *
+ * @private
+ */
+var NODE_TYPE_ELEMENT = 1;
+
+/**
+ * Node.DOCUMENT_NODE。IE8-ではNodeがないので自前で定数を作っている
+ *
+ * @private
+ */
 var NODE_TYPE_DOCUMENT = 9;
 
 //=============================
@@ -103,7 +123,7 @@ window.com = {
  * @param mapObj {Object} { (エラーコード): (フォーマット文字列) }という構造のオブジェクト
  */
 function addFwErrorCodeMap(mapObj) {
-	for (code in mapObj) {
+	for ( var code in mapObj) {
 		if (mapObj.hasOwnProperty(code)) {
 			errorCodeToMessageMap[code] = mapObj[code];
 		}
@@ -286,6 +306,7 @@ function registerCallbacksSilently(promise, method, args) {
  * <p>
  * deferred.pipe()がjQuery1.8から非推奨となったため1.8以上の場合then()を、1.7以下の場合はpipe()を実行します。
  *
+ * @private
  * @param {Promise} promise Promiseオブジェクト
  * @param {Function} doneFilter doneコールバック
  * @param {Function} failFilter failコールバック
@@ -299,15 +320,54 @@ function thenCompat(promise, doneFilter, failFilter, progressFilter) {
 }
 
 /**
- * エレメントからドキュメントを取得。
+ * ノードからドキュメントを取得。
  * <p>
- * エレメント自体がdocumentノードならエレメントをそのまま返す。そうでなければエレメントのownerDocumentを返す。
+ * 引数がdocumentノードなら引数をそのまま、ノードならownerDocument、windowオブジェクトならそのdocumentを返します。nodeがいずれにも該当しない場合はnullを返します。
  * </p>
  *
- * @param {DOM} elm
+ * @private
+ * @param {DOM} node
+ * @returns {Document} documentオブジェクト
  */
-function getDocumentOf(elm) {
-	return elm.nodeType === NODE_TYPE_DOCUMENT ? elm : elm.ownerDocument;
+function getDocumentOf(node) {
+	if (typeof node.nodeType === TYPE_OF_UNDEFINED) {
+		// ノードではない
+		if (node.document && node.document.nodeType === NODE_TYPE_DOCUMENT
+				&& getWindowOfDocument(node.document) === node) {
+			// nodeがdocumentを持ち、documentから得られるwindowオブジェクトがnode自身ならnodeをwindowオブジェクトと判定する
+			return node.document;
+		}
+		return null;
+	}
+	if (node.nodeType === NODE_TYPE_DOCUMENT) {
+		// nodeがdocumentの場合
+		return node;
+	}
+	// nodeがdocument以外(documentツリー属するノード)の場合はそのownerDocumentを返す
+	return node.ownerDocument;
+}
+
+/**
+ * documentオブジェクトからwindowオブジェクトを取得
+ *
+ * @private
+ * @param {Document} doc
+ * @returns {Window} windowオブジェクト
+ */
+function getWindowOfDocument(doc) {
+	// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
+	return doc.defaultView || doc.parentWindow;
+}
+
+/**
+ * ノードからwindowオブジェクトを取得
+ *
+ * @private
+ * @param {DOM} node
+ * @returns {Window} windowオブジェクト
+ */
+function getWindowOf(node) {
+	return getWindowOfDocument(getDocumentOf(node));
 }
 
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る

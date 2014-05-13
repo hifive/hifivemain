@@ -103,9 +103,6 @@
 	/** schemaに定義されていないプロパティを取得した */
 	var ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY = 15014;
 
-	/** addEventListenerに不正な引数が渡された */
-	var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 15015;
-
 	/** depend.calcが制約を満たさない値を返している */
 	var ERR_CODE_CALC_RETURNED_INVALID_VALUE = 15016;
 
@@ -236,7 +233,7 @@
 	function formatDescriptorError(code, msgSrc, msgParam, detail) {
 		var msg = h5.u.str.format.apply(null, [msgSrc].concat(msgParam)) + ' 詳細：';
 
-		for ( var i = 0, len = detail.length; i < len; i++) {
+		for (var i = 0, len = detail.length; i < len; i++) {
 			if (i !== 0) {
 				msg += ', ';
 			}
@@ -266,7 +263,6 @@
 	errMsgMap[ERR_CODE_DEPEND_PROPERTY] = 'depend指定されているプロパティに値をセットすることはできません。データモデル={0} 違反したプロパティ={1}';
 	errMsgMap[ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティに値をセットすることはできません。データモデル={0} 違反したプロパティ={1}';
 	errMsgMap[ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY] = 'スキーマに定義されていないプロパティは取得できません。データモデル={0} 違反したプロパティ={1}';
-	errMsgMap[ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
 	errMsgMap[ERR_CODE_CALC_RETURNED_INVALID_VALUE] = 'calcで返却された値が、スキーマで指定された型・制約に違反しています。データモデル={0} プロパティ={1} 返却値={2}';
 	errMsgMap[ERR_CODE_INVALID_COPYFROM_ARGUMENT] = 'copyFromの引数が不正です。配列を指定してください。引数位置={0}、値={1}';
 	errMsgMap[ERR_CODE_INVALID_MANAGER_NAME] = 'マネージャ名が不正です。識別子として有効な文字列を指定してください。';
@@ -525,7 +521,7 @@
 	 * schemaオブジェクトのtype指定の文字列を、パースした結果を返す。 正しくパースできなかった場合は空オブジェクトを返す。
 	 *
 	 * @private
-	 * @param {String} type
+	 * @param {String} type type指定文字列。文字列以外が渡された場合は空オブジェクトを返す
 	 * @returns {Object} typeをパースした結果オブジェクト。
 	 *          elmType:タイプから配列部分を除いた文字列。dataModel:データモデル名。dimension:配列の深さ(配列指定でない場合は0)
 	 */
@@ -533,7 +529,8 @@
 		// マッチ結果から、データモデル指定の場合と配列の場合をチェックする
 		// "string[]"のとき、matched = ["string[]", "string", undefined, "[]", "[]"]
 		// "@DataModel"のとき、matched = ["@DataModel", "@DataModel", "DataModel", "", undefined]
-		var matched = type.match(/^(string|number|integer|boolean|any|enum|@(.+?))((\[\]){0,1})$/);
+		var matched = type && isString(type) ? type
+				.match(/^(string|number|integer|boolean|any|enum|@(.+?))((\[\]){0,1})$/) : null;
 		return matched ? {
 			elmType: matched[1],
 			dataModel: matched[2],
@@ -555,7 +552,7 @@
 			if (!map[p]) {
 				return false;
 			}
-			for ( var i = 0, l = map[p].length; i < l; i++) {
+			for (var i = 0, l = map[p].length; i < l; i++) {
 				if ($.inArray(map[p][i], ancestors) > -1
 						|| checkCircular(map[p][i], ancestors.concat([p]))) {
 					return true;
@@ -643,7 +640,7 @@
 	function unbox(v) {
 		if ($.isArray(v)) {
 			var ary = v.slice(0);
-			for ( var i = 0, l = ary.length; i < l; i++) {
+			for (var i = 0, l = ary.length; i < l; i++) {
 				// aryalueOfメソッドのあるオブジェクトならその値を入れる
 				ary[i] = ary[i] && typeof ary[i] === 'object' ? ary[i] && ary[i].valueOf
 						&& ary[i].valueOf() : ary[i];
@@ -689,7 +686,7 @@
 	function isEnumValue(v, enumValue) {
 		if (isStrictNaN(v)) {
 			// NaN の時は、NaN===NaNにならない(inArrayでも判定できない)ので、enumValueの中身を見て判定する
-			for ( var i = 0, l = enumValue.length; i < l; i++) {
+			for (var i = 0, l = enumValue.length; i < l; i++) {
 				if (isStrictNaN(enumValue[i])) {
 					return true;
 				}
@@ -706,10 +703,17 @@
 	 * @param {Object} descriptor オブジェクト
 	 * @param {Object} DataManagerオブジェクト
 	 * @param {Boolean} stopOnErro エラーが発生した時に、即座にreturnするかどうか
-	 * @returns {Boolean} descriptorのチェック結果。
 	 */
 	function validateDescriptor(descriptor, manager, stopOnError) {
 		var errorReason = [];
+
+		function pushErrorReason(/* var_args */) {
+			errorReason.push(createItemDescErrorReason.call(this, arguments));
+			if (stopOnError) {
+				// エラーを投げてチェック処理を終了する
+				throw null;
+			}
+		}
 
 		// try-catchで囲うことで、必ずERR_CODE_INVALID_DESCRIPTORエラーを投げられるようにしている。
 		// (stopOnErrorがfalseで、予期しない箇所でエラーが出たとしてもERR_CODE_INVALID_DESCRIPTORエラーを投げる。)
@@ -717,17 +721,14 @@
 			// descriptorがオブジェクトかどうか
 			if (!$.isPlainObject(descriptor)) {
 				// descriptorがオブジェクトじゃなかったら、これ以上チェックしようがないので、stopOnErrorの値に関わらずreturnする
-				errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NOT_OBJECT));
+				pushErrorReason(DESC_ERR_DETAIL_NOT_OBJECT);
 				throw null;
 			}
 
 			// nameのチェック
 			if (!isValidNamespaceIdentifier(descriptor.name)) {
 				// 識別子として不適切な文字列が指定されていたらエラー
-				errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_INVALID_NAME));
-				if (stopOnError) {
-					throw null;
-				}
+				pushErrorReason(DESC_ERR_DETAIL_INVALID_NAME);
 			}
 
 			// baseのチェック
@@ -737,20 +738,13 @@
 				// nullまたはundefinedならチェックしない
 				if (!isString(base) || base.indexOf('@') !== 0) {
 					// @で始まる文字列（base.indexOf('@')が0）でないならエラー
-					errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_INVALID_BASE));
-					if (stopOnError) {
-						throw null;
-					}
+					pushErrorReason(DESC_ERR_DETAIL_INVALID_BASE);
 				} else {
 					var baseName = base.substring(1);
 					var baseModel = manager.models[baseName];
 					if (!baseModel) {
 						// 指定されたモデルが存在しないならエラー
-						errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NO_EXIST_BASE,
-								baseName));
-						if (stopOnError) {
-							throw null;
-						}
+						pushErrorReason(DESC_ERR_DETAIL_NO_EXIST_BASE, baseName);
 					} else {
 						baseSchema = manager.models[baseName].schema;
 					}
@@ -761,20 +755,15 @@
 			// baseSchemaがないのに、schemaが指定されていなかったらエラー
 			var schema = descriptor.schema;
 			if (!baseSchema && schema == null) {
-				errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_NO_SCHEMA));
-				if (stopOnError) {
-					throw null;
-				}
+				pushErrorReason(DESC_ERR_DETAIL_NO_SCHEMA);
 			}
 
 			// schemaが指定されていて、オブジェクトでないならエラー
 			if (!baseSchema && !$.isPlainObject(schema)) {
-				errorReason.push(createItemDescErrorReason(DESC_ERR_DETAIL_SCHEMA_IS_NOT_OBJECT));
-				// schemaがオブジェクトでなかったら、schemaのチェックのしようがないので、stopOnErrorの値に関わらずreturnする
+				pushErrorReason(DESC_ERR_DETAIL_SCHEMA_IS_NOT_OBJECT);
+				// schemaがオブジェクトでなかったら、schemaのチェックのしようがないので、stopOnErrorの値に関わらずエラーを投げる
 				throw null;
 			}
-
-			return true;
 		} catch (e) {
 			throwFwError(ERR_CODE_INVALID_DESCRIPTOR, null, errorReason);
 		}
@@ -789,7 +778,6 @@
 	 *            データモデルのスキーマかどうか。データモデルのスキーマならidチェックが必要で、type指定に@データモデル指定が可能。
 	 * @param {Object} [manager] DataManagerオブジェクト。データモデルのスキーマチェック時には必須。
 	 * @param {Boolean} [stopOnError] エラーが発生した時に、即座にreturnするかどうか。(trueなら即座にreturn)
-	 * @returns {Boolean} チェック結果。
 	 */
 	function validateSchema(schema, isDataModelSchema, manager, stopOnError) {
 		if (typeof schema !== 'object') {
@@ -798,6 +786,14 @@
 		}
 
 		var errorReason = [];
+
+		function pushErrorReason(/* var_args */) {
+			errorReason.push(createItemDescErrorReason.call(this, arguments));
+			if (stopOnError) {
+				// エラーを投げてチェック処理を終了する
+				throw null;
+			}
+		}
 
 		// try-catchで囲うことで、必ずERR_CODE_INVALID_SCHEMAエラーを投げられるようにしている。
 		// (stopOnErrorがfalseで、予期しない箇所でエラーが出たとしてもERR_CODE_INVALID_SCHEMAエラーを投げる。)
@@ -808,20 +804,13 @@
 				for ( var p in schema) {
 					if (schema[p] && schema[p].id === true) {
 						if (hasId) {
-							errorReason
-									.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DUPLICATED_ID));
-							if (stopOnError) {
-								throw null;
-							}
+							pushErrorReason(SCHEMA_ERR_DETAIL_DUPLICATED_ID);
 						}
 						hasId = true;
 					}
 				}
 				if (!hasId) {
-					errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_NO_ID));
-					if (stopOnError) {
-						throw null;
-					}
+					pushErrorReason(SCHEMA_ERR_DETAIL_NO_ID);
 				}
 			}
 
@@ -829,393 +818,331 @@
 			// key: プロパティ名, value: そのプロパティのdepend.onをwrapInArrayしたもの
 			var dependencyMap = {};
 
-			// schemaのチェック
+			/**
+			 * dependのチェック
+			 * <ul>
+			 * <li>defaultValueは指定されていないか
+			 * <li>onが指定されているか
+			 * <li>onに指定されているプロパティがschema内に存在するか
+			 * <li>calcが指定されているか
+			 * </ul>
+			 *
+			 * @param depend
+			 */
+			function checkDepend(depend) {
+				if (depend == null) {
+					return;
+				}
+				// id指定されているならエラー
+				if (isId) {
+					pushErrorReason(SCHEMA_ERR_DETAIL_ID_DEPEND, schemaProp);
+				}
+
+				// defaultValueが指定されているならエラー
+				if (propObj.hasOwnProperty('defaultValue')) {
+					pushErrorReason(SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND, schemaProp);
+				}
+
+				// dependが指定されているなら、onが指定されていること
+				if (depend.on == null) {
+					pushErrorReason(SCHEMA_ERR_DETAIL_DEPEND_ON, schemaProp);
+				} else {
+					var onArray = wrapInArray(depend.on);
+					for (var i = 0, l = onArray.length; i < l; i++) {
+						if (!schema.hasOwnProperty(onArray[i])) {
+							pushErrorReason(SCHEMA_ERR_DETAIL_DEPEND_ON, schemaProp);
+							break;
+						}
+					}
+				}
+
+				// dependが指定されているなら、calcが指定されていること
+				if (typeof depend.calc !== 'function') {
+					pushErrorReason(SCHEMA_ERR_DETAIL_DEPEND_CALC, schemaProp);
+				}
+
+				// 後の循環参照チェックのため、depend.onを覚えておく
+				dependencyMap[schemaProp] = wrapInArray(depend.on);
+			}
+
+			/**
+			 * typeのチェック
+			 * <ul>
+			 * <li>typeに指定されている文字列は正しいか
+			 * <li>defaultValueとの矛盾はないか
+			 * <li>constraintにそのtypeで使えない指定がないか
+			 * <li>enumの時は、enumValueが指定されているか
+			 * </ul>
+			 *
+			 * @param type
+			 */
+			function checkType(type) {
+				if (isId && type == null) {
+					// id項目で、typeが指定されていない場合は、type:stringにしてチェックする
+					type = 'string';
+				}
+				var typeObj = {};
+				if (type == null) {
+					return;
+				}
+				if (!isString(type)) {
+					pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_TYPE, schemaProp);
+					return;
+				}
+				if (isId && type !== 'string' && type !== 'integer') {
+					// id指定されているプロパティで、string,integer以外だった場合はエラー
+					pushErrorReason(SCHEMA_ERR_ID_TYPE, schemaProp);
+				}
+
+				// "string", "number[]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
+				// 正しくパースできなかった場合は空オブジェクトが返ってくる
+				typeObj = getTypeObjFromString(type);
+
+				if (!typeObj.elmType) {
+					// パースできない文字列が指定されていたらエラー
+					pushErrorReason(SCHEMA_ERR_DETAIL_TYPE, schemaProp, type);
+				} else {
+					// データモデルの場合
+					if (typeObj.dataModel) {
+						if (!isDataModelSchema) {
+							// データモデルをタイプに指定できるのはデータモデルのスキーマだけなのでエラー
+							pushErrorReason(SCHEMA_ERR_DETAIL_TYPE, schemaProp, typeObj.dataModel);
+						}
+						if (!manager.models[typeObj.dataModel]) {
+							pushErrorReason(SCHEMA_ERR_DETAIL_TYPE_DATAMODEL, schemaProp,
+									typeObj.dataModel);
+						}
+					}
+
+					// enumの場合
+					if (typeObj.elmType === 'enum') {
+						// enumValueが無ければエラー
+						if (propObj.enumValue == null) {
+							pushErrorReason(SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE, schemaProp);
+						}
+					}
+				}
+			}
+
+			/**
+			 * constraintのチェック
+			 * <ul>
+			 * <li>プロパティのチェック
+			 * <li>値のチェック
+			 * <li>タイプと矛盾していないかのチェック
+			 * </ul>
+			 *
+			 * @param constraint
+			 * @param typeObj
+			 */
+			function checkConstraint(constraint, typeObj) {
+				if (constraint == null) {
+					return;
+				}
+
+				// constraintのチェック
+				if (!$.isPlainObject(constraint)) {
+					// constraintがオブジェクトではない場合
+					pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT, schemaProp);
+					return;
+				}
+				for ( var p in constraint) {
+					// constraintのプロパティの値とtype指定との整合チェック
+					var val = constraint[p];
+					if (val == null) {
+						continue;
+					}
+					switch (p) {
+					case 'notNull':
+						if (val !== true && val !== false) {
+							// notNullにtrueまたはfalse以外が指定されていたらエラー
+							pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
+									schemaProp, p);
+						} else if (isId && !val) {
+							// id項目にnotNull:falseが指定されていたらエラー
+							pushErrorReason(SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID, schemaProp,
+									p, val);
+						}
+						break;
+					case 'min':
+					case 'max':
+						switch (typeObj.elmType) {
+						case 'integer':
+							if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)) {
+								// 整数値以外、NaNが指定されていたらエラー
+								pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX,
+										schemaProp, p);
+							}
+							break;
+						case 'number':
+							if (isString(val) || isString(val) || !isNumberValue(val)
+									|| val === Infinity || val === -Infinity || isStrictNaN(val)) {
+								// 整数値以外、NaNが指定されていたらエラー
+								pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX,
+										schemaProp, p);
+							}
+							break;
+						default:
+							// typeの指定とconstraintに不整合があったらエラー
+							pushErrorReason(SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
+									typeObj.elmType);
+						}
+						break;
+					case 'minLength':
+					case 'maxLength':
+						switch (typeObj.elmType) {
+						case 'string':
+							if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)
+									|| val < 0) {
+								// typeの指定とconstraintに不整合があったらエラー
+								pushErrorReason(
+										SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH,
+										schemaProp, p);
+							} else if (isId && p === 'maxLength' && val === 0) {
+								// id項目にmaxLength: 0 が指定されていたらエラー
+								pushErrorReason(SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID,
+										schemaProp, p, val);
+							}
+							break;
+						default:
+							// type:'string'以外の項目にmaxLength,minLengthが指定されていればエラー
+							pushErrorReason(SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
+									typeObj.elmType);
+						}
+						break;
+					case 'notEmpty':
+						switch (typeObj.elmType) {
+						case 'string':
+							if (val !== true && val !== false) {
+								// notEmptyにtrue,false以外の指定がされていたらエラー
+								pushErrorReason(
+										SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
+										schemaProp, p);
+							} else if (isId && !val) {
+								// id項目にnotEmpty: false が指定されていたらエラー
+								pushErrorReason(SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID,
+										schemaProp, p, val);
+							}
+							break;
+						default:
+							// type:'string'以外の項目にnotEmptyが指定されていたらエラー
+							pushErrorReason(SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
+									typeObj.elmType);
+						}
+						break;
+					case 'pattern':
+						switch (typeObj.elmType) {
+						case 'string':
+							if ($.type(val) !== 'regexp') {
+								// patternにRegExpオブジェクト以外のものが指定されていたらエラー
+								pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN,
+										schemaProp, p);
+							}
+							break;
+						default:
+							// type:'string'以外の項目にpatterが指定されていたらエラー
+							pushErrorReason(SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
+									typeObj.elmType);
+						}
+						break;
+					}
+				}
+
+				// constraintの中身に矛盾がないかどうかチェック
+				if (constraint.notEmpty && constraint.maxLength === 0) {
+					// notNullなのにmanLengthが0
+					pushErrorReason(SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp, 'notEmpty',
+							'maxLength');
+				}
+				if (constraint.min != null && constraint.max != null
+						&& constraint.min > constraint.max) {
+					// min > max
+					pushErrorReason(SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp, 'min', 'max');
+				}
+				if (constraint.minLength != null && constraint.maxLength != null
+						&& constraint.minLength > constraint.maxLength) {
+					// minLength > maxLength
+					pushErrorReason(SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp, 'minLength',
+							'maxLength');
+				}
+			}
+			/**
+			 * enumValueのチェック
+			 * <ul>
+			 * <li>typeがenumであること
+			 * <li>正しい配列が指定されていること
+			 * </ul>
+			 *
+			 * @param constraint
+			 * @param typeObj
+			 */
+			function checkEnumValue(enumValue, typeObj) {
+				if (enumValue == null) {
+					return;
+				}
+				if (typeObj.elmType !== 'enum') {
+					// type指定がenumでないならエラー
+					pushErrorReason(SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE, schemaProp);
+				}
+				if (!$.isArray(enumValue) || enumValue.length === 0
+						|| $.inArray(null, enumValue) > -1 || $.inArray(undefined, enumValue) > -1) {
+					// 配列でない、または空配列、null,undefinedを含む配列ならエラー
+					pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE, schemaProp);
+				}
+			}
+			/**
+			 * defaultValueのチェック
+			 * <ul>
+			 * <li>id:trueの項目ではないこと
+			 * </ul>
+			 * <p>
+			 * defaultValueの中身は見ない。typeやconstraintの条件を満たしているかのチェックはここでは行わない。
+			 * また、depend指定されている項目にdefaultValueが指定されている場合はdependのチェック時にエラーにしている。
+			 * </p>
+			 */
+			function checkDefaultValue(propObj) {
+				if (isId && propObj.hasOwnProperty('defaultValue')) {
+					// id項目にdefaultValueが設定されていたらエラー
+					pushErrorReason(SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID, schemaProp);
+
+				}
+			}
+
+			// schemaのそれぞれのプロパティをチェックする
 			for ( var schemaProp in schema) {
 				// null(またはundefined)がプロパティオブジェクトに指定されていたら、空オブジェクトと同等に扱い、エラーにしない。
 				var propObj = schema[schemaProp] == null ? {} : schema[schemaProp];
-				// idの時は特別にチェック(idにはdependが指定できない、typeが指定できない等)する項目があるのでそのフラグ
-				// ObservableItemの時は関係ない。
+				// idの時は特別にチェック(idにはdependが指定できない、typeが指定できない等)する項目があるのでそのフラグを立てる。
+				// ObservableItemの時はidは関係ないのでfalse
 				var isId = isDataModelSchema && !!propObj.id;
 
 				// プロパティ名が適切なものかどうかチェック
 				if (!isValidNamespaceIdentifier(schemaProp)) {
-					errorReason.push(createItemDescErrorReason(
-							SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME, schemaProp));
-					if (stopOnError) {
-						throw null;
-					}
+					pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_PROPERTY_NAME, schemaProp);
 				}
 
-				// -- dependのチェック --
-				// defaultValueが指定されていたらエラー
-				// onに指定されているプロパティがschema内に存在すること
-				var depend = propObj.depend;
-				if (depend != null) {
-					// id指定されているならエラー
-					if (isId) {
-						errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_ID_DEPEND,
-								schemaProp));
-						if (stopOnError) {
-							throw null;
-						}
-					}
+				// dependのチェック
+				checkDepend(propObj.depend);
 
-					// defaultValueが指定されているならエラー
-					if (propObj.hasOwnProperty('defaultValue')) {
-						errorReason.push(createItemDescErrorReason(
-								SCHEMA_ERR_DETAIL_DEFAULTVALUE_DEPEND, schemaProp));
-						if (stopOnError) {
-							throw null;
-						}
-					}
+				// typeのチェック
+				checkType(propObj.type);
 
-					// dependが指定されているなら、onが指定されていること
-					if (depend.on == null) {
-						errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEPEND_ON,
-								schemaProp));
-						if (stopOnError) {
-							throw null;
-						}
-					} else {
-						var onArray = wrapInArray(depend.on);
-						for ( var i = 0, l = onArray.length; i < l; i++) {
-							if (!schema.hasOwnProperty(onArray[i])) {
-								errorReason.push(createItemDescErrorReason(
-										SCHEMA_ERR_DETAIL_DEPEND_ON, schemaProp));
-								if (stopOnError) {
-									throw null;
-								}
-								break;
-							}
-						}
-					}
-
-					// dependが指定されているなら、calcが指定されていること
-					if (typeof depend.calc !== 'function') {
-						errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEPEND_CALC,
-								schemaProp));
-						if (stopOnError) {
-							throw null;
-						}
-					}
-
-					// 後の循環参照チェックのため、depend.onを覚えておく
-					dependencyMap[schemaProp] = wrapInArray(depend.on);
-				}
-
-				// -- typeのチェック --
-				// typeに指定されている文字列は正しいか
-				// defaultValueとの矛盾はないか
-				// constraintにそのtypeで使えない指定がないか
-				// enumの時は、enumValueが指定されているか
-				var type = propObj.type;
-				if (isId && type == null) {
-					// id項目で、typeが指定されていない場合は、type:stringにする
-					type = 'string';
-				}
+				// typeObjの作成
 				var typeObj = {};
-				if (type != null) {
-					if (!isString(type)) {
-						errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_INVALID_TYPE,
-								schemaProp));
-						if (stopOnError) {
-							throw null;
-						}
-					} else {
-						if (isId && type !== 'string' && type !== 'integer') {
-							// id指定されているプロパティで、string,integer以外だった場合はエラー
-							errorReason.push(createItemDescErrorReason(SCHEMA_ERR_ID_TYPE,
-									schemaProp));
-							if (stopOnError) {
-								throw null;
-							}
-						}
-
-						// "string", "number[]", "@DataModel"... などの文字列をパースしてオブジェクトを生成する
-						// 正しくパースできなかった場合は空オブジェクトが返ってくる
-						typeObj = getTypeObjFromString(type);
-
-						if (!typeObj.elmType) {
-							// パースできない文字列が指定されていたらエラー
-							errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_TYPE,
-									schemaProp, type));
-							if (stopOnError) {
-								throw null;
-							}
-						} else {
-							// データモデルの場合
-							if (typeObj.dataModel) {
-								if (!isDataModelSchema) {
-									// データモデルをタイプに指定できるのはデータモデルのスキーマだけなのでエラー
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE, schemaProp, typeObj.dataModel));
-									if (stopOnError) {
-										throw null;
-									}
-								}
-								if (!manager.models[typeObj.dataModel]) {
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE_DATAMODEL, schemaProp,
-											typeObj.dataModel));
-									if (stopOnError) {
-										throw null;
-									}
-								}
-							}
-
-							// enumの場合
-							if (typeObj.elmType === 'enum') {
-								// enumValueが無ければエラー
-								if (propObj.enumValue == null) {
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE_ENUM_NO_ENUMVALUE, schemaProp));
-									if (stopOnError) {
-										throw null;
-									}
-								}
-							}
-						}
-					}
+				// id項目で、typeが指定されていない場合は、type:stringにしてチェックする
+				var type = isId && type == null ? 'string' : propObj.type;
+				if (isString(type)) {
+					typeObj = getTypeObjFromString(type);
 				}
 
 				// constraintのチェック
-				// プロパティのチェック
-				// 値のチェック
-				// タイプと矛盾していないかのチェック
-				var constraintObj = propObj.constraint;
-				if (constraintObj != null) {
-					if (!$.isPlainObject(constraintObj)) {
-						// constraintがオブジェクトではない場合
-						errorReason.push(createItemDescErrorReason(
-								SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT, schemaProp));
-						if (stopOnError) {
-							throw null;
-						}
-					} else {
-						for ( var p in constraintObj) {
-							// constraintのプロパティの値とtype指定との整合チェック
-							var val = constraintObj[p];
-							if (val == null) {
-								continue;
-							}
-							switch (p) {
-							case 'notNull':
-								if (val !== true && val !== false) {
-									// notNullにtrueまたはfalse以外が指定されていたらエラー
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
-											schemaProp, p));
-									if (stopOnError) {
-										throw null;
-									}
-								} else if (isId && !val) {
-									// id項目にnotNull:falseが指定されていたらエラー
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID, schemaProp,
-											p, val));
-									if (stopOnError) {
-										throw null;
-									}
-								}
-								break;
-							case 'min':
-							case 'max':
-								switch (typeObj.elmType) {
-								case 'integer':
-									if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)) {
-										// 整数値以外、NaNが指定されていたらエラー
-										errorReason.push(createItemDescErrorReason(
-												SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX,
-												schemaProp, p));
-										if (stopOnError) {
-											throw null;
-										}
-									}
-									break;
-								case 'number':
-									if (isString(val) || isString(val) || !isNumberValue(val)
-											|| val === Infinity || val === -Infinity
-											|| isStrictNaN(val)) {
-										// 整数値以外、NaNが指定されていたらエラー
-										errorReason.push(createItemDescErrorReason(
-												SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MIN_MAX,
-												schemaProp, p));
-										if (stopOnError) {
-											throw null;
-										}
-									}
-									break;
-								default:
-									// typeの指定とconstraintに不整合があったらエラー
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
-											typeObj.elmType));
-									if (stopOnError) {
-										throw null;
-									}
-								}
-								break;
-							case 'minLength':
-							case 'maxLength':
-								switch (typeObj.elmType) {
-								case 'string':
-									if (isString(val) || !isIntegerValue(val) || isStrictNaN(val)
-											|| val < 0) {
-										// typeの指定とconstraintに不整合があったらエラー
-										errorReason
-												.push(createItemDescErrorReason(
-														SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_MINLENGTH_MAXLENGTH,
-														schemaProp, p));
-										if (stopOnError) {
-											throw null;
-										}
-									} else if (isId && p === 'maxLength' && val === 0) {
-										// id項目にmaxLength: 0 が指定されていたらエラー
-										errorReason.push(createItemDescErrorReason(
-												SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID,
-												schemaProp, p, val));
-										if (stopOnError) {
-											throw null;
-										}
-									}
-									break;
-								default:
-									// type:'string'以外の項目にmaxLength,minLengthが指定されていればエラー
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
-											typeObj.elmType));
-									if (stopOnError) {
-										throw null;
-									}
-								}
-								break;
-							case 'notEmpty':
-								switch (typeObj.elmType) {
-								case 'string':
-									if (val !== true && val !== false) {
-										// notEmptyにtrue,false以外の指定がされていたらエラー
-										errorReason
-												.push(createItemDescErrorReason(
-														SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_NOTNULL_NOTEMPTY,
-														schemaProp, p));
-										if (stopOnError) {
-											throw null;
-										}
-									} else if (isId && !val) {
-										// id項目にnotEmpty: false が指定されていたらエラー
-										errorReason.push(createItemDescErrorReason(
-												SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT_ID,
-												schemaProp, p, val));
-										if (stopOnError) {
-											throw null;
-										}
-									}
-									break;
-								default:
-									// type:'string'以外の項目にnotEmptyが指定されていたらエラー
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
-											typeObj.elmType));
-									if (stopOnError) {
-										throw null;
-									}
-								}
-								break;
-							case 'pattern':
-								switch (typeObj.elmType) {
-								case 'string':
-									if ($.type(val) !== 'regexp') {
-										// patternにRegExpオブジェクト以外のものが指定されていたらエラー
-										errorReason.push(createItemDescErrorReason(
-												SCHEMA_ERR_DETAIL_INVALID_CONSTRAINT_PATTERN,
-												schemaProp, p));
-										if (stopOnError) {
-											throw null;
-										}
-									}
-									break;
-								default:
-									// type:'string'以外の項目にpatterが指定されていたらエラー
-									errorReason.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_TYPE_CONSTRAINT, schemaProp, p,
-											typeObj.elmType));
-									if (stopOnError) {
-										throw null;
-									}
-								}
-								break;
-							}
-						}
-
-						// constraintの中身に矛盾がないかどうかチェック
-						if (constraintObj.notEmpty && constraintObj.maxLength === 0) {
-							// notNullなのにmanLengthが0
-							errorReason.push(createItemDescErrorReason(
-									SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp, 'notEmpty',
-									'maxLength'));
-							if (stopOnError) {
-								throw null;
-							}
-						}
-						if (constraintObj.min != null && constraintObj.max != null
-								&& constraintObj.min > constraintObj.max) {
-							// min > max
-							errorReason
-									.push(createItemDescErrorReason(
-											SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp,
-											'min', 'max'));
-							if (stopOnError) {
-								throw null;
-							}
-						}
-						if (constraintObj.minLength != null && constraintObj.maxLength != null
-								&& constraintObj.minLength > constraintObj.maxLength) {
-							// minLength > maxLength
-							errorReason.push(createItemDescErrorReason(
-									SCHEMA_ERR_DETAIL_CONSTRAINT_CONFLICT, schemaProp, 'minLength',
-									'maxLength'));
-							if (stopOnError) {
-								throw null;
-							}
-						}
-					}
-				}
+				checkConstraint(propObj.constraint, typeObj);
 
 				// enumValueのチェック
-				var enumValue = propObj.enumValue;
-				if (enumValue != null) {
-					if (typeObj.elmType !== 'enum') {
-						// type指定がenumでないならエラー
-						errorReason.push(createItemDescErrorReason(
-								SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE, schemaProp));
-						if (stopOnError) {
-							throw null;
-						}
-					}
-					if (!$.isArray(enumValue) || enumValue.length === 0
-							|| $.inArray(null, enumValue) > -1
-							|| $.inArray(undefined, enumValue) > -1) {
-						// 配列でない、または空配列、null,undefinedを含む配列ならエラー
-						errorReason.push(createItemDescErrorReason(
-								SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE, schemaProp));
-						if (stopOnError) {
-							throw null;
-						}
-					}
-				}
+				checkEnumValue(propObj.enumValue, typeObj);
 
 				// defaultValueのチェック
-				// defaultValueがtypeやconstraintの条件を満たしているかのチェックはここでは行わない
-				// id:trueの項目にdefaultValueが指定されていればここでエラーにする
-				// depend指定されている項目にdefaultValueが指定されている場合はエラー(dependのチェック時にエラーにしている)
-				if (isId && propObj.hasOwnProperty('defaultValue')) {
-					// id項目にdefaultValueが設定されていたらエラー
-					errorReason.push(createItemDescErrorReason(SCHEMA_ERR_DETAIL_DEFAULTVALUE_ID,
-							schemaProp));
-					if (stopOnError) {
-						throw null;
-					}
-				}
+				checkDefaultValue(propObj);
 			}
 
 			// depend.onの循環参照チェック
@@ -1224,11 +1151,7 @@
 			// （これ以前のチェックに引っかかっていたら、循環参照のチェックはしない）
 			for ( var prop in dependencyMap) {
 				if (checkDependCircularRef(prop, dependencyMap)) {
-					errorReason.push(createItemDescErrorReason(
-							SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF, prop));
-					if (stopOnError) {
-						throw null;
-					}
+					pushErrorReason(SCHEMA_ERR_DETAIL_DEPEND_CIRCULAR_REF, prop);
 				}
 			}
 		} catch (e) {
@@ -1267,11 +1190,7 @@
 				}
 				var defaultValue = propObj.defaultValue;
 				if (checkFuncs[p](defaultValue).length) {
-					errorReason.push(createItemDescErrorReason(
-							SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE, p, defaultValue));
-					if (stopOnError) {
-						throw null;
-					}
+					pushErrorReason(SCHEMA_ERR_DETAIL_INVALIDATE_DEFAULTVALUE, p, defaultValue);
 				}
 			}
 			return true;
@@ -1512,7 +1431,7 @@
 			function _checkValue(v, d) {
 				if (!d) {
 					// チェック関数を順番に適用して、falseが返ってきたらチェック終了してfalseを返す
-					for ( var i = 0, l = funcs.length; i < l; i++) {
+					for (var i = 0, l = funcs.length; i < l; i++) {
 						var result = funcs[i](v, isStrict);
 						if (result.length) {
 							errorReason = errorReason.concat(result);
@@ -1532,7 +1451,7 @@
 					});
 					return false;
 				}
-				for ( var i = 0, l = v.length; i < l; i++) {
+				for (var i = 0, l = v.length; i < l; i++) {
 					// 配列の各要素について、次元を一つ減らして再帰的にチェックする
 					if (!_checkValue(v[i], d - 1)) {
 						return false;
@@ -1557,7 +1476,7 @@
 	 * @private
 	 * @param {DataItem|ObservableItem} item
 	 * @param {Object} schema スキーマ
-	 * @param {Object} schemaInfo  チェック済みスキーマ
+	 * @param {Object} schemaInfo チェック済みスキーマ
 	 * @param {Object} userInitialValue 初期値としてsetする値が格納されたオブジェクト
 	 */
 	function initItem(item, schema, schemaInfo, userInitialValue) {
@@ -1692,7 +1611,7 @@
 		 */
 		function isReady(dependProp) {
 			var deps = wrapInArray(schema[dependProp].depend.on);
-			for ( var i = 0, len = deps.length; i < len; i++) {
+			for (var i = 0, len = deps.length; i < len; i++) {
 				if ($.inArray(deps[i], item._realProperty) === -1
 						&& $.inArray(deps[i], targets) !== -1) {
 					// 依存先が実プロパティでなく、未計算のプロパティであればfalseを返す
@@ -1706,14 +1625,14 @@
 		 * changedPropsで指定されたプロパティに依存するプロパティをtargetArrayに追加する
 		 */
 		function addDependencies(targetArray, srcProps) {
-			for ( var i = 0, len = srcProps.length; i < len; i++) {
+			for (var i = 0, len = srcProps.length; i < len; i++) {
 				var depends = dependsMap[srcProps[i]];
 
 				if (!depends) {
 					continue;
 				}
 
-				for ( var j = 0, jlen = depends.length; j < jlen; j++) {
+				for (var j = 0, jlen = depends.length; j < jlen; j++) {
 					var dprop = depends[j];
 					if ($.inArray(dprop, targetArray) === -1) {
 						targetArray.push(dprop);
@@ -1737,7 +1656,7 @@
 			var restTargets = [];
 
 			//各依存プロパティについて、計算可能（依存するすべてのプロパティが計算済み）なら計算する
-			for ( var i = 0, len = targets.length; i < len; i++) {
+			for (var i = 0, len = targets.length; i < len; i++) {
 				var dp = targets[i];
 
 				if (isReady(dp)) {
@@ -1882,7 +1801,7 @@
 			if (newValue != null && type && type.match(/number|integer/)
 					&& typeof newValue !== 'number') {
 				if ($.isArray(newValue) || h5.core.data.isObservableArray(newValue)) {
-					for ( var i = 0, l = newValue.length; i < l; i++) {
+					for (var i = 0, l = newValue.length; i < l; i++) {
 						// スパースな配列の場合、undefinedが入っている可能性があるので、!= で比較
 						// parseFloatできる値(isNumberValueに渡してtrueになる値)ならparseFloatする
 						if (newValue[i] != null && isNumberValue(newValue[i])) {
@@ -1930,7 +1849,7 @@
 		var changedPropNameArray = [];
 
 		//値の変更が起こる全てのプロパティについて整合性チェックが通ったら、実際に値を代入する
-		for ( var i = 0, len = readyProps.length; i < len; i++) {
+		for (var i = 0, len = readyProps.length; i < len; i++) {
 			var readyProp = readyProps[i];
 
 			//TODO 判定文改良
@@ -1999,7 +1918,7 @@
 
 		var modelLogs = getModelUpdateLogObj(model);
 
-		for ( var i = 0, len = items.length; i < len; i++) {
+		for (var i = 0, len = items.length; i < len; i++) {
 			var item = items[i];
 			var itemId = item._values[model._idKey];
 
@@ -2094,7 +2013,7 @@
 				var dependency = schema[prop] ? schema[prop].depend : null;
 				if (dependency) {
 					var dependOn = wrapInArray(dependency.on);
-					for ( var i = 0, len = dependOn.length; i < len; i++) {
+					for (var i = 0, len = dependOn.length; i < len; i++) {
 						var dependSrcPropName = dependOn[i];
 
 						if (!dependencyMap[dependSrcPropName]) {
@@ -2184,7 +2103,7 @@
 		var namesInDescriptors = [];
 		// 依存関係のチェック
 		// 要素がオブジェクトであり、name、schemaプロパティを持っていない場合はcatch節で、ディスクリプタのエラーを投げる
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 
 			// 既に同名のモデルがあるかどうかチェックし、それらは新規登録しない
 			var name = descriptor[i].name;
@@ -2233,10 +2152,10 @@
 			var registed = false;
 
 			// descriptorでループさせて、依存関係が解決された居たらデータモデルを登録
-			for ( var i = 0; i < l; i++) {
+			for (var i = 0; i < l; i++) {
 				if (!dependMap[i].registed) {
 					var depends = dependMap[i].depends;
-					for ( var j = 0, len = depends.length; j < len; j++) {
+					for (var j = 0, len = depends.length; j < len; j++) {
 						if (!this.models[depends[j]]) {
 							noExistModels[depends[j]] = true;
 							break;
@@ -2270,7 +2189,7 @@
 			}
 		}
 		var retAry = [];
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			retAry.push(retObj[i]);
 		}
 		return retAry;
@@ -2551,176 +2470,6 @@
 	//
 	// =========================================================================
 
-	//-------------------------------------------
-	// EventDispatcher
-	//-------------------------------------------
-	/**
-	 * イベントディスパッチャ
-	 * <p>
-	 * イベントリスナを管理するクラスです。このクラスはnewできません。
-	 * </p>
-	 * <p>
-	 * 以下のクラスがイベントディスパッチャのメソッドを持ちます。
-	 * <ul>
-	 * <li><a href="ObservableArray.html">ObservableArray</a>
-	 * <li><a href="ObservableItem.html">ObservableItem</a>
-	 * <li><a href="DataModelManager.html">DataModelManager</a>
-	 * <li><a href="DataModel.html">DataModel</a>
-	 * <li><a href="DataItem.html">DataItem</a>
-	 * </ul>
-	 * </p>
-	 *
-	 * @since 1.1.0
-	 * @class
-	 * @name EventDispatcher
-	 */
-	function EventDispatcher() {
-	// 空コンストラクタ
-	}
-
-	/**
-	 * イベントリスナが登録されているかどうかを返します
-	 * <p>
-	 * 第一引数にイベント名、第二引数にイベントリスナを渡し、指定したイベントに指定したイベントリスナが登録済みかどうかを返します。
-	 * </p>
-	 *
-	 * @since 1.1.0
-	 * @memberOf EventDispatcher
-	 * @param {String} type イベント名
-	 * @param {Function} listener イベントリスナ
-	 * @returns {Boolean} 第一引数のイベント名に第二引数のイベントリスナが登録されているかどうか
-	 */
-	EventDispatcher.prototype.hasEventListener = function(type, listener) {
-		if (!this.__listeners) {
-			return false;
-		}
-		var l = this.__listeners[type];
-		if (!l || !this.__listeners.hasOwnProperty(type)) {
-			return false;
-		}
-
-		for ( var i = 0, count = l.length; i < count; i++) {
-			if (l[i] === listener) {
-				return true;
-			}
-		}
-		return false;
-
-	};
-
-	/**
-	 * イベントリスナを登録します。
-	 * <p>
-	 * 第一引数にイベント名、第二引数にイベントリスナを渡し、イベントリスナを登録します。指定したイベントが起こった時にイベントリスナが実行されます。
-	 * </p>
-	 * <p>
-	 * 指定したイベントに、指定したイベントリスナが既に登録されていた場合は何もしません。
-	 * </p>
-	 * <p>
-	 * 同一のイベントに対して複数回addEventListener()を呼び、複数のイベントリスナを登録した場合は、イベント発火時に登録した順番に実行されます。
-	 * </p>
-	 *
-	 * @since 1.1.0
-	 * @memberOf EventDispatcher
-	 * @param {String} type イベント名
-	 * @param {Function} listener イベントリスナ
-	 */
-	EventDispatcher.prototype.addEventListener = function(type, listener) {
-		// 引数チェック
-		if (arguments.length !== 2 || !isString(type) || !$.isFunction(listener)) {
-			throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
-		}
-		if (this.hasEventListener(type, listener)) {
-			return;
-		}
-
-		if (!this.__listeners) {
-			this.__listeners = {};
-		}
-
-		if (!(this.__listeners.hasOwnProperty(type))) {
-			this.__listeners[type] = [];
-		}
-
-		this.__listeners[type].push(listener);
-	};
-
-	/**
-	 * イベントリスナを削除します。
-	 * <p>
-	 * 第一引数にイベント名、第二引数にイベントリスナを渡し、指定したイベントから指定したイベントリスナを削除します。
-	 * </p>
-	 * <p>
-	 * 指定したイベント名に指定したイベントリスナが登録されていない場合は何もしません。
-	 * </p>
-	 *
-	 * @since 1.1.0
-	 * @memberOf EventDispatcher
-	 * @param {String} type イベント名
-	 * @param {Function} listener イベントリスナ
-	 */
-	EventDispatcher.prototype.removeEventListener = function(type, listener) {
-		if (!this.hasEventListener(type, listener)) {
-			return;
-		}
-
-		var l = this.__listeners[type];
-
-		for ( var i = 0, count = l.length; i < count; i++) {
-			if (l[i] === listener) {
-				l.splice(i, 1);
-				return;
-			}
-		}
-	};
-
-	/**
-	 * イベントをディスパッチします
-	 * <p>
-	 * イベントオブジェクトを引数に取り、そのevent.typeに登録されているイベントリスナを実行します。
-	 * イベントオブジェクトにpreventDefault()関数を追加してイベントリスナの引数に渡して呼び出します。
-	 * </p>
-	 * <p>
-	 * 戻り値は『イベントリスナ内でpreventDefault()が呼ばれたかどうか』を返します。
-	 * </p>
-	 *
-	 * @since 1.1.0
-	 * @memberOf EventDispatcher
-	 * @param {Object} event イベントオブジェクト
-	 * @returns {Boolean} イベントリスナ内でpreventDefault()が呼ばれたかどうか。
-	 */
-	EventDispatcher.prototype.dispatchEvent = function(event) {
-		if (!this.__listeners) {
-			return;
-		}
-		var l = this.__listeners[event.type];
-		if (!l) {
-			return;
-		}
-
-		if (!event.target) {
-			event.target = this;
-		}
-
-		var isDefaultPrevented = false;
-
-		event.preventDefault = function() {
-			isDefaultPrevented = true;
-		};
-
-		var isImmediatePropagationStopped = false;
-		event.stopImmediatePropagation = function() {
-			isImmediatePropagationStopped = true;
-		};
-
-		// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
-		for ( var i = 0, count = l.length; i < count && !isImmediatePropagationStopped; i++) {
-			l[i].call(event.target, event);
-		}
-
-		return isDefaultPrevented;
-	};
-
 	//--------------------------------------------
 	// DataModelManager
 	//--------------------------------------------
@@ -2732,14 +2481,14 @@
 	 * href="h5.core.data.html#createManager">h5.core.data.createManager()</a>で作成します。
 	 * </p>
 	 * <p>
-	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
-	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherミックスイン</a>を参照してください。<br>
 	 * データモデルマネージャは、データモデルマネージャが管理するデータモデルに変更があった場合に'itemsChange'イベントが発火します。
 	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @class
-	 * @extends EventDispatcher
+	 * @mixes EventDispatcher
 	 * @name DataModelManager
 	 */
 	function DataModelManager(managerName) {
@@ -2806,7 +2555,9 @@
 		 */
 		this._isArrayPropChangeSilentlyRequested = false;
 	}
-	DataModelManager.prototype = new EventDispatcher();
+
+	// MixinでEventDispatcherをで継承
+	h5.mixin.eventDispatcher.mix(DataModelManager.prototype);
 	$.extend(DataModelManager.prototype, {
 		/**
 		 * データモデルを作成します。
@@ -2933,7 +2684,7 @@
 			this._oldValueLogs = null;
 
 			function getFirstCRLog(itemLogs, lastPos) {
-				for ( var i = 0; i < lastPos; i++) {
+				for (var i = 0; i < lastPos; i++) {
 					var type = itemLogs[i].type;
 					if ((type === UPDATE_LOG_TYPE_CREATE || type === UPDATE_LOG_TYPE_REMOVE)) {
 						return itemLogs[i];
@@ -2958,7 +2709,7 @@
 					var changeEventStack = [];
 
 					//新しい変更が後ろに入っているので、降順で履歴をチェックする
-					for ( var i = itemLogs.length - 1; i >= 0; i--) {
+					for (var i = itemLogs.length - 1; i >= 0; i--) {
 						var log = itemLogs[i]; //あるitemについてのログ
 						var logType = log.type; //当該ログの種類
 
@@ -3035,7 +2786,7 @@
 					if (isChangeOnly && changeEventStack.length > 0) {
 						var mergedProps = {};
 						//changeEventStackはより「古い」イベントが「後ろ」に入っている。
-						for ( var i = changeEventStack.length - 1; i >= 0; i--) {
+						for (var i = changeEventStack.length - 1; i >= 0; i--) {
 							for ( var p in changeEventStack[i].props) {
 								if (!mergedProps[p]) {
 									// oldValueのセット
@@ -3256,14 +3007,14 @@
 	 * <a href="DataModelManager.html#createModel">DataModelManager#createModel()</a>を呼ぶと、DataModelクラスを生成して返します。
 	 * </p>
 	 * <p>
-	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
-	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherミックスイン</a>を参照してください。<br>
 	 * データモデルは、データモデルが管理するデータアイテムに変更があった場合に'itemsChange'イベントが発火します。
 	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @class
-	 * @extends EventDispatcher
+	 * @mixes EventDispatcher
 	 * @name DataModel
 	 */
 	/**
@@ -3364,8 +3115,9 @@
 		manager.models[this.name] = this;
 	}
 
-	//EventDispatcherの機能を持たせるため、prototypeをコピーし、そのうえでDataModel独自のプロパティを追加する
-	$.extend(DataModel.prototype, EventDispatcher.prototype, {
+	// EventDispatcherをミックスイン
+	h5.mixin.eventDispatcher.mix(DataModel.prototype);
+	$.extend(DataModel.prototype, {
 		/**
 		 * 指定されたIDと初期値がセットされたデータアイテムを生成します。
 		 * <p>
@@ -3411,7 +3163,7 @@
 			var items = wrapInArray(objOrArray);
 			var ret = [];
 			var idKey = this._idKey;
-			for ( var i = 0, len = items.length; i < len; i++) {
+			for (var i = 0, len = items.length; i < len; i++) {
 				var valueObj = items[i];
 				var itemId = valueObj[idKey];
 
@@ -3497,7 +3249,7 @@
 					throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
 				}
 				if (asCreate) {
-					for ( var i = 0, len = items.length; i < len; i++) {
+					for (var i = 0, len = items.length; i < len; i++) {
 						var valueObj = items[i];
 						var itemId = valueObj[idKey];
 						//idが空文字、null、undefined、はid指定エラー
@@ -3507,12 +3259,12 @@
 
 						// validateする
 						// 新規作成時のチェックなら初期値をセットしてからチェックを実行
-						obj = this._schemaInfo._createInitialValueObj(valueObj);
+						var obj = this._schemaInfo._createInitialValueObj(valueObj);
 						validateValueObj(this.schema, this._schemaInfo._validateItemValue, obj,
 								this);
 					}
 				} else {
-					for ( var i = 0, l = items.length; i < l; i++) {
+					for (var i = 0, l = items.length; i < l; i++) {
 						var valueObj = items[i];
 						validateValueObj(this.schema, this._schemaInfo._validateItemValue,
 								valueObj, this);
@@ -3542,7 +3294,7 @@
 		get: function(idOrArray) {
 			if ($.isArray(idOrArray) || h5.core.data.isObservableArray(idOrArray)) {
 				var ret = [];
-				for ( var i = 0, len = idOrArray.length; i < len; i++) {
+				for (var i = 0, len = idOrArray.length; i < len; i++) {
 					ret.push(this._findById(idOrArray[i]));
 				}
 				return ret;
@@ -3584,7 +3336,7 @@
 			var actualRemovedItems = [];
 			var ret = [];
 
-			for ( var i = 0, len = ids.length; i < len; i++) {
+			for (var i = 0, len = ids.length; i < len; i++) {
 				if (!this.has(ids[i])) {
 					//指定されたアイテムが存在しない場合はnull
 					ret.push(null);
@@ -3754,14 +3506,14 @@
 		 * データアイテムは<a href="DataModel.html#create">DataModel#create()</a>で作成します。
 		 * </p>
 		 * <p>
-		 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
-		 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+		 * このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+		 * href="EventDispatcher.html">EventDispatcherミックスイン</a>を参照してください。<br>
 		 * データアイテムは、アイテムが持つ値に変更があった場合に'change'イベントが発火します。
 		 * </p>
 		 *
 		 * @since 1.1.0
 		 * @class
-		 * @extends EventDispatcher
+		 * @mixes EventDispatcher
 		 * @name DataItem
 		 */
 		/**
@@ -3780,14 +3532,15 @@
 			var arrayProps = schemaInfo._aryProps;
 
 			// ObservableArrayのイベントリスナの設定を行う
-			for ( var i = 0, l = arrayProps.length; i < l; i++) {
+			for (var i = 0, l = arrayProps.length; i < l; i++) {
 				setObservableArrayListeners(this, arrayProps[i], this.get(arrayProps[i]), model);
 			}
 		}
 
-		// EventDispatcherと、schemaInfoもprototypeに追加
-		$.extend(DataItem.prototype, EventDispatcher.prototype, schemaInfo, itemProto);
-		$.extend(DataItem.prototype, {
+		// EventDispatcherをミックスイン
+		h5.mixin.eventDispatcher.mix(DataItem.prototype);
+		// EventDispatcherと、schemaInfoもprototypeに追加する
+		$.extend(DataItem.prototype, schemaInfo, itemProto, {
 
 			/**
 			 * データアイテムが属しているデータモデル
@@ -3839,13 +3592,15 @@
 	 *
 	 * @since 1.1.0
 	 * @class
-	 * @extends EventDispatcher
+	 * @mixes EventDispatcher
 	 * @name ObservableItem
 	 */
 	function ObservableItem(item) {
 	// 空コンストラクタ
 	}
-	$.extend(ObservableItem.prototype, EventDispatcher.prototype, itemProto, {
+	// EventDispatcherをミックスイン
+	h5.mixin.eventDispatcher.mix(ObservableItem.prototype);
+	$.extend(ObservableItem.prototype, itemProto, {
 		/**
 		 * ObservableItemのスキーマに違反しないかどうか引数をチェックします。
 		 * <p>
@@ -3920,7 +3675,7 @@
 		itemSetter(obsItem, actualInitialValue, null, true);
 
 		// ObservableArrayのアイテムについてリスナの設定
-		for ( var i = 0, l = obsItem._aryProps.length; i < l; i++) {
+		for (var i = 0, l = obsItem._aryProps.length; i < l; i++) {
 			setObservableArrayListeners(obsItem, obsItem._aryProps[i], obsItem
 					.get(obsItem._aryProps[i]));
 		}
@@ -3960,14 +3715,14 @@
 	 * indexOf, lastIndexOf, every, filter, forEach, map, some, reduce, reduceRight)が使えます。
 	 * </p>
 	 * <p>
-	 * このクラスは<a href="EventDispatcher.html">EventDispatcherクラス</a>のメソッドを持ちます。イベント関連のメソッドについては<a
-	 * href="EventDispatcher.html">EventDispatcherクラス</a>を参照してください。<br>
+	 * このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ちます。イベント関連のメソッドについては<a
+	 * href="EventDispatcher.html">EventDispatcherミックスイン</a>を参照してください。<br>
 	 * ObservableArrayは、自身の内容が変更されるメソッドが呼び出される時、実行前に'changeBefore'、実行後に'change'イベントを発生させます。
 	 * </p>
 	 *
 	 * @since 1.1.0
 	 * @class
-	 * @extends EventDispatcher
+	 * @mixes EventDispatcher
 	 * @name ObservableArray
 	 */
 	function ObservableArray() {
@@ -3983,7 +3738,8 @@
 
 		this._src = [];
 	}
-	$.extend(ObservableArray.prototype, EventDispatcher.prototype);
+	// EventDispatcherをミックスイン
+	h5.mixin.eventDispatcher.mix(ObservableArray.prototype);
 
 	//ObservableArrayの関数はフックされるので、直接prototypeに置かない
 	var obsFuncs = {
@@ -4009,7 +3765,7 @@
 			var target = isObservableArray(ary) ? ary._src : ary;
 
 			// 中身の比較
-			for ( var i = 0; i < len; i++) {
+			for (var i = 0; i < len; i++) {
 				var myVal = this[i];
 				var targetVal = target[i];
 
@@ -4093,7 +3849,7 @@
 		 */
 		concat: function() {
 			var args = h5.u.obj.argsToArray(arguments);
-			for ( var i = 0, len = args.length; i < len; i++) {
+			for (var i = 0, len = args.length; i < len; i++) {
 				if (isObservableArray(args[i])) {
 					args[i] = args[i].toArray();
 				}
@@ -4123,7 +3879,7 @@
 	var destructiveMethods = ['sort', 'reverse', 'pop', 'shift', 'unshift', 'push', 'splice',
 			'copyFrom', 'set'];
 
-	for ( var i = 0, len = arrayMethods.length; i < len; i++) {
+	for (var i = 0, len = arrayMethods.length; i < len; i++) {
 		var arrayMethod = arrayMethods[i];
 		ObservableArray.prototype[arrayMethod] = (function(method) {
 			var func = obsFuncs[method] ? obsFuncs[method] : Array.prototype[method];

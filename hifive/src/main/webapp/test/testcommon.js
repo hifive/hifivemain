@@ -44,7 +44,7 @@ function rgbToHex(rgbStr) {
 
 	var hexs = [];
 
-	for ( var i = 1; i < patterns.length; i++) {
+	for (var i = 1; i < patterns.length; i++) {
 		hexs.push(("0" + parseInt(patterns[i]).toString(16)).slice(-2));
 	}
 
@@ -104,12 +104,13 @@ function createIFrameElement() {
 	// # 指し替わる前のdocumentのreadystateはずっとuninitializedのままなので、ハンドラを引っかけても発火しない
 	function check() {
 		// iframe.contentDocumentはIE7-で使えないので、contentWindowからdocumentを取得
-		var doc = iframe.contentWindow.document;
+		var win = iframe.contentWindow;
+		var doc = win.document;
 		if (doc.readyState !== 'complete') {
 			setTimeout(check, 10);
 			return;
 		}
-		dfd.resolve(iframe, doc);
+		dfd.resolve(iframe, doc, win);
 	}
 	setTimeout(check, 10);
 	return dfd.promise();
@@ -240,7 +241,7 @@ function compareVersion(a, b) {
 	var bAry = b.split('.');
 
 	var aAryLen = aAry.length;
-	for ( var i = 0; i < aAryLen; i++) {
+	for (var i = 0; i < aAryLen; i++) {
 		if (bAry[i] == null) {
 			// bAryが先にnullになった=aAryの方が桁数(バージョン文字列の.の数)が多い場合、
 			// '.0'が末尾にならないようにしてあるので、桁数の多い方がバージョンが大きい
@@ -261,4 +262,19 @@ function compareVersion(a, b) {
 	}
 	// 最後まで比較して同じなら同じバージョンなので0を返す
 	return 0;
+}
+
+/**
+ * オブジェクトからプロパティを削除する
+ *
+ * @param {Object} obj
+ * @param {string} prop
+ */
+function deleteProperty(obj, prop) {
+	try {
+		delete obj[prop];
+	} catch (e) {
+		// IE6の場合、windowオブジェクトからdeleteしようとするとエラーになるのでundefinedの代入を行う
+		obj[prop] = undefined;
+	}
 }

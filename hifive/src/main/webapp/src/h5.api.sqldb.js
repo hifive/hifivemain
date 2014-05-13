@@ -170,7 +170,7 @@
 	 * トランザクションエラー時に実行する共通処理
 	 */
 	function transactionErrorCallback(tasks, e) {
-		for ( var i = tasks.length - 1; i >= 0; i--) {
+		for (var i = tasks.length - 1; i >= 0; i--) {
 			var result = tasks[i];
 			var msgParam = getTransactionErrorMsg(e);
 			result.deferred.reject(createRejectReason(ERR_CODE_TRANSACTION_PROCESSING_FAILURE, [
@@ -182,7 +182,7 @@
 	 * トランザクション完了時に実行する共通処理
 	 */
 	function transactionSuccessCallback(tasks) {
-		for ( var i = tasks.length - 1; i >= 0; i--) {
+		for (var i = tasks.length - 1; i >= 0; i--) {
 			var result = tasks[i];
 			result.deferred.resolve(result.result);
 		}
@@ -274,7 +274,8 @@
 	/**
 	 * Statementクラス
 	 * <p>
-	 * このクラスを継承しているクラスはTransactionalExecutor.add()で追加できる。
+	 * このクラスを継承しているクラスは<a href="TransactionalExecutor.html#add">TransactionalExecutor.add()</a>で追加できます。
+	 * </p>
 	 *
 	 * @class
 	 * @name Statement
@@ -282,6 +283,8 @@
 	function Statement() {
 		/**
 		 * 1インスタンスで複数のステートメントを実行するか判定するフラグ このフラグがtrueの場合、execute()の実行結果を配列で返します
+		 *
+		 * @private
 		 */
 		this._multiple = false;
 	}
@@ -289,6 +292,9 @@
 	$.extend(Statement.prototype, {
 		/**
 		 * SQL文を実行します
+		 *
+		 * @memberOf Statement
+		 * @return {TransactionalExecutor} TransactionalExecutorオブジェクト
 		 */
 		execute: function() {
 			return this._executor.add(this)._execute(function(results) {
@@ -433,7 +439,7 @@
 				var p = getDeferred().resolve().promise();
 				var ret = [];
 
-				for ( var i = 0, iLen = statements.length; i < iLen; i++) {
+				for (var i = 0, iLen = statements.length; i < iLen; i++) {
 					(function(statement, parameter) {
 						fwLogger.debug(wrapInArray(statement), wrapInArray(parameter));
 
@@ -465,7 +471,7 @@
 
 				// トランザクション内で_buildStatementAndParameters()を実行すると、
 				// SQL構文エラーがクライアントに返せないため、ここでステートメントとパラメータを生成する
-				for ( var j = 0, jLen = queue.length; j < jLen; j++) {
+				for (var j = 0, jLen = queue.length; j < jLen; j++) {
 					queue[j]._buildStatementAndParameters();
 				}
 
@@ -754,7 +760,7 @@
 				return;
 			}
 
-			for ( var i = 0, len = values.length; i < len; i++) {
+			for (var i = 0, len = values.length; i < len; i++) {
 				var valueObj = values[i];
 
 				if (valueObj == null) {

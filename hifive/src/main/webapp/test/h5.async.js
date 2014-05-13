@@ -737,14 +737,14 @@ $(function() {
 			});
 
 	test('alwaysでfailコールバックを登録してreject()された場合、commonFailHandlerが呼ばれないこと', 1, function() {
-		dfd = h5.async.deferred();
+		var dfd = h5.async.deferred();
 		dfd.promise().always(emptyFunc);
 		dfd.reject();
 		ok(!this.cfhFlag, 'deferred.always() でコールバックを指定した時に、commonFailHandlerが呼ばれないこと');
 	});
 
 	test('alwaysでfailコールバックを登録せずにreject()された場合、commonFailHandlerは呼ばれること', 1, function() {
-		dfd = h5.async.deferred();
+		var dfd = h5.async.deferred();
 		dfd.always();
 		dfd.reject();
 		ok(this.cfhFlag, 'deferred.always() でコールバックを登録しなければ、commonFailHandlerは呼ばれること');
@@ -1264,7 +1264,7 @@ $(function() {
 	test('※要目視確認：引数にプロミスオブジェクトと配列以外のものを渡した場合は、同期実行されること。ログが出力されること。', 11, function() {
 		var argArray = [0, 1, true, false, {}];
 
-		for ( var i = 0, l = argArray.length; i < l; i++) {
+		for (var i = 0, l = argArray.length; i < l; i++) {
 			var count = 0;
 			h5.async.when(argArray[i]).done(function() {
 				equal(count++, 0, '引数が' + argArray[i].toString() + 'の場合、doneコールバックが同期的に実行されること。');
@@ -1281,7 +1281,7 @@ $(function() {
 				var dfd1;
 				var argArray = [0, 1, true, false, {}, []];
 
-				for ( var i = 0, l = argArray.length; i < l; i++) {
+				for (var i = 0, l = argArray.length; i < l; i++) {
 					// deferredを初期化する
 					dfd1 = h5.async.deferred();
 
@@ -1300,7 +1300,7 @@ $(function() {
 			'※要目視確認：引数を2つ以上渡して、プロミスの配列がある場合、配列は無視して配列以外のpromiseオブジェクトのresolveだけを待つこと。ログが出力されること。',
 			5,
 			function() {
-				var dfd1,dfd2,dfd3;
+				var dfd1, dfd2, dfd3;
 				// deferredを初期化する
 				dfd1 = h5.async.deferred();
 				dfd2 = h5.async.deferred();
@@ -1436,7 +1436,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('fail', 2, function() {
+	asyncTest('fail loop処理の途中で失敗するコールバックがある場合', 2, function() {
 		var ret = [];
 		var array = [0, 1, 2, 3, 4, 5];
 		var p = h5.async.loop(array, function(index, value, loopControl) {
@@ -1458,6 +1458,31 @@ $(function() {
 			start();
 			ok(true, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
 			strictEqual(ret.join(';'), '0;1;2;3', 'promiseを返してrejectすると処理が止まるか');
+		}).done(function() {
+			start();
+			ok(false, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
+		});
+	});
+
+	asyncTest('fail loop処理の最後に失敗するコールバックがある場合', 2, function() {
+		var ret = [];
+		var array = [0, 1, 2, 3, 4, 5];
+		var p = h5.async.loop(array, function(index, value, loopControl) {
+			var dfd = h5.async.deferred();
+			setTimeout(function() {
+				ret.push(value);
+				if (index === 5) {
+					dfd.reject();
+				} else {
+					dfd.resolve();
+				}
+			}, 0);
+			return dfd.promise();
+		}, 2);
+		p.fail(function() {
+			start();
+			ok(true, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
+			strictEqual(ret.join(';'), '0;1;2;3;4;5', 'loop処理は全て実行されていること');
 		}).done(function() {
 			start();
 			ok(false, 'ユーザが作成したDeferredがrejectされるとfailコールバックが呼ばれるか');
@@ -1523,7 +1548,7 @@ $(function() {
 
 	asyncTest('引数チェック', 3, function() {
 		var noArrayObjs = [1, {}, 'aaa'];
-		for ( var i = 0, len = noArrayObjs.length; i < len; i++) {
+		for (var i = 0, len = noArrayObjs.length; i < len; i++) {
 			try {
 				h5.async.loop(noArrayObjs[i], function() {
 				//

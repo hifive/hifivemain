@@ -43,9 +43,8 @@ $(function() {
 	// Variables
 	//=============================
 
-	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.data;
-
+	var ERR_MIXIN = ERRCODE.h5.mixin;
 	/**
 	 * データモデルマネージャ
 	 */
@@ -94,7 +93,7 @@ $(function() {
 	function testErrorWhenCreateModelByValueProperty(ary, errCode) {
 		var invalidProps = $.isArray(ary) ? ary : [ary];
 		var l = invalidProps.length;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager.createModel({
 					name: 'TestDataModel',
@@ -123,7 +122,7 @@ $(function() {
 			strictEqual('length:' + result.length, 'length:' + exp.length, msg);
 			return;
 		}
-		var i,l;
+		var i, l;
 		while ((l = exp.length) !== 0) {
 			var elm = result[0];
 			var hasElm = false;
@@ -190,7 +189,7 @@ $(function() {
 		}];
 		var l = noStrs.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager = h5.core.data.createManager(noStrs[i]);
 				ok(false, 'エラーが発生していません');
@@ -206,7 +205,7 @@ $(function() {
 		var invalidStrs = ['', ' ', '.', ',', '1A', ' TestModel', 'Test Model'];
 		var l = invalidStrs.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager = h5.core.data.createManager(invalidStrs[i]);
 				ok(false, 'エラーが発生していません');
@@ -222,7 +221,7 @@ $(function() {
 				'com.htmlhifive.'];
 		var l = invalidNs.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager = h5.core.data.createManager('TestManager', invalidNs[i]);
 				ok(false, 'エラーが発生していません');
@@ -235,7 +234,7 @@ $(function() {
 	test('データモデルマネージャの作成 名前空間指定が空文字の場合はwindow直下ににマネージャを作成できること', 1, function() {
 		manager = h5.core.data.createManager('TestManager', '');
 		ok(manager === window.TestManager, '名前空間指定が空文字の場合はwindow直下ににマネージャを作成できること');
-		window.TestManager = undefined;
+		deleteProperty(window, 'TestManager');
 	});
 
 	test('データモデルマネージャの作成 名前空間指定のない場合は同名のにマネージャを作成できること', 1, function() {
@@ -304,7 +303,7 @@ $(function() {
 	test('登録したデータモデルがmanager.modelsに格納されていること', function() {
 		var models = {};
 		var l = 3;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			var name = 'Test' + i;
 			models[name] = manager.createModel({
 				name: name,
@@ -373,7 +372,7 @@ $(function() {
 		var noDescriptors = ["a", 1, null, undefined, true, []];
 		var l = noDescriptors.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager.createModel(noDescriptors[i]);
 				ok(false, 'エラーが発生していません。');
@@ -507,7 +506,7 @@ $(function() {
 			});
 
 	test('baseにデータモデルを指定した時、継承元のスキーマは変わらないこと', function() {
-		var manager = h5.core.data.createManager('DataManager', 'model');
+		var manager = h5.core.data.createManager('DataManager');
 
 		// parentModel
 		var parentModel = manager.createModel({
@@ -534,7 +533,7 @@ $(function() {
 		var item = parentModel.create({
 			id: 0
 		});
-		raises(function() {
+		throws(function() {
 			item.get('val');
 		}, '継承元には継承先のスキーマで定義したスキーマは存在しないこと');
 	});
@@ -690,7 +689,7 @@ $(function() {
 				}
 			}
 		});
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager.createModel({
 					name: 'TestDataModel2',
@@ -746,7 +745,7 @@ $(function() {
 				}
 			}
 		});
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager.createModel({
 					name: 'TestDataModel3',
@@ -838,7 +837,7 @@ $(function() {
 		var l = noObjs.length;
 		expect(l);
 
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager.createModel({
 					name: 'TestDataModel',
@@ -865,7 +864,7 @@ $(function() {
 	test('schemaの持つプロパティ名が不正な場合エラーが発生すること', function() {
 		var errCode = ERR.ERR_CODE_INVALID_SCHEMA;
 		var invalidPropNames = ['', ' ', '1a', ' abc', 'a bc'];
-		for ( var i = 0, l = invalidPropNames.length; i < l; i++) {
+		for (var i = 0, l = invalidPropNames.length; i < l; i++) {
 			try {
 				var schema = {
 					id: {
@@ -919,7 +918,7 @@ $(function() {
 		var l = noStrs.length;
 		expect(l);
 
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: noStrs[i]
 			}, errCode);
@@ -935,7 +934,7 @@ $(function() {
 		var l = invalidStrs.length;
 		expect(l);
 
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: invalidStrs[i]
 			}, errCode);
@@ -949,7 +948,7 @@ $(function() {
 		}];
 		var l = noArrays.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: noArrays[i]
 			}, errCode);
@@ -965,7 +964,7 @@ $(function() {
 		var noArrays = [[null, 1], undefAr];
 		var l = noArrays.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: 'enum',
 				enumValue: noArrays[i]
@@ -980,7 +979,7 @@ $(function() {
 		var invalidArrays = [[], ary];
 		var l = invalidArrays.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: 'enum',
 				enumValue: invalidArrays[i]
@@ -1003,7 +1002,7 @@ $(function() {
 		var notEnumTypes = ['string', 'number', 'integer', 'boolean', '@A', 'any'];
 		var l = notEnumTypes.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: notEnumTypes[i],
 				enumValue: [1]
@@ -1016,7 +1015,7 @@ $(function() {
 		var invalidValues = [1, 'true', [], {}];
 		var l = invalidValues.length;
 		expect(l);
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: invalidValues[i]
 			}, errCode);
@@ -1035,7 +1034,7 @@ $(function() {
 		var l = invalidValues.length;
 		expect(l);
 
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager.createModel({
 					name: 'TestDataModel',
@@ -1295,7 +1294,7 @@ $(function() {
 		var l = invalidValues.length;
 		expect(l);
 
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				constraint: invalidValues[i]
 			}, errCode);
@@ -1307,7 +1306,7 @@ $(function() {
 		var invalidValues = [];
 		// type:numberで、constraint.minの値が不正な場合
 		var invalidNumMin = ['10', NaN, -Infinity, Infinity, [], {}, true];
-		for ( var i = 0, l = invalidNumMin.length; i < l; i++) {
+		for (var i = 0, l = invalidNumMin.length; i < l; i++) {
 			invalidValues.push({
 				type: 'number',
 				constraint: {
@@ -1318,7 +1317,7 @@ $(function() {
 
 		// type:numberで、constraint.maxの値が不正な場合
 		var invalidNumMax = invalidNumMin;
-		for ( var i = 0, l = invalidNumMax.length; i < l; i++) {
+		for (var i = 0, l = invalidNumMax.length; i < l; i++) {
 			invalidValues.push({
 				type: 'number',
 				constraint: {
@@ -1328,7 +1327,7 @@ $(function() {
 		}
 		// type:integerで、constraint.minの値が不正な場合 (integerの時は小数不可)
 		var invalidIntMin = ['10', 5.7, NaN, -Infinity, Infinity, [], {}, true];
-		for ( var i = 0, l = invalidIntMin.length; i < l; i++) {
+		for (var i = 0, l = invalidIntMin.length; i < l; i++) {
 			invalidValues.push({
 				type: 'integer',
 				constraint: {
@@ -1339,7 +1338,7 @@ $(function() {
 
 		// type:integerで、constraint.maxの値が不正な場合 (integerの時は小数不可)
 		var invalidIntMax = invalidIntMin;
-		for ( var i = 0, l = invalidIntMax.length; i < l; i++) {
+		for (var i = 0, l = invalidIntMax.length; i < l; i++) {
 			invalidValues.push({
 				type: 'integer',
 				constraint: {
@@ -1350,7 +1349,7 @@ $(function() {
 
 		// constraint.minLengthの値が不正な場合
 		var invalidStrMinLength = [-1, 10.1, '10', NaN, -Infinity, Infinity, [], {}, true];
-		for ( var i = 0, l = invalidStrMinLength.length; i < l; i++) {
+		for (var i = 0, l = invalidStrMinLength.length; i < l; i++) {
 			invalidValues.push({
 				type: 'string',
 				constraint: {
@@ -1361,7 +1360,7 @@ $(function() {
 
 		// constraint.maxLengthの値が不正な場合
 		var invalidStrMaxLength = invalidStrMinLength;
-		for ( var i = 0, l = invalidStrMaxLength.length; i < l; i++) {
+		for (var i = 0, l = invalidStrMaxLength.length; i < l; i++) {
 			invalidValues.push({
 				type: 'string',
 				constraint: {
@@ -1372,7 +1371,7 @@ $(function() {
 
 		// constraint.notNullの値が不正な場合
 		var invalidStrNotNull = [0, 'true', [], {}, new Boolean(true)];
-		for ( var i = 0, l = invalidStrNotNull.length; i < l; i++) {
+		for (var i = 0, l = invalidStrNotNull.length; i < l; i++) {
 			invalidValues.push({
 				type: 'string',
 				constraint: {
@@ -1383,7 +1382,7 @@ $(function() {
 
 		// constraint.notEmptyの値が不正な場合
 		var invalidStrNotEmpty = invalidStrNotNull;
-		for ( var i = 0, l = invalidStrNotEmpty.length; i < l; i++) {
+		for (var i = 0, l = invalidStrNotEmpty.length; i < l; i++) {
 			invalidValues.push({
 				type: 'string',
 				constraint: {
@@ -1394,7 +1393,7 @@ $(function() {
 
 		// constraint.patternの値が不正な場合
 		var invalidStrPattern = [1, 'a', [], {}, true, false];
-		for ( var i = 0, l = invalidStrPattern.length; i < l; i++) {
+		for (var i = 0, l = invalidStrPattern.length; i < l; i++) {
 			invalidValues.push({
 				type: 'string',
 				constraint: {
@@ -1434,7 +1433,7 @@ $(function() {
 		var l = invalidValues.length;
 		expect(l);
 
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: invalidValues[i].type,
 				constraint: invalidValues[i].constraint
@@ -1649,7 +1648,7 @@ $(function() {
 		var l = invalidValues.length;
 
 		// typeを配列にしたものを追加する(anyとarray以外)
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			var obj = invalidValues[i];
 			if (obj.type !== 'any' && obj.type !== 'array') {
 				invalidValues.push({
@@ -1670,7 +1669,7 @@ $(function() {
 			}
 		});
 
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: invalidValues[i].type,
 				constraint: invalidValues[i].constraint
@@ -1711,7 +1710,7 @@ $(function() {
 		}];
 		// typeを配列にしたものを追加する
 		l = invalidValues.length;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			var obj = invalidValues[i];
 			invalidValues.push({
 				type: obj.type + '[]',
@@ -1719,7 +1718,7 @@ $(function() {
 			});
 		}
 		l = invalidValues.length;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			testErrorWhenCreateModelByValueProperty({
 				type: invalidValues[i].type,
 				'enum': [1, 'a', 1.1],
@@ -1745,7 +1744,7 @@ $(function() {
 				}
 			}
 		});
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager.createModel({
 					name: 'TestDataModel',
@@ -1773,7 +1772,7 @@ $(function() {
 			maxLength: 0
 		}];
 		var l = invalidConstraint.length;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			try {
 				manager.createModel({
 					name: 'TestDataModel',
@@ -2126,9 +2125,9 @@ $(function() {
 		invalidValueArrays.push(["a", ["a"], [["a", "b", 1]], [[["a"]]]]);
 
 		var invalidProps = [];
-		for ( var i = 0, typesLen = types.length; i < typesLen; i++) {
+		for (var i = 0, typesLen = types.length; i < typesLen; i++) {
 			var type = types[i];
-			for ( var j = 0, valueArrayLen = invalidValueArrays[i].length; j < valueArrayLen; j++) {
+			for (var j = 0, valueArrayLen = invalidValueArrays[i].length; j < valueArrayLen; j++) {
 				var defaultValue = invalidValueArrays[i][j];
 				invalidProps.push({
 					type: type,
@@ -2794,7 +2793,7 @@ $(function() {
 		var invalidArgs = ['', 'aa', 1, 0, true, false];
 		var len = invalidArgs.length;
 		expect(len);
-		for ( var i = 0; i < len; i++) {
+		for (var i = 0; i < len; i++) {
 			try {
 				dataModel1.create(invalidArgs[i]);
 				ok(false, 'エラーが発生しませんでした。' + invalidArgs[i]);
@@ -2928,7 +2927,7 @@ $(function() {
 				});
 
 				var invalidIds = [null, undefined, 1, 1.1, true, [], {}, new String('abc'), /a/];
-				for ( var i = 0, l = invalidIds.length; i < l; i++) {
+				for (var i = 0, l = invalidIds.length; i < l; i++) {
 					try {
 						model.create({
 							id: invalidIds[i]
@@ -2957,7 +2956,7 @@ $(function() {
 				});
 
 				invalidIds = [null, undefined, 1.1, '1.1', true, [], {}, new Number('1'), /1/];
-				for ( var i = 0, l = invalidIds.length; i < l; i++) {
+				for (var i = 0, l = invalidIds.length; i < l; i++) {
 					try {
 						model.create({
 							id: invalidIds[i]
@@ -3383,13 +3382,13 @@ $(function() {
 	// Body
 	//=============================
 	test('スキーマに定義されていないプロパティをget/setするとエラーになること', 2, function() {
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			getSetDataItem.get('hoge');
 		}, function(actual) {
 			return actual.code === ERR.ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY;
 		}, 'スキーマに定義されていないプロパティの値を取得したためエラーになること"');
 
-		raises(function(enviroment) {
+		throws(function(enviroment) {
 			getSetDataItem.set('hoge', 10);
 		}, function(actual) {
 			return actual.code === ERR.ERR_CODE_CANNOT_SET_NOT_DEFINED_PROPERTY;
@@ -4084,7 +4083,7 @@ $(function() {
 			// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 			var item2 = null;
 			var sub = [new String('a'), new Object('i'), "", '', null, undefined];
-			for ( var i = 0; i < sub.length; i++) {
+			for (var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test1: sub[i]
@@ -4127,15 +4126,15 @@ $(function() {
 			var nosub = [1, /[0-9]/, new RegExp(), false, new Boolean(1), Infinity, -Infinity,
 					new Number(1), NaN, window, {}, new Object(1), new Object(['a']),
 					new Array('a'), ['a']];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4183,7 +4182,7 @@ $(function() {
 			var sub = [new Array(new String('a'), new String(10)), new Array('x', 'r'),
 					new Array('8', '5'), new Object(['i', 'd']), new Object(['3', '4']), [],
 					[null, undefined], null, undefined];
-			for ( var i = 0; i < sub.length; i++) {
+			for (var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test1: sub[i]
@@ -4228,15 +4227,15 @@ $(function() {
 					NaN, window, {}, new Object([10, 'v']), new Array(1, 'a'), function() {
 						return 10;
 					}];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', sub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4378,7 +4377,7 @@ $(function() {
 		});
 
 		// 異なる型を指定してcreateするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			model.create({
 				id: sequence.next(),
 				dataModel2: model1DataItem
@@ -4386,7 +4385,7 @@ $(function() {
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
 
 		// 異なる型をsetするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			item1.set('dataModel1', model2DataItem);
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
 
@@ -4555,7 +4554,7 @@ $(function() {
 		});
 
 		// 異なる型を指定してcreateするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			model.create({
 				id: sequence.next(),
 				dataModel1: [model1DataItem1, model2DataItem1]
@@ -4563,7 +4562,7 @@ $(function() {
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
 
 		// 異なる型を指定してcreateするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			model.create({
 				id: sequence.next(),
 				dataModel2: [model1DataItem1, model2DataItem1]
@@ -4571,12 +4570,12 @@ $(function() {
 		}, 'type:DataMode1のプロパティに異なる型の値を指定してcreateするとエラーが発生すること。');
 
 		// 異なる型をsetするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			item1.set('dataModel1', [model1DataItem1, model2DataItem1]);
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
 
 		// 異なる型をsetするとエラーが発生すること
-		raises(function() {
+		throws(function() {
 			item1.set('dataModel2', [model1DataItem1, model2DataItem1]);
 		}, 'type:DataModel2のプロパティに異なる型の値をsetするとエラーが発生すること。');
 
@@ -4631,7 +4630,7 @@ $(function() {
 					var item2 = null;
 					var sub = [new Number(10), Infinity, -Infinity, NaN, new Object(10.9), null,
 							undefined];
-					for ( var i = 0; i < sub.length; i++) {
+					for (var i = 0; i < sub.length; i++) {
 						item2 = model.create({
 							id: sequence.next(),
 							test1: sub[i]
@@ -4676,15 +4675,15 @@ $(function() {
 			}, '1a', [1], new Array(), new Boolean(1), window, function() {
 				return 10;
 			}];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4732,7 +4731,7 @@ $(function() {
 			var sub = [new Array(new Number(10)), new Array(40, 90), new Object([10, 30]), ["10"],
 					[Infinity, -Infinity, NaN], new Array(Infinity, -Infinity, NaN),
 					new Object([Infinity, -Infinity, NaN]), [null, undefined], null, undefined];
-			for ( var i = 0; i < sub.length; i++) {
+			for (var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test1: sub[i]
@@ -4782,15 +4781,15 @@ $(function() {
 					new Object(['a']), new Array(1, 'a'), function() {
 						return 10;
 					}];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4837,7 +4836,7 @@ $(function() {
 			var item2 = null;
 			var sub = [new Number(10), '10', '+10', '-10', 10.00, new String('56'),
 					new Object('30'), new Object(20), null, undefined];
-			for ( var i = 0; i < sub.length; i++) {
+			for (var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test1: sub[i]
@@ -4891,15 +4890,15 @@ $(function() {
 					Infinity, -Infinity, function() {
 						return 10;
 					}];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -4951,7 +4950,7 @@ $(function() {
 					new Array(new String('56'), new String('48')),
 					new Array(new Object('30'), new Object('31')),
 					new Array(new Object(20), new Object(20)), [null], null, undefined];
-			for ( var i = 0; i < sub.length; i++) {
+			for (var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test1: sub[i]
@@ -5002,15 +5001,15 @@ $(function() {
 					window, Infinity, -Infinity, NaN, function() {
 						return 10;
 					}];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5057,7 +5056,7 @@ $(function() {
 			var item2 = null;
 			var sub = [new Boolean(1), new Boolean(0), new Object(true), new Object(false), null,
 					undefined];
-			for ( var i = 0; i < sub.length; i++) {
+			for (var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test1: sub[i]
@@ -5108,15 +5107,15 @@ $(function() {
 					new Number(1), NaN, window, function() {
 						return 10;
 					}];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5165,7 +5164,7 @@ $(function() {
 					[new Object(true), new Object(false)],
 					new Array(new Object(true), new Object(false)), [null, undefined], [], null,
 					undefined];
-			for ( var i = 0; i < sub.length; i++) {
+			for (var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test1: sub[i]
@@ -5216,15 +5215,15 @@ $(function() {
 					window, function() {
 						return 10;
 					}, ['true', 'false'], [1, 0]];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5286,7 +5285,7 @@ $(function() {
 								return 10;
 							}];
 					var item2 = null;
-					for ( var i = 0; i < sub.length; i++) {
+					for (var i = 0; i < sub.length; i++) {
 						item2 = model.create({
 							id: sequence.next(),
 							test1: sub[i]
@@ -5344,7 +5343,7 @@ $(function() {
 			var item2 = null;
 			var sub = [new Array(10, 8), new Object(['a']), [new Number(1)], [null, undefined],
 					null, undefined];
-			for ( var i = 0; i < sub.length; i++) {
+			for (var i = 0; i < sub.length; i++) {
 				item2 = model.create({
 					id: sequence.next(),
 					test1: sub[i]
@@ -5394,15 +5393,15 @@ $(function() {
 					-Infinity, new Number(1), NaN, window, {}, new Object(), function() {
 						return 10;
 					}];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5457,7 +5456,7 @@ $(function() {
 					// 代入可能な値でDataItemの生成とプロパティへの代入ができるか
 					var item2 = null;
 					var sub = ['b', 20, false, testClass1, NaN];
-					for ( var i = 0; i < sub.length; i++) {
+					for (var i = 0; i < sub.length; i++) {
 						item2 = model.create({
 							id: sequence.next(),
 							test2: sub[i]
@@ -5516,15 +5515,15 @@ $(function() {
 						return 'a';
 					}, new TestClass1(), new String('a'), new Object('a'), new Number(10),
 					new Object(10), new Boolean(1), new Object(true)];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5575,7 +5574,7 @@ $(function() {
 		var item2 = null;
 		var sub = [['b'], ['b', 'b'], ['b', 20], ['b', 20, false, testClass1, NaN], [NaN], [false],
 				[testClass1], [null], [null, null], [], null, undefined];
-		for ( var i = 0; i < sub.length; i++) {
+		for (var i = 0; i < sub.length; i++) {
 			item2 = model.create({
 				id: sequence.next(),
 				test2: sub[i]
@@ -5632,15 +5631,15 @@ $(function() {
 						return 'a';
 					}, new TestClass1(), new String('a'), new Object('a'), new Number(10),
 					new Object(10), new Boolean(1), new Object(true)];
-			for ( var i = 0; i < nosub.length; i++) {
-				raises(function() {
+			for (var i = 0; i < nosub.length; i++) {
+				throws(function() {
 					model.create({
 						id: sequence.next(),
 						test1: nosub[i]
 					});
 				}, '指定された型以外の値でcreateできないこと。');
 
-				raises(function() {
+				throws(function() {
 					item.set('test1', nosub[i]);
 				}, '指定された型以外の値は代入できないこと。');
 			}
@@ -5707,7 +5706,7 @@ $(function() {
 			'@Test': [null, item],
 			any: [null, undefined, item, window]
 		};
-		for ( var c = 0; c < 2; c++) {
+		for (var c = 0; c < 2; c++) {
 			var constraint = [nullConstraint, undefConstraint][c];
 			for ( var type in typeValMap) {
 				var propObj = {
@@ -5726,7 +5725,7 @@ $(function() {
 						v: propObj
 					}
 				});
-				for ( var i = 0, l = typeValMap[type].length; i < l; i++) {
+				for (var i = 0, l = typeValMap[type].length; i < l; i++) {
 					var item = model.create({
 						id: sequence.next(),
 						v: typeValMap[type][i]
@@ -6017,7 +6016,7 @@ $(function() {
 	test('制約が適用されているか 異常系', 16, function() {
 		var i = 0;
 		for (i = 0; i < 15; i++) {
-			raises(function() {
+			throws(function() {
 				var desc1 = {
 					id: i
 				};
@@ -7237,8 +7236,8 @@ $(function() {
 		var values = [null, -2, 0, 1, 2, 3];
 		var propTypes = ['number', 'number[]', 'integer', 'integer[]'];
 		var props = ['num', 'numA', 'int', 'intA'];
-		for ( var i = 0, l = values.length; i < l; i++) {
-			for ( var j = 0, len = props.length; j < len; j++) {
+		for (var i = 0, l = values.length; i < l; i++) {
+			for (var j = 0, len = props.length; j < len; j++) {
 				var descriptor = {
 					id: sequence.next()
 				};
@@ -7287,8 +7286,8 @@ $(function() {
 		var values = ['hifive', 'hi5', 'hi-five', 'HIFIVE'];
 		var propTypes = ['string', 'string[]'];
 		var props = ['str', 'strA'];
-		for ( var i = 0, l = values.length; i < l; i++) {
-			for ( var j = 0, len = props.length; j < len; j++) {
+		for (var i = 0, l = values.length; i < l; i++) {
+			for (var j = 0, len = props.length; j < len; j++) {
 				var descriptor = {
 					id: sequence.next()
 				};
@@ -7350,7 +7349,7 @@ $(function() {
 		var vals = [1, 'abc', new String('ABC'), new Number(1), {}, [],
 				h5.core.data.createObservableArray(), null, undefined];
 
-		for ( var i = 0, l = vals.length; i < l; i++) {
+		for (var i = 0, l = vals.length; i < l; i++) {
 			item1.set('v', vals[i]);
 			strictEqual(item1.get('v'), vals[i], vals[i] + 'がsetできてgetできること');
 			item2.set('v', vals[i]);
@@ -8383,8 +8382,8 @@ $(function() {
 		var values = [null, -2, -1, 0, 1, 2, 3];
 		var propTypes = ['number', 'number[]', 'integer', 'integer[]'];
 		var props = ['n', 'na', 'i', 'ia'];
-		for ( var i = 0, l = values.length; i < l; i++) {
-			for ( var j = 0, len = props.length; j < len; j++) {
+		for (var i = 0, l = values.length; i < l; i++) {
+			for (var j = 0, len = props.length; j < len; j++) {
 				var descriptor = {
 					id: sequence.next()
 				};
@@ -8433,8 +8432,8 @@ $(function() {
 		var values = ['hifive', 'hi5', 'hi-five', 'HIFIVE'];
 		var propTypes = ['string', 'string[]'];
 		var props = ['str', 'strA'];
-		for ( var i = 0, l = values.length; i < l; i++) {
-			for ( var j = 0, len = props.length; j < len; j++) {
+		for (var i = 0, l = values.length; i < l; i++) {
+			for (var j = 0, len = props.length; j < len; j++) {
 				var descriptor = {
 					id: sequence.next()
 				};
@@ -8732,7 +8731,7 @@ $(function() {
 						'@' + dataModel1.name + '[]'];
 				var keys = ['numA', 'intA', 'strA', 'boolA', 'anyA', 'enumA', 'datamodelA'];
 				var store = [];
-				for ( var i = 0, l = types.length; i < l; i++) {
+				for (var i = 0, l = types.length; i < l; i++) {
 					ok(h5.core.data.isObservableArray(item.get(keys[i])), h5.u.str.format(
 							'type:{0}の要素がObservableArray', types[i]));
 					store.push(item.get(keys[i]));
@@ -8741,7 +8740,7 @@ $(function() {
 					item.set(keys[i], [null]);
 				}
 
-				for ( var i = 0, l = types.length; i < l; i++) {
+				for (var i = 0, l = types.length; i < l; i++) {
 					strictEqual(store[i], item.get(keys[i]),
 							'中身の違う配列をsetしてもObservableArrayのインスタンスは変わらないこと');
 				}
@@ -8756,7 +8755,7 @@ $(function() {
 		var keys = ['numA', 'intA', 'strA', 'boolA', 'enumA', 'datamodelA'];
 		var invalidVals = ['a', 1.1, 1, 'a', 4, {}];
 
-		for ( var i = 0, l = types.length; i < l; i++) {
+		for (var i = 0, l = types.length; i < l; i++) {
 			var o = item.get(keys[i]);
 			try {
 				o.push(invalidVals[i]);
@@ -8794,7 +8793,7 @@ $(function() {
 
 		var vals = [numOA, intOA, strOA, boolOA, anyOA, enumOA, datamodelOA];
 
-		for ( var i = 0, l = types.length; i < l; i++) {
+		for (var i = 0, l = types.length; i < l; i++) {
 			try {
 				var desc = {
 					id: sequence.next()
@@ -8820,586 +8819,6 @@ $(function() {
 	var order = [];
 
 	var changeListener = null;
-
-	module('DataItem EventListenerの登録・削除', {
-		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
-			manager = h5.core.data.createManager('TestManager');
-			createDataModel1();
-			changeListener = function() {
-			//
-			};
-			item = dataModel1.create({
-				id: sequence.next(),
-				val: 1
-			});
-		},
-		teardown: function() {
-			item.removeEventListener('change', changeListener);
-			sequence = null;
-			dataModel1 = null;
-			order = [];
-			evObj = {};
-			dropAllModel(manager);
-			changeListener = null;
-		}
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('addEventListener 正常系', 4, function() {
-		// (文字列,関数)ならエラーにならない
-		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				[' ', changeListener], ['', changeListener]];
-		var l = validArgs.length
-		for ( var i = 0; i < l; i++) {
-			var ret = item.addEventListener(validArgs[i][0], validArgs[i][1]);
-			strictEqual(ret, undefined, '(文字列、関数)ならエラーにならないこと。戻り値はundefinedであること。' + validArgs[i]);
-			item.removeEventListener(validArgs[i][0], validArgs[i][1]);
-		}
-		expect(l);
-	});
-
-
-	test('addEventListener 異常系', 5, function() {
-		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
-		try {
-			item.addEventListener();
-			ok(false, 'エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
-		}
-		try {
-			item.addEventListener('cnahge');
-			ok(false, 'エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, 'addEventListenerの引数にイベント名だけ渡した時、エラーになること');
-		}
-		try {
-			item.addEventListener(function() {});
-			ok(false, 'エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
-		}
-		try {
-			item.addEventListener(document.createEventObject ? document
-					.createEventObject('itemsChange') : !!document.createEvent ? document
-					.createEvent('HTMLEvents') : new Event('itemsChange'));
-			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			item.addEventListener('itemsChange', {});
-			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-	});
-
-	test('hasEventListener', 5, function() {
-		var ret = item.hasEventListener('change', changeListener);
-		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
-
-		item.addEventListener('change', changeListener);
-		ret = item.hasEventListener('change', changeListener);
-		strictEqual(ret, true,
-				'addEventListenerした後、addしたイベントとハンドラのインスタンスをhasEventListenerに渡した時、結果はtrueであること');
-
-		ret = item.hasEventListener('change', function() {});
-		strictEqual(ret, false,
-				'addEventListenerに渡したインスタンスと異なるインスタンスをhasEventListenerに渡した場合、結果はfalseであること');
-
-		ret = item.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, false,
-				'addEventListenerに渡したイベント名と異なるイベント名をhasEventListenerに渡した場合、結果はfalseであること');
-
-		item.removeEventListener('change', changeListener);
-		ret = item.hasEventListener('change', changeListener);
-		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
-	});
-
-	test(
-			'removeEventListener',
-			function() {
-				var ret = item.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されていない時、removeEventListenerの戻り値はundefinedであること');
-
-				item.addEventListener('change', changeListener);
-
-				item.removeEventListener('itemsChange', changeListener);
-				ret = item.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したイベント名と異なるイベント名をremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				item.removeEventListener('change', function() {
-				//
-				});
-				ret = item.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したハンドラと異なるハンドラをremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				ret = item.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されてる時、removeEventListenerの戻り値はundefinedであること');
-
-				ret = item.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						false,
-						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
-			});
-
-	test('addEventListenerで"change"イベントに登録したハンドラだけが実行され、removeEventListenerされたハンドラは実行されなくなること。',
-			function() {
-				// イベントをaddする
-				var managerEventListener = function() {
-					order.push('managerEventListener');
-				};
-				var modelEventListener = function() {
-					order.push('modelEventListener');
-				};
-				item.addEventListener('change', managerEventListener);
-
-				item.set('val', sequence.next());
-
-				deepEqual(order, ['managerEventListener'],
-						'addEventListenerの"change"にハンドリングした関数が実行されていること');
-
-				order = [];
-				item.addEventListener('change', managerEventListener);
-				item.set('val', sequence.next());
-
-				deepEqual(order, ['managerEventListener'],
-						'addEventListenerの"change"に同じ関数を2度ハンドリングしても一度だけ実行されること');
-
-				order = [];
-				item.addEventListener('change', modelEventListener);
-				item.set('val', sequence.next());
-
-				deepEqual(order, ['managerEventListener', 'modelEventListener'],
-						'addEventListenerの"change"にさらに別の関数をハンドリングすると、addした順番で実行されること');
-
-				order = [];
-				item.removeEventListener('change', managerEventListener);
-				item.set('val', sequence.next());
-
-				deepEqual(order, ['modelEventListener'],
-						'removeEventListenerすると、removeしたハンドラは実行されないこと');
-
-				order = [];
-				item.removeEventListener('change', modelEventListener);
-				item.set('val', sequence.next());
-
-				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
-
-				order = [];
-				function itemsChange() {
-					order.push('itemsChange');
-				}
-				function CHANGE() {
-					order.push('CHANGE');
-				}
-				item.addEventListener('itemsChange', itemsChange);
-				item.addEventListener('CHANGE', CHANGE);
-				item.set('val', sequence.next());
-
-				deepEqual(order, [], 'addEventListenerの"change"以外を指定してハンドリングした関数は、実行されないこと');
-
-				// addしたイベントを削除
-				item.removeEventListener('itemsChange', managerEventListener);
-				item.removeEventListener('itemsChange', itemsChange);
-				item.removeEventListener('itemsChange', CHANGE);
-			});
-
-	//=============================
-	// Definition
-	//=============================
-
-	module('DataModel EventListenerの登録・削除', {
-		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
-			manager = h5.core.data.createManager('TestManager');
-			createDataModel1();
-			changeListener = function() {
-			//
-			};
-		},
-		teardown: function() {
-			order = [];
-			evObj = {};
-			sequence = null;
-			dataModel1 = null;
-			dropAllModel(manager);
-			changeListener = null;
-		}
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('addEventListener 正常系', function() {
-		// (文字列,関数)ならエラーにならない
-		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				[' ', changeListener], ['', changeListener]];
-		var l = validArgs.length
-		for ( var i = 0; i < l; i++) {
-			var ret = dataModel1.addEventListener(validArgs[i][0], validArgs[i][1]);
-			strictEqual(ret, undefined,
-					'addEventListenerの戻り値はundefinedであること。引数が2つ指定されていればエラーにはならないこと');
-			dataModel1.removeEventListener(validArgs[i][0], validArgs[i][1]);
-		}
-		expect(l);
-	});
-
-
-	test('addEventListener 異常系', 5, function() {
-		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
-		try {
-			dataModel1.addEventListener();
-			ok(false, '引数なしでエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			dataModel1.addEventListener('cnahge');
-			ok(false, 'イベント名だけを引数に渡して呼び出した場合に、エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			dataModel1.addEventListener(function() {});
-			ok(false, '関数だけを引数に渡して呼び出した場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			dataModel1.addEventListener(document.createEventObject ? document
-					.createEventObject('itemsChange') : !!document.createEvent ? document
-					.createEvent('HTMLEvents') : new Event('itemsChange'));
-			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			dataModel1.addEventListener('itemsChange', {});
-			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-	});
-
-	test('hasEventListener', 5, function() {
-		var ret = dataModel1.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
-
-		dataModel1.addEventListener('itemsChange', changeListener);
-		ret = dataModel1.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, true,
-				'addEventListenerした後、addしたイベントとハンドラのインスタンスをhasEventListenerに渡した時、結果はtrueであること');
-
-		ret = dataModel1.hasEventListener('itemsChange', function() {});
-		strictEqual(ret, false,
-				'addEventListenerに渡したインスタンスと異なるインスタンスをhasEventListenerに渡した場合、結果はfalseであること');
-
-		ret = dataModel1.hasEventListener('change', changeListener);
-		strictEqual(ret, false,
-				'addEventListenerに渡したイベント名と異なるイベント名をhasEventListenerに渡した場合、結果はfalseであること');
-
-		dataModel1.removeEventListener('change', changeListener);
-		ret = dataModel1.hasEventListener('change', changeListener);
-		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
-	});
-
-	test(
-			'removeEventListener ',
-			function() {
-
-				var ret = dataModel1.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されていない時、removeEventListenerの戻り値はundefinedであること');
-
-				dataModel1.addEventListener('change', changeListener);
-
-				dataModel1.removeEventListener('itemsChange', changeListener);
-				ret = dataModel1.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したイベント名と異なるイベント名をremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				dataModel1.removeEventListener('change', function() {
-				//
-				});
-				ret = dataModel1.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したハンドラと異なるハンドラをremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				ret = dataModel1.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されてる時、removeEventListenerの戻り値はundefinedであること');
-
-				ret = dataModel1.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						false,
-						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
-			});
-
-	test('addEventListenerで"itemsChange"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。', 6,
-			function() {
-				var managerEventListener = function() {
-					order.push('itemsChange');
-				};
-				var modelEventListener = function() {
-					order.push('itemsChange2');
-				};
-				dataModel1.addEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-
-				deepEqual(order, ['itemsChange'],
-						'addEventListenerの"itemsChange"にハンドリングした関数が実行されていること');
-
-				order = [];
-				dataModel1.addEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange'],
-						'addEventListenerの"itemsChange"に同じ関数を2度ハンドリングしても一度だけ実行されること');
-
-				order = [];
-				dataModel1.addEventListener('itemsChange', modelEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange', 'itemsChange2'],
-						'addEventListenerの"itemsChange"にさらに別の関数をハンドリングすると、addした順番で実行されること');
-
-				order = [];
-				dataModel1.removeEventListener('itemsChange', modelEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange'], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
-
-				order = [];
-				dataModel1.removeEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
-
-				order = [];
-				dataModel1.addEventListener('change', managerEventListener);
-				dataModel1.val = sequence.next();
-
-				deepEqual(order, [], 'addEventListenerの"itemsChange"以外を指定してハンドリングした関数は、実行されないこと');
-
-				// addしたイベントを削除
-				dataModel1.removeEventListener('change', managerEventListener);
-				dataModel1.removeEventListener('change', modelEventListener);
-			});
-
-	//=============================
-	// Definition
-	//=============================
-
-	module('DataManager EventListenerの登録・削除', {
-		setup: function() {
-			sequence = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_STRING);
-			manager = h5.core.data.createManager('TestManager');
-			createDataModel1();
-			changeListener = function() {};
-		},
-		teardown: function() {
-			order = [];
-			evObj = {};
-			sequence = null;
-			dataModel1 = null;
-			changeListener = null;
-			dropAllModel(manager);
-		}
-	});
-
-
-	//=============================
-	// Body
-	//=============================
-	test('addEventListener 正常系', function() {
-		// (文字列,関数)ならエラーにならない
-		var validArgs = [['change', changeListener], ['itemsChange', changeListener],
-				[' ', changeListener], ['', changeListener]];
-		var l = validArgs.length
-		for ( var i = 0; i < l; i++) {
-			var ret = manager.addEventListener(validArgs[i][0], validArgs[i][1]);
-			strictEqual(ret, undefined,
-					'addEventListenerの戻り値はundefinedであること。引数が2つ指定されていればエラーにはならないこと');
-			manager.removeEventListener(validArgs[i][0], validArgs[i][1]);
-		}
-		expect(l);
-	});
-
-
-	test('addEventListener 異常系', function() {
-		var errCode = ERR.ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER;
-		try {
-			manager.addEventListener('itemsCnahge');
-			ok(false, 'エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, 'addEventListenerの引数にイベント名だけ渡した時、エラーになること');
-		}
-		try {
-			manager.addEventListener(function() {});
-			ok(false, 'エラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, 'addEventListenerの引数にハンドラだけ渡した時、エラーになること');
-		}
-		try {
-			manager.addEventListener(document.createEventObject ? document
-					.createEventObject('itemsChange') : !!document.createEvent ? document
-					.createEvent('HTMLEvents') : new Event('itemsChange'));
-			ok(false, 'イベント名が文字列でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-		try {
-			manager.addEventListener('itemsChange', {});
-			ok(false, 'イベントリスナが関数でない場合にエラーが発生していません');
-		} catch (e) {
-			strictEqual(e.code, errCode, e.message);
-		}
-	});
-
-	test('hasEventListener', 5, function() {
-		var ret = manager.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, false, 'addEventListenerする前のhasEventListenerの結果はfalseであること');
-
-		manager.addEventListener('itemsChange', changeListener);
-		ret = manager.hasEventListener('itemsChange', changeListener);
-		strictEqual(ret, true,
-				'addEventListenerした後、addしたイベントとハンドラのインスタンスをhasEventListenerに渡した時、結果はtrueであること');
-
-		ret = manager.hasEventListener('itemsChange', function() {});
-		strictEqual(ret, false,
-				'addEventListenerに渡したインスタンスと異なるインスタンスをhasEventListenerに渡した場合、結果はfalseであること');
-
-		ret = manager.hasEventListener('change', changeListener);
-		strictEqual(ret, false,
-				'addEventListenerに渡したイベント名と異なるイベント名をhasEventListenerに渡した場合、結果はfalseであること');
-
-		manager.removeEventListener('change', changeListener);
-		ret = manager.hasEventListener('change', changeListener);
-		strictEqual(ret, false, 'removeEventListenerすると、hasEventListenerの結果はfalseであること');
-	});
-
-	test(
-			'removeEventListener',
-			function() {
-
-				var ret = manager.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されていない時、removeEventListenerの戻り値はundefinedであること');
-
-				manager.addEventListener('change', changeListener);
-
-				manager.removeEventListener('itemsChange', changeListener);
-				ret = manager.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したイベント名と異なるイベント名をremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				manager.removeEventListener('change', function() {
-				//
-				});
-				ret = manager.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						true,
-						'addEventListenerに渡したハンドラと異なるハンドラをremoveEventListenerに渡して呼び出した場合、addしたイベントについてのhasEventListenerの結果はtrueであること');
-
-				ret = manager.removeEventListener('change', changeListener);
-				strictEqual(ret, undefined,
-						'指定したイベントに指定した関数インスタンスが登録されてる時、removeEventListenerの戻り値はundefinedであること');
-
-				ret = manager.hasEventListener('change', changeListener);
-				strictEqual(
-						ret,
-						false,
-						'removeEventListenerにaddEventListenerしたイベント名とハンドラを渡すと、そのイベントとハンドラについてのhasEventListenerの結果はfalseになること');
-			});
-
-	test('addEventListenerで"itemsChange"イベントに登録したハンドラが実行され、removeEventListenerすると実行されなくなること。', 6,
-			function() {
-				var managerEventListener = function() {
-					order.push('itemsChange');
-				};
-				var modelEventListener = function() {
-					order.push('itemsChange2');
-				};
-				manager.addEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-
-				deepEqual(order, ['itemsChange'],
-						'addEventListenerの"itemsChange"にハンドリングした関数が実行されていること');
-
-				order = [];
-				manager.addEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange'],
-						'addEventListenerの"itemsChange"に同じ関数を2度ハンドリングしても一度だけ実行されること');
-
-				order = [];
-				manager.addEventListener('itemsChange', modelEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange', 'itemsChange2'],
-						'addEventListenerの"itemsChange"にさらに別の関数をハンドリングすると、addした順番で実行されること');
-
-				order = [];
-				manager.removeEventListener('itemsChange', modelEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, ['itemsChange'], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
-
-				order = [];
-				manager.removeEventListener('itemsChange', managerEventListener);
-				dataModel1.create({
-					id: sequence.next()
-				});
-				deepEqual(order, [], 'removeEventListenerすると、removeしたハンドラは実行されないこと');
-
-				order = [];
-				manager.addEventListener('change', managerEventListener);
-				dataModel1.val = sequence.next();
-
-				deepEqual(order, [], 'addEventListenerの"itemsChange"以外を指定してハンドリングした関数は、実行されないこと');
-
-				// addしたイベントを削除
-				manager.removeEventListener('change', managerEventListener);
-				manager.removeEventListener('change', modelEventListener);
-			});
-
-	//=============================
-	// Definition
-	//=============================
 
 	// イベントハンドラ
 	var managerEventListener = modelEventListener = itemEventListener = null;
@@ -9636,8 +9055,8 @@ $(function() {
 				});
 				var o = item.get('ary');
 				o.addEventListener('changeBefore', function(ev) {
-					if(ev.method==='push')
-					ev.preventDefault();
+					if (ev.method === 'push')
+						ev.preventDefault();
 				});
 				o.push('a');
 				strictEqual(itemEv, null, 'DataItemのchangeイベントは起きていないこと');
@@ -10890,7 +10309,7 @@ $(function() {
 
 				strictEqual(evObj.manager.type, 'itemsChange', 'typeが"itemsChange"であること');
 				var evAry = ['created', 'changed', 'removed', 'recreated'];
-				for ( var i = 0, l = evAry.length; i < l; i++) {
+				for (var i = 0, l = evAry.length; i < l; i++) {
 					var prop = evAry[i];
 					strictEqual(
 							evObj.manager.models.AModel[prop],

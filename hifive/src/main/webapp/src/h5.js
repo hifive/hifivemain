@@ -295,7 +295,22 @@
 			retryCount: 0,
 			retryInterval: 500,
 			retryFilter: defaultAjaxRetryFilter
-		}
+		},
+
+		/**
+		 * コントローラがh5trackstartイベントにバインドするときに、バインド対象のターゲットに設定するCSSプロパティ"touch-action"の値
+		 * <p>
+		 * デフォルトは"none"で、h5trackstartイベントがバインドされた要素はタッチ操作でスクロールされないようになります。
+		 * </p>
+		 * <p>
+		 * nullを設定した場合はtouch-actionへの値の設定は行いません。
+		 * </p>
+		 *
+		 * @since 1.1.10
+		 * @memberOf h5.settings
+		 * @type String
+		 */
+		trackstartTouchAction: 'none'
 	};
 
 	// h5preinitでglobalAspectsの設定をしている関係上、別ファイルではなく、ここに置いている。

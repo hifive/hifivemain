@@ -471,7 +471,7 @@ $(function() {
 		strictEqual(o.length, originLength, 'メソッド呼び出し後のObservableArrayのlengthは変化していないこと');
 
 		// 引数にObservableArrayを取る場合
-		inAry = ['a', 'b', 'c'];
+		var inAry = ['a', 'b', 'c'];
 		var inObsAry = h5.core.data.createObservableArray();
 		inObsAry.copyFrom(inAry);
 

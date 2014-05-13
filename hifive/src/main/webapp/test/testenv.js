@@ -33,7 +33,7 @@
 		var paramsArray = paramsStr.substring(1).split('&');
 
 		var l = paramsArray.length;
-		for ( var i = 0; i < l; i++) {
+		for (var i = 0; i < l; i++) {
 			var keyVal = paramsArray[i].split('=');
 			var namespace = keyVal[0];
 			// h5env.で始まるものについてだけ
@@ -44,7 +44,7 @@
 
 			var names = namespace.substring(PARAM_PREFIX.length).split('.');
 			var ret = envByParam;
-			for ( var j = 0, len = names.length; j < len - 1; j++) {
+			for (var j = 0, len = names.length; j < len - 1; j++) {
 				if (ret[names[j]] == null) { // nullまたはundefjnedだったら辿らない
 					ret[names[j]] = {};
 				}
@@ -57,13 +57,13 @@
 	// リクエストパラメータからH5_TEST_ENVを生成する
 	// H5_TEST_ENVが既に定義されていれば、リクエストパラメータ優先でマージする
 	if (window.H5_TEST_ENV) {
-		for ( var i = 0, l = MARGE_PROP_NAMES.length; i < l; i++) {
+		for (var i = 0, l = MARGE_PROP_NAMES.length; i < l; i++) {
 			var prop = MARGE_PROP_NAMES[i];
 			if (envByParam[prop]) {
 				H5_TEST_ENV[prop] = $.extend(H5_TEST_ENV[prop], envByParam[prop]);
 			}
 		}
-	} else{
+	} else {
 		window.H5_TEST_ENV = envByParam;
 	}
 
