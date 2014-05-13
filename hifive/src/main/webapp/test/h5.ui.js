@@ -22,6 +22,9 @@ $(function() {
 	//
 	// =========================================================================
 
+	var TYPE_OF_UNDEFINED = 'undefined';
+	var NODE_TYPE_DOCUMENT = 9;
+
 	// =========================================================================
 	//
 	// Privates
@@ -113,6 +116,41 @@ $(function() {
 			return false;
 		};
 	})();
+
+	/**
+	 * ノードからドキュメントを取得。
+	 *
+	 * @param {DOM} node
+	 * @returns {Document} documentオブジェクト
+	 */
+	function getDocumentOf(node) {
+		if (typeof node.nodeType === TYPE_OF_UNDEFINED) {
+			// ノードではない
+			if (node.document && node.document.nodeType === NODE_TYPE_DOCUMENT
+					&& getWindowOfDocument(node.document) === node) {
+				// nodeがdocumentを持ち、documentから得られるwindowオブジェクトがnode自身ならnodeをwindowオブジェクトと判定する
+				return node.document;
+			}
+			return null;
+		}
+		if (node.nodeType === NODE_TYPE_DOCUMENT) {
+			// nodeがdocumentの場合
+			return node;
+		}
+		// nodeがdocument以外(documentツリー属するノード)の場合はそのownerDocumentを返す
+		return node.ownerDocument;
+	}
+
+	/**
+	 * documentオブジェクトからwindowオブジェクトを取得
+	 *
+	 * @param {Document} doc
+	 * @returns {Window} windowオブジェクト
+	 */
+	function getWindowOfDocument(doc) {
+		// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
+		return doc.defaultView || doc.parentWindow;
+	}
 
 	/**
 	 * getComputedStyleで引数に渡されたエレメントのスタイルを取得する
