@@ -573,6 +573,7 @@
 		vmlStyle.setAttribute('type', 'text/css');
 		vmlStyle.styleSheet.cssText = styleDef;
 	}
+
 	/**
 	 * getComputedStyleがあるブラウザについて、getComputedStyleを呼び出した結果を返します。
 	 * <p>
@@ -580,13 +581,11 @@
 	 * </p>
 	 *
 	 * @private
-	 * @param {DOM} elm
-	 * @returns {Style} elmのcomputedStyle
+	 * @param {DOM} elem
+	 * @returns {Style} elemのcomputedStyle
 	 */
-	function getComputedStyleObject(elm) {
-		var doc = getDocumentOf(elm);
-		var win = getWindowOfDocument(doc);
-		return win.getComputedStyle(elm, null);
+	function getComputedStyleObject(elem) {
+		return getWindowOf(elem).getComputedStyle(elem, null);
 	}
 
 	/**
@@ -599,15 +598,15 @@
 	 * </p>
 	 *
 	 * @private
-	 * @param elm {DOM}
+	 * @param elem {DOM}
 	 * @param prop {String} CSSプロパティ
 	 * @returns 第1引数について、computedStyleを取得し、第2引数に指定されたプロパティの値を返す
 	 */
-	function getComputedStyleValue(elm, prop) {
-		if (!window.getComputedStyle) {
-			return $(elm).css(prop);
+	function getComputedStyleValue(elem, prop) {
+		if (!getWindowOf(elem).getComputedStyle) {
+			return $(elem).css(prop);
 		}
-		return getComputedStyleObject(elm)[prop];
+		return getComputedStyleObject(elem)[prop];
 	}
 
 	/**
@@ -620,16 +619,16 @@
 	 * </p>
 	 *
 	 * @private
-	 * @param {DOM} elm
+	 * @param {DOM} elem
 	 * @returns {Number} 引数で渡された要素のheight
 	 */
-	function getHeight(elm) {
-		if (!window.getComputedStyle) {
-			return $(elm).height();
+	function getHeight(elem) {
+		if (!getWindowOf(elem).getComputedStyle) {
+			return $(elem).height();
 		}
-		var elmStyle = getComputedStyleObject(elm);
-		return elm.offsetHeight - parseFloat(elmStyle.paddingTop)
-				- parseFloat(elmStyle.paddingBottom);
+		var elemStyle = getComputedStyleObject(elem);
+		return elem.offsetHeight - parseFloat(elemStyle.paddingTop)
+				- parseFloat(elemStyle.paddingBottom);
 	}
 
 	/**
@@ -642,16 +641,16 @@
 	 * </p>
 	 *
 	 * @private
-	 * @param {DOM} elm
+	 * @param {DOM} elem
 	 * @returns {Number} 引数で渡された要素のwidth
 	 */
-	function getWidth(elm) {
-		if (!window.getComputedStyle) {
-			return $(elm).width();
+	function getWidth(elem) {
+		if (!getWindowOf(elem).getComputedStyle) {
+			return $(elem).width();
 		}
-		var elmStyle = getComputedStyleObject(elm);
-		return elm.offsetWidth - parseFloat(elmStyle.paddingLeft)
-				- parseFloat(elmStyle.paddingRight);
+		var elemStyle = getComputedStyleObject(elem);
+		return elem.offsetWidth - parseFloat(elemStyle.paddingLeft)
+				- parseFloat(elemStyle.paddingRight);
 	}
 
 	/**
@@ -664,22 +663,22 @@
 	 * </p>
 	 *
 	 * @private
-	 * @param {DOM} elm
+	 * @param {DOM} elem
 	 * @param {Boolean} [includeMargin=true] maginを含めるかどうか
 	 * @returns {Number} 引数で渡された要素のouterHeight
 	 */
-	function getOuterHeight(elm, includeMargin) {
-		if (!window.getComputedStyle) {
-			return $(elm).outerHeight();
+	function getOuterHeight(elem, includeMargin) {
+		if (!getWindowOf(elem).getComputedStyle) {
+			return $(elem).outerHeight();
 		}
 
-		var elmStyle = getComputedStyleObject(elm);
-		return getHeight(elm)
-				+ parseFloat(elmStyle.paddingTop)
-				+ parseFloat(elmStyle.paddingBottom)
-				+ parseFloat(elmStyle.borderTopWidth)
-				+ parseFloat(elmStyle.borderBottomWidth)
-				+ (includeMargin ? (parseFloat(elmStyle.marginTop) + parseFloat(elmStyle.marginBottom))
+		var elemStyle = getComputedStyleObject(elem);
+		return getHeight(elem)
+				+ parseFloat(elemStyle.paddingTop)
+				+ parseFloat(elemStyle.paddingBottom)
+				+ parseFloat(elemStyle.borderTopWidth)
+				+ parseFloat(elemStyle.borderBottomWidth)
+				+ (includeMargin ? (parseFloat(elemStyle.marginTop) + parseFloat(elemStyle.marginBottom))
 						: 0);
 	}
 
@@ -692,21 +691,21 @@
 	 * getComputedStyleがないブラウザについては、outerWidth()で取得した値を返す。
 	 * </p>
 	 *
-	 * @param {DOM} elm
+	 * @param {DOM} elem
 	 * @param {Boolean} [includeMargin=true] maginを含めるかどうか
 	 * @returns {Number} 引数で渡された要素のouterWidth
 	 */
-	function getOuterWidth(elm, includeMargin) {
-		if (!window.getComputedStyle) {
-			return $(elm).outerWidth();
+	function getOuterWidth(elem, includeMargin) {
+		if (!getWindowOf(elem).getComputedStyle) {
+			return $(elem).outerWidth();
 		}
-		var elmStyle = getComputedStyleObject(elm);
-		return getWidth(elm)
-				+ parseFloat(elmStyle.paddingLeft)
-				+ parseFloat(elmStyle.paddingRight)
-				+ parseFloat(elmStyle.borderLeftWidth)
-				+ parseFloat(elmStyle.borderRightWidth)
-				+ (includeMargin ? (parseFloat(elmStyle.marginLeft) + parseFloat(elmStyle.marginRight))
+		var elemStyle = getComputedStyleObject(elem);
+		return getWidth(elem)
+				+ parseFloat(elemStyle.paddingLeft)
+				+ parseFloat(elemStyle.paddingRight)
+				+ parseFloat(elemStyle.borderLeftWidth)
+				+ parseFloat(elemStyle.borderRightWidth)
+				+ (includeMargin ? (parseFloat(elemStyle.marginLeft) + parseFloat(elemStyle.marginRight))
 						: 0);
 	}
 
@@ -719,16 +718,16 @@
 	 * getComputedStyleがないブラウザについては、innerHeight()で取得した値を返す。
 	 * </p>
 	 *
-	 * @param {DOM} elm
+	 * @param {DOM} elem
 	 * @returns {Number} 引数で渡された要素のinnerHeight
 	 */
-	function getInnerHeight(elm) {
-		if (!window.getComputedStyle) {
-			return $(elm).innerHeight();
+	function getInnerHeight(elem) {
+		if (!getWindowOf(elem).getComputedStyle) {
+			return $(elem).innerHeight();
 		}
-		var elmStyle = getComputedStyleObject(elm);
-		return getHeight(elm) + parseFloat(elmStyle.paddingTop)
-				+ parseFloat(elmStyle.paddingBottom);
+		var elemStyle = getComputedStyleObject(elem);
+		return getHeight(elem) + parseFloat(elemStyle.paddingTop)
+				+ parseFloat(elemStyle.paddingBottom);
 	}
 
 	/**
@@ -740,38 +739,39 @@
 	 * getComputedStyleがないブラウザについては、innerWidth()で取得した値を返す。
 	 * </p>
 	 *
-	 * @param {DOM} elm
+	 * @param {DOM} elem
 	 * @returns {Number} 引数で渡された要素のinnerWidth
 	 */
-	function getInnerWidth(elm) {
-		if (!window.getComputedStyle) {
-			return $(elm).innerWidth();
+	function getInnerWidth(elem) {
+		if (!getWindowOf(elem).getComputedStyle) {
+			return $(elem).innerWidth();
 		}
-		var elmStyle = getComputedStyleObject(elm);
-		return getWidth(elm) + parseFloat(elmStyle.paddingLeft) + parseFloat(elmStyle.paddingRight);
+		var elemStyle = getComputedStyleObject(elem);
+		return getWidth(elem) + parseFloat(elemStyle.paddingLeft)
+				+ parseFloat(elemStyle.paddingRight);
 	}
 
 	/**
 	 * fadeIn, fadeOut用のアニメーション関数
 	 *
-	 * @param {Array} props $elmのアニメーション終了時のスタイルの配列。propsの配列のインデックスは$elmのインデックスに対応する。
-	 * @param {jQuery} $elm アニメーションさせる要素
+	 * @param {Array} props $elemのアニメーション終了時のスタイルの配列。propsの配列のインデックスは$elemのインデックスに対応する。
+	 * @param {jQuery} $elem アニメーションさせる要素
 	 * @param {Number} time アニメーションに掛ける時間
 	 * @param {Function} callback アニメーション終了時に実行するコールバック関数
 	 */
-	function animate(props, $elm, time, callback) {
+	function animate(props, $elem, time, callback) {
 		var interval = ANIMATION_INTERVAL;
 		var count = 0;
 		// 現在の値(アニメーションするごとに変化)
 		var curProps = [];
 		// 1インターバルごとに変化する量
 		var v = [];
-		// 現在のスタイルを$elmの最初の要素から取得し、それを基準にアニメーションする
-		$elm.each(function(i) {
+		// 現在のスタイルを$elemの最初の要素から取得し、それを基準にアニメーションする
+		$elem.each(function(i) {
 			var prop = props[i];
 			v[i] = {};
 			curProps[i] = {};
-			var curStyle = getComputedStyleObject($elm[i]);
+			var curStyle = getComputedStyleObject($elem[i]);
 			for ( var p in prop) {
 				curProps[i][p] = parseFloat(curStyle[p]);
 				v[i][p] = (parseFloat(prop[p]) - parseFloat(curStyle[p])) * interval / time;
@@ -783,7 +783,7 @@
 				// アニメーション終了
 				clearInterval(timerId);
 				// スタイルを削除して、デフォルト(cssなどで指定されている値)に戻す
-				$elm.each(function(i) {
+				$elem.each(function(i) {
 					for ( var p in props[i]) {
 						this.style[p] = '';
 					}
@@ -791,7 +791,7 @@
 				callback();
 				return;
 			}
-			$elm.each(function(i) {
+			$elem.each(function(i) {
 				var curProp = curProps[i];
 				for ( var p in curProp) {
 					curProp[p] += v[i][p];
@@ -806,42 +806,42 @@
 	/**
 	 * opacityを0から、現在の要素のopacityの値までアニメーションします
 	 *
-	 * @param {jQuery} $elm fadeInさせる要素
+	 * @param {jQuery} $elem fadeInさせる要素
 	 * @param {Number} time アニメーションに掛ける時間(ms)
 	 * @param {Function} callback アニメーションが終了した時に呼び出すコールバック関数
 	 */
-	function fadeIn($elm, time, callback) {
+	function fadeIn($elem, time, callback) {
 		// 現在のopacityを取得
 		var opacities = [];
-		$elm.each(function() {
+		$elem.each(function() {
 			var opacity = parseFloat(getComputedStyleValue(this, 'opacity'));
 			opacities.push({
 				opacity: opacity
 			});
 		});
 		// opacityを0にして、display:blockにする
-		$elm.css({
+		$elem.css({
 			opacity: 0,
 			display: 'block'
 		});
-		animate(opacities, $elm, time, callback);
+		animate(opacities, $elem, time, callback);
 	}
 
 	/**
 	 * opacityを現在の値から、0までアニメーションします
 	 *
-	 * @param {jQuery} $elm fadeOutさせる要素
+	 * @param {jQuery} $elem fadeOutさせる要素
 	 * @param {Number} time アニメーションに掛ける時間(ms)
 	 * @param {Function} callback アニメーションが終了した時に呼び出すコールバック関数
 	 */
-	function fadeOut($elm, time, callback) {
+	function fadeOut($elem, time, callback) {
 		var opacities = [];
-		$elm.each(function() {
+		$elem.each(function() {
 			opacities.push({
 				opacity: 0
 			});
 		});
-		animate(opacities, $elm, time, callback);
+		animate(opacities, $elem, time, callback);
 	}
 
 	// =========================================================================

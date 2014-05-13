@@ -359,6 +359,17 @@ function getWindowOfDocument(doc) {
 	return doc.defaultView || doc.parentWindow;
 }
 
+/**
+ * ノードからwindowオブジェクトを取得
+ *
+ * @private
+ * @param {DOM} node
+ * @returns {Window} windowオブジェクト
+ */
+function getWindowOf(node) {
+	return getWindowOfDocument(getDocumentOf(node));
+}
+
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る
 var h5internal = {
 	core: {
