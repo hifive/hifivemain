@@ -1441,7 +1441,7 @@
 					}
 					totalWidth += getOuterWidth(this, true);
 				});
-				_$content.width(totalWidth + blockElementPadding);
+				_$content.css('width', totalWidth + blockElementPadding);
 				_$content.css('left', _$target.scrollLeft()
 						+ (getInnerWidth(_$target[0]) - getOuterWidth(_$content[0])) / 2);
 			}
