@@ -34,16 +34,30 @@ var errorCodeToMessageMap = {};
 
 /**
  * { (エラーコード)： (フォーマッタ関数) } マップ
+ *
+ * @private
  */
 var errorCodeToCustomFormatterMap = {};
 
-/** undefinedかどうかの判定で、typeofで判定する */
+/**
+ * undefinedかどうかの判定で、typeofで判定する
+ *
+ * @private
+ */
 var TYPE_OF_UNDEFINED = 'undefined';
 
-/** Node.ELEMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
+/**
+ * Node.ELEMENT_NODE。IE8-ではNodeがないので自前で定数を作っている
+ *
+ * @private
+ */
 var NODE_TYPE_ELEMENT = 1;
 
-/** Node.DOCUMENT_NODE。IE8-ではNodeがないので自前で定数を作っている */
+/**
+ * Node.DOCUMENT_NODE。IE8-ではNodeがないので自前で定数を作っている
+ *
+ * @private
+ */
 var NODE_TYPE_DOCUMENT = 9;
 
 //=============================
@@ -292,6 +306,7 @@ function registerCallbacksSilently(promise, method, args) {
  * <p>
  * deferred.pipe()がjQuery1.8から非推奨となったため1.8以上の場合then()を、1.7以下の場合はpipe()を実行します。
  *
+ * @private
  * @param {Promise} promise Promiseオブジェクト
  * @param {Function} doneFilter doneコールバック
  * @param {Function} failFilter failコールバック
@@ -310,6 +325,7 @@ function thenCompat(promise, doneFilter, failFilter, progressFilter) {
  * 引数がdocumentノードなら引数をそのまま、ノードならownerDocument、windowオブジェクトならそのdocumentを返します。nodeがいずれにも該当しない場合はnullを返します。
  * </p>
  *
+ * @private
  * @param {DOM} node
  * @returns {Document} documentオブジェクト
  */
@@ -334,6 +350,7 @@ function getDocumentOf(node) {
 /**
  * documentオブジェクトからwindowオブジェクトを取得
  *
+ * @private
  * @param {Document} doc
  * @returns {Window} windowオブジェクト
  */

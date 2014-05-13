@@ -424,7 +424,7 @@
 		 * Mixinクラスについては<a href="Mixin.html">こちら</a>をご覧ください。
 		 * </p>
 		 * <p>
-		 * EventDispatcherクラスについては<a href="EventDispatcher">こちら</a>をご覧ください。
+		 * EventDispatcherクラスについては<a href="EventDispatcher.html">こちら</a>をご覧ください。
 		 * </p>
 		 *
 		 * @since 1.1.10

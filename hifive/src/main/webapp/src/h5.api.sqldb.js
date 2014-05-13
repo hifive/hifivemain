@@ -274,7 +274,8 @@
 	/**
 	 * Statementクラス
 	 * <p>
-	 * このクラスを継承しているクラスはTransactionalExecutor.add()で追加できる。
+	 * このクラスを継承しているクラスは<a href="TransactionalExecutor.html#add">TransactionalExecutor.add()</a>で追加できます。
+	 * </p>
 	 *
 	 * @class
 	 * @name Statement
@@ -282,6 +283,8 @@
 	function Statement() {
 		/**
 		 * 1インスタンスで複数のステートメントを実行するか判定するフラグ このフラグがtrueの場合、execute()の実行結果を配列で返します
+		 *
+		 * @private
 		 */
 		this._multiple = false;
 	}
@@ -289,6 +292,9 @@
 	$.extend(Statement.prototype, {
 		/**
 		 * SQL文を実行します
+		 *
+		 * @memberOf Statement
+		 * @return {TransactionalExecutor} TransactionalExecutorオブジェクト
 		 */
 		execute: function() {
 			return this._executor.add(this)._execute(function(results) {

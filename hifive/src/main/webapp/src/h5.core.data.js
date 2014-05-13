@@ -3591,6 +3591,7 @@
 	 * </p>
 	 *
 	 * @since 1.1.0
+	 * @class
 	 * @mixes EventDispatcher
 	 * @name ObservableItem
 	 */
