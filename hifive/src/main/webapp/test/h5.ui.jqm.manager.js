@@ -29,6 +29,9 @@ $(function() {
 	//
 	// =========================================================================
 
+	// testutils.async.gateのキャッシュ
+	var gate = testutils.async.gate;
+
 	// jQueryMobileを実際に読み込むことはせず、jQueryMobileをシミュレートする
 	/**
 	 * JQMSimulatorクラス
@@ -123,7 +126,7 @@ $(function() {
 			if (transition) {
 				setTimeout(function() {
 					func();
-				});
+				}, 0);
 			} else {
 				func();
 			}
@@ -304,18 +307,16 @@ $(function() {
 				ok(true, '__readyが実行される');
 
 				var count = 20;
-				function checkCSS() {
-					if (--count === 0 || $('#test1 h1').css('font-size') === '111px') {
-						deepEqual($('#test1 h1').css('font-size'), '111px',
-								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
-						jqmSimulator.changePage('#test2', true);
-					} else {
-						setTimeout(function() {
-							checkCSS();
-						}, 1000);
-					}
-				}
-				checkCSS();
+
+				gate({
+					gateFunction: function() {
+						return $('#test1 h1').css('font-size') === '111px';
+					},
+					failMsg: 'CSSファイルがダウンロードされませんでした'
+				}).done(function() {
+					strictEqual($('#test1 h1').css('font-size'), '111px', 'CSSが適応されている。');
+					jqmSimulator.changePage('#test2', true);
+				});
 			},
 			'button#test click': function() {
 				ok(true, 'button#test click が実行される');
@@ -335,19 +336,16 @@ $(function() {
 				ok(true, '__readyが実行される');
 
 				var count = 20;
-				function checkCSS() {
-					if (--count === 0 || $('#test2 h1').css('margin-left') === '33px') {
-						deepEqual($('#test2 h1').css('margin-left'), '33px',
-								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
-						ok($('#test2 h1').css('font-size') !== '111px', '遷移元ページのCSSは適用されていない。');
-						start();
-					} else {
-						setTimeout(function() {
-							checkCSS();
-						}, 1000);
-					}
-				}
-				checkCSS();
+				gate({
+					gateFunction: function() {
+						return $('#test2 h1').css('margin-left') === '33px';
+					},
+					failMsg: 'CSSファイルがダウンロードされませんでした'
+				}).done(function() {
+					deepEqual($('#test2 h1').css('margin-left'), '33px', 'CSSが適応されている。');
+					ok($('#test2 h1').css('font-size') !== '111px', '遷移元ページのCSSは適用されていない。');
+					start();
+				});
 			},
 			'button#test click': function() {
 				ok(true, 'button#test click が実行される');
@@ -747,19 +745,15 @@ $(function() {
 			var controller = {
 				__name: 'Test6Controller',
 				__ready: function() {
-					var count = 20;
-					function checkCSS() {
-						if (--count === 0 || $('#test6 h1').css('font-size') === '111px') {
-							deepEqual($('#test6 h1').css('font-size'), '111px',
-									'CSSが適応されている。(※CSSファイルが20秒経っても取得できない場合、失敗します)');
-							start();
-						} else {
-							setTimeout(function() {
-								checkCSS();
-							}, 1000);
-						}
-					}
-					checkCSS();
+					gate({
+						gateFunction: function() {
+							return $('#test6 h1').css('font-size') === '111px';
+						},
+						failMsg: 'CSSファイルがダウンロードされませんでした'
+					}).done(function() {
+						strictEqual($('#test6 h1').css('font-size'), '111px', 'CSSが適応されている。');
+						start();
+					});
 				}
 			};
 			h5.ui.jqm.manager.define('test6', 'css/test.css', controller);
@@ -801,20 +795,16 @@ $(function() {
 			__ready: function() {
 				ok(true, '__readyが実行される');
 
-				var count = 20;
-				function checkCSS() {
-					if (--count === 0 || $('#test7 h1').css('font-size') === '111px') {
-						deepEqual($('#test7 h1').css('font-size'), '111px',
-								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
-						h5.ui.jqm.manager.define('test8', 'css/test2.css', controller8);
-						jqmSimulator.changePage('#test8', true);
-					} else {
-						setTimeout(function() {
-							checkCSS();
-						}, 1000);
-					}
-				}
-				checkCSS();
+				gate({
+					gateFunction: function() {
+						return $('#test7 h1').css('font-size') === '111px';
+					},
+					failMsg: 'CSSファイルがダウンロードされませんでした'
+				}).done(function() {
+					strictEqual($('#test7 h1').css('font-size'), '111px', 'CSSが適応されている。');
+					h5.ui.jqm.manager.define('test8', 'css/test2.css', controller8);
+					jqmSimulator.changePage('#test8', true);
+				});
 			},
 			'button#test click': function() {
 				ok(true, 'button#test click が実行される');
@@ -832,20 +822,16 @@ $(function() {
 			__ready: function() {
 				ok(true, '__readyが実行される');
 
-				var count = 20;
-				function checkCSS() {
-					if (--count === 0 || $('#test8 h1').css('margin-left') === '33px') {
-						deepEqual($('#test8 h1').css('margin-left'), '33px',
-								'CSSが適応されている。(※CSSファイルが5秒経ってもダウンロードされない場合、失敗します)');
-						ok($('#test8 h1').css('font-size') !== '111px', '遷移元ページのCSSは適用されていない。');
-						start();
-					} else {
-						setTimeout(function() {
-							checkCSS();
-						}, 1000);
-					}
-				}
-				checkCSS();
+				gate({
+					gateFunction: function() {
+						return $('#test8 h1').css('margin-left') === '33px';
+					},
+					failMsg: 'CSSファイルがダウンロードされませんでした'
+				}).done(function() {
+					strictEqual($('#test8 h1').css('margin-left'), '33px', 'CSSが適応されている。');
+					ok($('#test8 h1').css('font-size') !== '111px', '遷移元ページのCSSは適用されていない。');
+					start();
+				});
 			},
 			'button#test click': function() {
 				ok(true, 'button#test click が実行される');
@@ -879,11 +865,6 @@ $(function() {
 	asyncTest('ページ遷移したときに遷移先のコントローラがバインドされること', 4, function() {
 		var controller9 = {
 			__name: 'Test9Controller',
-
-			__construct: function() {
-
-			},
-
 			__ready: function() {
 				ok(true, 'Test9Controller.__readyが実行される');
 				$('#test9 button').trigger('click');
@@ -1741,18 +1722,14 @@ $(function() {
 	//=============================
 	asyncTest('Aのコントローラがreadyでない状態でA->B->Aと遷移したとき、Aでh5jqmpageshowが2回発火しないこと(トランジションなし)', 2,
 			function() {
+				var dfd = h5.async.deferred();
 				h5.ui.jqm.manager.define('test32', null, {
 					__name: 'Test32Controller',
 					__ready: function() {
-						var df = this.deferred();
-
-						setTimeout(function() {
-							df.resolve();
-						}, 200);
-
 						createPage('test33');
 						jqmSimulator.changePage('#test33', true, false, false);
-						return df.promise();
+						// A->B->Aの遷移が終わってからAのコントローラをreadyにする
+						return dfd.promise();
 					},
 					'{rootElement} h5jqmpageshow': function(context) {
 						ok(true, 'h5jqmpageshowが1回実行されること');
@@ -1766,9 +1743,9 @@ $(function() {
 						ok(true, 'Bのh5jqmpageshowが実行されること');
 						// B->Aに遷移
 						jqmSimulator.changePage('#test32', false, false, true);
+						dfd.resolve();
 					}
 				});
-
 				jqmSimulator.changePage('#test32', true, false, false);
 			});
 
@@ -1792,18 +1769,14 @@ $(function() {
 	//=============================
 	asyncTest('Aのコントローラがreadyでない状態でA->B->Aと遷移したとき、Aでh5jqmpageshowが2回発火しないこと(トランジションあり)', 2,
 			function() {
+				var dfd = h5.async.deferred();
 				h5.ui.jqm.manager.define('test34', null, {
 					__name: 'Test34Controller',
 					__ready: function() {
-						var df = this.deferred();
-
-						setTimeout(function() {
-							df.resolve();
-						}, 500);
-
 						createPage('test35');
 						jqmSimulator.changePage('#test35', true, true, false);
-						return df.promise();
+						// A->B->Aの遷移が終わってからAのコントローラをreadyにする
+						return dfd.promise();
 					},
 					'{rootElement} h5jqmpageshow': function(context) {
 						ok(true, 'h5jqmpageshowが1回実行されること');
@@ -1817,6 +1790,10 @@ $(function() {
 						ok(true, 'Bのh5jqmpageshowが実行されること');
 						// B->Aに遷移
 						jqmSimulator.changePage('#test34', false, true, true);
+						// トランジションありだと非同期なので、AのコントローラをreadyにするタイミングがchangePageの後になるようにsetTimeoutする
+						setTimeout(function() {
+							dfd.resolve();
+						}, 0);
 					}
 				});
 
@@ -1842,19 +1819,13 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('A->Bと遷移したとき、BでAのh5jqmpageshowが実行されないこと', 1, function() {
+		var dfd = h5.async.deferred();
 		h5.ui.jqm.manager.define('test36', null, {
 			__name: 'Test36Controller',
 			__ready: function() {
-				var df = this.deferred();
-
-				setTimeout(function() {
-					df.resolve();
-					start();
-				}, 200);
-
 				createPage('test37');
 				jqmSimulator.changePage('#test37', true, true, false);
-				return df.promise();
+				return dfd.promise();
 			},
 			'{rootElement} h5jqmpageshow': function(context) {
 				ok(false, 'h5jqmpageshowが実行されたためテスト失敗');
@@ -1865,13 +1836,15 @@ $(function() {
 			__name: 'Test37Controller',
 			'{rootElement} h5jqmpageshow': function(context) {
 				ok(true, 'Bのh5jqmpageshowが実行されること');
+				start();
 			}
 		});
 
 		$('#test36').one('h5jqmpageshow', function() {
-			ok(false, 'h5jqmpageshowが実行されたためテスト失敗');
+			ok(false, 'まだreadyでないはずのコントローラのh5jqmpageshowが実行されたためテスト失敗');
 		});
 
 		jqmSimulator.changePage('#test36', true, false, false);
+		dfd.resolve();
 	});
 });
