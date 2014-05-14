@@ -4917,11 +4917,11 @@ $(function() {
 
 					__init: function(context) {
 						var dfd = this.deferred();
-						// 100ms待機させて、この間に親の__initは実行されないことを確認
+						// 非同期にしてこの間に親の__initは実行されないことを確認
 						setTimeout(function() {
 							ret.push(3);
 							dfd.resolve();
-						}, 100);
+						}, 0);
 						return dfd.promise();
 					},
 
