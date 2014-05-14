@@ -43,17 +43,21 @@ $(function() {
 	var test2 = '#isInViewTest2';
 	var test3 = '#isInViewTest3';
 
+	var isQuirksMode = (document.compatMode === "CSS1Compat");
+
 	//=============================
 	// Functions
 	//=============================
 
-	var isQuirksMode = (document.compatMode === "CSS1Compat");
+	// gate関数をキャッシュ
+	var gate = testutils.async.gate;
 
 	function getWindowWidth() {
 		var elem = isQuirksMode ? document.documentElement : document.body;
 		// window.innerHeightではスクロールバーの幅も入ってしまうため、clientWidthを使う
 		return elem.clientWidth;
 	}
+
 	function getWindowHeight() {
 		// iPhoneの場合、clientHeightだと下のツールバーまで含まれてしまうので、innerHeightを使う
 		if (h5.env.ua.isiPhone) {
@@ -62,6 +66,22 @@ $(function() {
 		var elem = isQuirksMode ? document.documentElement : document.body;
 		return elem.clientHeight;
 	}
+
+	/**
+	 * x,yの位置にスクロールされているかどうかチェックする関数を作成して返す
+	 */
+	function createCheckScrollFunction(x, y) {
+		return function() {
+			// 0,0にスクロールされているかどうか確認する
+			var scrollX = window.pageXOffset
+					|| (isQuirksMode ? document.documentElement.scrollLeft
+							: document.body.scrollLeft);
+			var scrollY = window.pageYOffset
+					|| (isQuirksMode ? document.documentElement.scrollTop : document.body.scrollTop);
+			return scrollX === x && scrollY === y;
+		}
+	}
+
 	// セレクタから、セレクタ/jQueryオブジェクト/DOMについてのisInViewのテストをする関数
 	function checkAllMode(fn, expect, message, s1, s2) {
 		var obj1 = [s1, $(s1), $(s1)[0]];
@@ -236,7 +256,7 @@ $(function() {
 
 	asyncTest(
 			'h5.ui.isInView - 親子関係である要素について、親のborderの内側に子のborderの外側が見えていればisInView()の結果がtrue、見えてない場合はfalseであること。引数は、セレクタ、DOM、jQueryオブジェクトのどれでも判定できること。',
-			3 * 4 * 9, function() {
+			108, function() {
 				var $fixture = $(fixture);
 				var $test1 = $(test1);
 				var test1Dom = $test1[0];
@@ -297,16 +317,13 @@ $(function() {
 
 					start();
 				}
-				function waitForDom(i) {
-					if ($(test1Dom).offset()) {
-						testFunc();
-						return;
-					}
-					setTimeout(function() {
-						waitForDom();
-					}, 0);
-				}
-				waitForDom();
+				// #test1が配置されるまで待機
+				gate({
+					gateFunction: function() {
+						return $(test1Dom).offset()
+					},
+					failMsg: 'テストに必要なDOMの準備が完了しませんでした'
+				}).done(testFunc);
 			});
 
 	//=============================
@@ -406,16 +423,14 @@ $(function() {
 
 			start();
 		}
-		function waitForDom(i) {
-			if ($(test2).offset()) {
-				testFunc();
-				return;
-			}
-			setTimeout(function() {
-				waitForDom();
-			}, 0);
-		}
-		waitForDom();
+
+		// #test2が配置されるまで待機
+		gate({
+			gateFunction: function() {
+				return $(test2Dom).offset()
+			},
+			failMsg: 'テストに必要なDOMの準備が完了しませんでした'
+		}).done(testFunc);
 	});
 
 	//=============================
@@ -514,16 +529,14 @@ $(function() {
 
 			start();
 		}
-		function waitForDom(i) {
-			if ($(test2).offset()) {
-				testFunc();
-				return;
-			}
-			setTimeout(function() {
-				waitForDom();
-			}, 0);
-		}
-		waitForDom();
+
+		// #test2が配置されるまで待機
+		gate({
+			gateFunction: function() {
+				return $(test2Dom).offset()
+			},
+			failMsg: 'テストに必要なDOMの準備が完了しませんでした'
+		}).done(testFunc);
 	});
 
 	//=============================
@@ -550,8 +563,17 @@ $(function() {
 							'<div id="enableScroll" style="width:' + width + 'px;height:' + height
 									+ 'px;visible:hidden;top:0;left:0;position:absolute;"></div>');
 
-					// 0,0にスクロールしてテスト
+					// 0,0 にスクロールされるまで待ってからテスト実行
+					stop();
 					window.scrollTo(0, 0);
+					gate({
+						gateFunction: createCheckScrollFunction(0, 0)
+					}).done(function() {
+						start();
+					}).fail(function() {
+						start();
+						skipTest(true, 'setupでスクロールが完了しませんでした');
+					});
 				},
 				teardown: function() {
 					// テスト用に作った要素の削除
@@ -635,17 +657,17 @@ $(function() {
 					} else {
 						return;
 					}
-					setTimeout(function() {
-						// スクロールされた状態でテスト
+
+					// scrollValにスクロールされるのを待機
+					gate({
+						gateFunction: createCheckScrollFunction(scrollVal, scrollVal),
+						failMsg: 'スクロールが完了しませんでした'
+					}).done(function() {
 						testFunc(scrollVal, scrollVal);
 						start();
-					}, 1000);
-
+					});
 				}
-				setTimeout(function() {
-					// 0,0 にスクロールされるまで待ってからテスト実行
-					testFunc();
-				}, 1000);
+				testFunc();
 			});
 
 	//=============================
@@ -771,16 +793,13 @@ $(function() {
 
 					start();
 				}
-				function waitForDom(i) {
-					if ($(test2).offset()) {
-						testFunc();
-						return;
-					}
-					setTimeout(function() {
-						waitForDom();
-					}, 0);
-				}
-				waitForDom();
+				// #test2が配置されるまで待機
+				gate({
+					gateFunction: function() {
+						return $(test2Dom).offset()
+					},
+					failMsg: 'テストに必要なDOMの準備が完了しませんでした'
+				}).done(testFunc);
 			});
 
 	//=============================
@@ -831,8 +850,17 @@ $(function() {
 					'<div id="enableScroll" style="width:' + width + 'px;height:' + height
 							+ 'px;visible:hidden;top:0;left:0;position:absolute;"></div>');
 
-			// 0,0にスクロールしてテスト
+			// 0,0 にスクロールされるまで待ってからテスト実行
+			stop();
 			window.scrollTo(0, 0);
+			gate({
+				gateFunction: createCheckScrollFunction(0, 0)
+			}).done(function() {
+				start();
+			}).fail(function() {
+				start();
+				skipTest(true, 'setupでスクロールが完了しませんでした');
+			});
 
 		},
 		teardown: function() {
@@ -941,29 +969,18 @@ $(function() {
 					test.style.left = left - 1 + 'px';
 					check(deepEqual, false, '左下1pxが見えている状態から右に1px移動', test, body);
 				}
-				function waitForDom(isScroll) {
-					if (!isScroll && $(that.$test).offset()) {
-						testFunc();
-						// スクロールしてテスト
-						window.scrollTo(scrollVal, scrollVal);
-						setTimeout(function() {
-							waitForDom(true);
-						}, 1000);
-						return;
-					}
-					if (isScroll) {
-						testFunc();
-						start();
-						return;
-					}
-					setTimeout(function() {
-						waitForDom(isScroll);
-					}, 0);
-				}
-				setTimeout(function() {
-					// 0,0にスクロールされるのを待ってからテスト実行
-					waitForDom();
-				}, 1000);
+				testFunc();
+
+				// スクロールしてテスト
+				window.scrollTo(scrollVal, scrollVal);
+				gate({
+					gateFunction: createCheckScrollFunction(scrollVal, scrollVal),
+					failMsg: 'スクロールが完了しませんでした'
+				}).done(function() {
+					testFunc();
+					start();
+				});
+
 			});
 
 	//=============================
@@ -986,32 +1003,19 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('h5.ui.scrollToTop (0, 1)の地点にスクロール', 1,
-			function() {
-				// scrollToTopで(0,1)にスクロール
-				h5.ui.scrollToTop();
+	asyncTest('h5.ui.scrollToTop (0, 1)の地点にスクロール', 1, function() {
+		// scrollToTopで(0,1)にスクロール
+		h5.ui.scrollToTop();
 
-				var count = 0;
-				function waitForScroll() {
-					var scrollX = window.pageXOffset
-							|| (isQuirksMode ? document.documentElement.scrollLeft
-									: document.body.scrollLeft);
-					var scrollY = window.pageYOffset
-							|| (isQuirksMode ? document.documentElement.scrollTop
-									: document.body.scrollTop);
-					if (scrollY === 1 && scrollX === 0) {
-						ok(true, '(0,1)にスクロールされた');
-						start();
-						return;
-					} else if (count++ === 3) {
-						ok(false, 'スクロールされませんでした。');
-						start();
-						return;
-					}
-					setTimeout(waitForScroll, 200);
-				}
-				waitForScroll();
-			});
+		// スクロールされるのを待機
+		gate({
+			gateFunction: createCheckScrollFunction(0, 1),
+			failMsg: 'スクロールが完了しませんでした'
+		}).done(function() {
+			ok(true, '(0,1)にスクロールされた');
+			start();
+		});
+	});
 
 	//=============================
 	// Definition
