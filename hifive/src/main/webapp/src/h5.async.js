@@ -369,16 +369,10 @@
 		// rootDfdがあればrootDfd.thenを持たせてあるので何もしない
 		if (promise.then && !rootDfd) {
 			var then = promise.then;
-			promise.then = function(/* var_args */) {
-				// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
-				// jQuery1.8以降は、thenが別のdeferredに基づくpromiseを生成して返ってくる(pipeと同じ)。
-
-				if (thenReturnsNewPromise) {
-					// 1.8以降の場合 thenはpipeと同じ挙動。
-					return hookMethods.pipe.apply(this, arguments);
-				}
-
+			// 1.8以降の場合 thenはpipeと同じで、別のdeferredに基づくpromiseを生成して返す(then===pipe)
+			promise.then = thenReturnsNewPromise ? promise.pipe : function(/* var_args */) {
 				// 1.7以前の場合
+				// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
 				var args = arguments;
 				var ret = then.apply(this, args);
 
@@ -389,7 +383,6 @@
 				}
 				// そのままthis(=ret)を返す
 				return ret;
-
 			};
 			hookMethods.then = promise.then;
 		}
