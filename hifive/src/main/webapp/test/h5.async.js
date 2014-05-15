@@ -368,7 +368,7 @@ $(function() {
 		dfd.fail(function() {
 			strictEqual(this, dfd, 'dfd.failで登録したfailフィルタのthisはdeferredオブジェクトであること');
 		});
-		promise.progress(function() {
+		promise.fail(function() {
 			strictEqual(this, dfd, 'promise.failで登録したfailフィルタのthisはdeferredオブジェクトであること');
 		});
 		dfd.reject();
@@ -440,7 +440,7 @@ $(function() {
 
 	test('thenとpipeは別関数であること', function() {
 		var dfd = h5.async.deferred();
-		strictNotEqual(dfd.then, dfd.pipe, 'thenとpipeは別関数であること');
+		notStrictEqual(dfd.then, dfd.pipe, 'thenとpipeは別関数であること');
 	});
 
 	test('thenはthenを呼んだ時のthisを返すこと。', 2, function() {
@@ -495,12 +495,12 @@ $(function() {
 	// Body
 	//=============================
 
-	test('[jquery#1.8-]thenとpipeは同一関数であること', function() {
+	test('[jquery#-1.7]thenとpipeは同一関数であること', function() {
 		var dfd = h5.async.deferred();
 		strictEqual(dfd.then, dfd.pipe, 'thenとpipeは===であること');
 	});
 
-	test('[jquery#1.8-]thenはpromiseを返し、deferred.promise()の返すpromiseとは別のものであること', 2, function() {
+	test('[jquery#-1.7]thenはpromiseを返し、deferred.promise()の返すpromiseとは別のものであること', 2, function() {
 		var dfd = h5.async.deferred();
 		var promise = dfd.promise();
 		var p = promise.then();
@@ -544,7 +544,7 @@ $(function() {
 
 	test('then(またはpipe)で登録したprogressフィルタがPromiseでない値を返した場合', function() {
 		// 後でnotifyWith
-		var dfd1 = $.Deferred();
+		var dfd1 = h5.async.deferred();
 		var filtered3 = dfd1[thenCompatMethod](null, null, function(value) {
 			return value * 3;
 		});
