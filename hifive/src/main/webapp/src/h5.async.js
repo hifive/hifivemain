@@ -199,9 +199,10 @@
 	 * 既にフック済みのもの(prev)があればprevが持っているものに差し替える
 	 *
 	 * @private
-	 * @param {Deferred|Promise} promise
-	 * @param {Deferred} rootDfd
+	 * @param {Deferred|Promise} promise DeferredまたはPromise
+	 * @param {Deferred} rootDfd 元のDeferred
 	 *            既にフック済みのDeferredオブジェクト。第一引数がPromiseで、元のdeferredでフック済みならそっちのメソッドに差し替える
+	 * @returns CFH機能を追加したDeferredまたはPromise
 	 */
 	function toCFHAware(promise, rootDfd) {
 		// すでにtoCFHAware済みなら何もしないでpromiseを返す
@@ -247,7 +248,8 @@
 		 * @private
 		 * @memberOf Deferred
 		 * @param {String} method メソッド名
-		 * @param {Array|Any} メソッドに渡す引数。Arrayで複数渡せる。引数1つならそのまま渡せる。
+		 * @param {Array|Any} args メソッドに渡す引数。Arrayで複数渡せる。引数1つならそのまま渡せる。
+		 * @returns メソッドの戻り値
 		 */
 		promise._h5UnwrappedCall = rootDfd ? rootDfd._h5UnwrappedCall : function(method, args) {
 			args = wrapInArray(args);
@@ -301,6 +303,7 @@
 			}
 		}
 
+
 		// pipeは戻り値が呼び出したpromise(またはdeferred)と違うので、
 		// そのdeferred/promiseが持つメソッドの上書きをして返す関数にする。
 		// jQuery1.6以下にない第3引数でのprogressコールバックの登録にも対応する。
@@ -321,12 +324,14 @@
 				for (var i = 0, l = PIPE_CREATE_METHODS.length; i < l; i++) {
 					var that = this;
 					(function(fn, method, action) {
-						if (!$.isFunction(fn)) {
-							// 引数が関数で無かったら何もしない
-							return;
-						}
-						// コールバックを登録
-						that[method](function(/* var_args */) {
+						var isFunc = !$.isFunction(fn);
+						// 登録するコールバック
+						function callback(/* var_args */) {
+							if (isFunc) {
+								// 関数で無かった場合は、渡された引数を次のコールバックにそのまま渡す
+								newDeferred[action + 'With'](this, arguments);
+								return;
+							}
 							var ret = fn.apply(this, arguments);
 							if (ret && $.isFunction(ret.promise)) {
 								toCFHAware(ret);
@@ -338,10 +343,19 @@
 								// progressメソッドがあるかチェックしてからprogressハンドラを登録
 								$.isFunction(ret.progress) && ret.progress(newDeferred.notify);
 							} else {
-								// 戻り値を次のコールバックに渡す
+								// 戻り値はプロミスでなかった場合、戻り値を次のコールバックに渡す
 								newDeferred[action + 'With'](this, [ret]);
 							}
-						});
+						}
+
+						// コールバックを登録
+						// fnが関数でないかつmethodがfailの場合は、CFHの動作を阻害しないようにfailハンドラを登録するため、
+						// _h5UnwrappedCallを使う
+						if (isFunc && method === 'fail') {
+							that._h5UnwrappedCall(method, callback);
+						} else {
+							that[method](callback);
+						}
 					})(fns[i], PIPE_CREATE_METHODS[i], PIPE_CREATE_ACTIONS[i]);
 				}
 				return newDeferred.promise();

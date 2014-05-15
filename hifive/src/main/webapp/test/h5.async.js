@@ -306,6 +306,73 @@ $(function() {
 		ok(dfd.promise() != p, 'pipe()の戻り値はdeferred.promise()の戻り値とは別のPromiseであること');
 	});
 
+	test('pipeの返したPromiseで登録したdone/failハンドラが、元のDeferredでresolve/rejectされたときに動作すること', 2, function() {
+		var dfd = h5.async.deferred();
+		var p = dfd.pipe();
+		var doneFlg = false;
+		p.done(function() {
+			doneFlg = true;
+		});
+		dfd.resolve();
+		ok(doneFlg, 'doneハンドラが実行されたこと');
+
+		dfd = h5.async.deferred();
+		p = dfd.pipe();
+		var failFlg = false;
+		p.fail(function() {
+			failFlg = true;
+		});
+		dfd.reject();
+		ok(failFlg, 'failハンドラが実行されたこと');
+	});
+
+	test('pipeの返したPromiseで登録したdone/failハンドラのthisが、元のDeferredのresolveWith/rejectWithで指定した値であること', 2,
+			function() {
+				var dfd = h5.async.deferred();
+				var p = dfd.pipe();
+				var obj = {};
+				var doneThis = null;
+				p.done(function() {
+					doneThis = this;
+				});
+				dfd.resolveWith(obj);
+				strictEqual(doneThis, obj, 'resolveWith()で指定したオブジェクトがdoneハンドラのthisになっていること');
+
+				dfd = h5.async.deferred();
+				p = dfd.pipe();
+				var failThis = null;
+				p.fail(function() {
+					failThis = this;
+				});
+				dfd.rejectWith(obj);
+				strictEqual(failThis, obj, 'rejectWith()で指定したオブジェクトがfailハンドラのthisになっていること');
+			});
+
+	test('pipeの返したPromiseで登録したdone/failハンドラに渡される引数が、pipeに渡した関数が返した値であること', 2, function() {
+		var dfd = h5.async.deferred();
+		var obj = {};
+		var p = dfd.pipe(function() {
+			return obj;
+		});
+		var doneArg = null;
+		p.done(function(arg) {
+			doneArg = arg;
+		});
+		dfd.resolve(obj);
+		strictEqual(doneArg, obj, 'pipeに渡した関数が返した値がdoneハンドラに渡されること');
+
+		dfd = h5.async.deferred();
+		p = dfd.pipe(null, function() {
+			return obj;
+		});
+		var failArg = null;
+		p.fail(function(arg) {
+			failArg = arg;
+		});
+		dfd.reject(obj);
+		strictEqual(failArg, obj, 'pipeに渡した関数が返した値がfailハンドラに渡されること');
+	});
+
 	asyncTest('pipeのfailコールバックがPromiseを返す場合、pipeの実行がPromiseの完了を待っているか', 6, function() {
 		var count = 1;
 
