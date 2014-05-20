@@ -499,45 +499,64 @@
 	 * @param {Function} callback 引数に各コントローラとプロパティ名が渡されます。
 	 *
 	 * <pre>
-	 * function(controller, prop) {}
+	 * function(controller, parentController, prop) {}
 	 * </pre>
 	 *
 	 * のような関数を指定してください。falseが返されたら中断します。
+	 * @returns 中断された場合はfalseを返します
 	 */
 	function childControllerEach(controller, callback) {
 		for ( var prop in controller) {
 			if (isChildController(controller, prop)) {
-				callback(controller[prop], prop);
+				if (false === callback(controller[prop], controller, prop)) {
+					return false;
+				}
 			}
 		}
 	}
 
 	/**
-	 * 指定されたコントローラの子孫のコントローラについて、コールバックを実行します
+	 * 指定されたコントローラ以下のコントローラについて、コールバックを実行します
 	 *
 	 * @param {Object} controller
 	 * @param {Function} callback 引数に各コントローラとプロパティ名が渡されます。
-	 * @param {Boolean} isChildFirst 子を先にやるかどうか
+	 * @param {Boolean} isChildFirst 子を先にやるかどうか。falseの場合は親から先に実行します
+	 * @param {Array} _params 再帰呼び出し時に受け取る変数です。
+	 *            <p>
+	 *            親から子コントローラについてのコールバックが呼ばれる際に、親コントローラと親が子を参照しているプロパティ名の配列が渡されます。
+	 *            childControllerEachを使用した時と同様、親からの再帰で呼ばれた時は親コントローラとプロパティ名がコールバックの引数で取得できるようになります。
+	 *            </p>
 	 *
 	 * <pre>
-	 * function(controller, prop) {}
+	 * function(controller, parentController, prop) {}
 	 * </pre>
 	 *
 	 * のような関数を指定してください。falseが返されたら中断します。
 	 */
-	function controllerGroupEach(controller, callback, isChildFirst) {
-		for ( var prop in controller) {
-			if (isChildController(controller, prop)) {
-				if (isChildFirst) {
-					controllerGroupEach(controller[prop], callback, isChildFirst);
-				}
-				var ret = callback(controller, prop);
-				if (ret === false) {
-					return;
-				}
-				if (!isChildFirst) {
-					controllerGroupEach(controller[prop], callback, isChildFirst);
-				}
+	function controllerGroupEach(controller, callback, isChildFirst, _params) {
+		var args = [controller];
+		if (_params && _params.length) {
+			for (var i = 0, l = _params.length; i < l; i++) {
+				args.push(_params[i]);
+			}
+		}
+		if (!isChildFirst) {
+			var ret = callback.apply(this, args);
+			if (ret === false) {
+				return;
+			}
+		}
+		function callbackWrapper(c, parent, prop) {
+			if (false === controllerGroupEach(c, callback, isChildFirst, [parent, prop])) {
+				return;
+			}
+		}
+		childControllerEach(controller, callbackWrapper);
+
+		if (isChildFirst) {
+			var ret = callback.apply(controller, args);
+			if (ret === false) {
+				return;
 			}
 		}
 	}
@@ -599,7 +618,6 @@
 				}
 			}
 		}
-		;
 		getPromisesInner(controller);
 		return promises;
 	}
@@ -990,6 +1008,12 @@
 			// getPromisesForXXXの戻り値が空の配列の場合はfunc()は同期的に呼ばれる
 			var promises = getPromisesForInit(controllerInstance);
 
+			// すでにpromisesのいずれかが失敗している場合、whenのdfdは即rejectされてしまうのでCFHが作動してしまう。
+			// すでにpromisesのいずれかが失敗している場合は、失敗した時にdisposeされているはずなので、disposeされているかどうかチェックする
+			// disopseされていたら何もしない。
+			if (isDisposing(controllerInstance)) {
+				return;
+			}
 			// dfdがrejectされたとき、commonFailHandlerが発火しないようにするため、dummyのfailハンドラを登録する
 			h5.async.when(promises).done(function() {
 				func();
@@ -1117,7 +1141,7 @@
 	 * __initイベントで実行するコールバック関数を返します。
 	 *
 	 * @param {Controller} controller コントローラ
-	 * @returns {Controller[]} 子コントローラの配列を返す
+	 * @returns {Function} 次に実行する__initを知らせるために、子コントローラの配列を返す関数を返します
 	 */
 	function createCallbackForInit(controller) {
 		return function() {
@@ -1133,41 +1157,39 @@
 			delete controller.__controllerContext.initDfd;
 			initDfd.resolveWith(controller);
 
-			if (!isDisposed(controller)) {
-				// 子コントローラのrootController,parentController,rootElementを設定
-				var rootController = controller.rootController;
-				var rootElement = controller.rootElement;
-				var meta = controller.__meta;
-				var childControllers = [];
-				childControllerEach(controller, function(c, prop) {
-					childControllers.push(c);
-					c.rootController = rootController;
-					c.parentController = controller;
-					// __metaが指定されている場合、__metaのrootElementを考慮した要素を取得する
-					if (meta && meta[prop] && meta[prop].rootElement) {
-						c.rootElement = getBindTarget(meta[prop].rootElement, rootElement, c);
-					} else {
-						c.rootElement = rootElement;
-					}
-					c.view.__controller = c;
-				});
-
-				// 子コントローラが無い(リーフノード)の場合、全コントローラのinitが終わったかどうかをチェック
-				var isAllInitDone = !childControllers.length && (function() {
-					var ret = true;
-					controllerGroupEach(controller.rootController, function(c) {
-						ret = c.isInit;
-						return ret;
-					});
-					return ret;
-				})();
-				if (isAllInitDone) {
-					// 全コントローラの__initが終わったら__postInitを呼び出す
-					triggerPostInit(controller.rootController);
+			if (isDisposed(controller)) {
+				return;
+			}
+			// 子コントローラのrootElementを設定
+			var rootElement = controller.rootElement;
+			var meta = controller.__meta;
+			var childControllers = [];
+			childControllerEach(controller, function(c, parent, prop) {
+				childControllers.push(c);
+				// __metaが指定されている場合、__metaのrootElementを考慮した要素を取得する
+				if (meta && meta[prop] && meta[prop].rootElement) {
+					c.rootElement = getBindTarget(meta[prop].rootElement, rootElement, c);
 				} else {
-					// 次にinitを実行するコントローラを返す
-					return childControllers;
+					c.rootElement = rootElement;
 				}
+				c.view.__controller = c;
+			});
+
+			// 子コントローラが無い(リーフノード)の場合、全コントローラのinitが終わったかどうかをチェック
+			var isAllInitDone = !childControllers.length && (function() {
+				var ret = true;
+				controllerGroupEach(controller.rootController, function(c) {
+					ret = c.isInit;
+					return ret;
+				});
+				return ret;
+			})();
+			if (isAllInitDone) {
+				// 全コントローラの__initが終わったら__postInitを呼び出す
+				triggerPostInit(controller.rootController);
+			} else {
+				// 次にinitを実行するコントローラを返す
+				return childControllers;
 			}
 		};
 	}
@@ -1228,11 +1250,56 @@
 	}
 
 	/**
+	 * ターゲットエレメントの指定が正しいかどうかチェックします。正しくない場合はthrowFwError
+	 *
+	 * @param {DOM|jQuery|String} targetElement
+	 * @param {Object} controllerDefObj コントローラ定義オブジェクト
+	 */
+	function checkTargetElement(targetElement, controllerDefObj) {
+		var controllerName = controllerDefObj.__name;
+
+		// null,undefinedならエラー
+		if (targetElement == null) {
+			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controllerName], {
+				controllerDefObj: controllerDefObj
+			});
+		}
+		// 文字列でもObjectでもないならエラー
+		if (!isString(targetElement) && typeof targetElement !== 'object') {
+			throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controllerName], {
+				controllerDefObj: controllerDefObj
+			});
+		}
+
+		var $bindTargetElement = $(targetElement);
+		// 要素が1つでない場合はエラー
+		if ($bindTargetElement.length === 0) {
+			throwFwError(ERR_CODE_BIND_NO_TARGET, [controllerName], {
+				controllerDefObj: controllerDefObj
+			});
+		}
+		// 要素が複数ある場合はエラー
+		if ($bindTargetElement.length > 1) {
+			throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controllerName], {
+				controllerDefObj: controllerDefObj
+			});
+		}
+		// ノードエレメントでない場合はエラー
+		if ($bindTargetElement[0].nodeType !== NODE_TYPE_DOCUMENT
+				&& $bindTargetElement[0].nodeType !== NODE_TYPE_ELEMENT) {
+			throwFwError(ERR_CODE_BIND_NOT_NODE, [controllerName], {
+				controllerDefObj: controllerDefObj
+			});
+		}
+	}
+
+	/**
 	 * __metaのチェックを行います。正しくない場合はthrowFwError
 	 *
 	 * @param controller
 	 */
 	function checkMeta(controller) {
+		var controllerName = controller.__name;
 		var meta = controller.__meta;
 		if (meta) {
 			for ( var prop in meta) {
@@ -1851,7 +1918,7 @@
 		// (CFHの動作回避のためfailにdummyを登録)
 		asyncDfd.promise().done(function() {
 			executeLifeInitChain(controller);
-		});
+		}).fail(dummyFailHandler);
 	}
 
 	/**
@@ -2041,48 +2108,30 @@
 	 * @param {Any} [errorObj] rejectに渡すオブジェクト
 	 */
 	function rejectControllerDfd(controller, errorObj) {
-		// 指定されたコントローラから見た末裔のコントローラを取得
-		var descendantControllers = [];
-		var getDescendant = function(con) {
-			var hasChildController = false;
-			for ( var prop in con) {
-				// 子コントローラがあれば再帰的に処理
-				if (isChildController(con, prop)) {
-					hasChildController = true;
-					getDescendant(con[prop]);
-				}
-			}
-			if (!hasChildController) {
-				// 子コントローラを持っていないなら、descendantControllersにpush
-				descendantControllers.push(con);
-			}
-		};
-		getDescendant(controller);
+		// 指定されたコントローラのルートコントローラを取得
+		// ルートからinitDfdをrejectしていく
+		var propertyArray = ['postInitDfd', 'readyDfd'];
 
-		var propertyArray = ['initDfd', 'readyDfd'];
-		function rejectControllerDfdLoop(con, propertyIndex) {
-			var property = propertyArray[propertyIndex];
-			var dfd = con.__controllerContext[property];
-			if (dfd) {
-				if (!isRejected(dfd) && !isResolved(dfd)) {
+		// ルートからinitDfd.rejectしていく
+		controllerGroupEach(controller, function(c) {
+			var dfd = c.__controllerContext['initDfd'];
+			if (dfd && !isRejected(dfd) && !isResolved(dfd)) {
+				// thisをDfdを持つコントローラにしてreject
+				dfd.rejectWith(c, [errorObj]);
+			}
+		});
+
+		// 子からpostInitDfd, readyDfdをrejectしていく
+		for (var i = 0, l = propertyArray.length; i < l; i++) {
+			var property = propertyArray[i];
+			controllerGroupEach(controller, function(c) {
+				var property = propertyArray[i];
+				var dfd = c.__controllerContext[property];
+				if (dfd && !isRejected(dfd) && !isResolved(dfd)) {
 					// thisをDfdを持つコントローラにしてreject
-					dfd.rejectWith(con, [errorObj]);
+					dfd.rejectWith(c, [errorObj]);
 				}
-			}
-			if (con.parentController) {
-				rejectControllerDfdLoop(con.parentController, propertyIndex);
-			} else {
-				// readyDfdまでrejectしたら終了
-				if (propertyIndex < propertyArray.length - 1) {
-					// ルートコントローラまで辿ったら、末裔のコントローラに対して次のdfdをrejectさせる
-					for (var i = 0, l = descendantControllers.length; i < l; i++) {
-						rejectControllerDfdLoop(descendantControllers[i], propertyIndex + 1);
-					}
-				}
-			}
-		}
-		for (var i = 0, l = descendantControllers.length; i < l; i++) {
-			rejectControllerDfdLoop(descendantControllers[i], 0);
+			}, true);
 		}
 	}
 
@@ -2759,10 +2808,11 @@
 			if (isDisposing(this)) {
 				return;
 			}
+			this.__controllerContext.isDisposing = 1;
+
 			// rejectまたはfailされていないdeferredをreject()する。
 			rejectControllerDfd(this, errorObj);
 
-			this.__controllerContext.isDisposing = 1;
 			var dfd = this.deferred();
 			this.unbind();
 			var that = this;
@@ -3116,39 +3166,10 @@
 			});
 		}
 
-		// バインド対象となる要素のチェック
+		// ルートコントローラの場合はバインド対象となる要素のチェックを同期で行う
 		// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
-		if (isRoot || targetElement) {
-			if (targetElement == null) {
-				throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controllerName], {
-					controllerDefObj: controllerDefObj
-				});
-			} else if (isString(targetElement) || typeof targetElement === 'object') {
-				var $bindTargetElement = $(targetElement);
-				// 要素が1つでない場合はエラー
-				if ($bindTargetElement.length === 0) {
-					throwFwError(ERR_CODE_BIND_NO_TARGET, [controllerName], {
-						controllerDefObj: controllerDefObj
-					});
-				}
-				// 要素が複数ある場合はエラー
-				if ($bindTargetElement.length > 1) {
-					throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET, [controllerName], {
-						controllerDefObj: controllerDefObj
-					});
-				}
-				// ノードエレメントでない場合はエラー
-				if ($bindTargetElement[0].nodeType !== NODE_TYPE_DOCUMENT
-						&& $bindTargetElement[0].nodeType !== NODE_TYPE_ELEMENT) {
-					throwFwError(ERR_CODE_BIND_NOT_NODE, [controllerName], {
-						controllerDefObj: controllerDefObj
-					});
-				}
-			} else {
-				throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controllerName], {
-					controllerDefObj: controllerDefObj
-				});
-			}
+		if (isRoot) {
+			checkTargetElement(targetElement, controllerDefObj);
 		}
 
 		// コントローラの循環参照チェック
@@ -3177,18 +3198,20 @@
 		var preinitDfd = getDeferred();
 		var preinitPromise = preinitDfd.promise();
 
+
+		// preinitDfd, preInitPromise, initDfd, initPromise, postInitDfd, postInitPromiseの設定
+		// preinitPromise, initPromise, postInitPromiseが失敗してもcommonFailHandlerを発火させないようにするため、dummyのfailハンドラを登録する
 		controller.__controllerContext.preinitDfd = preinitDfd;
-		controller.preinitPromise = preinitPromise;
+		controller.preinitPromise = preinitPromise.fail(dummyFailHandler);
 		controller.__controllerContext.initDfd = getDeferred();
 		controller.__controllerContext.postInitDfd = getDeferred();
-
-		// initPromise,postInitPromiseが失敗してもcommonFailHandlerを発火させないようにするため、dummyのfailハンドラを登録する
 		controller.initPromise = controller.__controllerContext.initDfd.promise().fail(
 				dummyFailHandler);
 		controller.postInitPromise = controller.__controllerContext.postInitDfd.promise().fail(
 				dummyFailHandler);
 
 		// readyDeferred,readyPromiseの設定
+		// ルートコントローラのreadyPromiseは失敗したらcommonFailHandlerが発火する
 		controller.__controllerContext.readyDfd = getDeferred();
 		controller.readyPromise = controller.__controllerContext.readyDfd.promise();
 
@@ -3313,13 +3336,12 @@
 				controller[prop] = weavedFunc;
 			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
 					&& !$.isFunction(clonedControllerDef[prop])) {
-				// 子コントローラの場合
-				// 子コントローラのバインドは__constructを実行してから行う
-				// ここでは子コントローラを覚えておく
-				childControllerDefs.push({
-					prop: prop,
-					def: clonedControllerDef[prop]
-				});
+				// 子コントローラをバインドする。fwOpt.isInternalを指定して、子コントローラであるかどうか分かるようにする
+				var c = createAndBindController(null,
+						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
+							isInternal: true
+						}, fwOpt));
+				controller[prop] = c;
 			} else if (endsWith(prop, SUFFIX_LOGIC) && clonedControllerDef[prop]
 					&& !$.isFunction(clonedControllerDef[prop])) {
 				// ロジック
@@ -3336,26 +3358,39 @@
 			}
 		}
 
-		// __constructがあれば実行。ここまでは完全に同期処理になる。
-		// 子コントローラのバインド前に呼び出すことで、親→子の順番に実行される
-		if (controller.__construct) {
-			controller.__construct(createInitializationContext(controller));
-		}
-
-		// 子コントローラのバインド開始
-		// fwOpt.isInternalを指定して、子コントローラであるかどうか分かるようにする
-		for (var i = 0, l = childControllerDefs.length; i < l; i++) {
-			controller[childControllerDefs[i].prop] = createAndBindController(null, $.extend(true,
-					{}, childControllerDefs[i].def), param, $.extend({
-				isInternal: true
-			}, fwOpt));
-		}
-
 		// __metaのチェック
+		// ルートエレメントのチェックは行わない
 		checkMeta(controller);
 
-		if (isDisposing(controller)) {
-			return null;
+		if (isRoot) {
+			// __constructを実行。ここまでは完全に同期処理になる。
+			// 子コントローラのバインドが終わってから、親→子の順番で実行する
+			var isDisposed = false;
+			controllerGroupEach(controller, function(c, parent, prop) {
+				c.__construct && c.__construct(createInitializationContext(c));
+
+				// __construct呼び出し後にparentControllerとrootControllerの設定
+				if (c === controller) {
+					// ルートコントローラの場合(parentが無い場合)、rootControllerは自分自身、parentControllerはnull
+					c.rootController = c;
+					c.parentController = null;
+				} else {
+					// rootControllerはisRoot===trueのコントローラには設定済みなので、親から子に同じrootControllerを引き継ぐ
+					c.parentController = parent;
+					c.rootController = parent.rootController;
+				}
+
+				if (isDisposing(c)) {
+					// 途中でdisposeされたら__constructの実行を中断
+					isDisposed = true;
+					return false;
+				}
+			});
+			if (isDisposed) {
+				// __constructでdisposeが呼ばれたらnullを返す
+				// (h5.core.controllerの戻り値がnullになる)
+				return null;
+			}
 		}
 
 		// コントローラマネージャの管理対象とするか判定する
@@ -3363,10 +3398,7 @@
 			controller.__controllerContext.managed = fwOpt.managed;
 		}
 
-		if (controller.__controllerContext.isRoot) {
-			// ルートなら、ルートコントローラの設定
-			controller.rootController = controller;
-
+		if (isRoot) {
 			// ルートコントローラなら自分以下のinitを実行
 			triggerInit(controller);
 		}
