@@ -8240,6 +8240,7 @@ $(function() {
 	//=============================
 	asyncTest(
 			'[browser#and-and:all|sa-ios:all|ie-wp:all]window.open()で開いた先のコントローラを取得できること',
+			3,
 			function() {
 				// 空のページを開く
 				openPopupWindow()
@@ -8255,16 +8256,17 @@ $(function() {
 												strictEqual(h5.core.controllerManager
 														.getControllers(div)[0], c,
 														'ポップアップウィンドウ内の要素のコントローラを取得できること');
+
 												strictEqual(h5.core.controllerManager
 														.getControllers(w.document.body, {
 															deep: true
 														})[0], c,
 														'deep:trueオプションで、ポップアップウィンドウの要素内のコントローラを取得できること');
-												notEqual($.inArray(c, h5.core.controllerManager
+												notEqual($.inArray(this, h5.core.controllerManager
 														.getAllControllers()), -1,
-														'getAllControllersでポップアップウィンドウの要素内にバインドしたコントローラが取得できること');
+														'getAllControllers()でポップアップウィンドウ内の要素のコントローラを取得できること');
+												c.dispose();
 												closePopupWindow(w).done(function() {
-													c.dispose();
 													start();
 												});
 											});
