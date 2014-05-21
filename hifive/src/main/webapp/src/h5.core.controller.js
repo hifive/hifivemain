@@ -942,7 +942,7 @@
 	function executeLifeInitChain(controller) {
 		var funcName = '__init';
 		function execInner(controllerInstance) {
-			// 子孫コントローラの準備ができた時に実行させる関数を定義
+			// 自分より上の階層のinitと、自分のpreInitが終わった時に実行させる関数を定義
 			function func() {
 				var ret = null;
 				var lifecycleFunc = controllerInstance[funcName];
@@ -1138,7 +1138,7 @@
 	}
 
 	/**
-	 * __initイベントで実行するコールバック関数を返します。
+	 * __init実行後に実行するコールバック関数を返します。
 	 *
 	 * @param {Controller} controller コントローラ
 	 * @returns {Function} 次に実行する__initを知らせるために、子コントローラの配列を返す関数を返します
@@ -1160,20 +1160,34 @@
 			if (isDisposed(controller)) {
 				return;
 			}
-			// 子コントローラのrootElementを設定
+			// 子コントローラのrootElementとviewを設定
 			var rootElement = controller.rootElement;
-			var meta = controller.__meta;
 			var childControllers = [];
-			childControllerEach(controller, function(c, parent, prop) {
-				childControllers.push(c);
-				// __metaが指定されている場合、__metaのrootElementを考慮した要素を取得する
-				if (meta && meta[prop] && meta[prop].rootElement) {
-					c.rootElement = getBindTarget(meta[prop].rootElement, rootElement, c);
-				} else {
-					c.rootElement = rootElement;
-				}
-				c.view.__controller = c;
-			});
+			try {
+				// __metaの記述がただしいかチェックを行う
+				checkMeta(controller);
+				var meta = controller.__meta;
+				childControllerEach(controller, function(c, parent, prop) {
+					childControllers.push(c);
+					// __metaが指定されている場合、__metaのrootElementを考慮した要素を取得する
+					var target;
+					if (meta && meta[prop] && meta[prop].rootElement) {
+						target = getBindTarget(meta[prop].rootElement, rootElement, c);
+					} else {
+						target = rootElement;
+					}
+					// ターゲット要素のチェック
+					checkTargetElement(target, c.__controllerContext.controllerDef);
+					// ルートエレメントの設定
+					c.rootElement = target;
+					// コントローラのviewにコントローラを設定
+					c.view.__controller = c;
+				});
+			} catch (e) {
+				// エラーが起きたらコントローラをdispose
+				controller.dispose(e);
+				return;
+			}
 
 			// 子コントローラが無い(リーフノード)の場合、全コントローラのinitが終わったかどうかをチェック
 			var isAllInitDone = !childControllers.length && (function() {
@@ -1187,10 +1201,10 @@
 			if (isAllInitDone) {
 				// 全コントローラの__initが終わったら__postInitを呼び出す
 				triggerPostInit(controller.rootController);
-			} else {
-				// 次にinitを実行するコントローラを返す
-				return childControllers;
+				return;
 			}
+			// 次にinitを実行するコントローラを返す
+			return childControllers;
 		};
 	}
 
@@ -3133,9 +3147,9 @@
 	/**
 	 * コントローラのファクトリ
 	 *
-	 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.
+	 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト
 	 * @param {Object} controllerDefObj コントローラ定義オブジェクト
-	 * @param {Object} [param] 初期化パラメータ.
+	 * @param {Object} [param] 初期化パラメータ
 	 */
 	// fwOptは内部的に使用している.
 	function createAndBindController(targetElement, controllerDefObj, param, fwOpt) {
@@ -3197,7 +3211,6 @@
 		var templatePromise = templateDfd.promise();
 		var preinitDfd = getDeferred();
 		var preinitPromise = preinitDfd.promise();
-
 
 		// preinitDfd, preInitPromise, initDfd, initPromise, postInitDfd, postInitPromiseの設定
 		// preinitPromise, initPromise, postInitPromiseが失敗してもcommonFailHandlerを発火させないようにするため、dummyのfailハンドラを登録する
@@ -3357,10 +3370,6 @@
 				controller[prop] = clonedControllerDef[prop];
 			}
 		}
-
-		// __metaのチェック
-		// ルートエレメントのチェックは行わない
-		checkMeta(controller);
 
 		if (isRoot) {
 			// __constructを実行。ここまでは完全に同期処理になる。
