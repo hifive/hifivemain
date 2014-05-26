@@ -96,6 +96,15 @@
 	// =============================
 	// Variables
 	// =============================
+
+	// thenが新しいプロミス(deferred)を返す(jQuery1.8以降)かどうか
+	// jQuery.thenの挙動の確認
+
+	var isThenReturnsNewPromise = (function() {
+		var tempDfd = $.Deferred();
+		return tempDfd !== tempDfd.then();
+	})();
+
 	// =============================
 	// Functions
 	// =============================
@@ -212,11 +221,6 @@
 
 		// progressを持っているか
 		var hasNativeProgress = !!promise.progress;
-
-		// thenが新しいプロミス(deferred)を返す(jQuery1.8以降)かどうか
-		// jQuery.thenの挙動の確認
-		var tempDfd = $.Deferred();
-		var thenReturnsNewPromise = tempDfd !== tempDfd.then();
 
 		// 引数がDeferredオブジェクト(!=プロミスオブジェクト)の場合、
 		// progress/notify/notifyWithがないなら追加。
@@ -370,7 +374,7 @@
 		if (promise.then && !rootDfd) {
 			var then = promise.then;
 			// 1.8以降の場合 thenはpipeと同じで、別のdeferredに基づくpromiseを生成して返す(then===pipe)
-			promise.then = thenReturnsNewPromise ? promise.pipe : function(/* var_args */) {
+			promise.then = isThenReturnsNewPromise ? promise.pipe : function(/* var_args */) {
 				// 1.7以前の場合
 				// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
 				var args = arguments;
