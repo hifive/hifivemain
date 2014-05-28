@@ -37,6 +37,12 @@
 
 	var EVENT_NAME_TRIGGER_INDICATOR = 'triggerIndicator';
 
+	/** グローバルセレクタ指定かどうかの判定に使用する正規表現 */
+	var GLOBAL_SELECTOR_REGEXP = /^\{.*\}$/;
+
+	/** イベント名がバインドリクエスト指定かどうかの判定に使用する正規表現 */
+	var BIND_REQUESTED_REGEXP = /^\[.*\]$/;
+
 	/** インラインコメントテンプレートのコメントノードの開始文字列 */
 	var COMMENT_BINDING_TARGET_MARKER = '{h5view ';
 
@@ -219,38 +225,14 @@
 	 * @param {String} controllerName
 	 */
 	function validateControllerDef(isRoot, targetElement, controllerDefObj, param, controllerName) {
-		// 初期化パラメータがオブジェクトかどうかチェック
-		if (param && !$.isPlainObject(param)) {
-			throwFwError(ERR_CODE_CONTROLLER_INVALID_INIT_PARAM, [controllerName], {
-				controllerDefObj: controllerDefObj
-			});
-		}
-
-		// 既にコントローラ化されているかどうかチェック
-		if (controllerDefObj.__controllerContext) {
-			throwFwError(ERR_CODE_CONTROLLER_ALREADY_CREATED, null, {
-				controllerDefObj: controllerDefObj
-			});
-		}
-
-		// ルートコントローラの場合はバインド対象となる要素のチェックを同期で行う
-		// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
-		if (isRoot) {
-			validateTargetElement(targetElement, controllerDefObj);
-		}
-
-		// コントローラの循環参照チェック
-		if (validateControllerCircularRef(controllerDefObj)) {
-			throwFwError(ERR_CODE_CONTROLLER_CIRCULAR_REF, [controllerName], {
-				controllerDefObj: controllerDefObj
-			});
-		}
-
-		// ロジックの循環参照チェック
-		if (validateLogicCircularRef(controllerDefObj)) {
-			throwFwError(ERR_CODE_LOGIC_CIRCULAR_REF, [controllerName], {
-				controllerDefObj: controllerDefObj
-			});
+		// コントローラ定義オブジェクトに、コントローラが追加するプロパティと重複するプロパティがあるかどうかチェック
+		for ( var prop in controllerDefObj) {
+			if (controllerPropertyMap[prop]) {
+				// コントローラが追加するプロパティと同じプロパティ名のものがあればエラー
+				throwFwError(ERR_CODE_CONTROLLER_SAME_PROPERTY, [controllerName, prop], {
+					controllerDefObj: controllerDefObj
+				});
+			}
 		}
 	}
 
@@ -259,37 +241,46 @@
 	 *
 	 * @private
 	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
-	 * @returns {Boolean} 循環参照になっているかどうか(true=循環参照)
+	 * @param {String} controllerName コントローラ名
 	 */
-	function validateControllerCircularRef(controllerDefObject) {
-		var validateCircular = function(controllerDef, ancestors) {
-			for ( var prop in controllerDef)
-				if ($.inArray(controllerDef, ancestors) >= 0 || endsWith(prop, SUFFIX_CONTROLLER)
-						&& validateCircular(controllerDef[prop], ancestors.concat([controllerDef]))) {
-					return true;
-				}
-			return false;
-		};
-		return validateCircular(controllerDefObject, []);
+	function validateControllerCircularRef(controllerDefObject, controllerName) {
+		function validateCircular(controllerDef, ancestors) {
+			if ($.inArray(controllerDef, ancestors) !== -1) {
+				// 循環参照エラー
+				throwFwError(ERR_CODE_CONTROLLER_CIRCULAR_REF, [controllerName], {
+					controllerDefObj: controllerDefObject
+				});
+			}
+			// 子コントローラをチェック
+			childControllerEach(controllerDef, function(controller) {
+				validateCircular(controller, ancestors.concat([controllerDef]));
+			}, true);
+		}
+		validateCircular(controllerDefObject, []);
 	}
 
 	/**
-	 * コントローラ定義オブジェクトのロジック定義が循環参照になっているかどうかをチェックします。
+	 * コントローラ定義オブジェクトが持つロジック定義それぞれについて循環参照になっているかどうかをチェックします。
 	 *
 	 * @private
 	 * @param {Object} controllerDefObj コントローラ定義オブジェクト
 	 * @returns {Boolean} 循環参照になっているかどうか(true=循環参照)
 	 */
-	function validateLogicCircularRef(controllerDefObj) {
-		var validateCircular = function(controllerDef, ancestors) {
-			for ( var prop in controllerDef)
-				if ($.inArray(controllerDef, ancestors) >= 0 || endsWith(prop, SUFFIX_LOGIC)
-						&& validateCircular(controllerDef[prop], ancestors.concat([controllerDef]))) {
-					return true;
-				}
-			return false;
-		};
-		return validateCircular(controllerDefObj, []);
+	function validateLogicCircularRef(controllerDefObj, controllerName) {
+		function validateCircular(logic, ancestors) {
+			if ($.inArray(logic, ancestors) !== -1) {
+				// 循環参照エラー
+				throwFwError(ERR_CODE_LOGIC_CIRCULAR_REF, [controllerName], {
+					controllerDefObj: controllerDefObj
+				});
+			}
+			childLogicEach(logic, function(child) {
+				validateCircular(child, ancestors.concat(logic));
+			});
+		}
+		childLogicEach(controllerDefObj, function(logic) {
+			validateCircular(controllerDefObj, []);
+		});
 	}
 
 	/**
@@ -298,10 +289,9 @@
 	 * @private
 	 * @param {DOM|jQuery|String} targetElement
 	 * @param {Object} controllerDefObj コントローラ定義オブジェクト
+	 * @param {String} controllerName コントローラ名
 	 */
-	function validateTargetElement(targetElement, controllerDefObj) {
-		var controllerName = controllerDefObj.__name;
-
+	function validateTargetElement(targetElement, controllerDefObj, controllerName) {
 		// null,undefinedならエラー
 		if (targetElement == null) {
 			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controllerName], {
@@ -482,23 +472,9 @@
 			if ($.isFunction(logic[prop])) {
 				logic[prop] = createWeavedFunction(logic[prop], prop, getInterceptors(logic.__name,
 						prop));
-			} else {
-				logic[prop] = logic[prop];
 			}
 		}
 		return logic;
-	}
-
-	/**
-	 * コントローラ定義オブジェクトのプロパティがライフサイクルイベントどうかを返します。
-	 *
-	 * @private
-	 * @param {Object} controllerDefObject コントローラ定義オブジェクト
-	 * @param {String} prop プロパティ名
-	 * @returns {Boolean} コントローラ定義オブジェクトのプロパティがライフサイクルイベントかどうか
-	 */
-	function isLifecycleProperty(controllerDefObject, prop) {
-		return (prop === '__ready' || prop === '__construct' || prop === '__init' || prop === '__postInit');
 	}
 
 	/**
@@ -510,7 +486,7 @@
 	 * @returns {Boolean} コントローラの外側の要素を指しているかどうか
 	 */
 	function isGlobalSelector(selector) {
-		return !!selector.match(/^\{.*\}$/);
+		return GLOBAL_SELECTOR_REGEXP.test(selector);
 	}
 
 	/**
@@ -521,7 +497,7 @@
 	 * @returns {Boolean} jQuery.bindを使って要素にイベントをバインドするかどうか
 	 */
 	function isBindRequested(eventName) {
-		return !!eventName.match(/^\[.*\]$/);
+		return BIND_REQUESTED_REGEXP.test(eventName);
 	}
 
 	/**
@@ -584,19 +560,35 @@
 	 * @private
 	 * @param {Object} controller コントローラ
 	 * @param {String} prop プロパティ名
+	 * @param {Boolean} isDefObj 定義オブジェクトについての判定かどうか。定義オブジェクトならparentControllerが一致するかどうかは見ない。
 	 * @returns {Boolean} コントローラのプロパティが第1引数のコントローラの子コントローラかどうか(true=子コントローラである)
 	 */
-	function isChildController(controller, prop) {
+	function isChildController(controller, prop, isDefObj) {
 		var target = controller[prop];
 		// プロパティがrootControllerまたはparentControllerの場合はfalse
 		// __controllerContextがない(コントローラインスタンスではないまたはdispose済みコントローラインスタンス)の場合はfalse
 		// 子コントローラでない(isRootがtrue)の場合はfalse
 		// parentControllerを見て、自分の子供ならtrueを返す。
 		// ただし、parentController未設定(コントローラ化処理の途中)の場合はtrueを返す。
-		return endsWith(prop, SUFFIX_CONTROLLER) && prop !== 'rootController'
-				&& prop !== 'parentController' && target && target.__controllerContext
-				&& !target.__controllerContext.isRoot
-				&& (!target.parentController || target.parentController === controller);
+		return endsWith(prop, SUFFIX_CONTROLLER)
+				&& prop !== 'rootController'
+				&& prop !== 'parentController'
+				&& target
+				&& (isDefObj || (target.__controllerContext && !target.__controllerContext.isRoot && (!target.parentController || target.parentController === controller)));
+	}
+
+	/**
+	 * ロジックのプロパティが自分自身の子ロジックであるかどうかを返します。
+	 *
+	 * @private
+	 * @param {Object} logic ロジックまたはコントローラ(コントローラを指定した時は、そのコントローラが持つロジックかどうかを返す)
+	 * @param {String} prop プロパティ名
+	 * @returns {Boolean} ロジックのプロパティが第1引数のロジックの子ロジックかどうか(true=子ロジックである)
+	 */
+	function isChildLogic(logic, prop) {
+		var target = logic[prop];
+		// hasOwnPropertyがtrueで、"Logic"で終わっているプロパティ名のものは子ロジック。ロジック化の対象になる。
+		return logic.hasOwnProperty(prop) && endsWith(prop, SUFFIX_LOGIC)
 	}
 
 	/**
@@ -611,12 +603,65 @@
 	 * @private
 	 * @param {Object} controller
 	 * @param {Function} callback 引数に各コントローラとプロパティ名が渡されます。
+	 * @param {Boolean} isDefObj
+	 *            定義オブジェクトについての実行かどうか。定義オブジェクトなら子コントローラを探索するときにparentControllerが一致するかどうかは見ない。
 	 * @returns 中断された場合はfalseを返します
 	 */
-	function childControllerEach(controller, callback) {
-		for ( var prop in controller) {
-			if (isChildController(controller, prop)) {
+	function childControllerEach(controller, callback, isDefObj) {
+		// 定義オブジェクトならcacheManagerからキャッシュを取得(ない場合はnull)
+		// コントローラインスタンスなら__controllerContextからキャッシュを取得
+		var cache = isDefObj ? h5.core.controllerCacheManager.get(controller.__name)
+				: (controller.__controllerContext && controller.__controllerContext.cache);
+		// キャッシュがあるなら、キャッシュを使ってループ
+		if (cache) {
+			for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
+				var prop = cache.childControllerProperties[i];
 				if (false === callback(controller[prop], controller, prop)) {
+					return false;
+				}
+			}
+			return;
+		}
+		// キャッシュがないなら探索しながらループ
+		for ( var prop in controller) {
+			if (isChildController(controller, prop, isDefObj)) {
+				if (false === callback(controller[prop], controller, prop)) {
+					return false;
+				}
+			}
+		}
+	}
+
+	/**
+	 * 指定されたロジック直下の子ロジックについて、コールバックを実行します
+	 *
+	 * <pre>
+	 * function(logic, parentLogic, prop) {}
+	 * </pre>
+	 *
+	 * のような関数を指定してください。falseが返されたら中断します。
+	 *
+	 * @private
+	 * @param {Logic|Object} logic ロジックまたは、まだインスタンス化されていないロジック定義オブジェクト
+	 * @param {Function} callback 引数に各ロジックとプロパティ名が渡されます。
+	 * @returns 中断された場合はfalseを返します
+	 */
+	function childLogicEach(logic, callback) {
+		// キャッシュがあるなら、キャッシュを使ってループ
+		var cache = h5.core.logicCacheManager.get(logic.__name);
+		if (cache) {
+			for (var i = 0, l = cache.childLogicProperties.length; i < l; i++) {
+				var prop = cache.childLogicProperties[i];
+				if (false === callback(logic[prop], logic, prop)) {
+					return false;
+				}
+			}
+			return;
+		}
+		// キャッシュがないなら探索しながらループ
+		for ( var prop in logic) {
+			if (isChildLogic(logic, prop)) {
+				if (false === callback(logic[prop], logic, prop)) {
 					return false;
 				}
 			}
@@ -728,23 +773,21 @@
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
-	 * @param {Controller} parent 親コントローラ
-	 * @param {String} prop parentがあるとき、parentがcontrollerを参照しているプロパティ名
 	 */
-	function bindByBindMap(controller, parent, prop) {
-		// 親コントローラの__metaからこのコントローラについてuseHandlersの定義を取得
-		var useHandlers = parent && parent.__meta && parent.__meta[prop]
-				&& parent.__meta[prop].useHandlers;
-		if (useHandlers === false) {
-			// 親のuseHandlersでfalseが指定されていた場合は何もしない
-			return;
-		}
-		var bindMap = controller.__controllerContext.bindMap;
-		for ( var s in bindMap) {
-			for ( var e in bindMap[s]) {
-				(function(selector, eventName) {
-					bindEventHandler(controller, selector, eventName);
-				})(s, e);
+	function bindByBindMap(controller) {
+		var bindMap = controller.__controllerContext.cache.bindMap;
+		for ( var p in bindMap) {
+			var bindObj = createBindObj(controller, bindMap[p]);
+			if (!$.isArray(bindObj)) {
+				// アンバインドマップにハンドラを追加
+				registerUnbindList(bindObj, bindMap[p]);
+				bindByBindObject(bindObj, bindMap[p]);
+			} else {
+				for (var i = 0, l = bindObj.length; i < l; i++) {
+					// アンバインドマップにハンドラを追加
+					registerUnbindList(bindObj[i], bindMap[p]);
+					bindByBindObject(bindObj[i], bindMap[p]);
+				}
 			}
 		}
 	}
@@ -754,17 +797,14 @@
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
-	 * @param {String} selector セレクタ
-	 * @param {String} eventName イベント名
+	 * @param {Object} eventHandlerInfo バインドマップに登録されているイベントハンドラの情報
+	 * @returns {Object|Object[]} バインドオブジェクト
 	 */
-	function bindEventHandler(controller, selector, eventName) {
-		// bindMapに格納しておいたハンドラを取得
-		var func = controller.__controllerContext.bindMap[selector][eventName];
-		var event = eventName;
-		var bindRequested = isBindRequested(eventName);
-		if (bindRequested) {
-			event = trimBindEventBracket(eventName);
-		}
+	function createBindObj(controller, eventHandlerInfo) {
+		var selector = eventHandlerInfo.selector;
+		var event = eventHandlerInfo.eventName;
+		// ハンドラを取得(アスペクト適用済み)
+		var func = controller[eventHandlerInfo.propertyKey];
 		var bindObj = null;
 		switch (event) {
 		case 'mousewheel':
@@ -780,13 +820,26 @@
 			break;
 		}
 
-		if (!$.isArray(bindObj)) {
-			useBindObj(bindObj, bindRequested);
-			return;
+		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
+		// unbindListにラップしたものが登録されるように、このタイミングで行う必要がある
+		function wrapHandler(obj) {
+			var handler = obj.handler;
+			obj.handler = function(/* var args */) {
+				var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(arguments[0].currentTarget)
+						: arguments[0].currentTarget;
+				handler.call(obj.controller, createEventContext(obj, arguments),
+						currentTargetShortcut);
+			};
 		}
-		for (var i = 0, l = bindObj.length; i < l; i++) {
-			useBindObj(bindObj[i], bindRequested);
+		if ($.isArray(bindObj)) {
+			for (var i = 0, l = bindObj.length; i < l; i++) {
+				wrapHandler(bindObj[i]);
+			}
+		} else {
+			wrapHandler(bindObj);
 		}
+
+		return bindObj;
 	}
 
 	/**
@@ -794,28 +847,27 @@
 	 *
 	 * @private
 	 * @param {Object} bindObj バインドオブジェクト
+	 * @param {Object} eventHandlerInfo バインドマップに登録されているイベントハンドラの情報
 	 */
-	function bindByBindObject(bindObj) {
+	function bindByBindObject(bindObj, eventHandlerInfo) {
 		var controller = bindObj.controller;
 		var rootElement = controller.rootElement;
 		var selector = bindObj.selector;
-		var eventName = bindObj.eventName;
+		var event = bindObj.eventName;
 		var handler = bindObj.handler;
-		var useBind = isBindRequested(eventName);
-		var event = useBind ? trimBindEventBracket(eventName) : eventName;
+		var useBind = eventHandlerInfo.bindRequested;
+		var isGlobal = eventHandlerInfo.global;
 		var doc = getDocumentOf(rootElement);
-		var isGlobal = isGlobalSelector(selector);
 
 		if (isGlobal) {
 			// グローバルなセレクタの場合
-			var selectorTrimmed = trimGlobalSelectorBracket(selector);
 			var isSelf = false;
 			var selectTarget;
-			if (selectorTrimmed === ROOT_ELEMENT_NAME) {
+			if (selector === ROOT_ELEMENT_NAME) {
 				selectTarget = rootElement;
 				isSelf = true;
 			} else {
-				selectTarget = getGlobalSelectorTarget(selectorTrimmed, doc);
+				selectTarget = getGlobalSelectorTarget(selector, doc);
 			}
 
 			// バインド対象がオブジェクトの場合、必ず直接バインドする
@@ -861,87 +913,54 @@
 	}
 
 	/**
-	 * バインドオブジェクトに対して必要であればイベント名を修正し、アンバインドマップにハンドラを追加した後、 実際にバインドを行います。
-	 *
-	 * @private
-	 * @param {Object} bindObj バインドオブジェクト
-	 * @param {Boolean} bindRequested イベントハンドラをバインド([]記法)すべきかどうか
-	 */
-	function useBindObj(bindObj, bindRequested) {
-		if (bindRequested) {
-			bindObj.eventName = '[' + bindObj.eventName + ']';
-		}
-		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
-		// unbindMapにラップしたものが登録されるように、このタイミングで行う必要がある
-		var handler = bindObj.handler;
-
-		bindObj.handler = function(/* var args */) {
-			var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(arguments[0].currentTarget)
-					: arguments[0].currentTarget;
-			handler.call(bindObj.controller, createEventContext(bindObj, arguments),
-					currentTargetShortcut);
-		};
-		// アンバインドマップにハンドラを追加
-		registerUnbindMap(bindObj.controller, bindObj.selector, bindObj.eventName, bindObj.handler);
-		bindByBindObject(bindObj);
-	}
-
-	/**
 	 * バインドマップに基づいてイベントハンドラをアンバインドします。
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
-	 * @param {Controller} parent 親コントローラ
-	 * @param {String} prop parentがあるとき、parentがcontrollerを参照しているプロパティ名
 	 */
-	function unbindByBindMap(controller, parent, prop) {
+	function unbindEventHandlers(controller) {
 		var rootElement = controller.rootElement;
 		if (!rootElement) {
 			// ルートエレメントが設定される前のunbind(=イベントハンドリング前)なら何もしない
 			return;
 		}
-		// 親コントローラの__metaからこのコントローラについてuseHandlersの定義を取得
-		var useHandlers = parent && parent.__meta && parent.__meta[prop]
-				&& parent.__meta[prop].useHandlers;
-		if (useHandlers === false) {
-			// 親のuseHandlersでfalseが指定されていた場合は何もしない
-			return;
-		}
 
 		// ドキュメントはrootElementのownerDocument。rootElement自体がdocumentノードならrootElement。
 		var doc = getDocumentOf(rootElement);
-		var unbindMap = controller.__controllerContext.unbindMap;
+		var unbindHandlerList = controller.__controllerContext.unbindHandlerList;
 
-		for ( var selector in unbindMap) {
-			for ( var eventName in unbindMap[selector]) {
-				var handler = unbindMap[selector][eventName];
-				var useBind = isBindRequested(eventName);
-				var event = useBind ? trimBindEventBracket(eventName) : eventName;
-				if (isGlobalSelector(selector)) {
-					var selectTarget = trimGlobalSelectorBracket(selector);
-					var isSelf = false;
-					if (selectTarget === ROOT_ELEMENT_NAME) {
-						selectTarget = rootElement;
-						isSelf = true;
-					} else {
-						if (getWindowOfDocument(doc) == null) {
-							// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
-							continue;
-						}
-						selectTarget = getGlobalSelectorTarget(selectTarget, doc);
-					}
-
-					if (isSelf || useBind || !isString(selectTarget)) {
-						$(selectTarget).unbind(event, handler);
-					} else {
-						$(doc).undelegate(selectTarget, event, handler);
-					}
+		for (var i = 0, l = unbindHandlerList.length; i < l; i++) {
+			var eventHandlerInfo = unbindHandlerList[i].eventHandlerInfo;
+			var bindObj = unbindHandlerList[i].bindObj;
+			var selector = eventHandlerInfo.selector;
+			var handler = bindObj.handler;
+			var useBind = eventHandlerInfo.bindRequested;
+			var event = eventHandlerInfo.eventName;
+			var isGlobal = eventHandlerInfo.global;
+			if (isGlobal) {
+				var selectTarget = selector;
+				var isSelf = false;
+				if (selectTarget === ROOT_ELEMENT_NAME) {
+					selectTarget = rootElement;
+					isSelf = true;
 				} else {
-					if (useBind) {
-						$(selector, rootElement).unbind(event, handler);
-					} else {
-						$(rootElement).undelegate(selector, event, handler);
+					if (getWindowOfDocument(doc) == null) {
+						// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
+						continue;
 					}
+					selectTarget = getGlobalSelectorTarget(selectTarget, doc);
+				}
+
+				if (isSelf || useBind || !isString(selectTarget)) {
+					$(selectTarget).unbind(event, handler);
+				} else {
+					$(doc).undelegate(selectTarget, event, handler);
+				}
+			} else {
+				if (useBind) {
+					$(selector, rootElement).unbind(event, handler);
+				} else {
+					$(rootElement).undelegate(selector, event, handler);
 				}
 			}
 		}
@@ -1032,7 +1051,7 @@
 				return;
 			}
 
-			var callback, promises, isChildFirst;
+			var callback, promises;
 
 			// ライフサイクルイベント名で場合分けして、待機するプロミスの取得と実行するコールバックの作成と子優先かどうかの決定を行う
 			// __postInit, __readyは子から先に実行する
@@ -1041,24 +1060,24 @@
 				promises = getPromisesForInit(c);
 			} else if (funcName === '__postInit') {
 				callback = createCallbackForPostInit(c);
-				promises = getPromisesForPostInit(c);
+				promises = getDescendantControllerPromises(c, 'postInitPromise');
 				isChildFirst = true;
 			} else {
 				callback = createCallbackForReady(c);
-				promises = getPromisesForReady(c);
+				promises = getDescendantControllerPromises(c, 'readyPromise');
 				isChildFirst = true;
 			}
 
 			// promisesが空の配列の場合はfunc()は同期的に呼ばれる
 			// whenが失敗した時commonFailHandlerが発火しないようにするため、dummyのfailハンドラを登録する
-			h5.async.when(promises).done(createLifecycleCaller(c, funcName, callback)).fail(
+			$.when.apply($, promises).done(createLifecycleCaller(c, funcName, callback)).fail(
 					dummyFailHandler);
 		}
 		controllerGroupEach(controller, execInner);
 	}
 
 	/**
-	 * __initイベントを実行するために必要なPromiseを返します。
+	 * __postInitイベントを実行するために必要なPromiseを返します。
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
@@ -1070,30 +1089,6 @@
 		// 自身のテンプレート用Promiseオブジェクトを取得
 		initPromises.push(controller.preinitPromise);
 		return initPromises;
-	}
-
-	/**
-	 * __postInitイベントを実行するために必要なPromiseを返します。
-	 *
-	 * @private
-	 * @param {Controller} controller コントローラ
-	 * @returns {Promise[]} Promiseオブジェクト
-	 */
-	function getPromisesForPostInit(controller) {
-		// 子孫コントローラのpostInitPromiseオブジェクトを取得
-		return getDescendantControllerPromises(controller, 'postInitPromise');
-	}
-
-	/**
-	 * __readyイベントを実行するために必要なPromiseを返します。
-	 *
-	 * @private
-	 * @param {Controller} controller コントローラ
-	 * @returns {Promise[]} Promiseオブジェクト
-	 */
-	function getPromisesForReady(controller) {
-		// 子孫コントローラのreadyPromiseオブジェクトを取得
-		return getDescendantControllerPromises(controller, 'readyPromise');
 	}
 
 	/**
@@ -1134,7 +1129,7 @@
 						target = rootElement;
 					}
 					// ターゲット要素のチェック
-					validateTargetElement(target, c.__controllerContext.controllerDef);
+					validateTargetElement(target, c.__controllerContext.controllerDef, c.__name);
 					// ルートエレメントの設定
 					c.rootElement = target;
 					// コントローラのviewにコントローラを設定
@@ -1193,7 +1188,16 @@
 			if (!isDisposed(controller) && controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば次の処理
 				// イベントハンドラのバインド
-				controllerGroupEach(controller, bindByBindMap);
+				controllerGroupEach(controller, function(c, parent, prop) {
+					// 親コントローラの__metaからこのコントローラについてuseHandlersの定義を取得
+					var useHandlers = parent && parent.__meta && parent.__meta[prop]
+							&& parent.__meta[prop].useHandlers;
+					if (useHandlers === false) {
+						// 親のuseHandlersでfalseが指定されていた場合は何もしない
+						return;
+					}
+					bindByBindMap(c);
+				});
 				// __readyの実行
 				triggerReady(controller);
 			}
@@ -1280,16 +1284,14 @@
 	 * ハンドラをアンバインドマップに登録します。
 	 *
 	 * @private
-	 * @param {Controller} controller コントローラ
-	 * @param {String} selector セレクタ
-	 * @param {String} eventName イベント名
-	 * @param {Function} handler ハンドラ
+	 * @param {Object} bindObj
+	 * @param {Object} eventHandlerInfo イベントハンドラ情報
 	 */
-	function registerUnbindMap(controller, selector, eventName, handler) {
-		if (!controller.__controllerContext.unbindMap[selector]) {
-			controller.__controllerContext.unbindMap[selector] = {};
-		}
-		controller.__controllerContext.unbindMap[selector][eventName] = handler;
+	function registerUnbindList(bindObj, eventHandlerInfo) {
+		bindObj.controller.__controllerContext.unbindHandlerList.push({
+			bindObj: bindObj,
+			eventHandlerInfo: eventHandlerInfo
+		});
 	}
 
 	/**
@@ -2011,7 +2013,9 @@
 		var propertyArray = ['postInitDfd', 'readyDfd'];
 
 		// ルートからinitDfd.rejectしていく
+		var controllers = [];
 		controllerGroupEach(controller, function(c) {
+			controllers.push(c);
 			var dfd = c.__controllerContext['initDfd'];
 			if (dfd && !isRejected(dfd) && !isResolved(dfd)) {
 				// thisをDfdを持つコントローラにしてreject
@@ -2022,14 +2026,15 @@
 		// 子からpostInitDfd, readyDfdをrejectしていく
 		for (var i = 0, l = propertyArray.length; i < l; i++) {
 			var property = propertyArray[i];
-			controllerGroupEach(controller, function(c) {
-				var property = propertyArray[i];
+			// initDfdと逆順
+			for (var index = controllers.length - 1; index >= 0; index--) {
+				var c = controllers[index];
 				var dfd = c.__controllerContext[property];
 				if (dfd && !isRejected(dfd) && !isResolved(dfd)) {
 					// thisをDfdを持つコントローラにしてreject
 					dfd.rejectWith(c, [errorObj]);
 				}
-			}, true);
+			}
 		}
 	}
 
@@ -2218,18 +2223,11 @@
 			isRoot: isRoot,
 
 			/**
-			 * バインド対象となるイベントハンドラのマップ.
-			 *
-			 * @type Object
-			 */
-			bindMap: {},
-
-			/**
 			 * アンバインド対象となるイベントハンドラのマップ.
 			 *
 			 * @type Object
 			 */
-			unbindMap: {},
+			unbindHandlerList: [],
 
 			/**
 			 * コントローラ定義オブジェクト
@@ -2728,9 +2726,17 @@
 
 			executeLifeEndChain(this, '__unbind');
 
-			controllerGroupEach(this, unbindByBindMap);
+			controllerGroupEach(this, function(c, parent, prop) {
+				// 親のuseHandlersでfalseが指定されていた場合は何もしない
+				var useHandlers = parent && parent.__meta && parent.__meta[prop]
+						&& parent.__meta[prop].useHandlers;
+				if (useHandlers === false) {
+					return;
+				}
+				unbindEventHandlers(c);
+			});
 
-			this.__controllerContext.unbindMap = {};
+			this.__controllerContext.unbindList = {};
 
 			// コントローラマネージャの管理対象から外す.
 			var controllers = h5.core.controllerManager.controllers;
@@ -3053,6 +3059,199 @@
 		}
 	});
 
+	/**
+	 * キャッシュマネージャクラス
+	 * <p>
+	 * コントローラキャッシュマネージャとロジックキャッシュマネージャのスーパークラス
+	 * </p>
+	 *
+	 * @name CacheManager
+	 * @class
+	 */
+	function CacheManager() {
+		this._init();
+	}
+	$.extend(CacheManager.prototype, {
+		register: function(name, cache) {
+			this.cacheMap[name] = cache;
+		},
+
+		/**
+		 * コントローラの名前からキャッシュを取り出す。 無ければnullを返す。
+		 *
+		 * @param {String} name
+		 */
+		get: function(name) {
+			return this._cacheMap[name];
+		},
+
+		/**
+		 * キャッシュを登録する。
+		 */
+		register: function(name, cacheObj) {
+			this._cacheMap[name] = cacheObj;
+		},
+
+		/**
+		 * 指定された名前のコントローラのキャッシュをクリア
+		 *
+		 * @param {String} name
+		 */
+		clear: function(name) {
+			delete this._cacheMap[name];
+		},
+
+		/**
+		 * キャッシュを全てクリア
+		 */
+		clearAll: function() {
+			var map = this._cacheMap;
+			for ( var p in map) {
+				delete map[p];
+			}
+		},
+
+		/**
+		 * 初期化処理
+		 */
+		_init: function() {
+			this._cacheMap = {};
+		}
+	});
+
+	/**
+	 * コントローラキャッシュマネージャクラス
+	 *
+	 * @name ControllerCacheManager
+	 * @class
+	 */
+	function ControllerCacheManager() {
+		this._init();
+	}
+	$.extend(ControllerCacheManager.prototype, CacheManager.prototype, {
+		/**
+		 * コントローラの定義オブジェクトからコントローラキャッシュオブジェクトを作ります
+		 *
+		 * @param {String} name コントローラ名
+		 * @param {Object} controllerDef コントローラ定義オブジェクト
+		 * @returns {Object} キャッシュオブジェクト
+		 */
+		create: function(name, controllerDef) {
+			var cache = {
+				// ロジックのプロパティ
+				logicProperties: [],
+				// イベントハンドランプロパティ
+				eventHandlerProperties: [],
+				// 関数のプロパティ
+				functionProperties: [],
+				// その他、コントローラインスタンスに持たせるプロパティ
+				otherProperties: [],
+				// バインドマップ
+				bindMap: {},
+				// 子コントローラのプロパティ
+				childControllerProperties: []
+			};
+			// 同じセレクタかつ同じイベントに複数のハンドラが指定されているかをチェックするためのマップ
+			var checkBindMap = {};
+
+			for ( var prop in controllerDef) {
+				if (isEventHandler(controllerDef, prop)) {
+					// イベントハンドラのキー
+					cache.eventHandlerProperties.push(prop);
+					// イベントハンドラの場合
+					// bindMapの作成
+					var propTrimmed = $.trim(prop);
+					var lastIndex = propTrimmed.lastIndexOf(' ');
+					var selector = $.trim(propTrimmed.substring(0, lastIndex));
+					var eventName = $
+							.trim(propTrimmed.substring(lastIndex + 1, propTrimmed.length));
+					var global = isGlobalSelector(selector);
+					var bindRequested = isBindRequested(eventName);
+					if (bindRequested) {
+						eventName = $.trim(trimBindEventBracket(eventName));
+					}
+
+					if (global) {
+						var selector = trimGlobalSelectorBracket(selector);
+						if (selector === 'this') {
+							throwFwError(ERR_CODE_EVENT_HANDLER_SELECTOR_THIS,
+									[controllerDef.__name], {
+										controllerDef: controllerDef
+									});
+						}
+					}
+					if (!checkBindMap[selector]) {
+						checkBindMap[selector] = {};
+					}
+
+					// 同じセレクタ、同じイベントハンドラに同じ指定(global,bindRequested)でイベントハンドラが指定されていたらエラー
+					if (checkBindMap[selector][eventName]
+							&& checkBindMap[selector][eventName].global === global
+							&& checkBindMap[selector][eventName].bindRequested === bindRequested) {
+						throwFwError(ERR_CODE_SAME_EVENT_HANDLER, [controllerDef.__name, selector,
+								eventName], {
+							controllerDef: controllerDef
+						});
+					} else {
+						checkBindMap[selector][eventName] = {
+							global: global,
+							bindRequested: bindRequested
+						};
+					}
+
+					cache.bindMap[prop] = {
+						selector: selector,
+						global: global,
+						bindRequested: bindRequested,
+						eventName: eventName,
+						propertyKey: prop
+					};
+				} else if (endsWith(prop, SUFFIX_CONTROLLER) && controllerDef[prop]
+						&& !$.isFunction(controllerDef[prop])) {
+					// 子コントローラ
+					cache.childControllerProperties.push(prop);
+				} else if (endsWith(prop, SUFFIX_LOGIC) && controllerDef[prop]
+						&& !$.isFunction(controllerDef[prop])) {
+					// ロジック
+					cache.logicProperties.push(prop);
+				} else if ($.isFunction(controllerDef[prop])) {
+					// メソッド(ライフサイクル含む)
+					cache.functionProperties.push(prop);
+				} else {
+					// その他プロパティ
+					cache.otherProperties.push(prop);
+				}
+			}
+			return cache;
+		}
+	});
+
+	/**
+	 * ロジックキャッシュマネージャクラス
+	 *
+	 * @name LogicCacheManager
+	 * @class
+	 */
+	function LogicCacheManager() {
+		this._init();
+	}
+	$.extend(LogicCacheManager.prototype, CacheManager.prototype, {
+		create: function(logicDef) {
+			var cache = {
+				childLogicProperties: [],
+				functionProperties: []
+			};
+			for ( var p in logicDef) {
+				if (isChildLogic(logicDef, p)) {
+					cache.childLogicProperties.push(p);
+				} else if ($.isFunction(logicDef[p])) {
+					cache.functionProperties.push(p);
+				}
+			}
+			return cache;
+		}
+	});
+
 	h5.u.obj.expose('h5.core', {
 		/**
 		 * コントローラマネージャ
@@ -3061,26 +3260,47 @@
 		 * @type ControllerManager
 		 * @memberOf h5.core
 		 */
-		controllerManager: new ControllerManager()
+		controllerManager: new ControllerManager(),
+
+		/**
+		 * コントローラキャッシュマネージャ
+		 *
+		 * @name controllerCacheManager
+		 * @type controllerCacheManager
+		 * @memberOf h5.core
+		 */
+		controllerCacheManager: new ControllerCacheManager(),
+
+		/**
+		 * ロジックキャッシュマネージャ
+		 *
+		 * @name logicCacheManager
+		 * @type logicCacheManager
+		 * @memberOf h5.core
+		 */
+		logicCacheManager: new LogicCacheManager()
 	});
 
 	// プロパティ重複チェック用のコントローラプロパティマップを作成
-	var controllerPropertyMap = {};
-	var tempInstance = new Controller(null, 'a');
-	for ( var p in tempInstance) {
-		if (tempInstance.hasOwnProperty(p) && p !== '__name' && p !== '__templates'
-				&& p !== '__meta') {
-			controllerPropertyMap[p] = 1;
+	var controllerPropertyMap = (function() {
+		var ret = {};
+		var tempInstance = new Controller(null, 'a');
+		for ( var p in tempInstance) {
+			if (tempInstance.hasOwnProperty(p) && p !== '__name' && p !== '__templates'
+					&& p !== '__meta') {
+				ret[p] = 1;
+			}
 		}
-	}
-	tempInstance = null;
-	var proto = Controller.prototype;
-	for ( var p in proto) {
-		if (proto.hasOwnProperty(p)) {
-			controllerPropertyMap[p] = 1;
+		tempInstance = null;
+		var proto = Controller.prototype;
+		for ( var p in proto) {
+			if (proto.hasOwnProperty(p)) {
+				ret[p] = 1;
+			}
 		}
-	}
-	proto = null;
+		proto = null;
+		return ret;
+	})();
 
 	/**
 	 * コントローラのファクトリ
@@ -3107,13 +3327,57 @@
 		// 初期化開始のログ
 		fwLogger.debug(FW_LOG_INIT_CONTROLLER_BEGIN, controllerName);
 
+		// 初期化パラメータがオブジェクトかどうかチェック
+		if (param && !$.isPlainObject(param)) {
+			throwFwError(ERR_CODE_CONTROLLER_INVALID_INIT_PARAM, [controllerName], {
+				controllerDefObj: controllerDefObj
+			});
+		}
+
+		// 既にコントローラ化されているかどうかチェック
+		if (controllerDefObj.__controllerContext) {
+			throwFwError(ERR_CODE_CONTROLLER_ALREADY_CREATED, null, {
+				controllerDefObj: controllerDefObj
+			});
+		}
+
+		// キャッシュの取得(無かったらundefined)
+		var cache = h5.core.controllerCacheManager.get(controllerName);
+
 		// コントローラ定義オブジェクトのチェック
-		validateControllerDef(isRoot, targetElement, controllerDefObj, param, controllerName);
+		// キャッシュがある場合はコントローラ定義オブジェクトについてはチェック済みなのでチェックしない
+		if (!cache) {
+			validateControllerDef(isRoot, targetElement, controllerDefObj, param, controllerName);
+		}
+
+		// 循環参照チェックはキャッシュが残っていても行う
+		// cache作成時にチェックしてOKだったとしても、子コントローラの中身が変わってしまっていることがあるため
+		if (isRoot) {
+			// コントローラの循環参照チェック(ルートコントローラで1度やればよい)
+			validateControllerCircularRef(controllerDefObj, controllerName);
+
+			// ロジックの循環参照チェック(ルートコントローラで1度やればよい)
+			validateLogicCircularRef(controllerDefObj, controllerName);
+		}
+
+		// キャッシュが無かった場合、キャッシュの作成と登録
+		if (!cache) {
+			cache = h5.core.controllerCacheManager.create(controllerName, controllerDefObj);
+			h5.core.controllerCacheManager.register(controllerName, cache);
+		}
+
+		if (isRoot) {
+			// ルートコントローラの場合はバインド対象となる要素のチェックを同期で行う
+			// (子コントローラの時は親の__init後にチェックしている)
+			// 文字列、オブジェクト(配列含む)でない場合はエラー (それぞれ、セレクタ、DOMオブジェクト(またはjQueryオブジェクト)を想定している)
+			validateTargetElement(targetElement, controllerDefObj, controllerName);
+		}
 
 		// new Controllerで渡すコントローラ定義オブジェクトはクローンしたものではなくオリジナルなものを渡す。
 		// コントローラが持つコントローラ定義オブジェクトはオリジナルのものになる。
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
 				controllerName, controllerDefObj, param, isRoot);
+
 
 		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
 		var templates = controllerDefObj.__templates;
@@ -3121,6 +3385,9 @@
 		var templatePromise = templateDfd.promise();
 		var preinitDfd = getDeferred();
 		var preinitPromise = preinitDfd.promise();
+
+		// cacheを持たせる
+		controller.__controllerContext.cache = cache;
 
 		// preinitDfd, preInitPromise, initDfd, initPromise, postInitDfd, postInitPromiseの設定
 		// preinitPromise, initPromise, postInitPromiseが失敗してもcommonFailHandlerを発火させないようにするため、dummyのfailハンドラを登録する
@@ -3185,70 +3452,43 @@
 			controller.rootController && controller.rootController.dispose(e);
 		});
 
-		var childControllerDefs = [];
-		for ( var prop in clonedControllerDef) {
-			if (controllerPropertyMap[prop]) {
-				// コントローラが追加するプロパティと同じプロパティ名のものがあればエラー
-				throwFwError(ERR_CODE_CONTROLLER_SAME_PROPERTY, [controllerName, prop], {
-					controllerDefObj: controllerDefObj
-				});
-			} else if (isEventHandler(clonedControllerDef, prop)) {
-				// イベントハンドラの場合
-				// bindMapの作成とアスペクトの設定を行う
-				var propTrimmed = $.trim(prop);
-				var lastIndex = propTrimmed.lastIndexOf(' ');
-				var selector = $.trim(propTrimmed.substring(0, lastIndex));
-				var eventName = $.trim(propTrimmed.substring(lastIndex + 1, propTrimmed.length));
-				if (isBindRequested(eventName)) {
-					eventName = '[' + $.trim(trimBindEventBracket(eventName)) + ']';
-				}
+		// 子コントローラをコントローラ化
+		// コントローラ化したものに差し替える
+		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
+			// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
+			var prop = cache.childControllerProperties[i];
+			controller[prop] = createAndBindController(null, $.extend(true, {},
+					clonedControllerDef[prop]), param, $.extend({
+				isInternal: true
+			}, fwOpt));
+		}
 
-				if (isGlobalSelector(selector)) {
-					var selectTarget = trimGlobalSelectorBracket(selector);
-					if (selectTarget === 'this') {
-						throwFwError(ERR_CODE_EVENT_HANDLER_SELECTOR_THIS, [controllerName], {
-							controllerDefObj: controllerDefObj
-						});
-					}
-				}
-				var bindMap = controller.__controllerContext.bindMap;
-				if (!bindMap[selector]) {
-					bindMap[selector] = {};
-				}
-				if (bindMap[selector][eventName]) {
-					throwFwError(ERR_CODE_SAME_EVENT_HANDLER,
-							[controllerName, selector, eventName], {
-								controllerDefObj: controllerDefObj
-							});
-				}
-				var weavedFunc = weaveControllerAspect(clonedControllerDef, prop, true);
-				bindMap[selector][eventName] = weavedFunc;
-				controller[prop] = weavedFunc;
-			} else if (endsWith(prop, SUFFIX_CONTROLLER) && clonedControllerDef[prop]
-					&& !$.isFunction(clonedControllerDef[prop])) {
-				// 子コントローラの場合
-				// バインド(コントローラ化)したものに差し替える。
-				// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
-				var c = createAndBindController(null,
-						$.extend(true, {}, clonedControllerDef[prop]), param, $.extend({
-							isInternal: true
-						}, fwOpt));
-				controller[prop] = c;
-			} else if (endsWith(prop, SUFFIX_LOGIC) && clonedControllerDef[prop]
-					&& !$.isFunction(clonedControllerDef[prop])) {
-				// ロジック
-				// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
-				// ロジックが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
-				var logicDef = controllerDefObj[prop];
-				controller[prop] = createLogic(logicDef);
-			} else if ($.isFunction(clonedControllerDef[prop])) {
-				// イベントハンドラではないメソッド(ライフサイクル含む)
-				// アスペクトを設定する
-				controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
-			} else {
-				// その他プロパティ
-				controller[prop] = clonedControllerDef[prop];
-			}
+		// ロジック定義をロジック化
+		// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
+		// ロジックが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
+		for (var i = 0, l = cache.logicProperties.length; i < l; i++) {
+			var prop = cache.logicProperties[i];
+			var logicDef = controllerDefObj[prop];
+			controller[prop] = createLogic(logicDef);
+		}
+
+		// イベントハンドラにアスペクトを設定
+		for (var i = 0, l = cache.eventHandlerProperties.length; i < l; i++) {
+			var prop = cache.eventHandlerProperties[i];
+			controller[prop] = weaveControllerAspect(clonedControllerDef, prop, true);
+		}
+
+		// イベントハンドラではないメソッド(ライフサイクル含む)にアスペクトを設定
+		for (var i = 0, l = cache.functionProperties.length; i < l; i++) {
+			var prop = cache.functionProperties[i];
+			// アスペクトを設定する
+			controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
+		}
+
+		// その他プロパティをコピー
+		for (var i = 0, l = cache.otherProperties.length; i < l; i++) {
+			var prop = cache.otherProperties[i];
+			controller[prop] = clonedControllerDef[prop];
 		}
 
 		if (isRoot) {
@@ -3334,12 +3574,11 @@
 		logic.own = own;
 		logic.ownWithOrg = ownWithOrg;
 
-		for ( var prop in logic) {
-			if (logic.hasOwnProperty(prop) && endsWith(prop, SUFFIX_LOGIC)) {
-				var target = logic[prop];
-				logic[prop] = createLogic(target);
-			}
-		}
+		// ロジックが持っているロジック定義もロジック化
+		childLogicEach(logic, function(logic, parent, prop) {
+			parent[prop] = createLogic(logic);
+		});
+
 		return logic;
 	}
 
