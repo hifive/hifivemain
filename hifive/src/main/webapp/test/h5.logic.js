@@ -63,6 +63,7 @@ $(function() {
 				},
 				teardown: function() {
 					$('#controllerTest').remove();
+					testutils.clearController();
 				}
 			});
 

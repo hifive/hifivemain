@@ -230,6 +230,7 @@ $(function() {
 			controllers[i].dispose();
 		}
 		h5.core.controllerManager.controllers = [];
+		h5.core.cacheManager.clearAll();
 	}
 
 	/**
@@ -289,7 +290,6 @@ $(function() {
 				start();
 			}
 		};
-
 		h5.ui.jqm.manager.define('test1', null, controllerDefObj);
 	});
 

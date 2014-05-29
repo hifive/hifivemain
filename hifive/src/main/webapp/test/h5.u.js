@@ -313,20 +313,24 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('html文字列をエスケープする', 4, function() {
-		var str = '<div id="a" class=\'b\'>hoge&amp;fuga<span>TEST</span>hoge.!</script>';
-		var escapeStr = h5.u.str.escapeHtml(str);
-		$('#qunit-fixture').append(escapeStr);
-		strictEqual(escapeStr,
-				'&lt;div id=&quot;a&quot; class=&#39;b&#39;&gt;hoge&amp;amp;fuga&lt;span&gt;TEST&lt;/span&gt;hoge.!&lt;/script&gt;',
-				'エスケープされること。結果：' + escapeStr);
-		strictEqual(h5.u.str.escapeHtml(0), 0, '文字列のみエスケープされること。');
-		strictEqual(h5.u.str.escapeHtml(undefined), undefined, '文字列のみエスケープされること。');
-		var obj = {
-			aaa: 10
-		};
-		strictEqual(h5.u.str.escapeHtml(obj), obj, '文字列のみエスケープされること。');
-	});
+	test(
+			'html文字列をエスケープする',
+			4,
+			function() {
+				var str = '<div id="a" class=\'b\'>hoge&amp;fuga<span>TEST</span>hoge.!</script>';
+				var escapeStr = h5.u.str.escapeHtml(str);
+				$('#qunit-fixture').append(escapeStr);
+				strictEqual(
+						escapeStr,
+						'&lt;div id=&quot;a&quot; class=&#39;b&#39;&gt;hoge&amp;amp;fuga&lt;span&gt;TEST&lt;/span&gt;hoge.!&lt;/script&gt;',
+						'エスケープされること。結果：' + escapeStr);
+				strictEqual(h5.u.str.escapeHtml(0), 0, '文字列のみエスケープされること。');
+				strictEqual(h5.u.str.escapeHtml(undefined), undefined, '文字列のみエスケープされること。');
+				var obj = {
+					aaa: 10
+				};
+				strictEqual(h5.u.str.escapeHtml(obj), obj, '文字列のみエスケープされること。');
+			});
 
 	//=============================
 	// Definition
@@ -1616,7 +1620,11 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('createInterceptor');
+	module('createInterceptor', {
+		teardown: function() {
+			testutils.clearController();
+		}
+	});
 
 	//=============================
 	// Body
@@ -1653,7 +1661,7 @@ $(function() {
 		deepEqual(ret, 100, '第二引数省略 関数そのものが実行されていること');
 	});
 
-	test('[build#min]インターセプタがpromiseを返した時、そのpromiseについてCommonFailHandlerの動作が阻害されていないこと', 1,
+	asyncTest('[build#min]インターセプタがpromiseを返した時、そのpromiseについてCommonFailHandlerの動作が阻害されていないこと', 1,
 			function() {
 				var dfd = h5.async.deferred();
 				var cfhFlag = false;
@@ -1683,6 +1691,8 @@ $(function() {
 					__name: 'TestController',
 					__ready: function() {
 						this.testLogic.test();
+						this.dispose();
+						start();
 					}
 				});
 				dfd.reject();

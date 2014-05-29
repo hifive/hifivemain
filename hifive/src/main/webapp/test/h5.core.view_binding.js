@@ -2084,10 +2084,7 @@ $(function() {
 			});
 		},
 		teardown: function() {
-			var controllers = h5.core.controllerManager.controllers;
-			for (var i = 0, l = controllers.length; i < l; i++) {
-				controllers[i] && controllers[i].dispose && controllers[i].dispose();
-			}
+			testutils.clearController();
 		}
 	});
 
@@ -2124,7 +2121,11 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('コメントビューにバインド');
+	module('コメントビューにバインド', {
+		teardown: function() {
+			testutils.clearController();
+		}
+	});
 
 	//=============================
 	// Body
@@ -2578,7 +2579,11 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('unbind');
+	module('unbind', {
+		teardown: function() {
+			testutils.clearController();
+		}
+	});
 
 	//=============================
 	// Body
@@ -2940,6 +2945,7 @@ $(function() {
 		},
 		teardown: function() {
 			cloneTestBinding.unbind();
+			testutils.clearController();
 		}
 	});
 
@@ -2993,7 +2999,6 @@ $(function() {
 		c.readyPromise.done(function() {
 			$('.hoge').click();
 		});
-
 	});
 
 	asyncTest('動的に生成(クローン)された要素の子孫要素でイベントが発火するか', 2, function() {
