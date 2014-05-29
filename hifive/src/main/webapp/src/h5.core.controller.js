@@ -804,23 +804,23 @@
 	 */
 	function createBindObjects(controller, eventHandlerInfo) {
 		var selector = eventHandlerInfo.selector;
-		var event = eventHandlerInfo.eventName;
+		var eventName = eventHandlerInfo.eventName;
 		// ハンドラを取得(アスペクト適用済み)
 		var func = controller[eventHandlerInfo.propertyKey];
 		// この関数の戻り値になるバインドオブジェクトの配列
 		// 結果は必ず配列になるようにする
 		var bindObjects;
-		switch (event) {
+		switch (eventName) {
 		case 'mousewheel':
-			bindObjects = getNormalizeMouseWheelBindObj(controller, selector, event, func);
+			bindObjects = getNormalizeMouseWheelBindObj(controller, selector, eventName, func);
 			break;
 		case EVENT_NAME_H5_TRACKSTART:
 		case EVENT_NAME_H5_TRACKMOVE:
 		case EVENT_NAME_H5_TRACKEND:
-			bindObjects = getH5TrackBindObj(controller, selector, event, func);
+			bindObjects = getH5TrackBindObj(controller, selector, eventName, func);
 			break;
 		default:
-			bindObjects = getNormalBindObj(controller, selector, event, func);
+			bindObjects = getNormalBindObj(controller, selector, eventName, func);
 			break;
 		}
 		// 配列にする
@@ -935,10 +935,10 @@
 		for (var i = 0, l = unbindHandlerList.length; i < l; i++) {
 			var eventHandlerInfo = unbindHandlerList[i].eventHandlerInfo;
 			var bindObj = unbindHandlerList[i].bindObj;
-			var selector = eventHandlerInfo.selector;
+			var selector = bindObj.selector;
 			var handler = bindObj.handler;
+			var eventName = bindObj.eventName;
 			var useBind = eventHandlerInfo.bindRequested;
-			var event = eventHandlerInfo.eventName;
 			var isGlobal = eventHandlerInfo.global;
 			if (isGlobal) {
 				var selectTarget = selector;
@@ -955,15 +955,15 @@
 				}
 
 				if (isSelf || useBind || !isString(selectTarget)) {
-					$(selectTarget).unbind(event, handler);
+					$(selectTarget).unbind(eventName, handler);
 				} else {
-					$(doc).undelegate(selectTarget, event, handler);
+					$(doc).undelegate(selectTarget, eventName, handler);
 				}
 			} else {
 				if (useBind) {
-					$(selector, rootElement).unbind(event, handler);
+					$(selector, rootElement).unbind(eventName, handler);
 				} else {
-					$(rootElement).undelegate(selector, event, handler);
+					$(rootElement).undelegate(selector, eventName, handler);
 				}
 			}
 		}
