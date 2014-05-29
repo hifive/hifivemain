@@ -147,11 +147,8 @@
 	// コントローラマネージャ。作成した時に値をセットしている。
 	var controllerManager;
 
-	// コントローラキャッシュマネージャ。作成した時に値をセットしている。
-	var controllerCacheManager;
-
-	// ロジックキャッシュマネージャ。作成した時に値をセットしている。
-	var logicCacheManager;
+	// キャッシュマネージャ。作成した時に値をセットしている。
+	var cacheManager;
 
 	// =========================================================================
 	//
@@ -617,7 +614,7 @@
 	function childControllerEach(controller, callback, isDefObj) {
 		// 定義オブジェクトならcacheManagerからキャッシュを取得(ない場合はnull)
 		// コントローラインスタンスなら__controllerContextからキャッシュを取得
-		var cache = isDefObj ? controllerCacheManager.get(controller.__name)
+		var cache = isDefObj ? cacheManager.get(controller.__name)
 				: (controller.__controllerContext && controller.__controllerContext.cache);
 		// キャッシュがあるなら、キャッシュを使ってループ
 		if (cache) {
@@ -655,10 +652,10 @@
 	 */
 	function childLogicEach(logic, callback) {
 		// キャッシュがあるなら、キャッシュを使ってループ
-		var cache = logicCacheManager.get(logic.__name);
+		var cache = cacheManager.get(logic.__name);
 		if (cache) {
-			for (var i = 0, l = cache.childLogicProperties.length; i < l; i++) {
-				var prop = cache.childLogicProperties[i];
+			for (var i = 0, l = cache.logicProperties.length; i < l; i++) {
+				var prop = cache.logicProperties[i];
 				if (false === callback(logic[prop], logic, prop)) {
 					return false;
 				}
@@ -2167,6 +2164,151 @@
 		}
 		viewLoad(0);
 	}
+	/**
+	 * コントローラキャッシュエントリークラス
+	 *
+	 * @private
+	 * @name ControllerCacheEntry
+	 * @class
+	 */
+	function ControllerCacheEntry() {
+		// ロジックのプロパティ
+		this.logicProperties = [];
+		// イベントハンドランプロパティ
+		this.eventHandlerProperties = [];
+		// 関数のプロパティ
+		this.functionProperties = [];
+		// その他、コントローラインスタンスに持たせるプロパティ
+		this.otherProperties = [];
+		// バインドマップ
+		this.bindMap = {};
+		// 子コントローラのプロパティ
+		this.childControllerProperties = [];
+	}
+
+	/**
+	 * コントローラのキャッシュを作成する
+	 *
+	 * @private
+	 * @param {Object} controllerDef コントローラ定義オブジェクト
+	 * @returns コントローラのキャッシュオブジェクト
+	 */
+	function createControllerCache(controllerDef) {
+		var cache = new ControllerCacheEntry();
+		var logicProperties = cache.logicProperties;
+		var eventHandlerProperties = cache.eventHandlerProperties;
+		var functionProperties = cache.functionProperties;
+		var otherProperties = cache.otherProperties;
+		var bindMap = cache.bindMap;
+		var childControllerProperties = cache.childControllerProperties;
+
+		// 同じセレクタかつ同じイベントに複数のハンドラが指定されているかをチェックするためのマップ
+		var checkBindMap = {};
+
+		for ( var prop in controllerDef) {
+			if (isEventHandler(controllerDef, prop)) {
+				// イベントハンドラのキー
+				eventHandlerProperties.push(prop);
+				// イベントハンドラの場合
+				// bindMapの作成
+				var propTrimmed = $.trim(prop);
+				var lastIndex = propTrimmed.lastIndexOf(' ');
+				var selector = $.trim(propTrimmed.substring(0, lastIndex));
+				var eventName = $.trim(propTrimmed.substring(lastIndex + 1, propTrimmed.length));
+				var global = isGlobalSelector(selector);
+				var bindRequested = isBindRequested(eventName);
+				if (bindRequested) {
+					eventName = $.trim(trimBindEventBracket(eventName));
+				}
+
+				if (global) {
+					var selector = trimGlobalSelectorBracket(selector);
+					if (selector === 'this') {
+						throwFwError(ERR_CODE_EVENT_HANDLER_SELECTOR_THIS, [controllerDef.__name],
+								{
+									controllerDef: controllerDef
+								});
+					}
+				}
+				if (!checkBindMap[selector]) {
+					checkBindMap[selector] = {};
+				}
+
+				// 同じセレクタ、同じイベントハンドラに同じ指定(global,bindRequested)でイベントハンドラが指定されていたらエラー
+				if (checkBindMap[selector][eventName]
+						&& checkBindMap[selector][eventName].global === global
+						&& checkBindMap[selector][eventName].bindRequested === bindRequested) {
+					throwFwError(ERR_CODE_SAME_EVENT_HANDLER, [controllerDef.__name, selector,
+							eventName], {
+						controllerDef: controllerDef
+					});
+				} else {
+					checkBindMap[selector][eventName] = {
+						global: global,
+						bindRequested: bindRequested
+					};
+				}
+
+				bindMap[prop] = {
+					selector: selector,
+					global: global,
+					bindRequested: bindRequested,
+					eventName: eventName,
+					propertyKey: prop
+				};
+			} else if (endsWith(prop, SUFFIX_CONTROLLER) && controllerDef[prop]
+					&& !isFunction(controllerDef[prop])) {
+				// 子コントローラ
+				childControllerProperties.push(prop);
+			} else if (endsWith(prop, SUFFIX_LOGIC) && controllerDef[prop]
+					&& !isFunction(controllerDef[prop])) {
+				// ロジック
+				logicProperties.push(prop);
+			} else if (isFunction(controllerDef[prop])) {
+				// メソッド(ライフサイクル含む)
+				functionProperties.push(prop);
+			} else {
+				// その他プロパティ
+				otherProperties.push(prop);
+			}
+		}
+		return cache;
+	}
+
+	/**
+	 * ロジックキャッシュエントリークラス
+	 *
+	 * @private
+	 * @name LogicCacheEntry
+	 * @class
+	 */
+	function LogicCacheEntry() {
+		// ロジックのプロパティ(子ロジック)
+		this.logicProperties = [];
+		// 関数のプロパティ
+		this.functionProperties = [];
+	}
+
+	/**
+	 * ロジックのキャッシュを作成する
+	 *
+	 * @private
+	 * @param {Object} logicDef ロジック定義オブジェクト
+	 * @returns ロジックのキャッシュオブジェクト
+	 */
+	function createLogicCache(logicDef) {
+		var cache = new LogicCacheEntry();
+		var functionProperties = cache.functionProperties;
+		var logicProperties = cache.logicProperties;
+		for ( var p in logicDef) {
+			if (isChildLogic(logicDef, p)) {
+				logicProperties.push(p);
+			} else if (isFunction(logicDef[p])) {
+				functionProperties.push(p);
+			}
+		}
+		return cache;
+	}
 	// =========================================================================
 	//
 	// Body
@@ -3062,26 +3204,6 @@
 	});
 
 	/**
-	 * コントローラキャッシュエントリークラス
-	 *
-	 * @name ControllerCacheEntry
-	 * @class
-	 */
-	function ControllerCacheEntry() {
-		// ロジックのプロパティ
-		this.logicProperties = [];
-		// イベントハンドランプロパティ
-		this.eventHandlerProperties = [];
-		// 関数のプロパティ
-		this.functionProperties = [];
-		// その他、コントローラインスタンスに持たせるプロパティ
-		this.otherProperties = [];
-		// バインドマップ
-		this.bindMap = {};
-		// 子コントローラのプロパティ
-		this.childControllerProperties = [];
-	}
-	/**
 	 * キャッシュマネージャクラス
 	 * <p>
 	 * コントローラキャッシュマネージャとロジックキャッシュマネージャのスーパークラス
@@ -3104,12 +3226,10 @@
 		},
 
 		/**
-		 * キャッシュを作成して登録する。
+		 * キャッシュを登録する。
 		 */
-		register: function(name, defObj) {
-			var cacheObj = this._create(name, defObj);
+		register: function(name, cacheObj) {
 			this._cacheMap[name] = cacheObj;
-			return cacheObj;
 		},
 
 		/**
@@ -3136,136 +3256,8 @@
 		}
 	});
 
-	/**
-	 * コントローラキャッシュマネージャクラス
-	 *
-	 * @name ControllerCacheManager
-	 * @class
-	 */
-	function ControllerCacheManager() {
-		this._init();
-	}
-	$.extend(ControllerCacheManager.prototype, CacheManager.prototype, {
-		/**
-		 * コントローラの定義オブジェクトからコントローラキャッシュオブジェクトを作ります
-		 *
-		 * @param {String} name コントローラ名
-		 * @param {Object} controllerDef コントローラ定義オブジェクト
-		 * @returns {Object} キャッシュオブジェクト
-		 */
-		_create: function(name, controllerDef) {
-			var cache = new ControllerCacheEntry();
-			var logicProperties = cache.logicProperties;
-			var eventHandlerProperties = cache.eventHandlerProperties;
-			var functionProperties = cache.functionProperties;
-			var otherProperties = cache.otherProperties;
-			var bindMap = cache.bindMap;
-			var childControllerProperties = cache.childControllerProperties;
-
-			// 同じセレクタかつ同じイベントに複数のハンドラが指定されているかをチェックするためのマップ
-			var checkBindMap = {};
-
-			for ( var prop in controllerDef) {
-				if (isEventHandler(controllerDef, prop)) {
-					// イベントハンドラのキー
-					eventHandlerProperties.push(prop);
-					// イベントハンドラの場合
-					// bindMapの作成
-					var propTrimmed = $.trim(prop);
-					var lastIndex = propTrimmed.lastIndexOf(' ');
-					var selector = $.trim(propTrimmed.substring(0, lastIndex));
-					var eventName = $
-							.trim(propTrimmed.substring(lastIndex + 1, propTrimmed.length));
-					var global = isGlobalSelector(selector);
-					var bindRequested = isBindRequested(eventName);
-					if (bindRequested) {
-						eventName = $.trim(trimBindEventBracket(eventName));
-					}
-
-					if (global) {
-						var selector = trimGlobalSelectorBracket(selector);
-						if (selector === 'this') {
-							throwFwError(ERR_CODE_EVENT_HANDLER_SELECTOR_THIS,
-									[controllerDef.__name], {
-										controllerDef: controllerDef
-									});
-						}
-					}
-					if (!checkBindMap[selector]) {
-						checkBindMap[selector] = {};
-					}
-
-					// 同じセレクタ、同じイベントハンドラに同じ指定(global,bindRequested)でイベントハンドラが指定されていたらエラー
-					if (checkBindMap[selector][eventName]
-							&& checkBindMap[selector][eventName].global === global
-							&& checkBindMap[selector][eventName].bindRequested === bindRequested) {
-						throwFwError(ERR_CODE_SAME_EVENT_HANDLER, [controllerDef.__name, selector,
-								eventName], {
-							controllerDef: controllerDef
-						});
-					} else {
-						checkBindMap[selector][eventName] = {
-							global: global,
-							bindRequested: bindRequested
-						};
-					}
-
-					bindMap[prop] = {
-						selector: selector,
-						global: global,
-						bindRequested: bindRequested,
-						eventName: eventName,
-						propertyKey: prop
-					};
-				} else if (endsWith(prop, SUFFIX_CONTROLLER) && controllerDef[prop]
-						&& !isFunction(controllerDef[prop])) {
-					// 子コントローラ
-					childControllerProperties.push(prop);
-				} else if (endsWith(prop, SUFFIX_LOGIC) && controllerDef[prop]
-						&& !isFunction(controllerDef[prop])) {
-					// ロジック
-					logicProperties.push(prop);
-				} else if (isFunction(controllerDef[prop])) {
-					// メソッド(ライフサイクル含む)
-					functionProperties.push(prop);
-				} else {
-					// その他プロパティ
-					otherProperties.push(prop);
-				}
-			}
-			return cache;
-		}
-	});
-
-	/**
-	 * ロジックキャッシュマネージャクラス
-	 *
-	 * @name LogicCacheManager
-	 * @class
-	 */
-	function LogicCacheManager() {
-		this._init();
-	}
-	$.extend(LogicCacheManager.prototype, CacheManager.prototype, {
-		_create: function(logicDef) {
-			var cache = {
-				childLogicProperties: [],
-				functionProperties: []
-			};
-			for ( var p in logicDef) {
-				if (isChildLogic(logicDef, p)) {
-					cache.childLogicProperties.push(p);
-				} else if (isFunction(logicDef[p])) {
-					cache.functionProperties.push(p);
-				}
-			}
-			return cache;
-		}
-	});
-
 	// キャッシュ変数にコントローラマネージャ、キャッシュマネージャのインスタンスをそれぞれ格納
-	controllerCacheManager = new ControllerCacheManager();
-	logicCacheManager = new LogicCacheManager();
+	cacheManager = new CacheManager();
 	controllerManager = new ControllerManager();
 
 	h5.u.obj.expose('h5.core', {
@@ -3276,7 +3268,34 @@
 		 * @type ControllerManager
 		 * @memberOf h5.core
 		 */
-		controllerManager: controllerManager
+		controllerManager: controllerManager,
+
+		/**
+		 * キャッシュマネージャ
+		 *
+		 * @name cacheManager
+		 * @memberOf h5.core
+		 */
+		cacheManager: {
+			/**
+			 * 名前を指定してキャッシュをクリアする
+			 *
+			 * @param {String} name コントローラまたはロジックの名前(__nameの値)
+			 * @memberOf h5.core.cacheManager
+			 */
+			clear: function(name) {
+				cacheManager.clear(name);
+			},
+
+			/**
+			 * キャッシュを全てクリアする
+			 *
+			 * @memberOf h5.core.cacheManager
+			 */
+			clearAll: function() {
+				cacheManager.clearAll();
+			}
+		}
 	});
 
 	// プロパティ重複チェック用のコントローラプロパティマップを作成
@@ -3340,7 +3359,7 @@
 		}
 
 		// キャッシュの取得(無かったらundefined)
-		var cache = controllerCacheManager.get(controllerName);
+		var cache = cacheManager.get(controllerName);
 
 		// コントローラ定義オブジェクトのチェック
 		// キャッシュがある場合はコントローラ定義オブジェクトについてはチェック済みなのでチェックしない
@@ -3360,7 +3379,8 @@
 
 		// キャッシュが無かった場合、キャッシュの作成と登録
 		if (!cache) {
-			cache = controllerCacheManager.register(controllerName, controllerDefObj);
+			cache = createControllerCache(controllerDefObj);
+			cacheManager.register(controllerName, cache);
 		}
 
 		if (isRoot) {
