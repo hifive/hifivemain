@@ -809,7 +809,7 @@
 	 * @memberOf h5.u.obj
 	 */
 	function serialize(value) {
-		if ($.isFunction(value)) {
+		if (isFunction(value)) {
 			throwFwError(ERR_CODE_SERIALIZE_FUNCTION);
 		}
 		// 循環参照チェック用配列
@@ -1105,7 +1105,7 @@
 					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					if (!$.isArray(obj)) {
+					if (!isArray(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					for (var i = 0; i < obj.length; i++) {
@@ -1297,7 +1297,7 @@
 			if (!post) {
 				return ret;
 			}
-			if (ret && $.isFunction(ret.promise) && !isJQueryObject(ret)) {
+			if (ret && isFunction(ret.promise) && !isJQueryObject(ret)) {
 				var that = this;
 
 				registerCallbacksSilently(ret, 'always', function() {

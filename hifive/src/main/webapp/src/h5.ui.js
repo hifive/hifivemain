@@ -1254,10 +1254,10 @@
 
 		// jQuery1.7以下ならpipe、1.8以降ならthenを使ってコールバックを登録
 		var pipeMethod = $.hasOwnProperty('curCSS') ? 'pipe' : 'then';
-		if ($.isArray(promises)) {
+		if (isArray(promises)) {
 			// プロミスでないものを除去
 			promises = $.map(promises, function(item, idx) {
-				return item && $.isFunction(item.promise) ? item : null;
+				return item && isFunction(item.promise) ? item : null;
 			});
 
 			if (promises.length > 0) {
@@ -1266,7 +1266,7 @@
 				registerCallbacksSilently(h5.async.when(promises), pipeMethod, [promiseCallback,
 						promiseCallback]);
 			}
-		} else if (promises && $.isFunction(promises.promise)) {
+		} else if (promises && isFunction(promises.promise)) {
 			// CFHの発火を阻害しないようにpipeを呼び出し。
 			registerCallbacksSilently(promises, pipeMethod, [promiseCallback, promiseCallback]);
 		}

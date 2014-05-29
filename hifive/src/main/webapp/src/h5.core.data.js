@@ -638,7 +638,7 @@
 	 * @returns unboxしたもの
 	 */
 	function unbox(v) {
-		if ($.isArray(v)) {
+		if (isArray(v)) {
 			var ary = v.slice(0);
 			for (var i = 0, l = ary.length; i < l; i++) {
 				// aryalueOfメソッドのあるオブジェクトならその値を入れる
@@ -1084,7 +1084,7 @@
 					// type指定がenumでないならエラー
 					pushErrorReason(SCHEMA_ERR_DETAIL_ENUMVALUE_TYPE, schemaProp);
 				}
-				if (!$.isArray(enumValue) || enumValue.length === 0
+				if (!isArray(enumValue) || enumValue.length === 0
 						|| $.inArray(null, enumValue) > -1 || $.inArray(undefined, enumValue) > -1) {
 					// 配列でない、または空配列、null,undefinedを含む配列ならエラー
 					pushErrorReason(SCHEMA_ERR_DETAIL_INVALID_ENUMVALUE, schemaProp);
@@ -1445,7 +1445,7 @@
 				if (v == null) {
 					return true;
 				}
-				if (!$.isArray(v) && !h5.core.data.isObservableArray(v)) {
+				if (!isArray(v) && !h5.core.data.isObservableArray(v)) {
 					errorReason.push({
 						dimension: dim
 					});
@@ -1800,7 +1800,7 @@
 			//型のチェックは終わっているので、typeがnumber・integerならnewValueは数値・数値変換可能文字列・null またはそれらを要素に持つ配列のいずれかである
 			if (newValue != null && type && type.match(/number|integer/)
 					&& typeof newValue !== 'number') {
-				if ($.isArray(newValue) || h5.core.data.isObservableArray(newValue)) {
+				if (isArray(newValue) || h5.core.data.isObservableArray(newValue)) {
 					for (var i = 0, l = newValue.length; i < l; i++) {
 						// スパースな配列の場合、undefinedが入っている可能性があるので、!= で比較
 						// parseFloatできる値(isNumberValueに渡してtrueになる値)ならparseFloatする
@@ -2076,7 +2076,7 @@
 					[createItemDescErrorReason(DESC_ERR_DETAIL_NOT_OBJECT)]);
 		}
 
-		if (!$.isArray(descriptor)) {
+		if (!isArray(descriptor)) {
 			// 既に同名のモデルが登録済みならそれを返す。
 			if (this.models[descriptor.name]) {
 				fwLogger.info(MSG_ERROR_DUP_REGISTER, this.name, descriptor.name);
@@ -3200,7 +3200,7 @@
 				this._manager.endUpdate();
 			}
 
-			if ($.isArray(objOrArray)) {
+			if (isArray(objOrArray)) {
 				return ret;
 			}
 			return ret[0];
@@ -3245,7 +3245,7 @@
 				var idKey = this._idKey;
 				var items = wrapInArray(value);
 				// objctでもArrayでもなかったらエラー
-				if (typeof value !== 'object' && !$.isArray(value)) {
+				if (typeof value !== 'object' && !isArray(value)) {
 					throwFwError(ERR_CODE_INVALID_CREATE_ARGS);
 				}
 				if (asCreate) {
@@ -3292,7 +3292,7 @@
 		 * @returns {DataItem|DataItem[]} データアイテム、またはその配列
 		 */
 		get: function(idOrArray) {
-			if ($.isArray(idOrArray) || h5.core.data.isObservableArray(idOrArray)) {
+			if (isArray(idOrArray) || h5.core.data.isObservableArray(idOrArray)) {
 				var ret = [];
 				for (var i = 0, len = idOrArray.length; i < len; i++) {
 					ret.push(this._findById(idOrArray[i]));
@@ -3368,7 +3368,7 @@
 				this._manager.endUpdate();
 			}
 
-			if ($.isArray(objOrItemIdOrArray)) {
+			if (isArray(objOrItemIdOrArray)) {
 				return ret;
 			}
 			return ret[0];
@@ -3410,7 +3410,7 @@
 				return !!this._findById(idOrObj);
 			} else if (typeof idOrObj === 'object') {
 				//型の厳密性はitemsとの厳密等価比較によってチェックできるので、if文ではtypeofで充分
-				return idOrObj != null && $.isFunction(idOrObj.get)
+				return idOrObj != null && isFunction(idOrObj.get)
 						&& idOrObj === this.items[idOrObj.get(this._idKey)];
 			} else {
 				return false;
@@ -3695,7 +3695,7 @@
 	 */
 	function isObservableItem(obj) {
 		// _validateItemValueを持っているかつ、getModelメソッドがない場合はObservableItemと判定する。
-		return !!(obj && obj.constructor && obj._validateItemValue && !$.isFunction(obj.getModel));
+		return !!(obj && obj.constructor && obj._validateItemValue && !isFunction(obj.getModel));
 	}
 
 	//--------------------------------------------
@@ -3758,7 +3758,7 @@
 
 			// aryが配列でもObservableArrayでもないならfalse
 			//サイズが異なる場合もfalse
-			if (!($.isArray(ary) || isObservableArray(ary)) || ary.length !== len) {
+			if (!(isArray(ary) || isObservableArray(ary)) || ary.length !== len) {
 				return false;
 			}
 
@@ -3795,7 +3795,7 @@
 
 			src = isObservableArray(src) ? src._src : src;
 
-			if (!$.isArray(src)) {
+			if (!isArray(src)) {
 				//引数が配列でない場合はエラー
 				throwFwError(ERR_CODE_INVALID_COPYFROM_ARGUMENT, [0, src]);
 			}

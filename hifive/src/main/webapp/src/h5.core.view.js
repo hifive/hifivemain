@@ -801,7 +801,7 @@
 			}
 
 			// targetのチェック
-			if ($.isArray(element)) {
+			if (isArray(element)) {
 				//配列はDOMノードの配列であることを仮定
 				targetNodes = element;
 			} else {
@@ -823,7 +823,7 @@
 			}
 
 			// contextのチェック
-			if (context == null || typeof context !== 'object' || $.isArray(context)
+			if (context == null || typeof context !== 'object' || isArray(context)
 					|| h5.core.data.isObservableArray(context)) {
 				throwFwError(ERR_CODE_BIND_CONTEXT_INVALID);
 			}

@@ -367,7 +367,7 @@
 		try {
 			ret = invocation.proceed();
 		} catch (e) {
-			if (h5.settings.commonFailHandler && $.isFunction(h5.settings.commonFailHandler)) {
+			if (h5.settings.commonFailHandler && isFunction(h5.settings.commonFailHandler)) {
 				h5.settings.commonFailHandler.call(null, e);
 			}
 		}

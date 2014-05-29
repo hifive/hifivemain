@@ -153,7 +153,7 @@
 			// hasOwnPropertyがtrueでなければコピーしない
 			// 関数、null、文字列リテラル、数値リテラル、真偽値リテラルのいずれかの場合のみコピー
 			if (moduleObject.hasOwnProperty(p)
-					&& ($.isFunction(v) || v === null || typeof v === 'string'
+					&& (isFunction(v) || v === null || typeof v === 'string'
 							|| typeof v === 'number' || typeof v === 'boolean')) {
 				props[p] = v;
 			}
@@ -381,7 +381,7 @@
 
 			// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
 			for (var i = 0, count = l.length; i < count && !event.isImmediatePropagationStopped(); i++) {
-				if ($.isFunction(l[i])) {
+				if (isFunction(l[i])) {
 					l[i].call(event.target, event);
 				} else if (l[i].handleEvent) {
 					// イベントリスナオブジェクトの場合はhandleEventを呼ぶ

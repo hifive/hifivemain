@@ -176,7 +176,7 @@ function wrapInArray(value) {
 	if (value == null) {
 		return value;
 	}
-	return $.isArray(value) ? value : [value];
+	return isArray(value) ? value : [value];
 }
 
 /**
@@ -368,6 +368,30 @@ function getWindowOfDocument(doc) {
  */
 function getWindowOf(node) {
 	return getWindowOfDocument(getDocumentOf(node));
+}
+
+/**
+ * 引数が配列かどうか判定
+ *
+ * @private
+ * @param {Any} obj
+ */
+var isArray = Array.isArray || (function() {
+	// プロパティアクセスを減らすため、toStringをキャッシュ
+	var core_toString = Object.prototype.toString;
+	return function(obj) {
+		return core_toString.call(obj) === '[object Array]';
+	};
+})();
+
+/**
+ * 引数が配列かどうか判定
+ *
+ * @private
+ * @param {Any} obj
+ */
+function isFunction(obj) {
+	return typeof obj === 'function';
 }
 
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る

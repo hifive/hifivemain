@@ -349,7 +349,7 @@
 	function isObservableItem(obj) {
 		//TODO 厳密に判定
 		// ObservableItemの場合もtrueを返す
-		if (obj && obj.addEventListener && obj.getModel && !$.isArray(obj)
+		if (obj && obj.addEventListener && obj.getModel && !isArray(obj)
 				&& !h5.core.data.isObservableArray(obj) || h5.core.data.isObservableItem(obj)) {
 			return true;
 		}
@@ -387,7 +387,7 @@
 			return;
 		}
 
-		if (!($.isArray(context) || h5.core.data.isObservableArray(context))) {
+		if (!(isArray(context) || h5.core.data.isObservableArray(context))) {
 			//data-h5-loop-contextの場合contextは配列でなければならない
 			throwFwError(ERR_CODE_INVALID_CONTEXT_SRC);
 		}
@@ -476,7 +476,7 @@
 		if (context) {
 			//TODO loop-contextにおいて個々のループ単位のコンテキスト自身をcontextやloop-contextにバインドする方法を追加した場合
 			//ここのチェックルーチンは変更になる
-			if (typeof context !== 'object' || $.isArray(context)
+			if (typeof context !== 'object' || isArray(context)
 					|| h5.core.data.isObservableArray(context)) {
 				//data-h5-contextの場合contextはオブジェクトでなければならない（配列は不可）
 				throwFwError(ERR_CODE_INVALID_CONTEXT_SRC);

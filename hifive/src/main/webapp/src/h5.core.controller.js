@@ -423,7 +423,7 @@
 			if (aspect.pointCut && !aspect.compiledPointCut.test(pcName)) {
 				continue;
 			}
-			if (!$.isArray(interceptors)) {
+			if (!isArray(interceptors)) {
 				ret.push(interceptors);
 				continue;
 			}
@@ -477,7 +477,7 @@
 	 */
 	function weaveLogicAspect(logic) {
 		for ( var prop in logic) {
-			if ($.isFunction(logic[prop])) {
+			if (isFunction(logic[prop])) {
 				logic[prop] = createWeavedFunction(logic[prop], prop, getInterceptors(logic.__name,
 						prop));
 			}
@@ -559,7 +559,7 @@
 	 * @returns {Boolean} プロパティがイベントハンドラかどうか
 	 */
 	function isEventHandler(controllerDefObject, prop) {
-		return prop.indexOf(' ') !== -1 && $.isFunction(controllerDefObject[prop]);
+		return prop.indexOf(' ') !== -1 && isFunction(controllerDefObject[prop]);
 	}
 
 	/**
@@ -786,7 +786,7 @@
 		var doc = getDocumentOf(controller.rootElement);
 		for ( var p in bindMap) {
 			var bindObjects = createBindObjects(controller, bindMap[p]);
-			if ($.isArray(bindObjects)) {
+			if (isArray(bindObjects)) {
 				for (var i = 0, l = bindObjects.length; i < l; i++) {
 					// アンバインドマップにハンドラを追加
 					registerWithUnbindList(bindObjects[i], bindMap[p]);
@@ -829,7 +829,7 @@
 			break;
 		}
 		// 配列にする
-		if (!$.isArray(bindObjects)) {
+		if (!isArray(bindObjects)) {
 			bindObjects = [bindObjects];
 		}
 
@@ -1015,7 +1015,7 @@
 					throw e;
 				}
 			}
-			if (ret && $.isFunction(ret.done) && $.isFunction(ret.fail)) {
+			if (ret && isFunction(ret.done) && isFunction(ret.fail)) {
 				// ライフサイクルイベントがpromiseを返している場合
 				// resolveされたらcallbackを実行
 				ret.done(callback).fail(
@@ -1912,7 +1912,7 @@
 		var promises = [];
 		// 子から順に__unbind,__disposeの実行
 		controllerGroupEach(controller, function(c) {
-			if (c[funcName] && $.isFunction(c[funcName])) {
+			if (c[funcName] && isFunction(c[funcName])) {
 				var ret = c[funcName]();
 				if (h5.async.isPromise(ret)) {
 					var df = h5.async.deferred();
@@ -3226,14 +3226,14 @@
 						propertyKey: prop
 					};
 				} else if (endsWith(prop, SUFFIX_CONTROLLER) && controllerDef[prop]
-						&& !$.isFunction(controllerDef[prop])) {
+						&& !isFunction(controllerDef[prop])) {
 					// 子コントローラ
 					childControllerProperties.push(prop);
 				} else if (endsWith(prop, SUFFIX_LOGIC) && controllerDef[prop]
-						&& !$.isFunction(controllerDef[prop])) {
+						&& !isFunction(controllerDef[prop])) {
 					// ロジック
 					logicProperties.push(prop);
-				} else if ($.isFunction(controllerDef[prop])) {
+				} else if (isFunction(controllerDef[prop])) {
 					// メソッド(ライフサイクル含む)
 					functionProperties.push(prop);
 				} else {
@@ -3263,7 +3263,7 @@
 			for ( var p in logicDef) {
 				if (isChildLogic(logicDef, p)) {
 					cache.childLogicProperties.push(p);
-				} else if ($.isFunction(logicDef[p])) {
+				} else if (isFunction(logicDef[p])) {
 					cache.functionProperties.push(p);
 				}
 			}
@@ -3284,7 +3284,10 @@
 		 * @type ControllerManager
 		 * @memberOf h5.core
 		 */
-		controllerManager: controllerManager
+		controllerManager: controllerManager,
+
+		controllerCacheManager:controllerCacheManager,
+		logicCacheManager:logicCacheManager
 	});
 
 	// プロパティ重複チェック用のコントローラプロパティマップを作成
