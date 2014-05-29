@@ -481,10 +481,10 @@
 
 		/* del begin */
 		// h5.dev.jsではデフォルトのdefaultOutをログ出力するようにしておく。
-//		defaultOut = {
-//			level: 'debug',
-//			targets: 'console'
-//		};
+		defaultOut = {
+			level: 'debug',
+			targets: 'console'
+		};
 
 		/* del end */
 
