@@ -144,7 +144,15 @@
 	// Cache
 	//
 	// =========================================================================
-	// TODO 高速化のために他で定義されている関数などを変数に入れておく場合はここに書く
+	// コントローラマネージャ。作成した時に値をセットしている。
+	var controllerManager;
+
+	// コントローラキャッシュマネージャ。作成した時に値をセットしている。
+	var controllerCacheManager;
+
+	// ロジックキャッシュマネージャ。作成した時に値をセットしている。
+	var logicCacheManager;
+
 	// =========================================================================
 	//
 	// Privates
@@ -227,7 +235,7 @@
 	function validateControllerDef(isRoot, targetElement, controllerDefObj, param, controllerName) {
 		// コントローラ定義オブジェクトに、コントローラが追加するプロパティと重複するプロパティがあるかどうかチェック
 		for ( var prop in controllerDefObj) {
-			if (controllerPropertyMap[prop]) {
+			if (prop in controllerPropertyMap) {
 				// コントローラが追加するプロパティと同じプロパティ名のものがあればエラー
 				throwFwError(ERR_CODE_CONTROLLER_SAME_PROPERTY, [controllerName, prop], {
 					controllerDefObj: controllerDefObj
@@ -586,7 +594,6 @@
 	 * @returns {Boolean} ロジックのプロパティが第1引数のロジックの子ロジックかどうか(true=子ロジックである)
 	 */
 	function isChildLogic(logic, prop) {
-		var target = logic[prop];
 		// hasOwnPropertyがtrueで、"Logic"で終わっているプロパティ名のものは子ロジック。ロジック化の対象になる。
 		return logic.hasOwnProperty(prop) && endsWith(prop, SUFFIX_LOGIC)
 	}
@@ -610,7 +617,7 @@
 	function childControllerEach(controller, callback, isDefObj) {
 		// 定義オブジェクトならcacheManagerからキャッシュを取得(ない場合はnull)
 		// コントローラインスタンスなら__controllerContextからキャッシュを取得
-		var cache = isDefObj ? h5.core.controllerCacheManager.get(controller.__name)
+		var cache = isDefObj ? controllerCacheManager.get(controller.__name)
 				: (controller.__controllerContext && controller.__controllerContext.cache);
 		// キャッシュがあるなら、キャッシュを使ってループ
 		if (cache) {
@@ -648,7 +655,7 @@
 	 */
 	function childLogicEach(logic, callback) {
 		// キャッシュがあるなら、キャッシュを使ってループ
-		var cache = h5.core.logicCacheManager.get(logic.__name);
+		var cache = logicCacheManager.get(logic.__name);
 		if (cache) {
 			for (var i = 0, l = cache.childLogicProperties.length; i < l; i++) {
 				var prop = cache.childLogicProperties[i];
@@ -776,18 +783,18 @@
 	 */
 	function bindByBindMap(controller) {
 		var bindMap = controller.__controllerContext.cache.bindMap;
+		var doc = getDocumentOf(controller.rootElement);
 		for ( var p in bindMap) {
-			var bindObj = createBindObj(controller, bindMap[p]);
-			if (!$.isArray(bindObj)) {
-				// アンバインドマップにハンドラを追加
-				registerUnbindList(bindObj, bindMap[p]);
-				bindByBindObject(bindObj, bindMap[p]);
-			} else {
-				for (var i = 0, l = bindObj.length; i < l; i++) {
+			var bindObjects = createBindObjects(controller, bindMap[p]);
+			if ($.isArray(bindObjects)) {
+				for (var i = 0, l = bindObjects.length; i < l; i++) {
 					// アンバインドマップにハンドラを追加
-					registerUnbindList(bindObj[i], bindMap[p]);
-					bindByBindObject(bindObj[i], bindMap[p]);
+					registerWithUnbindList(bindObjects[i], bindMap[p]);
+					bindByBindObject(bindObjects[i], bindMap[p], doc);
 				}
+			} else {
+				registerWithUnbindList(bindObjects, bindMap[p]);
+				bindByBindObject(bindObjects, bindMap[p], doc);
 			}
 		}
 	}
@@ -798,48 +805,49 @@
 	 * @private
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} eventHandlerInfo バインドマップに登録されているイベントハンドラの情報
-	 * @returns {Object|Object[]} バインドオブジェクト
+	 * @returns {Object[]} バインドオブジェクトの配列
 	 */
-	function createBindObj(controller, eventHandlerInfo) {
+	function createBindObjects(controller, eventHandlerInfo) {
 		var selector = eventHandlerInfo.selector;
 		var event = eventHandlerInfo.eventName;
 		// ハンドラを取得(アスペクト適用済み)
 		var func = controller[eventHandlerInfo.propertyKey];
-		var bindObj = null;
+		// この関数の戻り値になるバインドオブジェクトの配列
+		// 結果は必ず配列になるようにする
+		var bindObjects;
 		switch (event) {
 		case 'mousewheel':
-			bindObj = getNormalizeMouseWheelBindObj(controller, selector, event, func);
+			bindObjects = getNormalizeMouseWheelBindObj(controller, selector, event, func);
 			break;
 		case EVENT_NAME_H5_TRACKSTART:
 		case EVENT_NAME_H5_TRACKMOVE:
 		case EVENT_NAME_H5_TRACKEND:
-			bindObj = getH5TrackBindObj(controller, selector, event, func);
+			bindObjects = getH5TrackBindObj(controller, selector, event, func);
 			break;
 		default:
-			bindObj = getNormalBindObj(controller, selector, event, func);
+			bindObjects = getNormalBindObj(controller, selector, event, func);
 			break;
+		}
+		// 配列にする
+		if (!$.isArray(bindObjects)) {
+			bindObjects = [bindObjects];
 		}
 
 		// イベントコンテキストを作成してからハンドラを呼び出すようにhandlerをラップする
 		// unbindListにラップしたものが登録されるように、このタイミングで行う必要がある
-		function wrapHandler(obj) {
-			var handler = obj.handler;
-			obj.handler = function(/* var args */) {
+		function wrapHandler(bindObj) {
+			var handler = bindObj.handler;
+			bindObj.handler = function(/* var args */) {
 				var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(arguments[0].currentTarget)
 						: arguments[0].currentTarget;
-				handler.call(obj.controller, createEventContext(obj, arguments),
+				handler.call(bindObj.controller, createEventContext(bindObj, arguments),
 						currentTargetShortcut);
 			};
 		}
-		if ($.isArray(bindObj)) {
-			for (var i = 0, l = bindObj.length; i < l; i++) {
-				wrapHandler(bindObj[i]);
-			}
-		} else {
-			wrapHandler(bindObj);
+		for (var i = 0, l = bindObjects.length; i < l; i++) {
+			wrapHandler(bindObjects[i]);
 		}
-
-		return bindObj;
+		return bindObjects;
 	}
 
 	/**
@@ -848,16 +856,16 @@
 	 * @private
 	 * @param {Object} bindObj バインドオブジェクト
 	 * @param {Object} eventHandlerInfo バインドマップに登録されているイベントハンドラの情報
+	 * @param {Document} doc documentオブジェクト
 	 */
-	function bindByBindObject(bindObj, eventHandlerInfo) {
+	function bindByBindObject(bindObj, eventHandlerInfo, doc) {
 		var controller = bindObj.controller;
 		var rootElement = controller.rootElement;
 		var selector = bindObj.selector;
-		var event = bindObj.eventName;
+		var eventName = bindObj.eventName;
 		var handler = bindObj.handler;
 		var useBind = eventHandlerInfo.bindRequested;
 		var isGlobal = eventHandlerInfo.global;
-		var doc = getDocumentOf(rootElement);
 
 		if (isGlobal) {
 			// グローバルなセレクタの場合
@@ -875,12 +883,12 @@
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
 
-				$(selectTarget).bind(event, handler);
+				$(selectTarget).bind(eventName, handler);
 			} else {
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
 
-				$(doc).delegate(selectTarget, event, handler);
+				$(doc).delegate(selectTarget, eventName, handler);
 			}
 			// selectorがグローバル指定の場合はcontext.selectorに{}を取り除いた文字列を格納する
 			// selectorがオブジェクト指定(rootElement, window, document)の場合はオブジェクトを格納する
@@ -892,9 +900,9 @@
 			bindObj.evSelector = selector;
 
 			if (useBind) {
-				$(selector, rootElement).bind(event, handler);
+				$(selector, rootElement).bind(eventName, handler);
 			} else {
-				$(rootElement).delegate(selector, event, handler);
+				$(rootElement).delegate(selector, eventName, handler);
 			}
 		}
 
@@ -902,7 +910,7 @@
 		// touchActionをサポートしていないなら何もしない
 		// h5.settings.trackstartTouchActionがnullなら何もしない
 		// TODO プラッガブル(どのイベントの時にどういう処理をするか)が設定できるようにする
-		if (isTouchActionSupported && event === EVENT_NAME_H5_TRACKSTART
+		if (isTouchActionSupported && eventName === EVENT_NAME_H5_TRACKSTART
 				&& h5.settings.trackstartTouchAction != null) {
 			var $trackTarget = isGlobal ? $(bindObj.evSelector, doc) : $(bindObj.evSelector,
 					rootElement);
@@ -1287,7 +1295,7 @@
 	 * @param {Object} bindObj
 	 * @param {Object} eventHandlerInfo イベントハンドラ情報
 	 */
-	function registerUnbindList(bindObj, eventHandlerInfo) {
+	function registerWithUnbindList(bindObj, eventHandlerInfo) {
 		bindObj.controller.__controllerContext.unbindHandlerList.push({
 			bindObj: bindObj,
 			eventHandlerInfo: eventHandlerInfo
@@ -1369,7 +1377,7 @@
 	 * @param {String} selector セレクタ
 	 * @param {String} eventName イベント名 h5trackstart,h5trackmove,h5trackendのいずれか
 	 * @param {Function} func ハンドラとして登録したい関数
-	 * @returns {Object[]} バインドオブジェクト
+	 * @returns {Object|Object[]} バインドオブジェクト
 	 *          <ul>
 	 *          <li>bindObj.controller - コントローラ</li>
 	 *          <li>bindObj.selector - セレクタ</li>
@@ -1800,7 +1808,7 @@
 		// コントローラマネージャの管理対象に追加する
 		// フレームワークオプションでコントローラマネージャの管理対象としない(managed:false)の場合、コントローラマネージャに登録しない
 		var managed = controller.__controllerContext.managed;
-		var controllers = h5.core.controllerManager.controllers;
+		var controllers = controllerManager.controllers;
 		if ($.inArray(controller, controllers) === -1 && managed !== false) {
 			controllers.push(controller);
 		}
@@ -2739,12 +2747,11 @@
 			this.__controllerContext.unbindList = {};
 
 			// コントローラマネージャの管理対象から外す.
-			var controllers = h5.core.controllerManager.controllers;
+			var controllers = controllerManager.controllers;
 			var that = this;
-			h5.core.controllerManager.controllers = $.grep(controllers,
-					function(controllerInstance) {
-						return controllerInstance !== that;
-					});
+			controllerManager.controllers = $.grep(controllers, function(controllerInstance) {
+				return controllerInstance !== that;
+			});
 
 			// h5controllerunboundイベントをトリガ
 			$(this.rootElement).trigger('h5controllerunbound', this);
@@ -3060,6 +3067,26 @@
 	});
 
 	/**
+	 * コントローラキャッシュエントリークラス
+	 *
+	 * @name ControllerCacheEntry
+	 * @class
+	 */
+	function ControllerCacheEntry() {
+		// ロジックのプロパティ
+		this.logicProperties = [];
+		// イベントハンドランプロパティ
+		this.eventHandlerProperties = [];
+		// 関数のプロパティ
+		this.functionProperties = [];
+		// その他、コントローラインスタンスに持たせるプロパティ
+		this.otherProperties = [];
+		// バインドマップ
+		this.bindMap = {};
+		// 子コントローラのプロパティ
+		this.childControllerProperties = [];
+	}
+	/**
 	 * キャッシュマネージャクラス
 	 * <p>
 	 * コントローラキャッシュマネージャとロジックキャッシュマネージャのスーパークラス
@@ -3072,10 +3099,6 @@
 		this._init();
 	}
 	$.extend(CacheManager.prototype, {
-		register: function(name, cache) {
-			this.cacheMap[name] = cache;
-		},
-
 		/**
 		 * コントローラの名前からキャッシュを取り出す。 無ければnullを返す。
 		 *
@@ -3086,10 +3109,12 @@
 		},
 
 		/**
-		 * キャッシュを登録する。
+		 * キャッシュを作成して登録する。
 		 */
-		register: function(name, cacheObj) {
+		register: function(name, defObj) {
+			var cacheObj = this._create(name, defObj);
 			this._cacheMap[name] = cacheObj;
+			return cacheObj;
 		},
 
 		/**
@@ -3136,28 +3161,22 @@
 		 * @param {Object} controllerDef コントローラ定義オブジェクト
 		 * @returns {Object} キャッシュオブジェクト
 		 */
-		create: function(name, controllerDef) {
-			var cache = {
-				// ロジックのプロパティ
-				logicProperties: [],
-				// イベントハンドランプロパティ
-				eventHandlerProperties: [],
-				// 関数のプロパティ
-				functionProperties: [],
-				// その他、コントローラインスタンスに持たせるプロパティ
-				otherProperties: [],
-				// バインドマップ
-				bindMap: {},
-				// 子コントローラのプロパティ
-				childControllerProperties: []
-			};
+		_create: function(name, controllerDef) {
+			var cache = new ControllerCacheEntry();
+			var logicProperties = cache.logicProperties;
+			var eventHandlerProperties = cache.eventHandlerProperties;
+			var functionProperties = cache.functionProperties;
+			var otherProperties = cache.otherProperties;
+			var bindMap = cache.bindMap;
+			var childControllerProperties = cache.childControllerProperties;
+
 			// 同じセレクタかつ同じイベントに複数のハンドラが指定されているかをチェックするためのマップ
 			var checkBindMap = {};
 
 			for ( var prop in controllerDef) {
 				if (isEventHandler(controllerDef, prop)) {
 					// イベントハンドラのキー
-					cache.eventHandlerProperties.push(prop);
+					eventHandlerProperties.push(prop);
 					// イベントハンドラの場合
 					// bindMapの作成
 					var propTrimmed = $.trim(prop);
@@ -3199,7 +3218,7 @@
 						};
 					}
 
-					cache.bindMap[prop] = {
+					bindMap[prop] = {
 						selector: selector,
 						global: global,
 						bindRequested: bindRequested,
@@ -3209,17 +3228,17 @@
 				} else if (endsWith(prop, SUFFIX_CONTROLLER) && controllerDef[prop]
 						&& !$.isFunction(controllerDef[prop])) {
 					// 子コントローラ
-					cache.childControllerProperties.push(prop);
+					childControllerProperties.push(prop);
 				} else if (endsWith(prop, SUFFIX_LOGIC) && controllerDef[prop]
 						&& !$.isFunction(controllerDef[prop])) {
 					// ロジック
-					cache.logicProperties.push(prop);
+					logicProperties.push(prop);
 				} else if ($.isFunction(controllerDef[prop])) {
 					// メソッド(ライフサイクル含む)
-					cache.functionProperties.push(prop);
+					functionProperties.push(prop);
 				} else {
 					// その他プロパティ
-					cache.otherProperties.push(prop);
+					otherProperties.push(prop);
 				}
 			}
 			return cache;
@@ -3236,7 +3255,7 @@
 		this._init();
 	}
 	$.extend(LogicCacheManager.prototype, CacheManager.prototype, {
-		create: function(logicDef) {
+		_create: function(logicDef) {
 			var cache = {
 				childLogicProperties: [],
 				functionProperties: []
@@ -3252,6 +3271,11 @@
 		}
 	});
 
+	// キャッシュ変数にコントローラマネージャ、キャッシュマネージャのインスタンスをそれぞれ格納
+	controllerCacheManager = new ControllerCacheManager();
+	logicCacheManager = new LogicCacheManager();
+	controllerManager = new ControllerManager();
+
 	h5.u.obj.expose('h5.core', {
 		/**
 		 * コントローラマネージャ
@@ -3260,25 +3284,7 @@
 		 * @type ControllerManager
 		 * @memberOf h5.core
 		 */
-		controllerManager: new ControllerManager(),
-
-		/**
-		 * コントローラキャッシュマネージャ
-		 *
-		 * @name controllerCacheManager
-		 * @type controllerCacheManager
-		 * @memberOf h5.core
-		 */
-		controllerCacheManager: new ControllerCacheManager(),
-
-		/**
-		 * ロジックキャッシュマネージャ
-		 *
-		 * @name logicCacheManager
-		 * @type logicCacheManager
-		 * @memberOf h5.core
-		 */
-		logicCacheManager: new LogicCacheManager()
+		controllerManager: controllerManager
 	});
 
 	// プロパティ重複チェック用のコントローラプロパティマップを作成
@@ -3295,7 +3301,7 @@
 		var proto = Controller.prototype;
 		for ( var p in proto) {
 			if (proto.hasOwnProperty(p)) {
-				ret[p] = 1;
+				ret[p] = null;
 			}
 		}
 		proto = null;
@@ -3342,7 +3348,7 @@
 		}
 
 		// キャッシュの取得(無かったらundefined)
-		var cache = h5.core.controllerCacheManager.get(controllerName);
+		var cache = controllerCacheManager.get(controllerName);
 
 		// コントローラ定義オブジェクトのチェック
 		// キャッシュがある場合はコントローラ定義オブジェクトについてはチェック済みなのでチェックしない
@@ -3362,8 +3368,7 @@
 
 		// キャッシュが無かった場合、キャッシュの作成と登録
 		if (!cache) {
-			cache = h5.core.controllerCacheManager.create(controllerName, controllerDefObj);
-			h5.core.controllerCacheManager.register(controllerName, cache);
+			cache = controllerCacheManager.register(controllerName, controllerDefObj);
 		}
 
 		if (isRoot) {
@@ -3378,54 +3383,58 @@
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
 				controllerName, controllerDefObj, param, isRoot);
 
-
-		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
-		var templates = controllerDefObj.__templates;
-		var templateDfd = getDeferred();
-		var templatePromise = templateDfd.promise();
+		// ------ controllerContextの作成 ------//
+		// Deferred,Promiseの作成
+		// preinitPromise, initPromise, postInitPromiseが失敗してもcFHを発火させないようにするため、dummyのfailハンドラを登録する
 		var preinitDfd = getDeferred();
 		var preinitPromise = preinitDfd.promise();
-
-		// cacheを持たせる
-		controller.__controllerContext.cache = cache;
-
-		// preinitDfd, preInitPromise, initDfd, initPromise, postInitDfd, postInitPromiseの設定
-		// preinitPromise, initPromise, postInitPromiseが失敗してもcommonFailHandlerを発火させないようにするため、dummyのfailハンドラを登録する
-		controller.__controllerContext.preinitDfd = preinitDfd;
-		controller.preinitPromise = preinitPromise.fail(dummyFailHandler);
-		controller.__controllerContext.initDfd = getDeferred();
-		controller.__controllerContext.postInitDfd = getDeferred();
-		controller.initPromise = controller.__controllerContext.initDfd.promise().fail(
-				dummyFailHandler);
-		controller.postInitPromise = controller.__controllerContext.postInitDfd.promise().fail(
-				dummyFailHandler);
-
-		// readyDeferred,readyPromiseの設定
-		// ルートコントローラのreadyPromiseは失敗したらcommonFailHandlerが発火する
-		controller.__controllerContext.readyDfd = getDeferred();
-		controller.readyPromise = controller.__controllerContext.readyDfd.promise();
-
+		var initDfd = getDeferred();
+		var initPromise = initDfd.promise().fail(dummyFailHandler);
+		var postInitDfd = getDeferred();
+		var postInitPromise = postInitDfd.promise().fail(dummyFailHandler);
+		var readyDfd = getDeferred();
+		var readyPromise = readyDfd.promise();
 		if (!isRoot) {
 			// ルートコントローラでないなら、readyPromiseの失敗でcommonFailHandlerを発火させないようにする
-			controller.readyPromise.fail(dummyFailHandler);
+			// (ルートコントローラのreadyPromiseのみ、失敗したらcommonFailHandlerが発火する)
+			readyPromise.fail(dummyFailHandler);
 		}
 		/* del begin */
 		else {
 			// ルートコントローラなら、readyPromise.doneのタイミングで、ログを出力する
-			controller.readyPromise.done(function() {
+			readyPromise.done(function() {
 				fwLogger.info(FW_LOG_INIT_CONTROLLER_COMPLETE, controllerName);
 			});
 		}
 		/* del end */
 
+		// __controllerContextに必要な情報を持たせる
+		var controllerContext = controller.__controllerContext;
+		// cacheを持たせる
+		controllerContext.cache = cache;
+		// 各ライフサイクルのdeferredを持たせる
+		controllerContext.preinitDfd = preinitDfd;
+		controllerContext.initDfd = initDfd;
+		controllerContext.postInitDfd = postInitDfd;
+		controllerContext.readyDfd = readyDfd;
+
+		// コントローラにpromiseを持たせる
+		controller.preinitPromise = preinitPromise;
+		controller.initPromise = initPromise;
+		controller.postInitPromise = postInitPromise;
+		controller.readyPromise = readyPromise;
+
 		// templateDfdの設定
+		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
+		var templates = controllerDefObj.__templates;
+		var templateDfd = getDeferred();
+		var templatePromise = templateDfd.promise();
 		if (templates && templates.length > 0) {
 			// テンプレートファイルのロードを待機する処理を設定する
 			setTemlatesDeferred(controller, templateDfd, templates);
 		} else {
 			// テンプレートの指定がない場合は、resolve()しておく
 			templateDfd.resolve();
-
 		}
 
 		// テンプレートプロミスのハンドラ登録
@@ -3524,7 +3533,7 @@
 		}
 
 		// コントローラマネージャの管理対象とするか判定する(fwOpt.false===falseなら管理対象外)
-		controller.__controllerContext.managed = fwOpt && fwOpt.managed;
+		controllerContext.managed = fwOpt && fwOpt.managed;
 
 		if (isRoot) {
 			// ルートコントローラなら自分以下のinitを実行
