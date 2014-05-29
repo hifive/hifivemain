@@ -93,7 +93,8 @@
 	function gate(param) {
 		var gateFunction = param.gateFunction;
 		var maxWait = param.maxWait != null ? param.maxWait : testutils.settings.GATE_MAX_WAIT;
-		var interval = param.interval != null ? param.interval : testutils.settings.GATE_CHECK_INTERVAL;
+		var interval = param.interval != null ? param.interval
+				: testutils.settings.GATE_CHECK_INTERVAL;
 		var failMsg = param.failMsg;
 
 		var dfd = $.Deferred();
@@ -129,15 +130,30 @@
 				start();
 			});
 		}
-
 		return dfd.promise();
+	}
+
+	/**
+	 * #qunit-fixtur内にバインドされているコントローラをdisposeして、コントローラキャッシュ、ロジックキャッシュをクリアする
+	 */
+	function clearController() {
+		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
+			deep: true
+		});
+		for (var i = controllers.length - 1; i >= 0; i--) {
+			controllers[i].dispose();
+		}
+		h5.core.cacheManager.clearAll();
 	}
 
 	/**
 	 * @name testutils.async
 	 * @namespace
 	 */
-	expose('testutils.async', {
-		gate: gate
+	expose('testutils', {
+		async: {
+			gate: gate
+		},
+		clearController: clearController
 	});
 })();

@@ -71,17 +71,6 @@ $(function() {
 		h5.settings.aspects = null;
 	}
 
-	// テストでバインドしたコントローラのdispose
-	// #qunit-fixture以下にバインドされているコントローラを全てdisposeする。
-	function disposeQUnitFixtureController() {
-		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
-			deep: true
-		});
-		for (var i = controllers.length - 1; i >= 0; i--) {
-			controllers[i].dispose();
-		}
-	}
-
 	// タッチイベントの位置を設定する関数
 	function setPos(ev, pos) {
 		if (ev.type.indexOf('touch') != -1) {
@@ -1242,7 +1231,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.commonFailHandler = undefined;
 				}
 			});
@@ -1277,76 +1266,52 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module(
-			"Controller - controller",
-			{
-				setup: function() {
-					$('#qunit-fixture')
-							.append(
-									'<div id="controllerTest" style="display: none;"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
-				},
-				teardown: function() {
-					disposeQUnitFixtureController();
-					h5.settings.commonFailHandler = undefined;
-					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
-					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
-				},
-				originalRetryInterval: h5.settings.dynamicLoading.retryInterval,
-				originalRetryCount: h5.settings.dynamicLoading.retryCount
-			});
+	module("Controller - controller", {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"><input type="button"/></div>');
+		},
+		teardown: function() {
+			testutils.clearController();
+		}
+	});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('コントローラの作成と要素へのバインド(AOPなし)', 3, function() {
-		var cc = null;
+	asyncTest('コントローラの作成と要素へのバインド', 1, function() {
+		var result;
 		var controller = {
-
 			__name: 'TestController',
-
 			'input[type=button] click': function(context) {
-				cc = context.controller;
-				this.test();
-			},
-			test: function() {
-				$('#controllerResult').empty().text('ok');
-			},
-
-			dblTest: function() {
-				$('#controllerResult').empty().text('dblok');
+				result = true;
 			}
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-
 			$('#controllerTest input[type=button]').click();
-			var clickResult = $('#controllerResult').text();
-
-			strictEqual(clickResult, 'ok', 'コントローラが要素にバインドされているか');
-			ok(testController === cc, 'イベントコンテキストにコントローラの参照(context.controller)が格納されているか');
-
-			var result = [];
-			var outControllerBase = {
-				__name: 'OutController',
-
-				'{body} click': function() {
-					result.push(0);
-				}
-			};
-
-			var outController = h5.core.controller('#controllerResult', outControllerBase);
-			outController.readyPromise.done(function() {
-
-				$('body').click();
-				ok(result.length, 'コントローラの外にある要素にイベントコールバックが設定できたか');
-
-				testController.unbind();
-				outController.unbind();
-				start();
-			});
+			ok(result, 'コントローラが要素にバインドされていて、イベントハンドラが実行されること');
+			start();
 		});
 	});
+
+	//TODO 適切なモジュールを作って移動する
+	asyncTest('xxControllerがnull,関数,undefinedの場合は子コントローラとして扱わず、エラーにならない', 1, function() {
+		var result;
+		var controller = {
+			__name: 'TestController',
+			aController: null,
+			bControlelr: undefined,
+			cController:function(){}
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			ok(true);
+			start();
+		});
+	});
+
 
 	test('__name属性のないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
 		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
@@ -1414,63 +1379,6 @@ $(function() {
 		}
 	});
 
-	asyncTest('[build#min]コントローラの作成と要素へのバインド(AOPあり)', 3, function() {
-		if (!h5.core.__compileAspects) {
-			expect(1);
-			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
-			start();
-			return;
-		}
-
-		var controller = {
-			__name: 'TestController',
-
-			'input[type=button] click': function(context) {
-				this.test();
-			},
-			test: function() {
-				$('#controllerResult').empty().text('ok');
-			},
-
-			dblTest: function() {
-				$('#controllerResult').empty().text('dblok');
-			}
-		};
-
-		var aop1 = {
-			interceptors: function(invocation) {
-				var rootElement = this.rootElement;
-				$(rootElement).append('<div id="aop1"></div>');
-				invocation.proceed();
-			}
-		};
-
-		var aop2 = {
-			interceptors: function(invocation) {
-				var rootElement = this.rootElement;
-				$(rootElement).append('<div id="aop2"></div>');
-
-				invocation.proceed();
-			}
-		};
-
-		h5.core.__compileAspects([aop1, aop2]);
-
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-
-			strictEqual($('#controllerResult').text(), 'ok', 'コントローラが要素にバインドされているか');
-			ok($('#controllerTest #aop1').length, 'AOP1は動作しているか');
-			ok($('#controllerTest #aop2').length, 'AOP2は動作しているか');
-
-			testController.unbind();
-			cleanAspects();
-			start();
-		});
-
-	});
-
 	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 9, function() {
 		$('#controllerTest').append('<div class="test">a</div>');
 		$('#controllerTest').append('<div class="test">b</div>');
@@ -1526,7 +1434,6 @@ $(function() {
 	});
 
 	test('存在しない要素・複数要素へのバインド', function() {
-
 		var controller = {
 			__name: 'TestController'
 		};
@@ -1548,79 +1455,29 @@ $(function() {
 		strictEqual(err2.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, 'バインド対象が複数ある場合エラーとなるか');
 	});
 
-	asyncTest('コントローラ内のthis(AOPなし)', 1, function() {
-		var capturedController = null;
+	asyncTest('コントローラ内のthis', 3, function() {
+		var lifecycleThis, eventHandlerThis, methodThis;
 		var controller = {
 			__name: 'TestController',
-
-			'input[type=button] click': function(context) {
-				this.test();
+			__construct: function() {
+				lifecycleThis = this;
 			},
-
-			test: function() {
-				capturedController = this;
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise
-				.done(function() {
-
-					$('#controllerTest input[type=button]').click();
-
-					strictEqual(capturedController.__name, 'TestController',
-							'コントローラ内のthisはコントローラ自身を指しているか');
-
-					testController.unbind();
-					capturedController = undefined;
-					start();
-				});
-	});
-
-	asyncTest('[build#min]コントローラ内のthis(AOPあり)', 1, function() {
-		var controllerContext = null;
-		var controller = {
-			__name: 'TestController',
-
-			'input[type=button] click': function(context) {
-				this.test();
+			'input click': function() {
+				eventHandlerThis = this;
 			},
-
-			test: function() {
-				controllerContext = this;
+			test: function(context) {
+				methodThis = this;
 			}
 		};
-
-		var aop1 = {
-			interceptors: function(invocation) {
-				var rootElement = this.rootElement;
-				$(rootElement).append('<div id="aop1"></div>');
-				invocation.proceed();
-			}
-		};
-
-		var aop2 = {
-			interceptors: function(invocation) {
-				var rootElement = this.rootElement;
-				$(rootElement).append('<div id="aop2"></div>');
-
-				invocation.proceed();
-			}
-		};
-		h5.core.__compileAspects([aop1, aop2]);
-
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise
-				.done(function() {
-
-					$('#controllerTest input[type=button]').click();
-
-					strictEqual(controllerContext.__name, 'TestController',
-							'コントローラ内のthisはコントローラ自身を指しているか');
-
-					testController.unbind();
-					cleanAspects();
-					start();
-				});
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			strictEqual(lifecycleThis, c, '__construct内のthisはコントローラ自身を指しているか');
+			$('#controllerTest input[type=button]').click();
+			strictEqual(eventHandlerThis, c, 'イベントハンドラ内のthisはコントローラ自身を指しているか');
+			this.test();
+			strictEqual(methodThis, c, 'メソッド内のthisはコントローラ自身を指しているか');
+			start();
+		});
 	});
 
 	test('コントローラの循環参照チェックに引っかかるとエラーが発生するか', 1, function() {
@@ -1647,8 +1504,11 @@ $(function() {
 			__name: 'TestController'
 		};
 
+		var instance = new (function() {
+		//空コンストラクタ
+		})();
 		try {
-			h5.core.controller('#controllerTest', testController, '初期化パラメータ');
+			h5.core.controller('#controllerTest', testController, instance);
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_INVALID_INIT_PARAM,
 					'初期化パラメータがプレーンオブジェクトではない時にエラーが発生したか');
@@ -1668,8 +1528,6 @@ $(function() {
 				equal(e.code, ERR.ERR_CODE_CONTROLLER_ALREADY_CREATED,
 						'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 			}
-
-			c.unbind();
 			start();
 		});
 	});
@@ -1684,159 +1542,378 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', testController);
 		c.readyPromise.done(function() {
 			ok(c, 'xxxControllerというプロパティの値が設定されていない時にエラーが発生せず処理が終了するか');
-			c.unbind();
 			start();
 		});
-
-	});
-
-	asyncTest('h5controllerreadyイベントのevArgにコントローラが渡されること', 4, function() {
-		var order = 1;
-		var conIns = null;
-
-		var controller = {
-			__name: 'TestController',
-			'{rootElement} h5controllerready': function(context) {
-				equal(order, 2, '__readyのあとに発火すること');
-				strictEqual(context.evArg, conIns, '引数にコントローラが返ってくること');
-				equal(context.evArg.isReady, true, 'isReadyはtrueであること');
-				start();
-			},
-			__ready: function() {
-				equal(conIns.isReady, false, 'isReadyはfalseであること');
-				order++;
-			}
-		};
-
-		conIns = h5.core.controller('#controllerTest', controller);
-	});
-
-	asyncTest('__readyで返したPromiseがrejectされた場合、h5controllerreadyイベントは発生しないこと', 1, function() {
-		var conIns = null;
-
-		var controller = {
-			__name: 'TestController',
-			'{rootElement} h5controllerready': function(context) {
-				ok(false, 'h5controllerreadyイベントが発生したためテスト失敗');
-			},
-			__ready: function() {
-				var df = this.deferred();
-				df.reject();
-
-				return df.promise();
-			},
-			__dispose: function() {
-				equal(conIns.isReady, false, 'isReadyはfalseであること');
-				start();
-			}
-		};
-
-		conIns = h5.core.controller('#controllerTest', controller);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module(
-			"Controller - イベントハンドラ",
-			{
-				setup: function() {
-					$('#qunit-fixture')
-							.append(
-									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
-				},
-				teardown: function() {
-					disposeQUnitFixtureController();
-					h5.settings.commonFailHandler = undefined;
-					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
-					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
-				},
-				originalRetryInterval: h5.settings.dynamicLoading.retryInterval,
-				originalRetryCount: h5.settings.dynamicLoading.retryCount
-			});
+	module("Controller - コントローラが上げるイベント", {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			testutils.clearController();
+		}
+	});
+
+	//=============================
+	// Body
+//	//=============================
+//	asyncTest('h5controllerboundイベントの上がるタイミング', 3, function() {
+//		var callcount = 0;
+//		var controllerHandler = false;
+//		var controller = {
+//			__name: 'TestController',
+//			__ready: function() {
+//				strictEqual(callcount, 1, '__readyの前にh5controllerboundが呼ばれること');
+//				ok(controllerHandler,
+//						'イベントの発火はイベントバインドが終わった後なので、自身のh5controllerreadyイベントをを自身のイベントハンドラで拾えること');
+//			},
+//			__childController: {
+//				__name: 'ChildController'
+//			},
+//			'{rootElement} h5controllerbound': function() {
+//				controllerHandler = true;
+//				start();
+//			}
+//		};
+//		function handler(event, c) {
+//			callcount++;
+//			$('body').unbind('h5controllerbound', handler);
+//		}
+//		var c = h5.core.controller('#controllerTest', controller);
+//		c.initPromise.done(function() {
+//			strictEqual(callcount, 0, 'initPromiseが終わった時点ではh5controllerboundは呼ばれていないこと');
+//		});
+//		c.readyPromise.done(function() {
+//			strictEqual(callcount, 0, 'readyPromiseが終わった時点ではh5controllerboundは呼ばれていないこと');
+//		});
+//		$('body').bind('h5controllerbound', handler);
+//	});
+//
+//	asyncTest('h5controllerboundイベントオブジェクト', 3, function() {
+//		var controller = {
+//			__name: 'TestController',
+//			__childController: {
+//				__name: 'ChildController'
+//			},
+//			'{rootElement} h5controllerbound': function(context) {
+//				var event = context.event;
+//				strictEqual(event.type, 'h5controllerbound',
+//						'イベントオブジェトのtypeがh5controllerboundであること');
+//				strictEqual(event.target, $('#controllerTest')[0],
+//						'イベントオブジェトのtargetがコントローラのバインド先であること');
+//				strictEqual(context.evArg, this, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
+//				start();
+//			}
+//		};
+//		h5.core.controller('#controllerTest', controller);
+//	});
+//
+//	asyncTest('__initで返したPromiseがrejectされた場合、h5controllerboundイベントは発生しないこと', 1, function() {
+//		var eventFired = false;
+//		var controller = {
+//			__name: 'TestController',
+//			'{rootElement} h5controllerbound': function(context) {
+//				eventFired = true;
+//			},
+//			__init: function() {
+//				var df = this.deferred();
+//				df.reject();
+//				return df.promise();
+//			},
+//			__dispose: function() {
+//				ok(!eventFired, 'h5controllerreadyイベントが発生していないこと');
+//				start();
+//			}
+//		};
+//		conIns = h5.core.controller('#controllerTest', controller);
+//	});
+//
+//	asyncTest('h5controllerreadyイベントの上がるタイミング', 3, function() {
+//		var callcount = 0;
+//		var controllerHandler = false;
+//		var controller = {
+//			__name: 'TestController',
+//			__childController: {
+//				__name: 'ChildController'
+//			},
+//			'{rootElement} h5controllerready': function() {
+//				controllerHandler = true;
+//			}
+//		};
+//		function handler(event, c) {
+//			callcount++;
+//			strictEqual(callcount, 1, 'readyPromiseが終わったらh5controllerreadyが呼ばれること');
+//			ok(controllerHandler,
+//					'イベントの発火はイベントバインドが終わった後なので、自身のh5controllerreadyイベントをを自身のイベントハンドラで拾えること');
+//
+//			$('body').unbind('h5controllerready', handler);
+//			start();
+//		}
+//		h5.core.controller('#controllerTest', controller).readyPromise.done(function() {
+//			strictEqual(callcount, 0, 'readyPromise.doneの時点ではh5controllerreadyイベントは上がっていないこと');
+//		});
+//		$('body').bind('h5controllerready', handler);
+//	});
+//
+//	asyncTest('h5controllerreadyイベントオブジェクト', 3, function() {
+//		var controller = {
+//			__name: 'TestController',
+//			__childController: {
+//				__name: 'ChildController'
+//			},
+//			'{rootElement} h5controllerready': function(context) {
+//				var event = context.event;
+//				strictEqual(event.type, 'h5controllerready',
+//						'イベントオブジェトのtypeがh5controllerreadyであること');
+//				strictEqual(event.target, $('#controllerTest')[0],
+//						'イベントオブジェトのtargetがコントローラのバインド先であること');
+//				strictEqual(context.evArg, this, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
+//				start();
+//			}
+//		};
+//		h5.core.controller('#controllerTest', controller);
+//	});
+//
+//	asyncTest('__readyで返したPromiseがrejectされた場合、h5controllerreadyイベントは発生しないこと', 1, function() {
+//		var eventFired = false;
+//		var controller = {
+//			__name: 'TestController',
+//			'{rootElement} h5controllerready': function(context) {
+//				eventFired = true;
+//			},
+//			__ready: function() {
+//				var df = this.deferred();
+//				df.reject();
+//				return df.promise();
+//			},
+//			__dispose: function() {
+//				ok(!eventFired, 'h5controllerreadyイベントが発生していないこと');
+//				start();
+//			}
+//		};
+//		h5.core.controller('#controllerTest', controller);
+//	});
+//
+//	asyncTest('h5controllerunboundイベントの上がるタイミング', 3, function() {
+//		var callcount = 0;
+//		var controllerHandler = false;
+//		var controller = {
+//			__name: 'TestController',
+//			__ready: function() {
+//				strictEqual(callcount, 1, '__readyの前にh5controllerboundが呼ばれること');
+//				ok(controllerHandler,
+//						'イベントの発火はイベントバインドが終わった後なので、自身のh5controllerreadyイベントをを自身のイベントハンドラで拾えること');
+//				start();
+//			},
+//			__childController: {
+//				__name: 'ChildController'
+//			},
+//			'{rootElement} h5controllerunbound': function() {
+//				controllerHandler = true;
+//			}
+//		};
+//		function handler(event, c) {
+//			callcount++;
+//			$('body').unbind('h5controllerunbound', handler);
+//		}
+//		var c = h5.core.controller('#controllerTest', controller);
+//		c
+//		c.readyPromise.done(function() {
+//			strictEqual(callcount, 1, 'initPromiseが終わった時点ではh5controllerboundは呼ばれていないこと');
+//		});
+//		$('body').bind('h5controllerunbound', handler);
+//	});
+//
+//	asyncTest('h5controllerboundイベントオブジェクト', 3, function() {
+//		var controller = {
+//			__name: 'TestController',
+//			__childController: {
+//				__name: 'ChildController'
+//			},
+//			'{rootElement} h5controllerbound': function(context) {
+//				var event = context.event;
+//				strictEqual(event.type, 'h5controllerbound',
+//						'イベントオブジェトのtypeがh5controllerboundであること');
+//				strictEqual(event.target, $('#controllerTest')[0],
+//						'イベントオブジェトのtargetがコントローラのバインド先であること');
+//				strictEqual(context.evArg, this, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
+//				start();
+//			}
+//		};
+//		h5.core.controller('#controllerTest', controller);
+//	});
+
+	//=============================
+	// Definition
+	//=============================
+	module("Controller - イベントハンドラ", {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			testutils.clearController();
+			h5.settings.commonFailHandler = undefined;
+			h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
+			h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
+		},
+		originalRetryInterval: h5.settings.dynamicLoading.retryInterval,
+		originalRetryCount: h5.settings.dynamicLoading.retryCount
+	});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントハンドラの{}記法でオブジェクトを指定する時に2階層以上下のオブジェクトを指定できるか', function() {
-		window.test1 = {
-			test2: $('#controllerResult')
-		};
-		var ret = false;
+	asyncTest('イベントハンドラの動作', 2, function() {
+		var $controllerTarget = $('#controllerTest');
+		$controllerTarget.append('<input type="button" />');
+		var result;
 		var controller = {
-
 			__name: 'TestController',
-
-			'{window.test1.test2} click': function(context) {
-				ret = true;
+			__ready: function() {
+				this.$find('input[type=button]').trigger('click');
+				ok(result, '__readyの時点でイベントハンドラが動作していること');
+				this.unbind();
+				result = false;
+				this.$find('input[type=button]').trigger('click');
+				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
+				start();
+			},
+			'input[type=button] [click]': function(context) {
+				result = true;
 			}
 		};
+		h5.core.controller($controllerTarget, controller);
+	});
 
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			$('#controllerResult').click();
-			ok(ret, '{}記法で2階層以上下のオブジェクトを指定できたか');
+	asyncTest('イベントハンドラの動作 {}記法で外側の要素を含めて指定', 7, function() {
+		var $eventTarget1 = $('<div id="target1" class="event-target">');
+		var $eventTarget2 = $('<div id="target2" class="event-target">');
+		var $controllerTarget = $('#controllerTest');
+		$controllerTarget.append($eventTarget1);
+		$controllerTarget.after($eventTarget2);
+		var result1 = false;
+		var result2 = false;
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				$eventTarget1.click();
+				ok(result1, '.event-targetにバインドしたイベントハンドラが動作していること');
+				ok(result2, '{.event-target}にバインドしたイベントハンドラが動作していること');
+				result1 = result2 = false;
+				$eventTarget2.click();
+				ok(!result1, '.event-targetにバインドしたイベントハンドラは動作しないこと');
+				ok(result2, '{.event-target}にバインドしたイベントハンドラが動作していること');
+				this.unbind();
+				result1 = result2 = false;
+				$eventTarget1.click();
+				ok(!result1, 'unbindすると.event-targetにバインドしたイベントハンドラが動作しないこと');
+				ok(!result2, 'unbindすると{.event-target}にバインドしたイベントハンドラが動作しないこと');
+				result1 = result2 = false;
+				$eventTarget2.click();
+				ok(!result2, 'unbindすると{.event-target}にバインドしたイベントハンドラが動作しないこと');
+				start();
+			},
+			'.event-target click': function() {
+				result1 = true;
+			},
+			'{.event-target} click': function() {
+				result2 = true;
+			}
+		};
+		h5.core.controller($controllerTarget, controller);
+	});
 
-			testController.unbind();
-			deleteProperty(window, 'test1');
-			start();
-		});
+	asyncTest('イベントハンドラの動作 {rootElement}を指定', 2, function() {
+		var $controllerTarget = $('#controllerTest');
+		var result = false;
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				$controllerTarget.click();
+				ok(result, '{rootElement}にバインドしたイベントハンドラが動作していること');
+				this.unbind();
+				result = false;
+				$controllerTarget.click();
+				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
+
+				// テストで作成したwindow.test1を削除
+				deleteProperty(window, 'test1');
+				start();
+			},
+			'{rootElement} click': function(context) {
+				result = true;
+			}
+		};
+		h5.core.controller($controllerTarget, controller);
+	});
+
+	asyncTest('イベントハンドラの動作 {}記法でオブジェクトを指定', 2, function() {
+		var $eventTarget = $('<div id="target1">');
+		var $controllerTarget = $('#controllerTest');
+		$controllerTarget.append($eventTarget);
+		window.test1 = {
+			target: $eventTarget
+		};
+		var result = false;
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				this.$find('#target1').click();
+				ok(result, '{window.test1.target}にバインドしたイベントハンドラが動作していること');
+				this.unbind();
+				result = false;
+				this.$find('#target1').click();
+				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
+
+				// テストで作成したwindow.test1を削除
+				deleteProperty(window, 'test1');
+				start();
+			},
+			'{window.test1.target} click': function(context) {
+				result = true;
+			}
+		};
+		h5.core.controller($controllerTarget, controller);
 	});
 
 	asyncTest('コントローラの作成と要素へのバインド セレクタ、イベントの前後にスペースがあってもイベントハンドリングできること', 9, function() {
+		var $controllerTarget = $('#controllerTest');
+		$controllerTarget.append('<input type="button" /><div id="a"><div class="b"></div></div>');
+		var result;
+		function handler() {
+			result = true;
+		}
+
 		var controller = {
-
 			__name: 'TestController',
-
-			' input[type=button] click': function(context) {
-				this.test(0);
-			},
-			'  input[type=button]  dblclick       ': function(context) {
-				this.dblTest();
-			},
-			' #a .b click1': function(context) {
-				this.test(1);
-			},
-			'      #a .b    click2 ': function(context) {
-				this.test(2);
-			},
-			'      #a    .b  click3': function(context) {
-				this.test(3);
-			},
-			' {#a .b} click4': function(context) {
-				this.test(4);
-			},
-			' { #a .b}    click5': function(context) {
-				this.test(5);
-			},
-			' { #a  .b} click6   ': function(context) {
-				this.test(6);
-			},
-			'  {   #a    .b    }    click7   ': function(context) {
-				this.test(7);
-			},
-			test: function(n) {
-				$('#controllerResult').empty().text(n);
-			},
-
-			dblTest: function() {
-				$('#controllerResult').empty().text('dblok');
-			}
+			' input[type=button] click': handler,
+			'  input[type=button]  dblclick       ': handler,
+			' #a .b click1': handler,
+			'      #a .b    click2 ': handler,
+			'      #a    .b  click3': handler,
+			' {#a .b} click4': handler,
+			' { #a .b}    click5': handler,
+			' { #a  .b} click6   ': handler,
+			'  {   #a    .b    }    click7   ': handler
 		};
 
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var $result = $('#controllerResult');
-
+		h5.core.controller($controllerTarget, controller).readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
-			strictEqual($result.text(), '0', 'コントローラが要素にバインドされているか');
+			ok(result, '前後にスペースがあってもイベントハンドラが動作すること');
+			result = false;
 
 			$('#controllerTest input[type=button]').dblclick();
-			strictEqual($result.text(), 'dblok', 'コントローラが要素にバインドされているか');
+			ok(result, '前後にスペースがあってもイベントハンドラが動作すること');
+			result = false;
 
 			for (var i = 1; i <= 7; i++) {
 				$('#controllerTest #a .b').trigger('click' + i);
-				strictEqual($result.text(), '' + i, 'コントローラが要素にバインドされているか');
+				ok(result, '前後にスペースがあってもイベントハンドラが動作すること');
+				result = false;
 			}
 			start();
 		});
@@ -2125,7 +2202,7 @@ $(function() {
 									'<div id="controllerTest"><div id="parent"><div id="child"></div></div></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.listenerElementType = this.originalListenerElementType;
 				},
 				originalListenerElementType: h5.settings.listenerElementType
@@ -2191,7 +2268,7 @@ $(function() {
 									'<div class="touch"></div><div id="controllerTest"><div id="child1"></div><div class="touch"></div></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 				}
 			});
 
@@ -2398,7 +2475,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
 		teardown: function() {
-			disposeQUnitFixtureController();
+			testutils.clearController();
 			h5.settings.commonFailHandler = undefined;
 			h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 			h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -2508,49 +2585,6 @@ $(function() {
 		});
 	});
 
-	asyncTest('__metaで指定しているコントローラが無い場合', 1, function() {
-		var testController = {
-			__name: 'TestController',
-			__meta: {
-				childController: {
-					useHandlers: true
-				}
-			}
-		};
-
-		h5.core.controller('#controllerTest', testController).readyPromise.done(function() {
-			ok(false, 'テスト失敗。コントローラのバインドに成功');
-			start();
-		}).fail(
-				function(e) {
-					strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_META_KEY_INVALID,
-							'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがundefinedの場合にエラーが発生すること');
-					start();
-				});
-	});
-
-	asyncTest('__metaで指定しているコントローラがnull', 1, function() {
-		var testController = {
-			__name: 'TestController',
-			childController: null,
-			__meta: {
-				childController: {
-					useHandlers: true
-				}
-			}
-		};
-
-		h5.core.controller('#controllerTest', testController).readyPromise.done(function() {
-			ok(false, 'テスト失敗。コントローラのバインドに成功');
-			start();
-		}).fail(
-				function(e) {
-					strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_META_KEY_NULL,
-							'__metaに設定された名前と一致するプロパティ名を持つ子コントローラがundefinedの場合にエラーが発生するか');
-					start();
-				});
-	});
-
 	asyncTest('rootElementを指定', 1, function() {
 		var $child = $('<div id="child"></div>');
 		$('#controllerTest').append($child);
@@ -2619,7 +2653,7 @@ $(function() {
 				}
 			},
 			childController: {
-				__name: 'ChildController',
+				__name: 'ChildController1',
 				__init: function() {
 					childRootElm = this.rootElement;
 				},
@@ -2629,7 +2663,7 @@ $(function() {
 					}
 				},
 				childController: {
-					__name: 'ChildController',
+					__name: 'ChildController2',
 					__init: function() {
 						grandChildRootElm = this.rootElement;
 					}
@@ -2754,7 +2788,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -2877,7 +2911,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -3064,7 +3098,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -3945,7 +3979,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -5581,7 +5615,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -5822,7 +5856,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"Controller - アスペクト",
+			"[build#min]Controller - アスペクト",
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -5830,7 +5864,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -5842,6 +5876,99 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+	asyncTest('コントローラの作成と要素へのバインド(AOPあり)', 3, function() {
+		if (!h5.core.__compileAspects) {
+			expect(1);
+			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
+			start();
+			return;
+		}
+
+		var controller = {
+			__name: 'TestController',
+
+			'input[type=button] click': function(context) {
+				this.test();
+			},
+			test: function() {
+				$('#controllerResult').empty().text('ok');
+			},
+
+			dblTest: function() {
+				$('#controllerResult').empty().text('dblok');
+			}
+		};
+
+		var aop1 = {
+			interceptors: function(invocation) {
+				var rootElement = this.rootElement;
+				$(rootElement).append('<div id="aop1"></div>');
+				invocation.proceed();
+			}
+		};
+
+		var aop2 = {
+			interceptors: function(invocation) {
+				var rootElement = this.rootElement;
+				$(rootElement).append('<div id="aop2"></div>');
+
+				invocation.proceed();
+			}
+		};
+
+		h5.core.__compileAspects([aop1, aop2]);
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			$('#controllerTest input[type=button]').click();
+
+			strictEqual($('#controllerResult').text(), 'ok', 'コントローラが要素にバインドされているか');
+			ok($('#controllerTest #aop1').length, 'AOP1は動作しているか');
+			ok($('#controllerTest #aop2').length, 'AOP2は動作しているか');
+
+			testController.unbind();
+			cleanAspects();
+			start();
+		});
+
+	});
+	asyncTest('コントローラ内のthis', 3, function() {
+		var lifecycle, eventHandlerThis, methodThis;
+		var controller = {
+			__name: 'TestController',
+			__construct: function() {
+				lifecycleThis = this;
+			},
+			'input click': function() {
+				eventHandlerThis = this;
+			},
+			test: function(context) {
+				methodThis = this;
+			}
+		};
+		var aop1 = {
+			interceptors: function(invocation) {
+				invocation.proceed();
+			}
+		};
+
+		var aop2 = {
+			interceptors: function(invocation) {
+				invocation.proceed();
+			}
+		};
+		h5.core.__compileAspects([aop1, aop2]);
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			strictEqual(lifecycleThis, c, '__construct内のthisはコントローラ自身を指しているか');
+			$('#controllerTest input[type=button]').click();
+			strictEqual(eventHandlerThis, c, 'イベントハンドラ内のthisはコントローラ自身を指しているか');
+			this.test();
+			strictEqual(methodThis, c, 'メソッド内のthisはコントローラ自身を指しているか');
+			start();
+		});
+	});
+
 	asyncTest('[build#min]アスペクトの動作1', function() {
 		var ret = [];
 		var controller = {
@@ -6083,7 +6210,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -6614,7 +6741,7 @@ $(function() {
 					onerrorHandler = window.onerror;
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					$('#qunit-fixture #controllerTest').remove();
 					// window.onerrorを元に戻す
 					window.onerror = onerrorHandler;
@@ -6900,7 +7027,7 @@ $(function() {
 									'<div id="scrollable" style="width:400px; height:300px; overflow:scroll"><div id="for-scroll" style="height:888px; width:777px;"></div></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 					$('#scrollable').remove();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
@@ -7025,7 +7152,7 @@ $(function() {
 					}
 				};
 				var childController = {
-					__name: 'TestController',
+					__name: 'ChildController',
 
 					'{rootElement} click': function() {
 						var indicator = this.triggerIndicator();
@@ -7900,7 +8027,7 @@ $(function() {
 									'<div id="controllerTest"><div id="a"></div></div><div id="controllerTest2"></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 				}
 			});
 
@@ -8232,7 +8359,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					disposeQUnitFixtureController();
+					testutils.clearController();
 				}
 			});
 	//=============================
@@ -8309,7 +8436,7 @@ $(function() {
 			});
 		},
 		teardown: function() {
-			disposeQUnitFixtureController();
+			testutils.clearController();
 			// iframe内のコントローラをdispose
 			var iframeControllers = h5.core.controllerManager.getControllers(this.ifDoc, {
 				deep: true
@@ -8460,7 +8587,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
 		teardown: function() {
-			disposeQUnitFixtureController();
+			testutils.clearController();
 		}
 	});
 
