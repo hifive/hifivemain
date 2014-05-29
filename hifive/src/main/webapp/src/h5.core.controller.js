@@ -3276,10 +3276,7 @@
 		 * @type ControllerManager
 		 * @memberOf h5.core
 		 */
-		controllerManager: controllerManager,
-
-		controllerCacheManager: controllerCacheManager,
-		logicCacheManager: logicCacheManager
+		controllerManager: controllerManager
 	});
 
 	// プロパティ重複チェック用のコントローラプロパティマップを作成
