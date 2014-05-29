@@ -786,15 +786,10 @@
 		var doc = getDocumentOf(controller.rootElement);
 		for ( var p in bindMap) {
 			var bindObjects = createBindObjects(controller, bindMap[p]);
-			if (isArray(bindObjects)) {
-				for (var i = 0, l = bindObjects.length; i < l; i++) {
-					// アンバインドマップにハンドラを追加
-					registerWithUnbindList(bindObjects[i], bindMap[p]);
-					bindByBindObject(bindObjects[i], bindMap[p], doc);
-				}
-			} else {
-				registerWithUnbindList(bindObjects, bindMap[p]);
-				bindByBindObject(bindObjects, bindMap[p], doc);
+			for (var i = 0, l = bindObjects.length; i < l; i++) {
+				// アンバインドマップにハンドラを追加
+				registerWithUnbindList(bindObjects[i], bindMap[p]);
+				bindByBindObject(bindObjects[i], bindMap[p], doc);
 			}
 		}
 	}
@@ -837,11 +832,11 @@
 		// unbindListにラップしたものが登録されるように、このタイミングで行う必要がある
 		function wrapHandler(bindObj) {
 			var handler = bindObj.handler;
+			var c = bindObj.controller;
 			bindObj.handler = function(/* var args */) {
 				var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(arguments[0].currentTarget)
 						: arguments[0].currentTarget;
-				handler.call(bindObj.controller, createEventContext(bindObj, arguments),
-						currentTargetShortcut);
+				handler.call(c, createEventContext(bindObj, arguments), currentTargetShortcut);
 			};
 		}
 		for (var i = 0, l = bindObjects.length; i < l; i++) {
@@ -3130,10 +3125,7 @@
 		 * キャッシュを全てクリア
 		 */
 		clearAll: function() {
-			var map = this._cacheMap;
-			for ( var p in map) {
-				delete map[p];
-			}
+			this._cacheMap = [];
 		},
 
 		/**
@@ -3286,8 +3278,8 @@
 		 */
 		controllerManager: controllerManager,
 
-		controllerCacheManager:controllerCacheManager,
-		logicCacheManager:logicCacheManager
+		controllerCacheManager: controllerCacheManager,
+		logicCacheManager: logicCacheManager
 	});
 
 	// プロパティ重複チェック用のコントローラプロパティマップを作成
