@@ -93,7 +93,7 @@
 	function gate(param) {
 		var gateFunction = param.gateFunction;
 		var maxWait = param.maxWait != null ? param.maxWait : testutils.settings.GATE_MAX_WAIT;
-		var interval = param.interval != null ? param.interval : testutils.settings.GATE_MAX_WAIT;
+		var interval = param.interval != null ? param.interval : testutils.settings.GATE_CHECK_INTERVAL;
 		var failMsg = param.failMsg;
 
 		var dfd = $.Deferred();
