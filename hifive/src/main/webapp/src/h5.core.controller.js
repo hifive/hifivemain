@@ -3125,7 +3125,7 @@
 		 * キャッシュを全てクリア
 		 */
 		clearAll: function() {
-			this._cacheMap = [];
+			this._cacheMap = {};
 		},
 
 		/**
