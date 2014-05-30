@@ -378,9 +378,9 @@ function getWindowOf(node) {
  */
 var isArray = Array.isArray || (function() {
 	// プロパティアクセスを減らすため、toStringをキャッシュ
-	var core_toString = Object.prototype.toString;
+	var toStringObj = Object.prototype.toString;
 	return function(obj) {
-		return core_toString.call(obj) === '[object Array]';
+		return toStringObj.call(obj) === '[object Array]';
 	};
 })();
 
