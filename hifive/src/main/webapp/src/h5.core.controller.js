@@ -1061,11 +1061,9 @@
 			} else if (funcName === '__postInit') {
 				callback = createCallbackForPostInit(c);
 				promises = getDescendantControllerPromises(c, 'postInitPromise');
-				isChildFirst = true;
 			} else {
 				callback = createCallbackForReady(c);
 				promises = getDescendantControllerPromises(c, 'readyPromise');
-				isChildFirst = true;
 			}
 
 			// promisesが空の配列の場合はfunc()は同期的に呼ばれる
