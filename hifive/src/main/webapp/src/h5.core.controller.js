@@ -28,6 +28,15 @@
 	// Production
 	// =============================
 
+	/**
+	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
+	 */
+	var SELECTOR_TYPE_CONST = {
+		SELECTOR_TYPE_LOCAL: 1,
+		SELECTOR_TYPE_GLOBAL: 2,
+		SELECTOR_TYPE_OBJECT: 3
+	};
+
 	var SUFFIX_CONTROLLER = 'Controller';
 	var SUFFIX_LOGIC = 'Logic';
 	var EVENT_NAME_H5_TRACKSTART = 'h5trackstart';
@@ -171,15 +180,6 @@
 	var argsToArray = h5.u.obj.argsToArray;
 
 	/**
-	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
-	 */
-	var selectorTypeConst = {
-		SELECTOR_TYPE_LOCAL: 1,
-		SELECTOR_TYPE_GLOBAL: 2,
-		SELECTOR_TYPE_OBJECT: 3
-	};
-
-	/**
 	 * マウス/タッチイベントについてh5track*イベントをトリガしたかどうかを管理するため、イベントを格納する配列
 	 */
 	var storedEvents = [];
@@ -257,7 +257,7 @@
 				});
 			}
 			// 子コントローラをチェック
-			childControllerEach(controllerDef, function(controller) {
+			doForEachChildControllers(controllerDef, function(controller) {
 				validateCircular(controller, ancestors.concat([controllerDef]));
 			}, true);
 		}
@@ -279,11 +279,11 @@
 					controllerDefObj: controllerDefObj
 				});
 			}
-			childLogicEach(logic, function(child) {
+			doForEachLogics(logic, function(child) {
 				validateCircular(child, ancestors.concat(logic));
 			});
 		}
-		childLogicEach(controllerDefObj, function(logic) {
+		doForEachLogics(controllerDefObj, function(logic) {
 			validateCircular(controllerDefObj, []);
 		});
 	}
@@ -343,7 +343,7 @@
 	 * @param {Event} event イベントオブジェクト
 	 * @param {Array} evArg イベントハンドラに渡された引数(arguments)を配列にしたもの
 	 * @param {String} selector イベントハンドラのバインドに使用されたセレクタ
-	 * @param {Number} selectorType イベントハンドラのバインドに使用されたセレクタのタイプ(selectorTypeConstに定義されたもの)
+	 * @param {Number} selectorType イベントハンドラのバインドに使用されたセレクタのタイプ(SELECTOR_TYPE_CONSTに定義されたもの)
 	 */
 	function EventContext(controller, event, evArg, selector, selectorType) {
 		this.controller = controller;
@@ -353,7 +353,7 @@
 		this.selectorType = selectorType;
 	}
 	// prototypeにセレクタのタイプを表す定数を追加
-	$.extend(EventContext.prototype, selectorTypeConst);
+	$.extend(EventContext.prototype, SELECTOR_TYPE_CONST);
 
 	/**
 	 * コントローラがdisposeされていないことと、executeListenersを見てリスナーを実行するかどうかを決定するインターセプタ。
@@ -611,7 +611,7 @@
 	 *            定義オブジェクトについての実行かどうか。定義オブジェクトなら子コントローラを探索するときにparentControllerが一致するかどうかは見ない。
 	 * @returns 中断された場合はfalseを返します
 	 */
-	function childControllerEach(controller, callback, isDefObj) {
+	function doForEachChildControllers(controller, callback, isDefObj) {
 		// 定義オブジェクトならcacheManagerからキャッシュを取得(ない場合はnull)
 		// コントローラインスタンスなら__controllerContextからキャッシュを取得
 		var cache = isDefObj ? cacheManager.get(controller.__name)
@@ -650,7 +650,7 @@
 	 * @param {Function} callback 引数に各ロジックとプロパティ名が渡されます。
 	 * @returns 中断された場合はfalseを返します
 	 */
-	function childLogicEach(logic, callback) {
+	function doForEachLogics(logic, callback) {
 		// キャッシュがあるなら、キャッシュを使ってループ
 		var cache = cacheManager.get(logic.__name);
 		if (cache) {
@@ -688,10 +688,10 @@
 	 * @param {Array} _params 再帰呼び出し時に受け取る変数です。
 	 *            <p>
 	 *            親から子コントローラについてのコールバックが呼ばれる際に、親コントローラと親が子を参照しているプロパティ名の配列が渡されます。
-	 *            childControllerEachを使用した時と同様、親からの再帰で呼ばれた時は親コントローラとプロパティ名がコールバックの引数で取得できるようになります。
+	 *            doForEachChildControllersを使用した時と同様、親からの再帰で呼ばれた時は親コントローラとプロパティ名がコールバックの引数で取得できるようになります。
 	 *            </p>
 	 */
-	function controllerGroupEach(controller, callback, isChildFirst, _params) {
+	function doForEachControllerGroups(controller, callback, isChildFirst, _params) {
 		var args = [controller];
 		if (_params && _params.length) {
 			for (var i = 0, l = _params.length; i < l; i++) {
@@ -705,11 +705,11 @@
 			}
 		}
 		function callbackWrapper(c, parent, prop) {
-			if (false === controllerGroupEach(c, callback, isChildFirst, [parent, prop])) {
+			if (false === doForEachControllerGroups(c, callback, isChildFirst, [parent, prop])) {
 				return;
 			}
 		}
-		childControllerEach(controller, callbackWrapper);
+		doForEachChildControllers(controller, callbackWrapper);
 
 		if (isChildFirst) {
 			var ret = callback.apply(controller, args);
@@ -725,17 +725,17 @@
 	 * @private
 	 * @param {Object} controller コントローラ
 	 * @param {String} propertyName プロパティ名(initPromise,postInitPromise,readyPromise)
-	 * @param {Object} aquireFromControllerContext コントローラコンテキストのプロパティかどうか
+	 * @param {Object} acquireFromControllerContext コントローラコンテキストのプロパティかどうか
 	 * @returns {Promise[]} Promiseオブジェクト配列
 	 */
-	function getAncestorControllerPromises(controller, propertyName, aquireFromControllerContext) {
+	function getAncestorControllerPromises(controller, propertyName, acquireFromControllerContext) {
 		var promises = [];
 		function getPromisesInner(object) {
 			var c = object.parentController;
 			if (!c) {
 				return;
 			}
-			var promise = aquireFromControllerContext ? c.__controllerContext[propertyName]
+			var promise = acquireFromControllerContext ? c.__controllerContext[propertyName]
 					: c[propertyName];
 			if (promise) {
 				promises.push(promise);
@@ -763,9 +763,9 @@
 			if (promise) {
 				promises.push(promise);
 			}
-			childControllerEach(c, getPromisesInner);
+			doForEachChildControllers(c, getPromisesInner);
 		}
-		childControllerEach(controller, getPromisesInner);
+		doForEachChildControllers(controller, getPromisesInner);
 		return promises;
 	}
 
@@ -873,12 +873,12 @@
 			// バインド対象がオブジェクトの場合、必ず直接バインドする
 			if (isSelf || useBind || !isString(selectTarget)) {
 				// bindObjにselectorTypeを登録する
-				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_OBJECT;
+				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_OBJECT;
 
 				$(selectTarget).bind(eventName, handler);
 			} else {
 				// bindObjにselectorTypeを登録する
-				bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_GLOBAL;
+				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_GLOBAL;
 
 				$(doc).delegate(selectTarget, eventName, handler);
 			}
@@ -888,7 +888,7 @@
 		} else {
 			// selectorがグローバル指定でない場合
 			// bindObjにselectorTypeを登録し、selectorは文字列を格納する
-			bindObj.evSelectorType = selectorTypeConst.SELECTOR_TYPE_LOCAL;
+			bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_LOCAL;
 			bindObj.evSelector = selector;
 
 			if (useBind) {
@@ -974,7 +974,7 @@
 	 * @param {Boolean} flag フラグ
 	 */
 	function setExecuteListenersFlag(controller, flag) {
-		controllerGroupEach(controller, function(c) {
+		doForEachControllerGroups(controller, function(c) {
 			c.__controllerContext.executeListeners = flag;
 		});
 	}
@@ -1071,7 +1071,7 @@
 			$.when.apply($, promises).done(createLifecycleCaller(c, funcName, callback)).fail(
 					dummyFailHandler);
 		}
-		controllerGroupEach(controller, execInner);
+		doForEachControllerGroups(controller, execInner);
 	}
 
 	/**
@@ -1109,15 +1109,12 @@
 			delete controller.__controllerContext.preinitDfd;
 			delete controller.__controllerContext.initDfd;
 
-			if (isDisposed(controller)) {
-				return;
-			}
 			// 子コントローラのrootElementとviewを設定
 			var rootElement = controller.rootElement;
 			var childControllers = [];
 			try {
 				var meta = controller.__meta;
-				childControllerEach(controller, function(c, parent, prop) {
+				doForEachChildControllers(controller, function(c, parent, prop) {
 					childControllers.push(c);
 					// __metaが指定されている場合、__metaのrootElementを考慮した要素を取得する
 					var target;
@@ -1150,7 +1147,7 @@
 			// 子コントローラが無い(リーフノード)の場合、全コントローラのinitが終わったかどうかをチェック
 			var isAllInitDone = !childControllers.length && (function() {
 				var ret = true;
-				controllerGroupEach(controller.rootController, function(c) {
+				doForEachControllerGroups(controller.rootController, function(c) {
 					ret = c.isInit;
 					return ret;
 				});
@@ -1186,7 +1183,7 @@
 			if (!isDisposed(controller) && controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば次の処理
 				// イベントハンドラのバインド
-				controllerGroupEach(controller, function(c, parent, prop) {
+				doForEachControllerGroups(controller, function(c, parent, prop) {
 					// 親コントローラの__metaからこのコントローラについてuseHandlersの定義を取得
 					var useHandlers = parent && parent.__meta && parent.__meta[prop]
 							&& parent.__meta[prop].useHandlers;
@@ -1746,7 +1743,7 @@
 	 * @param {Controller} controller コントローラ
 	 */
 	function unbindRootElement(controller) {
-		controllerGroupEach(controller, function(c) {
+		doForEachControllerGroups(controller, function(c) {
 			c.rootElement = null;
 			c.view.__controller = null;
 		});
@@ -1852,12 +1849,12 @@
 	 * @param {Object} param 初期化パラメータ
 	 */
 	function initInternalProperty(controller, param) {
-		controllerGroupEach(controller, function(c) {
+		doForEachControllerGroups(controller, function(c) {
 			var templateDfd = getDeferred();
 			templateDfd.resolve();
 			c.__controllerContext.templatePromise = templateDfd.promise();
 			c.__controllerContext.initDfd = getDeferred();
-			c.postInitPromises = c.__controllerContext.initDfd.promise();
+			c.initPromises = c.__controllerContext.initDfd.promise();
 			c.__controllerContext.postInitDfd = getDeferred();
 			c.postInitPromise = c.__controllerContext.postInitDfd.promise();
 			c.__controllerContext.readyDfd = getDeferred();
@@ -1901,7 +1898,7 @@
 	function executeLifeEndChain(controller, funcName) {
 		var promises = [];
 		// 子から順に__unbind,__disposeの実行
-		controllerGroupEach(controller, function(c) {
+		doForEachControllerGroups(controller, function(c) {
 			if (c[funcName] && isFunction(c[funcName])) {
 				var ret = c[funcName]();
 				if (h5.async.isPromise(ret)) {
@@ -1942,7 +1939,7 @@
 	 */
 	function disposeController(controller) {
 		// 子から順にview.clearとnullifyの実行
-		controllerGroupEach(controller, function(c) {
+		doForEachControllerGroups(controller, function(c) {
 			nullify(c);
 			if (c.view && c.view.__view) {
 				c.view.clear();
@@ -2012,7 +2009,7 @@
 
 		// ルートからinitDfd.rejectしていく
 		var controllers = [];
-		controllerGroupEach(controller, function(c) {
+		doForEachControllerGroups(controller, function(c) {
 			controllers.push(c);
 			var dfd = c.__controllerContext['initDfd'];
 			if (dfd && !isRejected(dfd) && !isResolved(dfd)) {
@@ -2869,7 +2866,7 @@
 
 			executeLifeEndChain(this, '__unbind');
 
-			controllerGroupEach(this, function(c, parent, prop) {
+			doForEachControllerGroups(this, function(c, parent, prop) {
 				// 親のuseHandlersでfalseが指定されていた場合は何もしない
 				var useHandlers = parent && parent.__meta && parent.__meta[prop]
 						&& parent.__meta[prop].useHandlers;
@@ -3514,7 +3511,7 @@
 			// __constructを実行。ここまでは完全に同期処理になる。
 			// 子コントローラのバインドが終わってから、親→子の順番で実行する
 			var isDisposed = false;
-			controllerGroupEach(controller, function(c, parent, prop) {
+			doForEachControllerGroups(controller, function(c, parent, prop) {
 				// __construct呼び出し
 				c.__construct && c.__construct(createInitializationContext(c));
 
@@ -3594,7 +3591,7 @@
 		logic.ownWithOrg = ownWithOrg;
 
 		// ロジックが持っているロジック定義もロジック化
-		childLogicEach(logic, function(logic, parent, prop) {
+		doForEachLogics(logic, function(logic, parent, prop) {
 			parent[prop] = createLogic(logic);
 		});
 
