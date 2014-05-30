@@ -3397,7 +3397,7 @@
 		// Deferred,Promiseの作成
 		// preinitPromise, initPromise, postInitPromiseが失敗してもcFHを発火させないようにするため、dummyのfailハンドラを登録する
 		var preinitDfd = getDeferred();
-		var preinitPromise = preinitDfd.promise();
+		var preinitPromise = preinitDfd.promise().fail(dummyFailHandler);
 		var initDfd = getDeferred();
 		var initPromise = initDfd.promise().fail(dummyFailHandler);
 		var postInitDfd = getDeferred();
