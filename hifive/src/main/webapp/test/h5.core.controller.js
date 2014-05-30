@@ -6763,38 +6763,33 @@ $(function() {
 	 * window.onerrorを保管しておく変数
 	 */
 	var onerrorHandler = null;
-	module(
-			'ライフサイクルイベント内の例外',
-			{
-				setup: function() {
-					$('#qunit-fixture')
-							.append(
-									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+	module('ライフサイクルイベント内の例外', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 
-					// 元のwindow.onerror(QUnitのもの)を一時的に保管する
-					onerrorHandler = window.onerror;
-				},
-				teardown: function() {
-					testutils.clearController();
-					$('#qunit-fixture #controllerTest').remove();
-					// window.onerrorを元に戻す
-					window.onerror = onerrorHandler;
-				},
-				testTimeoutFunc: function(msg) {
-					var id = setTimeout(function() {
-						ok(false, 'window.onerrorが実行されませんでした。');
-						// __unbind, __disposeにundefinedを代入して、teardown時にdisposeするときエラーが出ないようにする
-						var controllers = h5.core.controllerManager
-								.getControllers('#controllerTest');
-						for (var i = 0, l = controllers.length; i < l; i++) {
-							controllers[i].__unbind = undefined;
-							controllers[i].__dispose = undefined;
-						}
-						start();
-					}, 5000);
-					return id;
+			// 元のwindow.onerror(QUnitのもの)を一時的に保管する
+			onerrorHandler = window.onerror;
+		},
+		teardown: function() {
+			testutils.clearController();
+			// window.onerrorを元に戻す
+			window.onerror = onerrorHandler;
+		},
+		/** window.onerrorが起こるまで待機して、待機時間(5秒)を過ぎたらテストを失敗させる関数 */
+		testTimeoutFunc: function(msg) {
+			var id = setTimeout(function() {
+				ok(false, 'window.onerrorが実行されませんでした。');
+				// __unbind, __disposeにundefinedを代入して、teardown時にdisposeするときエラーが出ないようにする
+				var controllers = h5.core.controllerManager.getControllers('#controllerTest');
+				for (var i = 0, l = controllers.length; i < l; i++) {
+					controllers[i].__unbind = undefined;
+					controllers[i].__dispose = undefined;
 				}
-			});
+				start();
+			}, 5000);
+			return id;
+		}
+	});
 
 	//=============================
 	// Body
@@ -6813,13 +6808,14 @@ $(function() {
 		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__init()で例外をスローする。', 1, function() {
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__init()で例外をスローする。', 2, function() {
 		var errorMsg = '__init error.';
 		var id = this.testTimeoutFunc(errorMsg);
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
 			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(!c.__name, 'コントローラはdisposeされていること');
 			start();
 		};
 
@@ -6829,46 +6825,71 @@ $(function() {
 				throw new Error(errorMsg);
 			}
 		};
-
-		h5.core.controller('#controllerTest', controller);
+		var c = h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__ready()で例外をスローする。', 1, function() {
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__postInit()で例外をスローする。', 2, function() {
+		var errorMsg = '__postInit error.';
+		var id = this.testTimeoutFunc(errorMsg);
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(!c.__name, 'コントローラはdisposeされていること');
+			start();
+		};
+
+		var controller = {
+			__name: 'TestController',
+			__postInit: function() {
+				throw new Error(errorMsg);
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__ready()で例外をスローする。', 2, function() {
 		var errorMsg = '__ready error.';
 		var id = this.testTimeoutFunc(errorMsg);
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			ok(ev.indexOf(errorMsg) != -1, '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(!c.__name, 'コントローラはdisposeされていること');
 			start();
 		};
 
+		var unbindFlag, disposeFlag;
 		var controller = {
 			__name: 'TestController',
 			__ready: function() {
 				throw new Error(errorMsg);
 			}
 		};
-
-		h5.core.controller('#controllerTest', controller);
+		var c = h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。', 1, function() {
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのunbindを呼んだ場合。', 3, function() {
 		var errorMsg = '__unbind error.';
 		var id = this.testTimeoutFunc(errorMsg);
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			ok(ev.indexOf(errorMsg) != -1, '__unbind()内で発生した例外がFW内で握りつぶされずcatchできること。');
-			// テストが終わってunbindするときにエラーが出ないようにする。
-			c.__unbind = undefined;
+			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			$(c.rootElement).click();
+			ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
+			ok(c.__name, 'コントローラはdisposeされていないこと');
 			start();
 		};
 
+		var evHandlerFlag;
 		var controller = {
 			__name: 'TestController',
 			__unbind: function() {
 				throw new Error(errorMsg);
+			},
+			'{rootElement} click':function(){
+				evHandlerFlag = true;
 			}
 		};
 
@@ -6878,15 +6899,44 @@ $(function() {
 		});
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__dispose()で例外をスローする。', 1, function() {
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのdisposeを呼んだ場合。', 3, function() {
+		var errorMsg = '__unbind error.';
+		var id = this.testTimeoutFunc(errorMsg);
+
+		window.onerror = function(ev) {
+			clearTimeout(id);
+			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			$(c.rootElement).click();
+			ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
+			ok(!c.__name, 'コントローラはdisposeされていること');
+			start();
+		};
+
+		var evHandlerFlag;
+		var controller = {
+			__name: 'TestController',
+			__unbind: function() {
+				throw new Error(errorMsg);
+			},
+			'{rootElement} click':function(){
+				evHandlerFlag = true;
+			}
+		};
+
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			c.dispose();
+		});
+	});
+
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__dispose()で例外をスローする。', 2, function() {
 		var errorMsg = '__dispose error.';
 		var id = this.testTimeoutFunc(errorMsg);
 
 		window.onerror = function(ev) {
 			clearTimeout(id);
-			ok(ev.indexOf(errorMsg) != -1, '__dispose()内で発生した例外がFW内で握りつぶされずcatchできること。');
-			// テストが終わってdisposeするときにエラーが出ないようにする。
-			c.__dispose = undefined;
+			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(!c.__name, 'コントローラはdisposeされていること');
 			start();
 		};
 

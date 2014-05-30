@@ -1900,7 +1900,16 @@
 		// 子から順に__unbind,__disposeの実行
 		doForEachControllerGroups(controller, function(c) {
 			if (c[funcName] && isFunction(c[funcName])) {
-				var ret = c[funcName]();
+				var ret;
+				try {
+					ret = c[funcName]();
+				} catch (e) {
+					// __unbindまたは__disposeで例外が投げられた場合
+					// 処理を中断せずに、unbind,dispose処理を継続するため、非同期でエラーを投げる
+					setTimeout(function() {
+						throw e;
+					}, 0);
+				}
 				if (isPromise(ret)) {
 					var df = h5.async.deferred();
 					ret.always(function() {
