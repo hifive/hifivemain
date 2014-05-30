@@ -4122,7 +4122,6 @@ $(function() {
 				var c = h5.core.controller('#controllerTest', {
 					__name: 'TestController',
 					__construct: function() {
-						cc = this;
 						child = this.childController;
 					},
 					childController: childControllerDef
