@@ -336,61 +336,6 @@
 	// ----------------------------- コントローラ定義オブジェクトのチェック関数ここまで -----------------------------
 
 	/**
-	 * 複数のプロミスが完了するのを待機する
-	 * <p>
-	 * whenとは仕様が異なり、新しくdeferredは作らない。
-	 * </p>
-	 *
-	 * @private
-	 * @param {Promise[]} promises
-	 * @param {Function} doneCallback doneコールバック。引数は渡されません。
-	 * @param {Function} failCallback failコールバック
-	 * @param {Boolean} cfhIfFail 渡されたpromiseのいずれかが失敗した時にcFHを呼ぶかどうか。
-	 *            cFHを呼ぶときのthisは失敗したpromiseオブジェクト、引数は失敗したpromiseのfailに渡される引数
-	 */
-	function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
-		// promisesの中のプロミスオブジェクトの数(プロミスでないものは無視)
-		// 引数に渡されたpromisesのうち、プロミスオブジェクトと判定したものを列挙
-		var monitorningPromises = [];
-		for (var i = 0, l = promises.length; i < l; i++) {
-			var promise = promises[i];
-			if (isPromise(promise)) {
-				monitorningPromises.push(promise);
-			}
-		}
-
-		var promisesLength = monitorningPromises.length;
-		if (promisesLength === 0) {
-			// プロミスが一つもなかった場合は即doneCallbackを実行
-			doneCallback && doneCallback();
-			return;
-		}
-
-		var resolveCount = 0;
-		var rejected = false;
-		function check() {
-			if (!rejected && ++resolveCount === promisesLength) {
-				// 全てのpromiseが成功したので、doneCallbackを実行
-				doneCallback && doneCallback();
-			}
-		}
-		function fail(/* var_args */) {
-			rejected = true;
-			if (failCallback) {
-				failCallback.apply(this, arguments);
-				return;
-			}
-			if (cfhIfFail && h5.settings.commonFailHandler) {
-				// failCallbackが渡されていなくてcfhIfFailがtrueでcommonFailHandlerが設定されていればcFHを呼ぶ
-				h5.settings.commonFailHandler.call(this, arguments);
-			}
-		}
-		for (var i = 0; i < promisesLength; i++) {
-			monitorningPromises[i].done(check).fail(fail);
-		}
-	}
-
-	/**
 	 * イベントコンテキストクラス イベントコンテキストの中に格納する
 	 *
 	 * @private

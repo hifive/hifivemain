@@ -510,9 +510,9 @@
 						promises.push(scriptLoad(url));
 					});
 
-					h5.async.when(promises).done(function() {
+					waitForPromises(promises, function() {
 						retDf.resolve();
-					}).fail(retDfFailCallback);
+					}, retDfFailCallback);
 				} else {
 					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
 					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
