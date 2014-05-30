@@ -174,6 +174,7 @@
 	//
 	};
 	var getDeferred = h5.async.deferred;
+	var isPromise = h5.async.isPromise;
 	var startsWith = h5.u.str.startsWith;
 	var endsWith = h5.u.str.endsWith;
 	var format = h5.u.str.format;
@@ -350,18 +351,19 @@
 	function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 		// promisesの中のプロミスオブジェクトの数(プロミスでないものは無視)
 		// 引数に渡されたpromisesのうち、プロミスオブジェクトと判定したものを列挙
-		var checkedPromises = [];
+		var monitorningPromises = [];
 		for (var i = 0, l = promises.length; i < l; i++) {
 			var promise = promises[i];
-			if (h5.async.isPromise(promise)) {
-				checkedPromises.push(promise);
+			if (isPromise(promise)) {
+				monitorningPromises.push(promise);
 			}
 		}
 
-		var promisesLength = checkedPromises.length;
+		var promisesLength = monitorningPromises.length;
 		if (promisesLength === 0) {
 			// プロミスが一つもなかった場合は即doneCallbackを実行
 			doneCallback && doneCallback();
+			return;
 		}
 
 		var resolveCount = 0;
@@ -384,7 +386,7 @@
 			}
 		}
 		for (var i = 0; i < promisesLength; i++) {
-			checkedPromises[i].done(check).fail(fail);
+			monitorningPromises[i].done(check).fail(fail);
 		}
 	}
 
@@ -1954,7 +1956,7 @@
 		doForEachControllerGroups(controller, function(c) {
 			if (c[funcName] && isFunction(c[funcName])) {
 				var ret = c[funcName]();
-				if (h5.async.isPromise(ret)) {
+				if (isPromise(ret)) {
 					var df = h5.async.deferred();
 					ret.always(function() {
 						// __unbind,__disposeが返すプロミスが成功したかどうかにかかわらず終了を待つプロミスにする
