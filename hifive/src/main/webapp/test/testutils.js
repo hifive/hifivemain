@@ -143,7 +143,7 @@
 		for (var i = controllers.length - 1; i >= 0; i--) {
 			controllers[i].dispose();
 		}
-		h5.core.cacheManager.clearAll();
+		h5.core.definitionCacheManager.clearAll();
 	}
 
 	/**

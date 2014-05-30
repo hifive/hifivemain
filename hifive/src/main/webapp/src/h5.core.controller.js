@@ -157,7 +157,7 @@
 	var controllerManager;
 
 	// キャッシュマネージャ。作成した時に値をセットしている。
-	var cacheManager;
+	var definitionCacheManager;
 
 	// =========================================================================
 	//
@@ -668,9 +668,9 @@
 	 * @returns 中断された場合はfalseを返します
 	 */
 	function doForEachChildControllers(controller, callback, isDefObj) {
-		// 定義オブジェクトならcacheManagerからキャッシュを取得(ない場合はnull)
+		// 定義オブジェクトならdefinitionCacheManagerからキャッシュを取得(ない場合はnull)
 		// コントローラインスタンスなら__controllerContextからキャッシュを取得
-		var cache = isDefObj ? cacheManager.get(controller.__name)
+		var cache = isDefObj ? definitionCacheManager.get(controller.__name)
 				: (controller.__controllerContext && controller.__controllerContext.cache);
 		// キャッシュがあるなら、キャッシュを使ってループ
 		if (cache) {
@@ -708,7 +708,7 @@
 	 */
 	function doForEachLogics(logic, callback) {
 		// キャッシュがあるなら、キャッシュを使ってループ
-		var cache = cacheManager.get(logic.__name);
+		var cache = definitionCacheManager.get(logic.__name);
 		if (cache) {
 			for (var i = 0, l = cache.logicProperties.length; i < l; i++) {
 				var prop = cache.logicProperties[i];
@@ -3256,7 +3256,7 @@
 	/**
 	 * キャッシュマネージャクラス
 	 * <p>
-	 * コントローラキャッシュマネージャとロジックキャッシュマネージャのスーパークラス
+	 * マップを使ってキャッシュの登録、削除を行うクラス
 	 * </p>
 	 *
 	 * @name CacheManager
@@ -3307,7 +3307,7 @@
 	});
 
 	// キャッシュ変数にコントローラマネージャ、キャッシュマネージャのインスタンスをそれぞれ格納
-	cacheManager = new CacheManager();
+	definitionCacheManager = new CacheManager();
 	controllerManager = new ControllerManager();
 
 	h5.u.obj.expose('h5.core', {
@@ -3321,29 +3321,29 @@
 		controllerManager: controllerManager,
 
 		/**
-		 * キャッシュマネージャ
+		 * 定義オブジェクトのキャッシュを管理するキャッシュマネージャ
 		 *
-		 * @name cacheManager
+		 * @name definitionCacheManager
 		 * @memberOf h5.core
 		 */
-		cacheManager: {
+		definitionCacheManager: {
 			/**
 			 * 名前を指定してキャッシュをクリアする
 			 *
 			 * @param {String} name コントローラまたはロジックの名前(__nameの値)
-			 * @memberOf h5.core.cacheManager
+			 * @memberOf h5.core.definitionCacheManager
 			 */
 			clear: function(name) {
-				cacheManager.clear(name);
+				definitionCacheManager.clear(name);
 			},
 
 			/**
 			 * キャッシュを全てクリアする
 			 *
-			 * @memberOf h5.core.cacheManager
+			 * @memberOf h5.core.definitionCacheManager
 			 */
 			clearAll: function() {
-				cacheManager.clearAll();
+				definitionCacheManager.clearAll();
 			}
 		}
 	});
@@ -3409,7 +3409,7 @@
 		}
 
 		// キャッシュの取得(無かったらundefined)
-		var cache = cacheManager.get(controllerName);
+		var cache = definitionCacheManager.get(controllerName);
 
 		// コントローラ定義オブジェクトのチェック
 		// キャッシュがある場合はコントローラ定義オブジェクトについてはチェック済みなのでチェックしない
@@ -3430,7 +3430,7 @@
 		// キャッシュが無かった場合、キャッシュの作成と登録
 		if (!cache) {
 			cache = createControllerCache(controllerDefObj);
-			cacheManager.register(controllerName, cache);
+			definitionCacheManager.register(controllerName, cache);
 		}
 
 		if (isRoot) {

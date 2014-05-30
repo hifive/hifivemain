@@ -230,7 +230,7 @@ $(function() {
 			controllers[i].dispose();
 		}
 		h5.core.controllerManager.controllers = [];
-		h5.core.cacheManager.clearAll();
+		h5.core.definitionCacheManager.clearAll();
 	}
 
 	/**
