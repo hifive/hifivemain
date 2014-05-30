@@ -372,9 +372,13 @@ function getWindowOf(node) {
 
 /**
  * 引数が配列かどうか判定
+ * <p>
+ * Array.isArrayがあるブラウザの場合はisArray===Array.isArrayです
+ * </p>
  *
  * @private
  * @param {Any} obj
+ * @returns {Boolean}
  */
 var isArray = Array.isArray || (function() {
 	// プロパティアクセスを減らすため、toStringをキャッシュ
@@ -389,6 +393,7 @@ var isArray = Array.isArray || (function() {
  *
  * @private
  * @param {Any} obj
+ * @returns {Boolean}
  */
 function isFunction(obj) {
 	return typeof obj === 'function';
