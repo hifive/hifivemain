@@ -1302,7 +1302,7 @@ $(function() {
 			__name: 'TestController',
 			aController: null,
 			bControlelr: undefined,
-			cController:function(){}
+			cController: function() {}
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
@@ -1560,192 +1560,195 @@ $(function() {
 
 	//=============================
 	// Body
-//	//=============================
-//	asyncTest('h5controllerboundイベントの上がるタイミング', 3, function() {
-//		var callcount = 0;
-//		var controllerHandler = false;
-//		var controller = {
-//			__name: 'TestController',
-//			__ready: function() {
-//				strictEqual(callcount, 1, '__readyの前にh5controllerboundが呼ばれること');
-//				ok(controllerHandler,
-//						'イベントの発火はイベントバインドが終わった後なので、自身のh5controllerreadyイベントをを自身のイベントハンドラで拾えること');
-//			},
-//			__childController: {
-//				__name: 'ChildController'
-//			},
-//			'{rootElement} h5controllerbound': function() {
-//				controllerHandler = true;
-//				start();
-//			}
-//		};
-//		function handler(event, c) {
-//			callcount++;
-//			$('body').unbind('h5controllerbound', handler);
-//		}
-//		var c = h5.core.controller('#controllerTest', controller);
-//		c.initPromise.done(function() {
-//			strictEqual(callcount, 0, 'initPromiseが終わった時点ではh5controllerboundは呼ばれていないこと');
-//		});
-//		c.readyPromise.done(function() {
-//			strictEqual(callcount, 0, 'readyPromiseが終わった時点ではh5controllerboundは呼ばれていないこと');
-//		});
-//		$('body').bind('h5controllerbound', handler);
-//	});
-//
-//	asyncTest('h5controllerboundイベントオブジェクト', 3, function() {
-//		var controller = {
-//			__name: 'TestController',
-//			__childController: {
-//				__name: 'ChildController'
-//			},
-//			'{rootElement} h5controllerbound': function(context) {
-//				var event = context.event;
-//				strictEqual(event.type, 'h5controllerbound',
-//						'イベントオブジェトのtypeがh5controllerboundであること');
-//				strictEqual(event.target, $('#controllerTest')[0],
-//						'イベントオブジェトのtargetがコントローラのバインド先であること');
-//				strictEqual(context.evArg, this, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
-//				start();
-//			}
-//		};
-//		h5.core.controller('#controllerTest', controller);
-//	});
-//
-//	asyncTest('__initで返したPromiseがrejectされた場合、h5controllerboundイベントは発生しないこと', 1, function() {
-//		var eventFired = false;
-//		var controller = {
-//			__name: 'TestController',
-//			'{rootElement} h5controllerbound': function(context) {
-//				eventFired = true;
-//			},
-//			__init: function() {
-//				var df = this.deferred();
-//				df.reject();
-//				return df.promise();
-//			},
-//			__dispose: function() {
-//				ok(!eventFired, 'h5controllerreadyイベントが発生していないこと');
-//				start();
-//			}
-//		};
-//		conIns = h5.core.controller('#controllerTest', controller);
-//	});
-//
-//	asyncTest('h5controllerreadyイベントの上がるタイミング', 3, function() {
-//		var callcount = 0;
-//		var controllerHandler = false;
-//		var controller = {
-//			__name: 'TestController',
-//			__childController: {
-//				__name: 'ChildController'
-//			},
-//			'{rootElement} h5controllerready': function() {
-//				controllerHandler = true;
-//			}
-//		};
-//		function handler(event, c) {
-//			callcount++;
-//			strictEqual(callcount, 1, 'readyPromiseが終わったらh5controllerreadyが呼ばれること');
-//			ok(controllerHandler,
-//					'イベントの発火はイベントバインドが終わった後なので、自身のh5controllerreadyイベントをを自身のイベントハンドラで拾えること');
-//
-//			$('body').unbind('h5controllerready', handler);
-//			start();
-//		}
-//		h5.core.controller('#controllerTest', controller).readyPromise.done(function() {
-//			strictEqual(callcount, 0, 'readyPromise.doneの時点ではh5controllerreadyイベントは上がっていないこと');
-//		});
-//		$('body').bind('h5controllerready', handler);
-//	});
-//
-//	asyncTest('h5controllerreadyイベントオブジェクト', 3, function() {
-//		var controller = {
-//			__name: 'TestController',
-//			__childController: {
-//				__name: 'ChildController'
-//			},
-//			'{rootElement} h5controllerready': function(context) {
-//				var event = context.event;
-//				strictEqual(event.type, 'h5controllerready',
-//						'イベントオブジェトのtypeがh5controllerreadyであること');
-//				strictEqual(event.target, $('#controllerTest')[0],
-//						'イベントオブジェトのtargetがコントローラのバインド先であること');
-//				strictEqual(context.evArg, this, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
-//				start();
-//			}
-//		};
-//		h5.core.controller('#controllerTest', controller);
-//	});
-//
-//	asyncTest('__readyで返したPromiseがrejectされた場合、h5controllerreadyイベントは発生しないこと', 1, function() {
-//		var eventFired = false;
-//		var controller = {
-//			__name: 'TestController',
-//			'{rootElement} h5controllerready': function(context) {
-//				eventFired = true;
-//			},
-//			__ready: function() {
-//				var df = this.deferred();
-//				df.reject();
-//				return df.promise();
-//			},
-//			__dispose: function() {
-//				ok(!eventFired, 'h5controllerreadyイベントが発生していないこと');
-//				start();
-//			}
-//		};
-//		h5.core.controller('#controllerTest', controller);
-//	});
-//
-//	asyncTest('h5controllerunboundイベントの上がるタイミング', 3, function() {
-//		var callcount = 0;
-//		var controllerHandler = false;
-//		var controller = {
-//			__name: 'TestController',
-//			__ready: function() {
-//				strictEqual(callcount, 1, '__readyの前にh5controllerboundが呼ばれること');
-//				ok(controllerHandler,
-//						'イベントの発火はイベントバインドが終わった後なので、自身のh5controllerreadyイベントをを自身のイベントハンドラで拾えること');
-//				start();
-//			},
-//			__childController: {
-//				__name: 'ChildController'
-//			},
-//			'{rootElement} h5controllerunbound': function() {
-//				controllerHandler = true;
-//			}
-//		};
-//		function handler(event, c) {
-//			callcount++;
-//			$('body').unbind('h5controllerunbound', handler);
-//		}
-//		var c = h5.core.controller('#controllerTest', controller);
-//		c
-//		c.readyPromise.done(function() {
-//			strictEqual(callcount, 1, 'initPromiseが終わった時点ではh5controllerboundは呼ばれていないこと');
-//		});
-//		$('body').bind('h5controllerunbound', handler);
-//	});
-//
-//	asyncTest('h5controllerboundイベントオブジェクト', 3, function() {
-//		var controller = {
-//			__name: 'TestController',
-//			__childController: {
-//				__name: 'ChildController'
-//			},
-//			'{rootElement} h5controllerbound': function(context) {
-//				var event = context.event;
-//				strictEqual(event.type, 'h5controllerbound',
-//						'イベントオブジェトのtypeがh5controllerboundであること');
-//				strictEqual(event.target, $('#controllerTest')[0],
-//						'イベントオブジェトのtargetがコントローラのバインド先であること');
-//				strictEqual(context.evArg, this, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
-//				start();
-//			}
-//		};
-//		h5.core.controller('#controllerTest', controller);
-//	});
+	//=============================
+	asyncTest('h5controllerboundイベントの上がるタイミング', 3, function() {
+		var callcount = 0;
+		var controllerHandler = false;
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				strictEqual(callcount, 1, '__readyの前にh5controllerboundが呼ばれること');
+				ok(controllerHandler,
+						'イベントの発火はイベントバインドが終わった後なので、自身のh5controllerreadyイベントをを自身のイベントハンドラで拾えること');
+			},
+			__childController: {
+				__name: 'ChildController'
+			},
+			'{rootElement} h5controllerbound': function() {
+				controllerHandler = true;
+				start();
+			}
+		};
+		function handler(event, c) {
+			callcount++;
+			$('body').unbind('h5controllerbound', handler);
+		}
+		var c = h5.core.controller('#controllerTest', controller);
+		c.initPromise.done(function() {
+			strictEqual(callcount, 0, 'initPromiseが終わった時点ではh5controllerboundは呼ばれていないこと');
+		});
+		$('body').bind('h5controllerbound', handler);
+	});
+
+	asyncTest('h5controllerboundイベントオブジェクト', 3, function() {
+		var controller = {
+			__name: 'TestController',
+			__childController: {
+				__name: 'ChildController'
+			},
+			'{rootElement} h5controllerbound': function(context) {
+				var event = context.event;
+				strictEqual(event.type, 'h5controllerbound',
+						'イベントオブジェトのtypeがh5controllerboundであること');
+				strictEqual(event.target, $('#controllerTest')[0],
+						'イベントオブジェトのtargetがコントローラのバインド先であること');
+				strictEqual(context.evArg, this, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
+				start();
+			}
+		};
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('__initで返したPromiseがrejectされた場合、h5controllerboundイベントは発生しないこと', 1, function() {
+		var eventFired = false;
+		var controller = {
+			__name: 'TestController',
+			'{rootElement} h5controllerbound': function(context) {
+				eventFired = true;
+			},
+			__init: function() {
+				var df = this.deferred();
+				df.reject();
+				return df.promise();
+			},
+			__dispose: function() {
+				ok(!eventFired, 'h5controllerreadyイベントが発生していないこと');
+				start();
+			}
+		};
+		conIns = h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('h5controllerreadyイベントの上がるタイミング', 3, function() {
+		var callcount = 0;
+		var controllerHandler = false;
+		var controller = {
+			__name: 'TestController',
+			__childController: {
+				__name: 'ChildController'
+			},
+			'{rootElement} h5controllerready': function() {
+				controllerHandler = true;
+			}
+		};
+		function handler(event, c) {
+			callcount++;
+			strictEqual(callcount, 1, 'readyPromiseが終わったらh5controllerreadyが呼ばれること');
+			ok(controllerHandler,
+					'イベントの発火はイベントバインドが終わった後なので、自身のh5controllerreadyイベントをを自身のイベントハンドラで拾えること');
+
+			$('body').unbind('h5controllerready', handler);
+			start();
+		}
+		h5.core.controller('#controllerTest', controller).readyPromise.done(function() {
+			strictEqual(callcount, 0, 'readyPromise.doneの時点ではh5controllerreadyイベントは上がっていないこと');
+		});
+		$('body').bind('h5controllerready', handler);
+	});
+
+	asyncTest('h5controllerreadyイベントオブジェクト', 3, function() {
+		var controller = {
+			__name: 'TestController',
+			__childController: {
+				__name: 'ChildController'
+			},
+			'{rootElement} h5controllerready': function(context) {
+				var event = context.event;
+				strictEqual(event.type, 'h5controllerready',
+						'イベントオブジェトのtypeがh5controllerreadyであること');
+				strictEqual(event.target, $('#controllerTest')[0],
+						'イベントオブジェトのtargetがコントローラのバインド先であること');
+				strictEqual(context.evArg, this, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
+				start();
+			}
+		};
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('__readyで返したPromiseがrejectされた場合、h5controllerreadyイベントは発生しないこと', 1, function() {
+		var eventFired = false;
+		var controller = {
+			__name: 'TestController',
+			'{rootElement} h5controllerready': function(context) {
+				eventFired = true;
+			},
+			__ready: function() {
+				var df = this.deferred();
+				df.reject();
+				return df.promise();
+			},
+			__dispose: function() {
+				ok(!eventFired, 'h5controllerreadyイベントが発生していないこと');
+				start();
+			}
+		};
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('h5controllerunboundイベントの上がるタイミング', 4, function() {
+		var callcount = 0;
+		var controllerHandler = false;
+		var controller = {
+			__name: 'TestController',
+			__childController: {
+				__name: 'ChildController'
+			},
+			__unbind: function() {
+				strictEqual(callcount, 0, '__unbindの時点ではh5controllerunboundイベントは上がっていないこと');
+			},
+			'{rootElement} h5controllerunbound': function() {
+				controllerHandler = true;
+			}
+		};
+		function handler(event, c) {
+			callcount++;
+		}
+		h5.core.controller('#controllerTest', controller).readyPromise.done(function() {
+			strictEqual(callcount, 0, 'unbind()を呼ぶ前にh5controllerunboundイベントは上がっていないこと');
+			this.unbind();
+			strictEqual(callcount, 1, 'unbind()を呼ぶとh5coontrollerunboundイベントがあがること');
+			ok(!controllerHandler,
+					'自身がunbindされた時、コントローラがh5controllerunboundにバインドしたハンドラはunbind済みなので動作しないこと');
+			$(document.body).unbind('h5controllerunbound', handler);
+			start();
+		});
+		$(document.body).bind('h5controllerunbound', handler);
+	});
+
+	asyncTest('h5controllerunboundイベントオブジェクト', 3,
+			function() {
+				var controller = {
+					__name: 'TestController',
+					__childController: {
+						__name: 'ChildController'
+					}
+				};
+				function handler(event, c) {
+					var event = event;
+					strictEqual(event.type, 'h5controllerunbound',
+							'イベントオブジェトのtypeがh5controllerunboundであること');
+					strictEqual(event.target, $('#controllerTest')[0],
+							'イベントオブジェトのtargetがコントローラのバインド先であること');
+					strictEqual(c, c, 'イベントハンドラの引数にルートコントローラのインスタンスが渡されること');
+					$(document.body).unbind('h5controllerunbound', handler);
+					start();
+				}
+				var c = h5.core.controller('#controllerTest', controller);
+				c.readyPromise.done(function() {
+					this.unbind();
+				});
+				$(document.body).bind('h5controllerunbound', handler);
+			});
 
 	//=============================
 	// Definition
@@ -3522,7 +3525,6 @@ $(function() {
 					__name: 'ChildController',
 					__templates: 'dummy'
 				};
-				var c;
 				h5.settings.commonFailHandler = function(arg) {
 					strictEqual(this, c, 'commonFailHandlerのthisはルートコントローラのインスタンスであること');
 					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
@@ -3530,7 +3532,7 @@ $(function() {
 					h5.settings.commonFailHandler = undefined;
 					start();
 				};
-				c = h5.core.controller('#controllerTest', {
+				var c = h5.core.controller('#controllerTest', {
 					__name: 'TestController',
 					childController: childControllerDef
 				});
