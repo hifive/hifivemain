@@ -2782,28 +2782,83 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module(
-			"Controller - unbind",
-			{
-				setup: function() {
-					$('#qunit-fixture')
-							.append(
-									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
-				},
-				teardown: function() {
-					testutils.clearController();
-					h5.settings.commonFailHandler = undefined;
-					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
-					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
-				},
-				originalRetryInterval: h5.settings.dynamicLoading.retryInterval,
-				originalRetryCount: h5.settings.dynamicLoading.retryCount
-			});
+	module("Controller - unbind", {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			testutils.clearController();
+			h5.settings.commonFailHandler = undefined;
+			h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
+			h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
+		},
+		originalRetryInterval: h5.settings.dynamicLoading.retryInterval,
+		originalRetryCount: h5.settings.dynamicLoading.retryCount
+	});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('unbind: 子コントローラではunbind()はできない', function() {
+	asyncTest('コントローラをunbindするとイベントハンドラがアンバインドされる', function() {
+		var ret = '';
+		var $inA = $('<div class="a"></div>');
+		var $outA = $('<div class="a"></div>');
+		$('#controllerTest').append($inA);
+		$('#qunit-fixture').append($outA);
+		window.h5test = {
+			target: $('')
+		};
+		function handler(context) {
+			ret += context.selector + ' ';
+		}
+		var controller = {
+			__name: 'a',
+			'.a click': handler,
+			'{rootElement} click': handler,
+			'{.a} click': handler,
+			'{document} click': handler,
+			'{window.h5test.target} click': handler,
+			childController: {
+				__name: 'b',
+				'.a click': handler,
+				'{rootElement} click': handler,
+				'{.a} click': handler,
+				'{document} click': handler,
+				'{window.h5test.target} click': handler
+			}
+		};
+		h5.core.controller('#controllerTest', controller).readyPromise.done(function() {
+			this.unbind();
+			$('.a').click();
+			ok(!ret, 'unbindした後、イベントハンドラは1つも動作しないこと');
+			deleteProperty(window, 'h5test');
+			start();
+		});
+	});
+
+	asyncTest('unbindで[eventName]のハンドラが削除できるか', function() {
+		var msg = '';
+		var controller = {
+			__name: 'TestController',
+
+			'{document} [click]': function(context) {
+				msg = 'bindclick';
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			$(document).click();
+			ok(msg.length > 0, 'イベントハンドラが動作するか');
+
+			msg = '';
+			testController.unbind();
+			$(document).click();
+			ok(msg.length === 0, 'イベントハンドラが動作しないことを確認');
+			start();
+		});
+	});
+
+	asyncTest('子コントローラではunbind()はできないこと', function() {
 		var rootController = {
 			__name: 'Root',
 			childController: {
@@ -2811,7 +2866,7 @@ $(function() {
 			}
 		};
 
-		var root = h5.core.controller('#controllerResult', rootController);
+		var root = h5.core.controller('#controllerTest', rootController);
 		root.readyPromise.done(function() {
 			try {
 				root.childController.unbind();
@@ -2877,28 +2932,6 @@ $(function() {
 					start();
 				}).fail(function() {
 			ok(false, 'テスト失敗。コントローラ化に失敗しました');
-		});
-	});
-
-	asyncTest('unbindで[eventName]のハンドラが削除できるか', function() {
-		var msg = '';
-		var controller = {
-			__name: 'TestController',
-
-			'{document} [click]': function(context) {
-				msg = 'bindclick';
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			$(document).click();
-			ok(msg.length > 0, 'イベントハンドラが動作するか');
-
-			msg = '';
-			testController.unbind();
-			$(document).click();
-			ok(msg.length === 0, 'イベントハンドラが動作しないことを確認');
-			start();
 		});
 	});
 
