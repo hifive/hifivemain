@@ -1191,6 +1191,10 @@
 						// 親のuseHandlersでfalseが指定されていた場合は何もしない
 						return;
 					}
+					// rootElementに値が無ければバインドしない(unbindされた場合等)
+					if (!c.rootElement) {
+						return;
+					}
 					bindByBindMap(c);
 				});
 				// __readyの実行
