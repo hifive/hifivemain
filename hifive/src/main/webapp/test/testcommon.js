@@ -62,11 +62,8 @@ function rgbToHex(rgbStr) {
  * 読み込んでいるhifiveがdev版かどうか
  *
  * @memberOf
- * @returns
  */
-function isDevMode() {
-	return !!h5.dev;
-}
+var isDevMode = !!h5.dev;
 
 /**
  * コントローラがdisposeされているかどうかチェックします

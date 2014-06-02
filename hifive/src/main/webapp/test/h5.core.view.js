@@ -455,7 +455,7 @@
 		asyncTest('EJSファイルに書かれた、scriptタグで囲まれていないテンプレートを取得。', 4, function() {
 			var p = h5.core.view.load(['./template/test1.ejs']);
 			p.fail(function(e) {
-				if (isDevMode()) {
+				if (isDevMode) {
 					ok(e.message, 'エラーからmessageプロパティが取得できること。' + e.message);
 				} else {
 					equal(e.message, null, 'リリース版にはエラーメッセージが格納されていないこと');
