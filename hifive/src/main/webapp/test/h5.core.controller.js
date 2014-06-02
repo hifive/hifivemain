@@ -33,10 +33,10 @@ $(function() {
 	//=============================
 
 	// testutils
-	var isDisposed = testutils.utils.isDisposed;
-	var rgbToHex = testutils.utils.rgbToHex;
-	var deleteProperty = testutils.utils.deleteProperty;
-	var clearController = testutils.utils.clearController;
+	var isDisposed = testutils.u.isDisposed;
+	var rgbToHex = testutils.u.rgbToHex;
+	var deleteProperty = testutils.u.deleteProperty;
+	var clearController = testutils.u.clearController;
 	var abortTest = testutils.qunit.abortTest;
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;

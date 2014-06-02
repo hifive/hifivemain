@@ -37,15 +37,7 @@
 		GATE_CHECK_INTERVAL: 100
 	};
 
-	// ----------- env ----------
-	/**
-	 * 読み込んでいるhifiveがdev版かどうか
-	 *
-	 * @memberOf
-	 */
-	var isDevMode = !!h5.dev;
-
-	// ----------- utils -----------
+	// ----------- u -----------
 
 	// resolve済みかどうかをチェックする関数
 	function isResolved(dfd) {
@@ -399,15 +391,12 @@
 	 */
 	h5.u.obj.expose('testutils', {
 		settings: settings,
-		env: {
-			isDevMode: isDevMode
-		},
 		dom: {
 			createIFrameElement: createIFrameElement,
 			openPopupWindow: openPopupWindow,
 			closePopupWindow: closePopupWindow
 		},
-		utils: {
+		u: {
 			isDisposed: isDisposed,
 			isRejected: isRejected,
 			isResolved: isResolved,

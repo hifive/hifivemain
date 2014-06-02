@@ -44,7 +44,7 @@ $(function() {
 	//=============================
 
 	// testutils
-	var deleteProperty = testutils.utils.deleteProperty;
+	var deleteProperty = testutils.u.deleteProperty;
 
 	var ERR = ERRCODE.h5.core.data;
 	/**

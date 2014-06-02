@@ -33,7 +33,7 @@ $(function() {
 	// Variables
 	//=============================
 	// testutils
-	var clearController = testutils.utils.clearController;
+	var clearController = testutils.u.clearController;
 
 	var ERR = ERRCODE.h5.core.controller;
 

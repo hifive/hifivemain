@@ -34,8 +34,8 @@ $(function() {
 	//=============================
 
 	// testutils
-	var deleteProperty = testutils.utils.deleteProperty;
-	var clearController = testutils.utils.clearController;
+	var deleteProperty = testutils.u.deleteProperty;
+	var clearController = testutils.u.clearController;
 
 	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR_U.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR_U = ERRCODE.h5.u;

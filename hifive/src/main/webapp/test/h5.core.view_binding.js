@@ -40,8 +40,8 @@ $(function() {
 	// Variables
 	//=============================
 	// testutils
-	var rgbToHex = testutils.utils.rgbToHex;
-	var clearController = testutils.utils.clearController;
+	var rgbToHex = testutils.u.rgbToHex;
+	var clearController = testutils.u.clearController;
 	var createIFrameElement = testutils.dom.createIFrameElement;
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;

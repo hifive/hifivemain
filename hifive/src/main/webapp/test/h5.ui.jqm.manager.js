@@ -30,8 +30,8 @@ $(function() {
 	// =========================================================================
 
 	// testutils
-	var compareVersion = testutils.utils.compareVersion;
-	var isDisposed = testutils.utils.isDisposed;
+	var compareVersion = testutils.u.compareVersion;
+	var isDisposed = testutils.u.isDisposed;
 	var gate = testutils.async.gate;
 
 	// jQueryMobileを実際に読み込むことはせず、jQueryMobileをシミュレートする
