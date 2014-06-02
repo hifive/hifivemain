@@ -354,7 +354,7 @@
 		var parentObj = window;
 		for (var i = 0; i < len; i++) {
 			var name = nsArray[i];
-			if (parentObj[name] === undefined) {
+			if (typeof parentObj[name] === TYPE_OF_UNDEFINED) {
 				parentObj[name] = {};
 			}
 			parentObj = parentObj[name];

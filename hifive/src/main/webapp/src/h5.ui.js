@@ -1738,7 +1738,7 @@
 		var height, width;
 
 		// containerの位置を取得。borderの内側の位置で判定する。
-		if (container === undefined) {
+		if (typeof container === TYPE_OF_UNDEFINED) {
 			// containerが指定されていないときは、画面表示範囲内にあるかどうか判定する
 			height = getDisplayArea('Height');
 			width = getDisplayArea('Width');

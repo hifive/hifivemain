@@ -740,7 +740,7 @@
 		 * @function
 		 */
 		clear: function(templateIds) {
-			if (templateIds === undefined) {
+			if (typeof templateIds === TYPE_OF_UNDEFINED) {
 				this.__cachedTemplates = {};
 				return;
 			}

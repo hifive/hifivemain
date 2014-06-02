@@ -176,7 +176,7 @@
 				}
 				// hasOwnPropertyがtrueかどうかは判定せず、プロトタイプチェーン上にあってもよい
 				// undefinedでなければそのプロパティを持っていると判定する
-				if (object[p] === undefined) {
+				if (typeof object[p] === TYPE_OF_UNDEFINED) {
 					return false;
 				}
 			}

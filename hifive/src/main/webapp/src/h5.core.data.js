@@ -3442,7 +3442,7 @@
 		 */
 		_findById: function(id) {
 			var item = this.items[id];
-			return item === undefined ? null : item;
+			return typeof item === TYPE_OF_UNDEFINED ? null : item;
 		},
 
 		/**

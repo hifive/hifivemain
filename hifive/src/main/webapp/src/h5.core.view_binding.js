@@ -220,7 +220,7 @@
 
 		for (var i = 0, len = attrs.length; i < len; i++) {
 			var attrValue = rootNode.getAttribute(attrs[i]);
-			if (value === undefined) {
+			if (typeof value === TYPE_OF_UNDEFINED) {
 				if (attrValue !== null) {
 					ret.push(rootNode);
 					break;
