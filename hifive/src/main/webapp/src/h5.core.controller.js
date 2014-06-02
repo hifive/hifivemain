@@ -1085,7 +1085,7 @@
 		// 先祖コントローラのinitPromiseオブジェクトを取得
 		var initPromises = getAncestorControllerPromises(controller, 'initPromise');
 		// 自身のテンプレート用Promiseオブジェクトを取得
-		initPromises.push(controller.preinitPromise);
+		initPromises.push(controller.preInitPromise);
 		return initPromises;
 	}
 
@@ -1106,7 +1106,7 @@
 			var initDfd = controller.__controllerContext.initDfd;
 			// FW、ユーザともに使用しないので削除
 			delete controller.__controllerContext.templatePromise;
-			delete controller.__controllerContext.preinitDfd;
+			delete controller.__controllerContext.preInitDfd;
 			delete controller.__controllerContext.initDfd;
 
 			// 子コントローラのrootElementとviewを設定
@@ -2484,14 +2484,14 @@
 		 * </tr>
 		 * </table>
 		 * <p>
-		 * また、preinitPromise.done()に関数を設定すると読み込み成功時に、
-		 * preinitPromise.fail()に関数を設定すると読み込み失敗時に、設定した関数を実行します。
+		 * また、preInitPromise.done()に関数を設定すると読み込み成功時に、
+		 * preInitPromise.fail()に関数を設定すると読み込み失敗時に、設定した関数を実行します。
 		 *
 		 * @type Promise
 		 * @memberOf Controller
-		 * @name preinitPromise
+		 * @name preInitPromise
 		 */
-		controller.preinitPromise = null;
+		controller.preInitPromise = null;
 
 		/**
 		 * コントローラのライフサイクルイベント__initについてのPromiseオブジェクトを返します。
@@ -3405,9 +3405,9 @@
 
 		// ------ controllerContextの作成 ------//
 		// Deferred,Promiseの作成
-		// preinitPromise, initPromise, postInitPromiseが失敗してもcFHを発火させないようにするため、dummyのfailハンドラを登録する
-		var preinitDfd = getDeferred();
-		var preinitPromise = preinitDfd.promise().fail(dummyFailHandler);
+		// preInitPromise, initPromise, postInitPromiseが失敗してもcFHを発火させないようにするため、dummyのfailハンドラを登録する
+		var preInitDfd = getDeferred();
+		var preInitPromise = preInitDfd.promise().fail(dummyFailHandler);
 		var initDfd = getDeferred();
 		var initPromise = initDfd.promise().fail(dummyFailHandler);
 		var postInitDfd = getDeferred();
@@ -3433,13 +3433,13 @@
 		// cacheを持たせる
 		controllerContext.cache = cache;
 		// 各ライフサイクルのdeferredを持たせる
-		controllerContext.preinitDfd = preinitDfd;
+		controllerContext.preInitDfd = preInitDfd;
 		controllerContext.initDfd = initDfd;
 		controllerContext.postInitDfd = postInitDfd;
 		controllerContext.readyDfd = readyDfd;
 
 		// コントローラにpromiseを持たせる
-		controller.preinitPromise = preinitPromise;
+		controller.preInitPromise = preInitPromise;
 		controller.initPromise = initPromise;
 		controller.postInitPromise = postInitPromise;
 		controller.readyPromise = readyPromise;
@@ -3461,12 +3461,12 @@
 		templatePromise.done(function() {
 			if (!isDisposing(controller)) {
 				// thisをコントローラにしてresolve
-				preinitDfd.resolveWith(controller);
+				preInitDfd.resolveWith(controller);
 			}
 		}).fail(function(e) {
 			// eはview.load()のfailに渡されたエラーオブジェクト
 			// thisをコントローラにしてreject
-			preinitDfd.rejectWith(controller, [e]);
+			preInitDfd.rejectWith(controller, [e]);
 
 			/* del begin */
 			// disposeされていなければルートコントローラの名前でログを出力
