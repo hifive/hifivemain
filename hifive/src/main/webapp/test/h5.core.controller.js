@@ -1626,7 +1626,7 @@ $(function() {
 				start();
 			}
 		};
-		conIns = h5.core.controller('#controllerTest', controller);
+		h5.core.controller('#controllerTest', controller);
 	});
 
 	asyncTest('h5controllerreadyイベントの上がるタイミング', 3, function() {
@@ -2805,7 +2805,7 @@ $(function() {
 		var $outA = $('<div class="a"></div>');
 		$('#controllerTest').append($inA);
 		$('#qunit-fixture').append($outA);
-		window.h5test = {
+		window.eventTargetTest = {
 			target: $('')
 		};
 		function handler(context) {
@@ -2817,21 +2817,21 @@ $(function() {
 			'{rootElement} click': handler,
 			'{.a} click': handler,
 			'{document} click': handler,
-			'{window.h5test.target} click': handler,
+			'{window.eventTargetTest.target} click': handler,
 			childController: {
 				__name: 'b',
 				'.a click': handler,
 				'{rootElement} click': handler,
 				'{.a} click': handler,
 				'{document} click': handler,
-				'{window.h5test.target} click': handler
+				'{window.eventTargetTest.target} click': handler
 			}
 		};
 		h5.core.controller('#controllerTest', controller).readyPromise.done(function() {
 			this.unbind();
 			$('.a').click();
 			ok(!ret, 'unbindした後、イベントハンドラは1つも動作しないこと');
-			deleteProperty(window, 'h5test');
+			deleteProperty(window, 'eventTargetTest');
 			start();
 		});
 	});
@@ -5967,7 +5967,7 @@ $(function() {
 
 	});
 	asyncTest('コントローラ内のthis', 3, function() {
-		var lifecycle, eventHandlerThis, methodThis;
+		var lifecycleThis, eventHandlerThis, methodThis;
 		var controller = {
 			__name: 'TestController',
 			__construct: function() {
@@ -6869,65 +6869,67 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', controller);
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのunbindを呼んだ場合。', 3, function() {
-		var errorMsg = '__unbind error.';
-		var id = this.testTimeoutFunc(errorMsg);
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのunbindを呼んだ場合。', 3,
+			function() {
+				var errorMsg = '__unbind error.';
+				var id = this.testTimeoutFunc(errorMsg);
 
-		window.onerror = function(ev) {
-			clearTimeout(id);
-			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-			$(c.rootElement).click();
-			ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
-			ok(c.__name, 'コントローラはdisposeされていないこと');
-			start();
-		};
+				window.onerror = function(ev) {
+					clearTimeout(id);
+					ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+					$(c.rootElement).click();
+					ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
+					ok(c.__name, 'コントローラはdisposeされていないこと');
+					start();
+				};
 
-		var evHandlerFlag;
-		var controller = {
-			__name: 'TestController',
-			__unbind: function() {
-				throw new Error(errorMsg);
-			},
-			'{rootElement} click':function(){
-				evHandlerFlag = true;
-			}
-		};
+				var evHandlerFlag;
+				var controller = {
+					__name: 'TestController',
+					__unbind: function() {
+						throw new Error(errorMsg);
+					},
+					'{rootElement} click': function() {
+						evHandlerFlag = true;
+					}
+				};
 
-		var c = h5.core.controller('#controllerTest', controller);
-		c.readyPromise.done(function() {
-			c.unbind();
-		});
-	});
+				var c = h5.core.controller('#controllerTest', controller);
+				c.readyPromise.done(function() {
+					c.unbind();
+				});
+			});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのdisposeを呼んだ場合。', 3, function() {
-		var errorMsg = '__unbind error.';
-		var id = this.testTimeoutFunc(errorMsg);
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのdisposeを呼んだ場合。', 3,
+			function() {
+				var errorMsg = '__unbind error.';
+				var id = this.testTimeoutFunc(errorMsg);
 
-		window.onerror = function(ev) {
-			clearTimeout(id);
-			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-			$(c.rootElement).click();
-			ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
-			ok(!c.__name, 'コントローラはdisposeされていること');
-			start();
-		};
+				window.onerror = function(ev) {
+					clearTimeout(id);
+					ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+					$(c.rootElement).click();
+					ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
+					ok(!c.__name, 'コントローラはdisposeされていること');
+					start();
+				};
 
-		var evHandlerFlag;
-		var controller = {
-			__name: 'TestController',
-			__unbind: function() {
-				throw new Error(errorMsg);
-			},
-			'{rootElement} click':function(){
-				evHandlerFlag = true;
-			}
-		};
+				var evHandlerFlag;
+				var controller = {
+					__name: 'TestController',
+					__unbind: function() {
+						throw new Error(errorMsg);
+					},
+					'{rootElement} click': function() {
+						evHandlerFlag = true;
+					}
+				};
 
-		var c = h5.core.controller('#controllerTest', controller);
-		c.readyPromise.done(function() {
-			c.dispose();
-		});
-	});
+				var c = h5.core.controller('#controllerTest', controller);
+				c.readyPromise.done(function() {
+					c.dispose();
+				});
+			});
 
 	asyncTest('[browser#and-and:-3|sa-ios:-4]__dispose()で例外をスローする。', 2, function() {
 		var errorMsg = '__dispose error.';
