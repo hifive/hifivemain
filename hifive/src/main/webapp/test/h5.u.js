@@ -33,6 +33,10 @@ $(function() {
 	// Variables
 	//=============================
 
+	// testutils
+	var deleteProperty = testutils.utils.deleteProperty;
+	var clearController = testutils.utils.clearController;
+
 	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR_U.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR_U = ERRCODE.h5.u;
 
@@ -1622,7 +1626,7 @@ $(function() {
 	//=============================
 	module('createInterceptor', {
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 		}
 	});
 

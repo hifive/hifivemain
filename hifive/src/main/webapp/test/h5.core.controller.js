@@ -31,6 +31,17 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
+
+	// testutils
+	var isDisposed = testutils.utils.isDisposed;
+	var rgbToHex = testutils.utils.rgbToHex;
+	var deleteProperty = testutils.utils.deleteProperty;
+	var clearController = testutils.utils.clearController;
+	var abortTest = testutils.qunit.abortTest;
+	var openPopupWindow = testutils.dom.openPopupWindow;
+	var closePopupWindow = testutils.dom.closePopupWindow;
+	var createIFrameElement = testutils.dom.createIFrameElement;
+
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.controller;
 	var ERR_VIEW = ERRCODE.h5.core.view;
@@ -1231,7 +1242,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					h5.settings.commonFailHandler = undefined;
 				}
 			});
@@ -1271,7 +1282,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"><input type="button"/></div>');
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 		}
 	});
 
@@ -1554,7 +1565,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 		}
 	});
 
@@ -1758,7 +1769,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 			h5.settings.commonFailHandler = undefined;
 			h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 			h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -2205,7 +2216,7 @@ $(function() {
 									'<div id="controllerTest"><div id="parent"><div id="child"></div></div></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					h5.settings.listenerElementType = this.originalListenerElementType;
 				},
 				originalListenerElementType: h5.settings.listenerElementType
@@ -2271,7 +2282,7 @@ $(function() {
 									'<div class="touch"></div><div id="controllerTest"><div id="child1"></div><div class="touch"></div></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 				}
 			});
 
@@ -2478,7 +2489,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 			h5.settings.commonFailHandler = undefined;
 			h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 			h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -2787,7 +2798,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 			h5.settings.commonFailHandler = undefined;
 			h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 			h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -2947,7 +2958,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -3134,7 +3145,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -4063,7 +4074,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -5878,7 +5889,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -6183,7 +6194,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -6529,7 +6540,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
 					h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
@@ -7084,7 +7095,7 @@ $(function() {
 			onerrorHandler = window.onerror;
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 			// window.onerrorを元に戻す
 			window.onerror = onerrorHandler;
 		},
@@ -7521,7 +7532,7 @@ $(function() {
 									'<div id="scrollable" style="width:400px; height:300px; overflow:scroll"><div id="for-scroll" style="height:888px; width:777px;"></div></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 					$('#scrollable').remove();
 					h5.settings.commonFailHandler = undefined;
 					h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
@@ -8521,7 +8532,7 @@ $(function() {
 									'<div id="controllerTest"><div id="a"></div></div><div id="controllerTest2"></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 				}
 			});
 
@@ -8853,7 +8864,7 @@ $(function() {
 									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
 				},
 				teardown: function() {
-					testutils.clearController();
+					clearController();
 				}
 			});
 	//=============================
@@ -8930,7 +8941,7 @@ $(function() {
 			});
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 			// iframe内のコントローラをdispose
 			var iframeControllers = h5.core.controllerManager.getControllers(this.ifDoc, {
 				deep: true
@@ -9081,7 +9092,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 		}
 	});
 

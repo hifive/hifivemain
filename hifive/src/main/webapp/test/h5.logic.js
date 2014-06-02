@@ -32,8 +32,9 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
+	// testutils
+	var clearController = testutils.utils.clearController;
 
-	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.controller;
 
 	//=============================
@@ -63,7 +64,7 @@ $(function() {
 				},
 				teardown: function() {
 					$('#controllerTest').remove();
-					testutils.clearController();
+					clearController();
 				}
 			});
 

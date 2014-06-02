@@ -29,7 +29,9 @@ $(function() {
 	//
 	// =========================================================================
 
-	// testutils.async.gateのキャッシュ
+	// testutils
+	var compareVersion = testutils.utils.compareVersion;
+	var isDisposed = testutils.utils.isDisposed;
 	var gate = testutils.async.gate;
 
 	// jQueryMobileを実際に読み込むことはせず、jQueryMobileをシミュレートする

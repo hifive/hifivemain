@@ -36,12 +36,16 @@ $(function() {
 	// Privates
 	//
 	// =========================================================================
-
-
-
 	//=============================
 	// Variables
 	//=============================
+	// testutils
+	var rgbToHex = testutils.utils.rgbToHex;
+	var clearController = testutils.utils.clearController;
+	var createIFrameElement = testutils.dom.createIFrameElement;
+	var openPopupWindow = testutils.dom.openPopupWindow;
+	var closePopupWindow = testutils.dom.closePopupWindow;
+
 	/**
 	 * #qunit-fixture
 	 */
@@ -2084,7 +2088,7 @@ $(function() {
 			});
 		},
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 		}
 	});
 
@@ -2123,7 +2127,7 @@ $(function() {
 	//=============================
 	module('コメントビューにバインド', {
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 		}
 	});
 
@@ -2581,7 +2585,7 @@ $(function() {
 	//=============================
 	module('unbind', {
 		teardown: function() {
-			testutils.clearController();
+			clearController();
 		}
 	});
 
@@ -2945,7 +2949,7 @@ $(function() {
 		},
 		teardown: function() {
 			cloneTestBinding.unbind();
-			testutils.clearController();
+			clearController();
 		}
 	});
 
