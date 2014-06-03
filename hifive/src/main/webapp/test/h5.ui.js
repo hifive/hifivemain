@@ -323,7 +323,7 @@ $(function() {
 				}
 				// #test1が配置されるまで待機
 				gate({
-					gateFunction: function() {
+					func: function() {
 						return $(test1Dom).offset()
 					},
 					failMsg: 'テストに必要なDOMの準備が完了しませんでした'
@@ -430,7 +430,7 @@ $(function() {
 
 		// #test2が配置されるまで待機
 		gate({
-			gateFunction: function() {
+			func: function() {
 				return $(test2Dom).offset()
 			},
 			failMsg: 'テストに必要なDOMの準備が完了しませんでした'
@@ -536,7 +536,7 @@ $(function() {
 
 		// #test2が配置されるまで待機
 		gate({
-			gateFunction: function() {
+			func: function() {
 				return $(test2Dom).offset()
 			},
 			failMsg: 'テストに必要なDOMの準備が完了しませんでした'
@@ -571,7 +571,7 @@ $(function() {
 					stop();
 					window.scrollTo(0, 0);
 					gate({
-						gateFunction: createCheckScrollFunction(0, 0)
+						func: createCheckScrollFunction(0, 0)
 					}).done(function() {
 						start();
 					}).fail(function() {
@@ -664,7 +664,7 @@ $(function() {
 
 					// scrollValにスクロールされるのを待機
 					gate({
-						gateFunction: createCheckScrollFunction(scrollVal, scrollVal),
+						func: createCheckScrollFunction(scrollVal, scrollVal),
 						failMsg: 'スクロールが完了しませんでした'
 					}).done(function() {
 						testFunc(scrollVal, scrollVal);
@@ -799,7 +799,7 @@ $(function() {
 				}
 				// #test2が配置されるまで待機
 				gate({
-					gateFunction: function() {
+					func: function() {
 						return $(test2Dom).offset()
 					},
 					failMsg: 'テストに必要なDOMの準備が完了しませんでした'
@@ -858,7 +858,7 @@ $(function() {
 			stop();
 			window.scrollTo(0, 0);
 			gate({
-				gateFunction: createCheckScrollFunction(0, 0)
+				func: createCheckScrollFunction(0, 0)
 			}).done(function() {
 				start();
 			}).fail(function() {
@@ -978,7 +978,7 @@ $(function() {
 				// スクロールしてテスト
 				window.scrollTo(scrollVal, scrollVal);
 				gate({
-					gateFunction: createCheckScrollFunction(scrollVal, scrollVal),
+					func: createCheckScrollFunction(scrollVal, scrollVal),
 					failMsg: 'スクロールが完了しませんでした'
 				}).done(function() {
 					testFunc();
@@ -1013,7 +1013,7 @@ $(function() {
 
 		// スクロールされるのを待機
 		gate({
-			gateFunction: createCheckScrollFunction(0, 1),
+			func: createCheckScrollFunction(0, 1),
 			failMsg: 'スクロールが完了しませんでした'
 		}).done(function() {
 			ok(true, '(0,1)にスクロールされた');

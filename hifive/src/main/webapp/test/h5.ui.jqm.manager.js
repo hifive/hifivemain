@@ -311,7 +311,7 @@ $(function() {
 				var count = 20;
 
 				gate({
-					gateFunction: function() {
+					func: function() {
 						return $('#test1 h1').css('font-size') === '111px';
 					},
 					failMsg: 'CSSファイルがダウンロードされませんでした'
@@ -339,7 +339,7 @@ $(function() {
 
 				var count = 20;
 				gate({
-					gateFunction: function() {
+					func: function() {
 						return $('#test2 h1').css('margin-left') === '33px';
 					},
 					failMsg: 'CSSファイルがダウンロードされませんでした'
@@ -748,7 +748,7 @@ $(function() {
 				__name: 'Test6Controller',
 				__ready: function() {
 					gate({
-						gateFunction: function() {
+						func: function() {
 							return $('#test6 h1').css('font-size') === '111px';
 						},
 						failMsg: 'CSSファイルがダウンロードされませんでした'
@@ -798,7 +798,7 @@ $(function() {
 				ok(true, '__readyが実行される');
 
 				gate({
-					gateFunction: function() {
+					func: function() {
 						return $('#test7 h1').css('font-size') === '111px';
 					},
 					failMsg: 'CSSファイルがダウンロードされませんでした'
@@ -825,7 +825,7 @@ $(function() {
 				ok(true, '__readyが実行される');
 
 				gate({
-					gateFunction: function() {
+					func: function() {
 						return $('#test8 h1').css('margin-left') === '33px';
 					},
 					failMsg: 'CSSファイルがダウンロードされませんでした'

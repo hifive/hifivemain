@@ -334,7 +334,7 @@
 	 *
 	 * @memberOf testutils.async
 	 * @param {Object} param 引数オブジェクト
-	 * @param {Function} param.gateFunction ゲート関数
+	 * @param {Function} param.func ゲート関数
 	 * @param {int} [param.maxWait] 最大待機時間(ms) デフォルトはtestutils.settings.GATE_MAX_WAIT
 	 * @param {int} [param.interval] ゲート関数を呼び出す時間間隔(ms) デフォルトはtestutils.settings.GATE_CHECK_INTERVAL
 	 * @param {String} [param.failMsg]
@@ -343,7 +343,7 @@
 	 * @returns {Promise}
 	 */
 	function gate(param) {
-		var gateFunction = param.gateFunction;
+		var gateFunction = param.func;
 		var maxWait = param.maxWait != null ? param.maxWait : testutils.settings.GATE_MAX_WAIT;
 		var interval = param.interval != null ? param.interval
 				: testutils.settings.GATE_CHECK_INTERVAL;
