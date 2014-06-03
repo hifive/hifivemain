@@ -39,13 +39,13 @@ $(function() {
 	var ERR = ERRCODE.h5.async;
 
 	// jQueryのthenとpipeが同じかどうか(jQuery1.8以上なら同じ)
-	var thenEqualsPipe = (function() {
+	var isThenEqualToPipe = (function() {
 		var dfd = $.Deferred();
 		return dfd.then === dfd.pipe;
 	})();
 
 	// 非同期をチェーンさせるメソッド名。thenとpipeが同じならthen、そうでないならpipe
-	var thenCompatMethod = thenEqualsPipe ? 'then' : 'pipe';
+	var thenCompatMethod = isThenEqualToPipe ? 'then' : 'pipe';
 
 	//=============================
 	// Functions
