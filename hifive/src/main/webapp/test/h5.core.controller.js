@@ -1615,7 +1615,7 @@ $(function() {
 				start();
 			}
 		};
-		function handler(event, c) {
+		function handler(event) {
 			callcount++;
 			$('body').unbind('h5controllerbound', handler);
 		}
@@ -1806,7 +1806,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントハンドラの動作', 2, function() {
+	asyncTest('イベントハンドラの動作', 4, function() {
 		var $controllerTarget = $('#controllerTest');
 		$controllerTarget.append('<input type="button" />');
 		var result;
@@ -1815,8 +1815,49 @@ $(function() {
 			__ready: function() {
 				this.$find('input[type=button]').trigger('click');
 				ok(result, '__readyの時点でイベントハンドラが動作していること');
-				this.unbind();
 				result = false;
+
+				var $newTarget = $('<input type="button"/>');
+				$(this.rootElement).append($newTarget);
+				$newTarget.click();
+				ok(result, '新しく追加した要素がセレクタにマッチした場合にハンドラが動作すること(delegateを使ってバインドされていること)');
+				result = false;
+
+				$('#qunit-fixture').append($newTarget);
+				$newTarget.click();
+				ok(!result, 'コントローラのバインド範囲外の要素のイベントでハンドラは動作しないこと');
+				result = false;
+
+				this.unbind();
+				this.$find('input[type=button]').trigger('click');
+				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
+				start();
+			},
+			'input[type=button] click': function(context) {
+				result = true;
+			}
+		};
+		h5.core.controller($controllerTarget, controller);
+	});
+
+	asyncTest('イベントハンドラの動作 直接バインド記法', 3, function() {
+		var $controllerTarget = $('#controllerTest');
+		$controllerTarget.append('<input type="button" />');
+		var result;
+		var controller = {
+			__name: 'TestController',
+			__ready: function() {
+				this.$find('input[type=button]').trigger('click');
+				ok(result, 'イベントハンドラが動作していること');
+				result = false;
+
+				var $newTarget = $('<input type="button"/>');
+				$(this.rootElement).append($newTarget);
+				$newTarget.click();
+				ok(!result, '新しく追加した要素のイベントでハンドラは動作しないこと(bindを使ってバインドされていること)');
+				result = false;
+
+				this.unbind();
 				this.$find('input[type=button]').trigger('click');
 				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
 				start();
@@ -1879,8 +1920,6 @@ $(function() {
 				$controllerTarget.click();
 				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
 
-				// テストで作成したwindow.test1を削除
-				deleteProperty(window, 'test1');
 				start();
 			},
 			'{rootElement} click': function(context) {
@@ -1963,7 +2002,6 @@ $(function() {
 
 		var errorController = {
 			__name: 'ErrorController',
-
 			'{this} click': function(context) {
 			// nothing to do
 			}
@@ -1992,7 +2030,7 @@ $(function() {
 			ok(isSame, '"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか');
 			testController.unbind();
 			start();
-		});
+	});
 	});
 
 	asyncTest('セレクタが {document}, {window} の場合にイベント名の記述に関わらず、bindが使用されているか', function() {
@@ -2231,7 +2269,9 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_SAME_EVENT_HANDLER, '重複するイベントハンドラを設定した時にエラーが発生したか');
 		}
 	});
-
+	//=============================
+	// Definition
+	//=============================
 	module(
 			'イベントハンドラの第2引数',
 			{
@@ -2247,6 +2287,9 @@ $(function() {
 				originalListenerElementType: h5.settings.listenerElementType
 			});
 
+	//=============================
+	// Body
+	//=============================
 	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 2, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var controller = {
