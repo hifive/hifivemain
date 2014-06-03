@@ -685,35 +685,26 @@
 	 * @private
 	 * @param {Object} controller
 	 * @param {Function} callback 引数に各コントローラとプロパティ名が渡されます。
-	 * @param {Boolean} isChildFirst 子を先にやるかどうか。falseの場合は親から先に実行します
-	 * @param {Array} _params 再帰呼び出し時に受け取る変数です。
-	 *            <p>
-	 *            親から子コントローラについてのコールバックが呼ばれる際に、親コントローラと親が子を参照しているプロパティ名の配列が渡されます。
-	 *            doForEachChildControllersを使用した時と同様、親からの再帰で呼ばれた時は親コントローラとプロパティ名がコールバックの引数で取得できるようになります。
-	 *            </p>
+	 * @param {Boolean} [isChildFirst=false] 子を先にやるかどうか。falseの場合は親から先に実行します
+	 * @param {Array} [_parent] 第1引数controllerの親コントローラ。再帰呼び出し時に受け取る変数です。
+	 * @param {Array} [_prop] _parentがcontrollerを指すプロパティ名。再帰呼び出し時に受け取る変数です。
 	 */
-	function doForEachControllerGroups(controller, callback, isChildFirst, _params) {
-		var args = [controller];
-		if (_params && _params.length) {
-			for (var i = 0, l = _params.length; i < l; i++) {
-				args.push(_params[i]);
-			}
-		}
+	function doForEachControllerGroups(controller, callback, isChildFirst, _parent, _prop) {
 		if (!isChildFirst) {
-			var ret = callback.apply(this, args);
+			var ret = callback.call(this, controller, _parent, _prop);
 			if (ret === false) {
 				return;
 			}
 		}
 		function callbackWrapper(c, parent, prop) {
-			if (false === doForEachControllerGroups(c, callback, isChildFirst, [parent, prop])) {
+			if (false === doForEachControllerGroups(c, callback, isChildFirst, parent, prop)) {
 				return;
 			}
 		}
 		doForEachChildControllers(controller, callbackWrapper);
 
 		if (isChildFirst) {
-			var ret = callback.apply(controller, args);
+			var ret = callback.call(this, controller, _parent, _prop);
 			if (ret === false) {
 				return;
 			}
