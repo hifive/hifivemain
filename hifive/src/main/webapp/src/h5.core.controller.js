@@ -1064,7 +1064,7 @@
 
 			var callback, promises;
 
-			// ライフサイクルイベント名で場合分けして、待機するプロミスの取得と実行するコールバックの作成と子優先かどうかの決定を行う
+			// ライフサイクルイベント名で場合分けして、待機するプロミスの取得と実行するコールバックの作成を行う
 			// __postInit, __readyは子から先に実行する
 			if (funcName === '__init') {
 				callback = createCallbackForInit(c);
