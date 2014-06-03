@@ -1997,40 +1997,19 @@ $(function() {
 		});
 	});
 
-	asyncTest('"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか', function() {
-		var isSame = false;
-
+	test('"{this} eventName"の指定はエラーになってコントローラをバインドできない', function() {
 		var errorController = {
 			__name: 'ErrorController',
 			'{this} click': function(context) {
 			// nothing to do
 			}
 		};
-
-		var controller = {
-
-			__name: 'TestController',
-
-			'{rootElement} click': function(context) {
-				var id = this.rootElement.id;
-				isSame = id === 'controllerTest' && context.event.target.id === id;
-			}
-		};
-
 		try {
 			h5.core.controller('body', errorController);
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_EVENT_HANDLER_SELECTOR_THIS,
 					'セレクタに{this}が指定された時にエラーが発生するか');
 		}
-
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			$('#controllerTest').click();
-			ok(isSame, '"{rootElement} eventName" でコントローラをバインドした要素自身にイベントハンドラが紐付いているか');
-			testController.unbind();
-			start();
-	});
 	});
 
 	asyncTest('セレクタが {document}, {window} の場合にイベント名の記述に関わらず、bindが使用されているか', function() {
@@ -2217,18 +2196,22 @@ $(function() {
 				});
 			});
 
-	asyncTest('mousewheelイベントハンドラが動作すること', 1, function() {
+	asyncTest('mousewheelイベントハンドラが動作すること', 2, function() {
+		var result;
 		var testController = {
 			__name: 'TestController',
 
 			'{rootElement} mousewheel': function(context) {
-				ok(true, 'mousewheelハンドラが動作すること');
+				result = true;
 			}
 		};
 		var c = h5.core.controller('#controllerTest', testController);
 		c.readyPromise.done(function() {
 			dispatchMouseWheelEvent($('#controllerTest')[0], 120);
+			ok(result, 'mousewheelハンドラが動作すること');
+			result = false;
 			c.unbind();
+			ok(!result, 'コントローラのアンバインドでmousewheelハンドラがアンバインドされていること');
 			start();
 		});
 	});
