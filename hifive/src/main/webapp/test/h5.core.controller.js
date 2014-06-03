@@ -34,6 +34,8 @@ $(function() {
 
 	// testutils
 	var isDisposed = testutils.u.isDisposed;
+	var isResolved = testutils.u.isResolved;
+	var isRejected = testutils.u.isRejected;
 	var rgbToHex = testutils.u.rgbToHex;
 	var deleteProperty = testutils.u.deleteProperty;
 	var clearController = testutils.u.clearController;

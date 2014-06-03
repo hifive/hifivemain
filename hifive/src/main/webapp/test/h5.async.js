@@ -33,6 +33,9 @@ $(function() {
 	// Variables
 	//=============================
 
+	// testutils
+	var isResolved = testutils.u.isResolved;
+
 	var ERR = ERRCODE.h5.async;
 
 	// jQueryのthenとpipeが同じかどうか(jQuery1.8以上なら同じ)
