@@ -685,29 +685,49 @@
 	 * @private
 	 * @param {Object} controller
 	 * @param {Function} callback 引数に各コントローラとプロパティ名が渡されます。
-	 * @param {Boolean} [isChildFirst=false] 子を先にやるかどうか。falseの場合は親から先に実行します
-	 * @param {Array} [_parent] 第1引数controllerの親コントローラ。再帰呼び出し時に受け取る変数です。
-	 * @param {Array} [_prop] _parentがcontrollerを指すプロパティ名。再帰呼び出し時に受け取る変数です。
+	 * @param {Controller} [_parent] 第1引数controllerの親コントローラ。再帰呼び出し時に受け取る変数です。
+	 * @param {String} [_prop] _parentがcontrollerを指すプロパティ名。再帰呼び出し時に受け取る変数です。
+	 * @returns コールバックがfalseを返して中断した場合はfalseを返します
 	 */
-	function doForEachControllerGroups(controller, callback, isChildFirst, _parent, _prop) {
-		if (!isChildFirst) {
-			var ret = callback.call(this, controller, _parent, _prop);
-			if (ret === false) {
-				return;
-			}
+	function doForEachControllerGroups(controller, callback, _parent, _prop) {
+		if (callback.call(this, controller, _parent, _prop) === false) {
+			return false;
 		}
 		function callbackWrapper(c, parent, prop) {
-			if (false === doForEachControllerGroups(c, callback, isChildFirst, parent, prop)) {
-				return;
+			if (doForEachControllerGroups(c, callback, parent, prop) === false) {
+				return false;
 			}
 		}
-		doForEachChildControllers(controller, callbackWrapper);
+		return doForEachChildControllers(controller, callbackWrapper);
+	}
 
-		if (isChildFirst) {
-			var ret = callback.call(this, controller, _parent, _prop);
-			if (ret === false) {
-				return;
+	/**
+	 * 指定されたコントローラ以下のコントローラについて、孵化さ優先でコールバックを実行します
+	 *
+	 * <pre>
+	 * function(controller, parentController, prop) {}
+	 * </pre>
+	 *
+	 * のような関数を指定してください。falseが返されたら中断します。
+	 *
+	 * @private
+	 * @param {Object} controller
+	 * @param {Function} callback 引数に各コントローラとプロパティ名が渡されます。
+	 * @param {Controller} [_parent] 第1引数controllerの親コントローラ。再帰呼び出し時に受け取る変数です。
+	 * @param {String} [_prop] _parentがcontrollerを指すプロパティ名。再帰呼び出し時に受け取る変数です。
+	 * @returns コールバックがfalseを返して中断した場合はfalseを返します
+	 */
+	function doForEachControllerGroupsDepthFirst(controller, callback, _parent, _prop) {
+		function callbackWrapper(c, parent, prop) {
+			if (doForEachControllerGroupsDepthFirst(c, callback, parent, prop) === false) {
+				return false;
 			}
+		}
+		if (doForEachChildControllers(controller, callbackWrapper) === false) {
+			return false;
+		}
+		if (callback.call(this, controller, _parent, _prop) === false) {
+			return false;
 		}
 	}
 
@@ -1893,7 +1913,7 @@
 	function executeLifeEndChain(controller, funcName) {
 		var promises = [];
 		// 子から順に__unbind,__disposeの実行
-		doForEachControllerGroups(controller, function(c) {
+		doForEachControllerGroupsDepthFirst(controller, function(c) {
 			if (c[funcName] && isFunction(c[funcName])) {
 				var ret;
 				try {
@@ -1914,7 +1934,7 @@
 					promises.push(df.promise());
 				}
 			}
-		}, true);
+		});
 		return promises;
 	}
 
@@ -1943,13 +1963,13 @@
 	 */
 	function disposeController(controller) {
 		// 子から順にview.clearとnullifyの実行
-		doForEachControllerGroups(controller, function(c) {
+		doForEachControllerGroupsDepthFirst(controller, function(c) {
 			nullify(c);
 			if (c.view && c.view.__view) {
 				c.view.clear();
 			}
 			nullify(c);
-		}, true);
+		});
 	}
 
 	/**
