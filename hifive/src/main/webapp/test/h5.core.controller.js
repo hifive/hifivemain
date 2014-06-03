@@ -44,8 +44,9 @@ $(function() {
 	var closePopupWindow = testutils.dom.closePopupWindow;
 	var createIFrameElement = testutils.dom.createIFrameElement;
 
-	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	// コントローラのエラーコード
 	var ERR = ERRCODE.h5.core.controller;
+	// viewのエラーコード
 	var ERR_VIEW = ERRCODE.h5.core.view;
 
 	// タッチイベントがあるか
@@ -1869,7 +1870,7 @@ $(function() {
 		h5.core.controller($controllerTarget, controller);
 	});
 
-	asyncTest('イベントハンドラの動作 {}記法で外側の要素を含めて指定', 7, function() {
+	asyncTest('イベントハンドラの動作 {}記法で外側の要素を含めて指定', 8, function() {
 		var $eventTarget1 = $('<div id="target1" class="event-target">');
 		var $eventTarget2 = $('<div id="target2" class="event-target">');
 		var $controllerTarget = $('#controllerTest');
@@ -1887,6 +1888,14 @@ $(function() {
 				$eventTarget2.click();
 				ok(!result1, '.event-targetにバインドしたイベントハンドラは動作しないこと');
 				ok(result2, '{.event-target}にバインドしたイベントハンドラが動作していること');
+				result1 = result2 = false;
+
+				var $newTarget = $('<div id="target3" class="event-target">');
+				$('#qunit-fixture').append($newTarget);
+				$newTarget.click();
+				ok(result2, '新しく追加した要素がセレクタにマッチすればイベントハンドラが動作すること');
+				result2 = false;
+
 				this.unbind();
 				result1 = result2 = false;
 				$eventTarget1.click();
@@ -2273,7 +2282,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 10, function() {
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 12, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var childElm = $('#controllerTest #child')[0];
 		window.h5test1 = {
@@ -2301,9 +2310,10 @@ $(function() {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 				strictEqual($el[0], window, '第二引数がバインド先の要素(window)であること');
 			},
-			'{window.h5test1.target} click': function(context, $el){
+			'{window.h5test1.target} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-				strictEqual($el[0], window.h5test1.target, '第二引数がバインド先の要素(window.h5test1.parentElm)であること');
+				strictEqual($el[0], window.h5test1.target,
+						'第二引数がバインド先の要素(window.h5test1.parentElm)であること');
 			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
@@ -2335,7 +2345,8 @@ $(function() {
 		var controller = {
 			__name: 'TestController',
 			'#parent click': function(context, el) {
-				strictEqual(el, parentElm, 'listenerElementType = 0 の時、第二引数がバンド先のDOM要素(≠jQueryオブジェクト)であること');
+				strictEqual(el, parentElm,
+						'listenerElementType = 0 の時、第二引数がバンド先のDOM要素(≠jQueryオブジェクト)であること');
 			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
