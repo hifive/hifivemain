@@ -1318,7 +1318,7 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			deepEqual(e.code, errorCode, e.message);
+			strictEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -1334,7 +1334,7 @@ $(function() {
 				});
 				ok(false, 'エラーが発生していません。');
 			} catch (e) {
-				deepEqual(e.code, errorCode, e.message);
+				strictEqual(e.code, errorCode, e.message);
 			}
 		}
 	});
@@ -1351,7 +1351,7 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			deepEqual(e.code, errorCode, e.message);
+			strictEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -1370,7 +1370,7 @@ $(function() {
 				});
 				ok(false, 'エラーが発生していません。');
 			} catch (e) {
-				deepEqual(e.code, errorCode, e.message);
+				strictEqual(e.code, errorCode, e.message);
 			}
 		}
 	});
@@ -1527,7 +1527,7 @@ $(function() {
 			h5.core.controller('#controllerTest', controller);
 			ok(false, 'エラーが発生していません。');
 		} catch (e) {
-			deepEqual(e.code, errorCode, e.message);
+			strictEqual(e.code, errorCode, e.message);
 		}
 	});
 
@@ -1576,7 +1576,7 @@ $(function() {
 			try {
 				h5.core.controller('#controllerTest', c);
 			} catch (e) {
-				equal(e.code, ERR.ERR_CODE_CONTROLLER_ALREADY_CREATED,
+				strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_ALREADY_CREATED,
 						'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 			}
 			start();
@@ -3244,7 +3244,20 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('h5.core.viewがない時のコントローラの動作', function() {
+	asyncTest('コントローラでテンプレートが使用できること', 1, function() {
+		var controller = {
+			__name: 'TestController',
+			__templates: 'template/test2.ejs',
+			__init: function() {
+				this.view.append(this.rootElement, 'template2');
+				ok(this.$find('table[name="table1"]')[0], 'テンプレートが__initの時点で使用できること');
+				start();
+			}
+		};
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('h5.core.viewがない時のコントローラの動作', 2, function() {
 		var index = h5.core.controllerManager.getAllControllers().length;
 		var view = h5.core.view;
 		h5.core.view = null;
@@ -3261,13 +3274,50 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートが存在しない時のコントローラの動作', 8, function() {
+	test('h5.core.viewがない時のコントローラの動作 テンプレートを指定されている場合はエラー', 1, function() {
+		var errorCode = ERR.ERR_CODE_NOT_VIEW;
+		var view = h5.core.view;
+		h5.core.view = null;
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./template/test2.ejs']
+		};
+		try {
+			h5.core.controller('#controllerTest', controller);
+			ok(false, 'エラーが起きていません');
+		} catch (e) {
+			strictEqual(e.code, errorCode, e.message);
+		}
+		h5.core.view = view;
+	});
+
+	asyncTest('テンプレートのロードに失敗するとコントローラはdisposeされること', 3, function() {
 		var count = 0;
+		var errorCode = ERR_VIEW.ERR_CODE_TEMPLATE_AJAX;
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./noExistPath']
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function(a) {
+			ok(false, 'テスト失敗。readyPromiseがresolve()された');
+			start();
+		}).fail(function(e, opt) {
+			ok(true, 'reaedyPromiseのfailハンドラが実行される');
+			strictEqual(e.code, errorCode, e.message);
+			setTimeout(function() {
+				ok(isDisposed(c), 'コントローラはdisposeされること');
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest('テンプレートのロードに失敗した時のライフサイクルイベントの動作', 3, function() {
 		var controller = {
 			__name: 'TestController',
 			__templates: ['./noExistPath'],
 			__construct: function(context) {
-				deepEqual(++count, 1, '1. コンストラクタが実行される。');
+				ok(true, 'コンストラクタが実行される。');
 			},
 			__init: function(context) {
 				ok(false, 'テスト失敗。__initが実行された');
@@ -3278,84 +3328,105 @@ $(function() {
 			__ready: function(context) {
 				ok(false, 'テスト失敗。__readyが実行された');
 			},
-			__dispose: function(context) {
-				deepEqual(++count, 4, '4. __disposeが実行されること');
-				start();
-			},
 			__unbind: function(context) {
-				deepEqual(++count, 3, '3. __unbindが実行されること');
+				ok(true, '__unbindが実行されること');
+			},
+			__dispose: function(context) {
+				ok(true, '__disposeが実行されること');
+				start();
 			}
 		};
+		h5.core.controller('#controllerTest', controller);
+	});
 
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.preInitPromise.done(function() {
+	asyncTest('テンプレートのロードに失敗した時の各プロミスのハンドラの動作', 8, function() {
+		var errorCode = ERR_VIEW.ERR_CODE_TEMPLATE_AJAX;
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./noExistPath']
+		};
+
+		var c = h5.core.controller('#controllerTest', controller);
+		c.preInitPromise.done(function(e) {
 			ok(false, 'テスト失敗。preInitPromiseがresolve()された');
 		}).fail(function(e) {
-			deepEqual(++count, 2, 'preInitPromiseのfailハンドラが実行される。');
-			strictEqual(this, testController, 'failハンドラのthisはコントローラインスタンス');
+			ok(true, 'preInitPromiseのfailハンドラが実行される。');
+			strictEqual(e.code, errorCode, e.message);
 		});
-		testController.postInitPromise.done(function(a) {
+		c.postInitPromise.done(function(a) {
 			ok(false, 'テスト失敗。postInitPromiseがresolve()された');
 		}).fail(function(e, opt) {
 			ok(true, 'postInitPromiseのfailハンドラが実行される');
+			strictEqual(e.code, errorCode, e.message);
 		});
-		testController.initPromise.done(function(a) {
+		c.initPromise.done(function(a) {
 			ok(false, 'テスト失敗。initPromiseがresolve()された');
 		}).fail(function(e, opt) {
 			ok(true, 'initPromiseのfailハンドラが実行される');
+			strictEqual(e.code, errorCode, e.message);
 		});
-		testController.readyPromise.done(function(a) {
+		c.readyPromise.done(function(a) {
 			ok(false, 'テスト失敗。readyPromiseがresolve()された');
 		}).fail(function(e, opt) {
 			ok(true, 'reaedyPromiseのfailハンドラが実行される');
+			strictEqual(e.code, errorCode, e.message);
+			start();
 		});
 	});
 
-	asyncTest('テンプレートのロードに失敗した時に実行されるライフサイクルイベント', 24, function() {
-		var disposedController = {};
+	asyncTest('子コントローラでテンプレートのロードに失敗するとコントローラはdisposeされること', 5, function() {
+		var errorCode = ERR_VIEW.ERR_CODE_TEMPLATE_AJAX;
+		var controller = {
+			__name: 'TestController',
+			childController: {
+				__name: 'child',
+				__templates: ['./noExistPath'],
+				childController: {
+					__name: 'grandChild'
+				}
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function(a) {
+			ok(false, 'テスト失敗。readyPromiseがresolve()された');
+			start();
+		}).fail(function(e, opt) {
+			ok(true, 'reaedyPromiseのfailハンドラが実行される');
+			strictEqual(e.code, errorCode, e.message);
+			// 自分以下のコントローラがdisposeされていることをチェック
+			var test = this;
+			var child = this.childController;
+			var grandChild = child.childController;
+			setTimeout(function() {
+				ok(isDisposed(test), '親コントローラがdisposeされていること');
+				ok(isDisposed(child), '子コントローラがdisposeされていること');
+				ok(isDisposed(grandChild), '孫コントローラがdisposeされていること');
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest('子コントローラでテンプレートのロードに失敗した時のライフサイクルイベントの動作', 9, function() {
 		var bController = {
 			__name: 'BController',
 
-			__construct: function(context) {
+			__construct: function() {
 				ok(true, '孫コントローラのコンストラクタが実行される');
-				var grandChildInstance = this;
-				this.preInitPromise.done(function() {
-					ok(true, '孫コントローラのpreInitPromiseのdoneハンドラが呼ばれる');
-				}).fail(function() {
-					ok(false, 'テスト失敗。孫コントローラのpreInitPromiseのfailハンドラが呼ばれた');
-				});
-				this.initPromise.done(function() {
-					ok(false, 'テスト失敗。孫コントローラのinitPromiseのdoneハンドラが呼ばれた');
-				}).fail(function() {
-					ok(true, '孫コントローラのinitPromiseのfailハンドラが呼ばれる');
-				});
-				this.postInitPromise.done(function() {
-					ok(false, 'テスト失敗。孫コントローラのpostInitPromiseのdoneハンドラが呼ばれた');
-				}).fail(function() {
-					ok(true, '孫コントローラのpostInitPromiseのfailハンドラが呼ばれる');
-				});
-				this.readyPromise.done(function() {
-					ok(false, 'テスト失敗。孫コントローラのreadyPromiseのdoneハンドラが呼ばれた');
-					start();
-				}).fail(function() {
-					ok(true, '孫コントローラのreadyPromiseのfailハンドラが呼ばれる');
-				});
 			},
-			__init: function(context) {
+			__init: function() {
 				ok(false, 'テスト失敗。孫コントローラの__initが実行された');
 			},
-			__postInit: function(context) {
+			__postInit: function() {
 				ok(false, 'テスト失敗。孫コントローラの__postInitが実行された');
 			},
-			__ready: function(context) {
+			__ready: function() {
 				ok(false, 'テスト失敗。孫コントローラの__readyが実行された');
 			},
-			__unbind: function(context) {
+			__unbind: function() {
 				ok(true, '孫コントローラの__unbindが実行される');
 			},
-			__dispose: function(context) {
+			__dispose: function() {
 				ok(true, '孫コントローラの__disposeが実行される');
-				disposedController.b = this;
 			}
 		};
 		var aController = {
@@ -3363,44 +3434,23 @@ $(function() {
 			__templates: '/noExistPath',
 			childController: bController,
 
-			__construct: function(context) {
+			__construct: function() {
 				ok(true, '子コントローラのコンストラクタが実行される');
-				this.preInitPromise.done(function() {
-					ok(false, 'テスト失敗。子コントローラのpreInitPromiseのdoneハンドラが呼ばれた');
-				}).fail(function() {
-					ok(true, '子コントローラのpreInitPromiseのfailハンドラが呼ばれる');
-				});
-				this.initPromise.done(function() {
-					ok(false, 'テスト失敗。子コントローラのinitPromiseのdoneハンドラが呼ばれた');
-				}).fail(function() {
-					ok(true, '子コントローラのinitPromiseのfailハンドラが呼ばれる');
-				});
-				this.postInitPromise.done(function() {
-					ok(false, 'テスト失敗。子コントローラのpostInitPromiseのdoneハンドラが呼ばれた');
-				}).fail(function() {
-					ok(true, '子コントローラのpostInitPromiseのfailハンドラが呼ばれる');
-				});
-				this.readyPromise.done(function() {
-					ok(false, 'テスト失敗。子コントローラのreadyPromiseのdoneハンドラが呼ばれた');
-				}).fail(function() {
-					ok(true, '子コントローラのreadyPromiseのfailハンドラが呼ばれる');
-				});
 			},
-			__init: function(context) {
+			__init: function() {
 				ok(false, 'テスト失敗。子コントローラの__initが実行された');
 			},
-			__postInit: function(context) {
+			__postInit: function() {
 				ok(false, 'テスト失敗。子コントローラの__postInitが実行された');
 			},
-			__ready: function(context) {
+			__ready: function() {
 				ok(false, 'テスト失敗。子コントローラの__readyが実行された');
 			},
-			__unbind: function(context) {
+			__unbind: function() {
 				ok(true, '子コントローラの__unbindが実行される');
 			},
-			__dispose: function(context) {
+			__dispose: function() {
 				ok(true, '子コントローラの__disposeが実行される');
-				disposedController.a = this;
 			}
 		};
 
@@ -3409,42 +3459,54 @@ $(function() {
 			__templates: ['./template/test2.ejs'],
 			childController: aController,
 
-			__construct: function(context) {
+			__construct: function() {
 				ok(true, '親コントローラのコンストラクタが実行される');
 			},
-			__init: function(context) {
-			// 親の__initは、その前にコントローラ群がdisposeされていれば実行されない
+			__init: function() {
+			// 親の__initは、実行されることもあればされない場合もある。
+			//__initの前にコントローラ群がdisposeされていれば実行されない
 			},
-			__postInit: function(context) {
+			__postInit: function() {
 				ok(false, 'テスト失敗。親コントローラの__postInitが実行された');
 			},
-			__ready: function(context) {
+			__ready: function() {
 				ok(false, 'テスト失敗。親コントローラの__readyが実行された');
 			},
-			__dispose: function(context) {
+			__dispose: function() {
 				ok(true, '親コントローラの__disposeが実行される');
-				// 自分以下のコントローラがdisposeされていることをチェック
-				disposedController.test = this;
-				setTimeout(function() {
-					for (var i = 0; i < 3; i++) {
-						var prop = ['b', 'a', 'test'][i];
-						var str = ['孫', '子', '親'][i];
-						ok(isDisposed(disposedController[prop]), str + 'コントローラがdisposeされていること');
-					}
-					start();
-				}, 0);
+				start();
 			},
-			__unbind: function(context) {
+			__unbind: function() {
 				ok(true, '親コントローラの__unbindが実行される');
 			}
 		};
 
-		var testController = h5.core.controller('#controllerTest', controller);
+		h5.core.controller('#controllerTest', controller);
+	});
+
+
+
+	asyncTest('子コントローラでテンプレートのロードに失敗した時の各プロミスのハンドラの動作', 19, function() {
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./template/test2.ejs'],
+			childController: {
+				__name: 'child',
+				__templates: ['./noExistPath'],
+				childController: {
+					__name: 'grandChild'
+				}
+			}
+		};
+		var c = h5.core.controller('#controllerTest', controller);
+		var child = c.childController;
+		var grandChild = child.childController;
+
 		// 親のpreInitPromiseのfailが呼ばれたらテスト失敗。
 		// doneについては、呼ばれるか呼ばれないか不定であるため、チェックしない。
 		//   子のテンプレートロードが失敗する前に親のテンプレートロードが始まっていればdoneは実行されるが、
 		//   そうでない時は親はテンプレートをロードしないため、doneもfailも実行されない。
-		testController.preInitPromise.fail(function() {
+		c.preInitPromise.fail(function() {
 			ok(false, 'テスト失敗。親コントローラのpreInitPromiseのfailハンドラが呼ばれた');
 		});
 
@@ -3452,20 +3514,71 @@ $(function() {
 		// doneについては、呼ばれるか呼ばれないか不定であるため、チェックしない。
 		//   子のテンプレートロードが失敗する前に親のテンプレートロードが始まっていればdoneは実行されるが、
 		//   そうでない時は親はテンプレートをロードしないため、doneもfailも実行されない。
-		testController.initPromise.fail(function(result) {
+		c.initPromise.fail(function() {
 			ok(false, '親コントローラのinitPromiseのfailハンドラが呼ばれた');
 		});
-		testController.postInitPromise.done(function() {
+
+		c.postInitPromise.done(function() {
 			ok(false, 'テスト失敗。親コントローラのpostInitPromiseのdoneハンドラが呼ばれた');
-		}).fail(function(result) {
-			equal(result.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX);
+		}).fail(function(e) {
 			ok(true, '親コントローラのpostInitPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
 		});
-		testController.readyPromise.done(function() {
+		c.readyPromise.done(function() {
 			ok(false, 'テスト失敗。親コントローラのreadyPromiseのdoneハンドラが呼ばれた');
-		}).fail(function(result) {
-			equal(result.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX);
+		}).fail(function(e) {
 			ok(true, '親コントローラのreadyPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
+			start();
+		});
+
+		child.preInitPromise.done(function() {
+			ok(false, 'テスト失敗。子コントローラのpreInitPromiseのdoneハンドラが呼ばれた');
+		}).fail(function(e) {
+			ok(true, '子コントローラのpreInitPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
+		});
+		child.initPromise.done(function() {
+			ok(false, 'テスト失敗。子コントローラのinitPromiseのdoneハンドラが呼ばれた');
+		}).fail(function(e) {
+			ok(true, '子コントローラのinitPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
+		});
+		child.postInitPromise.done(function() {
+			ok(false, 'テスト失敗。子コントローラのpostInitPromiseのdoneハンドラが呼ばれた');
+		}).fail(function(e) {
+			ok(true, '子コントローラのpostInitPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
+		});
+		child.readyPromise.done(function() {
+			ok(false, 'テスト失敗。子コントローラのreadyPromiseのdoneハンドラが呼ばれた');
+		}).fail(function(e) {
+			ok(true, '子コントローラのreadyPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
+		});
+
+		grandChild.preInitPromise.done(function() {
+			ok(true, '孫コントローラのpreInitPromiseのdoneハンドラが呼ばれる');
+		}).fail(function(e) {
+			ok(false, 'テスト失敗。孫コントローラのinitPromiseのfailハンドラが呼ばれた');
+		});
+		grandChild.initPromise.done(function() {
+			ok(false, 'テスト失敗。孫コントローラのinitPromiseのdoneハンドラが呼ばれた');
+		}).fail(function(e) {
+			ok(true, '孫コントローラのinitPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
+		});
+		grandChild.postInitPromise.done(function() {
+			ok(false, 'テスト失敗。孫コントローラのpostInitPromiseのdoneハンドラが呼ばれた');
+		}).fail(function(e) {
+			ok(true, '孫コントローラのpostInitPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
+		});
+		grandChild.readyPromise.done(function() {
+			ok(false, 'テスト失敗。孫コントローラのreadyPromiseのdoneハンドラが呼ばれた');
+		}).fail(function(e) {
+			ok(true, '孫コントローラのreadyPromiseのfailハンドラが呼ばれる');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, e.message);
 		});
 	});
 
@@ -3758,23 +3871,6 @@ $(function() {
 		}).fail(function(e, opt) {
 			deepEqual(++count, 5, 'readyPromiseがreject()された');
 		});
-	});
-
-	test('h5.core.viewがない時のコントローラの動作 テンプレートがあるときはエラー', 1, function() {
-		var errorCode = ERR.ERR_CODE_NOT_VIEW;
-		var view = h5.core.view;
-		h5.core.view = null;
-		var controller = {
-			__name: 'TestController',
-			__templates: ['./template/test2.ejs']
-		};
-		try {
-			h5.core.controller('#controllerTest', controller);
-			ok(false, 'エラーが起きていません');
-		} catch (e) {
-			deepEqual(e.code, errorCode, e.message);
-		}
-		h5.core.view = view;
 	});
 
 	asyncTest('this.view.get()', 1, function() {
@@ -7076,7 +7172,7 @@ $(function() {
 						try {
 							this.throwError();
 						} catch (e) {
-							equal(e.code, ERR.ERR_CODE_TOO_FEW_ARGUMENTS,
+							strictEqual(e.code, ERR.ERR_CODE_TOO_FEW_ARGUMENTS,
 									'codeプロパティにエラーコードを保持していること。');
 						}
 
