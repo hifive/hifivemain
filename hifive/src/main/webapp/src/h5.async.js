@@ -328,10 +328,10 @@
 				for (var i = 0, l = PIPE_CREATE_METHODS.length; i < l; i++) {
 					var that = this;
 					(function(fn, method, action) {
-						var isFunc = !isFunction(fn);
+						var isFunc = isFunction(fn);
 						// 登録するコールバック
 						function callback(/* var_args */) {
-							if (isFunc) {
+							if (!isFunc) {
 								// 関数で無かった場合は、渡された引数を次のコールバックにそのまま渡す
 								newDeferred[action + 'With'](this, arguments);
 								return;
@@ -355,7 +355,7 @@
 						// コールバックを登録
 						// fnが関数でないかつmethodがfailの場合は、CFHの動作を阻害しないようにfailハンドラを登録するため、
 						// _h5UnwrappedCallを使う
-						if (isFunc && method === 'fail') {
+						if (!isFunc && method === 'fail') {
 							that._h5UnwrappedCall(method, callback);
 						} else {
 							that[method](callback);
