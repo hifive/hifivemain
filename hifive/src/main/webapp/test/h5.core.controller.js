@@ -1308,24 +1308,6 @@ $(function() {
 		});
 	});
 
-	//TODO 適切なモジュールを作って移動する
-	asyncTest('xxControllerがnull,関数,undefinedの場合は子コントローラとして扱わず、エラーにならない', 1, function() {
-		var result;
-		var controller = {
-			__name: 'TestController',
-			aController: null,
-			bControlelr: undefined,
-			cController: function() {}
-		};
-
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			ok(true);
-			start();
-		});
-	});
-
-
 	test('__name属性のないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
 		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
 		var controller = {
@@ -1493,6 +1475,61 @@ $(function() {
 		});
 	});
 
+	asyncTest('子コントローラのバインド', 2, function() {
+		var result;
+		var c = {
+			__name: 'A',
+			childController: {
+				__name: 'B',
+				'input[type=button] click': function(context) {
+					result = true;
+				}
+			}
+		};
+		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
+			ok(this.childController.parentController, this,
+					'子コントローラとして定義したオブジェクトががコントローラ化され、parentControllerが設定されていること');
+			this.$find('input[type=button]').click();
+			ok(result, '子コントローラで定義したイベントハンドラが動作すること');
+			start();
+		});
+	});
+
+	asyncTest('xxxControllerがnull,関数,undefinedの場合は子コントローラとして扱わず、エラーにならない', 4, function() {
+		function f() {
+		// 何もしない
+		}
+		var controller = {
+			__name: 'TestController',
+			aController: null,
+			bControlelr: undefined,
+			cController: f
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			ok(true, 'xxxControllerプロパティにnull,undefined,functionが設定されているコントローラをバインドできること');
+			strictEqual(this.aController, null, '指定した値を取得できること');
+			strictEqual(this.bController, undefined, '指定した値を取得できること');
+			strictEqual(this.cController, f, '指定した値を取得できること');
+			start();
+		});
+	});
+
+	test('__name属性のないオブジェクトを子コントローラとしてバインドしようとするとエラーが出ること', function() {
+		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
+		var controller = {
+			__name: 'A',
+			childController: {}
+		};
+		try {
+			h5.core.controller('#controllerTest', controller);
+			ok(false, 'エラーが発生していません。');
+		} catch (e) {
+			deepEqual(e.code, errorCode, e.message);
+		}
+	});
+
 	test('コントローラの循環参照チェックに引っかかるとエラーが発生するか', 1, function() {
 		var test2Controller = {
 			__name: 'Test2Controller'
@@ -1541,20 +1578,6 @@ $(function() {
 				equal(e.code, ERR.ERR_CODE_CONTROLLER_ALREADY_CREATED,
 						'コントローラ化済みのオブジェクトを渡すとエラーが発生したか');
 			}
-			start();
-		});
-	});
-
-	asyncTest('xxxControllerというプロパティの値が設定されていない時にエラーにならないか', function() {
-		var testController = {
-			__name: 'TestController',
-
-			childController: null
-		};
-
-		var c = h5.core.controller('#controllerTest', testController);
-		c.readyPromise.done(function() {
-			ok(c, 'xxxControllerというプロパティの値が設定されていない時にエラーが発生せず処理が終了するか');
 			start();
 		});
 	});
