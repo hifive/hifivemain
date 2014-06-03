@@ -2273,18 +2273,43 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 2, function() {
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 10, function() {
 		var parentElm = $('#controllerTest #parent')[0];
+		var childElm = $('#controllerTest #child')[0];
+		window.h5test1 = {
+			target: parentElm
+		};
 		var controller = {
 			__name: 'TestController',
+			'#child click': function(context, $el) {
+				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+				strictEqual($el[0], childElm, '第二引数がバインド先の要素であること');
+			},
 			'#parent click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 				strictEqual($el[0], parentElm, '第二引数がバインド先の要素であること');
+			},
+			'{rootElement} click': function(context, $el) {
+				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+				strictEqual($el[0], this.rootElement, '第二引数がバインド先の要素(rootElement)であること');
+			},
+			'{document} click': function(context, $el) {
+				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+				strictEqual($el[0], document, '第二引数がバインド先の要素(document)であること');
+			},
+			'{window} click': function(context, $el) {
+				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+				strictEqual($el[0], window, '第二引数がバインド先の要素(window)であること');
+			},
+			'{window.h5test1.target} click': function(context, $el){
+				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+				strictEqual($el[0], window.h5test1.target, '第二引数がバインド先の要素(window.h5test1.parentElm)であること');
 			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
 		c.readyPromise.done(function() {
-			$('#parent').click();
+			$('#child').click();
+			deleteProperty(window, 'h5test1');
 			start();
 		});
 	});
@@ -2310,7 +2335,7 @@ $(function() {
 		var controller = {
 			__name: 'TestController',
 			'#parent click': function(context, el) {
-				strictEqual(el, parentElm, 'listenerElementType = 0 の時、第二引数がバンド先のDOM要素であること');
+				strictEqual(el, parentElm, 'listenerElementType = 0 の時、第二引数がバンド先のDOM要素(≠jQueryオブジェクト)であること');
 			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
