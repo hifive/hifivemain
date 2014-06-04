@@ -843,8 +843,11 @@
 			var handler = bindObj.handler;
 			var c = bindObj.controller;
 			bindObj.handler = function(/* var args */) {
-				var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(arguments[0].currentTarget)
-						: arguments[0].currentTarget;
+				// listenerElementTypeが1ならjQueryオブジェクト、そうでないならDOM要素を、イベントハンドラの第2引数にする
+				// jQuery1.6.4の場合、currentTargetに正しく値が設定されていない場合があるため、
+				// currentTargetではなくthisを使用している。(issue#338)
+				var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(this)
+						: this;
 				handler.call(c, createEventContext(bindObj, arguments), currentTargetShortcut);
 			};
 		}
