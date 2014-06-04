@@ -3033,6 +3033,381 @@ $(function() {
 			ok(false, 'テスト失敗。コントローラ化に失敗しました');
 		});
 	});
+	//=============================
+	// Definition
+	//=============================
+	module("Controller - dispose", {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('コントローラのdispose (同期処理) - __dispose()の実行順序をテスト', function() {
+		var ret = [];
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				ret.push(0);
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				ret.push(1);
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', 3, function() {
+		var childDfd = h5.async.deferred();
+		var rootDfd = h5.async.deferred();
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				setTimeout(function() {
+					childDfd.resolve();
+				}, 0);
+				return childDfd.promise();
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				setTimeout(function() {
+					rootDfd.resolve();
+				}, 0);
+				return rootDfd.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				ok(isResolved(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
+	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', 3, function() {
+		var childDfd = h5.async.deferred();
+		var rootDfd = h5.async.deferred();
+
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				var that = this;
+				setTimeout(function() {
+					that.__name === 'ChildController';
+					childDfd.resolve();
+				}, 0);
+				return childDfd.promise();
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				var that = this;
+				setTimeout(function() {
+					that.__name === 'TestController';
+					rootDfd.reject();
+				}, 0);
+				return rootDfd.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				ok(isRejected(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
+	asyncTest(
+			'コントローラのdispose __constructでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行される',
+			7, function() {
+				var flag = false;
+				var controller = {
+					__name: 'TestController',
+					__construct: function() {
+
+						this.preInitPromise.done(function() {
+							ok(true, 'preInitPromiseのdoneハンドラが実行された');
+						}).fail(function() {
+							ok(false, 'テスト失敗。preInitPromiseのfailハンドラが実行された');
+						});
+						this.initPromise.done(function() {
+							ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+						}).fail(function() {
+							ok(true, 'initPromiseのfailハンドラが実行された');
+						});
+						this.readyPromise.done(function() {
+							ok(false, 'テスト失敗。readyPromiseのdoneハンドラが実行された');
+						}).fail(function() {
+							ok(true, 'readyPromiseのfailハンドラが実行された');
+						});
+
+						// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
+						this.dispose();
+						this.dispose();
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						ok(false, 'テスト失敗。__initが実行された');
+					},
+					__ready: function() {
+						ok(false, 'テスト失敗。__readyが実行された');
+						start();
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+
+				strictEqual(h5.core.controller('#controllerTest', controller), null,
+						'h5.core.controller()がnullを返すこと');
+			});
+
+	asyncTest(
+			'コントローラのdispose preInitProimseのdoneハンドラでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること',
+			8, function() {
+				var flag = false;
+				var errorObj = {};
+				var controller = {
+
+					__name: 'TestController',
+					__construct: function() {
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						ok(false, 'テスト失敗。__initが実行された');
+					},
+					__ready: function() {
+						ok(false, 'テスト失敗。__readyが実行された');
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.initPromise.done(function() {
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'initPromiseのfailハンドラが実行されること');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+				testController.readyPromise.done(function() {
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'initPromiseのfailハンドラが実行されること');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+				testController.preInitPromise.done(function() {
+					ok(true, 'preInitPromiseのdoneハンドラが実行されること');
+					// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
+					var dispose = testController.dispose;
+					testController.dispose(errorObj);
+					testController.dispose(errorObj);
+				});
+			});
+
+	asyncTest(
+			'コントローラのdispose __initでthis.disposeを呼ぶと__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること',
+			9, function() {
+				var errorObj = {};
+				var flag = false;
+				var controller = {
+
+					__name: 'TestController',
+					__construct: function() {
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						// disposeを2回呼ぶ
+						this.dispose(errorObj);
+						this.dispose(errorObj);
+						ok(true, '__initが実行されること');
+					},
+					__ready: function() {
+						ok(false, 'テスト失敗。__readyが実行された');
+						start();
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.preInitPromise.done(function() {
+					ok(true, 'preInitPromiseのdoneハンドラが実行されること');
+				});
+				testController.initPromise.done(function() {
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'initPromiseのfailハンドラが実行された');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+				testController.readyPromise.done(function() {
+					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'initPromiseのfailハンドラが実行された');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+			});
+
+	asyncTest(
+			'コントローラのdispose initPromiseのdoneハンドラでdisposeを呼ぶと__readyは実行されず、readyPromiseのfailハンドラが実行されること',
+			7, function() {
+				var errorObj = {};
+				var flag = false;
+				var controller = {
+
+					__name: 'TestController',
+					__construct: function() {
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						ok(true, '__initが実行されること');
+					},
+					__ready: function() {
+						ok(false, 'テスト失敗。__readyが実行された');
+						start();
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+
+				var testController = h5.core.controller('#controllerTest', controller);
+
+				testController.initPromise.done(function() {
+					ok(true, 'initPromiseのdoneハンドラが実行されること');
+					// dispose()を2回呼ぶ
+					testController.dispose(errorObj);
+					testController.dispose(errorObj);
+				}).fail(function() {
+					ok(true, 'テスト失敗。initPromiseのfailハンドラが実行された');
+				});
+				testController.readyPromise.done(function() {
+					ok(false, 'テスト失敗。readyPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'readyPromiseのfailハンドラが実行された');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+			});
+
+	asyncTest('コントローラのdispose __readyでthis.disposeを呼ぶとreadyPromiseのfailハンドラが実行されること', 7,
+			function() {
+				var errorObj = {};
+				var flag = false;
+				var controller = {
+
+					__name: 'TestController',
+					__construct: function() {
+						ok(true, 'コンストラクタは実行されること');
+					},
+					__init: function() {
+						ok(true, '__initが実行されること');
+					},
+					__ready: function() {
+						// disposeを2回呼ぶ
+						this.dispose(errorObj);
+						this.dispose(errorObj);
+						ok(true, '__readyが実行されること');
+					},
+					__dispose: function() {
+						ok(!flag, '__disposeが1度だけ実行されること');
+						flag = true;
+						setTimeout(function() {
+							start();
+						}, 0);
+					},
+					__unbind: function() {
+						ok(true, '__unbindが実行されること');
+					}
+				};
+
+				var testController = h5.core.controller('#controllerTest', controller);
+				testController.readyPromise.done(function() {
+					ok(false, 'テスト失敗。redayPromiseのdoneハンドラが実行された');
+				}).fail(function(e) {
+					ok(true, 'readyPromiseのfailハンドラが実行された');
+					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+				});
+			});
 
 	//=============================
 	// Definition
@@ -4492,367 +4867,6 @@ $(function() {
 							'子コントローラのreadyPromiseのfailハンドラ:thisは子コントローラのインスタンスであること');
 					strictEqual(arg.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX,
 							'引数はloadのエラーオブジェクトであり、エラーコードが格納されていること');
-				});
-			});
-
-	asyncTest('コントローラのdispose (同期処理) - __dispose()の実行順序をテスト', function() {
-		var ret = [];
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				ret.push(0);
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				ret.push(1);
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
-		});
-	});
-
-	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', 3, function() {
-		var childDfd = h5.async.deferred();
-		var rootDfd = h5.async.deferred();
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				setTimeout(function() {
-					childDfd.resolve();
-				}, 0);
-				return childDfd.promise();
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				setTimeout(function() {
-					rootDfd.resolve();
-				}, 0);
-				return rootDfd.promise();
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				ok(isResolved(rootDfd) && isResolved(childDfd),
-						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
-		});
-	});
-
-	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', 3, function() {
-		var childDfd = h5.async.deferred();
-		var rootDfd = h5.async.deferred();
-
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				var that = this;
-				setTimeout(function() {
-					that.__name === 'ChildController';
-					childDfd.resolve();
-				}, 0);
-				return childDfd.promise();
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				var that = this;
-				setTimeout(function() {
-					that.__name === 'TestController';
-					rootDfd.reject();
-				}, 0);
-				return rootDfd.promise();
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				ok(isRejected(rootDfd) && isResolved(childDfd),
-						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
-		});
-	});
-
-	asyncTest(
-			'コントローラのdispose __constructでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行される',
-			7, function() {
-				var flag = false;
-				var controller = {
-					__name: 'TestController',
-					__construct: function() {
-
-						this.preInitPromise.done(function() {
-							ok(true, 'preInitPromiseのdoneハンドラが実行された');
-						}).fail(function() {
-							ok(false, 'テスト失敗。preInitPromiseのfailハンドラが実行された');
-						});
-						this.initPromise.done(function() {
-							ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-						}).fail(function() {
-							ok(true, 'initPromiseのfailハンドラが実行された');
-						});
-						this.readyPromise.done(function() {
-							ok(false, 'テスト失敗。readyPromiseのdoneハンドラが実行された');
-						}).fail(function() {
-							ok(true, 'readyPromiseのfailハンドラが実行された');
-						});
-
-						// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
-						this.dispose();
-						this.dispose();
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						ok(false, 'テスト失敗。__initが実行された');
-					},
-					__ready: function() {
-						ok(false, 'テスト失敗。__readyが実行された');
-						start();
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-
-				strictEqual(h5.core.controller('#controllerTest', controller), null,
-						'h5.core.controller()がnullを返すこと');
-			});
-
-	asyncTest(
-			'コントローラのdispose preInitProimseのdoneハンドラでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること',
-			8, function() {
-				var flag = false;
-				var errorObj = {};
-				var controller = {
-
-					__name: 'TestController',
-					__construct: function() {
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						ok(false, 'テスト失敗。__initが実行された');
-					},
-					__ready: function() {
-						ok(false, 'テスト失敗。__readyが実行された');
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.initPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'initPromiseのfailハンドラが実行されること');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-				testController.readyPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'initPromiseのfailハンドラが実行されること');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-				testController.preInitPromise.done(function() {
-					ok(true, 'preInitPromiseのdoneハンドラが実行されること');
-					// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
-					var dispose = testController.dispose;
-					testController.dispose(errorObj);
-					testController.dispose(errorObj);
-				});
-			});
-
-	asyncTest(
-			'コントローラのdispose __initでthis.disposeを呼ぶと__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること',
-			9, function() {
-				var errorObj = {};
-				var flag = false;
-				var controller = {
-
-					__name: 'TestController',
-					__construct: function() {
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						// disposeを2回呼ぶ
-						this.dispose(errorObj);
-						this.dispose(errorObj);
-						ok(true, '__initが実行されること');
-					},
-					__ready: function() {
-						ok(false, 'テスト失敗。__readyが実行された');
-						start();
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.preInitPromise.done(function() {
-					ok(true, 'preInitPromiseのdoneハンドラが実行されること');
-				});
-				testController.initPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'initPromiseのfailハンドラが実行された');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-				testController.readyPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'initPromiseのfailハンドラが実行された');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-			});
-
-	asyncTest(
-			'コントローラのdispose initPromiseのdoneハンドラでdisposeを呼ぶと__readyは実行されず、readyPromiseのfailハンドラが実行されること',
-			7, function() {
-				var errorObj = {};
-				var flag = false;
-				var controller = {
-
-					__name: 'TestController',
-					__construct: function() {
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						ok(true, '__initが実行されること');
-					},
-					__ready: function() {
-						ok(false, 'テスト失敗。__readyが実行された');
-						start();
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-
-				var testController = h5.core.controller('#controllerTest', controller);
-
-				testController.initPromise.done(function() {
-					ok(true, 'initPromiseのdoneハンドラが実行されること');
-					// dispose()を2回呼ぶ
-					testController.dispose(errorObj);
-					testController.dispose(errorObj);
-				}).fail(function() {
-					ok(true, 'テスト失敗。initPromiseのfailハンドラが実行された');
-				});
-				testController.readyPromise.done(function() {
-					ok(false, 'テスト失敗。readyPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'readyPromiseのfailハンドラが実行された');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-			});
-
-	asyncTest('コントローラのdispose __readyでthis.disposeを呼ぶとreadyPromiseのfailハンドラが実行されること', 7,
-			function() {
-				var errorObj = {};
-				var flag = false;
-				var controller = {
-
-					__name: 'TestController',
-					__construct: function() {
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						ok(true, '__initが実行されること');
-					},
-					__ready: function() {
-						// disposeを2回呼ぶ
-						this.dispose(errorObj);
-						this.dispose(errorObj);
-						ok(true, '__readyが実行されること');
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.readyPromise.done(function() {
-					ok(false, 'テスト失敗。redayPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'readyPromiseのfailハンドラが実行された');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
 				});
 			});
 
