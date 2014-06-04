@@ -4487,7 +4487,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('多重にネストしたコントローラで一番下の子がテンプレートを保持している場合に正しい順番で初期化処理が行われること', function() {
+	asyncTest('多重にネストしたコントローラで一番下の子がテンプレートを保持している場合に正しい順番で初期化処理が行われること', 8, function() {
 		var result = [];
 		var root1 = null;
 		var root2 = null;
@@ -4589,6 +4589,7 @@ $(function() {
 
 			strictEqual(constructResult.join(';'), '0;1;2', '__constructイベントが適切に発火しているか');
 			strictEqual(initResult.join(';'), '0;1;2', '__initイベントが適切に発火しているか');
+			strictEqual(postInitResult.join(';'), '0;1;2', '__postInitイベントが適切に発火しているか');
 			strictEqual(readyResult.join(';'), '0;1;2', '__readyイベントが適切に発火しているか');
 
 			testController.unbind();
