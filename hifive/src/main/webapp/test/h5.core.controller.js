@@ -4197,7 +4197,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('テンプレートのコンパイルに失敗するとコントローラはdisposeされること', 5, function() {
+	asyncTest('テンプレートのコンパイルに失敗するとコントローラはdisposeされること', 4, function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
