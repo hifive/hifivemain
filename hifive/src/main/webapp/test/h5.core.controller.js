@@ -43,6 +43,7 @@ $(function() {
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;
 	var createIFrameElement = testutils.dom.createIFrameElement;
+	var skipTest = testutils.qunit.skipTest;
 
 	// コントローラのエラーコード
 	var ERR = ERRCODE.h5.core.controller;
