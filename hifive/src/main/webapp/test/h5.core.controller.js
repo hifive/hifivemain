@@ -3860,8 +3860,6 @@ $(function() {
 		h5.core.controller('#controllerTest', controller);
 	});
 
-
-
 	asyncTest('子コントローラでテンプレートのロードに失敗した時の各プロミスのハンドラの動作', 19, function() {
 		var controller = {
 			__name: 'TestController',
@@ -4199,53 +4197,30 @@ $(function() {
 				});
 			});
 
-	asyncTest('テンプレートがコンパイルできない時のコントローラの動作', 7, function() {
+	asyncTest('テンプレートのコンパイルに失敗するとコントローラはdisposeされること', 5, function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
 			__templates: ['./template/test13.ejs?'],
 			__construct: function(context) {
-				deepEqual(++count, 1, '1. コンストラクタが実行される。');
+				ok(true, 'コンストラクタが実行される。');
 			},
 			__init: function(context) {
 				ok(false, 'テスト失敗。__initが実行された');
-			},
-			__postInit: function(context) {
-				ok(false, 'テスト失敗。__postInitが実行された');
-			},
-			__ready: function(context) {
-				ok(false, 'テスト失敗。__readyが実行された');
-			},
-			__dispose: function(context) {
-				deepEqual(++count, 7, '__disposeが実行される。');
-				start();
-			},
-			__unbind: function(context) {
-				deepEqual(++count, 6, '__unbindが実行される。');
 			}
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
-		testController.preInitPromise.done(function() {
-			ok(false, 'テスト失敗。preInitPromiseがresolve()された');
-		}).fail(function(e) {
-			deepEqual(++count, 2, 'preInitPromiseのfailハンドラが実行される。');
-		});
-		testController.initPromise.done(function(a) {
-			ok(false, 'テスト失敗。initPromiseがresolve()された');
-		}).fail(function(e, opt) {
-			deepEqual(++count, 3, 'initPromiseがreject()された');
-		});
-		testController.postInitPromise.done(function(a) {
-			ok(false, 'テスト失敗。postInitPromiseがresolve()された');
-		}).fail(function(e, opt) {
-			deepEqual(++count, 4, 'postInitPromiseがreject()された');
-		});
 		testController.readyPromise.done(function(a) {
 			ok(false, 'テスト失敗。readyPromiseがresolve()された');
 			start();
-		}).fail(function(e, opt) {
-			deepEqual(++count, 5, 'readyPromiseがreject()された');
+		}).fail(function(e) {
+			ok(true, 'readyPromiseがreject()された');
+			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR, 'エラーコードが取得できること');
+			setTimeout(function() {
+				ok(isDisposed(testController), 'コントローラはdisposeされること');
+				start();
+			}, 0);
 		});
 	});
 
