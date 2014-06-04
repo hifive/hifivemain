@@ -4846,7 +4846,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 __init, __readyで、resolveされる時の挙動', 20, function() {
+	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 __init, __postInit, __readyで、resolveされる時の挙動', 20, function() {
 		var dfdChild1Init = h5.async.deferred();
 		var dfdChild1PostInit = h5.async.deferred();
 		var dfdChild1Ready = h5.async.deferred();
