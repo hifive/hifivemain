@@ -2289,7 +2289,9 @@ $(function() {
 		window.h5test1 = {
 			target: parentElm
 		};
-		navigator.target = $('#controllerTest')[0];
+		navigator.h5test1 = {
+			target: $('#controllerTest')[0]
+		};
 		var controller = {
 			__name: 'TestController',
 			'#child click': function(context, $el) {
@@ -2308,9 +2310,10 @@ $(function() {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 				strictEqual($el[0], document, '第二引数がバインド先の要素(document)であること');
 			},
-			'{navigator.target} click': function(context, $el){
+			'{navigator.h5test1.target} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-				strictEqual($el[0], navigator.target, '第二引数がバインド先の要素(navigator.target)であること');
+				strictEqual($el[0], navigator.h5test1.target,
+						'第二引数がバインド先の要素(navigator.h5test1.target)であること');
 			},
 			'{window} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
@@ -2330,7 +2333,7 @@ $(function() {
 		c.readyPromise.done(function() {
 			$('#child').click();
 			deleteProperty(window, 'h5test1');
-			deleteProperty(navigator, 'target');
+			deleteProperty(navigator, 'h5test1');
 			start();
 		});
 	});
