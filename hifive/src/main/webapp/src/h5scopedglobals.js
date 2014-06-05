@@ -395,9 +395,20 @@ var isArray = Array.isArray || (function() {
  * @param {Any} obj
  * @returns {Boolean}
  */
-function isFunction(obj) {
-	return typeof obj === 'function';
-}
+var isFunction = (function() {
+	// Android3以下、iOS4以下は正規表現をtypeofで判定すると"function"を返す
+	// それらのブラウザでは、toStringを使って判定する
+	if (typeof new RegExp() === 'function') {
+		var toStringObj = Object.prototype.toString;
+		return function(obj) {
+			return toStringObj.call(obj) === '[object Function]';
+		};
+	}
+	// 正規表現のtypeofが"function"にならないブラウザなら、typeofがfunctionなら関数と判定する
+	return function(obj) {
+		return typeof obj === 'function';
+	};
+})();
 
 /**
  * 複数のプロミスが完了するのを待機する
