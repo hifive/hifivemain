@@ -188,7 +188,7 @@
 	 * @returns
 	 */
 	function createIFrameElement() {
-		var dfd = h5.async.deferred();
+		var dfd = $.Deferred();
 		var iframe = document.createElement('iframe');
 		$('#qunit-fixture').append(iframe);
 		// chrome,safari,operaの場合、iframeをappendした瞬間にreadystatechange='complete'になっている
@@ -223,7 +223,7 @@
 	 *          doneハンドラにはポップアップウィンドウのwindowオブジェクトが第1引数で渡される。
 	 */
 	function openPopupWindow() {
-		var dfd = h5.async.deferred();
+		var dfd = $.Deferred();
 		var w = window.open();
 		if (w == null) {
 			// ポップアップブロックされていた場合はrejectして終了
@@ -255,7 +255,7 @@
 	 * @param {Window} w ポップアップウィンドウのwindowオブジェクト
 	 */
 	function closePopupWindow(w) {
-		var dfd = h5.async.deferred();
+		var dfd = $.Deferred();
 		function unloadFunc() {
 			dfd.resolve(w);
 		}

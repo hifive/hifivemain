@@ -3094,8 +3094,8 @@ $(function() {
 	});
 
 	asyncTest('コントローラのdispose (非同期処理) - __dispose()で、resolveされるpromiseを返す。', 3, function() {
-		var childDfd = h5.async.deferred();
-		var rootDfd = h5.async.deferred();
+		var childDfd = $.Deferred();
+		var rootDfd = $.Deferred();
 		var childController = {
 			__name: 'ChildController',
 
@@ -3134,8 +3134,8 @@ $(function() {
 	});
 
 	asyncTest('コントローラのdispose (非同期処理) - __dispose()で rejectされるpromiseを返す。', 3, function() {
-		var childDfd = h5.async.deferred();
-		var rootDfd = h5.async.deferred();
+		var childDfd = $.Deferred();
+		var rootDfd = $.Deferred();
 
 		var childController = {
 			__name: 'ChildController',
@@ -3978,7 +3978,7 @@ $(function() {
 		var loadCount = 0;
 		var load = function() {
 			loadCount++;
-			var dfd = h5.async.deferred();
+			var dfd = $.Deferred();
 			var e = {
 				detail: {
 					error: {
@@ -4019,7 +4019,7 @@ $(function() {
 		var retryCount = 0;
 		var retryLimit = 3;
 		var load = function() {
-			var dfd = h5.async.deferred();
+			var dfd = $.Deferred();
 			var e = {
 				detail: {
 					error: {
@@ -4692,7 +4692,7 @@ $(function() {
 			result.push(this.__name + '__ready');
 		}
 		function asyncConstruct() {
-			var dfd = h5.async.deferred();
+			var dfd = $.Deferred();
 			setTimeout(this.own(function() {
 				result.push(this.__name + '__construct');
 				dfd.resolve();
@@ -4700,7 +4700,7 @@ $(function() {
 			return dfd.promise();
 		}
 		function asyncInit() {
-			var dfd = h5.async.deferred();
+			var dfd = $.Deferred();
 			setTimeout(this.own(function() {
 				result.push(this.__name + '__init');
 				dfd.resolve();
@@ -4708,7 +4708,7 @@ $(function() {
 			return dfd.promise();
 		}
 		function asyncPostInit() {
-			var dfd = h5.async.deferred();
+			var dfd = $.Deferred();
 			setTimeout(this.own(function() {
 				result.push(this.__name + '__postInit');
 				dfd.resolve();
@@ -4716,7 +4716,7 @@ $(function() {
 			return dfd.promise();
 		}
 		function asyncReady() {
-			var dfd = h5.async.deferred();
+			var dfd = $.Deferred();
 			setTimeout(this.own(function() {
 				result.push(this.__name + '__ready');
 				dfd.resolve();
@@ -4863,15 +4863,15 @@ $(function() {
 			'ライフサイクルイベントがpromiseを返す時の挙動 __init, __postInit, __readyで、resolveされる時の挙動',
 			20,
 			function() {
-				var dfdChild1Init = h5.async.deferred();
-				var dfdChild1PostInit = h5.async.deferred();
-				var dfdChild1Ready = h5.async.deferred();
-				var dfdChild2Init = h5.async.deferred();
-				var dfdChild2PostInit = h5.async.deferred();
-				var dfdChild2Ready = h5.async.deferred();
-				var dfdRootInit = h5.async.deferred();
-				var dfdRootPostInit = h5.async.deferred();
-				var dfdRootReady = h5.async.deferred();
+				var dfdChild1Init = $.Deferred();
+				var dfdChild1PostInit = $.Deferred();
+				var dfdChild1Ready = $.Deferred();
+				var dfdChild2Init = $.Deferred();
+				var dfdChild2PostInit = $.Deferred();
+				var dfdChild2Ready = $.Deferred();
+				var dfdRootInit = $.Deferred();
+				var dfdRootPostInit = $.Deferred();
+				var dfdRootReady = $.Deferred();
 				var controller = {
 					__name: 'TestController',
 					child1Controller: {
@@ -4974,7 +4974,7 @@ $(function() {
 			});
 
 	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 ルートの__initが返すpromiseがrejectされる時の挙動', 5, function() {
-		var dfd = h5.async.deferred();
+		var dfd = $.Deferred();
 		var controller = {
 			__name: 'TestController',
 			child1Controller: {
@@ -5037,7 +5037,7 @@ $(function() {
 	});
 
 	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 ルートの__readyが返すpromiseがrejectされる時の挙動', 6, function() {
-		var dfd = h5.async.deferred();
+		var dfd = $.Deferred();
 		var controller = {
 			__name: 'TestController',
 			child1Controller: {
@@ -5077,7 +5077,7 @@ $(function() {
 	});
 
 	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__initが返すpromiseがrejectされる時の挙動', 7, function() {
-		var dfd = h5.async.deferred();
+		var dfd = $.Deferred();
 		var controller = {
 			__name: 'TestController',
 			child1Controller: {
@@ -5115,7 +5115,7 @@ $(function() {
 	});
 
 	asyncTest('ライフサイクルイベントがpromiseを返す時の挙動 子の__readyが返すpromiseがrejectされる時の挙動', 5, function() {
-		var dfd = h5.async.deferred();
+		var dfd = $.Deferred();
 		var controller = {
 			__name: 'TestController',
 			child1Controller: {
@@ -5631,10 +5631,10 @@ $(function() {
 					}
 				};
 
-				var d1 = h5.async.deferred();
-				var d2 = h5.async.deferred();
-				var d3 = h5.async.deferred();
-				var d4 = h5.async.deferred();
+				var d1 = $.Deferred();
+				var d2 = $.Deferred();
+				var d3 = $.Deferred();
+				var d4 = $.Deferred();
 
 				var testController = {
 					__name: 'TestController',
@@ -5696,7 +5696,7 @@ $(function() {
 	asyncTest(
 			'__construct, __init, __postInit, __readyのそれぞれでh5.core.controller()を使って独立したコントローラをプロパティに持たせた場合、ライフサイクルイベントの発火回数は正しいか(テンプレートあり)',
 			function() {
-				var cdfd = h5.async.deferred();
+				var cdfd = $.Deferred();
 				var cp = cdfd.promise();
 				var cRet = [];
 				var cController = {
@@ -5723,7 +5723,7 @@ $(function() {
 					}
 				};
 
-				var idfd = h5.async.deferred();
+				var idfd = $.Deferred();
 				var ip = idfd.promise();
 				var iRet = [];
 				var iController = {
@@ -5750,7 +5750,7 @@ $(function() {
 					}
 				};
 
-				var pdfd = h5.async.deferred();
+				var pdfd = $.Deferred();
 				var pp = pdfd.promise();
 				var pRet = [];
 				var pController = {
@@ -5777,7 +5777,7 @@ $(function() {
 					}
 				};
 
-				var rdfd = h5.async.deferred();
+				var rdfd = $.Deferred();
 				var rp = rdfd.promise();
 				var rRet = [];
 				var rController = {
@@ -5919,10 +5919,10 @@ $(function() {
 					}
 				};
 
-				var d1 = h5.async.deferred();
-				var d2 = h5.async.deferred();
-				var d3 = h5.async.deferred();
-				var d4 = h5.async.deferred();
+				var d1 = $.Deferred();
+				var d2 = $.Deferred();
+				var d3 = $.Deferred();
+				var d4 = $.Deferred();
 
 				var p1 = h5.core.controller('#controllerTest', p1Controller);
 				p1.readyPromise.done(function() {
@@ -8381,7 +8381,7 @@ $(function() {
 			},
 
 			_showIndocator: function(target) {
-				var dfd = h5.async.deferred();
+				var dfd = $.Deferred();
 
 				var indicator = this.indicator({
 					target: target,

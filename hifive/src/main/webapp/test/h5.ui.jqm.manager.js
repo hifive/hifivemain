@@ -1724,7 +1724,7 @@ $(function() {
 	//=============================
 	asyncTest('Aのコントローラがreadyでない状態でA->B->Aと遷移したとき、Aでh5jqmpageshowが2回発火しないこと(トランジションなし)', 2,
 			function() {
-				var dfd = h5.async.deferred();
+				var dfd = $.Deferred();
 				h5.ui.jqm.manager.define('test32', null, {
 					__name: 'Test32Controller',
 					__ready: function() {
@@ -1771,7 +1771,7 @@ $(function() {
 	//=============================
 	asyncTest('Aのコントローラがreadyでない状態でA->B->Aと遷移したとき、Aでh5jqmpageshowが2回発火しないこと(トランジションあり)', 2,
 			function() {
-				var dfd = h5.async.deferred();
+				var dfd = $.Deferred();
 				h5.ui.jqm.manager.define('test34', null, {
 					__name: 'Test34Controller',
 					__ready: function() {
@@ -1821,7 +1821,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('A->Bと遷移したとき、BでAのh5jqmpageshowが実行されないこと', 1, function() {
-		var dfd = h5.async.deferred();
+		var dfd = $.Deferred();
 		h5.ui.jqm.manager.define('test36', null, {
 			__name: 'Test36Controller',
 			__ready: function() {
