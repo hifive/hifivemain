@@ -103,7 +103,7 @@ $(function() {
 			_p: 'p'
 		};
 		mixin.mix(target);
-		deepEqual(expect, target,
+		deepEqual(target, expect,
 				'mixメソッドでmixinされ、文字列リテラル、関数、数値リテラル、真偽値リテラル、nullのプロパティが上書きでコピーされること');
 
 		function A() {
