@@ -2283,7 +2283,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 12, function() {
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 11, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var childElm = $('#controllerTest #child')[0];
 		window.h5test1 = {
