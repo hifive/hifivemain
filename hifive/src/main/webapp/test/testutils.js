@@ -215,6 +215,8 @@
 	 * ポップアップウィンドウを開く
 	 * <p>
 	 * IE8でjQuery1.10.1,2.0.2の場合、ポップアップ内の要素をjQueryで操作するとき、
+	 * jQuery内部のsetDocumentでattachEventが呼ばれてエラーになる(IE11にはattachEventがないため)
+	 * ので、IE11&&(jQuery1.10.1||2.0.2)の場合は、この関数を使ったテスト=iframeを使ったテストは行わない。
 	 * </p>
 	 *
 	 * @returns {Promise} ポップアップウィンドウが開くまで待機するプロミスオブジェクト。<br>
