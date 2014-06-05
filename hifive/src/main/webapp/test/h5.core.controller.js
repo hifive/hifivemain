@@ -2283,15 +2283,16 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 13, function() {
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 12, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var childElm = $('#controllerTest #child')[0];
 		window.h5test1 = {
 			target: parentElm
 		};
-		navigator.h5test1 = {
-			target: $('#controllerTest')[0]
-		};
+		// TODO navigator以下のオブジェクトにバインドする場合の仕様について要確認
+		//		navigator.h5test1 = {
+		//			target: $('#controllerTest')[0]
+		//		};
 		var controller = {
 			__name: 'TestController',
 			'#child click': function(context, $el) {
@@ -2310,11 +2311,11 @@ $(function() {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 				strictEqual($el[0], document, '第二引数がバインド先の要素(document)であること');
 			},
-			'{navigator.h5test1.target} click': function(context, $el) {
-				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-				strictEqual($el[0], navigator.h5test1.target,
-						'第二引数がバインド先の要素(navigator.h5test1.target)であること');
-			},
+			//			'{navigator.h5test1.target} click': function(context, $el) {
+			//				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+			//				strictEqual($el[0], navigator.h5test1.target,
+			//						'第二引数がバインド先の要素(navigator.h5test1.target)であること');
+			//			},
 			'{window} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 
