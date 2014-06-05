@@ -45,6 +45,7 @@ $(function() {
 	var createIFrameElement = testutils.dom.createIFrameElement;
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;
+	var skipTest = testutils.qunit.skipTest;
 
 	/**
 	 * #qunit-fixture
