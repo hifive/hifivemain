@@ -1254,7 +1254,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('h5.core.expose()を実行', function() {
+	test('h5.core.expose()を実行', 3, function() {
 		var c1 = {
 			__name: 'TestController'
 		};
@@ -1310,7 +1310,7 @@ $(function() {
 		});
 	});
 
-	test('__name属性のないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
+	test('__name属性のないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', 1, function() {
 		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
 		var controller = {
 			name: 'TestController'
@@ -1323,7 +1323,7 @@ $(function() {
 		}
 	});
 
-	test('__name属性が文字列でないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', function() {
+	test('__name属性が文字列でないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', 5, function() {
 		var names = ['', '   ', 1, {}, ["MyController"]];
 		var l = names.length;
 		expect(l);
@@ -1340,7 +1340,7 @@ $(function() {
 		}
 	});
 
-	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
+	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', 1, function() {
 		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
 		var controller = {
 			__name: 'TestController',
@@ -1356,7 +1356,7 @@ $(function() {
 		}
 	});
 
-	test('__name属性が文字列でないロジックを持つコントローラをバインドしようとするとエラーが出ること', function() {
+	test('__name属性が文字列でないロジックを持つコントローラをバインドしようとするとエラーが出ること', 5, function() {
 		var names = ['', '   ', 1, {}, ["MyLogic"]];
 		var l = names.length;
 		expect(l);
@@ -1382,7 +1382,6 @@ $(function() {
 		var controller = {
 			__name: 'TestController'
 		};
-
 		try {
 			h5.core.controller(controller);
 		} catch (e) {
@@ -1518,7 +1517,7 @@ $(function() {
 		});
 	});
 
-	test('__name属性のないオブジェクトを子コントローラとしてバインドしようとするとエラーが出ること', function() {
+	test('__name属性のないオブジェクトを子コントローラとしてバインドしようとするとエラーが出ること', 1, function() {
 		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
 		var controller = {
 			__name: 'A',
@@ -2027,7 +2026,7 @@ $(function() {
 		});
 	});
 
-	test('"{this} eventName"の指定はエラーになってコントローラをバインドできない', function() {
+	test('"{this} eventName"の指定はエラーになってコントローラをバインドできない', 1, function() {
 		var errorController = {
 			__name: 'ErrorController',
 			'{this} click': function(context) {
@@ -2042,7 +2041,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('セレクタが {document}, {window} の場合にイベント名の記述に関わらず、bindが使用されているか', function() {
+	asyncTest('セレクタが {document}, {window} の場合にイベント名の記述に関わらず、bindが使用されているか', 8, function() {
 		var ret1 = null;
 		var ret2 = null;
 		var ret3 = null;
@@ -2816,7 +2815,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('子コントローラのルートエレメントを親の__initでテンプレートで追加した要素にする', function() {
+	asyncTest('子コントローラのルートエレメントを親の__initでテンプレートで追加した要素にする', 1, function() {
 		var a = {
 			__name: 'A',
 			__templates: 'template/test2.ejs',
@@ -2840,7 +2839,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('子コントローラのルートエレメントを親の__initでテンプレートで追加した要素を選択するセレクタにする', function() {
+	asyncTest('子コントローラのルートエレメントを親の__initでテンプレートで追加した要素を選択するセレクタにする', 1, function() {
 		var a = {
 			__name: 'A',
 			__templates: 'template/test2.ejs',
@@ -2865,7 +2864,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('rootElementにnullを指定', function() {
+	asyncTest('rootElementにnullを指定', 1, function() {
 		var bindTarget = $('#controllerTest')[0];
 		var a = {
 			__name: 'A',
@@ -2888,7 +2887,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('rootElementにundefinedを指定', function() {
+	asyncTest('rootElementにundefinedを指定', 1, function() {
 		var bindTarget = $('#controllerTest')[0];
 		var a = {
 			__name: 'A',
@@ -2931,7 +2930,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('コントローラをunbindするとイベントハンドラがアンバインドされる', function() {
+	asyncTest('コントローラをunbindするとイベントハンドラがアンバインドされる', 1, function() {
 		var ret = '';
 		var $inA = $('<div class="a"></div>');
 		var $outA = $('<div class="a"></div>');
@@ -2968,7 +2967,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('unbindで[eventName]のハンドラが削除できるか', function() {
+	asyncTest('unbindで[eventName]のハンドラが削除できるか', 2, function() {
 		var msg = '';
 		var controller = {
 			__name: 'TestController',
@@ -2990,7 +2989,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('子コントローラではunbind()はできないこと', function() {
+	asyncTest('子コントローラではunbind()はできないこと', 1, function() {
 		var rootController = {
 			__name: 'Root',
 			childController: {
@@ -3081,7 +3080,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('コントローラのdispose (同期処理) - __dispose()の実行順序をテスト', function() {
+	asyncTest('コントローラのdispose (同期処理) - __dispose()の実行順序をテスト', 3, function() {
 		var ret = [];
 		var childController = {
 			__name: 'ChildController',
@@ -3513,7 +3512,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('unbind: コントローラのアンバインド、再バインド', function() {
+	asyncTest('unbind: コントローラのアンバインド、再バインド', 11, function() {
 		var disposeRet = null;
 		var disposeRoot = null;
 		var rebind = null;
@@ -3606,7 +3605,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('bind: 子コントローラではbind()はできない', function() {
+	asyncTest('bind: 子コントローラではbind()はできない', 1, function() {
 		var rootController = {
 			__name: 'Root',
 			childController: {
@@ -3989,7 +3988,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5.settings.dynamicLoading.retryCountでテンプレートのロードのリトライ回数を設定できること', function() {
+	asyncTest('h5.settings.dynamicLoading.retryCountでテンプレートのロードのリトライ回数を設定できること', 1, function() {
 		// テンプレートロードのリトライ時のインターバルを0msに設定
 		h5.settings.dynamicLoading.retryInterval = 0;
 		// リトライ回数を2回に設定
@@ -4402,7 +4401,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('view操作', function() {
+	asyncTest('view操作', 6, function() {
 		var controller = {
 			__name: 'TestController',
 
@@ -4433,7 +4432,7 @@ $(function() {
 	});
 
 
-	asyncTest('テンプレートのカスケーディング1', function() {
+	asyncTest('テンプレートのカスケーディング1', 3, function() {
 		var html = '';
 		var html2 = '';
 		var errorObj = {};
@@ -4478,7 +4477,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートのカスケーディング2', function() {
+	asyncTest('テンプレートのカスケーディング2', 1, function() {
 		var childController = {
 			__name: 'ChildController',
 
@@ -4654,7 +4653,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('ライフサイクルイベントの実行順序', function() {
+	asyncTest('ライフサイクルイベントの実行順序', 1, function() {
 		var result = [];
 		function construct() {
 			result.push(this.__name + '__construct');
@@ -4697,7 +4696,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('ライフサイクルイベントの実行順序(非同期)', function() {
+	asyncTest('ライフサイクルイベントの実行順序(非同期)', 1, function() {
 		var result = [];
 		function construct() {
 			result.push(this.__name + '__construct');
@@ -5241,7 +5240,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('コントローラの__ready処理', function() {
+	asyncTest('コントローラの__ready処理', 1, function() {
 		var ret = 0;
 		var controller = {
 			__name: 'TestController',
@@ -5406,7 +5405,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('__construct, __init, __postInit, __readyが動作するタイミングは正しいか2(テンプレート使用)', function() {
+	asyncTest('__construct, __init, __postInit, __readyが動作するタイミングは正しいか2(テンプレート使用)', 1, function() {
 
 		var ret = [];
 		var cController = {
@@ -5872,7 +5871,7 @@ $(function() {
 			});
 
 	asyncTest('__construct, __init, __postInit, __readyで子コントローラに親コントローラのインスタンスを持たせた時に無限ループにならないか',
-			function() {
+			4, function() {
 
 
 				var c1Controller = {
@@ -5978,7 +5977,7 @@ $(function() {
 						});
 			});
 
-	asyncTest('初期化パラメータを渡せるか', function() {
+	asyncTest('初期化パラメータを渡せるか', 24, function() {
 		var cConstruct = null;
 		var cInit = null;
 		var cPostInit = null;
@@ -6514,7 +6513,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('[build#min]アスペクトの動作1', function() {
+	asyncTest('[build#min]アスペクトの動作1', 1, function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -6550,7 +6549,7 @@ $(function() {
 
 	});
 
-	asyncTest('[build#min]アスペクトの動作2', function() {
+	asyncTest('[build#min]アスペクトの動作2', 1, function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -6583,7 +6582,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('[build#min]アスペクトの動作3', function() {
+	asyncTest('[build#min]アスペクトの動作3', 1, function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -6624,7 +6623,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('[build#min]アスペクトの動作4', function() {
+	asyncTest('[build#min]アスペクトの動作4', 2, function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -6668,7 +6667,7 @@ $(function() {
 				});
 	});
 
-	asyncTest('[build#min]アスペクトの動作5', function() {
+	asyncTest('[build#min]アスペクトの動作5', 2, function() {
 		var ret = [];
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -6787,7 +6786,7 @@ $(function() {
 		}
 	});
 
-	asyncTest('this.deferred()は動作しているか', function() {
+	asyncTest('this.deferred()は動作しているか', 1, function() {
 
 		var dfd = null;
 		var controller = {
@@ -6809,7 +6808,7 @@ $(function() {
 	});
 
 
-	asyncTest('this.$find()は動作しているか', function() {
+	asyncTest('this.$find()は動作しているか', 2, function() {
 
 		var element1 = null;
 		var element2 = null;
@@ -6834,7 +6833,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.logは動作しているか', function() {
+	asyncTest('this.logは動作しているか', 2, function() {
 
 		var category = null;
 		var controller = {
@@ -7131,7 +7130,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('enableListeners() / disableListeners() の動作', function() {
+	asyncTest('enableListeners() / disableListeners() の動作', 8, function() {
 		var ret = null;
 		var cController = {
 			__name: 'CController',
@@ -7762,7 +7761,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('this.indicator() ルート要素にインジケータを表示',
+	asyncTest('this.indicator() ルート要素にインジケータを表示', 4,
 			function() {
 				var testController = null;
 				var controllerBase = {
@@ -7959,7 +7958,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() 親要素と子要素でインジケータを表示する', function() {
+	asyncTest('this.indicator() 親要素と子要素でインジケータを表示する', 6, function() {
 		var controllerBase = {
 			__name: 'TestController',
 			'input[type=button] click': function() {
@@ -8026,7 +8025,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() 存在しないターゲットを指定したときはインジケータが表示されないこと', function() {
+	asyncTest('this.indicator() 存在しないターゲットを指定したときはインジケータが表示されないこと', 3, function() {
 		var testController = null;
 		var controllerBase = {
 			__name: 'TestController',
@@ -8057,7 +8056,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', function() {
+	asyncTest('this.indicator() Indicator#percent()で指定した進捗率に更新されること', 20, function() {
 		var testController = null;
 		var testController2 = null;
 		var controllerBase = {
@@ -8302,7 +8301,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() promises', function() {
+	asyncTest('this.indicator() promises', 4, function() {
 		var indicator = null;
 		var controllerBase = {
 			__name: 'TestController',
@@ -8356,7 +8355,7 @@ $(function() {
 
 	});
 
-	asyncTest('this.indicator() 複数要素にマッチするセレクタをtargetに指定する', function() {
+	asyncTest('this.indicator() 複数要素にマッチするセレクタをtargetに指定する', 2, function() {
 		var controllerBase = {
 			__name: 'TestController',
 			'input[type=button] click': function() {
@@ -8391,7 +8390,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('body、document、windowをターゲットにした場合', function() {
+	asyncTest('body、document、windowをターゲットにした場合', 6, function() {
 		var controllerBase = {
 			__name: 'TestController',
 			__ready: function() {
@@ -8434,7 +8433,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('this.indicator() 同一要素に２つのインジケータを表示する', function() {
+	asyncTest('this.indicator() 同一要素に２つのインジケータを表示する', 2, function() {
 		var controllerBase = {
 			__name: 'TestController',
 			'input[type=button] click': function() {
@@ -8756,13 +8755,13 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('コントローラの取得（getControllers）、コントローラをバインドしていない場合', function() {
+	test('コントローラの取得（getControllers）、コントローラをバインドしていない場合', 2, function() {
 		var controllers = h5.core.controllerManager.getControllers('#controllerTest');
 		strictEqual($.isArray(controllers), true, 'コントローラをバインドしていないときも配列が返る');
 		strictEqual(controllers.length, 0, '配列の要素数は0');
 	});
 
-	asyncTest('コントローラの取得（getControllers）、コントローラを1つバインドした場合、および引数のパターンへの対応', function() {
+	asyncTest('コントローラの取得（getControllers）、コントローラを1つバインドした場合、および引数のパターンへの対応', 6, function() {
 		var controllerBase = {
 			__name: 'TestController'
 		};
@@ -8788,7 +8787,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラの取得（getControllers）、同じ要素にバインドする子コントローラが存在する場合', function() {
+	asyncTest('コントローラの取得（getControllers）、同じ要素にバインドする子コントローラが存在する場合', 3, function() {
 		var childController = {
 			__name: 'ChildController'
 		};
@@ -8815,7 +8814,7 @@ $(function() {
 
 	});
 
-	asyncTest('コントローラの取得（getControllers）、内包する子コントローラをmeta指定で親と別の要素にバインドする場合', function() {
+	asyncTest('コントローラの取得（getControllers）、内包する子コントローラをmeta指定で親と別の要素にバインドする場合', 1, function() {
 		var child = {
 			__name: 'ChildController'
 		};
@@ -8848,7 +8847,7 @@ $(function() {
 
 	});
 
-	asyncTest('コントローラの取得（getControllers）、同一要素に独立した複数のコントローラがバインドされている場合', function() {
+	asyncTest('コントローラの取得（getControllers）、同一要素に独立した複数のコントローラがバインドされている場合', 3, function() {
 		var c1 = {
 			__name: 'TestController1'
 		};
