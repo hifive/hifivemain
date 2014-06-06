@@ -1281,7 +1281,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("Controller - controller", {
+	module('Controller - controller', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"><input type="button"/></div>');
 		},
@@ -1598,7 +1598,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("Controller - コントローラが上げるイベント", {
+	module('Controller - コントローラが上げるイベント', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
@@ -1802,7 +1802,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("Controller - イベントハンドラ", {
+	module('Controller - イベントハンドラ', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
@@ -2163,7 +2163,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("Controller - イベントハンドラのcontextオブジェクト", {
+	module('Controller - イベントハンドラのcontextオブジェクト', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
@@ -2640,7 +2640,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("Controller - __meta", {
+	module('Controller - __meta', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
@@ -2949,7 +2949,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("Controller - unbind", {
+	module('Controller - unbind', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
@@ -3104,7 +3104,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module("Controller - dispose", {
+	module('Controller - dispose', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
