@@ -3101,123 +3101,6 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('__dispose()の実行順序をテスト', 3, function() {
-		var ret = [];
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				ret.push(0);
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				ret.push(1);
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
-		});
-	});
-
-	asyncTest('__dispose()で、resolveされるpromiseを返す。', 3, function() {
-		var childDfd = $.Deferred();
-		var rootDfd = $.Deferred();
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				setTimeout(function() {
-					childDfd.resolve();
-				}, 0);
-				return childDfd.promise();
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				setTimeout(function() {
-					rootDfd.resolve();
-				}, 0);
-				return rootDfd.promise();
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				ok(isResolved(rootDfd) && isResolved(childDfd),
-						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
-		});
-	});
-
-	asyncTest('__dispose()で rejectされるpromiseを返す。', 3, function() {
-		var childDfd = $.Deferred();
-		var rootDfd = $.Deferred();
-
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				var that = this;
-				setTimeout(function() {
-					that.__name === 'ChildController';
-					childDfd.resolve();
-				}, 0);
-				return childDfd.promise();
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				var that = this;
-				setTimeout(function() {
-					that.__name === 'TestController';
-					rootDfd.reject();
-				}, 0);
-				return rootDfd.promise();
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				ok(isRejected(rootDfd) && isResolved(childDfd),
-						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
-		});
-	});
-
 	asyncTest(
 			'__constructでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行される',
 			7, function() {
@@ -7745,6 +7628,123 @@ $(function() {
 			start();
 		}).fail(function() {
 			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+		});
+	});
+
+	asyncTest('__dispose()の実行順序をテスト', 3, function() {
+		var ret = [];
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				ret.push(0);
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				ret.push(1);
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
+	asyncTest('__dispose()で、resolveされるpromiseを返す。', 3, function() {
+		var childDfd = $.Deferred();
+		var rootDfd = $.Deferred();
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				setTimeout(function() {
+					childDfd.resolve();
+				}, 0);
+				return childDfd.promise();
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				setTimeout(function() {
+					rootDfd.resolve();
+				}, 0);
+				return rootDfd.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				ok(isResolved(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
+	asyncTest('__dispose()で rejectされるpromiseを返す。', 3, function() {
+		var childDfd = $.Deferred();
+		var rootDfd = $.Deferred();
+
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				var that = this;
+				setTimeout(function() {
+					that.__name === 'ChildController';
+					childDfd.resolve();
+				}, 0);
+				return childDfd.promise();
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				var that = this;
+				setTimeout(function() {
+					that.__name === 'TestController';
+					rootDfd.reject();
+				}, 0);
+				return rootDfd.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				ok(isRejected(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
 		});
 	});
 
