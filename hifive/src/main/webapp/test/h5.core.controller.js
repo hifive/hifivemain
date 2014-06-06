@@ -2163,7 +2163,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('Controller - イベントハンドラのcontextオブジェクト', {
+	module("Controller - イベントハンドラのcontextオブジェクト", {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		},
