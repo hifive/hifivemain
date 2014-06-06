@@ -3101,6 +3101,39 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+	asyncTest('コントローラのdispose', 2, function() {
+		var handlerResult = false;
+		function f() {
+		// 何もしない関数
+		}
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			prop: 'A',
+			__construct: f,
+			__init: f,
+			__postInit: f,
+			__ready: f,
+			method: f,
+			'{rootElement} click': function() {
+				handlerResult = true;
+			}
+		}).readyPromise.done(function() {
+			var c = this;
+			c.dispose();
+			// 全てのプロパティがnullになっているかどうかチェック
+			var props = '';
+			for ( var p in c) {
+				if (c.hasOwnProperty(p) && c[p] !== null) {
+					props += p + ', ';
+				}
+			}
+			strictEqual(props, '', 'disposeすると全てのプロパティ(hasOwnPropertyがtrueのもの)がnullになること');
+			$('#controllerTest').click();
+			ok(!handlerResult, 'イベントハンドラは動作しなくなること');
+			start();
+		});
+	});
+
 	asyncTest(
 			'__constructでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行される',
 			7, function() {
