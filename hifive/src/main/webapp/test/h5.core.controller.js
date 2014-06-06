@@ -1238,7 +1238,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"Controller - expose",
+			'Controller - expose',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -2411,7 +2411,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"Controller - イベントハンドラ - h5trackイベント",
+			'Controller - イベントハンドラ - h5trackイベント',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -3462,7 +3462,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"Controller - bind(コントローラの再利用)",
+			'Controller - bind(コントローラの再利用)',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -3649,7 +3649,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"Controller - テンプレート",
+			'Controller - テンプレート',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -4650,7 +4650,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"Controller - ライフサイクルイベント",
+			'Controller - ライフサイクルイベント',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -6112,7 +6112,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"Controller - CommonFailHandler",
+			'Controller - CommonFailHandler',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -6417,7 +6417,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"[build#min]Controller - アスペクト",
+			'[build#min]Controller - アスペクト',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -6763,7 +6763,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"Controller - コントローラのプロパティ・メソッド",
+			'Controller - コントローラのプロパティ・メソッド',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -8751,7 +8751,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"controllerManager",
+			'controllerManager',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -9074,7 +9074,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			"window.open()で開いたウィンドウの要素にコントローラをバインド",
+			'window.open()で開いたウィンドウの要素にコントローラをバインド',
 			{
 				setup: function() {
 					// (IE8-またはIE11)かつ(jQuery1.10.1または2.0.2)の場合はポップアップウィンドウを使用するテストは行わずにスキップする。
