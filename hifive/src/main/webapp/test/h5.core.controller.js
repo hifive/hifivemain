@@ -1808,12 +1808,7 @@ $(function() {
 		},
 		teardown: function() {
 			clearController();
-			h5.settings.commonFailHandler = undefined;
-			h5.settings.dynamicLoading.retryInterval = this.originalRetryInterval;
-			h5.settings.dynamicLoading.retryCount = this.originalRetryCount;
-		},
-		originalRetryInterval: h5.settings.dynamicLoading.retryInterval,
-		originalRetryCount: h5.settings.dynamicLoading.retryCount
+		}
 	});
 
 	//=============================
@@ -2109,6 +2104,95 @@ $(function() {
 		});
 	});
 
+	asyncTest('mousewheelイベントハンドラが動作すること', 2, function() {
+		var result;
+		var testController = {
+			__name: 'TestController',
+
+			'{rootElement} mousewheel': function(context) {
+				result = true;
+			}
+		};
+		var c = h5.core.controller('#controllerTest', testController);
+		c.readyPromise.done(function() {
+			dispatchMouseWheelEvent($('#controllerTest')[0], 120);
+			ok(result, 'mousewheelハンドラが動作すること');
+			result = false;
+			c.unbind();
+			ok(!result, 'コントローラのアンバインドでmousewheelハンドラがアンバインドされていること');
+			start();
+		});
+	});
+
+	asyncTest(
+			'[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること',
+			2, function() {
+				var isPositiveValue = false;
+				var testController = {
+					__name: 'TestController',
+
+					'{rootElement} mousewheel': function(context) {
+						ok(isPositiveValue ? context.event.wheelDelta > 0
+								: context.event.wheelDelta < 0, 'wheelDeltaに値格納されていて、正負が正しいこと');
+					}
+				};
+				var c = h5.core.controller('#controllerTest', testController);
+				c.readyPromise.done(function() {
+					isPositiveValue = true;
+					dispatchMouseWheelEvent($('#controllerTest')[0], 120);
+					isPositiveValue = false;
+					dispatchMouseWheelEvent($('#controllerTest')[0], -120);
+					c.unbind();
+					start();
+				});
+			});
+
+	test('あるセレクタに対して重複するイベントハンドラを設定した時の動作', 1, function() {
+		var testController = {
+			__name: 'TestController',
+			' {rootElement}   click': function(context) {},
+			'{rootElement} click': function(context) {}
+		};
+
+		try {
+			h5.core.controller('#controllerTest', testController);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_SAME_EVENT_HANDLER, '重複するイベントハンドラを設定した時にエラーが発生したか');
+		}
+	});
+	//=============================
+	// Definition
+	//=============================
+	module("Controller - イベントハンドラのcontextオブジェクト", {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('context.eventにjQueryイベントオブジェクトが格納されること', 1, function() {
+		var jQueryEvent, contextEvent;
+		$('#controllerTest').bind('click', function(e) {
+			jQueryEvent = e;
+		});
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			'{rootElement} click': function(context) {
+				contextEvent = context.event;
+			}
+		});
+		c.readyPromise.done(function() {
+			$('#controllerTest').trigger('click');
+			strictEqual(contextEvent, jQueryEvent, 'context.eventにjQueryイベントオブジェクトが格納されていること');
+			start();
+		});
+	});
+
 	asyncTest('jQueryのtriggerによるイベントのトリガで、context.evArgに引数が格納されること', 6, function() {
 		var evArg = "初期値";
 		var triggered = false;
@@ -2147,8 +2231,8 @@ $(function() {
 	});
 
 	asyncTest(
-			'context.selectorが取得できること',
-			20,
+			'context.selectorとselectorTypeが取得できること',
+			19,
 			function() {
 				$('#qunit-fixture')
 						.append(
@@ -2229,70 +2313,10 @@ $(function() {
 					$(document).trigger(new $.Event(eventName), {
 						test: true
 					});
-
-					test1Controller.unbind();
-					$('#controllerTest3').remove();
-					ok(!$('#parent').length, '（DOMのクリーンアップ）');
 					start();
 				});
 			});
 
-	asyncTest('mousewheelイベントハンドラが動作すること', 2, function() {
-		var result;
-		var testController = {
-			__name: 'TestController',
-
-			'{rootElement} mousewheel': function(context) {
-				result = true;
-			}
-		};
-		var c = h5.core.controller('#controllerTest', testController);
-		c.readyPromise.done(function() {
-			dispatchMouseWheelEvent($('#controllerTest')[0], 120);
-			ok(result, 'mousewheelハンドラが動作すること');
-			result = false;
-			c.unbind();
-			ok(!result, 'コントローラのアンバインドでmousewheelハンドラがアンバインドされていること');
-			start();
-		});
-	});
-
-	asyncTest(
-			'[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7]mousewheelイベントハンドラにwheelDeltaが正負正しく格納されていること',
-			2, function() {
-				var isPositiveValue = false;
-				var testController = {
-					__name: 'TestController',
-
-					'{rootElement} mousewheel': function(context) {
-						ok(isPositiveValue ? context.event.wheelDelta > 0
-								: context.event.wheelDelta < 0, 'wheelDeltaに値格納されていて、正負が正しいこと');
-					}
-				};
-				var c = h5.core.controller('#controllerTest', testController);
-				c.readyPromise.done(function() {
-					isPositiveValue = true;
-					dispatchMouseWheelEvent($('#controllerTest')[0], 120);
-					isPositiveValue = false;
-					dispatchMouseWheelEvent($('#controllerTest')[0], -120);
-					c.unbind();
-					start();
-				});
-			});
-
-	test('あるセレクタに対して重複するイベントハンドラを設定した時の動作', 1, function() {
-		var testController = {
-			__name: 'TestController',
-			' {rootElement}   click': function(context) {},
-			'{rootElement} click': function(context) {}
-		};
-
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_SAME_EVENT_HANDLER, '重複するイベントハンドラを設定した時にエラーが発生したか');
-		}
-	});
 	//=============================
 	// Definition
 	//=============================
