@@ -1376,17 +1376,25 @@ $(function() {
 		}
 	});
 
-	test('h5.core.controller() 不正な引数を渡した場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 9, function() {
-		$('#controllerTest').append('<div class="test">a</div>');
-		$('#controllerTest').append('<div class="test">b</div>');
+	test('コントローラのバインド対象のチェック 引数の数が1つ以下の場合はエラー', 2, function() {
 		var controller = {
 			__name: 'TestController'
 		};
+		try {
+			h5.core.controller();
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_TOO_FEW_ARGS, e.message);
+		}
 		try {
 			h5.core.controller(controller);
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_TOO_FEW_ARGS, e.message);
 		}
+	});
+	test('コントローラのバインド対象のチェック 第1引数がnull,undefinedの場合はエラー', 2, function() {
+		var controller = {
+			__name: 'TestController'
+		};
 		try {
 			h5.core.controller(null, controller);
 		} catch (e) {
@@ -1397,6 +1405,11 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_REQUIRED, e.message);
 		}
+	});
+	test('コントローラのバインド対象のチェック 指定したセレクタにマッチする要素が存在しない場合はエラー', 2, function() {
+		var controller = {
+			__name: 'TestController'
+		};
 		try {
 			h5.core.controller('#noexist', controller);
 		} catch (e) {
@@ -1407,11 +1420,22 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_BIND_NO_TARGET, e.message);
 		}
+	});
+	test('コントローラのバインド対象のチェック 指定したセレクタにマッチする要素が複数存在する場合はエラー', 1, function() {
+		$('#qunit-fixture').append('<div class="test"></div><div class="test"></div>');
+		var controller = {
+			__name: 'TestController'
+		};
 		try {
 			h5.core.controller('.test', controller);
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, e.message);
 		}
+	});
+	test('コントローラのバインド対象のチェック 第1引数が文字列でもDOM要素でもない場合はエラー', 2, function() {
+		var controller = {
+			__name: 'TestController'
+		};
 		try {
 			h5.core.controller(1, controller);
 		} catch (e) {
@@ -1422,33 +1446,21 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_NODE, e.message);
 		}
+	});
+	test('コントローラのバインド対象のチェック バインド先にwindowが指定された場合はエラー', 2, function() {
+		var controller = {
+			__name: 'TestController'
+		};
 		try {
 			h5.core.controller(window, controller);
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_NODE, e.message);
 		}
-	});
-
-	test('存在しない要素・複数要素へのバインド', function() {
-		var controller = {
-			__name: 'TestController'
-		};
-		var err1 = '';
-		var err2 = '';
-
 		try {
-			h5.core.controller('div.noexistclass', controller);
+			h5.core.controller($(window), controller);
 		} catch (e) {
-			err1 = e;
+			strictEqual(e.code, ERR.ERR_CODE_BIND_NOT_NODE, e.message);
 		}
-		try {
-			h5.core.controller('div', controller);
-		} catch (e) {
-			err2 = e;
-		}
-
-		strictEqual(err1.code, ERR.ERR_CODE_BIND_NO_TARGET, 'バインド対象がない場合エラーとなるか');
-		strictEqual(err2.code, ERR.ERR_CODE_BIND_TOO_MANY_TARGET, 'バインド対象が複数ある場合エラーとなるか');
 	});
 
 	asyncTest('コントローラ内のthis', 3, function() {
