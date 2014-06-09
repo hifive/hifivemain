@@ -1939,30 +1939,52 @@ $(function() {
 		h5.core.controller($controllerTarget, controller);
 	});
 
-	asyncTest('イベントハンドラの動作 {}記法でオブジェクトを指定', 2, function() {
+	asyncTest('イベントハンドラの動作 window,document,navigator以下にあるオブジェクトへのバインド', 6, function() {
 		var $eventTarget = $('<div id="target1">');
 		var $controllerTarget = $('#controllerTest');
 		$controllerTarget.append($eventTarget);
 		window.test1 = {
 			target: $eventTarget
 		};
-		var result = false;
+		var eventDispatcher = {};
+		h5.mixin.eventDispatcher.mix(eventDispatcher);
+		navigator.h5test1 = {
+			target: eventDispatcher
+		};
+		var winResult, docResult, navResult;
 		var controller = {
 			__name: 'TestController',
 			__ready: function() {
 				this.$find('#target1').click();
-				ok(result, '{window.test1.target}にバインドしたイベントハンドラが動作していること');
+				eventDispatcher.dispatchEvent({
+					type: 'myevent'
+				});
+				ok(winResult, '{window.h5test1.target}にバインドしたイベントハンドラが動作していること');
+				ok(docResult, '{document.body}にバインドしたイベントハンドラが動作していること');
+				ok(navResult, '{navigator.h5test1.target}にバインドしたイベントハンドラが動作していること');
 				this.unbind();
-				result = false;
+				winResult = docResult = navResult = false;
+				eventDispatcher.dispatchEvent({
+					type: 'myevent'
+				});
 				this.$find('#target1').click();
-				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
+				ok(!winResult, 'unbindすると{window.h5test1.target}にバインドしたイベントハンドラは動作しなくなること');
+				ok(!docResult, 'unbindすると{document.body}にバインドしたイベントハンドラは動作しなくなること');
+				ok(!navResult, 'unbindすると{navigator.h5test1.target}にバインドしたイベントハンドラは動作しなくなること');
 
-				// テストで作成したwindow.test1を削除
-				deleteProperty(window, 'test1');
+				// テストで作成したプロパティを削除
+				deleteProperty(window, 'h5test1');
+				deleteProperty(navigator, 'h5test1');
 				start();
 			},
 			'{window.test1.target} click': function(context) {
-				result = true;
+				winResult = true;
+			},
+			'{document.body} click': function(context) {
+				docResult = true;
+			},
+			'{navigator.h5test1.target} myevent': function(context) {
+				navResult = true;
 			}
 		};
 		h5.core.controller($controllerTarget, controller);
@@ -2283,16 +2305,18 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 11, function() {
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 13, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var childElm = $('#controllerTest #child')[0];
 		window.h5test1 = {
 			target: parentElm
 		};
-		// TODO navigator以下のオブジェクトにバインドする場合の仕様について要確認
-		//		navigator.h5test1 = {
-		//			target: $('#controllerTest')[0]
-		//		};
+		// navigator以下にEventDispatcherのMixInを持たせる
+		var eventDispatcher = {};
+		h5.mixin.eventDispatcher.mix(eventDispatcher);
+		navigator.h5test1 = {
+			target: eventDispatcher
+		};
 		var controller = {
 			__name: 'TestController',
 			'#child click': function(context, $el) {
@@ -2311,11 +2335,11 @@ $(function() {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 				strictEqual($el[0], document, '第二引数がバインド先の要素(document)であること');
 			},
-			//			'{navigator.h5test1.target} click': function(context, $el) {
-			//				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-			//				strictEqual($el[0], navigator.h5test1.target,
-			//						'第二引数がバインド先の要素(navigator.h5test1.target)であること');
-			//			},
+			'{navigator.h5test1.target} myevent': function(context, $el) {
+				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
+				strictEqual($el[0], navigator.h5test1.target,
+						'第二引数がバインド先のEventDispatcherオブジェクト(navigator.h5test1.target)であること');
+			},
 			'{window} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 
@@ -2333,6 +2357,9 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', controller);
 		c.readyPromise.done(function() {
 			$('#child').click();
+			eventDispatcher.dispatchEvent({
+				type: 'myevent'
+			});
 			deleteProperty(window, 'h5test1');
 			deleteProperty(navigator, 'h5test1');
 			start();
