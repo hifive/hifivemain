@@ -1948,9 +1948,7 @@ $(function() {
 		};
 		var eventDispatcher = {};
 		h5.mixin.eventDispatcher.mix(eventDispatcher);
-		navigator.h5test1 = {
-			target: eventDispatcher
-		};
+		navigator.h5test1 = eventDispatcher;
 		var winResult, docResult, navResult;
 		var controller = {
 			__name: 'TestController',
@@ -1961,7 +1959,7 @@ $(function() {
 				});
 				ok(winResult, '{window.h5test1.target}にバインドしたイベントハンドラが動作していること');
 				ok(docResult, '{document.body}にバインドしたイベントハンドラが動作していること');
-				ok(navResult, '{navigator.h5test1.target}にバインドしたイベントハンドラが動作していること');
+				ok(navResult, '{navigator.target}にバインドしたイベントハンドラが動作していること');
 				this.unbind();
 				winResult = docResult = navResult = false;
 				eventDispatcher.dispatchEvent({
@@ -1970,7 +1968,7 @@ $(function() {
 				this.$find('#target1').click();
 				ok(!winResult, 'unbindすると{window.h5test1.target}にバインドしたイベントハンドラは動作しなくなること');
 				ok(!docResult, 'unbindすると{document.body}にバインドしたイベントハンドラは動作しなくなること');
-				ok(!navResult, 'unbindすると{navigator.h5test1.target}にバインドしたイベントハンドラは動作しなくなること');
+				ok(!navResult, 'unbindすると{navigator.target}にバインドしたイベントハンドラは動作しなくなること');
 
 				// テストで作成したプロパティを削除
 				deleteProperty(window, 'h5test1');
@@ -1983,7 +1981,7 @@ $(function() {
 			'{document.body} click': function(context) {
 				docResult = true;
 			},
-			'{navigator.h5test1.target} myevent': function(context) {
+			'{navigator.h5test1} myevent': function(context) {
 				navResult = true;
 			}
 		};
@@ -2314,9 +2312,7 @@ $(function() {
 		// navigator以下にEventDispatcherのMixInを持たせる
 		var eventDispatcher = {};
 		h5.mixin.eventDispatcher.mix(eventDispatcher);
-		navigator.h5test1 = {
-			target: eventDispatcher
-		};
+		navigator.h5test1 = eventDispatcher;
 		var controller = {
 			__name: 'TestController',
 			'#child click': function(context, $el) {
@@ -2335,10 +2331,10 @@ $(function() {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 				strictEqual($el[0], document, '第二引数がバインド先の要素(document)であること');
 			},
-			'{navigator.h5test1.target} myevent': function(context, $el) {
+			'{navigator.h5test1} myevent': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-				strictEqual($el[0], navigator.h5test1.target,
-						'第二引数がバインド先のEventDispatcherオブジェクト(navigator.h5test1.target)であること');
+				strictEqual($el[0], navigator.h5test1,
+						'第二引数がバインド先のEventDispatcherオブジェクト(navigator.target)であること');
 			},
 			'{window} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
