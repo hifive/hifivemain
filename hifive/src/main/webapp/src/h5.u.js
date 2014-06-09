@@ -1225,13 +1225,14 @@
 		}
 
 		var names = namespace.split('.');
+		var idx = 0;
 		if ((!rootObj || rootObj === window) && names[0] === 'window') {
 			// rootObjが未指定またはwindowオブジェクトの場合、namespaceの最初のwindow.は無視する
-			names.shift();
+			idx = 1;
 		}
 		var ret = rootObj || window;
-		for (var i = 0, len = names.length; i < len; i++) {
-			ret = ret[names[i]];
+		for (var len = names.length; idx < len; idx++) {
+			ret = ret[names[idx]];
 			if (ret == null) { // nullまたはundefinedだったら辿らない
 				break;
 			}
