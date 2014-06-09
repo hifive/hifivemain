@@ -846,8 +846,7 @@
 				// listenerElementTypeが1ならjQueryオブジェクト、そうでないならDOM要素を、イベントハンドラの第2引数にする
 				// jQuery1.6.4の場合、currentTargetに正しく値が設定されていない場合があるため、
 				// currentTargetではなくthisを使用している。(issue#338)
-				var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(this)
-						: this;
+				var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(this) : this;
 				handler.call(c, createEventContext(bindObj, arguments), currentTargetShortcut);
 			};
 		}
@@ -1918,16 +1917,7 @@
 		// 子から順に__unbind,__disposeの実行
 		doForEachControllerGroupsDepthFirst(controller, function(c) {
 			if (c[funcName] && isFunction(c[funcName])) {
-				var ret;
-				try {
-					ret = c[funcName]();
-				} catch (e) {
-					// __unbindまたは__disposeで例外が投げられた場合
-					// 処理を中断せずに、unbind,dispose処理を継続するため、非同期でエラーを投げる
-					setTimeout(function() {
-						throw e;
-					}, 0);
-				}
+				var ret = c[funcName]();
 				if (isPromise(ret)) {
 					var df = h5.async.deferred();
 					ret.always(function() {
