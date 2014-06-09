@@ -292,6 +292,9 @@
 		 * <p>
 		 * 同一のイベントに対して複数回addEventListener()を呼び、複数のイベントリスナを登録した場合は、イベント発火時に登録した順番に実行されます。
 		 * </p>
+		 * <p>
+		 * 第３引数以降が指定されていても無視されます。
+		 * </p>
 		 *
 		 * @since 1.1.0
 		 * @memberOf EventDispatcher
@@ -302,7 +305,7 @@
 			// 引数チェック
 			// typeは文字列で、第2引数まで指定されていることをチェックする
 			// listenerが関数またはイベントリスナオブジェクトかどうかは、実行時に判定し、関数でもイベントリスナオブジェクトでもない場合は実行しない
-			if (arguments.length !== 2 || !isString(type)) {
+			if (arguments.length < 2 || !isString(type)) {
 				throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
 			}
 			if (listener == null || this.hasEventListener(type, listener)) {
