@@ -946,6 +946,14 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+
+	test('"window"を指定するとwindowオブジェクトが取得できること', 2, function() {
+		var result = h5.u.obj.getByPath('window');
+		strictEqual(result, window, '第１引数に"window"を指定するとwindowオブジェクトを取得できること');
+		result = h5.u.obj.getByPath('window', window);
+		strictEqual(result, window, '第１引数に"window"、第２引数にwindowオブジェクトを指定するとwindowオブジェクトを取得できること');
+	});
+
 	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', 8, function() {
 		window.hoge = {
 			hogehoge: {
