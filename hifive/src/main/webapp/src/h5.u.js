@@ -1226,7 +1226,7 @@
 
 		var names = namespace.split('.');
 		var idx = 0;
-		if ((!rootObj || rootObj === window) && names[0] === 'window') {
+		if (names[0] === 'window' && (!rootObj || rootObj === window)) {
 			// rootObjが未指定またはwindowオブジェクトの場合、namespaceの最初のwindow.は無視する
 			idx = 1;
 		}
