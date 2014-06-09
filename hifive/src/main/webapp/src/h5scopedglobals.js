@@ -355,8 +355,13 @@ function getDocumentOf(node) {
  * @returns {Window} windowオブジェクト
  */
 function getWindowOfDocument(doc) {
+	// IE8-だと、windowとwindow.document.parentWindowで、同じwindowを指すが、"==="で比較するとfalseになる (#339)
+	// イベントハンドラをバインドするターゲットがwindowである時は、window.document.parentWindowではなく
+	// windowにバインドして、イベントハンドラのthis(コントローライベントハンドラの第２引数)をwindowにするため、
+	// window.document === doc の場合はparentWindowではなくwindowを返すようにしている
+
 	// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
-	return doc.defaultView || doc.parentWindow;
+	return window.document === doc ? window : doc.defaultView || doc.parentWindow;
 }
 
 /**

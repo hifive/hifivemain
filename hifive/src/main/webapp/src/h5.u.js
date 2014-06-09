@@ -1225,8 +1225,9 @@
 		}
 
 		var names = namespace.split('.');
-		if (!rootObj && names[0] === 'window') {
-			names.unshift();
+		if ((!rootObj || rootObj === window) && names[0] === 'window') {
+			// rootObjが未指定またはwindowオブジェクトの場合、namespaceの最初のwindow.は無視する
+			names.shift();
 		}
 		var ret = rootObj || window;
 		for (var i = 0, len = names.length; i < len; i++) {

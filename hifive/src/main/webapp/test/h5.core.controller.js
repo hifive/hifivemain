@@ -2305,7 +2305,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 13, function() {
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 14, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var childElm = $('#controllerTest #child')[0];
 		window.h5test1 = {
@@ -2342,11 +2342,7 @@ $(function() {
 			},
 			'{window} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-
-				// TODO IE8-でwindowにバインドした時に$el[0]とwindowを比較できない issue#339
-				// issue#339でテストコードの対応が必要になるなら対応する
-
-				// strictEqual($el[0], window, '第二引数がバインド先の要素(window)であること');
+				strictEqual($el[0], window, '第二引数がバインド先の要素(window)であること');
 			},
 			'{window.h5test1.target} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
