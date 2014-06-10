@@ -3220,9 +3220,13 @@
 	 * <p>
 	 * マップを使ってキャッシュの登録、削除を行うクラス
 	 * </p>
+	 * <p>
+	 * このクラスは自分でnewすることはありません。<a
+	 * href="h5.core.html#definitionCacheManager">h5.core.definitionCacheManager</a>がこのクラスのメソッド(<a
+	 * href="#clear">clear()</a>,<a href="#clearAll">clearAll()</a>)を持ちます。
+	 * </p>
 	 *
-	 * @name CacheManager
-	 * @class
+	 * @class CacheManager
 	 */
 	function CacheManager() {
 		this._init();
@@ -3231,6 +3235,8 @@
 		/**
 		 * コントローラの名前からキャッシュを取り出す。 無ければnullを返す。
 		 *
+		 * @private
+		 * @memberOf CacheManager
 		 * @param {String} name
 		 */
 		get: function(name) {
@@ -3239,22 +3245,28 @@
 
 		/**
 		 * キャッシュを登録する。
+		 *
+		 * @private
+		 * @memberOf CacheManager
 		 */
 		register: function(name, cacheObj) {
 			this._cacheMap[name] = cacheObj;
 		},
 
 		/**
-		 * 指定された名前のコントローラのキャッシュをクリア
+		 * 名前を指定してキャッシュをクリアする
 		 *
-		 * @param {String} name
+		 * @param {String} name コントローラまたはロジックの名前(__nameの値)
+		 * @memberOf CacheManager
 		 */
 		clear: function(name) {
 			delete this._cacheMap[name];
 		},
 
 		/**
-		 * キャッシュを全てクリア
+		 * キャッシュを全てクリアする
+		 *
+		 * @memberOf CacheManager
 		 */
 		clearAll: function() {
 			this._cacheMap = {};
@@ -3262,6 +3274,9 @@
 
 		/**
 		 * 初期化処理
+		 *
+		 * @private
+		 * @memberOf CacheManager
 		 */
 		_init: function() {
 			this._cacheMap = {};
@@ -3284,26 +3299,28 @@
 
 		/**
 		 * 定義オブジェクトのキャッシュを管理するキャッシュマネージャ
+		 * <p>
+		 * コントローラとロジックのキャッシュを管理する<a href="CacheManager.html">CacheManager</a>のインスタンスです。<a
+		 * href="CacheManager.html#clear">clear</a>または<a
+		 * href="CacheManager.html#clearAll">clearAll</a>を使ってキャッシュを削除することができます。
+		 * </p>
+		 * <p>
+		 * コントローラ化、ロジック化の際に、コントローラ名及びロジック名で、インスタンス化に必要な情報をキャッシュしており、コントローラ及びロジックについて、同じ名前の定義オブジェクトは同じコントローラ、ロジックとして扱います。
+		 * </p>
+		 * <p>
+		 * 同じ名前で定義の異なるコントローラ、ロジックを使用したい場合は、<a href="CacheManager.html#clear">clear</a>または<a
+		 * href="CacheManager.html#clearAll">clearAll</a>でキャッシュを削除してください。
+		 * </p>
 		 *
 		 * @name definitionCacheManager
+		 * @type CacheManager
 		 * @memberOf h5.core
 		 */
+		// clearとclearAllのみ公開
 		definitionCacheManager: {
-			/**
-			 * 名前を指定してキャッシュをクリアする
-			 *
-			 * @param {String} name コントローラまたはロジックの名前(__nameの値)
-			 * @memberOf h5.core.definitionCacheManager
-			 */
 			clear: function(name) {
 				definitionCacheManager.clear(name);
 			},
-
-			/**
-			 * キャッシュを全てクリアする
-			 *
-			 * @memberOf h5.core.definitionCacheManager
-			 */
 			clearAll: function() {
 				definitionCacheManager.clearAll();
 			}
