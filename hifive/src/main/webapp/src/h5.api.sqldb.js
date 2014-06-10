@@ -573,7 +573,7 @@
 		this._parameters = [];
 		this._executor = executor;
 		this._tableName = tableName;
-		this._columns = $.isArray(columns) ? columns.join(', ') : '*';
+		this._columns = isArray(columns) ? columns.join(', ') : '*';
 		this._where = null;
 		this._orderBy = null;
 	}
@@ -698,7 +698,7 @@
 				statement += (' WHERE ' + where);
 			}
 
-			if ($.isArray(this._orderBy)) {
+			if (isArray(this._orderBy)) {
 				statement += (' ORDER BY ' + this._orderBy.join(', '));
 			}
 
@@ -1123,7 +1123,7 @@
 		select: function(tableName, columns, txe) {
 			validTableName('select', tableName);
 
-			if (!$.isArray(columns) && columns !== '*') {
+			if (!isArray(columns) && columns !== '*') {
 				throwFwError(ERR_CODE_INVALID_COLUMN_NAME, 'select');
 			}
 
@@ -1185,7 +1185,7 @@
 		insert: function(tableName, values, txe) {
 			validTableName('insert', tableName);
 
-			if (values != null && !$.isArray(values) && !$.isPlainObject(values)) {
+			if (values != null && !isArray(values) && !$.isPlainObject(values)) {
 				throwFwError(ERR_CODE_INVALID_VALUES, 'insert');
 			}
 
@@ -1260,7 +1260,7 @@
 				throwFwError(ERR_CODE_INVALID_STATEMENT, 'sql');
 			}
 
-			if (parameters != null && !$.isArray(parameters)) {
+			if (parameters != null && !isArray(parameters)) {
 				throwFwError(ERR_CODE_TYPE_NOT_ARRAY, 'sql');
 			}
 

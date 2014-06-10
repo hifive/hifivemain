@@ -33,6 +33,10 @@ $(function() {
 	// Variables
 	//=============================
 
+	// testutils
+	var deleteProperty = testutils.u.deleteProperty;
+	var clearController = testutils.u.clearController;
+
 	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR_U.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR_U = ERRCODE.h5.u;
 
@@ -313,20 +317,24 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('html文字列をエスケープする', 4, function() {
-		var str = '<div id="a" class=\'b\'>hoge&amp;fuga<span>TEST</span>hoge.!</script>';
-		var escapeStr = h5.u.str.escapeHtml(str);
-		$('#qunit-fixture').append(escapeStr);
-		strictEqual(escapeStr,
-				'&lt;div id=&quot;a&quot; class=&#39;b&#39;&gt;hoge&amp;amp;fuga&lt;span&gt;TEST&lt;/span&gt;hoge.!&lt;/script&gt;',
-				'エスケープされること。結果：' + escapeStr);
-		strictEqual(h5.u.str.escapeHtml(0), 0, '文字列のみエスケープされること。');
-		strictEqual(h5.u.str.escapeHtml(undefined), undefined, '文字列のみエスケープされること。');
-		var obj = {
-			aaa: 10
-		};
-		strictEqual(h5.u.str.escapeHtml(obj), obj, '文字列のみエスケープされること。');
-	});
+	test(
+			'html文字列をエスケープする',
+			4,
+			function() {
+				var str = '<div id="a" class=\'b\'>hoge&amp;fuga<span>TEST</span>hoge.!</script>';
+				var escapeStr = h5.u.str.escapeHtml(str);
+				$('#qunit-fixture').append(escapeStr);
+				strictEqual(
+						escapeStr,
+						'&lt;div id=&quot;a&quot; class=&#39;b&#39;&gt;hoge&amp;amp;fuga&lt;span&gt;TEST&lt;/span&gt;hoge.!&lt;/script&gt;',
+						'エスケープされること。結果：' + escapeStr);
+				strictEqual(h5.u.str.escapeHtml(0), 0, '文字列のみエスケープされること。');
+				strictEqual(h5.u.str.escapeHtml(undefined), undefined, '文字列のみエスケープされること。');
+				var obj = {
+					aaa: 10
+				};
+				strictEqual(h5.u.str.escapeHtml(obj), obj, '文字列のみエスケープされること。');
+			});
 
 	//=============================
 	// Definition
@@ -938,6 +946,14 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+
+	test('"window"を指定するとwindowオブジェクトが取得できること', 2, function() {
+		var result = h5.u.obj.getByPath('window');
+		strictEqual(result, window, '第１引数に"window"を指定するとwindowオブジェクトを取得できること');
+		result = h5.u.obj.getByPath('window', window);
+		strictEqual(result, window, '第１引数に"window"、第２引数にwindowオブジェクトを指定するとwindowオブジェクトを取得できること');
+	});
+
 	test('window.hoge 配下のオブジェクトを、名前空間の文字列を指定して取得。(h5.u.obj.getByPath)', 8, function() {
 		window.hoge = {
 			hogehoge: {
@@ -1616,7 +1632,11 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('createInterceptor');
+	module('createInterceptor', {
+		teardown: function() {
+			clearController();
+		}
+	});
 
 	//=============================
 	// Body
@@ -1653,7 +1673,7 @@ $(function() {
 		deepEqual(ret, 100, '第二引数省略 関数そのものが実行されていること');
 	});
 
-	test('[build#min]インターセプタがpromiseを返した時、そのpromiseについてCommonFailHandlerの動作が阻害されていないこと', 1,
+	asyncTest('[build#min]インターセプタがpromiseを返した時、そのpromiseについてCommonFailHandlerの動作が阻害されていないこと', 1,
 			function() {
 				var dfd = h5.async.deferred();
 				var cfhFlag = false;
@@ -1683,6 +1703,8 @@ $(function() {
 					__name: 'TestController',
 					__ready: function() {
 						this.testLogic.test();
+						this.dispose();
+						start();
 					}
 				});
 				dfd.reject();

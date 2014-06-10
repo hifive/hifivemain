@@ -36,12 +36,17 @@ $(function() {
 	// Privates
 	//
 	// =========================================================================
-
-
-
 	//=============================
 	// Variables
 	//=============================
+	// testutils
+	var rgbToHex = testutils.u.rgbToHex;
+	var clearController = testutils.u.clearController;
+	var createIFrameElement = testutils.dom.createIFrameElement;
+	var openPopupWindow = testutils.dom.openPopupWindow;
+	var closePopupWindow = testutils.dom.closePopupWindow;
+	var skipTest = testutils.qunit.skipTest;
+
 	/**
 	 * #qunit-fixture
 	 */
@@ -2084,10 +2089,7 @@ $(function() {
 			});
 		},
 		teardown: function() {
-			var controllers = h5.core.controllerManager.controllers;
-			for (var i = 0, l = controllers.length; i < l; i++) {
-				controllers[i] && controllers[i].dispose && controllers[i].dispose();
-			}
+			clearController();
 		}
 	});
 
@@ -2124,7 +2126,11 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('コメントビューにバインド');
+	module('コメントビューにバインド', {
+		teardown: function() {
+			clearController();
+		}
+	});
 
 	//=============================
 	// Body
@@ -2578,7 +2584,11 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('unbind');
+	module('unbind', {
+		teardown: function() {
+			clearController();
+		}
+	});
 
 	//=============================
 	// Body
@@ -2940,6 +2950,7 @@ $(function() {
 		},
 		teardown: function() {
 			cloneTestBinding.unbind();
+			clearController();
 		}
 	});
 
@@ -2993,7 +3004,6 @@ $(function() {
 		c.readyPromise.done(function() {
 			$('.hoge').click();
 		});
-
 	});
 
 	asyncTest('動的に生成(クローン)された要素の子孫要素でイベントが発火するか', 2, function() {

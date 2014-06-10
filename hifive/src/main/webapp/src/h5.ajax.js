@@ -118,7 +118,7 @@
 			// includeFunction=falseの場合は関数はコピーしない。
 			// includeFunction=trueの場合、
 			// 非推奨なプロパティ以外をコピー
-			if (jqXHR.hasOwnProperty(prop) && (includeFunction || !$.isFunction(jqXHR[prop]))
+			if (jqXHR.hasOwnProperty(prop) && (includeFunction || !isFunction(jqXHR[prop]))
 					&& $.inArray(prop, DEPRECATED_METHODS) === -1) {
 				// 値をコピー
 				jqXHRWrapper[prop] = jqXHR[prop];

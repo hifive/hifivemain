@@ -54,7 +54,7 @@ $(function() {
 	//=============================
 	module('H5Api - Geo Location (Debug Mode) - getCurrentPosition', {
 		setup: function() {
-			if (!isDevMode()) {
+			if (!isDevMode) {
 				return;
 			}
 
@@ -68,7 +68,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('ダミー位置情報をセットしていないときは元のAPIを使うこと。エラーが起きるか位置が取得できる。', 1, function() {
-		if (!isDevMode()) {
+		if (!isDevMode) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
@@ -93,7 +93,7 @@ $(function() {
 	});
 
 	asyncTest('ダミー位置情報がセットした通りに取得できること。', 8, function() {
-		if (!isDevMode()) {
+		if (!isDevMode) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
@@ -133,7 +133,7 @@ $(function() {
 
 	});
 	asyncTest('ダミー位置情報セット時に省略したパラメータにデフォルト値が入って取得できること。', 24, function() {
-		if (!isDevMode()) {
+		if (!isDevMode) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
@@ -203,7 +203,7 @@ $(function() {
 		});
 	});
 	asyncTest('強制エラー', 1, function() {
-		if (!isDevMode()) {
+		if (!isDevMode) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
@@ -228,7 +228,7 @@ $(function() {
 	//=============================
 	module('H5Api - Geo Location (Debug Mode) - watchPosition', {
 		setup: function() {
-			if (!isDevMode()) {
+			if (!isDevMode) {
 				return;
 			}
 
@@ -242,7 +242,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('ダミー位置情報をセットしていないときは元のAPIを使うこと。エラーが起きるか位置が取得できる。', 1, function() {
-		if (!isDevMode()) {
+		if (!isDevMode) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
@@ -268,7 +268,7 @@ $(function() {
 		});
 	});
 	asyncTest('ダミー位置情報がセットした通りに取得できること。ダミー位置を3カ所セットして、５回取得する', 36, function() {
-		if (!isDevMode()) {
+		if (!isDevMode) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();
@@ -322,7 +322,7 @@ $(function() {
 	asyncTest(
 			'watchPositionを3回呼ぶ。watchInterval=1000msにして2つ目と3つ目を900ms,2900msずらして呼び、それぞれが同時に正しい位置情報を取得し、それぞれを同時に停止し、正しく停止する。',
 			61, function() {
-				if (!isDevMode()) {
+				if (!isDevMode) {
 					expect(1);
 					ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 					start();
@@ -460,7 +460,7 @@ $(function() {
 			});
 
 	asyncTest('失敗 forceError=true', function() {
-		if (!isDevMode()) {
+		if (!isDevMode) {
 			expect(1);
 			ok(false, 'このテストは開発版(h5.dev.js)で実行してください。');
 			start();

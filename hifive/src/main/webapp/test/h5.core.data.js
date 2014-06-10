@@ -43,8 +43,10 @@ $(function() {
 	// Variables
 	//=============================
 
+	// testutils
+	var deleteProperty = testutils.u.deleteProperty;
+
 	var ERR = ERRCODE.h5.core.data;
-	var ERR_MIXIN = ERRCODE.h5.mixin;
 	/**
 	 * データモデルマネージャ
 	 */

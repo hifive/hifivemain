@@ -242,7 +242,7 @@
 		var COUNT = 3;
 		var result = {};
 
-		if ($.isArray(recentTraces)) {
+		if (isArray(recentTraces)) {
 			var recent = recentTraces.slice(0, COUNT).join(' <- ');
 
 			if (recentTraces.slice(COUNT).length > 0) {
@@ -549,7 +549,7 @@
 			if (!isDefault || targets != null) {
 				var targetNames = [];
 				// targetsの指定は文字列または配列またはnull,undefinedのみ
-				if (!(targets == null || $.isArray(targets) || (isString(targets) && $
+				if (!(targets == null || isArray(targets) || (isString(targets) && $
 						.trim(targets).length))) {
 					throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
 				}

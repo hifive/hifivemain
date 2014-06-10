@@ -176,7 +176,7 @@ function wrapInArray(value) {
 	if (value == null) {
 		return value;
 	}
-	return $.isArray(value) ? value : [value];
+	return isArray(value) ? value : [value];
 }
 
 /**
@@ -355,8 +355,13 @@ function getDocumentOf(node) {
  * @returns {Window} windowオブジェクト
  */
 function getWindowOfDocument(doc) {
+	// IE8-だと、windowとwindow.document.parentWindowで、同じwindowを指すが、"==="で比較するとfalseになる (#339)
+	// イベントハンドラをバインドするターゲットがwindowである時は、window.document.parentWindowではなく
+	// windowにバインドして、イベントハンドラのthis(コントローライベントハンドラの第２引数)をwindowにするため、
+	// window.document === doc の場合はparentWindowではなくwindowを返すようにしている
+
 	// IE8-ではdocument.parentWindow、それ以外はdoc.defaultViewでwindowオブジェクトを取得
-	return doc.defaultView || doc.parentWindow;
+	return window.document === doc ? window : doc.defaultView || doc.parentWindow;
 }
 
 /**
@@ -368,6 +373,128 @@ function getWindowOfDocument(doc) {
  */
 function getWindowOf(node) {
 	return getWindowOfDocument(getDocumentOf(node));
+}
+
+/**
+ * 引数が配列かどうか判定
+ * <p>
+ * Array.isArrayがあるブラウザの場合はisArray===Array.isArrayです
+ * </p>
+ *
+ * @private
+ * @param {Any} obj
+ * @returns {Boolean}
+ */
+var isArray = Array.isArray || (function() {
+	// プロパティアクセスを減らすため、toStringをキャッシュ
+	var toStringObj = Object.prototype.toString;
+	return function(obj) {
+		return toStringObj.call(obj) === '[object Array]';
+	};
+})();
+
+/**
+ * 引数が配列かどうか判定
+ *
+ * @private
+ * @param {Any} obj
+ * @returns {Boolean}
+ */
+var isFunction = (function() {
+	// Android3以下、iOS4以下は正規表現をtypeofで判定すると"function"を返す
+	// それらのブラウザでは、toStringを使って判定する
+	if (typeof new RegExp() === 'function') {
+		var toStringObj = Object.prototype.toString;
+		return function(obj) {
+			return toStringObj.call(obj) === '[object Function]';
+		};
+	}
+	// 正規表現のtypeofが"function"にならないブラウザなら、typeofがfunctionなら関数と判定する
+	return function(obj) {
+		return typeof obj === 'function';
+	};
+})();
+
+/**
+ * 複数のプロミスが完了するのを待機する
+ * <p>
+ * whenとは仕様が異なり、新しくdeferredは作らない。
+ * </p>
+ *
+ * @private
+ * @param {Promise[]} promises
+ * @param {Function} doneCallback doneコールバック。引数は渡されません。
+ * @param {Function} failCallback failコールバック
+ * @param {Boolean} cfhIfFail 渡されたpromiseのいずれかが失敗した時にcFHを呼ぶかどうか。
+ *            cFHを呼ぶときのthisは失敗したpromiseオブジェクト、引数は失敗したpromiseのfailに渡される引数
+ */
+function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
+	// 高速化のため、長さ1または0の場合はforを使わずにチェックする
+	var length = promises.length;
+	var isPromise = h5.async.isPromise;
+	if (length === 1) {
+		var promise = promises[0];
+		if (isPromise(promise)) {
+			// 長さ1で、それがプロミスなら、そのプロミスにdoneとfailを引っかける
+			promise.done(doneCallback);
+			if (failCallback) {
+				promise.fail(failCallback);
+			} else if (cfhIfFail && h5.settings.commonFailHandler) {
+				// failCallbackが無くて、cfhIfFail===trueかつcommonFailHandlerがある場合はcfhをfailハンドラにしておく
+				promise.fail(h5.settings.commonFailHandler);
+			}
+			return;
+		}
+		// 長さ1で中身がプロミスでない場合は長さ0として処理する
+		length = 0;
+	}
+	if (length === 0) {
+		doneCallback();
+		return;
+	}
+
+	// promisesの中のプロミスオブジェクトの数(プロミスでないものは無視)
+	// 引数に渡されたpromisesのうち、プロミスオブジェクトと判定したものを列挙
+	var monitorningPromises = [];
+	for (var i = 0, l = promises.length; i < l; i++) {
+		var promise = promises[i];
+		if (isPromise(promise)) {
+			monitorningPromises.push(promise);
+		}
+	}
+
+	var promisesLength = monitorningPromises.length;
+	if (promisesLength === 0) {
+		// プロミスが一つもなかった場合は即doneCallbackを実行
+		doneCallback && doneCallback();
+		return;
+	}
+
+	var resolveCount = 0;
+	var rejected = false;
+	/** いずれかのpromiseが成功するたびに全て終わったかチェック */
+	function check() {
+		if (!rejected && ++resolveCount === promisesLength) {
+			// 全てのpromiseが成功したので、doneCallbackを実行
+			doneCallback && doneCallback();
+		}
+	}
+	/** いずれかのpromiseが失敗した時に呼ばれるコールバック */
+	function fail(/* var_args */) {
+		rejected = true;
+		if (failCallback) {
+			failCallback.apply(this, arguments);
+			return;
+		}
+		if (cfhIfFail && h5.settings.commonFailHandler) {
+			// failCallbackが渡されていなくてcfhIfFailがtrueでcommonFailHandlerが設定されていればcFHを呼ぶ
+			h5.settings.commonFailHandler.call(this, arguments);
+		}
+	}
+
+	for (var i = 0; i < promisesLength; i++) {
+		monitorningPromises[i].done(check).fail(fail);
+	}
 }
 
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る

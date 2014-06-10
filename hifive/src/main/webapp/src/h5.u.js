@@ -354,7 +354,7 @@
 		var parentObj = window;
 		for (var i = 0; i < len; i++) {
 			var name = nsArray[i];
-			if (parentObj[name] === undefined) {
+			if (typeof parentObj[name] === TYPE_OF_UNDEFINED) {
 				parentObj[name] = {};
 			}
 			parentObj = parentObj[name];
@@ -510,9 +510,9 @@
 						promises.push(scriptLoad(url));
 					});
 
-					h5.async.when(promises).done(function() {
+					waitForPromises(promises, function() {
 						retDf.resolve();
-					}).fail(retDfFailCallback);
+					}, retDfFailCallback);
 				} else {
 					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
 					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
@@ -809,7 +809,7 @@
 	 * @memberOf h5.u.obj
 	 */
 	function serialize(value) {
-		if ($.isFunction(value)) {
+		if (isFunction(value)) {
 			throwFwError(ERR_CODE_SERIALIZE_FUNCTION);
 		}
 		// 循環参照チェック用配列
@@ -1105,7 +1105,7 @@
 					} catch (e) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					if (!$.isArray(obj)) {
+					if (!isArray(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					for (var i = 0; i < obj.length; i++) {
@@ -1225,12 +1225,14 @@
 		}
 
 		var names = namespace.split('.');
-		if (!rootObj && names[0] === 'window') {
-			names.unshift();
+		var idx = 0;
+		if (names[0] === 'window' && (!rootObj || rootObj === window)) {
+			// rootObjが未指定またはwindowオブジェクトの場合、namespaceの最初のwindow.は無視する
+			idx = 1;
 		}
 		var ret = rootObj || window;
-		for (var i = 0, len = names.length; i < len; i++) {
-			ret = ret[names[i]];
+		for (var len = names.length; idx < len; idx++) {
+			ret = ret[names[idx]];
 			if (ret == null) { // nullまたはundefinedだったら辿らない
 				break;
 			}
@@ -1297,7 +1299,7 @@
 			if (!post) {
 				return ret;
 			}
-			if (ret && $.isFunction(ret.promise) && !isJQueryObject(ret)) {
+			if (ret && isFunction(ret.promise) && !isJQueryObject(ret)) {
 				var that = this;
 
 				registerCallbacksSilently(ret, 'always', function() {

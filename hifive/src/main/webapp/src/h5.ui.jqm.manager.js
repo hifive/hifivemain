@@ -784,12 +784,12 @@
 						throwFwError(ERR_CODE_INVALID_TYPE, 'id');
 					}
 
-					if (cssSrc != null && !isString(cssSrc) && !$.isArray(cssSrc)) {
+					if (cssSrc != null && !isString(cssSrc) && !isArray(cssSrc)) {
 						throwFwError(ERR_CODE_INVALID_TYPE, 'cssSrc');
 					}
 
 					if (controllerDefObject != null) {
-						if (isString(controllerDefObject) || $.isArray(controllerDefObject)) {
+						if (isString(controllerDefObject) || isArray(controllerDefObject)) {
 							throwFwError(ERR_CODE_NAME_INVALID_PARAMETER);
 						}
 

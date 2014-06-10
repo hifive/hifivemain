@@ -96,6 +96,15 @@
 	// =============================
 	// Variables
 	// =============================
+
+	// thenが新しいプロミス(deferred)を返す(jQuery1.8以降)かどうか
+	// jQuery.thenの挙動の確認
+
+	var isThenReturnsNewPromise = (function() {
+		var tempDfd = $.Deferred();
+		return tempDfd !== tempDfd.then();
+	})();
+
 	// =============================
 	// Functions
 	// =============================
@@ -122,9 +131,9 @@
 			var callbacks = argsToArray(arguments);
 			for (var i = 0, l = callbacks.length; i < l; i++) {
 				var elem = callbacks[i];
-				if ($.isArray(elem)) {
+				if (isArray(elem)) {
 					dfd.progress.apply(this, elem);
-				} else if ($.isFunction(elem)) {
+				} else if (isFunction(elem)) {
 					if (notified) {
 						// 既にnorify/notifyWithが呼ばれていた場合、jQuery1.7以降の仕様と同じにするためにコールバックの登録と同時に実行する必要がある
 						var params = lastNotifyParam;
@@ -157,7 +166,7 @@
 						params = wrapInArray(params);
 					}
 					// 関数を実行。関数以外は無視。
-					$.isFunction(progressCallbacks[i]) && progressCallbacks[i].apply(this, params);
+					isFunction(progressCallbacks[i]) && progressCallbacks[i].apply(this, params);
 				}
 			}
 			return dfd;
@@ -187,7 +196,7 @@
 		}
 		arg = wrapInArray(arg);
 		for (var i = 0, l = arg.length; i < l; i++) {
-			if ($.isFunction(arg[i])) {
+			if (isFunction(arg[i])) {
 				return true;
 			}
 		}
@@ -199,9 +208,10 @@
 	 * 既にフック済みのもの(prev)があればprevが持っているものに差し替える
 	 *
 	 * @private
-	 * @param {Deferred|Promise} promise
-	 * @param {Deferred} rootDfd
+	 * @param {Deferred|Promise} promise DeferredまたはPromise
+	 * @param {Deferred} rootDfd 元のDeferred
 	 *            既にフック済みのDeferredオブジェクト。第一引数がPromiseで、元のdeferredでフック済みならそっちのメソッドに差し替える
+	 * @returns CFH機能を追加したDeferredまたはPromise
 	 */
 	function toCFHAware(promise, rootDfd) {
 		// すでにtoCFHAware済みなら何もしないでpromiseを返す
@@ -211,11 +221,6 @@
 
 		// progressを持っているか
 		var hasNativeProgress = !!promise.progress;
-
-		// thenが新しいプロミス(deferred)を返す(jQuery1.8以降)かどうか
-		// jQuery.thenの挙動の確認
-		var tempDfd = $.Deferred();
-		var thenReturnsNewPromise = tempDfd !== tempDfd.then();
 
 		// 引数がDeferredオブジェクト(!=プロミスオブジェクト)の場合、
 		// progress/notify/notifyWithがないなら追加。
@@ -247,7 +252,8 @@
 		 * @private
 		 * @memberOf Deferred
 		 * @param {String} method メソッド名
-		 * @param {Array|Any} メソッドに渡す引数。Arrayで複数渡せる。引数1つならそのまま渡せる。
+		 * @param {Array|Any} args メソッドに渡す引数。Arrayで複数渡せる。引数1つならそのまま渡せる。
+		 * @returns メソッドの戻り値
 		 */
 		promise._h5UnwrappedCall = rootDfd ? rootDfd._h5UnwrappedCall : function(method, args) {
 			args = wrapInArray(args);
@@ -301,6 +307,7 @@
 			}
 		}
 
+
 		// pipeは戻り値が呼び出したpromise(またはdeferred)と違うので、
 		// そのdeferred/promiseが持つメソッドの上書きをして返す関数にする。
 		// jQuery1.6以下にない第3引数でのprogressコールバックの登録にも対応する。
@@ -321,14 +328,16 @@
 				for (var i = 0, l = PIPE_CREATE_METHODS.length; i < l; i++) {
 					var that = this;
 					(function(fn, method, action) {
-						if (!$.isFunction(fn)) {
-							// 引数が関数で無かったら何もしない
-							return;
-						}
-						// コールバックを登録
-						that[method](function(/* var_args */) {
+						var isFunc = isFunction(fn);
+						// 登録するコールバック
+						function callback(/* var_args */) {
+							if (!isFunc) {
+								// 関数で無かった場合は、渡された引数を次のコールバックにそのまま渡す
+								newDeferred[action + 'With'](this, arguments);
+								return;
+							}
 							var ret = fn.apply(this, arguments);
-							if (ret && $.isFunction(ret.promise)) {
+							if (ret && isFunction(ret.promise)) {
 								toCFHAware(ret);
 								// コールバックが返したプロミスについてコールバックを登録する
 								ret.done(newDeferred.resolve);
@@ -336,12 +345,21 @@
 								ret._h5UnwrappedCall('fail', newDeferred.reject);
 								// jQuery1.6以下でh5を使わずに生成されたプロミスならprogressはないので、
 								// progressメソッドがあるかチェックしてからprogressハンドラを登録
-								$.isFunction(ret.progress) && ret.progress(newDeferred.notify);
+								isFunction(ret.progress) && ret.progress(newDeferred.notify);
 							} else {
-								// 戻り値を次のコールバックに渡す
+								// 戻り値はプロミスでなかった場合、戻り値を次のコールバックに渡す
 								newDeferred[action + 'With'](this, [ret]);
 							}
-						});
+						}
+
+						// コールバックを登録
+						// fnが関数でないかつmethodがfailの場合は、CFHの動作を阻害しないようにfailハンドラを登録するため、
+						// _h5UnwrappedCallを使う
+						if (!isFunc && method === 'fail') {
+							that._h5UnwrappedCall(method, callback);
+						} else {
+							that[method](callback);
+						}
 					})(fns[i], PIPE_CREATE_METHODS[i], PIPE_CREATE_ACTIONS[i]);
 				}
 				return newDeferred.promise();
@@ -355,16 +373,10 @@
 		// rootDfdがあればrootDfd.thenを持たせてあるので何もしない
 		if (promise.then && !rootDfd) {
 			var then = promise.then;
-			promise.then = function(/* var_args */) {
-				// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
-				// jQuery1.8以降は、thenが別のdeferredに基づくpromiseを生成して返ってくる(pipeと同じ)。
-
-				if (thenReturnsNewPromise) {
-					// 1.8以降の場合 thenはpipeと同じ挙動。
-					return hookMethods.pipe.apply(this, arguments);
-				}
-
+			// 1.8以降の場合 thenはpipeと同じで、別のdeferredに基づくpromiseを生成して返す(then===pipe)
+			promise.then = isThenReturnsNewPromise ? promise.pipe : function(/* var_args */) {
 				// 1.7以前の場合
+				// jQuery1.7以前は、thenを呼んだ時のthisが返ってくる(deferredから呼んだ場合はdeferredオブジェクトが返る)。
 				var args = arguments;
 				var ret = then.apply(this, args);
 
@@ -375,7 +387,6 @@
 				}
 				// そのままthis(=ret)を返す
 				return ret;
-
 			};
 			hookMethods.then = promise.then;
 		}
@@ -481,7 +492,7 @@
 	 * @memberOf h5.async
 	 */
 	var loop = function(array, callback, suspendOnTimes) {
-		if (!$.isArray(array)) {
+		if (!isArray(array)) {
 			throwFwError(ERR_CODE_NOT_ARRAY);
 		}
 		var dfd = deferred();
@@ -597,7 +608,7 @@
 	var when = function(/* var_args */) {
 		var args = argsToArray(arguments);
 
-		if (args.length === 1 && $.isArray(args[0])) {
+		if (args.length === 1 && isArray(args[0])) {
 			args = args[0];
 		}
 		var len = args.length;
@@ -607,7 +618,7 @@
 		for (var i = 0; i < len; i++) {
 			// DeferredもPromiseも、promiseメソッドを持つので、
 			// promiseメソッドがあるかどうかでDeferred/Promiseの両方を判定しています。
-			if (!args[i] || !(args[i].promise && $.isFunction(args[i].promise))) {
+			if (!args[i] || !(args[i].promise && isFunction(args[i].promise))) {
 				fwLogger.info(FW_LOG_H5_WHEN_INVALID_PARAMETER);
 				break;
 			}
@@ -662,7 +673,7 @@
 			for (var i = 0; i < len; i++) {
 				var p = args[i];
 				// progressはjQuery1.6で作られたdeferred/promiseだとないので、あるかどうかチェックして呼び出す
-				if (p && $.isFunction(p.promise) && p.progress) {
+				if (p && isFunction(p.promise) && p.progress) {
 					if (len > 1) {
 						p.progress(progressFunc(i));
 					} else {

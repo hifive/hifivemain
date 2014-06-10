@@ -153,7 +153,7 @@
 			// hasOwnPropertyがtrueでなければコピーしない
 			// 関数、null、文字列リテラル、数値リテラル、真偽値リテラルのいずれかの場合のみコピー
 			if (moduleObject.hasOwnProperty(p)
-					&& ($.isFunction(v) || v === null || typeof v === 'string'
+					&& (isFunction(v) || v === null || typeof v === 'string'
 							|| typeof v === 'number' || typeof v === 'boolean')) {
 				props[p] = v;
 			}
@@ -176,7 +176,7 @@
 				}
 				// hasOwnPropertyがtrueかどうかは判定せず、プロトタイプチェーン上にあってもよい
 				// undefinedでなければそのプロパティを持っていると判定する
-				if (object[p] === undefined) {
+				if (typeof object[p] === TYPE_OF_UNDEFINED) {
 					return false;
 				}
 			}
@@ -292,6 +292,9 @@
 		 * <p>
 		 * 同一のイベントに対して複数回addEventListener()を呼び、複数のイベントリスナを登録した場合は、イベント発火時に登録した順番に実行されます。
 		 * </p>
+		 * <p>
+		 * 第３引数以降が指定されていても無視されます。
+		 * </p>
 		 *
 		 * @since 1.1.0
 		 * @memberOf EventDispatcher
@@ -302,7 +305,7 @@
 			// 引数チェック
 			// typeは文字列で、第2引数まで指定されていることをチェックする
 			// listenerが関数またはイベントリスナオブジェクトかどうかは、実行時に判定し、関数でもイベントリスナオブジェクトでもない場合は実行しない
-			if (arguments.length !== 2 || !isString(type)) {
+			if (arguments.length < 2 || !isString(type)) {
 				throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
 			}
 			if (listener == null || this.hasEventListener(type, listener)) {
@@ -381,7 +384,7 @@
 
 			// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
 			for (var i = 0, count = l.length; i < count && !event.isImmediatePropagationStopped(); i++) {
-				if ($.isFunction(l[i])) {
+				if (isFunction(l[i])) {
 					l[i].call(event.target, event);
 				} else if (l[i].handleEvent) {
 					// イベントリスナオブジェクトの場合はhandleEventを呼ぶ

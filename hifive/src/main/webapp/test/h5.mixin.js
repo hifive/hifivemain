@@ -103,7 +103,7 @@ $(function() {
 			_p: 'p'
 		};
 		mixin.mix(target);
-		deepEqual(expect, target,
+		deepEqual(target, expect,
 				'mixメソッドでmixinされ、文字列リテラル、関数、数値リテラル、真偽値リテラル、nullのプロパティが上書きでコピーされること');
 
 		function A() {
@@ -207,7 +207,7 @@ $(function() {
 				'EventDispatcherのプロパティを一つでも持っていないオブジェクトについてはfalseが返ること');
 	});
 
-	test('addEventListener 正常系', 4, function() {
+	test('addEventListener 正常系', 6, function() {
 		var item = {};
 		h5.mixin.eventDispatcher.mix(item);
 		function listener() {
@@ -226,7 +226,8 @@ $(function() {
 							+ validArgs[i]);
 			item.removeEventListener(validArgs[i][0], validArgs[i][1]);
 		}
-		expect(l);
+		var ret = item.addEventListener('change', listener, true, true);
+		strictEqual(ret, undefined, '第３引数以降が指定されていても無視されてエラーにならないこと。戻り値はundefinedであること');
 	});
 
 	test('addEventListener 異常系', 4, function() {
@@ -593,5 +594,31 @@ $(function() {
 		item.change();
 		strictEqual(context, listenerObj, 'イベントリスナ内のthisはイベントリスナオブジェクトであること');
 		item.removeEventListener('change', listenerObj);
+	});
+
+	test('jQuery.bindを使ってバインドできること', 1, function() {
+		var target = {};
+		h5.mixin.eventDispatcher.mix(target);
+		var executed = false;
+		function listener() {
+			executed = true;
+		}
+		$(target).bind('myevent', listener);
+		target.dispatchEvent({
+			type: 'myevent'
+		});
+		ok(executed, 'jQuery.bindでバインドしたイベントハンドラが実行されること');
+	});
+
+	test('jQuery.triggerを使ってイベントハンドラを実行できること', 1, function() {
+		var target = {};
+		h5.mixin.eventDispatcher.mix(target);
+		var executed = false;
+		function listener() {
+			executed = true;
+		}
+		$(target).bind('myevent', listener);
+		$(target).trigger('myevent');
+		ok(executed, 'jQuery.bindでバインドしたイベントハンドラがjQuery.triggerで実行されること');
 	});
 });
