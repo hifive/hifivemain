@@ -4308,26 +4308,27 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5.settings.dynamicLoading.retryCountでテンプレートのロードのリトライ回数を設定できること', 1, function() {
+	asyncTest('h5.settings.dynamicLoading.retryCountでテンプレートのロードのリトライ回数を設定できること', 2, function() {
 		// テンプレートロードのリトライ時のインターバルを0msに設定
 		h5.settings.dynamicLoading.retryInterval = 0;
 		// リトライ回数を2回に設定
 		h5.settings.dynamicLoading.retryCount = 2;
 		// view.load()をスタブに差し替え
 		var loadCount = 0;
-		var load = function() {
+		var errorObj = {
+			detail: {
+				error: {
+					status: h5.env.ua.isIE ? 0 : 12029
+				}
+			}
+		};
+		function load() {
 			loadCount++;
 			var dfd = $.Deferred();
-			var e = {
-				detail: {
-					error: {
-						status: h5.env.ua.isIE ? 0 : 12029
-					}
-				}
-			};
-			dfd.reject(e);
+			dfd.reject(errorObj);
 			return dfd.promise();
-		};
+		}
+		;
 		var originalCreateView = h5.core.view.createView;
 		h5.core.view.createView = function() {
 			var view = originalCreateView();
@@ -4340,39 +4341,40 @@ $(function() {
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
-		testController.initPromise.done(function(a) {
+		testController.preInitPromise.done(function(a) {
 			ok(false, 'ロードできないテンプレートを指定してコントローラのバインドが失敗しませんでした');
 			h5.core.view.createView = originalCreateView;
 			start();
-		}).fail(function(e, opt) {
+		}).fail(function(e) {
 			strictEqual(loadCount, 3, 'リトライ回数2回なのでロードを試みた回数は3回になっていること');
+			strictEqual(e, errorObj, 'view.loadが投げたエラーオブジェクトが取得できること');
 			h5.core.view.createView = originalCreateView;
 			start();
 		});
 	});
 
-	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること', 8, function() {
+	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること', 2, function() {
 		// テンプレートロードのリトライ時のインターバルを0msに設定
 		h5.settings.dynamicLoading.retryInterval = 0;
 		// view.load()をスタブに差し替え
 		var retryCount = 0;
 		var retryLimit = 3;
-		var load = function() {
-			var dfd = $.Deferred();
-			var e = {
-				detail: {
-					error: {
-						status: h5.env.ua.isIE ? 0 : 12029
-					}
+		var errorObj = {
+			detail: {
+				error: {
+					status: h5.env.ua.isIE ? 0 : 12029
 				}
-			};
+			}
+		};
+		function load() {
+			var dfd = $.Deferred();
 			if (retryCount++ == retryLimit) {
 				dfd.resolve();
 			} else {
-				dfd.reject(e);
+				dfd.reject(errorObj);
 			}
 			return dfd.promise();
-		};
+		}
 		var originalCreateView = h5.core.view.createView;
 		h5.core.view.createView = function() {
 			var view = originalCreateView();
@@ -4382,153 +4384,80 @@ $(function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
-			__templates: ['./noExistPath'],
-			__construct: function(context) {
-				deepEqual(++count, 1, '__constructが実行される。');
-			},
-			__init: function(context) {
-				deepEqual(++count, 3, '__initが実行される。');
-			},
-			__postInit: function(context) {
-				deepEqual(++count, 5, '__postInitが実行される。');
-			},
-			__ready: function(context) {
-				deepEqual(++count, 7, '__readyが実行される。');
-			}
+			__templates: ['./noExistPath']
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
-		testController.preInitPromise.done(function(a) {
-			deepEqual(++count, 2, 'preInitPromiseがresolve()された');
-		}).fail(function(e, opt) {
+		testController.preInitPromise.done(function() {
+			ok(true, 'preInitPromiseがresolve()されること');
+		}).fail(function() {
 			ok(false, 'テスト失敗。initPromiseがreject()された');
 		});
-		testController.initPromise.done(function(a) {
-			deepEqual(++count, 4, 'initPromiseがresolve()された');
-		}).fail(function(e, opt) {
-			ok(false, 'テスト失敗。initPromiseがreject()された');
-		});
-		testController.postInitPromise.done(function(a) {
-			deepEqual(++count, 6, 'postInitPromiseがresolve()された');
-		}).fail(function(e, opt) {
-			ok(false, 'テスト失敗。initPromiseがreject()された');
-		});
-		testController.readyPromise.done(function(a) {
-			deepEqual(++count, 8, 'readyPromiseがresolve()された');
+		testController.readyPromise.done(function() {
+			ok(true, 'readyPromiseがresolve()されること');
 			h5.core.view.createView = originalCreateView;
 			start();
 		});
 	});
 
-	asyncTest(
-			'テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreInitPromiseのfailが呼ばれること',
-			14,
-			function() {
-				// テンプレートロードのリトライ時のインターバルを0msに設定
-				h5.settings.dynamicLoading.retryInterval = 0;
-				// view.load()をスタブに差し替え
-				var retryCount = 0;
-				var retryLimit = 3;
-				var load = function() {
-					var dfd = $.Deferred();
-					var e = {
-						detail: {
-							error: {
-								status: h5.env.ua.isIE ? 0 : 12029
-							}
-						}
-					};
-					if (retryCount++ == retryLimit + 1) {
-						dfd.resolve();
-					} else {
-						dfd.reject(e);
-					}
-					return dfd.promise();
-				};
-				var originalCreateView = h5.core.view.createView;
-				h5.core.view.createView = function() {
-					var view = originalCreateView();
-					view.load = load;
-					return view;
-				};
-				var count = 0;
-				var controller = {
-					__name: 'TestController',
-					__templates: ['./noExistPath'],
-					__construct: function(context) {
-						deepEqual(++count, 1, 'コンストラクタが実行される。');
-					},
-					__init: function(context) {
-						ok(false, 'テスト失敗。__initが実行された');
-					},
-					__postInit: function(context) {
-						ok(false, 'テスト失敗。__postInitが実行された');
-					},
-					__ready: function(context) {
-						ok(false, 'テスト失敗。__readyが実行された');
-					},
-					__dispose: function(context) {
-						deepEqual(++count, 7, '__disposeが実行される。');
-					},
-					__unbind: function(context) {
-						deepEqual(++count, 6, '__unbindが実行される。');
-					}
-				};
+	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreInitPromiseのfailが呼ばれること', 7, function() {
+		// テンプレートロードのリトライ時のインターバルを0msに設定
+		h5.settings.dynamicLoading.retryInterval = 0;
+		// view.load()をスタブに差し替え
+		var retryCount = 0;
+		var retryLimit = 3;
+		var errorObj = {
+			detail: {
+				error: {
+					status: h5.env.ua.isIE ? 0 : 12029
+				}
+			}
+		};
+		function load() {
+			var dfd = $.Deferred();
+			if (retryCount++ == retryLimit + 1) {
+				dfd.resolve();
+			} else {
+				dfd.reject(errorObj);
+			}
+			return dfd.promise();
+		}
+		var originalCreateView = h5.core.view.createView;
+		h5.core.view.createView = function() {
+			var view = originalCreateView();
+			view.load = load;
+			return view;
+		};
+		var count = 0;
+		var controller = {
+			__name: 'TestController',
+			__templates: ['./noExistPath']
+		};
 
-				var testController = h5.core.controller('#controllerTest', controller);
+		var testController = h5.core.controller('#controllerTest', controller);
 
-				var errorObj = null;
-				testController.preInitPromise.done(function() {
-					// createViewを元に戻す
-					h5.core.view.createView = originalCreateView;
-					ok(false, 'テスト失敗。preInitPromiseがresolve()された');
-					h5.core.view.createView = originalCreateView;
-					start();
-				}).fail(function(e) {
-					// createViewを元に戻す
-					h5.core.view.createView = originalCreateView;
-					errorObj = e;
-					deepEqual(++count, 2, 'preInitPromiseのfailハンドラが実行される。');
-					strictEqual(this, testController, 'thisはコントローラインスタンスであること');
-				});
-				testController.initPromise
-						.done(function(a) {
-							ok(false, 'テスト失敗。initPromiseがresolve()された');
-							start();
-						})
-						.fail(
-								function(e) {
-									deepEqual(++count, 3, 'initPromiseがreject()された');
-									strictEqual(this, testController, 'thisはコントローラインスタンスであること');
-									strictEqual(e, errorObj,
-											'preInitPromiseのfailで取得したエラーオブジェクトとinitPromiseのfailで取得したエラーオブジェクトが同じであること');
-								});
-				testController.postInitPromise
-						.done(function(a) {
-							ok(false, 'テスト失敗。postInitPromiseがresolve()された');
-							start();
-						})
-						.fail(
-								function(e) {
-									deepEqual(++count, 4, 'postInitPromiseがreject()された');
-									strictEqual(this, testController, 'thisはコントローラインスタンスであること');
-									strictEqual(e, errorObj,
-											'preInitPromiseのfailで取得したエラーオブジェクトとpostInitPromiseのfailで取得したエラーオブジェクトが同じであること');
-								});
-				testController.readyPromise
-						.done(function() {
-							ok(false, 'テスト失敗。 readyPromiseがresolve()された');
-							start();
-						})
-						.fail(
-								function(e) {
-									strictEqual(++count, 5, 'readyPromiseがreject()された');
-									strictEqual(this, testController, 'thisはコントローラインスタンスであること');
-									strictEqual(e, errorObj,
-											'preInitPromiseのfailで取得したエラーオブジェクトとreadyPromiseのfailで取得したエラーオブジェクトが同じであること');
-									start();
-								});
-			});
+		testController.preInitPromise.done(function() {
+			// createViewを元に戻す
+			h5.core.view.createView = originalCreateView;
+			ok(false, 'テスト失敗。preInitPromiseがresolve()された');
+			start();
+		}).fail(function(e) {
+			// createViewを元に戻す
+			h5.core.view.createView = originalCreateView;
+			ok(true, 'preInitPromiseのfailハンドラが実行されること');
+			strictEqual(this, testController, 'thisはコントローラインスタンスであること');
+			strictEqual(e, errorObj, 'view.loadが投げたエラーオブジェクトが取得できること');
+		});
+		testController.readyPromise.fail(function(e) {
+			ok(true, 'readyPromiseのfailハンドラが実行されること');
+			strictEqual(this, testController, 'thisはコントローラインスタンスであること');
+			strictEqual(e, errorObj, 'view.loadが投げたエラーオブジェクトが取得できること');
+			setTimeout(function() {
+				ok(isDisposed(testController), 'コントローラはdisposeされること');
+				start();
+			}, 0);
+		});
+	});
 
 	asyncTest('テンプレートのロードが失敗したとき、commonFailHandlerのthisはコントローラインスタンス、引数はview.loadのエラーオブジェクトであること',
 			2, function() {
