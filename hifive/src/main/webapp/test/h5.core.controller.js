@@ -5336,74 +5336,21 @@ $(function() {
 		});
 	});
 
-	asyncTest(
-			'ライフサイクルイベントがjQueryオブジェクトを返す時の挙動 jQueryオブジェクトを返した場合にpromiseを返したとは判定されずに何も返していない時と同じ挙動になること',
-			12, function() {
-				var jQueryObj = $(document.body);
-				var order = 1;
-				var controller = {
-					__name: 'TestController',
-					child1Controller: {
-						__name: 'child1Controller',
-						__construct: function() {
-							strictEqual(order++, 2, '子コントローラの___constructが2番目に実行されること');
-							return jQueryObj;
-						},
-						__init: function() {
-							strictEqual(order++, 4, '子コントローラの___initが4番目に実行されること');
-							return jQueryObj;
-						},
-						__postInit: function() {
-							strictEqual(order++, 5, '子コントローラの___postInitが5番目に実行されること');
-							return jQueryObj;
-						},
-						__ready: function() {
-							strictEqual(order++, 7, '子コントローラの___readyが7番目に実行されること');
-							return jQueryObj;
-						},
-						__unbind: function() {
-							strictEqual(order++, 9, '子コントローラの___unbindが9番目に実行されること');
-							return jQueryObj;
-						},
-						__dispose: function() {
-							strictEqual(order++, 11, '子コントローラの___disposeが11番目に実行されること');
-							return jQueryObj;
-						}
-					},
-					__construct: function() {
-						strictEqual(order++, 1, 'ルートコントローラの___constructが1番目に実行されること');
-						return jQueryObj;
-					},
-					__init: function() {
-						strictEqual(order++, 3, 'ルートコントローラの___initが3番目に実行されること');
-						return jQueryObj;
-					},
-					__postInit: function() {
-						strictEqual(order++, 6, 'ルートコントローラの___postInitが6番目に実行されること');
-						return jQueryObj;
-					},
-					__ready: function() {
-						strictEqual(order++, 8, 'ルートコントローラの___readyが8番目に実行されること');
-						return jQueryObj;
-					},
-					__unbind: function() {
-						strictEqual(order++, 10, 'ルートコントローラの___unbindが10番目に実行されること');
-						return jQueryObj;
-					},
-					__dispose: function() {
-						strictEqual(order++, 12, 'ルートコントローラの___disposeが11番目に実行されること');
-						return jQueryObj;
-					}
-				};
-				var c = h5.core.controller('#controllerTest', controller);
-				c.readyPromise.done(function() {
-					c.dispose().done(function() {
-						start();
-					});
-				}).fail(function(e) {
-					ok(false, 'ルートコントローラのreadyPromiseのfailハンドラが実行された');
-				});
-			});
+	asyncTest('ライフサイクルイベントがjQueryオブジェクトを返した時にプロミスオブジェクトと判定されないこと', 1, function() {
+		// jQueryオブジェクトはpromiseメソッドを持つが、jQueryオブジェクト自体はプロミスじゃないので、
+		// 正しく判定できているかどうかのテスト (#234)
+		var jQueryObj = $(document.body);
+		var controller = {
+			__name: 'TestController',
+			__init: function() {
+				return jQueryObj;
+			}
+		};
+		h5.core.controller('#controllerTest', controller).readyPromise.done(function() {
+			ok(true, '__initでjQueryオブジェクトを返していても、待機せずにコントローラ化されること');
+			start();
+		});
+	});
 
 	asyncTest('コントローラの__ready処理', 1, function() {
 		var ret = 0;
