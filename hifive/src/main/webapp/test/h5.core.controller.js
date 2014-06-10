@@ -1943,7 +1943,7 @@ $(function() {
 		var $eventTarget = $('<div id="target1">');
 		var $controllerTarget = $('#controllerTest');
 		$controllerTarget.append($eventTarget);
-		window.test1 = {
+		window.h5test1 = {
 			target: $eventTarget
 		};
 		var eventDispatcher = {};
@@ -1975,7 +1975,7 @@ $(function() {
 				deleteProperty(navigator, 'h5test1');
 				start();
 			},
-			'{window.test1.target} click': function(context) {
+			'{window.h5test1.target} click': function(context) {
 				winResult = true;
 			},
 			'{document.body} click': function(context) {
