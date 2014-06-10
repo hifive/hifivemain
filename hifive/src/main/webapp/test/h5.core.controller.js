@@ -3120,7 +3120,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('コントローラのdispose', 2, function() {
+	asyncTest('コントローラのdispose', 3, function() {
 		var handlerResult = false;
 		function f() {
 		// 何もしない関数
@@ -3135,262 +3135,865 @@ $(function() {
 			method: f,
 			'{rootElement} click': function() {
 				handlerResult = true;
+			},
+			childController: {
+				__name: 'ChildController'
 			}
 		}).readyPromise.done(function() {
 			var c = this;
-			c.dispose();
-			// 全てのプロパティがnullになっているかどうかチェック
-			var props = '';
-			for ( var p in c) {
-				if (c.hasOwnProperty(p) && c[p] !== null) {
-					props += p + ', ';
-				}
+			var child = c.childController;
+			var dp = c.dispose();
+			dp.done(function() {
+				ok(isDisposed(c), 'ルートコントローラのリソースはすべて削除(dispose)されていること');
+				ok(isDisposed(child), '子コントローラのリソースはすべて削除(dispose)されていること');
+				$('#controllerTest').click();
+				ok(!handlerResult, 'イベントハンドラは動作しないこと');
+				start();
+			});
+		});
+	});
+
+	asyncTest('子コントローラはdisposeできない', 3, function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			childController: {
+				__name: 'ChildController'
 			}
-			strictEqual(props, '', 'disposeすると全てのプロパティ(hasOwnPropertyがtrueのもの)がnullになること');
-			$('#controllerTest').click();
-			ok(!handlerResult, 'イベントハンドラは動作しなくなること');
+		}).readyPromise.done(function() {
+			try {
+				this.childController.dispose();
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_BIND_ROOT_ONLY, e.message);
+			}
+			ok(!isDisposed(this), 'コントローラはdisposeされていないこと');
+			ok(!isDisposed(this.childController), '子コントローラはdisposeされていないこと');
 			start();
 		});
 	});
 
-	asyncTest(
-			'__constructでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行される',
-			7, function() {
-				var flag = false;
-				var controller = {
-					__name: 'TestController',
-					__construct: function() {
-
-						this.preInitPromise.done(function() {
-							ok(true, 'preInitPromiseのdoneハンドラが実行された');
-						}).fail(function() {
-							ok(false, 'テスト失敗。preInitPromiseのfailハンドラが実行された');
-						});
-						this.initPromise.done(function() {
-							ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-						}).fail(function() {
-							ok(true, 'initPromiseのfailハンドラが実行された');
-						});
-						this.readyPromise.done(function() {
-							ok(false, 'テスト失敗。readyPromiseのdoneハンドラが実行された');
-						}).fail(function() {
-							ok(true, 'readyPromiseのfailハンドラが実行された');
-						});
-
-						// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
-						this.dispose();
-						this.dispose();
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						ok(false, 'テスト失敗。__initが実行された');
-					},
-					__ready: function() {
-						ok(false, 'テスト失敗。__readyが実行された');
-						start();
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-
-				strictEqual(h5.core.controller('#controllerTest', controller), null,
-						'h5.core.controller()がnullを返すこと');
-			});
-
-	asyncTest(
-			'preInitProimseのdoneハンドラでthis.disposeを呼ぶと__init,__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること',
-			8, function() {
-				var flag = false;
-				var errorObj = {};
-				var controller = {
-
-					__name: 'TestController',
-					__construct: function() {
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						ok(false, 'テスト失敗。__initが実行された');
-					},
-					__ready: function() {
-						ok(false, 'テスト失敗。__readyが実行された');
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.initPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'initPromiseのfailハンドラが実行されること');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-				testController.readyPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'initPromiseのfailハンドラが実行されること');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-				testController.preInitPromise.done(function() {
-					ok(true, 'preInitPromiseのdoneハンドラが実行されること');
-					// disposeを2回呼んでも、__disposeが1度だけ呼ばれることを確認する
-					var dispose = testController.dispose;
-					testController.dispose(errorObj);
-					testController.dispose(errorObj);
-				});
-			});
-
-	asyncTest('__initでthis.disposeを呼ぶと__readyは実行されず、initPromise,readyPromiseのfailハンドラが実行されること', 9,
-			function() {
-				var errorObj = {};
-				var flag = false;
-				var controller = {
-
-					__name: 'TestController',
-					__construct: function() {
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						// disposeを2回呼ぶ
-						this.dispose(errorObj);
-						this.dispose(errorObj);
-						ok(true, '__initが実行されること');
-					},
-					__ready: function() {
-						ok(false, 'テスト失敗。__readyが実行された');
-						start();
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-				var testController = h5.core.controller('#controllerTest', controller);
-				testController.preInitPromise.done(function() {
-					ok(true, 'preInitPromiseのdoneハンドラが実行されること');
-				});
-				testController.initPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'initPromiseのfailハンドラが実行された');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-				testController.readyPromise.done(function() {
-					ok(false, 'テスト失敗。initPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'initPromiseのfailハンドラが実行された');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-			});
-
-	asyncTest('initPromiseのdoneハンドラでdisposeを呼ぶと__readyは実行されず、readyPromiseのfailハンドラが実行されること', 7,
-			function() {
-				var errorObj = {};
-				var flag = false;
-				var controller = {
-
-					__name: 'TestController',
-					__construct: function() {
-						ok(true, 'コンストラクタは実行されること');
-					},
-					__init: function() {
-						ok(true, '__initが実行されること');
-					},
-					__ready: function() {
-						ok(false, 'テスト失敗。__readyが実行された');
-						start();
-					},
-					__dispose: function() {
-						ok(!flag, '__disposeが1度だけ実行されること');
-						flag = true;
-						setTimeout(function() {
-							start();
-						}, 0);
-					},
-					__unbind: function() {
-						ok(true, '__unbindが実行されること');
-					}
-				};
-
-				var testController = h5.core.controller('#controllerTest', controller);
-
-				testController.initPromise.done(function() {
-					ok(true, 'initPromiseのdoneハンドラが実行されること');
-					// dispose()を2回呼ぶ
-					testController.dispose(errorObj);
-					testController.dispose(errorObj);
-				}).fail(function() {
-					ok(true, 'テスト失敗。initPromiseのfailハンドラが実行された');
-				});
-				testController.readyPromise.done(function() {
-					ok(false, 'テスト失敗。readyPromiseのdoneハンドラが実行された');
-				}).fail(function(e) {
-					ok(true, 'readyPromiseのfailハンドラが実行された');
-					strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
-				});
-			});
-
-	asyncTest('__readyでthis.disposeを呼ぶとreadyPromiseのfailハンドラが実行されること', 7, function() {
-		var errorObj = {};
-		var flag = false;
-		var controller = {
-
-			__name: 'TestController',
+	test('__constructで自分をdisposeできること', 2, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'ConstructDispose',
 			__construct: function() {
-				ok(true, 'コンストラクタは実行されること');
+				var dp = this.dispose();
+				dp.done(this.own(function() {
+					ok(isDisposed(this), 'コントローラがdisposeされていること');
+				}));
+			}
+		});
+		strictEqual(c, null, '__constructでdisposeするとh5.core.controllerの戻り値はnullであること');
+	});
+
+	test('__constructで自分をdisposeした時、コントローラの初期化処理は中断されること', 7, function() {
+		var initExecuted, postInitExecuted, readyExecuted, childConstructExecuted;
+		h5.core.controller('#controllerTest', {
+			__name: 'ConstructDispose',
+			__construct: function() {
+				var initPromise = this.initPromise;
+				var postInitPromise = this.postInitPromise;
+				var readyPromise = this.readyPromise;
+				this.dispose().done(function() {
+					ok(isRejected(initPromise), 'initPromiseがrejectされること');
+					ok(isRejected(postInitPromise), 'postInitPromiseがrejectされること');
+					ok(isRejected(readyPromise), 'readyPromiseがrejectされること');
+					ok(!childConstructExecuted, '子の__constructは実行されていないこと');
+					ok(!initExecuted, '__initは実行されていないこと');
+					ok(!postInitExecuted, '__postInitは実行されていないこと');
+					ok(!readyExecuted, '__readyは実行されていないこと');
+				});
 			},
 			__init: function() {
-				ok(true, '__initが実行されること');
+				initExecuted = true;
+			},
+			__postInit: function() {
+				postInitExecuted = true;
 			},
 			__ready: function() {
-				// disposeを2回呼ぶ
-				this.dispose(errorObj);
-				this.dispose(errorObj);
-				ok(true, '__readyが実行されること');
+				readyExecuted = true;
 			},
-			__dispose: function() {
-				ok(!flag, '__disposeが1度だけ実行されること');
-				flag = true;
-				setTimeout(function() {
-					start();
-				}, 0);
-			},
-			__unbind: function() {
-				ok(true, '__unbindが実行されること');
+			childCOntroller: {
+				__construct: function() {
+					childConstructExecuted = true;
+				}
 			}
+		});
+	});
+
+	asyncTest('__initで自分をdisposeできること', 2, function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'InitDispose',
+			__init: function() {
+				this.dispose();
+			}
+		}).readyPromise.fail(function() {
+			var c = this;
+			ok(!isDisposed(c), '__initでdisposeするとdisposeされる前にreadyPromiseのfailハンドラが実行されること');
+			setTimeout(function() {
+				ok(isDisposed(c), '__initでdisposeできること');
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest('__initでルートコントローラをdisposeした時、コントローラの初期化処理は中断されること', 21, function() {
+		var resultMap = {};
+		h5.core.controller('#controllerTest', {
+			__name: 'InitDispose',
+			__init: function() {
+				resultMap.root__init = true;
+			},
+			__postInit: function() {
+				resultMap.root__postInit = true;
+			},
+			__ready: function() {
+				resultMap.root__ready = true;
+			},
+			childController: {
+				__name: 'child',
+				__init: function() {
+					resultMap.child__init = true;
+					var root = this.rootController;
+					var child = this;
+					var grandChild = this.childController;
+
+					var rootInitPromise = root.initPromise;
+					var rootPostInitPromise = root.postInitPromise;
+					var rootReadyPromise = root.readyPromise;
+					var childInitPromise = child.initPromise;
+					var childPostInitPromise = child.postInitPromise;
+					var childReadyPromise = child.readyPromise;
+					var grandChildInitPromise = grandChild.initPromise;
+					var grandChildPostInitPromise = grandChild.postInitPromise;
+					var grandChildReadyPromise = grandChild.readyPromise;
+
+					// ルートコントローラをdispose
+					root.dispose().done(
+							function() {
+								ok(isDisposed(root), 'ルートコントローラがdisposeされていること');
+								ok(isDisposed(child), '子コントローラがdisposeされていること');
+								ok(isDisposed(grandChild), '孫コントローラがdisposeされていること');
+
+								ok(resultMap.root__init, '親の__initは実行されていること');
+								ok(isResolved(rootInitPromise), '親のinitPromiseはresolveされること');
+								ok(!resultMap.root__postInit, '親の__postInitは実行されていないこと');
+								ok(isRejected(rootPostInitPromise),
+										'親のpostInitPromiseはrejectされていること');
+								ok(!resultMap.root__ready, '親の__readyは実行されていないこと');
+								ok(isRejected(rootReadyPromise), '親のreadyPromiseはrejectされていること');
+
+								ok(resultMap.child__init, '子の__initは実行されていること');
+								ok(isRejected(childInitPromise), '子のinitPromiseはrejectされること');
+								ok(!resultMap.child__postInit, '子の__postInitは実行されていないこと');
+								ok(isRejected(childPostInitPromise),
+										'子のpostInitPromiseはrejectされていること');
+								ok(!resultMap.child__ready, '子の__readyは実行されていないこと');
+								ok(isRejected(childReadyPromise), '子のreadyPromiseはrejectされていること');
+
+								ok(!resultMap.grandChild__init, '孫の__initは実行されていないこと');
+								ok(isRejected(grandChildInitPromise), '孫のinitPromiseはrejectされること');
+								ok(!resultMap.grandChild__postInit, '孫の__postInitは実行されていないこと');
+								ok(isRejected(grandChildPostInitPromise),
+										'孫のpostInitPromiseはrejectされていること');
+								ok(!resultMap.grandChild__ready, '孫の__readyは実行されていないこと');
+								ok(isRejected(grandChildReadyPromise),
+										'孫のreadyPromiseはrejectされていること');
+
+								start();
+							});
+				},
+				__postInit: function() {
+					resultMap.child__postInit = true;
+				},
+				__ready: function() {
+					resultMap.child__ready = true;
+				},
+				childController: {
+					__name: 'grandChild',
+					__init: function() {
+						resultMap.grandChild__init = true;
+					},
+					__postInit: function() {
+						resultMap.grandChild__postInit = true;
+					},
+					__ready: function() {
+						resultMap.grandChild__ready = true;
+					}
+				}
+			}
+		});
+	});
+
+	asyncTest('__postInitで自分をdisposeできること', 2, function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'InitDispose',
+			__postInit: function() {
+				this.dispose();
+			}
+		}).readyPromise.fail(function() {
+			var c = this;
+			ok(!isDisposed(c), '__postInitでdisposeするとdisposeされる前にreadyPromiseのfailハンドラが実行されること');
+			setTimeout(function() {
+				ok(isDisposed(c), '__postInitでdisposeできること');
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest(
+			'__postInitでルートコントローラをdisposeした時、コントローラの初期化処理は中断されること',
+			21,
+			function() {
+				var resultMap = {};
+				h5.core
+						.controller(
+								'#controllerTest',
+								{
+									__name: 'InitDispose',
+									__init: function() {
+										resultMap.root__init = true;
+									},
+									__postInit: function() {
+										resultMap.root__postInit = true;
+									},
+									__ready: function() {
+										resultMap.root__ready = true;
+									},
+									childController: {
+										__name: 'child',
+										__init: function() {
+											resultMap.child__init = true;
+										},
+										__postInit: function() {
+											resultMap.child__postInit = true;
+											var root = this.rootController;
+											var child = this;
+											var grandChild = this.childController;
+
+											var rootInitPromise = root.initPromise;
+											var rootPostInitPromise = root.postInitPromise;
+											var rootReadyPromise = root.readyPromise;
+											var childInitPromise = child.initPromise;
+											var childPostInitPromise = child.postInitPromise;
+											var childReadyPromise = child.readyPromise;
+											var grandChildInitPromise = grandChild.initPromise;
+											var grandChildPostInitPromise = grandChild.postInitPromise;
+											var grandChildReadyPromise = grandChild.readyPromise;
+
+											// ルートコントローラをdispose
+											root
+													.dispose()
+													.done(
+															function() {
+																ok(isDisposed(root),
+																		'ルートコントローラがdisposeされていること');
+																ok(isDisposed(child),
+																		'子コントローラがdisposeされていること');
+																ok(isDisposed(grandChild),
+																		'孫コントローラがdisposeされていること');
+
+																ok(resultMap.root__init,
+																		'親の__initは実行されていること');
+																ok(isResolved(rootInitPromise),
+																		'親のinitPromiseはresolveされること');
+																ok(!resultMap.root__postInit,
+																		'親の__postInitは実行されていないこと');
+																ok(isRejected(rootPostInitPromise),
+																		'親のpostInitPromiseはrejectされていること');
+																ok(!resultMap.root__ready,
+																		'親の__readyは実行されていないこと');
+																ok(isRejected(rootReadyPromise),
+																		'親のreadyPromiseはrejectされていること');
+
+																ok(resultMap.child__init,
+																		'子の__initは実行されていること');
+																ok(isResolved(childInitPromise),
+																		'子のinitPromiseはresolveされること');
+																ok(resultMap.child__postInit,
+																		'子の__postInitは実行されていること');
+																ok(
+																		isRejected(childPostInitPromise),
+																		'子のpostInitPromiseはrejectされていること');
+																ok(!resultMap.child__ready,
+																		'子の__readyは実行されていないこと');
+																ok(isRejected(childReadyPromise),
+																		'子のreadyPromiseはrejectされていること');
+
+																ok(resultMap.grandChild__init,
+																		'孫の__initは実行されていること');
+																ok(
+																		isResolved(grandChildInitPromise),
+																		'孫のinitPromiseはresolveされること');
+																ok(resultMap.grandChild__postInit,
+																		'孫の__postInitは実行されていること');
+																ok(
+																		isResolved(grandChildPostInitPromise),
+																		'孫のpostInitPromiseはresolveされていること');
+																ok(!resultMap.grandChild__ready,
+																		'孫の__readyは実行されていないこと');
+																ok(
+																		isRejected(grandChildReadyPromise),
+																		'孫のreadyPromiseはrejectされていること');
+
+																start();
+															});
+										},
+										__ready: function() {
+											resultMap.child__ready = true;
+										},
+										childController: {
+											__name: 'grandChild',
+											__init: function() {
+												resultMap.grandChild__init = true;
+											},
+											__postInit: function() {
+												resultMap.grandChild__postInit = true;
+											},
+											__ready: function() {
+												resultMap.grandChild__ready = true;
+											}
+										}
+									}
+								});
+			});
+
+	asyncTest('__readyで自分をdisposeできること', 2, function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'ReadyDispose',
+			__ready: function() {
+				this.dispose();
+			}
+		}).readyPromise.fail(function() {
+			var c = this;
+			ok(!isDisposed(c), '__readyでdisposeするとdisposeされる前にreadyPromiseのfailハンドラが実行されること');
+			setTimeout(function() {
+				ok(isDisposed(c), '__readyでdisposeできること');
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest(
+			'__readyでルートコントローラをdisposeした時、コントローラの初期化処理は中断されること',
+			21,
+			function() {
+				var resultMap = {};
+				h5.core
+						.controller(
+								'#controllerTest',
+								{
+									__name: 'InitDispose',
+									__init: function() {
+										resultMap.root__init = true;
+									},
+									__postInit: function() {
+										resultMap.root__postInit = true;
+									},
+									__ready: function() {
+										resultMap.root__ready = true;
+									},
+									childController: {
+										__name: 'child',
+										__init: function() {
+											resultMap.child__init = true;
+										},
+										__postInit: function() {
+											resultMap.child__postInit = true;
+										},
+										__ready: function() {
+											resultMap.child__ready = true;
+											var root = this.rootController;
+											var child = this;
+											var grandChild = this.childController;
+
+											var rootInitPromise = root.initPromise;
+											var rootPostInitPromise = root.postInitPromise;
+											var rootReadyPromise = root.readyPromise;
+											var childInitPromise = child.initPromise;
+											var childPostInitPromise = child.postInitPromise;
+											var childReadyPromise = child.readyPromise;
+											var grandChildInitPromise = grandChild.initPromise;
+											var grandChildPostInitPromise = grandChild.postInitPromise;
+											var grandChildReadyPromise = grandChild.readyPromise;
+
+											// ルートコントローラをdispose
+											root
+													.dispose()
+													.done(
+															function() {
+																ok(isDisposed(root),
+																		'ルートコントローラがdisposeされていること');
+																ok(isDisposed(child),
+																		'子コントローラがdisposeされていること');
+																ok(isDisposed(grandChild),
+																		'孫コントローラがdisposeされていること');
+
+																ok(resultMap.root__init,
+																		'親の__initは実行されていること');
+																ok(isResolved(rootInitPromise),
+																		'親のinitPromiseはresolveされること');
+																ok(resultMap.root__postInit,
+																		'親の__postInitは実行されていること');
+																ok(isResolved(rootPostInitPromise),
+																		'親のpostInitPromiseはresolveされていること');
+																ok(!resultMap.root__ready,
+																		'親の__readyは実行されていないこと');
+																ok(isRejected(rootReadyPromise),
+																		'親のreadyPromiseはrejectされていること');
+
+																ok(resultMap.child__init,
+																		'子の__initは実行されていること');
+																ok(isResolved(childInitPromise),
+																		'子のinitPromiseはresolveされること');
+																ok(resultMap.child__postInit,
+																		'子の__postInitは実行されていること');
+																ok(
+																		isResolved(childPostInitPromise),
+																		'子のpostInitPromiseはresolveされていること');
+																ok(resultMap.child__ready,
+																		'子の__readyは実行されていること');
+																ok(isRejected(childReadyPromise),
+																		'子のreadyPromiseはrejectされていること');
+
+																ok(resultMap.grandChild__init,
+																		'孫の__initは実行されていること');
+																ok(
+																		isResolved(grandChildInitPromise),
+																		'孫のinitPromiseはresolveされること');
+																ok(resultMap.grandChild__postInit,
+																		'孫の__postInitは実行されていること');
+																ok(
+																		isResolved(grandChildPostInitPromise),
+																		'孫のpostInitPromiseはresolveされていること');
+																ok(resultMap.grandChild__ready,
+																		'孫の__readyは実行されていること');
+																ok(
+																		isResolved(grandChildReadyPromise),
+																		'孫のreadyPromiseはresolveされていること');
+
+																start();
+															});
+										},
+										childController: {
+											__name: 'grandChild',
+											__init: function() {
+												resultMap.grandChild__init = true;
+											},
+											__postInit: function() {
+												resultMap.grandChild__postInit = true;
+											},
+											__ready: function() {
+												resultMap.grandChild__ready = true;
+											}
+										}
+									}
+								});
+			});
+
+	asyncTest('preInitProimseのdoneハンドラの中で自身をdisposeできること', 2, function() {
+		var controller = {
+			__name: 'TestController',
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.fail(function() {
+			ok(true, 'readyPromiseのfailが実行されること');
+			setTimeout(function() {
+				ok(isDisposed(testController), 'コントローラはdisposeされていること');
+				start();
+			}, 0);
+		});
+		testController.preInitPromise.done(function() {
+			this.dispose();
+		});
+	});
+
+	asyncTest('preInitProimseのdoneハンドラで自身をdisposeした時、コントローラの初期化処理は中断されること', 19, function() {
+		var resultMap = {};
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'InitDispose',
+			__init: function() {
+				resultMap.root__init = true;
+			},
+			__postInit: function() {
+				resultMap.root__postInit = true;
+			},
+			__ready: function() {
+				resultMap.root__ready = true;
+			},
+			childController: {
+				__name: 'child',
+				__init: function() {
+					resultMap.child__init = true;
+				},
+				__postInit: function() {
+					resultMap.child__postInit = true;
+				},
+				__ready: function() {
+					resultMap.child__ready = true;
+				},
+				childController: {
+					__name: 'grandChild',
+					__init: function() {
+						resultMap.grandChild__init = true;
+					},
+					__postInit: function() {
+						resultMap.grandChild__postInit = true;
+					},
+					__ready: function() {
+						resultMap.grandChild__ready = true;
+					}
+				}
+			}
+		});
+		c.childController.preInitPromise.done(function() {
+			var root = this.rootController;
+			var child = this;
+			var grandChild = this.childController;
+
+			var rootPostInitPromise = root.postInitPromise;
+			var rootReadyPromise = root.readyPromise;
+			var childInitPromise = child.initPromise;
+			var childPostInitPromise = child.postInitPromise;
+			var childReadyPromise = child.readyPromise;
+			var grandChildInitPromise = grandChild.initPromise;
+			var grandChildPostInitPromise = grandChild.postInitPromise;
+			var grandChildReadyPromise = grandChild.readyPromise;
+
+			// ルートコントローラをdispose
+			root.dispose().done(function() {
+				ok(isDisposed(root), 'ルートコントローラがdisposeされていること');
+				ok(isDisposed(child), '子コントローラがdisposeされていること');
+				ok(isDisposed(grandChild), '孫コントローラがdisposeされていること');
+
+				// 親と子のpreInitPromiseがresolveされる順番は不定なので、親の__initが実行されているかどうかは決まらない
+				// 親のpostInitからチェックする
+				ok(!resultMap.root__postInit, '親の__postInitは実行されていないこと');
+				ok(isRejected(rootPostInitPromise), '親のpostInitPromiseはrejectされていること');
+				ok(!resultMap.root__ready, '親の__readyは実行されていないこと');
+				ok(isRejected(rootReadyPromise), '親のreadyPromiseはrejectされていること');
+
+				ok(!resultMap.child__init, '子の__initは実行されていないこと');
+				ok(isRejected(childInitPromise), '子のinitPromiseはrejectされること');
+				ok(!resultMap.child__postInit, '子の__postInitは実行されていないこと');
+				ok(isRejected(childPostInitPromise), '子のpostInitPromiseはrejectされていること');
+				ok(!resultMap.child__ready, '子の__readyは実行されていないこと');
+				ok(isRejected(childReadyPromise), '子のreadyPromiseはrejectされていること');
+
+				ok(!resultMap.grandChild__init, '孫の__initは実行されていないこと');
+				ok(isRejected(grandChildInitPromise), '孫のinitPromiseはrejectされること');
+				ok(!resultMap.grandChild__postInit, '孫の__postInitは実行されていないこと');
+				ok(isRejected(grandChildPostInitPromise), '孫のpostInitPromiseはrejectされていること');
+				ok(!resultMap.grandChild__ready, '孫の__readyは実行されていないこと');
+				ok(isRejected(grandChildReadyPromise), '孫のreadyPromiseはrejectされていること');
+
+				start();
+			});
+		});
+	});
+
+	asyncTest('initProimseのdoneハンドラの中で自身をdisposeできること', 2, function() {
+		var controller = {
+			__name: 'TestController',
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.fail(function() {
+			ok(true, 'readyPromiseのfailが実行されること');
+			setTimeout(function() {
+				ok(isDisposed(testController), 'コントローラはdisposeされていること');
+				start();
+			}, 0);
+		});
+		testController.initPromise.done(function() {
+			this.dispose();
+		});
+	});
+
+	asyncTest('initProimseのdoneハンドラで自身をdisposeした時、コントローラの初期化処理は中断されること', 21, function() {
+		var resultMap = {};
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'InitDispose',
+			__init: function() {
+				resultMap.root__init = true;
+			},
+			__postInit: function() {
+				resultMap.root__postInit = true;
+			},
+			__ready: function() {
+				resultMap.root__ready = true;
+			},
+			childController: {
+				__name: 'child',
+				__init: function() {
+					resultMap.child__init = true;
+				},
+				__postInit: function() {
+					resultMap.child__postInit = true;
+				},
+				__ready: function() {
+					resultMap.child__ready = true;
+				},
+				childController: {
+					__name: 'grandChild',
+					__init: function() {
+						resultMap.grandChild__init = true;
+					},
+					__postInit: function() {
+						resultMap.grandChild__postInit = true;
+					},
+					__ready: function() {
+						resultMap.grandChild__ready = true;
+					}
+				}
+			}
+		});
+		c.childController.initPromise.done(function() {
+			var root = this.rootController;
+			var child = this;
+			var grandChild = this.childController;
+
+			var rootInitPromise = root.initPromise;
+			var rootPostInitPromise = root.postInitPromise;
+			var rootReadyPromise = root.readyPromise;
+			var childInitPromise = child.initPromise;
+			var childPostInitPromise = child.postInitPromise;
+			var childReadyPromise = child.readyPromise;
+			var grandChildInitPromise = grandChild.initPromise;
+			var grandChildPostInitPromise = grandChild.postInitPromise;
+			var grandChildReadyPromise = grandChild.readyPromise;
+
+			// ルートコントローラをdispose
+			root.dispose().done(function() {
+				ok(isDisposed(root), 'ルートコントローラがdisposeされていること');
+				ok(isDisposed(child), '子コントローラがdisposeされていること');
+				ok(isDisposed(grandChild), '孫コントローラがdisposeされていること');
+
+				ok(resultMap.root__init, '親の__initは実行されていること');
+				ok(isResolved(rootInitPromise), '親のinitPromiseはresolveされること');
+				ok(!resultMap.root__postInit, '親の__postInitは実行されていないこと');
+				ok(isRejected(rootPostInitPromise), '親のpostInitPromiseはrejectされていること');
+				ok(!resultMap.root__ready, '親の__readyは実行されていないこと');
+				ok(isRejected(rootReadyPromise), '親のreadyPromiseはrejectされていること');
+
+				ok(resultMap.child__init, '子の__initは実行されていること');
+				ok(isResolved(childInitPromise), '子のinitPromiseはresolveされること');
+				ok(!resultMap.child__postInit, '子の__postInitは実行されていないこと');
+				ok(isRejected(childPostInitPromise), '子のpostInitPromiseはrejectされていること');
+				ok(!resultMap.child__ready, '子の__readyは実行されていないこと');
+				ok(isRejected(childReadyPromise), '子のreadyPromiseはrejectされていること');
+
+				ok(!resultMap.grandChild__init, '孫の__initは実行されていないこと');
+				ok(isRejected(grandChildInitPromise), '孫のinitPromiseはrejectされること');
+				ok(!resultMap.grandChild__postInit, '孫の__postInitは実行されていないこと');
+				ok(isRejected(grandChildPostInitPromise), '孫のpostInitPromiseはrejectされていること');
+				ok(!resultMap.grandChild__ready, '孫の__readyは実行されていないこと');
+				ok(isRejected(grandChildReadyPromise), '孫のreadyPromiseはrejectされていること');
+
+				start();
+			});
+		});
+	});
+
+	asyncTest('postInitProimseのdoneハンドラの中で自身をdisposeできること', 2, function() {
+		var controller = {
+			__name: 'TestController',
+		};
+
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.fail(function() {
+			ok(true, 'readyPromiseのfailが実行されること');
+			setTimeout(function() {
+				ok(isDisposed(testController), 'コントローラはdisposeされていること');
+				start();
+			}, 0);
+		});
+		testController.postInitPromise.done(function() {
+			this.dispose();
+		});
+	});
+
+	asyncTest('postInitProimseのdoneハンドラで自身をdisposeした時、コントローラの初期化処理は中断されること', 21, function() {
+		var resultMap = {};
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'InitDispose',
+			__init: function() {
+				resultMap.root__init = true;
+			},
+			__postInit: function() {
+				resultMap.root__postInit = true;
+			},
+			__ready: function() {
+				resultMap.root__ready = true;
+			},
+			childController: {
+				__name: 'child',
+				__init: function() {
+					resultMap.child__init = true;
+				},
+				__postInit: function() {
+					resultMap.child__postInit = true;
+				},
+				__ready: function() {
+					resultMap.child__ready = true;
+				},
+				childController: {
+					__name: 'grandChild',
+					__init: function() {
+						resultMap.grandChild__init = true;
+					},
+					__postInit: function() {
+						resultMap.grandChild__postInit = true;
+					},
+					__ready: function() {
+						resultMap.grandChild__ready = true;
+					}
+				}
+			}
+		});
+		c.childController.postInitPromise.done(function() {
+			var root = this.rootController;
+			var child = this;
+			var grandChild = this.childController;
+
+			var rootInitPromise = root.initPromise;
+			var rootPostInitPromise = root.postInitPromise;
+			var rootReadyPromise = root.readyPromise;
+			var childInitPromise = child.initPromise;
+			var childPostInitPromise = child.postInitPromise;
+			var childReadyPromise = child.readyPromise;
+			var grandChildInitPromise = grandChild.initPromise;
+			var grandChildPostInitPromise = grandChild.postInitPromise;
+			var grandChildReadyPromise = grandChild.readyPromise;
+
+			// ルートコントローラをdispose
+			root.dispose().done(function() {
+				ok(isDisposed(root), 'ルートコントローラがdisposeされていること');
+				ok(isDisposed(child), '子コントローラがdisposeされていること');
+				ok(isDisposed(grandChild), '孫コントローラがdisposeされていること');
+
+				ok(resultMap.root__init, '親の__initは実行されていること');
+				ok(isResolved(rootInitPromise), '親のinitPromiseはresolveされること');
+				ok(!resultMap.root__postInit, '親の__postInitは実行されていないこと');
+				ok(isRejected(rootPostInitPromise), '親のpostInitPromiseはrejectされていること');
+				ok(!resultMap.root__ready, '親の__readyは実行されていないこと');
+				ok(isRejected(rootReadyPromise), '親のreadyPromiseはrejectされていること');
+
+				ok(resultMap.child__init, '子の__initは実行されていること');
+				ok(isResolved(childInitPromise), '子のinitPromiseはresolveされること');
+				ok(resultMap.child__postInit, '子の__postInitは実行されていること');
+				ok(isResolved(childPostInitPromise), '子のpostInitPromiseはresolveされていること');
+				ok(!resultMap.child__ready, '子の__readyは実行されていないこと');
+				ok(isRejected(childReadyPromise), '子のreadyPromiseはrejectされていること');
+
+				ok(resultMap.grandChild__init, '孫の__initは実行されていること');
+				ok(isResolved(grandChildInitPromise), '孫のinitPromiseはresolveされること');
+				ok(resultMap.grandChild__postInit, '孫の__postInitは実行されていること');
+				ok(isResolved(grandChildPostInitPromise), '孫のpostInitPromiseはresolveされていること');
+				ok(!resultMap.grandChild__ready, '孫の__readyは実行されていないこと');
+				ok(isRejected(grandChildReadyPromise), '孫のreadyPromiseはrejectされていること');
+
+				start();
+			});
+		});
+	});
+
+	asyncTest('readyProimseのdoneハンドラの中で自身をdisposeできること', 1, function() {
+		var controller = {
+			__name: 'TestController',
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			ok(false, 'テスト失敗。redayPromiseのdoneハンドラが実行された');
-		}).fail(function(e) {
-			ok(true, 'readyPromiseのfailハンドラが実行された');
-			strictEqual(e, errorObj, 'disposeに渡した引数が、failハンドラで受け取れること');
+			var dp = this.dispose();
+			dp.done(function() {
+				ok(isDisposed(testController), 'コントローラはdisposeされていること');
+				start();
+			});
+		});
+	});
+
+	asyncTest('readyProimseのdoneハンドラで自身をdisposeした時、コントローラの初期化処理は中断されること', 21, function() {
+		var resultMap = {};
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'InitDispose',
+			__init: function() {
+				resultMap.root__init = true;
+			},
+			__postInit: function() {
+				resultMap.root__postInit = true;
+			},
+			__ready: function() {
+				resultMap.root__ready = true;
+			},
+			childController: {
+				__name: 'child',
+				__init: function() {
+					resultMap.child__init = true;
+				},
+				__postInit: function() {
+					resultMap.child__postInit = true;
+				},
+				__ready: function() {
+					resultMap.child__ready = true;
+				},
+				childController: {
+					__name: 'grandChild',
+					__init: function() {
+						resultMap.grandChild__init = true;
+					},
+					__postInit: function() {
+						resultMap.grandChild__postInit = true;
+					},
+					__ready: function() {
+						resultMap.grandChild__ready = true;
+					}
+				}
+			}
+		});
+		c.childController.readyPromise.done(function() {
+			var root = this.rootController;
+			var child = this;
+			var grandChild = this.childController;
+
+			var rootInitPromise = root.initPromise;
+			var rootPostInitPromise = root.postInitPromise;
+			var rootReadyPromise = root.readyPromise;
+			var childInitPromise = child.initPromise;
+			var childPostInitPromise = child.postInitPromise;
+			var childReadyPromise = child.readyPromise;
+			var grandChildInitPromise = grandChild.initPromise;
+			var grandChildPostInitPromise = grandChild.postInitPromise;
+			var grandChildReadyPromise = grandChild.readyPromise;
+
+			// ルートコントローラをdispose
+			root.dispose().done(function() {
+				ok(isDisposed(root), 'ルートコントローラがdisposeされていること');
+				ok(isDisposed(child), '子コントローラがdisposeされていること');
+				ok(isDisposed(grandChild), '孫コントローラがdisposeされていること');
+
+				ok(resultMap.root__init, '親の__initは実行されていること');
+				ok(isResolved(rootInitPromise), '親のinitPromiseはresolveされること');
+				ok(resultMap.root__postInit, '親の__postInitは実行されていること');
+				ok(isResolved(rootPostInitPromise), '親のpostInitPromiseはresolveされていること');
+				ok(!resultMap.root__ready, '親の__readyは実行されていないこと');
+				ok(isRejected(rootReadyPromise), '親のreadyPromiseはrejectされていること');
+
+				ok(resultMap.child__init, '子の__initは実行されていること');
+				ok(isResolved(childInitPromise), '子のinitPromiseはresolveされること');
+				ok(resultMap.child__postInit, '子の__postInitは実行されていること');
+				ok(isResolved(childPostInitPromise), '子のpostInitPromiseはresolveされていること');
+				ok(resultMap.child__ready, '子の__readyは実行されていること');
+				ok(isResolved(childReadyPromise), '子のreadyPromiseはresolveされていること');
+
+				ok(resultMap.grandChild__init, '孫の__initは実行されていること');
+				ok(isResolved(grandChildInitPromise), '孫のinitPromiseはresolveされること');
+				ok(resultMap.grandChild__postInit, '孫の__postInitは実行されていること');
+				ok(isResolved(grandChildPostInitPromise), '孫のpostInitPromiseはresolveされていること');
+				ok(resultMap.grandChild__ready, '孫の__readyは実行されていること');
+				ok(isResolved(grandChildReadyPromise), '孫のreadyPromiseはresolveされていること');
+
+				start();
+			});
 		});
 	});
 
@@ -7360,93 +7963,93 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', controller);
 	});
 
-// TODO __unbind, __disposeで例外をスローした時の挙動について整理してから、テストコードの対応を行う。(#329)
-//
-//	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのunbindを呼んだ場合。', 3,
-//			function() {
-//				var errorMsg = '__unbind error.';
-//				var id = this.testTimeoutFunc(errorMsg);
-//
-//				window.onerror = function(ev) {
-//					clearTimeout(id);
-//					ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-//					$(c.rootElement).click();
-//					ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
-//					ok(c.__name, 'コントローラはdisposeされていないこと');
-//					start();
-//				};
-//
-//				var evHandlerFlag;
-//				var controller = {
-//					__name: 'TestController',
-//					__unbind: function() {
-//						throw new Error(errorMsg);
-//					},
-//					'{rootElement} click': function() {
-//						evHandlerFlag = true;
-//					}
-//				};
-//
-//				var c = h5.core.controller('#controllerTest', controller);
-//				c.readyPromise.done(function() {
-//					c.unbind();
-//				});
-//			});
-//
-//	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのdisposeを呼んだ場合。', 3,
-//			function() {
-//				var errorMsg = '__unbind error.';
-//				var id = this.testTimeoutFunc(errorMsg);
-//
-//				window.onerror = function(ev) {
-//					clearTimeout(id);
-//					ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-//					$(c.rootElement).click();
-//					ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
-//					ok(!c.__name, 'コントローラはdisposeされていること');
-//					start();
-//				};
-//
-//				var evHandlerFlag;
-//				var controller = {
-//					__name: 'TestController',
-//					__unbind: function() {
-//						throw new Error(errorMsg);
-//					},
-//					'{rootElement} click': function() {
-//						evHandlerFlag = true;
-//					}
-//				};
-//
-//				var c = h5.core.controller('#controllerTest', controller);
-//				c.readyPromise.done(function() {
-//					c.dispose();
-//				});
-//			});
-//
-//	asyncTest('[browser#and-and:-3|sa-ios:-4]__dispose()で例外をスローする。', 2, function() {
-//		var errorMsg = '__dispose error.';
-//		var id = this.testTimeoutFunc(errorMsg);
-//
-//		window.onerror = function(ev) {
-//			clearTimeout(id);
-//			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-//			ok(!c.__name, 'コントローラはdisposeされていること');
-//			start();
-//		};
-//
-//		var controller = {
-//			__name: 'TestController',
-//			__dispose: function() {
-//				throw new Error(errorMsg);
-//			}
-//		};
-//
-//		var c = h5.core.controller('#controllerTest', controller);
-//		c.readyPromise.done(function() {
-//			c.dispose();
-//		});
-//	});
+	// TODO __unbind, __disposeで例外をスローした時の挙動について整理してから、テストコードの対応を行う。(#329)
+	//
+	//	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのunbindを呼んだ場合。', 3,
+	//			function() {
+	//				var errorMsg = '__unbind error.';
+	//				var id = this.testTimeoutFunc(errorMsg);
+	//
+	//				window.onerror = function(ev) {
+	//					clearTimeout(id);
+	//					ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+	//					$(c.rootElement).click();
+	//					ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
+	//					ok(c.__name, 'コントローラはdisposeされていないこと');
+	//					start();
+	//				};
+	//
+	//				var evHandlerFlag;
+	//				var controller = {
+	//					__name: 'TestController',
+	//					__unbind: function() {
+	//						throw new Error(errorMsg);
+	//					},
+	//					'{rootElement} click': function() {
+	//						evHandlerFlag = true;
+	//					}
+	//				};
+	//
+	//				var c = h5.core.controller('#controllerTest', controller);
+	//				c.readyPromise.done(function() {
+	//					c.unbind();
+	//				});
+	//			});
+	//
+	//	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのdisposeを呼んだ場合。', 3,
+	//			function() {
+	//				var errorMsg = '__unbind error.';
+	//				var id = this.testTimeoutFunc(errorMsg);
+	//
+	//				window.onerror = function(ev) {
+	//					clearTimeout(id);
+	//					ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+	//					$(c.rootElement).click();
+	//					ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
+	//					ok(!c.__name, 'コントローラはdisposeされていること');
+	//					start();
+	//				};
+	//
+	//				var evHandlerFlag;
+	//				var controller = {
+	//					__name: 'TestController',
+	//					__unbind: function() {
+	//						throw new Error(errorMsg);
+	//					},
+	//					'{rootElement} click': function() {
+	//						evHandlerFlag = true;
+	//					}
+	//				};
+	//
+	//				var c = h5.core.controller('#controllerTest', controller);
+	//				c.readyPromise.done(function() {
+	//					c.dispose();
+	//				});
+	//			});
+	//
+	//	asyncTest('[browser#and-and:-3|sa-ios:-4]__dispose()で例外をスローする。', 2, function() {
+	//		var errorMsg = '__dispose error.';
+	//		var id = this.testTimeoutFunc(errorMsg);
+	//
+	//		window.onerror = function(ev) {
+	//			clearTimeout(id);
+	//			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+	//			ok(!c.__name, 'コントローラはdisposeされていること');
+	//			start();
+	//		};
+	//
+	//		var controller = {
+	//			__name: 'TestController',
+	//			__dispose: function() {
+	//				throw new Error(errorMsg);
+	//			}
+	//		};
+	//
+	//		var c = h5.core.controller('#controllerTest', controller);
+	//		c.readyPromise.done(function() {
+	//			c.dispose();
+	//		});
+	//	});
 
 	asyncTest('__init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。', 11, function() {
 		window.onerror = function() {};
