@@ -4916,7 +4916,7 @@ $(function() {
 		function ready() {
 			result.push(this.__name + '__ready');
 		}
-		var a = {
+		var c = {
 			__name: 'A',
 			__construct: construct,
 			__init: init,
@@ -4937,10 +4937,10 @@ $(function() {
 				}
 			}
 		};
-		h5.core.controller('#controllerTest', a).readyPromise.done(function() {
+		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
 			deepEqual(result, ['A__construct', 'B__construct', 'C__construct', 'A__init',
 					'B__init', 'C__init', 'C__postInit', 'B__postInit', 'A__postInit', 'C__ready',
-					'B__ready', 'A__ready'], '実行順序が正しいこと');
+					'B__ready', 'A__ready'], 'コントローラの各ライフサイクルの実行順序が正しいこと');
 			start();
 		});
 	});
@@ -4991,7 +4991,7 @@ $(function() {
 			}), 0);
 			return dfd.promise();
 		}
-		var a = {
+		var c = {
 			__name: 'A',
 			__construct: construct,
 			__init: init,
@@ -5012,12 +5012,106 @@ $(function() {
 				}
 			}
 		};
-		h5.core.controller('#controllerTest', a).readyPromise.done(function() {
+		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
 			deepEqual(result, ['A__construct', 'C__construct', 'B__construct', 'A__init',
 					'B__init', 'C__init', 'C__postInit', 'B__postInit', 'A__postInit', 'C__ready',
-					'B__ready', 'A__ready'], 'Bコントローラの各ライフサイクルが非同期の場合の実行順序が正しいこと');
+					'B__ready', 'A__ready'],
+					'ライフサイクルがプロミスを返して非同期で動作する場合、コントローラの各ライフサイクルの実行順序が正しいこと');
 			start();
 		});
+	});
+
+	asyncTest('テンプレート使用時のライフサイクルイベントの実行順序', 1, function() {
+		var result = [];
+		function construct() {
+			result.push(this.__name + '__construct');
+		}
+		function init() {
+			result.push(this.__name + '__init');
+		}
+		function postInit() {
+			result.push(this.__name + '__postInit');
+		}
+		function ready() {
+			result.push(this.__name + '__ready');
+		}
+		var c = {
+			__name: 'A',
+			__template: 'template/test2.ejs',
+			__construct: construct,
+			__init: init,
+			__postInit: postInit,
+			__ready: ready,
+			bController: {
+				__name: 'B',
+				__construct: construct,
+				__init: init,
+				__postInit: postInit,
+				__ready: ready,
+				cController: {
+					__name: 'C',
+					__template: 'template/test8.ejs',
+					__construct: construct,
+					__init: init,
+					__postInit: postInit,
+					__ready: ready
+				}
+			}
+		};
+		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
+			deepEqual(result, ['A__construct', 'B__construct', 'C__construct', 'A__init',
+					'B__init', 'C__init', 'C__postInit', 'B__postInit', 'A__postInit', 'C__ready',
+					'B__ready', 'A__ready'], 'テンプレートの指定されたコントローラがある場合、コントローラの各ライフサイクルの実行順序が正しいこと');
+			start();
+		});
+	});
+
+	asyncTest('__constructの時点で使用可能なコントローラのメソッドとプロパティ', 41, function() {
+		var props = ['preInitPromise', 'initPromise', 'postInitPromise', 'readyPromise', 'view',
+				'$find', 'bind', 'deferred', 'disableListeners', 'indicator', 'own', 'ownWithOrg',
+				'throwCustomError', 'throwError', 'trigger', 'triggerIndicator', 'unbind',
+				'isInit', 'isPostInit', 'isReady'];
+		var length = props.length;
+		function checkControllerProp(c) {
+			for (var i = 0; i < length; i++) {
+				var p = props[i];
+				ok(c[p] != null, p);
+			}
+		}
+		h5.core.controller('#controllerTest', {
+			__name: 'Test',
+			__construct: function() {
+				checkControllerProp(this);
+				strictEqual(this.rootElement, $('#controllerTest')[0],
+						'ルートコントローラの場合、ルートエレメントが__constructの時点で設定されていること');
+			},
+			childController: {
+				__name: 'Child',
+				__construct: function() {
+					checkControllerProp(this);
+				}
+			}
+		}).readyPromise.done(start);
+	});
+
+	asyncTest('__initの時点でルートコントローラ、ルートエレメントが設定されていること', 4, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'Test',
+			__init: function() {
+				strictEqual(this.rootElement, $('#controllerTest')[0],
+						'ルートエレメントが__initの時点で設定されていること');
+				strictEqual(this.rootController, c, 'ルートコントローラが__initの時点で設定されていること');
+			},
+			childController: {
+				__name: 'Child',
+				__init: function() {
+					strictEqual(this.rootElement, $('#controllerTest')[0],
+							'ルートエレメントが__initの時点で設定されていること');
+					strictEqual(this.rootController, c, 'ルートコントローラが__initの時点で設定されていること');
+				}
+			}
+		});
+		c.readyPromise.done(start);
 	});
 
 	asyncTest('コントローラの持つプロミスに登録したdoneハンドラのthisはコントローラインスタンスであること', 8, function() {
@@ -5352,310 +5446,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('__construct, __init, __postInit, __readyが動作するタイミングは正しいか1(テンプレート使用)', 31, function() {
-		var ip1 = null;
-		var ip2 = null;
-		var ip3 = null;
-		var ip4 = null;
-		var pp1 = null;
-		var pp2 = null;
-		var pp3 = null;
-		var pp4 = null;
-		var rp1 = null;
-		var rp2 = null;
-		var rp3 = null;
-		var rp4 = null;
-		var ir = null;
-		var pr = null;
-		var rr = null;
-		var array = [];
-		var controller = {
-			__name: 'TestController',
 
-			__templates: ['./template/test2.ejs'],
-
-			__construct: function() {
-				ip1 = this.initPromise;
-				pp1 = this.postInitPromise;
-				rp1 = this.readyPromise;
-				array.push(0);
-			},
-
-			__init: function() {
-				ir = this.rootElement;
-				ip2 = this.initPromise;
-				pp2 = this.postInitPromise;
-				rp2 = this.readyPromise;
-				array.push(1);
-			},
-			__postInit: function() {
-				pr = this.rootElement;
-				ip3 = this.initPromise;
-				pp3 = this.postInitPromise;
-				rp3 = this.readyPromise;
-				array.push(2);
-			},
-
-			__ready: function() {
-				rr = this.rootElement;
-				ip4 = this.initPromise;
-				pp4 = this.postInitPromise;
-				rp4 = this.readyPromise;
-				array.push(3);
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-
-		var noip1 = null;
-		var noip2 = null;
-		var noip3 = null;
-		var noip4 = null;
-		var nopp1 = null;
-		var nopp2 = null;
-		var nopp3 = null;
-		var nopp4 = null;
-		var norp1 = null;
-		var norp2 = null;
-		var norp3 = null;
-		var norp4 = null;
-		var noir = null;
-		var nopr = null;
-		var norr = null;
-		var controller2 = {
-			__name: 'NoTemplateController',
-
-			__construct: function() {
-				noip1 = this.initPromise;
-				nopp1 = this.postInitPromise;
-				norp1 = this.readyPromise;
-			},
-
-			__init: function() {
-				noir = this.rootElement;
-				noip2 = this.initPromise;
-				nopp2 = this.postInitPromise;
-				norp2 = this.readyPromise;
-			},
-
-			__postInit: function() {
-				nopr = this.rootElement;
-				noip3 = this.initPromise;
-				nopp3 = this.postInitPromise;
-				norp3 = this.readyPromise;
-			},
-
-			__ready: function() {
-				norr = this.rootElement;
-				noip4 = this.initPromise;
-				nopp4 = this.postInitPromise;
-				norp4 = this.readyPromise;
-			}
-		};
-
-		var noTemplateController = h5.core.controller('#controllerTest', controller2);
-
-		h5.async.when(testController.readyPromise, noTemplateController.readyPromise).done(
-				function() {
-					strictEqual(array.join(';'), '0;1;2;3',
-							'__construct, __init, __postInit, __readyは適切なタイミングで発火しているか');
-					ok(ip1, '__constructイベントの中でinitPromiseに触れるか');
-					ok(pp1, '__constructイベントの中でpostInitPromiseに触れるか');
-					ok(rp1, '__constructイベントの中でreadyPromiseに触れるか');
-					ok(ip2, '__initイベントの中でinitPromiseに触れるか');
-					ok(pp2, '__initイベントの中でpostInitPromiseに触れるか');
-					ok(rp2, '__initイベントの中でreadyPromiseに触れるか');
-					ok(ip3, '__postInitイベントの中でinitPromiseに触れるか');
-					ok(pp3, '__postInitイベントの中でpostInitPromiseに触れるか');
-					ok(rp3, '__postInitイベントの中でreadyPromiseに触れるか');
-					ok(ip4, '__readyイベントの中でinitPromiseに触れるか');
-					ok(pp4, '__readyイベントの中でpostInitPromiseに触れるか');
-					ok(rp4, '__readyイベントの中でreadyPromiseに触れるか');
-
-
-					ok(noip1, 'テンプレートを使わない場合でも、__constructイベントの中でinitPromiseに触れるか');
-					ok(nopp1, 'テンプレートを使わない場合でも、__constructイベントの中でpostInitPromiseに触れるか');
-					ok(norp1, 'テンプレートを使わない場合でも、__constructイベントの中でreadyPromiseに触れるか');
-					ok(noip2, 'テンプレートを使わない場合でも、__initイベントの中でinitPromiseに触れるか');
-					ok(nopp2, 'テンプレートを使わない場合でも、__initイベントの中でpostInitPromiseに触れるか');
-					ok(norp2, 'テンプレートを使わない場合でも、__initイベントの中でreadyPromiseに触れるか');
-					ok(noip3, 'テンプレートを使わない場合でも、__postInitイベントの中でinitPromiseに触れるか');
-					ok(nopp3, 'テンプレートを使わない場合でも、__postInitイベントの中でpostInitPromiseに触れるか');
-					ok(norp3, 'テンプレートを使わない場合でも、__postInitイベントの中でreadyPromiseに触れるか');
-					ok(noip4, 'テンプレートを使わない場合でも、__readyイベントの中でinitPromiseに触れるか');
-					ok(nopp4, 'テンプレートを使わない場合でも、__readyイベントの中でpostInitPromiseに触れるか');
-					ok(norp4, 'テンプレートを使わない場合でも、__readyイベントの中でreadyPromiseに触れるか');
-
-					var root = $('#controllerTest').get(0);
-					strictEqual(ir, root, '__initイベントの中でrootElementに触れるか');
-					strictEqual(pr, root, '__postInitイベントの中でrootElementに触れるか');
-					strictEqual(rr, root, '__readyイベントの中でrootElementに触れるか');
-					strictEqual(noir, root, 'テンプレートを使わない場合でも、__initイベントの中でrootElementに触れるか');
-					strictEqual(nopr, root, 'テンプレートを使わない場合でも、__postInitイベントの中でrootElementに触れるか');
-					strictEqual(norr, root, 'テンプレートを使わない場合でも、__readyイベントの中でrootElementに触れるか');
-
-					testController.unbind();
-					noTemplateController.unbind();
-					start();
-				});
-	});
-
-	asyncTest('__construct, __init, __postInit, __readyが動作するタイミングは正しいか2(テンプレート使用)', 1, function() {
-
-		var ret = [];
-		var cController = {
-			__name: 'CController',
-			__templates: ['./template/test2.ejs'],
-			__construct: function() {
-				ret.push(2);
-			},
-			__init: function(context) {
-				ret.push(5);
-			},
-			__postInit: function(context) {
-				ret.push(6);
-			},
-			__ready: function(context) {
-				ret.push(9);
-			}
-		};
-
-		var pController = {
-			__name: 'PController',
-			cController: cController,
-			__construct: function() {
-				ret.push(1);
-			},
-			__init: function(context) {
-				ret.push(4);
-			},
-			__postInit: function(context) {
-				ret.push(7);
-			},
-			__ready: function(context) {
-				ret.push(10);
-			}
-		};
-
-		var rController = {
-			__name: 'RController',
-			__templates: ['./template/test8.ejs'],
-			pController: pController,
-			__construct: function() {
-				ret.push(0);
-			},
-			__init: function(context) {
-				ret.push(3);
-			},
-			__postInit: function(context) {
-				ret.push(8);
-			},
-			__ready: function(context) {
-				ret.push(11);
-			}
-		};
-
-		var c = h5.core.controller('#controllerTest', rController);
-
-		c.readyPromise.done(function() {
-			strictEqual(ret.join(';'), '0;1;2;3;4;5;6;7;8;9;10;11',
-					'子、孫コントローラがある場合に、__construct, __init, __postInit, __readyの発火順は正しいか');
-
-			c.dispose();
-			start();
-		});
-	});
-
-	asyncTest(
-			'__construct, __init, __postInit, __readyが動作するタイミングは正しいか3(テンプレート使用)',
-			function() {
-				var ret = [];
-				var cController = {
-					__name: 'CController',
-					__templates: ['./template/test2.ejs'],
-					__construct: function() {
-						ret.push(2);
-					},
-					__init: function(context) {
-						ret.push(5);
-					},
-					__postInit: function(context) {
-						ret.push(6);
-					},
-					__ready: function(context) {
-						ret.push(9);
-					}
-				};
-
-				var pController = {
-					__name: 'PController',
-					cController: cController,
-					__construct: function() {
-						ret.push(1);
-					},
-					__init: function(context) {
-						var dfd = this.deferred();
-						setTimeout(function() {
-							ret.push(4);
-							dfd.resolve();
-						}, 0);
-						return dfd.promise();
-					},
-					__postInit: function(context) {
-						// 非同期にしてこの間に親の__postInitは実行されないことを確認
-						var dfd = this.deferred();
-						setTimeout(function() {
-							ret.push(7);
-							dfd.resolve();
-						}, 0);
-						return dfd.promise();
-					},
-					__ready: function(context) {
-						// 非同期にしてこの間に親の__readyは実行されないことを確認
-						var dfd = this.deferred();
-						setTimeout(function() {
-							ret.push(10);
-							dfd.resolve();
-						}, 0);
-						return dfd.promise();
-					}
-				};
-
-				var rController = {
-					__name: 'RController',
-					__templates: ['./template/test8.ejs'],
-					pController: pController,
-					__construct: function() {
-						ret.push(0);
-					},
-					__init: function(context) {
-						// 非同期にしてこの間に子の__postInitは実行されないことを確認
-						var dfd = this.deferred();
-						setTimeout(function() {
-							ret.push(3);
-							dfd.resolve();
-						}, 0);
-						return dfd.promise();
-					},
-					__postInit: function(context) {
-						ret.push(8);
-					},
-					__ready: function(context) {
-						ret.push(11);
-					}
-				};
-
-				var c = h5.core.controller('#controllerTest', rController);
-
-				c.readyPromise
-						.done(function() {
-							strictEqual(
-									ret.join(';'),
-									'0;1;2;3;4;5;6;7;8;9;10;11',
-									'子、孫コントローラがあり、__init, __postInit, __readyでPromiseオブジェクトを返している場合、__construct, __init, __readyの発火順は正しいか');
-							c.dispose();
-							start();
-						});
-			});
 
 	asyncTest(
 			'__construct, __init, __postInit, __readyのそれぞれでh5.core.controller()を使って独立したコントローラをプロパティに持たせた場合、ライフサイクルイベントの発火回数は正しいか(テンプレートなし)',
