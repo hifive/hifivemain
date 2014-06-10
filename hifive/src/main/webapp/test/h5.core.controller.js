@@ -5352,24 +5352,6 @@ $(function() {
 		});
 	});
 
-	asyncTest('コントローラの__ready処理', 1, function() {
-		var ret = 0;
-		var controller = {
-			__name: 'TestController',
-
-			__ready: function() {
-				ret = 1000;
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			strictEqual(ret, 1000, '__readyは動作しているか');
-
-			testController.unbind();
-			start();
-		});
-	});
-
 	asyncTest('__construct, __init, __postInit, __readyが動作するタイミングは正しいか1(テンプレート使用)', 31, function() {
 		var ip1 = null;
 		var ip2 = null;
