@@ -7182,21 +7182,17 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	/**
-	 * window.onerrorを保管しておく変数
-	 */
-	var onerrorHandler = null;
 	module('ライフサイクルイベント内の例外', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 
 			// 元のwindow.onerror(QUnitのもの)を一時的に保管する
-			onerrorHandler = window.onerror;
+			this.onerrorHandler = window.onerror;
 		},
 		teardown: function() {
 			clearController();
 			// window.onerrorを元に戻す
-			window.onerror = onerrorHandler;
+			window.onerror = this.onerrorHandler;
 		},
 		/** window.onerrorが起こるまで待機して、待機時間(5秒)を過ぎたらテストを失敗させる関数 */
 		testTimeoutFunc: function(msg) {
@@ -7211,7 +7207,9 @@ $(function() {
 				start();
 			}, 5000);
 			return id;
-		}
+		},
+		/** window.onerrorを保管しておく変数 */
+		onerrorHandler: null
 	});
 
 	//=============================
