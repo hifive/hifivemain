@@ -3997,6 +3997,123 @@ $(function() {
 		});
 	});
 
+	asyncTest('__dispose()の実行順序をテスト', 3, function() {
+		var ret = [];
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				ret.push(0);
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				ret.push(1);
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
+	asyncTest('__dispose()で、resolveされるpromiseを返す。', 3, function() {
+		var childDfd = $.Deferred();
+		var rootDfd = $.Deferred();
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				setTimeout(function() {
+					childDfd.resolve();
+				}, 0);
+				return childDfd.promise();
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				setTimeout(function() {
+					rootDfd.resolve();
+				}, 0);
+				return rootDfd.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				ok(isResolved(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
+	asyncTest('__dispose()で rejectされるpromiseを返す。', 3, function() {
+		var childDfd = $.Deferred();
+		var rootDfd = $.Deferred();
+
+		var childController = {
+			__name: 'ChildController',
+
+			__dispose: function() {
+				var that = this;
+				setTimeout(function() {
+					that.__name === 'ChildController';
+					childDfd.resolve();
+				}, 0);
+				return childDfd.promise();
+			}
+		};
+		var controller = {
+			__name: 'TestController',
+
+			childController: childController,
+
+			__dispose: function() {
+				var that = this;
+				setTimeout(function() {
+					that.__name === 'TestController';
+					rootDfd.reject();
+				}, 0);
+				return rootDfd.promise();
+			}
+		};
+		var testController = h5.core.controller('#controllerTest', controller);
+		testController.readyPromise.done(function() {
+			var cc = testController.childController;
+			var dp = testController.dispose();
+
+			dp.done(function() {
+				ok(isRejected(rootDfd) && isResolved(childDfd),
+						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
+				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
+				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				start();
+			});
+		});
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -7211,8 +7328,8 @@ $(function() {
 		/** window.onerrorを保管しておく変数 */
 		onerrorHandler: null,
 		/** エラーをキャッチするための何もしない関数 */
-		dummuyHandler: function(){
-			// 何もしない
+		dummuyHandler: function() {
+		// 何もしない
 		}
 	});
 
@@ -7407,12 +7524,12 @@ $(function() {
 			ok(isRejected(c.childController.initPromise), '子コントローラのinitPromiseはrejectされていること');
 			var child = c.childController;
 			var grandChild = c.childController.grandchildController;
-			setTimeout(function(){
+			setTimeout(function() {
 				ok(isDisposed(c), 'コントローラはdisposeされること');
 				ok(isDisposed(child), '子コントローラはdisposeされること');
 				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
 				start();
-			},0);
+			}, 0);
 		});
 	});
 
@@ -7439,15 +7556,16 @@ $(function() {
 		c.readyPromise.fail(function(e) {
 			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
 			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
-			ok(isRejected(c.childController.postInitPromise), '子コントローラのpostInitPromiseはrejectされていること');
+			ok(isRejected(c.childController.postInitPromise),
+					'子コントローラのpostInitPromiseはrejectされていること');
 			var child = c.childController;
 			var grandChild = c.childController.grandchildController;
-			setTimeout(function(){
+			setTimeout(function() {
 				ok(isDisposed(c), 'コントローラはdisposeされること');
 				ok(isDisposed(child), '子コントローラはdisposeされること');
 				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
 				start();
-			},0);
+			}, 0);
 		});
 	});
 
@@ -7477,129 +7595,12 @@ $(function() {
 			ok(isRejected(c.childController.readyPromise), '子コントローラのreadyPromiseはrejectされていること');
 			var child = c.childController;
 			var grandChild = c.childController.grandchildController;
-			setTimeout(function(){
+			setTimeout(function() {
 				ok(isDisposed(c), 'コントローラはdisposeされること');
 				ok(isDisposed(child), '子コントローラはdisposeされること');
 				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
 				start();
-			},0);
-		});
-	});
-
-	asyncTest('__dispose()の実行順序をテスト', 3, function() {
-		var ret = [];
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				ret.push(0);
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				ret.push(1);
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
-		});
-	});
-
-	asyncTest('__dispose()で、resolveされるpromiseを返す。', 3, function() {
-		var childDfd = $.Deferred();
-		var rootDfd = $.Deferred();
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				setTimeout(function() {
-					childDfd.resolve();
-				}, 0);
-				return childDfd.promise();
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				setTimeout(function() {
-					rootDfd.resolve();
-				}, 0);
-				return rootDfd.promise();
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				ok(isResolved(rootDfd) && isResolved(childDfd),
-						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
-		});
-	});
-
-	asyncTest('__dispose()で rejectされるpromiseを返す。', 3, function() {
-		var childDfd = $.Deferred();
-		var rootDfd = $.Deferred();
-
-		var childController = {
-			__name: 'ChildController',
-
-			__dispose: function() {
-				var that = this;
-				setTimeout(function() {
-					that.__name === 'ChildController';
-					childDfd.resolve();
-				}, 0);
-				return childDfd.promise();
-			}
-		};
-		var controller = {
-			__name: 'TestController',
-
-			childController: childController,
-
-			__dispose: function() {
-				var that = this;
-				setTimeout(function() {
-					that.__name === 'TestController';
-					rootDfd.reject();
-				}, 0);
-				return rootDfd.promise();
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
-
-			dp.done(function() {
-				ok(isRejected(rootDfd) && isResolved(childDfd),
-						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
-			});
+			}, 0);
 		});
 	});
 
