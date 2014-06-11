@@ -7195,7 +7195,7 @@ $(function() {
 			window.onerror = this.onerrorHandler;
 		},
 		/** window.onerrorが起こるまで待機して、待機時間(5秒)を過ぎたらテストを失敗させる関数 */
-		testTimeoutFunc: function(msg) {
+		testTimeoutFunc: function() {
 			var id = setTimeout(function() {
 				ok(false, 'window.onerrorが実行されませんでした。');
 				// __unbind, __disposeにundefinedを代入して、teardown時にdisposeするときエラーが出ないようにする
@@ -7215,79 +7215,78 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('__construct()で例外をスローする。', 1, function() {
+	test('__construct()で例外をスローする', 1, function() {
 		// __construct()は同期なのでwindow.onerrorの拾えないandroid0-3でもテストできる
+		var errorObj = new Error('__construct error.');
 		var controller = {
 			__name: 'TestController',
 			__construct: function() {
-				throw new Error('__construct error.');
+				throw errorObj;
 			}
 		};
 
-		throws(function() {
+		try {
 			h5.core.controller('#controllerTest', controller);
-		}, '__construct()内で発生した例外がFW内で握りつぶされずcatchできること。');
+		} catch (e) {
+			strictEqual(e, errorObj, '__constructで投げた例外をtry-catchでキャッチできること');
+		}
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__init()で例外をスローする。', 2, function() {
-		var errorMsg = '__init error.';
-		var id = this.testTimeoutFunc(errorMsg);
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__init()で例外をスローする', 2, function() {
+		var errorObj = new Error('__init error.');
+		var id = this.testTimeoutFunc();
 
-		window.onerror = function(ev) {
+		window.onerror = function(e) {
 			clearTimeout(id);
-			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-			ok(!c.__name, 'コントローラはdisposeされていること');
+			ok(e, errorObj, '__init()内で発生した例外がFW内で握りつぶされずにwindow.onerrorで取得できること');
+			ok(isDisposed(c), 'コントローラはdisposeされていること');
 			start();
 		};
 
-		var controller = {
+		var c = h5.core.controller('#controllerTest', {
 			__name: 'TestController',
 			__init: function() {
-				throw new Error(errorMsg);
+				throw errorObj;
 			}
-		};
-		var c = h5.core.controller('#controllerTest', controller);
+		});
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__postInit()で例外をスローする。', 2, function() {
-		var errorMsg = '__postInit error.';
-		var id = this.testTimeoutFunc(errorMsg);
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__postInit()で例外をスローする', 2, function() {
+		var errorObj = new Error('__postInit error.');
+		var id = this.testTimeoutFunc();
 
-		window.onerror = function(ev) {
+		window.onerror = function(e) {
 			clearTimeout(id);
-			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-			ok(!c.__name, 'コントローラはdisposeされていること');
+			ok(e, errorObj, '__postInit()内で発生した例外がFW内で握りつぶされずにwindow.onerrorで取得できること');
+			ok(isDisposed(c), 'コントローラはdisposeされていること');
 			start();
 		};
 
-		var controller = {
+		var c = h5.core.controller('#controllerTest', {
 			__name: 'TestController',
 			__postInit: function() {
-				throw new Error(errorMsg);
+				throw errorObj;
 			}
-		};
-		var c = h5.core.controller('#controllerTest', controller);
+		});
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__ready()で例外をスローする。', 2, function() {
-		var errorMsg = '__ready error.';
-		var id = this.testTimeoutFunc(errorMsg);
+	asyncTest('[browser#and-and:-3|sa-ios:-4]__ready()で例外をスローする', 2, function() {
+		var errorObj = new Error('__ready error.');
+		var id = this.testTimeoutFunc();
 
-		window.onerror = function(ev) {
+		window.onerror = function(e) {
 			clearTimeout(id);
-			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-			ok(!c.__name, 'コントローラはdisposeされていること');
+			ok(e, errorObj, '__ready()内で発生した例外がFW内で握りつぶされずにwindow.onerrorで取得できること');
+			ok(isDisposed(c), 'コントローラはdisposeされていること');
 			start();
 		};
 
-		var unbindFlag, disposeFlag;
-		var controller = {
+		var c = h5.core.controller('#controllerTest', {
 			__name: 'TestController',
 			__ready: function() {
-				throw new Error(errorMsg);
+				throw errorObj;
 			}
-		};
-		var c = h5.core.controller('#controllerTest', controller);
+		});
 	});
 
 	// TODO __unbind, __disposeで例外をスローした時の挙動について整理してから、テストコードの対応を行う。(#329)
