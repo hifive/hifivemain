@@ -7209,7 +7209,11 @@ $(function() {
 			return id;
 		},
 		/** window.onerrorを保管しておく変数 */
-		onerrorHandler: null
+		onerrorHandler: null,
+		/** エラーをキャッチするための何もしない関数 */
+		dummuyHandler: function(){
+			// 何もしない
+		}
 	});
 
 	//=============================
@@ -7377,240 +7381,108 @@ $(function() {
 	//		});
 	//	});
 
-	asyncTest('__init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。', 11, function() {
-		window.onerror = function() {};
+	asyncTest('子コントローラの__init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること', 6, function() {
+		window.onerror = this.dummyHandler;
+		var errorObj = new Error('__init');
+		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
-			child1Controller: {
+			childController: {
+				__name: 'childController',
+				__init: function() {
+					throw errorObj;
+				},
 				grandchildController: {
 					__name: 'grandchildController',
 					__init: function() {
-						ok(false, '孫コントローラの__initは実行されない');
-					},
-					__postInit: function() {
-						ok(false, '孫コントローラの__postInitは実行されない');
-					},
-					__ready: function() {
-						ok(false, '孫コントローラの__readyは実行されない');
-					},
-					__unbind: function() {
-						ok(true, '孫コントローラの__unbindが実行されること');
-					},
-					__dispose: function() {
-						ok(true, '孫コントローラの__disposeが実行されること');
+						nextLifecycleExecuted = true;
 					}
-				},
-				__name: 'childController',
-				__init: function() {
-					ok(true, '子コントローラの__initは実行されること');
-					throw new Error('__init');
-				},
-				__postInit: function() {
-					ok(false, '子コントローラの__postInitは実行されないこと');
-				},
-				__ready: function() {
-					ok(false, '子コントローラの__readyは実行されないこと');
-				},
-				__unbind: function() {
-					ok(true, '子コントローラの__unbindが実行されること');
-				},
-				__dispose: function() {
-					ok(true, '子コントローラの__disposeが実行されること');
-
 				}
-			},
-			__init: function() {
-				ok(true, 'ルートコントローラの__initは実行されること');
-			},
-			__postInit: function() {
-				ok(false, 'ルートコントローラの__initは実行されないこと');
-			},
-			__ready: function() {
-				ok(false, 'ルートコントローラの__readyは実行されないこと');
-			},
-			__unbind: function() {
-				ok(true, 'ルートコントローラの__unbindが実行されること');
-			},
-			__dispose: function() {
-				ok(true, 'ルートコントローラの__disposeが実行されること');
-				setTimeout(function() {
-					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
-					start();
-				}, 0);
 			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
-		c.initPromise.done(function() {
-			ok(true, 'ルートコントローラのinitPromiseのdoneハンドラが実行されること');
-		}).fail(function() {
-			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのfailが実行された');
-		});
-		c.readyPromise.done(function() {
-			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
-			start();
-		}).fail(function() {
+		c.readyPromise.fail(function(e) {
 			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			ok(isRejected(c.childController.initPromise), '子コントローラのinitPromiseはrejectされていること');
+			var child = c.childController;
+			var grandChild = c.childController.grandchildController;
+			setTimeout(function(){
+				ok(isDisposed(c), 'コントローラはdisposeされること');
+				ok(isDisposed(child), '子コントローラはdisposeされること');
+				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
+				start();
+			},0);
 		});
 	});
 
-	asyncTest('__postInit()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。', 15, function() {
-		window.onerror = function() {};
+	asyncTest('子コントローラの__postInit()で例外をスローしたとき、コントローラは連鎖的にdisposeされること', 6, function() {
+		window.onerror = this.dummyHandler;
+		var errorObj = new Error('__postInit');
+		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
-			child1Controller: {
-				grandchildController: {
-					__name: 'grandchildController',
-					__init: function() {
-						ok(true, '孫コントローラの__initは実行されること');
-					},
-					__postInit: function() {
-						ok(true, '孫コントローラの__postInitは実行さること');
-					},
-					__ready: function() {
-						ok(false, '孫コントローラの__readyは実行されない');
-					},
-					__unbind: function() {
-						ok(true, '孫コントローラの__unbindが実行されること');
-					},
-					__dispose: function() {
-						ok(true, '孫コントローラの__disposeが実行されること');
-					}
-				},
-				__name: 'childController',
-				__init: function() {
-					ok(true, '子コントローラの__initは実行されること');
-				},
-				__postInit: function() {
-					ok(true, '子コントローラの__postInitは実行されること');
-					throw new Error('__init');
-				},
-				__ready: function() {
-					ok(false, '子コントローラの__readyは実行されないこと');
-				},
-				__unbind: function() {
-					ok(true, '子コントローラの__unbindが実行されること');
-				},
-				__dispose: function() {
-					ok(true, '子コントローラの__disposeが実行されること');
-
-				}
-			},
-			__init: function() {
-				ok(true, 'ルートコントローラの__initは実行されること');
-			},
 			__postInit: function() {
-				ok(false, 'ルートコントローラの__postInitは実行されないこと');
+				nextLifecycleExecuted = true;
 			},
-			__ready: function() {
-				ok(false, 'ルートコントローラの__readyは実行されないこと');
-			},
-			__unbind: function() {
-				ok(true, 'ルートコントローラの__unbindが実行されること');
-			},
-			__dispose: function() {
-				ok(true, 'ルートコントローラの__disposeが実行されること');
-				setTimeout(function() {
-					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
-					start();
-				}, 0);
+			childController: {
+				__name: 'childController',
+				__postInit: function() {
+					throw errorObj;
+				},
+				grandchildController: {
+					__name: 'grandchildController'
+				}
 			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
-		c.initPromise.done(function() {
-			ok(true, 'ルートコントローラのinitPromiseのdoneハンドラが実行されること');
-		}).fail(function() {
-			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのfailが実行された');
-		});
-		c.postInitPromise.done(function() {
-			ok(false, 'テスト失敗。ルートコントローラのpostInitPromiseのdoneが実行された');
-		}).fail(function() {
-			ok(true, 'ルートコントローラのpostInitPromiseのfailハンドラが実行されること');
-		});
-		c.readyPromise.done(function() {
-			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
-			start();
-		}).fail(function() {
+		c.readyPromise.fail(function(e) {
 			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			ok(isRejected(c.childController.postInitPromise), '子コントローラのpostInitPromiseはrejectされていること');
+			var child = c.childController;
+			var grandChild = c.childController.grandchildController;
+			setTimeout(function(){
+				ok(isDisposed(c), 'コントローラはdisposeされること');
+				ok(isDisposed(child), '子コントローラはdisposeされること');
+				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
+				start();
+			},0);
 		});
 	});
 
-	asyncTest('__ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること。', 18, function() {
-		window.onerror = function() {};
+	asyncTest('子コントローラの__ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること', 6, function() {
+		window.onerror = this.dummyHandler;
+		var errorObj = new Error('__ready');
+		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
-			child1Controller: {
-				grandchildController: {
-					__name: 'grandchildController',
-					__init: function() {
-						ok(true, '孫コントローラの__initは実行されること');
-					},
-					__postInit: function() {
-						ok(true, '孫コントローラの__postInitは実行されること');
-					},
-					__ready: function() {
-						ok(true, '孫コントローラの__readyは実行されること');
-					},
-					__unbind: function() {
-						ok(true, '孫コントローラの__unbindが実行されること');
-					},
-					__dispose: function() {
-						ok(true, '孫コントローラの__disposeが実行されること');
-					}
-				},
-				__name: 'childController',
-				__init: function() {
-					ok(true, '子コントローラの__initは実行されること');
-				},
-				__postInit: function() {
-					ok(true, '子コントローラの__postInitは実行されること');
-				},
-				__ready: function() {
-					ok(true, '子コントローラの__readyは実行されること');
-					throw new Error('__ready');
-				},
-				__unbind: function() {
-					ok(true, '子コントローラの__unbindが実行されること');
-				},
-				__dispose: function() {
-					ok(true, '子コントローラの__disposeが実行されること');
-				}
-			},
-			__init: function() {
-				ok(true, 'ルートコントローラの__initが実行されること');
-			},
-			__postInit: function() {
-				ok(true, 'ルートコントローラの__postInitが実行されること');
-			},
 			__ready: function() {
-				ok(false, 'ルートコントローラの__readyは実行されないこと');
+				nextLifecycleExecuted = true;
 			},
-			__unbind: function() {
-				ok(true, 'ルートコントローラの__unbindが実行されること');
-			},
-			__dispose: function() {
-				ok(true, 'ルートコントローラの__disposeが実行されること');
-				setTimeout(function() {
-					ok(isDisposed(c), 'ルートコントローラはdisposeされたこと');
-					start();
-				}, 0);
+			childController: {
+				__name: 'childController',
+				__ready: function() {
+					throw errorObj;
+				},
+				grandchildController: {
+					__name: 'grandchildController'
+				}
 			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
-		c.initPromise.done(function() {
-			ok(true, 'ルートコントローラのinitPromiseのdoneハンドラが実行されること');
-		}).fail(function() {
-			ok(false, 'テスト失敗。ルートコントローラのinitPromiseのfailハンドラが実行された');
-		});
-		c.postInitPromise.done(function() {
-			ok(true, 'ルートコントローラのpostInitPromiseのdoneハンドラが実行されること');
-		}).fail(function() {
-			ok(false, 'テスト失敗。ルートコントローラのpostInitPromiseのfailハンドラが実行された');
-		});
-		c.readyPromise.done(function() {
-			ok(false, 'テスト失敗。ルートコントローラのreadyPromiseのdoneが実行された');
-			start();
-		}).fail(function() {
+		c.readyPromise.fail(function(e) {
 			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			ok(isRejected(c.childController.readyPromise), '子コントローラのreadyPromiseはrejectされていること');
+			var child = c.childController;
+			var grandChild = c.childController.grandchildController;
+			setTimeout(function(){
+				ok(isDisposed(c), 'コントローラはdisposeされること');
+				ok(isDisposed(child), '子コントローラはdisposeされること');
+				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
+				start();
+			},0);
 		});
 	});
 
