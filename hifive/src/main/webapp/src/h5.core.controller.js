@@ -528,8 +528,10 @@
 	}
 
 	/**
-	 * 指定されたセレクタがwindow, window., document, document., navigator, navigator. で
-	 * 始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します。
+	 * 指定されたセレクタがwindow, window., document, document., navigator, navigator.
+	 * で始まっていればそのオブジェクトを、そうでなければそのまま文字列を返します。
+	 * window,document,navigatorは第2引数に指定されたdocumentが属するウィンドウのものを使用します。
+	 * また、第3引数にコントローラが指定されていてかつselectorが"this."で始まっている場合は、コントローラ内のオブジェクトを取得します。
 	 *
 	 * @private
 	 * @param {String} selector セレクタ
@@ -2522,8 +2524,48 @@
 
 		/**
 		 * ビュー操作に関するメソッドを格納しています。
+		 * <p>
+		 * <a href="View.html">View</a>クラスと同様にテンプレートを扱うクラスですが、Controllerの持つViewは以下の点でViewクラスとは異なります。
+		 * </p>
+		 * <ul>
+		 * <li>append/update/prependメソッドでのターゲット(出力先)について、
+		 * コントローラのイベントハンドラと同様にコントローラのルートエレメントを起点に選択します。 また、グローバルセレクタも使用可能です。 </li>
 		 *
-		 * @namespace
+		 * <pre><code>
+		 * // 例
+		 * // thisはコントローラ
+		 * this.view.append('.target', 'tmpId'); // コントローラのルートエレメント内のtargetクラス要素
+		 * this.view.append('{.target}', 'tmpId'); // $('.target')と同じ
+		 * this.view.append('{rootElement}', 'tmpId'); // コントローラのルートエレメント(this.rootElementと同じ)
+		 * this.view.append('{document.body}', 'tmpId'); // body要素
+		 * </code></pre>
+		 *
+		 * <li>指定されたIDのテンプレートの探索を、親コントローラのView、h5.core.viewについても行います。</li>
+		 * <li>自分のコントローラ、親コントローラ、親コントローラの親コントローラ、…、ルートコントローラ、h5.core.view、の順番に探索して、
+		 * 最初に見つかったテンプレートを返します。</li>
+		 *
+		 * <pre><code>
+		 * // 例
+		 * // parentControllerは子コントローラを持つコントローラ
+		 * var parent = parentController.view;
+		 * var child = parentController.childController;
+		 *
+		 * // viewにテンプレートを登録
+		 * h5.core.view.register('a', 'a_coreView');
+		 * h5.core.view.register('b', 'b_coreView');
+		 * parent.view.register('a', 'a_parent');
+		 * parent.view.register('d', 'd_parent');
+		 * child.view.register('c', 'c_child');
+		 *
+		 * child.get('c'); // c_child
+		 * child.get('d'); // d_parent
+		 * child.get('a'); // a_parent
+		 * child.get('b'); // b_coreView
+		 * </code></pre>
+		 *
+		 * </ul>
+		 *
+		 * @class
 		 * @name view
 		 * @memberOf Controller
 		 * @see View
