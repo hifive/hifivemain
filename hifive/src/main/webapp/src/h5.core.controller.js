@@ -2554,7 +2554,6 @@
 		 *
 		 * </ul>
 		 *
-		 * @class
 		 * @name view
 		 * @memberOf Controller
 		 * @see View
