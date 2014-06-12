@@ -2983,88 +2983,37 @@
 		/**
 		 * 指定された要素に対して、インジケータ(メッセージ・画面ブロック・進捗)の表示や非表示を行うためのオブジェクトを取得します。
 		 * <p>
-		 * targetには、インジケータを表示するDOMオブジェクト、またはセレクタを指定して下さい。<br>
-		 * targetを指定しない場合、コントローラを割り当てた要素(rootElement)に対してインジケータを表示します。
+		 * <a href="h5.ui.indicator.html">h5.ui.indicator</a>と同様にインジケータオブジェクトを取得する関数ですが、ターゲットの指定方法について以下の点で<a
+		 * href="h5.ui.indicator.html">h5.ui.indicator</a>と異なります。
 		 * <p>
-		 * <h4>注意:</h4>
-		 * targetにセレクタを指定した場合、以下の制約があります。
 		 * <ul>
-		 * <li>コントローラがバインドされた要素内に存在する要素が対象となります。
-		 * <li>マッチした要素が複数存在する場合、最初にマッチした要素が対象となります。
+		 * <li>第1引数にオプションオブジェクトを渡してください。</li>
+		 *
+		 * <pre><code>
+		 * // thisはコントローラ
+		 * this.indicator({
+		 * 	target: this.rootElement
+		 * }); // OK
+		 * this.indicator(this.rootElement, option); // NG
+		 * </code></pre>
+		 *
+		 * <li>targetの指定は省略できます。省略した場合はコントローラのルートエレメントがインジケータの出力先になります。</li>
+		 * <li>targetにセレクタが渡された場合、要素の選択はコントローラのルートエレメントを起点にします。また、グローバルセレクタを使用できます。
+		 * (コントローラのイベントハンドラ記述と同様です。)</li>
+		 *
+		 * <pre><code>
+		 * // thisはコントローラ
+		 * this.indicator({target:'.target'}); // コントローラのルートエレメント内のtargetクラス要素
+		 * this.indicator({target:'{.target}'}); // $('.target')と同じ
+		 * this.indicator({target:'{rootElement}'); // コントローラのルートエレメント(this.rootElementと同じ)
+		 * this.indicator({target:'{document.body}'); // body要素
+		 * </code></pre>
+		 *
 		 * </ul>
-		 * コントローラがバインドされた要素よりも外にある要素にインジケータを表示したい場合は、セレクタではなく<b>DOMオブジェクト</b>を指定して下さい。
-		 * <p>
-		 * targetに<b>document</b>、<b>window</b>または<b>body</b>を指定しかつ、blockオプションがtrueの場合、「スクリーンロック」として動作します。<br>
-		 * 上記以外のDOM要素を指定した場合は、指定した要素上にインジケータを表示します。
-		 * <p>
-		 * <b>スクリーンロック</b>とは、コンテンツ領域(スクロールしないと見えない領域も全て含めた領域)全体にオーバーレイを、表示領域(画面に見えている領域)中央にメッセージが表示し、画面を操作できないようにすることです。スマートフォン等タッチ操作に対応する端末の場合、スクロール操作も禁止します。
-		 * <h4>使用例</h4>
-		 * <b>スクリーンロックとして表示する</b><br>
 		 *
-		 * <pre>
-		 * var indicator = this.indicator({
-		 * 	target: document
-		 * }).show();
-		 * </pre>
-		 *
-		 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
-		 *
-		 * <pre>
-		 * var indicator = this.indicator({
-		 * 	target: 'li',
-		 * 	block: false
-		 * }).show();
-		 * </pre>
-		 *
-		 * <b>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
-		 * resolve() または resolve() が実行されると、画面からインジケータを除去します。
-		 *
-		 * <pre>
-		 * var df = $.Deferred();
-		 * var indicator = this.indicator({
-		 * 	target: document,
-		 * 	promises: df.promise()
-		 * }).show();
-		 *
-		 * setTimeout(function() {
-		 * 	df.resolve() // ここでイジケータが除去される
-		 * }, 2000);
-		 * </pre>
-		 *
-		 * <b>パラメータに複数のPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
-		 * Promiseオブジェクトを配列で複数指定すると、全てのPromiseオブジェクトでresolve()が実行されるか、またはいずれかのPromiseオブジェクトでfail()が実行されるタイミングでインジケータを画面から除去します。
-		 *
-		 * <pre>
-		 * var df = $.Deferred();
-		 * var df2 = $.Deferred();
-		 * var indicator = this.indicator({
-		 * 	target: document,
-		 * 	promises: [df.promise(), df2.promise()]
-		 * }).show();
-		 *
-		 * setTimeout(function() {
-		 * 	df.resolve()
-		 * }, 2000);
-		 *
-		 * setTimeout(function() {
-		 * 	df.resolve() // ここでイジケータが除去される
-		 * }, 4000);
-		 * </pre>
-		 *
-		 * @param {Object} [opt] オプション
-		 * @param {String|Object} [opt.target] インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
-		 * @param {String} [opt.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
-		 * @param {Number} [opt.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
-		 * @param {Boolean} [opt.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
-		 * @param {Number} [opt.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
-		 * @param {Number} [opt.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
-		 * @param {Promise|Promise[]} [opt.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
-		 * @param {String} [opt.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
-		 * @param {String} [opt.throbber.lines] スロバーの線の本数 (デフォルト:12)
-		 * @param {String} [opt.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
-		 *            (このオプションはCSS3Animationを未サポートブラウザのみ有効) (デフォルト:1000)
 		 * @returns {Indicator} インジケータオブジェクト
 		 * @memberOf Controller
+		 * @see h5.ui.indicator
 		 * @see Indicator
 		 */
 		indicator: function(opt) {
