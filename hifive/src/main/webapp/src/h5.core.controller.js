@@ -1260,7 +1260,7 @@
 		var selector = $.trim(element);
 		if (isGlobalSelector(selector)) {
 			var s = trimGlobalSelectorBracket(selector);
-			return $(getGlobalSelectorTarget(s, getDocumentOf(controller.rootElement)));
+			return $(getGlobalSelectorTarget(s, getDocumentOf(controller.rootElement), controller));
 		}
 		return $(controller.rootElement).find(element);
 	}
