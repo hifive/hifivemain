@@ -56,8 +56,8 @@
 	var COMMENT_BINDING_TARGET_MARKER = '{h5view ';
 
 	// エラーコード
-	/** エラーコード: テンプレートに渡すセレクタが不正 */
-	var ERR_CODE_INVALID_TEMPLATE_SELECTOR = 6000;
+	/** エラーコード: テンプレートに渡すセレクタが不正（コントローラビューでテンプレートに渡せるセレクタはコントローラのイベントハンドラ記述と同じになりました(#349） */
+	//var ERR_CODE_INVALID_TEMPLATE_SELECTOR = 6000;
 	/** エラーコード: バインド対象が指定されていない */
 	var ERR_CODE_BIND_TARGET_REQUIRED = 6001;
 	/** エラーコード: bindControllerメソッドにコントローラではないオブジェクトが渡された（このエラーはver.1.1.3時点では通常発生しないので削除） */
@@ -121,7 +121,7 @@
 
 	// エラーコードマップ
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
+	//errMsgMap[ERR_CODE_INVALID_TEMPLATE_SELECTOR] = 'update/append/prepend() の第1引数に"window", "navigator", または"window.", "navigator."で始まるセレクタは指定できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_REQUIRED] = 'コントローラ"{0}"のバインド対象となる要素を指定して下さい。';
 	//errMsgMap[ERR_CODE_BIND_NOT_CONTROLLER] = 'コントローラ化したオブジェクトを指定して下さい。';
 	errMsgMap[ERR_CODE_BIND_NO_TARGET] = 'コントローラ"{0}"のバインド対象となる要素が存在しません。';
@@ -1138,7 +1138,7 @@
 					// __metaが指定されている場合、__metaのrootElementを考慮した要素を取得する
 					var target;
 					if (meta && meta[prop] && meta[prop].rootElement) {
-						target = getBindTarget(meta[prop].rootElement, rootElement, c);
+						target = getBindTarget(meta[prop].rootElement, c, controller);
 					} else {
 						target = rootElement;
 					}
@@ -1254,48 +1254,24 @@
 	}
 
 	/**
-	 * テンプレートに渡すセレクタとして正しいかどうかを返します。
-	 *
-	 * @private
-	 * @param {String} selector セレクタ
-	 * @returns {Boolean} テンプレートに渡すセレクタとして正しいかどうか(true=正しい)
-	 */
-	function isCorrectTemplatePrefix(selector) {
-		if (startsWith(selector, 'window')) {
-			return false;
-		}
-		if (startsWith(selector, 'navigator')) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
 	 * 指定された要素が文字列があれば、ルートエレメント、{}記法を考慮した要素をjQueryオブジェクト化して返します。 DOM要素、jQueryオブジェクトであれば、
 	 * jQueryオブジェクト化して(指定要素がjQueryオブジェクトの場合、無駄な処理になるがコスト的には問題ない)返します。
 	 *
 	 * @private
 	 * @param {String|DOM|jQuery} element セレクタ、DOM要素、jQueryオブジェクト
-	 * @param {DOM} rootElement ルートエレメント
-	 * @param {Boolean} isTemplate テンプレートで使用するかどうか
+	 * @param {Controlelr} controller
 	 * @returns {jQuery} jQueryオブジェクト
 	 */
-	function getTarget(element, rootElement, isTemplate) {
+	function getTarget(element, controller) {
 		if (!isString(element)) {
 			return $(element);
 		}
-		var $targets;
 		var selector = $.trim(element);
 		if (isGlobalSelector(selector)) {
 			var s = trimGlobalSelectorBracket(selector);
-			if (isTemplate && !isCorrectTemplatePrefix(s)) {
-				throwFwError(ERR_CODE_INVALID_TEMPLATE_SELECTOR);
-			}
-			$targets = $(getGlobalSelectorTarget(s, getDocumentOf(rootElement.ownerDocument)));
-		} else {
-			$targets = $(rootElement).find(element);
+			return $(getGlobalSelectorTarget(s, getDocumentOf(controller.rootElement)));
 		}
-		return $targets;
+		return $(controller.rootElement).find(element);
 	}
 
 	/**
@@ -1777,11 +1753,11 @@
 	 *
 	 * @private
 	 * @param {String|DOM|jQuery} element セレクタ、DOM要素、もしくはjQueryオブジェクト
-	 * @param {DOM} [rootElement] ルートエレメント
-	 * @param {Controller} controller コントローラ
+	 * @param {Controller} controller バインドするコントローラ
+	 * @param {Controller} parentController 親コントローラ
 	 * @returns {DOM} コントローラのバインド対象である要素
 	 */
-	function getBindTarget(element, rootElement, controller) {
+	function getBindTarget(element, controller, parentController) {
 		if (element == null) {
 			throwFwError(ERR_CODE_BIND_TARGET_REQUIRED, [controller.__name]);
 		}
@@ -1790,8 +1766,9 @@
 		if (!isString(element) && typeof element !== 'object') {
 			throwFwError(ERR_CODE_BIND_TARGET_ILLEGAL, [controller.__name]);
 		}
-		if (rootElement) {
-			$targets = getTarget(element, rootElement);
+		if (parentController) {
+			// 親コントローラが指定されている場合は、親のコントローラを起点に探索する
+			$targets = getTarget(element, parentController);
 		} else {
 			$targets = $(element);
 		}
@@ -1906,7 +1883,7 @@
 		} else {
 			opt = {};
 		}
-		target = target ? getTarget(target, controller.rootElement, true) : controller.rootElement;
+		target = target ? getTarget(target, controller) : controller.rootElement;
 		return h5.ui.indicator.call(controller, target, opt);
 	}
 
@@ -2636,7 +2613,7 @@
 		 * @see View.update
 		 */
 		update: function(element, templateId, param) {
-			var target = getTarget(element, this.__controller.rootElement, true);
+			var target = getTarget(element, this.__controller);
 			return getView(templateId, this.__controller).update(target, templateId, param);
 		},
 
@@ -2653,7 +2630,7 @@
 		 * @see View.append
 		 */
 		append: function(element, templateId, param) {
-			var target = getTarget(element, this.__controller.rootElement, true);
+			var target = getTarget(element, this.__controller);
 			return getView(templateId, this.__controller).append(target, templateId, param);
 		},
 
@@ -2670,7 +2647,7 @@
 		 * @see View.prepend
 		 */
 		prepend: function(element, templateId, param) {
-			var target = getTarget(element, this.__controller.rootElement, true);
+			var target = getTarget(element, this.__controller);
 			return getView(templateId, this.__controller).prepend(target, templateId, param);
 		},
 
@@ -2868,7 +2845,7 @@
 				throwFwError(ERR_CODE_BIND_ROOT_ONLY);
 			}
 
-			var target = getBindTarget(targetElement, null, this);
+			var target = getBindTarget(targetElement, this);
 			this.rootElement = target;
 			this.view.__controller = this;
 			var args = param ? param : null;
