@@ -1691,7 +1691,10 @@
 	 * @name indicator
 	 * @function
 	 * @param {String|Object} target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
-	 * @param {Object} [option] オプション
+	 * @param {Object} [option] オプションオブジェクト。targetをオプションオブジェクトに指定して、第1引数にオプションを渡すこともできます。 例：
+	 *            indicator({target:targetElement});
+	 * @param {String|Object} [option.target] インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ。
+	 *            第1引数にtargetが既に指定されている場合は、オプションオブジェクトでの指定は無視します。
 	 * @param {String} [option.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
 	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
 	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
@@ -1706,6 +1709,12 @@
 	 * @see Controller.indicator
 	 */
 	var indicator = function(target, option) {
+		if ($.isPlainObject(target)) {
+			// 第1引数にoptionオブジェクトが渡されていた場合は、ターゲットをoptionオブジェクトから取得
+			// (第1引数がプレーンオブジェクトならoptionオブジェクトと判定する)
+			option = target;
+			target = option.target;
+		}
 		return new Indicator(target, option);
 	};
 
