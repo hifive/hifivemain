@@ -534,9 +534,10 @@
 	 * @private
 	 * @param {String} selector セレクタ
 	 * @param {Document} doc
+	 * @param {Controller} [controller] セレクタがthis.で始まっているときにコントローラの持つオブジェクトをターゲットにする
 	 * @returns {Object|String} パスで指定されたオブジェクト、もしくは未変換の文字列
 	 */
-	function getGlobalSelectorTarget(selector, doc) {
+	function getGlobalSelectorTarget(selector, doc, controller) {
 		var specialObj = ['window', 'document', 'navigator'];
 		for (var i = 0, len = specialObj.length; i < len; i++) {
 			var s = specialObj[i];
@@ -544,6 +545,11 @@
 				//特殊オブジェクトそのものを指定された場合またはwindow. などドット区切りで続いている場合
 				return h5.u.obj.getByPath(selector, getWindowOfDocument(doc));
 			}
+		}
+		// selectorが'this.'で始まっていて、かつcontrollerが指定されている場合はコントローラから取得する
+		var controllerObjectPrefix = 'this.';
+		if (controller && startsWith(selector, controllerObjectPrefix)) {
+			return h5.u.obj.getByPath(selector.slice(controllerObjectPrefix.length), controller);
 		}
 		return selector;
 	}
@@ -881,7 +887,7 @@
 				selectTarget = rootElement;
 				isSelf = true;
 			} else {
-				selectTarget = getGlobalSelectorTarget(selector, doc);
+				selectTarget = getGlobalSelectorTarget(selector, doc, controller);
 			}
 
 			// バインド対象がオブジェクトの場合、必ず直接バインドする
@@ -962,7 +968,7 @@
 						// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
 						continue;
 					}
-					selectTarget = getGlobalSelectorTarget(selectTarget, doc);
+					selectTarget = getGlobalSelectorTarget(selectTarget, doc, controller);
 				}
 
 				if (isSelf || useBind || !isString(selectTarget)) {
