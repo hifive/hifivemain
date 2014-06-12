@@ -2552,10 +2552,17 @@
 		 * child.get('b'); // b_coreView
 		 * </code></pre>
 		 *
+		 * <li>bindメソッドはコメントビューを使用したバインドが可能です。</li>
+		 * <p>
+		 * コメントビューの詳細については、<a
+		 * href="http://www.htmlhifive.com/conts/web/view/reference/inline-comment-templating">リファレンス（仕様詳細)
+		 * &gt;&gt; コメントビュー</a>をご覧ください。
+		 * </p>
 		 * </ul>
 		 *
 		 * @name view
 		 * @memberOf Controller
+		 * @type View
 		 * @see View
 		 */
 		controller.view = new View(controller);
@@ -2571,13 +2578,17 @@
 	}
 
 	/**
-	 * JSDTのフォーマッタが過剰にインデントしてしまうので、独立した関数として記述している
+	 * コメントビューへのバインドに対応したbind
+	 * <p>
+	 * コメントビューへのバインドはコントローラビューのbindのみでの機能です
+	 * </p>
 	 *
 	 * @private
 	 * @param element
 	 * @param context
 	 * @returns {Binding}
 	 */
+	// JSDTのフォーマッタが過剰にインデントしてしまうので、独立した関数として記述している
 	function View_bind(element, context) {
 		var target = element;
 
