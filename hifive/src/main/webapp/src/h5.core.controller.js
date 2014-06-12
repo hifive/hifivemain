@@ -540,6 +540,9 @@
 	 * @returns {Object|String} パスで指定されたオブジェクト、もしくは未変換の文字列
 	 */
 	function getGlobalSelectorTarget(selector, doc, controller) {
+		if (controller && selector === ROOT_ELEMENT_NAME) {
+			return controller.rootElement;
+		}
 		var specialObj = ['window', 'document', 'navigator'];
 		for (var i = 0, len = specialObj.length; i < len; i++) {
 			var s = specialObj[i];
@@ -883,17 +886,10 @@
 
 		if (isGlobal) {
 			// グローバルなセレクタの場合
-			var isSelf = false;
-			var selectTarget;
-			if (selector === ROOT_ELEMENT_NAME) {
-				selectTarget = rootElement;
-				isSelf = true;
-			} else {
-				selectTarget = getGlobalSelectorTarget(selector, doc, controller);
-			}
+			var selectTarget = getGlobalSelectorTarget(selector, doc, controller);
 
 			// バインド対象がオブジェクトの場合、必ず直接バインドする
-			if (isSelf || useBind || !isString(selectTarget)) {
+			if (useBind || !isString(selectTarget)) {
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_OBJECT;
 
@@ -960,20 +956,13 @@
 			var useBind = eventHandlerInfo.bindRequested;
 			var isGlobal = eventHandlerInfo.global;
 			if (isGlobal) {
-				var selectTarget = selector;
-				var isSelf = false;
-				if (selectTarget === ROOT_ELEMENT_NAME) {
-					selectTarget = rootElement;
-					isSelf = true;
-				} else {
-					if (getWindowOfDocument(doc) == null) {
-						// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
-						continue;
-					}
-					selectTarget = getGlobalSelectorTarget(selectTarget, doc, controller);
+				if (getWindowOfDocument(doc) == null) {
+					// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
+					continue;
 				}
+				var selectTarget = getGlobalSelectorTarget(selector, doc, controller);
 
-				if (isSelf || useBind || !isString(selectTarget)) {
+				if (useBind || !isString(selectTarget)) {
 					$(selectTarget).unbind(eventName, handler);
 				} else {
 					$(doc).undelegate(selectTarget, eventName, handler);
