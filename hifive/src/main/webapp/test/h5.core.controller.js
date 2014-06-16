@@ -7327,7 +7327,7 @@ $(function() {
 		/** window.onerrorを保管しておく変数 */
 		onerrorHandler: null,
 		/** エラーをキャッチするための何もしない関数 */
-		dummuyHandler: function() {
+		dummyHandler: function() {
 		// 何もしない
 		}
 	});
