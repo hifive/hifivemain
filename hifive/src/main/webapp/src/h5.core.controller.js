@@ -2883,12 +2883,11 @@
 		/**
 		 * 指定された要素に対して、インジケータ(メッセージ・画面ブロック・進捗)の表示や非表示を行うためのオブジェクトを取得します。
 		 * <p>
-		 * <a href="h5.ui.indicator.html">h5.ui.indicator</a>と同様にインジケータオブジェクトを取得する関数ですが、ターゲットの指定方法について以下の点で<a
-		 * href="h5.ui.indicator.html">h5.ui.indicator</a>と異なります。
+		 * <a href="h5.ui.html#indicator">h5.ui.indicator</a>と同様にインジケータオブジェクトを取得する関数ですが、ターゲットの指定方法について以下の点で<a
+		 * href="h5.ui.html#indicator">h5.ui.indicator</a>と異なります。
 		 * <p>
 		 * <ul>
-		 * <li>第1引数にオプションオブジェクトを渡してください。</li>
-		 *
+		 * <li>第1引数にパラメータオブジェクトを渡してください。</li>
 		 * <pre><code>
 		 * // thisはコントローラ
 		 * this.indicator({
