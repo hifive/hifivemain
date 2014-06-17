@@ -4944,9 +4944,10 @@ $(function() {
 			}
 		};
 		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
-			deepEqual(result, ['parent__construct', 'child__construct', 'gchild__construct', 'parent__init',
-					'child__init', 'gchild__init', 'gchild__postInit', 'child__postInit', 'parent__postInit', 'gchild__ready',
-					'child__ready', 'parent__ready'], 'コントローラの各ライフサイクルの実行順序が正しいこと');
+			deepEqual(result, ['parent__construct', 'child__construct', 'gchild__construct',
+					'parent__init', 'child__init', 'gchild__init', 'gchild__postInit',
+					'child__postInit', 'parent__postInit', 'gchild__ready', 'child__ready',
+					'parent__ready'], 'コントローラの各ライフサイクルの実行順序が正しいこと');
 			start();
 		});
 	});
@@ -5019,10 +5020,10 @@ $(function() {
 			}
 		};
 		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
-			deepEqual(result, ['parent__construct', 'gchild__construct', 'child__construct', 'parent__init',
-					'child__init', 'gchild__init', 'gchild__postInit', 'child__postInit', 'parent__postInit', 'gchild__ready',
-					'child__ready', 'parent__ready'],
-					'ライフサイクルがプロミスを返して非同期で動作する場合、コントローラの各ライフサイクルの実行順序が正しいこと');
+			deepEqual(result, ['parent__construct', 'gchild__construct', 'child__construct',
+					'parent__init', 'child__init', 'gchild__init', 'gchild__postInit',
+					'child__postInit', 'parent__postInit', 'gchild__ready', 'child__ready',
+					'parent__ready'], 'ライフサイクルがプロミスを返して非同期で動作する場合、コントローラの各ライフサイクルの実行順序が正しいこと');
 			start();
 		});
 	});
@@ -5503,178 +5504,27 @@ $(function() {
 
 
 	asyncTest(
-			'__construct, __init, __postInit, __readyのそれぞれでh5.core.controller()を使って独立したコントローラをプロパティに持たせた場合、ライフサイクルイベントの発火回数は正しいか(テンプレートなし)',
-			function() {
-				var cRet = [];
-				var cController = {
-					__name: 'CController',
-
-					__construct: function() {
-						cRet.push(0);
-					},
-
-					__init: function(context) {
-						cRet.push(1);
-					},
-
-					__postInit: function(context) {
-						cRet.push(2);
-					},
-
-					__ready: function(context) {
-						cRet.push(3);
-					}
-				};
-
-				var iRet = [];
-				var iController = {
-					__name: 'IController',
-
-					__construct: function() {
-						iRet.push(0);
-					},
-
-					__init: function(context) {
-						iRet.push(1);
-					},
-
-					__postInit: function(context) {
-						iRet.push(2);
-					},
-
-					__ready: function(context) {
-						iRet.push(3);
-					}
-				};
-
-				var pRet = [];
-				var pController = {
-					__name: 'PController',
-
-					__construct: function() {
-						pRet.push(0);
-					},
-
-					__init: function(context) {
-						pRet.push(1);
-					},
-
-					__postInit: function(context) {
-						pRet.push(2);
-					},
-
-					__ready: function(context) {
-						pRet.push(3);
-					}
-				};
-
-				var rRet = [];
-				var rController = {
-					__name: 'RController',
-
-					__construct: function() {
-						rRet.push(0);
-					},
-
-					__init: function(context) {
-						rRet.push(1);
-					},
-
-					__postInit: function(context) {
-						rRet.push(2);
-					},
-
-					__ready: function(context) {
-						rRet.push(3);
-					}
-				};
-
-				var d1 = $.Deferred();
-				var d2 = $.Deferred();
-				var d3 = $.Deferred();
-				var d4 = $.Deferred();
-
-				var testController = {
-					__name: 'TestController',
-					cController: null,
-					iController: null,
-					rController: null,
-
-					__construct: function() {
-						this.cController = h5.core.controller('#controllerTest', cController);
-						this.cController.readyPromise.done(function() {
-							d1.resolve();
-						});
-					},
-
-					__init: function(context) {
-						this.iController = h5.core.controller('#controllerTest', iController);
-						this.iController.readyPromise.done(function() {
-							d2.resolve();
-						});
-					},
-
-					__postInit: function(context) {
-						this.iController = h5.core.controller('#controllerTest', pController);
-						this.iController.readyPromise.done(function() {
-							d3.resolve();
-						});
-					},
-
-					__ready: function(context) {
-						this.rController = h5.core.controller('#controllerTest', rController);
-						this.rController.readyPromise.done(function() {
-							d4.resolve();
-						});
-					}
-				};
-
-				var c = h5.core.controller('#controllerTest', testController);
-
-				h5.async.when(c.readyPromise, d1.promise(), d2.promise(), d3.promise(),
-						d4.promise()).done(
-						function() {
-							strictEqual(cRet.join(';'), '0;1;2;3',
-									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
-							strictEqual(iRet.join(';'), '0;1;2;3',
-									'__initでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
-							strictEqual(pRet.join(';'), '0;1;2;3',
-									'__postInitでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
-							strictEqual(rRet.join(';'), '0;1;2;3',
-									'__readyでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
-
-							c.cController.unbind();
-							c.iController.unbind();
-							c.rController.unbind();
-							c.unbind();
-							start();
-						});
-			});
-
-	asyncTest(
-			'__construct, __init, __postInit, __readyのそれぞれでh5.core.controller()を使って独立したコントローラをプロパティに持たせた場合、ライフサイクルイベントの発火回数は正しいか(テンプレートあり)',
+			'各ライフサイクルイベントでh5.core.controller()を使って独立したコントローラをプロパティに持たせた場合、ライフサイクルイベントの発火回数と順序は正しいか(テンプレートなし)',
 			function() {
 				var cdfd = $.Deferred();
-				var cp = cdfd.promise();
 				var cRet = [];
 				var cController = {
 					__name: 'CController',
-					__templates: ['./template/test2.ejs'],
 
 					__construct: function() {
-						cRet.push(0);
+						cRet.push('__construct');
 					},
 
-					__init: function(context) {
-						cRet.push(1);
+					__init: function() {
+						cRet.push('__init');
 					},
 
-					__postInit: function(context) {
-						cRet.push(2);
+					__postInit: function() {
+						cRet.push('__postInit');
 					},
 
-					__ready: function(context) {
-						cRet.push(3);
+					__ready: function() {
+						cRet.push('__ready');
 						this.readyPromise.done(function() {
 							cdfd.resolve();
 						});
@@ -5682,26 +5532,24 @@ $(function() {
 				};
 
 				var idfd = $.Deferred();
-				var ip = idfd.promise();
 				var iRet = [];
 				var iController = {
 					__name: 'IController',
-					__templates: ['./template/test2.ejs'],
 
 					__construct: function() {
-						iRet.push(0);
+						iRet.push('__construct');
 					},
 
-					__init: function(context) {
-						iRet.push(1);
+					__init: function() {
+						iRet.push('__init');
 					},
 
-					__postInit: function(context) {
-						iRet.push(2);
+					__postInit: function() {
+						iRet.push('__postInit');
 					},
 
-					__ready: function(context) {
-						iRet.push(3);
+					__ready: function() {
+						iRet.push('__ready');
 						this.readyPromise.done(function() {
 							idfd.resolve();
 						});
@@ -5709,26 +5557,24 @@ $(function() {
 				};
 
 				var pdfd = $.Deferred();
-				var pp = pdfd.promise();
 				var pRet = [];
 				var pController = {
 					__name: 'PController',
-					__templates: ['./template/test2.ejs'],
 
 					__construct: function() {
-						pRet.push(0);
+						pRet.push('__construct');
 					},
 
-					__init: function(context) {
-						pRet.push(1);
+					__init: function() {
+						pRet.push('__init');
 					},
 
-					__postInit: function(context) {
-						pRet.push(2);
+					__postInit: function() {
+						pRet.push('__postInit');
 					},
 
-					__ready: function(context) {
-						pRet.push(3);
+					__ready: function() {
+						pRet.push('__ready');
 						this.readyPromise.done(function() {
 							pdfd.resolve();
 						});
@@ -5736,26 +5582,172 @@ $(function() {
 				};
 
 				var rdfd = $.Deferred();
-				var rp = rdfd.promise();
+				var rRet = [];
+				var rController = {
+					__name: 'RController',
+
+					__construct: function() {
+						rRet.push('__construct');
+					},
+
+					__init: function() {
+						rRet.push('__init');
+					},
+
+					__postInit: function() {
+						rRet.push('__postInit');
+					},
+
+					__ready: function() {
+						rRet.push('__ready');
+						this.readyPromise.done(function() {
+							rdfd.resolve();
+						});
+					}
+				};
+
+				var testController = {
+					__name: 'TestController',
+					cController: null,
+					iController: null,
+					pController: null,
+					rController: null,
+
+					__construct: function() {
+						this.cController = h5.core.controller('#controllerTest', cController);
+					},
+
+					__init: function() {
+						this.iController = h5.core.controller('#controllerTest', iController);
+					},
+
+					__postInit: function() {
+						this.pController = h5.core.controller('#controllerTest', pController);
+					},
+
+					__ready: function() {
+						this.rController = h5.core.controller('#controllerTest', rController);
+					}
+				};
+
+				var c = h5.core.controller('#controllerTest', testController);
+
+				h5.async.when(c.readyPromise, cdfd.promise(), idfd.promise(), pdfd.promise(),
+						rdfd.promise()).done(
+						function() {
+							strictEqual(cRet.join(','), '__construct,__init,__postInit,__ready',
+									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
+							strictEqual(iRet.join(','), '__construct,__init,__postInit,__ready',
+									'__initでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
+							strictEqual(pRet.join(','), '__construct,__init,__postInit,__ready',
+									'__postInitでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
+							strictEqual(rRet.join(','), '__construct,__init,__postInit,__ready',
+									'__readyでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
+							start();
+						});
+			});
+
+	asyncTest(
+			'各ライフサイクルイベントでh5.core.controller()を使って独立したコントローラをプロパティに持たせた場合、ライフサイクルイベントの発火回数と順序は正しいか(テンプレートあり)',
+			function() {
+				var cdfd = $.Deferred();
+				var cRet = [];
+				var cController = {
+					__name: 'CController',
+					__templates: ['./template/test2.ejs'],
+
+					__construct: function() {
+						cRet.push('__construct');
+					},
+
+					__init: function() {
+						cRet.push('__init');
+					},
+
+					__postInit: function() {
+						cRet.push('__postInit');
+					},
+
+					__ready: function() {
+						cRet.push('__ready');
+						this.readyPromise.done(function() {
+							cdfd.resolve();
+						});
+					}
+				};
+
+				var idfd = $.Deferred();
+				var iRet = [];
+				var iController = {
+					__name: 'IController',
+					__templates: ['./template/test2.ejs'],
+
+					__construct: function() {
+						iRet.push('__construct');
+					},
+
+					__init: function() {
+						iRet.push('__init');
+					},
+
+					__postInit: function() {
+						iRet.push('__postInit');
+					},
+
+					__ready: function() {
+						iRet.push('__ready');
+						this.readyPromise.done(function() {
+							idfd.resolve();
+						});
+					}
+				};
+
+				var pdfd = $.Deferred();
+				var pRet = [];
+				var pController = {
+					__name: 'PController',
+					__templates: ['./template/test2.ejs'],
+
+					__construct: function() {
+						pRet.push('__construct');
+					},
+
+					__init: function() {
+						pRet.push('__init');
+					},
+
+					__postInit: function() {
+						pRet.push('__postInit');
+					},
+
+					__ready: function() {
+						pRet.push('__ready');
+						this.readyPromise.done(function() {
+							pdfd.resolve();
+						});
+					}
+				};
+
+				var rdfd = $.Deferred();
 				var rRet = [];
 				var rController = {
 					__name: 'RController',
 					__templates: ['./template/test2.ejs'],
 
 					__construct: function() {
-						rRet.push(0);
+						rRet.push('__construct');
 					},
 
-					__init: function(context) {
-						rRet.push(1);
+					__init: function() {
+						rRet.push('__init');
 					},
 
-					__postInit: function(context) {
-						rRet.push(2);
+					__postInit: function() {
+						rRet.push('__postInit');
 					},
 
-					__ready: function(context) {
-						rRet.push(3);
+					__ready: function() {
+						rRet.push('__ready');
 						this.readyPromise.done(function() {
 							rdfd.resolve();
 						});
@@ -5774,42 +5766,37 @@ $(function() {
 						this.cController = h5.core.controller('#controllerTest', cController);
 					},
 
-					__init: function(context) {
+					__init: function() {
 						this.iController = h5.core.controller('#controllerTest', iController);
 					},
 
-					__postInit: function(context) {
+					__postInit: function() {
 						this.pController = h5.core.controller('#controllerTest', pController);
 					},
 
-					__ready: function(context) {
+					__ready: function() {
 						this.rController = h5.core.controller('#controllerTest', rController);
 					}
 				};
 
 				var c = h5.core.controller('#controllerTest', testController);
 
-				h5.async.when(c.readyPromise, cp, ip, rp).done(
+				h5.async.when(c.readyPromise, cdfd.promise(), idfd.promise(), pdfd.promise(),
+						rdfd.promise()).done(
 						function() {
-							strictEqual(cRet.join(';'), '0;1;2;3',
+							strictEqual(cRet.join(','), '__construct,__init,__postInit,__ready',
 									'__constructでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
-							strictEqual(iRet.join(';'), '0;1;2;3',
+							strictEqual(iRet.join(','), '__construct,__init,__postInit,__ready',
 									'__initでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
-							strictEqual(pRet.join(';'), '0;1;2;3',
+							strictEqual(pRet.join(','), '__construct,__init,__postInit,__ready',
 									'__postInitでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
-							strictEqual(rRet.join(';'), '0;1;2;3',
+							strictEqual(rRet.join(','), '__construct,__init,__postInit,__ready',
 									'__readyでコントローラ化した独自コントローラのライフサイクルイベントの発火回数は正しいか');
-
-							c.cController.unbind();
-							c.iController.unbind();
-							c.pController.unbind();
-							c.rController.unbind();
-							c.unbind();
 							start();
 						});
 			});
 
-	asyncTest('__construct, __init, __postInit, __readyで子コントローラに親コントローラのインスタンスを持たせた時に無限ループにならないか',
+	asyncTest('各ライフサイクルで子コントローラに親コントローラのインスタンスを持たせた時に無限ループにならないか',
 			4, function() {
 
 
