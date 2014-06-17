@@ -2127,15 +2127,15 @@
 			}).fail(
 					function(result) {
 						// テンプレートのロードをリトライする条件は、リトライ回数が上限回数未満、かつ
-						// jqXhr.statusが"0"、もしくは"12029"であること。
-						// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に"0"になっていること、
-						// IEの場合は、コネクションが繋がらない時のコードが"12029"であること。
+						// jqXhr.statusが0、もしくは12029(ERROR_INTERNET_CANNOT_CONNECT)であること。
+						// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に0になっていること、
+						// IEの場合は、コネクションが繋がらない時のコードが12029であること。
 						// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
 						// WinInet のエラーコード(12001 - 12156):
 						// http://support.microsoft.com/kb/193625/ja
 						var jqXhrStatus = result.detail.error.status;
 						if (count === h5.settings.dynamicLoading.retryCount || jqXhrStatus !== 0
-								&& jqXhrStatus !== 12029) {
+								&& jqXhrStatus !== ERROR_INTERNET_CANNOT_CONNECT) {
 							fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
 									result.detail.url);
 							setTimeout(function() {

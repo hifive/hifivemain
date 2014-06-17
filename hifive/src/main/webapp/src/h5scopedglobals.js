@@ -40,6 +40,13 @@ var errorCodeToMessageMap = {};
 var errorCodeToCustomFormatterMap = {};
 
 /**
+ * ネットワークに繋がらない時にjqXhr.statusに格納されるコード(IE)。通信をリトライするかどうかの判定に使用。
+ *
+ * @private
+ */
+var ERROR_INTERNET_CANNOT_CONNECT = 12029;
+
+/**
  * undefinedかどうかの判定で、typeofで判定する
  *
  * @private

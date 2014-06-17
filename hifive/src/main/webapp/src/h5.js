@@ -95,7 +95,8 @@
 		// jQuery1.9以降、GET,POSTの設定はtypeではなくmethodで指定することが推奨されているが、
 		// thisにはtypeにtoUpperCase()されたものが格納されている
 		var type = this.type;
-		if (type === 'POST' || !(stat === 0 || stat === 12029)) {
+		if (type === 'POST'
+				|| !(stat === 0 || stat === ERROR_INTERNET_CANNOT_CONNECT)) {
 			return false;
 		}
 	}
