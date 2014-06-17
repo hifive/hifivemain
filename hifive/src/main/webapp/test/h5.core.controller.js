@@ -4729,6 +4729,56 @@ $(function() {
 		});
 	});
 
+	asyncTest('view.append()のターゲットは、コントローラのルートエレメントを起点に選択されること', 2, function() {
+		$('#qunit-fixture').append('<span class="view-target outer-target"></span>');
+		$('#controllerTest').append('<span class="view-target inner-target"></span>');
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController'
+		}).readyPromise.done(function() {
+			this.view.register('test', 'test');
+			this.view.append('.view-target', 'test');
+			strictEqual($('.inner-target').text(), 'test', 'コントローラのルートエレメント内の要素にテンプレートが出力されていること');
+			strictEqual($('.outer-target').text(), '', 'コントローラのルートエレメントの外の要素にテンプレートは出力されていないこと');
+			start();
+		});
+	});
+
+	asyncTest('view.append()のターゲット指定にグローバルセレクタが使用できること', 4, function() {
+		var $qunit = $('#qunit-fixture');
+		$qunit.append('<span class="outer-target"></span>');
+		$qunit.append('<span class="controller-target1"></span>');
+		$qunit.append('<span class="global-target1');
+		window.h5test1 = {
+			target: $('global-target1')
+		};
+
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			target: $('controller-target1')
+		}).readyPromise
+				.done(function() {
+					this.view.register('test', 'test');
+					this.view.append('{.outer-target}', 'test');
+					strictEqual($('.outer-target').text(), 'test',
+							'グローバルセレクタ使用でコントローラのルートエレメントの外側の要素を指定できること');
+
+					this.view.append('{rootElement}', 'test');
+					strictEqual($(this.rootElement).text(), 'test',
+							'{rootElement}でコントローラのルートエレメントを指定できること');
+
+					this.view.append('{this.target}', 'test');
+					strictEqual($(this.rootElement).text(), 'test',
+							'{this.target1}でコントローラの持つプロパティを指定できること');
+
+					this.view.append('{window.h5test1.target}', 'test');
+					strictEqual($(this.rootElement).text(), 'test',
+							'{window.h5test1.target}でグローバルから辿れる要素を指定できること');
+
+					deleteProperty(window, 'h5test1');
+					start();
+				});
+	});
+
 	asyncTest('view操作', 6, function() {
 		var controller = {
 			__name: 'TestController',
@@ -7493,7 +7543,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			'indicator',
+			'Controller - indicator',
 			{
 				setup: function() {
 					$('#qunit-fixture')
@@ -7518,43 +7568,107 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('this.indicator() ルート要素にインジケータを表示', 4,
-			function() {
-				var testController = null;
-				var controllerBase = {
-					__name: 'TestController',
-
-					'input[type=button] click': function() {
+	asyncTest('ターゲットを指定しない場合はルートエレメントにインジケータが表示されること', 3, function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController'
+		}).readyPromise.done(function() {
 						var indicator = this.indicator({
 							message: 'BlockMessageTest'
 						}).show();
 
-						strictEqual($(indicator._target).find(
-								'.h5-indicator.a.content > .indicator-message').text(),
-								'BlockMessageTest');
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
-								'Indicator#show() インジケータが表示されること');
-
-						strictEqual($(indicator._target).find('.h5-indicator.a.overlay').css(
-								'display'), 'block', 'オーバーレイが表示されていること');
+			strictEqual(this.$find('>.h5-indicator.a.overlay').length, 1, 'オーバレイ要素が追加されていること');
+			strictEqual(this.$find('>.h5-indicator.a.content>.indicator-message').text(),
+					'BlockMessageTest', 'メッセージが表示されていること');
 
 						setTimeout(function() {
 							indicator.hide();
 
 							setTimeout(function() {
-								strictEqual($('.h5-indicator', indicator._target).length, 0,
-										'Indicator#hide() インジケータが除去されていること');
+					strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+					start();
+				}, 0);
+			}, 0);
+		});
+	});
 
-								testController.unbind();
+	asyncTest('ターゲットの指定は、ルートエレメントを起点にして選択されること', 3, function() {
+		$('#qunit-fixture').append('<div class="indicator-target outer"></div>');
+		$('#controllerTest').append('<div class="indicator-target inner"></div>');
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController'
+		}).readyPromise.done(function() {
+			var indicator = this.indicator({
+				target: '.indicator-target'
+			}).show();
+
+			strictEqual(this.$find('>.inner>.h5-indicator.a.overlay').length, 1,
+					'オーバレイ要素が追加されていること');
+
+			strictEqual($('>.outer>.h5-indicator').length, 0, 'ルートエレメントの外側の要素にはインジケータは表示されていないこと');
+
+			setTimeout(function() {
+				indicator.hide();
+				setTimeout(function() {
+					strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
 								start();
 							}, 0);
 						}, 0);
-					}
-				};
+		});
+	});
 
-				testController = h5.core.controller('#controllerTest', controllerBase);
-				testController.readyPromise.done(function() {
-					$('#controllerTest input[type=button]').click();
+	asyncTest('ターゲットの指定にグローバルセレクタが使用できること', 6, function() {
+		var $qunit = $('#qunit-fixture');
+		$qunit.append('<div class="indicator-target outer"></div>');
+		$('#controllerTest').append('<div class="indicator-target inner"></div>');
+		$qunit.append('<div class="global-target"></div>');
+		window.h5test1 = {
+			target: $('.global-target')
+				};
+		$qunit.append('<div class="controller-target"></div>');
+
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			target: $('.controller-target')
+		}).readyPromise.done(function() {
+			var indicator1 = this.indicator({
+				target: '{.indicator-target}'
+			}).show();
+
+			strictEqual(this.$find('>.inner>.h5-indicator.a.overlay').length, 1,
+					'ルートエレメントの内側の要素にオーバレイ要素が追加されていること');
+			strictEqual($('.outer>.h5-indicator.a.overlay').length, 1,
+					'ルートエレメントの外側の要素にオーバレイ要素が追加されていること');
+
+			var indicator2 = this.indicator({
+				target: '{rootElement}'
+			}).show();
+
+			strictEqual(this.$find('>.h5-indicator.a.overlay').length, 1,
+					'ルートエレメントにオーバレイ要素が追加されていること');
+
+			var indicator3 = this.indicator({
+				target: '{window.h5test1.target}'
+			}).show();
+			strictEqual($('.global-target>.h5-indicator.a.overlay').length, 1,
+					'{window.h5test1.target}にオーバレイ要素が追加されていること');
+
+			var indicator4 = this.indicator({
+				target: '{this.target}'
+			}).show();
+			strictEqual($('.controller-target>.h5-indicator.a.overlay').length, 1,
+					'{this.target}にオーバレイ要素が追加されていること');
+
+			setTimeout(function() {
+				indicator1.hide();
+				indicator2.hide();
+				indicator3.hide();
+				indicator4.hide();
+				setTimeout(function() {
+					strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+					deleteProperty(window, 'h5test1');
+					start();
+				}, 0);
+			}, 0);
 				});
 			});
 
