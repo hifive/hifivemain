@@ -83,10 +83,9 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
-	// aspectのリセット
-	function cleanAspects() {
-		h5.settings.aspects = null;
-	}
+
+	// testutils
+	var cleanAspects = testutils.u.cleanAspects;
 
 	// タッチイベントの位置を設定する関数
 	function setPos(ev, pos) {

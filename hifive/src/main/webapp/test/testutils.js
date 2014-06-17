@@ -178,6 +178,13 @@
 		h5.core.definitionCacheManager.clearAll();
 	}
 
+	/**
+	 * アスペクトを削除する
+	 */
+	function cleanAspects(){
+		h5.settings.aspects = null;
+	}
+
 	// ----------- dom ------------
 	/**
 	 * iframeを作成 IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
@@ -408,7 +415,8 @@
 			deleteProperty: deleteProperty,
 			compareVersion: compareVersion,
 			rgbToHex: rgbToHex,
-			clearController: clearController
+			clearController: clearController,
+			cleanAspects: cleanAspects
 		},
 		qunit: {
 			abortTest: abortTest,

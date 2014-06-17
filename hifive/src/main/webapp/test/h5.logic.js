@@ -41,9 +41,8 @@ $(function() {
 	// Functions
 	//=============================
 
-	function cleanAspects() {
-		h5.settings.aspects = null;
-	}
+	// testutils
+	var cleanAspects = testutils.u.cleanAspects;
 
 	// =========================================================================
 	//
