@@ -4347,7 +4347,7 @@ $(function() {
 				setup: function() {
 					$('#qunit-fixture')
 							.append(
-									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click">btn</button></div>');
+									'<div id="controllerTest"><div id="controllerResult"></div><div id="a"><div class="b"></div></div><input type="button" value="click" /><button id="btn" name="click"></button></div>');
 				},
 				teardown: function() {
 					clearController();
