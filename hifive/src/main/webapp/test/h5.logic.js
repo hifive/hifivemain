@@ -207,6 +207,22 @@ $(function() {
 		}
 	});
 
+	test('既にロジック化されているものをコントローラのロジックとして持たせる', function() {
+		$('#qunit-fixture').append('<div id="testController"></div>');
+		var logic = h5.core.logic({
+			__name: 'logic'
+		});
+		try {
+			h5.core.controller('#testController', {
+				__name: 'controller',
+				myLogic: logic
+			});
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_ALREADY_CREATED, e.message);
+		}
+		clearController();
+	});
+
 	//=============================
 	// Definition
 	//=============================
