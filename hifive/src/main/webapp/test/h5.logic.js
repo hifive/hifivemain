@@ -72,6 +72,101 @@ $(function() {
 	// Body
 	//=============================
 
+	asyncTest('__constructの実行', 3, function() {
+		var myLogic = {
+			__name: 'logic',
+			__construct: function() {
+				this.isExecuted = true;
+			},
+			isExecuted: false,
+			childLogic: {
+				__name: 'childLogic',
+				__construct: function() {
+					this.isExecuted = true;
+				},
+				isExecuted: false
+			}
+		};
+		h5.core.controller('#controllerTest',
+				{
+					__name: 'controller',
+					myLogic: myLogic,
+					childController: {
+						__name: 'childController',
+						myLogic: myLogic
+					},
+					__construct: function() {
+						ok(this.myLogic.isExecuted,
+								'ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+						ok(this.myLogic.childLogic.isExecuted,
+								'子ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+						ok(this.childController.myLogic.isExecuted,
+								'子コントローラのロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+					}
+				}).readyPromise.done(start);
+	});
+
+	test('__constructが例外を投げる場合', 1, function() {
+		var errorObj = new Error();
+		var myLogic = {
+			__name: 'logic',
+			__construct: function() {
+				throw errorObj;
+			}
+		};
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller',
+				myLogic: myLogic
+			});
+		} catch (e) {
+			strictEqual(e, errorObj, 'ロジックの__constructが例外を投げた時、try-catchで拾えること');
+		}
+	});
+
+	test('h5.core.logic()で__constructが実行されること', 1, function() {
+		var logic = h5.core.logic({
+			__name: 'logic',
+			__construct: function() {
+				this.isExecuted = true;
+			},
+			isExecuted: false
+		});
+		ok(logic.isExecuted, '__constructが実行されること');
+	});
+
+	test('__constructの時点でロジックのメソッドが用意されていること', 4, function() {
+		h5.core.logic({
+			__name: 'logic',
+			__construct: function() {
+				ok(this.log, 'this.log');
+				ok(this.own, 'this.own');
+				ok(this.ownWithOrg, 'this.ownWithOrg');
+				ok(this.deferred, 'this.deferred');
+			}
+		});
+	});
+
+	test('[build#min]__constructに対してアスペクトが適用されること', 1, function() {
+		var isInterceptorExecuted;
+		var logicAspect = {
+			target: /TestLogic/,
+			interceptors: function(invocation) {
+				isInterceptorExecuted = true;
+				invocation.proceed();
+			}
+		};
+		h5.core.__compileAspects(logicAspect);
+		h5.core.logic({
+			__name: 'TestLogic',
+			__construct: function() {
+			// 何もしない
+			}
+		});
+		ok(isInterceptorExecuted);
+		cleanAspects();
+	});
+
 	asyncTest('this.deferred()は使用できるか', function() {
 		var innerDfd = null;
 		function InnerLogic() {

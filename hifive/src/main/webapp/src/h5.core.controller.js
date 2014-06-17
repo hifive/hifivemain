@@ -2888,6 +2888,7 @@
 		 * <p>
 		 * <ul>
 		 * <li>第1引数にパラメータオブジェクトを渡してください。</li>
+		 *
 		 * <pre><code>
 		 * // thisはコントローラ
 		 * this.indicator({
@@ -3485,6 +3486,11 @@
 		};
 		logic.own = own;
 		logic.ownWithOrg = ownWithOrg;
+
+		// __constructの実行
+		if (isFunction(logic.__construct)) {
+			logic.__construct();
+		}
 
 		// ロジックが持っているロジック定義もロジック化
 		doForEachLogics(logic, function(logic, parent, prop) {
