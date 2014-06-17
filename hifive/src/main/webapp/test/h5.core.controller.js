@@ -22,6 +22,8 @@ $(function() {
 	//
 	// =========================================================================
 
+	var ERROR_INTERNET_CANNOT_CONNECT = testutils.consts.ERROR_INTERNET_CANNOT_CONNECT;
+
 	// =========================================================================
 	//
 	// Privates
@@ -4470,7 +4472,7 @@ $(function() {
 		var errorObj = {
 			detail: {
 				error: {
-					status: h5.env.ua.isIE ? 0 : 12029
+					status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
 				}
 			}
 		};
@@ -4514,7 +4516,7 @@ $(function() {
 		var errorObj = {
 			detail: {
 				error: {
-					status: h5.env.ua.isIE ? 0 : 12029
+					status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
 				}
 			}
 		};
@@ -4561,7 +4563,7 @@ $(function() {
 		var errorObj = {
 			detail: {
 				error: {
-					status: h5.env.ua.isIE ? 0 : 12029
+					status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
 				}
 			}
 		};
@@ -7572,18 +7574,18 @@ $(function() {
 		h5.core.controller('#controllerTest', {
 			__name: 'TestController'
 		}).readyPromise.done(function() {
-						var indicator = this.indicator({
-							message: 'BlockMessageTest'
-						}).show();
+			var indicator = this.indicator({
+				message: 'BlockMessageTest'
+			}).show();
 
 			strictEqual(this.$find('>.h5-indicator.a.overlay').length, 1, 'オーバレイ要素が追加されていること');
 			strictEqual(this.$find('>.h5-indicator.a.content>.indicator-message').text(),
 					'BlockMessageTest', 'メッセージが表示されていること');
 
-						setTimeout(function() {
-							indicator.hide();
+			setTimeout(function() {
+				indicator.hide();
 
-							setTimeout(function() {
+				setTimeout(function() {
 					strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
 					start();
 				}, 0);
@@ -7610,9 +7612,9 @@ $(function() {
 				indicator.hide();
 				setTimeout(function() {
 					strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
-								start();
-							}, 0);
-						}, 0);
+					start();
+				}, 0);
+			}, 0);
 		});
 	});
 
@@ -7623,7 +7625,7 @@ $(function() {
 		$qunit.append('<div class="global-target"></div>');
 		window.h5test1 = {
 			target: $('.global-target')
-				};
+		};
 		$qunit.append('<div class="controller-target"></div>');
 
 		h5.core.controller('#controllerTest', {
@@ -7669,8 +7671,8 @@ $(function() {
 					start();
 				}, 0);
 			}, 0);
-				});
-			});
+		});
+	});
 
 	asyncTest('this.triggerIndicator() FWがtriggerIndicatorイベントを受け取りインジケータを表示', 7, function() {
 		var testController = null;

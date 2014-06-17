@@ -393,6 +393,9 @@
 	 */
 	h5.u.obj.expose('testutils', {
 		settings: settings,
+		consts: {
+			ERROR_INTERNET_CANNOT_CONNECT: 12029
+		},
 		dom: {
 			createIFrameElement: createIFrameElement,
 			openPopupWindow: openPopupWindow,

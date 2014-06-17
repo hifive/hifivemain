@@ -38,6 +38,8 @@ $(function() {
 	 */
 	var COMMON_FAIL_HANDLER_WAIT = 5000;
 
+	var ERROR_INTERNET_CANNOT_CONNECT = testutils.consts.ERROR_INTERNET_CANNOT_CONNECT;
+
 	//=============================
 	// Functions
 	//=============================
@@ -354,7 +356,7 @@ $(function() {
 				async: false
 			});
 			// timeout時のjqXHRを簡単に模倣したものを作成
-			jqXHR.status = 12029;
+			jqXHR.status = ERROR_INTERNET_CANNOT_CONNECT;
 			jqXHR.readyState = 0;
 			var dfd = $.Deferred();
 			var promise = dfd.promise(jqXHR);
