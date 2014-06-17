@@ -4884,116 +4884,6 @@ $(function() {
 		});
 	});
 
-	asyncTest('多重にネストしたコントローラで一番下の子がテンプレートを保持している場合に正しい順番で初期化処理が行われること', 8, function() {
-		var result = [];
-		var root1 = null;
-		var root2 = null;
-		var root3 = null;
-
-		var constructResult = [];
-		var initResult = [];
-		var postInitResult = [];
-		var readyResult = [];
-		var delegate1Controller = {
-			__name: 'Delegate1Controller',
-
-			__templates: ['template/test9.ejs'],
-
-			__construct: function() {
-				constructResult.push(2);
-			},
-
-			__init: function() {
-				initResult.push(2);
-			},
-
-			__postInit: function() {
-				postInitResult.push(0);
-			},
-
-			__ready: function() {
-				readyResult.push(0);
-			},
-
-			testHandler: function() {
-				root1 = this.rootElement;
-			}
-		};
-		var delegate2Controller = {
-			__name: 'Delegate2Controller',
-
-			__construct: function() {
-				constructResult.push(1);
-			},
-
-			__init: function() {
-				initResult.push(1);
-			},
-
-			__postInit: function() {
-				postInitResult.push(1);
-			},
-
-			__ready: function() {
-				readyResult.push(1);
-			},
-
-			delegate1Controller: delegate1Controller,
-
-			testHandler: function() {
-				this.delegate1Controller.testHandler();
-				root2 = this.rootElement;
-				result.push(0);
-			}
-		};
-
-		var controllerBase = {
-			__name: 'TestController',
-
-			__construct: function() {
-				constructResult.push(0);
-			},
-
-			__init: function() {
-				initResult.push(0);
-			},
-
-			__postInit: function() {
-				postInitResult.push(2);
-			},
-
-			__ready: function() {
-				readyResult.push(2);
-			},
-
-			delegate2Controller: delegate2Controller,
-
-			'input[type=button] click': function(context) {
-				root3 = this.rootElement;
-				this.delegate2Controller.testHandler();
-				result.push(1);
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controllerBase);
-
-		testController.readyPromise.done(function() {
-			$('#controllerTest input[type=button]').click();
-
-			strictEqual(result.join(';'), '0;1', 'xxxControllerが動作しているか');
-			strictEqual(root3, root1, 'コントローラ内コントローラのrootElementは親コントローラと同じ参照を持っているか1');
-			strictEqual(root3, root2, 'コントローラ内コントローラのrootElementは親コントローラと同じ参照を持っているか2');
-			strictEqual(root2, root1, 'コントローラ内コントローラのrootElementは親コントローラと同じ参照を持っているか3');
-
-			strictEqual(constructResult.join(';'), '0;1;2', '__constructイベントが適切に発火しているか');
-			strictEqual(initResult.join(';'), '0;1;2', '__initイベントが適切に発火しているか');
-			strictEqual(postInitResult.join(';'), '0;1;2', '__postInitイベントが適切に発火しているか');
-			strictEqual(readyResult.join(';'), '0;1;2', '__readyイベントが適切に発火しているか');
-
-			testController.unbind();
-			start();
-		});
-	});
-
 	//=============================
 	// Definition
 	//=============================
@@ -5033,19 +4923,19 @@ $(function() {
 			result.push(this.__name + '__ready');
 		}
 		var c = {
-			__name: 'A',
+			__name: 'parent',
 			__construct: construct,
 			__init: init,
 			__postInit: postInit,
 			__ready: ready,
 			bController: {
-				__name: 'B',
+				__name: 'child',
 				__construct: construct,
 				__init: init,
 				__postInit: postInit,
 				__ready: ready,
 				cController: {
-					__name: 'C',
+					__name: 'gchild',
 					__construct: construct,
 					__init: init,
 					__postInit: postInit,
@@ -5054,9 +4944,9 @@ $(function() {
 			}
 		};
 		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
-			deepEqual(result, ['A__construct', 'B__construct', 'C__construct', 'A__init',
-					'B__init', 'C__init', 'C__postInit', 'B__postInit', 'A__postInit', 'C__ready',
-					'B__ready', 'A__ready'], 'コントローラの各ライフサイクルの実行順序が正しいこと');
+			deepEqual(result, ['parent__construct', 'child__construct', 'gchild__construct', 'parent__init',
+					'child__init', 'gchild__init', 'gchild__postInit', 'child__postInit', 'parent__postInit', 'gchild__ready',
+					'child__ready', 'parent__ready'], 'コントローラの各ライフサイクルの実行順序が正しいこと');
 			start();
 		});
 	});
@@ -5108,19 +4998,19 @@ $(function() {
 			return dfd.promise();
 		}
 		var c = {
-			__name: 'A',
+			__name: 'parent',
 			__construct: construct,
 			__init: init,
 			__postInit: postInit,
 			__ready: ready,
 			bController: {
-				__name: 'B',
+				__name: 'child',
 				__construct: asyncConstruct,
 				__init: asyncInit,
 				__postInit: asyncPostInit,
 				__ready: asyncReady,
 				cController: {
-					__name: 'C',
+					__name: 'gchild',
 					__construct: construct,
 					__init: init,
 					__postInit: postInit,
@@ -5129,9 +5019,9 @@ $(function() {
 			}
 		};
 		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
-			deepEqual(result, ['A__construct', 'C__construct', 'B__construct', 'A__init',
-					'B__init', 'C__init', 'C__postInit', 'B__postInit', 'A__postInit', 'C__ready',
-					'B__ready', 'A__ready'],
+			deepEqual(result, ['parent__construct', 'gchild__construct', 'child__construct', 'parent__init',
+					'child__init', 'gchild__init', 'gchild__postInit', 'child__postInit', 'parent__postInit', 'gchild__ready',
+					'child__ready', 'parent__ready'],
 					'ライフサイクルがプロミスを返して非同期で動作する場合、コントローラの各ライフサイクルの実行順序が正しいこと');
 			start();
 		});
@@ -5152,20 +5042,21 @@ $(function() {
 			result.push(this.__name + '__ready');
 		}
 		var c = {
-			__name: 'A',
+			__name: 'parent',
 			__template: 'template/test2.ejs',
 			__construct: construct,
 			__init: init,
 			__postInit: postInit,
 			__ready: ready,
 			bController: {
-				__name: 'B',
+				__name: 'child',
+				__template: 'template/test3.ejs',
 				__construct: construct,
 				__init: init,
 				__postInit: postInit,
 				__ready: ready,
 				cController: {
-					__name: 'C',
+					__name: 'gchild',
 					__template: 'template/test8.ejs',
 					__construct: construct,
 					__init: init,
@@ -5175,9 +5066,56 @@ $(function() {
 			}
 		};
 		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
-			deepEqual(result, ['A__construct', 'B__construct', 'C__construct', 'A__init',
-					'B__init', 'C__init', 'C__postInit', 'B__postInit', 'A__postInit', 'C__ready',
-					'B__ready', 'A__ready'], 'テンプレートの指定されたコントローラがある場合、コントローラの各ライフサイクルの実行順序が正しいこと');
+			deepEqual(result, ['parent__construct', 'child__construct', 'gchild__construct',
+					'parent__init', 'child__init', 'gchild__init', 'gchild__postInit',
+					'child__postInit', 'parent__postInit', 'gchild__ready', 'child__ready',
+					'parent__ready'], 'テンプレートの指定されたコントローラがある場合、コントローラの各ライフサイクルの実行順序が正しいこと');
+			start();
+		});
+	});
+
+	asyncTest('テンプレート使用時のライフサイクルイベントの実行順序(子はテンプレートを持っていない場合)', 1, function() {
+		var result = [];
+		function construct() {
+			result.push(this.__name + '__construct');
+		}
+		function init() {
+			result.push(this.__name + '__init');
+		}
+		function postInit() {
+			result.push(this.__name + '__postInit');
+		}
+		function ready() {
+			result.push(this.__name + '__ready');
+		}
+		var c = {
+			__name: 'parent',
+			__template: 'template/test2.ejs',
+			__construct: construct,
+			__init: init,
+			__postInit: postInit,
+			__ready: ready,
+			bController: {
+				__name: 'child',
+				__construct: construct,
+				__init: init,
+				__postInit: postInit,
+				__ready: ready,
+				cController: {
+					__name: 'gchild',
+					__template: 'template/test8.ejs',
+					__construct: construct,
+					__init: init,
+					__postInit: postInit,
+					__ready: ready
+				}
+			}
+		};
+		h5.core.controller('#controllerTest', c).readyPromise.done(function() {
+			deepEqual(result, ['parent__construct', 'child__construct', 'gchild__construct',
+					'parent__init', 'child__init', 'gchild__init', 'gchild__postInit',
+					'child__postInit', 'parent__postInit', 'gchild__ready', 'child__ready',
+					'parent__ready'], 'テンプレートの指定されたコントローラがある場合、コントローラの各ライフサイクルの実行順序が正しいこと');
 			start();
 		});
 	});
