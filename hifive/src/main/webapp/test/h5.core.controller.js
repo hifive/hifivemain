@@ -4000,19 +4000,19 @@ $(function() {
 	asyncTest('__dispose()の実行順序をテスト', 3, function() {
 		var ret = [];
 		var childController = {
-			__name: 'ChildController',
+			__name: 'child',
 
 			__dispose: function() {
-				ret.push(0);
+				ret.push(this.__name);
 			}
 		};
 		var controller = {
-			__name: 'TestController',
+			__name: 'parent',
 
 			childController: childController,
 
 			__dispose: function() {
-				ret.push(1);
+				ret.push(this.__name);
 			}
 		};
 		var testController = h5.core.controller('#controllerTest', controller);
@@ -4021,9 +4021,9 @@ $(function() {
 			var dp = testController.dispose();
 
 			dp.done(function() {
-				strictEqual(ret.join(';'), '0;1', '__disposeイベントは実行されたか');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
+				strictEqual(ret.join(','), 'child,parent', '__disposeイベントは子から順に実行されること');
+				ok(isDisposed(testController), 'ルートコントローラはdisposeされること');
+				ok(isDisposed(cc), '子コントローラはdisposeされたこと');
 				start();
 			});
 		});
@@ -4191,14 +4191,14 @@ $(function() {
 		var rebind = null;
 		var exeUnbind = [];
 		var childController = {
-			__name: 'ChildController',
+			__name: 'child',
 
 			__unbind: function() {
-				exeUnbind.push(0);
+				exeUnbind.push(this.__name);
 			}
 		};
 		var controller = {
-			__name: 'TestController',
+			__name: 'parent',
 
 			childController: childController,
 
@@ -4209,7 +4209,7 @@ $(function() {
 			__unbind: function() {
 				disposeRet = 1;
 				disposeRoot = this.rootElement;
-				exeUnbind.push(1);
+				exeUnbind.push(this.__name);
 			},
 
 			'input[type=button] click': function(context) {
@@ -4238,7 +4238,7 @@ $(function() {
 		testController.readyPromise.done(function() {
 			testController.unbind();
 
-			strictEqual(exeUnbind.join(';'), '0;1', '__unbindハンドラは動作したか');
+			strictEqual(exeUnbind.join(','), 'child,parent', '__unbindハンドラは子から順に動作すること');
 
 			$('#controllerTest input[type=button]').click();
 			strictEqual($('#controllerResult').text(), '', 'コントローラ内要素はundelegateされているか');
@@ -5796,112 +5796,110 @@ $(function() {
 						});
 			});
 
-	asyncTest('各ライフサイクルで子コントローラに親コントローラのインスタンスを持たせた時に無限ループにならないか',
-			4, function() {
+	asyncTest('各ライフサイクルで子コントローラに親コントローラのインスタンスを持たせた時に無限ループにならないか', 4, function() {
 
 
-				var c1Controller = {
-					__name: 'C1Controller',
+		var c1Controller = {
+			__name: 'C1Controller',
 
-					pController: null
-				};
+			pController: null
+		};
 
-				var p1Controller = {
-					__name: 'P1Controller',
+		var p1Controller = {
+			__name: 'P1Controller',
 
-					c1Controller: c1Controller,
+			c1Controller: c1Controller,
 
-					__construct: function() {
-						this.c1Controller.pController = this;
-					}
-				};
+			__construct: function() {
+				this.c1Controller.pController = this;
+			}
+		};
 
-				var c2Controller = {
-					__name: 'C2Controller',
+		var c2Controller = {
+			__name: 'C2Controller',
 
-					pController: null
-				};
+			pController: null
+		};
 
-				var p2Controller = {
-					__name: 'P2Controller',
+		var p2Controller = {
+			__name: 'P2Controller',
 
-					c2Controller: c2Controller,
+			c2Controller: c2Controller,
 
-					__init: function() {
-						this.c2Controller.pController = this;
-					}
-				};
+			__init: function() {
+				this.c2Controller.pController = this;
+			}
+		};
 
-				var c3Controller = {
-					__name: 'C3Controller',
+		var c3Controller = {
+			__name: 'C3Controller',
 
-					pController: null
-				};
+			pController: null
+		};
 
-				var p3Controller = {
-					__name: 'P3Controller',
+		var p3Controller = {
+			__name: 'P3Controller',
 
-					c3Controller: c3Controller,
+			c3Controller: c3Controller,
 
-					__postInit: function() {
-						this.c3Controller.pController = this;
-					}
-				};
+			__postInit: function() {
+				this.c3Controller.pController = this;
+			}
+		};
 
-				var c4Controller = {
-					__name: 'C4Controller',
+		var c4Controller = {
+			__name: 'C4Controller',
 
-					pController: null
-				};
+			pController: null
+		};
 
-				var p4Controller = {
-					__name: 'P4Controller',
+		var p4Controller = {
+			__name: 'P4Controller',
 
-					c4Controller: c4Controller,
+			c4Controller: c4Controller,
 
-					__ready: function() {
-						this.c4Controller.pController = this;
-					}
-				};
+			__ready: function() {
+				this.c4Controller.pController = this;
+			}
+		};
 
-				var d1 = $.Deferred();
-				var d2 = $.Deferred();
-				var d3 = $.Deferred();
-				var d4 = $.Deferred();
+		var d1 = $.Deferred();
+		var d2 = $.Deferred();
+		var d3 = $.Deferred();
+		var d4 = $.Deferred();
 
-				var p1 = h5.core.controller('#controllerTest', p1Controller);
-				p1.readyPromise.done(function() {
-					d1.resolve();
-					ok(p1 === p1.c1Controller.pController, '__constructで無限ループが発生しないか');
-					p1.unbind();
-				});
+		var p1 = h5.core.controller('#controllerTest', p1Controller);
+		p1.readyPromise.done(function() {
+			d1.resolve();
+			ok(p1 === p1.c1Controller.pController, '__constructで無限ループが発生しないか');
+			p1.unbind();
+		});
 
-				var p2 = h5.core.controller('#controllerTest', p2Controller);
-				p2.readyPromise.done(function() {
-					d2.resolve();
-					ok(p2 === p2.c2Controller.pController, '__initで無限ループが発生しないか');
-					p2.unbind();
-				});
+		var p2 = h5.core.controller('#controllerTest', p2Controller);
+		p2.readyPromise.done(function() {
+			d2.resolve();
+			ok(p2 === p2.c2Controller.pController, '__initで無限ループが発生しないか');
+			p2.unbind();
+		});
 
-				var p3 = h5.core.controller('#controllerTest', p3Controller);
-				p3.readyPromise.done(function() {
-					d3.resolve();
-					ok(p3 === p3.c3Controller.pController, '__postInitで無限ループが発生しないか');
-					p3.unbind();
-				});
+		var p3 = h5.core.controller('#controllerTest', p3Controller);
+		p3.readyPromise.done(function() {
+			d3.resolve();
+			ok(p3 === p3.c3Controller.pController, '__postInitで無限ループが発生しないか');
+			p3.unbind();
+		});
 
-				var p4 = h5.core.controller('#controllerTest', p4Controller);
-				p4.readyPromise.done(function() {
-					d4.resolve();
-					ok(p4 === p4.c4Controller.pController, '__readyで無限ループが発生しないか');
-					p4.unbind();
-				});
+		var p4 = h5.core.controller('#controllerTest', p4Controller);
+		p4.readyPromise.done(function() {
+			d4.resolve();
+			ok(p4 === p4.c4Controller.pController, '__readyで無限ループが発生しないか');
+			p4.unbind();
+		});
 
-				h5.async.when(d1.promise(), d2.promise(), d3.promise(), d4.promise()).done(
-						function() {
-							start();
-						});
-			});
+		h5.async.when(d1.promise(), d2.promise(), d3.promise(), d4.promise()).done(function() {
+			start();
+		});
+	});
 
 	asyncTest('初期化パラメータを渡せるか', 24, function() {
 		var cConstruct = null;
@@ -6445,20 +6443,20 @@ $(function() {
 			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
-				ret.push(2);
+				ret.push('__init');
 			}
 		};
 
 		var aop1 = {
 			interceptors: function(invocation) {
-				ret.push(0);
+				ret.push('interceptor1');
 				invocation.proceed();
 			}
 		};
 
 		var aop2 = {
 			interceptors: function(invocation) {
-				ret.push(1);
+				ret.push('interceptor2');
 				invocation.proceed();
 			}
 		};
@@ -6466,7 +6464,7 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			strictEqual(ret.join(';'), '0;1;2', 'インターセプタの動作順は正しいか');
+			strictEqual(ret.join(','), 'interceptor1,interceptor2,__init', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
@@ -6481,17 +6479,17 @@ $(function() {
 			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
-				ret.push(2);
+				ret.push('__init');
 			}
 		};
 
 		var ic1 = function(invocation) {
-			ret.push(0);
+			ret.push('interceptor1');
 			invocation.proceed();
 		};
 
 		var ic2 = function(invocation) {
-			ret.push(1);
+			ret.push('interceptor2');
 			invocation.proceed();
 		};
 		h5.core.__compileAspects({
@@ -6500,7 +6498,7 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			strictEqual(ret.join(';'), '0;1;2', 'インターセプタの動作順は正しいか');
+			strictEqual(ret.join(','), 'interceptor1,interceptor2,__init', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
@@ -6514,22 +6512,22 @@ $(function() {
 			__name: 'com.htmlhifive.test.controller.TestController',
 
 			__init: function() {
-				ret.push(3);
+				ret.push('__init');
 			}
 		};
 
 		var ic1 = function(invocation) {
-			ret.push(0);
+			ret.push('interceptor1');
 			invocation.proceed();
 		};
 
 		var ic2 = function(invocation) {
-			ret.push(1);
+			ret.push('interceptor2');
 			invocation.proceed();
 		};
 
 		var ic3 = function(invocation) {
-			ret.push(2);
+			ret.push('interceptor3');
 			invocation.proceed();
 		};
 		var aspects = [{
@@ -6541,7 +6539,8 @@ $(function() {
 
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.readyPromise.done(function() {
-			strictEqual(ret.join(';'), '0;1;2;3', 'インターセプタの動作順は正しいか');
+			strictEqual(ret.join(','), 'interceptor1,interceptor2,interceptor3,__init',
+					'インターセプタの動作順は正しいか');
 
 			testController.unbind();
 			cleanAspects();
