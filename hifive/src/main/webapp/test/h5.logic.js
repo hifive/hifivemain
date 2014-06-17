@@ -196,6 +196,17 @@ $(function() {
 		clearController();
 	});
 
+	test('h5.core.logic()に既にロジック化されているものを渡す', function() {
+		var logic = h5.core.logic({
+			__name: 'logic'
+		});
+		try {
+			h5.core.logic(logic);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_ALREADY_CREATED, e.message);
+		}
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -214,7 +225,6 @@ $(function() {
 				}
 			},
 			check: function() {
-				var dfd = this.deferred();
 				ok($.isFunction(this.deferred), 'ロジックのthis.deferred();は動作しているか');
 			}
 		});
@@ -319,8 +329,6 @@ $(function() {
 			}
 		};
 
-		var ret1 = '';
-		var ret2 = '';
 		h5.core.__compileAspects(logicAspect);
 		var logic = h5.core.logic({
 			__name: 'TestLogic',
