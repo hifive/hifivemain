@@ -9304,7 +9304,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', 1, function() {
+	test('__nameがないロジックを持つコントローラをバインドしようとするとエラーが出ること', 1, function() {
 		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
 		var controller = {
 			__name: 'TestController',
@@ -9320,7 +9320,7 @@ $(function() {
 		}
 	});
 
-	test('__name属性が文字列でないロジックを持つコントローラをバインドしようとするとエラーが出ること', 5, function() {
+	test('__nameが文字列でないロジックを持つコントローラをバインドしようとするとエラーが出ること', 5, function() {
 		var names = ['', '   ', 1, {}, ["MyLogic"]];
 		var l = names.length;
 		expect(l);
@@ -9338,6 +9338,27 @@ $(function() {
 				strictEqual(e.code, errorCode, e.message);
 			}
 		}
+	});
+
+	test('__nameがないロジックを持つ子コントローラを持つコントローラバインドしようとするとエラーが出ること', 2, function() {
+		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
+		var constructExecuted;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'TestController',
+				__construct: function() {
+					constructExecuted = true;
+				},
+				childController: {
+					__name: 'child',
+					myLogic: {}
+				}
+			});
+			ok(false, 'エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, errorCode, e.message);
+		}
+		ok(!constructExecuted, 'ルートコントローラの__constructは実行されていないこと');
 	});
 
 	asyncTest('コントローラの持つロジックの__construct', 3, function() {
@@ -9375,8 +9396,8 @@ $(function() {
 			start();
 		});
 	});
+
 	test('コントローラの持つロジックが循環参照', 1, function() {
-		$('#qunit-fixture').append('<div id="controllerTest"><input type="button"></div>');
 		var test1Logic = {
 			__name: 'Test1Logic'
 		};
@@ -9395,8 +9416,7 @@ $(function() {
 		try {
 			h5.core.controller('#controllerTest', testController);
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, 'エラーが発生したか');
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, e.message);
 		}
-		clearController();
 	});
 });
