@@ -1341,42 +1341,6 @@ $(function() {
 		}
 	});
 
-	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', 1, function() {
-		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
-		var controller = {
-			__name: 'TestController',
-			myLogic: {
-				name: 'MyLogic'
-			}
-		};
-		try {
-			h5.core.controller('#controllerTest', controller);
-			ok(false, 'エラーが発生していません。');
-		} catch (e) {
-			strictEqual(e.code, errorCode, e.message);
-		}
-	});
-
-	test('__name属性が文字列でないロジックを持つコントローラをバインドしようとするとエラーが出ること', 5, function() {
-		var names = ['', '   ', 1, {}, ["MyLogic"]];
-		var l = names.length;
-		expect(l);
-		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
-		for (var i = 0; i < l; i++) {
-			try {
-				h5.core.controller('#controllerTest', {
-					__name: 'TestController',
-					myLogic: {
-						__name: names[i]
-					}
-				});
-				ok(false, 'エラーが発生していません。');
-			} catch (e) {
-				strictEqual(e.code, errorCode, e.message);
-			}
-		}
-	});
-
 	test('コントローラのバインド対象のチェック 引数の数が1つ以下の場合はエラー', 2, function() {
 		var controller = {
 			__name: 'TestController'
@@ -6659,12 +6623,12 @@ $(function() {
 				}, function(invocation, data) {
 					strictEqual(order++, 3, 'post()が3番目に実行されること');
 				});
-				var logicAspect = {
+				var aspect = {
 					target: '*',
 					interceptors: ic,
 					pointCut: 'f'
 				};
-				h5.core.__compileAspects(logicAspect);
+				h5.core.__compileAspects(aspect);
 				var c = h5.core.controller('#controllerTest', {
 					__name: 'TestController',
 					f: function() {
@@ -9323,5 +9287,116 @@ $(function() {
 				start();
 			});
 		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('Controller - Logic', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('__name属性のないロジックを持つコントローラをバインドしようとするとエラーが出ること', 1, function() {
+		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
+		var controller = {
+			__name: 'TestController',
+			myLogic: {
+				name: 'MyLogic'
+			}
+		};
+		try {
+			h5.core.controller('#controllerTest', controller);
+			ok(false, 'エラーが発生していません。');
+		} catch (e) {
+			strictEqual(e.code, errorCode, e.message);
+		}
+	});
+
+	test('__name属性が文字列でないロジックを持つコントローラをバインドしようとするとエラーが出ること', 5, function() {
+		var names = ['', '   ', 1, {}, ["MyLogic"]];
+		var l = names.length;
+		expect(l);
+		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
+		for (var i = 0; i < l; i++) {
+			try {
+				h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					myLogic: {
+						__name: names[i]
+					}
+				});
+				ok(false, 'エラーが発生していません。');
+			} catch (e) {
+				strictEqual(e.code, errorCode, e.message);
+			}
+		}
+	});
+
+	asyncTest('コントローラの持つロジックの__construct', 3, function() {
+		var myLogic = {
+			__name: 'logic',
+			__construct: function() {
+				this.isExecuted = true;
+			},
+			isExecuted: false,
+			childLogic: {
+				__name: 'childLogic',
+				__construct: function() {
+					this.isExecuted = true;
+				},
+				isExecuted: false
+			}
+		};
+		h5.core.controller('#controllerTest',
+				{
+					__name: 'controller',
+					myLogic: myLogic,
+					childController: {
+						__name: 'childController',
+						myLogic: myLogic
+					},
+					__construct: function() {
+						ok(this.myLogic.isExecuted,
+								'ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+						ok(this.myLogic.childLogic.isExecuted,
+								'子ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+						ok(this.childController.myLogic.isExecuted,
+								'子コントローラのロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+					}
+				}).readyPromise.done(function() {
+			start();
+		});
+	});
+	test('コントローラの持つロジックが循環参照', 1, function() {
+		$('#qunit-fixture').append('<div id="controllerTest"><input type="button"></div>');
+		var test1Logic = {
+			__name: 'Test1Logic'
+		};
+		var test2Logic = {
+			__name: 'Test2Logic',
+			test1Logic: test1Logic
+		};
+
+		test1Logic.test2Logic = test2Logic;
+
+		var testController = {
+			__name: 'TestController',
+			test1Logic: test1Logic
+		};
+
+		try {
+			h5.core.controller('#controllerTest', testController);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, 'エラーが発生したか');
+		}
+		clearController();
 	});
 });

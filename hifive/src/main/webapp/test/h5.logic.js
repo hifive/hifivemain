@@ -52,13 +52,17 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('Logic __construct');
+	module('Logic __construct', {
+		teardown: function() {
+			cleanAllAspects();
+			clearController();
+		}
+	});
 
 	//=============================
 	// Body
 	//=============================
 	test('ロジックの__construct', 2, function() {
-		$('#qunit-fixture').append('<div id="controllerTest"></div>');
 		var logic = h5.core.logic({
 			__name: 'logic',
 			__construct: function() {
@@ -77,55 +81,17 @@ $(function() {
 		ok(logic.childLogic.isExecuted, '子ロジックの__constructが実行されていること');
 	});
 
-	asyncTest('コントローラの持つロジックの__construct', 3, function() {
-		$('#qunit-fixture').append('<div id="controllerTest"></div>');
-		var myLogic = {
-			__name: 'logic',
-			__construct: function() {
-				this.isExecuted = true;
-			},
-			isExecuted: false,
-			childLogic: {
-				__name: 'childLogic',
-				__construct: function() {
-					this.isExecuted = true;
-				},
-				isExecuted: false
-			}
-		};
-		h5.core.controller('#controllerTest',
-				{
-					__name: 'controller',
-					myLogic: myLogic,
-					childController: {
-						__name: 'childController',
-						myLogic: myLogic
-					},
-					__construct: function() {
-						ok(this.myLogic.isExecuted,
-								'ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
-						ok(this.myLogic.childLogic.isExecuted,
-								'子ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
-						ok(this.childController.myLogic.isExecuted,
-								'子コントローラのロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
-					}
-				}).readyPromise.done(function() {
-			clearController();
-			start();
-		});
-	});
-
 	test('__constructが例外を投げる場合', 1, function() {
 		var errorObj = new Error();
 		var myLogic = {
-			__name: 'logic',
+			__name: 'myLogic',
 			__construct: function() {
 				throw errorObj;
 			}
 		};
 		try {
 			h5.core.logic({
-				__name: 'controller',
+				__name: 'logic',
 				myLogic: myLogic
 			});
 		} catch (e) {
@@ -160,42 +126,15 @@ $(function() {
 	// Definition
 	//=============================
 	module('Logic 異常系', {
-		setup: function() {
-			$('#qunit-fixture').append('<div id="controllerTest"><input type="button"></div>');
-		},
 		teardown: function() {
 			cleanAllAspects();
+			clearController();
 		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	test('コントローラの持つロジックが循環参照', 1, function() {
-		$('#qunit-fixture').append('<div id="controllerTest"><input type="button"></div>');
-		var test1Logic = {
-			__name: 'Test1Logic'
-		};
-		var test2Logic = {
-			__name: 'Test2Logic',
-			test1Logic: test1Logic
-		};
-
-		test1Logic.test2Logic = test2Logic;
-
-		var testController = {
-			__name: 'TestController',
-			test1Logic: test1Logic
-		};
-
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, 'エラーが発生したか');
-		}
-		clearController();
-	});
-
 	test('h5.core.logic()に既にロジック化されているものを渡す', function() {
 		var logic = h5.core.logic({
 			__name: 'logic'
@@ -207,26 +146,14 @@ $(function() {
 		}
 	});
 
-	test('既にロジック化されているものをコントローラのロジックとして持たせる', function() {
-		$('#qunit-fixture').append('<div id="testController"></div>');
-		var logic = h5.core.logic({
-			__name: 'logic'
-		});
-		try {
-			h5.core.controller('#testController', {
-				__name: 'controller',
-				myLogic: logic
-			});
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_LOGIC_ALREADY_CREATED, e.message);
-		}
-		clearController();
-	});
-
 	//=============================
 	// Definition
 	//=============================
-	module('Logicのメソッド');
+	module('Logicのメソッド', {
+		teardown: function() {
+			clearController();
+		}
+	});
 
 	//=============================
 	// Body
@@ -329,6 +256,7 @@ $(function() {
 	module('Logic アスペクト', {
 		teardown: function() {
 			cleanAllAspects();
+			clearController();
 		}
 	});
 
