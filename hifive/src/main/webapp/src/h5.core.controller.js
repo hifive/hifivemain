@@ -378,18 +378,18 @@
 	 * 指定されたオブジェクトの関数にアスペクトを織り込みます。
 	 *
 	 * @private
-	 * @param {Object} controllerDefObject オブジェクト.
+	 * @param {Object} defObj コントローラまたはロジックの定義オブジェクト
 	 * @param {Object} prop プロパティ名.
-	 * @param {Boolean} isEventHandler イベントハンドラかどうか.
-	 * @returns {Object} AOPに必要なメソッドを織り込んだオブジェクト.
+	 * @param {Boolean} isEventHandler イベントハンドラかどうか
+	 * @returns {Object} アスペクトを織り込んだ関数
 	 */
-	function weaveControllerAspect(controllerDefObject, prop, isEventHandler) {
-		var interceptors = getInterceptors(controllerDefObject.__name, prop);
+	function weaveAspect(defObj, prop, isEventHandler) {
+		var interceptors = getInterceptors(defObj.__name, prop);
 		// イベントハンドラの場合、 enable/disableListeners()のために一番外側に制御用インターセプタを織り込む
 		if (isEventHandler) {
 			interceptors.push(executeListenersInterceptor);
 		}
-		return createWeavedFunction(controllerDefObject[prop], prop, interceptors);
+		return createWeavedFunction(defObj[prop], prop, interceptors);
 	}
 
 	/**
@@ -461,23 +461,6 @@
 			f = weave(f, funcName, aspects[i]);
 		}
 		return f;
-	}
-
-	/**
-	 * 指定されたオブジェクトの関数にアスペクトを織り込みます。
-	 *
-	 * @private
-	 * @param {Object} logic ロジック.
-	 * @returns {Object} AOPに必要なメソッドを織り込んだロジック.
-	 */
-	function weaveLogicAspect(logic) {
-		for ( var prop in logic) {
-			if (isFunction(logic[prop])) {
-				logic[prop] = createWeavedFunction(logic[prop], prop, getInterceptors(logic.__name,
-						prop));
-			}
-		}
-		return logic;
 	}
 
 	/**
@@ -3382,14 +3365,14 @@
 		// イベントハンドラにアスペクトを設定
 		for (var i = 0, l = cache.eventHandlerProperties.length; i < l; i++) {
 			var prop = cache.eventHandlerProperties[i];
-			controller[prop] = weaveControllerAspect(clonedControllerDef, prop, true);
+			controller[prop] = weaveAspect(clonedControllerDef, prop, true);
 		}
 
 		// イベントハンドラではないメソッド(ライフサイクル含む)にアスペクトを設定
 		for (var i = 0, l = cache.functionProperties.length; i < l; i++) {
 			var prop = cache.functionProperties[i];
 			// アスペクトを設定する
-			controller[prop] = weaveControllerAspect(clonedControllerDef, prop);
+			controller[prop] = weaveAspect(clonedControllerDef, prop);
 		}
 
 		// その他プロパティをコピー
@@ -3453,6 +3436,7 @@
 	 * @memberOf h5.core
 	 */
 	function createLogic(logicDefObj) {
+		var logics = [];
 		function create(defObj, isRoot) {
 			var logicName = defObj.__name;
 
@@ -3469,14 +3453,29 @@
 					logicDefObj: defObj
 				});
 			}
-			// ロジックの循環参照チェック(ルートで1度やればよい)
-			if (isRoot) {
-				validateLogicCircularRef(defObj);
+
+			// キャッシュの取得
+			var cache = definitionCacheManager.get(logicName);
+			if (!cache) {
+				// キャッシュが無い場合で、ルートロジックなら循環参照チェック
+				// ロジックの循環参照チェック(ルートで1度やればよい)
+				if (isRoot) {
+					validateLogicCircularRef(defObj);
+				}
+
+				// キャッシュの作成
+				cache = createLogicCache(defObj);
+				definitionCacheManager.register(logicName, cache);
 			}
 
 			// クローンしたものをロジック化する
-			var clonedLogicDef = $.extend(true, {}, defObj);
-			var logic = weaveLogicAspect(clonedLogicDef);
+			var logic = $.extend(true, {}, defObj);
+			// アスペクトの設定
+			var functionProperties = cache.functionProperties;
+			for (var i = 0, l = functionProperties.length; i < l; i++) {
+				var prop = functionProperties[i];
+				logic[prop] = weaveAspect(logic, prop);
+			}
 			logic.deferred = getDeferred;
 			logic.log = h5.log.createLogger(logicName);
 			logic.__logicContext = {
@@ -3486,18 +3485,27 @@
 			logic.own = own;
 			logic.ownWithOrg = ownWithOrg;
 
-			// __constructの実行
+			logics.push(logic);
+
+			// ロジックが持っているロジック定義もロジック化
+			var logicProperties = cache.logicProperties;
+			for (var i = 0, l = logicProperties.length; i < l; i++) {
+				var prop = logicProperties[i];
+				logic[prop] = create(logic[prop]);
+			}
+			return logic;
+		}
+		var rootLogicInstance = create(logicDefObj, true);
+
+		// __constructの実行
+		// 子から実行する
+		for (var i = logics.length - 1; i >= 0; i--) {
+			var logic = logics[i];
 			if (isFunction(logic.__construct)) {
 				logic.__construct();
 			}
-
-			// ロジックが持っているロジック定義もロジック化
-			doForEachLogics(logic, function(l, parent, prop) {
-				parent[prop] = create(l);
-			});
-			return logic;
 		}
-		return create(logicDefObj, true);
+		return rootLogicInstance;
 	}
 
 	// =============================
