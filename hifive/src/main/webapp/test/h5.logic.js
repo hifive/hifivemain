@@ -482,7 +482,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('clear()でロジックのキャッシュをクリアできること', function() {
+	test('clear()でロジックのキャッシュをクリアできること', 2, function() {
 		h5.core.logic({
 			__name: 'logic',
 			hoge: function() {
@@ -500,7 +500,7 @@ $(function() {
 		ok(!$.isFunction(logic.hoge), 'clearするとclearする前のロジック定義は使用されないこと');
 	});
 
-	test('clearAll()でロジックのキャッシュをクリアできること', function() {
+	test('clearAll()でロジックのキャッシュをクリアできること', 2, function() {
 		h5.core.logic({
 			__name: 'logic',
 			hoge: function() {
