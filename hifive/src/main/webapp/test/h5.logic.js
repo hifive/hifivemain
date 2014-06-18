@@ -52,6 +52,42 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module('Logic h5.core.logic()', {
+		teardown: function() {
+			cleanAllAspects();
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('h5.core.logic()でロジックを生成できること', 1, function() {
+		var logic = h5.core.logic({
+			__name: 'logic'
+		});
+		// ownメソッドが追加されていることでロジック化されていることを確認
+		ok($.isFunction(logic.own), 'ロジック化されていること');
+	});
+
+	test('ネストしたロジックがロジック化されること', 2, function() {
+		var logic = h5.core.logic({
+			__name: 'logic',
+			childLogic: {
+				__name: 'child',
+				childLogic: {
+					__name: 'grand'
+				}
+			}
+		});
+		// ownメソッドが追加されていることでロジック化されていることを確認
+		ok($.isFunction(logic.childLogic.own), '子ロジックがロジック化されていること');
+		ok($.isFunction(logic.childLogic.childLogic.own), '孫ロジックがロジック化されていること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	module('Logic __construct', {
 		teardown: function() {
 			cleanAllAspects();
@@ -62,23 +98,37 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('ロジック化すると__constructが実行される', 2, function() {
+	test('ロジック化すると__constructが実行される', 1, function() {
 		var logic = h5.core.logic({
 			__name: 'logic',
 			__construct: function() {
 				this.isExecuted = true;
 			},
-			isExecuted: false,
+			isExecuted: false
+		});
+		ok(logic.isExecuted, 'ロジックの__constructが実行されていること');
+	});
+
+	test('ネストしたロジックの__constructが実行される', 2, function() {
+		var logic = h5.core.logic({
+			__name: 'logic',
 			childLogic: {
-				__name: 'childLogic',
+				__name: 'child',
 				__construct: function() {
 					this.isExecuted = true;
 				},
-				isExecuted: false
+				isExecuted: false,
+				childLogic: {
+					__name: 'grand',
+					__construct: function() {
+						this.isExecuted = true;
+					},
+					isExecuted: false
+				}
 			},
 		});
-		ok(logic.isExecuted, 'ロジックの__constructが実行されていること');
 		ok(logic.childLogic.isExecuted, '子ロジックの__constructが実行されていること');
+		ok(logic.childLogic.childLogic.isExecuted, '孫ロジックの__constructが実行されていること');
 	});
 
 	test('子から順に__constructが実行される', 3, function() {
@@ -171,7 +221,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('h5.core.logic()に既にロジック化されているものを渡す', function() {
+	test('既にロジック化されているロジック', function() {
 		var logic = h5.core.logic({
 			__name: 'logic'
 		});
