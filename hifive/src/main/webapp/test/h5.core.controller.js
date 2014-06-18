@@ -2147,19 +2147,74 @@ $(function() {
 				});
 			});
 
-	test('あるセレクタに対して重複するイベントハンドラを設定した時の動作', 1, function() {
-		var testController = {
-			__name: 'TestController',
-			' {rootElement}   click': function(context) {},
-			'{rootElement} click': function(context) {}
-		};
-
+	test('あるセレクタに対して重複するイベントハンドラを設定した時の動作', 8, function() {
+		var error;
 		try {
-			h5.core.controller('#controllerTest', testController);
+			h5.core.controller('#controllerTest', {
+				__name: 'controller1',
+				'{.target}  click': function(context) {},
+				'{.target} [click]': function(context) {}
+			});
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_SAME_EVENT_HANDLER, '重複するイベントハンドラを設定した時にエラーが発生したか');
+			error = e;
 		}
+		ok(!error, '直接バインド指定とそうでないイベントハンドラ記述があってもエラーにならないこと');
+
+		error = null;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller2',
+				'{.target}  click': function(context) {},
+				'.target click': function(context) {}
+			});
+		} catch (e) {
+			error = e;
+		}
+		ok(!error, 'グローバルセレクタとそうでないイベントハンドラ記述があってもエラーにならないこと');
+
+		error = null;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller3',
+				' {rootElement}   click': function(context) {},
+				'{rootElement} click': function(context) {}
+			});
+		} catch (e) {
+			error = e;
+		}
+		ok(error, '重複するイベントハンドラでエラーが発生すること');
+		strictEqual(error.code, ERR.ERR_CODE_SAME_EVENT_HANDLER, error.message);
+
+		error = null;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller4',
+				'{.target}  click': function(context) {},
+				'{ .target } click': function(context) {}
+			});
+		} catch (e) {
+			error = e;
+		}
+		ok(error, '重複するイベントハンドラでエラーが発生すること');
+		strictEqual(error.code, ERR.ERR_CODE_SAME_EVENT_HANDLER, error.message);
+
+		error = null;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller5',
+				'{.target}  click': function(context) {},
+				'{ .target} [click]': function(context) {},
+				'{ .target } click': function(context) {}
+			});
+			// 1番目と2番目、2番目と3番目はイベント名の記法が異なるので重複していないが、
+			// 1番目と3番目は重複しているケース
+		} catch (e) {
+			error = e;
+		}
+		ok(error, '重複するイベントハンドラでエラーが発生すること');
+		strictEqual(error.code, ERR.ERR_CODE_SAME_EVENT_HANDLER, error.message);
 	});
+
 	//=============================
 	// Definition
 	//=============================

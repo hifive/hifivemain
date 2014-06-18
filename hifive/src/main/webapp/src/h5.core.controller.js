@@ -2199,20 +2199,22 @@
 				if (!checkBindMap[selector]) {
 					checkBindMap[selector] = {};
 				}
+				if (!checkBindMap[selector][eventName]) {
+					checkBindMap[selector][eventName] = {};
+				}
+				if (!checkBindMap[selector][eventName][global]) {
+					checkBindMap[selector][eventName][global] = {};
+				}
 
 				// 同じセレクタ、同じイベントハンドラに同じ指定(global,bindRequested)でイベントハンドラが指定されていたらエラー
-				if (checkBindMap[selector][eventName]
-						&& checkBindMap[selector][eventName].global === global
-						&& checkBindMap[selector][eventName].bindRequested === bindRequested) {
+				if (checkBindMap[selector][eventName][global][bindRequested]) {
 					throwFwError(ERR_CODE_SAME_EVENT_HANDLER, [controllerDef.__name, selector,
 							eventName], {
 						controllerDef: controllerDef
 					});
 				} else {
-					checkBindMap[selector][eventName] = {
-						global: global,
-						bindRequested: bindRequested
-					};
+					// フラグを立てる
+					checkBindMap[selector][eventName][global][bindRequested] = 1;
 				}
 
 				bindMap[prop] = {
@@ -2974,7 +2976,39 @@
 			}
 			error.customType = customType;
 			throw error;
-		}
+		},
+
+		/**
+		 * イベントハンドラを動的にバインドします。
+		 * <p>
+		 * 第1引数targetの指定にはコントローラのイベントハンドラ記述と同様の記述ができます。
+		 * つまりセレクタの場合はルートエレメントを起点に選択します。またグローバルセレクタで指定することもできます。、
+		 * </p>
+		 * <p>
+		 * ここで追加したハンドラはコントローラのunbind時にアンバインドされます。
+		 * </p>
+		 *
+		 * @param target {String|Object} イベントハンドラのターゲット
+		 * @param eventName {String} イベント名
+		 * @param listener {Function} ハンドラ
+		 */
+		on: function(target, eventName, listener) {
+			var bindObj = createBindObjects(controller, eventHandlerInfo);
+			bindByBindObject(bindObj, eventHandlerInfo, doc);
+		},
+
+		/**
+		 * イベントハンドラを動的にアンバインドします。
+		 * <p>
+		 * 第1引数targetの指定にはコントローラのイベントハンドラ記述と同様の記述ができます。
+		 * つまりセレクタの場合はルートエレメントを起点に選択します。またグローバルセレクタで指定することもできます。、
+		 * </p>
+		 *
+		 * @param target {String|Object} イベントハンドラのターゲット
+		 * @param eventName {String} イベント名
+		 * @param listener {Function} ハンドラ
+		 */
+		off: function(target, eventName, listener) {}
 	});
 
 	/**
