@@ -42,7 +42,7 @@ $(function() {
 	// Functions
 	//=============================
 	// testutils
-	var cleanAspects = testutils.u.cleanAspects;
+	var cleanAllAspects = testutils.u.cleanAllAspects;
 
 	// =========================================================================
 	//
@@ -164,7 +164,7 @@ $(function() {
 			$('#qunit-fixture').append('<div id="controllerTest"><input type="button"></div>');
 		},
 		teardown: function() {
-			cleanAspects();
+			cleanAllAspects();
 		}
 	});
 
@@ -328,7 +328,7 @@ $(function() {
 	//=============================
 	module('Logic アスペクト', {
 		teardown: function() {
-			cleanAspects();
+			cleanAllAspects();
 		}
 	});
 

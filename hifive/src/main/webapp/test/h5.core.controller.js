@@ -85,7 +85,7 @@ $(function() {
 	//=============================
 
 	// testutils
-	var cleanAspects = testutils.u.cleanAspects;
+	var cleanAllAspects = testutils.u.cleanAllAspects;
 
 	// タッチイベントの位置を設定する関数
 	function setPos(ev, pos) {
@@ -6408,7 +6408,7 @@ $(function() {
 			ok($('#controllerTest #aop2').length, 'AOP2は動作しているか');
 
 			testController.unbind();
-			cleanAspects();
+			cleanAllAspects();
 			start();
 		});
 
@@ -6480,7 +6480,7 @@ $(function() {
 			strictEqual(ret.join(','), 'interceptor1,interceptor2,__init', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
-			cleanAspects();
+			cleanAllAspects();
 			start();
 		});
 
@@ -6514,7 +6514,7 @@ $(function() {
 			strictEqual(ret.join(','), 'interceptor1,interceptor2,__init', 'インターセプタの動作順は正しいか');
 
 			testController.unbind();
-			cleanAspects();
+			cleanAllAspects();
 			start();
 		});
 	});
@@ -6556,7 +6556,7 @@ $(function() {
 					'インターセプタの動作順は正しいか');
 
 			testController.unbind();
-			cleanAspects();
+			cleanAllAspects();
 			start();
 		});
 	});
@@ -6600,7 +6600,7 @@ $(function() {
 
 					testController.unbind();
 					test2Controller.unbind();
-					cleanAspects();
+					cleanAllAspects();
 					start();
 				});
 	});
@@ -6644,7 +6644,7 @@ $(function() {
 
 					testController.unbind();
 					test2Controller.unbind();
-					cleanAspects();
+					cleanAllAspects();
 					start();
 				});
 	});
@@ -6675,7 +6675,7 @@ $(function() {
 				c.readyPromise.done(function() {
 					c.f();
 					strictEqual(order++, 4, 'インターセプタが同期で実行されていること');
-					cleanAspects();
+					cleanAllAspects();
 					start();
 				});
 			});

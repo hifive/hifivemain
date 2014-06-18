@@ -181,7 +181,7 @@
 	/**
 	 * アスペクトを削除する
 	 */
-	function cleanAspects(){
+	function cleanAllAspects(){
 		h5.settings.aspects = null;
 	}
 
@@ -416,7 +416,7 @@
 			compareVersion: compareVersion,
 			rgbToHex: rgbToHex,
 			clearController: clearController,
-			cleanAspects: cleanAspects
+			cleanAllAspects: cleanAllAspects
 		},
 		qunit: {
 			abortTest: abortTest,
