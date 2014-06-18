@@ -470,7 +470,6 @@ $(function() {
 		ok(isInterceptorExecuted);
 	});
 
-
 	//=============================
 	// Definition
 	//=============================
