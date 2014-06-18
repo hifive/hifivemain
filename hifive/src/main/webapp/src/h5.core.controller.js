@@ -76,7 +76,7 @@
 	var ERR_CODE_CONTROLLER_ALREADY_CREATED = 6008;
 	/** エラーコード: コントローラの参照が循環している */
 	var ERR_CODE_CONTROLLER_CIRCULAR_REF = 6009;
-	/** エラーコード: コントローラ内のロジックの参照が循環している */
+	/** エラーコード: ロジックの参照が循環している */
 	var ERR_CODE_LOGIC_CIRCULAR_REF = 6010;
 	/** エラーコード: コントローラの参照が循環している */
 	var ERR_CODE_CONTROLLER_SAME_PROPERTY = 6011;
@@ -131,7 +131,7 @@
 	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_PARAM] = 'コントローラ"{0}"の初期化パラメータがプレーンオブジェクトではありません。初期化パラメータにはプレーンオブジェクトを設定してください。';
 	errMsgMap[ERR_CODE_CONTROLLER_ALREADY_CREATED] = '指定されたオブジェクトは既にコントローラ化されています。';
 	errMsgMap[ERR_CODE_CONTROLLER_CIRCULAR_REF] = 'コントローラ"{0}"で、参照が循環しているため、コントローラを生成できません。';
-	errMsgMap[ERR_CODE_LOGIC_CIRCULAR_REF] = 'コントローラ"{0}"のロジックで、参照が循環しているため、ロジックを生成できません。';
+	errMsgMap[ERR_CODE_LOGIC_CIRCULAR_REF] = 'ロジック"{0}"で、参照が循環しているため、ロジックを生成できません。';
 	errMsgMap[ERR_CODE_CONTROLLER_SAME_PROPERTY] = 'コントローラ"{0}"のプロパティ"{1}"はコントローラ化によって追加されるプロパティと名前が重複しています。';
 	errMsgMap[ERR_CODE_EVENT_HANDLER_SELECTOR_THIS] = 'コントローラ"{0}"でセレクタ名にthisが指定されています。コントローラをバインドした要素自身を指定したい時はrootElementを指定してください。';
 	errMsgMap[ERR_CODE_SAME_EVENT_HANDLER] = 'コントローラ"{0}"のセレクタ"{1}"に対して"{2}"というイベントハンドラが重複して設定されています。';
@@ -266,27 +266,24 @@
 	}
 
 	/**
-	 * コントローラ定義オブジェクトが持つロジック定義それぞれについて循環参照になっているかどうかをチェックします。
+	 * ロジック定義が循環参照になっているかどうかをチェックします。
 	 *
 	 * @private
-	 * @param {Object} controllerDefObj コントローラ定義オブジェクト
-	 * @returns {Boolean} 循環参照になっているかどうか(true=循環参照)
+	 * @param {Object} rootLogicDef ロジック定義オブジェクト
 	 */
-	function validateLogicCircularRef(controllerDefObj, controllerName) {
+	function validateLogicCircularRef(rootLogicDef) {
 		function validateCircular(logic, ancestors) {
 			if ($.inArray(logic, ancestors) !== -1) {
 				// 循環参照エラー
-				throwFwError(ERR_CODE_LOGIC_CIRCULAR_REF, [controllerName], {
-					controllerDefObj: controllerDefObj
+				throwFwError(ERR_CODE_LOGIC_CIRCULAR_REF, [rootLogicDef.__name], {
+					logicDefObj: rootLogicDef
 				});
 			}
 			doForEachLogics(logic, function(child) {
 				validateCircular(child, ancestors.concat(logic));
 			});
 		}
-		doForEachLogics(controllerDefObj, function(logic) {
-			validateCircular(controllerDefObj, []);
-		});
+		validateCircular(rootLogicDef, []);
 	}
 
 	/**
@@ -3264,9 +3261,6 @@
 		if (isRoot) {
 			// コントローラの循環参照チェック(ルートコントローラで1度やればよい)
 			validateControllerCircularRef(controllerDefObj, controllerName);
-
-			// ロジックの循環参照チェック(ルートコントローラで1度やればよい)
-			validateLogicCircularRef(controllerDefObj, controllerName);
 		}
 
 		// キャッシュが無かった場合、キャッシュの作成と登録
@@ -3328,6 +3322,15 @@
 		controller.postInitPromise = postInitPromise;
 		controller.readyPromise = readyPromise;
 
+		// ロジック定義をロジック化
+		// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
+		// ロジックが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
+		for (var i = 0, l = cache.logicProperties.length; i < l; i++) {
+			var prop = cache.logicProperties[i];
+			var logicDef = controllerDefObj[prop];
+			controller[prop] = createLogic(logicDef);
+		}
+
 		// templateDfdの設定
 		var clonedControllerDef = $.extend(true, {}, controllerDefObj);
 		var templates = controllerDefObj.__templates;
@@ -3374,15 +3377,6 @@
 					clonedControllerDef[prop]), param, $.extend({
 				isInternal: true
 			}, fwOpt));
-		}
-
-		// ロジック定義をロジック化
-		// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
-		// ロジックが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
-		for (var i = 0, l = cache.logicProperties.length; i < l; i++) {
-			var prop = cache.logicProperties[i];
-			var logicDef = controllerDefObj[prop];
-			controller[prop] = createLogic(logicDef);
 		}
 
 		// イベントハンドラにアスペクトを設定
@@ -3459,45 +3453,51 @@
 	 * @memberOf h5.core
 	 */
 	function createLogic(logicDefObj) {
-		var logicName = logicDefObj.__name;
+		function create(defObj, isRoot) {
+			var logicName = defObj.__name;
 
-		// エラーチェック
-		if (!isString(logicName) || $.trim(logicName).length === 0) {
-			// __nameが不正
-			throwFwError(ERR_CODE_INVALID_LOGIC_NAME, null, {
-				logicDefObj: logicDefObj
+			// エラーチェック
+			if (!isString(logicName) || $.trim(logicName).length === 0) {
+				// __nameが不正
+				throwFwError(ERR_CODE_INVALID_LOGIC_NAME, null, {
+					logicDefObj: defObj
+				});
+			}
+			if (defObj.__logicContext) {
+				// すでにロジックがインスタンス化されている
+				throwFwError(ERR_CODE_LOGIC_ALREADY_CREATED, null, {
+					logicDefObj: defObj
+				});
+			}
+			// ロジックの循環参照チェック(ルートで1度やればよい)
+			if (isRoot) {
+				validateLogicCircularRef(defObj);
+			}
+
+			// クローンしたものをロジック化する
+			var clonedLogicDef = $.extend(true, {}, defObj);
+			var logic = weaveLogicAspect(clonedLogicDef);
+			logic.deferred = getDeferred;
+			logic.log = h5.log.createLogger(logicName);
+			logic.__logicContext = {
+				// ロジック定義オブジェクトはクローンしたものではなくオリジナルのものを持たせる
+				logicDef: defObj
+			};
+			logic.own = own;
+			logic.ownWithOrg = ownWithOrg;
+
+			// __constructの実行
+			if (isFunction(logic.__construct)) {
+				logic.__construct();
+			}
+
+			// ロジックが持っているロジック定義もロジック化
+			doForEachLogics(logic, function(l, parent, prop) {
+				parent[prop] = create(l);
 			});
+			return logic;
 		}
-		if (logicDefObj.__logicContext) {
-			// すでにロジックがインスタンス化されている
-			throwFwError(ERR_CODE_LOGIC_ALREADY_CREATED, null, {
-				logicDefObj: logicDefObj
-			});
-		}
-
-		// クローンしたものをロジック化する
-		var clonedLogicDef = $.extend(true, {}, logicDefObj);
-		var logic = weaveLogicAspect(clonedLogicDef);
-		logic.deferred = getDeferred;
-		logic.log = h5.log.createLogger(logicName);
-		logic.__logicContext = {
-			// ロジック定義オブジェクトはクローンしたものではなくオリジナルのものを持たせる
-			logicDef: logicDefObj
-		};
-		logic.own = own;
-		logic.ownWithOrg = ownWithOrg;
-
-		// __constructの実行
-		if (isFunction(logic.__construct)) {
-			logic.__construct();
-		}
-
-		// ロジックが持っているロジック定義もロジック化
-		doForEachLogics(logic, function(logic, parent, prop) {
-			parent[prop] = createLogic(logic);
-		});
-
-		return logic;
+		return create(logicDefObj, true);
 	}
 
 	// =============================
