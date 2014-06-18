@@ -102,7 +102,7 @@ $(function() {
 		try {
 			h5.core.logic({});
 		} catch (e) {
-			strictEqual(e.code,ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
 		}
 	});
 
@@ -116,7 +116,7 @@ $(function() {
 					__name: names[i]
 				});
 			} catch (e) {
-				strictEqual(e.code,ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
 			}
 		}
 	});
@@ -128,7 +128,7 @@ $(function() {
 				childLogic: {}
 			});
 		} catch (e) {
-			strictEqual(e.code,ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
 		}
 	});
 
@@ -468,5 +468,54 @@ $(function() {
 			}
 		});
 		ok(isInterceptorExecuted);
+	});
+
+
+	//=============================
+	// Definition
+	//=============================
+	module('Logic キャッシュ', {
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('clear()でロジックのキャッシュをクリアできること', function() {
+		h5.core.logic({
+			__name: 'logic',
+			hoge: function() {
+			// 何もしない
+			}
+		});
+		h5.core.definitionCacheManager.clear('logic');
+		var logic = h5.core.logic({
+			__name: 'logic',
+			fuga: function() {
+			// 何もしない
+			}
+		});
+		ok($.isFunction(logic.fuga), 'clearすると新しいロジック定義が反映されること');
+		ok(!$.isFunction(logic.hoge), 'clearするとclearする前のロジック定義は使用されないこと');
+	});
+
+	test('clearAll()でロジックのキャッシュをクリアできること', function() {
+		h5.core.logic({
+			__name: 'logic',
+			hoge: function() {
+			// 何もしない
+			}
+		});
+		h5.core.definitionCacheManager.clearAll('logic');
+		var logic = h5.core.logic({
+			__name: 'logic',
+			fuga: function() {
+			// 何もしない
+			}
+		});
+		ok($.isFunction(logic.fuga), 'clearAllすると新しいロジック定義が反映されること');
+		ok(!$.isFunction(logic.hoge), 'clearAllするとclearする前のロジック定義は使用されないこと');
 	});
 });
