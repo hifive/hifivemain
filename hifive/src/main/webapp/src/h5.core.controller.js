@@ -2976,39 +2976,7 @@
 			}
 			error.customType = customType;
 			throw error;
-		},
-
-		/**
-		 * イベントハンドラを動的にバインドします。
-		 * <p>
-		 * 第1引数targetの指定にはコントローラのイベントハンドラ記述と同様の記述ができます。
-		 * つまりセレクタの場合はルートエレメントを起点に選択します。またグローバルセレクタで指定することもできます。、
-		 * </p>
-		 * <p>
-		 * ここで追加したハンドラはコントローラのunbind時にアンバインドされます。
-		 * </p>
-		 *
-		 * @param target {String|Object} イベントハンドラのターゲット
-		 * @param eventName {String} イベント名
-		 * @param listener {Function} ハンドラ
-		 */
-		on: function(target, eventName, listener) {
-			var bindObj = createBindObjects(controller, eventHandlerInfo);
-			bindByBindObject(bindObj, eventHandlerInfo, doc);
-		},
-
-		/**
-		 * イベントハンドラを動的にアンバインドします。
-		 * <p>
-		 * 第1引数targetの指定にはコントローラのイベントハンドラ記述と同様の記述ができます。
-		 * つまりセレクタの場合はルートエレメントを起点に選択します。またグローバルセレクタで指定することもできます。、
-		 * </p>
-		 *
-		 * @param target {String|Object} イベントハンドラのターゲット
-		 * @param eventName {String} イベント名
-		 * @param listener {Function} ハンドラ
-		 */
-		off: function(target, eventName, listener) {}
+		}
 	});
 
 	/**
