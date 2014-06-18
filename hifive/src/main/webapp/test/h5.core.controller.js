@@ -9521,4 +9521,93 @@ $(function() {
 			ok(!constructExecuted, 'コントローラのバインドは中断されていること');
 		}
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('Controller - キャッシュ', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('clear()でコントローラのキャッシュをクリアできること', 2, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			hoge: function() {
+			// 何もしない
+			}
+		});
+		c.readyPromise.done(function() {
+			h5.core.definitionCacheManager.clear('controller');
+			h5.core.controller('#controllerTest', {
+				__name: 'controller',
+				fuga: function() {
+				// 何もしない
+				}
+			}).readyPromise.done(function() {
+				ok($.isFunction(this.fuga), 'clearすると新しいコントローラ定義が反映されること');
+				ok(!$.isFunction(this.hoge), 'clearするとclearする前のコントローラ定義は使用されないこと');
+				start();
+			});
+		});
+	});
+
+	asyncTest('clearAll()でコントローラのキャッシュをクリアできること', 2, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			hoge: function() {
+			// 何もしない
+			}
+		});
+		c.readyPromise.done(function() {
+			h5.core.definitionCacheManager.clearAll();
+			h5.core.controller('#controllerTest', {
+				__name: 'controller',
+				fuga: function() {
+				// 何もしない
+				}
+			}).readyPromise.done(function() {
+				ok($.isFunction(this.fuga), 'clearAllすると新しいコントローラ定義が反映されること');
+				ok(!$.isFunction(this.hoge), 'clearAllするとclearする前のコントローラ定義は使用されないこと');
+				start();
+			});
+		});
+	});
+
+	asyncTest('バインドしているコントローラのキャッシュをクリアしてもアンバインドされるイベントハンドラは変わらないこと', 4, function() {
+		var eventHandlerExecuted1, eventHandlerExecuted2;
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			'{rootElement} click': function() {
+				eventHandlerExecuted1 = true;
+			}
+		});
+		c.readyPromise.done(function() {
+			// キャッシュをクリアして同名異定義のコントローラをバインド
+			h5.core.definitionCacheManager.clearAll();
+			h5.core.controller('#controllerTest', {
+				__name: 'controller',
+				'{rootElement} click': function() {
+					eventHandlerExecuted2 = true;
+				}
+			}).readyPromise.done(function() {
+				$('#controllerTest').trigger('click');
+				ok(eventHandlerExecuted1, 'イベントハンドラが実行されていること');
+				ok(eventHandlerExecuted2, 'イベントハンドラが実行されていること');
+				eventHandlerExecuted1 = eventHandlerExecuted2 = false;
+				c.unbind();
+				$('#controllerTest').trigger('click');
+				ok(!eventHandlerExecuted1, 'アンバインドしたコントローラのイベントハンドラは動作しないこと');
+				ok(eventHandlerExecuted2, 'アンバインドしていないコントローラのイベントハンドラは動作すること');
+				start();
+			});
+		});
+	});
 });
