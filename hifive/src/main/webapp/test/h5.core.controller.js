@@ -9448,4 +9448,77 @@ $(function() {
 			strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, e.message);
 		}
 	});
+
+	test('コントローラの持つロジックが不正でエラーが投げられたとき、コントローラのバインドは中断されること', 1, function() {
+		var constructExecuted;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller',
+				__construct: function() {
+					constructExecuted = true;
+				},
+				myLogic: {}
+			});
+		} catch (e) {
+			ok(!constructExecuted, 'コントローラのバインドは中断されていること');
+		}
+	});
+
+	test('ネストしたコントローラの持つロジックが不正でエラーが投げられたとき、コントローラのバインドは中断されること', 1, function() {
+		var constructExecuted;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller',
+				__construct: function() {
+					constructExecuted = true;
+				},
+				childController: {
+					__name: 'child',
+					myLogic: {}
+				}
+			});
+		} catch (e) {
+			ok(!constructExecuted, 'コントローラのバインドは中断されていること');
+		}
+	});
+
+	test('コントローラの持つロジックの__constructで例外が投げられたとき、コントローラのバインドは中断されること', 1, function() {
+		var constructExecuted;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller',
+				__construct: function() {
+					constructExecuted = true;
+				},
+				myLogic: {
+					__name: 'logic',
+					__construct: function() {
+						throw new Error();
+					}
+				}
+			});
+		} catch (e) {
+			ok(!constructExecuted, 'コントローラのバインドは中断されていること');
+		}
+	});
+
+	test('ネストしたコントローラの持つロジックの__constructで例外が投げられたとき、コントローラのバインドは中断されること', 1, function() {
+		var constructExecuted;
+		try {
+			h5.core.controller('#controllerTest', {
+				__name: 'controller',
+				childController: {
+					__name: 'child',
+					myLogic: {
+						__name: 'logic',
+						__construct: function() {
+							throw new Error();
+						}
+					}
+				}
+			});
+		} catch (e) {
+			ok(!constructExecuted, 'コントローラのバインドは中断されていること');
+		}
+	});
 });
