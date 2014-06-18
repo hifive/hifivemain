@@ -9304,6 +9304,71 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+	asyncTest('コントローラのロジックがロジック化されること', 1, function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			__construct: function() {
+				// ownメソッドが追加されているかどうかで確認
+				ok($.isFunction(this.myLogic.own), 'コントローラ定義に記述したロジックがロジック化されていること');
+			},
+			myLogic: {
+				__name: 'logic'
+			}
+		}).readyPromise.done(start);
+	});
+
+	asyncTest('子コントローラのロジックがロジック化されること', 1, function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			__construct: function() {
+				ok($.isFunction(this.childController.myLogic.own),
+						'子コントローラ定義に記述したロジックがロジック化されていること');
+			},
+			childController: {
+				__name: 'child',
+				myLogic: {
+					__name: 'logic'
+				}
+			}
+		}).readyPromise.done(start);
+	});
+
+	asyncTest('コントローラの持つロジックの__construct', 3, function() {
+		var myLogic = {
+			__name: 'logic',
+			__construct: function() {
+				this.isExecuted = true;
+			},
+			isExecuted: false,
+			childLogic: {
+				__name: 'childLogic',
+				__construct: function() {
+					this.isExecuted = true;
+				},
+				isExecuted: false
+			}
+		};
+		h5.core.controller('#controllerTest',
+				{
+					__name: 'controller',
+					myLogic: myLogic,
+					childController: {
+						__name: 'childController',
+						myLogic: myLogic
+					},
+					__construct: function() {
+						ok(this.myLogic.isExecuted,
+								'ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+						ok(this.myLogic.childLogic.isExecuted,
+								'子ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+						ok(this.childController.myLogic.isExecuted,
+								'子コントローラのロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
+					}
+				}).readyPromise.done(function() {
+			start();
+		});
+	});
+
 	test('__nameがないロジックを持つコントローラをバインドしようとするとエラーが出ること', 1, function() {
 		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
 		var controller = {
@@ -9359,42 +9424,6 @@ $(function() {
 			strictEqual(e.code, errorCode, e.message);
 		}
 		ok(!constructExecuted, 'ルートコントローラの__constructは実行されていないこと');
-	});
-
-	asyncTest('コントローラの持つロジックの__construct', 3, function() {
-		var myLogic = {
-			__name: 'logic',
-			__construct: function() {
-				this.isExecuted = true;
-			},
-			isExecuted: false,
-			childLogic: {
-				__name: 'childLogic',
-				__construct: function() {
-					this.isExecuted = true;
-				},
-				isExecuted: false
-			}
-		};
-		h5.core.controller('#controllerTest',
-				{
-					__name: 'controller',
-					myLogic: myLogic,
-					childController: {
-						__name: 'childController',
-						myLogic: myLogic
-					},
-					__construct: function() {
-						ok(this.myLogic.isExecuted,
-								'ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
-						ok(this.myLogic.childLogic.isExecuted,
-								'子ロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
-						ok(this.childController.myLogic.isExecuted,
-								'子コントローラのロジックの__constructがルートコントローラの__constructよりも前に実行されていること');
-					}
-				}).readyPromise.done(function() {
-			start();
-		});
 	});
 
 	test('コントローラの持つロジックが循環参照', 1, function() {
