@@ -88,6 +88,105 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module('Logic 異常系', {
+		teardown: function() {
+			cleanAllAspects();
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('__nameがない', function() {
+		try {
+			h5.core.logic({});
+		} catch (e) {
+			strictEqual(e.code,ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
+		}
+	});
+
+	test('__nameが文字列でない', function() {
+		var names = ['', '   ', 1, {}, ["MyLogic"]];
+		var l = names.length;
+		expect(l);
+		for (var i = 0, l = names.length; i < l; i++) {
+			try {
+				h5.core.logic({
+					__name: names[i]
+				});
+			} catch (e) {
+				strictEqual(e.code,ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
+			}
+		}
+	});
+
+	test('__nameが無いロジックを子に持つロジック', 1, function() {
+		try {
+			h5.core.logic({
+				__name: 'logic',
+				childLogic: {}
+			});
+		} catch (e) {
+			strictEqual(e.code,ERR.ERR_CODE_INVALID_LOGIC_NAME, e.message);
+		}
+	});
+
+	test('既にロジック化されているロジック', 1, function() {
+		var logic = h5.core.logic({
+			__name: 'logic'
+		});
+		try {
+			h5.core.logic(logic);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_ALREADY_CREATED, e.message);
+		}
+	});
+
+	test('既にロジック化されているロジックを子に持つロジック', 1, function() {
+		var logic = h5.core.logic({
+			__name: 'logic'
+		});
+		try {
+			h5.core.logic({
+				__name: 'parent',
+				myLogic: logic
+			});
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_ALREADY_CREATED, e.message);
+		}
+	});
+
+	test('循環参照するロジック', 1, function() {
+		var logicDef = {
+			__name: 'logic'
+		};
+		logicDef.childLogic = logicDef;
+		try {
+			h5.core.logic(logicDef);
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, e.message);
+		}
+	});
+
+	test('子のロジックが循環参照している場合', 1, function() {
+		var logicDef = {
+			__name: 'logic'
+		};
+		logicDef.childLogic = logicDef;
+		try {
+			h5.core.logic({
+				__name: 'parent',
+				childLogic: logicDef
+			});
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_LOGIC_CIRCULAR_REF, e.message);
+		}
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	module('Logic __construct', {
 		teardown: function() {
 			cleanAllAspects();
@@ -206,30 +305,6 @@ $(function() {
 				ok(this.deferred, 'this.deferred');
 			}
 		});
-	});
-
-	//=============================
-	// Definition
-	//=============================
-	module('Logic 異常系', {
-		teardown: function() {
-			cleanAllAspects();
-			clearController();
-		}
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('既にロジック化されているロジック', function() {
-		var logic = h5.core.logic({
-			__name: 'logic'
-		});
-		try {
-			h5.core.logic(logic);
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_LOGIC_ALREADY_CREATED, e.message);
-		}
 	});
 
 	//=============================
