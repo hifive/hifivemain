@@ -3438,7 +3438,6 @@
 	 * @memberOf h5.core
 	 */
 	function createLogic(logicDefObj) {
-		var logics = [];
 		function create(defObj, isRoot) {
 			var logicName = defObj.__name;
 
@@ -3467,7 +3466,6 @@
 
 				// キャッシュの作成
 				cache = createLogicCache(defObj);
-				definitionCacheManager.register(logicName, cache);
 			}
 
 			// クローンしたものをロジック化する
@@ -3487,27 +3485,24 @@
 			logic.own = own;
 			logic.ownWithOrg = ownWithOrg;
 
-			logics.push(logic);
-
 			// ロジックが持っているロジック定義もロジック化
 			var logicProperties = cache.logicProperties;
 			for (var i = 0, l = logicProperties.length; i < l; i++) {
 				var prop = logicProperties[i];
 				logic[prop] = create(logic[prop]);
 			}
-			return logic;
-		}
-		var rootLogicInstance = create(logicDefObj, true);
 
-		// __constructの実行
-		// 子から実行する
-		for (var i = logics.length - 1; i >= 0; i--) {
-			var logic = logics[i];
+			// __constructの実行
+			// 子から実行する
 			if (isFunction(logic.__construct)) {
 				logic.__construct();
 			}
+
+			// キャッシュへ登録
+			definitionCacheManager.register(logicName, cache);
+			return logic;
 		}
-		return rootLogicInstance;
+		return create(logicDefObj, true);
 	}
 
 	// =============================
