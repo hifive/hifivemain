@@ -1925,7 +1925,7 @@
 	function disposeController(controller) {
 		// 子から順にview.clearとnullifyの実行
 		doForEachControllerGroupsDepthFirst(controller, function(c) {
-			nullify(c);
+			// viewのclearとnullify
 			if (c.view && c.view.__view) {
 				c.view.clear();
 			}
