@@ -773,10 +773,7 @@
 	}
 
 	/**
-	 * バインドマップに基づいてイベントハンドラをバインドします。
-	 * <p>
-	 * 第2引数に親コントローラが指定されていた場合、第1引数コントローラについての親の__meta定義を参照して、 useHandlersがfalseならバインドをキャンセルします。
-	 * </p>
+	 * バインドマップに基づいてイベントハンドラをバインドします
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
@@ -787,9 +784,7 @@
 		for ( var p in bindMap) {
 			var bindObjects = createBindObjects(controller, bindMap[p]);
 			for (var i = 0, l = bindObjects.length; i < l; i++) {
-				// アンバインドマップにハンドラを追加
-				registerWithUnbindList(bindObjects[i], bindMap[p]);
-				bindByBindObject(bindObjects[i], bindMap[p], doc);
+				bindByBindObject(bindObjects[i], doc);
 			}
 		}
 	}
@@ -800,13 +795,14 @@
 	 * @private
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} eventHandlerInfo バインドマップに登録されているイベントハンドラの情報
+	 * @param {Function} directFunction 動的に(onメソッド)追加されるイベントハンドラの場合はハンドラを第3引数に指定
 	 * @returns {Object[]} バインドオブジェクトの配列
 	 */
-	function createBindObjects(controller, eventHandlerInfo) {
+	function createBindObjects(controller, eventHandlerInfo, directFunction) {
 		var selector = eventHandlerInfo.selector;
 		var eventName = eventHandlerInfo.eventName;
 		// ハンドラを取得(アスペクト適用済み)
-		var func = controller[eventHandlerInfo.propertyKey];
+		var func = directFunction || controller[eventHandlerInfo.propertyKey];
 		// この関数の戻り値になるバインドオブジェクトの配列
 		// 結果は必ず配列になるようにする
 		var bindObjects;
@@ -833,6 +829,7 @@
 		function wrapHandler(bindObj) {
 			var handler = bindObj.handler;
 			var c = bindObj.controller;
+			bindObj.originalHandler = handler;
 			bindObj.handler = function(/* var args */) {
 				// listenerElementTypeが1ならjQueryオブジェクト、そうでないならDOM要素を、イベントハンドラの第2引数にする
 				// jQuery1.6.4の場合、currentTargetに正しく値が設定されていない場合があるため、
@@ -842,7 +839,15 @@
 			};
 		}
 		for (var i = 0, l = bindObjects.length; i < l; i++) {
-			wrapHandler(bindObjects[i]);
+			var bindObject = bindObjects[i];
+			// handlerをラップ
+			wrapHandler(bindObject);
+			// eventHandlerInfoから、bindObjに必要なものを持たせる
+			bindObject.bindRequested = eventHandlerInfo.bindRequested;
+			bindObject.global = eventHandlerInfo.global;
+			bindObject.bindTarget = eventHandlerInfo.bindTarget;
+			// コントローラを持たせる
+			bindObject.controller = controller;
 		}
 		return bindObjects;
 	}
@@ -852,19 +857,24 @@
 	 *
 	 * @private
 	 * @param {Object} bindObj バインドオブジェクト
-	 * @param {Object} eventHandlerInfo バインドマップに登録されているイベントハンドラの情報
 	 * @param {Document} doc documentオブジェクト
 	 */
-	function bindByBindObject(bindObj, eventHandlerInfo, doc) {
+	function bindByBindObject(bindObj, doc) {
 		var controller = bindObj.controller;
 		var rootElement = controller.rootElement;
 		var selector = bindObj.selector;
 		var eventName = bindObj.eventName;
 		var handler = bindObj.handler;
-		var useBind = eventHandlerInfo.bindRequested;
-		var isGlobal = eventHandlerInfo.global;
 
-		if (isGlobal) {
+		var useBind = bindObj.bindRequested;
+		var isGlobal = bindObj.global;
+		var bindTarget = bindObj.bindTarget;
+
+		if (bindTarget) {
+			// bindTargetが指定されている場合は必ず直接バインド
+			bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_OBJECT;
+			$(bindTarget).bind(eventName, handler);
+		} else if (isGlobal) {
 			// グローバルなセレクタの場合
 			var selectTarget = getGlobalSelectorTarget(selector, doc, controller);
 
@@ -873,7 +883,8 @@
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_OBJECT;
 
-				$(selectTarget).bind(eventName, handler);
+				bindTarget = $(selectTarget);
+				bindTarget.bind(eventName, handler);
 			} else {
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_GLOBAL;
@@ -890,11 +901,16 @@
 			bindObj.evSelector = selector;
 
 			if (useBind) {
-				$(selector, rootElement).bind(eventName, handler);
+				bindTarget = $(selector, rootElement);
+				bindTarget.bind(eventName, handler);
 			} else {
 				$(rootElement).delegate(selector, eventName, handler);
 			}
 		}
+		// アンバインドマップにハンドラを追加
+		// バインドした場合はバインドした要素・オブジェクトをbindTargetに覚えておく
+		bindObj.bindTarget = bindTarget;
+		registerWithUnbindList(bindObj);
 
 		// h5trackstartのバインド先のstyle.touchActionにh5.settings.trackstartTouchActionの値(デフォルト'none')を設定する
 		// touchActionをサポートしていないなら何もしない
@@ -907,6 +923,35 @@
 			$trackTarget.each(function() {
 				this.style[touchActionProp] = h5.settings.trackstartTouchAction;
 			});
+		}
+	}
+
+	/**
+	 * バインドオブジェクトに基づいてイベントハンドラをアンバインドします。
+	 *
+	 * @private
+	 * @param {Object} bindObj バインドオブジェクト
+	 * @param {Document} doc documentオブジェクト
+	 */
+	function unbindByBindObject(bindObj, doc) {
+		var controller = bindObj.controller;
+		var rootElement = controller.rootElement;
+		var selector = bindObj.selector;
+		var handler = bindObj.handler;
+		var eventName = bindObj.eventName;
+		var isGlobal = bindObj.global;
+		var bindTarget = bindObj.bindTarget;
+		if (bindTarget) {
+			// オブジェクトまたは直接バインド指定されていた場合(===バインド時にbindメソッドを使った場合)は直接unbind
+			$(bindTarget).unbind(eventName, handler);
+		} else if (isGlobal) {
+			if (getWindowOfDocument(doc) == null) {
+				// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
+				return;
+			}
+			$(doc).undelegate(selector, eventName, handler);
+		} else {
+			$(rootElement).undelegate(selector, eventName, handler);
 		}
 	}
 
@@ -928,33 +973,11 @@
 		var unbindHandlerList = controller.__controllerContext.unbindHandlerList;
 
 		for (var i = 0, l = unbindHandlerList.length; i < l; i++) {
-			var eventHandlerInfo = unbindHandlerList[i].eventHandlerInfo;
-			var bindObj = unbindHandlerList[i].bindObj;
-			var selector = bindObj.selector;
-			var handler = bindObj.handler;
-			var eventName = bindObj.eventName;
-			var useBind = eventHandlerInfo.bindRequested;
-			var isGlobal = eventHandlerInfo.global;
-			if (isGlobal) {
-				if (getWindowOfDocument(doc) == null) {
-					// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
-					continue;
-				}
-				var selectTarget = getGlobalSelectorTarget(selector, doc, controller);
-
-				if (useBind || !isString(selectTarget)) {
-					$(selectTarget).unbind(eventName, handler);
-				} else {
-					$(doc).undelegate(selectTarget, eventName, handler);
-				}
-			} else {
-				if (useBind) {
-					$(selector, rootElement).unbind(eventName, handler);
-				} else {
-					$(rootElement).undelegate(selector, eventName, handler);
-				}
-			}
+			var bindObj = unbindHandlerList[i];
+			unbindByBindObject(bindObj, doc);
 		}
+		// アンバインドハンドラリストを空にする
+		controller.__controllerContext.unbindHandlerList = [];
 	}
 
 	/**
@@ -1252,11 +1275,8 @@
 	 * @param {Object} bindObj
 	 * @param {Object} eventHandlerInfo イベントハンドラ情報
 	 */
-	function registerWithUnbindList(bindObj, eventHandlerInfo) {
-		bindObj.controller.__controllerContext.unbindHandlerList.push({
-			bindObj: bindObj,
-			eventHandlerInfo: eventHandlerInfo
-		});
+	function registerWithUnbindList(bindObj) {
+		bindObj.controller.__controllerContext.unbindHandlerList.push(bindObj);
 	}
 
 	/**
@@ -2130,6 +2150,57 @@
 		}
 		viewLoad(0);
 	}
+
+	/**
+	 * eventHandlerInfoオブジェクトを作成します
+	 * <p>
+	 * 第4引数propはコントローラ定義に書かれたイベントハンドラ(静的)ならそのプロパティ名を渡してください
+	 * </p>
+	 * <p>
+	 * 動的なイベントハンドラの場合はpropは指定しないでください
+	 * </p>
+	 *
+	 * @param {String|Object} selector
+	 * @param {String} eventName
+	 * @param {Controller|Object} controller コントローラまたはコントローラ定義オブジェクト
+	 * @param {String} prop コントローラ定義に記述された静的イベントハンドラの場合に、そのインベントハンドラのプロパティを指定
+	 * @returns {Object} eventHandlerInfo
+	 */
+	function createEventHandlerInfo(selector, eventName, controller, prop) {
+		// selectorが文字列じゃない場合はターゲットを直接指定している
+		var direct = !isString(selector);
+		var bindTarget = direct ? selector : null;
+
+		selector = direct ? null : $.trim(selector);
+		eventName = $.trim(eventName);
+
+		// ターゲットが直接指定されているならglobalはtrue
+		var global = direct || isGlobalSelector(selector);
+		var bindRequested = isBindRequested(eventName);
+		if (bindRequested) {
+			eventName = $.trim(trimBindEventBracket(eventName));
+		}
+
+		if (!direct && global) {
+			var selector = trimGlobalSelectorBracket(selector);
+			// selectorに{this}が指定されていたらエラー
+			if (selector === 'this') {
+				throwFwError(ERR_CODE_EVENT_HANDLER_SELECTOR_THIS, [controller.__name], {
+					controllerDef: controller
+				});
+			}
+		}
+
+		return {
+			selector: selector,
+			bindTarget: bindTarget,
+			global: global,
+			bindRequested: bindRequested,
+			eventName: eventName,
+			propertyKey: prop
+		};
+	}
+
 	/**
 	 * コントローラキャッシュエントリークラス
 	 *
@@ -2179,23 +2250,18 @@
 				// bindMapの作成
 				var propTrimmed = $.trim(prop);
 				var lastIndex = propTrimmed.lastIndexOf(' ');
-				var selector = $.trim(propTrimmed.substring(0, lastIndex));
-				var eventName = $.trim(propTrimmed.substring(lastIndex + 1, propTrimmed.length));
-				var global = isGlobalSelector(selector);
-				var bindRequested = isBindRequested(eventName);
-				if (bindRequested) {
-					eventName = $.trim(trimBindEventBracket(eventName));
-				}
 
-				if (global) {
-					var selector = trimGlobalSelectorBracket(selector);
-					if (selector === 'this') {
-						throwFwError(ERR_CODE_EVENT_HANDLER_SELECTOR_THIS, [controllerDef.__name],
-								{
-									controllerDef: controllerDef
-								});
-					}
-				}
+				// イベントハンドラインフォの作成
+				var info = createEventHandlerInfo(propTrimmed.substring(0, lastIndex), propTrimmed
+						.substring(lastIndex + 1, propTrimmed.length), controllerDef, prop);
+
+				// 整形したものを取得
+				var selector = info.selector;
+				var eventName = info.eventName;
+				var global = info.global;
+				var bindRequested = info.bindRequested;
+
+				// 同じセレクタ、同じイベントハンドラに同じ指定(global,bindRequested)でイベントハンドラが指定されていたらエラー
 				if (!checkBindMap[selector]) {
 					checkBindMap[selector] = {};
 				}
@@ -2205,8 +2271,6 @@
 				if (!checkBindMap[selector][eventName][global]) {
 					checkBindMap[selector][eventName][global] = {};
 				}
-
-				// 同じセレクタ、同じイベントハンドラに同じ指定(global,bindRequested)でイベントハンドラが指定されていたらエラー
 				if (checkBindMap[selector][eventName][global][bindRequested]) {
 					throwFwError(ERR_CODE_SAME_EVENT_HANDLER, [controllerDef.__name, selector,
 							eventName], {
@@ -2217,13 +2281,7 @@
 					checkBindMap[selector][eventName][global][bindRequested] = 1;
 				}
 
-				bindMap[prop] = {
-					selector: selector,
-					global: global,
-					bindRequested: bindRequested,
-					eventName: eventName,
-					propertyKey: prop
-				};
+				bindMap[prop] = info;
 			} else if (endsWith(prop, SUFFIX_CONTROLLER) && controllerDef[prop]
 					&& !isFunction(controllerDef[prop])) {
 				// 子コントローラ
@@ -2277,6 +2335,41 @@
 		}
 		return cache;
 	}
+
+	/**
+	 * bindTargetターゲットが同じかどうか判定する
+	 * <p>
+	 * どちらかがjQueryオブジェクトならその中身を比較
+	 * </p>
+	 *
+	 * @private
+	 */
+	function isSameBindTarget(target1, target2) {
+		if (target1 === target2) {
+			// 同一インスタンスならtrue
+			return true;
+		}
+		var t1IsJQuery = h5.u.obj.isJQueryObject(target1);
+		var t2IsJQuery = h5.u.obj.isJQueryObject(target2);
+		if (!t1IsJQuery && !t2IsJQuery) {
+			// どちらもjQueryオブジェクトでないならfalse;
+			return false;
+		}
+		// どちらかがjQueryオブジェクトなら配列にして比較
+		var t1Ary = t1IsJQuery ? target1.toArray() : [target1];
+		var t2Ary = t2IsJQuery ? target2.toArray() : [target2];
+		if (t1Ary.length !== t2Ary.length) {
+			// 長さが違うならfalse
+			return false;
+		}
+		for (var i = 0, l = t1Ary.length; i < l; i++) {
+			if (t1Ary[i] !== t2Ary[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -2976,6 +3069,85 @@
 			}
 			error.customType = customType;
 			throw error;
+		},
+
+		/**
+		 * イベントハンドラを動的にバインドします。
+		 * <p>
+		 * 第1引数targetの指定にはコントローラのイベントハンドラ記述と同様の記述ができます。
+		 * つまりセレクタの場合はルートエレメントを起点に選択します。またグローバルセレクタで指定することもできます。、
+		 * </p>
+		 * <p>
+		 * ここで追加したハンドラはコントローラのunbind時にアンバインドされます。
+		 * </p>
+		 *
+		 * @memberOf Controller
+		 * @param target {String|Object} イベントハンドラのターゲット
+		 * @param eventName {String} イベント名
+		 * @param listener {Function} ハンドラ
+		 */
+		on: function(target, eventName, listener) {
+			// バインドオブジェクトの作成
+			var info = createEventHandlerInfo(target, eventName, this);
+			var bindObjects = createBindObjects(this, info, listener);
+
+			// バインドオブジェクトに基づいてバインド
+			for (var i = 0, l = bindObjects.length; i < l; i++) {
+				var bindObj = bindObjects[i];
+				bindByBindObject(bindObj, getDocumentOf(this.rootElement));
+			}
+		},
+
+		/**
+		 * イベントハンドラを動的にアンバインドします。
+		 * <p>
+		 * 第1引数targetの指定にはコントローラのイベントハンドラ記述と同様の記述ができます。
+		 * つまりセレクタの場合はルートエレメントを起点に選択します。またグローバルセレクタで指定することもできます。、
+		 * </p>
+		 *
+		 * @memberOf Controller
+		 * @param target {String|Object} イベントハンドラのターゲット
+		 * @param eventName {String} イベント名
+		 * @param listener {Function} ハンドラ
+		 */
+		off: function(target, eventName, listener) {
+			// 指定された条件にマッチするbindObjをunbindHandlerListから探して取得する
+			var info = createEventHandlerInfo(target, eventName, this);
+			var unbindHandlerList = this.__controllerContext.unbindHandlerList;
+
+			var matchBindObj = null;
+			var bindTarget = info.bindTarget;
+			var eventName = info.eventName;
+			var selector = info.selector;
+			var global = info.global;
+			var bindRequested = info.bindRequested;
+
+			var index = 0;
+			for (var l = unbindHandlerList.length; index < l; index++) {
+				var bindObj = unbindHandlerList[index];
+				if (bindTarget) {
+					// offでオブジェクトやDOMをターゲットに指定された場合はbindTarget、eventName、originalHandlerを比較
+					if (isSameBindTarget(bindTarget, bindObj.bindTarget)
+							&& eventName === bindObj.eventName
+							&& bindObj.originalHandler === listener) {
+						matchBindObj = bindObj;
+						break;
+					}
+				} else {
+					// offでセレクタを指定された場合、セレクタと、グローバル指定かどうかと、bindRequestedとoriginalHandlerを比較
+					if (selector === bindObj.selector && global === bindObj.global
+							&& bindRequested === bindObj.bindRequested
+							&& listener === bindObj.originalHandler) {
+						matchBindObj = bindObj;
+						break;
+					}
+				}
+			}
+			if (matchBindObj) {
+				unbindByBindObject(matchBindObj, getDocumentOf(this.rootElement));
+				// アンバインドハンドラリストから削除
+				unbindHandlerList.splice(index, 1);
+			}
 		}
 	});
 
@@ -3003,7 +3175,6 @@
 			opt.indicator = callIndicator(this, opt);
 			event.stopPropagation();
 		});
-
 	}
 	$.extend(ControllerManager.prototype, {
 		/**

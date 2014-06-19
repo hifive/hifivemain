@@ -5153,11 +5153,11 @@ $(function() {
 		});
 	});
 
-	asyncTest('__constructの時点で使用可能なコントローラのメソッドとプロパティ', 41, function() {
+	asyncTest('__constructの時点で使用可能なコントローラのメソッドとプロパティ', 45, function() {
 		var props = ['preInitPromise', 'initPromise', 'postInitPromise', 'readyPromise', 'view',
 				'$find', 'bind', 'deferred', 'disableListeners', 'indicator', 'own', 'ownWithOrg',
 				'throwCustomError', 'throwError', 'trigger', 'triggerIndicator', 'unbind',
-				'isInit', 'isPostInit', 'isReady'];
+				'isInit', 'isPostInit', 'isReady', 'on', 'off'];
 		var length = props.length;
 		function checkControllerProp(c) {
 			for (var i = 0; i < length; i++) {
@@ -6955,6 +6955,196 @@ $(function() {
 			}
 		});
 	});
+
+	asyncTest('on()でターゲットにセレクタを指定してイベントハンドラをバインド ', 3, function() {
+		$('#controllerTest').append('<div class="inner target"></div>');
+		$('#qunit-fixture').append('<div class="outer target"></div>');
+		h5.core.controller('#controllerTest', {
+			__name: 'controller'
+		}).readyPromise.done(function() {
+			var executed = true;
+			this.on('.target', 'click', function(context, $el) {
+				executed = true;
+				$el.text('ok');
+			});
+			$('.target').click();
+			strictEqual(this.$find('.target').text(), 'ok', 'onで".target"にバインドしたイベントハンドラが動作すること');
+			strictEqual($('.outer.target').text(), '', 'ルートエレメントの外側の要素にはバインドされていないこと');
+			executed = false;
+
+			this.unbind();
+			$('.target').click();
+			ok(!executed, 'コントローラのアンバインドでイベントハンドラが動作しなくなること');
+			start();
+		});
+	});
+
+	asyncTest('on()でターゲットにグローバルセレクタを指定してイベントハンドラをバインド', 9, function() {
+		$('#controllerTest').append('<div class="inner target"></div>');
+		$('#qunit-fixture').append('<div class="outer target"></div>');
+		h5.core.controller('#controllerTest', {
+			__name: 'controller'
+		}).readyPromise.done(function() {
+			var executed = false;
+			this.on('{.target}', 'click', function(context, $el) {
+				executed = true;
+				$el.text('ok');
+			});
+			$('.target').click();
+			strictEqual(this.$find('.target').text(), 'ok',
+					'onで"{.target}"にバインドしたイベントハンドラが内側の要素について動作すること');
+			strictEqual($('.outer.target').text(), 'ok',
+					'onで"{.target}"にバインドしたイベントハンドラが外側の要素について動作すること');
+			executed = false;
+			$('.target').text('');
+
+			this.on('{rootElement}', 'click', function() {
+				executed = true;
+			});
+			$(this.rootElement).click();
+			ok(executed, 'onで"{rootElement}"にバインドしたイベントハンドラが動作すること');
+			executed = false;
+
+			var element = $('<div class="new-target"></div>')[0];
+			$('#qunit-fixture').append(element);
+			this.element = element;
+			this.on('{this.element}', 'click', function(context, $el) {
+				executed = true;
+			});
+			$(element).click();
+			ok(executed, 'onで"{this.element}"にバインドしたイベントハンドラが動作すること');
+			executed = false;
+
+			var $globalTarget = $('<div class="global-target"></div>');
+			$('#qunit-fixture').append($globalTarget);
+			window.h5test1 = {
+				target: $globalTarget
+			};
+			this.on('{window.h5test1.target}', 'click', function() {
+				executed = true;
+			});
+			$globalTarget.click();
+			ok(executed, 'onで"{window.h5test1.target}"にバインドしたイベントハンドラが動作すること');
+			executed = false;
+			deleteProperty(window, 'h5test1');
+
+			this.unbind();
+			executed = false;
+			$(this.rootElement).click();
+			ok(!executed, 'コントローラのアンバインドでイベントハンドラが動作しなくなること');
+
+			executed = false;
+			$('.target').click();
+			ok(!executed, 'コントローラのアンバインドでイベントハンドラが動作しなくなること');
+
+			executed = false;
+			$(element).click();
+			ok(!executed, 'コントローラのアンバインドでイベントハンドラが動作しなくなること');
+
+			executed = false;
+			$globalTarget.click();
+			ok(!executed, 'コントローラのアンバインドでイベントハンドラが動作しなくなること');
+
+			start();
+		});
+	});
+
+	asyncTest('on()でターゲットにオブジェクトを指定してイベントハンドラをバインド', 4, function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'controller'
+		}).readyPromise.done(function() {
+			var executed = false;
+			var element = $('<div class="new-target"></div>')[0];
+			$('#qunit-fixture').append(element);
+			this.on(element, 'click', function(context, $el) {
+				executed = true;
+			});
+			$(element).click();
+			ok(executed, 'onでelementにバインドしたイベントハンドラが動作すること');
+			executed = false;
+
+			var target = {};
+			h5.mixin.eventDispatcher.mix(target);
+			this.on(target, 'myevent', function(context, $el) {
+				executed = true;
+			});
+			target.dispatchEvent({
+				type: 'myevent'
+			});
+			ok(executed, 'onでeventDispatcherのミックスインにバインドしたイベントハンドラが動作すること');
+
+			this.unbind();
+			executed = false;
+			$(element).click();
+			ok(!executed, 'コントローラのアンバインドでイベントハンドラが動作しなくなること');
+
+			executed = false;
+			target.dispatchEvent({
+				type: 'myevent'
+			});
+			ok(!executed, 'コントローラのアンバインドでイベントハンドラが動作しなくなること');
+			start();
+		});
+	});
+
+	asyncTest('off()で動的にバインドしたハンドラをアンバインド', function() {
+		$('#controllerTest').append('<div class="inner-target></div>');
+		$('#qunit-fixture').append('<div class="outer-target></div>');
+		$('#qunit-fixture').append('<div class="global-target></div>');
+
+		var executed = false;
+		function listener() {
+			executed = true
+		}
+		h5.core.controller('#controllerTest', {
+			__name: 'controller'
+		}).readyPromise.done(function() {
+			this.on('.inner-target', 'click', listener);
+			this.off('.inner-target', 'click', listener);
+			$('.inner-target').click();
+			ok(!executed, '".inner-target"にonでバインドしたハンドラをoff()にするとハンドラは動作しないこと');
+			executed = false;
+
+			this.on('{.outer-target}', 'click', listener);
+			this.off('{.outer-target}', 'click', listener);
+			$('.outer-target').click();
+			ok(!executed, '"{.outer-target}"にonでバインドしたハンドラをoff()にするとハンドラは動作しないこと');
+			executed = false;
+
+			var globalTarget = $('.global-target')[0];
+			window.h5test1 = {
+				target: globalTarget
+			};
+			this.on('{window.h5test1.target}', 'click', listener);
+			this.off('{window.h5test1.target}', 'click', listener);
+			$('.outer-target').click();
+			ok(!executed, '"{window.h5test1.target}"にonでバインドしたハンドラをoff()にするとハンドラは動作しないこと');
+			deleteProperty(window, 'h5test1');
+			executed = false;
+
+			var target = {};
+			h5.mixin.eventDispatcher.mix(target);
+			this.target = target;
+			this.on('{this.target}', 'myevent', listener);
+			this.off('{this.target}', 'myevent', listener);
+			target.dispatchEvent({
+				type: 'myevent'
+			});
+			ok(!executed, '"{this.target}"にonでバインドしたハンドラをoff()にするとハンドラは動作しないこと');
+			executed = false;
+
+			this.on('{this.target}', 'myevent', listener);
+			this.off(target, 'myevent', listener);
+			target.dispatchEvent({
+				type: 'myevent'
+			});
+			ok(!executed,
+					'"{this.target}"にonでバインドしたハンドラをoff()でターゲットにオブジェクトを指定して呼んだ場合、イベントハンドラは動作しないこと');
+
+			start();
+		});
+	});
+	// TODO this.on()でtargetにオブジェクトを指定するケース及び、this.off()のケース、を追加
 
 	asyncTest('rootController, parentControllerは正しくセットされているか', 24, function() {
 		var cir = null;
@@ -9462,7 +9652,7 @@ $(function() {
 
 	test('__nameがないロジックを持つ子コントローラを持つコントローラバインドしようとするとエラーが出ること', 2, function() {
 		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;
-		var constructExecuted;
+		var constructExecuted = false;
 		try {
 			h5.core.controller('#controllerTest', {
 				__name: 'TestController',
@@ -9505,7 +9695,7 @@ $(function() {
 	});
 
 	test('コントローラの持つロジックが不正でエラーが投げられたとき、コントローラのバインドは中断されること', 1, function() {
-		var constructExecuted;
+		var constructExecuted = false;
 		try {
 			h5.core.controller('#controllerTest', {
 				__name: 'controller',
@@ -9520,7 +9710,7 @@ $(function() {
 	});
 
 	test('ネストしたコントローラの持つロジックが不正でエラーが投げられたとき、コントローラのバインドは中断されること', 1, function() {
-		var constructExecuted;
+		var constructExecuted = false;
 		try {
 			h5.core.controller('#controllerTest', {
 				__name: 'controller',
@@ -9538,7 +9728,7 @@ $(function() {
 	});
 
 	test('コントローラの持つロジックの__constructで例外が投げられたとき、コントローラのバインドは中断されること', 1, function() {
-		var constructExecuted;
+		var constructExecuted = false;
 		try {
 			h5.core.controller('#controllerTest', {
 				__name: 'controller',
@@ -9558,7 +9748,7 @@ $(function() {
 	});
 
 	test('ネストしたコントローラの持つロジックの__constructで例外が投げられたとき、コントローラのバインドは中断されること', 1, function() {
-		var constructExecuted;
+		var constructExecuted = false;
 		try {
 			h5.core.controller('#controllerTest', {
 				__name: 'controller',
