@@ -1324,8 +1324,8 @@ $(function() {
 		}
 	});
 
-	test('__name属性が文字列でないオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', 5, function() {
-		var names = ['', '   ', 1, {}, ["MyController"]];
+	test('__name属性が不正なオブジェクトをコントローラとしてバインドしようとするとエラーが出ること', 6, function() {
+		var names = ['', '   ', 1, {}, ["MyController"], null];
 		var l = names.length;
 		expect(l);
 		var errorCode = ERR.ERR_CODE_INVALID_CONTROLLER_NAME;
@@ -9631,7 +9631,7 @@ $(function() {
 	});
 
 	test('__nameが不正なロジックを持つコントローラをバインドしようとするとエラーが出ること', 5, function() {
-		var names = ['', '   ', 1, {}, ["MyLogic"]];
+		var names = ['', '   ', 1, {}, ["MyLogic"], null];
 		var l = names.length;
 		expect(l);
 		var errorCode = ERR.ERR_CODE_INVALID_LOGIC_NAME;

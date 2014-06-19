@@ -107,7 +107,7 @@ $(function() {
 	});
 
 	test('__nameが不正', function() {
-		var names = ['', '   ', 1, {}, ["MyLogic"]];
+		var names = ['', '   ', 1, {}, ["MyLogic"], null];
 		var l = names.length;
 		expect(l);
 		for (var i = 0, l = names.length; i < l; i++) {
