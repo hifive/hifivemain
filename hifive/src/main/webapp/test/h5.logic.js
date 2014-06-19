@@ -224,7 +224,7 @@ $(function() {
 					},
 					isExecuted: false
 				}
-			},
+			}
 		});
 		ok(logic.childLogic.isExecuted, '子ロジックの__constructが実行されていること');
 		ok(logic.childLogic.childLogic.isExecuted, '孫ロジックの__constructが実行されていること');
