@@ -1811,14 +1811,8 @@
 		// 必ず非同期になるようにする
 		var asyncDfd = getDeferred();
 		setTimeout(function() {
-			asyncDfd.resolve();
-		}, 0);
-
-		// __initイベントの実行
-		// (CFHの動作回避のためfailにdummyを登録)
-		asyncDfd.promise().done(function() {
 			executeLifecycleEventChain(controller, '__init');
-		}).fail(dummyFailHandler);
+		}, 0);
 	}
 
 	/**
