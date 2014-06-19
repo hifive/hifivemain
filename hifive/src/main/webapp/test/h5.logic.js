@@ -88,7 +88,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('Logic 異常系', {
+	module('Logic 異常系(例外が発生し処理が中断する)', {
 		teardown: function() {
 			cleanAllAspects();
 			clearController();
@@ -106,7 +106,7 @@ $(function() {
 		}
 	});
 
-	test('__nameが文字列でない', function() {
+	test('__nameが不正', function() {
 		var names = ['', '   ', 1, {}, ["MyLogic"]];
 		var l = names.length;
 		expect(l);

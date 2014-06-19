@@ -9578,7 +9578,7 @@ $(function() {
 		}).readyPromise.done(start);
 	});
 
-	asyncTest('コントローラの持つロジックの__construct', 3, function() {
+	asyncTest('ロジックのコンストラクタはコントローラのコンストラクタよりも前に実行されること', 3, function() {
 		var myLogic = {
 			__name: 'logic',
 			__construct: function() {
@@ -9630,7 +9630,7 @@ $(function() {
 		}
 	});
 
-	test('__nameが文字列でないロジックを持つコントローラをバインドしようとするとエラーが出ること', 5, function() {
+	test('__nameが不正なロジックを持つコントローラをバインドしようとするとエラーが出ること', 5, function() {
 		var names = ['', '   ', 1, {}, ["MyLogic"]];
 		var l = names.length;
 		expect(l);
