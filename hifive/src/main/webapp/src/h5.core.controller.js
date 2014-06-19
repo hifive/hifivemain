@@ -750,25 +750,21 @@
 	}
 
 	/**
-	 * 指定されたコントローラの子孫コントローラのPromiseオブジェクトを全て取得します。
+	 * 指定されたコントローラの子コントローラが持つ、指定されたプロミスを取得します。
 	 *
 	 * @private
 	 * @param {Object} controller コントローラ
 	 * @param {String} propertyName プロパティ名(initPromise,postInitPromise,readyPromise)
-	 * @param {Object} aquireFromControllerContext コントローラコンテキストのプロパティかどうか
 	 * @returns {Promise[]} Promiseオブジェクト配列
 	 */
-	function getDescendantControllerPromises(controller, propertyName, aquireFromControllerContext) {
+	function getChildControllerPromises(controller, propertyName) {
 		var promises = [];
-		function getPromisesInner(c) {
-			var promise = aquireFromControllerContext ? c.__controllerContext[propertyName]
-					: c[propertyName];
+		doForEachChildControllers(controller, function(c) {
+			var promise = c[propertyName];
 			if (promise) {
 				promises.push(promise);
 			}
-			doForEachChildControllers(c, getPromisesInner);
-		}
-		doForEachChildControllers(controller, getPromisesInner);
+		});
 		return promises;
 	}
 
@@ -1073,10 +1069,10 @@
 				promises = getPromisesForInit(c);
 			} else if (funcName === '__postInit') {
 				callback = createCallbackForPostInit(c);
-				promises = getDescendantControllerPromises(c, 'postInitPromise');
+				promises = getChildControllerPromises(c, 'postInitPromise');
 			} else {
 				callback = createCallbackForReady(c);
-				promises = getDescendantControllerPromises(c, 'readyPromise');
+				promises = getChildControllerPromises(c, 'readyPromise');
 			}
 
 			// waitForPromisesで全てのプロミスが終わってからライフサイクルイベントの呼び出しを行う
@@ -1095,11 +1091,12 @@
 	 * @returns {Promise[]} Promiseオブジェクト
 	 */
 	function getPromisesForInit(controller) {
-		// 先祖コントローラのinitPromiseオブジェクトを取得
-		var initPromises = getAncestorControllerPromises(controller, 'initPromise');
-		// 自身のテンプレート用Promiseオブジェクトを取得
-		initPromises.push(controller.preInitPromise);
-		return initPromises;
+		// 自身のテンプレート用Promiseオブジェクトと、親コントローラのinitPromiseオブジェクトを返す
+		var promises = [controller.preInitPromise];
+		if (controller.parentController) {
+			promises.push(controller.parentController.initPromise);
+		}
+		return promises;
 	}
 
 	/**
