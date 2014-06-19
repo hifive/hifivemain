@@ -1088,7 +1088,7 @@
 	}
 
 	/**
-	 * __postInitイベントを実行するために必要なPromiseを返します。
+	 * __initイベントを実行するために必要なPromiseを返します。
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
@@ -3524,8 +3524,7 @@
 			controller.rootController && controller.rootController.dispose(e);
 		});
 
-		// 子コントローラをコントローラ化
-		// コントローラ化したものに差し替える
+		// 子コントローラをコントローラ化して持たせる
 		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
 			// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
 			var prop = cache.childControllerProperties[i];
