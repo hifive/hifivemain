@@ -1931,7 +1931,10 @@
 	 */
 	function disposeController(controller, e, failReason) {
 		// rootControllerの取得
-		var controller = controller.rootController;
+		// rootControllerが設定される前(__construct内からdispose()を呼び出した場合)のことを考慮して、
+		// rootControllerを取得する前にisRootを見てtrueならcontrollerをルートコントローラとみなす
+		var controller = controller.__controllerContext
+				&& (controller.__controllerContext.isRoot ? controller : controller.rootController);
 		// rootControllerが無いまたは、disopseされていたら何もしない。
 		if (!controller || isDisposing(controller)) {
 			return;
