@@ -1927,7 +1927,7 @@
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
-	 * @param {Error} e エラーオブジェクト(正常時は無し)
+	 * @param {Error} e エラーオブジェクト(正常時は無し)。エラーオブジェクトが指定されている場合は、dispose処理後にthrowする。
 	 * @param {Error} failReason プロミスのfailハンドラに渡すオブジェクト(正常時は無し)
 	 * @returns promise(ただしエラーがある場合はdispose処理が終わった後にエラーを投げて終了します)
 	 */
@@ -3588,7 +3588,7 @@
 			// disposeする
 			// 同じrootControllerを持つ他の子コントローラにdisposeされているかどうか
 			// (controller.rootControllerがnullになっていないか)をチェックをしてからdisposeする
-			controller.rootController && disposeController(controller.rootController, e);
+			controller.rootController && disposeController(controller.rootController, null, e);
 		});
 
 		// 子コントローラをコントローラ化して持たせる
