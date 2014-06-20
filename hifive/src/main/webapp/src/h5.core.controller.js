@@ -1010,7 +1010,7 @@
 					fwLogger.error(FW_LOG_INIT_CONTROLLER_THROWN_ERROR, controllerName, funcName);
 
 					// controllerをdispose
-					controller.rootController && disposeController(controller.rootController, e);
+					disposeController(controller, e);
 				}
 			}
 			if (ret && isFunction(ret.done) && isFunction(ret.fail)) {
@@ -1029,9 +1029,7 @@
 									argsToArray(arguments));
 
 							// controllerをdispose
-							controller.rootController
-									&& disposeController(controller.rootController, null,
-											failReason);
+							disposeController(controller.rootController, null, failReason);
 						});
 			} else {
 				// callbackを実行
@@ -1138,7 +1136,7 @@
 				});
 			} catch (e) {
 				// エラーが起きたらコントローラをdispose
-				disposeController(controller.rootController, e);
+				disposeController(controller, e);
 				return;
 			}
 
@@ -1932,8 +1930,10 @@
 	 * @returns promise(ただしエラーがある場合はdispose処理が終わった後にエラーを投げて終了します)
 	 */
 	function disposeController(controller, e, failReason) {
-		// disopseされていたら何もしない。
-		if (isDisposing(controller)) {
+		// rootControllerの取得
+		var controller = controller.rootController;
+		// rootControllerが無いまたは、disopseされていたら何もしない。
+		if (!controller || isDisposing(controller)) {
 			return;
 		}
 
@@ -3588,7 +3588,7 @@
 			// disposeする
 			// 同じrootControllerを持つ他の子コントローラにdisposeされているかどうか
 			// (controller.rootControllerがnullになっていないか)をチェックをしてからdisposeする
-			controller.rootController && disposeController(controller.rootController, null, e);
+			disposeController(controller, null, e);
 		});
 
 		// 子コントローラをコントローラ化して持たせる
