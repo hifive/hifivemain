@@ -437,7 +437,7 @@ var isFunction = (function() {
  */
 function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 	// 高速化のため、長さ1または0の場合はforを使わずにチェックする
-	var length = promises.length;
+	var length = promises ? promises.length : 0;
 	var isPromise = h5.async.isPromise;
 	if (length === 1) {
 		var promise = promises[0];

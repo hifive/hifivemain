@@ -1935,8 +1935,15 @@
 		// rootControllerを取得する前にisRootを見てtrueならcontrollerをルートコントローラとみなす
 		var controller = controller.__controllerContext
 				&& (controller.__controllerContext.isRoot ? controller : controller.rootController);
-		// rootControllerが無いまたは、disopseされていたら何もしない。
+		// rootControllerが無いまたは、disopseされている場合、
+		// エラーオブジェクトがあればエラーを投げて終了。エラーのない場合は何もしないで終了。
 		if (!controller || isDisposing(controller)) {
+			if (e) {
+				// ライフサイクルの中でdispose()して、__unbindや__disposeでエラーが出た時に、
+				// ライフサイクル呼び出しを包んでいるtry-catchのcatch節から再度disposeControllerが呼ばれる。
+				// その時に、dispose()の呼び出しで起きたエラーを飲まないようにするため、ここで再スローする。
+				throw e;
+			}
 			return;
 		}
 
@@ -1955,7 +1962,14 @@
 		rejectControllerDfd(controller, failReason || e);
 
 		// unbindの実行
-		controller.unbind();
+		try {
+			controller.unbind();
+		} catch (unbindError) {
+			// __unbindの実行でエラーが起きた場合
+			// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
+			// (一番最初に起きた例外のみスロー)
+			e = e || unbindError;
+		}
 
 		function cleanup() {
 			// 子から順にview.clearとnullifyの実行
@@ -1976,12 +1990,10 @@
 		try {
 			promises = executeLifeEndChain(controller, '__dispose');
 		} catch (disposeError) {
-			if (!e) {
-				// __disposeの実行でエラーが起きた場合
-				// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
-				// (一番最初に起きた例外のみスロー)
-				e = disposeError;
-			}
+			// __disposeの実行でエラーが起きた場合
+			// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
+			// (一番最初に起きた例外のみスロー)
+			e = e || disposeError;
 		}
 
 		var dfd = controller.deferred();
@@ -3629,7 +3641,11 @@
 			var isDisposed = false;
 			doForEachControllerGroups(controller, function(c, parent, prop) {
 				// __construct呼び出し
-				c.__construct && c.__construct(createInitializationContext(c));
+				try {
+					c.__construct && c.__construct(createInitializationContext(c));
+				} catch (e) {
+					disposeController(controller, e);
+				}
 
 				if (isDisposing(c)) {
 					// 途中(__constructの中)でdisposeされたら__constructの実行を中断
