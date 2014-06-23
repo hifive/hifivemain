@@ -1024,12 +1024,12 @@
 							fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR,
 									controller.rootController.__name);
 
-							var failReason = createRejectReason(
+							var rejectReason = createRejectReason(
 									ERR_CODE_CONTROLLER_REJECTED_BY_USER, controllerName,
 									argsToArray(arguments));
 
 							// controllerをdispose
-							disposeController(controller.rootController, null, failReason);
+							disposeController(controller.rootController, null, rejectReason);
 						});
 			} else {
 				// callbackを実行
@@ -1926,10 +1926,10 @@
 	 * @private
 	 * @param {Controller} controller コントローラ
 	 * @param {Error} e エラーオブジェクト(正常時は無し)。エラーオブジェクトが指定されている場合は、dispose処理後にthrowする。
-	 * @param {Error} failReason プロミスのfailハンドラに渡すオブジェクト(正常時は無し)
+	 * @param {Error} rejectReason プロミスのfailハンドラに渡すオブジェクト(正常時は無し)
 	 * @returns promise(ただしエラーがある場合はdispose処理が終わった後にエラーを投げて終了します)
 	 */
-	function disposeController(controller, e, failReason) {
+	function disposeController(controller, e, rejectReason) {
 		// rootControllerの取得
 		// rootControllerが設定される前(__construct内からdispose()を呼び出した場合)のことを考慮して、
 		// rootControllerを取得する前にisRootを見てtrueならcontrollerをルートコントローラとみなす
@@ -1947,23 +1947,17 @@
 			return;
 		}
 
-		// 非同期または同期でエラーが起きたかどうか
-		var isError = !!e || !!failReason;
-		if (isError) {
-			controller.__controllerContext.isError = true;
-		}
-
 		controller.__controllerContext.isDisposing = 1;
 
 		// rejectまたはfailされていないdeferredをreject()する
-		// failReasonが指定されている場合はfailReasonをfailハンドラの引数に渡す
-		// failReasonは未指定で、エラーオブジェクトが渡されている場合はエラーオブジェクトをfailハンドラの引数に渡す
-		// 正常時(failReasonもeもない場合)は、引数なし
-		rejectControllerDfd(controller, failReason || e);
+		// rejectReasonが指定されている場合はrejectReasonをfailハンドラの引数に渡す
+		// rejectReasonは未指定で、エラーオブジェクトが渡されている場合はエラーオブジェクトをfailハンドラの引数に渡す
+		// 正常時(rejectReasonもeもない場合)は、引数なし
+		rejectControllerDfd(controller, rejectReason || e);
 
 		// unbindの実行
 		try {
-			controller.unbind();
+			unbindController(controller);
 		} catch (unbindError) {
 			// __unbindの実行でエラーが起きた場合
 			// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
@@ -1989,27 +1983,40 @@
 		var promises;
 		try {
 			promises = executeLifeEndChain(controller, '__dispose');
-		} catch (disposeError) {
+		} catch (error) {
 			// __disposeの実行でエラーが起きた場合
 			// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
 			// (一番最初に起きた例外のみスロー)
-			e = e || disposeError;
+			e = e || error;
 		}
 
 		var dfd = controller.deferred();
 		waitForPromises(promises, function() {
-			cleanup();
-			dfd.resolve();
+			if (!e) {
+				cleanup();
+				dfd.resolveWith(controller);
+				return;
+			}
+			if (e || rejectReason) {
+				// cleanupが終わったタイミングで、エラーまたはrejectされてdisposeされた場合は、"lifecycleerror"イベントをあげる
+				// detailにエラーオブジェクトまたはfailハンドラに渡した引数をいれる
+				triggerLifecycleerror(controller, e || failReason);
+				if (e) {
+					throw e;
+				}
+			}
+		}, function(/* var_args */) {
+			// __disposeの返したプロミスがrejectされた時はcleanupしないでrejectする
+			dfd.rejectWith(controller, argsToArray(arguments));
+			// lifecycleerrorイベントをあげる
+			triggerLifecycleerror(controller,
+					createRejectReason(ERR_CODE_CONTROLLER_REJECTED_BY_USER, controller.__name,
+							argsToArray(arguments)));
 			if (e) {
-				// cleanupが終わったタイミングで、エラーがある場合は、"emergency"イベントをあげてエラーを投げる
-				controllerManager.dispatchEvent({
-					type: 'emergency',
-					errorObject: e,
-					controllerDef: controller
-				});
+				// エラーがある場合はエラーを投げる
 				throw e;
 			}
-		}, null, true);
+		}, true);
 		return dfd.promise();
 	}
 
@@ -2021,8 +2028,6 @@
 	 * @param {Error} e エラーオブジェクト
 	 */
 	function unbindController(controller) {
-		var isError = controller.__controllerContext.isError;
-
 		// __unbindの実行
 		var unbindError;
 		try {
@@ -2489,6 +2494,20 @@
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * lifecycleerrorイベントをトリガする
+	 *
+	 * @param {Controller} rootController ルートコントローラ
+	 * @param {Error||rejectReason} detail 例外オブジェクト、またはRejectReason
+	 */
+	function triggerLifecycleerror(rootController, detail) {
+		controllerManager.dispatchEvent({
+			type: 'lifecycleerror',
+			detail: detail,
+			rootController: rootController
+		});
 	}
 
 	// =========================================================================
@@ -3644,6 +3663,9 @@
 				try {
 					c.__construct && c.__construct(createInitializationContext(c));
 				} catch (e) {
+					// この時点ではrootControllerは設定されておらず、
+					// disposeControllerはrootControllerを取得できないと何もしないので
+					// ルートコントローラを渡してdisposeする
 					disposeController(controller, e);
 				}
 
