@@ -4234,9 +4234,7 @@ $(function() {
 					} catch (e) {
 						strictEqual(e.code, ERR.ERR_CODE_BIND_TARGET_ILLEGAL, e.message);
 					}
-					testController.dispose().done(function() {
-						start();
-					});
+					start();
 				});
 			});
 
@@ -4327,7 +4325,6 @@ $(function() {
 				$('#controllerTest input[type=button]').click();
 				strictEqual($('#controllerResult').text(), 'ok',
 						'1度アンバインドしたコントローラを再びバインドしてイベントハンドラが動作するか');
-				testController.unbind();
 				start();
 			});
 		});
@@ -4349,9 +4346,6 @@ $(function() {
 			} catch (e) {
 				strictEqual(e.code, ERR.ERR_CODE_BIND_ROOT_ONLY, e.message);
 			}
-
-			root.dispose();
-
 			start();
 		});
 	});
@@ -7441,10 +7435,614 @@ $(function() {
 
 			});
 
+
 	//=============================
 	// Definition
 	//=============================
-	module('ライフサイクルイベント内の例外', {
+	module('同期で実行されるライフサイクルイベント内の例外', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+			h5.core.controllerManager.removeEventListener('lifecycleerror',
+					this.lifecycleerrorEventListener);
+		},
+		/** テストで設定するlifecycleerrorイベントリスナはモジュール変数に覚えておいて、teardownでremoveEventListenerする * */
+		lifecycleerrorEventListener: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('__construct()で例外をスローするとdisposeされてlifecycleerrorイベントが起きること', 8, function() {
+		var unbindExecuted = false;
+		var disposeExecuted = false;
+		var nextLifecycleExecuted = false;
+		var lifecycleerrorExecuted = false;
+		var lifecycleerrorEventObj = null;
+		var controllerInstance = null;
+
+		var errorObj = new Error('__construct error.');
+		var controller = {
+			__name: 'controller',
+			__construct: function() {
+				controllerInstance = this;
+				throw errorObj;
+			},
+			__init: function() {
+				nextLifecycleExecuted = true;
+			},
+			__unbind: function() {
+				unbindExecuted = true;
+			},
+			__dispose: function() {
+				disposeExecuted = true;
+			}
+		};
+
+		this.lifecycleerrorEventListener = function(e) {
+			lifecycleerrorEventObj = e;
+			lifecycleerrorExecuted = true;
+		};
+		h5.core.controllerManager.addEventListener('lifecycleerror',
+				this.lifecycleerrorEventListener);
+		try {
+			h5.core.controller('#controllerTest', controller);
+		} catch (e) {
+			strictEqual(e, errorObj, '__constructで投げた例外をtry-catchでキャッチできること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			ok(unbindExecuted, '__unbindが実行されていること');
+			ok(disposeExecuted, '__disposeが実行されていること');
+			ok(lifecycleerrorExecuted, 'lifecycleerrorイベントが上がっていること');
+			strictEqual(lifecycleerrorEventObj.detail, errorObj,
+					'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+			strictEqual(lifecycleerrorEventObj.rootController, controllerInstance,
+					'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+			strictEqual(controllerInstance.__name, 'controller', 'nullifyされていないこと');
+		}
+	});
+
+	test('ネストしたコントローラの__construct()で例外をスローするとdisposeされてlifecycleerrorイベントが起きること', 14, function() {
+		var nextLifecycleExecuted = false;
+		var lifecycleerrorExecuted = false;
+		var lifecycleerrorEventObj = null;
+		var controllerInstance = null;
+
+		var errorObj = new Error('__construct error.');
+		var controller = {
+			__name: 'root',
+			__construct: function() {
+				controllerInstance = this;
+			},
+			childController: {
+				__name: 'child',
+				__construct: function() {
+					throw errorObj;
+				},
+				childController: {
+					__name: 'grand',
+					__construct: function() {
+						nextLifecycleExecuted = true;
+					},
+					__unbind: function() {
+						this.unbindExecuted = true;
+					},
+					__dispose: function() {
+						this.disposeExecuted = true;
+					}
+				},
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
+			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
+			}
+		};
+
+		this.lifecycleerrorEventListener = function(e) {
+			lifecycleerrorEventObj = e;
+			lifecycleerrorExecuted = true;
+		};
+		h5.core.controllerManager.addEventListener('lifecycleerror',
+				this.lifecycleerrorEventListener);
+		try {
+			h5.core.controller('#controllerTest', controller);
+		} catch (e) {
+			strictEqual(e, errorObj, '__constructで投げた例外をtry-catchでキャッチできること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			strictEqual(controllerInstance.__name, 'root', 'ルートコントローラがnullifyされていないこと');
+			ok(controllerInstance.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+			ok(controllerInstance.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+			var child = controllerInstance.childController;
+			strictEqual(child.__name, 'child', '子コントローラがnullifyされていないこと');
+			ok(child.unbindExecuted, '子コントローラの__unbindが実行されていること');
+			ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+			var grandChild = child.childController;
+			strictEqual(grandChild.__name, 'grand', '孫コントローラがnullifyされていないこと');
+			ok(grandChild.unbindExecuted, '孫コントローラの__unbindが実行されていること');
+			ok(grandChild.disposeExecuted, '孫コントローラの__disposeが実行されていること');
+			ok(lifecycleerrorExecuted, 'lifecycleerrorイベントが上がっていること');
+			strictEqual(lifecycleerrorEventObj.detail, errorObj,
+					'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+			strictEqual(lifecycleerrorEventObj.rootController, controllerInstance,
+					'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+		}
+	});
+
+	asyncTest('unbind()を呼んで__unbind()が例外をスローした時、disposeされてlifecycleerrorイベントが起きること', 13,
+			function() {
+				var errorObj = new Error('__unbind error.');
+				var lifecycleerrorExecuted = false;
+				var lifecycleerrorEventObj = null;
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'root',
+					__unbind: function() {
+						this.unbindExecuted = true;
+					},
+					__dispose: function() {
+						this.disposeExecuted = true;
+					},
+					childController: {
+						__name: 'child',
+						__unbind: function() {
+							this.unbindExecuted = true;
+							throw errorObj;
+						},
+						__dispose: function() {
+							this.disposeExecuted = true;
+						},
+						childController: {
+							__name: 'grand',
+							__unbind: function() {
+								this.unbindExecuted = true;
+							},
+							__dispose: function() {
+								this.disposeExecuted = true;
+							}
+						}
+					}
+				});
+				this.lifecycleerrorEventListener = function(e) {
+					lifecycleerrorEventObj = e;
+					lifecycleerrorExecuted = true;
+				};
+				h5.core.controllerManager.addEventListener('lifecycleerror',
+						this.lifecycleerrorEventListener);
+
+				c.readyPromise.done(function() {
+					var error = null;
+					try {
+						this.unbind();
+					} catch (e) {
+						error = e;
+					}
+					strictEqual(error, errorObj, 'try-catchでエラーオブジェクトが取得できること');
+					strictEqual(this.__name, 'root', 'ルートコントローラがnullifyされていないこと');
+					ok(this.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+					ok(this.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+					var child = this.childController;
+					strictEqual(child.__name, 'child', '子コントローラがnullifyされていないこと');
+					ok(child.unbindExecuted, '子コントローラの__unbindが実行されていること');
+					ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+					var grand = child.childController;
+					strictEqual(grand.__name, 'grand', '孫コントローラがnullifyされていないこと');
+					ok(grand.unbindExecuted, '孫コントローラの__unbindが実行されていること');
+					ok(grand.disposeExecuted, '孫コントローラの__disposeが実行されていること');
+
+					ok(lifecycleerrorExecuted, 'lifecycleerrorイベントが上がっていること');
+					strictEqual(lifecycleerrorEventObj.detail, errorObj,
+							'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+					strictEqual(lifecycleerrorEventObj.rootController, this,
+							'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+
+					start();
+				});
+			});
+
+	asyncTest('unbind()を呼んで__unbind()が例外をスローした時、h5controllerunboundイベントが上がってイベントハンドラがアンバインドされること',
+			4, function() {
+				var errorObj = new Error('__unbind error.');
+				var unboundEventExecuted = false;
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'root',
+					'{rootElement} click': function() {
+						this.eventHandlerExecuted = true;
+					},
+					childController: {
+						__name: 'child',
+						'{rootElement} click': function() {
+							this.eventHandlerExecuted = true;
+						},
+						__unbind: function() {
+							throw errorObj;
+						},
+						childController: {
+							__name: 'grand',
+							'{rootElement} click': function() {
+								this.eventHandlerExecuted = true;
+							}
+						}
+					}
+				});
+				$('#controllerTest').bind('h5controllerunbound', function() {
+					unboundEventExecuted = true;
+				});
+
+				c.readyPromise.done(function() {
+					var error = null;
+					try {
+						this.unbind();
+					} catch (e) {
+						// 何もしない
+					}
+					$('#controllerTest').click();
+					ok(!this.eventHandlerExecuted, 'ルートコントローラで定義したイベントハンドラは動作しなくなっていること');
+					ok(!this.childController.eventHandlerExecuted,
+							'子コントローラで定義したイベントハンドラは動作しなくなっていること');
+					ok(!this.childController.childController.eventHandlerExecuted,
+							'孫コントローラで定義したイベントハンドラは動作しなくなっていること');
+
+					ok(unboundEventExecuted, 'h5controllerunboundイベントが上がっていること');
+					start();
+				});
+
+			});
+
+	asyncTest('unbind()を呼んで__unbind()が例外をスローした時、最初に投げられた例外オブジェクトが取得できること', 1, function() {
+		var rootUnbindErrorObj = new Error('root.__unbind error.');
+		var childUnbindErrorObj = new Error('child.__unbind error.');
+		var grandUnbindErrorObj = new Error('grand.__unbind error.');
+		var rootDisposeErrorObj = new Error('root.__dispose error.');
+		var childDisposeErrorObj = new Error('child.__dispose error.');
+		var grandDisposeErrorObj = new Error('grand.__dispose error.');
+		h5.core.controller('#controllerTest', {
+			__name: 'root',
+			__unbind: function() {
+				throw rootUnbindErrorObj;
+			},
+			__dispose: function() {
+				throw rootDisposeErrorObj;
+			},
+			childController: {
+				__name: 'child',
+				__unbind: function() {
+					throw childUnbindErrorObj;
+				},
+				__dispose: function() {
+					throw childDisposeErrorObj;
+				},
+				childController: {
+					__name: 'grand',
+					__unbind: function() {
+						throw grandUnbindErrorObj;
+					},
+					__dispose: function() {
+						throw grandDisposeErrorObj;
+					}
+				}
+			}
+		}).readyPromise.done(function() {
+			try {
+				this.dispose();
+			} catch (e) {
+				strictEqual(e, grandUnbindErrorObj, '最初に投げられた例外オブジェクトが取得できること');
+			}
+			start();
+		});
+	});
+
+	asyncTest('dispose()を呼んで__unbind()が例外をスローした時、disposeされてlifecycleerrorイベントが起きること', 13,
+			function() {
+				var errorObj = new Error('__unbind error.');
+				var lifecycleerrorExecuted = false;
+				var lifecycleerrorEventObj = null;
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'root',
+					__unbind: function() {
+						this.unbindExecuted = true;
+					},
+					__dispose: function() {
+						this.disposeExecuted = true;
+					},
+					childController: {
+						__name: 'child',
+						__unbind: function() {
+							this.unbindExecuted = true;
+							throw errorObj;
+						},
+						__dispose: function() {
+							this.disposeExecuted = true;
+						},
+						childController: {
+							__name: 'grand',
+							__unbind: function() {
+								this.unbindExecuted = true;
+							},
+							__dispose: function() {
+								this.disposeExecuted = true;
+							}
+						}
+					}
+				});
+				this.lifecycleerrorEventListener = function(e) {
+					lifecycleerrorEventObj = e;
+					lifecycleerrorExecuted = true;
+				};
+				h5.core.controllerManager.addEventListener('lifecycleerror',
+						this.lifecycleerrorEventListener);
+
+				c.readyPromise.done(function() {
+					var error = null;
+					try {
+						this.dispose();
+					} catch (e) {
+						error = e;
+					}
+					strictEqual(error, errorObj, 'try-catchでエラーオブジェクトが取得できること');
+					strictEqual(this.__name, 'root', 'ルートコントローラがnullifyされていないこと');
+					ok(this.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+					ok(this.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+					var child = this.childController;
+					strictEqual(child.__name, 'child', '子コントローラがnullifyされていないこと');
+					ok(child.unbindExecuted, '子コントローラの__unbindが実行されていること');
+					ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+					var grand = child.childController;
+					strictEqual(grand.__name, 'grand', '孫コントローラがnullifyされていないこと');
+					ok(grand.unbindExecuted, '孫コントローラの__unbindが実行されていること');
+					ok(grand.disposeExecuted, '孫コントローラの__disposeが実行されていること');
+
+					ok(lifecycleerrorExecuted, 'lifecycleerrorイベントが上がっていること');
+					strictEqual(lifecycleerrorEventObj.detail, errorObj,
+							'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+					strictEqual(lifecycleerrorEventObj.rootController, this,
+							'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+
+					start();
+				});
+			});
+
+	asyncTest('dispose()を呼んで__unbind()が例外をスローした時、h5controllerunboundイベントが上がってイベントハンドラがアンバインドされること',
+			4, function() {
+				var errorObj = new Error('__unbind error.');
+				var unboundEventExecuted = false;
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'root',
+					'{rootElement} click': function() {
+						this.eventHandlerExecuted = true;
+					},
+					childController: {
+						__name: 'child',
+						'{rootElement} click': function() {
+							this.eventHandlerExecuted = true;
+						},
+						__unbind: function() {
+							throw errorObj;
+						},
+						childController: {
+							__name: 'grand',
+							'{rootElement} click': function() {
+								this.eventHandlerExecuted = true;
+							}
+						}
+					}
+				});
+				$('#controllerTest').bind('h5controllerunbound', function() {
+					unboundEventExecuted = true;
+				});
+
+				c.readyPromise.done(function() {
+					var error = null;
+					try {
+						this.dispose();
+					} catch (e) {
+						// 何もしない
+					}
+					$('#controllerTest').click();
+					ok(!this.eventHandlerExecuted, 'ルートコントローラで定義したイベントハンドラは動作しなくなっていること');
+					ok(!this.childController.eventHandlerExecuted,
+							'子コントローラで定義したイベントハンドラは動作しなくなっていること');
+					ok(!this.childController.childController.eventHandlerExecuted,
+							'孫コントローラで定義したイベントハンドラは動作しなくなっていること');
+
+					ok(unboundEventExecuted, 'h5controllerunboundイベントが上がっていること');
+					start();
+				});
+
+			});
+
+	asyncTest('dispose()を呼んで__unbind()が例外をスローした時、最初に投げられた例外オブジェクトが取得できること', 1, function() {
+		var rootUnbindErrorObj = new Error('root.__unbind error.');
+		var childUnbindErrorObj = new Error('child.__unbind error.');
+		var grandUnbindErrorObj = new Error('grand.__unbind error.');
+		var rootDisposeErrorObj = new Error('root.__dispose error.');
+		var childDisposeErrorObj = new Error('child.__dispose error.');
+		var grandDisposeErrorObj = new Error('grand.__dispose error.');
+		h5.core.controller('#controllerTest', {
+			__name: 'root',
+			__unbind: function() {
+				throw rootUnbindErrorObj;
+			},
+			__dispose: function() {
+				throw rootDisposeErrorObj;
+			},
+			childController: {
+				__name: 'child',
+				__unbind: function() {
+					throw childUnbindErrorObj;
+				},
+				__dispose: function() {
+					throw childDisposeErrorObj;
+				},
+				childController: {
+					__name: 'grand',
+					__unbind: function() {
+						throw grandUnbindErrorObj;
+					},
+					__dispose: function() {
+						throw grandDisposeErrorObj;
+					}
+				}
+			}
+		}).readyPromise.done(function() {
+			try {
+				this.dispose();
+			} catch (e) {
+				strictEqual(e, grandUnbindErrorObj, '最初に投げられた例外オブジェクトが取得できること');
+			}
+			start();
+		});
+	});
+
+	asyncTest('dispose()を呼んで__dispose()が例外をスローした時、disposeされてlifecycleerrorイベントが起きること', 10,
+			function() {
+				var errorObj = new Error('__unbind error.');
+				var lifecycleerrorExecuted = false;
+				var lifecycleerrorEventObj = null;
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'root',
+					__dispose: function() {
+						this.disposeExecuted = true;
+					},
+					childController: {
+						__name: 'child',
+						__dispose: function() {
+							this.disposeExecuted = true;
+							throw errorObj;
+						},
+						childController: {
+							__name: 'grand',
+							__dispose: function() {
+								this.disposeExecuted = true;
+							}
+						}
+					}
+				});
+				this.lifecycleerrorEventListener = function(e) {
+					lifecycleerrorEventObj = e;
+					lifecycleerrorExecuted = true;
+				};
+				h5.core.controllerManager.addEventListener('lifecycleerror',
+						this.lifecycleerrorEventListener);
+
+				c.readyPromise.done(function() {
+					var error = null;
+					try {
+						this.dispose();
+					} catch (e) {
+						error = e;
+					}
+					strictEqual(error, errorObj, 'try-catchでエラーオブジェクトが取得できること');
+					strictEqual(this.__name, 'root', 'ルートコントローラがnullifyされていないこと');
+					ok(this.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+					var child = this.childController;
+					strictEqual(child.__name, 'child', '子コントローラがnullifyされていないこと');
+					ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+					var grand = child.childController;
+					strictEqual(grand.__name, 'grand', '孫コントローラがnullifyされていないこと');
+					ok(grand.disposeExecuted, '孫コントローラの__disposeが実行されていること');
+
+					ok(lifecycleerrorExecuted, 'lifecycleerrorイベントが上がっていること');
+					strictEqual(lifecycleerrorEventObj.detail, errorObj,
+							'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+					strictEqual(lifecycleerrorEventObj.rootController, this,
+							'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+
+					start();
+				});
+			});
+
+	asyncTest(
+			'dispose()を呼んで__dispose()が例外をスローした時、h5controllerunboundイベントが上がってイベントハンドラがアンバインドされること',
+			4, function() {
+				var errorObj = new Error('__unbind error.');
+				var unboundEventExecuted = false;
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'root',
+					'{rootElement} click': function() {
+						this.eventHandlerExecuted = true;
+					},
+					childController: {
+						__name: 'child',
+						'{rootElement} click': function() {
+							this.eventHandlerExecuted = true;
+						},
+						__dispose: function() {
+							throw errorObj;
+						},
+						childController: {
+							__name: 'grand',
+							'{rootElement} click': function() {
+								this.eventHandlerExecuted = true;
+							}
+						}
+					}
+				});
+				$('#controllerTest').bind('h5controllerunbound', function() {
+					unboundEventExecuted = true;
+				});
+
+				c.readyPromise.done(function() {
+					var error = null;
+					try {
+						this.dispose();
+					} catch (e) {
+						// 何もしない
+					}
+					$('#controllerTest').click();
+					ok(!this.eventHandlerExecuted, 'ルートコントローラで定義したイベントハンドラは動作しなくなっていること');
+					ok(!this.childController.eventHandlerExecuted,
+							'子コントローラで定義したイベントハンドラは動作しなくなっていること');
+					ok(!this.childController.childController.eventHandlerExecuted,
+							'孫コントローラで定義したイベントハンドラは動作しなくなっていること');
+
+					ok(unboundEventExecuted, 'h5controllerunboundイベントが上がっていること');
+					start();
+				});
+			});
+
+	asyncTest('dispose()を呼んで__dispose()が例外をスローした時、最初に投げられた例外オブジェクトが取得できること', 1, function() {
+		var rootDisposeErrorObj = new Error('root.__dispose error.');
+		var childDisposeErrorObj = new Error('child.__dispose error.');
+		var grandDisposeErrorObj = new Error('grand.__dispose error.');
+		h5.core.controller('#controllerTest', {
+			__name: 'root',
+			__dispose: function() {
+				throw rootDisposeErrorObj;
+			},
+			childController: {
+				__name: 'child',
+				__dispose: function() {
+					throw childDisposeErrorObj;
+				},
+				childController: {
+					__name: 'grand',
+					__dispose: function() {
+						throw grandDisposeErrorObj;
+					}
+				}
+			}
+		}).readyPromise.done(function() {
+			try {
+				this.dispose();
+			} catch (e) {
+				strictEqual(e, grandDisposeErrorObj, '最初に投げられた例外オブジェクトが取得できること');
+			}
+			start();
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[browser#and-and:-3|sa-ios:-4]非同期で実行されるライフサイクルイベント内の例外', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 
@@ -7455,7 +8053,12 @@ $(function() {
 			clearController();
 			// window.onerrorを元に戻す
 			window.onerror = this.onerrorHandler;
+			h5.core.controllerManager.removeEventListener('lifecycleerror',
+					this.lifecycleerrorEventListener);
 		},
+		/** テストで設定するlifecycleerrorイベントリスナはモジュール変数に覚えておいて、teardownでremoveEventListenerする * */
+		lifecycleerrorEventListener: null,
+
 		/** window.onerrorが起こるまで待機して、待機時間(5秒)を過ぎたらテストを失敗させる関数 */
 		testTimeoutFunc: function() {
 			var id = setTimeout(function() {
@@ -7481,273 +8084,441 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('__construct()で例外をスローする', 1, function() {
-		// __construct()は同期なのでwindow.onerrorの拾えないandroid0-3でもテストできる
-		var errorObj = new Error('__construct error.');
+	asyncTest('__init()で例外をスローするとdisposeされてlifecycleerrorイベントが起きること', 6, function() {
+		window.onerror = this.dummyHandler;
+		var nextLifecycleExecuted = false;
+		var unbindExecuted = false;
+		var disposeExecuted = false;
+		var errorObj = new Error('__init error.');
 		var controller = {
-			__name: 'TestController',
-			__construct: function() {
+			__name: 'controller',
+			__init: function() {
 				throw errorObj;
+			},
+			__postInit: function() {
+				nextLifecycleExecuted = true;
+			},
+			__unbind: function() {
+				unbindExecuted = true;
+			},
+			__dispose: function() {
+				disposeExecuted = true;
+			}
+		};
+		var controllerInstance = h5.core.controller('#controllerTest', controller);
+
+		this.lifecycleerrorEventListener = function(e) {
+			ok(true, 'lifecycleerrorイベントが上がっていること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			ok(unbindExecuted, '__unbindが実行されていること');
+			ok(disposeExecuted, '__disposeが実行されていること');
+			strictEqual(e.detail, errorObj, 'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+			strictEqual(e.rootController, controllerInstance,
+					'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+			start();
+		}
+		h5.core.controllerManager.addEventListener('lifecycleerror',
+				this.lifecycleerrorEventListener);
+	});
+
+	asyncTest('__postInit()で例外をスローするとdisposeされてlifecycleerrorイベントが起きること', 6, function() {
+		window.onerror = this.dummyHandler;
+		var nextLifecycleExecuted = false;
+		var unbindExecuted = false;
+		var disposeExecuted = false;
+		var errorObj = new Error('__postInit error.');
+		var controller = {
+			__name: 'controller',
+			__postInit: function() {
+				throw errorObj;
+			},
+			__ready: function() {
+				nextLifecycleExecuted = true;
+			},
+			__unbind: function() {
+				unbindExecuted = true;
+			},
+			__dispose: function() {
+				disposeExecuted = true;
+			}
+		};
+		var controllerInstance = h5.core.controller('#controllerTest', controller);
+
+		this.lifecycleerrorEventListener = function(e) {
+			ok(true, 'lifecycleerrorイベントが上がっていること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			ok(unbindExecuted, '__unbindが実行されていること');
+			ok(disposeExecuted, '__disposeが実行されていること');
+			strictEqual(e.detail, errorObj, 'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+			strictEqual(e.rootController, controllerInstance,
+					'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+			start();
+		};
+		h5.core.controllerManager.addEventListener('lifecycleerror',
+				this.lifecycleerrorEventListener);
+	});
+
+	asyncTest('__ready()で例外をスローするとdisposeされてlifecycleerrorイベントが起きること', 6, function() {
+		window.onerror = this.dummyHandler;
+		var unbindExecuted = false;
+		var disposeExecuted = false;
+		var eventHandlerExecuted = false;
+		var errorObj = new Error('__ready error.');
+		var controller = {
+			__name: 'controller',
+			'{rootElement} click': function() {
+				eventHandlerExecuted = true;
+			},
+			__ready: function() {
+				throw errorObj;
+			},
+			__unbind: function() {
+				unbindExecuted = true;
+			},
+			__dispose: function() {
+				disposeExecuted = true;
+			}
+		};
+		var controllerInstance = h5.core.controller('#controllerTest', controller);
+
+		this.lifecycleerrorEventListener = function(e) {
+			ok(true, 'lifecycleerrorイベントが上がっていること');
+			ok(unbindExecuted, '__unbindが実行されていること');
+			ok(disposeExecuted, '__disposeが実行されていること');
+			$('#controllerTest').click();
+			ok(!eventHandlerExecuted, 'イベントハンドラは動作しなくなっていること');
+			strictEqual(e.detail, errorObj, 'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+			strictEqual(e.rootController, controllerInstance,
+					'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+			start();
+		};
+		h5.core.controllerManager.addEventListener('lifecycleerror',
+				this.lifecycleerrorEventListener);
+	});
+
+	asyncTest('ネストしたコントローラの__init()で例外をスローするとdisposeされてlifecycleerrorイベントが起きること', 13, function() {
+		window.onerror = this.dummyHandler;
+		var nextLifecycleExecuted = false;
+		var controllerInstance = null;
+
+		var errorObj = new Error('__init error.');
+		var controller = {
+			__name: 'root',
+			__construct: function() {
+				controllerInstance = this;
+			},
+			childController: {
+				__name: 'child',
+				__init: function() {
+					throw errorObj;
+				},
+				childController: {
+					__name: 'grand',
+					__init: function() {
+						nextLifecycleExecuted = true;
+					},
+					__unbind: function() {
+						this.unbindExecuted = true;
+					},
+					__dispose: function() {
+						this.disposeExecuted = true;
+					}
+				},
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
+			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
 			}
 		};
 
-		try {
-			h5.core.controller('#controllerTest', controller);
-		} catch (e) {
-			strictEqual(e, errorObj, '__constructで投げた例外をtry-catchでキャッチできること');
-		}
-	});
-
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__init()で例外をスローする', 2, function() {
-		var errorObj = new Error('__init error.');
-		var id = this.testTimeoutFunc();
-
-		window.onerror = function(e) {
-			clearTimeout(id);
-			ok(e, errorObj, '__init()内で発生した例外がFW内で握りつぶされずにwindow.onerrorで取得できること');
-			ok(isDisposed(c), 'コントローラはdisposeされていること');
+		this.lifecycleerrorEventListener = function(e) {
+			ok(true, 'lifecycleerrorイベントが上がっていること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			strictEqual(controllerInstance.__name, 'root', 'ルートコントローラがnullifyされていないこと');
+			ok(controllerInstance.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+			ok(controllerInstance.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+			var child = controllerInstance.childController;
+			strictEqual(child.__name, 'child', '子コントローラがnullifyされていないこと');
+			ok(child.unbindExecuted, '子コントローラの__unbindが実行されていること');
+			ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+			var grandChild = controllerInstance.childController.childController;
+			strictEqual(grandChild.__name, 'grand', '孫コントローラがnullifyされていないこと');
+			ok(grandChild.unbindExecuted, '孫コントローラの__unbindが実行されていること');
+			ok(grandChild.disposeExecuted, '孫コントローラの__disposeが実行されていること');
+			strictEqual(e.detail, errorObj, 'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+			strictEqual(e.rootController, controllerInstance,
+					'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
 			start();
 		};
+		h5.core.controllerManager.addEventListener('lifecycleerror',
+				this.lifecycleerrorEventListener);
+		h5.core.controller('#controllerTest', controller);
+	});
 
+	asyncTest(
+			'ネストしたコントローラの__postInit()で例外をスローするとdisposeされてlifecycleerrorイベントが起きること',
+			13,
+			function() {
+				window.onerror = this.dummyHandler;
+				var nextLifecycleExecuted = false;
+				var controllerInstance = null;
+
+				var errorObj = new Error('__postInit error.');
+				var controller = {
+					__name: 'root',
+					__construct: function() {
+						controllerInstance = this;
+					},
+					__postInit: function() {
+						nextLifecycleExecuted = true;
+					},
+					childController: {
+						__name: 'child',
+						__postInit: function() {
+							throw errorObj;
+						},
+						childController: {
+							__name: 'grand',
+							__unbind: function() {
+								this.unbindExecuted = true;
+							},
+							__dispose: function() {
+								this.disposeExecuted = true;
+							}
+						},
+						__unbind: function() {
+							this.unbindExecuted = true;
+						},
+						__dispose: function() {
+							this.disposeExecuted = true;
+						}
+					},
+					__unbind: function() {
+						this.unbindExecuted = true;
+					},
+					__dispose: function() {
+						this.disposeExecuted = true;
+					}
+				};
+
+				this.lifecycleerrorEventListener = function(e) {
+					ok(true, 'lifecycleerrorイベントが上がっていること');
+					ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+					strictEqual(controllerInstance.__name, 'root', 'ルートコントローラがnullifyされていないこと');
+					ok(controllerInstance.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+					ok(controllerInstance.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+					var child = controllerInstance.childController;
+					strictEqual(child.__name, 'child', '子コントローラがnullifyされていないこと');
+					ok(child.unbindExecuted, '子コントローラの__unbindが実行されていること');
+					ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+					var grandChild = controllerInstance.childController.childController;
+					strictEqual(grandChild.__name, 'grand', '孫コントローラがnullifyされていないこと');
+					ok(grandChild.unbindExecuted, '孫コントローラの__unbindが実行されていること');
+					ok(grandChild.disposeExecuted, '孫コントローラの__disposeが実行されていること');
+					strictEqual(e.detail, errorObj, 'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+					strictEqual(e.rootController, controllerInstance,
+							'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+					start();
+				};
+				h5.core.controllerManager.addEventListener('lifecycleerror',
+						this.lifecycleerrorEventListener);
+				h5.core.controller('#controllerTest', controller);
+			});
+
+	asyncTest('ネストしたコントローラの__ready()で例外をスローするとdisposeされてlifecycleerrorイベントが起きること', 16, function() {
+		window.onerror = this.dummyHandler;
+		var nextLifecycleExecuted = false;
+		var controllerInstance = null;
+
+		var errorObj = new Error('__ready error.');
+		var controller = {
+			__name: 'root',
+			'{rootElement} click': function() {
+				this.eventHandlerExecuted = true;
+			},
+			__construct: function() {
+				controllerInstance = this;
+			},
+			__ready: function() {
+				nextLifecycleExecuted = true;
+			},
+			childController: {
+				__name: 'child',
+				__ready: function() {
+					throw errorObj;
+				},
+				'{rootElement} click': function() {
+					this.eventHandlerExecuted = true;
+				},
+				childController: {
+					__name: 'grand',
+					'{rootElement} click': function() {
+						this.eventHandlerExecuted = true;
+					},
+					__unbind: function() {
+						this.unbindExecuted = true;
+					},
+					__dispose: function() {
+						this.disposeExecuted = true;
+					}
+				},
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
+			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
+			}
+		};
+
+		this.lifecycleerrorEventListener = function(e) {
+			ok(true, 'lifecycleerrorイベントが上がっていること');
+			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
+			strictEqual(controllerInstance.__name, 'root', 'ルートコントローラがnullifyされていないこと');
+			ok(controllerInstance.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+			ok(controllerInstance.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+			var child = controllerInstance.childController;
+			strictEqual(child.__name, 'child', '子コントローラがnullifyされていないこと');
+			ok(child.unbindExecuted, '子コントローラの__unbindが実行されていること');
+			ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+			var grandChild = controllerInstance.childController.childController;
+			strictEqual(grandChild.__name, 'grand', '孫コントローラがnullifyされていないこと');
+			ok(grandChild.unbindExecuted, '孫コントローラの__unbindが実行されていること');
+			ok(grandChild.disposeExecuted, '孫コントローラの__disposeが実行されていること');
+
+			$('#controllerTest').click();
+			ok(!controllerInstance.eventHandlerExecuted, 'ルートコントローラで定義したイベントハンドラは動作しなくなっていること');
+			ok(!child.eventHandlerExecuted, '子コントローラで定義したイベントハンドラは動作しなくなっていること');
+			ok(!grandChild.eventHandlerExecuted, '孫コントローラで定義したイベントハンドラは動作しなくなっていること');
+
+			strictEqual(e.detail, errorObj, 'lifecycleerrorイベントのdetailに例外オブジェクトが格納されていること');
+			strictEqual(e.rootController, controllerInstance,
+					'lifecycleerrorイベントオブジェクトのrootControllerにコントローラインスタンスが格納されていること');
+			start();
+		};
+		h5.core.controllerManager.addEventListener('lifecycleerror',
+				this.lifecycleerrorEventListener);
+		h5.core.controller('#controllerTest', controller);
+	});
+
+	asyncTest('window.onerrorで__init()が投げた例外を拾えること', 2, function() {
+		var id = this.testTimeoutFunc();
+		var errorMsg = '__init error.';
+		var errorObj = new Error(errorMsg);
+		window.onerror = function(e) {
+			clearTimeout(id);
+			ok(e.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(c.__name, 'controller', 'コントローラはdisposeされていないこと');
+			start();
+		};
 		var c = h5.core.controller('#controllerTest', {
-			__name: 'TestController',
+			__name: 'controller',
 			__init: function() {
 				throw errorObj;
 			}
 		});
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__postInit()で例外をスローする', 2, function() {
-		var errorObj = new Error('__postInit error.');
+	asyncTest('window.onerrorで__postInit()が投げた例外を拾えること', 2, function() {
 		var id = this.testTimeoutFunc();
-
+		var errorMsg = '__postInit error.';
+		var errorObj = new Error(errorMsg);
 		window.onerror = function(e) {
 			clearTimeout(id);
-			ok(e, errorObj, '__postInit()内で発生した例外がFW内で握りつぶされずにwindow.onerrorで取得できること');
-			ok(isDisposed(c), 'コントローラはdisposeされていること');
+			ok(e.indexOf(errorMsg) != -1, '__postInit()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(c.__name, 'controller', 'コントローラはdisposeされていないこと');
 			start();
 		};
-
 		var c = h5.core.controller('#controllerTest', {
-			__name: 'TestController',
+			__name: 'controller',
 			__postInit: function() {
 				throw errorObj;
 			}
 		});
 	});
 
-	asyncTest('[browser#and-and:-3|sa-ios:-4]__ready()で例外をスローする', 2, function() {
-		var errorObj = new Error('__ready error.');
+	asyncTest('window.onerrorで__ready()が投げた例外を拾えること', 2, function() {
 		var id = this.testTimeoutFunc();
-
+		var errorMsg = '__ready error.';
+		var errorObj = new Error(errorMsg);
 		window.onerror = function(e) {
 			clearTimeout(id);
-			ok(e, errorObj, '__ready()内で発生した例外がFW内で握りつぶされずにwindow.onerrorで取得できること');
-			ok(isDisposed(c), 'コントローラはdisposeされていること');
+			ok(e.indexOf(errorMsg) != -1, '__ready()内で発生した例外がFW内で握りつぶされずcatchできること。');
+			ok(c.__name, 'controller', 'コントローラはdisposeされていないこと');
 			start();
 		};
-
 		var c = h5.core.controller('#controllerTest', {
-			__name: 'TestController',
+			__name: 'controller',
 			__ready: function() {
 				throw errorObj;
 			}
 		});
 	});
 
-	// TODO __unbind, __disposeで例外をスローした時の挙動について整理してから、テストコードの対応を行う。(#329)
-	//
-	//	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのunbindを呼んだ場合。', 3,
-	//			function() {
-	//				var errorMsg = '__unbind error.';
-	//				var id = this.testTimeoutFunc(errorMsg);
-	//
-	//				window.onerror = function(ev) {
-	//					clearTimeout(id);
-	//					ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-	//					$(c.rootElement).click();
-	//					ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
-	//					ok(c.__name, 'コントローラはdisposeされていないこと');
-	//					start();
-	//				};
-	//
-	//				var evHandlerFlag;
-	//				var controller = {
-	//					__name: 'TestController',
-	//					__unbind: function() {
-	//						throw new Error(errorMsg);
-	//					},
-	//					'{rootElement} click': function() {
-	//						evHandlerFlag = true;
-	//					}
-	//				};
-	//
-	//				var c = h5.core.controller('#controllerTest', controller);
-	//				c.readyPromise.done(function() {
-	//					c.unbind();
-	//				});
-	//			});
-	//
-	//	asyncTest('[browser#and-and:-3|sa-ios:-4]__unbind()で例外をスローする。コントローラのdisposeを呼んだ場合。', 3,
-	//			function() {
-	//				var errorMsg = '__unbind error.';
-	//				var id = this.testTimeoutFunc(errorMsg);
-	//
-	//				window.onerror = function(ev) {
-	//					clearTimeout(id);
-	//					ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-	//					$(c.rootElement).click();
-	//					ok(!evHandlerFlag, 'コントローラのイベントハンドラは動作しないこと');
-	//					ok(!c.__name, 'コントローラはdisposeされていること');
-	//					start();
-	//				};
-	//
-	//				var evHandlerFlag;
-	//				var controller = {
-	//					__name: 'TestController',
-	//					__unbind: function() {
-	//						throw new Error(errorMsg);
-	//					},
-	//					'{rootElement} click': function() {
-	//						evHandlerFlag = true;
-	//					}
-	//				};
-	//
-	//				var c = h5.core.controller('#controllerTest', controller);
-	//				c.readyPromise.done(function() {
-	//					c.dispose();
-	//				});
-	//			});
-	//
-	//	asyncTest('[browser#and-and:-3|sa-ios:-4]__dispose()で例外をスローする。', 2, function() {
-	//		var errorMsg = '__dispose error.';
-	//		var id = this.testTimeoutFunc(errorMsg);
-	//
-	//		window.onerror = function(ev) {
-	//			clearTimeout(id);
-	//			ok(ev.indexOf(errorMsg) != -1, '__init()内で発生した例外がFW内で握りつぶされずcatchできること。');
-	//			ok(!c.__name, 'コントローラはdisposeされていること');
-	//			start();
-	//		};
-	//
-	//		var controller = {
-	//			__name: 'TestController',
-	//			__dispose: function() {
-	//				throw new Error(errorMsg);
-	//			}
-	//		};
-	//
-	//		var c = h5.core.controller('#controllerTest', controller);
-	//		c.readyPromise.done(function() {
-	//			c.dispose();
-	//		});
-	//	});
-
-	asyncTest('子コントローラの__init()で例外をスローしたとき、コントローラは連鎖的にdisposeされること', 6, function() {
-		window.onerror = this.dummyHandler;
-		var errorObj = new Error('__init');
-		var nextLifecycleExecuted;
-		var controller = {
-			__name: 'TestController',
-			childController: {
-				__name: 'childController',
-				__init: function() {
-					throw errorObj;
-				},
-				grandchildController: {
-					__name: 'grandchildController',
+	asyncTest('例外でコントローラの初期化が中断されて、__unbind,__disposeでも例外を投げた時、最初に投げられた例外オブジェクトが取得できること', 5,
+			function() {
+				var id = this.testTimeoutFunc();
+				var errorMsg = '__init error.';
+				var errorObj = new Error(errorMsg);
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'controller',
 					__init: function() {
-						nextLifecycleExecuted = true;
+						throw errorObj;
+					},
+					childController: {
+						__name: 'child',
+						__unbind: function() {
+							this.unbindExecuted = true;
+							throw new Error('__unbind error.');
+						},
+						__dispose: function() {
+							this.disposeExecuted = true;
+							throw new Error('__dispose error.');
+						}
+					},
+					__unbind: function() {
+						this.unbindExecuted = true;
+						throw new Error('__unbind error.');
+					},
+					__dispose: function() {
+						this.disposeExecuted = true;
+						throw new Error('__dispose error.');
 					}
-				}
-			}
-		};
-		var c = h5.core.controller('#controllerTest', controller);
-		c.readyPromise.fail(function(e) {
-			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
-			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
-			ok(isRejected(c.childController.initPromise), '子コントローラのinitPromiseはrejectされていること');
-			var child = c.childController;
-			var grandChild = c.childController.grandchildController;
-			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
-				ok(isDisposed(child), '子コントローラはdisposeされること');
-				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
-				start();
-			}, 0);
-		});
-	});
+				});
+				window.onerror = function(e) {
+					clearTimeout(id);
+					ok(e.indexOf(errorMsg) != -1, '__init()の例外がwindow.onerrorでcatchできること。');
+					ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+					ok(c.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+					var child = c.childController;
+					ok(child.unbindExecuted, '子コントローラの__unbindが実行されていること');
+					ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+					start();
+				};
+			});
 
-	asyncTest('子コントローラの__postInit()で例外をスローしたとき、コントローラは連鎖的にdisposeされること', 6, function() {
-		window.onerror = this.dummyHandler;
-		var errorObj = new Error('__postInit');
-		var nextLifecycleExecuted;
-		var controller = {
-			__name: 'TestController',
-			__postInit: function() {
-				nextLifecycleExecuted = true;
-			},
-			childController: {
-				__name: 'childController',
-				__postInit: function() {
-					throw errorObj;
-				},
-				grandchildController: {
-					__name: 'grandchildController'
-				}
-			}
-		};
-		var c = h5.core.controller('#controllerTest', controller);
-		c.readyPromise.fail(function(e) {
-			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
-			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
-			ok(isRejected(c.childController.postInitPromise),
-					'子コントローラのpostInitPromiseはrejectされていること');
-			var child = c.childController;
-			var grandChild = c.childController.grandchildController;
-			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
-				ok(isDisposed(child), '子コントローラはdisposeされること');
-				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
-				start();
-			}, 0);
-		});
-	});
 
-	asyncTest('子コントローラの__ready()で例外をスローしたとき、コントローラは連鎖的にdisposeされること', 6, function() {
-		window.onerror = this.dummyHandler;
-		var errorObj = new Error('__ready');
-		var nextLifecycleExecuted;
-		var controller = {
-			__name: 'TestController',
-			__ready: function() {
-				nextLifecycleExecuted = true;
-			},
-			childController: {
-				__name: 'childController',
-				__ready: function() {
-					throw errorObj;
-				},
-				grandchildController: {
-					__name: 'grandchildController'
-				}
-			}
-		};
-		var c = h5.core.controller('#controllerTest', controller);
-		c.readyPromise.fail(function(e) {
-			ok(true, 'ルートコントローラのreadyPromiseのfailハンドラが実行されること');
-			ok(!nextLifecycleExecuted, 'コントローラの初期化処理は中断されていること');
-			ok(isRejected(c.childController.readyPromise), '子コントローラのreadyPromiseはrejectされていること');
-			var child = c.childController;
-			var grandChild = c.childController.grandchildController;
-			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
-				ok(isDisposed(child), '子コントローラはdisposeされること');
-				ok(isDisposed(grandChild), '孫コントローラはdisposeされること');
-				start();
-			}, 0);
-		});
-	});
+
+
+
+
+
+
+
 
 	//=============================
 	// Definition
