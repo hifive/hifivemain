@@ -1997,21 +1997,24 @@
 
 		var dfd = controller.deferred();
 		waitForPromises(promises, function() {
-			if (!e) {
-				cleanup();
+			cleanup();
+			if (!e && !rejectReason) {
 				dfd.resolveWith(controller);
 				return;
 			}
-			if (e || rejectReason) {
-				// cleanupが終わったタイミングで、エラーまたはrejectされてdisposeされた場合は、"lifecycleerror"イベントをあげる
-				// detailにエラーオブジェクトまたはfailハンドラに渡した引数をいれる
-				triggerLifecycleerror(controller, e || failReason);
-				if (e) {
-					throw e;
-				}
+			// disposeの返すプロミスをrejectする。
+			// 引数にはエラーオブジェクトまたはrejectReasonを渡す
+			dfd.rejectWith(controller, [e||rejectReason]);
+			// cleanupが終わったタイミングで、エラーまたはrejectされてdisposeされた場合は、"lifecycleerror"イベントをあげる
+			// detailにエラーオブジェクトまたはfailハンドラに渡した引数をいれる
+			triggerLifecycleerror(controller, e || rejectReason);
+			if (e) {
+				throw e;
+
 			}
 		}, function(/* var_args */) {
 			// __disposeの返したプロミスがrejectされた時はcleanupしないでrejectする
+			// __disposeの返したプロミスのfailに渡される引数をそのまま渡す
 			dfd.rejectWith(controller, argsToArray(arguments));
 			// lifecycleerrorイベントをあげる
 			triggerLifecycleerror(controller,
