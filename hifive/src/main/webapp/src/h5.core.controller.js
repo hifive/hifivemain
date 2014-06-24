@@ -2028,6 +2028,11 @@
 	 * @param {Error} e エラーオブジェクト
 	 */
 	function unbindController(controller) {
+		// 既にunbind済みなら何もしない
+		if (isUnbinding(controller)) {
+			return;
+		}
+		controller.__controllerContext.isUnbinding = 1;
 		// __unbindの実行
 		var unbindError;
 		try {
@@ -2059,9 +2064,9 @@
 		// rootElementとview.__view.controllerにnullをセット
 		unbindRootElement(controller);
 
-		// __unbindでエラーが投げられていればエラーを投げる
+		// __unbindでエラーが投げられていればdisposeする
 		if (unbindError) {
-			throw unbindError;
+			disposeController(controller, unbindError);
 		}
 	}
 
@@ -2110,6 +2115,20 @@
 	 */
 	function isDisposing(controller) {
 		return isDisposed(controller) || controller.__controllerContext.isDisposing;
+	}
+
+	/**
+	 * 指定されたコントローラがunbind処理中またはunbind済みかどうかを返します
+	 * <p>
+	 * すでにdisposeされている場合はアンバインド済みなのでtrueを返します
+	 * </p>
+	 *
+	 * @private
+	 * @param {Controller} controller コントローラ
+	 * @returns {Boolean}
+	 */
+	function isUnbinding(controller) {
+		return isDisposed(controller) || controller.__controllerContext.isUnbinding;
 	}
 
 	/**
