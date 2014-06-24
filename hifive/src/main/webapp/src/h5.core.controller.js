@@ -1935,15 +1935,20 @@
 		// rootControllerを取得する前にisRootを見てtrueならcontrollerをルートコントローラとみなす
 		var controller = controller.__controllerContext
 				&& (controller.__controllerContext.isRoot ? controller : controller.rootController);
-		// rootControllerが無いまたは、disopseされている場合、
-		// エラーオブジェクトがあればエラーを投げて終了。エラーのない場合は何もしないで終了。
-		if (!controller || isDisposing(controller)) {
+
+		if (!controller) {
+			// rootControllerが無い場合、
+			// エラーオブジェクトがあればエラーを投げて終了。エラーのない場合は何もしないで終了。
 			if (e) {
 				// ライフサイクルの中でdispose()して、__unbindや__disposeでエラーが出た時に、
 				// ライフサイクル呼び出しを包んでいるtry-catchのcatch節から再度disposeControllerが呼ばれる。
 				// その時に、dispose()の呼び出しで起きたエラーを飲まないようにするため、ここで再スローする。
 				throw e;
 			}
+			return;
+		}
+		if (isDisposing(controller)) {
+			// コントローラのdispose中、dispose済みのコントローラについて呼ばれた場合は何もしない
 			return;
 		}
 
@@ -2064,9 +2069,9 @@
 		// rootElementとview.__view.controllerにnullをセット
 		unbindRootElement(controller);
 
-		// __unbindでエラーが投げられていればdisposeする
+		// __unbindでエラーが投げられていれば再スロー
 		if (unbindError) {
-			disposeController(controller, unbindError);
+			throw unbindError;
 		}
 	}
 
@@ -3015,6 +3020,7 @@
 			this.view.__controller = this;
 			var args = param ? param : null;
 			initInternalProperty(this, args);
+			this.__controllerContext.isUnbinding = false;
 			triggerInit(this);
 			return this;
 		},
@@ -3028,7 +3034,12 @@
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
-			return unbindController(this);
+			try {
+				unbindController(this);
+			} catch (e) {
+				// __unbindの実行でエラーが出たらdisposeする
+				disposeController(this, e);
+			}
 		},
 
 		/**
@@ -3331,7 +3342,7 @@
 			for (var i = 0, len = controllers.length; i < len; i++) {
 				var controller = controllers[i];
 
-				if (names && $.inArray(controller.__name, names) === -1) {
+				if (names && $.inArray(controller.__name, names) === -1 || !controller.rootElement) {
 					continue;
 				}
 
