@@ -2004,7 +2004,7 @@
 			}
 			// disposeの返すプロミスをrejectする。
 			// 引数にはエラーオブジェクトまたはrejectReasonを渡す
-			dfd.rejectWith(controller, [e||rejectReason]);
+			dfd.rejectWith(controller, [e || rejectReason]);
 			// cleanupが終わったタイミングで、エラーまたはrejectされてdisposeされた場合は、"lifecycleerror"イベントをあげる
 			// detailにエラーオブジェクトまたはfailハンドラに渡した引数をいれる
 			triggerLifecycleerror(controller, e || rejectReason);
