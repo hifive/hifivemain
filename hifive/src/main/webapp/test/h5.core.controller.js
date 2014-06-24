@@ -4421,7 +4421,7 @@ $(function() {
 		h5.core.view = view;
 	});
 
-	asyncTest('テンプレートのロードに失敗するとコントローラはdisposeされること', 3, function() {
+	asyncTest('テンプレートのロードに失敗するとコントローラの初期化に失敗すること', 3, function() {
 		var count = 0;
 		var errorCode = ERR_VIEW.ERR_CODE_TEMPLATE_AJAX;
 		var controller = {
@@ -4436,13 +4436,13 @@ $(function() {
 			ok(true, 'reaedyPromiseのfailハンドラが実行される');
 			strictEqual(e.code, errorCode, e.message);
 			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
+				strictEqual(c.__name, 'TestController', 'コントローラはnullifyされないこと');
 				start();
 			}, 0);
 		});
 	});
 
-	asyncTest('子コントローラでテンプレートのロードに失敗するとコントローラはdisposeされること', 5, function() {
+	asyncTest('子コントローラでテンプレートのロードに失敗するとコントローラの初期化に失敗すること', 5, function() {
 		var errorCode = ERR_VIEW.ERR_CODE_TEMPLATE_AJAX;
 		var controller = {
 			__name: 'TestController',
@@ -4466,9 +4466,9 @@ $(function() {
 			var child = this.childController;
 			var grandChild = child.childController;
 			setTimeout(function() {
-				ok(isDisposed(test), '親コントローラがdisposeされていること');
-				ok(isDisposed(child), '子コントローラがdisposeされていること');
-				ok(isDisposed(grandChild), '孫コントローラがdisposeされていること');
+				strictEqual(test.__name, 'TestController', '親コントローラはnullifyされないこと');
+				strictEqual(child.__name, 'child', '子コントローラはnullifyされないこと');
+				strictEqual(grandChild.__name, 'grandChild', '孫コントローラはnullifyされないこと');
 				start();
 			}, 0);
 		});
@@ -4619,7 +4619,7 @@ $(function() {
 			strictEqual(this, testController, 'thisはコントローラインスタンスであること');
 			strictEqual(e, errorObj, 'view.loadが投げたエラーオブジェクトが取得できること');
 			setTimeout(function() {
-				ok(isDisposed(testController), 'コントローラはdisposeされること');
+				strictEqual(testController.__name, 'TestController', 'コントローラはnullifyされないこと');
 				start();
 			}, 0);
 		});
@@ -4644,7 +4644,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('テンプレートのコンパイルに失敗するとコントローラはdisposeされること', 4, function() {
+	asyncTest('テンプレートのコンパイルに失敗するとコントローラの初期化に失敗すること', 4, function() {
 		var count = 0;
 		var controller = {
 			__name: 'TestController',
@@ -4665,7 +4665,7 @@ $(function() {
 			ok(true, 'readyPromiseがreject()された');
 			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR, 'エラーコードが取得できること');
 			setTimeout(function() {
-				ok(isDisposed(testController), 'コントローラはdisposeされること');
+				strictEqual(testController.__name, 'TestController', 'コントローラはnullifyされないこと');
 				start();
 			}, 0);
 		});
@@ -5294,7 +5294,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('ルートの__initが返すpromiseがrejectされる時の挙動', 5, function() {
+	asyncTest('ルートの__initが返すpromiseがrejectされる時の挙動', 7, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
@@ -5323,13 +5323,17 @@ $(function() {
 			deepEqual(e.detail, [1, 2], 'rejectで渡された引数がエラーオブジェクトのdetailに格納されていること');
 			ok(!nextLifecycleExecuted, 'rejectしなければ次に実行されるはずだったライフサイクルイベントは実行されないこと');
 			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
+				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
+				strictEqual(c.child1Controller.__name, 'child1Controller',
+						'子コントローラ(1)はnullifyされないこと');
+				strictEqual(c.child2Controller.__name, 'child2Controller',
+						'子コントローラ(2)はnullifyされないこと');
 				start();
 			}, 0);
 		});
 	});
 
-	asyncTest('ルートの__postInitが返すpromiseがrejectされる時の挙動', 5, function() {
+	asyncTest('ルートの__postInitが返すpromiseがrejectされる時の挙動', 7, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
@@ -5358,13 +5362,17 @@ $(function() {
 			deepEqual(e.detail, [1, 2], 'rejectで渡された引数がエラーオブジェクトのdetailに格納されていること');
 			ok(!nextLifecycleExecuted, 'rejectしなければ次に実行されるはずだったライフサイクルイベントは実行されないこと');
 			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
+				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
+				strictEqual(c.child1Controller.__name, 'child1Controller',
+						'子コントローラ(1)はnullifyされないこと');
+				strictEqual(c.child2Controller.__name, 'child2Controller',
+						'子コントローラ(2)はnullifyされないこと');
 				start();
 			}, 0);
 		});
 	});
 
-	asyncTest('ルートの__readyが返すpromiseがrejectされる時の挙動', 4, function() {
+	asyncTest('ルートの__readyが返すpromiseがrejectされる時の挙動', 6, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var controller = {
@@ -5388,7 +5396,11 @@ $(function() {
 			strictEqual(e.code, errorCode, e.message);
 			deepEqual(e.detail, [1, 2], 'rejectで渡された引数がエラーオブジェクトのdetailに格納されていること');
 			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
+				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
+				strictEqual(c.child1Controller.__name, 'child1Controller',
+						'子コントローラ(1)はnullifyされないこと');
+				strictEqual(c.child2Controller.__name, 'child2Controller',
+						'子コントローラ(2)はnullifyされないこと');
 				start();
 			}, 0);
 		});
@@ -5425,9 +5437,9 @@ $(function() {
 			var child1 = c.child1Controller;
 			var child2 = c.child2Controller;
 			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
-				ok(isDisposed(child1), '子コントローラはdisposeされること');
-				ok(isDisposed(child2), '子コントローラはdisposeされること');
+				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
+				strictEqual(child1.__name, 'child1Controller', '子コントローラ(1)はnullifyされないこと');
+				strictEqual(child2.__name, 'child2Controller', '子コントローラ(2)はnullifyされないこと');
 				start();
 			}, 0);
 		});
@@ -5464,9 +5476,9 @@ $(function() {
 			var child1 = c.child1Controller;
 			var child2 = c.child2Controller;
 			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
-				ok(isDisposed(child1), '子コントローラはdisposeされること');
-				ok(isDisposed(child2), '子コントローラはdisposeされること');
+				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
+				strictEqual(child1.__name, 'child1Controller', '子コントローラ(1)はnullifyされないこと');
+				strictEqual(child2.__name, 'child2Controller', '子コントローラ(2)はnullifyされないこと');
 				start();
 			}, 0);
 		});
@@ -5503,9 +5515,9 @@ $(function() {
 			var child1 = c.child1Controller;
 			var child2 = c.child2Controller;
 			setTimeout(function() {
-				ok(isDisposed(c), 'コントローラはdisposeされること');
-				ok(isDisposed(child1), '子コントローラはdisposeされること');
-				ok(isDisposed(child2), '子コントローラはdisposeされること');
+				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
+				strictEqual(child1.__name, 'child1Controller', '子コントローラ(1)はnullifyされないこと');
+				strictEqual(child2.__name, 'child2Controller', '子コントローラ(2)はnullifyされないこと');
 				start();
 			}, 0);
 		});

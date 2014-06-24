@@ -1977,7 +1977,7 @@
 				if (c.view && c.view.__view) {
 					c.view.clear();
 				}
-				if (!e) {
+				if (!e && !rejectReason) {
 					// エラーが起きていたらnullifyしない(nullifyをしないことでユーザがエラー時の原因を調べやすくなる)
 					nullify(c);
 				}
@@ -3307,60 +3307,65 @@
 	}
 	// eventDispatcherをmixin
 	h5.mixin.eventDispatcher.mix(ControllerManager.prototype);
-	$.extend(ControllerManager.prototype, {
-		/**
-		 * 現在動作しているすべてのコントローラのインスタンスの配列を返します。<br>
-		 * 子コントローラは含まれません。すなわち、ルートコントローラのみが含まれます。
-		 *
-		 * @returns {Controller[]} コントローラ配列
-		 * @memberOf ControllerManager
-		 */
-		getAllControllers: function() {
-			return this.controllers;
-		},
+	$
+			.extend(
+					ControllerManager.prototype,
+					{
+						/**
+						 * 現在動作しているすべてのコントローラのインスタンスの配列を返します。<br>
+						 * 子コントローラは含まれません。すなわち、ルートコントローラのみが含まれます。
+						 *
+						 * @returns {Controller[]} コントローラ配列
+						 * @memberOf ControllerManager
+						 */
+						getAllControllers: function() {
+							return this.controllers;
+						},
 
-		/**
-		 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
-		 * オプションを指定すると、子孫要素も検索対象に含めたり、特定の名前のコントローラだけを検索対象にしたりすることができます。<br>
-		 * なお、戻り値に含まれるのはルートコントローラのみです。
-		 *
-		 * @param {String|Element|jQuery} rootElement 検索対象の要素
-		 * @param {Object} [option] オプション（ver.1.1.7以降）
-		 * @param {Boolean} [option.deep=false] 子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.7以降)
-		 * @param {String|String[]} [option.name=null]
-		 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.7以降)
-		 * @returns {Controller[]} バインドされているコントローラの配列
-		 * @memberOf ControllerManager
-		 */
-		getControllers: function(rootElement, option) {
-			var deep = option && option.deep;
-			var names = option && option.name ? wrapInArray(option.name) : null;
+						/**
+						 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
+						 * オプションを指定すると、子孫要素も検索対象に含めたり、特定の名前のコントローラだけを検索対象にしたりすることができます。<br>
+						 * なお、戻り値に含まれるのはルートコントローラのみです。
+						 *
+						 * @param {String|Element|jQuery} rootElement 検索対象の要素
+						 * @param {Object} [option] オプション（ver.1.1.7以降）
+						 * @param {Boolean} [option.deep=false]
+						 *            子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.7以降)
+						 * @param {String|String[]} [option.name=null]
+						 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.7以降)
+						 * @returns {Controller[]} バインドされているコントローラの配列
+						 * @memberOf ControllerManager
+						 */
+						getControllers: function(rootElement, option) {
+							var deep = option && option.deep;
+							var names = option && option.name ? wrapInArray(option.name) : null;
 
-			var seekRoot = $(rootElement)[0];
-			var controllers = this.controllers;
-			var ret = [];
-			for (var i = 0, len = controllers.length; i < len; i++) {
-				var controller = controllers[i];
+							var seekRoot = $(rootElement)[0];
+							var controllers = this.controllers;
+							var ret = [];
+							for (var i = 0, len = controllers.length; i < len; i++) {
+								var controller = controllers[i];
 
-				if (names && $.inArray(controller.__name, names) === -1 || !controller.rootElement) {
-					continue;
-				}
+								if (names && $.inArray(controller.__name, names) === -1
+										|| !controller.rootElement) {
+									continue;
+								}
 
-				if (seekRoot === controller.rootElement) {
-					ret.push(controller);
-				} else if (deep
-						&& getDocumentOf(seekRoot) === getDocumentOf(controller.rootElement)
-						&& $.contains(seekRoot, controller.rootElement)) {
-					// ownerDocumentが同じ場合に$.contais()の判定を行う
-					// (IE8でwindow.open()で開いたポップアップウィンドウ内の要素と
-					// 元ページ内の要素で$.contains()の判定を行うとエラーになるため。)
-					// また、$.contains()は自分と比較した場合はfalse
-					ret.push(controller);
-				}
-			}
-			return ret;
-		}
-	});
+								if (seekRoot === controller.rootElement) {
+									ret.push(controller);
+								} else if (deep
+										&& getDocumentOf(seekRoot) === getDocumentOf(controller.rootElement)
+										&& $.contains(seekRoot, controller.rootElement)) {
+									// ownerDocumentが同じ場合に$.contais()の判定を行う
+									// (IE8でwindow.open()で開いたポップアップウィンドウ内の要素と
+									// 元ページ内の要素で$.contains()の判定を行うとエラーになるため。)
+									// また、$.contains()は自分と比較した場合はfalse
+									ret.push(controller);
+								}
+							}
+							return ret;
+						}
+					});
 
 	/**
 	 * キャッシュマネージャクラス
