@@ -102,6 +102,10 @@
 	var ERR_CODE_CONTROLLER_REJECTED_BY_USER = 6033;
 	/** エラーコード：コントローラのバインド対象がノードではない */
 	var ERR_CODE_BIND_NOT_NODE = 6034;
+	/** エラーコード：unbindされたコントローラで使用できないメソッドが呼ばれた */
+	var ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER = 6035;
+	/** エラーコード：disposeされたコントローラで使用できないメソッドが呼ばれた */
+	var ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER = 6036;
 
 	// =============================
 	// Development Only
@@ -144,7 +148,8 @@
 	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
 	errMsgMap[ERR_CODE_CONTROLLER_REJECTED_BY_USER] = 'コントローラ"{0}"の初期化処理がユーザによって中断されました。';
 	errMsgMap[ERR_CODE_BIND_NOT_NODE] = 'コントローラ"{0}"のバインド対象がノードではありません。バインド対象に指定できるのはノードかdocumentオブジェクトのみです。';
-
+	errMsgMap[ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER] = 'ルートエレメントの設定されていないコントローラのメソッド{0}は実行できません。';
+	errMsgMap[ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER] = 'disposeされたコントローラのメソッド{0}は実行できません。';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -1971,6 +1976,9 @@
 		}
 
 		function cleanup() {
+			// ルートコントローラにisDisposedフラグを立てる
+			// (nullifyされた場合は__controllerContext毎消えるので見えないが、nullifyされない場合にもdisposeが完了したことが分かるようにする)
+			controller.__controllerContext.isDisposed = 1;
 			// 子から順にview.clearとnullifyの実行
 			doForEachControllerGroupsDepthFirst(controller, function(c) {
 				// viewのclearとnullify
@@ -2010,10 +2018,9 @@
 			triggerLifecycleerror(controller, e || rejectReason);
 			if (e) {
 				throw e;
-
 			}
 		}, function(/* var_args */) {
-			// __disposeの返したプロミスがrejectされた時はcleanupしないでrejectする
+			cleanup();
 			// __disposeの返したプロミスのfailに渡される引数をそのまま渡す
 			dfd.rejectWith(controller, argsToArray(arguments));
 			// lifecycleerrorイベントをあげる
@@ -2072,6 +2079,9 @@
 		// rootElementとview.__view.controllerにnullをセット
 		unbindRootElement(controller);
 
+		// unbind処理が終了したのでunbindingステータスを元に戻す
+		controller.__controllerContext.isUnbinding = false;
+
 		// __unbindでエラーが投げられていれば再スロー
 		if (unbindError) {
 			throw unbindError;
@@ -2108,7 +2118,7 @@
 	 * @returns {Boolean}
 	 */
 	function isDisposed(controller) {
-		return !controller.__controllerContext;
+		return !controller.__controllerContext || controller.__controllerContext.isDisposed;
 	}
 
 	/**
@@ -2524,17 +2534,49 @@
 	}
 
 	/**
-	 * lifecycleerrorイベントをトリガする
+	 * コントローラをエラー終了状態にして、lifecycleerrorイベントをトリガする
 	 *
 	 * @param {Controller} rootController ルートコントローラ
 	 * @param {Error||rejectReason} detail 例外オブジェクト、またはRejectReason
 	 */
 	function triggerLifecycleerror(rootController, detail) {
+		// isErrorフラグを立てて、このインスタンスでbind,unbind,disposeを呼べないようにする
+		rootController.__controllerContext.isError = 1;
 		controllerManager.dispatchEvent({
 			type: 'lifecycleerror',
 			detail: detail,
 			rootController: rootController
 		});
+	}
+
+	/**
+	 * 渡されたコントローラがunbindされていたらエラーを投げる
+	 * <p>
+	 * unbindされたコントローラで呼べないメソッドの先頭で呼び出して使用する
+	 * </p>
+	 *
+	 * @param {Controller} controller
+	 * @param {String} method メソッド名
+	 */
+	function throwErrorIfNoExistsRootElement(controller, method) {
+		if (!controller.rootElement) {
+			throwFwError(ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER, method);
+		}
+	}
+
+	/**
+	 * 渡されたコントローラがdisposeされていたら、第２引数に指定されたメソッド名を含めたエラーを投げる
+	 * <p>
+	 * disposeされたコントローラで呼べないメソッドの先頭で呼び出して使用する
+	 * </p>
+	 *
+	 * @param {Controller} controller
+	 * @param {String} method メソッド名
+	 */
+	function throwErrorIfIsDisposed(controller, method) {
+		if (isDisposed(controller)) {
+			throwFwError(ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER, method);
+		}
 	}
 
 	// =========================================================================
@@ -2942,6 +2984,8 @@
 		 * @memberOf Controller
 		 */
 		$find: function(selector) {
+			throwErrorIfIsDisposed(this, '$find');
+			throwErrorIfNoExistsRootElement(this, '$find');
 			return $(this.rootElement).find(selector);
 		},
 
@@ -2952,6 +2996,7 @@
 		 * @memberOf Controller
 		 */
 		deferred: function() {
+			throwErrorIfIsDisposed(this, 'deferred');
 			return getDeferred();
 		},
 
@@ -2978,6 +3023,8 @@
 		 * @memberOf Controller
 		 */
 		trigger: function(event, parameter) {
+			throwErrorIfIsDisposed(this, 'trigger');
+			throwErrorIfNoExistsRootElement(this, 'trigger');
 			// eventNameが文字列ならイベントを作って投げる
 			// オブジェクトの場合はそのまま渡す。
 			var ev = isString(event) ? $.Event(event) : event;
@@ -3014,6 +3061,7 @@
 		 * @returns {Controller} コントローラ.
 		 */
 		bind: function(targetElement, param) {
+			throwErrorIfIsDisposed(this, 'bind');
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
@@ -3023,7 +3071,6 @@
 			this.view.__controller = this;
 			var args = param ? param : null;
 			initInternalProperty(this, args);
-			this.__controllerContext.isUnbinding = false;
 			triggerInit(this);
 			return this;
 		},
@@ -3034,6 +3081,8 @@
 		 * @memberOf Controller
 		 */
 		unbind: function() {
+			throwErrorIfIsDisposed(this, 'unbind');
+			throwErrorIfNoExistsRootElement(this, 'unbind');
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
@@ -3053,6 +3102,7 @@
 		 * @memberOf Controller
 		 */
 		dispose: function() {
+			throwErrorIfIsDisposed(this, 'dispose');
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
@@ -3076,6 +3126,8 @@
 		 * @memberOf Controller
 		 */
 		triggerIndicator: function(opt) {
+			throwErrorIfIsDisposed(this, 'triggerIndicator');
+			throwErrorIfNoExistsRootElement(this, 'triggerIndicator');
 			var args = {
 				indicator: null
 			};
@@ -3124,6 +3176,8 @@
 		 * @see Indicator
 		 */
 		indicator: function(opt) {
+			throwErrorIfIsDisposed(this, 'indicator');
+			throwErrorIfNoExistsRootElement(this, 'indicator');
 			return callIndicator(this, opt);
 		},
 
@@ -3133,6 +3187,7 @@
 		 * @memberOf Controller
 		 */
 		enableListeners: function() {
+			throwErrorIfIsDisposed(this, 'enableListeners');
 			setExecuteListenersFlag(this, true);
 		},
 
@@ -3142,6 +3197,7 @@
 		 * @memberOf Controller
 		 */
 		disableListeners: function() {
+			throwErrorIfIsDisposed(this, 'disableListeners');
 			setExecuteListenersFlag(this, false);
 		},
 
@@ -3161,10 +3217,11 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwError: function(msgOrErrObj, var_args) {
+			throwErrorIfIsDisposed(this, 'throwError');
 			//引数の個数チェックはthrowCustomErrorで行う
 			var args = argsToArray(arguments);
 			args.unshift(null);
-			this.throwCustomError.apply(null, args);
+			this.throwCustomError.apply(this, args);
 		},
 
 		/**
@@ -3186,6 +3243,7 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwCustomError: function(customType, msgOrErrObj, var_args) {
+			throwErrorIfIsDisposed(this, 'throwCustomError');
 			if (arguments.length < 2) {
 				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
@@ -3219,6 +3277,8 @@
 		 * @param listener {Function} ハンドラ
 		 */
 		on: function(target, eventName, listener) {
+			throwErrorIfIsDisposed(this, 'on');
+			throwErrorIfNoExistsRootElement(this, 'on');
 			// バインドオブジェクトの作成
 			var info = createEventHandlerInfo(target, eventName, this);
 			var bindObjects = createBindObjects(this, info, listener);
@@ -3243,6 +3303,8 @@
 		 * @param listener {Function} ハンドラ
 		 */
 		off: function(target, eventName, listener) {
+			throwErrorIfIsDisposed(this, 'off');
+			throwErrorIfNoExistsRootElement(this, 'off');
 			// 指定された条件にマッチするbindObjをunbindHandlerListから探して取得する
 			var info = createEventHandlerInfo(target, eventName, this);
 			var unbindHandlerList = this.__controllerContext.unbindHandlerList;
