@@ -184,6 +184,7 @@
 	var endsWith = h5.u.str.endsWith;
 	var format = h5.u.str.format;
 	var argsToArray = h5.u.obj.argsToArray;
+	var isJQueryObject = h5.u.obj.isJQueryObject;
 
 	/**
 	 * マウス/タッチイベントについてh5track*イベントをトリガしたかどうかを管理するため、イベントを格納する配列
@@ -487,7 +488,7 @@
 	 * @param {String} eventName イベント名
 	 * @returns {Boolean} jQuery.bindを使って要素にイベントをバインドするかどうか
 	 */
-	function isBindRequested(eventName) {
+	function isBindRequestedEvent(eventName) {
 		return BIND_REQUESTED_REGEXP.test(eventName);
 	}
 
@@ -783,7 +784,7 @@
 		var bindMap = controller.__controllerContext.cache.bindMap;
 		var doc = getDocumentOf(controller.rootElement);
 		for ( var p in bindMap) {
-			var bindObjects = createBindObjects(controller, bindMap[p]);
+			var bindObjects = createBindObjects(controller, bindMap[p], controller[p]);
 			for (var i = 0, l = bindObjects.length; i < l; i++) {
 				bindByBindObject(bindObjects[i], doc);
 			}
@@ -796,14 +797,13 @@
 	 * @private
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} eventHandlerInfo バインドマップに登録されているイベントハンドラの情報
-	 * @param {Function} directFunction 動的に(onメソッド)追加されるイベントハンドラの場合はハンドラを第3引数に指定
+	 * @param {Function} func イベントハンドラ
 	 * @returns {Object[]} バインドオブジェクトの配列
 	 */
-	function createBindObjects(controller, eventHandlerInfo, directFunction) {
+	function createBindObjects(controller, eventHandlerInfo, func) {
 		var selector = eventHandlerInfo.selector;
 		var eventName = eventHandlerInfo.eventName;
 		// ハンドラを取得(アスペクト適用済み)
-		var func = directFunction || controller[eventHandlerInfo.propertyKey];
 		// この関数の戻り値になるバインドオブジェクトの配列
 		// 結果は必ず配列になるようにする
 		var bindObjects;
@@ -844,8 +844,8 @@
 			// handlerをラップ
 			wrapHandler(bindObject);
 			// eventHandlerInfoから、bindObjに必要なものを持たせる
-			bindObject.bindRequested = eventHandlerInfo.bindRequested;
-			bindObject.global = eventHandlerInfo.global;
+			bindObject.isBindRequested = eventHandlerInfo.isBindRequested;
+			bindObject.isGlobal = eventHandlerInfo.isGlobal;
 			bindObject.bindTarget = eventHandlerInfo.bindTarget;
 			// コントローラを持たせる
 			bindObject.controller = controller;
@@ -867,8 +867,8 @@
 		var eventName = bindObj.eventName;
 		var handler = bindObj.handler;
 
-		var useBind = bindObj.bindRequested;
-		var isGlobal = bindObj.global;
+		var useBind = bindObj.isBindRequested;
+		var isGlobal = bindObj.isGlobal;
 		var bindTarget = bindObj.bindTarget;
 
 		if (bindTarget) {
@@ -933,14 +933,15 @@
 	 * @private
 	 * @param {Object} bindObj バインドオブジェクト
 	 * @param {Document} doc documentオブジェクト
+	 * @param {Boolean} shouldNotUnregist unbindHandlerListから指定されたバインドオブジェクトを削除しない時にtrueを指定する
 	 */
-	function unbindByBindObject(bindObj, doc) {
+	function unbindByBindObject(bindObj, doc, shouldNotUnregist) {
 		var controller = bindObj.controller;
 		var rootElement = controller.rootElement;
 		var selector = bindObj.selector;
 		var handler = bindObj.handler;
 		var eventName = bindObj.eventName;
-		var isGlobal = bindObj.global;
+		var isGlobal = bindObj.isGlobal;
 		var bindTarget = bindObj.bindTarget;
 		if (bindTarget) {
 			// オブジェクトまたは直接バインド指定されていた場合(===バインド時にbindメソッドを使った場合)は直接unbind
@@ -953,6 +954,11 @@
 			$(doc).undelegate(selector, eventName, handler);
 		} else {
 			$(rootElement).undelegate(selector, eventName, handler);
+		}
+		if (!shouldNotUnregist) {
+			// アンバインドハンドラリストから削除
+			var unbindHandlerList = controller.__controllerContext.unbindHandlerList;
+			unbindHandlerList.splice(unbindHandlerList.indexOf(bindObj), 1);
 		}
 	}
 
@@ -975,7 +981,7 @@
 
 		for (var i = 0, l = unbindHandlerList.length; i < l; i++) {
 			var bindObj = unbindHandlerList[i];
-			unbindByBindObject(bindObj, doc);
+			unbindByBindObject(bindObj, doc, true);
 		}
 		// アンバインドハンドラリストを空にする
 		controller.__controllerContext.unbindHandlerList = [];
@@ -1970,8 +1976,9 @@
 			unbindController(controller);
 		} catch (unbindError) {
 			// __unbindの実行でエラーが起きた場合
-			// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
-			// (一番最初に起きた例外のみスロー)
+			// 既に投げるエラーがある場合はここで発生したエラーは飲む(初出のエラーを投げるため)
+			// ここで発生したエラーが初出の場合は、ここで起きたエラーを最後に投げる
+			// (一番最初に起きた例外のみスローする。変数eには初出のエラーを格納する)
 			e = e || unbindError;
 		}
 
@@ -2331,20 +2338,20 @@
 	 */
 	function createEventHandlerInfo(selector, eventName, controller, prop) {
 		// selectorが文字列じゃない場合はターゲットを直接指定している
-		var direct = !isString(selector);
-		var bindTarget = direct ? selector : null;
+		var isSelector = isString(selector);
+		var bindTarget = isSelector ? null : selector;
 
-		selector = direct ? null : $.trim(selector);
+		selector = isSelector ? $.trim(selector) : null;
 		eventName = $.trim(eventName);
 
-		// ターゲットが直接指定されているならglobalはtrue
-		var global = direct || isGlobalSelector(selector);
-		var bindRequested = isBindRequested(eventName);
-		if (bindRequested) {
+		// ターゲットが直接指定されているならisGlobalはtrue
+		var isGlobal = !isSelector || isGlobalSelector(selector);
+		var isBindRequested = isBindRequestedEvent(eventName);
+		if (isBindRequested) {
 			eventName = $.trim(trimBindEventBracket(eventName));
 		}
 
-		if (!direct && global) {
+		if (isSelector && isGlobal) {
 			var selector = trimGlobalSelectorBracket(selector);
 			// selectorに{this}が指定されていたらエラー
 			if (selector === 'this') {
@@ -2357,8 +2364,8 @@
 		return {
 			selector: selector,
 			bindTarget: bindTarget,
-			global: global,
-			bindRequested: bindRequested,
+			isGlobal: isGlobal,
+			isBindRequested: isBindRequested,
 			eventName: eventName,
 			propertyKey: prop
 		};
@@ -2421,27 +2428,27 @@
 				// 整形したものを取得
 				var selector = info.selector;
 				var eventName = info.eventName;
-				var global = info.global;
-				var bindRequested = info.bindRequested;
+				var isGlobal = info.isGlobal;
+				var isBindRequested = info.isBindRequested;
 
-				// 同じセレクタ、同じイベントハンドラに同じ指定(global,bindRequested)でイベントハンドラが指定されていたらエラー
+				// 同じセレクタ、同じイベントハンドラに同じ指定(isGlobal,isBindRequested)でイベントハンドラが指定されていたらエラー
 				if (!checkBindMap[selector]) {
 					checkBindMap[selector] = {};
 				}
 				if (!checkBindMap[selector][eventName]) {
 					checkBindMap[selector][eventName] = {};
 				}
-				if (!checkBindMap[selector][eventName][global]) {
-					checkBindMap[selector][eventName][global] = {};
+				if (!checkBindMap[selector][eventName][isGlobal]) {
+					checkBindMap[selector][eventName][isGlobal] = {};
 				}
-				if (checkBindMap[selector][eventName][global][bindRequested]) {
+				if (checkBindMap[selector][eventName][isGlobal][isBindRequested]) {
 					throwFwError(ERR_CODE_SAME_EVENT_HANDLER, [controllerDef.__name, selector,
 							eventName], {
 						controllerDef: controllerDef
 					});
 				} else {
 					// フラグを立てる
-					checkBindMap[selector][eventName][global][bindRequested] = 1;
+					checkBindMap[selector][eventName][isGlobal][isBindRequested] = 1;
 				}
 
 				bindMap[prop] = info;
@@ -2512,15 +2519,15 @@
 			// 同一インスタンスならtrue
 			return true;
 		}
-		var t1IsJQuery = h5.u.obj.isJQueryObject(target1);
-		var t2IsJQuery = h5.u.obj.isJQueryObject(target2);
-		if (!t1IsJQuery && !t2IsJQuery) {
+		var isT1Jquery = isJQueryObject(target1);
+		var isT2Jquery = isJQueryObject(target2);
+		if (!isT1Jquery && !isT2Jquery) {
 			// どちらもjQueryオブジェクトでないならfalse;
 			return false;
 		}
 		// どちらかがjQueryオブジェクトなら配列にして比較
-		var t1Ary = t1IsJQuery ? target1.toArray() : [target1];
-		var t2Ary = t2IsJQuery ? target2.toArray() : [target2];
+		var t1Ary = isT1Jquery ? target1.toArray() : [target1];
+		var t2Ary = isT2Jquery ? target2.toArray() : [target2];
 		if (t1Ary.length !== t2Ary.length) {
 			// 長さが違うならfalse
 			return false;
@@ -3313,8 +3320,8 @@
 			var bindTarget = info.bindTarget;
 			var eventName = info.eventName;
 			var selector = info.selector;
-			var global = info.global;
-			var bindRequested = info.bindRequested;
+			var isGlobal = info.isGlobal;
+			var isBindRequested = info.isBindRequested;
 
 			var index = 0;
 			for (var l = unbindHandlerList.length; index < l; index++) {
@@ -3328,9 +3335,9 @@
 						break;
 					}
 				} else {
-					// offでセレクタを指定された場合、セレクタと、グローバル指定かどうかと、bindRequestedとoriginalHandlerを比較
-					if (selector === bindObj.selector && global === bindObj.global
-							&& bindRequested === bindObj.bindRequested
+					// offでセレクタを指定された場合、セレクタと、グローバル指定かどうかと、isBindRequestedとoriginalHandlerを比較
+					if (selector === bindObj.selector && isGlobal === bindObj.isGlobal
+							&& isBindRequested === bindObj.isBindRequested
 							&& listener === bindObj.originalHandler) {
 						matchBindObj = bindObj;
 						break;
@@ -3339,8 +3346,6 @@
 			}
 			if (matchBindObj) {
 				unbindByBindObject(matchBindObj, getDocumentOf(this.rootElement));
-				// アンバインドハンドラリストから削除
-				unbindHandlerList.splice(index, 1);
 			}
 		}
 	});
