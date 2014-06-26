@@ -106,6 +106,8 @@
 	var ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER = 6035;
 	/** エラーコード：disposeされたコントローラで使用できないメソッドが呼ばれた */
 	var ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER = 6036;
+	/** エラーコード：unbindは__constructでは呼べない * */
+	var ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND = 6037;
 
 	// =============================
 	// Development Only
@@ -150,6 +152,7 @@
 	errMsgMap[ERR_CODE_BIND_NOT_NODE] = 'コントローラ"{0}"のバインド対象がノードではありません。バインド対象に指定できるのはノードかdocumentオブジェクトのみです。';
 	errMsgMap[ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER] = 'ルートエレメントの設定されていないコントローラのメソッド{0}は実行できません。';
 	errMsgMap[ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER] = 'disposeされたコントローラのメソッド{0}は実行できません。';
+	errMsgMap[ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND] = 'unbind()メソッドは__constructから呼ぶことはできません。';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -1113,8 +1116,8 @@
 	 */
 	function createCallbackForInit(controller) {
 		return function() {
-			// disopseされていたら何もしない。
-			if (isDisposing(controller)) {
+			// disopseまたはunbindされていたら何もしない。
+			if (isUnbinding(controller)) {
 				return;
 			}
 			controller.isInit = true;
@@ -1154,8 +1157,8 @@
 			// resolveして、次のコールバックがあれば次を実行
 			initDfd.resolveWith(controller);
 
-			// resolveして呼ばれたコールバック内(子の__init)でdisposeされたかどうかチェック
-			if (isDisposing(controller)) {
+			// resolveして呼ばれたコールバック内(子の__init)でunbindまたはdisposeされたかチェック
+			if (isUnbinding(controller)) {
 				return;
 			}
 
@@ -1185,8 +1188,8 @@
 	 */
 	function createCallbackForPostInit(controller) {
 		return function() {
-			// disopseされていたら何もしない。
-			if (isDisposing(controller)) {
+			// disopseまたはunbindされていたら何もしない。
+			if (isUnbinding(controller)) {
 				return;
 			}
 			controller.isPostInit = true;
@@ -1194,8 +1197,12 @@
 			// FW、ユーザともに使用しないので削除
 			delete controller.__controllerContext.postInitDfd;
 			postInitDfd.resolveWith(controller);
+			// resolveして呼ばれたコールバック内でunbindまたはdisposeされたかチェック
+			if (isUnbinding(controller)) {
+				return;
+			}
 
-			if (!isDisposed(controller) && controller.__controllerContext.isRoot) {
+			if (controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば次の処理
 				// イベントハンドラのバインド
 				doForEachControllerGroups(controller, function(c, parent, prop) {
@@ -1204,10 +1211,6 @@
 							&& parent.__meta[prop].useHandlers;
 					if (useHandlers === false) {
 						// 親のuseHandlersでfalseが指定されていた場合は何もしない
-						return;
-					}
-					// rootElementに値が無ければバインドしない(unbindされた場合等)
-					if (!c.rootElement) {
 						return;
 					}
 					bindByBindMap(c);
@@ -1227,8 +1230,8 @@
 	 */
 	function createCallbackForReady(controller) {
 		return function() {
-			// disopseされていたら何もしない。
-			if (isDisposing(controller)) {
+			// disopseまたはunbindされていたら何もしない。
+			if (isUnbinding(controller)) {
 				return;
 			}
 			controller.isReady = true;
@@ -1237,8 +1240,11 @@
 			// FW、ユーザともに使用しないので削除
 			delete controller.__controllerContext.readyDfd;
 			readyDfd.resolveWith(controller);
-
-			if (!isDisposed(controller) && controller.__controllerContext.isRoot) {
+			// resolveして呼ばれたコールバック内でunbindまたはdisposeされたかチェック
+			if (isUnbinding(controller)) {
+				return;
+			}
+			if (controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば全ての処理が終了したことを表すイベント"h5controllerready"をトリガ
 				if (!controller.rootElement || !controller.isInit || !controller.isPostInit
 						|| !controller.isReady) {
@@ -1850,6 +1856,8 @@
 			c.isInit = false;
 			c.isPostInit = false;
 			c.isReady = false;
+			c.__controllerContext.isUnbinding = false;
+			c.__controllerContext.isUnbinded = false;
 			c.__controllerContext.args = param;
 		});
 	}
@@ -1965,15 +1973,9 @@
 
 		controller.__controllerContext.isDisposing = 1;
 
-		// rejectまたはfailされていないdeferredをreject()する
-		// rejectReasonが指定されている場合はrejectReasonをfailハンドラの引数に渡す
-		// rejectReasonは未指定で、エラーオブジェクトが渡されている場合はエラーオブジェクトをfailハンドラの引数に渡す
-		// 正常時(rejectReasonもeもない場合)は、引数なし
-		rejectControllerDfd(controller, rejectReason || e);
-
 		// unbindの実行
 		try {
-			unbindController(controller);
+			unbindController(controller, rejectReason || e);
 		} catch (unbindError) {
 			// __unbindの実行でエラーが起きた場合
 			// 既に投げるエラーがある場合はここで発生したエラーは飲む(初出のエラーを投げるため)
@@ -2047,14 +2049,22 @@
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
+	 * @param {Object} rejectReason 各Dfdをrejectするときにfailハンドラに渡す引数
 	 * @param {Error} e エラーオブジェクト
 	 */
-	function unbindController(controller) {
-		// 既にunbind済みなら何もしない
+	function unbindController(controller, rejectReason) {
+		// 既にunbindされている何もしない
 		if (isUnbinding(controller)) {
 			return;
 		}
 		controller.__controllerContext.isUnbinding = 1;
+
+		// rejectまたはfailされていないdeferredをreject()する
+		// rejectReasonが指定されている場合はrejectReasonをfailハンドラの引数に渡す
+		// rejectReasonは未指定で、エラーオブジェクトが渡されている場合はエラーオブジェクトをfailハンドラの引数に渡す
+		// 正常時(rejectReasonもeもない場合)は、引数なし
+		rejectControllerDfd(controller, rejectReason);
+
 		// __unbindの実行
 		var unbindError;
 		try {
@@ -2078,16 +2088,16 @@
 			return controllerInstance !== that;
 		});
 		// h5controllerunboundイベントをトリガ
-		// (コントローラのreadyまで終わっている、かつ、managedがfalseではない(===h5controllerboundをあげている)場合のみ)
-		if (controller.isReady && controller.__controllerContext.managed !== false) {
+		// (コントローラのpostInitまで終わっている、かつ、managedがfalseではない(===h5controllerboundをあげている)場合のみ)
+		if (controller.isPostInit && controller.__controllerContext.managed !== false) {
 			$(controller.rootElement).trigger('h5controllerunbound', controller);
 		}
 
 		// rootElementとview.__view.controllerにnullをセット
 		unbindRootElement(controller);
 
-		// unbind処理が終了したのでunbindingステータスを元に戻す
-		controller.__controllerContext.isUnbinding = false;
+		// unbind処理が終了したのでunbindedをtrueにする
+		controller.__controllerContext.isUnbinded = 1;
 
 		// __unbindでエラーが投げられていれば再スロー
 		if (unbindError) {
@@ -2153,7 +2163,8 @@
 	 * @returns {Boolean}
 	 */
 	function isUnbinding(controller) {
-		return isDisposed(controller) || controller.__controllerContext.isUnbinding;
+		return isDisposed(controller) || controller.__controllerContext.isUnbinding
+				|| controller.__controllerContext.isUnbinded;
 	}
 
 	/**
@@ -2557,9 +2568,9 @@
 	}
 
 	/**
-	 * 渡されたコントローラがunbindされていたらエラーを投げる
+	 * 渡されたコントローラにルートエレメントが設定されていなかったらエラーを投げる
 	 * <p>
-	 * unbindされたコントローラで呼べないメソッドの先頭で呼び出して使用する
+	 * unbindされたコントローラ及び__construct時に呼べないメソッドの先頭で呼び出して使用する
 	 * </p>
 	 *
 	 * @param {Controller} controller
@@ -3092,6 +3103,9 @@
 			throwErrorIfNoExistsRootElement(this, 'unbind');
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
+			}
+			if (!this.rootController) {
+				throwFwError(ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND);
 			}
 			try {
 				unbindController(this);
@@ -3762,7 +3776,7 @@
 		if (isRoot) {
 			// __constructを実行。ここまでは完全に同期処理になる。
 			// 子コントローラのバインドが終わってから、親→子の順番で実行する
-			var isDisposed = false;
+			var isDisposedInConstruct = false;
 			doForEachControllerGroups(controller, function(c, parent, prop) {
 				// __construct呼び出し
 				try {
@@ -3776,7 +3790,7 @@
 
 				if (isDisposing(c)) {
 					// 途中(__constructの中)でdisposeされたら__constructの実行を中断
-					isDisposed = true;
+					isDisposedInConstruct = true;
 					return false;
 				}
 
@@ -3791,7 +3805,7 @@
 					c.rootController = parent.rootController;
 				}
 			});
-			if (isDisposed) {
+			if (isDisposedInConstruct) {
 				// __constructでdisposeが呼ばれたらnullを返す
 				// (h5.core.controllerの戻り値がnullになる)
 				return null;
