@@ -723,33 +723,6 @@
 	}
 
 	/**
-	 * 指定されたコントローラの先祖コントローラのPromiseオブジェクトを全て取得します。
-	 *
-	 * @private
-	 * @param {Object} controller コントローラ
-	 * @param {String} propertyName プロパティ名(initPromise,postInitPromise,readyPromise)
-	 * @param {Object} acquireFromControllerContext コントローラコンテキストのプロパティかどうか
-	 * @returns {Promise[]} Promiseオブジェクト配列
-	 */
-	function getAncestorControllerPromises(controller, propertyName, acquireFromControllerContext) {
-		var promises = [];
-		function getPromisesInner(object) {
-			var c = object.parentController;
-			if (!c) {
-				return;
-			}
-			var promise = acquireFromControllerContext ? c.__controllerContext[propertyName]
-					: c[propertyName];
-			if (promise) {
-				promises.push(promise);
-			}
-			getPromisesInner(c);
-		}
-		getPromisesInner(controller);
-		return promises;
-	}
-
-	/**
 	 * 指定されたコントローラの子コントローラが持つ、指定されたプロミスを取得します。
 	 *
 	 * @private
