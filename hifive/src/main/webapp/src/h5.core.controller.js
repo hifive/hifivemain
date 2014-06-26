@@ -1945,17 +1945,17 @@
 	 * @private
 	 * @param {Controller} controller コントローラ
 	 * @param {Error} e エラーオブジェクト(正常時は無し)。エラーオブジェクトが指定されている場合は、dispose処理後にthrowする。
-	 * @param {Error} rejectReason プロミスのfailハンドラに渡すオブジェクト(正常時は無し)
+	 * @param {Object} rejectReason プロミスのfailハンドラに渡すオブジェクト(正常時は無し)
 	 * @returns promise(ただしエラーがある場合はdispose処理が終わった後にエラーを投げて終了します)
 	 */
 	function disposeController(controller, e, rejectReason) {
 		// rootControllerの取得
 		// rootControllerが設定される前(__construct内からdispose()を呼び出した場合)のことを考慮して、
 		// rootControllerを取得する前にisRootを見てtrueならcontrollerをルートコントローラとみなす
-		var controller = controller.__controllerContext
+		var rootController = controller.__controllerContext
 				&& (controller.__controllerContext.isRoot ? controller : controller.rootController);
 
-		if (!controller) {
+		if (!rootController) {
 			// rootControllerが無い場合、
 			// エラーオブジェクトがあればエラーを投げて終了。エラーのない場合は何もしないで終了。
 			if (e) {
@@ -1966,16 +1966,16 @@
 			}
 			return;
 		}
-		if (isDisposing(controller)) {
+		if (isDisposing(rootController)) {
 			// コントローラのdispose中、dispose済みのコントローラについて呼ばれた場合は何もしない
 			return;
 		}
 
-		controller.__controllerContext.isDisposing = 1;
+		rootController.__controllerContext.isDisposing = 1;
 
 		// unbindの実行
 		try {
-			unbindController(controller, rejectReason || e);
+			unbindController(rootController, rejectReason || e);
 		} catch (unbindError) {
 			// __unbindの実行でエラーが起きた場合
 			// 既に投げるエラーがある場合はここで発生したエラーは飲む(初出のエラーを投げるため)
@@ -1987,9 +1987,9 @@
 		function cleanup() {
 			// ルートコントローラにisDisposedフラグを立てる
 			// (nullifyされた場合は__controllerContext毎消えるので見えないが、nullifyされない場合にもdisposeが完了したことが分かるようにする)
-			controller.__controllerContext.isDisposed = 1;
+			rootController.__controllerContext.isDisposed = 1;
 			// 子から順にview.clearとnullifyの実行
-			doForEachControllerGroupsDepthFirst(controller, function(c) {
+			doForEachControllerGroupsDepthFirst(rootController, function(c) {
 				// viewのclearとnullify
 				if (c.view && c.view.__view) {
 					c.view.clear();
@@ -2004,7 +2004,7 @@
 		// __disposeを実行してからcleanupする
 		var promises;
 		try {
-			promises = executeLifeEndChain(controller, '__dispose');
+			promises = executeLifeEndChain(rootController, '__dispose');
 		} catch (error) {
 			// __disposeの実行でエラーが起きた場合
 			// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
@@ -2012,30 +2012,30 @@
 			e = e || error;
 		}
 
-		var dfd = controller.deferred();
+		var dfd = rootController.deferred();
 		waitForPromises(promises, function() {
 			cleanup();
 			if (!e && !rejectReason) {
-				dfd.resolveWith(controller);
+				dfd.resolveWith(rootController);
 				return;
 			}
 			// disposeの返すプロミスをrejectする。
 			// 引数にはエラーオブジェクトまたはrejectReasonを渡す
-			dfd.rejectWith(controller, [e || rejectReason]);
+			dfd.rejectWith(rootController, [e || rejectReason]);
 			// cleanupが終わったタイミングで、エラーまたはrejectされてdisposeされた場合は、"lifecycleerror"イベントをあげる
 			// detailにエラーオブジェクトまたはfailハンドラに渡した引数をいれる
-			triggerLifecycleerror(controller, e || rejectReason);
+			triggerLifecycleerror(rootController, e || rejectReason);
 			if (e) {
 				throw e;
 			}
 		}, function(/* var_args */) {
 			cleanup();
 			// __disposeの返したプロミスのfailに渡される引数をそのまま渡す
-			dfd.rejectWith(controller, argsToArray(arguments));
+			dfd.rejectWith(rootController, argsToArray(arguments));
 			// lifecycleerrorイベントをあげる
-			triggerLifecycleerror(controller,
-					createRejectReason(ERR_CODE_CONTROLLER_REJECTED_BY_USER, controller.__name,
-							argsToArray(arguments)));
+			triggerLifecycleerror(rootController, createRejectReason(
+					ERR_CODE_CONTROLLER_REJECTED_BY_USER, rootController.__name,
+					argsToArray(arguments)));
 			if (e) {
 				// エラーがある場合はエラーを投げる
 				throw e;
@@ -2050,7 +2050,6 @@
 	 * @private
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} rejectReason 各Dfdをrejectするときにfailハンドラに渡す引数
-	 * @param {Error} e エラーオブジェクト
 	 */
 	function unbindController(controller, rejectReason) {
 		// 既にunbindされている何もしない
