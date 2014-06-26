@@ -1802,7 +1802,7 @@ $(function() {
 				result = false;
 
 				this.unbind();
-				this.$find('input[type=button]').trigger('click');
+				$controllerTarget.find('input[type=button]').trigger('click');
 				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
 				start();
 			},
@@ -1831,7 +1831,7 @@ $(function() {
 				result = false;
 
 				this.unbind();
-				this.$find('input[type=button]').trigger('click');
+				$controllerTarget.find('input[type=button]').trigger('click');
 				ok(!result, 'unbindするとイベントハンドラは動作しなくなること');
 				start();
 			},
@@ -1936,7 +1936,7 @@ $(function() {
 				eventDispatcher.dispatchEvent({
 					type: 'myevent'
 				});
-				this.$find('#target1').click();
+				$controllerTarget.find('#target1').click();
 				ok(!winResult, 'unbindすると{window.h5test1.target}にバインドしたイベントハンドラは動作しなくなること');
 				ok(!docResult, 'unbindすると{document.body}にバインドしたイベントハンドラは動作しなくなること');
 				ok(!navResult, 'unbindすると{navigator.target}にバインドしたイベントハンドラは動作しなくなること');
@@ -3157,8 +3157,180 @@ $(function() {
 		});
 	});
 
-	// TODO コントローラがcontrollerManager管理下に置かれる前(__readyより前)にunbindした時の挙動の確認
+	asyncTest('__constructでunbindを呼ぶとエラー', 2, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			__construct: function() {
+				try {
+					this.unbind();
+				} catch (e) {
+					strictEqual(e.code, ERR.ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND, e.message);
+				}
+				ok(!this.unbindExecuted, '__unbindは実行されないこと');
+			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			}
+		}).readyPromise.done(start);
+	});
 
+	asyncTest('__initでunbindを呼んだ場合、初期化処理は中断されて__unbindが呼ばれる', 9, function() {
+		var boundExecuted = false;
+		var readyExecuted = false;
+		var unboundExecuted = false;
+		function bound() {
+			boundExecuted = true;
+		}
+		function ready() {
+			readyExecuted = true;
+		}
+		function unbound() {
+			unboundExecuted = true;
+		}
+		var $bindTarget = $('#controllerTest');
+		$bindTarget.bind('h5controllerbound', bound);
+		$bindTarget.bind('h5controllerready', ready);
+		$bindTarget.bind('h5controllerunbound', unbound);
+		var c = h5.core.controller($bindTarget, {
+			__name: 'controller',
+			__init: function() {
+				this.unbind();
+			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			childController: {
+				__name: 'child',
+				__init: function() {
+					this.initExecuted = true;
+				},
+				__unbind: function() {
+					this.unbindExecuted = true;
+				}
+			}
+		});
+
+		c.readyPromise.fail(function() {
+			setTimeout(function() {
+				ok(isRejected(c.initPromise), 'initPromiseはrejectされていること');
+				ok(isRejected(c.postInitPromise), 'postInitPromiseはrejectされていること');
+				ok(isRejected(c.readyPromise), 'readyPromiseはrejectされていること');
+				ok(!c.childController.initExecuted, '子コントローラの__initは実行されていないこと');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(c.childController.unbindExecuted, '子コントローラの__unbindが実行されていること');
+				ok(!boundExecuted, 'h5controllerboundイベントは上がっていないこと');
+				ok(!readyExecuted, 'h5controllerreadyイベントは上がっていないこと');
+				ok(!unboundExecuted, 'h5controllerunboundイベントは上がっていないこと');
+				$bindTarget.unbind('h5controllerbound', bound);
+				$bindTarget.unbind('h5controllerready', ready);
+				$bindTarget.unbind('h5controllerunbound', unbound);
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest('__postInitでunbindを呼んだ場合、初期化処理は中断されて__unbindが呼ばれる', 8, function() {
+		var boundExecuted = false;
+		var readyExecuted = false;
+		var unboundExecuted = false;
+		function bound() {
+			boundExecuted = true;
+		}
+		function ready() {
+			readyExecuted = true;
+		}
+		function unbound() {
+			unboundExecuted = true;
+		}
+		var $bindTarget = $('#controllerTest');
+		$bindTarget.bind('h5controllerbound', bound);
+		$bindTarget.bind('h5controllerunbound', unbound);
+		$bindTarget.bind('h5controllerready', ready);
+		var c = h5.core.controller($bindTarget, {
+			__name: 'controller',
+			__postInit: function() {
+				this.unbind();
+			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			childController: {
+				__name: 'child',
+				__ready: function() {
+					this.readyExecuted = true;
+				},
+				__unbind: function() {
+					this.unbindExecuted = true;
+				}
+			}
+		});
+
+		c.readyPromise.fail(function() {
+			setTimeout(function() {
+				ok(isRejected(c.postInitPromise), 'postInitPromiseはrejectされていること');
+				ok(isRejected(c.readyPromise), 'readyPromiseはrejectされていること');
+				ok(!c.childController.readyExecuted, '子コントローラの__readyは実行されていないこと');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(c.childController.unbindExecuted, '子コントローラの__unbindが実行されていること');
+				ok(!boundExecuted, 'h5controllerboundイベントは上がっていないこと');
+				ok(!readyExecuted, 'h5controllerreadyイベントは上がっていないこと');
+				ok(!unboundExecuted, 'h5controllerunboundイベントは上がっていないこと');
+				$bindTarget.unbind('h5controllerbound', bound);
+				$bindTarget.unbind('h5controllerready', ready);
+				$bindTarget.unbind('h5controllerunbound', unbound);
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest('__readyでunbindを呼んだ場合、初期化処理は中断されて__unbindが呼ばれる', 6, function() {
+		var boundExecuted = false;
+		var readyExecuted = false;
+		var unboundExecuted = false;
+		function bound() {
+			boundExecuted = true;
+		}
+		function ready() {
+			readyExecuted = true;
+		}
+		function unbound() {
+			unboundExecuted = true;
+		}
+		var $bindTarget = $('#controllerTest');
+		$bindTarget.bind('h5controllerbound', bound);
+		$bindTarget.bind('h5controllerready', ready);
+		$bindTarget.bind('h5controllerunbound', unbound);
+		var c = h5.core.controller($bindTarget, {
+			__name: 'controller',
+			__ready: function() {
+				this.unbind();
+			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			childController: {
+				__name: 'child',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				}
+			}
+		});
+
+		c.readyPromise.fail(function() {
+			setTimeout(function() {
+				ok(isRejected(c.readyPromise), 'readyPromiseはrejectされていること');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(c.childController.unbindExecuted, '子コントローラの__unbindが実行されていること');
+				ok(boundExecuted, 'h5controllerboundイベントは上がっていること');
+				ok(!readyExecuted, 'h5controllerreadyイベントは上がっていないこと');
+				ok(unboundExecuted, 'h5controllerunboundイベントは上がっていること');
+				$bindTarget.unbind('h5controllerbound', bound);
+				$bindTarget.unbind('h5controllerready', ready);
+				$bindTarget.unbind('h5controllerunbound', unbound);
+				start();
+			}, 0);
+		});
+	});
 
 	//=============================
 	// Definition
@@ -3231,9 +3403,10 @@ $(function() {
 			__name: 'ConstructDispose',
 			__construct: function() {
 				var dp = this.dispose();
-				dp.done(this.own(function() {
-					ok(isDisposed(this), 'コントローラがdisposeされていること');
-				}));
+				var that = this;
+				dp.done(function() {
+					ok(isDisposed(that), 'コントローラがdisposeされていること');
+				});
 			}
 		});
 		strictEqual(c, null, '__constructでdisposeするとh5.core.controllerの戻り値はnullであること');
@@ -5294,17 +5467,35 @@ $(function() {
 		});
 	});
 
-	asyncTest('ルートの__initが返すpromiseがrejectされる時の挙動', 7, function() {
+	asyncTest('ルートの__initが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
+			},
 			child1Controller: {
-				__name: 'child1Controller'
+				__name: 'child1Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			child2Controller: {
-				__name: 'child2Controller'
+				__name: 'child2Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			__init: function() {
 				setTimeout(function() {
@@ -5314,6 +5505,9 @@ $(function() {
 			},
 			__postInit: function() {
 				nextLifecycleExecuted = true;
+			},
+			__unbind: function() {
+				this.unbindExecuted = true;
 			}
 		};
 		var c = h5.core.controller('#controllerTest', controller);
@@ -5322,28 +5516,54 @@ $(function() {
 			strictEqual(e.code, errorCode, e.message);
 			deepEqual(e.detail, [1, 2], 'rejectで渡された引数がエラーオブジェクトのdetailに格納されていること');
 			ok(!nextLifecycleExecuted, 'rejectしなければ次に実行されるはずだったライフサイクルイベントは実行されないこと');
+			var child1 = c.child1Controller;
+			var child2 = c.child2Controller;
 			setTimeout(function() {
 				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
 				strictEqual(c.child1Controller.__name, 'child1Controller',
 						'子コントローラ(1)はnullifyされないこと');
 				strictEqual(c.child2Controller.__name, 'child2Controller',
 						'子コントローラ(2)はnullifyされないこと');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(child1.unbindExecuted, '子コントローラ(1)の__unbindが実行されていること');
+				ok(child2.unbindExecuted, '子コントローラ(2)の__unbindが実行されていること');
+				ok(c.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+				ok(child1.disposeExecuted, '子コントローラ(1)の__disposeが実行されていること');
+				ok(child2.disposeExecuted, '子コントローラ(2)の__disposeが実行されていること');
 				start();
 			}, 0);
 		});
 	});
 
-	asyncTest('ルートの__postInitが返すpromiseがrejectされる時の挙動', 7, function() {
+	asyncTest('ルートの__postInitが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
+			},
 			child1Controller: {
-				__name: 'child1Controller'
+				__name: 'child1Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			child2Controller: {
-				__name: 'child2Controller'
+				__name: 'child2Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			__postInit: function() {
 				setTimeout(function() {
@@ -5361,27 +5581,53 @@ $(function() {
 			strictEqual(e.code, errorCode, e.message);
 			deepEqual(e.detail, [1, 2], 'rejectで渡された引数がエラーオブジェクトのdetailに格納されていること');
 			ok(!nextLifecycleExecuted, 'rejectしなければ次に実行されるはずだったライフサイクルイベントは実行されないこと');
+			var child1 = c.child1Controller;
+			var child2 = c.child2Controller;
 			setTimeout(function() {
 				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
 				strictEqual(c.child1Controller.__name, 'child1Controller',
 						'子コントローラ(1)はnullifyされないこと');
 				strictEqual(c.child2Controller.__name, 'child2Controller',
 						'子コントローラ(2)はnullifyされないこと');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(child1.unbindExecuted, '子コントローラ(1)の__unbindが実行されていること');
+				ok(child2.unbindExecuted, '子コントローラ(2)の__unbindが実行されていること');
+				ok(c.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+				ok(child1.disposeExecuted, '子コントローラ(1)の__disposeが実行されていること');
+				ok(child2.disposeExecuted, '子コントローラ(2)の__disposeが実行されていること');
 				start();
 			}, 0);
 		});
 	});
 
-	asyncTest('ルートの__readyが返すpromiseがrejectされる時の挙動', 6, function() {
+	asyncTest('ルートの__readyが返すpromiseがrejectされると初期化処理が中断される', 12, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var controller = {
 			__name: 'TestController',
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
+			},
 			child1Controller: {
-				__name: 'child1Controller'
+				__name: 'child1Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			child2Controller: {
-				__name: 'child2Controller'
+				__name: 'child2Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			__ready: function() {
 				setTimeout(function() {
@@ -5395,25 +5641,45 @@ $(function() {
 			ok(true, 'readyPromiseのfailハンドラが実行されること');
 			strictEqual(e.code, errorCode, e.message);
 			deepEqual(e.detail, [1, 2], 'rejectで渡された引数がエラーオブジェクトのdetailに格納されていること');
+			var child1 = c.child1Controller;
+			var child2 = c.child2Controller;
 			setTimeout(function() {
 				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
 				strictEqual(c.child1Controller.__name, 'child1Controller',
 						'子コントローラ(1)はnullifyされないこと');
 				strictEqual(c.child2Controller.__name, 'child2Controller',
 						'子コントローラ(2)はnullifyされないこと');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(child1.unbindExecuted, '子コントローラ(1)の__unbindが実行されていること');
+				ok(child2.unbindExecuted, '子コントローラ(2)の__unbindが実行されていること');
+				ok(c.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+				ok(child1.disposeExecuted, '子コントローラ(1)の__disposeが実行されていること');
+				ok(child2.disposeExecuted, '子コントローラ(2)の__disposeが実行されていること');
 				start();
 			}, 0);
 		});
 	});
 
-	asyncTest('子の__initが返すpromiseがrejectされる時の挙動', 7, function() {
+	asyncTest('子の__initが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
+			},
 			child1Controller: {
-				__name: 'child1Controller'
+				__name: 'child1Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			child2Controller: {
 				__name: 'child2Controller',
@@ -5425,6 +5691,12 @@ $(function() {
 				},
 				__postInit: function() {
 					nextLifecycleExecuted = true;
+				},
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
 				}
 			}
 		};
@@ -5440,12 +5712,18 @@ $(function() {
 				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
 				strictEqual(child1.__name, 'child1Controller', '子コントローラ(1)はnullifyされないこと');
 				strictEqual(child2.__name, 'child2Controller', '子コントローラ(2)はnullifyされないこと');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(child1.unbindExecuted, '子コントローラ(1)の__unbindが実行されていること');
+				ok(child2.unbindExecuted, '子コントローラ(2)の__unbindが実行されていること');
+				ok(c.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+				ok(child1.disposeExecuted, '子コントローラ(1)の__disposeが実行されていること');
+				ok(child2.disposeExecuted, '子コントローラ(2)の__disposeが実行されていること');
 				start();
 			}, 0);
 		});
 	});
 
-	asyncTest('子の__postInitが返すpromiseがrejectされる時の挙動', 7, function() {
+	asyncTest('子の__postInitが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
@@ -5454,8 +5732,20 @@ $(function() {
 			__postInit: function() {
 				nextLifecycleExecuted = true;
 			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
+			},
 			child1Controller: {
-				__name: 'child1Controller'
+				__name: 'child1Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			child2Controller: {
 				__name: 'child2Controller',
@@ -5464,6 +5754,12 @@ $(function() {
 						dfd.reject(1, 2);
 					}, 0);
 					return dfd.promise();
+				},
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
 				}
 			}
 		};
@@ -5479,12 +5775,18 @@ $(function() {
 				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
 				strictEqual(child1.__name, 'child1Controller', '子コントローラ(1)はnullifyされないこと');
 				strictEqual(child2.__name, 'child2Controller', '子コントローラ(2)はnullifyされないこと');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(child1.unbindExecuted, '子コントローラ(1)の__unbindが実行されていること');
+				ok(child2.unbindExecuted, '子コントローラ(2)の__unbindが実行されていること');
+				ok(c.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+				ok(child1.disposeExecuted, '子コントローラ(1)の__disposeが実行されていること');
+				ok(child2.disposeExecuted, '子コントローラ(2)の__disposeが実行されていること');
 				start();
 			}, 0);
 		});
 	});
 
-	asyncTest('子の__readyが返すpromiseがrejectされる時の挙動', 7, function() {
+	asyncTest('子の__readyが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
 		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
@@ -5493,8 +5795,20 @@ $(function() {
 			__ready: function() {
 				nextLifecycleExecuted = true;
 			},
+			__unbind: function() {
+				this.unbindExecuted = true;
+			},
+			__dispose: function() {
+				this.disposeExecuted = true;
+			},
 			child1Controller: {
-				__name: 'child1Controller'
+				__name: 'child1Controller',
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
+				}
 			},
 			child2Controller: {
 				__name: 'child2Controller',
@@ -5503,6 +5817,12 @@ $(function() {
 						dfd.reject(1, 2);
 					}, 0);
 					return dfd.promise();
+				},
+				__unbind: function() {
+					this.unbindExecuted = true;
+				},
+				__dispose: function() {
+					this.disposeExecuted = true;
 				}
 			}
 		};
@@ -5518,8 +5838,36 @@ $(function() {
 				strictEqual(c.__name, 'TestController', 'ルートコントローラはnullifyされないこと');
 				strictEqual(child1.__name, 'child1Controller', '子コントローラ(1)はnullifyされないこと');
 				strictEqual(child2.__name, 'child2Controller', '子コントローラ(2)はnullifyされないこと');
+				ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
+				ok(child1.unbindExecuted, '子コントローラ(1)の__unbindが実行されていること');
+				ok(child2.unbindExecuted, '子コントローラ(2)の__unbindが実行されていること');
+				ok(c.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
+				ok(child1.disposeExecuted, '子コントローラ(1)の__disposeが実行されていること');
+				ok(child2.disposeExecuted, '子コントローラ(2)の__disposeが実行されていること');
 				start();
 			}, 0);
+		});
+	});
+
+	asyncTest('__initが返すプロミスがrejectされるとlifecycleerrorイベントが起きる', 3, function() {
+		var lifecycleerrorEventObj = null;
+		var rejectReason = null;
+		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
+		function handler(e) {
+			ok(true, 'lifecycleerrorイベントハンドラが実行されること');
+			ok(e.rootController, c, 'ルートコントローラがイベントオブジェクトから取得できること');
+			strictEqual(e.detail, rejectReason, 'エラー内容が取得できること ' + e.message);
+			this.removeEventListener('lifecycleerror', handler);
+			start();
+		}
+		h5.core.controllerManager.addEventListener('lifecycleerror', handler);
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			__init: function() {
+				return $.Deferred().reject(1, 2).promise();
+			}
+		}).readyPromise.fail(function(e) {
+			rejectReason = e;
 		});
 	});
 
@@ -5538,8 +5886,6 @@ $(function() {
 			start();
 		});
 	});
-
-
 
 	asyncTest(
 			'各ライフサイクルイベントでh5.core.controller()を使って独立したコントローラをプロパティに持たせた場合、ライフサイクルイベントの発火回数と順序は正しいか(テンプレートなし)',
@@ -6857,10 +7203,7 @@ $(function() {
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			testController.unbind();
-			start();
-		});
+		testController.readyPromise.done(start);
 	});
 
 	asyncTest('this.ownWithOrg()の動作', 5, function() {
@@ -6896,11 +7239,7 @@ $(function() {
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			start();
-
-			testController.unbind();
-		});
+		testController.readyPromise.done(start);
 	});
 
 	asyncTest('Controller.triggerによるイベントのトリガで、イベントが発火し、context.evArgに引数が格納されること', 6, function() {
@@ -7441,7 +7780,6 @@ $(function() {
 
 				var c = h5.core.controller('#controllerTest', testController);
 				c.readyPromise.done(function() {
-					c.unbind();
 					start();
 				});
 
@@ -8481,15 +8819,18 @@ $(function() {
 		});
 	});
 
-	asyncTest('例外でコントローラの初期化が中断されて、__unbind,__disposeでも例外を投げた時、最初に投げられた例外オブジェクトが取得できること', 5,
+	asyncTest('例外でコントローラの初期化が中断されて、__unbind,__disposeでも例外を投げた時、最初に投げられた例外オブジェクトが取得できること', 6,
 			function() {
 				var id = this.testTimeoutFunc();
 				var errorMsg = '__init error.';
 				var errorObj = new Error(errorMsg);
 				var c = h5.core.controller('#controllerTest', {
 					__name: 'controller',
-					__init: function() {
+					__ready: function() {
 						throw errorObj;
+					},
+					'{rootElement} click': function() {
+						this.eventHandlerExecuted = true;
 					},
 					childController: {
 						__name: 'child',
@@ -8513,24 +8854,17 @@ $(function() {
 				});
 				window.onerror = function(e) {
 					clearTimeout(id);
-					ok(e.indexOf(errorMsg) != -1, '__init()の例外がwindow.onerrorでcatchできること。');
+					ok(e.indexOf(errorMsg) != -1, '__ready()の例外がwindow.onerrorでcatchできること。');
 					ok(c.unbindExecuted, 'ルートコントローラの__unbindが実行されていること');
 					ok(c.disposeExecuted, 'ルートコントローラの__disposeが実行されていること');
 					var child = c.childController;
 					ok(child.unbindExecuted, '子コントローラの__unbindが実行されていること');
 					ok(child.disposeExecuted, '子コントローラの__disposeが実行されていること');
+					$('#controllerTest').click();
+					ok(!c.eventHandlerExecuted, 'イベントハンドラは実行されなくなっていること');
 					start();
 				};
 			});
-
-
-
-
-
-
-
-
-
 
 	//=============================
 	// Definition
@@ -8884,8 +9218,6 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
-
-			testController.unbind();
 		});
 	});
 
@@ -9293,7 +9625,6 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controllerBase);
 		testController.readyPromise.done(function() {
 			$('#controllerTest input[type=button]').click();
-			testController.unbind();
 		});
 	});
 
@@ -9471,7 +9802,6 @@ $(function() {
 					setTimeout(function() {
 						strictEqual($('.h5-indicator').length, 0,
 								'Indicator#hide() インジケータが除去されていること');
-						testController.unbind();
 						start();
 					}, 0);
 				}, 0);
