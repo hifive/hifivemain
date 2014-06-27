@@ -3045,7 +3045,10 @@
 		 * @return {Function} コンテキスト(this)をコントローラに変更した関数
 		 * @memberOf Controller
 		 */
-		own: own,
+		own: function(/* var_args */) {
+			throwErrorIfIsDisposed(this, 'own');
+			return own.apply(this, argsToArray(arguments));
+		},
 
 		/**
 		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えて実行する関数を返します。
@@ -3054,7 +3057,10 @@
 		 * @return {Function} コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えた関数
 		 * @memberOf Controller
 		 */
-		ownWithOrg: ownWithOrg,
+		ownWithOrg: function(/* var_args */) {
+			throwErrorIfIsDisposed(this, 'ownWithOrg');
+			return ownWithOrg.apply(this, argsToArray(arguments));
+		},
 
 		/**
 		 * コントローラを要素へ再度バインドします。子コントローラでは使用できません。
