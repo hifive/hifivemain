@@ -2013,7 +2013,8 @@
 		}
 
 		var dfd = rootController.deferred();
-		function doneHandler() {
+
+		waitForPromises(promises, function() {
 			cleanup();
 			if (!e && !rejectReason) {
 				dfd.resolveWith(rootController);
@@ -2028,13 +2029,7 @@
 			if (e) {
 				throw e;
 			}
-		}
-		waitForPromises(promises, doneHandler, function(/* var_args */) {
-			// rejectReasonを設定して、doneHandlerを呼ぶ
-			rejectReason = rejectReason || createRejectReason(ERR_CODE_CONTROLLER_REJECTED_BY_USER,
-					rootController.__name, argsToArray(arguments));
-			doneHandler();
-		}, true);
+		}, null, true);
 		return dfd.promise();
 	}
 
