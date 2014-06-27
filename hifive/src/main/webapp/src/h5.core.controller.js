@@ -1848,7 +1848,7 @@
 			templateDfd.resolve();
 			c.__controllerContext.templatePromise = templateDfd.promise();
 			c.__controllerContext.initDfd = getDeferred();
-			c.initPromises = c.__controllerContext.initDfd.promise();
+			c.initPromise = c.__controllerContext.initDfd.promise();
 			c.__controllerContext.postInitDfd = getDeferred();
 			c.postInitPromise = c.__controllerContext.postInitDfd.promise();
 			c.__controllerContext.readyDfd = getDeferred();
