@@ -4342,6 +4342,36 @@ $(function() {
 		});
 	});
 
+	asyncTest('disposeされたコントローラのメソッドは使用できない', function() {
+		var errorCode = ERR.ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER;
+		var controller = null;
+		h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			__ready: function() {
+				controller = this;
+				// 異常終了させてnullifyされないようにする
+				return $.Deferred().reject().promise();
+			}
+		}).readyPromise.fail(function() {
+			setTimeout(function() {
+				var methods = ['$find', 'bind', 'deferred', 'disableListeners', 'indicator', 'own',
+						'ownWithOrg', 'throwCustomError', 'throwError', 'trigger',
+						'triggerIndicator', 'unbind', 'on', 'off'];
+				var length = methods.length;
+				expect(length);
+				for (var i = 0; i < length; i++) {
+					try {
+						controller[methods[i]]();
+						ok(false, methods[i] + 'の呼び出しでエラーが発生していません');
+					} catch (e) {
+						strictEqual(e.code, errorCode, e.message);
+					}
+				}
+				start();
+			}, 0);
+		});
+	});
+
 	//=============================
 	// Definition
 	//=============================
