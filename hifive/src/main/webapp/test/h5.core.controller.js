@@ -3332,6 +3332,59 @@ $(function() {
 		});
 	});
 
+	asyncTest('unbindされたコントローラで使用できないメソッド', function() {
+		var errorCode = ERR.ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER;
+		var controller = null;
+		h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			__ready: function() {
+				controller = this;
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			var methods = ['$find', 'indicator', 'trigger', 'triggerIndicator', 'unbind', 'on',
+					'off'];
+			var length = methods.length;
+			expect(length);
+			for (var i = 0; i < length; i++) {
+				try {
+					controller[methods[i]]();
+					ok(false, methods[i] + 'の呼び出しでエラーが発生していません');
+				} catch (e) {
+					strictEqual(e.code, errorCode, e.message);
+				}
+			}
+			start();
+		});
+	});
+
+	asyncTest('unbindされたコントローラで使用できるメソッド', function() {
+		var controller = null;
+		var errorCode = ERR.ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER;
+		h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			__ready: function() {
+				controller = this;
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			var methods = ['bind', 'deferred', 'disableListeners', 'own', 'ownWithOrg',
+					'throwCustomError', 'throwError'];
+			var length = methods.length;
+			expect(length);
+			for (var i = 0; i < length; i++) {
+				try {
+					controller[methods[i]]();
+					ok(true, methods[i] + 'の呼び出しでエラーは発生しないこと');
+				} catch (e) {
+					// 引数エラー等、別のエラーならOK
+					ok(e.code !== errorCode, e.message);
+				}
+			}
+			start();
+		});
+	});
+
 	//=============================
 	// Definition
 	//=============================
