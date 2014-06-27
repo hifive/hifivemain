@@ -4366,7 +4366,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('bind: 引数が不正、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 6,
+	asyncTest('引数が不正、またはコントローラ化されたコントローラからの呼び出しでない場合、及び指定された要素が存在しないまたは、複数ある場合にエラーが出ること', 6,
 			function() {
 				$('#controllerTest').append('<div class="test">a</div>');
 				$('#controllerTest').append('<div class="test">b</div>');
@@ -4411,7 +4411,7 @@ $(function() {
 				});
 			});
 
-	asyncTest('unbind: コントローラのアンバインド、再バインド', 11, function() {
+	asyncTest('コントローラのアンバインド、再バインド', 11, function() {
 		var disposeRet = null;
 		var disposeRoot = null;
 		var rebind = null;
@@ -4503,7 +4503,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('bind: 子コントローラではbind()はできない', 1, function() {
+	asyncTest('子コントローラではbind()はできない', 1, function() {
 		var rootController = {
 			__name: 'Root',
 			childController: {
@@ -4520,6 +4520,48 @@ $(function() {
 				strictEqual(e.code, ERR.ERR_CODE_BIND_ROOT_ONLY, e.message);
 			}
 			start();
+		});
+	});
+
+	asyncTest('ライフサイクルイベント中にunbind()されたコントローラを再度バインドした時の動作', 9, function() {
+		var firstTime = true;
+		var initExecuted, postInitExecuted, readyExecuted;
+		var $newTarget = $('<div class="new-target"></div>');
+		$('#qunit-fixture').append($newTarget);
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			__init: function() {
+				initExecuted = true;
+				if (firstTime) {
+					this.unbind();
+				}
+			},
+			__postInit: function() {
+				postInitExecuted = true;
+			},
+			__ready: function() {
+				readyExecuted = true;
+			}
+		});
+		c.readyPromise.fail(function() {
+			firstTime = initExecuted = postInitExecuted = readyExecuted = false;
+			ok(isRejected(c.initPromise), '__initでunbindした時、initPromiseはrejectされていること');
+			ok(isRejected(c.postInitPromise), '__initでunbindした時、postInitPromiseはrejectされていること');
+			ok(isRejected(c.readyPromise), '__initでunbindした時、readyPromiseはrejectされていること');
+			// readyPromise.failハンドラはまだunbindの処理中なので、setTimeoutしてから再度バインドする
+			setTimeout(function() {
+				c.bind($newTarget);
+				c.readyPromise.done(function() {
+					ok(initExecuted, '再バインドすると__initが実行されること');
+					ok(postInitExecuted, '再バインドすると__postInitが実行されること');
+					ok(readyExecuted, '再バインドすると__readyが実行されること');
+
+					ok(isResolved(c.initPromise), 'initPromiseはresolveされていること');
+					ok(isResolved(c.postInitPromise), 'postInitPromiseはresolveされていること');
+					ok(isResolved(c.readyPromise), 'readyPromiseはresolveされていること');
+					start();
+				});
+			}, 0);
 		});
 	});
 
