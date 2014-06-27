@@ -2013,7 +2013,7 @@
 		}
 
 		var dfd = rootController.deferred();
-		waitForPromises(promises, function() {
+		function doneHandler() {
 			cleanup();
 			if (!e && !rejectReason) {
 				dfd.resolveWith(rootController);
@@ -2028,18 +2028,12 @@
 			if (e) {
 				throw e;
 			}
-		}, function(/* var_args */) {
-			cleanup();
-			// __disposeの返したプロミスのfailに渡される引数をそのまま渡す
-			dfd.rejectWith(rootController, argsToArray(arguments));
-			// lifecycleerrorイベントをあげる
-			triggerLifecycleerror(rootController, createRejectReason(
-					ERR_CODE_CONTROLLER_REJECTED_BY_USER, rootController.__name,
-					argsToArray(arguments)));
-			if (e) {
-				// エラーがある場合はエラーを投げる
-				throw e;
-			}
+		}
+		waitForPromises(promises, doneHandler, function(/* var_args */) {
+			// rejectReasonを設定して、doneHandlerを呼ぶ
+			rejectReason = rejectReason || createRejectReason(ERR_CODE_CONTROLLER_REJECTED_BY_USER,
+					rootController.__name, argsToArray(arguments));
+			doneHandler();
 		}, true);
 		return dfd.promise();
 	}
