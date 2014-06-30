@@ -961,7 +961,7 @@
 		if (!shouldNotUnregist) {
 			// アンバインドハンドラリストから削除
 			var unbindHandlerList = controller.__controllerContext.unbindHandlerList;
-			unbindHandlerList.splice(unbindHandlerList.indexOf(bindObj), 1);
+			unbindHandlerList.splice($.inArray(bindObj, unbindHandlerList), 1);
 		}
 	}
 
