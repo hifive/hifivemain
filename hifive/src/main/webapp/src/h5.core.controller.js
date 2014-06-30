@@ -99,15 +99,17 @@
 	/** エラーコード：コントローラメソッドは最低2つの引数が必要 */
 	var ERR_CODE_CONTROLLER_TOO_FEW_ARGS = 6032;
 	/** エラーコード：コントローラの初期化処理がユーザーコードによって中断された(__initや__readyで返したプロミスがrejectした) */
-	var ERR_CODE_CONTROLLER_REJECTED_BY_USER = 6033;
+	var ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER = 6033;
 	/** エラーコード：コントローラのバインド対象がノードではない */
 	var ERR_CODE_BIND_NOT_NODE = 6034;
 	/** エラーコード：unbindされたコントローラで使用できないメソッドが呼ばれた */
 	var ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER = 6035;
 	/** エラーコード：disposeされたコントローラで使用できないメソッドが呼ばれた */
 	var ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER = 6036;
-	/** エラーコード：unbindは__constructでは呼べない * */
+	/** エラーコード：unbindは__constructでは呼べない */
 	var ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND = 6037;
+	/** エラーコード：コントローラの終了処理がユーザーコードによって中断された(__disposeで返したプロミスがrejectした) */
+	var ERR_CODE_CONTROLLER_DISPOSE_REJECTED_BY_USER = 6038;
 
 	// =============================
 	// Development Only
@@ -148,11 +150,12 @@
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
 	errMsgMap[ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY] = 'コントローラのbind(), unbind()はルートコントローラでのみ使用可能です。';
 	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
-	errMsgMap[ERR_CODE_CONTROLLER_REJECTED_BY_USER] = 'コントローラ"{0}"の初期化処理がユーザによって中断されました。';
+	errMsgMap[ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER] = 'コントローラ"{0}"の初期化処理がユーザによって中断されました。';
 	errMsgMap[ERR_CODE_BIND_NOT_NODE] = 'コントローラ"{0}"のバインド対象がノードではありません。バインド対象に指定できるのはノードかdocumentオブジェクトのみです。';
 	errMsgMap[ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER] = 'ルートエレメントの設定されていないコントローラのメソッド{0}は実行できません。';
 	errMsgMap[ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER] = 'disposeされたコントローラのメソッド{0}は実行できません。';
 	errMsgMap[ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND] = 'unbind()メソッドは__constructから呼ぶことはできません。';
+	errMsgMap[ERR_CODE_CONTROLLER_DISPOSE_REJECTED_BY_USER] = 'コントローラ"{0}"のdispose処理がユーザによって中断されました。';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -1012,7 +1015,7 @@
 									controller.rootController.__name);
 
 							var rejectReason = createRejectReason(
-									ERR_CODE_CONTROLLER_REJECTED_BY_USER, controllerName,
+									ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER, controllerName,
 									argsToArray(arguments));
 
 							// controllerをdispose
@@ -1878,12 +1881,7 @@
 					error = error || e;
 				}
 				if (isPromise(ret)) {
-					var df = h5.async.deferred();
-					ret.always(function() {
-						// __unbind,__disposeが返すプロミスが成功したかどうかにかかわらず終了を待つプロミスにする
-						df.resolve();
-					});
-					promises.push(df.promise());
+					promises.push(ret);
 				}
 			}
 		});
@@ -1957,25 +1955,10 @@
 			e = e || unbindError;
 		}
 
-		function cleanup() {
-			// ルートコントローラにisDisposedフラグを立てる
-			// (nullifyされた場合は__controllerContext毎消えるので見えないが、nullifyされない場合にもdisposeが完了したことが分かるようにする)
-			rootController.__controllerContext.isDisposed = 1;
-			// 子から順にview.clearとnullifyの実行
-			doForEachControllerGroupsDepthFirst(rootController, function(c) {
-				// viewのclearとnullify
-				if (c.view && c.view.__view) {
-					c.view.clear();
-				}
-				if (!e && !rejectReason) {
-					// エラーが起きていたらnullifyしない(nullifyをしないことでユーザがエラー時の原因を調べやすくなる)
-					nullify(c);
-				}
-			});
-		}
-
 		// __disposeを実行してからcleanupする
+		// __disposeの実行
 		var promises;
+		var disposeError = null;
 		try {
 			promises = executeLifeEndChain(rootController, '__dispose');
 		} catch (error) {
@@ -1983,26 +1966,70 @@
 			// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
 			// (一番最初に起きた例外のみスロー)
 			e = e || error;
+			// disposeのエラーがあるかどうか覚えておく
+			disposeError = disposeError || error;
 		}
 
+		/** disposeメソッド(disposeControllerメソッド)が返すプロミスのdeferred */
 		var dfd = rootController.deferred();
 
-		waitForPromises(promises, function() {
-			cleanup();
-			if (!e && !rejectReason) {
+		/** __disposeが返すプロミスがrejectされた時のRejectReasonオブジェクト */
+		var disposeRejectReason = null;
+
+		/** コントローラのクリーンアップとエラー時の処理 */
+		function cleanup() {
+			var lifecycleerrorObject = e || rejectReason || disposeError || disposeRejectReason;
+			// 子から順にview.clearとnullifyの実行
+			doForEachControllerGroupsDepthFirst(rootController, function(c) {
+				// viewのclearとnullify
+				if (c.view && c.view.__view) {
+					c.view.clear();
+				}
+				if (!lifecycleerrorObject) {
+					// エラーが起きていたらnullifyしない(nullifyをしないことでユーザがエラー時の原因を調べやすくなる)
+					nullify(c);
+				} else {
+					// isDisposedフラグを立てる
+					// (nullifyされた場合は__controllerContextごと消えるので見えないが、nullifyされない場合にもdisposeが完了したことが分かるようにする)
+					c.__controllerContext.isDisposed = 1;
+				}
+			});
+
+			if (disposeRejectReason) {
+				// disposeの返すプロミスをrejectする。
+				// 引数にはエラーオブジェクトまたはrejectReasonを渡す
+				dfd.rejectWith(rootController, [disposeRejectReason]);
+			} else {
 				dfd.resolveWith(rootController);
+			}
+			if (!lifecycleerrorObject) {
+				// 何もエラーが起きていなければここで終了
 				return;
 			}
-			// disposeの返すプロミスをrejectする。
-			// 引数にはエラーオブジェクトまたはrejectReasonを渡す
-			dfd.rejectWith(rootController, [e || rejectReason]);
 			// cleanupが終わったタイミングで、エラーまたはrejectされてdisposeされた場合は、"lifecycleerror"イベントをあげる
-			// detailにエラーオブジェクトまたはfailハンドラに渡した引数をいれる
-			triggerLifecycleerror(rootController, e || rejectReason);
-			if (e) {
-				throw e;
+			// イベントオブジェクトのdetailに(初出の)エラーオブジェクトまたはrejectReasonをいれる
+			// __disposeで初めてエラーまたはrejectされた場合は__disposeのエラーまたはrejectReasonを入れる
+			triggerLifecycleerror(rootController, lifecycleerrorObject);
+			if (e || disposeError) {
+				throw e || disposeError;
 			}
-		}, null, true);
+		}
+		function disposeFail() {
+			// __disposeで投げられた例外または、promiseがrejectされた場合はそのrejectに渡された引数を、disposeの返すプロミスのfailハンドラに渡す
+			disposeRejectReason = disposeError
+					|| createRejectReason(ERR_CODE_CONTROLLER_DISPOSE_REJECTED_BY_USER,
+							rootController.__name, argsToArray(arguments));
+			// コントローラの句リンアップ
+			cleanup();
+		}
+
+		// __disposeでエラーが起きていたらプロミスを待たずに失敗時の処理を実行
+		if (disposeError) {
+			disposeFail();
+		} else {
+			// __disposeの返すプロミスを待機してから句リンアップ処理を実行
+			waitForPromises(promises, cleanup, disposeFail, true);
+		}
 		return dfd.promise();
 	}
 
@@ -2519,8 +2546,6 @@
 	 * @param {Error||rejectReason} detail 例外オブジェクト、またはRejectReason
 	 */
 	function triggerLifecycleerror(rootController, detail) {
-		// isErrorフラグを立てて、このインスタンスでbind,unbind,disposeを呼べないようにする
-		rootController.__controllerContext.isError = 1;
 		controllerManager.dispatchEvent({
 			type: 'lifecycleerror',
 			detail: detail,
@@ -3084,7 +3109,7 @@
 
 		/**
 		 * コントローラのリソースをすべて削除します。<br />
-		 * Controller#unbind() の処理を包含しています。
+		 * <a href="#unbind">Controller#unbind()</a> の処理を包含しています。
 		 *
 		 * @returns {Promise} Promiseオブジェクト
 		 * @memberOf Controller

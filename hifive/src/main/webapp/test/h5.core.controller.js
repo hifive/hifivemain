@@ -4567,50 +4567,86 @@ $(function() {
 		});
 	});
 
-	asyncTest('__dispose()で rejectされるpromiseを返す。', 3, function() {
-		var childDfd = $.Deferred();
-		var rootDfd = $.Deferred();
+	asyncTest(
+			'__dispose()で rejectされるpromiseを返す。',
+			10,
+			function() {
+				var childDfd = $.Deferred();
+				var rootDfd = $.Deferred();
 
-		var childController = {
-			__name: 'ChildController',
+				var childController = {
+					__name: 'ChildController',
 
-			__dispose: function() {
-				var that = this;
-				setTimeout(function() {
-					that.__name === 'ChildController';
-					childDfd.resolve();
-				}, 0);
-				return childDfd.promise();
-			}
-		};
-		var controller = {
-			__name: 'TestController',
+					__dispose: function() {
+						var that = this;
+						setTimeout(function() {
+							that.__name === 'ChildController';
+							childDfd.resolve();
+						}, 0);
+						return childDfd.promise();
+					}
+				};
+				var controller = {
+					__name: 'TestController',
 
-			childController: childController,
+					childController: childController,
 
-			__dispose: function() {
-				var that = this;
-				setTimeout(function() {
-					that.__name === 'TestController';
-					rootDfd.reject();
-				}, 0);
-				return rootDfd.promise();
-			}
-		};
-		var testController = h5.core.controller('#controllerTest', controller);
-		testController.readyPromise.done(function() {
-			var cc = testController.childController;
-			var dp = testController.dispose();
+					__dispose: function() {
+						var that = this;
+						setTimeout(function() {
+							that.__name === 'TestController';
+							rootDfd.reject(1, 2);
+						}, 0);
+						return rootDfd.promise();
+					}
+				};
+				var testController = h5.core.controller('#controllerTest', controller);
 
-			dp.done(function() {
-				ok(isRejected(rootDfd) && isResolved(childDfd),
-						'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
-				ok(isDisposed(testController), 'ルートコントローラのリソースはすべて削除されたか');
-				ok(isDisposed(cc), '子コントローラのリソースはすべて削除されたか');
-				start();
+				var lifecycleerrorEventObj = null;
+				var lifecycleerrorExecuted = false;
+				function handler(ev) {
+					lifecycleerrorExecuted = true;
+					lifecycleErrorEventObj = ev;
+				}
+				h5.core.controllerManager.addEventListener('lifecycleerror', handler);
+				testController.readyPromise
+						.done(function() {
+							var cc = testController.childController;
+							var dp = testController.dispose();
+
+							dp
+									.fail(function(failReason) {
+										ok(true, 'disposeの返すプロミスはrejectされること');
+										ok(isRejected(rootDfd) && isResolved(childDfd),
+												'全てのコントローラの__dispose()が返すPromiseがresolveまたはrejectされてからコントローラを破棄する');
+										strictEqual(failReason.code,
+												ERR.ERR_CODE_CONTROLLER_DISPOSE_REJECTED_BY_USER,
+												failReason.message);
+										deepEqual(failReason.detail, [1, 2],
+												'rejectで渡した引数がdetailに格納されていること');
+										deepEqual(failReason.detail, [1, 2],
+												'rejectで渡した引数がdetailに格納されていること');
+										setTimeout(
+												function() {
+													ok(lifecycleerrorExecuted,
+															'lifecycleerrorイベントが実行されていること');
+													strictEqual(lifecycleErrorEventObj.detail,
+															failReason,
+															'lifecycleerrorイベントオブジェクトのdetailにdisposeのfailハンドラに渡されたエラーオブジェクトが格納されていること');
+													strictEqual(
+															lifecycleErrorEventObj.rootController,
+															testController,
+															'lifecycleerrorイベントオブジェクトのrootControllerにルートコントローラが格納されていること');
+													strictEqual(testController.__name,
+															'TestController',
+															'ルートコントローラはnullifyされていないこと');
+													strictEqual(cc.__name, 'ChildController',
+															'子コントローラはnullifyされていないこと');
+													start();
+												}, 0);
+									});
+						});
 			});
-		});
-	});
 
 	asyncTest('disposeされたコントローラのメソッドは使用できない', function() {
 		var errorCode = ERR.ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER;
@@ -5811,7 +5847,7 @@ $(function() {
 
 	asyncTest('ルートの__initが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
-		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
+		var errorCode = ERR.ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
@@ -5879,7 +5915,7 @@ $(function() {
 
 	asyncTest('ルートの__postInitが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
-		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
+		var errorCode = ERR.ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
@@ -5944,7 +5980,7 @@ $(function() {
 
 	asyncTest('ルートの__readyが返すpromiseがrejectされると初期化処理が中断される', 12, function() {
 		var dfd = $.Deferred();
-		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
+		var errorCode = ERR.ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER;
 		var controller = {
 			__name: 'TestController',
 			__unbind: function() {
@@ -6004,7 +6040,7 @@ $(function() {
 
 	asyncTest('子の__initが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
-		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
+		var errorCode = ERR.ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
@@ -6067,7 +6103,7 @@ $(function() {
 
 	asyncTest('子の__postInitが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
-		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
+		var errorCode = ERR.ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
@@ -6130,7 +6166,7 @@ $(function() {
 
 	asyncTest('子の__readyが返すpromiseがrejectされると初期化処理が中断される', 13, function() {
 		var dfd = $.Deferred();
-		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
+		var errorCode = ERR.ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER;
 		var nextLifecycleExecuted;
 		var controller = {
 			__name: 'TestController',
@@ -6194,7 +6230,7 @@ $(function() {
 	asyncTest('__initが返すプロミスがrejectされるとlifecycleerrorイベントが起きる', 3, function() {
 		var lifecycleerrorEventObj = null;
 		var rejectReason = null;
-		var errorCode = ERR.ERR_CODE_CONTROLLER_REJECTED_BY_USER;
+		var errorCode = ERR.ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER;
 		function handler(e) {
 			ok(true, 'lifecycleerrorイベントハンドラが実行されること');
 			ok(e.rootController, c, 'ルートコントローラがイベントオブジェクトから取得できること');
