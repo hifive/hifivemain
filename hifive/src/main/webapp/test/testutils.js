@@ -17,6 +17,10 @@
  */
 
 (function() {
+	// --------- private --------
+	var $prevOutputs = null;
+	var $nextOutputs = null;
+
 	// --------- settings ---------
 	/**
 	 * @name testutils.settings
@@ -181,7 +185,7 @@
 	/**
 	 * アスペクトを削除する
 	 */
-	function cleanAllAspects(){
+	function cleanAllAspects() {
 		h5.settings.aspects = null;
 	}
 
@@ -276,6 +280,25 @@
 		}
 		w.close();
 		return dfd.promise();
+	}
+
+	function removeUnrelateOutput() {
+		var $current = $('#qunit-test-output' + (QUnit.config.current.testNumber - 1));
+		// prevAllだと逆順になってしまうためnextUntilで$currentまでのDOMを取得
+		$prevOutputs = $('#qunit-test-output0').add($('#qunit-test-output0').nextUntil($current));
+		$nextOutputs = $current.nextAll();
+
+		// DOMツリーから削除
+		$prevOutputs.remove();
+		$nextOutputs.remove();
+	}
+
+	function addUnrelateOutput() {
+		var $current = $('#qunit-test-output' + (QUnit.config.current.testNumber - 1));
+		$current.before($prevOutputs);
+		$current.after($nextOutputs);
+		$prevOutputs = null;
+		$nextOutputs = null;
 	}
 
 	// ----------- qunit -----------
@@ -406,7 +429,9 @@
 		dom: {
 			createIFrameElement: createIFrameElement,
 			openPopupWindow: openPopupWindow,
-			closePopupWindow: closePopupWindow
+			closePopupWindow: closePopupWindow,
+			removeUnrelateOutput: removeUnrelateOutput,
+			addUnrelateOutput: addUnrelateOutput
 		},
 		u: {
 			isDisposed: isDisposed,
