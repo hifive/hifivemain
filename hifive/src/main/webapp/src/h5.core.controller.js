@@ -94,14 +94,20 @@
 	var ERR_CODE_NOT_VIEW = 6029;
 	/** エラーコード：バインド対象を指定する引数に文字列、オブジェクト、配列以外が渡された */
 	var ERR_CODE_BIND_TARGET_ILLEGAL = 6030;
-	/** エラーコード：ルートコントローラ以外ではcontroller.bind()はできない */
-	var ERR_CODE_BIND_ROOT_ONLY = 6031;
+	/** エラーコード：ルートコントローラ以外ではcontroller.bind()/unbind()/dispose()はできない */
+	var ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY = 6031;
 	/** エラーコード：コントローラメソッドは最低2つの引数が必要 */
 	var ERR_CODE_CONTROLLER_TOO_FEW_ARGS = 6032;
 	/** エラーコード：コントローラの初期化処理がユーザーコードによって中断された(__initや__readyで返したプロミスがrejectした) */
 	var ERR_CODE_CONTROLLER_REJECTED_BY_USER = 6033;
 	/** エラーコード：コントローラのバインド対象がノードではない */
 	var ERR_CODE_BIND_NOT_NODE = 6034;
+	/** エラーコード：unbindされたコントローラで使用できないメソッドが呼ばれた */
+	var ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER = 6035;
+	/** エラーコード：disposeされたコントローラで使用できないメソッドが呼ばれた */
+	var ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER = 6036;
+	/** エラーコード：unbindは__constructでは呼べない * */
+	var ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND = 6037;
 
 	// =============================
 	// Development Only
@@ -140,11 +146,13 @@
 	errMsgMap[ERR_CODE_EXPOSE_NAME_REQUIRED] = 'コントローラ、もしくはロジックの __name が設定されていません。';
 	errMsgMap[ERR_CODE_NOT_VIEW] = 'テンプレートはViewモジュールがなければ使用できません。';
 	errMsgMap[ERR_CODE_BIND_TARGET_ILLEGAL] = 'コントローラ"{0}"のバインド対象には、セレクタ文字列、または、オブジェクトを指定してください。';
-	errMsgMap[ERR_CODE_BIND_ROOT_ONLY] = 'コントローラのbind(), unbind()はルートコントローラでのみ使用可能です。';
+	errMsgMap[ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY] = 'コントローラのbind(), unbind()はルートコントローラでのみ使用可能です。';
 	errMsgMap[ERR_CODE_CONTROLLER_TOO_FEW_ARGS] = 'h5.core.controller()メソッドは、バインドターゲットとコントローラ定義オブジェクトの2つが必須です。';
 	errMsgMap[ERR_CODE_CONTROLLER_REJECTED_BY_USER] = 'コントローラ"{0}"の初期化処理がユーザによって中断されました。';
 	errMsgMap[ERR_CODE_BIND_NOT_NODE] = 'コントローラ"{0}"のバインド対象がノードではありません。バインド対象に指定できるのはノードかdocumentオブジェクトのみです。';
-
+	errMsgMap[ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER] = 'ルートエレメントの設定されていないコントローラのメソッド{0}は実行できません。';
+	errMsgMap[ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER] = 'disposeされたコントローラのメソッド{0}は実行できません。';
+	errMsgMap[ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND] = 'unbind()メソッドは__constructから呼ぶことはできません。';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -179,6 +187,7 @@
 	var endsWith = h5.u.str.endsWith;
 	var format = h5.u.str.format;
 	var argsToArray = h5.u.obj.argsToArray;
+	var isJQueryObject = h5.u.obj.isJQueryObject;
 
 	/**
 	 * マウス/タッチイベントについてh5track*イベントをトリガしたかどうかを管理するため、イベントを格納する配列
@@ -482,7 +491,7 @@
 	 * @param {String} eventName イベント名
 	 * @returns {Boolean} jQuery.bindを使って要素にイベントをバインドするかどうか
 	 */
-	function isBindRequested(eventName) {
+	function isBindRequestedEvent(eventName) {
 		return BIND_REQUESTED_REGEXP.test(eventName);
 	}
 
@@ -751,7 +760,7 @@
 		var bindMap = controller.__controllerContext.cache.bindMap;
 		var doc = getDocumentOf(controller.rootElement);
 		for ( var p in bindMap) {
-			var bindObjects = createBindObjects(controller, bindMap[p]);
+			var bindObjects = createBindObjects(controller, bindMap[p], controller[p]);
 			for (var i = 0, l = bindObjects.length; i < l; i++) {
 				bindByBindObject(bindObjects[i], doc);
 			}
@@ -764,14 +773,13 @@
 	 * @private
 	 * @param {Controller} controller コントローラ
 	 * @param {Object} eventHandlerInfo バインドマップに登録されているイベントハンドラの情報
-	 * @param {Function} directFunction 動的に(onメソッド)追加されるイベントハンドラの場合はハンドラを第3引数に指定
+	 * @param {Function} func イベントハンドラ
 	 * @returns {Object[]} バインドオブジェクトの配列
 	 */
-	function createBindObjects(controller, eventHandlerInfo, directFunction) {
+	function createBindObjects(controller, eventHandlerInfo, func) {
 		var selector = eventHandlerInfo.selector;
 		var eventName = eventHandlerInfo.eventName;
 		// ハンドラを取得(アスペクト適用済み)
-		var func = directFunction || controller[eventHandlerInfo.propertyKey];
 		// この関数の戻り値になるバインドオブジェクトの配列
 		// 結果は必ず配列になるようにする
 		var bindObjects;
@@ -812,8 +820,8 @@
 			// handlerをラップ
 			wrapHandler(bindObject);
 			// eventHandlerInfoから、bindObjに必要なものを持たせる
-			bindObject.bindRequested = eventHandlerInfo.bindRequested;
-			bindObject.global = eventHandlerInfo.global;
+			bindObject.isBindRequested = eventHandlerInfo.isBindRequested;
+			bindObject.isGlobal = eventHandlerInfo.isGlobal;
 			bindObject.bindTarget = eventHandlerInfo.bindTarget;
 			// コントローラを持たせる
 			bindObject.controller = controller;
@@ -835,8 +843,8 @@
 		var eventName = bindObj.eventName;
 		var handler = bindObj.handler;
 
-		var useBind = bindObj.bindRequested;
-		var isGlobal = bindObj.global;
+		var useBind = bindObj.isBindRequested;
+		var isGlobal = bindObj.isGlobal;
 		var bindTarget = bindObj.bindTarget;
 
 		if (bindTarget) {
@@ -901,14 +909,15 @@
 	 * @private
 	 * @param {Object} bindObj バインドオブジェクト
 	 * @param {Document} doc documentオブジェクト
+	 * @param {Boolean} shouldNotUnregist unbindHandlerListから指定されたバインドオブジェクトを削除しない時にtrueを指定する
 	 */
-	function unbindByBindObject(bindObj, doc) {
+	function unbindByBindObject(bindObj, doc, shouldNotUnregist) {
 		var controller = bindObj.controller;
 		var rootElement = controller.rootElement;
 		var selector = bindObj.selector;
 		var handler = bindObj.handler;
 		var eventName = bindObj.eventName;
-		var isGlobal = bindObj.global;
+		var isGlobal = bindObj.isGlobal;
 		var bindTarget = bindObj.bindTarget;
 		if (bindTarget) {
 			// オブジェクトまたは直接バインド指定されていた場合(===バインド時にbindメソッドを使った場合)は直接unbind
@@ -921,6 +930,11 @@
 			$(doc).undelegate(selector, eventName, handler);
 		} else {
 			$(rootElement).undelegate(selector, eventName, handler);
+		}
+		if (!shouldNotUnregist) {
+			// アンバインドハンドラリストから削除
+			var unbindHandlerList = controller.__controllerContext.unbindHandlerList;
+			unbindHandlerList.splice($.inArray(bindObj, unbindHandlerList), 1);
 		}
 	}
 
@@ -943,7 +957,7 @@
 
 		for (var i = 0, l = unbindHandlerList.length; i < l; i++) {
 			var bindObj = unbindHandlerList[i];
-			unbindByBindObject(bindObj, doc);
+			unbindByBindObject(bindObj, doc, true);
 		}
 		// アンバインドハンドラリストを空にする
 		controller.__controllerContext.unbindHandlerList = [];
@@ -982,12 +996,8 @@
 					// ライフサイクルイベントの呼び出しで例外が投げられた
 					fwLogger.error(FW_LOG_INIT_CONTROLLER_THROWN_ERROR, controllerName, funcName);
 
-					// 同じrootControllerを持つ他の子のdisposeによって、
-					// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
-					controller.rootController && controller.rootController.dispose(arguments);
-
-					// dispose処理が終わったら例外を投げる
-					throw e;
+					// controllerをdispose
+					disposeController(controller, e);
 				}
 			}
 			if (ret && isFunction(ret.done) && isFunction(ret.fail)) {
@@ -1001,14 +1011,12 @@
 							fwLogger.error(FW_LOG_INIT_CONTROLLER_ERROR,
 									controller.rootController.__name);
 
-							var failReason = createRejectReason(
+							var rejectReason = createRejectReason(
 									ERR_CODE_CONTROLLER_REJECTED_BY_USER, controllerName,
 									argsToArray(arguments));
 
-							// 同じrootControllerを持つ他の子のdisposeによって、
-							// controller.rootControllerがnullになっている場合があるのでそのチェックをしてからdisposeする
-							controller.rootController
-									&& controller.rootController.dispose(failReason);
+							// controllerをdispose
+							disposeController(controller.rootController, null, rejectReason);
 						});
 			} else {
 				// callbackを実行
@@ -1081,8 +1089,8 @@
 	 */
 	function createCallbackForInit(controller) {
 		return function() {
-			// disopseされていたら何もしない。
-			if (isDisposing(controller)) {
+			// disopseまたはunbindされていたら何もしない。
+			if (isUnbinding(controller)) {
 				return;
 			}
 			controller.isInit = true;
@@ -1115,15 +1123,15 @@
 				});
 			} catch (e) {
 				// エラーが起きたらコントローラをdispose
-				controller.rootController.dispose(e);
+				disposeController(controller, e);
 				return;
 			}
 
 			// resolveして、次のコールバックがあれば次を実行
 			initDfd.resolveWith(controller);
 
-			// resolveして呼ばれたコールバック内(子の__init)でdisposeされたかどうかチェック
-			if (isDisposing(controller)) {
+			// resolveして呼ばれたコールバック内(子の__init)でunbindまたはdisposeされたかチェック
+			if (isUnbinding(controller)) {
 				return;
 			}
 
@@ -1153,8 +1161,8 @@
 	 */
 	function createCallbackForPostInit(controller) {
 		return function() {
-			// disopseされていたら何もしない。
-			if (isDisposing(controller)) {
+			// disopseまたはunbindされていたら何もしない。
+			if (isUnbinding(controller)) {
 				return;
 			}
 			controller.isPostInit = true;
@@ -1162,8 +1170,12 @@
 			// FW、ユーザともに使用しないので削除
 			delete controller.__controllerContext.postInitDfd;
 			postInitDfd.resolveWith(controller);
+			// resolveして呼ばれたコールバック内でunbindまたはdisposeされたかチェック
+			if (isUnbinding(controller)) {
+				return;
+			}
 
-			if (!isDisposed(controller) && controller.__controllerContext.isRoot) {
+			if (controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば次の処理
 				// イベントハンドラのバインド
 				doForEachControllerGroups(controller, function(c, parent, prop) {
@@ -1172,10 +1184,6 @@
 							&& parent.__meta[prop].useHandlers;
 					if (useHandlers === false) {
 						// 親のuseHandlersでfalseが指定されていた場合は何もしない
-						return;
-					}
-					// rootElementに値が無ければバインドしない(unbindされた場合等)
-					if (!c.rootElement) {
 						return;
 					}
 					bindByBindMap(c);
@@ -1195,8 +1203,8 @@
 	 */
 	function createCallbackForReady(controller) {
 		return function() {
-			// disopseされていたら何もしない。
-			if (isDisposing(controller)) {
+			// disopseまたはunbindされていたら何もしない。
+			if (isUnbinding(controller)) {
 				return;
 			}
 			controller.isReady = true;
@@ -1205,8 +1213,11 @@
 			// FW、ユーザともに使用しないので削除
 			delete controller.__controllerContext.readyDfd;
 			readyDfd.resolveWith(controller);
-
-			if (!isDisposed(controller) && controller.__controllerContext.isRoot) {
+			// resolveして呼ばれたコールバック内でunbindまたはdisposeされたかチェック
+			if (isUnbinding(controller)) {
+				return;
+			}
+			if (controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば全ての処理が終了したことを表すイベント"h5controllerready"をトリガ
 				if (!controller.rootElement || !controller.isInit || !controller.isPostInit
 						|| !controller.isReady) {
@@ -1761,7 +1772,8 @@
 			controllers.push(controller);
 		}
 
-		// managed=falseの場合、コントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない
+		// managed!==falseの場合のみh5controllerboundをトリガ
+		// (managedがfalseならコントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない)
 		if (managed !== false) {
 			// h5controllerboundイベントをトリガ.
 			$(controller.rootElement).trigger('h5controllerbound', controller);
@@ -1809,7 +1821,7 @@
 			templateDfd.resolve();
 			c.__controllerContext.templatePromise = templateDfd.promise();
 			c.__controllerContext.initDfd = getDeferred();
-			c.initPromises = c.__controllerContext.initDfd.promise();
+			c.initPromise = c.__controllerContext.initDfd.promise();
 			c.__controllerContext.postInitDfd = getDeferred();
 			c.postInitPromise = c.__controllerContext.postInitDfd.promise();
 			c.__controllerContext.readyDfd = getDeferred();
@@ -1817,6 +1829,8 @@
 			c.isInit = false;
 			c.isPostInit = false;
 			c.isReady = false;
+			c.__controllerContext.isUnbinding = false;
+			c.__controllerContext.isUnbinded = false;
 			c.__controllerContext.args = param;
 		});
 	}
@@ -1852,10 +1866,17 @@
 	 */
 	function executeLifeEndChain(controller, funcName) {
 		var promises = [];
-		// 子から順に__unbind,__disposeの実行
+		var error = null;
+		// 深さ優先で__unbind,__disposeの実行
 		doForEachControllerGroupsDepthFirst(controller, function(c) {
 			if (c[funcName] && isFunction(c[funcName])) {
-				var ret = c[funcName]();
+				try {
+					var ret = c[funcName]();
+				} catch (e) {
+					// エラーが起きても__unbind,__disposeの実行のチェーンは継続させる
+					// 最初に起きたエラーを覚えておいて、それ以降に起きたエラーは無視
+					error = error || e;
+				}
 				if (isPromise(ret)) {
 					var df = h5.async.deferred();
 					ret.always(function() {
@@ -1866,6 +1887,11 @@
 				}
 			}
 		});
+		if (error) {
+			// __unbind,__disposeで例外が発生した場合はエラーを投げる
+			// (executeLifeEndChainの呼び出し元で拾っている)
+			throw error;
+		}
 		return promises;
 	}
 
@@ -1891,16 +1917,153 @@
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
+	 * @param {Error} e エラーオブジェクト(正常時は無し)。エラーオブジェクトが指定されている場合は、dispose処理後にthrowする。
+	 * @param {Object} rejectReason プロミスのfailハンドラに渡すオブジェクト(正常時は無し)
+	 * @returns promise(ただしエラーがある場合はdispose処理が終わった後にエラーを投げて終了します)
 	 */
-	function disposeController(controller) {
-		// 子から順にview.clearとnullifyの実行
-		doForEachControllerGroupsDepthFirst(controller, function(c) {
-			// viewのclearとnullify
-			if (c.view && c.view.__view) {
-				c.view.clear();
+	function disposeController(controller, e, rejectReason) {
+		// rootControllerの取得
+		// rootControllerが設定される前(__construct内からdispose()を呼び出した場合)のことを考慮して、
+		// rootControllerを取得する前にisRootを見てtrueならcontrollerをルートコントローラとみなす
+		var rootController = controller.__controllerContext
+				&& (controller.__controllerContext.isRoot ? controller : controller.rootController);
+
+		if (!rootController) {
+			// rootControllerが無い場合、
+			// エラーオブジェクトがあればエラーを投げて終了。エラーのない場合は何もしないで終了。
+			if (e) {
+				// ライフサイクルの中でdispose()して、__unbindや__disposeでエラーが出た時に、
+				// ライフサイクル呼び出しを包んでいるtry-catchのcatch節から再度disposeControllerが呼ばれる。
+				// その時に、dispose()の呼び出しで起きたエラーを飲まないようにするため、ここで再スローする。
+				throw e;
 			}
-			nullify(c);
+			return;
+		}
+		if (isDisposing(rootController)) {
+			// コントローラのdispose中、dispose済みのコントローラについて呼ばれた場合は何もしない
+			return;
+		}
+
+		rootController.__controllerContext.isDisposing = 1;
+
+		// unbindの実行
+		try {
+			unbindController(rootController, rejectReason || e);
+		} catch (unbindError) {
+			// __unbindの実行でエラーが起きた場合
+			// 既に投げるエラーがある場合はここで発生したエラーは飲む(初出のエラーを投げるため)
+			// ここで発生したエラーが初出の場合は、ここで起きたエラーを最後に投げる
+			// (一番最初に起きた例外のみスローする。変数eには初出のエラーを格納する)
+			e = e || unbindError;
+		}
+
+		function cleanup() {
+			// ルートコントローラにisDisposedフラグを立てる
+			// (nullifyされた場合は__controllerContext毎消えるので見えないが、nullifyされない場合にもdisposeが完了したことが分かるようにする)
+			rootController.__controllerContext.isDisposed = 1;
+			// 子から順にview.clearとnullifyの実行
+			doForEachControllerGroupsDepthFirst(rootController, function(c) {
+				// viewのclearとnullify
+				if (c.view && c.view.__view) {
+					c.view.clear();
+				}
+				if (!e && !rejectReason) {
+					// エラーが起きていたらnullifyしない(nullifyをしないことでユーザがエラー時の原因を調べやすくなる)
+					nullify(c);
+				}
+			});
+		}
+
+		// __disposeを実行してからcleanupする
+		var promises;
+		try {
+			promises = executeLifeEndChain(rootController, '__dispose');
+		} catch (error) {
+			// __disposeの実行でエラーが起きた場合
+			// 既に投げるエラーがある場合はそのまま飲むが、そうでない場合はここでキャッチしたエラーを投げる
+			// (一番最初に起きた例外のみスロー)
+			e = e || error;
+		}
+
+		var dfd = rootController.deferred();
+
+		waitForPromises(promises, function() {
+			cleanup();
+			if (!e && !rejectReason) {
+				dfd.resolveWith(rootController);
+				return;
+			}
+			// disposeの返すプロミスをrejectする。
+			// 引数にはエラーオブジェクトまたはrejectReasonを渡す
+			dfd.rejectWith(rootController, [e || rejectReason]);
+			// cleanupが終わったタイミングで、エラーまたはrejectされてdisposeされた場合は、"lifecycleerror"イベントをあげる
+			// detailにエラーオブジェクトまたはfailハンドラに渡した引数をいれる
+			triggerLifecycleerror(rootController, e || rejectReason);
+			if (e) {
+				throw e;
+			}
+		}, null, true);
+		return dfd.promise();
+	}
+
+	/**
+	 * コントローラのアンバインド処理を行います。
+	 *
+	 * @private
+	 * @param {Controller} controller コントローラ
+	 * @param {Object} rejectReason 各Dfdをrejectするときにfailハンドラに渡す引数
+	 */
+	function unbindController(controller, rejectReason) {
+		// 既にunbindされている何もしない
+		if (isUnbinding(controller)) {
+			return;
+		}
+		controller.__controllerContext.isUnbinding = 1;
+
+		// rejectまたはfailされていないdeferredをreject()する
+		// rejectReasonが指定されている場合はrejectReasonをfailハンドラの引数に渡す
+		// rejectReasonは未指定で、エラーオブジェクトが渡されている場合はエラーオブジェクトをfailハンドラの引数に渡す
+		// 正常時(rejectReasonもeもない場合)は、引数なし
+		rejectControllerDfd(controller, rejectReason);
+
+		// __unbindの実行
+		var unbindError;
+		try {
+			executeLifeEndChain(controller, '__unbind');
+		} catch (e) {
+			// エラーが起きたら覚えておく
+			unbindError = e;
+		}
+
+		doForEachControllerGroups(controller, function(c, parent, prop) {
+			// unbind時は__metaのuseHandlersによらずunbind(onで動的に追加されるハンドラもあるため)
+			unbindEventHandlers(c);
 		});
+
+		controller.__controllerContext.unbindList = {};
+
+		// コントローラマネージャの管理対象から外す.
+		var controllers = controllerManager.controllers;
+		var that = controller;
+		controllerManager.controllers = $.grep(controllers, function(controllerInstance) {
+			return controllerInstance !== that;
+		});
+		// h5controllerunboundイベントをトリガ
+		// (コントローラのpostInitまで終わっている、かつ、managedがfalseではない(===h5controllerboundをあげている)場合のみ)
+		if (controller.isPostInit && controller.__controllerContext.managed !== false) {
+			$(controller.rootElement).trigger('h5controllerunbound', controller);
+		}
+
+		// rootElementとview.__view.controllerにnullをセット
+		unbindRootElement(controller);
+
+		// unbind処理が終了したのでunbindedをtrueにする
+		controller.__controllerContext.isUnbinded = 1;
+
+		// __unbindでエラーが投げられていれば再スロー
+		if (unbindError) {
+			throw unbindError;
+		}
 	}
 
 	/**
@@ -1933,7 +2096,7 @@
 	 * @returns {Boolean}
 	 */
 	function isDisposed(controller) {
-		return !controller.__controllerContext;
+		return !controller.__controllerContext || controller.__controllerContext.isDisposed;
 	}
 
 	/**
@@ -1948,6 +2111,21 @@
 	 */
 	function isDisposing(controller) {
 		return isDisposed(controller) || controller.__controllerContext.isDisposing;
+	}
+
+	/**
+	 * 指定されたコントローラがunbind処理中またはunbind済みかどうかを返します
+	 * <p>
+	 * すでにdisposeされている場合はアンバインド済みなのでtrueを返します
+	 * </p>
+	 *
+	 * @private
+	 * @param {Controller} controller コントローラ
+	 * @returns {Boolean}
+	 */
+	function isUnbinding(controller) {
+		return isDisposed(controller) || controller.__controllerContext.isUnbinding
+				|| controller.__controllerContext.isUnbinded;
 	}
 
 	/**
@@ -2132,20 +2310,20 @@
 	 */
 	function createEventHandlerInfo(selector, eventName, controller, prop) {
 		// selectorが文字列じゃない場合はターゲットを直接指定している
-		var direct = !isString(selector);
-		var bindTarget = direct ? selector : null;
+		var isSelector = isString(selector);
+		var bindTarget = isSelector ? null : selector;
 
-		selector = direct ? null : $.trim(selector);
+		selector = isSelector ? $.trim(selector) : null;
 		eventName = $.trim(eventName);
 
-		// ターゲットが直接指定されているならglobalはtrue
-		var global = direct || isGlobalSelector(selector);
-		var bindRequested = isBindRequested(eventName);
-		if (bindRequested) {
+		// ターゲットが直接指定されているならisGlobalはtrue
+		var isGlobal = !isSelector || isGlobalSelector(selector);
+		var isBindRequested = isBindRequestedEvent(eventName);
+		if (isBindRequested) {
 			eventName = $.trim(trimBindEventBracket(eventName));
 		}
 
-		if (!direct && global) {
+		if (isSelector && isGlobal) {
 			var selector = trimGlobalSelectorBracket(selector);
 			// selectorに{this}が指定されていたらエラー
 			if (selector === 'this') {
@@ -2158,8 +2336,8 @@
 		return {
 			selector: selector,
 			bindTarget: bindTarget,
-			global: global,
-			bindRequested: bindRequested,
+			isGlobal: isGlobal,
+			isBindRequested: isBindRequested,
 			eventName: eventName,
 			propertyKey: prop
 		};
@@ -2222,27 +2400,27 @@
 				// 整形したものを取得
 				var selector = info.selector;
 				var eventName = info.eventName;
-				var global = info.global;
-				var bindRequested = info.bindRequested;
+				var isGlobal = info.isGlobal;
+				var isBindRequested = info.isBindRequested;
 
-				// 同じセレクタ、同じイベントハンドラに同じ指定(global,bindRequested)でイベントハンドラが指定されていたらエラー
+				// 同じセレクタ、同じイベントハンドラに同じ指定(isGlobal,isBindRequested)でイベントハンドラが指定されていたらエラー
 				if (!checkBindMap[selector]) {
 					checkBindMap[selector] = {};
 				}
 				if (!checkBindMap[selector][eventName]) {
 					checkBindMap[selector][eventName] = {};
 				}
-				if (!checkBindMap[selector][eventName][global]) {
-					checkBindMap[selector][eventName][global] = {};
+				if (!checkBindMap[selector][eventName][isGlobal]) {
+					checkBindMap[selector][eventName][isGlobal] = {};
 				}
-				if (checkBindMap[selector][eventName][global][bindRequested]) {
+				if (checkBindMap[selector][eventName][isGlobal][isBindRequested]) {
 					throwFwError(ERR_CODE_SAME_EVENT_HANDLER, [controllerDef.__name, selector,
 							eventName], {
 						controllerDef: controllerDef
 					});
 				} else {
 					// フラグを立てる
-					checkBindMap[selector][eventName][global][bindRequested] = 1;
+					checkBindMap[selector][eventName][isGlobal][isBindRequested] = 1;
 				}
 
 				bindMap[prop] = info;
@@ -2313,15 +2491,15 @@
 			// 同一インスタンスならtrue
 			return true;
 		}
-		var t1IsJQuery = h5.u.obj.isJQueryObject(target1);
-		var t2IsJQuery = h5.u.obj.isJQueryObject(target2);
-		if (!t1IsJQuery && !t2IsJQuery) {
+		var isT1Jquery = isJQueryObject(target1);
+		var isT2Jquery = isJQueryObject(target2);
+		if (!isT1Jquery && !isT2Jquery) {
 			// どちらもjQueryオブジェクトでないならfalse;
 			return false;
 		}
 		// どちらかがjQueryオブジェクトなら配列にして比較
-		var t1Ary = t1IsJQuery ? target1.toArray() : [target1];
-		var t2Ary = t2IsJQuery ? target2.toArray() : [target2];
+		var t1Ary = isT1Jquery ? target1.toArray() : [target1];
+		var t2Ary = isT2Jquery ? target2.toArray() : [target2];
 		if (t1Ary.length !== t2Ary.length) {
 			// 長さが違うならfalse
 			return false;
@@ -2332,6 +2510,52 @@
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * コントローラをエラー終了状態にして、lifecycleerrorイベントをトリガする
+	 *
+	 * @param {Controller} rootController ルートコントローラ
+	 * @param {Error||rejectReason} detail 例外オブジェクト、またはRejectReason
+	 */
+	function triggerLifecycleerror(rootController, detail) {
+		// isErrorフラグを立てて、このインスタンスでbind,unbind,disposeを呼べないようにする
+		rootController.__controllerContext.isError = 1;
+		controllerManager.dispatchEvent({
+			type: 'lifecycleerror',
+			detail: detail,
+			rootController: rootController
+		});
+	}
+
+	/**
+	 * 渡されたコントローラにルートエレメントが設定されていなかったらエラーを投げる
+	 * <p>
+	 * unbindされたコントローラ及び__construct時に呼べないメソッドの先頭で呼び出して使用する
+	 * </p>
+	 *
+	 * @param {Controller} controller
+	 * @param {String} method メソッド名
+	 */
+	function throwErrorIfNoExistsRootElement(controller, method) {
+		if (!controller.rootElement) {
+			throwFwError(ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER, method);
+		}
+	}
+
+	/**
+	 * 渡されたコントローラがdisposeされていたら、第２引数に指定されたメソッド名を含めたエラーを投げる
+	 * <p>
+	 * disposeされたコントローラで呼べないメソッドの先頭で呼び出して使用する
+	 * </p>
+	 *
+	 * @param {Controller} controller
+	 * @param {String} method メソッド名
+	 */
+	function throwErrorIfIsDisposed(controller, method) {
+		if (isDisposed(controller)) {
+			throwFwError(ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER, method);
+		}
 	}
 
 	// =========================================================================
@@ -2739,6 +2963,8 @@
 		 * @memberOf Controller
 		 */
 		$find: function(selector) {
+			throwErrorIfIsDisposed(this, '$find');
+			throwErrorIfNoExistsRootElement(this, '$find');
 			return $(this.rootElement).find(selector);
 		},
 
@@ -2749,6 +2975,7 @@
 		 * @memberOf Controller
 		 */
 		deferred: function() {
+			throwErrorIfIsDisposed(this, 'deferred');
 			return getDeferred();
 		},
 
@@ -2775,6 +3002,8 @@
 		 * @memberOf Controller
 		 */
 		trigger: function(event, parameter) {
+			throwErrorIfIsDisposed(this, 'trigger');
+			throwErrorIfNoExistsRootElement(this, 'trigger');
 			// eventNameが文字列ならイベントを作って投げる
 			// オブジェクトの場合はそのまま渡す。
 			var ev = isString(event) ? $.Event(event) : event;
@@ -2789,7 +3018,10 @@
 		 * @return {Function} コンテキスト(this)をコントローラに変更した関数
 		 * @memberOf Controller
 		 */
-		own: own,
+		own: function(/* var_args */) {
+			throwErrorIfIsDisposed(this, 'own');
+			return own.apply(this, argsToArray(arguments));
+		},
 
 		/**
 		 * 指定された関数に対して、コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えて実行する関数を返します。
@@ -2798,7 +3030,10 @@
 		 * @return {Function} コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えた関数
 		 * @memberOf Controller
 		 */
-		ownWithOrg: ownWithOrg,
+		ownWithOrg: function(/* var_args */) {
+			throwErrorIfIsDisposed(this, 'ownWithOrg');
+			return ownWithOrg.apply(this, argsToArray(arguments));
+		},
 
 		/**
 		 * コントローラを要素へ再度バインドします。子コントローラでは使用できません。
@@ -2811,8 +3046,9 @@
 		 * @returns {Controller} コントローラ.
 		 */
 		bind: function(targetElement, param) {
+			throwErrorIfIsDisposed(this, 'bind');
 			if (!this.__controllerContext.isRoot) {
-				throwFwError(ERR_CODE_BIND_ROOT_ONLY);
+				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
 
 			var target = getBindTarget(targetElement, this);
@@ -2830,65 +3066,35 @@
 		 * @memberOf Controller
 		 */
 		unbind: function() {
+			throwErrorIfIsDisposed(this, 'unbind');
+			throwErrorIfNoExistsRootElement(this, 'unbind');
 			if (!this.__controllerContext.isRoot) {
-				throwFwError(ERR_CODE_BIND_ROOT_ONLY);
+				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
-
-			executeLifeEndChain(this, '__unbind');
-
-			doForEachControllerGroups(this, function(c, parent, prop) {
-				// 親のuseHandlersでfalseが指定されていた場合は何もしない
-				var useHandlers = parent && parent.__meta && parent.__meta[prop]
-						&& parent.__meta[prop].useHandlers;
-				if (useHandlers === false) {
-					return;
-				}
-				unbindEventHandlers(c);
-			});
-
-			this.__controllerContext.unbindList = {};
-
-			// コントローラマネージャの管理対象から外す.
-			var controllers = controllerManager.controllers;
-			var that = this;
-			controllerManager.controllers = $.grep(controllers, function(controllerInstance) {
-				return controllerInstance !== that;
-			});
-
-			// h5controllerunboundイベントをトリガ
-			$(this.rootElement).trigger('h5controllerunbound', this);
-
-			// rootElementとview.__view.controllerにnullをセット
-			unbindRootElement(this);
+			if (!this.rootController) {
+				throwFwError(ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND);
+			}
+			try {
+				unbindController(this);
+			} catch (e) {
+				// __unbindの実行でエラーが出たらdisposeする
+				disposeController(this, e);
+			}
 		},
 
 		/**
 		 * コントローラのリソースをすべて削除します。<br />
 		 * Controller#unbind() の処理を包含しています。
 		 *
-		 * @param {Any} [errorObj] disposeの際にrejectするdeferredのpromiseのfailハンドラに渡すオブジェクト
 		 * @returns {Promise} Promiseオブジェクト
 		 * @memberOf Controller
 		 */
-		dispose: function(errorObj) {
-			// disopseされていたら何もしない。
-			if (isDisposing(this)) {
-				return;
+		dispose: function() {
+			throwErrorIfIsDisposed(this, 'dispose');
+			if (!this.__controllerContext.isRoot) {
+				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
-			this.__controllerContext.isDisposing = 1;
-
-			// rejectまたはfailされていないdeferredをreject()する。
-			rejectControllerDfd(this, errorObj);
-
-			var dfd = this.deferred();
-			this.unbind();
-			var that = this;
-			var promises = executeLifeEndChain(this, '__dispose');
-			waitForPromises(promises, function() {
-				disposeController(that);
-				dfd.resolve();
-			}, null, true);
-			return dfd.promise();
+			return disposeController(this);
 		},
 
 		/**
@@ -2908,6 +3114,8 @@
 		 * @memberOf Controller
 		 */
 		triggerIndicator: function(opt) {
+			throwErrorIfIsDisposed(this, 'triggerIndicator');
+			throwErrorIfNoExistsRootElement(this, 'triggerIndicator');
 			var args = {
 				indicator: null
 			};
@@ -2956,6 +3164,8 @@
 		 * @see Indicator
 		 */
 		indicator: function(opt) {
+			throwErrorIfIsDisposed(this, 'indicator');
+			throwErrorIfNoExistsRootElement(this, 'indicator');
 			return callIndicator(this, opt);
 		},
 
@@ -2965,6 +3175,7 @@
 		 * @memberOf Controller
 		 */
 		enableListeners: function() {
+			throwErrorIfIsDisposed(this, 'enableListeners');
 			setExecuteListenersFlag(this, true);
 		},
 
@@ -2974,6 +3185,7 @@
 		 * @memberOf Controller
 		 */
 		disableListeners: function() {
+			throwErrorIfIsDisposed(this, 'disableListeners');
 			setExecuteListenersFlag(this, false);
 		},
 
@@ -2993,10 +3205,11 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwError: function(msgOrErrObj, var_args) {
+			throwErrorIfIsDisposed(this, 'throwError');
 			//引数の個数チェックはthrowCustomErrorで行う
 			var args = argsToArray(arguments);
 			args.unshift(null);
-			this.throwCustomError.apply(null, args);
+			this.throwCustomError.apply(this, args);
 		},
 
 		/**
@@ -3018,6 +3231,7 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwCustomError: function(customType, msgOrErrObj, var_args) {
+			throwErrorIfIsDisposed(this, 'throwCustomError');
 			if (arguments.length < 2) {
 				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
@@ -3051,6 +3265,8 @@
 		 * @param listener {Function} ハンドラ
 		 */
 		on: function(target, eventName, listener) {
+			throwErrorIfIsDisposed(this, 'on');
+			throwErrorIfNoExistsRootElement(this, 'on');
 			// バインドオブジェクトの作成
 			var info = createEventHandlerInfo(target, eventName, this);
 			var bindObjects = createBindObjects(this, info, listener);
@@ -3075,6 +3291,8 @@
 		 * @param listener {Function} ハンドラ
 		 */
 		off: function(target, eventName, listener) {
+			throwErrorIfIsDisposed(this, 'off');
+			throwErrorIfNoExistsRootElement(this, 'off');
 			// 指定された条件にマッチするbindObjをunbindHandlerListから探して取得する
 			var info = createEventHandlerInfo(target, eventName, this);
 			var unbindHandlerList = this.__controllerContext.unbindHandlerList;
@@ -3083,8 +3301,8 @@
 			var bindTarget = info.bindTarget;
 			var eventName = info.eventName;
 			var selector = info.selector;
-			var global = info.global;
-			var bindRequested = info.bindRequested;
+			var isGlobal = info.isGlobal;
+			var isBindRequested = info.isBindRequested;
 
 			var index = 0;
 			for (var l = unbindHandlerList.length; index < l; index++) {
@@ -3098,9 +3316,9 @@
 						break;
 					}
 				} else {
-					// offでセレクタを指定された場合、セレクタと、グローバル指定かどうかと、bindRequestedとoriginalHandlerを比較
-					if (selector === bindObj.selector && global === bindObj.global
-							&& bindRequested === bindObj.bindRequested
+					// offでセレクタを指定された場合、セレクタと、グローバル指定かどうかと、isBindRequestedとoriginalHandlerを比較
+					if (selector === bindObj.selector && isGlobal === bindObj.isGlobal
+							&& isBindRequested === bindObj.isBindRequested
 							&& listener === bindObj.originalHandler) {
 						matchBindObj = bindObj;
 						break;
@@ -3109,8 +3327,6 @@
 			}
 			if (matchBindObj) {
 				unbindByBindObject(matchBindObj, getDocumentOf(this.rootElement));
-				// アンバインドハンドラリストから削除
-				unbindHandlerList.splice(index, 1);
 			}
 		}
 	});
@@ -3140,60 +3356,67 @@
 			event.stopPropagation();
 		});
 	}
-	$.extend(ControllerManager.prototype, {
-		/**
-		 * 現在動作しているすべてのコントローラのインスタンスの配列を返します。<br>
-		 * 子コントローラは含まれません。すなわち、ルートコントローラのみが含まれます。
-		 *
-		 * @returns {Controller[]} コントローラ配列
-		 * @memberOf ControllerManager
-		 */
-		getAllControllers: function() {
-			return this.controllers;
-		},
+	// eventDispatcherをmixin
+	h5.mixin.eventDispatcher.mix(ControllerManager.prototype);
+	$
+			.extend(
+					ControllerManager.prototype,
+					{
+						/**
+						 * 現在動作しているすべてのコントローラのインスタンスの配列を返します。<br>
+						 * 子コントローラは含まれません。すなわち、ルートコントローラのみが含まれます。
+						 *
+						 * @returns {Controller[]} コントローラ配列
+						 * @memberOf ControllerManager
+						 */
+						getAllControllers: function() {
+							return this.controllers;
+						},
 
-		/**
-		 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
-		 * オプションを指定すると、子孫要素も検索対象に含めたり、特定の名前のコントローラだけを検索対象にしたりすることができます。<br>
-		 * なお、戻り値に含まれるのはルートコントローラのみです。
-		 *
-		 * @param {String|Element|jQuery} rootElement 検索対象の要素
-		 * @param {Object} [option] オプション（ver.1.1.7以降）
-		 * @param {Boolean} [option.deep=false] 子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.7以降)
-		 * @param {String|String[]} [option.name=null]
-		 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.7以降)
-		 * @returns {Controller[]} バインドされているコントローラの配列
-		 * @memberOf ControllerManager
-		 */
-		getControllers: function(rootElement, option) {
-			var deep = option && option.deep;
-			var names = option && option.name ? wrapInArray(option.name) : null;
+						/**
+						 * 指定した要素にバインドされているすべてのコントローラを返します。バインドされているコントローラがない場合は空の配列が返ります。<br>
+						 * オプションを指定すると、子孫要素も検索対象に含めたり、特定の名前のコントローラだけを検索対象にしたりすることができます。<br>
+						 * なお、戻り値に含まれるのはルートコントローラのみです。
+						 *
+						 * @param {String|Element|jQuery} rootElement 検索対象の要素
+						 * @param {Object} [option] オプション（ver.1.1.7以降）
+						 * @param {Boolean} [option.deep=false]
+						 *            子孫要素にバインドされているコントローラも含めるかどうか(ver.1.1.7以降)
+						 * @param {String|String[]} [option.name=null]
+						 *            指定された場合、この名前のコントローラのみを戻り値に含めます。配列で複数指定することも可能です。(ver.1.1.7以降)
+						 * @returns {Controller[]} バインドされているコントローラの配列
+						 * @memberOf ControllerManager
+						 */
+						getControllers: function(rootElement, option) {
+							var deep = option && option.deep;
+							var names = option && option.name ? wrapInArray(option.name) : null;
 
-			var seekRoot = $(rootElement)[0];
-			var controllers = this.controllers;
-			var ret = [];
-			for (var i = 0, len = controllers.length; i < len; i++) {
-				var controller = controllers[i];
+							var seekRoot = $(rootElement)[0];
+							var controllers = this.controllers;
+							var ret = [];
+							for (var i = 0, len = controllers.length; i < len; i++) {
+								var controller = controllers[i];
 
-				if (names && $.inArray(controller.__name, names) === -1) {
-					continue;
-				}
+								if (names && $.inArray(controller.__name, names) === -1
+										|| !controller.rootElement) {
+									continue;
+								}
 
-				if (seekRoot === controller.rootElement) {
-					ret.push(controller);
-				} else if (deep
-						&& getDocumentOf(seekRoot) === getDocumentOf(controller.rootElement)
-						&& $.contains(seekRoot, controller.rootElement)) {
-					// ownerDocumentが同じ場合に$.contais()の判定を行う
-					// (IE8でwindow.open()で開いたポップアップウィンドウ内の要素と
-					// 元ページ内の要素で$.contains()の判定を行うとエラーになるため。)
-					// また、$.contains()は自分と比較した場合はfalse
-					ret.push(controller);
-				}
-			}
-			return ret;
-		}
-	});
+								if (seekRoot === controller.rootElement) {
+									ret.push(controller);
+								} else if (deep
+										&& getDocumentOf(seekRoot) === getDocumentOf(controller.rootElement)
+										&& $.contains(seekRoot, controller.rootElement)) {
+									// ownerDocumentが同じ場合に$.contais()の判定を行う
+									// (IE8でwindow.open()で開いたポップアップウィンドウ内の要素と
+									// 元ページ内の要素で$.contains()の判定を行うとエラーになるため。)
+									// また、$.contains()は自分と比較した場合はfalse
+									ret.push(controller);
+								}
+							}
+							return ret;
+						}
+					});
 
 	/**
 	 * キャッシュマネージャクラス
@@ -3485,7 +3708,7 @@
 			// disposeする
 			// 同じrootControllerを持つ他の子コントローラにdisposeされているかどうか
 			// (controller.rootControllerがnullになっていないか)をチェックをしてからdisposeする
-			controller.rootController && controller.rootController.dispose(e);
+			disposeController(controller, null, e);
 		});
 
 		// 子コントローラをコントローラ化して持たせる
@@ -3520,14 +3743,21 @@
 		if (isRoot) {
 			// __constructを実行。ここまでは完全に同期処理になる。
 			// 子コントローラのバインドが終わってから、親→子の順番で実行する
-			var isDisposed = false;
+			var isDisposedInConstruct = false;
 			doForEachControllerGroups(controller, function(c, parent, prop) {
 				// __construct呼び出し
-				c.__construct && c.__construct(createInitializationContext(c));
+				try {
+					c.__construct && c.__construct(createInitializationContext(c));
+				} catch (e) {
+					// この時点ではrootControllerは設定されておらず、
+					// disposeControllerはrootControllerを取得できないと何もしないので
+					// ルートコントローラを渡してdisposeする
+					disposeController(controller, e);
+				}
 
 				if (isDisposing(c)) {
 					// 途中(__constructの中)でdisposeされたら__constructの実行を中断
-					isDisposed = true;
+					isDisposedInConstruct = true;
 					return false;
 				}
 
@@ -3542,7 +3772,7 @@
 					c.rootController = parent.rootController;
 				}
 			});
-			if (isDisposed) {
+			if (isDisposedInConstruct) {
 				// __constructでdisposeが呼ばれたらnullを返す
 				// (h5.core.controllerの戻り値がnullになる)
 				return null;

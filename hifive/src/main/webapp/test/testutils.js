@@ -17,6 +17,10 @@
  */
 
 (function() {
+	// --------- private --------
+	var $prevOutputs = null;
+	var $nextOutputs = null;
+
 	// --------- settings ---------
 	/**
 	 * @name testutils.settings
@@ -181,7 +185,7 @@
 	/**
 	 * アスペクトを削除する
 	 */
-	function cleanAllAspects(){
+	function cleanAllAspects() {
 		h5.settings.aspects = null;
 	}
 
@@ -325,6 +329,40 @@
 		return;
 	}
 
+	/**
+	 * 現在実行中のテスト結果以外のテスト結果要素(li要素)を削除する
+	 */
+	function unloadOutput() {
+		if ($prevOutputs || $nextOutputs) {
+			// 既にprev,nextの要素を取得済み(=unloadOutputが呼ばれている)ならエラー
+			throw new Error('unloadOutput()を連続で呼ぶことはできません。unloadOutput()を実行した後に実行してください。');
+		}
+		var $current = $('#' + QUnit.config.current.id);
+		// prevAllだと逆順になってしまうためnextUntilで$currentまでのDOMを取得
+		$prevOutputs = QUnit.config.current.id === 'qunit-test-output0' ? $() : $(
+				'#qunit-test-output0').add($('#qunit-test-output0').nextUntil($current));
+		$nextOutputs = $current.nextAll();
+
+		// DOMツリーから削除
+		$prevOutputs.remove();
+		$nextOutputs.remove();
+	}
+
+	/**
+	 * unloadOutput()で削除したテスト結果要素(li要素)を元に戻す
+	 */
+	function loadOutput() {
+		if (!$prevOutputs && !$nextOutputs) {
+			// 既にprev,nextの要素を出力済み(=unloadOutputが呼ばれていないまたはloadOutputが連続で呼ばれた)ならエラー
+			throw new Error('loadOutput()は、unloadOutput()の後に実行してください');
+		}
+		var $current = $('#' + QUnit.config.current.id);
+		$current.before($prevOutputs);
+		$current.after($nextOutputs);
+		$prevOutputs = null;
+		$nextOutputs = null;
+	}
+
 	// ----------- async -----------
 
 	/**
@@ -420,7 +458,9 @@
 		},
 		qunit: {
 			abortTest: abortTest,
-			skipTest: skipTest
+			skipTest: skipTest,
+			unloadOutput: unloadOutput,
+			loadOutput: loadOutput
 		},
 		async: {
 			gate: gate
