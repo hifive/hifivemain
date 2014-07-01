@@ -332,10 +332,10 @@
 	/**
 	 * 現在実行中のテスト結果以外のテスト結果要素(li要素)を削除する
 	 */
-	function unloadOutput() {
+	function stashOutput() {
 		if ($prevOutputs || $nextOutputs) {
-			// 既にprev,nextの要素を取得済み(=unloadOutputが呼ばれている)ならエラー
-			throw new Error('unloadOutput()を連続で呼ぶことはできません。unloadOutput()を実行した後に実行してください。');
+			// 既にprev,nextの要素を取得済み(=stashOutputが呼ばれている)ならエラー
+			throw new Error('stashOutput()を連続で呼ぶことはできません。stashOutput()を実行した後に実行してください。');
 		}
 		var $current = $('#' + QUnit.config.current.id);
 		// prevAllだと逆順になってしまうためnextUntilで$currentまでのDOMを取得
@@ -349,12 +349,12 @@
 	}
 
 	/**
-	 * unloadOutput()で削除したテスト結果要素(li要素)を元に戻す
+	 * stashOutput()で削除したテスト結果要素(li要素)を元に戻す
 	 */
-	function loadOutput() {
+	function unstashOutput() {
 		if (!$prevOutputs && !$nextOutputs) {
-			// 既にprev,nextの要素を出力済み(=unloadOutputが呼ばれていないまたはloadOutputが連続で呼ばれた)ならエラー
-			throw new Error('loadOutput()は、unloadOutput()の後に実行してください');
+			// 既にprev,nextの要素を出力済み(=stashOutputが呼ばれていないまたはunstashOutputが連続で呼ばれた)ならエラー
+			throw new Error('unstashOutput()は、stashOutput()の後に実行してください');
 		}
 		var $current = $('#' + QUnit.config.current.id);
 		$current.before($prevOutputs);
@@ -459,8 +459,8 @@
 		qunit: {
 			abortTest: abortTest,
 			skipTest: skipTest,
-			unloadOutput: unloadOutput,
-			loadOutput: loadOutput
+			stashOutput: stashOutput,
+			unstashOutput: unstashOutput
 		},
 		async: {
 			gate: gate

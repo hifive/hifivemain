@@ -44,8 +44,8 @@ $(function() {
 	var abortTest = testutils.qunit.abortTest;
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;
-	var unloadOutput = testutils.qunit.unloadOutput;
-	var loadOutput = testutils.qunit.loadOutput;
+	var stashOutput = testutils.qunit.stashOutput;
+	var unstashOutput = testutils.qunit.unstashOutput;
 	var createIFrameElement = testutils.dom.createIFrameElement;
 	var skipTest = testutils.qunit.skipTest;
 
@@ -1772,11 +1772,11 @@ $(function() {
 	module('Controller - イベントハンドラ', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
-			unloadOutput();
+			stashOutput();
 		},
 		teardown: function() {
 			clearController();
-			loadOutput();
+			unstashOutput();
 		}
 	});
 
@@ -2225,11 +2225,11 @@ $(function() {
 	module('Controller - イベントハンドラのcontextオブジェクト', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
-			unloadOutput();
+			stashOutput();
 		},
 		teardown: function() {
 			clearController();
-			loadOutput();
+			unstashOutput();
 		}
 	});
 
@@ -2388,12 +2388,12 @@ $(function() {
 					$('#qunit-fixture')
 							.append(
 									'<div id="controllerTest"><div id="parent"><div id="child"></div></div></div>');
-					unloadOutput();
+					stashOutput();
 				},
 				teardown: function() {
 					clearController();
 					h5.settings.listenerElementType = this.originalListenerElementType;
-					loadOutput();
+					unstashOutput();
 				},
 				originalListenerElementType: h5.settings.listenerElementType
 			});
@@ -2499,11 +2499,11 @@ $(function() {
 					$('#qunit-fixture')
 							.append(
 									'<div class="touch"></div><div id="controllerTest"><div id="child1"></div><div class="touch"></div></div>');
-					unloadOutput();
+					stashOutput();
 				},
 				teardown: function() {
 					clearController();
-					loadOutput();
+					unstashOutput();
 				}
 			});
 
@@ -2708,11 +2708,11 @@ $(function() {
 	module('Controller - 動的イベントハンドラ', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
-			unloadOutput();
+			stashOutput();
 		},
 		teardown: function() {
 			clearController();
-			loadOutput();
+			unstashOutput();
 		}
 	});
 
