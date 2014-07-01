@@ -2563,7 +2563,7 @@
 	 * @param {Controller} controller
 	 * @param {String} method メソッド名
 	 */
-	function throwErrorIfNoExistsRootElement(controller, method) {
+	function throwErrorIfNoRootElement(controller, method) {
 		if (!controller.rootElement) {
 			throwFwError(ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER, method);
 		}
@@ -2578,7 +2578,7 @@
 	 * @param {Controller} controller
 	 * @param {String} method メソッド名
 	 */
-	function throwErrorIfIsDisposed(controller, method) {
+	function throwErrorIfDisposed(controller, method) {
 		if (isDisposed(controller)) {
 			throwFwError(ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER, method);
 		}
@@ -3037,8 +3037,8 @@
 		 * @memberOf Controller
 		 */
 		$find: function(selector) {
-			throwErrorIfIsDisposed(this, '$find');
-			throwErrorIfNoExistsRootElement(this, '$find');
+			throwErrorIfDisposed(this, '$find');
+			throwErrorIfNoRootElement(this, '$find');
 			return $(this.rootElement).find(selector);
 		},
 
@@ -3049,7 +3049,7 @@
 		 * @memberOf Controller
 		 */
 		deferred: function() {
-			throwErrorIfIsDisposed(this, 'deferred');
+			throwErrorIfDisposed(this, 'deferred');
 			return getDeferred();
 		},
 
@@ -3076,8 +3076,8 @@
 		 * @memberOf Controller
 		 */
 		trigger: function(event, parameter) {
-			throwErrorIfIsDisposed(this, 'trigger');
-			throwErrorIfNoExistsRootElement(this, 'trigger');
+			throwErrorIfDisposed(this, 'trigger');
+			throwErrorIfNoRootElement(this, 'trigger');
 			// eventNameが文字列ならイベントを作って投げる
 			// オブジェクトの場合はそのまま渡す。
 			var ev = isString(event) ? $.Event(event) : event;
@@ -3093,7 +3093,7 @@
 		 * @memberOf Controller
 		 */
 		own: function(/* var_args */) {
-			throwErrorIfIsDisposed(this, 'own');
+			throwErrorIfDisposed(this, 'own');
 			return own.apply(this, argsToArray(arguments));
 		},
 
@@ -3105,7 +3105,7 @@
 		 * @memberOf Controller
 		 */
 		ownWithOrg: function(/* var_args */) {
-			throwErrorIfIsDisposed(this, 'ownWithOrg');
+			throwErrorIfDisposed(this, 'ownWithOrg');
 			return ownWithOrg.apply(this, argsToArray(arguments));
 		},
 
@@ -3120,7 +3120,7 @@
 		 * @returns {Controller} コントローラ.
 		 */
 		bind: function(targetElement, param) {
-			throwErrorIfIsDisposed(this, 'bind');
+			throwErrorIfDisposed(this, 'bind');
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
@@ -3140,8 +3140,8 @@
 		 * @memberOf Controller
 		 */
 		unbind: function() {
-			throwErrorIfIsDisposed(this, 'unbind');
-			throwErrorIfNoExistsRootElement(this, 'unbind');
+			throwErrorIfDisposed(this, 'unbind');
+			throwErrorIfNoRootElement(this, 'unbind');
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
@@ -3164,7 +3164,7 @@
 		 * @memberOf Controller
 		 */
 		dispose: function() {
-			throwErrorIfIsDisposed(this, 'dispose');
+			throwErrorIfDisposed(this, 'dispose');
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
@@ -3188,8 +3188,8 @@
 		 * @memberOf Controller
 		 */
 		triggerIndicator: function(opt) {
-			throwErrorIfIsDisposed(this, 'triggerIndicator');
-			throwErrorIfNoExistsRootElement(this, 'triggerIndicator');
+			throwErrorIfDisposed(this, 'triggerIndicator');
+			throwErrorIfNoRootElement(this, 'triggerIndicator');
 			var args = {
 				indicator: null
 			};
@@ -3238,8 +3238,8 @@
 		 * @see Indicator
 		 */
 		indicator: function(opt) {
-			throwErrorIfIsDisposed(this, 'indicator');
-			throwErrorIfNoExistsRootElement(this, 'indicator');
+			throwErrorIfDisposed(this, 'indicator');
+			throwErrorIfNoRootElement(this, 'indicator');
 			return callIndicator(this, opt);
 		},
 
@@ -3249,7 +3249,7 @@
 		 * @memberOf Controller
 		 */
 		enableListeners: function() {
-			throwErrorIfIsDisposed(this, 'enableListeners');
+			throwErrorIfDisposed(this, 'enableListeners');
 			setExecuteListenersFlag(this, true);
 		},
 
@@ -3259,7 +3259,7 @@
 		 * @memberOf Controller
 		 */
 		disableListeners: function() {
-			throwErrorIfIsDisposed(this, 'disableListeners');
+			throwErrorIfDisposed(this, 'disableListeners');
 			setExecuteListenersFlag(this, false);
 		},
 
@@ -3279,7 +3279,7 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwError: function(msgOrErrObj, var_args) {
-			throwErrorIfIsDisposed(this, 'throwError');
+			throwErrorIfDisposed(this, 'throwError');
 			//引数の個数チェックはthrowCustomErrorで行う
 			var args = argsToArray(arguments);
 			args.unshift(null);
@@ -3305,7 +3305,7 @@
 		 * @param {Any} [var_args] 置換パラメータ(第一引数が文字列の場合のみ使用します)
 		 */
 		throwCustomError: function(customType, msgOrErrObj, var_args) {
-			throwErrorIfIsDisposed(this, 'throwCustomError');
+			throwErrorIfDisposed(this, 'throwCustomError');
 			if (arguments.length < 2) {
 				throwFwError(ERR_CODE_TOO_FEW_ARGUMENTS);
 			}
@@ -3339,8 +3339,8 @@
 		 * @param listener {Function} ハンドラ
 		 */
 		on: function(target, eventName, listener) {
-			throwErrorIfIsDisposed(this, 'on');
-			throwErrorIfNoExistsRootElement(this, 'on');
+			throwErrorIfDisposed(this, 'on');
+			throwErrorIfNoRootElement(this, 'on');
 			// バインドオブジェクトの作成
 			var info = createEventHandlerInfo(target, eventName, this);
 			var bindObjects = createBindObjects(this, info, listener);
@@ -3365,8 +3365,8 @@
 		 * @param listener {Function} ハンドラ
 		 */
 		off: function(target, eventName, listener) {
-			throwErrorIfIsDisposed(this, 'off');
-			throwErrorIfNoExistsRootElement(this, 'off');
+			throwErrorIfDisposed(this, 'off');
+			throwErrorIfNoRootElement(this, 'off');
 			// 指定された条件にマッチするbindObjをunbindHandlerListから探して取得する
 			var info = createEventHandlerInfo(target, eventName, this);
 			var unbindHandlerList = this.__controllerContext.unbindHandlerList;
