@@ -850,7 +850,6 @@
 		var selector = bindObj.selector;
 		var eventName = bindObj.eventName;
 		var handler = bindObj.handler;
-
 		var useBind = bindObj.isBindRequested;
 		var isGlobal = bindObj.isGlobal;
 		var bindTarget = bindObj.bindTarget;
@@ -892,9 +891,16 @@
 				$(rootElement).delegate(selector, eventName, handler);
 			}
 		}
+
+		// bindEventで、bindTargetが不正なためバインドできなかった場合は以降何もしない
+		// (bindHandlersに不要なものを残さないようにするため)
+		if (bindObj.isBindCanceled) {
+			return;
+		}
+
 		// アンバインドマップにハンドラを追加
 		// バインドした場合はバインドした要素・オブジェクトをbindTargetに覚えておく
-		registerWithUnbindList(bindObj);
+		registerWithBoundHandlers(bindObj);
 
 		// h5trackstartのバインド先のstyle.touchActionにh5.settings.trackstartTouchActionの値(デフォルト'none')を設定する
 		// touchActionをサポートしていないなら何もしない
@@ -1257,13 +1263,13 @@
 	}
 
 	/**
-	 * ハンドラをアンバインドマップに登録します。
+	 * ハンドラをバインド済みリストに登録します。
 	 *
 	 * @private
 	 * @param {Object} bindObj
 	 * @param {Object} eventHandlerInfo イベントハンドラ情報
 	 */
-	function registerWithUnbindList(bindObj) {
+	function registerWithBoundHandlers(bindObj) {
 		bindObj.controller.__controllerContext.boundHandlers.push(bindObj);
 	}
 
@@ -2611,6 +2617,7 @@
 		} else {
 			if (!bindTarget || !bindTarget.addEventListener) {
 				fwLogger.warn(FW_LOG_BIND_TARGET_INVALID);
+				bindObj.isBindCanceled = true;
 				return;
 			}
 			// ノードでない場合はaddEventListenerを使う
