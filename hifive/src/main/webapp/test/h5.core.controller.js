@@ -2851,13 +2851,13 @@ $(function() {
 	});
 
 	asyncTest('off()で動的にバインドしたハンドラをアンバインド', function() {
-		$('#controllerTest').append('<div class="inner-target></div>');
-		$('#qunit-fixture').append('<div class="outer-target></div>');
-		$('#qunit-fixture').append('<div class="global-target></div>');
+		$('#controllerTest').append('<div class="inner-target"></div>');
+		$('#qunit-fixture').append('<div class="outer-target"></div>');
+		$('#qunit-fixture').append('<div class="global-target"></div>');
 
 		var executed = false;
 		function listener() {
-			executed = true
+			executed = true;
 		}
 		h5.core.controller('#controllerTest', {
 			__name: 'controller'
@@ -2907,7 +2907,6 @@ $(function() {
 			start();
 		});
 	});
-	// TODO this.on()でtargetにオブジェクトを指定するケース及び、this.off()のケース、を追加
 
 	//=============================
 	// Definition
