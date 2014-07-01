@@ -5518,6 +5518,28 @@ $(function() {
 		});
 	});
 
+	asyncTest('ルートエレメント設定前の__construct(子コントローラの__construct)ではviewは使用できないこと', 2, function() {
+		var errorCode = ERR.ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER;
+		h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			childController: {
+				__name: 'child',
+				__construct: function() {
+					try {
+						this.view.register('a', 'hoge');
+						ok(false, '__constructでviewを使用してエラーが発生しませんでした');
+					} catch (e) {
+						strictEqual(e.code, errorCode, e.message);
+					}
+				},
+				__init: function() {
+					this.view.register('a', 'hoge');
+					strictEqual(this.view.get('a'), 'hoge', '__initでは使用できること');
+				}
+			}
+		}).readyPromise.done(start);
+	});
+
 	//=============================
 	// Definition
 	//=============================
