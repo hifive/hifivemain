@@ -4606,7 +4606,7 @@ $(function() {
 				var lifecycleerrorExecuted = false;
 				function handler(ev) {
 					lifecycleerrorExecuted = true;
-					lifecycleErrorEventObj = ev;
+					lifecycleerrorEventObj = ev;
 				}
 				h5.core.controllerManager.addEventListener('lifecycleerror', handler);
 				testController.readyPromise
@@ -4630,11 +4630,11 @@ $(function() {
 												function() {
 													ok(lifecycleerrorExecuted,
 															'lifecycleerrorイベントが実行されていること');
-													strictEqual(lifecycleErrorEventObj.detail,
+													strictEqual(lifecycleerrorEventObj.detail,
 															failReason,
 															'lifecycleerrorイベントオブジェクトのdetailにdisposeのfailハンドラに渡されたエラーオブジェクトが格納されていること');
 													strictEqual(
-															lifecycleErrorEventObj.rootController,
+															lifecycleerrorEventObj.rootController,
 															testController,
 															'lifecycleerrorイベントオブジェクトのrootControllerにルートコントローラが格納されていること');
 													strictEqual(testController.__name,
