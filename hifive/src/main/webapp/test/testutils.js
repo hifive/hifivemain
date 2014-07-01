@@ -330,7 +330,7 @@
 	}
 
 	/**
-	 * 現在実行中のテスト結果以外のテスト結果要素(li要素)を削除する
+	 * 現在実行中のテスト結果以外のテスト結果要素(li要素)を退避する
 	 */
 	function stashOutput() {
 		if ($prevOutputs || $nextOutputs) {
