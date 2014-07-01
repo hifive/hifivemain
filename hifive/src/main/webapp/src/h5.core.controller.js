@@ -126,6 +126,7 @@
 	var FW_LOG_INIT_CONTROLLER_BEGIN = 'コントローラ"{0}"の初期化を開始しました。';
 	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ"{0}"の初期化が正常に完了しました。';
 	var FW_LOG_INIT_CONTROLLER_THROWN_ERROR = 'コントローラ"{0}"の{1}内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。';
+	var FW_LOG_BIND_TARGET_INVALID = 'イベントのバインド対象オブジェクトが不正です。DOMノードまたはaddEventListener/removeEventListenerを持つオブジェクトを指定してください。';
 
 	// エラーコードマップ
 	var errMsgMap = {};
@@ -853,18 +854,18 @@
 		if (bindTarget) {
 			// bindTargetが指定されている場合は必ず直接バインド
 			bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_OBJECT;
-			$(bindTarget).bind(eventName, handler);
+			bindEvent(bindTarget, eventName, handler);
 		} else if (isGlobal) {
 			// グローバルなセレクタの場合
 			var selectTarget = getGlobalSelectorTarget(selector, doc, controller);
 
-			// バインド対象がオブジェクトの場合、必ず直接バインドする
+			// バインド対象がオブジェクト、または直接バインド指定の場合、必ず直接バインドする
 			if (useBind || !isString(selectTarget)) {
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_OBJECT;
 
-				bindTarget = $(selectTarget);
-				bindTarget.bind(eventName, handler);
+				bindTarget = isString(selectTarget) ? $(selectTarget) : selectTarget;
+				bindEvent(bindTarget, eventName, handler);
 			} else {
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_GLOBAL;
@@ -882,7 +883,7 @@
 
 			if (useBind) {
 				bindTarget = $(selector, rootElement);
-				bindTarget.bind(eventName, handler);
+				bindEvent(bindTarget, eventName, handler);
 			} else {
 				$(rootElement).delegate(selector, eventName, handler);
 			}
@@ -924,7 +925,7 @@
 		var bindTarget = bindObj.bindTarget;
 		if (bindTarget) {
 			// オブジェクトまたは直接バインド指定されていた場合(===バインド時にbindメソッドを使った場合)は直接unbind
-			$(bindTarget).unbind(eventName, handler);
+			unbindEvent(bindTarget, eventName, handler);
 		} else if (isGlobal) {
 			if (getWindowOfDocument(doc) == null) {
 				// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
@@ -2580,6 +2581,54 @@
 	function throwErrorIfIsDisposed(controller, method) {
 		if (isDisposed(controller)) {
 			throwFwError(ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER, method);
+		}
+	}
+
+	/**
+	 * イベントのバインドを行う
+	 * <p>
+	 * bindTargetがnodeならjQueryのbindで、そうでないならaddEventListenerを使ってバインドする
+	 * </p>
+	 *
+	 * @private
+	 * @param bindTarget バインドするターゲット
+	 * @param eventName イベント名
+	 * @param handler イベントハンドラ
+	 */
+	function bindEvent(bindTarget, eventName, handler) {
+		if (bindTarget && typeof bindTarget.nodeType !== TYPE_OF_UNDEFINED
+				|| isWindowObject(bindTarget) || isJQueryObject(bindTarget)) {
+			// ノードタイプが定義されている(=ノード)またはwindowオブジェクトの場合またはjQueryオブジェクトの場合はjQueryのbindを使う
+			$(bindTarget).bind(eventName, handler);
+		} else {
+			if (!bindTarget || !bindTarget.addEventListener) {
+				fwLogger.warn(FW_LOG_BIND_TARGET_INVALID);
+				return;
+			}
+			// ノードでない場合はaddEventListenerを使う
+			bindTarget.addEventListener(eventName, handler);
+		}
+	}
+
+	/**
+	 * イベントのアンバインドを行う
+	 * <p>
+	 * bindTargetがnodeならjQueryのunbindで、そうでないならremoveEventListenerを使ってアンバインドする
+	 * </p>
+	 *
+	 * @private
+	 * @param bindTarget バインドするターゲット
+	 * @param eventName イベント名
+	 * @param handler イベントハンドラ
+	 */
+	function unbindEvent(bindTarget, eventName, handler) {
+		if (typeof bindTarget.nodeType !== TYPE_OF_UNDEFINED || isWindowObject(bindTarget)
+				|| isJQueryObject(bindTarget)) {
+			// ノードタイプが定義されている(=ノード)またはwindowオブジェクトの場合またはjQueryオブジェクトの場合はjQueryのbindを使う
+			$(bindTarget).unbind(eventName, handler);
+		} else {
+			// ノードでない場合はaddEventListenerを使う
+			bindTarget.removeEventListener(eventName, handler);
 		}
 	}
 
