@@ -913,9 +913,9 @@
 	 * @private
 	 * @param {Object} bindObj バインドオブジェクト
 	 * @param {Document} doc documentオブジェクト
-	 * @param {Boolean} shouldNotUnregist unbindHandlerListから指定されたバインドオブジェクトを削除しない時にtrueを指定する
+	 * @param {Boolean} shouldNotUnregister boundHandlersから指定されたバインドオブジェクトを削除しない時にtrueを指定する
 	 */
-	function unbindByBindObject(bindObj, doc, shouldNotUnregist) {
+	function unbindByBindObject(bindObj, doc, shouldNotUnregister) {
 		var controller = bindObj.controller;
 		var rootElement = controller.rootElement;
 		var selector = bindObj.selector;
@@ -935,10 +935,10 @@
 		} else {
 			$(rootElement).undelegate(selector, eventName, handler);
 		}
-		if (!shouldNotUnregist) {
-			// アンバインドハンドラリストから削除
-			var unbindHandlerList = controller.__controllerContext.unbindHandlerList;
-			unbindHandlerList.splice($.inArray(bindObj, unbindHandlerList), 1);
+		if (!shouldNotUnregister) {
+			// バインド中のハンドラリストから削除
+			var boundHandlers = controller.__controllerContext.boundHandlers;
+			boundHandlers.splice($.inArray(bindObj, boundHandlers), 1);
 		}
 	}
 
@@ -957,14 +957,14 @@
 
 		// ドキュメントはrootElementのownerDocument。rootElement自体がdocumentノードならrootElement。
 		var doc = getDocumentOf(rootElement);
-		var unbindHandlerList = controller.__controllerContext.unbindHandlerList;
+		var boundHandlers = controller.__controllerContext.boundHandlers;
 
-		for (var i = 0, l = unbindHandlerList.length; i < l; i++) {
-			var bindObj = unbindHandlerList[i];
+		for (var i = 0, l = boundHandlers.length; i < l; i++) {
+			var bindObj = boundHandlers[i];
 			unbindByBindObject(bindObj, doc, true);
 		}
-		// アンバインドハンドラリストを空にする
-		controller.__controllerContext.unbindHandlerList = [];
+		// バインド中のハンドラリストを空にする
+		controller.__controllerContext.boundHandlers = [];
 	}
 
 	/**
@@ -1261,7 +1261,7 @@
 	 * @param {Object} eventHandlerInfo イベントハンドラ情報
 	 */
 	function registerWithUnbindList(bindObj) {
-		bindObj.controller.__controllerContext.unbindHandlerList.push(bindObj);
+		bindObj.controller.__controllerContext.boundHandlers.push(bindObj);
 	}
 
 	/**
@@ -2695,7 +2695,7 @@
 			 *
 			 * @type Object
 			 */
-			unbindHandlerList: [],
+			boundHandlers: [],
 
 			/**
 			 * コントローラ定義オブジェクト
@@ -3367,9 +3367,9 @@
 		off: function(target, eventName, listener) {
 			throwErrorIfDisposed(this, 'off');
 			throwErrorIfNoRootElement(this, 'off');
-			// 指定された条件にマッチするbindObjをunbindHandlerListから探して取得する
+			// 指定された条件にマッチするbindObjをboundHandlersから探して取得する
 			var info = createEventHandlerInfo(target, eventName, this);
-			var unbindHandlerList = this.__controllerContext.unbindHandlerList;
+			var boundHandlers = this.__controllerContext.boundHandlers;
 
 			var matchBindObj = null;
 			var bindTarget = info.bindTarget;
@@ -3379,8 +3379,8 @@
 			var isBindRequested = info.isBindRequested;
 
 			var index = 0;
-			for (var l = unbindHandlerList.length; index < l; index++) {
-				var bindObj = unbindHandlerList[index];
+			for (var l = boundHandlers.length; index < l; index++) {
+				var bindObj = boundHandlers[index];
 				if (bindTarget) {
 					// offでオブジェクトやDOMをターゲットに指定された場合はbindTarget、eventName、originalHandlerを比較
 					if (isSameBindTarget(bindTarget, bindObj.bindTarget)
