@@ -3601,6 +3601,35 @@ $(function() {
 		});
 	});
 
+	asyncTest('unbindされたコントローラのviewのメソッドは使用できない', function() {
+		var view = null;
+		var errorCode = ERR.ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER;
+		$('#controllerTest').append('<div class="target"></div>');
+		h5.core.controller('#controllerTest', {
+			__name: 'A',
+			__init: function() {
+				view = this.view;
+				view.register('a', 'hoge');
+			}
+		}).readyPromise.done(function() {
+			this.unbind();
+			setTimeout(function() {
+				var methods = ['get', 'update', 'append', 'prepend', 'load', 'register', 'isValid',
+						'isAvailable', 'clear', 'getAvailableTemplates', 'bind'];
+				var length = methods.length;
+				expect(length);
+				for (var i = 0; i < length; i++) {
+					try {
+						view[methods[i]]();
+					} catch (e) {
+						strictEqual(e.code, errorCode, e.message);
+					}
+				}
+				start();
+			}, 0);
+		});
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -4674,6 +4703,35 @@ $(function() {
 				}
 				start();
 			}, 0);
+		});
+	});
+
+	asyncTest('disposeされたコントローラのviewのメソッドは使用できない', function() {
+		var view = null;
+		var errorCode = ERR.ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER;
+		$('#controllerTest').append('<div class="target"></div>');
+		h5.core.controller('#controllerTest', {
+			__name: 'A',
+			__init: function() {
+				view = this.view;
+				view.register('a', 'hoge');
+			}
+		}).readyPromise.done(function() {
+			var p = this.dispose();
+			p.done(function() {
+				var methods = ['get', 'update', 'append', 'prepend', 'load', 'register', 'isValid',
+						'isAvailable', 'clear', 'getAvailableTemplates', 'bind'];
+				var length = methods.length;
+				expect(length);
+				for (var i = 0; i < length; i++) {
+					try {
+						view[methods[i]]();
+					} catch (e) {
+						strictEqual(e.code, errorCode, e.message);
+					}
+				}
+				start();
+			});
 		});
 	});
 

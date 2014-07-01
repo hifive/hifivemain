@@ -1984,6 +1984,8 @@
 			doForEachControllerGroupsDepthFirst(rootController, function(c) {
 				// viewのclearとnullify
 				if (c.view && c.view.__view) {
+					// 内部から呼ぶviewのクリアは、アンバインド後に呼ぶので
+					// view.clearではなくview.__view.clearを使ってエラーチェックをしないようにする
 					c.view.__view.clear();
 				}
 				if (!lifecycleerrorObject) {
@@ -2286,7 +2288,9 @@
 			if (!h5.u.obj.getByPath('h5.core.view')) {
 				throwFwError(ERR_CODE_NOT_VIEW);
 			}
-			var vp = controller.view.load(templates);
+			// 内部から呼ぶviewのロードは、ルートコントローラ設定前に呼ぶので、
+			// view.loadではなくview.__view.loadを使ってエラーチェックをしないようにする
+			var vp = controller.view.__view.load(templates);
 			vp.done(function(result) {
 				/* del begin */
 				if (templates && templates.length > 0) {
@@ -2564,7 +2568,7 @@
 	 * @param {String} method メソッド名
 	 */
 	function throwErrorIfNoRootElement(controller, method) {
-		if (!controller.rootElement) {
+		if (!controller || !controller.rootElement) {
 			throwFwError(ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER, method);
 		}
 	}
@@ -2927,7 +2931,6 @@
 	 */
 	// JSDTのフォーマッタが過剰にインデントしてしまうので、独立した関数として記述している
 	function View_bind(element, context) {
-		throwErrorIfDisposed(this.__controller, 'view#bind');
 		throwErrorIfNoRootElement(this.__controller, 'view#bind');
 		var target = element;
 
@@ -2969,58 +2972,55 @@
 	// またコントローラがdisposeされている(this.__controllerがnullの場合も含む)ならエラー
 	$.extend(View.prototype, {
 		get: function(templateId, param) {
-			throwErrorIfDisposed(this.__controller, 'view#get');
+			throwErrorIfNoRootElement(this.__controller, 'view#get');
 			return getView(templateId, this.__controller).get(templateId, param);
 		},
 
 		update: function(element, templateId, param) {
-			throwErrorIfDisposed(this.__controller, 'view#update');
 			throwErrorIfNoRootElement(this.__controller, 'view#update');
 			var target = getTarget(element, this.__controller);
 			return getView(templateId, this.__controller).update(target, templateId, param);
 		},
 
 		append: function(element, templateId, param) {
-			throwErrorIfDisposed(this.__controller, 'view#append');
 			throwErrorIfNoRootElement(this.__controller, 'view#append');
 			var target = getTarget(element, this.__controller);
 			return getView(templateId, this.__controller).append(target, templateId, param);
 		},
 
 		prepend: function(element, templateId, param) {
-			throwErrorIfDisposed(this.__controller, 'view#prepend');
 			throwErrorIfNoRootElement(this.__controller, 'view#prepend');
 			var target = getTarget(element, this.__controller);
 			return getView(templateId, this.__controller).prepend(target, templateId, param);
 		},
 
 		load: function(resourcePaths) {
-			throwErrorIfDisposed(this.__controller, 'view#load');
+			throwErrorIfNoRootElement(this.__controller, 'view#load');
 			return this.__view.load(resourcePaths);
 		},
 
 		register: function(templateId, templateString) {
-			throwErrorIfDisposed(this.__controller, 'view#register');
+			throwErrorIfNoRootElement(this.__controller, 'view#register');
 			this.__view.register(templateId, templateString);
 		},
 
 		isValid: function(templateString) {
-			throwErrorIfDisposed(this.__controller, 'view#isValid');
+			throwErrorIfNoRootElement(this.__controller, 'view#isValid');
 			return this.__view.isValid(templateString);
 		},
 
 		isAvailable: function(templateId) {
-			throwErrorIfDisposed(this.__controller, 'view#isAvailable');
+			throwErrorIfNoRootElement(this.__controller, 'view#isAvailable');
 			return getView(templateId, this.__controller).isAvailable(templateId);
 		},
 
 		clear: function(templateIds) {
-			throwErrorIfDisposed(this.__controller, 'view#clear');
+			throwErrorIfNoRootElement(this.__controller, 'view#clear');
 			this.__view.clear(templateIds);
 		},
 
 		getAvailableTemplates: function() {
-			throwErrorIfDisposed(this.__controller, 'view#getAvailableTemplates');
+			throwErrorIfNoRootElement(this.__controller, 'view#getAvailableTemplates');
 			return this.__view.getAvailableTemplates();
 		},
 
