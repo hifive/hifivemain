@@ -2052,6 +2052,35 @@ $(function() {
 		});
 	});
 
+	asyncTest('オブジェクトにバインドした時のイベントハンドラの引数とthis', 3, function() {
+		var target = {};
+		h5.mixin.eventDispatcher.mix(target);
+		var eventObject = null;
+		var eventContext = null;
+		var eventTarget = null;
+		h5.core.controller('#controllerTest', {
+			__name: 'controller',
+			target: target,
+			'{this.target} myevent': function(context, target) {
+				eventContext = this;
+				eventObject = context.event;
+				eventTarget = target;
+			}
+		}).readyPromise
+				.done(function() {
+					var orgEvent = {
+						type: 'myevent'
+					};
+					this.target.dispatchEvent(orgEvent);
+					strictEqual(eventContext, this, 'イベントハンドラのthisはコントローラであること');
+					strictEqual(eventTarget, this.target,
+							'イベントハンドラの第2引数にはバインドしたオブジェクト(元々のthis)が格納されていること');
+					strictEqual(eventObject, orgEvent,
+							'イベントハンドラで受け取ったイベントオブジェクトがjQueryにラップされていないこと');
+					start();
+				});
+	});
+
 	asyncTest('セレクタが {document}, {window} の場合にイベント名の記述に関わらず、bindが使用されているか', 8, function() {
 		var ret1 = null;
 		var ret2 = null;
@@ -2401,7 +2430,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 14, function() {
+	asyncTest('イベントをバインド指定した要素が第二引数に渡されること', 13, function() {
 		var parentElm = $('#controllerTest #parent')[0];
 		var childElm = $('#controllerTest #child')[0];
 		window.h5test1 = {
@@ -2429,10 +2458,9 @@ $(function() {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
 				strictEqual($el[0], document, '第二引数がバインド先の要素(document)であること');
 			},
-			'{navigator.h5test1} myevent': function(context, $el) {
-				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');
-				strictEqual($el[0], navigator.h5test1,
-						'第二引数がバインド先のEventDispatcherオブジェクト(navigator.target)であること');
+			'{navigator.h5test1} myevent': function(context, target) {
+				strictEqual(target, navigator.h5test1,
+						'第二引数がバインド先のEventDispatcherオブジェクト(navigator.h5test1)であること');
 			},
 			'{window} click': function(context, $el) {
 				ok(h5.u.obj.isJQueryObject($el), '第二引数がjQueryObjectであること');

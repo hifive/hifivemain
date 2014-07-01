@@ -812,10 +812,14 @@
 			var c = bindObj.controller;
 			bindObj.originalHandler = handler;
 			bindObj.handler = function(/* var args */) {
-				// listenerElementTypeが1ならjQueryオブジェクト、そうでないならDOM要素を、イベントハンドラの第2引数にする
+				// isNativeBindがtrue(addEventListenerによるバインド)なら、イベントハンドラのthisをイベントハンドラの第2引数にする。
+				// (DOM要素でないものはlistenerElementTypeに関わらずjQueryで包まない)
+				// isNativeBindがfalse(jQueryのbindまたはdelegateによるバインド)なら
+				// listenerElementTypeが1ならjQueryオブジェクト、そうでないならDOM要素(イベントハンドラのthis)を、イベントハンドラの第2引数にする
 				// jQuery1.6.4の場合、currentTargetに正しく値が設定されていない場合があるため、
 				// currentTargetではなくthisを使用している。(issue#338)
-				var currentTargetShortcut = h5.settings.listenerElementType === 1 ? $(this) : this;
+				var currentTargetShortcut = !bindObj.isNativeBind
+						&& h5.settings.listenerElementType === 1 ? $(this) : this;
 				handler.call(c, createEventContext(bindObj, arguments), currentTargetShortcut);
 			};
 		}
@@ -854,7 +858,7 @@
 		if (bindTarget) {
 			// bindTargetが指定されている場合は必ず直接バインド
 			bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_OBJECT;
-			bindEvent(bindTarget, eventName, handler);
+			bindEvent(bindObj);
 		} else if (isGlobal) {
 			// グローバルなセレクタの場合
 			var selectTarget = getGlobalSelectorTarget(selector, doc, controller);
@@ -864,8 +868,8 @@
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_OBJECT;
 
-				bindTarget = isString(selectTarget) ? $(selectTarget) : selectTarget;
-				bindEvent(bindTarget, eventName, handler);
+				bindObj.bindTarget = isString(selectTarget) ? $(selectTarget) : selectTarget;
+				bindEvent(bindObj);
 			} else {
 				// bindObjにselectorTypeを登録する
 				bindObj.evSelectorType = SELECTOR_TYPE_CONST.SELECTOR_TYPE_GLOBAL;
@@ -882,15 +886,14 @@
 			bindObj.evSelector = selector;
 
 			if (useBind) {
-				bindTarget = $(selector, rootElement);
-				bindEvent(bindTarget, eventName, handler);
+				bindObj.bindTarget = $(selector, rootElement);
+				bindEvent(bindObj);
 			} else {
 				$(rootElement).delegate(selector, eventName, handler);
 			}
 		}
 		// アンバインドマップにハンドラを追加
 		// バインドした場合はバインドした要素・オブジェクトをbindTargetに覚えておく
-		bindObj.bindTarget = bindTarget;
 		registerWithUnbindList(bindObj);
 
 		// h5trackstartのバインド先のstyle.touchActionにh5.settings.trackstartTouchActionの値(デフォルト'none')を設定する
@@ -925,7 +928,7 @@
 		var bindTarget = bindObj.bindTarget;
 		if (bindTarget) {
 			// オブジェクトまたは直接バインド指定されていた場合(===バインド時にbindメソッドを使った場合)は直接unbind
-			unbindEvent(bindTarget, eventName, handler);
+			unbindEvent(bindObj);
 		} else if (isGlobal) {
 			if (getWindowOfDocument(doc) == null) {
 				// アンバインドする対象のdocumentがもうすでに閉じられている場合は何もしない
@@ -2591,15 +2594,16 @@
 	/**
 	 * イベントのバインドを行う
 	 * <p>
-	 * bindTargetがnodeならjQueryのbindで、そうでないならaddEventListenerを使ってバインドする
+	 * bindTargetがnodeならjQueryのbindで、そうでないならaddEventListenerを使ってバインドする。addEventListenerでバインドした場合はbindObj.isNativeBindをtrueにする。
 	 * </p>
 	 *
 	 * @private
-	 * @param bindTarget バインドするターゲット
-	 * @param eventName イベント名
-	 * @param handler イベントハンドラ
+	 * @param bindObj バインドオブジェクト
 	 */
-	function bindEvent(bindTarget, eventName, handler) {
+	function bindEvent(bindObj) {
+		var bindTarget = bindObj.bindTarget;
+		var eventName = bindObj.eventName;
+		var handler = bindObj.handler;
 		if (bindTarget && typeof bindTarget.nodeType !== TYPE_OF_UNDEFINED
 				|| isWindowObject(bindTarget) || isJQueryObject(bindTarget)) {
 			// ノードタイプが定義されている(=ノード)またはwindowオブジェクトの場合またはjQueryオブジェクトの場合はjQueryのbindを使う
@@ -2611,6 +2615,7 @@
 			}
 			// ノードでない場合はaddEventListenerを使う
 			bindTarget.addEventListener(eventName, handler);
+			bindObj.isNativeBind = true;
 		}
 	}
 
@@ -2621,18 +2626,18 @@
 	 * </p>
 	 *
 	 * @private
-	 * @param bindTarget バインドするターゲット
-	 * @param eventName イベント名
-	 * @param handler イベントハンドラ
+	 * @param bindObj バインドオブジェクト
 	 */
-	function unbindEvent(bindTarget, eventName, handler) {
-		if (typeof bindTarget.nodeType !== TYPE_OF_UNDEFINED || isWindowObject(bindTarget)
-				|| isJQueryObject(bindTarget)) {
-			// ノードタイプが定義されている(=ノード)またはwindowオブジェクトの場合またはjQueryオブジェクトの場合はjQueryのbindを使う
-			$(bindTarget).unbind(eventName, handler);
-		} else {
-			// ノードでない場合はaddEventListenerを使う
+	function unbindEvent(bindObj) {
+		var bindTarget = bindObj.bindTarget;
+		var eventName = bindObj.eventName;
+		var handler = bindObj.handler;
+		var isNativeBind = bindObj.isNativeBind;
+		if (isNativeBind) {
+			// addEventListenerでバインドした場合はremoveEventListenerを使う
 			bindTarget.removeEventListener(eventName, handler);
+		} else {
+			$(bindTarget).unbind(eventName, handler);
 		}
 	}
 
