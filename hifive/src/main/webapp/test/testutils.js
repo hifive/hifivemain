@@ -17,6 +17,10 @@
  */
 
 (function() {
+	// --------- private --------
+	var $prevOutputs = null;
+	var $nextOutputs = null;
+
 	// --------- settings ---------
 	/**
 	 * @name testutils.settings
@@ -178,6 +182,13 @@
 		h5.core.definitionCacheManager.clearAll();
 	}
 
+	/**
+	 * アスペクトを削除する
+	 */
+	function cleanAllAspects() {
+		h5.settings.aspects = null;
+	}
+
 	// ----------- dom ------------
 	/**
 	 * iframeを作成 IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
@@ -318,6 +329,40 @@
 		return;
 	}
 
+	/**
+	 * 現在実行中のテスト結果以外のテスト結果要素(li要素)を退避する
+	 */
+	function stashOutput() {
+		if ($prevOutputs || $nextOutputs) {
+			// 既にprev,nextの要素を取得済み(=stashOutputが呼ばれている)ならエラー
+			throw new Error('stashOutput()を連続で呼ぶことはできません。stashOutput()を実行した後に実行してください。');
+		}
+		var $current = $('#' + QUnit.config.current.id);
+		// prevAllだと逆順になってしまうためnextUntilで$currentまでのDOMを取得
+		$prevOutputs = QUnit.config.current.id === 'qunit-test-output0' ? $() : $(
+				'#qunit-test-output0').add($('#qunit-test-output0').nextUntil($current));
+		$nextOutputs = $current.nextAll();
+
+		// DOMツリーから削除
+		$prevOutputs.remove();
+		$nextOutputs.remove();
+	}
+
+	/**
+	 * stashOutput()で削除したテスト結果要素(li要素)を元に戻す
+	 */
+	function unstashOutput() {
+		if (!$prevOutputs && !$nextOutputs) {
+			// 既にprev,nextの要素を出力済み(=stashOutputが呼ばれていないまたはunstashOutputが連続で呼ばれた)ならエラー
+			throw new Error('unstashOutput()は、stashOutput()の後に実行してください');
+		}
+		var $current = $('#' + QUnit.config.current.id);
+		$current.before($prevOutputs);
+		$current.after($nextOutputs);
+		$prevOutputs = null;
+		$nextOutputs = null;
+	}
+
 	// ----------- async -----------
 
 	/**
@@ -393,6 +438,9 @@
 	 */
 	h5.u.obj.expose('testutils', {
 		settings: settings,
+		consts: {
+			ERROR_INTERNET_CANNOT_CONNECT: 12029
+		},
 		dom: {
 			createIFrameElement: createIFrameElement,
 			openPopupWindow: openPopupWindow,
@@ -405,11 +453,14 @@
 			deleteProperty: deleteProperty,
 			compareVersion: compareVersion,
 			rgbToHex: rgbToHex,
-			clearController: clearController
+			clearController: clearController,
+			cleanAllAspects: cleanAllAspects
 		},
 		qunit: {
 			abortTest: abortTest,
-			skipTest: skipTest
+			skipTest: skipTest,
+			stashOutput: stashOutput,
+			unstashOutput: unstashOutput
 		},
 		async: {
 			gate: gate

@@ -40,6 +40,13 @@ var errorCodeToMessageMap = {};
 var errorCodeToCustomFormatterMap = {};
 
 /**
+ * ネットワークに繋がらない時にjqXhr.statusに格納されるコード(IE)。通信をリトライするかどうかの判定に使用。
+ *
+ * @private
+ */
+var ERROR_INTERNET_CANNOT_CONNECT = 12029;
+
+/**
  * undefinedかどうかの判定で、typeofで判定する
  *
  * @private
@@ -320,6 +327,19 @@ function thenCompat(promise, doneFilter, failFilter, progressFilter) {
 }
 
 /**
+ * 渡されたオブジェクトがwindowオブジェクトかどうか判定する
+ *
+ * @private
+ * @param {Any} obj
+ * @returns {Boolean} objがwindowオブジェクトかどうか
+ */
+function isWindowObject(obj) {
+	// nodeがdocumentを持ち、documentから得られるwindowオブジェクトがnode自身ならnodeをwindowオブジェクトと判定する
+	return obj && obj.document && obj.document.nodeType === NODE_TYPE_DOCUMENT
+			&& getWindowOfDocument(obj.document) === obj;
+}
+
+/**
  * ノードからドキュメントを取得。
  * <p>
  * 引数がdocumentノードなら引数をそのまま、ノードならownerDocument、windowオブジェクトならそのdocumentを返します。nodeがいずれにも該当しない場合はnullを返します。
@@ -332,9 +352,8 @@ function thenCompat(promise, doneFilter, failFilter, progressFilter) {
 function getDocumentOf(node) {
 	if (typeof node.nodeType === TYPE_OF_UNDEFINED) {
 		// ノードではない
-		if (node.document && node.document.nodeType === NODE_TYPE_DOCUMENT
-				&& getWindowOfDocument(node.document) === node) {
-			// nodeがdocumentを持ち、documentから得られるwindowオブジェクトがnode自身ならnodeをwindowオブジェクトと判定する
+		if (isWindowObject(node)) {
+			// windowオブジェクトならwindow.documentを返す
 			return node.document;
 		}
 		return null;
@@ -430,7 +449,7 @@ var isFunction = (function() {
  */
 function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 	// 高速化のため、長さ1または0の場合はforを使わずにチェックする
-	var length = promises.length;
+	var length = promises ? promises.length : 0;
 	var isPromise = h5.async.isPromise;
 	if (length === 1) {
 		var promise = promises[0];

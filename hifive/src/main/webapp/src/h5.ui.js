@@ -1118,9 +1118,18 @@
 
 	/**
 	 * インジケータ(メッセージ・画面ブロック・進捗表示)の表示や非表示を行うクラス。
+	 * <p>
+	 * このクラスは自分でnewすることはありません。<a href="h5.ui.html#indicator">h5.ui.indicator()</a>または、<a
+	 * href="Controller.html#indicator">Controller.indicator()</a>の戻り値がIndicatorクラスです。
+	 * </p>
 	 *
 	 * @class
 	 * @name Indicator
+	 * @see h5.ui.indicator
+	 * @see Controller.indicator
+	 */
+	/**
+	 * @private
 	 * @param {String|Object} target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
 	 * @param {Object} [option] オプション
 	 * @param {String} [option.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
@@ -1623,10 +1632,23 @@
 	/**
 	 * 指定された要素に対して、インジケータ(メッセージ・画面ブロック・進捗)の表示や非表示を行うためのオブジェクトを取得します。
 	 * <p>
-	 * targetに<b>document</b>、<b>window</b>または<b>body</b>を指定しかつ、blockオプションがtrueの場合、「スクリーンロック」として動作します。<br>
+	 * 第1引数にインジケータの設定を記述したパラメータオブジェクトを指定してください。
+	 * <p>
+	 * <strong>第1引数にインジケータのターゲットを指定する方法は非推奨です。</strong>
+	 * </p>
+	 *
+	 * <pre><code>
+	 * h5.ui.indicator({
+	 * 	target: 'body'
+	 * });
+	 *
+	 * // h5.ui.indicator('body'); 非推奨
+	 * </code></pre>
+	 *
+	 * targetに<strong>document</strong>、<strong>window</strong>または<strong>body</strong>を指定しかつ、blockオプションがtrueの場合、「スクリーンロック」として動作します。<br>
 	 * 上記以外のDOM要素を指定した場合は、指定した要素上にインジケータを表示します。
 	 * <p>
-	 * <b>スクリーンロック</b>とは、コンテンツ領域(スクロールしないと見えない領域も全て含めた領域)全体にオーバーレイを、表示領域(画面に見えている領域)中央にメッセージが表示し、画面を操作できないようにすることです。スマートフォン等タッチ操作に対応する端末の場合、スクロール操作も禁止します。
+	 * <strong>スクリーンロック</strong>とは、コンテンツ領域(スクロールしないと見えない領域も全て含めた領域)全体にオーバーレイを、表示領域(画面に見えている領域)中央にメッセージが表示し、画面を操作できないようにすることです。スマートフォン等タッチ操作に対応する端末の場合、スクロール操作も禁止します。
 	 * <h4>スクリーンロック中の制限事項</h4>
 	 * <ul>
 	 * <li>Android
@@ -1636,26 +1658,30 @@
 	 * 7ではscrollイベントを抑止できないため、インジケータ背後の要素がスクロールしてしまいます。ただし、クリック等その他のイベントはキャンセルされます。</li>
 	 * </ul>
 	 * <h4>使用例</h4>
-	 * <b>スクリーンロックとして表示する</b><br>
+	 * <strong>スクリーンロックとして表示する</strong><br>
 	 *
 	 * <pre>
-	 * var indicator = h5.ui.indicator(document).show();
+	 * var indicator = h5.ui.indicator({
+	 * 	target: document
+	 * }).show();
 	 * </pre>
 	 *
-	 * <b>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</b><br>
+	 * <strong>li要素にスロバー(くるくる回るアイコン)を表示してブロックを表示しない場合</strong><br>
 	 *
 	 * <pre>
-	 * var indicator = h5.ui.indicator('li', {
+	 * var indicator = h5.ui.indicator({
+	 * 	target: 'li',
 	 * 	block: false
 	 * }).show();
 	 * </pre>
 	 *
-	 * <b>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
+	 * <strong>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</strong><br>
 	 * resolve() または resolve() が実行されると、画面からインジケータを除去します。
 	 *
 	 * <pre>
 	 * var df = $.Deferred();
-	 * var indicator = h5.ui.indicator(document, {
+	 * var indicator = h5.ui.indicator({
+	 * 	target: document,
 	 * 	promises: df.promise()
 	 * }).show();
 	 *
@@ -1664,13 +1690,14 @@
 	 * }, 2000);
 	 * </pre>
 	 *
-	 * <b>パラメータに複数のPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</b><br>
+	 * <strong>パラメータに複数のPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</strong><br>
 	 * Promiseオブジェクトを複数指定すると、全てのPromiseオブジェクトでresolve()が実行されるか、またはいずれかのPromiseオブジェクトでfail()が実行されるタイミングでインジケータを画面から除去します。
 	 *
 	 * <pre>
 	 * var df = $.Deferred();
 	 * var df2 = $.Deferred();
-	 * var indicator = h5.ui.indicator(document, {
+	 * var indicator = h5.ui.indicator({
+	 * 	target: document,
 	 * 	promises: [df.promise(), df2.promise()]
 	 * }).show();
 	 *
@@ -1690,23 +1717,31 @@
 	 * @memberOf h5.ui
 	 * @name indicator
 	 * @function
-	 * @param {String|Object} target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
-	 * @param {Object} [option] オプション
-	 * @param {String} [option.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
-	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
-	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
-	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
-	 * @param {Number} [option.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
-	 * @param {Promise|Promise[]} [option.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
-	 * @param {String} [option.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
-	 * @param {String} [option.throbber.lines] スロバーの線の本数 (デフォルト:12)
-	 * @param {String} [option.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
+	 * @param {Object} param パラメータオブジェクト
+	 * @param {DOM|jQuery|String} param.target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
+	 * @param {String} [param.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
+	 * @param {Number} [param.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
+	 * @param {Boolean} [param.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
+	 * @param {Number} [param.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
+	 * @param {Number} [param.fadeOut] インジケータをフェードで非表示にする場合、非表示までの時間をミリ秒(ms)で指定する (デフォルト:しない)
+	 * @param {Promise|Promise[]} [param.promises] Promiseオブジェクト (Promiseの状態に合わせて自動でインジケータの非表示を行う)
+	 * @param {String} [param.theme] テーマクラス名 (インジケータのにスタイル定義の基点となるクラス名 (デフォルト:'a')
+	 * @param {String} [param.throbber.lines] スロバーの線の本数 (デフォルト:12)
+	 * @param {String} [param.throbber.roundTime] スロバーの白線が1周するまでの時間(ms)
 	 *            (このオプションはCSS3Animationを未サポートブラウザのみ有効) (デフォルト:1000)
+	 * @param {Object} [option] 第1引数にターゲット(param.target)を指定して、第2引数にオプションオブジェクトを指定できます。<strong>ただしこの指定方法は非推奨です。</strong><br>
+	 *            第2引数のオプションオブジェクトの構造は、パラメータオブジェクトと同様です。
 	 * @see Indicator
 	 * @see Controller.indicator
 	 */
-	var indicator = function(target, option) {
-		return new Indicator(target, option);
+	var indicator = function(param, option) {
+		if ($.isPlainObject(param)) {
+			// 第1引数にパラメータオブジェクトが渡されていた場合は、ターゲットをパラメータオブジェクトから取得
+			// (第1引数がプレーンオブジェクトならパラメータ、そうでないならターゲットの指定と判定する)
+			return new Indicator(param.target, param);
+		}
+		// 第1引数にターゲット、第2引数にオプションオブジェクト
+		return new Indicator(param, option);
 	};
 
 	/**

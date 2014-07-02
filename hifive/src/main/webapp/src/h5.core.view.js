@@ -359,7 +359,7 @@
 								return;
 							}
 
-							var _ret,_data;
+							var _ret, _data;
 							try {
 								var compiled = compileData.compiled;
 								_data = compileData.data;
@@ -462,9 +462,16 @@
 	// =========================================================================
 
 	/**
-	 * テンプレートを扱うクラス。
+	 * テンプレートを扱うクラス
 	 * <p>
-	 * コントローラは内部にViewインスタンスを持ち、コントローラ内であればthis.viewで参照することができます。
+	 * <a href="h5.core.view.html">h5.core.view</a>がこのクラスを実装しています。また、<a
+	 * href="h5.core.view.html#createView">h5.core.view.createView()</a>でこのクラスのインスタンスを生成できます。
+	 * </p>
+	 * <p>
+	 * また、コントローラは内部にController.viewインスタンスを持ち、コントローラ内であればthis.viewで参照することができます。
+	 * </p>
+	 * <p>
+	 * コントローラの持つViewについての詳細は、<a href="Controller.view.html">Controller.view</a>を参照してください。
 	 * </p>
 	 *
 	 * @class
@@ -782,7 +789,7 @@
 		 * <p>
 		 * 注意:<br>
 		 * このメソッドではバインド対象にコメントビューを指定できません。<br>
-		 * コメントビューを使用したデータバインドは、コントローラが持つViewインスタンスから実行して下さい。
+		 * コメントビューを使用したデータバインドは、コントローラが持つViewインスタンス(<a href="Controller.html#view">Controller.view</a>)から実行して下さい。
 		 *
 		 * @since 1.1.0
 		 * @param {String|Element|Element[]|jQuery} element コメントビュー疑似セレクタ、またはDOM要素(セレクタ文字列, DOM要素,
@@ -877,7 +884,7 @@
 	 * グローバルに公開されているViewクラスのインスタンスです。
 	 * </p>
 	 * <p>
-	 * h5.core.viewは、Viewクラスであり、Viewクラスのメソッドを持ちます。<br>
+	 * h5.core.viewは、<a href="View.html">View</a>クラスであり、<a href="View.html">View</a>クラスのメソッドを持ちます。<br>
 	 * ただし、h5.core.viewはViewクラスを生成するためのcreateViewメソッドを持ち、生成されたViewクラスはcreateViewメソッドを持ちません。
 	 * </p>
 	 *
