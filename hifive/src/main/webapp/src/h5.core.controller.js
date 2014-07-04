@@ -3842,24 +3842,25 @@
 										null,
 										$.extend(true, {}, c),
 										param,
-										$
-												.extend(
-														{
-															isInternal: true,
-															parentController: controller,
-															rootController: isRoot ? controller
-																	: fwOpt.rootController,
-															controllerGroupConstructPromises: controllerGroupConstructPromises
-														}, fwOpt));
+										{
+											isInternal: true,
+											parentController: controller,
+											rootController: isRoot ? controller
+													: fwOpt.rootController,
+											controllerGroupConstructPromises: controllerGroupConstructPromises
+										});
+								// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
+								controllerGroupConstructPromises.splice($.inArray(this,
+										controllerGroupConstructPromises), 1);
 							}
 						})(prop));
 			} else {
 				controller[prop] = createAndBindController(null, $.extend(true, {},
-						clonedControllerDef[prop]), param, $.extend({
+						clonedControllerDef[prop]), param, {
 					isInternal: true,
 					parentController: controller,
 					rootController: isRoot ? controller : fwOpt.rootController
-				}, fwOpt));
+				});
 			}
 		}
 
@@ -3924,8 +3925,8 @@
 			// controllerGroupConstructPromisesは子コントローラの依存解決
 			var promisesLength = controllerGroupConstructPromises.length;
 			function constructPromiseCheck() {
-				if (promisesLength === controllerGroupConstructPromises.length) {
-					// 子孫にpromiseを追加されていない場合は、init処理の開始
+				if (controllerGroupConstructPromises.length === 0) {
+					// 待機中のプロミスがもうないならinit開始
 					triggerInit(controller);
 					return;
 				}

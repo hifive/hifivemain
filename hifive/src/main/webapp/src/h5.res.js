@@ -110,7 +110,7 @@
 	 * @returns {String}
 	 */
 	function getFilePath(filePath) {
-		return (h5.settings.currentPath || './') + filePath;
+		return (h5.settings.res.currentPath || './') + filePath;
 	}
 
 	/**
@@ -118,24 +118,22 @@
 	 *
 	 * @returns {Function} Viewリゾルバ
 	 */
-	function createNamespaceResolver() {
-		return function(namespace) {
-			var ret = h5.u.obj.getByPath(namespace);
-			if (ret) {
-				// 既にある場合はresolve済みのプロミスを返す
-				return $.Deferred().resolve(ret).promise();
-			}
-			// "."を"/"に変えてファイルパスを取得
-			var filePath = getFilePath(namespace.replace(/\./g, '/')) + '.js';
-			// loadScriptでロードする
-			var dfd = $.Deferred();
-			h5.u.loadScript(filePath).done(function() {
-				dfd.resolve(h5.u.obj.getByPath(namespace));
-			}).fail(function(/* var_args */) {
-				dfd.reject(argsToArray(arguments));
-			});
-			return dfd.promise();
-		};
+	function resolveNamespace(resourceKey) {
+		var ret = h5.u.obj.getByPath(resourceKey);
+		if (ret) {
+			// 既にある場合はresolve済みのプロミスを返す
+			return $.Deferred().resolve(ret).promise();
+		}
+		// "."を"/"に変えてファイルパスを取得
+		var filePath = getFilePath(resourceKey.replace(/\./g, '/')) + '.js';
+		// loadScriptでロードする
+		var dfd = $.Deferred();
+		h5.u.loadScript(filePath).done(function() {
+			dfd.resolve(h5.u.obj.getByPath(resourceKey));
+		}).fail(function(/* var_args */) {
+			dfd.reject(argsToArray(arguments));
+		});
+		return dfd.promise();
 	}
 
 	/**
@@ -143,22 +141,20 @@
 	 *
 	 * @returns {Function} Viewリゾルバ
 	 */
-	function createViewResolver() {
-		return function(filePath) {
-			if (!/\.ejs$/.test(filePath)) {
-				// .ejsで終わっていないファイルは無視
-				return false;
-			}
-			var dfd = $.Deferred();
-			// TODO VeiwTemplateクラスを作ってそれを返すようにする
-			var view = h5.core.view.createView();
-			view.load(getFilePath(filePath)).done(function() {
-				dfd.resolve(view.__cachedTemplates);
-			}).fail(function(/* var_args */) {
-				dfd.reject(argsToArray(arguments));
-			});
-			return dfd.promise();
-		};
+	function resolveEJSTemplate(resourceKey) {
+		if (!/\.ejs$/.test(resourceKey)) {
+			// .ejsで終わっていないファイルは無視
+			return false;
+		}
+		var dfd = $.Deferred();
+		// TODO VeiwTemplateクラスを作ってそれを返すようにする
+		var view = h5.core.view.createView();
+		view.load(getFilePath(resourceKey)).done(function() {
+			dfd.resolve(view.__cachedTemplates);
+		}).fail(function(/* var_args */) {
+			dfd.reject(argsToArray(arguments));
+		});
+		return dfd.promise();
 	}
 
 	/**
@@ -166,40 +162,35 @@
 	 *
 	 * @returns {Function} Viewリゾルバ
 	 */
-	function createJsResolver() {
-		return function(filePath) {
-			if (!/\.js$/.test(filePath)) {
-				// .jsで終わっていないファイルは無視
-				return false;
-			}
-			// loadScriptでロードする
-			return h5.u.loadScript(getFilePath(filePath));
-		};
+	function resolveJs(resourceKey) {
+		if (!/\.js$/.test(resourceKey)) {
+			// .jsで終わっていないファイルは無視
+			return false;
+		}
+		// loadScriptでロードする
+		return h5.u.loadScript(getFilePath(resourceKey));
 	}
-
 	/**
 	 * cssファイルのデフォルトのリゾルバを作成する
 	 *
 	 * @returns {Function} Viewリゾルバ
 	 */
-	function createCssResolver() {
-		return function(filePath) {
-			if (!/\.css$/.test(filePath)) {
-				// .cssで終わっていないファイルは無視
-				return false;
-			}
-			var head = document.getElementsByTagName('head')[0];
+	function resolveCss(resourceKey) {
+		if (!/\.css$/.test(resourceKey)) {
+			// .cssで終わっていないファイルは無視
+			return false;
+		}
+		var head = document.getElementsByTagName('head')[0];
 
-			var cssNode = document.createElement('link');
-			cssNode.type = 'text/css';
-			cssNode.rel = 'stylesheet';
-			cssNode.href = getFilePath(filePath);
-			head.appendChild(cssNode);
+		var cssNode = document.createElement('link');
+		cssNode.type = 'text/css';
+		cssNode.rel = 'stylesheet';
+		cssNode.href = getFilePath(resourceKey);
+		head.appendChild(cssNode);
 
-			// 同期でresolve
-			// TODO cssのロードを待機する必要ある…？
-			return $.Deferred().resolve().promise();
-		};
+		// 同期でresolve
+		// TODO cssのロードを待機する必要ある…？
+		return $.Deferred().resolve().promise();
 	}
 
 	/**
@@ -236,10 +227,10 @@
 	}
 
 	// デフォルトリゾルバの登録
-	addResolver(createNamespaceResolver());
-	addResolver(createViewResolver());
-	addResolver(createJsResolver());
-	addResolver(createCssResolver());
+	addResolver(resolveNamespace);
+	addResolver(resolveEJSTemplate);
+	addResolver(resolveJs);
+	addResolver(resolveCss);
 
 	// =============================
 	// Expose to window
