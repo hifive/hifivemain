@@ -229,6 +229,9 @@
 					top = $root.scrollTop();
 				} else if (top === POSITION_CONSTRAINT.bottom) {
 					top = $root.scrollTop() + $root.height() - $element.outerHeight();
+				} else {
+					// キーワード指定じゃない場合は$rootからの相対位置
+					top = $root.offset().top + parseFloat(top);
 				}
 
 				// leftがキーワード指定('left','center','right'の場合
@@ -238,6 +241,9 @@
 					left = $root.scrollLeft();
 				} else if (left === POSITION_CONSTRAINT.right) {
 					left = $root.scrollLeft() + $root.width() - $element.outerWidth();
+				} else {
+					// キーワード指定じゃない場合は$rootからの相対位置
+					left = $root.offset().left + parseFloat(left);
 				}
 				topLeftStyle.top = top;
 				topLeftStyle.left = left;
