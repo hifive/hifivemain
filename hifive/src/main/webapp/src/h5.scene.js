@@ -231,7 +231,7 @@
 					top = $root.scrollTop() + $root.height() - $element.outerHeight();
 				} else {
 					// キーワード指定じゃない場合は$rootからの相対位置
-					top = $root.offset().top + parseFloat(top);
+					top = $appendTarget.offset().top + parseFloat(top);
 				}
 
 				// leftがキーワード指定('left','center','right'の場合
@@ -242,8 +242,8 @@
 				} else if (left === POSITION_CONSTRAINT.right) {
 					left = $root.scrollLeft() + $root.width() - $element.outerWidth();
 				} else {
-					// キーワード指定じゃない場合は$rootからの相対位置
-					left = $root.offset().left + parseFloat(left);
+					// キーワード指定じゃない場合はappendしたルートからの相対位置
+					left = $appendTarget.offset().left + parseFloat(left);
 				}
 				topLeftStyle.top = top;
 				topLeftStyle.left = left;
@@ -300,7 +300,7 @@
 				animateShow($element);
 			}
 
-			if (param.mordal) {
+			if (param.modal) {
 				$element.css('z-index', 10001);
 				// オーバレイを表示
 				showOverlay($root);
