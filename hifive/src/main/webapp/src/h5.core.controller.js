@@ -165,11 +165,14 @@
 	// Cache
 	//
 	// =========================================================================
-	// コントローラマネージャ。作成した時に値をセットしている。
-	var controllerManager;
-
-	// キャッシュマネージャ。作成した時に値をセットしている。
-	var definitionCacheManager;
+	var getDeferred = h5.async.deferred;
+	var isPromise = h5.async.isPromise;
+	var startsWith = h5.u.str.startsWith;
+	var endsWith = h5.u.str.endsWith;
+	var format = h5.u.str.format;
+	var argsToArray = h5.u.obj.argsToArray;
+	var isJQueryObject = h5.u.obj.isJQueryObject;
+	var isDependency = h5.res.isDependency;
 
 	// =========================================================================
 	//
@@ -185,13 +188,12 @@
 	var dummyFailHandler = function() {
 	//
 	};
-	var getDeferred = h5.async.deferred;
-	var isPromise = h5.async.isPromise;
-	var startsWith = h5.u.str.startsWith;
-	var endsWith = h5.u.str.endsWith;
-	var format = h5.u.str.format;
-	var argsToArray = h5.u.obj.argsToArray;
-	var isJQueryObject = h5.u.obj.isJQueryObject;
+
+	// コントローラマネージャ。作成した時に値をセットしている。
+	var controllerManager;
+
+	// キャッシュマネージャ。作成した時に値をセットしている。
+	var definitionCacheManager;
 
 	/**
 	 * マウス/タッチイベントについてh5track*イベントをトリガしたかどうかを管理するため、イベントを格納する配列
@@ -3674,7 +3676,9 @@
 
 		// コントローラ名
 		var controllerName = controllerDefObj.__name;
-		if (!isString(controllerName) || $.trim(controllerName).length === 0) {
+		if ((!isString(controllerName) || $.trim(controllerName).length === 0)
+				&& !isDependency(controllerDefObj)) {
+			// Dependency指定の場合を除いて、文字列じゃない又は空文字、空白文字の場合はエラー
 			throwFwError(ERR_CODE_INVALID_CONTROLLER_NAME, null, {
 				controllerDefObj: controllerDefObj
 			});
@@ -3818,14 +3822,45 @@
 			disposeController(controller, null, e);
 		});
 
+		// 子コントローラの依存関係解決のプロミス
+		var controllerGroupConstructPromises = isRoot ? [] : fwOpt.controllerGroupConstructPromises;
+
 		// 子コントローラをコントローラ化して持たせる
+		// 子コントローラがDependencyオブジェクトなら依存関係を解決
 		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
 			// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
 			var prop = cache.childControllerProperties[i];
-			controller[prop] = createAndBindController(null, $.extend(true, {},
-					clonedControllerDef[prop]), param, $.extend({
-				isInternal: true
-			}, fwOpt));
+			var childController = clonedControllerDef[prop];
+			if (isDependency(childController)) {
+				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
+				var promise = childController.resolve();
+				controllerGroupConstructPromises.push(promise);
+				promise
+						.done((function(childProp) {
+							return function(c) {
+								controller[childProp] = createAndBindController(
+										null,
+										$.extend(true, {}, c),
+										param,
+										$
+												.extend(
+														{
+															isInternal: true,
+															parentController: controller,
+															rootController: isRoot ? controller
+																	: fwOpt.rootController,
+															controllerGroupConstructPromises: controllerGroupConstructPromises
+														}, fwOpt));
+							}
+						})(prop));
+			} else {
+				controller[prop] = createAndBindController(null, $.extend(true, {},
+						clonedControllerDef[prop]), param, $.extend({
+					isInternal: true,
+					parentController: controller,
+					rootController: isRoot ? controller : fwOpt.rootController
+				}, fwOpt));
+			}
 		}
 
 		// イベントハンドラにアスペクトを設定
@@ -3847,51 +3882,64 @@
 			controller[prop] = clonedControllerDef[prop];
 		}
 
-		if (isRoot) {
-			// __constructを実行。ここまでは完全に同期処理になる。
-			// 子コントローラのバインドが終わってから、親→子の順番で実行する
-			var isDisposedInConstruct = false;
-			doForEachControllerGroups(controller, function(c, parent, prop) {
-				// __construct呼び出し
-				try {
-					c.__construct && c.__construct(createInitializationContext(c));
-				} catch (e) {
-					// この時点ではrootControllerは設定されておらず、
-					// disposeControllerはrootControllerを取得できないと何もしないので
-					// ルートコントローラを渡してdisposeする
-					disposeController(controller, e);
-				}
-
-				if (isDisposing(c)) {
-					// 途中(__constructの中)でdisposeされたら__constructの実行を中断
-					isDisposedInConstruct = true;
-					return false;
-				}
-
-				// __construct呼び出し後にparentControllerとrootControllerの設定
-				if (c === controller) {
-					// ルートコントローラの場合(parentが無い場合)、rootControllerは自分自身、parentControllerはnull
-					c.rootController = c;
-					c.parentController = null;
-				} else {
-					// rootControllerはisRoot===trueのコントローラには設定済みなので、親から子に同じrootControllerを引き継ぐ
-					c.parentController = parent;
-					c.rootController = parent.rootController;
-				}
-			});
-			if (isDisposedInConstruct) {
-				// __constructでdisposeが呼ばれたらnullを返す
-				// (h5.core.controllerの戻り値がnullになる)
-				return null;
-			}
+		// __constructを実行
+		var isDisposedInConstruct = false;
+		try {
+			controller.__construct
+					&& controller.__construct(createInitializationContext(controller));
+		} catch (e) {
+			// ルートコントローラを渡してdisposeする
+			// TODO ルートコントローラは未設定なので、子コントローラの__construct実行時に取得できるようにする
+			disposeController(controller, e);
 		}
 
 		// コントローラマネージャの管理対象とするか判定する(fwOpt.false===falseなら管理対象外)
 		controllerContext.managed = fwOpt && fwOpt.managed;
 
+
+		if (isDisposing(controller)) {
+			// 途中(__constructの中)でdisposeされたら__constructの実行を中断
+			isDisposedInConstruct = true;
+			return false;
+		}
+
+		// __construct呼び出し後にparentControllerとrootControllerの設定
+		if (isRoot) {
+			// ルートコントローラの場合(parentが無い場合)、rootControllerは自分自身、parentControllerはnull
+			controller.rootController = controller;
+			controller.parentController = null;
+		} else {
+			// rootControllerはisRoot===trueのコントローラには設定済みなので、親から子に同じrootControllerを引き継ぐ
+			controller.parentController = fwOpt.parentController;
+			controller.rootController = fwOpt.rootController;
+		}
+		if (isDisposedInConstruct) {
+			// __constructでdisposeが呼ばれたらnullを返す
+			// (h5.core.controllerの戻り値がnullになる)
+			return null;
+		}
+
 		if (isRoot) {
 			// ルートコントローラなら自分以下のinitを実行
-			triggerInit(controller);
+			// controllerGroupConstructPromisesは子コントローラの依存解決
+			var promisesLength = controllerGroupConstructPromises.length;
+			function constructPromiseCheck() {
+				if (promisesLength === controllerGroupConstructPromises.length) {
+					// 子孫にpromiseを追加されていない場合は、init処理の開始
+					triggerInit(controller);
+					return;
+				}
+				// 子孫にpromiseを追加されていた場合(さらに待機するコンストラクタがあった場合)
+				// 再度待機する
+				promisesLength = controllerGroupConstructPromises.length
+				waitAllConstructPromise();
+			}
+			function waitAllConstructPromise() {
+				waitForPromises(controllerGroupConstructPromises, function() {
+					constructPromiseCheck();
+				});
+			}
+			waitAllConstructPromise();
 		}
 		return controller;
 	}
