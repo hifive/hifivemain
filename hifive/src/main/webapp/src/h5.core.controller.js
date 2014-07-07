@@ -3776,13 +3776,31 @@
 		controller.postInitPromise = postInitPromise;
 		controller.readyPromise = readyPromise;
 
+		// 子コントローラ、ロジック依存関係解決のプロミス
+		var controllerGroupDependencyPromises = isRoot ? []
+				: fwOpt.controllerGroupDependencyPromises;
+
 		// ロジック定義をロジック化
 		// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
 		// ロジックが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
 		for (var i = 0, l = cache.logicProperties.length; i < l; i++) {
 			var prop = cache.logicProperties[i];
 			var logicDef = controllerDefObj[prop];
-			controller[prop] = createLogic(logicDef);
+			if (isDependency(logicDef)) {
+				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
+				var promise = logicDef.resolve();
+				controllerGroupDependencyPromises.push(promise);
+				promise.done((function(logicProp) {
+					return function(logic) {
+						controller[logicProp] = createLogic(logic);
+						// ロジック化が終わったら、プロミスを取り除く
+						controllerGroupDependencyPromises.splice($.inArray(this,
+								controllerGroupDependencyPromises), 1);
+					}
+				})(prop));
+			} else {
+				controller[prop] = createLogic(logicDef);
+			}
 		}
 
 		// templateDfdの設定
@@ -3822,9 +3840,6 @@
 			disposeController(controller, null, e);
 		});
 
-		// 子コントローラの依存関係解決のプロミス
-		var controllerGroupConstructPromises = isRoot ? [] : fwOpt.controllerGroupConstructPromises;
-
 		// 子コントローラをコントローラ化して持たせる
 		// 子コントローラがDependencyオブジェクトなら依存関係を解決
 		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
@@ -3834,7 +3849,7 @@
 			if (isDependency(childController)) {
 				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
 				var promise = childController.resolve();
-				controllerGroupConstructPromises.push(promise);
+				controllerGroupDependencyPromises.push(promise);
 				promise
 						.done((function(childProp) {
 							return function(c) {
@@ -3847,11 +3862,11 @@
 											parentController: controller,
 											rootController: isRoot ? controller
 													: fwOpt.rootController,
-											controllerGroupConstructPromises: controllerGroupConstructPromises
+											controllerGroupDependencyPromises: controllerGroupDependencyPromises
 										});
 								// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
-								controllerGroupConstructPromises.splice($.inArray(this,
-										controllerGroupConstructPromises), 1);
+								controllerGroupDependencyPromises.splice($.inArray(this,
+										controllerGroupDependencyPromises), 1);
 							}
 						})(prop));
 			} else {
@@ -3922,21 +3937,21 @@
 
 		if (isRoot) {
 			// ルートコントローラなら自分以下のinitを実行
-			// controllerGroupConstructPromisesは子コントローラの依存解決
-			var promisesLength = controllerGroupConstructPromises.length;
+			// controllerGroupDependencyPromisesは子コントローラの依存解決
+			var promisesLength = controllerGroupDependencyPromises.length;
 			function constructPromiseCheck() {
-				if (controllerGroupConstructPromises.length === 0) {
+				if (controllerGroupDependencyPromises.length === 0) {
 					// 待機中のプロミスがもうないならinit開始
 					triggerInit(controller);
 					return;
 				}
 				// 子孫にpromiseを追加されていた場合(さらに待機するコンストラクタがあった場合)
 				// 再度待機する
-				promisesLength = controllerGroupConstructPromises.length
+				promisesLength = controllerGroupDependencyPromises.length
 				waitAllConstructPromise();
 			}
 			function waitAllConstructPromise() {
-				waitForPromises(controllerGroupConstructPromises, function() {
+				waitForPromises(controllerGroupDependencyPromises, function() {
 					constructPromiseCheck();
 				});
 			}

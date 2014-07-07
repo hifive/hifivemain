@@ -2,6 +2,7 @@
 	var controller = {
 		__name: 'app.controller.PageController',
 		childController: h5.res.require('app.controller.ChildController'),
+		myLogic: h5.res.require('app.logic.MyLogic'),
 		__construct: function() {
 			$('body').append('<p>' + this.__name + 'の初期化処理を開始します(__construct実行)</p>');
 		},
