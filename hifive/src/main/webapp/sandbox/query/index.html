@@ -1,0 +1,200 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+<script src="../../res/lib/jquery/jquery.js"></script>
+<script src="../../archives/current/ejs-h5mod.js"></script>
+<link rel="stylesheet" href="../../archives/current/h5.css" />
+
+<!-- 		<script src="../../archives/current/h5.js"></script> -->
+<script src="../../src/h5scopedglobals.js"></script>
+<script src="../../src/h5.u.js"></script>
+<script src="../../src/h5.mixin.js"></script>
+<script src="../../src/h5.log.js"></script>
+<script src="../../src/h5.js"></script>
+<script src="../../src/h5.env.js"></script>
+<script src="../../src/h5.async.js"></script>
+<script src="../../src/h5.ui.js"></script>
+<script src="../../src/h5.ui.jqm.manager.js"></script>
+<script src="../../src/h5.ajax.js"></script>
+<script src="../../src/h5.core.data_query.js"></script>
+<script src="../../src/h5.core.data.js"></script>
+<script src="../../src/h5.core.view_binding.js"></script>
+<script src="../../src/h5.core.view.js"></script>
+<script src="../../src/h5.core.controller.js"></script>
+<script src="../../src/h5.api.geo.js"></script>
+<script src="../../src/h5.api.sqldb.js"></script>
+<script src="../../src/h5.api.storage.js"></script>
+
+<script src="../../src/h5.dev.api.geo.js"></script>
+
+<script>
+	$(function() {
+		var seq = h5.core.data.createSequence(null, null, h5.core.data.SEQ_STRING);
+		var manager = h5.core.data.createManager('DataManager');
+		var model = manager.createModel({
+			name: 'SampleModel',
+			schema: {
+				id: {
+					id: true
+				},
+				str: {
+					type: 'string'
+				},
+				num: {
+					type: 'number'
+				}
+			}
+		});
+
+		var result = model.query({
+			str: 'str4',
+			num: '<5'
+		});
+
+		var view = h5.core.view;
+		function resultChangeListener() {
+			view.update('.result', 'query', {
+				result: result
+			});
+		}
+		function itemChangeListener() {
+			view.update('.items', 'items', {
+				items: model.items
+			});
+		}
+
+		// データモデルのitemsChangeが起きたら一覧更新
+		model.addEventListener('itemsChange', itemChangeListener);
+
+		// query結果が変更されたら検索結果一覧を更新
+		result.addEventListener('change', resultChangeListener);
+
+		for (var i = 0; i < 10; i++) {
+			model.create({
+				id: seq.next(),
+				str: 'str' + i,
+				num: i
+			});
+		}
+
+		h5.core.controller('body', {
+			__name: 'querySampleController',
+			'.create button click': function(context) {
+				context.event.preventDefault();
+				var $form = this.$find('.create');
+				var str = $form.find('[name=str]').val();
+				var num = $form.find('[name=num]').val();
+
+				model.create({
+					id: seq.next(),
+					str: str,
+					num: parseFloat(num)
+				});
+			},
+			'.remove button click': function(context) {
+				context.event.preventDefault();
+				var $form = this.$find('.remove');
+				var id = $form.find('[name=id]').val();
+				model.remove(id);
+			},
+			'.update button click': function(context) {
+				context.event.preventDefault();
+				var $form = this.$find('.update');
+				var id = $form.find('[name=id]').val();
+				var str = $form.find('[name=str]').val();
+				var num = $form.find('[name=num]').val();
+
+				var item = model.get(id);
+				item.set({
+					str: str,
+					num: parseFloat(num)
+				});
+			}
+		});
+	});
+</script>
+<script type="text/ejs" id="query">
+<table>
+<thead>
+<tr>
+<th>id</th><th>str</th><th>num</th>
+</tr>
+</thead>
+<tbody>
+[% for(var i = 0, l = result.length; i < l; i++){
+ 	var item = result.get(i); %]
+<tr>
+<td>[%= item.get('id') %]</td>
+<td>[%= item.get('str') %]</td>
+<td>[%= item.get('num') %]</td>
+</tr>
+[% } %]
+</tbody>
+</script>
+
+<script type="text/ejs" id="items">
+<table>
+<thead>
+<tr>
+<th>id</th><th>str</th><th>num</th>
+</tr>
+</thead>
+<tbody>
+[% for(p in items){
+ 	var item = items[p]; %]
+<tr>
+<td>[%= item.get('id') %]</td>
+<td>[%= item.get('str') %]</td>
+<td>[%= item.get('num') %]</td>
+</tr>
+[% } %]
+</tbody>
+</script>
+<style>
+form {
+	border: 1px solid #ccc
+}
+</style>
+<title>h5.core.data_query</title>
+</head>
+<body>
+	<h3>全てのアイテム</h3>
+	<div class="items"></div>
+	<h3>検索結果</h3>
+	<pre>var result = model.query({
+	str: 'str4',
+	num: '&lt;5'
+});</pre>
+	<div class="result"></div>
+	<form class="create">
+		<p>
+			str:<input type="text" name="str" value="str4" />
+		</p>
+		<p>
+			num:<input type="text" name="num" value="0" />
+		</p>
+		<button class="regist">作成</button>
+	</form>
+	<form class="remove">
+		<p>
+			id:<input type="text" name="id" value="5" />
+		</p>
+		<button class="regist">削除</button>
+	</form>
+	<form class="update">
+		<p>
+			id:<input type="text" name="id" value="1" />
+		</p>
+		<p>
+			str:<input type="text" name="str" value="str4" />
+		</p>
+		<p>
+			num:<input type="text" name="num" value="0" />
+		</p>
+		<button class="regist">更新</button>
+	</form>
+</body>
+</html>

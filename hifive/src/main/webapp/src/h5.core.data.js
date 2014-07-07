@@ -3480,7 +3480,12 @@
 				}
 			}
 			return ret;
-		}
+		},
+
+		/**
+		 * クエリにマッチするDataModelの持つDataItemの配列(ObservableArray)を返します
+		 */
+		query: h5internal.data.query
 	});
 
 	//------------------------------------------
