@@ -51,7 +51,8 @@
 
 		var result = model.query({
 			str: 'str4',
-			num: '<5'
+			'num <': 5,
+			'num >=': 0
 		});
 
 		var view = h5.core.view;
@@ -108,10 +109,12 @@
 				var num = $form.find('[name=num]').val();
 
 				var item = model.get(id);
-				item.set({
-					str: str,
-					num: parseFloat(num)
-				});
+				if (item) {
+					item.set({
+						str: str,
+						num: parseFloat(num)
+					});
+				}
 			}
 		});
 	});
@@ -165,8 +168,9 @@ form {
 	<div class="items"></div>
 	<h3>検索結果</h3>
 	<pre>var result = model.query({
-	str: 'str4',
-	num: '&lt;5'
+	str: &#39;str4&#39;,
+	&#39;num &lt;&#39;: 5,
+	&#39;num &gt;=&#39;: 0
 });</pre>
 	<div class="result"></div>
 	<form class="create">

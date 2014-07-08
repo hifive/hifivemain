@@ -27,7 +27,26 @@
 	// =============================
 	// Production
 	// =============================
-
+	var COMPARE_FUNCIONS = {
+		'===': function(value, queryValue) {
+			return value === queryValue;
+		},
+		'==': function(value, queryValue) {
+			return value == queryValue;
+		},
+		'<': function(value, queryValue) {
+			return value < queryValue;
+		},
+		'>': function(value, queryValue) {
+			return value > queryValue;
+		},
+		'<=': function(value, queryValue) {
+			return value <= queryValue;
+		},
+		'>=': function(value, queryValue) {
+			return value >= queryValue;
+		}
+	};
 	// =============================
 	// Development Only
 	// =============================
@@ -50,54 +69,78 @@
 	// =============================
 	// Functions
 	// =============================
-	function match(item, queryObj) {
-		for ( var prop in queryObj) {
-			if (prop === '_result') {
-				continue;
-			}
+
+	function match(item, analyzedQuery) {
+		// クエリの解析結果を使って、itemが条件を満たすかどうかチェックする
+		for (var i = 0, l = analyzedQuery.length; i < l; i++) {
+			var query = analyzedQuery[i];
+			var prop = query.prop;
+			var queryValue = query.queryValue;
 			var value = item.get(prop);
-			var param = queryObj[prop];
-			if (value === param) {
-				continue;
+			var compareFunction = query.compareFunction;
+			if (!compareFunction(value, queryValue)) {
+				return false;
 			}
-			if (!/^<*$/i.test(param)) {
-				if (value < parseFloat(param.slice(1))) {
-					continue;
-				}
-			}
-
-			// TODO
-
-
-
-			return false;
-
 		}
 		return true;
 	}
 
-	function createChangeListener(queryObj, result) {
+	function createChangeListener(analyzedQuery, resultArray) {
 		return function(ev) {
 			var removed = ev.removed;
 			var created = ev.created;
 			var changed = ev.changed;
+
 			for (var i = 0, l = removed.length; i < l; i++) {
-				result.splice($.inArray(removed[i], result), 1);
+				// resultArrayの何番目に入っているアイテムか
+				var resultIndex = $.inArray(removed[i], resultArray._src);
+				// DataModelから削除されたら結果からも削除
+				resultArray.splice(resultIndex, 1);
 			}
 			for (var i = 0, l = changed.length; i < l; i++) {
-				if (!match(changed[i].target, queryObj)) {
-					result.push(changed[i].target);
+				// resultArrayの何番目に入っているアイテムか(入っていないなら-1)
+				var resultIndex = $.inArray(changed[i].target, resultArray._src);
+
+				// マッチするかどうかチェックして、
+				// マッチするかつ結果にないものなら追加
+				// マッチしないかつ結果にあるものなら取り除く
+				if (match(changed[i].target, analyzedQuery)) {
+					if (resultIndex === -1) {
+						resultArray.push(changed[i].target);
+					}
 				} else {
-					result.splice($.inArray(changed[i], result), 1);
+					if (resultIndex !== -1) {
+						resultArray.splice(resultIndex, 1);
+					}
 				}
 			}
 			for (var i = 0, l = created.length; i < l; i++) {
-				if (match(created[i], queryObj)) {
-					result.push(created[i]);
+				// 新しく作成されたアイテムがあればマッチするかどうかチェックして
+				// マッチするなら結果に追加
+				if (match(created[i], analyzedQuery)) {
+					resultArray.push(created[i]);
 				}
 			}
 		};
 	}
+
+	function createAnalyzedQuery(queryObj) {
+		// queryObjの解析
+		var analyzedQuery = [];
+		for ( var prop in queryObj) {
+			// プロパティ名とオペランドに分割。連続した空白文字は無視
+			var tmp = $.trim(prop.replace(/ +/g, ' ')).split(' ');
+			// 演算子省略時は'==='で比較
+			var op = tmp[1] || '===';
+			analyzedQuery.push({
+				prop: tmp[0],
+				queryValue: queryObj[prop],
+				compareFunction: COMPARE_FUNCIONS[op]
+			});
+		}
+		return analyzedQuery;
+	}
+
 
 	// =========================================================================
 	//
@@ -110,22 +153,30 @@
 	function query(queryObj) {
 		var model = this;
 		var items = model.items;
-		if (queryObj._result) {
-			// 既に同一クエリで結果ObservableArray生成済みの場合はそれを返す
-			return queryObj._result;
-		}
-		var result = queryObj._result = h5.core.data.createObservableArray();
+		// TODO 同一クエリだった時に結果は覚えておいたものから持ってくるようにするべきか
+		// (覚えておく方法、queryObjにもたせる？queryObjにidを振ってmapで覚えておく？)
+		//		if (queryObj._result) {
+		//			// 既に同一クエリで結果ObservableArray生成済みの場合はそれを返す
+		//			return queryObj._result;
+		//		}
+		//		var result = queryObj._result = h5.core.data.createObservableArray();
+		var resultArray = h5.core.data.createObservableArray();
 
+		// queryObjを解析
+		var analyzedQuery = createAnalyzedQuery(queryObj);
+
+		// DataModelに変更があった時に結果を更新する関数をバインドする
+		this.addEventListener('itemsChange', createChangeListener(analyzedQuery, resultArray));
+
+		// 今あるアイテムについて、条件を満たすものを列挙
 		for ( var p in items) {
 			var item = items[p];
-			if (match(item, queryObj)) {
-				result.push(item);
+			if (match(item, analyzedQuery)) {
+				resultArray.push(item);
 			}
 		}
-		// DataModelに変更があった時に結果を更新する関数をバインドする
-		this.addEventListener('itemsChange', createChangeListener(queryObj, result));
 
-		return result;
+		return resultArray;
 	}
 
 	// h5internalにqueryを公開
