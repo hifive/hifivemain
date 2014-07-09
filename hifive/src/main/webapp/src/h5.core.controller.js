@@ -3835,6 +3835,8 @@
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
 				controllerName, controllerDefObj, param, isRoot);
 
+		var rootController = isRoot ? controller : fwOpt.rootController;
+
 		// ------ controllerContextの作成 ------//
 		// Deferred,Promiseの作成
 		// preInitPromise, initPromise, postInitPromiseが失敗してもcFHを発火させないようにするため、dummyのfailハンドラを登録する
@@ -3877,8 +3879,7 @@
 		controller.readyPromise = readyPromise;
 
 		// 子コントローラ、ロジック依存関係解決のプロミス
-		var controllerGroupDependencyPromises = isRoot ? []
-				: fwOpt.controllerGroupDependencyPromises;
+		var promisesForTriggerInit = isRoot ? [] : fwOpt.promisesForTriggerInit;
 
 		// ロジック定義をロジック化
 		// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
@@ -3889,15 +3890,23 @@
 			if (isDependency(logicDef)) {
 				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
 				var promise = logicDef.resolve();
-				controllerGroupDependencyPromises.push(promise);
+				promisesForTriggerInit.push(promise);
 				promise.done((function(logicProp) {
 					return function(logic) {
 						var logicInstance = createLogic(logic);
 						controller[logicProp] = logicInstance;
 						// ロジック化が終わったらコントローラが待機するプロミスから取り除く
-						controllerGroupDependencyPromises.splice($.inArray(this,
-								controllerGroupDependencyPromises), 1);
-					}
+						promisesForTriggerInit.splice($.inArray(this, promisesForTriggerInit), 1);
+						// ロジックのreadyPromiseを追加
+						promisesForTriggerInit.push(logicInstance.readyPromise);
+						// ロジックのreadyPromiseがdoneになったらpromisesForTriggerInitから取り除く
+						logicInstance.readyPromise.done((function(logicReadyPromise) {
+							return function() {
+								promisesForTriggerInit.splice($.inArray(logicReadyPromise,
+										promisesForTriggerInit), 1);
+							};
+						})(logicInstance.readyPromise));
+					};
 				})(prop));
 			} else {
 				controller[prop] = createLogic(logicDef);
@@ -3950,32 +3959,26 @@
 			if (isDependency(childController)) {
 				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
 				var promise = childController.resolve();
-				controllerGroupDependencyPromises.push(promise);
-				promise
-						.done((function(childProp) {
-							return function(c) {
-								controller[childProp] = createAndBindController(
-										null,
-										$.extend(true, {}, c),
-										param,
-										{
-											isInternal: true,
-											parentController: controller,
-											rootController: isRoot ? controller
-													: fwOpt.rootController,
-											controllerGroupDependencyPromises: controllerGroupDependencyPromises
-										});
-								// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
-								controllerGroupDependencyPromises.splice($.inArray(this,
-										controllerGroupDependencyPromises), 1);
-							}
-						})(prop));
+				promisesForTriggerInit.push(promise);
+				promise.done((function(childProp) {
+					return function(c) {
+						controller[childProp] = createAndBindController(null,
+								$.extend(true, {}, c), param, {
+									isInternal: true,
+									parentController: controller,
+									rootController: rootController,
+									promisesForTriggerInit: promisesForTriggerInit
+								});
+						// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
+						promisesForTriggerInit.splice($.inArray(this, promisesForTriggerInit), 1);
+					};
+				})(prop));
 			} else {
 				controller[prop] = createAndBindController(null, $.extend(true, {},
 						clonedControllerDef[prop]), param, {
 					isInternal: true,
 					parentController: controller,
-					rootController: isRoot ? controller : fwOpt.rootController
+					rootController: rootController
 				});
 			}
 		}
@@ -4004,21 +4007,18 @@
 		try {
 			controller.__construct
 					&& controller.__construct(createInitializationContext(controller));
+			if (isDisposing(controller)) {
+				// 途中(__constructの中)でdisposeされたら__constructの実行を中断
+				isDisposedInConstruct = true;
+				return;
+			}
 		} catch (e) {
 			// ルートコントローラを渡してdisposeする
-			// TODO ルートコントローラは未設定なので、子コントローラの__construct実行時に取得できるようにする
-			disposeController(controller, e);
+			disposeController(rootController, e);
 		}
 
 		// コントローラマネージャの管理対象とするか判定する(fwOpt.false===falseなら管理対象外)
 		controllerContext.managed = fwOpt && fwOpt.managed;
-
-
-		if (isDisposing(controller)) {
-			// 途中(__constructの中)でdisposeされたら__constructの実行を中断
-			isDisposedInConstruct = true;
-			return false;
-		}
 
 		// __construct呼び出し後にparentControllerとrootControllerの設定
 		if (isRoot) {
@@ -4038,9 +4038,9 @@
 
 		if (isRoot) {
 			// ルートコントローラなら自分以下のinitを実行
-			// controllerGroupDependencyPromisesは子コントローラの依存解決
+			// promisesForTriggerInitは子コントローラの依存解決
 			function constructPromiseCheck() {
-				if (controllerGroupDependencyPromises.length === 0) {
+				if (promisesForTriggerInit.length === 0) {
 					// 待機中のプロミスがもうないならinit開始
 					triggerInit(controller);
 					return;
@@ -4050,7 +4050,7 @@
 				waitAllConstructPromise();
 			}
 			function waitAllConstructPromise() {
-				waitForPromises(controllerGroupDependencyPromises, constructPromiseCheck);
+				waitForPromises(promisesForTriggerInit, constructPromiseCheck);
 			}
 			waitAllConstructPromise();
 		}

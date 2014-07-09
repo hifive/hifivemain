@@ -7,6 +7,12 @@
 		},
 		__ready:function(){
 			$(this.rootElement).append('<p>' + this.__name + 'のバインドが完了しました(__ready実行)</p>');
+		},
+		__init: function() {
+			$('body').append('<p>' + this.__name + 'の__initが実行されました</p>');
+		},
+		__dispose:function(){
+			$('body').append('<p>' + this.__name + 'をdisposeしました</p>');
 		}
 	};
 	h5.core.expose(controller);
