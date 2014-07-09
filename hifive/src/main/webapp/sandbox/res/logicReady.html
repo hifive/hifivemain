@@ -63,7 +63,7 @@
 				c1_1ChildLogic: {
 					__name: 'c1_1',
 					__construct: construct,
-					__ready: createAsyncReady(100)
+					__ready: createAsyncReady(0)
 				},
 				c1_2ChildLogic: {
 					__name: 'c1_2',
@@ -74,7 +74,12 @@
 			c2Logic: {
 				__name: 'c2',
 				__construct: construct,
-				__ready: createAsyncReady(500)
+				__ready: createAsyncReady(100),
+				c2_1ChildLogic: {
+					__name: 'c2_1',
+					__construct: construct,
+					__ready: createAsyncReady(0)
+				}
 			},
 			c3ChildLogic: {
 				__name: 'c3',
@@ -83,7 +88,7 @@
 				c3_1ChildLogic: {
 					__name: 'c3_1',
 					__construct: construct,
-					__ready: createAsyncReady(100)
+					__ready: createAsyncReady(0)
 				},
 				c3_2ChildLogic: {
 					__name: 'c3_2',

@@ -2533,9 +2533,20 @@
 		// プロミスがresolveされたら取り除く
 		var waitingPromises = [];
 
+		function addDoneListener(promise, targetLogic, listener) {
+			var logicWaitingPromises = targetLogic.__logicContext.waitingPromises = targetLogic.__logicContext.waitingPromises
+					|| [];
+			if ($.inArray(promise, logicWaitingPromises) === -1) {
+				logicWaitingPromises.push(promise);
+				promise.done(listener);
+			}
+		}
+
 		function execInner(logic, parent) {
-			// isReadyをfalseにしておく
+			// isReadyは__ready終了(promiseならresolveした)タイミングでtrueになる
 			logic.__logicContext.isReady = false;
+			// isCalledReadyは__readyを呼んだ(promiseを返すかどうかは関係ない)タイミングでtrueになる
+			logic.__logicContext.isCalledReady = false;
 			// 深さ優先でexecInnerを実行
 			doForEachLogics(logic, execInner);
 
@@ -2543,6 +2554,10 @@
 			 * 子が全てisReadyなら__readyを実行して自身をisReadyにする
 			 */
 			function executeReady() {
+				if (logic.__logicContext.isCalledReady) {
+					// 既に__ready呼び出し済みなら何もしない
+					return;
+				}
 				var isChildrenReady = true;
 				doForEachLogics(logic, function(child) {
 					// isReadyがfalseなものが一つでもあればfalseを返して探索を終了
@@ -2553,6 +2568,7 @@
 				if (isChildrenReady) {
 					// __readyを実行
 					var ret = isFunction(logic.__ready) && logic.__ready();
+					logic.__logicContext.isCalledReady = true;
 					if (isPromise(ret)) {
 						// __readyが返したプロミスをwaitingPromisesに覚えておく
 						waitingPromises.push(ret);
@@ -2578,9 +2594,13 @@
 				} else {
 					// 子のいずれかがisReadyじゃない===どこかで待機しているプロミスがある
 					// (待機するプロミスが無ければ子から順に実行しているため)
-					// この時点で待機しているプロミスが完了したタイミングで、
+					// この時点で待機しているプロミスのいずれかが完了したタイミングで、
 					// 再度自分の子が全てisReadyかどうかをチェックする
-					waitForPromises(waitingPromises, executeReady);
+					var waitingPromisesCopy = waitingPromises.slice(0);
+					for (var i = 0, l = waitingPromisesCopy.length; i < l; i++) {
+						// addDoneListener(内部関数)を使って、同じプロミスに同じロジックについてのハンドラが重複しないようにしている
+						addDoneListener(waitingPromisesCopy[i], logic, executeReady);
+					}
 				}
 			}
 			executeReady();
