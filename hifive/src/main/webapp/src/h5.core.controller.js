@@ -2290,7 +2290,7 @@
 	 *
 	 * @param {Controller} controller
 	 * @param {Deferred} templateDfd
-	 * @param {String|String[]} templates テンプレートのパス(またはその配列)
+	 * @param {String|String[]|Depency} templates テンプレートのパス(またはその配列)または、Dependencyオブジェクト
 	 */
 	function setTemlatesDeferred(controller, templateDfd, templates) {
 		var controllerName = controller.__name;
@@ -2300,17 +2300,22 @@
 				throwFwError(ERR_CODE_NOT_VIEW);
 			}
 			// 内部から呼ぶviewのロードは、ルートコントローラ設定前に呼ぶので、
-			// view.loadではなくview.__view.loadを使ってエラーチェックをしないようにする
-			var vp = controller.view.__view.load(templates);
+			// view.loadではなくview.__view.loadを使ってコントローラのルートエレメントが設定されているかのチェックをしないようにする
+			var vp = isDependency(templates) ? templates.resolve() : controller.view.__view
+					.load(templates);
 			vp.done(function(result) {
-				/* del begin */
-				if (templates && templates.length > 0) {
-					fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
+				fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
+				if (isDependency(templates)) {
+					result.applyToView(controller.view.__view);
 				}
-				/* del end */
 				templateDfd.resolve();
 			}).fail(
 					function(result) {
+						if (isDependency(templates)) {
+							// Dependencyならリトライしない
+							templateDfd.reject(result);
+							return;
+						}
 						// テンプレートのロードをリトライする条件は、リトライ回数が上限回数未満、かつ
 						// jqXhr.statusが0、もしくは12029(ERROR_INTERNET_CANNOT_CONNECT)であること。
 						// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に0になっていること、
@@ -3918,7 +3923,7 @@
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
 		var templatePromise = templateDfd.promise();
-		if (templates && templates.length > 0) {
+		if (isDependency(templates) || templates && templates.length > 0) {
 			// テンプレートファイルのロードを待機する処理を設定する
 			setTemlatesDeferred(controller, templateDfd, templates);
 		} else {

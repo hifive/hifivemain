@@ -13,6 +13,5 @@
 			return d.promise();
 		}
 	};
-
 	h5.core.expose(logic);
 })();

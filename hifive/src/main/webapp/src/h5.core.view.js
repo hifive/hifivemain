@@ -245,88 +245,30 @@
 		/**
 		 * 指定されたテンプレートパスからテンプレートを非同期で読み込みます。 テンプレートパスがキャッシュに存在する場合はキャッシュから読み込みます。
 		 *
-		 * @param {Array[String]} resourcePaths テンプレートパス
+		 * @param {Array[String]||String} resourcePaths テンプレートパス
 		 * @returns {Object} Promiseオブジェクト
 		 */
 		getTemplateByUrls: function(resourcePaths) {
-			var ret = {};
-			var tasks = [];
-			var datas = [];
-
-			var that = this;
+			resourcePaths = isString(resourcePaths) ? [resourcePaths] : resourcePaths;
 			/**
 			 * キャッシュからテンプレートを取得します。
 			 *
 			 * @param {String} url ファイルの絶対パス
 			 * @returns {Object} テンプレートIDがkeyである、コンパイル済みテンプレートオブジェクトを持つオブジェクト
 			 */
-			var getTemplateByURL = function(url) {
-				var ret = that.cache[url].templates;
+			function getTemplateByUrlFromCache(url) {
+				var ret = cacheManager.cache[url].templates;
 				that.deleteCache(url, true);
 				that.cacheUrls.push(url);
 				return ret;
-			};
-
-			/**
-			 * テンプレートをEJS用にコンパイルされたテンプレートに変換します。
-			 *
-			 * @param {jQuery} $templateElements テンプレートが記述されている要素(<script type="text/ejs">...</script>)
-			 * @returns {Object}
-			 *          テンプレートIDがkeyである、コンパイル済みテンプレートオブジェクトを持つオブジェクトと、テンプレートを取得したファイルパスと絶対パス(URL)を保持するオブジェクト
-			 */
-			function compileTemplatesByElements($templateElements) {
-				if ($templateElements.length === 0) {
-					return;
-				}
-
-				/**
-				 * テンプレート読み込み結果オブジェクト
-				 */
-				var compiled = {};
-				/**
-				 * 読み込んだテンプレートのIDを覚えておく
-				 */
-				var ids = [];
-
-				$templateElements.each(function() {
-					var templateId = $.trim(this.id);
-					var templateString = $.trim(this.innerHTML);
-
-					// 空文字または空白ならエラー
-					if (!templateId) {
-						// load()で更にdetail対してエラー情報を追加するため、ここで空のdetailオブジェクトを生成する
-						throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
-					}
-
-					try {
-						var compiledTemplate = new EJS.Compiler(templateString, DELIMITER);
-						compiledTemplate.compile();
-						compiled[templateId] = compiledTemplate.process;
-						ids.push(templateId);
-					} catch (e) {
-						var lineNo = e.lineNumber;
-						var msg = lineNo ? ' line:' + lineNo : '';
-						throwFwError(ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR, [msg, e.message], {
-							id: templateId,
-							error: e,
-							lineNo: lineNo
-						});
-					}
-				});
-
-				return {
-					compiled: compiled,
-					data: {
-						ids: ids
-					}
-				};
 			}
 
-			function load(absolutePath, filePath, df) {
+			function load(absolutePath, filePath) {
+				var df = $.Deferred();
 				h5.ajax(filePath).done(
 						function(result, statusText, obj) {
 							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
-							delete that.accessingUrls[absolutePath];
+							delete cacheManager.accessingUrls[absolutePath];
 
 							var templateText = obj.responseText;
 							// IE8以下で、テンプレート要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまうため、ここで除去する
@@ -347,39 +289,12 @@
 								return;
 							}
 
-							var compileData = null;
+							var viewTemplate = new ViewTemplate();
+							viewTemplate.registByElement($elements
+									.filter('script[type="text/ejs"]'));
 
-							try {
-								compileData = compileTemplatesByElements($elements
-										.filter('script[type="text/ejs"]'));
-							} catch (e) {
-								e.detail.url = absolutePath;
-								e.detail.path = filePath;
-								df.reject(e);
-								return;
-							}
-
-							var _ret, _data;
-							try {
-								var compiled = compileData.compiled;
-								_data = compileData.data;
-								_data.path = filePath;
-								_data.absoluteUrl = absolutePath;
-								_ret = compiled;
-								that.append(absolutePath, compiled, filePath);
-							} catch (e) {
-								df.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
-									error: e,
-									url: absolutePath,
-									path: filePath
-								}));
-								return;
-							}
-
-							df.resolve({
-								ret: _ret,
-								data: _data
-							});
+							cacheManager.append(absolutePath, viewTemplate, filePath);
+							df.resolve(viewTemplate);
 						}).fail(
 						function(e) {
 							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
@@ -393,18 +308,18 @@
 							}));
 							return;
 						});
+				return df.promise();
 			}
 
 			// キャッシュにあればそれを結果に格納し、なければajaxで取得する。
+			var tasks = [];
+			var margedViewTemplate = new ViewTemplate();
 			for (var i = 0; i < resourcePaths.length; i++) {
 				var path = resourcePaths[i];
 				var absolutePath = toAbsoluteUrl(path);
 
 				if (this.cache[absolutePath]) {
-					$.extend(ret, getTemplateByURL(absolutePath));
-					datas.push({
-						absoluteUrl: absolutePath
-					});
+					margedViewTemplate.marge(getTemplateByUrlFromCache(absolutePath));
 					continue;
 				}
 
@@ -412,25 +327,22 @@
 					// 現在アクセス中のURLであれば、そのpromiseを待つようにし、新たにリクエストを出さない
 					tasks.push(this.accessingUrls[absolutePath]);
 				} else {
-					var df = h5.async.deferred();
-					// IE6でファイルがキャッシュ内にある場合、load内のajaxが同期的に動くので、
-					// load()の呼び出しより先にaccessingUrlsとtasksへpromiseを登録する
-					tasks.push(this.accessingUrls[absolutePath] = df.promise());
-					load(absolutePath, path, df);
+					var loadPromise = load(absolutePath, path).done(function(viewTemplate) {
+						margedViewTemplate.marge(viewTemplate);
+					});
+					if (!isResolved(loadPromise) && !isRejected(loadPromise)) {
+						// IE6でファイルがキャッシュ内にある場合、load内のajaxが同期的に動くので、その場合はtasksには登録しない
+						// 非同期の場合のみtasksに追加
+						tasks.push(loadPromise);
+						this.accessingUrls[absolutePath] = loadPromise;
+					}
 				}
 			}
 
 			var retDf = getDeferred();
 
 			h5.async.when(tasks).done(function() {
-				var args = h5.u.obj.argsToArray(arguments);
-
-				// loadされたものを、キャッシュから持ってきたものとマージする
-				for (var i = 0, l = args.length; i < l; i++) {
-					$.extend(ret, args[i].ret);
-					datas.push(args[i].data);
-				}
-				retDf.resolve(ret, datas);
+				retDf.resolve(margedViewTemplate);
 			}).fail(function(e) {
 				retDf.reject(e);
 			});
@@ -454,7 +366,59 @@
 		return h5.u.obj.isJQueryObject(obj) ? obj : $(obj);
 	}
 
+	/**
+	 * ViewTemplateクラス
+	 */
+	function ViewTemplate() {
+		this._templateMap = {};
+	}
+	$.extend(ViewTemplate.prototype, {
+		/**
+		 * 受け取ったviewにこのインスタンスが持つテンプレートを登録する
+		 */
+		applyToView: function(view) {
+			var templateMap = this._templateMap;
+			for ( var p in templateMap) {
+				view.register(p, templateMap[p]);
+			}
+		},
+		/**
+		 * テンプレートマップに登録
+		 */
+		register: function(id, templateString) {
+			this._templateMap[id] = templateString;
+		},
+		/**
+		 * 別のviewTempalteとマージする
+		 */
+		marge: function(viewTemplate) {
+			$.extend(this._templateMap, viewTemplate._templateMap);
+		},
+		/**
+		 * エレメントからテンプレートマップに登録
+		 *
+		 * @param {DOM|jQuery} $templateElements テンプレートが記述されている要素(<script type="text/ejs">...</script>)
+		 */
+		registByElement: function compileTemplatesByElements($templateElements) {
+			$templateElements = $($templateElements);
+			if ($templateElements.length === 0) {
+				return;
+			}
+			var that = this;
+			$templateElements.each(function() {
+				var templateId = $.trim(this.id);
+				var templateString = $.trim(this.innerHTML);
 
+				// 空文字または空白ならエラー
+				if (!templateId) {
+					// load()で更にdetail対してエラー情報を追加するため、ここで空のdetailオブジェクトを生成する
+					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
+				}
+				that.register(templateId, templateString);
+			});
+		}
+
+	});
 	// =========================================================================
 	//
 	// Body
@@ -530,16 +494,9 @@
 				throwFwError(ERR_CODE_INVALID_FILE_PATH);
 			}
 
-			cacheManager.getTemplateByUrls(paths).done(function(result, datas) {
-				/* del begin */
-				for ( var id in result) {
-					if (that.__cachedTemplates[id]) {
-						fwLogger.info(FW_LOG_TEMPLATE_OVERWRITE, id);
-					}
-				}
-				/* del end */
-				$.extend(that.__cachedTemplates, result);
-				dfd.resolve(datas);
+			cacheManager.getTemplateByUrls(paths).done(function(viewTemplate) {
+				viewTemplate.applyToView(view);
+				dfd.resolve();
 			}).fail(function(e) {
 				fwLogger.error(e.message);
 				dfd.reject(e);
@@ -582,7 +539,11 @@
 			} else if (!isString(templateId) || !$.trim(templateId)) {
 				throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, []);
 			}
-
+			/* del begin */
+			if (this.__cachedTemplates[templateId]) {
+				fwLogger.info(FW_LOG_TEMPLATE_OVERWRITE, templateId);
+			}
+			/* del end */
 			try {
 				var compiledTemplate = new EJS.Compiler(templateString, DELIMITER);
 				compiledTemplate.compile();
@@ -904,4 +865,8 @@
 	});
 	/* del end */
 
+	// 内部使用のためにh5internal.view.cacheManagerを公開
+	h5internal.view = {
+		cacheManager: cacheManager
+	};
 })();

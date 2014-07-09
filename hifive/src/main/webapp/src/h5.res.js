@@ -148,12 +148,11 @@
 			return false;
 		}
 		var dfd = $.Deferred();
-		// TODO VeiwTemplateクラスを作ってそれを返すようにする
-		var view = h5.core.view.createView();
-		view.load(getFilePath(resourceKey)).done(function() {
-			dfd.resolve(view.__cachedTemplates);
-		}).fail(function(/* var_args */) {
-			dfd.reject(argsToArray(arguments));
+		h5internal.view.cacheManager.getTemplateByUrls(getFilePath(resourceKey)).done(
+				function(viewTemplate) {
+					dfd.resolve(viewTemplate);
+				}).fail(function(errorObj) {
+			dfd.reject(errorObj);
 		});
 		return dfd.promise();
 	}
