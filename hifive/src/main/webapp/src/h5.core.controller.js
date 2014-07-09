@@ -78,7 +78,7 @@
 	var ERR_CODE_CONTROLLER_CIRCULAR_REF = 6009;
 	/** エラーコード: ロジックの参照が循環している */
 	var ERR_CODE_LOGIC_CIRCULAR_REF = 6010;
-	/** エラーコード: コントローラの参照が循環している */
+	/** エラーコード: コントローラ化によって追加されるプロパティと名前が重複している */
 	var ERR_CODE_CONTROLLER_SAME_PROPERTY = 6011;
 	/** エラーコード: イベントハンドラのセレクタに{this}が指定されている */
 	var ERR_CODE_EVENT_HANDLER_SELECTOR_THIS = 6012;
@@ -2522,6 +2522,73 @@
 	}
 
 	/**
+	 * ロジックの__readyを実行する
+	 *
+	 * @private
+	 * @param {Logic} rootLogic ルートロジック
+	 * @param {Deferred} readyDfd rootLogicの__readyが終わったらresolveするdeferred
+	 */
+	function triggerLogicReady(rootLogic, readyDfd) {
+		// 待機中のプロミスを覚えておく
+		// プロミスがresolveされたら取り除く
+		var waitingPromises = [];
+
+		function execInner(logic, parent) {
+			// isReadyをfalseにしておく
+			logic.__logicContext.isReady = false;
+			// 深さ優先でexecInnerを実行
+			doForEachLogics(logic, execInner);
+
+			/**
+			 * 子が全てisReadyなら__readyを実行して自身をisReadyにする
+			 */
+			function executeReady() {
+				var isChildrenReady = true;
+				doForEachLogics(logic, function(child) {
+					// isReadyがfalseなものが一つでもあればfalseを返して探索を終了
+					// 子がいない場合はisChidrenReadyはtrueのまま
+					isChildrenReady = child.__logicContext.isReady;
+					return isChildrenReady;
+				});
+				if (isChildrenReady) {
+					// __readyを実行
+					var ret = isFunction(logic.__ready) && logic.__ready();
+					if (isPromise(ret)) {
+						// __readyが返したプロミスをwaitingPromisesに覚えておく
+						waitingPromises.push(ret);
+						ret.done(function() {
+							// __readyが返したプロミスがresolveされたらisReady=trueにする
+							logic.__logicContext.isReady = true;
+							if (logic === rootLogic) {
+								// rootLogicのisReadyがtrueになったらreadyDfdをresolveして終了
+								readyDfd.resolveWith(logic);
+								return;
+							}
+							// waitingPromisesから、resolveしたプロミスを取り除く
+							waitingPromises.splice($.inArray(ret, waitingPromises), 1);
+						});
+					} else {
+						// __readyが同期または関数でないならすぐにisReadyをtrueにする
+						logic.__logicContext.isReady = true;
+						if (logic === rootLogic) {
+							// rootLogicの__readyが終わったタイミングでreadyDfdをresolveする
+							readyDfd.resolveWith(logic);
+						}
+					}
+				} else {
+					// 子のいずれかがisReadyじゃない===どこかで待機しているプロミスがある
+					// (待機するプロミスが無ければ子から順に実行しているため)
+					// この時点で待機しているプロミスが完了したタイミングで、
+					// 再度自分の子が全てisReadyかどうかをチェックする
+					waitForPromises(waitingPromises, executeReady);
+				}
+			}
+			executeReady();
+		}
+		execInner(rootLogic);
+	}
+
+	/**
 	 * bindTargetターゲットが同じかどうか判定する
 	 * <p>
 	 * どちらかがjQueryオブジェクトならその中身を比較
@@ -3792,8 +3859,9 @@
 				controllerGroupDependencyPromises.push(promise);
 				promise.done((function(logicProp) {
 					return function(logic) {
-						controller[logicProp] = createLogic(logic);
-						// ロジック化が終わったら、プロミスを取り除く
+						var logicInstance = createLogic(logic);
+						controller[logicProp] = logicInstance;
+						// ロジック化が終わったらコントローラが待機するプロミスから取り除く
 						controllerGroupDependencyPromises.splice($.inArray(this,
 								controllerGroupDependencyPromises), 1);
 					}
@@ -3938,7 +4006,6 @@
 		if (isRoot) {
 			// ルートコントローラなら自分以下のinitを実行
 			// controllerGroupDependencyPromisesは子コントローラの依存解決
-			var promisesLength = controllerGroupDependencyPromises.length;
 			function constructPromiseCheck() {
 				if (controllerGroupDependencyPromises.length === 0) {
 					// 待機中のプロミスがもうないならinit開始
@@ -3947,13 +4014,10 @@
 				}
 				// 子孫にpromiseを追加されていた場合(さらに待機するコンストラクタがあった場合)
 				// 再度待機する
-				promisesLength = controllerGroupDependencyPromises.length
 				waitAllConstructPromise();
 			}
 			function waitAllConstructPromise() {
-				waitForPromises(controllerGroupDependencyPromises, function() {
-					constructPromiseCheck();
-				});
+				waitForPromises(controllerGroupDependencyPromises, constructPromiseCheck);
 			}
 			waitAllConstructPromise();
 		}
@@ -3973,6 +4037,10 @@
 	 * @memberOf h5.core
 	 */
 	function createLogic(logicDefObj) {
+		var readyDfd = h5.async.deferred();
+		var readyPromise = readyDfd.promise();
+		var logicTreeDependencyPromises = [];
+
 		function create(defObj, isRoot) {
 			var logicName = defObj.__name;
 
@@ -3983,6 +4051,7 @@
 					logicDefObj: defObj
 				});
 			}
+
 			if (defObj.__logicContext) {
 				// すでにロジックがインスタンス化されている
 				throwFwError(ERR_CODE_LOGIC_ALREADY_CREATED, null, {
@@ -3998,7 +4067,6 @@
 				if (isRoot) {
 					validateLogicCircularRef(defObj);
 				}
-
 				// キャッシュの作成
 				cache = createLogicCache(defObj);
 			}
@@ -4020,24 +4088,61 @@
 			logic.own = own;
 			logic.ownWithOrg = ownWithOrg;
 
-			// ロジックが持っているロジック定義もロジック化
-			var logicProperties = cache.logicProperties;
-			for (var i = 0, l = logicProperties.length; i < l; i++) {
-				var prop = logicProperties[i];
-				logic[prop] = create(logic[prop]);
-			}
+			// キャッシュへ登録
+			definitionCacheManager.register(logicName, cache);
 
 			// __constructの実行
-			// 子から実行する
+			// 親から実行する
 			if (isFunction(logic.__construct)) {
 				logic.__construct();
 			}
 
-			// キャッシュへ登録
-			definitionCacheManager.register(logicName, cache);
+			// ロジックが持っているロジック定義もロジック化
+			var logicProperties = cache.logicProperties;
+			for (var i = 0, l = logicProperties.length; i < l; i++) {
+				var prop = logicProperties[i];
+				var childLogicDef = logic[prop];
+				if (isDependency(childLogicDef)) {
+					// 子ロジックがDependencyならresolveしてからロジック化する
+					var promise = childLogicDef.resolve();
+					// ロジックツリーの待機するプロミスに追加
+					logicTreeDependencyPromises.push(promise);
+					promise.done((function(childLogicProp) {
+						return function(resolvedLogicDef) {
+							// ロジック化
+							logic[childLogicProp] = create(resolvedLogicDef);
+							// ロジックツリーの待機するプロミスから取り除く
+							logicTreeDependencyPromises.splice($.inArray(promise,
+									logicTreeDependencyPromises), 1);
+						};
+					})(prop));
+				} else {
+					logic[prop] = create(childLogicDef);
+				}
+			}
+
 			return logic;
 		}
-		return create(logicDefObj, true);
+		var rootLogic = create(logicDefObj, true);
+		rootLogic.readyPromise = readyPromise;
+
+		// ロジックツリーの依存解決が終わったタイミングで__readyの実行を開始
+		function logicTreePromiseCheck() {
+			if (logicTreeDependencyPromises.length === 0) {
+				// 待機中のプロミスがもうないなら__readyの開始
+				triggerLogicReady(rootLogic, readyDfd);
+				return;
+			}
+			// 子孫にpromiseを追加されていた場合(さらに待機するコンストラクタがあった場合)
+			// 再度待機する
+			waitAllConstructPromise();
+		}
+		function waitAllConstructPromise() {
+			waitForPromises(logicTreeDependencyPromises, logicTreePromiseCheck);
+		}
+		waitAllConstructPromise();
+
+		return rootLogic;
 	}
 
 	// =============================
