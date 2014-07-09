@@ -2533,6 +2533,16 @@
 		// プロミスがresolveされたら取り除く
 		var waitingPromises = [];
 
+		/**
+		 * promiseにdoneハンドラを追加する関数
+		 * <p>
+		 * ただし、同一プロミスに同一ロジックについてのリスナを登録できないようにしています
+		 * </p>
+		 *
+		 * @param {Promise} promise
+		 * @param {Logic} targetLogic
+		 * @param {Function} listener
+		 */
 		function addDoneListener(promise, targetLogic, listener) {
 			var logicWaitingPromises = targetLogic.__logicContext.waitingPromises = targetLogic.__logicContext.waitingPromises
 					|| [];
@@ -2575,17 +2585,21 @@
 						ret.done(function() {
 							// __readyが返したプロミスがresolveされたらisReady=trueにする
 							logic.__logicContext.isReady = true;
+							// waitingPromisesから、resolveしたプロミスを取り除く
+							waitingPromises.splice($.inArray(ret, waitingPromises), 1);
+							// ロジックが覚えていた、待機しているプロミスはもう不要なので削除
+							logic.__logicContext.waitingPromises = null;
 							if (logic === rootLogic) {
 								// rootLogicのisReadyがtrueになったらreadyDfdをresolveして終了
 								readyDfd.resolveWith(logic);
 								return;
 							}
-							// waitingPromisesから、resolveしたプロミスを取り除く
-							waitingPromises.splice($.inArray(ret, waitingPromises), 1);
 						});
 					} else {
 						// __readyが同期または関数でないならすぐにisReadyをtrueにする
 						logic.__logicContext.isReady = true;
+						// ロジックが覚えていた、待機しているプロミスはもう不要なので削除
+						logic.__logicContext.waitingPromises = null;
 						if (logic === rootLogic) {
 							// rootLogicの__readyが終わったタイミングでreadyDfdをresolveする
 							readyDfd.resolveWith(logic);
@@ -2596,10 +2610,9 @@
 					// (待機するプロミスが無ければ子から順に実行しているため)
 					// この時点で待機しているプロミスのいずれかが完了したタイミングで、
 					// 再度自分の子が全てisReadyかどうかをチェックする
-					var waitingPromisesCopy = waitingPromises.slice(0);
-					for (var i = 0, l = waitingPromisesCopy.length; i < l; i++) {
+					for (var i = 0, l = waitingPromises.length; i < l; i++) {
 						// addDoneListener(内部関数)を使って、同じプロミスに同じロジックについてのハンドラが重複しないようにしている
-						addDoneListener(waitingPromisesCopy[i], logic, executeReady);
+						addDoneListener(waitingPromises[i], logic, executeReady);
 					}
 				}
 			}
