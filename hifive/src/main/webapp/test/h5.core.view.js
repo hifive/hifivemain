@@ -305,39 +305,39 @@
 		// });
 
 
-		asyncTest('load() ロードが成功した時に、テンプレートファイルの絶対パスとファイルが持つテンプレートIDを取得できること', 6, function() {
-			var view = h5.core.view.createView();
-			// 強制的に読み込ませるため、パラメータを付加
-			var param = +new Date();
-			var p = view.load(['./template/test8.ejs?' + param, './template/test4.ejs?' + param]);
-			p.done(
-					function(result) {
-						for (var i = 0, l = result.length; i < l; i++) {
-							var obj = result[i];
-							if (obj.path === './template/test8.ejs?' + param) {
-								ok(true, 'pathが取得できること');
-								ok(obj.absoluteUrl.search(/http:\/\//) === 0
-										&& obj.absoluteUrl.search(/\/template\/test8\.ejs/) > 0,
-										'絶対パスが取得できること(http://～～/template/test8.ejs?' + param
-												+ '): ' + obj.absoluteUrl);
-								deepEqual(obj.ids, ['template8'], 'テンプレートのidが取得できること');
-							}
-							if (obj.path === './template/test4.ejs?' + param) {
-								ok(true, 'pathが取得できること');
-								ok(obj.absoluteUrl.search(/http:\/\//) === 0
-										&& obj.absoluteUrl.search(/\/template\/test4\.ejs/) > 0,
-										'絶対パスが取得できること(http://～～/template/test4.ejs?' + param
-												+ '): ' + obj.absoluteUrl);
-								deepEqual(obj.ids.sort(), ['template4', 'template5'].sort(),
-										'テンプレートのidが取得できること');
-							}
-						}
-						start();
-					}).fail(function(e) {
-				ok(false, e.message);
-				start();
-			});
-		});
+//		asyncTest('load() ロードが成功した時に、テンプレートファイルの絶対パスとファイルが持つテンプレートIDを取得できること', 6, function() {
+//			var view = h5.core.view.createView();
+//			// 強制的に読み込ませるため、パラメータを付加
+//			var param = +new Date();
+//			var p = view.load(['./template/test8.ejs?' + param, './template/test4.ejs?' + param]);
+//			p.done(
+//					function(result) {
+//						for (var i = 0, l = result.length; i < l; i++) {
+//							var obj = result[i];
+//							if (obj.path === './template/test8.ejs?' + param) {
+//								ok(true, 'pathが取得できること');
+//								ok(obj.absoluteUrl.search(/http:\/\//) === 0
+//										&& obj.absoluteUrl.search(/\/template\/test8\.ejs/) > 0,
+//										'絶対パスが取得できること(http://～～/template/test8.ejs?' + param
+//												+ '): ' + obj.absoluteUrl);
+//								deepEqual(obj.ids, ['template8'], 'テンプレートのidが取得できること');
+//							}
+//							if (obj.path === './template/test4.ejs?' + param) {
+//								ok(true, 'pathが取得できること');
+//								ok(obj.absoluteUrl.search(/http:\/\//) === 0
+//										&& obj.absoluteUrl.search(/\/template\/test4\.ejs/) > 0,
+//										'絶対パスが取得できること(http://～～/template/test4.ejs?' + param
+//												+ '): ' + obj.absoluteUrl);
+//								deepEqual(obj.ids.sort(), ['template4', 'template5'].sort(),
+//										'テンプレートのidが取得できること');
+//							}
+//						}
+//						start();
+//					}).fail(function(e) {
+//				ok(false, e.message);
+//				start();
+//			});
+//		});
 
 		asyncTest('ヘルパー関数を使用してエスケープする。', 2, function() {
 			var p = h5.core.view.load(['./template/test6.ejs']);

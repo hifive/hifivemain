@@ -2299,44 +2299,49 @@
 			if (!h5.u.obj.getByPath('h5.core.view')) {
 				throwFwError(ERR_CODE_NOT_VIEW);
 			}
-			// 内部から呼ぶviewのロードは、ルートコントローラ設定前に呼ぶので、
-			// view.loadではなくview.__view.loadを使ってコントローラのルートエレメントが設定されているかのチェックをしないようにする
-			var vp = isDependency(templates) ? templates.resolve() : controller.view.__view
-					.load(templates);
-			vp.done(function(result) {
+
+			templates = isArray(templates) ? templates : [templates];
+			var promises = [];
+			for (var i = 0, l = templates.length; i < l; i++) {
+				// 文字列が指定されていたらDependencyに変換
+				var dependency = isDependency(templates[i]) ? templates[i] : h5.res
+						.require(templates[i]);
+				promises.push(dependency.resolve());
+			}
+			waitForPromises(promises, function(resources) {
 				fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
-				if (isDependency(templates)) {
-					result.applyToView(controller.view.__view);
+				// viewにテンプレートを登録
+				resources = isArray(resources) ? resources : [resources];
+				for (var i = 0, l = resources.length; i < l; i++) {
+					var templates = resources[i].templates;
+					for (var j = 0, len = templates.length; j < len; j++) {
+						// 内部から呼ぶviewのロードは、ルートコントローラ設定前に呼ぶので、
+						// viewではなくview.__viewを使ってコントローラのルートエレメントが設定されているかのチェックをしないようにする
+						controller.view.__view.register(templates[i].id, templates[i].content);
+					}
 				}
 				templateDfd.resolve();
-			}).fail(
-					function(result) {
-						if (isDependency(templates)) {
-							// Dependencyならリトライしない
-							templateDfd.reject(result);
-							return;
-						}
-						// テンプレートのロードをリトライする条件は、リトライ回数が上限回数未満、かつ
-						// jqXhr.statusが0、もしくは12029(ERROR_INTERNET_CANNOT_CONNECT)であること。
-						// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に0になっていること、
-						// IEの場合は、コネクションが繋がらない時のコードが12029であること。
-						// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
-						// WinInet のエラーコード(12001 - 12156):
-						// http://support.microsoft.com/kb/193625/ja
-						var jqXhrStatus = result.detail.error.status;
-						if (count === h5.settings.dynamicLoading.retryCount || jqXhrStatus !== 0
-								&& jqXhrStatus !== ERROR_INTERNET_CANNOT_CONNECT) {
-							fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
-									result.detail.url);
-							setTimeout(function() {
-								templateDfd.reject(result);
-							}, 0);
-							return;
-						}
-						setTimeout(function() {
-							viewLoad(++count);
-						}, h5.settings.dynamicLoading.retryInterval);
-					});
+			}, function(result) {
+				// テンプレートのロードをリトライする条件は、リトライ回数が上限回数未満、かつ
+				// jqXhr.statusが0、もしくは12029(ERROR_INTERNET_CANNOT_CONNECT)であること。
+				// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に0になっていること、
+				// IEの場合は、コネクションが繋がらない時のコードが12029であること。
+				// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
+				// WinInet のエラーコード(12001 - 12156):
+				// http://support.microsoft.com/kb/193625/ja
+				var jqXhrStatus = result.detail.error.status;
+				if (count === h5.settings.dynamicLoading.retryCount || jqXhrStatus !== 0
+						&& jqXhrStatus !== ERROR_INTERNET_CANNOT_CONNECT) {
+					fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName, result.detail.url);
+					setTimeout(function() {
+						templateDfd.reject(result);
+					}, 0);
+					return;
+				}
+				setTimeout(function() {
+					viewLoad(++count);
+				}, h5.settings.dynamicLoading.retryInterval);
+			});
 		}
 		viewLoad(0);
 	}

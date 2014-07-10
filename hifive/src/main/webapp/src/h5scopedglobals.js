@@ -442,7 +442,7 @@ var isFunction = (function() {
  *
  * @private
  * @param {Promise[]} promises
- * @param {Function} doneCallback doneコールバック。引数は渡されません。
+ * @param {Function} doneCallback doneコールバック
  * @param {Function} failCallback failコールバック
  * @param {Boolean} cfhIfFail 渡されたpromiseのいずれかが失敗した時にcFHを呼ぶかどうか。
  *            cFHを呼ぶときのthisは失敗したpromiseオブジェクト、引数は失敗したpromiseのfailに渡される引数
@@ -489,13 +489,15 @@ function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 		return;
 	}
 
+	var resolveArgs = [];
 	var resolveCount = 0;
 	var rejected = false;
 	/** いずれかのpromiseが成功するたびに全て終わったかチェック */
-	function check() {
+	function check(/* var_args */) {
+		resolveArgs.push(h5.u.obj.argsToArray(arguments));
 		if (!rejected && ++resolveCount === promisesLength) {
 			// 全てのpromiseが成功したので、doneCallbackを実行
-			doneCallback && doneCallback();
+			doneCallback && doneCallback(resolveArgs);
 		}
 	}
 	/** いずれかのpromiseが失敗した時に呼ばれるコールバック */

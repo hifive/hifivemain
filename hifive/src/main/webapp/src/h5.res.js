@@ -28,30 +28,32 @@
 	// Production
 	// =============================
 
+	/**
+	 * リソースファイルの取得時に発生するエラー
+	 */
+	var ERR_CODE_RESOURCE_AJAX = 17000;
 	// =============================
 	// Development Only
 	// =============================
 
-	//	var fwLogger = h5.log.createLogger('h5.res');
-	//
-	//	/* del begin */
-	//
-	//	/**
-	//	 * 各エラーコードに対応するメッセージ
-	//	 */
-	//	var errMsgMap = {};
-	//
-	//	// メッセージの登録
-	//	addFwErrorCodeMap(errMsgMap);
-	//	/* del end */
+	var fwLogger = h5.log.createLogger('h5.res');
 
+	/* del begin */
+	/**
+	 * 各エラーコードに対応するメッセージ
+	 */
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_RESOURCE_AJAX] = 'リソースファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
+
+	// メッセージの登録
+	addFwErrorCodeMap(errMsgMap);
+	/* del end */
 
 	// =========================================================================
 	//
 	// Cache
 	//
 	// =========================================================================
-
 	var isPromise = h5.async.isPromise;
 	var argsToArray = h5.u.obj.argsToArray;
 
@@ -67,6 +69,188 @@
 	/** リゾルバのリスト保持する配列 */
 	var resolvers = [];
 
+	/**
+	 * TextResrouceクラス
+	 */
+	function TextResource(id, type, content) {
+		this.id = id;
+		this.type = type;
+		this.content = content;
+	}
+
+	/**
+	 * ResourceCacheクラス
+	 */
+	function ResourceCache(url, path, textResources) {
+		this.url = url;
+		this.path = path;
+		// キャッシュが持つtextResoucesは外から変えられてはいけないのでsliceでコピーして保持する
+		this.textResources = textResources.slice(0);
+	}
+
+	/** リソースのキャッシュ機構。リソースをURL毎にキャッシュします。キャッシュ済みのものはそれを返し、そうでないものは新たにキャッシュして返します * */
+	var textResourceManager = {
+		/**
+		 * キャッシュの最大数
+		 */
+		MAX_CACHE: 10,
+
+		/**
+		 * URLとリソースを格納するキャッシュ
+		 */
+		cache: {},
+
+		/**
+		 * 現在キャッシュしているURLを保持する配列。もっとも使用されていないURLが配列の先頭にくるようソートされています。(LRU)
+		 */
+		cacheUrls: [],
+
+		/**
+		 * 現在アクセス中のURL(絶対パス)をkeyにして、そのpromiseオブジェクトを持つ連想配列
+		 */
+		accessingUrls: {},
+
+		/**
+		 * リソースをキャッシュします。
+		 *
+		 * @param {TextResource} resource TextResourceインスタンス
+		 */
+		append: function(resource) {
+			if (this.cacheUrls.length >= this.MAX_CACHE) {
+				this.deleteCache(this.cacheUrls[0]);
+			}
+			var url = resource.url;
+			this.cache[url] = resource;
+			this.cacheUrls.push(url);
+		},
+
+		/* del begin */
+		/**
+		 * テンプレートのグローバルキャッシュがTextResourceの配列を返します。 この関数は開発版でのみ利用できます。
+		 *
+		 * @returns {Array[TextResource]} グローバルキャッシュが保持しているTextResourceの配列
+		 */
+		getCacheInfo: function() {
+			var ret = [];
+			for ( var url in this.cache) {
+				ret.push(this.cache[url]);
+			}
+			return ret;
+		},
+		/* del end */
+
+		/**
+		 * 指定されたURLのキャッシュを削除します。
+		 *
+		 * @param {String} url URL
+		 * @param {Boolean} isOnlyUrls trueを指定された場合、キャッシュは消さずに、キャッシュしているURLリストから引数に指定されたURLを削除します。
+		 */
+		deleteCache: function(url, isOnlyUrls) {
+			if (!isOnlyUrls) {
+				delete this.cache[url];
+			}
+			for (var i = 0, len = this.cacheUrls.length; i < len; i++) {
+				if (this.cacheUrls[i] === url) {
+					this.cacheUrls.splice(i, 1);
+					break;
+				}
+			}
+		},
+
+		/**
+		 * キャッシュからリソースを取得
+		 *
+		 * @param {String} url ファイルの絶対パス
+		 */
+		getResourceFromCache: function(url) {
+			var ret = this.cache[url];
+			this.deleteCache(url, true);
+			this.cacheUrls.push(url);
+			return ret;
+		},
+
+		/**
+		 * urlからリソースを取得。プロミスを返し、ResourceCacheをハンドラに渡す
+		 *
+		 * @param {String} path
+		 * @returns {Promise}
+		 */
+		loadResource: function(path) {
+			var absolutePath = toAbsoluteUrl(path);
+
+			// 現在アクセス中のURLであれば、そのpromiseを返す
+			if (this.accessingUrls[absolutePath]) {
+				return this.accessingUrls[absolutePath];
+			}
+
+			var df = $.Deferred();
+			var promise = df.promise();
+			this.accessingUrls[absolutePath] = promise;
+			var manager = this;
+			var absolutePath = toAbsoluteUrl(path);
+			h5.ajax(path).done(function(result, statusText, obj) {
+				// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
+				delete manager.accessingUrls[absolutePath];
+
+				var text = obj.responseText;
+				// IE8以下で、要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまう。
+				// tagNameを見てscriptのものだけにする。nodeTypeを見てコメントノードも除去する
+				var $elements = $(text).filter(function() {
+					// nodeTypeがELEMENT_NODEかつ、scrriptタグ
+					return this.nodeType === 1 && this.tagName.toLowerCase() === 'script';
+				});
+				var textResources = [];
+
+				// script要素からTextResourceを作成
+				$elements.each(function() {
+					var id = $.trim(this.id);
+					var type = $.trim(this.getAttribute('type'));
+					var content = $.trim(this.innerHTML);
+					textResources.push(new TextResource(id, type, content));
+				});
+				// ResourceCacheオブジェクトを作成してキャッシュに登録
+				var resource = new ResourceCache(absolutePath, this.url, textResources);
+				manager.append(resource);
+
+				// resolveする
+				df.resolve({
+					url: resource.url,
+					path: resource.path,
+					textResources: textResources
+				});
+			}).fail(function(e) {
+				// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
+				delete manager.accessingUrls[absolutePath];
+
+				df.reject(createRejectReason(ERR_CODE_RESOURCE_AJAX, [e.status, absolutePath], {
+					url: absolutePath,
+					path: this.url,
+					error: e
+				}));
+				return;
+			});
+			return promise;
+		},
+
+		/**
+		 * 指定されたテンプレートパスからテンプレートを非同期で読み込みます。 テンプレートパスがキャッシュに存在する場合はキャッシュから読み込みます。
+		 *
+		 * @param {String} resourcePath リソースパス
+		 * @returns {Object} Promiseオブジェクト
+		 */
+		getResource: function(resourcePath) {
+			var absolutePath = toAbsoluteUrl(resourcePath);
+			// キャッシュにある場合
+			if (this.cache[absolutePath]) {
+				// キャッシュから取得したリソースを返す
+				return $.Deferred().resolve(this.getResourceFromCache(absolutePath)).promise();
+			}
+			// キャッシュにない場合
+			// urlからロード
+			return this.loadResource(resourcePath);
+		}
+	};
+
 	// =============================
 	// Functions
 	// =============================
@@ -75,6 +259,8 @@
 	 * <p>
 	 * <a href="h5.res.html#reequire">h5.res.require()</a>がこのクラスのインスタンスを返します。
 	 * </p>
+	 *
+	 * @param {String} resourceKey
 	 */
 	function Dependency(resourceKey) {
 		this._resourceKey = resourceKey;
@@ -138,9 +324,10 @@
 	}
 
 	/**
-	 * ejsファイルのデフォルトのリゾルバを作成する
+	 * ejsファイルのリソース解決
 	 *
-	 * @returns {Function} Viewリゾルバ
+	 * @param {resourceKey}
+	 * @returns {Promise}
 	 */
 	function resolveEJSTemplate(resourceKey) {
 		if (!/\.ejs$/.test(resourceKey)) {
@@ -148,10 +335,22 @@
 			return false;
 		}
 		var dfd = $.Deferred();
-		h5internal.view.cacheManager.getTemplateByUrls(getFilePath(resourceKey)).done(
-				function(viewTemplate) {
-					dfd.resolve(viewTemplate);
-				}).fail(function(errorObj) {
+		textResourceManager.getResource(getFilePath(resourceKey)).done(function(resource) {
+			// type="text/ejs"のものだけにする
+			var templates = [];
+			var textResources = resource.textResources;
+			for (var i = 0, l = textResources.length; i < l; i++) {
+				var textResource = textResources[i];
+				if (textResource.type === 'text/ejs') {
+					templates.push(textResource);
+				}
+			}
+			dfd.resolve({
+				url: resource.url,
+				path: resource.path,
+				templates: templates
+			});
+		}).fail(function(errorObj) {
 			dfd.reject(errorObj);
 		});
 		return dfd.promise();
@@ -244,7 +443,10 @@
 	h5.u.obj.expose('h5.res', {
 		require: require,
 		addResolver: addResolver,
-		isDependency: isDependency
+		isDependency: isDependency,
+		getResource: function(resourcePath) {
+			return textResourceManager.getResource(resourcePath);
+		}
 	});
 
 })();
