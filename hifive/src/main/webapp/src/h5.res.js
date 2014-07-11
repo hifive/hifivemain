@@ -381,10 +381,13 @@
 				function(errorObj) {
 					// リソースの取得に失敗
 					// ここにくるエラーオブジェクトはgetResource()のエラーなので、
-					// テンプレートのロードが投げるエラー(Viewのエラー)に差し替える
-					var detail = errorObj.detail;
-					dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [detail.error.status,
-							detail.url], detail));
+					// テンプレートのロードが投げるエラー(Viewのエラー)にする
+					// インスタンスは変更しないようにする
+					var viewErrorObj = createRejectReason(ERR_CODE_TEMPLATE_AJAX, [
+							detail.error.status, detail.url], detail);
+					errorObj.code = viewErrorObj.code;
+					errorObj.message = viewErrorObj.message;
+					errorObj.detail = errorObj.detail;
 					dfd.reject(errorObj);
 				});
 		return dfd.promise();

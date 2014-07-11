@@ -5110,7 +5110,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('h5.settings.dynamicLoading.retryCountでテンプレートのロードのリトライ回数を設定できること', 3, function() {
+	asyncTest('h5.settings.dynamicLoading.retryCountでテンプレートのロードのリトライ回数を設定できること', 2, function() {
 		// テンプレートロードのリトライ時のインターバルを0msに設定
 		h5.settings.dynamicLoading.retryInterval = 0;
 		// リトライ回数を2回に設定
@@ -5146,8 +5146,7 @@ $(function() {
 			start();
 		}).fail(function(e) {
 			strictEqual(loadCount, 3, 'リトライ回数2回なのでロードを試みた回数は3回になっていること');
-			strictEqual(e.detail, errorObj.detail, 'view.loadが投げたエラーオブジェクトが取得できること');
-			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, 'エラーコードはViewのエラーコードになっていること');
+			strictEqual(e, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
 			h5.res.urlLoader.load = originalLoad;
 			start();
 		});
@@ -5202,7 +5201,7 @@ $(function() {
 		});
 	});
 
-	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreInitPromiseのfailが呼ばれること', 9, function() {
+	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして失敗ならpreInitPromiseのfailが呼ばれること', 7, function() {
 		// テンプレートロードのリトライ時のインターバルを0msに設定
 		h5.settings.dynamicLoading.retryInterval = 0;
 		// view.load()をスタブに差し替え
@@ -5249,14 +5248,12 @@ $(function() {
 			h5.res.urlLoader.load = originalLoad;
 			ok(true, 'preInitPromiseのfailハンドラが実行されること');
 			strictEqual(this, testController, 'thisはコントローラインスタンスであること');
-			strictEqual(e.detail, errorObj.detail, 'view.loadが投げたエラーオブジェクトが取得できること');
-			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, 'エラーコードはViewのエラーコードになっていること');
+			strictEqual(e, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
 		});
 		testController.readyPromise.fail(function(e) {
 			ok(true, 'readyPromiseのfailハンドラが実行されること');
 			strictEqual(this, testController, 'thisはコントローラインスタンスであること');
-			strictEqual(e.detail, errorObj.detail, 'view.loadが投げたエラーオブジェクトが取得できること');
-			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_AJAX, 'エラーコードはViewのエラーコードになっていること');
+			strictEqual(e, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
 			setTimeout(function() {
 				strictEqual(testController.__name, 'TestController', 'コントローラはnullifyされないこと');
 				start();
