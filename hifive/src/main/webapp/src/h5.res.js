@@ -383,6 +383,7 @@
 					// ここにくるエラーオブジェクトはgetResource()のエラーなので、
 					// テンプレートのロードが投げるエラー(Viewのエラー)にする
 					// インスタンスは変更しないようにする
+					var detail = errorObj.detail;
 					var viewErrorObj = createRejectReason(ERR_CODE_TEMPLATE_AJAX, [
 							detail.error.status, detail.url], detail);
 					errorObj.code = viewErrorObj.code;
