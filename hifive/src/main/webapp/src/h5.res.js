@@ -76,6 +76,7 @@
 	// =========================================================================
 	var isPromise = h5.async.isPromise;
 	var argsToArray = h5.u.obj.argsToArray;
+	var getDeferred = h5.async.deferred;
 
 	// =========================================================================
 	//
@@ -90,11 +91,10 @@
 	var resolvers = [];
 
 	/**
-	 * TextResrouceクラス
+	 * ViewTemplateクラス
 	 */
-	function TextResource(id, type, content) {
+	function ViewTemplate(id, content) {
 		this.id = id;
-		this.type = type;
 		this.content = content;
 	}
 
@@ -107,8 +107,15 @@
 		this.content = content;
 	}
 
-	/** リソースのキャッシュ機構。リソースをURL毎にキャッシュします。キャッシュ済みのものはそれを返し、そうでないものは新たにキャッシュして返します * */
-	var textResourceManager = {
+	/**
+	 * リソースのキャッシュ機構
+	 * <p>
+	 * リソースをURL毎にキャッシュします。キャッシュ済みのものはそれを返し、そうでないものは新たにキャッシュして返します
+	 * </p>
+	 *
+	 * @private
+	 */
+	var cacheManager = {
 		/**
 		 * キャッシュの最大数
 		 */
@@ -136,35 +143,21 @@
 		 */
 		append: function(resource) {
 			if (this.cacheUrls.length >= this.MAX_CACHE) {
-				this.deleteCache(this.cacheUrls[0]);
+				this.clearCache(this.cacheUrls[0]);
 			}
 			var url = resource.url;
 			this.cache[url] = resource;
 			this.cacheUrls.push(url);
 		},
 
-		/* del begin */
 		/**
-		 * テンプレートのグローバルキャッシュがResourceCacheの配列を返します。 この関数は開発版でのみ利用できます。
+		 * 指定されたパスのキャッシュを削除します。
 		 *
-		 * @returns {ResourceCache[]} グローバルキャッシュが保持しているResourceCacheの配列
-		 */
-		getCacheInfo: function() {
-			var ret = [];
-			for ( var url in this.cache) {
-				ret.push(this.cache[url]);
-			}
-			return ret;
-		},
-		/* del end */
-
-		/**
-		 * 指定されたURLのキャッシュを削除します。
-		 *
-		 * @param {String} url URL
+		 * @param {String} path ファイルパス
 		 * @param {Boolean} isOnlyUrls trueを指定された場合、キャッシュは消さずに、キャッシュしているURLリストから引数に指定されたURLを削除します。
 		 */
-		deleteCache: function(url, isOnlyUrls) {
+		clearCache: function(path, isOnlyUrls) {
+			var url = toAbsoluteUrl(path)
 			if (!isOnlyUrls) {
 				delete this.cache[url];
 			}
@@ -177,13 +170,21 @@
 		},
 
 		/**
+		 * キャッシュを全て削除します
+		 */
+		clearAllCache: function() {
+			this.cacheUrls = [];
+			this.cache = {};
+		},
+
+		/**
 		 * キャッシュからリソースを取得
 		 *
 		 * @param {String} url ファイルの絶対パス
 		 */
 		getResourceFromCache: function(url) {
 			var ret = this.cache[url];
-			this.deleteCache(url, true);
+			this.clearCache(url, true);
 			this.cacheUrls.push(url);
 			return ret;
 		},
@@ -194,7 +195,7 @@
 		 * @param {String} path
 		 * @returns {Promise}
 		 */
-		loadResource: function(path) {
+		loadResourceFromPath: function(path) {
 			var absolutePath = toAbsoluteUrl(path);
 
 			// 現在アクセス中のURLであれば、そのpromiseを返す
@@ -202,7 +203,7 @@
 				return this.accessingUrls[absolutePath];
 			}
 
-			var df = $.Deferred();
+			var df = getDeferred();
 			var promise = df.promise();
 			this.accessingUrls[absolutePath] = promise;
 			var manager = this;
@@ -226,24 +227,6 @@
 				return;
 			});
 			return promise;
-		},
-
-		/**
-		 * 指定されたテンプレートパスからテンプレートを非同期で読み込みます。 テンプレートパスがキャッシュに存在する場合はキャッシュから読み込みます。
-		 *
-		 * @param {String} resourcePath リソースパス
-		 * @returns {Object} Promiseオブジェクト
-		 */
-		getResource: function(resourcePath) {
-			var absolutePath = toAbsoluteUrl(resourcePath);
-			// キャッシュにある場合
-			if (this.cache[absolutePath]) {
-				// キャッシュから取得したリソースを返す
-				return $.Deferred().resolve(this.getResourceFromCache(absolutePath)).promise();
-			}
-			// キャッシュにない場合
-			// urlからロード
-			return this.loadResource(resourcePath);
 		}
 	};
 
@@ -260,7 +243,7 @@
 	 */
 	function Dependency(resourceKey) {
 		this._resourceKey = resourceKey;
-		var dfd = $.Deferred();
+		var dfd = getDeferred();
 		// プロミスのインターフェイスを持たせる
 		dfd.promise(this);
 	}
@@ -307,12 +290,12 @@
 		var ret = h5.u.obj.getByPath(resourceKey);
 		if (ret) {
 			// 既にある場合はresolve済みのプロミスを返す
-			return $.Deferred().resolve(ret).promise();
+			return getDeferred().resolve(ret).promise();
 		}
 		// "."を"/"に変えてファイルパスを取得
 		var filePath = getFilePath(resourceKey.replace(/\./g, '/')) + '.js';
 		// loadScriptでロードする
-		var dfd = $.Deferred();
+		var dfd = getDeferred();
 		h5.u.loadScript(filePath).done(function() {
 			dfd.resolve(h5.u.obj.getByPath(resourceKey));
 		}).fail(function(/* var_args */) {
@@ -332,8 +315,8 @@
 			// .ejsで終わっていないファイルは無視
 			return false;
 		}
-		var dfd = $.Deferred();
-		textResourceManager.getResource(getFilePath(resourceKey)).done(function(resource) {
+		var dfd = getDeferred();
+		urlLoader.load(getFilePath(resourceKey)).done(function(resource) {
 			// コンテンツからscript要素を取得
 			var $elements = $(resource.content).filter(function() {
 				// IE8以下で、要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまう。
@@ -356,7 +339,7 @@
 					path: resource.path
 				}));
 			}
-			// script要素からTextResourceを作成
+			// script要素からViewTemplateを作成
 			$elements.each(function() {
 				var id = $.trim(this.id);
 				if (!id) {
@@ -365,9 +348,8 @@
 						path: resource.path
 					}));
 				}
-				var type = $.trim(this.getAttribute('type'));
 				var content = $.trim(this.innerHTML);
-				textResources.push(new TextResource(id, type, content));
+				textResources.push(new ViewTemplate(id, content));
 			});
 
 			// resolveする
@@ -422,7 +404,7 @@
 
 		// 同期でresolve
 		// TODO cssのロードを待機する必要ある…？
-		return $.Deferred().resolve().promise();
+		return getDeferred().resolve().promise();
 	}
 
 	/**
@@ -439,6 +421,50 @@
 	// Body
 	//
 	// =========================================================================
+
+	/**
+	 * キャッシュ機構を使用してURLへアクセスします
+	 *
+	 * @memberOf h5.res
+	 * @name urlLoader
+	 */
+	var urlLoader = {
+		/**
+		 * 指定されたテンプレートパスからテンプレートを非同期で読み込みます。 テンプレートパスがキャッシュに存在する場合はキャッシュから読み込みます。
+		 *
+		 * @param {String} resourcePath リソースパス
+		 * @returns {Object} Promiseオブジェクト
+		 */
+		load: function(resourcePath) {
+			var absolutePath = toAbsoluteUrl(resourcePath);
+			// キャッシュにある場合
+			if (cacheManager.cache[absolutePath]) {
+				// キャッシュから取得したリソースを返す
+				// 新しくDeferredを作ってプロミスを返す
+				return getDeferred().resolve(cacheManager.getResourceFromCache(absolutePath))
+						.promise();
+			}
+			// キャッシュにない場合
+			// urlからロードして、そのプロミスを返す
+			return cacheManager.loadResourceFromPath(resourcePath);
+		},
+
+		/**
+		 * URL(path)を指定してキャッシュをクリアする
+		 *
+		 * @param {String} path
+		 */
+		clearCache: function(path) {
+			cacheManager.clearCache(path);
+		},
+		/**
+		 * URLキャッシュをすべてクリアする
+		 */
+		clearAllCache: function() {
+			cacheManager.clearAllCache();
+		}
+	};
+
 	/**
 	 * リソースキーから、Dependencyオブジェクトを返します
 	 *
@@ -477,9 +503,7 @@
 		require: require,
 		addResolver: addResolver,
 		isDependency: isDependency,
-		getResource: function(resourcePath) {
-			return textResourceManager.getResource(resourcePath);
-		}
+		urlLoader: urlLoader
 	});
 
 })();
