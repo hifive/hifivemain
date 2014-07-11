@@ -494,7 +494,11 @@ function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 	var rejected = false;
 	/** いずれかのpromiseが成功するたびに全て終わったかチェック */
 	function check(/* var_args */) {
-		resolveArgs.push(h5.u.obj.argsToArray(arguments));
+		var arg = h5.u.obj.argsToArray(arguments);
+		// 引数無しならundefined、引数が一つならそのまま、引数が2つ以上なら配列を追加
+		// ($.when()と同じ)
+		resolveArgs.push(arg.length < 2 ? arg[0] : arg);
+
 		if (!rejected && ++resolveCount === promisesLength) {
 			// 全てのpromiseが成功したので、doneCallbackを実行
 			doneCallback && doneCallback(resolveArgs);

@@ -32,6 +32,20 @@
 	 * リソースファイルの取得時に発生するエラー
 	 */
 	var ERR_CODE_RESOURCE_AJAX = 17000;
+
+	// ---------- EJSResolverのエラー ----------
+	/** テンプレートファイルの内容読み込み時に発生するエラー */
+	var ERR_CODE_TEMPLATE_FILE = 7001;
+
+	/** テンプレートIDが不正である時に発生するエラー */
+	var ERR_CODE_TEMPLATE_INVALID_ID = 7002;
+
+	/** テンプレートファイルの取得時に発生するエラー */
+	var ERR_CODE_TEMPLATE_AJAX = 7003;
+
+	/** テンプレートファイルにscriptタグの記述がない */
+	var ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT = 7011;
+
 	// =============================
 	// Development Only
 	// =============================
@@ -44,6 +58,12 @@
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_RESOURCE_AJAX] = 'リソースファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
+
+	// EJSResolverのエラー
+	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。';
+	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
+	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
+	errMsgMap[ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT] = 'テンプレートファイルに<script>タグの記述がありません。テンプレートは<script>タグで記述してください。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -81,11 +101,10 @@
 	/**
 	 * ResourceCacheクラス
 	 */
-	function ResourceCache(url, path, textResources) {
+	function ResourceCache(url, path, content) {
 		this.url = url;
 		this.path = path;
-		// キャッシュが持つtextResoucesは外から変えられてはいけないのでsliceでコピーして保持する
-		this.textResources = textResources.slice(0);
+		this.content = content;
 	}
 
 	/** リソースのキャッシュ機構。リソースをURL毎にキャッシュします。キャッシュ済みのものはそれを返し、そうでないものは新たにキャッシュして返します * */
@@ -113,7 +132,7 @@
 		/**
 		 * リソースをキャッシュします。
 		 *
-		 * @param {TextResource} resource TextResourceインスタンス
+		 * @param {ResourceCache} resource ResourceCacheインスタンス
 		 */
 		append: function(resource) {
 			if (this.cacheUrls.length >= this.MAX_CACHE) {
@@ -126,9 +145,9 @@
 
 		/* del begin */
 		/**
-		 * テンプレートのグローバルキャッシュがTextResourceの配列を返します。 この関数は開発版でのみ利用できます。
+		 * テンプレートのグローバルキャッシュがResourceCacheの配列を返します。 この関数は開発版でのみ利用できます。
 		 *
-		 * @returns {Array[TextResource]} グローバルキャッシュが保持しているTextResourceの配列
+		 * @returns {ResourceCache[]} グローバルキャッシュが保持しているResourceCacheの配列
 		 */
 		getCacheInfo: function() {
 			var ret = [];
@@ -191,40 +210,17 @@
 			h5.ajax(path).done(function(result, statusText, obj) {
 				// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 				delete manager.accessingUrls[absolutePath];
-
-				var text = obj.responseText;
-				// IE8以下で、要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまう。
-				// tagNameを見てscriptのものだけにする。nodeTypeを見てコメントノードも除去する
-				var $elements = $(text).filter(function() {
-					// nodeTypeがELEMENT_NODEかつ、scrriptタグ
-					return this.nodeType === 1 && this.tagName.toLowerCase() === 'script';
-				});
-				var textResources = [];
-
-				// script要素からTextResourceを作成
-				$elements.each(function() {
-					var id = $.trim(this.id);
-					var type = $.trim(this.getAttribute('type'));
-					var content = $.trim(this.innerHTML);
-					textResources.push(new TextResource(id, type, content));
-				});
 				// ResourceCacheオブジェクトを作成してキャッシュに登録
-				var resource = new ResourceCache(absolutePath, this.url, textResources);
+				var resource = new ResourceCache(absolutePath, path, obj.responseText);
 				manager.append(resource);
-
-				// resolveする
-				df.resolve({
-					url: resource.url,
-					path: resource.path,
-					textResources: textResources
-				});
+				df.resolve(resource);
 			}).fail(function(e) {
 				// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 				delete manager.accessingUrls[absolutePath];
 
 				df.reject(createRejectReason(ERR_CODE_RESOURCE_AJAX, [e.status, absolutePath], {
 					url: absolutePath,
-					path: this.url,
+					path: path,
 					error: e
 				}));
 				return;
@@ -297,6 +293,8 @@
 	 * @returns {String}
 	 */
 	function getFilePath(filePath) {
+		// './'で始まるパスが指定されていたら'./'を取り除いてcurrentPathを先頭に追加する
+		filePath = filePath.indexOf('./') === 0 ? filePath.slice(2) : filePath;
 		return (h5.settings.res.currentPath || './') + filePath;
 	}
 
@@ -336,23 +334,58 @@
 		}
 		var dfd = $.Deferred();
 		textResourceManager.getResource(getFilePath(resourceKey)).done(function(resource) {
-			// type="text/ejs"のものだけにする
-			var templates = [];
-			var textResources = resource.textResources;
-			for (var i = 0, l = textResources.length; i < l; i++) {
-				var textResource = textResources[i];
-				if (textResource.type === 'text/ejs') {
-					templates.push(textResource);
-				}
+			// コンテンツからscript要素を取得
+			var $elements = $(resource.content).filter(function() {
+				// IE8以下で、要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまう。
+				// nodeTypeを見てコメントノードも除去して、tagNameが'/SCRIPT'のものも除去する。
+				return this.nodeType === 1 && this.tagName.indexOf('/') !== 1;
+			});
+			var textResources = [];
+			if ($elements.not('script[type="text/ejs"]').length > 0) {
+				// テンプレート記述以外のタグがあ場合はエラー
+				dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT, null, {
+					url: resource.url,
+					path: resource.path
+				}));
+				return;
 			}
+			if ($elements.length === 0) {
+				// テンプレート記述が一つもない場合はエラー
+				dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
+					url: resource.url,
+					path: resource.path
+				}));
+			}
+			// script要素からTextResourceを作成
+			$elements.each(function() {
+				var id = $.trim(this.id);
+				if (!id) {
+					dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_INVALID_ID, null, {
+						url: resource.url,
+						path: resource.path
+					}));
+				}
+				var type = $.trim(this.getAttribute('type'));
+				var content = $.trim(this.innerHTML);
+				textResources.push(new TextResource(id, type, content));
+			});
+
+			// resolveする
 			dfd.resolve({
 				url: resource.url,
 				path: resource.path,
-				templates: templates
+				templates: textResources
 			});
-		}).fail(function(errorObj) {
-			dfd.reject(errorObj);
-		});
+		}).fail(
+				function(errorObj) {
+					// リソースの取得に失敗
+					// ここにくるエラーオブジェクトはgetResource()のエラーなので、
+					// テンプレートのロードが投げるエラー(Viewのエラー)に差し替える
+					var detail = errorObj.detail;
+					dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_AJAX, [detail.error.status,
+							detail.url], detail));
+					dfd.reject(errorObj);
+				});
 		return dfd.promise();
 	}
 
