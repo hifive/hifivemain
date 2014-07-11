@@ -2304,8 +2304,10 @@
 			var promises = [];
 			for (var i = 0, l = templates.length; i < l; i++) {
 				// 文字列が指定されていたらDependencyに変換
-				var dependency = isDependency(templates[i]) ? templates[i] : h5.res
-						.require(templates[i]);
+				var dependency = isDependency(templates[i]) ? templates[i] : h5.res.require(
+						templates[i], {
+							type: 'ejsfile'
+						});
 				promises.push(dependency.resolve());
 			}
 			waitForPromises(promises, function(resources) {
@@ -4020,7 +4022,7 @@
 			if (isDisposing(controller)) {
 				// 途中(__constructの中)でdisposeされたら__constructの実行を中断
 				isDisposedInConstruct = true;
-				return;
+				return null;
 			}
 		} catch (e) {
 			// ルートコントローラを渡してdisposeする

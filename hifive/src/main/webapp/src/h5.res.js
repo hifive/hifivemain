@@ -90,6 +90,9 @@
 	/** リゾルバのリスト保持する配列 */
 	var resolvers = [];
 
+	/** タイプとリゾルバの組み合わせを覚えておくマップ */
+	var resolverTypeMap = {};
+
 	/**
 	 * ViewTemplateクラス
 	 */
@@ -239,13 +242,18 @@
 	 * <a href="h5.res.html#reequire">h5.res.require()</a>がこのクラスのインスタンスを返します。
 	 * </p>
 	 *
-	 * @param {String} resourceKey
+	 * @param {String} resourceKey *
+	 * @param {Object} param パラメータオブジェクト
+	 * @param {String} param.type 指定されたresourceKeyを解決するリゾルバのタイプを指定します。省略した場合は適切なリゾルバを自動で探索します
 	 */
-	function Dependency(resourceKey) {
+	function Dependency(resourceKey, param) {
 		this._resourceKey = resourceKey;
 		var dfd = getDeferred();
-		// プロミスのインターフェイスを持たせる
-		dfd.promise(this);
+		// TODO プロミスのインターフェイスを持つ必要ある…？あるならコメントアウトを外す
+		// dfd.promise(this);
+		if (param && param.type) {
+			this._type = param.type;
+		}
 	}
 	$.extend(Dependency.prototype, {
 		/**
@@ -257,12 +265,22 @@
 		resolve: function() {
 			var promise = false;
 			var resourceKey = this._resourceKey;
-			for (var i = 0, l = resolvers.length; i < l; i++) {
-				var ret = resolvers[i](resourceKey);
+			var resolver = null;
+			if (this._type) {
+				// typeが指定されていればリゾルバをタイプから特定
+				var ret = resolverTypeMap[this._type] && resolverTypeMap[this._type](resourceKey);
 				if (isPromise(ret)) {
-					// プロミスを返すリゾルバがあったらそのリゾルバが返すプロミスを待機する
 					promise = ret;
-					break;
+				}
+			} else {
+				// typeが指定されていない場合は順に探索する
+				for (var i = 0, l = resolvers.length; i < l; i++) {
+					var ret = resolvers[i](resourceKey);
+					if (isPromise(ret)) {
+						// プロミスを返すリゾルバがあったらそのリゾルバが返すプロミスを待機する
+						promise = ret;
+						break;
+					}
 				}
 			}
 			// リゾルバがプロミスを返せばそのプロミス、プロミスを返すリゾルバが無かった場合はfalseを返す
@@ -311,7 +329,8 @@
 	 * @returns {Promise}
 	 */
 	function resolveEJSTemplate(resourceKey) {
-		if (!/\.ejs$/.test(resourceKey)) {
+		// resolverTypeMapから呼ばれた(=typeが特定されて呼ばれた)場合は、拡張子の判定を行わない
+		if (this !== resolverTypeMap && !/\.ejs$/.test(resourceKey)) {
 			// .ejsで終わっていないファイルは無視
 			return false;
 		}
@@ -377,7 +396,8 @@
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveJs(resourceKey) {
-		if (!/\.js$/.test(resourceKey)) {
+		// resolverTypeMapから呼ばれた(=typeが特定されて呼ばれた)場合は、拡張子の判定を行わない
+		if (this !== resolverTypeMap && !/\.js$/.test(resourceKey)) {
 			// .jsで終わっていないファイルは無視
 			return false;
 		}
@@ -390,7 +410,8 @@
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveCss(resourceKey) {
-		if (!/\.css$/.test(resourceKey)) {
+		// resolverTypeMapから呼ばれた(=typeが特定されて呼ばれた)場合は、拡張子の判定を行わない
+		if (this !== resolverTypeMap && !/\.css$/.test(resourceKey)) {
 			// .cssで終わっていないファイルは無視
 			return false;
 		}
@@ -469,26 +490,32 @@
 	 * リソースキーから、Dependencyオブジェクトを返します
 	 *
 	 * @param {String} resourceKey
+	 * @param {Object} param パラメータオブジェクト
+	 * @param {String} param.type 指定されたresourceKeyを解決するリゾルバのタイプを指定します。省略した場合は適切なリゾルバを自動で探索します
 	 */
-	function require(resourceKey) {
-		return new Dependency(resourceKey);
+	function require(resourceKey, param) {
+		return new Dependency(resourceKey, param);
 	}
 
 	/**
 	 * リゾルバを追加します
 	 *
-	 * @param {Function} resolver
+	 * @param {String} type リゾルバのタイプ。リゾルバをタイプと紐づける。nullを指定した場合はtypeに紐づかないリゾルバを登録します。
+	 * @param {Function} resolver リゾルバ
 	 */
-	function addResolver(resolver) {
+	function addResolver(type, resolver) {
 		// 先頭に追加する
 		resolvers.unshift(resolver);
+		if (type !== null) {
+			resolverTypeMap[type] = resolver;
+		}
 	}
 
 	// デフォルトリゾルバの登録
-	addResolver(resolveNamespace);
-	addResolver(resolveEJSTemplate);
-	addResolver(resolveJs);
-	addResolver(resolveCss);
+	addResolver('namespace', resolveNamespace);
+	addResolver('ejsfile', resolveEJSTemplate);
+	addResolver('jsfile', resolveJs);
+	addResolver('cssfile', resolveCss);
 
 	// =============================
 	// Expose to window
