@@ -725,7 +725,7 @@
 	 */
 	function doForEachControllerGroupsDepthFirst(controller, callback, _parent, _prop) {
 		function callbackWrapper(c, parent, prop) {
-			if (doForEachControllerGroupsDepthFirst(c, callback, parent, prop) === false) {
+			if (!c || doForEachControllerGroupsDepthFirst(c, callback, parent, prop) === false) {
 				return false;
 			}
 		}
@@ -2319,7 +2319,12 @@
 					for (var j = 0, len = templates.length; j < len; j++) {
 						// 内部から呼ぶviewのロードは、ルートコントローラ設定前に呼ぶので、
 						// viewではなくview.__viewを使ってコントローラのルートエレメントが設定されているかのチェックをしないようにする
-						controller.view.__view.register(templates[i].id, templates[i].content);
+						try {
+							controller.view.__view.register(templates[i].id, templates[i].content);
+						} catch (e) {
+							// registerで登録できない(=コンパイルエラー)ならreject
+							templateDfd.reject(e);
+						}
 					}
 				}
 				templateDfd.resolve();
@@ -3962,39 +3967,6 @@
 			disposeController(controller, null, e);
 		});
 
-		// 子コントローラをコントローラ化して持たせる
-		// 子コントローラがDependencyオブジェクトなら依存関係を解決
-		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
-			// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
-			var prop = cache.childControllerProperties[i];
-			var childController = clonedControllerDef[prop];
-			if (isDependency(childController)) {
-				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
-				var promise = childController.resolve();
-				promisesForTriggerInit.push(promise);
-				promise.done((function(childProp) {
-					return function(c) {
-						controller[childProp] = createAndBindController(null,
-								$.extend(true, {}, c), param, {
-									isInternal: true,
-									parentController: controller,
-									rootController: rootController,
-									promisesForTriggerInit: promisesForTriggerInit
-								});
-						// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
-						promisesForTriggerInit.splice($.inArray(this, promisesForTriggerInit), 1);
-					};
-				})(prop));
-			} else {
-				controller[prop] = createAndBindController(null, $.extend(true, {},
-						clonedControllerDef[prop]), param, {
-					isInternal: true,
-					parentController: controller,
-					rootController: rootController
-				});
-			}
-		}
-
 		// イベントハンドラにアスペクトを設定
 		for (var i = 0, l = cache.eventHandlerProperties.length; i < l; i++) {
 			var prop = cache.eventHandlerProperties[i];
@@ -4014,23 +3986,22 @@
 			controller[prop] = clonedControllerDef[prop];
 		}
 
-		// __constructを実行
-		var isDisposedInConstruct = false;
+		// コントローラマネージャの管理対象とするか判定する(fwOpt.false===falseなら管理対象外)
+		controllerContext.managed = fwOpt && fwOpt.managed;
+
+		// __constructを実行(子コントローラのコントローラ化より前)
 		try {
 			controller.__construct
 					&& controller.__construct(createInitializationContext(controller));
 			if (isDisposing(controller)) {
 				// 途中(__constructの中)でdisposeされたら__constructの実行を中断
-				isDisposedInConstruct = true;
 				return null;
 			}
 		} catch (e) {
 			// ルートコントローラを渡してdisposeする
 			disposeController(rootController, e);
+			return null;
 		}
-
-		// コントローラマネージャの管理対象とするか判定する(fwOpt.false===falseなら管理対象外)
-		controllerContext.managed = fwOpt && fwOpt.managed;
 
 		// __construct呼び出し後にparentControllerとrootControllerの設定
 		if (isRoot) {
@@ -4042,10 +4013,50 @@
 			controller.parentController = fwOpt.parentController;
 			controller.rootController = fwOpt.rootController;
 		}
-		if (isDisposedInConstruct) {
-			// __constructでdisposeが呼ばれたらnullを返す
-			// (h5.core.controllerの戻り値がnullになる)
-			return null;
+
+		// 子コントローラをコントローラ化して持たせる
+		// 子コントローラがDependencyオブジェクトなら依存関係を解決
+		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
+			// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
+			var prop = cache.childControllerProperties[i];
+			var childController = clonedControllerDef[prop];
+			if (isDependency(childController)) {
+				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
+				var promise = childController.resolve();
+				promisesForTriggerInit.push(promise);
+				promise.done((function(childProp) {
+					return function(c) {
+						var child = createAndBindController(null, $.extend(true, {}, c), param, {
+							isInternal: true,
+							parentController: controller,
+							rootController: rootController,
+							promisesForTriggerInit: promisesForTriggerInit
+						});
+						if (child == null) {
+							// __constructで失敗したりdisposeされた場合はnullが返ってくるので
+							// 子コントローラの__constructが正しく実行されなかった場合は以降何もしない
+							return null
+						}
+						controller[childProp] = child;
+						// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
+						promisesForTriggerInit.splice($.inArray(this, promisesForTriggerInit), 1);
+					};
+				})(prop));
+			} else {
+				var child = createAndBindController(null, $.extend(true, {},
+						clonedControllerDef[prop]), param, {
+					isInternal: true,
+					parentController: controller,
+					rootController: rootController
+				});
+
+				if (child == null) {
+					// __constructで失敗したりdisposeされた場合はnullが返ってくるので
+					// 子コントローラの__constructが正しく実行されなかった場合は以降何もしない
+					return null
+				}
+				controller[prop] = child;
+			}
 		}
 
 		if (isRoot) {
