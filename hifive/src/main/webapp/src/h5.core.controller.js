@@ -627,7 +627,10 @@
 		if (cache) {
 			for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
 				var prop = cache.childControllerProperties[i];
-				if (false === callback(controller[prop], controller, prop)) {
+				var child = controller[prop];
+				// __construct時点では子コントローラがセットされていない場合があるので、
+				// その場合はcallbackは実行しない
+				if (child && false === callback(controller[prop], controller, prop)) {
 					return false;
 				}
 			}
@@ -3790,6 +3793,10 @@
 	function createAndBindController(targetElement, controllerDefObj, param, fwOpt) {
 		// 内部から再帰的に呼び出された場合は、fwOpt.isInternalが指定されているはずなので、ルートコントローラかどうかはfwOpt.isInternalで判別できる
 		var isRoot = !fwOpt || !fwOpt.isInternal;
+		if (!isRoot && isDisposed(fwOpt.rootController)) {
+			// ルートコントローラがdisposeされていたら何もしない
+			return null;
+		}
 
 		// コントローラ名
 		var controllerName = controllerDefObj.__name;
