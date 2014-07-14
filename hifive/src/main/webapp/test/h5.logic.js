@@ -230,38 +230,12 @@ $(function() {
 		ok(logic.childLogic.childLogic.isExecuted, '孫ロジックの__constructが実行されていること');
 	});
 
-	test('親から順に__constructが実行される', 2, function() {
-		var parentExecuted = false;
-		var childExecuted = false;
-		h5.core.logic({
-			__name: 'logic',
-			__construct: function() {
-				parentExecuted = true;
-			},
-			child1Logic: {
-				__name: 'child1',
-				__construct: function() {
-					childExecuted = true;
-					ok(parentExecuted, '子の__construct時点で親ロジックの__constructが実行されていること');
-				},
-				grandLogic: {
-					__name: 'grand',
-					__construct: function() {
-						ok(childExecuted, '孫の__construct時点で子ロジックの__constructが実行されていること');
-					}
-				}
-			}
-		});
-	});
-
 	test('子から順に__readyが実行される', 3, function() {
 		h5.core.logic({
 			__name: 'logic',
 			__ready: function() {
-				ok(this.child1Logic.isExecuted,
-						'ルートロジックの__readyの時点で子ロジック１の__readyが実行されていること');
-				ok(this.child2Logic.isExecuted,
-						'ルートロジックの__readyの時点で子ロジック２の__readyが実行されていること');
+				ok(this.child1Logic.isExecuted, 'ルートロジックの__readyの時点で子ロジック１の__readyが実行されていること');
+				ok(this.child2Logic.isExecuted, 'ルートロジックの__readyの時点で子ロジック２の__readyが実行されていること');
 			},
 			isExecuted: false,
 			child1Logic: {
@@ -275,8 +249,7 @@ $(function() {
 				__name: 'child2',
 				__ready: function() {
 					this.isExecuted = true;
-					ok(this.childLogic.isExecuted,
-							'子ロジックの__readyの時点で孫ロジックの__readyが実行されていること');
+					ok(this.childLogic.isExecuted, '子ロジックの__readyの時点で孫ロジックの__readyが実行されていること');
 				},
 				isExecuted: false,
 				childLogic: {
@@ -327,6 +300,43 @@ $(function() {
 				ok(this.own, 'this.own');
 				ok(this.ownWithOrg, 'this.ownWithOrg');
 				ok(this.deferred, 'this.deferred');
+			}
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('Logic __ready', {
+		teardown: function() {
+			cleanAllAspects();
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('親から順に__constructが実行される', 2, function() {
+		var parentExecuted = false;
+		var childExecuted = false;
+		h5.core.logic({
+			__name: 'logic',
+			__construct: function() {
+				parentExecuted = true;
+			},
+			child1Logic: {
+				__name: 'child1',
+				__construct: function() {
+					childExecuted = true;
+					ok(parentExecuted, '子の__construct時点で親ロジックの__constructが実行されていること');
+				},
+				grandLogic: {
+					__name: 'grand',
+					__construct: function() {
+						ok(childExecuted, '孫の__construct時点で子ロジックの__constructが実行されていること');
+					}
+				}
 			}
 		});
 	});
