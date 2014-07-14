@@ -48,10 +48,15 @@
 				'price <=': 300
 			}
 		}
-	},{
+	}, {
+		description: '商品名が"石川遼 エキサイトゴルフ"、"レゴ 基本セット 青いバケツ"のいずれか(in使用)',
+		criteria: {
+			'itemname in': ["石川遼 エキサイトゴルフ", "レゴ 基本セット 青いバケツ"]
+		}
+	}, {
 		description: '商品名が10文字以下(ユーザ関数使用)',
-		criteria:{
-			func: function(valueObj){
+		criteria: {
+			func: function(valueObj) {
 				return valueObj.itemname.length <= 10;
 			}
 		}
