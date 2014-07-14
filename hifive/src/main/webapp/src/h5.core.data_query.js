@@ -33,7 +33,7 @@
 	var COMPARE_FUNCIONS = {
 		'=': function(value, queryValue) {
 			if (queryValue instanceof RegExp) {
-				return queryValue.test(value)
+				return queryValue.test(value);
 			}
 			return value === queryValue;
 		},
@@ -106,7 +106,7 @@
 				}
 			}
 			return true;
-		}
+		};
 	}
 
 	function createORCompareFunction(compiledCriteria) {
