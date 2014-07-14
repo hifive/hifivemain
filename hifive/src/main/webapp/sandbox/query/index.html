@@ -8,6 +8,9 @@
 <script src="../../archives/current/ejs-h5mod.js"></script>
 <link rel="stylesheet" href="../../archives/current/h5.css" />
 
+<script src="../../test/lib/qunit/qunit.js"></script>
+<!-- jsDumpを使用 -->
+
 <!-- 		<script src="../../archives/current/h5.js"></script> -->
 <script src="../../src/h5scopedglobals.js"></script>
 <script src="../../src/h5.u.js"></script>
@@ -30,100 +33,14 @@
 
 <script src="../../src/h5.dev.api.geo.js"></script>
 
-<script>
-	$(function() {
-		var seq = h5.core.data.createSequence(null, null, h5.core.data.SEQ_STRING);
-		var manager = h5.core.data.createManager('DataManager');
-		var model = manager.createModel({
-			name: 'SampleModel',
-			schema: {
-				id: {
-					id: true
-				},
-				str: {
-					type: 'string'
-				},
-				num: {
-					type: 'number'
-				}
-			}
-		});
+<script src="QueryController.js"></script>
+<script src="init.js"></script>
 
-		var result = model.query({
-			str: 'str4',
-			'num <': 5,
-			'num >=': 0
-		});
-
-		var view = h5.core.view;
-		function resultChangeListener() {
-			view.update('.result', 'query', {
-				result: result
-			});
-		}
-		function itemChangeListener() {
-			view.update('.items', 'items', {
-				items: model.items
-			});
-		}
-
-		// データモデルのitemsChangeが起きたら一覧更新
-		model.addEventListener('itemsChange', itemChangeListener);
-
-		// query結果が変更されたら検索結果一覧を更新
-		result.addEventListener('change', resultChangeListener);
-
-		for (var i = 0; i < 10; i++) {
-			model.create({
-				id: seq.next(),
-				str: 'str' + i,
-				num: i
-			});
-		}
-
-		h5.core.controller('body', {
-			__name: 'querySampleController',
-			'.create button click': function(context) {
-				context.event.preventDefault();
-				var $form = this.$find('.create');
-				var str = $form.find('[name=str]').val();
-				var num = $form.find('[name=num]').val();
-
-				model.create({
-					id: seq.next(),
-					str: str,
-					num: parseFloat(num)
-				});
-			},
-			'.remove button click': function(context) {
-				context.event.preventDefault();
-				var $form = this.$find('.remove');
-				var id = $form.find('[name=id]').val();
-				model.remove(id);
-			},
-			'.update button click': function(context) {
-				context.event.preventDefault();
-				var $form = this.$find('.update');
-				var id = $form.find('[name=id]').val();
-				var str = $form.find('[name=str]').val();
-				var num = $form.find('[name=num]').val();
-
-				var item = model.get(id);
-				if (item) {
-					item.set({
-						str: str,
-						num: parseFloat(num)
-					});
-				}
-			}
-		});
-	});
-</script>
 <script type="text/ejs" id="query">
 <table>
 <thead>
 <tr>
-<th>id</th><th>str</th><th>num</th>
+<th>id</th><th>itemname</th><th>price</th>
 </tr>
 </thead>
 <tbody>
@@ -131,8 +48,8 @@
  	var item = result.get(i); %]
 <tr>
 <td>[%= item.get('id') %]</td>
-<td>[%= item.get('str') %]</td>
-<td>[%= item.get('num') %]</td>
+<td>[%= item.get('itemname') %]</td>
+<td>[%= item.get('price') %]</td>
 </tr>
 [% } %]
 </tbody>
@@ -142,7 +59,7 @@
 <table>
 <thead>
 <tr>
-<th>id</th><th>str</th><th>num</th>
+<th>id</th><th>itemname</th><th>price</th>
 </tr>
 </thead>
 <tbody>
@@ -150,8 +67,8 @@
  	var item = items[p]; %]
 <tr>
 <td>[%= item.get('id') %]</td>
-<td>[%= item.get('str') %]</td>
-<td>[%= item.get('num') %]</td>
+<td>[%= item.get('itemname') %]</td>
+<td>[%= item.get('price') %]</td>
 </tr>
 [% } %]
 </tbody>
@@ -164,41 +81,42 @@ form {
 <title>h5.core.data_query</title>
 </head>
 <body>
-	<h3>全てのアイテム</h3>
-	<div class="items"></div>
+	<div style="float: left">
+		<h3>全てのアイテム</h3>
+		<div class="items"></div>
+	</div>
+	<div style="margin-left: 30px; float: left;">
+		<form class="create">
+			<p>
+				itemname:<input type="text" name="itemname" value="hoge" />
+			</p>
+			<p>
+				price:<input type="text" name="price" value="1111" />
+			</p>
+			<button class="regist">作成</button>
+		</form>
+		<form class="remove">
+			<p>
+				id:<input type="text" name="id" value="5" />
+			</p>
+			<button class="regist">削除</button>
+		</form>
+		<form class="update">
+			<p>
+				id:<input type="text" name="id" value="1" />
+			</p>
+			<p>
+				itemname:<input type="text" name="itemname" value="fuga" />
+			</p>
+			<p>
+				price:<input type="text" name="price" value="1111" />
+			</p>
+			<button class="regist">更新</button>
+		</form>
+	</div>
+
+	<hr style="clear: both">
 	<h3>検索結果</h3>
-	<pre>var result = model.query({
-	str: &#39;str4&#39;,
-	&#39;num &lt;&#39;: 5,
-	&#39;num &gt;=&#39;: 0
-});</pre>
 	<div class="result"></div>
-	<form class="create">
-		<p>
-			str:<input type="text" name="str" value="str4" />
-		</p>
-		<p>
-			num:<input type="text" name="num" value="0" />
-		</p>
-		<button class="regist">作成</button>
-	</form>
-	<form class="remove">
-		<p>
-			id:<input type="text" name="id" value="5" />
-		</p>
-		<button class="regist">削除</button>
-	</form>
-	<form class="update">
-		<p>
-			id:<input type="text" name="id" value="1" />
-		</p>
-		<p>
-			str:<input type="text" name="str" value="str4" />
-		</p>
-		<p>
-			num:<input type="text" name="num" value="0" />
-		</p>
-		<button class="regist">更新</button>
-	</form>
 </body>
 </html>
