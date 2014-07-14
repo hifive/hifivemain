@@ -4042,7 +4042,7 @@
 						if (child == null) {
 							// __constructで失敗したりdisposeされた場合はnullが返ってくるので
 							// 子コントローラの__constructが正しく実行されなかった場合は以降何もしない
-							return null
+							return null;
 						}
 						controller[childProp] = child;
 						// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
@@ -4060,7 +4060,7 @@
 				if (child == null) {
 					// __constructで失敗したりdisposeされた場合はnullが返ってくるので
 					// 子コントローラの__constructが正しく実行されなかった場合は以降何もしない
-					return null
+					return null;
 				}
 				controller[prop] = child;
 			}
