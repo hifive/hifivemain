@@ -80,21 +80,40 @@
 
 	var COMPARE_DATE_FUNCIONS = {
 		'=': function(value, queryValue) {
+			if (value == null) {
+				// nullまたはundefinedの場合は比較しないでfalseを返す
+				return false;
+			}
 			return value.getTime() === queryValue.getTime();
 		},
 		'<': function(value, queryValue) {
+			if (value == null) {
+				return false;
+			}
 			return value.getTime() < queryValue.getTime();
 		},
 		'>': function(value, queryValue) {
+			if (value == null) {
+				return false;
+			}
 			return value.getTime() > queryValue.getTime();
 		},
 		'<=': function(value, queryValue) {
+			if (value == null) {
+				return false;
+			}
 			return value.getTime() <= queryValue.getTime();
 		},
 		'>=': function(value, queryValue) {
+			if (value == null) {
+				return false;
+			}
 			return value.getTime() >= queryValue.getTime();
 		},
 		'between': function(value, queryValue) {
+			if (value == null) {
+				return false;
+			}
 			var lower = queryValue[0].getTime();
 			var upper = queryValue[1].getTime();
 			var valueTime = value.getTime();
@@ -102,6 +121,9 @@
 			return lower <= valueTime && valueTime <= upper;
 		},
 		'!between': function(value, queryValue) {
+			if (value == null) {
+				return false;
+			}
 			var lower = queryValue[0].getTime();
 			var upper = queryValue[1].getTime();
 			var valueTime = value.getTime();
@@ -109,6 +131,9 @@
 			return valueTime < lower || upper < valueTime;
 		},
 		'in': function(value, queryValue) {
+			if (value == null) {
+				return false;
+			}
 			var valueTime = value.getTime();
 			for (var i = 0; i < l; i++) {
 				if (valueTime === queryValue[i].getTime()) {
@@ -118,6 +143,9 @@
 			return false;
 		},
 		'!in': function(value, queryValue) {
+			if (value == null) {
+				return false;
+			}
 			var valueTime = value.getTime();
 			for (var i = 0; i < l; i++) {
 				if (valueTime === queryValue[i].getTime()) {
@@ -134,12 +162,14 @@
 	// TODO エラーコードの採番は決まってから適切な番号にする
 	/** 指定された比較関数がない */
 	var ERR_CODE_NO_COMPARE_FUNCTIONS = 0;
+	var ERR_CODE_ORDER_BY_CLAUSE = 1;
 
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_NO_COMPARE_FUNCTIONS] = '演算子"{0}"で"{1}"型の値を比較することはできません';
+	errMsgMap[ERR_CODE_ORDER_BY_CLAUSE] = 'ORDER BY句の指定が不正です。指定されたorder句:{0} "key名 ASC"または"key名 DESC"またはソート関数を指定してください';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -230,7 +260,9 @@
 		};
 	}
 
-	function createChangeListener(match, compareFunc, resultArray) {
+	function createChangeListener(query) {
+		var match = query._criteria.match;
+		var resultArray = query.result;
 		return function(ev) {
 			var removed = ev.removed;
 			var created = ev.created;
@@ -280,11 +312,11 @@
 				}
 			}
 
-			// TODO ソートの仕様が決まったら実装する
-//			if (!isSorted) {
-//				// ソートする必要があるならソートする
-//				resultArray.sort(compareFunc);
-//			}
+			// ソート
+			if (query._compareFunction && !isSorted) {
+				// ソートする必要があるならソートする
+				resultArray.sort(query._compareFunction);
+			}
 		};
 	}
 
@@ -348,6 +380,114 @@
 		return compiledCriteria;
 	}
 
+	function createAscCompareFunction(key) {
+		return function(item1, item2) {
+			var val1 = item1.get(key);
+			var val2 = item2.get(key);
+			if (val1 > val2) {
+				return 1;
+			}
+			if (val1 < val2) {
+				return -1;
+			}
+			return 0;
+		}
+	}
+
+	function createDescCompareFunction(key) {
+		return function(item1, item2) {
+			var val1 = item1.get(key);
+			var val2 = item2.get(key);
+			if (val1 > val2) {
+				return -1;
+			}
+			if (val1 < val2) {
+				return 1;
+			}
+			return 0;
+		}
+	}
+
+
+
+	/**
+	 * Queryクラス
+	 */
+	function Query(model, criteria) {
+		// データモデルのセット
+		this._model = model;
+		// criteriaを解析する
+		this._criteria = compileCriteria(criteria);
+		// 結果配列の作成
+		this.result = h5.core.data.createObservableArray();
+		// ライブクエリはデフォルトfalse
+		this._isLive = false;
+	}
+	// TODO 今は何もイベントをあげていないのでeventDispatcherにする必要がない。仕様が決まったら対応する。
+	//	h5.mixin.eventDispatcher.mix(Query.prototype);
+
+	$.extend(Query.prototype, {
+		execute: function() {
+			// 新しくdeferredを作成
+			this._executeDfd = h5.async.deferred();
+			var result = this.result;
+			for ( var id in this._model.items) {
+				var item = this._model.items[id];
+				// マッチするなら結果に追加
+				if (this._criteria.match(item.get())) {
+					result.push(item);
+				}
+				// ソート
+				if (this._compareFunction) {
+					result.sort(this._compareFunction);
+				}
+			}
+			this._executeDfd.resolveWith(this, result);
+			return this;
+		},
+		onQueryComplete: function(completeHandler) {
+			// TODO executeが呼ばれる前にハンドラを設定された場合はどうするか
+			this._executeDfd.done(completeHandler);
+		},
+		setLive: function() {
+			// ライブクエリ設定済みなら何もしない
+			if (this._isLive) {
+				return;
+			}
+			// リスナ未作成なら作成
+			this._listener = this._listener || createChangeListener(this);
+			this._model.addEventListener('itemsChange', this._listener);
+			this._isLive = true;
+
+			return this;
+		},
+		unsetLive: function() {
+			// ライブクエリでなければ何もしない
+			if (!this._isLive) {
+				return;
+			}
+			this.removeEventListener('itemsChange', this._listener);
+			this._isLive = false;
+		},
+		orderBy: function(orderByClause) {
+			// compareFuncの作成
+			if (isFunction(orderByClause)) {
+				this._compareFunction = orderByClause;
+			}
+			var tmp = orderByClause.split(' ');
+			var key = tmp[0];
+			var order = tmp[1] ? tmp[1].toUpperCase() : 'ASC';
+			if (order === 'DESC') {
+				this._compareFunction = createDescCompareFunction(key);
+			} else if (order = 'ASC') {
+				this._compareFunction = createAscCompareFunction(key);
+			} else {
+				// エラー
+				throwFwError(ERR_CODE_ORDER_BY_CLAUSE, [orderByClause]);
+			}
+			return this;
+		}
+	});
 
 	// =========================================================================
 	//
@@ -355,40 +495,18 @@
 	//
 	// =========================================================================
 	/**
-	 * クエリにマッチするDataItemを返します
+	 * Queryクラスを作成して返します
 	 *
 	 * @param {Object} criteria
-	 * @returns {ObservableArray} 検索結果にマッチするDataItemを持つObservableArray
+	 * @returns {Query} 検索を行うQueryクラスを返します
 	 */
-	function query(criteria) {
-		var resultArray = h5.core.data.createObservableArray();
-
-		// criteriaを解析してresultArrayに結果を格納する関数を作成する
-		var compiledCriteria = compileCriteria(criteria);
-
-		// ソートするときの比較関数を作成する
-		function compareFunc() {
-		// TODO ソートの仕様が決まったら実装
-		}
-
-		// DataModelに変更があった時に結果を更新する関数をバインドする
-		var listener = createChangeListener(compiledCriteria.match, compareFunc, resultArray);
-		this.addEventListener('itemsChange', listener);
-
-		// 今あるアイテムについて、条件を満たすものを列挙させる
-		var created = [];
-		for ( var id in this.items) {
-			created.push(this.items[id]);
-		}
-		listener({
-			created: created
-		});
-		return resultArray;
+	function createQuery(criteria) {
+		return new Query(this, criteria);
 	}
 
 	// h5internalにqueryを公開
 	h5internal.data = {
-		query: query
+		createQuery: createQuery
 	};
 	// =============================
 	// Expose to window

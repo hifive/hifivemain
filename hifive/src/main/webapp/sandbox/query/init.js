@@ -15,11 +15,10 @@
 			}
 		}
 	});
-	var queries = [{
-		description: '1000円以上かつ10000円未満',
+	var queryDatas = [{
+		description: '1000円以上かつ5000円以下',
 		criteria: {
-			'price >=': 1000,
-			'price <': 10000
+			'price between': [1000, 5000]
 		}
 	}, {
 		description: '1000円以下または10000円以上',
@@ -71,27 +70,30 @@
 		});
 	}
 
+	// jsonから読み込んだデータをmodelに追加
+	$.ajax('data.json').done(function(data) {
+		for (var i = 0, l = data.length; i < l; i++) {
+			data[i].id = seq.next();
+			model.create(data[i]);
+		}
+	});
+
 	// データモデルのitemsChangeが起きたら一覧更新
 	model.addEventListener('itemsChange', itemChangeListener);
 
 	$(function() {
-		for (var i = 0, l = queries.length; i < l; i++) {
+		// 検索結果を表示するコントローラのバインド
+		for (var i = 0, l = queryDatas.length; i < l; i++) {
 			var $target = $('<div class="query-result"></div>');
 			$('.result').append($target);
 			$('.result').append('<hr>');
 			h5.core.controller($target, query.QueryController, {
 				model: model,
-				query: queries[i]
+				queryData: queryDatas[i]
 			});
 		}
-		$.ajax('data.json').done(function(data) {
-			for (var i = 0, l = data.length; i < l; i++) {
-				data[i].id = seq.next();
-				model.create(data[i]);
-			}
-		});
 
-
+		// データモデルを操作するためのコントローラをバインド
 		h5.core.controller('body', {
 			__name: 'querySampleController',
 			'.create button click': function(context) {

@@ -3,21 +3,23 @@
 	var controller = {
 		__name: 'query.QueryController',
 		__init: function(context) {
-			this.query = context.args.query;
+			this.queryData = context.args.queryData;
 			this.model = context.args.model;
 
 			var $description = $('<p></p>');
-			$description.text(this.query.description);
+			$description.text(this.queryData.description);
 			$(this.rootElement).append($description);
 
 			var $pre = $('<pre class="criteria"></pre>');
-			$pre.text(QUnit.jsDump.parse(this.query.criteria));
+			$pre.text(QUnit.jsDump.parse(this.queryData.criteria));
 			$(this.rootElement).append($pre);
 
 			$(this.rootElement).append('<div class="result"></div>');
 
-			this.result = this.model.query(this.query.criteria);
-			//			$(this.rootElement).append();
+			this.model.createQuery(this.queryData.criteria).orderBy('id asc').setLive().execute()
+					.onQueryComplete(this.ownWithOrg(function(query) {
+						this.result = query.result;
+					}));
 		},
 		'{this.model} itemsChange': function(context) {
 			this.view.update('.result', 'query', {
