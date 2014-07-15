@@ -3483,9 +3483,9 @@
 		},
 
 		/**
-		 * クエリにマッチするDataModelの持つDataItemの配列(ObservableArray)を返します
+		 * クエリオブジェクトを作成します
 		 */
-		query: h5internal.data.query
+		createQuery: h5internal.data.createQuery
 	});
 
 	//------------------------------------------
