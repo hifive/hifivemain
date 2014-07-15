@@ -28,8 +28,16 @@
 	// Production
 	// =============================
 
+	/**
+	 * criteriaで'or'または'and'の論理演算子を指定するプロパティ
+	 */
 	var OPERAND_PROPERTY = '__op';
 
+	/**
+	 * 比較関数と演算子のマップ
+	 *
+	 * @private
+	 */
 	var COMPARE_FUNCIONS = {
 		'=': function(value, queryValue) {
 			return value === queryValue;
@@ -69,6 +77,11 @@
 		}
 	};
 
+	/**
+	 * RegExp型を比較する関数と演算子のマップ
+	 *
+	 * @private
+	 */
 	var COMPARE_REGEXP_FUNCTIONS = {
 		'=': function(value, queryValue) {
 			return queryValue.test(value);
@@ -78,6 +91,11 @@
 		}
 	};
 
+	/**
+	 * Date型を比較する関数と演算子のマップ
+	 *
+	 * @private
+	 */
 	var COMPARE_DATE_FUNCIONS = {
 		'=': function(value, queryValue) {
 			if (value == null) {
@@ -196,7 +214,13 @@
 	// =============================
 	// Functions
 	// =============================
-
+	/**
+	 * 各条件について結果をANDで評価する関数を生成して返します
+	 *
+	 * @private
+	 * @param {Object} compiledCriteria コンパイル済みcriteria
+	 * @returns {Function}
+	 */
 	function createANDCompareFunction(compiledCriteria) {
 		// 各条件をANDで比較して返す関数
 		return function(valueObj) {
@@ -229,6 +253,13 @@
 		};
 	}
 
+	/**
+	 * 各条件について結果をORで評価する関数を生成して返します
+	 *
+	 * @private
+	 * @param {Object} compiledCriteria コンパイル済みcriteria
+	 * @returns {Function}
+	 */
 	function createORCompareFunction(compiledCriteria) {
 		return function(valueObj) {
 			// クエリについてチェック
@@ -260,6 +291,12 @@
 		};
 	}
 
+	/**
+	 * setLive()が呼ばれた時にDataModelにaddEventListenerするリスナを作成します
+	 *
+	 * @param {Query} query クエリクラス
+	 * @returns {Function} リスナ
+	 */
 	function createChangeListener(query) {
 		var match = query._criteria.match;
 		var resultArray = query.result;
@@ -320,6 +357,28 @@
 		};
 	}
 
+	/**
+	 * criteriaオブジェクトをコンパイルします
+	 * <p>
+	 * 以下のようなオブジェクトを生成します
+	 * </p>
+	 *
+	 * <pre><code>
+	 * {
+	 *   queries: [{
+	 *     prop: プロパティ名,
+	 *     queryValue: 指定された値,
+	 *     compareFunction: 指定された値と比較する関数,
+	 *   }],
+	 *   nestedCriterias: ネストされたcriteriaオブジェクト(コンパイル済み)の配列,
+	 *   userFunctions: ユーザ指定関数の配列
+	 * }
+	 * </code></pre>
+	 *
+	 * @private
+	 * @param {Object} criteria
+	 * @returns {Object} コンパイル済みcriteriaオブジェクト
+	 */
 	function compileCriteria(criteria) {
 		// criteriaの解析
 		var queries = [];
@@ -380,6 +439,13 @@
 		return compiledCriteria;
 	}
 
+	/**
+	 * 指定されたキーでアイテムを昇順にソートするための比較関数を作成します
+	 *
+	 * @private
+	 * @param {String} key データアイテムのキー名
+	 * @returns {Function}
+	 */
 	function createAscCompareFunction(key) {
 		return function(item1, item2) {
 			var val1 = item1.get(key);
@@ -391,9 +457,16 @@
 				return -1;
 			}
 			return 0;
-		}
+		};
 	}
 
+	/**
+	 * 指定されたキーでアイテムを降順にソートするための比較関数を作成します
+	 *
+	 * @private
+	 * @param {String} key データアイテムのキー名
+	 * @returns {Function}
+	 */
 	function createDescCompareFunction(key) {
 		return function(item1, item2) {
 			var val1 = item1.get(key);
@@ -405,13 +478,15 @@
 				return 1;
 			}
 			return 0;
-		}
+		};
 	}
-
-
 
 	/**
 	 * Queryクラス
+	 *
+	 * @class
+	 * @param {DataModel} model データモデル
+	 * @param {Object} criteria
 	 */
 	function Query(model, criteria) {
 		// データモデルのセット
@@ -427,6 +502,11 @@
 	//	h5.mixin.eventDispatcher.mix(Query.prototype);
 
 	$.extend(Query.prototype, {
+		/**
+		 * 検索を実行
+		 *
+		 * @returns {Query}
+		 */
 		execute: function() {
 			// 新しくdeferredを作成
 			this._executeDfd = h5.async.deferred();
@@ -445,10 +525,26 @@
 			this._executeDfd.resolveWith(this, result);
 			return this;
 		},
+
+		/**
+		 * execute()による検索が完了した時に実行するハンドラを登録
+		 *
+		 * @returns {Query}
+		 */
 		onQueryComplete: function(completeHandler) {
 			// TODO executeが呼ばれる前にハンドラを設定された場合はどうするか
 			this._executeDfd.done(completeHandler);
+			return this;
 		},
+
+		/**
+		 * クエリをライブクエリにする
+		 * <p>
+		 * ライブクエリにすると、DataModelに変更があった時に検索結果が動的に変更されます
+		 * </p>
+		 *
+		 * @returns {Query}
+		 */
 		setLive: function() {
 			// ライブクエリ設定済みなら何もしない
 			if (this._isLive) {
@@ -461,6 +557,12 @@
 
 			return this;
 		},
+
+		/**
+		 * ライブクエリを解除する
+		 *
+		 * @returns {Query}
+		 */
 		unsetLive: function() {
 			// ライブクエリでなければ何もしない
 			if (!this._isLive) {
@@ -468,7 +570,14 @@
 			}
 			this.removeEventListener('itemsChange', this._listener);
 			this._isLive = false;
+			return this;
 		},
+
+		/**
+		 * 検索結果のソート条件を設定
+		 *
+		 * @returns {Query}
+		 */
 		orderBy: function(orderByClause) {
 			// compareFuncの作成
 			if (isFunction(orderByClause)) {
