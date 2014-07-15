@@ -190,7 +190,7 @@
 	}
 
 	function compileCriteria(criteria) {
-		// queryObjの解析
+		// criteriaの解析
 		var queries = [];
 		var nestedCriterias = [];
 		var userFunctions = [];
@@ -251,8 +251,12 @@
 		this.addEventListener('itemsChange', listener);
 
 		// 今あるアイテムについて、条件を満たすものを列挙させる
+		var created = [];
+		for ( var id in this.items) {
+			created.push(this.items[id]);
+		}
 		listener({
-			created: this.items
+			created: created
 		});
 		return resultArray;
 	}
