@@ -306,46 +306,38 @@
 			var changed = ev.changed;
 			var isSorted = true;
 
-			if (removed) {
-				for (var i = 0, l = removed.length; i < l; i++) {
-					// resultArrayの何番目に入っているアイテムか
-					var resultIndex = $.inArray(removed[i], resultArray._src);
-					// DataModelから削除されたら結果からも削除
+			for (var i = 0, l = removed.length; i < l; i++) {
+				// resultArrayの何番目に入っているアイテムか
+				var resultIndex = $.inArray(removed[i], resultArray._src);
+				// DataModelから削除されたら結果からも削除
+				if (resultIndex !== -1) {
+					resultArray.splice(resultIndex, 1);
+				}
+			}
+			for (var i = 0, l = changed.length; i < l; i++) {
+				// resultArrayの何番目に入っているアイテムか(入っていないなら-1)
+				var resultIndex = $.inArray(changed[i].target, resultArray._src);
+
+				// マッチするかどうかチェックして、
+				// マッチするかつ結果にないものなら追加
+				// マッチしないかつ結果にあるものなら取り除く
+				if (match(changed[i].target.get())) {
+					if (resultIndex === -1) {
+						isSorted = false;
+						resultArray.push(changed[i].target);
+					}
+				} else {
 					if (resultIndex !== -1) {
 						resultArray.splice(resultIndex, 1);
 					}
 				}
 			}
-
-			if (changed) {
-				for (var i = 0, l = changed.length; i < l; i++) {
-					// resultArrayの何番目に入っているアイテムか(入っていないなら-1)
-					var resultIndex = $.inArray(changed[i].target, resultArray._src);
-
-					// マッチするかどうかチェックして、
-					// マッチするかつ結果にないものなら追加
-					// マッチしないかつ結果にあるものなら取り除く
-					if (match(changed[i].target.get())) {
-						if (resultIndex === -1) {
-							isSorted = false;
-							resultArray.push(changed[i].target);
-						}
-					} else {
-						if (resultIndex !== -1) {
-							resultArray.splice(resultIndex, 1);
-						}
-					}
-				}
-			}
-
-			if (created) {
-				for (var i = 0, l = created.length; i < l; i++) {
-					// 新しく作成されたアイテムがあればマッチするかどうかチェックして
-					// マッチするなら結果に追加
-					if (match(created[i].get())) {
-						isSorted = false;
-						resultArray.push(created[i]);
-					}
+			for (var i = 0, l = created.length; i < l; i++) {
+				// 新しく作成されたアイテムがあればマッチするかどうかチェックして
+				// マッチするなら結果に追加
+				if (match(created[i].get())) {
+					isSorted = false;
+					resultArray.push(created[i]);
 				}
 			}
 
