@@ -98,38 +98,45 @@
 	 */
 	var COMPARE_DATE_FUNCIONS = {
 		'=': function(value, queryValue) {
-			if (value == null) {
-				// nullまたはundefinedの場合は比較しないでfalseを返す
+			if (!isDate(value)) {
+				// Date型じゃない場合はfalseを返す(queryValueは必ずDate型であるため)
 				return false;
 			}
 			return value.getTime() === queryValue.getTime();
 		},
+		'!=': function(value, queryValue) {
+			if (!isDate(value)) {
+				// Date型じゃない場合はtrueを返す(queryValueは必ずDate型であるため)
+				return true;
+			}
+			return value.getTime() !== queryValue.getTime();
+		},
 		'<': function(value, queryValue) {
-			if (value == null) {
+			if (!isDate(value)) {
 				return false;
 			}
 			return value.getTime() < queryValue.getTime();
 		},
 		'>': function(value, queryValue) {
-			if (value == null) {
+			if (!isDate(value)) {
 				return false;
 			}
 			return value.getTime() > queryValue.getTime();
 		},
 		'<=': function(value, queryValue) {
-			if (value == null) {
+			if (!isDate(value)) {
 				return false;
 			}
 			return value.getTime() <= queryValue.getTime();
 		},
 		'>=': function(value, queryValue) {
-			if (value == null) {
+			if (!isDate(value)) {
 				return false;
 			}
 			return value.getTime() >= queryValue.getTime();
 		},
 		'between': function(value, queryValue) {
-			if (value == null) {
+			if (!isDate(value)) {
 				return false;
 			}
 			var lower = queryValue[0].getTime();
@@ -139,7 +146,7 @@
 			return lower <= valueTime && valueTime <= upper;
 		},
 		'!between': function(value, queryValue) {
-			if (value == null) {
+			if (!isDate(value)) {
 				return false;
 			}
 			var lower = queryValue[0].getTime();
@@ -149,11 +156,11 @@
 			return valueTime < lower || upper < valueTime;
 		},
 		'in': function(value, queryValue) {
-			if (value == null) {
+			if (!isDate(value)) {
 				return false;
 			}
 			var valueTime = value.getTime();
-			for (var i = 0; i < l; i++) {
+			for (var i = 0, l = queryValue.length; i < l; i++) {
 				if (valueTime === queryValue[i].getTime()) {
 					return true;
 				}
@@ -161,17 +168,17 @@
 			return false;
 		},
 		'!in': function(value, queryValue) {
-			if (value == null) {
-				return false;
+			if (!isDate(value)) {
+				return true;
 			}
 			var valueTime = value.getTime();
-			for (var i = 0; i < l; i++) {
+			for (var i = 0, l = queryValue.length; i < l; i++) {
 				if (valueTime === queryValue[i].getTime()) {
 					return false;
 				}
 			}
 			return true;
-		},
+		}
 	};
 
 	// -------------------------------
@@ -214,6 +221,26 @@
 	// =============================
 	// Functions
 	// =============================
+	/**
+	 * 正規表現かどうか
+	 *
+	 * @param value
+	 * @returns {Boolean}
+	 */
+	function isRegExp(value) {
+		return value instanceof RegExp;
+	}
+
+	/**
+	 * 日付型かどうか
+	 *
+	 * @param value
+	 * @returns {Boolean}
+	 */
+	function isDate(value) {
+		return value instanceof Date;
+	}
+
 	/**
 	 * 各条件について結果をANDで評価する関数を生成して返します
 	 *
@@ -400,10 +427,11 @@
 			// queryValueのタイプをチェックする。配列指定なら先頭の要素でタイプを判定する
 			var valueForTypeCheck = isArray(queryValue) ? queryValue[0] : queryValue;
 			var compareFunctions = null;
-			if (valueForTypeCheck instanceof RegExp) {
+
+			if (isRegExp(valueForTypeCheck)) {
 				// 正規表現の場合
 				compareFunctions = COMPARE_REGEXP_FUNCTIONS;
-			} else if (valueForTypeCheck instanceof Date) {
+			} else if (isDate(valueForTypeCheck)) {
 				// Dateクラスの場合
 				compareFunctions = COMPARE_DATE_FUNCIONS;
 			} else {
@@ -574,6 +602,7 @@
 			// compareFuncの作成
 			if (isFunction(orderByClause)) {
 				this._compareFunction = orderByClause;
+				return this;
 			}
 			var tmp = orderByClause.split(' ');
 			var key = tmp[0];
