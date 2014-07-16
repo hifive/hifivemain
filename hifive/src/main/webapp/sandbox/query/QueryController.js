@@ -16,8 +16,8 @@
 
 			$(this.rootElement).append('<div class="result"></div>');
 
-			this.model.createQuery(this.queryData.criteria).orderBy('id asc').setLive().execute()
-					.onQueryComplete(this.ownWithOrg(function(query) {
+			this.model.createQuery().setCriteria(this.queryData.criteria).orderBy('id asc')
+					.setLive().execute().onQueryComplete(this.ownWithOrg(function(query) {
 						this.result = query.result;
 					}));
 		},

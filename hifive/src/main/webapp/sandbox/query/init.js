@@ -12,6 +12,9 @@
 			},
 			price: {
 				type: 'number'
+			},
+			state:{
+				type:'string'
 			}
 		}
 	});

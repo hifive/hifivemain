@@ -506,13 +506,10 @@
 	 *
 	 * @class
 	 * @param {DataModel} model データモデル
-	 * @param {Object} criteria
 	 */
-	function Query(model, criteria) {
+	function Query(model) {
 		// データモデルのセット
 		this._model = model;
-		// criteriaを解析する
-		this._criteria = compileCriteria(criteria);
 		// 結果配列の作成
 		this.result = h5.core.data.createObservableArray();
 		// ライブクエリはデフォルトfalse
@@ -522,6 +519,15 @@
 	//	h5.mixin.eventDispatcher.mix(Query.prototype);
 
 	$.extend(Query.prototype, {
+		/**
+		 * criteriaをセット
+		 *
+		 * @returns {Query}
+		 */
+		setCriteria: function(criteria) {
+			this._criteria = compileCriteria(criteria);
+			return this;
+		},
 		/**
 		 * 検索を実行
 		 *
@@ -634,11 +640,10 @@
 	/**
 	 * Queryクラスを作成して返します
 	 *
-	 * @param {Object} criteria
 	 * @returns {Query} 検索を行うQueryクラスを返します
 	 */
-	function createQuery(criteria) {
-		return new Query(this, criteria);
+	function createQuery() {
+		return new Query(this);
 	}
 
 	// h5internalにqueryを公開
