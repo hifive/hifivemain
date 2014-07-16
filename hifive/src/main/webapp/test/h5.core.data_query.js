@@ -32,6 +32,9 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
+	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.core.data_query;
+
 	var itemSchema = {
 		name: 'ItemModel',
 		schema: {
@@ -335,7 +338,7 @@ $(function() {
 		setup: function() {
 			this.manager = h5.core.data.createManager('TestManager');
 			this.model = this.manager.createModel(itemSchema);
-			this.model.create(itemData);
+			this.model.create(itemsData);
 		},
 		teardown: function() {
 			dropAllModel(this.manager);
@@ -348,6 +351,45 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+	test('演算子を指定しない場合は正規表現にマッチするアイテムが選択されること', 3, function() {
+		var query = this.model.createQuery({
+			itemname: /マウス/
+		});
+		query.orderBy(compareId).execute();
+		var result = query.result;
+		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
+		strictEqual(result.get(0), this.model.get('9'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(1), this.model.get('10'), '検索条件を満たすアイテムが格納されていること');
+	});
+
+	test('演算子に"="を指定した場合は正規表現にマッチするアイテムが選択されること', 3, function() {
+		var query = this.model.createQuery({
+			'itemname =': /マウス/
+		});
+		query.orderBy(compareId).execute();
+		var result = query.result;
+		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
+		strictEqual(result.get(0), this.model.get('9'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(1), this.model.get('10'), '検索条件を満たすアイテムが格納されていること');
+
+	});
+
+	test('演算子に"!="を指定した場合は正規表現にマッチしないアイテムが選択されること', 9, function() {
+		var query = this.model.createQuery({
+			'itemname !=': /マウス/
+		});
+		query.orderBy(compareId).execute();
+		var result = query.result;
+		strictEqual(result.length, 8, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
+		strictEqual(result.get(0), this.model.get('1'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(1), this.model.get('2'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(2), this.model.get('3'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(3), this.model.get('4'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(4), this.model.get('5'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(5), this.model.get('6'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(6), this.model.get('7'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result.get(7), this.model.get('8'), '検索条件を満たすアイテムが格納されていること');
+	});
 
 	//=============================
 	// Definition
@@ -483,6 +525,48 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module('演算子の指定が不正な場合はエラー', {
+		setup: function() {
+			this.manager = h5.core.data.createManager('TestManager');
+			this.model = this.manager.createModel(itemSchema);
+			this.model.create(itemsData);
+		},
+		teardown: function() {
+			dropAllModel(this.manager);
+			this.manager = null;
+		},
+		manager: null,
+		model: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('定義されていない演算子を使用', 1, function() {
+		try {
+			this.model.createQuery({
+				'price =>': 1000
+			});
+			ok(false, 'エラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_NO_COMPARE_FUNCTIONS, e.message);
+		}
+	});
+
+	test('正規表現で定義されていない演算子を使用', 1, function() {
+		try {
+			this.model.createQuery({
+				'itemname >': /テレビ/
+			});
+			ok(false, 'エラーが発生していません');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_NO_COMPARE_FUNCTIONS, e.message);
+		}
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	module('検索条件のソート', {
 		setup: function() {
 			this.manager = h5.core.data.createManager('TestManager');
@@ -502,30 +586,99 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
-
-
-	//=============================
-	// Definition
-	//=============================
-	module('正規表現', {
-		setup: function() {
-			this.manager = h5.core.data.createManager('TestManager');
-			this.model = this.manager.createModel(itemSchema);
-			this.model.create(itemsData);
-		},
-		teardown: function() {
-			dropAllModel(this.manager);
-			this.manager = null;
-		},
-		manager: null,
-		model: null
+	test('"キー名"を指定して昇順ソート', 3, function() {
+		var result = this.model.createQuery({
+			'id in': ['1', '2', '10']
+		}).orderBy('id').execute().result;
+		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
+		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
 	});
 
-	//=============================
-	// Body
-	//=============================
+	test('"キー名 asc"を指定して昇順ソート', 3, function() {
+		var result = this.model.createQuery({
+			'id in': ['1', '2', '10']
+		}).orderBy('id asc').execute().result;
+		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
+		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
+	});
 
+	test('"キー名 ASC"を指定して昇順ソート', 3, function() {
+		var result = this.model.createQuery({
+			'id in': ['1', '2', '10']
+		}).orderBy('id ASC').execute().result;
+		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
+		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
+	});
+
+	test('"キー名 desc"で降順ソート', 3, function() {
+		var result = this.model.createQuery({
+			'id in': ['1', '2', '10']
+		}).orderBy('id desc').execute().result;
+		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
+		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+	});
+
+	test('"キー名 DESC"で降順ソート', 3, function() {
+		var result = this.model.createQuery({
+			'id in': ['1', '2', '10']
+		}).orderBy('id DESC').execute().result;
+		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
+		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+	});
+
+	test('比較関数を指定してソート', 3, function() {
+		var result = this.model.createQuery({
+			'id in': ['1', '2', '10']
+		}).orderBy(function(a, b) {
+			// idを数値で評価して降順
+			return parseInt(b.get('id')) - parseInt(a.get('id'));
+		}).execute().result;
+		strictEqual(result.get(0), this.model.get('10'), 'id==="10"のアイテムが0番目');
+		strictEqual(result.get(1), this.model.get('2'), 'id==="2"のアイテムが1番目');
+		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+	});
+
+	test('execute()した後にorderBy()を指定すると結果がソートされる', 6, function() {
+		var query = this.model.createQuery({
+			'id in': ['1', '2', '10']
+		}).execute();
+		var result = query.result;
+		query.orderBy('id');
+		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
+		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
+
+		query.orderBy('id desc');
+		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
+		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+	});
+
+	test('orderByに不正な値を指定するとエラー', 10, function() {
+		try {
+			this.model.createQuery({
+				'id in': ['1', '2', '10']
+			}).orderBy();
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_CLAUSE, e.message);
+		}
+		var invalidArgs = ['id dsc', '', null, 1, true, false, {}, [], /id asc/];
+		for (var i = 0, l = invalidArgs.length; i < l; i++) {
+			try {
+				this.model.createQuery({
+					'id in': ['1', '2', '10']
+				}).orderBy(invalidArgs[i]);
+				ok(false, 'エラー発生していません');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_CLAUSE, e.message);
+			}
+		}
+	});
 
 	//=============================
 	// Definition
@@ -547,7 +700,18 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-
+	test('ユーザ関数がtrueを返したデータアイテムが検索結果に入ること', function() {
+		var result = this.model.createQuery({
+			func: function(valueObj) {
+				// 3で割り切れるidのアイテムだけtrueを返す
+				return !(parseInt(valueObj.id) % 3);
+			}
+		}).execute().result;
+		strictEqual(result.length, 3, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
+		strictEqual(result.get(0), this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result.get(1), this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result.get(2), this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
+	});
 
 	//=============================
 	// Definition

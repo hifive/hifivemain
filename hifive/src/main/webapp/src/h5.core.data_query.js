@@ -602,19 +602,26 @@
 			// compareFuncの作成
 			if (isFunction(orderByClause)) {
 				this._compareFunction = orderByClause;
+				this.result.sort(this._compareFunction);
 				return this;
 			}
+			if (!orderByClause || !isString(orderByClause)) {
+				// エラー
+				throwFwError(ERR_CODE_ORDER_BY_CLAUSE, [orderByClause]);
+			}
 			var tmp = orderByClause.split(' ');
-			var key = tmp[0];
-			var order = tmp[1] ? tmp[1].toUpperCase() : 'ASC';
+			var key = $.trim(tmp[0]);
+
+			var order = tmp[1] ? $.trim(tmp[1].toUpperCase()) : 'ASC';
 			if (order === 'DESC') {
 				this._compareFunction = createDescCompareFunction(key);
-			} else if (order = 'ASC') {
+			} else if (order === 'ASC') {
 				this._compareFunction = createAscCompareFunction(key);
 			} else {
 				// エラー
 				throwFwError(ERR_CODE_ORDER_BY_CLAUSE, [orderByClause]);
 			}
+			this.result.sort(this._compareFunction);
 			return this;
 		}
 	});
