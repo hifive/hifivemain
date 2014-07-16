@@ -182,7 +182,7 @@ $(function() {
 	// Body
 	//=============================
 	test('検索条件にマッチするデータアイテムを取得できること', 4, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			price: 22000
 		});
 		query.orderBy('id').execute();
@@ -214,29 +214,29 @@ $(function() {
 	// Body
 	//=============================
 	test('演算子未指定の場合は"==="で比較されること', 2, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			id: 1
 		}).execute().result;
 		strictEqual(result.length, 0, 'id===1のデータアイテムは検索結果に格納されていないこと');
-		result = this.model.createQuery({
+		result = this.model.createQuery().setCriteria({
 			id: '1'
 		}).execute().result;
 		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のデータアイテムが検索結果に格納されていること');
 	});
 
 	test('"="を指定した場合は"==="で比較されること', 2, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id =': 1
 		}).execute().result;
 		strictEqual(result.length, 0, 'id===1のデータアイテムは検索結果に格納されていないこと');
-		result = this.model.createQuery({
+		result = this.model.createQuery().setCriteria({
 			'id =': '1'
 		}).execute().result;
 		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のデータアイテムが検索結果に格納されていること');
 	});
 
 	test('"!="を指定した場合は"!=="で比較されること', 21, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id !=': 5
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 10, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -245,7 +245,7 @@ $(function() {
 			strictEqual(this.model.items[id], result.get(index++), '検索結果を満たすアイテムが検索結果に格納されていること');
 		}
 
-		result = this.model.createQuery({
+		result = this.model.createQuery().setCriteria({
 			'id !=': '5'
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 9, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -259,7 +259,7 @@ $(function() {
 	});
 
 	test('"<"を指定', 2, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'price <': 1200
 		}).execute().result;
 		strictEqual(result.length, 1, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -267,7 +267,7 @@ $(function() {
 	});
 
 	test('"<="を指定', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'price <=': 1200
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -276,7 +276,7 @@ $(function() {
 	});
 
 	test('">"を指定', 2, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'price >': 30000
 		}).execute().result;
 		strictEqual(result.length, 1, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -284,7 +284,7 @@ $(function() {
 	});
 
 	test('">="を指定', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'price >=': 30000
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -293,7 +293,7 @@ $(function() {
 	});
 
 	test('"between"を指定', 4, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'price between': [1000, 7000]
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 3, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -303,7 +303,7 @@ $(function() {
 	});
 
 	test('"!between"を指定', 5, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'price !between': [1200, 22000]
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -314,7 +314,7 @@ $(function() {
 	});
 
 	test('"in"を指定', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id in': ['4', '2']
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -323,7 +323,7 @@ $(function() {
 	});
 
 	test('"!in"を指定', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id !in': ['1', '2', '4', '5', '7', '8', '9', '10']
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -352,7 +352,7 @@ $(function() {
 	// Body
 	//=============================
 	test('演算子を指定しない場合は正規表現にマッチするアイテムが選択されること', 3, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			itemname: /マウス/
 		});
 		query.orderBy(compareId).execute();
@@ -363,7 +363,7 @@ $(function() {
 	});
 
 	test('演算子に"="を指定した場合は正規表現にマッチするアイテムが選択されること', 3, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			'itemname =': /マウス/
 		});
 		query.orderBy(compareId).execute();
@@ -375,7 +375,7 @@ $(function() {
 	});
 
 	test('演算子に"!="を指定した場合は正規表現にマッチしないアイテムが選択されること', 9, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			'itemname !=': /マウス/
 		});
 		query.orderBy(compareId).execute();
@@ -412,7 +412,7 @@ $(function() {
 	// Body
 	//=============================
 	test('演算子未指定の場合はgetTime()の"==="で比較されること', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			value: new Date('2014/7/2')
 		}).execute().result;
 		strictEqual(result.length, 2, 'id===1のデータアイテムは検索結果に格納されていないこと');
@@ -421,7 +421,7 @@ $(function() {
 	});
 
 	test('"="を指定した場合はgetTime()の"==="で比較されること', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value =': new Date('2014/7/2')
 		}).execute().result;
 		strictEqual(result.length, 2, 'id===1のデータアイテムは検索結果に格納されていないこと');
@@ -430,7 +430,7 @@ $(function() {
 	});
 
 	test('"!="を指定した場合は"!=="で比較されること', 6, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value !=': new Date('2014/7/2')
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 5, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -444,7 +444,7 @@ $(function() {
 	});
 
 	test('"<"を指定', 2, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value <': new Date('2014/7/1')
 		}).execute().result;
 		strictEqual(result.length, 1, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -453,7 +453,7 @@ $(function() {
 
 
 	test('"<="を指定', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value <=': new Date('2014/7/1')
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -462,7 +462,7 @@ $(function() {
 	});
 
 	test('">"を指定', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value >': new Date('2014/7/2')
 		}).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -471,7 +471,7 @@ $(function() {
 	});
 
 	test('">="を指定', 5, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value >=': new Date('2014/7/2')
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -482,7 +482,7 @@ $(function() {
 	});
 
 	test('"between"を指定', 5, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value between': [new Date('2014/7/1'), new Date('2014/7/3')]
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -493,7 +493,7 @@ $(function() {
 	});
 
 	test('"!between"を指定', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value !between': [new Date('2014/7/1'), new Date('2014/7/3')]
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -502,7 +502,7 @@ $(function() {
 	});
 
 	test('"in"を指定', 4, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value in': [new Date('2014/7/4'), new Date('2014/7/2')]
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 3, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -512,7 +512,7 @@ $(function() {
 	});
 
 	test('"!in"を指定', 5, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'value !in': [new Date('2014/7/4'), new Date('2014/7/2')]
 		}).execute().orderBy(compareId).result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -544,7 +544,7 @@ $(function() {
 	//=============================
 	test('定義されていない演算子を使用', 1, function() {
 		try {
-			this.model.createQuery({
+			this.model.createQuery().setCriteria({
 				'price =>': 1000
 			});
 			ok(false, 'エラーが発生していません');
@@ -555,7 +555,7 @@ $(function() {
 
 	test('正規表現で定義されていない演算子を使用', 1, function() {
 		try {
-			this.model.createQuery({
+			this.model.createQuery().setCriteria({
 				'itemname >': /テレビ/
 			});
 			ok(false, 'エラーが発生していません');
@@ -587,7 +587,7 @@ $(function() {
 	// Body
 	//=============================
 	test('"キー名"を指定して昇順ソート', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).orderBy('id').execute().result;
 		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
@@ -596,7 +596,7 @@ $(function() {
 	});
 
 	test('"キー名 asc"を指定して昇順ソート', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).orderBy('id asc').execute().result;
 		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
@@ -605,7 +605,7 @@ $(function() {
 	});
 
 	test('"キー名 ASC"を指定して昇順ソート', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).orderBy('id ASC').execute().result;
 		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
@@ -614,7 +614,7 @@ $(function() {
 	});
 
 	test('"キー名 desc"で降順ソート', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).orderBy('id desc').execute().result;
 		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
@@ -623,7 +623,7 @@ $(function() {
 	});
 
 	test('"キー名 DESC"で降順ソート', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).orderBy('id DESC').execute().result;
 		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
@@ -632,7 +632,7 @@ $(function() {
 	});
 
 	test('比較関数を指定してソート', 3, function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).orderBy(function(a, b) {
 			// idを数値で評価して降順
@@ -644,7 +644,7 @@ $(function() {
 	});
 
 	test('execute()した後にorderBy()を指定すると結果がソートされる', 6, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).execute();
 		var result = query.result;
@@ -661,7 +661,7 @@ $(function() {
 
 	test('orderByに不正な値を指定するとエラー', 10, function() {
 		try {
-			this.model.createQuery({
+			this.model.createQuery().setCriteria({
 				'id in': ['1', '2', '10']
 			}).orderBy();
 		} catch (e) {
@@ -670,7 +670,7 @@ $(function() {
 		var invalidArgs = ['id dsc', '', null, 1, true, false, {}, [], /id asc/];
 		for (var i = 0, l = invalidArgs.length; i < l; i++) {
 			try {
-				this.model.createQuery({
+				this.model.createQuery().setCriteria({
 					'id in': ['1', '2', '10']
 				}).orderBy(invalidArgs[i]);
 				ok(false, 'エラー発生していません');
@@ -701,7 +701,7 @@ $(function() {
 	// Body
 	//=============================
 	test('ユーザ関数がtrueを返したデータアイテムが検索結果に入ること', function() {
-		var result = this.model.createQuery({
+		var result = this.model.createQuery().setCriteria({
 			func: function(valueObj) {
 				// 3で割り切れるidのアイテムだけtrueを返す
 				return !(parseInt(valueObj.id) % 3);
@@ -756,7 +756,7 @@ $(function() {
 	// Body
 	//=============================
 	test('DataModelに新しくアイテムを追加した時、検索条件にマッチすれば検索結果に格納されること', 2, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			id: 'a'
 		}).setLive().execute();
 		var result = query.result;
@@ -768,7 +768,7 @@ $(function() {
 	});
 
 	test('検索結果に含まれるアイテムがDataModelから削除された時、検索結果から削除されること', 2, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			id: '1'
 		}).setLive().execute();
 		var result = query.result;
@@ -778,7 +778,7 @@ $(function() {
 	});
 
 	test('検索結果に含まれるアイテムの値が変更されて、検索条件を満たさなくなったとき、検索結果から外されること', 2, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			itemname: 'テレビ'
 		}).setLive().execute();
 		var result = query.result;
@@ -789,7 +789,7 @@ $(function() {
 	});
 
 	test('検索結果に含まれないアイテムの値が変更されて、検索条件を満たすようになったとき、検索結果に格納されること', 2, function() {
-		var query = this.model.createQuery({
+		var query = this.model.createQuery().setCriteria({
 			itemname: '4Kテレビ'
 		}).setLive().execute();
 		var result = query.result;
