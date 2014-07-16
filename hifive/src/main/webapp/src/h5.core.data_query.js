@@ -186,8 +186,8 @@
 	// -------------------------------
 	// TODO エラーコードの採番は決まってから適切な番号にする
 	/** 指定された比較関数がない */
-	var ERR_CODE_NO_COMPARE_FUNCTIONS = 0;
-	var ERR_CODE_ORDER_BY_CLAUSE = 1;
+	var ERR_CODE_NO_COMPARE_FUNCTIONS = 1;
+	var ERR_CODE_ORDER_BY_CLAUSE = 2;
 
 	/**
 	 * 各エラーコードに対応するメッセージ
