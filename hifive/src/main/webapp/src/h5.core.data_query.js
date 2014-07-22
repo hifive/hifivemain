@@ -187,15 +187,20 @@
 	// TODO エラーコードの採番は決まってから適切な番号にする
 	/** 指定された比較関数がない */
 	var ERR_CODE_NO_COMPARE_FUNCTIONS = 1;
-	var ERR_CODE_ORDER_BY_CLAUSE = 2;
+
+	/** ORDER BY句に指定されたkey名がschemaに存在しない */
+	var ERR_CODE_ORDER_BY_KEY = 2;
+
+	/** ORDER BY句に指定された、昇順、降順の指定が不正 */
+	var ERR_CODE_ORDER_BY_CLAUSE = 3;
 
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_NO_COMPARE_FUNCTIONS] = '演算子"{0}"で"{1}"型の値を比較することはできません';
+	errMsgMap[ERR_CODE_ORDER_BY_KEY] = 'ORDER BY句の指定が不正です。指定されたキー({0})は存在しません';
 	errMsgMap[ERR_CODE_ORDER_BY_CLAUSE] = 'ORDER BY句の指定が不正です。指定されたorder句:{0} "key名 ASC"または"key名 DESC"またはソート関数を指定してください';
-
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
 
@@ -543,12 +548,12 @@
 				if (this._criteria.match(item.get())) {
 					result.push(item);
 				}
-				// ソート
-				if (this._compareFunction) {
-					result.sort(this._compareFunction);
-				}
 			}
-			this._executeDfd.resolveWith(this, result);
+			// ソート
+			if (this._compareFunction) {
+				result.sort(this._compareFunction);
+			}
+			this._executeDfd.resolveWith(this, [result]);
 			return this;
 		},
 
@@ -617,6 +622,13 @@
 			}
 			var tmp = orderByClause.split(' ');
 			var key = $.trim(tmp[0]);
+
+			// keyがschemaにあるかどうかチェックする
+			var schema = this._model.schema;
+			if (!schema.hasOwnProperty(key)) {
+				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
+				throwFwError(ERR_CODE_ORDER_BY_KEY, [this._model.name, key]);
+			}
 
 			var order = tmp[1] ? $.trim(tmp[1].toUpperCase()) : 'ASC';
 			if (order === 'DESC') {
