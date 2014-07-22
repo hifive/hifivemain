@@ -1,4 +1,5 @@
 (function() {
+	var DATA_NUM = 10000;
 	var seq = h5.core.data.createSequence(null, null, h5.core.data.SEQ_STRING);
 	var manager = h5.core.data.createManager('DataManager');
 	var model = manager.createModel({
@@ -32,7 +33,7 @@
 	});
 
 	// jsonから読み込んだデータをmodelに追加
-	$.ajax('data.json').done(
+	$.ajax('data' + DATA_NUM + '.json').done(
 			function(data) {
 				for (var i = 0, l = data.length; i < l; i++) {
 					var itemDef = data[i];
