@@ -48,19 +48,38 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('デフォルトリゾルバを使った依存解決', {
+	module('名前空間の依存解決', {
 		teardown: function() {
 			deleteProperty(window, 'h5resdata');
+			// scriptタグの除去
+			$('script[src*="h5resdata\"]').remove();
 		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('namespaceで名前空間からjsファイルを取得', function() {
-		h5.res.require('h5resdata.controller.SampleController').resolve().done(function() {
-			ok(h5resdata.controller.SampleController, '指定した名前空間のコントローラが取得できること');
-			start();
-		});
+	asyncTest('名前空間からjsファイルを取得', 2, function() {
+		h5.res.require('h5resdata.controller.SampleController').resolve().done(
+				function(result) {
+					strictEqual(h5resdata.controller.SampleController.__name,
+							'h5resdata.controller.SampleController', '指定した名前空間のコントローラが取得できること');
+					strictEqual(h5resdata.controller.SampleController, result,
+							'doneハンドラの引数にコントローラが渡されること');
+					start();
+				});
+	});
+
+	asyncTest('type:namespaceを指定', 2, function() {
+		h5.res.require('h5resdata.controller.SampleController', {
+			type: 'namespace'
+		}).resolve().done(
+				function(result) {
+					strictEqual(h5resdata.controller.SampleController.__name,
+							'h5resdata.controller.SampleController', '指定した名前空間のコントローラが取得できること');
+					strictEqual(h5resdata.controller.SampleController, result,
+							'doneハンドラの引数にコントローラが渡されること');
+					start();
+				});
 	});
 });
