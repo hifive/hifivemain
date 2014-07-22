@@ -349,13 +349,13 @@
 			for (var i = 0, l = changed.length; i < l; i++) {
 				// resultArrayの何番目に入っているアイテムか(入っていないなら-1)
 				var resultIndex = $.inArray(changed[i].target, resultArray._src);
-
+				// 中身が変更されたら再ソート
+				isSorted = false;
 				// マッチするかどうかチェックして、
 				// マッチするかつ結果にないものなら追加
 				// マッチしないかつ結果にあるものなら取り除く
 				if (match(changed[i].target.get())) {
 					if (resultIndex === -1) {
-						isSorted = false;
 						resultArray.push(changed[i].target);
 					}
 				} else {
@@ -531,6 +531,10 @@
 		 */
 		setCriteria: function(criteria) {
 			this._criteria = compileCriteria(criteria);
+			if (this._isLive) {
+				// ライブクエリならセット時に検索
+				this.execute();
+			}
 			return this;
 		},
 		/**
@@ -542,6 +546,8 @@
 			// 新しくdeferredを作成
 			this._executeDfd = h5.async.deferred();
 			var result = this.result;
+			// resultを一旦空にする
+			result.copyFrom(null);
 			for ( var id in this._model.items) {
 				var item = this._model.items[id];
 				// マッチするなら結果に追加
@@ -599,7 +605,7 @@
 			if (!this._isLive) {
 				return;
 			}
-			this.removeEventListener('itemsChange', this._listener);
+			this._model.removeEventListener('itemsChange', this._listener);
 			this._isLive = false;
 			return this;
 		},
@@ -639,7 +645,10 @@
 				// エラー
 				throwFwError(ERR_CODE_ORDER_BY_CLAUSE, [orderByClause]);
 			}
-			this.result.sort(this._compareFunction);
+			// ライブクエリならソートする
+			if (this._isLive) {
+				this.result.sort(this._compareFunction);
+			}
 			return this;
 		}
 	});
