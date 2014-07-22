@@ -314,7 +314,9 @@
 		var filePath = getFilePath(resourceKey.replace(/\./g, '/')) + '.js';
 		// loadScriptでロードする
 		var dfd = getDeferred();
-		h5.u.loadScript(filePath).done(function() {
+		h5.u.loadScript(filePath, {
+			force: true
+		}).done(function() {
 			dfd.resolve(h5.u.obj.getByPath(resourceKey));
 		}).fail(function(/* var_args */) {
 			dfd.reject(argsToArray(arguments));
