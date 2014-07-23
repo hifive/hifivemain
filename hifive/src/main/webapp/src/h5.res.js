@@ -429,7 +429,7 @@
 
 		// 同期でresolve
 		// TODO cssのロードを待機する必要ある…？
-		return getDeferred().resolve().promise();
+		return getDeferred().resolve(cssNode).promise();
 	}
 
 	/**
