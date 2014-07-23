@@ -193,11 +193,13 @@ function wrapInArray(value) {
  * @param {String} relativePath 相対URL
  * @returns {String} 絶対パス
  */
-function toAbsoluteUrl(relativePath) {
-	var e = document.createElement('span');
-	e.innerHTML = '<a href="' + relativePath + '" />';
-	return e.firstChild.href;
-}
+var toAbsoluteUrl = (function() {
+	var a = document.createElement('a');
+	return function(relativePath) {
+		a.setAttribute('href', relativePath);
+		return a.href;
+	};
+})();
 
 /**
  * 引数が文字列かどうかを判定します。
