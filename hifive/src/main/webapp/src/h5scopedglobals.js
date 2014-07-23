@@ -194,8 +194,11 @@ function wrapInArray(value) {
  * @returns {String} 絶対パス
  */
 var toAbsoluteUrl = (function() {
-	var a = document.createElement('a');
+	var a = null;
 	return function(relativePath) {
+		if (!a) {
+			a = document.createElement('a');
+		}
 		a.setAttribute('href', relativePath);
 		return a.href;
 	};
