@@ -189,6 +189,24 @@
 		h5.settings.aspects = null;
 	}
 
+	/**
+	 * 相対URLを絶対URLに変換します(h5scopeglobalsからコピペ)
+	 *
+	 * @param {String} relativePath 相対URL
+	 * @returns {String} 絶対パス
+	 */
+	var toAbsoluteUrl = (function() {
+		var a = null;
+		return function(relativePath) {
+			if (!a) {
+				// toAbsoluteUrl()が初めて呼ばれた時にa要素を作成してキャッシュする
+				a = document.createElement('a');
+			}
+			a.setAttribute('href', relativePath);
+			return a.href;
+		};
+	})();
+
 	// ----------- dom ------------
 	/**
 	 * iframeを作成 IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
@@ -454,7 +472,8 @@
 			compareVersion: compareVersion,
 			rgbToHex: rgbToHex,
 			clearController: clearController,
-			cleanAllAspects: cleanAllAspects
+			cleanAllAspects: cleanAllAspects,
+			toAbsoluteUrl: toAbsoluteUrl
 		},
 		qunit: {
 			abortTest: abortTest,

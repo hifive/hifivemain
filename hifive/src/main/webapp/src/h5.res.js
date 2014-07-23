@@ -35,7 +35,7 @@
 
 	// ---------- EJSResolverのエラー ----------
 	/** テンプレートファイルの内容読み込み時に発生するエラー */
-	var ERR_CODE_TEMPLATE_FILE = 7001;
+	var ERR_CODE_TEMPLATE_FILE_NO_TEMPLATE = 7001;
 
 	/** テンプレートIDが不正である時に発生するエラー */
 	var ERR_CODE_TEMPLATE_INVALID_ID = 7002;
@@ -43,8 +43,8 @@
 	/** テンプレートファイルの取得時に発生するエラー */
 	var ERR_CODE_TEMPLATE_AJAX = 7003;
 
-	/** テンプレートファイルにscriptタグの記述がない */
-	var ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT = 7011;
+	/** テンプレートファイルにscriptタグ以外の記述がある */
+	var ERR_CODE_TEMPLATE_FILE_INVALID_ELEMENT = 7011;
 
 	// =============================
 	// Development Only
@@ -60,10 +60,10 @@
 	errMsgMap[ERR_CODE_RESOURCE_AJAX] = 'リソースファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
 
 	// EJSResolverのエラー
-	errMsgMap[ERR_CODE_TEMPLATE_FILE] = 'テンプレートファイルが不正です。';
+	errMsgMap[ERR_CODE_TEMPLATE_FILE_NO_TEMPLATE] = 'テンプレートファイルに<script>タグの記述がありません。テンプレートファイルは全て<script>タグで囲んだテンプレートを記述してください';
 	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
-	errMsgMap[ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT] = 'テンプレートファイルに<script>タグの記述がありません。テンプレートは<script>タグで記述してください。';
+	errMsgMap[ERR_CODE_TEMPLATE_FILE_INVALID_ELEMENT] = 'テンプレートファイルに<script>タグ以外の記述があります。テンプレートファイルは全て<script>タグで囲んだテンプレートを記述してください';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -316,8 +316,8 @@
 		var dfd = getDeferred();
 		h5.u.loadScript(filePath).done(function() {
 			dfd.resolve(h5.u.obj.getByPath(resourceKey));
-		}).fail(function(/* var_args */) {
-			dfd.reject(argsToArray(arguments));
+		}).fail(function(errorObj) {
+			dfd.reject(errorObj);
 		});
 		return dfd.promise();
 	}
@@ -345,7 +345,7 @@
 			var textResources = [];
 			if ($elements.not('script[type="text/ejs"]').length > 0) {
 				// テンプレート記述以外のタグがあ場合はエラー
-				dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT, null, {
+				dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE_INVALID_ELEMENT, null, {
 					url: resource.url,
 					path: resource.path
 				}));
@@ -353,7 +353,7 @@
 			}
 			if ($elements.length === 0) {
 				// テンプレート記述が一つもない場合はエラー
-				dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE, null, {
+				dfd.reject(createRejectReason(ERR_CODE_TEMPLATE_FILE_NO_TEMPLATE, null, {
 					url: resource.url,
 					path: resource.path
 				}));
