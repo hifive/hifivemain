@@ -75,7 +75,7 @@
 	var ERR_CODE_BIND_CONTEXT_INVALID = 7009;
 
 	/**
-	 * bindに指定したcontextがオブジェクトでない
+	 * テンプレートのコンパイルエラー
 	 */
 	var ERR_CODE_TEMPLATE_COMPILE_SYNTAX_ERR = 7010;
 
