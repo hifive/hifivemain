@@ -240,17 +240,12 @@
 	 * </p>
 	 *
 	 * @param {String} resourceKey
-	 * @param {Object} param パラメータオブジェクト
-	 * @param {String} param.type 指定されたresourceKeyを解決するリゾルバのタイプを指定します。省略した場合は適切なリゾルバを自動で探索します
 	 */
-	function Dependency(resourceKey, param) {
+	function Dependency(resourceKey) {
 		this._resourceKey = resourceKey;
 		// TODO プロミスのインターフェイスを持つ必要ある…？あるならコメントアウトを外す
 		// var dfd = getDeferred();
 		// dfd.promise(this);
-		if (param && param.type) {
-			this._type = param.type;
-		}
 	}
 	$.extend(Dependency.prototype, {
 		/**
@@ -267,7 +262,6 @@
 			var resolver = null;
 
 			// リゾルバを特定する
-			var type = this._type;
 			for (var i = 0, l = resolvers.length; i < l; i++) {
 				if (type && type !== resolvers[i].type) {
 					// typeが指定されている場合はtypeと一致するかどうか見る
@@ -503,11 +497,9 @@
 	 * リソースキーから、Dependencyオブジェクトを返します
 	 *
 	 * @param {String} resourceKey
-	 * @param {Object} param パラメータオブジェクト
-	 * @param {String} param.type 指定されたresourceKeyを解決するリゾルバのタイプを指定します。省略した場合は適切なリゾルバを自動で探索します
 	 */
-	function require(resourceKey, param) {
-		return new Dependency(resourceKey, param);
+	function require(resourceKey) {
+		return new Dependency(resourceKey);
 	}
 
 	/**
