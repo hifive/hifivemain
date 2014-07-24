@@ -239,14 +239,14 @@
 	 * <a href="h5.res.html#reequire">h5.res.require()</a>がこのクラスのインスタンスを返します。
 	 * </p>
 	 *
-	 * @param {String} resourceKey *
+	 * @param {String} resourceKey
 	 * @param {Object} param パラメータオブジェクト
 	 * @param {String} param.type 指定されたresourceKeyを解決するリゾルバのタイプを指定します。省略した場合は適切なリゾルバを自動で探索します
 	 */
 	function Dependency(resourceKey, param) {
 		this._resourceKey = resourceKey;
-		var dfd = getDeferred();
 		// TODO プロミスのインターフェイスを持つ必要ある…？あるならコメントアウトを外す
+		// var dfd = getDeferred();
 		// dfd.promise(this);
 		if (param && param.type) {
 			this._type = param.type;
@@ -258,8 +258,10 @@
 		 * <p>
 		 * 登録されているリゾルバでresolveできないリソースキーの場合はfalseを返します
 		 * </p>
+		 *
+		 * @param {String} type
 		 */
-		resolve: function() {
+		resolve: function(type) {
 			var promise = false;
 			var resourceKey = this._resourceKey;
 			var resolver = null;
@@ -299,10 +301,9 @@
 	 * 名前空間からjsファイルをロードするリゾルバ
 	 *
 	 * @param {String} resourceKey
-	 * @param {String} type
 	 * @returns {Promise} 解決した名前空間オブジェクトをresolveで渡します
 	 */
-	function resolveNamespace(resourceKey, type) {
+	function resolveNamespace(resourceKey) {
 		var ret = h5.u.obj.getByPath(resourceKey);
 		if (ret) {
 			// 既にある場合はresolve済みのプロミスを返す
@@ -324,7 +325,6 @@
 	 * ejsファイルリゾルバ
 	 *
 	 * @param {String} resourceKey
-	 * @param {String} type
 	 * @returns {Promise} 以下のようなオブジェクトをresolveで返します
 	 *
 	 * <pre><code>
@@ -335,9 +335,9 @@
 	 * }
 	 * </code></pre>
 	 */
-	function resolveEJSTemplate(resourceKey, type) {
-		// typeが指定されて呼び出された場合は判定を行わない
-		if (type !== this.type && !/\.ejs$/.test(resourceKey)) {
+	function resolveEJSTemplate(resourceKey) {
+		// 拡張子の判定。クエリパラメータ('?'以降の文字列)を除いた文字列が".ejs"で終わっているかどうか
+		if (!/\.ejs$/.test(resourceKey.slice(0, $.inArray('?', resourceKey + '?')))) {
 			// .ejsで終わっていないファイルは無視
 			return false;
 		}
@@ -409,8 +409,7 @@
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveJs(resourceKey, type) {
-		// typeが指定されて呼び出された場合は判定を行わない
-		if (type !== this.type && !/\.js$/.test(resourceKey)) {
+		if (!/\.js$/.test(resourceKey.slice(0, $.inArray('?', resourceKey + '?')))) {
 			// .jsで終わっていないファイルは無視
 			return false;
 		}
@@ -425,8 +424,7 @@
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveCss(resourceKey, type) {
-		// typeが指定されて呼び出された場合は判定を行わない
-		if (type !== this.type && !/\.css$/.test(resourceKey)) {
+		if (!/\.css$/.test(resourceKey.slice(0, $.inArray('?', resourceKey + '?')))) {
 			// .cssで終わっていないファイルは無視
 			return false;
 		}
