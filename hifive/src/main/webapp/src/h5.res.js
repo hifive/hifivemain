@@ -90,9 +90,6 @@
 	/** リゾルバのリスト保持する配列 */
 	var resolvers = [];
 
-	/** タイプとリゾルバの組み合わせを覚えておくマップ */
-	var resolverTypeMap = {};
-
 	/**
 	 * ViewTemplateクラス
 	 */
@@ -266,21 +263,19 @@
 			var promise = false;
 			var resourceKey = this._resourceKey;
 			var resolver = null;
-			if (this._type) {
-				// typeが指定されていればリゾルバをタイプから特定
-				var ret = resolverTypeMap[this._type] && resolverTypeMap[this._type](resourceKey);
-				if (isPromise(ret)) {
-					promise = ret;
+
+			// リゾルバを特定する
+			var type = this._type;
+			for (var i = 0, l = resolvers.length; i < l; i++) {
+				if (type && type !== resolvers[i].type) {
+					// typeが指定されている場合はtypeと一致するかどうか見る
+					continue;
 				}
-			} else {
-				// typeが指定されていない場合は順に探索する
-				for (var i = 0, l = resolvers.length; i < l; i++) {
-					var ret = resolvers[i](resourceKey);
-					if (isPromise(ret)) {
-						// プロミスを返すリゾルバがあったらそのリゾルバが返すプロミスを待機する
-						promise = ret;
-						break;
-					}
+				var ret = resolvers[i].resolver(resourceKey, type);
+				if (isPromise(ret)) {
+					// プロミスを返すリゾルバがあったらそのリゾルバが返すプロミスを待機する
+					promise = ret;
+					break;
 				}
 			}
 			// リゾルバがプロミスを返せばそのプロミス、プロミスを返すリゾルバが無かった場合はfalseを返す
@@ -291,6 +286,7 @@
 	/**
 	 * カレントを考慮したファイルパスの取得
 	 *
+	 * @param {String} filePath
 	 * @returns {String}
 	 */
 	function getFilePath(filePath) {
@@ -300,11 +296,13 @@
 	}
 
 	/**
-	 * 名前空間からjsファイルをロードするリゾルバを作成する
+	 * 名前空間からjsファイルをロードするリゾルバ
 	 *
-	 * @returns {Function} Viewリゾルバ
+	 * @param {String} resourceKey
+	 * @param {String} type
+	 * @returns {Promise} 解決した名前空間オブジェクトをresolveで渡します
 	 */
-	function resolveNamespace(resourceKey) {
+	function resolveNamespace(resourceKey, type) {
 		var ret = h5.u.obj.getByPath(resourceKey);
 		if (ret) {
 			// 既にある場合はresolve済みのプロミスを返す
@@ -323,14 +321,23 @@
 	}
 
 	/**
-	 * ejsファイルのリソース解決
+	 * ejsファイルリゾルバ
 	 *
-	 * @param {resourceKey}
-	 * @returns {Promise}
+	 * @param {String} resourceKey
+	 * @param {String} type
+	 * @returns {Promise} 以下のようなオブジェクトをresolveで返します
+	 *
+	 * <pre><code>
+	 * {
+	 *  path: ロードしたファイルのパス,
+	 * 	url: ロードしたファイルのURL(絶対パス),
+	 * 	templates: [{id: テンプレートID, content: テンプレートの中身}, ...]
+	 * }
+	 * </code></pre>
 	 */
-	function resolveEJSTemplate(resourceKey) {
-		// resolverTypeMapから呼ばれた(=typeが特定されて呼ばれた)場合は、拡張子の判定を行わない
-		if (this !== resolverTypeMap && !/\.ejs$/.test(resourceKey)) {
+	function resolveEJSTemplate(resourceKey, type) {
+		// typeが指定されて呼び出された場合は判定を行わない
+		if (type !== this.type && !/\.ejs$/.test(resourceKey)) {
 			// .ejsで終わっていないファイルは無視
 			return false;
 		}
@@ -397,11 +404,13 @@
 	/**
 	 * jsファイルのデフォルトのリゾルバを作成する
 	 *
+	 * @param {String} resourceKey
+	 * @param {String} type
 	 * @returns {Function} Viewリゾルバ
 	 */
-	function resolveJs(resourceKey) {
-		// resolverTypeMapから呼ばれた(=typeが特定されて呼ばれた)場合は、拡張子の判定を行わない
-		if (this !== resolverTypeMap && !/\.js$/.test(resourceKey)) {
+	function resolveJs(resourceKey, type) {
+		// typeが指定されて呼び出された場合は判定を行わない
+		if (type !== this.type && !/\.js$/.test(resourceKey)) {
 			// .jsで終わっていないファイルは無視
 			return false;
 		}
@@ -411,11 +420,13 @@
 	/**
 	 * cssファイルのデフォルトのリゾルバを作成する
 	 *
+	 * @param {String} resoruceKey
+	 * @param {String} type
 	 * @returns {Function} Viewリゾルバ
 	 */
-	function resolveCss(resourceKey) {
-		// resolverTypeMapから呼ばれた(=typeが特定されて呼ばれた)場合は、拡張子の判定を行わない
-		if (this !== resolverTypeMap && !/\.css$/.test(resourceKey)) {
+	function resolveCss(resourceKey, type) {
+		// typeが指定されて呼び出された場合は判定を行わない
+		if (type !== this.type && !/\.css$/.test(resourceKey)) {
 			// .cssで終わっていないファイルは無視
 			return false;
 		}
@@ -509,10 +520,10 @@
 	 */
 	function addResolver(type, resolver) {
 		// 先頭に追加する
-		resolvers.unshift(resolver);
-		if (type !== null) {
-			resolverTypeMap[type] = resolver;
-		}
+		resolvers.unshift({
+			type: type,
+			resolver: resolver
+		});
 	}
 
 	// デフォルトリゾルバの登録
@@ -534,7 +545,8 @@
 		require: require,
 		addResolver: addResolver,
 		isDependency: isDependency,
-		urlLoader: urlLoader
+		urlLoader: urlLoader,
+		resolvers: resolvers
 	});
 
 })();
