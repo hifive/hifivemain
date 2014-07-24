@@ -53,7 +53,6 @@ $(function() {
 	// Test Module
 	//
 	// =========================================================================
-
 	//=============================
 	// Definition
 	//=============================
@@ -392,5 +391,213 @@ $(function() {
 	test('isDependencyでDependencyオブジェクトを判定できること', 2, function() {
 		ok(h5.res.isDependency(h5.res.require('hoge.js')));
 		ok(!h5.res.isDependency({}));
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('リゾルバのカスタマイズ', {
+		setup: function() {
+			// slice(0)して、元のresolversの中身を覚えておく
+			this.orgResolvers = h5.res.resolvers.slice(0);
+		},
+		teardown: function() {
+			// 元のresolversの中身にspliceを使って入れ替える(元に戻す)
+			var resolvers = h5.res.resolvers;
+			var spliceArgs = this.orgResolvers;
+			spliceArgs.unshift(0, resolvers.length);
+			resolvers.splice.apply(resolvers, spliceArgs);
+		},
+		orgResolvers: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('リゾルバの引数とthis', 2, function() {
+		var context, arg;
+		function resolver(resourceKey) {
+			context = this;
+			arg = resourceKey;
+			return true;
+		}
+		h5.res.addResolver('mytype', resolver);
+		h5.res.require('hoge').resolve();
+		strictEqual(arg, 'hoge', '引数にはrequireで渡したリソースキーが渡されること');
+		strictEqual(context.type, 'mytype', 'this.typeで実行中のリゾルバのtypeが取得できること');
+	});
+
+	test('addResolverでリゾルバを追加', 3, function() {
+		h5.res.addResolver(function(resourceKey) {
+			return 'custom1';
+		});
+		strictEqual(h5.res.require('hoge').resolve(), 'custom1', '追加したリゾルバが使用されること');
+
+		h5.res.addResolver(function(resourceKey) {
+			return 'custom2';
+		});
+		strictEqual(h5.res.require('hoge').resolve(), 'custom2', '後から追加したリゾルバが使用されること');
+
+		h5.res.addResolver(function(resourceKey) {
+			return false;
+		});
+		strictEqual(h5.res.require('hoge').resolve(), 'custom2', 'リゾルバがfalseを返した時は次のリゾルバが使用されること');
+	});
+
+	test('addResolverでtypeを指定したリゾルバを追加', 3, function() {
+		h5.res.addResolver(function(resourceKey) {
+			return 'custom1';
+		});
+
+		h5.res.addResolver('customtype', function(resourceKey) {
+			return 'custom2';
+		});
+
+		h5.res.addResolver(function(resourceKey) {
+			return 'custom3';
+		});
+		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom2',
+				'指定したtypeのリゾルバが使用されること');
+
+		h5.res.addResolver('customtype', function(resourceKey) {
+			return 'custom4';
+		});
+		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom4',
+				'指定したtypeのリゾルバのうち、後から追加したものが使用されること');
+
+		h5.res.addResolver('customtype', function(resourceKey) {
+			return false;
+		});
+		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom4',
+				'指定したtypeのリゾルバのうち、後から追加したものが使用されること');
+	});
+
+	test('h5.res.resolversを編集', 1, function() {
+		var index = 0;
+		var resolvers = h5.res.resolvers;
+		for (var l = resolvers.length; index < l; index++) {
+			if (resolvers[index].type === 'jsfile') {
+				break;
+			}
+		}
+		resolvers.splice(index, 0, {
+			resolver: function() {
+				return 'hoge';
+			}
+		});
+		strictEqual(h5.res.require('a.js').resolve(), 'hoge', 'resolversに追加したリゾルバが使用されること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('リゾルバの選択', {
+		setup: function() {
+			// slice(0)して、元のresolversの中身を覚えておく
+			this.orgResolvers = h5.res.resolvers.slice(0);
+		},
+		teardown: function() {
+			// 元のresolversの中身にspliceを使って入れ替える(元に戻す)
+			var resolvers = h5.res.resolvers;
+			var spliceArgs = this.orgResolvers;
+			spliceArgs.unshift(0, resolvers.length);
+			resolvers.splice.apply(resolvers, spliceArgs);
+		},
+		orgResolvers: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('typeを指定した場合に実行されるリゾルバ', 2, function() {
+		var resolvers = h5.res.resolvers;
+		resolvers.splice(0, resolvers.length, {
+			type: 'a',
+			resolver: function() {
+				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
+				return false;
+			}
+		}, {
+			resolver: function() {
+				ok(false, 'typeの指定されていないリゾルバは実行されないこと');
+				return false;
+			}
+		}, {
+			type: 'b',
+			resolver: function() {
+				ok(true, 'typeが一致するリゾルバは実行されること');
+				return false;
+			}
+		}, {
+			type: 'b',
+			resolver: function() {
+				ok(true, 'typeが一致するリゾルバは実行されること');
+				return true;
+			}
+		}, {
+			type: 'b',
+			resolver: function() {
+				ok(false, 'false以外を返すリゾルバが実行された場合、以降のリゾルバは実行されないこと');
+				return true;
+			}
+		});
+		h5.res.require('hoge').resolve('b');
+	});
+
+
+	test('typeを指定しない場合に実行されるリゾルバ', 2, function() {
+		var resolvers = h5.res.resolvers;
+		resolvers.splice(0, resolvers.length, {
+			type: 'a',
+			resolver: function() {
+				ok(true, 'typeの指定されているリゾルバが実行されること');
+				return false;
+			}
+		}, {
+			resolver: function() {
+				ok(true, 'typeの指定されていないリゾルバが実行されること');
+				return true;
+			}
+		}, {
+			resolver: function() {
+				ok(false, 'false以外を返すリゾルバが実行された場合、以降のリゾルバは実行されないこと');
+				return true;
+			}
+		});
+		h5.res.require('hoge').resolve();
+	});
+
+	test('指定したtypeにマッチするリゾルバがない場合', 1, function() {
+		var resolvers = h5.res.resolvers;
+
+		resolvers.splice(0, resolvers.length, {
+			type: 'a',
+			resolver: function() {
+				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
+				return false;
+			}
+		}, {
+			resolver: function() {
+				ok(false, 'typeの指定されていないリゾルバは実行されないこと');
+				return false;
+			}
+		});
+		strictEqual(h5.res.require('hoge').resolve('c'), false, 'resolve()はfalseを返すこと');
+	});
+
+	test('全てのリゾルバがfalseを返す場合', 1, function() {
+		var resolvers = h5.res.resolvers;
+
+		resolvers.splice(0, resolvers.length, {
+			type: 'a',
+			resolver: function() {
+				return false;
+			}
+		}, {
+			resolver: function() {
+				return false;
+			}
+		});
+		strictEqual(h5.res.require('hoge').resolve(), false, 'resolve()はfalseを返すこと');
 	});
 });
