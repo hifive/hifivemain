@@ -257,7 +257,6 @@
 		 * @param {String} type
 		 */
 		resolve: function(type) {
-			var promise = false;
 			var resourceKey = this._resourceKey;
 			var resolver = null;
 
@@ -268,14 +267,14 @@
 					continue;
 				}
 				var ret = resolvers[i].resolver(resourceKey, type);
-				if (isPromise(ret)) {
-					// プロミスを返すリゾルバがあったらそのリゾルバが返すプロミスを待機する
-					promise = ret;
-					break;
+				if (ret === false) {
+					continue;
 				}
+				// リゾルバがfalse以外のものを返せばそれを返す
+				return ret;
 			}
-			// リゾルバがプロミスを返せばそのプロミス、プロミスを返すリゾルバが無かった場合はfalseを返す
-			return promise;
+			// false以外のものを返すリゾルバが無かった場合はfalseを返す
+			return false;
 		}
 	});
 
@@ -509,6 +508,12 @@
 	 * @param {Function} resolver リゾルバ
 	 */
 	function addResolver(type, resolver) {
+		if (resolver === undefined && isFunction(type)) {
+			// 第1引数に関数が指定されていて第2引数の指定がない場合はtype指定無しのリゾルバとみなす
+			// TODO とりあえずの実装です。引数の指定方法、引数チェック等、詳細仕様が決まり次第実装します。
+			resolver = type;
+			type = undefined;
+		}
 		// 先頭に追加する
 		resolvers.unshift({
 			type: type,
