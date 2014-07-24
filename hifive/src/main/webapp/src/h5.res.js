@@ -275,6 +275,15 @@
 			}
 			// false以外のものを返すリゾルバが無かった場合はfalseを返す
 			return false;
+		},
+
+		/**
+		 * 指定されたリソースキーを返します
+		 *
+		 * @returns {String} リソースキー
+		 */
+		getKey: function() {
+			return this._resourceKey;
 		}
 	});
 
