@@ -2307,11 +2307,9 @@
 			var promises = [];
 			for (var i = 0, l = templates.length; i < l; i++) {
 				// 文字列が指定されていたらDependencyに変換
-				var dependency = isDependency(templates[i]) ? templates[i] : h5.res.require(
-						templates[i], {
-							type: 'ejsfile'
-						});
-				promises.push(dependency.resolve());
+				var dependency = isDependency(templates[i]) ? templates[i] : h5.res
+						.require(templates[i]);
+				promises.push(dependency.resolve('ejsfile'));
 			}
 			waitForPromises(promises, function(resources) {
 				fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
@@ -3913,7 +3911,7 @@
 			var logicDef = controllerDefObj[prop];
 			if (isDependency(logicDef)) {
 				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
-				var promise = logicDef.resolve();
+				var promise = logicDef.resolve('namespace');
 				promisesForTriggerInit.push(promise);
 				promise.done((function(logicProp) {
 					return function(logic) {
@@ -4029,7 +4027,7 @@
 			var childController = clonedControllerDef[prop];
 			if (isDependency(childController)) {
 				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
-				var promise = childController.resolve();
+				var promise = childController.resolve('namespace');
 				promisesForTriggerInit.push(promise);
 				promise.done((function(childProp) {
 					return function(c) {
