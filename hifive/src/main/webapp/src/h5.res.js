@@ -331,7 +331,7 @@
 	 */
 	function resolveEJSTemplate(resourceKey) {
 		// 拡張子の判定。クエリパラメータ('?'以降の文字列)を除いた文字列が".ejs"で終わっているかどうか
-		if (!/\.ejs$/.test(resourceKey.slice(0, $.inArray('?', resourceKey + '?')))) {
+		if (!/\.ejs$/.test(resourceKey.slice(0, (resourceKey + '?').indexOf('?')))) {
 			// .ejsで終わっていないファイルは無視
 			return false;
 		}
@@ -403,7 +403,7 @@
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveJs(resourceKey, type) {
-		if (!/\.js$/.test(resourceKey.slice(0, $.inArray('?', resourceKey + '?')))) {
+		if (!/\.js$/.test(resourceKey.slice(0, (resourceKey + '?').indexOf('?')))) {
 			// .jsで終わっていないファイルは無視
 			return false;
 		}
@@ -418,7 +418,7 @@
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveCss(resourceKey, type) {
-		if (!/\.css$/.test(resourceKey.slice(0, $.inArray('?', resourceKey + '?')))) {
+		if (!/\.css$/.test(resourceKey.slice(0, (resourceKey + '?').indexOf('?')))) {
 			// .cssで終わっていないファイルは無視
 			return false;
 		}
