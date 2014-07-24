@@ -36,6 +36,7 @@ $(function() {
 	var deleteProperty = testutils.u.deleteProperty;
 	var gate = testutils.async.gate;
 	var toAbsoluteUrl = testutils.u.toAbsoluteUrl;
+	var clearController = testutils.u.clearController;
 
 	// resのエラーコード
 	var ERR = ERRCODE.h5.res;
@@ -396,6 +397,19 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module('getKey');
+
+	//=============================
+	// Body
+	//=============================
+	test('DependencyオブジェクトのgetKey()でリソースキーを取得できること', 1, function() {
+		var dep = h5.res.require('hoge');
+		strictEqual(dep.getKey(), 'hoge', 'getKey()でリソースキーを取得できること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	module('リゾルバのカスタマイズ', {
 		setup: function() {
 			// slice(0)して、元のresolversの中身を覚えておく
@@ -600,4 +614,359 @@ $(function() {
 		});
 		strictEqual(h5.res.require('hoge').resolve(), false, 'resolve()はfalseを返すこと');
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('子コントローラに未解決のコントローラを指定', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+			deleteProperty(window, 'h5resdata');
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('子コントローラに未解決のコントローラを指定', 3, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			childController: h5.res.require('h5resdata.controller.ChildController'),
+			__construct: function() {
+				this.isExecutedConstruct = true;
+			},
+			__init: function() {
+				strictEqual(this.childController.__name, 'h5resdata.controller.ChildController',
+						'__initの時点で子コントローラはインスタンス化されていること');
+				ok(this.childController.isExecutedConstruct,
+						'__initの時点で子コントローラの__constructが実行されていること');
+			}
+		});
+		ok(c.isExecutedConstruct, 'ルートコントローラの__constructは同期で実行されること');
+		c.readyPromise.done(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('コントローラのロジックに未解決のロジックを指定', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+			deleteProperty(window, 'h5resdata');
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('コントローラのロジックに未解決のロジックを指定', 4, function() {
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			sampleLogic: h5.res.require('h5resdata.logic.SampleLogic'),
+			__construct: function() {
+				this.isExecutedConstruct = true;
+			},
+			__init: function() {
+				strictEqual(this.sampleLogic.__name, 'h5resdata.logic.SampleLogic',
+						'__initの時点でロジックはインスタンス化されていること');
+				ok(this.sampleLogic.isExecutedConstruct, '__initの時点でロジックの__constructが実行されていること');
+				ok(this.sampleLogic.isExecutedReady, '__initの時点でロジックの__readyが実行されていること');
+			}
+		});
+		ok(c.isExecutedConstruct, 'ルートコントローラの__constructは同期で実行されること');
+		c.readyPromise.done(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('コントローラ化するときの依存関係解決', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+			deleteProperty(window, 'h5resdata');
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('子コントローラ及びロジックがDependencyで記述されているとき、__initの時点で全ての依存関係が解決していること', 6, function() {
+		h5.core.expose({
+			__name: 'h5resdata.controller.ChildController',
+			__construct: function() {
+				this.isExecutedConstruct = true;
+			}
+		});
+		h5.core.expose({
+			__name: 'h5resdata.logic.SampleLogic',
+			__construct: function() {
+				this.isExecutedConstruct = true;
+			},
+			__ready: function() {
+				this.isExecutedReady = true;
+			}
+		});
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			childController: h5.res.require('h5resdata.controller.ChildController'),
+			sampleLogic: h5.res.require('h5resdata.logic.SampleLogic'),
+			__construct: function() {
+				this.isExecutedConstruct = true;
+			},
+			__init: function() {
+				strictEqual(this.childController.__name, 'h5resdata.controller.ChildController',
+						'__initの時点で子コントローラはインスタンス化されていること');
+				ok(this.childController.isExecutedConstruct,
+						'__initの時点で子コントローラの__constructが実行されていること');
+				strictEqual(this.sampleLogic.__name, 'h5resdata.logic.SampleLogic',
+						'__initの時点でロジックはインスタンス化されていること');
+				ok(this.sampleLogic.isExecutedConstruct, '__initの時点でロジックの__constructが実行されていること');
+				ok(this.sampleLogic.isExecutedReady, '__initの時点でロジックの__readyが実行されていること');
+			}
+		});
+		ok(c.isExecutedConstruct, 'ルートコントローラの__constructは同期で実行されること');
+		c.readyPromise.done(start);
+	});
+
+	asyncTest(
+			'Dependencyで記述された定義オブジェクトが更にDependencyで記述された定義オブジェクトを持つとき、__initの時点で全ての依存関係が解決していること',
+			11, function() {
+				h5.core.expose({
+					__name: 'h5resdata.controller.ChildController',
+					childController: h5.res.require('h5resdata.controller.GrandChildController'),
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					}
+				});
+				h5.core.expose({
+					__name: 'h5resdata.controller.GrandChildController',
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					}
+				});
+				h5.core.expose({
+					__name: 'h5resdata.logic.SampleLogic',
+					childLogic: h5.res.require('h5resdata.logic.ChildLogic'),
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					},
+					__ready: function() {
+						this.isExecutedReady = true;
+					}
+				});
+				h5.core.expose({
+					__name: 'h5resdata.logic.ChildLogic',
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					},
+					__ready: function() {
+						this.isExecutedReady = true;
+					}
+				});
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					childController: h5.res.require('h5resdata.controller.ChildController'),
+					sampleLogic: h5.res.require('h5resdata.logic.SampleLogic'),
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					},
+					__init: function() {
+						strictEqual(this.childController.__name,
+								'h5resdata.controller.ChildController',
+								'__initの時点で子コントローラはインスタンス化されていること');
+						ok(this.childController.isExecutedConstruct,
+								'__initの時点で子コントローラの__constructが実行されていること');
+						strictEqual(this.childController.childController.__name,
+								'h5resdata.controller.GrandChildController',
+								'__initの時点で孫コントローラはインスタンス化されていること');
+						ok(this.childController.childController.isExecutedConstruct,
+								'__initの時点で孫コントローラの__constructが実行されていること');
+						strictEqual(this.sampleLogic.__name, 'h5resdata.logic.SampleLogic',
+								'__initの時点でロジックはインスタンス化されていること');
+						ok(this.sampleLogic.isExecutedConstruct,
+								'__initの時点でロジックの__constructが実行されていること');
+						ok(this.sampleLogic.isExecutedReady, '__initの時点でロジックの__readyが実行されていること');
+						strictEqual(this.sampleLogic.childLogic.__name,
+								'h5resdata.logic.ChildLogic', '__initの時点で子ロジックはインスタンス化されていること');
+						ok(this.sampleLogic.childLogic.isExecutedConstruct,
+								'__initの時点で子ロジックの__constructが実行されていること');
+						ok(this.sampleLogic.childLogic.isExecutedReady,
+								'__initの時点で子ロジックの__readyが実行されていること');
+					}
+				});
+				ok(c.isExecutedConstruct, 'ルートコントローラの__constructは同期で実行されること');
+				c.readyPromise.done(start);
+			});
+
+	asyncTest('テンプレートをDependencyで記述', function() {
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: h5.res.require('h5resdata/data/ejs/valid.ejs'),
+			__init: function() {
+				this.view.append('{rootElement}', 'tmp1');
+				strictEqual(this.$find('p').text(), 'テンプレート1', 'テンプレートが__initの時点で使用可能になっていること');
+			}
+		}).readyPromise.done(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('コントローラ化するときの依存関係解決(非同期)', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+			this.orgResolvers = h5.res.resolvers.slice(0);
+			var resolvers = h5.res.resolvers;
+			// 名前空間解決をスタブに変更
+			for (var i = 0, l = resolvers.length; i < l; i++) {
+				var resolver = resolvers[i];
+				if (resolver.type === 'namespace') {
+					resolvers[i] = this.asyncNamespaceResolver;
+					break;
+				}
+			}
+		},
+		teardown: function() {
+			// 元のresolversの中身にspliceを使って入れ替える(元に戻す)
+			var resolvers = h5.res.resolvers;
+			var spliceArgs = this.orgResolvers;
+			spliceArgs.unshift(0, resolvers.length);
+			resolvers.splice.apply(resolvers, spliceArgs);
+
+			clearController();
+			deleteProperty(window, 'h5resdata');
+		},
+		orgResolvers: null,
+		asyncNamespaceResolver: {
+			type: 'namespace',
+			resolver: function(resourceKey) {
+				// 非同期でオブジェクトを返すスタブ
+				var dfd = $.Deferred();
+				setTimeout(function() {
+					dfd.resolve(h5.u.obj.getByPath(resourceKey));
+				}, 0);
+				return dfd.promise();
+			}
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('子コントローラ及びロジックがDependencyで記述されているとき、__initの時点で全ての依存関係が解決していること', 6, function() {
+		h5.core.expose({
+			__name: 'h5resdata.controller.ChildController',
+			__construct: function() {
+				this.isExecutedConstruct = true;
+			}
+		});
+		h5.core.expose({
+			__name: 'h5resdata.logic.SampleLogic',
+			__construct: function() {
+				this.isExecutedConstruct = true;
+			},
+			__ready: function() {
+				this.isExecutedReady = true;
+			}
+		});
+		var c = h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			childController: h5.res.require('h5resdata.controller.ChildController'),
+			sampleLogic: h5.res.require('h5resdata.logic.SampleLogic'),
+			__construct: function() {
+				this.isExecutedConstruct = true;
+			},
+			__init: function() {
+				strictEqual(this.childController.__name, 'h5resdata.controller.ChildController',
+						'__initの時点で子コントローラはインスタンス化されていること');
+				ok(this.childController.isExecutedConstruct,
+						'__initの時点で子コントローラの__constructが実行されていること');
+				strictEqual(this.sampleLogic.__name, 'h5resdata.logic.SampleLogic',
+						'__initの時点でロジックはインスタンス化されていること');
+				ok(this.sampleLogic.isExecutedConstruct, '__initの時点でロジックの__constructが実行されていること');
+				ok(this.sampleLogic.isExecutedReady, '__initの時点でロジックの__readyが実行されていること');
+			}
+		});
+		ok(c.isExecutedConstruct, 'ルートコントローラの__constructは同期で実行されること');
+		c.readyPromise.done(start);
+	});
+
+	asyncTest(
+			'Dependencyで記述された定義オブジェクトが更にDependencyで記述された定義オブジェクトを持つとき、__initの時点で全ての依存関係が解決していること',
+			11, function() {
+				h5.core.expose({
+					__name: 'h5resdata.controller.ChildController',
+					childController: h5.res.require('h5resdata.controller.GrandChildController'),
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					}
+				});
+				h5.core.expose({
+					__name: 'h5resdata.controller.GrandChildController',
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					}
+				});
+				h5.core.expose({
+					__name: 'h5resdata.logic.SampleLogic',
+					childLogic: h5.res.require('h5resdata.logic.ChildLogic'),
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					},
+					__ready: function() {
+						this.isExecutedReady = true;
+					}
+				});
+				h5.core.expose({
+					__name: 'h5resdata.logic.ChildLogic',
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					},
+					__ready: function() {
+						this.isExecutedReady = true;
+					}
+				});
+				var c = h5.core.controller('#controllerTest', {
+					__name: 'TestController',
+					childController: h5.res.require('h5resdata.controller.ChildController'),
+					sampleLogic: h5.res.require('h5resdata.logic.SampleLogic'),
+					__construct: function() {
+						this.isExecutedConstruct = true;
+					},
+					__init: function() {
+						strictEqual(this.childController.__name,
+								'h5resdata.controller.ChildController',
+								'__initの時点で子コントローラはインスタンス化されていること');
+						ok(this.childController.isExecutedConstruct,
+								'__initの時点で子コントローラの__constructが実行されていること');
+						strictEqual(this.childController.childController.__name,
+								'h5resdata.controller.GrandChildController',
+								'__initの時点で孫コントローラはインスタンス化されていること');
+						ok(this.childController.childController.isExecutedConstruct,
+								'__initの時点で孫コントローラの__constructが実行されていること');
+						strictEqual(this.sampleLogic.__name, 'h5resdata.logic.SampleLogic',
+								'__initの時点でロジックはインスタンス化されていること');
+						ok(this.sampleLogic.isExecutedConstruct,
+								'__initの時点でロジックの__constructが実行されていること');
+						ok(this.sampleLogic.isExecutedReady, '__initの時点でロジックの__readyが実行されていること');
+						strictEqual(this.sampleLogic.childLogic.__name,
+								'h5resdata.logic.ChildLogic', '__initの時点で子ロジックはインスタンス化されていること');
+						ok(this.sampleLogic.childLogic.isExecutedConstruct,
+								'__initの時点で子ロジックの__constructが実行されていること');
+						ok(this.sampleLogic.childLogic.isExecutedReady,
+								'__initの時点で子ロジックの__readyが実行されていること');
+					}
+				});
+				ok(c.isExecutedConstruct, 'ルートコントローラの__constructは同期で実行されること');
+				c.readyPromise.done(start);
+			});
 });
