@@ -393,20 +393,4 @@ $(function() {
 		ok(h5.res.isDependency(h5.res.require('hoge.js')));
 		ok(!h5.res.isDependency({}));
 	});
-
-	//=============================
-	// Definition
-	//=============================
-	module('子コントローラにDependencyを指定');
-
-	//=============================
-	// Body
-	//=============================
-	test('子コントロ', 2, function() {
-		ok(h5.res.isDependency(h5.res.require('hoge.js')));
-		ok(!h5.res.isDependency({}));
-	});
-
-
-
 });
