@@ -3913,12 +3913,13 @@
 				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
 				var promise = logicDef.resolve('namespace');
 				promisesForTriggerInit.push(promise);
-				promise.done((function(logicProp) {
+				promise.done((function(logicProp, logicPromise) {
 					return function(logic) {
 						var logicInstance = createLogic(logic);
 						controller[logicProp] = logicInstance;
 						// ロジック化が終わったらコントローラが待機するプロミスから取り除く
-						promisesForTriggerInit.splice($.inArray(this, promisesForTriggerInit), 1);
+						promisesForTriggerInit.splice($.inArray(logicPromise,
+								promisesForTriggerInit), 1);
 						// ロジックのreadyPromiseを追加
 						promisesForTriggerInit.push(logicInstance.readyPromise);
 						// ロジックのreadyPromiseがdoneになったらpromisesForTriggerInitから取り除く
@@ -3929,7 +3930,7 @@
 							};
 						})(logicInstance.readyPromise));
 					};
-				})(prop));
+				})(prop, promise));
 			} else {
 				controller[prop] = createLogic(logicDef);
 			}
@@ -4029,7 +4030,7 @@
 				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
 				var promise = childController.resolve('namespace');
 				promisesForTriggerInit.push(promise);
-				promise.done((function(childProp) {
+				promise.done((function(childProp, childControllerPromise) {
 					return function(c) {
 						var child = createAndBindController(null, $.extend(true, {}, c), param, {
 							isInternal: true,
@@ -4044,9 +4045,10 @@
 						}
 						controller[childProp] = child;
 						// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
-						promisesForTriggerInit.splice($.inArray(this, promisesForTriggerInit), 1);
+						promisesForTriggerInit.splice($.inArray(childControllerPromise,
+								promisesForTriggerInit), 1);
 					};
-				})(prop));
+				})(prop, promise));
 			} else {
 				var child = createAndBindController(null, $.extend(true, {},
 						clonedControllerDef[prop]), param, {
@@ -4168,15 +4170,15 @@
 					var promise = childLogicDef.resolve();
 					// ロジックツリーの待機するプロミスに追加
 					logicTreeDependencyPromises.push(promise);
-					promise.done((function(childLogicProp) {
+					promise.done((function(childLogicProp, logicPromise) {
 						return function(resolvedLogicDef) {
 							// ロジック化
 							logic[childLogicProp] = create(resolvedLogicDef);
 							// ロジックツリーの待機するプロミスから取り除く
-							logicTreeDependencyPromises.splice($.inArray(promise,
+							logicTreeDependencyPromises.splice($.inArray(logicPromise,
 									logicTreeDependencyPromises), 1);
 						};
-					})(prop));
+					})(prop, promise));
 				} else {
 					logic[prop] = create(childLogicDef);
 				}
