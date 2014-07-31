@@ -207,7 +207,6 @@
 			var promise = df.promise();
 			this.accessingUrls[absolutePath] = promise;
 			var manager = this;
-			var absolutePath = toAbsoluteUrl(path);
 			h5.ajax(path).done(function(result, statusText, obj) {
 				// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 				delete manager.accessingUrls[absolutePath];
