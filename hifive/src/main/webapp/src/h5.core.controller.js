@@ -126,7 +126,8 @@
 	var FW_LOG_INIT_CONTROLLER_BEGIN = 'コントローラ"{0}"の初期化を開始しました。';
 	var FW_LOG_INIT_CONTROLLER_COMPLETE = 'コントローラ"{0}"の初期化が正常に完了しました。';
 	var FW_LOG_INIT_CONTROLLER_THROWN_ERROR = 'コントローラ"{0}"の{1}内でエラーが発生したため、コントローラの初期化を中断しdisposeしました。';
-	var FW_LOG_BIND_TARGET_INVALID = 'イベントのバインド対象オブジェクトが不正です。DOMノードまたはaddEventListener/removeEventListenerを持つオブジェクトを指定してください。';
+	var FW_LOG_BIND_TARGET_NOT_FOUND = 'イベントのバインド対象が見つかりません。指定されたグローバルセレクタ：{0}';
+	var FW_LOG_BIND_TARGET_INVALID = 'イベントのバインド対象オブジェクトが不正です。指定されたグローバルセレクタ：{0} DOMノードまたはaddEventListener/removeEventListenerを持つオブジェクトを指定してください。';
 
 	// エラーコードマップ
 	var errMsgMap = {};
@@ -2615,8 +2616,14 @@
 			// ノードタイプが定義されている(=ノード)またはwindowオブジェクトの場合またはjQueryオブジェクトの場合はjQueryのbindを使う
 			$(bindTarget).bind(eventName, handler);
 		} else {
+			/* del begin */
+			if (bindTarget == null) {
+				fwLogger.warn(FW_LOG_BIND_TARGET_NOT_FOUND, bindObj.selector);
+			} else if (!bindTarget.addEventListener) {
+				fwLogger.warn(FW_LOG_BIND_TARGET_INVALID, bindObj.selector);
+			}
+			/* del end */
 			if (!bindTarget || !bindTarget.addEventListener) {
-				fwLogger.warn(FW_LOG_BIND_TARGET_INVALID);
 				bindObj.isBindCanceled = true;
 				return;
 			}
