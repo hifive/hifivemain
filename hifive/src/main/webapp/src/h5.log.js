@@ -548,8 +548,7 @@
 			if (!isDefault || targets != null) {
 				var targetNames = [];
 				// targetsの指定は文字列または配列またはnull,undefinedのみ
-				if (!(targets == null || isArray(targets) || (isString(targets) && $
-						.trim(targets).length))) {
+				if (!(targets == null || isArray(targets) || (isString(targets) && $.trim(targets).length))) {
 					throwFwError(ERR_CODE_LOG_TARGETS_INVALID);
 				}
 				targets = wrapInArray(targets);
@@ -779,10 +778,9 @@
 						ret = $.trim(value);
 					}
 					return ret;
-				});
+				}).slice(DROP_TRACE_COUNT);
 
-				result = getTraceResult(traces.slice(DROP_TRACE_COUNT, traces.length), traces
-						.slice(0, this.maxStackSize));
+				result = getTraceResult(traces, traces.slice(0, this.maxStackSize));
 			} else {
 				// IE, Safari
 
