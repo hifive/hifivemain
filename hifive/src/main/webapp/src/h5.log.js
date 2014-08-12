@@ -80,6 +80,11 @@
 	 */
 	var ERR_CODE_OUT_CATEGORY_INVALID = 10010;
 
+	/**
+	 * スタックトレース出力時に1行目(メッセージ部)に表示するトレース件数
+	 */
+	var RECENT_TRACE_COUNT = 3;
+
 	// =============================
 	// Development Only
 	// =============================
@@ -238,13 +243,12 @@
 	 * </ul>
 	 */
 	function getTraceResult(recentTraces, detailTraces) {
-		var COUNT = 3;
 		var result = {};
 
 		if (isArray(recentTraces)) {
-			var recent = recentTraces.slice(0, COUNT).join(' <- ');
+			var recent = recentTraces.slice(0, RECENT_TRACE_COUNT).join(' <- ');
 
-			if (recentTraces.slice(COUNT).length > 0) {
+			if (recentTraces.slice(RECENT_TRACE_COUNT).length > 0) {
 				recent += ' ...';
 			}
 
@@ -801,6 +805,9 @@
 				if (!currentCaller) {
 					result = getTraceResult('{unable to trace}', '{unable to trace}');
 				} else {
+					// 1行目(メッセージ部分)にRECENT_TRACE_COUNT件のログを表示し、RECENT_TRACE_COUNTより多い場合は'...'を表示するので
+					// 最低でもRECENT_TRACE_COUNT+1件分はトレースを行う
+					var maxTraceCount = Math.max(RECENT_TRACE_COUNT + 1, this.maxStackSize);
 					while (true) {
 						var argStr = parseArgs(currentCaller.arguments);
 						var funcName = getFunctionName(currentCaller);
@@ -811,7 +818,7 @@
 						} catch (e) {
 							// エラーが発生してトレースできなくなったら終了
 							traces.push('{unable to trace}');
-							result = getTraceResult(traces, traces);
+							result = getTraceResult(traces, traces.slice(0, this.maxStackSize));
 							break;
 						}
 						if (funcName) {
@@ -826,8 +833,8 @@
 							}
 						}
 
-						if (!nextCaller || index >= this.maxStackSize) {
-							result = getTraceResult(traces, traces);
+						if (!nextCaller || index + 1 > maxTraceCount) {
+							result = getTraceResult(traces, traces.slice(0, this.maxStackSize));
 							break;
 						}
 
