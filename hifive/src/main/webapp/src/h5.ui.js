@@ -359,6 +359,8 @@
 	 * @param elem {Element} DOM要素
 	 */
 	function getScrollSize(elem) {
+		// 表示している要素内のインジケータを非表示にしたときのscrollWidth/Heightを取得する
+		var $indicator = $(elem).find('.' + CLASS_INDICATOR_ROOT).css('display', 'none');
 		var retW = elem.scrollWidth;
 		var retH = elem.scrollHeight;
 
@@ -385,6 +387,8 @@
 					+ parseFloat(comStyle.paddingBottom);
 			retH += eH - parseInt(eH) - 1;
 		}
+		// インジケータを再表示
+		$indicator.css('display', 'block');
 
 		return {
 			w: retW,
