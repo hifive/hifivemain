@@ -207,7 +207,9 @@
 			var promise = df.promise();
 			this.accessingUrls[absolutePath] = promise;
 			var manager = this;
-			h5.ajax(path).done(function(result, statusText, obj) {
+			h5.ajax(path, {
+				dataType: 'text'
+			}).done(function(result, statusText, obj) {
 				// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 				delete manager.accessingUrls[absolutePath];
 				// ResourceCacheオブジェクトを作成してキャッシュに登録
