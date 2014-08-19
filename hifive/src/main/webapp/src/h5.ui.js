@@ -176,11 +176,6 @@
 	var isLegacyIE = h5ua.isIE && h5ua.browserVersion <= 6;
 
 	/**
-	 * timer + transformでスロバーを回すかどうか (PC版chromeでは、timer + transformでスロバーを回すようにするため)
-	 */
-	var useTransformTimerAnimation = h5ua.isChrome && h5ua.isDesktop;
-
-	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
 	 * <p>
 	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
@@ -1026,13 +1021,9 @@
 			$(this.baseDiv).remove();
 
 			if (this._runId) {
+				// Timerで動かしている場合(CSSAnimationをサポートしていないためにTimerで動かしている場合)
 				// Timerを止める
-				// chromeの場合はsetIntervalでタイマーを回しているため、clearIntervalで止める
-				if (useTransformTimerAnimation) {
-					clearInterval(this._runId);
-				} else {
-					clearTimeout(this._runId);
-				}
+				clearTimeout(this._runId);
 				this._runId = null;
 			}
 		},
@@ -1073,25 +1064,6 @@
 				highlightPos++;
 			}
 			this.highlightPos = highlightPos;
-
-
-			if (useTransformTimerAnimation) {
-				// chrome22で、webkit-animationでアニメーションしている要素を消すと、表示上残ってしまう。(すべてのPCで起きるわけではない)
-				// そのため、chromeの場合はwebkit-animationを使わず、Timer + transform でスロバーを回している
-				//
-				// このwebkit-animationの問題について調べたところ、
-				// chrome23βでも同様の問題が起きたが、
-				// chrome24devとchrome25canaryではきちんと消えることを確認した。(2012/11/06現在)
-				var deg = 0;
-				this._runId = setInterval(function() {
-					deg++;
-					canvas.style.webkitTransform = 'rotate(' + deg + 'deg)';
-					if (deg >= 360) {
-						deg -= 360;
-					}
-				}, roundTime / 360);
-				return;
-			}
 
 			if (isCSS3AnimationsSupported) {
 				// CSS3Animationをサポートしている場合は、keyframesでスロバーを描写する
@@ -1507,11 +1479,8 @@
 				}
 			};
 
-			if (!isCSS3AnimationsSupported || useTransformTimerAnimation) {
-				// CSS3Animationをサポートしないブラウザまたはchromeの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
-				for (var i = 0, len = this._throbbers.length; i < len; i++) {
-					this._throbbers[i].hide();
-				}
+			for (var i = 0, len = this._throbbers.length; i < len; i++) {
+				this._throbbers[i].hide();
 			}
 
 			if (fadeOutTime < 0) {
