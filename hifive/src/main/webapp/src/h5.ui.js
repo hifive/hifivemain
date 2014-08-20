@@ -357,10 +357,9 @@
 	 *
 	 * @private
 	 * @param elem {Element} DOM要素
+	 * @returns {Object}
 	 */
 	function getScrollSize(elem) {
-		// 表示している要素内のインジケータを非表示にしたときのscrollWidth/Heightを取得する
-		var $indicator = $(elem).find('.' + CLASS_INDICATOR_ROOT).css('display', 'none');
 		var retW = elem.scrollWidth;
 		var retH = elem.scrollHeight;
 
@@ -387,8 +386,6 @@
 					+ parseFloat(comStyle.paddingBottom);
 			retH += eH - parseInt(eH) - 1;
 		}
-		// インジケータを再表示
-		$indicator.css('display', 'block');
 
 		return {
 			w: retW,
@@ -1369,7 +1366,10 @@
 					w = documentWidth();
 					h = documentHeight();
 				} else {
+					// オーバレイを非表示にしたときのscrollWidth/Heightを取得する
+					_$overlay.css('display', 'none');
 					var scrSize = getScrollSize(_$target[0]);
+					_$overlay.css('display', 'block');
 					w = scrSize.w;
 					h = scrSize.h;
 				}
