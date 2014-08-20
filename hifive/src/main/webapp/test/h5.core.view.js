@@ -34,6 +34,7 @@
 	//=============================
 	// testutils
 	var isDevMode = h5devtestutils.env.isDevMode;
+	var deleteProperty = testutils.u.deleteProperty;
 
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.core.view;
@@ -285,6 +286,21 @@
 					}).fail(function(e) {
 				ok(false, e.message);
 				start();
+			});
+		});
+
+		asyncTest('$.ajaxSetupでdataTypeに"json"が指定されているときに正しくテンプレートファイルをロードできること', 1, function() {
+			$.ajaxSetup({
+				dataType: 'json'
+			});
+			h5.core.view.load('template/test2.ejs').done(function() {
+				ok(h5.core.view.isAvailable('template2'), 'テンプレートがロードされていること');
+				start();
+			}).fail(function(e) {
+				ok(false, e.message);
+				start();
+			}).always(function() {
+				deleteProperty($.ajaxSettings, 'dataType');
 			});
 		});
 
