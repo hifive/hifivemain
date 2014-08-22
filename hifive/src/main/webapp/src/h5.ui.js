@@ -918,6 +918,10 @@
 		},
 		_run: function() {
 			var lineCount = this.style.throbber.lines;
+			if (lineCount === 0) {
+				// ラインの数が0なら何もしない
+				return;
+			}
 			var roundTime = this.style.throbber.roundTime;
 			var highlightPos = this.highlightPos;
 			var lines = this.group.childNodes;
@@ -1029,13 +1033,17 @@
 			}
 		},
 		_run: function() {
+			var lineCount = this.style.throbber.lines;
+			if (lineCount === 0) {
+				// lineの数が0なら何もしない
+				return;
+			}
 			var canvas = this.canvas;
 			var ctx = canvas.getContext('2d');
 			var highlightPos = this.highlightPos;
 			var positions = this.positions;
 			var lineColor = this.style.throbberLine.color;
 			var lineWidth = this.style.throbberLine.width;
-			var lineCount = this.style.throbber.lines;
 			var roundTime = this.style.throbber.roundTime;
 
 			canvas.width = canvas.width;
@@ -1074,11 +1082,9 @@
 				var that = this;
 
 				// CSSAnimation未サポートの場合タイマーアニメーションで描画する
-				// 対象ブラウザ: Firefox 2,3 / Opera  9.0～10.1 / Opera Mini 5.0～7.0 / Opera Mobile 10.0
+				// 対象ブラウザ: IE 9 / Firefox 2,3 / Opera  9.0～10.1 / Opera Mini 5.0～7.0 / Opera Mobile 10.0
 				// http://caniuse.com/transforms2d
 				// http://caniuse.com/#search=canvas
-				// ただし、Android 2.xは、-webkit-keyframesで-webkit-transformを使用すると、topとleftを変更してもその位置に描画されないバグがあるため、
-				// タイマーアニメーションでスロバーを描写する
 				this._runId = setTimeout(function() {
 					that._run.call(that);
 				}, perMills);

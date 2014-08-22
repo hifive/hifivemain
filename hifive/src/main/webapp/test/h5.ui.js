@@ -1060,6 +1060,33 @@ $(function() {
 		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
 	});
 
+	test('throbber.lines:0を指定してもエラーにならないこと', function() {
+		var indicator = h5.ui.indicator({
+			target: document,
+			message: 'BlockMessageTest',
+			throbber: {
+				lines: 0
+			}
+		}).show();
+
+		strictEqual($('body>.h5-indicator.a.overlay').length, 1, 'オーバレイ要素が表示されていること');
+		strictEqual($('body>.h5-indicator.a.content>.indicator-message').text(),
+				'BlockMessageTest', 'メッセージが表示されていること');
+		indicator.hide();
+		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+
+		var indicator = h5.ui.indicator({
+			target: '#indicatorTest',
+			message: 'BlockMessageTest',
+			block: false
+		}).show();
+		strictEqual($('#indicatorTest>.h5-indicator.a.overlay').length, 0, 'オーバレイ要素が表示されていること');
+		strictEqual($('#indicatorTest>.h5-indicator.a.content>.indicator-message').text(),
+				'BlockMessageTest', 'メッセージが表示されていること');
+		indicator.hide();
+		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+	});
+
 	test('プロミスオブジェクトを指定した時、commonFailHandlerの動作は阻害されない', 2, function() {
 		var cfhCount = 0;
 		h5.settings.commonFailHandler = function() {
