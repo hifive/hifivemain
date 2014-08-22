@@ -39,6 +39,7 @@ $(function() {
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;
 	var skipTest = testutils.qunit.skipTest;
+	var gate = testutils.async.gate;
 
 	var fixture = '#qunit-fixture';
 	var test1 = '#isInViewTest1';
@@ -1085,6 +1086,65 @@ $(function() {
 				'BlockMessageTest', 'メッセージが表示されていること');
 		indicator.hide();
 		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+	});
+
+	asyncTest('resizeイベントが起きた時に、overlayの大きさがターゲット要素の大きさに追従すること', 4, function() {
+		var $target = $('#indicatorTest');
+		$target.css({
+			width: 500,
+			height: 500
+		});
+		var indicator = h5.ui.indicator({
+			target: $target
+		}).show();
+		var $overlay = $('#indicatorTest>.h5-indicator.a.overlay');
+
+		// インジケータのターゲットが大きくなった場合
+		$target.css({
+			width: 600,
+			height: 700
+		});
+		$(window).trigger('resize');
+		// 小数点以下の処理のために誤差が出ることがあるので、1px以内の誤差ならOKとする
+		gate(
+				{
+					func: function() {
+						return Math.abs($overlay.width() - 600) <= 1
+								&& Math.abs($overlay.height() - 700) <= 1;
+					},
+					interval: 600
+				})
+				.always(
+						function() {
+							ok(Math.abs($overlay.width() - 600) <= 1, 'width:' + $overlay.width()
+									+ 'px');
+							ok(Math.abs($overlay.height() - 700) <= 1, 'height:'
+									+ $overlay.height() + 'px');
+
+							$target.css({
+								width: 200,
+								height: 300
+							});
+							$(window).trigger('resize');
+
+							// インジケータのターゲットが小さくなった場合
+							gate(
+									{
+										func: function() {
+											return Math.abs($overlay.width() - 200) <= 1
+													&& Math.abs($overlay.height() - 300) <= 1;
+										},
+										interval: 600
+									}).always(
+									function() {
+										ok(Math.abs($overlay.width() - 200) <= 1, 'width:'
+												+ $overlay.width() + 'px');
+										ok(Math.abs($overlay.height() - 300) <= 1, 'height:'
+												+ $overlay.height() + 'px');
+										indicator.hide();
+										start();
+									});
+						});
 	});
 
 	test('プロミスオブジェクトを指定した時、commonFailHandlerの動作は阻害されない', 2, function() {
