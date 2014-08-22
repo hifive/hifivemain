@@ -1350,15 +1350,12 @@
 		 * @private
 		 */
 		_resizeOverlay: function() {
-			if (this._isScreenLock && usePositionFixed) {
+			if (this._isScreenLock && usePositionFixed || this._$overlay.length === 0) {
 				return;
 			}
 
 			for (var i = 0, len = this._$target.length; i < len; i++) {
 				var _$overlay = this._$overlay.eq(i);
-				if (!_$overlay.length) {
-					return;
-				}
 				var _$target = this._$target.eq(i);
 				var _$skin = this._$skin.eq(i);
 
