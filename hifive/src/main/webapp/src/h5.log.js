@@ -83,7 +83,7 @@
 	/**
 	 * スタックトレース出力時に1行目(メッセージ部)に表示するトレース件数
 	 */
-	var RECENT_TRACE_COUNT = 3;
+	var PREVIEW_TRACE_COUNT = 3;
 
 	// =============================
 	// Development Only
@@ -236,29 +236,33 @@
 
 	/**
 	 * トレース情報からトレース結果のオブジェクト取得します。
-	 * <ul>
-	 * <li>result.all {String} 全てトレースする
-	 * <li>result.recent {String} Logクラス/LogTargetクラスのメソッドは省いた最大3件のスタックトーレス"[func1_2 () <- func1_1 () <-
-	 * func1 () ...]"
-	 * </ul>
+	 * <p>
+	 * 以下のようなオブジェクトを返します
+	 * </p>
+	 *
+	 * <pre><code>
+	 * {
+	 * 	 all: maxStackSize maxStackSizeまでのトレース結果を改行で結合した文字列
+	 * 	 preview: 最大でPREVIEW_TRACE_COUNTまでのトレース結果を&quot; &lt;- &quot;で結合した文字列 &quot;[func1_2 () &lt;- func1_1 () &lt;- func1 () ...]&quot;
+	 * }
+	 * </code></pre>
+	 *
+	 * @param {String[]} traces トレース結果
+	 * @param {Integer} maxStackSize 最大トレース数
 	 */
-	function getTraceResult(recentTraces, detailTraces) {
+	function getTraceResult(traces, maxStackSize) {
 		var result = {};
+		var slicedTraces = traces.slice(0, maxStackSize);
 
-		if (isArray(recentTraces)) {
-			var recent = recentTraces.slice(0, RECENT_TRACE_COUNT).join(' <- ');
+		var previewLength = Math.min(PREVIEW_TRACE_COUNT, maxStackSize);
+		var preview = slicedTraces.slice(0, previewLength).join(' <- ');
 
-			if (recentTraces.slice(RECENT_TRACE_COUNT).length > 0) {
-				recent += ' ...';
-			}
-
-			result.recent = recent;
-			result.all = detailTraces.join('\n');
-		} else {
-			result.recent = recentTraces;
-			result.all = detailTraces;
+		if (slicedTraces.length > previewLength) {
+			preview += ' ...';
 		}
 
+		result.preview = preview;
+		result.all = slicedTraces.join('\n');
 		return result;
 	}
 
@@ -364,7 +368,7 @@
 			var logMsg = this._getLogPrefix(logObj) + msg;
 
 			if (logObj.logger.enableStackTrace) {
-				logMsg += '  [' + logObj.stackTrace.recent + ']';
+				logMsg += '  [' + logObj.stackTrace.preview + ']';
 			}
 
 			if (logObj.logger.enableStackTrace && console.groupCollapsed) {
@@ -745,23 +749,21 @@
 		 * @memberOf Log
 		 * @function
 		 * @param fn {Function} トレース対象の関数
-		 * @returns {Object} スタックトレース<br>
+		 * @returns {Object} 以下のようなオブジェクトを返します
 		 *
-		 * <pre>
+		 * <pre><code>
 		 * {
-		 *   all: 全てトレースした文字列,
-		 *   recent: Logクラス/LogTargetクラスのメソッドは省いた最大3件トレースした文字列
-		 *    &quot;[func1_2 () &lt;- func1_1 () &lt;- func1 () ...]&quot;
+		 * 	 all: maxStackSize maxStackSizeまでのトレース結果を改行で結合した文字列
+		 * 	 preview: 最大でPREVIEW_TRACE_COUNTまでのトレース結果を&quot; &lt;- &quot;で結合した文字列 &quot;[func1_2 () &lt;- func1_1 () &lt;- func1 () ...]&quot;
 		 * }
-		 * </pre>
+		 * </code></pre>
 		 */
 		_traceFunctionName: function(fn) {
 			var e = new Error();
 			var errMsg = e.stack || e.stacktrace;
 			var traces = [];
-			/** @type Object */
-			var result = {};
 
+			// stackまたはstacktraceがある場合(IE,Safari以外)
 			if (errMsg) {
 				// トレースされたログのうち、トレースの基点から3メソッド分(_traceFunction、_log、
 				// debug|info|warn|error|trace)はログに出力しない。
@@ -783,8 +785,6 @@
 					}
 					return ret;
 				}).slice(DROP_TRACE_COUNT);
-
-				result = getTraceResult(traces, traces.slice(0, this.maxStackSize));
 			} else {
 				// IE, Safari
 
@@ -794,56 +794,34 @@
 				// (例えばjQuery1.9.0は"use strict"宣言がされており、jQuery1.9.0内の関数を経由して呼ばれた関数は全てstrictモード扱いとなり、
 				// callerプロパティにアクセスできない)
 				// そのため、try-catchで囲んで、取得できなかった場合は{unable to trace}を出力する
-				var currentCaller = null;
-				try {
-					currentCaller = fn.caller;
-				} catch (e) {
-					// 何もしない
-				}
-				var index = 0;
+				for (var i = 0, l = this.maxStackSize, caller = fn; i < l; i++) {
+					try {
+						caller = caller.caller;
+					} catch (e) {
+						// エラーが発生してトレースできなくなったら終了
+						traces.push('{unable to trace}');
+						break;
+					}
+					if (!caller) {
+						break;
+					}
+					var argStr = parseArgs(caller.arguments);
+					var funcName = getFunctionName(caller);
 
-				if (!currentCaller) {
-					result = getTraceResult('{unable to trace}', '{unable to trace}');
-				} else {
-					// 1行目(メッセージ部分)にRECENT_TRACE_COUNT件のログを表示し、RECENT_TRACE_COUNTより多い場合は'...'を表示するので
-					// 最低でもRECENT_TRACE_COUNT+1件分はトレースを行う
-					var maxTraceCount = Math.max(RECENT_TRACE_COUNT + 1, this.maxStackSize);
-					while (true) {
-						var argStr = parseArgs(currentCaller.arguments);
-						var funcName = getFunctionName(currentCaller);
-
-						var nextCaller = null;
-						try {
-							nextCaller = currentCaller.caller;
-						} catch (e) {
-							// エラーが発生してトレースできなくなったら終了
-							traces.push('{unable to trace}');
-							result = getTraceResult(traces, traces.slice(0, this.maxStackSize));
-							break;
-						}
-						if (funcName) {
-							// 関数名が取得できているときは関数名を表示
-							traces.push('{' + funcName + '}(' + argStr + ')');
+					if (funcName) {
+						// 関数名が取得できているときは関数名を表示
+						traces.push('{' + funcName + '}(' + argStr + ')');
+					} else {
+						if (!nextCaller) {
+							// nullの場合はルートからの呼び出し
+							traces.push('{root}(' + argStr + ')');
 						} else {
-							if (!nextCaller) {
-								// nullの場合はルートからの呼び出し
-								traces.push('{root}(' + argStr + ')');
-							} else {
-								traces.push('{anonymous}(' + argStr + ')');
-							}
+							traces.push('{anonymous}(' + argStr + ')');
 						}
-
-						if (!nextCaller || index + 1 > maxTraceCount) {
-							result = getTraceResult(traces, traces.slice(0, this.maxStackSize));
-							break;
-						}
-
-						currentCaller = nextCaller;
-						index++;
 					}
 				}
 			}
-			return result;
+			return getTraceResult(traces, this.maxStackSize);
 		},
 
 		/**
