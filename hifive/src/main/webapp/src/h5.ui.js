@@ -1367,6 +1367,7 @@
 			}
 
 			for (var i = 0, len = this._$target.length; i < len; i++) {
+				var _$content = this._$content.eq(i);
 				var _$overlay = this._$overlay.eq(i);
 				var _$target = this._$target.eq(i);
 				var _$skin = this._$skin.eq(i);
@@ -1378,10 +1379,12 @@
 					w = documentWidth();
 					h = documentHeight();
 				} else {
-					// オーバレイを非表示にしたときのscrollWidth/Heightを取得する
+					// オーバレイとコンテンツを非表示にしたときのscrollWidth/Heightを取得する
 					_$overlay.css('display', 'none');
+					_$content.css('display', 'none');
 					var scrSize = getScrollSize(_$target[0]);
 					_$overlay.css('display', 'block');
+					_$content.css('display', 'block');
 					w = scrSize.w;
 					h = scrSize.h;
 				}
