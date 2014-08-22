@@ -1167,6 +1167,9 @@
 		this._settings = settings;
 		// スタイル情報
 		this._styles = $.extend(true, {}, defaultStyle, readThrobberStyle(settings.theme));
+		if (settings.throbber) {
+			$.extend(this._styles.throbber, settings.throbber);
+		}
 		// スクリーンロックで表示するか
 		this._isScreenLock = isScreenlock;
 		// 表示対象であるDOM要素を保持するjQueryオブジェクト
