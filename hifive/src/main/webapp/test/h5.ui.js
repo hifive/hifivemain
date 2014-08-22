@@ -1022,11 +1022,44 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('indicator');
+	module('indicator', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="indicatorTest"></div>');
+		}
+	});
 
 	//=============================
 	// Body
 	//=============================
+
+	// TODO コントローラのテストケースでインジケータを使っているもののうち、
+	// コントローラのインジケータとh5.uiのインジケータで共通ことを確認しているテストケースはは、h5.ui側に移動する
+
+	test('オーバレイ非表示でインジケータを表示', function() {
+		var indicator = h5.ui.indicator({
+			target: document,
+			message: 'BlockMessageTest',
+			block: false
+		}).show();
+
+		strictEqual($('body>.h5-indicator.a.overlay').length, 0, 'オーバレイ要素は表示されていないこと');
+		strictEqual($('body>.h5-indicator.a.content>.indicator-message').text(),
+				'BlockMessageTest', 'メッセージが表示されていること');
+		indicator.hide();
+		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+
+		var indicator = h5.ui.indicator({
+			target: '#indicatorTest',
+			message: 'BlockMessageTest',
+			block: false
+		}).show();
+		strictEqual($('#indicatorTest>.h5-indicator.a.overlay').length, 0, 'オーバレイ要素は表示されていないこと');
+		strictEqual($('#indicatorTest>.h5-indicator.a.content>.indicator-message').text(),
+				'BlockMessageTest', 'メッセージが表示されていること');
+		indicator.hide();
+		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+	});
+
 	test('プロミスオブジェクトを指定した時、commonFailHandlerの動作は阻害されない', 2, function() {
 		var cfhCount = 0;
 		h5.settings.commonFailHandler = function() {
