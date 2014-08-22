@@ -250,7 +250,7 @@
 	 * @param {String[]} traces トレース結果
 	 * @param {Integer} maxStackSize 最大トレース数
 	 */
-	function getTraceResult(traces, maxStackSize) {
+	function getFormattedTraceMessage(traces, maxStackSize) {
 		var result = {};
 		var slicedTraces = traces.slice(0, maxStackSize);
 
@@ -821,7 +821,7 @@
 					}
 				}
 			}
-			return getTraceResult(traces, this.maxStackSize);
+			return getFormattedTraceMessage(traces, this.maxStackSize);
 		},
 
 		/**
