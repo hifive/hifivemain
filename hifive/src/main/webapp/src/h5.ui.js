@@ -1341,7 +1341,7 @@
 		/**
 		 * オーバーレイのサイズを再計算します。
 		 * <p>
-		 * position:fixedで表示している場合は再計算しません。
+		 * position:fixedで表示している場合は再計算しません。また、オーバレイ非表示の場合は何もしません。
 		 * <p>
 		 * position:absoluteの場合は高さのみ再計算を行い、IE6以下の標準モード及びQuirksモードの場合は高さと幅の両方を再計算します。
 		 *
@@ -1355,8 +1355,11 @@
 			}
 
 			for (var i = 0, len = this._$target.length; i < len; i++) {
-				var _$target = this._$target.eq(i);
 				var _$overlay = this._$overlay.eq(i);
+				if (!_$overlay.length) {
+					return;
+				}
+				var _$target = this._$target.eq(i);
 				var _$skin = this._$skin.eq(i);
 
 				var w, h;
