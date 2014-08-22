@@ -795,30 +795,28 @@
 				// callerプロパティにアクセスできない)
 				// そのため、try-catchで囲んで、取得できなかった場合は{unable to trace}を出力する
 				for (var i = 0, l = this.maxStackSize, caller = fn; i < l; i++) {
+					var funcName = getFunctionName(caller);
+					var argStr = parseArgs(caller.arguments);
+					var nextCaller;
 					try {
-						caller = caller.caller;
+						nextCaller = caller.caller;
 					} catch (e) {
 						// エラーが発生してトレースできなくなったら終了
 						traces.push('{unable to trace}');
 						break;
 					}
-					if (!caller) {
-						break;
-					}
-					var argStr = parseArgs(caller.arguments);
-					var funcName = getFunctionName(caller);
-
-					if (funcName) {
-						// 関数名が取得できているときは関数名を表示
-						traces.push('{' + funcName + '}(' + argStr + ')');
-					} else {
+					if (!funcName) {
 						if (!nextCaller) {
 							// nullの場合はルートからの呼び出し
 							traces.push('{root}(' + argStr + ')');
 						} else {
 							traces.push('{anonymous}(' + argStr + ')');
+							break;
 						}
 					}
+					// 関数名が取得できているときは関数名を表示
+					traces.push('{' + funcName + '}(' + argStr + ')');
+					caller = nextCaller;
 				}
 			}
 			return getFormattedTraceMessage(traces, this.maxStackSize);
