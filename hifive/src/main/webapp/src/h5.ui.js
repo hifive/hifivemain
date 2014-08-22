@@ -1353,7 +1353,10 @@
 		 * @private
 		 */
 		_resizeOverlay: function() {
-			if (this._isScreenLock && usePositionFixed || this._$overlay.length === 0) {
+			// スクリーンロックでpoisition:fixedが使用可能なブラウザの場合は、オーバレイをposition:fixedで表示している
+			// オーバレイをposition:fixedで表示している場合は何もしない
+			// また、オーバレイを表示していない(block:false)インジケータなら何もしない
+			if ((this._isScreenLock && usePositionFixed) || this._$overlay.length === 0) {
 				return;
 			}
 
