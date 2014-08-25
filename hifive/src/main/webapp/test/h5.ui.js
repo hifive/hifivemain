@@ -39,6 +39,7 @@ $(function() {
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;
 	var skipTest = testutils.qunit.skipTest;
+	var gate = testutils.async.gate;
 
 	var fixture = '#qunit-fixture';
 	var test1 = '#isInViewTest1';
@@ -1022,11 +1023,130 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('indicator');
+	module('indicator', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="indicatorTest"></div>');
+		}
+	});
 
 	//=============================
 	// Body
 	//=============================
+
+	// TODO コントローラのテストケースでインジケータを使っているもののうち、
+	// コントローラのインジケータとh5.uiのインジケータで共通ことを確認しているテストケースはは、h5.ui側に移動する
+
+	test('オーバレイ非表示でインジケータを表示', function() {
+		var indicator = h5.ui.indicator({
+			target: document,
+			message: 'BlockMessageTest',
+			block: false
+		}).show();
+
+		strictEqual($('body>.h5-indicator.a.overlay').length, 0, 'オーバレイ要素は表示されていないこと');
+		strictEqual($('body>.h5-indicator.a.content>.indicator-message').text(),
+				'BlockMessageTest', 'メッセージが表示されていること');
+		indicator.hide();
+		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+
+		var indicator = h5.ui.indicator({
+			target: '#indicatorTest',
+			message: 'BlockMessageTest',
+			block: false
+		}).show();
+		strictEqual($('#indicatorTest>.h5-indicator.a.overlay').length, 0, 'オーバレイ要素は表示されていないこと');
+		strictEqual($('#indicatorTest>.h5-indicator.a.content>.indicator-message').text(),
+				'BlockMessageTest', 'メッセージが表示されていること');
+		indicator.hide();
+		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+	});
+
+	test('throbber.lines:0を指定してもエラーにならないこと', function() {
+		var indicator = h5.ui.indicator({
+			target: document,
+			message: 'BlockMessageTest',
+			throbber: {
+				lines: 0
+			}
+		}).show();
+
+		strictEqual($('body>.h5-indicator.a.overlay').length, 1, 'オーバレイ要素が表示されていること');
+		strictEqual($('body>.h5-indicator.a.content>.indicator-message').text(),
+				'BlockMessageTest', 'メッセージが表示されていること');
+		indicator.hide();
+		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+
+		var indicator = h5.ui.indicator({
+			target: '#indicatorTest',
+			message: 'BlockMessageTest',
+			block: false
+		}).show();
+		strictEqual($('#indicatorTest>.h5-indicator.a.overlay').length, 0, 'オーバレイ要素が表示されていること');
+		strictEqual($('#indicatorTest>.h5-indicator.a.content>.indicator-message').text(),
+				'BlockMessageTest', 'メッセージが表示されていること');
+		indicator.hide();
+		strictEqual($('.h5-indicator').length, 0, 'Indicator#hide() インジケータが除去されていること');
+	});
+
+	asyncTest('resizeイベントが起きた時に、overlayの大きさがターゲット要素の大きさに追従すること', 4, function() {
+		var $target = $('#indicatorTest');
+		$target.css({
+			width: 500,
+			height: 500
+		});
+		var indicator = h5.ui.indicator({
+			target: $target
+		}).show();
+		var $overlay = $('#indicatorTest>.h5-indicator.a.overlay');
+
+		// インジケータのターゲットが大きくなった場合
+		$target.css({
+			width: 600,
+			height: 700
+		});
+		$(window).trigger('resize');
+		// 小数点以下の処理のために誤差が出ることがあるので、1px以内の誤差ならOKとする
+		gate(
+				{
+					func: function() {
+						return Math.abs($overlay.width() - 600) <= 1
+								&& Math.abs($overlay.height() - 700) <= 1;
+					},
+					interval: 600
+				})
+				.always(
+						function() {
+							ok(Math.abs($overlay.width() - 600) <= 1, 'width:' + $overlay.width()
+									+ 'px');
+							ok(Math.abs($overlay.height() - 700) <= 1, 'height:'
+									+ $overlay.height() + 'px');
+
+							$target.css({
+								width: 200,
+								height: 300
+							});
+							$(window).trigger('resize');
+
+							// インジケータのターゲットが小さくなった場合
+							gate(
+									{
+										func: function() {
+											return Math.abs($overlay.width() - 200) <= 1
+													&& Math.abs($overlay.height() - 300) <= 1;
+										},
+										interval: 600
+									}).always(
+									function() {
+										ok(Math.abs($overlay.width() - 200) <= 1, 'width:'
+												+ $overlay.width() + 'px');
+										ok(Math.abs($overlay.height() - 300) <= 1, 'height:'
+												+ $overlay.height() + 'px');
+										indicator.hide();
+										start();
+									});
+						});
+	});
+
 	test('プロミスオブジェクトを指定した時、commonFailHandlerの動作は阻害されない', 2, function() {
 		var cfhCount = 0;
 		h5.settings.commonFailHandler = function() {

@@ -9960,6 +9960,40 @@ $(function() {
 		});
 	});
 
+	asyncTest('this.indicator() インジケータインスタンスの再利用', 5, function() {
+		var controllerBase = {
+			__name: 'TestController',
+			__ready: function() {
+				var indicator = this.indicator({
+					target: this.rootElement,
+					message: 'message',
+					percent: 50
+				}).show();
+				indicator.hide();
+				indicator.show();
+				setTimeout(function() {
+					strictEqual($(indicator._target).find('.indicator-message').text(), 'message',
+							'メッセージが表示されていること');
+					strictEqual($(indicator._target).find('.h5-indicator.a.overlay').length, 1,
+							'オーバーレイが表示されていること');
+					strictEqual($(indicator._target).find('.indicator-throbber').length, 1,
+							'スロバーが表示されていること');
+					strictEqual($(indicator._target).find('.throbber-percent').length, 1,
+							'進捗の数値(percent)が表示されていること');
+
+					indicator.hide();
+					setTimeout(function() {
+						strictEqual(
+								$('#controllerTest').children('.h5-indicator.a.content').length, 0,
+								'Indicator#hide() インジケータが除去されていること');
+						start();
+					}, 0);
+				}, 0);
+			}
+		};
+		h5.core.controller('#controllerTest', controllerBase);
+	});
+
 	asyncTest('this.indicator() orientation/resizeイベントの発生につき1度だけハンドラが実行されているか', 1, function() {
 		var controllerBase = {
 			__name: 'TestController',

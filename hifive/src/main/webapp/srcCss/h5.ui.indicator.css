@@ -24,6 +24,18 @@
 	cursor: wait;
 }
 
+/* インジケータ オーバレイDIV */
+.h5-indicator.overlay {
+	height: 100%;
+	width: 100%;
+	border: none;
+	margin: 0px;
+	padding: 0px;
+	top: 0;
+	left: 0;
+	z-index: 1001;
+}
+
 /* インジケータメッセージDIV - スロバーSPAN */
 .h5-indicator .indicator-throbber {
 	display: inline-block;
@@ -108,7 +120,7 @@ div.a.throbber-line {
 }
 
 /** no-prefix (IE10) */
-@-keyframes rotateThrobber {
+@keyframes rotateThrobber {
     from {transform: rotate(0deg);}
     to {transform: rotate(360deg);}
 }
@@ -158,14 +170,6 @@ div.a.throbber-line {
 	background-color: #000;
 	opacity: 0.6;
 	filter: alpha(opacity=60);
-	height: 100%;
-	width: 100%;
-	border: none;
-	margin: 0px;
-	padding: 0px;
-	top: 0;
-	left: 0;
-	z-index: 1001;
 }
 
 /* メッセージDIV */

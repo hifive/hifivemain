@@ -323,7 +323,9 @@
 			}
 
 			function load(absolutePath, filePath, df) {
-				h5.ajax(filePath).done(
+				h5.ajax(filePath, {
+					dataType: 'text'
+				}).done(
 						function(result, statusText, obj) {
 							// アクセス中のURLのプロミスを保持するaccessingUrlsから、このURLのプロミスを削除する
 							delete that.accessingUrls[absolutePath];

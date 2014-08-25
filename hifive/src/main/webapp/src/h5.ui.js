@@ -176,11 +176,6 @@
 	var isLegacyIE = h5ua.isIE && h5ua.browserVersion <= 6;
 
 	/**
-	 * timer + transformでスロバーを回すかどうか (PC版chromeでは、timer + transformでスロバーを回すようにするため)
-	 */
-	var useTransformTimerAnimation = h5ua.isChrome && h5ua.isDesktop;
-
-	/**
 	 * position:fixedでインジケータを描画するかのフラグ。
 	 * <p>
 	 * 自動更新またはアップデート可能なブラウザは、最新のブラウザであるものとして判定しない。(常にposition:fixedは有効とする)
@@ -362,6 +357,7 @@
 	 *
 	 * @private
 	 * @param elem {Element} DOM要素
+	 * @returns {Object}
 	 */
 	function getScrollSize(elem) {
 		var retW = elem.scrollWidth;
@@ -922,6 +918,10 @@
 		},
 		_run: function() {
 			var lineCount = this.style.throbber.lines;
+			if (lineCount === 0) {
+				// ラインの数が0なら何もしない
+				return;
+			}
 			var roundTime = this.style.throbber.roundTime;
 			var highlightPos = this.highlightPos;
 			var lines = this.group.childNodes;
@@ -1026,24 +1026,24 @@
 			$(this.baseDiv).remove();
 
 			if (this._runId) {
+				// Timerで動かしている場合(CSSAnimationをサポートしていないためにTimerで動かしている場合)
 				// Timerを止める
-				// chromeの場合はsetIntervalでタイマーを回しているため、clearIntervalで止める
-				if (useTransformTimerAnimation) {
-					clearInterval(this._runId);
-				} else {
-					clearTimeout(this._runId);
-				}
+				clearTimeout(this._runId);
 				this._runId = null;
 			}
 		},
 		_run: function() {
+			var lineCount = this.style.throbber.lines;
+			if (lineCount === 0) {
+				// lineの数が0なら何もしない
+				return;
+			}
 			var canvas = this.canvas;
 			var ctx = canvas.getContext('2d');
 			var highlightPos = this.highlightPos;
 			var positions = this.positions;
 			var lineColor = this.style.throbberLine.color;
 			var lineWidth = this.style.throbberLine.width;
-			var lineCount = this.style.throbber.lines;
 			var roundTime = this.style.throbber.roundTime;
 
 			canvas.width = canvas.width;
@@ -1074,25 +1074,6 @@
 			}
 			this.highlightPos = highlightPos;
 
-
-			if (useTransformTimerAnimation) {
-				// chrome22で、webkit-animationでアニメーションしている要素を消すと、表示上残ってしまう。(すべてのPCで起きるわけではない)
-				// そのため、chromeの場合はwebkit-animationを使わず、Timer + transform でスロバーを回している
-				//
-				// このwebkit-animationの問題について調べたところ、
-				// chrome23βでも同様の問題が起きたが、
-				// chrome24devとchrome25canaryではきちんと消えることを確認した。(2012/11/06現在)
-				var deg = 0;
-				this._runId = setInterval(function() {
-					deg++;
-					canvas.style.webkitTransform = 'rotate(' + deg + 'deg)';
-					if (deg >= 360) {
-						deg -= 360;
-					}
-				}, roundTime / 360);
-				return;
-			}
-
 			if (isCSS3AnimationsSupported) {
 				// CSS3Animationをサポートしている場合は、keyframesでスロバーを描写する
 				canvas.className = CLASS_THROBBER_CANVAS;
@@ -1101,11 +1082,9 @@
 				var that = this;
 
 				// CSSAnimation未サポートの場合タイマーアニメーションで描画する
-				// 対象ブラウザ: Firefox 2,3 / Opera  9.0～10.1 / Opera Mini 5.0～7.0 / Opera Mobile 10.0
+				// 対象ブラウザ: IE 9 / Firefox 2,3 / Opera  9.0～10.1 / Opera Mini 5.0～7.0 / Opera Mobile 10.0
 				// http://caniuse.com/transforms2d
 				// http://caniuse.com/#search=canvas
-				// ただし、Android 2.xは、-webkit-keyframesで-webkit-transformを使用すると、topとleftを変更してもその位置に描画されないバグがあるため、
-				// タイマーアニメーションでスロバーを描写する
 				this._runId = setTimeout(function() {
 					that._run.call(that);
 				}, perMills);
@@ -1194,6 +1173,9 @@
 		this._settings = settings;
 		// スタイル情報
 		this._styles = $.extend(true, {}, defaultStyle, readThrobberStyle(settings.theme));
+		if (settings.throbber) {
+			$.extend(this._styles.throbber, settings.throbber);
+		}
 		// スクリーンロックで表示するか
 		this._isScreenLock = isScreenlock;
 		// 表示対象であるDOM要素を保持するjQueryオブジェクト
@@ -1368,7 +1350,7 @@
 		/**
 		 * オーバーレイのサイズを再計算します。
 		 * <p>
-		 * position:fixedで表示している場合は再計算しません。
+		 * position:fixedで表示している場合は再計算しません。また、オーバレイ非表示の場合は何もしません。
 		 * <p>
 		 * position:absoluteの場合は高さのみ再計算を行い、IE6以下の標準モード及びQuirksモードの場合は高さと幅の両方を再計算します。
 		 *
@@ -1377,13 +1359,17 @@
 		 * @private
 		 */
 		_resizeOverlay: function() {
-			if (this._isScreenLock && usePositionFixed) {
+			// スクリーンロックでpoisition:fixedが使用可能なブラウザの場合は、オーバレイをposition:fixedで表示している
+			// オーバレイをposition:fixedで表示している場合は何もしない
+			// また、オーバレイを表示していない(block:false)インジケータなら何もしない
+			if ((this._isScreenLock && usePositionFixed) || this._$overlay.length === 0) {
 				return;
 			}
 
 			for (var i = 0, len = this._$target.length; i < len; i++) {
-				var _$target = this._$target.eq(i);
+				var _$content = this._$content.eq(i);
 				var _$overlay = this._$overlay.eq(i);
+				var _$target = this._$target.eq(i);
 				var _$skin = this._$skin.eq(i);
 
 				var w, h;
@@ -1393,7 +1379,12 @@
 					w = documentWidth();
 					h = documentHeight();
 				} else {
+					// オーバレイとコンテンツを非表示にしたときのscrollWidth/Heightを取得する
+					_$overlay.css('display', 'none');
+					_$content.css('display', 'none');
 					var scrSize = getScrollSize(_$target[0]);
+					_$overlay.css('display', 'block');
+					_$content.css('display', 'block');
 					w = scrSize.w;
 					h = scrSize.h;
 				}
@@ -1507,11 +1498,8 @@
 				}
 			};
 
-			if (!isCSS3AnimationsSupported || useTransformTimerAnimation) {
-				// CSS3Animationをサポートしないブラウザまたはchromeの場合、タイマーでスロバーのアニメーションを動かしているため、スロバーのhide()でタイマーを停止させる。
-				for (var i = 0, len = this._throbbers.length; i < len; i++) {
-					this._throbbers[i].hide();
-				}
+			for (var i = 0, len = this._throbbers.length; i < len; i++) {
+				this._throbbers[i].hide();
 			}
 
 			if (fadeOutTime < 0) {
