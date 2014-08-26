@@ -2068,6 +2068,9 @@
 	 * <p>
 	 * thisはデータモデルマネージャから呼ばれた場合はそのデータモデルマネージャ。
 	 * </p>
+	 *
+	 * @param {Object|Object[]} descriptor ディスクリプタまたはディスクリプタの配列
+	 * @returns {DataModel|DataModel[]}
 	 */
 	function createModel(descriptor) {
 		// descriptorがオブジェクトまたは配列じゃなかったらエラー
@@ -2566,12 +2569,14 @@
 		 * </p>
 		 *
 		 * @since 1.1.0
-		 * @param {Object} descriptor データモデルディスクリプタ
+		 * @function
+		 * @param {Object|Object[]} descriptor データモデルディスクリプタまたはその配列
 		 * @param {String} descriptor.name データモデル名。必須。
 		 * @param {String} descriptor.base
 		 *            マネージャに属する別のデータモデルのschemaを継承する場合に指定します。『'@'+継承先データモデル名』で指定してください。
 		 * @param {Object} descriptor.schema スキーマを定義したオブジェクトを指定します。必須。
 		 * @memberOf DataModelManager
+		 * @returns {DataModel|DataModel[]} データモデルを返します。ディスクリプタが配列で渡された場合はそれぞれについてのデータモデルを配列で返します。
 		 */
 		createModel: createModel,
 
@@ -2647,7 +2652,6 @@
 		 * </pre>
 		 *
 		 * @since 1.1.0
-		 * @returns {Boolean} アップデートセッション中かどうか
 		 * @memberOf DataModelManager
 		 */
 		beginUpdate: function() {
@@ -2936,6 +2940,7 @@
 	 * @param {Number} [start=1] 開始番号
 	 * @param {Number} [step=1] ステップ数
 	 * @param {Integer} [returnType=2] 戻り値の型(デフォルト number)
+	 * @returns {Sequence}
 	 */
 	function createSequence(start, step, returnType) {
 		// start,stepをdefault値で、returnTypeだけ指定したい場合、createSequence(null,null,returnType)で呼べるように、==nullで比較している
