@@ -1193,14 +1193,19 @@
 				// ルートコントローラであれば次の処理
 				// イベントハンドラのバインド
 				doForEachControllerGroups(controller, function(c, parent, prop) {
-					// 親コントローラの__metaからこのコントローラについてuseHandlersの定義を取得
-					var useHandlers = parent && parent.__meta && parent.__meta[prop]
-							&& parent.__meta[prop].useHandlers;
-					if (useHandlers === false) {
-						// 親のuseHandlersでfalseが指定されていた場合は何もしない
-						return;
+					// useHandlersの判定文について、minifyした時にiOS7.0で正しく解釈されるようにisUseHandlersという変数を作って対応している(issue #402)
+					// iOS7.0.xで、「論理値との比較で、片方が論理積」である条件式がif文に指定されていた場合、正しく解釈されないバグがある
+					// if(false !== (null && 'fuga')) { } else { iOS7.0.xだとelse文に入る }
+					// minfyした時に↑のような条件式にならないようにこのような実装にしている
+					// (この実装の場合、3項演算に展開される)
+					var isUseHandlers = true;
+					if (parent && parent.__meta && parent.__meta[prop]) {
+						isUseHandlers = parent.__meta[prop].useHandlers !== false;
 					}
-					bindByBindMap(c);
+					if (isUseHandlers) {
+						// 親のuseHandlersでfalseが指定されていなければバインドを実行する
+						bindByBindMap(c);
+					}
 				});
 				// __readyの実行
 				triggerReady(controller);
