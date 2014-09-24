@@ -3754,11 +3754,11 @@
 		 * @returns {Boolean} 判定結果
 		 */
 		equals: function(ary) {
-			if (!isArray(ary) && !isObservableArray(ary)) {
+			var target = isObservableArray(ary) ? ary._src : ary;
+			if (!isArray(target)) {
 				return false;
 			}
 			var len = this.length;
-			var target = isObservableArray(ary) ? ary._src : ary;
 			var targetLength = target.length;
 
 			// aryが配列でもObservableArrayでもないならfalse
