@@ -1816,7 +1816,7 @@
 			// 配列なら、配列の中身も変更されていないかチェックする(type:anyならチェックしない)
 			// type:[]の場合、oldValueは必ずObsArrayまたはundefined。
 			// newValue,oldValueともに配列(oldValueの場合はObsArray)かつ、長さが同じ場合にのみチェックする
-			if (isTypeArray(type) && oldValue && oldValue.equals(newValue, oldValue)) {
+			if (isTypeArray(type) && oldValue && oldValue.equals(newValue)) {
 				continue;
 			}
 
@@ -3754,15 +3754,21 @@
 		 * @returns {Boolean} 判定結果
 		 */
 		equals: function(ary) {
+			if (!isArray(ary) && !isObservableArray(ary)) {
+				return false;
+			}
 			var len = this.length;
+			var target = isObservableArray(ary) ? ary._src : ary;
+			var targetLength = target.length;
 
 			// aryが配列でもObservableArrayでもないならfalse
 			//サイズが異なる場合もfalse
-			if (!(isArray(ary) || isObservableArray(ary)) || ary.length !== len) {
+			// aryがovservableArrayの場合は_src.lengthと比較
+			// target(ネイティブの配列)のlengthと比較する。
+			// (iOS8.0で、ObsArrayのlengthと比較すると比較結果がおかしくなることがある(#issue 404))
+			if (targetLength !== len) {
 				return false;
 			}
-
-			var target = isObservableArray(ary) ? ary._src : ary;
 
 			// 中身の比較
 			for (var i = 0; i < len; i++) {
