@@ -3754,18 +3754,19 @@
 		 * @returns {Boolean} 判定結果
 		 */
 		equals: function(ary) {
-			var target = isObservableArray(ary) ? ary._src : ary;
-			if (!isArray(target)) {
+			var isObservable = isObservableArray(ary);
+			if (!isObservable && !isArray(ary)) {
+				// ObservableArrayでもArrayでもないならfalseを返す
 				return false;
 			}
+
+			var target = isObservable ? ary._src : ary;
 			var len = this.length;
 			var targetLength = target.length;
 
-			// aryが配列でもObservableArrayでもないならfalse
-			//サイズが異なる場合もfalse
-			// aryがovservableArrayの場合は_src.lengthと比較
+			// サイズが異なる場合はfalseを返す
 			// target(ネイティブの配列)のlengthと比較する。
-			// (iOS8.0で、ObsArrayのlengthと比較すると比較結果がおかしくなることがある(#issue 404))
+			// (iOS8.0で、ObsArrayのlengthとネイティブのArrayのlengthを比較すると比較結果がおかしくなることがある(#issue 404))
 			if (targetLength !== len) {
 				return false;
 			}
