@@ -794,7 +794,10 @@
 				// (例えばjQuery1.9.0は"use strict"宣言がされており、jQuery1.9.0内の関数を経由して呼ばれた関数は全てstrictモード扱いとなり、
 				// callerプロパティにアクセスできない)
 				// そのため、try-catchで囲んで、取得できなかった場合は{unable to trace}を出力する
-				for (var i = 0, l = this.maxStackSize, caller = fn; i < l; i++) {
+
+				// fnは、(debug|info|warn|error|trace)の何れかなので、その呼び出し元から辿る
+				var caller = fn.caller;
+				for (var i = 0, l = this.maxStackSize; i < l; i++) {
 					var funcName = getFunctionName(caller);
 					var argStr = parseArgs(caller.arguments);
 					var nextCaller;
@@ -809,13 +812,15 @@
 						if (!nextCaller) {
 							// nullの場合はルートからの呼び出し
 							traces.push('{root}(' + argStr + ')');
+							// これ以上トレースできないので終了
+							break;
 						} else {
 							traces.push('{anonymous}(' + argStr + ')');
-							break;
 						}
+					} else {
+						// 関数名が取得できているときは関数名を表示
+						traces.push('{' + funcName + '}(' + argStr + ')');
 					}
-					// 関数名が取得できているときは関数名を表示
-					traces.push('{' + funcName + '}(' + argStr + ')');
 					caller = nextCaller;
 				}
 			}
