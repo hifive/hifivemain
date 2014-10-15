@@ -44,14 +44,8 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
-
-	var setDefault = function() {
-		var orgSettings = $.extend({}, h5.settings.log);
-		return function() {
-			h5.settings.log = orgSettings;
-			h5.log.configure();
-		};
-	};
+	// ログの設定を元に戻す関数
+	var restoreDefaultLogSettings = testutils.u.restoreDefaultLogSettings;
 
 	function setLevel(level, outputs) {
 		h5.settings.log = {
@@ -94,7 +88,7 @@ $(function() {
 	//=============================
 	module('ログカテゴリの設定', {
 		teardown: function() {
-			setDefault();
+			restoreDefaultLogSettings();
 		}
 	});
 
@@ -136,7 +130,7 @@ $(function() {
 	//=============================
 	module('configure()', {
 		teardown: function() {
-			setDefault();
+			restoreDefaultLogSettings();
 		}
 	});
 
@@ -167,7 +161,7 @@ $(function() {
 	//=============================
 	module('ログターゲットの設定', {
 		teardown: function() {
-			setDefault();
+			restoreDefaultLogSettings();
 		}
 	});
 
@@ -312,7 +306,7 @@ $(function() {
 	//=============================
 	module('カスタムログターゲットの動作', {
 		teardown: function() {
-			setDefault();
+			restoreDefaultLogSettings();
 		}
 	});
 
@@ -457,7 +451,7 @@ $(function() {
 	//=============================
 	module('ログレベル閾値動作', {
 		teardown: function() {
-			setDefault();
+			restoreDefaultLogSettings();
 		},
 		testLogLevel: function(level) {
 			var resultAry = [];
@@ -638,7 +632,7 @@ $(function() {
 			outputs.myTarget2 = [];
 			outputs.myTarget3 = [];
 			outputs.myTarget4 = [];
-			setDefault();
+			restoreDefaultLogSettings();
 		},
 		outputs: {
 			myTarget1: [],
@@ -831,7 +825,7 @@ $(function() {
 		teardown: function() {
 			this.logger = null;
 			this.logObjs = null;
-			setDefault();
+			restoreDefaultLogSettings();
 		},
 		/**
 		 * 引数の数分だけの関数呼び出しを行ってログを出力する
@@ -979,7 +973,7 @@ $(function() {
 			h5.log.configure();
 		},
 		teardown: function() {
-			setDefault();
+			restoreDefaultLogSettings();
 		}
 	});
 

@@ -189,6 +189,17 @@
 		h5.settings.aspects = null;
 	}
 
+	/**
+	 * ログの設定を元に戻す
+	 */
+	var restoreDefaultLogSettings = (function() {
+		var orgSettings = $.extend({}, h5.settings.log);
+		return function() {
+			h5.settings.log = orgSettings;
+			h5.log.configure();
+		};
+	})();
+
 	// ----------- dom ------------
 	/**
 	 * iframeを作成 IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
@@ -454,7 +465,8 @@
 			compareVersion: compareVersion,
 			rgbToHex: rgbToHex,
 			clearController: clearController,
-			cleanAllAspects: cleanAllAspects
+			cleanAllAspects: cleanAllAspects,
+			restoreDefaultLogSettings: restoreDefaultLogSettings
 		},
 		qunit: {
 			abortTest: abortTest,
