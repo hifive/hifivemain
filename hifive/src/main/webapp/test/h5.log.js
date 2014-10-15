@@ -35,47 +35,20 @@ $(function() {
 
 	var ERR = ERRCODE.h5.log;
 
-	var LOG_MESSAGE_ERROR = 'ERRORレベルのログ';
-	var LOG_MESSAGE_WARN = 'WARNレベルのログ';
-	var LOG_MESSAGE_DEBUG = 'DEBUGレベルのログ';
-	var LOG_MESSAGE_INFO = 'INFOレベルのログ';
-	var LOG_MESSAGE_TRACE = 'TRACEレベルのログ';
+	var LOG_MESSAGE_ERROR = h5devtestutils.log.LOG_MESSAGE_ERROR;
+	var LOG_MESSAGE_WARN = h5devtestutils.log.LOG_MESSAGE_WARN;
+	var LOG_MESSAGE_DEBUG = h5devtestutils.log.LOG_MESSAGE_DEBUG;
+	var LOG_MESSAGE_INFO = h5devtestutils.log.LOG_MESSAGE_INFO;
+	var LOG_MESSAGE_TRACE = h5devtestutils.log.LOG_MESSAGE_TRACE;
 
 	//=============================
 	// Functions
 	//=============================
 	// ログの設定を元に戻す関数
-	var restoreDefaultLogSettings = testutils.u.restoreDefaultLogSettings;
+	var restoreDefault = h5devtestutils.log.restoreDefault;
 
-	function setLevel(level, outputs) {
-		h5.settings.log = {
-			target: {
-				myTarget: {
-					type: {
-						log: function(logObj) {
-							if (outputs) {
-								outputs.push(logObj);
-							}
-						}
-					}
-				}
-			},
-			defaultOut: {
-				level: level,
-				targets: 'myTarget'
-			}
-		};
-		h5.log.configure();
-	}
-
-	function outputEachLevel(logger) {
-		var logger = logger || h5.log.createLogger('LogTest');
-		logger.error(LOG_MESSAGE_ERROR);
-		logger.warn(LOG_MESSAGE_WARN);
-		logger.info(LOG_MESSAGE_INFO);
-		logger.debug(LOG_MESSAGE_DEBUG);
-		logger.trace(LOG_MESSAGE_TRACE);
-	}
+	// 各レベルでログ出力を行う関数
+	var outputEachLevel = h5devtestutils.log.outputEachLevel;
 
 	// =========================================================================
 	//
@@ -88,7 +61,7 @@ $(function() {
 	//=============================
 	module('ログカテゴリの設定', {
 		teardown: function() {
-			restoreDefaultLogSettings();
+			restoreDefault();
 		}
 	});
 
@@ -130,7 +103,7 @@ $(function() {
 	//=============================
 	module('configure()', {
 		teardown: function() {
-			restoreDefaultLogSettings();
+			restoreDefault();
 		}
 	});
 
@@ -161,7 +134,7 @@ $(function() {
 	//=============================
 	module('ログターゲットの設定', {
 		teardown: function() {
-			restoreDefaultLogSettings();
+			restoreDefault();
 		}
 	});
 
@@ -306,7 +279,7 @@ $(function() {
 	//=============================
 	module('カスタムログターゲットの動作', {
 		teardown: function() {
-			restoreDefaultLogSettings();
+			restoreDefault();
 		}
 	});
 
@@ -451,11 +424,11 @@ $(function() {
 	//=============================
 	module('ログレベル閾値動作', {
 		teardown: function() {
-			restoreDefaultLogSettings();
+			restoreDefault();
 		},
 		testLogLevel: function(level) {
 			var resultAry = [];
-			setLevel(level, resultAry);
+			this.setLevel(level, resultAry);
 			outputEachLevel();
 
 			var outputs = [];
@@ -463,6 +436,26 @@ $(function() {
 				outputs.push(resultAry[i].args[0]);
 			}
 			return outputs;
+		},
+		setLevel: function(level, outputs) {
+			h5.settings.log = {
+				target: {
+					myTarget: {
+						type: {
+							log: function(logObj) {
+								if (outputs) {
+									outputs.push(logObj);
+								}
+							}
+						}
+					}
+				},
+				defaultOut: {
+					level: level,
+					targets: 'myTarget'
+				}
+			};
+			h5.log.configure();
 		}
 	});
 
@@ -613,7 +606,7 @@ $(function() {
 		var levelsStr = ["'debag'", "''", "' '", "[]", "{level: 'debug'}"];
 		for (var i = 0, l = levels.length; i < l; i++) {
 			try {
-				setLevel(levels[i]);
+				this.setLevel(levels[i]);
 				ok(false, 'エラーが発生していません。 ' + levelsStr[i]);
 			} catch (e) {
 				ok(true, e.code + ': ' + e.message + ' ' + levelsStr[i]);
@@ -632,7 +625,7 @@ $(function() {
 			outputs.myTarget2 = [];
 			outputs.myTarget3 = [];
 			outputs.myTarget4 = [];
-			restoreDefaultLogSettings();
+			restoreDefault();
 		},
 		outputs: {
 			myTarget1: [],
@@ -825,7 +818,7 @@ $(function() {
 		teardown: function() {
 			this.logger = null;
 			this.logObjs = null;
-			restoreDefaultLogSettings();
+			restoreDefault();
 		},
 		/**
 		 * 引数の数分だけの関数呼び出しを行ってログを出力する
@@ -973,7 +966,7 @@ $(function() {
 			h5.log.configure();
 		},
 		teardown: function() {
-			restoreDefaultLogSettings();
+			restoreDefault();
 		}
 	});
 
