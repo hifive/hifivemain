@@ -33,7 +33,8 @@ $(function() {
 	// Variables
 	//=============================
 	// testutils
-	var clearController = testutils.u.clearController;
+	var clearController = h5devtestutils.controller.clearController;
+	var cleanAllAspects = h5devtestutils.controller.cleanAllAspects;
 
 	// エラーコード
 	var ERR = ERRCODE.h5.core.controller;
@@ -41,8 +42,6 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
-	// testutils
-	var cleanAllAspects = testutils.u.cleanAllAspects;
 
 	// =========================================================================
 	//

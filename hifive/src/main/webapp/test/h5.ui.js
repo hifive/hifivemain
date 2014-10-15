@@ -51,10 +51,6 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
-
-	// gate関数をキャッシュ
-	var gate = testutils.async.gate;
-
 	function getWindowWidth() {
 		var elem = isQuirksMode ? document.documentElement : document.body;
 		// window.innerHeightではスクロールバーの幅も入ってしまうため、clientWidthを使う

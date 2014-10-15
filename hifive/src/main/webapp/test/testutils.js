@@ -153,42 +153,6 @@
 		}
 	}
 
-	/**
-	 * コントローラがdisposeされているかどうかチェックします
-	 *
-	 * @param controller
-	 * @returns {Boolean}
-	 */
-	function isDisposed(controller) {
-		var ret = true;
-		for ( var p in controller) {
-			if (controller.hasOwnProperty(p) && controller[p] !== null) {
-				ret = false;
-			}
-		}
-		return ret;
-	}
-
-	/**
-	 * #qunit-fixtur内にバインドされているコントローラをdisposeして、コントローラキャッシュ、ロジックキャッシュをクリアする
-	 */
-	function clearController() {
-		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
-			deep: true
-		});
-		for (var i = controllers.length - 1; i >= 0; i--) {
-			controllers[i].dispose();
-		}
-		h5.core.definitionCacheManager.clearAll();
-	}
-
-	/**
-	 * アスペクトを削除する
-	 */
-	function cleanAllAspects() {
-		h5.settings.aspects = null;
-	}
-
 	// ----------- dom ------------
 	/**
 	 * iframeを作成 IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
@@ -447,14 +411,11 @@
 			closePopupWindow: closePopupWindow
 		},
 		u: {
-			isDisposed: isDisposed,
 			isRejected: isRejected,
 			isResolved: isResolved,
 			deleteProperty: deleteProperty,
 			compareVersion: compareVersion,
 			rgbToHex: rgbToHex,
-			clearController: clearController,
-			cleanAllAspects: cleanAllAspects
 		},
 		qunit: {
 			abortTest: abortTest,

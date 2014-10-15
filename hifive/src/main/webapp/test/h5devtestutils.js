@@ -48,6 +48,8 @@
 
 	/**
 	 * 各レベルでログメッセージを出力する
+	 *
+	 * @param {Log} 指定しない場合は作成します
 	 */
 	function outputEachLevel(logger) {
 		var logger = logger || h5.log.createLogger('LogTest');
@@ -56,6 +58,43 @@
 		logger.info(LOG_MESSAGE_INFO);
 		logger.debug(LOG_MESSAGE_DEBUG);
 		logger.trace(LOG_MESSAGE_TRACE);
+	}
+
+	// ----------- controller ----------
+	/**
+	 * コントローラがdisposeされているかどうかチェックします
+	 *
+	 * @param controller
+	 * @returns {Boolean}
+	 */
+	function isDisposed(controller) {
+		var ret = true;
+		for ( var p in controller) {
+			if (controller.hasOwnProperty(p) && controller[p] !== null) {
+				ret = false;
+			}
+		}
+		return ret;
+	}
+
+	/**
+	 * #qunit-fixtur内にバインドされているコントローラをdisposeして、コントローラキャッシュ、ロジックキャッシュをクリアする
+	 */
+	function clearController() {
+		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
+			deep: true
+		});
+		for (var i = controllers.length - 1; i >= 0; i--) {
+			controllers[i].dispose();
+		}
+		h5.core.definitionCacheManager.clearAll();
+	}
+
+	/**
+	 * アスペクトを削除する
+	 */
+	function cleanAllAspects() {
+		h5.settings.aspects = null;
 	}
 
 	/**
@@ -74,6 +113,11 @@
 			LOG_MESSAGE_TRACE: LOG_MESSAGE_TRACE,
 			restoreDefault: restoreDefault,
 			outputEachLevel: outputEachLevel
+		},
+		controller: {
+			isDisposed: isDisposed,
+			clearController: clearController,
+			cleanAllAspects: cleanAllAspects
 		}
 	});
 })();

@@ -768,24 +768,24 @@ $(function() {
 				LOG_MESSAGE_DEBUG], 'defaultOutで指定されたターゲットに指定されたレベルのログが出力されていること');
 	});
 
-//	test('カテゴリにマッチする場合、マッチしたoutの定義で出力されること', 3, function() {
-//		this.configureCategoryLogger([{
-//			category: 'test.controller*',
-//			level: 'trace',
-//			targets: 'myTarget1'
-//		}, {
-//			category: '*',
-//			level: 'info',
-//			targets: 'myTarget2'
-//		}]);
-//		var logger = h5.log.createLogger('test.controller*');
-//		outputEachLevel(logger);
-//		var outputs = this.outputs;
-//		deepEqual(outputs.myTarget1, [LOG_MESSAGE_ERROR, LOG_MESSAGE_WARN, LOG_MESSAGE_INFO,
-//				LOG_MESSAGE_DEBUG, LOG_MESSAGE_TRACE], 'カテゴリにマッチしたoutの定義で出力されていること');
-//		deepEqual(outputs.myTarget2, [], 'マッチしたoutがあった時、それ以降のoutの定義では出力されないこと');
-//		deepEqual(outputs.defaultOut, [], 'defaultOutには出力されないこと');
-//	});
+	test('カテゴリにマッチする場合、マッチしたoutの定義で出力されること', 3, function() {
+		this.configureCategoryLogger([{
+			category: 'test.controller*',
+			level: 'trace',
+			targets: 'myTarget1'
+		}, {
+			category: '*',
+			level: 'info',
+			targets: 'myTarget2'
+		}]);
+		var logger = h5.log.createLogger('test.controller*');
+		outputEachLevel(logger);
+		var outputs = this.outputs;
+		deepEqual(outputs.myTarget1, [LOG_MESSAGE_ERROR, LOG_MESSAGE_WARN, LOG_MESSAGE_INFO,
+				LOG_MESSAGE_DEBUG, LOG_MESSAGE_TRACE], 'カテゴリにマッチしたoutの定義で出力されていること');
+		deepEqual(outputs.myTarget2, [], 'マッチしたoutがあった時、それ以降のoutの定義では出力されないこと');
+		deepEqual(outputs.defaultOut, [], 'defaultOutには出力されないこと');
+	});
 	// TODO
 	// カテゴリ指定時の挙動を確認してテスト記述
 

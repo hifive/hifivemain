@@ -33,14 +33,11 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
-
 	// testutils
-	var isDisposed = testutils.u.isDisposed;
 	var isResolved = testutils.u.isResolved;
 	var isRejected = testutils.u.isRejected;
 	var rgbToHex = testutils.u.rgbToHex;
 	var deleteProperty = testutils.u.deleteProperty;
-	var clearController = testutils.u.clearController;
 	var abortTest = testutils.qunit.abortTest;
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;
@@ -48,6 +45,9 @@ $(function() {
 	var unstashOutput = testutils.qunit.unstashOutput;
 	var createIFrameElement = testutils.dom.createIFrameElement;
 	var skipTest = testutils.qunit.skipTest;
+	var clearController = h5devtestutils.controller.clearController;
+	var isDisposed = h5devtestutils.controller.isDisposed;
+	var cleanAllAspects = h5devtestutils.controller.cleanAllAspects;
 
 	// コントローラのエラーコード
 	var ERR = ERRCODE.h5.core.controller;
@@ -85,9 +85,6 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
-
-	// testutils
-	var cleanAllAspects = testutils.u.cleanAllAspects;
 
 	// タッチイベントの位置を設定する関数
 	function setPos(ev, pos) {

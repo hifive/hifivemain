@@ -39,14 +39,6 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
-	// testutils
-	var rgbToHex = testutils.u.rgbToHex;
-	var clearController = testutils.u.clearController;
-	var createIFrameElement = testutils.dom.createIFrameElement;
-	var openPopupWindow = testutils.dom.openPopupWindow;
-	var closePopupWindow = testutils.dom.closePopupWindow;
-	var skipTest = testutils.qunit.skipTest;
-
 	/**
 	 * #qunit-fixture
 	 */
@@ -76,6 +68,14 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
+	// testutils
+	var rgbToHex = testutils.u.rgbToHex;
+	var createIFrameElement = testutils.dom.createIFrameElement;
+	var openPopupWindow = testutils.dom.openPopupWindow;
+	var closePopupWindow = testutils.dom.closePopupWindow;
+	var skipTest = testutils.qunit.skipTest;
+	var clearController = h5devtestutils.controller.clearController;
+
 	/**
 	 * 引数に指定された値をdata-h5-bind属性に持つspan要素を作って返す
 	 */
