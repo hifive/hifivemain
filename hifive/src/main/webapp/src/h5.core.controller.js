@@ -295,7 +295,6 @@
 				document.body.removeChild(svg);
 			});
 			// document.ready前はnullを返す
-			alert(_isSVGOffsetCollect);
 			return _isSVGOffsetCollect;
 		};
 	})();
@@ -1673,18 +1672,14 @@
 			// オフセットを返す
 			return $(target).offset();
 		}
+
 		// targetがSVG要素で、SVG要素のoffsetが正しくとれないブラウザの場合は自分で計算する issue #393
 		var doc = getDocumentOf(target);
-		var viewBox = target.getAttribute('viewBox');
-		var x = 0;
-		var y = 0;
-		// viewBoxが指定されている場合はviewBoxを考慮して、SVG要素の左上位置にrectを置くようにしている
-		if (viewBox) {
-			var tmp = viewBox.split(' ');
-			x = parseInt(tmp[0]);
-			y = parseInt(tmp[1]);
-		}
 		var dummyRect = doc.createElementNS(SVG_XMLNS, 'rect');
+		// viewBoxを考慮して、SVG要素の左上位置にrectを置くようにしている
+		var viewBox = target.viewBox;
+		var x = viewBox.baseVal.x;
+		var y = viewBox.baseVal.y;
 		dummyRect.setAttribute('x', x);
 		dummyRect.setAttribute('y', y);
 		dummyRect.setAttribute('width', 1);
