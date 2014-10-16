@@ -29,6 +29,11 @@
 	// =============================
 
 	/**
+	 * SVGの名前空間
+	 */
+	var SVG_XMLNS = 'http://www.w3.org/2000/svg';
+
+	/**
 	 * セレクタのタイプを表す定数 イベントコンテキストの中に格納する
 	 */
 	var SELECTOR_TYPE_CONST = {
@@ -231,6 +236,69 @@
 	// =============================
 	// Functions
 	// =============================
+	/**
+	 * 要素のtransformスタイルの指定を無効にする
+	 *
+	 * @private
+	 * @param {DOM} element
+	 */
+	function clearTransformStyle(element) {
+		if (element.style.transform != null) {
+			element.style.transform = '';
+		}
+		if (element.style.mozTansform != null) {
+			element.style.mozTansform = '';
+		}
+		if (element.style.webkitTansform != null) {
+			element.style.webkitTansform = '';
+		}
+	}
+
+	/**
+	 * svg要素のboundingClientRectを取得した時にsvg要素自体の位置を得できるブラウザかどうか
+	 * <p>
+	 * (Firefox32以下、iOS5以下、Android対応のため。 issue #393)
+	 * </p>
+	 *
+	 * @private
+	 * @returns {Boolean}
+	 */
+	var isSVGOffsetCollect = (function() {
+		var _isSVGOffsetCollect = null;
+		return function() {
+			if (_isSVGOffsetCollect != null) {
+				// 判定済みなら判定済み結果を返す
+				return _isSVGOffsetCollect;
+			}
+			// ダミーのsvg要素とrect要素を作って、正しく位置が取得できるかどうかの判定を行う
+			var svg = document.createElementNS(SVG_XMLNS, 'svg');
+			svg.setAttribute('width', 1);
+			svg.setAttribute('height', 1);
+			var rect = document.createElementNS(SVG_XMLNS, 'rect');
+			rect.setAttribute('x', 1);
+			rect.setAttribute('y', 1);
+			rect.setAttribute('width', 1);
+			rect.setAttribute('height', 1);
+			// transformを空文字にして無効にする(cssで指定されていたとしても無効にして計算できるようにするため)
+			clearTransformStyle(rect);
+
+			$(function() {
+				document.body.appendChild(svg);
+				// svgのboudingClientRectのtopを取得
+				var svgTop = svg.getBoundingClientRect().top;
+				svg.appendChild(rect);
+				// svg要素のboundingClientRectが正しく取得できていない場合、描画図形を包含する矩形を表している。
+				// その場合、rectを追加するとsvgのboundingClientRectが変わるので、rect追加前とrect追加後の位置の差がある場合は
+				// svg要素の位置が正しくとれないと判定する
+				_isSVGOffsetCollect = svgTop === svg.getBoundingClientRect().top;
+				// svg要素の削除
+				document.body.removeChild(svg);
+			});
+			// document.ready前はnullを返す
+			alert(_isSVGOffsetCollect);
+			return _isSVGOffsetCollect;
+		};
+	})();
 
 	// --------------------------------- コントローラ定義オブジェクトのvalidate関数 ---------------------------------
 	/**
@@ -1594,6 +1662,52 @@
 	}
 
 	/**
+	 * 要素のオフセットを返す
+	 *
+	 * @private
+	 * @param {DOM} target
+	 * @returns {Object} offset
+	 */
+	function getOffset(target) {
+		if (target.tagName.toLowerCase() !== 'svg' || isSVGOffsetCollect()) {
+			// オフセットを返す
+			return $(target).offset();
+		}
+		// targetがSVG要素で、SVG要素のoffsetが正しくとれないブラウザの場合は自分で計算する issue #393
+		var doc = getDocumentOf(target);
+		var viewBox = target.getAttribute('viewBox');
+		var x = 0;
+		var y = 0;
+		// viewBoxが指定されている場合はviewBoxを考慮して、SVG要素の左上位置にrectを置くようにしている
+		if (viewBox) {
+			var tmp = viewBox.split(' ');
+			x = parseInt(tmp[0]);
+			y = parseInt(tmp[1]);
+		}
+		var dummyRect = doc.createElementNS(SVG_XMLNS, 'rect');
+		dummyRect.setAttribute('x', x);
+		dummyRect.setAttribute('y', y);
+		dummyRect.setAttribute('width', 1);
+		dummyRect.setAttribute('height', 1);
+		// transformを空文字にして無効にする(cssで指定されていたとしても無効にして計算できるようにするため)
+		clearTransformStyle(dummyRect);
+
+		// ダミー要素を追加してオフセット位置を取得
+		target.appendChild(dummyRect);
+		var boundingClientRect = dummyRect.getBoundingClientRect();
+		var offsetLeft = boundingClientRect.left;
+		var offsetTop = boundingClientRect.top;
+		// ダミー要素を削除
+		target.removeChild(dummyRect);
+
+		// 取得したオフセット位置を返す
+		return {
+			left: offsetLeft,
+			top: offsetTop
+		};
+	}
+
+	/**
 	 * タッチイベントのイベントオブジェクトにpageXやoffsetXといった座標系のプロパティを追加します。
 	 * <p>
 	 * touchstart/touchmove/touchendをjQuery.trigger()で発火させた場合、originalEventプロパティは存在しないので、座標系プロパティのコピーを行いません。
@@ -1627,13 +1741,11 @@
 		} else if (target === window || target === document) {
 			target = document.body;
 		}
-		var offset = $(target).offset();
-		if (offset) {
-			var offsetX = pageX - offset.left;
-			var offsetY = pageY - offset.top;
-			event.offsetX = originalEvent.offsetX = offsetX;
-			event.offsetY = originalEvent.offsetY = offsetY;
-		}
+		var offset = getOffset(target);
+		var offsetX = pageX - offset.left;
+		var offsetY = pageY - offset.top;
+		event.offsetX = originalEvent.offsetX = offsetX;
+		event.offsetY = originalEvent.offsetY = offsetY;
 	}
 	/**
 	 * イベントオブジェクトを正規化します。
@@ -1646,15 +1758,14 @@
 		if (event && event.offsetX == null && event.offsetY == null && event.pageX && event.pageY) {
 			var target = event.target;
 			if (target.ownerSVGElement) {
+				// SVGに属する図形なら、外側のSVG要素をtargetとして扱う
 				target = target.farthestViewportElement;
 			} else if (target === window || target === document) {
 				target = document.body;
 			}
-			var offset = $(target).offset();
-			if (offset) {
-				event.offsetX = event.pageX - offset.left;
-				event.offsetY = event.pageY - offset.top;
-			}
+			var offset = getOffset(target);
+			event.offsetX = event.pageX - offset.left;
+			event.offsetY = event.pageY - offset.top;
 		}
 	}
 
