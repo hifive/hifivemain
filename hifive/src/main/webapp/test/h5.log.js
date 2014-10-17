@@ -778,7 +778,7 @@ $(function() {
 			level: 'info',
 			targets: 'myTarget2'
 		}]);
-		var logger = h5.log.createLogger('test.controller*');
+		var logger = h5.log.createLogger('test.controller.hoge');
 		outputEachLevel(logger);
 		var outputs = this.outputs;
 		deepEqual(outputs.myTarget1, [LOG_MESSAGE_ERROR, LOG_MESSAGE_WARN, LOG_MESSAGE_INFO,
@@ -786,8 +786,79 @@ $(function() {
 		deepEqual(outputs.myTarget2, [], 'マッチしたoutがあった時、それ以降のoutの定義では出力されないこと');
 		deepEqual(outputs.defaultOut, [], 'defaultOutには出力されないこと');
 	});
-	// TODO
-	// カテゴリ指定時の挙動を確認してテスト記述
+
+	test('カテゴリにマッチしてもレベル指定がマッチしない場合、それ以降の出力定義で出力されること', 3, function() {
+		this.configureCategoryLogger([{
+			category: 'test.controller*',
+			level: 'warn',
+			targets: 'myTarget1'
+		}, {
+			category: '*',
+			level: 'info',
+			targets: 'myTarget2'
+		}]);
+		var logger = h5.log.createLogger('test.controller.hoge');
+		outputEachLevel(logger);
+		var outputs = this.outputs;
+		deepEqual(outputs.myTarget1, [LOG_MESSAGE_ERROR, LOG_MESSAGE_WARN],
+				'カテゴリとレベルにマッチしたoutの定義で出力されていること');
+		deepEqual(outputs.myTarget2, [LOG_MESSAGE_INFO], 'カテゴリとレベルにマッチしたoutの定義で出力されていること');
+		deepEqual(outputs.defaultOut, [LOG_MESSAGE_DEBUG],
+				'カテゴリとレベルでマッチしなかった出力はdefaultOutには出力されること');
+	});
+
+	test('マッチした出力定義でterminate:falseが指定されている場合、それ以降の出力定義でも出力されること', 4, function() {
+		this.configureCategoryLogger([{
+			category: 'test.logic',
+			level: 'warn',
+			targets: 'myTarget1'
+		}, {
+			category: 'test.controller*',
+			level: 'warn',
+			targets: 'myTarget2',
+			terminate: false
+		}, {
+			category: '*',
+			level: 'info',
+			targets: 'myTarget3'
+		}]);
+		var logger = h5.log.createLogger('test.controller.hoge');
+		outputEachLevel(logger);
+		var outputs = this.outputs;
+		deepEqual(outputs.myTarget1, [], 'マッチしないoutの定義では出力されていないこと');
+		deepEqual(outputs.myTarget2, [LOG_MESSAGE_ERROR, LOG_MESSAGE_WARN],
+				'カテゴリとレベルにマッチしたoutの定義で出力されていること');
+		deepEqual(outputs.myTarget3, [LOG_MESSAGE_ERROR, LOG_MESSAGE_WARN, LOG_MESSAGE_INFO],
+				'カテゴリとレベルにマッチしたoutの定義で出力されていること');
+		deepEqual(outputs.defaultOut, [LOG_MESSAGE_DEBUG],
+				'カテゴリとレベルでマッチしなかった出力はdefaultOutには出力されること');
+	});
+
+	test('最後にマッチした出力定義でterminate:falseが指定されている場合、defaultOutでも出力されること', 4, function() {
+		this.configureCategoryLogger([{
+			category: 'test.*',
+			level: 'error',
+			targets: 'myTarget1'
+		}, {
+			category: 'test.controller*',
+			level: 'info',
+			targets: 'myTarget2',
+			terminate: false
+		}, {
+			category: 'test.logic*',
+			level: 'info',
+			targets: 'myTarget3'
+		}]);
+		var logger = h5.log.createLogger('test.controller.hoge');
+		outputEachLevel(logger);
+		var outputs = this.outputs;
+		deepEqual(outputs.myTarget1, [LOG_MESSAGE_ERROR], 'カテゴリとレベルにマッチしたoutの定義で出力されていること');
+		deepEqual(outputs.myTarget2, [LOG_MESSAGE_WARN, LOG_MESSAGE_INFO],
+				'カテゴリとレベルにマッチしたoutの定義で出力されていること');
+		deepEqual(outputs.myTarget3, [], 'マッチしないoutの定義では出力されていないこと');
+		deepEqual(outputs.defaultOut, [LOG_MESSAGE_WARN, LOG_MESSAGE_INFO, LOG_MESSAGE_DEBUG],
+				'カテゴリとレベルにマッチしないまたはマッチしたけどterminate:falseだった出力はdefaultOutには出力されること');
+	});
 
 	//=============================
 	// Definition

@@ -492,8 +492,17 @@
 			level: 'debug',
 			targets: 'console'
 		};
-
 		/* del end */
+
+		// 設定オブジェクト
+		var settings = $.extend(true, {}, h5.settings.log);
+
+		// デフォルトアウトの設定
+		var dOut = settings.defaultOut;
+		if (!dOut) {
+			dOut = defaultOut;
+			settings.defaultOut = dOut;
+		}
 
 		function compileLogTarget(targets) {
 			if (!$.isPlainObject(targets)) {
@@ -526,9 +535,9 @@
 		}
 
 		var categoryCache = [];
-		function compileOutput(_logTarget, out, _dOut) {
-			var isDefault = _dOut == null;
+		function compileOutput(_logTarget, out, isDefault) {
 			if (!isDefault) {
+				// デフォルトアウトでない場合はcategoryの設定を行う
 				var category = out.category;
 				if (!isString(category) || $.trim(category).length === 0) {
 					throwFwError(ERR_CODE_OUT_CATEGORY_INVALID);
@@ -540,9 +549,11 @@
 				out.compiledCategory = getRegex(category);
 				categoryCache.push(category);
 			}
+
+			// レベルのコンパイル(数値化)
 			var compiledLevel;
 			if (out.level == null) {
-				compiledLevel = stringToLevel(isDefault ? defaultOut.level : _dOut.level);
+				compiledLevel = stringToLevel(isDefault ? defaultOut.level : dOut.level);
 			} else {
 				compiledLevel = isString(out.level) ? stringToLevel($.trim(out.level)) : out.level;
 			}
@@ -551,9 +562,10 @@
 			}
 			out.compiledLevel = compiledLevel;
 
+			// ターゲットのコンパイル
 			var compiledTargets = [];
 			var targets = out.targets;
-			if (!isDefault || targets != null) {
+			if (targets != null) {
 				var targetNames = [];
 				// targetsの指定は文字列または配列またはnull,undefinedのみ
 				if (!(targets == null || isArray(targets) || (isString(targets) && $.trim(targets).length))) {
@@ -578,43 +590,25 @@
 					targetNames.push(targetName);
 					compiledTargets.push(l.compiledTarget);
 				}
-				if (!isDefault) {
-					var defaultTargets = _dOut.targets;
-					if (defaultTargets != null) {
-						defaultTargets = wrapInArray(defaultTargets);
-						for (var i = 0, len = defaultTargets.length; i < len; i++) {
-							var targetName = defaultTargets[i];
-							if ($.inArray(targetName, targetNames) === -1) {
-								compiledTargets.push(_dOut.compiledTargets[i]);
-								targetNames.push(targetName);
-							}
-						}
-					}
-				}
 			}
 			out.compiledTargets = compiledTargets;
 		}
 
-		var settings = $.extend(true, {}, h5.settings.log ? h5.settings.log : {
-			defaultOut: defaultOut
-		});
+		// ログターゲットをコンパイル
 		var logTarget = settings.target;
 		if (!logTarget) {
 			logTarget = {};
 			settings.target = logTarget;
 		}
 		compileLogTarget(logTarget);
-		var dOut = settings.defaultOut;
-		if (!dOut) {
-			dOut = defaultOut;
-			settings.defaultOut = dOut;
-		}
-		compileOutput(logTarget, dOut);
+
+		// 出力定義をコンパイル
+		compileOutput(logTarget, dOut, true);
 		var outs = settings.out;
 		if (outs) {
 			outs = wrapInArray(outs);
 			for (var i = 0, len = outs.length; i < len; i++) {
-				compileOutput(logTarget, outs[i], dOut);
+				compileOutput(logTarget, outs[i]);
 			}
 		}
 		// ここまでの処理でエラーが起きなかったら設定を適用する
@@ -851,38 +845,48 @@
 			var outs = compiledLogSettings.out;
 			var defaultOut = compiledLogSettings.defaultOut;
 
-			var targetOut = null;
+			var targetOuts = [];
+			var terminated = false;
 			if (outs) {
 				outs = wrapInArray(outs);
 				for (var i = 0, len = outs.length; i < len; i++) {
 					var out = outs[i];
-					if (!out.compiledCategory.test(this.category)) {
-						continue;
+					if (out.compiledCategory.test(this.category)
+							&& (level >= out.compiledLevel && out.compiledLevel >= 0)) {
+						// カテゴリとレベル指定を満たした出力定義が出力対象
+						targetOuts.push(out);
+						if (out.terminate !== false) {
+							// terminate:falseが明示的に指定されていない場合、出力定義にマッチするかどうかの探索を打ち切る
+							terminated = true;
+							break;
+						}
 					}
-					targetOut = out;
-					break;
 				}
 			}
-			if (!targetOut) {
-				targetOut = defaultOut;
+			if (!targetOuts.length || !terminated) {
+				// いずれの出力定義の条件も満たさなかったまたは、何れかの条件を満たしたが、terminateしていない場合は、defaultOutも出力対象
+				targetOuts.push(defaultOut);
 			}
-			var levelThreshold = targetOut.compiledLevel;
-			var logTarget = targetOut.compiledTargets;
+			for (var i = 0, l = targetOuts.length; i < l; i++) {
+				var targetOut = targetOuts[i];
+				var levelThreshold = targetOut.compiledLevel;
+				var logTarget = targetOut.compiledTargets;
 
-			if (level < levelThreshold || levelThreshold < 0) {
-				return;
-			}
+				if (level < levelThreshold || levelThreshold < 0) {
+					return;
+				}
 
-			logObj.logger = this;
-			logObj.date = new Date();
-			logObj.levelString = this._levelToString(level);
+				logObj.logger = this;
+				logObj.date = new Date();
+				logObj.levelString = this._levelToString(level);
 
-			if (!logTarget || logTarget.length === 0) {
-				return;
-			}
+				if (!logTarget || logTarget.length === 0) {
+					return;
+				}
 
-			for (var i = 0, len = logTarget.length; i < len; i++) {
-				logTarget[i].log(logObj);
+				for (var j = 0, len = logTarget.length; j < len; j++) {
+					logTarget[j].log(logObj);
+				}
 			}
 		},
 
