@@ -1689,17 +1689,12 @@
 
 		// ダミー要素を追加してオフセット位置を取得
 		target.appendChild(dummyRect);
-		var boundingClientRect = dummyRect.getBoundingClientRect();
-		var offsetLeft = boundingClientRect.left;
-		var offsetTop = boundingClientRect.top;
+		var dummyRectOffset = $(dummyRect).offset();
 		// ダミー要素を削除
 		target.removeChild(dummyRect);
 
 		// 取得したオフセット位置を返す
-		return {
-			left: offsetLeft,
-			top: offsetTop
-		};
+		return dummyRectOffset;
 	}
 
 	/**
