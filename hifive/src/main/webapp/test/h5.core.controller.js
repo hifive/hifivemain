@@ -23,6 +23,7 @@ $(function() {
 	// =========================================================================
 
 	var ERROR_INTERNET_CANNOT_CONNECT = testutils.consts.ERROR_INTERNET_CANNOT_CONNECT;
+	var SVG_XMLNS = 'http://www.w3.org/2000/svg';
 
 	// =========================================================================
 	//
@@ -122,21 +123,27 @@ $(function() {
 	}
 
 	// マウスイベントをディスパッチする関数
-	function dispatchMouseEvent(elm, eventName, x, y) {
+	function dispatchMouseEvent(elm, eventName, pageX, pageY) {
+		pageX = pageX || 0;
+		pageY = pageY || 0;
+		var clientX = pageX - window.scrollX;
+		var clientY = pageY - window.scrollY;
+		// screenX/Yはシミュレートしない
+		var screenX = 0;
+		var screenY = 0;
+
 		var ev = {};
 		if (elm.dispatchEvent) {
 			ev = document.createEvent('MouseEvent');
-			x = x || 0;
-			y = y || 0;
-			ev.initMouseEvent(eventName, true, true, window, 0, x, y, x, y, false, false, false,
-					false, 0, null);
+			ev.initMouseEvent(eventName, true, true, window, 0, screenX, screenY, clientX, clientY,
+					false, false, false, false, 0, null);
 			elm.dispatchEvent(ev);
 		} else {
 			ev = document.createEventObject();
-			ev.clientX = x;
-			ev.clientY = y;
-			ev.screenX = x;
-			ev.screenY = y;
+			ev.clientX = clientX;
+			ev.clientY = clientY;
+			ev.screenX = screenX;
+			ev.screenY = screenY;
 			elm.fireEvent('on' + eventName, ev);
 		}
 	}
@@ -197,18 +204,25 @@ $(function() {
 	/**
 	 * タッチイベントをディスパッチする関数
 	 */
-	function dispatchTouchEvent(elm, eventName, x, y) {
+	function dispatchTouchEvent(elm, eventName, pageX, pageY) {
+		pageX = pageX || 0;
+		pageY = pageY || 0;
+		var clientX = pageX - window.scrollX;
+		var clientY = pageY - window.scrollY;
+		// screenX/Yはシミュレートしない
+		var screenX = 0;
+		var screenY = 0;
 		var ev = null;
 		if (/Android\s+[123]\./i.test(navigator.userAgent)) {
 			//android 1-3 はcreateEvent('mouseEvents')で作ったイベントにtouchesを持たせてタッチイベントを作成する
 			ev = document.createEvent('MouseEvents');
-			ev.initMouseEvent(eventName, true, true, window, 0, x, y, x, y, false, false, false,
-					false, 0, null);
+			ev.initMouseEvent(eventName, true, true, window, 0, screenX, screenY, clientX, clientY,
+					false, false, false, false, 0, null);
 			var touches = null;
 			// touchesの作成
 			if (document.createTouch) {
 				// android2.3.6はcreateTouchあるが、2.2.1にはなかった
-				touches = [document.createTouch(window, elm, 0, x, y, x, y)];
+				touches = [document.createTouch(window, elm, 0, screenX, screenY, clientX, clientY)];
 			} else {
 				touches = [{
 					clientX: x,
@@ -228,16 +242,17 @@ $(function() {
 		} else {
 			// iOS、android4、またはタッチ対応PCのブラウザ
 			ev = document.createEvent('TouchEvent');
-			var touch = document.createTouch(window, elm, 0, x, y, x, y);
+			// createTouchの第4、第5引数はpageX/Yだが、initTouchEvent
+			var touch = document.createTouch(window, elm, 0, pageX, pageY, screenX, screenY);
 			var touches = document.createTouchList(touch);
 
 			if (h5.env.ua.isiOS) {
 				// iOS
-				ev.initTouchEvent(eventName, true, true, window, 0, x, y, x, y, false, false,
-						false, false, touches, touches, touches, 1, 0);
+				ev.initTouchEvent(eventName, true, true, window, 0, screenX, screenY, clientX,
+						clientY, false, false, false, false, touches, touches, touches, 1, 0);
 			} else {
-				ev.initTouchEvent(touches, touches, touches, eventName, window, x, y, x, y, false,
-						false, false, false);
+				ev.initTouchEvent(touches, touches, touches, eventName, window, screenX, screenY,
+						clientX, clientY, false, false, false, false);
 			}
 		}
 		elm.dispatchEvent(ev);
@@ -793,11 +808,11 @@ $(function() {
 				}
 			};
 
-			var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			var svg = document.createElementNS(SVG_XMLNS, 'svg');
 			svg.setAttribute('id', 'svgElem');
 			svg.setAttribute('width', '50');
 			svg.setAttribute('height', '50');
-			var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+			var rect = document.createElementNS(SVG_XMLNS, 'rect');
 			rect.setAttribute('x', '50');
 			rect.setAttribute('y', '50');
 			rect.setAttribute('width', '50');
@@ -2726,6 +2741,99 @@ $(function() {
 					start();
 				});
 			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7|and-and:0-2]SVGのオフセット計算', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+			stashOutput();
+			stop();
+			this.svgTestCtrl = h5.core.controller('#controllerTest', {
+				__name: 'SVGOffsetTestController',
+				offsetX: null,
+				offsetY: null,
+				__init: function() {
+					var svg = document.createElementNS(SVG_XMLNS, 'svg');
+					svg.setAttribute('id', 'svgElem');
+					svg.setAttribute('width', '50');
+					svg.setAttribute('height', '50');
+					var rect = document.createElementNS(SVG_XMLNS, 'rect');
+					rect.setAttribute('x', '10');
+					rect.setAttribute('y', '20');
+					rect.setAttribute('width', '10');
+					rect.setAttribute('height', '10');
+					svg.appendChild(rect);
+					this.rootElement.appendChild(svg);
+					this.rect = rect;
+					this.svg = svg;
+				},
+				'{this.svg} h5trackstart': function(context) {
+					this.offsetX = context.event.offsetX;
+					this.offsetY = context.event.offsetY;
+				}
+			});
+			this.svgTestCtrl.readyPromise.done(start);
+		},
+		teardown: function() {
+			this.svgTestCtrl = null;
+			clearController();
+			unstashOutput();
+		},
+		svgTestCtrl: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('SVGにバインドしたh5trackstartイベントハンドラがmousedownで発火した時にoffsetが取得できること', 4, function() {
+		if (!isExistEvents(mouseTrackEvents)) {
+			// マウスイベントが無い場合はテストしない
+			abortTest();
+			start();
+			return;
+		}
+		var ctrl = this.svgTestCtrl;
+		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
+		var rootOffset = $(ctrl.rootElement).offset();
+		dispatchMouseEvent(ctrl.svg, 'mousedown', rootOffset.left + 4, rootOffset.top + 8);
+		strictEqual(ctrl.offsetX, 4, 'svg要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
+		strictEqual(ctrl.offsetY, 8, 'svg要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
+		dispatchMouseEvent(ctrl.svg, 'mouseup');
+		ctrl.offsetX = ctrl.offsetY = null;
+		// rectの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
+		var rectOffset = $(ctrl.rect).offset();
+		dispatchMouseEvent(ctrl.rect, 'mousedown', rectOffset.left + 4, rectOffset.top + 8);
+		strictEqual(ctrl.offsetX, 14, 'rect要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
+		strictEqual(ctrl.offsetY, 28, 'rect要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
+		dispatchMouseEvent(ctrl.svg, 'mouseup');
+		start();
+	});
+
+	asyncTest('SVGにバインドしたh5trackstartイベントハンドラがtouchstartで発火した時にoffsetが取得できること', 4, function() {
+		if (!isExistEvents(touchTrackEvents)) {
+			// マウスイベントが無い場合はテストしない
+			abortTest();
+			start();
+			return;
+		}
+		var ctrl = this.svgTestCtrl;
+		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
+		var rootOffset = $(ctrl.rootElement).offset();
+		dispatchTouchEvent(ctrl.svg, 'touchstart', rootOffset.left + 4, rootOffset.top + 8);
+		strictEqual(ctrl.offsetX, 4, 'svg要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
+		strictEqual(ctrl.offsetY, 8, 'svg要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
+		dispatchTouchEvent(ctrl.svg, 'touchend');
+		ctrl.offsetX = ctrl.offsetY = null;
+		// rectの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
+		var rectOffset = $(ctrl.rect).offset();
+		dispatchTouchEvent(ctrl.rect, 'touchstart', rectOffset.left + 4, rectOffset.top + 8);
+		strictEqual(ctrl.offsetX, 14, 'rect要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
+		strictEqual(ctrl.offsetY, 28, 'rect要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
+		dispatchTouchEvent(ctrl.svg, 'touchend');
+		start();
+	});
 
 	//=============================
 	// Definition
