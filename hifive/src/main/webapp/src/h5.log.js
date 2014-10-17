@@ -40,10 +40,11 @@
 	 * var ERR_CODE_OUT_CATEGORY_IS_NONE = 10001;
 	 */
 
-	/**
+	/*
 	 * カテゴリが複数回指定されたときのエラーコード
+	 * 出力定義にマッチするかどうかは、カテゴリ名に加えてレベルしても判定するようになったので1.1.15で廃止 #410
+	 * var ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES = 10002;
 	 */
-	var ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES = 10002;
 
 	/**
 	 * ログレベルの指定が不正なときのエラーコード
@@ -95,7 +96,6 @@
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_LOG_TARGET_TYPE] = 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。';
-	errMsgMap[ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES] = 'category"{0}"が複数回指定されています。';
 	errMsgMap[ERR_CODE_LEVEL_INVALID] = 'level"{0}"の指定は不正です。Number、もしくはtrace, info, debug, warn, error, noneを指定してください。';
 	errMsgMap[ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES] = 'ログターゲット"{0}"が複数回指定されています。';
 	errMsgMap[ERR_CODE_LOG_TARGETS_IS_NONE] = '"{0}"という名前のログターゲットはありません。';
@@ -543,9 +543,6 @@
 					throwFwError(ERR_CODE_OUT_CATEGORY_INVALID);
 				}
 				category = $.trim(category);
-				if ($.inArray(category, categoryCache) !== -1) {
-					throwFwError(ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES, out.category);
-				}
 				out.compiledCategory = getRegex(category);
 				categoryCache.push(category);
 			}

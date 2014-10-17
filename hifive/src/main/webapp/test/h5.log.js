@@ -723,29 +723,24 @@ $(function() {
 		}
 	});
 
-	test('categoryに重複したものを登録してconfigure()するとエラーが発生すること。', 1, function() {
+	test('categoryに重複したものを登録してconfigure()してもエラーは発生しないこと', 1, function() {
 		h5.settings.log = {
-			target: {
-				myTarget: {
-					type: 'console'
-				}
-			},
 			out: [{
 				category: 'for test category',
 				level: 'trace',
-				targets: ['myTarget']
+				targets: 'console'
 			}, {
-				category: ' for test category  ',
-				level: 'debug',
+				category: 'for test category',
+				level: 'trace',
 				targets: 'console'
 			}]
 		};
 
 		try {
 			h5.log.configure();
-			ok(false, 'エラーが発生していません');
+			ok(true, 'エラーが発生しないこと');
 		} catch (e) {
-			deepEqual(e.code, ERR.ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES, e.message);
+			ok(false, e.message);
 		}
 	});
 
@@ -836,7 +831,7 @@ $(function() {
 
 	test('最後にマッチした出力定義でterminate:falseが指定されている場合、defaultOutでも出力されること', 4, function() {
 		this.configureCategoryLogger([{
-			category: 'test.*',
+			category: 'test.controller*',
 			level: 'error',
 			targets: 'myTarget1'
 		}, {
