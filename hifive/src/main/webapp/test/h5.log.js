@@ -135,14 +135,29 @@ $(function() {
 	module('ログターゲットの設定', {
 		teardown: function() {
 			restoreDefault();
+		},
+		createTarget: function(outputs) {
+			return {
+				type: {
+					log: function(logObj) {
+						outputs.push(logObj.args[0]);
+					}
+				}
+			};
 		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	test('ログターゲットの設定 (h5.log.createLogger) 指定なし、undefined、null を指定したときはログが出力されないこと。', 3,
+	test(
+			'※要目視確認 defaultOutのtargetsに指定なし、undefined、null を指定したときはログが出力されないこと',
+			3,
 			function() {
+				if (window.console) {
+					console
+							.log('------ ※要目視確認 defaultOutのtargetに指定なし、undefined、null を指定したときはログが出力されないこと ここから -----');
+				}
 				h5.settings.log = {
 					defaultOut: {
 						level: 'debug'
@@ -171,9 +186,14 @@ $(function() {
 				h5.log.configure();
 				outputEachLevel();
 				ok(true, 'ログが出力されていないことを確認してください。');
+
+				if (window.console) {
+					console
+							.log('------ ※要目視確認 defaultOutのtargetに指定なし、undefined、null を指定したときはログが出力されないこと ここまで -----');
+				}
 			});
 
-	test('ログターゲットの設定 (h5.log.createLogger)  文字列以外、空文字、空白文字、配列以外を指定したときはエラーが出ること。', 8, function() {
+	test('defaultOutのtargetsに文字列以外、空文字、空白文字、配列以外を指定したときはエラーが出ること。', 8, function() {
 		var categorys = [window.console || function() {}, '', ' ', {}, 0, 1, true, false];
 		var categorysStr = [window.console ? "window.console" : 'function(){}', "''", "' '", "{}",
 				"0", "1", "true", "false"];
@@ -193,11 +213,16 @@ $(function() {
 		}
 	});
 
-	test('ログターゲットの設定 (h5.log.createLogger)  "console"以外の文字列を指定したときはエラーが出ること。', 1, function() {
+	test('defaultOutのtargetsに未定義のターゲット名を指定したときはエラーが出ること。', 1, function() {
 		try {
 			h5.settings.log = {
+				target: {
+					myTarget: {
+						type: 'console'
+					}
+				},
 				defaultOut: {
-					targets: "aaa"
+					targets: 'aaa'
 				}
 			};
 			h5.log.configure();
@@ -207,7 +232,7 @@ $(function() {
 		}
 	});
 
-	test('ログターゲットの設定 (h5.log.createLogger)  配列の中に"console"以外の文字列を指定したときはエラーが出ること。', 2, function() {
+	test('defaultOutのtargesに未定義のターゲット名を含む配列を指定したときはエラーが出ること。', 2, function() {
 		h5.settings.log = {
 			defaultOut: {
 				targets: [null, undefined, 'console']
@@ -221,6 +246,11 @@ $(function() {
 		}
 
 		h5.settings.log = {
+			target: {
+				myTarget: {
+					type: 'console'
+				}
+			},
 			defaultOut: {
 				targets: ['aa', 'console']
 			}
@@ -233,26 +263,194 @@ $(function() {
 		}
 	});
 
-	test(
-			'ログターゲットの設定 (h5.log.createLogger)  配列の中に(null/undefined/文字列)以外、空文字、空白文字、を指定したときはエラーが出ること。',
-			7, function() {
-				var vals = [{}, [], '', ' ', 1, true, false];
-				for (var i = 0, l = vals.length; i < l; i++) {
-					h5.settings.log = {
-						defaultOut: {
-							targets: ['console', vals[i]]
-						}
-					};
-					try {
-						h5.log.configure();
-						ok(true, 'null,undefined,"console"ではエラー発生しない。');
-					} catch (e) {
-						equal(e.code, ERR.ERR_CODE_LOG_TARGETS_INVALID, e.message);
-					}
+	test('defaultOutのtargesに(null/undefined/文字列)以外、空文字、空白文字、を含む配列を指定したときはエラーが出ること。', 7, function() {
+		var vals = [{}, [], '', ' ', 1, true, false];
+		for (var i = 0, l = vals.length; i < l; i++) {
+			h5.settings.log = {
+				defaultOut: {
+					targets: ['console', vals[i]]
 				}
-			});
+			};
+			try {
+				h5.log.configure();
+				ok(false, vals[i] + 'を含む配列をtargetsに指定してエラーが発生していません');
+			} catch (e) {
+				equal(e.code, ERR.ERR_CODE_LOG_TARGETS_INVALID, e.message);
+			}
+		}
+	});
 
-	test('targetsに重複したターゲットを登録してconfigure()するとエラーが発生すること。', 1, function() {
+	test('defaultOutのtargesに重複したターゲットを含む配列を指定するとエラーが発生すること。', 1, function() {
+		h5.settings.log = {
+			target: {
+				myTarget: {
+					type: 'console'
+				}
+			},
+			defaultOut: {
+				category: 'for test category',
+				level: 'trace',
+				targets: ['myTarget', 'console', 'myTarget']
+			}
+		};
+
+		try {
+			h5.log.configure();
+			ok(false, 'エラーが発生していません');
+		} catch (e) {
+			deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES, e.message);
+		}
+	});
+
+	test('outのtargetsに指定なし、undefined、null を指定したときはログが出力されないこと', 3, function() {
+		var outputs = [];
+		var targetDef = {
+			customTarget: this.createTarget(outputs)
+		};
+		h5.settings.log = {
+			target: targetDef,
+			out: [{
+				category: '*',
+				level: 'debug'
+			}, {
+				category: '*',
+				level: 'all',
+				targets: 'customTarget'
+			}]
+		};
+		h5.log.configure();
+		outputEachLevel();
+		deepEqual(outputs, [LOG_MESSAGE_TRACE], 'targets指定無しの場合、条件にマッチしたログは出力されないこと');
+		outputs.splice(outputs, outputs.length);
+
+		h5.settings.log = {
+			target: targetDef,
+			out: [{
+				category: '*',
+				level: 'debug',
+				targets: null
+			}, {
+				category: '*',
+				level: 'all',
+				targets: 'customTarget'
+			}]
+		};
+		h5.log.configure();
+		outputEachLevel();
+		deepEqual(outputs, [LOG_MESSAGE_TRACE], 'targets:nullの場合、条件にマッチしたログは出力されないこと');
+		outputs.splice(outputs, outputs.length);
+
+
+		h5.settings.log = {
+			target: targetDef,
+			out: [{
+				category: '*',
+				level: 'debug',
+				targets: undefined
+			}, {
+				category: '*',
+				level: 'all',
+				targets: 'customTarget'
+			}]
+		};
+		h5.log.configure();
+		outputEachLevel();
+		deepEqual(outputs, [LOG_MESSAGE_TRACE], 'targets:undefinedの場合、条件にマッチしたログは出力されないこと');
+		outputs.splice(outputs, outputs.length);
+	});
+
+	test('outのtargetsに文字列以外、空文字、空白文字、配列以外を指定したときはエラーが出ること。', 8, function() {
+		var categorys = [window.console || function() {}, '', ' ', {}, 0, 1, true, false];
+		var categorysStr = [window.console ? "window.console" : 'function(){}', "''", "' '", "{}",
+				"0", "1", "true", "false"];
+
+		for (var i = 0, l = categorys.length; i < l; i++) {
+			try {
+				h5.settings.log = {
+					out: {
+						category: '*',
+						targets: categorys[i]
+					}
+				};
+				h5.log.configure();
+				ok(false, 'エラーが発生していません ' + categorysStr[i]);
+			} catch (e) {
+				deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_INVALID, e.message + categorysStr[i]);
+			}
+		}
+	});
+
+	test('outのtargetsに未定義のターゲット名を指定したときはエラーが出ること。', 1, function() {
+		try {
+			h5.settings.log = {
+				target: {
+					myTarget: {
+						type: 'console'
+					}
+				},
+				out: {
+					category: '*',
+					targets: 'aaa'
+				}
+			};
+			h5.log.configure();
+			ok(false, 'エラーが発生していません');
+		} catch (e) {
+			deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_IS_NONE, e.message);
+		}
+	});
+
+	test('outのtargesに未定義のターゲット名を含む配列を指定したときはエラーが出ること。', 2, function() {
+		h5.settings.log = {
+			defaultOut: {
+				targets: [null, undefined, 'console']
+			}
+		};
+		try {
+			h5.log.configure();
+			ok(true, 'null,undefined,"console"ではエラー発生しない。');
+		} catch (e) {
+			deepEqual(false, e.code + ': ' + e.message);
+		}
+
+		h5.settings.log = {
+			target: {
+				myTarget: {
+					type: 'console'
+				}
+			},
+			out: {
+				category: '*',
+				targets: ['aa', 'console']
+			}
+		};
+		try {
+			h5.log.configure();
+			ok(true, 'null,undefined,"console"ではエラー発生しない。');
+		} catch (e) {
+			deepEqual(e.code, ERR.ERR_CODE_LOG_TARGETS_IS_NONE, e.message);
+		}
+	});
+
+	test('outのtargesに(null/undefined/文字列)以外、空文字、空白文字、を含む配列を指定したときはエラーが出ること。', 7, function() {
+		var vals = [{}, [], '', ' ', 1, true, false];
+		for (var i = 0, l = vals.length; i < l; i++) {
+			h5.settings.log = {
+				out: {
+					category: '*',
+					targets: ['console', vals[i]]
+				}
+			};
+			try {
+				h5.log.configure();
+				ok(false, vals[i] + 'を含む配列をtargetsに指定してエラーが発生していません');
+			} catch (e) {
+				equal(e.code, ERR.ERR_CODE_LOG_TARGETS_INVALID, e.message);
+			}
+		}
+	});
+
+	test('outのtargesに重複したターゲットを含む配列を指定するとエラーが発生すること。', 1, function() {
 		h5.settings.log = {
 			target: {
 				myTarget: {
