@@ -17,17 +17,6 @@ Local Modifications: None.
 
 -----
 Code under:
-src/main/webapp/res/lib/jqplugins/blockui
-
-jQuery blockUI plugin
-URL:http://jquery.malsup.com/block/
-License:Dual licensed under the MIT and GPL licenses.
-	http://www.opensource.org/licenses/mit-license.php
-	http://www.gnu.org/licenses/gpl.html
-Local Modifications: None.
-
------
-Code under:
 src/main/webapp/src/ejs
 
 EJS(Embedded JavaScript)
