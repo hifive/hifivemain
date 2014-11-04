@@ -89,11 +89,45 @@
 }
 
 nav {
-	float: left; display : block;
+	float: left;
+	display: block;
 	margin-top: 5px;
 	width: 180px;
 	border-right: 1px solid #ccc;
-	padding-left: 9px;
 	display: block;
 	font-size: small;
+}
+
+nav ul {
+	padding-left: 9px;
+}
+
+.h5-logo {
+	width: 180px;
+}
+
+.h5-searchBox {
+	position: relative;
+}
+
+.h5-searchBox input {
+	width: 172px;
+	margin: 0;
+	padding-right: 24px;
+	box-sizing: border-box;
+}
+
+.h5-searchBox .clear {
+	width: 24px;
+	position: absolute;
+	right: 8px;
+	top: 0;
+	bottom: 0;
+	line-height: 0;
+	box-sizing: border-box;
+	line-height: 0;
+}
+
+.hidden {
+	display: none;
 }
