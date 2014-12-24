@@ -563,7 +563,7 @@ $(function() {
 			init: function(logTarget) {
 				ok(logTarget.type.isMyTargetType, 'initの引数には定義したターゲットのクローンが渡されること');
 				notStrictEqual(logTarget.type, myTargetType, 'initの引数は定義したターゲットとは別インスタンスであること');
-				arg = logTarget;
+				var arg = logTarget;
 				context = this;
 			},
 			isMyTargetType: true
