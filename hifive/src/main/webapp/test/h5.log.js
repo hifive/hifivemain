@@ -558,12 +558,13 @@ $(function() {
 	});
 
 	test('ログターゲットのinitのthisと引数', 3, function() {
+		var arg = null;
 		var context = null;
 		var myTargetType = {
 			init: function(logTarget) {
 				ok(logTarget.type.isMyTargetType, 'initの引数には定義したターゲットのクローンが渡されること');
 				notStrictEqual(logTarget.type, myTargetType, 'initの引数は定義したターゲットとは別インスタンスであること');
-				var arg = logTarget;
+				arg = logTarget;
 				context = this;
 			},
 			isMyTargetType: true
@@ -603,6 +604,7 @@ $(function() {
 				}
 			},
 			defaultOut: {
+				level: 'debug',
 				targets: 'myTarget'
 			}
 		};
@@ -661,7 +663,7 @@ $(function() {
 	// Body
 	//=============================
 
-	test('閾値設定なし', 1, function() {
+	test('[build#min]閾値設定なし', 1, function() {
 		var outputs = [];
 		h5.settings.log = {
 			target: {
@@ -683,6 +685,29 @@ $(function() {
 				LOG_MESSAGE_DEBUG];
 		deepEqual(outputs, expectResult,
 				'level指定無しの場合はデフォルトのレベルとなり、ERROR, WARN, INFO, DEBUGのレベルのログが出力されること');
+	});
+
+	test('[build#dev]閾値設定なし', 1, function() {
+		var outputs = [];
+		h5.settings.log = {
+			target: {
+				myTarget: {
+					type: {
+						log: function(logObj) {
+							outputs.push(logObj.args[0]);
+						}
+					}
+				}
+			},
+			defaultOut: {
+				targets: 'myTarget'
+			}
+		};
+		h5.log.configure();
+		outputEachLevel();
+		var expectResult = [];
+		deepEqual(outputs, expectResult,
+				'level指定無しの場合はデフォルトのレベルとなり、どのレベルのログも出力されないこと');
 	});
 
 	test('error,ERROR', 2,
@@ -788,13 +813,21 @@ $(function() {
 				'level:11の場合、ERROR,WARN,INFO,DEBUG,TRACEレベルのログが出力されること');
 	});
 
-	test('null,undefined', 2, function() {
+	test('[build#min]null,undefined', 2, function() {
 		var expectResult = [LOG_MESSAGE_ERROR, LOG_MESSAGE_WARN, LOG_MESSAGE_INFO,
 				LOG_MESSAGE_DEBUG];
 		deepEqual(this.testLogLevel(null), expectResult,
 				'level:nullの場合はデフォルトのレベルとなり、ERROR, WARN, INFO, DEBUGのレベルのログが出力されること');
 		deepEqual(this.testLogLevel(undefined), expectResult,
 				'level:undefinedの場合はデフォルトのレベルとなり、ERROR, WARN, INFO, DEBUGのレベルのログが出力されること');
+	});
+
+	test('[build#dev]null,undefined', 2, function() {
+		var expectResult = [];
+		deepEqual(this.testLogLevel(null), expectResult,
+				'level:nullの場合はデフォルトのレベルとなり、どのレベルのログも出力されないこと');
+		deepEqual(this.testLogLevel(undefined), expectResult,
+				'level:undefinedの場合はデフォルトのレベルとなり、どのレベルのログも出力されないこと');
 	});
 
 	test('ログレベルに不正な値(ログレベル指定できない文字、空文字、空白文字、文字列以外)を指定するとエラーが出ること', 5, function() {
