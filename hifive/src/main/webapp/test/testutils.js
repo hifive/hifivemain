@@ -415,7 +415,7 @@
 			isResolved: isResolved,
 			deleteProperty: deleteProperty,
 			compareVersion: compareVersion,
-			rgbToHex: rgbToHex,
+			rgbToHex: rgbToHex
 		},
 		qunit: {
 			abortTest: abortTest,
