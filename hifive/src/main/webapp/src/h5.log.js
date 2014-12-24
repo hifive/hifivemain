@@ -750,7 +750,10 @@
 		 * </code></pre>
 		 */
 		_traceFunctionName: function(fn) {
-			var e = new Error();
+			// エラーオブジェクトを生成してスタックトレースを取得
+			// new演算子を使うと、minifyした時にnewが省略される
+			// min版とdev版でトレース結果を同じにするためここではnewを省略している
+			var e = Error();
 			var errMsg = e.stack || e.stacktrace;
 			var traces = [];
 
@@ -758,7 +761,7 @@
 			if (errMsg) {
 				// トレースされたログのうち、トレースの基点から3メソッド分(_traceFunction、_log、
 				// debug|info|warn|error|trace)はログに出力しない。
-				var DROP_TRACE_COUNT = 3;
+				var DROP_TRACE_COUNT = 4;
 
 				// Chrome, FireFox, Opera
 				traces = errMsg.replace(/\r\n/, '\n').replace(
