@@ -126,8 +126,14 @@ $(function() {
 	function dispatchMouseEvent(elm, eventName, pageX, pageY) {
 		pageX = pageX || 0;
 		pageY = pageY || 0;
-		var clientX = pageX - window.scrollX;
-		var clientY = pageY - window.scrollY;
+		// scrollX/YはIEで未対応のためpageXOffsetを使用する
+		// pageXOffsetはIE8以下で未対応のため未対応ブラウザではdocumentElementのスクロール量を使用する
+		var scrollX = (window.pageXOffset !== undefined) ? window.pageXOffset
+				: document.documentElement.scrollLeft;
+		var scrollY = (window.pageYOffset !== undefined) ? window.pageYOffset
+				: document.documentElement.scrollTop;
+		var clientX = pageX - scrollX;
+		var clientY = pageY - (window.scrollY || window.pageYOffset);
 		// screenX/Yはシミュレートしない
 		var screenX = 0;
 		var screenY = 0;
