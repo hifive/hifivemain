@@ -805,11 +805,12 @@
 					if (funcName) {
 						// 関数名が取得できているときは関数名を表示
 						traces.push('{' + funcName + '}(' + argStr + ')');
-					} else if (nextCaller) {
+					}
+					if (nextCaller) {
 						// 関数名は取得できていなくても次の関数ができているなら{anonymous}として表示
 						traces.push('{anonymous}(' + argStr + ')');
 					} else {
-						// nullの場合はルートからの呼び出し
+						// 次の関数が無い場合はルートからの呼び出し
 						traces.push('{root}(' + argStr + ')');
 						// これ以上トレースできないので終了
 						break;
