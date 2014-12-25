@@ -805,8 +805,7 @@
 					if (funcName) {
 						// 関数名が取得できているときは関数名を表示
 						traces.push('{' + funcName + '}(' + argStr + ')');
-					}
-					if (nextCaller) {
+					} else if (nextCaller) {
 						// 関数名は取得できていなくても次の関数ができているなら{anonymous}として表示
 						traces.push('{anonymous}(' + argStr + ')');
 					} else {
