@@ -750,26 +750,29 @@
 		 * </code></pre>
 		 */
 		_traceFunctionName: function(fn) {
-			// エラーオブジェクトを生成してスタックトレースを取得
-			// new演算子を使うと、minifyした時にnewが省略される
-			// min版とdev版でトレース結果を同じにするためここではnewを省略している
-			var e = Error();
-			var errMsg = e.stack || e.stacktrace;
 			var traces = [];
-
-			// stackまたはstacktraceがある場合(IE,Safari以外)
+			// エラーオブジェクトを生成してスタックトレースを取得
+			var e = new Error();
+			var errMsg = e.stack || e.stacktrace;
 			if (errMsg) {
-				// トレースされたログのうち、トレースの基点から3メソッド分(_traceFunction、_log、
-				// debug|info|warn|error|trace)はログに出力しない。
-				var DROP_TRACE_COUNT = 4;
+				// stackまたはstacktraceがある場合(IE,Safari以外)
 
-				// Chrome, FireFox, Opera
+				// stackにはFW内部の関数も含まれるので、それを取り除く
+				// new Error()を呼んだ場合に関数呼び出し３つ分省略すればいいが、minifyするとnew演算子が省略される
+				// Chrome,FireFoxではnew演算子を省略するコンストラクト呼び出しがstackに入り、newを使った場合と結果が異なる
+				// Operaではnew演算子を省略しても結果は変わらない
+				// min版、dev版の互換とブラウザ互換をとるために、取り除く関数呼び出しはここの関数名を基点に数えて取り除く
+				var CURRENT_FUNCTION_NAME = '_traceFunctionName';
+				// トレースされたログのうち、ここの関数から3メソッド分先までの関数呼び出しはログに出力しない。
+				// (_traceFunction, _log, debug|info|warn|error|trace の3つ)
+				var DROP_TRACE_COUNT = 3;
 				traces = errMsg.replace(/\r\n/, '\n').replace(
 						/at\b|@|Error\b|\t|\[arguments not available\]/ig, '').replace(
 						/(http|https|file):.+[0-9]/g, '').replace(/ +/g, ' ').split('\n');
 
 				var ret = null;
-				traces = $.map(traces, function(value) {
+				var currentFunctionIndex = null;
+				traces = $.map(traces, function(value, index) {
 					if (value.length === 0) {
 						ret = null; // 不要なデータ(Chromeは配列の先頭, FireFoxは配列の末尾に存在する)
 					} else if ($.trim(value) === '') {
@@ -777,8 +780,11 @@
 					} else {
 						ret = $.trim(value);
 					}
+					if (currentFunctionIndex === null && value === CURRENT_FUNCTION_NAME) {
+						currentFunctionIndex = index;
+					}
 					return ret;
-				}).slice(DROP_TRACE_COUNT);
+				}).slice(currentFunctionIndex + DROP_TRACE_COUNT);
 			} else {
 				// IE, Safari
 
