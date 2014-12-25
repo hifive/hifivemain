@@ -811,6 +811,8 @@
 					} else {
 						// nullの場合はルートからの呼び出し
 						traces.push('{root}(' + argStr + ')');
+					}
+					if (!nextCaller) {
 						// これ以上トレースできないので終了
 						break;
 					}
