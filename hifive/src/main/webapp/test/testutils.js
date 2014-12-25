@@ -83,15 +83,17 @@
 	}
 
 	/**
-	 * バージョン文字列の大小を比較する関数(hifive[h5.ui.jqm.manager.js]から引用)
-	 * <p>
-	 * '1.11.0', '1.9.9'のような'.'区切りのバージョン文字列を比較して、第1引数の方が小さければ-1、同じなら0、第2引数の方が小さければ1 を返す。
-	 * </p>
+	 * 2つの数値の差が誤差範囲内に収まっているかどうかを返す
 	 *
-	 * @param {String} a バージョン文字列
-	 * @param {String} b バージョン文字列
-	 * @returns {Integer} 比較結果。aがbより小さいなら-1、同じなら0、aがbより大きいなら1 を返す
+	 * @param {Number} x
+	 * @param {Number} y
+	 * @param {Number} [tolerance=1] 誤差
+	 * @returns {Boolean} tolerance以下の差ならtrue
 	 */
+	function nearEqual(x, y, tolerance) {
+		return Math.abs(x - y) < (tolerance == null ? 1 : tolerance);
+	}
+
 	/**
 	 * バージョン文字列の大小を比較する関数
 	 * <p>
@@ -415,7 +417,8 @@
 			isResolved: isResolved,
 			deleteProperty: deleteProperty,
 			compareVersion: compareVersion,
-			rgbToHex: rgbToHex
+			rgbToHex: rgbToHex,
+			nearEqual: nearEqual
 		},
 		qunit: {
 			abortTest: abortTest,

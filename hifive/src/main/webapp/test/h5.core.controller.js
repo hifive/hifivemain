@@ -39,6 +39,7 @@ $(function() {
 	var isRejected = testutils.u.isRejected;
 	var rgbToHex = testutils.u.rgbToHex;
 	var deleteProperty = testutils.u.deleteProperty;
+	var nearEqual = testutils.u.nearEqual;
 	var abortTest = testutils.qunit.abortTest;
 	var openPopupWindow = testutils.dom.openPopupWindow;
 	var closePopupWindow = testutils.dom.closePopupWindow;
@@ -2751,7 +2752,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#ie:-8|ie:9-:docmode=7-8|ie-wp:9:docmode=7|and-and:0-2]SVGのオフセット計算', {
+	module('[browser#ie:-9|ie:10-:docmode=7-9|ie-wp:9:docmode=7|and-and:0-2|op]SVGのオフセット計算', {
 		setup: function() {
 			$('#qunit-fixture').append('<div id="controllerTest"></div>');
 			stashOutput();
@@ -2804,15 +2805,15 @@ $(function() {
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
 		dispatchMouseEvent(ctrl.svg, 'mousedown', rootOffset.left + 4, rootOffset.top + 8);
-		strictEqual(ctrl.offsetX, 4, 'svg要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
-		strictEqual(ctrl.offsetY, 8, 'svg要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
+		ok(nearEqual(ctrl.offsetX, 4), 'svg要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
+		ok(nearEqual(ctrl.offsetY, 8), 'svg要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
 		dispatchMouseEvent(ctrl.svg, 'mouseup');
 		ctrl.offsetX = ctrl.offsetY = null;
 		// rectの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rectOffset = $(ctrl.rect).offset();
 		dispatchMouseEvent(ctrl.rect, 'mousedown', rectOffset.left + 4, rectOffset.top + 8);
-		strictEqual(ctrl.offsetX, 14, 'rect要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
-		strictEqual(ctrl.offsetY, 28, 'rect要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
+		ok(nearEqual(ctrl.offsetX, 14), 'rect要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
+		ok(nearEqual(ctrl.offsetY, 28), 'rect要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
 		dispatchMouseEvent(ctrl.svg, 'mouseup');
 		start();
 	});
@@ -2828,15 +2829,15 @@ $(function() {
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
 		dispatchTouchEvent(ctrl.svg, 'touchstart', rootOffset.left + 4, rootOffset.top + 8);
-		strictEqual(ctrl.offsetX, 4, 'svg要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
-		strictEqual(ctrl.offsetY, 8, 'svg要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
+		ok(nearEqual(ctrl.offsetX, 4), 'svg要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
+		ok(nearEqual(ctrl.offsetY, 8), 'svg要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
 		dispatchTouchEvent(ctrl.svg, 'touchend');
 		ctrl.offsetX = ctrl.offsetY = null;
 		// rectの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rectOffset = $(ctrl.rect).offset();
 		dispatchTouchEvent(ctrl.rect, 'touchstart', rectOffset.left + 4, rectOffset.top + 8);
-		strictEqual(ctrl.offsetX, 14, 'rect要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
-		strictEqual(ctrl.offsetY, 28, 'rect要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
+		ok(nearEqual(ctrl.offsetX, 14), 'rect要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
+		ok(nearEqual(ctrl.offsetY, 28), 'rect要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
 		dispatchTouchEvent(ctrl.svg, 'touchend');
 		start();
 	});
