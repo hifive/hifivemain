@@ -133,7 +133,7 @@ $(function() {
 		var scrollY = (window.pageYOffset !== undefined) ? window.pageYOffset
 				: document.documentElement.scrollTop;
 		var clientX = pageX - scrollX;
-		var clientY = pageY - (window.scrollY || window.pageYOffset);
+		var clientY = pageY - scrollY;
 		// screenX/Yはシミュレートしない
 		var screenX = 0;
 		var screenY = 0;
