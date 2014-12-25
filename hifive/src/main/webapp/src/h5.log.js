@@ -762,9 +762,9 @@
 				// Chrome,FireFoxではnew演算子を省略するコンストラクト呼び出しがstackに入り、newを使った場合と結果が異なる
 				// Operaではnew演算子を省略しても結果は変わらない
 				// min版、dev版の互換とブラウザ互換をとるために、取り除く関数呼び出しはここの関数名を基点に数えて取り除く
-				var CURRENT_FUNCTION_NAME = '_traceFunctionName';
+				var CURRENT_FUNCTION_REGEXP = /_traceFunctionName/;
 				// トレースされたログのうち、ここの関数から3メソッド分先までの関数呼び出しはログに出力しない。
-				// (_traceFunction, _log, debug|info|warn|error|trace の3つ)
+				// (_traceFunction, _log, debug|info|warn|error|trace の3つ。この関数+2の箇所でsliceする)
 				var DROP_TRACE_COUNT = 3;
 				traces = errMsg.replace(/\r\n/, '\n').replace(
 						/at\b|@|Error\b|\t|\[arguments not available\]/ig, '').replace(
@@ -774,13 +774,15 @@
 				var currentFunctionIndex = null;
 				traces = $.map(traces, function(value, index) {
 					if (value.length === 0) {
-						ret = null; // 不要なデータ(Chromeは配列の先頭, FireFoxは配列の末尾に存在する)
+						// 不要なデータはnullを返して削除(Chromeは配列の先頭, FireFoxは配列の末尾に存在する)
+						// ただしslice箇所が決定する前は削除しない(nullを返さないようにする)
+						return currentFunctionIndex == null ? '' : null;
 					} else if ($.trim(value) === '') {
 						ret = '{anonymous}'; // ログとして出力されたが関数名が無い
 					} else {
 						ret = $.trim(value);
 					}
-					if (currentFunctionIndex === null && value === CURRENT_FUNCTION_NAME) {
+					if (currentFunctionIndex === null && CURRENT_FUNCTION_REGEXP.test(value)) {
 						currentFunctionIndex = index;
 					}
 					return ret;
