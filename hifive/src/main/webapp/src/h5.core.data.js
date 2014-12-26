@@ -3483,7 +3483,11 @@
 		},
 
 		/**
-		 * クエリオブジェクトを作成します
+		 * このデータモデルについてデータアイテムの検索を行うQueryクラスを作成して返します
+		 *
+		 * @since 1.2.0
+		 * @memberOf DataModel
+		 * @returns {Query} 検索を行うQueryクラスを返します
 		 */
 		createQuery: h5internal.data.createQuery
 	});

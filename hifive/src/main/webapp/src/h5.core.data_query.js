@@ -29,7 +29,9 @@
 	// =============================
 
 	/**
-	 * criteriaで'or'または'and'の論理演算子を指定するプロパティ
+	 * criteriaで'or'または'and'の論理演算子を指定するプロパティのマップ
+	 *
+	 * @private
 	 */
 	var OPERAND_PROPERTY = '__op';
 
@@ -229,6 +231,7 @@
 	/**
 	 * 正規表現かどうか
 	 *
+	 * @private
 	 * @param value
 	 * @returns {Boolean}
 	 */
@@ -239,6 +242,7 @@
 	/**
 	 * 日付型かどうか
 	 *
+	 * @private
 	 * @param value
 	 * @returns {Boolean}
 	 */
@@ -387,7 +391,7 @@
 	 * 以下のようなオブジェクトを生成します
 	 * </p>
 	 *
-	 * <pre><code>
+	 * <pre class="sh_javascript">
 	 * {
 	 *   queries: [{
 	 *     prop: プロパティ名,
@@ -397,7 +401,7 @@
 	 *   nestedCriterias: ネストされたcriteriaオブジェクト(コンパイル済み)の配列,
 	 *   userFunctions: ユーザ指定関数の配列
 	 * }
-	 * </code></pre>
+	 * </pre>
 	 *
 	 * @private
 	 * @param {Object} criteria
@@ -459,7 +463,7 @@
 				compareFunction: compareFunction
 			});
 		}
-		compiledCriteria.match = criteria.__op === 'or' ? createORCompareFunction(compiledCriteria)
+		compiledCriteria.match = criteria[OPERAND_PROPERTY] === 'or' ? createORCompareFunction(compiledCriteria)
 				: createANDCompareFunction(compiledCriteria);
 		return compiledCriteria;
 	}
@@ -508,16 +512,48 @@
 
 	/**
 	 * Queryクラス
+	 * <p>
+	 * {@link DataModel#createQuery}の戻り値がこのクラスのインスタンスです。
+	 * </p>
 	 *
 	 * @class
+	 * @name Query
+	 */
+	/**
+	 * @private
 	 * @param {DataModel} model データモデル
 	 */
 	function Query(model) {
-		// データモデルのセット
-		this._model = model;
-		// 結果配列の作成
+		/**
+		 * 検索結果の配列(ObservableArray)
+		 * <p>
+		 * 検索結果配列は中身は変わってもインスタンスは変わりません。
+		 * </p>
+		 *
+		 * @name result
+		 * @memberOf Query
+		 * @type {ObservableArray}
+		 */
 		this.result = h5.core.data.createObservableArray();
-		// ライブクエリはデフォルトfalse
+
+		/**
+		 * 検索対象のデータモデル
+		 *
+		 * @private
+		 * @name _model
+		 * @memberOf Query
+		 * @type {DataModel}
+		 */
+		this._model = model;
+
+		/**
+		 * ライブクエリかどうか。デフォルトfalse
+		 *
+		 * @private
+		 * @name _isLive
+		 * @memberOf Query
+		 * @type {Boolean}
+		 */
 		this._isLive = false;
 	}
 	// TODO 今は何もイベントをあげていないのでeventDispatcherにする必要がない。仕様が決まったら対応する。
@@ -525,8 +561,40 @@
 
 	$.extend(Query.prototype, {
 		/**
-		 * criteriaをセット
+		 * 検索条件オブジェクトをセットします
+		 * <p>
+		 * 検索の実行({@link Query#execute})を実行した時に、ここで指定した検索条件オブジェクトに基づいて検索を実行します。
+		 * </p>
+		 * <p>
+		 * 検索条件オブジェクトは、"プロパティ名 (演算子)"をキーにして、比較する値を値に持つオブジェクトを指定します。
+		 * 複数のプロパティを持つオブジェクトはデフォルトではANDで評価します。
+		 * <p>
+		 * 演算子には、===,!==,==,!=,>=,<=,between,!between,in,!inを指定できます。省略した場合は===です。
+		 * </p>
+		 * 検索条件オブジェクトに"__op"プロパティを持たせて、値に'or'を記述すると、ORでの評価になります。 ('and'を設定すると記述しない場合と同様ANDでの評価になります。
+		 * </p>
+		 * <p>
+		 * 詳細は{@link (TODO 未作成)|リファレンス&gt;Criteriaオブジェクト}をご覧ください
+		 * </p>
 		 *
+		 * <pre class="sh_javascript">
+		 * // 記述例
+		 * // categoryが'book'で、nameに'HTML5'を含み、priceが3000未満のアイテムを検索する条件
+		 * {
+		 * 	category: 'book',
+		 * 	name: /HTML5/,
+		 * 	'price &lt;': 3000
+		 * }
+		 *
+		 * // categoryが'game'または'movie'で、releaseDateが2014年以降のアイテムを検索する条件
+		 * {
+		 *   'category in': ['game', 'movie'],
+		 *   'relaseDate &gt;=': new Date('2014/1/1')
+		 * }
+		 * </pre>
+		 *
+		 * @memberOf Query
+		 * @param {Object} criteria 検索条件オブジェクト
 		 * @returns {Query}
 		 */
 		setCriteria: function(criteria) {
@@ -537,9 +605,17 @@
 			}
 			return this;
 		},
+
 		/**
 		 * 検索を実行
+		 * <p>
+		 * {@link Query#setCriteria}で設定した検索条件で検索します。検索が完了すると{@link result}に結果が格納されます。
+		 * </p>
+		 * <p>
+		 * また、{@link Query#onQueryComplete}に設定したハンドラが呼ばれます。
+		 * </p>
 		 *
+		 * @memberOf Query
 		 * @returns {Query}
 		 */
 		execute: function() {
@@ -565,7 +641,12 @@
 
 		/**
 		 * execute()による検索が完了した時に実行するハンドラを登録
+		 * <p>
+		 * ハンドラの引数には検索結果(ObserevableArray)が渡されます
+		 * </p>
 		 *
+		 * @memberOf Query
+		 * @param {Function} completeHandler
 		 * @returns {Query}
 		 */
 		onQueryComplete: function(completeHandler) {
@@ -575,11 +656,13 @@
 		},
 
 		/**
-		 * クエリをライブクエリにする
+		 * クエリをライブクエリにします
 		 * <p>
-		 * ライブクエリにすると、DataModelに変更があった時に検索結果が動的に変更されます
+		 * ライブクエリにすると、検索条件がセットされた時やDataModelに変更があった時に検索結果が動的に変更されます。(executeを呼ぶ必要がありません)
 		 * </p>
 		 *
+		 * @see Query#unsetLive
+		 * @memberOf Query
 		 * @returns {Query}
 		 */
 		setLive: function() {
@@ -596,8 +679,10 @@
 		},
 
 		/**
-		 * ライブクエリを解除する
+		 * ライブクエリを解除します
 		 *
+		 * @see Query#setLive
+		 * @memberOf Query
 		 * @returns {Query}
 		 */
 		unsetLive: function() {
@@ -612,7 +697,26 @@
 
 		/**
 		 * 検索結果のソート条件を設定
+		 * <p>
+		 * 比較関数または文字列で指定します
+		 * </p>
+		 * <p>
+		 * 文字列の場合は、'プロパティ名 ASC|DESC'のようにしてします。指定したプロパティの値でソートし、ASCは昇順、DESCは降順指定、省略すると昇順でソートします。
+		 * </p>
+		 * <p>
+		 * 比較関数を指定する場合、以下の例のように実装してください。
+		 * </p>
 		 *
+		 * <pre class="sh_javascript">
+		 * query.orderBy(function(a, b) {
+		 * 	// idを数値で評価して降順にする
+		 * 		// 引数はそれぞれデータアイテム。第1引数を先にする場合は正の値、第2引数を先にする場合は負の値を返す
+		 * 		return parseInt(b.get('id')) - parseInt(a.get('id'));
+		 * 	});
+		 * </pre>
+		 *
+		 * @memberOf Query
+		 * @param {String|Function}
 		 * @returns {Query}
 		 */
 		orderBy: function(orderByClause) {
@@ -661,17 +765,19 @@
 	/**
 	 * Queryクラスを作成して返します
 	 *
+	 * @private
 	 * @returns {Query} 検索を行うQueryクラスを返します
 	 */
 	function createQuery() {
 		return new Query(this);
 	}
 
+	// =============================
+	// Expose to window
+	// =============================
+
 	// h5internalにqueryを公開
 	h5internal.data = {
 		createQuery: createQuery
 	};
-	// =============================
-	// Expose to window
-	// =============================
 })();
