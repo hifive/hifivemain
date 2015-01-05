@@ -2805,7 +2805,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('DIVにバインドしたh5trackstartイベントハンドラがmousedownで発火した時にoffsetが取得できること', 4, function() {
+	asyncTest('DIVにバインドしたclickイベントハンドラでoffsetが取得できること', 4, function() {
 		var ctrl = this.offsetTestCtrl;
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
@@ -2871,8 +2871,8 @@ $(function() {
 		var innerOffset = ctrl.$inner.offset();
 		target = ctrl.$inner[0];
 		dispatchTouchEvent(target, 'touchstart', innerOffset.left + 4, innerOffset.top + 8);
-		ok(nearEqual(ctrl.offsetX, 14), '内側のdiv要素のh5trackstart時にオフセットのx座標が取得できること');
-		ok(nearEqual(ctrl.offsetY, 28), '内側のdiv要素のh5trackstart時にオフセットのy座標が取得できること');
+		ok(nearEqual(ctrl.offsetX, 4), '内側のdiv要素のh5trackstart時にオフセットのx座標が取得できること');
+		ok(nearEqual(ctrl.offsetY, 8), '内側のdiv要素のh5trackstart時にオフセットのy座標が取得できること');
 		dispatchTouchEvent(target, 'touchend');
 		start();
 	});
