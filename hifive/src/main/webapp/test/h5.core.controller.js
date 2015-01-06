@@ -229,7 +229,8 @@ $(function() {
 			// touchesの作成
 			if (document.createTouch) {
 				// android2.3.6はcreateTouchあるが、2.2.1にはなかった
-				touches = [document.createTouch(window, elm, 0, screenX, screenY, clientX, clientY)];
+				touches = [document.createTouch(window, elm, 1, pageX, pageY, screenX, screenY,
+						clientX, clientY, 0, 0, 0, 1)];
 			} else {
 				touches = [{
 					clientX: x,
