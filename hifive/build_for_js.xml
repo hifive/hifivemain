@@ -59,6 +59,11 @@
 				dstDir="${releaseDir}/"
 				version="${versionNumber}"
 				templateEngineVersion="1.0"
+				configBaseDir="${configBaseDir}"
+				jsTemplateFile="${jsTempFile}"
+				cssTemplateFile="${cssTempFile}"
+				minHeaderFile="${minHeaderFile}"
+				constructionFile="${constructionFile}"
 				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
@@ -89,7 +94,7 @@
 				cssTemplateFile="${cssTempFile}"
 				minHeaderFile="${minHeaderFile}"
 				constructionFile="${constructionFile}"
-				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,hoge" />
+				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
