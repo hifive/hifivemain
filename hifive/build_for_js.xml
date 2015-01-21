@@ -10,6 +10,13 @@
 	<property name="lib.tool.dir" value="${basedir}/jstool" />
 	<property name="lib.project.dir" value="./lib" />
 
+	<property name="configBaseDir" value="${basedir}/config/build" />
+	<property name="constructionFile" value="h5-file-construction.xml"/>
+	<property name="jsTempFile" value="template/hifive-ui-js.vm" />
+	<property name="ejsTempFile" value="template/hifive-ui-ejs.vm" />
+	<property name="cssTempFile" value="template/hifive-ui-css.vm" />
+	<property name="minHeaderFile" value="template/min-header.vm" />
+
 	<path id="base.path">
 		<fileset dir="${lib.project.dir}" includes="**/*.jar" />
 	</path>
@@ -42,16 +49,21 @@
 		<buildService>
 			<buildParameter
 				tmpFiles="false"
-				ejsName="ejs-h5mod.js"
+				templateEngineName="ejs-h5mod.js"
 				cssName="h5.css"
 				releaseName="h5.js"
 				devName="h5.dev.js"
-				srcDir="src/main/webapp/src/"
-				cssSrcDir="src/main/webapp/srcCss/"
-				ejsSrcDir="src/main/webapp/src/ejs/"
+				jsDir="src/main/webapp/src/"
+				cssDir="src/main/webapp/srcCss/"
+				templateEngineSrcDir="src/main/webapp/src/ejs/"
 				dstDir="${releaseDir}/"
 				version="${versionNumber}"
-				ejsVersion="1.0"
+				templateEngineVersion="1.0"
+				configBaseDir="${configBaseDir}"
+				jsTemplateFile="${jsTempFile}"
+				cssTemplateFile="${cssTempFile}"
+				minHeaderFile="${minHeaderFile}"
+				constructionFile="${constructionFile}"
 				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
@@ -67,16 +79,21 @@
 		<buildService>
 			<buildParameter
 				tmpFiles="false"
-				ejsName="ejs-h5mod.js"
+				templateEngineName="ejs-h5mod.js"
 				cssName="h5.css"
 				releaseName="h5.js"
 				devName="h5.dev.js"
-				srcDir="/src/main/webapp/src/"
-				cssSrcDir="/src/main/webapp/srcCss/"
-				ejsSrcDir="/src/main/webapp/src/ejs/"
+				jsDir="/src/main/webapp/src/"
+				cssDir="/src/main/webapp/srcCss/"
+				templateEngineSrcDir="/src/main/webapp/src/ejs/"
 				dstDir="${releaseDir}/"
 				version="Nightly_${nightly.version}"
-				ejsVersion="1.0"
+				templateEngineVersion="1.0"
+				configBaseDir="${configBaseDir}"
+				jsTemplateFile="${jsTempFile}"
+				cssTemplateFile="${cssTempFile}"
+				minHeaderFile="${minHeaderFile}"
+				constructionFile="${constructionFile}"
 				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>

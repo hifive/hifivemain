@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+	<xs:element name="h5-file-constraction">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="module" type="module" maxOccurs="unbounded" minOccurs="0"></xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="module">
+		<xs:sequence>
+			<xs:element name="dependencies" type="dependencies" maxOccurs="1" minOccurs="1"></xs:element>
+			<xs:element name="files" type="files" maxOccurs="1" minOccurs="1"></xs:element>
+			<xs:element name="cssfiles" type="files" maxOccurs="1" minOccurs="1"></xs:element>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" use="required"></xs:attribute>
+		<xs:attribute name="description" type="xs:string" use="required"></xs:attribute>
+		<xs:attribute name="selectable" type="xs:boolean" default="true"></xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="dependencies">
+		<xs:sequence>
+			<xs:element name="dependency" type="dependency" maxOccurs="unbounded" minOccurs="0"></xs:element>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="files">
+		<xs:sequence>
+			<xs:element name="file" type="file" maxOccurs="unbounded" minOccurs="0"></xs:element>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="dependency">
+		<xs:attribute name="name" type="xs:string" use="required"></xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="file">
+		<xs:attribute name="name" type="xs:string" use="required"></xs:attribute>
+	</xs:complexType>
+
+
+</xs:schema>
+
