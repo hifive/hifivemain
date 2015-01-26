@@ -83,7 +83,7 @@
 	var ERR_CODE_CONTROLLER_CIRCULAR_REF = 6009;
 	/** エラーコード: ロジックの参照が循環している */
 	var ERR_CODE_LOGIC_CIRCULAR_REF = 6010;
-	/** エラーコード: コントローラの参照が循環している */
+	/** エラーコード: コントローラ化によって追加されるプロパティと名前が重複している */
 	var ERR_CODE_CONTROLLER_SAME_PROPERTY = 6011;
 	/** エラーコード: イベントハンドラのセレクタに{this}が指定されている */
 	var ERR_CODE_EVENT_HANDLER_SELECTOR_THIS = 6012;
@@ -171,11 +171,14 @@
 	// Cache
 	//
 	// =========================================================================
-	// コントローラマネージャ。作成した時に値をセットしている。
-	var controllerManager;
-
-	// キャッシュマネージャ。作成した時に値をセットしている。
-	var definitionCacheManager;
+	var getDeferred = h5.async.deferred;
+	var isPromise = h5.async.isPromise;
+	var startsWith = h5.u.str.startsWith;
+	var endsWith = h5.u.str.endsWith;
+	var format = h5.u.str.format;
+	var argsToArray = h5.u.obj.argsToArray;
+	var isJQueryObject = h5.u.obj.isJQueryObject;
+	var isDependency = h5.res.isDependency;
 
 	// =========================================================================
 	//
@@ -191,13 +194,12 @@
 	var dummyFailHandler = function() {
 	//
 	};
-	var getDeferred = h5.async.deferred;
-	var isPromise = h5.async.isPromise;
-	var startsWith = h5.u.str.startsWith;
-	var endsWith = h5.u.str.endsWith;
-	var format = h5.u.str.format;
-	var argsToArray = h5.u.obj.argsToArray;
-	var isJQueryObject = h5.u.obj.isJQueryObject;
+
+	// コントローラマネージャ。作成した時に値をセットしている。
+	var controllerManager;
+
+	// キャッシュマネージャ。作成した時に値をセットしている。
+	var definitionCacheManager;
 
 	/**
 	 * マウス/タッチイベントについてh5track*イベントをトリガしたかどうかを管理するため、イベントを格納する配列
@@ -693,7 +695,10 @@
 		if (cache) {
 			for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
 				var prop = cache.childControllerProperties[i];
-				if (false === callback(controller[prop], controller, prop)) {
+				var child = controller[prop];
+				// __construct時点では子コントローラがセットされていない場合があるので、
+				// その場合はcallbackは実行しない
+				if (child && false === callback(controller[prop], controller, prop)) {
 					return false;
 				}
 			}
@@ -791,7 +796,7 @@
 	 */
 	function doForEachControllerGroupsDepthFirst(controller, callback, _parent, _prop) {
 		function callbackWrapper(c, parent, prop) {
-			if (doForEachControllerGroupsDepthFirst(c, callback, parent, prop) === false) {
+			if (!c || doForEachControllerGroupsDepthFirst(c, callback, parent, prop) === false) {
 				return false;
 			}
 		}
@@ -2395,7 +2400,7 @@
 	 *
 	 * @param {Controller} controller
 	 * @param {Deferred} templateDfd
-	 * @param {String|String[]} templates テンプレートのパス(またはその配列)
+	 * @param {String|String[]|Depency} templates テンプレートのパス(またはその配列)または、Dependencyオブジェクト
 	 */
 	function setTemlatesDeferred(controller, templateDfd, templates) {
 		var controllerName = controller.__name;
@@ -2404,39 +2409,54 @@
 			if (!h5.u.obj.getByPath('h5.core.view')) {
 				throwFwError(ERR_CODE_NOT_VIEW);
 			}
-			// 内部から呼ぶviewのロードは、ルートコントローラ設定前に呼ぶので、
-			// view.loadではなくview.__view.loadを使ってエラーチェックをしないようにする
-			var vp = controller.view.__view.load(templates);
-			vp.done(function(result) {
-				/* del begin */
-				if (templates && templates.length > 0) {
-					fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
-				}
-				/* del end */
-				templateDfd.resolve();
-			}).fail(
-					function(result) {
-						// テンプレートのロードをリトライする条件は、リトライ回数が上限回数未満、かつ
-						// jqXhr.statusが0、もしくは12029(ERROR_INTERNET_CANNOT_CONNECT)であること。
-						// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に0になっていること、
-						// IEの場合は、コネクションが繋がらない時のコードが12029であること。
-						// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
-						// WinInet のエラーコード(12001 - 12156):
-						// http://support.microsoft.com/kb/193625/ja
-						var jqXhrStatus = result.detail.error.status;
-						if (count === h5.settings.dynamicLoading.retryCount || jqXhrStatus !== 0
-								&& jqXhrStatus !== ERROR_INTERNET_CANNOT_CONNECT) {
-							fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName,
-									result.detail.url);
-							setTimeout(function() {
-								templateDfd.reject(result);
-							}, 0);
-							return;
+
+			templates = isArray(templates) ? templates : [templates];
+			var promises = [];
+			for (var i = 0, l = templates.length; i < l; i++) {
+				// 文字列が指定されていたらDependencyに変換
+				var dependency = isDependency(templates[i]) ? templates[i] : h5.res
+						.require(templates[i]);
+				promises.push(dependency.resolve('ejsfile'));
+			}
+			waitForPromises(promises, function(resources) {
+				fwLogger.debug(FW_LOG_TEMPLATE_LOADED, controllerName);
+				// viewにテンプレートを登録
+				resources = isArray(resources) ? resources : [resources];
+				for (var i = 0, l = resources.length; i < l; i++) {
+					var templates = resources[i].templates;
+					for (var j = 0, len = templates.length; j < len; j++) {
+						// 内部から呼ぶviewのロードは、ルートコントローラ設定前に呼ぶので、
+						// viewではなくview.__viewを使ってコントローラのルートエレメントが設定されているかのチェックをしないようにする
+						try {
+							controller.view.__view.register(templates[i].id, templates[i].content);
+						} catch (e) {
+							// registerで登録できない(=コンパイルエラー)ならreject
+							templateDfd.reject(e);
 						}
-						setTimeout(function() {
-							viewLoad(++count);
-						}, h5.settings.dynamicLoading.retryInterval);
-					});
+					}
+				}
+				templateDfd.resolve();
+			}, function(result) {
+				// テンプレートのロードをリトライする条件は、リトライ回数が上限回数未満、かつ
+				// jqXhr.statusが0、もしくは12029(ERROR_INTERNET_CANNOT_CONNECT)であること。
+				// jqXhr.statusの値の根拠は、IE以外のブラウザだと通信エラーの時に0になっていること、
+				// IEの場合は、コネクションが繋がらない時のコードが12029であること。
+				// 12000番台すべてをリトライ対象としていないのは、何度リトライしても成功しないエラーが含まれていることが理由。
+				// WinInet のエラーコード(12001 - 12156):
+				// http://support.microsoft.com/kb/193625/ja
+				var jqXhrStatus = result.detail.error.status;
+				if (count === h5.settings.dynamicLoading.retryCount || jqXhrStatus !== 0
+						&& jqXhrStatus !== ERROR_INTERNET_CANNOT_CONNECT) {
+					fwLogger.error(FW_LOG_TEMPLATE_LOAD_FAILED, controllerName, result.detail.url);
+					setTimeout(function() {
+						templateDfd.reject(result);
+					}, 0);
+					return;
+				}
+				setTimeout(function() {
+					viewLoad(++count);
+				}, h5.settings.dynamicLoading.retryInterval);
+			});
 		}
 		viewLoad(0);
 	}
@@ -2624,6 +2644,106 @@
 			}
 		}
 		return cache;
+	}
+
+	/**
+	 * ロジックの__readyを実行する
+	 *
+	 * @private
+	 * @param {Logic} rootLogic ルートロジック
+	 * @param {Deferred} readyDfd rootLogicの__readyが終わったらresolveするdeferred
+	 */
+	function triggerLogicReady(rootLogic, readyDfd) {
+		// 待機中のプロミスを覚えておく
+		// プロミスがresolveされたら取り除く
+		var waitingPromises = [];
+
+		/**
+		 * promiseにdoneハンドラを追加する関数
+		 * <p>
+		 * ただし、同一プロミスに同一ロジックについてのリスナを登録できないようにしています
+		 * </p>
+		 *
+		 * @param {Promise} promise
+		 * @param {Logic} targetLogic
+		 * @param {Function} listener
+		 */
+		function addDoneListener(promise, targetLogic, listener) {
+			var logicWaitingPromises = targetLogic.__logicContext.waitingPromises = targetLogic.__logicContext.waitingPromises
+					|| [];
+			if ($.inArray(promise, logicWaitingPromises) === -1) {
+				logicWaitingPromises.push(promise);
+				promise.done(listener);
+			}
+		}
+
+		function execInner(logic, parent) {
+			// isReadyは__ready終了(promiseならresolveした)タイミングでtrueになる
+			logic.__logicContext.isReady = false;
+			// isCalledReadyは__readyを呼んだ(promiseを返すかどうかは関係ない)タイミングでtrueになる
+			logic.__logicContext.isCalledReady = false;
+			// 深さ優先でexecInnerを実行
+			doForEachLogics(logic, execInner);
+
+			/**
+			 * 子が全てisReadyなら__readyを実行して自身をisReadyにする
+			 */
+			function executeReady() {
+				if (logic.__logicContext.isCalledReady) {
+					// 既に__ready呼び出し済みなら何もしない
+					return;
+				}
+				var isChildrenReady = true;
+				doForEachLogics(logic, function(child) {
+					// isReadyがfalseなものが一つでもあればfalseを返して探索を終了
+					// 子がいない場合はisChidrenReadyはtrueのまま
+					isChildrenReady = child.__logicContext.isReady;
+					return isChildrenReady;
+				});
+				if (isChildrenReady) {
+					// __readyを実行
+					var ret = isFunction(logic.__ready) && logic.__ready();
+					logic.__logicContext.isCalledReady = true;
+					if (isPromise(ret)) {
+						// __readyが返したプロミスをwaitingPromisesに覚えておく
+						waitingPromises.push(ret);
+						ret.done(function() {
+							// __readyが返したプロミスがresolveされたらisReady=trueにする
+							logic.__logicContext.isReady = true;
+							// waitingPromisesから、resolveしたプロミスを取り除く
+							waitingPromises.splice($.inArray(ret, waitingPromises), 1);
+							// ロジックが覚えていた、待機しているプロミスはもう不要なので削除
+							logic.__logicContext.waitingPromises = null;
+							if (logic === rootLogic) {
+								// rootLogicのisReadyがtrueになったらreadyDfdをresolveして終了
+								readyDfd.resolveWith(logic);
+								return;
+							}
+						});
+					} else {
+						// __readyが同期または関数でないならすぐにisReadyをtrueにする
+						logic.__logicContext.isReady = true;
+						// ロジックが覚えていた、待機しているプロミスはもう不要なので削除
+						logic.__logicContext.waitingPromises = null;
+						if (logic === rootLogic) {
+							// rootLogicの__readyが終わったタイミングでreadyDfdをresolveする
+							readyDfd.resolveWith(logic);
+						}
+					}
+				} else {
+					// 子のいずれかがisReadyじゃない===どこかで待機しているプロミスがある
+					// (待機するプロミスが無ければ子から順に実行しているため)
+					// この時点で待機しているプロミスのいずれかが完了したタイミングで、
+					// 再度自分の子が全てisReadyかどうかをチェックする
+					for (var i = 0, l = waitingPromises.length; i < l; i++) {
+						// addDoneListener(内部関数)を使って、同じプロミスに同じロジックについてのハンドラが重複しないようにしている
+						addDoneListener(waitingPromises[i], logic, executeReady);
+					}
+				}
+			}
+			executeReady();
+		}
+		execInner(rootLogic);
 	}
 
 	/**
@@ -3784,10 +3904,16 @@
 	function createAndBindController(targetElement, controllerDefObj, param, fwOpt) {
 		// 内部から再帰的に呼び出された場合は、fwOpt.isInternalが指定されているはずなので、ルートコントローラかどうかはfwOpt.isInternalで判別できる
 		var isRoot = !fwOpt || !fwOpt.isInternal;
+		if (!isRoot && isDisposed(fwOpt.rootController)) {
+			// ルートコントローラがdisposeされていたら何もしない
+			return null;
+		}
 
 		// コントローラ名
 		var controllerName = controllerDefObj.__name;
-		if (!isString(controllerName) || $.trim(controllerName).length === 0) {
+		if ((!isString(controllerName) || $.trim(controllerName).length === 0)
+				&& !isDependency(controllerDefObj)) {
+			// Dependency指定の場合を除いて、文字列じゃない又は空文字、空白文字の場合はエラー
 			throwFwError(ERR_CODE_INVALID_CONTROLLER_NAME, null, {
 				controllerDefObj: controllerDefObj
 			});
@@ -3844,6 +3970,8 @@
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
 				controllerName, controllerDefObj, param, isRoot);
 
+		var rootController = isRoot ? controller : fwOpt.rootController;
+
 		// ------ controllerContextの作成 ------//
 		// Deferred,Promiseの作成
 		// preInitPromise, initPromise, postInitPromiseが失敗してもcFHを発火させないようにするため、dummyのfailハンドラを登録する
@@ -3885,13 +4013,40 @@
 		controller.postInitPromise = postInitPromise;
 		controller.readyPromise = readyPromise;
 
+		// 子コントローラ、ロジック依存関係解決のプロミス
+		var promisesForTriggerInit = isRoot ? [] : fwOpt.promisesForTriggerInit;
+
 		// ロジック定義をロジック化
 		// ロジック定義はクローンされたものではなく、定義時に記述されたものを使用する
 		// ロジックが持つロジック定義オブジェクトはオリジナルの定義オブジェクトになる
 		for (var i = 0, l = cache.logicProperties.length; i < l; i++) {
 			var prop = cache.logicProperties[i];
 			var logicDef = controllerDefObj[prop];
-			controller[prop] = createLogic(logicDef);
+			if (isDependency(logicDef)) {
+				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
+				var promise = logicDef.resolve('namespace');
+				promisesForTriggerInit.push(promise);
+				promise.done((function(logicProp, logicPromise) {
+					return function(logic) {
+						var logicInstance = createLogic(logic);
+						controller[logicProp] = logicInstance;
+						// ロジック化が終わったらコントローラが待機するプロミスから取り除く
+						promisesForTriggerInit.splice($.inArray(logicPromise,
+								promisesForTriggerInit), 1);
+						// ロジックのreadyPromiseを追加
+						promisesForTriggerInit.push(logicInstance.readyPromise);
+						// ロジックのreadyPromiseがdoneになったらpromisesForTriggerInitから取り除く
+						logicInstance.readyPromise.done((function(logicReadyPromise) {
+							return function() {
+								promisesForTriggerInit.splice($.inArray(logicReadyPromise,
+										promisesForTriggerInit), 1);
+							};
+						})(logicInstance.readyPromise));
+					};
+				})(prop, promise));
+			} else {
+				controller[prop] = createLogic(logicDef);
+			}
 		}
 
 		// templateDfdの設定
@@ -3899,7 +4054,7 @@
 		var templates = controllerDefObj.__templates;
 		var templateDfd = getDeferred();
 		var templatePromise = templateDfd.promise();
-		if (templates && templates.length > 0) {
+		if (isDependency(templates) || templates && templates.length > 0) {
 			// テンプレートファイルのロードを待機する処理を設定する
 			setTemlatesDeferred(controller, templateDfd, templates);
 		} else {
@@ -3931,16 +4086,6 @@
 			disposeController(controller, null, e);
 		});
 
-		// 子コントローラをコントローラ化して持たせる
-		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
-			// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
-			var prop = cache.childControllerProperties[i];
-			controller[prop] = createAndBindController(null, $.extend(true, {},
-					clonedControllerDef[prop]), param, $.extend({
-				isInternal: true
-			}, fwOpt));
-		}
-
 		// イベントハンドラにアスペクトを設定
 		for (var i = 0, l = cache.eventHandlerProperties.length; i < l; i++) {
 			var prop = cache.eventHandlerProperties[i];
@@ -3960,51 +4105,97 @@
 			controller[prop] = clonedControllerDef[prop];
 		}
 
-		if (isRoot) {
-			// __constructを実行。ここまでは完全に同期処理になる。
-			// 子コントローラのバインドが終わってから、親→子の順番で実行する
-			var isDisposedInConstruct = false;
-			doForEachControllerGroups(controller, function(c, parent, prop) {
-				// __construct呼び出し
-				try {
-					c.__construct && c.__construct(createInitializationContext(c));
-				} catch (e) {
-					// この時点ではrootControllerは設定されておらず、
-					// disposeControllerはrootControllerを取得できないと何もしないので
-					// ルートコントローラを渡してdisposeする
-					disposeController(controller, e);
-				}
-
-				if (isDisposing(c)) {
-					// 途中(__constructの中)でdisposeされたら__constructの実行を中断
-					isDisposedInConstruct = true;
-					return false;
-				}
-
-				// __construct呼び出し後にparentControllerとrootControllerの設定
-				if (c === controller) {
-					// ルートコントローラの場合(parentが無い場合)、rootControllerは自分自身、parentControllerはnull
-					c.rootController = c;
-					c.parentController = null;
-				} else {
-					// rootControllerはisRoot===trueのコントローラには設定済みなので、親から子に同じrootControllerを引き継ぐ
-					c.parentController = parent;
-					c.rootController = parent.rootController;
-				}
-			});
-			if (isDisposedInConstruct) {
-				// __constructでdisposeが呼ばれたらnullを返す
-				// (h5.core.controllerの戻り値がnullになる)
-				return null;
-			}
-		}
-
 		// コントローラマネージャの管理対象とするか判定する(fwOpt.false===falseなら管理対象外)
 		controllerContext.managed = fwOpt && fwOpt.managed;
 
+		// __constructを実行(子コントローラのコントローラ化より前)
+		try {
+			controller.__construct
+					&& controller.__construct(createInitializationContext(controller));
+			if (isDisposing(controller)) {
+				// 途中(__constructの中)でdisposeされたら__constructの実行を中断
+				return null;
+			}
+		} catch (e) {
+			// ルートコントローラを渡してdisposeする
+			disposeController(rootController, e);
+			return null;
+		}
+
+		// __construct呼び出し後にparentControllerとrootControllerの設定
+		if (isRoot) {
+			// ルートコントローラの場合(parentが無い場合)、rootControllerは自分自身、parentControllerはnull
+			controller.rootController = controller;
+			controller.parentController = null;
+		} else {
+			// rootControllerはisRoot===trueのコントローラには設定済みなので、親から子に同じrootControllerを引き継ぐ
+			controller.parentController = fwOpt.parentController;
+			controller.rootController = fwOpt.rootController;
+		}
+
+		// 子コントローラをコントローラ化して持たせる
+		// 子コントローラがDependencyオブジェクトなら依存関係を解決
+		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
+			// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
+			var prop = cache.childControllerProperties[i];
+			var childController = clonedControllerDef[prop];
+			if (isDependency(childController)) {
+				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
+				var promise = childController.resolve('namespace');
+				promisesForTriggerInit.push(promise);
+				promise.done((function(childProp, childControllerPromise) {
+					return function(c) {
+						var child = createAndBindController(null, $.extend(true, {}, c), param, {
+							isInternal: true,
+							parentController: controller,
+							rootController: rootController,
+							promisesForTriggerInit: promisesForTriggerInit
+						});
+						if (child == null) {
+							// __constructで失敗したりdisposeされた場合はnullが返ってくるので
+							// 子コントローラの__constructが正しく実行されなかった場合は以降何もしない
+							return null;
+						}
+						controller[childProp] = child;
+						// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
+						promisesForTriggerInit.splice($.inArray(childControllerPromise,
+								promisesForTriggerInit), 1);
+					};
+				})(prop, promise));
+			} else {
+				var child = createAndBindController(null, $.extend(true, {},
+						clonedControllerDef[prop]), param, {
+					isInternal: true,
+					parentController: controller,
+					rootController: rootController
+				});
+
+				if (child == null) {
+					// __constructで失敗したりdisposeされた場合はnullが返ってくるので
+					// 子コントローラの__constructが正しく実行されなかった場合は以降何もしない
+					return null;
+				}
+				controller[prop] = child;
+			}
+		}
+
 		if (isRoot) {
 			// ルートコントローラなら自分以下のinitを実行
-			triggerInit(controller);
+			// promisesForTriggerInitは子コントローラの依存解決
+			function constructPromiseCheck() {
+				if (promisesForTriggerInit.length === 0) {
+					// 待機中のプロミスがもうないならinit開始
+					triggerInit(controller);
+					return;
+				}
+				// 子孫にpromiseを追加されていた場合(さらに待機するコンストラクタがあった場合)
+				// 再度待機する
+				waitAllConstructPromise();
+			}
+			function waitAllConstructPromise() {
+				waitForPromises(promisesForTriggerInit, constructPromiseCheck);
+			}
+			waitAllConstructPromise();
 		}
 		return controller;
 	}
@@ -4022,6 +4213,10 @@
 	 * @memberOf h5.core
 	 */
 	function createLogic(logicDefObj) {
+		var readyDfd = h5.async.deferred();
+		var readyPromise = readyDfd.promise();
+		var logicTreeDependencyPromises = [];
+
 		function create(defObj, isRoot) {
 			var logicName = defObj.__name;
 
@@ -4032,6 +4227,7 @@
 					logicDefObj: defObj
 				});
 			}
+
 			if (defObj.__logicContext) {
 				// すでにロジックがインスタンス化されている
 				throwFwError(ERR_CODE_LOGIC_ALREADY_CREATED, null, {
@@ -4047,7 +4243,6 @@
 				if (isRoot) {
 					validateLogicCircularRef(defObj);
 				}
-
 				// キャッシュの作成
 				cache = createLogicCache(defObj);
 			}
@@ -4069,24 +4264,61 @@
 			logic.own = own;
 			logic.ownWithOrg = ownWithOrg;
 
-			// ロジックが持っているロジック定義もロジック化
-			var logicProperties = cache.logicProperties;
-			for (var i = 0, l = logicProperties.length; i < l; i++) {
-				var prop = logicProperties[i];
-				logic[prop] = create(logic[prop]);
-			}
+			// キャッシュへ登録
+			definitionCacheManager.register(logicName, cache);
 
 			// __constructの実行
-			// 子から実行する
+			// 親から実行する
 			if (isFunction(logic.__construct)) {
 				logic.__construct();
 			}
 
-			// キャッシュへ登録
-			definitionCacheManager.register(logicName, cache);
+			// ロジックが持っているロジック定義もロジック化
+			var logicProperties = cache.logicProperties;
+			for (var i = 0, l = logicProperties.length; i < l; i++) {
+				var prop = logicProperties[i];
+				var childLogicDef = logic[prop];
+				if (isDependency(childLogicDef)) {
+					// 子ロジックがDependencyならresolveしてからロジック化する
+					var promise = childLogicDef.resolve();
+					// ロジックツリーの待機するプロミスに追加
+					logicTreeDependencyPromises.push(promise);
+					promise.done((function(childLogicProp, logicPromise) {
+						return function(resolvedLogicDef) {
+							// ロジック化
+							logic[childLogicProp] = create(resolvedLogicDef);
+							// ロジックツリーの待機するプロミスから取り除く
+							logicTreeDependencyPromises.splice($.inArray(logicPromise,
+									logicTreeDependencyPromises), 1);
+						};
+					})(prop, promise));
+				} else {
+					logic[prop] = create(childLogicDef);
+				}
+			}
+
 			return logic;
 		}
-		return create(logicDefObj, true);
+		var rootLogic = create(logicDefObj, true);
+		rootLogic.readyPromise = readyPromise;
+
+		// ロジックツリーの依存解決が終わったタイミングで__readyの実行を開始
+		function logicTreePromiseCheck() {
+			if (logicTreeDependencyPromises.length === 0) {
+				// 待機中のプロミスがもうないなら__readyの開始
+				triggerLogicReady(rootLogic, readyDfd);
+				return;
+			}
+			// 子孫にpromiseを追加されていた場合(さらに待機するコンストラクタがあった場合)
+			// 再度待機する
+			waitAllConstructPromise();
+		}
+		function waitAllConstructPromise() {
+			waitForPromises(logicTreeDependencyPromises, logicTreePromiseCheck);
+		}
+		waitAllConstructPromise();
+
+		return rootLogic;
 	}
 
 	// =============================
