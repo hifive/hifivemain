@@ -480,7 +480,7 @@
 				}
 				strictEqual(h5.core.view.isAvailable('test1'), false,
 						'scriptタグで囲まれていないテンプレートはエラーとして処理されること。');
-				equal(e.code, ERR.ERR_CODE_TEMPLATE_FILE_NO_SCRIPT_ELEMENT,
+				equal(e.code, ERR.ERR_CODE_TEMPLATE_FILE_INVALID_ELEMENT,
 						'エラーからcodeプロパティが取得できること。:' + e.code);
 				ok(!!e.detail.url, 'エラーからdetail.urlプロパティが取得できること。:' + e.detail.url);
 				start();
@@ -673,7 +673,7 @@
 
 
 		asyncTest('中身が空のテンプレートファイルを読み込む。出力されるログも確認する ※要目視確認', 4, function() {
-			var errCode = ERR.ERR_CODE_TEMPLATE_FILE;
+			var errCode = ERR.ERR_CODE_TEMPLATE_FILE_NO_TEMPLATE;
 			var p = h5.core.view.load(['./template/test14.ejs']);
 			p.fail(function(e) {
 				strictEqual(e.code, errCode, 'エラーコード: ' + e.code);
