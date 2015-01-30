@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0">
 	<meta http-equiv="Pragma" content="no-cache">
 	<meta http-equiv="Cache-Control" content="no-cache">
 	<meta http-equiv="Expires" content="-1">
@@ -25,12 +26,18 @@
 
 <div id="container">
     <nav>
-    	<div><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
-        <div class="h5-searchBox">
-        	<input type="text" placeholder="Search...">
-        	<button class="clear">×</button>
+    	<div class="module-search-header">
+	    	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+	        <div class="h5-searchBox">
+	        	<input type="text" placeholder="Search...">
+	        	<button class="clear">×</button>
+	        </div>
         </div>
-        <?js= nav ?>
+	    <div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+	    <div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+        <div class="module-list-wrapper hidden-mobile">
+        	<?js= nav ?>
+        </div>
     </nav>
 
     <div id="main">

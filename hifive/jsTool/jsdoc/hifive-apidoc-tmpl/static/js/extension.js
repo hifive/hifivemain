@@ -123,4 +123,24 @@
 			}, 0);
 		});
 	});
+
+	//-------------- モジュールの表示・非表示(スマフォ用) --------------
+	$(function() {
+		$('.show-modules').click(function(e) {
+			e.preventDefault();
+			window.scrollTo(0, 1);
+			var $moduleList = $('.module-list-wrapper');
+			$moduleList.removeClass('hidden-mobile');
+			$('#main').addClass('hidden-mobile');
+			$('nav').css('height', window.innerHeight).addClass('module-mode');
+		});
+		$('.hide-modules').click(function(e) {
+			e.preventDefault();
+			window.scrollTo(0, 1);
+			var $moduleList = $('.module-list-wrapper');
+			$moduleList.addClass('hidden-mobile');
+			$('#main').removeClass('hidden-mobile');
+			$('nav').css('height', '').removeClass('module-mode');
+		});
+	});
 })(jQuery);
