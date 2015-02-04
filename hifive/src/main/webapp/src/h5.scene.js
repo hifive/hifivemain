@@ -142,6 +142,8 @@
 
 	}
 
+	var REMOTE_METHOD_INVOCATION = '__h5__remoteMethodInvocation';
+
 	function RemoteWindow(url, windowName, features, isModal) {
 		var win = window.open(url, windowName, features);
 
@@ -153,13 +155,37 @@
 
 		this.setModal(isModal === true ? true : false);
 
+		//TODO createSequenceは別ファイルにしたい
+		this._messageSeq = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_INT);
+
+		this._channel = new MessageChannel(REMOTE_METHOD_INVOCATION, win);
+
+		this._channel.addEventListener('');
+
+		//TODO channelはmessageイベントを1つだけonしてハンドラを共有する
+		//id -> dfd
+		this._invocationMap = {};
+
 		this._watchChild();
 	}
 	$.extend(RemoteWindow.prototype, {
 		invoke: function(method, args) {
 			var dfd = h5.async.deferred();
 
+			var data = {
+				id: this._messageSeq.next(),
+				args: args
+			};
+
+			this._invocationMap[data.id] = dfd;
+
+			this._channel.send(data);
+
 			return dfd.promise();
+		},
+
+		_receiveInvocationResult: function(ev) {
+
 		},
 
 		getControllerProxy: function(selector) {
@@ -215,9 +241,16 @@
 	});
 
 	function openWindow(url, name, features, isModal, controllerName, param) {
+		var dfd = h5.async.deferred();
+
 		var remote = new RemoteWindow(url, name, features, isModal);
 
-		return remote;
+		//FIXME window側のURLのロードが完了し、存在する場合にコントローラのreadyが完了したらresolve
+		setTimeout(function(){
+			dfd.resolve(remote);
+		}, 100);
+
+		return dfd.promise();
 	}
 
 
