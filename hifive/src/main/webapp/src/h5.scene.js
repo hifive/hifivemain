@@ -71,7 +71,7 @@
 	 * @returns controller
 	 */
 	function getDefaultSceneController() {
-		var bodyController = h5.core.controllerManager.getControllers(document.body);
+		var bodyController = h5.core.controllerManager.getControllers(document.body)[0];
 
 		return bodyController;
 	}
@@ -219,7 +219,7 @@
 			try {
 				ret = controller[method].apply(controller, args);
 			} catch (e) {
-				this._channel.send({
+				this._sendChannel.send({
 					id: id,
 					isAsync: false,
 					status: RMI_STATUS_EXCEPTION,
@@ -228,12 +228,14 @@
 				return;
 			}
 
+			var that = this;
+
 			//TODO コード整理
-			if (isPromise(ret)) {
+			if (h5.async.isPromise(ret)) {
 				ret.done(function(/* var_args */) {
 					var value = h5.u.obj.argsToArray(arguments);
 
-					this._channel.send({
+					that._sendChannel.send({
 						id: id,
 						isAsync: true,
 						status: RMI_STATUS_ASYNC_RESOLVED,
@@ -242,7 +244,7 @@
 				}).fail(function(/* var_args */) {
 					var value = h5.u.obj.argsToArray(arguments);
 
-					this._channel.send({
+					that._sendChannel.send({
 						id: id,
 						isAsync: true,
 						status: RMI_STATUS_ASYNC_REJECTED,
@@ -251,7 +253,7 @@
 
 				});
 			} else {
-				this._channel.send({
+				this._sendChannel.send({
 					id: id,
 					isAsync: false,
 					status: RMI_STATUS_SUCCESS,
@@ -369,13 +371,13 @@
 
 		this.setModal(isModal === true ? true : false);
 
-		this.rmi = new RemoteMethodInvocation(win);
+		this._rmi = new RemoteMethodInvocation(win);
 
 		this._watchChild();
 	}
 	$.extend(RemoteWindow.prototype, {
 		invoke: function(method, args) {
-			this.rmi.invoke(method, args);
+			return this._rmi.invoke(method, args);
 		},
 
 		getControllerProxy: function(selector) {
