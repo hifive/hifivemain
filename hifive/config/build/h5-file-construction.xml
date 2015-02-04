@@ -153,6 +153,16 @@
 		</cssfiles>
 	</module>
 
+	<module name="scene" description="module.scene.description" selectable="false">
+		<dependencies>
+		</dependencies>
+		<files>
+			<file name="h5.scene.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
 	<module name="dev" description="module.dev.description" selectable="false">
 		<dependencies>
 			<dependency name="util" />
