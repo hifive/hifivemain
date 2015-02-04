@@ -39,13 +39,38 @@
 		</cssfiles>
 	</module>
 
-	<module name="controller" description="module.controller.description">
+	<module name="resource" description="module.resource.description">
 		<dependencies>
 			<dependency name="util" />
 			<dependency name="async" />
 		</dependencies>
 		<files>
+			<file name="h5.res.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="controller" description="module.controller.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+			<dependency name="resource" />
+		</dependencies>
+		<files>
 			<file name="h5.core.controller.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="dataModel" description="module.core.data.description">
+		<dependencies>
+			<dependency name="util" />
+		</dependencies>
+		<files>
+			<file name="h5.core.data_query.js" />
+			<file name="h5.core.data.js" />
 		</files>
 		<cssfiles>
 		</cssfiles>
@@ -55,9 +80,9 @@
 		<dependencies>
 			<dependency name="util" />
 			<dependency name="view" />
+			<dependency name="dataModel" />
 		</dependencies>
 		<files>
-			<file name="h5.core.data.js" />
 			<file name="h5.core.view_binding.js" />
 		</files>
 		<cssfiles>
