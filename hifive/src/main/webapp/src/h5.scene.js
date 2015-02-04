@@ -27,6 +27,9 @@
 	// Production
 	// =============================
 
+	var REMOTE_METHOD_INVOCATION = '__h5__RMI';
+
+	var REMOTE_METHOD_INVOCATION_RESULT = '__h5__RMI_Result';
 
 	// =============================
 	// Development Only
@@ -62,6 +65,17 @@
 	// =============================
 	// Functions
 	// =============================
+	/**
+	 * デフォルトシーンのシーンコントローラを取得する。
+	 *
+	 * @returns controller
+	 */
+	function getDefaultSceneController() {
+		var bodyController = h5.core.controllerManager.getControllers(document.body);
+
+		return bodyController;
+	}
+
 	function TypedMessage(type, data) {
 		this.type = type;
 		this.data = data;
@@ -74,13 +88,15 @@
 
 		this._closed = false;
 
+		this._subscribers = [];
+
 		var that = this;
 
-		this._recv = function(ev) {
-			that._receiveMessage(ev);
+		this._recv = function(event) {
+			that._receiveMessage(event.originalEvent);
 		};
 
-		$.on(window, 'message', this._recv);
+		$(window).on('message', this._recv);
 	}
 	h5.mixin.eventDispatcher.mix(MessageChannel.prototype);
 	$.extend(MessageChannel.prototype, {
@@ -99,20 +115,38 @@
 			this._targetWindow.postMessage(msgSerialized, location.origin);
 		},
 
+		subscribe: function(func, thisObj) {
+			var s = {
+				func: func,
+				thisObj: thisObj ? thisObj : null
+			};
+
+			this._subscribers.push(s);
+		},
+
 		close: function() {
 			this._closed = true;
 			this.off(window, 'message', this._recv);
 		},
 
 		_receiveMessage: function(event) {
+			var msg;
+
 			try {
-				var msg = h5.u.obj.deserialize(event.data);
+				msg = h5.u.obj.deserialize(event.data);
+
+				if (msg.type !== this.type) {
+					return;
+				}
 			} catch (e) {
 				fwLogger.debug('メッセージをデシリアライズできませんでした。無視します。');
+				return;
 			}
 
-			if (msg.type !== this.type) {
-				return;
+			var subers = this._subscribers;
+			for (var i = 0, len = subers.length; i < len; i++) {
+				var s = subers[i];
+				s.func.call(s.thisObj, msg.data);
 			}
 
 			var ev = {
@@ -125,11 +159,192 @@
 
 	});
 
+	//type:String -> MessageChannelインスタンス
+	var singletonMessageChannelMap = {};
+
+	/**
+	 * type毎に一意なMessageChannelインスタンスを取得する。
+	 *
+	 * @returns channel
+	 */
+	function getMessageChannel(type, win) {
+		var channel = singletonMessageChannelMap[type];
+
+		if (!channel) {
+			channel = new MessageChannel(type, win);
+			singletonMessageChannelMap[type] = channel;
+		}
+
+		return channel;
+	}
+
+	// =========================================================================
+	//
+	// Classes
+	//
+	// =========================================================================
+
+	//=============================
+	// RemoteInvocation
+	//=============================
+
+	var RMI_STATUS_SUCCESS = 0;
+	var RMI_STATUS_EXCEPTION = 1;
+	var RMI_STATUS_ASYNC_RESOLVED = 2;
+	var RMI_STATUS_ASYNC_REJECTED = 3;
+
+	function RMIReceiver() {
+		this._recvChannel = new MessageChannel(REMOTE_METHOD_INVOCATION, window.opener);
+		this._recvChannel.subscribe(this._receive, this);
+
+		this._sendChannel = new MessageChannel(REMOTE_METHOD_INVOCATION_RESULT, window.opener);
+	}
+	$.extend(RMIReceiver.prototype, {
+		_receive: function(data) {
+			var controller = getDefaultSceneController();
+
+			var id = data.id;
+			var method = data.method;
+			var args = data.args;
+
+			if (!controller[method] || isFunction(controller[method])) {
+				this._callFunction(id, controller, method, args);
+			}
+		},
+
+		_callFunction: function(id, controller, method, args) {
+			args = wrapInArray(args);
+
+			var ret = undefined;
+			try {
+				ret = controller[method].apply(controller, args);
+			} catch (e) {
+				this._channel.send({
+					id: id,
+					isAsync: false,
+					status: RMI_STATUS_EXCEPTION,
+					result: null
+				});
+				return;
+			}
+
+			//TODO コード整理
+			if (isPromise(ret)) {
+				ret.done(function(/* var_args */) {
+					var value = h5.u.obj.argsToArray(arguments);
+
+					this._channel.send({
+						id: id,
+						isAsync: true,
+						status: RMI_STATUS_ASYNC_RESOLVED,
+						result: value
+					});
+				}).fail(function(/* var_args */) {
+					var value = h5.u.obj.argsToArray(arguments);
+
+					this._channel.send({
+						id: id,
+						isAsync: true,
+						status: RMI_STATUS_ASYNC_REJECTED,
+						result: value
+					});
+
+				});
+			} else {
+				this._channel.send({
+					id: id,
+					isAsync: false,
+					status: RMI_STATUS_SUCCESS,
+					result: ret
+				});
+			}
+
+		}
+	});
+
+	//=============================
+	// RemoteInvocation
+	//=============================
+
+	function RemoteMethodInvocation(targetWindow) {
+		this.targetWindow = targetWindow;
+
+		//TODO channel id は一意になるように生成する
+		this.id = 'FIXME';
+
+		//TODO channelはmessageイベントを1つだけonしてハンドラを共有する
+		//id -> dfd
+		this._invocationMap = {};
+
+		//TODO createSequenceは別ファイルにしたい
+		this._invocationSeq = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_INT);
+
+		//TODO MessageChannelは、同一ウィンドウ、かつ、同一チャネルにのみ伝わるようにすべき(channel idの導入)
+		this._sendChannel = getMessageChannel(REMOTE_METHOD_INVOCATION, targetWindow);
+
+		this._recvChannel = getMessageChannel(REMOTE_METHOD_INVOCATION_RESULT, targetWindow);
+		this._recvChannel.subscribe(this._receive, this);
+	}
+	$.extend(RemoteMethodInvocation.prototype, {
+		invoke: function(method, args) {
+			var dfd = h5.async.deferred();
+
+			var data = {
+				id: this._invocationSeq.next(),
+				method: method,
+				args: args
+			};
+
+			this._invocationMap[data.id] = dfd;
+
+			this._sendChannel.send(data);
+
+			return dfd.promise();
+		},
+
+		_receive: function(data) {
+			var id = data.id;
+			var dfd = this._invocationMap[id];
+
+			if (!dfd) {
+				//TODO fwLogger
+				return;
+			}
+
+			delete this._invocationMap[id];
+
+			var ret = data.result;
+			var isAsync = data.isAsync;
+			var status = data.status;
+
+			if (!isAsync) {
+				if (status === RMI_STATUS_SUCCESS) {
+					dfd.resolve(ret);
+				} else {
+					dfd.reject();
+				}
+			} else {
+				if (status === RMI_STATUS_ASYNC_RESOLVED) {
+					dfd.resolve.apply(dfd, ret);
+				} else {
+					dfd.reject.apply(dfd, ret);
+				}
+			}
+
+		}
+	});
+
 	// =========================================================================
 	//
 	// Body
 	//
 	// =========================================================================
+
+	//子ウィンドウの場合
+	if (window.opener) {
+		new RMIReceiver();
+	}
+
 	function Scene() {
 	//scene
 	}
@@ -142,7 +357,6 @@
 
 	}
 
-	var REMOTE_METHOD_INVOCATION = '__h5__remoteMethodInvocation';
 
 	function RemoteWindow(url, windowName, features, isModal) {
 		var win = window.open(url, windowName, features);
@@ -155,37 +369,13 @@
 
 		this.setModal(isModal === true ? true : false);
 
-		//TODO createSequenceは別ファイルにしたい
-		this._messageSeq = h5.core.data.createSequence(1, 1, h5.core.data.SEQ_INT);
-
-		this._channel = new MessageChannel(REMOTE_METHOD_INVOCATION, win);
-
-		this._channel.addEventListener('');
-
-		//TODO channelはmessageイベントを1つだけonしてハンドラを共有する
-		//id -> dfd
-		this._invocationMap = {};
+		this.rmi = new RemoteMethodInvocation(win);
 
 		this._watchChild();
 	}
 	$.extend(RemoteWindow.prototype, {
 		invoke: function(method, args) {
-			var dfd = h5.async.deferred();
-
-			var data = {
-				id: this._messageSeq.next(),
-				args: args
-			};
-
-			this._invocationMap[data.id] = dfd;
-
-			this._channel.send(data);
-
-			return dfd.promise();
-		},
-
-		_receiveInvocationResult: function(ev) {
-
+			this.rmi.invoke(method, args);
 		},
 
 		getControllerProxy: function(selector) {
@@ -246,7 +436,7 @@
 		var remote = new RemoteWindow(url, name, features, isModal);
 
 		//FIXME window側のURLのロードが完了し、存在する場合にコントローラのreadyが完了したらresolve
-		setTimeout(function(){
+		setTimeout(function() {
 			dfd.resolve(remote);
 		}, 100);
 
