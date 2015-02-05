@@ -445,6 +445,63 @@
 		}
 	});
 
+	function Scene(contentsSource, type) {
+		this.type = type;
+
+		this._contentsSource = contentsSource;
+
+		this.rootElement = null;
+
+		this._producer = null;
+	}
+	$.extend(Scene.prototype, {
+
+		show: function() {
+			var dfd = h5.async.deferred();
+
+			var producer = sceneTypeMap[this.type];
+
+			var p = h5.core.controller($('<div></div>'), producer);
+
+			this._producer = p;
+
+			var that = this;
+
+			p.readyPromise.then(function() {
+				return p.onShow(that._contentsSource);
+			}).done(function(elem) {
+				that.rootElement = elem;
+				dfd.resolve();
+			});
+
+			return dfd.promise();
+		},
+
+		hide: function() {
+			this._producer.onHide();
+		},
+
+		dispose: function() {
+
+		}
+	});
+
+	function createScene(contentsSource, type, controller) {
+		var scene = new Scene(contentsSource, type);
+		return scene;
+	}
+
+	/**
+	 * 別ウィンドウをオープンします。
+	 *
+	 * @param url
+	 * @param name
+	 * @param features
+	 * @param isModal
+	 * @param controllerName
+	 * @param param
+	 * @returns {Promise} プロミス。完了するとRemoteWindowオブジェクトを返します。
+	 */
 	function openWindow(url, name, features, isModal, controllerName, param) {
 		var dfd = h5.async.deferred();
 
@@ -458,13 +515,145 @@
 		return dfd.promise();
 	}
 
+	/**
+	 * シーンタイプ⇒コントローラ
+	 */
+	var sceneTypeMap = {};
+
+	function registerSceneType(type, controller) {
+		sceneTypeMap[type] = controller;
+	}
+
+	//directorよりproducer？
+	var simpleSceneDirectorController = {
+		__name: 'h5.scene.SimpleSceneDirectorController',
+
+		onInit: function() {
+
+		},
+
+		onShow: function() {
+
+		},
+
+		onHide: function() {
+
+		},
+
+		onDispose: function() {
+
+		}
+	};
+
+	function loadContentsFromUrl(source) {
+		var dfd = h5.async.deferred();
+
+		//TODO htmlだとスクリプトが実行されてしまうのでフルHTMLが返されるとよくない
+		//部分HTML取得の場合のことを考慮。
+		var xhr = h5.ajax({
+			url: source,
+			dataType: 'html'
+		});
+
+		xhr.done(function(data) {
+			dfd.resolve($.parseHTML(data));
+		}).fail(function(error) {
+			dfd.reject(error);
+		});
+
+		return dfd;
+	}
+
+	var NEW_SCENE_HTML = '<div class="h5-scene"></div>';
+
+	function loadContents(source) {
+		var dfd;
+
+		if (isString(source)) {
+			dfd = loadContentsFromUrl(source);
+		} else {
+			dfd = h5.async.deferred();
+
+			var contentsRoot;
+			if (source == null) {
+				//新しくdiv要素を生成
+				contentsRoot = $.parseHTML(NEW_SCENE_HTML);
+			} else {
+				//DOM要素が指定されたのでそれをそのまま使用
+				contentsRoot = h5.u.obj.isJQueryObject(source) ? source[0] : source;
+			}
+
+			dfd.resolve(contentsRoot);
+		}
+
+		return dfd.promise();
+	}
+
+	registerSceneType('simple', simpleSceneDirectorController);
+
+	//directorよりproducer？
+	var popupSceneDirectorController = {
+		__name: 'h5.scene.PopupSceneDirectorController',
+
+		_$root: null,
+
+		_popup: null,
+
+		onShow: function(contentsSource, controller) {
+			var dfd = h5.async.deferred();
+
+			if (this._popup) {
+				this._popup.show();
+			}
+
+			var loadPromise = loadContents(contentsSource);
+
+			var that = this;
+
+			var p = loadPromise.done(function(dom) {
+
+				var popup = h5.ui.popupManager.createPopup('defaultGroup', '', dom);
+
+				that._popup = popup;
+
+				//						var popup = $(
+				//								'<div class="popup" style="left: 100px; top: 100px; position: absolute; width: 200px; height: 200px"></div>')
+				//								.append(dom);
+
+				//						this._$root = popup;
+
+				//						$(document.body).append(popup);
+
+				popup.show();
+
+				dfd.resolve(popup.rootElement);
+			});
+
+			return dfd.promise();
+		},
+
+		onHide: function() {
+			if (this._popup) {
+				this._popup.hide();
+			}
+		},
+
+		onDispose: function() {
+
+		}
+	};
+
+	registerSceneType('popup', popupSceneDirectorController);
+
 
 	// =============================
 	// Expose to window
 	// =============================
 
 	h5.u.obj.expose('h5.scene', {
-		openWindow: openWindow
+		openWindow: openWindow,
+		registerSceneType: registerSceneType,
+		createScene: createScene
 	});
 
 })();
