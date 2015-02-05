@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+<!-- jQuery -->
+<script src="../../res/lib/jquery/jquery-1.11.1.js"></script>
+<!--  hifive -->
+<link rel="stylesheet" href="../../archives/current/h5.css" />
+<script src="../../archives/current/ejs-h5mod.js"></script>
+<script src="../../archives/current/h5.dev.js"></script>
+<title>sceneテスト</title>
+<script>
+	$(function() {
+		h5.core.expose({
+			__name: 'PageController',
+			__ready: function(){
+				alert(h5.scene.getParentWindow)
+				var parent = h5.scene.getParentWindow();
+				parent.window.checkRemoteWindowCall();
+				parent.invoke('method', ['ok']);
+			}
+		});
+		h5.core.controller(document.body, PageController);
+	});
+</script>
+</head>
+<body>
+</body>
+</html>
