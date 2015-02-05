@@ -192,6 +192,7 @@
 	var RMI_STATUS_EXCEPTION = 1;
 	var RMI_STATUS_ASYNC_RESOLVED = 2;
 	var RMI_STATUS_ASYNC_REJECTED = 3;
+	var RMI_STATUS_METHOD_NOT_FOUND = 4;
 
 	function RMIReceiver() {
 		this._recvChannel = new MessageChannel(REMOTE_METHOD_INVOCATION, window.opener);
@@ -209,6 +210,13 @@
 
 			if (!controller[method] || isFunction(controller[method])) {
 				this._callFunction(id, controller, method, args);
+			} else {
+				this._sendChannel.send({
+					id: id,
+					isAsync: false,
+					status: RMI_STATUS_METHOD_NOT_FOUND,
+					result: null
+				});
 			}
 		},
 
@@ -391,7 +399,11 @@
 				return;
 			}
 
+			//TODO 外部化
+			//h5.messageBundle.scene.MODAL_NOTICE = '子ウィンドウを開いている間は操作できません';
 			var message = '子ウィンドウを開いている間は操作できません。';
+
+
 
 			if (this._isModal) {
 				//true -> false なので親ウィンドウのブロックを外す
@@ -402,7 +414,8 @@
 				this._parentBlocker = h5.ui.indicator({
 					target: 'body',
 					block: true,
-					message: message
+					message: message,
+					showThrobber: false
 				}).show();
 			}
 
