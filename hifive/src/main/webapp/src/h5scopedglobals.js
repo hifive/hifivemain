@@ -497,17 +497,20 @@ function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 	var resolveArgs = [];
 	var resolveCount = 0;
 	var rejected = false;
-	/** いずれかのpromiseが成功するたびに全て終わったかチェック */
-	function check(/* var_args */) {
-		var arg = h5.u.obj.argsToArray(arguments);
-		// 引数無しならundefined、引数が一つならそのまま、引数が2つ以上なら配列を追加
-		// ($.when()と同じ)
-		resolveArgs.push(arg.length < 2 ? arg[0] : arg);
+	// indexを取って関数を生成することで、結果に格納する順番を渡されたpromisesに基づく順番にしている
+	function createCheckFunction(index) {
+		// いずれかのpromiseが成功するたびに全て終わったかチェックする関数
+		return function check(/* var_args */) {
+			var arg = h5.u.obj.argsToArray(arguments);
+			// 引数無しならundefined、引数が一つならそのまま、引数が2つ以上なら配列を追加
+			// ($.when()と同じ)
+			resolveArgs[index] = (arg.length < 2 ? arg[0] : arg);
 
-		if (!rejected && ++resolveCount === promisesLength) {
-			// 全てのpromiseが成功したので、doneCallbackを実行
-			doneCallback && doneCallback(resolveArgs);
-		}
+			if (!rejected && ++resolveCount === promisesLength) {
+				// 全てのpromiseが成功したので、doneCallbackを実行
+				doneCallback && doneCallback(resolveArgs);
+			}
+		};
 	}
 	/** いずれかのpromiseが失敗した時に呼ばれるコールバック */
 	function fail(/* var_args */) {
@@ -523,7 +526,7 @@ function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 	}
 
 	for (var i = 0; i < promisesLength; i++) {
-		monitorningPromises[i].done(check).fail(fail);
+		monitorningPromises[i].done(createCheckFunction(i)).fail(fail);
 	}
 }
 
