@@ -295,9 +295,9 @@
 	 * @returns {String}
 	 */
 	function getFilePath(filePath) {
-		// './'で始まるパスが指定されていたら'./'を取り除いてcurrentPathを先頭に追加する
+		// './'で始まるパスが指定されていたら'./'を取り除いてbaseUrlを先頭に追加する
 		filePath = filePath.indexOf('./') === 0 ? filePath.slice(2) : filePath;
-		return (h5.settings.res.currentPath || './') + filePath;
+		return (h5.settings.res.baseUrl || './') + filePath;
 	}
 
 	/**
