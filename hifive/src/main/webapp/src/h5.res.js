@@ -259,7 +259,7 @@
 		 */
 		resolve: function(type) {
 			// リゾルバを特定する
-			function resolveInner(resouceKey) {
+			function resolveInner(resourceKey) {
 				for (var i = 0, l = resolvers.length; i < l; i++) {
 					if (type && type !== resolvers[i].type) {
 						// typeが指定されている場合はtypeと一致するかどうか見る
