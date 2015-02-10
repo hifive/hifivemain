@@ -258,24 +258,45 @@
 		 * @param {String} type
 		 */
 		resolve: function(type) {
-			var resourceKey = this._resourceKey;
-			var resolver = null;
-
 			// リゾルバを特定する
-			for (var i = 0, l = resolvers.length; i < l; i++) {
-				if (type && type !== resolvers[i].type) {
-					// typeが指定されている場合はtypeと一致するかどうか見る
-					continue;
+			function resolveInner(resourceKey) {
+				for (var i = 0, l = resolvers.length; i < l; i++) {
+					if (type && type !== resolvers[i].type) {
+						// typeが指定されている場合はtypeと一致するかどうか見る
+						continue;
+					}
+					var ret = resolvers[i].resolver(resourceKey, type);
+					if (ret === false) {
+						continue;
+					}
+					// リゾルバがfalse以外のものを返せばそれを返す
+					return ret;
 				}
-				var ret = resolvers[i].resolver(resourceKey, type);
-				if (ret === false) {
-					continue;
-				}
-				// リゾルバがfalse以外のものを返せばそれを返す
-				return ret;
+				// false以外のものを返すリゾルバが無かった場合はfalseを返す
+				return false;
 			}
-			// false以外のものを返すリゾルバが無かった場合はfalseを返す
-			return false;
+
+			if (!isArray(this._resourceKey)) {
+				return resolveInner(this._resourceKey);
+			}
+
+			// リソースキーが配列の場合
+			var resourceKeys = this._resourceKey;
+			var promises = [];
+			for (var i = 0, l = resourceKeys.length; i < l; i++) {
+				var resourceKey = resourceKeys[i];
+				var ret = resolveInner(resourceKey);
+				promises.push(ret);
+			}
+			var dfd = h5.async.deferred();
+			waitForPromises(promises, function(results) {
+				// 結果の配列、1番目の結果、2番目の結果、…となるように引数を生成
+				results.unshift(results.slice(0));
+				dfd.resolveWith(dfd, results);
+			}, function(e) {
+				dfd.reject(e);
+			});
+			return dfd.promise();
 		},
 
 		/**
@@ -295,9 +316,9 @@
 	 * @returns {String}
 	 */
 	function getFilePath(filePath) {
-		// './'で始まるパスが指定されていたら'./'を取り除いてcurrentPathを先頭に追加する
+		// './'で始まるパスが指定されていたら'./'を取り除いてbaseUrlを先頭に追加する
 		filePath = filePath.indexOf('./') === 0 ? filePath.slice(2) : filePath;
-		return (h5.settings.res.currentPath || './') + filePath;
+		return (h5.settings.res.baseUrl || './') + filePath;
 	}
 
 	/**

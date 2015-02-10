@@ -144,11 +144,13 @@ $(function() {
 		var promise1 = h5.res.require('h5resdata/data/js/test.js?hoge').resolve();
 		promise1.done(function(result) {
 			strictEqual(h5test.test.a, 1, 'クエリパラメータを指定した場合に、jsファイルがロードされていること');
+			h5test.test.a = 0;
 		});
 
 		var promise2 = h5.res.require('h5resdata/data/js/test.js?fuga').resolve('jsfile');
 		promise2.done(function(result) {
 			strictEqual(h5test.test.a, 1, 'resolveの引数にリゾルバのタイプを指定した時、jsファイルがロードされていること');
+			h5test.test.a = 0;
 		});
 		$.when(promise1, promise2).done(start);
 	});
@@ -379,6 +381,32 @@ $(function() {
 			strictEqual(detail.url, toAbsoluteUrl(ejsFile), 'detailから絶対パスが取得できること');
 			start();
 		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('複数のリソースの同時取得');
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('複数のリソースを配列で指定', function() {
+		var ejsFile = './h5resdata/data/ejs/valid.ejs';
+		var cssFile = './h5resdata/data/css/test.css';
+		var jsFile = 'h5resdata/data/js/test.js?複数のリソースの同時取得';
+		h5.res.require([ejsFile, cssFile, jsFile]).resolve().done(
+				function(all, ejs, css, js) {
+					ok(all.length === 3 && all[0] === ejs && all[1] === css && all[2] === js,
+							'第1引数は各リソースの取得結果が指定した順に格納された配列であること');
+					strictEqual(ejs.templates && ejs.templates && ejs.templates[0].id, 'tmp1',
+							'テンプレートが取得できること');
+					strictEqual($(css).attr('href'), cssFile, '指定したcssファイルのlinkタグが取得できること');
+					strictEqual(h5test.test.a, 1, 'jsファイルがロードされていること');
+					deleteProperty(window, 'h5test');
+				}).fail(function() {
+			ok(false, 'resolveが失敗しました');
+		}).always(start);
 	});
 
 	//=============================

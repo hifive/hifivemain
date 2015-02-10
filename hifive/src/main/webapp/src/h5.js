@@ -321,7 +321,7 @@
 			 *
 			 * @memberOf h5.settings.res
 			 */
-			currentPath: null
+			baseUrl: null
 		}
 	};
 
