@@ -76,6 +76,59 @@
 		return bodyController;
 	}
 
+
+	function disposeAllControllers(element) {
+		var controllers = h5.core.controllerManager.getControllers(element, {
+			deep: true
+		});
+		for (var i = 0, len = controllers.length; i < len; i++) {
+			controllers[i].dispose();
+		}
+	}
+
+
+	function scan(rootElement, controllerName) {
+		//		if (!isDocumentReady) {
+		//			reserveScan();
+		//			return;
+		//		}
+
+		var root = rootElement; // ? rootElement : document.body;
+		$(root).find('[' + DATA_ATTR_CONTROLLER + ']').each(
+				function() {
+					var attrControllers = this.getAttribute(DATA_ATTR_CONTROLLER);
+
+					var attrControllerNameList = attrControllers.split(',');
+
+					for (var i = 0, len = attrControllerNameList.length; i < len; i++) {
+						var attrControllerName = getFullname($.trim(attrControllerNameList[i]));
+
+						if (attrControllerName === '') {
+							// trimした結果空文字になる場合は何もしない
+							return true;
+						}
+
+						if (controllerName && attrControllerName !== controllerName) {
+							// バインドしたいコントローラが指定されていて、その指定と異なっている場合は次を検索
+							return true;
+						}
+
+						// 既に「同じ名前の」コントローラがバインドされていたら何もしない
+						if (!alreadyBound(attrControllerName, h5.core.controllerManager
+								.getControllers(this))) {
+							// TODO
+							// 一時しのぎ、getControllers()でバインド途中のコントローラも取得できるようにすべき
+							if (!this.getAttribute(DATA_ATTR_CURRENT_BOUND)) {
+								this.setAttribute(DATA_ATTR_CURRENT_BOUND, attrControllerName);
+								loadController(attrControllerName, this);
+							}
+
+						}
+					}
+				});
+	}
+
+
 	function TypedMessage(type, data) {
 		this.type = type;
 		this.data = data;
@@ -646,6 +699,173 @@
 	registerSceneType('popup', popupSceneDirectorController);
 
 
+	/**
+	 * type -> constructor function
+	 */
+	var transitionTypeMap = {};
+
+	function registerSceneTransition(type, constructor) {
+		if (transitionTypeMap[type]) {
+
+		}
+		transitionTypeMap[type] = constructor;
+	}
+
+
+	var DEFAULT_SCENE_TRANSITION_TYPE = 'default';
+
+	/**
+	 * from,to is Element rootElementはコンテナ要素になる
+	 */
+	var defaultTransitionController = {
+		__name: 'h5.scene.DefaultTransitionController',
+
+		onChange: function(container, from, to) {
+			var loadPromise = loadContents(to);
+
+			var dfd = this.deferred();
+
+			//			var that = this;
+
+			var ind = this.indicator({
+				target: this.rootElement,
+				block: true,
+				message: '遷移中...'
+			}).show();
+
+			//TODO always->done/fail
+			loadPromise.always(function(html) {
+				$(container).html(html);
+
+				ind.hide();
+
+				dfd.resolve(html);
+			});
+
+			return dfd.promise();
+		}
+	};
+
+	registerSceneTransition(DEFAULT_SCENE_TRANSITION_TYPE, defaultTransitionController);
+
+	function pushState(state, title, url) {
+		history.pushState(state, title, url);
+	}
+
+	var mainContainer = null;
+
+	function SceneContainer(element, isMain) {
+		this.isMain = !!isMain;
+
+		if (this.isMain) {
+			if (mainContainer) {
+				//TODO throwFwError();
+			}
+			mainContainer = this;
+		}
+
+		this.rootElement = element;
+
+		this._currentSceneRootElement = null;
+
+		this._isClickjackEnabled = true;
+
+		var that = this;
+
+		$(element).on('click', 'a', function(event) {
+			if (that._isClickjackEnabled) {
+				event.preventDefault();
+
+				var href = event.originalEvent.target.href;
+
+				that.changePage(href);
+			}
+		});
+	}
+	$.extend(SceneContainer.prototype,
+			{
+				changePage: function(to, type) {
+					if (isString(to)) {
+						pushState(null, null, toAbsoluteUrl(to));
+					}
+
+					var transition = transitionTypeMap[type != null ? type
+							: DEFAULT_SCENE_TRANSITION_TYPE];
+
+					var dfd = h5.async.deferred();
+
+					if (!transition) {
+						//TODO throwFwError();
+					}
+
+					var from = this._currentSceneRootElement;
+
+					//現在のページの全てのコントローラを削除
+					if (from) {
+						disposeAllControllers(from);
+					}
+
+					var transitionController = h5.core.controller(this.rootElement, transition);
+
+					var that = this;
+
+					transitionController.readyPromise.done(function() {
+						var transitionPromise = transitionController.onChange(that.rootElement,
+								from, to);
+
+						transitionPromise.done(function(sceneRoot) {
+							this._currentSceneRootElement = sceneRoot;
+
+							dfd.resolve({
+								from: from,
+								to: sceneRoot
+							});
+
+							transitionController.dispose();
+						});
+					});
+
+					return dfd.promise();
+				}
+			});
+
+
+	//コンテナにtypeはあるか？？
+	function createSceneContainer(element, type, isMain) {
+		var container = new SceneContainer(element, isMain);
+
+		return container;
+	}
+
+	var isInited = false;
+
+	function init() {
+		if (!isInited) {
+			isInited = true;
+
+			var main = $('main')[0];
+
+			//TODO main-container属性を見る
+			createSceneContainer(main ? main : document.body, null, true);
+		}
+	}
+
+	function getMainContainer() {
+		return mainContainer;
+	}
+
+
+	// =============================
+	// Code on boot
+	// =============================
+
+	//TODO autoInitがtrueの場合のみinit
+	//	if (h5.settings.scene.autoInit) {
+	$(function() {
+		init();
+	});
+	//	}
+
 	// =============================
 	// Expose to window
 	// =============================
@@ -653,7 +873,10 @@
 	h5.u.obj.expose('h5.scene', {
 		openWindow: openWindow,
 		registerSceneType: registerSceneType,
-		createScene: createScene
+		createScene: createScene,
+		createSceneContainer: createSceneContainer,
+		init: init,
+		getMainContainer: getMainContainer
 	});
 
 })();
