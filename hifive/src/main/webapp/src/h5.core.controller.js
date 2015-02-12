@@ -2428,7 +2428,7 @@
 						// 内部から呼ぶviewのロードは、ルートコントローラ設定前に呼ぶので、
 						// viewではなくview.__viewを使ってコントローラのルートエレメントが設定されているかのチェックをしないようにする
 						try {
-							controller.view.__view.register(templates[i].id, templates[i].content);
+							controller.view.__view.register(templates[j].id, templates[j].content);
 						} catch (e) {
 							// registerで登録できない(=コンパイルエラー)ならreject
 							templateDfd.reject(e);

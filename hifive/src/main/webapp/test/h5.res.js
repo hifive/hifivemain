@@ -846,6 +846,20 @@ $(function() {
 		}).readyPromise.done(start);
 	});
 
+	asyncTest('テンプレートに複数リソースのDependencyを指定', function() {
+		var ejs1 = './h5resdata/data/ejs/valid1.ejs';
+		var ejs2 = './h5resdata/data/ejs/valid2.ejs';
+
+		h5.core.controller('#controllerTest', {
+			__name: 'TestController',
+			__templates: h5.res.require([ejs1, ejs2]),
+			__ready: function() {
+				ok($(this.view.get('valid1-tmp1')).text(), 'valid1-tmp1', 'テンプレートがロードされていること');
+				ok($(this.view.get('valid2-tmp1')).text(), 'valid2-tmp1', 'テンプレートがロードされていること');
+			}
+		}).readyPromise.done(start);
+	});
+
 	//=============================
 	// Definition
 	//=============================
