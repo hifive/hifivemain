@@ -409,6 +409,19 @@ $(function() {
 		}).always(start);
 	});
 
+	asyncTest('長さ１の配列でリソース指定', function() {
+		var ejsFile = './h5resdata/data/ejs/valid.ejs';
+		h5.res.require([ejsFile]).resolve().done(
+				function(all, ejs) {
+					ok(all.length === 1 && all[0] === ejs, '第1引数は各リソースの取得結果が指定した順に格納された配列であること');
+					strictEqual(ejs.templates && ejs.templates && ejs.templates[0].id, 'tmp1',
+							'テンプレートが取得できること');
+					deleteProperty(window, 'h5test');
+				}).fail(function() {
+			ok(false, 'resolveが失敗しました');
+		}).always(start);
+	});
+
 	//=============================
 	// Definition
 	//=============================

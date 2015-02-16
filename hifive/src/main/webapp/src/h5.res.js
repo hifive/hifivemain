@@ -277,6 +277,7 @@
 			}
 
 			if (!isArray(this._resourceKey)) {
+				// リソースキーが配列でない場合
 				return resolveInner(this._resourceKey);
 			}
 
@@ -291,6 +292,10 @@
 			var dfd = h5.async.deferred();
 			waitForPromises(promises, function(results) {
 				// 結果の配列、1番目の結果、2番目の結果、…となるように引数を生成
+				if (!isArray(results)) {
+					// 結果が配列でない場合(=リソースキーが長さ１の配列の場合)、配列にする
+					results = [results];
+				}
 				results.unshift(results.slice(0));
 				dfd.resolveWith(dfd, results);
 			}, function(e) {
