@@ -416,6 +416,48 @@
 	// ----------------------------- コントローラ定義オブジェクトのチェック関数ここまで -----------------------------
 
 	/**
+	 * 子コントローラRequestクラス
+	 *
+	 * @param {String} selector セレクタ
+	 */
+	function Request(selector) {
+		var $target = $(selector);
+
+		this._controller = null;
+
+		// FIXME エラーメッセージ作成する
+		if ($target.length === 0) {
+			// 要素が0個の場合はnullにして終了
+			this._targetElement = null;
+			return;
+		} else if ($target.length > 1) {
+			// 要素が複数ある場合はエラー
+			throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET);
+		} else if ($target[0].nodeType !== NODE_TYPE_DOCUMENT
+				&& $target[0].nodeType !== NODE_TYPE_ELEMENT) {
+			// ノードエレメントでない場合はエラー
+			throwFwError(ERR_CODE_BIND_NOT_NODE);
+		} else {
+			this._targetElement = $target[0];
+		}
+
+
+		// 既にコントローラがバインドされているか
+		var controllers = h5.core.controllerManager.getController(this._controller);
+		if (controllers.length > 1) {
+			// 複数バインドされている場合はエラー
+			// TODO
+			throwFwError();
+		}
+		if (controllers.length == 1) {
+			this._controller = controllres[0];
+		} else if (controllers.length === 0) {
+			var controllerName = $target.data('h5-controller');
+			this._controller = h5.res.require(controllerName);
+		}
+	}
+
+	/**
 	 * イベントコンテキストクラス イベントコンテキストの中に格納する
 	 *
 	 * @private
@@ -687,10 +729,26 @@
 	 * @returns 中断された場合はfalseを返します
 	 */
 	function doForEachChildControllers(controller, callback, isDefObj) {
+		// コントローラインスタンスなら__controllerContextから子コントローラを取得
+		if (!isDefObj) {
+			// disposeされていたら何もしない
+			if (isDisposed(controller)) {
+				return;
+			}
+			var childControllers = controller.__controllerContext.childControllers;
+			for (var i = 0, l = childControllers.length; i < l; i++) {
+				var childController = childControllers[i];
+				var prop = childController.prop;
+				var child = childController.instance;
+				if (false === callback(child, controller, prop)) {
+					return false;
+				}
+			}
+			return;
+		}
+
 		// 定義オブジェクトならdefinitionCacheManagerからキャッシュを取得(ない場合はnull)
-		// コントローラインスタンスなら__controllerContextからキャッシュを取得
-		var cache = isDefObj ? definitionCacheManager.get(controller.__name)
-				: (controller.__controllerContext && controller.__controllerContext.cache);
+		var cache = definitionCacheManager.get(controller.__name);
 		// キャッシュがあるなら、キャッシュを使ってループ
 		if (cache) {
 			for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
@@ -2881,6 +2939,57 @@
 		}
 	}
 
+	/**
+	 * コントローラインスタンスを子コントローラとして追加
+	 *
+	 * @param {Controller} parent
+	 * @param {Controller} child
+	 */
+	function addChildController(parent, child) {
+		child.parentController = parent;
+		child.rootController = parent.rootController;
+		parent.__controllerContext.childControllers.push({
+			instance: child
+		});
+	}
+
+	/**
+	 * コントローラインスタンスを子コントローラから削除
+	 *
+	 * @param {Controller} parent
+	 * @param {Controller} child
+	 */
+	function removeChildController(parent, child, andDispose) {
+		// 子コントローラをルートコントローラにする(親との関係を切る)
+		var childControllers = parent.__controllerContext.childControllers;
+		var index = -1;
+		var prop;
+		for (var i = 0, l = childControllers.length; i < l; i++) {
+			if (childControllers[i].instance === child) {
+				index = i;
+				prop = childControllers[i].prop;
+				break;
+			}
+		}
+		if (index === -1) {
+			// TODO 親子関係にないならエラー
+			return;
+		}
+		childControllers.splice(index, 1);
+		child.parentController = null;
+		child.rootController = child;
+		child.__controllerContext.isRoot = true;
+
+		// FIXME propがある場合(manageChildではなく静的に定義された子コントローラの場合)は参照を削除でよいか
+		if (prop) {
+			parent[prop] = null;
+		}
+
+		if (andDispose) {
+			child.dispose();
+		}
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -3668,6 +3777,59 @@
 			if (matchBindObj) {
 				unbindByBindObject(matchBindObj, getDocumentOf(this.rootElement));
 			}
+		},
+
+		/**
+		 * 子コントローラを動的に追加します
+		 *
+		 * @param {Controller|Object|String} コントローラインスタンスまたはコントローラ定義またはリソースキー
+		 * @returns {Promise}
+		 */
+		manageChild: function(controller) {
+			var dfd = h5.async.deferred();
+
+			if (isString(controller)) {
+				h5.res.require(controller).resolve('namespace').done(this.own(function(result) {
+					this.manageChild(result).done(function(c) {
+						dfd.resolve(c);
+					});
+				}));
+				return dfd.promise();
+			}
+			if (typeof controller !== 'object') {
+				// TODO 文字列でもobjectでもない場合はエラー
+				return false;
+			}
+			if (!controller.__controllerContext) {
+				// 定義オブジェクトの場合はインスタンス化
+				controller = h5.core.controller(this.rootElement, controller);
+				controller.readyPromise.done(this.own(function() {
+					this.manageChild(controller).done(function(c) {
+						dfd.resolve(c);
+					});
+				}));
+				return dfd.promise();
+			}
+
+			// コントローラインスタンスの場合
+			// 必要なプロパティをセット
+			addChildController(this, controller);
+			if (!this.isReady) {
+				// FIXME ready状態でない場合はライフサイクルの実行を同期化させる
+			}
+			return dfd.resolve(controller).promise();
+		},
+
+		/**
+		 * 子コントローラを動的に削除
+		 *
+		 * @param {Controller|Object|String} コントローラインスタンスまたはコントローラ定義またはリソースキー
+		 * @returns {Promise}
+		 */
+		unmanageChild: function(controller, andDispose) {
+			// disposeするのがデフォルト
+			andDispose = andDispose === false ? false : true;
+			removeChildController(this, controller, andDispose);
 		}
 	});
 
@@ -4013,6 +4175,9 @@
 		controller.postInitPromise = postInitPromise;
 		controller.readyPromise = readyPromise;
 
+		// 子コントローラを保持する配列を持たせる
+		controllerContext.childControllers = [];
+
 		// 子コントローラ、ロジック依存関係解決のプロミス
 		var promisesForTriggerInit = isRoot ? [] : fwOpt.promisesForTriggerInit;
 
@@ -4157,6 +4322,10 @@
 							return null;
 						}
 						controller[childProp] = child;
+						controller.__controllerContext.childControllers.push({
+							prop: childProp,
+							instance: child
+						});
 						// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
 						promisesForTriggerInit.splice($.inArray(childControllerPromise,
 								promisesForTriggerInit), 1);
@@ -4175,6 +4344,10 @@
 					// 子コントローラの__constructが正しく実行されなかった場合は以降何もしない
 					return null;
 				}
+				controller.__controllerContext.childControllers.push({
+					prop: prop,
+					instance: child
+				});
 				controller[prop] = child;
 			}
 		}
@@ -4383,7 +4556,15 @@
 				nsObj[key] = obj;
 				h5.u.obj.expose(ns, nsObj);
 			}
+		},
 
+		/**
+		 * セレクタから子コントローラ定義を行うオブジェクト
+		 *
+		 * @param {String} セレクタ
+		 */
+		childFrom: function(selector) {
+			return new Request(selector);
 		}
 	});
 })();
