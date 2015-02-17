@@ -738,9 +738,8 @@
 			var childControllers = controller.__controllerContext.childControllers;
 			for (var i = 0, l = childControllers.length; i < l; i++) {
 				var childController = childControllers[i];
-				var prop = childController.prop;
-				var child = childController.instance;
-				if (false === callback(child, controller, prop)) {
+				var child = childController;
+				if (false === callback(child, controller)) {
 					return false;
 				}
 			}
@@ -1126,14 +1125,15 @@
 	 * @param {Controller} controller
 	 * @param {String} funcName __init, __postInit, __ready のいずれか
 	 * @param {Function} callback ライフサイクルイベントの実行が終わった時(非同期ならresolveされた時)に実行する関数
+	 * @param {Boolean} isAlreadyExecuted 既にライフサイクル実行済みかどうか
 	 * @returns {Function}
 	 */
-	function createLifecycleCaller(controller, funcName, callback) {
+	function createLifecycleCaller(controller, funcName, callback, isAlreadyExecuted) {
 		return function() {
 			var ret = null;
 			var lifecycleFunc = controller[funcName];
 			var controllerName = controller.__name;
-			if (lifecycleFunc) {
+			if (!isAlreadyExecuted && lifecycleFunc) {
 				try {
 					ret = controller[funcName](createInitializationContext(controller));
 				} catch (e) {
@@ -1189,13 +1189,17 @@
 
 			// ライフサイクルイベント名で場合分けして、待機するプロミスの取得と実行するコールバックの作成を行う
 			// __postInit, __readyは子から先に実行する
+			var isAlreadyExecute = false;
 			if (funcName === '__init') {
+				isAlreadyExecute = controller.isInit;
 				callback = createCallbackForInit(c);
 				promises = getPromisesForInit(c);
 			} else if (funcName === '__postInit') {
+				isAlreadyExecute = controller.isPostInit;
 				callback = createCallbackForPostInit(c);
 				promises = getChildControllerPromises(c, 'postInitPromise');
 			} else {
+				isAlreadyExecute = controller.isReady;
 				callback = createCallbackForReady(c);
 				promises = getChildControllerPromises(c, 'readyPromise');
 			}
@@ -1203,7 +1207,8 @@
 			// waitForPromisesで全てのプロミスが終わってからライフサイクルイベントの呼び出しを行う
 			// promisesの中にpendingのpromiseが無い場合(空または全てのプロミスがresolve/reject済み)の場合、
 			// ライフサイクルイベントの呼び出しは同期的に呼ばれる
-			waitForPromises(promises, createLifecycleCaller(c, funcName, callback));
+			waitForPromises(promises,
+					createLifecycleCaller(c, funcName, callback, isAlreadyExecute));
 		}
 		doForEachControllerGroups(controller, execInner);
 	}
@@ -1233,10 +1238,37 @@
 	 */
 	function createCallbackForInit(controller) {
 		return function() {
-			// disopseまたはunbindされていたら何もしない。
+			// disopseまたはunbindされていたら何もしない
 			if (isUnbinding(controller)) {
 				return;
 			}
+			// 既にinit処理済み(動的に追加されたコントローラによるライフサイクル実行で、当該コントローラはinit処理済み)かどうか
+			var isAlreadyInitDone = controller.isInit;
+			var childControllers = controller.__controllerContext.childControllers;
+
+			// 全コントローラのinitが終わっていればpostInitを実行する関数
+			function checkAndTriggerPostInit() {
+				// 次のコールバックの実行
+				// 子コントローラが無い(リーフノード)の場合、全コントローラのinitが終わったかどうかをチェック
+				var isAllInitDone = !childControllers.length && (function() {
+					var ret = true;
+					doForEachControllerGroups(controller.rootController, function(c) {
+						ret = c.isInit;
+						return ret;
+					});
+					return ret;
+				})();
+				if (isAllInitDone) {
+					// 全コントローラの__initが終わったら__postInitを呼び出す
+					triggerPostInit(controller.rootController);
+					return;
+				}
+			}
+			if (isAlreadyInitDone) {
+				checkAndTriggerPostInit();
+				return;
+			}
+			// isInitフラグを立てる
 			controller.isInit = true;
 			var initDfd = controller.__controllerContext.initDfd;
 			// FW、ユーザともに使用しないので削除
@@ -1246,18 +1278,37 @@
 
 			// 子コントローラのrootElementとviewを設定
 			var rootElement = controller.rootElement;
-			var childControllers = [];
+
+			// 子コントローラ
 			try {
 				var meta = controller.__meta;
-				doForEachChildControllers(controller, function(c, parent, prop) {
-					childControllers.push(c);
-					// __metaが指定されている場合、__metaのrootElementを考慮した要素を取得する
-					var target;
-					if (meta && meta[prop] && meta[prop].rootElement) {
-						target = getBindTarget(meta[prop].rootElement, c, controller);
-					} else {
-						target = rootElement;
+				// メタのルートエレメント定義とコントローラインスタンスの紐付け
+				for ( var p in meta) {
+					if ($.inArray(controller[p], childControllers) !== -1) {
+						// 子コントローラに一時的にルートエレメントのメタ定義を持たせる
+						controller[p].__controllerContext.metaRootElement = meta[p]
+								&& meta[p].rootElement;
 					}
+				}
+				// ルートコントローラはrootElement設定済み
+				controller.__controllerContext.isExecutedSetupRootElement = true;
+				doForEachChildControllers(controller, function(c, parent) {
+					var metaRootElement = c.__controllerContext.metaRootElement;
+					delete c.__controllerContext.metaRootElement;
+
+					if (c.__controllerContext.isExecutedSetupRootElement) {
+						return;
+					}
+					// ルートエレメントの設定処理をしたかどうか
+					// manageChildによる動的子コントローラについて再度設定しないようにするためのフラグ
+					// (ルートエレメントの決まっている子コントローラについてはそのまま)
+					c.__controllerContext.isExecutedSetupRootElement = true;
+
+					// ルートエレメントが__metaで指定されている場合は指定箇所、
+					// そうでない場合は親と同じルートエレメントをターゲットにする
+					var target = metaRootElement ? getBindTarget(metaRootElement, c, controller)
+							: rootElement;
+					// バインド箇所決定後には不要なので削除
 					// ターゲット要素のチェック
 					validateTargetElement(target, c.__controllerContext.controllerDef, c.__name);
 					// ルートエレメントの設定
@@ -1278,21 +1329,8 @@
 			if (isUnbinding(controller)) {
 				return;
 			}
-
-			// 子コントローラが無い(リーフノード)の場合、全コントローラのinitが終わったかどうかをチェック
-			var isAllInitDone = !childControllers.length && (function() {
-				var ret = true;
-				doForEachControllerGroups(controller.rootController, function(c) {
-					ret = c.isInit;
-					return ret;
-				});
-				return ret;
-			})();
-			if (isAllInitDone) {
-				// 全コントローラの__initが終わったら__postInitを呼び出す
-				triggerPostInit(controller.rootController);
-				return;
-			}
+			// postInitの準備ができていれば実行
+			checkAndTriggerPostInit();
 		};
 	}
 
@@ -1309,6 +1347,13 @@
 			if (isUnbinding(controller)) {
 				return;
 			}
+			var isAlreadyPostInitDone = controller.isPostInit;
+			if (isAlreadyPostInitDone) {
+				if (controller.__controllerContext.isRoot) {
+					triggerReady(controller);
+				}
+				return;
+			}
 			controller.isPostInit = true;
 			var postInitDfd = controller.__controllerContext.postInitDfd;
 			// FW、ユーザともに使用しないので削除
@@ -1322,17 +1367,27 @@
 			if (controller.__controllerContext.isRoot) {
 				// ルートコントローラであれば次の処理
 				// イベントハンドラのバインド
-				doForEachControllerGroups(controller, function(c, parent, prop) {
-					// useHandlersの判定文について、minifyした時にiOS7.0で正しく解釈されるようにisUseHandlersという変数を作って対応している(issue #402)
-					// iOS7.0.xで、「論理値との比較で、片方が論理積」である条件式がif文に指定されていた場合、正しく解釈されないバグがある
-					// if(false !== (null && 'fuga')) { } else { iOS7.0.xだとelse文に入る }
-					// minfyした時に↑のような条件式にならないようにこのような実装にしている
-					// (この実装の場合、3項演算に展開される)
-					var isUseHandlers = true;
-					if (parent && parent.__meta && parent.__meta[prop]) {
-						isUseHandlers = parent.__meta[prop].useHandlers !== false;
+				// メタのuseHandlers定義とコントローラインスタンスの紐付け
+				var meta = controller.__meta;
+				var childControllers = controller.__controllerContext.childControllers;
+				for ( var p in meta) {
+					if ($.inArray(controller[p], childControllers) !== -1) {
+						// 子コントローラに一時的にルートエレメントのメタ定義を持たせる
+						controller[p].__controllerContext.metaUseHandlers = meta[p]
+								&& meta[p].useHandlers;
 					}
-					if (isUseHandlers) {
+				}
+				doForEachControllerGroups(controller, function(c, parent) {
+					metaUseHandlers = c.__controllerContext.metaUseHandlers;
+					delete c.__controllerContext.metaUseHandlers;
+					// バインド処理をしたかどうか
+					// manageChildによる動的子コントローラについて２重にバインドしないためのフラグ
+					if (c.__controllerContext.isExecutedBind) {
+						return;
+					}
+					c.__controllerContext.isExecutedBind = true;
+
+					if (metaUseHandlers !== false) {
 						// 親のuseHandlersでfalseが指定されていなければバインドを実行する
 						bindByBindMap(c);
 					}
@@ -1354,6 +1409,10 @@
 		return function() {
 			// disopseまたはunbindされていたら何もしない。
 			if (isUnbinding(controller)) {
+				return;
+			}
+			var isAlreadyReadyDone = controller.isReady;
+			if (isAlreadyReadyDone) {
 				return;
 			}
 			controller.isReady = true;
@@ -2244,7 +2303,7 @@
 			unbindError = e;
 		}
 
-		doForEachControllerGroups(controller, function(c, parent, prop) {
+		doForEachControllerGroups(controller, function(c) {
 			// unbind時は__metaのuseHandlersによらずunbind(onで動的に追加されるハンドラもあるため)
 			unbindEventHandlers(c);
 		});
@@ -2948,9 +3007,7 @@
 	function addChildController(parent, child) {
 		child.parentController = parent;
 		child.rootController = parent.rootController;
-		parent.__controllerContext.childControllers.push({
-			instance: child
-		});
+		parent.__controllerContext.childControllers.push(child);
 	}
 
 	/**
@@ -2965,9 +3022,8 @@
 		var index = -1;
 		var prop;
 		for (var i = 0, l = childControllers.length; i < l; i++) {
-			if (childControllers[i].instance === child) {
+			if (childControllers[i] === child) {
 				index = i;
-				prop = childControllers[i].prop;
 				break;
 			}
 		}
@@ -3780,44 +3836,22 @@
 		},
 
 		/**
-		 * 子コントローラを動的に追加します
+		 * コントローラを子コントローラとして動的に追加します
+		 * <p>
+		 * 追加されたコントローラは呼び出し元のコントローラの子コントローラとなります。
+		 * </p>
 		 *
-		 * @param {Controller|Object|String} コントローラインスタンスまたはコントローラ定義またはリソースキー
-		 * @returns {Promise}
+		 * @param {Controller}
 		 */
 		manageChild: function(controller) {
-			var dfd = h5.async.deferred();
-
-			if (isString(controller)) {
-				h5.res.require(controller).resolve('namespace').done(this.own(function(result) {
-					this.manageChild(result).done(function(c) {
-						dfd.resolve(c);
-					});
-				}));
-				return dfd.promise();
+			throwErrorIfDisposed(this, 'manageChild');
+			throwErrorIfNoRootElement(this, 'manageChild');
+			if (!controller || !controller.__controllerContext) {
+				// FIXME エラー
+				return;
 			}
-			if (typeof controller !== 'object') {
-				// TODO 文字列でもobjectでもない場合はエラー
-				return false;
-			}
-			if (!controller.__controllerContext) {
-				// 定義オブジェクトの場合はインスタンス化
-				controller = h5.core.controller(this.rootElement, controller);
-				controller.readyPromise.done(this.own(function() {
-					this.manageChild(controller).done(function(c) {
-						dfd.resolve(c);
-					});
-				}));
-				return dfd.promise();
-			}
-
-			// コントローラインスタンスの場合
 			// 必要なプロパティをセット
 			addChildController(this, controller);
-			if (!this.isReady) {
-				// FIXME ready状態でない場合はライフサイクルの実行を同期化させる
-			}
-			return dfd.resolve(controller).promise();
 		},
 
 		/**
@@ -3827,7 +3861,9 @@
 		 * @returns {Promise}
 		 */
 		unmanageChild: function(controller, andDispose) {
-			// disposeするのがデフォルト
+			throwErrorIfDisposed(this, 'unmanageChild');
+			throwErrorIfNoRootElement(this, 'unmanageChild');
+			// disposeするかどうか。デフォルトtrue(disposeする)
 			andDispose = andDispose === false ? false : true;
 			removeChildController(this, controller, andDispose);
 		}
@@ -4322,10 +4358,7 @@
 							return null;
 						}
 						controller[childProp] = child;
-						controller.__controllerContext.childControllers.push({
-							prop: childProp,
-							instance: child
-						});
+						controller.__controllerContext.childControllers.push(child);
 						// createAndBindControllerの呼び出しが終わったら、プロミスを取り除く
 						promisesForTriggerInit.splice($.inArray(childControllerPromise,
 								promisesForTriggerInit), 1);
@@ -4344,10 +4377,7 @@
 					// 子コントローラの__constructが正しく実行されなかった場合は以降何もしない
 					return null;
 				}
-				controller.__controllerContext.childControllers.push({
-					prop: prop,
-					instance: child
-				});
+				controller.__controllerContext.childControllers.push(child);
 				controller[prop] = child;
 			}
 		}

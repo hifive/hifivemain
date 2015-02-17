@@ -49,7 +49,7 @@
 
 	(function() {
 		h5.core.expose({
-			__name: 'app.test1.ChildController',
+			__name: 'app.test.ChildController',
 			__construct: createCallback('__construct'),
 			__init: createCallback('__init'),
 			__postInit: createCallback('__postInit'),
@@ -61,17 +61,11 @@
 	})();
 	(function() {
 		h5.core.expose({
-			__name: 'app.test1.RootController',
+			__name: 'app.test.RootController',
 			__construct: createCallback('__construct'),
 			__init: createCallback('__init'),
 			__postInit: createCallback('__postInit'),
 			__ready: createCallback('__ready'),
-			'.manageChild click': function() {
-				// manage
-				this.manageChild(app.test1.ChildController).done(this.own(function(c) {
-					this.childController = c;
-				}));
-			},
 			'.unmanageChild click': function() {
 				this.unmanageChild(this.childController);
 			},
@@ -84,14 +78,16 @@
 			__dispose: createCallback('__dispose')
 		});
 	})();
+
+	// バインド済みコントローラをmanageChild
 	(function() {
-		h5.core.expose($.extend({}, app.test1.ChildController, {
-			__name: 'app.test2.ChildController'
+		h5.core.expose($.extend({}, app.test.ChildController, {
+			__name: 'app.test0.ChildController'
 		}));
 	})();
 	(function() {
-		h5.core.expose($.extend({}, app.test1.RootController, {
-			__name: 'app.test2.RootController',
+		h5.core.expose($.extend({}, app.test.RootController, {
+			__name: 'app.test0.RootController',
 			'.manageChild click': function() {
 				// manage
 				this.childController = h5.core.controllerManager.getControllers(this
@@ -103,20 +99,22 @@
 			}
 		}));
 	})();
+
+	// 子コントローラコントローラをunmanageChild
 	(function() {
-		h5.core.expose($.extend({}, app.test1.ChildController, {
-			__name: 'app.test3.ChildController'
+		h5.core.expose($.extend({}, app.test.ChildController, {
+			__name: 'app.test1.ChildController'
 		}));
 	})();
 	(function() {
-		h5.core.expose($.extend({}, app.test1.RootController, {
-			__name: 'app.test3.RootController',
+		h5.core.expose($.extend({}, app.test.RootController, {
+			__name: 'app.test1.RootController',
 			__meta: {
 				childController: {
 					rootElement: '.child'
 				}
 			},
-			childController: app.test3.ChildController,
+			childController: app.test1.ChildController,
 			'.manageChild click': function() {},
 			'.unmanageChild click': function() {
 				this.unmanageChild(this.childController);
@@ -124,33 +122,90 @@
 		}));
 	})();
 
+	// __initでmanageChild
 	(function() {
-		h5.core.expose($.extend({}, app.test1.ChildController, {
+		h5.core.expose($.extend({}, app.test.ChildController, {
+			__name: 'app.test2.ChildController'
+		}));
+	})();
+	(function() {
+		h5.core.expose($.extend({}, app.test.RootController, {
+			__name: 'app.test2.RootController',
+			__init: function() {
+				this.childController = h5.core.controllerManager.getControllers(this
+						.$find('.child'))[0];
+				this.manageChild(this.childController);
+				this.own(createCallback('__init'))();
+			},
+			'.unmanageChild click': function() {
+				this.unmanageChild(this.childController);
+			}
+		}));
+	})();
+
+	// __postInitでmanageChild
+	(function() {
+		h5.core.expose($.extend({}, app.test.ChildController, {
+			__name: 'app.test3.ChildController'
+		}));
+	})();
+	(function() {
+		h5.core.expose($.extend({}, app.test.RootController, {
+			__name: 'app.test3.RootController',
+			__postInit: function() {
+				this.childController = h5.core.controllerManager.getControllers(this
+						.$find('.child'))[0];
+				this.manageChild(this.childController);
+				this.own(createCallback('__postInit'))();
+			},
+			'.unmanageChild click': function() {
+				this.unmanageChild(this.childController);
+			}
+		}));
+	})();
+
+	// __readyでmanageChild
+	(function() {
+		h5.core.expose($.extend({}, app.test.ChildController, {
 			__name: 'app.test4.ChildController'
 		}));
 	})();
 	(function() {
-		h5.core.expose($.extend({}, app.test1.RootController, {
+		h5.core.expose($.extend({}, app.test.RootController, {
 			__name: 'app.test4.RootController',
-			'.manageChild click': function() {
-				// manage
-				this.manageChild('app.test4.ChildController').done(this.own(function(c) {
-					this.childController = c;
-				}));
+			__ready: function() {
+				this.childController = h5.core.controllerManager.getControllers(this
+						.$find('.child'))[0];
+				this.manageChild(this.childController);
+				this.own(createCallback('__ready'))();
+			},
+			'.unmanageChild click': function() {
+				this.unmanageChild(this.childController);
 			}
 		}));
 	})();
+
 	$(function() {
 		$('.root').each(function(index) {
+			var $root = $(this);
+			var $child = $root.find('.child');
 			if (index === 0) {
-				h5.core.controller(this, app.test1.RootController);
+				h5.core.controller($root, app.test0.RootController);
+				h5.core.controller($child, app.test0.ChildController);
 			} else if (index === 1) {
-				h5.core.controller(this, app.test2.RootController);
-				h5.core.controller($(this).find('.child'), app.test2.ChildController);
+				h5.core.controller($root, app.test1.RootController);
 			} else if (index === 2) {
-				h5.core.controller(this, app.test3.RootController);
+				h5.core.controller($child, app.test2.ChildController).readyPromise.done(function() {
+					h5.core.controller($root, app.test2.RootController)
+				});
 			} else if (index === 3) {
-				h5.core.controller(this, app.test4.RootController);
+				h5.core.controller($child, app.test3.ChildController).readyPromise.done(function() {
+					h5.core.controller($root, app.test3.RootController)
+				});
+			} else if (index === 4) {
+				h5.core.controller($child, app.test4.ChildController).readyPromise.done(function() {
+					h5.core.controller($root, app.test4.RootController)
+				});
 			}
 		});
 	});
@@ -185,12 +240,13 @@
 <body>
 	<p>Root disposeはdispose()時にmanageした子コントローラのライフサイクルが連鎖することを確認できます。</p>
 	<p>__dispose時及び子コントローラの__construct時のログは、ルートエレメントが取れないため、コンソールに出しています。</p>
+
 	<div class="root">
 		<p>root</p>
-		<p>子コントローラ(定義オブジェクト)をmanage/unmanage</p>
+		<p>コントローラ(インスタンス)をmanageChild/unmanageChild</p>
 		<div class="description">
-			<p>manageChildすると子コントローラとなり、ライフサイクルが実行されイベントハンドラが動作するようになります。</p>
-			<p>unmanageChildすると子コントローラはdisposeされます。</p>
+			<p>manageChildすると子コントローラとなります。</p>
+			<p>unmanageChildすると子コントローラはdisposeされ、イベントハンドラは動作しなくなります。</p>
 			<p>再度manageChildすると再度定義オブジェクトから子コントローラを生成します。</p>
 			<p>manageChildされた状態でルートをdisposeすると子コントローラもdisposeされます。</p>
 		</div>
@@ -206,28 +262,9 @@
 	</div>
 	<div class="root">
 		<p>root</p>
-		<p>コントローラ(インスタンス)をmanage/unmanage</p>
+		<p>子コントローラ(インスタンス)をunmanageChild</p>
 		<div class="description">
-			<p>manageChildすると子コントローラとなり、ライフサイクルが実行されイベントハンドラが動作するようになります。</p>
-			<p>unmanageChildすると子コントローラはdisposeされます。</p>
-			<p>再度manageChildすると再度定義オブジェクトから子コントローラを生成します。</p>
-			<p>manageChildされた状態でルートをdisposeすると子コントローラもdisposeされます。</p>
-		</div>
-		<div class="output"></div>
-		<button class="manageChild">manageChild</button>
-		<button class="unmanageChild">unmanageChild</button>
-		<button class="dispose">Root dispose</button>
-		<div class="child">
-			<p>child</p>
-			<button class="eventHandler">イベントハンドラ</button>
-			<div class="output"></div>
-		</div>
-	</div>
-	<div class="root">
-		<p>root</p>
-		<p>子コントローラ(インスタンス)をmanage/unmanage</p>
-		<div class="description">
-			<p>既に子コントローラとしてバインドされているコントローラのunmanage。</p>
+			<p>既に子コントローラとしてバインドされているコントローラのunmanageChild。</p>
 		</div>
 		<div class="output"></div>
 		<button class="unmanageChild">unmanageChild</button>
@@ -240,12 +277,41 @@
 	</div>
 	<div class="root">
 		<p>root</p>
-		<p>子コントローラを名前空間で指定してmanage/unmanage</p>
+		<p>__initでmanageChild</p>
 		<div class="description">
-			<p>manageChildに文字列でコントローラ名を指定し、名前空間解決をしてから子コントローラとしてバインドされます。</p>
+			<p>__init中にmanageChildしてライフサイクルが動作する。</p>
 		</div>
 		<div class="output"></div>
-		<button class="manageChild">manageChild</button>
+		<button class="unmanageChild">unmanageChild</button>
+		<button class="dispose">Root dispose</button>
+		<div class="child">
+			<p>child</p>
+			<button class="eventHandler">イベントハンドラ</button>
+			<div class="output"></div>
+		</div>
+	</div>
+	<div class="root">
+		<p>root</p>
+		<p>__postInitでmanageChild</p>
+		<div class="description">
+			<p>__postInit中にmanageChildしてライフサイクルが動作する。</p>
+		</div>
+		<div class="output"></div>
+		<button class="unmanageChild">unmanageChild</button>
+		<button class="dispose">Root dispose</button>
+		<div class="child">
+			<p>child</p>
+			<button class="eventHandler">イベントハンドラ</button>
+			<div class="output"></div>
+		</div>
+	</div>
+	<div class="root">
+		<p>root</p>
+		<p>__readyでmanageChild</p>
+		<div class="description">
+			<p>__ready中にmanageChildしてライフサイクルが動作する。</p>
+		</div>
+		<div class="output"></div>
 		<button class="unmanageChild">unmanageChild</button>
 		<button class="dispose">Root dispose</button>
 		<div class="child">
