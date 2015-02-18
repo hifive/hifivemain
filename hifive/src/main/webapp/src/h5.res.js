@@ -90,6 +90,18 @@
 	/** リゾルバのリスト保持する配列 */
 	var resolvers = [];
 
+	/** リソースキーをキーに、解決済コンポーネントを持つマップ */
+	var componentMap = {};
+
+	/** registerされるのを待っているDeferredのマップ */
+	waitingRegisterMap = {};
+
+	/** setImmediateでresolve処理を待っているdeferredの配列 */
+	waitingForImmediateDeferred = [];
+
+	/** 非同期でresolveするのを待機するタイマーID(タイマーを複数作成しないようにするため) */
+	waitingImmediateTimer = null;
+
 	/**
 	 * ViewTemplateクラス
 	 */
@@ -157,7 +169,7 @@
 		 * @param {Boolean} isOnlyUrls trueを指定された場合、キャッシュは消さずに、キャッシュしているURLリストから引数に指定されたURLを削除します。
 		 */
 		clearCache: function(path, isOnlyUrls) {
-			var url = toAbsoluteUrl(path)
+			var url = toAbsoluteUrl(path);
 			if (!isOnlyUrls) {
 				delete this.cache[url];
 			}
@@ -265,12 +277,22 @@
 						// typeが指定されている場合はtypeと一致するかどうか見る
 						continue;
 					}
-					var ret = resolvers[i].resolver(resourceKey, type);
-					if (ret === false) {
-						continue;
+					// typeが指定されていない場合は条件とマッチするか判定
+					var test = resolvers[i].test;
+					if (!type && test) {
+						if ($.type(test) === 'regexp') {
+							if (!test.test(resourceKey)) {
+								continue;
+							}
+						} else {
+							if (test(resourceKey) === false) {
+								continue;
+							}
+						}
 					}
-					// リゾルバがfalse以外のものを返せばそれを返す
-					return ret;
+
+					// リゾルバを実行
+					return resolvers[i].resolver(resourceKey, type);
 				}
 				// false以外のものを返すリゾルバが無かった場合はfalseを返す
 				return false;
@@ -327,23 +349,78 @@
 	}
 
 	/**
+	 * リソースの登録
+	 *
+	 * @param {String} key
+	 * @param {Any} value
+	 * @param {Boolean} [exposeToGlobal=false] グローバルに公開するか
+	 * @param {String} [exposureName=null] グローバル公開名
+	 */
+	function register(key, value, exposeToGlobal, exposureName) {
+		if (exposeToGlobal) {
+			if (exposureName) {
+				h5.u.expose(exposureName, value);
+			} else {
+				h5.u.expose(key, value);
+			}
+		}
+		// コンポーネントマップに登録
+		componentMap[key] = value;
+		// このリソースキーに紐づくdeferredが既にregister待ちなら何もしない
+		var dfd = waitingRegisterMap[key];
+		if (!dfd) {
+			return;
+		}
+		delete waitingRegisterMap[key];
+
+		// 読込後の処理(register()呼び出し後)等が実行された後に、
+		// ユーザコードのdoneハンドラが動作するようにするためsetTimeout使用
+		// 既に動作しているタイマーがあれば新たにタイマーは作らない
+		waitingForImmediateDeferred.push(dfd);
+		if (!waitingImmediateTimer) {
+			waitingImmediateTimer = setTimeout(function() {
+				waitingImmediateTimer = null;
+				var dfds = waitingForImmediateDeferred.splice(0);
+				for (var i = 0, l = dfds.length; i < l; i++) {
+					dfds[i].resolve(value);
+				}
+			}, 0);
+		}
+	}
+
+	/**
 	 * 名前空間からjsファイルをロードするリゾルバ
 	 *
 	 * @param {String} resourceKey
 	 * @returns {Promise} 解決した名前空間オブジェクトをresolveで渡します
 	 */
 	function resolveNamespace(resourceKey) {
-		var ret = h5.u.obj.getByPath(resourceKey);
+		var ret = componentMap[resourceKey] || h5.u.obj.getByPath(resourceKey);
 		if (ret) {
 			// 既にある場合はresolve済みのプロミスを返す
 			return getDeferred().resolve(ret).promise();
+		}
+		// register待ちのリソースキーであれば、それを返す
+		if (waitingRegisterMap[resourceKey]) {
+			return waitingRegisterMap[resourceKey].promise();
 		}
 		// "."を"/"に変えてファイルパスを取得
 		var filePath = getFilePath(resourceKey.replace(/\./g, '/')) + '.js';
 		// loadScriptでロードする
 		var dfd = getDeferred();
+		// registerされるのを待つ
+		waitingRegisterMap[resourceKey] = dfd;
+		var dep = this;
 		h5.u.loadScript(filePath).done(function() {
-			dfd.resolve(h5.u.obj.getByPath(resourceKey));
+			var ret = componentMap[resourceKey] || h5.u.obj.getByPath(resourceKey);
+			if (ret) {
+				componentMap[resourceKey] = ret;
+				dfd.resolve(ret);
+				return;
+			}
+
+			// TODO タイムアウト処理
+
 		}).fail(function(errorObj) {
 			dfd.reject(errorObj);
 		});
@@ -365,11 +442,6 @@
 	 * </code></pre>
 	 */
 	function resolveEJSTemplate(resourceKey) {
-		// 拡張子の判定。クエリパラメータ('?'以降の文字列)を除いた文字列が".ejs"で終わっているかどうか
-		if (!/\.ejs$/.test(resourceKey.slice(0, (resourceKey + '?').indexOf('?')))) {
-			// .ejsで終わっていないファイルは無視
-			return false;
-		}
 		var dfd = getDeferred();
 		urlLoader.load(getFilePath(resourceKey)).done(function(resource) {
 			// コンテンツからscript要素を取得
@@ -438,10 +510,6 @@
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveJs(resourceKey, type) {
-		if (!/\.js$/.test(resourceKey.slice(0, (resourceKey + '?').indexOf('?')))) {
-			// .jsで終わっていないファイルは無視
-			return false;
-		}
 		// loadScriptでロードする
 		return h5.u.loadScript(getFilePath(resourceKey));
 	}
@@ -453,10 +521,6 @@
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveCss(resourceKey, type) {
-		if (!/\.css$/.test(resourceKey.slice(0, (resourceKey + '?').indexOf('?')))) {
-			// .cssで終わっていないファイルは無視
-			return false;
-		}
 		var head = document.getElementsByTagName('head')[0];
 
 		var cssNode = document.createElement('link');
@@ -541,9 +605,10 @@
 	 * リゾルバを追加します
 	 *
 	 * @param {String} type リゾルバのタイプ。リゾルバをタイプと紐づける。nullを指定した場合はtypeに紐づかないリゾルバを登録します。
+	 * @param {RegExp|Function} リソースキーがこのリゾルバにマッチするかどうかの正規表現、または関数
 	 * @param {Function} resolver リゾルバ
 	 */
-	function addResolver(type, resolver) {
+	function addResolver(type, test, resolver) {
 		if (resolver === undefined && isFunction(type)) {
 			// 第1引数に関数が指定されていて第2引数の指定がない場合はtype指定無しのリゾルバとみなす
 			// TODO とりあえずの実装です。引数の指定方法、引数チェック等、詳細仕様が決まり次第実装します。
@@ -553,15 +618,16 @@
 		// 先頭に追加する
 		resolvers.unshift({
 			type: type,
+			test: test,
 			resolver: resolver
 		});
 	}
 
 	// デフォルトリゾルバの登録
-	addResolver('namespace', resolveNamespace);
-	addResolver('ejsfile', resolveEJSTemplate);
-	addResolver('jsfile', resolveJs);
-	addResolver('cssfile', resolveCss);
+	addResolver('namespace', null, resolveNamespace);
+	addResolver('ejsfile', /.*\.ejs(\?.*$|$)/, resolveEJSTemplate);
+	addResolver('jsfile', /.*\.js(\?.*$|$)/, resolveJs);
+	addResolver('cssfile', /.*\.css(\?.*$|$)/, resolveCss);
 
 	// =============================
 	// Expose to window
@@ -577,7 +643,19 @@
 		addResolver: addResolver,
 		isDependency: isDependency,
 		urlLoader: urlLoader,
-		resolvers: resolvers
+		resolvers: resolvers,
+		register: register,
+		/**
+		 * コンポーネントキャッシュのクリア
+		 *
+		 * @name clearAll
+		 * @memberOf h5.res
+		 */
+		clearAll: function() {
+			for ( var p in componentMap) {
+				delete componentMap[p];
+			}
+		}
 	});
 
 })();
