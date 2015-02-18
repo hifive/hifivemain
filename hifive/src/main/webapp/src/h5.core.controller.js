@@ -1191,15 +1191,15 @@
 			// __postInit, __readyは子から先に実行する
 			var isAlreadyExecute = false;
 			if (funcName === '__init') {
-				isAlreadyExecute = controller.isInit;
+				isAlreadyExecute = c.isInit;
 				callback = createCallbackForInit(c);
 				promises = getPromisesForInit(c);
 			} else if (funcName === '__postInit') {
-				isAlreadyExecute = controller.isPostInit;
+				isAlreadyExecute = c.isPostInit;
 				callback = createCallbackForPostInit(c);
 				promises = getChildControllerPromises(c, 'postInitPromise');
 			} else {
-				isAlreadyExecute = controller.isReady;
+				isAlreadyExecute = c.isReady;
 				callback = createCallbackForReady(c);
 				promises = getChildControllerPromises(c, 'readyPromise');
 			}
@@ -2061,19 +2061,22 @@
 		doForEachControllerGroups(controller, function(c) {
 			var templateDfd = getDeferred();
 			templateDfd.resolve();
-			c.__controllerContext.templatePromise = templateDfd.promise();
-			c.__controllerContext.initDfd = getDeferred();
-			c.initPromise = c.__controllerContext.initDfd.promise();
-			c.__controllerContext.postInitDfd = getDeferred();
-			c.postInitPromise = c.__controllerContext.postInitDfd.promise();
-			c.__controllerContext.readyDfd = getDeferred();
-			c.readyPromise = c.__controllerContext.readyDfd.promise();
+			var context = c.__controllerContext;
+			context.templatePromise = templateDfd.promise();
+			context.initDfd = getDeferred();
+			context.postInitDfd = getDeferred();
+			context.readyDfd = getDeferred();
+			context.isUnbinding = false;
+			context.isUnbinded = false;
+			context.isExecutedBind = false;
+			context.isExecutedSetupRootElement = false;
+			context.args = param;
+			c.initPromise = context.initDfd.promise();
+			c.postInitPromise = context.postInitDfd.promise();
+			c.readyPromise = context.readyDfd.promise();
 			c.isInit = false;
 			c.isPostInit = false;
 			c.isReady = false;
-			c.__controllerContext.isUnbinding = false;
-			c.__controllerContext.isUnbinded = false;
-			c.__controllerContext.args = param;
 		});
 	}
 
