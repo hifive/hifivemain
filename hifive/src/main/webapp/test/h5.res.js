@@ -448,100 +448,100 @@ $(function() {
 		strictEqual(dep.getKey(), 'hoge', 'getKey()でリソースキーを取得できること');
 	});
 
-	//=============================
-	// Definition
-	//=============================
-	module('リゾルバのカスタマイズ', {
-		setup: function() {
-			// slice(0)して、元のresolversの中身を覚えておく
-			this.orgResolvers = h5.res.resolvers.slice(0);
-		},
-		teardown: function() {
-			// 元のresolversの中身にspliceを使って入れ替える(元に戻す)
-			var resolvers = h5.res.resolvers;
-			var spliceArgs = this.orgResolvers;
-			spliceArgs.unshift(0, resolvers.length);
-			resolvers.splice.apply(resolvers, spliceArgs);
-		},
-		orgResolvers: null
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('リゾルバの引数とthis', 2, function() {
-		var context, arg;
-		function resolver(resourceKey) {
-			context = this;
-			arg = resourceKey;
-			return true;
-		}
-		h5.res.addResolver('mytype', resolver);
-		h5.res.require('hoge').resolve();
-		strictEqual(arg, 'hoge', '引数にはrequireで渡したリソースキーが渡されること');
-		strictEqual(context.type, 'mytype', 'this.typeで実行中のリゾルバのtypeが取得できること');
-	});
-
-	test('addResolverでリゾルバを追加', 3, function() {
-		h5.res.addResolver(function(resourceKey) {
-			return 'custom1';
-		});
-		strictEqual(h5.res.require('hoge').resolve(), 'custom1', '追加したリゾルバが使用されること');
-
-		h5.res.addResolver(function(resourceKey) {
-			return 'custom2';
-		});
-		strictEqual(h5.res.require('hoge').resolve(), 'custom2', '後から追加したリゾルバが使用されること');
-
-		h5.res.addResolver(function(resourceKey) {
-			return false;
-		});
-		strictEqual(h5.res.require('hoge').resolve(), 'custom2', 'リゾルバがfalseを返した時は次のリゾルバが使用されること');
-	});
-
-	test('addResolverでtypeを指定したリゾルバを追加', 3, function() {
-		h5.res.addResolver(function(resourceKey) {
-			return 'custom1';
-		});
-
-		h5.res.addResolver('customtype', function(resourceKey) {
-			return 'custom2';
-		});
-
-		h5.res.addResolver(function(resourceKey) {
-			return 'custom3';
-		});
-		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom2',
-				'指定したtypeのリゾルバが使用されること');
-
-		h5.res.addResolver('customtype', function(resourceKey) {
-			return 'custom4';
-		});
-		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom4',
-				'指定したtypeのリゾルバのうち、後から追加したものが使用されること');
-
-		h5.res.addResolver('customtype', function(resourceKey) {
-			return false;
-		});
-		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom4',
-				'指定したtypeのリゾルバのうち、後から追加したものが使用されること');
-	});
-
-	test('h5.res.resolversを編集', 1, function() {
-		var index = 0;
-		var resolvers = h5.res.resolvers;
-		for (var l = resolvers.length; index < l; index++) {
-			if (resolvers[index].type === 'jsfile') {
-				break;
-			}
-		}
-		resolvers.splice(index, 0, {
-			resolver: function() {
-				return 'hoge';
-			}
-		});
-		strictEqual(h5.res.require('a.js').resolve(), 'hoge', 'resolversに追加したリゾルバが使用されること');
-	});
+	//	//=============================
+	//	// Definition
+	//	//=============================
+	//	module('リゾルバのカスタマイズ', {
+	//		setup: function() {
+	//			// slice(0)して、元のresolversの中身を覚えておく
+	//			this.orgResolvers = h5.res.resolvers.slice(0);
+	//		},
+	//		teardown: function() {
+	//			// 元のresolversの中身にspliceを使って入れ替える(元に戻す)
+	//			var resolvers = h5.res.resolvers;
+	//			var spliceArgs = this.orgResolvers;
+	//			spliceArgs.unshift(0, resolvers.length);
+	//			resolvers.splice.apply(resolvers, spliceArgs);
+	//		},
+	//		orgResolvers: null
+	//	});
+	//
+	//	//=============================
+	//	// Body
+	//	//=============================
+	//	test('リゾルバの引数とthis', 2, function() {
+	//		var context, arg;
+	//		function resolver(resourceKey) {
+	//			context = this;
+	//			arg = resourceKey;
+	//			return true;
+	//		}
+	//		h5.res.addResolver('mytype', resolver);
+	//		h5.res.require('hoge').resolve();
+	//		strictEqual(arg, 'hoge', '引数にはrequireで渡したリソースキーが渡されること');
+	//		strictEqual(context.type, 'mytype', 'this.typeで実行中のリゾルバのtypeが取得できること');
+	//	});
+	//
+	//	test('addResolverでリゾルバを追加', 3, function() {
+	//		h5.res.addResolver(function(resourceKey) {
+	//			return 'custom1';
+	//		});
+	//		strictEqual(h5.res.require('hoge').resolve(), 'custom1', '追加したリゾルバが使用されること');
+	//
+	//		h5.res.addResolver(function(resourceKey) {
+	//			return 'custom2';
+	//		});
+	//		strictEqual(h5.res.require('hoge').resolve(), 'custom2', '後から追加したリゾルバが使用されること');
+	//
+	//		h5.res.addResolver(function(resourceKey) {
+	//			return false;
+	//		});
+	//		strictEqual(h5.res.require('hoge').resolve(), 'custom2', 'リゾルバがfalseを返した時は次のリゾルバが使用されること');
+	//	});
+	//
+	//	test('addResolverでtypeを指定したリゾルバを追加', 3, function() {
+	//		h5.res.addResolver(function(resourceKey) {
+	//			return 'custom1';
+	//		});
+	//
+	//		h5.res.addResolver('customtype', function(resourceKey) {
+	//			return 'custom2';
+	//		});
+	//
+	//		h5.res.addResolver(function(resourceKey) {
+	//			return 'custom3';
+	//		});
+	//		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom2',
+	//				'指定したtypeのリゾルバが使用されること');
+	//
+	//		h5.res.addResolver('customtype', function(resourceKey) {
+	//			return 'custom4';
+	//		});
+	//		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom4',
+	//				'指定したtypeのリゾルバのうち、後から追加したものが使用されること');
+	//
+	//		h5.res.addResolver('customtype', function(resourceKey) {
+	//			return false;
+	//		});
+	//		strictEqual(h5.res.require('hoge').resolve('customtype'), 'custom4',
+	//				'指定したtypeのリゾルバのうち、後から追加したものが使用されること');
+	//	});
+	//
+	//	test('h5.res.resolversを編集', 1, function() {
+	//		var index = 0;
+	//		var resolvers = h5.res.resolvers;
+	//		for (var l = resolvers.length; index < l; index++) {
+	//			if (resolvers[index].type === 'jsfile') {
+	//				break;
+	//			}
+	//		}
+	//		resolvers.splice(index, 0, {
+	//			resolver: function() {
+	//				return 'hoge';
+	//			}
+	//		});
+	//		strictEqual(h5.res.require('a.js').resolve(), 'hoge', 'resolversに追加したリゾルバが使用されること');
+	//	});
 
 	//=============================
 	// Definition
@@ -564,63 +564,98 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('typeを指定した場合に実行されるリゾルバ', 2, function() {
+	test('testに関数を指定した場合の使用するリゾルバの判定', function() {
 		var resolvers = h5.res.resolvers;
 		resolvers.splice(0, resolvers.length, {
-			type: 'a',
-			resolver: function() {
-				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
+			test: function(resouceKey) {
+				strictEqual(resouceKey, 'hoge', 'test関数にリソースキーが渡されること');
 				return false;
+			},
+			resolver: function() {
+				ok(false, 'test関数がfalseを返した場合はリゾルバは実行されないこと');
 			}
 		}, {
+			test: function(resouceKey) {
+				ok(true, '2番目に登録されたリゾルバのtest関数が実行されること');
+				strictEqual(resouceKey, 'hoge', 'test関数にリソースキーが渡されること');
+			},
 			resolver: function() {
-				ok(false, 'typeの指定されていないリゾルバは実行されないこと');
-				return false;
+				ok(true, 'test関数がfalseを返していない場合、そのリゾルバが実行されること');
 			}
 		}, {
-			type: 'b',
+			test: function(resouceKey) {
+				ok(false, '実行されるリゾルバが決定した後のtest関数は実行されないこと');
+			},
 			resolver: function() {
-				ok(true, 'typeが一致するリゾルバは実行されること');
-				return false;
-			}
-		}, {
-			type: 'b',
-			resolver: function() {
-				ok(true, 'typeが一致するリゾルバは実行されること');
-				return true;
-			}
-		}, {
-			type: 'b',
-			resolver: function() {
-				ok(false, 'false以外を返すリゾルバが実行された場合、以降のリゾルバは実行されないこと');
-				return true;
+			// 何もしない
 			}
 		});
-		h5.res.require('hoge').resolve('b');
+		h5.res.require('hoge').resolve();
 	});
 
-
-	test('typeを指定しない場合に実行されるリゾルバ', 2, function() {
+	test('testに正規表現を指定した場合の使用するリゾルバの判定', function() {
 		var resolvers = h5.res.resolvers;
 		resolvers.splice(0, resolvers.length, {
-			type: 'a',
+			test: /a/,
 			resolver: function() {
-				ok(true, 'typeの指定されているリゾルバが実行されること');
-				return false;
+				ok(false, 'testの正規表現にマッチしないリゾルバは実行されないこと');
 			}
 		}, {
+			test: /hoge/,
 			resolver: function() {
-				ok(true, 'typeの指定されていないリゾルバが実行されること');
+				ok(true, 'testの正規表現にマッチするリゾルバが実行されること');
 				return true;
 			}
 		}, {
 			resolver: function() {
-				ok(false, 'false以外を返すリゾルバが実行された場合、以降のリゾルバは実行されないこと');
+				ok(false, '実行されるリゾルバが決まった場合、それ以降のリゾルバは実行されないこと');
 				return true;
 			}
 		});
 		h5.res.require('hoge').resolve();
 	});
+
+	test('typeを指定した場合の使用するリゾルバの判定', function() {
+		var resolvers = h5.res.resolvers;
+		resolvers.splice(0, resolvers.length, {
+			type: 'a',
+			test: function() {
+				ok(false, '指定されたtypeと異なるリゾルバのtest関数は実行されないこと');
+			},
+			resolver: function() {
+				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
+			}
+		}, {
+			type: 'b',
+			resolver: function() {
+				ok(true, 'typeが一致するリゾルバは実行されること');
+			}
+		});
+		h5.res.require('hoge').resolve('b');
+
+		var testExecuted = false;
+		resolvers.splice(0, resolvers.length, {
+			type: 'b',
+			test: function() {
+				textExecuted = true;
+			},
+			resolver: function() {
+				ok(!testExecuted, 'type指定された場合、test関数は実行されないこと');
+			}
+		});
+		h5.res.require('hoge').resolve('b');
+
+		var testExecuted = false;
+		resolvers.splice(0, resolvers.length, {
+			type: 'b',
+			test: /fuga/,
+			resolver: function() {
+				ok(!testExecuted, 'type指定された場合、testに指定した正規表現による判定は実行されないこと');
+			}
+		});
+		h5.res.require('hoge').resolve('b');
+	});
+
 
 	test('指定したtypeにマッチするリゾルバがない場合', 1, function() {
 		var resolvers = h5.res.resolvers;
@@ -631,26 +666,24 @@ $(function() {
 				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
 				return false;
 			}
-		}, {
-			resolver: function() {
-				ok(false, 'typeの指定されていないリゾルバは実行されないこと');
-				return false;
-			}
 		});
-		strictEqual(h5.res.require('hoge').resolve('c'), false, 'resolve()はfalseを返すこと');
+		strictEqual(h5.res.require('hoge').resolve('b'), false, 'resolve()はfalseを返すこと');
 	});
 
-	test('全てのリゾルバがfalseを返す場合', 1, function() {
+	test('全てのリゾルバについてtestが条件を満たさない場合', 1, function() {
 		var resolvers = h5.res.resolvers;
-
 		resolvers.splice(0, resolvers.length, {
 			type: 'a',
-			resolver: function() {
+			test: function() {
 				return false;
+			},
+			resolver: function() {
+				ok(false, 'リゾルバはじっこうされないこと');
 			}
 		}, {
+			test: /fuga/,
 			resolver: function() {
-				return false;
+				ok(false, 'リゾルバはじっこうされないこと');
 			}
 		});
 		strictEqual(h5.res.require('hoge').resolve(), false, 'resolve()はfalseを返すこと');
@@ -734,6 +767,7 @@ $(function() {
 		teardown: function() {
 			clearController();
 			deleteProperty(window, 'h5resdata');
+			h5.res.clearAll();
 		}
 	});
 
