@@ -58,17 +58,8 @@ $(function() {
 	// Definition
 	//=============================
 	module('名前空間の依存解決', {
-		setup: function() {
-			stop();
-			var that = this;
-			h5.res.require('h5resdata.controller.SampleController').resolve().done(
-					function(result) {
-						// 最初にロードした時の結果を覚えておく
-						that.result = result;
-						start();
-					});
-		},
 		teardown: function() {
+			h5.res.clearAll();
 			deleteProperty(window, 'h5resdata');
 			// scriptタグの除去
 			$('script[src*="h5resdata\"]').remove();
@@ -79,27 +70,38 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('名前空間の依存解決', 4,
-			function() {
-				strictEqual(h5resdata.controller.SampleController.__name,
-						'h5resdata.controller.SampleController', '指定した名前空間のコントローラが取得できること');
-				strictEqual(h5resdata.controller.SampleController, this.result,
-						'doneハンドラの引数にコントローラが渡されること');
+	asyncTest('グローバルに公開されるオブジェクトの取得', function() {
+		h5.res.require('h5resdata.controller.SampleController').resolve().done(
+				function(result) {
+					strictEqual(h5resdata.controller.SampleController.__name,
+							'h5resdata.controller.SampleController',
+							'指定した名前空間のコントローラがグローバル領域から取得できること');
+					strictEqual(h5resdata.controller.SampleController, result,
+							'doneハンドラの引数にコントローラが渡されること');
+				}).always(start);
+	});
 
-				h5.res.require('h5resdata.controller.SampleController').resolve('namespace').done(
-						function(result) {
-							strictEqual(h5resdata.controller.SampleController, result,
-									'resolveの引数にリゾルバのタイプを指定した時、doneハンドラの引数にコントローラが渡されること');
-						});
+	asyncTest('リゾルバタイプ"namespace"を指定', function() {
+		h5.res.require('h5resdata.controller.SampleController').resolve('namespace').done(
+				function(result) {
+					strictEqual(h5resdata.controller.SampleController, result,
+							'resolveの引数にリゾルバのタイプを指定した時、doneハンドラの引数にコントローラが渡されること');
+					strictEqual(h5resdata.controller.SampleController.__name,
+							'h5resdata.controller.SampleController',
+							'指定した名前空間のコントローラがグローバル領域から取得できること');
+				}).always(start);
+	});
 
-				h5resdata.controller.SampleController = 'hoge';
-
-				h5.res.require('h5resdata.controller.SampleController').resolve().done(
-						function() {
-							strictEqual(h5resdata.controller.SampleController, 'hoge',
-									'指定した名前空間に既に値が存在するとき、doneハンドラの引数に元々入っている値が渡されること');
-						});
-			});
+	asyncTest('オブジェクトが既にグローバルに公開済み', function() {
+		h5resdata = {
+			controller: {
+				SampleController: 'hoge'
+			}
+		};
+		h5.res.require('h5resdata.controller.SampleController').resolve().done(function(result) {
+			strictEqual(result, 'hoge', '指定した名前空間に既に値が存在するとき、doneハンドラの引数に元々入っている値が渡されること');
+		}).always(start);
+	});
 
 	//=============================
 	// Definition
@@ -114,6 +116,83 @@ $(function() {
 			strictEqual(e.code, ERR_U.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 			start();
 		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('register', {
+		teardown: function() {
+			h5.res.clearAll();
+			deleteProperty(window, 'h5resdata');
+			// scriptタグの除去
+			$('script[src*="h5resdata\"]').remove();
+		},
+		result: null
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('オブジェクトが既にregister()で登録済み', function() {
+		h5.res.register('h5resdata.controller.SampleController', {
+			a: 'a'
+		});
+		h5.res.require('h5resdata.controller.SampleController').resolve().done(function(result) {
+			strictEqual(result.a, 'a', '指定した名前空間にregister()で登録済みである時、doneハンドラの引数に登録済みの値が渡されること');
+		}).always(start);
+	});
+
+	asyncTest('同期で呼ばれるregister()によって登録されるオブジェクトの取得', function() {
+		var promise = h5.res.require('h5resdata.register.A').resolve();
+		promise.done(function(result) {
+			var a = new result();
+			strictEqual(a.a, 'a', 'register()で渡されたオブジェクトがdoneハンドラに渡されること');
+			ok(!window.h5resdata, 'グローバルには公開されていないこと');
+			ok(a.ary[0], 'ok', 'register呼び出し後の処理が、doneハンドラの時点で実行済みであること');
+		}).always(start);
+	});
+
+	asyncTest('非同期で呼ばれるregister()によって登録されるオブジェクトの取得', function() {
+		var promise = h5.res.require('h5resdata.register.A_async').resolve();
+		promise.done(function(result) {
+			var a = new result();
+			strictEqual(a.a, 'a', 'register()で渡されたオブジェクトがdoneハンドラに渡されること');
+			ok(a.ary[0], 'ok', 'register呼び出し後の処理が、doneハンドラの時点で実行済みであること');
+		}).always(start);
+	});
+
+	asyncTest('依存関係のネスト', function() {
+		var promise = h5.res.require('h5resdata.register.B').resolve();
+		promise.done(function(result) {
+			var r = new result();
+			strictEqual(r.b, 'b', 'register()で渡されたオブジェクトがdoneハンドラに渡されること');
+			strictEqual(r.a && r.a.a, 'a', 'ネストした依存関係が解決されていること');
+		}).always(start);
+	});
+
+	test('register()でグローバルに公開', function() {
+		var obj = {
+			a: 'a'
+		};
+		h5.res.register('h5resdata.objA', obj, true);
+		strictEqual(h5resdata.objA.a, 'a', '第3引数にtrueを指定すると、キー名でオブジェクトが公開されること');
+		h5.res.register('h5resdata.objB', obj, false);
+		strictEqual(h5resdata.objB, undefined, '第3引数にfalseを指定すると、グローバルに公開されないこと');
+		h5.res.register('h5resdata.objC', obj);
+		strictEqual(h5resdata.objC, undefined, '第3引数を指定しない場合、グローバルに公開されないこと');
+	});
+
+	test('register()でグローバルに公開する名前空間を指定', function() {
+		var obj = {
+			a: 'a'
+		};
+		h5.res.register('h5resdata.objA', obj, true, 'h5resdata.hogeA');
+		strictEqual(h5resdata.hogeA.a, 'a', '第4引数に指定した名前空間に公開されること');
+		strictEqual(h5resdata.objA, undefined, 'キー名の名前空間には公開されないこと');
+		h5.res.register('h5resdata.objB', obj, false, 'h5resdata.hogeB');
+		strictEqual(h5resdata.hogeB, undefined, '第3引数がfalseの場合、第4引数を指定してもその場所に公開されないこと');
+		strictEqual(h5resdata.objB, undefined, '第3引数がfalseの場合、キー名の場所に公開されないこと');
 	});
 
 	//=============================

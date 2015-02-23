@@ -359,9 +359,9 @@
 	function register(key, value, exposeToGlobal, exposureName) {
 		if (exposeToGlobal) {
 			if (exposureName) {
-				h5.u.expose(exposureName, value);
+				h5.u.obj.expose(exposureName, value);
 			} else {
-				h5.u.expose(key, value);
+				h5.u.obj.expose(key, value);
 			}
 		}
 		// コンポーネントマップに登録
