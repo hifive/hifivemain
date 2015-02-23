@@ -376,13 +376,16 @@
 		// 読込後の処理(register()呼び出し後)等が実行された後に、
 		// ユーザコードのdoneハンドラが動作するようにするためsetTimeout使用
 		// 既に動作しているタイマーがあれば新たにタイマーは作らない
-		waitingForImmediateDeferred.push(dfd);
+		waitingForImmediateDeferred.push({
+			dfd: dfd,
+			value: value
+		});
 		if (!waitingImmediateTimer) {
 			waitingImmediateTimer = setTimeout(function() {
 				waitingImmediateTimer = null;
 				var dfds = waitingForImmediateDeferred.splice(0);
 				for (var i = 0, l = dfds.length; i < l; i++) {
-					dfds[i].resolve(value);
+					dfds[i].dfd.resolve(dfds[i].value);
 				}
 			}, 0);
 		}
@@ -411,10 +414,13 @@
 		// registerされるのを待つ
 		waitingRegisterMap[resourceKey] = dfd;
 		var dep = this;
-		h5.u.loadScript(filePath).done(function() {
+		h5.u.loadScript(filePath, {
+			force: true
+		}).done(function() {
 			var ret = componentMap[resourceKey] || h5.u.obj.getByPath(resourceKey);
 			if (ret) {
 				componentMap[resourceKey] = ret;
+				delete waitingRegisterMap[resourceKey];
 				dfd.resolve(ret);
 				return;
 			}
