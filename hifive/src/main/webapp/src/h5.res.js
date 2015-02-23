@@ -414,9 +414,7 @@
 		// registerされるのを待つ
 		waitingRegisterMap[resourceKey] = dfd;
 		var dep = this;
-		h5.u.loadScript(filePath, {
-			force: true
-		}).done(function() {
+		h5.u.loadScript(filePath).done(function() {
 			var ret = componentMap[resourceKey] || h5.u.obj.getByPath(resourceKey);
 			if (ret) {
 				componentMap[resourceKey] = ret;
