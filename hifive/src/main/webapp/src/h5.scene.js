@@ -408,14 +408,6 @@
 		new RMIReceiver();
 	}
 
-	function Scene() {
-	//scene
-	}
-
-	function SceneContainer() {
-	//ignore
-	}
-
 	function InvocationProxy() {
 
 	}
@@ -512,6 +504,7 @@
 		show: function() {
 			var dfd = h5.async.deferred();
 
+			//producerは、シーンの表示方法を制御する人
 			var producer = sceneTypeMap[this.type];
 
 			var p = h5.core.controller($('<div></div>'), producer);
@@ -581,12 +574,36 @@
 	var simpleSceneDirectorController = {
 		__name: 'h5.scene.SimpleSceneDirectorController',
 
+		_controller: null,
+
 		onInit: function() {
 
 		},
 
-		onShow: function() {
+		onShow: function(contentsSource, controller) {
+			var dfd = h5.async.deferred();
 
+			if (this._isShowing) {
+				return;
+			}
+
+			var loadPromise = loadContents(contentsSource);
+
+			var that = this;
+
+			var p = loadPromise.done(function(dom) {
+				//コントローラをバインド
+				var ic = h5.core.controller(dom, controller);
+
+				that._controller = ic;
+
+				ic.readyPromise.done(function() {
+					dfd.resolve(dom);
+				});
+
+			});
+
+			return dfd.promise();
 		},
 
 		onHide: function() {
@@ -594,7 +611,7 @@
 		},
 
 		onDispose: function() {
-
+			this._controller.dispose();
 		}
 	};
 
@@ -768,23 +785,25 @@
 
 		this._currentSceneRootElement = null;
 
-		this._isClickjackEnabled = true;
+		this._isClickjackEnabled = false;
 
 		var that = this;
 
-		$(element).on('click', 'a', function(event) {
-			if (that._isClickjackEnabled) {
+		//TODO isClickjackのT/Fでハンドラを切り替える
+		//デフォルトではclickjackはfalseの方向
+		if (that._isClickjackEnabled) {
+			$(element).on('click', 'a', function(event) {
 				event.preventDefault();
 
 				var href = event.originalEvent.target.href;
 
-				that.changePage(href);
-			}
-		});
+				that.changeScene(href);
+			});
+		}
 	}
 	$.extend(SceneContainer.prototype,
 			{
-				changePage: function(to, type) {
+				changeScene: function(to, type) {
 					if (isString(to)) {
 						pushState(null, null, toAbsoluteUrl(to));
 					}
@@ -805,6 +824,7 @@
 						disposeAllControllers(from);
 					}
 
+					//TODO transitionはコントローラでなく特別な型orFunctionにするのがよいだろう
 					var transitionController = h5.core.controller(this.rootElement, transition);
 
 					var that = this;
