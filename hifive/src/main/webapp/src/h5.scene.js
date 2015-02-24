@@ -737,27 +737,49 @@
 	var defaultTransitionController = {
 		__name: 'h5.scene.DefaultTransitionController',
 
-		onChange: function(container, from, to) {
-			var loadPromise = loadContents(to);
-
+		//TODO(鈴木) 次のコンテンツのロード自体はシーンコンテナに任せ、
+		//TransitionControllerはコンテンツの切り替え処理のみに特化したほうがよい
+//		onChange: function(container, from, to) {
+//			var loadPromise = loadContents(to);
+//
+//			var dfd = this.deferred();
+//
+//			// var that = this;
+//
+//			var ind = this.indicator({
+//				target: this.rootElement,
+//				block: true,
+//				message: '遷移中...'
+//			}).show();
+//
+//			//TODO always->done/fail
+//			loadPromise.always(function(html) {
+//
+//				$(container).html(html);
+//
+//				ind.hide();
+//
+//				dfd.resolve(html);
+//			});
+//
+//			return dfd.promise();
+//		},
+		onChange: function(container, html) {
 			var dfd = this.deferred();
 
-			//			var that = this;
-
+			//TODO(鈴木)遷移処理としてのインジケーターはシーンコンテナに任せるべき・・・
+			//と思ったのですが、そもそもコンテナはコントローラーじゃないので無理。
+			//(現状はアニメーションがないのでここで表示してもあまり意味がない)
 			var ind = this.indicator({
 				target: this.rootElement,
 				block: true,
 				message: '遷移中...'
 			}).show();
 
-			//TODO always->done/fail
-			loadPromise.always(function(html) {
-				$(container).html(html);
+			$(container).html(html);
+			dfd.resolve(html);
 
-				ind.hide();
-
-				dfd.resolve(html);
-			});
+			ind.hide();
 
 			return dfd.promise();
 		}
@@ -771,13 +793,30 @@
 
 	var mainContainer = null;
 
+	//TODO(鈴木) 画面遷移時のpopState時のコールバック
+	function onPopState(event) {
+		mainContainer._changeScene(location.href);
+	}
+
 	function SceneContainer(element, isMain) {
+
 		this.isMain = !!isMain;
+
+		//TODO(鈴木) element指定なしの場合はbodyを対象とし、メインシーンコンテナ扱いとする
+		//ただし、あえてisMainにfalseが指定されている場合はメインシーンとしては扱わない
+		if(element == null){
+			element = document.body;
+			if(isMain !== false) this.isMain = true;
+		}
 
 		if (this.isMain) {
 			if (mainContainer) {
 				//TODO throwFwError();
+				throw new Error();
 			}
+			//TODO(鈴木) メインシーンコンテナの場合はURL連動指定を行う。
+			//※popStateが使えない場合(hashchangeを使用)を考慮するか？
+			$(window).on('popstate', onPopState);
 			mainContainer = this;
 		}
 
@@ -803,15 +842,36 @@
 	}
 	$.extend(SceneContainer.prototype,
 			{
+				//TODO(鈴木) popState, hashChangeイベント連動のため_changeSceneメソッドに処理を分割
 				changeScene: function(to, type) {
-					if (isString(to)) {
+
+					//TODO(鈴木) インジケーターは遷移処理発動直後に表示する必要がある(余計な操作をさせないため)・・・
+					//→上述のとおり無理。ただ、ユーザーに余計な操作をさせないためにも、遷移処理直後にインジケーターは表示したい。
+//					this._ind = this.indicator({
+//						target: this.rootElement,
+//						block: true,
+//						message: '遷移中...'
+//					}).show();
+
+					var dfd = this._dfd = h5.async.deferred();
+
+					if (this.isMain){
+						if(!isString(to)) {
+							//TODO throwFwError();
+						}
 						pushState(null, null, toAbsoluteUrl(to));
 					}
 
+					this._changeScene(to, type);
+
+					return dfd.promise();
+				},
+
+				//TODO(鈴木) changeSceneメソッドから処理を分割
+				_changeScene : function(to, type){
+
 					var transition = transitionTypeMap[type != null ? type
 							: DEFAULT_SCENE_TRANSITION_TYPE];
-
-					var dfd = h5.async.deferred();
 
 					if (!transition) {
 						//TODO throwFwError();
@@ -830,22 +890,51 @@
 					var that = this;
 
 					transitionController.readyPromise.done(function() {
-						var transitionPromise = transitionController.onChange(that.rootElement,
-								from, to);
+						//TODO(鈴木) TransitionController変更に伴う変更
+						//次のコンテンツのロードはこちらで行う。
+						//将来、コントローラー・DOMを保存して使用する場合に、それらのハンドリングはシーンコンテナで行うほうがよいと思われるため。
+						//var transitionPromise = transitionController.onChange(that.rootElement,
+						//		from, to);
 
-						transitionPromise.done(function(sceneRoot) {
-							this._currentSceneRootElement = sceneRoot;
+						var transitionPromise;
 
-							dfd.resolve({
+						var loadPromise = loadContents(to);
+						//TODO always->done/fail
+						loadPromise.always(function(html) {
+							//TODO(鈴木) ここでhtmlから対象の部分を抜きたい。
+							//が、判別方法をどうするか。
+							//メインシーンコンテナであれば、mainタグ、data-main-container属性、bodyタグの順で探すが、
+							//それ以外の場合は？ メインシーンコンテナでない場合はhtml全部を対象とする前提とし、
+							//ファイル内にはhtml断片を入れてもらうか？
+							//とりあえずここではメインシーンコンテナの場合のみ実装
+							if (that.isMain){
+								//alert($(html).filter('body').length);→0
+							}else{
+								//TODO(鈴木) メインシーンコンテナ以外
+							}
+
+							return transitionController.onChange(that.rootElement, html);
+						}).done(function(sceneRoot) {
+							console.debug(sceneRoot);
+							//TODO(鈴木) data-h5-controllerに基づいてコントローラーをバインド
+							//alert($(sceneRoot).find('div').data('h5-controller'));→0
+
+
+							that._currentSceneRootElement = sceneRoot;
+
+							that._dfd.resolve({
 								from: from,
 								to: sceneRoot
 							});
 
 							transitionController.dispose();
+
+							//TODO(鈴木) インジケータ非表示→現状無理
+							//that._ind.hide();
 						});
 					});
 
-					return dfd.promise();
+
 				}
 			});
 
@@ -863,10 +952,17 @@
 		if (!isInited) {
 			isInited = true;
 
-			var main = $('main')[0];
+			//TODO(鈴木) main-container属性チェック実装
+			var main = $('main, [data-main-container]')[0];
 
 			//TODO main-container属性を見る
-			createSceneContainer(main ? main : document.body, null, true);
+			//createSceneContainer(main ? main : document.body, null, true);
+
+			//TODO(鈴木) mainタグ、もしくはdata-main-container属性が指定されていない場合は,
+			//明示的にcreateSceneContainerを呼ばない限りは機能を有効化しない。※もしくはデフォルトでオフ
+			if(main){
+				createSceneContainer(main, null, true);
+			}
 		}
 	}
 
