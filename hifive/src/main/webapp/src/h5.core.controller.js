@@ -3490,19 +3490,60 @@
 		/**
 		 * ルート要素を起点に指定されたイベントを実行します。
 		 * <p>
-		 * 第2引数に指定したparameterオブジェクトは、コントローラのイベントハンドラで受け取るcontext.evArgに格納されます。<br>
-		 * parameterに配列を指定した場合は、context.evArgに渡した配列が格納されます。<br>
-		 * ただし、
-		 *
-		 * <pre>
-		 * trigger('click', ['a']);
-		 * </pre>
-		 *
-		 * のように、１要素だけの配列を渡した場合は、その中身がcontext.evArgに格納されます。(jQuery.triggerと同様です。)
+		 * 第2引数に指定したparameterオブジェクトは、コントローラのイベントハンドラで受け取るcontext.evArgに格納されます。
+		 * </p>
+		 * <p>
+		 * parameterに配列を指定した場合は、context.evArgに渡した配列が格納されます。
 		 * </p>
 		 * <p>
 		 * 戻り値は、jQueryEventオブジェクトを返します。
 		 * </p>
+		 * <h5>長さ1の配列をparameterに指定した場合について</h5>
+		 * <p>
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * trigger('click', ['a']);
+		 * </code></pre>
+		 *
+		 * のように、１要素だけの配列を渡した場合は、配列ではなくその中身がcontext.evArgに格納されます。(jQuery.triggerと同様です。)
+		 * </p>
+		 * <p>
+		 * triggerで、渡した配列の長さに関わらず、渡したデータを配列としてハンドラで扱いたい場合は、以下のような方法を検討してください。。
+		 * </p>
+		 * <ul>
+		 * <li> parameterをオブジェクトでラップする。
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * // trigger
+		 * $(this.rootElement).trigger('hoge', {data: ary});
+		 *
+		 * // イベントハンドラ
+		 * '{rootElement} hoge': function(context){
+		 *   var ary = context.evArg.data;
+		 *   for(var i = 0, l = ary.length; i &lt; l; i++){
+		 *     // 配列に対する処理
+		 *   }
+		 * }
+		 * </code></pre>
+		 *
+		 * </li>
+		 * <li>イベントハンドラ側で、受け取ったデータが配列で無かったら配列でラップしてから扱う
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * // trigger
+		 * $(this.rootElement).trigger('hoge', ary);
+		 *
+		 * // イベントハンドラ
+		 * '{rootElement} hoge': function(context){
+		 *   var ary = $.isArray(context.evArg) ? context.evArg: [context.evArg];
+		 *   for(var i = 0, l = ary.length; i &lt; l; i++){
+		 *     // 配列に対する処理
+		 *   }
+		 * }
+		 * </code></pre>
+		 *
+		 * </li>
+		 * </ul>
 		 *
 		 * @param {String|jQueryEvent} event イベント名またはjQueryEventオブジェクト
 		 * @param {Object} [parameter] パラメータ

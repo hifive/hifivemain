@@ -131,3 +131,7 @@ nav ul {
 .hidden {
 	display: none;
 }
+
+.sh_sourceCode {
+	width: 100%;
+}
