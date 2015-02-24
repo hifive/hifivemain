@@ -118,6 +118,17 @@ $(function() {
 		});
 	});
 
+	asyncTest('タイムアウト', function() {
+		var orgTimeoutTime = h5.settings.res.timeoutTime;
+		h5.settings.res.timeoutTime = 1;
+		h5.res.depend('h5resdata.controller.NoExposeController').resolve().fail(function(e) {
+			strictEqual(e.code, ERR.ERR_CODE_RESOLVE_TIMEOUT, e.message);
+		}).always(function() {
+			h5.settings.res.timeoutTime = orgTimeoutTime;
+			start();
+		});
+	});
+
 	//=============================
 	// Definition
 	//=============================

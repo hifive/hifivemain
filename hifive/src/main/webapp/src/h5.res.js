@@ -446,10 +446,14 @@
 			if (ret && waitingInfoMap[resourceKey]) {
 				componentMap[resourceKey] = ret;
 				delete waitingInfoMap[resourceKey];
+				clearTimeout(timer);
 				dfd.resolve(ret);
 				return;
 			}
 		}).fail(function(errorObj) {
+			// loadScriptのエラー
+			clearTimeout(timer);
+			delete waitingInfoMap[resourceKey];
 			dfd.reject(errorObj);
 		});
 		return dfd.promise();
