@@ -249,7 +249,7 @@
 	/**
 	 * Dependencyクラス
 	 * <p>
-	 * <a href="h5.res.html#reequire">h5.res.require()</a>がこのクラスのインスタンスを返します。
+	 * <a href="h5.res.html#reequire">h5.res.depend()</a>がこのクラスのインスタンスを返します。
 	 * </p>
 	 *
 	 * @param {String} resourceKey
@@ -601,7 +601,7 @@
 	 *
 	 * @param {String} resourceKey
 	 */
-	function require(resourceKey) {
+	function depend(resourceKey) {
 		return new Dependency(resourceKey);
 	}
 
@@ -643,7 +643,7 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.res', {
-		require: require,
+		depend: depend,
 		addResolver: addResolver,
 		isDependency: isDependency,
 		urlLoader: urlLoader,
