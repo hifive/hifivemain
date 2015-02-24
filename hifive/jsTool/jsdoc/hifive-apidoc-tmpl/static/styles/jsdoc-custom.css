@@ -129,140 +129,6 @@ nav ul {
 }
 
 .hidden {
-	display: none;
-}
-
-@charset "utf-8";
-/*
- * Copyright (C) 2012-2014 NS Solutions Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * hifive css
- */
-.summaryTable {
-	border-spacing: 0;
-	border: 0;
-	border-collapse: collapse;
-	margin: 20px;
-	width: 70%;
-}
-
-.returnsTable {
-	border-spacing: 0;
-	border: 0;
-	border-collapse: collapse;
-}
-
-.summaryTable .name,.props .name,.name code {
-	color: #A35A00;
-	font-family: Consolas, 'Lucida Console', Monaco, monospace;
-	font-size: 100%;
-}
-
-.returnsTable td,.returnsTable th,.summaryTable td,.summaryTable th {
-	border: 1px solid #ddd;
-	margin: 0px;
-	text-align: left;
-	vertical-align: top;
-	padding: 4px 6px;
-	display: table-cell;
-}
-
-.summaryTable td:last-child {
-	width: 70%;
-}
-
-.summaryTable td:first-child a {
-	color: #A35A00;
-}
-
-.summaryTable thead tr {
-	background-color: #ddd;
-	font-weight: bold;
-	font-size: 18px;
-}
-
-.returnsTable thead tr {
-	background-color: #ddd;
-	font-weight: bold;
-	font-size: 14px;
-}
-
-.summaryTable .summaryTable thead tr {
-	background-color: #fff;
-	font-weight: bold;
-}
-
-.summaryTable th,.returnsTable th {
-	border-right: 1px solid #aaa;
-}
-
-.summaryTable th:last-child,.returnsTable th:last-child {
-	border-right: 1px solid #ddd;
-}
-
-#container {
-	width: 900px;
-}
-
-#main {
-	float: left;
-	padding-left: 10px;
-	width: 700px;
-}
-
-nav {
-	float: left;
-	display: block;
-	margin-top: 5px;
-	width: 180px;
-	border-right: 1px solid #ccc;
-	display: block;
-	font-size: small;
-}
-
-nav ul {
-	padding-left: 9px;
-}
-
-.h5-logo {
-	width: 180px;
-}
-
-.h5-searchBox {
-	position: relative;
-}
-
-.h5-searchBox input {
-	width: 172px;
-	margin: 0;
-	padding-right: 24px;
-	box-sizing: border-box;
-}
-
-.h5-searchBox .clear {
-	width: 24px;
-	position: absolute;
-	right: 8px;
-	top: 0;
-	bottom: 0;
-	line-height: 0;
-	box-sizing: border-box;
-	line-height: 0;
-}
-
-.hidden {
 	display: none !important;
 }
 
@@ -283,6 +149,10 @@ pre {
 	display: block;
 }
 
+.sh_sourceCode {
+	width: 100%;
+}
+
 /* 900px以下 */
 @media screen and (max-width: 900px) {
 	body {
@@ -290,7 +160,7 @@ pre {
 	}
 	/* メディアクエリ有効時のみ有効なhiddenクラス */
 	.hidden-mobile {
-		display: none!important;
+		display: none !important;
 	}
 	nav {
 		height: 40px;
