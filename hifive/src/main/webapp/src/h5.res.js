@@ -372,7 +372,7 @@
 		}
 		// コンポーネントマップに登録
 		componentMap[key] = value;
-		// このリソースキーに紐づくdeferredが既にregister待ちなら何もしない
+		// このリソースキーに紐づくdeferredが既に解決済み(waitingInfoから削除済み)なら何もしない
 		var waitingInfo = waitingInfoMap[key];
 		if (!waitingInfo) {
 			return;
