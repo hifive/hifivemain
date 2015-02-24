@@ -321,7 +321,17 @@
 			 *
 			 * @memberOf h5.settings.res
 			 */
-			baseUrl: null
+			baseUrl: null,
+
+			/**
+			 * タイムアウト時間設定(ms)
+			 * <p>
+			 * タイムアウトに設定された時間待機して、依存解決ができない場合、resolve()は失敗します。デフォルトは10000(10秒)です。
+			 * </p>
+			 *
+			 * @memberOf h5.settings.res
+			 */
+			timeoutTime: 10000
 		}
 	};
 
