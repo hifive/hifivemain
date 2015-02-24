@@ -152,5 +152,6 @@ h5.u.obj.expose('ERRCODE.h5.mixin', {
 });
 
 h5.u.obj.expose('ERRCODE.h5.res', {
-	ERR_CODE_RESOURCE_AJAX: 17000
+	ERR_CODE_RESOURCE_AJAX: 17000,
+	ERR_CODE_RESOLVE_TIMEOUT: 17001
 });
