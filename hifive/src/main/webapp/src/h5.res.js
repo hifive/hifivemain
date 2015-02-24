@@ -33,6 +33,11 @@
 	 */
 	var ERR_CODE_RESOURCE_AJAX = 17000;
 
+	/**
+	 * タイムアウト時のエラー
+	 */
+	var ERR_CODE_RESOLVE_TIMEOUT = 17001;
+
 	// ---------- EJSResolverのエラー ----------
 	/** テンプレートファイルの内容読み込み時に発生するエラー */
 	var ERR_CODE_TEMPLATE_FILE_NO_TEMPLATE = 7001;
@@ -64,6 +69,7 @@
 	errMsgMap[ERR_CODE_TEMPLATE_INVALID_ID] = 'テンプレートIDが指定されていません。空や空白でない文字列で指定してください。';
 	errMsgMap[ERR_CODE_TEMPLATE_AJAX] = 'テンプレートファイルを取得できませんでした。ステータスコード:{0}, URL:{1}';
 	errMsgMap[ERR_CODE_TEMPLATE_FILE_INVALID_ELEMENT] = 'テンプレートファイルに<script>タグ以外の記述があります。テンプレートファイルは全て<script>タグで囲んだテンプレートを記述してください';
+	errMsgMap[ERR_CODE_RESOLVE_TIMEOUT] = 'リソースキー"{0}"の解決がタイムアウトしました';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -94,7 +100,7 @@
 	var componentMap = {};
 
 	/** registerされるのを待っているDeferredのマップ */
-	waitingRegisterMap = {};
+	waitingInfoMap = {};
 
 	/** setImmediateでresolve処理を待っているdeferredの配列 */
 	waitingForImmediateDeferred = [];
@@ -367,11 +373,17 @@
 		// コンポーネントマップに登録
 		componentMap[key] = value;
 		// このリソースキーに紐づくdeferredが既にregister待ちなら何もしない
-		var dfd = waitingRegisterMap[key];
-		if (!dfd) {
+		var waitingInfo = waitingInfoMap[key];
+		if (!waitingInfo) {
 			return;
 		}
-		delete waitingRegisterMap[key];
+		delete waitingInfoMap[key];
+		var dfd = waitingInfo.deferred;
+		var timer = waitingInfo.timer;
+		if (timer) {
+			// タイムアウト待ちタイマーをクリア
+			clearTimeout(timer);
+		}
 
 		// 読込後の処理(register()呼び出し後)等が実行された後に、
 		// ユーザコードのdoneハンドラが動作するようにするためsetTimeout使用
@@ -400,31 +412,43 @@
 	function resolveNamespace(resourceKey) {
 		var ret = componentMap[resourceKey] || h5.u.obj.getByPath(resourceKey);
 		if (ret) {
-			// 既にある場合はresolve済みのプロミスを返す
+			// 既に解決済みの場合はresolve済みのプロミスを返す
 			return getDeferred().resolve(ret).promise();
 		}
-		// register待ちのリソースキーであれば、それを返す
-		if (waitingRegisterMap[resourceKey]) {
-			return waitingRegisterMap[resourceKey].promise();
+		// 現在解決待ちのリソースキーであれば、それを返す
+		if (waitingInfoMap[resourceKey]) {
+			return waitingInfoMap[resourceKey].promise();
 		}
 		// "."を"/"に変えてファイルパスを取得
 		var filePath = getFilePath(resourceKey.replace(/\./g, '/')) + '.js';
-		// loadScriptでロードする
+
 		var dfd = getDeferred();
+		// タイムアウト設定
+		var timeoutTime = h5.settings.res.timeoutTime;
+		var timer = null;
+		if (timeoutTime > 0) {
+			timer = setTimeout(function() {
+				if (waitingInfoMap[resourceKey]) {
+					delete waitingInfoMap[resourceKey];
+					dfd.reject(createRejectReason(ERR_CODE_RESOLVE_TIMEOUT, [resourceKey]));
+				}
+			}, timeoutTime);
+		}
 		// registerされるのを待つ
-		waitingRegisterMap[resourceKey] = dfd;
+		waitingInfoMap[resourceKey] = {
+			deferred: dfd,
+			timer: timer
+		};
 		var dep = this;
+
 		h5.u.loadScript(filePath).done(function() {
 			var ret = componentMap[resourceKey] || h5.u.obj.getByPath(resourceKey);
-			if (ret) {
+			if (ret && waitingInfoMap[resourceKey]) {
 				componentMap[resourceKey] = ret;
-				delete waitingRegisterMap[resourceKey];
+				delete waitingInfoMap[resourceKey];
 				dfd.resolve(ret);
 				return;
 			}
-
-			// TODO タイムアウト処理
-
 		}).fail(function(errorObj) {
 			dfd.reject(errorObj);
 		});
