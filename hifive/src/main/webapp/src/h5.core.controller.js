@@ -3515,7 +3515,7 @@
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * // trigger
-		 * $(this.rootElement).trigger('hoge', {data: ary});
+		 * this.trigger('hoge', {data: ary});
 		 *
 		 * // イベントハンドラ
 		 * '{rootElement} hoge': function(context){
@@ -3531,7 +3531,7 @@
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * // trigger
-		 * $(this.rootElement).trigger('hoge', ary);
+		 * this.trigger('hoge', ary);
 		 *
 		 * // イベントハンドラ
 		 * '{rootElement} hoge': function(context){
