@@ -615,6 +615,11 @@
 		}
 	};
 
+	//TODO(鈴木) HTMLコメント削除用正規表現
+	var htmlCommentRegexp = /<!--(?:\s|\S)*?-->/g;
+	//TODO(鈴木) BODYタグ内容抽出用正規表現
+	var bodyTagRegExp = /<body[^>]*>((?:\s|\S)*?)(?:<\/body\s*>|<\/html\s*>|$)/i;
+
 	function loadContentsFromUrl(source) {
 		var dfd = h5.async.deferred();
 
@@ -626,7 +631,41 @@
 		});
 
 		xhr.done(function(data) {
-			dfd.resolve($.parseHTML(data));
+
+			//TODO(鈴木) HTML直下でいいのでsetStartBefore等はしない。
+			//これだとhtml、head、bodyタグが消え、sucriptタグはそのままとなる。
+			//※Rangeが使えない場合の考慮は必要か？(insertAdjacentHTML使用等)
+//			var range = document.createRange();
+//			var fragment = range.createContextualFragment(data);
+//			var dom = $(fragment);
+
+			//TODO(鈴木) 文字列解析して↓にappendしていくのはつらい・・
+			//var fragment = document.createDocumentFragment();
+
+			//TODO(鈴木) これだとhtml、head、bodyタグが消え、sucriptタグはなくなる。
+			//var dom = $.parseHTML(data);
+
+			//TODO(鈴木) ここでdataからbody部分のみ抜く。
+			var match = data.replace(htmlCommentRegexp, '').match(bodyTagRegExp);
+			if(match) data = match[1]; //この場合HTMLコメントは消える。HTMLコメント内にbodyタグがない前提であれば楽だが。。
+
+			var dom = $.parseHTML(data);
+
+			//TODO(鈴木) bodyから抽出した場合、タグに書かれた属性を以下のdivに反映
+			//var dom = $.parseHTML('<div>' + data + '</div>');
+
+			//TODO(鈴木) これだと危ない？
+			//var dom = $(data);
+
+			//TODO(鈴木) さらにmainタグかdata-main-container属性要素があればそれを対象とする。
+			//通常のシーンコンテナ内にmainとdata-main-containerはない前提。
+			if(!$(dom).is('main, [data-main-container]')){
+				var _dom = $(dom).find('main, [data-main-container]');
+				if(_dom.length) dom = _dom.get(0);
+			}
+
+			dfd.resolve(dom);
+
 		}).fail(function(error) {
 			dfd.reject(error);
 		});
@@ -734,17 +773,11 @@
 	/**
 	 * from,to is Element rootElementはコンテナ要素になる
 	 */
-	var defaultTransitionController = {
-		__name: 'h5.scene.DefaultTransitionController',
-
-		//TODO(鈴木) 次のコンテンツのロード自体はシーンコンテナに任せ、
-		//TransitionControllerはコンテンツの切り替え処理のみに特化したほうがよい
-//		onChange: function(container, from, to) {
-//			var loadPromise = loadContents(to);
+//	var defaultTransitionController = {
+//		__name: 'h5.scene.DefaultTransitionController',
 //
+//		onChange: function(container, html) {
 //			var dfd = this.deferred();
-//
-//			// var that = this;
 //
 //			var ind = this.indicator({
 //				target: this.rootElement,
@@ -752,38 +785,38 @@
 //				message: '遷移中...'
 //			}).show();
 //
-//			//TODO always->done/fail
-//			loadPromise.always(function(html) {
+//			$(container).html(html);
+//			dfd.resolve(html);
 //
-//				$(container).html(html);
-//
-//				ind.hide();
-//
-//				dfd.resolve(html);
-//			});
+//			ind.hide();
 //
 //			return dfd.promise();
-//		},
+//		}
+//	};
+
+	//TODO(鈴木) transitionをコントローラーからFunctionに変更
+	function defaultTransitionController(){
+		//
+	}
+	$.extend(defaultTransitionController.prototype, {
 		onChange: function(container, html) {
-			var dfd = this.deferred();
-
-			//TODO(鈴木)遷移処理としてのインジケーターはシーンコンテナに任せるべき・・・
-			//と思ったのですが、そもそもコンテナはコントローラーじゃないので無理。
-			//(現状はアニメーションがないのでここで表示してもあまり意味がない)
-			var ind = this.indicator({
-				target: this.rootElement,
-				block: true,
-				message: '遷移中...'
-			}).show();
-
+			var dfd = h5.async.deferred();
 			$(container).html(html);
 			dfd.resolve(html);
 
-			ind.hide();
-
 			return dfd.promise();
+		},
+		onChangeStart: function(container, from, to){
+			this._ind = h5.ui.indicator({
+				target: container,
+				block: true,
+				message: '遷移中...'
+			}).show();
+		},
+		onChangeEnd: function(container, from, to){
+			this._ind.hide();
 		}
-	};
+});
 
 	registerSceneTransition(DEFAULT_SCENE_TRANSITION_TYPE, defaultTransitionController);
 
@@ -802,11 +835,9 @@
 
 		this.isMain = !!isMain;
 
-		//TODO(鈴木) element指定なしの場合はbodyを対象とし、メインシーンコンテナ扱いとする
-		//ただし、あえてisMainにfalseが指定されている場合はメインシーンとしては扱わない
+		//TODO(鈴木) element指定なしの場合はdiv要素を作って設定(bodyを対象とするのはやめました)
 		if(element == null){
-			element = document.body;
-			if(isMain !== false) this.isMain = true;
+			element = $('<div></div>');
 		}
 
 		if (this.isMain) {
@@ -815,7 +846,6 @@
 				throw new Error();
 			}
 			//TODO(鈴木) メインシーンコンテナの場合はURL連動指定を行う。
-			//※popStateが使えない場合(hashchangeを使用)を考慮するか？
 			$(window).on('popstate', onPopState);
 			mainContainer = this;
 		}
@@ -845,13 +875,13 @@
 				//TODO(鈴木) popState, hashChangeイベント連動のため_changeSceneメソッドに処理を分割
 				changeScene: function(to, type) {
 
-					//TODO(鈴木) インジケーターは遷移処理発動直後に表示する必要がある(余計な操作をさせないため)・・・
-					//→上述のとおり無理。ただ、ユーザーに余計な操作をさせないためにも、遷移処理直後にインジケーターは表示したい。
-//					this._ind = this.indicator({
-//						target: this.rootElement,
-//						block: true,
-//						message: '遷移中...'
-//					}).show();
+					this._transition = this._createTransition(type);
+
+					var from = this._currentSceneRootElement;
+
+					//TODO(鈴木) インジケーターは遷移処理発動直後に表示する必要がある(余計な操作をさせないため)
+					//fromは設定しているが使っていない。toはここでは指定できない。
+					this._transition.onChangeStart(this.rootElement, from);
 
 					var dfd = this._dfd = h5.async.deferred();
 
@@ -862,6 +892,8 @@
 						pushState(null, null, toAbsoluteUrl(to));
 					}
 
+					this._isNavigated = true;
+
 					this._changeScene(to, type);
 
 					return dfd.promise();
@@ -870,29 +902,28 @@
 				//TODO(鈴木) changeSceneメソッドから処理を分割
 				_changeScene : function(to, type){
 
-					var transition = transitionTypeMap[type != null ? type
-							: DEFAULT_SCENE_TRANSITION_TYPE];
-
-					if (!transition) {
-						//TODO throwFwError();
-					}
-
 					var from = this._currentSceneRootElement;
+
+					//popstate経由の場合
+					if(!this._isNavigated){
+						this._transition = this._createTransition(type);
+						this._transition.onChangeStart(this.rootElement, from);
+					}
 
 					//現在のページの全てのコントローラを削除
 					if (from) {
 						disposeAllControllers(from);
 					}
 
-					//TODO transitionはコントローラでなく特別な型orFunctionにするのがよいだろう
-					var transitionController = h5.core.controller(this.rootElement, transition);
-
 					var that = this;
 
-					transitionController.readyPromise.done(function() {
+					//TODO(鈴木) transitionをコントローラーからFunctionに変更
+					//transitionController.readyPromise.done(function() {
+
 						//TODO(鈴木) TransitionController変更に伴う変更
 						//次のコンテンツのロードはこちらで行う。
 						//将来、コントローラー・DOMを保存して使用する場合に、それらのハンドリングはシーンコンテナで行うほうがよいと思われるため。
+						//更にその先で、これらの処理も外部指定が可能なようにする。
 						//var transitionPromise = transitionController.onChange(that.rootElement,
 						//		from, to);
 
@@ -901,43 +932,65 @@
 						var loadPromise = loadContents(to);
 						//TODO always->done/fail
 						loadPromise.always(function(html) {
-							//TODO(鈴木) ここでhtmlから対象の部分を抜きたい。
-							//が、判別方法をどうするか。
-							//メインシーンコンテナであれば、mainタグ、data-main-container属性、bodyタグの順で探すが、
-							//それ以外の場合は？ メインシーンコンテナでない場合はhtml全部を対象とする前提とし、
-							//ファイル内にはhtml断片を入れてもらうか？
-							//とりあえずここではメインシーンコンテナの場合のみ実装
+							//TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装
 							if (that.isMain){
-								//alert($(html).filter('body').length);→0
+								//
 							}else{
 								//TODO(鈴木) メインシーンコンテナ以外
 							}
-
-							return transitionController.onChange(that.rootElement, html);
+							return that._transition.onChange(that.rootElement, html);
 						}).done(function(sceneRoot) {
-							console.debug(sceneRoot);
-							//TODO(鈴木) data-h5-controllerに基づいてコントローラーをバインド
-							//alert($(sceneRoot).find('div').data('h5-controller'));→0
 
+							//TODO(鈴木) data-h5-controllerに基づいてコントローラーをバインド
+							var target = null;
+							if($(sceneRoot).is('[data-h5-controller]')){
+								target = $(sceneRoot).filter('[data-h5-controller]');
+							}else{
+								target = $(sceneRoot).find('[data-h5-controller]');
+							}
+							if(target.length){
+								var name = target.attr('data-h5-controller');
+								h5.res.require(name).resolve().then(function(Controller) {
+									//TODO(鈴木) どこに登録しよう。。
+									//というか、Secne自体はどうやって使用する？
+									this.topController = h5.core.controller(target[0], Controller);
+								});
+							}
 
 							that._currentSceneRootElement = sceneRoot;
 
-							that._dfd.resolve({
-								from: from,
-								to: sceneRoot
-							});
+							if(that._dfd){
+								that._dfd.resolve({
+									from: from,
+									to: sceneRoot
+								});
+							}
 
-							transitionController.dispose();
+							//TODO(鈴木) インジケータ非表示
+							that._transition.onChangeEnd(this, from, sceneRoot);
 
-							//TODO(鈴木) インジケータ非表示→現状無理
-							//that._ind.hide();
+							that._isNavigated = false;
+							that._dfd = null;
+							that._transition = null;
 						});
-					});
+					//});
+				},
+				_createTransition : function(type){
+					var Transition = transitionTypeMap[type != null ? type
+							: DEFAULT_SCENE_TRANSITION_TYPE];
 
+					if (!Transition) {
+						//TODO throwFwError();
+						throw new Error();
+					}
 
+					//TODO transitionはコントローラでなく特別な型orFunctionにするのがよいだろう
+					//var transitionController = h5.core.controller(this.rootElement, transition);
+
+					//TODO(鈴木) transitionをコントローラーからFunctionに変更
+					return  new Transition();
 				}
 			});
-
 
 	//コンテナにtypeはあるか？？
 	function createSceneContainer(element, type, isMain) {
@@ -956,13 +1009,9 @@
 			var main = $('main, [data-main-container]')[0];
 
 			//TODO main-container属性を見る
-			//createSceneContainer(main ? main : document.body, null, true);
+			createSceneContainer(main ? main : document.body, null, true);
 
-			//TODO(鈴木) mainタグ、もしくはdata-main-container属性が指定されていない場合は,
-			//明示的にcreateSceneContainerを呼ばない限りは機能を有効化しない。※もしくはデフォルトでオフ
-			if(main){
-				createSceneContainer(main, null, true);
-			}
+			//TODO(鈴木) 戻り値をどこかに公開したい・・
 		}
 	}
 
@@ -976,11 +1025,13 @@
 	// =============================
 
 	//TODO autoInitがtrueの場合のみinit
-	//	if (h5.settings.scene.autoInit) {
-	$(function() {
-		init();
-	});
-	//	}
+	//TODO(鈴木) 暫定。とりあえず設定を有効化しました
+	h5.settings.scene = h5.settings.scene || {};
+	if (h5.settings.scene.autoInit) {
+		$(function() {
+			init();
+		});
+	}
 
 	// =============================
 	// Expose to window
