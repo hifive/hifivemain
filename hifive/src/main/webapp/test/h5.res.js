@@ -512,6 +512,29 @@ $(function() {
 		}).always(start);
 	});
 
+
+	//=============================
+	// Definition
+	//=============================
+	module('get', {
+		teardown: function() {
+			h5.res.clearAll();
+			deleteProperty(window, 'h5resdata');
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('get()メソッドでリソースキーの解決ができること', function() {
+		h5.res.register('h5resdata.get', {
+			a: 1
+		});
+		h5.res.get('h5resdata.get').done(function(result) {
+			strictEqual(result.a, 1, 'get()メソッドでリソースキーの解決ができること');
+		}).always(start);
+	});
+
 	//=============================
 	// Definition
 	//=============================

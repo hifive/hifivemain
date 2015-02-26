@@ -80,8 +80,6 @@
 	// Cache
 	//
 	// =========================================================================
-	var isPromise = h5.async.isPromise;
-	var argsToArray = h5.u.obj.argsToArray;
 	var getDeferred = h5.async.deferred;
 
 	// =========================================================================
@@ -627,7 +625,9 @@
 	/**
 	 * リソースキーから、Dependencyオブジェクトを返します
 	 *
+	 * @memberOf h5.res
 	 * @param {String} resourceKey
+	 * @returns {Dependency}
 	 */
 	function dependsOn(resourceKey) {
 		return new Dependency(resourceKey);
@@ -637,7 +637,7 @@
 	 * リゾルバを追加します
 	 *
 	 * @param {String} type リゾルバのタイプ。リゾルバをタイプと紐づける。nullを指定した場合はtypeに紐づかないリゾルバを登録します。
-	 * @param {RegExp|Function} リソースキーがこのリゾルバにマッチするかどうかの正規表現、または関数
+	 * @param {RegExp|Function} test リソースキーがこのリゾルバにマッチするかどうかの正規表現、または関数
 	 * @param {Function} resolver リゾルバ
 	 */
 	function addResolver(type, test, resolver) {
@@ -653,6 +653,17 @@
 			test: test,
 			resolver: resolver
 		});
+	}
+
+	/**
+	 * 指定されたリソースキーの解決を行います
+	 *
+	 * @memberOf h5.res
+	 * @param {String|Array} resourceKey
+	 * @returns {Promise}
+	 */
+	function get(resourceKey) {
+		return h5.res.dependsOn(resourceKey).resolve();
 	}
 
 	// デフォルトリゾルバの登録
@@ -677,6 +688,7 @@
 		urlLoader: urlLoader,
 		resolvers: resolvers,
 		register: register,
+		get: get,
 		/**
 		 * コンポーネントキャッシュのクリア
 		 *
