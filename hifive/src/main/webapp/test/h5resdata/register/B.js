@@ -1,6 +1,6 @@
 (function() {
 	// BはAに依存
-	h5.res.depend('h5resdata.register.A').resolve().done(function(A) {
+	h5.res.dependsOn('h5resdata.register.A').resolve().done(function(A) {
 		function B() {
 			this.a = new A();
 			this.b = 'b';

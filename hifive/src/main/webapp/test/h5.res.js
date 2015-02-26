@@ -71,7 +71,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('グローバルに公開されるオブジェクトの取得', function() {
-		h5.res.depend('h5resdata.controller.SampleController').resolve().done(
+		h5.res.dependsOn('h5resdata.controller.SampleController').resolve().done(
 				function(result) {
 					strictEqual(h5resdata.controller.SampleController.__name,
 							'h5resdata.controller.SampleController',
@@ -82,7 +82,7 @@ $(function() {
 	});
 
 	asyncTest('リゾルバタイプ"namespace"を指定', function() {
-		h5.res.depend('h5resdata.controller.SampleController').resolve('namespace').done(
+		h5.res.dependsOn('h5resdata.controller.SampleController').resolve('namespace').done(
 				function(result) {
 					strictEqual(h5resdata.controller.SampleController, result,
 							'resolveの引数にリゾルバのタイプを指定した時、doneハンドラの引数にコントローラが渡されること');
@@ -98,7 +98,7 @@ $(function() {
 				SampleController: 'hoge'
 			}
 		};
-		h5.res.depend('h5resdata.controller.SampleController').resolve().done(function(result) {
+		h5.res.dependsOn('h5resdata.controller.SampleController').resolve().done(function(result) {
 			strictEqual(result, 'hoge', '指定した名前空間に既に値が存在するとき、doneハンドラの引数に元々入っている値が渡されること');
 		}).always(start);
 	});
@@ -112,7 +112,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('存在しないファイルを指す名前空間を指定した場合はエラー', 1, function() {
-		h5.res.depend('h5resdata.noexist.SampleController').resolve().fail(function(e) {
+		h5.res.dependsOn('h5resdata.noexist.SampleController').resolve().fail(function(e) {
 			strictEqual(e.code, ERR_U.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 			start();
 		});
@@ -121,7 +121,7 @@ $(function() {
 	asyncTest('タイムアウト', function() {
 		var orgTimeoutTime = h5.settings.res.timeoutTime;
 		h5.settings.res.timeoutTime = 1;
-		h5.res.depend('h5resdata.controller.NoExposeController').resolve().fail(function(e) {
+		h5.res.dependsOn('h5resdata.controller.NoExposeController').resolve().fail(function(e) {
 			strictEqual(e.code, ERR.ERR_CODE_RESOLVE_TIMEOUT, e.message);
 		}).always(function() {
 			h5.settings.res.timeoutTime = orgTimeoutTime;
@@ -149,13 +149,13 @@ $(function() {
 		h5.res.register('h5resdata.controller.SampleController', {
 			a: 'a'
 		});
-		h5.res.depend('h5resdata.controller.SampleController').resolve().done(function(result) {
+		h5.res.dependsOn('h5resdata.controller.SampleController').resolve().done(function(result) {
 			strictEqual(result.a, 'a', '指定した名前空間にregister()で登録済みである時、doneハンドラの引数に登録済みの値が渡されること');
 		}).always(start);
 	});
 
 	asyncTest('同期で呼ばれるregister()によって登録されるオブジェクトの取得', function() {
-		var promise = h5.res.depend('h5resdata.register.A').resolve();
+		var promise = h5.res.dependsOn('h5resdata.register.A').resolve();
 		promise.done(function(result) {
 			var a = new result();
 			strictEqual(a.a, 'a', 'register()で渡されたオブジェクトがdoneハンドラに渡されること');
@@ -165,7 +165,7 @@ $(function() {
 	});
 
 	asyncTest('非同期で呼ばれるregister()によって登録されるオブジェクトの取得', function() {
-		var promise = h5.res.depend('h5resdata.register.A_async').resolve();
+		var promise = h5.res.dependsOn('h5resdata.register.A_async').resolve();
 		promise.done(function(result) {
 			var a = new result();
 			strictEqual(a.a, 'a', 'register()で渡されたオブジェクトがdoneハンドラに渡されること');
@@ -174,7 +174,7 @@ $(function() {
 	});
 
 	asyncTest('依存関係のネスト', function() {
-		var promise = h5.res.depend('h5resdata.register.B').resolve();
+		var promise = h5.res.dependsOn('h5resdata.register.B').resolve();
 		promise.done(function(result) {
 			var r = new result();
 			strictEqual(r.b, 'b', 'register()で渡されたオブジェクトがdoneハンドラに渡されること');
@@ -212,7 +212,7 @@ $(function() {
 	module('jsファイルの依存解決', {
 		setup: function() {
 			stop();
-			h5.res.depend('h5resdata/data/js/test.js').resolve().done(function(result) {
+			h5.res.dependsOn('h5resdata/data/js/test.js').resolve().done(function(result) {
 				start();
 			});
 		},
@@ -231,13 +231,13 @@ $(function() {
 		h5test.test.a = 0;
 
 
-		var promise1 = h5.res.depend('h5resdata/data/js/test.js?hoge').resolve();
+		var promise1 = h5.res.dependsOn('h5resdata/data/js/test.js?hoge').resolve();
 		promise1.done(function(result) {
 			strictEqual(h5test.test.a, 1, 'クエリパラメータを指定した場合に、jsファイルがロードされていること');
 			h5test.test.a = 0;
 		});
 
-		var promise2 = h5.res.depend('h5resdata/data/js/test.js?fuga').resolve('jsfile');
+		var promise2 = h5.res.dependsOn('h5resdata/data/js/test.js?fuga').resolve('jsfile');
 		promise2.done(function(result) {
 			strictEqual(h5test.test.a, 1, 'resolveの引数にリゾルバのタイプを指定した時、jsファイルがロードされていること');
 			h5test.test.a = 0;
@@ -254,7 +254,7 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('存在しないjsファイルを指定した場合はエラー', function() {
-		h5.res.depend('noexist.js').resolve().fail(function(e) {
+		h5.res.dependsOn('noexist.js').resolve().fail(function(e) {
 			strictEqual(e.code, ERR_U.ERR_CODE_SCRIPT_FILE_LOAD_FAILD, e.message);
 			start();
 		});
@@ -270,7 +270,7 @@ $(function() {
 	//=============================
 	asyncTest('cssファイルの依存解決', function() {
 		var cssFile = './h5resdata/data/css/test.css';
-		h5.res.depend(cssFile).resolve().done(function(result) {
+		h5.res.dependsOn(cssFile).resolve().done(function(result) {
 			strictEqual($(result).attr('href'), cssFile, 'doneハンドラにlinkタグ要素が渡されること');
 
 			var $h1 = $('<h1>hoge</h1>');
@@ -292,7 +292,7 @@ $(function() {
 
 	asyncTest('クエリパラメータ付きcssファイルの依存解決', function() {
 		var cssFile = './h5resdata/data/css/test.css?hoge';
-		h5.res.depend(cssFile).resolve().done(function(result) {
+		h5.res.dependsOn(cssFile).resolve().done(function(result) {
 			strictEqual($(result).attr('href'), cssFile, 'doneハンドラにlinkタグ要素が渡されること');
 
 			var $h1 = $('<h1>hoge</h1>');
@@ -314,7 +314,7 @@ $(function() {
 
 	asyncTest('cssファイルの依存解決(typeにcssfile指定)', function() {
 		var cssFile = './h5resdata/data/css/test.css';
-		h5.res.depend(cssFile).resolve('cssfile').done(function(result) {
+		h5.res.dependsOn(cssFile).resolve('cssfile').done(function(result) {
 			strictEqual($(result).attr('href'), cssFile, 'doneハンドラにlinkタグ要素が渡されること');
 
 			var $h1 = $('<h1>hoge</h1>');
@@ -344,7 +344,7 @@ $(function() {
 	//=============================
 	asyncTest('ejsファイルの依存解決', 7, function() {
 		var ejsFile = './h5resdata/data/ejs/valid.ejs';
-		h5.res.depend(ejsFile).resolve().done(
+		h5.res.dependsOn(ejsFile).resolve().done(
 				function(result) {
 					strictEqual(result.path, ejsFile, 'doneハンドラに渡されるオブジェクトから相対パスが取得できること');
 					strictEqual(result.url, toAbsoluteUrl(ejsFile),
@@ -361,7 +361,7 @@ $(function() {
 
 	asyncTest('クエリパラメータ付きejsファイルの依存解決', 7, function() {
 		var ejsFile = './h5resdata/data/ejs/valid.ejs?hoge';
-		h5.res.depend(ejsFile).resolve().done(
+		h5.res.dependsOn(ejsFile).resolve().done(
 				function(result) {
 					strictEqual(result.path, ejsFile, 'doneハンドラに渡されるオブジェクトから相対パスが取得できること');
 					strictEqual(result.url, toAbsoluteUrl(ejsFile),
@@ -378,7 +378,7 @@ $(function() {
 
 	asyncTest('resolveの引数にリゾルバのタイプを指定してejsファイルの依存解決', 7, function() {
 		var ejsFile = './h5resdata/data/ejs/valid.ejs';
-		h5.res.depend(ejsFile).resolve('ejsfile').done(
+		h5.res.dependsOn(ejsFile).resolve('ejsfile').done(
 				function(result) {
 					strictEqual(result.path, ejsFile, 'doneハンドラに渡されるオブジェクトから相対パスが取得できること');
 					strictEqual(result.url, toAbsoluteUrl(ejsFile),
@@ -403,7 +403,7 @@ $(function() {
 	//=============================
 	asyncTest('scriptタグ以外の要素があるときはエラー', 4, function() {
 		var ejsFile = './h5resdata/data/ejs/invalidElement.ejs';
-		h5.res.depend(ejsFile).resolve().fail(function(e) {
+		h5.res.dependsOn(ejsFile).resolve().fail(function(e) {
 			ok(true, 'failハンドラが実行されること');
 			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_FILE_INVALID_ELEMENT, e.message);
 			var detail = e.detail;
@@ -415,7 +415,7 @@ $(function() {
 
 	asyncTest('空ファイルはエラー', 4, function() {
 		var ejsFile = './h5resdata/data/ejs/blank.ejs';
-		h5.res.depend(ejsFile).resolve('ejsfile').fail(function(e) {
+		h5.res.dependsOn(ejsFile).resolve('ejsfile').fail(function(e) {
 			ok(true, 'failハンドラが実行されること');
 			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_FILE_NO_TEMPLATE, e.message);
 			var detail = e.detail;
@@ -427,7 +427,7 @@ $(function() {
 
 	asyncTest('コメントのみのファイルはエラー', 4, function() {
 		var ejsFile = './h5resdata/data/ejs/commentOnly.ejs';
-		h5.res.depend(ejsFile).resolve().fail(function(e) {
+		h5.res.dependsOn(ejsFile).resolve().fail(function(e) {
 			ok(true, 'failハンドラが実行されること');
 			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_FILE_NO_TEMPLATE, e.message);
 			var detail = e.detail;
@@ -439,7 +439,7 @@ $(function() {
 
 	asyncTest('id属性が無いテンプレートはエラー', 4, function() {
 		var ejsFile = './h5resdata/data/ejs/noId.ejs';
-		h5.res.depend(ejsFile).resolve().fail(function(e) {
+		h5.res.dependsOn(ejsFile).resolve().fail(function(e) {
 			ok(true, 'failハンドラが実行されること');
 			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_INVALID_ID, e.message);
 			var detail = e.detail;
@@ -451,7 +451,7 @@ $(function() {
 
 	asyncTest('idが空文字のテンプレートはエラー', 4, function() {
 		var ejsFile = './h5resdata/data/ejs/blankId.ejs';
-		h5.res.depend(ejsFile).resolve().fail(function(e) {
+		h5.res.dependsOn(ejsFile).resolve().fail(function(e) {
 			ok(true, 'failハンドラが実行されること');
 			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_INVALID_ID, e.message);
 			var detail = e.detail;
@@ -463,7 +463,7 @@ $(function() {
 
 	asyncTest('idが空白文字のテンプレートはエラー', 4, function() {
 		var ejsFile = './h5resdata/data/ejs/spaceId.ejs';
-		h5.res.depend(ejsFile).resolve().fail(function(e) {
+		h5.res.dependsOn(ejsFile).resolve().fail(function(e) {
 			ok(true, 'failハンドラが実行されること');
 			strictEqual(e.code, ERR_VIEW.ERR_CODE_TEMPLATE_INVALID_ID, e.message);
 			var detail = e.detail;
@@ -485,7 +485,7 @@ $(function() {
 		var ejsFile = './h5resdata/data/ejs/valid.ejs';
 		var cssFile = './h5resdata/data/css/test.css';
 		var jsFile = 'h5resdata/data/js/test.js?複数のリソースの同時取得';
-		h5.res.depend([ejsFile, cssFile, jsFile]).resolve().done(
+		h5.res.dependsOn([ejsFile, cssFile, jsFile]).resolve().done(
 				function(all, ejs, css, js) {
 					ok(all.length === 3 && all[0] === ejs && all[1] === css && all[2] === js,
 							'第1引数は各リソースの取得結果が指定した順に格納された配列であること');
@@ -501,7 +501,7 @@ $(function() {
 
 	asyncTest('長さ１の配列でリソース指定', function() {
 		var ejsFile = './h5resdata/data/ejs/valid.ejs';
-		h5.res.depend([ejsFile]).resolve().done(
+		h5.res.dependsOn([ejsFile]).resolve().done(
 				function(all, ejs) {
 					ok(all.length === 1 && all[0] === ejs, '第1引数は各リソースの取得結果が指定した順に格納された配列であること');
 					strictEqual(ejs.templates && ejs.templates && ejs.templates[0].id, 'tmp1',
@@ -521,7 +521,7 @@ $(function() {
 	// Body
 	//=============================
 	test('isDependencyでDependencyオブジェクトを判定できること', 2, function() {
-		ok(h5.res.isDependency(h5.res.depend('hoge.js')));
+		ok(h5.res.isDependency(h5.res.dependsOn('hoge.js')));
 		ok(!h5.res.isDependency({}));
 	});
 
@@ -534,10 +534,12 @@ $(function() {
 	// Body
 	//=============================
 	test('DependencyオブジェクトのgetKey()でリソースキーを取得できること', 1, function() {
-		var dep = h5.res.depend('hoge');
+		var dep = h5.res.dependsOn('hoge');
 		strictEqual(dep.getKey(), 'hoge', 'getKey()でリソースキーを取得できること');
 	});
 
+	// TODO リゾルバのカスタマイズについて前仕様のテストをコメントアウトしている
+	// 仕様が決まったらテスト追加
 	//	//=============================
 	//	// Definition
 	//	//=============================
@@ -567,7 +569,7 @@ $(function() {
 	//			return true;
 	//		}
 	//		h5.res.addResolver('mytype', resolver);
-	//		h5.res.depend('hoge').resolve();
+	//		h5.res.dependsOn('hoge').resolve();
 	//		strictEqual(arg, 'hoge', '引数にはrequireで渡したリソースキーが渡されること');
 	//		strictEqual(context.type, 'mytype', 'this.typeで実行中のリゾルバのtypeが取得できること');
 	//	});
@@ -576,17 +578,17 @@ $(function() {
 	//		h5.res.addResolver(function(resourceKey) {
 	//			return 'custom1';
 	//		});
-	//		strictEqual(h5.res.depend('hoge').resolve(), 'custom1', '追加したリゾルバが使用されること');
+	//		strictEqual(h5.res.dependsOn('hoge').resolve(), 'custom1', '追加したリゾルバが使用されること');
 	//
 	//		h5.res.addResolver(function(resourceKey) {
 	//			return 'custom2';
 	//		});
-	//		strictEqual(h5.res.depend('hoge').resolve(), 'custom2', '後から追加したリゾルバが使用されること');
+	//		strictEqual(h5.res.dependsOn('hoge').resolve(), 'custom2', '後から追加したリゾルバが使用されること');
 	//
 	//		h5.res.addResolver(function(resourceKey) {
 	//			return false;
 	//		});
-	//		strictEqual(h5.res.depend('hoge').resolve(), 'custom2', 'リゾルバがfalseを返した時は次のリゾルバが使用されること');
+	//		strictEqual(h5.res.dependsOn('hoge').resolve(), 'custom2', 'リゾルバがfalseを返した時は次のリゾルバが使用されること');
 	//	});
 	//
 	//	test('addResolverでtypeを指定したリゾルバを追加', 3, function() {
@@ -601,19 +603,19 @@ $(function() {
 	//		h5.res.addResolver(function(resourceKey) {
 	//			return 'custom3';
 	//		});
-	//		strictEqual(h5.res.depend('hoge').resolve('customtype'), 'custom2',
+	//		strictEqual(h5.res.dependsOn('hoge').resolve('customtype'), 'custom2',
 	//				'指定したtypeのリゾルバが使用されること');
 	//
 	//		h5.res.addResolver('customtype', function(resourceKey) {
 	//			return 'custom4';
 	//		});
-	//		strictEqual(h5.res.depend('hoge').resolve('customtype'), 'custom4',
+	//		strictEqual(h5.res.dependsOn('hoge').resolve('customtype'), 'custom4',
 	//				'指定したtypeのリゾルバのうち、後から追加したものが使用されること');
 	//
 	//		h5.res.addResolver('customtype', function(resourceKey) {
 	//			return false;
 	//		});
-	//		strictEqual(h5.res.depend('hoge').resolve('customtype'), 'custom4',
+	//		strictEqual(h5.res.dependsOn('hoge').resolve('customtype'), 'custom4',
 	//				'指定したtypeのリゾルバのうち、後から追加したものが使用されること');
 	//	});
 	//
@@ -630,7 +632,7 @@ $(function() {
 	//				return 'hoge';
 	//			}
 	//		});
-	//		strictEqual(h5.res.depend('a.js').resolve(), 'hoge', 'resolversに追加したリゾルバが使用されること');
+	//		strictEqual(h5.res.dependsOn('a.js').resolve(), 'hoge', 'resolversに追加したリゾルバが使用されること');
 	//	});
 
 	//=============================
@@ -680,7 +682,7 @@ $(function() {
 			// 何もしない
 			}
 		});
-		h5.res.depend('hoge').resolve();
+		h5.res.dependsOn('hoge').resolve();
 	});
 
 	test('testに正規表現を指定した場合の使用するリゾルバの判定', function() {
@@ -702,7 +704,7 @@ $(function() {
 				return true;
 			}
 		});
-		h5.res.depend('hoge').resolve();
+		h5.res.dependsOn('hoge').resolve();
 	});
 
 	test('typeを指定した場合の使用するリゾルバの判定', function() {
@@ -721,7 +723,7 @@ $(function() {
 				ok(true, 'typeが一致するリゾルバは実行されること');
 			}
 		});
-		h5.res.depend('hoge').resolve('b');
+		h5.res.dependsOn('hoge').resolve('b');
 
 		var testExecuted = false;
 		resolvers.splice(0, resolvers.length, {
@@ -733,7 +735,7 @@ $(function() {
 				ok(!testExecuted, 'type指定された場合、test関数は実行されないこと');
 			}
 		});
-		h5.res.depend('hoge').resolve('b');
+		h5.res.dependsOn('hoge').resolve('b');
 
 		var testExecuted = false;
 		resolvers.splice(0, resolvers.length, {
@@ -743,7 +745,7 @@ $(function() {
 				ok(!testExecuted, 'type指定された場合、testに指定した正規表現による判定は実行されないこと');
 			}
 		});
-		h5.res.depend('hoge').resolve('b');
+		h5.res.dependsOn('hoge').resolve('b');
 	});
 
 
@@ -757,7 +759,7 @@ $(function() {
 				return false;
 			}
 		});
-		strictEqual(h5.res.depend('hoge').resolve('b'), false, 'resolve()はfalseを返すこと');
+		strictEqual(h5.res.dependsOn('hoge').resolve('b'), false, 'resolve()はfalseを返すこと');
 	});
 
 	test('全てのリゾルバについてtestが条件を満たさない場合', 1, function() {
@@ -776,7 +778,7 @@ $(function() {
 				ok(false, 'リゾルバはじっこうされないこと');
 			}
 		});
-		strictEqual(h5.res.depend('hoge').resolve(), false, 'resolve()はfalseを返すこと');
+		strictEqual(h5.res.dependsOn('hoge').resolve(), false, 'resolve()はfalseを返すこと');
 	});
 
 	//=============================
@@ -798,7 +800,7 @@ $(function() {
 	asyncTest('子コントローラに未解決のコントローラを指定', 3, function() {
 		var c = h5.core.controller('#controllerTest', {
 			__name: 'TestController',
-			childController: h5.res.depend('h5resdata.controller.ChildController'),
+			childController: h5.res.dependsOn('h5resdata.controller.ChildController'),
 			__construct: function() {
 				this.isExecutedConstruct = true;
 			},
@@ -832,7 +834,7 @@ $(function() {
 	asyncTest('コントローラのロジックに未解決のロジックを指定', 4, function() {
 		var c = h5.core.controller('#controllerTest', {
 			__name: 'TestController',
-			sampleLogic: h5.res.depend('h5resdata.logic.SampleLogic'),
+			sampleLogic: h5.res.dependsOn('h5resdata.logic.SampleLogic'),
 			__construct: function() {
 				this.isExecutedConstruct = true;
 			},
@@ -882,8 +884,8 @@ $(function() {
 		});
 		var c = h5.core.controller('#controllerTest', {
 			__name: 'TestController',
-			childController: h5.res.depend('h5resdata.controller.ChildController'),
-			sampleLogic: h5.res.depend('h5resdata.logic.SampleLogic'),
+			childController: h5.res.dependsOn('h5resdata.controller.ChildController'),
+			sampleLogic: h5.res.dependsOn('h5resdata.logic.SampleLogic'),
 			__construct: function() {
 				this.isExecutedConstruct = true;
 			},
@@ -907,7 +909,7 @@ $(function() {
 			11, function() {
 				h5.core.expose({
 					__name: 'h5resdata.controller.ChildController',
-					childController: h5.res.depend('h5resdata.controller.GrandChildController'),
+					childController: h5.res.dependsOn('h5resdata.controller.GrandChildController'),
 					__construct: function() {
 						this.isExecutedConstruct = true;
 					}
@@ -920,7 +922,7 @@ $(function() {
 				});
 				h5.core.expose({
 					__name: 'h5resdata.logic.SampleLogic',
-					childLogic: h5.res.depend('h5resdata.logic.ChildLogic'),
+					childLogic: h5.res.dependsOn('h5resdata.logic.ChildLogic'),
 					__construct: function() {
 						this.isExecutedConstruct = true;
 					},
@@ -939,8 +941,8 @@ $(function() {
 				});
 				var c = h5.core.controller('#controllerTest', {
 					__name: 'TestController',
-					childController: h5.res.depend('h5resdata.controller.ChildController'),
-					sampleLogic: h5.res.depend('h5resdata.logic.SampleLogic'),
+					childController: h5.res.dependsOn('h5resdata.controller.ChildController'),
+					sampleLogic: h5.res.dependsOn('h5resdata.logic.SampleLogic'),
 					__construct: function() {
 						this.isExecutedConstruct = true;
 					},
@@ -975,7 +977,7 @@ $(function() {
 	asyncTest('テンプレートをDependencyで記述', function() {
 		h5.core.controller('#controllerTest', {
 			__name: 'TestController',
-			__templates: h5.res.depend('h5resdata/data/ejs/valid.ejs'),
+			__templates: h5.res.dependsOn('h5resdata/data/ejs/valid.ejs'),
 			__init: function() {
 				this.view.append('{rootElement}', 'tmp1');
 				strictEqual(this.$find('p').text(), 'テンプレート1', 'テンプレートが__initの時点で使用可能になっていること');
@@ -989,7 +991,7 @@ $(function() {
 
 		h5.core.controller('#controllerTest', {
 			__name: 'TestController',
-			__templates: h5.res.depend([ejs1, ejs2]),
+			__templates: h5.res.dependsOn([ejs1, ejs2]),
 			__ready: function() {
 				ok($(this.view.get('valid1-tmp1')).text(), 'valid1-tmp1', 'テンプレートがロードされていること');
 				ok($(this.view.get('valid2-tmp1')).text(), 'valid2-tmp1', 'テンプレートがロードされていること');
@@ -1059,8 +1061,8 @@ $(function() {
 		});
 		var c = h5.core.controller('#controllerTest', {
 			__name: 'TestController',
-			childController: h5.res.depend('h5resdata.controller.ChildController'),
-			sampleLogic: h5.res.depend('h5resdata.logic.SampleLogic'),
+			childController: h5.res.dependsOn('h5resdata.controller.ChildController'),
+			sampleLogic: h5.res.dependsOn('h5resdata.logic.SampleLogic'),
 			__construct: function() {
 				this.isExecutedConstruct = true;
 			},
@@ -1084,7 +1086,7 @@ $(function() {
 			11, function() {
 				h5.core.expose({
 					__name: 'h5resdata.controller.ChildController',
-					childController: h5.res.depend('h5resdata.controller.GrandChildController'),
+					childController: h5.res.dependsOn('h5resdata.controller.GrandChildController'),
 					__construct: function() {
 						this.isExecutedConstruct = true;
 					}
@@ -1097,7 +1099,7 @@ $(function() {
 				});
 				h5.core.expose({
 					__name: 'h5resdata.logic.SampleLogic',
-					childLogic: h5.res.depend('h5resdata.logic.ChildLogic'),
+					childLogic: h5.res.dependsOn('h5resdata.logic.ChildLogic'),
 					__construct: function() {
 						this.isExecutedConstruct = true;
 					},
@@ -1116,8 +1118,8 @@ $(function() {
 				});
 				var c = h5.core.controller('#controllerTest', {
 					__name: 'TestController',
-					childController: h5.res.depend('h5resdata.controller.ChildController'),
-					sampleLogic: h5.res.depend('h5resdata.logic.SampleLogic'),
+					childController: h5.res.dependsOn('h5resdata.controller.ChildController'),
+					sampleLogic: h5.res.dependsOn('h5resdata.logic.SampleLogic'),
 					__construct: function() {
 						this.isExecutedConstruct = true;
 					},

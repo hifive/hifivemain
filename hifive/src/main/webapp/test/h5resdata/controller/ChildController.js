@@ -18,7 +18,7 @@
 (function() {
 	h5.core.expose({
 		__name: 'h5resdata.controller.ChildController',
-		childController: h5.res.depend('h5resdata.controller.GrandChildController'),
+		childController: h5.res.dependsOn('h5resdata.controller.GrandChildController'),
 		__construct: function() {
 			this.isExecutedConstruct = true;
 		},
