@@ -23,6 +23,10 @@
 	//
 	// =========================================================================
 
+	//TODO(鈴木) 定数追加
+	var DATA_ATTR_CONTROLLER = 'data-h5-controller';
+	var DATA_ATTR_CURRENT_BOUND = 'data-h5-current-bound';
+
 	// =============================
 	// Production
 	// =============================
@@ -86,22 +90,26 @@
 		}
 	}
 
-
 	function scan(rootElement, controllerName) {
 		//		if (!isDocumentReady) {
 		//			reserveScan();
 		//			return;
 		//		}
 
-		var root = rootElement; // ? rootElement : document.body;
-		$(root).find('[' + DATA_ATTR_CONTROLLER + ']').each(
+		//TODO(鈴木) デフォルトをBODYにする実装を有効化
+		//var root = rootElement; // ? rootElement : document.body;
+		var root = rootElement ? rootElement : document.body;
+		//TODO(鈴木) ルート要素自身も対象とする
+		$(root).find('[' + DATA_ATTR_CONTROLLER + ']').andSelf('[' + DATA_ATTR_CONTROLLER + ']').each(
 				function() {
 					var attrControllers = this.getAttribute(DATA_ATTR_CONTROLLER);
 
 					var attrControllerNameList = attrControllers.split(',');
 
 					for (var i = 0, len = attrControllerNameList.length; i < len; i++) {
-						var attrControllerName = getFullname($.trim(attrControllerNameList[i]));
+						//TODO(鈴木) getFullnameの使用不明のため暫定回避
+						//var attrControllerName = getFullname($.trim(attrControllerNameList[i]));
+						var attrControllerName = $.trim(attrControllerNameList[i]);
 
 						if (attrControllerName === '') {
 							// trimした結果空文字になる場合は何もしない
@@ -114,20 +122,29 @@
 						}
 
 						// 既に「同じ名前の」コントローラがバインドされていたら何もしない
-						if (!alreadyBound(attrControllerName, h5.core.controllerManager
-								.getControllers(this))) {
+						//TODO(鈴木) alreadyBoundの使用不明のため暫定回避
+						//if (!alreadyBound(attrControllerName, h5.core.controllerManager
+						//		.getControllers(this))) {
 							// TODO
 							// 一時しのぎ、getControllers()でバインド途中のコントローラも取得できるようにすべき
 							if (!this.getAttribute(DATA_ATTR_CURRENT_BOUND)) {
 								this.setAttribute(DATA_ATTR_CURRENT_BOUND, attrControllerName);
 								loadController(attrControllerName, this);
 							}
-
-						}
+						//}
 					}
 				});
 	}
 
+	//TODO(鈴木) loadController実装
+	function loadController(name, rootElement){
+		var dfd = h5.async.deferred();
+		h5.res.get(name).then(function(Controller){
+			var controller = h5.core.controller(rootElement, Controller);
+			dfd.resolve(controller);
+		});
+		return dfd.promise();
+	}
 
 	function TypedMessage(type, data) {
 		this.type = type;
@@ -528,7 +545,7 @@
 		},
 
 		dispose: function() {
-
+			//
 		}
 	});
 
@@ -577,7 +594,7 @@
 		_controller: null,
 
 		onInit: function() {
-
+			//
 		},
 
 		onShow: function(contentsSource, controller) {
@@ -607,7 +624,7 @@
 		},
 
 		onHide: function() {
-
+			//
 		},
 
 		onDispose: function() {
@@ -618,7 +635,38 @@
 	//TODO(鈴木) HTMLコメント削除用正規表現
 	var htmlCommentRegexp = /<!--(?:\s|\S)*?-->/g;
 	//TODO(鈴木) BODYタグ内容抽出用正規表現
-	var bodyTagRegExp = /<body[^>]*>((?:\s|\S)*?)(?:<\/body\s*>|<\/html\s*>|$)/i;
+	var bodyTagRegExp = /<body\s([^>]*)>((?:\s|\S)*?)(?:<\/body\s*>|<\/html\s*>|$)/i;
+
+	//TODO(鈴木) HTML文字列からBODYタグ内容部分抽出
+	//BODYタグがある場合、戻り値はDIVタグで囲む。
+	//BODYタグの属性をそのDIVに追加する。(既存BODYタグの属性を操作することはしない)
+	//data-main-container属性を追加する。
+	//BODYタグがない場合は字列をそのまま返す。
+	function extractBody(html){
+		//TODO(鈴木) この場合HTMLコメントは消える。HTMLコメント内にbodyタグがない前提であれば楽だが。。
+		//HTMLコメントも保存するよう実装すべきか？
+		var match = html.replace(htmlCommentRegexp, '').match(bodyTagRegExp);
+		if(match){
+			return '<div data-main-container ' + match[1] + '>' + match[2] + '</div>';
+		}
+		return html;
+	}
+
+	//TODO(鈴木) 直下の要素に'data-h5-scene'属性がない場合は、'data-h5-scene'のDIV要素で囲む。
+	//また、親(シーンコンテナ)側にdata-h5-controller属性がある場合は、シーン要素に移動する。
+	//ほかの属性も移動すべきか？
+	function wrapScene(parent){
+		var $parent = $(parent);
+		var $children = $parent.children();
+		if($children.is('[data-h5-scene]') === false){
+			$children.wrapAll($('<div data-h5-scene></div>'));
+		}
+		var name = $parent.attr('data-h5-controller');
+		if(name){
+			//TODO(鈴木) ↑により要素は1つはあるはず。全部処理でよいか。(eq(0)で先頭だけ対象とするか)
+			$parent.removeAttr('data-h5-controller').children('[data-h5-scene]').attr('data-h5-controller', name);
+		}
+	}
 
 	function loadContentsFromUrl(source) {
 		var dfd = h5.async.deferred();
@@ -633,38 +681,32 @@
 		xhr.done(function(data) {
 
 			//TODO(鈴木) HTML直下でいいのでsetStartBefore等はしない。
-			//これだとhtml、head、bodyタグが消え、sucriptタグはそのままとなる。
+			//これだとhtml、head、bodyタグが消え、scriptタグはそのままとなる。
 			//※Rangeが使えない場合の考慮は必要か？(insertAdjacentHTML使用等)
 //			var range = document.createRange();
 //			var fragment = range.createContextualFragment(data);
 //			var dom = $(fragment);
 
-			//TODO(鈴木) 文字列解析して↓にappendしていくのはつらい・・
-			//var fragment = document.createDocumentFragment();
-
-			//TODO(鈴木) これだとhtml、head、bodyタグが消え、sucriptタグはなくなる。
+			//TODO(鈴木) これだとhtml、head、bodyタグが消え、scriptタグはなくなる。
 			//var dom = $.parseHTML(data);
 
 			//TODO(鈴木) ここでdataからbody部分のみ抜く。
-			var match = data.replace(htmlCommentRegexp, '').match(bodyTagRegExp);
-			if(match) data = match[1]; //この場合HTMLコメントは消える。HTMLコメント内にbodyタグがない前提であれば楽だが。。
+			data = extractBody(data);
 
-			var dom = $.parseHTML(data);
+			var $dom = $($.parseHTML(data));
 
-			//TODO(鈴木) bodyから抽出した場合、タグに書かれた属性を以下のdivに反映
-			//var dom = $.parseHTML('<div>' + data + '</div>');
-
-			//TODO(鈴木) これだと危ない？
-			//var dom = $(data);
-
-			//TODO(鈴木) さらにmainタグかdata-main-container属性要素があればそれを対象とする。
+			//TODO(鈴木) mainタグかdata-main-container属性要素があればその内容を対象とする。
 			//通常のシーンコンテナ内にmainとdata-main-containerはない前提。
-			if(!$(dom).is('main, [data-main-container]')){
-				var _dom = $(dom).find('main, [data-main-container]');
-				if(_dom.length) dom = _dom.get(0);
+			var main = $dom.filter('main, [data-main-container]');
+			if(main.length === 0) main = $dom.find('main, [data-main-container]');
+			if(main.length > 0){
+				$dom = main;
 			}
 
-			dfd.resolve(dom);
+			//TODO(鈴木) 直下の要素に'data-h5-scene'属性がない場合は、'data-h5-scene'のDIV要素で囲む。
+			wrapScene($dom);
+
+			dfd.resolve($dom.children());
 
 		}).fail(function(error) {
 			dfd.reject(error);
@@ -748,7 +790,7 @@
 		},
 
 		onDispose: function() {
-
+			//
 		}
 	};
 
@@ -762,7 +804,7 @@
 
 	function registerSceneTransition(type, constructor) {
 		if (transitionTypeMap[type]) {
-
+			//
 		}
 		transitionTypeMap[type] = constructor;
 	}
@@ -858,6 +900,9 @@
 
 		var that = this;
 
+		//TODO(鈴木) 直下の要素に'data-h5-scene'属性がない場合は、'data-h5-scene'のDIV要素で囲む。
+		wrapScene(this.rootElement);
+
 		//TODO isClickjackのT/Fでハンドラを切り替える
 		//デフォルトではclickjackはfalseの方向
 		if (that._isClickjackEnabled) {
@@ -942,19 +987,14 @@
 						}).done(function(sceneRoot) {
 
 							//TODO(鈴木) data-h5-controllerに基づいてコントローラーをバインド
-							var target = null;
-							if($(sceneRoot).is('[data-h5-controller]')){
-								target = $(sceneRoot).filter('[data-h5-controller]');
-							}else{
+							var target = $(sceneRoot).filter('[data-h5-controller]');;
+							if(target.length === 0){
 								target = $(sceneRoot).find('[data-h5-controller]');
 							}
-							if(target.length){
+							if(target.length > 0){
 								var name = target.attr('data-h5-controller');
-								h5.res.require(name).resolve().then(function(Controller) {
-									//TODO(鈴木) どこに登録しよう。。
-									//というか、Secne自体はどうやって使用する？
-									this.topController = h5.core.controller(target[0], Controller);
-								});
+								loadController(name, target[0]);
+
 							}
 
 							that._currentSceneRootElement = sceneRoot;
@@ -1011,7 +1051,7 @@
 			//TODO main-container属性を見る
 			createSceneContainer(main ? main : document.body, null, true);
 
-			//TODO(鈴木) 戻り値をどこかに公開したい・・
+			//TODO(鈴木) 戻り値をどこかに公開したい・・→されてた
 		}
 	}
 
@@ -1026,12 +1066,14 @@
 
 	//TODO autoInitがtrueの場合のみinit
 	//TODO(鈴木) 暫定。とりあえず設定を有効化しました
+	//ドキュメントロード時にdata-h5-controller属性からコントローラーロード・バインドするようにしました。
 	h5.settings.scene = h5.settings.scene || {};
-	if (h5.settings.scene.autoInit) {
-		$(function() {
+	$(function() {
+		if (h5.settings.scene.autoInit) {
 			init();
-		});
-	}
+		}
+		scan();
+	});
 
 	// =============================
 	// Expose to window
