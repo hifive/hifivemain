@@ -28,6 +28,9 @@
 	var DATA_ATTR_CURRENT_BOUND = 'data-h5-current-bound';
 	var DATA_ATTR_DEFAULT_SCENE = 'data-h5-default-scene';
 	var DATA_ATTR_SCENE = 'data-h5-scene';
+	var DATA_ATTR_CONTAINER = 'data-h5-container';
+	var DATA_ATTR_MAIN_CONTAINER = 'data-h5-main-container';
+	var DATA_ATTR_CONTAINER_BOUND = 'data-h5-container-bound';
 
 	// =============================
 	// Production
@@ -112,26 +115,161 @@
 		__name : 'h5.scene.DummyController'
 	};
 
-	function scan(rootElement, controllerName, args) {
-		//		if (!isDocumentReady) {
-		//			reserveScan();
-		//			return;
-		//		}
+	//TODO(鈴木) 要素がシーン属性を持っているかのチェック
+	function isScene(target){
+		return $(target).is('[' + DATA_ATTR_DEFAULT_SCENE + '],[' + DATA_ATTR_SCENE + ']' );
+	}
+
+	//TODO(鈴木) 要素の上方直近のシーン要素を取得する(自身が該当の場合は自身を返す)
+	function getParentScene(target){
+		if(isScene(target)) return target;
+		var parentScene = $(target).closest('[' + DATA_ATTR_DEFAULT_SCENE + '],[' + DATA_ATTR_SCENE + ']');
+		return parentScene.length ? parentScene.get(0) : null;
+	}
+
+	//TODO(鈴木) scan関数分割。コントローラーバインドおよびシーンコンテナ生成用。
+	//対象要素がシーンである場合に限り、対応コントローラーを生成後にresolveで返す。
+	function scan(rootElement, controllerName, args){
 
 		//TODO(鈴木) デフォルトをBODYにする実装を有効化
 		//var root = rootElement; // ? rootElement : document.body;
 		var root = rootElement ? rootElement : document.body;
 
+		var $root = $(root);
+
+		//TODO(鈴木) メインシーンコンテナ自動生成はrootElementがbodyかmainタグの場合のみ実行する
+		if(h5.settings.scene.autoCreateContainer){
+			if($root.is('body')){
+				if($('[' + DATA_ATTR_MAIN_CONTAINER +  '],main').length === 0){
+					$root.attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
+				}
+			}else if($root.is('main')){
+				if($('[' + DATA_ATTR_MAIN_CONTAINER +  ']').length === 0){
+					$root.attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
+				}
+			}
+		}
+
+		//TODO(鈴木) rootElementがシーンコンテナの場合
+		//この場合promiseは返さない
+		//createSceneContainer→scanForContainer→scanとなり再帰になる
+		//※createSceneContainerの処理完了を待つべきか？
+		if($root.attr(DATA_ATTR_CONTAINER)){
+			createSceneContainer(root);
+			return;
+		}else if($root.attr(DATA_ATTR_MAIN_CONTAINER)){
+			createSceneContainer(root, null, true);
+			return;
+		}
+
+		//TODO(鈴木) 以下、rootElementがシーンコンテナでない場合
+
+		//TODO(鈴木) シーンコントローラーをresolveで返却すべきか
+		var resolveSceneController = !isBoundController(root) && isScene(root);
+
+		var dfd = resolveSceneController ? h5.async.deferred() : null;
+
+		var parentScene = getParentScene(root);
+
+		//TODO(鈴木) シーンコントローラーが見つかったか
+		var isFound = false;
+
+		//TODO(鈴木) コントローラーのバインド
+		findWithSelf(root, '[' + DATA_ATTR_CONTROLLER + ']').each(function() {
+			var attrControllers = this.getAttribute(DATA_ATTR_CONTROLLER);
+
+			var attrControllerNameList = attrControllers.split(',');
+
+			for (var i = 0, len = attrControllerNameList.length; i < len; i++) {
+				//TODO(鈴木) getFullnameの使用不明のため暫定回避
+				//var attrControllerName = getFullname($.trim(attrControllerNameList[i]));
+				var attrControllerName = $.trim(attrControllerNameList[i]);
+
+				if (attrControllerName === '') {
+					// trimした結果空文字になる場合は何もしない
+					return true;
+				}
+
+				if (controllerName && attrControllerName !== controllerName) {
+					// バインドしたいコントローラが指定されていて、その指定と異なっている場合は次を検索
+					return true;
+				}
+
+				// 既に「同じ名前の」コントローラがバインドされていたら何もしない
+				//TODO(鈴木) alreadyBoundの使用不明のため暫定回避
+				//シーンコンテナが入れ子になっている場合、ここの実装は必須
+				//if (!alreadyBound(attrControllerName, h5.core.controllerManager
+				//		.getControllers(this))) {
+					if (!isBoundController(this)) {
+						markBoundController(this, attrControllerName);
+
+						if(getParentScene(this) !== parentScene){
+							return true;
+						}
+
+						var isCurrent = false;
+
+						if(resolveSceneController && !isFound && this === root){
+							isFound = true;
+							isCurrent = true;
+						}
+
+						var loadControllerPromise = loadController(attrControllerName, this, isCurrent ? args : null);
+						if(isCurrent){
+							loadControllerPromise.done(function(controller){
+								dfd.resolve(controller);
+							});
+						}
+					}
+				//}
+			}
+		});
+
+		//TODO(鈴木) シーンコンテナの探索と生成
+		$root.find('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + '],main').each(function(){
+			if(getParentScene(this) !== parentScene){
+				return true;
+			}
+			var $container = $(this);
+			if($container.attr(DATA_ATTR_CONTAINER_BOUND)){
+				return true;
+			}
+			if($container.is('[' + DATA_ATTR_CONTAINER + ']')){
+				createSceneContainer(this);
+			}else if($container.is('main') || $container.is('[' + DATA_ATTR_MAIN_CONTAINER + ']')){
+				createSceneContainer(this, null, true);
+			}
+		});
+
+		if(resolveSceneController){
+			return dfd.promise();
+		}
+		return;
+	}
+
+	// TODO
+	// 一時しのぎ、getControllers()でバインド途中のコントローラも取得できるようにすべき
+	function isBoundController(target){
+		return !!$(target).attr(DATA_ATTR_CURRENT_BOUND);
+	}
+
+	function markBoundController(target, name){
+		$(target).attr(DATA_ATTR_CURRENT_BOUND, name);
+	}
+
+
+	//TODO(鈴木) scan関数分割。シーンコンテナ作成用。
+	//カレントシーンとなる要素の探索と、そのコントローラー指定なしの場合のダミーコントローラーバインドを行う。
+	function scanForContainer(rootElement, controllerName, args){
+
+		var root = rootElement ? rootElement : document.body;
+
 		var dfd = h5.async.deferred();
-
-
-		//TODO(鈴木) 同時にデフォルトで表示するコントローラーをresolveするようにしましたが
-		//分離するべきかもしれません。
 
 		//TODO(鈴木) 処理対象がシーンコンテナである場合、スキップする実装が必要。
 
 		//TODO(鈴木)
-		var isHit = false;
+		var isFound = false;
 		var dummyController = null;
 
 		//TODO(鈴木) data-h5-default-scene属性を持つ要素が直下に存在するかの確認
@@ -139,84 +277,151 @@
 		//TODO(鈴木) 先頭要素がdata-h5-controllerを属性持っていない場合、ダミーのコントローラーをバインドしてresolve
 		if(defaultSceneElm.length > 0){
 			var elm = defaultSceneElm.eq(0);
+			if (!isBoundController(elm)) {
+				isFound = true;
 			if(!elm.is('[' + DATA_ATTR_CONTROLLER + ']')){
-				dummyController = h5.core.controller(elm, DummyController);
+					markBoundController(elm, DummyController.__name);
+				dummyController = h5.core.controller(elm, DummyController, args);
 				dfd.resolve(dummyController);
-				isHit = true;
 			}
 		}
+		}
 
-		if(!isHit){
-			//TODO(鈴木) data-h5-scene属性を持つ要素が直下に存在するかの確認
-			var sceneElm = $(root).find('>[' + DATA_ATTR_DEFAULT_SCENE + ']');
+		if(!isFound){
+			//TODO(鈴木) data-h5-scene属性を持つ要素が直下先頭に存在するかの確認
+			var sceneElm = $(root).children().eq(0).filter('[' + DATA_ATTR_SCENE + ']');
 			if(sceneElm.length > 0){
-				var elm = sceneElm.eq(0);
+				if (!isBoundController(sceneElm)) {
+					isFound = true;
+				sceneElm.attr(DATA_ATTR_DEFAULT_SCENE, DATA_ATTR_DEFAULT_SCENE);
+				defaultSceneElm = sceneElm;
 				//TODO(鈴木) 先頭要素がdata-h5-controllerを属性持っていない場合、ダミーのコントローラーをバインドしてresolve
-				if(!elm.is('[' + DATA_ATTR_CONTROLLER + ']')){
-					dummyController = h5.core.controller(elm, DummyController);
+				if(!sceneElm.is('[' + DATA_ATTR_CONTROLLER + ']')){
+						markBoundController(sceneElm, DummyController.__name);
+						dummyController = h5.core.controller(sceneElm, DummyController, args);
 					dfd.resolve(dummyController);
-					isHit = true;
 				}
 			}
 		}
+		}
 
-		//TODO(鈴木) ルート要素自身も対象とする
-		//$(root).find('[' + DATA_ATTR_CONTROLLER + ']').each(
-		findWithSelf(root, '[' + DATA_ATTR_CONTROLLER + ']').each(
+		//TODO(鈴木) カレントとなるシーン要素が見つからない場合はエラー
+		if(!isFound){
+			throw new Error();
+		}
 
-				function() {
-					var attrControllers = this.getAttribute(DATA_ATTR_CONTROLLER);
+		var promise = scan(defaultSceneElm.get(0), controllerName, args);
 
-					var attrControllerNameList = attrControllers.split(',');
-
-					for (var i = 0, len = attrControllerNameList.length; i < len; i++) {
-						//TODO(鈴木) getFullnameの使用不明のため暫定回避
-						//var attrControllerName = getFullname($.trim(attrControllerNameList[i]));
-						var attrControllerName = $.trim(attrControllerNameList[i]);
-
-						if (attrControllerName === '') {
-							// trimした結果空文字になる場合は何もしない
-							return true;
-						}
-
-						if (controllerName && attrControllerName !== controllerName) {
-							// バインドしたいコントローラが指定されていて、その指定と異なっている場合は次を検索
-							return true;
-						}
-
-						// 既に「同じ名前の」コントローラがバインドされていたら何もしない
-						//TODO(鈴木) alreadyBoundの使用不明のため暫定回避
-						//シーンコンテナが入れ子になっている場合、ここの実装は必須
-						//if (!alreadyBound(attrControllerName, h5.core.controllerManager
-						//		.getControllers(this))) {
-							// TODO
-							// 一時しのぎ、getControllers()でバインド途中のコントローラも取得できるようにすべき
-							if (!this.getAttribute(DATA_ATTR_CURRENT_BOUND)) {
-								this.setAttribute(DATA_ATTR_CURRENT_BOUND, attrControllerName);
-								var that = this;
-								loadController(attrControllerName, this, args).done(function(controller){
-									if(isHit) return;
-									if(defaultSceneElm.length > 0){
-										if(defaultSceneElm.get(0) === that){
-											dfd.resolve(controller);
-											isHit = true;
-										}
-									}else{
-										//TODO(鈴木) defaultSceneElmがなければ一番最初のシーン要素を対象とする
-										if($(that).is('[' + DATA_ATTR_SCENE + ']')){
-											dfd.resolve(controller);
-											isHit = true;
-										}
-									}
-								});
-							}
-						//}
-					}
-				});
+		if(dfd.state() !== 'resolved'){
+			promise.done(function(controller){
+				dfd.resolve(controller);
+			});
+		}
 
 		return dfd.promise();
 
 	}
+
+//	function scan(rootElement, controllerName, args) {
+//		//		if (!isDocumentReady) {
+//		//			reserveScan();
+//		//			return;
+//		//		}
+//
+//		//TODO(鈴木) デフォルトをBODYにする実装を有効化
+//		//var root = rootElement; // ? rootElement : document.body;
+//		var root = rootElement ? rootElement : document.body;
+//
+//		var dfd = h5.async.deferred();
+//
+//		//TODO(鈴木) 処理対象がシーンコンテナである場合、スキップする実装が必要。
+//
+//		//TODO(鈴木)
+//		var isFound = false;
+//		var dummyController = null;
+//
+//		//TODO(鈴木) data-h5-default-scene属性を持つ要素が直下に存在するかの確認
+//		var defaultSceneElm = $(root).find('>[' + DATA_ATTR_DEFAULT_SCENE + ']');
+//		//TODO(鈴木) 先頭要素がdata-h5-controllerを属性持っていない場合、ダミーのコントローラーをバインドしてresolve
+//		if(defaultSceneElm.length > 0){
+//			var elm = defaultSceneElm.eq(0);
+//			if(!elm.is('[' + DATA_ATTR_CONTROLLER + ']')){
+//				dummyController = h5.core.controller(elm, DummyController, args);
+//				dfd.resolve(dummyController);
+//				isFound = true;
+//			}
+//		}
+//
+//		if(!isFound){
+//			//TODO(鈴木) data-h5-scene属性を持つ要素が直下先頭に存在するかの確認
+//			var sceneElm = $(root).children().eq(0).filter('[' + DATA_ATTR_SCENE + ']');
+//			if(sceneElm.length > 0){
+//				sceneElm.attr(DATA_ATTR_DEFAULT_SCENE, DATA_ATTR_DEFAULT_SCENE);
+//				defaultSceneElm = sceneElm;
+//				//TODO(鈴木) 先頭要素がdata-h5-controllerを属性持っていない場合、ダミーのコントローラーをバインドしてresolve
+//				if(!sceneElm.is('[' + DATA_ATTR_CONTROLLER + ']')){
+//					dummyController = h5.core.controller(sceneElm, DummyControlle, args);
+//					dfd.resolve(dummyController);
+//					isFound = true;
+//				}
+//			}
+//		}
+//
+//		//TODO(鈴木) カレントとなるシーン要素が見つからない場合はエラー
+//		if(defaultSceneElm.length === 0){
+//			throw new Error();
+//		}
+//
+//		//TODO(鈴木) ルート要素自身も対象とする
+//		//$(root).find('[' + DATA_ATTR_CONTROLLER + ']').each(
+//		findWithSelf(root, '[' + DATA_ATTR_CONTROLLER + ']').each(
+//
+//				function() {
+//					var attrControllers = this.getAttribute(DATA_ATTR_CONTROLLER);
+//
+//					var attrControllerNameList = attrControllers.split(',');
+//
+//					for (var i = 0, len = attrControllerNameList.length; i < len; i++) {
+//						//TODO(鈴木) getFullnameの使用不明のため暫定回避
+//						//var attrControllerName = getFullname($.trim(attrControllerNameList[i]));
+//						var attrControllerName = $.trim(attrControllerNameList[i]);
+//
+//						if (attrControllerName === '') {
+//							// trimした結果空文字になる場合は何もしない
+//							return true;
+//						}
+//
+//						if (controllerName && attrControllerName !== controllerName) {
+//							// バインドしたいコントローラが指定されていて、その指定と異なっている場合は次を検索
+//							return true;
+//						}
+//
+//						// 既に「同じ名前の」コントローラがバインドされていたら何もしない
+//						//TODO(鈴木) alreadyBoundの使用不明のため暫定回避
+//						//シーンコンテナが入れ子になっている場合、ここの実装は必須
+//						//if (!alreadyBound(attrControllerName, h5.core.controllerManager
+//						//		.getControllers(this))) {
+//							// TODO
+//							// 一時しのぎ、getControllers()でバインド途中のコントローラも取得できるようにすべき
+//							if (!this.getAttribute(DATA_ATTR_CURRENT_BOUND)) {
+//								this.setAttribute(DATA_ATTR_CURRENT_BOUND, attrControllerName);
+//								var isCurrent = false;
+//								if(!isFound && defaultSceneElm.length > 0 && defaultSceneElm.get(0) === this){
+//									isFound = true;
+//									isCurrent = true;
+//								}
+//
+//								loadController(attrControllerName, this, isCurrent ? args : null).done(function(controller){
+//									if(isCurrent) dfd.resolve(controller);
+//								});
+//							}
+//						//}
+//					}
+//				});
+//
+//		return dfd.promise();
+//
+//	}
 
 	//TODO(鈴木) loadController実装
 	function loadController(name, rootElement, args){
@@ -729,24 +934,24 @@
 		//HTMLコメントも保存するよう実装すべきか？
 		var match = html.replace(htmlCommentRegexp, '').match(bodyTagRegExp);
 		if(match){
-			return '<div data-main-container ' + match[1] + '>' + match[2] + '</div>';
+			return '<div ' + DATA_ATTR_MAIN_CONTAINER +' ' + match[1] + '>' + match[2] + '</div>';
 		}
 		return html;
 	}
 
-	//TODO(鈴木) 直下の要素に'data-h5-scene'属性がない場合は、'data-h5-scene'のDIV要素で囲む。
-	//また、親(シーンコンテナ)側にdata-h5-controller属性がある場合は、シーン要素に移動する。
+	//TODO(鈴木) 直下先頭要素に'data-h5-default-scene'もしくは'data-h5-scene'属性がない場合は、'data-h5-default-scene'のDIV要素で囲む。
+	//その際、親(シーンコンテナ)側にdata-h5-controller属性がある場合は、シーン要素に移動する。
 	//ほかの属性も移動すべきか？
 	function wrapScene(parent){
 		var $parent = $(parent);
 		var $children = $parent.children();
-		if($children.is('[data-h5-scene]') === false){
-			$children.wrapAll($('<div data-h5-scene></div>'));
-		}
-		var name = $parent.attr(DATA_ATTR_CONTROLLER);
-		if(name){
-			//TODO(鈴木) ↑により要素は1つはあるはず。全部処理でよいか。(eq(0)で先頭だけ対象とするか)
-			$parent.removeAttr(DATA_ATTR_CONTROLLER).children('[' + DATA_ATTR_SCENE + ']').attr(DATA_ATTR_CONTROLLER, name);
+		if($children.eq(0).is('[' + DATA_ATTR_DEFAULT_SCENE + '],[' + DATA_ATTR_SCENE + ']') === false){
+			$children.wrapAll($('<div ' + DATA_ATTR_DEFAULT_SCENE + '></div>'));
+			var name = $parent.attr(DATA_ATTR_CONTROLLER);
+			if(name){
+				//TODO(鈴木) childrenは↑のwrapAllで作成した要素
+				$parent.removeAttr(DATA_ATTR_CONTROLLER).children().attr(DATA_ATTR_CONTROLLER, name);
+			}
 		}
 	}
 
@@ -779,14 +984,13 @@
 
 			//TODO(鈴木) mainタグかdata-main-container属性要素があればその内容を対象とする。
 			//通常のシーンコンテナ内にmainとdata-main-containerはない前提。
-			var main = $dom.filter('main, [data-main-container]');
-			if(main.length === 0) main = $dom.find('main, [data-main-container]');
+			var main = $dom.filter('[' + DATA_ATTR_MAIN_CONTAINER + '], main');
+			if(main.length === 0) main = $dom.find('[' + DATA_ATTR_MAIN_CONTAINER + '], main');
 			if(main.length > 0){
 				$dom = main;
-				//TODO(鈴木) 直下の要素に'data-h5-scene'属性がない場合は、'data-h5-scene'のDIV要素で囲む。
-				//wrapSceneはメインシーンコンテナの場合のみに限定
-				wrapScene($dom);
 			}
+
+			wrapScene($dom);
 
 			dfd.resolve($dom.children());
 
@@ -1003,7 +1207,14 @@
 
 		this.isMain = !!isMain;
 
-		//TODO(鈴木) element指定なしの場合はdiv要素を作って設定(bodyを対象とするのはやめました)
+		if (this.isMain) {
+			if (mainContainer) {
+				//TODO throwFwError();
+				throw new Error();
+			}
+		}
+
+		//TODO(鈴木) element指定なしの場合はdiv要素を作って設定
 		if(element == null){
 			element = $('<div></div>');
 		}
@@ -1028,18 +1239,12 @@
 			});
 		}
 
+		wrapScene(element);
+
 		if (this.isMain) {
-			if (mainContainer) {
-				//TODO throwFwError();
-				throw new Error();
-			}
 			//TODO(鈴木) メインシーンコンテナの場合はURL連動指定を行う。
 			$(window).on('popstate', onPopState);
 			mainContainer = this;
-
-			//TODO(鈴木) 直下の要素に'data-h5-scene'属性がない場合は、'data-h5-scene'のDIV要素で囲む。
-			//wrapSceneはメインシーンコンテナの場合のみに限定
-			wrapScene(element);
 
 			//TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得するため、直接scanせずにonPopStateを呼ぶ。
 			//Routerがほしい・・。
@@ -1047,9 +1252,18 @@
 
 		}else{
 
-			scan(this.rootElement);
+			scanForContainer(this.rootElement).done(function(controller){
+				that._currentController = controller;
+			});
 
 		}
+
+		//TODO(鈴木) シーン遷移イベント購読。暫定。
+		$(this.rootElement).on('changeScene', function(e, to, params){
+			console.debug(that._currentController.__name);
+			e.stopPropagation();
+			that.changeScene(to, params);
+		});
 
 	}
 	$.extend(SceneContainer.prototype,
@@ -1058,11 +1272,11 @@
 				changeScene: function(to, params) {
 
 					params = params || {};
-					if(isString(params)){
-						params = {
-							type : params
-						};
-					}
+//					if(isString(params)){
+//						params = {
+//							type : params
+//						};
+//					}
 					var type =params.type;
 
 					this._transition = this._createTransition(type);
@@ -1132,8 +1346,6 @@
 						//var transitionPromise = transitionController.onChange(that.rootElement,
 						//		from, to);
 
-						var transitionPromise;
-
 						//TODO(鈴木) 処理順を以下に変更
 						//HTMLロード→(ツリーにはappendせず)DOM生成→属性に基づきコントローラーをロード・バインド
 						//→シーンルートとなるコントローラーのDOMを既存と入れ替える
@@ -1144,8 +1356,12 @@
 
 						//TODO always->done/fail
 						loadPromise.always(function(toElm) {
+
+							//scan用にダミーのDIVにappend
+							var _toElm = $('<div></div>').append(toElm);
+
 							//TODO(鈴木) data-h5-controllerに基づいてコントローラーをバインド
-							scan(toElm, null, params.args).done(function(toController){
+							scanForContainer(_toElm, null, params.args).done(function(toController){
 
 								if(that._dfd){
 									that._dfd.resolve({
@@ -1197,7 +1413,14 @@
 
 		//TODO(鈴木) 対象要素配下にコンテナ、またはコントローラーバインド済みの要素がある場合はエラーとすべき
 
+		//TODO(鈴木) コンテナ生成済みであればエラー。判定方法は見直しが必要か。
+		if($(element).attr(DATA_ATTR_CONTAINER_BOUND)){
+			throw new Error();
+		}
+
 		var container = new SceneContainer(element, isMain);
+
+		$(element).attr(DATA_ATTR_CONTAINER_BOUND, DATA_ATTR_CONTAINER_BOUND);
 
 		return container;
 	}
@@ -1208,11 +1431,10 @@
 		if (!isInited) {
 			isInited = true;
 
-			//TODO(鈴木) main-container属性チェック実装
-			var main = $('[data-main-container], main')[0];
+			//TODO(鈴木) scan内でcreateSceneContainerを呼び出す
+			//createSceneContainer(main, null, true);
 
-			//TODO main-container属性を見る
-			createSceneContainer(main ? main : document.body, null, true);
+			scan();
 		}
 	}
 
@@ -1227,13 +1449,11 @@
 
 	//TODO autoInitがtrueの場合のみinit
 	//TODO(鈴木) 暫定。とりあえず設定を有効化しました
-	//ドキュメントロード時にdata-h5-controller属性からコントローラーロード・バインドするようにしました。
 	h5.settings.scene = h5.settings.scene || {};
 	$(function() {
+		//TODO(鈴木) autoInit=trueの場合に全体を探索し、DATA属性によりコントローラーバインドとシーンコンテナ生成を行う。
 		if (h5.settings.scene.autoInit) {
 			init();
-		}else{
-			scan();
 		}
 	});
 
