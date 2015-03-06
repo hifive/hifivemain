@@ -31,6 +31,7 @@
 	var DATA_ATTR_CONTAINER = 'data-h5-container';
 	var DATA_ATTR_MAIN_CONTAINER = 'data-h5-main-container';
 	var DATA_ATTR_CONTAINER_BOUND = 'data-h5-container-bound';
+	var DATA_ATTR_DUMMY_BODY = 'data-h5-dummy-body';
 
 	// =============================
 	// Production
@@ -120,11 +121,51 @@
 		return $(target).is('[' + DATA_ATTR_DEFAULT_SCENE + '],[' + DATA_ATTR_SCENE + ']' );
 	}
 
-	//TODO(鈴木) 要素の上方直近のシーン要素を取得する(自身が該当の場合は自身を返す)
+	//TODO(鈴木) 要素の上方直近のシーン要素を取得する
 	function getParentScene(target){
-		if(isScene(target)) return target;
 		var parentScene = $(target).closest('[' + DATA_ATTR_DEFAULT_SCENE + '],[' + DATA_ATTR_SCENE + ']');
 		return parentScene.length ? parentScene.get(0) : null;
+	}
+
+	//TODO(鈴木) 要素がコンテナ属性を持っているかのチェック
+	//body、mainタグがメインシーンコンテナの場合、事前にDATA_ATTR_MAIN_CONTAINERが付与されている前提
+	function isContainer(target){
+		return $(target).is('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + ']' );
+	}
+
+	//TODO(鈴木) 要素の上方直近のコンテナ要素を取得する
+	function getParentContainer(target){
+		var parentContainer = $(target).closest('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + ']');
+		console.debug(parentContainer.length);
+		return parentContainer.length ? parentContainer.get(0) : null;
+	}
+
+	//TODO(鈴木) 対象要素が指定シーン要素の直属であるかのチェック
+	//コンテナ化前の要素も存在するため、シーン属性のチェックのみでは判定できない
+	function checkScene(target, scene){
+
+		//TODO(鈴木) 同一ならtrue(両方nullは想定していない)
+		if(target === scene) return true;
+
+		//TODO(鈴木) 対象要素上方直近のコンテナ要素
+		var targetContainer = getParentContainer(target);
+
+		//TODO(鈴木) 指定シーン要素のコンテナ要素。指定シーン要素がない場合はnull。
+		var container = scene ? getParentContainer(scene) : null;
+
+//		//TODO(鈴木) シーン要素指定なし、もしくは指定シーン要素のコンテナが見つからない場合
+//		if(!container){
+//			//対象要素がコンテナに所属していればfalse、所属していなければtrue
+//			return !targetContainer;
+//		}
+
+		//TODO(鈴木) コンテナ要素が一致しない場合はfalse
+		if(targetContainer !== container){
+			return false;
+		}
+
+		//TODO(鈴木) 対象要素上方直近のシーン要素が、指定シーン要素に一致すればtrue、そうでなければfalse
+		return getParentScene(target) === scene;
 	}
 
 	//TODO(鈴木) scan関数分割。コントローラーバインドおよびシーンコンテナ生成用。
@@ -147,15 +188,17 @@
 			throw new Error();
 		}
 
-		//TODO(鈴木) メインシーンコンテナ自動生成はrootElementがbodyかmainタグの場合のみ実行する
-		if(h5.settings.scene.autoCreateContainer){
-			if($root.is('body')){
-				if($('[' + DATA_ATTR_MAIN_CONTAINER +  '],main').length === 0){
-					$root.attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
+		//TODO(鈴木) メインシーンコンテナができていない場合のみ実行。
+		//この時点でメインシーンコンテナにはdata-h5-main-container属性があるようにする。
+		if(!mainContainer && h5.settings.scene.autoCreateMainContainer){
+			var main = findWithSelf(root, '[' + DATA_ATTR_MAIN_CONTAINER +  ']');
+			if(main.length === 0){
+				main = findWithSelf(root, 'main');
+				if(main.length === 0 && root === document.body){
+					main = $(root);
 				}
-			}else if($root.is('main')){
-				if($('[' + DATA_ATTR_MAIN_CONTAINER +  ']').length === 0){
-					$root.attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
+				if(main.length > 0){
+					main.eq(0).attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
 				}
 			}
 		}
@@ -181,7 +224,7 @@
 		var dfd = resolveSceneController ? h5.async.deferred() : null;
 
 		//処理対象となるシーン要素取得(自身か、上方直近のシーン要素)
-		var currentScene = getParentScene(root);
+		var currentScene = isScene(root) ? root : getParentScene(root);
 
 		//TODO(鈴木) シーンコントローラーが見つかったか
 		var isFound = false;
@@ -211,12 +254,12 @@
 				//TODO(鈴木)
 				if (!alreadyBound(this, attrControllerName)) {
 
-					//TODO(鈴木) 上方直近のシーン要素が処理対象のシーン要素と一致しない場合は処理しない
-					if(getParentScene(this) !== currentScene){
+					//TODO(鈴木) 対象シーン要素直属でなければ処理しない
+					if(!checkScene(this, currentScene)){
 						return true;
 					}
 
-					//TODO(鈴木) 対象シーンのコントローラーであるか否か
+					//TODO(鈴木) 対象シーンのシーンコントローラーであるか否か
 					var isCurrent = false;
 
 					//TODO(鈴木) シーンコントローラーを返却する必要がある場合で、また見つかっておらず、
@@ -245,18 +288,17 @@
 		});
 
 		//TODO(鈴木) シーンコンテナの探索と生成
-		$root.find('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + '],main').each(function(){
-			if(getParentScene(this) !== currentScene){
+		$root.find('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + ']').each(function(){
+
+			//TODO(鈴木) 対象シーン要素直属でなければ処理しない
+			if(checkScene(this, currentScene)){
 				return true;
 			}
 			var $container = $(this);
-			if($container.is('[' + DATA_ATTR_CONTAINER_BOUND + ']')){
-				return true;
-			}
-			if($container.is('[' + DATA_ATTR_CONTAINER + ']')){
-				createSceneContainer(this);
-			}else if($container.is('main') || $container.is('[' + DATA_ATTR_MAIN_CONTAINER + ']')){
+			if($container.is('[' + DATA_ATTR_MAIN_CONTAINER + ']')){
 				createSceneContainer(this, true);
+			}else if($container.is('[' + DATA_ATTR_CONTAINER + ']')){
+				createSceneContainer(this);
 			}
 		});
 
@@ -293,7 +335,7 @@
 
 	//TODO(鈴木) コントローラーがバインドされたことをマーク(暫定)
 	function markBoundController(target, name){
-		var attr = $(target).attr(DATA_ATTR_CURRENT_BOUND);
+		var attr = $(target).attr(DATA_ATTR_CURRENT_BOUND) || '';
 		if(attr) attr += ',';
 		attr += name;
 		$(target).attr(DATA_ATTR_CURRENT_BOUND, attr);
@@ -879,7 +921,7 @@
 		//HTMLコメントも保存するよう実装すべきか？
 		var match = html.replace(htmlCommentRegexp, '').match(bodyTagRegExp);
 		if(match){
-			return '<div ' + DATA_ATTR_MAIN_CONTAINER +' ' + match[1] + '>' + match[2] + '</div>';
+			return '<div ' + DATA_ATTR_DUMMY_BODY +' ' + match[1] + '>' + match[2] + '</div>';
 		}
 		return html;
 	}
@@ -930,8 +972,15 @@
 			}else{
 				//TODO(鈴木) mainタグかdata-main-container属性要素があればその内容を対象とする。
 				//通常のシーンコンテナ内にmainとdata-main-containerはない前提。
-				var main = $dom.filter('[' + DATA_ATTR_MAIN_CONTAINER + '], main');
-				if(main.length === 0) main = $dom.find('[' + DATA_ATTR_MAIN_CONTAINER + '], main');
+				var main = findWithSelf($dom, '[' + DATA_ATTR_MAIN_CONTAINER + ']');
+				//TODO(鈴木) 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
+				//さすがに遷移先HTMLでのフラグ状態までは見られない。。
+				if(h5.settings.scene.autoCreateMainContainer){
+					if(main.length === 0) main = findWithSelf($dom, 'main');
+//					if(main.length === 0 && $dom.is('[' + DATA_ATTR_DUMMY_BODY + ']')){
+//						$dom.removeAttr(DATA_ATTR_DUMMY_BODY).attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
+//					}
+				}
 				if(main.length > 0){
 					$dom = main.eq(0);
 				}
@@ -1165,6 +1214,10 @@
 
 		this.rootElement = element;
 
+		//TODO(鈴木) とりあえずデフォルトのtransitionを使用。
+		this._transition = this._createTransition();
+		this._transition.onChangeStart(element);
+
 		//TODO(鈴木) シーンコンテナ下はコントローラーを管理
 		this._currentController = null;
 
@@ -1192,15 +1245,22 @@
 			//TODO(鈴木) メインシーンコンテナの場合はURL連動指定を行う。
 			$(window).on('popstate', onPopState);
 
-			//TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得するため、直接scanせずにonPopStateを呼ぶ。
-			//Routerがほしい・・。
-			onPopState();
+			//TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
+			//onPopStateを呼んでしまうと余計にHTMLを取りに行くことになるので、直接_changeSceneをto=elementで呼び出す。
+			var params = toQueryParams((location.search || '').substring(1));
+			scanForContainer(element, null, params.args).done(function(toController){
+				that._currentController = toController;
+				that._transition.onChangeEnd(that, null, element);
+				that._transition = null;
+			});
 
 		}else{
 
 			//TODO(鈴木) カレントとなるシーンを探索してscan
 			scanForContainer(element).done(function(controller){
 				that._currentController = controller;
+				that._transition.onChangeEnd(that, null, element);
+				that._transition = null;
 			});
 
 		}
@@ -1260,7 +1320,7 @@
 			//TODO(鈴木) シーンコンテナ下はコントローラーを管理
 			var fromElm = (this._currentController||{}).rootElement;
 
-			//popstate経由の場合
+			//changeSceneメソッド経由でない場合
 			if(!this._isNavigated){
 				this._transition = this._createTransition(params.transition);
 				this._transition.onChangeStart(this.rootElement, fromElm);
@@ -1285,44 +1345,50 @@
 			//→シーンルートとなるコントローラーのDOMを既存と入れ替える
 			//(現状はコンテナ以下をそのまま入れている。コンテナ内にDOM的にシーンが複数あるケースは未対応)
 
-			//TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
-			var loadPromise = loadContents(to, params.container);
+			if(isString(to)){
 
-			//TODO always->done/fail
-			loadPromise.always(function(toElm) {
+				//TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
+				var loadPromise = loadContents(to, params.container);
 
-				//TODO(鈴木) scan用にダミーのDIVにappend
-				var _toElm = $('<div></div>').append(toElm);
+				//TODO always->done/fail
+				loadPromise.always(function(toElm) {
 
-				//TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
-				scanForContainer(_toElm, null, params.args).done(function(toController){
+					//TODO(鈴木) scan用にダミーのDIVにappend
+					var _toElm = $('<div></div>').append(toElm);
 
-					if(that._dfd){
-						that._dfd.resolve({
-							from: fromElm,
-							to: toElm
-						});
-					}
+					//TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
+					scanForContainer(_toElm, null, params.args).done(function(toController){
 
-					that._transition.onChange(that.rootElement, toElm).done(function(){
-
-						//TODO(鈴木) インジケータ非表示
-						that._transition.onChangeEnd(this, fromElm, toElm);
-
-						that._isNavigated = false;
-						that._dfd = null;
-						that._transition = null;
-
-						//TODO(鈴木) disposeのタイミングはどうすべきか・・
-
-						if(fromElm){
-							fromElm.remove();
+						if(that._dfd){
+							that._dfd.resolve({
+								from: fromElm,
+								to: toElm
+							});
 						}
 
-						that._currentController = toController;
+						that._transition.onChange(that.rootElement, toElm).done(function(){
+
+							//TODO(鈴木) disposeのタイミングはどうすべきか・・
+
+							if(fromElm){
+								fromElm.remove();
+							}
+
+							that._currentController = toController;
+
+							//TODO(鈴木) インジケータ非表示
+							that._transition.onChangeEnd(that, fromElm, toElm);
+
+							that._isNavigated = false;
+							that._dfd = null;
+							that._transition = null;
+
+						});
 					});
 				});
-			});
+
+			}
+
 		},
 		_createTransition : function(type){
 			var Transition = transitionTypeMap[type != null ? type
@@ -1338,6 +1404,11 @@
 		}
 	});
 
+	//TODO(鈴木)
+	function isElement(obj){
+		return !!(obj && obj.nodeType === 1);
+	}
+
 	//コンテナにtypeはあるか？？
 	//TODO(鈴木) 第二引数type消しました。
 	function createSceneContainer(element, isMain) {
@@ -1348,6 +1419,16 @@
 		if($(element).is('[' + DATA_ATTR_CONTAINER_BOUND + ']')){
 			//TODO throwFwError();
 			throw new Error();
+		}
+
+		if(isMain){
+			if($(element).is(':not([' + DATA_ATTR_MAIN_CONTAINER +  '])')){
+				$(element).attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
+			}
+		}else{
+			if($(element).is(':not([' + DATA_ATTR_CONTAINER +  '])')){
+				$(element).attr(DATA_ATTR_CONTAINER, DATA_ATTR_CONTAINER);
+			}
 		}
 
 		var container = new SceneContainer(element, isMain);
@@ -1398,7 +1479,8 @@
 		createScene: createScene,
 		createSceneContainer: createSceneContainer,
 		init: init,
-		getMainContainer: getMainContainer
+		getMainContainer: getMainContainer,
+		scan : scan
 	});
 
 })();
