@@ -688,18 +688,7 @@
 		urlLoader: urlLoader,
 		resolvers: resolvers,
 		register: register,
-		get: get,
-		/**
-		 * コンポーネントキャッシュのクリア
-		 *
-		 * @name clearAll
-		 * @memberOf h5.res
-		 */
-		clearAll: function() {
-			for ( var p in componentMap) {
-				delete componentMap[p];
-			}
-		}
+		get: get
 	});
 
 })();
