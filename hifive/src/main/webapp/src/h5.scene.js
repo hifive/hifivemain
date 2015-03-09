@@ -1300,7 +1300,8 @@
 				}
 				//TODO(鈴木) パラメータをエンコードしてURLに付加
 				//最終的にはhashにも対応する必要がある
-				to += ((to.indexOf('?') === -1) ? '?' : '&') + $.param(params);
+				//※toにパラメータは付加しない前提
+				to += '?' + $.param(params);
 				pushState(null, null, toAbsoluteUrl(to));
 			}
 
