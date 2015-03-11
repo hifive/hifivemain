@@ -1194,6 +1194,15 @@
 		mainContainer._changeScene(location.href, params);
 	}
 
+	//TODO(鈴木) changeSceneの遷移先指定コントローラーか否かを判断する正規表現
+	var controllerRegexp = /Controller$/;
+
+	function own(context, func){
+		return function(){
+			return func.apply(context, arguments);
+		};
+	}
+
 	function SceneContainer(element, isMain) {
 
 		var that = this;
@@ -1250,7 +1259,7 @@
 			var params = toQueryParams((location.search || '').substring(1));
 			scanForContainer(element, null, params.args).done(function(toController){
 				that._currentController = toController;
-				that._transition.onChangeEnd(that, null, element);
+				that._transition.onChangeEnd(that.rootElement, null, element);
 				that._transition = null;
 			});
 
@@ -1259,7 +1268,7 @@
 			//TODO(鈴木) カレントとなるシーンを探索してscan
 			scanForContainer(element).done(function(controller){
 				that._currentController = controller;
-				that._transition.onChangeEnd(that, null, element);
+				that._transition.onChangeEnd(that.rootElement, null, element);
 				that._transition = null;
 			});
 
@@ -1293,22 +1302,28 @@
 
 			var dfd = this._dfd = h5.async.deferred();
 
+			//TODO(鈴木) changeScene経由で_changeSceneを実行したか否か
+			this._isNavigated = true;
+
 			if (this.isMain){
 				if(!isString(to)) {
 					//TODO throwFwError();
 					throw new Error();
 				}
+				//hashが指定されていたらエラーとする
+				if(to.indexOf('#') !== -1){
+					//TODO throwFwError();
+					throw new Error();
+				}
+
 				//TODO(鈴木) パラメータをエンコードしてURLに付加
-				//最終的にはhashにも対応する必要がある
-				//※toにパラメータは付加しない前提
-				to += '?' + $.param(params);
+				to += ((to.indexOf('?') === -1) ? '?' : '&') + $.param(params);
 				pushState(null, null, toAbsoluteUrl(to));
+				onPopState();
+
+			}else{
+				this._changeScene(to, params);
 			}
-
-			//TODO(鈴木) changeScene経由で_changeSceneを実行したか否か
-			this._isNavigated = true;
-
-			this._changeScene(to, params);
 
 			return dfd.promise();
 		},
@@ -1348,46 +1363,28 @@
 
 			if(isString(to)){
 
-				//TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
-				var loadPromise = loadContents(to, params.container);
+				if(controllerRegexp.test(to)){
 
-				//TODO always->done/fail
-				loadPromise.always(function(toElm) {
-
-					//TODO(鈴木) scan用にダミーのDIVにappend
-					var _toElm = $('<div></div>').append(toElm);
-
-					//TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
-					scanForContainer(_toElm, null, params.args).done(function(toController){
-
-						if(that._dfd){
-							that._dfd.resolve({
-								from: fromElm,
-								to: toElm
-							});
-						}
-
-						that._transition.onChange(that.rootElement, toElm).done(function(){
-
-							//TODO(鈴木) disposeのタイミングはどうすべきか・・
-
-							if(fromElm){
-								fromElm.remove();
-							}
-
-							that._currentController = toController;
-
-							//TODO(鈴木) インジケータ非表示
-							that._transition.onChangeEnd(that, fromElm, toElm);
-
-							that._isNavigated = false;
-							that._dfd = null;
-							that._transition = null;
-
-						});
+					//TODO(鈴木)
+					loadController(to, $('<div></div>'), params.args).done(function(toController){
+						that._onLoadController(toController, fromElm);
 					});
-				});
 
+				}else{
+					//TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
+					var loadPromise = loadContents(to, params.container);
+
+					//TODO always->done/fail
+					loadPromise.always(function(toElm) {
+
+						//TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
+						//TODO(鈴木) scan用にダミーのDIVにappend
+						scanForContainer($('<div></div>').append(toElm), null, params.args).done(function(toController){
+							that._onLoadController(toController, fromElm);
+						});
+
+					});
+				}
 			}
 
 		},
@@ -1402,6 +1399,38 @@
 
 			//TODO(鈴木) transitionをコントローラーからFunctionに変更
 			return  new Transition();
+		},
+		_onLoadController : function(toController, fromElm){
+
+			var that = this;
+
+			var toElm = toController.rootElement;
+
+			this._transition.onChange(this.rootElement, toElm).done(function(){
+
+				//TODO(鈴木) disposeのタイミングはどうすべきか・・
+
+				if(this._dfd){
+					this._dfd.resolve({
+						from: fromElm,
+						to: toElm
+					});
+				}
+
+				if(fromElm){
+					fromElm.remove();
+				}
+
+				that._currentController = toController;
+
+				//TODO(鈴木) インジケータ非表示
+				that._transition.onChangeEnd(that.rootElement, fromElm, toElm);
+
+				that._isNavigated = false;
+				that._dfd = null;
+				that._transition = null;
+
+			});
 		}
 	});
 
