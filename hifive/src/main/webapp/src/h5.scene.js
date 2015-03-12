@@ -170,6 +170,36 @@
 
 	//TODO(鈴木) scan関数分割。コントローラーバインドおよびシーンコンテナ生成用。
 	//対象要素がシーンである場合に限り、対応コントローラーを生成後にresolveで返す。
+	/**
+	 * 対象要素を配下を含めて走査し、DATA属性に基づいてコントローラーをバインド、およびシーンコンテナを生成します。
+	 *
+	 * <p>
+	 * DATA属性については以下を参照してください。<br/>
+	 * http://172.30.249.188:20781/conts/web/view/reference/scene-spec#HHTML306E8A188FF0306B57FA30653044305F81EA52D5751F6210 <br/>
+	 * http://172.30.249.188:20781/conts/web/view/reference/scene-spec#HHTML89817D20306E8A188FF0306B57FA30653044305F30B330F330C830ED30FC30E9306E81EA52D530D030A430F330C9
+	 * </p>
+	 *
+	 * <p>
+	 * 対象要素がシーンであり、かつコントローラーがバインドされていない場合にPromiseオブジェクトを返却します。
+	 * その場合、コントローラーがロード・バインドされたタイミングでresolveが実行されます。
+	 * シーンに対応するコントローラーを取得したい場合に利用してください。
+	 * </p>
+	 *
+	 * <p>
+	 * メインシーンコンテナが未生成で、h5.settings.scene.autoCreateMainContainerにtrueが設定されている場合、
+	 * 所定の条件で対象要素および配下を探索し、最初の該当の要素でメインシーンコンテナを生成します。
+	 * 条件の詳細については以下を参照してください。<br/>
+	 * http://172.30.249.188:20781/conts/web/view/reference/scene-spec#HHTML306E8A188FF0306B57FA30653044305F81EA52D5751F6210
+	 * </p>
+	 *
+	 *
+	 *
+	 * @memberOf h5.scene
+	 * @param rootElement {Element} 走査処理対象のルート要素。指定なしの場合はdocument.bodyをルート要素とする。
+	 * @param controllerName
+	 * @param args
+	 * @returns {Promise} Promiseオブジェクト。
+	 */
 	function scan(rootElement, controllerName, args){
 
 		//TODO(鈴木) デフォルトをBODYにする実装を有効化
@@ -1190,8 +1220,10 @@
 
 	//TODO(鈴木) 画面遷移時のpopState時のコールバック
 	function onPopState() {
-		var params = toQueryParams((location.search || '').substring(1));
-		mainContainer._changeScene(location.href, params);
+		//TODO(鈴木) 現状はURLでパラメーター渡しはしない
+		//var params = toQueryParams((location.search || '').substring(1));
+		//mainContainer._changeScene(location.href, params);
+		mainContainer._changeScene(location.href);
 	}
 
 	//TODO(鈴木) changeSceneの遷移先指定コントローラーか否かを判断する正規表現
@@ -1275,9 +1307,11 @@
 		}
 
 		//TODO(鈴木) シーン遷移イベント購読。暫定。
-		$(this.rootElement).on('changeScene', function(e, to, params){
+		$(this.rootElement).on('changeScene', function(e, to, _params){
 			e.stopPropagation();
-			that.changeScene(to, params);
+			setTimeout(function(){
+				that.changeScene(to, _params);
+			}, 0);
 		});
 
 	}
@@ -1316,13 +1350,25 @@
 					throw new Error();
 				}
 
+				//TODO(鈴木) 現状、メインシーンコンテナの遷移先にコントローラーは指定できない。
+				if(controllerRegexp.test(to)) {
+					//TODO throwFwError();
+					throw new Error('現在、メインシーンコンテナの遷移先にコントローラーは指定できません。');
+				}
+
 				//TODO(鈴木) パラメータをエンコードしてURLに付加
-				to += ((to.indexOf('?') === -1) ? '?' : '&') + $.param(params);
+				//※現在シリアライズ方式検討中のため、パラメータの付加はしない
+				//to += ((to.indexOf('?') === -1) ? '?' : '&') + $.param(params);
+
 				pushState(null, null, toAbsoluteUrl(to));
-				onPopState();
+
+				//TODO(鈴木) URLから遷移したいが、↑のためパラメータが付加されていないので、
+				//直接_changeSceneを呼ぶ。
+				//onPopState();
+				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj.serialize(params)));
 
 			}else{
-				this._changeScene(to, params);
+				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj.serialize(params)));
 			}
 
 			return dfd.promise();
@@ -1372,7 +1418,8 @@
 
 				}else{
 					//TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
-					var loadPromise = loadContents(to, params.container);
+					//1.2.0では、URLにパラメーターを保存しないため、メインシーンコンテナの場合はcontainer指定は無効とする
+					var loadPromise = loadContents(to, (!this.isMain) ? params.container : null);
 
 					//TODO always->done/fail
 					loadPromise.always(function(toElm) {
@@ -1439,8 +1486,14 @@
 		return !!(obj && obj.nodeType === 1);
 	}
 
-	//コンテナにtypeはあるか？？
-	//TODO(鈴木) 第二引数type消しました。
+	/**
+	 * シーンコンテナインスタンスを生成します.
+	 *
+	 * @memberOf h5.scene
+	 * @param {Element} element シーンコンテナ生成対象要素。
+	 * @param {Boolean} isMain メインシーンコンテナであるか否か。(メインシーンコンテナである:true/メインシーンコンテナでない:false)(デフォルト:false)
+	 * @returns {h5.scene.SceneContainer} 生成したシーンコンテナのインスタンス。
+	 */
 	function createSceneContainer(element, isMain) {
 
 		//TODO(鈴木) 対象要素配下にコンテナ、またはコントローラーバインド済みの要素がある場合はエラーとすべき
@@ -1470,17 +1523,29 @@
 
 	var isInited = false;
 
+	/**
+	 * シーン機能の初回適用を行います。
+	 *
+	 * <p>
+	 * ドキュメント全体に対し、DATA属性に基づいて、コントローラーのバインドとシーンコンテナの生成を行います。<br/>
+	 * 2回目以降の実行は無視されます。
+	 * </p>
+	 *
+	 * @memberOf h5.scene
+	 */
 	function init() {
 		if (!isInited) {
 			isInited = true;
-
-			//TODO(鈴木) createSceneContainerはscan内で呼び出す
-			//createSceneContainer(main, true);
-
 			scan();
 		}
 	}
 
+	/**
+	 * メインシーンコンテナのインスタンスを取得します。
+	 *
+	 * @memberOf h5.scene
+	 * @returns {h5.scene.SceneContainer} メインシーンコンテナのインスタンス。未作成の場合はnull。
+	 */
 	function getMainContainer() {
 		return mainContainer;
 	}
