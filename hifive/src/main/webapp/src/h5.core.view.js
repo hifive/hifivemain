@@ -285,7 +285,7 @@
 
 			var promises = [];
 			for (var i = 0, l = paths.length; i < l; i++) {
-				promises.push(h5.res.require(paths[i]).resolve());
+				promises.push(h5.res.get(paths[i]));
 			}
 			var view = this;
 			waitForPromises(promises, function(resources) {

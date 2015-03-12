@@ -453,7 +453,7 @@
 			this._controller = controllres[0];
 		} else if (controllers.length === 0) {
 			var controllerName = $target.data('h5-controller');
-			this._controller = h5.res.require(controllerName);
+			this._controller = h5.res.dependsOn(controllerName);
 		}
 	}
 
@@ -2535,7 +2535,7 @@
 			for (var i = 0, l = templates.length; i < l; i++) {
 				// 文字列が指定されていたらDependencyに変換
 				var dependency = isDependency(templates[i]) ? templates[i] : h5.res
-						.require(templates[i]);
+						.dependsOn(templates[i]);
 				promises.push(dependency.resolve('ejsfile'));
 			}
 			waitForPromises(promises, function(resources) {
