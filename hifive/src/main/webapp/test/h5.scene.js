@@ -22,7 +22,7 @@ $(function() {
 	// Constants
 	//
 	// =========================================================================
-	var WAIT_TIME_FOR_OPEN_WINDOW = 3000;
+	var WAIT_TIME_FOR_OPEN_WINDOW = 100;
 
 	// =========================================================================
 	//
@@ -33,10 +33,31 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
+	// testutils
+	var deleteProperty = testutils.u.deleteProperty;
+	var clearController = testutils.u.clearController;
+	var gate = testutils.async.gate;
 
+	/** createTestControllerを使って作成されたコントローラ定義がバインドされた時にそのコントローラインスタンスを覚えておくマップ */
+	var boundControllerMap = {
+	// 空オブジェクト
+	};
 	//=============================
 	// Functions
 	//=============================
+	/**
+	 * コントローラを作成してグローバルに公開する
+	 */
+	function createTestController(name) {
+		function construct() {
+			boundControllerMap[this.__name] = this;
+		}
+
+		h5.core.expose({
+			__name: 'h5scenetest.' + name,
+			__construct: construct
+		});
+	}
 
 	// =========================================================================
 	//
@@ -47,78 +68,362 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('openWindow', {
-		setup: function() {
-			stop();
-			var that = this;
-			h5.scene.openWindow('data/scene.html', 'popup',
-					'width=400, height=300, menubar=no, toolbar=no, scrollbars=yes').done(
-					function(remoteWindow) {
-						that.remoteWindow = remoteWindow;
-						setTimeout(function() {
-							// FIXME 仮実装に合わせたタイムアウト処理。待機処理が実装されれば要らない
-							start();
-						}, WAIT_TIME_FOR_OPEN_WINDOW);
-					}).fail(function(e) {
-				throw e;
-			});
-		},
+	module('HTML要素の記述に基づいたコントローラの自動バインド', {
 		teardown: function() {
-			if (this.remoteWindow) {
-				stop();
-				start(); // FIXME
-				this.remoteWindow.close().always(function() {
-					start();
-				});
-			}
+			deleteProperty(window, 'h5scenetest');
+			clearController();
+			$('[data-h5-controller]').removeAttr('data-h5-controller');
+			$('[data-h5-current-bound]').removeAttr('data-h5-current-bound');
+			boundControllerMap = {};
 		},
-		remoteWindow: null
+		$fixture: $('#qunit-fixture')
 	});
 
 	//=============================
 	// Body
 	//=============================
-	test(
-			'リモートウィンドウオブジェクトの取得',
+	test('data-h5-controller指定要素について、init()呼び出し時に指定したコントローラがバインドされること', function() {
+		createTestController('Body');
+		createTestController('Test');
+		$(document.body).attr('data-h5-controller', 'h5scenetest.Body');
+		var $test = $('<div data-h5-controller="h5scenetest.Test">');
+		this.$fixture.append($test);
+
+		h5.scene.init();
+		var testCtrl = boundControllerMap['h5scenetest.Test'];
+		var bodyCtrl = boundControllerMap['h5scenetest.Body'];
+		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+		ok(bodyCtrl, 'body要素でdata-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(bodyCtrl.rootElement, document.body,
+				'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+
+		// initは一度しか呼び出せないので、このケース以外でinit()の呼び出しはしない
+		// このケースで二度目のinit()を呼んでも何も起こらないことを確認している
+		createTestController('Test2');
+		var $test2 = $('<div data-h5-controller="h5scenetest.Test2">');
+		this.$fixture.append($test2);
+		h5.scene.init();
+		ok(!boundControllerMap['h5scenetest.Test2'],
+				'init()呼び出し後に追加したdata-h5-controller指定要素があっても、もう一度init()を呼んでもコントローラはバインドされないこと');
+	});
+
+	test('data-h5-controller指定要素について、scan()呼び出し時に指定したコントローラがバインドされること', function() {
+		createTestController('Body');
+		createTestController('Test');
+		$(document.body).attr('data-h5-controller', 'h5scenetest.Body');
+		var $test = $('<div data-h5-controller="h5scenetest.Test">');
+		this.$fixture.append($test);
+
+		h5.scene.scan();
+		var testCtrl = boundControllerMap['h5scenetest.Test'];
+		var bodyCtrl = boundControllerMap['h5scenetest.Body'];
+		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+		ok(bodyCtrl, 'body要素でdata-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(bodyCtrl.rootElement, document.body,
+				'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+	});
+
+	test('bodyをルートに指定してscan()', function() {
+		createTestController('Body');
+		createTestController('Test');
+		$(document.body).attr('data-h5-controller', 'h5scenetest.Body');
+		var $test = $('<div data-h5-controller="h5scenetest.Test">');
+		this.$fixture.append($test);
+
+		h5.scene.scan(document.body);
+		var testCtrl = boundControllerMap['h5scenetest.Test'];
+		var bodyCtrl = boundControllerMap['h5scenetest.Body'];
+		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+		ok(bodyCtrl, 'body要素でdata-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(bodyCtrl.rootElement, document.body,
+				'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+	});
+
+	test('body以下の要素をルートに指定してscan()', function() {
+		createTestController('Root');
+		createTestController('Brother');
+		createTestController('Test');
+
+		var $root = $('<div data-h5-controller="h5scenetest.Root">');
+		var $brother = $('<div data-h5-controller="h5scenetest.Brother">');
+		var $test = $('<div data-h5-controller="h5scenetest.Test">');
+		$root.append($test);
+		this.$fixture.append($root);
+		this.$fixture.append($brother);
+
+		h5.scene.scan($root);
+		var testCtrl = boundControllerMap['h5scenetest.Test'];
+		var rootCtrl = boundControllerMap['h5scenetest.Root'];
+		var brotherCtrl = boundControllerMap['h5scenetest.Brother'];
+
+		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+		ok(rootCtrl, 'ルート要素でdata-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(rootCtrl.rootElement, $root[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+		ok(!brotherCtrl, '指定したルートの兄弟要素にdata-h5-controller記述がしてあってもコントローラはバインドされないこと');
+	});
+
+	test('複数コントローラのバインド',
 			function() {
-				ok(this.remoteWindow, 'リモートウィンドウオブジェクトが取得できること');
-				strictEqual(this.remoteWindow.window.opener, window,
-						'windowオブジェクトが取得でき、openerがwindowであること');
-				strictEqual(this.remoteWindow.window.innerHeight, 300,
-						'開いたウィンドウはfeatureで指定した高さであること');
-				strictEqual(this.remoteWindow.window.innerWidth, 400, '開いたウィンドウはfeatureで指定した幅であること');
+				createTestController('Test1');
+				createTestController('Test2');
+				var $test = $('<div data-h5-controller="h5scenetest.Test1,h5scenetest.Test2">');
+				this.$fixture.append($test);
+
+				h5.scene.scan();
+				var test1Ctrl = boundControllerMap['h5scenetest.Test1'];
+				var test2Ctrl = boundControllerMap['h5scenetest.Test2'];
+
+				ok(test1Ctrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+				strictEqual(test1Ctrl.rootElement, $test[0],
+						'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+				ok(test2Ctrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+				strictEqual(test2Ctrl.rootElement, $test[0],
+						'コントローラのバインド先はdata-h5-controller指定をした要素であること');
 			});
 
-	asyncTest('メインシーンのメソッド呼び出し(同期)', function() {
-		this.remoteWindow.invoke('getValue', [1, 2]).done(function(result) {
-			strictEqual(result, '3PageController', 'メインシーンのメソッドが実行され戻り値が取得できること');
-		}).fail(function() {
-			ok(false, 'invokeが失敗した');
-		}).always(start);
+	asyncTest('リソースキー指定によるバインド', function() {
+		var $test = $('<div data-h5-controller="h5scenedata.controller.SampleController">');
+		this.$fixture.append($test);
+
+		h5.scene.scan();
+		gate({
+			func: function() {
+				return h5.core.controllerManager.getControllers($test)[0];
+			},
+			failMessage: 'コントローラがバインドされませんでした'
+		}).done(
+				function(a) {
+					var testCtrl = h5.core.controllerManager.getControllers($test)[0];
+					ok(testCtrl, 'data-h5-controller指定をしたコントローラがリソースキーから解決されてバインドされていること');
+					strictEqual(testCtrl.rootElement, $test[0],
+							'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+				}).always(start);
 	});
 
-	asyncTest('メインシーンのメソッド呼び出し(非同期)', function() {
-		this.remoteWindow.invoke('getValueAsync', [1, 2]).done(function(result) {
-			strictEqual(result, '3PageController', 'メインシーンのメソッドが実行され戻り値が取得できること');
-		}).fail(function() {
-			ok(false, 'invokeが失敗した');
-		}).always(start);
+	test('シーン要素のdata-h5-controller指定',
+			function() {
+				createTestController('Test');
+				var $container = $('<div data-h5-container>');
+				var $scene = $('<div data-h5-scene data-h5-controller="h5scenetest.Test">');
+				$container.append($scene);
+				this.$fixture.append($container);
+
+				h5.scene.scan();
+				var test1Ctrl = boundControllerMap['h5scenetest.Test'];
+
+				ok(test1Ctrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+				strictEqual(test1Ctrl.rootElement, $scene[0],
+						'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+			});
+
+	test(
+			'シーンを持つシーンコンテナ要素のdata-h5-controller指定',
+			function() {
+				createTestController('Test1');
+				createTestController('Container');
+				var $container = $('<div data-h5-container data-h5-container="h5scenetest.Container">');
+				var $scene = $('<div data-h5-scene data-h5-controller="h5scenetest.Test1">');
+				$container.append($scene);
+				this.$fixture.append($container);
+
+				h5.scene.scan();
+				var test1Ctrl = boundControllerMap['h5scenetest.Test1'];
+				var containerCtrl = boundControllerMap['Container'];
+				ok(test1Ctrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+				strictEqual(test1Ctrl.rootElement, $scene[0],
+						'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+				ok(!containerCtrl, 'シーンコンテナ要素のdata-h5-controller指定は無効でコントローラはバインドされないこと');
+			});
+
+	test('シーンを持たないシーンコンテナ要素のdata-h5-controller指定', function() {
+		createTestController('Test');
+		var $container = $('<div data-h5-container data-h5-controller="h5scenetest.Test">');
+		this.$fixture.append($container);
+
+		h5.scene.scan();
+		var testCtrl = boundControllerMap['h5scenetest.Test'];
+		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
+		strictEqual(testCtrl.rootElement, $container.children()[0],
+				'コントローラのバインド先はシーンコンテナ直下に作られたシーン要素であること');
 	});
 
-	test('モーダル化', function() {
-		this.remoteWindow.setModal(true);
-		strictEqual($('.h5-indicator.overlay').length, 1, 'setModal(true)で親ウィンドウにオーバレイが表示されること');
-		this.remoteWindow.setModal(false);
-		strictEqual($('.h5-indicator.overlay').length, 0, 'setModal(false)で親ウィンドウのオーバレイが消去されること');
+	test(
+			'data-h5-scene指定の要素の位置がシーンコンテナ直下でない場合のdata-h5-controller指定',
+			function() {
+				createTestController('Test1');
+				createTestController('Test2');
+				var $root = $('<div>');
+				var $container = $('<div data-h5-container>');
+				var $scene1 = $('<div data-h5-scene data-h5-controller="h5scenetest.Test1">');
+				var $scene2 = $('<div data-h5-scene data-h5-controller="h5scenetest.Test2">');
+				var $div = $('<div>');
+				$root.append($scene1);
+				$div.append($scene2);
+				$container.append($div);
+				$root.append($container);
+				this.$fixture.append($root);
+				h5.scene.scan();
+
+				var test1Ctrl = boundControllerMap['h5scenetest.Test1'];
+				var test2Ctrl = boundControllerMap['h5scenetest.Test2'];
+
+				ok(!test1Ctrl,
+						'data-h5-scene指定要素がコンテナ以下でない要素の場合、data-h5-controller指定は無効でコントローラはバインドされないこと');
+				ok(!test2Ctrl,
+						'data-h5-scene指定要素がコンテナの直下でない要素の場合、data-h5-controller指定は無効でコントローラはバインドされないこと');
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('シーンコンテナとシーン', {
+		teardown: function() {
+			deleteProperty(window, 'h5scenetest');
+			clearController();
+			$('[data-h5-controller]').removeAttr('data-h5-controller');
+			$('[data-h5-current-bound]').removeAttr('data-h5-current-bound');
+			boundControllerMap = {};
+		},
+		$fixture: $('#qunit-fixture')
 	});
 
-//	test('プロキシオブジェクトの取得', function() {
-//		var proxy = this.remoteWindow.getControllerProxy();
-//	});
-//
-//	test('セレクタを指定してプロキシオブジェクトの取得', function() {
-//		var proxy = this.remoteWindow.getControllerProxy('.target1');
-//	});
+	//=============================
+	// Body
+	//=============================
+	test('createContainer()で生成したシーンコンテナのメソッドによる遷移', function() {
+	//TODO
+	});
+	test('createContainer()で生成したシーンコンテナのイベントによる遷移', function() {
+	//TODO
+	});
+
+	asyncTest('scan()で生成したシーンコンテナのイベントによる遷移', function() {
+		var $container = $('<div data-h5-container>');
+		var $scene = $('<div data-h5-scene>');
+		$container.append($scene);
+		this.$fixture.append($container);
+		h5.scene.scan();
+		$scene.trigger('changeScene', 'h5scenedata/page/to1.html');
+		gate({
+			func: function() {
+				return $container.text() === 'to1';
+			},
+			failMessage: 'シーンが変更されませんでした'
+		}).done(function() {
+			strictEqual($container.text(), 'to1', 'シーンが変更されること');
+			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
+			var $scene1 = $container.children();
+			$scene1.trigger('changeScene', 'h5scenedata/page/to2.html');
+			gate({
+				func: function() {
+					return $container.text() === 'to2';
+				},
+				failMessage: 'シーンが変更されませんでした'
+			}).done(function() {
+				strictEqual($container.text(), 'to2', 'シーンが変更されること');
+				ok(!$scene1.parent()[0], '遷移前のシーン要素は削除されていること');
+			}).always(start);
+		}).fail(start);
+	});
+
+
+	//=============================
+	// Definition
+	//=============================
+	module('メインシーンコンテナ', {
+		teardown: function() {
+			deleteProperty(window, 'h5scenetest');
+			clearController();
+			$('[data-h5-controller]').removeAttr('data-h5-controller');
+			$('[data-h5-current-bound]').removeAttr('data-h5-current-bound');
+			boundControllerMap = {};
+		},
+		$fixture: $('#qunit-fixture')
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	//	//=============================
+	//	// Definition
+	//	//=============================
+	//	module('openWindow', {
+	//		setup: function() {
+	//			stop();
+	//			var that = this;
+	//			h5.scene.openWindow('data/scene.html', 'popup',
+	//					'width=400, height=300, menubar=no, toolbar=no, scrollbars=yes').done(
+	//					function(remoteWindow) {
+	//						that.remoteWindow = remoteWindow;
+	//						setTimeout(function() {
+	//							// FIXME 仮実装に合わせたタイムアウト処理。待機処理が実装されれば要らない
+	//							start();
+	//						}, WAIT_TIME_FOR_OPEN_WINDOW);
+	//					}).fail(function(e) {
+	//				throw e;
+	//			});
+	//		},
+	//		teardown: function() {
+	//			if (this.remoteWindow) {
+	//				stop();
+	//				start(); // FIXME
+	//				this.remoteWindow.close().always(function() {
+	//					start();
+	//				});
+	//			}
+	//		},
+	//		remoteWindow: null
+	//	});
+	//
+	//	//=============================
+	//	// Body
+	//	//=============================
+	//	test(
+	//			'リモートウィンドウオブジェクトの取得',
+	//			function() {
+	//				ok(this.remoteWindow, 'リモートウィンドウオブジェクトが取得できること');
+	//				strictEqual(this.remoteWindow.window.opener, window,
+	//						'windowオブジェクトが取得でき、openerがwindowであること');
+	//				strictEqual(this.remoteWindow.window.innerHeight, 300,
+	//						'開いたウィンドウはfeatureで指定した高さであること');
+	//				strictEqual(this.remoteWindow.window.innerWidth, 400, '開いたウィンドウはfeatureで指定した幅であること');
+	//			});
+	//
+	//	asyncTest('メインシーンのメソッド呼び出し(同期)', function() {
+	//		this.remoteWindow.invoke('getValue', [1, 2]).done(function(result) {
+	//			strictEqual(result, '3PageController', 'メインシーンのメソッドが実行され戻り値が取得できること');
+	//		}).fail(function() {
+	//			ok(false, 'invokeが失敗した');
+	//		}).always(start);
+	//	});
+	//
+	//	asyncTest('メインシーンのメソッド呼び出し(非同期)', function() {
+	//		this.remoteWindow.invoke('getValueAsync', [1, 2]).done(function(result) {
+	//			strictEqual(result, '3PageController', 'メインシーンのメソッドが実行され戻り値が取得できること');
+	//		}).fail(function() {
+	//			ok(false, 'invokeが失敗した');
+	//		}).always(start);
+	//	});
+	//
+	//	test('モーダル化', function() {
+	//		this.remoteWindow.setModal(true);
+	//		strictEqual($('.h5-indicator.overlay').length, 1, 'setModal(true)で親ウィンドウにオーバレイが表示されること');
+	//		this.remoteWindow.setModal(false);
+	//		strictEqual($('.h5-indicator.overlay').length, 0, 'setModal(false)で親ウィンドウのオーバレイが消去されること');
+	//	});
+
+	//	test('プロキシオブジェクトの取得', function() {
+	//		var proxy = this.remoteWindow.getControllerProxy();
+	//	});
+	//
+	//	test('セレクタを指定してプロキシオブジェクトの取得', function() {
+	//		var proxy = this.remoteWindow.getControllerProxy('.target1');
+	//	});
 
 	//	//=============================
 	//	// Definition
