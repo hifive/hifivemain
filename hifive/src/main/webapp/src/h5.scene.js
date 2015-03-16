@@ -207,7 +207,6 @@
 	 */
 	function getParentContainer(target){
 		var parentContainer = $(target).closest('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + ']');
-		console.debug(parentContainer.length);
 		return parentContainer.length ? parentContainer.get(0) : null;
 	}
 
