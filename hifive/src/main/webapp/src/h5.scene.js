@@ -249,10 +249,10 @@
 	 * <p>
 	 * DATA属性については以下を参照してください。<br/>
 	 * </p>
-	 * <ul><li><a href="http://www.htmlhifive.com/conts/web/view/reference/scene-spec">リファレンス（仕様詳細)&gt;&gt;画面遷移制御・履歴管理(シーン機能)仕様 [ver.1.2]</a>
+	 * <ul><li><a href="/conts/web/view/reference/scene-spec">リファレンス（仕様詳細)&gt;&gt;画面遷移制御・履歴管理(シーン機能)仕様 [ver.1.2]</a>
 	 *   <ul>
-	 *     <li><a href="http://www.htmlhifive.com/conts/web/view/reference/scene-spec#HHTML306E8A188FF0306B57FA30653044305F81EA52D5751F6210">HTMLの記述に基づいた自動生成</a></li>
-	 *     <li><a href="http://www.htmlhifive.com/conts/web/view/reference/scene-spec#HHTML89817D20306E8A188FF0306B57FA30653044305F30B330F330C830ED30FC30E9306E81EA52D530D030A430F330C9">
+	 *     <li><a href="/conts/web/view/reference/scene-spec#HHTML306E8A188FF0306B57FA30653044305F81EA52D5751F6210">HTMLの記述に基づいた自動生成</a></li>
+	 *     <li><a href="/conts/web/view/reference/scene-spec#HHTML89817D20306E8A188FF0306B57FA30653044305F30B330F330C830ED30FC30E9306E81EA52D530D030A430F330C9">
 	 *       HTML要素の記述に基づいたコントローラの自動バインド</a></li>
 	 *   </ul>
 	 * </li></ul>
@@ -1304,9 +1304,9 @@
 	 	 * <p>
 	 	 * 機能の詳細については以下を参照してください。
 	 	 * </p>
-	 	 * <ul><li><a href="http://www.htmlhifive.com/conts/web/view/reference/scene-spec">リファレンス（仕様詳細)&gt;&gt;画面遷移制御・履歴管理(シーン機能)仕様 [ver.1.2]</a>
+	 	 * <ul><li><a href="/conts/web/view/reference/scene-spec">リファレンス（仕様詳細)&gt;&gt;画面遷移制御・履歴管理(シーン機能)仕様 [ver.1.2]</a>
 		 *   <ul>
-		 *     <li><a href="http://www.htmlhifive.com/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E907779FB2830B730FC30F3306E907779FB29">
+		 *     <li><a href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E907779FB2830B730FC30F3306E907779FB29">
 		 *       シーンコンテナ内の遷移(シーンの遷移)</a></li>
 		 *   </ul>
 		 * </li></ul>
