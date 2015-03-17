@@ -186,7 +186,7 @@ $(function() {
 			});
 
 	asyncTest('リソースキー指定によるバインド', function() {
-		var $test = $('<div data-h5-controller="h5scenedata.controller.SampleController">');
+		var $test = $('<div data-h5-controller="scenedata.controller.SampleController">');
 		this.$fixture.append($test);
 
 		h5.scene.scan();
@@ -194,7 +194,7 @@ $(function() {
 			func: function() {
 				return h5.core.controllerManager.getControllers($test)[0];
 			},
-			failMessage: 'コントローラがバインドされませんでした'
+			failMsg: 'コントローラがバインドされませんでした'
 		}).done(
 				function(a) {
 					var testCtrl = h5.core.controllerManager.getControllers($test)[0];
@@ -294,11 +294,64 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('createContainer()で生成したシーンコンテナのメソッドによる遷移', function() {
-	//TODO
+	asyncTest('createContainer()で生成したシーンコンテナのメソッドによる遷移', function() {
+		var $container = $('<div>');
+		this.$fixture.append($container);
+		var $scene = $('<div data-h5-scene>');
+		$container.append($scene);
+		var container = h5.scene.createSceneContainer($container);
+		container.changeScene('scenedata/page/to1.html');
+		gate({
+			func: function() {
+				return $container.text() === 'to1';
+			},
+			failMsg: 'シーンが変更されませんでした'
+		}).done(function() {
+			strictEqual($container.text(), 'to1', 'シーンが変更されること');
+			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
+			var $scene1 = $container.children();
+			container.changeScene('scenedata/page/to2.html', {args:{test:'TEST'}});
+			gate({
+				func: function() {
+					return $container.text() === 'to2';
+				},
+				failMsg: 'シーンが変更されませんでした'
+			}).done(function() {
+				strictEqual($container.text(), 'to2', 'シーンが変更されること');
+				ok(!$scene1.parent()[0], '遷移前のシーン要素は削除されていること');
+				ok(container._currentController.args.test === 'TEST', '遷移パラメータが渡されていること');
+			}).always(start);
+		}).fail(start);
 	});
-	test('createContainer()で生成したシーンコンテナのイベントによる遷移', function() {
-	//TODO
+
+	asyncTest('createContainer()で生成したシーンコンテナのイベントによる遷移', function() {
+		var $container = $('<div>');
+		var $scene = $('<div data-h5-scene>');
+		$container.append($scene);
+		this.$fixture.append($container);
+		var container = h5.scene.createSceneContainer($container);
+		$(container.rootElement).trigger('changeScene', 'scenedata/page/to1.html');
+		gate({
+			func: function() {
+				return $container.text() === 'to1';
+			},
+			failMsg: 'シーンが変更されませんでした'
+		}).done(function() {
+			strictEqual($container.text(), 'to1', 'シーンが変更されること');
+			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
+			var $scene1 = $container.children();
+			$scene1.trigger('changeScene', ['scenedata/page/to2.html', {args:{test:'TEST'}}]);
+			gate({
+				func: function() {
+					return $container.text() === 'to2';
+				},
+				failMsg: 'シーンが変更されませんでした'
+			}).done(function() {
+				strictEqual($container.text(), 'to2', 'シーンが変更されること');
+				ok(!$scene1.parent()[0], '遷移前のシーン要素は削除されていること');
+				ok(container._currentController.args.test === 'TEST', '遷移パラメータが渡されていること');
+			}).always(start);
+		}).fail(start);
 	});
 
 	asyncTest('scan()で生成したシーンコンテナのイベントによる遷移', function() {
@@ -307,40 +360,88 @@ $(function() {
 		$container.append($scene);
 		this.$fixture.append($container);
 		h5.scene.scan();
-		$scene.trigger('changeScene', 'h5scenedata/page/to1.html');
+		$scene.trigger('changeScene', 'scenedata/page/to1.html');
 		gate({
 			func: function() {
 				return $container.text() === 'to1';
 			},
-			failMessage: 'シーンが変更されませんでした'
+			failMsg: 'シーンが変更されませんでした'
 		}).done(function() {
 			strictEqual($container.text(), 'to1', 'シーンが変更されること');
 			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
 			var $scene1 = $container.children();
-			$scene1.trigger('changeScene', 'h5scenedata/page/to2.html');
+			$scene1.trigger('changeScene', ['scenedata/page/to2.html', {args:{test:'TEST'}}]);
 			gate({
 				func: function() {
 					return $container.text() === 'to2';
 				},
-				failMessage: 'シーンが変更されませんでした'
+				failMsg: 'シーンが変更されませんでした'
 			}).done(function() {
 				strictEqual($container.text(), 'to2', 'シーンが変更されること');
 				ok(!$scene1.parent()[0], '遷移前のシーン要素は削除されていること');
+				//scanの場合、containerが取れないので遷移パラメーター確認はスキップ
 			}).always(start);
 		}).fail(start);
 	});
 
+	asyncTest('コントローラーベースの遷移', function() {
+		var $container = $('<div>');
+		var $scene = $('<div data-h5-scene>');
+		$container.append($scene);
+		this.$fixture.append($container);
+		var container = h5.scene.createSceneContainer($container);
+		container.changeScene('scenedata.controller.ControllerSubController', {args:{test:'CTRL'}});
+		gate({
+			func: function() {
+				return container._currentController.$find('h2').text() === 'CONTROLLER_SUB';
+			},
+			failMsg: 'シーンが変更されませんでした'
+		}).done(function() {
+			strictEqual(container._currentController.$find('h2').text(), 'CONTROLLER_SUB', 'シーンが変更されること');
+			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
+			ok(container._currentController.args.test === 'CTRL', '遷移パラメータが渡されていること');
+		}).always(start);
+	});
+
+	asyncTest('遷移先HTMLの一部分(コンテナ)を指定して遷移', function() {
+		var $container = $('<div>');
+		var $scene = $('<div data-h5-scene>');
+		$container.append($scene);
+		this.$fixture.append($container);
+		var container = h5.scene.createSceneContainer($container);
+		container.changeScene('scenedata/page/from.html', {container:'sub_from', args:{test:'SUB'}});
+		gate({
+			func: function() {
+				return container._currentController.$find('h2').text() === 'SUB';
+			},
+			failMsg: 'シーンが変更されませんでした'
+		}).done(function() {
+			var controller = container._currentController;
+			strictEqual(controller.$find('h2').text(), 'SUB', 'シーンが変更されること');
+			ok(!controller.$find('h1').length, '指定コンテナ以外が表示されていないこと');
+			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
+			ok(controller.args.test === 'SUB', '遷移パラメータが渡されていること');
+		}).always(start);
+	});
 
 	//=============================
 	// Definition
 	//=============================
 	module('メインシーンコンテナ', {
+		setup: function() {
+			stop();
+			var that = this;
+			testutils.dom.openPopupWindow().done(function(w) {
+				that.w = w;
+				//window.focus(); //Chromeだと効かない
+				start();
+			}).fail(function(e) {
+				throw e;
+			});
+		},
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
-			clearController();
-			$('[data-h5-controller]').removeAttr('data-h5-controller');
-			$('[data-h5-current-bound]').removeAttr('data-h5-current-bound');
-			boundControllerMap = {};
+			this.w.close();
 		},
 		$fixture: $('#qunit-fixture')
 	});
@@ -348,6 +449,143 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
+	asyncTest('ブラウザ履歴連動遷移', function() {
+		this.w.location.href = 'scenedata/page/from.html';
+		var that = this;
+		gate({
+			func: function() {
+				return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
+			},
+			failMsg: 'メインシーンコンテナが取得できませんでした'
+		}).done(function() {
+			var mainContainer = that.w.h5.scene.getMainContainer();
+			var controller = mainContainer._currentController;
+			var title = controller.$find('h1').text();
+			strictEqual(title, 'FROM', '直接アクセスで画面が表示されていること');
+			//strictEqual(controller.__name, 'scenedata.controller.FromController', 'コントローラーバインド確認');
+			mainContainer.changeScene('to.html', {args:{test:'hoge'}});
+			gate({
+				func: function() {
+					return mainContainer._currentController && mainContainer._currentController.__name === 'scenedata.controller.ToController';
+				},
+				failMsg: 'シーンが変更されませんでした'
+			}).done(function() {
+				var controller = mainContainer._currentController;
+				var title = controller.$find('h1').text();
+				strictEqual(title, 'TO', '画面が遷移されていること');
+				var param = controller.$find('.pg_view').text();
+				strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+				ok(/\/to\.html$/.test(that.w.location.href), 'URLが連動していること');
+
+				controller = null;
+
+				that.w.history.back();
+				gate({
+					func: function() {
+						return mainContainer._currentController && mainContainer._currentController.__name === 'scenedata.controller.FromController';
+					},
+					failMsg: 'シーンが変更されませんでした'
+				}).done(function() {
+					var controller = mainContainer._currentController;
+					var title = controller.$find('h1').text();
+					strictEqual(title, 'FROM', 'histroy.back()で画面が遷移されていること');
+					ok(/\/from\.html$/.test(that.w.location.href), 'URLが連動していること');
+					//履歴遷移でのパラメーター取得は未対応
+
+					controller = null;
+
+					that.w.history.forward();
+					gate({
+						func: function() {
+							return mainContainer._currentController && mainContainer._currentController.__name === 'scenedata.controller.ToController';
+						},
+						failMsg: 'シーンが変更されませんでした'
+					}).done(function() {
+						var controller = mainContainer._currentController;
+						var title = controller.$find('h1').text();
+						strictEqual(title, 'TO', 'histroy.forward()で画面が遷移されていること');
+						ok(/\/to\.html$/.test(that.w.location.href), 'URLが連動していること');
+						//履歴遷移でのパラメーター取得は未対応
+
+						mainContainer = controller = null;
+
+						that.w.location.reload(true);
+						gate({
+							func: function() {
+								return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
+							},
+							failMsg: 'メインシーンコンテナが取得できませんでした'
+						}).done(function() {
+							mainContainer = that.w.h5.scene.getMainContainer(); //リロードしたので再度取得
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'TO', 'location.reload()で画面が再表示されていること');
+							ok(/\/to\.html$/.test(that.w.location.href), 'URLが連動していること');
+							//履歴遷移でのパラメーター取得は未対応
+
+						}).always(start);
+					});
+				});
+			});
+		}).fail(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('フラグの確認', {
+		setup: function() {
+			stop();
+			var that = this;
+			testutils.dom.openPopupWindow().done(function(w) {
+				that.w = w;
+				//window.focus(); //Chromeだと効かない
+				start();
+			}).fail(function(e) {
+				throw e;
+			});
+		},
+		teardown: function() {
+			deleteProperty(window, 'h5scenetest');
+			this.w.close();
+		},
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('h5.settings.scene.autoInitフラグの確認', function() {
+		this.w.location.href = 'scenedata/page/from.html';
+		var that = this;
+		gate({
+			func: function() {
+				return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
+			},
+			failMsg: 'メインシーンコンテナが取得できませんでした'
+		}).done(function() {
+			strictEqual(that.w.h5.settings.scene.autoInit, true, 'フラグの確認');
+			var mainContainer = that.w.h5.scene.getMainContainer();
+			ok(!!mainContainer, 'メインシーンコンテナが生成されていること');
+			ok(that.w.$('[data-h5-container="sub_from"]').is('[data-h5-container-bound]'), '通常のシーンコンテナが生成されていること');
+			var elm = that.w.$('[data-h5-controller="scenedata.controller.SubController"]');
+			var controller = that.w.h5.core.controllerManager.getControllers(elm)[0];
+			strictEqual(controller.__name,'scenedata.controller.SubController', 'コントローラーがバインドされていること');
+		}).always(start);
+	});
+
+	asyncTest('h5.settings.scene.autoCreateMainContainerフラグの確認', function() {
+		this.w.location.href = 'scenedata/page/from.html';
+		var that = this;
+		gate({
+			func: function() {
+				return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
+			},
+			failMsg: 'メインシーンコンテナが取得できませんでした'
+		}).done(function() {
+			strictEqual(that.w.h5.settings.scene.autoCreateMainContainer, true, 'フラグの確認');
+			ok(that.w.$('body').is('[data-h5-main-container]'), 'BODYタグがメインシーンコンテナとなっているかの確認');
+		}).always(start);
+	});
 
 	//	//=============================
 	//	// Definition
