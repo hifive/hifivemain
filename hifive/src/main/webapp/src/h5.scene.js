@@ -63,7 +63,10 @@
 	 */
 	var DATA_H5_DYN_DUMMY_BODY = 'data-h5-dyn-dummy-body';
 
-	var EVENT_CHANGE_SCENE = 'changeScene';
+	/**
+	 * シーンコンテナに対するシーンの変更要求イベント名
+	 */
+	var EVENT_SCENE_CHANGE_REQUEST = 'sceneChangeRequest';
 
 	// =============================
 	// Production
@@ -1325,11 +1328,10 @@
 
 		}
 
-		//TODO(鈴木) シーン遷移イベント購読。暫定。
-		$(this.rootElement).on('changeScene', function(e, to, _params){
+		$(this.rootElement).on(EVENT_SCENE_CHANGE_REQUEST, function(e, data){
 			e.stopPropagation();
 			setTimeout(function(){
-				that.changeScene(to, _params);
+				that.changeScene(data.to, data.args);
 			}, 0);
 		});
 
@@ -1612,8 +1614,12 @@
 	 * @param {Object} params
 	 * @memberOf Controller
 	 */
-	function triggerChangeScene(to, params) {
-		this.trigger(EVENT_SCENE_CHANGE);
+	function triggerSceneChange(to, args) {
+		var data = {
+			to: to,
+			args: args
+		};
+		this.trigger(EVENT_SCENE_CHANGE_REQUEST, data);
 	}
 
 	/**
@@ -1632,9 +1638,7 @@
 
 	if(h5internal.core.controllerConstructor) {
 		//Controllerのコンストラクタがあれば、sceneモジュール用の関数を追加
-
-		h5internal.core.controllerConstructor.prototype.triggerChangeScene = triggerChangeScene;
-
+		h5internal.core.controllerConstructor.prototype.triggerSceneChange = triggerSceneChange;
 		h5internal.core.controllerConstructor.prototype.getSceneContainer = getSceneContainer;
 	}
 
