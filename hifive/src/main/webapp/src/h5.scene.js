@@ -63,6 +63,8 @@
 	 */
 	var DATA_ATTR_DUMMY_BODY = 'data-h5-dummy-body';
 
+	var EVENT_CHANGE_SCENE = 'changeScene';
+
 	// =============================
 	// Production
 	// =============================
@@ -102,6 +104,13 @@
 	// =============================
 	// Variables
 	// =============================
+
+	/**
+	 * シーン機能初回適用判定フラグ
+	 */
+	var isInited = false;
+
+
 	// =============================
 	// Functions
 	// =============================
@@ -972,7 +981,7 @@
 	 * data-main-container属性を追加する。<br>
 	 * </p>
 	 * <p>
-	 * BODYタグがない場合は字列をそのまま返す。
+	 * BODYタグがない場合は文字列をそのまま返す。
 	 * </p>
 	 *
 	 * @private
@@ -1540,11 +1549,6 @@
 	}
 
 	/**
-	 * シーン機能初回適用判定フラグ
-	 */
-	var isInited = false;
-
-	/**
 	 * シーン機能の初回適用を行います。
 	 *
 	 * <p>
@@ -1571,9 +1575,38 @@
 		return mainContainer;
 	}
 
+	/**
+	 * コントローラがバインドされた要素内から要素を選択します。
+	 *
+	 * @param {String} to
+	 * @param {Object} params
+	 * @memberOf Controller
+	 */
+	function triggerChangeScene(to, params) {
+		this.trigger(EVENT_SCENE_CHANGE);
+	}
+
+	/**
+	 * このコントローラを直接包含しているシーンコンテナを取得します。
+	 *
+	 * @returns {SceneContainer} シーンコンテナ
+	 * @memberOf Controller
+	 */
+	function getSceneContainer() {
+
+	}
+
 	// =============================
 	// Code on boot
 	// =============================
+
+	if(h5internal.core.controllerConstructor) {
+		//Controllerのコンストラクタがあれば、sceneモジュール用の関数を追加
+
+		h5internal.core.controllerConstructor.prototype.triggerChangeScene = triggerChangeScene;
+
+		h5internal.core.controllerConstructor.prototype.getSceneContainer = getSceneContainer;
+	}
 
 	//TODO autoInitがtrueの場合のみinit
 	//TODO(鈴木) 暫定。とりあえず設定を有効化しました

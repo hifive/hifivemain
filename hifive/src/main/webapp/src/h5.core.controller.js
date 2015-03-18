@@ -4447,9 +4447,6 @@
 		return controller;
 	}
 
-	// fwOptを引数に取る、コントローラ化を行うメソッドを、h5internal.core.controllerInternalとして内部用に登録
-	h5internal.core.controllerInternal = createAndBindController;
-
 	/**
 	 * オブジェクトのロジック化を行います。
 	 *
@@ -4567,6 +4564,15 @@
 
 		return rootLogic;
 	}
+
+	// =============================
+	// Expose internally
+	// =============================
+
+	// fwOptを引数に取る、コントローラ化を行うメソッドを、h5internal.core.controllerInternalとして内部用に登録
+	h5internal.core.controllerInternal = createAndBindController;
+
+	h5internal.core.controllerConstructor = Controller;
 
 	// =============================
 	// Expose to window
