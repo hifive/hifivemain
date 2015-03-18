@@ -26,42 +26,42 @@
 	/**
 	 * コントローラーバインド用データ属性名
 	 */
-	var DATA_ATTR_CONTROLLER = 'data-h5-controller';
+	var DATA_H5_CONTROLLER = 'data-h5-controller';
 
 	/**
 	 * バインド済みコントローラー設定用データ属性名
 	 */
-	var DATA_ATTR_CURRENT_BOUND = 'data-h5-current-bound';
+	var DATA_H5_DYN_CONTROLLER_BOUND = 'data-h5-dyn-controller-bound';
 
 	/**
 	 * デフォルトシーン指定用データ属性名
 	 */
-	var DATA_ATTR_DEFAULT_SCENE = 'data-h5-default-scene';
+	var DATA_H5_DEFAULT_SCENE = 'data-h5-default-scene';
 
 	/**
 	 * シーン指定用データ属性名
 	 */
-	var DATA_ATTR_SCENE = 'data-h5-scene';
+	var DATA_H5_SCENE = 'data-h5-scene';
 
 	/**
 	 * シーンコンテナ指定用データ属性名
 	 */
-	var DATA_ATTR_CONTAINER = 'data-h5-container';
+	var DATA_H5_CONTAINER = 'data-h5-container';
 
 	/**
 	 * メインシーンコンテナ指定用データ属性名
 	 */
-	var DATA_ATTR_MAIN_CONTAINER = 'data-h5-main-container';
+	var DATA_H5_MAIN_CONTAINER = 'data-h5-main-container';
 
 	/**
 	 * コンテナ生成済み識別用データ属性名
 	 */
-	var DATA_ATTR_CONTAINER_BOUND = 'data-h5-container-bound';
+	var DATA_H5_DYN_CONTAINER_BOUND = 'data-h5-dyn-container-bound';
 
 	/**
 	 * BODY要素のダミーDIV識別用データー属性名
 	 */
-	var DATA_ATTR_DUMMY_BODY = 'data-h5-dummy-body';
+	var DATA_H5_DYN_DUMMY_BODY = 'data-h5-dyn-dummy-body';
 
 	var EVENT_CHANGE_SCENE = 'changeScene';
 
@@ -177,7 +177,7 @@
 	 * @returns {Boolean}
 	 */
 	function isScene(target){
-		return $(target).is('[' + DATA_ATTR_DEFAULT_SCENE + '],[' + DATA_ATTR_SCENE + ']' );
+		return $(target).is('[' + DATA_H5_DEFAULT_SCENE + '],[' + DATA_H5_SCENE + ']' );
 	}
 
 	/**
@@ -188,7 +188,7 @@
 	 * @returns {Element}
 	 */
 	function getParentScene(target){
-		var parentScene = $(target).closest('[' + DATA_ATTR_DEFAULT_SCENE + '],[' + DATA_ATTR_SCENE + ']');
+		var parentScene = $(target).closest('[' + DATA_H5_DEFAULT_SCENE + '],[' + DATA_H5_SCENE + ']');
 		return parentScene.length ? parentScene.get(0) : null;
 	}
 
@@ -196,7 +196,7 @@
 	 * 要素がコンテナ属性を持っているかをチェックします
 	 *
 	 * <p>
-	 * body、mainタグがメインシーンコンテナの場合、事前にDATA_ATTR_MAIN_CONTAINERが付与されている前提
+	 * body、mainタグがメインシーンコンテナの場合、事前にDATA_H5_MAIN_CONTAINERが付与されている前提
 	 * </p>
 	 *
 	 * @private
@@ -204,7 +204,7 @@
 	 * @returns {Boolean}
 	 */
 	function isContainer(target){
-		return $(target).is('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + ']' );
+		return $(target).is('[' + DATA_H5_MAIN_CONTAINER + '],[' + DATA_H5_CONTAINER + ']' );
 	}
 
 	/**
@@ -215,7 +215,7 @@
 	 * @returns {Element}
 	 */
 	function getParentContainer(target){
-		var parentContainer = $(target).closest('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + ']');
+		var parentContainer = $(target).closest('[' + DATA_H5_MAIN_CONTAINER + '],[' + DATA_H5_CONTAINER + ']');
 		return parentContainer.length ? parentContainer.get(0) : null;
 	}
 
@@ -312,14 +312,14 @@
 		//TODO(鈴木) メインシーンコンテナができていない場合のみ実行。
 		//この時点でメインシーンコンテナにはdata-h5-main-container属性があるようにする。
 		if(!mainContainer && h5.settings.scene.autoCreateMainContainer){
-			var main = findWithSelf(root, '[' + DATA_ATTR_MAIN_CONTAINER +  ']');
+			var main = findWithSelf(root, '[' + DATA_H5_MAIN_CONTAINER +  ']');
 			if(main.length === 0){
 				main = findWithSelf(root, 'main');
 				if(main.length === 0 && root === document.body){
 					main = $(root);
 				}
 				if(main.length > 0){
-					main.eq(0).attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
+					main.eq(0).attr(DATA_H5_MAIN_CONTAINER, DATA_H5_MAIN_CONTAINER);
 				}
 			}
 		}
@@ -327,10 +327,10 @@
 		//TODO(鈴木) rootElementがシーンコンテナの場合
 		//この場合promiseは返さない
 		//createSceneContainer→scanForContainer→scanとなり再帰になる
-		if($root.is('[' + DATA_ATTR_CONTAINER + ']')){
+		if($root.is('[' + DATA_H5_CONTAINER + ']')){
 			createSceneContainer(root);
 			return;
-		}else if($root.is('[' + DATA_ATTR_MAIN_CONTAINER + ']')){
+		}else if($root.is('[' + DATA_H5_MAIN_CONTAINER + ']')){
 			createSceneContainer(root, true);
 			return;
 		}
@@ -350,8 +350,8 @@
 		var isFound = false;
 
 		//TODO(鈴木) コントローラーのバインド
-		findWithSelf(root, '[' + DATA_ATTR_CONTROLLER + ']').each(function() {
-			var attrControllers = this.getAttribute(DATA_ATTR_CONTROLLER);
+		findWithSelf(root, '[' + DATA_H5_CONTROLLER + ']').each(function() {
+			var attrControllers = this.getAttribute(DATA_H5_CONTROLLER);
 
 			var attrControllerNameList = attrControllers.split(',');
 
@@ -408,7 +408,7 @@
 		});
 
 		//TODO(鈴木) シーンコンテナの探索と生成
-		$root.find('[' + DATA_ATTR_MAIN_CONTAINER + '],[' + DATA_ATTR_CONTAINER + ']').each(function(){
+		$root.find('[' + DATA_H5_MAIN_CONTAINER + '],[' + DATA_H5_CONTAINER + ']').each(function(){
 
 			//TODO(鈴木) 対象シーン要素直属でなければ処理しない
 			if(checkScene(this, currentScene)){
@@ -416,9 +416,9 @@
 			}
 
 			var $container = $(this);
-			if($container.is('[' + DATA_ATTR_MAIN_CONTAINER + ']')){
+			if($container.is('[' + DATA_H5_MAIN_CONTAINER + ']')){
 				createSceneContainer(this, true);
-			}else if($container.is('[' + DATA_ATTR_CONTAINER + ']')){
+			}else if($container.is('[' + DATA_H5_CONTAINER + ']')){
 				createSceneContainer(this);
 			}
 
@@ -444,7 +444,7 @@
 		// 一時しのぎ、getControllers()でバインド途中のコントローラも取得できるようにすべき
 		//var controllers = h5.core.controllerManager.getControllers(element);
 
-		var controllers = $(element).attr(DATA_ATTR_CURRENT_BOUND);
+		var controllers = $(element).attr(DATA_H5_DYN_CONTROLLER_BOUND);
 
 		if(!controllers) return false;
 
@@ -471,10 +471,10 @@
 	 * @param name
 	 */
 	function markBoundController(target, name){
-		var attr = $(target).attr(DATA_ATTR_CURRENT_BOUND) || '';
+		var attr = $(target).attr(DATA_H5_DYN_CONTROLLER_BOUND) || '';
 		if(attr) attr += ',';
 		attr += name;
-		$(target).attr(DATA_ATTR_CURRENT_BOUND, attr);
+		$(target).attr(DATA_H5_DYN_CONTROLLER_BOUND, attr);
 	}
 
 	/**
@@ -503,13 +503,13 @@
 		var dummyController = null;
 
 		//TODO(鈴木) data-h5-default-scene属性を持つ要素が直下に存在するかの確認
-		var defaultSceneElm = $(root).find('>[' + DATA_ATTR_DEFAULT_SCENE + ']');
+		var defaultSceneElm = $(root).find('>[' + DATA_H5_DEFAULT_SCENE + ']');
 		//TODO(鈴木) 先頭要素がdata-h5-controllerを属性持っていない場合、ダミーのコントローラーをバインドしてresolve
 		if(defaultSceneElm.length > 0){
 			var elm = defaultSceneElm.eq(0);
 			if(!alreadyBound(elm)){
 				isFound = true;
-				if(!elm.is('[' + DATA_ATTR_CONTROLLER + ']')){
+				if(!elm.is('[' + DATA_H5_CONTROLLER + ']')){
 					markBoundController(elm, DummyController.__name);
 					dummyController = h5.core.controller(elm, DummyController, args);
 					dfd.resolve(dummyController);
@@ -519,14 +519,14 @@
 
 		if(!isFound){
 			//TODO(鈴木) data-h5-scene属性を持つ要素が直下先頭に存在するかの確認
-			var sceneElm = $(root).children().eq(0).filter('[' + DATA_ATTR_SCENE + ']');
+			var sceneElm = $(root).children().eq(0).filter('[' + DATA_H5_SCENE + ']');
 			if(sceneElm.length > 0){
 				if(!alreadyBound(sceneElm)){
 					isFound = true;
-					sceneElm.attr(DATA_ATTR_DEFAULT_SCENE, DATA_ATTR_DEFAULT_SCENE);
+					sceneElm.attr(DATA_H5_DEFAULT_SCENE, DATA_H5_DEFAULT_SCENE);
 					defaultSceneElm = sceneElm;
 					//TODO(鈴木) 先頭要素がdata-h5-controllerを属性持っていない場合、ダミーのコントローラーをバインドしてresolve
-					if(!sceneElm.is('[' + DATA_ATTR_CONTROLLER + ']')){
+					if(!sceneElm.is('[' + DATA_H5_CONTROLLER + ']')){
 						markBoundController(sceneElm, DummyController.__name);
 						dummyController = h5.core.controller(sceneElm, DummyController, args);
 						dfd.resolve(dummyController);
@@ -993,7 +993,7 @@
 		//HTMLコメントも保存するよう実装すべきか？
 		var match = html.replace(htmlCommentRegexp, '').match(bodyTagRegExp);
 		if(match){
-			return '<div ' + DATA_ATTR_DUMMY_BODY +' ' + match[1] + '>' + match[2] + '</div>';
+			return '<div ' + DATA_H5_DYN_DUMMY_BODY +' ' + match[1] + '>' + match[2] + '</div>';
 		}
 		return html;
 	}
@@ -1011,14 +1011,14 @@
 	function wrapScene(parent){
 		var $parent = $(parent);
 		var $children = $parent.children();
-		if($children.eq(0).is('[' + DATA_ATTR_DEFAULT_SCENE + '],[' + DATA_ATTR_SCENE + ']') === false){
+		if($children.eq(0).is('[' + DATA_H5_DEFAULT_SCENE + '],[' + DATA_H5_SCENE + ']') === false){
 			console.info('シーンコンテナ直下先頭にシーン要素が見つからないため、シーン要素でラップします。');
-			$children.wrapAll($('<div ' + DATA_ATTR_DEFAULT_SCENE + '></div>'));
-			var name = $parent.attr(DATA_ATTR_CONTROLLER);
+			$children.wrapAll($('<div ' + DATA_H5_DEFAULT_SCENE + '></div>'));
+			var name = $parent.attr(DATA_H5_CONTROLLER);
 			if(name){
 				console.info('シーンコンテナのコントローラー指定をラップに使用したシーン要素に移動します。');
 				//TODO(鈴木) childrenは↑のwrapAllで作成した要素
-				$parent.removeAttr(DATA_ATTR_CONTROLLER).children().attr(DATA_ATTR_CONTROLLER, name);
+				$parent.removeAttr(DATA_H5_CONTROLLER).children().attr(DATA_H5_CONTROLLER, name);
 			}
 		}
 	}
@@ -1054,7 +1054,7 @@
 			var $dom = $($.parseHTML(data));
 
 			if(container){
-				var $container = findWithSelf($dom, '[' + DATA_ATTR_CONTAINER + '="' + container + '"]');
+				var $container = findWithSelf($dom, '[' + DATA_H5_CONTAINER + '="' + container + '"]');
 				if($container.length === 0){
 					throw new Error('対象のコンテナ要素が見つかりません');
 				}
@@ -1062,7 +1062,7 @@
 			}else{
 				//TODO(鈴木) mainタグかdata-main-container属性要素があればその内容を対象とする。
 				//通常のシーンコンテナ内にmainとdata-main-containerはない前提。
-				var main = findWithSelf($dom, '[' + DATA_ATTR_MAIN_CONTAINER + ']');
+				var main = findWithSelf($dom, '[' + DATA_H5_MAIN_CONTAINER + ']');
 				//TODO(鈴木) 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
 				//さすがに遷移先HTMLでのフラグ状態までは見られない。。
 				if(h5.settings.scene.autoCreateMainContainer){
@@ -1526,24 +1526,24 @@
 		//TODO(鈴木) 対象要素配下にコンテナ、またはコントローラーバインド済みの要素がある場合はエラーとすべき
 
 		//TODO(鈴木) コンテナ生成済みであればエラー。判定方法は見直しが必要か。
-		if($(element).is('[' + DATA_ATTR_CONTAINER_BOUND + ']')){
+		if($(element).is('[' + DATA_H5_DYN_CONTAINER_BOUND + ']')){
 			//TODO throwFwError();
 			throw new Error();
 		}
 
 		if(isMain){
-			if($(element).is(':not([' + DATA_ATTR_MAIN_CONTAINER +  '])')){
-				$(element).attr(DATA_ATTR_MAIN_CONTAINER, DATA_ATTR_MAIN_CONTAINER);
+			if($(element).is(':not([' + DATA_H5_MAIN_CONTAINER +  '])')){
+				$(element).attr(DATA_H5_MAIN_CONTAINER, DATA_H5_MAIN_CONTAINER);
 			}
 		}else{
-			if($(element).is(':not([' + DATA_ATTR_CONTAINER +  '])')){
-				$(element).attr(DATA_ATTR_CONTAINER, DATA_ATTR_CONTAINER);
+			if($(element).is(':not([' + DATA_H5_CONTAINER +  '])')){
+				$(element).attr(DATA_H5_CONTAINER, DATA_H5_CONTAINER);
 			}
 		}
 
 		var container = new SceneContainer(element, isMain);
 
-		$(element).attr(DATA_ATTR_CONTAINER_BOUND, DATA_ATTR_CONTAINER_BOUND);
+		$(element).attr(DATA_H5_DYN_CONTAINER_BOUND, DATA_H5_DYN_CONTAINER_BOUND);
 
 		return container;
 	}
