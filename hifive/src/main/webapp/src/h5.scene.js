@@ -92,6 +92,8 @@
 	var ERR_CODE_TRANSITION_NOT_FOUND = 100007;
 	/** エラーコード: シーンコンテナ生成済みの要素でシーンコンテナを作成しようとした */
 	var ERR_CODE_CONTAINER_ALREADY_CREATED = 100008;
+	/** エラーコード: シーン遷移先HTMLのロードに失敗した */
+	var ERR_CODE_HTML_LOAD_FAILED = 100009;
 
 	// =============================
 	// Development Only
@@ -115,6 +117,7 @@
 	errMsgMap[ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER] = '現在、メインシーンコンテナのシーン遷移先にコントローラーは指定できません。to:{0}';
 	errMsgMap[ERR_CODE_TRANSITION_NOT_FOUND] = '指定された遷移効果は存在しません。transition:{0}';
 	errMsgMap[ERR_CODE_CONTAINER_ALREADY_CREATED] = '対象要素ですでにシーンコンテナが生成されているため、生成できません。';
+	errMsgMap[ERR_CODE_HTML_LOAD_FAILED] = 'シーン遷移先HTMLのロードに失敗しました。to:{0}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -1461,14 +1464,18 @@
 					//1.2.0では、URLにパラメーターを保存しないため、メインシーンコンテナの場合はcontainer指定は無効とする
 					var loadPromise = loadContents(to, (!this.isMain) ? params.container : null);
 
-					//TODO always->done/fail
-					loadPromise.always(function(toElm) {
+					loadPromise.done(function(toElm) {
 
 						//TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
 						//TODO(鈴木) scan用にダミーのDIVにappend
 						scanForContainer($('<div></div>').append(toElm), null, params.args).done(function(toController){
 							that._onLoadController(toController, fromElm);
 						});
+
+					}).fail(function(xhr){
+
+						// シーン遷移先HTMLのロードに失敗
+						throwFwError(ERR_CODE_HTML_LOAD_FAILED, [to], xhr);
 
 					});
 				}
