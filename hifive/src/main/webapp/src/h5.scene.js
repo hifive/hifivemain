@@ -73,6 +73,26 @@
 
 	var REMOTE_METHOD_INVOCATION_RESULT = '__h5__RMI_Result';
 
+	// エラーコード
+	/** エラーコード: scan関数の対象要素が単一でない */
+	var ERR_CODE_SCAN_MULTIPLE_ELEMENT = 100000;
+	/** エラーコード: コンテナ生成時にカレントとなるシーン要素が見つからない */
+	var ERR_CODE_CURRENT_SCENE_NOT_FOUND = 100001;
+	/** エラーコード: ロードしたHTML内に指定のコンテナが存在しない */
+	var ERR_CODE_TARGET_CONTAINER_NOT_FOUND = 100002;
+	/** エラーコード: メインシーンコンテナを複数生成しようとした */
+	var ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED = 100003;
+	/** エラーコード: シーン遷移先に文字列以外を指定した */
+	var ERR_CODE_CHANGE_SCENE_TO_IS_NOT_STRING = 100004;
+	/** エラーコード: シーン遷移先にハッシュを指定した */
+	var ERR_CODE_CHANGE_SCENE_HASH_IN_TO = 100005;
+	/** エラーコード: メインシーンコンテナの遷移先にコントローラーを指定した(暫定対応) */
+	var ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER = 100006;
+	/** エラーコード: 指定された遷移効果が存在しない */
+	var ERR_CODE_TRANSITION_NOT_FOUND = 100007;
+	/** エラーコード: シーンコンテナ生成済みの要素でシーンコンテナを作成しようとした */
+	var ERR_CODE_CONTAINER_ALREADY_CREATED = 100008;
+
 	// =============================
 	// Development Only
 	// =============================
@@ -81,13 +101,23 @@
 
 	/* del begin */
 	//	var FW_LOG_H5_WHEN_INVALID_PARAMETER = 'h5.scene.when: 引数にpromiseオブジェクトでないものが含まれています。';
+
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
-	//	var errMsgMap = {};
-	//	errMsgMap[ERR_CODE_NOT_ARRAY] = 'h5.scene.each() の第1引数は配列のみを扱います。';
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_SCAN_MULTIPLE_ELEMENT] = 'h5.scene.scan() の第1引数に複数要素は指定できません。単一要素で指定してください。';
+	errMsgMap[ERR_CODE_CURRENT_SCENE_NOT_FOUND] = 'カレントとなるシーン要素が見つかりません。';
+	errMsgMap[ERR_CODE_TARGET_CONTAINER_NOT_FOUND] = 'ロードしたHTMLに、指定されたコンテナ要素が見つかりません。to:{0} container:{1}';
+	errMsgMap[ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED] = 'メインシーンコンテナはすでに生成されているため、生成できません。';
+	errMsgMap[ERR_CODE_CHANGE_SCENE_TO_IS_NOT_STRING] = 'シーン遷移先は文字列で指定してください。to:{0}';
+	errMsgMap[ERR_CODE_CHANGE_SCENE_HASH_IN_TO] = 'シーン遷移先にハッシュは指定できません。to:{0}';
+	errMsgMap[ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER] = '現在、メインシーンコンテナのシーン遷移先にコントローラーは指定できません。to:{0}';
+	errMsgMap[ERR_CODE_TRANSITION_NOT_FOUND] = '指定された遷移効果は存在しません。transition:{0}';
+	errMsgMap[ERR_CODE_CONTAINER_ALREADY_CREATED] = '対象要素ですでにシーンコンテナが生成されているため、生成できません。';
+
 	// メッセージの登録
-	//	addFwErrorCodeMap(errMsgMap);
+	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
 
@@ -305,8 +335,7 @@
 
 		//TODO(鈴木) 対象要素は一つに限定
 		if($root.length !== 1){
-			//TODO throwFwError();
-			throw new Error();
+			throwFwError(ERR_CODE_SCAN_MULTIPLE_ELEMENT);
 		}
 
 		//TODO(鈴木) メインシーンコンテナができていない場合のみ実行。
@@ -537,8 +566,7 @@
 
 		//TODO(鈴木) カレントとなるシーン要素が見つからない場合はエラー
 		if(!isFound){
-			//TODO throwFwError();
-			throw new Error('カレントとなるシーン要素が見つかりません。');
+			throwFwError(ERR_CODE_CURRENT_SCENE_NOT_FOUND);
 		}
 
 		//TODO(鈴木) カレントとなるシーン要素のみscan
@@ -552,7 +580,6 @@
 		}
 
 		return dfd.promise();
-
 	}
 
 	/**
@@ -1056,7 +1083,8 @@
 			if(container){
 				var $container = findWithSelf($dom, '[' + DATA_H5_CONTAINER + '="' + container + '"]');
 				if($container.length === 0){
-					throw new Error('対象のコンテナ要素が見つかりません');
+					// ロードしたHTML内に指定のコンテナが存在しない場合はエラー
+					throwFwError(ERR_CODE_TARGET_CONTAINER_NOT_FOUND, [source, container]);
 				}
 				$dom = $container.eq(0);
 			}else{
@@ -1229,8 +1257,8 @@
 
 		if (this.isMain) {
 			if (mainContainer) {
-				//TODO throwFwError();
-				throw new Error();
+				// すでにメインシーンコンテナが生成されている場合にエラー
+				throwFwError(ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED);
 			}
 		}
 
@@ -1349,19 +1377,16 @@
 
 			if (this.isMain){
 				if(!isString(to)) {
-					//TODO throwFwError();
-					throw new Error();
+					// シーン遷移先に文字列以外を指定されたらエラー
+					throwFwError(ERR_CODE_CHANGE_SCENE_TO_IS_NOT_STRING, [to]);
 				}
-				//hashが指定されていたらエラーとする
 				if(to.indexOf('#') !== -1){
-					//TODO throwFwError();
-					throw new Error();
+					// シーン遷移先にハッシュを指定されたらエラー
+					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [to]);
 				}
-
-				//TODO(鈴木) 現状、メインシーンコンテナの遷移先にコントローラーは指定できない。
 				if(controllerRegexp.test(to)) {
-					//TODO throwFwError();
-					throw new Error('現在、メインシーンコンテナの遷移先にコントローラーは指定できません。');
+					// メインシーンコンテナで遷移先にコントローラーを指定されたらエラー(暫定)
+					throwFwError(ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER, [to]);
 				}
 
 				//TODO(鈴木) パラメータをエンコードしてURLに付加
@@ -1463,11 +1488,10 @@
 					: DEFAULT_SCENE_TRANSITION_TYPE];
 
 			if (!Transition) {
-				//TODO throwFwError();
-				throw new Error();
+				// 指定された遷移効果が存在しない場合はエラー
+				throwFwError(ERR_CODE_TRANSITION_NOT_FOUND, [type]);
 			}
 
-			//TODO(鈴木) transitionをコントローラーからFunctionに変更
 			return  new Transition();
 		},
 
@@ -1527,8 +1551,7 @@
 
 		//TODO(鈴木) コンテナ生成済みであればエラー。判定方法は見直しが必要か。
 		if($(element).is('[' + DATA_H5_DYN_CONTAINER_BOUND + ']')){
-			//TODO throwFwError();
-			throw new Error();
+			throwFwError(ERR_CODE_CONTAINER_ALREADY_CREATED);
 		}
 
 		if(isMain){
