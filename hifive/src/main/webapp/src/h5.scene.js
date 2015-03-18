@@ -1331,7 +1331,7 @@
 		$(this.rootElement).on(EVENT_SCENE_CHANGE_REQUEST, function(e, data) {
 			e.stopPropagation();
 			setTimeout(function() {
-				that.changeScene(data.to, data.args);
+				that.changeScene(data.to, data);
 			}, 0);
 		});
 
