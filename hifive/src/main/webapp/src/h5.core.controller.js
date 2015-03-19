@@ -2030,10 +2030,16 @@
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
+	 * @param {Boolean} async 同期で__initを呼ぶ場合はfalseを指定
 	 */
-	function triggerInit(controller) {
-		// 必ず非同期になるようにする
-		var asyncDfd = getDeferred();
+	function triggerInit(controller, async) {
+		if (async === false) {
+			// asyncがfalseなら同期
+			executeLifecycleEventChain(controller, '__init');
+			return;
+		}
+
+		// asyncにfalseが指定されていない場合は必ず非同期になるようにする
 		setTimeout(function() {
 			executeLifecycleEventChain(controller, '__init');
 		}, 0);
@@ -4225,6 +4231,15 @@
 		var postInitPromise = postInitDfd.promise().fail(dummyFailHandler);
 		var readyDfd = getDeferred();
 		var readyPromise = readyDfd.promise();
+		// async:falseならresolve済みにしておいて同期でバインドされるようにする(内部で使用するオプション)
+		var async = fwOpt && fwOpt.async;
+		if (async === false) {
+			preInitDfd.resolve();
+			initDfd.resolve();
+			postInitDfd.resolve();
+			readyDfd.resolve();
+		}
+
 		if (!isRoot) {
 			// ルートコントローラでないなら、readyPromiseの失敗でcommonFailHandlerを発火させないようにする
 			// (ルートコントローラのreadyPromiseのみ、失敗したらcommonFailHandlerが発火する)
@@ -4350,7 +4365,7 @@
 			controller[prop] = clonedControllerDef[prop];
 		}
 
-		// コントローラマネージャの管理対象とするか判定する(fwOpt.false===falseなら管理対象外)
+		// コントローラマネージャの管理対象とするか判定する(fwOpt.managed===falseなら管理対象外)
 		controllerContext.managed = fwOpt && fwOpt.managed;
 
 		// __constructを実行(子コントローラのコントローラ化より前)
@@ -4394,7 +4409,8 @@
 							isInternal: true,
 							parentController: controller,
 							rootController: rootController,
-							promisesForTriggerInit: promisesForTriggerInit
+							promisesForTriggerInit: promisesForTriggerInit,
+							async: async
 						});
 						if (child == null) {
 							// __constructで失敗したりdisposeされた場合はnullが返ってくるので
@@ -4432,7 +4448,7 @@
 			function constructPromiseCheck() {
 				if (promisesForTriggerInit.length === 0) {
 					// 待機中のプロミスがもうないならinit開始
-					triggerInit(controller);
+					triggerInit(controller, async);
 					return;
 				}
 				// 子孫にpromiseを追加されていた場合(さらに待機するコンストラクタがあった場合)
