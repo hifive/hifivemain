@@ -312,7 +312,8 @@ $(function() {
 			strictEqual($container.text(), 'to1', 'シーンが変更されること');
 			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
 			var $scene1 = $container.children();
-			container.changeScene('scenedata/page/to2.html', {
+			container.changeScene({
+				to : 'scenedata/page/to2.html',
 				args: {
 					test: 'TEST'
 				}
@@ -336,9 +337,7 @@ $(function() {
 		$container.append($scene);
 		this.$fixture.append($container);
 		var container = h5.scene.createSceneContainer($container);
-		$(container.rootElement).trigger('sceneChangeRequest', {
-			to : 'scenedata/page/to1.html'
-		});
+		$(container.rootElement).trigger('sceneChangeRequest', 'scenedata/page/to1.html');
 		gate({
 			func: function() {
 				return $container.text() === 'to1';
@@ -410,7 +409,8 @@ $(function() {
 		$container.append($scene);
 		this.$fixture.append($container);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata.controller.ControllerSubController', {
+		container.changeScene({
+			to : 'scenedata.controller.ControllerSubController',
 			args: {
 				test: 'CTRL'
 			}
@@ -435,7 +435,8 @@ $(function() {
 		$container.append($scene);
 		this.$fixture.append($container);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/from.html', {
+		container.changeScene({
+			to : 'scenedata/page/from.html',
 			container: 'sub_from',
 			args: {
 				test: 'SUB'
@@ -498,7 +499,8 @@ $(function() {
 									var title = controller.$find('h1').text();
 									strictEqual(title, 'FROM', '直接アクセスで画面が表示されていること');
 									//strictEqual(controller.__name, 'scenedata.controller.FromController', 'コントローラーバインド確認');
-									mainContainer.changeScene('to.html?' + BUILD_TYPE_PARAM, {
+									mainContainer.changeScene({
+										to : 'to.html?' + BUILD_TYPE_PARAM,
 										args: {
 											test: 'hoge'
 										}
