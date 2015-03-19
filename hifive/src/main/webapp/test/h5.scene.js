@@ -346,8 +346,9 @@ $(function() {
 		}).done(function() {
 			strictEqual($container.text(), 'to1', 'シーンが変更されること');
 			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
-			var $scene1 = $container.children();
-			$scene1.trigger('sceneChangeRequest', {
+			var scene1 = container._currentController;
+			var $scene1 = $(scene1.rootElement);
+			scene1.triggerSceneChange({
 				to : 'scenedata/page/to2.html',
 				args: {
 					test: 'TEST'

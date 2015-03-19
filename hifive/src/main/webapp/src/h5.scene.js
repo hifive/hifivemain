@@ -97,6 +97,8 @@
 	var ERR_CODE_CONTAINER_ALREADY_CREATED = 100008;
 	/** エラーコード: シーン遷移先HTMLのロードに失敗した */
 	var ERR_CODE_HTML_LOAD_FAILED = 100009;
+	/** コンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていない */
+	var ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND = 100010;
 
 	// =============================
 	// Development Only
@@ -120,6 +122,7 @@
 	errMsgMap[ERR_CODE_TRANSITION_NOT_FOUND] = '指定された遷移効果は存在しません。transition:{0}';
 	errMsgMap[ERR_CODE_CONTAINER_ALREADY_CREATED] = '対象要素ですでにシーンコンテナが生成されているため、生成できません。';
 	errMsgMap[ERR_CODE_HTML_LOAD_FAILED] = 'シーン遷移先HTMLのロードに失敗しました。to:{0}';
+	errMsgMap[ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND] = '要素にコンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていません。';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -1238,339 +1241,398 @@
 	/**
 	 * シーンコンテナクラス
 	 * <p>
-	 * このオブジェクトは自分でnewすることはありません。 シーンコンテナを生成する場合はh5.scene.createSceneContainer()を使用してください。
+	 * 実体はコントローラーです。
+	 * シーンコンテナを生成する場合はh5.scene.createSceneContainer()を使用してください。
 	 * </p>
 	 *
 	 * @class
-	 * @name SceneContainer
+	 * @name SceneContainerController
 	 */
-	/**
-	 * @private
-	 * @param {Element} element シーンコンテナ生成対象要素。
-	 * @param {Boolean} isMain
-	 *            メインシーンコンテナであるか否か。(メインシーンコンテナである:true/メインシーンコンテナでない:false)(デフォルト:false)
-	 */
-	function SceneContainer(element, isMain) {
+	var SceneContainerController = {
 
-		var that = this;
+		__name : 'SceneContainerController',
 
-		this.isMain = !!isMain;
+		/**
+		 * メインシーンコンテナであるか否か
+		 *
+		 * @readOnly
+		 * @type Boolean
+		 * @memberOf SceneContainerController
+		 */
+		isMain : false,
 
-		if (this.isMain) {
-			if (mainContainer) {
-				// すでにメインシーンコンテナが生成されている場合にエラー
-				throwFwError(ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED);
+		/**
+		 * 画面遷移効果
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_transition : null,
+
+		/**
+		 * 現在表示しているシーンのコントローラー
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_currentController : null,
+
+		/**
+		 * リンククリックジャックによるシーン遷移の可否
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_isClickjackEnabled : false,
+
+		/**
+		 * シーン遷移時に使用するDeferredオブジェクト
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_dfd : null,
+
+		/**
+		 * changeScene経由で_changeSceneを実行したか否か
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_isNavigated : false,
+
+		__init : function(context) {
+
+			var args = context.args || {};
+
+			var element  = this.rootElement;
+			var isMain = args.isMain;
+
+			var that = this;
+
+			this.isMain = !!isMain;
+
+			if (this.isMain) {
+				if (mainContainer) {
+					// すでにメインシーンコンテナが生成されている場合にエラー
+					throwFwError(ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED);
+				}
 			}
-		}
 
-		// TODO(鈴木) element指定なしの場合はdiv要素を作って設定
-		if (element == null) {
-			element = $('<div></div>').get(0);
-		}
+			// TODO(鈴木) とりあえずデフォルトのtransitionを使用。
+			this._transition = this._createTransition();
+			this._transition.onChangeStart(element);
 
-		this.rootElement = element;
+			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
+			this._currentController = null;
 
-		// TODO(鈴木) とりあえずデフォルトのtransitionを使用。
-		this._transition = this._createTransition();
-		this._transition.onChangeStart(element);
+			this._isClickjackEnabled = false;
 
-		// TODO(鈴木) シーンコンテナ下はコントローラーを管理
-		this._currentController = null;
+			// TODO isClickjackのT/Fでハンドラを切り替える
+			// デフォルトではclickjackはfalseの方向
+			if (that._isClickjackEnabled) {
+				$(element).on('click', 'a', function(event) {
+					event.preventDefault();
 
-		this._isClickjackEnabled = false;
+					var href = event.originalEvent.target.href;
 
-		// TODO isClickjackのT/Fでハンドラを切り替える
-		// デフォルトではclickjackはfalseの方向
-		if (that._isClickjackEnabled) {
-			$(element).on('click', 'a', function(event) {
-				event.preventDefault();
+					that.changeScene(href);
+				});
+			}
 
-				var href = event.originalEvent.target.href;
+			// TODO(鈴木) コンテナ内にシーン要素がなければ追加する
+			wrapScene(element);
 
-				that.changeScene(href);
-			});
-		}
+			if (this.isMain) {
 
-		// TODO(鈴木) コンテナ内にシーン要素がなければ追加する
-		wrapScene(element);
+				mainContainer = this;
 
-		if (this.isMain) {
+				// TODO(鈴木) メインシーンコンテナの場合はURL連動指定を行う。
+				$(window).on('popstate', onPopState);
 
-			mainContainer = this;
-
-			// TODO(鈴木) メインシーンコンテナの場合はURL連動指定を行う。
-			$(window).on('popstate', onPopState);
-
-			// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
-			// onPopStateを呼んでしまうと余計にHTMLを取りに行くことになるので、直接_changeSceneをto=elementで呼び出す。
-			// URLからのパラメーター取得は現状では無効とする。
-			// var params = toQueryParams((location.search || '').substring(1));
-			var params = {};
-			scanForContainer(element, null, params.args).done(function(toController) {
-				that._currentController = toController;
-				that._transition.onChangeEnd(that.rootElement, null, element);
-				that._transition = null;
-			});
-
-		} else {
-
-			// TODO(鈴木) カレントとなるシーンを探索してscan
-			scanForContainer(element).done(function(controller) {
-				that._currentController = controller;
-				that._transition.onChangeEnd(that.rootElement, null, element);
-				that._transition = null;
-			});
-
-		}
-
-		$(this.rootElement).on(EVENT_SCENE_CHANGE_REQUEST, function(e, data) {
-			e.stopPropagation();
-			setTimeout(function() {
-				that.changeScene(data);
-			}, 0);
-		});
-
-	}
-
-	$.extend(SceneContainer.prototype,
-			{
-
-				/**
-				 * シーンコンテナ内のシーンを遷移します。
-				 * <p>
-				 * 機能の詳細については以下を参照してください。
-				 * </p>
-				 * <ul>
-				 * <li><a
-				 * href="/conts/web/view/reference/scene-spec">リファレンス（仕様詳細)&gt;&gt;画面遷移制御・履歴管理(シーン機能)仕様
-				 * [ver.1.2]</a>
-				 * <ul>
-				 * <li><a
-				 * href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E907779FB2830B730FC30F3306E907779FB29">
-				 * シーンコンテナ内の遷移(シーンの遷移)</a></li>
-				 * </ul>
-				 * </li>
-				 * </ul>
-				 *
-				 * @param {String} to 遷移先を指定します。HTMLを返却するURLか、コントローラーの__name属性を指定します。
-				 * @param {Object|String} params 遷移先文字列、または遷移用オプション。
-				 *            <p>
-				 *            遷移先文字列は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
-				 *            遷移用オプションは、以下のプロパティを持ちます。
-				 *            </p>
-				 *            <ul>
-				 *            <li>to … 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。
-				 *            <li>transition … 遷移効果指定
-				 *            <li>container …
-				 *            toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
-				 *            <li> args … デフォルトシーンに対応するコントローラー生成時に渡されるパラメータ
-				 *            </ul>
-				 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
-				 * @memberOf SceneContainer
-				 */
-				changeScene: function(params) {
-
-					// TODO(鈴木) paramが文字列の場合は遷移先と見なして再帰呼び出しする
-					if (isString(params)) {
-						return this.changeScene({
-							to: params
+				// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
+				// onPopStateを呼んでしまうと余計にHTMLを取りに行くことになるので、直接_changeSceneをto=elementで呼び出す。
+				// URLからのパラメーター取得は現状では無効とする。
+				// var params = toQueryParams((location.search ||
+				// '').substring(1));
+				var params = {};
+				scanForContainer(element, null, params.args).done(
+						function(toController) {
+							that._currentController = toController;
+							that._transition.onChangeEnd(that.rootElement,
+									null, element);
+							that._transition = null;
 						});
-					}
 
-					params = $.extend(true, {}, params);
+			} else {
 
-					var to = params.to;
+				// TODO(鈴木) カレントとなるシーンを探索してscan
+				scanForContainer(element).done(
+						function(controller) {
+							that._currentController = controller;
+							that._transition.onChangeEnd(that.rootElement,
+									null, element);
+							that._transition = null;
+						});
 
-					this._transition = this._createTransition(params.transition);
+			}
 
-					// TODO(鈴木) シーンコンテナ下はコントローラーを管理
-					var fromElm = (this._currentController || {}).rootElement;
+			$(this.rootElement).on(EVENT_SCENE_CHANGE_REQUEST,
+					function(e, data) {
+						e.stopPropagation();
+						setTimeout(function() {
+							that.changeScene(data);
+						}, 0);
+					});
 
-					// TODO(鈴木) インジケーターは遷移処理発動直後に表示する必要がある(余計な操作をさせないため)
-					// fromは設定しているが使っていない。toはここでは指定できない。
-					this._transition.onChangeStart(this.rootElement, fromElm);
+		},
 
-					var dfd = this._dfd = h5.async.deferred();
+		/**
+		 * シーンコンテナ内のシーンを遷移します。
+		 * <p>
+		 * 機能の詳細については以下を参照してください。
+		 * </p>
+		 * <ul>
+		 * <li><a
+		 * href="/conts/web/view/reference/scene-spec">リファレンス（仕様詳細)&gt;&gt;画面遷移制御・履歴管理(シーン機能)仕様
+		 * [ver.1.2]</a>
+		 * <ul>
+		 * <li><a
+		 * href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E907779FB2830B730FC30F3306E907779FB29">
+		 * シーンコンテナ内の遷移(シーンの遷移)</a></li>
+		 * </ul>
+		 * </li>
+		 * </ul>
+		 *
+		 * @param {String}
+		 *            to 遷移先を指定します。HTMLを返却するURLか、コントローラーの__name属性を指定します。
+		 * @param {Object|String}
+		 *            params 遷移先文字列、または遷移用オプション。
+		 *            <p>
+		 *            遷移先文字列は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
+		 *            遷移用オプションは、以下のプロパティを持ちます。
+		 *            </p>
+		 *            <ul>
+		 *            <li>to … 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。
+		 *            <li>transition … 遷移効果指定
+		 *            <li>container …
+		 *            toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
+		 *            <li> args … デフォルトシーンに対応するコントローラー生成時に渡されるパラメータ
+		 *            </ul>
+		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
+		 * @memberOf SceneContainerController
+		 */
+		changeScene : function(params) {
 
-					// TODO(鈴木) changeScene経由で_changeSceneを実行したか否か
-					this._isNavigated = true;
+			// TODO(鈴木) paramが文字列の場合は遷移先と見なして再帰呼び出しする
+			if (isString(params)) {
+				return this.changeScene({
+					to : params
+				});
+			}
 
-					if (this.isMain) {
+			params = $.extend(true, {}, params);
 
-						// TODO(鈴木) メインシーンコンテナで遷移先がHTML(コントローラーでない)の場合は
-						// paramsからtoを削除(URLに余計な情報を残さないため)
-						if (!controllerRegexp.test(to)) {
-							delete params.to;
-						}
+			var to = params.to;
 
-						if (!isString(to)) {
-							// シーン遷移先に文字列以外を指定されたらエラー
-							throwFwError(ERR_CODE_CHANGE_SCENE_TO_IS_NOT_STRING, [to]);
-						}
-						if (to.indexOf('#') !== -1) {
-							// シーン遷移先にハッシュを指定されたらエラー
-							throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [to]);
-						}
-						if (controllerRegexp.test(to)) {
-							// メインシーンコンテナで遷移先にコントローラーを指定されたらエラー(暫定)
-							throwFwError(ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER, [to]);
-						}
+			this._transition = this._createTransition(params.transition);
 
-						// TODO(鈴木) パラメータをエンコードしてURLに付加
-						// ※現在シリアライズ方式検討中のため、パラメータの付加はしない
-						//to += ((to.indexOf('?') === -1) ? '?' : '&') + $.param(params);
+			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
+			var fromElm = (this._currentController || {}).rootElement;
 
-						pushState(null, null, toAbsoluteUrl(to));
+			// TODO(鈴木) インジケーターは遷移処理発動直後に表示する必要がある(余計な操作をさせないため)
+			// fromは設定しているが使っていない。toはここでは指定できない。
+			this._transition.onChangeStart(this.rootElement, fromElm);
 
-						// TODO(鈴木) URLから遷移したいが、↑のためパラメータが付加されていないので、
-						// 直接_changeSceneを呼ぶ。
-						// onPopState();
-						this._changeScene(to, h5.u.obj.deserialize(h5.u.obj.serialize(params)));
+			var dfd = this._dfd = h5.async.deferred();
 
-					} else {
-						this._changeScene(to, h5.u.obj.deserialize(h5.u.obj.serialize(params)));
-					}
+			// TODO(鈴木) changeScene経由で_changeSceneを実行したか否か
+			this._isNavigated = true;
 
-					return dfd.promise();
-				},
+			if (this.isMain) {
 
-				/**
-				 * シーン遷移内部処理
-				 *
-				 * @private
-				 * @memberOf SceneContainer
-				 * @param to
-				 * @param params
-				 */
-				_changeScene: function(to, params) {
+				// TODO(鈴木) メインシーンコンテナで遷移先がHTML(コントローラーでない)の場合は
+				// paramsからtoを削除(URLに余計な情報を残さないため)
+				if (!controllerRegexp.test(to)) {
+					delete params.to;
+				}
 
-					params = params || {};
+				if (!isString(to)) {
+					// シーン遷移先に文字列以外を指定されたらエラー
+					throwFwError(ERR_CODE_CHANGE_SCENE_TO_IS_NOT_STRING, [ to ]);
+				}
+				if (to.indexOf('#') !== -1) {
+					// シーン遷移先にハッシュを指定されたらエラー
+					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [ to ]);
+				}
+				if (controllerRegexp.test(to)) {
+					// メインシーンコンテナで遷移先にコントローラーを指定されたらエラー(暫定)
+					throwFwError(ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER,
+							[ to ]);
+				}
 
-					// TODO(鈴木) シーンコンテナ下はコントローラーを管理
-					var fromElm = (this._currentController || {}).rootElement;
+				// TODO(鈴木) パラメータをエンコードしてURLに付加
+				// ※現在シリアライズ方式検討中のため、パラメータの付加はしない
+				// to += ((to.indexOf('?') === -1) ? '?' : '&') +
+				// $.param(params);
 
-					// changeSceneメソッド経由でない場合
-					if (!this._isNavigated) {
-						this._transition = this._createTransition(params.transition);
-						this._transition.onChangeStart(this.rootElement, fromElm);
-					}
+				pushState(null, null, toAbsoluteUrl(to));
 
-					// 現在のページの全てのコントローラを削除
-					if (fromElm) {
-						disposeAllControllers(fromElm);
-					}
+				// TODO(鈴木) URLから遷移したいが、↑のためパラメータが付加されていないので、
+				// 直接_changeSceneを呼ぶ。
+				// onPopState();
+				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj
+						.serialize(params)));
 
-					var that = this;
+			} else {
+				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj
+						.serialize(params)));
+			}
 
-					// TODO(鈴木) transitionをコントローラーからFunctionに変更
+			return dfd.promise();
+		},
 
-					// TODO(鈴木) TransitionController変更に伴う変更
-					// 次のコンテンツのロードはこちらで行う。
-					// 将来、コントローラー・DOMを保存して使用する場合に、それらのハンドリングはシーンコンテナで行うほうがよいと思われるため。
-					// 更にその先で、これらの処理も外部指定が可能なようにする。
+		/**
+		 * シーン遷移内部処理
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 * @param to
+		 * @param params
+		 */
+		_changeScene : function(to, params) {
 
-					// TODO(鈴木) 処理順を以下に変更
-					// HTMLロード→(ツリーにはappendせず)DOM生成→属性に基づきコントローラーをロード・バインド
-					// →シーンルートとなるコントローラーのDOMを既存と入れ替える
-					// (現状はコンテナ以下をそのまま入れている。コンテナ内にDOM的にシーンが複数あるケースは未対応)
+			params = params || {};
 
-					if (isString(to)) {
+			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
+			var fromElm = (this._currentController || {}).rootElement;
 
-						if (controllerRegexp.test(to)) {
+			// changeSceneメソッド経由でない場合
+			if (!this._isNavigated) {
+				this._transition = this._createTransition(params.transition);
+				this._transition.onChangeStart(this.rootElement, fromElm);
+			}
 
-							// TODO(鈴木)
-							loadController(to, $('<div></div>'), params.args).done(
-									function(toController) {
-										that._onLoadController(toController, fromElm);
-									});
+			// 現在のページの全てのコントローラを削除
+			if (fromElm) {
+				disposeAllControllers(fromElm);
+			}
 
-						} else {
-							//TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
-							// 1.2.0では、URLにパラメーターを保存しないため、メインシーンコンテナの場合はcontainer指定は無効とする
-							var loadPromise = loadContents(to, (!this.isMain) ? params.container
-									: null);
+			var that = this;
 
-							loadPromise.done(
-									function(toElm) {
+			// TODO(鈴木) transitionをコントローラーからFunctionに変更
 
-										//TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
-										//TODO(鈴木) scan用にダミーのDIVにappend
-										scanForContainer($('<div></div>').append(toElm), null,
-												params.args).done(function(toController) {
-											that._onLoadController(toController, fromElm);
+			// TODO(鈴木) TransitionController変更に伴う変更
+			// 次のコンテンツのロードはこちらで行う。
+			// 将来、コントローラー・DOMを保存して使用する場合に、それらのハンドリングはシーンコンテナで行うほうがよいと思われるため。
+			// 更にその先で、これらの処理も外部指定が可能なようにする。
+
+			// TODO(鈴木) 処理順を以下に変更
+			// HTMLロード→(ツリーにはappendせず)DOM生成→属性に基づきコントローラーをロード・バインド
+			// →シーンルートとなるコントローラーのDOMを既存と入れ替える
+			// (現状はコンテナ以下をそのまま入れている。コンテナ内にDOM的にシーンが複数あるケースは未対応)
+
+			if (isString(to)) {
+
+				if (controllerRegexp.test(to)) {
+
+					// TODO(鈴木)
+					loadController(to, $('<div></div>'), params.args).done(
+							function(toController) {
+								that._onLoadController(toController, fromElm);
+							});
+
+				} else {
+					// TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
+					// 1.2.0では、URLにパラメーターを保存しないため、メインシーンコンテナの場合はcontainer指定は無効とする
+					var loadPromise = loadContents(to,
+							(!this.isMain) ? params.container : null);
+
+					loadPromise.done(
+							function(toElm) {
+
+								// TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
+								// TODO(鈴木) scan用にダミーのDIVにappend
+								scanForContainer(
+										$('<div></div>').append(toElm), null,
+										params.args).done(
+										function(toController) {
+											that._onLoadController(
+													toController, fromElm);
 										});
 
-									}).fail(function(xhr) {
+							}).fail(function(xhr) {
 
-								// シーン遷移先HTMLのロードに失敗
-								throwFwError(ERR_CODE_HTML_LOAD_FAILED, [to], xhr);
-
-							});
-						}
-					}
-
-				},
-
-				/**
-				 * 遷移効果登録
-				 *
-				 * @private
-				 * @memberOf SceneContainer
-				 * @param type
-				 */
-				_createTransition: function(type) {
-					var Transition = transitionTypeMap[type != null ? type
-							: DEFAULT_SCENE_TRANSITION_TYPE];
-
-					if (!Transition) {
-						// 指定された遷移効果が存在しない場合はエラー
-						throwFwError(ERR_CODE_TRANSITION_NOT_FOUND, [type]);
-					}
-
-					return new Transition();
-				},
-
-				/**
-				 * シーン遷移時コントローラーロード後処理
-				 *
-				 * @private
-				 * @memberOf SceneContainer
-				 * @param toController
-				 * @param fromElm
-				 */
-				_onLoadController: function(toController, fromElm) {
-
-					var that = this;
-
-					var toElm = toController.rootElement;
-
-					this._transition.onChange(this.rootElement, toElm).done(function() {
-
-						//TODO(鈴木) disposeのタイミングはどうすべきか・・
-
-						if (this._dfd) {
-							this._dfd.resolve({
-								from: fromElm,
-								to: toElm
-							});
-						}
-
-						if (fromElm) {
-							fromElm.remove();
-						}
-
-						that._currentController = toController;
-
-						// TODO(鈴木) インジケータ非表示
-						that._transition.onChangeEnd(that.rootElement, fromElm, toElm);
-
-						that._isNavigated = false;
-						that._dfd = null;
-						that._transition = null;
+						// シーン遷移先HTMLのロードに失敗
+						throwFwError(ERR_CODE_HTML_LOAD_FAILED, [ to ], xhr);
 
 					});
 				}
+			}
+
+		},
+
+		/**
+		 * 遷移効果登録
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 * @param type
+		 */
+		_createTransition : function(type) {
+			var Transition = transitionTypeMap[type != null ? type
+					: DEFAULT_SCENE_TRANSITION_TYPE];
+
+			if (!Transition) {
+				// 指定された遷移効果が存在しない場合はエラー
+				throwFwError(ERR_CODE_TRANSITION_NOT_FOUND, [ type ]);
+			}
+
+			return new Transition();
+		},
+
+		/**
+		 * シーン遷移時コントローラーロード後処理
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 * @param toController
+		 * @param fromElm
+		 */
+		_onLoadController : function(toController, fromElm) {
+
+			var that = this;
+
+			var toElm = toController.rootElement;
+
+			this._transition.onChange(this.rootElement, toElm).done(function() {
+
+				// TODO(鈴木) disposeのタイミングはどうすべきか・・
+
+				if (this._dfd) {
+					this._dfd.resolve({
+						from : fromElm,
+						to : toElm
+					});
+				}
+
+				if (fromElm) {
+					fromElm.remove();
+				}
+
+				that._currentController = toController;
+
+				// TODO(鈴木) インジケータ非表示
+				that._transition.onChangeEnd(that.rootElement, fromElm, toElm);
+
+				that._isNavigated = false;
+				that._dfd = null;
+				that._transition = null;
+
 			});
+		}
+
+	};
 
 	/**
 	 * シーンコンテナインスタンスを生成します.
@@ -1579,11 +1641,16 @@
 	 * @param {Element} element シーンコンテナ生成対象要素。
 	 * @param {Boolean} isMain
 	 *            メインシーンコンテナであるか否か。(メインシーンコンテナである:true/メインシーンコンテナでない:false)(デフォルト:false)
-	 * @returns {SceneContainer} 生成したシーンコンテナのインスタンス。
+	 * @returns {SceneContainerController} 生成したシーンコンテナのインスタンス。
 	 */
 	function createSceneContainer(element, isMain) {
 
 		// TODO(鈴木) 対象要素配下にコンテナ、またはコントローラーバインド済みの要素がある場合はエラーとすべき
+
+		// TODO(鈴木) element指定なしの場合はdiv要素を作って設定
+		if (element == null) {
+			element = $('<div></div>').get(0);
+		}
 
 		// TODO(鈴木) コンテナ生成済みであればエラー。判定方法は見直しが必要か。
 		if ($(element).is('[' + DATA_H5_DYN_CONTAINER_BOUND + ']')) {
@@ -1600,7 +1667,12 @@
 			}
 		}
 
-		var container = new SceneContainer(element, isMain);
+		var container = h5internal.core.controllerInternal(element,
+				SceneContainerController, {
+					isMain : isMain
+				}, {
+					async : false
+				});
 
 		$(element).attr(DATA_H5_DYN_CONTAINER_BOUND, DATA_H5_DYN_CONTAINER_BOUND);
 
@@ -1626,7 +1698,7 @@
 	 * メインシーンコンテナのインスタンスを取得します。
 	 *
 	 * @memberOf h5.scene
-	 * @returns {SceneContainer} メインシーンコンテナのインスタンス。未作成の場合はnull。
+	 * @returns {SceneContainerController} メインシーンコンテナのインスタンス。未作成の場合はnull。
 	 */
 	function getMainContainer() {
 		return mainContainer;
@@ -1635,26 +1707,44 @@
 	/**
 	 * コントローラがバインドされた要素内から要素を選択します。
 	 *
-	 * @param {String} to
-	 * @param {Object} params
+	 * @param {String|Object}
+	 *            data
 	 * @memberOf Controller
 	 */
-	function triggerSceneChange(to, args) {
-		var data = {
-			to: to,
-			args: args
-		};
+	function triggerSceneChange(data) {
 		this.trigger(EVENT_SCENE_CHANGE_REQUEST, data);
 	}
 
 	/**
 	 * このコントローラを直接包含しているシーンコンテナを取得します。
 	 *
-	 * @returns {SceneContainer} シーンコンテナ
+	 * <p>
+	 * シーンコンテナ要素が存在しない、または未生成の場合はnullを返却します。
+	 * </p>
+	 *
+	 * @returns {SceneContainerController} シーンコンテナ
 	 * @memberOf Controller
 	 */
 	function getSceneContainer() {
-
+		var element = getParentContainer(this.rootElement);
+		if (!element
+				|| $(element).is(':not([' + DATA_H5_DYN_CONTAINER_BOUND + '])')) {
+			return null;
+		}
+		var controllers = h5.core.controllerManager.getControllers(element);
+		var container = null;
+		for (var i = 0; i < controllers.length; i++) {
+			var controller = controllers[i];
+			if (controller.__name === SceneContainerController.__name) {
+				container = controller;
+				break;
+			}
+		}
+		if (!container) {
+			// 要素にコンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていない
+			throwFwError(ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND);
+		}
+		return container;
 	}
 
 	// =============================
@@ -1686,11 +1776,11 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.scene', {
-		openWindow: openWindow,
-		createSceneContainer: createSceneContainer,
-		init: init,
-		getMainContainer: getMainContainer,
-		scan: scan
+		openWindow : openWindow,
+		createSceneContainer : createSceneContainer,
+		init : init,
+		getMainContainer : getMainContainer,
+		scan : scan
 	});
 
 })();
