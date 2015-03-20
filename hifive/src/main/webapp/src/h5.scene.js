@@ -1220,20 +1220,6 @@
 	var mainContainer = null;
 
 	/**
-	 * 画面遷移時のpopState時のコールバック
-	 *
-	 * @private
-	 */
-	function onPopState() {
-		// TODO(鈴木) 現状はURLでパラメーター渡しはしない
-		// var params = toQueryParams((location.search || '').substring(1));
-		// mainContainer._changeScene(location.href, params);
-		mainContainer._changeScene(location.href);
-
-		// TODO(鈴木) hrefからparamsに該当する部分を削除して使用したほうがよいか？
-	}
-
-	/**
 	 * changeSceneの遷移先指定コントローラーか否かを判断する正規表現
 	 */
 	var controllerRegexp = /Controller$/;
@@ -1301,6 +1287,12 @@
 		 */
 		_isNavigated : false,
 
+		/**
+		 * __init
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
 		__init : function(context) {
 
 			var args = context.args || {};
@@ -1326,29 +1318,12 @@
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
 			this._currentController = null;
 
-			this._isClickjackEnabled = false;
-
-			// TODO isClickjackのT/Fでハンドラを切り替える
-			// デフォルトではclickjackはfalseの方向
-			if (that._isClickjackEnabled) {
-				$(element).on('click', 'a', function(event) {
-					event.preventDefault();
-
-					var href = event.originalEvent.target.href;
-
-					that.changeScene(href);
-				});
-			}
-
 			// TODO(鈴木) コンテナ内にシーン要素がなければ追加する
 			wrapScene(element);
 
 			if (this.isMain) {
 
 				mainContainer = this;
-
-				// TODO(鈴木) メインシーンコンテナの場合はURL連動指定を行う。
-				$(window).on('popstate', onPopState);
 
 				// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
 				// onPopStateを呼んでしまうと余計にHTMLを取りに行くことになるので、直接_changeSceneをto=elementで呼び出す。
@@ -1377,14 +1352,48 @@
 
 			}
 
-			$(this.rootElement).on(EVENT_SCENE_CHANGE_REQUEST,
-					function(e, data) {
-						e.stopPropagation();
-						setTimeout(function() {
-							that.changeScene(data);
-						}, 0);
-					});
+		},
 
+		/**
+		 * クリックジャックによる遷移
+		 *
+		 * <p>
+		 * メインシーンコンテナの場合で、_isClickjackEnabledがtrueの場合のみ有効。<br>
+		 * TODO:フラグのセット方法
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 * @param context
+		 */
+		'{a} click' : function(context) {
+			if (this.isMain && this._isClickjackEnabled) {
+				context.event.preventDefault();
+				var href = context.event.originalEvent.target.href;
+				this.changeScene(href);
+			}
+		},
+
+		/**
+		 * 画面遷移時のpopState時のコールバック
+		 *
+		 * <p>
+		 * メインシーンコンテナの場合のみ有効。
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 * @param context
+		 */
+		'{window} popstate' : function(context) {
+			if (this.isMain) {
+				// TODO(鈴木) 現状はURLでパラメーター渡しはしない
+				// var params = toQueryParams((location.search || '').substring(1));
+				// this._changeScene(location.href, params);
+				this._changeScene(location.href);
+
+				// TODO(鈴木) hrefからparamsに該当する部分を削除して使用したほうがよいか？
+			}
 		},
 
 		/**
@@ -1630,8 +1639,23 @@
 				that._transition = null;
 
 			});
-		}
+		},
 
+	};
+
+	/**
+	 * シーン遷移イベント発生時処理
+	 *
+	 * @private
+	 * @method
+	 * @memberOf SceneContainerController
+	 * @param context
+	 */
+	SceneContainerController['{rootElement} ' + EVENT_SCENE_CHANGE_REQUEST] = function(context) {
+		context.event.stopPropagation();
+		setTimeout(this.own(function() {
+			this.changeScene(context.evArg);
+		}), 0);
 	};
 
 	/**
