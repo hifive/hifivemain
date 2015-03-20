@@ -172,7 +172,9 @@
 			deep: true
 		});
 		for (var i = 0, len = controllers.length; i < len; i++) {
-			controllers[i].dispose();
+			if(!h5internal.core.isDisposing(controllers[i])) {
+				controllers[i].dispose();
+			}
 		}
 	}
 
@@ -1236,7 +1238,7 @@
 	 */
 	var SceneContainerController = {
 
-		__name : 'SceneContainerController',
+		__name : 'h5.scene.SceneContainerController',
 
 		/**
 		 * メインシーンコンテナであるか否か
@@ -1315,15 +1317,27 @@
 			this._transition = this._createTransition();
 			this._transition.onChangeStart(element);
 
+			this._containerName = $(element).attr(DATA_H5_MAIN_CONTAINER) || $(element).attr(DATA_H5_CONTAINER);
+
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
 			this._currentController = null;
 
 			// TODO(鈴木) コンテナ内にシーン要素がなければ追加する
 			wrapScene(element);
 
+			this.on('{rootElement}', EVENT_SCENE_CHANGE_REQUEST, this.own(this._onSceneChangeRequest));
+
 			if (this.isMain) {
 
 				mainContainer = this;
+
+				this.on('{window}', 'popstate', this.own(this._onWindowPopstate));
+
+				//_isClickjackEnabledがtrueの場合のみ有効。
+				//TODO:フラグのセット方法
+				if(this._isClickjackEnabled){
+					this.on('{a}', 'click', this.own(this._onAClick));
+				}
 
 				// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
 				// onPopStateを呼んでしまうと余計にHTMLを取りに行くことになるので、直接_changeSceneをto=elementで呼び出す。
@@ -1355,23 +1369,32 @@
 		},
 
 		/**
-		 * クリックジャックによる遷移
+		 * __dispose
 		 *
-		 * <p>
-		 * メインシーンコンテナの場合で、_isClickjackEnabledがtrueの場合のみ有効。<br>
-		 * TODO:フラグのセット方法
-		 * </p>
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		__dispose : function(){
+
+			if(!h5internal.core.isDisposing(this._currentController)) {
+				this._currentController.dispose();
+			}
+
+			this._currentController = null;
+			$(this.rootElement).empty();
+		},
+
+		/**
+		 * クリックジャックによる遷移
 		 *
 		 * @private
 		 * @memberOf SceneContainerController
 		 * @param context
 		 */
-		'{a} click' : function(context) {
-			if (this.isMain && this._isClickjackEnabled) {
-				context.event.preventDefault();
-				var href = context.event.originalEvent.target.href;
-				this.changeScene(href);
-			}
+		_onAClick : function(context) {
+			context.event.preventDefault();
+			var href = context.event.originalEvent.target.href;
+			this.changeScene(href);
 		},
 
 		/**
@@ -1385,15 +1408,26 @@
 		 * @memberOf SceneContainerController
 		 * @param context
 		 */
-		'{window} popstate' : function(context) {
-			if (this.isMain) {
-				// TODO(鈴木) 現状はURLでパラメーター渡しはしない
-				// var params = toQueryParams((location.search || '').substring(1));
-				// this._changeScene(location.href, params);
-				this._changeScene(location.href);
+		_onWindowPopstate : function(context) {
+			// TODO(鈴木) 現状はURLでパラメーター渡しはしない
+			// var params = toQueryParams((location.search || '').substring(1));
+			// this._changeScene(location.href, params);
+			this._changeScene(location.href);
+			// TODO(鈴木) hrefからparamsに該当する部分を削除して使用したほうがよいか？
+		},
 
-				// TODO(鈴木) hrefからparamsに該当する部分を削除して使用したほうがよいか？
-			}
+		/**
+		 * シーン遷移イベント発生時処理
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 * @param context
+		 */
+		_onSceneChangeRequest : function(context) {
+			context.event.stopPropagation();
+			setTimeout(this.own(function() {
+				this.changeScene(context.evArg);
+			}), 0);
 		},
 
 		/**
@@ -1639,23 +1673,8 @@
 				that._transition = null;
 
 			});
-		},
+		}
 
-	};
-
-	/**
-	 * シーン遷移イベント発生時処理
-	 *
-	 * @private
-	 * @method
-	 * @memberOf SceneContainerController
-	 * @param context
-	 */
-	SceneContainerController['{rootElement} ' + EVENT_SCENE_CHANGE_REQUEST] = function(context) {
-		context.event.stopPropagation();
-		setTimeout(this.own(function() {
-			this.changeScene(context.evArg);
-		}), 0);
 	};
 
 	/**
@@ -1729,7 +1748,75 @@
 	}
 
 	/**
-	 * コントローラがバインドされた要素内から要素を選択します。
+	 * 指定要素およびその配下のシーンコンテナを取得します
+	 *
+	 * @memberOf h5.scene
+	 * @param {Element}
+	 *            rootElement
+	 *            走査先頭要素。指定しない場合はドキュメント全体を対象とします。
+	 * @returns {Array} シーンコンテナの配列。
+	 */
+	function getAllSceneContainers(rootElement) {
+
+		var containers = h5.core.controllerManager.getControllers(rootElement || document.body, {
+			name: SceneContainerController.__name,
+			deep: true
+		});
+
+		return containers;
+
+	}
+
+	/**
+	 * シーンコンテナを取得します。
+	 *
+	 * @memberOf h5.scene
+	 * @param {String|Element}
+	 *            nameOrElement 文字列、要素が指定できます。
+	 *            <dl>
+	 *            <dt>文字列の場合</dt>
+	 *            <dd>取得対象とする要素のdata-h5-container属性まはたdata-h5-main-container属性の値とみなし、その要素に対応するシーンコンテナを返却します。</dd>
+	 *            <dt>要素の場合</dt>
+	 *            <dd>その要素に対応するシーンコンテをを返却します。</dd>
+	 *            </dl>
+	 *            <p>いずれの場合も、該当がない場合はnullを返却します。</p>
+	 * @returns {SceneContainerController} シーンコンテナ
+	 */
+	function getSceneContainer(nameOrElement) {
+
+		if (nameOrElement == null)
+			return null;
+
+
+		var name = null, element = null;
+
+		if (isString(nameOrElement)) {
+			name = nameOrElement;
+		}else{
+			element = nameOrElement;
+		}
+
+		var containers = getAllSceneContainers(element);
+
+		if(containers.length === 0){
+			return null;
+		}
+
+		if(name){
+			for(var i = 0; i < containers.length; i++){
+				if(containers[i]._containerName === name){
+					return containers[i];
+				}
+			}
+			return null;
+		}
+
+		return containers[0];
+
+	}
+
+	/**
+	 * シーン遷移イベントを発行します。
 	 *
 	 * @param {String|Object}
 	 *            data
@@ -1743,32 +1830,18 @@
 	 * このコントローラを直接包含しているシーンコンテナを取得します。
 	 *
 	 * <p>
-	 * シーンコンテナ要素が存在しない、または未生成の場合はnullを返却します。
+	 * シーンコンテナ要素が存在しない、またはシーンコンテナ未生成の場合はnullを返却します。
 	 * </p>
 	 *
 	 * @returns {SceneContainerController} シーンコンテナ
 	 * @memberOf Controller
 	 */
-	function getSceneContainer() {
+	function getParentSceneContainer() {
 		var element = getParentContainer(this.rootElement);
-		if (!element
-				|| $(element).is(':not([' + DATA_H5_DYN_CONTAINER_BOUND + '])')) {
+		if (!element) {
 			return null;
 		}
-		var controllers = h5.core.controllerManager.getControllers(element);
-		var container = null;
-		for (var i = 0; i < controllers.length; i++) {
-			var controller = controllers[i];
-			if (controller.__name === SceneContainerController.__name) {
-				container = controller;
-				break;
-			}
-		}
-		if (!container) {
-			// 要素にコンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていない
-			throwFwError(ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND);
-		}
-		return container;
+		return getSceneContainer(element);
 	}
 
 	// =============================
@@ -1778,7 +1851,7 @@
 	if (h5internal.core.controllerConstructor) {
 		// Controllerのコンストラクタがあれば、sceneモジュール用の関数を追加
 		h5internal.core.controllerConstructor.prototype.triggerSceneChange = triggerSceneChange;
-		h5internal.core.controllerConstructor.prototype.getSceneContainer = getSceneContainer;
+		h5internal.core.controllerConstructor.prototype.getParentSceneContainer = getParentSceneContainer;
 	}
 
 	// TODO autoInitがtrueの場合のみinit
@@ -1804,7 +1877,9 @@
 		createSceneContainer : createSceneContainer,
 		init : init,
 		getMainContainer : getMainContainer,
-		scan : scan
+		scan : scan,
+		getAllSceneContainers : getAllSceneContainers,
+		getSceneContainer : getSceneContainer
 	});
 
 })();

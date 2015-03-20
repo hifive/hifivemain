@@ -4590,6 +4590,8 @@
 
 	h5internal.core.controllerConstructor = Controller;
 
+	h5internal.core.isDisposing = isDisposing;
+
 	// =============================
 	// Expose to window
 	// =============================

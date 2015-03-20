@@ -457,6 +457,29 @@ $(function() {
 		}).always(start);
 	});
 
+	asyncTest('シーンコンテナ取得機能の確認', function() {
+		var $container = $('<div data-h5-container="testContainer">');
+		var $scene = $('<div data-h5-scene>');
+		$container.append($scene);
+		this.$fixture.append($container);
+		h5.scene.scan();
+		//scan直後ではContorllerが取れない。
+		setTimeout(function(){
+			var controller = h5.core.controllerManager.getControllers($scene)[0];
+			var container = controller.getParentSceneContainer();
+			strictEqual(container._containerName, 'testContainer', 'ControllerのgetParentSceneContainerで所属するシーンコンテナが取得できること');
+			container = h5.scene.getSceneContainer($container);
+			strictEqual(container._containerName, 'testContainer', 'h5.scene.getSceneContainerで要素を指定してシーンコンテナが取得できること');
+			container = h5.scene.getSceneContainer('testContainer');
+			strictEqual(container._containerName, 'testContainer', 'h5.scene.getSceneContainerで名前を指定してシーンコンテナが取得できること');
+			container = h5.scene.getAllSceneContainers()[0];
+			strictEqual(container._containerName, 'testContainer', 'h5.scene.getAllSceneContainerで引数なしでシーンコンテナが取得できること');
+			container = h5.scene.getAllSceneContainers($container)[0];
+			strictEqual(container._containerName, 'testContainer', 'h5.scene.getAllSceneContainerで引数ありでシーンコンテナが取得できること');
+			start();
+		}, 100);
+	});
+
 	//=============================
 	// Definition
 	//=============================
