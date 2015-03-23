@@ -463,21 +463,28 @@ $(function() {
 		$container.append($scene);
 		this.$fixture.append($container);
 		h5.scene.scan();
-		//scan直後ではContorllerが取れない。
-		setTimeout(function(){
-			var controller = h5.core.controllerManager.getControllers($scene)[0];
+		$scene.on('h5controllerbound', function(e, controller) {
+			if (controller.rootElement !== $scene.get(0) || controller.__name !== 'h5.scene.DummyController'){
+				return;
+			}
+
 			var container = controller.getParentSceneContainer();
-			strictEqual(container._containerName, 'testContainer', 'ControllerのgetParentSceneContainerで所属するシーンコンテナが取得できること');
+			strictEqual(container._containerName, 'testContainer',
+					'ControllerのgetParentSceneContainerで所属するシーンコンテナが取得できること');
 			container = h5.scene.getSceneContainer($container);
-			strictEqual(container._containerName, 'testContainer', 'h5.scene.getSceneContainerで要素を指定してシーンコンテナが取得できること');
+			strictEqual(container._containerName, 'testContainer',
+					'h5.scene.getSceneContainerで要素を指定してシーンコンテナが取得できること');
 			container = h5.scene.getSceneContainer('testContainer');
-			strictEqual(container._containerName, 'testContainer', 'h5.scene.getSceneContainerで名前を指定してシーンコンテナが取得できること');
+			strictEqual(container._containerName, 'testContainer',
+					'h5.scene.getSceneContainerで名前を指定してシーンコンテナが取得できること');
 			container = h5.scene.getAllSceneContainers()[0];
-			strictEqual(container._containerName, 'testContainer', 'h5.scene.getAllSceneContainerで引数なしでシーンコンテナが取得できること');
+			strictEqual(container._containerName, 'testContainer',
+					'h5.scene.getAllSceneContainerで引数なしでシーンコンテナが取得できること');
 			container = h5.scene.getAllSceneContainers($container)[0];
-			strictEqual(container._containerName, 'testContainer', 'h5.scene.getAllSceneContainerで引数ありでシーンコンテナが取得できること');
+			strictEqual(container._containerName, 'testContainer',
+					'h5.scene.getAllSceneContainerで引数ありでシーンコンテナが取得できること');
 			start();
-		}, 100);
+		});
 	});
 
 	//=============================
