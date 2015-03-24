@@ -323,10 +323,10 @@
 	 * </p>
 	 *
 	 * @memberOf h5.scene
-	 * @param {Element} rootElement 走査処理対象のルート要素。指定なしの場合はdocument.bodyをルート要素とします。
-	 * @param {String} controllerName
+	 * @param {Element} [rootElement=document.body] 走査処理対象のルート要素。指定なしの場合はdocument.bodyをルート要素とします。
+	 * @param {String} [controllerName]
 	 *            バインド対象コントローラー名。指定なしの場合は'data-h5-controller'属性に指定されたすべてのコントローラーを対象とします。
-	 * @param {Any} args 走査対象のルート要素がコンテナの場合、デフォルトで表示されるシーンコントローラー生成時に渡される引数を設定します。
+	 * @param {Any} [args] 走査対象のルート要素がコンテナの場合、デフォルトで表示されるシーンコントローラー生成時に渡される引数を設定します。
 	 * @returns {Promise} Promiseオブジェクト。詳細については当関数の説明を参照してください。
 	 */
 	function scan(rootElement, controllerName, args) {
@@ -1447,21 +1447,20 @@
 		 * </li>
 		 * </ul>
 		 *
-		 * @param {String}
-		 *            to 遷移先を指定します。HTMLを返却するURLか、コントローラーの__name属性を指定します。
-		 * @param {Object|String}
-		 *            params 遷移先文字列、または遷移用オプション。
+		 * @param {String|Object} params
+		 *            遷移先文字列、または遷移用オプション。
 		 *            <p>
-		 *            遷移先文字列は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
-		 *            遷移用オプションは、以下のプロパティを持ちます。
+		 *            遷移先文字列の場合は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
+		 *            遷移用オプションの場合は、以下のプロパティを持ちます。
 		 *            </p>
-		 *            <ul>
-		 *            <li>to … 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。
-		 *            <li>transition … 遷移効果指定
-		 *            <li>container …
+		 * @param {String} params.to
+		 *            遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
+		 * @param {String}[params.transition='default']
+		 *            遷移効果指定。指定しない場合は'default'が使用されます。(現在、'default'以外は指定できません)
+		 * @param {String}[params.container]
 		 *            toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
-		 *            <li> args … デフォルトシーンに対応するコントローラー生成時に渡されるパラメータ
-		 *            </ul>
+		 * @param {Any}[params.args]
+		 *            デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
 		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
 		 * @memberOf SceneContainerController
 		 */
@@ -1682,8 +1681,12 @@
 	 *
 	 * @memberOf h5.scene
 	 * @param {Element} element シーンコンテナ生成対象要素。
-	 * @param {Boolean} isMain
-	 *            メインシーンコンテナであるか否か。(メインシーンコンテナである:true/メインシーンコンテナでない:false)(デフォルト:false)
+	 * @param {Boolean} [isMain=false]
+	 *            メインシーンコンテナとするか否か。
+	 *            <dl>
+	 *            <dt>メインシーンコンテナとする<dt><dd>true</dd>
+	 *            <dt>メインシーンコンテナとしない</dt><dd>false(デフォルト)</dd>
+	 *            </dl>
 	 * @returns {SceneContainerController} 生成したシーンコンテナのインスタンス。
 	 */
 	function createSceneContainer(element, isMain) {
@@ -1752,9 +1755,9 @@
 	 *
 	 * @memberOf h5.scene
 	 * @param {Element}
-	 *            rootElement
+	 *            [rootElement=document.body]
 	 *            走査先頭要素。指定しない場合はドキュメント全体を対象とします。
-	 * @returns {Array} シーンコンテナの配列。
+	 * @returns {SceneContainerController[]} シーンコンテナの配列。
 	 */
 	function getAllSceneContainers(rootElement) {
 
