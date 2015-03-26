@@ -1659,7 +1659,7 @@
 				}
 
 				if (fromElm) {
-					fromElm.remove();
+					$(fromElm).remove();
 				}
 
 				that._currentController = toController;
