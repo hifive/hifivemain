@@ -296,38 +296,6 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('createContainer()で初期表示シーンにHTMLを指定', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		h5.scene.createSceneContainer($container, false, 'scenedata/page/to1.html');
-		gate({
-			func: function() {
-				return $container.text() === 'to1';
-			},
-			failMsg: 'シーンが初期表示されませんでした'
-		}).done(function() {
-			strictEqual($container.text(), 'to1', 'シーンが初期表示されること');
-			start();
-		}).fail(start);
-	});
-
-	asyncTest('createContainer()で初期表示シーンにコントローラーを指定', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		var container = h5.scene.createSceneContainer($container, false, 'scenedata.controller.ControllerSubController');
-		gate({
-			func: function() {
-				return $container.find('h2').text() === 'CONTROLLER_SUB';
-			},
-			failMsg: 'シーンが初期表示されませんでした'
-		}).done(
-				function() {
-					strictEqual(container._currentController.$find('h2').text(), 'CONTROLLER_SUB',
-							'シーンが初期表示されること');
-				}).always(start);
-	});
-
-
 	asyncTest('createContainer()で生成したシーンコンテナのメソッドによる遷移', function() {
 		var $container = $('<div>');
 		this.$fixture.append($container);
@@ -683,46 +651,6 @@ $(function() {
 																							});
 																		});
 													});
-								}).fail(start);
-			});
-
-	asyncTest(
-			'メインシーンコンテナの初期表示シーンの確認',
-			function() {
-				this.w.location.href = 'scenedata/page/init_scene.html?' + BUILD_TYPE_PARAM;
-				var that = this;
-				gate({
-					func: function() {
-						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
-					},
-					failMsg: 'メインシーンコンテナが取得できませんでした'
-				})
-						.done(
-								function() {
-									var mainContainer = that.w.h5.scene.getMainContainer();
-									var controller = mainContainer._currentController;
-									var title = controller.$find('h1').text();
-									strictEqual(title, 'FROM', '初期表示シーンの画面が表示されていること');
-									ok(/\/init_scene\.html(?:\?|#|$)/.test(that.w.location.href),
-											'初期表示シーンはURL連動していないこと');
-									mainContainer.changeScene('to.html?' + BUILD_TYPE_PARAM);
-									gate(
-											{
-												func: function() {
-													return mainContainer._currentController
-															&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
-												},
-												failMsg: 'シーンが変更されませんでした'
-											})
-											.done(
-													function() {
-														var controller = mainContainer._currentController;
-														var title = controller.$find('h1').text();
-														strictEqual(title, 'TO', '画面が遷移されていること');
-														ok(/\/to\.html(?:\?|#|$)/
-																.test(that.w.location.href),
-																'URLが連動していること');
-													}).always(start);
 								}).fail(start);
 			});
 
