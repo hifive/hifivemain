@@ -100,6 +100,7 @@
 	/** コンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていない */
 	var ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND = 100010;
 
+
 	// =============================
 	// Development Only
 	// =============================
@@ -1290,6 +1291,18 @@
 		_isNavigated : false,
 
 		/**
+		 * メインシーンコンテナでURLを連動せずにシーンを遷移する場合を識別するためのフラグ
+		 *
+		 * <p>
+		 * 初期はtrueで連動せず。初期処理完了後にfalseにする。
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_notPushState : true,
+
+		/**
 		 * __init
 		 *
 		 * @private
@@ -1301,6 +1314,7 @@
 
 			var element  = this.rootElement;
 			var isMain = args.isMain;
+			var initialSceneInfo = args.initialSceneInfo;
 
 			var that = this;
 
@@ -1327,6 +1341,9 @@
 
 			this.on('{rootElement}', EVENT_SCENE_CHANGE_REQUEST, this.own(this._onSceneChangeRequest));
 
+
+			var params = {};
+
 			if (this.isMain) {
 
 				mainContainer = this;
@@ -1342,28 +1359,24 @@
 				// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
 				// onPopStateを呼んでしまうと余計にHTMLを取りに行くことになるので、直接_changeSceneをto=elementで呼び出す。
 				// URLからのパラメーター取得は現状では無効とする。
-				// var params = toQueryParams((location.search ||
+				// params = toQueryParams((location.search ||
 				// '').substring(1));
-				var params = {};
-				scanForContainer(element, null, params.args).done(
-						function(toController) {
-							that._currentController = toController;
-							that._transition.onChangeEnd(that.rootElement,
-									null, element);
-							that._transition = null;
-						});
+				params = {};
 
-			} else {
+			}
 
+			if(initialSceneInfo){
+				this.changeScene(initialSceneInfo);
+				// TODO(鈴木)  _currentControllerへの登録等は内部で行われるので後続処理は不要
+			}else{
 				// TODO(鈴木) カレントとなるシーンを探索してscan
-				scanForContainer(element).done(
+				scanForContainer(element, null, params.args).done(
 						function(controller) {
 							that._currentController = controller;
 							that._transition.onChangeEnd(that.rootElement,
 									null, element);
 							that._transition = null;
 						});
-
 			}
 
 		},
@@ -1513,12 +1526,14 @@
 							[ to ]);
 				}
 
-				// TODO(鈴木) パラメータをエンコードしてURLに付加
-				// ※現在シリアライズ方式検討中のため、パラメータの付加はしない
-				// to += ((to.indexOf('?') === -1) ? '?' : '&') +
-				// $.param(params);
-
-				pushState(null, null, toAbsoluteUrl(to));
+				// TODO(鈴木) 初期表示シーンの場合はURL連動しない。
+				if(this.isInit){
+					// TODO(鈴木) パラメータをエンコードしてURLに付加
+					// ※現在シリアライズ方式検討中のため、パラメータの付加はしない
+					// to += ((to.indexOf('?') === -1) ? '?' : '&') +
+					// $.param(params);
+					pushState(null, null, toAbsoluteUrl(to));
+				}
 
 				// TODO(鈴木) URLから遷移したいが、↑のためパラメータが付加されていないので、
 				// 直接_changeSceneを呼ぶ。
@@ -1687,9 +1702,25 @@
 	 *            <dt>メインシーンコンテナとする<dt><dd>true</dd>
 	 *            <dt>メインシーンコンテナとしない</dt><dd>false(デフォルト)</dd>
 	 *            </dl>
+	 * @param {String|Object} [params]
+	 *            初期表示シーン用文字列、またはオプション。
+	 *            <p>
+ 	 *            指定しない場合は、既存のDOM要素を元にシーンを生成します。<br>
+ 	 *            メインシーンコンテナにおいて、このシーン指定はURLに連動しません。<br>
+	 *            文字列の場合は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
+	 *            オプションの場合は、以下のプロパティを持ちます。
+	 *            </p>
+	 * @param {String} params.to
+	 *            初期表示シーン指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
+	 * @param {String}[params.transition='default']
+	 *            表示効果指定。指定しない場合は'default'が使用されます。(現在、'default'以外は指定できません)
+	 * @param {String}[params.container]
+	 *            toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
+	 * @param {Any}[params.args]
+	 *            デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
 	 * @returns {SceneContainerController} 生成したシーンコンテナのインスタンス。
 	 */
-	function createSceneContainer(element, isMain) {
+	function createSceneContainer(element, isMain, params) {
 
 		// TODO(鈴木) 対象要素配下にコンテナ、またはコントローラーバインド済みの要素がある場合はエラーとすべき
 
@@ -1715,7 +1746,8 @@
 
 		var container = h5internal.core.controllerInternal(element,
 				SceneContainerController, {
-					isMain : isMain
+					isMain : isMain,
+					initialSceneInfo : params
 				}, {
 					async : false
 				});
