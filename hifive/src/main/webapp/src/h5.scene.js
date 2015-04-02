@@ -1342,7 +1342,7 @@
 			this.on('{rootElement}', EVENT_SCENE_CHANGE_REQUEST, this.own(this._onSceneChangeRequest));
 
 
-			var params = {};
+			var param = {};
 
 			if (this.isMain) {
 
@@ -1359,9 +1359,9 @@
 				// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
 				// onPopStateを呼んでしまうと余計にHTMLを取りに行くことになるので、直接_changeSceneをto=elementで呼び出す。
 				// URLからのパラメーター取得は現状では無効とする。
-				// params = toQueryParams((location.search ||
+				// param = toQueryParams((location.search ||
 				// '').substring(1));
-				params = {};
+				param = {};
 
 			}
 
@@ -1370,7 +1370,7 @@
 				// TODO(鈴木)  _currentControllerへの登録等は内部で行われるので後続処理は不要
 			}else{
 				// TODO(鈴木) カレントとなるシーンを探索してscan
-				scanForContainer(element, null, params.args).done(
+				scanForContainer(element, null, param.args).done(
 						function(controller) {
 							that._currentController = controller;
 							that._transition.onChangeEnd(that.rootElement,
@@ -1423,10 +1423,10 @@
 		 */
 		_onWindowPopstate : function(context) {
 			// TODO(鈴木) 現状はURLでパラメーター渡しはしない
-			// var params = toQueryParams((location.search || '').substring(1));
-			// this._changeScene(location.href, params);
+			// var param = toQueryParams((location.search || '').substring(1));
+			// this._changeScene(location.href, param);
 			this._changeScene(location.href);
-			// TODO(鈴木) hrefからparamsに該当する部分を削除して使用したほうがよいか？
+			// TODO(鈴木) hrefからparamに該当する部分を削除して使用したほうがよいか？
 		},
 
 		/**
@@ -1460,37 +1460,37 @@
 		 * </li>
 		 * </ul>
 		 *
-		 * @param {String|Object} params
+		 * @param {String|Object} param
 		 *            遷移先文字列、または遷移用オプション。
 		 *            <p>
 		 *            遷移先文字列の場合は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
 		 *            遷移用オプションの場合は、以下のプロパティを持ちます。
 		 *            </p>
-		 * @param {String} params.to
+		 * @param {String} param.to
 		 *            遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
-		 * @param {String}[params.transition='default']
+		 * @param {String}[param.transition='default']
 		 *            遷移効果指定。指定しない場合は'default'が使用されます。(現在、'default'以外は指定できません)
-		 * @param {String}[params.container]
+		 * @param {String}[param.container]
 		 *            toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
-		 * @param {Any}[params.args]
+		 * @param {Any}[param.args]
 		 *            デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
 		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
 		 * @memberOf SceneContainerController
 		 */
-		changeScene : function(params) {
+		changeScene : function(param) {
 
 			// TODO(鈴木) paramが文字列の場合は遷移先と見なして再帰呼び出しする
-			if (isString(params)) {
+			if (isString(param)) {
 				return this.changeScene({
-					to : params
+					to : param
 				});
 			}
 
-			params = $.extend(true, {}, params);
+			param = $.extend(true, {}, param);
 
-			var to = params.to;
+			var to = param.to;
 
-			this._transition = this._createTransition(params.transition);
+			this._transition = this._createTransition(param.transition);
 
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
 			var fromElm = (this._currentController || {}).rootElement;
@@ -1507,9 +1507,9 @@
 			if (this.isMain) {
 
 				// TODO(鈴木) メインシーンコンテナで遷移先がHTML(コントローラーでない)の場合は
-				// paramsからtoを削除(URLに余計な情報を残さないため)
+				// paramからtoを削除(URLに余計な情報を残さないため)
 				if (!controllerRegexp.test(to)) {
-					delete params.to;
+					delete param.to;
 				}
 
 				if (!isString(to)) {
@@ -1531,7 +1531,7 @@
 					// TODO(鈴木) パラメータをエンコードしてURLに付加
 					// ※現在シリアライズ方式検討中のため、パラメータの付加はしない
 					// to += ((to.indexOf('?') === -1) ? '?' : '&') +
-					// $.param(params);
+					// $.param(param);
 					pushState(null, null, toAbsoluteUrl(to));
 				}
 
@@ -1539,11 +1539,11 @@
 				// 直接_changeSceneを呼ぶ。
 				// onPopState();
 				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj
-						.serialize(params)));
+						.serialize(param)));
 
 			} else {
 				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj
-						.serialize(params)));
+						.serialize(param)));
 			}
 
 			return dfd.promise();
@@ -1555,18 +1555,18 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 * @param to
-		 * @param params
+		 * @param param
 		 */
-		_changeScene : function(to, params) {
+		_changeScene : function(to, param) {
 
-			params = params || {};
+			param = param || {};
 
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
 			var fromElm = (this._currentController || {}).rootElement;
 
 			// changeSceneメソッド経由でない場合
 			if (!this._isNavigated) {
-				this._transition = this._createTransition(params.transition);
+				this._transition = this._createTransition(param.transition);
 				this._transition.onChangeStart(this.rootElement, fromElm);
 			}
 
@@ -1594,7 +1594,7 @@
 				if (controllerRegexp.test(to)) {
 
 					// TODO(鈴木)
-					loadController(to, $('<div></div>'), params.args).done(
+					loadController(to, $('<div></div>'), param.args).done(
 							function(toController) {
 								that._onLoadController(toController, fromElm);
 							});
@@ -1603,7 +1603,7 @@
 					// TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
 					// 1.2.0では、URLにパラメーターを保存しないため、メインシーンコンテナの場合はcontainer指定は無効とする
 					var loadPromise = loadContents(to,
-							(!this.isMain) ? params.container : null);
+							(!this.isMain) ? param.container : null);
 
 					loadPromise.done(
 							function(toElm) {
@@ -1612,7 +1612,7 @@
 								// TODO(鈴木) scan用にダミーのDIVにappend
 								scanForContainer(
 										$('<div></div>').append(toElm), null,
-										params.args).done(
+										param.args).done(
 										function(toController) {
 											that._onLoadController(
 													toController, fromElm);
@@ -1702,7 +1702,7 @@
 	 *            <dt>メインシーンコンテナとする<dt><dd>true</dd>
 	 *            <dt>メインシーンコンテナとしない</dt><dd>false(デフォルト)</dd>
 	 *            </dl>
-	 * @param {String|Object} [params]
+	 * @param {String|Object} [param]
 	 *            初期表示シーン用文字列、またはオプション。
 	 *            <p>
  	 *            指定しない場合は、既存のDOM要素を元にシーンを生成します。<br>
@@ -1710,17 +1710,17 @@
 	 *            文字列の場合は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
 	 *            オプションの場合は、以下のプロパティを持ちます。
 	 *            </p>
-	 * @param {String} params.to
+	 * @param {String} param.to
 	 *            初期表示シーン指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
-	 * @param {String}[params.transition='default']
+	 * @param {String}[param.transition='default']
 	 *            表示効果指定。指定しない場合は'default'が使用されます。(現在、'default'以外は指定できません)
-	 * @param {String}[params.container]
+	 * @param {String}[param.container]
 	 *            toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
-	 * @param {Any}[params.args]
+	 * @param {Any}[param.args]
 	 *            デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
 	 * @returns {SceneContainerController} 生成したシーンコンテナのインスタンス。
 	 */
-	function createSceneContainer(element, isMain, params) {
+	function createSceneContainer(element, isMain, param) {
 
 		// TODO(鈴木) 対象要素配下にコンテナ、またはコントローラーバインド済みの要素がある場合はエラーとすべき
 
@@ -1747,7 +1747,7 @@
 		var container = h5internal.core.controllerInternal(element,
 				SceneContainerController, {
 					isMain : isMain,
-					initialSceneInfo : params
+					initialSceneInfo : param
 				}, {
 					async : false
 				});
