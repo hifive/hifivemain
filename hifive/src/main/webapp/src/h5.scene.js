@@ -1314,7 +1314,7 @@
 
 			var element  = this.rootElement;
 			var isMain = args.isMain;
-			var initialSceneInfo = args.initialSceneInfo;
+			/*var initialSceneInfo = args.initialSceneInfo;*/
 
 			var that = this;
 
@@ -1365,10 +1365,11 @@
 
 			}
 
-			if(initialSceneInfo){
+			/*if(initialSceneInfo){
 				this.changeScene(initialSceneInfo);
 				// TODO(鈴木)  _currentControllerへの登録等は内部で行われるので後続処理は不要
 			}else{
+			*/
 				// TODO(鈴木) カレントとなるシーンを探索してscan
 				scanForContainer(element, null, param.args).done(
 						function(controller) {
@@ -1377,7 +1378,7 @@
 									null, element);
 							that._transition = null;
 						});
-			}
+			/*}*/
 
 		},
 
@@ -1526,14 +1527,13 @@
 							[ to ]);
 				}
 
-				// TODO(鈴木) 初期表示シーンの場合はURL連動しない。
-				if(this.isInit){
+				/*if(this.isInit){ // TODO(鈴木) 初期表示シーンの場合はURL連動しない。*/
 					// TODO(鈴木) パラメータをエンコードしてURLに付加
 					// ※現在シリアライズ方式検討中のため、パラメータの付加はしない
 					// to += ((to.indexOf('?') === -1) ? '?' : '&') +
 					// $.param(param);
 					pushState(null, null, toAbsoluteUrl(to));
-				}
+				/*}*/
 
 				// TODO(鈴木) URLから遷移したいが、↑のためパラメータが付加されていないので、
 				// 直接_changeSceneを呼ぶ。
@@ -1702,25 +1702,9 @@
 	 *            <dt>メインシーンコンテナとする<dt><dd>true</dd>
 	 *            <dt>メインシーンコンテナとしない</dt><dd>false(デフォルト)</dd>
 	 *            </dl>
-	 * @param {String|Object} [param]
-	 *            初期表示シーン用文字列、またはオプション。
-	 *            <p>
- 	 *            指定しない場合は、既存のDOM要素を元にシーンを生成します。<br>
- 	 *            メインシーンコンテナにおいて、このシーン指定はURLに連動しません。<br>
-	 *            文字列の場合は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
-	 *            オプションの場合は、以下のプロパティを持ちます。
-	 *            </p>
-	 * @param {String} param.to
-	 *            初期表示シーン指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
-	 * @param {String}[param.transition='default']
-	 *            表示効果指定。指定しない場合は'default'が使用されます。(現在、'default'以外は指定できません)
-	 * @param {String}[param.container]
-	 *            toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
-	 * @param {Any}[param.args]
-	 *            デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
 	 * @returns {SceneContainerController} 生成したシーンコンテナのインスタンス。
 	 */
-	function createSceneContainer(element, isMain, param) {
+	function createSceneContainer(element, isMain/*, param*/) {
 
 		// TODO(鈴木) 対象要素配下にコンテナ、またはコントローラーバインド済みの要素がある場合はエラーとすべき
 
@@ -1747,7 +1731,7 @@
 		var container = h5internal.core.controllerInternal(element,
 				SceneContainerController, {
 					isMain : isMain,
-					initialSceneInfo : param
+					/*initialSceneInfo : param*/
 				}, {
 					async : false
 				});
