@@ -11549,4 +11549,48 @@ $(function() {
 			});
 		});
 	});
+
+
+
+	//=============================
+	// Definition
+	//=============================
+	module('Controller - manageChild/unmanageChild', {
+		setup: function() {
+			$('#qunit-fixture').append('<div id="controllerTest"></div>');
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('getControllers/getAllControllers', function() {
+		var $target = $('#controllerTest');
+		var parent = h5.core.controller($target, {
+			__name: 'parentController'
+		});
+		var eventHandlerExecuted = false;
+		var child = h5.core.controller($target, {
+			__name: 'childController',
+			'{rootElement} click': function() {
+				eventHandlerExecuted = true;
+			}
+		});
+		$.when(child.readyPromise, parent.readyPromise).done(
+				function() {
+					parent.manageChild(child);
+					ok(h5.core.controllerManager.getControllers($target).indexOf(child) === -1,
+							'manageChildでルートコントローラでなくなったコントローラはgetControllersで取得できないこと');
+					ok(h5.core.controllerManager.getAllControllers($target).indexOf(child) === -1,
+							'manageChildでルートコントローラでなくなったコントローラはgetAllControllers取得できないこと');
+					parent.unmanageChild(child, false);
+					ok(h5.core.controllerManager.getControllers($target).indexOf(child) !== -1,
+							'unmanageChildでルートコントローラでなくなったコントローラはgetControllersで取得できること');
+					ok(h5.core.controllerManager.getAllControllers($target).indexOf(child) !== -1,
+							'unmanageChildでルートコントローラでなくなったコントローラはgetAllControllers取得できること');
+				}).always(start);
+	});
 });

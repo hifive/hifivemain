@@ -3298,14 +3298,12 @@
 		 * // parentControllerは子コントローラを持つコントローラ
 		 * var parent = parentController.view;
 		 * var child = parentController.childController;
-		 *
 		 * // viewにテンプレートを登録
 		 * h5.core.view.register('a', 'a_coreView');
 		 * h5.core.view.register('b', 'b_coreView');
 		 * parent.view.register('a', 'a_parent');
 		 * parent.view.register('d', 'd_parent');
 		 * child.view.register('c', 'c_child');
-		 *
 		 * child.get('c'); // c_child
 		 * child.get('d'); // d_parent
 		 * child.get('a'); // a_parent
@@ -3522,7 +3520,6 @@
 		 * <pre class="sh_javascript"><code>
 		 * // trigger
 		 * this.trigger('hoge', {data: ary});
-		 *
 		 * // イベントハンドラ
 		 * '{rootElement} hoge': function(context){
 		 *   var ary = context.evArg.data;
@@ -3538,7 +3535,6 @@
 		 * <pre class="sh_javascript"><code>
 		 * // trigger
 		 * this.trigger('hoge', ary);
-		 *
 		 * // イベントハンドラ
 		 * '{rootElement} hoge': function(context){
 		 *   var ary = $.isArray(context.evArg) ? context.evArg: [context.evArg];
@@ -3891,7 +3887,7 @@
 		 * 追加されたコントローラは呼び出し元のコントローラの子コントローラとなります。
 		 * </p>
 		 *
-		 * @param {Controller}
+		 * @param {Controller} コントローラインスタンス
 		 */
 		manageChild: function(controller) {
 			throwErrorIfDisposed(this, 'manageChild');
@@ -3902,12 +3898,19 @@
 			}
 			// 必要なプロパティをセット
 			addChildController(this, controller);
+			// manageChildしたコントローラはルートコントローラで無くなるので、controllerManagerの管理下から外す
+			var controllers = controllerManager.controllers;
+			var index = $.inArray(controller, controllers);
+			if (index != -1) {
+				controllers.splice(index, 1);
+			}
 		},
 
 		/**
 		 * 子コントローラを動的に削除
 		 *
-		 * @param {Controller|Object|String} コントローラインスタンスまたはコントローラ定義またはリソースキー
+		 * @param {Controller} コントローラインスタンス
+		 * @param {Boolean} [andDispose=true] 第1引数で指定されたコントローラをdisposeするかどうか。指定無しの場合はdisposeします。
 		 * @returns {Promise}
 		 */
 		unmanageChild: function(controller, andDispose) {
@@ -3916,6 +3919,10 @@
 			// disposeするかどうか。デフォルトtrue(disposeする)
 			andDispose = andDispose === false ? false : true;
 			removeChildController(this, controller, andDispose);
+			if (!andDispose) {
+				// disposeしない場合、unmanageChildしたコントローラはルートコントローラになるので、controllerManagerの管理下に追加
+				controllerManager.controllers.push(controller);
+			}
 		}
 	});
 
