@@ -1302,12 +1302,17 @@
 				if(arguments[1] === '#') return '#';
 				return '';
 			});
+			if(result === '#'){
+				result = '';
+			}
 		}else{
 			result =  str.replace(new RegExp('(^|\\?|&)' + clientQueryStringPrefix + '[^=]*=.*?(?=&|#|$)', 'g'), function(){
 				if(arguments[1] === '?') return '?';
 				return '';
 			});
-			debugger;
+			if(result === '?'){
+				result = '';
+			}
 		}
 		return result;
 	}
