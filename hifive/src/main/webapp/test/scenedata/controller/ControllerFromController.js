@@ -18,15 +18,13 @@
 (function(){
 	'use strict';
 
-	var ControllerSubController = null;
-	ControllerSubController = {
-		__name : 'scenedata.controller.ControllerSubController',
-		__templates: 'scenedata/view/ControllerSub.ejs',
+	var ControllerFromController = null;
+	ControllerFromController = {
+		__name :  'scenedata.controller.ControllerFromController',
+		__templates: 'scenedata/view/ControllerFrom.ejs',
 		__init : function(context){
-			var args = context.args || {};
-			this.view.update('{rootElement}', 'default', {test:args.test || ''});
-			this.args = args;
+			this.view.update('{rootElement}', 'default');
 		}
 	};
-	h5.core.expose(ControllerSubController);
+	h5.core.expose(ControllerFromController);
 })();

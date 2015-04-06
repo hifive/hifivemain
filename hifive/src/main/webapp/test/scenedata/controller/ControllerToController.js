@@ -18,15 +18,14 @@
 (function(){
 	'use strict';
 
-	var ControllerSubController = null;
-	ControllerSubController = {
-		__name : 'scenedata.controller.ControllerSubController',
-		__templates: 'scenedata/view/ControllerSub.ejs',
+	var ControllerToController = null;
+	ControllerToController = {
+		__name : 'scenedata.controller.ControllerToController',
+		__templates: 'scenedata/view/ControllerTo.ejs',
 		__init : function(context){
 			var args = context.args || {};
-			this.view.update('{rootElement}', 'default', {test:args.test || ''});
-			this.args = args;
+			this.view.update('{rootElement}', 'default', {test:args.test});
 		}
 	};
-	h5.core.expose(ControllerSubController);
+	h5.core.expose(ControllerToController);
 })();

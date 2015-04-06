@@ -68,6 +68,11 @@
 	 */
 	var EVENT_SCENE_CHANGE_REQUEST = 'sceneChangeRequest';
 
+	/**
+	 * シーン間パラメーター用デフォルトプレフィクス
+	 */
+	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '__cl__';
+
 	// =============================
 	// Production
 	// =============================
@@ -146,6 +151,17 @@
 	 * シーン機能初回適用判定フラグ
 	 */
 	var isInited = false;
+
+	/**
+	 * シーン間パラメーター用デフォルトプレフィクス
+	 */
+	var clientQueryStringPrefix = DEFAULT_CLIENT_QUERY_STRING_PREFIX;
+
+	/**
+	 * シーン間パラメーター用ハッシュ使用フラグ
+	 */
+	var useHash = false;
+
 
 	// =============================
 	// Functions
@@ -1218,6 +1234,124 @@
 	}
 
 	/**
+	 * シーン遷移用パラメーターシリアライズ
+	 *
+	 * @private
+	 * @param obj
+	 * @param parent
+	 * @return {String}
+	 */
+	function serialize(obj, parent){
+		var str = '';
+		$.each(obj, function(k, v){
+			if(str) str += '&';
+			if(!parent && k === 'args'){
+				str += serialize(v, k);
+			}else{
+				if(parent){
+					str += encodeURIComponent(clientQueryStringPrefix + parent + '.' + k );
+				}else{
+					str += encodeURIComponent(clientQueryStringPrefix + k);
+				}
+				str += '=';
+				str += encodeURIComponent(h5.u.obj.serialize(v));
+			}
+		});
+		return str;
+	}
+
+	/**
+	 * シーン遷移用パラメーターデシリアライズ
+	 *
+	 * @private
+	 * @param str
+	 * @return {Object}
+	 */
+	function deserialize(str){
+		var obj = {};
+		$.each(str.split('&'), function(i, pair){
+			pair = pair.split('=');
+			var k = decodeURIComponent(pair[0]), v = decodeURIComponent(pair[1]);
+			var match = k.match(new RegExp('^' + clientQueryStringPrefix + '(.*)'));
+			if(!match){
+				return;
+			}
+			k = match[1];
+			var match = k.match(/^args\.(.*)/i);
+			if(match){
+				obj['args'] = obj['args'] || {};
+				obj['args'][match[1]] = h5.u.obj.deserialize(v);
+			}else{
+				obj[k] = h5.u.obj.deserialize(v);
+			}
+		});
+		return obj;
+	}
+
+	/**
+	 * シーン遷移用パラメーター文字列削除
+	 *
+	 * @private
+	 * @param str
+	 * @return {String}
+	 */
+	function clearParam(str){
+		var result;
+		if(useHash){
+			result =  str.replace(new RegExp('(^|#|&)' + clientQueryStringPrefix + '[^=]*=.*?(?=&|$)', 'g'), function(){
+				if(arguments[1] === '#') return '#';
+				return '';
+			});
+		}else{
+			result =  str.replace(new RegExp('(^|\\?|&)' + clientQueryStringPrefix + '[^=]*=.*?(?=&|#|$)', 'g'), function(){
+				if(arguments[1] === '?') return '?';
+				return '';
+			});
+			debugger;
+		}
+		return result;
+	}
+
+	/**
+	 * URLからシーン遷移パラメーターを取得
+	 *
+	 * @return {Object}
+	 */
+	function getParamFromURL(){
+		var target = useHash ? location.hash : location.search;
+		return deserialize(target.substring(1));
+	}
+
+	/**
+	 * URLにシーン遷移パラメーターを設定
+	 *
+	 * @param param
+	 * @param to
+	 *
+	 */
+	function setParamToURL(param, to){
+		if(to){
+			to = toAbsoluteUrl(to);
+		}else{
+			to = location.href.replace(/(?:\?.*)?(?:#.*)?$/, '');
+		}
+		if(useHash){
+			var hash = location.hash;
+			hash = clearParam(hash);
+			hash += (hash) ? '&' : '#';
+			hash += serialize(param);
+			to += location.search + hash;
+		}else{
+			var search = location.search;
+			search = clearParam(search);
+			search += (search) ? '&' : '?';
+			search += serialize(param);
+			to += search + location.hash;
+		}
+		pushState(null, null, toAbsoluteUrl(to));
+	}
+
+	/**
 	 * メインシーンコンテナインスタンス保持用
 	 */
 	var mainContainer = null;
@@ -1357,11 +1491,8 @@
 				}
 
 				// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
-				// onPopStateを呼んでしまうと余計にHTMLを取りに行くことになるので、直接_changeSceneをto=elementで呼び出す。
-				// URLからのパラメーター取得は現状では無効とする。
-				// param = toQueryParams((location.search ||
-				// '').substring(1));
-				param = {};
+				// TODO(鈴木) 本来はRouterを使うべき。
+				param = getParamFromURL();
 
 			}
 
@@ -1370,6 +1501,11 @@
 				// TODO(鈴木)  _currentControllerへの登録等は内部で行われるので後続処理は不要
 			}else{
 			*/
+
+			if(param.to){
+				this._changeScene(param.to, param);
+			}else{
+
 				// TODO(鈴木) カレントとなるシーンを探索してscan
 				scanForContainer(element, null, param.args).done(
 						function(controller) {
@@ -1378,7 +1514,7 @@
 									null, element);
 							that._transition = null;
 						});
-			/*}*/
+			}
 
 		},
 
@@ -1423,11 +1559,12 @@
 		 * @param context
 		 */
 		_onWindowPopstate : function(context) {
-			// TODO(鈴木) 現状はURLでパラメーター渡しはしない
-			// var param = toQueryParams((location.search || '').substring(1));
-			// this._changeScene(location.href, param);
-			this._changeScene(location.href);
-			// TODO(鈴木) hrefからparamに該当する部分を削除して使用したほうがよいか？
+			var param = getParamFromURL();
+			if(param.to){
+				this._changeScene(param.to, param);
+			}else{
+				this._changeScene(clearParam(location.href), param);
+			}
 		},
 
 		/**
@@ -1521,25 +1658,19 @@
 					// シーン遷移先にハッシュを指定されたらエラー
 					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [ to ]);
 				}
+
 				if (controllerRegexp.test(to)) {
-					// メインシーンコンテナで遷移先にコントローラーを指定されたらエラー(暫定)
-					throwFwError(ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER,
-							[ to ]);
+					setParamToURL(param);
+
+				}else{
+					/*if(this.isInit){ // TODO(鈴木) 初期表示シーンの場合はURL連動しない。*/
+					// TODO(鈴木) パラメータをエンコードしてURLに付加
+					setParamToURL(param, to);
+					/*}*/
 				}
 
-				/*if(this.isInit){ // TODO(鈴木) 初期表示シーンの場合はURL連動しない。*/
-					// TODO(鈴木) パラメータをエンコードしてURLに付加
-					// ※現在シリアライズ方式検討中のため、パラメータの付加はしない
-					// to += ((to.indexOf('?') === -1) ? '?' : '&') +
-					// $.param(param);
-					pushState(null, null, toAbsoluteUrl(to));
-				/*}*/
-
-				// TODO(鈴木) URLから遷移したいが、↑のためパラメータが付加されていないので、
-				// 直接_changeSceneを呼ぶ。
-				// onPopState();
-				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj
-						.serialize(param)));
+				// TODO(鈴木) 本来はRouterで実装
+				this._onWindowPopstate();
 
 			} else {
 				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj
@@ -1590,7 +1721,6 @@
 			// (現状はコンテナ以下をそのまま入れている。コンテナ内にDOM的にシーンが複数あるケースは未対応)
 
 			if (isString(to)) {
-
 				if (controllerRegexp.test(to)) {
 
 					// TODO(鈴木)
@@ -1881,6 +2011,15 @@
 		if (h5.settings.scene.autoInit) {
 			init();
 		}
+		// TODO(鈴木) シーン遷移パラメーター識別用プレフィクス
+		if(h5.settings.scene.clientQueryStringPrefix){
+			clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
+		}
+		// TODO(鈴木) シーン遷移パラメーターハッシュ使用フラグ
+		// 現在無効
+//		if(h5.settings.scene.useHash != null){
+//			useHash = h5.settings.scene.useHash;
+//		}
 	});
 
 	// =============================
