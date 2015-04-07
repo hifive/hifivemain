@@ -71,7 +71,17 @@
 	/**
 	 * シーン間パラメーター用デフォルトプレフィクス
 	 */
-	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '__cl__';
+	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '_cl_';
+
+	/**
+	 * シーン間パラメーター用デフォルトプレフィクス(FW用)
+	 */
+	var DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX = '_clfw_';
+
+	/**
+	 * シリアライズプレフィクス
+	 */
+	var SERIALIZE_PREFIX = '2|';
 
 	// =============================
 	// Production
@@ -158,10 +168,29 @@
 	var clientQueryStringPrefix = DEFAULT_CLIENT_QUERY_STRING_PREFIX;
 
 	/**
+	 * シーン間パラメーター用デフォルトプレフィクス(FW用)
+	 */
+	var clientFWQueryStringPrefix = DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX;
+
+	/**
+	 * シーン間パラメーター用デフォルトプレフィクス正規表現用文字列
+	 */
+	var clientQueryStringPrefixForRegExp = null;
+
+	/**
+	 * シーン間パラメーター用デフォルトプレフィクス(FW用)正規表現用文字列
+	 */
+	var clientFWQueryStringPrefixForRegExp = null
+
+	/**
 	 * シーン間パラメーター用ハッシュ使用フラグ
 	 */
 	var useHash = false;
 
+	/**
+	 * URL分割用正規表現
+	 */
+	var locationRegExp = /^(.*?)(\?.*?)?(#.*)?$/;
 
 	// =============================
 	// Functions
@@ -1241,20 +1270,22 @@
 	 * @param parent
 	 * @return {String}
 	 */
-	function serialize(obj, parent){
+	function serialize(obj, parent) {
 		var str = '';
-		$.each(obj, function(k, v){
-			if(str) str += '&';
-			if(!parent && k === 'args'){
+		$.each(obj, function(k, v) {
+			if (str)
+				str += '&';
+			if (!parent && k === 'args') {
 				str += serialize(v, k);
-			}else{
-				if(parent){
-					str += encodeURIComponent(clientQueryStringPrefix + parent + '.' + k );
-				}else{
+			} else {
+				if (parent === 'args') {
 					str += encodeURIComponent(clientQueryStringPrefix + k);
+				} else {
+					str += encodeURIComponent(clientFWQueryStringPrefix + k);
 				}
 				str += '=';
-				str += encodeURIComponent(h5.u.obj.serialize(v));
+				// TODO(鈴木) シリアライズ結果から先頭の'2|'を除く
+				str += encodeURIComponent(h5.u.obj.serialize(v).substring(2));
 			}
 		});
 		return str;
@@ -1267,22 +1298,29 @@
 	 * @param str
 	 * @return {Object}
 	 */
-	function deserialize(str){
+	function deserialize(str) {
+		if (!deserialize._regExp) {
+			deserialize._regExp = new RegExp('^('
+					+ clientQueryStringPrefixForRegExp + '|'
+					+ clientFWQueryStringPrefixForRegExp
+					+ ')(.*)');
+		}
 		var obj = {};
-		$.each(str.split('&'), function(i, pair){
+		var regExp = deserialize._regExp;
+		$.each(str.split('&'), function(i, pair) {
 			pair = pair.split('=');
-			var k = decodeURIComponent(pair[0]), v = decodeURIComponent(pair[1]);
-			var match = k.match(new RegExp('^' + clientQueryStringPrefix + '(.*)'));
-			if(!match){
+			var k = decodeURIComponent(pair[0]);
+			var v = decodeURIComponent(pair[1]);
+			var match = k.match(regExp);
+			if (!match) {
 				return;
 			}
-			k = match[1];
-			var match = k.match(/^args\.(.*)/i);
-			if(match){
+			if (match[1] === clientQueryStringPrefix) {
 				obj['args'] = obj['args'] || {};
-				obj['args'][match[1]] = h5.u.obj.deserialize(v);
-			}else{
-				obj[k] = h5.u.obj.deserialize(v);
+				obj['args'][match[2]] = h5.u.obj.deserialize(SERIALIZE_PREFIX
+						+ v);
+			} else {
+				obj[match[2]] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
 			}
 		});
 		return obj;
@@ -1295,26 +1333,30 @@
 	 * @param str
 	 * @return {String}
 	 */
-	function clearParam(str){
-		var result;
-		if(useHash){
-			result =  str.replace(new RegExp('(^|#|&)' + clientQueryStringPrefix + '[^=]*=.*?(?=&|$)', 'g'), function(){
-				if(arguments[1] === '#') return '#';
-				return '';
-			});
-			if(result === '#'){
-				result = '';
-			}
-		}else{
-			result =  str.replace(new RegExp('(^|\\?|&)' + clientQueryStringPrefix + '[^=]*=.*?(?=&|#|$)', 'g'), function(){
-				if(arguments[1] === '?') return '?';
-				return '';
-			});
-			if(result === '?'){
-				result = '';
-			}
+	function clearParam(str) {
+		if (!str)
+			return '';
+		if (!clearParam._regExp) {
+			clearParam._regExp = new RegExp('(^|&)(?:'
+					+ clientQueryStringPrefixForRegExp + '|'
+					+ clientFWQueryStringPrefixForRegExp + ')[^=]*=.*?(?=&|$)',
+					'g');
 		}
-		return result;
+		var regExp = clearParam._regExp;
+		var match = str.match(locationRegExp);
+		var path = match[1];
+		var search = match[2] || '';
+		var hash = match[3] || '';
+		if (useHash && hash) {
+			hash = hash.substring(1).replace(regExp, '');
+			if (hash)
+				hash = '#' + hash;
+		} else if (!useHash && search) {
+			search = search.substring(1).replace(regExp, '');
+			if (search)
+				search = '#' + search;
+		}
+		return path + search + hash;
 	}
 
 	/**
@@ -1322,7 +1364,7 @@
 	 *
 	 * @return {Object}
 	 */
-	function getParamFromURL(){
+	function getParamFromURL() {
 		var target = useHash ? location.hash : location.search;
 		return deserialize(target.substring(1));
 	}
@@ -1332,28 +1374,27 @@
 	 *
 	 * @param param
 	 * @param to
-	 *
 	 */
-	function setParamToURL(param, to){
-		if(to){
-			to = toAbsoluteUrl(to);
-		}else{
-			to = location.href.replace(/(?:\?.*)?(?:#.*)?$/, '');
+	function setParamToURL(param, to) {
+		// TODO(鈴木) 遷移先指定がない場合、現在のURLを使用
+		to = to || location.href;
+		to = clearParam(to);
+		var match = to.match(locationRegExp);
+		var path = match[1];
+		var search = match[2] || '';
+		var hash = match[3] || '';
+		var paramStr = serialize(param);
+		if (paramStr) {
+			if (useHash) {
+				hash += (hash) ? '&' : '#';
+				hash += paramStr;
+			} else {
+				search += (search) ? '&' : '?';
+				search += paramStr;
+			}
 		}
-		if(useHash){
-			var hash = location.hash;
-			hash = clearParam(hash);
-			hash += (hash) ? '&' : '#';
-			hash += serialize(param);
-			to += location.search + hash;
-		}else{
-			var search = location.search;
-			search = clearParam(search);
-			search += (search) ? '&' : '?';
-			search += serialize(param);
-			to += search + location.hash;
-		}
-		pushState(null, null, toAbsoluteUrl(to));
+		path += search + hash;
+		pushState(null, null, toAbsoluteUrl(path));
 	}
 
 	/**
@@ -1565,11 +1606,9 @@
 		 */
 		_onWindowPopstate : function(context) {
 			var param = getParamFromURL();
-			if(param.to){
-				this._changeScene(param.to, param);
-			}else{
-				this._changeScene(clearParam(location.href), param);
-			}
+			var to = param.to || location.href;
+			to = clearParam(to);
+			this._changeScene(to, param);
 		},
 
 		/**
@@ -2012,19 +2051,34 @@
 	// TODO(鈴木) 暫定。とりあえず設定を有効化しました
 	h5.settings.scene = h5.settings.scene || {};
 	$(function() {
+
+		// TODO(鈴木) シーン遷移パラメーター識別用プレフィクス
+		if (h5.settings.scene.clientQueryStringPrefix) {
+			clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
+		}
+		// TODO(鈴木) 正規表現用文字列作成
+		clientQueryStringPrefixForRegExp = clientQueryStringPrefix.replace(
+				/\\/g, '\\\\');
+
+		// TODO(鈴木) シーン遷移パラメーター識別用プレフィクス(FW用)
+		if (h5.settings.scene.clientFWQueryStringPrefix) {
+			clientFWQueryStringPrefix = h5.settings.scene.clientFWQueryStringPrefix;
+		}
+		// TODO(鈴木) 正規表現用文字列作成
+		clientFWQueryStringPrefixForRegExp = clientFWQueryStringPrefix.replace(
+				/\\/g, '\\\\');
+
+		// TODO(鈴木) シーン遷移パラメーターハッシュ使用フラグ
+		// 現在無効
+		// if(h5.settings.scene.useHash != null){
+		// useHash = h5.settings.scene.useHash;
+		// }
+
 		// TODO(鈴木) autoInit=trueの場合に全体を探索し、DATA属性によりコントローラーバインドとシーンコンテナ生成を行う。
 		if (h5.settings.scene.autoInit) {
 			init();
 		}
-		// TODO(鈴木) シーン遷移パラメーター識別用プレフィクス
-		if(h5.settings.scene.clientQueryStringPrefix){
-			clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
-		}
-		// TODO(鈴木) シーン遷移パラメーターハッシュ使用フラグ
-		// 現在無効
-//		if(h5.settings.scene.useHash != null){
-//			useHash = h5.settings.scene.useHash;
-//		}
+
 	});
 
 	// =============================

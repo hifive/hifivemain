@@ -735,7 +735,7 @@ $(function() {
 														strictEqual(param, 'hoge',
 																'画面間パラメータが渡されていること');
 														ok(
-																/.*\b__cl__to=2%7Csscenedata\.controller\.ControllerToController\b.*/
+																/.*\b_clfw_to=sscenedata\.controller\.ControllerToController\b.*/
 																		.test(that.w.location.search),
 																'URLが連動していること');
 
@@ -761,7 +761,7 @@ $(function() {
 																					'CONTROLLER_FROM',
 																					'histroy.back()で画面が遷移されていること');
 																			ok(
-																					/.*\b__cl__to=2%7Csscenedata\.controller\.ControllerFromController\b.*/
+																					/.*\b_clfw_to=sscenedata\.controller\.ControllerFromController\b.*/
 																							.test(that.w.location.search),
 																					'URLが連動していること');
 
@@ -789,7 +789,7 @@ $(function() {
 																										'CONTROLLER_TO',
 																										'histroy.forward()で画面が遷移されていること');
 																								ok(
-																										/.*\b__cl__to=2%7Csscenedata\.controller\.ControllerToController\b.*/
+																										/.*\b_clfw_to=sscenedata\.controller\.ControllerToController\b.*/
 																												.test(that.w.location.search),
 																										'URLが連動していること');
 
@@ -835,7 +835,7 @@ $(function() {
 																															'CONTROLLER_TO',
 																															'location.reload()で画面が再表示されていること');
 																													ok(
-																															/.*\b__cl__to=2%7Csscenedata\.controller\.ControllerToController\b.*/
+																															/.*\b_clfw_to=sscenedata\.controller\.ControllerToController\b.*/
 																																	.test(that.w.location.search),
 																															'URLが連動していること');
 
