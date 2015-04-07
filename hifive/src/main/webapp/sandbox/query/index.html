@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+<script src="../../res/lib/jquery/jquery.js"></script>
+<script src="../../archives/current/ejs-h5mod.js"></script>
+<link rel="stylesheet" href="../../archives/current/h5.css" />
+
+<script src="../../test/lib/qunit/qunit.js"></script>
+<!-- jsDumpを使用 -->
+
+<!-- 		<script src="../../archives/current/h5.js"></script> -->
+<script src="../../src/h5scopedglobals.js"></script>
+<script src="../../src/h5.u.js"></script>
+<script src="../../src/h5.mixin.js"></script>
+<script src="../../src/h5.log.js"></script>
+<script src="../../src/h5.js"></script>
+<script src="../../src/h5.env.js"></script>
+<script src="../../src/h5.async.js"></script>
+<script src="../../src/h5.ui.js"></script>
+<script src="../../src/h5.ui.jqm.manager.js"></script>
+<script src="../../src/h5.ajax.js"></script>
+<script src="../../src/h5.core.data_query.js"></script>
+<script src="../../src/h5.core.data.js"></script>
+<script src="../../src/h5.core.view_binding.js"></script>
+<script src="../../src/h5.core.view.js"></script>
+<script src="../../src/h5.core.controller.js"></script>
+<script src="../../src/h5.api.geo.js"></script>
+<script src="../../src/h5.api.sqldb.js"></script>
+<script src="../../src/h5.api.storage.js"></script>
+
+<script src="../../src/h5.dev.api.geo.js"></script>
+
+<script src="QueryController.js"></script>
+<script src="init.js"></script>
+
+<script type="text/ejs" id="query">
+<table>
+<thead>
+<tr>
+<th>id</th><th>itemname</th><th>price</th>
+</tr>
+</thead>
+<tbody>
+[% for(var i = 0, l = result.length; i < l; i++){
+ 	var item = result.get(i); %]
+<tr>
+<td>[%= item.get('id') %]</td>
+<td>[%= item.get('itemname') %]</td>
+<td>[%= item.get('price') %]</td>
+</tr>
+[% } %]
+</tbody>
+</script>
+
+<script type="text/ejs" id="items">
+<table>
+<thead>
+<tr>
+<th>id</th><th>itemname</th><th>price</th>
+</tr>
+</thead>
+<tbody>
+[% for(p in items){
+ 	var item = items[p]; %]
+<tr>
+<td>[%= item.get('id') %]</td>
+<td>[%= item.get('itemname') %]</td>
+<td>[%= item.get('price') %]</td>
+</tr>
+[% } %]
+</tbody>
+</script>
+<style>
+form {
+	border: 1px solid #ccc
+}
+</style>
+<title>h5.core.data_query</title>
+</head>
+<body>
+	<div style="float: left">
+		<h3>全てのアイテム</h3>
+		<div class="items"></div>
+	</div>
+	<div style="margin-left: 30px; float: left;">
+		<div>
+			<p>DataModelに対してアイテムを追加、削除、更新できます。</p>
+			<p>検索結果は動的に反映されます(ライブクエリ)</p>
+		</div>
+		<form class="create">
+			<p>
+				itemname:<input type="text" name="itemname" value="hoge" />
+			</p>
+			<p>
+				price:<input type="text" name="price" value="1111" />
+			</p>
+			<button class="regist">追加</button>
+		</form>
+		<form class="remove">
+			<p>
+				id:<input type="text" name="id" value="5" />
+			</p>
+			<button class="regist">削除</button>
+		</form>
+		<form class="update">
+			<p>
+				id:<input type="text" name="id" value="1" />
+			</p>
+			<p>
+				itemname:<input type="text" name="itemname" value="fuga" />
+			</p>
+			<p>
+				price:<input type="text" name="price" value="1111" />
+			</p>
+			<button class="regist">更新</button>
+		</form>
+	</div>
+
+	<hr style="clear: both">
+	<h3>検索結果</h3>
+	<div class="result"></div>
+</body>
+</html>

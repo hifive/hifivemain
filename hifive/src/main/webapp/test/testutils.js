@@ -155,6 +155,44 @@
 		}
 	}
 
+	/**
+	 * 相対URLを絶対URLに変換します(h5scopeglobalsからコピペ)
+	 *
+	 * @param {String} relativePath 相対URL
+	 * @returns {String} 絶対パス
+	 */
+	var toAbsoluteUrl = (function() {
+		var a = null;
+		return function(relativePath) {
+			if (!a) {
+				// toAbsoluteUrl()が初めて呼ばれた時にa要素を作成してキャッシュする
+				a = document.createElement('a');
+			}
+			a.setAttribute('href', relativePath);
+			return a.href;
+		};
+	})();
+
+	/**
+	 * #qunit-fixtur内にバインドされているコントローラをdisposeして、コントローラキャッシュ、ロジックキャッシュをクリアする
+	 */
+	function clearController() {
+		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
+			deep: true
+		});
+		for (var i = controllers.length - 1; i >= 0; i--) {
+			controllers[i].dispose();
+		}
+		h5.core.definitionCacheManager.clearAll();
+	}
+
+	/**
+	 * アスペクトを削除する
+	 */
+	function cleanAllAspects() {
+		h5.settings.aspects = null;
+	}
+
 	// ----------- dom ------------
 	/**
 	 * iframeを作成 IE11でjQuery1.10.1,2.0.2の場合、iframe内の要素をjQueryで操作するとき、
@@ -418,7 +456,10 @@
 			deleteProperty: deleteProperty,
 			compareVersion: compareVersion,
 			rgbToHex: rgbToHex,
-			nearEqual: nearEqual
+			nearEqual: nearEqual,
+			clearController: clearController,
+			cleanAllAspects: cleanAllAspects,
+			toAbsoluteUrl: toAbsoluteUrl
 		},
 		qunit: {
 			abortTest: abortTest,

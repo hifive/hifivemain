@@ -193,11 +193,16 @@ function wrapInArray(value) {
  * @param {String} relativePath 相対URL
  * @returns {String} 絶対パス
  */
-function toAbsoluteUrl(relativePath) {
-	var e = document.createElement('span');
-	e.innerHTML = '<a href="' + relativePath + '" />';
-	return e.firstChild.href;
-}
+var toAbsoluteUrl = (function() {
+	var a = null;
+	return function(relativePath) {
+		if (!a) {
+			a = document.createElement('a');
+		}
+		a.setAttribute('href', relativePath);
+		return a.href;
+	};
+})();
 
 /**
  * 引数が文字列かどうかを判定します。
@@ -442,7 +447,7 @@ var isFunction = (function() {
  *
  * @private
  * @param {Promise[]} promises
- * @param {Function} doneCallback doneコールバック。引数は渡されません。
+ * @param {Function} doneCallback doneコールバック
  * @param {Function} failCallback failコールバック
  * @param {Boolean} cfhIfFail 渡されたpromiseのいずれかが失敗した時にcFHを呼ぶかどうか。
  *            cFHを呼ぶときのthisは失敗したpromiseオブジェクト、引数は失敗したpromiseのfailに渡される引数
@@ -489,14 +494,23 @@ function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 		return;
 	}
 
+	var resolveArgs = [];
 	var resolveCount = 0;
 	var rejected = false;
-	/** いずれかのpromiseが成功するたびに全て終わったかチェック */
-	function check() {
-		if (!rejected && ++resolveCount === promisesLength) {
-			// 全てのpromiseが成功したので、doneCallbackを実行
-			doneCallback && doneCallback();
-		}
+	// indexを取って関数を生成することで、結果に格納する順番を渡されたpromisesに基づく順番にしている
+	function createCheckFunction(index) {
+		// いずれかのpromiseが成功するたびに全て終わったかチェックする関数
+		return function check(/* var_args */) {
+			var arg = h5.u.obj.argsToArray(arguments);
+			// 引数無しならundefined、引数が一つならそのまま、引数が2つ以上なら配列を追加
+			// ($.when()と同じ)
+			resolveArgs[index] = (arg.length < 2 ? arg[0] : arg);
+
+			if (!rejected && ++resolveCount === promisesLength) {
+				// 全てのpromiseが成功したので、doneCallbackを実行
+				doneCallback && doneCallback(resolveArgs);
+			}
+		};
 	}
 	/** いずれかのpromiseが失敗した時に呼ばれるコールバック */
 	function fail(/* var_args */) {
@@ -512,7 +526,7 @@ function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
 	}
 
 	for (var i = 0; i < promisesLength; i++) {
-		monitorningPromises[i].done(check).fail(fail);
+		monitorningPromises[i].done(createCheckFunction(i)).fail(fail);
 	}
 }
 

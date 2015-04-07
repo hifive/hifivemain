@@ -95,8 +95,7 @@
 		// jQuery1.9以降、GET,POSTの設定はtypeではなくmethodで指定することが推奨されているが、
 		// thisにはtypeにtoUpperCase()されたものが格納されている
 		var type = this.type;
-		if (type === 'POST'
-				|| !(stat === 0 || stat === ERROR_INTERNET_CANNOT_CONNECT)) {
+		if (type === 'POST' || !(stat === 0 || stat === ERROR_INTERNET_CANNOT_CONNECT)) {
 			return false;
 		}
 	}
@@ -311,7 +310,29 @@
 		 * @memberOf h5.settings
 		 * @type String
 		 */
-		trackstartTouchAction: 'none'
+		trackstartTouchAction: 'none',
+
+		res: {
+			/**
+			 * リソースを取得時のカレントパス
+			 * <p>
+			 * デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)
+			 * </p>
+			 *
+			 * @memberOf h5.settings.res
+			 */
+			baseUrl: null,
+
+			/**
+			 * タイムアウト時間設定(ms)
+			 * <p>
+			 * タイムアウトに設定された時間待機して、依存解決ができない場合、resolve()は失敗します。デフォルトは10000(10秒)です。
+			 * </p>
+			 *
+			 * @memberOf h5.settings.res
+			 */
+			timeoutTime: 10000
+		}
 	};
 
 	// h5preinitでglobalAspectsの設定をしている関係上、別ファイルではなく、ここに置いている。

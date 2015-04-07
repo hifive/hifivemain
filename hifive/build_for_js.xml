@@ -35,7 +35,7 @@
 		</delete>
 	</target>
 
-	<target name="getVersion" depends="cleanCurrent">
+	<target name="getVersion">
 		<input message="バージョン番号を入力してください。(ex. 1.0.1)" addproperty="versionNumber" />
 		<condition property="isCorrectNumber">
 			<matches pattern="[0-9]+\.[0-9]+\.[0-9]+" string="${versionNumber}" />
@@ -45,7 +45,7 @@
 	</target>
 
 
-	<target name="build" depends="prepare,getVersion,getGitHash">
+	<target name="build" depends="prepare,cleanCurrent,getVersion,getGitHash">
 		<buildService>
 			<buildParameter
 				tmpFiles="false"
@@ -64,7 +64,7 @@
 				cssTemplateFile="${cssTempFile}"
 				minHeaderFile="${minHeaderFile}"
 				constructionFile="${constructionFile}"
-				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
+				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
@@ -73,9 +73,10 @@
 		<tstamp>
 			<format property="nightly.version"  pattern="yyyy-MM-dd_HH-mm-ss-SSS" />
 		</tstamp>
+		<touch file="${archivesDir}/current/NIGHTLY" />
 	</target>
 
-	<target name="build-nightly" depends="prepare,getNightlyVersion,getGitHash">
+	<target name="build-nightly" depends="prepare,cleanCurrent,getNightlyVersion,getGitHash">
 		<buildService>
 			<buildParameter
 				tmpFiles="false"
@@ -94,7 +95,7 @@
 				cssTemplateFile="${cssTempFile}"
 				minHeaderFile="${minHeaderFile}"
 				constructionFile="${constructionFile}"
-				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
+				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
