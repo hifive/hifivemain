@@ -501,7 +501,7 @@
 					promises.push(asyncFunc());
 
 					$.each(resources, function() {
-						var url = toAbsoluteUrl(this);
+						var url = toAbsoluteUrl(this.toString());
 
 						if (!force && url in addedJS) {
 							return true;
@@ -518,7 +518,7 @@
 					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
 
 					$.each(resources, function() {
-						var url = toAbsoluteUrl(this);
+						var url = toAbsoluteUrl(this.toString());
 
 						seq = thenCompat(seq, function() {
 							if (!force && url in addedJS) {
@@ -544,7 +544,7 @@
 					loadedScripts.push(null);
 
 					$.each(resources, function() {
-						var url = toAbsoluteUrl(this);
+						var url = toAbsoluteUrl(this.toString());
 
 						if (!force && (url in addedJS || url in loadedUrl)) {
 							return true;
@@ -599,7 +599,7 @@
 					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
 
 					$.each(resources, function() {
-						var url = toAbsoluteUrl(this);
+						var url = toAbsoluteUrl(this.toString());
 
 						seq = thenCompat(seq, function() {
 							var df = getDeferred();
@@ -644,7 +644,7 @@
 			return retDf.promise();
 		} else {
 			$.each(resources, function() {
-				var url = toAbsoluteUrl(this);
+				var url = toAbsoluteUrl(this.toString());
 
 				if (!force && (url in addedJS || url in loadedUrl)) {
 					return true;
