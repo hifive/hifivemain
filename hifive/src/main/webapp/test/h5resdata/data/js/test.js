@@ -16,7 +16,7 @@
  * hifive
  */
 (function() {
-	h5test = {
+	h5restest = {
 		test: {
 			a: 1
 		}

@@ -209,7 +209,7 @@ $(function() {
 			});
 		},
 		teardown: function() {
-			deleteProperty(window, 'h5test');
+			deleteProperty(window, 'h5restest');
 			// scriptタグの除去
 			$('script[src*="h5resdata\"]').remove();
 		}
@@ -219,20 +219,20 @@ $(function() {
 	// Body
 	//=============================
 	asyncTest('jsファイルの依存解決', 3, function() {
-		strictEqual(h5test.test.a, 1, '指定したjsファイルがロードされていること');
-		h5test.test.a = 0;
+		strictEqual(h5restest.test.a, 1, '指定したjsファイルがロードされていること');
+		h5restest.test.a = 0;
 
 
 		var promise1 = h5.res.dependsOn('h5resdata/data/js/test.js?hoge').resolve();
 		promise1.done(function(result) {
-			strictEqual(h5test.test.a, 1, 'クエリパラメータを指定した場合に、jsファイルがロードされていること');
-			h5test.test.a = 0;
+			strictEqual(h5restest.test.a, 1, 'クエリパラメータを指定した場合に、jsファイルがロードされていること');
+			h5restest.test.a = 0;
 		});
 
 		var promise2 = h5.res.dependsOn('h5resdata/data/js/test.js?fuga').resolve('jsfile');
 		promise2.done(function(result) {
-			strictEqual(h5test.test.a, 1, 'resolveの引数にリゾルバのタイプを指定した時、jsファイルがロードされていること');
-			h5test.test.a = 0;
+			strictEqual(h5restest.test.a, 1, 'resolveの引数にリゾルバのタイプを指定した時、jsファイルがロードされていること');
+			h5restest.test.a = 0;
 		});
 		$.when(promise1, promise2).done(start);
 	});
@@ -484,8 +484,8 @@ $(function() {
 					strictEqual(ejs.templates && ejs.templates && ejs.templates[0].id, 'tmp1',
 							'テンプレートが取得できること');
 					strictEqual($(css).attr('href'), cssFile, '指定したcssファイルのlinkタグが取得できること');
-					strictEqual(h5test.test.a, 1, 'jsファイルがロードされていること');
-					deleteProperty(window, 'h5test');
+					strictEqual(h5restest.test.a, 1, 'jsファイルがロードされていること');
+					deleteProperty(window, 'h5restest');
 				}).fail(function() {
 			ok(false, 'resolveが失敗しました');
 		}).always(start);
@@ -498,7 +498,7 @@ $(function() {
 					ok(all.length === 1 && all[0] === ejs, '第1引数は各リソースの取得結果が指定した順に格納された配列であること');
 					strictEqual(ejs.templates && ejs.templates && ejs.templates[0].id, 'tmp1',
 							'テンプレートが取得できること');
-					deleteProperty(window, 'h5test');
+					deleteProperty(window, 'h5restest');
 				}).fail(function() {
 			ok(false, 'resolveが失敗しました');
 		}).always(start);
