@@ -222,14 +222,14 @@ $(function() {
 		strictEqual(h5restest.test.a, 1, '指定したjsファイルがロードされていること');
 		h5restest.test.a = 0;
 
-
 		var promise1 = h5.res.dependsOn('h5resdata/data/js/test.js?hoge').resolve();
 		promise1.done(function(result) {
 			strictEqual(h5restest.test.a, 1, 'クエリパラメータを指定した場合に、jsファイルがロードされていること');
-			h5restest.test.a = 0;
 		});
 
-		var promise2 = h5.res.dependsOn('h5resdata/data/js/test.js?fuga').resolve('jsfile');
+		var promise2 = h5.res.dependsOn('h5resdata/data/js/test.js?fuga').resolve(
+				'jsfile');
+		h5restest.test.a = 0;
 		promise2.done(function(result) {
 			strictEqual(h5restest.test.a, 1, 'resolveの引数にリゾルバのタイプを指定した時、jsファイルがロードされていること');
 			h5restest.test.a = 0;
