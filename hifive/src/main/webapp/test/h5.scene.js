@@ -744,7 +744,7 @@ $(function() {
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
 			this.w.close();
-		},
+		}
 	});
 
 	//=============================

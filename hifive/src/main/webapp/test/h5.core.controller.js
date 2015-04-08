@@ -11356,7 +11356,7 @@ $(function() {
 					myLogic: {},
 					__construct: function() {
 						constructExecuted = true;
-					},
+					}
 				}
 			});
 			ok(false, 'エラーが発生していません。');
