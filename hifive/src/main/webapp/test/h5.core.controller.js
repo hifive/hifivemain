@@ -8413,6 +8413,7 @@ $(function() {
 		var lifecycleerrorExecuted = false;
 		var lifecycleerrorEventObj = null;
 		var controllerInstance = null;
+		var child = null;
 
 		var errorObj = new Error('__construct error.');
 		var controller = {

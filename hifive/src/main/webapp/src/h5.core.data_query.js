@@ -451,7 +451,7 @@
 			var tmp = $.trim(prop.replace(/ +/g, ' ')).split(' ');
 			// 演算子省略時は'='で比較
 			var op = tmp[1] || '=';
-			compareFunction = compareFunctions[op];
+			var compareFunction = compareFunctions[op];
 			// compareFunctionが無い場合はエラー
 			if (!compareFunction) {
 				throwFwError(ERR_CODE_NO_COMPARE_FUNCTIONS, [op, $.type(valueForTypeCheck)]);

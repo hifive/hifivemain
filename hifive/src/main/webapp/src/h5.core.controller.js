@@ -1378,7 +1378,7 @@
 					}
 				}
 				doForEachControllerGroups(controller, function(c, parent) {
-					metaUseHandlers = c.__controllerContext.metaUseHandlers;
+					var metaUseHandlers = c.__controllerContext.metaUseHandlers;
 					delete c.__controllerContext.metaUseHandlers;
 					// バインド処理をしたかどうか
 					// manageChildによる動的子コントローラについて２重にバインドしないためのフラグ
