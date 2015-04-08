@@ -1730,7 +1730,7 @@
 
 		var container = h5internal.core.controllerInternal(element,
 				SceneContainerController, {
-					isMain : isMain,
+					isMain : isMain
 					/*initialSceneInfo : param*/
 				}, {
 					async : false
