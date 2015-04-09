@@ -524,7 +524,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('メインシーンコンテナ', {
+	module('[browser#ie:-8]メインシーンコンテナ', {
 		setup: function() {
 			stop();
 			var that = this;
