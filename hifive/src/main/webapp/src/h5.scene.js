@@ -440,8 +440,6 @@
 									dfd.resolve(controller);
 								});
 							}
-						} else {
-							//console.debug('同一コントローラーバインド回避:' + attrControllerName);
 						}
 					}
 				});
@@ -1044,11 +1042,9 @@
 		var $parent = $(parent);
 		var $children = $parent.children();
 		if ($children.eq(0).is('[' + DATA_H5_DEFAULT_SCENE + '],[' + DATA_H5_SCENE + ']') === false) {
-			//console.info('シーンコンテナ直下先頭にシーン要素が見つからないため、シーン要素でラップします。');
 			$children.wrapAll($('<div ' + DATA_H5_DEFAULT_SCENE + '></div>'));
 			var name = $parent.attr(DATA_H5_CONTROLLER);
 			if (name) {
-				//console.info('シーンコンテナのコントローラー指定をラップに使用したシーン要素に移動します。');
 				// TODO(鈴木) childrenは↑のwrapAllで作成した要素
 				$parent.removeAttr(DATA_H5_CONTROLLER).children().attr(DATA_H5_CONTROLLER, name);
 			}
