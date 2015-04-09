@@ -479,7 +479,7 @@
 			var $elements = $(resource.content).filter(function() {
 				// IE8以下で、要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまう。
 				// nodeTypeを見てコメントノードも除去して、tagNameが'/SCRIPT'のものも除去する。
-				return this.nodeType === 1 && this.tagName.indexOf('/') !== 1;
+				return this.nodeType === 1 && this.tagName.indexOf('/') !== 0;
 			});
 			var textResources = [];
 			if ($elements.not('script[type="text/ejs"]').length > 0) {
