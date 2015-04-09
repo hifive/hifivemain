@@ -163,13 +163,30 @@
 	 */
 	var toAbsoluteUrl = (function() {
 		var a = null;
+		var span = null;
+		var isHrefPropAbsoluteFlag = null;
+		function isHrefPropAbsolute() {
+			if (isHrefPropAbsoluteFlag === null) {
+				a.setAttribute('href', './');
+				isHrefPropAbsoluteFlag = a.href !== './';
+			}
+			return isHrefPropAbsoluteFlag;
+		}
 		return function(relativePath) {
 			if (!a) {
-				// toAbsoluteUrl()が初めて呼ばれた時にa要素を作成してキャッシュする
+				// a.hrefを使わない場合でも、a.hrefが使えるかどうかの判定でa要素を使用するので、最初の呼び出し時に必ずa要素を作る
 				a = document.createElement('a');
 			}
-			a.setAttribute('href', relativePath);
-			return a.href;
+			if (isHrefPropAbsolute()) {
+				a.setAttribute('href', relativePath);
+				return a.href;
+			}
+			// a.hrefが絶対パスにならない場合はinnerHTMLを使う
+			if (!span) {
+				span = document.createElement('span');
+			}
+			span.innerHTML = '<a href="' + relativePath + '" />';
+			return span.firstChild.href;
 		};
 	})();
 
