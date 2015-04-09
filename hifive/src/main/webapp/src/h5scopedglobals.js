@@ -218,8 +218,7 @@ var toAbsoluteUrl = (function() {
 			span = document.createElement('span');
 		}
 		span.innerHTML = '<a href="' + relativePath + '" />';
-		var ret = span.firstChild.href;
-		return ret;
+		return span.firstChild.href;
 	};
 })();
 
