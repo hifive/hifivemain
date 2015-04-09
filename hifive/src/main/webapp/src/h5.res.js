@@ -393,7 +393,8 @@
 		if (!waitingImmediateTimer) {
 			waitingImmediateTimer = setTimeout(function() {
 				waitingImmediateTimer = null;
-				var dfds = waitingForImmediateDeferred.splice(0);
+				var dfds = waitingForImmediateDeferred
+						.splice(0, waitingForImmediateDeferred.length);
 				for (var i = 0, l = dfds.length; i < l; i++) {
 					dfds[i].dfd.resolve(dfds[i].value);
 				}
