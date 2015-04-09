@@ -416,7 +416,7 @@
 		}
 		// 現在解決待ちのリソースキーであれば、それを返す
 		if (waitingInfoMap[resourceKey]) {
-			return waitingInfoMap[resourceKey].promise();
+			return waitingInfoMap[resourceKey].deferred.promise();
 		}
 		// "."を"/"に変えてファイルパスを取得
 		var filePath = getFilePath(resourceKey.replace(/\./g, '/')) + '.js';
