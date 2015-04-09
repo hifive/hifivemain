@@ -73,6 +73,7 @@ $(function() {
 	module('HTML要素の記述に基づいたコントローラの自動バインド', {
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
+			deleteProperty(window, 'scenedata');
 			clearController();
 			$('[data-h5-controller]').removeAttr('data-h5-controller');
 			$('[data-h5-dyn-controller-bound]').removeAttr('data-h5-dyn-controller-bound');
@@ -285,6 +286,7 @@ $(function() {
 	module('シーンコンテナとシーン', {
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
+			deleteProperty(window, 'scenedata');
 			clearController();
 			$('[data-h5-controller]').removeAttr('data-h5-controller');
 			$('[data-h5-dyn-controller-bound]').removeAttr('data-h5-dyn-controller-bound');
