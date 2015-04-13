@@ -1005,6 +1005,11 @@
 	var bodyTagRegExp = /<body\b([^>]*)>((?:\s|\S)*?)(?:<\/body\s*>|<\/html\s*>|$)/i;
 
 	/**
+	 * 先頭に表示文字列テキストノードがあるかのチェック用正規表現
+	 */
+	var startByTextRegexp = /^\s*(?!\s|<)/;
+
+	/**
 	 * HTML文字列からBODYタグ内容部分抽出
 	 * <p>
 	 * BODYタグがある場合、戻り値はDIVタグで囲む。<br>
@@ -1026,6 +1031,9 @@
 		if (match) {
 			return '<div ' + DATA_H5_DYN_DUMMY_BODY + ' ' + match[1] + '>' + match[2] + '</div>';
 		}
+		if(startByTextRegexp.test(html)){
+			return '<div>' + html + '</div>';
+		}
 		return html;
 	}
 
@@ -1042,7 +1050,7 @@
 		var $parent = $(parent);
 		var $children = $parent.children();
 		if ($children.eq(0).is('[' + DATA_H5_DEFAULT_SCENE + '],[' + DATA_H5_SCENE + ']') === false) {
-			$children.wrapAll($('<div ' + DATA_H5_DEFAULT_SCENE + '></div>'));
+			$parent.wrapInner($('<div ' + DATA_H5_DEFAULT_SCENE + '></div>'));
 			var name = $parent.attr(DATA_H5_CONTROLLER);
 			if (name) {
 				// TODO(鈴木) childrenは↑のwrapAllで作成した要素
