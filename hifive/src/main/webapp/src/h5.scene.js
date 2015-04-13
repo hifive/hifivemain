@@ -114,6 +114,8 @@
 	var ERR_CODE_HTML_LOAD_FAILED = 100009;
 	/** コンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていない */
 	var ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND = 100010;
+	/** メインシーンコンテナ遷移先URLが設定された最大長を超過した */
+	var ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER = 100011;
 
 
 	// =============================
@@ -139,6 +141,7 @@
 	errMsgMap[ERR_CODE_CONTAINER_ALREADY_CREATED] = '対象要素ですでにシーンコンテナが生成されているため、生成できません。';
 	errMsgMap[ERR_CODE_HTML_LOAD_FAILED] = 'シーン遷移先HTMLのロードに失敗しました。to:{0}';
 	errMsgMap[ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND] = '要素にコンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていません。';
+	errMsgMap[ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER] = 'メインシーンコンテナの遷移先URLが設定された最大長を超過しました。長さ:{0} 最大長:{1}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -191,6 +194,16 @@
 	 * URL分割用正規表現
 	 */
 	var locationRegExp = /^(.*?)(\?.*?)?(#.*)?$/;
+
+	/**
+	 * changeSceneの遷移先指定コントローラーか否かを判断する正規表現
+	 */
+	var controllerRegexp = /Controller$/;
+
+	/**
+	 * メインシーンコンテナのシーン遷移先URLの最大長
+	 */
+	var urlMaxLength = 2000;
 
 	// =============================
 	// Functions
@@ -1251,18 +1264,6 @@
 	registerSceneTransition(DEFAULT_SCENE_TRANSITION_TYPE, defaultTransitionController);
 
 	/**
-	 * pushState関数
-	 *
-	 * @private
-	 * @param state
-	 * @param title
-	 * @param url
-	 */
-	function pushState(state, title, url) {
-		history.pushState(state, title, url);
-	}
-
-	/**
 	 * シーン遷移用パラメーターシリアライズ
 	 *
 	 * @private
@@ -1362,9 +1363,10 @@
 	/**
 	 * URLからシーン遷移パラメーターを取得
 	 *
+	 * @private
 	 * @return {Object}
 	 */
-	function getParamFromURL() {
+	function getParamFromUrl() {
 		var target = useHash ? location.hash : location.search;
 		return deserialize(target.substring(1));
 	}
@@ -1372,29 +1374,50 @@
 	/**
 	 * URLにシーン遷移パラメーターを設定
 	 *
+	 * @private
 	 * @param param
 	 * @param to
 	 */
-	function setParamToURL(param, to) {
+	function setParamToUrl(param) {
 		// TODO(鈴木) 遷移先指定がない場合、現在のURLを使用
+		var to = param.to;
 		to = to || location.href;
 		to = clearParam(to);
 		var match = to.match(locationRegExp);
 		var path = match[1];
 		var search = match[2] || '';
 		var hash = match[3] || '';
+		if (!controllerRegexp.test(to) && !useHash) {
+			// TODO(鈴木) メインシーンコンテナで遷移先がHTML(コントローラーでない)の場合は
+			// paramからtoを削除(URLに余計な情報を残さないため)
+			delete param.to;
+		}
 		var paramStr = serialize(param);
-		if (paramStr) {
 			if (useHash) {
 				hash += (hash) ? '&' : '#';
 				hash += paramStr;
+			checkUrlLength(path + search + hash);
+			location.hash = hash;
 			} else {
 				search += (search) ? '&' : '?';
 				search += paramStr;
+			checkUrlLength(path + search + hash);
+			history.pushState(null, null, toAbsoluteUrl(path + search + hash));
 			}
 		}
-		path += search + hash;
-		pushState(null, null, toAbsoluteUrl(path));
+
+	/**
+	 * メインシーンコンテナ遷移先URL長チェック
+	 *
+	 * @private
+	 * @param url
+	 */
+	function checkUrlLength(url){
+		var length = toAbsoluteUrl(url).length;
+		if(length > urlMaxLength){
+			// メインシーンコンテナ遷移先URLが設定された最大長を超過した
+			throwFwError(ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER, [ length,  urlMaxLength ]);
+		}
 	}
 
 	/**
@@ -1403,9 +1426,19 @@
 	var mainContainer = null;
 
 	/**
-	 * changeSceneの遷移先指定コントローラーか否かを判断する正規表現
+	 * 再表示不可画面用コントローラー
+	 *
+	 * <p>
+	 * シーン遷移時シーン間パラメーターをURLに保持しない場合で、ブラウザ履歴等により再表示した場合に表示する画面。
+	 * </p>
 	 */
-	var controllerRegexp = /Controller$/;
+	var NotReshowController = {
+		__name: 'h5.scene.NotReshowController',
+		__init: function(){
+			$(this.rootElement).html('<h1>この画面は再表示できません。</h1>');
+		}
+	};
+	//TODO(鈴木) このクラス定義を外部から指定可能にする必要がある。
 
 	/**
 	 * シーンコンテナクラス
@@ -1471,16 +1504,16 @@
 		_isNavigated : false,
 
 		/**
-		 * メインシーンコンテナでURLを連動せずにシーンを遷移する場合を識別するためのフラグ
+		 * メインシーンコンテナ シーン遷移時パラメーター迂回用
 		 *
 		 * <p>
-		 * 初期はtrueで連動せず。初期処理完了後にfalseにする。
+		 * 遷移パラメーター(FW用以外)をURLに保持しない場合に、このプロパティを経由する。
 		 * </p>
 		 *
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_notPushState : true,
+		_detour : null,
 
 		/**
 		 * __init
@@ -1528,7 +1561,11 @@
 
 				mainContainer = this;
 
+				if(useHash){
+					this.on('{window}', 'hashchange', this.own(this._onWindowPopstate));
+				}else{
 				this.on('{window}', 'popstate', this.own(this._onWindowPopstate));
+				}
 
 				//_isClickjackEnabledがtrueの場合のみ有効。
 				//TODO:フラグのセット方法
@@ -1538,7 +1575,7 @@
 
 				// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
 				// TODO(鈴木) 本来はRouterを使うべき。
-				param = getParamFromURL();
+				param = getParamFromUrl();
 
 			}
 
@@ -1605,7 +1642,7 @@
 		 * @param context
 		 */
 		_onWindowPopstate : function(context) {
-			var param = getParamFromURL();
+			var param = getParamFromUrl();
 			var to = param.to || location.href;
 			to = clearParam(to);
 			this._changeScene(to, param);
@@ -1670,8 +1707,6 @@
 
 			param = $.extend(true, {}, param);
 
-			var to = param.to;
-
 			this._transition = this._createTransition(param.transition);
 
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
@@ -1686,13 +1721,9 @@
 			// TODO(鈴木) changeScene経由で_changeSceneを実行したか否か
 			this._isNavigated = true;
 
-			if (this.isMain) {
+			var to = param.to;
 
-				// TODO(鈴木) メインシーンコンテナで遷移先がHTML(コントローラーでない)の場合は
-				// paramからtoを削除(URLに余計な情報を残さないため)
-				if (!controllerRegexp.test(to)) {
-					delete param.to;
-				}
+			if (this.isMain) {
 
 				if (!isString(to)) {
 					// シーン遷移先に文字列以外を指定されたらエラー
@@ -1703,15 +1734,15 @@
 					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [ to ]);
 				}
 
-				if (controllerRegexp.test(to)) {
-					setParamToURL(param);
-
-				}else{
-					/*if(this.isInit){ // TODO(鈴木) 初期表示シーンの場合はURL連動しない。*/
-					// TODO(鈴木) パラメータをエンコードしてURLに付加
-					setParamToURL(param, to);
-					/*}*/
+				// TODO(鈴木) とりあえずtype='b'で
+				if (param.type === 'b') {
+					this._detour = h5.u.obj.deserialize(h5.u.obj
+							.serialize(param.args));
+					delete param.args;
 				}
+
+				// TODO(鈴木) 本来Routerでやるべき
+				setParamToUrl(param);
 
 				// TODO(鈴木) 本来はRouterで実装
 				this._onWindowPopstate();
@@ -1752,6 +1783,16 @@
 
 			var that = this;
 
+			if (param.type === 'b') {
+				if (!this._isNavigated) {
+					var notReshowController = h5.core.controller($('<div></div>'), NotReshowController);
+					that._onLoadController(notReshowController, fromElm);
+					return;
+				}
+				param.args = this._detour;
+				this._detour = null;
+			}
+
 			// TODO(鈴木) transitionをコントローラーからFunctionに変更
 
 			// TODO(鈴木) TransitionController変更に伴う変更
@@ -1775,9 +1816,7 @@
 
 				} else {
 					// TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
-					// 1.2.0では、URLにパラメーターを保存しないため、メインシーンコンテナの場合はcontainer指定は無効とする
-					var loadPromise = loadContents(to,
-							(!this.isMain) ? param.container : null);
+					var loadPromise = loadContents(to, param.container);
 
 					loadPromise.done(
 							function(toElm) {
@@ -1902,7 +1941,8 @@
 			}
 		}
 
-		var container = h5internal.core.controllerInternal(element,
+		//var container = h5internal.core.controllerInternal(element,
+		var container = h5.core.controller(element,
 				SceneContainerController, {
 					isMain : isMain,
 					/*initialSceneInfo : param*/
@@ -2069,10 +2109,20 @@
 				/\\/g, '\\\\');
 
 		// TODO(鈴木) シーン遷移パラメーターハッシュ使用フラグ
-		// 現在無効
-		// if(h5.settings.scene.useHash != null){
-		// useHash = h5.settings.scene.useHash;
-		// }
+		if (h5.settings.scene.useHash != null) {
+			useHash = h5.settings.scene.useHash;
+		}
+
+		// TODO(鈴木) pushState使用不可環境ではhashを使用する
+		if (!window.history.pushState) {
+			useHash = true;
+		}
+
+		// TODO(鈴木) シーン遷移先URL最大長
+		var settedUrlMaxLength = h5.settings.scene.urlMaxLength;
+		if (settedUrlMaxLength != null && typeof settedUrlMaxLength === 'number') {
+			urlMaxLength = h5.settings.scene.urlMaxLength;
+		}
 
 		// TODO(鈴木) autoInit=trueの場合に全体を探索し、DATA属性によりコントローラーバインドとシーンコンテナ生成を行う。
 		if (h5.settings.scene.autoInit) {
