@@ -601,7 +601,7 @@ $(function() {
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
 		container.changeScene('scenedata/page/textNodePart.html');
-		var expect = 'text body';
+		var expect = 'plain text';
 		gate({
 			func: function() {
 				return $.trim($container.text()) === expect;
@@ -618,8 +618,8 @@ $(function() {
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/textAndElementPart.html');
-		var expect = 'text and element body';
+		container.changeScene('scenedata/page/textNodeAndElementPart.html');
+		var expect = 'plain text and element';
 		gate({
 			func: function() {
 				return $.trim($container.text()) === expect;
