@@ -1005,11 +1005,6 @@
 	var bodyTagRegExp = /<body\b([^>]*)>((?:\s|\S)*?)(?:<\/body\s*>|<\/html\s*>|$)/i;
 
 	/**
-	 * 先頭に表示文字列テキストノードがあるかのチェック用正規表現
-	 */
-	var startByTextRegexp = /^\s*(?!\s|<)/;
-
-	/**
 	 * HTML文字列からBODYタグ内容部分抽出
 	 * <p>
 	 * BODYタグがある場合、戻り値はDIVタグで囲む。<br>
@@ -1030,9 +1025,6 @@
 		var match = html.replace(htmlCommentRegexp, '').match(bodyTagRegExp);
 		if (match) {
 			return '<div ' + DATA_H5_DYN_DUMMY_BODY + ' ' + match[1] + '>' + match[2] + '</div>';
-		}
-		if (startByTextRegexp.test(html)) {
-			return '<div>' + html + '</div>';
 		}
 		return html;
 	}
@@ -1060,6 +1052,11 @@
 	}
 
 	/**
+	 * 先頭に表示文字列テキストノードがあるかのチェック用正規表現
+	 */
+	var startByTextRegexp = /^\s*(?!\s|<)/;
+
+	/**
 	 * HTML要素取得(通信)
 	 * <p>
 	 * 第二引数にコンテナ指定を追加。これが指定された場合、第一引数により取得したHTML内で、 data-h5-container属性の値がこれに一致する要素を対象とする。
@@ -1076,8 +1073,8 @@
 		// TODO htmlだとスクリプトが実行されてしまうのでフルHTMLが返されるとよくない
 		// 部分HTML取得の場合のことを考慮。
 		var xhr = h5.ajax({
-			url: source,
-			dataType: 'html'
+			url : source,
+			dataType : 'html'
 		});
 
 		xhr.done(
@@ -1086,21 +1083,31 @@
 					// TODO(鈴木) ここでdataからbody部分のみ抜く。
 					data = extractBody(data);
 
+					// 先頭が表示文字列テキストノードの場合はコンテナ要素で囲む
+					if (startByTextRegexp.test(data)) {
+						data = '<div ' + DATA_H5_CONTAINER + '>' + data
+								+ '</div>';
+					}
+
 					var $dom = $(data);
 
 					if (container) {
-						var $container = findWithSelf($dom, '[' + DATA_H5_CONTAINER + '="'
-								+ container + '"]');
+						var $container = findWithSelf($dom, '['
+								+ DATA_H5_CONTAINER + '="' + container + '"]');
 						if ($container.length === 0) {
 							// ロードしたHTML内に指定のコンテナが存在しない場合はエラー
-							throwFwError(ERR_CODE_TARGET_CONTAINER_NOT_FOUND, [source, container]);
+							throwFwError(ERR_CODE_TARGET_CONTAINER_NOT_FOUND, [
+									source, container ]);
 						}
 						$dom = $container.eq(0);
 					} else {
-						//TODO(鈴木) mainタグかdata-main-container属性要素があればその内容を対象とする。
+						// TODO(鈴木)
+						// mainタグかdata-main-container属性要素があればその内容を対象とする。
 						// 通常のシーンコンテナ内にmainとdata-main-containerはない前提。
-						var main = findWithSelf($dom, '[' + DATA_H5_MAIN_CONTAINER + ']');
-						// TODO(鈴木) 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
+						var main = findWithSelf($dom, '['
+								+ DATA_H5_MAIN_CONTAINER + ']');
+						// TODO(鈴木)
+						// 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
 						// さすがに遷移先HTMLでのフラグ状態までは見られない。。
 						if (h5.settings.scene.autoCreateMainContainer) {
 							if (main.length === 0)
@@ -1108,7 +1115,16 @@
 						}
 						if (main.length > 0) {
 							$dom = main.eq(0);
+							$dom.attr(DATA_H5_MAIN_CONTAINER,
+									DATA_H5_MAIN_CONTAINER);
 						}
+					}
+
+					// ルート要素が複数か、単一でもコンテナ要素、またはBODYのダミーでなければコンテナ要素で囲む
+					if ($dom.length > 1
+							|| (!isContainer($dom) && !$dom.is('['
+									+ DATA_H5_DYN_DUMMY_BODY + ']'))) {
+						$dom = $('<div ' + DATA_H5_CONTAINER + '></div>').append($dom);
 					}
 
 					wrapScene($dom);
@@ -1611,7 +1627,6 @@
 
 					loadPromise.done(
 							function(toElm) {
-
 								// TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
 								// TODO(鈴木) scan用にダミーのDIVにappend
 								scanForContainer(
