@@ -633,7 +633,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#ie:-8]メインシーンコンテナ', {
+	module('[browser#ie:-8|op]メインシーンコンテナ', {
 		setup: function() {
 			stop();
 			var that = this;
