@@ -316,7 +316,7 @@ parseHTML = $.parseHTML ? $.parseHTML : (function() {
 		// タグで囲ってパースしたので、parentElementがダミーのものになっている
 		// そのためフラグメントを生成してparentElementがnullになるようにする
 		var ret = $ret[0].childNodes;
-		var fragment = document.createDocumentFragment();
+		var fragment = context.createDocumentFragment();
 		for (var i = 0, l = ret.length; i < l; i++) {
 			fragment.appendChild(ret[i]);
 		}
