@@ -581,7 +581,7 @@
 		var promise = scan(defaultSceneElm.get(0), controllerName, args);
 
 		// TODO(鈴木) デフォルトコントローラーがバインド・返却されていなければscanの結果を使用する
-		if (dfd.state() !== 'resolved') {
+		if (!isResolved(dfd)) {
 			promise.done(function(controller) {
 				dfd.resolve(controller);
 			});
@@ -1078,7 +1078,7 @@
 					// TODO(鈴木) ここでdataからbody部分のみ抜く。
 					data = extractBody(data);
 
-					var $dom = $($.parseHTML(data));
+					var $dom = $(data);
 
 					if (container) {
 						var $container = findWithSelf($dom, '[' + DATA_H5_CONTAINER + '="'

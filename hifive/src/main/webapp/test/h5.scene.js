@@ -497,7 +497,7 @@ $(function() {
 		$container.append($scene);
 		this.$fixture.append($container);
 		h5.scene.scan();
-		$scene.on('h5controllerbound', function(e, controller) {
+		$scene.bind('h5controllerbound', function(e, controller) {
 			if (controller.rootElement !== $scene.get(0) || controller.__name !== 'h5.scene.DummyController'){
 				return;
 			}
