@@ -1031,7 +1031,7 @@
 		if (match) {
 			return '<div ' + DATA_H5_DYN_DUMMY_BODY + ' ' + match[1] + '>' + match[2] + '</div>';
 		}
-		if(startByTextRegexp.test(html)){
+		if (startByTextRegexp.test(html)) {
 			return '<div>' + html + '</div>';
 		}
 		return html;
