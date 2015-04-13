@@ -532,7 +532,7 @@ $(function() {
 		var expect = 'no container';
 		gate({
 			func: function() {
-				return $container.text() === expect;
+				return $.trim($container.text()) === expect;
 			},
 			failMsg: 'シーンが変更されませんでした'
 		}).done(function() {
@@ -550,7 +550,7 @@ $(function() {
 		var expect = 'text body';
 		gate({
 			func: function() {
-				return $container.text() === expect;
+				return $.trim($container.text()) === expect;
 			},
 			failMsg: 'シーンが変更されませんでした'
 		}).done(function() {
@@ -568,7 +568,7 @@ $(function() {
 		var expect = 'text and element body';
 		gate({
 			func: function() {
-				return $container.text() === expect;
+				return $.trim($container.text()) === expect;
 			},
 			failMsg: 'シーンが変更されませんでした'
 		}).done(function() {
@@ -586,7 +586,7 @@ $(function() {
 		var expect = 'no container';
 		gate({
 			func: function() {
-				return $container.text() === expect;
+				return $.trim($container.text()) === expect;
 			},
 			failMsg: 'シーンが変更されませんでした'
 		}).done(function() {
@@ -604,7 +604,7 @@ $(function() {
 		var expect = 'text body';
 		gate({
 			func: function() {
-				return $container.text() === expect;
+				return $.trim($container.text()) === expect;
 			},
 			failMsg: 'シーンが変更されませんでした'
 		}).done(function() {
@@ -622,7 +622,7 @@ $(function() {
 		var expect = 'text and element body';
 		gate({
 			func: function() {
-				return $container.text() === expect;
+				return $.trim($container.text()) === expect;
 			},
 			failMsg: 'シーンが変更されませんでした'
 		}).done(function() {
