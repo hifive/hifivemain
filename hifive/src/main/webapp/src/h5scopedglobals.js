@@ -280,6 +280,50 @@ function isValidNamespaceIdentifier(property) {
 	return !!property.match(/^[A-Za-z_\$][\w|\$]*$/);
 }
 
+/**
+ * 文字列をHTMLにパースします
+ * <p>
+ * jQuery.parseHTMLがある(jQuery1.8以降)場合はjQuery.parseHTMLと同じです
+ * </p>
+ * <p>
+ * ない場合はjQuery1.8以降のparseHTMLと同様の動作を実装しています。
+ * </p>
+ *
+ * @private
+ * @param {String} data HTML文字列
+ * @param {Document} [context=document] createElementを行うDocumentオブジェクト。省略した場合はdocumentを使用します
+ * @param {Boolean} [keppScripts=false] script要素を生成するかどうか。デフォルトは生成しない(false)です
+ */
+parseHTML = $.parseHTML ? $.parseHTML : (function() {
+	return function(data, context, keepScripts) {
+		if (!data || !isString(data)) {
+			return null;
+		}
+		if (typeof context === 'boolean') {
+			// context指定が省略された場合(第2引数がboolean)なら第2引数をkeepScripts指定として扱う
+			keepScripts = context;
+			context = false;
+		}
+		context = context || document;
+
+		// タグで囲って、$()でパースできるようにする
+		data = '<div>' + data + '</div>';
+		var $ret = $(data, context);
+		if (!keepScripts) {
+			// script要素の除去
+			$ret.find('script').remove();
+		}
+		// タグで囲ってパースしたので、parentElementがダミーのものになっている
+		// そのためフラグメントを生成してparentElementがnullになるようにする
+		var ret = $ret[0].childNodes;
+		var fragment = document.createDocumentFragment();
+		for (var i = 0, l = ret.length; i < l; i++) {
+			fragment.appendChild(ret[i]);
+		}
+		return fragment.childNodes;
+	};
+})();
+
 // =============================
 // ロガー・アスペクトで使用する共通処理
 // =============================
