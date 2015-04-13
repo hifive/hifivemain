@@ -1113,7 +1113,7 @@
 
 					wrapScene($dom);
 
-					dfd.resolve($dom.html());
+					dfd.resolve($dom.children());
 
 				}).fail(function(error) {
 			dfd.reject(error);
@@ -1610,12 +1610,12 @@
 							(!this.isMain) ? param.container : null);
 
 					loadPromise.done(
-							function(toHTML) {
+							function(toElm) {
 
 								// TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
 								// TODO(鈴木) scan用にダミーのDIVにappend
 								scanForContainer(
-										$('<div></div>').html(toHTML), null,
+										$('<div></div>').append(toElm), null,
 										param.args).done(
 										function(toController) {
 											that._onLoadController(
