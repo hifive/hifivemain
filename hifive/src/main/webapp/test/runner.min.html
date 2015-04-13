@@ -53,8 +53,12 @@
 		<!-- テスト環境の指定 -->
 		<script>
 			H5_TEST_ENV = window.H5_TEST_ENV || {};
- 			H5_TEST_ENV.buildType = 'min'; // Minify版を使用
+ 			H5_TEST_ENV.buildType = 'src'; // 各ソースファイルを使用
  		</script>
+
+		<!-- テストで使用するutils -->
+		<script src="testutils.js"></script>
+		<script src="h5devtestutils.js"></script>
 
 		<!-- テスト環境の指定をリクエストパラメータから読み込む -->
 		<script src="testenv.js"></script>
@@ -67,10 +71,6 @@
 
 		<!-- h5ソースファイルの読み込み -->
 		<script src="loadScriptForTest.js"></script>
-
-		<!-- テストで使用するutils -->
-		<script src="testutils.js"></script>
-		<script src="h5devtestutils.js"></script>
 
 		<!-- エラーコード -->
 		<script src="_h5errorcode.js"></script>

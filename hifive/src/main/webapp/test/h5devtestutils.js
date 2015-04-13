@@ -19,11 +19,11 @@
 (function() {
 	// ----------- env ----------
 	/**
-	 * 読み込んでいるhifiveがdev版かどうか
+	 * 読み込んでいるhifiveがdev版かどうか('src'はdev扱い)
 	 *
 	 * @memberOf
 	 */
-	var isDevMode = !!h5.dev;
+	var isDevMode = !!H5_TEST_ENV.buildType !== 'min';
 
 	// ----------- log ----------
 	/**
@@ -39,7 +39,11 @@
 	 * ログの設定を元に戻す
 	 */
 	var restoreDefault = (function() {
-		var orgSettings = $.extend({}, h5.settings.log);
+		// h5ロード時のログ設定を覚えておく
+		var orgSettings = null;
+		$(document).bind('h5preinit', function() {
+			orgSettings = $.extend({}, h5.settings.log);
+		});
 		return function() {
 			h5.settings.log = orgSettings;
 			h5.log.configure();
@@ -98,10 +102,10 @@
 	}
 
 	/**
-	 * @name testutils.async
+	 * @name h5devtestutils
 	 * @namespace
 	 */
-	h5.u.obj.expose('h5devtestutils', {
+	window.h5devtestutils = {
 		env: {
 			isDevMode: isDevMode
 		},
@@ -119,5 +123,5 @@
 			clearController: clearController,
 			cleanAllAspects: cleanAllAspects
 		}
-	});
+	};
 })();

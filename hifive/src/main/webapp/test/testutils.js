@@ -303,6 +303,37 @@
 		return dfd.promise();
 	}
 
+	/**
+	 * リクエストパラメータをパースしてオブジェクトを返す
+	 *
+	 * @returns {Object}
+	 */
+	function parseRequestParameter() {
+		var paramsStr = window.location.search;
+		// リクエストパラメータからオブジェクトを生成する
+		var ret = {};
+		if (paramsStr === '') {
+			return ret;
+		}
+		var paramsArray = paramsStr.substring(1).split('&');
+
+		for (var i = 0, l = paramsArray.length; i < l; i++) {
+			var keyVal = paramsArray[i].split('=');
+			var namespace = keyVal[0];
+			var val = keyVal[1];
+			var names = namespace.split('.');
+			var cursor = ret;
+			for (var j = 0, len = names.length; j < len - 1; j++) {
+				if (cursor[names[j]] == null) { // nullまたはundefjnedだったら辿らない
+					cursor[names[j]] = {};
+				}
+				cursor = cursor[names[j]];
+			}
+			cursor[names[len - 1]] = val;
+		}
+		return ret;
+	}
+
 	// ----------- qunit -----------
 
 	/**
@@ -457,7 +488,8 @@
 	 * @name testutils.async
 	 * @namespace
 	 */
-	h5.u.obj.expose('testutils', {
+	// testutilはh5読込前に定義するので、h5.core.exposeは使わずにwindowに直接配置
+	window.testutils = {
 		settings: settings,
 		consts: {
 			ERROR_INTERNET_CANNOT_CONNECT: 12029
@@ -476,7 +508,8 @@
 			nearEqual: nearEqual,
 			clearController: clearController,
 			cleanAllAspects: cleanAllAspects,
-			toAbsoluteUrl: toAbsoluteUrl
+			toAbsoluteUrl: toAbsoluteUrl,
+			parseRequestParameter: parseRequestParameter
 		},
 		qunit: {
 			abortTest: abortTest,
@@ -487,5 +520,5 @@
 		async: {
 			gate: gate
 		}
-	});
+	};
 })();

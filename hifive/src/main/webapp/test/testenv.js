@@ -31,42 +31,16 @@
 	if (!H5_TEST_ENV.srcBaseUrl)
 		H5_TEST_ENV.srcBaseUrl = '../';
 
-	// テスト環境オブジェクトの作成。
-	// リクエストパラメータから取得して生成
-	var paramsStr = window.location.search;
-
 	// H5_TEST_ENVに格納するパラメータキーのプレフィックス
-	var PARAM_PREFIX = 'h5testenv.';
+	var H5TEST_NAMASPACE = 'h5testenv';
 
 	// H5_TEST_ENVとリクエストパラメータでマージするプロパティ
 	var MARGE_PROP_NAMES = ['ci', 'filter', 'geo', 'qunit', 'buildType'];
 
 	// リクエストパラメータからオブジェクトを生成する
-	var envByParam = {};
-	if (paramsStr !== "") {
-		var paramsArray = paramsStr.substring(1).split('&');
+	var requestParam = testutils.u.parseRequestParameter();
 
-		var l = paramsArray.length;
-		for (var i = 0; i < l; i++) {
-			var keyVal = paramsArray[i].split('=');
-			var namespace = keyVal[0];
-			// h5env.で始まるものについてだけ
-			if (namespace.indexOf(PARAM_PREFIX) != 0) {
-				continue;
-			}
-			var val = keyVal[1];
-
-			var names = namespace.substring(PARAM_PREFIX.length).split('.');
-			var ret = envByParam;
-			for (var j = 0, len = names.length; j < len - 1; j++) {
-				if (ret[names[j]] == null) { // nullまたはundefjnedだったら辿らない
-					ret[names[j]] = {};
-				}
-				ret = ret[names[j]];
-			}
-			ret[names[len - 1]] = val;
-		}
-	}
+	var envByParam = requestParam[H5TEST_NAMASPACE] || {};
 
 	// H5_TEST_ENVにリクエストパラメータ優先でマージする
 	for (var i = 0, l = MARGE_PROP_NAMES.length; i < l; i++) {
@@ -92,8 +66,6 @@
 			}, 0);
 		});
 	}
-
-
 
 	// 環境設定
 	// dummygeoが設定されていればnavigator.geolocationの持つメソッドをダミーで上書く(オリジナルはprototypeメソッドなので、メンバとして上書く)
