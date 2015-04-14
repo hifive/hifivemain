@@ -83,6 +83,23 @@
 	 */
 	var SERIALIZE_PREFIX = '2|';
 
+	/**
+	 * シーン遷移タイプ
+	 */
+	var NAVIGATE_TYPE = {
+		NORMAL : 'normal',
+		ONCE : 'once',
+		EXCHANGE : 'exchange'
+	};
+
+	/**
+	 * Ajaxメソッド
+	 */
+	var METHOD = {
+		GET : 'get',
+		POST : 'post'
+	};
+
 	// =============================
 	// Production
 	// =============================
@@ -116,7 +133,6 @@
 	var ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND = 100010;
 	/** メインシーンコンテナ遷移先URLが設定された最大長を超過した */
 	var ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER = 100011;
-
 
 	// =============================
 	// Development Only
@@ -204,6 +220,12 @@
 	 * メインシーンコンテナのシーン遷移先URLの最大長
 	 */
 	var urlMaxLength = 2000;
+
+	/**
+	 * シーン遷移タイプ
+	 */
+	var navigateType = NAVIGATE_TYPE;
+
 
 	// =============================
 	// Functions
@@ -498,8 +520,6 @@
 									dfd.resolve(controller);
 								});
 							}
-						} else {
-							console.debug('同一コントローラーバインド回避:' + attrControllerName);
 						}
 					}
 				});
@@ -1102,16 +1122,19 @@
 		var $parent = $(parent);
 		var $children = $parent.children();
 		if ($children.eq(0).is('[' + DATA_H5_DEFAULT_SCENE + '],[' + DATA_H5_SCENE + ']') === false) {
-			console.info('シーンコンテナ直下先頭にシーン要素が見つからないため、シーン要素でラップします。');
-			$children.wrapAll($('<div ' + DATA_H5_DEFAULT_SCENE + '></div>'));
+			$parent.wrapInner($('<div ' + DATA_H5_DEFAULT_SCENE + '></div>'));
 			var name = $parent.attr(DATA_H5_CONTROLLER);
 			if (name) {
-				console.info('シーンコンテナのコントローラー指定をラップに使用したシーン要素に移動します。');
 				// TODO(鈴木) childrenは↑のwrapAllで作成した要素
 				$parent.removeAttr(DATA_H5_CONTROLLER).children().attr(DATA_H5_CONTROLLER, name);
 			}
 		}
 	}
+
+	/**
+	 * 先頭に表示文字列テキストノードがあるかのチェック用正規表現
+	 */
+	var startByTextRegexp = /^\s*(?!\s|<)/;
 
 	/**
 	 * HTML要素取得(通信)
@@ -1122,16 +1145,18 @@
 	 * @private
 	 * @param source
 	 * @param container
+	 * @param method
 	 * @returns {Promise}
 	 */
-	function loadContentsFromUrl(source, container) {
+	function loadContentsFromUrl(source, container, method) {
 		var dfd = h5.async.deferred();
 
 		// TODO htmlだとスクリプトが実行されてしまうのでフルHTMLが返されるとよくない
 		// 部分HTML取得の場合のことを考慮。
 		var xhr = h5.ajax({
 			url: source,
-			dataType: 'html'
+			dataType: 'html',
+			method  : method || 'get'
 		});
 
 		xhr.done(
@@ -1140,21 +1165,31 @@
 					// TODO(鈴木) ここでdataからbody部分のみ抜く。
 					data = extractBody(data);
 
-					var $dom = $($.parseHTML(data));
+					// 先頭が表示文字列テキストノードの場合はコンテナ要素で囲む
+					if (startByTextRegexp.test(data)) {
+						data = '<div ' + DATA_H5_CONTAINER + '>' + data
+								+ '</div>';
+					}
+
+					var $dom = $(data);
 
 					if (container) {
-						var $container = findWithSelf($dom, '[' + DATA_H5_CONTAINER + '="'
-								+ container + '"]');
+						var $container = findWithSelf($dom, '['
+								+ DATA_H5_CONTAINER + '="' + container + '"]');
 						if ($container.length === 0) {
 							// ロードしたHTML内に指定のコンテナが存在しない場合はエラー
-							throwFwError(ERR_CODE_TARGET_CONTAINER_NOT_FOUND, [source, container]);
+							throwFwError(ERR_CODE_TARGET_CONTAINER_NOT_FOUND, [
+									source, container ]);
 						}
 						$dom = $container.eq(0);
 					} else {
-						//TODO(鈴木) mainタグかdata-main-container属性要素があればその内容を対象とする。
+						// TODO(鈴木)
+						// mainタグかdata-main-container属性要素があればその内容を対象とする。
 						// 通常のシーンコンテナ内にmainとdata-main-containerはない前提。
-						var main = findWithSelf($dom, '[' + DATA_H5_MAIN_CONTAINER + ']');
-						// TODO(鈴木) 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
+						var main = findWithSelf($dom, '['
+								+ DATA_H5_MAIN_CONTAINER + ']');
+						// TODO(鈴木)
+						// 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
 						// さすがに遷移先HTMLでのフラグ状態までは見られない。。
 						if (h5.settings.scene.autoCreateMainContainer) {
 							if (main.length === 0)
@@ -1162,7 +1197,16 @@
 						}
 						if (main.length > 0) {
 							$dom = main.eq(0);
+							$dom.attr(DATA_H5_MAIN_CONTAINER,
+									DATA_H5_MAIN_CONTAINER);
 						}
+					}
+
+					// ルート要素が複数か、単一でもコンテナ要素、またはBODYのダミーでなければコンテナ要素で囲む
+					if ($dom.length > 1
+							|| (!isContainer($dom) && !$dom.is('['
+									+ DATA_H5_DYN_DUMMY_BODY + ']'))) {
+						$dom = $('<div ' + DATA_H5_CONTAINER + '></div>').append($dom);
 					}
 
 					wrapScene($dom);
@@ -1184,13 +1228,14 @@
 	 * @private
 	 * @param source
 	 * @param container
+	 * @param method
 	 * @returns {Promise}
 	 */
-	function loadContents(source, container) {
+	function loadContents(source, container, method) {
 		var dfd;
 
 		if (isString(source)) {
-			dfd = loadContentsFromUrl(source, container);
+			dfd = loadContentsFromUrl(source, container, method);
 		} else {
 			dfd = h5.async.deferred();
 
@@ -1378,33 +1423,44 @@
 	 * @param param
 	 * @param to
 	 */
-	function setParamToUrl(param) {
+	function setParamToUrl(param, replace) {
 		// TODO(鈴木) 遷移先指定がない場合、現在のURLを使用
 		var to = param.to;
-		to = to || location.href;
+		var isController = controllerRegexp.test(to);
+		if (isController || useHash) {
+			to  = location.href;
+		}else{
+			to = to || location.href;
+			// TODO(鈴木) paramからtoを削除(URLに余計な情報を残さないため)
+			delete param.to;
+		}
 		to = clearParam(to);
 		var match = to.match(locationRegExp);
 		var path = match[1];
 		var search = match[2] || '';
 		var hash = match[3] || '';
-		if (!controllerRegexp.test(to) && !useHash) {
-			// TODO(鈴木) メインシーンコンテナで遷移先がHTML(コントローラーでない)の場合は
-			// paramからtoを削除(URLに余計な情報を残さないため)
-			delete param.to;
-		}
 		var paramStr = serialize(param);
-			if (useHash) {
-				hash += (hash) ? '&' : '#';
-				hash += paramStr;
+		if (useHash) {
+			hash += (hash) ? '&' : '#';
+			hash += paramStr;
 			checkUrlLength(path + search + hash);
-			location.hash = hash;
-			} else {
-				search += (search) ? '&' : '?';
-				search += paramStr;
-			checkUrlLength(path + search + hash);
-			history.pushState(null, null, toAbsoluteUrl(path + search + hash));
+			if(replace){
+				location.replace(hash);
+			}else{
+				location.hash = hash;
+			}
+		} else {
+			search += (search) ? '&' : '?';
+			search += paramStr;
+			var result = path + search + hash;
+			checkUrlLength(result);
+			if(replace){
+				history.replaceState(null, null, toAbsoluteUrl(result));
+			}else{
+				history.pushState(null, null, toAbsoluteUrl(result));
 			}
 		}
+	}
 
 	/**
 	 * メインシーンコンテナ遷移先URL長チェック
@@ -1431,6 +1487,8 @@
 	 * <p>
 	 * シーン遷移時シーン間パラメーターをURLに保持しない場合で、ブラウザ履歴等により再表示した場合に表示する画面。
 	 * </p>
+	 *
+	 * @private
 	 */
 	var NotReshowController = {
 		__name: 'h5.scene.NotReshowController',
@@ -1439,6 +1497,16 @@
 		}
 	};
 	//TODO(鈴木) このクラス定義を外部から指定可能にする必要がある。
+
+	/**
+	 * 再表示不可画面用コントローラー生成関数
+	 *
+	 * @private
+	 * @returns [NotReshowController]
+	 */
+	function makeNotReshowController(){
+		return h5internal.core.controllerInternal($('<div></div>'), NotReshowController);
+	}
 
 	/**
 	 * シーンコンテナクラス
@@ -1554,7 +1622,6 @@
 
 			this.on('{rootElement}', EVENT_SCENE_CHANGE_REQUEST, this.own(this._onSceneChangeRequest));
 
-
 			var param = {};
 
 			if (this.isMain) {
@@ -1564,7 +1631,7 @@
 				if(useHash){
 					this.on('{window}', 'hashchange', this.own(this._onWindowPopstate));
 				}else{
-				this.on('{window}', 'popstate', this.own(this._onWindowPopstate));
+					this.on('{window}', 'popstate', this.own(this._onWindowPopstate));
 				}
 
 				//_isClickjackEnabledがtrueの場合のみ有効。
@@ -1577,18 +1644,21 @@
 				// TODO(鈴木) 本来はRouterを使うべき。
 				param = getParamFromUrl();
 
+				if (param.navigateType === navigateType.ONCE) {
+					this._changeSceneWithController(makeNotReshowController());
+					return;
+				}
+
 			}
 
 			/*if(initialSceneInfo){
 				this.changeScene(initialSceneInfo);
-				// TODO(鈴木)  _currentControllerへの登録等は内部で行われるので後続処理は不要
 			}else{
 			*/
 
 			if(param.to){
 				this._changeScene(param.to, param);
 			}else{
-
 				// TODO(鈴木) カレントとなるシーンを探索してscan
 				scanForContainer(element, null, param.args).done(
 						function(controller) {
@@ -1723,7 +1793,7 @@
 
 			var to = param.to;
 
-			if (this.isMain) {
+			if (this.isMain && param.navigateType !== navigateType.EXCHANGE) {
 
 				if (!isString(to)) {
 					// シーン遷移先に文字列以外を指定されたらエラー
@@ -1734,15 +1804,19 @@
 					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [ to ]);
 				}
 
-				// TODO(鈴木) とりあえずtype='b'で
-				if (param.type === 'b') {
+				if (param.navigateType === navigateType.ONCE) {
 					this._detour = h5.u.obj.deserialize(h5.u.obj
 							.serialize(param.args));
 					delete param.args;
 				}
 
+				var replace = param.replace;
+				if ('replace' in param) {
+					delete param.replace;
+				}
+
 				// TODO(鈴木) 本来Routerでやるべき
-				setParamToUrl(param);
+				setParamToUrl(param, replace);
 
 				// TODO(鈴木) 本来はRouterで実装
 				this._onWindowPopstate();
@@ -1765,6 +1839,9 @@
 		 */
 		_changeScene : function(to, param) {
 
+			if (!to)
+				return;
+
 			param = param || {};
 
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
@@ -1783,10 +1860,9 @@
 
 			var that = this;
 
-			if (param.type === 'b') {
+			if (param.navigateType === navigateType.ONCE) {
 				if (!this._isNavigated) {
-					var notReshowController = h5.core.controller($('<div></div>'), NotReshowController);
-					that._onLoadController(notReshowController, fromElm);
+					that._changeSceneWithController(makeNotReshowController());
 					return;
 				}
 				param.args = this._detour;
@@ -1811,12 +1887,12 @@
 					// TODO(鈴木)
 					loadController(to, $('<div></div>'), param.args).done(
 							function(toController) {
-								that._onLoadController(toController, fromElm);
+								that._changeSceneWithController(toController);
 							});
 
 				} else {
 					// TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
-					var loadPromise = loadContents(to, param.container);
+					var loadPromise = loadContents(to, param.container, param.method);
 
 					loadPromise.done(
 							function(toElm) {
@@ -1827,8 +1903,8 @@
 										$('<div></div>').append(toElm), null,
 										param.args).done(
 										function(toController) {
-											that._onLoadController(
-													toController, fromElm);
+											that._changeSceneWithController(
+													toController);
 										});
 
 							}).fail(function(xhr) {
@@ -1838,6 +1914,8 @@
 
 					});
 				}
+			} else if(to.__name && controllerRegexp.test(to.__name)) {
+				that._changeSceneWithController(to);
 			}
 
 		},
@@ -1869,9 +1947,11 @@
 		 * @param toController
 		 * @param fromElm
 		 */
-		_onLoadController : function(toController, fromElm) {
+		_changeSceneWithController : function(toController) {
 
 			var that = this;
+
+			var fromElm = (this._currentController || {}).rootElement;
 
 			var toElm = toController.rootElement;
 
@@ -1941,8 +2021,7 @@
 			}
 		}
 
-		//var container = h5internal.core.controllerInternal(element,
-		var container = h5.core.controller(element,
+		var container = h5internal.core.controllerInternal(element,
 				SceneContainerController, {
 					isMain : isMain,
 					/*initialSceneInfo : param*/
@@ -2124,6 +2203,12 @@
 			urlMaxLength = h5.settings.scene.urlMaxLength;
 		}
 
+		// TODO(鈴木) 遷移タイプ識別文字列定義オブジェクト
+		var type = h5.settings.scene.navigateType;
+		if (type) {
+			navigateType = h5.settings.scene.navigateType;
+		}
+
 		// TODO(鈴木) autoInit=trueの場合に全体を探索し、DATA属性によりコントローラーバインドとシーンコンテナ生成を行う。
 		if (h5.settings.scene.autoInit) {
 			init();
@@ -2146,7 +2231,9 @@
 		getMainContainer : getMainContainer,
 		scan : scan,
 		getAllSceneContainers : getAllSceneContainers,
-		getSceneContainer : getSceneContainer
+		getSceneContainer : getSceneContainer,
+		navigateType : navigateType,
+		method : METHOD
 	});
 
 })();
