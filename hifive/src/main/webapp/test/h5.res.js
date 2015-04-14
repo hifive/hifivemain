@@ -174,6 +174,18 @@ $(function() {
 		}).always(start);
 	});
 
+	asyncTest('同一リソースに対して同時にdependsOnが呼ばれる場合の動作', function() {
+		var promise1 = h5.res.dependsOn('h5resdata.register.B_async').resolve();
+		var promise2 = h5.res.dependsOn('h5resdata.register.B_async').resolve();
+		promise1.done(function(result) {
+			strictEqual(result.a, 'a', 'register()で渡されたオブジェクトがdoneハンドラに渡されること');
+		});
+		promise2.done(function(result) {
+			strictEqual(result.a, 'a', 'register()で渡されたオブジェクトがdoneハンドラに渡されること');
+		});
+		$.when(promise1, promise2).always(start);
+	});
+
 	test('register()でグローバルに公開', function() {
 		var obj = {
 			a: 'a'
