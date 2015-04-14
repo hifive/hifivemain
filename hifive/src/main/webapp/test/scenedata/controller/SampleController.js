@@ -17,6 +17,6 @@
  */
 (function() {
 	h5.core.expose({
-		__name: 'scenedata.controller.SampleController',
+		__name: 'scenedata.controller.SampleController'
 	});
 })();
