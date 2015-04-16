@@ -1320,9 +1320,21 @@
 				str += serialize(v, k);
 			} else {
 				if (parent === 'serverParam') {
-					str += encodeURIComponent(k);
-					str += '=';
-					str += encodeURIComponent(v);
+					var _k = encodeURIComponent(k);
+					if (v instanceof Array) {
+						var _str = '';
+						for (var i = 0; i < v.length; i++) {
+							if(_str) _str += '&';
+							_str += _k + '[]';
+							_str += '=';
+							_str += encodeURIComponent(v[i]);
+						}
+						str += _str;
+					} else {
+						str += _k;
+						str += '=';
+						str += encodeURIComponent(v);
+					}
 				} else {
 					if (parent === 'args') {
 						str += encodeURIComponent(clientQueryStringPrefix + k);
@@ -1347,30 +1359,46 @@
 	 * @return {Object}
 	 */
 	function deserialize(str) {
-		if (!deserialize._regExp) {
-			deserialize._regExp = new RegExp('^('
+		if (!deserialize._checkKeyRegExp) {
+			deserialize._checkKeyRegExp = new RegExp('^('
 					+ clientQueryStringPrefixForRegExp + '|'
-					+ clientFWQueryStringPrefixForRegExp
-					+ ')?(.*)');
+					+ clientFWQueryStringPrefixForRegExp + ')?(.+)');
+			deserialize._checkArrayRegExp = /^(.*)\[\]$/;
 		}
 		var obj = {};
-		var regExp = deserialize._regExp;
-		$.each(str.split('&'), function(i, pair) {
+		var checkKeyRegExp = deserialize._checkKeyRegExp;
+		var checkArrayRegExp = deserialize._checkArrayRegExp;
+		function callback(i, pair) {
 			pair = pair.split('=');
 			var k = decodeURIComponent(pair[0]);
 			var v = decodeURIComponent(pair[1]);
-			var match = k.match(regExp);
-			if (match[1] === clientQueryStringPrefix) {
+			var match = k.match(checkKeyRegExp);
+			if (!match)
+				return;
+			var prefix = match[1];
+			var name = match[2];
+			if (prefix === clientQueryStringPrefix) {
 				obj.args = obj.args || {};
-				obj.args[match[2]] = h5.u.obj.deserialize(SERIALIZE_PREFIX
-						+ v);
-			} else if (match[1] === clientFWQueryStringPrefix) {
-				obj[match[2]] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
+				obj.args[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
+			} else if (prefix === clientFWQueryStringPrefix) {
+				obj[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
 			} else {
 				obj.serverParam = obj.serverParam || {};
-				obj.serverParam[match[2]] = v;
+				var _match = name.match(checkArrayRegExp);
+				if (_match) {
+					var _name = _match[1];
+					if (_name in obj.serverParam === false) {
+						obj.serverParam[_name] = [];
+					}
+					if (obj.serverParam[_name] instanceof Array) {
+						obj.serverParam[_name].push(v);
+					}
+				} else {
+					obj.serverParam[name] = v;
+				}
 			}
-		});
+		}
+		$.each(str.split('&'), callback);
 		return obj;
 	}
 
