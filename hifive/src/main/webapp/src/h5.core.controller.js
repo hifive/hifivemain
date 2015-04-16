@@ -107,7 +107,7 @@
 	var ERR_CODE_CONTROLLER_INIT_REJECTED_BY_USER = 6033;
 	/** エラーコード：コントローラのバインド対象がノードではない */
 	var ERR_CODE_BIND_NOT_NODE = 6034;
-	/** エラーコード：unbindされたコントローラで使用できないメソッドが呼ばれた */
+	/** エラーコード：ルートエレメント未設定もしくはunbindされたコントローラで使用できないメソッドが呼ばれた */
 	var ERR_CODE_METHOD_OF_NO_ROOTELEMENT_CONTROLLER = 6035;
 	/** エラーコード：disposeされたコントローラで使用できないメソッドが呼ばれた */
 	var ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER = 6036;
@@ -115,6 +115,14 @@
 	var ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND = 6037;
 	/** エラーコード：コントローラの終了処理がユーザーコードによって中断された(__disposeで返したプロミスがrejectした) */
 	var ERR_CODE_CONTROLLER_DISPOSE_REJECTED_BY_USER = 6038;
+	/** エラーコード：manageChildの引数にコントローラインスタンス以外が渡された */
+	var ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_CONTROLLER = 6039;
+	/** エラーコード：unbindされたコントローラをmanageChildしようとした */
+	var ERR_CODE_CONTROLLER_MANAGE_CHILD_UNBINDED_CONTROLLER = 6040;
+	/** エラーコード：unbindされたコントローラのmanageChildが呼ばれた */
+	var ERR_CODE_CONTROLLER_MANAGE_CHILD_BY_UNBINDED_CONTROLLER = 6041;
+	/** エラーコード：manageChildの引数のコントローラインスタンスがルートコントローラじゃない */
+	var ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_ROOT_CONTROLLER = 6040;
 
 	// =============================
 	// Development Only
@@ -163,6 +171,10 @@
 	errMsgMap[ERR_CODE_METHOD_OF_DISPOSED_CONTROLLER] = 'disposeされたコントローラのメソッド{0}は実行できません。';
 	errMsgMap[ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND] = 'unbind()メソッドは__constructから呼ぶことはできません。';
 	errMsgMap[ERR_CODE_CONTROLLER_DISPOSE_REJECTED_BY_USER] = 'コントローラ"{0}"のdispose処理がユーザによって中断されました。';
+	errMsgMap[ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_CONTROLLER] = 'manageChildの第1引数はコントローラインスタンスである必要があります。';
+	errMsgMap[ERR_CODE_CONTROLLER_MANAGE_CHILD_UNBINDED_CONTROLLER] = 'アンバインドされたコントローラをmanageChildすることはできません';
+	errMsgMap[ERR_CODE_CONTROLLER_MANAGE_CHILD_BY_UNBINDED_CONTROLLER] = 'アンバインドされたコントローラのmanageChildは呼び出せません';
+	errMsgMap[ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_ROOT_CONTROLLER] = 'manageChildの第1引数はルートコントローラである必要があります。';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -1197,11 +1209,11 @@
 			} else if (funcName === '__postInit') {
 				isAlreadyExecute = c.isPostInit;
 				callback = createCallbackForPostInit(c);
-				promises = getChildControllerPromises(c, 'postInitPromise');
+				promises = getPromisesForPostInit(c);
 			} else {
 				isAlreadyExecute = c.isReady;
 				callback = createCallbackForReady(c);
-				promises = getChildControllerPromises(c, 'readyPromise');
+				promises = getPromisesForReady(c);
 			}
 
 			// waitForPromisesで全てのプロミスが終わってからライフサイクルイベントの呼び出しを行う
@@ -1226,6 +1238,34 @@
 		if (controller.parentController) {
 			promises.push(controller.parentController.initPromise);
 		}
+		return promises;
+	}
+
+	/**
+	 * __postInitイベントを実行するために必要なPromiseを返します
+	 *
+	 * @private
+	 * @param {Controller} controller コントローラ
+	 * @returns {Promise[]} Promiseオブジェクト
+	 */
+	function getPromisesForPostInit(controller) {
+		// 子コントローラのpostInitPromiseを取得
+		var promises = getChildControllerPromises(controller, 'postInitPromise');
+		promises.push(controller.initPromise);
+		return promises;
+	}
+
+	/**
+	 * __readyイベントを実行するために必要なPromiseを返します
+	 *
+	 * @private
+	 * @param {Controller} controller コントローラ
+	 * @returns {Promise[]} Promiseオブジェクト
+	 */
+	function getPromisesForReady(controller) {
+		// 子コントローラのreadyPromiseを取得
+		var promises = getChildControllerPromises(controller, 'readyPromise');
+		promises.push(controller.postInitPromise);
 		return promises;
 	}
 
@@ -1291,18 +1331,15 @@
 					}
 				}
 				// ルートコントローラはrootElement設定済み
-				controller.__controllerContext.isExecutedSetupRootElement = true;
 				doForEachChildControllers(controller, function(c, parent) {
 					var metaRootElement = c.__controllerContext.metaRootElement;
 					delete c.__controllerContext.metaRootElement;
 
-					if (c.__controllerContext.isExecutedSetupRootElement) {
+					if (c.rootElement) {
+						// ルートエレメント設定済みなら何もしない
+						// (manageChildによる動的子コントローラの場合など、再設定しないようにする)
 						return;
 					}
-					// ルートエレメントの設定処理をしたかどうか
-					// manageChildによる動的子コントローラについて再度設定しないようにするためのフラグ
-					// (ルートエレメントの決まっている子コントローラについてはそのまま)
-					c.__controllerContext.isExecutedSetupRootElement = true;
 
 					// ルートエレメントが__metaで指定されている場合は指定箇所、
 					// そうでない場合は親と同じルートエレメントをターゲットにする
@@ -1325,11 +1362,10 @@
 			// resolveして、次のコールバックがあれば次を実行
 			initDfd.resolveWith(controller);
 
-			// resolveして呼ばれたコールバック内(子の__init)でunbindまたはdisposeされたかチェック
+			// resolveして呼ばれたコールバック内(子の__initやinitPromiseのdoneハンドラ)でunbindまたはdisposeされたかチェック
 			if (isUnbinding(controller)) {
 				return;
 			}
-			// postInitの準備ができていれば実行
 			checkAndTriggerPostInit();
 		};
 	}
@@ -1350,22 +1386,37 @@
 			var isAlreadyPostInitDone = controller.isPostInit;
 			if (isAlreadyPostInitDone) {
 				if (controller.__controllerContext.isRoot) {
-					triggerReady(controller);
+					// 自分の子の__postInitが終わっているか再度チェック
+					// (動的に追加された子コントローラ対応)
+					waitForPromises(getPromisesForPostInit(controller), function() {
+						// unbindまたはdisposeされたかチェック
+						if (isUnbinding(controller)) {
+							return;
+						}
+						triggerReady(controller);
+					});
 				}
 				return;
 			}
-			controller.isPostInit = true;
-			var postInitDfd = controller.__controllerContext.postInitDfd;
-			// FW、ユーザともに使用しないので削除
-			delete controller.__controllerContext.postInitDfd;
-			postInitDfd.resolveWith(controller);
-			// resolveして呼ばれたコールバック内でunbindまたはdisposeされたかチェック
-			if (isUnbinding(controller)) {
-				return;
-			}
 
-			if (controller.__controllerContext.isRoot) {
-				// ルートコントローラであれば次の処理
+			// 動的に追加された子コントローラに対応するため、
+			// 再度子コントローラのpostInitプロミスを取得して、その完了を待ってからpostInitDfdをresolveする
+			waitForPromises(getPromisesForPostInit(controller), function() {
+				// unbindまたはdisposeされたかチェック
+				if (isUnbinding(controller)) {
+					return;
+				}
+				controller.isPostInit = true;
+				var postInitDfd = controller.__controllerContext.postInitDfd;
+				// FW、ユーザともに使用しないので削除
+				delete controller.__controllerContext.postInitDfd;
+				postInitDfd.resolveWith(controller);
+				// initPromiseのdoneハンドラでunbindまたはdisposeされている場合は何もしない
+				// また、ルートコントローラでない場合も何もしない
+				if (isUnbinding(controller) || !controller.__controllerContext.isRoot) {
+					return;
+				}
+				// ルートコントローラなら次のフェーズへ
 				// イベントハンドラのバインド
 				// メタのuseHandlers定義とコントローラインスタンスの紐付け
 				var meta = controller.__meta;
@@ -1394,7 +1445,8 @@
 				});
 				// __readyの実行
 				triggerReady(controller);
-			}
+			});
+			return;
 		};
 	}
 
@@ -1415,24 +1467,28 @@
 			if (isAlreadyReadyDone) {
 				return;
 			}
-			controller.isReady = true;
 
-			var readyDfd = controller.__controllerContext.readyDfd;
-			// FW、ユーザともに使用しないので削除
-			delete controller.__controllerContext.readyDfd;
-			readyDfd.resolveWith(controller);
-			// resolveして呼ばれたコールバック内でunbindまたはdisposeされたかチェック
-			if (isUnbinding(controller)) {
-				return;
-			}
-			if (controller.__controllerContext.isRoot) {
-				// ルートコントローラであれば全ての処理が終了したことを表すイベント"h5controllerready"をトリガ
-				if (!controller.rootElement || !controller.isInit || !controller.isPostInit
-						|| !controller.isReady) {
+			// 動的に追加された子コントローラに対応するため、
+			// 再度子コントローラのreadyプロミスを取得して、その完了を待ってからreadyDfdをresolveする
+			waitForPromises(getPromisesForReady(controller), function() {
+				// unbind,disposeされたかチェック
+				if (isUnbinding(controller)) {
 					return;
 				}
+				controller.isReady = true;
+
+				var readyDfd = controller.__controllerContext.readyDfd;
+				// FW、ユーザともに使用しないので削除
+				delete controller.__controllerContext.readyDfd;
+				readyDfd.resolveWith(controller);
+				// readyPromiseのdoneハンドラでunbindまたはdisposeされている場合は何もしない
+				// また、ルートコントローラでない場合も何もしない
+				if (isUnbinding(controller) || !controller.__controllerContext.isRoot) {
+					return;
+				}
+				// ルートコントローラであれば全ての処理が終了したことを表すイベント"h5controllerready"をトリガ
 				$(controller.rootElement).trigger('h5controllerready', controller);
-			}
+			});
 		};
 	}
 
@@ -2075,7 +2131,6 @@
 			context.isUnbinding = false;
 			context.isUnbinded = false;
 			context.isExecutedBind = false;
-			context.isExecutedSetupRootElement = false;
 			context.args = param;
 			c.initPromise = context.initDfd.promise();
 			c.postInitPromise = context.postInitDfd.promise();
@@ -3017,6 +3072,7 @@
 		child.parentController = parent;
 		child.rootController = parent.rootController;
 		parent.__controllerContext.childControllers.push(child);
+		child.__controllerContext.isRoot = false;
 	}
 
 	/**
@@ -3622,7 +3678,7 @@
 			if (!this.__controllerContext.isRoot) {
 				throwFwError(ERR_CODE_BIND_UNBIND_DISPOSE_ROOT_ONLY);
 			}
-			if (!this.rootController) {
+			if (!this.__controllerContext.isExecutedConstruct) {
 				throwFwError(ERR_CODE_CONSTRUCT_CANNOT_CALL_UNBIND);
 			}
 			try {
@@ -3891,10 +3947,23 @@
 		 */
 		manageChild: function(controller) {
 			throwErrorIfDisposed(this, 'manageChild');
-			throwErrorIfNoRootElement(this, 'manageChild');
-			if (!controller || !controller.__controllerContext) {
-				// FIXME エラー
+			// 自分自身がunbindされていたらエラー
+			if (isUnbinding(this)) {
+				throwFwError(ERR_CODE_CONTROLLER_MANAGE_CHILD_BY_UNBINDED_CONTROLLER);
 				return;
+			}
+			// 対象のコントローラがdisopseまたはunbindされていたらエラー
+			if (isUnbinding(controller)) {
+				throwFwError(ERR_CODE_CONTROLLER_MANAGE_CHILD_UNBINDED_CONTROLLER);
+				return;
+			}
+			if (!controller || !controller.__controllerContext) {
+				// コントローラインスタンスでない場合はエラー
+				throwFwError(ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_CONTROLLER);
+			}
+			// ルートコントローラでない場合はエラー
+			if (controller.rootController !== controller) {
+				throwFwError(ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_ROOT_CONTROLLER);
 			}
 			// 必要なプロパティをセット
 			addChildController(this, controller);
@@ -4399,6 +4468,10 @@
 			controller.parentController = fwOpt.parentController;
 			controller.rootController = fwOpt.rootController;
 		}
+
+		// __construct実行フェーズが完了したかどうか
+		// この時点でunbind()呼び出しが可能になる
+		controller.__controllerContext.isExecutedConstruct = true;
 
 		// 子コントローラをコントローラ化して持たせる
 		// 子コントローラがDependencyオブジェクトなら依存関係を解決
