@@ -221,12 +221,6 @@
 	 */
 	var urlMaxLength = 2000;
 
-	/**
-	 * シーン遷移タイプ
-	 */
-	var navigateType = NAVIGATE_TYPE;
-
-
 	// =============================
 	// Functions
 	// =============================
@@ -1148,7 +1142,7 @@
 	 * @param method
 	 * @returns {Promise}
 	 */
-	function loadContentsFromUrl(source, container, method) {
+	function loadContentsFromUrl(source, container, method, serverParam) {
 		var dfd = h5.async.deferred();
 
 		// TODO htmlだとスクリプトが実行されてしまうのでフルHTMLが返されるとよくない
@@ -1156,7 +1150,8 @@
 		var xhr = h5.ajax({
 			url: source,
 			dataType: 'html',
-			method  : method || 'get'
+			method  : method || 'get',
+			data : serverParam
 		});
 
 		xhr.done(
@@ -1231,11 +1226,11 @@
 	 * @param method
 	 * @returns {Promise}
 	 */
-	function loadContents(source, container, method) {
+	function loadContents(source, container, method, serverParam) {
 		var dfd;
 
 		if (isString(source)) {
-			dfd = loadContentsFromUrl(source, container, method);
+			dfd = loadContentsFromUrl(source, container, method, serverParam);
 		} else {
 			dfd = h5.async.deferred();
 
@@ -1318,22 +1313,29 @@
 	 */
 	function serialize(obj, parent) {
 		var str = '';
-		$.each(obj, function(k, v) {
+		function callback(k, v) {
 			if (str)
 				str += '&';
-			if (!parent && k === 'args') {
+			if (!parent && (k === 'args' || (!useHash && k === 'serverParam'))) {
 				str += serialize(v, k);
 			} else {
-				if (parent === 'args') {
-					str += encodeURIComponent(clientQueryStringPrefix + k);
+				if (parent === 'serverParam') {
+					str += encodeURIComponent(k);
+					str += '=';
+					str += encodeURIComponent(v);
 				} else {
-					str += encodeURIComponent(clientFWQueryStringPrefix + k);
+					if (parent === 'args') {
+						str += encodeURIComponent(clientQueryStringPrefix + k);
+					} else {
+						str += encodeURIComponent(clientFWQueryStringPrefix + k);
+					}
+					str += '=';
+					str += encodeURIComponent(h5.u.obj.serialize(v)
+							.substring(2));
 				}
-				str += '=';
-				// TODO(鈴木) シリアライズ結果から先頭の'2|'を除く
-				str += encodeURIComponent(h5.u.obj.serialize(v).substring(2));
 			}
-		});
+		}
+		$.each(obj, callback);
 		return str;
 	}
 
@@ -1421,15 +1423,15 @@
 	 *
 	 * @private
 	 * @param param
-	 * @param to
+	 * @param replace
 	 */
 	function setParamToUrl(param, replace) {
 		// TODO(鈴木) 遷移先指定がない場合、現在のURLを使用
 		var to = param.to;
 		var isController = controllerRegexp.test(to);
 		if (isController || useHash) {
-			to  = location.href;
-		}else{
+			to = location.href;
+		} else {
 			to = to || location.href;
 			// TODO(鈴木) paramからtoを削除(URLに余計な情報を残さないため)
 			delete param.to;
@@ -1444,9 +1446,9 @@
 			hash += (hash) ? '&' : '#';
 			hash += paramStr;
 			checkUrlLength(path + search + hash);
-			if(replace){
+			if (replace) {
 				location.replace(hash);
-			}else{
+			} else {
 				location.hash = hash;
 			}
 		} else {
@@ -1454,9 +1456,9 @@
 			search += paramStr;
 			var result = path + search + hash;
 			checkUrlLength(result);
-			if(replace){
+			if (replace) {
 				history.replaceState(null, null, toAbsoluteUrl(result));
-			}else{
+			} else {
 				history.pushState(null, null, toAbsoluteUrl(result));
 			}
 		}
@@ -1581,7 +1583,7 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_detour : null,
+		_detour : {},
 
 		/**
 		 * __init
@@ -1644,7 +1646,7 @@
 				// TODO(鈴木) 本来はRouterを使うべき。
 				param = getParamFromUrl();
 
-				if (param.navigateType === navigateType.ONCE) {
+				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
 					this._changeSceneWithController(makeNotReshowController());
 					return;
 				}
@@ -1793,7 +1795,7 @@
 
 			var to = param.to;
 
-			if (this.isMain && param.navigateType !== navigateType.EXCHANGE) {
+			if (this.isMain && param.navigateType !== NAVIGATE_TYPE.EXCHANGE) {
 
 				if (!isString(to)) {
 					// シーン遷移先に文字列以外を指定されたらエラー
@@ -1804,22 +1806,28 @@
 					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [ to ]);
 				}
 
-				if (param.navigateType === navigateType.ONCE) {
-					this._detour = h5.u.obj.deserialize(h5.u.obj
+				this._detour.serverParam = param.serverParam;
+
+				if (param.method === METHOD.POST) {
+					delete param.serverParam;
+				}
+
+				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
+					this._detour.args = h5.u.obj.deserialize(h5.u.obj
 							.serialize(param.args));
 					delete param.args;
 				}
 
 				var replace = param.replace;
-				if ('replace' in param) {
-					delete param.replace;
-				}
+				delete param.replace;
 
 				// TODO(鈴木) 本来Routerでやるべき
 				setParamToUrl(param, replace);
 
 				// TODO(鈴木) 本来はRouterで実装
-				this._onWindowPopstate();
+				if(!useHash){
+					this._onWindowPopstate();
+				}
 
 			} else {
 				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj
@@ -1860,13 +1868,18 @@
 
 			var that = this;
 
-			if (param.navigateType === navigateType.ONCE) {
+			var serverParam = this._detour.serverParam;
+			delete this._detour.serverParam;
+
+			var args = null;
+			if (param.navigateType === NAVIGATE_TYPE.ONCE
+					|| param.method === METHOD.POST) {
 				if (!this._isNavigated) {
 					that._changeSceneWithController(makeNotReshowController());
 					return;
 				}
-				param.args = this._detour;
-				this._detour = null;
+				args = this._detour.args;
+				delete this._detour.args;
 			}
 
 			// TODO(鈴木) transitionをコントローラーからFunctionに変更
@@ -1885,36 +1898,36 @@
 				if (controllerRegexp.test(to)) {
 
 					// TODO(鈴木)
-					loadController(to, $('<div></div>'), param.args).done(
+					loadController(to, $('<div></div>'), args).done(
 							function(toController) {
 								that._changeSceneWithController(toController);
 							});
 
 				} else {
 					// TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
-					var loadPromise = loadContents(to, param.container, param.method);
+					var loadPromise = loadContents(to, param.container,
+							param.method, serverParam);
 
-					loadPromise.done(
-							function(toElm) {
+					function callback(toElm) {
 
-								// TODO(鈴木) DATA属性に基づいてコントローラーバインド・コンテナ生成
-								// TODO(鈴木) scan用にダミーのDIVにappend
-								scanForContainer(
-										$('<div></div>').append(toElm), null,
-										param.args).done(
-										function(toController) {
-											that._changeSceneWithController(
-													toController);
-										});
+						// TODO(鈴木)
+						// DATA属性に基づいてコントローラーバインド・コンテナ生成
+						// TODO(鈴木) scan用にダミーのDIVにappend
+						scanForContainer($('<div></div>').append(toElm), null,
+								args).done(function(toController) {
+							that._changeSceneWithController(toController);
+						});
 
-							}).fail(function(xhr) {
+					}
+
+					loadPromise.done(callback).fail(function(xhr) {
 
 						// シーン遷移先HTMLのロードに失敗
 						throwFwError(ERR_CODE_HTML_LOAD_FAILED, [ to ], xhr);
 
 					});
 				}
-			} else if(to.__name && controllerRegexp.test(to.__name)) {
+			} else if (to.__name && controllerRegexp.test(to.__name)) {
 				that._changeSceneWithController(to);
 			}
 
@@ -2203,12 +2216,6 @@
 			urlMaxLength = h5.settings.scene.urlMaxLength;
 		}
 
-		// TODO(鈴木) 遷移タイプ識別文字列定義オブジェクト
-		var type = h5.settings.scene.navigateType;
-		if (type) {
-			navigateType = h5.settings.scene.navigateType;
-		}
-
 		// TODO(鈴木) autoInit=trueの場合に全体を探索し、DATA属性によりコントローラーバインドとシーンコンテナ生成を行う。
 		if (h5.settings.scene.autoInit) {
 			init();
@@ -2232,7 +2239,7 @@
 		scan : scan,
 		getAllSceneContainers : getAllSceneContainers,
 		getSceneContainer : getSceneContainer,
-		navigateType : navigateType,
+		navigateType : NAVIGATE_TYPE,
 		method : METHOD
 	});
 
