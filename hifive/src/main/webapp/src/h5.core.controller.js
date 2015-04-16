@@ -1137,14 +1137,21 @@
 	 * @param {Controller} controller
 	 * @param {String} funcName __init, __postInit, __ready のいずれか
 	 * @param {Function} callback ライフサイクルイベントの実行が終わった時(非同期ならresolveされた時)に実行する関数
-	 * @param {Boolean} isAlreadyExecuted 既にライフサイクル実行済みかどうか
 	 * @returns {Function}
 	 */
-	function createLifecycleCaller(controller, funcName, callback, isAlreadyExecuted) {
+	function createLifecycleCaller(controller, funcName, callback) {
 		return function() {
 			var ret = null;
 			var lifecycleFunc = controller[funcName];
 			var controllerName = controller.__name;
+			var isAlreadyExecuted = false;
+			if (funcName === '__init') {
+				isAlreadyExecuted = controller.isInit;
+			} else if (funcName === '__postInit') {
+				isAlreadyExecuted = controller.isPostInit;
+			} else {
+				isAlreadyExecuted = controller.isReady;
+			}
 			if (!isAlreadyExecuted && lifecycleFunc) {
 				try {
 					ret = controller[funcName](createInitializationContext(controller));
@@ -1201,17 +1208,13 @@
 
 			// ライフサイクルイベント名で場合分けして、待機するプロミスの取得と実行するコールバックの作成を行う
 			// __postInit, __readyは子から先に実行する
-			var isAlreadyExecute = false;
 			if (funcName === '__init') {
-				isAlreadyExecute = c.isInit;
 				callback = createCallbackForInit(c);
 				promises = getPromisesForInit(c);
 			} else if (funcName === '__postInit') {
-				isAlreadyExecute = c.isPostInit;
 				callback = createCallbackForPostInit(c);
 				promises = getPromisesForPostInit(c);
 			} else {
-				isAlreadyExecute = c.isReady;
 				callback = createCallbackForReady(c);
 				promises = getPromisesForReady(c);
 			}
@@ -1219,8 +1222,7 @@
 			// waitForPromisesで全てのプロミスが終わってからライフサイクルイベントの呼び出しを行う
 			// promisesの中にpendingのpromiseが無い場合(空または全てのプロミスがresolve/reject済み)の場合、
 			// ライフサイクルイベントの呼び出しは同期的に呼ばれる
-			waitForPromises(promises,
-					createLifecycleCaller(c, funcName, callback, isAlreadyExecute));
+			waitForPromises(promises, createLifecycleCaller(c, funcName, callback));
 		}
 		doForEachControllerGroups(controller, execInner);
 	}
@@ -1383,27 +1385,20 @@
 			if (isUnbinding(controller)) {
 				return;
 			}
-			var isAlreadyPostInitDone = controller.isPostInit;
-			if (isAlreadyPostInitDone) {
-				if (controller.__controllerContext.isRoot) {
-					// 自分の子の__postInitが終わっているか再度チェック
-					// (動的に追加された子コントローラ対応)
-					waitForPromises(getPromisesForPostInit(controller), function() {
-						// unbindまたはdisposeされたかチェック
-						if (isUnbinding(controller)) {
-							return;
-						}
-						triggerReady(controller);
-					});
-				}
-				return;
-			}
 
 			// 動的に追加された子コントローラに対応するため、
 			// 再度子コントローラのpostInitプロミスを取得して、その完了を待ってからpostInitDfdをresolveする
 			waitForPromises(getPromisesForPostInit(controller), function() {
 				// unbindまたはdisposeされたかチェック
 				if (isUnbinding(controller)) {
+					return;
+				}
+				if (controller.isPostInit) {
+					// すでにpostInit実行済みであれば以降の処理はしない
+					if (controller.__controllerContext.isRoot) {
+						// ルートなら次のライフサイクルへ
+						triggerReady(controller);
+					}
 					return;
 				}
 				controller.isPostInit = true;
@@ -1443,6 +1438,12 @@
 						bindByBindMap(c);
 					}
 				});
+				// managed!==falseの場合のみh5controllerboundをトリガ
+				// (managedがfalseならコントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない)
+				if (controller.__controllerContext.managed !== false) {
+					// h5controllerboundイベントをトリガ.
+					$(controller.rootElement).trigger('h5controllerbound', controller);
+				}
 				// __readyの実行
 				triggerReady(controller);
 			});
@@ -1463,21 +1464,22 @@
 			if (isUnbinding(controller)) {
 				return;
 			}
-			var isAlreadyReadyDone = controller.isReady;
-			if (isAlreadyReadyDone) {
-				return;
-			}
+			controller.isReady = true;
 
 			// 動的に追加された子コントローラに対応するため、
 			// 再度子コントローラのreadyプロミスを取得して、その完了を待ってからreadyDfdをresolveする
 			waitForPromises(getPromisesForReady(controller), function() {
-				// unbind,disposeされたかチェック
+				// unbind,disposeされた場合は何もしない
 				if (isUnbinding(controller)) {
 					return;
 				}
-				controller.isReady = true;
 
 				var readyDfd = controller.__controllerContext.readyDfd;
+				if (!readyDfd) {
+					// また、ready後の処理が実行済みなら何もしない
+					return;
+				}
+
 				// FW、ユーザともに使用しないので削除
 				delete controller.__controllerContext.readyDfd;
 				readyDfd.resolveWith(controller);
@@ -2069,14 +2071,6 @@
 		if ($.inArray(controller, controllers) === -1 && managed !== false) {
 			controllers.push(controller);
 		}
-
-		// managed!==falseの場合のみh5controllerboundをトリガ
-		// (managedがfalseならコントローラマネージャの管理対象ではないため、h5controllerboundイベントをトリガしない)
-		if (managed !== false) {
-			// h5controllerboundイベントをトリガ.
-			$(controller.rootElement).trigger('h5controllerbound', controller);
-		}
-
 		// __readyイベントの実行
 		executeLifecycleEventChain(controller, '__ready');
 	}
