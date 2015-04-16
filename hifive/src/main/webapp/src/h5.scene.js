@@ -1316,7 +1316,7 @@
 		function callback(k, v) {
 			if (str)
 				str += '&';
-			if (!parent && (k === 'args' || (!useHash && k === 'serverParam'))) {
+			if (!parent && (k === 'args' || k === 'serverParam')) {
 				str += serialize(v, k);
 			} else {
 				if (parent === 'serverParam') {
@@ -1351,7 +1351,7 @@
 			deserialize._regExp = new RegExp('^('
 					+ clientQueryStringPrefixForRegExp + '|'
 					+ clientFWQueryStringPrefixForRegExp
-					+ ')(.*)');
+					+ ')?(.*)');
 		}
 		var obj = {};
 		var regExp = deserialize._regExp;
@@ -1360,15 +1360,15 @@
 			var k = decodeURIComponent(pair[0]);
 			var v = decodeURIComponent(pair[1]);
 			var match = k.match(regExp);
-			if (!match) {
-				return;
-			}
 			if (match[1] === clientQueryStringPrefix) {
-				obj['args'] = obj['args'] || {};
-				obj['args'][match[2]] = h5.u.obj.deserialize(SERIALIZE_PREFIX
+				obj.args = obj.args || {};
+				obj.args[match[2]] = h5.u.obj.deserialize(SERIALIZE_PREFIX
 						+ v);
-			} else {
+			} else if (match[1] === clientFWQueryStringPrefix) {
 				obj[match[2]] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
+			} else {
+				obj.serverParam = obj.serverParam || {};
+				obj.serverParam[match[2]] = v;
 			}
 		});
 		return obj;
@@ -1806,9 +1806,8 @@
 					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [ to ]);
 				}
 
-				this._detour.serverParam = param.serverParam;
-
 				if (param.method === METHOD.POST) {
+					this._detour.serverParam = param.serverParam;
 					delete param.serverParam;
 				}
 
@@ -1868,9 +1867,6 @@
 
 			var that = this;
 
-			var serverParam = this._detour.serverParam;
-			delete this._detour.serverParam;
-
 			var args = null;
 			if (param.navigateType === NAVIGATE_TYPE.ONCE
 					|| param.method === METHOD.POST) {
@@ -1880,6 +1876,14 @@
 				}
 				args = this._detour.args;
 				delete this._detour.args;
+			}
+
+			var serverParam = null;
+			if (param.method === METHOD.POST) {
+				serverParam = this._detour.serverParam;
+				delete this._detour.serverParam;
+			} else {
+				serverParam = param.serverParam;
 			}
 
 			// TODO(鈴木) transitionをコントローラーからFunctionに変更
