@@ -100,6 +100,11 @@
 		POST : 'post'
 	};
 
+	/**
+	 * 再表示不可画面用メッセージ
+	 */
+	var NOT_RESHOWABLE_MESSAGE = 'この画面は再表示できません。';
+
 	// =============================
 	// Production
 	// =============================
@@ -220,6 +225,16 @@
 	 * メインシーンコンテナのシーン遷移先URLの最大長
 	 */
 	var urlMaxLength = 2000;
+
+	/**
+	 * 再表示不可画面URL/コントローラー
+	 */
+	var notReshowable = null;
+
+	/**
+	 * 再表示不可画面用メッセージ
+	 */
+	var notReshowableMessage = NOT_RESHOWABLE_MESSAGE;
 
 	// =============================
 	// Functions
@@ -1520,23 +1535,14 @@
 	 *
 	 * @private
 	 */
-	var NotReshowController = {
-		__name: 'h5.scene.NotReshowController',
-		__init: function(){
-			$(this.rootElement).html('<h1>この画面は再表示できません。</h1>');
+	var NotReshowableController = {
+		__name: 'h5.scene.NotReshowableController',
+		__init: function(context){
+			var _notReshowableMessage = context.args._notReshowableMessage;
+			$(this.rootElement).html('<h1>' + _notReshowableMessage + '</h1>');
 		}
 	};
 	//TODO(鈴木) このクラス定義を外部から指定可能にする必要がある。
-
-	/**
-	 * 再表示不可画面用コントローラー生成関数
-	 *
-	 * @private
-	 * @returns [NotReshowController]
-	 */
-	function makeNotReshowController(){
-		return h5internal.core.controllerInternal($('<div></div>'), NotReshowController);
-	}
 
 	/**
 	 * シーンコンテナクラス
@@ -1675,7 +1681,7 @@
 				param = getParamFromUrl();
 
 				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
-					this._changeSceneWithController(makeNotReshowController());
+					this._onNotReshowable();
 					return;
 				}
 
@@ -1899,11 +1905,13 @@
 			if (param.navigateType === NAVIGATE_TYPE.ONCE
 					|| param.method === METHOD.POST) {
 				if (!this._isNavigated) {
-					that._changeSceneWithController(makeNotReshowController());
+					this._onNotReshowable();
 					return;
 				}
 				args = this._detour.args;
 				delete this._detour.args;
+			} else {
+				args = param.args;
 			}
 
 			var serverArgs = null;
@@ -1932,7 +1940,7 @@
 					// TODO(鈴木)
 					loadController(to, $('<div></div>'), args).done(
 							function(toController) {
-								that._changeSceneWithController(toController);
+								that._changeSceneEnd(toController);
 							});
 
 				} else {
@@ -1947,7 +1955,7 @@
 						// TODO(鈴木) scan用にダミーのDIVにappend
 						scanForContainer($('<div></div>').append(toElm), null,
 								args).done(function(toController) {
-							that._changeSceneWithController(toController);
+							that._changeSceneEnd(toController);
 						});
 
 					}
@@ -1960,7 +1968,7 @@
 					});
 				}
 			} else if (to.__name && controllerRegexp.test(to.__name)) {
-				that._changeSceneWithController(to);
+				that._changeSceneEnd(to);
 			}
 
 		},
@@ -1992,7 +2000,7 @@
 		 * @param toController
 		 * @param fromElm
 		 */
-		_changeSceneWithController : function(toController) {
+		_changeSceneEnd : function(toController) {
 
 			var that = this;
 
@@ -2025,6 +2033,35 @@
 				that._transition = null;
 
 			});
+		},
+
+		/**
+		 * シーン再表示不可時処理
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_onNotReshowable : function() {
+			if (notReshowable.__name
+					&& controllerRegexp.test(notReshowable.__name)) {
+				var notReshowableController = h5internal.core
+						.controllerInternal($('<div></div>'), notReshowable, {
+							_notReshowableMessage : notReshowableMessage
+						});
+				this._changeSceneEnd(notReshowableController);
+			} else {
+				var param = null;
+				if (isString(notReshowable)) {
+					param = {
+						to : notReshowable
+					};
+				} else {
+					param = $.extend(true, {}, notReshowable);
+				}
+				param.args = param.args || {};
+				param.args._notReshowableMessage = notReshowableMessage;
+				this._changeScene(param.to, param);
+			}
 		}
 
 	};
@@ -2246,6 +2283,18 @@
 		var settedUrlMaxLength = h5.settings.scene.urlMaxLength;
 		if (settedUrlMaxLength != null && typeof settedUrlMaxLength === 'number') {
 			urlMaxLength = h5.settings.scene.urlMaxLength;
+		}
+
+		// TODO(鈴木) 再表示不可画面
+		if (h5.settings.scene.notReshowable != null) {
+			notReshowable = h5.settings.scene.notReshowable;
+		} else {
+			notReshowable = NotReshowableController;
+		}
+
+		// TODO(鈴木) 再表示不可画面メッセージ
+		if (h5.settings.scene.notReshowableMessage != null) {
+			notReshowableMessage = h5.settings.scene.notReshowableMessage;
 		}
 
 		// TODO(鈴木) autoInit=trueの場合に全体を探索し、DATA属性によりコントローラーバインドとシーンコンテナ生成を行う。
