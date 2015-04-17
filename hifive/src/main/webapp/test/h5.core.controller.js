@@ -11564,11 +11564,9 @@ $(function() {
 			this.$child = $('#controllerTestChild');
 			var executedLog = [];
 			this.executedLog = executedLog;
-			this.$target.bind('h5controllerbound', function(ev, c) {
-				executedLog.push(c.__name + '.h5controllerbound');
-			});
-			this.$target.bind('h5controllerready', function(ev, c) {
-				executedLog.push(c.__name + '.h5controllerready');
+			this.$target.bind('h5controllerbound h5controllerready h5controllerunbound', function(
+					event, c) {
+				executedLog.push(c.__name + '.' + event.type);
 			});
 			this.createLifecycleFunc = function(lifecycle) {
 				return function() {
@@ -12231,6 +12229,210 @@ $(function() {
 
 				$target.bind('h5controllerready', check);
 			});
+
+	asyncTest(
+			'__initで子コントローラをunmanageChildで外す',
+			function() {
+				var $target = this.$target;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					childController: {
+						__name: 'child',
+						__init: createLifecycleFunc('__init'),
+						__postInit: createLifecycleFunc('__postInit'),
+						__ready: createLifecycleFunc('__ready')
+					},
+					__init: function() {
+						this.own(createLifecycleFunc('__init'))();
+						this.unmanageChild(this.childController);
+					},
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: createLifecycleFunc('__ready')
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					// childはpostInitまで終わっていない時にdisposeされるのでh5controllerunboundは上がらない
+					var expect = 'parent.__init, parent.__postInit, parent.h5controllerbound, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
+
+	asyncTest(
+			'__postInitで子コントローラをunmanageChildで外す',
+			function() {
+				var $target = this.$target;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					childController: {
+						__name: 'child',
+						__init: createLifecycleFunc('__init'),
+						__postInit: createLifecycleFunc('__postInit'),
+						__ready: createLifecycleFunc('__ready')
+					},
+					__init: createLifecycleFunc('__init'),
+					__postInit: function() {
+						this.own(createLifecycleFunc('__postInit'))();
+						this.unmanageChild(this.childController);
+					},
+					__ready: createLifecycleFunc('__ready')
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, child.h5controllerunbound, parent.h5controllerbound, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
+
+	asyncTest(
+			'__readyで子コントローラをunmanageChildで外す',
+			function() {
+				var $target = this.$target;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					childController: {
+						__name: 'child',
+						__init: createLifecycleFunc('__init'),
+						__postInit: createLifecycleFunc('__postInit'),
+						__ready: createLifecycleFunc('__ready')
+					},
+					__init: createLifecycleFunc('__init'),
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: function() {
+						this.own(createLifecycleFunc('__ready'))();
+						this.unmanageChild(this.childController);
+					}
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, child.h5controllerunbound, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
+
+	asyncTest(
+			'__initで子コントローラをunmanageChildで外す',
+			function() {
+				var $target = this.$target;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					childController: {
+						__name: 'child',
+						__init: createLifecycleFunc('__init'),
+						__postInit: createLifecycleFunc('__postInit'),
+						__ready: createLifecycleFunc('__ready')
+					},
+					__init: function() {
+						this.own(createLifecycleFunc('__init'))();
+						this.unmanageChild(this.childController);
+					},
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: createLifecycleFunc('__ready')
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					// childはpostInitまで終わっていない時にdisposeされるのでh5controllerunboundは上がらない
+					var expect = 'parent.__init, parent.__postInit, parent.h5controllerbound, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
+
+	asyncTest(
+			'__postInitで子コントローラをunmanageChildで外す',
+			function() {
+				var $target = this.$target;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					childController: {
+						__name: 'child',
+						__init: createLifecycleFunc('__init'),
+						__postInit: createLifecycleFunc('__postInit'),
+						__ready: createLifecycleFunc('__ready')
+					},
+					__init: createLifecycleFunc('__init'),
+					__postInit: function() {
+						this.own(createLifecycleFunc('__postInit'))();
+						this.unmanageChild(this.childController);
+					},
+					__ready: createLifecycleFunc('__ready')
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, child.h5controllerunbound, parent.h5controllerbound, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
+
+	asyncTest(
+			'__readyで子コントローラをunmanageChildで外す',
+			function() {
+				var $target = this.$target;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					childController: {
+						__name: 'child',
+						__init: createLifecycleFunc('__init'),
+						__postInit: createLifecycleFunc('__postInit'),
+						__ready: createLifecycleFunc('__ready')
+					},
+					__init: createLifecycleFunc('__init'),
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: function() {
+						this.own(createLifecycleFunc('__ready'))();
+						this.unmanageChild(this.childController);
+					}
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, child.h5controllerunbound, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
+
+	// TODO コントローラをdisposeせずに外す
+	// TODO ライフサイクルの途中でmanageChildしたコントローラをunamnageChildで外す(waitForPromisesで待機しているプロミスの削除できるような実装が必要)
+	// TODO 異常系
 
 	asyncTest(
 			'getControllers/getAllControllers',

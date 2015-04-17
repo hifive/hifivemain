@@ -123,6 +123,12 @@
 	var ERR_CODE_CONTROLLER_MANAGE_CHILD_BY_UNBINDED_CONTROLLER = 6041;
 	/** エラーコード：manageChildの引数のコントローラインスタンスがルートコントローラじゃない */
 	var ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_ROOT_CONTROLLER = 6040;
+	/** エラーコード：unbindされたコントローラのunmanageChildが呼ばれた */
+	var ERR_CODE_CONTROLLER_UNMANAGE_CHILD_BY_UNBINDED_CONTROLLER = 6041;
+	/** エラーコード：unmanageChildの引数のコントローラインスタンスが自分の子コントローラじゃない */
+	var ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER = 6042;
+	/** エラーコード：unmanageChildの第1引数がルートエレメント未決定コントローラで、第2引数がfalse */
+	var ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NO_ROOT_ELEMENT = 6043;
 
 	// =============================
 	// Development Only
@@ -175,6 +181,9 @@
 	errMsgMap[ERR_CODE_CONTROLLER_MANAGE_CHILD_UNBINDED_CONTROLLER] = 'アンバインドされたコントローラをmanageChildすることはできません';
 	errMsgMap[ERR_CODE_CONTROLLER_MANAGE_CHILD_BY_UNBINDED_CONTROLLER] = 'アンバインドされたコントローラのmanageChildは呼び出せません';
 	errMsgMap[ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_ROOT_CONTROLLER] = 'manageChildの第1引数はルートコントローラである必要があります。';
+	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_BY_UNBINDED_CONTROLLER] = 'アンバインドされたコントローラのunmanageChildは呼び出せません';
+	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER] = 'unmanageChildの第1引数は呼び出し側の子コントローラである必要があります。';
+	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NO_ROOT_ELEMENT] = 'ルートエレメントの決定していない子コントローラのunmanageChildは、第2引数にfalseを指定することはできません';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -3107,34 +3116,19 @@
 	 * @param {Controller} parent
 	 * @param {Controller} child
 	 */
-	function removeChildController(parent, child, andDispose) {
+	function removeChildController(parent, child) {
 		// 子コントローラをルートコントローラにする(親との関係を切る)
 		var childControllers = parent.__controllerContext.childControllers;
-		var index = -1;
-		var prop;
 		for (var i = 0, l = childControllers.length; i < l; i++) {
 			if (childControllers[i] === child) {
 				index = i;
 				break;
 			}
 		}
-		if (index === -1) {
-			// TODO 親子関係にないならエラー
-			return;
-		}
 		childControllers.splice(index, 1);
 		child.parentController = null;
 		child.rootController = child;
 		child.__controllerContext.isRoot = true;
-
-		// FIXME propがある場合(manageChildではなく静的に定義された子コントローラの場合)は参照を削除でよいか
-		if (prop) {
-			parent[prop] = null;
-		}
-
-		if (andDispose) {
-			child.dispose();
-		}
 	}
 
 	// =========================================================================
@@ -4010,13 +4004,29 @@
 		 */
 		unmanageChild: function(controller, andDispose) {
 			throwErrorIfDisposed(this, 'unmanageChild');
-			throwErrorIfNoRootElement(this, 'unmanageChild');
+			// 自分自身がunbindされていたらエラー
+			if (isUnbinding(this)) {
+				throwFwError(ERR_CODE_CONTROLLER_UNMANAGE_CHILD_BY_UNBINDED_CONTROLLER);
+				return;
+			}
+			// 対象のコントローラが子コントローラでないならエラー
+			if (controller.parentController !== this) {
+				throwFwError(ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER);
+				return;
+			}
 			// disposeするかどうか。デフォルトtrue(disposeする)
 			andDispose = andDispose === false ? false : true;
+			if (!andDispose && !controller.rootElement) {
+				// ルートエレメント未決定コントローラはdisposeせずにunmanageChildできない
+				throwFwError(ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NO_ROOT_ELEMENT);
+				return;
+			}
 			removeChildController(this, controller, andDispose);
 			if (!andDispose) {
 				// disposeしない場合、unmanageChildしたコントローラはルートコントローラになるので、controllerManagerの管理下に追加
 				controllerManager.controllers.push(controller);
+			} else {
+				controller.dispose();
 			}
 		}
 	});
