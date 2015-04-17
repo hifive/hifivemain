@@ -1142,7 +1142,7 @@
 	 * @param method
 	 * @returns {Promise}
 	 */
-	function loadContentsFromUrl(source, container, method, serverParam) {
+	function loadContentsFromUrl(source, container, method, serverArgs) {
 		var dfd = h5.async.deferred();
 
 		// TODO htmlだとスクリプトが実行されてしまうのでフルHTMLが返されるとよくない
@@ -1151,7 +1151,7 @@
 			url: source,
 			dataType: 'html',
 			method  : method || 'get',
-			data : serverParam
+			data : serverArgs
 		});
 
 		xhr.done(
@@ -1226,11 +1226,11 @@
 	 * @param method
 	 * @returns {Promise}
 	 */
-	function loadContents(source, container, method, serverParam) {
+	function loadContents(source, container, method, serverArgs) {
 		var dfd;
 
 		if (isString(source)) {
-			dfd = loadContentsFromUrl(source, container, method, serverParam);
+			dfd = loadContentsFromUrl(source, container, method, serverArgs);
 		} else {
 			dfd = h5.async.deferred();
 
@@ -1316,10 +1316,10 @@
 		function callback(k, v) {
 			if (str)
 				str += '&';
-			if (!parent && (k === 'args' || k === 'serverParam')) {
+			if (!parent && (k === 'args' || k === 'serverArgs')) {
 				str += serialize(v, k);
 			} else {
-				if (parent === 'serverParam') {
+				if (parent === 'serverArgs') {
 					var _k = encodeURIComponent(k);
 					if (v instanceof Array) {
 						var _str = '';
@@ -1383,18 +1383,18 @@
 			} else if (prefix === clientFWQueryStringPrefix) {
 				obj[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
 			} else {
-				obj.serverParam = obj.serverParam || {};
+				obj.serverArgs = obj.serverArgs || {};
 				var _match = name.match(checkArrayRegExp);
 				if (_match) {
 					var _name = _match[1];
-					if (_name in obj.serverParam === false) {
-						obj.serverParam[_name] = [];
+					if (_name in obj.serverArgs === false) {
+						obj.serverArgs[_name] = [];
 					}
-					if (obj.serverParam[_name] instanceof Array) {
-						obj.serverParam[_name].push(v);
+					if (obj.serverArgs[_name] instanceof Array) {
+						obj.serverArgs[_name].push(v);
 					}
 				} else {
-					obj.serverParam[name] = v;
+					obj.serverArgs[name] = v;
 				}
 			}
 		}
@@ -1835,8 +1835,8 @@
 				}
 
 				if (param.method === METHOD.POST) {
-					this._detour.serverParam = param.serverParam;
-					delete param.serverParam;
+					this._detour.serverArgs = param.serverArgs;
+					delete param.serverArgs;
 				}
 
 				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
@@ -1906,12 +1906,12 @@
 				delete this._detour.args;
 			}
 
-			var serverParam = null;
+			var serverArgs = null;
 			if (param.method === METHOD.POST) {
-				serverParam = this._detour.serverParam;
-				delete this._detour.serverParam;
+				serverArgs = this._detour.serverArgs;
+				delete this._detour.serverArgs;
 			} else {
-				serverParam = param.serverParam;
+				serverArgs = param.serverArgs;
 			}
 
 			// TODO(鈴木) transitionをコントローラーからFunctionに変更
@@ -1938,7 +1938,7 @@
 				} else {
 					// TODO(鈴木) HTMLの対象部分抽出はloadContentsFromUrlに実装。
 					var loadPromise = loadContents(to, param.container,
-							param.method, serverParam);
+							param.method, serverArgs);
 
 					function callback(toElm) {
 
