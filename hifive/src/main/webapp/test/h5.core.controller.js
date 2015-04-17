@@ -11607,6 +11607,43 @@ $(function() {
 					parent.manageChild(child);
 					strictEqual(child.parentController, parent,
 							'manageChildの引数に渡したコントローラのparentControllerが呼び出し元のコントローラになること');
+					strictEqual(child.rootController, parent,
+							'manageChildの引数に渡したコントローラのrootControllerが呼び出し元のコントローラになること');
+					parent.unbind();
+					$target.click();
+					ok(!eventHandlerExecuted,
+							'親をunbindしたらmanageChildで子コントローラ化したコントローラのイベントハンドラも動作しなくなること');
+					parent.dispose();
+					ok(isDisposed(child), '親をdisposeしたらmanageChildで子コントローラ化したコントローラもdisposeされること');
+				}).always(start);
+	});
+
+	asyncTest('manageChildで子コントローラを持つコントローラを子コントローラにする', function() {
+		var $target = this.$target;
+		var parent = h5.core.controller($target, {
+			__name: 'parentController'
+		});
+		var eventHandlerExecuted = false;
+		var child = h5.core.controller($target, {
+			__name: 'childController',
+			grandChildController: {
+				__name: 'grandchildController',
+				'{rootElement} click': function() {
+					eventHandlerExecuted = true;
+				},
+			}
+		});
+		$.when(child.readyPromise, parent.readyPromise).done(
+				function() {
+					parent.manageChild(child);
+					strictEqual(child.parentController, parent,
+							'manageChildの引数に渡したコントローラのparentControllerが呼び出し元のコントローラになること');
+					strictEqual(child.grandChildController.parentController, child,
+							'manageChildの引数に渡したコントローラの子コントローラのparentControllerは変わっていないこと');
+					strictEqual(child.rootController, parent,
+							'manageChildの引数に渡したコントローラのrootControllerが呼び出し元のコントローラになること');
+					strictEqual(child.grandChildController.rootController, parent,
+							'manageChildの引数に渡したコントローラの子コントローラのrootControllerが呼び出し元のコントローラになること');
 					parent.unbind();
 					$target.click();
 					ok(!eventHandlerExecuted,

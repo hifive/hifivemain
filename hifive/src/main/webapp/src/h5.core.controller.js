@@ -1216,7 +1216,8 @@
 			// waitForPromisesで全てのプロミスが終わってからライフサイクルイベントの呼び出しを行う
 			// promisesの中にpendingのpromiseが無い場合(空または全てのプロミスがresolve/reject済み)の場合、
 			// ライフサイクルイベントの呼び出しは同期的に呼ばれる
-			waitForPromises(promises, createLifecycleCaller(c, funcName, callback));
+			var waitingPromise = waitForPromises(promises, createLifecycleCaller(c, funcName,
+					callback));
 		}
 		// すでにpromisesのいずれかが失敗している場合は、失敗した時にdisposeされているはず
 		// disopseされていたら何もしない
@@ -3087,13 +3088,17 @@
 	 * @param {Controller} child
 	 */
 	function addChildController(parent, child) {
-		if (parent.__controllerContext.isExecutedConstruct) {
-			// __construct実行済みならrootControllerを設定
-			child.rootController = parent.rootController;
-		}
 		child.parentController = parent;
 		parent.__controllerContext.childControllers.push(child);
 		child.__controllerContext.isRoot = false;
+		if (parent.__controllerContext.isExecutedConstruct) {
+			var rootController = parent.rootController;
+			// __construct実行済みならrootControllerを設定
+			// 子コントローラの持つ子コントローラも含めてルートコントローラを設定
+			doForEachControllerGroups(child, function(c) {
+				c.rootController = rootController;
+			});
+		}
 	}
 
 	/**
