@@ -11718,41 +11718,42 @@ $(function() {
 						});
 			});
 
-	//	asyncTest(
-	//			'manageChild呼び出し側のコントローラの__constructで__initの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
-	//			function() {
-	//				var $target = this.$target;
-	//				var $child = this.$child;
-	//				var createLifecycleFunc = this.createLifecycleFunc;
-	//				var executedLog = this.executedLog;
-	//				h5.core.controller($target, {
-	//					__name: 'parent',
-	//					__construct: function() {
-	//						this.own(createLifecycleFunc('__init'))();
-	//						this.c = h5.core.controller($child, {
-	//							__name: 'child',
-	//							__init: createLifecycleFunc('__init'),
-	//							__postInit: createLifecycleFunc('__postInit'),
-	//							__ready: createLifecycleFunc('__ready')
-	//						});
-	//						this.manageChild(this.c);
-	//					},
-	//					__init: createLifecycleFunc('__init'),
-	//					__postInit: createLifecycleFunc('__postInit'),
-	//					__ready: createLifecycleFunc('__ready')
-	//				}).readyPromise
-	//						.done(function() {
-	//							var result = executedLog.join(', ');
-	//							var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, child.__ready, parent.h5controllerbound, parent.__ready';
-	//							strictEqual(rsult, expect, 'ライフサイクルの実行順序が正しいこと '
-	//									+ result);
-	//							ok(testutils.u.isResolved(this.c.readyPromise),
-	//									'親コントローラのreadyPromiseが完了した時点で子コントローラのreadyPromiseも完了していること');
-	//							strictEqual($(this.c.rootElement).attr('id'), 'controllerTestChild',
-	//									'manageChildされたコントローラのルートエレメントは変わらないこと');
-	//							start();
-	//						});
-	//			});
+	asyncTest(
+			'manageChild呼び出し側のコントローラの__constructで__initの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
+			function() {
+				var $target = this.$target;
+				var $child = this.$child;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					__construct: function() {
+						this.c = h5.core.controller($child, {
+							__name: 'child',
+							__init: createLifecycleFunc('__init'),
+							__postInit: createLifecycleFunc('__postInit'),
+							__ready: createLifecycleFunc('__ready')
+						});
+						this.manageChild(this.c);
+					},
+					__init: createLifecycleFunc('__init'),
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: createLifecycleFunc('__ready')
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(testutils.u.isResolved(parent.c.readyPromise),
+							'親コントローラのreadyPromiseが完了した時点で子コントローラのreadyPromiseも完了していること');
+					strictEqual($(parent.c.rootElement).attr('id'), 'controllerTestChild',
+							'manageChildされたコントローラのルートエレメントは変わらないこと');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
 
 	asyncTest(
 			'manageChild呼び出し側のコントローラの__initで__initの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
@@ -11781,7 +11782,7 @@ $(function() {
 					var result = executedLog.join(', ');
 					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, parent.h5controllerready';
 					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
-					ok(testutils.u.isResolved(parent.readyPromise),
+					ok(testutils.u.isResolved(parent.c.readyPromise),
 							'親コントローラのreadyPromiseが完了した時点で子コントローラのreadyPromiseも完了していること');
 					strictEqual($(parent.c.rootElement).attr('id'), 'controllerTestChild',
 							'manageChildされたコントローラのルートエレメントは変わらないこと');
@@ -11864,6 +11865,48 @@ $(function() {
 				$target.bind('h5controllerready', check);
 			});
 
+	asyncTest(
+			'manageChild呼び出し側のコントローラの__constructで__postInitの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
+			function() {
+				var $target = this.$target;
+				var $child = this.$child;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = null;
+				var child = h5.core.controller($child, {
+					__name: 'child',
+					__init: createLifecycleFunc('__init'),
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: createLifecycleFunc('__ready')
+				});
+				child.initPromise.done(function() {
+					parent = h5.core.controller($target, {
+						__name: 'parent',
+						__construct: function() {
+							this.manageChild(child);
+							this.c = child;
+						},
+						__init: createLifecycleFunc('__init'),
+						__postInit: createLifecycleFunc('__postInit'),
+						__ready: createLifecycleFunc('__ready')
+					});
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					// childに親が追加されてもchild.__postInit実行時に待機するプロミスは変わらないため、
+					// parent.__initより前にchild.__postInitが先に実行される
+					var expect = 'child.__init, child.__postInit, parent.__init, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(testutils.u.isResolved(parent.c.readyPromise),
+							'親コントローラのreadyPromiseが完了した時点で子コントローラのreadyPromiseも完了していること');
+					strictEqual($(parent.c.rootElement).attr('id'), 'controllerTestChild',
+							'manageChildされたコントローラのルートエレメントは変わらないこと');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
 
 	asyncTest(
 			'manageChild呼び出し側のコントローラの__initで__postInitの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
@@ -11988,11 +12031,169 @@ $(function() {
 				$target.bind('h5controllerready', check);
 			});
 
-	// TODO __readyの終わっていないコントローラをバインドした場合のテスト
+	asyncTest(
+			'manageChild呼び出し側のコントローラの__constructで__readyの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
+			function() {
+				var $target = this.$target;
+				var $child = this.$child;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = null;
+				var child = h5.core.controller($child, {
+					__name: 'child',
+					__init: createLifecycleFunc('__init'),
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: createLifecycleFunc('__ready')
+				});
+				child.postInitPromise.done(function() {
+					parent = h5.core.controller($target, {
+						__name: 'parent',
+						__construct: function() {
+							this.manageChild(child);
+							this.c = child;
+						},
+						__init: createLifecycleFunc('__init'),
+						__postInit: createLifecycleFunc('__postInit'),
+						__ready: createLifecycleFunc('__ready')
+					});
+				});
 
-	// TODO 子コントローラが孫コントローラをmanageChildした時
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'child.__init, child.__postInit, parent.__init, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(testutils.u.isResolved(parent.c.readyPromise),
+							'親コントローラのreadyPromiseが完了した時点で子コントローラのreadyPromiseも完了していること');
+					strictEqual($(parent.c.rootElement).attr('id'), 'controllerTestChild',
+							'manageChildされたコントローラのルートエレメントは変わらないこと');
+					start();
+				}
 
-	// TODO ライフサイクルの途中でunmanageChild呼んだ時
+				$target.bind('h5controllerready', check);
+			});
+
+	asyncTest(
+			'manageChild呼び出し側のコントローラの__initで__readyの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
+			function() {
+				var $target = this.$target;
+				var $child = this.$child;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					__init: function() {
+						this.own(createLifecycleFunc('__init'))();
+						this.c = h5.core.controller($child, {
+							__name: 'child',
+							__init: createLifecycleFunc('__init'),
+							__postInit: createLifecycleFunc('__postInit'),
+							__ready: createLifecycleFunc('__ready')
+						});
+						var promise = this.c.postInitPromise;
+						promise.done(this.own(function() {
+							this.manageChild(this.c);
+						}));
+						return promise;
+					},
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: createLifecycleFunc('__ready')
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(testutils.u.isResolved(parent.c.readyPromise),
+							'親コントローラのreadyPromiseが完了した時点で子コントローラのreadyPromiseも完了していること');
+					strictEqual($(parent.c.rootElement).attr('id'), 'controllerTestChild',
+							'manageChildされたコントローラのルートエレメントは変わらないこと');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
+
+	asyncTest(
+			'manageChild呼び出し側のコントローラの__postInitで__readyの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
+			function() {
+				var $target = this.$target;
+				var $child = this.$child;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					__init: createLifecycleFunc('__init'),
+					__postInit: function() {
+						this.own(createLifecycleFunc('__postInit'))();
+						this.c = h5.core.controller($child, {
+							__name: 'child',
+							__init: createLifecycleFunc('__init'),
+							__postInit: createLifecycleFunc('__postInit'),
+							__ready: createLifecycleFunc('__ready')
+						});
+						var promise = this.c.postInitPromise;
+						promise.done(this.own(function() {
+							this.manageChild(this.c);
+						}));
+						return promise;
+					},
+					__ready: createLifecycleFunc('__ready')
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'parent.__init, parent.__postInit, child.__init, child.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(testutils.u.isResolved(parent.c.readyPromise),
+							'親コントローラのreadyPromiseが完了した時点で子コントローラのreadyPromiseも完了していること');
+					strictEqual($(parent.c.rootElement).attr('id'), 'controllerTestChild',
+							'manageChildされたコントローラのルートエレメントは変わらないこと');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
+
+	asyncTest(
+			'manageChild呼び出し側のコントローラの__readyで__readyの終わっていないコントローラをmanageChildした時のライフサイクルの実行順序',
+			function() {
+				var $target = this.$target;
+				var $child = this.$child;
+				var createLifecycleFunc = this.createLifecycleFunc;
+				var executedLog = this.executedLog;
+				var parent = h5.core.controller($target, {
+					__name: 'parent',
+					__init: createLifecycleFunc('__init'),
+					__postInit: createLifecycleFunc('__postInit'),
+					__ready: function() {
+						this.own(createLifecycleFunc('__ready'))();
+						this.c = h5.core.controller($child, {
+							__name: 'child',
+							__init: createLifecycleFunc('__init'),
+							__postInit: createLifecycleFunc('__postInit'),
+							__ready: createLifecycleFunc('__ready')
+						});
+						var promise = this.c.postInitPromise;
+						promise.done(this.own(function() {
+							this.manageChild(this.c);
+						}));
+						return promise;
+					}
+				});
+
+				function check() {
+					var result = executedLog.join(', ');
+					var expect = 'parent.__init, parent.__postInit, parent.h5controllerbound, parent.__ready, child.__init, child.__postInit, child.__ready, parent.h5controllerready';
+					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
+					ok(testutils.u.isResolved(parent.c.readyPromise),
+							'親コントローラのreadyPromiseが完了した時点で子コントローラのreadyPromiseも完了していること');
+					strictEqual($(parent.c.rootElement).attr('id'), 'controllerTestChild',
+							'manageChildされたコントローラのルートエレメントは変わらないこと');
+					start();
+				}
+
+				$target.bind('h5controllerready', check);
+			});
 
 	asyncTest(
 			'getControllers/getAllControllers',

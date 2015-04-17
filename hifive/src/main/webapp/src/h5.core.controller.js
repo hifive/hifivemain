@@ -1198,12 +1198,6 @@
 	 */
 	function executeLifecycleEventChain(controller, funcName) {
 		function execInner(c) {
-			// すでにpromisesのいずれかが失敗している場合は、失敗した時にdisposeされているはずなので、disposeされているかどうかチェックする
-			// disopseされていたら何もしない。
-			if (isDisposing(c)) {
-				return;
-			}
-
 			var callback, promises;
 
 			// ライフサイクルイベント名で場合分けして、待機するプロミスの取得と実行するコールバックの作成を行う
@@ -1223,6 +1217,11 @@
 			// promisesの中にpendingのpromiseが無い場合(空または全てのプロミスがresolve/reject済み)の場合、
 			// ライフサイクルイベントの呼び出しは同期的に呼ばれる
 			waitForPromises(promises, createLifecycleCaller(c, funcName, callback));
+		}
+		// すでにpromisesのいずれかが失敗している場合は、失敗した時にdisposeされているはず
+		// disopseされていたら何もしない
+		if (isDisposing(controller)) {
+			return;
 		}
 		doForEachControllerGroups(controller, execInner);
 	}
@@ -1284,30 +1283,30 @@
 			if (isUnbinding(controller)) {
 				return;
 			}
-			// 既にinit処理済み(動的に追加されたコントローラによるライフサイクル実行で、当該コントローラはinit処理済み)かどうか
-			var isAlreadyInitDone = controller.isInit;
-			var childControllers = controller.__controllerContext.childControllers;
 
-			// 全コントローラのinitが終わっていればpostInitを実行する関数
-			function checkAndTriggerPostInit() {
-				// 次のコールバックの実行
-				// 子コントローラが無い(リーフノード)の場合、全コントローラのinitが終わったかどうかをチェック
-				var isAllInitDone = !childControllers.length && (function() {
-					var ret = true;
-					doForEachControllerGroups(controller.rootController, function(c) {
-						ret = c.isInit;
-						return ret;
-					});
+			/**
+			 * 全コントローラのinitが終わっているかどうかチェックする関数
+			 *
+			 * @private
+			 * @returns {boolean}
+			 */
+			function isAllInitExecuted() {
+				// __initは親から順に実行しているので、コントローラがリーフノードの場合のみチェックすればよいが、
+				// 動的に子コントローラが追加される場合もあるため、いずれのコントローラの__initが完了た場合もチェックする
+				var ret = true;
+				doForEachControllerGroups(controller.rootController, function(c) {
+					ret = c.isInit;
 					return ret;
-				})();
-				if (isAllInitDone) {
-					// 全コントローラの__initが終わったら__postInitを呼び出す
-					triggerPostInit(controller.rootController);
-					return;
-				}
+				});
+				return ret;
 			}
-			if (isAlreadyInitDone) {
-				checkAndTriggerPostInit();
+
+			if (controller.isInit) {
+				// このコントローラの__init後の処理がすでに実行済みであれば
+				// 全コントローラの__initが終わっているかどうかチェックして__postInitを呼び出す
+				if (isAllInitExecuted()) {
+					triggerPostInit(controller.rootController);
+				}
 				return;
 			}
 			// isInitフラグを立てる
@@ -1324,6 +1323,7 @@
 			// 子コントローラ
 			try {
 				var meta = controller.__meta;
+				var childControllers = controller.__controllerContext.childControllers;
 				// メタのルートエレメント定義とコントローラインスタンスの紐付け
 				for ( var p in meta) {
 					if ($.inArray(controller[p], childControllers) !== -1) {
@@ -1361,14 +1361,17 @@
 				return;
 			}
 
+			// initDfdをresolveする前に、この時点でコントローラツリー上の__initが終わっているかどうかチェック
+			var shouldTriggerPostInit = isAllInitExecuted();
+
 			// resolveして、次のコールバックがあれば次を実行
 			initDfd.resolveWith(controller);
 
-			// resolveして呼ばれたコールバック内(子の__initやinitPromiseのdoneハンドラ)でunbindまたはdisposeされたかチェック
-			if (isUnbinding(controller)) {
-				return;
+			// initPromiseのdoneハンドラでunbindされているかどうかチェック
+			// unbindされていなくて全コントローラの__initが終わっていたら__postInitを呼び出す
+			if (!isUnbinding(controller) && shouldTriggerPostInit) {
+				triggerPostInit(controller.rootController);
 			}
-			checkAndTriggerPostInit();
 		};
 	}
 
@@ -1385,6 +1388,8 @@
 			if (isUnbinding(controller)) {
 				return;
 			}
+			var isAlreadyPostInitDone = controller.isPostInit;
+			controller.isPostInit = true;
 
 			// 動的に追加された子コントローラに対応するため、
 			// 再度子コントローラのpostInitプロミスを取得して、その完了を待ってからpostInitDfdをresolveする
@@ -1393,22 +1398,35 @@
 				if (isUnbinding(controller)) {
 					return;
 				}
-				if (controller.isPostInit) {
-					// すでにpostInit実行済みであれば以降の処理はしない
-					if (controller.__controllerContext.isRoot) {
-						// ルートなら次のライフサイクルへ
-						triggerReady(controller);
-					}
+				var postInitDfd = controller.__controllerContext.postInitDfd;
+				if (!postInitDfd) {
+					// 既に削除済み(=resolve済み)の場合は、以降の処理は実行済みなので何もしない
 					return;
 				}
-				controller.isPostInit = true;
-				var postInitDfd = controller.__controllerContext.postInitDfd;
-				// FW、ユーザともに使用しないので削除
+				// FW、ユーザともに使用しないので削除してresolve
 				delete controller.__controllerContext.postInitDfd;
 				postInitDfd.resolveWith(controller);
-				// initPromiseのdoneハンドラでunbindまたはdisposeされている場合は何もしない
-				// また、ルートコントローラでない場合も何もしない
-				if (isUnbinding(controller) || !controller.__controllerContext.isRoot) {
+				// postInitPromiseのdoneハンドラでunbindまたはdisposeされている場合は何もしない
+				if (isUnbinding(controller)) {
+					return;
+				}
+				if (!controller.__controllerContext.isRoot) {
+					if (!controller.rootController.isPostInit) {
+						// postInitDfdをresolveした時にルートのpostInitが終わった場合や、
+						// このコントローラがルートのpostInit後にmanageChildされた場合は、
+						// 既にルートコントローラのpostInitが終わっている。
+						// その場合は何もしない
+						return;
+					}
+					// ルートのpostInitが終わっている場合、
+					// このコントローラがルートのpostInit後に実行されたので、
+					// ルートがtriggerReadyしたタイミングでは自分のreadyの実行が呼び出せていない。
+					// 自分についてのpostInit後の処理(バインド処理)を行って再度triggerReadyを呼ぶ
+					if (!controller.parentController.__meta
+							|| controller.parentController.__meta.userHandlers !== false) {
+						bindByBindMap(controller);
+					}
+					triggerReady(controller.rootController);
 					return;
 				}
 				// ルートコントローラなら次のフェーズへ
@@ -1476,13 +1494,13 @@
 
 				var readyDfd = controller.__controllerContext.readyDfd;
 				if (!readyDfd) {
-					// また、ready後の処理が実行済みなら何もしない
+					// 既に削除済み(=resolve済み)の場合は、以降の処理は実行済みなので何もしない
 					return;
 				}
-
-				// FW、ユーザともに使用しないので削除
+				// FW、ユーザともに使用しないので削除してresolve
 				delete controller.__controllerContext.readyDfd;
 				readyDfd.resolveWith(controller);
+
 				// readyPromiseのdoneハンドラでunbindまたはdisposeされている場合は何もしない
 				// また、ルートコントローラでない場合も何もしない
 				if (isUnbinding(controller) || !controller.__controllerContext.isRoot) {
@@ -2091,6 +2109,10 @@
 
 		// asyncにfalseが指定されていない場合は必ず非同期になるようにする
 		setTimeout(function() {
+			// この時点でcontrollerがルートコントローラでなくなっている(__constructでmanageChildされた)場合は何もしない
+			if (isUnbinding(controller) || !controller.__controllerContext.isRoot) {
+				return;
+			}
 			executeLifecycleEventChain(controller, '__init');
 		}, 0);
 	}
@@ -2450,8 +2472,10 @@
 	 * @returns {Boolean}
 	 */
 	function isUnbinding(controller) {
-		return isDisposed(controller) || controller.__controllerContext.isUnbinding
-				|| controller.__controllerContext.isUnbinded;
+		var rc = controller.__controllerContext && controller.__controllerContext.isRoot ? controller
+				: controller.rootController;
+		return !rc || isDisposed(rc) || rc.__controllerContext.isUnbinding
+				|| rc.__controllerContext.isUnbinded;
 	}
 
 	/**
@@ -3063,8 +3087,11 @@
 	 * @param {Controller} child
 	 */
 	function addChildController(parent, child) {
+		if (parent.__controllerContext.isExecutedConstruct) {
+			// __construct実行済みならrootControllerを設定
+			child.rootController = parent.rootController;
+		}
 		child.parentController = parent;
-		child.rootController = parent.rootController;
 		parent.__controllerContext.childControllers.push(child);
 		child.__controllerContext.isRoot = false;
 	}
@@ -4461,6 +4488,14 @@
 			// rootControllerはisRoot===trueのコントローラには設定済みなので、親から子に同じrootControllerを引き継ぐ
 			controller.parentController = fwOpt.parentController;
 			controller.rootController = fwOpt.rootController;
+		}
+
+		// 動的に追加されたコントローラ(__constructのタイミングで追加されたコントローラ)について、
+		// ルートコントローラを設定する
+		if (controller.__controllerContext.childControllers) {
+			for (var i = 0, childs = controller.__controllerContext.childControllers, l = childs.length; i < l; i++) {
+				childs[i].rootController = controller.rootController;
+			}
 		}
 
 		// __construct実行フェーズが完了したかどうか
