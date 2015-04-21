@@ -101,9 +101,37 @@
 	};
 
 	/**
+	 * メインシーンコンテナのシーン遷移先URLの最大長デフォルト値
+	 */
+	var URL_MAX_LENGTH = 2000;
+
+	/**
 	 * 再表示不可画面用メッセージ
 	 */
 	var NOT_RESHOWABLE_MESSAGE = 'この画面は再表示できません。';
+
+	/**
+	 * Router URL履歴保持方法指定
+	 */
+	var URL_HISTORY_MODE = {
+		HASH : 'hash',
+		HISTORY : 'history',
+		NONE : 'none',
+		HISTORY_OR_HASH : 'historyOrHash',
+		HISTORY_OR_ERROR : 'historyOrError',
+		HISTORY_OR_NONE : 'historyOrNone',
+		HISTORY_OR_FULLRELOAD : 'historyOrFullreload'
+	};
+
+	/**
+	 * Router URL履歴保持方法(判定後)
+	 */
+	var URL_HISTORY_ACTUAL_MODE = {
+		HASH : 'hash',
+		HISTORY : 'history',
+		NONE : 'none',
+		FULLRELOAD : 'fullreload'
+	};
 
 	// =============================
 	// Production
@@ -138,6 +166,10 @@
 	var ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND = 100010;
 	/** メインシーンコンテナ遷移先URLが設定された最大長を超過した */
 	var ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER = 100011;
+	/** RouterでHistoryAPIが使えないためエラー */
+	var ERR_CODE_HISTORY_API_NOT_AVAILABLE = 100012;
+	/** RouterでURL履歴保持方法指定が不正 */
+	var ERR_CODE_URL_HISTORY_MODE_INVALID = 100013;
 
 	// =============================
 	// Development Only
@@ -163,6 +195,8 @@
 	errMsgMap[ERR_CODE_HTML_LOAD_FAILED] = 'シーン遷移先HTMLのロードに失敗しました。to:{0}';
 	errMsgMap[ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND] = '要素にコンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていません。';
 	errMsgMap[ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER] = 'メインシーンコンテナの遷移先URLが設定された最大長を超過しました。長さ:{0} 最大長:{1}';
+	errMsgMap[ERR_CODE_HISTORY_API_NOT_AVAILABLE] = 'HistoryAPIが使用できない環境では処理できない設定になっています。';
+	errMsgMap[ERR_CODE_URL_HISTORY_MODE_INVALID] = 'RouterのURL履歴保持方法指定が不正です。urlHistoryMode:{0}';
 
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
@@ -207,9 +241,14 @@
 	var clientFWQueryStringPrefixForRegExp = null
 
 	/**
-	 * シーン間パラメーター用ハッシュ使用フラグ
+	 * Router URL履歴保持方法指定
 	 */
-	var useHash = false;
+	var urlHistoryMode = URL_HISTORY_MODE.HISTORY;
+
+	/**
+	 * Router URL履歴保持方法(判定後)
+	 */
+	var urlHistoryActualMode = null;
 
 	/**
 	 * URL分割用正規表現
@@ -224,7 +263,7 @@
 	/**
 	 * メインシーンコンテナのシーン遷移先URLの最大長
 	 */
-	var urlMaxLength = 2000;
+	var urlMaxLength = null;
 
 	/**
 	 * 再表示不可画面URL/コントローラー
@@ -965,6 +1004,397 @@
 		}
 	});
 
+	// =============================
+	// Router
+	// =============================
+
+	/**
+	 * Router
+	 *
+	 * <p>
+	 * 暫定実装。
+	 * </p>
+	 *
+	 * @private
+	 * @class
+	 * @param {Object}
+	 *            [option]
+	 * @param {Boolean}
+	 *            [option.urlHistoryMode]
+	 * @param {String}
+	 *            [option.baseUrl]
+	 * @param {Integer}
+	 *            [option.urlMaxLength=2000]
+	 * @param {Integer}
+	 *            [option.routes]
+	 * @returns {Router}
+	 */
+	function Router(option) {
+		option = option || {};
+
+		var self;
+
+		// TODO(鈴木) Routerはシングルトン実装とする。
+		if (!Router._instance) {
+			self = Router._instance = this;
+			var pushSate = !!(window.history.pushState);
+			self.urlHistoryMode = option.urlHistoryMode
+					|| URL_HISTORY_MODE.HISTORY;
+
+			switch (self.urlHistoryMode) {
+			case URL_HISTORY_MODE.HASH:
+				self.urlHistoryActualMode = URL_HISTORY_ACTUAL_MODE.HASH;
+				break;
+			case URL_HISTORY_MODE.NONE:
+				self.urlHistoryActualMode = URL_HISTORY_ACTUAL_MODE.NONE;
+				break;
+			case URL_HISTORY_MODE.HISTORY:
+			case URL_HISTORY_MODE.HISTORY_OR_HASH:
+			case URL_HISTORY_MODE.HISTORY_OR_ERROR:
+			case URL_HISTORY_MODE.HISTORY_OR_NONE:
+			case URL_HISTORY_MODE.HISTORY_OR_FULLRELOAD:
+				if (pushSate) {
+					self.urlHistoryActualMode = URL_HISTORY_ACTUAL_MODE.HISTORY;
+				}
+			}
+
+			if (!self.urlHistoryActualMode && !pushSate) {
+				switch (self.urlHistoryMode) {
+				case URL_HISTORY_MODE.HISTORY_OR_ERROR:
+					// HistoryAPIが使用できない環境では処理できない
+					throwFwError(ERR_CODE_HISTORY_API_NOT_AVAILABLE);
+					return;
+				case URL_HISTORY_MODE.HISTORY:
+				case URL_HISTORY_MODE.HISTORY_OR_HASH:
+					self.urlHistoryActualMode = URL_HISTORY_ACTUAL_MODE.HASH;
+					break;
+				case URL_HISTORY_MODE.HISTORY_OR_NONE:
+					self.urlHistoryActualMode = URL_HISTORY_ACTUAL_MODE.NONE;
+					break;
+				case URL_HISTORY_MODE.HISTORY_OR_FULLRELOAD:
+					self.urlHistoryActualMode = URL_HISTORY_ACTUAL_MODE.FULLRELOAD;
+					break;
+				}
+			}
+
+			if (!self.urlHistoryActualMode) {
+				// Router URL履歴保持方法指定が不正
+				throwFwError(ERR_CODE_URL_HISTORY_MODE_INVALID, self.urlHistoryMode);
+			}
+
+			if (option.baseUrl) {
+				self._baseUrl = option.baseUrl;
+			} else if (self.urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.HISTORY
+					|| self.urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.FULLRELOAD) {
+				// TODO(鈴木)
+				// ベースURL指定がない場合は、pushState使用もしくは通常遷移の場合、現URLからベースURLを設定
+				self._baseUrl = location.pathname.replace(/[^\/]*$/, '');
+			}
+
+			self._urlMaxLength = option.urlMaxLength || URL_MAX_LENGTH;
+
+			// TODO(鈴木) on/off用にthisをバインド
+			var _onChange = self._onChange;
+			self._onChange = function() {
+				return _onChange.apply(self, arguments);
+			};
+
+		} else {
+			self = Router._instance;
+		}
+
+		// TODO(鈴木) 2回目以降のインスタンス生成時はroutesをマージするのみ、その他のパラメーターは無視
+		if (option.routes) {
+			self._routes = self._routes.concat(option.routes);
+		}
+
+		return self;
+	}
+
+	$.extend(Router.prototype, {
+
+		/**
+		 * ルーティングルール
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		_routes : [],
+
+		/**
+		 * ベースURL
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		_baseUrl : '',
+
+		/**
+		 * URL監視フラグ
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		_started : false,
+
+		/**
+		 * URL最大長
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		_urlMaxLength : null,
+
+		/**
+		 * hashChange時コールバック抑制フラグ
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		_silentOnce : false,
+
+		/**
+		 * Router URL履歴保持方法指定
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		urlHistoryMode : null,
+
+		/**
+		 * Router URL履歴保持方法(判定後)
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		urlHistoryActualMode : null,
+
+		/**
+		 * URL変更なしでの遷移処理 URL文字列保持用
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		_urlForSimulate : null,
+
+		/**
+		 * URL変化時コールバック
+		 *
+		 * @private
+		 * @memberOf Router
+		 */
+		_onChange : function() {
+
+			if (this._silentOnce) {
+				this._silentOnce = false;
+				return;
+			}
+
+			var current;
+
+			if (this._urlForSimulate) {
+				current = this._urlForSimulate;
+				this._urlForSimulate = null;
+			} else if (this.urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.HASH) {
+				current = location.hash.substring(1);
+			} else {
+				current = location.pathname + location.search;
+			}
+			current = this.removeBaseUrl(current);
+
+			for (var i = 0; i < this._routes.length; i++) {
+				var route = this._routes[i];
+				if (isString(route.test)) {
+					if (route.test === '*') {
+						route.func(current);
+						break;
+					} else if (current === route.test) {
+						route.func(current);
+						break;
+					}
+					continue;
+				} else if (route.test instanceof RegExp) {
+					if (route.test.test(current)) {
+						route.func(current);
+						break;
+					}
+				} else if (typeof route.test === 'function') {
+					if (route.test(current)) {
+						route.func(current);
+						break;
+					}
+				}
+			}
+		},
+
+		/**
+		 * URL監視の開始
+		 *
+		 * @memberOf Router
+		 * @param {Object} [option]
+		 * @param {Boolean} [option.silent]
+		 */
+		start : function(option) {
+			option = option || {};
+			if (this._started)
+				return;
+			if(!this.checkUrlLength(location.href)){
+				// メインシーンコンテナ遷移先URLが設定された最大長を超過した
+				throwFwError(ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER, [ length,  urlMaxLength ]);
+			}
+			this._started = true;
+			if (!option || !option.silent) {
+				this._onChange();
+			}
+			switch (this.urlHistoryActualMode){
+			case URL_HISTORY_ACTUAL_MODE.HASH:
+				$(window).on('hashchange', this._onChange);
+				break;
+			case URL_HISTORY_ACTUAL_MODE.HISTORY:
+				$(window).on('popstate', this._onChange);
+				break;
+ 			}
+		},
+
+		/**
+		 * URL監視の開始
+		 *
+		 * @memberOf Router
+		 * @param {String} url
+		 * @param {Object} [option]
+		 * @param {Boolean} [option.replace=false]
+		 * @param {Boolean} [option.silent=false]
+		 */
+		navigate : function(url, option) {
+			if (!this._started)
+				return;
+			if(!this.checkUrlLength(url)){
+				// メインシーンコンテナ遷移先URLが設定された最大長を超過した
+				throwFwError(ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER, [ length,  urlMaxLength ]);
+			}
+			var baseUrl = this.getBaseUrl();
+
+			if (url.charAt(0) !== '/' && url.indexOf(location.protocol) !== 0) {
+				url = baseUrl + url;
+			}
+
+			switch (this.urlHistoryActualMode){
+			case URL_HISTORY_ACTUAL_MODE.HASH:
+				if (option.replace) {
+					location.replace('#' + url);
+				} else {
+					location.hash = url;
+				}
+				if (option && option.silent) {
+					this._silentOnce = true;
+				}
+				break;
+			case URL_HISTORY_ACTUAL_MODE.HISTORY:
+				if (option.replace) {
+					history.replaceState(null, null, url);
+				} else {
+					history.pushState(null, null, url);
+				}
+				if (!option || !option.silent) {
+					this._onChange();
+				}
+				break;
+			case URL_HISTORY_ACTUAL_MODE.FULLRELOAD:
+				if (option.replace) {
+					location.replace(url);
+				} else {
+					location.href = url;
+				}
+				break;
+			case URL_HISTORY_ACTUAL_MODE.NONE:
+				this.simulate(url);
+				break;
+ 			}
+
+			return;
+		},
+
+		/**
+		 * URL監視の停止
+		 *
+		 * @memberOf Router
+		 */
+		stop : function() {
+			if (!this._started)
+				return;
+			this._started = false;
+			switch (this.urlHistoryActualMode){
+			case URL_HISTORY_ACTUAL_MODE.HASH:
+				$(window).off('hashchange', this._onChange);
+				break;
+			case URL_HISTORY_ACTUAL_MODE.HISTORY:
+				$(window).off('popstate', this._onChange);
+				break;
+ 			}
+		},
+
+		/**
+		 * URL長のチェック
+		 *
+		 * @memberOf Router
+		 * @param {String} url
+		 * @returns {Boolean}
+		 */
+		checkUrlLength : function(url){
+			if(this._urlMaxLength == null){
+				return true;
+			}
+			var baseUrl = this.getBaseUrl();
+			var match = location.href.match(locationRegExp);
+			var path = match[1];
+			var search = match[2] || '';
+			var result = null;
+			if (this.urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.HASH) {
+				result = path + search + '#' + url;
+			} else {
+				result = (baseUrl || '') + url;
+				result = toAbsoluteUrl(result);
+			}
+			return (result.length <= this._urlMaxLength);
+		},
+
+		/**
+		 * ベースURLの取得
+		 *
+		 * @memberOf Router
+		 * @returns {String}
+		 */
+		getBaseUrl : function () {
+			return this._baseUrl;
+		},
+
+		/**
+		 * 先頭のベースURLを取り除いたURLを返却
+		 *
+		 * @memberOf Router
+		 * @param {String} url
+		 * @returns {String}
+		 */
+		removeBaseUrl : function (url) {
+			var baseUrl = this.getBaseUrl();
+			if (baseUrl && url.indexOf(baseUrl) === 0) {
+				url = url.replace(baseUrl, '');
+			}
+			return url;
+		},
+
+		/**
+		 * URL変更なしでの遷移
+		 *
+		 * @memberOf Router
+		 * @param {String} url
+		 */
+		simulate : function(url){
+			this._urlForSimulate = url;
+			this._onChange();
+		}
+	});
+
 	// =========================================================================
 	//
 	// Body
@@ -1437,45 +1867,54 @@
 		var match = str.match(locationRegExp);
 		var path = match[1];
 		var search = match[2] || '';
-		var hash = match[3] || '';
-		if (useHash && hash) {
-			hash = hash.substring(1).replace(regExp, '');
-			if (hash)
-				hash = '#' + hash;
-		} else if (!useHash && search) {
-			search = search.substring(1).replace(regExp, '');
-			if (search)
-				search = '#' + search;
-		}
-		return path + search + hash;
+		search = search.substring(1).replace(regExp, '');
+		if (search)
+			search = '?' + search;
+		return path + search;
 	}
 
 	/**
 	 * URLからシーン遷移パラメーターを取得
 	 *
 	 * @private
+	 * @param url
 	 * @return {Object}
 	 */
-	function getParamFromUrl() {
-		var target = useHash ? location.hash : location.search;
-		return deserialize(target.substring(1));
+	function getParamFromUrl(url) {
+		var match = url.match(locationRegExp);
+		var path = match[1] || '';
+		var search = match[2] || '';
+		var param = deserialize(search.substring(1));
+		if (!param.to) {
+			param.to = path;
+		}
+		return param;
 	}
 
 	/**
-	 * URLにシーン遷移パラメーターを設定
+	 * URL用にシーン遷移パラメーターを文字列に変換
 	 *
 	 * @private
 	 * @param param
-	 * @param replace
+	 * @param baseUrl
+	 * @param current
+	 * @param base
+	 * @return {String}
 	 */
-	function setParamToUrl(param, replace) {
+	function convertParamToUrl(param, current, base) {
 		// TODO(鈴木) 遷移先指定がない場合、現在のURLを使用
 		var to = param.to;
 		var isController = controllerRegexp.test(to);
-		if (isController || useHash) {
-			to = location.href;
+		if (urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.HASH) {
+			if (isController || to === base) {
+				to = '';
+			}
 		} else {
-			to = to || location.href;
+			if (isController || !to) {
+				to = current;
+			}
+		}
+		if (!isController) {
 			// TODO(鈴木) paramからtoを削除(URLに余計な情報を残さないため)
 			delete param.to;
 		}
@@ -1483,42 +1922,11 @@
 		var match = to.match(locationRegExp);
 		var path = match[1];
 		var search = match[2] || '';
-		var hash = match[3] || '';
 		var paramStr = serialize(param);
-		if (useHash) {
-			hash += (hash) ? '&' : '#';
-			hash += paramStr;
-			checkUrlLength(path + search + hash);
-			if (replace) {
-				location.replace(hash);
-			} else {
-				location.hash = hash;
-			}
-		} else {
-			search += (search) ? '&' : '?';
-			search += paramStr;
-			var result = path + search + hash;
-			checkUrlLength(result);
-			if (replace) {
-				history.replaceState(null, null, toAbsoluteUrl(result));
-			} else {
-				history.pushState(null, null, toAbsoluteUrl(result));
-			}
-		}
-	}
-
-	/**
-	 * メインシーンコンテナ遷移先URL長チェック
-	 *
-	 * @private
-	 * @param url
-	 */
-	function checkUrlLength(url){
-		var length = toAbsoluteUrl(url).length;
-		if(length > urlMaxLength){
-			// メインシーンコンテナ遷移先URLが設定された最大長を超過した
-			throwFwError(ERR_CODE_MAIN_CONTAINER_URL_LENGTH_OVER, [ length,  urlMaxLength ]);
-		}
+		search += (search) ? '&' : '?';
+		search += paramStr;
+		var result = path + search;
+		return result;
 	}
 
 	/**
@@ -1620,6 +2028,22 @@
 		_detour : {},
 
 		/**
+		 * Routerインスタンス
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_router : null,
+
+		/**
+		 * URL対応シーン情報
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_routes : [],
+
+		/**
 		 * __init
 		 *
 		 * @private
@@ -1636,6 +2060,16 @@
 			var that = this;
 
 			this.isMain = !!isMain;
+
+			//TODO(鈴木) h5.settings.scene.routesからルーティングテーブルマージ
+			if(h5.settings.scene.routes){
+				this._routes = this._routes.concat(h5.settings.scene.routes);
+			}
+
+			//TODO(鈴木) 生成時引数からルーティングテーブルマージ
+			if(args.routes){
+				this._routes = this._routes.concat(args.routes);
+			}
 
 			if (this.isMain) {
 				if (mainContainer) {
@@ -1664,45 +2098,114 @@
 
 				mainContainer = this;
 
-				if(useHash){
-					this.on('{window}', 'hashchange', this.own(this._onWindowPopstate));
-				}else{
-					this.on('{window}', 'popstate', this.own(this._onWindowPopstate));
-				}
-
-				//_isClickjackEnabledがtrueの場合のみ有効。
-				//TODO:フラグのセット方法
-				if(this._isClickjackEnabled){
+				// _isClickjackEnabledがtrueの場合のみ有効。
+				// TODO:フラグのセット方法
+				if (this._isClickjackEnabled) {
 					this.on('{a}', 'click', this.own(this._onAClick));
 				}
 
-				// TODO(鈴木) メインシーンコンテナの場合、URLパラメータを取得して使用。
-				// TODO(鈴木) 本来はRouterを使うべき。
-				param = getParamFromUrl();
+				// ★ 初回読み込み判別。HTMLの場合でURLそのまま使用する場合は、単にscanForContainerする。
+				var first = true;
 
-				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
-					this._onNotReshowable();
-					return;
-				}
+				// シーン用ルーティングテーブルをRouter用に変換。
+				var routes = $.map(this._routes, function(v) {
+					function func(url) {
+						var to = isString(v.navigationInfo) ? v.navigationInfo
+								: v.navigationInfo.to;
+						var param = $.extend(true, {}, v.navigationInfo);
+						if (param.navigateType === NAVIGATE_TYPE.ONCE
+								|| param.method === METHOD.POST) {
+							that._onNotReshowable();
+							return;
+						}
+						var isController = controllerRegexp.test(to);
+						if (!isController) {
+							delete param.to;
+						}
+						if (first) {
+							that._navigated = true;
+						}
+						that._changeScene(to, param);
+						first = false;
+					}
+					return {
+						test : v.test,
+						func : func
+					};
+				});
 
-			}
+				function func(url) {
+					var param = getParamFromUrl(url);
+					var to = param.to;
+					var isController = to && controllerRegexp.test(to);
+					if (first
+							&& urlHistoryActualMode !== URL_HISTORY_ACTUAL_MODE.HASH
+							&& !isController) {
 
-			/*if(initialSceneInfo){
-				this.changeScene(initialSceneInfo);
-			}else{
-			*/
+						if (param.navigateType === NAVIGATE_TYPE.ONCE
+								|| param.method === METHOD.POST) {
+							that._onNotReshowable();
+							first = false;
+							return;
+						}
 
-			if(param.to){
-				this._changeScene(param.to, param);
-			}else{
-				// TODO(鈴木) カレントとなるシーンを探索してscan
-				scanForContainer(element, null, param.args).done(
-						function(controller) {
+						// TODO(鈴木) 初回読み込みでHTMLの場合でURLそのまま使用する場合は、
+						// 単にscanForContainerする。
+						function callback(controller) {
 							that._currentController = controller;
 							that._transition.onChangeEnd(that.rootElement,
 									null, element);
 							that._transition = null;
-						});
+						}
+						scanForContainer(element, null, param.args).done(
+								callback);
+					} else {
+						// TODO(鈴木) それ以外の場合はURLからシーンを表示
+						to = to || location.href;
+						to = clearParam(to);
+						if (first) {
+							that._navigated = true;
+						}
+						that._changeScene(to, param);
+					}
+					first = false;
+				}
+
+				// TODO(鈴木) デフォルト動作用定義追加。とりあえずデフォルトの場合は'*'としました。
+				routes.push({
+					test : '*',
+					func : func
+				});
+
+				// TODO(鈴木) Routerインスタンス生成
+				this._router = new Router({
+					routes : routes,
+					urlHistoryMode : urlHistoryMode,
+					baseUrl :args._baseUrl,
+					urlMaxLength : urlMaxLength
+				});
+
+				// TODO(鈴木) Routerでの判定結果を取得
+				urlHistoryActualMode = this._router.urlHistoryActualMode;
+
+				// TODO(鈴木) Router処理開始
+				this._router.start();
+
+			} else {
+
+				if (param.to) {
+					this._changeScene(param.to, param);
+				} else {
+					// TODO(鈴木) カレントとなるシーンを探索してscan
+					scanForContainer(element, null, param.args).done(
+							function(controller) {
+								that._currentController = controller;
+								that._transition.onChangeEnd(that.rootElement,
+										null, element);
+								that._transition = null;
+							});
+				}
+
 			}
 
 		},
@@ -1737,7 +2240,7 @@
 		},
 
 		/**
-		 * 画面遷移時のpopState時のコールバック
+		 * 画面遷移時のコールバック
 		 *
 		 * <p>
 		 * メインシーンコンテナの場合のみ有効。
@@ -1747,8 +2250,8 @@
 		 * @memberOf SceneContainerController
 		 * @param context
 		 */
-		_onWindowPopstate : function(context) {
-			var param = getParamFromUrl();
+		_onChangeURL : function(url) {
+			var param = getParamFromUrl(url);
 			var to = param.to || location.href;
 			to = clearParam(to);
 			this._changeScene(to, param);
@@ -1854,13 +2357,23 @@
 				var replace = param.replace;
 				delete param.replace;
 
-				// TODO(鈴木) 本来Routerでやるべき
-				setParamToUrl(param, replace);
-
-				// TODO(鈴木) 本来はRouterで実装
-				if(!useHash){
-					this._onWindowPopstate();
+				var current, base = null;
+				if (urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.HASH) {
+					current = location.hash.substring(1);
+					var match = location.pathname.match(/[^\/]*$/);
+					if (match) {
+						base = match[0];
+					}
+				} else {
+					current = location.pathname + location.search + location.hash;
+					current = this._router.removeBaseUrl(current);
 				}
+
+				var url = convertParamToUrl(param, current, base);
+
+				this._router.navigate(url, {
+					replace : replace
+				});
 
 			} else {
 				this._changeScene(to, h5.u.obj.deserialize(h5.u.obj
@@ -2063,7 +2576,6 @@
 				this._changeScene(param.to, param);
 			}
 		}
-
 	};
 
 	/**
@@ -2079,7 +2591,7 @@
 	 *            </dl>
 	 * @returns {SceneContainerController} 生成したシーンコンテナのインスタンス。
 	 */
-	function createSceneContainer(element, isMain/*, param*/) {
+	function createSceneContainer(element, isMain) {
 
 		// TODO(鈴木) 対象要素配下にコンテナ、またはコントローラーバインド済みの要素がある場合はエラーとすべき
 
@@ -2105,8 +2617,7 @@
 
 		var container = h5internal.core.controllerInternal(element,
 				SceneContainerController, {
-					isMain : isMain,
-					/*initialSceneInfo : param*/
+					isMain : isMain
 				}, {
 					async : false
 				});
@@ -2269,14 +2780,9 @@
 		clientFWQueryStringPrefixForRegExp = clientFWQueryStringPrefix.replace(
 				/\\/g, '\\\\');
 
-		// TODO(鈴木) シーン遷移パラメーターハッシュ使用フラグ
-		if (h5.settings.scene.useHash != null) {
-			useHash = h5.settings.scene.useHash;
-		}
-
-		// TODO(鈴木) pushState使用不可環境ではhashを使用する
-		if (!window.history.pushState) {
-			useHash = true;
+		// TODO(鈴木) メインシーンコンテナURL履歴保持方法
+		if (h5.settings.scene.urlHistoryMode != null) {
+			urlHistoryMode = h5.settings.scene.urlHistoryMode;
 		}
 
 		// TODO(鈴木) シーン遷移先URL最大長
@@ -2321,7 +2827,8 @@
 		getAllSceneContainers : getAllSceneContainers,
 		getSceneContainer : getSceneContainer,
 		navigateType : NAVIGATE_TYPE,
-		method : METHOD
+		method : METHOD,
+		urlHistoryMode : URL_HISTORY_MODE
 	});
 
 })();
