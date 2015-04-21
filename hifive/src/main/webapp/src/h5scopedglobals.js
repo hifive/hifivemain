@@ -510,7 +510,15 @@ function WaitingPromiseManager(promises, doneCallback, failCallback, cfhIfFail) 
 	var resolveArgs = null;
 	this._doneCallbackExecuter = function() {
 		that._resolved = true;
-		doneCallback && doneCallback.apply(this, resolveArgs || arguments);
+		if (doneCallback) {
+			if (resolveArgs) {
+				// resolveArgsを生成している(=複数プロミス)の場合は各doneハンドラの引数を配列にしたものを第1引数に渡す
+				doneCallback.call(this, resolveArgs);
+			} else {
+				// 一つのpromiseにdoneハンドラを引っかけた場合はdoneハンドラの引数をそのままcallbackに渡す
+				doneCallback.apply(this, arguments);
+			}
+		}
 	};
 	this._failCallbackExecuter = function() {
 		that._rejected = true;
