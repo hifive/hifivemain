@@ -80,7 +80,7 @@ $(function() {
 				return;
 			}
 			// メインシーンコンテナが取得できるまで待機
-			return w.h5.scene.getMainContainer();
+			return w.h5 && w.h5.scene.getMainContainer();
 		}
 	}
 
