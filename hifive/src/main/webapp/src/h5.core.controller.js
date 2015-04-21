@@ -1477,6 +1477,10 @@
 						if (context.managed !== false) {
 							// h5controllerboundイベントをトリガ.
 							$(controller.rootElement).trigger('h5controllerbound', controller);
+							if (isUnbinding(controller)) {
+								// イベントハンドラでunbindされたら終了
+								return;
+							}
 						}
 						// __readyの実行
 						triggerReady(controller);
