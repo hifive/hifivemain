@@ -61,12 +61,34 @@ $(function() {
 		});
 	}
 
+	/**
+	 * ポップアップウィンドウのメインシーンコンテナが取得できるまで待機する関数を作成する関数(gateに渡す判定関数)
+	 *
+	 * @param {Window}
+	 * @returns {Function}
+	 */
+	function createFuncForWaitPouupMainContainer(w) {
+		return function() {
+			try {
+				w.document;
+			} catch (e) {
+				// IEの場合、ステータスがlodingの場合に、window以下のオブジェクトを参照しただけでエラーになる場合がある
+				// その場合は待機する
+				return;
+			}
+			if (w.document.readyState !== 'complete') {
+				return;
+			}
+			// メインシーンコンテナが取得できるまで待機
+			return w.h5.scene.getMainContainer();
+		}
+	}
+
 	// =========================================================================
 	//
 	// Test Module
 	//
 	// =========================================================================
-
 	//=============================
 	// Definition
 	//=============================
@@ -661,9 +683,7 @@ $(function() {
 				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
 				var that = this;
 				gate({
-					func: function() {
-						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
-					},
+					func: createFuncForWaitPouupMainContainer(this.w),
 					failMsg: 'メインシーンコンテナが取得できませんでした'
 				})
 						.done(
@@ -761,12 +781,7 @@ $(function() {
 																										.reload(true);
 																								gate(
 																										{
-																											func: function() {
-																												return that.w.h5
-																														&& that.w.h5.scene
-																														&& that.w.h5.scene
-																																.getMainContainer();
-																											},
+																											func: createFuncForWaitPouupMainContainer(that.w),
 																											failMsg: 'メインシーンコンテナが取得できませんでした'
 																										})
 																										.done(
@@ -867,9 +882,7 @@ $(function() {
 				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
 				var that = this;
 				gate({
-					func: function() {
-						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
-					},
+					func: createFuncForWaitPouupMainContainer(this.w),
 					failMsg: 'メインシーンコンテナが取得できませんでした'
 				})
 						.done(
@@ -894,9 +907,7 @@ $(function() {
 		this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
 		var that = this;
 		gate({
-			func: function() {
-				return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
-			},
+			func: createFuncForWaitPouupMainContainer(this.w),
 			failMsg: 'メインシーンコンテナが取得できませんでした'
 		}).done(function() {
 			strictEqual(that.w.h5.settings.scene.autoCreateMainContainer, true, 'フラグの確認');
