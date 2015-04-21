@@ -500,6 +500,133 @@ var isFunction = (function() {
 })();
 
 /**
+ *
+ */
+function WaitingPromiseManager(promises, doneCallback, failCallback, cfhIfFail) {
+	// 高速化のため、長さ1または0の場合はforを使わずにチェックする
+	var length = promises ? promises.length : 0;
+	var isPromise = h5.async.isPromise;
+	var that = this;
+	var resolveArgs = null;
+	this._doneCallbackExecuter = function() {
+		that._resolved = true;
+		doneCallback && doneCallback.apply(this, resolveArgs || arguments);
+	};
+	this._failCallbackExecuter = function() {
+		that._rejected = true;
+		if (failCallback) {
+			failCallback.apply(this, arguments);
+		} else if (cfhIfFail && h5.settings.commonFailHandler) {
+			// failCallbackが渡されていなくてcfhIfFailがtrueでcommonFailHandlerが設定されていればcFHを呼ぶ
+			h5.settings.commonFailHandler.call(this, arguments);
+		}
+	};
+
+	// 高速化のため、長さ１またはプロミスを直接指定の場合はプロミス配列を作らない
+	if (length === 1 || isPromise(promises)) {
+		var promise = length === 1 ? promises[0] : promises;
+		if (!isPromise(promise)) {
+			// 長さ1で中身がプロミスでない場合はdoneCallback実行して終了
+			this._doneCallbackExecuter();
+			return;
+		}
+		// プロミス配列を作っていない場合のremoveをここで定義(プロトタイプのremoveを上書き)
+		this.remove = function(p) {
+			if (this._resolved || this._rejected) {
+				return;
+			}
+			if (promise === p) {
+				this._doneCallbackExecuter();
+			}
+		};
+		// 長さ1で、それがプロミスなら、そのプロミスにdoneとfailを引っかける
+		promise.done(this._doneCallbackExecuter);
+		promise.fail(this._failCallbackExecuter);
+		return;
+	}
+	// promisesの中のプロミスオブジェクトの数(プロミスでないものは無視)
+	// 引数に渡されたpromisesのうち、プロミスオブジェクトと判定したものを列挙
+	var monitoringPromises = [];
+	for (var i = 0, l = promises.length; i < l; i++) {
+		var p = promises[i];
+		if (isPromise(p)) {
+			monitoringPromises.push(p);
+		}
+	}
+
+	var promisesLength = monitoringPromises.length;
+	if (promisesLength === 0) {
+		// プロミスが一つもなかった場合は即doneCallbackを実行
+		this._resolved = true;
+		doneCallback && doneCallback();
+		return;
+	}
+	this._promises = monitoringPromises;
+
+	resolveArgs = [];
+	this._resolveArgs = [];
+	this._resolveCount = 0;
+	this._promisesLength = promisesLength;
+
+	// いずれかのpromiseが成功するたびに全て終わったかチェックする関数
+	function createCheckFunction(_promise) {
+		// いずれかのpromiseが成功するたびに全て終わったかチェックする関数
+		return function check(/* var_args */) {
+			if (that._rejected) {
+				// 既にいずれかがreject済みならなにもしない
+				return;
+			}
+			var arg = h5.u.obj.argsToArray(arguments);
+			// 引数無しならundefined、引数が一つならそのまま、引数が2つ以上なら配列を追加
+			// ($.when()と同じ)
+			var index = $.inArray(_promise, promises);
+			resolveArgs[index] = (arg.length < 2 ? arg[0] : arg);
+
+			if (++that._resolveCount === that._promisesLength) {
+				// 全てのpromiseが成功したので、doneCallbackを実行
+				that._doneCallbackExecuter();
+			}
+		};
+	}
+
+	for (var i = 0; i < promisesLength; i++) {
+		var targetPromise = monitoringPromises[i];
+		targetPromise.done(createCheckFunction(targetPromise)).fail(this._failCallbackExecuter);
+	}
+}
+WaitingPromiseManager.prototype = $.extend(WaitingPromiseManager.prototype, {
+	remove: function(promise) {
+		if (this._resolved || this._rejected) {
+			return;
+		}
+		if (promsie === this._promises) {
+			this._doneCallback && doneCallback();
+			this._resolved = true;
+			return;
+		}
+		var index = $.inArray(promise, this._promises);
+		if (index === -1) {
+			return;
+		}
+
+		// 待機中のpromisesからpromiseを外す
+		this._promises.splice(index, 1);
+		// 取り除くpromiseについてのresolveArgsを減らす
+		this._resolveArgs.splice(index, 1);
+		if (isResolved(promise)) {
+			// 既にresolve済みなら何もしない
+			return;
+		}
+		// キャッシュしてある待機中プロミスの個数を1減らす
+		this._promisesLength--;
+		if (that._resolveCount === this._promisesLength) {
+			// 現在resolve済みの個数と、1減らした後の待機中プロミス個数が同じならdoneハンドラ実行
+			this._doneCallbackExecuter();
+		}
+	}
+});
+
+/**
  * 複数のプロミスが完了するのを待機する
  * <p>
  * whenとは仕様が異なり、新しくdeferredは作らない。
@@ -511,83 +638,11 @@ var isFunction = (function() {
  * @param {Function} failCallback failコールバック
  * @param {Boolean} cfhIfFail 渡されたpromiseのいずれかが失敗した時にcFHを呼ぶかどうか。
  *            cFHを呼ぶときのthisは失敗したpromiseオブジェクト、引数は失敗したpromiseのfailに渡される引数
+ * @returns {WaitingPromiseManager}
  */
 function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
-	// 高速化のため、長さ1または0の場合はforを使わずにチェックする
-	var length = promises ? promises.length : 0;
-	var isPromise = h5.async.isPromise;
-	if (length === 1) {
-		var promise = promises[0];
-		if (isPromise(promise)) {
-			// 長さ1で、それがプロミスなら、そのプロミスにdoneとfailを引っかける
-			promise.done(doneCallback);
-			if (failCallback) {
-				promise.fail(failCallback);
-			} else if (cfhIfFail && h5.settings.commonFailHandler) {
-				// failCallbackが無くて、cfhIfFail===trueかつcommonFailHandlerがある場合はcfhをfailハンドラにしておく
-				promise.fail(h5.settings.commonFailHandler);
-			}
-			return;
-		}
-		// 長さ1で中身がプロミスでない場合は長さ0として処理する
-		length = 0;
-	}
-	if (length === 0) {
-		doneCallback();
-		return;
-	}
+	return new WaitingPromiseManager(promises, doneCallback, failCallback, cfhIfFail);
 
-	// promisesの中のプロミスオブジェクトの数(プロミスでないものは無視)
-	// 引数に渡されたpromisesのうち、プロミスオブジェクトと判定したものを列挙
-	var monitorningPromises = [];
-	for (var i = 0, l = promises.length; i < l; i++) {
-		var promise = promises[i];
-		if (isPromise(promise)) {
-			monitorningPromises.push(promise);
-		}
-	}
-
-	var promisesLength = monitorningPromises.length;
-	if (promisesLength === 0) {
-		// プロミスが一つもなかった場合は即doneCallbackを実行
-		doneCallback && doneCallback();
-		return;
-	}
-
-	var resolveArgs = [];
-	var resolveCount = 0;
-	var rejected = false;
-	// indexを取って関数を生成することで、結果に格納する順番を渡されたpromisesに基づく順番にしている
-	function createCheckFunction(index) {
-		// いずれかのpromiseが成功するたびに全て終わったかチェックする関数
-		return function check(/* var_args */) {
-			var arg = h5.u.obj.argsToArray(arguments);
-			// 引数無しならundefined、引数が一つならそのまま、引数が2つ以上なら配列を追加
-			// ($.when()と同じ)
-			resolveArgs[index] = (arg.length < 2 ? arg[0] : arg);
-
-			if (!rejected && ++resolveCount === promisesLength) {
-				// 全てのpromiseが成功したので、doneCallbackを実行
-				doneCallback && doneCallback(resolveArgs);
-			}
-		};
-	}
-	/** いずれかのpromiseが失敗した時に呼ばれるコールバック */
-	function fail(/* var_args */) {
-		rejected = true;
-		if (failCallback) {
-			failCallback.apply(this, arguments);
-			return;
-		}
-		if (cfhIfFail && h5.settings.commonFailHandler) {
-			// failCallbackが渡されていなくてcfhIfFailがtrueでcommonFailHandlerが設定されていればcFHを呼ぶ
-			h5.settings.commonFailHandler.call(this, arguments);
-		}
-	}
-
-	for (var i = 0; i < promisesLength; i++) {
-		monitorningPromises[i].done(createCheckFunction(i)).fail(fail);
-	}
 }
 
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る

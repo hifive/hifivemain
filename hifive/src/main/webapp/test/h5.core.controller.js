@@ -11573,8 +11573,12 @@ $(function() {
 					executedLog.push(this.__name + '.' + lifecycle);
 				};
 			};
+			// 元のwindow.onerror(QUnitのもの)を一時的に保管する
+			this.onerrorHandler = window.onerror;
 		},
 		teardown: function() {
+			// window.onerrorを元に戻す
+			window.onerror = this.onerrorHandler;
 			clearController();
 			this.$target = null;
 			this.$child = null;
@@ -11582,7 +11586,12 @@ $(function() {
 		$target: null,
 		$child: null,
 		executedLog: null,
-		createLifecycleFunc: null
+		createLifecycleFunc: null,
+		onerrorHandler: null,
+		/** エラーをキャッチするための何もしない関数 */
+		dummyHandler: function() {
+		// 何もしない
+		}
 	});
 
 	//=============================
@@ -11628,7 +11637,7 @@ $(function() {
 				__name: 'grandchildController',
 				'{rootElement} click': function() {
 					eventHandlerExecuted = true;
-				},
+				}
 			}
 		});
 		$.when(child.readyPromise, parent.readyPromise).done(
@@ -12331,47 +12340,18 @@ $(function() {
 			});
 
 	asyncTest(
-			'__initで子コントローラをunmanageChildで外す',
+			'__postInitで子コントローラをdisposeせずにunmanageChildで外す',
 			function() {
 				var $target = this.$target;
 				var createLifecycleFunc = this.createLifecycleFunc;
 				var executedLog = this.executedLog;
 				var parent = h5.core.controller($target, {
 					__name: 'parent',
-					childController: {
-						__name: 'child',
-						__init: createLifecycleFunc('__init'),
-						__postInit: createLifecycleFunc('__postInit'),
-						__ready: createLifecycleFunc('__ready')
+					__meta: {
+						childController: {
+							rootElement: '#controllerTestChild'
+						}
 					},
-					__init: function() {
-						this.own(createLifecycleFunc('__init'))();
-						this.unmanageChild(this.childController);
-					},
-					__postInit: createLifecycleFunc('__postInit'),
-					__ready: createLifecycleFunc('__ready')
-				});
-
-				function check() {
-					var result = executedLog.join(', ');
-					// childはpostInitまで終わっていない時にdisposeされるのでh5controllerunboundは上がらない
-					var expect = 'parent.__init, parent.__postInit, parent.h5controllerbound, parent.__ready, parent.h5controllerready';
-					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
-					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
-					start();
-				}
-
-				$target.bind('h5controllerready', check);
-			});
-
-	asyncTest(
-			'__postInitで子コントローラをunmanageChildで外す',
-			function() {
-				var $target = this.$target;
-				var createLifecycleFunc = this.createLifecycleFunc;
-				var executedLog = this.executedLog;
-				var parent = h5.core.controller($target, {
-					__name: 'parent',
 					childController: {
 						__name: 'child',
 						__init: createLifecycleFunc('__init'),
@@ -12381,16 +12361,30 @@ $(function() {
 					__init: createLifecycleFunc('__init'),
 					__postInit: function() {
 						this.own(createLifecycleFunc('__postInit'))();
-						this.unmanageChild(this.childController);
+						this.unmanageChild(this.childController, false);
 					},
 					__ready: createLifecycleFunc('__ready')
 				});
 
-				function check() {
+				var parentReady = false;
+				var childReady = false;
+				function check(event, c) {
+					if (c === parent) {
+						parentReady = true;
+					} else if (c === parent.childController) {
+						childReady = true;
+					}
+					if (!parentReady || !childReady) {
+						return;
+					}
 					var result = executedLog.join(', ');
-					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, child.h5controllerunbound, parent.h5controllerbound, parent.__ready, parent.h5controllerready';
+					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, child.__ready, child.h5controllerready, parent.h5controllerbound, parent.__ready, parent.h5controllerready';
 					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
-					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
+					strictEqual(parent.childController.parentController, null,
+							'unmanageChildしたコントローラはルートコントローラになっていること');
+					strictEqual($(parent.childController.rootElement).attr('id'),
+							'controllerTestChild',
+							'unmanageChildしたコントローラのルートエレメントは__metaで定義したものになっていること');
 					start();
 				}
 
@@ -12398,13 +12392,18 @@ $(function() {
 			});
 
 	asyncTest(
-			'__readyで子コントローラをunmanageChildで外す',
+			'__readyで子コントローラをdisposeせずにunmanageChildで外す',
 			function() {
 				var $target = this.$target;
 				var createLifecycleFunc = this.createLifecycleFunc;
 				var executedLog = this.executedLog;
 				var parent = h5.core.controller($target, {
 					__name: 'parent',
+					__meta: {
+						childController: {
+							rootElement: '#controllerTestChild'
+						}
+					},
 					childController: {
 						__name: 'child',
 						__init: createLifecycleFunc('__init'),
@@ -12415,24 +12414,33 @@ $(function() {
 					__postInit: createLifecycleFunc('__postInit'),
 					__ready: function() {
 						this.own(createLifecycleFunc('__ready'))();
-						this.unmanageChild(this.childController);
+						this.unmanageChild(this.childController, false);
 					}
 				});
-
-				function check() {
+				var parentReady = false;
+				var childReady = false;
+				function check(event, c) {
+					if (c === parent) {
+						parentReady = true;
+					} else if (c === parent.childController) {
+						childReady = true;
+					}
+					if (!parentReady || !childReady) {
+						return;
+					}
 					var result = executedLog.join(', ');
-					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, child.h5controllerunbound, parent.h5controllerready';
+					var expect = 'parent.__init, child.__init, child.__postInit, parent.__postInit, parent.h5controllerbound, child.__ready, parent.__ready, parent.h5controllerready, child.h5controllerready';
 					strictEqual(result, expect, 'ライフサイクルの実行順序が正しいこと ' + result);
-					ok(isDisposed(parent.childController), 'unmanageChildしたコントローラはdisposeされていること');
+					strictEqual(parent.childController.parentController, null,
+							'unmanageChildしたコントローラはルートコントローラになっていること');
+					strictEqual($(parent.childController.rootElement).attr('id'),
+							'controllerTestChild',
+							'unmanageChildしたコントローラのルートエレメントは__metaで定義したものになっていること');
 					start();
 				}
 
 				$target.bind('h5controllerready', check);
 			});
-
-	// TODO コントローラをdisposeせずに外す
-	// TODO ライフサイクルの途中でmanageChildしたコントローラをunamnageChildで外す(waitForPromisesで待機しているプロミスの削除できるような実装が必要)
-	// TODO 異常系
 
 	asyncTest(
 			'getControllers/getAllControllers',
@@ -12468,4 +12476,144 @@ $(function() {
 											'unmanageChildでルートコントローラでなくなったコントローラはgetAllControllers取得できること');
 								}).always(start);
 			});
+
+	asyncTest('unbindされたコントローラはmanageChildを呼べないこと', function() {
+		var child = h5.core.controller(this.$child, {
+			__name: 'child'
+		});
+		var parent = h5.core.controller(this.$target, {
+			__name: 'parent'
+		});
+		parent.readyPromise.done(function() {
+			var that = this;
+			child.unbind();
+			throws(function() {
+				that.manageChild(child);
+			}, function(e) {
+				return e.code === ERR.ERR_CODE_CONTROLLER_MANAGE_CHILD_UNBINDED_CONTROLLER;
+			});
+		}).always(start);
+	});
+
+	asyncTest('コントローラインスタンスでないオブジェクトをmanageChildできないこと', function() {
+		var parent = h5.core.controller(this.$target, {
+			__name: 'parent'
+		});
+		parent.readyPromise.done(function() {
+			var that = this;
+			throws(function() {
+				that.manageChild({
+					__name: 'child'
+				});
+			}, function(e) {
+				return e.code === ERR.ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_CONTROLLER;
+			});
+			throws(function() {
+				that.manageChild(null);
+			}, function(e) {
+				return e.code === ERR.ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_CONTROLLER;
+			});
+		}).always(start);
+	});
+
+	asyncTest('unbindされたコントローラをmanageChildできないこと', function() {
+		var child = h5.core.controller(this.$child, {
+			__name: 'child'
+		});
+		var parent = h5.core.controller(this.$target, {
+			__name: 'parent'
+		});
+		parent.readyPromise.done(function() {
+			var that = this;
+			child.unbind();
+			throws(function() {
+				that.manageChild(child);
+			}, function(e) {
+				return e.code === ERR.ERR_CODE_CONTROLLER_MANAGE_CHILD_UNBINDED_CONTROLLER;
+			});
+		}).always(start);
+	});
+
+	asyncTest('ルートコントローラでないコントローラをmanageChildできないこと', function() {
+		window.onerror = this.dummyHandler;
+		var child = h5.core.controller(this.$target, {
+			__name: 'child',
+			childController: {
+				__name: 'grandchild'
+			}
+		});
+		var parent = h5.core.controller(this.$target, {
+			__name: 'parent',
+			__ready: function() {
+				return child.readyPromise;
+			}
+		});
+		parent.readyPromise.done(function() {
+			var that = this;
+			throws(function() {
+				that.manageChild(child.childController);
+			}, function(e) {
+				return e.code === ERR.ERR_CODE_CONTROLLER_MANAGE_CHILD_NOT_ROOT_CONTROLLER;
+			});
+		}).always(start);
+	});
+
+	asyncTest('unbindされたコントローラのunmanageChildは呼べないこと', function() {
+		var parent = h5.core.controller(this.$target, {
+			__name: 'parent',
+			childController: {
+				__name: 'child'
+			}
+		});
+		parent.readyPromise.done(function() {
+			this.unbind();
+			var that = this;
+			throws(function() {
+				that.unmanageChild(this.childController);
+			}, function(e) {
+				return e.code === ERR.ERR_CODE_CONTROLLER_UNMANAGE_CHILD_BY_UNBINDED_CONTROLLER;
+			});
+		}).always(start);
+	});
+
+	asyncTest('自分の子コントローラでないコントローラをunmanageChildできないこと', function() {
+		var child = h5.core.controller(this.$target, {
+			__name: 'child',
+			childController: {
+				__name: 'grandchild'
+			}
+		});
+		var parent = h5.core.controller(this.$target, {
+			__name: 'parent',
+			__ready: function() {
+				return child.readyPromise;
+			}
+		});
+		parent.readyPromise.done(function() {
+			var that = this;
+			throws(function() {
+				that.unmanageChild(child.childController);
+			}, function(e) {
+				return e.code === ERR.	ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER;
+			});
+		}).always(start);
+	});
+
+	asyncTest('ルートエレメント未決定のコントローラはunmanageChildをandDispose=falseで呼べないこと', function() {
+		window.onerror = this.dummyHandler;
+		var parent = h5.core.controller(this.$target, {
+			__name: 'parent',
+			childController: {
+				__name: 'child'
+			},
+			__init: function() {
+				this.unmanageChild(this.childController, false);
+			}
+		});
+		parent.readyPromise.done(function() {
+			ok(false, 'エラーが起きませんでした');
+		}).fail(function(e) {
+			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NO_ROOT_ELEMENT, e.message);
+		}).always(start);
+	});
 });
