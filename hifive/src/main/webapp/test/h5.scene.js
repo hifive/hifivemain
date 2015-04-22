@@ -39,6 +39,8 @@ $(function() {
 	var deleteProperty = testutils.u.deleteProperty;
 	var clearController = testutils.u.clearController;
 	var gate = testutils.async.gate;
+	var openPopupWindow = testutils.dom.openPopupWindow;
+	var closePopupWindow = testutils.dom.closePopupWindow;
 
 	/** createTestControllerを使って作成されたコントローラ定義がバインドされた時にそのコントローラインスタンスを覚えておくマップ */
 	var boundControllerMap = {
@@ -396,7 +398,7 @@ $(function() {
 		$(container.rootElement).trigger('sceneChangeRequest', 'scenedata/page/to1.html');
 		gate({
 			func: function() {
-				return $container.text() === 'to1';
+				return $container.text() === 'to1' && container._currentController;
 			},
 			failMsg: 'シーンが変更されませんでした'
 		}).done(function() {
@@ -655,11 +657,11 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#ie:-8|op]メインシーンコンテナ', {
+	module('[browser#ie:-9|op]メインシーンコンテナ', {
 		setup: function() {
 			stop();
 			var that = this;
-			testutils.dom.openPopupWindow().done(function(w) {
+			openPopupWindow().done(function(w) {
 				that.w = w;
 				//window.focus(); //Chromeだと効かない
 				start();
@@ -669,7 +671,10 @@ $(function() {
 		},
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
-			this.w.close();
+			stop();
+			closePopupWindow(this.w).done(function() {
+				start();
+			});
 		},
 		$fixture: $('#qunit-fixture')
 	});
@@ -689,45 +694,29 @@ $(function() {
 						.done(
 								function() {
 									var mainContainer = that.w.h5.scene.getMainContainer();
-									var controller = mainContainer._currentController;
-									var title = controller.$find('h1').text();
-									strictEqual(title, 'FROM', '直接アクセスで画面が表示されていること');
-									//strictEqual(controller.__name, 'scenedata.controller.FromController', 'コントローラーバインド確認');
-									mainContainer.changeScene({
-										to: 'to.html?' + BUILD_TYPE_PARAM,
-										args: {
-											test: 'hoge'
+									gate({
+										func: function() {
+											return !!mainContainer._currentController;
 										}
-									});
-									gate(
-											{
-												func: function() {
-													return mainContainer._currentController
-															&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
-												},
-												failMsg: 'シーンが変更されませんでした'
-											})
+									})
 											.done(
 													function() {
 														var controller = mainContainer._currentController;
 														var title = controller.$find('h1').text();
-														strictEqual(title, 'TO', '画面が遷移されていること');
-														var param = controller.$find('.pg_view')
-																.text();
-														strictEqual(param, 'hoge',
-																'画面間パラメータが渡されていること');
-														ok(/\/to\.html(?:\?|#|$)/
-																.test(that.w.location.href),
-																'URLが連動していること');
-
-														controller = null;
-
-														that.w.history.back();
+														strictEqual(title, 'FROM',
+																'直接アクセスで画面が表示されていること');
+														//strictEqual(controller.__name, 'scenedata.controller.FromController', 'コントローラーバインド確認');
+														mainContainer.changeScene({
+															to: 'to.html?' + BUILD_TYPE_PARAM,
+															args: {
+																test: 'hoge'
+															}
+														});
 														gate(
 																{
 																	func: function() {
 																		return mainContainer._currentController
-																				&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
+																				&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
 																	},
 																	failMsg: 'シーンが変更されませんでした'
 																})
@@ -738,23 +727,28 @@ $(function() {
 																					.$find('h1')
 																					.text();
 																			strictEqual(title,
-																					'FROM',
-																					'histroy.back()で画面が遷移されていること');
+																					'TO',
+																					'画面が遷移されていること');
+																			var param = controller
+																					.$find(
+																							'.pg_view')
+																					.text();
+																			strictEqual(param,
+																					'hoge',
+																					'画面間パラメータが渡されていること');
 																			ok(
-																					/\/from\.html(?:\?|#|$)/
+																					/\/to\.html(?:\?|#|$)/
 																							.test(that.w.location.href),
 																					'URLが連動していること');
-																			//履歴遷移でのパラメーター取得は未対応
 
 																			controller = null;
 
-																			that.w.history
-																					.forward();
+																			that.w.history.back();
 																			gate(
 																					{
 																						func: function() {
 																							return mainContainer._currentController
-																									&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+																									&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
 																						},
 																						failMsg: 'シーンが変更されませんでした'
 																					})
@@ -767,27 +761,28 @@ $(function() {
 																										.text();
 																								strictEqual(
 																										title,
-																										'TO',
-																										'histroy.forward()で画面が遷移されていること');
+																										'FROM',
+																										'histroy.back()で画面が遷移されていること');
 																								ok(
-																										/\/to\.html(?:\?|#|$)/
+																										/\/from\.html(?:\?|#|$)/
 																												.test(that.w.location.href),
 																										'URLが連動していること');
 																								//履歴遷移でのパラメーター取得は未対応
 
-																								mainContainer = controller = null;
+																								controller = null;
 
-																								that.w.location
-																										.reload(true);
+																								that.w.history
+																										.forward();
 																								gate(
 																										{
-																											func: createFuncForWaitPouupMainContainer(that.w),
-																											failMsg: 'メインシーンコンテナが取得できませんでした'
+																											func: function() {
+																												return mainContainer._currentController
+																														&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+																											},
+																											failMsg: 'シーンが変更されませんでした'
 																										})
 																										.done(
 																												function() {
-																													mainContainer = that.w.h5.scene
-																															.getMainContainer(); //リロードしたので再度取得
 																													var controller = mainContainer._currentController;
 																													var title = controller
 																															.$find(
@@ -796,19 +791,60 @@ $(function() {
 																													strictEqual(
 																															title,
 																															'TO',
-																															'location.reload()で画面が再表示されていること');
+																															'histroy.forward()で画面が遷移されていること');
 																													ok(
 																															/\/to\.html(?:\?|#|$)/
 																																	.test(that.w.location.href),
 																															'URLが連動していること');
 																													//履歴遷移でのパラメーター取得は未対応
 
+																													mainContainer = controller = null;
+
+																													that.w.location
+																															.reload(true);
+																													gate(
+																															{
+																																func: createFuncForWaitPouupMainContainer(that.w),
+																																failMsg: 'メインシーンコンテナが取得できませんでした'
+																															})
+																															.done(
+																																	function() {
+																																		mainContainer = that.w.h5.scene
+																																				.getMainContainer(); //リロードしたので再度取得
+																																		gate(
+																																				{
+																																					func: function() {
+																																						return !!mainContainer._currentController;
+																																					}
+																																				})
+																																				.done(
+																																						function() {
+																																							var controller = mainContainer._currentController;
+																																							var title = controller
+																																									.$find(
+																																											'h1')
+																																									.text();
+																																							strictEqual(
+																																									title,
+																																									'TO',
+																																									'location.reload()で画面が再表示されていること');
+																																							ok(
+																																									/\/to\.html(?:\?|#|$)/
+																																											.test(that.w.location.href),
+																																									'URLが連動していること');
+																																							//履歴遷移でのパラメーター取得は未対応
+
+																																						});
+																																	})
+																															.always(
+																																	start);
 																												})
-																										.always(
+																										.fail(
 																												start);
-																							});
-																		});
-													});
+																							})
+																					.fail(start);
+																		}).fail(start);
+													}).fail(start);
 								}).fail(start);
 			});
 
@@ -859,7 +895,7 @@ $(function() {
 		setup: function() {
 			stop();
 			var that = this;
-			testutils.dom.openPopupWindow().done(function(w) {
+			openPopupWindow().done(function(w) {
 				that.w = w;
 				//window.focus(); //Chromeだと効かない
 				start();
@@ -869,7 +905,10 @@ $(function() {
 		},
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
-			this.w.close();
+			stop();
+			closePopupWindow(this.w).done(function() {
+				start();
+			});
 		}
 	});
 
@@ -895,12 +934,22 @@ $(function() {
 											'通常のシーンコンテナが生成されていること');
 									var elm = that.w
 											.$('[data-h5-controller="scenedata.controller.SubController"]');
-									var controller = that.w.h5.core.controllerManager
-											.getControllers(elm)[0];
-									strictEqual(controller.__name,
-											'scenedata.controller.SubController',
-											'コントローラーがバインドされていること');
-								}).always(start);
+									gate(
+											{
+												func: function() {
+													return !!that.w.h5.core.controllerManager
+															.getControllers(elm)[0];
+												},
+												failMsg: 'ポップアップウィンドウのDOM要素に記述されているコントローラがバインドされませんでした'
+											}).done(
+											function() {
+												var controller = that.w.h5.core.controllerManager
+														.getControllers(elm)[0];
+												strictEqual(controller && controller.__name,
+														'scenedata.controller.SubController',
+														'コントローラーがバインドされていること');
+											}).always(start);
+								}).fail(start);
 			});
 
 	asyncTest('h5.settings.scene.autoCreateMainContainerフラグの確認', function() {
