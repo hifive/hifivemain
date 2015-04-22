@@ -3135,17 +3135,15 @@
 	 */
 	function removeChildController(parent, child) {
 		// 子コントローラをルートコントローラにする(親との関係を切る)
-		var childControllers = parent.__controllerContext.childControllers;
-		for (var i = 0, l = childControllers.length; i < l; i++) {
-			if (childControllers[i] === child) {
-				index = i;
-				break;
-			}
-		}
-		childControllers.splice(index, 1);
 		child.parentController = null;
 		child.rootController = child;
 		child.__controllerContext.isRoot = true;
+
+		var childControllers = parent.__controllerContext.childControllers;
+		var index = $.inArray(child, childControllers);
+		if (index !== -1) {
+			childControllers.splice(index, 1);
+		}
 	}
 
 	// =========================================================================
