@@ -23,7 +23,7 @@
 	 *
 	 * @memberOf
 	 */
-	var isDevMode = !!H5_TEST_ENV.buildType !== 'min';
+	var isDevMode = H5_TEST_ENV.buildType !== 'min';
 
 	// ----------- log ----------
 	/**
