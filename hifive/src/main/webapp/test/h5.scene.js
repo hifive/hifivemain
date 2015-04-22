@@ -39,6 +39,8 @@ $(function() {
 	var deleteProperty = testutils.u.deleteProperty;
 	var clearController = testutils.u.clearController;
 	var gate = testutils.async.gate;
+	var openPopupWindow = testutils.dom.openPopupWindow;
+	var closePopupWindow = testutils.dom.closePopupWindow;
 
 	/** createTestControllerを使って作成されたコントローラ定義がバインドされた時にそのコントローラインスタンスを覚えておくマップ */
 	var boundControllerMap = {
@@ -659,7 +661,7 @@ $(function() {
 		setup: function() {
 			stop();
 			var that = this;
-			testutils.dom.openPopupWindow().done(function(w) {
+			openPopupWindow().done(function(w) {
 				that.w = w;
 				//window.focus(); //Chromeだと効かない
 				start();
@@ -669,7 +671,10 @@ $(function() {
 		},
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
-			this.w.close();
+			stop();
+			closePopupWindow(this.w).done(function() {
+				start();
+			});
 		},
 		$fixture: $('#qunit-fixture')
 	});
@@ -859,7 +864,7 @@ $(function() {
 		setup: function() {
 			stop();
 			var that = this;
-			testutils.dom.openPopupWindow().done(function(w) {
+			openPopupWindow().done(function(w) {
 				that.w = w;
 				//window.focus(); //Chromeだと効かない
 				start();
@@ -869,7 +874,10 @@ $(function() {
 		},
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
-			this.w.close();
+			stop();
+			closePopupWindow(this.w).done(function() {
+				start();
+			});
 		}
 	});
 
@@ -895,12 +903,22 @@ $(function() {
 											'通常のシーンコンテナが生成されていること');
 									var elm = that.w
 											.$('[data-h5-controller="scenedata.controller.SubController"]');
-									var controller = that.w.h5.core.controllerManager
-											.getControllers(elm)[0];
-									strictEqual(controller.__name,
-											'scenedata.controller.SubController',
-											'コントローラーがバインドされていること');
-								}).always(start);
+									gate(
+											{
+												func: function() {
+													return !!that.w.h5.core.controllerManager
+															.getControllers(elm)[0];
+												},
+												failMsg: 'ポップアップウィンドウのDOM要素に記述されているコントローラがバインドされませんでした'
+											}).done(
+											function() {
+												var controller = that.w.h5.core.controllerManager
+														.getControllers(elm)[0];
+												strictEqual(controller && controller.__name,
+														'scenedata.controller.SubController',
+														'コントローラーがバインドされていること');
+											}).always(start);
+								}).fail(start);
 			});
 
 	asyncTest('h5.settings.scene.autoCreateMainContainerフラグの確認', function() {
