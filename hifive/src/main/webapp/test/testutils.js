@@ -474,11 +474,10 @@
 			dfd.reject();
 		}, maxWait);
 
-		// failMsgが指定されていたらメッセージを表示してテストを終了させるfailハンドラを追加する
+		// failMsgが指定されていたらメッセージを表示するfailハンドラを追加する
 		if (failMsg) {
 			dfd.fail(function() {
 				ok(false, failMsg);
-				start();
 			});
 		}
 		return dfd.promise();
