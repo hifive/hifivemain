@@ -70,13 +70,13 @@ $(function() {
 	function createFuncForWaitPouupMainContainer(w) {
 		return function() {
 			try {
-				w.document;
+				var readyState = w.document.readyState;
+				if (readyState !== 'complete') {
+					return;
+				}
 			} catch (e) {
 				// IEの場合、ステータスがlodingの場合に、window以下のオブジェクトを参照しただけでエラーになる場合がある
 				// その場合は待機する
-				return;
-			}
-			if (w.document.readyState !== 'complete') {
 				return;
 			}
 			// メインシーンコンテナが取得できるまで待機
