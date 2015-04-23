@@ -15,12 +15,12 @@
  *
  * hifive
  */
-(function(){
+(function() {
 	'use strict';
 
 	h5.core.expose({
-			__name: 'scenedata.controller.ToController',
-		__init : function(context){
+		__name: 'scenedata.controller.ToController',
+		__construct: function(context) {
 			var args = context.args || {};
 			this.args = args;
 			this.$find('.pg_view').text(args.test || '');
