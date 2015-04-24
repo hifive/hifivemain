@@ -23,6 +23,8 @@
 		__construct: function(context) {
 			var args = context.args || {};
 			this.args = args;
+		},
+		__init: function() {
 			this.$find('.pg_view').text(args.test || '');
 		}
 	});

@@ -21,10 +21,11 @@
 	var SubController = null;
 	SubController = {
 		__name : 'scenedata.controller.SubController',
-		__init : function(context){
-			var args = context.args || {};
-			this.args = args;
-			this.$find('.pg_sub_view').text(args.test || '');
+		__construct: function(context){
+			this.args = context.args || {};
+		},
+		__init : function(){
+			this.$find('.pg_sub_view').text(this.args.test || '');
 		}
 	};
 	h5.core.expose(SubController);

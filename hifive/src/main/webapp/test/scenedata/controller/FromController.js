@@ -21,8 +21,10 @@
 	h5.core.expose({
 		__name : 'scenedata.controller.FromController',
 		__construct : function(context){
-			var args = context.args || {};
-			this.$find('.pg_view').text(args.test || '');
+			this.args = context.args || {};
+		},
+		__init:function(){
+			this.$find('.pg_view').text(this.args.test || '');
 		}
 	});
 })();

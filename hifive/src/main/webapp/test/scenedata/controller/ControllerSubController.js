@@ -20,14 +20,15 @@
 
 	h5.core.expose({
 		__name : 'scenedata.controller.ControllerSubController',
+		__construct: function(context){
+			this.args = context.args || {};
+		},
 		__init : function(context){
-			var args = context.args || {};
 			$(this.rootElement).html('<h2>CONTROLLER_SUB</h2>'
 					+ '<dl><dt>前画面入力</dt><dd class="pg_sub_view"></dd></dl>'
 					+ '<input type="text" name="sub_input" />'
 					+ '<button type="button" class="pg_sub_test">TEST</button>');
-			this.args = args;
-			this.$find('.pg_sub_view').text(args.test || '');
+			this.$find('.pg_sub_view').text(this.args.test || '');
 		}
 	});
 })();
