@@ -500,7 +500,14 @@ var isFunction = (function() {
 })();
 
 /**
+ * 複数のプロミスを待機する機能と、待機中のプロミスを外す機能を提供するクラス
  *
+ * @private
+ * @class
+ * @param promises
+ * @param doneCallback
+ * @param failCallback
+ * @param cfhIfFail
  */
 function WaitingPromiseManager(promises, doneCallback, failCallback, cfhIfFail) {
 	// 高速化のため、長さ1または0の場合はforを使わずにチェックする
