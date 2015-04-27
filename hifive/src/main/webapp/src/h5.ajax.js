@@ -137,6 +137,8 @@
 	 * このクラスは自分でnewすることはありません。 h5.ajax()の戻り値がこのクラスです。
 	 * jqXHRをラップしているクラスで、jqXHRのメソッド、プロパティを使用することができます。
 	 * </p>
+	 * <p>jqXHRについての詳細は{@link http://api.jquery.com/jQuery.ajax/|jQuery.ajax() | jQuery API Documentation}をご覧ください。
+	 * </p>
 	 * <p>
 	 * <strong>注意：</strong>jqXHRオブジェクトと違い、success, error, complete メソッドはありません(非推奨であるため)。 それぞれ、done,
 	 * fail, always を使用して下さい。
@@ -144,6 +146,11 @@
 	 *
 	 * @class
 	 * @name JqXHRWrapper
+	 */
+	/**
+	 * @private
+	 * @param jqXHR
+	 * @param dfd
 	 */
 	function JqXHRWrapper(jqXHR, dfd) {
 		// オリジナルのjqXHRから値をコピー
