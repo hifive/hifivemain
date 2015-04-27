@@ -1682,7 +1682,7 @@
 	 * </pre>
 	 *
 	 * <strong>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</strong><br>
-	 * resolve() または resolve() が実行されると、画面からインジケータを除去します。
+	 * resolve() または reject() が実行されると、画面からインジケータを除去します。
 	 *
 	 * <pre>
 	 * var df = $.Deferred();
@@ -1692,7 +1692,7 @@
 	 * }).show();
 	 *
 	 * setTimeout(function() {
-	 * 	df.resolve() // ここでイジケータが除去される
+	 * 	df.resolve(); // ここでインジケータが除去される
 	 * }, 2000);
 	 * </pre>
 	 *
@@ -1708,11 +1708,11 @@
 	 * }).show();
 	 *
 	 * setTimeout(function() {
-	 * 	df.resolve()
+	 * 	df.resolve();
 	 * }, 2000);
 	 *
 	 * setTimeout(function() {
-	 * 	df.resolve() // ここでイジケータが除去される
+	 * 	df.resolve(); // ここでインジケータが除去される
 	 * }, 4000);
 	 * </pre>
 	 *
