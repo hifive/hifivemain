@@ -101,9 +101,14 @@
 	};
 
 	/**
-	 * メインシーンコンテナのシーン遷移先URLの最大長デフォルト値
+	 * シーン遷移先URL最大長
+	 *
+	 * <p>
+	 * URL全体がこの値を超えた場合、開発字はエラー、運用時は警告ログを出力。
+	 * IEで2084の場合があり、これ以下である程度のバッファを取った。
+	 * </p>
 	 */
-	var URL_MAX_LENGTH = 2000;
+	var URL_MAX_LENGTH = 1800;
 
 	/**
 	 * 再表示不可画面用メッセージ
@@ -1259,7 +1264,7 @@
 				return;
 
 			this._checkUrlLength(location.href, {
-				thorowOnError : true
+				throwOnError : true
 			});
 
 			this._started = true;
@@ -1296,7 +1301,7 @@
 				return;
 
 			this._checkUrlLength(to, {
-				thorowOnError : true
+				throwOnError : true
 			});
 
 			var silent = false, mode = this.urlHistoryActualMode;
@@ -1418,11 +1423,16 @@
 
 			if (result.length <= this._urlMaxLength) {
 				return true;
+			/* del begin */
 			} else if (option.throwOnError) {
 				// 遷移先URLが設定された最大長を超過した
 				throwFwError(ERR_CODE_URL_LENGTH_OVER, [ result.length,
 						this._urlMaxLength ]);
+				return false;
+			/* del end */
 			} else {
+				fwLogger.warn(ERR_CODE_URL_LENGTH_OVER, result.length,
+						this._urlMaxLength);
 				return false;
 			}
 		},
