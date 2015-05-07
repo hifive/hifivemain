@@ -815,7 +815,8 @@ $(function() {
 																																				{
 																																					func: function() {
 																																						return !!mainContainer._currentController;
-																																					}
+																																					},
+																																					failMsg: 'currentControllerが取得できませんでした'
 																																				})
 																																				.done(
 																																						function() {
@@ -834,9 +835,11 @@ $(function() {
 																																									'URLが連動していること');
 																																							//履歴遷移でのパラメーター取得は未対応
 
-																																						});
+																																						})
+																																				.always(
+																																						start);
 																																	})
-																															.always(
+																															.fail(
 																																	start);
 																												})
 																										.fail(
