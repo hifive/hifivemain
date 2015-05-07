@@ -657,7 +657,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#ie:-9|op]メインシーンコンテナ', {
+	module('[browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナ', {
 		setup: function() {
 			stop();
 			var that = this;
@@ -891,7 +891,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('フラグの確認', {
+	module('[browser#and-and:all|sa-ios:all|ie-wp:all]フラグの確認', {
 		setup: function() {
 			stop();
 			var that = this;
