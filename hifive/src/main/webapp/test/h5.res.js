@@ -99,7 +99,19 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('名前空間の依存解決(異常系)');
+	module('名前空間の依存解決(異常系)', {
+		setup: function() {
+			// window.onerrorを空にする
+			// Android2系でscriptのonerrorが発生するとwindow.onerrorが実行されてしまうため、
+			// QUnitの引っかけているonerrorを一旦外す
+			this.originalOnerror = window.onerror;
+			window.onerror = null;
+		},
+		teardown: function() {
+			// テスト終了時にwindow.onerrorを元に戻す
+			window.onerror = this.originalOnerror;
+		}
+	});
 
 	//=============================
 	// Body
@@ -249,7 +261,19 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('jsファイルの依存解決(異常系)');
+	module('jsファイルの依存解決(異常系)', {
+		setup: function() {
+			// window.onerrorを空にする
+			// Android2系でscriptのonerrorが発生するとwindow.onerrorが実行されてしまうため、
+			// QUnitの引っかけているonerrorを一旦外す
+			this.originalOnerror = window.onerror;
+			window.onerror = null;
+		},
+		teardown: function() {
+			// テスト終了時にwindow.onerrorを元に戻す
+			window.onerror = this.originalOnerror;
+		}
+	});
 
 	//=============================
 	// Body
