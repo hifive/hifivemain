@@ -729,10 +729,7 @@ $(function() {
 																			strictEqual(title,
 																					'TO',
 																					'画面が遷移されていること');
-																			var param = controller
-																					.$find(
-																							'.pg_view')
-																					.text();
+																			var param = controller.args.test;
 																			strictEqual(param,
 																					'hoge',
 																					'画面間パラメータが渡されていること');
