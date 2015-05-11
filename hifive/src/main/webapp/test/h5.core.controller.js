@@ -2774,6 +2774,7 @@ $(function() {
 					});
 					var $inner = $('<div></div>');
 					$inner.css({
+						position: 'absolute',
 						top: 10,
 						left: 20,
 						width: 10,
@@ -2817,7 +2818,10 @@ $(function() {
 		dispatchMouseEvent(target, 'mouseup');
 		ctrl.offsetX = ctrl.offsetY = null;
 		// 内側のdivの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
-		var innerOffset = ctrl.$inner.offset();
+		var innerOffset = {
+			top: rootOffset.top + 10,
+			left: rootOffset.left + 20
+		};
 		target = ctrl.$inner[0];
 		dispatchMouseEvent(target, 'click', innerOffset.left + 4, innerOffset.top + 8);
 		ok(nearEqual(ctrl.offsetX, 4), '内側のdiv要素のh5trackstart時にオフセットのx座標が取得できること');
@@ -2843,11 +2847,15 @@ $(function() {
 		dispatchMouseEvent(target, 'mouseup');
 		ctrl.offsetX = ctrl.offsetY = null;
 		// 内側のdivの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
-		var innerOffset = ctrl.$inner.offset();
+		var innerOffset = {
+			top: rootOffset.top + 10,
+			left: rootOffset.left + 20
+		};
 		target = ctrl.$inner[0];
 		dispatchMouseEvent(target, 'mousedown', innerOffset.left + 4, innerOffset.top + 8);
 		ok(nearEqual(ctrl.offsetX, 4), '内側のdiv要素のh5trackstart時にオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), '内側のdiv要素のh5trackstart時にオフセットのy座標が取得できること');
+
 		dispatchMouseEvent(target, 'mouseup');
 		start();
 	});
@@ -2869,7 +2877,10 @@ $(function() {
 		dispatchTouchEvent(target, 'touchend');
 		ctrl.offsetX = ctrl.offsetY = null;
 		// 内側のdivの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
-		var innerOffset = ctrl.$inner.offset();
+		var innerOffset = {
+			top: rootOffset.top + 10,
+			left: rootOffset.left + 20
+		};
 		target = ctrl.$inner[0];
 		dispatchTouchEvent(target, 'touchstart', innerOffset.left + 4, innerOffset.top + 8);
 		ok(nearEqual(ctrl.offsetX, 4), '内側のdiv要素のh5trackstart時にオフセットのx座標が取得できること');
@@ -2937,7 +2948,10 @@ $(function() {
 		dispatchMouseEvent(ctrl.svg, 'mouseup');
 		ctrl.offsetX = ctrl.offsetY = null;
 		// rectの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
-		var rectOffset = $(ctrl.rect).offset();
+		var rectOffset = {
+			left: rootOffset.left + 10,
+			top: rootOffset.top + 20
+		};
 		dispatchMouseEvent(ctrl.rect, 'click', rectOffset.left + 4, rectOffset.top + 8);
 		ok(nearEqual(ctrl.offsetX, 14), 'rect要素のh5trackstart時にsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 28), 'rect要素のh5trackstart時にsvg要素からのオフセットのy座標が取得できること');
@@ -2961,7 +2975,10 @@ $(function() {
 		dispatchMouseEvent(ctrl.svg, 'mouseup');
 		ctrl.offsetX = ctrl.offsetY = null;
 		// rectの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
-		var rectOffset = $(ctrl.rect).offset();
+		var rectOffset = {
+			left: rootOffset.left + 10,
+			top: rootOffset.top + 20
+		};
 		dispatchMouseEvent(ctrl.rect, 'mousedown', rectOffset.left + 4, rectOffset.top + 8);
 		ok(nearEqual(ctrl.offsetX, 14), 'rect要素のh5trackstart時にsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 28), 'rect要素のh5trackstart時にsvg要素からのオフセットのy座標が取得できること');
@@ -2985,7 +3002,10 @@ $(function() {
 		dispatchTouchEvent(ctrl.svg, 'touchend');
 		ctrl.offsetX = ctrl.offsetY = null;
 		// rectの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
-		var rectOffset = $(ctrl.rect).offset();
+		var rectOffset = {
+			left: rootOffset.left + 10,
+			top: rootOffset.top + 20
+		};
 		dispatchTouchEvent(ctrl.rect, 'touchstart', rectOffset.left + 4, rectOffset.top + 8);
 		ok(nearEqual(ctrl.offsetX, 14), 'rect要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 28), 'rect要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
@@ -12594,7 +12614,7 @@ $(function() {
 			throws(function() {
 				that.unmanageChild(child.childController);
 			}, function(e) {
-				return e.code === ERR.	ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER;
+				return e.code === ERR.ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER;
 			});
 		}).always(start);
 	});
