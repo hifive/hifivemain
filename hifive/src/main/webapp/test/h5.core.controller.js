@@ -6097,6 +6097,37 @@ $(function() {
 		});
 	});
 
+	asyncTest('子のライフサイクルが非同期の場合でもイベントハンドラが2重にバインドされないこと', function() {
+		// postInit終了時のタイミングが異なる場合でも、イベントハンドラが一度しかバインドされないことを確認する(issue #447)
+		function asyncFunc() {
+			var dfd = h5.async.deferred();
+			setTimeout(dfd.resolve, 0);
+			return dfd.promise();
+		}
+		var result = [];
+		function eventHandler() {
+			result.push(this.__name);
+		}
+
+		h5.core.controller('#controllerTest', {
+			__name: 'parent',
+			'{rootElement} click': eventHandler,
+			bController: {
+				__name: 'child',
+				__init: asyncFunc,
+				__postInit: asyncFunc,
+				__ready: asyncFunc,
+				'{rootElement} click': eventHandler
+			}
+		}).readyPromise
+				.done(function() {
+					$(this.rootElement).click();
+					strictEqual(result.join(','), 'parent,child',
+							'各コントローラのイベントハンドラがそれぞれ1度だけ実行されること');
+					start();
+				});
+	});
+
 	asyncTest('__constructの時点で使用可能なコントローラのメソッドとプロパティ', 45, function() {
 		var props = ['preInitPromise', 'initPromise', 'postInitPromise', 'readyPromise', 'view',
 				'$find', 'bind', 'deferred', 'disableListeners', 'indicator', 'own', 'ownWithOrg',
