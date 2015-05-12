@@ -729,7 +729,7 @@
 		var promise = scan(defaultSceneElm.get(0), controllerName, args);
 
 		// TODO(鈴木) デフォルトコントローラーがバインド・返却されていなければscanの結果を使用する
-		if (dfd.state() !== 'resolved') {
+		if (!isResolved(dfd)) {
 			promise.done(function(controller) {
 				dfd.resolve(controller);
 			});
@@ -2011,7 +2011,7 @@
 			var contentsRoot;
 			if (source == null) {
 				// 新しくdiv要素を生成
-				contentsRoot = $.parseHTML(NEW_SCENE_HTML);
+				contentsRoot = $(NEW_SCENE_HTML).get(0);
 			} else {
 				// DOM要素が指定されたのでそれをそのまま使用
 				contentsRoot = h5.u.obj.isJQueryObject(source) ? source[0] : source;
