@@ -1449,9 +1449,12 @@
 		 *            [option]
 		 * @param {Boolean}
 		 *            [option.writeBack=false]
+		 *            チェック結果詳細を仮引数のオブジェクトに書き込む場合にtrue。
+		 *            ※現時点では使用していない。将来的にメソッドを公開した場合での使用を想定。
 		 * @param {Boolean}
 		 *            [option.throwOnError=false]
-		 * @returns {Boolean}
+		 *            チェックエラー時に例外をスローする場合にtrue。dev版のみ有効。min版では無効。
+		 * @returns {Boolean} チェック結果
 		 */
 		_checkUrlLength : function(url, option) {
 			option = option || {};
