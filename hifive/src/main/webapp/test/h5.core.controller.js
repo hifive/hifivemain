@@ -127,14 +127,23 @@ $(function() {
 	function dispatchMouseEvent(elm, eventName, pageX, pageY) {
 		pageX = pageX || 0;
 		pageY = pageY || 0;
-		// scrollX/YはIEで未対応のためpageXOffsetを使用する
-		// pageXOffsetはIE8以下で未対応のため未対応ブラウザではdocumentElementのスクロール量を使用する
-		var scrollX = (window.pageXOffset !== undefined) ? window.pageXOffset
-				: document.documentElement.scrollLeft;
-		var scrollY = (window.pageYOffset !== undefined) ? window.pageYOffset
-				: document.documentElement.scrollTop;
-		var clientX = pageX - scrollX;
-		var clientY = pageY - scrollY;
+		var scX, scY;
+		if (h5.env.ua.isiOS && h5.env.ua.browserVersion === 4) {
+			// iOS4の場合はdispatchEventするときに指定するclientX/Yの座標はスクロール量に関わらず、
+			// body左上からの座標位置でのイベントになるため、
+			// スクロール量は計算しない
+			scX = scY = 0;
+		} else {
+			// iOS4以外は、見えている左上位置からの座標指定になるのでスクロール量を計算する
+			// scrollX/YはIEで未対応のためpageXOffsetを使用する
+			// pageXOffsetはIE8以下で未対応のため未対応ブラウザではdocumentElementのスクロール量を使用する
+			scX = (window.pageXOffset !== undefined) ? window.pageXOffset
+					: document.documentElement.scrollLeft;
+			scY = (window.pageYOffset !== undefined) ? window.pageYOffset
+					: document.documentElement.scrollTop;
+		}
+		var clientX = pageX - scX;
+		var clientY = pageY - scY;
 		// screenX/Yはシミュレートしない
 		var screenX = 0;
 		var screenY = 0;
