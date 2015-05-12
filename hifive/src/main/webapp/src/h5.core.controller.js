@@ -1423,18 +1423,12 @@
 						delete context.postInitDfd;
 						postInitDfd.resolveWith(controller);
 						// postInitPromiseのdoneハンドラでunbindまたはdisposeされている場合は何もしない
-						if (isUnbinding(controller)) {
+						// また、すでにバインド実行済みなら何もしない
+						if (isUnbinding(controller) || context.isExecutedBind) {
 							return;
 						}
 						if (!context.isRoot) {
-							if (!controller.rootController.isPostInit) {
-								// postInitDfdをresolveした時にルートのpostInitが終わった場合や、
-								// このコントローラがルートのpostInit後にmanageChildされた場合は、
-								// 既にルートコントローラのpostInitが終わっている。
-								// その場合は何もしない
-								return;
-							}
-							// ルートのpostInitが終わっている場合、
+							// ルートのpostInitが終わっている場合でかつイベントハンドラのバインドが未実行の場合、、
 							// このコントローラがルートのpostInit後に実行されたので、
 							// ルートがtriggerReadyしたタイミングでは自分のreadyの実行が呼び出せていない。
 							// 自分についてのpostInit後の処理(バインド処理)を行って再度triggerReadyを呼ぶ
