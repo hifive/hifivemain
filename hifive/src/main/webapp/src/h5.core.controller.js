@@ -1428,10 +1428,17 @@
 							return;
 						}
 						if (!context.isRoot) {
-							// ルートのpostInitが終わっている場合でかつイベントハンドラのバインドが未実行の場合、、
-							// このコントローラがルートのpostInit後に実行されたので、
-							// ルートがtriggerReadyしたタイミングでは自分のreadyの実行が呼び出せていない。
-							// 自分についてのpostInit後の処理(バインド処理)を行って再度triggerReadyを呼ぶ
+							// 子コントローラの場合
+							if (!controller.rootController.isPostInit) {
+								// 通常、この時点ではルートのpostInitは未完了であり、
+								// 以降の処理(イベントハンドラのバインドとtriggerReady)は、
+								// ルートのpostInit後の処理で行うので何もしない
+								return;
+							}
+							// ただし、例えばrootの__readyのタイミングでこのコントローラがmanageChildで子コントローラになったなどの場合は、
+							// この時点でルートのpostInit後の処理が終わっている。
+							// その場合、このコントローラのイベントハンドラのバインドは自分で行い、
+							// かつこのコントローラの__readyを実行するためtriggerReadyを呼び出す必要がある
 							if (!controller.parentController.__meta
 									|| controller.parentController.__meta.userHandlers !== false) {
 								bindByBindMap(controller);
