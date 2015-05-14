@@ -5,7 +5,13 @@
 <meta charset="utf-8" />
 <meta http-equiv="pragma" content="no-cache" />
 <meta http-equiv="cache-control" content="no-cache" />
-<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
 <script>
 	H5_TEST_ENV = window.H5_TEST_ENV || {};
 	H5_TEST_ENV.srcBaseUrl = '../../../';

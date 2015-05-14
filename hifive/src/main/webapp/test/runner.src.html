@@ -1,21 +1,28 @@
 <!doctype html>
 <html>
-	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta charset="UTF-8">
-		<meta name="viewport" content="initial-scale=1.0">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+<!-- jquery -->
+<!--[if lt IE 9]>
 		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
 
-		<script src="../archives/current/ejs-h5mod.js"></script>
+<script src="../archives/current/ejs-h5mod.js"></script>
 
-		<link rel="stylesheet" href="./lib/qunit/qunit.css" type="text/css" media="screen" />
-		<link rel="stylesheet" href="../archives/current/h5.css"/>
-		<!--
+<link rel="stylesheet" href="./lib/qunit/qunit.css" type="text/css"
+	media="screen" />
+<link rel="stylesheet" href="../archives/current/h5.css" />
+<!--
 		<link rel="stylesheet" href="../srcCss/h5.ui.indicator.css"/>
 		-->
 
-		<link rel="stylesheet" href="css/indicator-theme-b.css"/>
-		<script type="text/javascript" src="./lib/qunit/qunit.js"></script>
+<link rel="stylesheet" href="css/indicator-theme-b.css" />
+<script type="text/javascript" src="./lib/qunit/qunit.js"></script>
 <!--
 		<script>
 			// -----------------------
@@ -50,63 +57,63 @@
 		</script>
  -->
 
-		<!-- テスト環境の指定 -->
-		<script>
-			H5_TEST_ENV = window.H5_TEST_ENV || {};
- 			H5_TEST_ENV.buildType = 'src'; // 各ソースファイルを使用
- 		</script>
+<!-- テスト環境の指定 -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.buildType = 'src'; // 各ソースファイルを使用
+</script>
 
-		<!-- テストで使用するutils -->
-		<script src="testutils.js"></script>
-		<script src="h5devtestutils.js"></script>
+<!-- テストで使用するutils -->
+<script src="testutils.js"></script>
+<script src="h5devtestutils.js"></script>
 
-		<!-- テスト環境の指定をリクエストパラメータから読み込む -->
-		<script src="testenv.js"></script>
-		<script src="qunit_config.js"></script>
+<!-- テスト環境の指定をリクエストパラメータから読み込む -->
+<script src="testenv.js"></script>
+<script src="qunit_config.js"></script>
 
-		<script src="h5preinit.js"></script>
+<script src="h5preinit.js"></script>
 
-		<!-- 各モジュールのソースJSを読み込む（h5.jsは必ず最初に読み込む必要がある） -->
-		<script src="runner.js"></script>
+<!-- 各モジュールのソースJSを読み込む（h5.jsは必ず最初に読み込む必要がある） -->
+<script src="runner.js"></script>
 
-		<!-- h5ソースファイルの読み込み -->
-		<script src="loadScriptForTest.js"></script>
+<!-- h5ソースファイルの読み込み -->
+<script src="loadScriptForTest.js"></script>
 
-		<!-- エラーコード -->
-		<script src="_h5errorcode.js"></script>
+<!-- エラーコード -->
+<script src="_h5errorcode.js"></script>
 
-		<!-- ブラウザによって失敗するテストをスキップさせる -->
-		<script src="testFilter.js"></script>
+<!-- ブラウザによって失敗するテストをスキップさせる -->
+<script src="testFilter.js"></script>
 
-		<!-- 各モジュールのテストケースJSを読み込む -->
-		<script src="h5.env.js"></script>
-		<script src="h5.u.js"></script>
-		<script src="h5.mixin.js"></script>
-		<script src="h5.log.js"></script>
-		<script src="h5.async.js"></script>
-		<script src="h5.res.js"></script>
-		<script src="h5.scene.js"></script>
-		<script src="h5.ui.js"></script>
-		<script src="h5.ui.jqm.manager.js"></script>
-		<script src="h5.ajax.js"></script>
-		<script src="h5.core.controller.js"></script>
-		<script src="h5.core.data_obs_ary.js"></script>
-		<script src="h5.core.data_obs_item.js"></script>
-		<script src="h5.core.data_query.js"></script>
-		<script src="h5.core.data.js"></script>
-		<script src="h5.logic.js"></script>
-		<script src="h5.core.view_binding.js"></script>
-		<script src="h5.core.view.js"></script>
-		<script src="h5.api.storage.js"></script>
-		<script src="h5.api.geo.js"></script>
-		<script src="h5.api.sqldb.js"></script>
+<!-- 各モジュールのテストケースJSを読み込む -->
+<script src="h5.env.js"></script>
+<script src="h5.u.js"></script>
+<script src="h5.mixin.js"></script>
+<script src="h5.log.js"></script>
+<script src="h5.async.js"></script>
+<script src="h5.res.js"></script>
+<script src="h5.scene.js"></script>
+<script src="h5.ui.js"></script>
+<script src="h5.ui.jqm.manager.js"></script>
+<script src="h5.ajax.js"></script>
+<script src="h5.core.controller.js"></script>
+<script src="h5.core.data_obs_ary.js"></script>
+<script src="h5.core.data_obs_item.js"></script>
+<script src="h5.core.data_query.js"></script>
+<script src="h5.core.data.js"></script>
+<script src="h5.logic.js"></script>
+<script src="h5.core.view_binding.js"></script>
+<script src="h5.core.view.js"></script>
+<script src="h5.api.storage.js"></script>
+<script src="h5.api.geo.js"></script>
+<script src="h5.api.sqldb.js"></script>
 <!-- 		<script src="h5.coexist.js"></script> -->
-		<script src="h5scopedglobals.js"></script>
+<script src="h5scopedglobals.js"></script>
 
-		<title>hifiveテスト</title>
-	</head>
-	<body>
-		<div id="qunit"></div>
-		<div id="qunit-fixture">test markup, will be hidden</div>
-	</body>
+<title>hifiveテスト</title>
+</head>
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture">test markup, will be hidden</div>
+</body>
 </html>

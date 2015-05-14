@@ -8,7 +8,13 @@
 <link rel="stylesheet" href="./lib/qunit/qunit.css" type="text/css"
 	media="screen" />
 
-<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
 <script type="text/javascript" src="./lib/qunit/qunit.js"></script>
 <script>
 	(function() {
