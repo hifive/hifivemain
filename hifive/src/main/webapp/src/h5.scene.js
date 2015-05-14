@@ -1084,6 +1084,7 @@
 		// TODO(鈴木) Routerはシングルトン実装とする。
 		if (!Router._instance) {
 			self = Router._instance = this;
+
 			var pushSate = !!(window.history.pushState);
 			self.urlHistoryMode = option.urlHistoryMode
 					|| URL_HISTORY_MODE.HISTORY;
@@ -2689,7 +2690,10 @@
 
 					// TODO(鈴木) 遷移先指定がHTMLの場合
 
-					var loadPromise = loadContents(to, param.container,
+					// TODO(鈴木) メインシーンコンテナの場合はcontainer指定は無効とする
+					var container = this.isMain ? null : param.container;
+
+					var loadPromise = loadContents(to, container,
 							param.method, serverArgs);
 
 					function callback(toElm) {
