@@ -2262,7 +2262,7 @@
 			search = urlHelper.search;
 		}
 		var paramStr = serialize(param);
-		if(paramStr){
+		if (paramStr) {
 			search += (search) ? '&' : '?';
 			search += paramStr;
 		}
