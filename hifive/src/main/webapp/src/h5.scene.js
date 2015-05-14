@@ -1084,7 +1084,6 @@
 		// TODO(鈴木) Routerはシングルトン実装とする。
 		if (!Router._instance) {
 			self = Router._instance = this;
-
 			var pushSate = !!(window.history.pushState);
 			self.urlHistoryMode = option.urlHistoryMode
 					|| URL_HISTORY_MODE.HISTORY;
@@ -1351,7 +1350,6 @@
 				throwOnError : true
 			});
 
-
 			var silent = false, mode = this.urlHistoryActualMode;
 
 			// TODO(鈴木) 動作モード判定
@@ -1370,11 +1368,25 @@
 			var result = this._toAbusolute(to);
 
 			// TODO(鈴木) URL履歴保持方法指定に合わせた処理
+
+			// 遷移先URLが現在と同一の場合、NONE以外のケースで、
+			// 「現URLに対応した処理を実行、ブラウザ履歴は追加しない」
+			// という動作にする。
+			//
+			// ・HistoryAPI pushStateは、同一URLでもブラウザ履歴が追加される。
+			//   その後のブラウザバックでpopstateも発生する。
+			// ・hash使用の場合は同一URLではブラウザ履歴は追加されず、hashchangeも発生しない。
+			// ・href使用の場合は同一URLではブラウザ履歴は追加されないが、通常画面更新は発生する。
+			//   が、URLにハッシュがついていると、画面更新は発生しない。(スクロールのみ)
+			//
+			// これらの差異を吸収するよう実装する。
+
 			switch (mode) {
 			case URL_HISTORY_ACTUAL_MODE.HASH:
 				if (silent) {
 					this._silentOnce = true;
 				}
+				//TODO #449 パラメーター順序違いを考慮した同一性の判定については要検討
 				if (this.compareUrl(result)) {
 					this._onChange();
 				}else{
@@ -1389,6 +1401,7 @@
 				if (silent) {
 					this._silentOnce = true;
 				}
+				//TODO #449 パラメーター順序違いを考慮した同一性の判定については要検討
 				if (this.compareUrl(result)) {
 					this._onChange();
 				}else{
@@ -1401,7 +1414,11 @@
 				}
 				break;
 			case URL_HISTORY_ACTUAL_MODE.FULLRELOAD:
-				if (option.replace) {
+				//TODO #449 パラメーター順序違いを考慮した同一性の判定については要検討
+				if(this.compareUrl(result)){
+					//TODO(鈴木) URLにHashが付いていても再表示する
+					location.reload();
+				}else if (option.replace) {
 					location.replace(result);
 				} else {
 					location.href = result;
