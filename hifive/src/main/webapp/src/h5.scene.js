@@ -2262,8 +2262,10 @@
 			search = urlHelper.search;
 		}
 		var paramStr = serialize(param);
-		search += (search) ? '&' : '?';
-		search += paramStr;
+		if(paramStr){
+			search += (search) ? '&' : '?';
+			search += paramStr;
+		}
 		var result = path + search;
 		return result;
 	}
@@ -3139,19 +3141,36 @@
 		}
 
 		// TODO(鈴木) シーン用ルーティングテーブルをRouter用に変換。
-		var routesForRouter = $.map(routes, function(v) {
+		var routesForRouter = $.map(routes, function(route) {
+			var test = route.test;
+			if (isFunction(test)) {
+				var _test = test;
+				test = function(url) {
+					var param = getParamFromUrl(url);
+					return _test(url, param);
+				};
+			}
 			return {
-				test : v.test,
-				//convert : function(url) {
-				func : function(url) {
-					var navigationInfo = v.navigationInfo;
+				test: test,
+				func: function(url, contextualData){
+					contextualData = contextualData || {};
+					var navigationInfo = route.navigationInfo;
+					if (isFunction(navigationInfo)) {
+						var param = getParamFromUrl(url);
+						navigationInfo = navigationInfo(url, param);
+					}
+					if (navigationInfo == null) {
+						var container = contextualData.container || mainContainer;
+						container._defaultFuncForRouter(url);
+						return null;
+					}
 					if (isString(navigationInfo)) {
 						navigationInfo = {
-							to : navigationInfo
+							to: navigationInfo
 						};
 					}
-					var url = convertParamToUrl(navigationInfo);
-					return url;
+					var result = convertParamToUrl(navigationInfo);
+					return result;
 				}
 			};
 		});
