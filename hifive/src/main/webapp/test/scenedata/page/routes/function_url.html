@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<title>ROUTES TEST(FUNCTION URL/DUMMY)</title>
+<meta http-equiv="imagetoolbar" content="no"/>
+<meta charset="utf-8"/>
+<meta http-equiv="pragma" content="no-cache"/>
+<meta http-equiv="cache-control" content="no-cache"/>
+<script src="../../../../res/lib/jquery/jquery.js"></script>
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../../../';
+</script>
+<script src="../../../testenv.js"></script>
+<script src="../../../lib/qunit/qunit.js"></script>
+<script src="../../../../archives/current/ejs-h5mod.js"></script>
+<script src="../../../loadScriptForTest.js"></script>
+<script>
+h5.settings.scene = h5.settings.scene || {};
+h5.settings.scene.autoInit = true;
+h5.settings.scene.autoCreateMainContainer = true;
+h5.settings.res.baseUrl = '../../../';
+</script>
+<script src="routes.js"></script>
+<body data-h5-controller="scenedata.controller.DummyController">
+<h1>ROUTES TEST(FUNCTION URL/DUMMY)</h1>
+</body>
+</html>

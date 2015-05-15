@@ -549,359 +549,804 @@ $(function() {
 			function() {
 				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
 				var that = this;
+				var mainContainer;
+				var unloaded = false;
+
 				gate({
 					func: function() {
-						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
 					},
 					failMsg: 'メインシーンコンテナが取得できませんでした'
 				})
-						.done(
+						.then(
 								function() {
-									var mainContainer = that.w.h5.scene.getMainContainer();
+
 									var controller = mainContainer._currentController;
 									var title = controller.$find('h1').text();
 									strictEqual(title, 'FROM', '直接アクセスで画面が表示されていること');
 									//strictEqual(controller.__name, 'scenedata.controller.FromController', 'コントローラーバインド確認');
 									mainContainer.changeScene({
-										to : 'to.html?' + BUILD_TYPE_PARAM,
+										to: 'to.html?' + BUILD_TYPE_PARAM,
 										args: {
 											test: 'hoge'
 										}
 									});
-									gate(
-											{
-												func: function() {
-													return mainContainer._currentController
-															&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
-												},
-												failMsg: 'シーンが変更されませんでした'
-											})
-											.done(
-													function() {
-														var controller = mainContainer._currentController;
-														var title = controller.$find('h1').text();
-														strictEqual(title, 'TO', '画面が遷移されていること');
-														var param = controller.$find('.pg_view')
-																.text();
-														strictEqual(param, 'hoge',
-																'画面間パラメータが渡されていること');
-														ok(/\/to\.html(?:\?|#|$)/
-																.test(that.w.location.href),
-																'URLが連動していること');
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+								})
 
-														controller = null;
+						.then(
+								function() {
 
-														that.w.history.back();
-														gate(
-																{
-																	func: function() {
-																		return mainContainer._currentController
-																				&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
-																	},
-																	failMsg: 'シーンが変更されませんでした'
-																})
-																.done(
-																		function() {
-																			var controller = mainContainer._currentController;
-																			var title = controller
-																					.$find('h1')
-																					.text();
-																			strictEqual(title,
-																					'FROM',
-																					'histroy.back()で画面が遷移されていること');
-																			ok(
-																					/\/from\.html(?:\?|#|$)/
-																							.test(that.w.location.href),
-																					'URLが連動していること');
-																			//履歴遷移でのパラメーター取得は未対応
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+									ok(/\/to\.html(?:\?|#|$)/.test(that.w.location.href),
+											'URLが連動していること');
 
-																			controller = null;
+									//----
 
-																			that.w.history
-																					.forward();
-																			gate(
-																					{
-																						func: function() {
-																							return mainContainer._currentController
-																									&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
-																						},
-																						failMsg: 'シーンが変更されませんでした'
-																					})
-																					.done(
-																							function() {
-																								var controller = mainContainer._currentController;
-																								var title = controller
-																										.$find(
-																												'h1')
-																										.text();
-																								strictEqual(
-																										title,
-																										'TO',
-																										'histroy.forward()で画面が遷移されていること');
-																								ok(
-																										/\/to\.html(?:\?|#|$)/
-																												.test(that.w.location.href),
-																										'URLが連動していること');
-																								//履歴遷移でのパラメーター取得は未対応
+									that.w.history.back();
 
-																								mainContainer = controller = null;
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+								})
 
-																								that.w.location
-																										.reload(true);
-																								gate(
-																										{
-																											func: function() {
-																												return that.w.h5
-																														&& that.w.h5.scene
-																														&& that.w.h5.scene
-																																.getMainContainer();
-																											},
-																											failMsg: 'メインシーンコンテナが取得できませんでした'
-																										})
-																										.done(
-																												function() {
-																													mainContainer = that.w.h5.scene
-																															.getMainContainer(); //リロードしたので再度取得
-																													var controller = mainContainer._currentController;
-																													var title = controller
-																															.$find(
-																																	'h1')
-																															.text();
-																													strictEqual(
-																															title,
-																															'TO',
-																															'location.reload()で画面が再表示されていること');
-																													ok(
-																															/\/to\.html(?:\?|#|$)/
-																																	.test(that.w.location.href),
-																															'URLが連動していること');
-																													//履歴遷移でのパラメーター取得は未対応
+						.then(
+								function() {
 
-																												})
-																										.always(
-																												start);
-																							});
-																		});
-													});
-								}).fail(start);
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'FROM', 'histroy.back()で画面が遷移されていること');
+									ok(/\/from\.html(?:\?|#|$)/.test(that.w.location.href),
+											'URLが連動していること');
+
+									//----
+
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'TO', 'histroy.forward()で画面が遷移されていること');
+							var param = controller.$find('.pg_view').text();
+							strictEqual(param, 'hoge', 'ブラウザ履歴遷移時に画面間パラメータが使用できること');
+							ok(/\/to\.html(?:\?|#|$)/.test(that.w.location.href), 'URLが連動していること');
+
+							//----
+
+							that.w.$(that.w).on('unload', function() {
+								unloaded = true;
+							});
+
+							that.w.location.reload(true);
+
+							return gate({
+								func: function() {
+									if (unloaded && that.w.h5 && that.w.h5.scene) {
+										mainContainer = that.w.h5.scene.getMainContainer();
+										return mainContainer && mainContainer._currentController;
+									}
+									return false;
+								},
+								failMsg: 'メインシーンコンテナが取得できませんでした'
+							});
+
+						}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'TO', 'location.reload()で画面が再表示されていること');
+							var param = controller.$find('.pg_view').text();
+							strictEqual(param, 'hoge', 'リロード時に画面間パラメータが取得できること');
+							ok(/\/to\.html(?:\?|#|$)/.test(that.w.location.href), 'URLが連動していること');
+
+						}).always(start);
+
 			});
 
 	asyncTest(
+
 			'ブラウザ履歴連動遷移(コントローラーベース)',
+
 			function() {
 				this.w.location.href = 'scenedata/page/controller.html?' + BUILD_TYPE_PARAM;
 				var that = this;
-				gate(
-						{
-							func: function() {
-								if (that.w.h5 && that.w.h5.scene) {
-									var mainContainer = that.w.h5.scene.getMainContainer();
-									return mainContainer
-											&& mainContainer._currentController
-											&& mainContainer._currentController.__name == 'scenedata.controller.ControllerFromController';
-								}
-								return false;
-							},
-							failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
-						})
-						.done(
+				var mainContainer;
+				var unloaded = false;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
+				})
+						.then(
 								function() {
-									var mainContainer = that.w.h5.scene.getMainContainer();
+									mainContainer.changeScene({
+										to: 'scenedata.controller.ControllerFromController'
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ControllerFromController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
 									var controller = mainContainer._currentController;
 									var title = controller.$find('h1').text();
-									strictEqual(title, 'CONTROLLER_FROM', '初期表示シーンの画面が表示されていること');
+									strictEqual(title, 'CONTROLLER_FROM', '画面が表示されていること');
+
+									//----
+
 									mainContainer.changeScene({
 										to: 'scenedata.controller.ControllerToController',
 										args: {
 											test: 'hoge'
 										}
 									});
-									gate(
-											{
-												func: function() {
-													return mainContainer._currentController
-															&& mainContainer._currentController.__name === 'scenedata.controller.ControllerToController';
-												},
-												failMsg: 'シーンが変更されませんでした'
-											})
-											.done(
-													function() {
-														var controller = mainContainer._currentController;
-														var title = controller.$find('h1').text();
-														strictEqual(title, 'CONTROLLER_TO',
-																'画面が遷移されていること');
-														var param = controller.$find('.pg_view')
-																.text();
-														strictEqual(param, 'hoge',
-																'画面間パラメータが渡されていること');
-														ok(
-																/.*\b_clfw_to=sscenedata\.controller\.ControllerToController\b.*/
-																		.test(that.w.location.search),
-																'URLが連動していること');
 
-														controller = null;
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ControllerToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
 
-														that.w.history.back();
-														gate(
-																{
-																	func: function() {
-																		return mainContainer._currentController
-																				&& mainContainer._currentController.__name === 'scenedata.controller.ControllerFromController';
-																	},
-																	failMsg: 'シーンが変更されませんでした'
-																})
-																.done(
-																		function() {
-																			var controller = mainContainer._currentController;
-																			var title = controller
-																					.$find('h1')
-																					.text();
-																			strictEqual(
-																					title,
-																					'CONTROLLER_FROM',
-																					'histroy.back()で画面が遷移されていること');
-																			ok(
-																					/.*\b_clfw_to=sscenedata\.controller\.ControllerFromController\b.*/
-																							.test(that.w.location.search),
-																					'URLが連動していること');
+								})
+						.then(
+								function() {
 
-																			controller = null;
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'CONTROLLER_TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+									ok(
+											/.*\b_clfw_to=sscenedata\.controller\.ControllerToController\b.*/
+													.test(that.w.location.search), 'URLが連動していること');
 
-																			that.w.history
-																					.forward();
-																			gate(
-																					{
-																						func: function() {
-																							return mainContainer._currentController
-																									&& mainContainer._currentController.__name === 'scenedata.controller.ControllerToController';
-																						},
-																						failMsg: 'シーンが変更されませんでした'
-																					})
-																					.done(
-																							function() {
-																								var controller = mainContainer._currentController;
-																								var title = controller
-																										.$find(
-																												'h1')
-																										.text();
-																								strictEqual(
-																										title,
-																										'CONTROLLER_TO',
-																										'histroy.forward()で画面が遷移されていること');
-																								ok(
-																										/.*\b_clfw_to=sscenedata\.controller\.ControllerToController\b.*/
-																												.test(that.w.location.search),
-																										'URLが連動していること');
+									//----
 
-																								var param = controller
-																										.$find(
-																												'.pg_view')
-																										.text();
-																								strictEqual(
-																										param,
-																										'hoge',
-																										'履歴遷移で画面間パラメータが取得できること');
+									that.w.history.back();
 
-																								mainContainer = controller = null;
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ControllerFromController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+								})
 
-																								that.w.location
-																										.reload(true);
-																								gate(
-																										{
-																											func: function() {
-																												if (that.w.h5
-																														&& that.w.h5.scene) {
-																													var mainContainer = that.w.h5.scene
-																															.getMainContainer();
-																													return mainContainer
-																															&& mainContainer._currentController
-																															&& mainContainer._currentController.__name == 'scenedata.controller.ControllerToController';
-																												}
-																												return false;
-																											},
-																											failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
-																										})
-																										.done(
-																												function() {
-																													mainContainer = that.w.h5.scene
-																															.getMainContainer(); //リロードしたので再度取得
-																													var controller = mainContainer._currentController;
-																													var title = controller
-																															.$find(
-																																	'h1')
-																															.text();
-																													strictEqual(
-																															title,
-																															'CONTROLLER_TO',
-																															'location.reload()で画面が再表示されていること');
-																													ok(
-																															/.*\b_clfw_to=sscenedata\.controller\.ControllerToController\b.*/
-																																	.test(that.w.location.search),
-																															'URLが連動していること');
+						.then(
+								function() {
 
-																													var param = controller
-																															.$find(
-																																	'.pg_view')
-																															.text();
-																													strictEqual(
-																															param,
-																															'hoge',
-																															'リロード時に画面間パラメータが取得できること');
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'CONTROLLER_FROM',
+											'histroy.back()で画面が遷移されていること');
+									ok(
+											/.*\b_clfw_to=sscenedata\.controller\.ControllerFromController\b.*/
+													.test(that.w.location.search), 'URLが連動していること');
 
-																												})
-																										.always(
-																												start);
-																							});
-																		});
-													});
-								}).fail(start);
+									//----
+
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ControllerToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+								})
+
+						.then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'CONTROLLER_TO',
+											'histroy.forward()で画面が遷移されていること');
+									ok(
+											/.*\b_clfw_to=sscenedata\.controller\.ControllerToController\b.*/
+													.test(that.w.location.search), 'URLが連動していること');
+
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '履歴遷移で画面間パラメータが取得できること');
+
+									//----
+
+									that.w.onunload = function() {
+										unloaded = true;
+									};
+
+									that.w.location.reload(true);
+
+									return gate({
+										func: function() {
+											if (unloaded && that.w.h5 && that.w.h5.scene) {
+												var mainContainer = that.w.h5.scene
+														.getMainContainer();
+												return mainContainer
+														&& mainContainer._currentController
+														&& mainContainer._currentController.__name == 'scenedata.controller.ControllerToController';
+											}
+											return false;
+										},
+										failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
+									});
+
+								}).then(
+								function() {
+
+									mainContainer = that.w.h5.scene.getMainContainer(); //リロードしたので再度取得
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'CONTROLLER_TO',
+											'location.reload()で画面が再表示されていること');
+									ok(
+											/.*[&?]_clfw_to=sscenedata\.controller\.ControllerToController(?:&|$)/
+													.test(that.w.location.search), 'URLが連動していること');
+
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', 'リロード時に画面間パラメータが取得できること');
+
+								}).always(start);
+
+			});
+
+	asyncTest(
+
+			'遷移パターンの確認(normal)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+
+				gate(
+						{
+							func: function() {
+								if (that.w.h5 && that.w.h5.scene) {
+									mainContainer = that.w.h5.scene.getMainContainer();
+									return mainContainer
+											&& mainContainer._currentController
+											&& mainContainer._currentController.__name == 'scenedata.controller.FromController';
+								}
+								return false;
+							},
+							failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
+						})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										},
+										navigateType: h5.scene.navigateType.NORMAL
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'TO', '履歴遷移時に画面が表示されていること');
+							var param = controller.$find('.pg_view').text();
+							strictEqual(param, 'hoge', '履歴遷移時に画面間パラメータが使用できること');
+
+						}).always(start);
+			});
+
+	asyncTest(
+
+			'遷移パターンの確認(once)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+
+				gate(
+						{
+							func: function() {
+								if (that.w.h5 && that.w.h5.scene) {
+									mainContainer = that.w.h5.scene.getMainContainer();
+									return mainContainer
+											&& mainContainer._currentController
+											&& mainContainer._currentController.__name == 'scenedata.controller.FromController';
+								}
+								return false;
+							},
+							failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
+						})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										},
+										navigateType: h5.scene.navigateType.ONCE
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'h5.scene.NotReshowableController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'この画面は再表示できません。', '履歴遷移時に再表示不可エラー画面が表示されていること');
+
+						}).always(start);
+			});
+
+	asyncTest(
+
+			'遷移パターンの確認(exchange)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+
+				gate(
+						{
+							func: function() {
+								if (that.w.h5 && that.w.h5.scene) {
+									mainContainer = that.w.h5.scene.getMainContainer();
+									return mainContainer
+											&& mainContainer._currentController
+											&& mainContainer._currentController.__name == 'scenedata.controller.FromController';
+								}
+								return false;
+							},
+							failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
+						})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										},
+										navigateType: h5.scene.navigateType.EXCHANGE
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+									ok(/\/from\.html(?:\?|#|$)/.test(that.w.location.href),
+											'URLが連動していないこと');
+
+								}).always(start);
 			});
 
 
-//	asyncTest(
-//			'メインシーンコンテナの初期表示シーンの確認',
-//			function() {
-//				this.w.location.href = 'scenedata/page/init_scene.html?' + BUILD_TYPE_PARAM;
-//				var that = this;
-//				gate({
-//					func: function() {
-//						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
-//					},
-//					failMsg: 'メインシーンコンテナが取得できませんでした'
-//				})
-//						.done(
-//								function() {
-//									var mainContainer = that.w.h5.scene.getMainContainer();
-//									var controller = mainContainer._currentController;
-//									var title = controller.$find('h1').text();
-//									strictEqual(title, 'FROM', '初期表示シーンの画面が表示されていること');
-//									ok(/\/init_scene\.html(?:\?|#|$)/.test(that.w.location.href),
-//											'初期表示シーンはURL連動していないこと');
-//									mainContainer.changeScene('to.html?' + BUILD_TYPE_PARAM);
-//									gate(
-//											{
-//												func: function() {
-//													return mainContainer._currentController
-//															&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
-//												},
-//												failMsg: 'シーンが変更されませんでした'
-//											})
-//											.done(
-//													function() {
-//														var controller = mainContainer._currentController;
-//														var title = controller.$find('h1').text();
-//														strictEqual(title, 'TO', '画面が遷移されていること');
-//														ok(/\/to\.html(?:\?|#|$)/
-//																.test(that.w.location.href),
-//																'URLが連動していること');
-//													}).always(start);
-//								}).fail(start);
-//			});
+	asyncTest(
+
+			'replace指定の確認',
+
+			function() {
+				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+
+				gate(
+						{
+							func: function() {
+								if (that.w.h5 && that.w.h5.scene) {
+									mainContainer = that.w.h5.scene.getMainContainer();
+									return mainContainer
+											&& mainContainer._currentController
+											&& mainContainer._currentController.__name == 'scenedata.controller.FromController';
+								}
+								return false;
+							},
+							failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
+						})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'dummy.html'
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.DummyController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										},
+										replace: true
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+									ok(/\/to\.html(?:\?|#|$)/.test(that.w.location.href),
+											'URLが連動していること');
+
+									//----
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'FROM', 'ひとつ前の画面に遷移していること');
+									ok(/\/from\.html(?:\?|#|$)/.test(that.w.location.href),
+											'URLが連動していること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'method指定の確認(get)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var url;
+				var method;
+
+				gate(
+						{
+							func: function() {
+								if (that.w.h5 && that.w.h5.scene) {
+									mainContainer = that.w.h5.scene.getMainContainer();
+									return mainContainer
+											&& mainContainer._currentController
+											&& mainContainer._currentController.__name == 'scenedata.controller.FromController';
+								}
+								return false;
+							},
+							failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
+						})
+						.then(
+								function() {
+
+									that.w.$(that.w).on('ajaxSend', function(e, p, xhr) {
+										url = xhr.url;
+										method = xhr.method;
+									});
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										},
+										serverArgs:{
+											test: 'fuga'
+										},
+										method: h5.scene.method.GET
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									strictEqual(method, 'get', 'GETメソッドで通信していること');
+									ok(/\/to\.html\?test=fuga/.test(url), 'URLにパラメーターが設定されていること');
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+									ok(/\/to\.html(?:\?|#|$)/.test(that.w.location.href),
+											'URLが連動していること');
+
+									//----
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'TO', '履歴遷移時に画面が表示されること');
+							var param = controller.$find('.pg_view').text();
+							strictEqual(param, 'hoge', '履歴遷移時に画面間パラメータが使用できること');
+							ok(/\/to\.html(?:\?|#|$)/.test(that.w.location.href), 'URLが連動していること');
+
+						}).always(start);
+			});
+
+	asyncTest(
+
+			'method指定の確認(post)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var url;
+				var method;
+
+				gate(
+						{
+							func: function() {
+								if (that.w.h5 && that.w.h5.scene) {
+									mainContainer = that.w.h5.scene.getMainContainer();
+									return mainContainer
+											&& mainContainer._currentController
+											&& mainContainer._currentController.__name == 'scenedata.controller.FromController';
+								}
+								return false;
+							},
+							failMsg: 'メインシーンコンテナ、または初期表示シーンが取得できませんでした'
+						})
+						.then(
+								function() {
+
+									that.w.$(that.w).on('ajaxSend', function(e, p, xhr) {
+										url = xhr.url;
+										method = xhr.method;
+									});
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										},
+										method: h5.scene.method.POST
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									strictEqual(method, 'post', 'POSTメソッドで通信していること');
+									ok(/\/to\.html/.test(url), 'URLにパラメーターが設定されていないこと');
+									// POSTの場合のパラメーターの確認方法不明。。
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+									ok(/\/to\.html(?:\?|#|$)/.test(that.w.location.href),
+											'URLが連動していること');
+
+									//----
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'h5.scene.NotReshowableController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'この画面は再表示できません。', '履歴遷移時に再表示不可エラー画面が表示されていること');
+
+						}).always(start);
+			});
+
+
 
 	//=============================
 	// Definition
 	//=============================
-	module('フラグの確認', {
+	module('各設定の確認', {
 		setup: function() {
 			stop();
 			var that = this;
@@ -927,16 +1372,20 @@ $(function() {
 			function() {
 				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
 				var that = this;
+				var mainContainer;
 				gate({
 					func: function() {
-						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return !!mainContainer;
+						}
+						return false;
 					},
 					failMsg: 'メインシーンコンテナが取得できませんでした'
 				})
 						.done(
 								function() {
 									strictEqual(that.w.h5.settings.scene.autoInit, true, 'フラグの確認');
-									var mainContainer = that.w.h5.scene.getMainContainer();
 									ok(!!mainContainer, 'メインシーンコンテナが生成されていること');
 									ok(that.w.$('[data-h5-container="sub_from"]').is(
 											'[data-h5-dyn-container-bound]'),
@@ -964,6 +1413,1506 @@ $(function() {
 			ok(that.w.$('body').is('[data-h5-main-container]'), 'BODYタグがメインシーンコンテナとなっているかの確認');
 		}).always(start);
 	});
+
+	asyncTest(
+
+			'h5.settings.scene.clientFWQueryStringPrefix および clientQueryStringPrefix の確認',
+
+			function() {
+				this.w.location.href = 'scenedata/page/prefix.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+									strictEqual(that.w.h5.settings.scene.clientQueryStringPrefix,
+											'--cl--', 'clientQueryStringPrefixの確認');
+									strictEqual(that.w.h5.settings.scene.clientFWQueryStringPrefix,
+											'--clfw--', 'clientFWQueryStringPrefixの確認');
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										},
+										navigateType: h5.scene.navigateType.NORMAL
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+									ok(/\/to\.html(?:\?|#|$)/.test(that.w.location.href),
+											'URLが連動していること');
+									ok(/[&?]--cl--test=shoge\b/.test(that.w.location.href),
+											'clientQueryStringPrefix指定が適用されていること');
+									ok(/[&?]--clfw--navigateType=snormal\b/
+											.test(that.w.location.href),
+											'clientFWQueryStringPrefix指定が適用されていること');
+
+								}).always(start);
+	});
+
+	asyncTest(
+
+			'h5.settings.scene.urlHistoryMode の確認(hash)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/history.html?' + BUILD_TYPE_PARAM
+						+ '&urlHistoryMode=hash';
+				var that = this;
+				var mainContainer;
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+									strictEqual(that.w.h5.settings.scene.urlHistoryMode, 'hash',
+											'clientQueryStringPrefixの確認');
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										}
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+									ok(/\/history.html\b.*#.*\/to\.html\b/
+											.test(that.w.location.href), 'ハッシュが連動していること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.urlHistoryMode の確認(none)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/history.html?' + BUILD_TYPE_PARAM
+						+ '&urlHistoryMode=none';
+				var that = this;
+				var mainContainer;
+				var url;
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+									strictEqual(that.w.h5.settings.scene.urlHistoryMode, 'none',
+											'clientQueryStringPrefixの確認');
+
+									//----
+
+									url = location.href;
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										}
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'TO', '画面が遷移されていること');
+							var param = controller.$find('.pg_view').text();
+							strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+							strictEqual(location.href, url, 'URLが変更されないこと');
+
+						}).always(start);
+			});
+
+	asyncTest(
+
+	'h5.settings.scene.urlHistoryMode の確認(fullreload)',
+
+	function() {
+		this.w.location.href = 'scenedata/page/history.html?' + BUILD_TYPE_PARAM
+				+ '&urlHistoryMode=fullreload';
+		var that = this;
+		var mainContainer;
+		var unloaded = false;
+
+		gate({
+			func: function() {
+				if (that.w.h5 && that.w.h5.scene) {
+					mainContainer = that.w.h5.scene.getMainContainer();
+					return mainContainer && mainContainer._currentController;
+				}
+				return false;
+			},
+			failMsg: 'メインシーンコンテナが取得できませんでした'
+		}).then(
+				function() {
+					strictEqual(that.w.h5.settings.scene.urlHistoryMode, 'fullreload',
+							'urlHistoryModeの確認');
+
+					//----
+
+					that.w.$(that.w).on('unload', function() {
+						unloaded = true;
+					});
+
+					mainContainer.changeScene({
+						to: 'to.html?' + BUILD_TYPE_PARAM,
+						args: {
+							test: 'hoge'
+						}
+					});
+
+					return gate({
+						func: function() {
+							if (unloaded && that.w.h5 && that.w.h5.scene) {
+								mainContainer = that.w.h5.scene.getMainContainer();
+								return mainContainer && mainContainer._currentController;
+							}
+							return false;
+						},
+						failMsg: 'シーンが変更されませんでした'
+					});
+
+				}).then(function() {
+
+			ok(unloaded, '画面全体がロードされていること');
+
+			var controller = mainContainer._currentController;
+			var title = controller.$find('h1').text();
+			strictEqual(title, 'TO', '画面が遷移されていること');
+			var param = controller.$find('.pg_view').text();
+			strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+			ok(/[^#]+\/to\.html\b/.test(that.w.location.href), 'URLが連動していること');
+
+		}).always(start);
+	});
+
+	asyncTest(
+
+			'h5.settings.scene.urlHistoryMode の確認(history)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/history.html?' + BUILD_TYPE_PARAM
+						+ '&urlHistoryMode=history';
+				var that = this;
+				var mainContainer;
+				var pushState = !!(window.history.pushState);
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.urlHistoryMode, 'history',
+											'urlHistoryModeの確認');
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										}
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+
+									if (pushState) {
+										ok(/[^#]+\/to\.html\b/.test(that.w.location.href),
+												'URLが連動していること(History API有効)');
+									} else {
+										ok(/\/history.html\b.*#.*\/to\.html\b/
+												.test(that.w.location.href),
+												'URLが連動していること(History API無効)');
+									}
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.urlHistoryMode の確認(historyOrHash)',
+
+			function() {
+				this.w.location.href = 'scenedata/page/history.html?' + BUILD_TYPE_PARAM
+						+ '&urlHistoryMode=historyOrHash';
+				var that = this;
+				var mainContainer;
+				var pushState = !!(window.history.pushState);
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.urlHistoryMode,
+											'historyOrHash', 'urlHistoryModeの確認');
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										}
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+
+									if (pushState) {
+										ok(/[^#]+\/to\.html\b/.test(that.w.location.href),
+												'URLが連動していること(History API有効)');
+									} else {
+										ok(/\/history.html\b.*#.*\/to\.html\b/
+												.test(that.w.location.href),
+												'URLが連動していること(History API無効)');
+									}
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.urlHistoryMode の確認(historyOrError)',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/history.html?' + BUILD_TYPE_PARAM
+						+ '&urlHistoryMode=historyOrError';
+				var that = this;
+				var mainContainer;
+				var pushState = !!(window.history.pushState);
+
+				gate({
+					func: function() {
+						if (!pushState) {
+							return !!(that.w._errorMsg);
+						}
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.urlHistoryMode,
+											'historyOrError', 'urlHistoryModeの確認');
+
+									if (!pushState) {
+										ok(/\bcode=100012\b/.test(that.w._errorMsg),
+												'所定の例外が発生しているか(History API無効)');
+										return h5.async.deferred().reject();
+									}
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										}
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+
+									ok(/[^#]+\/to\.html\b/.test(that.w.location.href),
+											'URLが連動していること(History API有効)');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.urlHistoryMode の確認(historyOrNone)',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/history.html?' + BUILD_TYPE_PARAM
+						+ '&urlHistoryMode=historyOrNone';
+				var that = this;
+				var mainContainer;
+				var pushState = !!(window.history.pushState);
+				var url;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.urlHistoryMode,
+											'historyOrNone', 'urlHistoryModeの確認');
+
+									//----
+
+									url = location.href;
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										args: {
+											test: 'hoge'
+										}
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+
+									if (pushState) {
+										ok(/[^#]+\/to\.html\b/.test(that.w.location.href),
+												'URLが連動していること(History API有効)');
+									} else {
+										strictEqual(location.href, url,
+												'URLが変更されないこと(History API無効)');
+									}
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.urlHistoryMode の確認(historyOrFullreload)',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/history.html?' + BUILD_TYPE_PARAM
+						+ '&urlHistoryMode=historyOrFullreload';
+				var that = this;
+				var mainContainer;
+				var unloaded = false;
+				var pushState = !!(window.history.pushState);
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.urlHistoryMode,
+											'historyOrFullreload', 'urlHistoryModeの確認');
+
+									//----
+
+									if (!pushState) {
+										that.w.$(that.w).on('unload', function() {
+											unloaded = true;
+										});
+									}
+
+									mainContainer.changeScene({
+										to: 'to.html?' + BUILD_TYPE_PARAM,
+										args: {
+											test: 'hoge'
+										}
+									});
+
+									return gate({
+										func: function() {
+											if ((pushState || unloaded) && that.w.h5
+													&& that.w.h5.scene) {
+												mainContainer = that.w.h5.scene.getMainContainer();
+												return mainContainer
+														&& mainContainer._currentController
+														&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+											}
+											return false;
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, 'hoge', '画面間パラメータが渡されていること');
+
+									if (pushState) {
+										ok(/[^#]+\/to\.html\b/.test(that.w.location.href),
+												'URLが連動していること(History API有効)');
+									} else {
+										ok(/[^#]+\/to\.html\b/.test(that.w.location.href),
+												'URLが変更されないこと(History API無効)');
+									}
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.urlMaxLength の確認',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/maxlength.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var errorMsg;
+				var str = '';
+				for(var i = 0; i < 500; i++){
+					str += (i % 10 === 9) ? '|' : '-';
+				}
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+
+									strictEqual(that.w.h5.settings.scene.urlMaxLength,
+											500, 'urlMaxLengthの確認');
+
+									//----
+
+									try{
+										mainContainer.changeScene({
+											to: 'to.html',
+											args: {
+												test: str
+											}
+										});
+									}catch(e){
+										errorMsg = e.message;
+									}
+
+									return gate({
+										func: function() {
+											if (H5_TEST_ENV.buildType !== 'min'){
+												return !!(errorMsg);
+											}
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+
+								}).then(
+								function() {
+
+									if (H5_TEST_ENV.buildType !== 'min'){
+										ok(/\bcode=100011\b/.test(errorMsg), '所定の例外が発生しているか(src, dev版)');
+										return;
+									}
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'TO', '画面が遷移されていること(min版)');
+									var param = controller.$find('.pg_view').text();
+									strictEqual(param, str, '画面間パラメータが渡されていること(min版)');
+
+									ok(/[^#]+\/to\.html\b/.test(that.w.location.href),
+												'URLが連動していること(min版)');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.notReshowableMessage の確認',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/not_reshowable.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.notReshowableMessage,
+											'再表示できないっす', 'notReshowableMessageの確認');
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										navigateType : h5.scene.navigateType.ONCE
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.DummyController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'h5.scene.NotReshowableController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, '再表示できないっす', '設定した再表示不可エラーメッセージが表示されていること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.notReshowable の確認(local controller)',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/not_reshowable.html?' + BUILD_TYPE_PARAM
+						+ '&notReshowable=local';
+				var that = this;
+				var mainContainer;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.notReshowable.__name,
+											'NotReshowableTestController', 'notReshowableの確認');
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										navigateType: h5.scene.navigateType.ONCE
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.DummyController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'NotReshowableTestController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									strictEqual(mainContainer._currentController.__name,
+											'NotReshowableTestController', '指定のコントローラーが使用されていること');
+									var title = controller.$find('h1').text();
+									strictEqual(title, '再表示できないっす(Local)',
+											'設定した再表示不可エラーメッセージが表示されていること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.notReshowable の確認(controller.__name)',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/not_reshowable.html?' + BUILD_TYPE_PARAM
+						+ '&notReshowable=controller';
+				var that = this;
+				var mainContainer;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.notReshowable,
+											'scenedata.controller.NotReshowableController',
+											'notReshowableの確認');
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										navigateType: h5.scene.navigateType.ONCE
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.DummyController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.NotReshowableController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									strictEqual(mainContainer._currentController.__name,
+											'scenedata.controller.NotReshowableController',
+											'指定のコントローラーが使用されていること');
+									var title = controller.$find('h1').text();
+									strictEqual(title, '再表示できないっす(Controller)',
+											'設定した再表示不可エラーメッセージが表示されていること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'h5.settings.scene.notReshowable の確認(html)',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/not_reshowable.html?' + BUILD_TYPE_PARAM
+						+ '&notReshowable=html';
+				var that = this;
+				var mainContainer;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									strictEqual(that.w.h5.settings.scene.notReshowable,
+											'not_reshowable_html.html', 'notReshowableの確認');
+
+									//----
+
+									mainContainer.changeScene({
+										to: 'to.html',
+										navigateType: h5.scene.navigateType.ONCE
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.back();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.DummyController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								})
+						.then(
+								function() {
+
+									that.w.history.forward();
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'h5.scene.DummyController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, '再表示不可(HTML)', '指定のHTMLが使用されていること');
+
+						}).always(start);
+			});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ルーティングの確認', {
+		setup: function() {
+			stop();
+			var that = this;
+			testutils.dom.openPopupWindow().done(function(w) {
+				that.w = w;
+				//window.focus(); //Chromeだと効かない
+				start();
+			}).fail(function(e) {
+				throw e;
+			});
+		},
+		teardown: function() {
+			deleteProperty(window, 'h5scenetest');
+			this.w.close();
+		},
+	});
+
+	asyncTest(
+
+			'文字列でのルール指定',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/routes/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var unloaded = false;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'string.html?' + BUILD_TYPE_PARAM
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.RoutesController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(STRING/ACTUAL)',
+											'ルールに従いルーティングされていること');
+
+									//----
+
+									that.w.$(that.w).on('unload', function() {
+										unloaded = true;
+									});
+
+									that.w.location.reload(true);
+
+									return gate({
+										func: function() {
+											if (unloaded && that.w.h5 && that.w.h5.scene) {
+												mainContainer = that.w.h5.scene.getMainContainer();
+												return mainContainer
+														&& mainContainer._currentController;
+											}
+											return false;
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+
+								}).then(
+								function() {
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(STRING/ACTUAL)',
+											'直接アクセス時もルールに従いルーティングされていること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'正規表現オブジェクトでのルール指定',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/routes/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var unloaded = false;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'regexp.html?' + BUILD_TYPE_PARAM
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.RoutesController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(REGEXP/ACTUAL)',
+											'ルールに従いルーティングされていること');
+
+									//----
+
+									that.w.$(that.w).on('unload', function() {
+										unloaded = true;
+									});
+
+									that.w.location.reload(true);
+
+									return gate({
+										func: function() {
+											if (unloaded && that.w.h5 && that.w.h5.scene) {
+												mainContainer = that.w.h5.scene.getMainContainer();
+												return mainContainer
+														&& mainContainer._currentController;
+											}
+											return false;
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+
+								}).then(
+								function() {
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(REGEXP/ACTUAL)',
+											'直接アクセス時もルールに従いルーティングされていること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'関数でのルール指定、および変更先指定(第一仮引数(URL)の使用)',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/routes/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var unloaded = false;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'function_url.html?' + BUILD_TYPE_PARAM
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.RoutesController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(FUNCTION URL/ACTUAL)',
+											'ルールに従いルーティングされていること');
+
+									//----
+
+									that.w.$(that.w).on('unload', function() {
+										unloaded = true;
+									});
+
+									that.w.location.reload(true);
+
+									return gate({
+										func: function() {
+											if (unloaded && that.w.h5 && that.w.h5.scene) {
+												mainContainer = that.w.h5.scene.getMainContainer();
+												return mainContainer
+														&& mainContainer._currentController;
+											}
+											return false;
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+
+								}).then(
+								function() {
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(FUNCTION URL/ACTUAL)',
+											'直接アクセス時もルールに従いルーティングされていること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'関数でのルール指定、および変更先指定(第二仮引数(遷移情報)の使用)',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/routes/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var unloaded = false;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'function_info.html?' + BUILD_TYPE_PARAM
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.RoutesController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(FUNCTION INFO/ACTUAL)',
+											'ルールに従いルーティングされていること');
+
+									//----
+
+									that.w.$(that.w).on('unload', function() {
+										unloaded = true;
+									});
+
+									that.w.location.reload(true);
+
+									return gate({
+										func: function() {
+											if (unloaded && that.w.h5 && that.w.h5.scene) {
+												mainContainer = that.w.h5.scene.getMainContainer();
+												return mainContainer
+														&& mainContainer._currentController;
+											}
+											return false;
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+
+								}).then(
+								function() {
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(FUNCTION INFO/ACTUAL)',
+											'直接アクセス時もルールに従いルーティングされていること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'変更先指定なしの場合の動作確認',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/routes/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var unloaded = false;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'no_info.html?' + BUILD_TYPE_PARAM
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.RoutesController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(NO NAVIGATION INFO)',
+											'ルールに従いルーティングされていること(元の画面を表示)');
+
+									//----
+
+									that.w.$(that.w).on('unload', function() {
+										unloaded = true;
+									});
+
+									that.w.location.reload(true);
+
+									return gate({
+										func: function() {
+											if (unloaded && that.w.h5 && that.w.h5.scene) {
+												mainContainer = that.w.h5.scene.getMainContainer();
+												return mainContainer
+														&& mainContainer._currentController;
+											}
+											return false;
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(NO NAVIGATION INFO)',
+											'直接アクセス時もルールに従いルーティングされていること(元の画面を表示)');
+
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'連続ルーティングの確認',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/routes/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var mainContainer;
+				var unloaded = false;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							mainContainer = that.w.h5.scene.getMainContainer();
+							return mainContainer && mainContainer._currentController;
+						}
+						return false;
+					},
+					failMsg: 'メインシーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									mainContainer.changeScene({
+										to: 'straight1.html?' + BUILD_TYPE_PARAM
+									});
+
+									return gate({
+										func: function() {
+											return mainContainer._currentController
+													&& mainContainer._currentController.__name === 'scenedata.controller.RoutesController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(function() {
+
+							var controller = mainContainer._currentController;
+							var title = controller.$find('h1').text();
+							strictEqual(title, 'ROUTES TEST(STRAIGHT/3)', 'ルールに従いルーティングされていること');
+
+							//----
+
+							that.w.$(that.w).on('unload', function() {
+								unloaded = true;
+							});
+
+							that.w.location.reload(true);
+
+							return gate({
+								func: function() {
+									if (unloaded && that.w.h5 && that.w.h5.scene) {
+										mainContainer = that.w.h5.scene.getMainContainer();
+										return mainContainer && mainContainer._currentController;
+									}
+									return false;
+								},
+								failMsg: 'シーンが変更されませんでした'
+							});
+
+						}).then(
+								function() {
+
+									var controller = mainContainer._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(STRAIGHT/3)',
+											'直接アクセス時もルールに従いルーティングされていること');
+
+								}).always(start);
+			});
+
+	asyncTest(
+
+			'通常シーンコンテナでのルーティングの確認',
+
+			function() {
+
+				this.w.location.href = 'scenedata/page/routes/from.html?' + BUILD_TYPE_PARAM;
+				var that = this;
+				var container;
+
+				gate({
+					func: function() {
+						if (that.w.h5 && that.w.h5.scene) {
+							container = that.w.h5.scene.getSceneContainer('sub_from');
+							return container && container._currentController;
+						}
+						return false;
+					},
+					failMsg: 'シーンコンテナが取得できませんでした'
+				})
+						.then(
+								function() {
+
+									container.changeScene({
+										to: 'string.html?' + BUILD_TYPE_PARAM
+									});
+
+									return gate({
+										func: function() {
+											return container._currentController.__name === 'scenedata.controller.RoutesController';
+										},
+										failMsg: 'シーンが変更されませんでした'
+									});
+
+								}).then(
+								function() {
+
+									var controller = container._currentController;
+									var title = controller.$find('h1').text();
+									strictEqual(title, 'ROUTES TEST(STRING/ACTUAL)',
+											'ルールに従いルーティングされていること');
+
+								}).always(start);
+			});
 
 	//	//=============================
 	//	// Definition
