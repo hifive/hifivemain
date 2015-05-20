@@ -2472,7 +2472,6 @@
 			}
 
 			this._currentController = null;
-			$(this.rootElement).empty();
 
 			if (this.isMain) {
 				// TODO(鈴木) Router処理停止
