@@ -7890,7 +7890,7 @@ $(function() {
 			try {
 				var prop = duplicatedProperties[i];
 				var def = {
-					__name: 'TestController'
+					__name: 'TestController' + i
 				};
 				def[prop] = null;
 				h5.core.controller('#controllerTest', def);
