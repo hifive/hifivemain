@@ -341,6 +341,25 @@
 	 */
 	function validateControllerDef(isRoot, targetElement, controllerDefObj, param, controllerName) {
 		// コントローラ定義オブジェクトに、コントローラが追加するプロパティと重複するプロパティがあるかどうかチェック
+		if (!controllerPropertyMap) {
+			// 重複チェックが初めて呼ばれた時にコントローラプロパティマップを生成してチェックで使用する
+			controllerPropertyMap = {};
+			var tempInstance = new Controller(null, 'a');
+			for ( var p in tempInstance) {
+				if (tempInstance.hasOwnProperty(p) && p !== '__name' && p !== '__templates'
+						&& p !== '__meta') {
+					controllerPropertyMap[p] = 1;
+				}
+			}
+			tempInstance = null;
+			var proto = Controller.prototype;
+			for ( var p in proto) {
+				if (proto.hasOwnProperty(p)) {
+					controllerPropertyMap[p] = null;
+				}
+			}
+			proto = null;
+		}
 		for ( var prop in controllerDefObj) {
 			if (prop in controllerPropertyMap) {
 				// コントローラが追加するプロパティと同じプロパティ名のものがあればエラー
@@ -3561,6 +3580,10 @@
 	 * @param {Boolean} isRoot ルートコントローラかどうか
 	 */
 	function Controller(rootElement, controllerName, controllerDef, param, isRoot) {
+		// フック関数を実行
+		for (var i = 0, l = controllerInstantiationHooks.length; i < l; i++) {
+			controllerInstantiationHooks[i](this);
+		}
 		return controllerFactory(this, rootElement, controllerName, controllerDef, param, isRoot);
 	}
 	$
@@ -4289,25 +4312,7 @@
 	});
 
 	// プロパティ重複チェック用のコントローラプロパティマップを作成
-	var controllerPropertyMap = (function() {
-		var ret = {};
-		var tempInstance = new Controller(null, 'a');
-		for ( var p in tempInstance) {
-			if (tempInstance.hasOwnProperty(p) && p !== '__name' && p !== '__templates'
-					&& p !== '__meta') {
-				ret[p] = 1;
-			}
-		}
-		tempInstance = null;
-		var proto = Controller.prototype;
-		for ( var p in proto) {
-			if (proto.hasOwnProperty(p)) {
-				ret[p] = null;
-			}
-		}
-		proto = null;
-		return ret;
-	})();
+	var controllerPropertyMap = null;
 
 	/**
 	 * コントローラのファクトリ
@@ -4538,11 +4543,6 @@
 		// コントローラマネージャの管理対象とするか判定する(fwOpt.managed===falseなら管理対象外)
 		controllerContext.managed = fwOpt && fwOpt.managed;
 
-		// フック関数を実行
-		for (var i = 0, l = controllerInstantiationHooks.length; i < l; i++) {
-			controllerInstantiationHooks[i](controller);
-		}
-
 		// __constructを実行(子コントローラのコントローラ化より前)
 		try {
 			controller.__construct
@@ -4771,7 +4771,7 @@
 	/**
 	 * コントローラ化時にコントローラに対して追加処理を行うフック関数を登録する関数
 	 * <p>
-	 * ここで登録したフック関数はコントローラ化時に__construct呼び出し前に呼ばれます
+	 * ここで登録したフック関数はコントローラインスタンス生成時(__construct呼び出し前)に呼ばれます
 	 * </p>
 	 *
 	 * @memberOf h5internal.core

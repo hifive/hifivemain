@@ -7883,8 +7883,8 @@ $(function() {
 				'disableListeners', 'dispose', 'enableListeners', 'indicator', 'initPromise',
 				'isInit', 'isPostInit', 'isReady', 'log', 'manageChild', 'off', 'on', 'own',
 				'ownWithOrg', 'parentController', 'postInitPromise', 'preInitPromise',
-				'readyPromise', 'rootController', 'rootElement', 'throwCustomError', 'throwError',
-				'trigger', 'triggerIndicator', 'unbind', 'unmanageChild', 'view'];
+				'readyPromise', 'rootController', 'rootElement', 'scene', 'throwCustomError',
+				'throwError', 'trigger', 'triggerIndicator', 'unbind', 'unmanageChild', 'view'];
 
 		for (var i = 0, l = duplicatedProperties.length; i < l; i++) {
 			try {
