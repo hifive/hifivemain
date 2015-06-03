@@ -256,6 +256,11 @@
 		return false;
 	})();
 
+	/**
+	 * コントローラ化時に呼ばれるフック関数の配列
+	 */
+	var controllerInstantiationHooks = [];
+
 	// =============================
 	// Functions
 	// =============================
@@ -4533,6 +4538,11 @@
 		// コントローラマネージャの管理対象とするか判定する(fwOpt.managed===falseなら管理対象外)
 		controllerContext.managed = fwOpt && fwOpt.managed;
 
+		// フック関数を実行
+		for (var i = 0, l = controllerInstantiationHooks.length; i < l; i++) {
+			controllerInstantiationHooks[i](controller);
+		}
+
 		// __constructを実行(子コントローラのコントローラ化より前)
 		try {
 			controller.__construct
@@ -4758,6 +4768,20 @@
 		return rootLogic;
 	}
 
+	/**
+	 * コントローラ化時にコントローラに対して追加処理を行うフック関数を登録する関数
+	 * <p>
+	 * ここで登録したフック関数はコントローラ化時に__construct呼び出し前に呼ばれます
+	 * </p>
+	 *
+	 * @memberOf h5internal.core
+	 * @private
+	 * @param {Function} func フック関数。第1引数にコントローラインスタンスが渡される
+	 */
+	function addControllerInstantiationHook(func) {
+		controllerInstantiationHooks.push(func);
+	}
+
 	// =============================
 	// Expose internally
 	// =============================
@@ -4765,7 +4789,8 @@
 	// fwOptを引数に取る、コントローラ化を行うメソッドを、h5internal.core.controllerInternalとして内部用に登録
 	h5internal.core.controllerInternal = createAndBindController;
 
-	h5internal.core.controllerConstructor = Controller;
+	// コントローラ化時にフック関数を登録する関数
+	h5internal.core.addControllerInstantiationHook = addControllerInstantiationHook;
 
 	h5internal.core.isDisposing = isDisposing;
 

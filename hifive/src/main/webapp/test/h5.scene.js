@@ -406,7 +406,7 @@ $(function() {
 			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
 			var scene1 = container._currentController;
 			var $scene1 = $(scene1.rootElement);
-			scene1.triggerSceneChange({
+			scene1.scene.navigate({
 				to: 'scenedata/page/to2.html',
 				args: {
 					test: 'TEST'
@@ -527,7 +527,7 @@ $(function() {
 				return;
 			}
 
-			var container = controller.getParentSceneContainer();
+			var container = controller.scene.getParentSceneContainer();
 			strictEqual(container._containerName, 'testContainer',
 					'ControllerのgetParentSceneContainerで所属するシーンコンテナが取得できること');
 			container = h5.scene.getSceneContainer($container);
