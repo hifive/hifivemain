@@ -6119,13 +6119,11 @@ $(function() {
 				__ready: asyncFunc,
 				'{rootElement} click': eventHandler
 			}
-		}).readyPromise
-				.done(function() {
-					$(this.rootElement).click();
-					strictEqual(result.join(','), 'parent,child',
-							'各コントローラのイベントハンドラがそれぞれ1度だけ実行されること');
-					start();
-				});
+		}).readyPromise.done(function() {
+			$(this.rootElement).click();
+			strictEqual(result.join(','), 'parent,child', '各コントローラのイベントハンドラがそれぞれ1度だけ実行されること');
+			start();
+		});
 	});
 
 	asyncTest('__constructの時点で使用可能なコントローラのメソッドとプロパティ', 45, function() {
@@ -7880,23 +7878,27 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('プロパティの重複チェック', 1, function() {
-		var testController = {
-			/**
-			 * コントローラ名
-			 */
-			__name: 'TestController',
+	test('プロパティの重複チェック', function() {
+		var duplicatedProperties = ['$find', '__controllerContext', 'bind', 'deferred',
+				'disableListeners', 'dispose', 'enableListeners', 'indicator', 'initPromise',
+				'isInit', 'isPostInit', 'isReady', 'log', 'manageChild', 'off', 'on', 'own',
+				'ownWithOrg', 'parentController', 'postInitPromise', 'preInitPromise',
+				'readyPromise', 'rootController', 'rootElement', 'throwCustomError', 'throwError',
+				'trigger', 'triggerIndicator', 'unbind', 'unmanageChild', 'view'];
 
-			indicator: function() {
-			// 何もしない
+		for (var i = 0, l = duplicatedProperties.length; i < l; i++) {
+			try {
+				var prop = duplicatedProperties[i];
+				var def = {
+					__name: 'TestController'
+				};
+				def[prop] = null;
+				h5.core.controller('#controllerTest', def);
+				ok(false, prop + 'を持つ定義オブジェクトのコントローラ化でエラーが発生しませんでした');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_SAME_PROPERTY, prop
+						+ 'を持つコントローラ定義はコントローラ化できないこと');
 			}
-		};
-
-		try {
-			h5.core.controller('#controllerTest', testController);
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_CONTROLLER_SAME_PROPERTY,
-					'コントローラ化によって追加されるプロパティと名前が重複するプロパティがある場合、エラーが出るか');
 		}
 	});
 
