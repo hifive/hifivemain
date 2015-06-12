@@ -2157,13 +2157,18 @@
 		}
 
 		// asyncにfalseが指定されていない場合は必ず非同期になるようにする
-		setTimeout(function() {
-			// この時点でcontrollerがルートコントローラでなくなっている(__constructでmanageChildされた)場合は何もしない
-			if (isUnbinding(controller) || !controller.__controllerContext.isRoot) {
-				return;
-			}
-			executeLifecycleEventChain(controller, '__init');
-		}, 0);
+		setTimeout(
+				function() {
+					// この時点でcontrollerがルートコントローラでなくなっている(__construct時などバインド後すぐにmanageChildされた)場合がある
+					// その場合はmanageChild()した側のルートコントローラのライフサイクルが完全に終わっている(===readyDfd削除まで終わっている)場合、
+					// 自分でtriggerInitする必要がある
+					// ルートのライフサイクルがまだ終わっていない場合は、親がライフサイクルを実行してくれるのでmanageChildされた側はtriggerInitしない
+					if (isUnbinding(controller)
+							|| (!controller.__controllerContext.isRoot && controller.rootController.readyDfd)) {
+						return;
+					}
+					executeLifecycleEventChain(controller, '__init');
+				}, 0);
 	}
 
 	/**
