@@ -985,7 +985,9 @@
 		function wrapHandler(bindObj) {
 			var handler = bindObj.handler;
 			var c = bindObj.controller;
-			bindObj.originalHandler = handler;
+			// h5track*のオフセット計算等のためにすでにhandlerにはFW側でラップ済みの関数を持っている場合がある
+			// その場合は、bindObj.originalHandlerにすでにラップ前の関数を持たせてある
+			bindObj.originalHandler = bindObj.originalHandler || handler;
 			bindObj.handler = function(/* var args */) {
 				// isNativeBindがtrue(addEventListenerによるバインド)なら、イベントハンドラのthisをイベントハンドラの第2引数にする。
 				// (DOM要素でないものはlistenerElementTypeに関わらずjQueryで包まない)
@@ -1681,20 +1683,24 @@
 		if (eventName !== EVENT_NAME_H5_TRACKSTART) {
 			// h5trackmove,h5trackendはh5trackstart時にバインドするのでここでmouseやtouchにバインドするbindObjは作らない
 			// h5trackmoveまたはh5trackendのbindObjのみを返す
-			return getNormalBindObj(controller, selector, eventName, function(context) {
-				// マウスイベントによる発火なら場合はオフセットを正規化する
-				var originalEventType = context.event.h5DelegatingEvent.type;
-				if (originalEventType === 'mousemove' || originalEventType === 'mouseup') {
-					var event = context.event;
-					var offset = $(event.currentTarget).offset() || {
-						left: 0,
-						top: 0
-					};
-					event.offsetX = event.pageX - offset.left;
-					event.offsetY = event.pageY - offset.top;
-				}
-				func.apply(this, arguments);
-			});
+			var normalBindObj = getNormalBindObj(controller, selector, eventName,
+					function(context) {
+						// マウスイベントによる発火なら場合はオフセットを正規化する
+						var originalEventType = context.event.h5DelegatingEvent.type;
+						if (originalEventType === 'mousemove' || originalEventType === 'mouseup') {
+							var event = context.event;
+							var offset = $(event.currentTarget).offset() || {
+								left: 0,
+								top: 0
+							};
+							event.offsetX = event.pageX - offset.left;
+							event.offsetY = event.pageY - offset.top;
+						}
+						func.apply(this, arguments);
+					});
+			// ラップした関数をhandlerに持たせるので、ラップ前をoriginalHandlerに覚えておく
+			// ogirinalHandlerにはユーザが指定した関数と同じ関数(ラップ前)を持っていないとoff()でアンバインドできないため
+			normalBindObj.originalHandler = func;
 		}
 
 		function getEventType(en) {
