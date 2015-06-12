@@ -120,7 +120,6 @@
 		<dependencies>
 			<dependency name="util" />
 			<dependency name="async" />
-			<dependency name="dev" />
 		</dependencies>
 		<files>
 			<file name="h5.api.geo.js" />
