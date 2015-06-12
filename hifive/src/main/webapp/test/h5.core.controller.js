@@ -1262,6 +1262,74 @@ $(function() {
 		};
 	}
 
+	/**
+	 * h5trackイベントのon/offのテスト
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestTrackEventOnOff(events) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var startTrackEvent = createDummyTrackEvent(events.start, 0);
+			var moveTrackEvent = createDummyTrackEvent(events.move, 10);
+			var endTrackEvent = createDummyTrackEvent(events.end, 10);
+
+			var trackEvents = [];
+			var $elm = $('#controllerTest');
+			$elm.append('<div id="divInControllerTest"></div>');
+			var $inElm = $('#divInControllerTest');
+			function handler(ctx) {
+				trackEvents.push(ctx.event.type);
+			}
+			var controller = h5.core.controller($elm, {
+				__name: 'Controller',
+				__ready: function() {
+					this.on('{rootElement}', 'h5trackstart', handler);
+					this.on('{rootElement}', 'h5trackmove', handler);
+					this.on('{rootElement}', 'h5trackend', handler);
+				}
+			});
+
+			controller.readyPromise.done(function() {
+				function track() {
+					$inElm.trigger(startTrackEvent);
+					$inElm.trigger(moveTrackEvent);
+					$inElm.trigger(endTrackEvent);
+				}
+				// h5trackstartをoff
+				this.off('{rootElement}', 'h5trackstart', handler);
+				track();
+				strictEqual(trackEvents.join(','), 'h5trackmove,h5trackend',
+						'h5trackstartをoffにするとh5trackmove,h5trackendのハンドラのみ呼ばれること');
+				this.on('{rootElement}', 'h5trackstart', handler);
+				trackEvents = [];
+
+				// h5trackmoveをoff
+				this.off('{rootElement}', 'h5trackmove', handler);
+				track();
+				strictEqual(trackEvents.join(','), 'h5trackstart,h5trackend',
+						'h5trackmoveをoffにするとh5trackstart,h5trackendのハンドラのみ呼ばれること');
+				this.on('{rootElement}', 'h5trackmove', handler);
+				trackEvents = [];
+
+				// h5trackendをoff
+				this.off('{rootElement}', 'h5trackend', handler);
+				track();
+				strictEqual(trackEvents.join(','), 'h5trackstart,h5trackmove',
+						'h5trackmoveをoffにするとh5trackstart,h5trackmoveのハンドラのみ呼ばれること');
+				this.on('{rootElement}', 'h5trackend', handler);
+				trackEvents = [];
+
+				start();
+			});
+		};
+	}
+
 	// =========================================================================
 	//
 	// Test Module
@@ -2635,6 +2703,10 @@ $(function() {
 	asyncTest(
 			'ルートエレメントより外のエレメントでtouch系イベントがstopPropagation()されていて、documentまでtouch系イベントがバブリングしない状態でも、h5trackイベントハンドラは実行されること',
 			3, getH5trackTestCheckStopPropagation(touchTrackEvents));
+	asyncTest('on/offでh5trackイベントのバインド、アンバインドができること(mouse)',
+			getH5trackTestTrackEventOnOff(mouseTrackEvents));
+	asyncTest('on/offでh5trackイベントのバインド、アンバインドができること(touch)',
+			getH5trackTestTrackEventOnOff(touchTrackEvents));
 
 	asyncTest(
 			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラを記述した要素にtouch-action(-ms-touch-action)プロパティが設定されること',
