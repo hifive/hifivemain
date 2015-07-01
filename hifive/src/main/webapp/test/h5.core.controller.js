@@ -2833,6 +2833,36 @@ $(function() {
 				});
 			});
 
+
+	asyncTest('h5track*イベントをトリガ', function() {
+		var startEvent, moveEvent, endEvent;
+		h5.core.controller('#controllerTest', {
+			__name: 'H5trackTriggerTest',
+			'{rootElement} h5trackstart': function(ctx) {
+				startEvent = ctx.event;
+			},
+			'{rootElement} h5trackmove': function(ctx) {
+				moveEvent = ctx.event;
+			},
+			'{rootElement} h5trackend': function(ctx) {
+				endEvent = ctx.event;
+			}
+		}).readyPromise.done(function() {
+			this.trigger('h5trackstart');
+			ok(startEvent, 'h5trackstartイベントがトリガで発火すること');
+			strictEqual(startEvent.offsetX, undefined, 'offsetXはundefinedであること');
+			strictEqual(startEvent.offsetX, undefined, 'offsetYはundefinedであること');
+			this.trigger('h5trackmove');
+			ok(moveEvent, 'h5trackmoveイベントがトリガで発火すること');
+			strictEqual(moveEvent.offsetX, undefined, 'offsetXはundefinedであること');
+			strictEqual(moveEvent.offsetX, undefined, 'offsetYはundefinedであること');
+			this.trigger('h5trackend');
+			ok(endEvent, 'h5trackendイベントがトリガで発火すること');
+			strictEqual(endEvent.offsetX, undefined, 'offsetXはundefinedであること');
+			strictEqual(endEvent.offsetX, undefined, 'offsetYはundefinedであること');
+			start();
+		});
+	});
 	//=============================
 	// Definition
 	//=============================
