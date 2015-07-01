@@ -1685,10 +1685,15 @@
 			// h5trackmoveまたはh5trackendのbindObjのみを返す
 			var normalBindObj = getNormalBindObj(controller, selector, eventName,
 					function(context) {
+						var event = context.event;
+						var h5DelegatingEvent = event.h5DelegatingEvent;
+						if (!h5DelegatingEvent) {
+							// マウスやタッチではなくtriggerで呼ばれた場合はオフセット正規化はしない
+							return func.apply(this, arguments);
+						}
 						// マウスイベントによる発火なら場合はオフセットを正規化する
-						var originalEventType = context.event.h5DelegatingEvent.type;
+						var originalEventType = h5DelegatingEvent.type;
 						if (originalEventType === 'mousemove' || originalEventType === 'mouseup') {
-							var event = context.event;
 							var offset = $(event.currentTarget).offset() || {
 								left: 0,
 								top: 0
