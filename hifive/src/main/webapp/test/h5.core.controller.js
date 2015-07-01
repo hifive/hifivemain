@@ -2833,7 +2833,6 @@ $(function() {
 				});
 			});
 
-
 	asyncTest('h5track*イベントをトリガ', function() {
 		var startEvent, moveEvent, endEvent;
 		h5.core.controller('#controllerTest', {
@@ -2863,6 +2862,7 @@ $(function() {
 			start();
 		});
 	});
+
 	//=============================
 	// Definition
 	//=============================
