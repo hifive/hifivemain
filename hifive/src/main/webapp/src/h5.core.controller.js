@@ -1701,6 +1701,7 @@
 			// ラップした関数をhandlerに持たせるので、ラップ前をoriginalHandlerに覚えておく
 			// ogirinalHandlerにはユーザが指定した関数と同じ関数(ラップ前)を持っていないとoff()でアンバインドできないため
 			normalBindObj.originalHandler = func;
+			return normalBindObj;
 		}
 
 		function getEventType(en) {
