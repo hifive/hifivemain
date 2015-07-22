@@ -281,6 +281,16 @@
 		return str;
 	}
 
+	/**
+	 * 文字列中のダブルコーテーションをエスケープする
+	 *
+	 * @private
+	 * @param {String} str
+	 * @returns {String} エスケープ後の文字列
+	 */
+	function escapeDoubleQuotation(str) {
+		return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+	}
 
 	/**
 	 * 指定されたスクリプトファイルをロードして、スクリプト文字列を取得します。(loadScriptメソッド用)
@@ -910,7 +920,7 @@
 					} else if ($.type(val[i]) === 'function') {
 						elm = typeToCode(TYPE_OF_UNDEFINED);
 					} else {
-						elm = (func(val[i])).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+						elm = escapeDoubleQuotation(func(val[i]));
 					}
 					ret += '"' + elm + '"';
 					if (i !== val.length - 1) {
@@ -923,14 +933,13 @@
 						continue;
 					}
 					if ($.type(val[key]) !== 'function') {
-						hash += '"' + escape(key) + '":"'
-								+ (func(val[key])).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-								+ '",';
+						hash += '"' + escapeDoubleQuotation(escape(key)) + '":"'
+								+ escapeDoubleQuotation(func(val[key])) + '",';
 					}
 				}
 				if (hash) {
 					ret += ((val.length) ? ',' : '') + '"' + typeToCode('objElem') + '{'
-							+ hash.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+							+ escapeDoubleQuotation(hash);
 					ret = ret.replace(/,$/, '');
 					ret += '}"';
 				}
@@ -948,9 +957,8 @@
 						if ($.type(val[key]) === 'function') {
 							continue;
 						}
-						ret += '"' + key + '":"'
-								+ (func(val[key])).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-								+ '",';
+						ret += '"' + escapeDoubleQuotation(escape(key)) + '":"'
+								+ escapeDoubleQuotation(func(val[key])) + '",';
 					}
 				}
 				ret = ret.replace(/,$/, '');
@@ -1121,7 +1129,7 @@
 							}
 							obj = tempObj;
 							for ( var key in extendObj) {
-								obj[key] = extendObj[key];
+								obj[unescape(key)] = extendObj[key];
 							}
 							break;
 						default:
@@ -1141,7 +1149,11 @@
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
 					for ( var key in obj) {
-						obj[key] = func(obj[key]);
+						// プロパティキーはエスケープしたものになっている
+						// 元のプロパティキー(エスケープ前)のものに変更して値を持たせる
+						var val = func(obj[key]);
+						delete obj[key];
+						obj[unescape(key)] = val;
 					}
 					ret = obj;
 					break;

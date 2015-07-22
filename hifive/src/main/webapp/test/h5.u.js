@@ -1427,6 +1427,26 @@ $(function() {
 		}
 	});
 
+	test('プロパティキーに特殊文字を含むオブジェクトまたは連想配列をシリアライズ・デシリアライズできること', function() {
+		var prop = '"\'\\\n\r\b\f\t ';
+		var obj = {};
+		obj[prop] = 1;
+		var nested = {};
+		nested[prop] = 2;
+		obj[prop + '-nested'] = nested;
+		var ary = [];
+		ary[prop] = 2;
+		ary[prop + '-nested'] = nested;
+
+		var serialized = h5.u.obj.serialize(obj);
+		var deserialized = h5.u.obj.deserialize(serialized);
+		deepEqual(deserialized, obj, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
+
+		serialized = h5.u.obj.serialize(ary);
+		deserialized = h5.u.obj.deserialize(serialized);
+		deepEqual(deserialized, ary, "シリアライズしてデシリアライズした配列が元の配列と同じ");
+	});
+
 	test('プロトタイプの中身はシリアライズ化されないこと', 1, function() {
 		var P = function() {};
 		P.prototype = {
