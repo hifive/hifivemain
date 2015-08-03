@@ -1116,27 +1116,27 @@
 					if (!isArray(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					for (var i = 0; i < obj.length; i++) {
+					var ret = [];
+					for (var i = 0, l = obj.length; i < l; i++) {
 						switch (codeToType(obj[i].substring(0, 1))) {
 						case 'undefElem':
-							delete obj[i];
+							// i番目に値を何も入れない場合と、
+							// i番目に値を入れてからdeleteする場合とで
+							// lengthが異なる場合がある。
+							// 最後の要素にundefが明示的に入れられている場合は後者のやりかたでデシリアライズする必要がある
+							ret[i] = undefined;
+							delete ret[i];
 							break;
 						case 'objElem':
 							var extendObj = func(typeToCode('object') + obj[i].substring(1));
-							var tempObj = [];
-							for (var i = 0, l = obj.length - 1; i < l; i++) {
-								tempObj[i] = obj[i];
-							}
-							obj = tempObj;
 							for ( var key in extendObj) {
-								obj[unescape(key)] = extendObj[key];
+								ret[unescape(key)] = extendObj[key];
 							}
 							break;
 						default:
-							obj[i] = func(obj[i]);
+							ret[i] = func(obj[i]);
 						}
 					}
-					ret = obj;
 					break;
 				case 'object':
 					var obj;
@@ -1148,14 +1148,13 @@
 					if (!$.isPlainObject(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
+					var ret = {};
 					for ( var key in obj) {
 						// プロパティキーはエスケープしたものになっている
 						// 元のプロパティキー(エスケープ前)のものに変更して値を持たせる
 						var val = func(obj[key]);
-						delete obj[key];
-						obj[unescape(key)] = val;
+						ret[unescape(key)] = val;
 					}
-					ret = obj;
 					break;
 				case 'date':
 					ret = new Date(parseInt(ret, 10));
