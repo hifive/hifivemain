@@ -157,59 +157,6 @@
 		return h5.u.obj.isJQueryObject(obj) ? obj : $(obj);
 	}
 
-	/**
-	 * ViewTemplateクラス
-	 */
-	function ViewTemplate() {
-		this._templateMap = {};
-	}
-	$.extend(ViewTemplate.prototype, {
-		/**
-		 * 受け取ったviewにこのインスタンスが持つテンプレートを登録する
-		 */
-		applyToView: function(view) {
-			var templateMap = this._templateMap;
-			for ( var p in templateMap) {
-				view.register(p, templateMap[p]);
-			}
-		},
-		/**
-		 * テンプレートマップに登録
-		 */
-		register: function(id, templateString) {
-			this._templateMap[id] = templateString;
-		},
-		/**
-		 * 別のviewTempalteとマージする
-		 */
-		marge: function(viewTemplate) {
-			$.extend(this._templateMap, viewTemplate._templateMap);
-		},
-		/**
-		 * エレメントからテンプレートマップに登録
-		 *
-		 * @param {DOM|jQuery} $templateElements テンプレートが記述されている要素(<script type="text/ejs">...</script>)
-		 */
-		registByElement: function compileTemplatesByElements($templateElements) {
-			$templateElements = $($templateElements);
-			if ($templateElements.length === 0) {
-				return;
-			}
-			var that = this;
-			$templateElements.each(function() {
-				var templateId = $.trim(this.id);
-				var templateString = $.trim(this.innerHTML);
-
-				// 空文字または空白ならエラー
-				if (!templateId) {
-					// load()で更にdetail対してエラー情報を追加するため、ここで空のdetailオブジェクトを生成する
-					throwFwError(ERR_CODE_TEMPLATE_INVALID_ID, null, {});
-				}
-				that.register(templateId, templateString);
-			});
-		}
-
-	});
 	// =========================================================================
 	//
 	// Body
@@ -251,7 +198,7 @@
 		 * @memberOf View
 		 * @name load
 		 * @function
-		 * @param {String|Array[String]} resourcePaths テンプレートファイル(.ejs)のパス (配列で複数指定可能)
+		 * @param {String|String[]} resourcePaths テンプレートファイル(.ejs)のパス (配列で複数指定可能)
 		 * @returns {Promise} promiseオブジェクト
 		 */
 		load: function(resourcePaths) {
@@ -340,7 +287,7 @@
 		 * @memberOf View
 		 * @name getAvailableTemplates
 		 * @function
-		 * @returns {Array[String]} テンプレートIDの配列
+		 * @returns {String[]} テンプレートIDの配列
 		 */
 		getAvailableTemplates: function() {
 			var ids = [];

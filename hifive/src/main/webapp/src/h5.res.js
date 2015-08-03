@@ -256,6 +256,8 @@
 	 * <a href="h5.res.html#reequire">h5.res.dependsOn()</a>がこのクラスのインスタンスを返します。
 	 * </p>
 	 *
+	 * @class
+	 * @name Dependency
 	 * @param {String} resourceKey
 	 */
 	function Dependency(resourceKey) {
@@ -271,6 +273,7 @@
 		 * 登録されているリゾルバでresolveできないリソースキーの場合はfalseを返します
 		 * </p>
 		 *
+		 * @memberOf Dependency
 		 * @param {String} type
 		 */
 		resolve: function(type) {
@@ -333,6 +336,7 @@
 		/**
 		 * 指定されたリソースキーを返します
 		 *
+		 * @memberOf Dependency
 		 * @returns {String} リソースキー
 		 */
 		getKey: function() {
@@ -477,7 +481,7 @@
 		urlLoader.load(getFilePath(resourceKey)).done(function(resource) {
 			// コンテンツからscript要素を取得
 			var $elements = $(resource.content).filter(function() {
-				// IE8以下で、要素内にSCRIPTタグが含まれていると、jQueryが</SCRIPT>をunknownElementとして扱ってしまう。
+				// IE8以下で、要素内にSCRIPTタグが含まれていると、jQueryが&lt;/SCRIPT&gt;をunknownElementとして扱ってしまう。
 				// nodeTypeを見てコメントノードも除去して、tagNameが'/SCRIPT'のものも除去する。
 				return this.nodeType === 1 && this.tagName.indexOf('/') !== 0;
 			});
