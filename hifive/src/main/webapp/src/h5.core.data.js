@@ -2328,7 +2328,7 @@
 	 * DataItem、ObservableItemのが持つObservableArrayのプロパティに対して、リスナを登録します
 	 *
 	 * @private
-	 * @param {DataItem||ObservableItem} item
+	 * @param {DataItem|ObservableItem} item
 	 * @param {String} propName プロパティ名
 	 * @param {ObservableArray} リスナ登録をするObservableArray
 	 * @param {DataModel} [model] モデル(DataItemの場合)

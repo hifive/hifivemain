@@ -3052,7 +3052,7 @@
 	 * コントローラをエラー終了状態にして、lifecycleerrorイベントをトリガする
 	 *
 	 * @param {Controller} rootController ルートコントローラ
-	 * @param {Error||rejectReason} detail 例外オブジェクト、またはRejectReason
+	 * @param {Error|rejectReason} detail 例外オブジェクト、またはRejectReason
 	 */
 	function triggerLifecycleerror(rootController, detail) {
 		controllerManager.dispatchEvent({
@@ -4030,6 +4030,7 @@
 						 * 追加されたコントローラは呼び出し元のコントローラの子コントローラとなります。
 						 * </p>
 						 *
+						 * @memberOf Controller
 						 * @param {Controller} コントローラインスタンス
 						 */
 						manageChild: function(controller) {
@@ -4066,6 +4067,7 @@
 						/**
 						 * 子コントローラを動的に削除
 						 *
+						 * @memberOf Controller
 						 * @param {Controller} コントローラインスタンス
 						 * @param {Boolean} [andDispose=true]
 						 *            第1引数で指定されたコントローラをdisposeするかどうか。指定無しの場合はdisposeします。
@@ -4878,6 +4880,7 @@
 		/**
 		 * セレクタから子コントローラ定義を行うオブジェクト
 		 *
+		 * @memberOf h5.core
 		 * @param {String} セレクタ
 		 */
 		childFrom: function(selector) {
