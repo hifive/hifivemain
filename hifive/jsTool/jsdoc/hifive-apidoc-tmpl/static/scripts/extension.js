@@ -37,37 +37,36 @@
 						return;
 					}
 					var tableTitle = $(this).text() + ': 概要';
-					$constructaTable = $('<table class="summaryTable constructa"></table>');
+					var $constructaTable = $('<table class="summaryTable constructa"></table>');
 					$constructaTable.append('<thead><tr><th colspan=3>' + tableTitle
 							+ '</th><tr></thead>');
 
 					// テーブルの中身を追加
-					$(this).next().children('dt').each(
-							function() {
-								var name = $.trim(escapeHTML($(this).text().replace(/<.*> /, '')));
-								var type = $.trim($(this).html()).match(" :.*$");
-								if (!type) {
-									type = ' ';
-								} else {
-									type = type[0].replace(/ :/, '');
-									name = name.split(' :')[0];
-								}
-								var link = name.replace(/ /g, '');
-								var desc = $(this).next().find('.description:first').text();
-								if (!tableTitle.match('Members')) {
-									$constructaTable.append('<tbody><tr><td colspan=2><a href="#'
-											+ link + '">' + name + '</td><td>' + desc
-											+ '</td><tr></thead>');
-								} else {
-									$constructaTable.append('<tbody><tr><td><a href="#' + link
-											+ '">' + name + '</td><td>' + type + '</td><td>' + desc
-											+ '</td><tr></thead>');
-								}
-								$summary.append($constructaTable);
+					var $current = $(this).nextAll('h4,h3').eq(0);
+					while ($current.length && !$current.hasClass('subsection-title')) {
+						var name = $.trim($current.contents().not($current.children()).text());
+						var type = $current.text().match(" :.*$");
+						if (!type) {
+							type = ' ';
+						} else {
+							type = type[0].replace(/ :/, '');
+						}
+						var link = '.' + name.replace(/ /g, '');
+						var desc = $($current.next('.description')[0].childNodes[0]).text();
+						$current = $current.nextAll('h4,h3').eq(0);
+						if (!tableTitle.match('Members')) {
+							$constructaTable.append('<tbody><tr><td colspan=2><a href="#' + link
+									+ '">' + name + '</td><td>' + desc + '</td><tr></thead>');
+						} else {
+							$constructaTable.append('<tbody><tr><td><a href="#' + link + '">'
+									+ name + '</td><td>' + type + '</td><td>' + desc
+									+ '</td><tr></thead>');
+						}
+						$summary.append($constructaTable);
+					}
 
-								// リンクの追加
-								$(this).find('h4').prepend('<a name="' + link + '"/>');
-							});
+					// リンクの追加
+					$(this).find('h4').prepend('<a name="' + link + '"/>');
 				});
 
 		// 水平線の追加

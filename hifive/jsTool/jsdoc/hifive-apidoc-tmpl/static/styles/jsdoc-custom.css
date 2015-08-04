@@ -1,21 +1,11 @@
-@charset "utf-8";
-/*
- * Copyright (C) 2012-2014 NS Solutions Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * hifive css
- */
+nav {
+	float: left;
+	border-right: 1px solid #ccc;
+	border-left: none;
+	padding-left: 0;
+	width: 180px;
+}
+
 .summaryTable {
 	border-spacing: 0;
 	border: 0;
@@ -31,7 +21,6 @@
 }
 
 .summaryTable .name,.props .name,.name code {
-	color: #A35A00;
 	font-family: Consolas, 'Lucida Console', Monaco, monospace;
 	font-size: 100%;
 }
@@ -42,15 +31,10 @@
 	text-align: left;
 	vertical-align: top;
 	padding: 4px 6px;
-	display: table-cell;
 }
 
 .summaryTable td:last-child {
 	width: 70%;
-}
-
-.summaryTable td:first-child a {
-	color: #A35A00;
 }
 
 .summaryTable thead tr {
@@ -74,36 +58,19 @@
 	border-right: 1px solid #aaa;
 }
 
-.summaryTable th:last-child,.returnsTable th:last-child {
-	border-right: 1px solid #ddd;
-}
-
 #container {
 	width: 900px;
 }
 
 #main {
 	float: left;
-	/* padding-left: 10px; */
+	padding-left: 10px;
 	width: 700px;
-}
-
-nav {
-	float: left;
-	display: block;
-	margin-top: 5px;
-	width: 180px;
-	border-right: 1px solid #ccc;
-	display: block;
-	font-size: small;
-}
-
-nav ul {
-	padding-left: 9px;
 }
 
 .h5-logo {
 	width: 180px;
+	height: 75px;
 }
 
 .h5-searchBox {
@@ -132,7 +99,7 @@ nav ul {
 	display: none !important;
 }
 
-/* preã‚¿ã‚°è¨˜è¿°ãŒã¯ã¿å‡ºãªã„ã‚ˆã†ã« */
+/* preƒ^ƒO‹Lq‚ª‚Í‚İo‚È‚¢‚æ‚¤‚É */
 pre {
 	white-space: -moz-pre-wrap;
 	white-space: -webkit-pre-wrap;
@@ -149,16 +116,12 @@ pre {
 	display: block;
 }
 
-.sh_sourceCode {
-	width: 100%;
-}
-
-/* 900pxä»¥ä¸‹ */
+/* 900pxˆÈ‰º */
 @media screen and (max-width: 900px) {
 	body {
 		margin: 0;
 	}
-	/* ãƒ¡ãƒ‡ã‚£ã‚¢ã‚¯ã‚¨ãƒªæœ‰åŠ¹æ™‚ã®ã¿æœ‰åŠ¹ãªhiddenã‚¯ãƒ©ã‚¹ */
+	/* ƒƒfƒBƒAƒNƒGƒŠ—LŒø‚Ì‚İ—LŒø‚ÈhiddenƒNƒ‰ƒX */
 	.hidden-mobile {
 		display: none !important;
 	}
@@ -169,17 +132,18 @@ pre {
 		position: fixed;
 		background-color: #fff;
 		margin-top: 0;
-		border-bottom: 1px solid #ccc;
 		overflow-y: visible;
-	}
-	.h5-logo {
-		width: 90px;
 	}
 	.module-list-wrapper {
 		clear: both;
 	}
 	.h5-logo-wrapper {
 		float: left;
+		height: 40px;
+	}
+	.h5-logo {
+		width: 90px;
+		height: 38px;
 	}
 	.h5-searchBox {
 		display: none;

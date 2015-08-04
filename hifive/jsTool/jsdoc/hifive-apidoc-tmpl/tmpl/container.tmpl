@@ -1,266 +1,183 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width,initial-scale=1.0">
-	<meta http-equiv="Pragma" content="no-cache">
-	<meta http-equiv="Cache-Control" content="no-cache">
-	<meta http-equiv="Expires" content="-1">
-	<title>JSDoc: <?js= title ?></title>
-    <!--[if lt IE 9]>
-    <script src="js/modernizr.js"></script>
-    <![endif]-->
+<?js
+    var self = this;
+    var isGlobalPage;
 
-    <link type="text/css" rel="stylesheet" href="styles/node-dark.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+    docs.forEach(function(doc, i) {
+?>
 
-	<script src="http://shjs.sourceforge.net/sh_main.min.js"> </script>
-    <script src="http://shjs.sourceforge.net/lang/sh_javascript.min.js"> </script>
-    <script src="js/jquery.js"> </script>
-    <script src="js/extension.js"> </script>
-</head>
+<?js
+    // we only need to check this once
+    if (typeof isGlobalPage === 'undefined') {
+        isGlobalPage = (doc.kind === 'globalobj');
+    }
+?>
+<?js if (doc.kind === 'mainpage' || (doc.kind === 'package')) { ?>
+    <?js= self.partial('mainpage.tmpl', doc) ?>
+<?js } else if (doc.kind === 'source') { ?>
+    <?js= self.partial('source.tmpl', doc) ?>
+<?js } else { ?>
 
-<body>
+<section>
 
-<div id="container">
-    <nav>
-    	<div class="module-search-header">
-	    	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
-	        <div class="h5-searchBox">
-	        	<input type="text" placeholder="Search...">
-	        	<button class="clear">×</button>
-	        </div>
-        </div>
-	    <div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
-	    <div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
-        <div class="module-list-wrapper hidden-mobile">
-        	<?js= nav ?>
-        </div>
-    </nav>
-
-    <div id="main">
-
-        <h1 class="page-title"><?js= title ?></h1>
-
-        <?js
-            docs.forEach(function(doc, i) {
-        ?>
-
-        <section>
-
-        <header>
-            <h2><?js
-                if (doc.ancestors && doc.ancestors.length) {
-                    print('<span class="ancestors">');
-                    print( doc.ancestors.join('') );
-                    print('</span>' + doc.name);
-                }
-                else {
-                    print(doc.name)
-                }
-
-                if (doc.variation) {
-                   print('<sup class="variation">'+doc.variation+'</sup>');
-                }
-
-             ?></h2>
-            <?js
-                if (doc.classdesc) {
-                   print('<p class="class-description">'+doc.classdesc+'</p>');
-                }
-            ?>
-        </header>
-
-        <article>
-            <div class="container-overview">
-            <?js
-            if (doc.kind === 'module' && doc.module) {
-                print(render('method.tmpl', doc.module));
-            }
-
-            if (doc.kind === 'class') {
-                print(render('method.tmpl', doc));
-            }
-            else {
-                if (doc.description) {
-                    print('<p class="description">' + doc.description + '</p>');
-                }
-
-                print(render('details.tmpl', doc));
-
-                if (doc.examples && doc.examples.length) {
-                    print('<h3>Example' + (doc.examples.length > 1? 's':'') + '</h3>');
-                    print( render('examples.tmpl', doc.examples) );
-                }
-            }
-            ?>
-            </div>
-
-            <?js
-                if (doc.augments && doc.augments.length) {
-            ?>
-                <h3 class="subsection-title">Extends</h3>
-
-                <ul><?js
-                    doc.augments.forEach(function(a) {
-                ?>
-                    <li><?js= linkto(a, a) ?></li>
-                <?js
-                    });
-                ?></ul>
-            <?js
-                }
-            ?>
-
-            <?js
-                if (doc.mixes && doc.mixes.length) {
-            ?>
-                <h3 class="subsection-title">Mixes In</h3>
-
-                <ul><?js
-                    doc.mixes.forEach(function(a) {
-                ?>
-                    <li><?js= linkto(a, a) ?></li>
-                <?js
-                    });
-                ?></ul>
-            <?js
-                }
-            ?>
-
-            <?js
-                if (doc.requires && doc.requires.length) {
-            ?>
-                <h3 class="subsection-title">Requires</h3>
-
-                <ul><?js
-                    doc.requires.forEach(function(r) {
-                ?>
-                    <li><?js= linkto(r, r) ?></li>
-                <?js
-                    });
-                ?></ul>
-            <?js
-                }
-            ?>
-
-            <?js
-                var classes = find({kind: 'class', memberof: doc.longname});
-                if (doc.kind !== 'globalobj' && classes && classes.length) {
-            ?>
-
-                <h3 class="subsection-title">Classes</h3>
-
-                <dl><?js
-                    classes.forEach(function(c) {
-                ?>
-                    <dt><?js= linkto(c.longname, c.name) ?></dt>
-                    <dd><?js if (c.summary) print(c.summary); ?></dd>
-                <?js
-                    });
-                ?></dl>
-
+<header>
+    <?js if (!doc.longname || doc.kind !== 'module') { ?>
+        <h2><?js if (doc.ancestors && doc.ancestors.length) { ?>
+            <span class="ancestors"><?js= doc.ancestors.join('') ?></span>
+        <?js } ?>
+        <?js= doc.name ?>
+        <?js if (doc.variation) { ?>
+            <sup class="variation"><?js= doc.variation ?></sup>
+        <?js } ?></h2>
+        <?js if (doc.classdesc) { ?>
+            <div class="class-description"><?js= doc.classdesc ?></div>
+        <?js } ?>
+    <?js } else if (doc.kind === 'module' && doc.modules) { ?>
+        <?js doc.modules.forEach(function(module) { ?>
+            <?js if (module.classdesc) { ?>
+                <div class="class-description"><?js= module.classdesc ?></div>
             <?js } ?>
+        <?js }) ?>
+    <?js } ?>
+</header>
 
-            <?js
-                var namespaces = find({kind: 'namespace', memberof: doc.longname});
-                if (doc.kind !== 'globalobj' && namespaces && namespaces.length) {
-            ?>
+<article>
+    <div class="container-overview">
+    <?js if (doc.kind === 'module' && doc.modules) { ?>
+        <?js if (doc.description) { ?>
+            <div class="description"><?js= doc.description ?></div>
+        <?js } ?>
 
-                <h3 class="subsection-title">Namespaces</h3>
+        <?js doc.modules.forEach(function(module) { ?>
+            <?js= self.partial('method.tmpl', module) ?>
+        <?js }) ?>
+    <?js } else if (doc.kind === 'class') { ?>
+        <?js= self.partial('method.tmpl', doc) ?>
+    <?js } else { ?>
+        <?js if (doc.description) { ?>
+            <div class="description"><?js= doc.description ?></div>
+        <?js } ?>
 
-                <dl><?js
-                    namespaces.forEach(function(n) {
-                ?>
-                    <dt><?js= linkto(n.longname, n.longname) ?></dt>
-                    <dd><?js if (n.summary) print(n.summary); ?></dd>
-                <?js
-                    });
-                ?></dl>
+        <?js= self.partial('details.tmpl', doc) ?>
 
-            <?js } ?>
-
-            <?js
-                var members = find({kind: 'member', memberof: doc.longname});
-                if (title === 'Globals') {
-                    members = find({kind: 'member', memberof: {isUndefined: true}});
-                }
-                if (members && members.length && members.forEach) {
-            ?>
-
-                <h3 class="subsection-title">Members</h3>
-
-                <dl><?js
-                    members.forEach(function(p) {
-                        print(render('members.tmpl', p));
-                        print('<hr>');
-                    });
-                ?></dl>
-
-            <?js } ?>
-
-            <?js
-                var methods = find({kind: 'function', memberof: doc.longname});
-                if (title === 'Globals') {
-                    methods = find({kind: 'function', memberof: {isUndefined: true}});
-                }
-                if (methods && methods.length && methods.forEach) {
-            ?>
-
-                <h3 class="subsection-title">Methods</h3>
-
-                <dl><?js
-                    methods.forEach(function(m) {
-                        print(render('method.tmpl', m));
-                        print('<hr>');
-                    });
-                ?></dl>
-
-            <?js } ?>
-
-            <?js
-                var typedefs = find({kind: 'typedef', memberof: doc.longname});
-                if (typedefs && typedefs.length && typedefs.forEach) {
-            ?>
-
-                <h3 class="subsection-title">TypeDefs</h3>
-
-                <dl><?js
-                    typedefs.forEach(function(e) {
-                        print(render('members.tmpl', e));
-                    });
-                ?></dl>
-            <?js } ?>
-
-            <?js
-                var events = find({kind: 'event', memberof: doc.longname});
-                if (events && events.length && events.forEach) {
-            ?>
-
-                <h3 class="subsection-title">Events</h3>
-
-                <dl><?js
-                    events.forEach(function(e) {
-                        print(render('method.tmpl', e));
-                    });
-                ?></dl>
-            <?js } ?>
-        </article>
-
-        </section>
-        <?js }); ?>
+        <?js if (doc.examples && doc.examples.length) { ?>
+            <h3>Example<?js= doc.examples.length > 1? 's':'' ?></h3>
+            <?js= self.partial('examples.tmpl', doc.examples) ?>
+        <?js } ?>
+    <?js } ?>
     </div>
 
-    <br clear="both">
-</div>
+    <?js if (doc.augments && doc.augments.length) { ?>
+        <h3 class="subsection-title">Extends</h3>
 
-<footer>
-    Documentation generated by <a href="https://github.com/micmath/jsdoc">JSDoc 3</a> on <?js= (new Date()) ?><br />
-    <small class="footerCopyright">Copyright (C) 2012-2014 NS Solutions Corporation, All Rights Reserved.</small>
-</footer>
+        <?js= self.partial('augments.tmpl', doc) ?>
+    <?js } ?>
 
-<script> sh_highlightDocument(); </script>
-</body>
-</html>
+    <?js if (doc.requires && doc.requires.length) { ?>
+        <h3 class="subsection-title">Requires</h3>
+
+        <ul><?js doc.requires.forEach(function(r) { ?>
+            <li><?js= self.linkto(r, r) ?></li>
+        <?js }); ?></ul>
+    <?js } ?>
+
+    <?js
+        var classes = self.find({kind: 'class', memberof: doc.longname});
+        if (!isGlobalPage && classes && classes.length) {
+    ?>
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl><?js classes.forEach(function(c) { ?>
+            <dt><?js= self.linkto(c.longname, c.name) ?></dt>
+            <dd><?js if (c.summary) { ?><?js= c.summary ?><?js } ?></dd>
+        <?js }); ?></dl>
+    <?js } ?>
+
+     <?js
+        var mixins = self.find({kind: 'mixin', memberof: doc.longname});
+        if (!isGlobalPage && mixins && mixins.length) {
+    ?>
+        <h3 class="subsection-title">Mixins</h3>
+
+        <dl><?js mixins.forEach(function(m) { ?>
+            <dt><?js= self.linkto(m.longname, m.name) ?></dt>
+            <dd><?js if (m.summary) { ?><?js= m.summary ?><?js } ?></dd>
+        <?js }); ?></dl>
+    <?js } ?>
+
+    <?js
+        var namespaces = self.find({kind: 'namespace', memberof: doc.longname});
+        if (!isGlobalPage && namespaces && namespaces.length) {
+    ?>
+        <h3 class="subsection-title">Namespaces</h3>
+
+        <dl><?js namespaces.forEach(function(n) { ?>
+            <dt><?js= self.linkto(n.longname, n.name) ?></dt>
+            <dd><?js if (n.summary) { ?><?js= n.summary ?><?js } ?></dd>
+        <?js }); ?></dl>
+    <?js } ?>
+
+    <?js
+        var members = self.find({kind: 'member', memberof: isGlobalPage ? {isUndefined: true} : doc.longname});
+
+        // symbols that are assigned to module.exports are not globals, even though they're not a memberof anything
+        if (isGlobalPage && members && members.length && members.forEach) {
+            members = members.filter(function(m) {
+                return m.longname && m.longname.indexOf('module:') !== 0;
+            });
+        }
+        if (members && members.length && members.forEach) {
+    ?>
+        <h3 class="subsection-title">Members</h3>
+
+        <?js members.forEach(function(p) { ?>
+            <?js= self.partial('members.tmpl', p) ?>
+        <?js }); ?>
+    <?js } ?>
+
+    <?js
+        var methods = self.find({kind: 'function', memberof: isGlobalPage ? {isUndefined: true} : doc.longname});
+        if (methods && methods.length && methods.forEach) {
+    ?>
+        <h3 class="subsection-title">Methods</h3>
+
+        <?js methods.forEach(function(m) { ?>
+            <?js= self.partial('method.tmpl', m) ?>
+        <?js }); ?>
+    <?js } ?>
+
+    <?js
+        var typedefs = self.find({kind: 'typedef', memberof: isGlobalPage ? {isUndefined: true} : doc.longname});
+        if (typedefs && typedefs.length && typedefs.forEach) {
+    ?>
+        <h3 class="subsection-title">Type Definitions</h3>
+
+        <?js typedefs.forEach(function(e) {
+                if (e.signature) {
+            ?>
+                <?js= self.partial('method.tmpl', e) ?>
+            <?js
+                }
+                else {
+            ?>
+                <?js= self.partial('members.tmpl', e) ?>
+            <?js
+                }
+            }); ?>
+    <?js } ?>
+
+    <?js
+        var events = self.find({kind: 'event', memberof: isGlobalPage ? {isUndefined: true} : doc.longname});
+        if (events && events.length && events.forEach) {
+    ?>
+        <h3 class="subsection-title">Events</h3>
+
+        <?js events.forEach(function(e) { ?>
+            <?js= self.partial('method.tmpl', e) ?>
+        <?js }); ?>
+    <?js } ?>
+</article>
+
+</section>
+<?js } ?>
+
+<?js }); ?>

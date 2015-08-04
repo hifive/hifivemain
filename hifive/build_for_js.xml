@@ -102,6 +102,10 @@
 
 	<target name="jsdoc">
 		<delete dir="${webappdir}/doc" />
+		<mkdir dir="${webappdir}/doc" />
+		<copy todir="${webappdir}/doc">
+			<fileset dir="jstool/jsdoc/hifive-apidoc-tmpl/static"/>
+		</copy>
 		<exec executable="cmd" dir="jstool/jsdoc">
 			<arg line="/C jsdoc.bat" />
 		</exec>
