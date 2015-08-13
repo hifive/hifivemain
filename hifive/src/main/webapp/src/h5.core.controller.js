@@ -987,7 +987,9 @@
 			var c = bindObj.controller;
 			// h5track*のオフセット計算等のためにすでにhandlerにはFW側でラップ済みの関数を持っている場合がある
 			// その場合は、bindObj.originalHandlerにすでにラップ前の関数を持たせてある
-			bindObj.originalHandler = bindObj.originalHandler || handler;
+			if (!bindObj.originalHandler) {
+				bindObj.originalHandler = handler;
+			}
 			bindObj.handler = function(/* var args */) {
 				// isNativeBindがtrue(addEventListenerによるバインド)なら、イベントハンドラのthisをイベントハンドラの第2引数にする。
 				// (DOM要素でないものはlistenerElementTypeに関わらずjQueryで包まない)
@@ -999,6 +1001,14 @@
 						&& h5.settings.listenerElementType === 1 ? $(this) : this;
 				handler.call(c, createEventContext(bindObj, arguments), currentTargetShortcut);
 			};
+		}
+		function e(b) {
+			var c = b.handler, I = b.controller;
+			b.originalHandler || (b.originalHandler = c);
+			b.handler = function() {
+				var l = !b.isNativeBind && d.settings.listenerElementType === 1 ? a(this) : this;
+				c.call(I, da(b, arguments), l)
+			}
 		}
 		for (var i = 0, l = bindObjects.length; i < l; i++) {
 			var bindObject = bindObjects[i];
