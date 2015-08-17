@@ -148,11 +148,23 @@ $(function() {
 		var screenX = 0;
 		var screenY = 0;
 
-		var ev = {};
+		var ev;
 		if (elm.dispatchEvent) {
-			ev = document.createEvent('MouseEvent');
-			ev.initMouseEvent(eventName, true, true, window, 0, screenX, screenY, clientX, clientY,
-					false, false, false, false, 0, null);
+			if (typeof window.MouseEvent == 'function') {
+				// DOM Level4 イベントコンストラクタに対応している場合
+				// chrome, Edge
+				ev = new MouseEvent(eventName, {
+					screenX: screenX,
+					screenY: screenY,
+					clientX: clientX,
+					clientY: clientY,
+					bubbles: true
+				});
+			} else {
+				ev = document.createEvent('MouseEvent');
+				ev.initMouseEvent(eventName, true, true, window, 0, screenX, screenY, clientX,
+						clientY, false, false, false, false, 0, null);
+			}
 			elm.dispatchEvent(ev);
 		} else {
 			ev = document.createEventObject();
@@ -170,7 +182,6 @@ $(function() {
 		var ev;
 		if (typeof document.onmousewheel !== 'undefined') {
 			if (elm.dispatchEvent) {
-
 				function createUIEvent() {
 					// opera, android2
 					// wheelDeltaが負ならdetailを3、正なら-3のイベントを作成。
@@ -179,7 +190,7 @@ $(function() {
 				}
 				try {
 					var ev;
-					if (typeof window.Event == 'function') {
+					if (typeof window.MouseEvent == 'function') {
 						// DOM Level4 イベントコンストラクタに対応している場合
 						// chrome, Edge
 						ev = new MouseEvent('wheel', {
