@@ -2942,7 +2942,8 @@ $(function() {
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
 		var target = ctrl.$div[0];
-		dispatchMouseEvent(target, 'click', rootOffset.left + 4, rootOffset.top + 8);
+		dispatchMouseEvent(target, 'click', Math.round(rootOffset.left) + 4, Math
+				.round(rootOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), 'h5trackstart時にオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), 'h5trackstart時にオフセットのy座標が取得できること');
 		dispatchMouseEvent(target, 'mouseup');
@@ -2953,7 +2954,8 @@ $(function() {
 			left: rootOffset.left + 20
 		};
 		target = ctrl.$inner[0];
-		dispatchMouseEvent(target, 'click', innerOffset.left + 4, innerOffset.top + 8);
+		dispatchMouseEvent(target, 'click', Math.round(innerOffset.left) + 4, Math
+				.round(innerOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), '内側のdiv要素のh5trackstart時にオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), '内側のdiv要素のh5trackstart時にオフセットのy座標が取得できること');
 		dispatchMouseEvent(target, 'mouseup');
@@ -2971,7 +2973,8 @@ $(function() {
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
 		var target = ctrl.$div[0];
-		dispatchMouseEvent(target, 'mousedown', rootOffset.left + 4, rootOffset.top + 8);
+		dispatchMouseEvent(target, 'mousedown', Math.round(rootOffset.left) + 4, Math
+				.round(rootOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), 'h5trackstart時にオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), 'h5trackstart時にオフセットのy座標が取得できること');
 		dispatchMouseEvent(target, 'mouseup');
@@ -2982,7 +2985,8 @@ $(function() {
 			left: rootOffset.left + 20
 		};
 		target = ctrl.$inner[0];
-		dispatchMouseEvent(target, 'mousedown', innerOffset.left + 4, innerOffset.top + 8);
+		dispatchMouseEvent(target, 'mousedown', Math.round(innerOffset.left) + 4, Math
+				.round(innerOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), '内側のdiv要素のh5trackstart時にオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), '内側のdiv要素のh5trackstart時にオフセットのy座標が取得できること');
 
@@ -3001,7 +3005,8 @@ $(function() {
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
 		var target = ctrl.$div[0];
-		dispatchTouchEvent(target, 'touchstart', rootOffset.left + 4, rootOffset.top + 8);
+		dispatchTouchEvent(target, 'touchstart', Math.round(rootOffset.left) + 4, Math
+				.round(rootOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), 'h5trackstart時にオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), 'h5trackstart時にオフセットのy座標が取得できること');
 		dispatchTouchEvent(target, 'touchend');
@@ -3012,7 +3017,8 @@ $(function() {
 			left: rootOffset.left + 20
 		};
 		target = ctrl.$inner[0];
-		dispatchTouchEvent(target, 'touchstart', innerOffset.left + 4, innerOffset.top + 8);
+		dispatchTouchEvent(target, 'touchstart', Math.round(innerOffset.left) + 4, Math
+				.round(innerOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), '内側のdiv要素のh5trackstart時にオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), '内側のdiv要素のh5trackstart時にオフセットのy座標が取得できること');
 		dispatchTouchEvent(target, 'touchend');
@@ -3072,7 +3078,8 @@ $(function() {
 		var ctrl = this.offsetTestCtrl;
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
-		dispatchMouseEvent(ctrl.svg, 'click', rootOffset.left + 4, rootOffset.top + 8);
+		dispatchMouseEvent(ctrl.svg, 'click', Math.round(rootOffset.left) + 4, Math
+				.round(rootOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), 'svg要素のh5trackstart時にsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), 'svg要素のh5trackstart時にsvg要素からのオフセットのy座標が取得できること');
 		dispatchMouseEvent(ctrl.svg, 'mouseup');
@@ -3082,7 +3089,8 @@ $(function() {
 			left: rootOffset.left + 10,
 			top: rootOffset.top + 20
 		};
-		dispatchMouseEvent(ctrl.rect, 'click', rectOffset.left + 4, rectOffset.top + 8);
+		dispatchMouseEvent(ctrl.rect, 'click', Math.round(rectOffset.left) + 4, Math
+				.round(rectOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 14), 'rect要素のh5trackstart時にsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 28), 'rect要素のh5trackstart時にsvg要素からのオフセットのy座標が取得できること');
 		dispatchMouseEvent(ctrl.rect, 'mouseup');
@@ -3099,7 +3107,8 @@ $(function() {
 		var ctrl = this.offsetTestCtrl;
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
-		dispatchMouseEvent(ctrl.svg, 'mousedown', rootOffset.left + 4, rootOffset.top + 8);
+		dispatchMouseEvent(ctrl.svg, 'mousedown', Math.round(rootOffset.left) + 4, Math
+				.round(rootOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), 'svg要素のh5trackstart時にsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), 'svg要素のh5trackstart時にsvg要素からのオフセットのy座標が取得できること');
 		dispatchMouseEvent(ctrl.svg, 'mouseup');
@@ -3109,7 +3118,8 @@ $(function() {
 			left: rootOffset.left + 10,
 			top: rootOffset.top + 20
 		};
-		dispatchMouseEvent(ctrl.rect, 'mousedown', rectOffset.left + 4, rectOffset.top + 8);
+		dispatchMouseEvent(ctrl.rect, 'mousedown', Math.round(rectOffset.left) + 4, Math
+				.round(rectOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 14), 'rect要素のh5trackstart時にsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 28), 'rect要素のh5trackstart時にsvg要素からのオフセットのy座標が取得できること');
 		dispatchMouseEvent(ctrl.rect, 'mouseup');
@@ -3126,7 +3136,8 @@ $(function() {
 		var ctrl = this.offsetTestCtrl;
 		// ルートエレメントの座標を基準にdispatchするイベントの座標(clientX,clientY)を決める
 		var rootOffset = $(ctrl.rootElement).offset();
-		dispatchTouchEvent(ctrl.svg, 'touchstart', rootOffset.left + 4, rootOffset.top + 8);
+		dispatchTouchEvent(ctrl.svg, 'touchstart', Math.round(rootOffset.left) + 4, Math
+				.round(rootOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 4), 'svg要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 8), 'svg要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
 		dispatchTouchEvent(ctrl.svg, 'touchend');
@@ -3136,7 +3147,8 @@ $(function() {
 			left: rootOffset.left + 10,
 			top: rootOffset.top + 20
 		};
-		dispatchTouchEvent(ctrl.rect, 'touchstart', rectOffset.left + 4, rectOffset.top + 8);
+		dispatchTouchEvent(ctrl.rect, 'touchstart', Math.round(rectOffset.left) + 4, Math
+				.round(rectOffset.top) + 8);
 		ok(nearEqual(ctrl.offsetX, 14), 'rect要素をクリックした時のsvg要素からのオフセットのx座標が取得できること');
 		ok(nearEqual(ctrl.offsetY, 28), 'rect要素をクリックした時のsvg要素からのオフセットのy座標が取得できること');
 		dispatchTouchEvent(ctrl.rect, 'touchend');
