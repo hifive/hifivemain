@@ -178,22 +178,30 @@ $(function() {
 					ev.initUIEvent('mousewheel', false, false, window, wheelDelta < 0 ? 3 : -3);
 				}
 				try {
-					ev = document.createEvent('WheelEvent');
-
-					if (ev.initWebKitWheelEvent) {
-						// chrome,safari,android3+
-						// wheelDeltaが正ならwheelDeltaYを正、負なら負のイベントを作成。
-						ev.initWebKitWheelEvent(0, wheelDelta > 0 ? 1 : -1, window, 0, 0, 0, 0,
-								false, false, false, false);
-					} else if (ev.initWheelEvent) {
-						// IE9+
-						// wheelDeltaが負ならdetailを3、正なら-3のイベントを作成。
-						ev.initWheelEvent('mousewheel', false, false, window, wheelDelta < 0 ? 3
-								: -3, 0, 0, 0, 0, 0, null, null, 0, 0, 0, 0);
-
+					var ev;
+					if (typeof window.Event == 'function') {
+						// DOM Level4 イベントコンストラクタに対応している場合
+						// chrome, Edge
+						ev = new MouseEvent('wheel', {
+							detail: wheelDelta < 0 ? 3 : -3
+						});
 					} else {
-						// android2
-						createUIEvent();
+						ev = document.createEvent('WheelEvent');
+						if (ev.initWebKitWheelEvent) {
+							// safari,android3+
+							// wheelDeltaが正ならwheelDeltaYを正、負なら負のイベントを作成。
+							ev.initWebKitWheelEvent(0, wheelDelta > 0 ? 1 : -1, window, 0, 0, 0, 0,
+									false, false, false, false);
+						} else if (ev.initWheelEvent) {
+							// IE9+
+							// wheelDeltaが負ならdetailを3、正なら-3のイベントを作成。
+							ev.initWheelEvent('mousewheel', false, false, window,
+									wheelDelta < 0 ? 3 : -3, 0, 0, 0, 0, 0, null, null, 0, 0, 0, 0);
+
+						} else {
+							// android2
+							createUIEvent();
+						}
 					}
 				} catch (e) {
 					// opera
