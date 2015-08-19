@@ -1280,6 +1280,65 @@ $(function() {
 			});
 		};
 	}
+	/**
+	 * h5trackstartを発火させたイベント(mosudown,touchstart)がpreventDefault()されることの確認及び、
+	 * h5trackstartイベントをpreventDefault()したときに発火させたイベントがpreventDefault()されないことの確認
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @param {boolean} h5trackstartPreventDefault h5trackstartをpreventDefault()するかどうか
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestPreventDefault(events, h5trackstartPreventDefault) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var startTrackEvent = createDummyTrackEvent(events.start, 0);
+			var moveTrackEvent = createDummyTrackEvent(events.move, 10);
+			var endTrackEvent = createDummyTrackEvent(events.end, 10);
+
+			var $elm = $('#controllerTest');
+			$elm.append('<div id="divInControllerTest"></div>');
+			var executedEventMap = {};
+			function registMap(ctx) {
+				executedEventMap[ctx.event.type] = ctx.event;
+			}
+			var controller = h5.core.controller($elm, {
+				__name: 'Controller',
+				'{rootElement} h5trackstart': function(ctx) {
+					registMap(ctx);
+					if (h5trackstartPreventDefault) {
+						ctx.event.preventDefault();
+					}
+				},
+				'{rootElement} h5trackmove': registMap,
+				'{rootElement} h5trackend': registMap
+			});
+
+			controller.readyPromise
+					.done(function() {
+						$elm.trigger(startTrackEvent);
+						$elm.trigger(moveTrackEvent);
+						$elm.trigger(endTrackEvent);
+
+						var startEvent = executedEventMap['h5trackstart'];
+						ok(startEvent, 'h5trackstartイベントが実行された');
+						if (!h5trackstartPreventDefault) {
+							ok(startEvent.h5DelegatingEvent.isDefaultPrevented,
+									'h5trackstartイベントをpreventDefault()しない場合、元のイベントのpreventDefault()が呼ばれていること');
+						}
+						if (h5trackstartPreventDefault) {
+							ok(startEvent.h5DelegatingEvent.isDefaultPrevented,
+									'h5trackstartイベントをpreventDefault()した場合、元のイベントのpreventDefault()は呼ばれないこと');
+						}
+						ok(executedEventMap['h5trackmove'], 'h5trackmoveイベントが実行された');
+						ok(executedEventMap['h5trackend'], 'h5trackendイベントが実行された');
+						start();
+					});
+		};
+	}
 
 	/**
 	 * h5trackイベントのon/offのテスト
@@ -2722,6 +2781,17 @@ $(function() {
 	asyncTest(
 			'ルートエレメントより外のエレメントでtouch系イベントがstopPropagation()されていて、documentまでtouch系イベントがバブリングしない状態でも、h5trackイベントハンドラは実行されること',
 			3, getH5trackTestCheckStopPropagation(touchTrackEvents));
+	asyncTest('mousedownでh5trackstartが発火した時、mousedownイベントのpreventDefault()が呼ばれること',
+			getH5trackTestPreventDefault(mouseTrackEvents));
+	asyncTest('touchstartでh5trackstartが発火した時、touchstartイベントのpreventDefault()が呼ばれること',
+			getH5trackTestPreventDefault(mouseTrackEvents));
+	asyncTest(
+			'mousedownでh5trackstartが発火して、h5trackstartイベントのpreventDefault()を呼んだ時、mousedownイベントのpreventDefault()は呼ばれないこと',
+			getH5trackTestPreventDefault(mouseTrackEvents, true));
+	asyncTest(
+			'touchstartでh5trackstartが発火して、h5trackstartイベントのpreventDefault()を呼んだ時、touchstartイベントのpreventDefault()は呼ばれないこと',
+			getH5trackTestPreventDefault(mouseTrackEvents, true));
+
 	asyncTest('on/offでh5trackイベントのバインド、アンバインドができること(mouse)',
 			getH5trackTestTrackEventOnOff(mouseTrackEvents));
 	asyncTest('on/offでh5trackイベントのバインド、アンバインドができること(touch)',
