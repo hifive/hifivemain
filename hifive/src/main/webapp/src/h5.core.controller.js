@@ -1839,7 +1839,11 @@
 						// スタートイベント、かつ今h5trackstartをトリガしたところなら、
 						// h5trackmove,endを登録
 
-						newEvent.h5DelegatingEvent.preventDefault();
+						// トラック操作で文字列選択やスクロールなどが起きないように元のイベントのpreventDefault()を呼ぶ
+						// ただし、h5trackstartがpreventDefault()されていたら、元のイベントのpreventDefault()は呼ばない
+						if (!newEvent.isDefaultPrevented()) {
+							newEvent.h5DelegatingEvent.preventDefault();
+						}
 						var nt = newEvent.target;
 
 						// 直前のh5track系イベントとの位置の差分を格納
