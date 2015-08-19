@@ -100,6 +100,15 @@
 		var isWindowsPhone = !!ua.match(/Windows Phone/i);
 
 		/**
+		 * ブラウザがMicrosoft Edgeであるかどうかを表します。
+		 *
+		 * @name isEdge
+		 * @type Boolean
+		 * @memberOf h5.env.ua
+		 */
+		var isEdge = !!ua.match(/Edge/);
+
+		/**
 		 * ブラウザがInternet Explorerであるかどうかを表します。
 		 *
 		 * @name isIE
@@ -130,7 +139,8 @@
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
-		var isChrome = !!ua.match(/Chrome/i) || !!ua.match(/CrMo/) || !!ua.match(/CriOS/);
+		var isChrome = (!isEdge && !!ua.match(/Chrome/i)) || !!ua.match(/CrMo/)
+				|| !!ua.match(/CriOS/);
 
 		/**
 		 * ブラウザがSafariであるかどうかを表します。 iOSのSafariの場合もtrueです。
@@ -139,7 +149,7 @@
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
-		var isSafari = !isAndroid && !!ua.match(/Safari/i) && !isChrome;
+		var isSafari = !isEdge && !isAndroid && !isChrome && !!ua.match(/Safari/i);
 
 		/**
 		 * レンダリングエンジンがWebkitであるかどうかを表します。
@@ -148,7 +158,7 @@
 		 * @type Boolean
 		 * @memberOf h5.env.ua
 		 */
-		var isWebkit = !!ua.match(/Webkit/i);
+		var isWebkit = !isEdge && !!ua.match(/Webkit/i);
 
 		/**
 		 * ブラウザがOperaであるかどうかを表します。 モバイル、iOSのOperaの場合もtrueです。
@@ -338,6 +348,8 @@
 				if (!version) {
 					version = spaceSplit('Opera');
 				}
+			} else if (isEdge) {
+				version = slashSplit('Edge');
 			}
 			if (version) {
 				browserVersion = getMainVersion(version);
@@ -360,6 +372,7 @@
 			isChrome: isChrome,
 			isSafari: isSafari,
 			isOpera: isOpera,
+			isEdge: isEdge,
 			isAndroidDefaultBrowser: isAndroidDefaultBrowser,
 			isSmartPhone: isSmartPhone,
 			isTablet: isTablet,
