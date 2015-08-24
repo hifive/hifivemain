@@ -94,7 +94,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('HTML要素の記述に基づいたコントローラの自動バインド', {
+	module('[jquery#-1.6.4]HTML要素の記述に基づいたコントローラの自動バインド', {
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
 			deleteProperty(window, 'scenedata');
@@ -307,7 +307,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('シーンコンテナとシーン', {
+	module('[jquery#-1.6.4]シーンコンテナとシーン', {
 		teardown: function() {
 			deleteProperty(window, 'h5scenetest');
 			deleteProperty(window, 'scenedata');
@@ -657,7 +657,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナ', {
+	module('[jquery#-1.6.4;browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナ', {
 		setup: function() {
 			stop();
 			var that = this;
@@ -891,7 +891,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[browser#and-and:all|sa-ios:all|ie-wp:all]フラグの確認', {
+	module('[jquery#-1.6.4;browser#and-and:all|sa-ios:all|ie-wp:all]フラグの確認', {
 		setup: function() {
 			stop();
 			var that = this;
