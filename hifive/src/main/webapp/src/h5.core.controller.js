@@ -1002,14 +1002,7 @@
 				handler.call(c, createEventContext(bindObj, arguments), currentTargetShortcut);
 			};
 		}
-		function e(b) {
-			var c = b.handler, I = b.controller;
-			b.originalHandler || (b.originalHandler = c);
-			b.handler = function() {
-				var l = !b.isNativeBind && d.settings.listenerElementType === 1 ? a(this) : this;
-				c.call(I, da(b, arguments), l)
-			}
-		}
+
 		for (var i = 0, l = bindObjects.length; i < l; i++) {
 			var bindObject = bindObjects[i];
 			// handlerをラップ
