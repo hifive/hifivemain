@@ -173,21 +173,26 @@
 			for ( var prop in this._rule) {
 				var rule = this._rule[prop];
 				var value = obj[prop];
+				var invalid = false;
+				// TODO order対応
+				//				var order = rule[PROPERTY_NAME_ORDER];
 				for ( var ruleName in rule) {
-					if (ruleName === PROPERTY_NAME_ORDER) {
-						// TODO order対応
+					var args = rule[ruleName];
+					if (args === undefined || ruleName === PROPERTY_NAME_ORDER) {
 						continue;
 					}
-					var args = rule[ruleName];
 					if (isArray(args)) {
 						args.unshift(value);
 					} else {
 						args = [value, args];
 					}
 					var validateFunc = ruleDefinitionsMap[ruleName];
-					var isValid = validateFunc.apply(this, args);
-					(isValid ? validProperties : invalidProperties).push(prop);
+					if (!validateFunc.apply(this, args)) {
+						invalid = true;
+						break;
+					}
 				}
+				(invalid ? invalidProperties : validProperties).push(prop);
 			}
 			return new ValidationResult({
 				isValid: !invalidProperties.length,
@@ -554,7 +559,7 @@
 	}
 
 	// デフォルトルールの追加
-	defineRule('required', function(value) {
+	defineRule('require', function(value) {
 		// nullでないかつ、空文字でもないこと
 		return value != null && value !== '';
 	});

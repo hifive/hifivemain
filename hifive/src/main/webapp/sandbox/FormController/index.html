@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
+
+<!-- hifive -->
+<!-- <link href="/hifive-res/fw/current/h5.css" rel="stylesheet"> -->
+<!-- <script src="/hifive-res/fw/current/ejs-h5mod.js"></script> -->
+<!-- <script src="/hifive-res/fw/current/h5.dev.js"></script> -->
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.buildType = 'src';
+	H5_TEST_ENV.srcBaseUrl = '../../';
+</script>
+<script src="../../test/loadScriptForTest.js"></script>
+
+
+<script src="../../src/h5.ui.FormController.js"></script>
+
+<!-- QUnitのjsdump使用 -->
+<script type="text/javascript" src="../../test/lib/qunit/qunit.js"></script>
+
+<script>
+	$(function() {
+		// 全てのinput[type="text"]にdata-requre追加
+		$('input[type="text"]').data('require', '');
+
+		h5.core.controller(document.body, {
+			__name: 'sample.PageController',
+			_objIndex: 0,
+			__meta: {
+				formController: {
+					rootElement: '#form1'
+				}
+			},
+			formController: h5.ui.FormController,
+			'.gather click': function(ctx, $el) {
+				var ret = this.formController.gather();
+				console.log(ret);
+				var $set = $('<button class="set">set(obj' + ++this._objIndex + ')</button>');
+				$el.after($set);
+				$set.data('obj', ret);
+			},
+			'.set click': function(ctx, $el) {
+				var obj = $el.data('obj');
+				this.formController.set(obj);
+			},
+			'.validate click': function(ctx) {
+				var result = this.formController.validate();
+				this.$find('.validateResult').text(QUnit.jsDump.parse(result));
+			},
+			'.clear click': function(ctx) {
+				ctx.event.preventDefault();
+				this.formController.clear();
+			}
+		})
+	})
+</script>
+<style>
+form {
+	margin: 10px;
+	padding: 3px;
+	border: 1px solid #ccc;
+	padding: 3px;
+}
+</style>
+
+<title>FormController</title>
+</head>
+<body>
+	<div>
+		<h2>FormControllerのメソッド実行</h2>
+		<button class="gather">gather()</button>
+		<br>
+		<button class="validate">validate()</button>
+		<div class="validateResult"></div>
+	</div>
+	<form id="form1">
+		<p>FormControllerのバインド先(form1)</p>
+		<p>
+			<input type="text" name="text1" value="hoge" />
+		</p>
+		<p>
+			名前なし <input type="text" value="no-name" />
+		</p>
+		<p>
+			同じ名前 <label><input type="text" name="text2" value="a" /> </label><input
+				type="text" name="text2" value="b" />
+		</p>
+		<p>
+			別のフォーム(form2)に属するinput<input type="text" form="form2" name="text3"
+				value="form=form2のinput">
+		</p>
+		<p>
+			<input type="file" name="file1" value="" /> <input type="file"
+				name="file2" value="" multiple /> <input type="file" name="file2"
+				value="" multiple />
+		</p>
+		<p>
+			<textarea name="textarea1">fuga</textarea>
+		</p>
+		<p>
+			<select name="select1">
+				<option value="1" selected>1</option>
+				<option value="2">2</option>
+			</select>
+		</p>
+		<p>
+			<select name="select2" multiple size="3" style="width: 120px">
+				<option value="1" selected>1</option>
+				<option value="2">2</option>
+				<option value="3" selected>3</option>
+			</select>
+		</p>
+		<div>
+			<label><input type="radio" name="radio1" value="ok" checked>ok</label>
+			<label><input type="radio" name="radio1" value="ng">ng
+			</label> <label><input type="checkbox" name="check1" value="c1"
+				checked>c1</label> <label><input type="checkbox"
+				name="check1" value="c2">c2 </label>
+		</div>
+
+		<p>
+			同じ名前 <select name="select3" multiple size="3" style="width: 120px">
+				<option value="1">1</option>
+				<option value="2" selected>2</option>
+				<option value="3" selected>3</option>
+			</select> <select name="select3" multiple size="3" style="width: 120px">
+				<option value="3" selected>3</option>
+				<option value="4" selected>4</option>
+				<option value="5">5</option>
+			</select>
+		</p>
+		<input type="submit" value="送信" /> <input type="reset" value="リセット" />
+		<button class="clear">クリア</button>
+	</form>
+
+	<form id="form2">
+		<p>
+			別のフォーム(form2)内のinput<input type="text" name="text4"
+				value="form2の中のinput">
+		</p>
+		<p>
+			form1に属するinput<input type="text" form="form1" name="text5"
+				value="form2の中だけどform属性がform1のinput">
+		</p>
+	</form>
+</body>
+</html>

@@ -53,7 +53,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module("validation");
+	module("validation.func");
 
 	//=============================
 	// Body
@@ -199,4 +199,146 @@ $(function() {
 
 		strictEqual(vf.size(1, 0, 1), false, '引数: 1, 0, 1 結果: false');
 	});
+
+	//=============================
+	// Definition
+	//=============================
+	module("validator.validate", {
+		setup: function() {
+			this.validator = h5.validation.createValidator();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	//	test('validateに渡す値がオブジェクトでない場合はエラー', function() {
+	//
+	//	});
+
+	test('required', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				required: true
+			}
+		});
+		strictEqual(validator.validate({
+			p1: false,
+			p2: 0
+		}).isValid, true, 'require指定されているプロパティの値がfalseであるオブジェクトはvalid');
+		strictEqual(validator.validate({
+			p2: 0
+		}).isValid, false, 'require指定されているプロパティのないオブジェクトはinvalid');
+		strictEqual(validator.validate({
+			p2: 0
+		}).isValid, false, 'require指定されているプロパティの値がnullであるオブジェクトはinvalid');
+		strictEqual(validator.validate({
+			p2: 0
+		}).isValid, false, 'require指定されているプロパティの値がundefinedであるオブジェクトはinvalid');
+	});
+
+	test('assertFalse', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				assertFalse: true
+			}
+		});
+		strictEqual(validator.validate({
+			p1: false
+		}).isValid, true, 'assertFalse指定されているプロパティの値がfalseであるオブジェクトはvalid');
+		strictEqual(validator.validate({
+			p1: true
+		}).isValid, false, 'assertFalse指定されているプロパティの値がtrueであるオブジェクトはinvalid');
+		strictEqual(validator.validate({
+			p2: 0
+		}).isValid, true, 'assertFalse指定されているプロパティがないオブジェクトはvalid');
+		strictEqual(validator.validate({
+			p2: 0
+		}).isValid, true, 'assertFalse指定されているプロパティの値がnullであるオブジェクトはvalid');
+		strictEqual(validator.validate({
+			p2: 0
+		}).isValid, true, 'require指定されているプロパティの値がundefinedであるオブジェクトはvalid');
+	});
+
+	test('複数ルールの指定', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				notNull: true,
+				min: 0,
+				max: [1.1, true],
+				digits: [1, 1]
+			}
+		});
+		strictEqual(validator.validate({
+			p1: 1.1
+		}).isValid, true, '全てのルールを満たすのでtrue');
+		strictEqual(validator.validate({
+			p1: null
+		}).isValid, false, 'notNullを満たさないのでfalse');
+		strictEqual(validator.validate({
+			p1: 1.01
+		}).isValid, false, 'digitsを満たさないのでfalse');
+		strictEqual(validator.validate({
+			p1: -1
+		}).isValid, false, 'minを満たさないのでfalse');
+		strictEqual(validator.validate({
+			p1: 2
+		}).isValid, false, 'maxを満たさないのでfalse');
+
+		validator.addRule({
+			p1: {
+				notNull: true,
+				min: 0,
+				max: [2.1, true],
+				digits: [1, 1]
+			},
+			p2: {
+				min: 0
+			}
+		});
+		strictEqual(validator.validate({
+			p1: 2
+		}).isValid, true, 'ルール変更した');
+		strictEqual(validator.validate({
+			p1: null
+		}).isValid, false, 'ルール変更した');
+
+
+		validator.removeRule('p1');
+		strictEqual(validator.validate({
+			p1: 2
+		}).isValid, true, 'p1のルール削除した');
+		strictEqual(validator.validate({
+			p2: -10
+		}).isValid, false, 'p1のルール削除した');
+	});
+
+	test('ValidationResultの中身', function() {});
+	//=============================
+	// Definition
+	//=============================
+	module("ルールの追加と削除", {
+		setup: function() {
+			this.validator = h5.validation.createValidator();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	//=============================
+	// Definition
+	//=============================
+	module("ルールの定義", {
+		setup: function() {
+			this.validator = h5.validation.createValidator();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
 });
