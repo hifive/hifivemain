@@ -202,8 +202,13 @@
 				this._rule[prop] = propRule;
 			}
 		},
-		removeRule: function() {
-
+		removeRule: function(keys) {
+			if (!isArray(keys)) {
+				delete this._rule[keys];
+			}
+			for (var i = 0, l = keys.length; i < l; i++) {
+				delete this._rule[keys[i]];
+			}
 		},
 		setOrder: function(ruleOrder) {}
 	});
