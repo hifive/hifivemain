@@ -148,84 +148,94 @@
 		return val == null || typeof val === 'boolean' || (!isStrict && val instanceof Boolean);
 	}
 
-
 	function assertFalse(value) {
 		return value == null || isBooleanValue(value) && value == false;
 	}
+
 	function assertTrue(value) {
 		return value == null || isBooleanValue(value) && value == true;
 	}
-	function decimalMax(value, maxValue, inclusive) {
-		return value == null || isNumberValue(value) && !isNaN(value) && inclusive ? (value <= maxValue)
-				: (value < maxValue);
+
+	function max(value, maxValue, inclusive) {
+		return value == null || (isNumberValue(value, true) || value instanceof Number)
+				&& (inclusive ? (value <= maxValue) : (value < maxValue));
 	}
-	function decimalMin(value, minValue, inclusive) {
-		return value == null || isNumberValue(value) && !isNaN(value) && inclusive ? (value <= minValue)
-				: (value < minValue);
+
+	function min(value, minValue, inclusive) {
+		return value == null || (isNumberValue(value, true) || value instanceof Number)
+				&& (inclusive ? (minValue <= value) : (minValue < value));
 	}
+
+	function nul(value) {
+		return value == null;
+	}
+
+	function notNull(value) {
+		return value != null;
+	}
+
+	function future(value) {
+		return value == null || value instanceof Date && new Date().getTime() < value.getTime();
+	}
+
+	function past(value) {
+		return value == null || value instanceof Date && value.getTime() < new Date().getTime();
+	}
+
 	function digits(value, integer, fruction) {
 		if (value == null) {
 			return true;
 		}
-		var typeValid = isNumberValue(value) && !isNaN(value) && value != Infinity
-				&& value != -Infinity;
+		var typeValid = (isNumberValue(value, true) || value instanceof Number) && !isNaN(value)
+				&& value != Infinity && value != -Infinity;
 		if (!typeValid) {
 			return false;
 		}
-		// 正数で考える
+		// 正の数で考える
 		var abs = value < 0 ? -value : value;
-		var d = parseInt(abs);
 		// 整数部分判定
-		if (!decimalMax(d, Math.pow(10, integer))) {
+		if (abs >= Math.pow(10, integer)) {
 			return false;
 		}
 		// 小数部分判定
-		var f = d - abs;
-		if (f > 1) {
-			// 1.1e+50のような数をparseIntすると1になってしまうのでその場合は小数部分はなし
+		// 小数部分を出すのに演算すると誤差が出る(例：1.1-1の結果が0.10000000000000009)
+		// そのため、文字列にして判定する
+		var str = '' + abs;
+		if (str.indexOf('+') !== -1) {
+			// 1.1e+50のような数をparseIntすると1になってしまう。その場合は小数部分はなし
 			return true;
 		}
-		// fruction桁分ずらして、小数点以降が残るかどうかで判定
-		var v = f * Math.pow(10, fruction);
-		return v == parseInt(v);
+		var pointMinus = str.indexOf('-');
+		if (pointMinus !== -1) {
+			// 1.1e-50のような数の場合、-の後の数値とfructionを比較
+			return str.slice(pointMinus + 1) <= fruction;
+		}
+		var pointIndex = str.indexOf('.');
+		if (pointIndex === -1) {
+			// 小数点が無い場合はvalid
+			return true;
+		}
+		// 小数部分の桁数がfruction以下の長さかどうか返す
+		return str.slice(pointIndex + 1).length <= fruction;
 	}
-	function future(value) {
-		return value == null || value instanceof Date && new Date().getTime() < value.getTime();
-	}
-	function max(value, maxValue) {
-		return value == null || isNumberValue(value) && !isNaN(value) && inclusive ? (value <= maxValue)
-				: (value < maxValue);
-	}
-	function min(value, minValue) {
-		return value == null || isNumberValue(value) && !isNaN(value) && inclusive ? (value <= minValue)
-				: (value < minValue);
-	}
-	function nul(value) {
-		return value == null;
-	}
-	function notNull(value) {
-		return value != null;
-	}
-	function past(value) {
-		return value == null || value instanceof Date && value.getTime() < new Date().getTime();
-	}
+
 	function pattern(value, regexp) {
 		return value == null || isStringValue(value) && regexp.test(value);
 	}
+
 	function size(value, min, max) {
 		min = min || 0;
 		max = max || Infinity;
-		var valueSize = 0;
 		if ($.isPlainObject(value)) {
 			// プレーンオブジェクトの場合プロパティの数をカウント
+			var valueSize = 0;
 			for ( var p in value) {
 				valueSize++;
 			}
-		} else {
-			valueSize = value && value.length
+			return min <= valueSize && valueSize <= max;
 		}
-		return value == null || (isStringValue(value) || isArray(value)) && min <= valueSize
-				&& valueSize <= max;
+		return value == null || (isStringValue(value) || isArray(value)) && min <= value.length
+				&& value.length <= max;
 	}
 
 	// =========================================================================
@@ -249,12 +259,12 @@
 	h5.u.obj.expose('h5.validation.func', {
 		assertFalse: assertFalse,
 		assertTrue: assertTrue,
-		decimalMax: decimalMax,
-		digits: digits,
-		future: future,
 		max: max,
 		min: min,
+		digits: digits,
+		nul: nul,
 		notNull: notNull,
+		future: future,
 		past: past,
 		pattern: pattern,
 		size: size

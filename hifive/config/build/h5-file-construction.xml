@@ -164,8 +164,7 @@
 		</cssfiles>
 	</module>
 
-	<module name="validation" description="module.validation.description"
-		selectable="false">
+	<module name="validation" description="module.validation.description">
 		<dependencies>
 			<dependency name="util" />
 		</dependencies>
