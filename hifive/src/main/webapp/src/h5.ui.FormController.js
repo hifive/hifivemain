@@ -99,8 +99,17 @@
 		}
 	};
 
+	var defaultMessage = {
+		require: '{label}は必須項目です',
+		min: '{label}は{min}以上の数値を指定してください。',
+		max: '{label}は{max}以下の数値を指定してください。',
+		size: '{label}は{min}以上{max}以下の文字数でなければいけません。'
+	// TODO
+	};
+
 	var controller = {
 		__name: 'h5.ui.FormController',
+		_config: {},
 		_bindedForm: null,
 		_ruleCreators: [],
 		defaultRuleCreators: defaultRuleCreators,
@@ -125,6 +134,11 @@
 			// また、ルートエレメント外にあるinputでも、form属性がルートエレメントのformを指定していれば対象とする
 			if (this.rootElement.tagName.toUpperCase() === 'FORM') {
 				this._bindedForm = this.rootElement;
+			}
+		},
+		__ready: function() {
+			if (this._bindedForm) {
+				this.on(this._bindedForm, 'submit', this._submitHandler);
 			}
 		},
 
@@ -265,6 +279,7 @@
 
 		validate: function() {
 			var $formControls = this._getFormControls();
+			$formControls.removeClass('hasError');
 			var validateRule = {};
 			$formControls.each(this.ownWithOrg(function(element) {
 				var name = element.getAttribute('name');
@@ -282,7 +297,63 @@
 			}));
 			var validator = h5.validation.createValidator();
 			validator.addRule(validateRule);
-			return validator.validate(this.gather());
+			var result = validator.validate(this.gather());
+			if (!result.isValid) {
+				// エラー表示
+				var globalMsgs = [];
+				for (var i = 0, l = result.invalidProperties.length; i < l; i++) {
+					var name = result.invalidProperties[i];
+					var outputConfig = this._config.output && this._config.output[name];
+					var onError = outputConfig && outputConfig.onError;
+					if (onError) {
+						var element = $formControls.filter('[name="' + name + '"]');
+						var propName = name;
+						// TODO validateResultにリーズンが入っていないので入れるようにする
+						// 一旦requireでエラーしたことにしている
+						var msg = defaultMessage.require || 'require';
+						if (defaultMessage.require) {
+							var label = (outputConfig && outputConfig.label) || name;
+							msg = msg.replace(/\{label\}/g, label);
+							// TODO minとかmaxとか他にもreplaceholderが必要な場合はfailReasonから取得す
+						}
+						var reason = {
+							message: msg
+						};
+						onError(element, name, reason);
+						globalMsgs.push(msg);
+					}
+				}
+				// 全エラーメッセージを表示
+				var globalOutput = this._config.globalOutput
+				if (globalOutput) {
+					var $container = $(globalOutput.container);
+					var tagName = globalOutput.wrapper;
+					$container.empty();
+					for (var i = 0, l = globalMsgs.length; i < l; i++) {
+						var msg = globalMsgs[i];
+						var p = document.createElement(tagName);
+						$(p).html(msg);
+						$container.append(p);
+					}
+				}
+			}
+			return result;
+		},
+
+		setOutputConfig: function(outputConfig) {
+			this._config.output = outputConfig;
+		},
+		setGlobalOutput: function(globalOutput) {
+			this._config.globalOutput = globalOutput;
+		},
+
+		_submitHandler: function(ctx, $el) {
+			ctx.event.preventDefault();
+			var validateResult = this.validate();
+			if (validateResult.isValid) {
+				// 送信
+				this._bindedForm.submit();
+			}
 		},
 
 		/**

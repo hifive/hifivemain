@@ -216,11 +216,11 @@ $(function() {
 	//
 	//	});
 
-	test('required', function() {
+	test('require', function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				required: true
+				require: true
 			}
 		});
 		strictEqual(validator.validate({
@@ -287,36 +287,73 @@ $(function() {
 		strictEqual(validator.validate({
 			p1: 2
 		}).isValid, false, 'maxを満たさないのでfalse');
+	});
 
+	test('addRuleでルールの上書き', function() {
+		var validator = this.validator;
 		validator.addRule({
 			p1: {
 				notNull: true,
 				min: 0,
-				max: [2.1, true],
+				max: [1.1, true],
 				digits: [1, 1]
 			},
 			p2: {
 				min: 0
 			}
 		});
+		validator.addRule({
+			p1: {
+				min: 10,
+			},
+			p3: {
+				min: 0
+			}
+		});
 		strictEqual(validator.validate({
-			p1: 2
-		}).isValid, true, 'ルール変更した');
+			p1: 1
+		}).isValid, false, '既存のプロパティについてルールが上書かれていること');
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, false, 'ルール変更した');
-
-
-		validator.removeRule('p1');
+		}).isValid, true, '既存のプロパティについてルールが上書かれていること');
 		strictEqual(validator.validate({
-			p1: 2
-		}).isValid, true, 'p1のルール削除した');
+			p2: -1
+		}).isValid, false, '上書かれていないプロパティは前のルールが適用されていること');
 		strictEqual(validator.validate({
-			p2: -10
-		}).isValid, false, 'p1のルール削除した');
+			p3: -1
+		}).isValid, false, '新しく追加したプロパティのルールが適用されていること');
 	});
 
-	test('ValidationResultの中身', function() {});
+	test('removeRule', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				min: 0
+			},
+			p2: {
+				min: 0
+			},
+			p3: {
+				min: 0
+			}
+		});
+		validator.removeRule('p1');
+		strictEqual(validator.validate({
+			p1: -1
+		}).isValid, true, '指定したキーのルールが削除されていること');
+		strictEqual(validator.validate({
+			p2: -1
+		}).isValid, false, '指定していないキーのルールは削除されていないこと');
+		validator.removeRule(['p2', 'p3']);
+		strictEqual(validator.validate({
+			p2: -1
+		}).isValid, true, 'removeRuleにキーを配列で複数指定した時、複数プロパティのルールを削除できること');
+		strictEqual(validator.validate({
+			p3: -1
+		}).isValid, true, 'removeRuleにキーを配列で複数指定した時、複数プロパティのルールを削除できること');
+	});
+
+//	test('ValidationResultの中身', function() {});
 	//=============================
 	// Definition
 	//=============================

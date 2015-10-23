@@ -31,6 +31,11 @@
 <!-- QUnitのjsdump使用 -->
 <script type="text/javascript" src="../../test/lib/qunit/qunit.js"></script>
 
+<style>
+.hasError {
+	border: 2px solid #f00;
+}
+</style>
 <script>
 	$(function() {
 		// 全てのinput[type="text"]にdata-requre追加
@@ -45,8 +50,24 @@
 				}
 			},
 			formController: h5.ui.FormController,
+			__init: function() {
+				var globalOut = {
+					container: this.$find('.globalError'),
+					wrapper: 'li'
+				};
+				this.formController.setGlobalOutput(globalOut);
+
+
+				var outputConfig = {}
+				this.$find('input[type="text"]').each(this.ownWithOrg(function(input) {
+					outputConfig[input.name] = {
+						onError: this._onError
+					}
+				}));
+
+				this.formController.setOutputConfig(outputConfig);
+			},
 			'.gather click': function(ctx, $el) {
-				var ret = this.formController.gather();
 				console.log(ret);
 				var $set = $('<button class="set">set(obj' + ++this._objIndex + ')</button>');
 				$el.after($set);
@@ -57,12 +78,26 @@
 				this.formController.set(obj);
 			},
 			'.validate click': function(ctx) {
+				this._removeValidateError();
 				var result = this.formController.validate();
 				this.$find('.validateResult').text(QUnit.jsDump.parse(result));
 			},
 			'.clear click': function(ctx) {
 				ctx.event.preventDefault();
 				this.formController.clear();
+			},
+			'#form1 [submit]': function() {
+				this._removeValidateError();
+			},
+			_removeValidateError: function() {
+				this.$find('.hasError').removeClass('hasError');
+				this.$find('.errorMsg').remove();
+			},
+			_onError: function(element, property, reason) {
+				$(element).parent().addClass('hasError');
+				var $msg = $('<span class="errorMsg"></span>');
+				$msg.text(reason.message);
+				$(element).after($msg);
 			}
 		})
 	})
@@ -85,11 +120,12 @@ form {
 		<br>
 		<button class="validate">validate()</button>
 		<div class="validateResult"></div>
+		<ul class="globalError"></ul>
 	</div>
 	<form id="form1">
 		<p>FormControllerのバインド先(form1)</p>
 		<p>
-			<input type="text" name="text1" value="hoge" />
+			<input type="text" name="text1" value="" placeholder="必須" />
 		</p>
 		<p>
 			名前なし <input type="text" value="no-name" />
@@ -152,8 +188,8 @@ form {
 				value="form2の中のinput">
 		</p>
 		<p>
-			form1に属するinput<input type="text" form="form1" name="text5"
-				value="form2の中だけどform属性がform1のinput">
+			form1に属するinput<input type="text" form="form1" name="text5" value=""
+				placeholder="必須">
 		</p>
 	</form>
 </body>
