@@ -1,4 +1,5 @@
 (function() {
+	// TODO formのvalidatorで不要な項目は要らない
 	var DATA_RULE_REQUIRED = 'require';
 	var DATA_RULE_ASSERT_FALSE = 'assertFalse';
 	var DATA_RULE_ASSERT_TRUE = 'assertTrue';
@@ -10,15 +11,6 @@
 	var DATA_RULE_PAST = 'past';
 	var DATA_RULE_PATTERN = 'pattern';
 	var DATA_RULE_SIZE = 'size';
-
-	function stringToArray(str) {
-		str = $.trim(str);
-		if (str.indexOf('[') === -1) {
-			return [str];
-		}
-		str.slice('1', str.length - 1);
-		var ary = str.split(',');
-	}
 
 	// デフォルトで用意しているvalidateルール生成関数
 	var defaultRuleCreators = {
@@ -50,12 +42,24 @@
 		maxRuleCreator: function(inputElement) {
 			var data = $(inputElement).data(DATA_RULE_MAX);
 			if (data != null) {
+				if (typeof data === 'number') {
+					return data;
+				}
+				if (isArray(data)) {
+					return [parseFloat(data[0]), $.trim(data[1]) === 'true'];
+				}
 				return parseFloat(data);
 			}
 		},
 		minRuleCreator: function(inputElement) {
 			var data = $(inputElement).data(DATA_RULE_MIN);
 			if (data != null) {
+				if (typeof data === 'number') {
+					return data;
+				}
+				if (isArray(data)) {
+					return [parseFloat(data[0]), $.trim(data[1]) === 'true'];
+				}
 				return parseFloat(data);
 			}
 		},
@@ -74,11 +78,13 @@
 		digitsRuleCreator: function(inputElement) {
 			var data = $(inputElement).data(DATA_RULE_PAST);
 			if (data != null) {
-				var ary = stringToArray(data);
-				for (var i = 0, l = ary.length; i < l; i++) {
-					ary[i] = parseFloat(ary[i]);
+				if (isArray(data)) {
+					for (var i = 0, l = data.length; i < l; i++) {
+						data[i] = parseInt(data[i]);
+					}
+					return data;
 				}
-				return ary;
+				return parseInt(data);
 			}
 		},
 		patternRuleCreator: function(inputElement) {
@@ -90,21 +96,31 @@
 		sizeRuleCreator: function(inputElement) {
 			var data = $(inputElement).data(DATA_RULE_SIZE);
 			if (data != null) {
-				var ary = stringToArray(data);
-				for (var i = 0, l = ary.length; i < l; i++) {
-					ary[i] = parseFloat(ary[i]);
+				if (isArray(data)) {
+					for (var i = 0, l = data.length; i < l; i++) {
+						data[i] = parseInt(data[i]);
+					}
+					return data;
 				}
-				return ary;
+				return parseInt(data);
 			}
 		}
 	};
 
-	var defaultMessage = {
-		require: '{label}は必須項目です',
-		min: '{label}は{min}以上の数値を指定してください。',
-		max: '{label}は{max}以下の数値を指定してください。',
-		size: '{label}は{min}以上{max}以下の文字数でなければいけません。'
-	// TODO
+	// TODO formのvalidatorで不要な項目は要らない
+	var defaultInvalidMessage = {
+		require: '[%=label%]は必須項目です',
+		min: '[%= label %]は[%=param.min%][%=param.include?"以上の":"より大きい"%]数値を入力してください。',
+		max: '[%=label%]は[%=param.max%][%=param.include?"以下の":"未満"%]の数値を入力してください。',
+		pattern: '[%=label%]は正規表現[%=param.regexp%]を満たす文字列を入力してください。',
+		digits: '[%=label%]は整数部分[%=param.integer%]桁、小数部分[%=fruction%]桁以下の数値を入力してください。',
+		size: '[%=label%]は[%=param.min%]以上[%=param.max%]以下の文字数でなければいけません。',
+		future: '[%=label%]は現在時刻より未来の時刻を入力してください。',
+		past: '[%=label%]は現在時刻より過去の時刻を入力してください。',
+		nul: '[%=label%]はnullでなければなりません。',
+		notNull: '[%=label%]はnullでない値を設定してください。',
+		assertFalse: '[%=label%]はfalseとなる値を入力してください。',
+		assertTrue: '[%=label%]はtrueとなる値を入力してください。'
 	};
 
 	var controller = {
@@ -112,10 +128,12 @@
 		_config: {},
 		_bindedForm: null,
 		_ruleCreators: [],
+		invalidMessageView: null,
 		defaultRuleCreators: defaultRuleCreators,
 
 		__construct: function() {
 			// デフォルトルールの追加
+			// TODO formのvalidatorで不要な項目は要らない
 			this.addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requireRuleCreator);
 			this.addRuleCreator(DATA_RULE_ASSERT_FALSE, defaultRuleCreators.assertFalseRuleCreator);
 			this.addRuleCreator(DATA_RULE_ASSERT_TRUE, defaultRuleCreators.assertTrueRuleCreator);
@@ -127,6 +145,12 @@
 			this.addRuleCreator(DATA_RULE_PAST, defaultRuleCreators.pastRuleCreator);
 			this.addRuleCreator(DATA_RULE_PATTERN, defaultRuleCreators.patternRuleCreator);
 			this.addRuleCreator(DATA_RULE_SIZE, defaultRuleCreators.sizeRuleCreator);
+
+			// デフォルトメッセージの追加
+			this.invalidMessageView = h5.core.view.createView();
+			for ( var p in defaultInvalidMessage) {
+				this.invalidMessageView.register(p, defaultInvalidMessage[p]);
+			}
 		},
 		__init: function() {
 			// form要素にバインドされていればそのformに属しているform関連要素を見る
@@ -292,10 +316,13 @@
 				for (var i = 0, l = this._ruleCreators.length; i < l; i++) {
 					var key = this._ruleCreators[i].key;
 					var func = this._ruleCreators[i].func;
-					ruleOfProp[key] = func(element);
+					var ret = func(element);
+					if (ret !== undefined) {
+						ruleOfProp[key] = ret;
+					}
 				}
 			}));
-			var validator = h5.validation.createValidator();
+			var validator = h5.validation.createValidator('form');
 			validator.addRule(validateRule);
 			var result = validator.validate(this.gather());
 			if (!result.isValid) {
@@ -305,23 +332,15 @@
 					var name = result.invalidProperties[i];
 					var outputConfig = this._config.output && this._config.output[name];
 					var onError = outputConfig && outputConfig.onError;
-					if (onError) {
-						var element = $formControls.filter('[name="' + name + '"]');
-						var propName = name;
-						// TODO validateResultにリーズンが入っていないので入れるようにする
-						// 一旦requireでエラーしたことにしている
-						var msg = defaultMessage.require || 'require';
-						if (defaultMessage.require) {
-							var label = (outputConfig && outputConfig.label) || name;
-							msg = msg.replace(/\{label\}/g, label);
-							// TODO minとかmaxとか他にもreplaceholderが必要な場合はfailReasonから取得す
-						}
-						var reason = {
-							message: msg
-						};
-						onError(element, name, reason);
-						globalMsgs.push(msg);
+					if (!onError) {
+						continue;
 					}
+					var element = $formControls.filter('[name="' + name + '"]');
+					var msg = this._createOnErrorMessage(result, name);
+					onError(element, name, {
+						message: msg
+					});
+					globalMsgs.push(msg);
 				}
 				// 全エラーメッセージを表示
 				var globalOutput = this._config.globalOutput
@@ -339,7 +358,6 @@
 			}
 			return result;
 		},
-
 		setOutputConfig: function(outputConfig) {
 			this._config.output = outputConfig;
 		},
@@ -383,6 +401,29 @@
 				return (formAttr && formAttr === formId) || !formAttr
 						&& $innerFormControls.index($this) !== -1;
 			});
+		},
+
+		/**
+		 * onErrorに渡すメッセージの作成
+		 *
+		 * @param result
+		 * @param name
+		 * @returns
+		 */
+		_createOnErrorMessage: function(result, name) {
+			var reason = result.failureReason[name];
+			var config = this._config.output[name];
+			var label = (config && config.label) || name;
+			if (!this.invalidMessageView.isAvailable(reason.rule)) {
+				return '';
+			}
+			var msg = this.invalidMessageView.get(reason.rule, {
+				value: reason.value,
+				label: label,
+				param: reason.param
+			});
+
+			return msg;
 		}
 	};
 	h5.core.expose(controller);

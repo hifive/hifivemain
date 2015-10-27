@@ -32,14 +32,31 @@
 	 */
 	var PROPERTY_NAME_ORDER = '_order';
 
+	/**
+	 * デフォルトで定義済みのルール名
+	 */
+	var DEFAULT_RULE_NAME_REQUIRE = 'require';
+	var DEFAULT_RULE_NAME_NUL = 'nul';
+	var DEFAULT_RULE_NAME_NOT_NULL = 'notNull';
+	var DEFAULT_RULE_NAME_ASSERT_FALSE = 'assertFalse';
+	var DEFAULT_RULE_NAME_ASSERT_TRUE = 'assertTrue';
+	var DEFAULT_RULE_NAME_MAX = 'max';
+	var DEFAULT_RULE_NAME_MIN = 'min';
+	var DEFAULT_RULE_NAME_FUTURE = 'future';
+	var DEFAULT_RULE_NAME_PAST = 'past';
+	var DEFAULT_RULE_NAME_DIGITS = 'digits';
+	var DEFAULT_RULE_NAME_PATTERN = 'pattern';
+	var DEFAULT_RULE_NAME_SIZE = 'size';
+
 	// =============================
 	// Development Only
 	// =============================
-
 	/* del begin */
+	var fwLogger = h5.log.createLogger('h5.core');
 
+	// ログメッセージ
+	var FW_LOG_NOT_DEFINED_RULE_NAME = '指定されたルール{0}は未定義です';
 	/* del end */
-
 
 	// =========================================================================
 	//
@@ -54,12 +71,6 @@
 	// =============================
 	// Variables
 	// =============================
-	/** ルール定義(優先度順) */
-	var ruleDefinitions = [];
-
-	/** ルール定義名と関数のマップ */
-	var ruleDefinitionsMap = {};
-
 	// =============================
 	// Functions
 	// =============================
@@ -170,24 +181,54 @@
 		validate: function(obj) {
 			var validProperties = [];
 			var invalidProperties = [];
+			var failureReason = null;
 			for ( var prop in this._rule) {
 				var rule = this._rule[prop];
-				var value = obj[prop];
+				var orgValue = obj[prop];
 				var invalid = false;
 				// TODO order対応
 				//				var order = rule[PROPERTY_NAME_ORDER];
+
 				for ( var ruleName in rule) {
 					var args = rule[ruleName];
-					if (args === undefined || ruleName === PROPERTY_NAME_ORDER) {
+					if ((!obj.hasOwnProperty(prop) || args == null)
+							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRE && args)) {
+						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
+						// また、argsがundefinedならそのルールはチェックしない
+						// ただし、require指定がある場合はチェックする
 						continue;
 					}
+					// 値の型変換
+					var value = this._convertBeforeValidate ? this._convertBeforeValidate(orgValue,
+							ruleName) : orgValue;
 					if (isArray(args)) {
-						args.unshift(value);
+						args = [value].concat(args);
 					} else {
 						args = [value, args];
 					}
-					var validateFunc = ruleDefinitionsMap[ruleName];
-					if (!validateFunc.apply(this, args)) {
+					var validateFunc = validateRuleManager.getValidateFunction(ruleName);
+					/* del begin */
+					if (!validateFunc) {
+						fwLogger.warn(FW_LOG_NOT_DEFINED_RULE_NAME, ruleName);
+					}
+					/* del end */
+
+					if (validateFunc && !validateFunc.apply(this, args)) {
+						// failureReasonの作成
+						// 引数の値を格納する
+						var param = {};
+						var argNames = validateRuleManager.getValidateArgNames(ruleName);
+						if (argNames) {
+							for (var i = 0, l = argNames.length; i < l; i++) {
+								param[argNames[i]] = args[i + 1];
+							}
+						}
+						failureReason = failureReason || {};
+						failureReason[prop] = {
+							rule: ruleName,
+							value: value,
+							param: param
+						};
 						invalid = true;
 						break;
 					}
@@ -197,7 +238,8 @@
 			return new ValidationResult({
 				isValid: !invalidProperties.length,
 				validProperties: validProperties,
-				invalidProperties: invalidProperties
+				invalidProperties: invalidProperties,
+				failureReason: failureReason
 			});
 		},
 		addRule: function(ruleObject) {
@@ -219,6 +261,35 @@
 	});
 
 	/**
+	 * FormValidatorクラス
+	 *
+	 * @class
+	 */
+	function FormValidator() {
+		this._rule = {};
+	}
+	$.extend(FormValidator.prototype, Validator.prototype, {
+		/**
+		 * Formから取得した値のvalidateのために、値をルールに適した型へ変換を行う
+		 *
+		 * @private
+		 * @memberOf FormValidator
+		 */
+		_convertBeforeValidate: function(value, ruleName) {
+			switch (ruleName) {
+			case DEFAULT_RULE_NAME_DIGITS:
+			case DEFAULT_RULE_NAME_MAX:
+			case DEFAULT_RULE_NAME_MIN:
+				return parseFloat(value);
+			case DEFAULT_RULE_NAME_FUTURE:
+			case DEFAULT_RULE_NAME_PAST:
+				return new Date(value);
+			}
+			return value;
+		}
+	});
+
+	/**
 	 * validation結果クラス
 	 *
 	 * @class
@@ -232,6 +303,7 @@
 		this.isValid = result.isValid;
 		this.validProperties = result.validProperties;
 		this.invalidProperties = result.invalidProperties;
+		this.failureReason = result.failureReason;
 		this.validCount = result.validProperties.length;
 		this.invalidCount = result.invalidProperties.length;
 	}
@@ -250,11 +322,55 @@
 		p2 = obj2.priority || Infinity;
 		return p1 === p2 ? 0 : p1 - p2;
 	}
+
+	/**
+	 * ルールオブジェクトの管理クラス
+	 *
+	 * @class
+	 * @private
+	 */
+	function ValidateRuleManager() {
+		// ルールを優先度順に並べたもの
+		this.rules = [];
+		// ルール名→ルールオブジェクトのマップ
+		this.rulesMap = {};
+	}
+	$.extend(ValidateRuleManager.prototype, {
+		addValidateRule: function(key, func, priority, argNames) {
+			var isExistAlready = this.rulesMap[key];
+			if (isExistAlready) {
+				for (var i = 0, l = this.rules.length; i < l; i++) {
+					if (this.rules[i].key === key) {
+						this.rules.splice(i, 1);
+						break;
+					}
+				}
+			}
+			var ruleObj = {
+				key: key,
+				func: func,
+				priority: priority,
+				argNames: argNames
+			};
+			this.rules.push(ruleObj);
+			this.rulesMap[key] = ruleObj;
+		},
+		getValidateFunction: function(key) {
+			return this.rulesMap[key] && this.rulesMap[key].func;
+		},
+		getValidateArgNames: function(key) {
+			return this.rulesMap[key] && this.rulesMap[key].argNames;
+		}
+	});
+
+	var validateRuleManager = new ValidateRuleManager();
+
 	// =========================================================================
 	//
 	// Body
 	//
 	// =========================================================================
+
 	/**
 	 * @memberOf h5.validation
 	 * @name func
@@ -447,32 +563,41 @@
 			if (!typeValid) {
 				return false;
 			}
+
 			// 正の数で考える
 			var abs = value < 0 ? -value : value;
-			// 整数部分判定
-			if (abs >= Math.pow(10, integer)) {
-				return false;
+
+			if (integer != null) {
+				// 整数部分判定
+				if (abs >= Math.pow(10, integer)) {
+					return false;
+				}
 			}
-			// 小数部分判定
-			// 小数部分を出すのに演算すると誤差が出る(例：1.1-1の結果が0.10000000000000009)
-			// そのため、文字列にして判定する
-			var str = '' + abs;
-			if (str.indexOf('+') !== -1) {
-				// 1.1e+50のような数の場合、小数部分はなし
-				return true;
+
+			if (fruction != null) {
+				// 小数部分判定
+				// 小数部分を出すのに絶対値を使って演算して求めると誤差が出る(例：1.1-1の結果が0.10000000000000009)
+				// そのため、文字列にして判定する
+				var str = '' + abs;
+				if (str.indexOf('+') !== -1) {
+					// 1.1e+50のような数の場合、小数部分はなし
+					return true;
+				}
+				var pointMinus = str.indexOf('-');
+				if (pointMinus !== -1) {
+					// 1.1e-50のような数の場合、-の後の数値とfructionを比較
+					return str.slice(pointMinus + 1) <= fruction;
+				}
+				var pointIndex = str.indexOf('.');
+				if (pointIndex === -1) {
+					// 小数点が無い場合はvalid
+					return true;
+				}
+				// 小数部分の桁数がfruction以下の長さかどうか返す
+				return str.slice(pointIndex + 1).length <= fruction;
 			}
-			var pointMinus = str.indexOf('-');
-			if (pointMinus !== -1) {
-				// 1.1e-50のような数の場合、-の後の数値とfructionを比較
-				return str.slice(pointMinus + 1) <= fruction;
-			}
-			var pointIndex = str.indexOf('.');
-			if (pointIndex === -1) {
-				// 小数点が無い場合はvalid
-				return true;
-			}
-			// 小数部分の桁数がfruction以下の長さかどうか返す
-			return str.slice(pointIndex + 1).length <= fruction;
+			// integerもfructionもどちらもnullならvalid
+			return true;
 		},
 
 		/**
@@ -533,7 +658,10 @@
 		}
 	};
 
-	function createValidator() {
+	function createValidator(type) {
+		if (type === 'form') {
+			return new FormValidator();
+		}
 		return new Validator();
 	}
 
@@ -543,37 +671,29 @@
 	 * @memberOf h5.validation
 	 * @param {string} key
 	 * @param {Function} func
+	 * @param {string[]} [argNames] パラメータ名
 	 * @param {intenger} [priority] 優先度
 	 */
-	function defineRule(key, func, priority) {
-		if (ruleDefinitions[key]) {
-			// TODO 既にある場合
-		}
-		ruleDefinitions.push({
-			key: key,
-			func: func,
-			priority: priority
-		});
-		ruleDefinitionsMap[key] = func;
-		ruleDefinitions.sort(comparePriority);
+	function defineRule(key, func, argNames, priority) {
+		validateRuleManager.addValidateRule(key, func, priority, argNames);
 	}
 
 	// デフォルトルールの追加
-	defineRule('require', function(value) {
+	defineRule(DEFAULT_RULE_NAME_REQUIRE, function(value) {
 		// nullでないかつ、空文字でもないこと
 		return value != null && value !== '';
 	});
-	defineRule('nul', func.nul);
-	defineRule('notNull', func.notNull);
-	defineRule('assertFalse', func.assertFalse);
-	defineRule('assertTrue', func.assertTrue);
-	defineRule('max', func.max);
-	defineRule('min', func.min);
-	defineRule('future', func.future);
-	defineRule('past', func.past);
-	defineRule('digits', func.digits);
-	defineRule('pattern', func.pattern);
-	defineRule('size', func.size);
+	defineRule(DEFAULT_RULE_NAME_NUL, func.nul);
+	defineRule(DEFAULT_RULE_NAME_NOT_NULL, func.notNull);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, func.assertFalse);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, func.assertTrue);
+	defineRule(DEFAULT_RULE_NAME_MAX, func.max, ['max', 'inclusive']);
+	defineRule(DEFAULT_RULE_NAME_MIN, func.min, ['min', 'inclusive']);
+	defineRule(DEFAULT_RULE_NAME_FUTURE, func.future);
+	defineRule(DEFAULT_RULE_NAME_PAST, func.past);
+	defineRule(DEFAULT_RULE_NAME_DIGITS, func.digits, ['integer', 'fruction']);
+	defineRule(DEFAULT_RULE_NAME_PATTERN, func.pattern, ['regexp']);
+	defineRule(DEFAULT_RULE_NAME_SIZE, func.size, ['min', 'max']);
 
 	// =============================
 	// Expose to window
