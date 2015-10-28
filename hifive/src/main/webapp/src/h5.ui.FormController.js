@@ -207,6 +207,7 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.ErrorBaloon',
+		_executedOnValidate: false,
 		__ready: function() {
 			// デフォルトメッセージの追加
 			this.invalidMessageView = h5.core.view.createView();
@@ -238,6 +239,7 @@
 				this._setErrorBaloon(element, globalSetting, outputSetting[name],
 						result.failureReason[name]);
 			}
+			this._executedOnValidate = true;
 
 			//			if (!result.isValid) {
 			//				// エラー表示
@@ -271,19 +273,46 @@
 			//				}
 			//			}
 		},
-
-		_setErrorBaloon: function(element, globalSetting, setting, errorReason) {
+		onFocus: function(element, globalSetting, setting, errorReason) {
+			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'focus');
+		},
+		onBlur: function(element, globalSetting, setting, errorReason) {
+			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'blur');
+		},
+		//		onChange: function(element, globalSetting, setting, errorReason) {
+		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//		},
+		//		onKeyup: function(element, globalSetting, setting, errorReason) {
+		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//		},
+		//		onClick: function(element, globalSetting, setting, errorReason) {
+		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//		},
+		_setErrorBaloon: function(element, globalSetting, setting, errorReason, type) {
+			if (!this._executedOnValidate) {
+				// onValidateが１度も呼ばれていなければ何もしない
+				return;
+			}
 			var replaceElement = (setting && setting.replaceElement)
 					|| (globalSetting && globalSetting.replaceElement);
 			var target = replaceElement ? replaceElement(element) : element;
 			if (!target) {
 				return;
 			}
+
+			if (type === 'blur') {
+				$(target).tooltip('hide');
+				return;
+			}
 			if (errorReason) {
 				var msg = this._createOnErrorMessage(element.name, errorReason, setting);
 				$(target).attr('data-original-title', msg).tooltip({
 					trigger: 'manual'
-				}).tooltip('show');
+				});
+				if (type === 'focus') {
+					$(target).tooltip('show');
+					return;
+				}
 			} else {
 				$(target).tooltip('hide');
 			}
