@@ -49,28 +49,28 @@
 			},
 			formController: h5.ui.FormController,
 			__init: function() {
-				// フォーム全体のエラーの出力設定
-				var globalOut = {
-					/* 出力先 */
-					container: this.$find('.globalError'),
-					/* 各エラーメッセージをラップする要素 */
-					wrapper: 'li'
-				};
-				this.formController.setGlobalOutput(globalOut);
-
-				// 各フォーム部品ごとのエラーの出力設定
-				var outputConfig = {}
-				this.$find('#form1 [name]').each(this.ownWithOrg(function(element) {
-					outputConfig[element.name] = {
-						onError: this._onError,
-						label: $(element).closest('.form-group').find('.label-name').text()
+				// エラー出力設定
+				this.formController.globalSetting = {
+					errorClass: {
+						className: 'has-error',
+						replaceElement: function(element) {
+							// エラークラス追加対象は、input等の親のform-group要素に変換する
+							return $(element).closest('.form-group');
+						}
+					},
+					allMessage: {
+						container: this.$find('.globalError'),
+						wrapper: 'li'
 					}
-				}));
-
-				this.formController.setOutputConfig(outputConfig);
+				};
+				this.formController.outputSetting = {
+					name: {
+						label: '名前'
+					}
+				};
 
 				// エラーメッセージテンプレートの設定(正規表現のメッセージをデフォルトのものを上書き)
-				this.formController.invalidMessageView.register('pattern', '[%=label%]が正しくありません');
+				// 				this.formController.invalidMessageView.register('pattern', '[%=label%]が正しくありません');
 			},
 			'.gather click': function(ctx, $el) {
 				var ret = this.formController.gather();
@@ -177,8 +177,8 @@
 						</select>
 					</div>
 					<div class="form-group">
-						<label class="control-label"><span class="label-name">予約日</span>(翌日以降)</label>
-						<input name="reserve" type="date" class="form-control"
+						<label class="control-label"><span class="label-name">予約日</span>(翌日以降,
+							必須)</label> <input name="reserve" type="date" class="form-control"
 							data-require data-future />
 					</div>
 					<div class="form-group">
