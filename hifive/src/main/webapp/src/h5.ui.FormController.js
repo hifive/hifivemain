@@ -1,4 +1,23 @@
 (function() {
+	h5.u.obj.expose('h5internal.validationSetting', {
+		defaultIntvalidMessage: {
+			require: '[%=label%]は必須項目です',
+			min: '[%= label %]は[%=param.min%][%=param.inclusive?"以上の":"より大きい"%]数値を入力してください。',
+			max: '[%=label%]は[%=param.max%][%=param.inclusive?"以下":"未満"%]の数値を入力してください。',
+			pattern: '[%=label%]は正規表現[%=param.regexp%]を満たす文字列を入力してください。',
+			digits: '[%=label%]は整数部分[%=param.integer%]桁、小数部分[%=fruction%]桁以下の数値を入力してください。',
+			size: '[%=label%]は[%=param.min%]以上[%=param.max%]以下の長さでなければいけません。',
+			future: '[%=label%]は現在時刻より未来の時刻を入力してください。',
+			past: '[%=label%]は現在時刻より過去の時刻を入力してください。',
+			nul: '[%=label%]はnullでなければなりません。',
+			notNull: '[%=label%]はnullでない値を設定してください。',
+			assertFalse: '[%=label%]はfalseとなる値を入力してください。',
+			assertTrue: '[%=label%]はtrueとなる値を入力してください。'
+		}
+	});
+})();
+
+(function() {
 	function defaultReplaceElement(element) {
 		return element;
 	}
@@ -12,7 +31,7 @@
 	var controller = {
 		__name: 'h5.ui.validation.ErrorClass',
 		onValidate: function(result, globalSetting, outputSetting) {
-			var $formControls = this.parentController.getFormControls();
+			var $formControls = this.parentController.getElements();
 
 			// validだったものからエラークラスを削除
 			var validProperties = result.validProperties;
@@ -73,22 +92,8 @@
 
 
 (function() {
-
 	// TODO デフォルトメッセージは他のプラグインと共通で使う
-	var defaultInvalidMessage = {
-		require: '[%=label%]は必須項目です',
-		min: '[%= label %]は[%=param.min%][%=param.inclusive?"以上の":"より大きい"%]数値を入力してください。',
-		max: '[%=label%]は[%=param.max%][%=param.inclusive?"以下":"未満"%]の数値を入力してください。',
-		pattern: '[%=label%]は正規表現[%=param.regexp%]を満たす文字列を入力してください。',
-		digits: '[%=label%]は整数部分[%=param.integer%]桁、小数部分[%=fruction%]桁以下の数値を入力してください。',
-		size: '[%=label%]は[%=param.min%]以上[%=param.max%]以下の長さでなければいけません。',
-		future: '[%=label%]は現在時刻より未来の時刻を入力してください。',
-		past: '[%=label%]は現在時刻より過去の時刻を入力してください。',
-		nul: '[%=label%]はnullでなければなりません。',
-		notNull: '[%=label%]はnullでない値を設定してください。',
-		assertFalse: '[%=label%]はfalseとなる値を入力してください。',
-		assertTrue: '[%=label%]はtrueとなる値を入力してください。'
-	};
+	var defaultInvalidMessage = h5internal.validationSetting.defaultIntvalidMessage;
 
 	/**
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
@@ -122,38 +127,6 @@
 				$(p).html(msg);
 				$container.append(p);
 			}
-
-			//			if (!result.isValid) {
-			//				// エラー表示
-			//				var globalMsgs = [];
-			//				for (var i = 0, l = result.invalidProperties.length; i < l; i++) {
-			//					var name = result.invalidProperties[i];
-			//					var outputConfig = this._config.output && this._config.output[name];
-			//					var onError = outputConfig && outputConfig.onError;
-			//					if (!onError) {
-			//						continue;
-			//					}
-			//					var element = $formControls.filter('[name="' + name + '"]');
-			//					var msg = this._createOnErrorMessage(result, name);
-			//					onError(element, name, {
-			//						message: msg
-			//					});
-			//					globalMsgs.push(msg);
-			//				}
-			//				// 全エラーメッセージを表示
-			//				var globalOutput = this._config.globalOutput;
-			//				if (globalOutput) {
-			//					var $container = $(globalOutput.container);
-			//					var tagName = globalOutput.wrapper;
-			//					$container.empty();
-			//					for (var i = 0, l = globalMsgs.length; i < l; i++) {
-			//						var msg = globalMsgs[i];
-			//						var p = document.createElement(tagName);
-			//						$(p).html(msg);
-			//						$container.append(p);
-			//					}
-			//				}
-			//			}
 		},
 
 		/**
@@ -183,22 +156,7 @@
 })();
 
 (function() {
-	// TODO formのvalidatorで不要な項目は要らない
-	var defaultInvalidMessage = {
-		require: '[%=label%]は必須項目です',
-		min: '[%= label %]は[%=param.min%][%=param.inclusive?"以上の":"より大きい"%]数値を入力してください。',
-		max: '[%=label%]は[%=param.max%][%=param.inclusive?"以下":"未満"%]の数値を入力してください。',
-		pattern: '[%=label%]は正規表現[%=param.regexp%]を満たす文字列を入力してください。',
-		digits: '[%=label%]は整数部分[%=param.integer%]桁、小数部分[%=fruction%]桁以下の数値を入力してください。',
-		size: '[%=label%]は[%=param.min%]以上[%=param.max%]以下の長さでなければいけません。',
-		future: '[%=label%]は現在時刻より未来の時刻を入力してください。',
-		past: '[%=label%]は現在時刻より過去の時刻を入力してください。',
-		nul: '[%=label%]はnullでなければなりません。',
-		notNull: '[%=label%]はnullでない値を設定してください。',
-		assertFalse: '[%=label%]はfalseとなる値を入力してください。',
-		assertTrue: '[%=label%]はtrueとなる値を入力してください。'
-	};
-
+	var defaultInvalidMessage = h5internal.validationSetting.defaultIntvalidMessage;
 	/**
 	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
 	 *
@@ -216,7 +174,123 @@
 			}
 		},
 		onValidate: function(result, globalSetting, outputSetting) {
-			var $formControls = this.parentController.getFormControls();
+			var $formControls = this.parentController.getElements();
+			// validだったものからバルーンを削除
+			var validProperties = result.validProperties;
+			for (var i = 0, l = validProperties.length; i < l; i++) {
+				var name = validProperties[i];
+				var element = $formControls.filter('[name="' + name + '"]')[0];
+				if (!element) {
+					continue;
+				}
+				this._setErrorBaloon(element, globalSetting, outputSetting[name], false);
+			}
+
+			// invalidだったものにバルーンを追加
+			var invalidProperties = result.invalidProperties;
+			for (var i = 0, l = invalidProperties.length; i < l; i++) {
+				var name = invalidProperties[i];
+				var element = $formControls.filter('[name="' + name + '"]')[0];
+				if (!element) {
+					continue;
+				}
+				this._setErrorBaloon(element, globalSetting, outputSetting[name],
+						result.failureReason[name]);
+			}
+			this._executedOnValidate = true;
+		},
+		onFocus: function(element, globalSetting, setting, errorReason) {
+			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'focus');
+		},
+		onBlur: function(element, globalSetting, setting, errorReason) {
+			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'blur');
+		},
+		//		onChange: function(element, globalSetting, setting, errorReason) {
+		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//		},
+		//		onKeyup: function(element, globalSetting, setting, errorReason) {
+		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//		},
+		//		onClick: function(element, globalSetting, setting, errorReason) {
+		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//		},
+		_setErrorBaloon: function(element, globalSetting, setting, errorReason, type) {
+			if (!this._executedOnValidate) {
+				// onValidateが１度も呼ばれていなければ何もしない
+				return;
+			}
+			var replaceElement = (setting && setting.replaceElement)
+					|| (globalSetting && globalSetting.replaceElement);
+			var target = replaceElement ? replaceElement(element) : element;
+			if (!target) {
+				return;
+			}
+
+			if (type === 'blur') {
+				$(target).tooltip('hide');
+				return;
+			}
+			if (errorReason) {
+				var msg = this._createOnErrorMessage(element.name, errorReason, setting);
+				$(target).attr('data-original-title', msg).tooltip({
+					trigger: 'manual'
+				});
+				if (type === 'focus') {
+					$(target).tooltip('show');
+					return;
+				}
+			} else {
+				$(target).tooltip('hide');
+			}
+		},
+
+		/**
+		 * メッセージの作成
+		 *
+		 * @private
+		 * @param result
+		 * @param name
+		 * @returns
+		 */
+		_createOnErrorMessage: function(name, reason, setting) {
+			var label = (setting && setting.label) || name;
+			if (!this.invalidMessageView.isAvailable(reason.rule)) {
+				return '';
+			}
+			// TODO setting.formatterで設定できるようにする
+			var msg = this.invalidMessageView.get(reason.rule, {
+				value: reason.value,
+				label: label,
+				param: reason.param
+			});
+
+			return msg;
+		}
+	};
+	h5.core.expose(controller);
+})();
+
+(function() {
+	var defaultInvalidMessage = h5internal.validationSetting.defaultIntvalidMessage;
+	/**
+	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
+	 *
+	 * @class
+	 * @name h5.ui.validation.ErrorMessage
+	 */
+	var controller = {
+		__name: 'h5.ui.validation.ErrorMessage',
+		_executedOnValidate: false,
+		_errorMessageElementMap: {},
+		__ready: function() {
+			// デフォルトメッセージの追加
+			this.invalidMessageView = h5.core.view.createView();
+			for ( var p in defaultInvalidMessage) {
+				this.invalidMessageView.register(p, defaultInvalidMessage[p]);
+			}
+		},
+		onValidate: function(result, globalSetting, outputSetting) {
+			var $formControls = this.parentController.getElements();
 			// validだったものからバルーンを削除
 			var validProperties = result.validProperties;
 			for (var i = 0, l = validProperties.length; i < l; i++) {
@@ -295,26 +369,38 @@
 			}
 			var replaceElement = (setting && setting.replaceElement)
 					|| (globalSetting && globalSetting.replaceElement);
+			var errorPlacement = (setting && setting.errorPlacement)
+					|| (globalSetting && globalSetting.errorPlacement);
 			var target = replaceElement ? replaceElement(element) : element;
 			if (!target) {
 				return;
 			}
 
 			if (type === 'blur') {
-				$(target).tooltip('hide');
+				if (this._errorMessageElementMap[name]) {
+					this._errorMessageElementMap[name].remove();
+				}
 				return;
 			}
 			if (errorReason) {
 				var msg = this._createOnErrorMessage(element.name, errorReason, setting);
-				$(target).attr('data-original-title', msg).tooltip({
-					trigger: 'manual'
-				});
-				if (type === 'focus') {
-					$(target).tooltip('show');
-					return;
+				var $errorMsg = this._errorMessageElementMap[name];
+				if (!$errorMsg) {
+					// TODO タグやクラスを設定できるようにする
+					$errorMsg = $('<span class="errorMessage">');
+					this._errorMessageElementMap[name] = $errorMsg;
+				}
+				$errorMsg.html(msg);
+				if (errorPlacement) {
+					errorPlacement($errorMsg[0], element);
+				} else {
+					// elementの後ろに追加するのがデフォルト動作
+					$(element).after($errorMsg);
 				}
 			} else {
-				$(target).tooltip('hide');
+				if (this._errorMessageElementMap[name]) {
+					this._errorMessageElementMap[name].remove();
+				}
 			}
 		},
 
@@ -514,6 +600,8 @@
 			// また、ルートエレメント外にあるinputでも、form属性がルートエレメントのformを指定していれば対象とする
 			if (this.rootElement.tagName.toUpperCase() === 'FORM') {
 				this._bindedForm = this.rootElement;
+				// HTML5のformによる標準のバリデーションは行わないようにする
+				$(this._bindedForm).prop('novalidate', true);
 			}
 		},
 		__ready: function() {
@@ -521,10 +609,11 @@
 			this._addOutputPlugin('errorClass', h5.ui.validation.ErrorClass);
 			this._addOutputPlugin('allMessage', h5.ui.validation.AllMessage);
 			this._addOutputPlugin('baloon', h5.ui.validation.ErrorBaloon);
+			this._addOutputPlugin('errorMessage', h5.ui.validation.ErrorMessage);
 
 			// フォーム部品からルールを生成
 			this._validator = h5.validation.createValidator('form');
-			var $formControls = this.getFormControls();
+			var $formControls = this.getElements();
 			var validateRule = {};
 			$formControls.each(this.ownWithOrg(function(element) {
 				var name = element.getAttribute('name');
@@ -555,12 +644,36 @@
 		 * ルールの追加
 		 *
 		 * @param {Object} ruleObj
-		 * @param {boolean} shouldValidate ルール追加した後にvalidateを行うかどうか
+		 * @param {boolean} [shouldValidate=false] ルール追加した後にvalidateを行うかどうか
+		 * @param {boolean} [onlyAddedRule=true]
+		 *            shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue
 		 */
 		addRule: function(ruleObj, shouldValidate) {
 			this._validator.addRule(ruleObj);
 			if (shouldValidate) {
-				this.validate();
+				var names = null;
+				if (onlyAddedRule) {
+					names = [];
+					for ( var p in ruleObj) {
+						names.push(p);
+					}
+				}
+				this._validate(names);
+			}
+		},
+
+		/**
+		 * ルールの削除
+		 *
+		 * @param {string|string[]} names プロパティ名またはその配列
+		 * @param {boolean} shouldValidate ルール削除した後にvalidateを行うかどうか
+		 * @param {boolean} [onlyRemovedRule=true]
+		 *            shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue
+		 */
+		removeRule: function(names, shouldValidate, onlyRemovedRule) {
+			this._validator.removeRule();
+			if (shouldValidate) {
+				this.validate(onlyRemovedRule ? names : null);
 			}
 		},
 
@@ -573,7 +686,7 @@
 		 */
 		gather: function(targetNames) {
 			targetNames = targetNames && (!isArray(targetNames) ? [targetNames] : targetNames);
-			var $elements = this.getFormControls();
+			var $elements = this.getElements();
 			var ret = {};
 			$elements.each(function() {
 				var name = this.name;
@@ -625,7 +738,7 @@
 		 * @param {Object} フォーム部品の値を集約したオブジェクト
 		 */
 		set: function(obj) {
-			var $elements = this.getFormControls();
+			var $elements = this.getElements();
 			var indexMap = {};
 			$elements.each(function() {
 				var name = this.name;
@@ -682,7 +795,7 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		clear: function() {
-			this.getFormControls().each(function() {
+			this.getElements().each(function() {
 				if (this.type === 'radio' || this.type === 'checkbox') {
 					$(this).prop('checked', false);
 					return;
@@ -717,7 +830,7 @@
 		 * @memberOf h5.ui.FormController
 		 * @returns {jQuery}
 		 */
-		getFormControls: function() {
+		getElements: function() {
 			var $innerFormControls = this.$find('input,select,textarea').not(
 					'[type="submit"],[type="reset"],[type="image"]');
 			if (!this._bindedForm) {
@@ -759,11 +872,6 @@
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_CLICK);
 		},
 
-		_validate: function(names) {
-			var formData = this.gather(names);
-			return this._validator.validate(formData, names);
-		},
-
 		/**
 		 * プラグインの追加(1.2.0では非公開)
 		 *
@@ -776,6 +884,11 @@
 			var c = h5.core.controller(this._bindedForm || this.rootElement, controller);
 			this.manageChild(c);
 			this._plugins[pluginName] = c;
+		},
+
+		_validate: function(names) {
+			var formData = this.gather(names);
+			return this._validator.validate(formData, names);
 		},
 
 		_createPluginElementEventArgs: function(element, validateResult) {
@@ -840,7 +953,7 @@
 		},
 
 		_isFormControls: function(element) {
-			var $formControls = this.getFormControls();
+			var $formControls = this.getElements();
 			return $formControls.index(element) !== -1;
 		}
 	};
