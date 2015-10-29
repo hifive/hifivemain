@@ -568,13 +568,18 @@
 		 * このコントローラが管理するフォーム内のフォーム部品の値を集約したオブジェクトを生成する
 		 *
 		 * @memberOf h5.ui.FormController
+		 * @param {string||string[]} targetNames 指定した場合、指定したnameのものだけを集約
 		 * @returns {Object}
 		 */
-		gather: function() {
+		gather: function(targetNames) {
+			targetNames = targetNames && (!isArray(targetNames) ? [targetNames] : targetNames);
 			var $elements = this.getFormControls();
 			var ret = {};
 			$elements.each(function() {
 				var name = this.name;
+				if (targetNames && $.inArray(name, targetNames) === -1) {
+					return;
+				}
 				if (this.type === 'file') {
 					// ファイルオブジェクトを覚えておく
 					var files = this.files;
@@ -699,17 +704,11 @@
 			});
 		},
 
-		validate: function() {
-			var result = this._validate();
+		validate: function(names) {
+			var result = this._validate(names);
 			// onValidateの呼び出し
 			this._callPluginValidateEvent(PLUGIN_EVENT_VALIDATE, result);
 			return result;
-		},
-
-		_validate: function() {
-			var validator = this._validator;
-			var $formControls = this.getFormControls();
-			return validator.validate(this.gather());
 		},
 
 		/**
@@ -760,6 +759,11 @@
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_CLICK);
 		},
 
+		_validate: function(names) {
+			var formData = this.gather(names);
+			return this._validator.validate(formData, names);
+		},
+
 		/**
 		 * プラグインの追加(1.2.0では非公開)
 		 *
@@ -783,8 +787,9 @@
 			if (!this._isFormControls(target)) {
 				return;
 			}
-			var validateResult = this._validate();
-			var reason = validateResult.failureReason && validateResult.failureReason[target.name];
+			var name = target.name;
+			var validateResult = this._validate(name);
+			var reason = validateResult.failureReason && validateResult.failureReason[name];
 			this._callPluginElementEvent(type, target, reason);
 		},
 

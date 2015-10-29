@@ -178,11 +178,19 @@
 		this._rule = {};
 	}
 	$.extend(Validator.prototype, {
-		validate: function(obj) {
+		/**
+		 * @param {Object} obj
+		 * @param {string|string[]} names
+		 */
+		validate: function(obj, names) {
 			var validProperties = [];
 			var invalidProperties = [];
 			var failureReason = null;
+			var targetNames = names && (isArray(names) ? names : [names]);
 			for ( var prop in this._rule) {
+				if (names && $.inArray(prop, targetNames) === -1) {
+					continue;
+				}
 				var rule = this._rule[prop];
 				var orgValue = obj[prop];
 				var invalid = false;
