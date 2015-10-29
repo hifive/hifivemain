@@ -444,6 +444,9 @@
 	var DATA_RULE_PATTERN = 'pattern';
 	var DATA_RULE_SIZE = 'size';
 
+	// フォームコントロールグループの名前指定
+	var DATA_ITEM_NAME = 'item-name';
+
 	// プラグインに通知するイベント
 	var PLUGIN_EVENT_VALIDATE = 'onValidate';
 	var PLUGIN_EVENT_FOCUS = 'onFocus';
@@ -687,10 +690,25 @@
 		gather: function(targetNames) {
 			targetNames = targetNames && (!isArray(targetNames) ? [targetNames] : targetNames);
 			var $elements = this.getElements();
+			var $groups = this.$find('[data-' + DATA_ITEM_NAME + ']');
 			var ret = {};
 			$elements.each(function() {
 				var name = this.name;
-				if (targetNames && $.inArray(name, targetNames) === -1) {
+				var currentGroup = ret;
+				if ($groups.find(this).length) {
+					// グループに属するエレメントの場合
+					// グループ単位でオブジェクトを作る
+					var $group = $(this).closest('[data-' + DATA_ITEM_NAME + ']');
+					var groupName = $group.data(DATA_ITEM_NAME);
+					if (targetNames && $.inArray(groupName, targetNames) === -1) {
+						// targetNamesに含まれないグループ名のエレメントは集約対象外
+						return;
+					}
+					ret[groupName] = ret[groupName] || {};
+					currentGroup = ret[groupName];
+				} else if (targetNames && $.inArray(name, targetNames) === -1) {
+					// グループに属さないエレメントの場合
+					// targetNamesに含まれないnameのエレメントは集約対象外
 					return;
 				}
 				if (this.type === 'file') {
@@ -700,9 +718,9 @@
 					if (!filesLength) {
 						return;
 					}
-					ret[name] = ret[name] || [];
+					currentGroup[name] = currentGroup[name] || [];
 					for (var i = 0; i < filesLength; i++) {
-						ret[name].push(files[i]);
+						currentGroup[name].push(files[i]);
 					}
 					return;
 				}
@@ -714,18 +732,18 @@
 				if (value == null) {
 					return;
 				}
-				if (ret[name] !== undefined) {
+				if (currentGroup[name] !== undefined) {
 					if (!$.isArray(ret[name])) {
-						ret[name] = [ret[name]];
+						currentGroup[name] = [currentGroup[name]];
 					}
 					if ($.isArray(value)) {
 						// select multipleの場合は値は配列
-						Array.prototype.push.apply(ret[name], value);
+						Array.prototype.push.apply(currentGroup[name], value);
 					} else {
-						ret[name].push(value);
+						currentGroup[name].push(value);
 					}
 				} else {
-					ret[name] = value;
+					currentGroup[name] = value;
 				}
 			});
 			return ret;
@@ -888,7 +906,18 @@
 
 		_validate: function(names) {
 			var formData = this.gather(names);
-			return this._validator.validate(formData, names);
+
+			// TODO 動作確認としてログ出力
+			this.log.debug('-----------------------------------------');
+			this.log.debug('・validateするデータ');
+			this.log.debug(formData);
+			this.log.debug('・validate対象のプロパティ:' + names);
+			var ret = this._validator.validate(formData, names);
+
+			this.log.debug('・validate結果');
+			this.log.debug(ret);
+			this.log.debug('-----------------------------------------');
+			return ret;
 		},
 
 		_createPluginElementEventArgs: function(element, validateResult) {
@@ -901,6 +930,11 @@
 				return;
 			}
 			var name = target.name;
+			// グループに属している場合はグループ名
+			var $group = $(target).closest('[data-' + DATA_ITEM_NAME + ']');
+			if ($group.length) {
+				name = $group.data(DATA_ITEM_NAME);
+			}
 			var validateResult = this._validate(name);
 			var reason = validateResult.failureReason && validateResult.failureReason[name];
 			this._callPluginElementEvent(type, target, reason);
