@@ -1,6 +1,49 @@
 (function() {
-	h5.u.obj.expose('h5internal.validationSetting', {
-		defaultIntvalidMessage: {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =============================
+	// Production
+	// =============================
+	/**
+	 * EJSにスクリプトレットの区切りとして認識させる文字
+	 */
+	var DELIMITER = '[';
+
+	// =============================
+	// Development Only
+	// =============================
+	var fwLogger = h5.log.createLogger('h5.ui.FormController');
+
+	/** デフォルトのルールにないルールでのバリデートエラーの場合に出すメッセージ */
+	var MSG_DEFAULT_INVALIDATE = '{0}はルール{1}を満たしません';
+
+	/* del begin */
+	// ログメッセージ
+	var FW_LOG_ERROR_CREATE_VALIDATE_MESSAGE = 'バリデートエラーメッセージの生成に失敗しました。message:{0}';
+	/* del end */
+
+	// =========================================================================
+	//
+	// Cache
+	//
+	// =========================================================================
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+	// =============================
+	// Variables
+	// =============================
+	/**
+	 * デフォルトエラーメッセージビュー
+	 */
+	var defaultIntvalidMessageView = (function() {
+		var msgs = {
 			require: '[%=label%]は必須項目です',
 			min: '[%= label %]は[%=param.min%][%=param.inclusive?"以上の":"より大きい"%]数値を入力してください。',
 			max: '[%=label%]は[%=param.max%][%=param.inclusive?"以下":"未満"%]の数値を入力してください。',
@@ -13,8 +56,72 @@
 			notNull: '[%=label%]はnullでない値を設定してください。',
 			assertFalse: '[%=label%]はfalseとなる値を入力してください。',
 			assertTrue: '[%=label%]はtrueとなる値を入力してください。'
+		};
+		var view = h5.core.view.createView();
+		for ( var p in msgs) {
+			view.register(p, msgs[p]);
 		}
-	});
+		return view;
+	})();
+
+	// =============================
+	// Functions
+	// =============================
+	/**
+	 * メッセージ生成関数
+	 *
+	 * @memberOf h5internal.validation
+	 * @private
+	 * @param {ValidationResult} result
+	 * @param {string} name
+	 * @param {object} setting
+	 * @returns {string} メッセージ
+	 */
+	function createValidateErrorMessage(name, reason, setting) {
+		var label = (setting && setting.label) || name;
+		var msg = setting && setting.message;
+		var formatter = setting && setting.formatter;
+		var param = {
+			name: name,
+			value: reason.value,
+			label: label,
+			param: reason.param
+		};
+		if (isString(msg)) {
+			// messageが指定されていればテンプレート文字列として扱ってメッセージを作成する
+			try {
+				var compiledTemplate = new EJS.Compiler(msg, DELIMITER);
+				compiledTemplate.compile();
+				msg = compiledTemplate.process.call(param, param, new EJS.Helpers(param));
+			} catch (e) {
+				// パラメータ置換時にエラーがおきた場合
+				fwLogger.error(FW_LOG_ERROR_CREATE_VALIDATE_MESSAGE, msg);
+				return msg;
+			}
+		} else if (isFunction(formatter)) {
+			// formatterが設定されている場合はパラメータを渡して関数呼び出しして生成
+			return formatter(param);
+		}
+
+		// 何も設定されていない場合はデフォルトメッセージ
+		if (defaultIntvalidMessageView.isAvailable(reason.rule)) {
+			return defaultIntvalidMessageView.get(reason.rule, param);
+		}
+		// デフォルトにないルールの場合
+		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, value, reason.rule);
+	}
+
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+	// =============================
+	// Expose to window
+	// =============================
+	h5.u.obj.expose('h5internal.validation', {
+		createValidateErrorMessage: createValidateErrorMessage
+	})
 })();
 
 (function() {
@@ -92,9 +199,6 @@
 
 
 (function() {
-	// TODO デフォルトメッセージは他のプラグインと共通で使う
-	var defaultInvalidMessage = h5internal.validationSetting.defaultIntvalidMessage;
-
 	/**
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
 	 *
@@ -103,14 +207,6 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.AllMessage',
-		invalidMessageView: null,
-		__ready: function() {
-			// デフォルトメッセージの追加
-			this.invalidMessageView = h5.core.view.createView();
-			for ( var p in defaultInvalidMessage) {
-				this.invalidMessageView.register(p, defaultInvalidMessage[p]);
-			}
-		},
 		onValidate: function(result, globalSetting, outputSetting) {
 			var container = globalSetting && globalSetting.container;
 			if (!container) {
@@ -122,41 +218,19 @@
 			var invalidProperties = result.invalidProperties;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
-				var msg = this._createOnErrorMessage(result, name, outputSetting[name]);
+				var reason = result.failureReason[name];
+				var msg = h5internal.validation.createValidateErrorMessage(name, reason, name,
+						outputSetting[name]);
 				var p = document.createElement(tagName);
 				$(p).html(msg);
 				$container.append(p);
 			}
-		},
-
-		/**
-		 * メッセージの作成
-		 *
-		 * @private
-		 * @param result
-		 * @param name
-		 * @returns
-		 */
-		_createOnErrorMessage: function(result, name, setting) {
-			var reason = result.failureReason[name];
-			var label = (setting && setting.label) || name;
-			if (!this.invalidMessageView.isAvailable(reason.rule)) {
-				return '';
-			}
-			var msg = this.invalidMessageView.get(reason.rule, {
-				value: reason.value,
-				label: label,
-				param: reason.param
-			});
-
-			return msg;
 		}
 	};
 	h5.core.expose(controller);
 })();
 
 (function() {
-	var defaultInvalidMessage = h5internal.validationSetting.defaultIntvalidMessage;
 	/**
 	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
 	 *
@@ -166,13 +240,6 @@
 	var controller = {
 		__name: 'h5.ui.validation.ErrorBaloon',
 		_executedOnValidate: false,
-		__ready: function() {
-			// デフォルトメッセージの追加
-			this.invalidMessageView = h5.core.view.createView();
-			for ( var p in defaultInvalidMessage) {
-				this.invalidMessageView.register(p, defaultInvalidMessage[p]);
-			}
-		},
 		onValidate: function(result, globalSetting, outputSetting) {
 			var $formControls = this.parentController.getElements();
 			// validだったものからバルーンを削除
@@ -231,7 +298,8 @@
 				return;
 			}
 			if (errorReason) {
-				var msg = this._createOnErrorMessage(element.name, errorReason, setting);
+				var msg = h5internal.validation.createValidateErrorMessage(element.name,
+						errorReason, setting);
 				$(target).attr('data-original-title', msg).tooltip({
 					trigger: 'manual'
 				});
@@ -242,36 +310,12 @@
 			} else {
 				$(target).tooltip('hide');
 			}
-		},
-
-		/**
-		 * メッセージの作成
-		 *
-		 * @private
-		 * @param result
-		 * @param name
-		 * @returns
-		 */
-		_createOnErrorMessage: function(name, reason, setting) {
-			var label = (setting && setting.label) || name;
-			if (!this.invalidMessageView.isAvailable(reason.rule)) {
-				return '';
-			}
-			// TODO setting.formatterで設定できるようにする
-			var msg = this.invalidMessageView.get(reason.rule, {
-				value: reason.value,
-				label: label,
-				param: reason.param
-			});
-
-			return msg;
 		}
 	};
 	h5.core.expose(controller);
 })();
 
 (function() {
-	var defaultInvalidMessage = h5internal.validationSetting.defaultIntvalidMessage;
 	/**
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
 	 *
@@ -282,13 +326,6 @@
 		__name: 'h5.ui.validation.ErrorMessage',
 		_executedOnValidate: false,
 		_errorMessageElementMap: {},
-		__ready: function() {
-			// デフォルトメッセージの追加
-			this.invalidMessageView = h5.core.view.createView();
-			for ( var p in defaultInvalidMessage) {
-				this.invalidMessageView.register(p, defaultInvalidMessage[p]);
-			}
-		},
 		onValidate: function(result, globalSetting, outputSetting) {
 			var $formControls = this.parentController.getElements();
 			// validだったものからバルーンを削除
@@ -314,38 +351,6 @@
 						result.failureReason[name]);
 			}
 			this._executedOnValidate = true;
-
-			//			if (!result.isValid) {
-			//				// エラー表示
-			//				var globalMsgs = [];
-			//				for (var i = 0, l = result.invalidProperties.length; i < l; i++) {
-			//					var name = result.invalidProperties[i];
-			//					var outputConfig = this._config.output && this._config.output[name];
-			//					var onError = outputConfig && outputConfig.onError;
-			//					if (!onError) {
-			//						continue;
-			//					}
-			//					var element = $formControls.filter('[name="' + name + '"]');
-			//					var msg = this._createOnErrorMessage(result, name);
-			//					onError(element, name, {
-			//						message: msg
-			//					});
-			//					globalMsgs.push(msg);
-			//				}
-			//				// 全エラーメッセージを表示
-			//				var globalOutput = this._config.globalOutput;
-			//				if (globalOutput) {
-			//					var $container = $(globalOutput.container);
-			//					var tagName = globalOutput.wrapper;
-			//					$container.empty();
-			//					for (var i = 0, l = globalMsgs.length; i < l; i++) {
-			//						var msg = globalMsgs[i];
-			//						var p = document.createElement(tagName);
-			//						$(p).html(msg);
-			//						$container.append(p);
-			//					}
-			//				}
-			//			}
 		},
 		onFocus: function(element, globalSetting, setting, errorReason) {
 			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'focus');
@@ -383,7 +388,8 @@
 				return;
 			}
 			if (errorReason) {
-				var msg = this._createOnErrorMessage(element.name, errorReason, setting);
+				var msg = h5internal.validation.createValidateErrorMessage(element.name,
+						errorReason, setting);
 				var $errorMsg = this._errorMessageElementMap[name];
 				if (!$errorMsg) {
 					// TODO タグやクラスを設定できるようにする
@@ -402,29 +408,6 @@
 					this._errorMessageElementMap[name].remove();
 				}
 			}
-		},
-
-		/**
-		 * メッセージの作成
-		 *
-		 * @private
-		 * @param result
-		 * @param name
-		 * @returns
-		 */
-		_createOnErrorMessage: function(name, reason, setting) {
-			var label = (setting && setting.label) || name;
-			if (!this.invalidMessageView.isAvailable(reason.rule)) {
-				return '';
-			}
-			// TODO setting.formatterで設定できるようにする
-			var msg = this.invalidMessageView.get(reason.rule, {
-				value: reason.value,
-				label: label,
-				param: reason.param
-			});
-
-			return msg;
 		}
 	};
 	h5.core.expose(controller);
@@ -444,8 +427,9 @@
 	var DATA_RULE_PATTERN = 'pattern';
 	var DATA_RULE_SIZE = 'size';
 
-	// フォームコントロールグループの名前指定
-	var DATA_ITEM_NAME = 'item-name';
+	// フォームコントロールグループコンテナの名前指定
+	var DATA_INPUTGROUP_CONTAINER = 'inputgroup-container';
+	var DATA_INPUTGROUP = 'inputgroup';
 
 	// プラグインに通知するイベント
 	var PLUGIN_EVENT_VALIDATE = 'onValidate';
@@ -690,16 +674,21 @@
 		gather: function(targetNames) {
 			targetNames = targetNames && (!isArray(targetNames) ? [targetNames] : targetNames);
 			var $elements = this.getElements();
-			var $groups = this.$find('[data-' + DATA_ITEM_NAME + ']');
+			var $groups = this.$find('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
 			var ret = {};
 			$elements.each(function() {
 				var name = this.name;
 				var currentGroup = ret;
-				if ($groups.find(this).length) {
-					// グループに属するエレメントの場合
+				// タグに指定されているグループ名をグループコンテナより優先
+				var groupName = $(this).data(DATA_INPUTGROUP);
+				if (!groupName && $groups.find(this).length) {
+					// タグにグループの指定が無くグループコンテナに属している場合
+					var $group = $(this).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
+					var groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
+				}
+				if (groupName) {
+					// グループコンテナに属するエレメントの場合
 					// グループ単位でオブジェクトを作る
-					var $group = $(this).closest('[data-' + DATA_ITEM_NAME + ']');
-					var groupName = $group.data(DATA_ITEM_NAME);
 					if (targetNames && $.inArray(groupName, targetNames) === -1) {
 						// targetNamesに含まれないグループ名のエレメントは集約対象外
 						return;
@@ -930,11 +919,7 @@
 				return;
 			}
 			var name = target.name;
-			// グループに属している場合はグループ名
-			var $group = $(target).closest('[data-' + DATA_ITEM_NAME + ']');
-			if ($group.length) {
-				name = $group.data(DATA_ITEM_NAME);
-			}
+
 			var validateResult = this._validate(name);
 			var reason = validateResult.failureReason && validateResult.failureReason[name];
 			this._callPluginElementEvent(type, target, reason);

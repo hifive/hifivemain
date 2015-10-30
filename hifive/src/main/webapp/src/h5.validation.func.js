@@ -71,6 +71,7 @@
 	// =============================
 	// Variables
 	// =============================
+	var validateRuleManager = new ValidateRuleManager();
 	// =============================
 	// Functions
 	// =============================
@@ -368,17 +369,29 @@
 		},
 		getValidateArgNames: function(key) {
 			return this.rulesMap[key] && this.rulesMap[key].argNames;
+		},
+		validate: function(obj, names) {
+			// FormValidatorの場合、値がオブジェクトならそれはInputGroupとして扱う
+			var groups = [];
+			var validateTarget = {};
+			for ( var p in obj) {
+				if ($.isPlaneObject(obj[p])) {
+					// グループは中身を展開したものをvalidateする
+					groups.push(p);
+					$.extend(validateTarget, validateTarget[p]);
+				} else {
+					validateTarget[p] = obj[p];
+				}
+			}
+			// TODO グループの結果をどう返すか
+			return Validator.prototype.validate.call(this, validateTarget, names);
 		}
 	});
-
-	var validateRuleManager = new ValidateRuleManager();
-
 	// =========================================================================
 	//
 	// Body
 	//
 	// =========================================================================
-
 	/**
 	 * @memberOf h5.validation
 	 * @name func

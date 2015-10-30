@@ -66,49 +66,14 @@
 				this.formController.outputSetting = {
 					name: {
 						label: '名前'
+					},
+					agree: {
+						message: '利用規約への同意が必要です'
 					}
 				};
 
 				// エラーメッセージテンプレートの設定(正規表現のメッセージをデフォルトのものを上書き)
 				// 				this.formController.invalidMessageView.register('pattern', '[%=label%]が正しくありません');
-			},
-			'.gather click': function(ctx, $el) {
-				var ret = this.formController.gather();
-				var $set = $('<button class="set">set(obj' + ++this._objIndex + ')</button>');
-				$el.after($set);
-				$set.data('obj', ret);
-			},
-			'.set click': function(ctx, $el) {
-				var obj = $el.data('obj');
-				this.formController.set(obj);
-			},
-			'.validate click': function(ctx) {
-				this._removeValidateError();
-				var result = this.formController.validate();
-				this.$find('.validateResult').html(QUnit.jsDump.parse(result));
-			},
-			'.clear click': function(ctx) {
-				ctx.event.preventDefault();
-				this.formController.clear();
-			},
-			'#form1 [submit]': function() {
-				this._removeValidateError();
-			},
-			_removeValidateError: function() {
-				this.$find('.has-error').removeClass('has-error');
-				this.$find('.errorMsg').remove();
-			},
-			_onError: function(element, property, reason) {
-				var $targetGroup = $(element).closest('.form-group');
-				$targetGroup.addClass('has-error');
-				var $msg = $('<span class="errorMsg"></span>');
-				var msgTxt = reason.message;
-				if (element.name === 'agree') {
-					// 『同意する』のチェックボックスならメッセージを書き換える
-					msgTxt = 'サービスのご利用は、利用規約の同意が必要です';
-				}
-				$msg.text(reason.message);
-				$targetGroup.append($msg);
 			}
 		});
 	});
@@ -128,23 +93,33 @@
 							placeholder="名前" data-require />
 					</div>
 					<div class="form-group">
-						<label class="control-label"><span class="label-name">性別</span>
-							<div class="radio">
-								<label> <input name="sex" type="radio" name="radio"
-									data-require /> 男性
-								</label> <label> <input name="sex" type="radio" name="radio"
-									data-require /> 女性
-								</label>
-							</div>
+						<label class="control-label"><span class="label-name">性別</span></label>
+						<div class="radio">
+							<label> <input name="sex" type="radio" name="radio"
+								data-require /> 男性
+							</label> <label> <input name="sex" type="radio" name="radio"
+								data-require /> 女性
+							</label>
+						</div>
 					</div>
-					<div class="form-group" data-item-name="birthday">
+					<div class="form-group" data-inputgroup-container="birthday">
 						<label class="control-label">生年月日</label>
 						<div class="form-inline">
 							<input name="year" type="text" placeholder="年(西暦)"
-								class="form-control" size="4" />年<input name="month"
-								type="text" placeholder="月" class="form-control" size="2" />月<input
-								name="day" type="text" placeholder="日" class="form-control"
-								size="2" />日
+								class="form-control" size="4" data-require />年<input
+								name="month" type="text" placeholder="月" class="form-control"
+								size="2" data-require />月<input name="day" type="text"
+								placeholder="日" class="form-control" size="2" data-require />日
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label class="control-label">郵便番号</label>
+						<div class="form-inline">
+							<input name="zip1" type="text" class="form-control" size="3"
+								data-inputgroup="zipcode" data-require /> -<input name="zip2"
+								type="text" class="form-control" size="4"
+								data-inputgroup="zipcode" data-require />
 						</div>
 					</div>
 					<div class="form-group">
