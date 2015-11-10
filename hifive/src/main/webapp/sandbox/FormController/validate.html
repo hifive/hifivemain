@@ -61,14 +61,24 @@
 					allMessage: {
 						container: this.$find('.globalError'),
 						wrapper: 'li'
+					},
+					baloon: {
+						placement: 'top',
 					}
 				};
 				this.formController.outputSetting = {
 					name: {
 						label: '名前'
 					},
+					sex: {
+						label: '性別',
+						message: '[%=label%]は必ずどちらかを指定してください'
+					},
 					agree: {
-						message: '利用規約への同意が必要です'
+						message: '利用規約への同意が必要です',
+						baloon: {
+							placement: 'bottom'
+						}
 					}
 				};
 

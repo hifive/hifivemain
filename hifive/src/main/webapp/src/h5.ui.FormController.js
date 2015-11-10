@@ -98,6 +98,7 @@
 				fwLogger.error(FW_LOG_ERROR_CREATE_VALIDATE_MESSAGE, msg);
 				return msg;
 			}
+			return msg;
 		} else if (isFunction(formatter)) {
 			// formatterが設定されている場合はパラメータを渡して関数呼び出しして生成
 			return formatter(param);
@@ -219,7 +220,7 @@
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
 				var reason = result.failureReason[name];
-				var msg = h5internal.validation.createValidateErrorMessage(name, reason, name,
+				var msg = h5internal.validation.createValidateErrorMessage(name, reason,
 						outputSetting[name]);
 				var p = document.createElement(tagName);
 				$(p).html(msg);
@@ -231,6 +232,7 @@
 })();
 
 (function() {
+	var DEFAULT_PLACEMENT = 'top';
 	/**
 	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
 	 *
@@ -300,7 +302,16 @@
 			if (errorReason) {
 				var msg = h5internal.validation.createValidateErrorMessage(element.name,
 						errorReason, setting);
-				$(target).attr('data-original-title', msg).tooltip({
+				var placement = DEFAULT_PLACEMENT;
+				if (setting && setting.baloon && setting.baloon.placement) {
+					placement = setting.baloon.placement;
+				} else if (globalSetting && globalSetting.placement) {
+					placement = globalSetting.placement;
+				}
+				$(target).attr({
+					'data-placement': placement,
+					'data-original-title': msg
+				}).tooltip({
 					trigger: 'manual'
 				});
 				if (type === 'focus') {
@@ -336,7 +347,7 @@
 				if (!element) {
 					continue;
 				}
-				this._setErrorBaloon(element, globalSetting, outputSetting[name], false);
+				this._setErrorMessage(element, globalSetting, outputSetting[name], false);
 			}
 
 			// invalidだったものにバルーンを追加
@@ -347,27 +358,27 @@
 				if (!element) {
 					continue;
 				}
-				this._setErrorBaloon(element, globalSetting, outputSetting[name],
+				this._setErrorMessage(element, globalSetting, outputSetting[name],
 						result.failureReason[name]);
 			}
 			this._executedOnValidate = true;
 		},
 		onFocus: function(element, globalSetting, setting, errorReason) {
-			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'focus');
+			this._setErrorMessage(element, globalSetting, setting, errorReason, 'focus');
 		},
 		onBlur: function(element, globalSetting, setting, errorReason) {
-			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'blur');
+			this._setErrorMessage(element, globalSetting, setting, errorReason, 'blur');
 		},
 		//		onChange: function(element, globalSetting, setting, errorReason) {
-		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//			this._setErrorMessage(element, globalSetting, setting, errorReason);
 		//		},
 		//		onKeyup: function(element, globalSetting, setting, errorReason) {
-		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//			this._setErrorMessage(element, globalSetting, setting, errorReason);
 		//		},
 		//		onClick: function(element, globalSetting, setting, errorReason) {
-		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
+		//			this._setErrorMessage(element, globalSetting, setting, errorReason);
 		//		},
-		_setErrorBaloon: function(element, globalSetting, setting, errorReason, type) {
+		_setErrorMessage: function(element, globalSetting, setting, errorReason, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
