@@ -72,12 +72,58 @@
 					},
 					sex: {
 						label: '性別',
-						message: '[%=label%]は必ずどちらかを指定してください'
+						message: '[%=label%]は必ずどちらかを指定してください',
+						errorMessage: {
+							off: true
+						}
+					},
+					year: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					month: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					day: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					zip1: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					zip2: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
 					},
 					agree: {
 						message: '利用規約への同意が必要です',
 						baloon: {
-							placement: 'bottom'
+							placement: 'right',
+							replaceElement: function($el) {
+								return $el.closest('label');
+							}
+						},
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-group');
+							}
 						}
 					}
 				};

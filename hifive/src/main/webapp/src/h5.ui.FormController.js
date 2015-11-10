@@ -288,8 +288,12 @@
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
-			var replaceElement = (setting && setting.replaceElement)
-					|| (globalSetting && globalSetting.replaceElement);
+			var pluginSetting = $.extend({}, globalSetting && globalSetting.baloon, setting
+					&& setting.baloon);
+			if (setting && setting.baloon && setting.baloon.off) {
+				return;
+			}
+			var replaceElement = pluginSetting.replaceElement;
 			var target = replaceElement ? replaceElement(element) : element;
 			if (!target) {
 				return;
@@ -350,7 +354,7 @@
 				this._setErrorMessage(element, globalSetting, outputSetting[name], false);
 			}
 
-			// invalidだったものにバルーンを追加
+			// invalidだったものにメッセージを表示
 			var invalidProperties = result.invalidProperties;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
@@ -383,10 +387,13 @@
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
-			var replaceElement = (setting && setting.replaceElement)
-					|| (globalSetting && globalSetting.replaceElement);
-			var errorPlacement = (setting && setting.errorPlacement)
-					|| (globalSetting && globalSetting.errorPlacement);
+			var pluginSetting = $.extend({}, globalSetting && globalSetting.errorMessage, setting
+					&& setting.errorMessage);
+			if (setting && setting.errorMessage && setting.errorMessage.off) {
+				return;
+			}
+			var replaceElement = pluginSetting.replaceElement;
+			var errorPlacement = pluginSetting.errorPlacement;
 			var target = replaceElement ? replaceElement(element) : element;
 			if (!target) {
 				return;
@@ -409,10 +416,11 @@
 				}
 				$errorMsg.html(msg);
 				if (errorPlacement) {
-					errorPlacement($errorMsg[0], element);
+					errorPlacement($errorMsg[0], target);
 				} else {
 					// elementの後ろに追加するのがデフォルト動作
-					$(element).after($errorMsg);
+					// replaceElementで対象が変更されていればその後ろ
+					$(target).after($errorMsg);
 				}
 			} else {
 				if (this._errorMessageElementMap[name]) {
