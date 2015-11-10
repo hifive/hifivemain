@@ -120,9 +120,9 @@
 	// =============================
 	// Expose to window
 	// =============================
-	h5.u.obj.expose('h5internal.validation', {
+	h5internal.validation = {
 		createValidateErrorMessage: createValidateErrorMessage
-	})
+	};
 })();
 
 (function() {
