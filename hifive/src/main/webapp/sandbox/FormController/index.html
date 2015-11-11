@@ -46,23 +46,6 @@
 				}
 			},
 			formController: h5.ui.FormController,
-			__init: function() {
-				var globalOut = {
-					container: this.$find('.globalError'),
-					wrapper: 'li'
-				};
-				this.formController.setGlobalOutput(globalOut);
-
-
-				var outputConfig = {}
-				this.$find('.form-controls').each(this.ownWithOrg(function(input) {
-					outputConfig[input.name] = {
-						onError: this._onError
-					}
-				}));
-
-				this.formController.setOutputConfig(outputConfig);
-			},
 			'.gather click': function(ctx, $el) {
 				var ret = this.formController.gather();
 				var $set = $('<button class="set">set(obj' + ++this._objIndex + ')</button>');
