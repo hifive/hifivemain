@@ -179,6 +179,14 @@
 		onClick: function(element, globalSetting, setting, errorReason) {
 			this._setErrorClass(element, globalSetting, setting, errorReason);
 		},
+		reset: function(globalSetting, outputSetting) {
+			var $formControls = this.parentController.getElements();
+			// validだったものからエラークラスを削除
+			$formControls.each(this.ownWithOrg(function(element) {
+				var name = element.name;
+				this._setErrorClass(element, globalSetting, outputSetting[name], false);
+			}));
+		},
 		_setErrorClass: function(element, globalSetting, setting, errorReason) {
 			var className = (setting && setting.className)
 					|| (globalSetting && globalSetting.className);
@@ -226,6 +234,10 @@
 				$(p).html(msg);
 				$container.append(p);
 			}
+		},
+		reset: function(globalSetting, outputSetting) {
+			var container = globalSetting && globalSetting.container;
+			$(container).empty();
 		}
 	};
 	h5.core.expose(controller);
@@ -283,6 +295,12 @@
 		//		onClick: function(element, globalSetting, setting, errorReason) {
 		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
 		//		},
+
+		reset: function() {
+			// 常にバルーンは一つのみ表示している実装のため、その1つのバルーンを非表示
+			$(this._currentBaloonTarget).tooltip('hide');
+		},
+
 		_setErrorBaloon: function(element, globalSetting, setting, errorReason, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
@@ -301,6 +319,7 @@
 
 			if (type === 'blur') {
 				$(target).tooltip('hide');
+				this._currentBaloonTarget = null;
 				return;
 			}
 			if (errorReason) {
@@ -320,10 +339,12 @@
 				});
 				if (type === 'focus') {
 					$(target).tooltip('show');
+					this._currentBaloonTarget = target;
 					return;
 				}
 			} else {
 				$(target).tooltip('hide');
+				this._currentBaloonTarget = null;
 			}
 		}
 	};
@@ -373,6 +394,7 @@
 		onBlur: function(element, globalSetting, setting, errorReason) {
 			this._setErrorMessage(element, globalSetting, setting, errorReason, 'blur');
 		},
+		// FIXME どのタイミングで実行するかは設定で決める？
 		//		onChange: function(element, globalSetting, setting, errorReason) {
 		//			this._setErrorMessage(element, globalSetting, setting, errorReason);
 		//		},
@@ -382,6 +404,13 @@
 		//		onClick: function(element, globalSetting, setting, errorReason) {
 		//			this._setErrorMessage(element, globalSetting, setting, errorReason);
 		//		},
+
+		reset: function() {
+			for ( var p in this._errorMessageElementMap) {
+				this._errorMessageElementMap[name].remove();
+			}
+		},
+
 		_setErrorMessage: function(element, globalSetting, setting, errorReason, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
@@ -457,6 +486,9 @@
 	var PLUGIN_EVENT_CHANGE = 'onChange';
 	var PLUGIN_EVENT_KEYUP = 'onKeyup';
 	var PLUGIN_EVENT_CLICK = 'onClick';
+
+	// プラグインの表示リセットメソッド名
+	var PLUGIN_METHOD_RESET = 'reset';
 
 	// デフォルトで用意しているvalidateルール生成関数
 	var defaultRuleCreators = {
@@ -828,6 +860,23 @@
 				}
 				$(this).val(null);
 			});
+		},
+
+		/**
+		 * validation結果表示をすべてリセットする
+		 *
+		 * @memberOf h5.ui.FormController
+		 */
+		resetValidation: function() {
+			var plugins = this._plugins;
+			var globalSetting = this.globalSetting;
+			for ( var pluginName in plugins) {
+				var plugin = plugins[pluginName];
+				if (plugin[PLUGIN_METHOD_RESET]) {
+					plugin[PLUGIN_METHOD_RESET].call(plugin, globalSetting[pluginName],
+							this.outputSetting);
+				}
+			}
 		},
 
 		/**
