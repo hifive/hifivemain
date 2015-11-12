@@ -36,6 +36,7 @@
 	 * デフォルトで定義済みのルール名
 	 */
 	var DEFAULT_RULE_NAME_REQUIRE = 'require';
+	var DEFAULT_RULE_NAME_CUSTOM_FUNC = 'customFunc';
 	var DEFAULT_RULE_NAME_NUL = 'nul';
 	var DEFAULT_RULE_NAME_NOT_NULL = 'notNull';
 	var DEFAULT_RULE_NAME_ASSERT_FALSE = 'assertFalse';
@@ -278,6 +279,62 @@
 		this._rule = {};
 	}
 	$.extend(FormValidator.prototype, Validator.prototype, {
+
+		/**
+		 * フォームオブジェクトのvalidateを行う
+		 * <p>
+		 * FormValidatorはグループとそのグループ内のプロパティについてのvalidateに対応する。
+		 * </p>
+		 * <p>
+		 * 以下はbirthdayをループとして扱いvalidateを行う場合、
+		 * </p>
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * var formValidator = h5.u.validation.createValidator('form');
+		 * formValidator.addRule({
+		 *   birthday: {
+		 *     customFunc: function(val){...}
+		 *   },
+		 *   year: { require:true },
+		 *   month: { require:true },
+		 *   day: { require:true }
+		 * });
+		 * formValidator.validate({
+		 * 	birthday: {
+		 * 		year: 1999,
+		 * 		month: 1,
+		 * 		date: 1
+		 * 	}
+		 * });
+		 * </code></pre>
+		 *
+		 * <p>
+		 * グループはそのグループ(birthday)のルールによるvalidateが行われる。
+		 * </p>
+		 * <p>
+		 * また、year,month,dayもそれぞれのルールに基づいてvalidateが行われる。
+		 * </p>
+		 *
+		 * @param {Object} obj
+		 * @param {string|string[]} names
+		 */
+		validate: function(obj, names) {
+			// グループ対応。値がオブジェクトのものはグループとして扱う
+			var validateTarget = {};
+			for ( var p in obj) {
+				if ($.isPlainObject(obj[p])) {
+					// オブジェクトの場合はその中身も展開してvalidateされるようにする
+					// なお、グループの入れ子は考慮していない
+					for ( var prop in obj[p]) {
+						validateTarget[prop] = obj[p];
+					}
+				}
+				validateTarget[p] = obj[p];
+			}
+			return Validator.prototype.validate.call(this, obj, names);
+
+		},
+
 		/**
 		 * Formから取得した値のvalidateのために、値をルールに適した型へ変換を行う
 		 *
@@ -397,6 +454,15 @@
 	 * @name func
 	 */
 	var func = {
+		/**
+		 * 値を第2引数の関数で判定した結果を返す
+		 *
+		 * @memberOf h5.validaiton.func
+		 */
+		customFunc: function(value, func) {
+			return func(value);
+		},
+
 		/**
 		 * 値がfalseかどうか判定し、判定結果をtrueまたはfalseで返します
 		 * <p>
@@ -704,6 +770,7 @@
 		// nullでないかつ、空文字でもないこと
 		return value != null && value !== '';
 	});
+	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, func.customFunc, ['func']);
 	defineRule(DEFAULT_RULE_NAME_NUL, func.nul);
 	defineRule(DEFAULT_RULE_NAME_NOT_NULL, func.notNull);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, func.assertFalse);

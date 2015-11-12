@@ -19,7 +19,7 @@
 	var fwLogger = h5.log.createLogger('h5.ui.FormController');
 
 	/** デフォルトのルールにないルールでのバリデートエラーの場合に出すメッセージ */
-	var MSG_DEFAULT_INVALIDATE = '{0}はルール{1}を満たしません';
+	var MSG_DEFAULT_INVALIDATE = '{0}:{1}はルール{2}を満たしません';
 
 	/* del begin */
 	// ログメッセージ
@@ -72,7 +72,7 @@
 	 *
 	 * @memberOf h5internal.validation
 	 * @private
-	 * @param {ValidationResult} result
+	 * @param {Object} reason
 	 * @param {string} name
 	 * @param {object} setting
 	 * @returns {string} メッセージ
@@ -109,7 +109,7 @@
 			return defaultIntvalidMessageView.get(reason.rule, param);
 		}
 		// デフォルトにないルールの場合
-		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, value, reason.rule);
+		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, name, reason.value, reason.rule);
 	}
 
 	// =========================================================================
@@ -139,45 +139,44 @@
 	var controller = {
 		__name: 'h5.ui.validation.ErrorClass',
 		onValidate: function(result, globalSetting, outputSetting) {
-			var $formControls = this.parentController.getElements();
 
 			// validだったものからエラークラスを削除
 			var validProperties = result.validProperties;
 			for (var i = 0, l = validProperties.length; i < l; i++) {
 				var name = validProperties[i];
-				var element = $formControls.filter('[name="' + name + '"]')[0];
+				var element = this.parentController.getElementByName(name);
 				if (!element) {
 					continue;
 				}
-				this._setErrorClass(element, globalSetting, outputSetting[name], false);
+				this._setErrorClass(element, name, globalSetting, outputSetting[name], false);
 			}
 
 			// invalidだったものにエラークラスを追加
 			var invalidProperties = result.invalidProperties;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
-				var element = $formControls.filter('[name="' + name + '"]')[0];
+				var element = this.parentController.getElementByName(name);
 				if (!element) {
 					continue;
 				}
-				this._setErrorClass(element, globalSetting, outputSetting[name],
+				this._setErrorClass(element, name, globalSetting, outputSetting[name],
 						result.failureReason[name]);
 			}
 		},
-		onFocus: function(element, globalSetting, setting, errorReason) {
+		onFocus: function(element, name, globalSetting, setting, errorReason) {
 			this._setErrorClass(element, globalSetting, setting, errorReason);
 		},
-		onBlur: function(element, globalSetting, setting, errorReason) {
-			this._setErrorClass(element, globalSetting, setting, errorReason);
+		onBlur: function(element, name, globalSetting, setting, errorReason) {
+			this._setErrorClass(element, name, globalSetting, setting, errorReason);
 		},
-		onChange: function(element, globalSetting, setting, errorReason) {
-			this._setErrorClass(element, globalSetting, setting, errorReason);
+		onChange: function(element, name, globalSetting, setting, errorReason) {
+			this._setErrorClass(element, name, globalSetting, setting, errorReason);
 		},
 		onKeyup: function(element, globalSetting, setting, errorReason) {
-			this._setErrorClass(element, globalSetting, setting, errorReason);
+			this._setErrorClass(element, name, globalSetting, setting, errorReason);
 		},
-		onClick: function(element, globalSetting, setting, errorReason) {
-			this._setErrorClass(element, globalSetting, setting, errorReason);
+		onClick: function(element, name, globalSetting, setting, errorReason) {
+			this._setErrorClass(element, name, globalSetting, setting, errorReason);
 		},
 		reset: function(globalSetting, outputSetting) {
 			var $formControls = this.parentController.getElements();
@@ -187,12 +186,12 @@
 				this._setErrorClass(element, globalSetting, outputSetting[name], false);
 			}));
 		},
-		_setErrorClass: function(element, globalSetting, setting, errorReason) {
-			var className = (setting && setting.className)
-					|| (globalSetting && globalSetting.className);
-			var replaceElement = (setting && setting.replaceElement)
-					|| (globalSetting && globalSetting.replaceElement);
-			var target = replaceElement ? replaceElement(element) : element;
+		_setErrorClass: function(element, name, globalSetting, setting, errorReason) {
+			var pluginSetting = $.extend({}, globalSetting, setting && setting.errorClass);
+			var className = pluginSetting.className;
+			var replaceElement = pluginSetting.replaceElement;
+			var target = isFunction(replaceElement) ? replaceElement(element)
+					: (replaceElement || element);
 			if (!target) {
 				return;
 			}
@@ -255,44 +254,43 @@
 		__name: 'h5.ui.validation.ErrorBaloon',
 		_executedOnValidate: false,
 		onValidate: function(result, globalSetting, outputSetting) {
-			var $formControls = this.parentController.getElements();
 			// validだったものからバルーンを削除
 			var validProperties = result.validProperties;
 			for (var i = 0, l = validProperties.length; i < l; i++) {
 				var name = validProperties[i];
-				var element = $formControls.filter('[name="' + name + '"]')[0];
+				var element = this.parentController.getElementByName(name);
 				if (!element) {
 					continue;
 				}
-				this._setErrorBaloon(element, globalSetting, outputSetting[name], false);
+				this._setErrorBaloon(element, name, globalSetting, outputSetting[name], false);
 			}
 
 			// invalidだったものにバルーンを追加
 			var invalidProperties = result.invalidProperties;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
-				var element = $formControls.filter('[name="' + name + '"]')[0];
+				var element = this.parentController.getElementByName(name);
 				if (!element) {
 					continue;
 				}
-				this._setErrorBaloon(element, globalSetting, outputSetting[name],
+				this._setErrorBaloon(element, name, globalSetting, outputSetting[name],
 						result.failureReason[name]);
 			}
 			this._executedOnValidate = true;
 		},
-		onFocus: function(element, globalSetting, setting, errorReason) {
-			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'focus');
+		onFocus: function(element, name, globalSetting, setting, errorReason) {
+			this._setErrorBaloon(element, name, globalSetting, setting, errorReason, 'focus');
 		},
 		onBlur: function(element, globalSetting, setting, errorReason) {
-			this._setErrorBaloon(element, globalSetting, setting, errorReason, 'blur');
+			this._setErrorBaloon(element, name, globalSetting, setting, errorReason, 'blur');
 		},
-		//		onChange: function(element, globalSetting, setting, errorReason) {
+		//		onChange: function(element,name, globalSetting, setting, errorReason) {
 		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
 		//		},
-		//		onKeyup: function(element, globalSetting, setting, errorReason) {
+		//		onKeyup: function(element, name, globalSetting, setting, errorReason) {
 		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
 		//		},
-		//		onClick: function(element, globalSetting, setting, errorReason) {
+		//		onClick: function(element,name, globalSetting, setting, errorReason) {
 		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
 		//		},
 
@@ -301,18 +299,18 @@
 			$(this._currentBaloonTarget).tooltip('hide');
 		},
 
-		_setErrorBaloon: function(element, globalSetting, setting, errorReason, type) {
+		_setErrorBaloon: function(element, name, globalSetting, setting, errorReason, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
-			var pluginSetting = $.extend({}, globalSetting && globalSetting.baloon, setting
-					&& setting.baloon);
+			var pluginSetting = $.extend({}, globalSetting, setting && setting.baloon);
 			if (setting && setting.baloon && setting.baloon.off) {
 				return;
 			}
 			var replaceElement = pluginSetting.replaceElement;
-			var target = replaceElement ? replaceElement(element) : element;
+			var target = isFunction(replaceElement) ? replaceElement(element)
+					: (replaceElement || element);
 			if (!target) {
 				return;
 			}
@@ -323,8 +321,8 @@
 				return;
 			}
 			if (errorReason) {
-				var msg = h5internal.validation.createValidateErrorMessage(element.name,
-						errorReason, setting);
+				var msg = h5internal.validation.createValidateErrorMessage(name, errorReason,
+						setting);
 				var placement = DEFAULT_PLACEMENT;
 				if (setting && setting.baloon && setting.baloon.placement) {
 					placement = setting.baloon.placement;
@@ -333,7 +331,11 @@
 				}
 				$(target).attr({
 					'data-placement': placement,
-					'data-original-title': msg
+					'data-original-title': msg,
+					// FIXME animationをtrueにすると、show/hide/showを同期で繰り返した時に表示されない
+					// (shown.bs.tooltipイベントとか拾って制御する必要あり)
+					// 一旦animationをoffにしている
+					'data-animation': false
 				}).tooltip({
 					trigger: 'manual'
 				});
@@ -364,15 +366,13 @@
 		_errorMessageElementMap: {},
 		onValidate: function(result, globalSetting, outputSetting) {
 			var $formControls = this.parentController.getElements();
+			var $groups = this.parentController.getInputGroupElements();
 			// validだったものからバルーンを削除
 			var validProperties = result.validProperties;
 			for (var i = 0, l = validProperties.length; i < l; i++) {
 				var name = validProperties[i];
 				var element = $formControls.filter('[name="' + name + '"]')[0];
-				if (!element) {
-					continue;
-				}
-				this._setErrorMessage(element, globalSetting, outputSetting[name], false);
+				this._setErrorMessage(element, name, globalSetting, outputSetting[name], false);
 			}
 
 			// invalidだったものにメッセージを表示
@@ -380,29 +380,26 @@
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
 				var element = $formControls.filter('[name="' + name + '"]')[0];
-				if (!element) {
-					continue;
-				}
-				this._setErrorMessage(element, globalSetting, outputSetting[name],
+				this._setErrorMessage(element, name, globalSetting, outputSetting[name],
 						result.failureReason[name]);
 			}
 			this._executedOnValidate = true;
 		},
-		onFocus: function(element, globalSetting, setting, errorReason) {
-			this._setErrorMessage(element, globalSetting, setting, errorReason, 'focus');
+		onFocus: function(element, name, globalSetting, setting, errorReason) {
+			this._setErrorMessage(element, name, globalSetting, setting, errorReason, 'focus');
 		},
-		onBlur: function(element, globalSetting, setting, errorReason) {
-			this._setErrorMessage(element, globalSetting, setting, errorReason, 'blur');
+		onBlur: function(element, name, globalSetting, setting, errorReason) {
+			this._setErrorMessage(element, name, globalSetting, setting, errorReason, 'blur');
 		},
 		// FIXME どのタイミングで実行するかは設定で決める？
-		//		onChange: function(element, globalSetting, setting, errorReason) {
-		//			this._setErrorMessage(element, globalSetting, setting, errorReason);
+		//		onChange: function(element,name, globalSetting, setting, errorReason) {
+		//			this._setErrorMessage(element,name, globalSetting, setting, errorReason);
 		//		},
-		//		onKeyup: function(element, globalSetting, setting, errorReason) {
-		//			this._setErrorMessage(element, globalSetting, setting, errorReason);
+		//		onKeyup: function(element,name, globalSetting, setting, errorReason) {
+		//			this._setErrorMessage(element,name, globalSetting, setting, errorReason);
 		//		},
-		//		onClick: function(element, globalSetting, setting, errorReason) {
-		//			this._setErrorMessage(element, globalSetting, setting, errorReason);
+		//		onClick: function(element, name,globalSetting, setting, errorReason) {
+		//			this._setErrorMessage(element, name,globalSetting, setting, errorReason);
 		//		},
 
 		reset: function() {
@@ -411,19 +408,19 @@
 			}
 		},
 
-		_setErrorMessage: function(element, globalSetting, setting, errorReason, type) {
+		_setErrorMessage: function(element, name, globalSetting, setting, errorReason, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
-			var pluginSetting = $.extend({}, globalSetting && globalSetting.errorMessage, setting
-					&& setting.errorMessage);
+			var pluginSetting = $.extend({}, globalSetting, setting && setting.errorMessage);
 			if (setting && setting.errorMessage && setting.errorMessage.off) {
 				return;
 			}
-			var replaceElement = pluginSetting.replaceElement;
 			var errorPlacement = pluginSetting.errorPlacement;
-			var target = replaceElement ? replaceElement(element) : element;
+			var replaceElement = pluginSetting.replaceElement;
+			var target = isFunction(replaceElement) ? replaceElement(element)
+					: (replaceElement || element);
 			if (!target) {
 				return;
 			}
@@ -435,8 +432,8 @@
 				return;
 			}
 			if (errorReason) {
-				var msg = h5internal.validation.createValidateErrorMessage(element.name,
-						errorReason, setting);
+				var msg = h5internal.validation.createValidateErrorMessage(name, errorReason,
+						setting);
 				var $errorMsg = this._errorMessageElementMap[name];
 				if (!$errorMsg) {
 					// TODO タグやクラスを設定できるようにする
@@ -615,9 +612,16 @@
 		 */
 		outputSetting: {},
 
+		/**
+		 * @memberOf h5.ui.FormController
+		 */
 		defaultRuleCreators: defaultRuleCreators,
 
+		/**
+		 * @memberOf h5.ui.FormController
+		 */
 		__construct: function() {
+			this._validator = h5.validation.createValidator('form');
 			// デフォルトルールの追加
 			// TODO formのvalidatorで不要な項目は要らない
 			this.addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requireRuleCreator);
@@ -632,6 +636,10 @@
 			this.addRuleCreator(DATA_RULE_PATTERN, defaultRuleCreators.patternRuleCreator);
 			this.addRuleCreator(DATA_RULE_SIZE, defaultRuleCreators.sizeRuleCreator);
 		},
+
+		/**
+		 * @memberOf h5.ui.FormController
+		 */
 		__init: function() {
 			// form要素にバインドされていればそのformに属しているform関連要素を見る
 			// すなわち、ルートエレメント以下にあるinputでもform属性で別IDが指定されていたらそのinputは対象外
@@ -642,6 +650,10 @@
 				$(this._bindedForm).prop('novalidate', true);
 			}
 		},
+
+		/**
+		 * @memberOf h5.ui.FormController
+		 */
 		__ready: function() {
 			// デフォルトの出力プラグイン追加
 			this._addOutputPlugin('errorClass', h5.ui.validation.ErrorClass);
@@ -650,7 +662,6 @@
 			this._addOutputPlugin('errorMessage', h5.ui.validation.ErrorMessage);
 
 			// フォーム部品からルールを生成
-			this._validator = h5.validation.createValidator('form');
 			var $formControls = this.getElements();
 			var validateRule = {};
 			$formControls.each(this.ownWithOrg(function(element) {
@@ -686,7 +697,7 @@
 		 * @param {boolean} [onlyAddedRule=true]
 		 *            shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue
 		 */
-		addRule: function(ruleObj, shouldValidate) {
+		addRule: function(ruleObj, shouldValidate, onlyAddedRule) {
 			this._validator.addRule(ruleObj);
 			if (shouldValidate) {
 				var names = null;
@@ -725,7 +736,7 @@
 		gather: function(targetNames) {
 			targetNames = targetNames && (!isArray(targetNames) ? [targetNames] : targetNames);
 			var $elements = this.getElements();
-			var $groups = this.$find('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
+			var $groups = this.getInputGroupElements();
 			var ret = {};
 			$elements.each(function() {
 				var name = this.name;
@@ -927,6 +938,56 @@
 			});
 		},
 
+		/**
+		 * このコントローラが管理するformに属するフォーム部品グループ要素を取得
+		 *
+		 * @returns {jQuery}
+		 */
+		getInputGroupElements: function() {
+			var $allGroups = $('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
+			return this.$find('[data-' + DATA_INPUTGROUP_CONTAINER + ']').filter(
+					function() {
+						var $this = $(this);
+						var formAttr = $this.attr('form');
+						// form属性がこのコントローラのフォームを指している
+						// または、このコントローラのフォーム内の要素でかつform属性指定無し
+						return (formAttr && formAttr === formId) || !formAttr
+								&& $allGroups.index($this) !== -1;
+					});
+		},
+
+		/**
+		 * このコントローラが管理するformに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
+		 *
+		 * @param {string} name
+		 * @returns {DOM}
+		 */
+		getElementByName: function(name) {
+			// このメソッドはプラグインがvalidate結果から対応するエレメントを探す時に呼び出される
+			var $formCtrls = this.getElements();
+			var element = $formCtrls.filter('[name="' + name + '"]')[0];
+			if (element) {
+				return element;
+			}
+			var groupContainer = this.getInputGroupElements().filter(
+					'[data-' + DATA_INPUTGROUP_CONTAINER + '="' + name + '"]')[0];
+			if (groupContainer) {
+				return groupContainer;
+			}
+
+			var $groupElements = $formCtrls.filter(function() {
+				var $this = $(this);
+				return $this.data(DATA_INPUTGROUP) === name;
+			});
+			// FIXME 複数ある場合は代表の一つを返しているが、どうするか
+			// jQueryオブジェクトを受け取るようにしてjQueryオブジェクトで対応するべき？
+			// ex.name='zipCode'で、
+			// <input name="zip1" data-inputgroup="zipCode"/>
+			// <input name="zip2" data-inputgroup="zipCode"/>
+			// の2つがある場合は1つ目を返している。
+			return $groupElements[0];
+		},
+
 		'{rootElement} focusin': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_FOCUS);
 		},
@@ -990,7 +1051,26 @@
 
 			var validateResult = this._validate(name);
 			var reason = validateResult.failureReason && validateResult.failureReason[name];
-			this._callPluginElementEvent(type, target, reason);
+			this._callPluginElementEvent(type, target, name, reason);
+
+			// グループに属していればそのグループに対しても呼び出し
+			var groupName = $(target).data(DATA_INPUTGROUP);
+			if (!groupName) {
+				var $groups = this.getInputGroupElements();
+				if (!$groups.find(target).length) {
+					// グループに属していないなら終了
+					return;
+				}
+				// タグにグループの指定が無くグループコンテナに属している場合
+				var $group = $(target).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
+				var groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
+			}
+			// グループに属している場合
+			var groupValidateResult = this._validate(groupName);
+			var groupReason = groupValidateResult.failureReason
+					&& groupValidateResult.failureReason[groupName];
+			this._callPluginElementEvent(type, this.getElementByName(groupName), groupName,
+					groupReason);
 		},
 
 		/**
@@ -1017,15 +1097,15 @@
 		 * @memberOf h5.ui.FormController
 		 * @private
 		 */
-		_callPluginElementEvent: function(type, element, reason) {
+		_callPluginElementEvent: function(type, element, name, reason) {
 			var plugins = this._plugins;
 			var globalSetting = this.globalSetting;
 			var outputSetting = this.outputSetting;
-			var name = element.name;
 			for ( var pluginName in plugins) {
 				var plugin = plugins[pluginName];
 				if (plugin[type]) {
-					plugin[type](element, globalSetting[pluginName], outputSetting[name], reason);
+					plugin[type](element, name, globalSetting[pluginName], outputSetting[name],
+							reason);
 				}
 			}
 		},

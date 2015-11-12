@@ -36,6 +36,10 @@
 	font-weight: bold;
 	color: #f00;
 }
+
+.groupSample.has-error {
+	border: 1px solid #ff0000;
+}
 </style>
 <script>
 	$(function() {
@@ -49,6 +53,20 @@
 			},
 			formController: h5.ui.FormController,
 			__init: function() {
+				// birthdayグループのルール追加
+				this.formController.addRule({
+					birthday: {
+						customFunc: function(value) {
+							var y = value.year;
+							var m = value.month;
+							var d = value.day;
+							var numRegexp = /^[0-9]+$/;
+							return numRegexp.test(y) && numRegexp.test(m) && numRegexp.test(d)
+									&& !isNaN(new Date(y + '/' + m + '/' + d).getDate());
+						}
+					}
+				});
+
 				// エラー出力設定
 				this.formController.globalSetting = {
 					errorClass: {
@@ -76,6 +94,10 @@
 						errorMessage: {
 							off: true
 						}
+					},
+					birthday: {
+						label: '生年月日',
+						message: '[%=label%]が正しい日付ではありません'
 					},
 					year: {
 						errorMessage: {
@@ -165,7 +187,9 @@
 							</label>
 						</div>
 					</div>
-					<div class="form-group" data-inputgroup-container="birthday">
+					<!--  data-inputgroup-container指定 -->
+					<div class="form-group groupSample"
+						data-inputgroup-container="birthday">
 						<label class="control-label">生年月日</label>
 						<div class="form-inline">
 							<input name="year" type="text" placeholder="年(西暦)"
@@ -179,10 +203,11 @@
 					<div class="form-group">
 						<label class="control-label">郵便番号</label>
 						<div class="form-inline">
+							<!--  data-inputgroup指定 -->
 							<input name="zip1" type="text" class="form-control" size="3"
-								data-inputgroup="zipcode" data-require /> -<input name="zip2"
-								type="text" class="form-control" size="4"
-								data-inputgroup="zipcode" data-require />
+								data-inputgroup="zipcode" data-inputgroup="zipCode" data-require />
+							-<input name="zip2" type="text" class="form-control" size="4"
+								data-inputgroup="zipcode" data-inputgroup="zipCode" data-require />
 						</div>
 					</div>
 					<div class="form-group">
