@@ -651,12 +651,7 @@
 				// HTML5のformによる標準のバリデーションは行わないようにする
 				$(this._bindedForm).prop('novalidate', true);
 			}
-		},
 
-		/**
-		 * @memberOf h5.ui.FormController
-		 */
-		__ready: function() {
 			// デフォルトの出力プラグイン追加
 			this._addOutputPlugin('errorClass', h5.ui.validation.ErrorClass);
 			this._addOutputPlugin('allMessage', h5.ui.validation.AllMessage);
@@ -910,6 +905,12 @@
 			var result = this._validate(names);
 			// onValidateの呼び出し
 			this._callPluginValidateEvent(PLUGIN_EVENT_VALIDATE, result);
+			if (result.isAsync) {
+				var that = this;
+				result.addEventListener('validateComplete', function() {
+					that._callPluginValidateEvent(PLUGIN_EVENT_VALIDATE, result);
+				});
+			}
 			return result;
 		},
 
@@ -1037,7 +1038,9 @@
 
 			this.log.debug('・validate結果');
 			this.log.debug(ret);
+			this.log.debug(ret.isAsync ? '非同期' : '同期');
 			this.log.debug('-----------------------------------------');
+
 			return ret;
 		},
 
@@ -1063,15 +1066,27 @@
 			}
 
 			var validateResult = this._validate(groupName || name);
-			var reason = validateResult.failureReason && validateResult.failureReason[name];
-			this._callPluginElementEvent(type, target, name, reason);
 
-			if (groupName) {
-				var groupReason = validateResult.failureReason
-						&& validateResult.failureReason[groupName];
-				this._callPluginElementEvent(type, this.getElementByName(groupName), groupName,
-						groupReason);
+			function callPluginEventHandler() {
+				var reason = validateResult.failureReason && validateResult.failureReason[name];
+				this._callPluginElementEvent(type, target, name, reason);
+
+				if (groupName) {
+					var groupReason = validateResult.failureReason
+							&& validateResult.failureReason[groupName];
+					this._callPluginElementEvent(type, this.getElementByName(groupName), groupName,
+							groupReason);
+				}
 			}
+
+			if (validateResult.isAsync) {
+				// 非同期validateを含む場合
+				validateResult.addEventListener('validateComplete', this
+						.own(callPluginEventHandler));
+			} else {
+				this.own(callPluginEventHandler)();
+			}
+			return;
 		},
 
 		/**
@@ -1114,7 +1129,7 @@
 		_submitHandler: function(ctx, $el) {
 			ctx.event.preventDefault();
 			var validateResult = this.validate();
-			if (validateResult.isValid) {
+			if (validateResult.isAllValid) {
 				// 送信
 				$el[0].submit();
 			}

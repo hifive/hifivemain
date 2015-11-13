@@ -49,6 +49,12 @@
 	var DEFAULT_RULE_NAME_PATTERN = 'pattern';
 	var DEFAULT_RULE_NAME_SIZE = 'size';
 
+	/**
+	 * ValidationResultのイベント名
+	 */
+	var EVENT_VALIDATE = 'validate';
+	var EVENT_VALIDATE_COMPLETE = 'validateComplete';
+
 	// =============================
 	// Development Only
 	// =============================
@@ -64,6 +70,8 @@
 	// Cache
 	//
 	// =========================================================================
+	var isPromise = h5.async.isPromise;
+
 	// =========================================================================
 	//
 	// Privates
@@ -187,15 +195,20 @@
 		validate: function(obj, names) {
 			var validProperties = [];
 			var invalidProperties = [];
+			var allProperties = [];
 			var failureReason = null;
 			var targetNames = names && (isArray(names) ? names : [names]);
+			var isAsync = false;
+			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
+			var propertyWaitingPromsies = {};
 			for ( var prop in this._rule) {
 				if (names && $.inArray(prop, targetNames) === -1) {
 					continue;
 				}
 				var rule = this._rule[prop];
 				var orgValue = obj[prop];
-				var invalid = false;
+				var isInvalidProp = false;
+				var isAsyncProp = false;
 				// TODO order対応
 				//				var order = rule[PROPERTY_NAME_ORDER];
 
@@ -217,40 +230,97 @@
 						args = [value, args];
 					}
 					var validateFunc = validateRuleManager.getValidateFunction(ruleName);
-					/* del begin */
 					if (!validateFunc) {
 						fwLogger.warn(FW_LOG_NOT_DEFINED_RULE_NAME, ruleName);
+						break;
 					}
-					/* del end */
 
-					if (validateFunc && !validateFunc.apply(this, args)) {
-						// failureReasonの作成
-						// 引数の値を格納する
-						var param = {};
-						var argNames = validateRuleManager.getValidateArgNames(ruleName);
-						if (argNames) {
-							for (var i = 0, l = argNames.length; i < l; i++) {
-								param[argNames[i]] = args[i + 1];
-							}
+					var ret = validateFunc.apply(this, args);
+
+					// validate関数呼び出し時の引数を格納しておく
+					var param = {};
+					var argNames = validateRuleManager.getValidateArgNames(ruleName);
+					if (argNames) {
+						for (var i = 0, l = argNames.length; i < l; i++) {
+							param[argNames[i]] = args[i + 1];
 						}
+					}
+
+					// 非同期の場合
+					if (isPromise(ret) && !isRejected(ret) && !isResolved(ret)) {
+						// pendingのプロミスが返ってきた場合
+						// 結果が返ってきたらvalidateイベントをあげるようにしておく
+						isAsyncProp = true;
+						propertyWaitingPromsies[prop] = propertyWaitingPromsies[prop] || [];
+						propertyWaitingPromsies[prop].push(ret);
+					}
+
+					// 同期の場合
+					if (!ret || isPromise(ret) && isResolved(ret)) {
+						// validate関数がfalseを返したまたは、promiseを返したけどすでにreject済みの場合はvalidate失敗
+						// failureReasonの作成
 						failureReason = failureReason || {};
-						failureReason[prop] = {
-							rule: ruleName,
-							value: value,
-							param: param
-						};
-						invalid = true;
+						failureReason[prop] = this._createFailureReason(ruleName, value, param);
+						isInvalidProp = true;
+						// あるルールでinvalidなら他のルールはもう検証しない
 						break;
 					}
 				}
-				(invalid ? invalidProperties : validProperties).push(prop);
+				if (isAsyncProp) {
+					isAsync = true;
+				} else {
+					(isInvalidProp ? invalidProperties : validProperties).push(prop);
+				}
+				allProperties.push(prop);
 			}
-			return new ValidationResult({
-				isValid: !invalidProperties.length,
+			var isValid = !invalidProperties.length;
+			var validationResult = new ValidationResult({
 				validProperties: validProperties,
 				invalidProperties: invalidProperties,
-				failureReason: failureReason
+				allProperties: allProperties,
+				failureReason: failureReason,
+				isAsync: isAsync,
+				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
+				isValid: isValid,
+				// 非同期でvalidateしているものがあって決まっていない時はisAllValidはnull
+				isAllValid: isAsync ? null : isValid
 			});
+
+			if (isAsync) {
+				var that = this;
+				// 非同期の場合、結果が返って気次第イベントをあげる
+				for ( var prop in propertyWaitingPromsies) {
+					var promises = propertyWaitingPromsies[prop];
+					waitForPromises(promises, (function(_prop) {
+						return function() {
+							// 既にinvalidになっていたらもう何もしない
+							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
+								return;
+							}
+							validationResult.dispatchEvent({
+								type: EVENT_VALIDATE,
+								property: _prop,
+								isValid: true
+							});
+						};
+					})(prop), (function(_prop, _ruleName, _value, _param) {
+						return function() {
+							// 一つでも失敗したらfailCallbackが実行される
+							// 既にinvalidになっていたらもう何もしない
+							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
+								return;
+							}
+							validationResult.dispatchEvent({
+								type: EVENT_VALIDATE,
+								property: _prop,
+								isValid: false,
+								failureReason: that._createFailureReason(_ruleName, _value, _param)
+							});
+						};
+					})(prop, ruleName, value, param));
+				}
+			}
+			return validationResult;
 		},
 		addRule: function(ruleObject) {
 			for ( var prop in ruleObject) {
@@ -267,7 +337,15 @@
 				delete this._rule[keys[i]];
 			}
 		},
-		setOrder: function(ruleOrder) {}
+		setOrder: function(ruleOrder) {},
+
+		_createFailureReason: function(ruleName, value, param) {
+			return {
+				rule: ruleName,
+				value: value,
+				param: param
+			};
+		}
 	});
 
 	/**
@@ -338,7 +416,6 @@
 				validateNames = ($.isArray(names) ? names.slice(0) : [names]).concat(inGroupNames);
 			}
 			return Validator.prototype.validate.call(this, validateTarget, validateNames);
-
 		},
 
 		/**
@@ -363,6 +440,9 @@
 
 	/**
 	 * validation結果クラス
+	 * <p>
+	 * このクラスは{@link EventDispatcher}のメソッドを持ちます。
+	 * </p>
 	 *
 	 * @class
 	 * @name ValidationResult
@@ -378,7 +458,36 @@
 		this.failureReason = result.failureReason;
 		this.validCount = result.validProperties.length;
 		this.invalidCount = result.invalidProperties.length;
+		this.isAsync = result.isAsync;
+		this.isAllValid = result.isAllValid;
+		this.allProperties = result.allProperties;
+
+		this.addEventListener(EVENT_VALIDATE, function(ev) {
+			// このハンドラがユーザが追加するハンドラより先に動作する前提(EventDispatcherがそういう実装)
+			// 非同期validateの結果をValidationResultに反映させる
+			var isValid = ev.isValid;
+			var prop = ev.property;
+			if (isValid) {
+				this.validProperties.push(prop);
+				this.validCount++;
+			} else {
+				this.isValid = isValid;
+				this.invalidProperties.push(prop);
+				this.invalidCount++;
+				this.failureReason = this.failureReason || {};
+				this.failureReason[prop] = this.failureReason[prop] || ev.failureReason;
+			}
+
+			if (this.validCount + this.invalidCount === this.allProperties.length) {
+				this.isAllValid = true;
+				this.dispatchEvent({
+					type: EVENT_VALIDATE_COMPLETE
+				});
+			}
+		});
 	}
+	// イベントディスパッチャ
+	h5.mixin.eventDispatcher.mix(ValidationResult.prototype);
 
 	/**
 	 * priority順に並べるための比較関数

@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
+
+<!-- bootstrap -->
+<link href="/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css"
+	rel="stylesheet" media="screen">
+<script src="/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+<!-- hifive -->
+<!-- <link href="/hifive-res/fw/current/h5.css" rel="stylesheet"> -->
+<script src="/hifive-res/fw/current/ejs-h5mod.js"></script>
+<!-- <script src="/hifive-res/fw/current/h5.dev.js"></script> -->
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.buildType = 'src';
+	H5_TEST_ENV.srcBaseUrl = '../../';
+</script>
+<script src="../../test/loadScriptForTest.js"></script>
+
+<script src="../../src/h5.ui.FormController.js"></script>
+<style>
+.errorMsg {
+	font-weight: bold;
+	color: #f00;
+}
+</style>
+<script>
+	$(function() {
+		h5.core.controller(document.body, {
+			__name: 'sample.PageController',
+			_objIndex: 0,
+			sampleLogic: {
+				__name: 'sample.sampleLogic',
+				isExistUserid: function(userid) {
+					var dfd = this.deferred();
+					setTimeout(function() {
+						// ユーザIDがhifiveだったらrejectする
+						if (userid === 'hifive') {
+							dfd.reject();
+							return;
+						}
+						dfd.resolve();
+					}, 1000);
+					return dfd.promise();
+				}
+			},
+			__meta: {
+				formController: {
+					rootElement: '#form1'
+				}
+			},
+			formController: h5.ui.FormController,
+			__ready: function() {
+				var logic = this.sampleLogic;
+				this.formController.addRule({
+					userid: {
+						require: true,
+						size: [3, 10],
+						customFunc: logic.own(logic.isExistUserid)
+					}
+				});
+
+				// エラー出力設定
+				this.formController.globalSetting = {
+					errorClass: {
+						className: 'has-error',
+						replaceElement: function(element) {
+							// エラークラス追加対象は、input等の親のform-group要素に変換する
+							return $(element).closest('.form-group');
+						}
+					},
+					allMessage: {
+						container: this.$find('.globalError'),
+						wrapper: 'li'
+					}
+				};
+				this.formController.outputSetting = {
+					userid: {
+						formatter: function(reason) {
+							switch (reason.rule) {
+							case 'require':
+								return '必須です';
+							case 'size':
+								var max = reason.param.max;
+								var min = reason.param.min;
+								var val = reason.value;
+								if (val.length < min) {
+									return '短すぎます';
+								} else {
+									return '長すぎます';
+								}
+							case 'customFunc':
+								return '登録済みなので変えてください'
+							}
+						}
+					}
+				};
+			},
+			'{.resetValidation} click': function() {
+				this.formController.resetValidation();
+			}
+		});
+	});
+</script>
+
+<title>フォームのvalidateサンプル</title>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-12">
+				<ul class="globalError"></ul>
+				<button class="btn btn-default resetValidation">FormController.resetValidation()</button>
+				<form class="form" id="form1">
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">名前</span>(必須)</label>
+						<input name="name" type="text" class="form-control"
+							placeholder="名前" data-require />
+					</div>
+					<!--  data-inputgroup-container指定 -->
+					<div class="form-group">
+						<label class="control-label">ユーザID(3～10字)</label>
+						<p>重複チェックのため非同期validateするサンプル。動作確認のため"hifive"を既存のIDとして、失敗扱いにしています。</p>
+						<input name="userid" type="text" class="form-control"
+							value="hifive" />
+					</div>
+
+					<div class="form-group">
+						<input class="btn btn-primary" type="submit" value="送信"> <input
+							class="btn btn-primary" type="reset" value="リセット">
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
