@@ -55,7 +55,8 @@
 			nul: '[%=label%]はnullでなければなりません。',
 			notNull: '[%=label%]はnullでない値を設定してください。',
 			assertFalse: '[%=label%]はfalseとなる値を入力してください。',
-			assertTrue: '[%=label%]はtrueとなる値を入力してください。'
+			assertTrue: '[%=label%]はtrueとなる値を入力してください。',
+			customFunc: '[%=label%]は条件を満たしません'
 		};
 		var view = h5.core.view.createView();
 		for ( var p in msgs) {
@@ -101,7 +102,7 @@
 			return msg;
 		} else if (isFunction(formatter)) {
 			// formatterが設定されている場合はパラメータを渡して関数呼び出しして生成
-			return formatter(param);
+			return formatter(reason);
 		}
 
 		// 何も設定されていない場合はデフォルトメッセージ
@@ -183,7 +184,7 @@
 			// validだったものからエラークラスを削除
 			$formControls.each(this.ownWithOrg(function(element) {
 				var name = element.name;
-				this._setErrorClass(element, globalSetting, outputSetting[name], false);
+				this._setErrorClass(element, name, globalSetting, outputSetting[name], false);
 			}));
 		},
 		_setErrorClass: function(element, name, globalSetting, setting, errorReason) {
@@ -404,7 +405,8 @@
 
 		reset: function() {
 			for ( var p in this._errorMessageElementMap) {
-				this._errorMessageElementMap[name].remove();
+				var $target = this._errorMessageElementMap[name];
+				$target && $target.remove();
 			}
 		},
 
