@@ -1129,6 +1129,15 @@
 		_submitHandler: function(ctx, $el) {
 			ctx.event.preventDefault();
 			var validateResult = this.validate();
+			if (validateResult.isAsync) {
+				validateResult.addEventListener('validateComplete', function() {
+					if (this.isAllValid) {
+						// 送信
+						$el[0].submit();
+					}
+				});
+				return;
+			}
 			if (validateResult.isAllValid) {
 				// 送信
 				$el[0].submit();

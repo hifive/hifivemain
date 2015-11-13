@@ -465,13 +465,12 @@
 		this.addEventListener(EVENT_VALIDATE, function(ev) {
 			// このハンドラがユーザが追加するハンドラより先に動作する前提(EventDispatcherがそういう実装)
 			// 非同期validateの結果をValidationResultに反映させる
-			var isValid = ev.isValid;
 			var prop = ev.property;
-			if (isValid) {
+			if (ev.isValid) {
 				this.validProperties.push(prop);
 				this.validCount++;
 			} else {
-				this.isValid = isValid;
+				this.isValid = false;
 				this.invalidProperties.push(prop);
 				this.invalidCount++;
 				this.failureReason = this.failureReason || {};
@@ -479,7 +478,7 @@
 			}
 
 			if (this.validCount + this.invalidCount === this.allProperties.length) {
-				this.isAllValid = true;
+				this.isAllValid = this.isValid;
 				this.dispatchEvent({
 					type: EVENT_VALIDATE_COMPLETE
 				});
