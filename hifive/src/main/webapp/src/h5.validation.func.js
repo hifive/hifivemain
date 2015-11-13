@@ -321,17 +321,23 @@
 		validate: function(obj, names) {
 			// グループ対応。値がオブジェクトのものはグループとして扱う
 			var validateTarget = {};
+			var inGroupNames = [];
 			for ( var p in obj) {
 				if ($.isPlainObject(obj[p])) {
 					// オブジェクトの場合はその中身も展開してvalidateされるようにする
 					// なお、グループの入れ子は考慮していない
 					for ( var prop in obj[p]) {
-						validateTarget[prop] = obj[p];
+						validateTarget[prop] = obj[p][prop];
+						inGroupNames.push(prop);
 					}
 				}
 				validateTarget[p] = obj[p];
 			}
-			return Validator.prototype.validate.call(this, obj, names);
+			var validateNames = null;
+			if (names) {
+				validateNames = ($.isArray(names) ? names.slice(0) : [names]).concat(inGroupNames);
+			}
+			return Validator.prototype.validate.call(this, validateTarget, validateNames);
 
 		},
 

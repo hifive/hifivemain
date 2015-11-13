@@ -750,11 +750,12 @@
 				}
 				if (groupName) {
 					// グループコンテナに属するエレメントの場合
-					// グループ単位でオブジェクトを作る
-					if (targetNames && $.inArray(groupName, targetNames) === -1) {
-						// targetNamesに含まれないグループ名のエレメントは集約対象外
+					if (targetNames && $.inArray(name, targetNames) === -1
+							&& $.inArray(groupName, targetNames) === -1) {
+						// nameもgroupNameもtargetNamesに入っていなければ集約対象外
 						return;
 					}
+					// グループ単位でオブジェクトを作る
 					ret[groupName] = ret[groupName] || {};
 					currentGroup = ret[groupName];
 				} else if (targetNames && $.inArray(name, targetNames) === -1) {
@@ -1048,29 +1049,27 @@
 				return;
 			}
 			var name = target.name;
+			// グループに属していればそのグループに対してvalidate
+			var groupName = $(target).data(DATA_INPUTGROUP);
+			if (!groupName) {
+				// タグにグループの指定が無くグループコンテナに属している場合
+				var $groups = this.getInputGroupElements();
+				if ($groups.find(target).length) {
+					var $group = $(target).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
+					groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
+				}
+			}
 
-			var validateResult = this._validate(name);
+			var validateResult = this._validate(groupName || name);
 			var reason = validateResult.failureReason && validateResult.failureReason[name];
 			this._callPluginElementEvent(type, target, name, reason);
 
-			// グループに属していればそのグループに対しても呼び出し
-			var groupName = $(target).data(DATA_INPUTGROUP);
-			if (!groupName) {
-				var $groups = this.getInputGroupElements();
-				if (!$groups.find(target).length) {
-					// グループに属していないなら終了
-					return;
-				}
-				// タグにグループの指定が無くグループコンテナに属している場合
-				var $group = $(target).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
-				var groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
+			if (groupName) {
+				var groupReason = validateResult.failureReason
+						&& validateResult.failureReason[groupName];
+				this._callPluginElementEvent(type, this.getElementByName(groupName), groupName,
+						groupReason);
 			}
-			// グループに属している場合
-			var groupValidateResult = this._validate(groupName);
-			var groupReason = groupValidateResult.failureReason
-					&& groupValidateResult.failureReason[groupName];
-			this._callPluginElementEvent(type, this.getElementByName(groupName), groupName,
-					groupReason);
 		},
 
 		/**
