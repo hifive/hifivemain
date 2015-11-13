@@ -716,17 +716,43 @@
 
 	/**
 	 * 第一引数の文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第2引数以降に指定されたパラメータに置換します。
-	 *
-	 * <pre>
+	 * <p>
+	 * また、第2引数にオブジェクトまたは配列を指定した場合は、第一引数の文字列に含まれるキー名の置換を行います。
+	 * </p>
+	 * <p>
 	 * 例：
-	 * 		var myValue = 10;
-	 * 		h5.u.str.format('{0} is {1}', 'myValue', myValue);
-	 * </pre>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * var myValue = 10;
+	 * h5.u.str.format('{0} is {1}', 'myValue', myValue);
+	 * </code></pre>
 	 *
 	 * 実行結果: myValue is 10
+	 * </p>
+	 * <p>
+	 * 例：
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * h5.u.str.format('{name} is at {address}', {
+	 * 	name: 'Taro',
+	 * 	address: 'Yokohama'
+	 * });
+	 * </code></pre>
+	 *
+	 * 実行結果: Taro is at Yokohama
+	 * </p>
+	 * <p>
+	 * 例：
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * h5.u.str.format('{0},{1},{2},…(長さ{length})', [2, 3, 5]);
+	 * </code></pre>
+	 *
+	 * 実行結果: 2,3,5,…(長さ3)
+	 * </p>
 	 *
 	 * @param {String} str 文字列
-	 * @param {Any} var_args 可変長引数
+	 * @param {Any} var_args 可変長引数。ただし1つ目にオブジェクトまたは配列を指定した場合はその中身で置換
 	 * @returns {String} フォーマット済み文字列
 	 * @name format
 	 * @function
@@ -737,6 +763,14 @@
 			return '';
 		}
 		var args = arguments;
+		if (typeof args[1] === 'object' && args[1]) {
+			// オブジェクト(又は配列)が1番目に指定されている場合は、その中身で置換する
+			// (2番目以降の引数は無効)
+			var obj = args[1];
+			return str.replace(/\{(.+?)\}/g, function(m, c) {
+				return obj[c];
+			});
+		}
 		return str.replace(/\{(\d+)\}/g, function(m, c) {
 			var rep = args[parseInt(c, 10) + 1];
 			if (typeof rep === TYPE_OF_UNDEFINED) {

@@ -342,7 +342,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('文字列のフォーマット', 5, function() {
+	test('数値と可変長引数の指定', 5, function() {
 		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
 		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
 				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
@@ -353,6 +353,34 @@ $(function() {
 				'パラメータとしてnullを渡すと"null"という文字列になっているか');
 		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
 				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
+	});
+
+	test('キー名とオブジェクトの指定', function() {
+		var format = h5.u.str.format;
+		var str = 'このテストは、{name}によって実行されています。{result}するはず、です。{name}いいですね。';
+		strictEqual(format(str, {
+			name: 'qUnit',
+			result: '成功'
+		}), 'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
+
+		var obj = {
+			name: 'key',
+			index: 0
+		};
+		obj[0] = '0をキーとする値';
+		strictEqual(format('{name}に{index}を指定すると{0}になる', obj), 'keyに0を指定すると0をキーとする値になる',
+				'{0}は0をキーとする値');
+		strictEqual(format('{0}', obj, 1), '0をキーとする値', '置換引数1つ目がオブジェクトならキーワード引数扱い');
+		var ary = [1, 2, 3, 4, 5];
+		ary.hoge = 'hoge';
+		strictEqual(format('{0}-{1}-{2}-{length}-{hoge}', ary, 4), '1-2-3-5-hoge',
+				'置換引数1つ目が配列ならキーワード引数扱い');
+		strictEqual(format('{a},{b},{c}', {
+			a: null,
+			b: undefined
+		}), 'null,undefined,undefined', 'nullは"null"、undefinedは"undefined"に置換される');
+		strictEqual(format('{0},{1},{name}', 'hoge', 1), 'hoge,1,{name}',
+				'置換引数1つ目がオブジェクトでないならポジション引数扱い');
 	});
 
 	//=============================
