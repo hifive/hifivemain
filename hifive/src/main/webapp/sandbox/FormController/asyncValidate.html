@@ -89,21 +89,21 @@
 				};
 				this.formController.outputSetting = {
 					userid: {
-						formatter: function(reason) {
-							switch (reason.rule) {
+						formatter: function(param) {
+							switch (param.rule) {
 							case 'require':
 								return '必須です';
 							case 'size':
-								var max = reason.param.max;
-								var min = reason.param.min;
-								var val = reason.value;
+								var max = param.param.max;
+								var min = param.param.min;
+								var val = param.value;
 								if (val.length < min) {
 									return '短すぎます';
 								} else {
 									return '長すぎます';
 								}
 							case 'customFunc':
-								return 'そのIDは既に使用済みです。変更してください。'
+								return 'そのIDは既に使用されています。変更してください。'
 							}
 						}
 					}

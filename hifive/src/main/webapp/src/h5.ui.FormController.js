@@ -83,10 +83,11 @@
 		var msg = setting && setting.message;
 		var formatter = setting && setting.formatter;
 		var param = {
-			name: name,
 			value: reason.value,
-			label: label,
-			param: reason.param
+			param: reason.param,
+			rule: reason.rule,
+			name: name,
+			label: label
 		};
 		if (isString(msg)) {
 			// messageが指定されていればテンプレート文字列として扱ってメッセージを作成する
@@ -102,7 +103,7 @@
 			return msg;
 		} else if (isFunction(formatter)) {
 			// formatterが設定されている場合はパラメータを渡して関数呼び出しして生成
-			return formatter(reason);
+			return formatter(param);
 		}
 
 		// 何も設定されていない場合はデフォルトメッセージ
