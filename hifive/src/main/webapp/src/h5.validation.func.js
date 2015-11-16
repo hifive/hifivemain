@@ -54,6 +54,7 @@
 	 */
 	var EVENT_VALIDATE = 'validate';
 	var EVENT_VALIDATE_COMPLETE = 'validateComplete';
+	var EVENT_VALIDATE_ABORT = 'abort';
 
 	// =============================
 	// Development Only
@@ -196,6 +197,7 @@
 			var validProperties = [];
 			var invalidProperties = [];
 			var allProperties = [];
+			var validatingProperties = [];
 			var failureReason = null;
 			var targetNames = names && (isArray(names) ? names : [names]);
 			var isAsync = false;
@@ -268,6 +270,7 @@
 				}
 				if (isAsyncProp) {
 					isAsync = true;
+					validatingProperties.push(prop);
 				} else {
 					(isInvalidProp ? invalidProperties : validProperties).push(prop);
 				}
@@ -277,6 +280,7 @@
 			var validationResult = new ValidationResult({
 				validProperties: validProperties,
 				invalidProperties: invalidProperties,
+				validatingProperties: validatingProperties,
 				allProperties: allProperties,
 				failureReason: failureReason,
 				isAsync: isAsync,
@@ -439,6 +443,36 @@
 	});
 
 	/**
+	 * ValidationResultにデフォルトで登録するvalidateイベントリスナ
+	 *
+	 * @private
+	 */
+	function validateEventListener(ev) {
+		// thisはvalidationResult
+		// このハンドラがユーザが追加するハンドラより先に動作する前提(EventDispatcherがそういう実装)
+		// 非同期validateの結果をValidationResultに反映させる
+		var prop = ev.property;
+		if (ev.isValid) {
+			this.validProperties.push(prop);
+			this.validCount++;
+		} else {
+			this.isValid = false;
+			this.invalidProperties.push(prop);
+			this.invalidCount++;
+			this.failureReason = this.failureReason || {};
+			this.failureReason[prop] = this.failureReason[prop] || ev.failureReason;
+		}
+		this.validatingProperties.splice(this.validatingProperties.indexOf(prop), 1);
+
+		if (this.validCount + this.invalidCount === this.allProperties.length) {
+			this.isAllValid = this.isValid;
+			this.dispatchEvent({
+				type: EVENT_VALIDATE_COMPLETE
+			});
+		}
+	}
+
+	/**
 	 * validation結果クラス
 	 * <p>
 	 * このクラスは{@link EventDispatcher}のメソッドを持ちます。
@@ -455,6 +489,7 @@
 		this.isValid = result.isValid;
 		this.validProperties = result.validProperties;
 		this.invalidProperties = result.invalidProperties;
+		this.validatingProperties = result.validatingProperties;
 		this.failureReason = result.failureReason;
 		this.validCount = result.validProperties.length;
 		this.invalidCount = result.invalidProperties.length;
@@ -462,31 +497,34 @@
 		this.isAllValid = result.isAllValid;
 		this.allProperties = result.allProperties;
 
-		this.addEventListener(EVENT_VALIDATE, function(ev) {
-			// このハンドラがユーザが追加するハンドラより先に動作する前提(EventDispatcherがそういう実装)
-			// 非同期validateの結果をValidationResultに反映させる
-			var prop = ev.property;
-			if (ev.isValid) {
-				this.validProperties.push(prop);
-				this.validCount++;
-			} else {
-				this.isValid = false;
-				this.invalidProperties.push(prop);
-				this.invalidCount++;
-				this.failureReason = this.failureReason || {};
-				this.failureReason[prop] = this.failureReason[prop] || ev.failureReason;
-			}
+		this.addEventListener(EVENT_VALIDATE, validateEventListener);
 
-			if (this.validCount + this.invalidCount === this.allProperties.length) {
-				this.isAllValid = this.isValid;
-				this.dispatchEvent({
-					type: EVENT_VALIDATE_COMPLETE
-				});
+		// abort()が呼ばれていたらdispatchEventを動作させない
+		this.dispatchEvent = function() {
+			if (this._aborted) {
+				return;
 			}
-		});
+			ValidationResult.prototype.dispatchEvent.apply(this, arguments);
+		};
 	}
 	// イベントディスパッチャ
 	h5.mixin.eventDispatcher.mix(ValidationResult.prototype);
+	/**
+	 * 非同期validateの中止
+	 * <p>
+	 * 非同期validateを行っている途中でまだvalidateCompleteイベントが上がっていない時にabort()を呼ぶと、イベントをあげなくなります。
+	 * </p>
+	 *
+	 * @memberOf ValidationResult
+	 * @name abort
+	 */
+	ValidationResult.prototype.abort = function() {
+		this.removeEventListener(EVENT_VALIDATE, validateEventListener);
+		this.dispatchEvent({
+			type: EVENT_VALIDATE_ABORT
+		});
+		this._aborted = true;
+	};
 
 	/**
 	 * priority順に並べるための比較関数
