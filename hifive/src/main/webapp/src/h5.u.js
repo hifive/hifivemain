@@ -778,11 +778,11 @@
 		if (str == null) {
 			return '';
 		}
-		var args = arguments;
+		var args = argsToArray(arguments).slice(1);
 		return str.replace(/\{(.+?)\}/g, function(m, c) {
 			if (/^\d+$/.test(c)) {
 				// {0}のような数値のみの指定の場合は引数の値をそのまま返す
-				var rep = args[parseInt(c, 10) + 1];
+				var rep = args[parseInt(c, 10)];
 				if (typeof rep === TYPE_OF_UNDEFINED) {
 					// undefinedなら"undefined"を返す
 					return TYPE_OF_UNDEFINED;
@@ -790,23 +790,9 @@
 				return rep;
 			}
 			// 数値じゃない場合はオブジェクトプロパティ指定扱い
-			var tmp = c.split(/^([\d*])\./);
-			var rootObj = args[1];
-			var path = c;
-			if (tmp[1]) {
-				// {0.name}のような指定の場合は先頭の数字を引数のindexとして扱う
-				rootObj = args[parseInt(tmp[1], 10) + 1];
-				path = tmp[2];
-			}
-			// getByPathを使って取得。辿れないプロパティはundefinedになる
-			if (!rootObj) {
-				// getByPathは第2引数がfalseを返す場合にwindowとして扱ってしまうので、その場合でもrootObjから辿れるようにオブジェクトで包んでおく
-				rootObj = {
-					a: rootObj
-				};
-				path = 'a.' + path;
-			}
-			var rep = getByPath(path, rootObj);
+			// 数値.で始まっていなければ"0."が省略されていると見做す
+			var path = /^\d+\./.test(c) ? c : '0.' + c;
+			var rep = getByPath(path, args);
 			if (typeof rep === TYPE_OF_UNDEFINED) {
 				return TYPE_OF_UNDEFINED;
 			}
