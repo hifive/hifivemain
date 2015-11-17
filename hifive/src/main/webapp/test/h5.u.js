@@ -342,45 +342,57 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('数値と可変長引数の指定', 5, function() {
+	test('数値と可変長引数の指定', function() {
+		var format = h5.u.str.format;
 		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
 		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
 				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
 
-		strictEqual('', h5.u.str.format(null, 1), 'nullを渡すと空文字列が返るか');
-		strictEqual('', h5.u.str.format(undefined), 'undefinedを渡すと空文字列が返るか');
-		strictEqual('nullが渡されました。', h5.u.str.format('{0}が渡されました。', null),
+		strictEqual(format(null, 1), '', 'nullを渡すと空文字列が返るか');
+		strictEqual(format(undefined), '', 'undefinedを渡すと空文字列が返るか');
+		strictEqual(h5.u.str.format('{0}が渡されました。', null), 'nullが渡されました。',
 				'パラメータとしてnullを渡すと"null"という文字列になっているか');
-		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
+		strictEqual(h5.u.str.format('{0}が渡されました。', undefined), 'undefinedが渡されました。',
 				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
+
+		var ary = [2, 3, 5];
+		strictEqual(format('{0}', ary), ary.toString(), '配列を渡した場合にtoString()結果が返ってくること');
+		function A() {
+			this.toString = function() {
+				return 'A';
+			};
+		}
+		strictEqual(format('{0}', new A()), 'A', 'オブジェクトを渡した場合にtoString()結果が返ってくること');
 	});
 
-	test('キー名とオブジェクトの指定', function() {
+	test('オブジェクトのプロパティ', function() {
 		var format = h5.u.str.format;
-		var str = 'このテストは、{name}によって実行されています。{result}するはず、です。{name}いいですね。';
-		strictEqual(format(str, {
-			name: 'qUnit',
-			result: '成功'
-		}), 'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
-
-		var obj = {
-			name: 'key',
-			index: 0
+		var obj1 = {
+			name: 'a',
+			id: 1,
+			u: undefined,
+			n: null
 		};
-		obj[0] = '0をキーとする値';
-		strictEqual(format('{name}に{index}を指定すると{0}になる', obj), 'keyに0を指定すると0をキーとする値になる',
-				'{0}は0をキーとする値');
-		strictEqual(format('{0}', obj, 1), '0をキーとする値', '置換引数1つ目がオブジェクトならキーワード引数扱い');
-		var ary = [1, 2, 3, 4, 5];
-		ary.hoge = 'hoge';
-		strictEqual(format('{0}-{1}-{2}-{length}-{hoge}', ary, 4), '1-2-3-5-hoge',
-				'置換引数1つ目が配列ならキーワード引数扱い');
-		strictEqual(format('{a},{b},{c}', {
-			a: null,
-			b: undefined
-		}), 'null,undefined,undefined', 'nullは"null"、undefinedは"undefined"に置換される');
-		strictEqual(format('{0},{1},{name}', 'hoge', 1), 'hoge,1,{name}',
-				'置換引数1つ目がオブジェクトでないならポジション引数扱い');
+		obj1[0] = '0をキーとする値';
+		var obj2 = {
+			hoge: 'h',
+			fuga: 'f',
+			obj1: obj1
+		};
+		var ary = ['A', 'B', 'C', 'D', obj2];
+		strictEqual(format('{0.name}{0.id}{1.hoge}{1.fuga}', obj1, obj2), 'a1hf',
+				'オブジェクトの中身を埋め込める');
+		strictEqual(format('{0.name}{0.id}{2}{1.hoge}{1.fuga}', obj1, obj2, '/'), 'a1/hf',
+				'インデックス指定とオブジェクトのプロパティ指定を混合できる');
+		strictEqual(format('{0.obj1.name}', obj2), 'a', 'オブジェクトの入れ子をたどれる');
+		strictEqual(format('{0.0}/{0.1}', ary), 'A/B', '配列のindexを指定できる');
+		strictEqual(format('{0.length}', ary), '' + ary.length, '配列のlengthプロパティを指定できる');
+		strictEqual(format('{0.4.obj1.name}', ary), 'a', '配列の中のオブジェクトをたどれる');
+		strictEqual(format('{name}{id}', obj1), 'a1', '0.は省略できる');
+		strictEqual(format('{0.n}', obj1), 'null', 'nullの値を持つプロパティは"null"');
+		strictEqual(format('{0.u}', obj1), 'undefined', 'undefinedの値を持つプロパティは"undefined"');
+		strictEqual(format('{0.a}', obj1), 'undefined', '存在しないプロパティは"undefined"');
+		strictEqual(format('{0.a.b}', obj1), 'undefined', '辿れないプロパティは"undefined"');
 	});
 
 	//=============================

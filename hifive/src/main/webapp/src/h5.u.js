@@ -717,7 +717,10 @@
 	/**
 	 * 第一引数の文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第2引数以降に指定されたパラメータに置換します。
 	 * <p>
-	 * また、第2引数にオブジェクトまたは配列を指定した場合は、第一引数の文字列に含まれるキー名の置換を行います。
+	 * また、{0.name}のように記述すると第2引数のnameプロパティの値で置換を行います。"0."は引数の何番目かを指し、第2引数を0としてそれ以降の引数のプロパティの値を採ることもできます。
+	 * </p>
+	 * <p>
+	 * "0."は省略して単に{name}のように記述することもできます。また、{0.birthday.year}のように入れ子になっているプロパティを辿ることもできます。
 	 * </p>
 	 * <p>
 	 * 例：
@@ -745,10 +748,23 @@
 	 * 例：
 	 *
 	 * <pre class="sh_javascript"><code>
-	 * h5.u.str.format('{0},{1},{2},…(長さ{length})', [2, 3, 5]);
+	 * h5.u.str.format('{0} is born on {1.birthday.year}.', 'Taro', {
+	 * 	birthday: {
+	 * 		year: 1990
+	 * 	}
+	 * });
 	 * </code></pre>
 	 *
-	 * 実行結果: 2,3,5,…(長さ3)
+	 * 実行結果: Taro is born on 1990.
+	 * </p>
+	 * <p>
+	 * 例：
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * h5.u.str.format('{0.0},{0.1},{0.2},…(長さ{length})', [2, 3, 5, 7]);
+	 * </code></pre>
+	 *
+	 * 実行結果: 2,3,5,…(長さ4)
 	 * </p>
 	 *
 	 * @param {String} str 文字列
@@ -763,16 +779,34 @@
 			return '';
 		}
 		var args = arguments;
-		if (typeof args[1] === 'object' && args[1]) {
-			// オブジェクト(又は配列)が1番目に指定されている場合は、その中身で置換する
-			// (2番目以降の引数は無効)
-			var obj = args[1];
-			return str.replace(/\{(.+?)\}/g, function(m, c) {
-				return obj[c];
-			});
-		}
-		return str.replace(/\{(\d+)\}/g, function(m, c) {
-			var rep = args[parseInt(c, 10) + 1];
+		return str.replace(/\{(.+?)\}/g, function(m, c) {
+			if (/^\d+$/.test(c)) {
+				// {0}のような数値のみの指定の場合は引数の値をそのまま返す
+				var rep = args[parseInt(c, 10) + 1];
+				if (typeof rep === TYPE_OF_UNDEFINED) {
+					// undefinedなら"undefined"を返す
+					return TYPE_OF_UNDEFINED;
+				}
+				return rep;
+			}
+			// 数値じゃない場合はオブジェクトプロパティ指定扱い
+			var tmp = c.split(/^([\d*])\./);
+			var rootObj = args[1];
+			var path = c;
+			if (tmp[1]) {
+				// {0.name}のような指定の場合は先頭の数字を引数のindexとして扱う
+				rootObj = args[parseInt(tmp[1], 10) + 1];
+				path = tmp[2];
+			}
+			// getByPathを使って取得。辿れないプロパティはundefinedになる
+			if (!rootObj) {
+				// getByPathは第2引数がfalseを返す場合にwindowとして扱ってしまうので、その場合でもrootObjから辿れるようにオブジェクトで包んでおく
+				rootObj = {
+					a: rootObj
+				};
+				path = 'a.' + path;
+			}
+			var rep = getByPath(path, rootObj);
 			if (typeof rep === TYPE_OF_UNDEFINED) {
 				return TYPE_OF_UNDEFINED;
 			}
