@@ -64,7 +64,7 @@
 				cssTemplateFile="${cssTempFile}"
 				minHeaderFile="${minHeaderFile}"
 				constructionFile="${constructionFile}"
-				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene" />
+				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
@@ -95,7 +95,7 @@
 				cssTemplateFile="${cssTempFile}"
 				minHeaderFile="${minHeaderFile}"
 				constructionFile="${constructionFile}"
-				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene" />
+				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>

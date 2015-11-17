@@ -27,7 +27,8 @@
 		</cssfiles>
 	</module>
 
-	<module name="async" description="module.async.description" selectable="false">
+	<module name="async" description="module.async.description"
+		selectable="false">
 		<dependencies>
 			<dependency name="util" />
 		</dependencies>
@@ -152,7 +153,8 @@
 		</cssfiles>
 	</module>
 
-	<module name="scene" description="module.scene.description" selectable="false">
+	<module name="scene" description="module.scene.description"
+		selectable="false">
 		<dependencies>
 		</dependencies>
 		<files>
@@ -162,7 +164,19 @@
 		</cssfiles>
 	</module>
 
-	<module name="dev" description="module.dev.description" selectable="false">
+	<module name="validation" description="module.validation.description">
+		<dependencies>
+			<dependency name="util" />
+		</dependencies>
+		<files>
+			<file name="h5.validation.func.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="dev" description="module.dev.description"
+		selectable="false">
 		<dependencies>
 			<dependency name="util" />
 			<dependency name="async" />

@@ -1,0 +1,283 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
+
+<!-- bootstrap -->
+<link href="/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css"
+	rel="stylesheet" media="screen">
+<script src="/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+<!-- hifive -->
+<!-- <link href="/hifive-res/fw/current/h5.css" rel="stylesheet"> -->
+<script src="/hifive-res/fw/current/ejs-h5mod.js"></script>
+<!-- <script src="/hifive-res/fw/current/h5.dev.js"></script> -->
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.buildType = 'src';
+	H5_TEST_ENV.srcBaseUrl = '../../';
+</script>
+<script src="../../test/loadScriptForTest.js"></script>
+
+<script src="../../src/h5.ui.FormController.js"></script>
+<style>
+.errorMsg {
+	font-weight: bold;
+	color: #f00;
+}
+
+.groupSample.has-error {
+	border: 1px solid #ff0000;
+}
+</style>
+<script>
+	$(function() {
+		h5.core.controller(document.body, {
+			__name: 'sample.PageController',
+			_objIndex: 0,
+			__meta: {
+				formController: {
+					rootElement: '#form1'
+				}
+			},
+			formController: h5.ui.FormController,
+			__init: function() {
+				// birthdayグループのルール追加
+				this.formController.addRule({
+					birthday: {
+						customFunc: function(value) {
+							var y = value.year;
+							var m = value.month;
+							var d = value.day;
+							var numRegexp = /^[0-9]+$/;
+							return numRegexp.test(y) && numRegexp.test(m) && numRegexp.test(d)
+									&& !isNaN(new Date(y + '/' + m + '/' + d).getDate());
+						}
+					}
+				});
+
+				// エラー出力設定
+				this.formController.globalSetting = {
+					errorClass: {
+						className: 'has-error',
+						replaceElement: function(element) {
+							// エラークラス追加対象は、input等の親のform-group要素に変換する
+							return $(element).closest('.form-group');
+						}
+					},
+					allMessage: {
+						container: this.$find('.globalError'),
+						wrapper: 'li'
+					},
+					baloon: {
+						placement: 'top'
+					}
+				};
+				this.formController.outputSetting = {
+					name: {
+						label: '名前'
+					},
+					sex: {
+						label: '性別',
+						message: '[%=label%]は必ずどちらかを指定してください',
+						errorMessage: {
+							off: true
+						}
+					},
+					birthday: {
+						label: '生年月日',
+						message: '[%=label%]が正しい日付ではありません'
+					},
+					year: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					month: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					day: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					zip1: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					zip2: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					agree: {
+						message: '利用規約への同意が必要です',
+						baloon: {
+							placement: 'right',
+							replaceElement: function($el) {
+								return $el.closest('label');
+							}
+						},
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-group');
+							}
+						}
+					}
+				};
+
+				// エラーメッセージテンプレートの設定(正規表現のメッセージをデフォルトのものを上書き)
+				// 				this.formController.invalidMessageView.register('pattern', '[%=label%]が正しくありません');
+			},
+			'{.resetValidation} click': function() {
+				// 動作確認のため1秒後
+				setTimeout(this.own(function() {
+					this.formController.resetValidation();
+				}), 1000);
+			}
+		});
+	});
+</script>
+
+<title>フォームのvalidateサンプル</title>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-12">
+				<ul class="globalError"></ul>
+				<button class="btn btn-default resetValidation">FormController.resetValidation()</button>
+				<form class="form" id="form1">
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">名前</span>(必須)</label>
+						<input name="name" type="text" class="form-control"
+							placeholder="名前" data-require />
+					</div>
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">性別</span></label>
+						<div class="radio">
+							<label> <input name="sex" type="radio" name="radio"
+								data-require /> 男性
+							</label> <label> <input name="sex" type="radio" name="radio"
+								data-require /> 女性
+							</label>
+						</div>
+					</div>
+					<!--  data-inputgroup-container指定 -->
+					<div class="form-group groupSample"
+						data-inputgroup-container="birthday">
+						<label class="control-label">生年月日</label>
+						<div class="form-inline">
+							<input name="year" type="text" placeholder="年(西暦)"
+								class="form-control" size="4" data-require />年<input
+								name="month" type="text" placeholder="月" class="form-control"
+								size="2" data-require />月<input name="day" type="text"
+								placeholder="日" class="form-control" size="2" data-require />日
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label class="control-label">郵便番号</label>
+						<div class="form-inline">
+							<!--  data-inputgroup指定 -->
+							<input name="zip1" type="text" class="form-control" size="3"
+								data-inputgroup="zipcode" data-inputgroup="zipCode" data-require />
+							-<input name="zip2" type="text" class="form-control" size="4"
+								data-inputgroup="zipcode" data-inputgroup="zipCode" data-require />
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">メールアドレス</span>(必須)</label>
+						<input name="email" type="text" placeholder="example@example.com"
+							class="form-control" data-require data-pattern=".+@.+" />
+					</div>
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">パスワード</span>(8文字以上16文字以下)</label>
+						<input name="pass" type="password" class="form-control"
+							placeholder="Password" data-require data-size="[8,16]" />
+					</div>
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">一言コメント</span>(10字以内)</label>
+						<textarea name="comment" class="form-control" placeholder="一言コメント"
+							data-size="[0,10]"></textarea>
+					</div>
+					<!-- select -->
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">お住まい</span></label>
+						<select name="address" class="form-control" data-require>
+							<option value="">[必ず選択してください]</option>
+							<option value="1">東京(23区内)</option>
+							<option value="2">東京(23区外)</option>
+							<option value="3">日本(東京外)</option>
+							<option value="3">海外</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">希望パート</span>(3つまで選択可)</label>
+						<select name="part" class="form-control" multiple data-require
+							data-size="[1,3]">
+							<option value="1">ギター</option>
+							<option value="2">ベース</option>
+							<option value="3">ドラム</option>
+							<option value="4">ボーカル</option>
+							<option value="5">ドラム</option>
+							<option value="6">バイオリン</option>
+							<option value="7">アゴゴベル</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">予約日</span>(翌日以降,
+							必須)</label> <input name="reserve" type="date" class="form-control"
+							data-require data-future />
+					</div>
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">ご利用人数</span>(1～6)</label>
+						<input name="member" type="number" class="form-control"
+							data-require data-min="[1,true]" data-max="[6,true]" />
+					</div>
+					<div class="form-group">
+						<label class="control-label" data-require data-future><span
+							class="label-name">前回ご利用日</span>(今日以前)</label> <input name="last-date"
+							type="date" class="form-control" data-past />
+					</div>
+					<div class="form-group">
+						<div class="checkbox">
+							<label> <input name="agree" type="checkbox" data-require /><span
+								class="label-name">同意</span>する
+							</label>
+						</div>
+					</div>
+					<div class="form-group">
+						<input class="btn btn-primary" type="submit" value="送信"> <input
+							class="btn btn-primary" type="reset" value="リセット">
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
