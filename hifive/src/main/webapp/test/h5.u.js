@@ -365,35 +365,36 @@ $(function() {
 		strictEqual(format('{0}', new A()), 'A', 'オブジェクトを渡した場合にtoString()結果が返ってくること');
 	});
 
-	test('オブジェクトのプロパティ', function() {
-		var format = h5.u.str.format;
-		var obj1 = {
-			name: 'a',
-			id: 1,
-			u: undefined,
-			n: null
-		};
-		obj1[0] = '0をキーとする値';
-		var obj2 = {
-			hoge: 'h',
-			fuga: 'f',
-			obj1: obj1
-		};
-		var ary = ['A', 'B', 'C', 'D', obj2];
-		strictEqual(format('{0.name}{0.id}{1.hoge}{1.fuga}', obj1, obj2), 'a1hf',
-				'オブジェクトの中身を埋め込める');
-		strictEqual(format('{0.name}{0.id}{2}{1.hoge}{1.fuga}', obj1, obj2, '/'), 'a1/hf',
-				'インデックス指定とオブジェクトのプロパティ指定を混合できる');
-		strictEqual(format('{0.obj1.name}', obj2), 'a', 'オブジェクトの入れ子をたどれる');
-		strictEqual(format('{0.0}/{0.1}', ary), 'A/B', '配列のindexを指定できる');
-		strictEqual(format('{0.length}', ary), '' + ary.length, '配列のlengthプロパティを指定できる');
-		strictEqual(format('{0.4.obj1.name}', ary), 'a', '配列の中のオブジェクトをたどれる');
-		strictEqual(format('{name}{id}', obj1), 'a1', '0.は省略できる');
-		strictEqual(format('{0.n}', obj1), 'null', 'nullの値を持つプロパティは"null"');
-		strictEqual(format('{0.u}', obj1), 'undefined', 'undefinedの値を持つプロパティは"undefined"');
-		strictEqual(format('{0.a}', obj1), 'undefined', '存在しないプロパティは"undefined"');
-		strictEqual(format('{0.a.b}', obj1), 'undefined', '辿れないプロパティは"undefined"');
-	});
+	test('オブジェクトのプロパティ',
+			function() {
+				var format = h5.u.str.format;
+				var obj1 = {
+					name: 'a',
+					id: 1,
+					u: undefined,
+					n: null
+				};
+				obj1[0] = '0をキーとする値';
+				var obj2 = {
+					hoge: 'h',
+					fuga: 'f',
+					obj1: obj1
+				};
+				var ary = ['A', 'B', 'C', 'D', obj2];
+				strictEqual(format('{0.name}{0.id}{1.hoge}{1.fuga}', obj1, obj2), 'a1hf',
+						'オブジェクトの中身を埋め込める');
+				strictEqual(format('{0.name}{0.id}{2}{1.hoge}{1.fuga}', obj1, obj2, '/'), 'a1/hf',
+						'インデックス指定とオブジェクトのプロパティ指定を混合できる');
+				strictEqual(format('{0.obj1.name}', obj2), 'a', 'オブジェクトの入れ子をたどれる');
+				strictEqual(format('{0[0]}/{0[1]}', ary), 'A/B', '配列のindexを指定できる');
+				strictEqual(format('{0.length}', ary), '' + ary.length, '配列のlengthプロパティを指定できる');
+				strictEqual(format('{0[4].obj1.name}', ary), 'a', '配列の中のオブジェクトをたどれる');
+				strictEqual(format('{name}{id}', obj1), 'a1', '0.は省略できる');
+				strictEqual(format('{0.n}', obj1), 'null', 'nullの値を持つプロパティは"null"');
+				strictEqual(format('{0.u}', obj1), 'undefined', 'undefinedの値を持つプロパティは"undefined"');
+				strictEqual(format('{0.a}', obj1), 'undefined', '存在しないプロパティは"undefined"');
+				strictEqual(format('{0.a.b}', obj1), 'undefined', '辿れないプロパティは"undefined"');
+			});
 
 	//=============================
 	// Definition
@@ -1057,6 +1058,25 @@ $(function() {
 		objs = h5.u.obj.getByPath('hoge2', root);
 		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 	});
+
+	test(
+			'配列記法',
+			function() {
+				var root = {
+					obj: {
+						ary: [{
+							name: 'Taro'
+						}]
+					},
+					ary: ['A', 'B', ['AA']]
+				};
+				strictEqual(h5.u.obj.getByPath('ary[1]', root), 'B', '配列内の要素アクセスできること');
+				strictEqual(h5.u.obj.getByPath('ary[2][0]', root), 'AA',
+						'2重配列(ネストした配列)内の要素アクセスできること');
+				strictEqual(h5.u.obj.getByPath('obj.ary[0].name', root), 'Taro',
+						'オブジェクト内の配列内の要素にアクセスできること');
+				strictEqual(h5.u.obj.getByPath('[1]', root.ary), 'B', '配列index指定が先頭にある場合も値を取得できること');
+			});
 
 	//=============================
 	// Definition

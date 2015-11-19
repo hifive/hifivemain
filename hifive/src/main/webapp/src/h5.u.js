@@ -791,7 +791,7 @@
 			}
 			// 数値じゃない場合はオブジェクトプロパティ指定扱い
 			// 数値.で始まっていなければ"0."が省略されていると見做す
-			var path = /^\d+\./.test(c) ? c : '0.' + c;
+			var path = /^\d+[\.|\[]/.test(c) ? c : '0.' + c;
 			var rep = getByPath(path, args);
 			if (typeof rep === TYPE_OF_UNDEFINED) {
 				return TYPE_OF_UNDEFINED;
@@ -1288,6 +1288,15 @@
 		if (!isString(namespace)) {
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
 		}
+		// 'ary[0]'のような配列のindex参照の記法に対応するため、'.'記法に変換する
+		namespace = namespace.replace(/\[(\d+)\]/g, function(m, c, index) {
+			if (index) {
+				// 先頭以外の場合は'[]'を外して'.'を付けて返す
+				return '.' + c;
+			}
+			// 先頭の場合は'[]'を外すだけ
+			return c;
+		});
 
 		var names = namespace.split('.');
 		var idx = 0;
