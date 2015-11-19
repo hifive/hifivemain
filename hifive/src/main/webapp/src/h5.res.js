@@ -351,9 +351,33 @@
 	 * @returns {String}
 	 */
 	function getFilePath(filePath) {
-		// './'で始まるパスが指定されていたら'./'を取り除いてbaseUrlを先頭に追加する
-		filePath = filePath.indexOf('./') === 0 ? filePath.slice(2) : filePath;
-		return (h5.settings.res.baseUrl || './') + filePath;
+		var baseUrl = h5.settings.res.baseUrl;
+		if (filePath === toAbsoluteUrl(filePath) || filePath.indexOf('/') === 0) {
+			// filePathが絶対パスの場合、または、'/'始まりの場合は、filePathをそのまま返す
+			return filePath;
+		}
+		if (!baseUrl) {
+			// baseUrlが指定されていないなら'./'を付けて返す
+			if (filePath.indexOf('./') === 0) {
+				return filePath;
+			}
+			return './' + filePath;
+		}
+
+		// 上位パス指定('../')を取り除いて、baseUrlの上位をたどる
+		function removeAbovePath(base, path) {
+			if (path.indexOf('../') !== 0) {
+				return base + path;
+			}
+			path = path.slice(3);
+			base = base.replace(/[^\/]+?\/$/, '');
+			return removeAbovePath(base, path);
+		}
+		// baseUrlを'/'終わりにして、上位パス指定の計算
+		if (!h5.u.str.endsWith(baseUrl, '/')) {
+			baseUrl += '/';
+		}
+		return removeAbovePath(baseUrl, filePath);
 	}
 
 	/**

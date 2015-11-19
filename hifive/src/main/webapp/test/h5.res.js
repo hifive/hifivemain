@@ -562,6 +562,80 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module('baseUrl指定', {
+		setup: function() {
+			this.orgBaseUrl = h5.settings.res.baseUrl;
+		},
+		teardown: function() {
+			// baseUrlを元に戻す
+			h5.settings.res.baseUrl = this.orgBaseUrl;
+		},
+		isLoadedCssFile: function(baseUrl, cssFilePath) {
+			h5.settings.res.baseUrl = baseUrl;
+			h5.res.dependsOn(cssFilePath).resolve().done(function(result) {
+				var $h1 = $('<h1>hoge</h1>');
+				$('#qunit-fixture').append($h1);
+				gate({
+					func: function() {
+						return $h1.css('font-size') === '111px';
+					},
+					failMessage: '絶対パス指定したcssファイルが適用されていません'
+				}).done(function() {
+					ok(true, '絶対パス指定したcssファイルがロードされてスタイルが適用されていること');
+				}).always(function() {
+					// linkタグの除去
+					$(result).remove();
+					start();
+				});
+			});
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('baseUrlを考慮したパス指定', function() {
+		var baseUrl = 'h5resdata/data/';
+		var cssFile = 'css/test.css?baseUrlTest';
+		this.isLoadedCssFile(baseUrl, cssFile);
+	});
+
+	asyncTest('baseUrlの末尾が"/"で終わっていない場合もディレクトリ指定と見做される', function() {
+		var baseUrl = 'h5resdata/data';
+		var cssFile = 'css/test.css?baseUrlNoSlashTest';
+		this.isLoadedCssFile(baseUrl, cssFile);
+	});
+
+	asyncTest('絶対パス指定の場合baseUrlは無視される', function() {
+		var baseUrl = 'h5resdata/data/';
+		var cssFile = toAbsoluteUrl('./h5resdata/data/css/test.css?baseUrlAbsolutePathTest');
+		this.isLoadedCssFile(baseUrl, cssFile);
+
+	});
+
+	asyncTest('"/"始まりのパス指定の場合、baseUrlは無視される', function() {
+		var dirs = location.pathname.split('/');
+		var context = dirs.slice(0, dirs.length - 1).join('/');
+		var baseUrl = 'h5resdata/data/js';
+		var cssFile = context + '/h5resdata/data/css/test.css?baseUrlContextPathTest';
+		this.isLoadedCssFile(baseUrl, cssFile);
+	});
+
+	asyncTest('"./"始まりのパス指定', function() {
+		var baseUrl = 'h5resdata/data/';
+		var cssFile = './css/test.css?baseUrlCurrentPathTest';
+		this.isLoadedCssFile(baseUrl, cssFile);
+	});
+
+	asyncTest('"../"始まりのパス指定', function() {
+		var baseUrl = 'h5resdata/data/js/';
+		var cssFile = '../css/test.css?baseUrlAbovePathTest';
+		this.isLoadedCssFile(baseUrl, cssFile);
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	module('isDependency');
 
 	//=============================
