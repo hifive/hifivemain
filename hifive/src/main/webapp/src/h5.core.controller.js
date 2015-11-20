@@ -129,6 +129,8 @@
 	var ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER = 6044;
 	/** エラーコード：unmanageChildの第1引数がルートエレメント未決定コントローラで、第2引数がfalse */
 	var ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NO_ROOT_ELEMENT = 6045;
+	/** エラーコード: コントローラのデフォルトパラメータが不正 */
+	var ERR_CODE_CONTROLLER_INVALID_INIT_DEFAULT_PARAM = 6046;
 
 	// =============================
 	// Development Only
@@ -184,6 +186,7 @@
 	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_BY_UNBINDED_CONTROLLER] = 'アンバインドされたコントローラのunmanageChildは呼び出せません';
 	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER] = 'unmanageChildの第1引数は呼び出し側の子コントローラである必要があります。';
 	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NO_ROOT_ELEMENT] = 'ルートエレメントの決定していない子コントローラのunmanageChildは、第2引数にfalseを指定することはできません';
+	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_DEFAULT_PARAM] = 'コントローラ"{0}"のデフォルトパラメータ(__defaultParam)がプレーンオブジェクトではありません。デフォルトパラメータにはプレーンオブジェクトを設定してください。';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -2086,9 +2089,9 @@
 	 * @param {Controller} rootController ルートコントローラ
 	 * @returns {Object} argsを持つオブジェクト
 	 */
-	function createInitializationContext(rootController) {
+	function createInitializationContext(controller) {
 		return {
-			args: rootController.__controllerContext.args
+			args: controller.__controllerContext.args
 		};
 	}
 
@@ -4385,6 +4388,18 @@
 			});
 		}
 
+		// デフォルトパラメータがオブジェクトかどうかチェック
+		if (controllerDefObj.__defaultParam) {
+			if (!$.isPlainObject(controllerDefObj.__defaultParam)) {
+				throwFwError(ERR_CODE_CONTROLLER_INVALID_INIT_DEFAULT_PARAM, [controllerName], {
+					controllerDefObj: controllerDefObj
+				});
+			}
+			// デフォルトパラメータがある場合はparamとマージ
+			// (この場合、新しくオブジェクトを作るので、argsで受け取るオブジェクトはparamとは別オブジェクトになる)
+			param = $.extend({}, controllerDefObj.__defaultParam, param);
+		}
+
 		// キャッシュの取得(無かったらundefined)
 		var cache = definitionCacheManager.get(controllerName);
 
@@ -4608,17 +4623,24 @@
 
 		// 子コントローラをコントローラ化して持たせる
 		// 子コントローラがDependencyオブジェクトなら依存関係を解決
+		var meta = controller.__meta;
 		for (var i = 0, l = cache.childControllerProperties.length; i < l; i++) {
 			// createAndBindControllerの呼び出し時に、fwOpt.isInternalを指定して、内部からの呼び出し(=子コントローラ)であることが分かるようにする
 			var prop = cache.childControllerProperties[i];
 			var childController = clonedControllerDef[prop];
+			// 子コントローラにパラメータを引き継ぐかどうか
+			var childParam = null;
+			if (meta && meta[prop] && meta[prop].inheritParam) {
+				childParam = param;
+			}
+
 			if (isDependency(childController)) {
 				// Dependencyオブジェクトが指定されていた場合は依存関係を解決する
 				var promise = childController.resolve('namespace');
 				promisesForTriggerInit.push(promise);
-				promise.done((function(childProp, childControllerPromise) {
+				promise.done((function(childProp, childControllerPromise, cp) {
 					return function(c) {
-						var child = createAndBindController(null, $.extend(true, {}, c), param, {
+						var child = createAndBindController(null, $.extend(true, {}, c), cp, {
 							isInternal: true,
 							parentController: controller,
 							rootController: rootController,
@@ -4636,10 +4658,10 @@
 						promisesForTriggerInit.splice($.inArray(childControllerPromise,
 								promisesForTriggerInit), 1);
 					};
-				})(prop, promise));
+				})(prop, promise, childParam));
 			} else {
 				var child = createAndBindController(null, $.extend(true, {},
-						clonedControllerDef[prop]), param, {
+						clonedControllerDef[prop]), childParam, {
 					isInternal: true,
 					parentController: controller,
 					rootController: rootController

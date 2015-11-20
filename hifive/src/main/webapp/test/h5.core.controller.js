@@ -7291,120 +7291,433 @@ $(function() {
 		});
 	});
 
-	asyncTest('初期化パラメータを渡せるか', 24, function() {
-		var cConstruct = null;
-		var cInit = null;
-		var cPostInit = null;
-		var cReady = null;
-		var cController = {
-			__name: 'CController',
-
-			__construct: function(context) {
-				cConstruct = context.args;
-			},
-
-			__init: function(context) {
-				cInit = context.args;
-			},
-
-			__postInit: function(context) {
-				cPostInit = context.args;
-			},
-
-			__ready: function(context) {
-				cReady = context.args;
-			}
-		};
-
-		var pConstruct = null;
-		var pInit = null;
-		var pPostInit = null;
-		var pReady = null;
-		var pController = {
-			__name: 'PController',
-
-			cController: cController,
-
-			__construct: function(context) {
-				pConstruct = context.args;
-			},
-
-			__init: function(context) {
-				pInit = context.args;
-			},
-
-			__postInit: function(context) {
-				pPostInit = context.args;
-			},
-
-			__ready: function(context) {
-				pReady = context.args;
-			}
-		};
-
-		var rConstruct = null;
-		var rInit = null;
-		var rPostInit = null;
-		var rReady = null;
-		var rController = {
-			__name: 'RController',
-
-			pController: pController,
-
-			__construct: function(context) {
-				rConstruct = context.args;
-			},
-
-			__init: function(context) {
-				rInit = context.args;
-			},
-
-			__postInit: function(context) {
-				rPostInit = context.args;
-			},
-
-			__ready: function(context) {
-				rReady = context.args;
-			}
-		};
-
-		var args = {
-			param: 100
-		};
-
-		var rootController = h5.core.controller('#controllerTest', rController, args);
-		rootController.readyPromise.done(function() {
-			strictEqual(rConstruct, args, '__constructでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(rConstruct.param, args.param, '__constructでルートに渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(rInit, args, '__initでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(rInit.param, args.param, '__initでルートに渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(rPostInit, args, '__postInitでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(rPostInit.param, args.param, '__postInitでルートに渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(rReady, args, '__readyでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(rReady.param, args.param, '__readyでルートに渡された初期化パラメータのプロパティは正しいか');
-
-			strictEqual(pConstruct, args, '__constructで子に渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(pConstruct.param, args.param, '__constructで子に渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(pInit, args, '__initで子に渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(pInit.param, args.param, '__initで子に渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(pPostInit, args, '__postInitでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(pPostInit.param, args.param, '__postInitでルートに渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(pReady, args, '__readyで子に渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(pReady.param, args.param, '__readyで子に渡された初期化パラメータのプロパティは正しいか');
-
-			strictEqual(cConstruct, args, '__constructで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(cConstruct.param, args.param, '__constructで孫に渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(cInit, args, '__initで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(cInit.param, args.param, '__initで孫に渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(cPostInit, args, '__postInitでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(cPostInit.param, args.param, '__postInitでルートに渡された初期化パラメータのプロパティは正しいか');
-			strictEqual(cReady, args, '__readyで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
-			strictEqual(cReady.param, args.param, '__readyで孫に渡された初期化パラメータのプロパティは正しいか');
-
-			rootController.dispose();
-			start();
-		});
+	//=============================
+	// Definition
+	//=============================
+	module('Controller - 初期化パラメータ', {
+		setup: function() {
+			this.$controllerTarget = $('<div id="controllerTest"></div>');
+			$('#qunit-fixture').append(this.$controllerTarget);
+		},
+		teardown: function() {
+			this.$controllerTarget = null;
+			clearController();
+		}
 	});
+
+	//=============================
+	// Body
+	//=============================
+	//	asyncTest('初期化パラメータを渡せるか', 24, function() {
+	//		var cConstruct = null;
+	//		var cInit = null;
+	//		var cPostInit = null;
+	//		var cReady = null;
+	//		var cController = {
+	//			__name: 'CController',
+	//
+	//			__construct: function(context) {
+	//				cConstruct = context.args;
+	//			},
+	//
+	//			__init: function(context) {
+	//				cInit = context.args;
+	//			},
+	//
+	//			__postInit: function(context) {
+	//				cPostInit = context.args;
+	//			},
+	//
+	//			__ready: function(context) {
+	//				cReady = context.args;
+	//			}
+	//		};
+	//
+	//		var pConstruct = null;
+	//		var pInit = null;
+	//		var pPostInit = null;
+	//		var pReady = null;
+	//		var pController = {
+	//			__name: 'PController',
+	//
+	//			cController: cController,
+	//
+	//			__construct: function(context) {
+	//				pConstruct = context.args;
+	//			},
+	//
+	//			__init: function(context) {
+	//				pInit = context.args;
+	//			},
+	//
+	//			__postInit: function(context) {
+	//				pPostInit = context.args;
+	//			},
+	//
+	//			__ready: function(context) {
+	//				pReady = context.args;
+	//			}
+	//		};
+	//
+	//		var rConstruct = null;
+	//		var rInit = null;
+	//		var rPostInit = null;
+	//		var rReady = null;
+	//		var rController = {
+	//			__name: 'RController',
+	//
+	//			pController: pController,
+	//
+	//			__construct: function(context) {
+	//				rConstruct = context.args;
+	//			},
+	//
+	//			__init: function(context) {
+	//				rInit = context.args;
+	//			},
+	//
+	//			__postInit: function(context) {
+	//				rPostInit = context.args;
+	//			},
+	//
+	//			__ready: function(context) {
+	//				rReady = context.args;
+	//			}
+	//		};
+	//
+	//		var args = {
+	//			param: 100
+	//		};
+	//
+	//		var rootController = h5.core.controller(this.$controllerTarget, rController, args);
+	//		rootController.readyPromise.done(function() {
+	//			strictEqual(rConstruct, args, '__constructでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(rConstruct.param, args.param, '__constructでルートに渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(rInit, args, '__initでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(rInit.param, args.param, '__initでルートに渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(rPostInit, args, '__postInitでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(rPostInit.param, args.param, '__postInitでルートに渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(rReady, args, '__readyでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(rReady.param, args.param, '__readyでルートに渡された初期化パラメータのプロパティは正しいか');
+	//
+	//			strictEqual(pConstruct, args, '__constructで子に渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(pConstruct.param, args.param, '__constructで子に渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(pInit, args, '__initで子に渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(pInit.param, args.param, '__initで子に渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(pPostInit, args, '__postInitでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(pPostInit.param, args.param, '__postInitでルートに渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(pReady, args, '__readyで子に渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(pReady.param, args.param, '__readyで子に渡された初期化パラメータのプロパティは正しいか');
+	//
+	//			strictEqual(cConstruct, args, '__constructで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(cConstruct.param, args.param, '__constructで孫に渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(cInit, args, '__initで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(cInit.param, args.param, '__initで孫に渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(cPostInit, args, '__postInitでルートに渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(cPostInit.param, args.param, '__postInitでルートに渡された初期化パラメータのプロパティは正しいか');
+	//			strictEqual(cReady, args, '__readyで孫に渡された初期化パラメータの参照は引数で渡したものと同一');
+	//			strictEqual(cReady.param, args.param, '__readyで孫に渡された初期化パラメータのプロパティは正しいか');
+	//
+	//			rootController.dispose();
+	//			start();
+	//		});
+	//	});
+
+	asyncTest('ルートコントローラのライフサイクルに初期化パラメータが渡されること', function() {
+		var param = {
+			a: 1
+		};
+		var rCtrl = {
+			__name: 'root',
+			__construct: function(ctx) {
+				strictEqual(ctx.args, param, 'ルートの__constructで初期化パラメータが受け取れること');
+			},
+			__init: function(ctx) {
+				strictEqual(ctx.args, param, 'ルートの__initで初期化パラメータが受け取れること');
+			},
+			__postInit: function(ctx) {
+				strictEqual(ctx.args, param, 'ルートの__postInitで初期化パラメータが受け取れること');
+			},
+			__ready: function(ctx) {
+				strictEqual(ctx.args, param, 'ルートの__readyで初期化パラメータが受け取れること');
+			}
+		};
+		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
+	});
+
+	asyncTest('inheritParamオプションが未指定の場合、子コントローラには初期化パラメータは渡らないこと', function() {
+		var param = {
+			a: 1
+		};
+		var cCtrl = {
+			__name: 'child',
+			__construct: function(ctx) {
+				strictEqual(ctx.args, null, '子の__constructに初期化パラメータは渡されないこと');
+			},
+			__init: function(ctx) {
+				strictEqual(ctx.args, null, '子の__initに初期化パラメータは渡されないこと');
+			},
+			__postInit: function(ctx) {
+				strictEqual(ctx.args, null, '子の__postInitに初期化パラメータは渡されないこと');
+			},
+			__ready: function(ctx) {
+				strictEqual(ctx.args, null, '子の__readyに初期化パラメータは渡されないこと');
+			}
+		};
+		var rCtrl = {
+			__name: 'root',
+			childController: cCtrl
+		};
+		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
+	});
+
+	asyncTest('inheritParamオプションがfalseの場合、子コントローラには初期化パラメータは渡らないこと', function() {
+		var param = {
+			a: 1
+		};
+		var cCtrl = {
+			__name: 'child',
+			__construct: function(ctx) {
+				strictEqual(ctx.args, null, '子の__constructに初期化パラメータは渡されないこと');
+			},
+			__init: function(ctx) {
+				strictEqual(ctx.args, null, '子の__initに初期化パラメータは渡されないこと');
+			},
+			__postInit: function(ctx) {
+				strictEqual(ctx.args, null, '子の__postInitに初期化パラメータは渡されないこと');
+			},
+			__ready: function(ctx) {
+				strictEqual(ctx.args, null, '子の__readyに初期化パラメータは渡されないこと');
+			}
+		};
+		var rCtrl = {
+			__name: 'root',
+			__meta: {
+				childController: {
+					inheritParam: false
+				}
+			},
+			childController: cCtrl
+		};
+		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
+	});
+
+	asyncTest('inheritParamオプションがtrueの場合、子コントローラに初期化パラメータが渡されること', function() {
+		var param = {
+			a: 1
+		};
+		var cCtrl = {
+			__name: 'child',
+			__construct: function(ctx) {
+				strictEqual(ctx.args, param, '子の__constructで初期化パラメータが受け取れること');
+			},
+			__init: function(ctx) {
+				strictEqual(ctx.args, param, '子の__initで初期化パラメータが受け取れること');
+			},
+			__postInit: function(ctx) {
+				strictEqual(ctx.args, param, '子の__postInitで初期化パラメータが受け取れること');
+			},
+			__ready: function(ctx) {
+				strictEqual(ctx.args, param, '子の__readyで初期化パラメータが受け取れること');
+			}
+		};
+		var rCtrl = {
+			__name: 'root',
+			__meta: {
+				childController: {
+					inheritParam: true
+				}
+			},
+			childController: cCtrl
+		};
+		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
+	});
+
+	asyncTest('inheritParamオプション指定が各子コントローラについて有効であること',
+			function() {
+				var param = {
+					a: 1
+				};
+				var cCtrl = {
+					__name: 'child',
+					__construct: function(ctx) {
+						this.testExecutedDeferred = $.Deferred();
+						// 子コントローラの__construct実行時に親もルートも未設定で取得できない
+						// ので、setTimeoutでinheritParam指定があるコントローラかどうかチェックしている
+						setTimeout(this.own(this.inheritParamTest), 0, ctx);
+					},
+					inheritParamTest: function(ctx) {
+						if (this.rootController.child1Controller === this) {
+							strictEqual(ctx.args, param,
+									'ルートでinheritParamが指定されている場合は子コントローラに初期化パラメータが渡される');
+						} else {
+							strictEqual(ctx.args, null,
+									'ルートでinheritParamが指定されていない場合は子コントローラに初期化パラメータは渡されない');
+						}
+						this.testExecutedDeferred.resolve();
+					},
+					__ready: function() {
+						return this.testExecutedDeferred.promise();
+					}
+				};
+				var rCtrl = {
+					__name: 'root',
+					__meta: {
+						child1Controller: {
+							inheritParam: true
+						}
+					},
+					child1Controller: cCtrl,
+					child2Controller: cCtrl
+				};
+				h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
+			});
+
+	asyncTest('inheritParamオプション指定は__construct実行後に評価されること',
+			function() {
+				var param = {
+					a: 1
+				};
+				var cCtrl = {
+					__name: 'child',
+					__construct: function(ctx) {
+						this.testExecutedDeferred = $.Deferred();
+						setTimeout(this.own(this.inheritParamTest), 0, ctx);
+					},
+					inheritParamTest: function(ctx) {
+						if (this.rootController.child1Controller === this) {
+							strictEqual(ctx.args, param,
+									'ルートでinheritParamが指定されている場合は子コントローラに初期化パラメータが渡される');
+						} else {
+							strictEqual(ctx.args, null,
+									'ルートでinheritParamが指定されていない場合は子コントローラに初期化パラメータは渡されない');
+						}
+						this.testExecutedDeferred.resolve();
+					},
+					__ready: function() {
+						return this.testExecutedDeferred.promise();
+					}
+				};
+				var rCtrl = {
+					__name: 'root',
+					child1Controller: cCtrl,
+					child2Controller: cCtrl,
+					__construct: function() {
+						this.__meta = {
+							child1Controller: {
+								inheritParam: true
+							}
+						};
+					}
+				};
+				h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
+			});
+
+	asyncTest('子で初期化パラメータを引き継がない場合はその子の子も引き継がないこと', function() {
+		var param = {
+			a: 1
+		};
+		var gcCtrl = {
+			__name: 'grandChild',
+			__construct: function(ctx) {
+				strictEqual(ctx.args, null, 'ルートでinheritParamが指定されていない場合は孫コントローラに初期化パラメータは渡されない');
+			}
+		};
+		var cCtrl = {
+			__name: 'child',
+			__meta: {
+				childController: {
+					inheritParam: true
+				}
+			},
+			childController: gcCtrl
+		};
+		var rCtrl = {
+			__name: 'root',
+			childController: cCtrl
+		};
+		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
+	});
+
+	asyncTest('子で初期化パラメータを引き継ぐ場合、孫が引き継ぐかどうかは子で設定しているinheritParamオプションに従うこと',
+			function() {
+				var param = {
+					a: 1
+				};
+				var gcCtrl = {
+					__name: 'grandChild',
+					__construct: function(ctx) {
+						this.testExecutedDeferred = $.Deferred();
+						setTimeout(this.own(this.inheritParamTest), 0, ctx);
+					},
+					inheritParamTest: function(ctx) {
+						if (this.parentController.child1Controller === this) {
+							strictEqual(ctx.args, param,
+									'子でinheritParamが指定されている場合は孫コントローラに初期化パラメータが渡される');
+						} else {
+							strictEqual(ctx.args, null,
+									'子でinheritParamが指定されていない場合は孫コントローラに初期化パラメータは渡されない');
+						}
+						this.testExecutedDeferred.resolve();
+					},
+					__ready: function() {
+						return this.testExecutedDeferred.promise();
+					}
+				};
+				var cCtrl = {
+					__name: 'child',
+					__meta: {
+						child1Controller: {
+							inheritParam: true
+						}
+					},
+					child1Controller: gcCtrl,
+					child2Controller: gcCtrl
+				};
+				var rCtrl = {
+					__name: 'root',
+					__meta: {
+						childController: {
+							inheritParam: true
+						}
+					},
+					childController: cCtrl
+				};
+				h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
+			});
+
+	asyncTest('__defaultParamの設定', function() {
+		h5.core.controller(this.$controllerTarget, {
+			__name: 'defaultParamTest',
+			__defaultParam: {
+				a: 1
+			},
+			__construct: function(ctx) {
+				strictEqual(ctx.args && ctx.args.a, 1, '__defaultParamに設定した値が__constructで受け取れること');
+			}
+		}).readyPromise.done(start);
+	});
+
+	asyncTest('__defaultParamと初期化パラメータ', function() {
+		h5.core.controller(this.$controllerTarget, {
+			__name: 'defaultParamTest',
+			__defaultParam: {
+				a: 1,
+				c: 3
+			},
+			__construct: function(ctx) {
+				deepEqual(ctx.args, {
+					a: 11,
+					b: 22,
+					c: 3
+				}, 'argsの値はデフォルトパラメータを初期化パラメータで上書いたオブジェクトであること');
+			}
+		}, {
+			a: 11,
+			b: 22
+		}).readyPromise.done(start);
+	});
+
 	//=============================
 	// Definition
 	//=============================
