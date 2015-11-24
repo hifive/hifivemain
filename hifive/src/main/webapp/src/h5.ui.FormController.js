@@ -125,6 +125,68 @@
 	h5internal.validation = {
 		createValidateErrorMessage: createValidateErrorMessage
 	};
+
+	/**
+	 * メッセージ及びvalidate結果から作成したメッセージを出力するコントローラ
+	 *
+	 * @class
+	 * @name h5.ui.validaiton.MessageOutput
+	 */
+	var controlelr = {
+		__name: 'h5.ui.validation.MessageOutput',
+		// container,tagNameの設定
+		_containerSetting: {},
+		// validationResultからメッセージを作るための設定
+		_validateOutputSetting: {},
+		reset: function(containerSetting, validateOutputSetting) {
+			this._containerSetting = containerSetting;
+			this._validateOutputSetting = validateOutputSetting;
+			this.clearAll();
+		},
+		appendMessage: function(message, contaienr, tagName) {
+			// 未指定ならsettingに設定されたコンテナ
+			var container = container || this._containerSetting.container;
+			var $container = $(container);
+			if (!$container.length) {
+				return;
+			}
+
+			var tagName = tagName || this._containerSetting.wrapper || 'p'; // デフォルトはpタグ
+			var msgElement = document.createElement(tagName);
+			$(msgElement).html(message);
+			$container.append(msgElement);
+		},
+		appendMessageByValidationResult: function(result, container, tagName) {
+			var invalidProperties = result.invalidProperties;
+			for (var i = 0, l = invalidProperties.length; i < l; i++) {
+				var name = invalidProperties[i];
+				var failureReason = result.failureReason[name];
+				var message = h5internal.validation.createValidateErrorMessage(name, failureReason,
+						this._validateOutputSetting[name]);
+				this.appendMessage(message, container, tagName);
+			}
+			if (result.isAllValid === null) {
+				// 非同期でまだ結果が返ってきていないものがある場合
+				result.addEventListener('validate', this.own(function(ev) {
+					if (!ev.isValid) {
+						var message = h5internal.validation.createValidateErrorMessage(ev.property,
+								ev.failureReason, this._validateOutputSetting[ev.property]);
+						this.appendMessage(message, container, tagName);
+					}
+				}));
+				return;
+			}
+		},
+		clearAll: function(container) {
+			// 未指定ならsettingに設定されたコンテナ
+			var container = container || this._containerSetting.container;
+			if (container) {
+				$(container).empty();
+			}
+
+		}
+	};
+	h5.core.expose(controlelr);
 })();
 
 (function() {
@@ -244,40 +306,12 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.AllMessage',
+		_messageOutputController: h5.ui.validation.MessageOutput,
 		onValidate: function(result, globalSetting, outputSetting) {
-			var container = globalSetting && globalSetting.container;
-			if (!container) {
-				return;
-			}
-			$(container).empty();
-			var tagName = globalSetting.wrapper || 'p'; // デフォルトはpタグ
-			var invalidProperties = result.invalidProperties;
-			for (var i = 0, l = invalidProperties.length; i < l; i++) {
-				var name = invalidProperties[i];
-				var failureReason = result.failureReason[name];
-				this._appendMessage(name, failureReason, outputSetting[name], container, tagName);
-			}
-			if (result.isAllValid === null) {
-				// 非同期でまだ結果が返ってきていないものがある場合
-				result.addEventListener('validate', this.own(function(ev) {
-					if (!ev.isValid) {
-						this._appendMessage(ev.property, ev.failureReason,
-								outputSetting[ev.property], container, tagName);
-					}
-				}));
-				return;
-			}
+			this._messageOutputController.appendMessageByValidationResult(result);
 		},
 		reset: function(globalSetting, outputSetting) {
-			var container = globalSetting && globalSetting.container;
-			$(container).empty();
-		},
-		_appendMessage: function(name, failureReason, setting, container, tagName) {
-			var msg = h5internal.validation
-					.createValidateErrorMessage(name, failureReason, setting);
-			var msgElement = document.createElement(tagName);
-			$(msgElement).html(msg);
-			$(container).append(msgElement);
+			this._messageOutputController.reset(globalSetting, outputSetting);
 		}
 	};
 	h5.core.expose(controller);
@@ -960,16 +994,11 @@
 			for ( var p in this._validationResultMap) {
 				delete this._validationResultMap[p];
 			}
-
 			var plugins = this._plugins;
-			var globalSetting = this.globalSetting;
 			for ( var pluginName in plugins) {
-				var plugin = plugins[pluginName];
-				if (plugin[PLUGIN_METHOD_RESET]) {
-					plugin[PLUGIN_METHOD_RESET].call(plugin, globalSetting[pluginName],
-							this.outputSetting);
-				}
+				this._resetPlugin(pluginName, plugins[pluginName]);
 			}
+			this._resetPlugin();
 		},
 
 		/**
@@ -1091,6 +1120,22 @@
 		},
 
 		/**
+		 * プラグインのリセット
+		 *
+		 * @private
+		 * @memberOf h5.ui.FormController
+		 * @param {string} pluginName
+		 * @param {Controller} plugins
+		 */
+		_resetPlugin: function(pluginName, plugin) {
+			if (!plugin[PLUGIN_METHOD_RESET]) {
+				return;
+			}
+			plugin[PLUGIN_METHOD_RESET].call(plugin, this.globalSetting[pluginName],
+					this.outputSetting);
+		},
+
+		/**
 		 * プラグインの追加(1.2.0では非公開)
 		 *
 		 * @private
@@ -1106,6 +1151,9 @@
 			var c = h5.core.controller(this._bindedForm || this.rootElement, controller);
 			this.manageChild(c);
 			this._plugins[pluginName] = c;
+			c.readyPromise.done(this.own(function() {
+				this._resetPlugin(pluginName, c);
+			}));
 		},
 
 		_validate: function(names) {

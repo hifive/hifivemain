@@ -31,16 +31,8 @@
 <script src="../../test/loadScriptForTest.js"></script>
 
 <script src="../../src/h5.ui.FormController.js"></script>
-<style>
-.errorMsg {
-	font-weight: bold;
-	color: #f00;
-}
+<link href="sample.css" rel="stylesheet">
 
-.groupSample.has-error {
-	border: 1px solid #ff0000;
-}
-</style>
 <script>
 	$(function() {
 		h5.core.controller(document.body, {
@@ -98,9 +90,6 @@
 						message: '[%=label%]は必ずどちらかを指定してください',
 						errorMessage: {
 							off: true
-						},
-						baloon: {
-							message: '[%=label%]は日っすだよ'
 						}
 					},
 					birthday: {

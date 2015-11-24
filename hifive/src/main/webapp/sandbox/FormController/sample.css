@@ -1,0 +1,36 @@
+@charset 'utf-8';
+
+.errorMsg {
+	font-weight: bold;
+	color: #f00;
+}
+
+.groupSample.has-error {
+	border: 1px solid #ff0000;
+}
+
+.validateIconWrapper>* {
+	display: none;
+}
+
+.success .validateIconWrapper .icon-success {
+	display: inline-bolck;
+}
+
+.has-error .validateIconWrapper .icon-error {
+	display: inline-block;
+}
+
+.validating .validateIconWrapper .icon-validating {
+	display: inline-block;
+	animation: switchtext 0.25s infinite alternate;
+}
+
+@keyframes switchtext {
+	from {
+		opacity: 1.0;
+	}
+	to {
+		opacity: 0;
+	}
+}

@@ -31,12 +31,8 @@
 <script src="../../test/loadScriptForTest.js"></script>
 
 <script src="../../src/h5.ui.FormController.js"></script>
-<style>
-.errorMsg {
-	font-weight: bold;
-	color: #f00;
-}
-</style>
+
+<link href="sample.css" rel="stylesheet">
 <script>
 	$(function() {
 		h5.core.controller(document.body, {
@@ -50,10 +46,15 @@
 					setTimeout(function() {
 						// ユーザIDがhifiveだったらrejectする
 						if (userid === 'hifive') {
-							dfd.reject();
+							// rejectのパラメータはサーバが返すメッセージを想定
+							dfd.reject({
+								valid: false,
+								userid:userid,
+								reason: 'already exist'
+							});
 							return;
 						}
-						dfd.resolve();
+						dfd.resolve({valid:true,userid:userid});
 					}, waitingTime);
 					return dfd.promise();
 				}
@@ -111,7 +112,8 @@
 									return '長すぎます';
 								}
 							case 'customFunc':
-								return 'そのIDは既に使用されています。変更してください。'
+								var serverMessage = param.rejectReason;
+
 							}
 						}
 					}
@@ -123,34 +125,6 @@
 		});
 	});
 </script>
-<style>
-.validateIconWrapper>* {
-	display: none;
-}
-
-.success  .validateIconWrapper .icon-success {
-	display: inline-bolck;
-}
-
-.has-error .validateIconWrapper .icon-error {
-	display: inline-block;
-}
-
-.validating .validateIconWrapper .icon-validating {
-	display: inline-block;
-	animation: switchtext 0.25s infinite alternate;
-}
-
-@
-keyframes switchtext {
-	from {opacity: 1.0;
-}
-
-to {
-	opacity: 0;
-}
-}
-</style>
 <title>フォームのvalidateサンプル</title>
 </head>
 <body>
