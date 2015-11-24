@@ -46,7 +46,7 @@
 				__name: 'sample.sampleLogic',
 				isExistUserid: function(userid) {
 					var dfd = this.deferred();
-					var waitingTime = 100 + parseInt(Math.random()*10) * 100;
+					var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
 					setTimeout(function() {
 						// ユーザIDがhifiveだったらrejectする
 						if (userid === 'hifive') {
@@ -66,6 +66,8 @@
 			formController: h5.ui.FormController,
 			__ready: function() {
 				var logic = this.sampleLogic;
+
+				// validateルール設定
 				this.formController.addRule({
 					userid: {
 						require: true,
@@ -73,7 +75,9 @@
 						customFunc: logic.own(logic.isExistUserid)
 					}
 				});
-
+				// プラグインの有効化
+				this.formController.enablePlugins(['allMessage', 'errorClass', 'errorMessage',
+						'baloon']);
 				// エラー出力設定
 				this.formController.globalSetting = {
 					errorClass: {
@@ -123,9 +127,11 @@
 .validateIconWrapper>* {
 	display: none;
 }
+
 .success  .validateIconWrapper .icon-success {
 	display: inline-bolck;
 }
+
 .has-error .validateIconWrapper .icon-error {
 	display: inline-block;
 }
@@ -135,9 +141,14 @@
 	animation: switchtext 0.25s infinite alternate;
 }
 
-@keyframes switchtext {
-	from {opacity:1.0;}
-	to {opacity: 0;}
+@
+keyframes switchtext {
+	from {opacity: 1.0;
+}
+
+to {
+	opacity: 0;
+}
 }
 </style>
 <title>フォームのvalidateサンプル</title>
@@ -158,9 +169,12 @@
 					<div class="form-group">
 						<label class="control-label">ユーザID(3～10字)</label> <span
 							class="validateIconWrapper"><span
-							class="glyphicon glyphicon-ok-circle icon-success" aria-hidden="true"></span><span
-							class="glyphicon glyphicon glyphicon-hourglass icon-validating" aria-hidden="true"></span><span
-							class="glyphicon glyphicon-remove-circle icon-error" aria-hidden="true"></span></span>
+							class="glyphicon glyphicon-ok-circle icon-success"
+							aria-hidden="true"></span><span
+							class="glyphicon glyphicon glyphicon-hourglass icon-validating"
+							aria-hidden="true"></span><span
+							class="glyphicon glyphicon-remove-circle icon-error"
+							aria-hidden="true"></span></span>
 						<p>重複チェックのため非同期validateするサンプル。動作確認のため"hifive"を既存のIDとして、失敗扱いにしています。</p>
 						<input name="userid" type="text" class="form-control"
 							value="hifive" />

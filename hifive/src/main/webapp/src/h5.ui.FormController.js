@@ -493,6 +493,10 @@
 })();
 
 (function() {
+	// ログメッセージ
+	var FW_LOG_NOT_DEFINED_PLUGIN_NAME = 'プラグイン"{0}"は存在しません';
+	var FW_LOG_ALREADY_ADDED = 'プラグイン"{0}"は登録済みです。';
+
 	// TODO formのvalidatorで不要な項目は要らない
 	var DATA_RULE_REQUIRED = 'require';
 	var DATA_RULE_ASSERT_FALSE = 'assertFalse';
@@ -517,6 +521,14 @@
 	var PLUGIN_EVENT_CHANGE = 'onChange';
 	var PLUGIN_EVENT_KEYUP = 'onKeyup';
 	var PLUGIN_EVENT_CLICK = 'onClick';
+
+	// デフォルトで用意しているプラグイン名とプラグイン(コントローラ定義)のマップ
+	var DEFAULT_PLUGINS = {
+		errorClass: h5.ui.validation.ErrorClass,
+		allMessage: h5.ui.validation.AllMessage,
+		baloon: h5.ui.validation.ErrorBaloon,
+		errorMessage: h5.ui.validation.ErrorMessage
+	};
 
 	// プラグインの表示リセットメソッド名
 	var PLUGIN_METHOD_RESET = 'reset';
@@ -700,13 +712,6 @@
 				// HTML5のformによる標準のバリデーションは行わないようにする
 				$(this._bindedForm).prop('novalidate', true);
 			}
-
-			// デフォルトの出力プラグイン追加
-			this._addOutputPlugin('errorClass', h5.ui.validation.ErrorClass);
-			this._addOutputPlugin('allMessage', h5.ui.validation.AllMessage);
-			this._addOutputPlugin('baloon', h5.ui.validation.ErrorBaloon);
-			this._addOutputPlugin('errorMessage', h5.ui.validation.ErrorMessage);
-
 			// フォーム部品からルールを生成
 			var $formControls = this.getElements();
 			var validateRule = {};
@@ -733,6 +738,28 @@
 			if (this._bindedForm) {
 				this.on(this._bindedForm, 'submit', this._submitHandler);
 			}
+		},
+
+		enablePlugins: function(pluginNames) {
+			// デフォルトの出力プラグイン追加
+			// __init前(rootElement決定前)ならルートエレメント決定後に実行
+			if (!this.isInit) {
+				this.initPromise.done(this.own(function() {
+					this.enablePlugins(pluginNames);
+				}));
+				return;
+			}
+			pluginNames = $.isArray(pluginNames) ? pluginNames : [pluginNames];
+			for (var i = 0, l = pluginNames.length; i < l; i++) {
+				var pluginName = pluginNames[i];
+				var plugin = DEFAULT_PLUGINS[pluginName];
+				if (!plugin) {
+					this.log.warn(FW_LOG_NOT_DEFINED_PLUGIN_NAME, pluginName);
+					continue;
+				}
+				this._addOutputPlugin(pluginName, plugin);
+			}
+
 		},
 
 		/**
@@ -1072,6 +1099,10 @@
 		 * @param controller
 		 */
 		_addOutputPlugin: function(pluginName, controller) {
+			if (this._plugins[pluginName]) {
+				this.log.warn(FW_LOG_ALREADY_ADDED, pluginName);
+				return;
+			}
 			var c = h5.core.controller(this._bindedForm || this.rootElement, controller);
 			this.manageChild(c);
 			this._plugins[pluginName] = c;

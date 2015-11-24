@@ -53,6 +53,10 @@
 			},
 			formController: h5.ui.FormController,
 			__init: function() {
+				// プラグインの有効化
+				this.formController.enablePlugins(['allMessage', 'errorClass', 'errorMessage',
+						'baloon']);
+
 				// birthdayグループのルール追加
 				this.formController.addRule({
 					birthday: {
@@ -70,7 +74,7 @@
 				// エラー出力設定
 				this.formController.globalSetting = {
 					errorClass: {
-						className: 'has-error',
+						errorClassName: 'has-error',
 						replaceElement: function(element) {
 							// エラークラス追加対象は、input等の親のform-group要素に変換する
 							return $(element).closest('.form-group');
@@ -81,6 +85,7 @@
 						wrapper: 'li'
 					},
 					baloon: {
+						off: true,
 						placement: 'top'
 					}
 				};
@@ -93,6 +98,9 @@
 						message: '[%=label%]は必ずどちらかを指定してください',
 						errorMessage: {
 							off: true
+						},
+						baloon: {
+							message: '[%=label%]は日っすだよ'
 						}
 					},
 					birthday: {
