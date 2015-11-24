@@ -1103,6 +1103,10 @@
 				return;
 			}
 			var name = target.name;
+			if (!name) {
+				// name無しの要素は対象外
+				return;
+			}
 			// グループに属していればそのグループに対してvalidate
 			var groupName = $(target).data(DATA_INPUTGROUP);
 			if (!groupName) {
