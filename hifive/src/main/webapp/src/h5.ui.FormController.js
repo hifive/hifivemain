@@ -837,7 +837,7 @@
 		 * このコントローラが管理するフォーム内のフォーム部品の値を集約したオブジェクトを生成する
 		 *
 		 * @memberOf h5.ui.FormController
-		 * @param {string||string[]} targetNames 指定した場合、指定したnameのものだけを集約
+		 * @param {string|string[]} targetNames 指定した場合、指定したnameのものだけを集約
 		 * @returns {Object}
 		 */
 		gather: function(targetNames) {

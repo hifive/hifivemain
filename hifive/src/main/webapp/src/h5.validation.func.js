@@ -190,6 +190,7 @@
 	}
 	$.extend(Validator.prototype, {
 		/**
+		 * @memberOf Validator
 		 * @param {Object} obj
 		 * @param {string|string[]} names
 		 */
@@ -397,6 +398,7 @@
 		 * また、year,month,dayもそれぞれのルールに基づいてvalidateが行われる。
 		 * </p>
 		 *
+		 * @memberOf FormValidator
 		 * @param {Object} obj
 		 * @param {string|string[]} names
 		 */
@@ -586,6 +588,7 @@
 	//
 	// =========================================================================
 	/**
+	 * @namespace
 	 * @memberOf h5.validation
 	 * @name func
 	 */
@@ -926,11 +929,6 @@
 	 * @namespace
 	 * @name validation
 	 * @memberOf h5
-	 */
-	/**
-	 * @namespace
-	 * @name func
-	 * @memberOf h5.validation
 	 */
 	h5.u.obj.expose('h5.validation', {
 		func: func,
