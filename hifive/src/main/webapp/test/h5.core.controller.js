@@ -7718,6 +7718,47 @@ $(function() {
 		}).readyPromise.done(start);
 	});
 
+	asyncTest('子コントローラの__defaultParam', function() {
+		var cCtrl = {
+			__name: 'child',
+			__defaultParam: {
+				c: 333
+			},
+			__construct: function(ctx) {
+				deepEqual(ctx.args, {
+					a: 1,
+					b: 2,
+					c: 333
+				}, 'argsの値はデフォルトパラメータを初期化パラメータで上書いたオブジェクトであること');
+			}
+		};
+		var rCtrl = {
+			__name: 'root',
+			childController: cCtrl,
+			__meta: {
+				childController: {
+					inheritParam: true
+				}
+			},
+			__defaultParam: {
+				a: 11,
+				b: 22,
+				c: 33
+			},
+			__construct: function(ctx) {
+				deepEqual(ctx.args, {
+					a: 1,
+					b: 2,
+					c: 33
+				}, 'argsの値はデフォルトパラメータを初期化パラメータで上書いたオブジェクトであること');
+			}
+		};
+		h5.core.controller(this.$controllerTarget, rCtrl, {
+			a: 1,
+			b: 2
+		}).readyPromise.done(start);
+	});
+
 	//=============================
 	// Definition
 	//=============================

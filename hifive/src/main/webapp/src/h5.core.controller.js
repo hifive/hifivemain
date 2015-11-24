@@ -3268,11 +3268,24 @@
 			 *
 			 * @type {Object}
 			 */
-			controllerDef: controllerDef
+			controllerDef: controllerDef,
+
+			/**
+			 * コントローラパラメータ
+			 */
+			args: null
 		};
 
-		// 初期化パラメータをセット（クローンはしない #163）
-		controller.__controllerContext.args = param ? param : null;
+		// 初期化パラメータをセット
+		// パラメータもデフォルトパラメータも指定の無い場合はnull
+		var defaultParam = controllerDef && controllerDef.__defaultParam;
+		if (defaultParam) {
+			// デフォルトパラメーターとマージする (#474)
+			controller.__controllerContext.args = $.extend({}, defaultParam, param);
+		} else if (param) {
+			// デフォルトパラメータの無い場合はクローンせずにparamをそのままセット（#163）
+			controller.__controllerContext.args = param;
+		}
 
 		/**
 		 * コントローラのライフサイクルイベント__initが終了したかどうかを返します。
@@ -4395,9 +4408,6 @@
 					controllerDefObj: controllerDefObj
 				});
 			}
-			// デフォルトパラメータがある場合はparamとマージ
-			// (この場合、新しくオブジェクトを作るので、argsで受け取るオブジェクトはparamとは別オブジェクトになる)
-			param = $.extend({}, controllerDefObj.__defaultParam, param);
 		}
 
 		// キャッシュの取得(無かったらundefined)
