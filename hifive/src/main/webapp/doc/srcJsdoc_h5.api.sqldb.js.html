@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: srcJsdoc/h5.api.sqldb.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+
+    <script src="scripts/jquery.js"> </script>
+    <script src="scripts/extension.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+</head>
+
+<body>
+<div id="container">
+	<nav>
+		<div class="module-search-header">
+		   	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+			<div class="h5-searchBox">
+				<input type="text" placeholder="Search...">
+				<button class="clear">×</button>
+			</div>
+		</div>
+		<div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+		<div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+		<div class="module-list-wrapper hidden-mobile">
+		    <h3>Classes</h3><ul><li><a href="Binding.html">Binding</a></li><li><a href="CacheManager.html">CacheManager</a></li><li><a href="ConsoleLogTarget.html">ConsoleLogTarget</a></li><li><a href="Controller.html">Controller</a></li><li><a href="ControllerManager.html">ControllerManager</a></li><li><a href="DatabaseWrapper.html">DatabaseWrapper</a></li><li><a href="DataItem.html">DataItem</a></li><li><a href="DataModel.html">DataModel</a></li><li><a href="DataModelManager.html">DataModelManager</a></li><li><a href="Del.html">Del</a></li><li><a href="Dependency.html">Dependency</a></li><li><a href="FormValidator.html">FormValidator</a></li><li><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></li><li><a href="h5.ui.validaiton.MessageOutput.html">h5.ui.validaiton.MessageOutput</a></li><li><a href="h5.ui.validation.AllMessage.html">h5.ui.validation.AllMessage</a></li><li><a href="h5.ui.validation.ErrorBaloon.html">h5.ui.validation.ErrorBaloon</a></li><li><a href="h5.ui.validation.ErrorClassController.html">h5.ui.validation.ErrorClassController</a></li><li><a href="h5.ui.validation.ErrorMessage.html">h5.ui.validation.ErrorMessage</a></li><li><a href="Indicator.html">Indicator</a></li><li><a href="Insert.html">Insert</a></li><li><a href="JqXHRWrapper.html">JqXHRWrapper</a></li><li><a href="Log.html">Log</a></li><li><a href="Logic.html">Logic</a></li><li><a href="Mixin.html">Mixin</a></li><li><a href="ObservableArray.html">ObservableArray</a></li><li><a href="ObservableItem.html">ObservableItem</a></li><li><a href="Query.html">Query</a></li><li><a href="SceneContainerController.html">SceneContainerController</a></li><li><a href="Select.html">Select</a></li><li><a href="Sequence.html">Sequence</a></li><li><a href="Sql.html">Sql</a></li><li><a href="Statement.html">Statement</a></li><li><a href="TransactionalExecutor.html">TransactionalExecutor</a></li><li><a href="Update.html">Update</a></li><li><a href="ValidationResult.html">ValidationResult</a></li><li><a href="Validator.html">Validator</a></li><li><a href="View.html">View</a></li><li><a href="WatchPositionPromise.html">WatchPositionPromise</a></li><li><a href="WebSqlDatabase.html">WebSqlDatabase</a></li></ul><h3>Namespaces</h3><ul><li><a href="h5.html">h5</a></li><li><a href="h5.api.html">h5.api</a></li><li><a href="h5.api.geo.html">h5.api.geo</a></li><li><a href="h5.api.sqldb.html">h5.api.sqldb</a></li><li><a href="h5.api.storage.html">h5.api.storage</a></li><li><a href="h5.api.storage.local.html">h5.api.storage.local</a></li><li><a href="h5.api.storage.session.html">h5.api.storage.session</a></li><li><a href="h5.async.html">h5.async</a></li><li><a href="h5.core.html">h5.core</a></li><li><a href="h5.core.data.html">h5.core.data</a></li><li><a href="h5.core.interceptor.html">h5.core.interceptor</a></li><li><a href="h5.core.view.html">h5.core.view</a></li><li><a href="h5.dev.api.geo.html">h5.dev.api.geo</a></li><li><a href="h5.env.html">h5.env</a></li><li><a href="h5.env.ua.html">h5.env.ua</a></li><li><a href="h5.log.html">h5.log</a></li><li><a href="h5.mixin.html">h5.mixin</a></li><li><a href="h5.res.html">h5.res</a></li><li><a href="h5.scene.html">h5.scene</a></li><li><a href="h5.settings.html">h5.settings</a></li><li><a href="h5.u.html">h5.u</a></li><li><a href="h5.u.obj.html">h5.u.obj</a></li><li><a href="h5.u.str.html">h5.u.str</a></li><li><a href="h5.ui.html">h5.ui</a></li><li><a href="h5.ui.jqm.html">h5.ui.jqm</a></li><li><a href="h5.ui.jqm.manager.html">h5.ui.jqm.manager</a></li><li><a href="h5.validation.html">h5.validation</a></li><li><a href="h5.validation.func.html">h5.validation.func</a></li></ul><h3>Mixins</h3><ul><li><a href="EventDispatcher.html">EventDispatcher</a></li></ul>
+	    </div>
+	</nav>
+	<div id="main">
+	    <h1 class="page-title">Source: srcJsdoc/h5.api.sqldb.js</h1>
+	    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Copyright (C) 2012-2014 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * hifive
+ */
+
+function Select() {
+//
+}
+function Insert() {
+//
+}
+function Update() {
+//
+}
+function Del() {
+//
+}
+function Sql() {
+//
+}
+
+/**
+ * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
+ * &lt;p>
+ * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、&lt;b>検索結果を保持するインスタンス&lt;/b>が返されます。
+ * &lt;p>
+ * 検索結果へのアクセスは以下のように実行します。
+ *
+ * &lt;pre>
+ *  db.insert('USER', {ID:10, NAME:'TANAKA'}).execute().done(function(rows) {
+ * 　rows.item(0).ID     // 検索にマッチした1件目のレコードのID
+ * 　rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
+ *  });
+ * &lt;/pre>
+ *
+ * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
+ *
+ * &lt;pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
+ * 　db.update('STOCK', {PRICE: 2000}, tx).where({ID: rs.item(0).ID}).execute();
+ *  });
+ * &lt;/pre>
+ *
+ * db.select().execute()で返ってきたトランザクションを、db.update()の第三引数に指定することで、db.selec()とdb.update()は同一トランザクションで実行されます。
+ * &lt;p>
+ * &lt;h5>ver1.1.8からの変更点&lt;/h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(&lt;b>TransactionalExecutor&lt;/b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * &lt;p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.select()と同一トランザクションでSQLを実行します。
+ *
+ * &lt;pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME:'ballA'}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.select('STOCK', ['COUNT']).where({ID: rs.item(0).ID})).execute().done(function(rows) {
+ * 　　　alert(rows.item(0).COUNT);
+ * 　　});
+ *  });
+ * &lt;/pre>
+ *
+ * @function
+ * @memberOf Select
+ * @returns {Promise} Promiseオブジェクト
+ */
+Select.prototype.execute = function() {
+//
+};
+
+/**
+ * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
+ * &lt;p>
+ * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、&lt;b>登録に成功したレコードのIDを持つ配列&lt;/b>が返されます。
+ * &lt;p>
+ * 検索結果へのアクセスは以下のように実行します。
+ *
+ * &lt;pre>
+ *  db.insert('USER', {ID:10, NAME:'TANAKA'}).execute().done(function(rows) {
+ * 　rows.item(0).ID     // 検索にマッチした1件目のレコードのID
+ * 　rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
+ *  });
+ * &lt;/pre>
+ *
+ * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
+ *
+ * &lt;pre>
+ *  db.select('STOCK', {ID:10, NAME:'ballA'}).execute().progress(function(rs, tx) { // ※1
+ * 　db.insert('STOCK', {ID:11, NAME:'ballB'}, tx).execute(); // ※2
+ *  });
+ * &lt;/pre>
+ *
+ * ※1のprogress()で返ってきたトランザクション(tx)を、※2のinsert()の第三引数に指定することで、2つのdb.insert()は同一トランザクションで実行されます。 *
+ * &lt;p>
+ * &lt;h5>ver1.1.8からの変更点&lt;/h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(&lt;b>TransactionalExecutor&lt;/b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * &lt;p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.insert()と同一トランザクションでSQLを実行します。
+ *
+ * &lt;pre>
+ *  db.insert('PRODUCT', {ID:11, NAME:'ballA'}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.insert('PRODUCT', {ID:12, NAME:'ballB'})).execute().done(function() {
+ * 　　　alert('success');
+ * 　　});
+ *  });
+ * &lt;/pre>
+ *
+ * @function
+ * @memberOf Insert
+ * @returns {Promise} Promiseオブジェクト
+ */
+Insert.prototype.execute = function() {
+//
+};
+
+/**
+ * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
+ * &lt;p>
+ * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、&lt;b>更新されたレコードの件数&lt;/b>が返されます。
+ *
+ * &lt;pre>
+ *  db.update('USER', {NAME:TANAKA}).where({ID:10}).execute().done(function(rowsAffected) {
+ *  　rowsAffected // 更新されたレコードの行数(Number型)
+ *  });
+ * &lt;/pre>
+ *
+ * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
+ *
+ * &lt;pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
+ * 　db.update('STOCK', {PRICE: 2000}, tx).where({ID: rs.item(0).ID}).execute();
+ *  });
+ * &lt;/pre>
+ *
+ * db.select().execute()で返ってきたトランザクションを、db.update()の第三引数に指定することで、db.select()とdb.update()は同一トランザクションで実行されます。
+ * &lt;p>
+ * &lt;h5>ver1.1.8からの変更点&lt;/h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(&lt;b>TransactionalExecutor&lt;/b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * &lt;p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.select()と同一トランザクションでSQLを実行します。
+ *
+ * &lt;pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME: 'ballA'}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.update('STOCK', {COUNT: 10}).where({ID: rs.item(0).ID})).execute().done(function() {
+ * 　　　alert('success');
+ * 　　});
+ *  });
+ * &lt;/pre>
+ *
+ * @function
+ * @memberOf Update
+ * @returns {Promise} Promiseオブジェクト
+ */
+Update.prototype.execute = function() {
+//
+};
+
+/**
+ * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
+ * &lt;p>
+ * 実行結果は、Promiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、&lt;b>削除されたレコードの件数&lt;/b>が返されます。
+ *
+ * &lt;pre>
+ *  db.del('USER').where({ID:10}).execute().done(function(rowsAffected) {
+ *  　rowsAffected // 削除されたレコードの行数(Number型)
+ *  });
+ * &lt;/pre>
+ *
+ * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
+ *
+ * &lt;pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
+ *  　db.del('STOCK', tx).where({ID: rs.item(0).ID}).execute();
+ *  });
+ * &lt;/pre>
+ *
+ * db.select().execute()で返ってきたトランザクションを、db.del()の第二引数に指定することで、db.select()とdb.del()は同一トランザクションで実行されます。 *
+ * &lt;p>
+ * &lt;h5>ver1.1.8からの変更点&lt;/h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(&lt;b>TransactionalExecutor&lt;/b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * &lt;p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.del()と同一トランザクションでSQLを実行します。
+ *
+ * &lt;pre>
+ *  db.del('USER').where({ID:1}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.del('ROLE').where({ID:1})).execute().done(function() {
+ * 　　　alert('success');
+ * 　　});
+ *  });
+ * &lt;/pre>
+ *
+ * @function
+ * @memberOf Del
+ * @returns {Promise} Promiseオブジェクト
+ */
+Del.prototype.execute = function() {
+//
+};
+
+/**
+ * このオブジェクトに設定された情報からSQLステートメントとパラメータを生成し、SQLを実行します
+ * &lt;p>
+ * 実行結果は、戻り値であるPromiseオブジェクトのprogress()に指定したコールバック関数または、done()に指定したコールバック関数に、&lt;b>実行結果を保持するオブジェクト&lt;/b>が返されます。
+ * &lt;p>
+ * 実行結果オブジェクトは、以下のプロパティを持っています。&lt;br>
+ * &lt;table border="1">
+ * &lt;tr>
+ * &lt;td>プロパティ名&lt;/td>
+ * &lt;td>説明&lt;/td>
+ * &lt;/tr>
+ * &lt;tr>
+ * &lt;td>rows&lt;/td>
+ * &lt;td>検索(SELECT)を実行した場合、このプロパティに結果が格納されます。&lt;/td>
+ * &lt;/tr>
+ * &lt;tr>
+ * &lt;td>insertId&lt;/td>
+ * &lt;td>登録(INSERT)を実行した場合、このプロパティに登録したレコードのIDが格納されます。&lt;/td>
+ * &lt;/tr>
+ * &lt;tr>
+ * &lt;td>rowsAffected&lt;/td>
+ * &lt;td>削除(DELETE)や更新(UPDATE)した場合、このプロパティに変更のあったレコードの件数が格納されます。&lt;/td>
+ * &lt;/tr>
+ * &lt;/table>
+ * &lt;p>
+ * 例.検索結果の取得
+ *
+ * &lt;pre>
+ *  db.sql('SELECT * FROM USER').execute().done(function(rs) {
+ *  　rs.rows          // SQLResultSetRowList
+ *  　rs.insertId      // Number
+ *  　rs.rowsAffected  // Number
+ *  });
+ * &lt;/pre>
+ *
+ * &lt;p>
+ * &lt;b>SQLResultSetRowList&lt;/b>は、以下のプロパティを持っています。&lt;br>
+ * &lt;table border="1">
+ * &lt;tr>
+ * &lt;td>プロパティ名&lt;/td>
+ * &lt;td>説明&lt;/td>
+ * &lt;/tr>
+ * &lt;tr>
+ * &lt;td>length&lt;/td>
+ * &lt;td>検索にマッチしたレコードの件数&lt;/td>
+ * &lt;/tr>
+ * &lt;tr>
+ * &lt;td>rows&lt;/td>
+ * &lt;td>検索結果&lt;/td>
+ * &lt;/tr>
+ * &lt;/table>
+ * &lt;p>
+ * 例.検索結果の取得する
+ *
+ * &lt;pre>
+ *  db.sql('SELECT ID, NAME FROM USER').execute().done(function(rs) {
+ * 　rs.rows.item(0).ID     // 検索にマッチした1件目のレコードのID
+ * 　rs.rows.item(0).NAME   // 検索にマッチした1件目のレコードのNAME
+ *  });
+ * &lt;/pre>
+ *
+ * また、progress()に指定したコールバック関数の第二引数には、トランザクションオブジェクトが格納され、このオブジェクトを使用することで、トランザクションを引き継ぐことができます。
+ * &lt;p>
+ * 例.同一トランザクションでdb.insert()とdb.sql()を実行する
+ *
+ * &lt;pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME: 'ball'}).execute().progress(function(rs, tx) {
+ * 　db.sql('UPDATE STOCK SET PRICE = 2000', tx).where({ID: rs.item(0).ID}).execute();
+ *  });
+ * &lt;/pre>
+ *
+ * db.select().execute()で返ってきたトランザクションを、db.sql()の第三引数に指定することで、db.select()とdb.sql()は同一トランザクションで実行されます。 *
+ * &lt;p>
+ * &lt;h5>ver1.1.8からの変更点&lt;/h5>
+ * execute()が返すPromiseオブジェクトのprogressコールバックの第二引数(&lt;b>TransactionalExecutor&lt;/b>インスタンス)に、
+ * Select/Insert/Del/Update/Sqlインスタンスをaddすることができるようになりました。
+ * &lt;p>
+ * 下記のサンプルコードは、tx.add()で追加したStatementインスタンスを、一番最初に実行したdb.select()と同一トランザクションでSQLを実行します。
+ *
+ * &lt;pre>
+ *  db.select('PRODUCT', ['ID']).where({NAME:'ballA'}).execute().progress(function(rs, tx) {
+ * 　　tx.add(db.sql('SELECT COUNT FROM STOCK WHERE ID = '+ rs.item(0).ID')).execute().done(function(rs2) {
+ * 　　　alert(rs2.rows.item(0).COUNT);
+ * 　　});
+ *  });
+ * &lt;/pre>
+ *
+ * @function
+ * @memberOf Sql
+ * @returns {Promise} Promiseオブジェクト
+ */
+Sql.prototype.execute = function() {
+//
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+	</div>
+
+	<br class="clear">
+
+	<footer>
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Nov 24 2015 19:15:25 GMT+0900 (JST)
+	</footer>
+</div>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

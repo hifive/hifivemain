@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: src/h5.validation.func.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+
+    <script src="scripts/jquery.js"> </script>
+    <script src="scripts/extension.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+</head>
+
+<body>
+<div id="container">
+	<nav>
+		<div class="module-search-header">
+		   	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+			<div class="h5-searchBox">
+				<input type="text" placeholder="Search...">
+				<button class="clear">×</button>
+			</div>
+		</div>
+		<div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+		<div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+		<div class="module-list-wrapper hidden-mobile">
+		    <h3>Classes</h3><ul><li><a href="Binding.html">Binding</a></li><li><a href="CacheManager.html">CacheManager</a></li><li><a href="ConsoleLogTarget.html">ConsoleLogTarget</a></li><li><a href="Controller.html">Controller</a></li><li><a href="ControllerManager.html">ControllerManager</a></li><li><a href="DatabaseWrapper.html">DatabaseWrapper</a></li><li><a href="DataItem.html">DataItem</a></li><li><a href="DataModel.html">DataModel</a></li><li><a href="DataModelManager.html">DataModelManager</a></li><li><a href="Del.html">Del</a></li><li><a href="Dependency.html">Dependency</a></li><li><a href="FormValidator.html">FormValidator</a></li><li><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></li><li><a href="h5.ui.validaiton.MessageOutput.html">h5.ui.validaiton.MessageOutput</a></li><li><a href="h5.ui.validation.AllMessage.html">h5.ui.validation.AllMessage</a></li><li><a href="h5.ui.validation.ErrorBaloon.html">h5.ui.validation.ErrorBaloon</a></li><li><a href="h5.ui.validation.ErrorClassController.html">h5.ui.validation.ErrorClassController</a></li><li><a href="h5.ui.validation.ErrorMessage.html">h5.ui.validation.ErrorMessage</a></li><li><a href="Indicator.html">Indicator</a></li><li><a href="Insert.html">Insert</a></li><li><a href="JqXHRWrapper.html">JqXHRWrapper</a></li><li><a href="Log.html">Log</a></li><li><a href="Logic.html">Logic</a></li><li><a href="Mixin.html">Mixin</a></li><li><a href="ObservableArray.html">ObservableArray</a></li><li><a href="ObservableItem.html">ObservableItem</a></li><li><a href="Query.html">Query</a></li><li><a href="SceneContainerController.html">SceneContainerController</a></li><li><a href="Select.html">Select</a></li><li><a href="Sequence.html">Sequence</a></li><li><a href="Sql.html">Sql</a></li><li><a href="Statement.html">Statement</a></li><li><a href="TransactionalExecutor.html">TransactionalExecutor</a></li><li><a href="Update.html">Update</a></li><li><a href="ValidationResult.html">ValidationResult</a></li><li><a href="Validator.html">Validator</a></li><li><a href="View.html">View</a></li><li><a href="WatchPositionPromise.html">WatchPositionPromise</a></li><li><a href="WebSqlDatabase.html">WebSqlDatabase</a></li></ul><h3>Namespaces</h3><ul><li><a href="h5.html">h5</a></li><li><a href="h5.api.html">h5.api</a></li><li><a href="h5.api.geo.html">h5.api.geo</a></li><li><a href="h5.api.sqldb.html">h5.api.sqldb</a></li><li><a href="h5.api.storage.html">h5.api.storage</a></li><li><a href="h5.api.storage.local.html">h5.api.storage.local</a></li><li><a href="h5.api.storage.session.html">h5.api.storage.session</a></li><li><a href="h5.async.html">h5.async</a></li><li><a href="h5.core.html">h5.core</a></li><li><a href="h5.core.data.html">h5.core.data</a></li><li><a href="h5.core.interceptor.html">h5.core.interceptor</a></li><li><a href="h5.core.view.html">h5.core.view</a></li><li><a href="h5.dev.api.geo.html">h5.dev.api.geo</a></li><li><a href="h5.env.html">h5.env</a></li><li><a href="h5.env.ua.html">h5.env.ua</a></li><li><a href="h5.log.html">h5.log</a></li><li><a href="h5.mixin.html">h5.mixin</a></li><li><a href="h5.res.html">h5.res</a></li><li><a href="h5.scene.html">h5.scene</a></li><li><a href="h5.settings.html">h5.settings</a></li><li><a href="h5.u.html">h5.u</a></li><li><a href="h5.u.obj.html">h5.u.obj</a></li><li><a href="h5.u.str.html">h5.u.str</a></li><li><a href="h5.ui.html">h5.ui</a></li><li><a href="h5.ui.jqm.html">h5.ui.jqm</a></li><li><a href="h5.ui.jqm.manager.html">h5.ui.jqm.manager</a></li><li><a href="h5.validation.html">h5.validation</a></li><li><a href="h5.validation.func.html">h5.validation.func</a></li></ul><h3>Mixins</h3><ul><li><a href="EventDispatcher.html">EventDispatcher</a></li></ul>
+	    </div>
+	</nav>
+	<div id="main">
+	    <h1 class="page-title">Source: src/h5.validation.func.js</h1>
+	    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Copyright (C) 2012-2014 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * hifive
+ */
+
+/* ------ h5.validation ------ */
+(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =============================
+	// Production
+	// =============================
+	/**
+	 * ルールオブジェクトで判定順序を指定する場合に使用するプロパティ名
+	 */
+	var PROPERTY_NAME_ORDER = '_order';
+
+	/**
+	 * デフォルトで定義済みのルール名
+	 */
+	var DEFAULT_RULE_NAME_REQUIRE = 'require';
+	var DEFAULT_RULE_NAME_CUSTOM_FUNC = 'customFunc';
+	var DEFAULT_RULE_NAME_NUL = 'nul';
+	var DEFAULT_RULE_NAME_NOT_NULL = 'notNull';
+	var DEFAULT_RULE_NAME_ASSERT_FALSE = 'assertFalse';
+	var DEFAULT_RULE_NAME_ASSERT_TRUE = 'assertTrue';
+	var DEFAULT_RULE_NAME_MAX = 'max';
+	var DEFAULT_RULE_NAME_MIN = 'min';
+	var DEFAULT_RULE_NAME_FUTURE = 'future';
+	var DEFAULT_RULE_NAME_PAST = 'past';
+	var DEFAULT_RULE_NAME_DIGITS = 'digits';
+	var DEFAULT_RULE_NAME_PATTERN = 'pattern';
+	var DEFAULT_RULE_NAME_SIZE = 'size';
+
+	/**
+	 * ValidationResultのイベント名
+	 */
+	var EVENT_VALIDATE = 'validate';
+	var EVENT_VALIDATE_COMPLETE = 'validateComplete';
+	var EVENT_VALIDATE_ABORT = 'abort';
+
+	// =============================
+	// Development Only
+	// =============================
+	/* del begin */
+	var fwLogger = h5.log.createLogger('h5.core');
+
+	// ログメッセージ
+	var FW_LOG_NOT_DEFINED_RULE_NAME = '指定されたルール{0}は未定義です';
+	/* del end */
+
+	// =========================================================================
+	//
+	// Cache
+	//
+	// =========================================================================
+	var isPromise = h5.async.isPromise;
+
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+	// =============================
+	// Variables
+	// =============================
+	var validateRuleManager = new ValidateRuleManager();
+	// =============================
+	// Functions
+	// =============================
+	// =============================
+	// FIXME h5.core.dataからコピペ
+	// =============================
+	/**
+	 * 引数がNaNかどうか判定する。isNaNとは違い、例えば文字列はNaNではないのでfalseとする
+	 *
+	 * @private
+	 * @param {Any} val 判定する値
+	 * @returns {boolean} 引数がNaNかどうか
+	 */
+	function isStrictNaN(val) {
+		return typeof val === 'number' &amp;&amp; isNaN(val);
+	}
+
+	/**
+	 * 引数を2つ取り、両方ともisStrictNaNかどうか判定する
+	 *
+	 * @private
+	 * @param {Any} val1 判定する値
+	 * @param {Any} val2 判定する値
+	 * @returns {boolean} 引数が2つともNaNかどうか
+	 */
+	function isBothStrictNaN(val1, val2) {
+		return isStrictNaN(val1) &amp;&amp; isStrictNaN(val2);
+	}
+
+	/**
+	 * type:'number' 指定のプロパティに代入できるかのチェック null,undefined,NaN,parseFloatしてNaNにならないもの
+	 * に当てはまる引数についてtrueを返す
+	 *
+	 * @private
+	 * @param {Any} val 判定する値
+	 * @param {Boolean} isStrict 厳密に判定するかどうか。isStrict === trueなら型変換可能でも型が違えばfalseを返す
+	 * @returns {boolean} type:'number'指定のプロパティに代入可能か
+	 */
+	function isNumberValue(val, isStrict) {
+		// nullまたはundefinedはtrue
+		// NaNを直接入れた場合はtrue
+		// new Number() で生成したオブジェクトはtrue
+		// 文字列の場合は、[±(数字)(.数字)]で構成されている文字列ならOKにする
+		// ※ parseFloatよりも厳しいチェックにしている。
+		// "1.2", "+1.2", "1", ".2", "-.2" はOK。
+		// "12.3px"、"12.3.4"、"123.", [12.3, 4] はいずれもparseFloatできるが、ここではNG。
+		return val == null
+				|| isStrictNaN(val)
+				|| typeof val === 'number'
+				|| (!isStrict &amp;&amp; (val instanceof Number || !!((isString(val) || val instanceof String) &amp;&amp; !!val
+						.match(/^[+\-]{0,1}[0-9]*\.{0,1}[0-9]+$/))));
+	}
+
+	/**
+	 * type:'integer' 指定のプロパティに代入できるかのチェック null,undefined,parseFloatとparsFloatの結果が同じもの(NaNは除く)
+	 * に当てはまる引数についてtrueを返す
+	 *
+	 * @private
+	 * @param {Any} val 判定する値
+	 * @param {Boolean} isStrict 厳密に判定するかどうか。isStrict === trueなら型変換可能でも型が違えばfalseを返す
+	 * @returns {boolean} type:'integer'指定のプロパティに代入可能か
+	 */
+	function isIntegerValue(val, isStrict) {
+		// parseIntとparseFloatの結果が同じかどうかで整数値かどうかの判定をする
+		// typeofが'nubmer'または、new Number()で生成したオブジェクトで、parseFloatとparseIntの結果が同じならtrue
+		// NaN, Infinity, -Infinityはfalseを返す(parseInt(Infinity)はNaNであるので、InfinityはIntじゃない扱いにする
+		// 文字列の場合は、[±数字]で構成されている文字列ならOKにする
+		// ※ parseIntよりも厳しいチェックにしている。"12px"、"12.3"、[12,3] はいずれもparseIntできるが、ここではNG。
+		return val == null
+				|| (typeof val === 'number' &amp;&amp; parseInt(val) === val)
+				|| (!isStrict &amp;&amp; (val instanceof Number &amp;&amp; parseInt(val) === parseFloat(val) || (typeof val === 'string' || val instanceof String)
+						&amp;&amp; !!val.match(/^[+\-]{0,1}[0-9]+$/)));
+	}
+
+	/**
+	 * type:'string' 指定のプロパティに代入できるかのチェック
+	 *
+	 * @private
+	 * @param {Any} val 判定する値
+	 * @param {Boolean} isStrict 厳密に判定するかどうか。isStrict === trueなら型変換可能でも型が違えばfalseを返す
+	 * @returns {boolean} type:'string'指定のプロパティに代入可能か
+	 */
+	function isStringValue(val, isStrict) {
+		return !!(val == null || isString(val) || (!isStrict &amp;&amp; val instanceof String));
+	}
+
+	/**
+	 * type:'boolean' 指定のプロパティに代入できるかのチェック
+	 *
+	 * @private
+	 * @param {Any} val 判定する値
+	 * @param {Boolean} isStrict 厳密に判定するかどうか。isStrict === trueなら型変換可能でも型が違えばfalseを返す
+	 * @returns {boolean} type:'boolean'指定のプロパティに代入可能か
+	 */
+	function isBooleanValue(val, isStrict) {
+		return val == null || typeof val === 'boolean' || (!isStrict &amp;&amp; val instanceof Boolean);
+	}
+
+	/**
+	 * validatorクラス
+	 * &lt;p>
+	 * バリデートを行うクラス
+	 * &lt;/p>
+	 *
+	 * @class
+	 * @name Validator
+	 */
+	function Validator() {
+		this._rule = {};
+	}
+	$.extend(Validator.prototype, {
+		/**
+		 * @memberOf Validator
+		 * @param {Object} obj
+		 * @param {string|string[]} names
+		 */
+		validate: function(obj, names) {
+			var validProperties = [];
+			var invalidProperties = [];
+			var allProperties = [];
+			var validatingProperties = [];
+			var failureReason = null;
+			var targetNames = names &amp;&amp; (isArray(names) ? names : [names]);
+			var isAsync = false;
+			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
+			var propertyWaitingPromsies = {};
+			for ( var prop in this._rule) {
+				if (names &amp;&amp; $.inArray(prop, targetNames) === -1) {
+					continue;
+				}
+				var rule = this._rule[prop];
+				var orgValue = obj[prop];
+				var isInvalidProp = false;
+				var isAsyncProp = false;
+				// TODO order対応
+				//				var order = rule[PROPERTY_NAME_ORDER];
+
+				for ( var ruleName in rule) {
+					var args = rule[ruleName];
+					if ((!obj.hasOwnProperty(prop) || args == null)
+							&amp;&amp; !(ruleName === DEFAULT_RULE_NAME_REQUIRE &amp;&amp; args)) {
+						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
+						// また、argsがundefinedならそのルールはチェックしない
+						// ただし、require指定がある場合はチェックする
+						continue;
+					}
+					// 値の型変換
+					var value = this._convertBeforeValidate ? this._convertBeforeValidate(orgValue,
+							ruleName) : orgValue;
+					if (isArray(args)) {
+						args = [value].concat(args);
+					} else {
+						args = [value, args];
+					}
+					var validateFunc = validateRuleManager.getValidateFunction(ruleName);
+					if (!validateFunc) {
+						fwLogger.warn(FW_LOG_NOT_DEFINED_RULE_NAME, ruleName);
+						break;
+					}
+
+					var ret = validateFunc.apply(this, args);
+
+					// validate関数呼び出し時の引数を格納しておく
+					var param = {};
+					var argNames = validateRuleManager.getValidateArgNames(ruleName);
+					if (argNames) {
+						for (var i = 0, l = argNames.length; i &lt; l; i++) {
+							param[argNames[i]] = args[i + 1];
+						}
+					}
+
+					// 非同期の場合
+					if (isPromise(ret) &amp;&amp; !isRejected(ret) &amp;&amp; !isResolved(ret)) {
+						// pendingのプロミスが返ってきた場合
+						// 結果が返ってきたらvalidateイベントをあげるようにしておく
+						isAsyncProp = true;
+						propertyWaitingPromsies[prop] = propertyWaitingPromsies[prop] || [];
+						propertyWaitingPromsies[prop].push(ret);
+					}
+
+					// 同期の場合
+					if (!ret || isPromise(ret) &amp;&amp; isResolved(ret)) {
+						// validate関数がfalseを返したまたは、promiseを返したけどすでにreject済みの場合はvalidate失敗
+						// failureReasonの作成
+						failureReason = failureReason || {};
+						failureReason[prop] = this._createFailureReason(ruleName, value, param);
+						isInvalidProp = true;
+						// あるルールでinvalidなら他のルールはもう検証しない
+						break;
+					}
+				}
+				if (isAsyncProp) {
+					isAsync = true;
+					validatingProperties.push(prop);
+				} else {
+					(isInvalidProp ? invalidProperties : validProperties).push(prop);
+				}
+				allProperties.push(prop);
+			}
+			var isValid = !invalidProperties.length;
+			var validationResult = new ValidationResult({
+				validProperties: validProperties,
+				invalidProperties: invalidProperties,
+				validatingProperties: validatingProperties,
+				allProperties: allProperties,
+				failureReason: failureReason,
+				isAsync: isAsync,
+				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
+				isValid: isValid,
+				// 非同期でvalidateしているものがあって決まっていない時はisAllValidはnull
+				isAllValid: isAsync ? null : isValid
+			});
+
+			if (isAsync) {
+				var that = this;
+				// 非同期の場合、結果が返って気次第イベントをあげる
+				for ( var prop in propertyWaitingPromsies) {
+					var promises = propertyWaitingPromsies[prop];
+					waitForPromises(promises, (function(_prop) {
+						return function() {
+							// 既にinvalidになっていたらもう何もしない
+							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
+								return;
+							}
+							validationResult.dispatchEvent({
+								type: EVENT_VALIDATE,
+								property: _prop,
+								isValid: true
+							});
+						};
+					})(prop), (function(_prop, _ruleName, _value, _param) {
+						return function() {
+							// 一つでも失敗したらfailCallbackが実行される
+							// 既にinvalidになっていたらもう何もしない
+							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
+								return;
+							}
+							validationResult.dispatchEvent({
+								type: EVENT_VALIDATE,
+								property: _prop,
+								isValid: false,
+								failureReason: that._createFailureReason(_ruleName, _value, _param)
+							});
+						};
+					})(prop, ruleName, value, param));
+				}
+			}
+			return validationResult;
+		},
+		addRule: function(ruleObject) {
+			for ( var prop in ruleObject) {
+				var propRule = ruleObject[prop];
+				// 既に適用ルールが定義されているプロパティについては上書き
+				this._rule[prop] = propRule;
+			}
+		},
+		removeRule: function(keys) {
+			if (!isArray(keys)) {
+				delete this._rule[keys];
+			}
+			for (var i = 0, l = keys.length; i &lt; l; i++) {
+				delete this._rule[keys[i]];
+			}
+		},
+		setOrder: function(ruleOrder) {},
+
+		_createFailureReason: function(ruleName, value, param) {
+			return {
+				rule: ruleName,
+				value: value,
+				param: param
+			};
+		}
+	});
+
+	/**
+	 * FormValidatorクラス
+	 * &lt;p>
+	 * フォームに入力された値のバリデートを行うクラス
+	 * &lt;/p>
+	 *
+	 * @class
+	 * @name FormValidator
+	 */
+	function FormValidator() {
+		this._rule = {};
+	}
+	$.extend(FormValidator.prototype, Validator.prototype, {
+
+		/**
+		 * フォームオブジェクトのvalidateを行う
+		 * &lt;p>
+		 * FormValidatorはグループとそのグループ内のプロパティについてのvalidateに対応する。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 以下はbirthdayをループとして扱いvalidateを行う場合、
+		 * &lt;/p>
+		 *
+		 * &lt;pre class="sh_javascript">&lt;code>
+		 * var formValidator = h5.u.validation.createValidator('form');
+		 * formValidator.addRule({
+		 *   birthday: {
+		 *     customFunc: function(val){...}
+		 *   },
+		 *   year: { require:true },
+		 *   month: { require:true },
+		 *   day: { require:true }
+		 * });
+		 * formValidator.validate({
+		 * 	birthday: {
+		 * 		year: 1999,
+		 * 		month: 1,
+		 * 		date: 1
+		 * 	}
+		 * });
+		 * &lt;/code>&lt;/pre>
+		 *
+		 * &lt;p>
+		 * グループはそのグループ(birthday)のルールによるvalidateが行われる。
+		 * &lt;/p>
+		 * &lt;p>
+		 * また、year,month,dayもそれぞれのルールに基づいてvalidateが行われる。
+		 * &lt;/p>
+		 *
+		 * @memberOf FormValidator
+		 * @param {Object} obj
+		 * @param {string|string[]} names
+		 */
+		validate: function(obj, names) {
+			// グループ対応。値がオブジェクトのものはグループとして扱う
+			var validateTarget = {};
+			var inGroupNames = [];
+			for ( var p in obj) {
+				if ($.isPlainObject(obj[p])) {
+					// オブジェクトの場合はその中身も展開してvalidateされるようにする
+					// なお、グループの入れ子は考慮していない
+					for ( var prop in obj[p]) {
+						validateTarget[prop] = obj[p][prop];
+						inGroupNames.push(prop);
+					}
+				}
+				validateTarget[p] = obj[p];
+			}
+			var validateNames = null;
+			if (names) {
+				validateNames = ($.isArray(names) ? names.slice(0) : [names]).concat(inGroupNames);
+			}
+			return Validator.prototype.validate.call(this, validateTarget, validateNames);
+		},
+
+		/**
+		 * Formから取得した値のvalidateのために、値をルールに適した型へ変換を行う
+		 *
+		 * @private
+		 * @memberOf FormValidator
+		 */
+		_convertBeforeValidate: function(value, ruleName) {
+			switch (ruleName) {
+			case DEFAULT_RULE_NAME_DIGITS:
+			case DEFAULT_RULE_NAME_MAX:
+			case DEFAULT_RULE_NAME_MIN:
+				return parseFloat(value);
+			case DEFAULT_RULE_NAME_FUTURE:
+			case DEFAULT_RULE_NAME_PAST:
+				return new Date(value);
+			}
+			return value;
+		}
+	});
+
+	/**
+	 * ValidationResultにデフォルトで登録するvalidateイベントリスナ
+	 *
+	 * @private
+	 */
+	function validateEventListener(ev) {
+		// thisはvalidationResult
+		// このハンドラがユーザが追加するハンドラより先に動作する前提(EventDispatcherがそういう実装)
+		// 非同期validateの結果をValidationResultに反映させる
+		var prop = ev.property;
+		if (ev.isValid) {
+			this.validProperties.push(prop);
+			this.validCount++;
+		} else {
+			this.isValid = false;
+			this.invalidProperties.push(prop);
+			this.invalidCount++;
+			this.failureReason = this.failureReason || {};
+			this.failureReason[prop] = this.failureReason[prop] || ev.failureReason;
+		}
+		this.validatingProperties.splice(this.validatingProperties.indexOf(prop), 1);
+
+		if (this.validCount + this.invalidCount === this.allProperties.length) {
+			this.isAllValid = this.isValid;
+			this.dispatchEvent({
+				type: EVENT_VALIDATE_COMPLETE
+			});
+		}
+	}
+
+	/**
+	 * validation結果クラス
+	 * &lt;p>
+	 * このクラスは{@link EventDispatcher}のメソッドを持ちます。
+	 * &lt;/p>
+	 *
+	 * @class
+	 * @name ValidationResult
+	 */
+	/**
+	 * @private
+	 * @param result
+	 */
+	function ValidationResult(result) {
+		this.isValid = result.isValid;
+		this.validProperties = result.validProperties;
+		this.invalidProperties = result.invalidProperties;
+		this.validatingProperties = result.validatingProperties;
+		this.failureReason = result.failureReason;
+		this.validCount = result.validProperties.length;
+		this.invalidCount = result.invalidProperties.length;
+		this.isAsync = result.isAsync;
+		this.isAllValid = result.isAllValid;
+		this.allProperties = result.allProperties;
+
+		this.addEventListener(EVENT_VALIDATE, validateEventListener);
+
+		// abort()が呼ばれていたらdispatchEventを動作させない
+		this.dispatchEvent = function() {
+			if (this._aborted) {
+				return;
+			}
+			ValidationResult.prototype.dispatchEvent.apply(this, arguments);
+		};
+	}
+	// イベントディスパッチャ
+	h5.mixin.eventDispatcher.mix(ValidationResult.prototype);
+	/**
+	 * 非同期validateの中止
+	 * &lt;p>
+	 * 非同期validateを行っている途中でまだvalidateCompleteイベントが上がっていない時にabort()を呼ぶと、イベントをあげなくなります。
+	 * &lt;/p>
+	 *
+	 * @memberOf ValidationResult
+	 * @name abort
+	 */
+	ValidationResult.prototype.abort = function() {
+		this.removeEventListener(EVENT_VALIDATE, validateEventListener);
+		this.dispatchEvent({
+			type: EVENT_VALIDATE_ABORT
+		});
+		this._aborted = true;
+	};
+
+	/**
+	 * priority順に並べるための比較関数
+	 *
+	 * @private
+	 * @param obj1
+	 * @param obj2
+	 * @returns {integer}
+	 */
+	function comparePriority(obj1, obj2) {
+		var p1, p2;
+		p1 = obj1.priority || Infinity;
+		p2 = obj2.priority || Infinity;
+		return p1 === p2 ? 0 : p1 - p2;
+	}
+
+	/**
+	 * ルールオブジェクトの管理クラス
+	 *
+	 * @class
+	 * @private
+	 */
+	function ValidateRuleManager() {
+		// ルールを優先度順に並べたもの
+		this.rules = [];
+		// ルール名→ルールオブジェクトのマップ
+		this.rulesMap = {};
+	}
+	$.extend(ValidateRuleManager.prototype, {
+		addValidateRule: function(key, func, priority, argNames) {
+			var isExistAlready = this.rulesMap[key];
+			if (isExistAlready) {
+				for (var i = 0, l = this.rules.length; i &lt; l; i++) {
+					if (this.rules[i].key === key) {
+						this.rules.splice(i, 1);
+						break;
+					}
+				}
+			}
+			var ruleObj = {
+				key: key,
+				func: func,
+				priority: priority,
+				argNames: argNames
+			};
+			this.rules.push(ruleObj);
+			this.rulesMap[key] = ruleObj;
+		},
+		getValidateFunction: function(key) {
+			return this.rulesMap[key] &amp;&amp; this.rulesMap[key].func;
+		},
+		getValidateArgNames: function(key) {
+			return this.rulesMap[key] &amp;&amp; this.rulesMap[key].argNames;
+		}
+	});
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+	/**
+	 * @namespace
+	 * @memberOf h5.validation
+	 * @name func
+	 */
+	var func = {
+		/**
+		 * 値を第2引数の関数で判定した結果を返す
+		 *
+		 * @memberOf h5.validaiton.func
+		 */
+		customFunc: function(value, func) {
+			return func(value);
+		},
+
+		/**
+		 * 値がfalseかどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値が真偽値でない場合はfalseを返します
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @returns {boolean}
+		 */
+		assertFalse: function(value) {
+			return value == null || isBooleanValue(value) &amp;&amp; value == false;
+		},
+
+		/**
+		 * 値がtrueかどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値が真偽値型でない場合はfalseを返します
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @returns {boolean}
+		 */
+		assertTrue: function(value) {
+			return value == null || isBooleanValue(value) &amp;&amp; value == true;
+		},
+
+		/**
+		 * 値が最大値より小さいかどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 第2引数には最大値を指定して、その数値より小さいかどうか判定します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 第3引数にtrueを指定すると、値が最大値と等しい場合もtrueを返します(デフォルトはfalse)。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値が数値型でない場合はfalseを返します
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @param {number} max 最大値
+		 * @param {boolean} [inclusive=false] 境界値にmaxValueを含めるかどうか
+		 * @returns {boolean}
+		 */
+		max: function max(value, max, inclusive) {
+			return value == null || (isNumberValue(value, true) || value instanceof Number)
+					&amp;&amp; (inclusive ? (value &lt;= max) : (value &lt; max));
+		},
+
+		/**
+		 * 値が最小値より大きいかどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 第2引数には最小値を指定して、その数値より大きいかどうか判定します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 第3引数にtrueを指定すると、値が最小値と等しい場合もtrueを返します(デフォルトはfalse)。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値が数値型でない場合はfalseを返します
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @param {number} min 最小値
+		 * @param {boolean} [inclusive=false] 境界値にmaxValueを含めるかどうか
+		 * @returns {boolean}
+		 */
+		min: function(value, min, inclusive) {
+			return value == null || (isNumberValue(value, true) || value instanceof Number)
+					&amp;&amp; (inclusive ? (min &lt;= value) : (min &lt; value));
+		},
+
+		/**
+		 * 値がnullかどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * それ以外の場合はfalseを返します。
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @returns {boolean}
+		 */
+		nul: function(value) {
+			return value == null;
+		},
+
+		/**
+		 * 値がnullでないかどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はfalseを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * それ以外の場合はtrueを返します。
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @returns {boolean}
+		 */
+		notNull: function(value) {
+			return value != null;
+		},
+
+		/**
+		 * 値が現在時刻より未来かどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値がDate型でない場合はfalseを返します。
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @returns {boolean}
+		 */
+		future: function(value) {
+			return value == null || value instanceof Date &amp;&amp; new Date().getTime() &lt; value.getTime();
+		},
+
+		/**
+		 * 値が現在時刻より過去かどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値がDate型でない場合はfalseを返します。
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @returns {boolean}
+		 */
+		past: function(value) {
+			return value == null || value instanceof Date &amp;&amp; value.getTime() &lt; new Date().getTime();
+		},
+
+		/**
+		 * 値の桁数の判定を行い、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 第2引数には整数部分の桁数の上限を設定します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 第3引数には小数部分の桁数の上限を設定します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値が数値型でない場合はfalseを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 整数部分、小数部分いずれの桁数も境界値を含めます。
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @param {integer} integer 整数桁数の上限値
+		 * @param {integer} fruction 小数桁数の上限値
+		 * @returns {boolean}
+		 */
+		digits: function(value, integer, fruction) {
+			if (value == null) {
+				return true;
+			}
+			var typeValid = (isNumberValue(value, true) || value instanceof Number)
+					&amp;&amp; !isNaN(value) &amp;&amp; value != Infinity &amp;&amp; value != -Infinity;
+			if (!typeValid) {
+				return false;
+			}
+
+			// 正の数で考える
+			var abs = value &lt; 0 ? -value : value;
+
+			if (integer != null) {
+				// 整数部分判定
+				if (abs >= Math.pow(10, integer)) {
+					return false;
+				}
+			}
+
+			if (fruction != null) {
+				// 小数部分判定
+				// 小数部分を出すのに絶対値を使って演算して求めると誤差が出る(例：1.1-1の結果が0.10000000000000009)
+				// そのため、文字列にして判定する
+				var str = '' + abs;
+				if (str.indexOf('+') !== -1) {
+					// 1.1e+50のような数の場合、小数部分はなし
+					return true;
+				}
+				var pointMinus = str.indexOf('-');
+				if (pointMinus !== -1) {
+					// 1.1e-50のような数の場合、-の後の数値とfructionを比較
+					return str.slice(pointMinus + 1) &lt;= fruction;
+				}
+				var pointIndex = str.indexOf('.');
+				if (pointIndex === -1) {
+					// 小数点が無い場合はvalid
+					return true;
+				}
+				// 小数部分の桁数がfruction以下の長さかどうか返す
+				return str.slice(pointIndex + 1).length &lt;= fruction;
+			}
+			// integerもfructionもどちらもnullならvalid
+			return true;
+		},
+
+		/**
+		 * 値が正規表現を満たすかどうか判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * 第2引数に正規表現オブジェクトを指定し、その正規表現を満たすかどうかの判定を行います。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値が文字列型でない場合はfalseを返します。
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @returns {boolean}
+		 */
+		pattern: function(value, regexp) {
+			return value == null || isStringValue(value) &amp;&amp; regexp.test(value);
+		},
+
+		/**
+		 * 値のサイズが範囲内であるかどうかを判定し、判定結果をtrueまたはfalseで返します
+		 * &lt;p>
+		 * サイズの判定対象となる値は配列、文字列、プレーンオブジェクトの何れかです。
+		 * 配列の場合は配列の長さ、文字列の場合は文字数、プレーンオブジェクトの場合はプロパティをサイズとして扱い、判定の対象となります。
+		 * &lt;/p>
+		 * &lt;p>
+		 * その他の型の値の場合はfalseを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 第2引数でサイズの下限値、第3引数でサイズの上限値を指定し、その範囲内のサイズであるかどうかを判定します。上限値、下限値ともに境界を含めます。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 値がnullまたはundefinedの場合はtrueを返します。
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @param {integer} min 下限値
+		 * @param {integer} max 上限値
+		 * @returns {boolean}
+		 */
+		size: function(value, min, max) {
+			min = min || 0;
+			max = max || Infinity;
+			if ($.isPlainObject(value)) {
+				// プレーンオブジェクトの場合プロパティの数をカウント
+				var valueSize = 0;
+				for ( var p in value) {
+					valueSize++;
+				}
+				return min &lt;= valueSize &amp;&amp; valueSize &lt;= max;
+			}
+			return value == null || (isStringValue(value) || isArray(value)) &amp;&amp; min &lt;= value.length
+					&amp;&amp; value.length &lt;= max;
+		}
+	};
+
+	function createValidator(type) {
+		if (type === 'form') {
+			return new FormValidator();
+		}
+		return new Validator();
+	}
+
+	/**
+	 * ルール定義の追加
+	 *
+	 * @memberOf h5.validation
+	 * @param {string} key
+	 * @param {Function} func
+	 * @param {string[]} [argNames] パラメータ名
+	 * @param {intenger} [priority] 優先度
+	 */
+	function defineRule(key, func, argNames, priority) {
+		validateRuleManager.addValidateRule(key, func, priority, argNames);
+	}
+
+	// デフォルトルールの追加
+	defineRule(DEFAULT_RULE_NAME_REQUIRE, function(value) {
+		// nullでないかつ、空文字でもないこと
+		return value != null &amp;&amp; value !== '';
+	});
+	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, func.customFunc, ['func']);
+	defineRule(DEFAULT_RULE_NAME_NUL, func.nul);
+	defineRule(DEFAULT_RULE_NAME_NOT_NULL, func.notNull);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, func.assertFalse);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, func.assertTrue);
+	defineRule(DEFAULT_RULE_NAME_MAX, func.max, ['max', 'inclusive']);
+	defineRule(DEFAULT_RULE_NAME_MIN, func.min, ['min', 'inclusive']);
+	defineRule(DEFAULT_RULE_NAME_FUTURE, func.future);
+	defineRule(DEFAULT_RULE_NAME_PAST, func.past);
+	defineRule(DEFAULT_RULE_NAME_DIGITS, func.digits, ['integer', 'fruction']);
+	defineRule(DEFAULT_RULE_NAME_PATTERN, func.pattern, ['regexp']);
+	defineRule(DEFAULT_RULE_NAME_SIZE, func.size, ['min', 'max']);
+
+	// =============================
+	// Expose to window
+	// =============================
+	/**
+	 * @namespace
+	 * @name validation
+	 * @memberOf h5
+	 */
+	h5.u.obj.expose('h5.validation', {
+		func: func,
+		defineRule: defineRule,
+		createValidator: createValidator
+	});
+})();</code></pre>
+        </article>
+    </section>
+
+
+
+
+	</div>
+
+	<br class="clear">
+
+	<footer>
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Nov 24 2015 19:15:25 GMT+0900 (JST)
+	</footer>
+</div>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

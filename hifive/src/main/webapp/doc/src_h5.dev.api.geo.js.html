@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: src/h5.dev.api.geo.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+
+    <script src="scripts/jquery.js"> </script>
+    <script src="scripts/extension.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+</head>
+
+<body>
+<div id="container">
+	<nav>
+		<div class="module-search-header">
+		   	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+			<div class="h5-searchBox">
+				<input type="text" placeholder="Search...">
+				<button class="clear">×</button>
+			</div>
+		</div>
+		<div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+		<div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+		<div class="module-list-wrapper hidden-mobile">
+		    <h3>Classes</h3><ul><li><a href="Binding.html">Binding</a></li><li><a href="CacheManager.html">CacheManager</a></li><li><a href="ConsoleLogTarget.html">ConsoleLogTarget</a></li><li><a href="Controller.html">Controller</a></li><li><a href="ControllerManager.html">ControllerManager</a></li><li><a href="DatabaseWrapper.html">DatabaseWrapper</a></li><li><a href="DataItem.html">DataItem</a></li><li><a href="DataModel.html">DataModel</a></li><li><a href="DataModelManager.html">DataModelManager</a></li><li><a href="Del.html">Del</a></li><li><a href="Dependency.html">Dependency</a></li><li><a href="FormValidator.html">FormValidator</a></li><li><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></li><li><a href="h5.ui.validaiton.MessageOutput.html">h5.ui.validaiton.MessageOutput</a></li><li><a href="h5.ui.validation.AllMessage.html">h5.ui.validation.AllMessage</a></li><li><a href="h5.ui.validation.ErrorBaloon.html">h5.ui.validation.ErrorBaloon</a></li><li><a href="h5.ui.validation.ErrorClassController.html">h5.ui.validation.ErrorClassController</a></li><li><a href="h5.ui.validation.ErrorMessage.html">h5.ui.validation.ErrorMessage</a></li><li><a href="Indicator.html">Indicator</a></li><li><a href="Insert.html">Insert</a></li><li><a href="JqXHRWrapper.html">JqXHRWrapper</a></li><li><a href="Log.html">Log</a></li><li><a href="Logic.html">Logic</a></li><li><a href="Mixin.html">Mixin</a></li><li><a href="ObservableArray.html">ObservableArray</a></li><li><a href="ObservableItem.html">ObservableItem</a></li><li><a href="Query.html">Query</a></li><li><a href="SceneContainerController.html">SceneContainerController</a></li><li><a href="Select.html">Select</a></li><li><a href="Sequence.html">Sequence</a></li><li><a href="Sql.html">Sql</a></li><li><a href="Statement.html">Statement</a></li><li><a href="TransactionalExecutor.html">TransactionalExecutor</a></li><li><a href="Update.html">Update</a></li><li><a href="ValidationResult.html">ValidationResult</a></li><li><a href="Validator.html">Validator</a></li><li><a href="View.html">View</a></li><li><a href="WatchPositionPromise.html">WatchPositionPromise</a></li><li><a href="WebSqlDatabase.html">WebSqlDatabase</a></li></ul><h3>Namespaces</h3><ul><li><a href="h5.html">h5</a></li><li><a href="h5.api.html">h5.api</a></li><li><a href="h5.api.geo.html">h5.api.geo</a></li><li><a href="h5.api.sqldb.html">h5.api.sqldb</a></li><li><a href="h5.api.storage.html">h5.api.storage</a></li><li><a href="h5.api.storage.local.html">h5.api.storage.local</a></li><li><a href="h5.api.storage.session.html">h5.api.storage.session</a></li><li><a href="h5.async.html">h5.async</a></li><li><a href="h5.core.html">h5.core</a></li><li><a href="h5.core.data.html">h5.core.data</a></li><li><a href="h5.core.interceptor.html">h5.core.interceptor</a></li><li><a href="h5.core.view.html">h5.core.view</a></li><li><a href="h5.dev.api.geo.html">h5.dev.api.geo</a></li><li><a href="h5.env.html">h5.env</a></li><li><a href="h5.env.ua.html">h5.env.ua</a></li><li><a href="h5.log.html">h5.log</a></li><li><a href="h5.mixin.html">h5.mixin</a></li><li><a href="h5.res.html">h5.res</a></li><li><a href="h5.scene.html">h5.scene</a></li><li><a href="h5.settings.html">h5.settings</a></li><li><a href="h5.u.html">h5.u</a></li><li><a href="h5.u.obj.html">h5.u.obj</a></li><li><a href="h5.u.str.html">h5.u.str</a></li><li><a href="h5.ui.html">h5.ui</a></li><li><a href="h5.ui.jqm.html">h5.ui.jqm</a></li><li><a href="h5.ui.jqm.manager.html">h5.ui.jqm.manager</a></li><li><a href="h5.validation.html">h5.validation</a></li><li><a href="h5.validation.func.html">h5.validation.func</a></li></ul><h3>Mixins</h3><ul><li><a href="EventDispatcher.html">EventDispatcher</a></li></ul>
+	    </div>
+	</nav>
+	<div id="main">
+	    <h1 class="page-title">Source: src/h5.dev.api.geo.js</h1>
+	    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Copyright (C) 2012-2014 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * hifive
+ */
+/* del begin */
+/* ------ h5.dev.api.geo ------ */
+(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =============================
+	// Production
+	// =============================
+
+	// =============================
+	// Development Only
+	// =============================
+
+
+	// =========================================================================
+	//
+	// Cache
+	//
+	// =========================================================================
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+
+	// =============================
+	// Variables
+	// =============================
+
+	/**
+	 * 元のh5.api.geo
+	 *
+	 * @private
+	 */
+	var originalAPI = {};
+
+	/**
+	 * _watchPositionで作られたdeferredオブジェクトの配列
+	 *
+	 * @private
+	 * @type deferred[]
+	 */
+	var _dfds = [];
+	/**
+	 * _watchPositionで作られたdeferredオブジェクトに割り当てるID
+	 *
+	 * @private
+	 * @type Number
+	 */
+	var _dfdID = 0;
+	/**
+	 * _watchPositionで使用するsetInterval()のタイマーID
+	 *
+	 * @private
+	 * @type Number
+	 */
+	var _timerID = null;
+	/**
+	 * _watchPositionがデバッグ用位置情報の何番目を見ているかを設定します。
+	 *
+	 * @private
+	 * @type Number
+	 */
+	var _watchPointer = 0;
+
+	// =============================
+	// Functions
+	// =============================
+	/**
+	 * 以下の構造の位置情報オブジェクトを生成します&lt;br>
+	 * &lt;p>
+	 * &lt;table border="1">
+	 * &lt;tr>
+	 * &lt;td>プロパティ名&lt;/td>
+	 * &lt;td>説明&lt;/td>
+	 * &lt;/tr>
+	 * &lt;tr>
+	 * &lt;td>latitude&lt;/td>
+	 * &lt;td>緯度&lt;/td>
+	 * &lt;/tr>
+	 * &lt;tr>
+	 * &lt;td>longitude&lt;/td>
+	 * &lt;td>経度&lt;/td>
+	 * &lt;/tr>
+	 * &lt;tr>
+	 * &lt;td>accuracy&lt;/td>
+	 * &lt;td>位置の誤差(m)&lt;/td>
+	 * &lt;/tr>
+	 * &lt;tr>
+	 * &lt;td>altitude&lt;/td>
+	 * &lt;td>高度(m)&lt;/td>
+	 * &lt;/tr>
+	 * &lt;tr>
+	 * &lt;td>altitudeAccuracy&lt;/td>
+	 * &lt;td>高度の誤差(m)&lt;/td>
+	 * &lt;/tr>
+	 * &lt;tr>
+	 * &lt;td>heading&lt;/td>
+	 * &lt;td>方角(0～360)(度)&lt;/td>
+	 * &lt;/tr>
+	 * &lt;tr>
+	 * &lt;td>speed&lt;/td>
+	 * &lt;td>速度 (m/s)&lt;/td>
+	 * &lt;/tr>
+	 * &lt;tr>
+	 * &lt;td>timestamp&lt;/td>
+	 * &lt;td>時刻&lt;/td>
+	 * &lt;/tr>
+	 * &lt;/table>
+	 *
+	 * @memberOf h5.dev.api.geo
+	 * @private
+	 * @params {Object} dummyPosition dummyPositionsに格納されたオブジェクト
+	 * @returns {Object} 位置情報オブジェクト
+	 * @type Object[]
+	 */
+	function createPosition(params) {
+		var param = params || {};
+		param.timestamp = param.timestamp || new Date().getTime();
+		var coords = param.coords ? param.coords : param;
+		param.coords = {
+			latitude: coords.latitude || 0,
+			longitude: coords.longitude || 0,
+			accuracy: coords.accuracy || 0,
+			altitude: coords.altitude || null,
+			altitudeAccuracy: coords.altitudeAccuracy || null,
+			heading: coords.heading || null,
+			speed: coords.speed || null
+		};
+		return param;
+	}
+
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+
+	// originalAPI に 元のgetCurrentPositionとwatchPositionをとっておく
+	originalAPI.getCurrentPosition = h5.api.geo.getCurrentPosition;
+	originalAPI.watchPosition = h5.api.geo.watchPosition;
+
+	/**
+	 * ※この関数はh5.dev.jsを読み込んだ場合のみ利用可能です。開発支援用機能のため、最終リリース物にh5.dev.jsやデバッグコードが混入しないよう十分ご注意ください。&lt;br>
+	 * dummyPosiitonsへ位置情報オブジェクトを格納して使用してください。位置情報はcreatePosition()で作成することができます。
+	 *
+	 * @memberOf h5.dev.api
+	 * @name geo
+	 * @namespace
+	 */
+	var h5GeolocationSupport = {
+		/**
+		 * 強制的にロケーションの取得に失敗させるかどうか
+		 *
+		 * @memberOf h5.dev.api.geo
+		 * @type Boolean
+		 */
+		forceError: false,
+		/**
+		 * _watchPositionの座標の送信間隔(ms)
+		 *
+		 * @memberOf h5.dev.api.geo
+		 * @type Number
+		 */
+		watchIntervalTime: 1000,
+		/**
+		 * デバッグ用位置情報
+		 * &lt;p>
+		 * 位置情報オブジェクトを格納する配列です。 以下のようなオブジェクトを格納してください。
+		 * &lt;/p>
+		 * &lt;table class="params" style="">&lt;thead>
+		 * &lt;tr>
+		 * &lt;th>Name&lt;/th>
+		 * &lt;th>Type&lt;/th>
+		 * &lt;th>Argument&lt;/th>
+		 * &lt;th class="last">Description&lt;/th>
+		 * &lt;/tr>
+		 * &lt;/thead>&lt;tbody>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>coords&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Object &lt;/td>
+		 * &lt;td class="attributes">&lt;/td>
+		 * &lt;td class="description last">
+		 * &lt;h6>Properties&lt;/h6>
+		 * &lt;table class="params">&lt;thead>
+		 * &lt;tr>
+		 * &lt;th>Name&lt;/th>
+		 * &lt;th>Type&lt;/th>
+		 * &lt;th>Argument&lt;/th>
+		 * &lt;th>Default&lt;/th>
+		 * &lt;th class="last">Description&lt;/th>
+		 * &lt;/tr>
+		 * &lt;/thead>&lt;tbody>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>latitude&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Number &lt;/td>
+		 * &lt;td class="attributes"> &amp;lt;optional&amp;gt;&lt;br>
+		 * &lt;/td>
+		 * &lt;td class="default"> 0 &lt;/td>
+		 * &lt;td class="description last">緯度&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>longitude&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Number &lt;/td>
+		 * &lt;td class="attributes"> &amp;lt;optional&amp;gt;&lt;br>
+		 * &lt;/td>
+		 * &lt;td class="default"> 0 &lt;/td>
+		 * &lt;td class="description last">経度&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>accuracy&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Number &lt;/td>
+		 * &lt;td class="attributes"> &amp;lt;optional&amp;gt;&lt;br>
+		 * &lt;/td>
+		 * &lt;td class="default"> 50 &lt;/td>
+		 * &lt;td class="description last">位置の誤差(m)&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>altitude&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Number &lt;/td>
+		 * &lt;td class="attributes"> &amp;lt;optional&amp;gt;&lt;br>
+		 * &lt;/td>
+		 * &lt;td class="default"> null &lt;/td>
+		 * &lt;td class="description last">高度(m)&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>altitudeAccuracy&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Number &lt;/td>
+		 * &lt;td class="attributes"> &amp;lt;optional&amp;gt;&lt;br>
+		 * &lt;/td>
+		 * &lt;td class="default"> null &lt;/td>
+		 * &lt;td class="description last">高度の誤差(m)&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>heading&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Number &lt;/td>
+		 * &lt;td class="attributes"> &amp;lt;optional&amp;gt;&lt;br>
+		 * &lt;/td>
+		 * &lt;td class="default"> null &lt;/td>
+		 * &lt;td class="description last">方角(0～360)(度)&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>speed&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Number &lt;/td>
+		 * &lt;td class="attributes"> &amp;lt;optional&amp;gt;&lt;br>
+		 * &lt;/td>
+		 * &lt;td class="default"> null &lt;/td>
+		 * &lt;td class="description last">速度 (m/s)&lt;/td>
+		 * &lt;/tr>
+		 * &lt;/tbody>&lt;/table>&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td class="name">&lt;code>timestamp&lt;/code>&lt;/td>
+		 * &lt;td class="type"> Number &lt;/td>
+		 * &lt;td class="attributes"> &amp;lt;optional&amp;gt;&lt;br>
+		 * &lt;/td>
+		 * &lt;td class="description last">タイムスタンプ。省略時は取得時のタイムスタンプが自動で格納されます。&lt;/td>
+		 * &lt;/tr>
+		 * &lt;/tbody>&lt;/table> &lt;br>
+		 * &lt;br>
+		 *
+		 * &lt;pre>
+		 * 	例１．
+		 * 	h5.api.geo.dummyPositions.push({
+		 * 		coords:{
+		 * 			latitude: 35.45019435393257,
+		 * 			longitude: 139.6305128879394,
+		 * 			accuracy: 50,
+		 * 			altitude: 100,
+		 * 			altitudeAccuracy: 100,
+		 * 			heading: 90,
+		 * 			speed: 9
+		 * 		}
+		 * 	timestamp: 1331106454545
+		 * 	})
+		 * &lt;/pre>
+		 *
+		 * &lt;p>
+		 * 省略したプロパティにはdefault値が入ります。timestampを省略すると、取得時に値が格納されます。
+		 * &lt;/p>
+		 *
+		 * &lt;pre>
+		 * 	例２．
+		 * 	h5.api.geo.dummyPositions.push({
+		 * 		coords: {
+		 * 			latitude: 35.45019435393257,
+		 * 			longitude: 139.6305128879394,
+		 * 		}
+		 * 	})
+		 * &lt;/pre>
+		 *
+		 * &lt;p>
+		 * coordsの中身だけを記述して格納することもできます。getPositionや_watchPositionでの取得時にcoordsプロパティに格納して返します。省略したプロパティにはdefault値が入ります。
+		 * timestampには取得時に値が格納されます。
+		 * &lt;/p>
+		 *
+		 * &lt;pre>
+		 * 	例３．
+		 * 	h5.api.geo.dummyPositions.push(
+		 * 		latitude: 35.45019435393257,
+		 * 		longitude: 139.6305128879394
+		 * 	})
+		 * &lt;/pre>
+		 *
+		 * &lt;p>
+		 * &lt;a href="http://www.htmlhifive.com/ja/recipe/geolocation/index.html">座標データ生成ツール&lt;/a>を使うと地図から緯度と経度を求められます。
+		 * &lt;/p>
+		 *
+		 * @memberOf h5.dev.api.geo
+		 * @type Object[]
+		 */
+		dummyPositions: []
+	};
+
+	/**
+	 * dummyPositionsの先頭の位置情報を返します。dummyPositionsがオブジェクトの場合はdummyPositionsを返します。
+	 * &lt;p>
+	 * このメソッドはh5.api.geo.getCurrentPosition()で呼びます。※ h5.dev.api.geo.getCurrentPosition()ではありません。
+	 * &lt;/p>
+	 * &lt;p>
+	 * dummyPositionsに値が設定されていない場合は元のh5.api.geoのメソッドを実行します。
+	 * &lt;/p>
+	 *
+	 * @memberOf h5.dev.api.geo
+	 * @function
+	 * @param {Object} [option] 設定情報
+	 * @param {Boolean} [option.enableHighAccuracy] 正確な位置を取得するか (ただし消費電力の増加や応答が遅延する)
+	 * @param {Number} [option.timeout] 位置情報を取得するまで待機する時間 (ミリ秒)
+	 * @param {Number} [option.maximumAge] キャッシュされた位置情報の有効期間を指定する (ミリ秒)
+	 * @returns {Promise} Promiseオブジェクト
+	 */
+	function getCurrentPosition(option) {
+		var dfd = h5.async.deferred();
+		if (h5.dev.api.geo.forceError) {
+			setTimeout(function() {
+				dfd.reject({
+					code: 'forceError'
+				});
+			}, 0);
+			return dfd.promise();
+		}
+
+		var positions = h5.dev.api.geo.dummyPositions;
+		if (!positions || positions.length === 0) {
+			return originalAPI.getCurrentPosition(option);
+		}
+		// dummyPositionsが配列でない場合も対応する
+		var positionsAry = wrapInArray(positions);
+
+		setTimeout(function() {
+			dfd.resolve(createPosition(positionsAry[0]));
+		}, 0);
+		return dfd.promise();
+	}
+
+	/**
+	 * dummyPositionsの緯度・緯度を順番に返します。 dummyPositionsの末尾まで到達すると、末尾の要素を返し続けます。
+	 * &lt;p>
+	 * このメソッドはh5.api.geo.watchPosition()で呼びます。※ h5.dev.api.geo.watchtPosition()ではありません。
+	 * &lt;/p>
+	 * &lt;p>
+	 * dummyPositionsに値が設定されていない場合は元のh5.api.geoのメソッドを実行します。
+	 * &lt;/p>
+	 *
+	 * @memberOf h5.dev.api.geo
+	 * @function
+	 * @name watchPosition
+	 * @param {Object} [option] 設定情報
+	 * @param {Boolean} [option.enableHighAccuracy] 正確な位置を取得するか (ただし消費電力の増加や応答が遅延する)
+	 * @param {Number} [option.timeout] 位置情報を取得するまで待機する時間 (ミリ秒)
+	 * @param {Number} [option.maximumAge] キャッシュされた位置情報の有効期間を指定する (ミリ秒)
+	 * @returns {WatchPositionPromise} WatchPositionPromiseオブジェクト
+	 */
+	function watchPosition(option) {
+		var dfd = h5.async.deferred();
+		if (h5.dev.api.geo.forceError) {
+			setTimeout(function() {
+				dfd.reject({
+					code: 'forceError'
+				});
+			}, 0);
+			return dfd.promise();
+		}
+		// dummyPositionsが配列でない場合も対応する
+		var dummyPos = wrapInArray(h5.dev.api.geo.dummyPositions);
+		if (dummyPos.length === 0) {
+			return originalAPI.watchPosition(option);
+		}
+
+		var watchID = _dfdID++;
+		// WatchPositionPromiseクラス
+		// _watchPositionはこのクラスをプロミス化して返す。
+		var WatchPositionPromise = function() {
+		// コンストラクタ
+		};
+		// promiseオブジェクトにunwatchメソッドを付加
+		WatchPositionPromise.prototype = {
+			// unwatchを呼び出したdeferredを_dfds[]から削除
+			unwatch: function() {
+				_dfds[watchID] &amp;&amp; _dfds[watchID].resolve();
+				delete _dfds[watchID];
+				setTimeout(function() {
+					// deferredオブジェクトがすべてなくなったらタイマーの停止
+					// dummyPositionsの見ている位置を0に戻す。
+					if ($.isEmptyObject(_dfds)) {
+						clearInterval(_timerID);
+						_timerID = null;
+						_watchPointer = 0;
+					}
+				}, 0);
+			}
+		};
+
+		setTimeout(function() {
+			_dfds[watchID] = dfd;
+			if (_timerID === null) {
+				var intervalFunc = function() {
+					var pos;
+					if (_watchPointer >= dummyPos.length) {
+						pos = dummyPos[dummyPos.length - 1];
+					} else {
+						pos = dummyPos[_watchPointer++];
+					}
+					for ( var id in _dfds) {
+						_dfds[id].notify(createPosition(pos));
+					}
+				};
+				intervalFunc();
+				_timerID = setInterval(intervalFunc, h5.dev.api.geo.watchIntervalTime);
+			}
+		}, 0);
+		return dfd.promise(new WatchPositionPromise(watchID));
+	}
+
+	// =============================
+	// Expose to window
+	// =============================
+
+	// getCurrentPosition と watchPosition を上書きする。
+	$.extend(h5.api.geo, {
+		getCurrentPosition: getCurrentPosition,
+		watchPosition: watchPosition
+	});
+	h5.u.obj.expose('h5.dev.api.geo', h5GeolocationSupport);
+})();
+/* del end */
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+	</div>
+
+	<br class="clear">
+
+	<footer>
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Nov 24 2015 19:15:25 GMT+0900 (JST)
+	</footer>
+</div>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

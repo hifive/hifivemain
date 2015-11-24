@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: src/h5.u.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+
+    <script src="scripts/jquery.js"> </script>
+    <script src="scripts/extension.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+</head>
+
+<body>
+<div id="container">
+	<nav>
+		<div class="module-search-header">
+		   	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+			<div class="h5-searchBox">
+				<input type="text" placeholder="Search...">
+				<button class="clear">×</button>
+			</div>
+		</div>
+		<div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+		<div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+		<div class="module-list-wrapper hidden-mobile">
+		    <h3>Classes</h3><ul><li><a href="Binding.html">Binding</a></li><li><a href="CacheManager.html">CacheManager</a></li><li><a href="ConsoleLogTarget.html">ConsoleLogTarget</a></li><li><a href="Controller.html">Controller</a></li><li><a href="ControllerManager.html">ControllerManager</a></li><li><a href="DatabaseWrapper.html">DatabaseWrapper</a></li><li><a href="DataItem.html">DataItem</a></li><li><a href="DataModel.html">DataModel</a></li><li><a href="DataModelManager.html">DataModelManager</a></li><li><a href="Del.html">Del</a></li><li><a href="Dependency.html">Dependency</a></li><li><a href="FormValidator.html">FormValidator</a></li><li><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></li><li><a href="h5.ui.validaiton.MessageOutput.html">h5.ui.validaiton.MessageOutput</a></li><li><a href="h5.ui.validation.AllMessage.html">h5.ui.validation.AllMessage</a></li><li><a href="h5.ui.validation.ErrorBaloon.html">h5.ui.validation.ErrorBaloon</a></li><li><a href="h5.ui.validation.ErrorClassController.html">h5.ui.validation.ErrorClassController</a></li><li><a href="h5.ui.validation.ErrorMessage.html">h5.ui.validation.ErrorMessage</a></li><li><a href="Indicator.html">Indicator</a></li><li><a href="Insert.html">Insert</a></li><li><a href="JqXHRWrapper.html">JqXHRWrapper</a></li><li><a href="Log.html">Log</a></li><li><a href="Logic.html">Logic</a></li><li><a href="Mixin.html">Mixin</a></li><li><a href="ObservableArray.html">ObservableArray</a></li><li><a href="ObservableItem.html">ObservableItem</a></li><li><a href="Query.html">Query</a></li><li><a href="SceneContainerController.html">SceneContainerController</a></li><li><a href="Select.html">Select</a></li><li><a href="Sequence.html">Sequence</a></li><li><a href="Sql.html">Sql</a></li><li><a href="Statement.html">Statement</a></li><li><a href="TransactionalExecutor.html">TransactionalExecutor</a></li><li><a href="Update.html">Update</a></li><li><a href="ValidationResult.html">ValidationResult</a></li><li><a href="Validator.html">Validator</a></li><li><a href="View.html">View</a></li><li><a href="WatchPositionPromise.html">WatchPositionPromise</a></li><li><a href="WebSqlDatabase.html">WebSqlDatabase</a></li></ul><h3>Namespaces</h3><ul><li><a href="h5.html">h5</a></li><li><a href="h5.api.html">h5.api</a></li><li><a href="h5.api.geo.html">h5.api.geo</a></li><li><a href="h5.api.sqldb.html">h5.api.sqldb</a></li><li><a href="h5.api.storage.html">h5.api.storage</a></li><li><a href="h5.api.storage.local.html">h5.api.storage.local</a></li><li><a href="h5.api.storage.session.html">h5.api.storage.session</a></li><li><a href="h5.async.html">h5.async</a></li><li><a href="h5.core.html">h5.core</a></li><li><a href="h5.core.data.html">h5.core.data</a></li><li><a href="h5.core.interceptor.html">h5.core.interceptor</a></li><li><a href="h5.core.view.html">h5.core.view</a></li><li><a href="h5.dev.api.geo.html">h5.dev.api.geo</a></li><li><a href="h5.env.html">h5.env</a></li><li><a href="h5.env.ua.html">h5.env.ua</a></li><li><a href="h5.log.html">h5.log</a></li><li><a href="h5.mixin.html">h5.mixin</a></li><li><a href="h5.res.html">h5.res</a></li><li><a href="h5.scene.html">h5.scene</a></li><li><a href="h5.settings.html">h5.settings</a></li><li><a href="h5.u.html">h5.u</a></li><li><a href="h5.u.obj.html">h5.u.obj</a></li><li><a href="h5.u.str.html">h5.u.str</a></li><li><a href="h5.ui.html">h5.ui</a></li><li><a href="h5.ui.jqm.html">h5.ui.jqm</a></li><li><a href="h5.ui.jqm.manager.html">h5.ui.jqm.manager</a></li><li><a href="h5.validation.html">h5.validation</a></li><li><a href="h5.validation.func.html">h5.validation.func</a></li></ul><h3>Mixins</h3><ul><li><a href="EventDispatcher.html">EventDispatcher</a></li></ul>
+	    </div>
+	</nav>
+	<div id="main">
+	    <h1 class="page-title">Source: src/h5.u.js</h1>
+	    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Copyright (C) 2012-2014 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * hifive
+ */
+
+/* ------ h5.u ------ */
+(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =============================
+	// Production
+	// =============================
+
+	/**
+	 * undefinedのタイプ
+	 */
+	var TYPE_OF_UNDEFINED = 'undefined';
+
+	/**
+	 * シリアライザのバージョン
+	 */
+	var CURRENT_SEREALIZER_VERSION = '2';
+
+	// エラーコード
+	/**
+	 * ns()、getByPathで引数の名前空間名にstring以外が渡されたときに発生するエラー
+	 */
+	var ERR_CODE_NAMESPACE_INVALID = 11000;
+
+	/**
+	 * expose()で既に存在する名前空間が指定されたときに発生するエラー
+	 */
+	var ERR_CODE_NAMESPACE_EXIST = 11001;
+
+	/**
+	 * serialize()に関数オブジェクトが渡されたときに発生するエラー
+	 */
+	var ERR_CODE_SERIALIZE_FUNCTION = 11002;
+
+	/**
+	 * 現行のバージョンと違うバージョンでserialize()された文字列をdeserialize()しようとしたときに発生するエラー
+	 */
+	var ERR_CODE_SERIALIZE_VERSION = 11003;
+
+	/**
+	 * deserialize()で型情報の判定に失敗したときに発生するエラー
+	 */
+	var ERR_CODE_DESERIALIZE_TYPE = 11004;
+
+	/**
+	 * serialize()に渡されたオブジェクト/配列が循環参照を持つときに発生するエラー
+	 */
+	var ERR_CODE_CIRCULAR_REFERENCE = 11005;
+
+	/**
+	 * deserialize()で値が不正でデシリアライズできない時に発生するエラー
+	 */
+	var ERR_CODE_DESERIALIZE_VALUE = 11006;
+
+	/**
+	 * loadScript()に渡されたパスが不正(文字列以外、空文字、空白文字)である時に発生するエラー
+	 */
+	var ERR_CODE_INVALID_SCRIPT_PATH = 11007;
+
+	/**
+	 * loadScript()に渡されたオプションが不正(プレーンオブジェクト、null、undefined)である時に発生するエラー
+	 */
+	var ERR_CODE_INVALID_OPTION = 11008;
+
+	/**
+	 * deserialize()で引数に文字列でないものを渡されたときのエラー
+	 */
+	var ERR_CODE_DESERIALIZE_ARGUMENT = 11009;
+
+	/**
+	 * loadScript() 読み込みに失敗した場合に発生するエラー
+	 */
+	var ERR_CODE_SCRIPT_FILE_LOAD_FAILD = 11010;
+
+	// =============================
+	// Development Only
+	// =============================
+
+	/* del begin */
+	/**
+	 * 各エラーコードに対応するメッセージ
+	 */
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_NAMESPACE_INVALID] = '{0} 名前空間の指定が不正です。名前空間として有効な文字列を指定してください。';
+	errMsgMap[ERR_CODE_NAMESPACE_EXIST] = '名前空間"{0}"には、プロパティ"{1}"が既に存在します。';
+	errMsgMap[ERR_CODE_SERIALIZE_FUNCTION] = 'Function型のオブジェクトは変換できません。';
+	errMsgMap[ERR_CODE_SERIALIZE_VERSION] = 'シリアライザのバージョンが違います。シリアライズされたバージョン：{0} 現行のバージョン：{1}';
+	errMsgMap[ERR_CODE_DESERIALIZE_TYPE] = '型指定子が不正です。';
+	errMsgMap[ERR_CODE_CIRCULAR_REFERENCE] = '循環参照が含まれています。';
+	errMsgMap[ERR_CODE_DESERIALIZE_VALUE] = '不正な値が含まれるため、デシリアライズできませんでした。';
+	errMsgMap[ERR_CODE_INVALID_SCRIPT_PATH] = 'スクリプトのパスが不正です。空文字以外の文字列、またはその配列を指定して下さい。';
+	errMsgMap[ERR_CODE_INVALID_OPTION] = '{0} オプションの指定が不正です。プレーンオブジェクトで指定してください。';
+	errMsgMap[ERR_CODE_DESERIALIZE_ARGUMENT] = 'deserialize() 引数の値が不正です。引数には文字列を指定してください。';
+	errMsgMap[ERR_CODE_SCRIPT_FILE_LOAD_FAILD] = 'スクリプトファイルの読み込みに失敗しました。URL:{0}';
+
+	// メッセージの登録
+	addFwErrorCodeMap(errMsgMap);
+	/* del end */
+
+
+	// =========================================================================
+	//
+	// Cache
+	//
+	// =========================================================================
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+	// =============================
+	// Variables
+	// =============================
+	/**
+	 * loadScript()によって追加されたjsファイルの絶対パスを保持するオブジェクト
+	 *
+	 * @private
+	 */
+	var addedJS = {};
+
+	/**
+	 * HTMLのエスケープルール
+	 *
+	 * @private
+	 */
+	var htmlEscapeRules = {
+		'&amp;': '&amp;amp;',
+		'"': '&amp;quot;',
+		'&lt;': '&amp;lt;',
+		'>': '&amp;gt;',
+		"'": '&amp;#39;'
+	};
+
+	/**
+	 * SCRIPTにonloadがあるかどうか
+	 *
+	 * @private
+	 */
+	var existScriptOnload = document.createElement('script').onload !== undefined;
+
+	/**
+	 * RegExp#toStringで改行文字がエスケープされるかどうか。 IEはtrue
+	 *
+	 * @private
+	 */
+	var regToStringEscapeNewLine = new RegExp('\r\n').toString().indexOf('\r\n') === -1;
+
+	// =============================
+	// Functions
+	// =============================
+
+	/**
+	 * 型情報の文字列をコードに変換します。
+	 *
+	 * @private
+	 * @returns {String} 型を表すコード（１字）
+	 */
+	function typeToCode(typeStr) {
+		switch (typeStr) {
+		case 'string':
+			return 's';
+		case 'number':
+			return 'n';
+		case 'boolean':
+			return 'b';
+		case 'String':
+			return 'S';
+		case 'Number':
+			return 'N';
+		case 'Boolean':
+			return 'B';
+		case 'infinity':
+			return 'i';
+		case '-infinity':
+			return 'I';
+		case 'nan':
+			return 'x';
+		case 'date':
+			return 'd';
+		case 'regexp':
+			return 'r';
+		case 'array':
+			return 'a';
+		case 'object':
+			return 'o';
+		case 'null':
+			return 'l';
+		case TYPE_OF_UNDEFINED:
+			return 'u';
+		case 'undefElem':
+			return '_';
+		case 'objElem':
+			return '@';
+		}
+	}
+
+	/**
+	 * 文字列中の\(エスケープ文字)とその他特殊文字をエスケープ
+	 * &lt;p>
+	 * \\, \b, \f, \n, \r, \t をエスケープする
+	 * &lt;/p>
+	 * &lt;p>
+	 * http://json.org/json-ja.html に載っているうちの \/ と \" 以外。
+	 * &lt;/p>
+	 * &lt;p>
+	 * \/はJSON.stringifyでもエスケープされず、$.parseJSONでは\/も\\/も\/に復元されるので、エスケープしなくてもしてもどちらでもよい。
+	 * \"はserialize文字列組立時にエスケープするのでここではエスケープしない。
+	 * &lt;/p>
+	 *
+	 * @private
+	 * @param {String} str
+	 * @param {Boolean} nlEscaped 改行コードがすでにエスケープ済みかどうか。正規表現をtoString()した文字列をエスケープする場合に使用する。
+	 *            正規表現をtoString()した場合に改行がエスケープされるブラウザとそうでないブラウザがあるため、改行がescape済みかどうかを引数で取り、
+	 *            trueが指定されていた場合は改行以外をエスケープする。
+	 * @returns {String} エスケープ後の文字列
+	 */
+	function escape(str, nlEscaped) {
+		if (isString(str)) {
+			var ret = str;
+
+			if (nlEscaped) {
+				// 改行コードがすでにエスケープ済みの文字列なら、一旦通常の改行コードに戻して、再度エスケープ
+				// IEの場合、RegExp#toString()が改行コードをエスケープ済みの文字列を返すため。
+				ret = ret.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+			}
+			// \b は、バックスペース。正規表現で\bを使うと単語境界を表すが、[\b]と書くとバックスペースとして扱える
+			ret = ret.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(
+					/[\b]/g, '\\b').replace(/\f/g, '\\f').replace(/\t/g, '\\t');
+
+			return ret;
+		}
+		if (str instanceof String) {
+			return new String(escape(str.toString()));
+		}
+		return str;
+	}
+
+	/**
+	 * エスケープされた改行とタブと\(エスケープ文字)をアンエスケープ
+	 *
+	 * @private
+	 * @param {String} str
+	 * @param {String} version デシリアライズ対象の文字列がシリアライズされた時のバージョン。'1'ならunescapeしない。
+	 * @returns {String} エスケープ後の文字列
+	 */
+	function unescape(str, version) {
+		if (version === '1') {
+			return str;
+		}
+		if (isString(str)) {
+			// \に変換する\\は一度'\-'にしてから、改行とタブを元に戻す。
+			// '\-'を元に戻す。
+			return str.replace(/\\\\/g, '\\-').replace(/\\b/g, '\b').replace(/\\f/g, '\f').replace(
+					/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t').replace(/\\-/g, '\\');
+		}
+		if (str instanceof String) {
+			return new String(unescape(str.toString()));
+		}
+		return str;
+	}
+
+	/**
+	 * 文字列中のダブルコーテーションをエスケープする
+	 *
+	 * @private
+	 * @param {String} str
+	 * @returns {String} エスケープ後の文字列
+	 */
+	function escapeDoubleQuotation(str) {
+		return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+	}
+
+	/**
+	 * 指定されたスクリプトファイルをロードして、スクリプト文字列を取得します。(loadScriptメソッド用)
+	 * &lt;p>
+	 * dataType:scriptを指定した場合のデフォルトの挙動は、スクリプトファイルの読み込み完了後に$.globalEval()で評価を行うため、
+	 * convertersを上書きしています。
+	 *
+	 * @private
+	 * @param {String} url 読み込み対象のスクリプトパス
+	 * @param {Boolean} async 非同期でロードを行うか (true:非同期 / false:同期)
+	 * @param {Boolean} cache キャッシュされた通信結果が存在する場合、その通信結果を使用するか (true:使用する/false:使用しない)
+	 */
+	function getScriptString(url, async, cache) {
+		var df = h5.async.deferred();
+		// 複数のパラメータを配列でまとめて指定できるため、コールバックの実行をresolveWith/rejectWith/notifyWithで行っている
+		h5.ajax({
+			url: url,
+			async: async,
+			cache: cache,
+			dataType: 'script',
+			converters: {
+				'text script': function(text) {
+					return text;
+				}
+			}
+		}).done(function() {
+			var args = argsToArray(arguments);
+			args.push(this.url);
+
+			df.notifyWith(df, args);
+			df.resolveWith(df, args);
+		}).fail(function() {
+			df.rejectWith(df, argsToArray(arguments));
+		});
+
+		return df.promise();
+	}
+
+
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+
+	/**
+	 * ドット区切りで名前空間オブジェクトを生成します。
+	 * （h5.u.obj.ns('sample.namespace')と呼ぶと、window.sample.namespaceとオブジェクトを生成します。）
+	 * すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外、または、識別子として不適切な文字列が渡された場合はエラーとします。
+	 *
+	 * @param {String} namespace 名前空間
+	 * @memberOf h5.u.obj
+	 * @returns {Object} 作成した名前空間オブジェクト
+	 */
+	function ns(namespace) {
+		if (!isString(namespace)) {
+			// 文字列でないならエラー
+			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
+		}
+
+		var nsArray = namespace.split('.');
+		var len = nsArray.length;
+
+		for (var i = 0; i &lt; len; i++) {
+			if (!isValidNamespaceIdentifier(nsArray[i])) {
+				// 名前空間として不正な文字列ならエラー
+				throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.ns()');
+			}
+		}
+
+		var parentObj = window;
+		for (var i = 0; i &lt; len; i++) {
+			var name = nsArray[i];
+			if (typeof parentObj[name] === TYPE_OF_UNDEFINED) {
+				parentObj[name] = {};
+			}
+			parentObj = parentObj[name];
+		}
+
+		// ループが終了しているので、parentObjは一番末尾のオブジェクトを指している
+		return parentObj;
+	}
+
+	/**
+	 * 指定された名前空間に、オブジェクトの各プロパティをそれぞれ対応するキー名で公開（グローバルからたどれる状態に）します。
+	 * &lt;p>
+	 * &lt;ul>
+	 * &lt;li>指定された名前空間が既に存在する場合は、その名前空間に対してプロパティを追加します。&lt;/li>
+	 * &lt;li>指定された名前空間にプロパティが存在する場合は、『上書きは行われず』例外が発生します。。&lt;/li>
+	 * &lt;/ul>
+	 * 実行例:
+	 *
+	 * &lt;pre>
+	 * expose('sample.namespace', {
+	 * 	funcA: function() {
+	 * 		return 'test';
+	 * 	},
+	 * 	value1: 10
+	 * });
+	 * &lt;/pre>
+	 *
+	 * 実行結果:&amp;nbsp;(window.は省略可)&lt;br>
+	 * alert(window.sample.namespace.funcA) -&amp;gt; "test"と表示。&lt;br>
+	 * alert(window.sample.namespace.value1) -&amp;gt; 10と表示。
+	 *
+	 * @param {String} namespace 名前空間
+	 * @param {Object} obj グローバルに公開したいプロパティをもつオブジェクト
+	 * @memberOf h5.u.obj
+	 */
+	function expose(namespace, obj) {
+		var nsObj = ns(namespace);
+		for ( var prop in obj) {
+			if (obj.hasOwnProperty(prop)) {
+				if (nsObj[prop] !== undefined) {
+					throwFwError(ERR_CODE_NAMESPACE_EXIST, [namespace, prop]);
+				}
+				nsObj[prop] = obj[prop];
+			}
+		}
+	}
+
+	/**
+	 * 指定されたスクリプトをロードします。
+	 *
+	 * @param {String|String[]} path ソースパス
+	 * @param {Object} [opt] オプション
+	 * @param {Boolean} [opt.async] 非同期で読み込むかどうかを指定します。デフォルトはtrue(非同期)です。&lt;br>
+	 *            trueの場合、戻り値としてPromiseオブジェクトを返します。&lt;br>
+	 *            falseを指定すると同期的に読み込みます（loadScript関数からリターンしたタイミングで、スクリプトは読み込み済みになります）。&lt;br>
+	 *            falseの場合、戻り値はありません。&lt;br>
+	 *            なお、同期読み込みにすると場合によってはブラウザが固まる等の問題が発生する場合がありますので注意してください。
+	 * @param {Boolean} [opt.force] 既に読み込み済みのスクリプトを再度読み込むかどうかを指定します。&lt;br>
+	 *            trueの場合、サーバーから最新のスクリプトファイルを取得します。デフォルトはfalse(読み込まない)です。
+	 * @param {Boolean} [opt.parallel] 非同期で読み込む場合にパラレルに読み込むかどうかを指定します。&lt;br>
+	 *            trueの場合、指定した順番を考慮せずに読み込みます。デフォルトはfalse(シーケンシャルに読み込む)です。&lt;br>
+	 *            また、このオプションはasyncオプションがtrue(非同期)のときのみ有効です。
+	 * @param {Boolean} [opt.atomic] ファイルの読み込みが全て正常に完了した時点でスクリプトを評価します。デフォルトはfalse(逐次読み込み)です。&lt;br>
+	 *            読み込みに失敗したファイルが1つ以上存在する場合、指定した全てのスクリプトがロードされません。
+	 * @returns {Any} asyncオプションがtrueの場合はPromiseオブジェクトを、falseの場合は何も返しません。
+	 * @name loadScript
+	 * @function
+	 * @memberOf h5.u
+	 */
+	function loadScript(path, opt) {
+		var getDeferred = h5.async.deferred;
+		var resources = wrapInArray(path);
+
+		if (!resources || resources.length === 0) {
+			throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
+		}
+
+		for (var i = 0, l = resources.length; i &lt; l; i++) {
+			var path = resources[i];
+			if (!isString(path) || !$.trim(path)) {
+				throwFwError(ERR_CODE_INVALID_SCRIPT_PATH);
+			}
+		}
+
+		if (opt != null &amp;&amp; !$.isPlainObject(opt)) {
+			throwFwError(ERR_CODE_INVALID_OPTION, 'h5.u.loadScript()');
+		}
+
+		// asyncオプションはデフォルトtrue(非同期)なので、falseが明示的に指定された場合のみfalse(同期)とする
+		var async = opt &amp;&amp; opt.async === false ? false : true;
+		var force = !!(opt &amp;&amp; opt.force === true);
+		var parallel = !!(opt &amp;&amp; opt.parallel === true);
+		var atomic = !!(opt &amp;&amp; opt.atomic === true);
+		// forceオプションがtrue(ロード済みのJSファイルを再度読み込む)の場合、サーバから最新のファイルを取得する
+		var cache = !force;
+
+		var retDf = async ? getDeferred() : null;
+		var retDfFailCallback = async ? function(url) {
+			retDf.reject(createRejectReason(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]));
+		} : null;
+		var asyncFunc = async ? function() {
+			var df = getDeferred();
+			setTimeout(function() {
+				df.resolve([]);
+			}, 0);
+
+			return df.promise();
+		} : null;
+		var promises = parallel ? [] : null;
+		var scriptData = [];
+		var loadedUrl = {};
+
+		if (async) {
+			// atomicオプションが無効でかつscript.onloadがあるブラウザ(IE6,7,8以外のブラウザ)の場合、SCRIPTタグでスクリプトを動的に読み込む
+			// (IE9以降の場合、DocumentModeがQuirksおよび6～8の場合はonloadはundefinedになる)
+			if (!atomic &amp;&amp; existScriptOnload) {
+				var $head = $('head');
+				var scriptLoad = function(url) {
+					var scriptDfd = getDeferred();
+					var script = document.createElement('script');
+
+					script.onload = function() {
+						script.onload = null;
+						addedJS[url] = url;
+						scriptDfd.resolve();
+					};
+					script.onerror = function() {
+						script.onerror = null;
+						scriptDfd.reject(url);
+					};
+
+					script.type = 'text/javascript';
+					// cacheがfalse(最新のJSファイルを取得する)の場合、URLの末尾にパラメータ(+new Date()で、getTime()の値)を付与して常に最新のJSファイルを取得する
+					// URLにもともとパラメータが付いていれば、パラメータを追加する。
+					script.src = cache ? url : url + ((url.indexOf('?') > -1) ? '&amp;_' : '?_')
+							+ (+new Date());
+					$head[0].appendChild(script);
+
+					return scriptDfd.promise();
+				};
+
+				if (parallel) {
+					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+					promises.push(asyncFunc());
+
+					$.each(resources, function() {
+						var url = toAbsoluteUrl(this.toString());
+
+						if (!force &amp;&amp; url in addedJS) {
+							return true;
+						}
+
+						promises.push(scriptLoad(url));
+					});
+
+					waitForPromises(promises, function() {
+						retDf.resolve();
+					}, retDfFailCallback);
+				} else {
+					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
+
+					$.each(resources, function() {
+						var url = toAbsoluteUrl(this.toString());
+
+						seq = thenCompat(seq, function() {
+							if (!force &amp;&amp; url in addedJS) {
+								return;
+							}
+							return scriptLoad(url);
+						}, retDfFailCallback);
+					});
+
+					thenCompat(seq, function() {
+						retDf.resolve();
+					}, retDfFailCallback);
+				}
+			}
+			// IE6,7,8の場合、SCRIPTタグのonerrorイベントが発生しないため、読み込みが成功または失敗したか判定できない。
+			// よってatomicな読み込みができないため、Ajaxでスクリプトを読み込む
+			else {
+				if (parallel) {
+					var loadedScripts = [];
+
+					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+					promises.push(asyncFunc());
+					loadedScripts.push(null);
+
+					$.each(resources, function() {
+						var url = toAbsoluteUrl(this.toString());
+
+						if (!force &amp;&amp; (url in addedJS || url in loadedUrl)) {
+							return true;
+						}
+
+						promises.push(getScriptString(url, async, cache));
+						atomic ? loadedUrl[url] = url : loadedScripts.push(null);
+					});
+
+					var doneCallback = null;
+					var progressCallback = null;
+
+					if (atomic) {
+						doneCallback = function() {
+							$.each(argsToArray(arguments), function(i, e) {
+								$.globalEval(e[0]); // e[0] = responseText
+							});
+
+							$.extend(addedJS, loadedUrl);
+							retDf.resolve();
+						};
+						progressCallback = $.noop;
+					} else {
+						doneCallback = function() {
+							retDf.resolve();
+						};
+						progressCallback = function() {
+							var results = argsToArray(arguments);
+
+							for (var i = 0; i &lt; loadedScripts.length; i++) {
+								var result = results[i];
+
+								if (!result) {
+									continue;
+								}
+
+								var url = results[i][3]; // results[i][3] = url
+								if (loadedScripts[i] === url) {
+									continue;
+								}
+
+								$.globalEval(results[i][0]); // results[i][0] = responseText
+								loadedScripts.splice(i, 1, url);
+							}
+						};
+					}
+
+					h5.async.when(promises).done(doneCallback).fail(retDfFailCallback).progress(
+							progressCallback);
+				} else {
+					// 必ず非同期として処理されるようsetTimeout()を処理して強制的に非同期にする
+					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
+
+					$.each(resources, function() {
+						var url = toAbsoluteUrl(this.toString());
+
+						seq = thenCompat(seq, function() {
+							var df = getDeferred();
+
+							if (!force &amp;&amp; (url in addedJS || url in loadedUrl)) {
+								df.resolve();
+							} else {
+								getScriptString(url, async, cache).done(
+										function(text, status, xhr) {
+											if (atomic) {
+												scriptData.push(text);
+												loadedUrl[url] = url;
+											} else {
+												$.globalEval(text);
+												addedJS[url] = url;
+											}
+
+											df.resolve();
+										}).fail(function() {
+									df.reject(this.url);
+								});
+							}
+
+							return df.promise();
+						}, retDfFailCallback);
+					});
+
+					thenCompat(seq, function() {
+						if (atomic) {
+							$.each(scriptData, function(i, e) {
+								$.globalEval(e);
+							});
+
+							$.extend(addedJS, loadedUrl);
+						}
+
+						retDf.resolve();
+					}, retDfFailCallback);
+				}
+			}
+
+			return retDf.promise();
+		} else {
+			$.each(resources, function() {
+				var url = toAbsoluteUrl(this.toString());
+
+				if (!force &amp;&amp; (url in addedJS || url in loadedUrl)) {
+					return true;
+				}
+
+				getScriptString(url, async, cache).done(function(text, status, xhr) {
+					if (atomic) {
+						scriptData.push(text);
+						loadedUrl[url] = url;
+					} else {
+						$.globalEval(text);
+						addedJS[url] = url;
+					}
+
+				}).fail(function() {
+					throwFwError(ERR_CODE_SCRIPT_FILE_LOAD_FAILD, [url]);
+				});
+			});
+
+			if (atomic) {
+				// 読み込みに成功した全てのスクリプトを評価する
+				$.each(scriptData, function(i, e) {
+					$.globalEval(e);
+				});
+				$.extend(addedJS, loadedUrl);
+			}
+			// 同期ロードの場合は何もreturnしない
+		}
+	}
+
+	/**
+	 * 文字列のプレフィックスが指定したものかどうかを返します。
+	 *
+	 * @param {String} str 文字列
+	 * @param {String} prefix プレフィックス
+	 * @returns {Boolean} 文字列のプレフィックスが指定したものかどうか
+	 * @name startsWith
+	 * @function
+	 * @memberOf h5.u.str
+	 */
+	function startsWith(str, prefix) {
+		return str.lastIndexOf(prefix, 0) === 0;
+	}
+
+	/**
+	 * 文字列のサフィックスが指定したものかどうかを返します。
+	 *
+	 * @param {String} str 文字列
+	 * @param {String} suffix サフィックス
+	 * @returns {Boolean} 文字列のサフィックスが指定したものかどうか
+	 * @name endsWith
+	 * @function
+	 * @memberOf h5.u.str
+	 */
+	function endsWith(str, suffix) {
+		var sub = str.length - suffix.length;
+		return (sub >= 0) &amp;&amp; (str.lastIndexOf(suffix) === sub);
+	}
+
+	/**
+	 * 第一引数の文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第2引数以降に指定されたパラメータに置換します。
+	 * &lt;p>
+	 * また、{0.name}のように記述すると第2引数のnameプロパティの値で置換を行います。"0."は引数の何番目かを指し、第2引数を0としてそれ以降の引数のプロパティの値を採ることもできます。
+	 * &lt;/p>
+	 * &lt;p>
+	 * "0."は省略して単に{name}のように記述することもできます。また、{0.birthday.year}のように入れ子になっているプロパティを辿ることもできます。
+	 * &lt;/p>
+	 * &lt;p>
+	 * 例：
+	 *
+	 * &lt;pre class="sh_javascript">&lt;code>
+	 * var myValue = 10;
+	 * h5.u.str.format('{0} is {1}', 'myValue', myValue);
+	 * &lt;/code>&lt;/pre>
+	 *
+	 * 実行結果: myValue is 10
+	 * &lt;/p>
+	 * &lt;p>
+	 * 例：
+	 *
+	 * &lt;pre class="sh_javascript">&lt;code>
+	 * h5.u.str.format('{name} is at {address}', {
+	 * 	name: 'Taro',
+	 * 	address: 'Yokohama'
+	 * });
+	 * &lt;/code>&lt;/pre>
+	 *
+	 * 実行結果: Taro is at Yokohama
+	 * &lt;/p>
+	 * &lt;p>
+	 * 例：
+	 *
+	 * &lt;pre class="sh_javascript">&lt;code>
+	 * h5.u.str.format('{0} is born on {1.birthday.year}.', 'Taro', {
+	 * 	birthday: {
+	 * 		year: 1990
+	 * 	}
+	 * });
+	 * &lt;/code>&lt;/pre>
+	 *
+	 * 実行結果: Taro is born on 1990.
+	 * &lt;/p>
+	 * &lt;p>
+	 * 例：
+	 *
+	 * &lt;pre class="sh_javascript">&lt;code>
+	 * h5.u.str.format('{0.0},{0.1},{0.2},…(長さ{length})', [2, 3, 5, 7]);
+	 * &lt;/code>&lt;/pre>
+	 *
+	 * 実行結果: 2,3,5,…(長さ4)
+	 * &lt;/p>
+	 *
+	 * @param {String} str 文字列
+	 * @param {Any} var_args 可変長引数。ただし1つ目にオブジェクトまたは配列を指定した場合はその中身で置換
+	 * @returns {String} フォーマット済み文字列
+	 * @name format
+	 * @function
+	 * @memberOf h5.u.str
+	 */
+	function format(str, var_args) {
+		if (str == null) {
+			return '';
+		}
+		var args = argsToArray(arguments).slice(1);
+		return str.replace(/\{(.+?)\}/g, function(m, c) {
+			if (/^\d+$/.test(c)) {
+				// {0}のような数値のみの指定の場合は引数の値をそのまま返す
+				var rep = args[parseInt(c, 10)];
+				if (typeof rep === TYPE_OF_UNDEFINED) {
+					// undefinedなら"undefined"を返す
+					return TYPE_OF_UNDEFINED;
+				}
+				return rep;
+			}
+			// 数値じゃない場合はオブジェクトプロパティ指定扱い
+			// 数値.で始まっていなければ"0."が省略されていると見做す
+			var path = /^\d+[\.|\[]/.test(c) ? c : '0.' + c;
+			var rep = getByPath(path, args);
+			if (typeof rep === TYPE_OF_UNDEFINED) {
+				return TYPE_OF_UNDEFINED;
+			}
+			return rep;
+		});
+	}
+
+	/**
+	 * 指定されたHTML文字列をエスケープします。
+	 *
+	 * @param {String} str HTML文字列
+	 * @returns {String} エスケープ済HTML文字列
+	 * @name escapeHtml
+	 * @function
+	 * @memberOf h5.u.str
+	 */
+	function escapeHtml(str) {
+		if ($.type(str) !== 'string') {
+			return str;
+		}
+		return str.replace(/[&amp;"'&lt;>]/g, function(c) {
+			return htmlEscapeRules[c];
+		});
+	}
+
+	/**
+	 * オブジェクトを、型情報を付与した文字列に変換します。
+	 * &lt;p>
+	 * このメソッドが判定可能な型は、以下のとおりです。
+	 * &lt;ul>
+	 * &lt;li>string(文字列)
+	 * &lt;li>number(数値)
+	 * &lt;li>boolean(真偽値)
+	 * &lt;li>String(文字列のラッパークラス型)
+	 * &lt;li>Number(数値のラッパークラス型)
+	 * &lt;li>Boolean(真偽値のラッパークラス型)
+	 * &lt;li>array(配列)
+	 * &lt;li>object(プレーンオブジェクト [new Object() または {…} のリテラルで作られたオブジェクト])
+	 * &lt;li>Date(日付)
+	 * &lt;li>RegExp(正規表現)
+	 * &lt;li>undefined
+	 * &lt;li>null
+	 * &lt;li>NaN
+	 * &lt;li>Infinity
+	 * &lt;li>-Infinity
+	 * &lt;/ul>
+	 * &lt;p>
+	 * このメソッドで文字列化したオブジェクトは&lt;a href="#deserialize">deseriarize&lt;/a>メソッドで元に戻すことができます。
+	 * &lt;/p>
+	 * &lt;p>
+	 * object型はプレーンオブジェクトとしてシリアライズします。 渡されたオブジェクトがプレーンオブジェクトで無い場合、そのprototypeやconstructorは無視します。
+	 * &lt;/p>
+	 * &lt;p>
+	 * array型は連想配列として保持されているプロパティもシリアライズします。
+	 * &lt;/p>
+	 * &lt;p>
+	 * 循環参照を含むarray型およびobject型はシリアライズできません。例外をスローします。
+	 * &lt;/p>
+	 * &lt;p>
+	 * 内部に同一インスタンスを持つarray型またはobject型は、別インスタンスとしてシリアライズします。以下のようなarray型オブジェクトaにおいて、a[0]とa[1]が同一インスタンスであるという情報は保存しません。
+	 *
+	 * &lt;pre>
+	 * a = [];
+	 * a[0] = a[1] = [];
+	 * &lt;/pre>
+	 *
+	 * &lt;/p>
+	 * &lt;h4>注意&lt;/h4>
+	 * &lt;p>
+	 * function型のオブジェクトは&lt;b>変換できません&lt;/b>。例外をスローします。
+	 * array型にfunction型のオブジェクトが存在する場合は、undefinedとしてシリアライズします。object型または連想配列にfunction型のオブジェクトが存在する場合は、無視します。
+	 * &lt;/p>
+	 *
+	 * @param {Object} value オブジェクト
+	 * @returns {String} 型情報を付与した文字列
+	 * @name serialize
+	 * @function
+	 * @memberOf h5.u.obj
+	 */
+	function serialize(value) {
+		if (isFunction(value)) {
+			throwFwError(ERR_CODE_SERIALIZE_FUNCTION);
+		}
+		// 循環参照チェック用配列
+		var objStack = [];
+		function existStack(obj) {
+			for (var i = 0, len = objStack.length; i &lt; len; i++) {
+				if (obj === objStack[i]) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		function popStack(obj) {
+			for (var i = 0, len = objStack.length; i &lt; len; i++) {
+				if (obj === objStack[i]) {
+					objStack.splice(i, 1);
+				}
+			}
+		}
+
+		function func(val) {
+			var ret = val;
+			var type = $.type(val);
+
+			// プリミティブラッパークラスを判別する
+			if (typeof val === 'object') {
+				if (val instanceof String) {
+					type = 'String';
+				} else if (val instanceof Number) {
+					type = 'Number';
+				} else if (val instanceof Boolean) {
+					type = 'Boolean';
+				}
+			}
+
+			// オブジェクトや配列の場合、JSON.stringify()を使って書けるが、json2.jsのJSON.stringify()を使った場合に不具合があるため自分で実装した。
+			switch (type) {
+			case 'String':
+				// stringの場合と同じ処理を行うため、breakしない
+			case 'string':
+				// String、string、両方の場合について同じ処理を行う
+				// typeToCodeはStringなら'S'、stringなら's'を返し、区別される
+				ret = typeToCode(type) + escape(ret);
+				break;
+			case 'Boolean':
+				// String/stringの場合と同様に、Boolean/booleanでも同じ処理を行うためbreakしていないが、
+				// Boolean型の場合はvalueOfで真偽値を取得する
+				ret = ret.valueOf();
+			case 'boolean':
+				// Booleanの場合は'B0','B1'。booleanの場合は'b0','b1'に変換する
+				ret = typeToCode(type) + ((ret) ? 1 : 0);
+				break;
+			case 'Number':
+				ret = ret.valueOf();
+				if (($.isNaN &amp;&amp; $.isNaN(val)) || ($.isNumeric &amp;&amp; !$.isNumeric(val))) {
+					if (val.valueOf() === Infinity) {
+						ret = typeToCode('infinity');
+					} else if (val.valueOf() === -Infinity) {
+						ret = typeToCode('-infinity');
+					} else {
+						ret = typeToCode('nan');
+					}
+				}
+				ret = typeToCode(type) + ret;
+				break;
+			case 'number':
+				if (($.isNaN &amp;&amp; $.isNaN(val)) || ($.isNumeric &amp;&amp; !$.isNumeric(val))) {
+					if (val === Infinity) {
+						ret = typeToCode('infinity');
+					} else if (val === -Infinity) {
+						ret = typeToCode('-infinity');
+					} else {
+						ret = typeToCode('nan');
+					}
+				} else {
+					ret = typeToCode(type) + ret;
+				}
+				break;
+			case 'regexp':
+				ret = typeToCode(type) + escape(ret.toString(), regToStringEscapeNewLine);
+				break;
+			case 'date':
+				ret = typeToCode(type) + (+ret);
+				break;
+			case 'array':
+				if (existStack(val)) {
+					throwFwError(ERR_CODE_REFERENCE_CYCLE);
+				}
+				objStack.push(val);
+				var indexStack = [];
+				ret = typeToCode(type) + '[';
+				for (var i = 0, len = val.length; i &lt; len; i++) {
+					indexStack[i.toString()] = true;
+					var elm;
+					if (!val.hasOwnProperty(i)) {
+						elm = typeToCode('undefElem');
+					} else if ($.type(val[i]) === 'function') {
+						elm = typeToCode(TYPE_OF_UNDEFINED);
+					} else {
+						elm = escapeDoubleQuotation(func(val[i]));
+					}
+					ret += '"' + elm + '"';
+					if (i !== val.length - 1) {
+						ret += ',';
+					}
+				}
+				var hash = '';
+				for ( var key in val) {
+					if (indexStack[key]) {
+						continue;
+					}
+					if ($.type(val[key]) !== 'function') {
+						hash += '"' + escapeDoubleQuotation(escape(key)) + '":"'
+								+ escapeDoubleQuotation(func(val[key])) + '",';
+					}
+				}
+				if (hash) {
+					ret += ((val.length) ? ',' : '') + '"' + typeToCode('objElem') + '{'
+							+ escapeDoubleQuotation(hash);
+					ret = ret.replace(/,$/, '');
+					ret += '}"';
+				}
+				ret += ']';
+				popStack(val);
+				break;
+			case 'object':
+				if (existStack(val)) {
+					throwFwError(ERR_CODE_CIRCULAR_REFERENCE);
+				}
+				objStack.push(val);
+				ret = typeToCode(type) + '{';
+				for ( var key in val) {
+					if (val.hasOwnProperty(key)) {
+						if ($.type(val[key]) === 'function') {
+							continue;
+						}
+						ret += '"' + escapeDoubleQuotation(escape(key)) + '":"'
+								+ escapeDoubleQuotation(func(val[key])) + '",';
+					}
+				}
+				ret = ret.replace(/,$/, '');
+				ret += '}';
+				popStack(val);
+				break;
+			case 'null':
+			case TYPE_OF_UNDEFINED:
+				ret = typeToCode(type);
+				break;
+			}
+
+			return ret;
+		}
+
+		return CURRENT_SEREALIZER_VERSION + '|' + func(value);
+	}
+
+	/**
+	 * 型情報が付与された文字列をオブジェクトを復元します。
+	 *
+	 * @param {String} value 型情報が付与された文字列
+	 * @returns {Any} 復元されたオブジェクト
+	 * @name deserialize
+	 * @function
+	 * @memberOf h5.u.obj
+	 */
+	function deserialize(value) {
+		if (!isString(value)) {
+			throwFwError(ERR_CODE_DESERIALIZE_ARGUMENT);
+		}
+
+		value.match(/^(.)\|(.*)/);
+		var version = RegExp.$1;
+		// version1の場合はエラーにせず、現在のバージョンでunescapeをしない方法で対応している。
+		if (version !== '1' &amp;&amp; version !== CURRENT_SEREALIZER_VERSION) {
+			throwFwError(ERR_CODE_SERIALIZE_VERSION, [version, CURRENT_SEREALIZER_VERSION]);
+		}
+		var ret = RegExp.$2;
+
+		function func(val) {
+			/**
+			 * 型情報のコードを文字列に変換します。
+			 *
+			 * @private
+			 * @returns {String} 型を表す文字列
+			 */
+			function codeToType(typeStr) {
+				switch (typeStr) {
+				case 's':
+					return 'string';
+				case 'n':
+					return 'number';
+				case 'b':
+					return 'boolean';
+				case 'S':
+					return 'String';
+				case 'N':
+					return 'Number';
+				case 'B':
+					return 'Boolean';
+				case 'i':
+					return 'infinity';
+				case 'I':
+					return '-infinity';
+				case 'x':
+					return 'nan';
+				case 'd':
+					return 'date';
+				case 'r':
+					return 'regexp';
+				case 'a':
+					return 'array';
+				case 'o':
+					return 'object';
+				case 'l':
+					return 'null';
+				case 'u':
+					return TYPE_OF_UNDEFINED;
+				case '_':
+					return 'undefElem';
+				case '@':
+					return 'objElem';
+				}
+			}
+			val.match(/^(.)(.*)/);
+			var type = RegExp.$1;
+			ret = (RegExp.$2) ? RegExp.$2 : '';
+			if (type !== undefined &amp;&amp; type !== '') {
+				switch (codeToType(type)) {
+				case 'String':
+					ret = new String(unescape(ret, version));
+					break;
+				case 'string':
+					break;
+				case 'Boolean':
+					if (ret === '0' || ret === '1') {
+						ret = new Boolean(ret === '1');
+					} else {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					break;
+				case 'boolean':
+					if (ret === '0' || ret === '1') {
+						ret = ret === '1';
+					} else {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					break;
+				case 'nan':
+					if (ret !== '') {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = NaN;
+					break;
+				case 'infinity':
+					if (ret !== '') {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = Infinity;
+					break;
+				case '-infinity':
+					if (ret !== '') {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = -Infinity;
+					break;
+				case 'Number':
+					if (codeToType(ret) === 'infinity') {
+						ret = new Number(Infinity);
+					} else if (codeToType(ret) === '-infinity') {
+						ret = new Number(-Infinity);
+					} else if (codeToType(ret) === 'nan') {
+						ret = new Number(NaN);
+					} else {
+						ret = new Number(ret);
+						if (isNaN(ret.valueOf())) {
+							throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+						}
+					}
+					break;
+				case 'number':
+					ret = new Number(ret).valueOf();
+					if (isNaN(ret)) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					break;
+				case 'array':
+					var obj;
+					try {
+						obj = $.parseJSON(ret);
+					} catch (e) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					if (!isArray(obj)) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					var ret = [];
+					for (var i = 0, l = obj.length; i &lt; l; i++) {
+						switch (codeToType(obj[i].substring(0, 1))) {
+						case 'undefElem':
+							// i番目に値を何も入れない場合と、
+							// i番目に値を入れてからdeleteする場合とで
+							// lengthが異なる場合がある。
+							// 最後の要素にundefが明示的に入れられている場合は後者のやりかたでデシリアライズする必要がある
+							ret[i] = undefined;
+							delete ret[i];
+							break;
+						case 'objElem':
+							var extendObj = func(typeToCode('object') + obj[i].substring(1));
+							for ( var key in extendObj) {
+								ret[unescape(key)] = extendObj[key];
+							}
+							break;
+						default:
+							ret[i] = func(obj[i]);
+						}
+					}
+					break;
+				case 'object':
+					var obj;
+					try {
+						obj = $.parseJSON(ret);
+					} catch (e) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					if (!$.isPlainObject(obj)) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					var ret = {};
+					for ( var key in obj) {
+						// プロパティキーはエスケープしたものになっている
+						// 元のプロパティキー(エスケープ前)のものに変更して値を持たせる
+						var val = func(obj[key]);
+						ret[unescape(key)] = val;
+					}
+					break;
+				case 'date':
+					ret = new Date(parseInt(ret, 10));
+					break;
+				case 'regexp':
+					try {
+						var matchResult = ret.match(/^\/(.*)\/(.*)$/);
+						var regStr = unescape(matchResult[1], version);
+						var flg = matchResult[2];
+						ret = new RegExp(regStr, flg);
+					} catch (e) {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					break;
+				case 'null':
+					if (ret !== '') {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = null;
+					break;
+				case TYPE_OF_UNDEFINED:
+					if (ret !== '') {
+						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
+					}
+					ret = undefined;
+					break;
+				default:
+					throwFwError(ERR_CODE_DESERIALIZE_TYPE);
+				}
+			}
+
+			return unescape(ret, version);
+		}
+		return func(ret);
+	}
+
+	/**
+	 * オブジェクトがjQueryオブジェクトかどうかを返します。
+	 *
+	 * @param {Object} obj オブジェクト
+	 * @returns {Boolean} jQueryオブジェクトかどうか
+	 * @name isJQueryObject
+	 * @function
+	 * @memberOf h5.u.obj
+	 */
+	function isJQueryObject(obj) {
+		if (!obj || !obj.jquery) {
+			return false;
+		}
+		return (obj.jquery === $().jquery);
+	}
+
+	/**
+	 * argumentsを配列に変換します。
+	 *
+	 * @param {Arguments} args Arguments
+	 * @returns {Any[]} argumentsを変換した配列
+	 * @name argsToArray
+	 * @function
+	 * @memberOf h5.u.obj
+	 */
+	function argsToArray(args) {
+		return Array.prototype.slice.call(args);
+	}
+
+	/**
+	 * 指定された名前空間に存在するオブジェクトを取得します。
+	 *
+	 * @param {String} namespace 名前空間
+	 * @param {Object} [rootObj=window] 名前空間のルートとなるオブジェクト。デフォルトはwindowオブジェクト。
+	 * @returns {Any} その名前空間に存在するオブジェクト
+	 * @name getByPath
+	 * @function
+	 * @memberOf h5.u.obj
+	 */
+	function getByPath(namespace, rootObj) {
+		if (!isString(namespace)) {
+			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
+		}
+		// 'ary[0]'のような配列のindex参照の記法に対応するため、'.'記法に変換する
+		namespace = namespace.replace(/\[(\d+)\]/g, function(m, c, index) {
+			if (index) {
+				// 先頭以外の場合は'[]'を外して'.'を付けて返す
+				return '.' + c;
+			}
+			// 先頭の場合は'[]'を外すだけ
+			return c;
+		});
+
+		var names = namespace.split('.');
+		var idx = 0;
+		if (names[0] === 'window' &amp;&amp; (!rootObj || rootObj === window)) {
+			// rootObjが未指定またはwindowオブジェクトの場合、namespaceの最初のwindow.は無視する
+			idx = 1;
+		}
+		var ret = rootObj || window;
+		for (var len = names.length; idx &lt; len; idx++) {
+			ret = ret[names[idx]];
+			if (ret == null) { // nullまたはundefinedだったら辿らない
+				break;
+			}
+		}
+		return ret;
+	}
+
+	/**
+	 * インターセプタを作成します。
+	 *
+	 * @param {Function} pre インターセプト先関数の実行前に呼ばれる関数です。
+	 * @param {Function} post インターセプト先関数の実行後に呼ばれる関数です。&lt;br />
+	 *            &lt;ul>
+	 *            &lt;li>&lt;code>pre(),post()には引数としてinvocation(インターセプト対象の関数についてのオブジェクト)と
+	 *            data(preからpostへ値を渡すための入れ物オブジェクト)が渡されます。&lt;/li>
+	 *            &lt;li>invocationは以下のプロパティを持つオブジェクトです。
+	 *            &lt;dl>
+	 *            &lt;dt>target&lt;/dt>
+	 *            &lt;dd>インターセプト対象の関数が属しているコントローラまたはロジック&lt;/dd>
+	 *            &lt;dt>func&lt;/dt>
+	 *            &lt;dd>インターセプト対象の関数&lt;/dd>
+	 *            &lt;dt>funcName&lt;/dt>
+	 *            &lt;dd>インターセプト対象の関数名&lt;/dd>
+	 *            &lt;dt>args&lt;/dt>
+	 *            &lt;dd>関数が呼ばれたときに渡された引数(argumentsオブジェクト)&lt;/dd>
+	 *            &lt;dt>proceed&lt;/dt>
+	 *            &lt;dd>インターセプト対象の関数を実行する関数。インターセプト対象の関数は自動では実行されません。 インターセプト先の関数を実行するには、
+	 *            &lt;code>pre&lt;/code>に指定した関数内で&lt;code>invocation.proceed()&lt;/code>を呼んでください。
+	 *            &lt;code>proceed()&lt;/code>を呼ぶと対象の関数(&lt;code>invocation.func&lt;/code>)を呼び出し時の引数(&lt;code>invocation.args&lt;/code>)で実行します。
+	 *            &lt;code>proceed&lt;/code>自体は引数を取りません。&lt;/dd>
+	 *            &lt;/dl>
+	 *            &lt;/li>
+	 *            &lt;li>post()は、呼び出した関数の戻り値がPromiseオブジェクトかどうかをチェックし、Promiseオブジェクトの場合は対象のDeferredが完了した後に呼ばれます。&lt;/li>
+	 *            &lt;li>pre()の中でinvocation.proceed()が呼ばれなかった場合、post()は呼ばれません。&lt;/li>
+	 *            &lt;li>invocation.resultプロパティに呼び出した関数の戻り値が格納されます。&lt;/li>
+	 *            &lt;li>pre()が指定されていない場合、invocation.proceed()を実行した後にpost()を呼びます。&lt;/li>
+	 *            &lt;/ul>
+	 *            コード例(h5.core.interceptor.lapInterceptor)を以下に示します。&lt;br />
+	 *
+	 * &lt;pre>
+	 * var lapInterceptor = h5.u.createInterceptor(function(invocation, data) {
+	 * 	// 開始時間をdataオブジェクトに格納
+	 * 		data.start = new Date();
+	 * 		// invocationを実行
+	 * 		return invocation.proceed();
+	 * 	}, function(invocation, data) {
+	 * 		// 終了時間を取得
+	 * 		var end = new Date();
+	 * 		// ログ出力
+	 * 		this.log.info('{0} &amp;quot;{1}&amp;quot;: {2}ms', this.__name, invocation.funcName, (end - data.start));
+	 * 	});
+	 * &lt;/pre>
+	 *
+	 * @returns {Function} インターセプタ
+	 * @name createInterceptor
+	 * @function
+	 * @memberOf h5.u
+	 */
+	function createInterceptor(pre, post) {
+		return function(invocation) {
+			var data = {};
+			var ret = pre ? pre.call(this, invocation, data) : invocation.proceed();
+			invocation.result = ret;
+			if (!post) {
+				return ret;
+			}
+			if (ret &amp;&amp; isFunction(ret.promise) &amp;&amp; !isJQueryObject(ret)) {
+				var that = this;
+
+				registerCallbacksSilently(ret, 'always', function() {
+					post.call(that, invocation, data);
+				});
+
+				return ret;
+			}
+			post.call(this, invocation, data);
+			return ret;
+		};
+	}
+
+	// =============================
+	// Expose to window
+	// =============================
+
+	expose('h5.u', {
+		loadScript: loadScript,
+		createInterceptor: createInterceptor
+	});
+
+	/**
+	 * @namespace
+	 * @name str
+	 * @memberOf h5.u
+	 */
+	expose('h5.u.str', {
+		startsWith: startsWith,
+		endsWith: endsWith,
+		format: format,
+		escapeHtml: escapeHtml
+	});
+
+	/**
+	 * @namespace
+	 * @name obj
+	 * @memberOf h5.u
+	 */
+	expose('h5.u.obj', {
+		expose: expose,
+		ns: ns,
+		serialize: serialize,
+		deserialize: deserialize,
+		isJQueryObject: isJQueryObject,
+		argsToArray: argsToArray,
+		getByPath: getByPath
+	});
+})();
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+	</div>
+
+	<br class="clear">
+
+	<footer>
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Nov 24 2015 19:15:25 GMT+0900 (JST)
+	</footer>
+</div>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
