@@ -70,7 +70,7 @@
 	// =============================
 	/**
 	 * メッセージ生成関数
-	 *
+	 * 
 	 * @memberOf h5internal.validation
 	 * @private
 	 * @param {Object} reason
@@ -128,7 +128,7 @@
 
 	/**
 	 * メッセージ及びvalidate結果から作成したメッセージを出力するコントローラ
-	 *
+	 * 
 	 * @class
 	 * @name h5.ui.validaiton.MessageOutput
 	 */
@@ -200,7 +200,7 @@
 
 	/**
 	 * validateエラー箇所の要素にクラスを追加するためのFormControllerプラグイン
-	 *
+	 * 
 	 * @class
 	 * @name h5.ui.validation.ErrorClassController
 	 */
@@ -300,7 +300,7 @@
 (function() {
 	/**
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
-	 *
+	 * 
 	 * @class
 	 * @name h5.ui.validation.AllMessage
 	 */
@@ -321,7 +321,7 @@
 	var DEFAULT_PLACEMENT = 'top';
 	/**
 	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
-	 *
+	 * 
 	 * @class
 	 * @name h5.ui.validation.ErrorBaloon
 	 */
@@ -416,7 +416,7 @@
 (function() {
 	/**
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
-	 *
+	 * 
 	 * @class
 	 * @name h5.ui.validation.ErrorMessage
 	 */
@@ -672,7 +672,7 @@
 
 		/**
 		 * nameをキーにvalidationResultを持つマップ
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 * @private
 		 */
@@ -680,7 +680,7 @@
 
 		/**
 		 * 全体のvalidateを行ったときのvalidationResult
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 * @private
 		 */
@@ -688,7 +688,7 @@
 
 		/**
 		 * プラグイン設定
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 */
 		globalSetting: {
@@ -704,7 +704,7 @@
 
 		/**
 		 * 出力設定
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 */
 		outputSetting: {},
@@ -798,7 +798,7 @@
 
 		/**
 		 * ルールの追加
-		 *
+		 * 
 		 * @param {Object} ruleObj
 		 * @param {boolean} [shouldValidate=false] ルール追加した後にvalidateを行うかどうか
 		 * @param {boolean} [onlyAddedRule=true]
@@ -820,7 +820,7 @@
 
 		/**
 		 * ルールの削除
-		 *
+		 * 
 		 * @param {string|string[]} names プロパティ名またはその配列
 		 * @param {boolean} shouldValidate ルール削除した後にvalidateを行うかどうか
 		 * @param {boolean} [onlyRemovedRule=true]
@@ -835,7 +835,7 @@
 
 		/**
 		 * このコントローラが管理するフォーム内のフォーム部品の値を集約したオブジェクトを生成する
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} targetNames 指定した場合、指定したnameのものだけを集約
 		 * @returns {Object}
@@ -910,7 +910,7 @@
 
 		/**
 		 * このコントローラが管理するフォームに対して、値を集約したオブジェクトから値をセットする
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 * @param {Object} フォーム部品の値を集約したオブジェクト
 		 */
@@ -968,7 +968,7 @@
 
 		/**
 		 * フォーム部品の値をすべてクリアする
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 */
 		clear: function() {
@@ -983,7 +983,7 @@
 
 		/**
 		 * validation結果表示をすべてリセットする
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 */
 		resetValidation: function() {
@@ -998,12 +998,11 @@
 			for ( var pluginName in plugins) {
 				this._resetPlugin(pluginName, plugins[pluginName]);
 			}
-			this._resetPlugin();
 		},
 
 		/**
 		 * validateルール生成関数の登録
-		 *
+		 * 
 		 * @param key
 		 * @param func
 		 */
@@ -1023,7 +1022,7 @@
 
 		/**
 		 * このコントローラが管理するフォームに属するフォーム部品を取得
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 * @returns {jQuery}
 		 */
@@ -1051,7 +1050,7 @@
 
 		/**
 		 * このコントローラが管理するformに属するフォーム部品グループ要素を取得
-		 *
+		 * 
 		 * @returns {jQuery}
 		 */
 		getInputGroupElements: function() {
@@ -1069,7 +1068,7 @@
 
 		/**
 		 * このコントローラが管理するformに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
-		 *
+		 * 
 		 * @param {string} name
 		 * @returns {DOM}
 		 */
@@ -1121,7 +1120,7 @@
 
 		/**
 		 * プラグインのリセット
-		 *
+		 * 
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param {string} pluginName
@@ -1137,7 +1136,7 @@
 
 		/**
 		 * プラグインの追加(1.2.0では非公開)
-		 *
+		 * 
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param pluginName
@@ -1220,7 +1219,7 @@
 
 		/**
 		 * プラグインのvalidateイベントの呼び出し
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 * @private
 		 */
@@ -1252,7 +1251,7 @@
 
 		/**
 		 * プラグインのフォームコントロール要素についてのイベント呼び出し
-		 *
+		 * 
 		 * @memberOf h5.ui.FormController
 		 * @private
 		 */
