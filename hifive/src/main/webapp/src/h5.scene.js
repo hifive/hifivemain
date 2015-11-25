@@ -3101,17 +3101,6 @@
 	}
 
 	/**
-	 * シーン遷移イベントを発行します。
-	 *
-	 * @param {String|Object}
-	 *            data
-	 * @memberOf Controller
-	 */
-	function triggerSceneChange(data) {
-		this.trigger(EVENT_SCENE_CHANGE_REQUEST, data);
-	}
-
-	/**
 	 * このコントローラを直接包含しているシーンコンテナを取得します。
 	 *
 	 * <p>
