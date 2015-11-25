@@ -545,16 +545,6 @@
 		 * @type {DataModel}
 		 */
 		this._model = model;
-
-		/**
-		 * ライブクエリかどうか。デフォルトfalse
-		 *
-		 * @private
-		 * @name _isLive
-		 * @memberOf Query
-		 * @type {Boolean}
-		 */
-		this._isLive = false;
 	}
 	// TODO 今は何もイベントをあげていないのでeventDispatcherにする必要がない。仕様が決まったら対応する。
 	//	h5.mixin.eventDispatcher.mix(Query.prototype);
@@ -599,10 +589,6 @@
 		 */
 		setCriteria: function(criteria) {
 			this._criteria = compileCriteria(criteria);
-			if (this._isLive) {
-				// ライブクエリならセット時に検索
-				this.execute();
-			}
 			return this;
 		},
 
@@ -655,45 +641,46 @@
 			return this;
 		},
 
-		/**
-		 * クエリをライブクエリにします
-		 * <p>
-		 * ライブクエリにすると、検索条件がセットされた時やDataModelに変更があった時に検索結果が動的に変更されます。(executeを呼ぶ必要がありません)
-		 * </p>
-		 *
-		 * @see Query#unsetLive
-		 * @memberOf Query
-		 * @returns {Query}
-		 */
-		setLive: function() {
-			// ライブクエリ設定済みなら何もしない
-			if (this._isLive) {
-				return;
-			}
-			// リスナ未作成なら作成
-			this._listener = this._listener || createChangeListener(this);
-			this._model.addEventListener('itemsChange', this._listener);
-			this._isLive = true;
-
-			return this;
-		},
-
-		/**
-		 * ライブクエリを解除します
-		 *
-		 * @see Query#setLive
-		 * @memberOf Query
-		 * @returns {Query}
-		 */
-		unsetLive: function() {
-			// ライブクエリでなければ何もしない
-			if (!this._isLive) {
-				return;
-			}
-			this._model.removeEventListener('itemsChange', this._listener);
-			this._isLive = false;
-			return this;
-		},
+		// TODO Liveクエリの仕様は再検討する
+		//		/**
+		//		 * クエリをライブクエリにします
+		//		 * <p>
+		//		 * ライブクエリにすると、検索条件がセットされた時やDataModelに変更があった時に検索結果が動的に変更されます。(executeを呼ぶ必要がありません)
+		//		 * </p>
+		//		 *
+		//		 * @see Query#unsetLive
+		//		 * @memberOf Query
+		//		 * @returns {Query}
+		//		 */
+		//		setLive: function() {
+		//			// ライブクエリ設定済みなら何もしない
+		//			if (this._isLive) {
+		//				return;
+		//			}
+		//			// リスナ未作成なら作成
+		//			this._listener = this._listener || createChangeListener(this);
+		//			this._model.addEventListener('itemsChange', this._listener);
+		//			this._isLive = true;
+		//
+		//			return this;
+		//		},
+		//
+		//		/**
+		//		 * ライブクエリを解除します
+		//		 *
+		//		 * @see Query#setLive
+		//		 * @memberOf Query
+		//		 * @returns {Query}
+		//		 */
+		//		unsetLive: function() {
+		//			// ライブクエリでなければ何もしない
+		//			if (!this._isLive) {
+		//				return;
+		//			}
+		//			this._model.removeEventListener('itemsChange', this._listener);
+		//			this._isLive = false;
+		//			return this;
+		//		},
 
 		/**
 		 * 検索結果のソート条件を設定
@@ -767,9 +754,6 @@
 
 		_orderBy: function(compareFunction) {
 			this._compareFunction = compareFunction;
-			if (this._isLive) {
-				this.result.sort(this._compareFunction);
-			}
 			return this;
 		}
 	});
