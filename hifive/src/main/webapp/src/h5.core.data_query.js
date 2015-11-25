@@ -513,7 +513,7 @@
 	/**
 	 * Queryクラス
 	 * <p>
-	 * {@link DataModel#createQuery}の戻り値がこのクラスのインスタンスです。
+	 * {@link DataModel.createQuery}の戻り値がこのクラスのインスタンスです。
 	 * </p>
 	 *
 	 * @class
@@ -553,7 +553,7 @@
 		/**
 		 * 検索条件オブジェクトをセットします
 		 * <p>
-		 * 検索の実行({@link Query#execute})を実行した時に、ここで指定した検索条件オブジェクトに基づいて検索を実行します。
+		 * 検索の実行({@link Query.execute})を実行した時に、ここで指定した検索条件オブジェクトに基づいて検索を実行します。
 		 * </p>
 		 * <p>
 		 * 検索条件オブジェクトは、"プロパティ名 (演算子)"をキーにして、比較する値を値に持つオブジェクトを指定します。
@@ -595,10 +595,10 @@
 		/**
 		 * 検索を実行
 		 * <p>
-		 * {@link Query#setCriteria}で設定した検索条件で検索します。検索が完了すると{@link result}に結果が格納されます。
+		 * {@link Query.setCriteria}で設定した検索条件で検索します。検索が完了すると{@link result}に結果が格納されます。
 		 * </p>
 		 * <p>
-		 * また、{@link Query#onQueryComplete}に設定したハンドラが呼ばれます。
+		 * また、{@link Query.onQueryComplete}に設定したハンドラが呼ばれます。
 		 * </p>
 		 *
 		 * @memberOf Query
@@ -685,7 +685,7 @@
 		/**
 		 * 検索結果のソート条件を設定
 		 * <p>
-		 * 比較関数で指定します。単にあるプロパティで昇順あるいは降順にしたい場合は{@link Query#orderByAsc}または{@link Query#orderByDesc}を使用できます。
+		 * 比較関数で指定します。単にあるプロパティで昇順あるいは降順にしたい場合は{@link Query.orderByAsc}または{@link Query.orderByDesc}を使用できます。
 		 * </p>
 		 * <p>
 		 * 比較関数は、以下の例のように実装してください。
