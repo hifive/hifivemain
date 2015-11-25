@@ -527,9 +527,9 @@ $(function() {
 				return;
 			}
 
-			var container = controller.scene.getParentSceneContainer();
+			var container = controller.scene.getParentContainer();
 			strictEqual(container._containerName, 'testContainer',
-					'ControllerのgetParentSceneContainerで所属するシーンコンテナが取得できること');
+					'ControllerのgetParentContainerで所属するシーンコンテナが取得できること');
 			container = h5.scene.getSceneContainer($container);
 			strictEqual(container._containerName, 'testContainer',
 					'h5.scene.getSceneContainerで要素を指定してシーンコンテナが取得できること');

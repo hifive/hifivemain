@@ -1795,7 +1795,7 @@
 		 * @returns {SceneContainerController} シーンコンテナ
 		 * @memberOf ControllerScene
 		 */
-		getParentSceneContainer: function() {
+		getParentContainer: function() {
 			if (isDisposing(this.__controller)) {
 				return null;
 			}
@@ -3098,24 +3098,6 @@
 
 		return containers[0];
 
-	}
-
-	/**
-	 * このコントローラを直接包含しているシーンコンテナを取得します。
-	 *
-	 * <p>
-	 * シーンコンテナ要素が存在しない、またはシーンコンテナ未生成の場合はnullを返却します。
-	 * </p>
-	 *
-	 * @returns {SceneContainerController} シーンコンテナ
-	 * @memberOf Controller
-	 */
-	function getParentSceneContainer() {
-		var element = getParentContainer(this.rootElement);
-		if (!element) {
-			return null;
-		}
-		return getSceneContainer(element);
 	}
 
 	// =============================
