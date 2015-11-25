@@ -4151,7 +4151,107 @@
 							} else if (!this.rootController.__controllerContext.triggerReadyInitExecuted) {
 								triggerReady(controller);
 							}
-						}
+						},
+
+					// 以下JSDocコメントのみ
+					/**
+					 * コントローラのライフサイクル __construct
+					 * <p>
+					 * コントローラ生成時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__constructに関数を記述することで動作する。
+					 * 指定はオプションであり、記述しなくてもよい。
+					 * </p>
+					 * <p>
+					 * コントローラ生成時のライフサイクルメソッドは{@link Controller.__construct},
+					 * {@link Controller.__init}, {@link Controller.__postInit},
+					 * {@link Controller.__ready}の順序で動作する。
+					 * </p>
+					 *
+					 * @see {@link http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle|リファレンス（仕様詳細） » コントローラのライフサイクルについて}
+					 * @memberOf Controller
+					 * @type {function}
+					 * @name __construct
+					 */
+					/**
+					 * コントローラのライフサイクル __init
+					 * <p>
+					 * コントローラ生成時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__initに関数を記述することで動作する。
+					 * 指定はオプションであり、記述しなくてもよい。
+					 * </p>
+					 * <p>
+					 * コントローラ生成時のライフサイクルメソッドは{@link Controller.__construct},
+					 * {@link Controller.__init}, {@link Controller.__postInit},
+					 * {@link Controller.__ready}の順序で動作する。
+					 * </p>
+					 *
+					 * @see {@link http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle|リファレンス（仕様詳細） » コントローラのライフサイクルについて}
+					 * @memberOf Controller
+					 * @type {function}
+					 * @name __init
+					 */
+					/**
+					 * コントローラのライフサイクル __postInit
+					 * <p>
+					 * コントローラ生成時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__postInitに関数を記述することで動作する。
+					 * 指定はオプションであり、記述しなくてもよい。
+					 * </p>
+					 * <p>
+					 * コントローラ生成時のライフサイクルメソッドは{@link Controller.__construct},
+					 * {@link Controller.__init}, {@link Controller.__postInit},
+					 * {@link Controller.__ready}の順序で動作する。
+					 * </p>
+					 *
+					 * @see {@link http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle|リファレンス（仕様詳細） » コントローラのライフサイクルについて}
+					 * @memberOf Controller
+					 * @type {function}
+					 * @name __postInit
+					 */
+					/**
+					 * コントローラのライフサイクル __ready
+					 * <p>
+					 * コントローラ生成時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__readyに関数を記述することで動作する。
+					 * 指定はオプションであり、記述しなくてもよい。
+					 * </p>
+					 * <p>
+					 * コントローラ生成時のライフサイクルメソッドは{@link Controller.__construct},
+					 * {@link Controller.__init}, {@link Controller.__postInit},
+					 * {@link Controller.__ready}の順序で動作する。
+					 * </p>
+					 *
+					 * @see {@link http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle|リファレンス（仕様詳細） » コントローラのライフサイクルについて}
+					 * @memberOf Controller
+					 * @type {function}
+					 * @name __ready
+					 */
+					/**
+					 * コントローラのライフサイクル __unbind
+					 * <p>
+					 * コントローラの破棄時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__unbindに関数を記述することで動作する。
+					 * 指定はオプションであり、記述しなくてもよい。
+					 * </p>
+					 * <p>
+					 * コントローラ破棄時のライフサイクルメソッドは{@link Controller.__unbind},{@link Controller.__dispose}の順序で動作する。
+					 * </p>
+					 *
+					 * @see {@link http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle|リファレンス（仕様詳細） » コントローラのライフサイクルについて}
+					 * @memberOf Controller
+					 * @type {function}
+					 * @name __unbind
+					 */
+					/**
+					 * コントローラのライフサイクル __dispose
+					 * <p>
+					 * コントローラの破棄時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__disposeに関数を記述することで動作する。
+					 * 指定はオプションであり、記述しなくてもよい。
+					 * </p>
+					 * <p>
+					 * コントローラ破棄時のライフサイクルメソッドは{@link Controller.__unbind},{@link Controller.__dispose}の順序で動作する。
+					 * </p>
+					 *
+					 * @see {@link http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle|リファレンス（仕様詳細） » コントローラのライフサイクルについて}
+					 * @memberOf Controller
+					 * @type {function}
+					 * @name __dispose
+					 */
 					});
 
 	/**
