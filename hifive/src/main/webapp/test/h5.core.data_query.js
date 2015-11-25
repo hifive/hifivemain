@@ -185,7 +185,7 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			price: 22000
 		});
-		query.orderBy('id').execute();
+		query.orderByAsc('id').execute();
 		var result = query.result;
 		ok(h5.core.data.isObservableArray(result), '結果はObservableArrayで返ってくること');
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -586,46 +586,19 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('"キー名"を指定して昇順ソート', 3, function() {
+	test('orderByAsc', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
-		}).orderBy('id').execute().result;
+		}).orderByAsc('id').execute().result;
 		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
 		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
 		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
 	});
 
-	test('"キー名 asc"を指定して昇順ソート', 3, function() {
+	test('orderByDesc', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
-		}).orderBy('id asc').execute().result;
-		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
-	});
-
-	test('"キー名 ASC"を指定して昇順ソート', 3, function() {
-		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).orderBy('id ASC').execute().result;
-		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
-	});
-
-	test('"キー名 desc"で降順ソート', 3, function() {
-		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).orderBy('id desc').execute().result;
-		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
-	});
-
-	test('"キー名 DESC"で降順ソート', 3, function() {
-		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).orderBy('id DESC').execute().result;
+		}).orderByDesc('id').execute().result;
 		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
 		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
 		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
@@ -643,15 +616,57 @@ $(function() {
 		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
 	});
 
-	test('orderByに不正な値を指定するとエラー', 10, function() {
+	test('orderByAscに存在しないキー名を指定するとエラー', function() {
+		try {
+			this.model.createQuery().setCriteria({
+				'id in': ['1', '2', '10']
+			}).orderByAsc();
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
+		}
+		var invalidArgs = ['ID', '', null, 1, true, false, {}, [], /id/, $.noop];
+		for (var i = 0, l = invalidArgs.length; i < l; i++) {
+			try {
+				this.model.createQuery().setCriteria({
+					'id in': ['1', '2', '10']
+				}).orderByAsc(invalidArgs[i]);
+				ok(false, 'エラー発生していません');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
+			}
+		}
+	});
+
+	test('orderByDescに存在しないキー名を指定するとエラー', function() {
+		try {
+			this.model.createQuery().setCriteria({
+				'id in': ['1', '2', '10']
+			}).orderByDesc();
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
+		}
+		var invalidArgs = ['id dsc', '', null, 1, true, false, {}, [], /id/, $.noop];
+		for (var i = 0, l = invalidArgs.length; i < l; i++) {
+			try {
+				this.model.createQuery().setCriteria({
+					'id in': ['1', '2', '10']
+				}).orderByDesc(invalidArgs[i]);
+				ok(false, 'エラー発生していません');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
+			}
+		}
+	});
+
+	test('orderByに関数以外を指定するとエラー', 10, function() {
 		try {
 			this.model.createQuery().setCriteria({
 				'id in': ['1', '2', '10']
 			}).orderBy();
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_CLAUSE, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID, e.message);
 		}
-		var invalidArgs = ['id dsc', '', null, 1, true, false, {}, [], /id asc/];
+		var invalidArgs = ['id', '', null, 1, true, false, {}, [], /id asc/];
 		for (var i = 0, l = invalidArgs.length; i < l; i++) {
 			try {
 				this.model.createQuery().setCriteria({
@@ -659,7 +674,7 @@ $(function() {
 				}).orderBy(invalidArgs[i]);
 				ok(false, 'エラー発生していません');
 			} catch (e) {
-				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_CLAUSE, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID, e.message);
 			}
 		}
 	});
@@ -697,164 +712,143 @@ $(function() {
 		strictEqual(result.get(2), this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
-	//=============================
-	// Definition
-	//=============================
-	module('検索条件のネスト', {
-		setup: function() {
-			this.manager = h5.core.data.createManager('TestManager');
-			this.model = this.manager.createModel(itemSchema);
-			this.model.create(itemsData);
-		},
-		teardown: function() {
-			dropAllModel(this.manager);
-			this.manager = null;
-		},
-		manager: null,
-		model: null
-	});
-
-	//=============================
-	// Body
-	//=============================
-
-
-	//=============================
-	// Definition
-	//=============================
-	module('ライブクエリ', {
-		setup: function() {
-			this.manager = h5.core.data.createManager('TestManager');
-			this.model = this.manager.createModel(itemSchema);
-			this.model.create(itemsData);
-		},
-		teardown: function() {
-			dropAllModel(this.manager);
-			this.manager = null;
-		},
-		manager: null,
-		model: null
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('DataModelに新しくアイテムを追加した時、検索条件にマッチすれば検索結果に格納されること', 2, function() {
-		var query = this.model.createQuery().setCriteria({
-			id: 'a'
-		}).setLive().execute();
-		var result = query.result;
-		strictEqual(result.length, 0, '検索条件にマッチするアイテムが無いとき、検索結果は長さ0であること');
-		var item = this.model.create({
-			id: 'a'
-		});
-		strictEqual(result.get(0), item, 'DataModelに新しく追加したアイテムが検索結果に格納されていること');
-	});
-
-	test('検索結果に含まれるアイテムがDataModelから削除された時、検索結果から削除されること', 2, function() {
-		var query = this.model.createQuery().setCriteria({
-			id: '1'
-		}).setLive().execute();
-		var result = query.result;
-		strictEqual(result.get(0), this.model.get('1'), '検索条件にマッチするアイテムが結果に格納されていること');
-		this.model.remove('1');
-		strictEqual(result.length, 0, 'DataModelのitemが削除されたら検索結果からも削除されること');
-	});
-
-	test('検索結果に含まれるアイテムの値が変更されて、検索条件を満たさなくなったとき、検索結果から外されること', 2, function() {
-		var query = this.model.createQuery().setCriteria({
-			itemname: 'テレビ'
-		}).setLive().execute();
-		var result = query.result;
-		var item = this.model.get('1');
-		strictEqual(result.get(0), item, '検索条件にマッチするアイテムが検索結果に格納されていること');
-		item.set('itemname', '4Kテレビ');
-		strictEqual(result.length, 0, '検索条件を満たさなくなったアイテムは検索結果から外されていること');
-	});
-
-	test('検索結果に含まれないアイテムの値が変更されて、検索条件を満たすようになったとき、検索結果に格納されること', 2, function() {
-		var query = this.model.createQuery().setCriteria({
-			itemname: '4Kテレビ'
-		}).setLive().execute();
-		var result = query.result;
-		strictEqual(result.length, 0, '検索条件にマッチするアイテムが無いとき、検索結果は長さ0であること');
-		var item = this.model.get('1');
-		item.set('itemname', '4Kテレビ');
-		strictEqual(result.get(0), item, '検索条件にマッチするようになったアイテムが検索結果に格納されていること');
-	});
-
-	test('ライブクエリにorderByを指定すると、指定したタイミングでソートされること', 6, function() {
-		var query = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).setLive().execute();
-		var result = query.result;
-		query.orderBy('id');
-		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
-
-		query.orderBy('id desc');
-		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
-	});
-
-	test('ライブクエリにorderByを指定すると、検索結果に変更があった場合にもソートされること', 7, function() {
-		var query = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10', '100']
-		}).setLive().execute();
-		var result = query.result;
-		query.orderBy('price');
-		this.model.get('2').set('price', '0');
-		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
-
-		this.model.create({
-			id: '100',
-			price: 1
-		});
-		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('100'), 'id==="100"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('10'), 'id==="10"のアイテムが2番目');
-		strictEqual(result.get(3), this.model.get('1'), 'id==="1"のアイテムが3番目');
-	});
-
-	test('unsetLiveでライブクエリを解除できること', 2, function() {
-		var query = this.model.createQuery().setCriteria({
-			itemname: 'テレビ'
-		}).setLive().execute();
-		var result = query.result;
-		query.unsetLive();
-		var item = result.get(0);
-		item.set('itemname', 'hoge');
-		strictEqual(result.get(0), item, 'unsetLive()したクエリはデータアイテムの変更があっても検索結果は変わらないこと');
-		query.execute();
-		strictEqual(result.length, 0, '再度execute()すると変更が反映されること');
-	});
-
-	module('onQueryComplete', {
-		setup: function() {
-			this.manager = h5.core.data.createManager('TestManager');
-			this.model = this.manager.createModel(itemSchema);
-			this.model.create(itemsData);
-		},
-		teardown: function() {
-			dropAllModel(this.manager);
-			this.manager = null;
-		},
-		manager: null,
-		model: null
-	});
-
-	test('onQueryCompleteハンドラの引数とthis', 3, function() {
-		var query = this.model.createQuery().setCriteria({
-			itemname: 'テレビ'
-		}).setLive().execute();
-		query.onQueryComplete(function(result) {
-			ok(true, 'execute()処理が完了するとonQueryCompleteハンドラが呼ばれること');
-			strictEqual(this, query, 'thisはqueryであること');
-			strictEqual(result, query.result, '引数に検索結果が渡されること');
-		});
-	});
+	// TODO ライブクエリの仕様は再検討する
+	//	//=============================
+	//	// Definition
+	//	//=============================
+	//	module('ライブクエリ', {
+	//		setup: function() {
+	//			this.manager = h5.core.data.createManager('TestManager');
+	//			this.model = this.manager.createModel(itemSchema);
+	//			this.model.create(itemsData);
+	//		},
+	//		teardown: function() {
+	//			dropAllModel(this.manager);
+	//			this.manager = null;
+	//		},
+	//		manager: null,
+	//		model: null
+	//	});
+	//
+	//	//=============================
+	//	// Body
+	//	//=============================
+	//	test('DataModelに新しくアイテムを追加した時、検索条件にマッチすれば検索結果に格納されること', 2, function() {
+	//		var query = this.model.createQuery().setCriteria({
+	//			id: 'a'
+	//		}).setLive().execute();
+	//		var result = query.result;
+	//		strictEqual(result.length, 0, '検索条件にマッチするアイテムが無いとき、検索結果は長さ0であること');
+	//		var item = this.model.create({
+	//			id: 'a'
+	//		});
+	//		strictEqual(result.get(0), item, 'DataModelに新しく追加したアイテムが検索結果に格納されていること');
+	//	});
+	//
+	//	test('検索結果に含まれるアイテムがDataModelから削除された時、検索結果から削除されること', 2, function() {
+	//		var query = this.model.createQuery().setCriteria({
+	//			id: '1'
+	//		}).setLive().execute();
+	//		var result = query.result;
+	//		strictEqual(result.get(0), this.model.get('1'), '検索条件にマッチするアイテムが結果に格納されていること');
+	//		this.model.remove('1');
+	//		strictEqual(result.length, 0, 'DataModelのitemが削除されたら検索結果からも削除されること');
+	//	});
+	//
+	//	test('検索結果に含まれるアイテムの値が変更されて、検索条件を満たさなくなったとき、検索結果から外されること', 2, function() {
+	//		var query = this.model.createQuery().setCriteria({
+	//			itemname: 'テレビ'
+	//		}).setLive().execute();
+	//		var result = query.result;
+	//		var item = this.model.get('1');
+	//		strictEqual(result.get(0), item, '検索条件にマッチするアイテムが検索結果に格納されていること');
+	//		item.set('itemname', '4Kテレビ');
+	//		strictEqual(result.length, 0, '検索条件を満たさなくなったアイテムは検索結果から外されていること');
+	//	});
+	//
+	//	test('検索結果に含まれないアイテムの値が変更されて、検索条件を満たすようになったとき、検索結果に格納されること', 2, function() {
+	//		var query = this.model.createQuery().setCriteria({
+	//			itemname: '4Kテレビ'
+	//		}).setLive().execute();
+	//		var result = query.result;
+	//		strictEqual(result.length, 0, '検索条件にマッチするアイテムが無いとき、検索結果は長さ0であること');
+	//		var item = this.model.get('1');
+	//		item.set('itemname', '4Kテレビ');
+	//		strictEqual(result.get(0), item, '検索条件にマッチするようになったアイテムが検索結果に格納されていること');
+	//	});
+	//
+	//	test('ライブクエリにorderByを指定すると、指定したタイミングでソートされること', 6, function() {
+	//		var query = this.model.createQuery().setCriteria({
+	//			'id in': ['1', '2', '10']
+	//		}).setLive().execute();
+	//		var result = query.result;
+	//		query.orderByAsc('id');
+	//		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
+	//		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+	//		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
+	//
+	//		query.orderByDesc('id');
+	//		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
+	//		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+	//		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+	//	});
+	//
+	//	test('ライブクエリにorderByを指定すると、検索結果に変更があった場合にもソートされること', 7, function() {
+	//		var query = this.model.createQuery().setCriteria({
+	//			'id in': ['1', '2', '10', '100']
+	//		}).setLive().execute();
+	//		var result = query.result;
+	//		query.orderByAsc('price');
+	//		this.model.get('2').set('price', '0');
+	//		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
+	//		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
+	//		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+	//
+	//		this.model.create({
+	//			id: '100',
+	//			price: 1
+	//		});
+	//		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
+	//		strictEqual(result.get(1), this.model.get('100'), 'id==="100"のアイテムが1番目');
+	//		strictEqual(result.get(2), this.model.get('10'), 'id==="10"のアイテムが2番目');
+	//		strictEqual(result.get(3), this.model.get('1'), 'id==="1"のアイテムが3番目');
+	//	});
+	//
+	//	test('unsetLiveでライブクエリを解除できること', 2, function() {
+	//		var query = this.model.createQuery().setCriteria({
+	//			itemname: 'テレビ'
+	//		}).setLive().execute();
+	//		var result = query.result;
+	//		query.unsetLive();
+	//		var item = result.get(0);
+	//		item.set('itemname', 'hoge');
+	//		strictEqual(result.get(0), item, 'unsetLive()したクエリはデータアイテムの変更があっても検索結果は変わらないこと');
+	//		query.execute();
+	//		strictEqual(result.length, 0, '再度execute()すると変更が反映されること');
+	//	});
+	//
+	//	module('onQueryComplete', {
+	//		setup: function() {
+	//			this.manager = h5.core.data.createManager('TestManager');
+	//			this.model = this.manager.createModel(itemSchema);
+	//			this.model.create(itemsData);
+	//		},
+	//		teardown: function() {
+	//			dropAllModel(this.manager);
+	//			this.manager = null;
+	//		},
+	//		manager: null,
+	//		model: null
+	//	});
+	//
+	//	test('onQueryCompleteハンドラの引数とthis', 3, function() {
+	//		var query = this.model.createQuery().setCriteria({
+	//			itemname: 'テレビ'
+	//		}).setLive().execute();
+	//		query.onQueryComplete(function(result) {
+	//			ok(true, 'execute()処理が完了するとonQueryCompleteハンドラが呼ばれること');
+	//			strictEqual(this, query, 'thisはqueryであること');
+	//			strictEqual(result, query.result, '引数に検索結果が渡されること');
+	//		});
+	//	});
 });
