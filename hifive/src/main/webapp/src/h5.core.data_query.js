@@ -193,16 +193,16 @@
 	/** ORDER BY句に指定されたkey名がschemaに存在しない */
 	var ERR_CODE_ORDER_BY_KEY = 2;
 
-	/** ORDER BY句に指定された、昇順、降順の指定が不正 */
-	var ERR_CODE_ORDER_BY_CLAUSE = 3;
+	/** ORDER BY句に指定された比較関数が不正 */
+	var ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID = 3;
 
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_NO_COMPARE_FUNCTIONS] = '演算子"{0}"で"{1}"型の値を比較することはできません';
-	errMsgMap[ERR_CODE_ORDER_BY_KEY] = 'ORDER BY句の指定が不正です。指定されたキー({0})は存在しません';
-	errMsgMap[ERR_CODE_ORDER_BY_CLAUSE] = 'ORDER BY句の指定が不正です。指定されたorder句:{0} "key名 ASC"または"key名 DESC"またはソート関数を指定してください';
+	errMsgMap[ERR_CODE_ORDER_BY_KEY] = '{0}の第1引数が不正です。指定されたキー({1})はモデル{2}に存在しません';
+	errMsgMap[ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID] = 'orderByの第1引数が不正です。比較関数を関数で指定してください';
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
 
@@ -698,13 +698,10 @@
 		/**
 		 * 検索結果のソート条件を設定
 		 * <p>
-		 * 比較関数または文字列で指定します
+		 * 比較関数で指定します。単にあるプロパティで昇順あるいは降順にしたい場合は{@link Query#orderByAsc}または{@link Query#orderByDesc}を使用できます。
 		 * </p>
 		 * <p>
-		 * 文字列の場合は、'プロパティ名 ASC|DESC'のようにしてします。指定したプロパティの値でソートし、ASCは昇順、DESCは降順指定、省略すると昇順でソートします。
-		 * </p>
-		 * <p>
-		 * 比較関数を指定する場合、以下の例のように実装してください。
+		 * 比較関数は、以下の例のように実装してください。
 		 * </p>
 		 *
 		 * <pre class="sh_javascript">
@@ -716,40 +713,60 @@
 		 * </pre>
 		 *
 		 * @memberOf Query
-		 * @param {String|Function}
+		 * @param {Function} compareFunction
 		 * @returns {Query}
 		 */
-		orderBy: function(orderByClause) {
-			// compareFuncの作成
-			if (isFunction(orderByClause)) {
-				this._compareFunction = orderByClause;
-				this.result.sort(this._compareFunction);
-				return this;
+		orderBy: function(compareFunction) {
+			// 比較関数のエラーチェック
+			if (!isFunction(compareFunction)) {
+				throwFwError(ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID);
+				return;
 			}
-			if (!orderByClause || !isString(orderByClause)) {
-				// エラー
-				throwFwError(ERR_CODE_ORDER_BY_CLAUSE, [orderByClause]);
-			}
-			var tmp = orderByClause.split(' ');
-			var key = $.trim(tmp[0]);
+			return this._orderBy(compareFunction);
+		},
 
+		/**
+		 * 検索結果のソート条件を指定したプロパティについての昇順に設定
+		 * <p>
+		 * 検索結果のソート条件を指定したプロパティについての昇順に設定します。第1引数には比較対象となるキー名を指定してください。
+		 * </p>
+		 *
+		 * @memberOf Query
+		 * @param {string} key
+		 * @returns {Query}
+		 */
+		orderByAsc: function(key) {
 			// keyがschemaにあるかどうかチェックする
 			var schema = this._model.schema;
 			if (!schema.hasOwnProperty(key)) {
 				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
-				throwFwError(ERR_CODE_ORDER_BY_KEY, [this._model.name, key]);
+				throwFwError(ERR_CODE_ORDER_BY_KEY, ['orderByAsc', key, this._model.name]);
 			}
+			return this._orderBy(createAscCompareFunction(key));
+		},
 
-			var order = tmp[1] ? $.trim(tmp[1].toUpperCase()) : 'ASC';
-			if (order === 'DESC') {
-				this._compareFunction = createDescCompareFunction(key);
-			} else if (order === 'ASC') {
-				this._compareFunction = createAscCompareFunction(key);
-			} else {
-				// エラー
-				throwFwError(ERR_CODE_ORDER_BY_CLAUSE, [orderByClause]);
+		/**
+		 * 検索結果のソート条件を指定したプロパティについての降順に設定
+		 * <p>
+		 * 検索結果のソート条件を指定したプロパティについての降順に設定します。第1引数には比較対象となるキー名を指定してください。
+		 * </p>
+		 *
+		 * @memberOf Query
+		 * @param {string} key
+		 * @returns {Query}
+		 */
+		orderByDesc: function(key) {
+			// keyがschemaにあるかどうかチェックする
+			var schema = this._model.schema;
+			if (!schema.hasOwnProperty(key)) {
+				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
+				throwFwError(ERR_CODE_ORDER_BY_KEY, ['orderByDesc', key, this._model.name]);
 			}
-			// ライブクエリならソートする
+			return this._orderBy(createDescCompareFunction(key));
+		},
+
+		_orderBy: function(compareFunction) {
+			this._compareFunction = compareFunction;
 			if (this._isLive) {
 				this.result.sort(this._compareFunction);
 			}

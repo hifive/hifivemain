@@ -152,7 +152,7 @@ h5.u.obj.expose('ERRCODE.h5.core.data', {
 h5.u.obj.expose('ERRCODE.h5.core.data_query', {
 	ERR_CODE_NO_COMPARE_FUNCTIONS: 1,
 	ERR_CODE_ORDER_BY_KEY: 2,
-	ERR_CODE_ORDER_BY_CLAUSE: 3
+	ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID: 3
 });
 
 h5.u.obj.expose('ERRCODE.h5.mixin', {

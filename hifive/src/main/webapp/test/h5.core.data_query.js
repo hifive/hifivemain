@@ -185,7 +185,7 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			price: 22000
 		});
-		query.orderBy('id').execute();
+		query.orderByAsc('id').execute();
 		var result = query.result;
 		ok(h5.core.data.isObservableArray(result), '結果はObservableArrayで返ってくること');
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -586,46 +586,19 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('"キー名"を指定して昇順ソート', 3, function() {
+	test('orderByAsc', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
-		}).orderBy('id').execute().result;
+		}).orderByAsc('id').execute().result;
 		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
 		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
 		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
 	});
 
-	test('"キー名 asc"を指定して昇順ソート', 3, function() {
+	test('orderByDesc', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
-		}).orderBy('id asc').execute().result;
-		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
-	});
-
-	test('"キー名 ASC"を指定して昇順ソート', 3, function() {
-		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).orderBy('id ASC').execute().result;
-		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
-	});
-
-	test('"キー名 desc"で降順ソート', 3, function() {
-		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).orderBy('id desc').execute().result;
-		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
-	});
-
-	test('"キー名 DESC"で降順ソート', 3, function() {
-		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).orderBy('id DESC').execute().result;
+		}).orderByDesc('id').execute().result;
 		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
 		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
 		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
@@ -643,15 +616,57 @@ $(function() {
 		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
 	});
 
-	test('orderByに不正な値を指定するとエラー', 10, function() {
+	test('orderByAscに存在しないキー名を指定するとエラー', function() {
+		try {
+			this.model.createQuery().setCriteria({
+				'id in': ['1', '2', '10']
+			}).orderByAsc();
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
+		}
+		var invalidArgs = ['ID', '', null, 1, true, false, {}, [], /id/, $.noop];
+		for (var i = 0, l = invalidArgs.length; i < l; i++) {
+			try {
+				this.model.createQuery().setCriteria({
+					'id in': ['1', '2', '10']
+				}).orderByAsc(invalidArgs[i]);
+				ok(false, 'エラー発生していません');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
+			}
+		}
+	});
+
+	test('orderByDescに存在しないキー名を指定するとエラー', function() {
+		try {
+			this.model.createQuery().setCriteria({
+				'id in': ['1', '2', '10']
+			}).orderByDesc();
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
+		}
+		var invalidArgs = ['id dsc', '', null, 1, true, false, {}, [], /id/, $.noop];
+		for (var i = 0, l = invalidArgs.length; i < l; i++) {
+			try {
+				this.model.createQuery().setCriteria({
+					'id in': ['1', '2', '10']
+				}).orderByDesc(invalidArgs[i]);
+				ok(false, 'エラー発生していません');
+			} catch (e) {
+				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
+			}
+		}
+	});
+
+	test('orderByに関数以外を指定するとエラー', 10, function() {
 		try {
 			this.model.createQuery().setCriteria({
 				'id in': ['1', '2', '10']
 			}).orderBy();
 		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_CLAUSE, e.message);
+			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID, e.message);
 		}
-		var invalidArgs = ['id dsc', '', null, 1, true, false, {}, [], /id asc/];
+		var invalidArgs = ['id', '', null, 1, true, false, {}, [], /id asc/];
 		for (var i = 0, l = invalidArgs.length; i < l; i++) {
 			try {
 				this.model.createQuery().setCriteria({
@@ -659,7 +674,7 @@ $(function() {
 				}).orderBy(invalidArgs[i]);
 				ok(false, 'エラー発生していません');
 			} catch (e) {
-				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_CLAUSE, e.message);
+				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID, e.message);
 			}
 		}
 	});
@@ -788,12 +803,12 @@ $(function() {
 			'id in': ['1', '2', '10']
 		}).setLive().execute();
 		var result = query.result;
-		query.orderBy('id');
+		query.orderByAsc('id');
 		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
 		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
 		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
 
-		query.orderBy('id desc');
+		query.orderByDesc('id');
 		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
 		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
 		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
@@ -804,7 +819,7 @@ $(function() {
 			'id in': ['1', '2', '10', '100']
 		}).setLive().execute();
 		var result = query.result;
-		query.orderBy('price');
+		query.orderByAsc('price');
 		this.model.get('2').set('price', '0');
 		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
 		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
