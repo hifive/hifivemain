@@ -65,7 +65,7 @@
 
 
 <div class="description">
-    validatorクラス<p>バリデートを行うクラス</p>
+    Validatorクラス
 </div>
 
 
@@ -158,11 +158,15 @@
 
     
 
-    <h4 class="name" id=".validate"><span class="type-signature">(static) </span>validate<span class="signature">(obj, names)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".addRule"><span class="type-signature">(static) </span>addRule<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
 
+
+<div class="description">
+    バリデートルールを追加する<p><a href="Validator.html#.validate">Validator.validate</a>でバリデートを行う際のバリデートルールを追加します。</p><p>バリデートルールは以下のようなオブジェクトで指定します。<pre class="sh_javascript"><code>validator.addRule({	// 対象となるプロパティ名(userid)をキーにする		userid: {			// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。			require: true,			pattern: /&circ;[a-z|0-9]*$/,			size: [4, 10]		}	});</code></pre>上記の場合、useridは指定が必須(require指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。</p><p>以下のようなルールが標準で定義されています。また<a href="h5.validation.html#.defineRule">h5.validation.defineRule</a>で独自ルールを定義することもできます。</p><table><thead><tr><th>ルール名</th><th>パラメータ</th><th>定義</th></tr></thead><tbody><tr><td>require</td><td>なし</td><td>値がnull,undefined,空文字のいずれでもないこと</td></tr><tr><td>customFunc</td><td>func</td><td>funcには第1引数に値を取る関数を指定する。funcがtrueを返すこと。</td></tr><tr><td>nul</td><td>なし</td><td>値がnullまたはundefinedであること</td></tr><tr><td>notNull</td><td>なし</td><td>値がnullまたはundefinedでないこと</td></tr><tr><td>assertFalse</td><td>なし</td><td>値がfalseであること</td></tr><tr><td>assertTrue</td><td>なし</td><td>値がtrueであること</td></tr><tr><td>max</td><td>[max, inclusive]</td><td>inclusiveは省略可能。値がmax未満の数値であること。またinclusiveにtrueを指定した場合は境界値にmaxも含める(値がmax以下であること)。</td></tr><tr><td>min</td><td>[mix, inclusive]</td><td>inclusiveは省略可能。値がminより大きい数値であること。またinclusiveにtrueを指定した場合は境界値にminも含める(値がmin以上であること)。</td></tr><tr><td>future</td><td>なし</td><td>値がDate型で現在時刻より未来であること。</td></tr><tr><td>past</td><td>なし</td><td>値がDate型で現在時刻より過去であること。</td></tr><tr><td>digits</td><td>[integer, fruction]</td><td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下であること</td></tr><tr><td>pattern</td><td>[regexp]</td><td>regexpには正規表現を指定。値がregexpを満たす文字列であること</td></tr><tr><td>size</td><td>[min, max]</td><td>値のサイズがmin以上max以下であること。ただし、値がプレーンオブジェクトの場合はプロパティの数、配列または文字列の場合はその長さをその値のサイズとする。</td></tr></tbody></table>
+</div>
 
 
 
@@ -178,8 +182,6 @@
 <table class="params">
     <thead>
     <tr>
-        
-        <th>Name</th>
         
 
         <th>Type</th>
@@ -197,39 +199,11 @@
 
         <tr>
             
-                <td class="name"><code>obj</code></td>
-            
 
             <td class="type">
             
                 
 <span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>names</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-|
-
-<span class="param-type">Array.&lt;string></span>
 
 
             
@@ -280,7 +254,400 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.func.js.html">src/h5.validation.func.js</a>, <a href="src_h5.validation.func.js.html#line201">line 201</a>
+        <a href="src_h5.validation.func.js.html">src/h5.validation.func.js</a>, <a href="src_h5.validation.func.js.html#line445">line 445</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".removeRule"><span class="type-signature">(static) </span>removeRule<span class="signature">(keys)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    ルールの削除<p><a href="Validator.html#.addRule">Validator.addRule</a>で追加したプロパティルールを削除します。</p><p>ルールの削除はプロパティ単位で行います。第1引数に対象となるプロパティ名を指定(複数指定可)します。</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>keys</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">プロパティ名またはその配列</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.validation.func.js.html">src/h5.validation.func.js</a>, <a href="src_h5.validation.func.js.html#line465">line 465</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".setOrder"><span class="type-signature">(static) </span>setOrder<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    このValidatorでバリデートするときのルールの適用順序を指定します
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.validation.func.js.html">src/h5.validation.func.js</a>, <a href="src_h5.validation.func.js.html#line479">line 479</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".validate"><span class="type-signature">(static) </span>validate<span class="signature">(obj, names<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    パラメータのバリデートを行う<p>第1引数にはバリデート対象となるオブジェクト、第2引数には第1引数のオブジェクトのうち、バリデートを行うキー名(複数の場合は配列)を指定します。</p><p>第2引数を省略した場合は第1引数のオブジェクトが持つすべてのキーがバリデート対象になります。</p><p>バリデートは<a href="Validator.html#.addRule">Validator.addRule</a>によって登録されたルールで行われます。</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>obj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>names</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.validation.func.js.html">src/h5.validation.func.js</a>, <a href="src_h5.validation.func.js.html#line209">line 209</a>
     </li></ul></dd>
     
 
@@ -324,7 +691,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Nov 24 2015 19:15:28 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Wed Nov 25 2015 13:04:31 GMT+0900 (JST)
 	</footer>
 </div>
 

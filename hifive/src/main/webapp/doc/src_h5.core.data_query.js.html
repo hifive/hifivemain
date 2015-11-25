@@ -237,16 +237,16 @@
 	/** ORDER BY句に指定されたkey名がschemaに存在しない */
 	var ERR_CODE_ORDER_BY_KEY = 2;
 
-	/** ORDER BY句に指定された、昇順、降順の指定が不正 */
-	var ERR_CODE_ORDER_BY_CLAUSE = 3;
+	/** ORDER BY句に指定された比較関数が不正 */
+	var ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID = 3;
 
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_NO_COMPARE_FUNCTIONS] = '演算子"{0}"で"{1}"型の値を比較することはできません';
-	errMsgMap[ERR_CODE_ORDER_BY_KEY] = 'ORDER BY句の指定が不正です。指定されたキー({0})は存在しません';
-	errMsgMap[ERR_CODE_ORDER_BY_CLAUSE] = 'ORDER BY句の指定が不正です。指定されたorder句:{0} "key名 ASC"または"key名 DESC"またはソート関数を指定してください';
+	errMsgMap[ERR_CODE_ORDER_BY_KEY] = '{0}の第1引数が不正です。指定されたキー({1})はモデル{2}に存在しません';
+	errMsgMap[ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID] = 'orderByの第1引数が不正です。比較関数を関数で指定してください';
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
 
@@ -557,7 +557,7 @@
 	/**
 	 * Queryクラス
 	 * &lt;p>
-	 * {@link DataModel#createQuery}の戻り値がこのクラスのインスタンスです。
+	 * {@link DataModel.createQuery}の戻り値がこのクラスのインスタンスです。
 	 * &lt;/p>
 	 *
 	 * @class
@@ -589,16 +589,6 @@
 		 * @type {DataModel}
 		 */
 		this._model = model;
-
-		/**
-		 * ライブクエリかどうか。デフォルトfalse
-		 *
-		 * @private
-		 * @name _isLive
-		 * @memberOf Query
-		 * @type {Boolean}
-		 */
-		this._isLive = false;
 	}
 	// TODO 今は何もイベントをあげていないのでeventDispatcherにする必要がない。仕様が決まったら対応する。
 	//	h5.mixin.eventDispatcher.mix(Query.prototype);
@@ -607,7 +597,7 @@
 		/**
 		 * 検索条件オブジェクトをセットします
 		 * &lt;p>
-		 * 検索の実行({@link Query#execute})を実行した時に、ここで指定した検索条件オブジェクトに基づいて検索を実行します。
+		 * 検索の実行({@link Query.execute})を実行した時に、ここで指定した検索条件オブジェクトに基づいて検索を実行します。
 		 * &lt;/p>
 		 * &lt;p>
 		 * 検索条件オブジェクトは、"プロパティ名 (演算子)"をキーにして、比較する値を値に持つオブジェクトを指定します。
@@ -643,20 +633,16 @@
 		 */
 		setCriteria: function(criteria) {
 			this._criteria = compileCriteria(criteria);
-			if (this._isLive) {
-				// ライブクエリならセット時に検索
-				this.execute();
-			}
 			return this;
 		},
 
 		/**
 		 * 検索を実行
 		 * &lt;p>
-		 * {@link Query#setCriteria}で設定した検索条件で検索します。検索が完了すると{@link result}に結果が格納されます。
+		 * {@link Query.setCriteria}で設定した検索条件で検索します。検索が完了すると{@link result}に結果が格納されます。
 		 * &lt;/p>
 		 * &lt;p>
-		 * また、{@link Query#onQueryComplete}に設定したハンドラが呼ばれます。
+		 * また、{@link Query.onQueryComplete}に設定したハンドラが呼ばれます。
 		 * &lt;/p>
 		 *
 		 * @memberOf Query
@@ -699,56 +685,54 @@
 			return this;
 		},
 
-		/**
-		 * クエリをライブクエリにします
-		 * &lt;p>
-		 * ライブクエリにすると、検索条件がセットされた時やDataModelに変更があった時に検索結果が動的に変更されます。(executeを呼ぶ必要がありません)
-		 * &lt;/p>
-		 *
-		 * @see Query#unsetLive
-		 * @memberOf Query
-		 * @returns {Query}
-		 */
-		setLive: function() {
-			// ライブクエリ設定済みなら何もしない
-			if (this._isLive) {
-				return;
-			}
-			// リスナ未作成なら作成
-			this._listener = this._listener || createChangeListener(this);
-			this._model.addEventListener('itemsChange', this._listener);
-			this._isLive = true;
-
-			return this;
-		},
-
-		/**
-		 * ライブクエリを解除します
-		 *
-		 * @see Query#setLive
-		 * @memberOf Query
-		 * @returns {Query}
-		 */
-		unsetLive: function() {
-			// ライブクエリでなければ何もしない
-			if (!this._isLive) {
-				return;
-			}
-			this._model.removeEventListener('itemsChange', this._listener);
-			this._isLive = false;
-			return this;
-		},
+		// TODO Liveクエリの仕様は再検討する
+		//		/**
+		//		 * クエリをライブクエリにします
+		//		 * &lt;p>
+		//		 * ライブクエリにすると、検索条件がセットされた時やDataModelに変更があった時に検索結果が動的に変更されます。(executeを呼ぶ必要がありません)
+		//		 * &lt;/p>
+		//		 *
+		//		 * @see Query#unsetLive
+		//		 * @memberOf Query
+		//		 * @returns {Query}
+		//		 */
+		//		setLive: function() {
+		//			// ライブクエリ設定済みなら何もしない
+		//			if (this._isLive) {
+		//				return;
+		//			}
+		//			// リスナ未作成なら作成
+		//			this._listener = this._listener || createChangeListener(this);
+		//			this._model.addEventListener('itemsChange', this._listener);
+		//			this._isLive = true;
+		//
+		//			return this;
+		//		},
+		//
+		//		/**
+		//		 * ライブクエリを解除します
+		//		 *
+		//		 * @see Query#setLive
+		//		 * @memberOf Query
+		//		 * @returns {Query}
+		//		 */
+		//		unsetLive: function() {
+		//			// ライブクエリでなければ何もしない
+		//			if (!this._isLive) {
+		//				return;
+		//			}
+		//			this._model.removeEventListener('itemsChange', this._listener);
+		//			this._isLive = false;
+		//			return this;
+		//		},
 
 		/**
 		 * 検索結果のソート条件を設定
 		 * &lt;p>
-		 * 比較関数または文字列で指定します
+		 * 比較関数で指定します。単にあるプロパティで昇順あるいは降順にしたい場合は{@link Query.orderByAsc}または{@link Query.orderByDesc}を使用できます。
 		 * &lt;/p>
 		 * &lt;p>
-		 * 文字列の場合は、'プロパティ名 ASC|DESC'のようにしてします。指定したプロパティの値でソートし、ASCは昇順、DESCは降順指定、省略すると昇順でソートします。
-		 * &lt;/p>
-		 * &lt;p>
-		 * 比較関数を指定する場合、以下の例のように実装してください。
+		 * 比較関数は、以下の例のように実装してください。
 		 * &lt;/p>
 		 *
 		 * &lt;pre class="sh_javascript">
@@ -760,43 +744,60 @@
 		 * &lt;/pre>
 		 *
 		 * @memberOf Query
-		 * @param {String|Function}
+		 * @param {Function} compareFunction
 		 * @returns {Query}
 		 */
-		orderBy: function(orderByClause) {
-			// compareFuncの作成
-			if (isFunction(orderByClause)) {
-				this._compareFunction = orderByClause;
-				this.result.sort(this._compareFunction);
-				return this;
+		orderBy: function(compareFunction) {
+			// 比較関数のエラーチェック
+			if (!isFunction(compareFunction)) {
+				throwFwError(ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID);
+				return;
 			}
-			if (!orderByClause || !isString(orderByClause)) {
-				// エラー
-				throwFwError(ERR_CODE_ORDER_BY_CLAUSE, [orderByClause]);
-			}
-			var tmp = orderByClause.split(' ');
-			var key = $.trim(tmp[0]);
+			return this._orderBy(compareFunction);
+		},
 
+		/**
+		 * 検索結果のソート条件を指定したプロパティについての昇順に設定
+		 * &lt;p>
+		 * 検索結果のソート条件を指定したプロパティについての昇順に設定します。第1引数には比較対象となるキー名を指定してください。
+		 * &lt;/p>
+		 *
+		 * @memberOf Query
+		 * @param {string} key
+		 * @returns {Query}
+		 */
+		orderByAsc: function(key) {
 			// keyがschemaにあるかどうかチェックする
 			var schema = this._model.schema;
 			if (!schema.hasOwnProperty(key)) {
 				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
-				throwFwError(ERR_CODE_ORDER_BY_KEY, [this._model.name, key]);
+				throwFwError(ERR_CODE_ORDER_BY_KEY, ['orderByAsc', key, this._model.name]);
 			}
+			return this._orderBy(createAscCompareFunction(key));
+		},
 
-			var order = tmp[1] ? $.trim(tmp[1].toUpperCase()) : 'ASC';
-			if (order === 'DESC') {
-				this._compareFunction = createDescCompareFunction(key);
-			} else if (order === 'ASC') {
-				this._compareFunction = createAscCompareFunction(key);
-			} else {
-				// エラー
-				throwFwError(ERR_CODE_ORDER_BY_CLAUSE, [orderByClause]);
+		/**
+		 * 検索結果のソート条件を指定したプロパティについての降順に設定
+		 * &lt;p>
+		 * 検索結果のソート条件を指定したプロパティについての降順に設定します。第1引数には比較対象となるキー名を指定してください。
+		 * &lt;/p>
+		 *
+		 * @memberOf Query
+		 * @param {string} key
+		 * @returns {Query}
+		 */
+		orderByDesc: function(key) {
+			// keyがschemaにあるかどうかチェックする
+			var schema = this._model.schema;
+			if (!schema.hasOwnProperty(key)) {
+				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
+				throwFwError(ERR_CODE_ORDER_BY_KEY, ['orderByDesc', key, this._model.name]);
 			}
-			// ライブクエリならソートする
-			if (this._isLive) {
-				this.result.sort(this._compareFunction);
-			}
+			return this._orderBy(createDescCompareFunction(key));
+		},
+
+		_orderBy: function(compareFunction) {
+			this._compareFunction = compareFunction;
 			return this;
 		}
 	});
@@ -837,7 +838,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Nov 24 2015 19:15:25 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Wed Nov 25 2015 13:04:28 GMT+0900 (JST)
 	</footer>
 </div>
 

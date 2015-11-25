@@ -225,10 +225,7 @@
 	}
 
 	/**
-	 * validatorクラス
-	 * &lt;p>
-	 * バリデートを行うクラス
-	 * &lt;/p>
+	 * Validatorクラス
 	 *
 	 * @class
 	 * @name Validator
@@ -238,9 +235,20 @@
 	}
 	$.extend(Validator.prototype, {
 		/**
+		 * パラメータのバリデートを行う
+		 * &lt;p>
+		 * 第1引数にはバリデート対象となるオブジェクト、第2引数には第1引数のオブジェクトのうち、バリデートを行うキー名(複数の場合は配列)を指定します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 第2引数を省略した場合は第1引数のオブジェクトが持つすべてのキーがバリデート対象になります。
+		 * &lt;/p>
+		 * &lt;p>
+		 * バリデートは{@link Validator.addRule}によって登録されたルールで行われます。
+		 * &lt;/p>
+		 *
 		 * @memberOf Validator
 		 * @param {Object} obj
-		 * @param {string|string[]} names
+		 * @param {string|string[]} [names]
 		 */
 		validate: function(obj, names) {
 			var validProperties = [];
@@ -375,6 +383,109 @@
 			}
 			return validationResult;
 		},
+
+		/**
+		 * バリデートルールを追加する
+		 * &lt;p>
+		 * {@link Validator.validate}でバリデートを行う際のバリデートルールを追加します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * バリデートルールは以下のようなオブジェクトで指定します。
+		 *
+		 * &lt;pre class="sh_javascript">&lt;code>
+		 * validator.addRule({
+		 * 	// 対象となるプロパティ名(userid)をキーにする
+		 * 		userid: {
+		 * 			// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。
+		 * 			require: true,
+		 * 			pattern: /&amp;circ;[a-z|0-9]*$/,
+		 * 			size: [4, 10]
+		 * 		}
+		 * 	});
+		 * &lt;/code>&lt;/pre>
+		 *
+		 * 上記の場合、useridは指定が必須(require指定)かつ/&amp;circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 以下のようなルールが標準で定義されています。また{@link h5.validation.defineRule}で独自ルールを定義することもできます。
+		 * &lt;/p>
+		 * &lt;table>&lt;thead>
+		 * &lt;tr>
+		 * &lt;th>ルール名&lt;/th>
+		 * &lt;th>パラメータ&lt;/th>
+		 * &lt;th>定義&lt;/th>
+		 * &lt;/tr>
+		 * &lt;/thead>&lt;tbody>
+		 * &lt;tr>
+		 * &lt;td>require&lt;/td>
+		 * &lt;td>なし&lt;/td>
+		 * &lt;td>値がnull,undefined,空文字のいずれでもないこと&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>customFunc&lt;/td>
+		 * &lt;td>func&lt;/td>
+		 * &lt;td>funcには第1引数に値を取る関数を指定する。funcがtrueを返すこと。&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>nul&lt;/td>
+		 * &lt;td>なし&lt;/td>
+		 * &lt;td>値がnullまたはundefinedであること&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>notNull&lt;/td>
+		 * &lt;td>なし&lt;/td>
+		 * &lt;td>値がnullまたはundefinedでないこと&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>assertFalse&lt;/td>
+		 * &lt;td>なし&lt;/td>
+		 * &lt;td>値がfalseであること&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>assertTrue&lt;/td>
+		 * &lt;td>なし&lt;/td>
+		 * &lt;td>値がtrueであること&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>max&lt;/td>
+		 * &lt;td>[max, inclusive]&lt;/td>
+		 * &lt;td>inclusiveは省略可能。値がmax未満の数値であること。またinclusiveにtrueを指定した場合は境界値にmaxも含める(値がmax以下であること)。&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>min&lt;/td>
+		 * &lt;td>[mix, inclusive]&lt;/td>
+		 * &lt;td>inclusiveは省略可能。値がminより大きい数値であること。またinclusiveにtrueを指定した場合は境界値にminも含める(値がmin以上であること)。&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>future&lt;/td>
+		 * &lt;td>なし&lt;/td>
+		 * &lt;td>値がDate型で現在時刻より未来であること。&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>past&lt;/td>
+		 * &lt;td>なし&lt;/td>
+		 * &lt;td>値がDate型で現在時刻より過去であること。&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>digits&lt;/td>
+		 * &lt;td>[integer, fruction]&lt;/td>
+		 * &lt;td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下であること&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>pattern&lt;/td>
+		 * &lt;td>[regexp]&lt;/td>
+		 * &lt;td>regexpには正規表現を指定。値がregexpを満たす文字列であること&lt;/td>
+		 * &lt;/tr>
+		 * &lt;tr>
+		 * &lt;td>size&lt;/td>
+		 * &lt;td>[min, max]&lt;/td>
+		 * &lt;td>値のサイズがmin以上max以下であること。ただし、値がプレーンオブジェクトの場合はプロパティの数、配列または文字列の場合はその長さをその値のサイズとする。&lt;/td>
+		 * &lt;/tr>
+		 * &lt;/tbody>&lt;/table>
+		 *
+		 * @memberOf Validator
+		 * @param {Object}
+		 */
 		addRule: function(ruleObject) {
 			for ( var prop in ruleObject) {
 				var propRule = ruleObject[prop];
@@ -382,6 +493,19 @@
 				this._rule[prop] = propRule;
 			}
 		},
+
+		/**
+		 * ルールの削除
+		 * &lt;p>
+		 * {@link Validator.addRule}で追加したプロパティルールを削除します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * ルールの削除はプロパティ単位で行います。第1引数に対象となるプロパティ名を指定(複数指定可)します。
+		 * &lt;/p>
+		 *
+		 * @memberOf Validator
+		 * @param {string|string[]} keys プロパティ名またはその配列
+		 */
 		removeRule: function(keys) {
 			if (!isArray(keys)) {
 				delete this._rule[keys];
@@ -390,7 +514,15 @@
 				delete this._rule[keys[i]];
 			}
 		},
-		setOrder: function(ruleOrder) {},
+
+		/**
+		 * このValidatorでバリデートするときのルールの適用順序を指定します
+		 *
+		 * @memberOf Validator
+		 */
+		setOrder: function(ruleOrder) {
+		// TODO 未実装
+		},
 
 		_createFailureReason: function(ruleName, value, param) {
 			return {
@@ -403,12 +535,10 @@
 
 	/**
 	 * FormValidatorクラス
-	 * &lt;p>
-	 * フォームに入力された値のバリデートを行うクラス
-	 * &lt;/p>
 	 *
 	 * @class
 	 * @name FormValidator
+	 * @extends Validator
 	 */
 	function FormValidator() {
 		this._rule = {};
@@ -892,6 +1022,7 @@
 		 *
 		 * @memberOf h5.validation.func
 		 * @param {Any} value 判定する値
+		 * @param {RegExp} regexp 正規表現オブジェクト
 		 * @returns {boolean}
 		 */
 		pattern: function(value, regexp) {
@@ -999,7 +1130,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Nov 24 2015 19:15:25 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Wed Nov 25 2015 13:04:28 GMT+0900 (JST)
 	</footer>
 </div>
 
