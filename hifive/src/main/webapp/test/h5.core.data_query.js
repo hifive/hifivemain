@@ -185,12 +185,12 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			price: 22000
 		});
-		query.orderByAsc('id').execute();
-		var result = query.result;
-		ok(h5.core.data.isObservableArray(result), '結果はObservableArrayで返ってくること');
+		var queryResult = query.orderByAsc('id').execute();
+		var result = queryResult.result;
+		ok($.isArray(result), '検索結果はQueryResultでresultプロパティが配列であること');
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('2'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(1), this.model.get('8'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[0], this.model.get('2'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[1], this.model.get('8'), '検索条件を満たすアイテムが格納されていること');
 	});
 
 	//=============================
@@ -221,7 +221,7 @@ $(function() {
 		result = this.model.createQuery().setCriteria({
 			id: '1'
 		}).execute().result;
-		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のデータアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('1'), 'id==="1"のデータアイテムが検索結果に格納されていること');
 	});
 
 	test('"="を指定した場合は"==="で比較されること', 2, function() {
@@ -232,29 +232,29 @@ $(function() {
 		result = this.model.createQuery().setCriteria({
 			'id =': '1'
 		}).execute().result;
-		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のデータアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('1'), 'id==="1"のデータアイテムが検索結果に格納されていること');
 	});
 
 	test('"!="を指定した場合は"!=="で比較されること', 21, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id !=': 5
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 10, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		var index = 0;
 		for ( var id in this.model.items) {
-			strictEqual(this.model.items[id], result.get(index++), '検索結果を満たすアイテムが検索結果に格納されていること');
+			strictEqual(this.model.items[id], result[index++], '検索結果を満たすアイテムが検索結果に格納されていること');
 		}
 
 		result = this.model.createQuery().setCriteria({
 			'id !=': '5'
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 9, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		index = 0;
 		for ( var id in this.model.items) {
 			if (id === '5') {
 				continue;
 			}
-			strictEqual(this.model.items[id], result.get(index++), '検索結果を満たすアイテムが検索結果に格納されていること');
+			strictEqual(this.model.items[id], result[index++], '検索結果を満たすアイテムが検索結果に格納されていること');
 		}
 	});
 
@@ -263,16 +263,16 @@ $(function() {
 			'price <': 1200
 		}).execute().result;
 		strictEqual(result.length, 1, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"<="を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'price <=': 1200
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('10'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('10'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('">"を指定', 2, function() {
@@ -280,55 +280,55 @@ $(function() {
 			'price >': 30000
 		}).execute().result;
 		strictEqual(result.length, 1, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('">="を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'price >=': 30000
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"between"を指定', 4, function() {
 		var result = this.model.createQuery().setCriteria({
 			'price between': [1000, 7000]
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 3, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(2), this.model.get('10'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[2], this.model.get('10'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"!between"を指定', 5, function() {
 		var result = this.model.createQuery().setCriteria({
 			'price !between': [1200, 22000]
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(2), this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(3), this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[2], this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[3], this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"in"を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['4', '2']
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"!in"を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id !in': ['1', '2', '4', '5', '7', '8', '9', '10']
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	//=============================
@@ -355,22 +355,20 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			itemname: /マウス/
 		});
-		query.orderBy(compareId).execute();
-		var result = query.result;
+		var result = query.orderBy(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('9'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(1), this.model.get('10'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[0], this.model.get('9'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[1], this.model.get('10'), '検索条件を満たすアイテムが格納されていること');
 	});
 
 	test('演算子に"="を指定した場合は正規表現にマッチするアイテムが選択されること', 3, function() {
 		var query = this.model.createQuery().setCriteria({
 			'itemname =': /マウス/
 		});
-		query.orderBy(compareId).execute();
-		var result = query.result;
+		var result = query.orderBy(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('9'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(1), this.model.get('10'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[0], this.model.get('9'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[1], this.model.get('10'), '検索条件を満たすアイテムが格納されていること');
 
 	});
 
@@ -378,17 +376,16 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			'itemname !=': /マウス/
 		});
-		query.orderBy(compareId).execute();
-		var result = query.result;
+		var result = query.orderBy(compareId).execute().result;
 		strictEqual(result.length, 8, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('1'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(1), this.model.get('2'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(2), this.model.get('3'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(3), this.model.get('4'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(4), this.model.get('5'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(5), this.model.get('6'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(6), this.model.get('7'), '検索条件を満たすアイテムが格納されていること');
-		strictEqual(result.get(7), this.model.get('8'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[1], this.model.get('2'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[2], this.model.get('3'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[3], this.model.get('4'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[4], this.model.get('5'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[5], this.model.get('6'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[6], this.model.get('7'), '検索条件を満たすアイテムが格納されていること');
+		strictEqual(result[7], this.model.get('8'), '検索条件を満たすアイテムが格納されていること');
 	});
 
 	//=============================
@@ -416,8 +413,8 @@ $(function() {
 			value: new Date('2014/7/2')
 		}).execute().result;
 		strictEqual(result.length, 2, 'id===1のデータアイテムは検索結果に格納されていないこと');
-		strictEqual(result.get(0), this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"="を指定した場合はgetTime()の"==="で比較されること', 3, function() {
@@ -425,21 +422,21 @@ $(function() {
 			'value =': new Date('2014/7/2')
 		}).execute().result;
 		strictEqual(result.length, 2, 'id===1のデータアイテムは検索結果に格納されていないこと');
-		strictEqual(result.get(0), this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"!="を指定した場合は"!=="で比較されること', 6, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value !=': new Date('2014/7/2')
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 5, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		var index = 0;
 		for ( var id in this.model.items) {
 			if (id === '3' || id === '4') {
 				continue;
 			}
-			strictEqual(this.model.items[id], result.get(index++), '検索結果を満たすアイテムが検索結果に格納されていること');
+			strictEqual(this.model.items[id], result[index++], '検索結果を満たすアイテムが検索結果に格納されていること');
 		}
 	});
 
@@ -448,17 +445,17 @@ $(function() {
 			'value <': new Date('2014/7/1')
 		}).execute().result;
 		strictEqual(result.length, 1, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 
 	test('"<="を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value <=': new Date('2014/7/1')
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('">"を指定', 3, function() {
@@ -466,60 +463,60 @@ $(function() {
 			'value >': new Date('2014/7/2')
 		}).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('5'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('5'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('">="を指定', 5, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value >=': new Date('2014/7/2')
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(2), this.model.get('5'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(3), this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[2], this.model.get('5'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[3], this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"between"を指定', 5, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value between': [new Date('2014/7/1'), new Date('2014/7/3')]
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(2), this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(3), this.model.get('5'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[2], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[3], this.model.get('5'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"!between"を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value !between': [new Date('2014/7/1'), new Date('2014/7/3')]
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"in"を指定', 4, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value in': [new Date('2014/7/4'), new Date('2014/7/2')]
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 3, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(2), this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[2], this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	test('"!in"を指定', 5, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value !in': [new Date('2014/7/4'), new Date('2014/7/2')]
-		}).execute().orderBy(compareId).result;
+		}).orderBy(compareId).execute().result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(2), this.model.get('5'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(3), this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[2], this.model.get('5'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[3], this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	//=============================
@@ -590,18 +587,18 @@ $(function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).orderByAsc('id').execute().result;
-		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
+		strictEqual(result[0], this.model.get('1'), 'id==="1"のアイテムが0番目');
+		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result[2], this.model.get('2'), 'id==="2"のアイテムが2番目');
 	});
 
 	test('orderByDesc', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
 		}).orderByDesc('id').execute().result;
-		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+		strictEqual(result[0], this.model.get('2'), 'id==="2"のアイテムが0番目');
+		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
 	});
 
 	test('比較関数を指定してソート', 3, function() {
@@ -611,9 +608,9 @@ $(function() {
 			// idを数値で評価して降順
 			return parseInt(b.get('id')) - parseInt(a.get('id'));
 		}).execute().result;
-		strictEqual(result.get(0), this.model.get('10'), 'id==="10"のアイテムが0番目');
-		strictEqual(result.get(1), this.model.get('2'), 'id==="2"のアイテムが1番目');
-		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+		strictEqual(result[0], this.model.get('10'), 'id==="10"のアイテムが0番目');
+		strictEqual(result[1], this.model.get('2'), 'id==="2"のアイテムが1番目');
+		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
 	});
 
 	test('orderByAscに存在しないキー名を指定するとエラー', function() {
@@ -707,9 +704,9 @@ $(function() {
 			}
 		}).execute().result;
 		strictEqual(result.length, 3, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
-		strictEqual(result.get(0), this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(1), this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
-		strictEqual(result.get(2), this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[1], this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
+		strictEqual(result[2], this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
 	});
 
 	// TODO ライブクエリの仕様は再検討する
@@ -742,7 +739,7 @@ $(function() {
 	//		var item = this.model.create({
 	//			id: 'a'
 	//		});
-	//		strictEqual(result.get(0), item, 'DataModelに新しく追加したアイテムが検索結果に格納されていること');
+	//		strictEqual(result[0], item, 'DataModelに新しく追加したアイテムが検索結果に格納されていること');
 	//	});
 	//
 	//	test('検索結果に含まれるアイテムがDataModelから削除された時、検索結果から削除されること', 2, function() {
@@ -750,7 +747,7 @@ $(function() {
 	//			id: '1'
 	//		}).setLive().execute();
 	//		var result = query.result;
-	//		strictEqual(result.get(0), this.model.get('1'), '検索条件にマッチするアイテムが結果に格納されていること');
+	//		strictEqual(result[0], this.model.get('1'), '検索条件にマッチするアイテムが結果に格納されていること');
 	//		this.model.remove('1');
 	//		strictEqual(result.length, 0, 'DataModelのitemが削除されたら検索結果からも削除されること');
 	//	});
@@ -761,7 +758,7 @@ $(function() {
 	//		}).setLive().execute();
 	//		var result = query.result;
 	//		var item = this.model.get('1');
-	//		strictEqual(result.get(0), item, '検索条件にマッチするアイテムが検索結果に格納されていること');
+	//		strictEqual(result[0], item, '検索条件にマッチするアイテムが検索結果に格納されていること');
 	//		item.set('itemname', '4Kテレビ');
 	//		strictEqual(result.length, 0, '検索条件を満たさなくなったアイテムは検索結果から外されていること');
 	//	});
@@ -774,7 +771,7 @@ $(function() {
 	//		strictEqual(result.length, 0, '検索条件にマッチするアイテムが無いとき、検索結果は長さ0であること');
 	//		var item = this.model.get('1');
 	//		item.set('itemname', '4Kテレビ');
-	//		strictEqual(result.get(0), item, '検索条件にマッチするようになったアイテムが検索結果に格納されていること');
+	//		strictEqual(result[0], item, '検索条件にマッチするようになったアイテムが検索結果に格納されていること');
 	//	});
 	//
 	//	test('ライブクエリにorderByを指定すると、指定したタイミングでソートされること', 6, function() {
@@ -783,14 +780,14 @@ $(function() {
 	//		}).setLive().execute();
 	//		var result = query.result;
 	//		query.orderByAsc('id');
-	//		strictEqual(result.get(0), this.model.get('1'), 'id==="1"のアイテムが0番目');
-	//		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-	//		strictEqual(result.get(2), this.model.get('2'), 'id==="2"のアイテムが2番目');
+	//		strictEqual(result[0], this.model.get('1'), 'id==="1"のアイテムが0番目');
+	//		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
+	//		strictEqual(result[2], this.model.get('2'), 'id==="2"のアイテムが2番目');
 	//
 	//		query.orderByDesc('id');
-	//		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-	//		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-	//		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+	//		strictEqual(result[0], this.model.get('2'), 'id==="2"のアイテムが0番目');
+	//		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
+	//		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
 	//	});
 	//
 	//	test('ライブクエリにorderByを指定すると、検索結果に変更があった場合にもソートされること', 7, function() {
@@ -800,18 +797,18 @@ $(function() {
 	//		var result = query.result;
 	//		query.orderByAsc('price');
 	//		this.model.get('2').set('price', '0');
-	//		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-	//		strictEqual(result.get(1), this.model.get('10'), 'id==="10"のアイテムが1番目');
-	//		strictEqual(result.get(2), this.model.get('1'), 'id==="1"のアイテムが2番目');
+	//		strictEqual(result[0], this.model.get('2'), 'id==="2"のアイテムが0番目');
+	//		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
+	//		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
 	//
 	//		this.model.create({
 	//			id: '100',
 	//			price: 1
 	//		});
-	//		strictEqual(result.get(0), this.model.get('2'), 'id==="2"のアイテムが0番目');
-	//		strictEqual(result.get(1), this.model.get('100'), 'id==="100"のアイテムが1番目');
-	//		strictEqual(result.get(2), this.model.get('10'), 'id==="10"のアイテムが2番目');
-	//		strictEqual(result.get(3), this.model.get('1'), 'id==="1"のアイテムが3番目');
+	//		strictEqual(result[0], this.model.get('2'), 'id==="2"のアイテムが0番目');
+	//		strictEqual(result[1], this.model.get('100'), 'id==="100"のアイテムが1番目');
+	//		strictEqual(result[2], this.model.get('10'), 'id==="10"のアイテムが2番目');
+	//		strictEqual(result[3], this.model.get('1'), 'id==="1"のアイテムが3番目');
 	//	});
 	//
 	//	test('unsetLiveでライブクエリを解除できること', 2, function() {
@@ -820,9 +817,9 @@ $(function() {
 	//		}).setLive().execute();
 	//		var result = query.result;
 	//		query.unsetLive();
-	//		var item = result.get(0);
+	//		var item = result[0];
 	//		item.set('itemname', 'hoge');
-	//		strictEqual(result.get(0), item, 'unsetLive()したクエリはデータアイテムの変更があっても検索結果は変わらないこと');
+	//		strictEqual(result[0], item, 'unsetLive()したクエリはデータアイテムの変更があっても検索結果は変わらないこと');
 	//		query.execute();
 	//		strictEqual(result.length, 0, '再度execute()すると変更が反映されること');
 	//	});

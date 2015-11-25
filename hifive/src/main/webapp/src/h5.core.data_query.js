@@ -511,6 +511,36 @@
 	}
 
 	/**
+	 * QueryResultクラス
+	 * <p>
+	 * {@link Query.execute}がこのクラスのインスタンスを返します
+	 * </p>
+	 * <p>
+	 * {@link QueryResult.result}プロパティにクエリ結果が格納されています
+	 * </p>
+	 *
+	 * @class
+	 * @name QueryResult
+	 */
+	/**
+	 * @private
+	 * @param {DataItem[]} result
+	 */
+	function QueryResult(result) {
+		/**
+		 * クエリ結果配列
+		 * <p>
+		 * {@link Query.execute}によって選択された{@link DataItem}が格納された配列です。
+		 * </p>
+		 *
+		 * @memberOf QueryResult
+		 * @name result
+		 * @type {DataItem[]}
+		 */
+		this.result = result;
+	}
+
+	/**
 	 * Queryクラス
 	 * <p>
 	 * {@link DataModel.createQuery}の戻り値がこのクラスのインスタンスです。
@@ -524,18 +554,6 @@
 	 * @param {DataModel} model データモデル
 	 */
 	function Query(model) {
-		/**
-		 * 検索結果の配列(ObservableArray)
-		 * <p>
-		 * 検索結果配列は中身は変わってもインスタンスは変わりません。
-		 * </p>
-		 *
-		 * @name result
-		 * @memberOf Query
-		 * @type {ObservableArray}
-		 */
-		this.result = h5.core.data.createObservableArray();
-
 		/**
 		 * 検索対象のデータモデル
 		 *
@@ -595,21 +613,19 @@
 		/**
 		 * 検索を実行
 		 * <p>
-		 * {@link Query.setCriteria}で設定した検索条件で検索します。検索が完了すると{@link result}に結果が格納されます。
+		 * {@link Query.setCriteria}で設定した検索条件で検索し、結果を{@link QueryResult}で返します。
 		 * </p>
 		 * <p>
 		 * また、{@link Query.onQueryComplete}に設定したハンドラが呼ばれます。
 		 * </p>
 		 *
 		 * @memberOf Query
-		 * @returns {Query}
+		 * @returns {QueryResult}
 		 */
 		execute: function() {
 			// 新しくdeferredを作成
 			this._executeDfd = h5.async.deferred();
-			var result = this.result;
-			// resultを一旦空にする
-			result.copyFrom(null);
+			var result = [];
 			for ( var id in this._model.items) {
 				var item = this._model.items[id];
 				// マッチするなら結果に追加
@@ -622,7 +638,7 @@
 				result.sort(this._compareFunction);
 			}
 			this._executeDfd.resolveWith(this, [result]);
-			return this;
+			return new QueryResult(result);
 		},
 
 		/**
