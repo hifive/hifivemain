@@ -181,18 +181,30 @@
 	}
 
 	/**
-	 * validatorクラス
+	 * Validatorクラス
 	 *
 	 * @class
+	 * @name Validator
 	 */
 	function Validator() {
 		this._rule = {};
 	}
 	$.extend(Validator.prototype, {
 		/**
+		 * パラメータのバリデートを行う
+		 * <p>
+		 * 第1引数にはバリデート対象となるオブジェクト、第2引数には第1引数のオブジェクトのうち、バリデートを行うキー名(複数の場合は配列)を指定します。
+		 * </p>
+		 * <p>
+		 * 第2引数を省略した場合は第1引数のオブジェクトが持つすべてのキーがバリデート対象になります。
+		 * </p>
+		 * <p>
+		 * バリデートは{@link Validator.addRule}によって登録されたルールで行われます。
+		 * </p>
+		 *
 		 * @memberOf Validator
 		 * @param {Object} obj
-		 * @param {string|string[]} names
+		 * @param {string|string[]} [names]
 		 */
 		validate: function(obj, names) {
 			var validProperties = [];
@@ -327,6 +339,109 @@
 			}
 			return validationResult;
 		},
+
+		/**
+		 * バリデートルールを追加する
+		 * <p>
+		 * {@link Validator.validate}でバリデートを行う際のバリデートルールを追加します。
+		 * </p>
+		 * <p>
+		 * バリデートルールは以下のようなオブジェクトで指定します。
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * validator.addRule({
+		 * 	// 対象となるプロパティ名(userid)をキーにする
+		 * 		userid: {
+		 * 			// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。
+		 * 			require: true,
+		 * 			pattern: /&circ;[a-z|0-9]*$/,
+		 * 			size: [4, 10]
+		 * 		}
+		 * 	});
+		 * </code></pre>
+		 *
+		 * 上記の場合、useridは指定が必須(require指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。
+		 * </p>
+		 * <p>
+		 * 以下のようなルールが標準で定義されています。また{@link h5.validation.defineRule}で独自ルールを定義することもできます。
+		 * </p>
+		 * <table><thead>
+		 * <tr>
+		 * <th>ルール名</th>
+		 * <th>パラメータ</th>
+		 * <th>定義</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <td>require</td>
+		 * <td>なし</td>
+		 * <td>値がnull,undefined,空文字のいずれでもないこと</td>
+		 * </tr>
+		 * <tr>
+		 * <td>customFunc</td>
+		 * <td>func</td>
+		 * <td>funcには第1引数に値を取る関数を指定する。funcがtrueを返すこと。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>nul</td>
+		 * <td>なし</td>
+		 * <td>値がnullまたはundefinedであること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>notNull</td>
+		 * <td>なし</td>
+		 * <td>値がnullまたはundefinedでないこと</td>
+		 * </tr>
+		 * <tr>
+		 * <td>assertFalse</td>
+		 * <td>なし</td>
+		 * <td>値がfalseであること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>assertTrue</td>
+		 * <td>なし</td>
+		 * <td>値がtrueであること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>max</td>
+		 * <td>[max, inclusive]</td>
+		 * <td>inclusiveは省略可能。値がmax未満の数値であること。またinclusiveにtrueを指定した場合は境界値にmaxも含める(値がmax以下であること)。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>min</td>
+		 * <td>[mix, inclusive]</td>
+		 * <td>inclusiveは省略可能。値がminより大きい数値であること。またinclusiveにtrueを指定した場合は境界値にminも含める(値がmin以上であること)。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>future</td>
+		 * <td>なし</td>
+		 * <td>値がDate型で現在時刻より未来であること。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>past</td>
+		 * <td>なし</td>
+		 * <td>値がDate型で現在時刻より過去であること。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>digits</td>
+		 * <td>[integer, fruction]</td>
+		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下であること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>pattern</td>
+		 * <td>[regexp]</td>
+		 * <td>regexpには正規表現を指定。値がregexpを満たす文字列であること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>size</td>
+		 * <td>[min, max]</td>
+		 * <td>値のサイズがmin以上max以下であること。ただし、値がプレーンオブジェクトの場合はプロパティの数、配列または文字列の場合はその長さをその値のサイズとする。</td>
+		 * </tr>
+		 * </tbody></table>
+		 *
+		 * @memberOf Validator
+		 * @param {Object}
+		 */
 		addRule: function(ruleObject) {
 			for ( var prop in ruleObject) {
 				var propRule = ruleObject[prop];
@@ -334,6 +449,19 @@
 				this._rule[prop] = propRule;
 			}
 		},
+
+		/**
+		 * ルールの削除
+		 * <p>
+		 * {@link Validator.addRule}で追加したプロパティルールを削除します。
+		 * </p>
+		 * <p>
+		 * ルールの削除はプロパティ単位で行います。第1引数に対象となるプロパティ名を指定(複数指定可)します。
+		 * </p>
+		 *
+		 * @memberOf Validator
+		 * @param {string|string[]} keys プロパティ名またはその配列
+		 */
 		removeRule: function(keys) {
 			if (!isArray(keys)) {
 				delete this._rule[keys];
@@ -342,7 +470,15 @@
 				delete this._rule[keys[i]];
 			}
 		},
-		setOrder: function(ruleOrder) {},
+
+		/**
+		 * このValidatorでバリデートするときのルールの適用順序を指定します
+		 *
+		 * @memberOf Validator
+		 */
+		setOrder: function(ruleOrder) {
+		// TODO 未実装
+		},
 
 		_createFailureReason: function(ruleName, value, param) {
 			return {
@@ -357,6 +493,8 @@
 	 * FormValidatorクラス
 	 *
 	 * @class
+	 * @name FormValidator
+	 * @extends Validator
 	 */
 	function FormValidator() {
 		this._rule = {};
@@ -840,6 +978,7 @@
 		 *
 		 * @memberOf h5.validation.func
 		 * @param {Any} value 判定する値
+		 * @param {RegExp} regexp 正規表現オブジェクト
 		 * @returns {boolean}
 		 */
 		pattern: function(value, regexp) {
