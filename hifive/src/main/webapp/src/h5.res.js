@@ -274,20 +274,15 @@
 		 * </p>
 		 *
 		 * @memberOf Dependency
-		 * @param {String} type
 		 * @returns {Promise} 依存関係の解決を待機するプロミスオブジェクト
 		 */
-		resolve: function(type) {
+		resolve: function() {
 			// リゾルバを特定する
 			function resolveInner(resourceKey) {
 				for (var i = 0, l = resolvers.length; i < l; i++) {
-					if (type && type !== resolvers[i].type) {
-						// typeが指定されている場合はtypeと一致するかどうか見る
-						continue;
-					}
-					// typeが指定されていない場合は条件とマッチするか判定
+					// 条件とマッチするか判定
 					var test = resolvers[i].test;
-					if (!type && test) {
+					if (test) {
 						if ($.type(test) === 'regexp') {
 							if (!test.test(resourceKey)) {
 								continue;
@@ -300,7 +295,7 @@
 					}
 
 					// リゾルバを実行
-					return resolvers[i].resolver(resourceKey, type);
+					return resolvers[i].resolver(resourceKey);
 				}
 				// false以外のものを返すリゾルバが無かった場合はfalseを返す
 				return false;
@@ -566,10 +561,9 @@
 	 * jsファイルのデフォルトのリゾルバを作成する
 	 *
 	 * @param {String} resourceKey
-	 * @param {String} type
 	 * @returns {Function} Viewリゾルバ
 	 */
-	function resolveJs(resourceKey, type) {
+	function resolveJs(resourceKey) {
 		// loadScriptでロードする
 		return h5.u.loadScript(getFilePath(resourceKey));
 	}
@@ -577,10 +571,9 @@
 	 * cssファイルのデフォルトのリゾルバを作成する
 	 *
 	 * @param {String} resoruceKey
-	 * @param {String} type
 	 * @returns {Function} Viewリゾルバ
 	 */
-	function resolveCss(resourceKey, type) {
+	function resolveCss(resourceKey) {
 		var head = document.getElementsByTagName('head')[0];
 
 		var cssNode = document.createElement('link');
