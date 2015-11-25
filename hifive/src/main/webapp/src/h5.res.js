@@ -275,6 +275,7 @@
 		 *
 		 * @memberOf Dependency
 		 * @param {String} type
+		 * @returns {Promise} 依存関係の解決を待機するプロミスオブジェクト
 		 */
 		resolve: function(type) {
 			// リゾルバを特定する
