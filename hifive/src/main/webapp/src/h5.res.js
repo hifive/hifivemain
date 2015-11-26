@@ -274,15 +274,20 @@
 		 * </p>
 		 *
 		 * @memberOf Dependency
+		 * @param {String} type
 		 * @returns {Promise} 依存関係の解決を待機するプロミスオブジェクト
 		 */
-		resolve: function() {
+		resolve: function(type) {
 			// リゾルバを特定する
 			function resolveInner(resourceKey) {
 				for (var i = 0, l = resolvers.length; i < l; i++) {
-					// 条件とマッチするか判定
+					if (type && type !== resolvers[i].type) {
+						// typeが指定されている場合はtypeと一致するかどうか見る
+						continue;
+					}
+					// typeが指定されていない場合は条件とマッチするか判定
 					var test = resolvers[i].test;
-					if (test) {
+					if (!type && test) {
 						if ($.type(test) === 'regexp') {
 							if (!test.test(resourceKey)) {
 								continue;
@@ -295,7 +300,7 @@
 					}
 
 					// リゾルバを実行
-					return resolvers[i].resolver(resourceKey);
+					return resolvers[i].resolver(resourceKey, type);
 				}
 				// false以外のものを返すリゾルバが無かった場合はfalseを返す
 				return false;
@@ -571,6 +576,7 @@
 	 * cssファイルのデフォルトのリゾルバを作成する
 	 *
 	 * @param {String} resoruceKey
+	 * @param {String} type
 	 * @returns {Function} Viewリゾルバ
 	 */
 	function resolveCss(resourceKey) {

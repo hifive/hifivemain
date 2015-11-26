@@ -337,6 +337,28 @@ $(function() {
 		});
 	});
 
+	asyncTest('cssファイルの依存解決(typeにcssfile指定)', function() {
+		var cssFile = './h5resdata/data/css/test.css';
+		h5.res.dependsOn(cssFile).resolve('cssfile').done(function(result) {
+			strictEqual($(result).attr('href'), cssFile, 'doneハンドラにlinkタグ要素が渡されること');
+
+			var $h1 = $('<h1>hoge</h1>');
+			$('#qunit-fixture').append($h1);
+			gate({
+				func: function() {
+					return $h1.css('font-size') === '111px';
+				},
+				failMessage: 'スタイルが適用されていません'
+			}).done(function() {
+				ok(true, 'cssファイルがロードされてスタイルが適用されていること');
+			}).always(function() {
+				// linkタグの除去
+				$(result).remove();
+				start();
+			});
+		});
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -804,6 +826,61 @@ $(function() {
 			}
 		});
 		h5.res.dependsOn('hoge').resolve();
+	});
+
+	test('typeを指定した場合の使用するリゾルバの判定', function() {
+		var resolvers = h5.res.resolvers;
+		resolvers.splice(0, resolvers.length, {
+			type: 'a',
+			test: function() {
+				ok(false, '指定されたtypeと異なるリゾルバのtest関数は実行されないこと');
+			},
+			resolver: function() {
+				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
+			}
+		}, {
+			type: 'b',
+			resolver: function() {
+				ok(true, 'typeが一致するリゾルバは実行されること');
+			}
+		});
+		h5.res.dependsOn('hoge').resolve('b');
+
+		var testExecuted = false;
+		resolvers.splice(0, resolvers.length, {
+			type: 'b',
+			test: function() {
+				textExecuted = true;
+			},
+			resolver: function() {
+				ok(!testExecuted, 'type指定された場合、test関数は実行されないこと');
+			}
+		});
+		h5.res.dependsOn('hoge').resolve('b');
+
+		var testExecuted = false;
+		resolvers.splice(0, resolvers.length, {
+			type: 'b',
+			test: /fuga/,
+			resolver: function() {
+				ok(!testExecuted, 'type指定された場合、testに指定した正規表現による判定は実行されないこと');
+			}
+		});
+		h5.res.dependsOn('hoge').resolve('b');
+	});
+
+
+	test('指定したtypeにマッチするリゾルバがない場合', 1, function() {
+		var resolvers = h5.res.resolvers;
+
+		resolvers.splice(0, resolvers.length, {
+			type: 'a',
+			resolver: function() {
+				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
+				return false;
+			}
+		});
+		strictEqual(h5.res.dependsOn('hoge').resolve('b'), false, 'resolve()はfalseを返すこと');
 	});
 
 	test('全てのリゾルバについてtestが条件を満たさない場合', 1, function() {
