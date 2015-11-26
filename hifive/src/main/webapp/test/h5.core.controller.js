@@ -7759,6 +7759,21 @@ $(function() {
 		}).readyPromise.done(start);
 	});
 
+	test('__defaultParamがプレーンオブジェクトでない場合はエラー', function() {
+		var expectErrorCode = ERR.ERR_CODE_CONTROLLER_INVALID_INIT_DEFAULT_PARAM;
+		var invalidValues = [true, ['a'], new Date()];
+		for (var i = 0, l = invalidValues.length; i < l; i++) {
+			throws(function() {
+				h5.core.controller(this.$controllerTarget, {
+					__name: 'defaultParamTest' + i,
+					__defaultParam: invalidValues[i]
+				});
+			}, function(e) {
+				return e.code === expectErrorCode;
+			});
+		}
+	});
+
 	//=============================
 	// Definition
 	//=============================
