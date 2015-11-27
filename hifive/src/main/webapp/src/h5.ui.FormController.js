@@ -137,17 +137,25 @@
 		// container,tagNameの設定
 		_containerSetting: {},
 		// validationResultからメッセージを作るための設定
-		_validateOutputSetting: {},
-		reset: function(containerSetting, validateOutputSetting) {
+		_messageSetting: {},
+		reset: function(containerSetting, messageSetting) {
 			this._containerSetting = containerSetting;
-			this._validateOutputSetting = validateOutputSetting;
+			// TODO reset呼ばれる前にaddMessageSetting呼ばれた場合でも動く様にしている
+			this._messageSetting = $.extend({}, messageSetting, this._addedMessageSetting);
+			for ( var p in this._addedMessageSetting) {
+				this._messageSetting[p] = $.extend({}, messageSetting[p],
+						this._addedMessageSetting[p]);
+			}
 			this.clearAll();
+		},
+		addMessageSetting: function(messageSetting) {
+			this._addedMessageSetting = $.extend({}, this._messageSetting, messageSetting);
 		},
 		clearMessage: function(container) {
 			var container = container || this._containerSetting.container;
 			$(container).empty();
 		},
-		appendMessage: function(message, contaienr, tagName) {
+		appendMessage: function(message, container, tagName) {
 			// 未指定ならsettingに設定されたコンテナ
 			var container = container || this._containerSetting.container;
 			var $container = $(container);
@@ -155,27 +163,31 @@
 				return;
 			}
 
-			var tagName = tagName || this._containerSetting.wrapper || 'p'; // デフォルトはpタグ
-			var msgElement = document.createElement(tagName);
-			$(msgElement).html(message);
+			var tagName = tagName || this._containerSetting.wrapper;
+			// tagName未設定ならテキストノード
+			var msgElement = tagName ? $(document.createElement(tagName)).html(message) : document
+					.createTextNode(message);
 			$container.append(msgElement);
 		},
-		appendMessageByValidationResult: function(result, container, tagName) {
+		appendMessageByValidationResult: function(result, names, container, tagName) {
 			var invalidProperties = result.invalidProperties;
+			names = isString(names) ? [names] : names;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
+				if (names && $.inArray(name, names) === -1) {
+					continue;
+				}
 				var failureReason = result.failureReason[name];
 				var message = h5internal.validation.createValidateErrorMessage(name, failureReason,
-						this._validateOutputSetting[name]);
+						this._messageSetting[name]);
 				this.appendMessage(message, container, tagName);
 			}
 			if (result.isAllValid === null) {
 				// 非同期でまだ結果が返ってきていないものがある場合
 				result.addEventListener('validate', this.own(function(ev) {
 					if (!ev.isValid) {
-						var message = h5internal.validation.createValidateErrorMessage(ev.property,
-								ev.failureReason, this._validateOutputSetting[ev.property]);
-						this.appendMessage(message, container, tagName);
+						this.appendMessageByValidationResult(ev.target, ev.property, container,
+								tagName);
 					}
 				}));
 				return;
@@ -310,10 +322,23 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.AllMessage',
+		_message: {},
 		_messageOutputController: h5.ui.validation.MessageOutput,
 		onValidate: function(result, globalSetting, outputSetting) {
 			this._messageOutputController.clearMessage();
 			this._messageOutputController.appendMessageByValidationResult(result);
+		},
+		/**
+		 * このプラグインが出力するメッセージを設定する
+		 *
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param {string} name
+		 * @param {object} messageObj message,formatterを持つオブジェクト
+		 */
+		setMessage: function(name, messageObj) {
+			var setting = {};
+			setting[name] = messageObj;
+			this._messageOutputController.addMessageSetting(setting);
 		},
 		reset: function(globalSetting, outputSetting) {
 			this._messageOutputController.reset(globalSetting, outputSetting);
@@ -333,6 +358,7 @@
 	var controller = {
 		__name: 'h5.ui.validation.ErrorBaloon',
 		_executedOnValidate: false,
+		_message: {},
 		onValidate: function(result, globalSetting, outputSetting) {
 			this._executedOnValidate = true;
 		},
@@ -358,15 +384,30 @@
 			this._executedOnValidate = false;
 		},
 
+		/**
+		 * このプラグインが出力するメッセージを設定する
+		 *
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param {string} name
+		 * @param {object} messageObj message,formatterを持つオブジェクト
+		 */
+		setMessage: function(name, messageObj) {
+			this._message[name] = {
+				message: messageObj.message,
+				formatter: messageObj.formatter
+			};
+		},
+
 		_setErrorBaloon: function(element, name, globalSetting, setting, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
-			var pluginSetting = $.extend({}, globalSetting, setting && setting.baloon);
 			if (setting && setting.baloon && setting.baloon.off) {
 				return;
 			}
+			var pluginSetting = $.extend({}, globalSetting, setting && setting.baloon,
+					this._message[name]);
 
 			var replaceElement = pluginSetting.replaceElement;
 			var target = isFunction(replaceElement) ? replaceElement(element)
@@ -390,8 +431,10 @@
 			}
 
 			// validateエラーがあるとき
-			var msg = h5internal.validation
-					.createValidateErrorMessage(name, failureReason, setting);
+			var messageSetting = $.extend({}, setting, setting && setting.errorMessage,
+					this._message[name]);
+			var msg = h5internal.validation.createValidateErrorMessage(name, failureReason,
+					messageSetting);
 			var placement = DEFAULT_PLACEMENT;
 			if (setting && setting.baloon && setting.baloon.placement) {
 				placement = setting.baloon.placement;
@@ -428,7 +471,9 @@
 	var controller = {
 		__name: 'h5.ui.validation.ErrorMessage',
 		_executedOnValidate: false,
+		_message: {},
 		_errorMessageElementMap: {},
+		_messageOutputController: h5.ui.validation.MessageOutput,
 		onValidate: function(result, globalSetting, outputSetting) {
 			this._executedOnValidate = true;
 			this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
@@ -466,15 +511,29 @@
 			this._executedOnValidate = false;
 		},
 
+		/**
+		 * このプラグインが出力するメッセージを設定する
+		 *
+		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @param {string} name
+		 * @param {object} messageObj message,formatterを持つオブジェクト
+		 */
+		setMessage: function(name, messageObj) {
+			this._message[name] = {
+				message: messageObj.message,
+				formatter: messageObj.formatter
+			};
+		},
+
 		_setErrorMessage: function(element, name, globalSetting, setting, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
-			var pluginSetting = $.extend({}, globalSetting, setting && setting.errorMessage);
 			if (setting && setting.errorMessage && setting.errorMessage.off) {
 				return;
 			}
+			var pluginSetting = $.extend({}, globalSetting, setting && setting.errorMessage);
 			if (type === 'blur') {
 				// blurの時はメッセージを非表示にして、終了
 				this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
@@ -510,15 +569,18 @@
 				this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
 				return;
 			}
-			var msg = h5internal.validation
-					.createValidateErrorMessage(name, failureReason, setting);
+			var messageSetting = $.extend({}, setting, setting && setting.errorMessage,
+					this._message[name]);
+			var msg = h5internal.validation.createValidateErrorMessage(name, failureReason,
+					messageSetting);
 			var $errorMsg = this._errorMessageElementMap[name];
 			if (!$errorMsg) {
 				// TODO タグやクラスを設定できるようにする
 				$errorMsg = $('<span class="errorMessage">');
 				this._errorMessageElementMap[name] = $errorMsg;
 			}
-			$errorMsg.html(msg);
+			this._messageOutputController.clearMessage($errorMsg);
+			this._messageOutputController.appendMessage(msg, $errorMsg);
 			if (errorPlacement) {
 				errorPlacement($errorMsg[0], target);
 			} else {
@@ -1101,6 +1163,16 @@
 			// <input name="zip2" data-inputgroup="zipCode"/>
 			// の2つがある場合は1つ目を返している。
 			return $groupElements[0];
+		},
+
+		/**
+		 * プラグイン名からプラグインインスタンスを取得
+		 *
+		 * @param pluginName
+		 * @returns {Controller}
+		 */
+		getPlugin: function(pluginName) {
+			return this._plugins[pluginName];
 		},
 
 		'{rootElement} focusin': function(ctx) {

@@ -44,7 +44,7 @@
 				}
 			},
 			formController: h5.ui.FormController,
-			__init: function() {
+			__ready: function() {
 				// プラグインの有効化
 				this.formController.enablePlugins(['allMessage', 'errorClass', 'errorMessage',
 						'baloon']);
@@ -77,7 +77,6 @@
 						wrapper: 'li'
 					},
 					baloon: {
-						off: true,
 						placement: 'top'
 					}
 				};
@@ -89,7 +88,9 @@
 						label: '性別',
 						message: '[%=label%]は必ずどちらかを指定してください',
 						errorMessage: {
-							off: true
+							replaceElement: function($el) {
+								return $el.closest('.radio');
+							}
 						}
 					},
 					birthday: {
@@ -131,6 +132,9 @@
 							}
 						}
 					},
+					address: {
+						label: 'お住まい'
+					},
 					agree: {
 						message: '利用規約への同意が必要です',
 						baloon: {
@@ -146,9 +150,22 @@
 						}
 					}
 				};
-
-				// エラーメッセージテンプレートの設定(正規表現のメッセージをデフォルトのものを上書き)
-				// 				this.formController.invalidMessageView.register('pattern', '[%=label%]が正しくありません');
+				// プラグインのsetMessage
+				this.formController.getPlugin('baloon').setMessage('name', {
+					message: '※必須'
+				});
+				// プラグインのsetMessage
+				this.formController.getPlugin('errorMessage').setMessage('address', {
+					// message: '[%= label %]は選択肢の中から当てはまるものを選んでください',
+					// ↑と同じ↓
+					formatter: function(param) {
+						return param.label + 'は選択肢の中から当てはまるものを選んでください';
+					}
+				});
+				// プラグインのsetMessage
+				this.formController.getPlugin('allMessage').setMessage('sex', {
+					message: '[%=label%]の入力は必須です'
+				});
 			},
 			'{.resetValidation} click': function() {
 				// 動作確認のため1秒後
