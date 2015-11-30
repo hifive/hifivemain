@@ -1274,7 +1274,6 @@
 			}
 
 			var validateTargetName = groupName || name;
-			var validateTargetElement = groupName ? this.getElementByName(groupName) : target;
 
 			var validationResult = this._validate(validateTargetName);
 
@@ -1290,8 +1289,11 @@
 				}));
 			}
 
-			this._callPluginElementEvent(type, validateTargetElement, validateTargetName,
-					validationResult);
+			this._callPluginElementEvent(type, target, name, validationResult);
+			if (groupName) {
+				var groupTarget = this.getElementByName(groupName);
+				this._callPluginElementEvent(type, groupTarget, groupName, validationResult);
+			}
 		},
 
 		/**

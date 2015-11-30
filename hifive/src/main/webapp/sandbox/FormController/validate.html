@@ -102,6 +102,11 @@
 							replaceElement: function($el) {
 								return $el.closest('.form-inline');
 							}
+						},
+						errorClass:{
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
 						}
 					},
 					month: {
@@ -207,7 +212,7 @@
 						<label class="control-label">生年月日</label>
 						<div class="form-inline">
 							<input name="year" type="text" placeholder="年(西暦)"
-								class="form-control" size="4" data-require />年<input
+								class="form-control" size="4" data-max="[2015,true]" data-require />年<input
 								name="month" type="text" placeholder="月" class="form-control"
 								size="2" data-require />月<input name="day" type="text"
 								placeholder="日" class="form-control" size="2" data-require />日
