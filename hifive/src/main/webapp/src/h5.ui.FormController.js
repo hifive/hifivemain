@@ -377,12 +377,12 @@
 		onBlur: function(element, globalSetting, setting, validationResult) {
 			this._setErrorBaloon(element, name, globalSetting, setting, validationResult, 'blur');
 		},
-		//		onChange: function(element,name, globalSetting, setting, errorReason) {
+		//		onChange: function(element, name, globalSetting, setting, errorReason) {
 		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
 		//		},
-		//		onKeyup: function(element, name, globalSetting, setting, validationResult, errorReason) {
-		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
-		//		},
+		onKeyup: function(element, name, globalSetting, setting, validationResult, errorReason) {
+			this._setErrorBaloon(element, name, globalSetting, setting, validationResult, 'keyup');
+		},
 		//		onClick: function(element,name, globalSetting, setting, errorReason) {
 		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
 		//		},
@@ -425,9 +425,38 @@
 				return;
 			}
 
-			if (type === 'blur') {
+			if (type === 'blur' || element !== document.activeElement) {
+				// フォーカスが外れた時、該当要素にフォーカスが当たっていない場合は非表示にする
 				$(target).tooltip('hide');
 				this._currentBaloonTarget = null;
+				return;
+			}
+			var placement = DEFAULT_PLACEMENT;
+			if (setting && setting.baloon && setting.baloon.placement) {
+				placement = setting.baloon.placement;
+			} else if (globalSetting && globalSetting.placement) {
+				placement = globalSetting.placement;
+			}
+			var messageSetting = $.extend({}, setting, setting && setting.errorMessage,
+					this._message[name]);
+
+			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
+				// 非同期バリデートの結果待ちの場合
+				validationResult.addEventListener('validate', this.own(function(ev) {
+					if (element !== document.activeElement) {
+						return;
+						// 非同期バリデート終了時に既にフォーカスが外れていたら何もしない
+					}
+					if (ev.isValid) {
+						// validならバルーンを隠す
+						$(target).tooltip('hide');
+						return;
+					}
+					// invalidならツールチップ表示
+					this._setTooltip(target, placement, h5internal.validation
+							.createValidateErrorMessage(name, ev.target.failureReason[ev.property],
+									messageSetting));
+				}));
 				return;
 			}
 			var failureReason = validationResult.failureReason
@@ -440,19 +469,13 @@
 			}
 
 			// validateエラーがあるとき
-			var messageSetting = $.extend({}, setting, setting && setting.errorMessage,
-					this._message[name]);
-			var msg = h5internal.validation.createValidateErrorMessage(name, failureReason,
-					messageSetting);
-			var placement = DEFAULT_PLACEMENT;
-			if (setting && setting.baloon && setting.baloon.placement) {
-				placement = setting.baloon.placement;
-			} else if (globalSetting && globalSetting.placement) {
-				placement = globalSetting.placement;
-			}
+			this._setTooltip(target, placement, h5internal.validation.createValidateErrorMessage(
+					name, failureReason, messageSetting));
+		},
+		_setTooltip: function(target, placement, message) {
 			$(target).attr({
 				'data-placement': placement,
-				'data-original-title': msg,
+				'data-original-title': message,
 				// FIXME animationをtrueにすると、show/hide/showを同期で繰り返した時に表示されない
 				// (shown.bs.tooltipイベントとか拾って制御する必要あり)
 				// 一旦animationをoffにしている
@@ -460,11 +483,8 @@
 			}).tooltip({
 				trigger: 'manual'
 			});
-			if (type === 'focus') {
-				$(target).tooltip('show');
-				this._currentBaloonTarget = target;
-				return;
-			}
+			$(target).tooltip('show');
+			this._currentBaloonTarget = target;
 		}
 	};
 	h5.core.expose(controller);
