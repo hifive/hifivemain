@@ -35,94 +35,185 @@
 <link href="sample.css" rel="stylesheet">
 <script>
 	$(function() {
-		h5.core.controller(document.body, {
-			__name: 'sample.PageController',
-			_objIndex: 0,
-			sampleLogic: {
-				__name: 'sample.sampleLogic',
-				isExistUserid: function(userid) {
-					var dfd = this.deferred();
-					var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
-					setTimeout(function() {
-						// ユーザIDがhifiveだったらrejectする
-						if (userid === 'hifive') {
-							// rejectのパラメータはサーバが返すメッセージを想定
-							dfd.reject({
-								valid: false,
-								userid:userid,
-								reason: 'already exist'
-							});
-							return;
-						}
-						dfd.resolve({valid:true,userid:userid});
-					}, waitingTime);
-					return dfd.promise();
-				}
-			},
-			__meta: {
-				formController: {
-					rootElement: '#form1'
-				}
-			},
-			formController: h5.ui.FormController,
-			__ready: function() {
-				var logic = this.sampleLogic;
-
-				// validateルール設定
-				this.formController.addRule({
-					userid: {
-						require: true,
-						size: [3, 10],
-						customFunc: logic.own(logic.isExistUserid)
-					}
-				});
-				// プラグインの有効化
-				this.formController.enablePlugins(['allMessage', 'errorClass', 'errorMessage',
-						'baloon']);
-				// エラー出力設定
-				this.formController.globalSetting = {
-					errorClass: {
-						errorClassName: 'has-error',
-						successClassName: 'success',
-						// 非同期validate用の設定。validate中に適用するクラス名
-						validatingClassName: 'validating',
-						replaceElement: function(element) {
-							// エラークラス追加対象は、input等の親のform-group要素に変換する
-							return $(element).closest('.form-group');
-						}
-					},
-					allMessage: {
-						container: this.$find('.globalError'),
-						wrapper: 'li'
-					}
-				};
-				this.formController.outputSetting = {
-					userid: {
-						formatter: function(param) {
-							switch (param.rule) {
-							case 'require':
-								return '必須です';
-							case 'size':
-								var max = param.param.max;
-								var min = param.param.min;
-								var val = param.value;
-								if (val.length < min) {
-									return '短すぎます';
-								} else {
-									return '長すぎます';
+		var REGEXP_MAIL_ADRESS = /^[-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i;
+		h5.core
+				.controller(
+						document.body,
+						{
+							__name: 'sample.PageController',
+							_objIndex: 0,
+							sampleLogic: {
+								__name: 'sample.sampleLogic',
+								isExistUserid: function(userid) {
+									var dfd = this.deferred();
+									var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
+									setTimeout(function() {
+										// ユーザIDがhifiveだったらrejectする
+										if (userid === 'hifive') {
+											// rejectのパラメータはサーバが返すメッセージを想定
+											dfd.reject({
+												valid: false,
+												value: userid,
+												code: '1001',
+												message: 'already exist'
+											});
+											return;
+										}
+										dfd.resolve({
+											valid: true,
+											value: userid
+										});
+									}, waitingTime);
+									return dfd.promise();
+								},
+								isExistMail: function(mail) {
+									var dfd = this.deferred();
+									var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
+									setTimeout(function() {
+										// メールがhifive@hifive.comだったらrejectする
+										if (mail === 'hifive@hifive.com') {
+											// rejectのパラメータはサーバが返すメッセージを想定
+											dfd.reject({
+												valid: false,
+												value: mail,
+												code: '1001',
+												message: 'already exist'
+											});
+											return;
+										}
+										dfd.resolve({
+											valid: true,
+											value: mail
+										});
+									}, waitingTime);
+									return dfd.promise();
+								},
+								isCorrectMail: function(mail) {
+									var dfd = this.deferred();
+									var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
+									setTimeout(function() {
+										// メールアドレスの正規表現チェック
+										if (!REGEXP_MAIL_ADRESS.test(mail)) {
+											// rejectのパラメータはサーバが返すメッセージを想定
+											dfd.reject({
+												valid: false,
+												value: mail,
+												code: '1002',
+												message: 'incorrect mail'
+											});
+											return;
+										}
+										dfd.resolve({
+											valid: true,
+											value: mail
+										});
+									}, waitingTime);
+									return dfd.promise();
 								}
-							case 'customFunc':
-								var serverMessage = param.rejectReason;
+							},
+							__meta: {
+								formController: {
+									rootElement: '#form1'
+								}
+							},
+							formController: h5.ui.FormController,
+							__ready: function() {
+								var logic = this.sampleLogic;
 
+								// validateルール設定
+								h5.validation.defineRule('isCorrectMail', logic
+										.own(logic.isCorrectMail));
+								this.formController.addRule({
+									userid: {
+										require: true,
+										size: [3, 10],
+										customFunc: logic.own(logic.isExistUserid)
+									},
+									mail: {
+										require: true,
+										customFunc: logic.own(logic.isExistMail),
+										isCorrectMail: true,
+									}
+								});
+								// プラグインの有効化
+								this.formController.enablePlugins(['allMessage', 'errorMessage',
+										'errorClass', 'baloon']);
+								// エラー出力設定
+								this.formController.globalSetting = {
+									errorClass: {
+										errorClassName: 'has-error',
+										successClassName: 'success',
+										// 非同期validate用の設定。validate中に適用するクラス名
+										validatingClassName: 'validating',
+										replaceElement: function(element) {
+											// エラークラス追加対象は、input等の親のform-group要素に変換する
+											return $(element).closest('.form-group');
+										}
+									},
+									allMessage: {
+										container: this.$find('.globalError'),
+										wrapper: 'li'
+									}
+								};
+								this.formController.outputSetting = {
+									userid: {
+										formatter: function(param) {
+											switch (param.rule) {
+											case 'require':
+												return '必須です';
+											case 'size':
+												var max = param.param.max;
+												var min = param.param.min;
+												var val = param.value;
+												if (val.length < min) {
+													return '短すぎます';
+												} else {
+													return '長すぎます';
+												}
+											case 'customFunc':
+												var serverMessage = param.rejectReason[0];
+												switch (serverMessage.code) {
+												case '1001':
+													return h5.u.str
+															.format(
+																	'{label}:"{value}"は既に登録されています。(code={1.code}) "{1.message}"',
+																	param, serverMessage);
+												}
+											}
+										}
+									},
+									mail: {
+										formatter: function(param) {
+											switch (param.rule) {
+											case 'require':
+												return '必須です';
+											case 'customFunc':
+												var serverMessage = param.rejectReason[0];
+												switch (serverMessage.code) {
+												case '1001':
+													return h5.u.str
+															.format(
+																	'{label}:"{value}"は既に登録されています。(code={1.code}) "{1.message}"',
+																	param, serverMessage);
+												}
+											case 'isCorrectMail':
+												var serverMessage = param.rejectReason[0];
+												switch (serverMessage.code) {
+												case '1002':
+													return h5.u.str
+															.format(
+																	'{label}:"{value}" 正しいメールアドレスではありません。(code={1.code}) "{1.message}"',
+																	param, serverMessage);
+												}
+											}
+										}
+									}
+								};
+							},
+							'{.resetValidation} click': function() {
+								this.formController.resetValidation();
 							}
-						}
-					}
-				};
-			},
-			'{.resetValidation} click': function() {
-				this.formController.resetValidation();
-			}
-		});
+						});
 	});
 </script>
 <title>フォームのvalidateサンプル</title>
@@ -151,7 +242,21 @@
 							aria-hidden="true"></span></span>
 						<p>重複チェックのため非同期validateするサンプル。動作確認のため"hifive"を既存のIDとして、失敗扱いにしています。</p>
 						<input name="userid" type="text" class="form-control"
-							value="hifive" />
+							value="hifive" data-require data-size="[3,10]" />
+					</div>
+
+					<div class="form-group">
+						<label class="control-label">メールアドレス</label> <span
+							class="validateIconWrapper"><span
+							class="glyphicon glyphicon-ok-circle icon-success"
+							aria-hidden="true"></span><span
+							class="glyphicon glyphicon glyphicon-hourglass icon-validating"
+							aria-hidden="true"></span><span
+							class="glyphicon glyphicon-remove-circle icon-error"
+							aria-hidden="true"></span></span>
+						<p>非同期バリデートを複数行うサンプル。hifive@hfiive.comを失敗扱いにし、さらに、メールアドレスとして正しい正規表現かどうかも非同期でチェック。</p>
+						<input name="mail" type="text" class="form-control"
+							value="hifive@hifive.com" data-require />
 					</div>
 
 					<div class="form-group">

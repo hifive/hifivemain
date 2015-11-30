@@ -267,7 +267,12 @@
 						// 結果が返ってきたらvalidateイベントをあげるようにしておく
 						isAsyncProp = true;
 						propertyWaitingPromsies[prop] = propertyWaitingPromsies[prop] || [];
-						propertyWaitingPromsies[prop].push(ret);
+						// プロミス自体にルール名と値と引数を覚えさせておく
+						propertyWaitingPromsies[prop].push(ret.promise({
+							ruleName: ruleName,
+							value: value,
+							param: param
+						}));
 					}
 
 					// 同期の場合
@@ -308,7 +313,7 @@
 				// 非同期の場合、結果が返って気次第イベントをあげる
 				for ( var prop in propertyWaitingPromsies) {
 					var promises = propertyWaitingPromsies[prop];
-					waitForPromises(promises, (function(_prop) {
+					var doneHandler = (function(_prop) {
 						return function() {
 							// 既にinvalidになっていたらもう何もしない
 							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
@@ -320,21 +325,36 @@
 								isValid: true
 							});
 						};
-					})(prop), (function(_prop, _ruleName, _value, _param) {
+					})(prop);
+					var failHandler = (function(_prop, _promises, _param) {
 						return function() {
 							// 一つでも失敗したらfailCallbackが実行される
 							// 既にinvalidになっていたらもう何もしない
 							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
 								return;
 							}
+							// どのルールのプロミスがrejectされたか
+							var ruleName, value;
+							for (var i = 0, l = _promises.length; i < l; i++) {
+								var p = _promises[i];
+								if (isRejected(p)) {
+									ruleName = p.ruleName;
+									value = p.value;
+									param = p.param;
+									break;
+								}
+							}
 							validationResult.dispatchEvent({
 								type: EVENT_VALIDATE,
 								property: _prop,
 								isValid: false,
-								failureReason: that._createFailureReason(_ruleName, _value, _param)
+								failureReason: that._createFailureReason(ruleName, value, param,
+										arguments),
 							});
 						};
-					})(prop, ruleName, value, param));
+					})(prop, promises);
+					// failハンドラでどのプロミスの失敗かを判定したいのでwaitForPromisesではなくwhenを使用している
+					$.when.apply($, promises).done(doneHandler).fail(failHandler);
 				}
 			}
 			return validationResult;
@@ -480,12 +500,22 @@
 		// TODO 未実装
 		},
 
-		_createFailureReason: function(ruleName, value, param) {
-			return {
+		/**
+		 * @param ruleName
+		 * @param value
+		 * @param param
+		 * @param rejectReason 非同期バリデートの場合、failハンドラに渡された引数リスト
+		 */
+		_createFailureReason: function(ruleName, value, param, failHandlerArgs) {
+			var ret = {
 				rule: ruleName,
 				value: value,
 				param: param
 			};
+			if (failHandlerArgs) {
+				ret.rejectReason = h5.u.obj.argsToArray(failHandlerArgs);
+			}
+			return ret;
 		}
 	});
 

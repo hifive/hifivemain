@@ -86,6 +86,7 @@
 			value: reason.value,
 			param: reason.param,
 			rule: reason.rule,
+			rejectReason: reason.rejectReason,
 			name: name,
 			label: label
 		};
@@ -185,7 +186,7 @@
 			if (result.isAllValid === null) {
 				// 非同期でまだ結果が返ってきていないものがある場合
 				result.addEventListener('validate', this.own(function(ev) {
-					if (!ev.isValid) {
+					if (!ev.isValid && !names || $.inArray(ev.property, names) !== -1) {
 						this.appendMessageByValidationResult(ev.target, ev.property, container,
 								tagName);
 					}
