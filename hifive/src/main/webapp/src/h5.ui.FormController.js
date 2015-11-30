@@ -170,6 +170,12 @@
 					.createTextNode(message);
 			$container.append(msgElement);
 		},
+		/**
+		 * validate結果からメッセージを作成して表示する
+		 * <p>
+		 * 非同期の結果待ちであるValidationResultも対応。その場合は非同期バリデートの結果が返ってきたタイミングでメッセージを表示する
+		 * </p>
+		 */
 		appendMessageByValidationResult: function(result, names, container, tagName) {
 			var invalidProperties = result.invalidProperties;
 			names = isString(names) ? [names] : names;
@@ -187,8 +193,10 @@
 				// 非同期でまだ結果が返ってきていないものがある場合
 				result.addEventListener('validate', this.own(function(ev) {
 					if (!ev.isValid && !names || $.inArray(ev.property, names) !== -1) {
-						this.appendMessageByValidationResult(ev.target, ev.property, container,
-								tagName);
+						var failureReason = ev.target.failureReason[ev.property];
+						var message = h5internal.validation.createValidateErrorMessage(ev.property,
+								failureReason, this._messageSetting[ev.property]);
+						this.appendMessage(message, container, tagName);
 					}
 				}));
 				return;
