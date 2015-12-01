@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: FormValidator</title>
+    <title>JSDoc: Class: QueryResult</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -34,7 +34,7 @@
 	    </div>
 	</nav>
 	<div id="main">
-	    <h1 class="page-title">Class: FormValidator</h1>
+	    <h1 class="page-title">Class: QueryResult</h1>
 	    
 
 
@@ -45,7 +45,7 @@
 <header>
     
         <h2>
-        FormValidator
+        QueryResult
         </h2>
         
     
@@ -58,14 +58,14 @@
 
     
 
-    <h4 class="name" id="FormValidator"><span class="type-signature"></span>new FormValidator<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="QueryResult"><span class="type-signature"></span>new QueryResult<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    FormValidatorクラス<p>フォーム要素を集約したオブジェクトのバリデートを行うためのクラスです。</p><p>h5.validation.createValidatorの引数に'form'を指定するとこのクラスのインスタンスが生成されます。</p><p>このクラスは<a href="Validator.html">Validator</a>クラスを継承しています。</p><p><a href="Validator.html">Validator</a>クラスとの違いは、フォーム部品に入力された文字列を、バリデートルールごとに適切な型に変換してからバリデートを行う点(例えばmaxルールなら数値に変換など)と、グループ単位のバリデートに対応しています。</p><p>グループ単位のバリデートについては<a href="FormValidator.html#.validate">FormValidator.validate</a>を参照してください。</p>
+    QueryResultクラス<p><a href="Query.html#.execute">Query.execute</a>がこのクラスのインスタンスを返します</p><p><a href="QueryResult.html#.result">QueryResult.result</a>プロパティにクエリ結果が格納されています</p>
 </div>
 
 
@@ -109,7 +109,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.func.js.html">src/h5.validation.func.js</a>, <a href="src_h5.validation.func.js.html#line535">line 535</a>
+        <a href="src_h5.core.data_query.js.html">src/h5.core.data_query.js</a>, <a href="src_h5.core.data_query.js.html#line513">line 513</a>
     </li></ul></dd>
     
 
@@ -139,17 +139,6 @@
     </div>
 
     
-        <h3 class="subsection-title">Extends</h3>
-
-        
-
-
-    <ul>
-        <li><a href="Validator.html">Validator</a></li>
-    </ul>
-
-
-    
 
     
 
@@ -160,127 +149,30 @@
     
 
     
-
-    
-        <h3 class="subsection-title">Methods</h3>
+        <h3 class="subsection-title">Members</h3>
 
         
             
+<h4 class="name" id=".result"><span class="type-signature">(static) </span>result<span class="type-signature"> :Array.&lt;<a href="DataItem.html">DataItem</a>></span></h4>
 
-    
-
-    <h4 class="name" id=".validate"><span class="type-signature">(static) </span>validate<span class="signature">(obj, names<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="ValidationResult.html">ValidationResult</a>}</span></h4>
-
-    
 
 
 
 <div class="description">
-    フォームオブジェクトのvalidateを行う<p>バリデートの基本的な動作については<a href="Validator.html#.validate">Validator.validate</a>を参照してください。</p><p>FormValidatorはバリデートルールごとにバリデート対象の値を適切な型に変換してからバリデートを行います。例えば、値が"1"という文字列であってもmaxルールで判定する場合は1という数値に対してバリデートを行います。</p><p>また、 グループとそのグループ内のプロパティについてのvalidateに対応しています。</p><p>グループとは、第1引数のオブジェクトの中に、オブジェクトを値として持つプロパティがある場合、それをグループと言います。そのグループ単位でのバリデートも行い、さらにグループ内のプロパティについてのバリデートを行います。</p><p>グループはネストすることはできません。</p><p>以下はbirthdayをグループとして扱いvalidateを行う場合の例です。</p><pre class="sh_javascript"><code>var formValidator = h5.u.validation.createValidator('form');formValidator.addRule({	birthday: {		customFunc: function(val) {			// 日付として正しいか判定する			!isNaN(new Date(val.year, val.month - 1, val.date).getTime());		}	},	year: {		require: true	},	month: {		require: true	},	day: {		require: true	}});formValidator.validate({	birthday: {		year: 1999,		month: 1,		date: 1	}});</code></pre><p>グループはそのグループ(birthday)のルールによるvalidateが行われる。</p><p>また、year,month,dayもそれぞれのルールに基づいてvalidateが行われる。</p>
+    クエリ結果配列<p><a href="Query.html#.execute">Query.execute</a>によって選択された<a href="DataItem.html">DataItem</a>が格納された配列です。</p>
 </div>
 
 
 
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
+    <h5>Type:</h5>
+    <ul>
+        <li>
             
-                <td class="name"><code>obj</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
+<span class="param-type">Array.&lt;<a href="DataItem.html">DataItem</a>></span>
 
 
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">バリデート対象となるオブジェクト</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>names</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-|
-
-<span class="param-type">Array.&lt;string></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
+        </li>
+    </ul>
 
 
 
@@ -315,7 +207,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.func.js.html">src/h5.validation.func.js</a>, <a href="src_h5.validation.func.js.html#line625">line 625</a>
+        <a href="src_h5.core.data_query.js.html">src/h5.core.data_query.js</a>, <a href="src_h5.core.data_query.js.html#line530">line 530</a>
     </li></ul></dd>
     
 
@@ -331,39 +223,9 @@
 
 
 
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
         
-<div class="param-desc">
-    バリデート結果
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="ValidationResult.html">ValidationResult</a></span>
-
-
-    </dd>
-</dl>
-
     
 
-
-
-        
     
 
     
@@ -381,7 +243,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 01 2015 17:43:34 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 01 2015 17:43:36 GMT+0900 (JST)
 	</footer>
 </div>
 

@@ -182,6 +182,12 @@
 
 	/**
 	 * Validatorクラス
+	 * <p>
+	 * 追加されたルールに基づいてオブジェクトのバリデートを行うためのクラスです。
+	 * </p>
+	 * <p>
+	 * {@link h5.validation.createValidator}がこのクラスのインスタンスを返します
+	 * </p>
 	 *
 	 * @class
 	 * @name Validator
@@ -203,8 +209,9 @@
 		 * </p>
 		 *
 		 * @memberOf Validator
-		 * @param {Object} obj
-		 * @param {string|string[]} [names]
+		 * @param {Object} obj バリデート対象となるオブジェクト
+		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
+		 * @returns {ValidationResult} バリデート結果
 		 */
 		validate: function(obj, names) {
 			var validProperties = [];
@@ -322,6 +329,7 @@
 							validationResult.dispatchEvent({
 								type: EVENT_VALIDATE,
 								property: _prop,
+								value: obj[_prop], // validate対象のオブジェクトに指定された値
 								isValid: true
 							});
 						};
@@ -339,7 +347,7 @@
 								var p = _promises[i];
 								if (isRejected(p)) {
 									ruleName = p.ruleName;
-									value = p.value;
+									value = p.value, // ruleNameでのバリデート用に変換された値
 									param = p.param;
 									break;
 								}
@@ -495,12 +503,17 @@
 		 * このValidatorでバリデートするときのルールの適用順序を指定します
 		 *
 		 * @memberOf Validator
+		 * @param ruleOrder
 		 */
 		setOrder: function(ruleOrder) {
 		// TODO 未実装
 		},
 
 		/**
+		 * ValidationResultに格納するfailureReasonオブジェクトを作成する
+		 *
+		 * @private
+		 * @memberOf Validator
 		 * @param ruleName
 		 * @param value
 		 * @param param
@@ -521,6 +534,22 @@
 
 	/**
 	 * FormValidatorクラス
+	 * <p>
+	 * フォーム要素を集約したオブジェクトのバリデートを行うためのクラスです。
+	 * </p>
+	 * <p>
+	 * {@link h5.validation.createValidator}の引数に'form'を指定するとこのクラスのインスタンスが生成されます。
+	 * </p>
+	 * <p>
+	 * このクラスは{@link Validator}クラスを継承しています。
+	 * </p>
+	 * <p>
+	 * {@link Validator}クラスとの違いは、フォーム部品に入力された文字列を、バリデートルールごとに適切な型に変換してからバリデートを行う点(例えばmaxルールなら数値に変換など)と、
+	 * グループ単位のバリデートに対応しています。
+	 * </p>
+	 * <p>
+	 * グループ単位のバリデートについては{@link FormValidator.validate}を参照してください。
+	 * </p>
 	 *
 	 * @class
 	 * @name FormValidator
@@ -530,25 +559,47 @@
 		this._rule = {};
 	}
 	$.extend(FormValidator.prototype, Validator.prototype, {
-
 		/**
 		 * フォームオブジェクトのvalidateを行う
 		 * <p>
-		 * FormValidatorはグループとそのグループ内のプロパティについてのvalidateに対応する。
+		 * バリデートの基本的な動作については{@link Validator.validate}を参照してください。
 		 * </p>
 		 * <p>
-		 * 以下はbirthdayをループとして扱いvalidateを行う場合、
+		 * FormValidatorはバリデートルールごとにバリデート対象の値を適切な型に変換してからバリデートを行います。
+		 * 例えば、値が"1"という文字列であってもmaxルールで判定する場合は1という数値に対してバリデートを行います。
+		 * </p>
+		 * <p>
+		 * また、 グループとそのグループ内のプロパティについてのvalidateに対応しています。
+		 * </p>
+		 * <p>
+		 * グループとは、第1引数のオブジェクトの中に、オブジェクトを値として持つプロパティがある場合、それをグループと言います。
+		 * そのグループ単位でのバリデートも行い、さらにグループ内のプロパティについてのバリデートを行います。
+		 * </p>
+		 * <p>
+		 * グループはネストすることはできません。
+		 * </p>
+		 * <p>
+		 * 以下はbirthdayをグループとして扱いvalidateを行う場合の例です。
 		 * </p>
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * var formValidator = h5.u.validation.createValidator('form');
 		 * formValidator.addRule({
-		 *   birthday: {
-		 *     customFunc: function(val){...}
-		 *   },
-		 *   year: { require:true },
-		 *   month: { require:true },
-		 *   day: { require:true }
+		 * 	birthday: {
+		 * 		customFunc: function(val) {
+		 * 			// 日付として正しいか判定する
+		 * 			!isNaN(new Date(val.year, val.month - 1, val.date).getTime());
+		 * 		}
+		 * 	},
+		 * 	year: {
+		 * 		require: true
+		 * 	},
+		 * 	month: {
+		 * 		require: true
+		 * 	},
+		 * 	day: {
+		 * 		require: true
+		 * 	}
 		 * });
 		 * formValidator.validate({
 		 * 	birthday: {
@@ -567,8 +618,9 @@
 		 * </p>
 		 *
 		 * @memberOf FormValidator
-		 * @param {Object} obj
-		 * @param {string|string[]} names
+		 * @param {Object} obj バリデート対象となるオブジェクト
+		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
+		 * @returns {ValidationResult} バリデート結果
 		 */
 		validate: function(obj, names) {
 			// グループ対応。値がオブジェクトのものはグループとして扱う
@@ -597,6 +649,8 @@
 		 *
 		 * @private
 		 * @memberOf FormValidator
+		 * @param {Any} value
+		 * @param {string} ruleName ルール名
 		 */
 		_convertBeforeValidate: function(value, ruleName) {
 			switch (ruleName) {
@@ -645,26 +699,186 @@
 	/**
 	 * validation結果クラス
 	 * <p>
-	 * このクラスは{@link EventDispatcher}のメソッドを持ちます。
+	 * バリデート結果を保持するクラスです。{@link Validator.validate}、{@link FormValidator.validate}がこのクラスのインスタンスを返します。
 	 * </p>
+	 * <p>
+	 * このクラスは{@link EventDispatcher}のメソッドを持ち、イベントリスナを登録することができます。
+	 * </p>
+	 * <p>
+	 * このクラスは非同期バリデートの完了を通知するために以下のイベントをあげます。
+	 * </p>
+	 * <dl>
+	 * <dt>validate</dt>
+	 * <dd>
+	 * <p>
+	 * 非同期バリデートを行っているプロパティについて、どれか1つのバリデートが完了した。
+	 * </p>
+	 * <p>
+	 * 以下のようなイベントオブジェクトを通知します。
+	 * </p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * {
+	 * 	type: 'validate'
+	 * 	property: // バリデートが完了したプロパティ名
+	 * 	value: // バリデート対象の値
+	 * 	isValid: // バリデート結果(true/false)
+	 * 	failureReason:
+	 * 	// 失敗時のみ。該当プロパティについてのバリデート失敗理由({@link ValidationResult.failureReason}[property]}と同じ。)
+	 * }
+	 * </code></pre>
+	 *
+	 * </dd>
+	 * <dt>validateComplete</dt>
+	 * <dd>非同期バリデートを行っているすべてのプロパティのバリデートが完了した。
+	 * <p>
+	 * 以下のようなイベントオブジェクトを通知します。
+	 * </p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * {
+	 * 	type: 'validateComplete'
+	 * }
+	 * </code></pre>
+	 *
+	 * </dd>
+	 * <dt>abort</dt>
+	 * <dd>非同期バリデートが中断された。
+	 * <p>
+	 * 以下のようなイベントオブジェクトを通知します。
+	 * </p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * {
+	 * 	type: 'abort'
+	 * }
+	 * </code></pre>
+	 *
+	 * </dd>
+	 * </dl>
 	 *
 	 * @class
 	 * @name ValidationResult
+	 * @mixes EventDispatcher
 	 */
 	/**
 	 * @private
 	 * @param result
 	 */
 	function ValidationResult(result) {
+		/**
+		 * バリデーション結果
+		 * <p>
+		 * 現在完了しているバリデート全てについてバリデートが通ったかどうかをtrueまたはfalseで保持します。
+		 * </p>
+		 *
+		 * @memberOf ValidationResult
+		 * @name isValid
+		 * @type {boolean}
+		 */
 		this.isValid = result.isValid;
+
+		/**
+		 * バリデートの通ったプロパティ名の配列
+		 *
+		 * @memberOf ValidationResult
+		 * @name validProperties
+		 * @type {string[]}
+		 */
 		this.validProperties = result.validProperties;
+
+		/**
+		 * バリデートの通らなかったプロパティ名の配列
+		 *
+		 * @memberOf ValidationResult
+		 * @name invalidProperties
+		 * @type {string[]}
+		 */
 		this.invalidProperties = result.invalidProperties;
+
+		/**
+		 * バリデートの終わっていないプロパティ名の配列
+		 * <p>
+		 * 非同期バリデートが完了していないプロパティ名がここに格納されます。 非同期バリデートが完了した時点で街頭プロパティはここから取り除かれ、{@link ValidationResult.validProperties}または{@link ValidationResult.invalidPropertes}に格納されます。
+		 * </p>
+		 *
+		 * @memberOf ValidationResult
+		 * @name validatingProperties
+		 * @type {string[]}
+		 */
 		this.validatingProperties = result.validatingProperties;
+
+		/**
+		 * バリデート失敗理由
+		 * <p>
+		 * バリデート失敗の理由がここに格納されます。failureReasonは以下のようなオブジェクトです。
+		 * </p>
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * {
+		 *   &quot;プロパティ名&quot;: {
+		 *     rule: 'max'                // バリデートを行ったルール
+		 *     value: 101,                // バリデート対象の値
+		 *     param: {inclusive: 100,},  // バリデート関数に渡されたパラメータ
+		 *     rejectReason: // 非同期バリデートのみ。非同期バリデート関数が返したプロミスのfailハンドラに渡された引数リスト。
+		 *   },
+		 *   &quot;プロパティ名&quot;: {...},
+		 *   &quot;プロパティ名&quot;: {...}
+		 * }
+		 * </code></pre>
+		 *
+		 * @memberOf ValidationResult
+		 * @name failureReason
+		 * @type {object}
+		 */
 		this.failureReason = result.failureReason;
+
+		/**
+		 * バリデート成功したプロパティ数
+		 *
+		 * @memberOf ValidationResult
+		 * @name validCount
+		 * @type {integer}
+		 */
 		this.validCount = result.validProperties.length;
+
+		/**
+		 * バリデート失敗したプロパティ数
+		 *
+		 * @memberOf ValidationResult
+		 * @name invalidCount
+		 * @type {integer}
+		 */
 		this.invalidCount = result.invalidProperties.length;
+
+		/**
+		 * 非同期バリデートがあるかどうか
+		 *
+		 * @memberOf ValidationResult
+		 * @name isAsync
+		 * @type {boolean}
+		 */
 		this.isAsync = result.isAsync;
+
+		/**
+		 * 非同期バリデートも含めすべてのプロパティがバリデート成功したかどうか
+		 * <p>
+		 * 非同期バリデートがあり、まだ結果が出ていない場合はnullです。
+		 * </p>
+		 *
+		 * @memberOf ValidationResult
+		 * @name isAllValid
+		 * @type {boolean|null}
+		 */
 		this.isAllValid = result.isAllValid;
+
+		/**
+		 * バリデート対象のプロパティ名リスト
+		 *
+		 * @memberOf ValidationResult
+		 * @name allProperties
+		 * @type {string[]}
+		 */
 		this.allProperties = result.allProperties;
 
 		this.addEventListener(EVENT_VALIDATE, validateEventListener);
@@ -680,9 +894,9 @@
 	// イベントディスパッチャ
 	h5.mixin.eventDispatcher.mix(ValidationResult.prototype);
 	/**
-	 * 非同期validateの中止
+	 * 非同期バリデートを中止する
 	 * <p>
-	 * 非同期validateを行っている途中でまだvalidateCompleteイベントが上がっていない時にabort()を呼ぶと、イベントをあげなくなります。
+	 * ValidationResultが非同期バリデート結果を待機している場合、このメソッドを呼ぶとバリデートを中止し、以降validate及びvalidateCompleteイベントをあげなくなります。
 	 * </p>
 	 *
 	 * @memberOf ValidationResult
@@ -724,30 +938,30 @@
 		this.rulesMap = {};
 	}
 	$.extend(ValidateRuleManager.prototype, {
-		addValidateRule: function(key, func, priority, argNames) {
-			var isExistAlready = this.rulesMap[key];
+		addValidateRule: function(ruleName, func, argNames, priority) {
+			var isExistAlready = this.rulesMap[ruleName];
 			if (isExistAlready) {
 				for (var i = 0, l = this.rules.length; i < l; i++) {
-					if (this.rules[i].key === key) {
+					if (this.rules[i].ruleName === ruleName) {
 						this.rules.splice(i, 1);
 						break;
 					}
 				}
 			}
 			var ruleObj = {
-				key: key,
+				ruleName: ruleName,
 				func: func,
 				priority: priority,
 				argNames: argNames
 			};
 			this.rules.push(ruleObj);
-			this.rulesMap[key] = ruleObj;
+			this.rulesMap[ruleName] = ruleObj;
 		},
-		getValidateFunction: function(key) {
-			return this.rulesMap[key] && this.rulesMap[key].func;
+		getValidateFunction: function(ruleName) {
+			return this.rulesMap[ruleName] && this.rulesMap[ruleName].func;
 		},
-		getValidateArgNames: function(key) {
-			return this.rulesMap[key] && this.rulesMap[key].argNames;
+		getValidateArgNames: function(ruleName) {
+			return this.rulesMap[ruleName] && this.rulesMap[ruleName].argNames;
 		}
 	});
 	// =========================================================================
@@ -1062,15 +1276,31 @@
 
 	/**
 	 * ルール定義の追加
+	 * <p>
+	 * {@link Validator.addRule}で追加するルールはここで追加されたルール定義が使用されます。
+	 * </p>
+	 * <p>
+	 * 第1引数にはルール名を指定します。
+	 * </p>
+	 * <p>
+	 * 第2引数にはバリデート関数を指定します。 バリデート結果が正しい場合はtrueとなる値を返す関数を指定してください。 バリデート関数は第1引数にはバリデート対象の値、第2引数以降には{@link Validate.addRule}で指定するルールオブジェクトに記述されたパラメータが渡されます。
+	 * </p>
+	 * <p>
+	 * 第3引数にはバリデート関数に渡すパラメータのパラメータ名リストを指定します。パラメータ名は{@link ValidationResult.failureReason}で使用されます。
+	 * </p>
+	 * <p>
+	 * 第4引数は優先度指定です。複数ルールをバリデートする場合に、どのルールから順にバリデートを行うかを優先度で指定します。
+	 * </p>
 	 *
 	 * @memberOf h5.validation
-	 * @param {string} key
-	 * @param {Function} func
-	 * @param {string[]} [argNames] パラメータ名
-	 * @param {intenger} [priority] 優先度
+	 * @param {string} ruleName ルール名
+	 * @param {Function} func バリデート関数
+	 * @param {string[]} [argNames] パラメータ名リスト
+	 * @param {number} [priority] 優先度
 	 */
-	function defineRule(key, func, argNames, priority) {
-		validateRuleManager.addValidateRule(key, func, priority, argNames);
+	function defineRule(ruleName, func, argNames, priority) {
+		// TODO 優先度は未実装
+		validateRuleManager.addValidateRule(ruleName, func, argNames, priority);
 	}
 
 	// デフォルトルールの追加

@@ -139,6 +139,20 @@
 		_containerSetting: {},
 		// validationResultからメッセージを作るための設定
 		_messageSetting: {},
+
+		/**
+		 * このプラグインに設定を適用する
+		 * <p>
+		 * また、メッセージをすべて削除します。
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.MessageOutput
+		 * @param {object} containerSetting 出力先設定
+		 * @param {object} containerSetting.container デフォルト出力先(コンテナ)要素
+		 * @param {object} containerSetting.wrapper デフォルト出力タグ名
+		 * @param {object} messageSetting プロパティ毎のメッセージ定義。{プロパティ名: {message:..., formatter:..}}
+		 *            のようなオブジェクト。
+		 */
 		reset: function(containerSetting, messageSetting) {
 			this._containerSetting = containerSetting;
 			// TODO reset呼ばれる前にaddMessageSetting呼ばれた場合でも動く様にしている
@@ -149,9 +163,26 @@
 			}
 			this.clearAll();
 		},
+
+		/**
+		 * メッセージ設定へ追加設定を行う
+		 *
+		 * @memberOf h5.ui.validation.MessageOutput
+		 * @param {object} messageSetting {プロパティ名: {message:..., formatter:..}}のようなオブジェクト
+		 */
 		addMessageSetting: function(messageSetting) {
 			this._addedMessageSetting = $.extend({}, this._messageSetting, messageSetting);
 		},
+
+		/**
+		 * コンテナからメッセージを削除
+		 * <p>
+		 * 第1引数を省略した場合はデフォルト出力先からメッセージを削除します
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.MessageOutput
+		 * @param {object} messageSetting {プロパティ名: {message:..., formatter:..}}のようなオブジェクト
+		 */
 		clearMessage: function(container) {
 			var container = container || this._containerSetting.container;
 			$(container).empty();
@@ -258,18 +289,18 @@
 		onFocus: function(element, name, globalSetting, setting, validationResult) {
 			this._setErrorClass(element, name, globalSetting, setting, validationResult);
 		},
-		onBlur: function(element, name, globalSetting, setting, validationResult) {
-			this._setErrorClass(element, name, globalSetting, setting, validationResult);
-		},
-		onChange: function(element, name, globalSetting, setting, validationResult) {
-			this._setErrorClass(element, name, globalSetting, setting, validationResult);
-		},
+		//		onBlur: function(element, name, globalSetting, setting, validationResult) {
+		//			this._setErrorClass(element, name, globalSetting, setting, validationResult);
+		//		},
+		//		onChange: function(element, name, globalSetting, setting, validationResult) {
+		//			this._setErrorClass(element, name, globalSetting, setting, validationResult);
+		//		},
 		onKeyup: function(element, name, globalSetting, setting, validationResult) {
 			this._setErrorClass(element, name, globalSetting, setting, validationResult);
 		},
-		onClick: function(element, name, globalSetting, setting, validationResult) {
-			this._setErrorClass(element, name, globalSetting, setting, validationResult);
-		},
+		//		onClick: function(element, name, globalSetting, setting, validationResult) {
+		//			this._setErrorClass(element, name, globalSetting, setting, validationResult);
+		//		},
 		reset: function(globalSetting, outputSetting) {
 			var $formControls = this.parentController.getElements();
 			// 全てのフォームコントロール部品からすべてのクラスを削除
@@ -635,8 +666,7 @@
 		onValidate: function(result, globalSetting, outputSetting) {
 			var validatingProperties = result.validatingProperties;
 			for (var i = 0, l = validatingProperties.length; i < l; i++) {
-				this._showIndicator(validationResult, validatingProperties[i], globalSetting,
-						outputSetting);
+				this._showIndicator(result, validatingProperties[i], globalSetting, outputSetting);
 			}
 		},
 		onFocus: function(element, name, globalSetting, setting, validationResult) {
