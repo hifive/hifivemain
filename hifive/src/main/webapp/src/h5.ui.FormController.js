@@ -623,6 +623,91 @@
 })();
 
 (function() {
+	/**
+	 * 非同期validate時にインジケータを出すプラグイン
+	 *
+	 * @class
+	 * @name h5.ui.validation.AsyncIndicator
+	 */
+	var controller = {
+		__name: 'h5.ui.validation.AsyncIndicator',
+		_indicators: {},
+		onValidate: function(result, globalSetting, outputSetting) {
+			var validatingProperties = result.validatingProperties;
+			for (var i = 0, l = validatingProperties.length; i < l; i++) {
+				this._showIndicator(validationResult, validatingProperties[i], globalSetting,
+						outputSetting);
+			}
+		},
+		onFocus: function(element, name, globalSetting, setting, validationResult) {
+			this._showIndicator(validationResult, name, globalSetting, setting);
+		},
+		//		onBlur: function(element, name, globalSetting, setting, validationResult) {
+		//			this._showIndicator(validationResult, name, globalSetting, setting);
+		//		},
+		// FIXME どのタイミングで実行するかは設定で決める？
+		//		onChange: function(element, name, globalSetting, setting, validationResult) {
+		//			this._showIndicator(validationResult, name, globalSetting, setting);
+		//		},
+		onKeyup: function(element, name, globalSetting, setting, validationResult) {
+			this._showIndicator(validationResult, name, globalSetting, setting);
+		},
+		//		onClick: function(element, name,globalSetting, setting, errorReason) {
+		//			this._setErrorMessage(element, name,globalSetting, setting, errorReason);
+		//		},
+
+		reset: function() {
+			for ( var name in this._indicators) {
+				this._hideIndicator(name);
+			}
+			this._executedOnValidate = false;
+		},
+
+		_showIndicator: function(validationResult, name, globalSetting, setting) {
+			if (setting && setting.asyncIndicator && setting.asyncIndicator.off) {
+				return;
+			}
+			if (validationResult.isAllValid !== null) {
+				// 既にバリデート結果が出ているなら何もしない
+				return;
+			}
+			var pluginSetting = $.extend({}, globalSetting, setting && setting.asyncIndicator);
+			var element = this.parentController.getElementByName(name);
+			var replaceElement = pluginSetting.replaceElement;
+			var target = isFunction(replaceElement) ? replaceElement(element)
+					: (replaceElement || element);
+			if (!target) {
+				return;
+			}
+
+			// 既にある場合は再利用
+			this._indicators[name] = this._indicators[name] || h5.ui.indicator({
+				target: target,
+				block: false
+			});
+			this._indicators[name].show();
+			console.log('show:' + name);
+			validationResult.addEventListener('validate', this.own(function(ev) {
+				if (name === ev.property) {
+					this._hideIndicator(ev.property);
+				}
+			}));
+			validationResult.addEventListener('abort', this.own(function(ev) {
+				this._hideIndicator(name);
+			}));
+		},
+
+		_hideIndicator: function(name) {
+			if (this._indicators[name]) {
+				this._indicators[name].hide();
+				console.log('hide:' + name);
+			}
+		}
+	};
+	h5.core.expose(controller);
+})();
+
+(function() {
 	// ログメッセージ
 	var FW_LOG_NOT_DEFINED_PLUGIN_NAME = 'プラグイン"{0}"は存在しません';
 	var FW_LOG_ALREADY_ADDED = 'プラグイン"{0}"は登録済みです。';
@@ -657,7 +742,8 @@
 		errorClass: h5.ui.validation.ErrorClass,
 		allMessage: h5.ui.validation.AllMessage,
 		baloon: h5.ui.validation.ErrorBaloon,
-		errorMessage: h5.ui.validation.ErrorMessage
+		errorMessage: h5.ui.validation.ErrorMessage,
+		asyncIndicator: h5.ui.validation.AsyncIndicator
 	};
 
 	// プラグインの表示リセットメソッド名

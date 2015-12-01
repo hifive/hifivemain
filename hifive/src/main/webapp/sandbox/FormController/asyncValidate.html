@@ -19,7 +19,7 @@
 <script src="/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
 <!-- hifive -->
-<!-- <link href="/hifive-res/fw/current/h5.css" rel="stylesheet"> -->
+<link href="/hifive-res/fw/current/h5.css" rel="stylesheet">
 <script src="/hifive-res/fw/current/ejs-h5mod.js"></script>
 <!-- <script src="/hifive-res/fw/current/h5.dev.js"></script> -->
 <!-- h5ソースファイルの読み込み -->
@@ -137,7 +137,7 @@
 								});
 								// プラグインの有効化
 								this.formController.enablePlugins(['allMessage', 'errorMessage',
-										'errorClass', 'baloon']);
+										'errorClass', 'baloon', 'asyncIndicator']);
 								// エラー出力設定
 								this.formController.globalSetting = {
 									errorClass: {
@@ -153,6 +153,19 @@
 									allMessage: {
 										container: this.$find('.globalError'),
 										wrapper: 'li'
+									},
+									asyncIndicator:{
+										replaceElement: function(element){
+											// input要素の前に表示
+											var $element = $(element);
+											var $parent = $element.parent();
+											var $indicatorWrapper = $parent.find('.validateIndicatorWrapper');
+											if(!$indicatorWrapper.length){
+												$indicatorWrapper = $('<div class="validateIndicatorWrapper">');
+												$element.before($indicatorWrapper);
+											}
+											return $indicatorWrapper;
+										}
 									}
 								};
 								this.formController.outputSetting = {

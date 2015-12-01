@@ -25,6 +25,12 @@
 	display: inline-block;
 	animation: switchtext 0.25s infinite alternate;
 }
+.validateIndicatorWrapper{
+	float:left;
+	-ms-transform: scale(0.5);
+	-wabkit-transform: scale(0.5);
+	transform: scale(0.5);
+}
 
 @keyframes switchtext {
 	from {
