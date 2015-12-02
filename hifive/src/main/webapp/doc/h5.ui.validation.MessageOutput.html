@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Namespace: geo</title>
+    <title>JSDoc: Class: MessageOutput</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -34,7 +34,7 @@
 	    </div>
 	</nav>
 	<div id="main">
-	    <h1 class="page-title">Namespace: geo</h1>
+	    <h1 class="page-title">Class: MessageOutput</h1>
 	    
 
 
@@ -45,9 +45,7 @@
 <header>
     
         <h2>
-            <span class="ancestors"><a href="h5.html">h5</a><a href="h5.api.html">.api</a>.</span>
-        
-        geo
+        MessageOutput
         </h2>
         
     
@@ -57,10 +55,29 @@
     <div class="container-overview">
     
         
-            <div class="description">Geolocation API</div>
-        
 
-        
+    
+
+    <h4 class="name" id="MessageOutput"><span class="type-signature"></span>new MessageOutput<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    メッセージ及びvalidate結果から作成したメッセージを出力するコントローラ
+</div>
+
+
+
+
+
+
+
+
+
+
+
 
 
 <dl class="details">
@@ -92,7 +109,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.api.geo.js.html">src/h5.api.geo.js</a>, <a href="src_h5.api.geo.js.html#line132">line 132</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line130">line 130</a>
     </li></ul></dd>
     
 
@@ -104,7 +121,20 @@
 </dl>
 
 
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     </div>
 
@@ -119,206 +149,6 @@
     
 
     
-        <h3 class="subsection-title">Members</h3>
-
-        
-            
-<h4 class="name" id=".GS_BESSEL"><span class="type-signature">(static, constant) </span>GS_BESSEL<span class="type-signature"></span></h4>
-
-
-
-
-<div class="description">
-    getDistanceメソッドで使用する計算モード定数 (日本測地系:BESSEL)
-</div>
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.api.geo.js.html">src/h5.api.geo.js</a>, <a href="src_h5.api.geo.js.html#line310">line 310</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id=".GS_GRS80"><span class="type-signature">(static, constant) </span>GS_GRS80<span class="type-signature"></span></h4>
-
-
-
-
-<div class="description">
-    getDistanceメソッドで使用する計算モード定数 (世界測地系:GRS80)
-</div>
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.api.geo.js.html">src/h5.api.geo.js</a>, <a href="src_h5.api.geo.js.html#line302">line 302</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id=".isSupported"><span class="type-signature">(static) </span>isSupported<span class="type-signature"> :Boolean</span></h4>
-
-
-
-
-<div class="description">
-    Geolocation APIが使用可能であるかの判定結果<br>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Boolean</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.api.geo.js.html">src/h5.api.geo.js</a>, <a href="src_h5.api.geo.js.html#line144">line 144</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-    
 
     
         <h3 class="subsection-title">Methods</h3>
@@ -328,14 +158,175 @@
 
     
 
-    <h4 class="name" id=".getCurrentPosition"><span class="type-signature">(static) </span>getCurrentPosition<span class="signature">(option<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id=".addMessageSetting"><span class="type-signature">(static) </span>addMessageSetting<span class="signature">(name, messageObj)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    現在地の緯度・経度を取得します。
+    メッセージ設定へ追加設定を行う
+<p>
+<a href="h5.ui.validation.MessageOutput.html#.setMessageSetting">setMessageSetting</a>で設定したメッセージ設定に、追加で設定を行う。
+</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">追加設定を行うプロパティ名</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>messageObj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">メッセージ設定オブジェクト。{message:..., formatter:...,
+           label:...}のようなオブジェクト</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line224">line 224</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".appendMessageByValidationResult"><span class="type-signature">(static) </span>appendMessageByValidationResult<span class="signature">(result, names<span class="signature-attributes">opt</span>, container<span class="signature-attributes">opt</span>, tagName<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <a href="ValidationResult.html">ValidationResult</a>からメッセージを作成して追加表示する
+<p>
+<a href="ValidationResult.html">ValidationResult</a>が非同期バリデート待ちの場合は、結果が返ってきたタイミングでメッセージを表示します。
+</p>
 </div>
 
 
@@ -373,13 +364,47 @@
 
         <tr>
             
-                <td class="name"><code>option</code></td>
+                <td class="name"><code>result</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Object</span>
+<span class="param-type"><a href="ValidationResult.html">ValidationResult</a></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>names</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
 
 
             
@@ -399,7 +424,493 @@
 
             
 
-            <td class="description last">設定情報
+            <td class="description last">出力対象のプロパティ名。指定しない場合は全てが対象</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>container</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">DOM</span>
+|
+
+<span class="param-type">jQuery</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">表示先要素。指定しない場合はデフォルト出力先に出力します</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>tagName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">メッセージをラップするタグ名。指定しない場合はデフォルトタグ名を使用します</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line276">line 276</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".clearAll"><span class="type-signature">(static) </span>clearAll<span class="signature">(container<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    コンテナからメッセージをすべて削除
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>container</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">DOM</span>
+|
+
+<span class="param-type">jQuery</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">中身を削除するコンテナ。指定しない場合はデフォルト出力先。</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line309">line 309</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".clearMessage"><span class="type-signature">(static) </span>clearMessage<span class="signature">(messageSetting)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    コンテナからメッセージを削除
+<p>
+第1引数を省略した場合は設定済みのデフォルト出力先からメッセージを削除します
+</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>messageSetting</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">{プロパティ名: {message:..., formatter:..}}のようなオブジェクト</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line237">line 237</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".setContainerSetting"><span class="type-signature">(static) </span>setContainerSetting<span class="signature">(containerSetting)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    メッセージ出力先の設定を適用する
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>containerSetting</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">出力先設定
                 <h6>Properties</h6>
                 
 
@@ -413,8 +924,6 @@
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
         
 
@@ -427,99 +936,46 @@
 
         <tr>
             
-                <td class="name"><code>enableHighAccuracy</code></td>
+                <td class="name"><code>container</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Boolean</span>
+<span class="param-type">object</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">正確な位置を取得するか (ただし消費電力の増加や応答が遅延する)</td>
+            <td class="description last">デフォルト出力先(コンテナ)要素</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>timeout</code></td>
+                <td class="name"><code>wrapper</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">object</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">位置情報を取得するまで待機する時間 (ミリ秒)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>maximumAge</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">キャッシュされた位置情報の有効期間を指定する (ミリ秒)</td>
+            <td class="description last">デフォルト出力タグ名。指定しない場合はメッセージはテキストノードとして生成されます</td>
         </tr>
 
     
@@ -567,7 +1023,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.api.geo.js.html">src/h5.api.geo.js</a>, <a href="src_h5.api.geo.js.html#line153">line 153</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line151">line 151</a>
     </li></ul></dd>
     
 
@@ -590,28 +1046,6 @@
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Promiseオブジェクト
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -620,14 +1054,61 @@
 
     
 
-    <h4 class="name" id=".getDistance"><span class="type-signature">(static) </span>getDistance<span class="signature">(lat1, lng1, lat2, lng2, geoSystem<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Number}</span></h4>
+    <h4 class="name" id=".setMessageSetting"><span class="type-signature">(static) </span>setMessageSetting<span class="signature">(messageSetting)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    ヒュベニの法則を使用して、2点間の緯度・経度から直線距離(m)を取得します。<p>定数に使用している長半径・扁平率は国土地理院で紹介されている値を使用。<p>注意:アルゴリズム上、長距離(100km以上)の地点を図る場合1m以上の誤差が出てしまいます。<h4>計算モードの指定方法</h4>計算モードの指定は以下の定数クラスを使用します。<br><table border="1"><tr><td>h5.api.geo.GS_GRS80</td><td>世界測地系</td></tr><tr><td>h5.api.geo.GS_BESSEL</td><td>日本測地系</td></tr></table>
+    メッセージ出力先の設定を適用する
+<p>
+メッセージを<a href="ValidationResult.html">ValidationResult</a>から出力する(appendMessageByValidationResultを使用する)場合の設定を行うメソッド。
+</p>
+<p>
+以下のようなオブジェクトで指定します。
+</p>
+
+<pre class="sh_javascript"><code>
+setMessageSetting({
+	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
+	userid: {
+		label: 'ユーザID', // ラベル名
+		message: '[%= label %]がルール[%= rule %]に違反しています。', // メッセージ。テンプレート形式で記述可能。
+	},
+	address: {
+		label: 'アドレス',
+		formatter: function(param) {
+			// フォーマッタは関数で記述。メッセージを生成して返すような関数を作成
+		switch (param.rule) {
+		case 'require':
+			return '必須です';
+		case 'pattern':
+			return param.value + 'は' + param.label + 'の値として不正です'
+		}
+	}
+	}
+});
+</code></pre>
+
+<p>
+messageとformatterが両方記述されている場合は、messageに記述されたメッセージが優先して使用されます。
+</p>
+<p>
+messageをテンプレート形式で記述した場合に適用されるパラメータ及び、formatterの引数に渡されるパラメータは以下のようなオブジェクトです。
+</p>
+
+<pre class="sh_javascript"><code>
+{
+	value: value, // バリデート対象の値
+	param: param, // バリデート時に渡された引数リスト
+	rule: rule, // バリデートルール名
+	rejectReason: rejectReason, // 非同期バリデートだった場合、failハンドラに渡された引数リスト
+	name: name, // バリデート対象のプロパティ名
+	label: label
+// メッセージ定義に指定されたラベル名
+}
+</code></pre>
 </div>
 
 
@@ -651,8 +1132,6 @@
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
         
 
@@ -665,157 +1144,24 @@
 
         <tr>
             
-                <td class="name"><code>lat1</code></td>
+                <td class="name"><code>messageSetting</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">object</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">地点1の緯度</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>lng1</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">地点1の経度</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>lat2</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">地点2の緯度</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>lng2</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">地点2の経度</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>geoSystem</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">計算モード定数           (h5.api.geo.GS_GRS80:世界測地系(未指定の場合このモードで計算する) / h5.api.geo.GS_BESSEL: 日本測地系)</td>
+            <td class="description last">プロパティ毎のメッセージ定義。{プロパティ名: {message:..., formatter:..}}
+           のようなオブジェクト。messageは文字列(テンプレート文字列)、formatterは関数を指定。</td>
         </tr>
 
     
@@ -856,7 +1202,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.api.geo.js.html">src/h5.api.geo.js</a>, <a href="src_h5.api.geo.js.html#line232">line 232</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line209">line 209</a>
     </li></ul></dd>
     
 
@@ -879,320 +1225,6 @@
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    2点間の直線距離
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Number</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".watchPosition"><span class="type-signature">(static) </span>watchPosition<span class="signature">(option<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="WatchPositionPromise.html">WatchPositionPromise</a>}</span></h4>
-
-    
-
-
-
-<div class="description">
-    現在地の緯度・経度を定期的に送信します。<p>このメソッドは定期的に位置情報を取得するため、Deferred.progress()で値を取得します。<br>(Deferred.done()では値を取得できません。)<p><b>実装例</b><br><pre>h5.api.geo.watchPosition().progress(function(pos) {// 変数 pos に位置情報が格納されている。		});</pre>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>option</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">設定情報
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>enableHighAccuracy</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">正確な位置を取得するか (ただし消費電力の増加や応答が遅延する)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>timeout</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">位置情報を取得するまで待機する時間 (ミリ秒)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>maximumAge</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">キャッシュされた位置情報の有効期間を指定する (ミリ秒)</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.api.geo.js.html">src/h5.api.geo.js</a>, <a href="src_h5.api.geo.js.html#line174">line 174</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    WatchPositionPromiseオブジェクト
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="WatchPositionPromise.html">WatchPositionPromise</a></span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -1214,7 +1246,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Wed Dec 02 2015 14:32:30 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Wed Dec 02 2015 14:32:32 GMT+0900 (JST)
 	</footer>
 </div>
 

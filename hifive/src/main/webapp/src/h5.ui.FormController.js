@@ -131,7 +131,7 @@
 	 * メッセージ及びvalidate結果から作成したメッセージを出力するコントローラ
 	 *
 	 * @class
-	 * @name h5.ui.validaiton.MessageOutput
+	 * @name h5.ui.validation.MessageOutput
 	 */
 	var controlelr = {
 		__name: 'h5.ui.validation.MessageOutput',
@@ -353,9 +353,9 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.ErrorClass
-		 * @param result
-		 * @param globalSetting
-		 * @param outputSetting
+		 * @param {ValidationResult} result
+		 * @param {Object} globalSetting
+		 * @param {Object} outputSetting
 		 */
 		onValidate: function(result, globalSetting, outputSetting) {
 			var callSetErrorClass = this.own(function(name) {
@@ -521,20 +521,46 @@
 		__name: 'h5.ui.validation.AllMessage',
 		_message: {},
 		_messageOutputController: h5.ui.validation.MessageOutput,
+		/**
+		 * バリデート時に呼ばれる
+		 * <p>
+		 * バリデート結果からメッセージを生成して表示
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.AllMessage
+		 * @param {ValidationResult} result
+		 * @param {Object} globalSetting
+		 * @param {Object} outputSetting
+		 */
 		onValidate: function(result, globalSetting, outputSetting) {
 			this._messageOutputController.clearMessage();
 			this._messageOutputController.appendMessageByValidationResult(result);
 		},
+
 		/**
 		 * このプラグインが出力するメッセージを設定する
+		 * <p>
+		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
+		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.AllMessage
 		 * @param {string} name
 		 * @param {object} messageObj message,formatterを持つオブジェクト
 		 */
 		setMessage: function(name, messageObj) {
 			this._messageOutputController.addMessageSetting(name, messageObj);
 		},
+
+		/**
+		 * プラグインのリセット
+		 * <p>
+		 * 設定をリセットしてメッセージを削除します
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.AllMessage
+		 * @param globalSetting
+		 * @param setting
+		 */
 		reset: function(globalSetting, outputSetting) {
 			this._messageOutputController.setContainerSetting({
 				container: globalSetting.container,
@@ -559,18 +585,72 @@
 		__name: 'h5.ui.validation.ErrorBaloon',
 		_executedOnValidate: false,
 		_message: {},
+
+		/**
+		 * バリデート時に呼ばれる
+		 * <p>
+		 * バリデート結果からバルーンの表示・非表示を行う
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param {ValidationResult} result
+		 * @param {Object} globalSetting
+		 * @param {Object} outputSetting
+		 */
 		onValidate: function(result, globalSetting, outputSetting) {
 			this._executedOnValidate = true;
 		},
+
+		/**
+		 * 要素にフォーカスした時に呼ばれる
+		 * <p>
+		 * バリデート結果からバルーンの表示・非表示を行う
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param element
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 * @param {ValidationResult} validationResult
+		 */
 		onFocus: function(element, name, globalSetting, setting, validationResult) {
 			this._setErrorBaloon(element, name, globalSetting, setting, validationResult, 'focus');
 		},
+
+		/**
+		 * 要素からフォーカスが外れた時に呼ばれる
+		 * <p>
+		 * バリデート結果からバルーンの表示・非表示を行う
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param element
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 * @param {ValidationResult} validationResult
+		 */
 		onBlur: function(element, globalSetting, setting, validationResult) {
 			this._setErrorBaloon(element, name, globalSetting, setting, validationResult, 'blur');
 		},
 		//		onChange: function(element, name, globalSetting, setting, errorReason) {
 		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
 		//		},
+
+		/**
+		 * 要素のキーアップ時に呼ばれる
+		 * <p>
+		 * バリデート結果からバルーンの表示・非表示を行う
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param element
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 * @param {ValidationResult} validationResult
+		 */
 		onKeyup: function(element, name, globalSetting, setting, validationResult, errorReason) {
 			this._setErrorBaloon(element, name, globalSetting, setting, validationResult, 'keyup');
 		},
@@ -578,6 +658,14 @@
 		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
 		//		},
 
+		/**
+		 * プラグインのリセット
+		 * <p>
+		 * 表示されているバルーンを削除します
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 */
 		reset: function() {
 			// 常にバルーンは一つのみ表示している実装のため、その1つのバルーンを非表示
 			$(this._currentBaloonTarget).tooltip('hide');
@@ -586,6 +674,9 @@
 
 		/**
 		 * このプラグインが出力するメッセージを設定する
+		 * <p>
+		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
+		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param {string} name
@@ -598,6 +689,18 @@
 			};
 		},
 
+		/**
+		 * バルーンをセット
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param element
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 * @param {ValidationResult} validationResult
+		 * @param {string} type 要素で発生したイベントタイプ
+		 */
 		_setErrorBaloon: function(element, name, globalSetting, setting, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
@@ -663,6 +766,16 @@
 			this._setTooltip(target, placement, h5internal.validation.createValidateErrorMessage(
 					name, failureReason, messageSetting));
 		},
+
+		/**
+		 * bootstrapのtooltipを使ってバルーンを表示
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param target
+		 * @param placement
+		 * @param message
+		 */
 		_setTooltip: function(target, placement, message) {
 			$(target).attr({
 				'data-placement': placement,
@@ -694,6 +807,18 @@
 		_message: {},
 		_errorMessageElementMap: {},
 		_messageOutputController: h5.ui.validation.MessageOutput,
+
+		/**
+		 * バリデート時に呼ばれる
+		 * <p>
+		 * バリデート結果からメッセージの表示・非表示を行う
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @param {ValidationResult} result
+		 * @param {Object} globalSetting
+		 * @param {Object} outputSetting
+		 */
 		onValidate: function(result, globalSetting, outputSetting) {
 			this._executedOnValidate = true;
 			this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
@@ -706,9 +831,37 @@
 				this._setErrorMessage(element, name, globalSetting, outputSetting[name], result);
 			}
 		},
+
+		/**
+		 * 要素にフォーカスされた時に呼ばれる
+		 * <p>
+		 * バリデート結果からメッセージの表示・非表示を行う
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @param element
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 * @param {ValidationResult} validationResult
+		 */
 		onFocus: function(element, name, globalSetting, setting, validationResult) {
 			this._setErrorMessage(element, name, globalSetting, setting, validationResult, 'focus');
 		},
+
+		/**
+		 * 要素からフォーカスが外れた時に呼ばれる
+		 * <p>
+		 * バリデート結果からバルーンの表示・非表示を行う
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @param element
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 * @param {ValidationResult} validationResult
+		 */
 		onBlur: function(element, name, globalSetting, setting, validationResult) {
 			this._setErrorMessage(element, name, globalSetting, setting, validationResult, 'blur');
 		},
@@ -723,6 +876,14 @@
 		//			this._setErrorMessage(element, name,globalSetting, setting, errorReason);
 		//		},
 
+		/**
+		 * プラグインのリセット
+		 * <p>
+		 * 表示されているメッセージを削除します
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.ErrorMessage
+		 */
 		reset: function() {
 			for ( var p in this._errorMessageElementMap) {
 				var $target = this._errorMessageElementMap[name];
@@ -733,6 +894,9 @@
 
 		/**
 		 * このプラグインが出力するメッセージを設定する
+		 * <p>
+		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
+		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.ErrorMessage
 		 * @param {string} name
@@ -823,12 +987,38 @@
 	var controller = {
 		__name: 'h5.ui.validation.AsyncIndicator',
 		_indicators: {},
+
+		/**
+		 * バリデート時に呼ばれる
+		 * <p>
+		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.AsyncIndicator
+		 * @param {ValidationResult}
+		 * @param {Object} globalSetting
+		 * @param {Object} outputSetting
+		 */
 		onValidate: function(result, globalSetting, outputSetting) {
 			var validatingProperties = result.validatingProperties;
 			for (var i = 0, l = validatingProperties.length; i < l; i++) {
 				this._showIndicator(result, validatingProperties[i], globalSetting, outputSetting);
 			}
 		},
+
+		/**
+		 * 要素にフォーカスされた時に呼ばれる
+		 * <p>
+		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.AsyncIndicator
+		 * @param element
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 * @param {ValidationResult} validationResult
+		 */
 		onFocus: function(element, name, globalSetting, setting, validationResult) {
 			this._showIndicator(validationResult, name, globalSetting, setting);
 		},
@@ -839,6 +1029,20 @@
 		//		onChange: function(element, name, globalSetting, setting, validationResult) {
 		//			this._showIndicator(validationResult, name, globalSetting, setting);
 		//		},
+
+		/**
+		 * 要素でキーアップされた時に呼ばれる
+		 * <p>
+		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.AsyncIndicator
+		 * @param element
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 * @param {ValidationResult} validationResult
+		 */
 		onKeyup: function(element, name, globalSetting, setting, validationResult) {
 			this._showIndicator(validationResult, name, globalSetting, setting);
 		},
@@ -846,6 +1050,14 @@
 		//			this._setErrorMessage(element, name,globalSetting, setting, errorReason);
 		//		},
 
+		/**
+		 * プラグインのリセット
+		 * <p>
+		 * 表示されているインジケータを削除します
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.AsyncIndicator
+		 */
 		reset: function() {
 			for ( var name in this._indicators) {
 				this._hideIndicator(name);
@@ -853,6 +1065,16 @@
 			this._executedOnValidate = false;
 		},
 
+		/**
+		 * インジケータの表示
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.AsyncIndicator
+		 * @param {ValidationResult} validationResult
+		 * @param name
+		 * @param globalSetting
+		 * @param setting
+		 */
 		_showIndicator: function(validationResult, name, globalSetting, setting) {
 			if (setting && setting.asyncIndicator && setting.asyncIndicator.off) {
 				return;
@@ -887,6 +1109,13 @@
 			}));
 		},
 
+		/**
+		 * インジケータの非表示
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.AsyncIndicator
+		 * @param name
+		 */
 		_hideIndicator: function(name) {
 			if (this._indicators[name]) {
 				this._indicators[name].hide();
