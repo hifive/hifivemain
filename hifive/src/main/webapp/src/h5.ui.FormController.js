@@ -1078,10 +1078,10 @@
 		 * 		errorClassName: 'has-error',
 		 * 		successClassName: 'success',
 		 * 		validatingClassName: 'validating',
+		 * 		// クラス追加対象は、input等の親のform-group要素に変換する
 		 * 		replaceElement: function(element) {
-		 * 			// エラークラス追加対象は、input等の親のform-group要素に変換する
-		 * 		return $(element).closest('.form-group');
-		 * 	}
+		 * 			return $(element).closest('.form-group');
+		 * 		}
 		 * 	},
 		 * 	// allMessageプラグインの設定
 		 * 	allMessage: {
@@ -1277,10 +1277,11 @@
 		/**
 		 * ルールの追加
 		 * <p>
-		 * バリデートルールを追加する。第1引数にはルールオブジェクトを指定します。ルールオブジェクトについては{@link Validator.validate}と同じ形式で指定してください。
+		 * バリデートルールを追加する。第1引数にはルールオブジェクトを指定します。ルールオブジェクトについては{@link Validator.addRule}と同じ形式で指定してください。
 		 * </p>
 		 *
-		 * @param {Object} ruleObj
+		 * @memberOf h5.ui.FormController
+		 * @param {Object} ruleObj ルールオブジェクト(オブジェクトの形式は{@link Validator.addRule}参照)
 		 * @param {boolean} [shouldValidate=false] ルール追加した後にvalidateを行うかどうか
 		 * @param {boolean} [onlyAddedRule=true]
 		 *            shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue
@@ -1305,6 +1306,7 @@
 		 * 第1引数に指定されたプロパティについてのバリデートルールを削除します
 		 * </p>
 		 *
+		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} properties プロパティ名またはその配列
 		 * @param {boolean} shouldValidate ルール削除した後にvalidateを行うかどうか
 		 * @param {boolean} [onlyRemovedRule=true]
@@ -1582,6 +1584,7 @@
 		/**
 		 * このコントローラが管理するフォームに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
 		 *
+		 * @memberOf h5.ui.FormController
 		 * @param {string} name
 		 * @returns {DOM}
 		 */
@@ -1614,6 +1617,7 @@
 		/**
 		 * プラグイン名からプラグインインスタンスを取得
 		 *
+		 * @memberOf h5.ui.FormController
 		 * @param {string} pluginName プラグイン名
 		 * @returns {Controller}
 		 */
@@ -1621,6 +1625,9 @@
 			return this._plugins[pluginName];
 		},
 
+		/*
+		 * フォーム部品でのイベント発生時にプラグインを呼び出すイベントハンドラ設定
+		 */
 		'{rootElement} focusin': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_FOCUS);
 		},
