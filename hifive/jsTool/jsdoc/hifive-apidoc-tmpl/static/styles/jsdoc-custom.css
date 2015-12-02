@@ -116,6 +116,10 @@ pre {
 	display: block;
 }
 
+.sh_javascript,.sh_html{
+	tab-size: 2;
+}
+
 /* 900pxˆÈ‰º */
 @media screen and (max-width: 900px) {
 	body {
