@@ -46,7 +46,8 @@
 			formController: h5.ui.FormController,
 			__ready: function() {
 				// プラグインの有効化
-				this.formController.enablePlugins(['errorClass', 'allMessage']);
+				this.formController.enablePlugins(['allMessage', 'errorClass', 'errorMessage',
+						'baloon']);
 
 				// birthdayグループのルール追加
 				this.formController.addRule({
@@ -63,123 +64,116 @@
 				});
 
 				// エラー出力設定
-				this.formController.setSetting({
-					output: {
-						errorClass: {
-							errorClassName: 'has-error',
-							replaceElement: function(element) {
-								// エラークラス追加対象は、input等の親のform-group要素に変換する
-								return $(element).closest('.form-group');
+				this.formController.globalSetting = {
+					errorClass: {
+						errorClassName: 'has-error',
+						replaceElement: function(element) {
+							// エラークラス追加対象は、input等の親のform-group要素に変換する
+							return $(element).closest('.form-group');
+						}
+					},
+					allMessage: {
+						container: this.$find('.globalError'),
+						wrapper: 'li'
+					},
+					baloon: {
+						placement: 'top'
+					}
+				};
+				this.formController.outputSetting = {
+					name: {
+						label: '名前'
+					},
+					sex: {
+						label: '性別',
+						message: '[%=label%]は必ずどちらかを指定してください',
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.radio');
 							}
 						},
 						allMessage: {
-							container: this.$find('.globalError'),
-							wrapper: 'li'
-						},
-						baloon: {
-							placement: 'top'
+							message: 'BBB'
 						}
 					},
-					prpperty: {
-						name: {
-							label: '名前'
-						},
-						sex: {
-							label: '性別',
-							message: '[%=label%]は必ずどちらかを指定してください',
-							errorMessage: {
-								replaceElement: function($el) {
-									return $el.closest('.radio');
-								}
-							},
-							allMessage: {
-								message: 'BBB'
+					birthday: {
+						label: '生年月日',
+						message: '[%=label%]が正しい日付ではありません'
+					},
+					year: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
 							}
 						},
-						birthday: {
-							label: '生年月日',
-							message: '[%=label%]が正しい日付ではありません'
-						},
-						year: {
-							errorMessage: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
-								}
-							},
-							errorClass: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
-								}
+						errorClass: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					month: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					day: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					zip1: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					zip2: {
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-inline');
+							}
+						}
+					},
+					address: {
+						label: 'お住まい'
+					},
+					agree: {
+						message: '利用規約への同意が必要です',
+						baloon: {
+							placement: 'right',
+							replaceElement: function($el) {
+								return $el.closest('label');
 							}
 						},
-						month: {
-							errorMessage: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
-								}
-							}
-						},
-						day: {
-							errorMessage: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
-								}
-							}
-						},
-						zipCode: {
-							errorClass: {
-								off: true
-							}
-						},
-						zip1: {
-							errorMessage: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
-								}
-							}
-						},
-						zip2: {
-							errorMessage: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
-								}
-							}
-						},
-						address: {
-							label: 'お住まい'
-						},
-						agree: {
-							message: '利用規約への同意が必要です',
-							baloon: {
-								placement: 'right',
-								replaceElement: function($el) {
-									return $el.closest('label');
-								}
-							},
-							errorMessage: {
-								replaceElement: function($el) {
-									return $el.closest('.form-group');
-								}
+						errorMessage: {
+							replaceElement: function($el) {
+								return $el.closest('.form-group');
 							}
 						}
 					}
+				};
+				// プラグインのsetMessage
+				this.formController.getPlugin('baloon').setMessage('name', {
+					message: '※必須'
 				});
 				// プラグインのsetMessage
-				// 				this.formController.getPlugin('baloon').setMessage('name', {
-				// 					message: '※必須'
-				// 				});
-				// 				// プラグインのsetMessage
-				// 				this.formController.getPlugin('errorMessage').setMessage('address', {
-				// 					// message: '[%= label %]は選択肢の中から当てはまるものを選んでください',
-				// 					// ↑と同じ↓
-				// 					formatter: function(param) {
-				// 						return param.label + 'は選択肢の中から当てはまるものを選んでください';
-				// 					}
-				// 				});
-				// 				// プラグインのsetMessage
-				// 				this.formController.getPlugin('allMessage').setMessage('sex', {
-				// 					message: '[%=label%]の入力は必須です'
-				// 				});
+				this.formController.getPlugin('errorMessage').setMessage('address', {
+					// message: '[%= label %]は選択肢の中から当てはまるものを選んでください',
+					// ↑と同じ↓
+					formatter: function(param) {
+						return param.label + 'は選択肢の中から当てはまるものを選んでください';
+					}
+				});
+				// プラグインのsetMessage
+				this.formController.getPlugin('allMessage').setMessage('sex', {
+					message: '[%=label%]の入力は必須です'
+				});
 			},
 			'{.resetValidation} click': function() {
 				// 動作確認のため1秒後
