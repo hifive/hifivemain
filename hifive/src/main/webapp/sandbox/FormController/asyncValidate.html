@@ -136,8 +136,9 @@
 									}
 								});
 								// プラグインの有効化
-								this.formController.enablePlugins(['allMessage', 'errorMessage',
-										'errorClass', 'baloon', 'asyncIndicator']);
+								// 								this.formController.enablePlugins(['allMessage', 'errorMessage',
+								// 										'errorClass', 'baloon', 'asyncIndicator']);
+								this.formController.enablePlugins(['errorClass']);
 								// エラー出力設定
 								this.formController.globalSetting = {
 									errorClass: {
@@ -154,13 +155,14 @@
 										container: this.$find('.globalError'),
 										wrapper: 'li'
 									},
-									asyncIndicator:{
-										replaceElement: function(element){
+									asyncIndicator: {
+										replaceElement: function(element) {
 											// input要素の前に表示
 											var $element = $(element);
 											var $parent = $element.parent();
-											var $indicatorWrapper = $parent.find('.validateIndicatorWrapper');
-											if(!$indicatorWrapper.length){
+											var $indicatorWrapper = $parent
+													.find('.validateIndicatorWrapper');
+											if (!$indicatorWrapper.length) {
 												$indicatorWrapper = $('<div class="validateIndicatorWrapper">');
 												$element.before($indicatorWrapper);
 											}
@@ -194,8 +196,8 @@
 												}
 											}
 										},
-										allMessage:{
-											message:'allM 必須'
+										allMessage: {
+											message: 'allM 必須'
 										}
 									},
 									mail: {

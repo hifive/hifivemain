@@ -636,6 +636,7 @@ $(function() {
 		strictEqual(result.invalidCount, 0, 'invalidCountはinvalidだったプロパティの総数');
 		strictEqual(result.isValid, true, 'isValidは全てのプロパティがvalidだったかどうか');
 	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -717,6 +718,77 @@ $(function() {
 		strictEqual(validator.validate({
 			p3: -1
 		}).isValid, true, 'removeRuleにキーを配列で複数指定した時、複数プロパティのルールを削除できること');
+	});
+	//=============================
+	// Definition
+	//=============================
+	module('ルールの無効化と有効化', {
+		setup: function() {
+			this.validator = h5.validation.createValidator();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('disableRuleで無効にするプロパティの指定', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				min: 0,
+			},
+			p2: {
+				min: 0
+			}
+		});
+		validator.disableRule('p1');
+		ok(validator.validate({
+			p1: -1
+		}).isValid, '指定したプロパティのバリデートが無効になっていること');
+		ok(!validator.validate({
+			p2: -1
+		}).isValid, '指定したプロパティ以外のバリデートは有効であること');
+		validator.disableRule('p2');
+		ok(validator.validate({
+			p2: -1
+		}).isValid, '無効化するプロパティを追加設定できること');
+
+		validator.addRule({
+			q1: {
+				require: true,
+			},
+			q2: {
+				require: true
+			}
+		});
+		validator.disableRule(['q1', 'q2']);
+		ok(validator.validate({}).isValid, '配列で無効化するプロパティを複数指定できること');
+	});
+
+	test('enableRule', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				min: 0
+			},
+			p2: {
+				min: 0
+			},
+			p3: {
+				min: 0
+			}
+		});
+		validator.disableRule(['p1', 'p2', 'p3']);
+		validator.enableRule('p1');
+		ok(!validator.validate({
+			p1: -1
+		}).isValid, '指定したプロパティのバリデートが有効になっていること');
+		validator.enableRule(['p2', 'p3']);
+		deepEqual(validator.validate({
+			p1: -1,
+			p2: -1,
+			p3: -1
+		}).invalidProperties.sort(), ['p1', 'p2', 'p3'], '配列で複数指定したプロパティのバリデートが有効になっていること');
 	});
 
 	//=============================

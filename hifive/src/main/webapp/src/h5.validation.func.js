@@ -194,6 +194,7 @@
 	 */
 	function Validator() {
 		this._rule = {};
+		this._disableProperties = [];
 	}
 	$.extend(Validator.prototype, {
 		/**
@@ -224,7 +225,10 @@
 			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
 			var propertyWaitingPromsies = {};
 			for ( var prop in this._rule) {
-				if (names && $.inArray(prop, targetNames) === -1) {
+				if (names && $.inArray(prop, targetNames) === -1
+						|| $.inArray(prop, this._disableProperties) !== -1) {
+					// バリデートを行うプロパティ名指定がある場合は、そこにないプロパティの場合はバリデート対象にしない
+					// また、disableRule()でバリデートしないよう設定されているプロパティについてもバリデート対象にしない
 					continue;
 				}
 				var rule = this._rule[prop];
@@ -496,6 +500,44 @@
 			}
 			for (var i = 0, l = keys.length; i < l; i++) {
 				delete this._rule[keys[i]];
+			}
+		},
+
+		/**
+		 * ルールの無効化
+		 * <p>
+		 * 第1引数に指定されたプロパティについてのバリデートを無効化します
+		 * </p>
+		 *
+		 * @memberOf Validator
+		 * @param {string|string[]} name プロパティ名またはその配列
+		 */
+		disableRule: function(name) {
+			var names = wrapInArray(name);
+			for (var i = 0, l = names.length; i < l; i++) {
+				var index = $.inArray(names[i], this._disableProperties);
+				if (index === -1) {
+					this._disableProperties.push(names[i]);
+				}
+			}
+		},
+
+		/**
+		 * ルールの有効化
+		 * <p>
+		 * 第1引数に指定されたプロパティについてのバリデートを有効化します
+		 * </p>
+		 *
+		 * @memberOf Validator
+		 * @param {string|string[]} name プロパティ名またはその配列
+		 */
+		enableRule: function(name) {
+			var names = wrapInArray(name);
+			for (var i = 0, l = names.length; i < l; i++) {
+				var index = $.inArray(names[i], this._disableProperties);
+				if (index !== -1) {
+					this._disableProperties.splice(index, 1);
+				}
 			}
 		},
 
