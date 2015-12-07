@@ -1684,37 +1684,74 @@
 	 *          </ul>
 	 */
 	function getH5TrackBindObj(controller, selector, eventName, func) {
-		// タッチイベントがあるかどうか
-		var hasTouchEvent = typeof document.ontouchstart !== TYPE_OF_UNDEFINED;
-		if (eventName !== EVENT_NAME_H5_TRACKSTART) {
-			// h5trackmove,h5trackendはh5trackstart時にバインドするのでここでmouseやtouchにバインドするbindObjは作らない
-			// h5trackmoveまたはh5trackendのbindObjのみを返す
-			var normalBindObj = getNormalBindObj(controller, selector, eventName,
-					function(context) {
-						var event = context.event;
-						var h5DelegatingEvent = event.h5DelegatingEvent;
-						if (!h5DelegatingEvent) {
-							// マウスやタッチではなくtriggerで呼ばれた場合はオフセット正規化はしない
-							return func.apply(this, arguments);
-						}
-						// マウスイベントによる発火なら場合はオフセットを正規化する
-						var originalEventType = h5DelegatingEvent.type;
-						if (originalEventType === 'mousemove' || originalEventType === 'mouseup') {
-							var offset = $(event.currentTarget).offset() || {
-								left: 0,
-								top: 0
-							};
-							event.offsetX = event.pageX - offset.left;
-							event.offsetY = event.pageY - offset.top;
-						}
-						func.apply(this, arguments);
-					});
-			// ラップした関数をhandlerに持たせるので、ラップ前をoriginalHandlerに覚えておく
-			// ogirinalHandlerにはユーザが指定した関数と同じ関数(ラップ前)を持っていないとoff()でアンバインドできないため
-			normalBindObj.originalHandler = func;
-			return normalBindObj;
+		// 指定されたセレクタについてトラックイベントの何れかのハンドラが初めてだった場合は、h5trackxxxイベントハンドラについてのバインドオブジェクトに加えて、
+		// トラックイベントをmousedown,touchstart時に有効にするためのイベントハンドラについてのバインドオブジェクトも追加して返す
+		var bindObjForEnableH5track = null;
+		var context = controller.__controllerContext;
+		context.h5trackBoundSelector = context.h5trackBoundSelector || {};
+		var h5trackBoundSelector = context.h5trackBoundSelector;
+		if (!h5trackBoundSelector[selector]) {
+			h5trackBoundSelector[selector] = 1;
+			bindObjForEnableH5track = getBindObjForEnableH5track(controller, selector);
 		}
 
+		var normalBindObj = null;
+		if (eventName === EVENT_NAME_H5_TRACKSTART) {
+			// h5trackstartの場合
+			normalBindObj = getNormalBindObj(controller, selector, eventName, func);
+			return bindObjForEnableH5track ? bindObjForEnableH5track.concat(normalBindObj)
+					: normalBindObj;
+		}
+		// h5trackmove,h5trackendの場合は、ハンドラ呼び出し前にオフセット計算処理を行うようラップする
+		normalBindObj = getNormalBindObj(controller, selector, eventName, function(context) {
+			var event = context.event;
+			var h5DelegatingEvent = event.h5DelegatingEvent;
+			if (!h5DelegatingEvent) {
+				// マウスやタッチではなくtriggerで呼ばれた場合はオフセット正規化はしない
+				return func.apply(this, arguments);
+			}
+			// マウスイベントによる発火なら場合はオフセットを正規化する
+			var originalEventType = h5DelegatingEvent.type;
+			if (originalEventType === 'mousemove' || originalEventType === 'mouseup') {
+				var offset = $(event.currentTarget).offset() || {
+					left: 0,
+					top: 0
+				};
+				event.offsetX = event.pageX - offset.left;
+				event.offsetY = event.pageY - offset.top;
+			}
+			func.apply(this, arguments);
+		});
+		// ラップした関数をhandlerに持たせるので、ラップ前をoriginalHandlerに覚えておく
+		// ogirinalHandlerにはユーザが指定した関数と同じ関数(ラップ前)を持っていないとoff()でアンバインドできないため
+		normalBindObj.originalHandler = func;
+		return bindObjForEnableH5track ? bindObjForEnableH5track.concat(normalBindObj)
+				: normalBindObj;
+	}
+
+	/**
+	 * hifiveの独自イベント"h5trackstart", "h5trackmove", "h5trackend"を対象のコントローラで有効にするためのハンドラを返します
+	 * <p>
+	 * h5trackハンドラは、mousedown,touchstartt時に動的にバインドし、mouseend,touchend時に動的にアンバインドしています。
+	 * </p>
+	 * <p>
+	 * この挙動を有効にするためのバインドオブジェクトを生成して返します。
+	 * </p>
+	 *
+	 * @private
+	 * @param {Controller} controller コントローラ
+	 * @param {string} selector セレクタ
+	 * @returns {Object[]} バインドオブジェクトの配列 mousedown,touchstartのバインドオブジェクト(touchが無い場合はmousedonwのみ)
+	 *          <ul>
+	 *          <li>bindObj.controller - コントローラ</li>
+	 *          <li>bindObj.selector - セレクタ</li>
+	 *          <li>bindObj.eventName - イベント名</li>
+	 *          <li>bindObj.handler - イベントハンドラ</li>
+	 *          </ul>
+	 */
+	function getBindObjForEnableH5track(controller, selector) {
+		// タッチイベントがあるかどうか
+		var hasTouchEvent = typeof document.ontouchstart !== TYPE_OF_UNDEFINED;
 		function getEventType(en) {
 			switch (en) {
 			case 'touchstart':
@@ -1744,188 +1781,178 @@
 
 		var $document = $(getDocumentOf(controller.rootElement));
 
-		/**
-		 * トラックイベントの一連のイベントについてのbindObjを作る
-		 *
-		 * @private
-		 * @returns {Objects[]}
-		 */
-		function getBindObjects() {
-			// h5trackendイベントの最後でハンドラの除去を行う関数を格納するための変数
-			var removeHandlers = null;
-			var execute = false;
-			function getHandler(en, eventTarget, setup) {
-				return function(context) {
-					var type = getEventType(en);
-					var isStart = type === EVENT_NAME_H5_TRACKSTART;
-					if (isStart && execute) {
-						// スタートイベントが起きた時に実行中 = マルチタッチされた時なので、何もしない
-						return;
-					}
+		// h5trackendイベントの最後でハンドラの除去を行う関数を格納するための変数
+		var removeHandlers = null;
+		var execute = false;
+		function getHandler(en, eventTarget, setup) {
+			return function(context) {
+				var type = getEventType(en);
+				var isStart = type === EVENT_NAME_H5_TRACKSTART;
+				if (isStart && execute) {
+					// スタートイベントが起きた時に実行中 = マルチタッチされた時なので、何もしない
+					return;
+				}
 
-					// タッチイベントかどうか
-					var isTouch = context.event.type.indexOf('touch') === 0;
-					if (isTouch) {
-						// タッチイベントの場合、イベントオブジェクトに座標系のプロパティを付加
-						initTouchEventObject(context.event, en);
-					}
-					var newEvent = new $.Event(type);
-					copyEventObject(context.event, newEvent);
-					var target = context.event.target;
-					if (eventTarget) {
-						target = eventTarget;
-					}
-					if (setup) {
-						setup(newEvent);
-					}
+				// タッチイベントかどうか
+				var isTouch = context.event.type.indexOf('touch') === 0;
+				if (isTouch) {
+					// タッチイベントの場合、イベントオブジェクトに座標系のプロパティを付加
+					initTouchEventObject(context.event, en);
+				}
+				var newEvent = new $.Event(type);
+				copyEventObject(context.event, newEvent);
+				var target = context.event.target;
+				if (eventTarget) {
+					target = eventTarget;
+				}
+				if (setup) {
+					setup(newEvent);
+				}
 
-					// ------------- h5track*のトリガ処理 -------------
-					// originalEventがあればoriginalEvent、なければjQueryEventオブジェクトでh5track*をトリガしたかどうかのフラグを管理する
-					var triggeredFlagEvent = context.event.originalEvent || context.event;
+				// ------------- h5track*のトリガ処理 -------------
+				// originalEventがあればoriginalEvent、なければjQueryEventオブジェクトでh5track*をトリガしたかどうかのフラグを管理する
+				var triggeredFlagEvent = context.event.originalEvent || context.event;
 
-					if (isStart && $.inArray(triggeredFlagEvent, storedEvents) === -1) {
-						// スタート時で、かつこのスタートイベントがstoredEventsに入っていないなら
-						// トリガする前にトリガフラグ保管イベントのリセット(storedEventsに不要なイベントオブジェクトを残さないため)
+				if (isStart && $.inArray(triggeredFlagEvent, storedEvents) === -1) {
+					// スタート時で、かつこのスタートイベントがstoredEventsに入っていないなら
+					// トリガする前にトリガフラグ保管イベントのリセット(storedEventsに不要なイベントオブジェクトを残さないため)
+					storedEvents = [];
+					h5trackTriggeredFlags = [];
+				}
+
+				var index = $.inArray(triggeredFlagEvent, storedEvents);
+				if (index === -1) {
+					// storedEventsにイベントが登録されていなければ追加し、トリガ済みフラグにfalseをセットする
+					index = storedEvents.push(triggeredFlagEvent) - 1;
+					h5trackTriggeredFlags[index] = false;
+				}
+				// sotredEventsにイベントが登録されていれば、そのindexからトリガ済みフラグを取得する
+				var triggeredFlag = h5trackTriggeredFlags[index];
+
+				if (!triggeredFlag && (!isTouch || execute || isStart)) {
+					// 親子コントローラで複数のイベントハンドラが同じイベントにバインドされているときに、
+					// それぞれがトリガしてイベントハンドラがループしないように制御している。
+					// マウス/タッチイベントがh5track*にトリガ済みではない時にトリガする。
+					// タッチイベントの場合、h5track中でないのにmoveやtouchendが起きた時は何もしない。
+					// タッチイベントの場合はターゲットにバインドしており(マウスの場合はdocument)、
+					// バブリングによって同じイベントが再度トリガされるのを防ぐためである。
+
+					// トリガ済みフラグを立てる
+					h5trackTriggeredFlags[index] = true;
+					// h5track*イベントをトリガ
+					$(target).trigger(newEvent, context.evArg);
+					execute = true;
+				}
+
+				// 不要なイベントオブジェクトを残さないため、
+				// documentだったら現在のイベントとそのフラグをstoredEvents/h5trackTriggeredFlagsから外す
+				// h5trackend時ならstoredEvents/h5trackTtriggeredFlagsをリセットする
+				// (※ documentまでバブリングすればイベントオブジェクトを保管しておく必要がなくなるため)
+				if (context.event.currentTarget === document) {
+					if (type === EVENT_NAME_H5_TRACKEND) {
 						storedEvents = [];
 						h5trackTriggeredFlags = [];
 					}
-
-					var index = $.inArray(triggeredFlagEvent, storedEvents);
-					if (index === -1) {
-						// storedEventsにイベントが登録されていなければ追加し、トリガ済みフラグにfalseをセットする
-						index = storedEvents.push(triggeredFlagEvent) - 1;
-						h5trackTriggeredFlags[index] = false;
+					var storedIndex = $.inArray(triggeredFlagEvent, storedEvents);
+					if (storedIndex !== -1) {
+						storedEvents.splice(index, 1);
+						h5trackTriggeredFlags.splice(index, 1);
 					}
-					// sotredEventsにイベントが登録されていれば、そのindexからトリガ済みフラグを取得する
-					var triggeredFlag = h5trackTriggeredFlags[index];
+				}
+				// ------------- h5track*のトリガ処理 ここまで -------------
 
-					if (!triggeredFlag && (!isTouch || execute || isStart)) {
-						// 親子コントローラで複数のイベントハンドラが同じイベントにバインドされているときに、
-						// それぞれがトリガしてイベントハンドラがループしないように制御している。
-						// マウス/タッチイベントがh5track*にトリガ済みではない時にトリガする。
-						// タッチイベントの場合、h5track中でないのにmoveやtouchendが起きた時は何もしない。
-						// タッチイベントの場合はターゲットにバインドしており(マウスの場合はdocument)、
-						// バブリングによって同じイベントが再度トリガされるのを防ぐためである。
+				if (isStart && execute) {
+					// スタートイベント、かつ今h5trackstartをトリガしたところなら、
+					// h5trackmove,endを登録
 
-						// トリガ済みフラグを立てる
-						h5trackTriggeredFlags[index] = true;
-						// h5track*イベントをトリガ
-						$(target).trigger(newEvent, context.evArg);
-						execute = true;
+					// トラック操作で文字列選択やスクロールなどが起きないように元のイベントのpreventDefault()を呼ぶ
+					// ただし、h5trackstartがpreventDefault()されていたら、元のイベントのpreventDefault()は呼ばない
+					if (!newEvent.isDefaultPrevented()) {
+						newEvent.h5DelegatingEvent.preventDefault();
 					}
+					var nt = newEvent.target;
 
-					// 不要なイベントオブジェクトを残さないため、
-					// documentだったら現在のイベントとそのフラグをstoredEvents/h5trackTriggeredFlagsから外す
-					// h5trackend時ならstoredEvents/h5trackTtriggeredFlagsをリセットする
-					// (※ documentまでバブリングすればイベントオブジェクトを保管しておく必要がなくなるため)
-					if (context.event.currentTarget === document) {
-						if (type === EVENT_NAME_H5_TRACKEND) {
-							storedEvents = [];
-							h5trackTriggeredFlags = [];
-						}
-						var storedIndex = $.inArray(triggeredFlagEvent, storedEvents);
-						if (storedIndex !== -1) {
-							storedEvents.splice(index, 1);
-							h5trackTriggeredFlags.splice(index, 1);
-						}
-					}
-					// ------------- h5track*のトリガ処理 ここまで -------------
+					// 直前のh5track系イベントとの位置の差分を格納
+					var ox = newEvent.clientX;
+					var oy = newEvent.clientY;
+					var setupDPos = function(ev) {
+						var cx = ev.clientX;
+						var cy = ev.clientY;
+						ev.dx = cx - ox;
+						ev.dy = cy - oy;
+						ox = cx;
+						oy = cy;
+					};
 
-					if (isStart && execute) {
-						// スタートイベント、かつ今h5trackstartをトリガしたところなら、
-						// h5trackmove,endを登録
+					// h5trackstart実行時に、move、upのハンドラを作成して登録する。
+					// コンテキストをとるように関数をラップして、bindする。
+					// touchstartで発火したならtouchstart,touchendにバインド、
+					// そうでない場合(mousedown)ならmousemove,mousenendにバインド
+					var moveEventType = isTouch ? 'touchmove' : 'mousemove';
+					var endEventType = isTouch ? 'touchend' : 'mouseup';
+					var moveHandler = getHandler(moveEventType, nt, setupDPos);
+					var upHandler = getHandler(endEventType, nt);
+					var moveHandlerWrapped = function(e) {
+						context.event = e;
+						context.evArg = handlerArgumentsToContextEvArg(arguments);
+						moveHandler(context);
+					};
+					var upHandlerWrapped = function(e) {
+						context.event = e;
+						context.evArg = handlerArgumentsToContextEvArg(arguments);
+						upHandler(context);
+					};
 
-						// トラック操作で文字列選択やスクロールなどが起きないように元のイベントのpreventDefault()を呼ぶ
-						// ただし、h5trackstartがpreventDefault()されていたら、元のイベントのpreventDefault()は呼ばない
-						if (!newEvent.isDefaultPrevented()) {
-							newEvent.h5DelegatingEvent.preventDefault();
-						}
-						var nt = newEvent.target;
-
-						// 直前のh5track系イベントとの位置の差分を格納
-						var ox = newEvent.clientX;
-						var oy = newEvent.clientY;
-						var setupDPos = function(ev) {
-							var cx = ev.clientX;
-							var cy = ev.clientY;
-							ev.dx = cx - ox;
-							ev.dy = cy - oy;
-							ox = cx;
-							oy = cy;
-						};
-
-						// h5trackstart実行時に、move、upのハンドラを作成して登録する。
-						// コンテキストをとるように関数をラップして、bindする。
-						// touchstartで発火したならtouchstart,touchendにバインド、
-						// そうでない場合(mousedown)ならmousemove,mousenendにバインド
-						var moveEventType = isTouch ? 'touchmove' : 'mousemove';
-						var endEventType = isTouch ? 'touchend' : 'mouseup';
-						var moveHandler = getHandler(moveEventType, nt, setupDPos);
-						var upHandler = getHandler(endEventType, nt);
-						var moveHandlerWrapped = function(e) {
-							context.event = e;
-							context.evArg = handlerArgumentsToContextEvArg(arguments);
-							moveHandler(context);
-						};
-						var upHandlerWrapped = function(e) {
-							context.event = e;
-							context.evArg = handlerArgumentsToContextEvArg(arguments);
-							upHandler(context);
-						};
-
-						// タッチならイベントの起きた要素、マウスならdocumentにバインド
-						var $bindTarget = isTouch ? $(nt) : $document;
-						// moveとendのunbindをする関数
-						removeHandlers = function() {
-							storedEvents = [];
-							h5trackTriggeredFlags = [];
-							$bindTarget.unbind(moveEventType, moveHandlerWrapped);
-							$bindTarget.unbind(endEventType, upHandlerWrapped);
-							if (!isTouch && controller.rootElement !== document) {
-								$(controller.rootElement).unbind(moveEventType, moveHandlerWrapped);
-								$(controller.rootElement).unbind(endEventType, upHandlerWrapped);
-							}
-						};
-						// h5trackmoveとh5trackendのbindを行う
-						$bindTarget.bind(moveEventType, moveHandlerWrapped);
-						$bindTarget.bind(endEventType, upHandlerWrapped);
-
-						// タッチでなく、かつコントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
-						// タッチイベントでない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
-						// stopPropagationされたときに、h5trackイベントを発火することができなくなる。
-						// コントローラのルートエレメント外でstopPropagationされていた場合を考慮して、
-						// ルートエレメントにもmove,endをバインドする。
-						// (ルートエレメントの内側でstopPropagationしている場合は考慮しない)
-						// (タッチの場合はターゲットはstart時の要素なので2重にバインドする必要はない)
+					// タッチならイベントの起きた要素、マウスならdocumentにバインド
+					var $bindTarget = isTouch ? $(nt) : $document;
+					// moveとendのunbindをする関数
+					removeHandlers = function() {
+						storedEvents = [];
+						h5trackTriggeredFlags = [];
+						$bindTarget.unbind(moveEventType, moveHandlerWrapped);
+						$bindTarget.unbind(endEventType, upHandlerWrapped);
 						if (!isTouch && controller.rootElement !== document) {
-							// h5trackmoveとh5trackendのbindを行う
-							$(controller.rootElement).bind(moveEventType, moveHandlerWrapped);
-							$(controller.rootElement).bind(endEventType, upHandlerWrapped);
+							$(controller.rootElement).unbind(moveEventType, moveHandlerWrapped);
+							$(controller.rootElement).unbind(endEventType, upHandlerWrapped);
 						}
-					} else if (type === EVENT_NAME_H5_TRACKEND) {
-						// touchend,mousup時(=h5trackend時)にmoveとendのイベントをunbindする
-						removeHandlers();
-						execute = false;
+					};
+					// h5trackmoveとh5trackendのbindを行う
+					$bindTarget.bind(moveEventType, moveHandlerWrapped);
+					$bindTarget.bind(endEventType, upHandlerWrapped);
+
+					// タッチでなく、かつコントローラのルートエレメントがdocumentでなかったら、ルートエレメントにもバインドする
+					// タッチイベントでない場合、move,endをdocumentにバインドしているが、途中でmousemove,mouseupを
+					// stopPropagationされたときに、h5trackイベントを発火することができなくなる。
+					// コントローラのルートエレメント外でstopPropagationされていた場合を考慮して、
+					// ルートエレメントにもmove,endをバインドする。
+					// (ルートエレメントの内側でstopPropagationしている場合は考慮しない)
+					// (タッチの場合はターゲットはstart時の要素なので2重にバインドする必要はない)
+					if (!isTouch && controller.rootElement !== document) {
+						// h5trackmoveとh5trackendのbindを行う
+						$(controller.rootElement).bind(moveEventType, moveHandlerWrapped);
+						$(controller.rootElement).bind(endEventType, upHandlerWrapped);
 					}
-				};
-			}
-			function createBindObj(en) {
-				return {
-					controller: controller,
-					selector: selector,
-					eventName: en,
-					handler: getHandler(en)
-				};
-			}
-			var bindObjects = [getNormalBindObj(controller, selector, eventName, func)];
-			if (hasTouchEvent) {
-				// タッチがあるならタッチにもバインド
-				bindObjects.push(createBindObj('touchstart'));
-			}
-			bindObjects.push(createBindObj('mousedown'));
-			return bindObjects;
+				} else if (type === EVENT_NAME_H5_TRACKEND) {
+					// touchend,mousup時(=h5trackend時)にmoveとendのイベントをunbindする
+					removeHandlers();
+					execute = false;
+				}
+			};
 		}
-		return getBindObjects();
+		function createBindObj(en) {
+			return {
+				controller: controller,
+				selector: selector,
+				eventName: en,
+				handler: getHandler(en)
+			};
+		}
+		var bindObjects = [createBindObj('mousedown')];
+		if (hasTouchEvent) {
+			// タッチがあるならタッチにもバインド
+			bindObjects.push(createBindObj('touchstart'));
+		}
+		return bindObjects;
 	}
 
 	/**

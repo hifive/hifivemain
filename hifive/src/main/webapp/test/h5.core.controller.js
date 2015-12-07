@@ -1408,6 +1408,94 @@ $(function() {
 		};
 	}
 
+	/**
+	 * h5trackイベントのいずれか一つをバインドした時の動作テスト
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @param {string} type start|move|end
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestIndividualBind(events, type) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var controllerDef = {
+				__name: 'Controller',
+				trackEvents: []
+			};
+			controllerDef['{rootElement} h5track' + type] = function handler(ctx) {
+				this.trackEvents.push(ctx.event.type);
+			}
+			var startTrackEvent = createDummyTrackEvent(events.start, 0);
+			var moveTrackEvent = createDummyTrackEvent(events.move, 10);
+			var endTrackEvent = createDummyTrackEvent(events.end, 10);
+
+			var $elm = $('#controllerTest');
+			var $inElm = $('<div id="divInControllerTest"></div>');
+			$elm.append($inElm);
+			h5.core.controller($elm, controllerDef).readyPromise.done(function() {
+				$inElm.trigger(startTrackEvent);
+				$inElm.trigger(moveTrackEvent);
+				$inElm.trigger(endTrackEvent);
+
+				deepEqual(this.trackEvents, ['h5track' + type], 'h5track' + type
+						+ 'のみバインドした場合でもそのイベントハンドラが発火すること');
+				start();
+			});
+		};
+	}
+
+	/**
+	 * h5trackイベントのいずれか一つをon/offでバインド/アンバインドした時の動作テスト
+	 *
+	 * @param {Object} events touchTrackEventsまたはmouseTrackEvents
+	 * @param {string} type start|move|end
+	 * @returns {Function} テスト関数
+	 */
+	function getH5trackTestIndividualOnOff(events, type) {
+		return function() {
+			if (!isExistEvents(events)) {
+				abortTest();
+				start();
+				return;
+			}
+			var controllerDef = {
+				__name: 'Controller',
+				trackEvents: []
+			};
+			var handler = function handler(ctx) {
+				this.trackEvents.push(ctx.event.type);
+			}
+			var startTrackEvent = createDummyTrackEvent(events.start, 0);
+			var moveTrackEvent = createDummyTrackEvent(events.move, 10);
+			var endTrackEvent = createDummyTrackEvent(events.end, 10);
+
+			var $elm = $('#controllerTest');
+			var $inElm = $('<div id="divInControllerTest"></div>');
+			$elm.append($inElm);
+			h5.core.controller($elm, controllerDef).readyPromise.done(function() {
+				this.on('{rootElement}', 'h5track' + type, handler);
+				function track() {
+					$inElm.trigger(startTrackEvent);
+					$inElm.trigger(moveTrackEvent);
+					$inElm.trigger(endTrackEvent);
+				}
+				track();
+				deepEqual(this.trackEvents, ['h5track' + type], 'h5track' + type
+						+ 'のみバインドした場合でもそのイベントハンドラが発火すること');
+				this.trackEvents = [];
+
+				this.off('{rootElement}', 'h5track' + type, handler);
+				track();
+
+				deepEqual(this.trackEvents, [], 'offでアンバインドす路とイベントハンドラは発火しないこと');
+				start();
+			});
+		};
+	}
 	// =========================================================================
 	//
 	// Test Module
@@ -2784,18 +2872,46 @@ $(function() {
 	asyncTest('mousedownでh5trackstartが発火した時、mousedownイベントのpreventDefault()が呼ばれること',
 			getH5trackTestPreventDefault(mouseTrackEvents));
 	asyncTest('touchstartでh5trackstartが発火した時、touchstartイベントのpreventDefault()が呼ばれること',
-			getH5trackTestPreventDefault(mouseTrackEvents));
+			getH5trackTestPreventDefault(touchTrackEvents));
 	asyncTest(
 			'mousedownでh5trackstartが発火して、h5trackstartイベントのpreventDefault()を呼んだ時、mousedownイベントのpreventDefault()は呼ばれないこと',
 			getH5trackTestPreventDefault(mouseTrackEvents, true));
 	asyncTest(
 			'touchstartでh5trackstartが発火して、h5trackstartイベントのpreventDefault()を呼んだ時、touchstartイベントのpreventDefault()は呼ばれないこと',
-			getH5trackTestPreventDefault(mouseTrackEvents, true));
+			getH5trackTestPreventDefault(touchTrackEvents, true));
 
 	asyncTest('on/offでh5trackイベントのバインド、アンバインドができること(mouse)',
 			getH5trackTestTrackEventOnOff(mouseTrackEvents));
 	asyncTest('on/offでh5trackイベントのバインド、アンバインドができること(touch)',
 			getH5trackTestTrackEventOnOff(touchTrackEvents));
+
+	asyncTest('h5trackstartイベントハンドラのみ定義した場合の動作(マウス)', getH5trackTestIndividualBind(
+			mouseTrackEvents, 'start'));
+	asyncTest('h5trackmoveイベントハンドラのみ定義した場合の動作(マウス)', getH5trackTestIndividualBind(mouseTrackEvents,
+			'move'));
+	asyncTest('h5trackendイベントハンドラのみ定義した場合の動作(マウス)', getH5trackTestIndividualBind(mouseTrackEvents,
+			'end'));
+
+	asyncTest('h5trackstartイベントハンドラのみ定義した場合の動作(タッチ)', getH5trackTestIndividualBind(
+			touchTrackEvents, 'start'));
+	asyncTest('h5trackmoveイベントハンドラのみ定義した場合の動作(タッチ)', getH5trackTestIndividualBind(touchTrackEvents,
+			'move'));
+	asyncTest('h5trackendイベントハンドラのみ定義した場合の動作(タッチ)', getH5trackTestIndividualBind(touchTrackEvents,
+			'end'));
+
+	asyncTest('h5trackstartイベントハンドラのみon/offでバインド/アンバインドした時の動作(マウス)', getH5trackTestIndividualOnOff(
+			mouseTrackEvents, 'start'));
+	asyncTest('h5trackmoveイベントハンドラのみon/offでバインド/アンバインドした時の動作(マウス)', getH5trackTestIndividualOnOff(
+			mouseTrackEvents, 'move'));
+	asyncTest('h5trackendイベントハンドラのみon/offでバインド/アンバインドした時の動作(マウス)', getH5trackTestIndividualOnOff(
+			mouseTrackEvents, 'end'));
+
+	asyncTest('h5trackstartイベントハンドラのみon/offでバインド/アンバインドした時の動作(タッチ)', getH5trackTestIndividualOnOff(
+			touchTrackEvents, 'start'));
+	asyncTest('h5trackmoveイベントハンドラのみon/offでバインド/アンバインドした時の動作(タッチ)', getH5trackTestIndividualOnOff(
+			touchTrackEvents, 'move'));
+	asyncTest('h5trackendイベントハンドラのみon/offでバインド/アンバインドした時の動作(タッチ)', getH5trackTestIndividualOnOff(
+			touchTrackEvents, 'end'));
 
 	asyncTest(
 			'touch-actionプロパティに対応しているブラウザについて、h5trackイベントハンドラを記述した要素にtouch-action(-ms-touch-action)プロパティが設定されること',
