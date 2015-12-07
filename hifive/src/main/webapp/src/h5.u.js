@@ -728,7 +728,9 @@
 	 * "0."は省略して単に{name}のように記述することもできます。また、{0.birthday.year}のように入れ子になっているプロパティを辿ることもできます。
 	 * </p>
 	 * <p>
-	 * 例：
+	 * "."の代わりに"[]"を使ってプロパティにアクセスすることもできます。以下、使用例です。
+	 * </p>
+	 * <p>
 	 *
 	 * <pre class="sh_javascript"><code>
 	 * var myValue = 10;
@@ -738,7 +740,6 @@
 	 * 実行結果: myValue is 10
 	 * </p>
 	 * <p>
-	 * 例：
 	 *
 	 * <pre class="sh_javascript"><code>
 	 * h5.u.str.format('{name} is at {address}', {
@@ -750,7 +751,6 @@
 	 * 実行結果: Taro is at Yokohama
 	 * </p>
 	 * <p>
-	 * 例：
 	 *
 	 * <pre class="sh_javascript"><code>
 	 * h5.u.str.format('{0} is born on {1.birthday.year}.', 'Taro', {
@@ -763,10 +763,25 @@
 	 * 実行結果: Taro is born on 1990.
 	 * </p>
 	 * <p>
-	 * 例：
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * h5.u.str.format('{0.name} likes {0.hobby[0]}. {1.name} likes {1.hobby[0]}.', {
+	 * 	name: 'Taro',
+	 * 	hobby: ['Traveling', 'Shopping']
+	 * }, {
+	 * 	name: 'Hanako',
+	 * 	hobby: ['Chess']
+	 * });
+	 * </code></pre>
+	 *
+	 * 実行結果: Taro likes Traveling. Hanako likes Chess.
+	 * </p>
+	 * <p>
 	 *
 	 * <pre class="sh_javascript"><code>
 	 * h5.u.str.format('{0.0},{0.1},{0.2},…(長さ{length})', [2, 3, 5, 7]);
+	 * // 以下と同じ
+	 * h5.u.str.format('{0[0]},{0[1]},{0[2]},…(長さ{0.length})', [2, 3, 5, 7]);
 	 * </code></pre>
 	 *
 	 * 実行結果: 2,3,5,…(長さ4)
@@ -1281,6 +1296,32 @@
 
 	/**
 	 * 指定された名前空間に存在するオブジェクトを取得します。
+	 * <p>
+	 * 第1引数に名前空間文字列、第2引数にルートオブジェクトを指定します。第2引数を省略した場合はwindowオブジェクトをルートオブジェクトとして扱います。
+	 * </p>
+	 * <p>
+	 * 名前空間文字列はプロパティ名を"."区切りで記述子、ルートオブジェクトからのパスを記述します。また"."区切りの代わりに"[]"を使ってプロパティアクセスを表すことも可能です。
+	 * </p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * var rootObj = {
+	 * 	a: {
+	 * 		b: {
+	 * 			c: [{
+	 * 				d: 'hoge'
+	 * 			}]
+	 * 		}
+	 * 	}
+	 * };
+	 * h5.u.obj.getByPath('a.b.c[0].d', rootObj);
+	 * // → hoge
+	 *
+	 * window.hoge = {
+	 * 	obj: rootObj
+	 * };
+	 * h5.u.obj.getByPath('hoge.obj.a.b.c[0].d');
+	 * // → hoge
+	 * </code></pre>
 	 *
 	 * @param {String} namespace 名前空間
 	 * @param {Object} [rootObj=window] 名前空間のルートとなるオブジェクト。デフォルトはwindowオブジェクト。
