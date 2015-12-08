@@ -32,6 +32,22 @@
 	transform: scale(0.5);
 }
 
+.room{
+	display: inline-block;
+	width: 120px;
+	margin: 10px;
+	text-align: center;
+	border: 5px dashed #ccc;
+	cursor: pointer;
+}
+.room.selected {
+	border: 5px solid #f00;
+}
+.room-label {
+	font-size: 3em;
+}
+
+
 @keyframes switchtext {
 	from {
 		opacity: 1.0;
