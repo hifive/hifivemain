@@ -87,25 +87,23 @@
 	 * シーン遷移タイプ
 	 */
 	var NAVIGATE_TYPE = {
-		NORMAL : 'normal',
-		ONCE : 'once',
-		EXCHANGE : 'exchange'
+		NORMAL: 'normal',
+		ONCE: 'once',
+		EXCHANGE: 'exchange'
 	};
 
 	/**
 	 * Ajaxメソッド
 	 */
 	var METHOD = {
-		GET : 'get',
-		POST : 'post'
+		GET: 'get',
+		POST: 'post'
 	};
 
 	/**
 	 * Router 遷移先URL最大長
-	 *
 	 * <p>
-	 * URL全体がこの値を超えた場合、開発字はエラー、運用時は警告ログを出力。
-	 * IEで2084の場合があり、これ以下で、ある程度のバッファを取った。
+	 * URL全体がこの値を超えた場合、開発字はエラー、運用時は警告ログを出力。 IEで2084の場合があり、これ以下で、ある程度のバッファを取った。
 	 * </p>
 	 */
 	var URL_MAX_LENGTH = 1800;
@@ -119,33 +117,33 @@
 	 * Router URL履歴保持方法指定
 	 */
 	var URL_HISTORY_MODE = {
-		HASH : 'hash',
-		HISTORY : 'history',
-		NONE : 'none',
-		FULLRELOAD : 'fullreload',
-		HISTORY_OR_HASH : 'historyOrHash',
-		HISTORY_OR_ERROR : 'historyOrError',
-		HISTORY_OR_NONE : 'historyOrNone',
-		HISTORY_OR_FULLRELOAD : 'historyOrFullreload'
+		HASH: 'hash',
+		HISTORY: 'history',
+		NONE: 'none',
+		FULLRELOAD: 'fullreload',
+		HISTORY_OR_HASH: 'historyOrHash',
+		HISTORY_OR_ERROR: 'historyOrError',
+		HISTORY_OR_NONE: 'historyOrNone',
+		HISTORY_OR_FULLRELOAD: 'historyOrFullreload'
 	};
 
 	/**
 	 * Router URL履歴保持方法(判定後)
 	 */
 	var URL_HISTORY_ACTUAL_MODE = {
-		HASH : 'hash',
-		HISTORY : 'history',
-		NONE : 'none',
-		FULLRELOAD : 'fullreload'
+		HASH: 'hash',
+		HISTORY: 'history',
+		NONE: 'none',
+		FULLRELOAD: 'fullreload'
 	};
 
 	/**
 	 * Router navigate動作モード指定
 	 */
 	var URL_HISTORY_MODE_ON_NAVIGATE = {
-		NONE : 'none',
-		FULLRELOAD : 'fullreload',
-		SILENT : 'silent'
+		NONE: 'none',
+		FULLRELOAD: 'fullreload',
+		SILENT: 'silent'
 	};
 
 	// =============================
@@ -327,7 +325,7 @@
 			deep: true
 		});
 		for (var i = 0, len = controllers.length; i < len; i++) {
-			if(!isDisposing(controllers[i])) {
+			if (!isDisposing(controllers[i])) {
 				controllers[i].dispose();
 			}
 		}
@@ -1032,17 +1030,13 @@
 
 	/**
 	 * Router
-	 *
 	 * <p>
 	 * 暫定実装。
 	 * </p>
-	 *
 	 * <p>
 	 * URLのチェック対象となるのは、HirtoryAPI使用の場合はドメインルートより後、Hash使用の場合はHash(#より後)を対象とし、先頭からベースURLを除いたものです。
-	 * (ただし、Hash使用の場合でもHash値がない場合はドメインルートより後を使用)
-	 * (これをここでは「ルーターURL」と呼称します)
+	 * (ただし、Hash使用の場合でもHash値がない場合はドメインルートより後を使用) (これをここでは「ルーターURL」と呼称します)
 	 * </p>
-	 *
 	 * <p>
 	 * ルーティングルールは引数optionのroutesプロパティに以下の形式の配列を指定します。
 	 * </p>
@@ -1054,7 +1048,6 @@
 	 * <p>
 	 * testには、URLをチェックするためのルールを以下の様に指定します。
 	 * </p>
-	 *
 	 * <dl>
 	 * <dt>文字列の場合</dt>
 	 * <dd>ルーターURLすべてを指定。(完全一致。パラメーター以下もすべて指定)</dd>
@@ -1066,16 +1059,11 @@
 	 *
 	 * @private
 	 * @class
-	 * @param {Object}
-	 *            [option]
-	 * @param {Boolean}
-	 *            [option.urlHistoryMode] URL履歴保持方法指定
-	 * @param {String}
-	 *            [option.baseUrl] ベースURL
-	 * @param {Integer}
-	 *            [option.urlMaxLength=1800] 遷移先URL最大長
-	 * @param {Array}
-	 *            [option.routes] ルーティングルール。詳細は上述。
+	 * @param {Object} [option]
+	 * @param {Boolean} [option.urlHistoryMode] URL履歴保持方法指定
+	 * @param {String} [option.baseUrl] ベースURL
+	 * @param {Integer} [option.urlMaxLength=1800] 遷移先URL最大長
+	 * @param {Array} [option.routes] ルーティングルール。詳細は上述。
 	 * @returns {Router} Routerインスタンス
 	 */
 	function Router(option) {
@@ -1087,8 +1075,7 @@
 		if (!Router._instance) {
 			self = Router._instance = this;
 			var pushSate = !!(window.history.pushState);
-			self.urlHistoryMode = option.urlHistoryMode
-					|| URL_HISTORY_MODE.HISTORY;
+			self.urlHistoryMode = option.urlHistoryMode || URL_HISTORY_MODE.HISTORY;
 
 			// TODO(鈴木) URL履歴保持方法判定
 			switch (self.urlHistoryMode) {
@@ -1171,7 +1158,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		_routes : [],
+		_routes: [],
 
 		/**
 		 * ベースURL
@@ -1179,7 +1166,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		_baseUrl : null,
+		_baseUrl: null,
 
 		/**
 		 * URL監視フラグ
@@ -1187,7 +1174,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		_started : false,
+		_started: false,
 
 		/**
 		 * URL最大長
@@ -1195,7 +1182,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		_urlMaxLength : null,
+		_urlMaxLength: null,
 
 		/**
 		 * hashChange時コールバック抑制フラグ
@@ -1203,7 +1190,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		_silentOnce : false,
+		_silentOnce: false,
 
 		/**
 		 * Router URL履歴保持方法指定
@@ -1211,7 +1198,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		urlHistoryMode : null,
+		urlHistoryMode: null,
 
 		/**
 		 * Router URL履歴保持方法(判定後)
@@ -1219,7 +1206,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		urlHistoryActualMode : null,
+		urlHistoryActualMode: null,
 
 		/**
 		 * URL変更なしでの対応関数実行 URL文字列保持用
@@ -1227,7 +1214,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		_urlForSimulate : null,
+		_urlForSimulate: null,
 
 		/**
 		 * URL変化時コールバック
@@ -1235,7 +1222,7 @@
 		 * @private
 		 * @memberOf Router
 		 */
-		_onChange : function() {
+		_onChange: function() {
 
 			// TODO(鈴木) hash変更時にhashchangeを無視する場合
 			if (this._silentOnce) {
@@ -1296,20 +1283,17 @@
 		 * URL監視の開始
 		 *
 		 * @memberOf Router
-		 * @param {Object}
-		 *            [option]
-		 * @param {Boolean}
-		 *            [option.silent=false]
-		 *            監視開始時にその時点のURLに対応した処理を実行しない場合にtrueを指定する。
+		 * @param {Object} [option]
+		 * @param {Boolean} [option.silent=false] 監視開始時にその時点のURLに対応した処理を実行しない場合にtrueを指定する。
 		 */
-		start : function(option) {
+		start: function(option) {
 			option = option || {};
 
 			if (this._started)
 				return;
 
 			this._checkUrlLength(location.href, {
-				throwOnError : true
+				throwOnError: true
 			});
 
 			this._started = true;
@@ -1332,24 +1316,19 @@
 		 * URL変更
 		 *
 		 * @memberOf Router
-		 * @param {String}
-		 *            to 遷移先指定
-		 * @param {Object}
-		 *            [option]
-		 * @param {Boolean}
-		 *            [option.replace=false]
-		 *            前の画面の履歴を残さずに遷移する場合にtrueを指定する。
-		 * @param {String}
-		 *            [option.mode] 動作モード指定
+		 * @param {String} to 遷移先指定
+		 * @param {Object} [option]
+		 * @param {Boolean} [option.replace=false] 前の画面の履歴を残さずに遷移する場合にtrueを指定する。
+		 * @param {String} [option.mode] 動作モード指定
 		 */
-		navigate : function(to, option) {
+		navigate: function(to, option) {
 			option = option || {};
 
 			if (!this._started)
 				return;
 
 			this._checkUrlLength(to, {
-				throwOnError : true
+				throwOnError: true
 			});
 
 			var silent = false, mode = this.urlHistoryActualMode;
@@ -1391,7 +1370,7 @@
 				//TODO #449 パラメーター順序違いを考慮した同一性の判定については要検討
 				if (this.compareUrl(result)) {
 					this._onChange();
-				}else{
+				} else {
 					if (option.replace) {
 						location.replace('#' + result);
 					} else {
@@ -1406,7 +1385,7 @@
 				//TODO #449 パラメーター順序違いを考慮した同一性の判定については要検討
 				if (this.compareUrl(result)) {
 					this._onChange();
-				}else{
+				} else {
 					if (option.replace) {
 						history.replaceState(null, null, result);
 					} else {
@@ -1417,10 +1396,10 @@
 				break;
 			case URL_HISTORY_ACTUAL_MODE.FULLRELOAD:
 				//TODO #449 パラメーター順序違いを考慮した同一性の判定については要検討
-				if(this.compareUrl(result)){
+				if (this.compareUrl(result)) {
 					//TODO(鈴木) URLにHashが付いていても再表示する
 					location.reload();
-				}else if (option.replace) {
+				} else if (option.replace) {
 					location.replace(result);
 				} else {
 					location.href = result;
@@ -1439,7 +1418,7 @@
 		 *
 		 * @memberOf Router
 		 */
-		stop : function() {
+		stop: function() {
 			if (!this._started)
 				return;
 			this._started = false;
@@ -1455,28 +1434,20 @@
 
 		/**
 		 * URL長のチェック
-		 *
 		 * <p>
-		 * 指定のURLに遷移した場合、URL全体で設定された最大長を超過しないかをチェックします。
-		 * HistroyAPI使用の場合とHash使用の場合で長さは異なるので注意してください。
+		 * 指定のURLに遷移した場合、URL全体で設定された最大長を超過しないかをチェックします。 HistroyAPI使用の場合とHash使用の場合で長さは異なるので注意してください。
 		 * </p>
 		 *
 		 * @private
 		 * @memberOf Router
-		 * @param {String}
-		 *            url
-		 * @param {Object}
-		 *            [option]
-		 * @param {Boolean}
-		 *            [option.writeBack=false]
-		 *            チェック結果詳細を仮引数のオブジェクトに書き込む場合にtrue。
+		 * @param {String} url
+		 * @param {Object} [option]
+		 * @param {Boolean} [option.writeBack=false] チェック結果詳細を仮引数のオブジェクトに書き込む場合にtrue。
 		 *            ※現時点では使用していない。将来的にメソッドを公開した場合での使用を想定。
-		 * @param {Boolean}
-		 *            [option.throwOnError=false]
-		 *            チェックエラー時に例外をスローする場合にtrue。dev版のみ有効。min版では無効。
+		 * @param {Boolean} [option.throwOnError=false] チェックエラー時に例外をスローする場合にtrue。dev版のみ有効。min版では無効。
 		 * @returns {Boolean} チェック結果
 		 */
-		_checkUrlLength : function(url, option) {
+		_checkUrlLength: function(url, option) {
 			option = option || {};
 			if (this._urlMaxLength == null) {
 				return true;
@@ -1502,16 +1473,14 @@
 
 			if (result.length <= this._urlMaxLength) {
 				return true;
-			/* del begin */
+				/* del begin */
 			} else if (option.throwOnError) {
 				// 遷移先URLが設定された最大長を超過した
-				throwFwError(ERR_CODE_URL_LENGTH_OVER, [ result.length,
-						this._urlMaxLength ]);
+				throwFwError(ERR_CODE_URL_LENGTH_OVER, [result.length, this._urlMaxLength]);
 				return false;
-			/* del end */
+				/* del end */
 			} else {
-				fwLogger.warn(ERR_CODE_URL_LENGTH_OVER, result.length,
-						this._urlMaxLength);
+				fwLogger.warn(ERR_CODE_URL_LENGTH_OVER, result.length, this._urlMaxLength);
 				return false;
 			}
 		},
@@ -1522,8 +1491,8 @@
 		 * @memberOf Router
 		 * @returns {String}
 		 */
-		_getBaseDir : function() {
-			if(this._baseUrl){
+		_getBaseDir: function() {
+			if (this._baseUrl) {
 				return this._baseUrl;
 			}
 			var routerLocation = this._getRouterLocation();
@@ -1535,11 +1504,10 @@
 		 *
 		 * @private
 		 * @memberOf Router
-		 * @param {String}
-		 *            url
+		 * @param {String} url
 		 * @returns {String}
 		 */
-		_removeBaseUrl : function(url) {
+		_removeBaseUrl: function(url) {
 			var baseUrl = this._baseUrl;
 			if (baseUrl && url.indexOf(baseUrl) === 0) {
 				url = url.replace(baseUrl, '');
@@ -1551,12 +1519,10 @@
 		 * URL変更なしでの対応処理実行
 		 *
 		 * @memberOf Router
-		 * @param {String}
-		 *            url
-		 * @param {Any}
-		 *            contextualData
+		 * @param {String} url
+		 * @param {Any} contextualData
 		 */
-		evaluate : function(url, contextualData) {
+		evaluate: function(url, contextualData) {
 			var result = this._toAbusolute(url);
 			this._urlForSimulate = result;
 			this._contextualData = contextualData;
@@ -1568,19 +1534,18 @@
 		 *
 		 * @private
 		 * @memberOf Router
-		 * @param {String}
-		 *            url
+		 * @param {String} url
 		 * @returns {String}
 		 */
-		_toAbusolute : function(url) {
+		_toAbusolute: function(url) {
 			var wk = null;
 			var urlHelper = new UrlHelper(url);
 			var routerLocation = this._getRouterLocation();
-			if(urlHelper.isSearch()){
+			if (urlHelper.isSearch()) {
 				wk = routerLocation.pathname + urlHelper.search + urlHelper.hash;
-			}else if(urlHelper.isHash()){
+			} else if (urlHelper.isHash()) {
 				wk = routerLocation.pathname + routerLocation.search + urlHelper.hash;
-			}else{
+			} else {
 				wk = urlHelper.pathname + urlHelper.search + urlHelper.hash;
 				if (wk.indexOf('/') !== 0) {
 					var base = this._getBaseDir();
@@ -1594,45 +1559,40 @@
 		},
 		/**
 		 * URLの比較
-		 *
 		 * <p>
 		 * 第二引数を指定しない場合、現時点のURLと比較します。
 		 * </p>
 		 *
 		 * @memberOf Router
-		 * @param {String}
-		 *            sbj 比較するURL
-		 * @param {String}
-		 *            [obj] 比較するURL。指定しない場合は、現時点のURLを対象とする。
+		 * @param {String} sbj 比較するURL
+		 * @param {String} [obj] 比較するURL。指定しない場合は、現時点のURLを対象とする。
 		 * @returns {Boolean} 同一の場合はtrue、異なる場合はfalse
-		 *
 		 */
-		compareUrl : function(sbj, obj){
-			if(obj == null){
+		compareUrl: function(sbj, obj) {
+			if (obj == null) {
 				var routerLocation = this._getRouterLocation();
 				obj = routerLocation.pathname + routerLocation.search;
 			}
-			if(sbj.indexOf('/') !== 0){
+			if (sbj.indexOf('/') !== 0) {
 				sbj = this._toAbusolute(sbj);
 			}
-			if(obj.indexOf('/') !== 0){
+			if (obj.indexOf('/') !== 0) {
 				obj = this._toAbusolute(obj);
 			}
 			return (sbj === obj);
 		},
 		/**
 		 * 現時点のURLの取得
-		 *
 		 * <p>
-	 	 * HirtoryAPI使用の場合はドメインルートより後、Hash使用の場合はHash(#より後)を使用し、UrlHelperで返却します。
-	 	 * (ただし、Hash使用の場合でもHash値がない場合はドメインルートより後を使用します)
-	 	 * </p>
-	 	 *
+		 * HirtoryAPI使用の場合はドメインルートより後、Hash使用の場合はHash(#より後)を使用し、UrlHelperで返却します。
+		 * (ただし、Hash使用の場合でもHash値がない場合はドメインルートより後を使用します)
+		 * </p>
+		 *
 		 * @private
 		 * @memberOf Router
 		 * @returns {UrlHelper}
 		 */
-		_getRouterLocation : function(){
+		_getRouterLocation: function() {
 			var urlHelper;
 			if (this.urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.HASH && location.hash) {
 				urlHelper = new UrlHelper(location.hash.substring(1));
@@ -1649,15 +1609,13 @@
 	// =============================
 	/**
 	 * UrlHelper
-	 *
 	 * <p>
 	 * 暫定実装。
 	 * </p>
 	 *
 	 * @private
 	 * @class
-	 * @param {String}
-	 *            url
+	 * @param {String} url
 	 * @returns {UrlHelper}
 	 */
 	function UrlHelper(url) {
@@ -1678,67 +1636,55 @@
 	}
 	$.extend(UrlHelper.prototype, {
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		href : undefined,
+		href: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		protocol : undefined,
+		protocol: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		host : undefined,
+		host: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		hostname  : undefined,
+		hostname: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		port : undefined,
+		port: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		pathname : undefined,
+		pathname: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		dir : undefined,
+		dir: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		file : undefined,
+		file: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		search : undefined,
+		search: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		hash : undefined,
+		hash: undefined,
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		isSearch : function(){
+		isSearch: function() {
 			return !this.protocol && !this.host && !this.pathname && this.search;
 		},
 		/**
-		 *
 		 * @memberOf UrlHelper
 		 */
-		isHash : function(){
+		isHash: function() {
 			return !this.protocol && !this.host && !this.pathname && !this.search && this.hash;
 		}
 	});
@@ -1996,67 +1942,65 @@
 		var xhr = h5.ajax({
 			url: source,
 			dataType: 'html',
-			method  : method || 'get',
-			data : serverArgs
+			method: method || 'get',
+			data: serverArgs
 		});
 
-		xhr.done(
-				function(data) {
+		xhr
+				.done(
+						function(data) {
 
-					// TODO(鈴木) ここでdataからbody部分のみ抜く。
-					data = extractBody(data);
+							// TODO(鈴木) ここでdataからbody部分のみ抜く。
+							data = extractBody(data);
 
-					// 先頭が表示文字列テキストノードの場合はコンテナ要素で囲む
-					if (startByTextRegexp.test(data)) {
-						data = '<div ' + DATA_H5_CONTAINER + '>' + data
-								+ '</div>';
-					}
+							// 先頭が表示文字列テキストノードの場合はコンテナ要素で囲む
+							if (startByTextRegexp.test(data)) {
+								data = '<div ' + DATA_H5_CONTAINER + '>' + data + '</div>';
+							}
 
-					var $dom = $(data);
+							var $dom = $(data);
 
-					if (container) {
-						var $container = findWithSelf($dom, '['
-								+ DATA_H5_CONTAINER + '="' + container + '"]');
-						if ($container.length === 0) {
-							// ロードしたHTML内に指定のコンテナが存在しない場合はエラー
-							throwFwError(ERR_CODE_TARGET_CONTAINER_NOT_FOUND, [
-									source, container ]);
-						}
-						$dom = $container.eq(0);
-					} else {
-						// TODO(鈴木)
-						// mainタグかdata-main-container属性要素があればその内容を対象とする。
-						// 通常のシーンコンテナ内にmainとdata-main-containerはない前提。
-						var main = findWithSelf($dom, '['
-								+ DATA_H5_MAIN_CONTAINER + ']');
-						// TODO(鈴木)
-						// 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
-						// さすがに遷移先HTMLでのフラグ状態までは見られない。。
-						if (h5.settings.scene.autoCreateMainContainer) {
-							if (main.length === 0)
-								main = findWithSelf($dom, 'main');
-						}
-						if (main.length > 0) {
-							$dom = main.eq(0);
-							$dom.attr(DATA_H5_MAIN_CONTAINER,
-									DATA_H5_MAIN_CONTAINER);
-						}
-					}
+							if (container) {
+								var $container = findWithSelf($dom, '[' + DATA_H5_CONTAINER + '="'
+										+ container + '"]');
+								if ($container.length === 0) {
+									// ロードしたHTML内に指定のコンテナが存在しない場合はエラー
+									throwFwError(ERR_CODE_TARGET_CONTAINER_NOT_FOUND, [source,
+											container]);
+								}
+								$dom = $container.eq(0);
+							} else {
+								// TODO(鈴木)
+								// mainタグかdata-main-container属性要素があればその内容を対象とする。
+								// 通常のシーンコンテナ内にmainとdata-main-containerはない前提。
+								var main = findWithSelf($dom, '[' + DATA_H5_MAIN_CONTAINER + ']');
+								// TODO(鈴木)
+								// 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
+								// さすがに遷移先HTMLでのフラグ状態までは見られない。。
+								if (h5.settings.scene.autoCreateMainContainer) {
+									if (main.length === 0)
+										main = findWithSelf($dom, 'main');
+								}
+								if (main.length > 0) {
+									$dom = main.eq(0);
+									$dom.attr(DATA_H5_MAIN_CONTAINER, DATA_H5_MAIN_CONTAINER);
+								}
+							}
 
-					// ルート要素が複数か、単一でもコンテナ要素、またはBODYのダミーでなければコンテナ要素で囲む
-					if ($dom.length > 1
-							|| (!isContainer($dom) && !$dom.is('['
-									+ DATA_H5_DYN_DUMMY_BODY + ']'))) {
-						$dom = $('<div ' + DATA_H5_CONTAINER + '></div>').append($dom);
-					}
+							// ルート要素が複数か、単一でもコンテナ要素、またはBODYのダミーでなければコンテナ要素で囲む
+							if ($dom.length > 1
+									|| (!isContainer($dom) && !$dom.is('[' + DATA_H5_DYN_DUMMY_BODY
+											+ ']'))) {
+								$dom = $('<div ' + DATA_H5_CONTAINER + '></div>').append($dom);
+							}
 
-					wrapScene($dom);
+							wrapScene($dom);
 
-					dfd.resolve($dom.children());
+							dfd.resolve($dom.children());
 
-				}).fail(function(error) {
-			dfd.reject(error);
-		});
+						}).fail(function(error) {
+					dfd.reject(error);
+				});
 
 		return dfd;
 	}
@@ -2170,7 +2114,8 @@
 					if (v instanceof Array) {
 						var _str = '';
 						for (var i = 0; i < v.length; i++) {
-							if(_str) _str += '&';
+							if (_str)
+								_str += '&';
 							_str += _k + '[]';
 							_str += '=';
 							_str += encodeURIComponent(v[i]);
@@ -2188,8 +2133,7 @@
 						str += encodeURIComponent(clientFWQueryStringPrefix + k);
 					}
 					str += '=';
-					str += encodeURIComponent(h5.u.obj.serialize(v)
-							.substring(2));
+					str += encodeURIComponent(h5.u.obj.serialize(v).substring(2));
 				}
 			}
 		}
@@ -2206,8 +2150,7 @@
 	 */
 	function deserialize(str) {
 		if (!deserialize._checkKeyRegExp) {
-			deserialize._checkKeyRegExp = new RegExp('^('
-					+ clientQueryStringPrefixForRegExp + '|'
+			deserialize._checkKeyRegExp = new RegExp('^(' + clientQueryStringPrefixForRegExp + '|'
 					+ clientFWQueryStringPrefixForRegExp + ')?(.+)');
 			deserialize._checkArrayRegExp = /^(.*)\[\]$/;
 		}
@@ -2259,10 +2202,8 @@
 		if (!str)
 			return '';
 		if (!clearParam._regExp) {
-			clearParam._regExp = new RegExp('(^|&)(?:'
-					+ clientQueryStringPrefixForRegExp + '|'
-					+ clientFWQueryStringPrefixForRegExp + ')[^=]*=.*?(?=&|$)',
-					'g');
+			clearParam._regExp = new RegExp('(^|&)(?:' + clientQueryStringPrefixForRegExp + '|'
+					+ clientFWQueryStringPrefixForRegExp + ')[^=]*=.*?(?=&|$)', 'g');
 		}
 		var regExp = clearParam._regExp;
 		var urlHelper = new UrlHelper(str);
@@ -2331,7 +2272,6 @@
 
 	/**
 	 * 再表示不可画面用コントローラー
-	 *
 	 * <p>
 	 * シーン遷移時シーン間パラメーターをURLに保持しない場合で、ブラウザ履歴等により再表示した場合に表示する画面。
 	 * </p>
@@ -2340,7 +2280,7 @@
 	 */
 	var NotReshowableController = {
 		__name: 'h5.scene.NotReshowableController',
-		__init: function(context){
+		__init: function(context) {
 			var _notReshowableMessage = context.args._notReshowableMessage;
 			$(this.rootElement).html('<h1>' + _notReshowableMessage + '</h1>');
 		}
@@ -2349,8 +2289,7 @@
 	/**
 	 * シーンコンテナクラス
 	 * <p>
-	 * 実体はコントローラーです。
-	 * シーンコンテナを生成する場合はh5.scene.createSceneContainer()を使用してください。
+	 * 実体はコントローラーです。 シーンコンテナを生成する場合はh5.scene.createSceneContainer()を使用してください。
 	 * </p>
 	 *
 	 * @class
@@ -2358,7 +2297,7 @@
 	 */
 	var SceneContainerController = {
 
-		__name : 'h5.scene.SceneContainerController',
+		__name: 'h5.scene.SceneContainerController',
 
 		/**
 		 * メインシーンコンテナであるか否か
@@ -2367,7 +2306,7 @@
 		 * @type Boolean
 		 * @memberOf SceneContainerController
 		 */
-		isMain : false,
+		isMain: false,
 
 		/**
 		 * 画面遷移効果
@@ -2375,7 +2314,7 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_transition : null,
+		_transition: null,
 
 		/**
 		 * 現在表示しているシーンのコントローラー
@@ -2383,7 +2322,7 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_currentController : null,
+		_currentController: null,
 
 		/**
 		 * リンククリックジャックによるシーン遷移の可否
@@ -2391,7 +2330,7 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_isClickjackEnabled : false,
+		_isClickjackEnabled: false,
 
 		/**
 		 * シーン遷移時に使用するDeferredオブジェクト
@@ -2399,7 +2338,7 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_dfd : null,
+		_dfd: null,
 
 		/**
 		 * changeScene経由で_changeSceneを実行したか否か
@@ -2407,11 +2346,10 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_isNavigated : false,
+		_isNavigated: false,
 
 		/**
 		 * メインシーンコンテナ シーン遷移時パラメーター迂回用
-		 *
 		 * <p>
 		 * 遷移パラメーター(FW用以外)をURLに保持しない場合に、このプロパティを経由する。
 		 * </p>
@@ -2419,7 +2357,7 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_detour : {},
+		_detour: {},
 
 		/**
 		 * Routerインスタンス
@@ -2427,11 +2365,10 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_router : null,
+		_router: null,
 
 		/**
 		 * 初期表示フラグ
-		 *
 		 * <p>
 		 * メインシーンコンテナで使用。
 		 * </p>
@@ -2439,7 +2376,7 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_first : true,
+		_first: true,
 
 		/**
 		 * __init
@@ -2447,7 +2384,7 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		__init : function(context) {
+		__init: function(context) {
 
 			var args = context.args || {};
 
@@ -2470,7 +2407,8 @@
 			this._transition = this._createTransition();
 			this._transition.onChangeStart(element);
 
-			this._containerName = $(element).attr(DATA_H5_MAIN_CONTAINER) || $(element).attr(DATA_H5_CONTAINER);
+			this._containerName = $(element).attr(DATA_H5_MAIN_CONTAINER)
+					|| $(element).attr(DATA_H5_CONTAINER);
 
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
 			this._currentController = null;
@@ -2478,7 +2416,8 @@
 			// TODO(鈴木) コンテナ内にシーン要素がなければ追加する
 			wrapScene(element);
 
-			this.on('{rootElement}', EVENT_SCENE_CHANGE_REQUEST, this.own(this._onSceneChangeRequest));
+			this.on('{rootElement}', EVENT_SCENE_CHANGE_REQUEST, this
+					.own(this._onSceneChangeRequest));
 
 			this._router = router;
 
@@ -2501,13 +2440,11 @@
 			} else {
 
 				// TODO(鈴木) カレントとなるシーンを探索してscan
-				scanForContainer(element).done(
-						function(controller) {
-							that._currentController = controller;
-							that._transition.onChangeEnd(that.rootElement,
-									null, controller.rootElement);
-							that._transition = null;
-						});
+				scanForContainer(element).done(function(controller) {
+					that._currentController = controller;
+					that._transition.onChangeEnd(that.rootElement, null, controller.rootElement);
+					that._transition = null;
+				});
 
 			}
 
@@ -2519,9 +2456,9 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		__dispose : function(){
+		__dispose: function() {
 
-			if(!isDisposing(this._currentController)) {
+			if (!isDisposing(this._currentController)) {
 				this._currentController.dispose();
 			}
 
@@ -2535,14 +2472,13 @@
 		},
 
 		/**
-		 *
 		 * クリックジャックによる遷移
 		 *
 		 * @private
 		 * @memberOf SceneContainerController
 		 * @param context
 		 */
-		_onAClick : function(context) {
+		_onAClick: function(context) {
 			context.event.preventDefault();
 			var href = context.event.originalEvent.target.href;
 			this.changeScene(href);
@@ -2555,7 +2491,7 @@
 		 * @memberOf SceneContainerController
 		 * @param context
 		 */
-		_onSceneChangeRequest : function(context) {
+		_onSceneChangeRequest: function(context) {
 			context.event.stopPropagation();
 			setTimeout(this.own(function() {
 				this.changeScene(context.evArg);
@@ -2579,29 +2515,25 @@
 		 * </li>
 		 * </ul>
 		 *
-		 * @param {String|Object} param
-		 *            遷移先文字列、または遷移用オプション。
+		 * @param {String|Object} param 遷移先文字列、または遷移用オプション。
 		 *            <p>
 		 *            遷移先文字列の場合は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
 		 *            遷移用オプションの場合は、以下のプロパティを持ちます。
 		 *            </p>
-		 * @param {String} param.to
-		 *            遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
+		 * @param {String} param.to 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
 		 * @param {String}[param.transition='default']
 		 *            遷移効果指定。指定しない場合は'default'が使用されます。(現在、'default'以外は指定できません)
-		 * @param {String}[param.container]
-		 *            toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
-		 * @param {Any}[param.args]
-		 *            デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
+		 * @param {String}[param.container] toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
+		 * @param {Any}[param.args] デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
 		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
 		 * @memberOf SceneContainerController
 		 */
-		changeScene : function(param) {
+		changeScene: function(param) {
 
 			// TODO(鈴木) paramが文字列の場合は遷移先と見なして再帰呼び出しする
 			if (isString(param)) {
 				return this.changeScene({
-					to : param
+					to: param
 				});
 			}
 
@@ -2629,12 +2561,12 @@
 
 				if (!isString(to)) {
 					// TODO(鈴木) シーン遷移先に文字列以外を指定されたらエラー
-					throwFwError(ERR_CODE_CHANGE_SCENE_TO_IS_NOT_STRING, [ to ]);
+					throwFwError(ERR_CODE_CHANGE_SCENE_TO_IS_NOT_STRING, [to]);
 				}
 
 				if (to.indexOf('#') !== -1) {
 					// TODO(鈴木) シーン遷移先にハッシュを指定されたらエラー
-					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [ to ]);
+					throwFwError(ERR_CODE_CHANGE_SCENE_HASH_IN_TO, [to]);
 				}
 
 				if (param.method === METHOD.POST) {
@@ -2643,8 +2575,7 @@
 				}
 
 				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
-					this._detour.args = h5.u.obj.deserialize(h5.u.obj
-							.serialize(param.args));
+					this._detour.args = h5.u.obj.deserialize(h5.u.obj.serialize(param.args));
 					delete param.args;
 				}
 
@@ -2655,21 +2586,21 @@
 
 				// 現URLと次のURLが同一の場合は処理しないほうがよいか。。
 				// 処理した場合、履歴は積まれないので、アニメーション的に遷移したとみなされるようなものはしないほうがいい。
-//				if (this._router.compareUrl(url)) {
-//					this._dfd.resolve({
-//						from : fromElm,
-//						to : null
-//					});
-//					// インジケーター消すだけ用のイベント作らないといけない。。
-//					this._transition.onChangeEnd(this.rootElement, fromElm);
-//					this._isNavigated = false;
-//					this._dfd = null;
-//					this._transition = null;
-//					return;
-//				}
+				//				if (this._router.compareUrl(url)) {
+				//					this._dfd.resolve({
+				//						from : fromElm,
+				//						to : null
+				//					});
+				//					// インジケーター消すだけ用のイベント作らないといけない。。
+				//					this._transition.onChangeEnd(this.rootElement, fromElm);
+				//					this._isNavigated = false;
+				//					this._dfd = null;
+				//					this._transition = null;
+				//					return;
+				//				}
 
 				this._router.navigate(url, {
-					replace : replace
+					replace: replace
 				});
 
 			} else {
@@ -2678,7 +2609,7 @@
 
 				var url = convertParamToUrl(param);
 				this._router.evaluate(url, {
-					container : this
+					container: this
 				});
 			}
 
@@ -2693,7 +2624,7 @@
 		 * @param to
 		 * @param param
 		 */
-		_changeScene : function(to, param) {
+		_changeScene: function(to, param) {
 
 			if (!to)
 				return;
@@ -2717,8 +2648,7 @@
 			var that = this;
 
 			var args = null;
-			if (param.navigateType === NAVIGATE_TYPE.ONCE
-					|| param.method === METHOD.POST) {
+			if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
 				if (!this._isNavigated) {
 					this._onNotReshowable();
 					return;
@@ -2754,10 +2684,9 @@
 
 					// TODO(鈴木) 遷移先指定がコントローラーの__name属性の場合
 
-					loadController(to, $('<div></div>'), args).done(
-							function(toController) {
-								that._changeSceneEnd(toController);
-							});
+					loadController(to, $('<div></div>'), args).done(function(toController) {
+						that._changeSceneEnd(toController);
+					});
 
 				} else {
 
@@ -2766,25 +2695,24 @@
 					// TODO(鈴木) メインシーンコンテナの場合はcontainer指定は無効とする
 					var container = this.isMain ? null : param.container;
 
-					var loadPromise = loadContents(to, container,
-							param.method, serverArgs);
+					var loadPromise = loadContents(to, container, param.method, serverArgs);
 
 					function callback(toElm) {
 
 						// TODO(鈴木)
 						// DATA属性に基づいてコントローラーバインド・コンテナ生成
 						// TODO(鈴木) scan用にダミーのDIVにappend
-						scanForContainer($('<div></div>').append(toElm), null,
-								args).done(function(toController) {
-							that._changeSceneEnd(toController);
-						});
+						scanForContainer($('<div></div>').append(toElm), null, args).done(
+								function(toController) {
+									that._changeSceneEnd(toController);
+								});
 
 					}
 
 					loadPromise.done(callback).fail(function(xhr) {
 
 						// シーン遷移先HTMLのロードに失敗
-						throwFwError(ERR_CODE_HTML_LOAD_FAILED, [ to ], xhr);
+						throwFwError(ERR_CODE_HTML_LOAD_FAILED, [to], xhr);
 
 					});
 				}
@@ -2806,13 +2734,12 @@
 		 * @memberOf SceneContainerController
 		 * @param type
 		 */
-		_createTransition : function(type) {
-			var Transition = transitionTypeMap[type != null ? type
-					: DEFAULT_SCENE_TRANSITION_TYPE];
+		_createTransition: function(type) {
+			var Transition = transitionTypeMap[type != null ? type : DEFAULT_SCENE_TRANSITION_TYPE];
 
 			if (!Transition) {
 				// 指定された遷移効果が存在しない場合はエラー
-				throwFwError(ERR_CODE_TRANSITION_NOT_FOUND, [ type ]);
+				throwFwError(ERR_CODE_TRANSITION_NOT_FOUND, [type]);
 			}
 
 			return new Transition();
@@ -2826,7 +2753,7 @@
 		 * @param toController
 		 * @param fromElm
 		 */
-		_changeSceneEnd : function(toController) {
+		_changeSceneEnd: function(toController) {
 
 			var that = this;
 
@@ -2840,8 +2767,8 @@
 
 				if (this._dfd) {
 					this._dfd.resolve({
-						from : fromElm,
-						to : toElm
+						from: fromElm,
+						to: toElm
 					});
 				}
 
@@ -2867,15 +2794,14 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 */
-		_onNotReshowable : function() {
-			if (notReshowable.__name
-					&& controllerRegexp.test(notReshowable.__name)) {
+		_onNotReshowable: function() {
+			if (notReshowable.__name && controllerRegexp.test(notReshowable.__name)) {
 
 				// TODO(鈴木) notReshowable指定がコントローラーの場合
 
-				var notReshowableController = h5internal.core
-						.controllerInternal($('<div></div>'), notReshowable, {
-							_notReshowableMessage : notReshowableMessage
+				var notReshowableController = h5internal.core.controllerInternal($('<div></div>'),
+						notReshowable, {
+							_notReshowableMessage: notReshowableMessage
 						});
 				this._changeSceneEnd(notReshowableController);
 
@@ -2886,7 +2812,7 @@
 				var param = null;
 				if (isString(notReshowable)) {
 					param = {
-						to : notReshowable
+						to: notReshowable
 					};
 				} else {
 					param = $.extend(true, {}, notReshowable);
@@ -2899,16 +2825,14 @@
 
 		/**
 		 * Router用デフォルトコールバック
-		 *
 		 * <p>
-		 *
 		 * </p>
 		 *
 		 * @private
 		 * @memberOf SceneContainerController
 		 * @param {String} url
 		 */
-		_defaultFuncForRouter : function (url) {
+		_defaultFuncForRouter: function(url) {
 			var that = this;
 			var param = getParamFromUrl(url);
 			var to = param.to;
@@ -2918,24 +2842,24 @@
 
 				// TODO(鈴木) シーン遷移タイプが'once'(一回のみ)、またはAjaxメソッドタイプが'post'の場合、
 				// 再表示不可エラー画面を表示する。
-				if (param.navigateType === NAVIGATE_TYPE.ONCE
-						|| param.method === METHOD.POST) {
+				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
 					this._onNotReshowable();
 					this._first = false;
 					return;
 				}
 
 				var isController = to && controllerRegexp.test(to);
-				var useHash = urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.HASH && location.hash.substring(1);
+				var useHash = urlHistoryActualMode === URL_HISTORY_ACTUAL_MODE.HASH
+						&& location.hash.substring(1);
 				var converted = !this._router.compareUrl(url);
 
 				// TODO(鈴木) 初回読み込みでHTMLの場合でURLそのまま使用する場合は、
 				// 単にscanForContainerする。
-				if(!converted && !useHash && !isController) {
+				if (!converted && !useHash && !isController) {
 					function callback(controller) {
 						that._currentController = controller;
-						that._transition.onChangeEnd(that.rootElement, null,
-								controller.rootElement);
+						that._transition
+								.onChangeEnd(that.rootElement, null, controller.rootElement);
 						that._transition = null;
 					}
 					scanForContainer(this.rootElement, null, param.args).done(callback);
@@ -2959,10 +2883,8 @@
 	 * シーンコンテナインスタンスを生成します.
 	 *
 	 * @memberOf h5.scene
-	 * @param {Element}
-	 *            element シーンコンテナ生成対象要素。
-	 * @param {Boolean}
-	 *            [isMain=false] メインシーンコンテナとするか否か。
+	 * @param {Element} element シーンコンテナ生成対象要素。
+	 * @param {Boolean} [isMain=false] メインシーンコンテナとするか否か。
 	 *            <dl>
 	 *            <dt>メインシーンコンテナとする
 	 *            <dt>
@@ -2994,15 +2916,13 @@
 			}
 		}
 
-		var container = h5internal.core.controllerInternal(element,
-				SceneContainerController, {
-					isMain : isMain
-				}, {
-					async : false
-				});
+		var container = h5internal.core.controllerInternal(element, SceneContainerController, {
+			isMain: isMain
+		}, {
+			async: false
+		});
 
-		$(element).attr(DATA_H5_DYN_CONTAINER_BOUND,
-				DATA_H5_DYN_CONTAINER_BOUND);
+		$(element).attr(DATA_H5_DYN_CONTAINER_BOUND, DATA_H5_DYN_CONTAINER_BOUND);
 
 		return container;
 	}
@@ -3036,9 +2956,7 @@
 	 * 指定要素およびその配下のシーンコンテナを取得します
 	 *
 	 * @memberOf h5.scene
-	 * @param {Element}
-	 *            [rootElement=document.body]
-	 *            走査先頭要素。指定しない場合はドキュメント全体を対象とします。
+	 * @param {Element} [rootElement=document.body] 走査先頭要素。指定しない場合はドキュメント全体を対象とします。
 	 * @returns {SceneContainerController[]} シーンコンテナの配列。
 	 */
 	function getAllSceneContainers(rootElement) {
@@ -3056,15 +2974,16 @@
 	 * シーンコンテナを取得します。
 	 *
 	 * @memberOf h5.scene
-	 * @param {String|Element}
-	 *            nameOrElement 文字列、要素が指定できます。
+	 * @param {String|Element} nameOrElement 文字列、要素が指定できます。
 	 *            <dl>
 	 *            <dt>文字列の場合</dt>
 	 *            <dd>取得対象とする要素のdata-h5-container属性まはたdata-h5-main-container属性の値とみなし、その要素に対応するシーンコンテナを返却します。</dd>
 	 *            <dt>要素の場合</dt>
 	 *            <dd>その要素に対応するシーンコンテをを返却します。</dd>
 	 *            </dl>
-	 *            <p>いずれの場合も、該当がない場合はnullを返却します。</p>
+	 *            <p>
+	 *            いずれの場合も、該当がない場合はnullを返却します。
+	 *            </p>
 	 * @returns {SceneContainerController} シーンコンテナ
 	 */
 	function getSceneContainer(nameOrElement) {
@@ -3077,19 +2996,19 @@
 
 		if (isString(nameOrElement)) {
 			name = nameOrElement;
-		}else{
+		} else {
 			element = nameOrElement;
 		}
 
 		var containers = getAllSceneContainers(element);
 
-		if(containers.length === 0){
+		if (containers.length === 0) {
 			return null;
 		}
 
-		if(name){
-			for(var i = 0; i < containers.length; i++){
-				if(containers[i]._containerName === name){
+		if (name) {
+			for (var i = 0; i < containers.length; i++) {
+				if (containers[i]._containerName === name) {
 					return containers[i];
 				}
 			}
@@ -3120,16 +3039,14 @@
 			clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
 		}
 		// TODO(鈴木) 正規表現用文字列作成
-		clientQueryStringPrefixForRegExp = clientQueryStringPrefix.replace(
-				/\\/g, '\\\\');
+		clientQueryStringPrefixForRegExp = clientQueryStringPrefix.replace(/\\/g, '\\\\');
 
 		// TODO(鈴木) シーン遷移パラメーター識別用プレフィクス(FW用)
 		if (h5.settings.scene.clientFWQueryStringPrefix) {
 			clientFWQueryStringPrefix = h5.settings.scene.clientFWQueryStringPrefix;
 		}
 		// TODO(鈴木) 正規表現用文字列作成
-		clientFWQueryStringPrefixForRegExp = clientFWQueryStringPrefix.replace(
-				/\\/g, '\\\\');
+		clientFWQueryStringPrefixForRegExp = clientFWQueryStringPrefix.replace(/\\/g, '\\\\');
 
 		// TODO(鈴木) メインシーンコンテナURL履歴保持方法
 		if (h5.settings.scene.urlHistoryMode != null) {
@@ -3177,7 +3094,7 @@
 			}
 			return {
 				test: test,
-				func: function(url, contextualData){
+				func: function(url, contextualData) {
 					contextualData = contextualData || {};
 					var navigationInfo = route.navigationInfo;
 					if (isFunction(navigationInfo)) {
@@ -3202,8 +3119,8 @@
 
 		// TODO(鈴木) デフォルト動作用定義追加。
 		routesForRouter.push({
-			test : /.*/,
-			func : function(url, contextualData){
+			test: /.*/,
+			func: function(url, contextualData) {
 				contextualData = contextualData || {};
 				var container = contextualData.container || mainContainer;
 				container._defaultFuncForRouter(url);
@@ -3212,10 +3129,10 @@
 
 		// TODO(鈴木) Routerインスタンス生成
 		router = new Router({
-			routes : routesForRouter,
-			urlHistoryMode : urlHistoryMode,
-			baseUrl : baseUrl,
-			urlMaxLength : urlMaxLength
+			routes: routesForRouter,
+			urlHistoryMode: urlHistoryMode,
+			baseUrl: baseUrl,
+			urlMaxLength: urlMaxLength
 		});
 
 
@@ -3235,16 +3152,16 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.scene', {
-		openWindow : openWindow,
-		createSceneContainer : createSceneContainer,
-		init : init,
-		getMainContainer : getMainContainer,
-		scan : scan,
-		getAllSceneContainers : getAllSceneContainers,
-		getSceneContainer : getSceneContainer,
-		navigateType : NAVIGATE_TYPE,
-		method : METHOD,
-		urlHistoryMode : URL_HISTORY_MODE
+		openWindow: openWindow,
+		createSceneContainer: createSceneContainer,
+		init: init,
+		getMainContainer: getMainContainer,
+		scan: scan,
+		getAllSceneContainers: getAllSceneContainers,
+		getSceneContainer: getSceneContainer,
+		navigateType: NAVIGATE_TYPE,
+		method: METHOD,
+		urlHistoryMode: URL_HISTORY_MODE
 	});
 
 })();
