@@ -8,30 +8,16 @@
 
 <script src="../../archives/current/ejs-h5mod.js"></script>
 
-<link rel="stylesheet" href="./lib/qunit/qunit.css" type="text/css" media="screen" />
 <link rel="stylesheet" href="../../archives/current/h5.css" />
 
-<!-- 各モジュールのソースJSを読み込む（h5.jsは必ず最初に読み込む必要がある） -->
-<!-- 		<script src="../../archives/current/h5.dev.js"></script> -->
-<script src="../../src/h5scopedglobals.js"></script>
-<script src="../../src/h5.u.js"></script>
-<script src="../../src/h5.mixin.js"></script>
-<script src="../../src/h5.log.js"></script>
-<script src="../../src/h5.js"></script>
-<script src="../../src/h5.env.js"></script>
-<script src="../../src/h5.async.js"></script>
-<script src="../../src/h5.ui.js"></script>
-<script src="../../src/h5.ui.jqm.manager.js"></script>
-<script src="../../src/h5.ajax.js"></script>
-<script src="../../src/h5.core.data.js"></script>
-<script src="../../src/h5.core.view_binding.js"></script>
-<script src="../../src/h5.core.view.js"></script>
-<script src="../../src/h5.core.controller.js"></script>
-<script src="../../src/h5.api.geo.js"></script>
-<script src="../../src/h5.api.sqldb.js"></script>
-<script src="../../src/h5.api.storage.js"></script>
-<script src="../../src/h5.dev.api.geo.js"></script>
-<script src="../../src/h5.scene.js"></script>
+
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+	H5_TEST_ENV.buildType = 'src'; // 各ソースファイルを使用
+</script>
+<script src="../../test/loadScriptForTest.js"></script>
 
 <style>
 .tooltip {
