@@ -1477,7 +1477,7 @@ $(function() {
 			var $inElm = $('<div id="divInControllerTest"></div>');
 			$elm.append($inElm);
 			h5.core.controller($elm, controllerDef).readyPromise.done(function() {
-				this.on('{rootElement}', 'h5track' + type, handler);
+				this.on($inElm, 'h5track' + type, handler);
 				function track() {
 					$inElm.trigger(startTrackEvent);
 					$inElm.trigger(moveTrackEvent);
@@ -1488,10 +1488,10 @@ $(function() {
 						+ 'のみバインドした場合でもそのイベントハンドラが発火すること');
 				this.trackEvents = [];
 
-				this.off('{rootElement}', 'h5track' + type, handler);
+				this.off($inElm, 'h5track' + type, handler);
 				track();
 
-				deepEqual(this.trackEvents, [], 'offでアンバインドす路とイベントハンドラは発火しないこと');
+				deepEqual(this.trackEvents, [], 'offでアンバインドするとイベントハンドラは発火しないこと');
 				start();
 			});
 		};

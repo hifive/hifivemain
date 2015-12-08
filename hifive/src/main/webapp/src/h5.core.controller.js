@@ -961,21 +961,52 @@
 	function createBindObjects(controller, eventHandlerInfo, func) {
 		var selector = eventHandlerInfo.selector;
 		var eventName = eventHandlerInfo.eventName;
+		var bindTarget = eventHandlerInfo.bindTarget;
+		var isGlobal = eventHandlerInfo.isGlobal;
+		var isBindRequested = eventHandlerInfo.isBindRequested;
 		// ハンドラを取得(アスペクト適用済み)
 		// この関数の戻り値になるバインドオブジェクトの配列
 		// 結果は必ず配列になるようにする
 		var bindObjects;
 		switch (eventName) {
 		case 'mousewheel':
-			bindObjects = getNormalizeMouseWheelBindObj(controller, selector, eventName, func);
+			bindObjects = getNormalizeMouseWheelBindObj(controller, eventName, func);
 			break;
 		case EVENT_NAME_H5_TRACKSTART:
 		case EVENT_NAME_H5_TRACKMOVE:
 		case EVENT_NAME_H5_TRACKEND:
-			bindObjects = getH5TrackBindObj(controller, selector, eventName, func);
+			bindObjects = getH5TrackBindObj(controller, eventName, func);
+			// バインド対象要素またはセレクタについてトラックイベントの何れかのハンドラが初めてだった場合は、
+			// h5trackxxxイベントハンドラについてのバインドオブジェクトに加えて、
+			// トラックイベントをmousedown,touchstart時に有効にするためのイベントハンドラをバインド
+			var context = controller.__controllerContext;
+			var alreadyBound = false;
+			context.h5trackEventHandlerInfos = context.h5trackEventHandlerInfos || [];
+			var h5trackEventHandlerInfos = context.h5trackEventHandlerInfos;
+			for (var i = 0, l = h5trackEventHandlerInfos.length; i < l; i++) {
+				var info = h5trackEventHandlerInfos[i];
+				if (bindTarget) {
+					// ターゲット指定の場合はbindTargetを比較
+					if (isSameBindTarget(bindTarget, info.bindTarget)) {
+						alreadyBound = true;
+						break;
+					}
+				} else {
+					// セレクタを指定された場合は、セレクタと、グローバル指定かどうかと、isBindRequested指定を比較
+					if (selector === info.selector && isGlobal === info.isGlobal
+							&& isBindRequested === info.isBindRequested) {
+						alreadyBound = true;
+						break;
+					}
+				}
+			}
+			if (!alreadyBound) {
+				bindObjects = getBindObjForEnableH5track(controller).concat(bindObjects);
+				h5trackEventHandlerInfos.push(eventHandlerInfo);
+			}
 			break;
 		default:
-			bindObjects = getNormalBindObj(controller, selector, eventName, func);
+			bindObjects = getNormalBindObj(controller, eventName, func);
 			break;
 		}
 		// 配列にする
@@ -1011,9 +1042,10 @@
 			// handlerをラップ
 			wrapHandler(bindObject);
 			// eventHandlerInfoから、bindObjに必要なものを持たせる
-			bindObject.isBindRequested = eventHandlerInfo.isBindRequested;
-			bindObject.isGlobal = eventHandlerInfo.isGlobal;
-			bindObject.bindTarget = eventHandlerInfo.bindTarget;
+			bindObject.isBindRequested = isBindRequested;
+			bindObject.isGlobal = isGlobal;
+			bindObject.bindTarget = bindTarget;
+			bindObject.selector = selector;
 			// コントローラを持たせる
 			bindObject.controller = controller;
 		}
@@ -1616,10 +1648,9 @@
 	 *          <li>bindObj.handler - イベントハンドラ</li>
 	 *          </ul>
 	 */
-	function getNormalBindObj(controller, selector, eventName, func) {
+	function getNormalBindObj(controller, eventName, func) {
 		return {
 			controller: controller,
-			selector: selector,
 			eventName: eventName,
 			handler: func
 		};
@@ -1630,21 +1661,18 @@
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
-	 * @param {String} selector セレクタ
 	 * @param {String} eventName イベント名
 	 * @param {Function} func ハンドラとして登録したい関数
 	 * @returns {Object} バインドオブジェクト
 	 *          <ul>
 	 *          <li>bindObj.controller - コントローラ</li>
-	 *          <li>bindObj.selector - セレクタ</li>
 	 *          <li>bindObj.eventName - イベント名</li>
 	 *          <li>bindObj.handler - イベントハンドラ</li>
 	 *          </ul>
 	 */
-	function getNormalizeMouseWheelBindObj(controller, selector, eventName, func) {
+	function getNormalizeMouseWheelBindObj(controller, eventName, func) {
 		return {
 			controller: controller,
-			selector: selector,
 			// Firefoxには"mousewheel"イベントがない
 			eventName: typeof document.onmousewheel === TYPE_OF_UNDEFINED ? 'DOMMouseScroll'
 					: eventName,
@@ -1672,38 +1700,23 @@
 	 *
 	 * @private
 	 * @param {Controller} controller コントローラ
-	 * @param {String} selector セレクタ
 	 * @param {String} eventName イベント名 h5trackstart,h5trackmove,h5trackendのいずれか
 	 * @param {Function} func ハンドラとして登録したい関数
 	 * @returns {Object|Object[]} バインドオブジェクト
 	 *          <ul>
 	 *          <li>bindObj.controller - コントローラ</li>
-	 *          <li>bindObj.selector - セレクタ</li>
 	 *          <li>bindObj.eventName - イベント名</li>
 	 *          <li>bindObj.handler - イベントハンドラ</li>
 	 *          </ul>
 	 */
-	function getH5TrackBindObj(controller, selector, eventName, func) {
-		// 指定されたセレクタについてトラックイベントの何れかのハンドラが初めてだった場合は、h5trackxxxイベントハンドラについてのバインドオブジェクトに加えて、
-		// トラックイベントをmousedown,touchstart時に有効にするためのイベントハンドラについてのバインドオブジェクトも追加して返す
-		var bindObjForEnableH5track = null;
-		var context = controller.__controllerContext;
-		context.h5trackBoundSelector = context.h5trackBoundSelector || {};
-		var h5trackBoundSelector = context.h5trackBoundSelector;
-		if (!h5trackBoundSelector[selector]) {
-			h5trackBoundSelector[selector] = 1;
-			bindObjForEnableH5track = getBindObjForEnableH5track(controller, selector);
-		}
-
+	function getH5TrackBindObj(controller, eventName, func) {
 		var normalBindObj = null;
 		if (eventName === EVENT_NAME_H5_TRACKSTART) {
 			// h5trackstartの場合
-			normalBindObj = getNormalBindObj(controller, selector, eventName, func);
-			return bindObjForEnableH5track ? bindObjForEnableH5track.concat(normalBindObj)
-					: normalBindObj;
+			return getNormalBindObj(controller, eventName, func);
 		}
 		// h5trackmove,h5trackendの場合は、ハンドラ呼び出し前にオフセット計算処理を行うようラップする
-		normalBindObj = getNormalBindObj(controller, selector, eventName, function(context) {
+		normalBindObj = getNormalBindObj(controller, eventName, function(context) {
 			var event = context.event;
 			var h5DelegatingEvent = event.h5DelegatingEvent;
 			if (!h5DelegatingEvent) {
@@ -1725,8 +1738,7 @@
 		// ラップした関数をhandlerに持たせるので、ラップ前をoriginalHandlerに覚えておく
 		// ogirinalHandlerにはユーザが指定した関数と同じ関数(ラップ前)を持っていないとoff()でアンバインドできないため
 		normalBindObj.originalHandler = func;
-		return bindObjForEnableH5track ? bindObjForEnableH5track.concat(normalBindObj)
-				: normalBindObj;
+		return normalBindObj;
 	}
 
 	/**
