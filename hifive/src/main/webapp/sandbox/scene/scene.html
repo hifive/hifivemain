@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+<script src="/hifive-res/ext/jquery/jquery-1.11.1.js"></script>
+
+<script src="../../archives/current/ejs-h5mod.js"></script>
+
+<link rel="stylesheet" href="../../archives/current/h5.css" />
+
+
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+	H5_TEST_ENV.buildType = 'src'; // 各ソースファイルを使用
+</script>
+<script src="../../test/loadScriptForTest.js"></script>
+
+<script>
+	$(function() {
+		h5.core.expose({
+			__name: 'scene1Controller',
+			__init: function() {
+				$(this.rootElement).append('<p>' + this.__name + '</p>');
+			}
+		});
+		h5.core.controller('body', {
+			__name: 'sample',
+			__ready: function() {
+				this.container = h5.scene.createSceneContainer('#hoge');
+			},
+			'.change click': function(ctx, $el) {
+				var target = $el.data('target');
+				var promise;
+				if (target) {
+					promise = this.container.changeScene(target);
+				} else {
+					promise=this.container.toDefaultScene();
+				}
+				promise.done(function() {
+					console.log('done');
+				});
+			}
+		});
+	});
+</script>
+<title>h5.scene</title>
+</head>
+<body>
+	<div id="hoge">hoge</div>
+	<button class="change" data-target="scene1Controller">scene1へ</button>
+	<button class="change" data-target="scenes/scene1.html">scene1.htmlへ</button>
+	<button class="change" data-target="">デフォルトへ</button>
+</body>
+</html>
