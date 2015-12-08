@@ -2761,7 +2761,7 @@
 
 			var toElm = toController.rootElement;
 
-			this._transition.onChange(this.rootElement, toElm).done(function() {
+			this._transition.onChange(this.rootElement, toElm).done(this.own(function() {
 
 				// TODO(鈴木) disposeのタイミングはどうすべきか・・
 
@@ -2784,8 +2784,7 @@
 				that._isNavigated = false;
 				that._dfd = null;
 				that._transition = null;
-
-			});
+			}));
 		},
 
 		/**
