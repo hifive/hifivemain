@@ -2135,6 +2135,11 @@
 		 */
 		getElementByName: function(name) {
 			// このメソッドはプラグインがvalidate結果から対応するエレメントを探す時に呼び出される
+			var targetElement = this._setting.property && this._setting.property[name]
+					&& this._setting.property[name].targetElement;
+			if (targetElement) {
+				return targetElement;
+			}
 			var $formCtrls = this.getElements();
 			var element = $formCtrls.filter('[name="' + name + '"]')[0];
 			if (element) {

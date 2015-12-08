@@ -168,9 +168,9 @@
 						position: {
 							label: '予約部屋',
 							valueFunc: function(rootElement, key) {
-								return $(rootElement).find('.room-select .selected').data(
-										'room');
-							}
+								return $(rootElement).find('.room-select .selected').data('room');
+							},
+							targetElement: this.$find('.room-select')
 						}
 					}
 				});

@@ -32,6 +32,10 @@
 	transform: scale(0.5);
 }
 
+.has-error .room-select{
+	border: 1px solid #a94442;
+}
+
 .room{
 	display: inline-block;
 	width: 120px;
