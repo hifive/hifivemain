@@ -358,7 +358,6 @@
 	var DummyController = {
 		__name: 'h5.scene.DummyController'
 	};
-	h5.core.expose(DummyController);
 
 	/**
 	 * 要素がシーン属性を持っているかをチェックします
@@ -2326,14 +2325,6 @@
 		_currentController: null,
 
 		/**
-		 * シーンコンテナ生成時に作成したシーンのコントローラー
-		 *
-		 * @private
-		 * @memberOf SceneContainerController
-		 */
-		_defaultController: null,
-
-		/**
 		 * リンククリックジャックによるシーン遷移の可否
 		 *
 		 * @private
@@ -2421,9 +2412,6 @@
 			// TODO(鈴木) コンテナ内にシーン要素がなければ追加する
 			wrapScene(element);
 
-			// デフォルトシーンを覚えておく
-			this._$defaultSceneElement = this.$find('[' + DATA_H5_DEFAULT_SCENE + ']');
-
 			// TODO(鈴木) とりあえずデフォルトのtransitionを使用。
 			this._transition = this._createTransition();
 			this._transition.onChangeStart(element);
@@ -2506,29 +2494,6 @@
 			setTimeout(this.own(function() {
 				this.changeScene(context.evArg);
 			}), 0);
-		},
-		/**
-		 * デフォルトシーンへ遷移
-		 * <p>
-		 * シーンコンテナ作成時のシーンへ遷移します
-		 * </p>
-		 *
-		 * @param {Object} param 遷移用オプション。
-		 * @param {String}[param.transition='default']
-		 *            遷移効果指定。指定しない場合は'default'が使用されます。(現在、'default'以外は指定できません)
-		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
-		 * @memberOf SceneContainerController
-		 */
-		toDefaultScene: function(param) {
-			var param = param ? $.extend({}, param) : {};
-
-			param.to = DummyController.__name;
-			return this.changeScene(param).done(this.own(function(arg) {
-				// ダミーで生成された要素を、元のデフォルトシーンに差し替え
-				var $to = $(arg.to);
-				$to.after(this._$defaultSceneElement);
-				$to.remove();
-			}));
 		},
 
 		/**
