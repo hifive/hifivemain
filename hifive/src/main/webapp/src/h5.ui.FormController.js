@@ -75,7 +75,7 @@
 	 * @private
 	 * @param {Object} reason
 	 * @param {string} name
-	 * @param {object} setting
+	 * @param {Object} setting
 	 * @returns {string} メッセージ
 	 */
 	function createValidateErrorMessage(name, reason, setting) {
@@ -146,9 +146,9 @@
 		 * メッセージ出力先の設定を適用する
 		 *
 		 * @memberOf h5.ui.validation.MessageOutput
-		 * @param {object} containerSetting 出力先設定
-		 * @param {object} containerSetting.container デフォルト出力先(コンテナ)要素
-		 * @param {object} containerSetting.wrapper デフォルト出力タグ名。指定しない場合はメッセージはテキストノードとして生成されます
+		 * @param {Object} containerSetting 出力先設定
+		 * @param {Object} containerSetting.container デフォルト出力先(コンテナ)要素
+		 * @param {Object} containerSetting.wrapper デフォルト出力タグ名。指定しない場合はメッセージはテキストノードとして生成されます
 		 */
 		setContainerSetting: function(containerSetting) {
 			this._containerSetting = containerSetting;
@@ -205,7 +205,7 @@
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutput
-		 * @param {object} messageSetting プロパティ毎のメッセージ定義。{プロパティ名: {message:..., formatter:..,
+		 * @param {Object} messageSetting プロパティ毎のメッセージ定義。{プロパティ名: {message:..., formatter:..,
 		 *            label:...}} のようなオブジェクト
 		 */
 		setMessageSetting: function(messageSetting) {
@@ -220,7 +220,7 @@
 		 *
 		 * @memberOf h5.ui.validation.MessageOutput
 		 * @param {string} name 追加設定を行うプロパティ名
-		 * @param {object} messageObj メッセージ設定オブジェクト。{message:..., formatter:...,
+		 * @param {Object} messageObj メッセージ設定オブジェクト。{message:..., formatter:...,
 		 *            label:...}のようなオブジェクト
 		 */
 		addMessageSetting: function(name, messageObj) {
@@ -235,7 +235,7 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutput
-		 * @param {object} messageSetting {プロパティ名: {message:..., formatter:..}}のようなオブジェクト
+		 * @param {Object} messageSetting {プロパティ名: {message:..., formatter:..}}のようなオブジェクト
 		 */
 		clearMessage: function(container) {
 			var container = container || this._containerSetting.container;
@@ -247,9 +247,9 @@
 		 *
 		 * @param {string} message メッセージ
 		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合はデフォルト出力先に出力します
-		 * @param {string} [tagName] メッセージをラップするタグ名。指定しない場合はデフォルトタグ名を使用します
+		 * @param {string} [wrapper] メッセージをラップするタグ名または要素生成文字列。指定しない場合はデフォルトタグ名を使用します
 		 */
-		appendMessage: function(message, container, tagName) {
+		appendMessage: function(message, container, wrapper) {
 			// 未指定ならsettingに設定されたコンテナ
 			var container = container || this._containerSetting.container;
 			var $container = $(container);
@@ -257,11 +257,44 @@
 				return;
 			}
 
-			var tagName = tagName || this._containerSetting.wrapper;
-			// tagName未設定ならテキストノード
-			var msgElement = tagName ? $(document.createElement(tagName)).html(message) : document
-					.createTextNode(message);
+			wrapper = wrapper || this._containerSetting.wrapper;
+			if (wrapper) {
+				if (h5.u.str.startsWith($.trim(wrapper), '<')) {
+					// '<span class="hoge">'のような指定ならその文字列でDOM生成
+					msgElement = $(wrapper);
+					msgElement.text(message);
+				} else {
+					// 'span'のような指定ならcreateElementでエレメント生成
+					msgElement = $(document.createElement(wrapper)).html(message);
+				}
+			} else {
+				// wrapper未設定ならテキストノード
+				msgElement = document.createTextNode(message);
+			}
 			$container.append(msgElement);
+		},
+
+		/**
+		 * {@link ValidationResult}からエラーメッセージを作成して返す
+		 * <p>
+		 * 第1引数に指定されたプロパティ名についてのエラーメッセージを作成して返します
+		 * </p>
+		 * <p>
+		 * 指定されたプロパティがエラーでないばあいはnullを返します。
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.MessageOutput
+		 * @param {ValidationResult} validationResult
+		 * @param {string} name 対象のプロパティ名
+		 * @returns {string} エラーメッセージ
+		 */
+		getMessageByValidationResult: function(validationResult, name) {
+			var failureReason = validationResult.failureReason[name];
+			if (!failureReason) {
+				return null;
+			}
+			return h5internal.validation.createValidateErrorMessage(name, failureReason, this
+					._getMessageSettingByName(name));
 		},
 
 		/**
@@ -271,32 +304,31 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutput
-		 * @param {ValidationResult} result
+		 * @param {ValidationResult} validationResult
 		 * @param {string|string[]} [names] 出力対象のプロパティ名。指定しない場合は全てが対象
 		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合はデフォルト出力先に出力します
-		 * @param {string} [tagName] メッセージをラップするタグ名。指定しない場合はデフォルトタグ名を使用します
+		 * @param {string} [wrapper] メッセージをラップするタグ名またはタグ生成文字列。指定しない場合はデフォルトタグ名を使用します
 		 */
-		appendMessageByValidationResult: function(result, names, container, tagName) {
-			var invalidProperties = result.invalidProperties;
+		appendMessageByValidationResult: function(validationResult, names, container, wrapper) {
+			var invalidProperties = validationResult.invalidProperties;
 			names = isString(names) ? [names] : names;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
 				if (names && $.inArray(name, names) === -1) {
 					continue;
 				}
-				var failureReason = result.failureReason[name];
-				var message = h5internal.validation.createValidateErrorMessage(name, failureReason,
-						this._getMessageSettingByName(name));
-				this.appendMessage(message, container, tagName);
+				var failureReason = validationResult.failureReason[name];
+				var message = this.getMessageByValidationResult(validationResult, name);
+				this.appendMessage(message, container, wrapper);
 			}
-			if (result.isAllValid === null) {
+			if (validationResult.isAllValid === null) {
 				// 非同期でまだ結果が返ってきていないものがある場合
-				result.addEventListener('validate', this.own(function(ev) {
+				validationResult.addEventListener('validate', this.own(function(ev) {
 					if (!ev.isValid && !names || $.inArray(ev.property, names) !== -1) {
 						var failureReason = ev.target.failureReason[ev.property];
 						var message = h5internal.validation.createValidateErrorMessage(ev.property,
 								failureReason, this._getMessageSettingByName(ev.property));
-						this.appendMessage(message, container, tagName);
+						this.appendMessage(message, container, wrapper);
 					}
 				}));
 				return;
@@ -408,7 +440,7 @@
 		 * <tr>
 		 * <th>replaceElement</th>
 		 * <td>DOM|jQuery|string|function</td>
-		 * <td>クラス適用要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素がクラス適用要素になります。</td>
+		 * <td>クラス適用対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
 		 * <td>各プロパティのフォーム部品要素</td>
 		 * </tr>
 		 * </tbody></table>
@@ -438,7 +470,7 @@
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.validaiton.ErrorClass
-		 * @param {object} setting errorClassプラグイン設定オブジェクト
+		 * @param {Object} setting errorClassプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
 			this._setting = setting;
@@ -453,12 +485,13 @@
 		 * @memberOf h5.ui.validation.ErrorClass
 		 * @param {ValidationResult} result
 		 */
-		onValidate: function(result) {
+		onValidate: function(validationResult) {
 			// validだったものにクラスを適用
-			var allProperties = result.allProperties;
+			var allProperties = validationResult.allProperties;
 			for (var i = 0, l = allProperties.length; i < l; i++) {
 				var name = allProperties[i];
-				this._setErrorClass(this.parentController.getElementByName(name), name, result);
+				this._setErrorClass(this.parentController.getElementByName(name), name,
+						validationResult);
 			}
 		},
 
@@ -503,11 +536,8 @@
 		 * @param globalSetting
 		 * @param setting
 		 */
-		reset: function(globalSetting, outputSetting) {
-			var $formControls = this.parentController.getElements();
+		reset: function() {
 			// 全てのフォームコントロール部品からすべてのクラスを削除
-			var pluginSetting = $.extend({}, globalSetting, outputSetting
-					&& outputSetting.errorClass);
 			this._setValidateState(null, $formControls, pluginSetting);
 		},
 
@@ -521,9 +551,6 @@
 		 * @param validationResult
 		 */
 		_setErrorClass: function(element, name, validationResult) {
-			if (!element) {
-				return;
-			}
 			// 共通設定とプロパティ毎の設定をマージ
 			var propSetting = $.extend({}, this._setting, this._setting.property
 					&& this._setting.property[name]);
@@ -531,12 +558,18 @@
 				// off指定されていれば何もしない
 				return;
 			}
+			var replaceElement = propSetting.replaceElement;
+			var element = isFunction(replaceElement) ? replaceElement(element)
+					: (replaceElement || element);
+			if (!element) {
+				return;
+			}
 			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
 				// まだvalidate結果が返ってきていない場合
 				this._setValidateState(STATE_VALIDATING, element, propSetting);
 				validationResult.addEventListener('validate', this.own(function(ev) {
 					if (ev.property === name) {
-						this._setValidateState(ev.isValid ? STATE_ERROR : STATE_SUCCESS, element,
+						this._setValidateState(ev.isValid ? STATE_SUCCESS : STATE_ERROR, element,
 								propSetting);
 					}
 				}));
@@ -562,21 +595,15 @@
 		 * @param propSetting 適用する設定オブジェクト
 		 */
 		_setValidateState: function(state, element, propSetting) {
-			var replaceElement = propSetting.replaceElement;
-			var target = isFunction(replaceElement) ? replaceElement(element)
-					: (replaceElement || element);
-			if (!target) {
-				return;
-			}
 			var errorClassName = propSetting.errorClassName;
 			var successClassName = propSetting.successClassName;
 			var validatingClassName = propSetting.validatingClassName;
-			$(target).removeClass(errorClassName).removeClass(successClassName).removeClass(
+			$(element).removeClass(errorClassName).removeClass(successClassName).removeClass(
 					validatingClassName);
 			if (!state) {
 				return;
 			}
-			$(target).addClass(propSetting[state + 'ClassName']);
+			$(element).addClass(propSetting[state + 'ClassName']);
 		}
 	};
 	h5.core.expose(controller);
@@ -591,7 +618,6 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.AllMessage',
-		_message: {},
 		_messageOutputController: h5.ui.validation.MessageOutput,
 		/**
 		 * プラグイン設定
@@ -636,7 +662,8 @@
 		 * <tr>
 		 * <th>wrapper</th>
 		 * <td>string</td>
-		 * <td>メッセージを出力する要素のタグ名</td>
+		 * <td>メッセージを出力する要素のタグ名またはタグ生成文字列。'li'や、'&lt;span
+		 * class="error-msg"&gt;'のような指定ができ、指定された文字列から生成した要素が各メッセージ要素になります。</td>
 		 * <td>なし(テキストノードとして表示)</td>
 		 * </tr>
 		 * <tr>
@@ -676,7 +703,7 @@
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.validation.AllMessage
-		 * @param {object} setting allMessageプラグイン設定オブジェクト
+		 * @param {Object} setting allMessageプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
 			this._setting = setting;
@@ -695,13 +722,13 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.AllMessage
-		 * @param {ValidationResult} result
+		 * @param {ValidationResult} validationResult
 		 * @param {Object} globalSetting
 		 * @param {Object} outputSetting
 		 */
-		onValidate: function(result) {
+		onValidate: function(validationResult) {
 			this._messageOutputController.clearMessage();
-			this._messageOutputController.appendMessageByValidationResult(result);
+			this._messageOutputController.appendMessageByValidationResult(validationResult);
 		},
 
 		/**
@@ -712,7 +739,7 @@
 		 *
 		 * @memberOf h5.ui.validation.AllMessage
 		 * @param {string} name
-		 * @param {object} messageObj message,formatterを持つオブジェクト
+		 * @param {Object} messageObj message,formatterを持つオブジェクト
 		 */
 		setMessage: function(name, messageObj) {
 			this._messageOutputController.addMessageSetting(name, messageObj);
@@ -721,19 +748,14 @@
 		/**
 		 * プラグインのリセット
 		 * <p>
-		 * 設定をリセットしてメッセージを削除します
+		 * メッセージを削除します
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.AllMessage
 		 * @param globalSetting
 		 * @param setting
 		 */
-		reset: function(globalSetting, outputSetting) {
-			this._messageOutputController.setContainerSetting({
-				container: globalSetting.container,
-				wrapper: globalSetting.wrapper
-			});
-			this._messageOutputController.setMessageSetting(outputSetting);
+		reset: function() {
 			this._messageOutputController.clearAll();
 		},
 
@@ -770,15 +792,105 @@
 (function() {
 	var DEFAULT_PLACEMENT = 'top';
 	/**
-	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
+	 * validate時にエラーがあった時、Bootstrapのエラーバルーンを表示するプラグイン
+	 * <p>
+	 * このプラグインはBootstrapに依存します。Bootstrapのtooltipを使用して表示してています。
+	 * </p>
 	 *
 	 * @class
-	 * @name h5.ui.validation.ErrorBaloon
+	 * @name h5.ui.validation.BootstrapErrorBaloon
 	 */
 	var controller = {
-		__name: 'h5.ui.validation.ErrorBaloon',
+		__name: 'h5.ui.validation.BootstrapErrorBaloon',
 		_executedOnValidate: false,
-		_message: {},
+		_messageOutputController: h5.ui.validation.MessageOutput,
+		_setting: {},
+
+		/**
+		 * プラグイン設定を行う
+		 * <p>
+		 * bsBaloonプラグインには以下の設定項目があります。
+		 * </p>
+		 * <table><thead>
+		 * <tr>
+		 * <th>設定項目</th>
+		 * <th>型</th>
+		 * <th>説明</th>
+		 * <th>デフォルト値</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <th>off</th>
+		 * <td>boolean</td>
+		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
+		 * <td>false</td>
+		 * </tr>
+		 * <tr>
+		 * <th>message</th>
+		 * <td>string</td>
+		 * <td>バリデートエラー時に表示するメッセージ。メッセージの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のmessageプロパティと同じ形式です。</td>
+		 * <td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
+		 * </tr>
+		 * <tr>
+		 * <th>formatter</th>
+		 * <td>function</td>
+		 * <td>バリデートエラー時に表示するメッセージフォーマッタ。フォーマッタの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のformatterプロパティと同じ形式です。</td>
+		 * <td>なし</td>
+		 * </tr>
+		 * <tr>
+		 * <th>label</th>
+		 * <td>string</td>
+		 * <td>バリデーション対象のプロパティに対応するラベル名</td>
+		 * <td>バリデーション対象のプロパティ名</td>
+		 * </tr>
+		 * <tr>
+		 * <th>replaceElement</th>
+		 * <td>DOM|jQuery|string|function</td>
+		 * <td>バルーン表示対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
+		 * <td>各プロパティのフォーム部品要素</td>
+		 * </tr>
+		 * <tr>
+		 * <th>placement</th>
+		 * <td>string</td>
+		 * <td>バルーンを表示する位置。top,right,bottom,leftの何れかで指定。</td>
+		 * <td>top</td>
+		 * </tr>
+		 * <tr>
+		 * <th>container</th>
+		 * <td>DOM|jQuery|string</td>
+		 * <td>バルーン要素を配置するコンテナ。表示位置ではなくDOMツリー上で配置するときのバルーン要素の親要素となる要素を指定します。指定しない場合は対象要素の親要素。</td>
+		 * <td>なし</td>
+		 * </tr>
+		 * </tbody></table>
+		 * <p>
+		 * 各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
+		 * </p>
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * {
+		 * 	placement: 'right',
+		 * 	container: 'body',
+		 * 	property: { // 各プロパティ固有の設定
+		 * 		userid: { // プルパティ名
+		 * 			label: 'ユーザ名',
+		 * 			message: '[%= label %]は必須です'
+		 * 		}
+		 * 	}
+		 * }
+		 * </code></pre>
+		 *
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
+		 */
+		setSetting: function(setting) {
+			this._setting = setting;
+			if (this.isInit) {
+				this._setChildSetting();
+			} else {
+				// 子コントローラの設定は子コントローラのコントローラ化が終わってから
+				this.initPromise.done(this.own(this._setChildSetting));
+			}
+		},
 
 		/**
 		 * バリデート時に呼ばれる
@@ -786,12 +898,10 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 * @param {ValidationResult} result
-		 * @param {Object} globalSetting
-		 * @param {Object} outputSetting
 		 */
-		onValidate: function(result, globalSetting, outputSetting) {
+		onValidate: function(result) {
 			this._executedOnValidate = true;
 		},
 
@@ -801,15 +911,13 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 * @param element
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 * @param {ValidationResult} validationResult
 		 */
-		onFocus: function(element, name, globalSetting, setting, validationResult) {
-			this._setErrorBaloon(element, name, globalSetting, setting, validationResult, 'focus');
+		onFocus: function(element, name, validationResult) {
+			this._setErrorBaloon(element, name, validationResult, 'focus');
 		},
 
 		/**
@@ -818,19 +926,14 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 * @param element
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 * @param {ValidationResult} validationResult
 		 */
-		onBlur: function(element, globalSetting, setting, validationResult) {
-			this._setErrorBaloon(element, name, globalSetting, setting, validationResult, 'blur');
+		onBlur: function(element, name, validationResult) {
+			this._setErrorBaloon(element, name, validationResult, 'blur');
 		},
-		//		onChange: function(element, name, globalSetting, setting, errorReason) {
-		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
-		//		},
 
 		/**
 		 * 要素のキーアップ時に呼ばれる
@@ -838,19 +941,14 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 * @param element
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 * @param {ValidationResult} validationResult
 		 */
-		onKeyup: function(element, name, globalSetting, setting, validationResult, errorReason) {
-			this._setErrorBaloon(element, name, globalSetting, setting, validationResult, 'keyup');
+		onKeyup: function(element, name, validationResult) {
+			this._setErrorBaloon(element, name, validationResult, 'keyup');
 		},
-		//		onClick: function(element,name, globalSetting, setting, errorReason) {
-		//			this._setErrorBaloon(element, globalSetting, setting, errorReason);
-		//		},
 
 		/**
 		 * プラグインのリセット
@@ -858,7 +956,7 @@
 		 * 表示されているバルーンを削除します
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 */
 		reset: function() {
 			// 常にバルーンは一つのみ表示している実装のため、その1つのバルーンを非表示
@@ -867,27 +965,24 @@
 		},
 
 		/**
-		 * このプラグインが出力するメッセージを設定する
+		 * このプラグインが出力するメッセージの追加設定
 		 * <p>
 		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 * @param {string} name
-		 * @param {object} messageObj message,formatterを持つオブジェクト
+		 * @param {Object} messageObj message,formatterを持つオブジェクト
 		 */
 		setMessage: function(name, messageObj) {
-			this._message[name] = {
-				message: messageObj.message,
-				formatter: messageObj.formatter
-			};
+			this._messageOutputController.addMessageSetting(name, messageObj);
 		},
 
 		/**
 		 * バルーンをセット
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 * @param element
 		 * @param name
 		 * @param globalSetting
@@ -895,18 +990,19 @@
 		 * @param {ValidationResult} validationResult
 		 * @param {string} type 要素で発生したイベントタイプ
 		 */
-		_setErrorBaloon: function(element, name, globalSetting, setting, validationResult, type) {
+		_setErrorBaloon: function(element, name, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
-			if (setting && setting.baloon && setting.baloon.off) {
+			// 共通設定とプロパティ毎の設定をマージ
+			var propSetting = $.extend({}, this._setting, this._setting.property
+					&& this._setting.property[name]);
+			if (propSetting.off) {
+				// off指定されていれば何もしない
 				return;
 			}
-			var pluginSetting = $.extend({}, globalSetting, setting && setting.baloon,
-					this._message[name]);
-
-			var replaceElement = pluginSetting.replaceElement;
+			var replaceElement = propSetting.replaceElement;
 			var target = isFunction(replaceElement) ? replaceElement(element)
 					: (replaceElement || element);
 			if (!target) {
@@ -919,14 +1015,8 @@
 				this._currentBaloonTarget = null;
 				return;
 			}
-			var placement = DEFAULT_PLACEMENT;
-			if (setting && setting.baloon && setting.baloon.placement) {
-				placement = setting.baloon.placement;
-			} else if (globalSetting && globalSetting.placement) {
-				placement = globalSetting.placement;
-			}
-			var messageSetting = $.extend({}, setting, setting && setting.errorMessage,
-					this._message[name]);
+			var placement = propSetting.placement || DEFAULT_PLACEMENT;
+			var container = propSetting.container || null;
 
 			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
 				// 非同期バリデートの結果待ちの場合
@@ -941,9 +1031,8 @@
 						return;
 					}
 					// invalidならツールチップ表示
-					this._setTooltip(target, placement, h5internal.validation
-							.createValidateErrorMessage(name, ev.target.failureReason[ev.property],
-									messageSetting));
+					this._setTooltip(target, placement, container, this._messageOutputController
+							.getMessageByValidationResult(validationResult, ev.property));
 				}));
 				return;
 			}
@@ -957,22 +1046,23 @@
 			}
 
 			// validateエラーがあるとき
-			this._setTooltip(target, placement, h5internal.validation.createValidateErrorMessage(
-					name, failureReason, messageSetting));
+			this._setTooltip(target, placement, container, this._messageOutputController
+					.getMessageByValidationResult(validationResult, name));
 		},
 
 		/**
 		 * bootstrapのtooltipを使ってバルーンを表示
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 * @param target
 		 * @param placement
 		 * @param message
 		 */
-		_setTooltip: function(target, placement, message) {
+		_setTooltip: function(target, placement, container, message) {
 			$(target).attr({
 				'data-placement': placement,
+				'data-container': container,
 				'data-original-title': message,
 				// FIXME animationをtrueにすると、show/hide/showを同期で繰り返した時に表示されない
 				// (shown.bs.tooltipイベントとか拾って制御する必要あり)
@@ -983,6 +1073,28 @@
 			});
 			$(target).tooltip('show');
 			this._currentBaloonTarget = target;
+		},
+
+		/**
+		 * メッセージ出力コントローラの設定
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 */
+		_setChildSetting: function() {
+			var setting = this._setting;
+
+			// 各プロパティ毎のメッセージ設定をする
+			var property = setting.property;
+			var messageSetting = {};
+			for ( var p in property) {
+				messageSetting[p] = {
+					label: property[p].label || setting.label,
+					message: property[p].message || setting.message,
+					formatter: property[p].formatter || setting.formatter,
+				};
+			}
+			this._messageOutputController.setMessageSetting(messageSetting);
 		}
 	};
 	h5.core.expose(controller);
@@ -998,9 +1110,97 @@
 	var controller = {
 		__name: 'h5.ui.validation.ErrorMessage',
 		_executedOnValidate: false,
-		_message: {},
 		_errorMessageElementMap: {},
 		_messageOutputController: h5.ui.validation.MessageOutput,
+
+		/**
+		 * プラグイン設定を行う
+		 * <p>
+		 * errorMessageプラグインには以下の設定項目があります。
+		 * </p>
+		 * <table><thead>
+		 * <tr>
+		 * <th>設定項目</th>
+		 * <th>型</th>
+		 * <th>説明</th>
+		 * <th>デフォルト値</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <th>off</th>
+		 * <td>boolean</td>
+		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
+		 * <td>false</td>
+		 * </tr>
+		 * <tr>
+		 * <th>message</th>
+		 * <td>string</td>
+		 * <td>バリデートエラー時に表示するメッセージ。メッセージの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のmessageプロパティと同じ形式です。</td>
+		 * <td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
+		 * </tr>
+		 * <tr>
+		 * <th>formatter</th>
+		 * <td>function</td>
+		 * <td>バリデートエラー時に表示するメッセージフォーマッタ。フォーマッタの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のformatterプロパティと同じ形式です。</td>
+		 * <td>なし</td>
+		 * </tr>
+		 * <tr>
+		 * <th>label</th>
+		 * <td>string</td>
+		 * <td>バリデーション対象のプロパティに対応するラベル名</td>
+		 * <td>バリデーション対象のプロパティ名</td>
+		 * </tr>
+		 * <tr>
+		 * <th>replaceElement</th>
+		 * <td>DOM|jQuery|string|function</td>
+		 * <td>メッセージ追加対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素がクラス適用要素になります。</td>
+		 * <td>各プロパティのフォーム部品要素</td>
+		 * </tr>
+		 * <tr>
+		 * <th>appendMessage</th>
+		 * <td>function</td>
+		 * <td>メッセージ要素配置関数。メッセージ要素の配置を行う関数を指定します。第1引数にメッセージ要素(DOM)、第2引数にプロパティ名、第3引数にメッセージ追加対象要素が渡されます。指定しない場合は、メッセージ追加対象要素の後ろに追加します。</td>
+		 * <td>なし</td>
+		 * </tr>
+		 * <tr>
+		 * <th>wrapper</th>
+		 * <td>string</td>
+		 * <td>メッセージを出力する要素のタグ名またはタグ生成文字列。'li'や、'&lt;span
+		 * class="error-msg"&gt;'のような指定ができ、指定された文字列から生成した要素が各メッセージ要素になります。</td>
+		 * <td>なし(テキストノードとして表示)</td>
+		 * </tr>
+		 * </tbody></table>
+		 * <p>
+		 * 各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
+		 * </p>
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * {
+		 * 	wrapper: '&lt;span class=&quot;error-msg&quot;&gt;',
+		 * 	appendMessage: function(element, name, target) {
+		 * 		$(target).closest('.wrapper').append(element);
+		 * 	},
+		 * 	property: { // 各プロパティ固有の設定
+		 * 		userid: { // プルパティ名
+		 * 			label: 'ユーザ名',
+		 * 			message: '[%= label %]は必須です'
+		 * 		}
+		 * 	}
+		 * }
+		 * </code></pre>
+		 *
+		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
+		 */
+		setSetting: function(setting) {
+			this._setting = setting;
+			if (this.isInit) {
+				this._setChildSetting();
+			} else {
+				// 子コントローラの設定は子コントローラのコントローラ化が終わってから
+				this.initPromise.done(this.own(this._setChildSetting));
+			}
+		},
 
 		/**
 		 * バリデート時に呼ばれる
@@ -1010,19 +1210,13 @@
 		 *
 		 * @memberOf h5.ui.validation.ErrorMessage
 		 * @param {ValidationResult} result
-		 * @param {Object} globalSetting
-		 * @param {Object} outputSetting
 		 */
-		onValidate: function(result, globalSetting, outputSetting) {
+		onValidate: function(result) {
 			this._executedOnValidate = true;
-			this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
-			var $formControls = this.parentController.getElements();
-			// validだったものからメッセージを削除
-			var allProperties = result.allProperties;
+			var allProperties = result.validProperties;
 			for (var i = 0, l = allProperties.length; i < l; i++) {
 				var name = allProperties[i];
-				var element = $formControls.filter('[name="' + name + '"]')[0];
-				this._setErrorMessage(element, name, globalSetting, outputSetting[name], result);
+				this._setErrorMessage(this.parentController.getElementByName(name), name, result);
 			}
 		},
 
@@ -1035,12 +1229,10 @@
 		 * @memberOf h5.ui.validation.ErrorMessage
 		 * @param element
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 * @param {ValidationResult} validationResult
 		 */
-		onFocus: function(element, name, globalSetting, setting, validationResult) {
-			this._setErrorMessage(element, name, globalSetting, setting, validationResult, 'focus');
+		onFocus: function(element, name, validationResult) {
+			this._setErrorMessage(element, name, validationResult, 'focus');
 		},
 
 		/**
@@ -1052,12 +1244,10 @@
 		 * @memberOf h5.ui.validation.ErrorMessage
 		 * @param element
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 * @param {ValidationResult} validationResult
 		 */
-		onBlur: function(element, name, globalSetting, setting, validationResult) {
-			this._setErrorMessage(element, name, globalSetting, setting, validationResult, 'blur');
+		onBlur: function(element, name, validationResult) {
+			this._setErrorMessage(element, name, validationResult, 'blur');
 		},
 		// FIXME どのタイミングで実行するかは設定で決める？
 		//		onChange: function(element,name, globalSetting, setting, errorReason) {
@@ -1094,63 +1284,59 @@
 		 *
 		 * @memberOf h5.ui.validation.ErrorMessage
 		 * @param {string} name
-		 * @param {object} messageObj message,formatterを持つオブジェクト
+		 * @param {Object} messageObj message,formatterを持つオブジェクト
 		 */
 		setMessage: function(name, messageObj) {
-			this._message[name] = {
-				message: messageObj.message,
-				formatter: messageObj.formatter
-			};
+			this._messageOutputController.addMessageSetting(name, messageObj);
 		},
 
-		_setErrorMessage: function(element, name, globalSetting, setting, validationResult, type) {
+		_setErrorMessage: function(element, name, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
-			if (setting && setting.errorMessage && setting.errorMessage.off) {
+			// 共通設定とプロパティ毎の設定をマージ
+			var propSetting = $.extend({}, this._setting, this._setting.property
+					&& this._setting.property[name]);
+			if (propSetting.off) {
+				// off指定されていれば何もしない
 				return;
 			}
-			var pluginSetting = $.extend({}, globalSetting, setting && setting.errorMessage);
 			if (type === 'blur') {
 				// blurの時はメッセージを非表示にして、終了
-				this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
+				this._removeErrorMessage(name);
 				return;
 			}
 			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
 				// まだvalidate結果が返ってきていない場合
 				// メッセージを削除
-				this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
+				this._removeErrorMessage(name);
 				validationResult.addEventListener('validate', this.own(function(ev) {
-					console.log(document.activeElement);
-					if (ev.property === name
+					if (ev.property === name && !ev.isValid
 							&& (type !== 'focus' || document.activeElement === element)) {
 						// nameの結果が返ってきた時にメッセージを表示
 						// focus時のvalidateなら、まだfocusが当たっているときだけ表示
-						this._setErrorMessage(element, name, globalSetting, setting,
-								validationResult, type);
+						this._setErrorMessage(element, name, validationResult, type);
 					}
 				}));
 				return;
 			}
-			var errorPlacement = pluginSetting.errorPlacement;
-			var replaceElement = pluginSetting.replaceElement;
-			var target = isFunction(replaceElement) ? replaceElement(element)
-					: (replaceElement || element);
-			if (!target) {
+
+			// 既存のエラーメッセージを削除
+			this._removeErrorMessage(name);
+			var msg = this._messageOutputController.getMessageByValidationResult(validationResult,
+					name);
+			if (msg === null) {
+				// エラーメッセージが無い場合はメッセージを非表示にして、終了
+				this._removeErrorMessage(name);
 				return;
 			}
 
-			var failureReason = validationResult.failureReason
-					&& validationResult.failureReason[name];
-			if (!failureReason) {
-				this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
-				return;
-			}
-			var messageSetting = $.extend({}, setting, setting && setting.errorMessage,
-					this._message[name]);
-			var msg = h5internal.validation.createValidateErrorMessage(name, failureReason,
-					messageSetting);
+			var appendMessage = propSetting.appendMessage;
+			var replaceElement = propSetting.replaceElement;
+			var target = isFunction(replaceElement) ? replaceElement(element)
+					: (replaceElement || element);
+
 			var $errorMsg = this._errorMessageElementMap[name];
 			if (!$errorMsg) {
 				// TODO タグやクラスを設定できるようにする
@@ -1159,13 +1345,39 @@
 			}
 			this._messageOutputController.clearMessage($errorMsg);
 			this._messageOutputController.appendMessage(msg, $errorMsg);
-			if (errorPlacement) {
-				errorPlacement($errorMsg[0], target);
-			} else {
+			if (appendMessage) {
+				appendMessage($errorMsg[0], target, name);
+			} else if (target) {
 				// elementの後ろに追加するのがデフォルト動作
 				// replaceElementで対象が変更されていればその後ろ
 				$(target).after($errorMsg);
 			}
+		},
+
+		_removeErrorMessage: function(name) {
+			this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
+		},
+
+		/**
+		 * メッセージ出力コントローラの設定
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.ErrorMessage
+		 */
+		_setChildSetting: function() {
+			var setting = this._setting;
+
+			// 各プロパティ毎のメッセージ設定をする
+			var property = setting.property;
+			var messageSetting = {};
+			for ( var p in property) {
+				messageSetting[p] = {
+					label: property[p].label || setting.label,
+					message: property[p].message || setting.message,
+					formatter: property[p].formatter || setting.formatter,
+				};
+			}
+			this._messageOutputController.setMessageSetting(messageSetting);
 		}
 	};
 	h5.core.expose(controller);
@@ -1183,6 +1395,58 @@
 		_indicators: {},
 
 		/**
+		 * プラグイン設定を行う
+		 * <p>
+		 * asyncIndicatorプラグインには以下の設定項目があります。
+		 * </p>
+		 * <table><thead>
+		 * <tr>
+		 * <th>設定項目</th>
+		 * <th>型</th>
+		 * <th>説明</th>
+		 * <th>デフォルト値</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <th>off</th>
+		 * <td>boolean</td>
+		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
+		 * <td>false</td>
+		 * </tr>
+		 * <tr>
+		 * <th>replaceElement</th>
+		 * <td>DOM|jQuery|string|function</td>
+		 * <td>インジケータ表示対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
+		 * <td>各プロパティのフォーム部品要素</td>
+		 * </tr>
+		 * </tbody></table>
+		 * <p>
+		 * 各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
+		 * </p>
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * {
+		 * 	replaceElement: function(element) {
+		 * 		return $(element).prev();
+		 * 	},
+		 * 	property: { // 各プロパティ固有の設定
+		 * 		userid: { // プルパティ名
+		 * 			replaceElement: function(element) {
+		 * 				return $(element).next();
+		 * 			}
+		 * 		}
+		 * 	}
+		 * }
+		 * </code></pre>
+		 *
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
+		 */
+		setSetting: function(setting) {
+			this._setting = setting;
+		},
+
+		/**
 		 * バリデート時に呼ばれる
 		 * <p>
 		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
@@ -1193,10 +1457,17 @@
 		 * @param {Object} globalSetting
 		 * @param {Object} outputSetting
 		 */
-		onValidate: function(result, globalSetting, outputSetting) {
+		onValidate: function(result) {
 			var validatingProperties = result.validatingProperties;
-			for (var i = 0, l = validatingProperties.length; i < l; i++) {
-				this._showIndicator(result, validatingProperties[i], globalSetting, outputSetting);
+			var allProperties = result.allProperties;
+			for (var i = 0, l = allProperties.length; i < l; i++) {
+				var name = allProperties[i];
+				if ($.inArray(name, valdatingProperties)) {
+					var element = this.parentController.getElementByName(name);
+					this._showIndicator(element, name, validatingProperties[i]);
+				} else {
+					this._hideIndicator(name);
+				}
 			}
 		},
 
@@ -1209,12 +1480,16 @@
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param element
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 * @param {ValidationResult} validationResult
 		 */
-		onFocus: function(element, name, globalSetting, setting, validationResult) {
-			this._showIndicator(validationResult, name, globalSetting, setting);
+		onFocus: function(element, name, validationResult) {
+			var validatingProperties = result.validatingProperties;
+			if ($.inArray(name, validatingProperties)) {
+				var element = this.parentController.getElementByName(name);
+				this._showIndicator(element, name, validatingProperties[i]);
+			} else {
+				this._hideIndicator(name);
+			}
 		},
 		//		onBlur: function(element, name, globalSetting, setting, validationResult) {
 		//			this._showIndicator(validationResult, name, globalSetting, setting);
@@ -1233,12 +1508,13 @@
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param element
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 * @param {ValidationResult} validationResult
 		 */
-		onKeyup: function(element, name, globalSetting, setting, validationResult) {
-			this._showIndicator(validationResult, name, globalSetting, setting);
+		onKeyup: function(element, name, validationResult) {
+			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
+				// バリデート中ならインジケータ表示
+				this._showIndicator(element, name, validationResult);
+			}
 		},
 		//		onClick: function(element, name,globalSetting, setting, errorReason) {
 		//			this._setErrorMessage(element, name,globalSetting, setting, errorReason);
@@ -1266,20 +1542,16 @@
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param {ValidationResult} validationResult
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 */
-		_showIndicator: function(validationResult, name, globalSetting, setting) {
-			if (setting && setting.asyncIndicator && setting.asyncIndicator.off) {
+		_showIndicator: function(element, name, validationResult) {
+			// 共通設定とプロパティ毎の設定をマージ
+			var propSetting = $.extend({}, this._setting, this._setting.property
+					&& this._setting.property[name]);
+			if (propSetting.off) {
+				// off指定されていれば何もしない
 				return;
 			}
-			if (validationResult.isAllValid !== null) {
-				// 既にバリデート結果が出ているなら何もしない
-				return;
-			}
-			var pluginSetting = $.extend({}, globalSetting, setting && setting.asyncIndicator);
-			var element = this.parentController.getElementByName(name);
-			var replaceElement = pluginSetting.replaceElement;
+			var replaceElement = propSetting.replaceElement;
 			var target = isFunction(replaceElement) ? replaceElement(element)
 					: (replaceElement || element);
 			if (!target) {
@@ -1292,7 +1564,6 @@
 				block: false
 			});
 			this._indicators[name].show();
-			console.log('show:' + name);
 			validationResult.addEventListener('validate', this.own(function(ev) {
 				if (name === ev.property) {
 					this._hideIndicator(ev.property);
@@ -1313,7 +1584,6 @@
 		_hideIndicator: function(name) {
 			if (this._indicators[name]) {
 				this._indicators[name].hide();
-				console.log('hide:' + name);
 			}
 		}
 	};
@@ -1354,12 +1624,12 @@
 	var DEFAULT_PLUGINS = {
 		errorClass: h5.ui.validation.ErrorClass,
 		allMessage: h5.ui.validation.AllMessage,
-		baloon: h5.ui.validation.ErrorBaloon,
+		bsBaloon: h5.ui.validation.BootstrapErrorBaloon,
 		errorMessage: h5.ui.validation.ErrorMessage,
 		asyncIndicator: h5.ui.validation.AsyncIndicator
 	};
 
-	// プラグインの表示リセットメソッド名
+	// プラグインの表示リセットメui.validation.BootstrapErrorBaloonソッド名
 	var PLUGIN_METHOD_RESET = 'reset';
 
 	// デフォルトで用意しているvalidateルール生成関数
@@ -1573,6 +1843,7 @@
 			pluginSetting.property = {};
 			for ( var prop in propertySetting) {
 				var propSetting = $.extend({}, propertySetting[prop]);
+				$.extend(propSetting, propSetting[pluginName]);
 				var propertyPluginOutput = h5.u.obj.getByPath('output.' + pluginName, propSetting);
 				delete propSetting['output'];
 				pluginSetting.property[prop] = $.extend({}, propSetting, propertyPluginOutput)
@@ -2069,10 +2340,10 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		resetValidation: function() {
-			this._waitingAllValidationResult && this._waitingAllValidationResult.abort();
-			for ( var p in this._waitingValidationResultMap) {
-				this._waitingValidationResultMap[p].abort();
-			}
+			//			this._waitingAllValidationResult && this._waitingAllValidationResult.abort();
+			//			for ( var p in this._waitingValidationResultMap) {
+			//				this._waitingValidationResultMap[p].abort();
+			//			}
 			this._waitingValidationResultMap = {};
 			var plugins = this._plugins;
 			for ( var pluginName in plugins) {
@@ -2277,25 +2548,25 @@
 
 			// 待機中のValidationResultをabortする処理
 			// 指定されたnamesに該当するValidationResultをabortで中断する
-			if (names) {
-				names = $.isArray(names) ? names : [names];
-				for (var i = 0, l = names.length; i < l; i++) {
-					// 現在のプロパティ毎の非同期バリデート待ちのValidationResultは全て中断
-					var name = names[i];
-					var r = this._waitingValidationResultMap[name];
-					if (!r) {
-						continue;
-					}
-					r.abort();
-					delete this._waitingValidationResultMap[name];
-				}
-			} else {
-				// namesが指定されていない場合は全てのプロパティが対象
-				for ( var p in this._waitingValidationResultMap) {
-					this._waitingValidationResultMap[p].abort();
-				}
-				this._waitingValidationResultMap = {};
-			}
+			//			if (names) {
+			//				names = $.isArray(names) ? names : [names];
+			//				for (var i = 0, l = names.length; i < l; i++) {
+			//					// 現在のプロパティ毎の非同期バリデート待ちのValidationResultは全て中断
+			//					var name = names[i];
+			//					var r = this._waitingValidationResultMap[name];
+			//					if (!r) {
+			//						continue;
+			//					}
+			//					r.abort();
+			//					delete this._waitingValidationResultMap[name];
+			//				}
+			//			} else {
+			//				// namesが指定されていない場合は全てのプロパティが対象
+			//				for ( var p in this._waitingValidationResultMap) {
+			//					this._waitingValidationResultMap[p].abort();
+			//				}
+			//				this._waitingValidationResultMap = {};
+			//			}
 
 			var result = this._validator.validate(formData, names);
 
@@ -2316,7 +2587,7 @@
 					this._waitingValidationResultMap[p] = result;
 				}
 				result.addEventListener('validate', this.own(function(ev) {
-					delete this._waitingAllValidationResult[ev.property];
+					delete this._waitingValidationResultMap[ev.property];
 				}));
 			}
 

@@ -137,94 +137,98 @@
 								});
 								// プラグインの有効化
 								this.formController.enablePlugins(['allMessage', 'errorMessage',
-										'errorClass', 'baloon', 'asyncIndicator']);
+										'errorClass', 'bsBaloon']);
 								// エラー出力設定
-								this.formController.globalSetting = {
-									errorClass: {
-										errorClassName: 'has-error',
-										successClassName: 'success',
-										// 非同期validate用の設定。validate中に適用するクラス名
-										validatingClassName: 'validating',
-										replaceElement: function(element) {
-											// エラークラス追加対象は、input等の親のform-group要素に変換する
-											return $(element).closest('.form-group');
-										}
-									},
-									allMessage: {
-										container: this.$find('.globalError'),
-										wrapper: 'li'
-									},
-									asyncIndicator:{
-										replaceElement: function(element){
-											// input要素の前に表示
-											var $element = $(element);
-											var $parent = $element.parent();
-											var $indicatorWrapper = $parent.find('.validateIndicatorWrapper');
-											if(!$indicatorWrapper.length){
-												$indicatorWrapper = $('<div class="validateIndicatorWrapper">');
-												$element.before($indicatorWrapper);
-											}
-											return $indicatorWrapper;
-										}
-									}
-								};
-								this.formController.outputSetting = {
-									userid: {
-										formatter: function(param) {
-											switch (param.rule) {
-											case 'require':
-												return '必須です';
-											case 'size':
-												var max = param.param.max;
-												var min = param.param.min;
-												var val = param.value;
-												if (val.length < min) {
-													return '短すぎます';
-												} else {
-													return '長すぎます';
-												}
-											case 'customFunc':
-												var serverMessage = param.rejectReason[0];
-												switch (serverMessage.code) {
-												case '1001':
-													return h5.u.str
-															.format(
-																	'{label}:"{value}"は既に登録されています。(code={1.code}) "{1.message}"',
-																	param, serverMessage);
-												}
+								var setting = {
+									output: {
+										errorClass: {
+											errorClassName: 'has-error',
+											successClassName: 'success',
+											// 非同期validate用の設定。validate中に適用するクラス名
+											validatingClassName: 'validating',
+											replaceElement: function(element) {
+												// エラークラス追加対象は、input等の親のform-group要素に変換する
+												return $(element).closest('.form-group');
 											}
 										},
-										allMessage:{
-											message:'allM 必須'
+										allMessage: {
+											container: this.$find('.globalError'),
+											wrapper: 'li'
+										},
+										asyncIndicator: {
+											replaceElement: function(element) {
+												// input要素の前に表示
+												var $element = $(element);
+												var $parent = $element.parent();
+												var $indicatorWrapper = $parent
+														.find('.validateIndicatorWrapper');
+												if (!$indicatorWrapper.length) {
+													$indicatorWrapper = $('<div class="validateIndicatorWrapper">');
+													$element.before($indicatorWrapper);
+												}
+												return $indicatorWrapper;
+											}
 										}
 									},
-									mail: {
-										formatter: function(param) {
-											switch (param.rule) {
-											case 'require':
-												return '必須です';
-											case 'customFunc':
-												var serverMessage = param.rejectReason[0];
-												switch (serverMessage.code) {
-												case '1001':
-													return h5.u.str
-															.format(
-																	'{label}:"{value}"は既に登録されています。(code={1.code}) "{1.message}"',
-																	param, serverMessage);
+									property: {
+										userid: {
+											formatter: function(param) {
+												switch (param.rule) {
+												case 'require':
+													return '必須です';
+												case 'size':
+													var max = param.param.max;
+													var min = param.param.min;
+													var val = param.value;
+													if (val.length < min) {
+														return '短すぎます';
+													} else {
+														return '長すぎます';
+													}
+												case 'customFunc':
+													var serverMessage = param.rejectReason[0];
+													switch (serverMessage.code) {
+													case '1001':
+														return h5.u.str
+																.format(
+																		'{label}:"{value}"は既に登録されています。(code={1.code}) "{1.message}"',
+																		param, serverMessage);
+													}
 												}
-											case 'isCorrectMail':
-												var serverMessage = param.rejectReason[0];
-												switch (serverMessage.code) {
-												case '1002':
-													return h5.u.str
-															.format(
-																	'{label}:"{value}" 正しいメールアドレスではありません。(code={1.code}) "{1.message}"',
-																	param, serverMessage);
+											},
+											allMessage: {
+												message: '必須'
+											}
+										},
+										mail: {
+											formatter: function(param) {
+												switch (param.rule) {
+												case 'require':
+													return '必須です';
+												case 'customFunc':
+													var serverMessage = param.rejectReason[0];
+													switch (serverMessage.code) {
+													case '1001':
+														return h5.u.str
+																.format(
+																		'{label}:"{value}"は既に登録されています。(code={1.code}) "{1.message}"',
+																		param, serverMessage);
+													}
+												case 'isCorrectMail':
+													var serverMessage = param.rejectReason[0];
+													switch (serverMessage.code) {
+													case '1002':
+														return h5.u.str
+																.format(
+																		'{label}:"{value}" 正しいメールアドレスではありません。(code={1.code}) "{1.message}"',
+																		param, serverMessage);
+													}
 												}
 											}
 										}
 									}
 								};
+								this.formController.setSetting(setting);
 							},
 							'{.resetValidation} click': function() {
 								this.formController.resetValidation();

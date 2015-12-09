@@ -46,7 +46,7 @@
 			formController: h5.ui.FormController,
 			__ready: function() {
 				// プラグインの有効化
-				this.formController.enablePlugins(['errorClass', 'allMessage']);
+				this.formController.enablePlugins(['errorClass', 'allMessage', 'bsBaloon', 'errorMessage']);
 
 				// birthdayグループのルール追加
 				this.formController.addRule({
@@ -79,13 +79,17 @@
 							container: this.$find('.globalError'),
 							wrapper: 'li'
 						},
-						baloon: {
-							placement: 'top'
+						bsBaloon: {
+							placement: 'top',
+							baloonContainer: 'body'
 						}
 					},
 					property: {
 						name: {
-							label: '名前'
+							label: '名前',
+							bsBaloon:{
+								message:'※必須'
+							}
 						},
 						sex: {
 							label: '性別',
@@ -94,9 +98,6 @@
 								replaceElement: function($el) {
 									return $el.closest('.radio');
 								}
-							},
-							allMessage: {
-								message: 'BBB'
 							}
 						},
 						birthday: {
@@ -153,7 +154,7 @@
 						},
 						agree: {
 							message: '利用規約への同意が必要です',
-							baloon: {
+							bsBaloon: {
 								placement: 'right',
 								replaceElement: function($el) {
 									return $el.closest('label');
