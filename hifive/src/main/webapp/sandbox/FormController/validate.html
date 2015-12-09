@@ -19,18 +19,16 @@
 <script src="/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
 <!-- hifive -->
-<!-- <link href="/hifive-res/fw/current/h5.css" rel="stylesheet"> -->
-<script src="/hifive-res/fw/current/ejs-h5mod.js"></script>
-<!-- <script src="/hifive-res/fw/current/h5.dev.js"></script> -->
+<link href="../../srcCss/h5.ui.indicator.css" rel="stylesheet">
+<link href="../../srcCss/h5.ui.validation.css" rel="stylesheet">
+<script src="../../src/ejs/ejs-1.0.js"></script>
 <!-- h5ソースファイルの読み込み -->
 <script>
 	H5_TEST_ENV = window.H5_TEST_ENV || {};
-	H5_TEST_ENV.buildType = 'src';
 	H5_TEST_ENV.srcBaseUrl = '../../';
 </script>
-<script src="../../test/loadScriptForTest.js"></script>
+<script src="loadScript.js"></script>
 
-<script src="../../src/h5.ui.FormController.js"></script>
 <link href="sample.css" rel="stylesheet">
 
 <script>
@@ -46,7 +44,8 @@
 			formController: h5.ui.FormController,
 			__ready: function() {
 				// プラグインの有効化
-				this.formController.enablePlugins(['errorClass', 'allMessage', 'bsBaloon', 'errorMessage']);
+				this.formController.enablePlugins(['errorClass', 'allMessage', 'bsBaloon',
+						'errorMessage', 'baloon']);
 
 				// birthdayグループのルール追加
 				this.formController.addRule({
@@ -79,6 +78,9 @@
 							container: this.$find('.globalError'),
 							wrapper: 'li'
 						},
+						baloon: {
+							placement: 'bottom'
+						},
 						bsBaloon: {
 							placement: 'top',
 							baloonContainer: 'body'
@@ -87,8 +89,8 @@
 					property: {
 						name: {
 							label: '名前',
-							bsBaloon:{
-								message:'※必須'
+							bsBaloon: {
+								message: '※必須'
 							}
 						},
 						sex: {
