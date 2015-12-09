@@ -469,7 +469,7 @@
 		 * }
 		 * </code></pre>
 		 *
-		 * @memberOf h5.ui.validaiton.ErrorClass
+		 * @memberOf h5.ui.validation.ErrorClass
 		 * @param {Object} setting errorClassプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
@@ -1190,7 +1190,7 @@
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.validation.ErrorMessage
-		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
+		 * @param {Object} setting errorMessageプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
 			this._setting = setting;
@@ -1439,8 +1439,8 @@
 		 * }
 		 * </code></pre>
 		 *
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
-		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
+		 * @memberOf h5.ui.validation.AsyncIndicator
+		 * @param {Object} setting asyncIndicatorプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
 			this._setting = setting;
@@ -1816,6 +1816,11 @@
 		 * }
 		 * </code></pre>
 		 *
+		 * <p>
+		 * 各プラグインの設定については各プラグインのsetSettingのドキュメントを参照してください
+		 * </p>
+		 *
+		 * @memberOf h5.ui.FormController
 		 * @param {Object} setting 設定オブジェクト
 		 */
 		setSetting: function(setting) {

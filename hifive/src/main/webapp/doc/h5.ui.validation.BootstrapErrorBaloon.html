@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: AsyncIndicator</title>
+    <title>JSDoc: Class: BootstrapErrorBaloon</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -34,7 +34,7 @@
 	    </div>
 	</nav>
 	<div id="main">
-	    <h1 class="page-title">Class: AsyncIndicator</h1>
+	    <h1 class="page-title">Class: BootstrapErrorBaloon</h1>
 	    
 
 
@@ -45,7 +45,7 @@
 <header>
     
         <h2>
-        AsyncIndicator
+        BootstrapErrorBaloon
         </h2>
         
     
@@ -58,14 +58,17 @@
 
     
 
-    <h4 class="name" id="AsyncIndicator"><span class="type-signature"></span>new AsyncIndicator<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="BootstrapErrorBaloon"><span class="type-signature"></span>new BootstrapErrorBaloon<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    非同期validate時にインジケータを出すプラグイン
+    validate時にエラーがあった時、Bootstrapのエラーバルーンを表示するプラグイン
+<p>
+このプラグインはBootstrapに依存します。Bootstrapのtooltipを使用して表示してています。
+</p>
 </div>
 
 
@@ -109,7 +112,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1387">line 1387</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line794">line 794</a>
     </li></ul></dd>
     
 
@@ -158,16 +161,16 @@
 
     
 
-    <h4 class="name" id=".onFocus"><span class="type-signature">(static) </span>onFocus<span class="signature">(element, name, validationResult)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".onBlur"><span class="type-signature">(static) </span>onBlur<span class="signature">(element, name, validationResult)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    要素にフォーカスされた時に呼ばれる
+    要素からフォーカスが外れた時に呼ばれる
 <p>
-非同期バリデートがある場合、該当要素に対してインジケータを表示する
+バリデート結果からバルーンの表示・非表示を行う
 </p>
 </div>
 
@@ -297,7 +300,177 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1485">line 1485</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line934">line 934</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".onFocus"><span class="type-signature">(static) </span>onFocus<span class="signature">(element, name, validationResult)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    要素にフォーカスした時に呼ばれる
+<p>
+バリデート結果からバルーンの表示・非表示を行う
+</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>element</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>validationResult</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="ValidationResult.html">ValidationResult</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line919">line 919</a>
     </li></ul></dd>
     
 
@@ -335,9 +508,9 @@
 
 
 <div class="description">
-    要素でキーアップされた時に呼ばれる
+    要素のキーアップ時に呼ばれる
 <p>
-非同期バリデートがある場合、該当要素に対してインジケータを表示する
+バリデート結果からバルーンの表示・非表示を行う
 </p>
 </div>
 
@@ -467,7 +640,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1513">line 1513</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line949">line 949</a>
     </li></ul></dd>
     
 
@@ -498,7 +671,7 @@
 
     
 
-    <h4 class="name" id=".onValidate"><span class="type-signature">(static) </span>onValidate<span class="signature">(globalSetting, outputSetting)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".onValidate"><span class="type-signature">(static) </span>onValidate<span class="signature">(result)</span><span class="type-signature"></span></h4>
 
     
 
@@ -507,7 +680,7 @@
 <div class="description">
     バリデート時に呼ばれる
 <p>
-非同期バリデートがある場合、該当要素に対してインジケータを表示する
+バリデート結果からバルーンの表示・非表示を行う
 </p>
 </div>
 
@@ -544,59 +717,13 @@
 
         <tr>
             
-                <td class="name"><code></code></td>
+                <td class="name"><code>result</code></td>
             
 
             <td class="type">
             
                 
 <span class="param-type"><a href="ValidationResult.html">ValidationResult</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>globalSetting</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>outputSetting</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
 
 
             
@@ -647,7 +774,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1460">line 1460</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line904">line 904</a>
     </li></ul></dd>
     
 
@@ -687,7 +814,7 @@
 <div class="description">
     プラグインのリセット
 <p>
-表示されているインジケータを削除します
+表示されているバルーンを削除します
 </p>
 </div>
 
@@ -732,7 +859,164 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1531">line 1531</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line961">line 961</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".setMessage"><span class="type-signature">(static) </span>setMessage<span class="signature">(name, messageObj)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    このプラグインが出力するメッセージの追加設定
+<p>
+プロパティ毎の出力メッセージ設定オブジェクトを設定します。
+</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>messageObj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">message,formatterを持つオブジェクト</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line977">line 977</a>
     </li></ul></dd>
     
 
@@ -772,7 +1056,7 @@
 <div class="description">
     プラグイン設定を行う
 <p>
-asyncIndicatorプラグインには以下の設定項目があります。
+bsBaloonプラグインには以下の設定項目があります。
 </p>
 <table><thead>
 <tr>
@@ -789,10 +1073,40 @@ asyncIndicatorプラグインには以下の設定項目があります。
 <td>false</td>
 </tr>
 <tr>
+<th>message</th>
+<td>string</td>
+<td>バリデートエラー時に表示するメッセージ。メッセージの記述形式はh5.ui.validation.MessageOutput.setMessageのmessageプロパティと同じ形式です。</td>
+<td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
+</tr>
+<tr>
+<th>formatter</th>
+<td>function</td>
+<td>バリデートエラー時に表示するメッセージフォーマッタ。フォーマッタの記述形式はh5.ui.validation.MessageOutput.setMessageのformatterプロパティと同じ形式です。</td>
+<td>なし</td>
+</tr>
+<tr>
+<th>label</th>
+<td>string</td>
+<td>バリデーション対象のプロパティに対応するラベル名</td>
+<td>バリデーション対象のプロパティ名</td>
+</tr>
+<tr>
 <th>replaceElement</th>
 <td>DOM|jQuery|string|function</td>
-<td>インジケータ表示対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
+<td>バルーン表示対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
 <td>各プロパティのフォーム部品要素</td>
+</tr>
+<tr>
+<th>placement</th>
+<td>string</td>
+<td>バルーンを表示する位置。top,right,bottom,leftの何れかで指定。</td>
+<td>top</td>
+</tr>
+<tr>
+<th>container</th>
+<td>DOM|jQuery|string</td>
+<td>バルーン要素を配置するコンテナ。表示位置ではなくDOMツリー上で配置するときのバルーン要素の親要素となる要素を指定します。指定しない場合は対象要素の親要素。</td>
+<td>なし</td>
 </tr>
 </tbody></table>
 <p>
@@ -801,14 +1115,12 @@ asyncIndicatorプラグインには以下の設定項目があります。
 
 <pre class="sh_javascript"><code>
 {
-	replaceElement: function(element) {
-		return $(element).prev();
-	},
+	placement: 'right',
+	container: 'body',
 	property: { // 各プロパティ固有の設定
 		userid: { // プルパティ名
-			replaceElement: function(element) {
-				return $(element).next();
-			}
+			label: 'ユーザ名',
+			message: '[%= label %]は必須です'
 		}
 	}
 }
@@ -864,7 +1176,7 @@ asyncIndicatorプラグインには以下の設定項目があります。
 
             
 
-            <td class="description last">asyncIndicatorプラグイン設定オブジェクト</td>
+            <td class="description last">bsBaloonプラグイン設定オブジェクト</td>
         </tr>
 
     
@@ -905,7 +1217,7 @@ asyncIndicatorプラグインには以下の設定項目があります。
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1445">line 1445</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line885">line 885</a>
     </li></ul></dd>
     
 
