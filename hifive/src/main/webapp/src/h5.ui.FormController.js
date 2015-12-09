@@ -792,16 +792,13 @@
 (function() {
 	var DEFAULT_PLACEMENT = 'top';
 	/**
-	 * validate時にエラーがあった時、Bootstrapのエラーバルーンを表示するプラグイン
-	 * <p>
-	 * このプラグインはBootstrapに依存します。Bootstrapのtooltipを使用して表示してています。
-	 * </p>
+	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
 	 *
 	 * @class
-	 * @name h5.ui.validation.BootstrapErrorBaloon
+	 * @name h5.ui.validation.ErrorBaloon
 	 */
 	var controller = {
-		__name: 'h5.ui.validation.BootstrapErrorBaloon',
+		__name: 'h5.ui.validation.ErrorBaloon',
 		_executedOnValidate: false,
 		_messageOutputController: h5.ui.validation.MessageOutput,
 		_setting: {},
@@ -879,7 +876,7 @@
 		 * }
 		 * </code></pre>
 		 *
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
@@ -898,7 +895,7 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param {ValidationResult} result
 		 */
 		onValidate: function(result) {
@@ -911,7 +908,7 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
@@ -926,7 +923,7 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
@@ -941,7 +938,7 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
@@ -956,11 +953,10 @@
 		 * 表示されているバルーンを削除します
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 */
 		reset: function() {
-			// 常にバルーンは一つのみ表示している実装のため、その1つのバルーンを非表示
-			$(this._currentBaloonTarget).tooltip('hide');
+			this._hideBaloon();
 			this._executedOnValidate = false;
 		},
 
@@ -970,7 +966,7 @@
 		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param {string} name
 		 * @param {Object} messageObj message,formatterを持つオブジェクト
 		 */
@@ -982,7 +978,7 @@
 		 * バルーンをセット
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
 		 * @param name
 		 * @param globalSetting
@@ -1011,8 +1007,7 @@
 
 			if (type === 'blur' || element !== document.activeElement) {
 				// フォーカスが外れた時、該当要素にフォーカスが当たっていない場合は非表示にする
-				$(target).tooltip('hide');
-				this._currentBaloonTarget = null;
+				this._hideBaloon();
 				return;
 			}
 			var placement = propSetting.placement || DEFAULT_PLACEMENT;
@@ -1027,11 +1022,11 @@
 					}
 					if (ev.isValid) {
 						// validならバルーンを隠す
-						$(target).tooltip('hide');
+						this._hideBaloon();
 						return;
 					}
-					// invalidならツールチップ表示
-					this._setTooltip(target, placement, container, this._messageOutputController
+					// invalidならバルーン表示
+					this._showBaloon(target, placement, container, this._messageOutputController
 							.getMessageByValidationResult(validationResult, ev.property));
 				}));
 				return;
@@ -1040,46 +1035,68 @@
 					&& validationResult.failureReason[name];
 			if (!failureReason) {
 				// validateエラーがないときはhideして終了
-				$(target).tooltip('hide');
-				this._currentBaloonTarget = null;
+				this._hideBaloon();
 				return;
 			}
 
 			// validateエラーがあるとき
-			this._setTooltip(target, placement, container, this._messageOutputController
+			this._showBaloon(target, placement, container, this._messageOutputController
 					.getMessageByValidationResult(validationResult, name));
 		},
 
 		/**
-		 * bootstrapのtooltipを使ってバルーンを表示
+		 * バルーンを表示
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param target
 		 * @param placement
 		 * @param message
 		 */
-		_setTooltip: function(target, placement, container, message) {
-			$(target).attr({
-				'data-placement': placement,
-				'data-container': container,
-				'data-original-title': message,
-				// FIXME animationをtrueにすると、show/hide/showを同期で繰り返した時に表示されない
-				// (shown.bs.tooltipイベントとか拾って制御する必要あり)
-				// 一旦animationをoffにしている
-				'data-animation': false
-			}).tooltip({
-				trigger: 'manual'
+		_showBaloon: function(target, placement, container, message) {
+			this._hideBaloon();
+			var baloonCtrl = this._baloonController;
+			if (!baloonCtrl) {
+				var c = h5.core.controller(this.rootElement, h5.ui.components.BaloonController);
+				this.manageChild(c);
+				c.readyPromise.done(this.own(function() {
+					this._baloonController = c;
+					this._showBaloon(target, placement, container, message);
+				}));
+				return;
+			}
+			var baloon = this._baloonController.create(message);
+			// 吹き出しの表示
+			baloon.show({
+				target: target,
+				direction: placement
 			});
-			$(target).tooltip('show');
+			this._currentBaloon = baloon;
 			this._currentBaloonTarget = target;
+		},
+
+		/**
+		 * バルーンを非表示
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @param target
+		 * @param placement
+		 * @param message
+		 */
+		_hideBaloon: function(target, placement, container, message) {
+			if (this._currentBaloon) {
+				this._currentBaloon.dispose();
+				this._currentBaloon = null;
+			}
+			this._currentBaloonTarget = null;
 		},
 
 		/**
 		 * メッセージ出力コントローラの設定
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBaloon
 		 */
 		_setChildSetting: function() {
 			var setting = this._setting;
@@ -1097,6 +1114,67 @@
 			this._messageOutputController.setMessageSetting(messageSetting);
 		}
 	};
+	h5.core.expose(controller);
+})();
+
+(function() {
+	var DEFAULT_PLACEMENT = 'top';
+	/**
+	 * validate時にエラーがあった時、Bootstrapのエラーバルーンを表示するプラグイン
+	 * <p>
+	 * このプラグインはBootstrapに依存します。Bootstrapのtooltipを使用して表示してています。
+	 * </p>
+	 * <p>
+	 * API仕様は{@link h5.ui.validation.ErrorBaloon}と同じです。
+	 * </p>
+	 *
+	 * @class
+	 * @name h5.ui.validation.BootstrapErrorBaloon
+	 */
+	var controller = {
+		__name: 'h5.ui.validation.BootstrapErrorBaloon',
+
+		/**
+		 * バルーンの削除
+		 * <p>
+		 * 表示されているバルーンを削除します
+		 * </p>
+		 *
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 */
+		_hideBaloon: function() {
+			// 常にバルーンは一つのみ表示している実装のため、その1つのバルーンを非表示
+			$(this._currentBaloonTarget).tooltip('hide');
+		},
+
+		/**
+		 * bootstrapのtooltipを使ってバルーンを表示
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @param target
+		 * @param placement
+		 * @param container
+		 * @param message
+		 */
+		_showBaloon: function(target, placement, container, message) {
+			$(target).attr({
+				'data-placement': placement,
+				'data-container': container,
+				'data-original-title': message,
+				// FIXME animationをtrueにすると、show/hide/showを同期で繰り返した時に表示されない
+				// (shown.bs.tooltipイベントとか拾って制御する必要あり)
+				// 一旦animationをoffにしている
+				'data-animation': false
+			}).tooltip({
+				trigger: 'manual'
+			});
+			$(target).tooltip('show');
+			this._currentBaloonTarget = target;
+		}
+	};
+	// 他のメソッドやプロパティはErrorBaloonから流用
+	controller = $.extend({}, h5.ui.validation.ErrorBaloon, controller);
 	h5.core.expose(controller);
 })();
 
@@ -1624,6 +1702,7 @@
 	var DEFAULT_PLUGINS = {
 		errorClass: h5.ui.validation.ErrorClass,
 		allMessage: h5.ui.validation.AllMessage,
+		baloon: h5.ui.validation.ErrorBaloon,
 		bsBaloon: h5.ui.validation.BootstrapErrorBaloon,
 		errorMessage: h5.ui.validation.ErrorMessage,
 		asyncIndicator: h5.ui.validation.AsyncIndicator
