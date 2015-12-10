@@ -19,17 +19,30 @@
 </script>
 <script src="../../test/loadScriptForTest.js"></script>
 
-<script>
-	isMain = false;
-</script>
+<link rel="stylesheet" href="sample.css" />
 <script src="sample.js"></script>
-<title>h5.scene</title>
+<script type="text/ejs" id="nav">
+	<div>
+		<label>[%= method %]</label>
+		<button class="[%= method %]" data-target="sample.SampleSceneController">SampleSceneへ</button>
+		<button class="[%= method %]" data-target="/hifive/sandbox/scene/scenes/scene1.html">scene1.htmlへ</button>
+		<button class="[%= method %]" data-target="/hifive/sandbox/scene/scenes/scene2.html">scene2.htmlへ</button>
+	</div>
+</script>
+<title>h5.sceneサンプル</title>
 </head>
 <body>
-	<div id="hoge">hoge</div>
-	<button class="change" data-target="controllerSceneController">scene1へ</button>
-	<button class="change" data-target="scenes/scene1.html">scene1.htmlへ</button>
-	<button class="change" data-target="scenes/scene2.html">scene2.htmlへ</button>
-	<button class="change" data-target="">デフォルトへ</button>
+	<a href="/hifive/sandbox/scene/scene.html">isMain=false</a>
+	<a href="/hifive/sandbox/scene/scene.html?isMain=true">isMain=true</a>
+	<div id="hoge" class="container">
+		<div data-controller="hoge"
+			data-h5-controller="sample.NavigateHandler" data-title="デフォルトタイトル">
+			<p>hoge</p>
+		</div>
+	</div>
+	<button class="reload">リロード</button>
+	<br>
+	<input type="text" name="title-test" style="width: 400px"
+		placeholder="タイトル指定動作確認用。ここに入力したタイトルになります">
 </body>
 </html>

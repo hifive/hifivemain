@@ -83,6 +83,13 @@
 	 */
 	var SERIALIZE_PREFIX = '2|';
 
+
+	/** シーンコンテナのタイトルデータ属性 */
+	var DATA_SCENE_TITLE = 'title';
+
+	/** シーンコントローラのシーンタイトル定義プロパティ */
+	var CONTROLLER_SCENE_TITLE = 'sceneTitle';
+
 	/**
 	 * シーン遷移タイプ
 	 */
@@ -1324,8 +1331,9 @@
 		navigate: function(to, option) {
 			option = option || {};
 
-			if (!this._started)
+			if (!this._started) {
 				return;
+			}
 
 			this._checkUrlLength(to, {
 				throwOnError: true
@@ -2395,6 +2403,7 @@
 			var that = this;
 
 			this.isMain = !!isMain;
+			this.followTitle = args.followTitle;
 
 			if (this.isMain) {
 				if (mainContainer) {
@@ -2436,6 +2445,11 @@
 
 				// TODO(鈴木) Router処理開始
 				this._router.start();
+
+				// タイトルの設定
+				if (this.followTitle) {
+					this._setTitleFromCurrentScene();
+				}
 
 			} else {
 
@@ -2534,6 +2548,10 @@
 					to: param
 				});
 			}
+
+			// 渡されたパラメータを覚えておく
+			// シーン遷移後のコールバックで使用し、_changeSceneEndが終わったら破棄する
+			this._changeSceneParam = param;
 
 			param = $.extend(true, {}, param);
 
@@ -2682,7 +2700,6 @@
 				if (controllerRegexp.test(to)) {
 
 					// TODO(鈴木) 遷移先指定がコントローラーの__name属性の場合
-
 					loadController(to, $('<div></div>'), args).done(function(toController) {
 						that._changeSceneEnd(toController);
 					});
@@ -2760,6 +2777,29 @@
 
 			var toElm = toController.rootElement;
 
+			that._currentController = toController;
+
+			if (this.followTitle) {
+				// タイトルを決定する
+
+				var title = this._changeSceneParam.title;
+				if (title == null) {
+					// 指定無しの場合
+					var isController = controllerRegexp.test(this._changeSceneParam.to);
+					if (isController && toController[CONTROLLER_SCENE_TITLE] != null) {
+						// 遷移先指定がコントローラの場合、プロパティから取得
+						document.title = toController[CONTROLLER_SCENE_TITLE];
+					} else {
+						// 遷移先指定がコントローラでない場合(=ページURLの場合)は表示されている要素から設定
+						this._setTitleFromCurrentScene();
+					}
+					var $rootElement = $(toController.rootElement);
+				} else {
+					document.title = title;
+				}
+			}
+			this._changeSceneParam = null;
+
 			this._transition.onChange(this.rootElement, toElm).done(this.own(function() {
 
 				// TODO(鈴木) disposeのタイミングはどうすべきか・・
@@ -2775,8 +2815,6 @@
 					$(fromElm).remove();
 				}
 
-				that._currentController = toController;
-
 				// TODO(鈴木) インジケータ非表示
 				that._transition.onChangeEnd(that.rootElement, fromElm, toElm);
 
@@ -2785,6 +2823,27 @@
 				that._transition = null;
 
 			}));
+		},
+
+		/**
+		 * 現在表示されているシーン要素からタイトルを抽出して設定する
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 */
+		_setTitleFromCurrentScene: function() {
+			var elm = this._currentController.rootElement;
+			var dataTitle = $(elm).find('[data-' + DATA_SCENE_TITLE + ']').data(DATA_SCENE_TITLE);
+			if (dataTitle != null) {
+				// data-title指定
+				document.title = dataTitle;
+			} else {
+				// titleタグ
+				var $title = $(elm).find('title');
+				if ($title.length) {
+					document.title = $title.text();
+				}
+			}
 		},
 
 		/**
@@ -2905,6 +2964,9 @@
 			throwFwError(ERR_CODE_CONTAINER_ALREADY_CREATED);
 		}
 
+		// タイトル追従するかどうか(メインシーンコンテナの場合はデフォルトtrue)
+		// メインシーンコンテナでない場合は追従しない
+		var followTitle = isMain;
 		if (isMain) {
 			if ($(element).is(':not([' + DATA_H5_MAIN_CONTAINER + '])')) {
 				$(element).attr(DATA_H5_MAIN_CONTAINER, DATA_H5_MAIN_CONTAINER);
@@ -2913,10 +2975,12 @@
 			if ($(element).is(':not([' + DATA_H5_CONTAINER + '])')) {
 				$(element).attr(DATA_H5_CONTAINER, DATA_H5_CONTAINER);
 			}
+			followTitle = h5.settings.scene.followTitle;
 		}
 
 		var container = h5internal.core.controllerInternal(element, SceneContainerController, {
-			isMain: isMain
+			isMain: isMain,
+			followTitle: followTitle
 		}, {
 			async: false
 		});
@@ -3030,7 +3094,22 @@
 
 	// TODO autoInitがtrueの場合のみinit
 	// TODO(鈴木) 暫定。とりあえず設定を有効化しました
-	h5.settings.scene = h5.settings.scene || {};
+	/**
+	 * シーン機能の設定
+	 *
+	 * @namespace h5.settings.scene
+	 */
+	h5.settings.scene = h5.settings.scene || {
+		// デフォルト設定を記述
+		/**
+		 * メインシーンコンテナでブラウザタイトルの追従を行うか(デフォルトtrue)
+		 *
+		 * @type {boolean}
+		 * @memberOf h5.setting.scene
+		 * @name followTitle
+		 */
+		followTitle: true
+	};
 	$(function() {
 
 		// TODO(鈴木) シーン遷移パラメーター識別用プレフィクス
@@ -3139,7 +3218,6 @@
 		if (h5.settings.scene.autoInit) {
 			init();
 		}
-
 	});
 
 	// =============================
