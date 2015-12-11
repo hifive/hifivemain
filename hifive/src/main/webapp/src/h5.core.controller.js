@@ -186,7 +186,7 @@
 	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_BY_UNBINDED_CONTROLLER] = 'アンバインドされたコントローラのunmanageChildは呼び出せません';
 	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NOT_CHILD_CONTROLLER] = 'unmanageChildの第1引数は呼び出し側の子コントローラである必要があります。';
 	errMsgMap[ERR_CODE_CONTROLLER_UNMANAGE_CHILD_NO_ROOT_ELEMENT] = 'ルートエレメントの決定していない子コントローラのunmanageChildは、第2引数にfalseを指定することはできません';
-	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_DEFAULT_PARAM] = 'コントローラ"{0}"のデフォルトパラメータ(__defaultParam)がプレーンオブジェクトではありません。デフォルトパラメータにはプレーンオブジェクトを設定してください。';
+	errMsgMap[ERR_CODE_CONTROLLER_INVALID_INIT_DEFAULT_PARAM] = 'コントローラ"{0}"のデフォルトパラメータ(__defaultArgs)がプレーンオブジェクトではありません。デフォルトパラメータにはプレーンオブジェクトを設定してください。';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -342,7 +342,7 @@
 	 * @param {Object} controllerDefObj
 	 * @param {String} controllerName
 	 */
-	function validateControllerDef(isRoot, targetElement, controllerDefObj, param, controllerName) {
+	function validateControllerDef(isRoot, targetElement, controllerDefObj, controllerName) {
 		// コントローラ定義オブジェクトに、コントローラが追加するプロパティと重複するプロパティがあるかどうかチェック
 		if (!controllerPropertyMap) {
 			// 重複チェックが初めて呼ばれた時にコントローラプロパティマップを生成してチェックで使用する
@@ -3242,8 +3242,7 @@
 	// Body
 	//
 	// =========================================================================
-	function controllerFactory(controller, rootElement, controllerName, controllerDef, param,
-			isRoot) {
+	function controllerFactory(controller, rootElement, controllerName, controllerDef, args, isRoot) {
 
 		/**
 		 * コントローラ名.
@@ -3317,13 +3316,13 @@
 
 		// 初期化パラメータをセット
 		// パラメータもデフォルトパラメータも指定の無い場合はnull
-		var defaultParam = controllerDef && controllerDef.__defaultParam;
+		var defaultParam = controllerDef && controllerDef.__defaultArgs;
 		if (defaultParam) {
 			// デフォルトパラメーターとマージする (#474)
-			controller.__controllerContext.args = $.extend({}, defaultParam, param);
-		} else if (param) {
+			controller.__controllerContext.args = $.extend({}, defaultParam, args);
+		} else if (args) {
 			// デフォルトパラメータの無い場合はクローンせずにparamをそのままセット（#163）
-			controller.__controllerContext.args = param;
+			controller.__controllerContext.args = args;
 		}
 
 		/**
@@ -3655,15 +3654,15 @@
 	 * @param {Element} rootElement コントローラをバインドした要素
 	 * @param {String} controllerName コントローラ名
 	 * @param {Object} controllerDef コントローラ定義オブジェクト
-	 * @param {Object} param 初期化パラメータ
+	 * @param {Object} args 初期化パラメータ
 	 * @param {Boolean} isRoot ルートコントローラかどうか
 	 */
-	function Controller(rootElement, controllerName, controllerDef, param, isRoot) {
+	function Controller(rootElement, controllerName, controllerDef, args, isRoot) {
 		// フック関数を実行
 		for (var i = 0, l = controllerInstantiationHooks.length; i < l; i++) {
 			controllerInstantiationHooks[i](this);
 		}
-		return controllerFactory(this, rootElement, controllerName, controllerDef, param, isRoot);
+		return controllerFactory(this, rootElement, controllerName, controllerDef, args, isRoot);
 	}
 	$
 			.extend(
@@ -4505,7 +4504,7 @@
 	 * @returns {Controller}
 	 */
 	// fwOptは内部的に使用している.
-	function createAndBindController(targetElement, controllerDefObj, param, fwOpt) {
+	function createAndBindController(targetElement, controllerDefObj, args, fwOpt) {
 		// 内部から再帰的に呼び出された場合は、fwOpt.isInternalが指定されているはずなので、ルートコントローラかどうかはfwOpt.isInternalで判別できる
 		var isRoot = !fwOpt || !fwOpt.isInternal;
 		if (!isRoot && isDisposed(fwOpt.rootController)) {
@@ -4527,7 +4526,7 @@
 		fwLogger.debug(FW_LOG_INIT_CONTROLLER_BEGIN, controllerName);
 
 		// 初期化パラメータがオブジェクトかどうかチェック
-		if (param && !$.isPlainObject(param)) {
+		if (args && !$.isPlainObject(args)) {
 			throwFwError(ERR_CODE_CONTROLLER_INVALID_INIT_PARAM, [controllerName], {
 				controllerDefObj: controllerDefObj
 			});
@@ -4541,8 +4540,8 @@
 		}
 
 		// デフォルトパラメータがオブジェクトかどうかチェック
-		if (controllerDefObj.__defaultParam) {
-			if (!$.isPlainObject(controllerDefObj.__defaultParam)) {
+		if (controllerDefObj.__defaultArgs) {
+			if (!$.isPlainObject(controllerDefObj.__defaultArgs)) {
 				throwFwError(ERR_CODE_CONTROLLER_INVALID_INIT_DEFAULT_PARAM, [controllerName], {
 					controllerDefObj: controllerDefObj
 				});
@@ -4555,7 +4554,7 @@
 		// コントローラ定義オブジェクトのチェック
 		// キャッシュがある場合はコントローラ定義オブジェクトについてはチェック済みなのでチェックしない
 		if (!cache) {
-			validateControllerDef(isRoot, targetElement, controllerDefObj, param, controllerName);
+			validateControllerDef(isRoot, targetElement, controllerDefObj, controllerName);
 		}
 
 		// 循環参照チェックはキャッシュが残っていても行う
@@ -4581,7 +4580,7 @@
 		// new Controllerで渡すコントローラ定義オブジェクトはクローンしたものではなくオリジナルなものを渡す。
 		// コントローラが持つコントローラ定義オブジェクトはオリジナルのものになる。
 		var controller = new Controller(targetElement ? $(targetElement).get(0) : null,
-				controllerName, controllerDefObj, param, isRoot);
+				controllerName, controllerDefObj, args, isRoot);
 
 		var rootController = isRoot ? controller : fwOpt.rootController;
 
@@ -4778,9 +4777,9 @@
 			var prop = cache.childControllerProperties[i];
 			var childController = clonedControllerDef[prop];
 			// 子コントローラにパラメータを引き継ぐかどうか
-			var childParam = null;
+			var childArgs = null;
 			if (meta && meta[prop] && meta[prop].inheritParam) {
-				childParam = param;
+				childArgs = args;
 			}
 
 			if (isDependency(childController)) {
@@ -4807,10 +4806,10 @@
 						promisesForTriggerInit.splice($.inArray(childControllerPromise,
 								promisesForTriggerInit), 1);
 					};
-				})(prop, promise, childParam));
+				})(prop, promise, childArgs));
 			} else {
 				var child = createAndBindController(null, $.extend(true, {},
-						clonedControllerDef[prop]), childParam, {
+						clonedControllerDef[prop]), childArgs, {
 					isInternal: true,
 					parentController: controller,
 					rootController: rootController
@@ -5009,19 +5008,19 @@
 		 * @param {String|Element|jQuery} targetElement バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト..<br />
 		 *            セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。
 		 * @param {Object} controllerDefObj コントローラ定義オブジェクト
-		 * @param {Object} [param] 初期化パラメータ.<br />
+		 * @param {Object} [args] 初期化パラメータ.<br />
 		 *            初期化パラメータは __construct, __init, __readyの引数として渡されるオブジェクトの argsプロパティとして格納されます。
 		 * @returns {Controller} コントローラ
 		 * @name controller
 		 * @function
 		 * @memberOf h5.core
 		 */
-		controller: function(targetElement, controllerDefObj, param) {
+		controller: function(targetElement, controllerDefObj, args) {
 			if (arguments.length < 2) {
 				throwFwError(ERR_CODE_CONTROLLER_TOO_FEW_ARGS);
 			}
 
-			return createAndBindController(targetElement, controllerDefObj, param);
+			return createAndBindController(targetElement, controllerDefObj, args);
 		},
 
 		logic: createLogic,

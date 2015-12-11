@@ -7802,22 +7802,22 @@ $(function() {
 				h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
 			});
 
-	asyncTest('__defaultParamの設定', function() {
+	asyncTest('__defaultArgsの設定', function() {
 		h5.core.controller(this.$controllerTarget, {
 			__name: 'defaultParamTest',
-			__defaultParam: {
+			__defaultArgs: {
 				a: 1
 			},
 			__construct: function(ctx) {
-				strictEqual(ctx.args && ctx.args.a, 1, '__defaultParamに設定した値が__constructで受け取れること');
+				strictEqual(ctx.args && ctx.args.a, 1, '__defaultArgsに設定した値が__constructで受け取れること');
 			}
 		}).readyPromise.done(start);
 	});
 
-	asyncTest('__defaultParamと初期化パラメータ', function() {
+	asyncTest('__defaultArgsと初期化パラメータ', function() {
 		h5.core.controller(this.$controllerTarget, {
 			__name: 'defaultParamTest',
-			__defaultParam: {
+			__defaultArgs: {
 				a: 1,
 				c: 3
 			},
@@ -7834,10 +7834,10 @@ $(function() {
 		}).readyPromise.done(start);
 	});
 
-	asyncTest('子コントローラの__defaultParam', function() {
+	asyncTest('子コントローラの__defaultArgs', function() {
 		var cCtrl = {
 			__name: 'child',
-			__defaultParam: {
+			__defaultArgs: {
 				c: 333
 			},
 			__construct: function(ctx) {
@@ -7856,7 +7856,7 @@ $(function() {
 					inheritParam: true
 				}
 			},
-			__defaultParam: {
+			__defaultArgs: {
 				a: 11,
 				b: 22,
 				c: 33
@@ -7875,14 +7875,14 @@ $(function() {
 		}).readyPromise.done(start);
 	});
 
-	test('__defaultParamがプレーンオブジェクトでない場合はエラー', function() {
+	test('__defaultArgsがプレーンオブジェクトでない場合はエラー', function() {
 		var expectErrorCode = ERR.ERR_CODE_CONTROLLER_INVALID_INIT_DEFAULT_PARAM;
 		var invalidValues = [true, ['a'], new Date()];
 		for (var i = 0, l = invalidValues.length; i < l; i++) {
 			throws(function() {
 				h5.core.controller(this.$controllerTarget, {
 					__name: 'defaultParamTest' + i,
-					__defaultParam: invalidValues[i]
+					__defaultArgs: invalidValues[i]
 				});
 			}, function(e) {
 				return e.code === expectErrorCode;
