@@ -44,8 +44,8 @@
 			formController: h5.ui.FormController,
 			__ready: function() {
 				// プラグインの有効化
-				this.formController.enableOutput(['errorClass', 'allMessage', 'bsBaloon',
-						'errorMessage', 'baloon']);
+				this.formController.enableOutput(['style', 'composition', 'bsBaloon',
+						'message', 'baloon']);
 
 				// birthdayグループのルール追加
 				this.formController.addRule({
@@ -67,14 +67,14 @@
 				// エラー出力設定
 				this.formController.setSetting({
 					output: {
-						errorClass: {
+						style: {
 							errorClassName: 'has-error',
 							replaceElement: function(element) {
 								// エラークラス追加対象は、input等の親のform-group要素に変換する
 								return $(element).closest('.form-group');
 							}
 						},
-						allMessage: {
+						composition: {
 							container: this.$find('.globalError'),
 							wrapper: 'li'
 						},
@@ -95,8 +95,8 @@
 						},
 						sex: {
 							label: '性別',
-							message: '[%=label%]は必ずどちらかを指定してください',
-							errorMessage: {
+							message: '{label}は必ずどちらかを指定してください',
+							message: {
 								replaceElement: function($el) {
 									return $el.closest('.radio');
 								}
@@ -104,48 +104,48 @@
 						},
 						birthday: {
 							label: '生年月日',
-							message: '[%=label%]が正しい日付ではありません'
+							message: '{label}が正しい日付ではありません'
 						},
 						year: {
-							errorMessage: {
+							message: {
 								replaceElement: function($el) {
 									return $el.closest('.form-inline');
 								}
 							},
-							errorClass: {
+							style: {
 								replaceElement: function($el) {
 									return $el.closest('.form-inline');
 								}
 							}
 						},
 						month: {
-							errorMessage: {
+							message: {
 								replaceElement: function($el) {
 									return $el.closest('.form-inline');
 								}
 							}
 						},
 						day: {
-							errorMessage: {
+							message: {
 								replaceElement: function($el) {
 									return $el.closest('.form-inline');
 								}
 							}
 						},
 						zipcode: {
-							errorClass: {
+							style: {
 								off: true
 							}
 						},
 						zip1: {
-							errorMessage: {
+							message: {
 								replaceElement: function($el) {
 									return $el.closest('.form-inline');
 								}
 							}
 						},
 						zip2: {
-							errorMessage: {
+							message: {
 								replaceElement: function($el) {
 									return $el.closest('.form-inline');
 								}
@@ -162,7 +162,7 @@
 									return $el.closest('label');
 								}
 							},
-							errorMessage: {
+							message: {
 								replaceElement: function($el) {
 									return $el.closest('.form-group');
 								}
@@ -182,16 +182,16 @@
 				// 					message: '※必須'
 				// 				});
 				// 				// プラグインのsetMessage
-				// 				this.formController.getPlugin('errorMessage').setMessage('address', {
-				// 					// message: '[%= label %]は選択肢の中から当てはまるものを選んでください',
+				// 				this.formController.getPlugin('message').setMessage('address', {
+				// 					// message: '{label}は選択肢の中から当てはまるものを選んでください',
 				// 					// ↑と同じ↓
 				// 					formatter: function(param) {
 				// 						return param.label + 'は選択肢の中から当てはまるものを選んでください';
 				// 					}
 				// 				});
 				// プラグインのsetMessage
-				this.formController.getPlugin('allMessage').setMessage('sex', {
-					message: '[%=label%]は必須！'
+				this.formController.getPlugin('composition').setMessage('sex', {
+					message: '{label}は必須！'
 				});
 			},
 			'{.resetValidation} click': function() {

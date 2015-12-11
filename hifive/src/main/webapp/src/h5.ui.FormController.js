@@ -8,10 +8,6 @@
 	// =============================
 	// Production
 	// =============================
-	/**
-	 * EJSにスクリプトレットの区切りとして認識させる文字
-	 */
-	var DELIMITER = '[';
 
 	// =============================
 	// Development Only
@@ -40,30 +36,23 @@
 	// Variables
 	// =============================
 	/**
-	 * デフォルトエラーメッセージビュー
+	 * デフォルトエラーメッセージ
 	 */
-	var defaultIntvalidMessageView = (function() {
-		var msgs = {
-			require: '[%=label%]は必須項目です',
-			min: '[%= label %]は[%=param.min%][%=param.inclusive?"以上の":"より大きい"%]数値を入力してください。',
-			max: '[%=label%]は[%=param.max%][%=param.inclusive?"以下":"未満"%]の数値を入力してください。',
-			pattern: '[%=label%]は正規表現[%=param.regexp%]を満たす文字列を入力してください。',
-			digits: '[%=label%]は整数部分[%=param.integer%]桁、小数部分[%=fruction%]桁以下の数値を入力してください。',
-			size: '[%=label%]は[%=param.min%]以上[%=param.max%]以下の長さでなければいけません。',
-			future: '[%=label%]は現在時刻より未来の時刻を入力してください。',
-			past: '[%=label%]は現在時刻より過去の時刻を入力してください。',
-			nul: '[%=label%]はnullでなければなりません。',
-			notNull: '[%=label%]はnullでない値を設定してください。',
-			assertFalse: '[%=label%]はfalseとなる値を入力してください。',
-			assertTrue: '[%=label%]はtrueとなる値を入力してください。',
-			customFunc: '[%=label%]は条件を満たしません'
-		};
-		var view = h5.core.view.createView();
-		for ( var p in msgs) {
-			view.register(p, msgs[p]);
-		}
-		return view;
-	})();
+	var defaultIntvalidMessage = {
+		require: '{label}は必須項目です',
+		min: '{label}は{param.min}{param.inclusive?"以上の":"より大きい"}数値を入力してください。',
+		max: '{label}は{param.max}{param.inclusive?"以下":"未満"}の数値を入力してください。',
+		pattern: '{label}は正規表現{param.regexp}を満たす文字列を入力してください。',
+		digits: '{label}は整数部分{param.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
+		size: '{label}は{param.min}以上{param.max}以下の長さでなければいけません。',
+		future: '{label}は現在時刻より未来の時刻を入力してください。',
+		past: '{label}は現在時刻より過去の時刻を入力してください。',
+		nul: '{label}はnullでなければなりません。',
+		notNull: '{label}はnullでない値を設定してください。',
+		assertFalse: '{label}はfalseとなる値を入力してください。',
+		assertTrue: '{label}はtrueとなる値を入力してください。',
+		customFunc: '{label}は条件を満たしません'
+	};
 
 	// =============================
 	// Functions
@@ -91,16 +80,8 @@
 			label: label
 		};
 		if (isString(msg)) {
-			// messageが指定されていればテンプレート文字列として扱ってメッセージを作成する
-			try {
-				var compiledTemplate = new EJS.Compiler(msg, DELIMITER);
-				compiledTemplate.compile();
-				msg = compiledTemplate.process.call(param, param, new EJS.Helpers(param));
-			} catch (e) {
-				// パラメータ置換時にエラーがおきた場合
-				fwLogger.error(FW_LOG_ERROR_CREATE_VALIDATE_MESSAGE, msg);
-				return msg;
-			}
+			// messageが指定されていればh5.u.str.formatでメッセージを作成
+			msg = h5.u.str.format(msg, param);
 			return msg;
 		} else if (isFunction(formatter)) {
 			// formatterが設定されている場合はパラメータを渡して関数呼び出しして生成
@@ -108,8 +89,8 @@
 		}
 
 		// 何も設定されていない場合はデフォルトメッセージ
-		if (defaultIntvalidMessageView.isAvailable(reason.rule)) {
-			return defaultIntvalidMessageView.get(reason.rule, param);
+		if (defaultIntvalidMessage[reason.rule]) {
+			return h5.u.str.format(defaultIntvalidMessage[reason.rule], param);
 		}
 		// デフォルトにないルールの場合
 		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, name, reason.value, reason.rule);
@@ -168,7 +149,7 @@
 		 * 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
 		 * 	userid: {
 		 * 		label: 'ユーザID', // ラベル名
-		 * 		message: '[%= label %]がルール[%= rule %]に違反しています。', // メッセージ。テンプレート形式で記述可能。
+		 * 		message: '{label}がルール{rule}に違反しています。', // メッセージ。プレースホルダを記述可能(後述)。
 		 * 	},
 		 * 	address: {
 		 * 		label: 'アドレス',
@@ -189,7 +170,7 @@
 		 * messageとformatterが両方記述されている場合は、messageに記述されたメッセージが優先して使用されます。
 		 * </p>
 		 * <p>
-		 * messageをテンプレート形式で記述した場合に適用されるパラメータ及び、formatterの引数に渡されるパラメータは以下のようなオブジェクトです。
+		 * messageにはプレースホルダを記述できます。適用されるパラメータはformatterの引数に渡されるパラメータと同じで、以下のようなオブジェクトです。
 		 * </p>
 		 *
 		 * <pre class="sh_javascript"><code>
@@ -696,7 +677,7 @@
 		 * 	property: { // 各プロパティ固有の設定
 		 * 		userid: { // プルパティ名
 		 * 			label: 'ユーザ名',
-		 * 			message: '[%= label %]は必須です'
+		 * 			message: '{label}は必須です'
 		 * 		}
 		 * 	}
 		 * }
@@ -870,7 +851,7 @@
 		 * 	property: { // 各プロパティ固有の設定
 		 * 		userid: { // プルパティ名
 		 * 			label: 'ユーザ名',
-		 * 			message: '[%= label %]は必須です'
+		 * 			message: '{label}は必須です'
 		 * 		}
 		 * 	}
 		 * }
@@ -1261,7 +1242,7 @@
 		 * 	property: { // 各プロパティ固有の設定
 		 * 		userid: { // プルパティ名
 		 * 			label: 'ユーザ名',
-		 * 			message: '[%= label %]は必須です'
+		 * 			message: '{label}は必須です'
 		 * 		}
 		 * 	}
 		 * }
@@ -1893,7 +1874,7 @@
 		 * 			message: '必須です', // nameのエラーメッセージ
 		 * 			output: { // 各プロパティについて各プラグインの設定
 		 * 				baloon: {
-		 * 					message: '※[%=label%]は必須です',
+		 * 					message: '※{label}は必須です',
 		 * 					placement: 'left' // nameのbaloonはleftに表示
 		 * 				}
 		 * 			}
@@ -1956,7 +1937,7 @@
 		 * 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
 		 * 	userid: {
 		 * 		label: 'ユーザID', // ラベル名
-		 * 		message: '[%= label %]がルール[%= rule %]に違反しています。', // メッセージ。テンプレート形式で記述可能。
+		 * 		message: '{label}がルール{rule}に違反しています。', // メッセージ
 		 * 		baloon:{
 		 * 			// プラグイン名をキーにしてプロパティ毎・プラグイン毎の設定を記述
 		 * 			placement: 'left'

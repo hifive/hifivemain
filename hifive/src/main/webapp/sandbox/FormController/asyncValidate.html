@@ -133,12 +133,12 @@
 									}
 								});
 								// プラグインの有効化
-								this.formController.enableOutput(['allMessage', 'errorMessage',
-										'errorClass', 'bsBaloon', 'baloon']);
+								this.formController.enableOutput(['composition', 'message',
+										'style', 'bsBaloon', 'baloon']);
 								// エラー出力設定
 								var setting = {
 									output: {
-										errorClass: {
+										style: {
 											errorClassName: 'has-error',
 											successClassName: 'success',
 											// 非同期validate用の設定。validate中に適用するクラス名
@@ -148,7 +148,7 @@
 												return $(element).closest('.form-group');
 											}
 										},
-										allMessage: {
+										composition: {
 											container: this.$find('.globalError'),
 											wrapper: 'li'
 										},
@@ -193,7 +193,7 @@
 													}
 												}
 											},
-											allMessage: {
+											composition: {
 												message: '必須'
 											}
 										},
