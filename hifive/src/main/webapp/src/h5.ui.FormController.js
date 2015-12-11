@@ -1668,7 +1668,7 @@
 	var DATA_RULE_SIZE = 'size';
 
 	// フォームコントロールグループコンテナの名前指定
-	var DATA_INPUTGROUP_CONTAINER = 'h5-input-group-name';
+	var DATA_INPUTGROUP_CONTAINER = 'h5-input-group-name-container';
 	var DATA_INPUTGROUP = 'h5-input-group-name';
 
 	// プラグインに通知するイベント
@@ -2284,6 +2284,18 @@
 		set: function(obj) {
 			var $elements = $(this.getElements());
 			var indexMap = {};
+			// グループ指定でプロパティが入れ子であるオブジェクトの場合、展開する
+			var flatObj = {};
+			for ( var p in obj) {
+				if ($.isPlainObject(obj[p])) {
+					for ( var prop in obj[p]) {
+						flatObj[prop] = obj[p][prop];
+					}
+				} else {
+					flatObj[prop] = obj[p];
+				}
+			}
+			obj = flatObj;
 			$elements.each(function() {
 				var name = this.name;
 				if (!name) {
