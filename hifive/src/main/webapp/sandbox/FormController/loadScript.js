@@ -21,7 +21,7 @@
 		'src/h5.api.geo.js',
 		'src/h5.api.sqldb.js',
 		'src/h5.api.storage.js',
-		'src/h5.validation.func.js',
+		'src/h5.validation.js',
 		'src/h5.ui.components.BaloonController.js',
 		'src/h5.ui.FormController.js',
 		'src/h5.dev.api.geo.js'
