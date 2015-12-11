@@ -403,7 +403,7 @@
 		/**
 		 * プラグイン設定を行う
 		 * <p>
-		 * errorClassプラグインには以下の設定項目があります。
+		 * styleプラグインには以下の設定項目があります。
 		 * </p>
 		 * <table><thead>
 		 * <tr>
@@ -470,7 +470,7 @@
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.validation.ErrorClass
-		 * @param {Object} setting errorClassプラグイン設定オブジェクト
+		 * @param {Object} setting styleプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
 			this._setting = setting;
@@ -637,7 +637,7 @@
 		/**
 		 * プラグイン設定を行う
 		 * <p>
-		 * allMessageプラグインには以下の設定項目があります。
+		 * compositionプラグインには以下の設定項目があります。
 		 * </p>
 		 * <table><thead>
 		 * <tr>
@@ -691,7 +691,7 @@
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * {
-		 * 	container: 'ul.allMessage',
+		 * 	container: 'ul.composition',
 		 * 	wrapper: 'li',
 		 * 	property: { // 各プロパティ固有の設定
 		 * 		userid: { // プルパティ名
@@ -703,7 +703,7 @@
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.validation.AllMessage
-		 * @param {Object} setting allMessageプラグイン設定オブジェクト
+		 * @param {Object} setting compositionプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
 			this._setting = setting;
@@ -1188,13 +1188,13 @@
 	var controller = {
 		__name: 'h5.ui.validation.ErrorMessage',
 		_executedOnValidate: false,
-		_errorMessageElementMap: {},
+		_messageElementMap: {},
 		_messageOutputController: h5.ui.validation.MessageOutput,
 
 		/**
 		 * プラグイン設定を行う
 		 * <p>
-		 * errorMessageプラグインには以下の設定項目があります。
+		 * messageプラグインには以下の設定項目があります。
 		 * </p>
 		 * <table><thead>
 		 * <tr>
@@ -1268,7 +1268,7 @@
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.validation.ErrorMessage
-		 * @param {Object} setting errorMessageプラグイン設定オブジェクト
+		 * @param {Object} setting messageプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
 			this._setting = setting;
@@ -1347,8 +1347,8 @@
 		 * @memberOf h5.ui.validation.ErrorMessage
 		 */
 		reset: function() {
-			for ( var p in this._errorMessageElementMap) {
-				var $target = this._errorMessageElementMap[name];
+			for ( var p in this._messageElementMap) {
+				var $target = this._messageElementMap[name];
 				$target && $target.remove();
 			}
 			this._executedOnValidate = false;
@@ -1415,11 +1415,11 @@
 			var target = isFunction(replaceElement) ? replaceElement(element)
 					: (replaceElement || element);
 
-			var $errorMsg = this._errorMessageElementMap[name];
+			var $errorMsg = this._messageElementMap[name];
 			if (!$errorMsg) {
 				// TODO タグやクラスを設定できるようにする
-				$errorMsg = $('<span class="errorMessage">');
-				this._errorMessageElementMap[name] = $errorMsg;
+				$errorMsg = $('<span class="message">');
+				this._messageElementMap[name] = $errorMsg;
 			}
 			this._messageOutputController.clearMessage($errorMsg);
 			this._messageOutputController.appendMessage(msg, $errorMsg);
@@ -1433,7 +1433,7 @@
 		},
 
 		_removeErrorMessage: function(name) {
-			this._errorMessageElementMap[name] && this._errorMessageElementMap[name].remove();
+			this._messageElementMap[name] && this._messageElementMap[name].remove();
 		},
 
 		/**
@@ -1687,8 +1687,8 @@
 	var DATA_RULE_SIZE = 'size';
 
 	// フォームコントロールグループコンテナの名前指定
-	var DATA_INPUTGROUP_CONTAINER = 'inputgroup-container';
-	var DATA_INPUTGROUP = 'inputgroup';
+	var DATA_INPUTGROUP_CONTAINER = 'h5-input-group-name';
+	var DATA_INPUTGROUP = 'h5-input-group-name';
 
 	// プラグインに通知するイベント
 	var PLUGIN_EVENT_VALIDATE = 'onValidate';
@@ -1700,11 +1700,11 @@
 
 	// デフォルトで用意しているプラグイン名とプラグイン(コントローラ定義)のマップ
 	var DEFAULT_PLUGINS = {
-		errorClass: h5.ui.validation.ErrorClass,
-		allMessage: h5.ui.validation.AllMessage,
+		style: h5.ui.validation.ErrorClass,
+		composition: h5.ui.validation.AllMessage,
 		baloon: h5.ui.validation.ErrorBaloon,
 		bsBaloon: h5.ui.validation.BootstrapErrorBaloon,
-		errorMessage: h5.ui.validation.ErrorMessage,
+		message: h5.ui.validation.ErrorMessage,
 		asyncIndicator: h5.ui.validation.AsyncIndicator
 	};
 
@@ -1884,7 +1884,7 @@
 		 * 		baloon: {
 		 * 			placement: 'top'
 		 * 		},
-		 * 		errorMessage: {...},
+		 * 		message: {...},
 		 * 		...
 		 * 	},
 		 * 	property: { // 各プロパティ毎の設定
@@ -1940,50 +1940,6 @@
 				pluginSetting.property[prop] = $.extend({}, propSetting, propertyPluginOutput)
 			}
 			return pluginSetting;
-		},
-
-		/**
-		 * プラグイン設定
-		 * <p>
-		 * 各プラグイン毎の設定。プラグイン名をプロパティにして、各プラグインの設定オブジェクトを記述します。
-		 * </p>
-		 *
-		 * <pre class="sh_javascript"><code>
-		 * formController.globalSetting = {
-		 * 	// errorClassプラグインの設定
-		 * 	errorClass: {
-		 * 		errorClassName: 'has-error',
-		 * 		successClassName: 'success',
-		 * 		validatingClassName: 'validating',
-		 * 		// クラス追加対象は、input等の親のform-group要素に変換する
-		 * 		replaceElement: function(element) {
-		 * 			return $(element).closest('.form-group');
-		 * 		}
-		 * 	},
-		 * 	// allMessageプラグインの設定
-		 * 	allMessage: {
-		 * 		container: this.$find('ul.globalError'),
-		 * 		wrapper: 'li'
-		 * 	},
-		 * 	// baloonプラグインの設定
-		 * 	baloon: {
-		 * 		placement: 'top'
-		 * 	}
-		 * };
-		 * </code></pre>
-		 *
-		 * @memberOf h5.ui.FormController
-		 * @type {Object}
-		 */
-		globalSetting: {
-			errorClass: {
-				errorClassName: 'has-error',
-				replaceElement: null
-			},
-			allMessage: {
-				container: '.globalError',
-				wrapper: 'li'
-			}
 		},
 
 		/**
@@ -2089,15 +2045,15 @@
 		 * <th>説明</th>
 		 * </thead><tbody>
 		 * <tr>
-		 * <td>allMessage</td>
+		 * <td>composition</td>
 		 * <td>フォーム全体バリデート時にバリデート失敗した項目全てについて指定した箇所にメッセージを出力する</td>
 		 * </tr>
 		 * <tr>
-		 * <td>errorClass</td>
+		 * <td>style</td>
 		 * <td>バリデート時にバリデート結果によって要素にクラスを適用する</td>
 		 * </tr>
 		 * <tr>
-		 * <td>errorMessage</td>
+		 * <td>message</td>
 		 * <td>バリデート時にバリデート失敗した項目についてメッセージを表示する</td>
 		 * </tr>
 		 * <tr>
@@ -2211,8 +2167,8 @@
 		 * </p>
 		 *
 		 * <pre class="sh_html"><code>
-		 * &lt;!-- data-inputgroup-containerにグループ名を指定。子要素がそのグループになる。 --&gt;
-		 * lt;div data-inputgroup-container=&quot;birthday&quot;&gt;
+		 * &lt;!-- data-h5-input-group-nameにグループ名を指定。子要素がそのグループになる。 --&gt;
+		 * lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
 		 * 		&lt;label class=&quot;control-label&quot;&gt;生年月日&lt;/label&gt;
 		 * 		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;
 		 * 		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;
@@ -2220,9 +2176,9 @@
 		 * 		&lt;/div&gt;
 		 * </code></pre>
 		 * <pre class="sh_html"><code>
-		 * 		&lt;!-- data-inputgroupにグループ名を指定。同じグループ名の要素がそのグループになる --&gt;
-		 * 		&lt;input name=&quot;zip1&quot; data-inputgroup=&quot;zipcode&quot;/&gt;
-		 * 		&lt;input name=&quot;zip2&quot; data-inputgroup=&quot;zipcode&quot;/&gt;
+		 * 		&lt;!-- data-h5-input-group-nameにグループ名を指定。同じグループ名の要素がそのグループになる --&gt;
+		 * 		&lt;input name=&quot;zip1&quot; data-h5-input-group-name=&quot;zipcode&quot;/&gt;
+		 * 		&lt;input name=&quot;zip2&quot; data-h5-input-group-name=&quot;zipcode&quot;/&gt;
 		 * </code></pre>
 		 *
 		 * <p>
@@ -2509,7 +2465,7 @@
 			if (groupContainer) {
 				return groupContainer;
 			}
-			// data-inputgroup指定で作成されたグループの場合は一意に決まらないため、nullを返している
+			// data-h5-input-group-name指定で作成されたグループの場合は一意に決まらないため、nullを返している
 			return null;
 
 			//			var $groupElements = $formCtrls.filter(function() {
@@ -2719,7 +2675,7 @@
 			this._callPluginElementEvent(eventType, target, name, validationResult);
 			if (groupName) {
 				// グループがあればグループについてのバリデート結果も通知
-				// グループコンテナではなく各inputにdata-inputgroupが指定されているような場合は、
+				// グループコンテナではなく各inputにdata-h5-input-group-nameが指定されているような場合は、
 				// グループ名から特定の要素を指定できないのでプラグインに要素を渡すことができない
 				// (要素が渡されなかった時にプラグインがどうするかはプラグインの実装次第)
 				var groupTarget = this.getElementByName(groupName);
