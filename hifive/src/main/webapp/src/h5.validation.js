@@ -1016,7 +1016,7 @@
 		/**
 		 * 値がnullでないかどうか判定し、判定結果をtrueまたはfalseで返します
 		 * <p>
-		 * 値がnullまたはundefinedの場合はfalseを返します。
+		 * 値がnullの場合はfalseを返します。undefinedの場合はtrueを返します。
 		 * </p>
 		 * <p>
 		 * それ以外の場合はtrueを返します。
@@ -1027,7 +1027,7 @@
 		 * @returns {boolean}
 		 */
 		assertNotNull: function(value) {
-			return value != null;
+			return value === undefined ? true : value != null;
 		},
 
 		/**
