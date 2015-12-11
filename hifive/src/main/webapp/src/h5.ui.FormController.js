@@ -2412,6 +2412,17 @@
 		},
 
 		/**
+		 * フォーム部品の値をすべてリセットする
+		 *
+		 * @memberOf h5.ui.FromController
+		 */
+		resetValue: function() {
+			if (this._bindedForm) {
+				this._bindedForm.reset();
+			}
+		},
+
+		/**
 		 * 各プラグインが出力しているバリデート結果表示をすべてリセットする
 		 *
 		 * @memberOf h5.ui.FormController
