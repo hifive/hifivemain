@@ -147,20 +147,20 @@ $(function() {
 				strictEqual(vf.future(new Date().getTime() - 1), false, '引数: ) - 1 結果: false');
 			});
 
-	test('nul', function() {
-		strictEqual(vf.nul(null), true, '引数: null 結果: true');
-		strictEqual(vf.nul(undefined), true, '引数: undefined 結果: true');
-		strictEqual(vf.nul(false), false, '引数: false 結果: false');
-		strictEqual(vf.nul(true), false, '引数: true 結果: false');
-		strictEqual(vf.nul(0), false, '引数: 0 結果: false');
+	test('assertNull', function() {
+		strictEqual(vf.assertNull(null), true, '引数: null 結果: true');
+		strictEqual(vf.assertNull(undefined), true, '引数: undefined 結果: true');
+		strictEqual(vf.assertNull(false), false, '引数: false 結果: false');
+		strictEqual(vf.assertNull(true), false, '引数: true 結果: false');
+		strictEqual(vf.assertNull(0), false, '引数: 0 結果: false');
 	});
 
-	test('notNull', function() {
-		strictEqual(vf.notNull(null), false, '引数: null 結果: false');
-		strictEqual(vf.notNull(undefined), false, '引数: undefined 結果: false');
-		strictEqual(vf.notNull(false), true, '引数: false 結果: true');
-		strictEqual(vf.notNull(true), true, '引数: true 結果: true');
-		strictEqual(vf.notNull(0), true, '引数: 0 結果: true');
+	test('assertNotNull', function() {
+		strictEqual(vf.assertNotNull(null), false, '引数: null 結果: false');
+		strictEqual(vf.assertNotNull(undefined), false, '引数: undefined 結果: false');
+		strictEqual(vf.assertNotNull(false), true, '引数: false 結果: true');
+		strictEqual(vf.assertNotNull(true), true, '引数: true 結果: true');
+		strictEqual(vf.assertNotNull(0), true, '引数: 0 結果: true');
 	});
 
 	test('pattern', function() {
@@ -458,39 +458,39 @@ $(function() {
 		}).isValid, true, 'undefinedならvalid');
 	});
 
-	test('nul', function() {
+	test('assertNull', function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				nul: true
+				assertNull: true
 			}
 		});
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, true, 'nul指定されているプロパティの値がnullであるオブジェクトはvalid');
+		}).isValid, true, 'assertNull指定されているプロパティの値がnullであるオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: ''
-		}).isValid, false, 'nul指定されているプロパティの値が空文字であるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, true, 'nul指定されているプロパティがないオブジェクトはvalid');
+		}).isValid, false, 'assertNull指定されているプロパティの値が空文字であるオブジェクトはinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'assertNull指定されているプロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: undefined
 		}).isValid, true, 'undefinedならvalid');
 	});
 
-	test('notNull', function() {
+	test('assertNotNull', function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				notNull: true
+				assertNotNull: true
 			}
 		});
 		strictEqual(validator.validate({
 			p1: ''
-		}).isValid, true, 'notNull指定されているプロパティの値が空文字であるオブジェクトはvalid');
+		}).isValid, true, 'assertNotNull指定されているプロパティの値が空文字であるオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, false, 'notNull指定されているプロパティの値がnullであるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, true, 'notNull指定されているプロパティがないオブジェクトはvalid');
+		}).isValid, false, 'assertNotNull指定されているプロパティの値がnullであるオブジェクトはinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'assertNotNull指定されているプロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: undefined
 		}).isValid, false, 'undefinedならinvalid');
@@ -544,7 +544,7 @@ $(function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				notNull: true,
+				assertNotNull: true,
 				min: 0,
 				max: [1.1, true],
 				digits: [1, 1]
@@ -555,7 +555,7 @@ $(function() {
 		}).isValid, true, '全てのルールを満たすのでtrue');
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, false, 'notNullを満たさないのでfalse');
+		}).isValid, false, 'assertNotNullを満たさないのでfalse');
 		strictEqual(validator.validate({
 			p1: 1.01
 		}).isValid, false, 'digitsを満たさないのでfalse');
@@ -653,7 +653,7 @@ $(function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				notNull: true,
+				assertNotNull: true,
 				min: 0,
 				max: [1.1, true],
 				digits: [1, 1]

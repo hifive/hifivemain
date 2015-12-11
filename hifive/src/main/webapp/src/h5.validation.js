@@ -32,8 +32,8 @@
 	 */
 	var DEFAULT_RULE_NAME_REQUIRE = 'require';
 	var DEFAULT_RULE_NAME_CUSTOM_FUNC = 'customFunc';
-	var DEFAULT_RULE_NAME_NUL = 'nul';
-	var DEFAULT_RULE_NAME_NOT_NULL = 'notNull';
+	var DEFAULT_RULE_NAME_ASSERT_NULL = 'assertNull';
+	var DEFAULT_RULE_NAME_ASSERT_NOT_NULL = 'assertNotNull';
 	var DEFAULT_RULE_NAME_ASSERT_FALSE = 'assertFalse';
 	var DEFAULT_RULE_NAME_ASSERT_TRUE = 'assertTrue';
 	var DEFAULT_RULE_NAME_MAX = 'max';
@@ -269,8 +269,8 @@
 					var param = {};
 					var argNames = validateRuleManager.getValidateArgNames(ruleName);
 					if (argNames) {
-						for (var i = 0, l = argNames.length; i < l; i++) {
-							param[argNames[i]] = args[i + 1];
+						for (var j = 0, len = argNames.length; j < len; j++) {
+							param[argNames[j]] = args[j + 1];
 						}
 					}
 
@@ -422,7 +422,7 @@
 		 * <td>値がnullまたはundefinedであること</td>
 		 * </tr>
 		 * <tr>
-		 * <td>notNull</td>
+		 * <td>assertNotNull</td>
 		 * <td>なし</td>
 		 * <td>値がnullまたはundefinedでないこと</td>
 		 * </tr>
@@ -892,7 +892,7 @@
 		 * </p>
 		 *
 		 * @name rquire
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -919,7 +919,7 @@
 		 * 値が真偽値でない場合はfalseを返します
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -936,7 +936,7 @@
 		 * 値が真偽値型でない場合はfalseを返します
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -959,7 +959,7 @@
 		 * 値が数値型でない場合はfalseを返します
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {number} max 最大値
 		 * @param {boolean} [inclusive=false] 境界値にmaxValueを含めるかどうか
@@ -985,7 +985,7 @@
 		 * 値が数値型でない場合はfalseを返します
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {number} min 最小値
 		 * @param {boolean} [inclusive=false] 境界値にmaxValueを含めるかどうか
@@ -1005,11 +1005,11 @@
 		 * それ以外の場合はfalseを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
-		nul: function(value) {
+		assertNull: function(value) {
 			return value == null;
 		},
 
@@ -1022,11 +1022,11 @@
 		 * それ以外の場合はtrueを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
-		notNull: function(value) {
+		assertNotNull: function(value) {
 			return value != null;
 		},
 
@@ -1039,7 +1039,7 @@
 		 * 値がDate型でない場合はfalseを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -1056,7 +1056,7 @@
 		 * 値がDate型でない場合はfalseを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -1082,7 +1082,7 @@
 		 * 整数部分、小数部分いずれの桁数も境界値を含めます。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {integer} integer 整数桁数の上限値
 		 * @param {integer} fruction 小数桁数の上限値
@@ -1146,7 +1146,7 @@
 		 * 値が文字列型でない場合はfalseを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {RegExp} regexp 正規表現オブジェクト
 		 * @returns {boolean}
@@ -1171,7 +1171,7 @@
 		 * 値がnullまたはundefinedの場合はtrueを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.func
+		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {integer} min 下限値 (nullを指定した場合は下限値による判定は行いません)
 		 * @param {integer} max 上限値 (nullを指定した場合は上限値による判定は行いません)
@@ -1375,8 +1375,8 @@
 	// デフォルトルールの追加
 	defineRule(DEFAULT_RULE_NAME_REQUIRE, rule.require, null, 51);
 	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50);
-	defineRule(DEFAULT_RULE_NAME_NUL, rule.nul, null, 50);
-	defineRule(DEFAULT_RULE_NAME_NOT_NULL, rule.notNull, null, 50);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, rule.assertFalse, null, 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, rule.assertTrue, null, 50);
 	defineRule(DEFAULT_RULE_NAME_MAX, rule.max, ['max', 'inclusive'], 50);
