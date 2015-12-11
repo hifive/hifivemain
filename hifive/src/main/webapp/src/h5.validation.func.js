@@ -28,11 +28,6 @@
 	// Production
 	// =============================
 	/**
-	 * ルールオブジェクトで判定順序を指定する場合に使用するプロパティ名
-	 */
-	var PROPERTY_NAME_ORDER = '_order';
-
-	/**
 	 * デフォルトで定義済みのルール名
 	 */
 	var DEFAULT_RULE_NAME_REQUIRE = 'require';
@@ -235,8 +230,6 @@
 				var orgValue = obj[prop];
 				var isInvalidProp = false;
 				var isAsyncProp = false;
-				// TODO order対応
-				//				var order = rule[PROPERTY_NAME_ORDER];
 
 				for ( var ruleName in rule) {
 					var args = rule[ruleName];
@@ -542,16 +535,6 @@
 		},
 
 		/**
-		 * このValidatorでバリデートするときのルールの適用順序を指定します
-		 *
-		 * @memberOf Validator
-		 * @param ruleOrder
-		 */
-		setOrder: function(ruleOrder) {
-		// TODO 未実装
-		},
-
-		/**
 		 * ValidationResultに格納するfailureReasonオブジェクトを作成する
 		 *
 		 * @private
@@ -571,140 +554,6 @@
 				ret.rejectReason = h5.u.obj.argsToArray(failHandlerArgs);
 			}
 			return ret;
-		}
-	});
-
-	/**
-	 * FormValidatorクラス
-	 * <p>
-	 * フォーム要素を集約したオブジェクトのバリデートを行うためのクラスです。
-	 * </p>
-	 * <p>
-	 * {@link h5.validation.createValidator}の引数に'form'を指定するとこのクラスのインスタンスが生成されます。
-	 * </p>
-	 * <p>
-	 * このクラスは{@link Validator}クラスを継承しています。
-	 * </p>
-	 * <p>
-	 * {@link Validator}クラスとの違いは、フォーム部品に入力された文字列を、バリデートルールごとに適切な型に変換してからバリデートを行う点(例えばmaxルールなら数値に変換など)と、
-	 * グループ単位のバリデートに対応しています。
-	 * </p>
-	 * <p>
-	 * グループ単位のバリデートについては{@link FormValidator.validate}を参照してください。
-	 * </p>
-	 *
-	 * @class
-	 * @name FormValidator
-	 * @extends Validator
-	 */
-	function FormValidator() {
-		this._rule = {};
-	}
-	$.extend(FormValidator.prototype, Validator.prototype, {
-		/**
-		 * フォームオブジェクトのvalidateを行う
-		 * <p>
-		 * バリデートの基本的な動作については{@link Validator.validate}を参照してください。
-		 * </p>
-		 * <p>
-		 * FormValidatorはバリデートルールごとにバリデート対象の値を適切な型に変換してからバリデートを行います。
-		 * 例えば、値が"1"という文字列であってもmaxルールで判定する場合は1という数値に対してバリデートを行います。
-		 * </p>
-		 * <p>
-		 * また、 グループとそのグループ内のプロパティについてのvalidateに対応しています。
-		 * </p>
-		 * <p>
-		 * グループとは、第1引数のオブジェクトの中に、オブジェクトを値として持つプロパティがある場合、それをグループと言います。
-		 * そのグループ単位でのバリデートも行い、さらにグループ内のプロパティについてのバリデートを行います。
-		 * </p>
-		 * <p>
-		 * グループはネストすることはできません。
-		 * </p>
-		 * <p>
-		 * 以下はbirthdayをグループとして扱いvalidateを行う場合の例です。
-		 * </p>
-		 *
-		 * <pre class="sh_javascript"><code>
-		 * var formValidator = h5.u.validation.createValidator('form');
-		 * formValidator.addRule({
-		 * 	birthday: {
-		 * 		customFunc: function(val) {
-		 * 			// 日付として正しいか判定する
-		 * 			!isNaN(new Date(val.year, val.month - 1, val.date).getTime());
-		 * 		}
-		 * 	},
-		 * 	year: {
-		 * 		require: true
-		 * 	},
-		 * 	month: {
-		 * 		require: true
-		 * 	},
-		 * 	day: {
-		 * 		require: true
-		 * 	}
-		 * });
-		 * formValidator.validate({
-		 * 	birthday: {
-		 * 		year: 1999,
-		 * 		month: 1,
-		 * 		date: 1
-		 * 	}
-		 * });
-		 * </code></pre>
-		 *
-		 * <p>
-		 * グループはそのグループ(birthday)のルールによるvalidateが行われる。
-		 * </p>
-		 * <p>
-		 * また、year,month,dayもそれぞれのルールに基づいてvalidateが行われる。
-		 * </p>
-		 *
-		 * @memberOf FormValidator
-		 * @param {Object} obj バリデート対象となるオブジェクト
-		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
-		 * @returns {ValidationResult} バリデート結果
-		 */
-		validate: function(obj, names) {
-			// グループ対応。値がオブジェクトのものはグループとして扱う
-			var validateTarget = {};
-			var inGroupNames = [];
-			for ( var p in obj) {
-				if ($.isPlainObject(obj[p])) {
-					// オブジェクトの場合はその中身も展開してvalidateされるようにする
-					// なお、グループの入れ子は考慮していない
-					for ( var prop in obj[p]) {
-						validateTarget[prop] = obj[p][prop];
-						inGroupNames.push(prop);
-					}
-				}
-				validateTarget[p] = obj[p];
-			}
-			var validateNames = null;
-			if (names) {
-				validateNames = ($.isArray(names) ? names.slice(0) : [names]).concat(inGroupNames);
-			}
-			return Validator.prototype.validate.call(this, validateTarget, validateNames);
-		},
-
-		/**
-		 * Formから取得した値のvalidateのために、値をルールに適した型へ変換を行う
-		 *
-		 * @private
-		 * @memberOf FormValidator
-		 * @param {Any} value
-		 * @param {string} ruleName ルール名
-		 */
-		_convertBeforeValidate: function(value, ruleName) {
-			switch (ruleName) {
-			case DEFAULT_RULE_NAME_DIGITS:
-			case DEFAULT_RULE_NAME_MAX:
-			case DEFAULT_RULE_NAME_MIN:
-				return parseFloat(value);
-			case DEFAULT_RULE_NAME_FUTURE:
-			case DEFAULT_RULE_NAME_PAST:
-				return new Date(value);
-			}
-			return value;
 		}
 	});
 
@@ -1018,6 +867,22 @@
 	 */
 	var func = {
 		/**
+		 * 値がnullでないかつ空文字でないことを判定する
+		 * <p>
+		 * 値がnullまたは空文字の場合はfalseを返します。
+		 * </p>
+		 *
+		 * @name rquire
+		 * @memberOf h5.validation.func
+		 * @param {Any} value 判定する値
+		 * @returns {boolean}
+		 */
+		require: function(value) {
+			// nullでないかつ、空文字でもないこと
+			return value != null && value !== '';
+		},
+
+		/**
 		 * 値を第2引数の関数で判定した結果を返す
 		 *
 		 * @memberOf h5.validaiton.func
@@ -1272,16 +1137,16 @@
 		},
 
 		/**
-		 * 値のサイズが範囲内であるかどうかを判定し、判定結果をtrueまたはfalseで返します
+		 * 配列の長さ、または文字列の長さ、オブジェクトのプロパティ数が指定された範囲内であるかどうかを判定し、判定結果をtrueまたはfalseで返します
 		 * <p>
-		 * サイズの判定対象となる値は配列、文字列、プレーンオブジェクトの何れかです。
-		 * 配列の場合は配列の長さ、文字列の場合は文字数、プレーンオブジェクトの場合はプロパティをサイズとして扱い、判定の対象となります。
+		 * 判定対象となる値は配列、文字列、プレーンオブジェクトの何れかです。
+		 * 配列の場合は配列の長さ、文字列の場合は文字数、プレーンオブジェクトの場合はhasOwnPropertyがtrueであるプロパティの数を判定の対象とします。
 		 * </p>
 		 * <p>
 		 * その他の型の値の場合はfalseを返します。
 		 * </p>
 		 * <p>
-		 * 第2引数でサイズの下限値、第3引数でサイズの上限値を指定し、その範囲内のサイズであるかどうかを判定します。上限値、下限値ともに境界を含めます。
+		 * 第2引数でサイズの下限値、第3引数でサイズの上限値を指定し、その範囲内のサイズであるかどうかを判定します。上限値、下限値ともに境界を含めます。上限値、下限値はどちらかのみの指定が可能です。
 		 * </p>
 		 * <p>
 		 * 値がnullまたはundefinedの場合はtrueを返します。
@@ -1289,8 +1154,8 @@
 		 *
 		 * @memberOf h5.validation.func
 		 * @param {Any} value 判定する値
-		 * @param {integer} min 下限値
-		 * @param {integer} max 上限値
+		 * @param {integer} min 下限値 (nullを指定した場合は下限値による判定は行いません)
+		 * @param {integer} max 上限値 (nullを指定した場合は上限値による判定は行いません)
 		 * @returns {boolean}
 		 */
 		size: function(value, min, max) {
@@ -1309,12 +1174,154 @@
 		}
 	};
 
-	function createValidator(type) {
-		if (type === 'form') {
-			return new FormValidator();
-		}
+	/**
+	 * バリデータの作成
+	 * <p>
+	 * 追加されたルールに基づいてオブジェクトのバリデートを行うバリデータを生成して返します
+	 * </p>
+	 * <p>
+	 * {@link h5.validation.createValidator}がこのクラスのインスタンスを返します
+	 * </p>
+	 *
+	 * @class
+	 * @name Validator
+	 */
+	function createValidator() {
 		return new Validator();
 	}
+
+	/**
+	 * FormValidationロジック
+	 * <p>
+	 * フォーム要素を集約したオブジェクトのバリデートを行うためのロジックです。
+	 * </p>
+	 * <p>
+	 * このロジックは{@link Validator}クラスの各メソッドを持ちます。
+	 * </p>
+	 * <p>
+	 * {@link Validator}クラスのメソッドを直接呼んだ場合との違いは、バリデートルールごとに適切な型に変換してからバリデートを行う点(例えばmaxルールなら数値に変換など)と、
+	 * グループ単位のバリデートに対応している点です。
+	 * </p>
+	 * <p>
+	 * グループ単位のバリデートについては{@link h5.validation.FormValidation}を参照してください。
+	 * </p>
+	 *
+	 * @class
+	 * @name h5.validation.FormValidationLogic
+	 * @extends Validator
+	 */
+	var FormValidationLogic = $.extend({}, Validator.prototype, {
+		__name: 'h5.validation.FormValidationLogic',
+		__construct: function() {
+			// Validatorのコンストラクタを実行
+			Validator.call(this);
+		},
+		/**
+		 * フォームオブジェクトのvalidateを行う
+		 * <p>
+		 * バリデートの基本的な動作については{@link Validator.validate}を参照してください。
+		 * </p>
+		 * <p>
+		 * FormValidationロジックはバリデートルールごとにバリデート対象の値を適切な型に変換してからバリデートを行います。
+		 * 例えば、値が"1"という文字列であってもmaxルールで判定する場合は1という数値に対してバリデートを行います。
+		 * </p>
+		 * <p>
+		 * また、 グループとそのグループ内のプロパティについてのvalidateに対応しています。
+		 * </p>
+		 * <p>
+		 * グループとは、第1引数のオブジェクトの中に、オブジェクトを値として持つプロパティがある場合、それをグループと言います。
+		 * そのグループ単位でのバリデートも行い、さらにグループ内のプロパティについてのバリデートを行います。
+		 * </p>
+		 * <p>
+		 * グループはネストすることはできません。
+		 * </p>
+		 * <p>
+		 * 以下はbirthdayをグループとして扱いvalidateを行う場合の例です。
+		 * </p>
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * var formValidator = h5.core.logic(h5.validation.FormValidationLogic);
+		 * formValidator.addRule({
+		 * 	birthday: {
+		 * 		customFunc: function(val) {
+		 * 			// 日付として正しいか判定する
+		 * 			!isNaN(new Date(val.year, val.month - 1, val.date).getTime());
+		 * 		}
+		 * 	},
+		 * 	year: {
+		 * 		require: true
+		 * 	},
+		 * 	month: {
+		 * 		require: true
+		 * 	},
+		 * 	day: {
+		 * 		require: true
+		 * 	}
+		 * });
+		 * formValidator.validate({
+		 * 	birthday: {
+		 * 		year: 1999,
+		 * 		month: 1,
+		 * 		date: 1
+		 * 	}
+		 * });
+		 * </code></pre>
+		 *
+		 * <p>
+		 * グループはそのグループ(birthday)のルールによるvalidateが行われる。
+		 * </p>
+		 * <p>
+		 * また、year,month,dayもそれぞれのルールに基づいてvalidateが行われる。
+		 * </p>
+		 *
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param {Object} obj バリデート対象となるオブジェクト
+		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
+		 * @returns {ValidationResult} バリデート結果
+		 */
+		validate: function(obj, names) {
+			// グループ対応。値がオブジェクトのものはグループとして扱う
+			var validateTarget = {};
+			var inGroupNames = [];
+			for ( var p in obj) {
+				if ($.isPlainObject(obj[p])) {
+					// オブジェクトの場合はその中身も展開してvalidateされるようにする
+					// なお、グループの入れ子は考慮していない
+					for ( var prop in obj[p]) {
+						validateTarget[prop] = obj[p][prop];
+						inGroupNames.push(prop);
+					}
+				}
+				validateTarget[p] = obj[p];
+			}
+			var validateNames = null;
+			if (names) {
+				validateNames = ($.isArray(names) ? names.slice(0) : [names]).concat(inGroupNames);
+			}
+			return Validator.prototype.validate.call(this, validateTarget, validateNames);
+		},
+
+		/**
+		 * Formから取得した値のvalidateのために、値をルールに適した型へ変換を行う
+		 *
+		 * @private
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param {Any} value
+		 * @param {string} ruleName ルール名
+		 */
+		_convertBeforeValidate: function(value, ruleName) {
+			switch (ruleName) {
+			case DEFAULT_RULE_NAME_DIGITS:
+			case DEFAULT_RULE_NAME_MAX:
+			case DEFAULT_RULE_NAME_MIN:
+				return parseFloat(value);
+			case DEFAULT_RULE_NAME_FUTURE:
+			case DEFAULT_RULE_NAME_PAST:
+				return new Date(value);
+			}
+			return value;
+		}
+	});
 
 	/**
 	 * ルール定義の追加
@@ -1346,10 +1353,7 @@
 	}
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_REQUIRE, function(value) {
-		// nullでないかつ、空文字でもないこと
-		return value != null && value !== '';
-	});
+	defineRule(DEFAULT_RULE_NAME_REQUIRE, func.require);
 	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, func.customFunc, ['func']);
 	defineRule(DEFAULT_RULE_NAME_NUL, func.nul);
 	defineRule(DEFAULT_RULE_NAME_NOT_NULL, func.notNull);
@@ -1376,4 +1380,5 @@
 		defineRule: defineRule,
 		createValidator: createValidator
 	});
+	h5.core.expose(FormValidationLogic);
 })();

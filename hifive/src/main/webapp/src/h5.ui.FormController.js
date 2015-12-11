@@ -1817,9 +1817,16 @@
 		__name: 'h5.ui.FormController',
 		_config: {},
 		_bindedForm: null,
-		_validator: null,
 		_ruleCreators: [],
 		_plugins: [],
+
+		/**
+		 * フォームバリデーションロジック
+		 *
+		 * @private
+		 * @memberOf h5.ui.FormController
+		 */
+		_validationLogic: h5.validation.FormValidationLogic,
 
 		/**
 		 * nameをキーに非同期バリデート結果を待つValidationResultを持つマップ
@@ -2013,7 +2020,6 @@
 		 * @private
 		 */
 		__construct: function() {
-			this._validator = h5.validation.createValidator('form');
 			// デフォルトルールの追加
 			// TODO formのvalidatorで不要な項目は要らない
 			this._addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requireRuleCreator);
@@ -2141,7 +2147,7 @@
 		 *            shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue
 		 */
 		addRule: function(ruleObj, shouldValidate, onlyAddedRule) {
-			this._validator.addRule(ruleObj);
+			this._validationLogic.addRule(ruleObj);
 			if (shouldValidate) {
 				var properties = null;
 				if (onlyAddedRule) {
@@ -2167,7 +2173,7 @@
 		 *            shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue
 		 */
 		removeRule: function(properties, shouldValidate, onlyRemovedRule) {
-			this._validator.removeRule();
+			this._validationLogic.removeRule();
 			if (shouldValidate) {
 				this.validate(onlyRemovedRule ? properties : null);
 			}
@@ -2183,7 +2189,7 @@
 		 * @param {string|string[]} name プロパティ名またはその配列
 		 */
 		enableRule: function(name) {
-			this._validator.enableRule(name);
+			this._validationLogic.enableRule(name);
 		},
 
 		/**
@@ -2196,7 +2202,7 @@
 		 * @param {string|string[]} name プロパティ名またはその配列
 		 */
 		disableRule: function(name) {
-			this._validator.disableRule(name);
+			this._validationLogic.disableRule(name);
 		},
 
 		/**
@@ -2652,7 +2658,7 @@
 			//				this._waitingValidationResultMap = {};
 			//			}
 
-			var result = this._validator.validate(formData, names);
+			var result = this._validationLogic.validate(formData, names);
 
 			// TODO 動作確認としてログ出力
 			this.log.debug('-----------------------------------------');
