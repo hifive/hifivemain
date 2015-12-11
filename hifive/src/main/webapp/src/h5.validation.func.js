@@ -219,6 +219,7 @@
 			var isAsync = false;
 			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
 			var propertyWaitingPromsies = {};
+
 			for ( var prop in this._rule) {
 				if (names && $.inArray(prop, targetNames) === -1
 						|| $.inArray(prop, this._disableProperties) !== -1) {
@@ -231,7 +232,15 @@
 				var isInvalidProp = false;
 				var isAsyncProp = false;
 
+				// ルールを優先度順にソート
+				var sortedRuleNames = [];
 				for ( var ruleName in rule) {
+					sortedRuleNames.push(ruleName);
+				}
+				validateRuleManager.sortRuleByPriority(sortedRuleNames);
+
+				for (var i = 0, l = sortedRuleNames.length; i < l; i++) {
+					var ruleName = sortedRuleNames[i];
 					var args = rule[ruleName];
 					if ((!obj.hasOwnProperty(prop) || args == null)
 							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRE && args)) {
@@ -803,6 +812,8 @@
 
 	/**
 	 * priority順に並べるための比較関数
+	 * <p>
+	 * priorityの数値の降順で返えす。(priorityに一大きい数値の指定されているものが先)
 	 *
 	 * @private
 	 * @param obj1
@@ -811,9 +822,9 @@
 	 */
 	function comparePriority(obj1, obj2) {
 		var p1, p2;
-		p1 = obj1.priority || Infinity;
-		p2 = obj2.priority || Infinity;
-		return p1 === p2 ? 0 : p1 - p2;
+		p1 = obj1.priority == null ? -Infinity : obj1.priority;
+		p2 = obj2.priority == null ? -Infinity : obj2.priority;
+		return p1 === p2 ? 0 : p2 - p1;
 	}
 
 	/**
@@ -853,6 +864,12 @@
 		},
 		getValidateArgNames: function(ruleName) {
 			return this.rulesMap[ruleName] && this.rulesMap[ruleName].argNames;
+		},
+		sortRuleByPriority: function(ruleNames) {
+			var rulesMap = this.rulesMap;
+			ruleNames.sort(function(a, b) {
+				return comparePriority(rulesMap[a], rulesMap[b]);
+			});
 		}
 	});
 	// =========================================================================
@@ -1339,13 +1356,14 @@
 	 * </p>
 	 * <p>
 	 * 第4引数は優先度指定です。複数ルールをバリデートする場合に、どのルールから順にバリデートを行うかを優先度で指定します。
+	 * 優先度は、数値が大きいものほど優先されます。同じ優先度の場合適用順序は不定です。 デフォルトで用意されているルールの優先度は、requireが51、その他は50で定義しています。
 	 * </p>
 	 *
 	 * @memberOf h5.validation
 	 * @param {string} ruleName ルール名
 	 * @param {Function} func バリデート関数
 	 * @param {string[]} [argNames] パラメータ名リスト
-	 * @param {number} [priority] 優先度
+	 * @param {number} [priority=0] 優先度
 	 */
 	function defineRule(ruleName, func, argNames, priority) {
 		// TODO 優先度は未実装
@@ -1353,19 +1371,19 @@
 	}
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_REQUIRE, func.require);
-	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, func.customFunc, ['func']);
-	defineRule(DEFAULT_RULE_NAME_NUL, func.nul);
-	defineRule(DEFAULT_RULE_NAME_NOT_NULL, func.notNull);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, func.assertFalse);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, func.assertTrue);
-	defineRule(DEFAULT_RULE_NAME_MAX, func.max, ['max', 'inclusive']);
-	defineRule(DEFAULT_RULE_NAME_MIN, func.min, ['min', 'inclusive']);
-	defineRule(DEFAULT_RULE_NAME_FUTURE, func.future);
-	defineRule(DEFAULT_RULE_NAME_PAST, func.past);
-	defineRule(DEFAULT_RULE_NAME_DIGITS, func.digits, ['integer', 'fruction']);
-	defineRule(DEFAULT_RULE_NAME_PATTERN, func.pattern, ['regexp']);
-	defineRule(DEFAULT_RULE_NAME_SIZE, func.size, ['min', 'max']);
+	defineRule(DEFAULT_RULE_NAME_REQUIRE, func.require, null, 51);
+	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, func.customFunc, ['func'], 50);
+	defineRule(DEFAULT_RULE_NAME_NUL, func.nul, null, 50);
+	defineRule(DEFAULT_RULE_NAME_NOT_NULL, func.notNull, null, 50);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, func.assertFalse, null, 50);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, func.assertTrue, null, 50);
+	defineRule(DEFAULT_RULE_NAME_MAX, func.max, ['max', 'inclusive'], 50);
+	defineRule(DEFAULT_RULE_NAME_MIN, func.min, ['min', 'inclusive'], 50);
+	defineRule(DEFAULT_RULE_NAME_FUTURE, func.future, null, 50);
+	defineRule(DEFAULT_RULE_NAME_PAST, func.past, null, 50);
+	defineRule(DEFAULT_RULE_NAME_DIGITS, func.digits, ['integer', 'fruction'], 50);
+	defineRule(DEFAULT_RULE_NAME_PATTERN, func.pattern, ['regexp'], 50);
+	defineRule(DEFAULT_RULE_NAME_SIZE, func.size, ['min', 'max'], 50);
 
 	// =============================
 	// Expose to window
