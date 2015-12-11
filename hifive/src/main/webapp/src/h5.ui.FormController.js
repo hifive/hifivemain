@@ -2113,12 +2113,12 @@
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} pluginNames プラグイン名またはその配列
 		 */
-		enablePlugins: function(pluginNames) {
+		enableOutput: function(pluginNames) {
 			// デフォルトの出力プラグイン追加
 			// __init前(rootElement決定前)ならルートエレメント決定後に実行
 			if (!this.isInit) {
 				this.initPromise.done(this.own(function() {
-					this.enablePlugins(pluginNames);
+					this.enableOutput(pluginNames);
 				}));
 				return;
 			}
@@ -2142,22 +2142,9 @@
 		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {Object} ruleObj ルールオブジェクト(オブジェクトの形式は{@link Validator.addRule}参照)
-		 * @param {boolean} [shouldValidate=false] ルール追加した後にvalidateを行うかどうか
-		 * @param {boolean} [onlyAddedRule=true]
-		 *            shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue
 		 */
-		addRule: function(ruleObj, shouldValidate, onlyAddedRule) {
+		addRule: function(ruleObj) {
 			this._validationLogic.addRule(ruleObj);
-			if (shouldValidate) {
-				var properties = null;
-				if (onlyAddedRule) {
-					properties = [];
-					for ( var p in ruleObj) {
-						properties.push(p);
-					}
-				}
-				this._validate(properties);
-			}
 		},
 
 		/**
@@ -2414,7 +2401,7 @@
 		 *
 		 * @memberOf h5.ui.FormController
 		 */
-		clear: function() {
+		clearAll: function() {
 			this.getElements().each(function() {
 				if (this.type === 'radio' || this.type === 'checkbox') {
 					$(this).prop('checked', false);
