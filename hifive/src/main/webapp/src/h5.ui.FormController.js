@@ -1988,7 +1988,7 @@
 				$(this._bindedForm).prop('novalidate', true);
 			}
 			// フォーム部品からルールを生成
-			var $formControls = this.getElements();
+			var $formControls = $(this.getElements());
 			var validateRule = {};
 			$formControls.each(this.ownWithOrg(function(element) {
 				var name = element.getAttribute('name');
@@ -2186,8 +2186,8 @@
 		 */
 		gather: function(targetNames) {
 			targetNames = targetNames && (!isArray(targetNames) ? [targetNames] : targetNames);
-			var $elements = this.getElements();
-			var $groups = this._getInputGroupElements();
+			var $elements = $(this.getElements());
+			var $groups = $(this._getInputGroupElements());
 			var propertySetting = this._setting && this._setting.property || {};
 			var ret = {};
 			var elementNames = [];
@@ -2282,7 +2282,7 @@
 		 * @param {Object} obj フォーム部品の値を集約したオブジェクト
 		 */
 		set: function(obj) {
-			var $elements = this.getElements();
+			var $elements = $(this.getElements());
 			var indexMap = {};
 			$elements.each(function() {
 				var name = this.name;
@@ -2339,7 +2339,7 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		clearAll: function() {
-			this.getElements().each(function() {
+			$(this.getElements()).each(function() {
 				if (this.type === 'radio' || this.type === 'checkbox') {
 					$(this).prop('checked', false);
 					return;
@@ -2398,7 +2398,7 @@
 		 * このコントローラが管理するフォームに属するフォーム部品全てを取得
 		 *
 		 * @memberOf h5.ui.FormController
-		 * @returns {jQuery}
+		 * @returns {DOM[]}
 		 */
 		getElements: function() {
 			var $innerFormControls = this.$find('input,select,textarea').not(
@@ -2412,14 +2412,15 @@
 			// HTML5の仕様に従ってformに属するフォームコントロール部品を列挙する
 			var $formControls = $('input,select,textarea').not(
 					'[type="submit"],[type="reset"],[type="image"]');
-			return $formControls.filter(function() {
-				var $this = $(this);
-				var formAttr = $this.attr('form');
-				// form属性がこのコントローラのフォームを指している
-				// または、このコントローラのフォーム内の要素でかつform属性指定無し
-				return (formAttr && formAttr === formId) || !formAttr
-						&& $innerFormControls.index($this) !== -1;
-			});
+			return $formControls.filter(
+					function() {
+						var $this = $(this);
+						var formAttr = $this.attr('form');
+						// form属性がこのコントローラのフォームを指している
+						// または、このコントローラのフォーム内の要素でかつform属性指定無し
+						return (formAttr && formAttr === formId) || !formAttr
+								&& $innerFormControls.index($this) !== -1;
+					}).toArray();
 		},
 
 		/**
@@ -2436,12 +2437,12 @@
 			if (targetElement) {
 				return targetElement;
 			}
-			var $formCtrls = this.getElements();
+			var $formCtrls = $(this.getElements());
 			var element = $formCtrls.filter('[name="' + name + '"]')[0];
 			if (element) {
 				return element;
 			}
-			var groupContainer = this._getInputGroupElements().filter(
+			var groupContainer = $(this._getInputGroupElements()).filter(
 					'[data-' + DATA_INPUTGROUP_CONTAINER + '="' + name + '"]')[0];
 			if (groupContainer) {
 				return groupContainer;
@@ -2494,7 +2495,7 @@
 		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
-		 * @returns {jQuery}
+		 * @returns {DOM[]}
 		 */
 		_getInputGroupElements: function() {
 			var $allGroups = $('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
@@ -2506,7 +2507,7 @@
 						// または、このコントローラのフォーム内の要素でかつform属性指定無し
 						return (formAttr && formAttr === formId) || !formAttr
 								&& $allGroups.index($this) !== -1;
-					});
+					}).toArray();
 		},
 
 		/**
@@ -2645,7 +2646,7 @@
 			var groupName = $(target).data(DATA_INPUTGROUP);
 			if (!groupName) {
 				// タグにグループの指定が無くグループコンテナに属している場合
-				var $groups = this._getInputGroupElements();
+				var $groups = $(this._getInputGroupElements());
 				if ($groups.find(target).length) {
 					var $group = $(target).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
 					groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
@@ -2725,7 +2726,7 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		_isFormControls: function(element) {
-			var $formControls = this.getElements();
+			var $formControls = $(this.getElements());
 			return $formControls.index(element) !== -1;
 		}
 	};
