@@ -178,11 +178,11 @@
 					}
 				});
 				// プラグインのsetMessage
-				// 				this.formController.getPlugin('baloon').setMessage('name', {
+				// 				this.formController.getOutput('baloon').setMessage('name', {
 				// 					message: '※必須'
 				// 				});
 				// 				// プラグインのsetMessage
-				// 				this.formController.getPlugin('message').setMessage('address', {
+				// 				this.formController.getOutput('message').setMessage('address', {
 				// 					// message: '{label}は選択肢の中から当てはまるものを選んでください',
 				// 					// ↑と同じ↓
 				// 					formatter: function(param) {
@@ -190,7 +190,7 @@
 				// 					}
 				// 				});
 				// プラグインのsetMessage
-				this.formController.getPlugin('composition').setMessage('sex', {
+				this.formController.getOutput('composition').setMessage('sex', {
 					message: '{label}は必須！'
 				});
 			},
@@ -232,9 +232,9 @@
 							</label>
 						</div>
 					</div>
-					<!--  data-inputgroup-container指定 -->
+					<!--  data-h5-input-group-name-container指定 -->
 					<div class="form-group groupSample"
-						data-inputgroup-container="birthday">
+						data-h5-input-group-name-container="birthday">
 						<label class="control-label">生年月日</label>
 						<div class="form-inline">
 							<input name="year" type="text" placeholder="年(西暦)"
@@ -249,11 +249,11 @@
 					<div class="form-group">
 						<label class="control-label">郵便番号</label>
 						<div class="form-inline">
-							<!--  data-inputgroup指定 -->
+							<!--  data-h5-input-group-name指定 -->
 							<input name="zip1" type="text" class="form-control" size="3"
-								data-inputgroup="zipcode" data-require /> -<input name="zip2"
+								data-h5-input-group-name="zipcode" data-require /> -<input name="zip2"
 								type="text" class="form-control" size="4"
-								data-inputgroup="zipcode" data-require />
+								data-h5-input-group-name="zipcode" data-require />
 						</div>
 					</div>
 					<div class="form-group">

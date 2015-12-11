@@ -362,15 +362,15 @@
 	 * バリデートエラー箇所の要素にクラスを追加するための[FormController]{@link h5.ui.validation.FormController}プラグイン
 	 *
 	 * @class
-	 * @name h5.ui.validation.ErrorClass
+	 * @name h5.ui.validation.Style
 	 */
 	var controller = {
-		__name: 'h5.ui.validation.ErrorClass',
+		__name: 'h5.ui.validation.Style',
 		/**
 		 * プラグイン設定
 		 *
 		 * @private
-		 * @memberOf h5.ui.validaiton.ErrorClass
+		 * @memberOf h5.ui.validaiton.Style
 		 */
 		_setting: {},
 
@@ -450,7 +450,7 @@
 		 * }
 		 * </code></pre>
 		 *
-		 * @memberOf h5.ui.validation.ErrorClass
+		 * @memberOf h5.ui.validation.Style
 		 * @param {Object} setting styleプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
@@ -463,7 +463,7 @@
 		 * {@link ValidationResult}から、各要素にクラスを設定する
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorClass
+		 * @memberOf h5.ui.validation.Style
 		 * @param {ValidationResult} result
 		 */
 		onValidate: function(validationResult) {
@@ -471,7 +471,7 @@
 			var allProperties = validationResult.allProperties;
 			for (var i = 0, l = allProperties.length; i < l; i++) {
 				var name = allProperties[i];
-				this._setErrorClass(this.parentController.getElementByName(name), name,
+				this._setStyle(this.parentController.getElementByName(name), name,
 						validationResult);
 			}
 		},
@@ -482,13 +482,13 @@
 		 * イベントの発生したフォーム部品のバリデート結果を適用
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorClass
+		 * @memberOf h5.ui.validation.Style
 		 * @param {DOM} element イベント発生要素
 		 * @param {string} name イベント発生要素の名前(グループの場合はグループ名)
 		 * @param {ValidationResult} validationResult
 		 */
 		onFocus: function(element, name, validationResult) {
-			this._setErrorClass(element, name, validationResult);
+			this._setStyle(element, name, validationResult);
 		},
 
 		/**
@@ -497,14 +497,14 @@
 		 * イベントの発生したフォーム部品のバリデート結果を適用
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorClass
-		 * @memberOf h5.ui.validation.ErrorClass
+		 * @memberOf h5.ui.validation.Style
+		 * @memberOf h5.ui.validation.Style
 		 * @param {DOM} element イベント発生要素
 		 * @param {string} name イベント発生要素の名前(グループの場合はグループ名)
 		 * @param {ValidationResult} validationResult
 		 */
 		onKeyup: function(element, name, validationResult) {
-			this._setErrorClass(element, name, validationResult);
+			this._setStyle(element, name, validationResult);
 		},
 
 		/**
@@ -513,7 +513,7 @@
 		 * 全てのフォームコントロール部品からプラグインが追加したクラスを全て削除します
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorClass
+		 * @memberOf h5.ui.validation.Style
 		 * @param globalSetting
 		 * @param setting
 		 */
@@ -526,12 +526,12 @@
 		 * バリデート結果からクラスをセットする
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorClass
+		 * @memberOf h5.ui.validation.Style
 		 * @param element
 		 * @param name
 		 * @param validationResult
 		 */
-		_setErrorClass: function(element, name, validationResult) {
+		_setStyle: function(element, name, validationResult) {
 			// 共通設定とプロパティ毎の設定をマージ
 			var propSetting = $.extend({}, this._setting, this._setting.property
 					&& this._setting.property[name]);
@@ -570,7 +570,7 @@
 		 * </p>
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorClass
+		 * @memberOf h5.ui.validation.Style
 		 * @param state
 		 * @param element
 		 * @param propSetting 適用する設定オブジェクト
@@ -595,16 +595,16 @@
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
 	 *
 	 * @class
-	 * @name h5.ui.validation.AllMessage
+	 * @name h5.ui.validation.Composition
 	 */
 	var controller = {
-		__name: 'h5.ui.validation.AllMessage',
+		__name: 'h5.ui.validation.Composition',
 		_messageOutputController: h5.ui.validation.MessageOutput,
 		/**
 		 * プラグイン設定
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.AllMessage
+		 * @memberOf h5.ui.validation.Composition
 		 */
 		_setting: {},
 
@@ -683,7 +683,7 @@
 		 * }
 		 * </code></pre>
 		 *
-		 * @memberOf h5.ui.validation.AllMessage
+		 * @memberOf h5.ui.validation.Composition
 		 * @param {Object} setting compositionプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
@@ -702,7 +702,7 @@
 		 * バリデート結果からメッセージを生成して表示
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.AllMessage
+		 * @memberOf h5.ui.validation.Composition
 		 * @param {ValidationResult} validationResult
 		 * @param {Object} globalSetting
 		 * @param {Object} outputSetting
@@ -718,7 +718,7 @@
 		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.AllMessage
+		 * @memberOf h5.ui.validation.Composition
 		 * @param {string} name
 		 * @param {Object} messageObj message,formatterを持つオブジェクト
 		 */
@@ -732,7 +732,7 @@
 		 * メッセージを削除します
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.AllMessage
+		 * @memberOf h5.ui.validation.Composition
 		 * @param globalSetting
 		 * @param setting
 		 */
@@ -744,7 +744,7 @@
 		 * メッセージ出力コントローラの設定
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.AllMessage
+		 * @memberOf h5.ui.validation.Composition
 		 */
 		_setChildSetting: function() {
 			var setting = this._setting;
@@ -1164,10 +1164,10 @@
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
 	 *
 	 * @class
-	 * @name h5.ui.validation.ErrorMessage
+	 * @name h5.ui.validation.Message
 	 */
 	var controller = {
-		__name: 'h5.ui.validation.ErrorMessage',
+		__name: 'h5.ui.validation.Message',
 		_executedOnValidate: false,
 		_messageElementMap: {},
 		_messageOutputController: h5.ui.validation.MessageOutput,
@@ -1248,7 +1248,7 @@
 		 * }
 		 * </code></pre>
 		 *
-		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @memberOf h5.ui.validation.Message
 		 * @param {Object} setting messageプラグイン設定オブジェクト
 		 */
 		setSetting: function(setting) {
@@ -1267,7 +1267,7 @@
 		 * バリデート結果からメッセージの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @memberOf h5.ui.validation.Message
 		 * @param {ValidationResult} result
 		 */
 		onValidate: function(result) {
@@ -1275,7 +1275,7 @@
 			var allProperties = result.validProperties;
 			for (var i = 0, l = allProperties.length; i < l; i++) {
 				var name = allProperties[i];
-				this._setErrorMessage(this.parentController.getElementByName(name), name, result);
+				this._setMessage(this.parentController.getElementByName(name), name, result);
 			}
 		},
 
@@ -1285,13 +1285,13 @@
 		 * バリデート結果からメッセージの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @memberOf h5.ui.validation.Message
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
 		onFocus: function(element, name, validationResult) {
-			this._setErrorMessage(element, name, validationResult, 'focus');
+			this._setMessage(element, name, validationResult, 'focus');
 		},
 
 		/**
@@ -1300,23 +1300,23 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @memberOf h5.ui.validation.Message
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
 		onBlur: function(element, name, validationResult) {
-			this._setErrorMessage(element, name, validationResult, 'blur');
+			this._setMessage(element, name, validationResult, 'blur');
 		},
 		// FIXME どのタイミングで実行するかは設定で決める？
 		//		onChange: function(element,name, globalSetting, setting, errorReason) {
-		//			this._setErrorMessage(element,name, globalSetting, setting, errorReason);
+		//			this._setMessage(element,name, globalSetting, setting, errorReason);
 		//		},
 		//		onKeyup: function(element,name, globalSetting, setting, errorReason) {
-		//			this._setErrorMessage(element,name, globalSetting, setting, errorReason);
+		//			this._setMessage(element,name, globalSetting, setting, errorReason);
 		//		},
 		//		onClick: function(element, name,globalSetting, setting, errorReason) {
-		//			this._setErrorMessage(element, name,globalSetting, setting, errorReason);
+		//			this._setMessage(element, name,globalSetting, setting, errorReason);
 		//		},
 
 		/**
@@ -1325,7 +1325,7 @@
 		 * 表示されているメッセージを削除します
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @memberOf h5.ui.validation.Message
 		 */
 		reset: function() {
 			for ( var p in this._messageElementMap) {
@@ -1341,7 +1341,7 @@
 		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @memberOf h5.ui.validation.Message
 		 * @param {string} name
 		 * @param {Object} messageObj message,formatterを持つオブジェクト
 		 */
@@ -1349,7 +1349,7 @@
 			this._messageOutputController.addMessageSetting(name, messageObj);
 		},
 
-		_setErrorMessage: function(element, name, validationResult, type) {
+		_setMessage: function(element, name, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// onValidateが１度も呼ばれていなければ何もしない
 				return;
@@ -1363,31 +1363,31 @@
 			}
 			if (type === 'blur') {
 				// blurの時はメッセージを非表示にして、終了
-				this._removeErrorMessage(name);
+				this._removeMessage(name);
 				return;
 			}
 			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
 				// まだvalidate結果が返ってきていない場合
 				// メッセージを削除
-				this._removeErrorMessage(name);
+				this._removeMessage(name);
 				validationResult.addEventListener('validate', this.own(function(ev) {
 					if (ev.property === name && !ev.isValid
 							&& (type !== 'focus' || document.activeElement === element)) {
 						// nameの結果が返ってきた時にメッセージを表示
 						// focus時のvalidateなら、まだfocusが当たっているときだけ表示
-						this._setErrorMessage(element, name, validationResult, type);
+						this._setMessage(element, name, validationResult, type);
 					}
 				}));
 				return;
 			}
 
 			// 既存のエラーメッセージを削除
-			this._removeErrorMessage(name);
+			this._removeMessage(name);
 			var msg = this._messageOutputController.getMessageByValidationResult(validationResult,
 					name);
 			if (msg === null) {
 				// エラーメッセージが無い場合はメッセージを非表示にして、終了
-				this._removeErrorMessage(name);
+				this._removeMessage(name);
 				return;
 			}
 
@@ -1413,7 +1413,7 @@
 			}
 		},
 
-		_removeErrorMessage: function(name) {
+		_removeMessage: function(name) {
 			this._messageElementMap[name] && this._messageElementMap[name].remove();
 		},
 
@@ -1421,7 +1421,7 @@
 		 * メッセージ出力コントローラの設定
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorMessage
+		 * @memberOf h5.ui.validation.Message
 		 */
 		_setChildSetting: function() {
 			var setting = this._setting;
@@ -1576,7 +1576,7 @@
 			}
 		},
 		//		onClick: function(element, name,globalSetting, setting, errorReason) {
-		//			this._setErrorMessage(element, name,globalSetting, setting, errorReason);
+		//			this._setMessage(element, name,globalSetting, setting, errorReason);
 		//		},
 
 		/**
@@ -1681,11 +1681,11 @@
 
 	// デフォルトで用意しているプラグイン名とプラグイン(コントローラ定義)のマップ
 	var DEFAULT_PLUGINS = {
-		style: h5.ui.validation.ErrorClass,
-		composition: h5.ui.validation.AllMessage,
+		style: h5.ui.validation.Style,
+		composition: h5.ui.validation.Composition,
 		baloon: h5.ui.validation.ErrorBaloon,
 		bsBaloon: h5.ui.validation.BootstrapErrorBaloon,
-		message: h5.ui.validation.ErrorMessage,
+		message: h5.ui.validation.Message,
 		asyncIndicator: h5.ui.validation.AsyncIndicator
 	};
 
@@ -2475,7 +2475,7 @@
 		 * @param {string} pluginName プラグイン名
 		 * @returns {Controller}
 		 */
-		getPlugin: function(pluginName) {
+		getOutput: function(pluginName) {
 			return this._plugins[pluginName];
 		},
 
