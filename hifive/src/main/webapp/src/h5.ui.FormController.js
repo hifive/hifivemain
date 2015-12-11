@@ -468,9 +468,9 @@
 		 */
 		onValidate: function(validationResult) {
 			// validだったものにクラスを適用
-			var allProperties = validationResult.allProperties;
-			for (var i = 0, l = allProperties.length; i < l; i++) {
-				var name = allProperties[i];
+			var properties = validationResult.properties;
+			for (var i = 0, l = properties.length; i < l; i++) {
+				var name = properties[i];
 				this._setStyle(this.parentController.getElementByName(name), name,
 						validationResult);
 			}
@@ -557,7 +557,7 @@
 				return;
 			}
 			// invalidPropertiesに入っていればエラー扱い、そうでない場合は成功扱い
-			// (そもそもルールの指定が無くvalidation対象じゃない(allPropertiesに入っていない)場合は成功扱い)
+			// (そもそもルールの指定が無くvalidation対象じゃない(propertiesに入っていない)場合は成功扱い)
 			this._setValidateState(
 					$.inArray(name, validationResult.invalidProperties) === -1 ? STATE_SUCCESS
 							: STATE_ERROR, element, propSetting);
@@ -1272,9 +1272,9 @@
 		 */
 		onValidate: function(result) {
 			this._executedOnValidate = true;
-			var allProperties = result.validProperties;
-			for (var i = 0, l = allProperties.length; i < l; i++) {
-				var name = allProperties[i];
+			var validProperties = result.validProperties;
+			for (var i = 0, l = validProperties.length; i < l; i++) {
+				var name = validProperties[i];
 				this._setMessage(this.parentController.getElementByName(name), name, result);
 			}
 		},
@@ -1518,9 +1518,9 @@
 		 */
 		onValidate: function(result) {
 			var validatingProperties = result.validatingProperties;
-			var allProperties = result.allProperties;
-			for (var i = 0, l = allProperties.length; i < l; i++) {
-				var name = allProperties[i];
+			var properties = result.properties;
+			for (var i = 0, l = properties.length; i < l; i++) {
+				var name = properties[i];
 				if ($.inArray(name, valdatingProperties)) {
 					var element = this.parentController.getElementByName(name);
 					this._showIndicator(element, name, validatingProperties[i]);

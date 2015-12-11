@@ -212,7 +212,7 @@
 		validate: function(obj, names) {
 			var validProperties = [];
 			var invalidProperties = [];
-			var allProperties = [];
+			var properties = [];
 			var validatingProperties = [];
 			var failureReason = null;
 			var targetNames = names && (isArray(names) ? names : [names]);
@@ -305,14 +305,14 @@
 				} else {
 					(isInvalidProp ? invalidProperties : validProperties).push(prop);
 				}
-				allProperties.push(prop);
+				properties.push(prop);
 			}
 			var isValid = !invalidProperties.length;
 			var validationResult = new ValidationResult({
 				validProperties: validProperties,
 				invalidProperties: invalidProperties,
 				validatingProperties: validatingProperties,
-				allProperties: allProperties,
+				properties: properties,
 				failureReason: failureReason,
 				isAsync: isAsync,
 				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
@@ -588,7 +588,7 @@
 		}
 		this.validatingProperties.splice(this.validatingProperties.indexOf(prop), 1);
 
-		if (this.validCount + this.invalidCount === this.allProperties.length) {
+		if (this.validCount + this.invalidCount === this.properties.length) {
 			this.isAllValid = this.isValid;
 			this.dispatchEvent({
 				type: EVENT_VALIDATE_COMPLETE
@@ -776,10 +776,10 @@
 		 * バリデート対象のプロパティ名リスト
 		 *
 		 * @memberOf ValidationResult
-		 * @name allProperties
+		 * @name properties
 		 * @type {string[]}
 		 */
-		this.allProperties = result.allProperties;
+		this.properties = result.properties;
 
 		this.addEventListener(EVENT_VALIDATE, validateEventListener);
 
