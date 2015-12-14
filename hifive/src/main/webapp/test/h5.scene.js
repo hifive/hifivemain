@@ -488,33 +488,6 @@ $(function() {
 				}).always(start);
 	});
 
-	asyncTest('遷移先HTMLの一部分(コンテナ)を指定して遷移', function() {
-		var $container = $('<div>');
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		this.$fixture.append($container);
-		var container = h5.scene.createSceneContainer($container);
-		container.changeScene({
-			to: 'scenedata/page/from.html',
-			container: 'sub_from',
-			args: {
-				test: 'SUB'
-			}
-		});
-		gate({
-			func: function() {
-				return container._currentController.$find('h2').text() === 'SUB';
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			var controller = container._currentController;
-			strictEqual(controller.$find('h2').text(), 'SUB', 'シーンが変更されること');
-			ok(!controller.$find('h1').length, '指定コンテナ以外が表示されていないこと');
-			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
-			ok(controller.args.test === 'SUB', '遷移パラメータが渡されていること');
-		}).always(start);
-	});
-
 	asyncTest('シーンコンテナ取得機能の確認', function() {
 		var $container = $('<div data-h5-container="testContainer">');
 		var $scene = $('<div data-h5-scene>');

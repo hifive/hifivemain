@@ -1935,11 +1935,10 @@
 	 *
 	 * @private
 	 * @param source
-	 * @param container
 	 * @param method
 	 * @returns {Promise}
 	 */
-	function loadContentsFromUrl(source, container, method, serverArgs) {
+	function loadContentsFromUrl(source, method, serverArgs) {
 		var dfd = h5.async.deferred();
 
 		// TODO htmlだとスクリプトが実行されてしまうのでフルHTMLが返されるとよくない
@@ -1965,31 +1964,20 @@
 
 							var $dom = $(data);
 
-							if (container) {
-								var $container = findWithSelf($dom, '[' + DATA_H5_CONTAINER + '="'
-										+ container + '"]');
-								if ($container.length === 0) {
-									// ロードしたHTML内に指定のコンテナが存在しない場合はエラー
-									throwFwError(ERR_CODE_TARGET_CONTAINER_NOT_FOUND, [source,
-											container]);
-								}
-								$dom = $container.eq(0);
-							} else {
-								// TODO(鈴木)
-								// mainタグかdata-main-container属性要素があればその内容を対象とする。
-								// 通常のシーンコンテナ内にmainとdata-main-containerはない前提。
-								var main = findWithSelf($dom, '[' + DATA_H5_MAIN_CONTAINER + ']');
-								// TODO(鈴木)
-								// 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
-								// さすがに遷移先HTMLでのフラグ状態までは見られない。。
-								if (h5.settings.scene.autoCreateMainContainer) {
-									if (main.length === 0)
-										main = findWithSelf($dom, 'main');
-								}
-								if (main.length > 0) {
-									$dom = main.eq(0);
-									$dom.attr(DATA_H5_MAIN_CONTAINER, DATA_H5_MAIN_CONTAINER);
-								}
+							// TODO(鈴木)
+							// mainタグかdata-main-container属性要素があればその内容を対象とする。
+							// 通常のシーンコンテナ内にmainとdata-main-containerはない前提。
+							var main = findWithSelf($dom, '[' + DATA_H5_MAIN_CONTAINER + ']');
+							// TODO(鈴木)
+							// 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
+							// さすがに遷移先HTMLでのフラグ状態までは見られない。。
+							if (h5.settings.scene.autoCreateMainContainer) {
+								if (main.length === 0)
+									main = findWithSelf($dom, 'main');
+							}
+							if (main.length > 0) {
+								$dom = main.eq(0);
+								$dom.attr(DATA_H5_MAIN_CONTAINER, DATA_H5_MAIN_CONTAINER);
 							}
 
 							// ルート要素が複数か、単一でもコンテナ要素、またはBODYのダミーでなければコンテナ要素で囲む
@@ -2017,15 +2005,14 @@
 	 *
 	 * @private
 	 * @param source
-	 * @param container
 	 * @param method
 	 * @returns {Promise}
 	 */
-	function loadContents(source, container, method, serverArgs) {
+	function loadContents(source, method, serverArgs) {
 		var dfd;
 
 		if (isString(source)) {
-			dfd = loadContentsFromUrl(source, container, method, serverArgs);
+			dfd = loadContentsFromUrl(source, method, serverArgs);
 		} else {
 			dfd = h5.async.deferred();
 
@@ -2512,7 +2499,6 @@
 		 *            遷移用オプションの場合は、以下のプロパティを持ちます。
 		 *            </p>
 		 * @param {String} param.to 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
-		 * @param {String}[param.container] toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
 		 * @param {Any}[param.args] デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
 		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
 		 * @memberOf SceneContainerController
@@ -2685,10 +2671,7 @@
 
 					// TODO(鈴木) 遷移先指定がHTMLの場合
 
-					// TODO(鈴木) メインシーンコンテナの場合はcontainer指定は無効とする
-					var container = this.isMain ? null : param.container;
-
-					var loadPromise = loadContents(to, container, param.method, serverArgs);
+					var loadPromise = loadContents(to, param.method, serverArgs);
 
 					function callback(toElm) {
 
