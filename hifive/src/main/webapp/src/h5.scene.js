@@ -176,20 +176,18 @@
 	var ERR_CODE_CHANGE_SCENE_HASH_IN_TO = 100005;
 	/** エラーコード: メインシーンコンテナの遷移先にコントローラーを指定した(暫定対応) */
 	var ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER = 100006;
-	/** エラーコード: 指定された遷移効果が存在しない */
-	var ERR_CODE_TRANSITION_NOT_FOUND = 100007;
 	/** エラーコード: シーンコンテナ生成済みの要素でシーンコンテナを作成しようとした */
-	var ERR_CODE_CONTAINER_ALREADY_CREATED = 100008;
+	var ERR_CODE_CONTAINER_ALREADY_CREATED = 100007;
 	/** エラーコード: シーン遷移先HTMLのロードに失敗した */
-	var ERR_CODE_HTML_LOAD_FAILED = 100009;
+	var ERR_CODE_HTML_LOAD_FAILED = 100008;
 	/** コンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていない */
-	var ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND = 100010;
+	var ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND = 100009;
 	/** 遷移先URLが設定された最大長を超過した */
-	var ERR_CODE_URL_LENGTH_OVER = 100011;
+	var ERR_CODE_URL_LENGTH_OVER = 100010;
 	/** RouterでHistoryAPIが使えないためエラー */
-	var ERR_CODE_HISTORY_API_NOT_AVAILABLE = 100012;
+	var ERR_CODE_HISTORY_API_NOT_AVAILABLE = 100011;
 	/** RouterでURL履歴保持方法指定が不正 */
-	var ERR_CODE_URL_HISTORY_MODE_INVALID = 100013;
+	var ERR_CODE_URL_HISTORY_MODE_INVALID = 100012;
 
 	// =============================
 	// Development Only
@@ -209,7 +207,6 @@
 	errMsgMap[ERR_CODE_CHANGE_SCENE_TO_IS_NOT_STRING] = 'シーン遷移先は文字列で指定してください。to:{0}';
 	errMsgMap[ERR_CODE_CHANGE_SCENE_HASH_IN_TO] = 'シーン遷移先にハッシュは指定できません。to:{0}';
 	errMsgMap[ERR_CODE_MAIN_CHANGE_SCENE_TO_IS_CONTROLLER] = '現在、メインシーンコンテナのシーン遷移先にコントローラーは指定できません。to:{0}';
-	errMsgMap[ERR_CODE_TRANSITION_NOT_FOUND] = '指定された遷移効果は存在しません。transition:{0}';
 	errMsgMap[ERR_CODE_CONTAINER_ALREADY_CREATED] = '対象要素ですでにシーンコンテナが生成されているため、生成できません。';
 	errMsgMap[ERR_CODE_HTML_LOAD_FAILED] = 'シーン遷移先HTMLのロードに失敗しました。to:{0}';
 	errMsgMap[ERR_CODE_CONTAINER_CONTROLLER_NOT_FOUND] = '要素にコンテナ生成済みマークがあるにも関わらず所定のコントローラーがバインドされていません。';
@@ -2055,22 +2052,6 @@
 	var transitionTypeMap = {};
 
 	/**
-	 * シーン遷移効果登録
-	 *
-	 * @private
-	 * @param type
-	 * @param constructor
-	 */
-	function registerSceneTransition(type, constructor) {
-		if (transitionTypeMap[type]) {
-			//
-		}
-		transitionTypeMap[type] = constructor;
-	}
-
-	var DEFAULT_SCENE_TRANSITION_TYPE = 'default';
-
-	/**
 	 * デフォルトシーン遷移効果
 	 *
 	 * @private
@@ -2098,8 +2079,6 @@
 			this._ind.hide();
 		}
 	});
-
-	registerSceneTransition(DEFAULT_SCENE_TRANSITION_TYPE, defaultTransitionController);
 
 	/**
 	 * シーン遷移用パラメーターシリアライズ
@@ -2422,7 +2401,7 @@
 			wrapScene(element);
 
 			// TODO(鈴木) とりあえずデフォルトのtransitionを使用。
-			this._transition = this._createTransition();
+			this._transition = new defaultTransitionController();
 			this._transition.onChangeStart(element);
 
 			this.on('{rootElement}', EVENT_SCENE_CHANGE_REQUEST, this
@@ -2533,8 +2512,6 @@
 		 *            遷移用オプションの場合は、以下のプロパティを持ちます。
 		 *            </p>
 		 * @param {String} param.to 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
-		 * @param {String}[param.transition='default']
-		 *            遷移効果指定。指定しない場合は'default'が使用されます。(現在、'default'以外は指定できません)
 		 * @param {String}[param.container] toで指定される要素内の部分を表示する場合、その要素のdata-h5-container属性の値を指定します。
 		 * @param {Any}[param.args] デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
 		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
@@ -2555,7 +2532,7 @@
 
 			param = $.extend(true, {}, param);
 
-			this._transition = this._createTransition(param.transition);
+			this._transition = new defaultTransitionController();
 
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
 			var fromElm = (this._currentController || {}).rootElement;
@@ -2741,24 +2718,6 @@
 
 			}
 
-		},
-
-		/**
-		 * 遷移効果登録
-		 *
-		 * @private
-		 * @memberOf SceneContainerController
-		 * @param type
-		 */
-		_createTransition: function(type) {
-			var Transition = transitionTypeMap[type != null ? type : DEFAULT_SCENE_TRANSITION_TYPE];
-
-			if (!Transition) {
-				// 指定された遷移効果が存在しない場合はエラー
-				throwFwError(ERR_CODE_TRANSITION_NOT_FOUND, [type]);
-			}
-
-			return new Transition();
 		},
 
 		/**
