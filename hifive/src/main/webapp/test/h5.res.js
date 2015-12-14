@@ -756,151 +756,152 @@ $(function() {
 	//		strictEqual(h5.res.dependsOn('a.js').resolve(), 'hoge', 'resolversに追加したリゾルバが使用されること');
 	//	});
 
-	//=============================
-	// Definition
-	//=============================
-	module('リゾルバの選択', {
-		setup: function() {
-			// slice(0)して、元のresolversの中身を覚えておく
-			this.orgResolvers = h5.res.resolvers.slice(0);
-		},
-		teardown: function() {
-			// 元のresolversの中身にspliceを使って入れ替える(元に戻す)
-			var resolvers = h5.res.resolvers;
-			var spliceArgs = this.orgResolvers;
-			spliceArgs.unshift(0, resolvers.length);
-			resolvers.splice.apply(resolvers, spliceArgs);
-		},
-		orgResolvers: null
-	});
-
-	//=============================
-	// Body
-	//=============================
-	test('testに関数を指定した場合の使用するリゾルバの判定', function() {
-		var resolvers = h5.res.resolvers;
-		resolvers.splice(0, resolvers.length, {
-			test: function(resouceKey) {
-				strictEqual(resouceKey, 'hoge', 'test関数にリソースキーが渡されること');
-				return false;
-			},
-			resolver: function() {
-				ok(false, 'test関数がfalseを返した場合はリゾルバは実行されないこと');
-			}
-		}, {
-			test: function(resouceKey) {
-				ok(true, '2番目に登録されたリゾルバのtest関数が実行されること');
-				strictEqual(resouceKey, 'hoge', 'test関数にリソースキーが渡されること');
-			},
-			resolver: function() {
-				ok(true, 'test関数がfalseを返していない場合、そのリゾルバが実行されること');
-			}
-		}, {
-			test: function(resouceKey) {
-				ok(false, '実行されるリゾルバが決定した後のtest関数は実行されないこと');
-			},
-			resolver: function() {
-			// 何もしない
-			}
-		});
-		h5.res.dependsOn('hoge').resolve();
-	});
-
-	test('testに正規表現を指定した場合の使用するリゾルバの判定', function() {
-		var resolvers = h5.res.resolvers;
-		resolvers.splice(0, resolvers.length, {
-			test: /a/,
-			resolver: function() {
-				ok(false, 'testの正規表現にマッチしないリゾルバは実行されないこと');
-			}
-		}, {
-			test: /hoge/,
-			resolver: function() {
-				ok(true, 'testの正規表現にマッチするリゾルバが実行されること');
-				return true;
-			}
-		}, {
-			resolver: function() {
-				ok(false, '実行されるリゾルバが決まった場合、それ以降のリゾルバは実行されないこと');
-				return true;
-			}
-		});
-		h5.res.dependsOn('hoge').resolve();
-	});
-
-	test('typeを指定した場合の使用するリゾルバの判定', function() {
-		var resolvers = h5.res.resolvers;
-		resolvers.splice(0, resolvers.length, {
-			type: 'a',
-			test: function() {
-				ok(false, '指定されたtypeと異なるリゾルバのtest関数は実行されないこと');
-			},
-			resolver: function() {
-				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
-			}
-		}, {
-			type: 'b',
-			resolver: function() {
-				ok(true, 'typeが一致するリゾルバは実行されること');
-			}
-		});
-		h5.res.dependsOn('hoge').resolve('b');
-
-		var testExecuted = false;
-		resolvers.splice(0, resolvers.length, {
-			type: 'b',
-			test: function() {
-				textExecuted = true;
-			},
-			resolver: function() {
-				ok(!testExecuted, 'type指定された場合、test関数は実行されないこと');
-			}
-		});
-		h5.res.dependsOn('hoge').resolve('b');
-
-		var testExecuted = false;
-		resolvers.splice(0, resolvers.length, {
-			type: 'b',
-			test: /fuga/,
-			resolver: function() {
-				ok(!testExecuted, 'type指定された場合、testに指定した正規表現による判定は実行されないこと');
-			}
-		});
-		h5.res.dependsOn('hoge').resolve('b');
-	});
-
-
-	test('指定したtypeにマッチするリゾルバがない場合', 1, function() {
-		var resolvers = h5.res.resolvers;
-
-		resolvers.splice(0, resolvers.length, {
-			type: 'a',
-			resolver: function() {
-				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
-				return false;
-			}
-		});
-		strictEqual(h5.res.dependsOn('hoge').resolve('b'), false, 'resolve()はfalseを返すこと');
-	});
-
-	test('全てのリゾルバについてtestが条件を満たさない場合', 1, function() {
-		var resolvers = h5.res.resolvers;
-		resolvers.splice(0, resolvers.length, {
-			type: 'a',
-			test: function() {
-				return false;
-			},
-			resolver: function() {
-				ok(false, 'リゾルバはじっこうされないこと');
-			}
-		}, {
-			test: /fuga/,
-			resolver: function() {
-				ok(false, 'リゾルバはじっこうされないこと');
-			}
-		});
-		strictEqual(h5.res.dependsOn('hoge').resolve(), false, 'resolve()はfalseを返すこと');
-	});
+	// リゾルバの追加・削除は1.2.1で対応します issue#386
+	//	//=============================
+	//	// Definition
+	//	//=============================
+	//	module('リゾルバの選択', {
+	//		setup: function() {
+	//			// slice(0)して、元のresolversの中身を覚えておく
+	//			this.orgResolvers = h5.res.resolvers.slice(0);
+	//		},
+	//		teardown: function() {
+	//			// 元のresolversの中身にspliceを使って入れ替える(元に戻す)
+	//			var resolvers = h5.res.resolvers;
+	//			var spliceArgs = this.orgResolvers;
+	//			spliceArgs.unshift(0, resolvers.length);
+	//			resolvers.splice.apply(resolvers, spliceArgs);
+	//		},
+	//		orgResolvers: null
+	//	});
+	//
+	//	//=============================
+	//	// Body
+	//	//=============================
+	//	test('testに関数を指定した場合の使用するリゾルバの判定', function() {
+	//		var resolvers = h5.res.resolvers;
+	//		resolvers.splice(0, resolvers.length, {
+	//			test: function(resouceKey) {
+	//				strictEqual(resouceKey, 'hoge', 'test関数にリソースキーが渡されること');
+	//				return false;
+	//			},
+	//			resolver: function() {
+	//				ok(false, 'test関数がfalseを返した場合はリゾルバは実行されないこと');
+	//			}
+	//		}, {
+	//			test: function(resouceKey) {
+	//				ok(true, '2番目に登録されたリゾルバのtest関数が実行されること');
+	//				strictEqual(resouceKey, 'hoge', 'test関数にリソースキーが渡されること');
+	//			},
+	//			resolver: function() {
+	//				ok(true, 'test関数がfalseを返していない場合、そのリゾルバが実行されること');
+	//			}
+	//		}, {
+	//			test: function(resouceKey) {
+	//				ok(false, '実行されるリゾルバが決定した後のtest関数は実行されないこと');
+	//			},
+	//			resolver: function() {
+	//			// 何もしない
+	//			}
+	//		});
+	//		h5.res.dependsOn('hoge').resolve();
+	//	});
+	//
+	//	test('testに正規表現を指定した場合の使用するリゾルバの判定', function() {
+	//		var resolvers = h5.res.resolvers;
+	//		resolvers.splice(0, resolvers.length, {
+	//			test: /a/,
+	//			resolver: function() {
+	//				ok(false, 'testの正規表現にマッチしないリゾルバは実行されないこと');
+	//			}
+	//		}, {
+	//			test: /hoge/,
+	//			resolver: function() {
+	//				ok(true, 'testの正規表現にマッチするリゾルバが実行されること');
+	//				return true;
+	//			}
+	//		}, {
+	//			resolver: function() {
+	//				ok(false, '実行されるリゾルバが決まった場合、それ以降のリゾルバは実行されないこと');
+	//				return true;
+	//			}
+	//		});
+	//		h5.res.dependsOn('hoge').resolve();
+	//	});
+	//
+	//	test('typeを指定した場合の使用するリゾルバの判定', function() {
+	//		var resolvers = h5.res.resolvers;
+	//		resolvers.splice(0, resolvers.length, {
+	//			type: 'a',
+	//			test: function() {
+	//				ok(false, '指定されたtypeと異なるリゾルバのtest関数は実行されないこと');
+	//			},
+	//			resolver: function() {
+	//				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
+	//			}
+	//		}, {
+	//			type: 'b',
+	//			resolver: function() {
+	//				ok(true, 'typeが一致するリゾルバは実行されること');
+	//			}
+	//		});
+	//		h5.res.dependsOn('hoge').resolve('b');
+	//
+	//		var testExecuted = false;
+	//		resolvers.splice(0, resolvers.length, {
+	//			type: 'b',
+	//			test: function() {
+	//				textExecuted = true;
+	//			},
+	//			resolver: function() {
+	//				ok(!testExecuted, 'type指定された場合、test関数は実行されないこと');
+	//			}
+	//		});
+	//		h5.res.dependsOn('hoge').resolve('b');
+	//
+	//		var testExecuted = false;
+	//		resolvers.splice(0, resolvers.length, {
+	//			type: 'b',
+	//			test: /fuga/,
+	//			resolver: function() {
+	//				ok(!testExecuted, 'type指定された場合、testに指定した正規表現による判定は実行されないこと');
+	//			}
+	//		});
+	//		h5.res.dependsOn('hoge').resolve('b');
+	//	});
+	//
+	//
+	//	test('指定したtypeにマッチするリゾルバがない場合', 1, function() {
+	//		var resolvers = h5.res.resolvers;
+	//
+	//		resolvers.splice(0, resolvers.length, {
+	//			type: 'a',
+	//			resolver: function() {
+	//				ok(false, '指定されたtypeと異なるリゾルバは実行されないこと');
+	//				return false;
+	//			}
+	//		});
+	//		strictEqual(h5.res.dependsOn('hoge').resolve('b'), false, 'resolve()はfalseを返すこと');
+	//	});
+	//
+	//	test('全てのリゾルバについてtestが条件を満たさない場合', 1, function() {
+	//		var resolvers = h5.res.resolvers;
+	//		resolvers.splice(0, resolvers.length, {
+	//			type: 'a',
+	//			test: function() {
+	//				return false;
+	//			},
+	//			resolver: function() {
+	//				ok(false, 'リゾルバはじっこうされないこと');
+	//			}
+	//		}, {
+	//			test: /fuga/,
+	//			resolver: function() {
+	//				ok(false, 'リゾルバはじっこうされないこと');
+	//			}
+	//		});
+	//		strictEqual(h5.res.dependsOn('hoge').resolve(), false, 'resolve()はfalseを返すこと');
+	//	});
 
 	//=============================
 	// Definition
@@ -918,7 +919,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('子コントローラに未解決のコントローラを指定', 3, function() {
+	asyncTest('子コントローラに未解決のコントローラを指定', function() {
 		var c = h5.core.controller('#controllerTest', {
 			__name: 'TestController',
 			childController: h5.res.dependsOn('h5resdata.controller.ChildController'),
@@ -928,6 +929,9 @@ $(function() {
 			__init: function() {
 				strictEqual(this.childController.__name, 'h5resdata.controller.ChildController',
 						'__initの時点で子コントローラはインスタンス化されていること');
+				strictEqual(this.childController.childController.__name,
+						'h5resdata.controller.GrandChildController',
+						'__initの時点で子コントローラに更にdependsOnで記述された子コントローラがインスタンス化されていること');
 				ok(this.childController.isExecutedConstruct,
 						'__initの時点で子コントローラの__constructが実行されていること');
 			}
@@ -1123,156 +1127,4 @@ $(function() {
 			}
 		}).readyPromise.done(start);
 	});
-
-	//=============================
-	// Definition
-	//=============================
-	module('コントローラ化するときの依存関係解決(非同期)', {
-		setup: function() {
-			$('#qunit-fixture').append('<div id="controllerTest"></div>');
-			this.orgResolvers = h5.res.resolvers.slice(0);
-			var resolvers = h5.res.resolvers;
-			// 名前空間解決をスタブに変更
-			for (var i = 0, l = resolvers.length; i < l; i++) {
-				var resolver = resolvers[i];
-				if (resolver.type === 'namespace') {
-					resolvers[i] = this.asyncNamespaceResolver;
-					break;
-				}
-			}
-		},
-		teardown: function() {
-			// 元のresolversの中身にspliceを使って入れ替える(元に戻す)
-			var resolvers = h5.res.resolvers;
-			var spliceArgs = this.orgResolvers;
-			spliceArgs.unshift(0, resolvers.length);
-			resolvers.splice.apply(resolvers, spliceArgs);
-
-			clearController();
-			deleteProperty(window, 'h5resdata');
-		},
-		orgResolvers: null,
-		asyncNamespaceResolver: {
-			type: 'namespace',
-			resolver: function(resourceKey) {
-				// 非同期でオブジェクトを返すスタブ
-				var dfd = $.Deferred();
-				setTimeout(function() {
-					dfd.resolve(h5.u.obj.getByPath(resourceKey));
-				}, 0);
-				return dfd.promise();
-			}
-		}
-	});
-
-	//=============================
-	// Body
-	//=============================
-	asyncTest('子コントローラ及びロジックがDependencyで記述されているとき、__initの時点で全ての依存関係が解決していること', 6, function() {
-		h5.core.expose({
-			__name: 'h5resdata.controller.ChildController',
-			__construct: function() {
-				this.isExecutedConstruct = true;
-			}
-		});
-		h5.core.expose({
-			__name: 'h5resdata.logic.SampleLogic',
-			__construct: function() {
-				this.isExecutedConstruct = true;
-			},
-			__ready: function() {
-				this.isExecutedReady = true;
-			}
-		});
-		var c = h5.core.controller('#controllerTest', {
-			__name: 'TestController',
-			childController: h5.res.dependsOn('h5resdata.controller.ChildController'),
-			sampleLogic: h5.res.dependsOn('h5resdata.logic.SampleLogic'),
-			__construct: function() {
-				this.isExecutedConstruct = true;
-			},
-			__init: function() {
-				strictEqual(this.childController.__name, 'h5resdata.controller.ChildController',
-						'__initの時点で子コントローラはインスタンス化されていること');
-				ok(this.childController.isExecutedConstruct,
-						'__initの時点で子コントローラの__constructが実行されていること');
-				strictEqual(this.sampleLogic.__name, 'h5resdata.logic.SampleLogic',
-						'__initの時点でロジックはインスタンス化されていること');
-				ok(this.sampleLogic.isExecutedConstruct, '__initの時点でロジックの__constructが実行されていること');
-				ok(this.sampleLogic.isExecutedReady, '__initの時点でロジックの__readyが実行されていること');
-			}
-		});
-		ok(c.isExecutedConstruct, 'ルートコントローラの__constructは同期で実行されること');
-		c.readyPromise.done(start);
-	});
-
-	asyncTest(
-			'Dependencyで記述された定義オブジェクトが更にDependencyで記述された定義オブジェクトを持つとき、__initの時点で全ての依存関係が解決していること',
-			11, function() {
-				h5.core.expose({
-					__name: 'h5resdata.controller.ChildController',
-					childController: h5.res.dependsOn('h5resdata.controller.GrandChildController'),
-					__construct: function() {
-						this.isExecutedConstruct = true;
-					}
-				});
-				h5.core.expose({
-					__name: 'h5resdata.controller.GrandChildController',
-					__construct: function() {
-						this.isExecutedConstruct = true;
-					}
-				});
-				h5.core.expose({
-					__name: 'h5resdata.logic.SampleLogic',
-					childLogic: h5.res.dependsOn('h5resdata.logic.ChildLogic'),
-					__construct: function() {
-						this.isExecutedConstruct = true;
-					},
-					__ready: function() {
-						this.isExecutedReady = true;
-					}
-				});
-				h5.core.expose({
-					__name: 'h5resdata.logic.ChildLogic',
-					__construct: function() {
-						this.isExecutedConstruct = true;
-					},
-					__ready: function() {
-						this.isExecutedReady = true;
-					}
-				});
-				var c = h5.core.controller('#controllerTest', {
-					__name: 'TestController',
-					childController: h5.res.dependsOn('h5resdata.controller.ChildController'),
-					sampleLogic: h5.res.dependsOn('h5resdata.logic.SampleLogic'),
-					__construct: function() {
-						this.isExecutedConstruct = true;
-					},
-					__init: function() {
-						strictEqual(this.childController.__name,
-								'h5resdata.controller.ChildController',
-								'__initの時点で子コントローラはインスタンス化されていること');
-						ok(this.childController.isExecutedConstruct,
-								'__initの時点で子コントローラの__constructが実行されていること');
-						strictEqual(this.childController.childController.__name,
-								'h5resdata.controller.GrandChildController',
-								'__initの時点で孫コントローラはインスタンス化されていること');
-						ok(this.childController.childController.isExecutedConstruct,
-								'__initの時点で孫コントローラの__constructが実行されていること');
-						strictEqual(this.sampleLogic.__name, 'h5resdata.logic.SampleLogic',
-								'__initの時点でロジックはインスタンス化されていること');
-						ok(this.sampleLogic.isExecutedConstruct,
-								'__initの時点でロジックの__constructが実行されていること');
-						ok(this.sampleLogic.isExecutedReady, '__initの時点でロジックの__readyが実行されていること');
-						strictEqual(this.sampleLogic.childLogic.__name,
-								'h5resdata.logic.ChildLogic', '__initの時点で子ロジックはインスタンス化されていること');
-						ok(this.sampleLogic.childLogic.isExecutedConstruct,
-								'__initの時点で子ロジックの__constructが実行されていること');
-						ok(this.sampleLogic.childLogic.isExecutedReady,
-								'__initの時点で子ロジックの__readyが実行されていること');
-					}
-				});
-				ok(c.isExecutedConstruct, 'ルートコントローラの__constructは同期で実行されること');
-				c.readyPromise.done(start);
-			});
 });

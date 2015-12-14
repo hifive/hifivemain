@@ -718,10 +718,7 @@
 	 */
 	h5.u.obj.expose('h5.res', {
 		dependsOn: dependsOn,
-		addResolver: addResolver,
 		isDependency: isDependency,
-		urlLoader: urlLoader,
-		resolvers: resolvers,
 		register: register,
 		get: get
 	});
