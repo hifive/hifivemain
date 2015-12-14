@@ -157,7 +157,7 @@ $(function() {
 
 	test('assertNotNull', function() {
 		strictEqual(vf.assertNotNull(null), false, '引数: null 結果: false');
-		strictEqual(vf.assertNotNull(undefined), false, '引数: undefined 結果: false');
+		strictEqual(vf.assertNotNull(undefined), true, '引数: undefined 結果: true');
 		strictEqual(vf.assertNotNull(false), true, '引数: false 結果: true');
 		strictEqual(vf.assertNotNull(true), true, '引数: true 結果: true');
 		strictEqual(vf.assertNotNull(0), true, '引数: 0 結果: true');
@@ -493,7 +493,7 @@ $(function() {
 		strictEqual(validator.validate({}).isValid, true, 'assertNotNull指定されているプロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: undefined
-		}).isValid, false, 'undefinedならinvalid');
+		}).isValid, true, 'undefinedならvalid');
 	});
 
 	test('pattern', function() {
