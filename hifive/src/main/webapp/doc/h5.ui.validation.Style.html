@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Namespace: str</title>
+    <title>JSDoc: Class: Style</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -34,7 +34,7 @@
 	    </div>
 	</nav>
 	<div id="main">
-	    <h1 class="page-title">Namespace: str</h1>
+	    <h1 class="page-title">Class: Style</h1>
 	    
 
 
@@ -45,9 +45,7 @@
 <header>
     
         <h2>
-            <span class="ancestors"><a href="h5.html">h5</a><a href="h5.u.html">.u</a>.</span>
-        
-        str
+        Style
         </h2>
         
     
@@ -58,7 +56,28 @@
     
         
 
-        
+    
+
+    <h4 class="name" id="Style"><span class="type-signature"></span>new Style<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    バリデートエラー箇所の要素にクラスを追加するためのFormControllerプラグイン
+</div>
+
+
+
+
+
+
+
+
+
+
+
 
 
 <dl class="details">
@@ -90,7 +109,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line1446">line 1446</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line361">line 361</a>
     </li></ul></dd>
     
 
@@ -102,7 +121,20 @@
 </dl>
 
 
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     </div>
 
@@ -126,14 +158,17 @@
 
     
 
-    <h4 class="name" id=".endsWith"><span class="type-signature">(static) </span>endsWith<span class="signature">(str, suffix)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    <h4 class="name" id=".onFocus"><span class="type-signature">(static) </span>onFocus<span class="signature">(element, name, validationResult)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    文字列のサフィックスが指定したものかどうかを返します。
+    フォーム部品フォーカス時に呼ばれる
+<p>
+イベントの発生したフォーム部品のバリデート結果を適用
+</p>
 </div>
 
 
@@ -169,13 +204,13 @@
 
         <tr>
             
-                <td class="name"><code>str</code></td>
+                <td class="name"><code>element</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">DOM</span>
 
 
             
@@ -185,20 +220,20 @@
 
             
 
-            <td class="description last">文字列</td>
+            <td class="description last">イベント発生要素</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>suffix</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
             
@@ -208,7 +243,30 @@
 
             
 
-            <td class="description last">サフィックス</td>
+            <td class="description last">イベント発生要素の名前(グループの場合はグループ名)</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>validationResult</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="ValidationResult.html">ValidationResult</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
         </tr>
 
     
@@ -249,7 +307,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line708">line 708</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line490">line 490</a>
     </li></ul></dd>
     
 
@@ -272,28 +330,6 @@
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    文字列のサフィックスが指定したものかどうか
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Boolean</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -302,14 +338,17 @@
 
     
 
-    <h4 class="name" id=".escapeHtml"><span class="type-signature">(static) </span>escapeHtml<span class="signature">(str)</span><span class="type-signature"> &rarr; {String}</span></h4>
+    <h4 class="name" id=".onKeyup"><span class="type-signature">(static) </span>onKeyup<span class="signature">(element, name, validationResult)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    指定されたHTML文字列をエスケープします。
+    フォーム部品のkeyup時に呼ばれる
+<p>
+イベントの発生したフォーム部品のバリデート結果を適用
+</p>
 </div>
 
 
@@ -345,13 +384,13 @@
 
         <tr>
             
-                <td class="name"><code>str</code></td>
+                <td class="name"><code>element</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">DOM</span>
 
 
             
@@ -361,7 +400,53 @@
 
             
 
-            <td class="description last">HTML文字列</td>
+            <td class="description last">イベント発生要素</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">イベント発生要素の名前(グループの場合はグループ名)</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>validationResult</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="ValidationResult.html">ValidationResult</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
         </tr>
 
     
@@ -402,7 +487,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line824">line 824</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line506">line 506</a>
     </li></ul></dd>
     
 
@@ -425,28 +510,6 @@
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    エスケープ済HTML文字列
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">String</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -455,14 +518,17 @@
 
     
 
-    <h4 class="name" id=".format"><span class="type-signature">(static) </span>format<span class="signature">(str, var_args)</span><span class="type-signature"> &rarr; {String}</span></h4>
+    <h4 class="name" id=".onValidate"><span class="type-signature">(static) </span>onValidate<span class="signature">(result)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    第一引数の文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第2引数以降に指定されたパラメータに置換します。<p>また、{0.name}のように記述すると第2引数のnameプロパティの値で置換を行います。"0."は引数の何番目かを指し、第2引数を0としてそれ以降の引数のプロパティの値を採ることもできます。</p><p>"0."は省略して単に{name}のように記述することもできます。また、{0.birthday.year}のように入れ子になっているプロパティを辿ることもできます。</p><p>"."の代わりに"[]"を使ってプロパティにアクセスすることもできます。以下、使用例です。</p><p><pre class="sh_javascript"><code>var myValue = 10;h5.u.str.format('{0} is {1}', 'myValue', myValue);</code></pre>実行結果: myValue is 10</p><p><pre class="sh_javascript"><code>h5.u.str.format('{name} is at {address}', {	name: 'Taro',	address: 'Yokohama'});</code></pre>実行結果: Taro is at Yokohama</p><p><pre class="sh_javascript"><code>h5.u.str.format('{0} is born on {1.birthday.year}.', 'Taro', {	birthday: {		year: 1990	}});</code></pre>実行結果: Taro is born on 1990.</p><p><pre class="sh_javascript"><code>h5.u.str.format('{0.name} likes {0.hobby[0]}. {1.name} likes {1.hobby[0]}.', {	name: 'Taro',	hobby: ['Traveling', 'Shopping']}, {	name: 'Hanako',	hobby: ['Chess']});</code></pre>実行結果: Taro likes Traveling. Hanako likes Chess.</p><p><pre class="sh_javascript"><code>h5.u.str.format('{0.0},{0.1},{0.2},…(長さ{length})', [2, 3, 5, 7]);// 以下と同じh5.u.str.format('{0[0]},{0[1]},{0[2]},…(長さ{0.length})', [2, 3, 5, 7]);</code></pre>実行結果: 2,3,5,…(長さ4)</p>
+    バリデート時に呼ばれる
+<p>
+<a href="ValidationResult.html">ValidationResult</a>から、各要素にクラスを設定する
+</p>
 </div>
 
 
@@ -498,13 +564,13 @@
 
         <tr>
             
-                <td class="name"><code>str</code></td>
+                <td class="name"><code>result</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type"><a href="ValidationResult.html">ValidationResult</a></span>
 
 
             
@@ -514,30 +580,7 @@
 
             
 
-            <td class="description last">文字列</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>var_args</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Any</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">可変長引数。ただし1つ目にオブジェクトまたは配列を指定した場合はその中身で置換</td>
+            <td class="description last"></td>
         </tr>
 
     
@@ -578,7 +621,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line723">line 723</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line469">line 469</a>
     </li></ul></dd>
     
 
@@ -601,28 +644,6 @@
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    フォーマット済み文字列
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">String</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -631,14 +652,17 @@
 
     
 
-    <h4 class="name" id=".startsWith"><span class="type-signature">(static) </span>startsWith<span class="signature">(str, prefix)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    <h4 class="name" id=".reset"><span class="type-signature">(static) </span>reset<span class="signature">(globalSetting, setting)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    文字列のプレフィックスが指定したものかどうかを返します。
+    プラグインのリセット
+<p>
+全てのフォームコントロール部品からプラグインが追加したクラスを全て削除します
+</p>
 </div>
 
 
@@ -674,15 +698,10 @@
 
         <tr>
             
-                <td class="name"><code>str</code></td>
+                <td class="name"><code>globalSetting</code></td>
             
 
             <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
             
             </td>
 
@@ -690,22 +709,17 @@
 
             
 
-            <td class="description last">文字列</td>
+            <td class="description last"></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>prefix</code></td>
+                <td class="name"><code>setting</code></td>
             
 
             <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
             
             </td>
 
@@ -713,7 +727,7 @@
 
             
 
-            <td class="description last">プレフィックス</td>
+            <td class="description last"></td>
         </tr>
 
     
@@ -754,7 +768,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line694">line 694</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line520">line 520</a>
     </li></ul></dd>
     
 
@@ -777,28 +791,203 @@
 
 
 
-<h5>Returns:</h5>
+
+
 
         
-<div class="param-desc">
-    文字列のプレフィックスが指定したものかどうか
+            
+
+    
+
+    <h4 class="name" id=".setSetting"><span class="type-signature">(static) </span>setSetting<span class="signature">(setting)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    プラグイン設定を行う
+<p>
+styleプラグインには以下の設定項目があります。
+</p>
+<table><thead>
+<tr>
+<th>設定項目</th>
+<th>型</th>
+<th>説明</th>
+<th>デフォルト値</th>
+</tr>
+</thead><tbody>
+<tr>
+<th>off</th>
+<td>boolean</td>
+<td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
+<td>false</td>
+</tr>
+<tr>
+<th>errorClassName</th>
+<td>string</td>
+<td>バリデートエラー時に適用するクラス名</td>
+<td>なし</td>
+</tr>
+<tr>
+<th>successClassName</th>
+<td>string</td>
+<td>バリデート成功時に適用するクラス名</td>
+<td>なし</td>
+</tr>
+<tr>
+<th>validatingClassName</th>
+<td>string</td>
+<td>非同期バリデートの結果待機時に適用するクラス名</td>
+<td>なし</td>
+</tr>
+<tr>
+<th>replaceElement</th>
+<td>DOM|jQuery|string|function</td>
+<td>クラス適用対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
+<td>各プロパティのフォーム部品要素</td>
+</tr>
+</tbody></table>
+<p>
+各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
+</p>
+
+<pre class="sh_javascript"><code>
+{
+	errorClassName: 'error', // バリデートエラー時に適用するクラス名
+	successClassName: 'success', // バリデート成功時に適用するクラス名
+	validatingClassName: 'validating', // 非同期バリデート待ちの場合に適用するクラス名
+	property: { // 各プロパティ固有の設定
+		userid: { // プルパティ名
+			errorClassName: 'id-error',
+			replaceElement: function(element) {
+				// クラス設定対象要素は親要素にする
+				return $(element).parent();
+			}
+		},
+		name: {
+			off: true
+		// nameプロパティについてプラグインによるクラス設定を無効
+		}
+	}
+}
+</code></pre>
 </div>
 
 
 
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
         
-<span class="param-type">Boolean</span>
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>setting</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
 
 
-    </dd>
-</dl>
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">styleプラグイン設定オブジェクト</td>
+        </tr>
 
     
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line456">line 456</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

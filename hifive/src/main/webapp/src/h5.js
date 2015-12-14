@@ -312,25 +312,25 @@
 		 */
 		trackstartTouchAction: 'none',
 
+		/**
+		 * h5.resモジュールの設定
+		 * <p>
+		 * 以下のプロパティの設定を行ってください
+		 * </p>
+		 * <dl>
+		 * <dt>baseUrl</dt>
+		 * <dd>type:string|null</dd>
+		 * <dd>ベースURL。デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)</dd>
+		 * <dt>timeoutTime</dt>
+		 * <dd>type:integer</dd>
+		 * <dd>タイムアウト時間設定(ms)を設定。タイムアウトに設定された時間待機して、依存解決ができない場合、resolve()は失敗します。デフォルトは10000(10秒)です。</dd>
+		 * </dl>
+		 *
+		 * @memberOf h5.settings
+		 * @type Object
+		 */
 		res: {
-			/**
-			 * リソースを取得時のカレントパス
-			 * <p>
-			 * デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)
-			 * </p>
-			 *
-			 * @memberOf h5.settings.res
-			 */
 			baseUrl: null,
-
-			/**
-			 * タイムアウト時間設定(ms)
-			 * <p>
-			 * タイムアウトに設定された時間待機して、依存解決ができない場合、resolve()は失敗します。デフォルトは10000(10秒)です。
-			 * </p>
-			 *
-			 * @memberOf h5.settings.res
-			 */
 			timeoutTime: 10000
 		}
 	};

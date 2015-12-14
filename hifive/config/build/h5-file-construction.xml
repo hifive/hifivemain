@@ -169,7 +169,7 @@
 			<dependency name="util" />
 		</dependencies>
 		<files>
-			<file name="h5.validation.func.js" />
+			<file name="h5.validation.js" />
 		</files>
 		<cssfiles>
 		</cssfiles>

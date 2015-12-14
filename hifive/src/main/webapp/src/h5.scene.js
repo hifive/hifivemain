@@ -3096,63 +3096,97 @@
 	// TODO(鈴木) 暫定。とりあえず設定を有効化しました
 	/**
 	 * シーン機能の設定
+	 * <p>
+	 * 以下のプロパティの設定を行ってください。
+	 * </p>
+	 * <dl>
+	 * <dt>followTitle</dt>
+	 * <dd>type:boolean</dd>
+	 * <dd>メインシーンコンテナでブラウザタイトルの追従を行うか(デフォルトtrue)</dd>
+	 * <dt>clientQueryStringPrefix</dt>
+	 * <dd>type:string</dd>
+	 * <dd>シーン遷移パラメーター識別用プレフィクス。デフォルト"_cl_"</dd>
+	 * <dt>clientFWQueryStringPrefix</dt>
+	 * <dd>type:string</dd>
+	 * <dd>シーン遷移パラメーター識別用プレフィクス(FW用)。デフォルト"_clfw_"</dd>
+	 * <dt>urlHistoryMode</dt>
+	 * <dd>type:string</dd>
+	 * <dd>メインシーンコンテナURL履歴保持方法({@link h5.scene.urlHistoryMode}参照)。デフォルトは"'history"</dd>
+	 * <dt>clientQueryStringPrefix</dt>
+	 * <dd>type:string</dd>
+	 * <dd>シーン遷移パラメーター識別用プレフィクス</dd>
+	 * <dt>clientFWQueryStringPrefix</dt>
+	 * <dd>type:string</dd>
+	 * <dd>シーン遷移パラメーター識別用プレフィクス(FW用)</dd>
+	 * <dt>urlMaxLength</dt>
+	 * <dd>type:integer</dd>
+	 * <dd>シーン遷移先URL最大長。デフォルト1800</dd>
+	 * <dt>notReshowable</dt>
+	 * <dd>type:Object</dd>
+	 * <dd>再表示不可画面コントローラ定義。再表示不可画面へ遷移した時にバインドするコントローラを任意に設定できます。デフォルトは再表示不可画面時のメッセージを表示するだけのコントローラです</dd>
+	 * <dt>notReshowableMessage</dt>
+	 * <dd>type:string</dd>
+	 * <dd>再表示不可画面時のメッセージ。デフォルトは"この画面は再表示できません。"
+	 * <dt>baseUrl</dt>
+	 * <dd>type:string|null</dd>
+	 * <dd>ベースURL。デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)</dd>
+	 * <dt>routes</dt>
+	 * <dd>type:object[]</dd>
+	 * <dd>ルーティングテーブル</dd>
+	 * <dt>autoInit</dt>
+	 * <dd>type:boolean</dd>
+	 * <dd>ページロード時にドキュメント全体を探索して、DATA属性によるコントローラーバインドとシーンコンテナ生成を行うかどうか。デフォルトfalse</dd>
+	 * <dt>autoCreateMainContainer</dt>
+	 * <dd>type:boolean</dd>
+	 * <dd>autoInitにtrueを設定した時のメインシーンコンテナ作成時の設定。mainタグ要素をメインシーンコンテナとして扱うかどうかを設定します。デフォルトはfalse</dd>
+	 * </dl>
 	 *
-	 * @namespace h5.settings.scene
+	 * @memberOf h5.settings
+	 * @name scene
+	 * @type {Object}
 	 */
 	h5.settings.scene = h5.settings.scene || {
 		// デフォルト設定を記述
-		/**
-		 * メインシーンコンテナでブラウザタイトルの追従を行うか(デフォルトtrue)
-		 *
-		 * @type {boolean}
-		 * @memberOf h5.setting.scene
-		 * @name followTitle
-		 */
-		followTitle: true
+		followTitle: true,
+		clientQueryStringPrefix: DEFAULT_CLIENT_QUERY_STRING_PREFIX,
+		clientFWQueryStringPrefix: DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX,
+		urlHistoryMode: URL_HISTORY_MODE.HISTORY,
+		urlMaxLength: URL_MAX_LENGTH,
+		notReshowable: NotReshowableController,
+		notReshowableMessage: NOT_RESHOWABLE_MESSAGE,
+		routes: null,
+		baseUrl: null,
+		autoInit: false,
+		autoCreateMainContainer: false
 	};
 	$(function() {
 
-		// TODO(鈴木) シーン遷移パラメーター識別用プレフィクス
-		if (h5.settings.scene.clientQueryStringPrefix) {
-			clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
-		}
-		// TODO(鈴木) 正規表現用文字列作成
+		// シーン遷移パラメーター識別用プレフィクス
+		clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
+
+		//  正規表現用文字列作成
 		clientQueryStringPrefixForRegExp = clientQueryStringPrefix.replace(/\\/g, '\\\\');
 
-		// TODO(鈴木) シーン遷移パラメーター識別用プレフィクス(FW用)
-		if (h5.settings.scene.clientFWQueryStringPrefix) {
-			clientFWQueryStringPrefix = h5.settings.scene.clientFWQueryStringPrefix;
-		}
-		// TODO(鈴木) 正規表現用文字列作成
+		// シーン遷移パラメーター識別用プレフィクス(FW用)
+		clientFWQueryStringPrefix = h5.settings.scene.clientFWQueryStringPrefix;
+
+		// 正規表現用文字列作成
 		clientFWQueryStringPrefixForRegExp = clientFWQueryStringPrefix.replace(/\\/g, '\\\\');
 
-		// TODO(鈴木) メインシーンコンテナURL履歴保持方法
-		if (h5.settings.scene.urlHistoryMode != null) {
-			urlHistoryMode = h5.settings.scene.urlHistoryMode;
-		}
+		// メインシーンコンテナURL履歴保持方法
+		urlHistoryMode = h5.settings.scene.urlHistoryMode;
 
-		// TODO(鈴木) シーン遷移先URL最大長
-		var settedUrlMaxLength = h5.settings.scene.urlMaxLength;
-		if (settedUrlMaxLength != null && typeof settedUrlMaxLength === 'number') {
-			urlMaxLength = h5.settings.scene.urlMaxLength;
-		}
+		// シーン遷移先URL最大長
+		urlMaxLength = parseInt(h5.settings.scene.urlMaxLength);
 
-		// TODO(鈴木) 再表示不可画面
-		if (h5.settings.scene.notReshowable != null) {
-			notReshowable = h5.settings.scene.notReshowable;
-		} else {
-			notReshowable = NotReshowableController;
-		}
+		//  再表示不可画面
+		notReshowable = h5.settings.scene.notReshowable || NotReshowableController;
 
-		// TODO(鈴木) 再表示不可画面メッセージ
-		if (h5.settings.scene.notReshowableMessage != null) {
-			notReshowableMessage = h5.settings.scene.notReshowableMessage;
-		}
+		// 再表示不可画面メッセージ
+		notReshowableMessage = h5.settings.scene.notReshowableMessage;
 
-		// TODO(鈴木) ベースURL
-		if (h5.settings.scene.baseUrl != null) {
-			baseUrl = h5.settings.scene.baseUrl;
-		}
+		// ベースURL
+		baseUrl = h5.settings.scene.baseUrl;
 
 		// TODO(鈴木) h5.settings.scene.routesからルーティングテーブルマージ
 		var routes = [];
@@ -3214,7 +3248,7 @@
 		});
 
 
-		// TODO(鈴木) autoInit=trueの場合に全体を探索し、DATA属性によりコントローラーバインドとシーンコンテナ生成を行う。
+		// autoInit=trueの場合に全体を探索し、DATA属性によりコントローラーバインドとシーンコンテナ生成を行う。
 		if (h5.settings.scene.autoInit) {
 			init();
 		}
