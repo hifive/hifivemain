@@ -2353,6 +2353,18 @@
 		_first: true,
 
 		/**
+		 * このシーンコンテナが現在表示しているシーンのタイトル
+		 * <p>
+		 * getTitle()で取得できる
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf SceneContainerController
+		 * @type {string}
+		 */
+		_title: '',
+
+		/**
 		 * __init
 		 *
 		 * @private
@@ -2369,7 +2381,7 @@
 			var that = this;
 
 			this.isMain = !!isMain;
-			this.followTitle = args.followTitle;
+			this.followTitle = isMain && args.followTitle;
 
 			if (this.isMain) {
 				if (mainContainer) {
@@ -2413,12 +2425,11 @@
 				this._router.start();
 
 				// タイトルの設定
-				if (this.followTitle) {
-					this._setTitleFromCurrentScene();
+				var title = this._getTitleFromCurrentScene();
+				if (title != null) {
+					this.setTitle(this._getTitleFromCurrentScene());
 				}
-
 			} else {
-
 				// TODO(鈴木) カレントとなるシーンを探索してscan
 				scanForContainer(element).done(function(controller) {
 					that._currentController = controller;
@@ -2596,6 +2607,29 @@
 		},
 
 		/**
+		 * 現在のシーンのタイトルの設定
+		 *
+		 * @memberOf SceneContainerController
+		 * @param {string} title タイトル文字列
+		 */
+		setTitle: function(title) {
+			this._title = title;
+			if (this.followTitle) {
+				document.title = title;
+			}
+		},
+
+		/**
+		 * 現在のシーンのタイトルの取得
+		 *
+		 * @memberOf SceneContainerController
+		 * @returns {string} 現在のシーンのタイトル
+		 */
+		getTitle: function() {
+			return this._title;
+		},
+
+		/**
 		 * シーン遷移内部処理
 		 *
 		 * @private
@@ -2721,25 +2755,25 @@
 
 			that._currentController = toController;
 
-			if (this.followTitle) {
-				// タイトルを決定する
-
-				var title = this._changeSceneParam.title;
-				if (title == null) {
-					// 指定無しの場合
-					var isController = controllerRegexp.test(this._changeSceneParam.to);
-					if (isController && toController[CONTROLLER_SCENE_TITLE] != null) {
-						// 遷移先指定がコントローラの場合、プロパティから取得
-						document.title = toController[CONTROLLER_SCENE_TITLE];
-					} else {
-						// 遷移先指定がコントローラでない場合(=ページURLの場合)は表示されている要素から設定
-						this._setTitleFromCurrentScene();
-					}
-					var $rootElement = $(toController.rootElement);
+			// タイトルを決定する
+			var title = this._changeSceneParam.title;
+			if (title == null) {
+				// 指定無しの場合
+				var isController = controllerRegexp.test(this._changeSceneParam.to);
+				if (isController && toController[CONTROLLER_SCENE_TITLE] != null) {
+					// 遷移先指定がコントローラの場合、プロパティから取得
+					this.setTitle(toController[CONTROLLER_SCENE_TITLE]);
 				} else {
-					document.title = title;
+					// 遷移先指定がコントローラでない場合(=ページURLの場合)は表示されている要素から設定
+					var title = this._getTitleFromCurrentScene();
+					if (title != null) {
+						this.setTitle(title);
+					}
 				}
+			} else {
+				this.setTitle(title);
 			}
+
 			this._changeSceneParam = null;
 
 			this._transition.onChange(this.rootElement, toElm).done(this.own(function() {
@@ -2772,19 +2806,19 @@
 		 *
 		 * @private
 		 * @memberOf SceneContainerController
+		 * @returns {string|undefined} シーン要素から取得したタイトル文字列(未定義の場合はundefined)
 		 */
-		_setTitleFromCurrentScene: function() {
+		_getTitleFromCurrentScene: function() {
 			var elm = this._currentController.rootElement;
 			var dataTitle = $(elm).find('[data-' + DATA_SCENE_TITLE + ']').data(DATA_SCENE_TITLE);
 			if (dataTitle != null) {
 				// data-title指定
-				document.title = dataTitle;
-			} else {
-				// titleタグ
-				var $title = $(elm).find('title');
-				if ($title.length) {
-					document.title = $title.text();
-				}
+				return dataTitle;
+			}
+			// titleタグ
+			var $title = $(elm).find('title');
+			if ($title.length) {
+				return $title.text();
 			}
 		},
 

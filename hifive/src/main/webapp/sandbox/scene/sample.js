@@ -8,10 +8,8 @@ $(function() {
 		},
 		'.navigate click': function(ctx, $el) {
 			var target = $el.data('target');
-			var title = $('input[name="title-test"]').val() || null;
 			this.scene.navigate({
 				to: target,
-				title: title
 			});
 		}
 	});
@@ -36,17 +34,22 @@ $(function() {
 		},
 		'.changeScene click': function(ctx, $el) {
 			var target = $el.data('target');
-			var title = $('input[name="title-test"]').val() || null;
 			var promise = this.container.changeScene({
-				to: target,
-				title: title
+				to: target
 			});
 			promise.done(function() {
 				console.log('done');
 			});
 		},
-		'.reload click':function(){
+		'.reload click': function() {
 			location.href = this._orgLocation;
+		},
+		'.setTitle click': function() {
+			var title = $('input[name="title-test"]').val();
+			this.container.setTitle(title);
+		},
+		'.getTitle click': function() {
+			alert(this.container.getTitle());
 		}
 	});
 	h5.core.controller('body', sample.PageController);
