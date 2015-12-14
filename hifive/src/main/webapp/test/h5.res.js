@@ -124,12 +124,12 @@ $(function() {
 	});
 
 	asyncTest('タイムアウト', function() {
-		var orgTimeoutTime = h5.settings.res.timeoutTime;
-		h5.settings.res.timeoutTime = 1;
+		var orgTimeoutTime = h5.settings.res.resolveTimeout;
+		h5.settings.res.resolveTimeout = 1;
 		h5.res.dependsOn('h5resdata.controller.NoExposeController').resolve().fail(function(e) {
 			strictEqual(e.code, ERR.ERR_CODE_RESOLVE_TIMEOUT, e.message);
 		}).always(function() {
-			h5.settings.res.timeoutTime = orgTimeoutTime;
+			h5.settings.res.resolveTimeout = orgTimeoutTime;
 			start();
 		});
 	});

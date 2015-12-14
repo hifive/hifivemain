@@ -247,6 +247,50 @@
 		}
 	};
 
+	/**
+	 * キャッシュ機構を使用してURLへアクセスします
+	 *
+	 * @memberOf h5.res
+	 * @name urlLoader
+	 */
+	var urlLoader = {
+		/**
+		 * 指定されたテンプレートパスからテンプレートを非同期で読み込みます。 テンプレートパスがキャッシュに存在する場合はキャッシュから読み込みます。
+		 *
+		 * @private
+		 * @param {String} resourcePath リソースパス
+		 * @returns {Object} Promiseオブジェクト
+		 */
+		load: function(resourcePath) {
+			var absolutePath = toAbsoluteUrl(resourcePath);
+			// キャッシュにある場合
+			if (cacheManager.cache[absolutePath]) {
+				// キャッシュから取得したリソースを返す
+				// 新しくDeferredを作ってプロミスを返す
+				return getDeferred().resolve(cacheManager.getResourceFromCache(absolutePath))
+						.promise();
+			}
+			// キャッシュにない場合
+			// urlからロードして、そのプロミスを返す
+			return cacheManager.loadResourceFromPath(resourcePath);
+		},
+
+		/**
+		 * URL(path)を指定してキャッシュをクリアする
+		 *
+		 * @param {String} path
+		 */
+		clearCache: function(path) {
+			cacheManager.clearCache(path);
+		},
+		/**
+		 * URLキャッシュをすべてクリアする
+		 */
+		clearAllCache: function() {
+			cacheManager.clearAllCache();
+		}
+	};
+
 	// =============================
 	// Functions
 	// =============================
@@ -354,6 +398,7 @@
 	/**
 	 * カレントを考慮したファイルパスの取得
 	 *
+	 * @private
 	 * @param {String} filePath
 	 * @returns {String}
 	 */
@@ -388,58 +433,9 @@
 	}
 
 	/**
-	 * リソースの登録
-	 *
-	 * @param {String} key
-	 * @param {Any} value
-	 * @param {Boolean} [exposeToGlobal=false] グローバルに公開するか
-	 * @param {String} [exposureName=null] グローバル公開名
-	 */
-	function register(key, value, exposeToGlobal, exposureName) {
-		if (exposeToGlobal) {
-			if (exposureName) {
-				h5.u.obj.expose(exposureName, value);
-			} else {
-				h5.u.obj.expose(key, value);
-			}
-		}
-		// コンポーネントマップに登録
-		componentMap[key] = value;
-		// このリソースキーに紐づくdeferredが既に解決済み(waitingInfoから削除済み)なら何もしない
-		var waitingInfo = waitingInfoMap[key];
-		if (!waitingInfo) {
-			return;
-		}
-		delete waitingInfoMap[key];
-		var dfd = waitingInfo.deferred;
-		var timer = waitingInfo.timer;
-		if (timer) {
-			// タイムアウト待ちタイマーをクリア
-			clearTimeout(timer);
-		}
-
-		// 読込後の処理(register()呼び出し後)等が実行された後に、
-		// ユーザコードのdoneハンドラが動作するようにするためsetTimeout使用
-		// 既に動作しているタイマーがあれば新たにタイマーは作らない
-		waitingForImmediateDeferred.push({
-			dfd: dfd,
-			value: value
-		});
-		if (!waitingImmediateTimer) {
-			waitingImmediateTimer = setTimeout(function() {
-				waitingImmediateTimer = null;
-				var dfds = waitingForImmediateDeferred
-						.splice(0, waitingForImmediateDeferred.length);
-				for (var i = 0, l = dfds.length; i < l; i++) {
-					dfds[i].dfd.resolve(dfds[i].value);
-				}
-			}, 0);
-		}
-	}
-
-	/**
 	 * 名前空間からjsファイルをロードするリゾルバ
 	 *
+	 * @private
 	 * @param {String} resourceKey
 	 * @returns {Promise} 解決した名前空間オブジェクトをresolveで渡します
 	 */
@@ -458,15 +454,15 @@
 
 		var dfd = getDeferred();
 		// タイムアウト設定
-		var timeoutTime = h5.settings.res.timeoutTime;
+		var resolveTimeout = h5.settings.res.resolveTimeout;
 		var timer = null;
-		if (timeoutTime > 0) {
+		if (resolveTimeout > 0) {
 			timer = setTimeout(function() {
 				if (waitingInfoMap[resourceKey]) {
 					delete waitingInfoMap[resourceKey];
 					dfd.reject(createRejectReason(ERR_CODE_RESOLVE_TIMEOUT, [resourceKey]));
 				}
-			}, timeoutTime);
+			}, resolveTimeout);
 		}
 		// registerされるのを待つ
 		waitingInfoMap[resourceKey] = {
@@ -496,6 +492,7 @@
 	/**
 	 * ejsファイルリゾルバ
 	 *
+	 * @private
 	 * @param {String} resourceKey
 	 * @returns {Promise} 以下のようなオブジェクトをresolveで返します
 	 *
@@ -571,6 +568,7 @@
 	/**
 	 * jsファイルのデフォルトのリゾルバを作成する
 	 *
+	 * @private
 	 * @param {String} resourceKey
 	 * @returns {Function} Viewリゾルバ
 	 */
@@ -581,6 +579,7 @@
 	/**
 	 * cssファイルのデフォルトのリゾルバを作成する
 	 *
+	 * @private
 	 * @param {String} resoruceKey
 	 * @param {String} type
 	 * @returns {Function} Viewリゾルバ
@@ -599,78 +598,11 @@
 		return getDeferred().resolve(cssNode).promise();
 	}
 
-	/**
-	 * 引数がDependencyクラスかどうか判定
-	 *
-	 * @param {Any} obj
-	 * @returns {Boolean} Dependencyクラスかどうか
-	 */
-	function isDependency(obj) {
-		return obj instanceof Dependency;
-	}
-	// =========================================================================
-	//
-	// Body
-	//
-	// =========================================================================
-
-	/**
-	 * キャッシュ機構を使用してURLへアクセスします
-	 *
-	 * @memberOf h5.res
-	 * @name urlLoader
-	 */
-	var urlLoader = {
-		/**
-		 * 指定されたテンプレートパスからテンプレートを非同期で読み込みます。 テンプレートパスがキャッシュに存在する場合はキャッシュから読み込みます。
-		 *
-		 * @param {String} resourcePath リソースパス
-		 * @returns {Object} Promiseオブジェクト
-		 */
-		load: function(resourcePath) {
-			var absolutePath = toAbsoluteUrl(resourcePath);
-			// キャッシュにある場合
-			if (cacheManager.cache[absolutePath]) {
-				// キャッシュから取得したリソースを返す
-				// 新しくDeferredを作ってプロミスを返す
-				return getDeferred().resolve(cacheManager.getResourceFromCache(absolutePath))
-						.promise();
-			}
-			// キャッシュにない場合
-			// urlからロードして、そのプロミスを返す
-			return cacheManager.loadResourceFromPath(resourcePath);
-		},
-
-		/**
-		 * URL(path)を指定してキャッシュをクリアする
-		 *
-		 * @param {String} path
-		 */
-		clearCache: function(path) {
-			cacheManager.clearCache(path);
-		},
-		/**
-		 * URLキャッシュをすべてクリアする
-		 */
-		clearAllCache: function() {
-			cacheManager.clearAllCache();
-		}
-	};
-
-	/**
-	 * リソースキーから、Dependencyオブジェクトを返します
-	 *
-	 * @memberOf h5.res
-	 * @param {String} resourceKey
-	 * @returns {Dependency}
-	 */
-	function dependsOn(resourceKey) {
-		return new Dependency(resourceKey);
-	}
 
 	/**
 	 * リゾルバを追加します
 	 *
+	 * @private
 	 * @param {String} type リゾルバのタイプ。リゾルバをタイプと紐づける。nullを指定した場合はtypeに紐づかないリゾルバを登録します。
 	 * @param {RegExp|Function} test リソースキーがこのリゾルバにマッチするかどうかの正規表現、または関数
 	 * @param {Function} resolver リゾルバ
@@ -690,6 +622,33 @@
 		});
 	}
 
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+	/**
+	 * 引数がDependencyクラスかどうか判定
+	 *
+	 * @memberOf h5.res
+	 * @param {Any} obj
+	 * @returns {Boolean} Dependencyクラスかどうか
+	 */
+	function isDependency(obj) {
+		return obj instanceof Dependency;
+	}
+
+	/**
+	 * リソースキーから、Dependencyオブジェクトを返します
+	 *
+	 * @memberOf h5.res
+	 * @param {String} resourceKey
+	 * @returns {Dependency}
+	 */
+	function dependsOn(resourceKey) {
+		return new Dependency(resourceKey);
+	}
+
 	/**
 	 * 指定されたリソースキーの解決を行います
 	 *
@@ -699,6 +658,57 @@
 	 */
 	function get(resourceKey) {
 		return h5.res.dependsOn(resourceKey).resolve();
+	}
+
+	/**
+	 * リソースの登録
+	 *
+	 * @memberOf h5.res
+	 * @param {String} key
+	 * @param {Any} value
+	 * @param {Boolean} [exposeToGlobal=false] グローバルに公開するか
+	 * @param {String} [exposureName=null] グローバル公開名
+	 */
+	function register(key, value, exposeToGlobal, exposureName) {
+		if (exposeToGlobal) {
+			if (exposureName) {
+				h5.u.obj.expose(exposureName, value);
+			} else {
+				h5.u.obj.expose(key, value);
+			}
+		}
+		// コンポーネントマップに登録
+		componentMap[key] = value;
+		// このリソースキーに紐づくdeferredが既に解決済み(waitingInfoから削除済み)なら何もしない
+		var waitingInfo = waitingInfoMap[key];
+		if (!waitingInfo) {
+			return;
+		}
+		delete waitingInfoMap[key];
+		var dfd = waitingInfo.deferred;
+		var timer = waitingInfo.timer;
+		if (timer) {
+			// タイムアウト待ちタイマーをクリア
+			clearTimeout(timer);
+		}
+
+		// 読込後の処理(register()呼び出し後)等が実行された後に、
+		// ユーザコードのdoneハンドラが動作するようにするためsetTimeout使用
+		// 既に動作しているタイマーがあれば新たにタイマーは作らない
+		waitingForImmediateDeferred.push({
+			dfd: dfd,
+			value: value
+		});
+		if (!waitingImmediateTimer) {
+			waitingImmediateTimer = setTimeout(function() {
+				waitingImmediateTimer = null;
+				var dfds = waitingForImmediateDeferred
+						.splice(0, waitingForImmediateDeferred.length);
+				for (var i = 0, l = dfds.length; i < l; i++) {
+					dfds[i].dfd.resolve(dfds[i].value);
+				}
+			}, 0);
+		}
 	}
 
 	// デフォルトリゾルバの登録

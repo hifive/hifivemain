@@ -320,8 +320,8 @@
 		 * <dl>
 		 * <dt>baseUrl</dt>
 		 * <dd>type:string|null</dd>
-		 * <dd>ベースURL。デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)</dd>
-		 * <dt>timeoutTime</dt>
+		 * <dd>ベースURL。デフォルトはnullで、リソースパス解決時のブラウザのアドレスバーの（ファイル名部分を除いた）パスがカレントパスになります(空文字を指定した場合もnullと同じです)</dd>
+		 * <dt>resolveTimeout</dt>
 		 * <dd>type:integer</dd>
 		 * <dd>タイムアウト時間設定(ms)を設定。タイムアウトに設定された時間待機して、依存解決ができない場合、resolve()は失敗します。デフォルトは10000(10秒)です。</dd>
 		 * </dl>
@@ -331,7 +331,7 @@
 		 */
 		res: {
 			baseUrl: null,
-			timeoutTime: 10000
+			resolveTimeout: 10000
 		}
 	};
 
