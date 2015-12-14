@@ -250,8 +250,7 @@
 	/**
 	 * キャッシュ機構を使用してURLへアクセスします
 	 *
-	 * @memberOf h5.res
-	 * @name urlLoader
+	 * @private
 	 */
 	var urlLoader = {
 		/**
