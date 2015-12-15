@@ -3986,11 +3986,15 @@
 							// バインドオブジェクトに基づいてバインド
 							// アスペクトを掛ける(動的に追加されたハンドラは、プロパティ名無し扱い(=いずれのポイントカットにもマッチしない)
 							// また、 enable/disableListeners()のために一番外側に制御用インターセプタを織り込む
-							var interceptors = getInterceptors(this.__name);
+							var methodName = null;
+							if (isString(target)) {
+								methodName = $.trim(target) + ' ' + $.trim(eventName);
+							}
+							var interceptors = getInterceptors(this.__name, methodName);
 							interceptors.push(executeListenersInterceptor);
-							// invocation.funcNameは空文字にする
+							// invocation.funcNameはターゲットがセレクタでない場合は空文字にする
 							var bindObjects = createBindObjects(this, info, createWeavedFunction(
-									listener, '', interceptors));
+									listener, methodName || '', interceptors));
 							for (var i = 0, l = bindObjects.length; i < l; i++) {
 								var bindObj = bindObjects[i];
 								if (!bindObj.isInnerBindObj) {
