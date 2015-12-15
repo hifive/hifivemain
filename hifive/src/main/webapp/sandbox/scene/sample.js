@@ -25,16 +25,16 @@ $(function() {
 		__name: 'sample.PageController',
 		__ready: function() {
 			this.view.append(this.rootElement, 'nav', {
-				method: 'changeScene'
+				method: 'navigate'
 			});
 			var $container = $('#hoge');
 			var isMain = location.href.indexOf('?isMain=true') !== -1;
 			this.container = h5.scene.createSceneContainer($container, isMain);
 			this._orgLocation = location.href;
 		},
-		'.changeScene click': function(ctx, $el) {
+		'.navigate click': function(ctx, $el) {
 			var target = $el.data('target');
-			var promise = this.container.changeScene({
+			var promise = this.container.navigate({
 				to: target
 			});
 			promise.done(function() {

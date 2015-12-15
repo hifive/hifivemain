@@ -82,7 +82,7 @@ $(function() {
 				return;
 			}
 			// メインシーンコンテナが取得できるまで待機
-			return w.h5 && w.h5.scene.getMainContainer();
+			return w.h5 && w.h5.scene.getMainSceneContainer();
 		};
 	}
 
@@ -234,7 +234,7 @@ $(function() {
 	test('シーン要素のdata-h5-controller指定',
 			function() {
 				createTestController('Test');
-				var $container = $('<div data-h5-container>');
+				var $container = $('<div data-h5-scene-container>');
 				var $scene = $('<div data-h5-scene data-h5-controller="h5scenetest.Test">');
 				$container.append($scene);
 				this.$fixture.append($container);
@@ -252,7 +252,7 @@ $(function() {
 			function() {
 				createTestController('Test1');
 				createTestController('Container');
-				var $container = $('<div data-h5-container data-h5-container="h5scenetest.Container">');
+				var $container = $('<div data-h5-scene-container data-h5-scene-container="h5scenetest.Container">');
 				var $scene = $('<div data-h5-scene data-h5-controller="h5scenetest.Test1">');
 				$container.append($scene);
 				this.$fixture.append($container);
@@ -268,7 +268,7 @@ $(function() {
 
 	test('シーンを持たないシーンコンテナ要素のdata-h5-controller指定', function() {
 		createTestController('Test');
-		var $container = $('<div data-h5-container data-h5-controller="h5scenetest.Test">');
+		var $container = $('<div data-h5-scene-container data-h5-controller="h5scenetest.Test">');
 		this.$fixture.append($container);
 
 		h5.scene.scan();
@@ -284,7 +284,7 @@ $(function() {
 				createTestController('Test1');
 				createTestController('Test2');
 				var $root = $('<div>');
-				var $container = $('<div data-h5-container>');
+				var $container = $('<div data-h5-scene-container>');
 				var $scene1 = $('<div data-h5-scene data-h5-controller="h5scenetest.Test1">');
 				var $scene2 = $('<div data-h5-scene data-h5-controller="h5scenetest.Test2">');
 				var $div = $('<div>');
@@ -360,7 +360,7 @@ $(function() {
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/to1.html');
+		container.navigate('scenedata/page/to1.html');
 		gate({
 			func: function() {
 				return $container.text() === 'to1';
@@ -370,7 +370,7 @@ $(function() {
 			strictEqual($container.text(), 'to1', 'シーンが変更されること');
 			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
 			var $scene1 = $container.children();
-			container.changeScene({
+			container.navigate({
 				to: 'scenedata/page/to2.html',
 				args: {
 					test: 'TEST'
@@ -426,7 +426,7 @@ $(function() {
 	});
 
 	asyncTest('scan()で生成したシーンコンテナのイベントによる遷移', function() {
-		var $container = $('<div data-h5-container>');
+		var $container = $('<div data-h5-scene-container>');
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		this.$fixture.append($container);
@@ -468,7 +468,7 @@ $(function() {
 		$container.append($scene);
 		this.$fixture.append($container);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene({
+		container.navigate({
 			to: 'scenedata.controller.ControllerSubController',
 			args: {
 				test: 'CTRL'
@@ -489,7 +489,7 @@ $(function() {
 	});
 
 	asyncTest('シーンコンテナ取得機能の確認', function() {
-		var $container = $('<div data-h5-container="testContainer">');
+		var $container = $('<div data-h5-scene-container="testContainer">');
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		this.$fixture.append($container);
@@ -525,7 +525,7 @@ $(function() {
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/noContainerBody.html');
+		container.navigate('scenedata/page/noContainerBody.html');
 		var expect = 'no container';
 		gate({
 			func: function() {
@@ -543,7 +543,7 @@ $(function() {
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/textNodeBody.html');
+		container.navigate('scenedata/page/textNodeBody.html');
 		var expect = 'text body';
 		gate({
 			func: function() {
@@ -561,7 +561,7 @@ $(function() {
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/textNodeAndElementBody.html');
+		container.navigate('scenedata/page/textNodeAndElementBody.html');
 		var expect = 'text and element body';
 		gate({
 			func: function() {
@@ -579,7 +579,7 @@ $(function() {
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/noContainerPart.html');
+		container.navigate('scenedata/page/noContainerPart.html');
 		var expect = 'no container';
 		gate({
 			func: function() {
@@ -597,7 +597,7 @@ $(function() {
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/textNodePart.html');
+		container.navigate('scenedata/page/textNodePart.html');
 		var expect = 'plain text';
 		gate({
 			func: function() {
@@ -615,7 +615,7 @@ $(function() {
 		var $scene = $('<div data-h5-scene>');
 		$container.append($scene);
 		var container = h5.scene.createSceneContainer($container);
-		container.changeScene('scenedata/page/textNodeAndElementPart.html');
+		container.navigate('scenedata/page/textNodeAndElementPart.html');
 		var expect = 'plain text and element';
 		gate({
 			func: function() {
@@ -666,7 +666,7 @@ $(function() {
 				})
 						.done(
 								function() {
-									var mainContainer = that.w.h5.scene.getMainContainer();
+									var mainContainer = that.w.h5.scene.getMainSceneContainer();
 									gate({
 										func: function() {
 											return !!mainContainer._currentController;
@@ -679,7 +679,7 @@ $(function() {
 														strictEqual(title, 'FROM',
 																'直接アクセスで画面が表示されていること');
 														//strictEqual(controller.__name, 'scenedata.controller.FromController', 'コントローラーバインド確認');
-														mainContainer.changeScene({
+														mainContainer.navigate({
 															to: 'to.html?' + BUILD_TYPE_PARAM,
 															args: {
 																test: 'hoge'
@@ -780,7 +780,7 @@ $(function() {
 																															.done(
 																																	function() {
 																																		mainContainer = that.w.h5.scene
-																																				.getMainContainer(); //リロードしたので再度取得
+																																				.getMainSceneContainer(); //リロードしたので再度取得
 																																		gate(
 																																				{
 																																					func: function() {
@@ -828,19 +828,19 @@ $(function() {
 	//				var that = this;
 	//				gate({
 	//					func: function() {
-	//						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainContainer();
+	//						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainSceneContainer();
 	//					},
 	//					failMsg: 'メインシーンコンテナが取得できませんでした'
 	//				})
 	//						.done(
 	//								function() {
-	//									var mainContainer = that.w.h5.scene.getMainContainer();
+	//									var mainContainer = that.w.h5.scene.getMainSceneContainer();
 	//									var controller = mainContainer._currentController;
 	//									var title = controller.$find('h1').text();
 	//									strictEqual(title, 'FROM', '初期表示シーンの画面が表示されていること');
 	//									ok(/\/init_scene\.html(?:\?|#|$)/.test(that.w.location.href),
 	//											'初期表示シーンはURL連動していないこと');
-	//									mainContainer.changeScene('to.html?' + BUILD_TYPE_PARAM);
+	//									mainContainer.navigate('to.html?' + BUILD_TYPE_PARAM);
 	//									gate(
 	//											{
 	//												func: function() {
@@ -900,9 +900,9 @@ $(function() {
 						.done(
 								function() {
 									strictEqual(that.w.h5.settings.scene.autoInit, true, 'フラグの確認');
-									var mainContainer = that.w.h5.scene.getMainContainer();
+									var mainContainer = that.w.h5.scene.getMainSceneContainer();
 									ok(!!mainContainer, 'メインシーンコンテナが生成されていること');
-									ok(that.w.$('[data-h5-container="sub_from"]').is(
+									ok(that.w.$('[data-h5-scene-container="sub_from"]').is(
 											'[data-h5-dyn-container-bound]'),
 											'通常のシーンコンテナが生成されていること');
 									var elm = that.w
@@ -933,7 +933,7 @@ $(function() {
 			failMsg: 'メインシーンコンテナが取得できませんでした'
 		}).done(function() {
 			strictEqual(that.w.h5.settings.scene.autoCreateMainContainer, true, 'フラグの確認');
-			ok(that.w.$('body').is('[data-h5-main-container]'), 'BODYタグがメインシーンコンテナとなっているかの確認');
+			ok(that.w.$('body').is('[data-h5-main-scene-container]'), 'BODYタグがメインシーンコンテナとなっているかの確認');
 		}).always(start);
 	});
 
