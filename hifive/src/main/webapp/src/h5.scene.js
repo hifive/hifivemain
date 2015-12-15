@@ -2778,7 +2778,7 @@
 			var title = this._navigateParam && this._navigateParam.title;
 			if (title == null) {
 				// 指定無しの場合
-				var isController = controllerRegexp.test(this._navigateParam.to);
+				var isController = this._navigateParam && controllerRegexp.test(this._navigateParam.to);
 				if (isController && toController[CONTROLLER_SCENE_TITLE] != null) {
 					// 遷移先指定がコントローラの場合、プロパティから取得
 					this.setTitle(toController[CONTROLLER_SCENE_TITLE]);
