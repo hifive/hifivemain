@@ -504,7 +504,7 @@
 	 * シーンコンテナ生成済み要素配下は走査対象となりません。追加要素を対象としたい場合ははその部分を指定するようにしてください。
 	 * </p>
 	 *
-	 * @memberOf h5.scene
+	 * @private
 	 * @param {Element} [rootElement=document.body] 走査処理対象のルート要素。指定なしの場合はdocument.bodyをルート要素とします。
 	 * @param {String} [controllerName]
 	 *            バインド対象コントローラー名。指定なしの場合は'data-h5-controller'属性に指定されたすべてのコントローラーを対象とします。
@@ -1779,7 +1779,7 @@
 			if (!element) {
 				return null;
 			}
-			return getSceneContainer(element);
+			return getSceneContainers(element)[0];
 		}
 	});
 
@@ -3020,51 +3020,36 @@
 	 * 指定要素およびその配下のシーンコンテナを取得します
 	 *
 	 * @memberOf h5.scene
-	 * @param {Element} [rootElement=document.body] 走査先頭要素。指定しない場合はドキュメント全体を対象とします。
+	 * @param {DOM|jQuery|stroing} [rootElement=document.body]
+	 *            走査先頭要素。要素またはセレクタを指定します。指定しない場合はドキュメント全体を対象とします。
+	 * @param {boolean} [option.deep=true] 子孫要素にバインドされているコントローラも含めるかどうか(デフォルトは含める)
 	 * @returns {SceneContainerController[]} シーンコンテナの配列。
 	 */
-	function getAllSceneContainers(rootElement) {
-
-		var containers = h5.core.controllerManager.getControllers(rootElement || document.body, {
+	function getSceneContainers(rootElement, option) {
+		return h5.core.controllerManager.getControllers(rootElement || document.body, {
 			name: SceneContainerController.__name,
-			deep: true
+			deep: option && option.deep === false ? false : true
 		});
-
-		return containers;
-
 	}
 
 	/**
-	 * シーンコンテナを取得します。
+	 * シーンコンテナを取得します
+	 * <p>
+	 * 第1引数に取得対象とする要素のdata-h5-scene-container属性まはたdata-h5-main-scene-container属性の値を文字列で指定します。該当する要素に対応するシーンコンテナを返します。
+	 * </p>
 	 *
 	 * @memberOf h5.scene
-	 * @param {String|Element} nameOrElement 文字列、要素が指定できます。
-	 *            <dl>
-	 *            <dt>文字列の場合</dt>
-	 *            <dd>取得対象とする要素のdata-h5-scene-container属性まはたdata-h5-main-scene-container属性の値とみなし、その要素に対応するシーンコンテナを返却します。</dd>
-	 *            <dt>要素の場合</dt>
-	 *            <dd>その要素に対応するシーンコンテをを返却します。</dd>
-	 *            </dl>
-	 *            <p>
-	 *            いずれの場合も、該当がない場合はnullを返却します。
-	 *            </p>
-	 * @returns {SceneContainerController} シーンコンテナ
+	 * @param {String} name
+	 *            取得対象とする要素のdata-h5-scene-container属性まはたdata-h5-main-scene-container属性の値を文字列で指定します。
+	 * @returns {SceneContainerController} 該当するシーンコンテナ。ない場合はnullを返します。
 	 */
-	function getSceneContainer(nameOrElement) {
+	function getSceneContainerByName(name) {
 
-		if (nameOrElement == null)
+		if (name == null) {
 			return null;
-
-
-		var name = null, element = null;
-
-		if (isString(nameOrElement)) {
-			name = nameOrElement;
-		} else {
-			element = nameOrElement;
 		}
 
-		var containers = getAllSceneContainers(element);
+		var containers = getSceneContainers();
 
 		if (containers.length === 0) {
 			return null;
@@ -3268,9 +3253,8 @@
 		createSceneContainer: createSceneContainer,
 		init: init,
 		getMainSceneContainer: getMainSceneContainer,
-		scan: scan,
-		getAllSceneContainers: getAllSceneContainers,
-		getSceneContainer: getSceneContainer,
+		getSceneContainers: getSceneContainers,
+		getSceneContainerByName: getSceneContainerByName,
 		navigateType: NAVIGATE_TYPE,
 		method: METHOD,
 		urlHistoryMode: URL_HISTORY_MODE
