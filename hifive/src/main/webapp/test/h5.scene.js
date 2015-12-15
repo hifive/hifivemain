@@ -931,10 +931,12 @@ $(function() {
 		gate({
 			func: createFuncForWaitPouupMainContainer(this.w),
 			failMsg: 'メインシーンコンテナが取得できませんでした'
-		}).done(function() {
-			strictEqual(that.w.h5.settings.scene.autoCreateMainContainer, true, 'フラグの確認');
-			ok(that.w.$('body').is('[data-h5-main-scene-container]'), 'BODYタグがメインシーンコンテナとなっているかの確認');
-		}).always(start);
+		}).done(
+				function() {
+					strictEqual(that.w.h5.settings.scene.autoCreateMainContainer, true, 'フラグの確認');
+					ok(that.w.$('body').is('[data-h5-main-scene-container]'),
+							'BODYタグがメインシーンコンテナとなっているかの確認');
+				}).always(start);
 	});
 
 	//	//=============================

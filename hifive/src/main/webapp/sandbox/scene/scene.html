@@ -22,11 +22,11 @@
 <link rel="stylesheet" href="sample.css" />
 <script src="sample.js"></script>
 <script type="text/ejs" id="nav">
-	<div>
-		<label>[%= method %]</label>
-		<button class="[%= method %]" data-target="sample.SampleSceneController">SampleSceneへ</button>
-		<button class="[%= method %]" data-target="/hifive/sandbox/scene/scenes/scene1.html">scene1.htmlへ</button>
-		<button class="[%= method %]" data-target="/hifive/sandbox/scene/scenes/scene2.html">scene2.htmlへ</button>
+	<div >
+		<label>navigate</label>
+		<button class="navigate" data-target="sample.SampleSceneController">SampleSceneへ</button>
+		<button class="navigate" data-target="/hifive/sandbox/scene/scenes/scene1.html">scene1.htmlへ</button>
+		<button class="navigate" data-target="/hifive/sandbox/scene/scenes/scene2.html">scene2.htmlへ</button>
 	</div>
 </script>
 <title>h5.sceneサンプル</title>
@@ -35,8 +35,7 @@
 	<a href="/hifive/sandbox/scene/scene.html">isMain=false</a>
 	<a href="/hifive/sandbox/scene/scene.html?isMain=true">isMain=true</a>
 	<div id="hoge" class="container">
-		<div data-controller="hoge"
-			data-h5-controller="sample.NavigateHandler" data-title="デフォルトタイトル">
+		<div data-controller="hoge" data-h5-controller="SampleController" data-title="初期ページ">
 			<p>hoge</p>
 		</div>
 	</div>
@@ -47,5 +46,6 @@
 	<button class="setTitle">setTitle(title)</button>
 	<br>
 	<button class="getTitle">getTitle()</button>
+	<div class="container-methods"></div>
 </body>
 </html>

@@ -2448,12 +2448,6 @@
 
 				// TODO(鈴木) Router処理開始
 				this._router.start();
-
-				// タイトルの設定
-				var title = this._getTitleFromCurrentScene();
-				if (title != null) {
-					this.setTitle(this._getTitleFromCurrentScene());
-				}
 			} else {
 				// TODO(鈴木) カレントとなるシーンを探索してscan
 				scanForContainer(element).done(function(controller) {
@@ -2675,7 +2669,7 @@
 
 			// navigateメソッド経由でない場合
 			if (!this._isNavigated) {
-				this._transition = this._createTransition(param.transition);
+				this._transition = new defaultTransitionController();
 				this._transition.onChangeStart(this.rootElement, fromElm);
 			}
 
@@ -2781,7 +2775,7 @@
 			that._currentController = toController;
 
 			// タイトルを決定する
-			var title = this._navigateParam.title;
+			var title = this._navigateParam && this._navigateParam.title;
 			if (title == null) {
 				// 指定無しの場合
 				var isController = controllerRegexp.test(this._navigateParam.to);
@@ -2920,6 +2914,12 @@
 						that._transition
 								.onChangeEnd(that.rootElement, null, controller.rootElement);
 						that._transition = null;
+
+						// タイトルの設定
+						var title = that._getTitleFromCurrentScene();
+						if (title != null) {
+							that.setTitle(title);
+						}
 					}
 					scanForContainer(this.rootElement, null, param.args).done(callback);
 					this._first = false;

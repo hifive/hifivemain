@@ -2,9 +2,7 @@ $(function() {
 	h5.core.expose({
 		__name: 'sample.NavigateHandler',
 		__ready: function() {
-			this.view.append(this.rootElement, 'nav', {
-				method: 'navigate'
-			});
+			this.view.append(this.rootElement, 'nav');
 		},
 		'.navigate click': function(ctx, $el) {
 			var target = $el.data('target');
@@ -24,15 +22,13 @@ $(function() {
 	h5.core.expose({
 		__name: 'sample.PageController',
 		__ready: function() {
-			this.view.append(this.rootElement, 'nav', {
-				method: 'navigate'
-			});
+			this.view.append('.container-methods', 'nav');
 			var $container = $('#hoge');
 			var isMain = location.href.indexOf('?isMain=true') !== -1;
 			this.container = h5.scene.createSceneContainer($container, isMain);
 			this._orgLocation = location.href;
 		},
-		'.navigate click': function(ctx, $el) {
+		'.container-methods .navigate click': function(ctx, $el) {
 			var target = $el.data('target');
 			var promise = this.container.navigate({
 				to: target
