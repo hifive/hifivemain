@@ -5726,24 +5726,20 @@ $(function() {
 		h5.settings.dynamicLoading.retryInterval = 0;
 		// リトライ回数を2回に設定
 		h5.settings.dynamicLoading.retryCount = 2;
-		// h5.res.urlLoader.load()をスタブに差し替え
+		// h5.res.dependsOn()をスタブに差し替え
 		var loadCount = 0;
 		var errorObj = {
-			detail: {
-				error: {
-					status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
-				}
-			}
+			status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
 		};
-		function load() {
+		// h5.ajaxをダミーに差し替える
+		function dummyAjax() {
 			loadCount++;
 			var dfd = $.Deferred();
-			dfd.reject(errorObj);
+			dfd.reject(errorObj, 'error', 'error');
 			return dfd.promise();
 		}
-
-		var originalLoad = h5.res.urlLoader.load;
-		h5.res.urlLoader.load = load;
+		var originalAjax = h5.ajax;
+		h5.ajax = dummyAjax;
 
 		var controller = {
 			__name: 'TestController',
@@ -5753,12 +5749,11 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 		testController.preInitPromise.done(function(a) {
 			ok(false, 'ロードできないテンプレートを指定してコントローラのバインドが失敗しませんでした');
-			h5.res.urlLoader.load = originalLoad;
-			start();
 		}).fail(function(e) {
 			strictEqual(loadCount, 3, 'リトライ回数2回なのでロードを試みた回数は3回になっていること');
-			strictEqual(e, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
-			h5.res.urlLoader.load = originalLoad;
+			strictEqual(e.detail.error, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
+		}).always(function() {
+			h5.ajax = originalAjax;
 			start();
 		});
 	});
@@ -5766,36 +5761,33 @@ $(function() {
 	asyncTest('テンプレートのロードが通信エラーで失敗した場合、3回リトライして、3回目で成功したらコントローラ化が行われること', 3, function() {
 		// テンプレートロードのリトライ時のインターバルを0msに設定
 		h5.settings.dynamicLoading.retryInterval = 0;
-		// h5.res.urlLoader.load()をスタブに差し替え
-		var retryCount = 0;
-		var retryLimit = 3;
+		// h5.res.dependsOn()をスタブに差し替え
+		var loadCount = 0;
+		var responseText = '<script type="text/ejs" id="hoge">hoge</script>';
 		var errorObj = {
-			detail: {
-				error: {
-					status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
-				}
-			}
+			status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
 		};
-		function load(path) {
+		var successObj = {
+			status: 200,
+			responseText: responseText
+		};
+		// h5.ajaxをダミーに差し替える
+		function dummyAjax() {
+			loadCount++;
 			var dfd = $.Deferred();
-			if (retryCount++ == retryLimit) {
-				dfd.resolve({
-					url: 'http://xxx.xx/' + path,
-					path: path,
-					content: '<script type="text/ejs" id="hoge">hoge</script>'
-				});
+			if (loadCount === 3) {
+				dfd.resolve(responseText, 'success', successObj);
 			} else {
-				dfd.reject(errorObj);
+				dfd.reject(errorObj, 'error', 'error');
 			}
 			return dfd.promise();
 		}
-
-		var originalLoad = h5.res.urlLoader.load;
-		h5.res.urlLoader.load = load;
+		var originalAjax = h5.ajax;
+		h5.ajax = dummyAjax;
 
 		var controller = {
 			__name: 'TestController',
-			__templates: ['./noExistPath']
+			__templates: ['./noExistPath/retrySuccess']
 		};
 
 		var testController = h5.core.controller('#controllerTest', controller);
@@ -5807,7 +5799,8 @@ $(function() {
 		testController.readyPromise.done(function() {
 			ok(true, 'readyPromiseがresolve()されること');
 			strictEqual(this.view.get('hoge'), 'hoge', 'ロードされたテンプレートが使用できること');
-			h5.res.urlLoader.load = originalLoad;
+		}).always(function() {
+			h5.ajax = originalAjax;
 			start();
 		});
 	});
@@ -5816,32 +5809,18 @@ $(function() {
 		// テンプレートロードのリトライ時のインターバルを0msに設定
 		h5.settings.dynamicLoading.retryInterval = 0;
 		// view.load()をスタブに差し替え
-		var retryCount = 0;
-		var retryLimit = 3;
 		var errorObj = {
-			detail: {
-				error: {
-					status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
-				}
-			}
+			status: h5.env.ua.isIE ? 0 : ERROR_INTERNET_CANNOT_CONNECT
 		};
-		function load(path) {
+		// h5.ajaxをダミーに差し替える
+		function dummyAjax() {
 			var dfd = $.Deferred();
-			if (retryCount++ == retryLimit + 1) {
-				dfd.resolve({
-					url: 'http://xxx.xx/' + path,
-					path: path,
-					content: '<script type="text/ejs" id="hoge">hoge</script>'
-				});
-			} else {
-				dfd.reject(errorObj);
-			}
+			dfd.reject(errorObj, 'error', 'error');
 			return dfd.promise();
 		}
-		var originalLoad = h5.res.urlLoader.load;
-		h5.res.urlLoader.load = load;
+		var originalAjax = h5.ajax;
+		h5.ajax = dummyAjax;
 
-		var count = 0;
 		var controller = {
 			__name: 'TestController',
 			__templates: ['./noExistPath']
@@ -5850,21 +5829,19 @@ $(function() {
 		var testController = h5.core.controller('#controllerTest', controller);
 
 		testController.preInitPromise.done(function() {
-			// loadを元に戻す
-			h5.res.urlLoader.load = originalLoad;
 			ok(false, 'テスト失敗。preInitPromiseがresolve()された');
 			start();
 		}).fail(function(e) {
-			// loadを元に戻す
-			h5.res.urlLoader.load = originalLoad;
 			ok(true, 'preInitPromiseのfailハンドラが実行されること');
 			strictEqual(this, testController, 'thisはコントローラインスタンスであること');
-			strictEqual(e, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
+			strictEqual(e.detail.error, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
+		}).always(function() {
+			h5.ajax = originalAjax;
 		});
 		testController.readyPromise.fail(function(e) {
 			ok(true, 'readyPromiseのfailハンドラが実行されること');
 			strictEqual(this, testController, 'thisはコントローラインスタンスであること');
-			strictEqual(e, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
+			strictEqual(e.detail.error, errorObj, 'load()が投げたエラーオブジェクトが取得できること');
 			setTimeout(function() {
 				strictEqual(testController.__name, 'TestController', 'コントローラはnullifyされないこと');
 				start();
