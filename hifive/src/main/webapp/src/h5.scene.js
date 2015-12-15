@@ -2530,6 +2530,28 @@
 		 *            </p>
 		 * @param {String} param.to 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
 		 * @param {Any}[param.args] デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
+		 * @param {string}[param.navigateType="normal"] メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。
+		 *            <dl>
+		 *            <dt>"normal"</dt>
+		 *            <dd>URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。h5.scene.navigateType.NORMALと同値なのでこれを指定してもよいです。</dd>
+		 *            <dt>"once"</dt>
+		 *            <dd>URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。ブラウザバック等で再表示はできなくなります(再表示不可のメッセージ画面(後述)を表示)。h5.scene.navigateType.ONCEと同値なのでこれを指定してもよいです。</dd>
+		 *            <dt>"exchange"</dt>
+		 *            <dd>URLは変化させずに遷移します。h5.scene.navigateType.EXCHANGEと同値なのでこれを指定してもよいです。</dd>
+		 *            </dl>
+		 * @param {boolean}[param.replace=false] URLを置換しつつ遷移するか否か。置換して遷移する場合はtrueを設定します。
+		 *            デフォルトはfalseです。trueで遷移した場合、元の画面のURLは履歴から削除されるため、ブラウザバックでは戻れなくなります。
+		 * @param {string} [param.method="get"]
+		 *            toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のHTTPメソッドを指定します。
+		 *            <dl>
+		 *            <dt>"get"</dt>
+		 *            <dd>GETメソッドで取得します(デフォルト)。h5.scene.method.GETと同値なのでこれを指定してもよいです。</dd>
+		 *            <dt>"post"</dt>
+		 *            <dd>POSTメソッドで取得します。h5.scene.method.POSTと同値なのでこれを指定してもよいです。</dd>
+		 *            <dd>ブラウザバック等で再表示はできなくなります。</dd>
+		 *            </dl>
+		 * @param {Object} [param.serverArgs]
+		 *            toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のパラメーターを指定します。jQuery.ajaxの引数のdataプロパティに相当します。ただし、直下メンバーの各値として配列以外のオブジェクトは設定できません。値の配列については、その要素にオブジェクトは設定できません。
 		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
 		 * @memberOf SceneContainerController
 		 */
@@ -2683,7 +2705,7 @@
 			var args = null;
 			if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
 				if (!this._isNavigated) {
-					this._onNotReshowable();
+					this._onNotReshowable(param);
 					return;
 				}
 				args = this._detour.args;
@@ -2717,7 +2739,7 @@
 
 					// TODO(鈴木) 遷移先指定がコントローラーの__name属性の場合
 					loadController(to, $('<div></div>'), args).done(function(toController) {
-						that._navigateEnd(toController);
+						that._navigateEnd(toController, param);
 					});
 
 				} else {
@@ -2733,7 +2755,7 @@
 						// TODO(鈴木) scan用にダミーのDIVにappend
 						scanForContainer($('<div></div>').append(toElm), null, args).done(
 								function(toController) {
-									that._navigateEnd(toController);
+									that._navigateEnd(toController, param);
 								});
 
 					}
@@ -2750,7 +2772,7 @@
 
 				// TODO(鈴木) 遷移先指定がコントローラーの場合
 
-				that._navigateEnd(to);
+				that._navigateEnd(to, param);
 
 			}
 
@@ -2762,9 +2784,9 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 * @param toController
-		 * @param fromElm
+		 * @param param
 		 */
-		_navigateEnd: function(toController) {
+		_navigateEnd: function(toController, param) {
 
 			var that = this;
 
@@ -2775,10 +2797,11 @@
 			that._currentController = toController;
 
 			// タイトルを決定する
-			var title = this._navigateParam && this._navigateParam.title;
+			var title = param && param.title;
 			if (title == null) {
 				// 指定無しの場合
-				var isController = this._navigateParam && controllerRegexp.test(this._navigateParam.to);
+				var isController = this._navigateParam
+						&& controllerRegexp.test(this._navigateParam.to);
 				if (isController && toController[CONTROLLER_SCENE_TITLE] != null) {
 					// 遷移先指定がコントローラの場合、プロパティから取得
 					this.setTitle(toController[CONTROLLER_SCENE_TITLE]);
@@ -2846,8 +2869,9 @@
 		 *
 		 * @private
 		 * @memberOf SceneContainerController
+		 * @param {Object} param
 		 */
-		_onNotReshowable: function() {
+		_onNotReshowable: function(param) {
 			if (notReshowable.__name && controllerRegexp.test(notReshowable.__name)) {
 
 				// TODO(鈴木) notReshowable指定がコントローラーの場合
@@ -2856,23 +2880,23 @@
 						notReshowable, {
 							_notReshowableMessage: notReshowableMessage
 						});
-				this._navigateEnd(notReshowableController);
+				this._navigateEnd(notReshowableController, param);
 
 			} else {
 
 				// TODO(鈴木) notReshowable指定がコントローラー以外の場合
 
-				var param = null;
+				var navigateParam = null;
 				if (isString(notReshowable)) {
-					param = {
+					navigateParam = {
 						to: notReshowable
 					};
 				} else {
-					param = $.extend(true, {}, notReshowable);
+					navigateParam = $.extend(true, {}, notReshowable);
 				}
-				param.args = param.args || {};
-				param.args._notReshowableMessage = notReshowableMessage;
-				this._navigate(param.to, param);
+				navigateParam.args = navigateParam.args || {};
+				navigateParam.args._notReshowableMessage = notReshowableMessage;
+				this._navigate(navigateParam.to, navigateParam);
 			}
 		},
 
@@ -2896,7 +2920,7 @@
 				// TODO(鈴木) シーン遷移タイプが'once'(一回のみ)、またはAjaxメソッドタイプが'post'の場合、
 				// 再表示不可エラー画面を表示する。
 				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
-					this._onNotReshowable();
+					this._onNotReshowable(param);
 					this._first = false;
 					return;
 				}
