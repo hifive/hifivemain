@@ -112,7 +112,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2263">line 2263</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2288">line 2288</a>
     </li></ul></dd>
     
 
@@ -210,7 +210,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2283">line 2283</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2308">line 2308</a>
     </li></ul></dd>
     
 
@@ -237,7 +237,111 @@
 
     
 
-    <h4 class="name" id=".changeScene"><span class="type-signature">(static) </span>changeScene<span class="signature">(param)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id=".getTitle"><span class="type-signature">(static) </span>getTitle<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+
+    
+
+
+
+<div class="description">
+    現在のシーンのタイトルの取得
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2669">line 2669</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    現在のシーンのタイトル
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".navigate"><span class="type-signature">(static) </span>navigate<span class="signature">(param)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
 
     
 
@@ -335,6 +439,8 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -367,6 +473,10 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
                 </td>
             
 
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last">遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。</td>
@@ -401,8 +511,182 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last">デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>navigateType</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    "normal"
+                
+                </td>
+            
+
+            <td class="description last">メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。
+           <dl>
+           <dt>"normal"</dt>
+           <dd>URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。h5.scene.navigateType.NORMALと同値なのでこれを指定してもよいです。</dd>
+           <dt>"once"</dt>
+           <dd>URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。ブラウザバック等で再表示はできなくなります(再表示不可のメッセージ画面(後述)を表示)。h5.scene.navigateType.ONCEと同値なのでこれを指定してもよいです。</dd>
+           <dt>"exchange"</dt>
+           <dd>URLは変化させずに遷移します。h5.scene.navigateType.EXCHANGEと同値なのでこれを指定してもよいです。</dd>
+           </dl></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>replace</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last">URLを置換しつつ遷移するか否か。置換して遷移する場合はtrueを設定します。
+           デフォルトはfalseです。trueで遷移した場合、元の画面のURLは履歴から削除されるため、ブラウザバックでは戻れなくなります。</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>method</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    "get"
+                
+                </td>
+            
+
+            <td class="description last">toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のHTTPメソッドを指定します。
+           <dl>
+           <dt>"get"</dt>
+           <dd>GETメソッドで取得します(デフォルト)。h5.scene.method.GETと同値なのでこれを指定してもよいです。</dd>
+           <dt>"post"</dt>
+           <dd>POSTメソッドで取得します。h5.scene.method.POSTと同値なのでこれを指定してもよいです。</dd>
+           <dd>ブラウザバック等で再表示はできなくなります。</dd>
+           </dl></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>serverArgs</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のパラメーターを指定します。jQuery.ajaxの引数のdataプロパティに相当します。ただし、直下メンバーの各値として配列以外のオブジェクトは設定できません。値の配列については、その要素にオブジェクトは設定できません。</td>
         </tr>
 
     
@@ -450,7 +734,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2517">line 2517</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2558">line 2558</a>
     </li></ul></dd>
     
 
@@ -489,110 +773,6 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
     <dd>
         
 <span class="param-type">Promise</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".getTitle"><span class="type-signature">(static) </span>getTitle<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
-
-    
-
-
-
-<div class="description">
-    現在のシーンのタイトルの取得
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2628">line 2628</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    現在のシーンのタイトル
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
 
 
     </dd>
@@ -707,7 +887,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2615">line 2615</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2656">line 2656</a>
     </li></ul></dd>
     
 
@@ -751,7 +931,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Mon Dec 14 2015 18:40:58 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 15 2015 19:47:31 GMT+0900 (JST)
 	</footer>
 </div>
 

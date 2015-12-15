@@ -90,12 +90,12 @@
 	/**
 	 * シーンコンテナ指定用データ属性名
 	 */
-	var DATA_H5_CONTAINER = 'data-h5-container';
+	var DATA_H5_CONTAINER = 'data-h5-scene-container';
 
 	/**
 	 * メインシーンコンテナ指定用データ属性名
 	 */
-	var DATA_H5_MAIN_CONTAINER = 'data-h5-main-container';
+	var DATA_H5_MAIN_CONTAINER = 'data-h5-main-scene-container';
 
 	/**
 	 * コンテナ生成済み識別用データ属性名
@@ -165,7 +165,32 @@
 	var NOT_RESHOWABLE_MESSAGE = 'この画面は再表示できません。';
 
 	/**
-	 * Router URL履歴保持方法指定
+	 * メインシーンコンテナのURL履歴保持方法列挙体
+	 * &lt;p>
+	 * メインシーンコンテナURL履歴保持方法です。何れかをh5.settings.scene.urlHistoryModeに指定します。
+	 * &lt;/p>
+	 * &lt;dl>
+	 * &lt;dt>h5.scene.urlHistoryMode.HASH&lt;/dt>
+	 * &lt;dd>"hash" … シーン遷移パラメーターをハッシュに格納する。&lt;/dd>
+	 * &lt;dt>h5.scene.urlHistoryMode.NONE&lt;/dt>
+	 * &lt;dd>"none" … URLを変更しない。&lt;/dd>
+	 * &lt;dt>h5.scene.urlHistoryMode.FULLRELOAD&lt;/dt>
+	 * &lt;dd>"fullreload" … Ajaxを使用せず、ページ全体を再読み込みする(通常の遷移)。&lt;/dd>
+	 * &lt;dt>h5.scene.urlHistoryMode.HISTORY&lt;/dt>
+	 * &lt;dd>"history"(デフォルト) … HTML5 History APIを使用してURLを変更する。History APIが使用できない場合はハッシュを使用する。&lt;/dd>
+	 * &lt;dt>h5.scene.urlHistoryMode.HISTORY_OR_HASH&lt;/dt>
+	 * &lt;dd>"historyOrHash" … "history"と同義。&lt;/dd>
+	 * &lt;dt>h5.scene.urlHistoryMode.HISTORY_OR_ERROR&lt;/dt>
+	 * &lt;dd>"historyOrError" … HTML5 History APIを使用してURLを変更する。History APIが使用できない場合はエラーとする。&lt;/dd>
+	 * &lt;dt>h5.scene.urlHistoryMode.HISTORY_OR_NONE&lt;/dt>
+	 * &lt;dd>"historyOrNone" … HTML5 History APIを使用してURLを変更する。History APIが使用できない場合はURLを変更せずに遷移する。&lt;/dd>
+	 * &lt;dt>h5.scene.urlHistoryMode.HISTORY_OR_FULLRELOAD&lt;/dt>
+	 * &lt;dd>"historyOrFullreload" … HTML5 History APIを使用してURLを変更する。History
+	 * APIが使用できない場合はAjaxを使用せずに遷移する(通常遷移)。&lt;/dd>
+	 * &lt;/dl>
+	 *
+	 * @memberOf h5.scene
+	 * @name urlHistoryMode
 	 */
 	var URL_HISTORY_MODE = {
 		HASH: 'hash',
@@ -318,7 +343,7 @@
 	var locationRegExp = /^(?:(\w+:)?\/\/(([^\/:]+)(?::(\d+))?))?((\/?.*?)([^\/]*?))(\?.*?)?(#.*)?$/;
 
 	/**
-	 * changeSceneの遷移先指定がコントローラーか否かを判断する正規表現
+	 * navigateの遷移先指定がコントローラーか否かを判断する正規表現
 	 */
 	var controllerRegexp = /Controller$/;
 
@@ -523,7 +548,7 @@
 	 * シーンコンテナ生成済み要素配下は走査対象となりません。追加要素を対象としたい場合ははその部分を指定するようにしてください。
 	 * &lt;/p>
 	 *
-	 * @memberOf h5.scene
+	 * @private
 	 * @param {Element} [rootElement=document.body] 走査処理対象のルート要素。指定なしの場合はdocument.bodyをルート要素とします。
 	 * @param {String} [controllerName]
 	 *            バインド対象コントローラー名。指定なしの場合は'data-h5-controller'属性に指定されたすべてのコントローラーを対象とします。
@@ -547,7 +572,7 @@
 		}
 
 		// TODO(鈴木) メインシーンコンテナができていない場合のみ実行。
-		// この時点でメインシーンコンテナにはdata-h5-main-container属性があるようにする。
+		// この時点でメインシーンコンテナにはdata-h5-main-scene-container属性があるようにする。
 		if (!mainContainer &amp;&amp; h5.settings.scene.autoCreateMainContainer) {
 			var main = findWithSelf(root, '[' + DATA_H5_MAIN_CONTAINER + ']');
 			if (main.length === 0) {
@@ -1798,7 +1823,7 @@
 			if (!element) {
 				return null;
 			}
-			return getSceneContainer(element);
+			return getSceneContainers(element)[0];
 		}
 	});
 
@@ -1974,7 +1999,7 @@
 	/**
 	 * HTML要素取得(通信)
 	 * &lt;p>
-	 * 第二引数にコンテナ指定を追加。これが指定された場合、第一引数により取得したHTML内で、 data-h5-container属性の値がこれに一致する要素を対象とする。
+	 * 第二引数にコンテナ指定を追加。これが指定された場合、第一引数により取得したHTML内で、 data-h5-scene-container属性の値がこれに一致する要素を対象とする。
 	 * &lt;/p>
 	 *
 	 * @private
@@ -2359,7 +2384,7 @@
 		_dfd: null,
 
 		/**
-		 * changeScene経由で_changeSceneを実行したか否か
+		 * navigate経由で_navigateを実行したか否か
 		 *
 		 * @private
 		 * @memberOf SceneContainerController
@@ -2467,12 +2492,6 @@
 
 				// TODO(鈴木) Router処理開始
 				this._router.start();
-
-				// タイトルの設定
-				var title = this._getTitleFromCurrentScene();
-				if (title != null) {
-					this.setTitle(this._getTitleFromCurrentScene());
-				}
 			} else {
 				// TODO(鈴木) カレントとなるシーンを探索してscan
 				scanForContainer(element).done(function(controller) {
@@ -2514,7 +2533,7 @@
 		_onAClick: function(context) {
 			context.event.preventDefault();
 			var href = context.event.originalEvent.target.href;
-			this.changeScene(href);
+			this.navigate(href);
 		},
 
 		/**
@@ -2527,7 +2546,7 @@
 		_onSceneChangeRequest: function(context) {
 			context.event.stopPropagation();
 			setTimeout(this.own(function() {
-				this.changeScene(context.evArg);
+				this.navigate(context.evArg);
 			}), 0);
 		},
 
@@ -2555,21 +2574,43 @@
 		 *            &lt;/p>
 		 * @param {String} param.to 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
 		 * @param {Any}[param.args] デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
+		 * @param {string}[param.navigateType="normal"] メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。
+		 *            &lt;dl>
+		 *            &lt;dt>"normal"&lt;/dt>
+		 *            &lt;dd>URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。h5.scene.navigateType.NORMALと同値なのでこれを指定してもよいです。&lt;/dd>
+		 *            &lt;dt>"once"&lt;/dt>
+		 *            &lt;dd>URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。ブラウザバック等で再表示はできなくなります(再表示不可のメッセージ画面(後述)を表示)。h5.scene.navigateType.ONCEと同値なのでこれを指定してもよいです。&lt;/dd>
+		 *            &lt;dt>"exchange"&lt;/dt>
+		 *            &lt;dd>URLは変化させずに遷移します。h5.scene.navigateType.EXCHANGEと同値なのでこれを指定してもよいです。&lt;/dd>
+		 *            &lt;/dl>
+		 * @param {boolean}[param.replace=false] URLを置換しつつ遷移するか否か。置換して遷移する場合はtrueを設定します。
+		 *            デフォルトはfalseです。trueで遷移した場合、元の画面のURLは履歴から削除されるため、ブラウザバックでは戻れなくなります。
+		 * @param {string} [param.method="get"]
+		 *            toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のHTTPメソッドを指定します。
+		 *            &lt;dl>
+		 *            &lt;dt>"get"&lt;/dt>
+		 *            &lt;dd>GETメソッドで取得します(デフォルト)。h5.scene.method.GETと同値なのでこれを指定してもよいです。&lt;/dd>
+		 *            &lt;dt>"post"&lt;/dt>
+		 *            &lt;dd>POSTメソッドで取得します。h5.scene.method.POSTと同値なのでこれを指定してもよいです。&lt;/dd>
+		 *            &lt;dd>ブラウザバック等で再表示はできなくなります。&lt;/dd>
+		 *            &lt;/dl>
+		 * @param {Object} [param.serverArgs]
+		 *            toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のパラメーターを指定します。jQuery.ajaxの引数のdataプロパティに相当します。ただし、直下メンバーの各値として配列以外のオブジェクトは設定できません。値の配列については、その要素にオブジェクトは設定できません。
 		 * @returns {Promise} Promiseオブジェクト。遷移完了時にresolveを実行します。
 		 * @memberOf SceneContainerController
 		 */
-		changeScene: function(param) {
+		navigate: function(param) {
 
 			// TODO(鈴木) paramが文字列の場合は遷移先と見なして再帰呼び出しする
 			if (isString(param)) {
-				return this.changeScene({
+				return this.navigate({
 					to: param
 				});
 			}
 
 			// 渡されたパラメータを覚えておく
-			// シーン遷移後のコールバックで使用し、_changeSceneEndが終わったら破棄する
-			this._changeSceneParam = param;
+			// シーン遷移後のコールバックで使用し、_navigateEndが終わったら破棄する
+			this._navigateParam = param;
 
 			param = $.extend(true, {}, param);
 
@@ -2584,7 +2625,7 @@
 
 			var dfd = this._dfd = h5.async.deferred();
 
-			// TODO(鈴木) changeScene経由で_changeSceneを実行したか否か
+			// TODO(鈴木) navigate経由で_navigateを実行したか否か
 			this._isNavigated = true;
 
 			var to = param.to;
@@ -2681,7 +2722,7 @@
 		 * @param to
 		 * @param param
 		 */
-		_changeScene: function(to, param) {
+		_navigate: function(to, param) {
 
 			if (!to) {
 				return;
@@ -2692,9 +2733,9 @@
 			// TODO(鈴木) シーンコンテナ下はコントローラーを管理
 			var fromElm = (this._currentController || {}).rootElement;
 
-			// changeSceneメソッド経由でない場合
+			// navigateメソッド経由でない場合
 			if (!this._isNavigated) {
-				this._transition = this._createTransition(param.transition);
+				this._transition = new defaultTransitionController();
 				this._transition.onChangeStart(this.rootElement, fromElm);
 			}
 
@@ -2708,7 +2749,7 @@
 			var args = null;
 			if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
 				if (!this._isNavigated) {
-					this._onNotReshowable();
+					this._onNotReshowable(param);
 					return;
 				}
 				args = this._detour.args;
@@ -2742,7 +2783,7 @@
 
 					// TODO(鈴木) 遷移先指定がコントローラーの__name属性の場合
 					loadController(to, $('&lt;div>&lt;/div>'), args).done(function(toController) {
-						that._changeSceneEnd(toController);
+						that._navigateEnd(toController, param);
 					});
 
 				} else {
@@ -2758,7 +2799,7 @@
 						// TODO(鈴木) scan用にダミーのDIVにappend
 						scanForContainer($('&lt;div>&lt;/div>').append(toElm), null, args).done(
 								function(toController) {
-									that._changeSceneEnd(toController);
+									that._navigateEnd(toController, param);
 								});
 
 					}
@@ -2775,7 +2816,7 @@
 
 				// TODO(鈴木) 遷移先指定がコントローラーの場合
 
-				that._changeSceneEnd(to);
+				that._navigateEnd(to, param);
 
 			}
 
@@ -2787,9 +2828,9 @@
 		 * @private
 		 * @memberOf SceneContainerController
 		 * @param toController
-		 * @param fromElm
+		 * @param param
 		 */
-		_changeSceneEnd: function(toController) {
+		_navigateEnd: function(toController, param) {
 
 			var that = this;
 
@@ -2800,10 +2841,11 @@
 			that._currentController = toController;
 
 			// タイトルを決定する
-			var title = this._changeSceneParam.title;
+			var title = param &amp;&amp; param.title;
 			if (title == null) {
 				// 指定無しの場合
-				var isController = controllerRegexp.test(this._changeSceneParam.to);
+				var isController = this._navigateParam
+						&amp;&amp; controllerRegexp.test(this._navigateParam.to);
 				if (isController &amp;&amp; toController[CONTROLLER_SCENE_TITLE] != null) {
 					// 遷移先指定がコントローラの場合、プロパティから取得
 					this.setTitle(toController[CONTROLLER_SCENE_TITLE]);
@@ -2818,7 +2860,7 @@
 				this.setTitle(title);
 			}
 
-			this._changeSceneParam = null;
+			this._navigateParam = null;
 
 			this._transition.onChange(this.rootElement, toElm).done(this.own(function() {
 
@@ -2871,8 +2913,9 @@
 		 *
 		 * @private
 		 * @memberOf SceneContainerController
+		 * @param {Object} param
 		 */
-		_onNotReshowable: function() {
+		_onNotReshowable: function(param) {
 			if (notReshowable.__name &amp;&amp; controllerRegexp.test(notReshowable.__name)) {
 
 				// TODO(鈴木) notReshowable指定がコントローラーの場合
@@ -2881,23 +2924,23 @@
 						notReshowable, {
 							_notReshowableMessage: notReshowableMessage
 						});
-				this._changeSceneEnd(notReshowableController);
+				this._navigateEnd(notReshowableController, param);
 
 			} else {
 
 				// TODO(鈴木) notReshowable指定がコントローラー以外の場合
 
-				var param = null;
+				var navigateParam = null;
 				if (isString(notReshowable)) {
-					param = {
+					navigateParam = {
 						to: notReshowable
 					};
 				} else {
-					param = $.extend(true, {}, notReshowable);
+					navigateParam = $.extend(true, {}, notReshowable);
 				}
-				param.args = param.args || {};
-				param.args._notReshowableMessage = notReshowableMessage;
-				this._changeScene(param.to, param);
+				navigateParam.args = navigateParam.args || {};
+				navigateParam.args._notReshowableMessage = notReshowableMessage;
+				this._navigate(navigateParam.to, navigateParam);
 			}
 		},
 
@@ -2921,7 +2964,7 @@
 				// TODO(鈴木) シーン遷移タイプが'once'(一回のみ)、またはAjaxメソッドタイプが'post'の場合、
 				// 再表示不可エラー画面を表示する。
 				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
-					this._onNotReshowable();
+					this._onNotReshowable(param);
 					this._first = false;
 					return;
 				}
@@ -2939,6 +2982,12 @@
 						that._transition
 								.onChangeEnd(that.rootElement, null, controller.rootElement);
 						that._transition = null;
+
+						// タイトルの設定
+						var title = that._getTitleFromCurrentScene();
+						if (title != null) {
+							that.setTitle(title);
+						}
 					}
 					scanForContainer(this.rootElement, null, param.args).done(callback);
 					this._first = false;
@@ -2952,7 +3001,7 @@
 			if (this._first) {
 				this._navigated = true;
 			}
-			this._changeScene(to, param);
+			this._navigate(to, param);
 			this._first = false;
 		}
 	};
@@ -3031,7 +3080,7 @@
 	 * @memberOf h5.scene
 	 * @returns {SceneContainerController} メインシーンコンテナのインスタンス。未作成の場合はnull。
 	 */
-	function getMainContainer() {
+	function getMainSceneContainer() {
 		return mainContainer;
 	}
 
@@ -3039,51 +3088,36 @@
 	 * 指定要素およびその配下のシーンコンテナを取得します
 	 *
 	 * @memberOf h5.scene
-	 * @param {Element} [rootElement=document.body] 走査先頭要素。指定しない場合はドキュメント全体を対象とします。
+	 * @param {DOM|jQuery|stroing} [rootElement=document.body]
+	 *            走査先頭要素。要素またはセレクタを指定します。指定しない場合はドキュメント全体を対象とします。
+	 * @param {boolean} [option.deep=true] 子孫要素にバインドされているコントローラも含めるかどうか(デフォルトは含める)
 	 * @returns {SceneContainerController[]} シーンコンテナの配列。
 	 */
-	function getAllSceneContainers(rootElement) {
-
-		var containers = h5.core.controllerManager.getControllers(rootElement || document.body, {
+	function getSceneContainers(rootElement, option) {
+		return h5.core.controllerManager.getControllers(rootElement || document.body, {
 			name: SceneContainerController.__name,
-			deep: true
+			deep: option &amp;&amp; option.deep === false ? false : true
 		});
-
-		return containers;
-
 	}
 
 	/**
-	 * シーンコンテナを取得します。
+	 * シーンコンテナを取得します
+	 * &lt;p>
+	 * 第1引数に取得対象とする要素のdata-h5-scene-container属性まはたdata-h5-main-scene-container属性の値を文字列で指定します。該当する要素に対応するシーンコンテナを返します。
+	 * &lt;/p>
 	 *
 	 * @memberOf h5.scene
-	 * @param {String|Element} nameOrElement 文字列、要素が指定できます。
-	 *            &lt;dl>
-	 *            &lt;dt>文字列の場合&lt;/dt>
-	 *            &lt;dd>取得対象とする要素のdata-h5-container属性まはたdata-h5-main-container属性の値とみなし、その要素に対応するシーンコンテナを返却します。&lt;/dd>
-	 *            &lt;dt>要素の場合&lt;/dt>
-	 *            &lt;dd>その要素に対応するシーンコンテをを返却します。&lt;/dd>
-	 *            &lt;/dl>
-	 *            &lt;p>
-	 *            いずれの場合も、該当がない場合はnullを返却します。
-	 *            &lt;/p>
-	 * @returns {SceneContainerController} シーンコンテナ
+	 * @param {String} name
+	 *            取得対象とする要素のdata-h5-scene-container属性まはたdata-h5-main-scene-container属性の値を文字列で指定します。
+	 * @returns {SceneContainerController} 該当するシーンコンテナ。ない場合はnullを返します。
 	 */
-	function getSceneContainer(nameOrElement) {
+	function getSceneContainerByName(name) {
 
-		if (nameOrElement == null)
+		if (name == null) {
 			return null;
-
-
-		var name = null, element = null;
-
-		if (isString(nameOrElement)) {
-			name = nameOrElement;
-		} else {
-			element = nameOrElement;
 		}
 
-		var containers = getAllSceneContainers(element);
+		var containers = getSceneContainers();
 
 		if (containers.length === 0) {
 			return null;
@@ -3286,10 +3320,9 @@
 		openWindow: openWindow,
 		createSceneContainer: createSceneContainer,
 		init: init,
-		getMainContainer: getMainContainer,
-		scan: scan,
-		getAllSceneContainers: getAllSceneContainers,
-		getSceneContainer: getSceneContainer,
+		getMainSceneContainer: getMainSceneContainer,
+		getSceneContainers: getSceneContainers,
+		getSceneContainerByName: getSceneContainerByName,
 		navigateType: NAVIGATE_TYPE,
 		method: METHOD,
 		urlHistoryMode: URL_HISTORY_MODE
@@ -3307,7 +3340,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Mon Dec 14 2015 18:40:54 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 15 2015 19:47:27 GMT+0900 (JST)
 	</footer>
 </div>
 
