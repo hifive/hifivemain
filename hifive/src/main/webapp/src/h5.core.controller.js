@@ -462,49 +462,6 @@
 	}
 
 	// ----------------------------- コントローラ定義オブジェクトのチェック関数ここまで -----------------------------
-
-	/**
-	 * 子コントローラRequestクラス
-	 *
-	 * @param {String} selector セレクタ
-	 */
-	function Request(selector) {
-		var $target = $(selector);
-
-		this._controller = null;
-
-		// FIXME エラーメッセージ作成する
-		if ($target.length === 0) {
-			// 要素が0個の場合はnullにして終了
-			this._targetElement = null;
-			return;
-		} else if ($target.length > 1) {
-			// 要素が複数ある場合はエラー
-			throwFwError(ERR_CODE_BIND_TOO_MANY_TARGET);
-		} else if ($target[0].nodeType !== NODE_TYPE_DOCUMENT
-				&& $target[0].nodeType !== NODE_TYPE_ELEMENT) {
-			// ノードエレメントでない場合はエラー
-			throwFwError(ERR_CODE_BIND_NOT_NODE);
-		} else {
-			this._targetElement = $target[0];
-		}
-
-
-		// 既にコントローラがバインドされているか
-		var controllers = h5.core.controllerManager.getController(this._controller);
-		if (controllers.length > 1) {
-			// 複数バインドされている場合はエラー
-			// TODO
-			throwFwError();
-		}
-		if (controllers.length == 1) {
-			this._controller = controllres[0];
-		} else if (controllers.length === 0) {
-			var controllerName = $target.data('h5-controller');
-			this._controller = h5.res.dependsOn(controllerName);
-		}
-	}
-
 	/**
 	 * イベントコンテキストクラス イベントコンテキストの中に格納する
 	 *
@@ -5052,16 +5009,6 @@
 				nsObj[key] = obj;
 				h5.u.obj.expose(ns, nsObj);
 			}
-		},
-
-		/**
-		 * セレクタから子コントローラ定義を行うオブジェクト
-		 *
-		 * @memberOf h5.core
-		 * @param {String} セレクタ
-		 */
-		childFrom: function(selector) {
-			return new Request(selector);
 		}
 	});
 })();
