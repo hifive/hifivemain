@@ -1913,7 +1913,9 @@
 				controller: controller,
 				selector: selector,
 				eventName: en,
-				handler: getHandler(en)
+				handler: getHandler(en),
+				// コントローラが内部で使用するハンドラ。ポイントカットなどのアスペクトの影響を受けない。
+				isInnerBindObj: true
 			};
 		}
 		var bindObjects = [createBindObj('mousedown')];
@@ -3980,11 +3982,21 @@
 							throwErrorIfNoRootElement(this, 'on');
 							// バインドオブジェクトの作成
 							var info = createEventHandlerInfo(target, eventName, this);
-							var bindObjects = createBindObjects(this, info, listener);
 
 							// バインドオブジェクトに基づいてバインド
+							// アスペクトを掛ける(動的に追加されたハンドラは、プロパティ名無し扱い(=いずれのポイントカットにもマッチしない)
+							// また、 enable/disableListeners()のために一番外側に制御用インターセプタを織り込む
+							var interceptors = getInterceptors(this.__name);
+							interceptors.push(executeListenersInterceptor);
+							// invocation.funcNameは空文字にする
+							var bindObjects = createBindObjects(this, info, createWeavedFunction(
+									listener, '', interceptors));
 							for (var i = 0, l = bindObjects.length; i < l; i++) {
 								var bindObj = bindObjects[i];
+								if (!bindObj.isInnerBindObj) {
+									// h5track*を有効にするハンドラを除いて、オリジナルハンドラを覚えて置き、off()できるようにする
+									bindObj.originalHandler = listener;
+								}
 								bindByBindObject(bindObj, getDocumentOf(this.rootElement));
 							}
 						},

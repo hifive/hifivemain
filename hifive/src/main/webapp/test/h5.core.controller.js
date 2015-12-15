@@ -8966,6 +8966,58 @@ $(function() {
 		});
 	});
 
+	asyncTest('動的にバインドしたハンドラについてのenableListeners()/disableListeners()の動作', function() {
+		var ret = null;
+		function cHandler() {
+			ret = 1;
+		}
+		function pHandler() {
+			ret = 2;
+		}
+		var cController = {
+			__name: 'CController',
+			__ready: function() {
+				this.on('{rootElement}', 'cEvent', cHandler);
+			}
+		};
+
+		var pController = {
+			__name: 'PController',
+			cController: cController,
+			__ready: function() {
+				this.on('{rootElement}', 'pEvent', pHandler);
+			}
+		};
+
+		var c = h5.core.controller('#controllerTest', pController);
+		c.readyPromise.done(function() {
+			var root = $(c.rootElement);
+			ret = null;
+			c.disableListeners();
+			root.trigger('cEvent');
+			ok(ret === null,
+					'親のdisableListeners()によって、useHandlersがtrueである子コントローラのイベントハンドラが動作しなくなったか');
+			root.trigger('pEvent');
+			ok(ret === null, '親のdisableListeners()によって、イベントハンドラが動作しなくなったか');
+
+			c.cController.enableListeners();
+			root.trigger('cEvent');
+			ok(ret === 1, '子のenableListeners()によって、子コントローラのイベントハンドラが動作するようになったか');
+			ret = null;
+			root.trigger('pEvent');
+			ok(ret === null, '子のenableListeners()によって、親コントローラのイベントハンドラが動作しないままになっているか');
+
+			c.enableListeners();
+			root.trigger('cEvent');
+			ok(ret === 1, '親のenableListeners()によって、子コントローラのイベントハンドラが動作しているか');
+			root.trigger('pEvent');
+			ok(ret === 2, '親のenableListeners()によって、イベントハンドラが動作するようになったか');
+
+			c.unbind();
+			start();
+		});
+	});
+
 	asyncTest(
 			'throwError() / throwCustomError() の動作',
 			14,
