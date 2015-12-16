@@ -3984,17 +3984,15 @@
 							var info = createEventHandlerInfo(target, eventName, this);
 
 							// バインドオブジェクトに基づいてバインド
-							// アスペクトを掛ける(動的に追加されたハンドラは、プロパティ名無し扱い(=いずれのポイントカットにもマッチしない)
-							// また、 enable/disableListeners()のために一番外側に制御用インターセプタを織り込む
-							var methodName = null;
-							if (isString(target)) {
-								methodName = $.trim(target) + ' ' + $.trim(eventName);
-							}
-							var interceptors = getInterceptors(this.__name, methodName);
+							// アスペクトを掛ける
+							// onで動的に追加されたハンドラは、メソッド名無し扱いとし、ポイントカットでのメソッド名のマッチングは行わない
+							// また、invocation.funcNameは空文字とする
+							// enable/disableListeners()のために制御用インターセプタも織り込む
+							var interceptors = getInterceptors(this.__name);
 							interceptors.push(executeListenersInterceptor);
 							// invocation.funcNameはターゲットがセレクタでない場合は空文字にする
 							var bindObjects = createBindObjects(this, info, createWeavedFunction(
-									listener, methodName || '', interceptors));
+									listener, '', interceptors));
 							for (var i = 0, l = bindObjects.length; i < l; i++) {
 								var bindObj = bindObjects[i];
 								if (!bindObj.isInnerBindObj) {
