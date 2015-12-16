@@ -478,7 +478,7 @@ var isArray = Array.isArray || (function() {
 })();
 
 /**
- * 引数が配列かどうか判定
+ * 引数が関数かどうか判定
  *
  * @private
  * @param {Any} obj
