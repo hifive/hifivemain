@@ -8488,6 +8488,64 @@ $(function() {
 				});
 	});
 
+	asyncTest('[build#min]onで動的にバインドしたハンドラもアスペクトの対象であること', function() {
+		var ret;
+		var controller = {
+			__name: 'com.htmlhifive.test.controller.TestController',
+			__init: function() {
+				this.on('{rootElement}', 'click', function() {
+				// 何もしない
+				});
+			}
+		};
+		h5.core.__compileAspects([{
+			target: 'com.htmlhifive.test.controller*',
+			interceptors: function(invocation) {
+				if (invocation.funcName !== '__init') {
+					ret = invocation;
+				}
+				invocation.proceed();
+			}
+		}]);
+
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			$(c.rootElement).click();
+			ok(ret, 'pointCut指定されていないアスペクトは対象になること');
+			strictEqual(ret && ret.funcName, '', 'invocation.funcNameは空文字であること');
+			cleanAllAspects();
+		}).always(start);
+	});
+
+	asyncTest('[build#min]onで動的にバインドしたハンドラはpointCut指定されているアスペクトは掛からないこと', function() {
+		var ret;
+		var controller = {
+			__name: 'com.htmlhifive.test.controller.TestController',
+			__init: function() {
+				this.on('{rootElement}', 'click', function() {
+				// 何もしない
+				});
+			}
+		};
+		h5.core.__compileAspects([{
+			target: 'com.htmlhifive.test.controller*',
+			interceptors: function(invocation) {
+				if (invocation.funcName !== '__init') {
+					ret = invocation;
+				}
+				invocation.proceed();
+			},
+			pointCut: /.*/
+		}]);
+
+		var c = h5.core.controller('#controllerTest', controller);
+		c.readyPromise.done(function() {
+			$(c.rootElement).click();
+			ok(ret, '動的にバインドしたハンドラはpointCut指定されているアスペクトの対象にならないこと');
+			cleanAllAspects();
+		}).always(start);
+	});
+
 	asyncTest(
 			'[build#min]アスペクト対象のメソッドがjQueryオブジェクトを返した時にpromiseオブジェクトと判定されずにreject/resolveを待たないこと',
 			4, function() {
