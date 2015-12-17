@@ -711,7 +711,7 @@
 		 * setOrderFunction()で比較設定を設定済みである場合に再度setOrderFunction()を実行すると、設定済みの関数は上書きされます。
 		 * </p>
 		 * <p>
-		 * setOrderFunction()で設定した関数を削除したい場合は第1引数にnullを設定して実行してください。
+		 * setOrderFunction()で設定したソート条件を削除したい場合は{@link Query.clearOrder}を実行してください。
 		 * </p>
 		 *
 		 * @memberOf Query
@@ -719,16 +719,13 @@
 		 * @returns {Query}
 		 */
 		setOrderFunction: function(orderFunction) {
-			// nullが明示的に指定されたらnullにして終了(比較関数設定のクリア)
-			if (orderFunction !== null) {
-				// 比較関数のエラーチェック
-				if (!isFunction(orderFunction)) {
-					throwFwError(ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID);
-				}
-				if (this._addedOrders) {
-					// addOrderですでにオーダーキーが設定済みの場合はsetOrderFunctionできない
-					throwFwError(ERR_CODE_ALREADY_ADDED_ORDER);
-				}
+			// 比較関数のエラーチェック
+			if (!isFunction(orderFunction)) {
+				throwFwError(ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID);
+			}
+			if (this._addedOrders) {
+				// addOrderですでにオーダーキーが設定済みの場合はsetOrderFunctionできない
+				throwFwError(ERR_CODE_ALREADY_ADDED_ORDER);
 			}
 			this._orderFunction = orderFunction;
 			return this;
@@ -757,7 +754,7 @@
 		 * {@link Query.setOrderFunction}で比較関数を設定している場合はこのメソッドは呼べません。また逆に、addOrder()で条件を追加している場合にsetOrderFunctionで比較関数を設定することもできません。
 		 * </p>
 		 * <p>
-		 * addOrder()で追加した条件をすべて削除したい場合は{@link Query.clearOrderAll}を実行してください。
+		 * addOrder()で追加した条件をすべて削除したい場合は{@link Query.clearOrder}を実行してください。
 		 * </p>
 		 *
 		 * @memberOf Query
@@ -785,16 +782,17 @@
 		},
 
 		/**
-		 * 検索結果のソート条件となるプロパティ指定を全て削除
+		 * 検索結果のソート条件指定を全て削除
 		 * <p>
-		 * {@link Query.addOrder}で追加したソート条件をすべて削除します。
+		 * {@link Query.addOrder}及び{@link Query.setOrderFunction}で設定したソート条件をすべて削除します。
 		 * </p>
 		 *
 		 * @memberOf Query
 		 * @returns {Query}
 		 */
-		clearOrderAll: function() {
+		clearOrder: function() {
 			this._addedOrders = null;
+			this._orderFunction = null;
 			return this;
 		}
 	});

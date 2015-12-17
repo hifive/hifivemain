@@ -669,28 +669,25 @@ $(function() {
 		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
 	});
 
-	test('setOrderFunctionの引数にnullを設定して比較関数設定を削除', 3, function() {
+	test('clearOrderを呼んで比較条件設定を削除して再設定できること', function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
-		}).setOrderFunction(function(a, b) {
-			// idを数値で評価して降順
-			return parseInt(b.get('id')) - parseInt(a.get('id'));
-		}).setOrderFunction(null).addOrder('id').execute().result;
-		strictEqual(result[0], this.model.get('1'), 'id==="1"のアイテムが0番目');
-		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result[2], this.model.get('2'), 'id==="2"のアイテムが2番目');
-	});
-
-	test('clearOrderAllを読んで比較条件設定を削除', 3, function() {
-		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).addOrder('id').clearOrderAll().setOrderFunction(function(a, b) {
+		}).addOrder('id').clearOrder().setOrderFunction(function(a, b) {
 			// idを数値で評価して降順
 			return parseInt(b.get('id')) - parseInt(a.get('id'));
 		}).execute().result;
 		strictEqual(result[0], this.model.get('10'), 'id==="10"のアイテムが0番目');
 		strictEqual(result[1], this.model.get('2'), 'id==="2"のアイテムが1番目');
 		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
+		result = this.model.createQuery().setCriteria({
+			'id in': ['1', '2', '10']
+		}).setOrderFunction(function(a, b) {
+			// idを数値で評価して降順
+			return parseInt(b.get('id')) - parseInt(a.get('id'));
+		}).clearOrder().addOrder('id').execute().result;
+		strictEqual(result[0], this.model.get('1'), 'id==="1"のアイテムが0番目');
+		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result[2], this.model.get('2'), 'id==="2"のアイテムが2番目');
 	});
 
 	test('addOrderに存在しないキー名を指定するとエラー', function() {
@@ -722,7 +719,7 @@ $(function() {
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID, e.message);
 		}
-		var invalidArgs = ['id', '', 1, true, false, {}, [], /id asc/];
+		var invalidArgs = ['id', '', null, 1, true, false, {}, [], /id asc/];
 		for (var i = 0, l = invalidArgs.length; i < l; i++) {
 			try {
 				this.model.createQuery().setCriteria({
