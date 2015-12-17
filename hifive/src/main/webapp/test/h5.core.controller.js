@@ -8511,13 +8511,12 @@ $(function() {
 		var c = h5.core.controller('#controllerTest', controller);
 		c.readyPromise.done(function() {
 			$(c.rootElement).click();
-			ok(ret, 'pointCut指定されていないアスペクトは対象になること');
-			strictEqual(ret && ret.funcName, '', 'invocation.funcNameは空文字であること');
+			ok(ret, '動的ハンドラがアスペクトの対象になること');
 			cleanAllAspects();
 		}).always(start);
 	});
 
-	asyncTest('[build#min]onで動的にバインドしたハンドラはpointCut指定されているアスペクトは掛からないこと', function() {
+	asyncTest('[build#min]onで動的にバインドしたハンドラの名前は空文字として扱われる', function() {
 		var ret;
 		var controller = {
 			__name: 'com.htmlhifive.test.controller.TestController',
@@ -8530,18 +8529,17 @@ $(function() {
 		h5.core.__compileAspects([{
 			target: 'com.htmlhifive.test.controller*',
 			interceptors: function(invocation) {
-				if (invocation.funcName !== '__init') {
-					ret = invocation;
-				}
+				ret = invocation;
 				invocation.proceed();
 			},
-			pointCut: /.*/
+			pointCut: /^$/
 		}]);
 
 		var c = h5.core.controller('#controllerTest', controller);
 		c.readyPromise.done(function() {
 			$(c.rootElement).click();
-			ok(ret, '動的にバインドしたハンドラはpointCut指定されているアスペクトの対象にならないこと');
+			ok(ret, '動的にバインドしたハンドラは空文字としてpointCutにマッチすること');
+			strictEqual(ret && ret.funcName, '', 'invocation.funcNameは空文字であること');
 			cleanAllAspects();
 		}).always(start);
 	});
