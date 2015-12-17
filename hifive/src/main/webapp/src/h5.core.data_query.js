@@ -196,13 +196,22 @@
 	/** ORDER BY句に指定された比較関数が不正 */
 	var ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID = 3;
 
+	/** setOrderFunctionで既にオーダー関数が設定済みなのにaddOrderが呼ばれた */
+	var ERR_CODE_ALREADY_SET_ORDER_FUNCTION = 4;
+
+	/** addOrderで既にオーダーキーが追加済みなのにsetOrderFunctionが呼ばれた */
+	var ERR_CODE_ALREADY_ADDED_ORDER = 5;
+
 	/**
 	 * 各エラーコードに対応するメッセージ
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_NO_COMPARE_FUNCTIONS] = '演算子"{0}"で"{1}"型の値を比較することはできません';
 	errMsgMap[ERR_CODE_ORDER_BY_KEY] = '{0}の第1引数が不正です。指定されたキー({1})はモデル{2}に存在しません';
-	errMsgMap[ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID] = 'orderByの第1引数が不正です。比較関数を関数で指定してください';
+	errMsgMap[ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID] = 'setOrderFunctionの第1引数が不正です。比較関数を関数で指定してください';
+	errMsgMap[ERR_CODE_ALREADY_SET_ORDER_FUNCTION] = 'setOrderFunction()ですでにソート条件が設定済みです。addOrder()でソート条件を追加することはできません。';
+	errMsgMap[ERR_CODE_ALREADY_ADDED_ORDER] = 'addOrder()ですでにソート条件が追加済みです。setOrderFunction()でソート条件を設定することはできません。';
+
 	// メッセージの登録
 	addFwErrorCodeMap(errMsgMap);
 
@@ -469,48 +478,6 @@
 	}
 
 	/**
-	 * 指定されたキーでアイテムを昇順にソートするための比較関数を作成します
-	 *
-	 * @private
-	 * @param {String} key データアイテムのキー名
-	 * @returns {Function}
-	 */
-	function createAscCompareFunction(key) {
-		return function(item1, item2) {
-			var val1 = item1.get(key);
-			var val2 = item2.get(key);
-			if (val1 > val2) {
-				return 1;
-			}
-			if (val1 < val2) {
-				return -1;
-			}
-			return 0;
-		};
-	}
-
-	/**
-	 * 指定されたキーでアイテムを降順にソートするための比較関数を作成します
-	 *
-	 * @private
-	 * @param {String} key データアイテムのキー名
-	 * @returns {Function}
-	 */
-	function createDescCompareFunction(key) {
-		return function(item1, item2) {
-			var val1 = item1.get(key);
-			var val2 = item2.get(key);
-			if (val1 > val2) {
-				return -1;
-			}
-			if (val1 < val2) {
-				return 1;
-			}
-			return 0;
-		};
-	}
-
-	/**
 	 * QueryResultクラス
 	 * <p>
 	 * {@link Query.execute}がこのクラスのインスタンスを返します
@@ -593,7 +560,6 @@
 		 * 	name: /HTML5/,
 		 * 	'price &lt;': 3000
 		 * }
-		 *
 		 * // categoryが'game'または'movie'で、releaseDateが2014年以降のアイテムを検索する条件
 		 * {
 		 *   'category in': ['game', 'movie'],
@@ -634,8 +600,29 @@
 				}
 			}
 			// ソート
-			if (this._compareFunction) {
-				result.sort(this._compareFunction);
+			if (this._orderFunction) {
+				result.sort(this._orderFunction);
+			} else if (this._addedOrders) {
+				var addedOrders = this._addedOrders;
+				var keysLength = addedOrders.length;
+				result.sort(function(item1, item2) {
+					// 追加されたキー順に評価する
+					// p1,p2が2つとも昇順で登録されている場合、p1で昇順ソートになっていて、p1が同じものについてはp2で昇順ソートされるようにする
+					for (var i = 0; i < keysLength; i++) {
+						var order = addedOrders[i];
+						var key = order.key;
+						var isAsc = order.isAsc;
+						var val1 = item1.get(key);
+						var val2 = item2.get(key);
+						if (val1 > val2) {
+							return isAsc ? 1 : -1;
+						}
+						if (val1 < val2) {
+							return isAsc ? -1 : 1;
+						}
+					}
+					return 0;
+				});
 			}
 			this._executeDfd.resolveWith(this, [result]);
 			return new QueryResult(result);
@@ -699,77 +686,115 @@
 		//		},
 
 		/**
-		 * 検索結果のソート条件を設定
+		 * 検索結果のソート条件を比較関数で設定
 		 * <p>
-		 * 比較関数で指定します。単にあるプロパティで昇順あるいは降順にしたい場合は{@link Query.orderByAsc}または{@link Query.orderByDesc}を使用できます。
+		 * 検索結果をソートする比較関数を指定します。データアイテム同士を比較する関数を設定してください。
 		 * </p>
 		 * <p>
-		 * 比較関数は、以下の例のように実装してください。
+		 * 比較関数の例
 		 * </p>
 		 *
-		 * <pre class="sh_javascript">
-		 * query.orderBy(function(a, b) {
-		 * 	// idを数値で評価して降順にする
-		 * 		// 引数はそれぞれデータアイテム。第1引数を先にする場合は正の値、第2引数を先にする場合は負の値を返す
+		 * <pre class="sh_javascript"><code>
+		 * query.setOrderFunction(function(a, b) {
+		 * 	// 比較関数の引数はそれぞれデータアイテム。第1引数を先にする場合は正の値、第2引数を先にする場合は負の値を返す
 		 * 		return parseInt(b.get('id')) - parseInt(a.get('id'));
 		 * 	});
-		 * </pre>
+		 * </code></pre>
+		 *
+		 * <p>
+		 * 単にあるプロパティで昇順あるいは降順にソートしたい場合は{@link Query.addOrder}で設定できます。
+		 * </p>
+		 * <p>
+		 * {@link Query.addOrder}で条件を追加している場合にsetOrderFunctionで比較関数を設定することはできません。また逆に、setOrderFunctionで比較関数を設定している場合はaddOrderは呼べません。
+		 * </p>
+		 * <p>
+		 * setOrderFunction()で比較設定を設定済みである場合に再度setOrderFunction()を実行すると、設定済みの関数は上書きされます。
+		 * </p>
+		 * <p>
+		 * setOrderFunction()で設定した関数を削除したい場合は第1引数にnullを設定して実行してください。
+		 * </p>
 		 *
 		 * @memberOf Query
-		 * @param {Function} compareFunction
+		 * @param {Function} orderFunction
 		 * @returns {Query}
 		 */
-		orderBy: function(compareFunction) {
-			// 比較関数のエラーチェック
-			if (!isFunction(compareFunction)) {
-				throwFwError(ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID);
-				return;
+		setOrderFunction: function(orderFunction) {
+			// nullが明示的に指定されたらnullにして終了(比較関数設定のクリア)
+			if (orderFunction !== null) {
+				// 比較関数のエラーチェック
+				if (!isFunction(orderFunction)) {
+					throwFwError(ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID);
+				}
+				if (this._addedOrders) {
+					// addOrderですでにオーダーキーが設定済みの場合はsetOrderFunctionできない
+					throwFwError(ERR_CODE_ALREADY_ADDED_ORDER);
+				}
 			}
-			return this._orderBy(compareFunction);
+			this._orderFunction = orderFunction;
+			return this;
 		},
 
 		/**
-		 * 検索結果のソート条件を指定したプロパティについての昇順に設定
+		 * 検索結果のソート条件を指定したプロパティついての昇順、または降順に設定
 		 * <p>
-		 * 検索結果のソート条件を指定したプロパティについての昇順に設定します。第1引数には比較対象となるキー名を指定してください。
+		 * 検索結果のソート条件を指定したプロパティについての昇順、または降順に設定します。第1引数には比較対象となるキー名を指定してください。
+		 * </p>
+		 * <p>
+		 * 第2引数にfalseを指定した場合は降順です。trueを指定した場合は省略した場合は昇順です。
+		 * </p>
+		 * <p>
+		 * addOrderは複数回呼ぶことで条件を追加できます。
+		 * </p>
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * query.addOrder('p1').addOrder('p2', false);
+		 * </code></pre>
+		 *
+		 * <p>
+		 * 上記のように指定した場合、p1キーで昇順ソートし、p1の値が同じアイテムについてはp2キーで降順ソートします。
+		 * </p>
+		 * <p>
+		 * {@link Query.setOrderFunction}で比較関数を設定している場合はこのメソッドは呼べません。また逆に、addOrder()で条件を追加している場合にsetOrderFunctionで比較関数を設定することもできません。
+		 * </p>
+		 * <p>
+		 * addOrder()で追加した条件をすべて削除したい場合は{@link Query.clearOrderAll}を実行してください。
 		 * </p>
 		 *
 		 * @memberOf Query
 		 * @param {string} key
+		 * @param {boolean} [isAsc=true] falseを指定すると降順に設定。デフォルトは昇順
 		 * @returns {Query}
 		 */
-		orderByAsc: function(key) {
+		addOrder: function(key, isAsc) {
 			// keyがschemaにあるかどうかチェックする
 			var schema = this._model.schema;
 			if (!schema.hasOwnProperty(key)) {
-				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
-				throwFwError(ERR_CODE_ORDER_BY_KEY, ['orderByAsc', key, this._model.name]);
+				// スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
+				throwFwError(ERR_CODE_ORDER_BY_KEY, ['addOrder', key, this._model.name]);
 			}
-			return this._orderBy(createAscCompareFunction(key));
+			if (this._orderFunction) {
+				// setOrderFunctionですでにオーダー関数が設定済みの場合はaddOrderできない
+				throwFwError(ERR_CODE_ALREADY_SET_ORDER_FUNCTION);
+			}
+			this._addedOrders = this._addedOrders || [];
+			this._addedOrders.push({
+				key: key,
+				isAsc: isAsc !== false
+			});
+			return this;
 		},
 
 		/**
-		 * 検索結果のソート条件を指定したプロパティについての降順に設定
+		 * 検索結果のソート条件となるプロパティ指定を全て削除
 		 * <p>
-		 * 検索結果のソート条件を指定したプロパティについての降順に設定します。第1引数には比較対象となるキー名を指定してください。
+		 * {@link Query.addOrder}で追加したソート条件をすべて削除します。
 		 * </p>
 		 *
 		 * @memberOf Query
-		 * @param {string} key
 		 * @returns {Query}
 		 */
-		orderByDesc: function(key) {
-			// keyがschemaにあるかどうかチェックする
-			var schema = this._model.schema;
-			if (!schema.hasOwnProperty(key)) {
-				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
-				throwFwError(ERR_CODE_ORDER_BY_KEY, ['orderByDesc', key, this._model.name]);
-			}
-			return this._orderBy(createDescCompareFunction(key));
-		},
-
-		_orderBy: function(compareFunction) {
-			this._compareFunction = compareFunction;
+		clearOrderAll: function() {
+			this._addedOrders = null;
 			return this;
 		}
 	});

@@ -185,7 +185,7 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			price: 22000
 		});
-		var queryResult = query.orderByAsc('id').execute();
+		var queryResult = query.addOrder('id').execute();
 		var result = queryResult.result;
 		ok($.isArray(result), '検索結果はQueryResultでresultプロパティが配列であること');
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
@@ -238,7 +238,7 @@ $(function() {
 	test('"!="を指定した場合は"!=="で比較されること', 21, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id !=': 5
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 10, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		var index = 0;
 		for ( var id in this.model.items) {
@@ -247,7 +247,7 @@ $(function() {
 
 		result = this.model.createQuery().setCriteria({
 			'id !=': '5'
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 9, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		index = 0;
 		for ( var id in this.model.items) {
@@ -269,7 +269,7 @@ $(function() {
 	test('"<="を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'price <=': 1200
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('10'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -286,7 +286,7 @@ $(function() {
 	test('">="を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'price >=': 30000
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -295,7 +295,7 @@ $(function() {
 	test('"between"を指定', 4, function() {
 		var result = this.model.createQuery().setCriteria({
 			'price between': [1000, 7000]
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 3, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('9'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -305,7 +305,7 @@ $(function() {
 	test('"!between"を指定', 5, function() {
 		var result = this.model.createQuery().setCriteria({
 			'price !between': [1200, 22000]
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -316,7 +316,7 @@ $(function() {
 	test('"in"を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['4', '2']
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -325,7 +325,7 @@ $(function() {
 	test('"!in"を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'id !in': ['1', '2', '4', '5', '7', '8', '9', '10']
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('6'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -355,7 +355,7 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			itemname: /マウス/
 		});
-		var result = query.orderBy(compareId).execute().result;
+		var result = query.setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('9'), '検索条件を満たすアイテムが格納されていること');
 		strictEqual(result[1], this.model.get('10'), '検索条件を満たすアイテムが格納されていること');
@@ -365,7 +365,7 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			'itemname =': /マウス/
 		});
-		var result = query.orderBy(compareId).execute().result;
+		var result = query.setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('9'), '検索条件を満たすアイテムが格納されていること');
 		strictEqual(result[1], this.model.get('10'), '検索条件を満たすアイテムが格納されていること');
@@ -376,7 +376,7 @@ $(function() {
 		var query = this.model.createQuery().setCriteria({
 			'itemname !=': /マウス/
 		});
-		var result = query.orderBy(compareId).execute().result;
+		var result = query.setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 8, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが格納されていること');
 		strictEqual(result[1], this.model.get('2'), '検索条件を満たすアイテムが格納されていること');
@@ -429,7 +429,7 @@ $(function() {
 	test('"!="を指定した場合は"!=="で比較されること', 6, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value !=': new Date('2014/7/2')
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 5, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		var index = 0;
 		for ( var id in this.model.items) {
@@ -452,7 +452,7 @@ $(function() {
 	test('"<="を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value <=': new Date('2014/7/1')
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -470,7 +470,7 @@ $(function() {
 	test('">="を指定', 5, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value >=': new Date('2014/7/2')
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -481,7 +481,7 @@ $(function() {
 	test('"between"を指定', 5, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value between': [new Date('2014/7/1'), new Date('2014/7/3')]
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -492,7 +492,7 @@ $(function() {
 	test('"!between"を指定', 3, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value !between': [new Date('2014/7/1'), new Date('2014/7/3')]
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 2, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('7'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -501,7 +501,7 @@ $(function() {
 	test('"in"を指定', 4, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value in': [new Date('2014/7/4'), new Date('2014/7/2')]
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 3, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('3'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('4'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -511,7 +511,7 @@ $(function() {
 	test('"!in"を指定', 5, function() {
 		var result = this.model.createQuery().setCriteria({
 			'value !in': [new Date('2014/7/4'), new Date('2014/7/2')]
-		}).orderBy(compareId).execute().result;
+		}).setOrderFunction(compareId).execute().result;
 		strictEqual(result.length, 4, '検索結果の長さが検索条件を満たすアイテムの数分だけあること');
 		strictEqual(result[0], this.model.get('1'), '検索条件を満たすアイテムが検索結果に格納されていること');
 		strictEqual(result[1], this.model.get('2'), '検索条件を満たすアイテムが検索結果に格納されていること');
@@ -568,7 +568,38 @@ $(function() {
 		setup: function() {
 			this.manager = h5.core.data.createManager('TestManager');
 			this.model = this.manager.createModel(itemSchema);
-			this.model.create(itemsData);
+			this.model.create([{
+				id: '11',
+				itemname: 'B',
+				price: 100
+			}, {
+				id: '12',
+				itemname: 'A',
+				price: 100
+			}, {
+				id: '13',
+				itemname: 'C',
+				price: 200
+			}, {
+				id: '14',
+				itemname: 'A',
+				price: 100
+			}, {
+				id: '15',
+				price: 1
+			}, {
+				id: '16',
+				price: 3
+			}, {
+				id: '17',
+				price: 2
+			}, {
+				id: '1'
+			}, {
+				id: '2'
+			}, {
+				id: '10'
+			}]);
 			this.sequence = h5.core.data.createSequence(itemsData.length, 1,
 					h5.core.data.SEQ_STRING);
 		},
@@ -583,28 +614,38 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('orderByAsc', 3, function() {
+	test('addOrderで昇順', function() {
 		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).orderByAsc('id').execute().result;
-		strictEqual(result[0], this.model.get('1'), 'id==="1"のアイテムが0番目');
-		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result[2], this.model.get('2'), 'id==="2"のアイテムが2番目');
+			'id in': ['15', '16', '17']
+		}).addOrder('price').execute().result;
+		strictEqual(result[0], this.model.get('15'), 'price=1のアイテムが0番目');
+		strictEqual(result[1], this.model.get('17'), 'price=2のアイテムが1番目');
+		strictEqual(result[2], this.model.get('16'), 'price=3のアイテムが2番目');
 	});
 
-	test('orderByDesc', 3, function() {
+	test('addOrderで降順', function() {
 		var result = this.model.createQuery().setCriteria({
-			'id in': ['1', '2', '10']
-		}).orderByDesc('id').execute().result;
-		strictEqual(result[0], this.model.get('2'), 'id==="2"のアイテムが0番目');
-		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
-		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
+			'id in': ['15', '16', '17']
+		}).addOrder('price', false).execute().result;
+		strictEqual(result[0], this.model.get('16'), 'price=3のアイテムが0番目');
+		strictEqual(result[1], this.model.get('17'), 'price=2のアイテムが1番目');
+		strictEqual(result[2], this.model.get('15'), 'price=1のアイテムが2番目');
 	});
 
-	test('比較関数を指定してソート', 3, function() {
+	test('addOrderで複数条件指定', function() {
+		var result = this.model.createQuery().setCriteria({
+			'id in': ['11', '12', '13', '14']
+		}).addOrder('price').addOrder('itemname', false).addOrder('id', false).execute().result;
+		strictEqual(result[0], this.model.get('11'), 'id==="11"のアイテムが0番目');
+		strictEqual(result[1], this.model.get('14'), 'id==="14"のアイテムが1番目');
+		strictEqual(result[2], this.model.get('12'), 'id==="12"のアイテムが2番目');
+		strictEqual(result[3], this.model.get('13'), 'id==="13"のアイテムが3番目');
+	});
+
+	test('setOrderFunctionで比較関数を指定してソート', function() {
 		var result = this.model.createQuery().setCriteria({
 			'id in': ['1', '2', '10']
-		}).orderBy(function(a, b) {
+		}).setOrderFunction(function(a, b) {
 			// idを数値で評価して降順
 			return parseInt(b.get('id')) - parseInt(a.get('id'));
 		}).execute().result;
@@ -613,11 +654,50 @@ $(function() {
 		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
 	});
 
-	test('orderByAscに存在しないキー名を指定するとエラー', function() {
+	test('setOrderFunctionを複数回呼んで比較関数を上書き', function() {
+		var result = this.model.createQuery().setCriteria({
+			'id in': ['1', '2', '10']
+		}).setOrderFunction(function(a, b) {
+			// idを数値で評価して昇順
+			return parseInt(a.get('id')) - parseInt(b.get('id'));
+		}).setOrderFunction(function(a, b) {
+			// idを数値で評価して降順
+			return parseInt(b.get('id')) - parseInt(a.get('id'));
+		}).execute().result;
+		strictEqual(result[0], this.model.get('10'), 'id==="10"のアイテムが0番目');
+		strictEqual(result[1], this.model.get('2'), 'id==="2"のアイテムが1番目');
+		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
+	});
+
+	test('setOrderFunctionの引数にnullを設定して比較関数設定を削除', 3, function() {
+		var result = this.model.createQuery().setCriteria({
+			'id in': ['1', '2', '10']
+		}).setOrderFunction(function(a, b) {
+			// idを数値で評価して降順
+			return parseInt(b.get('id')) - parseInt(a.get('id'));
+		}).setOrderFunction(null).addOrder('id').execute().result;
+		strictEqual(result[0], this.model.get('1'), 'id==="1"のアイテムが0番目');
+		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
+		strictEqual(result[2], this.model.get('2'), 'id==="2"のアイテムが2番目');
+	});
+
+	test('clearOrderAllを読んで比較条件設定を削除', 3, function() {
+		var result = this.model.createQuery().setCriteria({
+			'id in': ['1', '2', '10']
+		}).addOrder('id').clearOrderAll().setOrderFunction(function(a, b) {
+			// idを数値で評価して降順
+			return parseInt(b.get('id')) - parseInt(a.get('id'));
+		}).execute().result;
+		strictEqual(result[0], this.model.get('10'), 'id==="10"のアイテムが0番目');
+		strictEqual(result[1], this.model.get('2'), 'id==="2"のアイテムが1番目');
+		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
+	});
+
+	test('addOrderに存在しないキー名を指定するとエラー', function() {
 		try {
 			this.model.createQuery().setCriteria({
 				'id in': ['1', '2', '10']
-			}).orderByAsc();
+			}).addOrder();
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
 		}
@@ -626,7 +706,7 @@ $(function() {
 			try {
 				this.model.createQuery().setCriteria({
 					'id in': ['1', '2', '10']
-				}).orderByAsc(invalidArgs[i]);
+				}).addOrder(invalidArgs[i]);
 				ok(false, 'エラー発生していません');
 			} catch (e) {
 				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
@@ -634,45 +714,44 @@ $(function() {
 		}
 	});
 
-	test('orderByDescに存在しないキー名を指定するとエラー', function() {
+	test('setOrderFunctionに関数以外を指定するとエラー', function() {
 		try {
 			this.model.createQuery().setCriteria({
 				'id in': ['1', '2', '10']
-			}).orderByDesc();
-		} catch (e) {
-			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
-		}
-		var invalidArgs = ['id dsc', '', null, 1, true, false, {}, [], /id/, $.noop];
-		for (var i = 0, l = invalidArgs.length; i < l; i++) {
-			try {
-				this.model.createQuery().setCriteria({
-					'id in': ['1', '2', '10']
-				}).orderByDesc(invalidArgs[i]);
-				ok(false, 'エラー発生していません');
-			} catch (e) {
-				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_KEY, e.message);
-			}
-		}
-	});
-
-	test('orderByに関数以外を指定するとエラー', 10, function() {
-		try {
-			this.model.createQuery().setCriteria({
-				'id in': ['1', '2', '10']
-			}).orderBy();
+			}).setOrderFunction();
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID, e.message);
 		}
-		var invalidArgs = ['id', '', null, 1, true, false, {}, [], /id asc/];
+		var invalidArgs = ['id', '', 1, true, false, {}, [], /id asc/];
 		for (var i = 0, l = invalidArgs.length; i < l; i++) {
 			try {
 				this.model.createQuery().setCriteria({
 					'id in': ['1', '2', '10']
-				}).orderBy(invalidArgs[i]);
+				}).setOrderFunction(invalidArgs[i]);
 				ok(false, 'エラー発生していません');
 			} catch (e) {
 				strictEqual(e.code, ERR.ERR_CODE_ORDER_BY_COMPARE_FUNCTION_INVALID, e.message);
 			}
+		}
+	});
+
+	test('addOrderで条件が追加済みの時、setFunction()で比較関数を設定するとエラー', function() {
+		var query = this.model.createQuery().addOrder('id');
+		try {
+			query.setOrderFunction($.noop);
+			ok(false, 'エラー発生していません');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_ALREADY_ADDED_ORDER, e.message);
+		}
+	});
+
+	test('setFunctionで条件が設定済みの時、addOrder()で条件を追加するとエラー', function() {
+		var query = this.model.createQuery().setOrderFunction($.noop);
+		try {
+			query.addOrder('id');
+			ok(false, 'エラー発生していません');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_ALREADY_SET_ORDER_FUNCTION, e.message);
 		}
 	});
 
@@ -774,28 +853,28 @@ $(function() {
 	//		strictEqual(result[0], item, '検索条件にマッチするようになったアイテムが検索結果に格納されていること');
 	//	});
 	//
-	//	test('ライブクエリにorderByを指定すると、指定したタイミングでソートされること', 6, function() {
+	//	test('ライブクエリにsetOrderFunctionを指定すると、指定したタイミングでソートされること', 6, function() {
 	//		var query = this.model.createQuery().setCriteria({
 	//			'id in': ['1', '2', '10']
 	//		}).setLive().execute();
 	//		var result = query.result;
-	//		query.orderByAsc('id');
+	//		query.addOrder('id');
 	//		strictEqual(result[0], this.model.get('1'), 'id==="1"のアイテムが0番目');
 	//		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
 	//		strictEqual(result[2], this.model.get('2'), 'id==="2"のアイテムが2番目');
 	//
-	//		query.orderByDesc('id');
+	//		query.setOrderFunctionDesc('id');
 	//		strictEqual(result[0], this.model.get('2'), 'id==="2"のアイテムが0番目');
 	//		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
 	//		strictEqual(result[2], this.model.get('1'), 'id==="1"のアイテムが2番目');
 	//	});
 	//
-	//	test('ライブクエリにorderByを指定すると、検索結果に変更があった場合にもソートされること', 7, function() {
+	//	test('ライブクエリにsetOrderFunctionを指定すると、検索結果に変更があった場合にもソートされること', 7, function() {
 	//		var query = this.model.createQuery().setCriteria({
 	//			'id in': ['1', '2', '10', '100']
 	//		}).setLive().execute();
 	//		var result = query.result;
-	//		query.orderByAsc('price');
+	//		query.addOrder('price');
 	//		this.model.get('2').set('price', '0');
 	//		strictEqual(result[0], this.model.get('2'), 'id==="2"のアイテムが0番目');
 	//		strictEqual(result[1], this.model.get('10'), 'id==="10"のアイテムが1番目');
