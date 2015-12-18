@@ -878,11 +878,9 @@
 	//
 	// =========================================================================
 	/**
-	 * ルールに基づいたバリデーション関数を格納する名前空間です
+	 * ルールに基づいたバリデーション関数を持つオブジェクト
 	 *
-	 * @namespace
-	 * @memberOf h5.validation
-	 * @name rule
+	 * @private
 	 */
 	var rule = {
 		/**
@@ -891,8 +889,6 @@
 		 * 値がnullまたは空文字の場合はfalseを返します。
 		 * </p>
 		 *
-		 * @name rquire
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -904,7 +900,9 @@
 		/**
 		 * 値を第2引数の関数で判定した結果を返す
 		 *
-		 * @memberOf h5.validaiton.func
+		 * @param {Any} value 判定する値
+		 * @param {Function} func 任意のバリデート関数。第1引数に判定する値が渡されます
+		 * @returns {Any}
 		 */
 		customFunc: function(value, func) {
 			return func(value);
@@ -919,7 +917,6 @@
 		 * 値が真偽値でない場合はfalseを返します
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -936,7 +933,6 @@
 		 * 値が真偽値型でない場合はfalseを返します
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -959,7 +955,6 @@
 		 * 値が数値型でない場合はfalseを返します
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {number} max 最大値
 		 * @param {boolean} [inclusive=false] 境界値にmaxValueを含めるかどうか
@@ -985,7 +980,6 @@
 		 * 値が数値型でない場合はfalseを返します
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {number} min 最小値
 		 * @param {boolean} [inclusive=false] 境界値にmaxValueを含めるかどうか
@@ -1005,7 +999,6 @@
 		 * それ以外の場合はfalseを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -1022,7 +1015,6 @@
 		 * それ以外の場合はtrueを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -1039,7 +1031,6 @@
 		 * 値がDate型でない場合はfalseを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -1056,7 +1047,6 @@
 		 * 値がDate型でない場合はfalseを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
@@ -1082,7 +1072,6 @@
 		 * 整数部分、小数部分いずれの桁数も境界値を含めます。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {integer} integer 整数桁数の上限値
 		 * @param {integer} fruction 小数桁数の上限値
@@ -1146,7 +1135,6 @@
 		 * 値が文字列型でない場合はfalseを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {RegExp} regexp 正規表現オブジェクト
 		 * @returns {boolean}
@@ -1171,7 +1159,6 @@
 		 * 値がnullまたはundefinedの場合はtrueを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.validation.rule
 		 * @param {Any} value 判定する値
 		 * @param {integer} min 下限値 (nullを指定した場合は下限値による判定は行いません)
 		 * @param {integer} max 上限値 (nullを指定した場合は上限値による判定は行いません)
@@ -1202,8 +1189,7 @@
 	 * {@link h5.validation.createValidator}がこのクラスのインスタンスを返します
 	 * </p>
 	 *
-	 * @class
-	 * @name Validator
+	 * @memberOf h5.validation
 	 */
 	function createValidator() {
 		return new Validator();
@@ -1396,7 +1382,6 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.validation', {
-		rule: rule,
 		defineRule: defineRule,
 		createValidator: createValidator
 	});
