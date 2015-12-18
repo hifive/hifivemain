@@ -43,15 +43,15 @@
 				}
 			},
 			formController: h5.ui.FormController,
-			'.gather click': function(ctx, $el) {
-				var ret = this.formController.gather();
-				var $set = $('<button class="set">set(obj' + ++this._objIndex + ')</button>');
+			'.getValue click': function(ctx, $el) {
+				var ret = this.formController.getValue();
+				var $set = $('<button class="set">setValue(obj' + ++this._objIndex + ')</button>');
 				$el.after($set);
 				$set.data('obj', ret);
 			},
 			'.set click': function(ctx, $el) {
 				var obj = $el.data('obj');
-				this.formController.set(obj);
+				this.formController.setValue(obj);
 			},
 			'.validate click': function(ctx) {
 				this._removeValidateError();
@@ -92,7 +92,7 @@ form {
 <body>
 	<div>
 		<h2>FormControllerのメソッド実行</h2>
-		<button class="gather">gather()</button>
+		<button class="getValue">getValue()</button>
 		<br>
 		<button class="validate">validate()</button>
 		<div>

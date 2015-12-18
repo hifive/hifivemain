@@ -2014,7 +2014,7 @@
 				$(this._bindedForm).prop('novalidate', true);
 			}
 			// フォーム部品からルールを生成
-			var $formControls = $(this.getElements());
+			var $formControls = $(this._getElements());
 			var validateRule = {};
 			$formControls.each(this.ownWithOrg(function(element) {
 				var name = element.getAttribute('name');
@@ -2076,12 +2076,12 @@
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} pluginNames プラグイン名またはその配列
 		 */
-		enableOutput: function(pluginNames) {
+		addOutput: function(pluginNames) {
 			// デフォルトの出力プラグイン追加
 			// __init前(rootElement決定前)ならルートエレメント決定後に実行
 			if (!this.isInit) {
 				this.initPromise.done(this.own(function() {
-					this.enableOutput(pluginNames);
+					this.addOutput(pluginNames);
 				}));
 				return;
 			}
@@ -2118,15 +2118,10 @@
 		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} properties プロパティ名またはその配列
-		 * @param {boolean} shouldValidate ルール削除した後にvalidateを行うかどうか
-		 * @param {boolean} [onlyRemovedRule=true]
-		 *            shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue
 		 */
-		removeRule: function(properties, shouldValidate, onlyRemovedRule) {
+		removeRule: function(properties) {
 			this._validationLogic.removeRule();
-			if (shouldValidate) {
-				this.validate(onlyRemovedRule ? properties : null);
-			}
+			this.validate(properties);
 		},
 
 		/**
@@ -2210,9 +2205,9 @@
 		 * @param {string|string[]} targetNames 指定した場合、指定したnameのものだけを集約
 		 * @returns {Object} フォーム部品集約オブジェクト
 		 */
-		gather: function(targetNames) {
+		getValue: function(targetNames) {
 			targetNames = targetNames && (!isArray(targetNames) ? [targetNames] : targetNames);
-			var $elements = $(this.getElements());
+			var $elements = $(this._getElements());
 			var $groups = $(this._getInputGroupElements());
 			var propertySetting = this._setting && this._setting.property || {};
 			var ret = {};
@@ -2305,8 +2300,8 @@
 		 * @memberOf h5.ui.FormController
 		 * @param {Object} obj フォーム部品の値を集約したオブジェクト
 		 */
-		set: function(obj) {
-			var $elements = $(this.getElements());
+		setValue: function(obj) {
+			var $elements = $(this._getElements());
 			var indexMap = {};
 			// グループ指定でプロパティが入れ子であるオブジェクトの場合、展開する
 			var flatObj = {};
@@ -2375,7 +2370,7 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		clearAll: function() {
-			$(this.getElements()).each(function() {
+			$(this._getElements()).each(function() {
 				if (this.type === 'radio' || this.type === 'checkbox') {
 					$(this).prop('checked', false);
 					return;
@@ -2431,35 +2426,6 @@
 		},
 
 		/**
-		 * このコントローラが管理するフォームに属するフォーム部品全てを取得
-		 *
-		 * @memberOf h5.ui.FormController
-		 * @returns {DOM[]}
-		 */
-		getElements: function() {
-			var $innerFormControls = this.$find('input,select,textarea').not(
-					'[type="submit"],[type="reset"],[type="image"]');
-			if (!this._bindedForm) {
-				return $innerFormControls;
-			}
-
-			var formId = $(this._bindedForm).attr('id');
-			// ブラウザがform属性に対応しているかどうかに関わらず、
-			// HTML5の仕様に従ってformに属するフォームコントロール部品を列挙する
-			var $formControls = $('input,select,textarea').not(
-					'[type="submit"],[type="reset"],[type="image"]');
-			return $formControls.filter(
-					function() {
-						var $this = $(this);
-						var formAttr = $this.attr('form');
-						// form属性がこのコントローラのフォームを指している
-						// または、このコントローラのフォーム内の要素でかつform属性指定無し
-						return (formAttr && formAttr === formId) || !formAttr
-								&& $innerFormControls.index($this) !== -1;
-					}).toArray();
-		},
-
-		/**
 		 * このコントローラが管理するフォームに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
 		 *
 		 * @memberOf h5.ui.FormController
@@ -2473,7 +2439,7 @@
 			if (targetElement) {
 				return targetElement;
 			}
-			var $formCtrls = $(this.getElements());
+			var $formCtrls = $(this._getElements());
 			var element = $formCtrls.filter('[name="' + name + '"]')[0];
 			if (element) {
 				return element;
@@ -2518,6 +2484,36 @@
 
 		'{rootElement} click': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_CLICK);
+		},
+
+		/**
+		 * このコントローラが管理するフォームに属するフォーム部品全てを取得
+		 *
+		 * @private
+		 * @memberOf h5.ui.FormController
+		 * @returns {DOM[]}
+		 */
+		_getElements: function() {
+			var $innerFormControls = this.$find('input,select,textarea').not(
+					'[type="submit"],[type="reset"],[type="image"]');
+			if (!this._bindedForm) {
+				return $innerFormControls;
+			}
+
+			var formId = $(this._bindedForm).attr('id');
+			// ブラウザがform属性に対応しているかどうかに関わらず、
+			// HTML5の仕様に従ってformに属するフォームコントロール部品を列挙する
+			var $formControls = $('input,select,textarea').not(
+					'[type="submit"],[type="reset"],[type="image"]');
+			return $formControls.filter(
+					function() {
+						var $this = $(this);
+						var formAttr = $this.attr('form');
+						// form属性がこのコントローラのフォームを指している
+						// または、このコントローラのフォーム内の要素でかつform属性指定無し
+						return (formAttr && formAttr === formId) || !formAttr
+								&& $innerFormControls.index($this) !== -1;
+					}).toArray();
 		},
 
 		/**
@@ -2599,7 +2595,7 @@
 		 * @returns {ValidationResult}
 		 */
 		_validate: function(names) {
-			var formData = this.gather(names);
+			var formData = this.getValue(names);
 
 			// 待機中のValidationResultをabortする処理
 			// 指定されたnamesに該当するValidationResultをabortで中断する
@@ -2750,7 +2746,7 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		_isFormControls: function(element) {
-			var $formControls = $(this.getElements());
+			var $formControls = $(this._getElements());
 			return $formControls.index(element) !== -1;
 		}
 	};
