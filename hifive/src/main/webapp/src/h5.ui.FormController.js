@@ -463,16 +463,18 @@
 		 * {@link ValidationResult}から、各要素にクラスを設定する
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param {ValidationResult} result
 		 */
-		onValidate: function(validationResult) {
+		_onValidate: function(validationResult) {
 			// validだったものにクラスを適用
 			var properties = validationResult.properties;
 			for (var i = 0, l = properties.length; i < l; i++) {
 				var name = properties[i];
-				this._setStyle(this.parentController.getElementByName(name), name,
-						validationResult);
+				this
+						._setStyle(this.parentController.getElementByName(name), name,
+								validationResult);
 			}
 		},
 
@@ -482,12 +484,13 @@
 		 * イベントの発生したフォーム部品のバリデート結果を適用
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param {DOM} element イベント発生要素
 		 * @param {string} name イベント発生要素の名前(グループの場合はグループ名)
 		 * @param {ValidationResult} validationResult
 		 */
-		onFocus: function(element, name, validationResult) {
+		_onFocus: function(element, name, validationResult) {
 			this._setStyle(element, name, validationResult);
 		},
 
@@ -497,13 +500,13 @@
 		 * イベントの発生したフォーム部品のバリデート結果を適用
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.Style
+		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param {DOM} element イベント発生要素
 		 * @param {string} name イベント発生要素の名前(グループの場合はグループ名)
 		 * @param {ValidationResult} validationResult
 		 */
-		onKeyup: function(element, name, validationResult) {
+		_onKeyup: function(element, name, validationResult) {
 			this._setStyle(element, name, validationResult);
 		},
 
@@ -702,12 +705,13 @@
 		 * バリデート結果からメッセージを生成して表示
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Composition
 		 * @param {ValidationResult} validationResult
 		 * @param {Object} globalSetting
 		 * @param {Object} outputSetting
 		 */
-		onValidate: function(validationResult) {
+		_onValidate: function(validationResult) {
 			this._messageOutputController.clearMessage();
 			this._messageOutputController.appendMessageByValidationResult(validationResult);
 		},
@@ -876,10 +880,11 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param {ValidationResult} result
 		 */
-		onValidate: function(result) {
+		_onValidate: function(result) {
 			this._executedOnValidate = true;
 		},
 
@@ -889,12 +894,13 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
-		onFocus: function(element, name, validationResult) {
+		_onFocus: function(element, name, validationResult) {
 			this._setErrorBaloon(element, name, validationResult, 'focus');
 		},
 
@@ -904,12 +910,13 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
-		onBlur: function(element, name, validationResult) {
+		_onBlur: function(element, name, validationResult) {
 			this._setErrorBaloon(element, name, validationResult, 'blur');
 		},
 
@@ -919,12 +926,13 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
-		onKeyup: function(element, name, validationResult) {
+		_onKeyup: function(element, name, validationResult) {
 			this._setErrorBaloon(element, name, validationResult, 'keyup');
 		},
 
@@ -969,7 +977,7 @@
 		 */
 		_setErrorBaloon: function(element, name, validationResult, type) {
 			if (!this._executedOnValidate) {
-				// onValidateが１度も呼ばれていなければ何もしない
+				// _onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
 			// 共通設定とプロパティ毎の設定をマージ
@@ -1267,10 +1275,11 @@
 		 * バリデート結果からメッセージの表示・非表示を行う
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 * @param {ValidationResult} result
 		 */
-		onValidate: function(result) {
+		_onValidate: function(result) {
 			this._executedOnValidate = true;
 			var validProperties = result.validProperties;
 			for (var i = 0, l = validProperties.length; i < l; i++) {
@@ -1285,12 +1294,13 @@
 		 * バリデート結果からメッセージの表示・非表示を行う
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
-		onFocus: function(element, name, validationResult) {
+		_onFocus: function(element, name, validationResult) {
 			this._setMessage(element, name, validationResult, 'focus');
 		},
 
@@ -1300,22 +1310,23 @@
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
-		onBlur: function(element, name, validationResult) {
+		_onBlur: function(element, name, validationResult) {
 			this._setMessage(element, name, validationResult, 'blur');
 		},
 		// FIXME どのタイミングで実行するかは設定で決める？
-		//		onChange: function(element,name, globalSetting, setting, errorReason) {
+		//		_onChange: function(element,name, globalSetting, setting, errorReason) {
 		//			this._setMessage(element,name, globalSetting, setting, errorReason);
 		//		},
-		//		onKeyup: function(element,name, globalSetting, setting, errorReason) {
+		//		_onKeyup: function(element,name, globalSetting, setting, errorReason) {
 		//			this._setMessage(element,name, globalSetting, setting, errorReason);
 		//		},
-		//		onClick: function(element, name,globalSetting, setting, errorReason) {
+		//		_onClick: function(element, name,globalSetting, setting, errorReason) {
 		//			this._setMessage(element, name,globalSetting, setting, errorReason);
 		//		},
 
@@ -1351,7 +1362,7 @@
 
 		_setMessage: function(element, name, validationResult, type) {
 			if (!this._executedOnValidate) {
-				// onValidateが１度も呼ばれていなければ何もしない
+				// _onValidateが１度も呼ばれていなければ何もしない
 				return;
 			}
 			// 共通設定とプロパティ毎の設定をマージ
@@ -1511,12 +1522,13 @@
 		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param {ValidationResult}
 		 * @param {Object} globalSetting
 		 * @param {Object} outputSetting
 		 */
-		onValidate: function(result) {
+		_onValidate: function(result) {
 			var validatingProperties = result.validatingProperties;
 			var properties = result.properties;
 			for (var i = 0, l = properties.length; i < l; i++) {
@@ -1536,12 +1548,13 @@
 		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
-		onFocus: function(element, name, validationResult) {
+		_onFocus: function(element, name, validationResult) {
 			var validatingProperties = result.validatingProperties;
 			if ($.inArray(name, validatingProperties)) {
 				var element = this.parentController.getElementByName(name);
@@ -1550,11 +1563,11 @@
 				this._hideIndicator(name);
 			}
 		},
-		//		onBlur: function(element, name, globalSetting, setting, validationResult) {
+		//		_onBlur: function(element, name, globalSetting, setting, validationResult) {
 		//			this._showIndicator(validationResult, name, globalSetting, setting);
 		//		},
 		// FIXME どのタイミングで実行するかは設定で決める？
-		//		onChange: function(element, name, globalSetting, setting, validationResult) {
+		//		_onChange: function(element, name, globalSetting, setting, validationResult) {
 		//			this._showIndicator(validationResult, name, globalSetting, setting);
 		//		},
 
@@ -1564,18 +1577,19 @@
 		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
-		onKeyup: function(element, name, validationResult) {
+		_onKeyup: function(element, name, validationResult) {
 			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
 				// バリデート中ならインジケータ表示
 				this._showIndicator(element, name, validationResult);
 			}
 		},
-		//		onClick: function(element, name,globalSetting, setting, errorReason) {
+		//		_onClick: function(element, name,globalSetting, setting, errorReason) {
 		//			this._setMessage(element, name,globalSetting, setting, errorReason);
 		//		},
 
@@ -1668,16 +1682,15 @@
 	var DATA_RULE_SIZE = 'size';
 
 	// フォームコントロールグループコンテナの名前指定
-	var DATA_INPUTGROUP_CONTAINER = 'h5-input-group-name-container';
-	var DATA_INPUTGROUP = 'h5-input-group-name';
+	var DATA_INPUTGROUP_CONTAINER = 'h5-input-group-container';
 
 	// プラグインに通知するイベント
-	var PLUGIN_EVENT_VALIDATE = 'onValidate';
-	var PLUGIN_EVENT_FOCUS = 'onFocus';
-	var PLUGIN_EVENT_BLUR = 'onBlur';
-	var PLUGIN_EVENT_CHANGE = 'onChange';
-	var PLUGIN_EVENT_KEYUP = 'onKeyup';
-	var PLUGIN_EVENT_CLICK = 'onClick';
+	var PLUGIN_EVENT_VALIDATE = '_onValidate';
+	var PLUGIN_EVENT_FOCUS = '_onFocus';
+	var PLUGIN_EVENT_BLUR = '_onBlur';
+	var PLUGIN_EVENT_CHANGE = '_onChange';
+	var PLUGIN_EVENT_KEYUP = '_onKeyup';
+	var PLUGIN_EVENT_CLICK = '_onClick';
 
 	// デフォルトで用意しているプラグイン名とプラグイン(コントローラ定義)のマップ
 	var DEFAULT_PLUGINS = {
@@ -2195,10 +2208,8 @@
 				var name = this.name;
 				elementNames.push(name);
 				var currentGroup = ret;
-				// タグに指定されているグループ名をグループコンテナより優先
-				var groupName = $(this).data(DATA_INPUTGROUP);
-				if (!groupName && $groups.find(this).length) {
-					// タグにグループの指定が無くグループコンテナに属している場合
+				// グループに属していればグループ名を取得
+				if ($groups.find(this).length) {
 					var $group = $(this).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
 					var groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
 				}
@@ -2242,7 +2253,7 @@
 					return;
 				}
 				if (currentGroup[name] !== undefined) {
-					if (!$.isArray(ret[name])) {
+					if (!$.isArray(currentGroup[name])) {
 						currentGroup[name] = [currentGroup[name]];
 					}
 					if ($.isArray(value)) {
@@ -2401,7 +2412,7 @@
 			// バリデート実行
 			var result = this._validate(names);
 
-			// onValidateの呼び出し
+			// _onValidateの呼び出し
 			this._callPluginValidateEvent(PLUGIN_EVENT_VALIDATE, result);
 			return result;
 		},
@@ -2459,13 +2470,7 @@
 			if (groupContainer) {
 				return groupContainer;
 			}
-			// data-h5-input-group-name指定で作成されたグループの場合は一意に決まらないため、nullを返している
 			return null;
-
-			//			var $groupElements = $formCtrls.filter(function() {
-			//				var $this = $(this);
-			//				return $this.data(DATA_INPUTGROUP) === name;
-			//			});
 		},
 
 		/**
@@ -2655,23 +2660,18 @@
 				return;
 			}
 			// グループに属していればそのグループに対してvalidate
-			var groupName = $(target).data(DATA_INPUTGROUP);
-			if (!groupName) {
-				// タグにグループの指定が無くグループコンテナに属している場合
-				var $groups = $(this._getInputGroupElements());
-				if ($groups.find(target).length) {
-					var $group = $(target).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
-					groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
-				}
+			// タグにグループの指定が無くグループコンテナに属している場合
+			var groupName;
+			var $groups = $(this._getInputGroupElements());
+			if ($groups.find(target).length) {
+				var $group = $(target).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
+				groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
 			}
 			var validateTargetName = groupName || name;
 			var validationResult = this._validate(validateTargetName);
 			this._callPluginElementEvent(eventType, target, name, validationResult);
 			if (groupName) {
 				// グループがあればグループについてのバリデート結果も通知
-				// グループコンテナではなく各inputにdata-h5-input-group-nameが指定されているような場合は、
-				// グループ名から特定の要素を指定できないのでプラグインに要素を渡すことができない
-				// (要素が渡されなかった時にプラグインがどうするかはプラグインの実装次第)
 				var groupTarget = this.getElementByName(groupName);
 				this._callPluginElementEvent(eventType, groupTarget, groupName, validationResult);
 			}

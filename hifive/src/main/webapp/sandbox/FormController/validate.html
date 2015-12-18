@@ -44,8 +44,8 @@
 			formController: h5.ui.FormController,
 			__ready: function() {
 				// プラグインの有効化
-				this.formController.enableOutput(['style', 'composition', 'bsBaloon',
-						'message', 'baloon']);
+				this.formController.enableOutput(['style', 'composition', 'bsBaloon', 'message',
+						'baloon']);
 
 				// birthdayグループのルール追加
 				this.formController.addRule({
@@ -174,6 +174,12 @@
 								return $(rootElement).find('.room-select .selected').data('room');
 							},
 							targetElement: this.$find('.room-select')
+						},
+						pic_id: {
+							valueFunc: function(element, name) {
+								var $elm = $(element);
+								return element[$('[name="' + name + '"]').val()];
+							}
 						}
 					}
 				});
@@ -232,9 +238,17 @@
 							</label>
 						</div>
 					</div>
-					<!--  data-h5-input-group-name-container指定 -->
+					<!--
+					<div class="form-group">
+						<label class="control-label"><span class="label-name">check</label>
+
+						<input type="checkbox" name="pic_id" value="1">1</input> <input
+							type="checkbox" name="pic_id" value="3">2</input> <input
+							type="checkbox" name="pic_id" value="3">3</input>
+					</div> -->
+					<!--  data-h5-input-group-container指定 -->
 					<div class="form-group groupSample"
-						data-h5-input-group-name-container="birthday">
+						data-h5-input-group-container="birthday">
 						<label class="control-label">生年月日</label>
 						<div class="form-inline">
 							<input name="year" type="text" placeholder="年(西暦)"
@@ -246,14 +260,12 @@
 						</div>
 					</div>
 
-					<div class="form-group">
+					<div class="form-group" data-h5-input-group-container="zipcode">
 						<label class="control-label">郵便番号</label>
 						<div class="form-inline">
-							<!--  data-h5-input-group-name指定 -->
 							<input name="zip1" type="text" class="form-control" size="3"
-								data-h5-input-group-name="zipcode" data-require /> -<input name="zip2"
-								type="text" class="form-control" size="4"
-								data-h5-input-group-name="zipcode" data-require />
+								data-require /> -<input name="zip2" type="text"
+								class="form-control" size="4" data-require />
 						</div>
 					</div>
 					<div class="form-group">
