@@ -88,7 +88,7 @@
 					},
 					property: {
 						name: {
-							label: '名前',
+							displayName: '名前',
 							output: {
 								bsBaloon: {
 									message: '※必須'
@@ -96,8 +96,8 @@
 							}
 						},
 						sex: {
-							label: '性別',
-							message: '{label}は必ずどちらかを指定してください',
+							displayName: '性別',
+							message: '{displayName}は必ずどちらかを指定してください',
 							output: {
 								message: {
 									replaceElement: function($el) {
@@ -107,8 +107,8 @@
 							}
 						},
 						birthday: {
-							label: '生年月日',
-							message: '{label}が正しい日付ではありません',
+							displayName: '生年月日',
+							message: '{displayName}が正しい日付ではありません',
 							output: {
 								bsBaloon: {
 									off: true
@@ -180,7 +180,7 @@
 							}
 						},
 						address: {
-							label: 'お住まい'
+							displayName: 'お住まい'
 						},
 						agree: {
 							message: '利用規約への同意が必要です',
@@ -199,7 +199,7 @@
 							}
 						},
 						position: {
-							label: '予約部屋',
+							displayName: '予約部屋',
 							valueFunc: function(rootElement, key) {
 								return $(rootElement).find('.room-select .selected').data('room');
 							},
@@ -216,7 +216,7 @@
 				// 				});
 				// 				// プラグインのsetMessage
 				// 				this.formController.getOutput('message').setMessage('address', {
-				// 					// message: '{label}は選択肢の中から当てはまるものを選んでください',
+				// 					// message: '{displayName}は選択肢の中から当てはまるものを選んでください',
 				// 					// ↑と同じ↓
 				// 					formatter: function(param) {
 				// 						return param.label + 'は選択肢の中から当てはまるものを選んでください';
@@ -224,7 +224,7 @@
 				// 				});
 				// プラグインのsetMessage
 				this.formController.getOutput('composition').setMessage('sex', {
-					message: '{label}は必須！'
+					message: '{displayName}は必須！'
 				});
 			},
 			'{.resetValidation} click': function() {

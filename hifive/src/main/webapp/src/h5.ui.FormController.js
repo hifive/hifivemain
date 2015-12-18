@@ -39,19 +39,19 @@
 	 * デフォルトエラーメッセージ
 	 */
 	var defaultIntvalidMessage = {
-		require: '{label}は必須項目です',
-		min: '{label}は{param.min}{param.inclusive?"以上の":"より大きい"}数値を入力してください。',
-		max: '{label}は{param.max}{param.inclusive?"以下":"未満"}の数値を入力してください。',
-		pattern: '{label}は正規表現{param.regexp}を満たす文字列を入力してください。',
-		digits: '{label}は整数部分{param.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
-		size: '{label}は{param.min}以上{param.max}以下の長さでなければいけません。',
-		future: '{label}は現在時刻より未来の時刻を入力してください。',
-		past: '{label}は現在時刻より過去の時刻を入力してください。',
-		nul: '{label}はnullでなければなりません。',
-		notNull: '{label}はnullでない値を設定してください。',
-		assertFalse: '{label}はfalseとなる値を入力してください。',
-		assertTrue: '{label}はtrueとなる値を入力してください。',
-		customFunc: '{label}は条件を満たしません'
+		require: '{displayName}は必須項目です',
+		min: '{displayName}は{param.min}{param.inclusive?"以上の":"より大きい"}数値を入力してください。',
+		max: '{displayName}は{param.max}{param.inclusive?"以下":"未満"}の数値を入力してください。',
+		pattern: '{displayName}は正規表現{param.regexp}を満たす文字列を入力してください。',
+		digits: '{displayName}は整数部分{param.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
+		size: '{displayName}は{param.min}以上{param.max}以下の長さでなければいけません。',
+		future: '{displayName}は現在時刻より未来の時刻を入力してください。',
+		past: '{displayName}は現在時刻より過去の時刻を入力してください。',
+		nul: '{displayName}はnullでなければなりません。',
+		notNull: '{displayName}はnullでない値を設定してください。',
+		assertFalse: '{displayName}はfalseとなる値を入力してください。',
+		assertTrue: '{displayName}はtrueとなる値を入力してください。',
+		customFunc: '{displayName}は条件を満たしません'
 	};
 
 	// =============================
@@ -68,7 +68,7 @@
 	 * @returns {string} メッセージ
 	 */
 	function createValidateErrorMessage(name, reason, setting) {
-		var label = (setting && setting.label) || name;
+		var displayName = (setting && setting.displayName) || name;
 		var msg = setting && setting.message;
 		var formatter = setting && setting.formatter;
 		var param = {
@@ -77,7 +77,7 @@
 			rule: reason.rule,
 			rejectReason: reason.rejectReason,
 			name: name,
-			label: label
+			displayName: displayName
 		};
 		if (isString(msg)) {
 			// messageが指定されていればh5.u.str.formatでメッセージを作成
@@ -148,18 +148,18 @@
 		 * setMessageSetting({
 		 * 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
 		 * 	userid: {
-		 * 		label: 'ユーザID', // ラベル名
-		 * 		message: '{label}がルール{rule}に違反しています。', // メッセージ。プレースホルダを記述可能(後述)。
+		 * 		displayName: 'ユーザID', // 表示名
+		 * 		message: '{displayName}がルール{rule}に違反しています。', // メッセージ。プレースホルダを記述可能(後述)。
 		 * 	},
 		 * 	address: {
-		 * 		label: 'アドレス',
+		 * 		displayName: 'アドレス',
 		 * 		formatter: function(param) {
 		 * 			// フォーマッタは関数で記述。メッセージを生成して返すような関数を作成
 		 * 		switch (param.rule) {
 		 * 		case 'require':
 		 * 			return '必須です';
 		 * 		case 'pattern':
-		 * 			return param.value + 'は' + param.label + 'の値として不正です'
+		 * 			return param.value + 'は' + param.displayName + 'の値として不正です'
 		 * 		}
 		 * 	}
 		 * 	}
@@ -180,14 +180,14 @@
 		 * 	rule: rule, // バリデートルール名
 		 * 	rejectReason: rejectReason, // 非同期バリデートだった場合、failハンドラに渡された引数リスト
 		 * 	name: name, // バリデート対象のプロパティ名
-		 * 	label: label
-		 * // メッセージ定義に指定されたラベル名
+		 * 	displayName: displayName
+		 * // メッセージ定義に指定された表示名
 		 * }
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutput
 		 * @param {Object} messageSetting プロパティ毎のメッセージ定義。{プロパティ名: {message:..., formatter:..,
-		 *            label:...}} のようなオブジェクト
+		 *            displayName:...}} のようなオブジェクト
 		 */
 		setMessageSetting: function(messageSetting) {
 			this._setting = messageSetting;
@@ -202,7 +202,7 @@
 		 * @memberOf h5.ui.validation.MessageOutput
 		 * @param {string} name 追加設定を行うプロパティ名
 		 * @param {Object} messageObj メッセージ設定オブジェクト。{message:..., formatter:...,
-		 *            label:...}のようなオブジェクト
+		 *            displayName:...}のようなオブジェクト
 		 */
 		addMessageSetting: function(name, messageObj) {
 			this._addedSetting = this._addedSetting || {};
@@ -322,7 +322,7 @@
 		 * @memberOf h5.ui.validation.MessageOutput
 		 * @param {DOM|jQuery|string} [container] 中身を削除するコンテナ。指定しない場合はデフォルト出力先。
 		 */
-		clearAll: function(container) {
+		clearValue: function(container) {
 			// 未指定ならsettingに設定されたコンテナ
 			var container = container || this._containerSetting.container;
 			if (container) {
@@ -484,7 +484,7 @@
 			for (var i = 0, l = properties.length; i < l; i++) {
 				var name = properties[i];
 				this
-						._setStyle(this.parentController.getElementByName(name), name,
+						._setStyle(this.parentController._getElementByName(name), name,
 								validationResult);
 			}
 		},
@@ -682,9 +682,9 @@
 		 * <td>なし</td>
 		 * </tr>
 		 * <tr>
-		 * <th>label</th>
+		 * <th>displayName</th>
 		 * <td>string</td>
-		 * <td>バリデーション対象のプロパティに対応するラベル名</td>
+		 * <td>バリデーション対象のプロパティに対応する表示名</td>
 		 * <td>バリデーション対象のプロパティ名</td>
 		 * </tr>
 		 * </tbody></table>
@@ -698,8 +698,8 @@
 		 * 	wrapper: 'li',
 		 * 	property: { // 各プロパティ固有の設定
 		 * 		userid: { // プルパティ名
-		 * 			label: 'ユーザ名',
-		 * 			message: '{label}は必須です'
+		 * 			displayName: 'ユーザ名',
+		 * 			message: '{displayName}は必須です'
 		 * 		}
 		 * 	}
 		 * }
@@ -760,7 +760,7 @@
 		 * @param setting
 		 */
 		reset: function() {
-			this._messageOutputController.clearAll();
+			this._messageOutputController.clearValue();
 		},
 
 		/**
@@ -782,7 +782,7 @@
 			var messageSetting = {};
 			for ( var p in property) {
 				messageSetting[p] = {
-					label: property[p].label || setting.label,
+					displayName: property[p].displayName || setting.displayName,
 					message: property[p].message || setting.message,
 					formatter: property[p].formatter || setting.formatter,
 				};
@@ -839,9 +839,9 @@
 		 * <td>なし</td>
 		 * </tr>
 		 * <tr>
-		 * <th>label</th>
+		 * <th>displayName</th>
 		 * <td>string</td>
-		 * <td>バリデーション対象のプロパティに対応するラベル名</td>
+		 * <td>バリデーション対象のプロパティに対応する表示名</td>
 		 * <td>バリデーション対象のプロパティ名</td>
 		 * </tr>
 		 * <tr>
@@ -873,8 +873,8 @@
 		 * 	container: 'body',
 		 * 	property: { // 各プロパティ固有の設定
 		 * 		userid: { // プルパティ名
-		 * 			label: 'ユーザ名',
-		 * 			message: '{label}は必須です'
+		 * 			displayName: 'ユーザ名',
+		 * 			message: '{displayName}は必須です'
 		 * 		}
 		 * 	}
 		 * }
@@ -1116,7 +1116,7 @@
 			var messageSetting = {};
 			for ( var p in property) {
 				messageSetting[p] = {
-					label: property[p].label || setting.label,
+					displayName: property[p].displayName || setting.displayName,
 					message: property[p].message || setting.message,
 					formatter: property[p].formatter || setting.formatter,
 				};
@@ -1233,9 +1233,9 @@
 		 * <td>なし</td>
 		 * </tr>
 		 * <tr>
-		 * <th>label</th>
+		 * <th>displayName</th>
 		 * <td>string</td>
-		 * <td>バリデーション対象のプロパティに対応するラベル名</td>
+		 * <td>バリデーション対象のプロパティに対応する表示名</td>
 		 * <td>バリデーション対象のプロパティ名</td>
 		 * </tr>
 		 * <tr>
@@ -1270,8 +1270,8 @@
 		 * 	},
 		 * 	property: { // 各プロパティ固有の設定
 		 * 		userid: { // プルパティ名
-		 * 			label: 'ユーザ名',
-		 * 			message: '{label}は必須です'
+		 * 			displayName: 'ユーザ名',
+		 * 			message: '{displayName}は必須です'
 		 * 		}
 		 * 	}
 		 * }
@@ -1305,7 +1305,7 @@
 			var validProperties = result.validProperties;
 			for (var i = 0, l = validProperties.length; i < l; i++) {
 				var name = validProperties[i];
-				this._setMessage(this.parentController.getElementByName(name), name, result);
+				this._setMessage(this.parentController._getElementByName(name), name, result);
 			}
 		},
 
@@ -1457,7 +1457,7 @@
 			var messageSetting = {};
 			for ( var p in property) {
 				messageSetting[p] = {
-					label: property[p].label || setting.label,
+					displayName: property[p].displayName || setting.displayName,
 					message: property[p].message || setting.message,
 					formatter: property[p].formatter || setting.formatter,
 				};
@@ -1549,7 +1549,7 @@
 			for (var i = 0, l = properties.length; i < l; i++) {
 				var name = properties[i];
 				if ($.inArray(name, valdatingProperties)) {
-					var element = this.parentController.getElementByName(name);
+					var element = this.parentController._getElementByName(name);
 					this._showIndicator(element, name, validatingProperties[i]);
 				} else {
 					this._hideIndicator(name);
@@ -1572,7 +1572,7 @@
 		_onFocus: function(element, name, validationResult) {
 			var validatingProperties = result.validatingProperties;
 			if ($.inArray(name, validatingProperties)) {
-				var element = this.parentController.getElementByName(name);
+				var element = this.parentController._getElementByName(name);
 				this._showIndicator(element, name, validatingProperties[i]);
 			} else {
 				this._hideIndicator(name);
@@ -1898,11 +1898,11 @@
 		 * 	},
 		 * 	property: { // 各プロパティ毎の設定
 		 * 		name: {
-		 * 			label: '名前',
+		 * 			displayName: '名前',
 		 * 			message: '必須です', // nameのエラーメッセージ
 		 * 			output: { // 各プロパティについて各プラグインの設定
 		 * 				baloon: {
-		 * 					message: '※{label}は必須です',
+		 * 					message: '※{displayName}は必須です',
 		 * 					placement: 'left' // nameのbaloonはleftに表示
 		 * 				}
 		 * 			}
@@ -1964,8 +1964,8 @@
 		 * formController.outputSetting = {
 		 * 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
 		 * 	userid: {
-		 * 		label: 'ユーザID', // ラベル名
-		 * 		message: '{label}がルール{rule}に違反しています。', // メッセージ
+		 * 		displayName: 'ユーザID', // 表示名
+		 * 		message: '{displayName}がルール{rule}に違反しています。', // メッセージ
 		 * 		baloon:{
 		 * 			// プラグイン名をキーにしてプロパティ毎・プラグイン毎の設定を記述
 		 * 			placement: 'left'
@@ -2173,7 +2173,7 @@
 		 * <pre class="sh_html"><code>
 		 * &lt;!-- data-h5-input-group-nameにグループ名を指定。子要素がそのグループになる。 --&gt;
 		 * lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
-		 * 		&lt;label class=&quot;control-label&quot;&gt;生年月日&lt;/label&gt;
+		 * 		&lt;displayName class=&quot;control-displayName&quot;&gt;生年月日&lt;/displayName&gt;
 		 * 		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;
 		 * 		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;
 		 * 		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;
@@ -2376,7 +2376,7 @@
 		 *
 		 * @memberOf h5.ui.FormController
 		 */
-		clearAll: function() {
+		clearValue: function() {
 			$(this._getElements()).each(function() {
 				if (this.type === 'radio' || this.type === 'checkbox') {
 					$(this).prop('checked', false);
@@ -2433,33 +2433,6 @@
 		},
 
 		/**
-		 * このコントローラが管理するフォームに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
-		 *
-		 * @memberOf h5.ui.FormController
-		 * @param {string} name
-		 * @returns {DOM}
-		 */
-		getElementByName: function(name) {
-			// このメソッドはプラグインがvalidate結果から対応するエレメントを探す時に呼び出される
-			var targetElement = this._setting.property && this._setting.property[name]
-					&& this._setting.property[name].targetElement;
-			if (targetElement) {
-				return targetElement;
-			}
-			var $formCtrls = $(this._getElements());
-			var element = $formCtrls.filter('[name="' + name + '"]')[0];
-			if (element) {
-				return element;
-			}
-			var groupContainer = $(this._getInputGroupElements()).filter(
-					'[data-' + DATA_INPUTGROUP_CONTAINER + '="' + name + '"]')[0];
-			if (groupContainer) {
-				return groupContainer;
-			}
-			return null;
-		},
-
-		/**
 		 * プラグイン名からプラグインインスタンスを取得
 		 *
 		 * @memberOf h5.ui.FormController
@@ -2491,6 +2464,33 @@
 
 		'{rootElement} click': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_CLICK);
+		},
+
+		/**
+		 * このコントローラが管理するフォームに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
+		 *
+		 * @memberOf h5.ui.FormController
+		 * @param {string} name
+		 * @returns {DOM}
+		 */
+		_getElementByName: function(name) {
+			// このメソッドはプラグインがvalidate結果から対応するエレメントを探す時に呼び出される
+			var targetElement = this._setting.property && this._setting.property[name]
+					&& this._setting.property[name].targetElement;
+			if (targetElement) {
+				return targetElement;
+			}
+			var $formCtrls = $(this._getElements());
+			var element = $formCtrls.filter('[name="' + name + '"]')[0];
+			if (element) {
+				return element;
+			}
+			var groupContainer = $(this._getInputGroupElements()).filter(
+					'[data-' + DATA_INPUTGROUP_CONTAINER + '="' + name + '"]')[0];
+			if (groupContainer) {
+				return groupContainer;
+			}
+			return null;
 		},
 
 		/**
@@ -2687,7 +2687,7 @@
 			this._callPluginElementEvent(eventType, target, name, validationResult);
 			if (groupName) {
 				// グループがあればグループについてのバリデート結果も通知
-				var groupTarget = this.getElementByName(groupName);
+				var groupTarget = this._getElementByName(groupName);
 				this._callPluginElementEvent(eventType, groupTarget, groupName, validationResult);
 			}
 		},
