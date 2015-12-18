@@ -374,6 +374,17 @@
 		 */
 		_setting: {},
 
+		/**
+		 * このプラグインがスタイルを適用した要素
+		 * <p>
+		 * キーにプロパティ名、値に要素を覚えておく
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.Style
+		 */
+		_styleAppliedElements: {},
+
 		__construct: function(ctx) {
 			var setting = ctx.args && ctx.args.setting;
 			if (setting) {
@@ -521,8 +532,13 @@
 		 * @param setting
 		 */
 		reset: function() {
-			// 全てのフォームコントロール部品からすべてのクラスを削除
-			this._setValidateState(null, $formControls, pluginSetting);
+			// このプラグインが触った要素全てからクラスを削除
+			for ( var name in this._styleAppliedElements) {
+				var element = this._styleAppliedElements[name];
+				var propSetting = $.extend({}, this._setting, this._setting.property
+						&& this._setting.property[name]);
+				this._setValidateState(null, element, propSetting, name);
+			}
 		},
 
 		/**
@@ -554,7 +570,7 @@
 				validationResult.addEventListener('validate', this.own(function(ev) {
 					if (ev.property === name) {
 						this._setValidateState(ev.isValid ? STATE_SUCCESS : STATE_ERROR, element,
-								propSetting);
+								propSetting, name);
 					}
 				}));
 				return;
@@ -563,7 +579,7 @@
 			// (そもそもルールの指定が無くvalidation対象じゃない(propertiesに入っていない)場合は成功扱い)
 			this._setValidateState(
 					$.inArray(name, validationResult.invalidProperties) === -1 ? STATE_SUCCESS
-							: STATE_ERROR, element, propSetting);
+							: STATE_ERROR, element, propSetting, name);
 		},
 
 		/**
@@ -577,8 +593,9 @@
 		 * @param state
 		 * @param element
 		 * @param propSetting 適用する設定オブジェクト
+		 * @param 対応するプロパティ名
 		 */
-		_setValidateState: function(state, element, propSetting) {
+		_setValidateState: function(state, element, propSetting, name) {
 			var errorClassName = propSetting.errorClassName;
 			var successClassName = propSetting.successClassName;
 			var validatingClassName = propSetting.validatingClassName;
@@ -587,7 +604,9 @@
 			if (!state) {
 				return;
 			}
-			$(element).addClass(propSetting[state + 'ClassName']);
+			var className = propSetting[state + 'ClassName'];
+			$(element).addClass(className);
+			this._styleAppliedElements[name] = element;
 		}
 	};
 	h5.core.expose(controller);
@@ -2548,8 +2567,7 @@
 			if (!plugin[PLUGIN_METHOD_RESET]) {
 				return;
 			}
-			plugin[PLUGIN_METHOD_RESET].call(plugin, this.globalSetting[pluginName],
-					this.outputSetting);
+			plugin[PLUGIN_METHOD_RESET].call(plugin);
 		},
 
 		/**
