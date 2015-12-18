@@ -1013,8 +1013,10 @@
 				return;
 			}
 
-			if (type === 'blur' || element !== document.activeElement) {
-				// フォーカスが外れた時、該当要素にフォーカスが当たっていない場合は非表示にする
+			if (type === 'blur'
+					|| (element !== document.activeElement && !$(document.activeElement).closest(
+							element).length)) {
+				// フォーカスが外れた時、該当要素または該当要素内の要素にフォーカスが当たっていない場合は非表示にする
 				this._hideBaloon();
 				return;
 			}

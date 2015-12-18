@@ -89,39 +89,58 @@
 					property: {
 						name: {
 							label: '名前',
-							bsBaloon: {
-								message: '※必須'
+							output: {
+								bsBaloon: {
+									message: '※必須'
+								}
 							}
 						},
 						sex: {
 							label: '性別',
 							message: '{label}は必ずどちらかを指定してください',
-							message: {
-								replaceElement: function($el) {
-									return $el.closest('.radio');
+							output: {
+								message: {
+									replaceElement: function($el) {
+										return $el.closest('.radio');
+									}
 								}
 							}
 						},
 						birthday: {
 							label: '生年月日',
-							message: '{label}が正しい日付ではありません'
+							message: '{label}が正しい日付ではありません',
+							output: {
+								bsBaloon: {
+									off: true
+								}
+							}
 						},
 						year: {
-							message: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
-								}
-							},
-							style: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
+							output: {
+								message: {
+									replaceElement: function($el) {
+										return $el.closest('.form-inline');
+									}
+								},
+								style: {
+									replaceElement: function($el) {
+										return $el.closest('.form-inline');
+									}
+								},
+								baloon: {
+									off: true
 								}
 							}
 						},
 						month: {
-							message: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
+							output: {
+								message: {
+									replaceElement: function($el) {
+										return $el.closest('.form-inline');
+									}
+								},
+								baloon: {
+									off: true
 								}
 							}
 						},
@@ -129,25 +148,34 @@
 							message: {
 								replaceElement: function($el) {
 									return $el.closest('.form-inline');
+								},
+								baloon: {
+									off: true
 								}
 							}
 						},
 						zipcode: {
-							style: {
-								off: true
+							output: {
+								style: {
+									off: true
+								}
 							}
 						},
 						zip1: {
-							message: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
+							output: {
+								message: {
+									replaceElement: function($el) {
+										return $el.closest('.form-inline');
+									}
 								}
 							}
 						},
 						zip2: {
-							message: {
-								replaceElement: function($el) {
-									return $el.closest('.form-inline');
+							output: {
+								message: {
+									replaceElement: function($el) {
+										return $el.closest('.form-inline');
+									}
 								}
 							}
 						},
@@ -156,15 +184,17 @@
 						},
 						agree: {
 							message: '利用規約への同意が必要です',
-							bsBaloon: {
-								placement: 'right',
-								replaceElement: function($el) {
-									return $el.closest('label');
-								}
-							},
-							message: {
-								replaceElement: function($el) {
-									return $el.closest('.form-group');
+							output: {
+								bsBaloon: {
+									placement: 'right',
+									replaceElement: function($el) {
+										return $el.closest('label');
+									}
+								},
+								message: {
+									replaceElement: function($el) {
+										return $el.closest('.form-group');
+									}
 								}
 							}
 						},
