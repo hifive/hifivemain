@@ -1394,13 +1394,6 @@
 
 			// 既存のエラーメッセージを削除
 			this._removeMessage(name);
-			var msg = this._messageOutputController.getMessageByValidationResult(validationResult,
-					name);
-			if (msg === null) {
-				// エラーメッセージが無い場合はメッセージを非表示にして、終了
-				this._removeMessage(name);
-				return;
-			}
 
 			var appendMessage = propSetting.appendMessage;
 			var replaceElement = propSetting.replaceElement;
@@ -1414,7 +1407,8 @@
 				this._messageElementMap[name] = $errorMsg;
 			}
 			this._messageOutputController.clearMessage($errorMsg);
-			this._messageOutputController.appendMessage(msg, $errorMsg);
+			this._messageOutputController.appendMessageByValidationResult(validationResult, name,
+					$errorMsg);
 			if (appendMessage) {
 				appendMessage($errorMsg[0], target, name);
 			} else if (target) {
