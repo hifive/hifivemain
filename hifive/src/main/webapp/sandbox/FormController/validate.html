@@ -205,11 +205,8 @@
 							},
 							targetElement: this.$find('.room-select')
 						},
-						pic_id: {
-							valueFunc: function(element, name) {
-								var $elm = $(element);
-								return element[$('[name="' + name + '"]').val()];
-							}
+						flute: {
+							isArray: true
 						}
 					}
 				});
@@ -268,14 +265,15 @@
 							</label>
 						</div>
 					</div>
-					<!--
 					<div class="form-group">
-						<label class="control-label"><span class="label-name">check</label>
-
-						<input type="checkbox" name="pic_id" value="1">1</input> <input
-							type="checkbox" name="pic_id" value="3">2</input> <input
-							type="checkbox" name="pic_id" value="3">3</input>
-					</div> -->
+						<label class="control-label"><span class="label-name">好きな果物</label>
+						<div class="check">
+							<label><input type="checkbox" name="flute" value="banana" />バナナ
+							</label><label><input type="checkbox" name="flute" value="apple" />リンゴ
+							</label><label><input type="checkbox" name="flute"
+								value="rambutan" />ランブータン </label>
+						</div>
+					</div>
 					<!--  data-h5-input-group-container指定 -->
 					<div class="form-group groupSample"
 						data-h5-input-group-container="birthday">

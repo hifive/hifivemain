@@ -2214,6 +2214,7 @@
 			var propertySetting = this._setting && this._setting.property || {};
 			var ret = {};
 			var elementNames = [];
+			var rootElement = this.rootElement;
 			$elements.each(function() {
 				var name = this.name;
 				elementNames.push(name);
@@ -2257,10 +2258,14 @@
 					return;
 				}
 				var valueFunc = propertySetting[name] && propertySetting[name].valueFunc;
-				var value = valueFunc ? valueFunc(this.rootElement, name) : $(this).val();
+				var value = valueFunc ? valueFunc(rootElement, name) : $(this).val();
 				if (valueFunc && value === undefined || value == null) {
 					// valueFuncがundefinedを返した場合またはvalueがnullだった場合はそのプロパティは含めない
 					return;
+				}
+				if(propertySetting[name] && !!propertySetting[name].isArray){
+					// isArray:trueが指定されていたら必ず配列
+					value = wrapInArray(value);
 				}
 				if (currentGroup[name] !== undefined) {
 					if (!$.isArray(currentGroup[name])) {
@@ -2283,7 +2288,7 @@
 				if ((!targetNames || $.inArray(p, targetNames) !== -1)
 						&& $.inArray(p, elementNames) === -1) {
 					var valueFunc = propertySetting[p] && propertySetting[p].valueFunc;
-					var val = valueFunc && valueFunc(this.rootElement, p);
+					var val = valueFunc && valueFunc(rootElement, p);
 					if (val !== undefined) {
 						ret[p] = val;
 					}
