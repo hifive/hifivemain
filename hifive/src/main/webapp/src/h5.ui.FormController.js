@@ -2316,7 +2316,7 @@
 						flatObj[prop] = obj[p][prop];
 					}
 				} else {
-					flatObj[prop] = obj[p];
+					flatObj[p] = obj[p];
 				}
 			}
 			obj = flatObj;
