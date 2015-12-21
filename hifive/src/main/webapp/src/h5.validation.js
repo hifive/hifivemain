@@ -176,397 +176,6 @@
 	}
 
 	/**
-	 * Validatorクラス
-	 * <p>
-	 * 追加されたルールに基づいてオブジェクトのバリデートを行うためのクラスです。
-	 * </p>
-	 * <p>
-	 * {@link h5.validation.createValidator}がこのクラスのインスタンスを返します
-	 * </p>
-	 *
-	 * @class
-	 * @name Validator
-	 */
-	function Validator() {
-		this._rule = {};
-		this._disableProperties = [];
-	}
-	$.extend(Validator.prototype, {
-		/**
-		 * パラメータのバリデートを行う
-		 * <p>
-		 * 第1引数にはバリデート対象となるオブジェクト、第2引数には第1引数のオブジェクトのうち、バリデートを行うキー名(複数の場合は配列)を指定します。
-		 * </p>
-		 * <p>
-		 * 第2引数を省略した場合は第1引数のオブジェクトが持つすべてのキーがバリデート対象になります。
-		 * </p>
-		 * <p>
-		 * バリデートは{@link Validator.addRule}によって登録されたルールで行われます。
-		 * </p>
-		 *
-		 * @memberOf Validator
-		 * @param {Object} obj バリデート対象となるオブジェクト
-		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
-		 * @returns {ValidationResult} バリデート結果
-		 */
-		validate: function(obj, names) {
-			var validProperties = [];
-			var invalidProperties = [];
-			var properties = [];
-			var validatingProperties = [];
-			var failureReason = null;
-			var targetNames = names && (isArray(names) ? names : [names]);
-			var isAsync = false;
-			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
-			var propertyWaitingPromsies = {};
-
-			for ( var prop in this._rule) {
-				if (names && $.inArray(prop, targetNames) === -1
-						|| $.inArray(prop, this._disableProperties) !== -1) {
-					// バリデートを行うプロパティ名指定がある場合は、そこにないプロパティの場合はバリデート対象にしない
-					// また、disableRule()でバリデートしないよう設定されているプロパティについてもバリデート対象にしない
-					continue;
-				}
-				var rule = this._rule[prop];
-				var orgValue = obj[prop];
-				var isInvalidProp = false;
-				var isAsyncProp = false;
-
-				// ルールを優先度順にソート
-				var sortedRuleNames = [];
-				for ( var ruleName in rule) {
-					sortedRuleNames.push(ruleName);
-				}
-				validateRuleManager.sortRuleByPriority(sortedRuleNames);
-
-				for (var i = 0, l = sortedRuleNames.length; i < l; i++) {
-					var ruleName = sortedRuleNames[i];
-					var args = rule[ruleName];
-					if ((!obj.hasOwnProperty(prop) || args == null)
-							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRE && args)) {
-						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
-						// また、argsがundefinedならそのルールはチェックしない
-						// ただし、require指定がある場合はチェックする
-						continue;
-					}
-					// 値の型変換
-					var value = this._convertBeforeValidate ? this._convertBeforeValidate(orgValue,
-							ruleName) : orgValue;
-					if (isArray(args)) {
-						args = [value].concat(args);
-					} else {
-						args = [value, args];
-					}
-					var validateFunc = validateRuleManager.getValidateFunction(ruleName);
-					if (!validateFunc) {
-						fwLogger.warn(FW_LOG_NOT_DEFINED_RULE_NAME, ruleName);
-						break;
-					}
-
-					var ret = validateFunc.apply(this, args);
-
-					// validate関数呼び出し時の引数を格納しておく
-					var param = {};
-					var argNames = validateRuleManager.getValidateArgNames(ruleName);
-					if (argNames) {
-						for (var j = 0, len = argNames.length; j < len; j++) {
-							param[argNames[j]] = args[j + 1];
-						}
-					}
-
-					// 非同期の場合
-					if (isPromise(ret) && !isRejected(ret) && !isResolved(ret)) {
-						// pendingのプロミスが返ってきた場合
-						// 結果が返ってきたらvalidateイベントをあげるようにしておく
-						isAsyncProp = true;
-						propertyWaitingPromsies[prop] = propertyWaitingPromsies[prop] || [];
-						// プロミス自体にルール名と値と引数を覚えさせておく
-						propertyWaitingPromsies[prop].push(ret.promise({
-							ruleName: ruleName,
-							value: value,
-							param: param
-						}));
-					}
-
-					// 同期の場合
-					if (!ret || isPromise(ret) && isResolved(ret)) {
-						// validate関数がfalseを返したまたは、promiseを返したけどすでにreject済みの場合はvalidate失敗
-						// failureReasonの作成
-						failureReason = failureReason || {};
-						failureReason[prop] = this._createFailureReason(ruleName, value, param);
-						isInvalidProp = true;
-						// あるルールでinvalidなら他のルールはもう検証しない
-						break;
-					}
-				}
-				if (isAsyncProp) {
-					isAsync = true;
-					validatingProperties.push(prop);
-				} else {
-					(isInvalidProp ? invalidProperties : validProperties).push(prop);
-				}
-				properties.push(prop);
-			}
-			var isValid = !invalidProperties.length;
-			var validationResult = new ValidationResult({
-				validProperties: validProperties,
-				invalidProperties: invalidProperties,
-				validatingProperties: validatingProperties,
-				properties: properties,
-				failureReason: failureReason,
-				isAsync: isAsync,
-				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
-				isValid: isValid,
-				// 非同期でvalidateしているものがあって決まっていない時はisAllValidはnull
-				isAllValid: isAsync ? null : isValid
-			});
-
-			if (isAsync) {
-				var that = this;
-				// 非同期の場合、結果が返って気次第イベントをあげる
-				for ( var prop in propertyWaitingPromsies) {
-					var promises = propertyWaitingPromsies[prop];
-					var doneHandler = (function(_prop) {
-						return function() {
-							// 既にinvalidになっていたらもう何もしない
-							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
-								return;
-							}
-							validationResult.dispatchEvent({
-								type: EVENT_VALIDATE,
-								property: _prop,
-								value: obj[_prop], // validate対象のオブジェクトに指定された値
-								isValid: true
-							});
-						};
-					})(prop);
-					var failHandler = (function(_prop, _promises, _param) {
-						return function() {
-							// 一つでも失敗したらfailCallbackが実行される
-							// 既にinvalidになっていたらもう何もしない
-							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
-								return;
-							}
-							// どのルールのプロミスがrejectされたか
-							var ruleName, value;
-							for (var i = 0, l = _promises.length; i < l; i++) {
-								var p = _promises[i];
-								if (isRejected(p)) {
-									ruleName = p.ruleName;
-									value = p.value, // ruleNameでのバリデート用に変換された値
-									param = p.param;
-									break;
-								}
-							}
-							validationResult.dispatchEvent({
-								type: EVENT_VALIDATE,
-								property: _prop,
-								isValid: false,
-								failureReason: that._createFailureReason(ruleName, value, param,
-										arguments),
-							});
-						};
-					})(prop, promises);
-					// failハンドラでどのプロミスの失敗かを判定したいのでwaitForPromisesではなくwhenを使用している
-					$.when.apply($, promises).done(doneHandler).fail(failHandler);
-				}
-			}
-			return validationResult;
-		},
-
-		/**
-		 * バリデートルールを追加する
-		 * <p>
-		 * {@link Validator.validate}でバリデートを行う際のバリデートルールを追加します。
-		 * </p>
-		 * <p>
-		 * バリデートルールは以下のようなオブジェクトで指定します。
-		 *
-		 * <pre class="sh_javascript"><code>
-		 * validator.addRule({
-		 * 	// 対象となるプロパティ名(userid)をキーにする
-		 * 		userid: {
-		 * 			// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。
-		 * 			require: true,
-		 * 			pattern: /&circ;[a-z|0-9]*$/,
-		 * 			size: [4, 10]
-		 * 		}
-		 * 	});
-		 * </code></pre>
-		 *
-		 * 上記の場合、useridは指定が必須(require指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。
-		 * </p>
-		 * <p>
-		 * 以下のようなルールが標準で定義されています。また{@link h5.validation.defineRule}で独自ルールを定義することもできます。
-		 * </p>
-		 * <table><thead>
-		 * <tr>
-		 * <th>ルール名</th>
-		 * <th>パラメータ</th>
-		 * <th>定義</th>
-		 * </tr>
-		 * </thead><tbody>
-		 * <tr>
-		 * <td>require</td>
-		 * <td>なし</td>
-		 * <td>値がnull,undefined,空文字のいずれでもないこと</td>
-		 * </tr>
-		 * <tr>
-		 * <td>customFunc</td>
-		 * <td>func</td>
-		 * <td>funcには第1引数に値を取る関数を指定する。funcがtrueを返すこと。</td>
-		 * </tr>
-		 * <tr>
-		 * <td>nul</td>
-		 * <td>なし</td>
-		 * <td>値がnullまたはundefinedであること</td>
-		 * </tr>
-		 * <tr>
-		 * <td>assertNotNull</td>
-		 * <td>なし</td>
-		 * <td>値がnullまたはundefinedでないこと</td>
-		 * </tr>
-		 * <tr>
-		 * <td>assertFalse</td>
-		 * <td>なし</td>
-		 * <td>値がfalseであること</td>
-		 * </tr>
-		 * <tr>
-		 * <td>assertTrue</td>
-		 * <td>なし</td>
-		 * <td>値がtrueであること</td>
-		 * </tr>
-		 * <tr>
-		 * <td>max</td>
-		 * <td>[max, inclusive]</td>
-		 * <td>inclusiveは省略可能。値がmax未満の数値であること。またinclusiveにtrueを指定した場合は境界値にmaxも含める(値がmax以下であること)。</td>
-		 * </tr>
-		 * <tr>
-		 * <td>min</td>
-		 * <td>[mix, inclusive]</td>
-		 * <td>inclusiveは省略可能。値がminより大きい数値であること。またinclusiveにtrueを指定した場合は境界値にminも含める(値がmin以上であること)。</td>
-		 * </tr>
-		 * <tr>
-		 * <td>future</td>
-		 * <td>なし</td>
-		 * <td>値がDate型で現在時刻より未来であること。</td>
-		 * </tr>
-		 * <tr>
-		 * <td>past</td>
-		 * <td>なし</td>
-		 * <td>値がDate型で現在時刻より過去であること。</td>
-		 * </tr>
-		 * <tr>
-		 * <td>digits</td>
-		 * <td>[integer, fruction]</td>
-		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下であること</td>
-		 * </tr>
-		 * <tr>
-		 * <td>pattern</td>
-		 * <td>[regexp]</td>
-		 * <td>regexpには正規表現を指定。値がregexpを満たす文字列であること</td>
-		 * </tr>
-		 * <tr>
-		 * <td>size</td>
-		 * <td>[min, max]</td>
-		 * <td>値のサイズがmin以上max以下であること。ただし、値がプレーンオブジェクトの場合はプロパティの数、配列または文字列の場合はその長さをその値のサイズとする。</td>
-		 * </tr>
-		 * </tbody></table>
-		 *
-		 * @memberOf Validator
-		 * @param {Object}
-		 */
-		addRule: function(ruleObject) {
-			for ( var prop in ruleObject) {
-				var propRule = ruleObject[prop];
-				// 既に適用ルールが定義されているプロパティについては上書き
-				this._rule[prop] = propRule;
-			}
-		},
-
-		/**
-		 * ルールの削除
-		 * <p>
-		 * {@link Validator.addRule}で追加したプロパティルールを削除します。
-		 * </p>
-		 * <p>
-		 * ルールの削除はプロパティ単位で行います。第1引数に対象となるプロパティ名を指定(複数指定可)します。
-		 * </p>
-		 *
-		 * @memberOf Validator
-		 * @param {string|string[]} keys プロパティ名またはその配列
-		 */
-		removeRule: function(keys) {
-			if (!isArray(keys)) {
-				delete this._rule[keys];
-			}
-			for (var i = 0, l = keys.length; i < l; i++) {
-				delete this._rule[keys[i]];
-			}
-		},
-
-		/**
-		 * ルールの無効化
-		 * <p>
-		 * 第1引数に指定されたプロパティについてのバリデートを無効化します
-		 * </p>
-		 *
-		 * @memberOf Validator
-		 * @param {string|string[]} name プロパティ名またはその配列
-		 */
-		disableRule: function(name) {
-			var names = wrapInArray(name);
-			for (var i = 0, l = names.length; i < l; i++) {
-				var index = $.inArray(names[i], this._disableProperties);
-				if (index === -1) {
-					this._disableProperties.push(names[i]);
-				}
-			}
-		},
-
-		/**
-		 * ルールの有効化
-		 * <p>
-		 * 第1引数に指定されたプロパティについてのバリデートを有効化します
-		 * </p>
-		 *
-		 * @memberOf Validator
-		 * @param {string|string[]} name プロパティ名またはその配列
-		 */
-		enableRule: function(name) {
-			var names = wrapInArray(name);
-			for (var i = 0, l = names.length; i < l; i++) {
-				var index = $.inArray(names[i], this._disableProperties);
-				if (index !== -1) {
-					this._disableProperties.splice(index, 1);
-				}
-			}
-		},
-
-		/**
-		 * ValidationResultに格納するfailureReasonオブジェクトを作成する
-		 *
-		 * @private
-		 * @memberOf Validator
-		 * @param ruleName
-		 * @param value
-		 * @param param
-		 * @param rejectReason 非同期バリデートの場合、failハンドラに渡された引数リスト
-		 */
-		_createFailureReason: function(ruleName, value, param, failHandlerArgs) {
-			var ret = {
-				rule: ruleName,
-				value: value,
-				param: param
-			};
-			if (failHandlerArgs) {
-				ret.rejectReason = h5.u.obj.argsToArray(failHandlerArgs);
-			}
-			return ret;
-		}
-	});
-
-	/**
 	 * ValidationResultにデフォルトで登録するvalidateイベントリスナ
 	 *
 	 * @private
@@ -599,7 +208,7 @@
 	/**
 	 * validation結果クラス
 	 * <p>
-	 * バリデート結果を保持するクラスです。{@link Validator.validate}、{@link FormValidator.validate}がこのクラスのインスタンスを返します。
+	 * バリデート結果を保持するクラスです。{@link h5.validation.FormValidationLogic.validate}がこのクラスのインスタンスを返します。
 	 * </p>
 	 * <p>
 	 * このクラスは{@link EventDispatcher}のメソッドを持ち、イベントリスナを登録することができます。
@@ -872,6 +481,37 @@
 			});
 		}
 	});
+
+	/**
+	 * ルール定義の追加
+	 * <p>
+	 * {@link h5.validation.FormValidationLogic.addRule}で追加するルールはここで追加されたルール定義が使用されます。
+	 * </p>
+	 * <p>
+	 * 第1引数にはルール名を指定します。
+	 * </p>
+	 * <p>
+	 * 第2引数にはバリデート関数を指定します。 バリデート結果が正しい場合はtrueとなる値を返す関数を指定してください。 バリデート関数は第1引数にはバリデート対象の値、第2引数以降には{@link Validate.addRule}で指定するルールオブジェクトに記述されたパラメータが渡されます。
+	 * </p>
+	 * <p>
+	 * 第3引数にはバリデート関数に渡すパラメータのパラメータ名リストを指定します。パラメータ名は{@link ValidationResult.failureReason}で使用されます。
+	 * </p>
+	 * <p>
+	 * 第4引数は優先度指定です。複数ルールをバリデートする場合に、どのルールから順にバリデートを行うかを優先度で指定します。
+	 * 優先度は、数値が大きいものほど優先されます。同じ優先度の場合適用順序は不定です。 デフォルトで用意されているルールの優先度は、requireが51、その他は50で定義しています。
+	 * </p>
+	 *
+	 * @private
+	 * @param {string} ruleName ルール名
+	 * @param {Function} func バリデート関数
+	 * @param {string[]} [argNames] パラメータ名リスト
+	 * @param {number} [priority=0] 優先度
+	 */
+	function defineRule(ruleName, func, argNames, priority) {
+		// TODO 優先度は未実装
+		validateRuleManager.addValidateRule(ruleName, func, argNames, priority);
+	}
+
 	// =========================================================================
 	//
 	// Body
@@ -1181,51 +821,32 @@
 	};
 
 	/**
-	 * バリデータの作成
-	 * <p>
-	 * 追加されたルールに基づいてオブジェクトのバリデートを行うバリデータを生成して返します
-	 * </p>
-	 * <p>
-	 * {@link h5.validation.createValidator}がこのクラスのインスタンスを返します
-	 * </p>
-	 *
-	 * @memberOf h5.validation
-	 */
-	function createValidator() {
-		return new Validator();
-	}
-
-	/**
 	 * FormValidationロジック
 	 * <p>
 	 * フォーム要素を集約したオブジェクトのバリデートを行うためのロジックです。
 	 * </p>
-	 * <p>
-	 * このロジックは{@link Validator}クラスの各メソッドを持ちます。
-	 * </p>
-	 * <p>
-	 * {@link Validator}クラスのメソッドを直接呼んだ場合との違いは、バリデートルールごとに適切な型に変換してからバリデートを行う点(例えばmaxルールなら数値に変換など)と、
-	 * グループ単位のバリデートに対応している点です。
-	 * </p>
-	 * <p>
-	 * グループ単位のバリデートについては{@link h5.validation.FormValidation}を参照してください。
-	 * </p>
 	 *
 	 * @class
 	 * @name h5.validation.FormValidationLogic
-	 * @extends Validator
 	 */
-	var FormValidationLogic = $.extend({}, Validator.prototype, {
-		__name: 'h5.validation.FormValidationLogic',
-		__construct: function() {
-			// Validatorのコンストラクタを実行
-			Validator.call(this);
-		},
+	var FormValidationLogic = {
 		/**
-		 * フォームオブジェクトのvalidateを行う
-		 * <p>
-		 * バリデートの基本的な動作については{@link Validator.validate}を参照してください。
-		 * </p>
+		 * @private
+		 */
+		__name: 'h5.validation.FormValidationLogic',
+
+		/**
+		 * @private
+		 */
+		_rule: {},
+
+		/**
+		 * @private
+		 */
+		_desableProperties: [],
+
+		/**
+		 * フォームの値を集約したオブジェクトのvalidateを行う
 		 * <p>
 		 * FormValidationロジックはバリデートルールごとにバリデート対象の値を適切な型に変換してからバリデートを行います。
 		 * 例えば、値が"1"という文字列であってもmaxルールで判定する場合は1という数値に対してバリデートを行います。
@@ -1303,7 +924,383 @@
 			if (names) {
 				validateNames = ($.isArray(names) ? names.slice(0) : [names]).concat(inGroupNames);
 			}
-			return Validator.prototype.validate.call(this, validateTarget, validateNames);
+			return this._validate(validateTarget, validateNames);
+		},
+
+
+		/**
+		 * バリデートルールを追加する
+		 * <p>
+		 * {@link h5.validation.FormValidationLogic.validate}でバリデートを行う際のバリデートルールを追加します。
+		 * </p>
+		 * <p>
+		 * バリデートルールは以下のようなオブジェクトで指定します。
+		 *
+		 * <pre class="sh_javascript"><code>
+		 * var formValidator = h5.core.logic(h5.validation.FormValidationLogic);
+		 * formValidator.addRule({
+		 * 	// 対象となるプロパティ名(userid)をキーにする
+		 * 	userid: {
+		 * 		// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。
+		 * 		require: true,
+		 * 		pattern: /&circ;[a-z|0-9]*$/,
+		 * 		size: [4, 10]
+		 * 	}
+		 * });
+		 * </code></pre>
+		 *
+		 * 上記の場合、useridは指定が必須(require指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。
+		 * </p>
+		 * <p>
+		 * 以下のようなルールが定義されています。
+		 * </p>
+		 * <table><thead>
+		 * <tr>
+		 * <th>ルール名</th>
+		 * <th>パラメータ</th>
+		 * <th>定義</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <td>require</td>
+		 * <td>なし</td>
+		 * <td>値がnull,undefined,空文字のいずれでもないこと</td>
+		 * </tr>
+		 * <tr>
+		 * <td>customFunc</td>
+		 * <td>func</td>
+		 * <td>funcには第1引数に値を取る関数を指定する。funcがtrueを返すこと。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>assertNull</td>
+		 * <td>なし</td>
+		 * <td>値がnullまたはundefinedであること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>assertNotNull</td>
+		 * <td>なし</td>
+		 * <td>値がnullまたはundefinedでないこと</td>
+		 * </tr>
+		 * <tr>
+		 * <td>assertFalse</td>
+		 * <td>なし</td>
+		 * <td>値がfalseであること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>assertTrue</td>
+		 * <td>なし</td>
+		 * <td>値がtrueであること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>max</td>
+		 * <td>[max, inclusive]</td>
+		 * <td>inclusiveは省略可能。値がmax未満の数値であること。またinclusiveにtrueを指定した場合は境界値にmaxも含める(値がmax以下であること)。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>min</td>
+		 * <td>[mix, inclusive]</td>
+		 * <td>inclusiveは省略可能。値がminより大きい数値であること。またinclusiveにtrueを指定した場合は境界値にminも含める(値がmin以上であること)。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>future</td>
+		 * <td>なし</td>
+		 * <td>値がDate型で現在時刻より未来であること。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>past</td>
+		 * <td>なし</td>
+		 * <td>値がDate型で現在時刻より過去であること。</td>
+		 * </tr>
+		 * <tr>
+		 * <td>digits</td>
+		 * <td>[integer, fruction]</td>
+		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下であること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>pattern</td>
+		 * <td>[regexp]</td>
+		 * <td>regexpには正規表現を指定。値がregexpを満たす文字列であること</td>
+		 * </tr>
+		 * <tr>
+		 * <td>size</td>
+		 * <td>[min, max]</td>
+		 * <td>値のサイズがmin以上max以下であること。ただし、値がプレーンオブジェクトの場合はプロパティの数、配列または文字列の場合はその長さをその値のサイズとする。</td>
+		 * </tr>
+		 * </tbody></table>
+		 *
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param {Object} ルールオブジェクト
+		 */
+		addRule: function(ruleObject) {
+			for ( var prop in ruleObject) {
+				var propRule = ruleObject[prop];
+				// 既に適用ルールが定義されているプロパティについては上書き
+				this._rule[prop] = propRule;
+			}
+		},
+
+		/**
+		 * ルールの削除
+		 * <p>
+		 * {@link h5.validation.FormValidationLogic.addRule}で追加したプロパティルールを削除します。
+		 * </p>
+		 * <p>
+		 * ルールの削除はプロパティ単位で行います。第1引数に対象となるプロパティ名を指定(複数指定可)します。
+		 * </p>
+		 *
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param {string|string[]} keys プロパティ名またはその配列
+		 */
+		removeRule: function(keys) {
+			if (!isArray(keys)) {
+				delete this._rule[keys];
+			}
+			for (var i = 0, l = keys.length; i < l; i++) {
+				delete this._rule[keys[i]];
+			}
+		},
+
+		/**
+		 * ルールの無効化
+		 * <p>
+		 * 第1引数に指定されたプロパティについてのバリデートを無効化します
+		 * </p>
+		 *
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param {string|string[]} name プロパティ名またはその配列
+		 */
+		disableRule: function(name) {
+			var names = wrapInArray(name);
+			for (var i = 0, l = names.length; i < l; i++) {
+				var index = $.inArray(names[i], this._disableProperties);
+				if (index === -1) {
+					this._disableProperties.push(names[i]);
+				}
+			}
+		},
+
+		/**
+		 * ルールの有効化
+		 * <p>
+		 * 第1引数に指定されたプロパティについてのバリデートを有効化します
+		 * </p>
+		 *
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param {string|string[]} name プロパティ名またはその配列
+		 */
+		enableRule: function(name) {
+			var names = wrapInArray(name);
+			for (var i = 0, l = names.length; i < l; i++) {
+				var index = $.inArray(names[i], this._disableProperties);
+				if (index !== -1) {
+					this._disableProperties.splice(index, 1);
+				}
+			}
+		},
+
+		/**
+		 * パラメータのバリデートを行う
+		 * <p>
+		 * 第1引数にはバリデート対象となるオブジェクト、第2引数には第1引数のオブジェクトのうち、バリデートを行うキー名(複数の場合は配列)を指定します。
+		 * </p>
+		 * <p>
+		 * 第2引数を省略した場合は第1引数のオブジェクトが持つすべてのキーがバリデート対象になります。
+		 * </p>
+		 * <p>
+		 * バリデートは{@link h5.validation.FormValidationLogic.addRule}によって登録されたルールで行われます。
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param {Object} obj バリデート対象となるオブジェクト
+		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
+		 * @returns {ValidationResult} バリデート結果
+		 */
+		_validate: function(obj, names) {
+			var validProperties = [];
+			var invalidProperties = [];
+			var properties = [];
+			var validatingProperties = [];
+			var failureReason = null;
+			var targetNames = names && (isArray(names) ? names : [names]);
+			var isAsync = false;
+			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
+			var propertyWaitingPromsies = {};
+
+			for ( var prop in this._rule) {
+				if (names && $.inArray(prop, targetNames) === -1
+						|| $.inArray(prop, this._disableProperties) !== -1) {
+					// バリデートを行うプロパティ名指定がある場合は、そこにないプロパティの場合はバリデート対象にしない
+					// また、disableRule()でバリデートしないよう設定されているプロパティについてもバリデート対象にしない
+					continue;
+				}
+				var rule = this._rule[prop];
+				var orgValue = obj[prop];
+				var isInvalidProp = false;
+				var isAsyncProp = false;
+
+				// ルールを優先度順にソート
+				var sortedRuleNames = [];
+				for ( var ruleName in rule) {
+					sortedRuleNames.push(ruleName);
+				}
+				validateRuleManager.sortRuleByPriority(sortedRuleNames);
+
+				for (var i = 0, l = sortedRuleNames.length; i < l; i++) {
+					var ruleName = sortedRuleNames[i];
+					var args = rule[ruleName];
+					if ((!obj.hasOwnProperty(prop) || args == null)
+							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRE && args)) {
+						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
+						// また、argsがundefinedならそのルールはチェックしない
+						// ただし、require指定がある場合はチェックする
+						continue;
+					}
+					// 値の型変換
+					var value = this._convertBeforeValidate ? this._convertBeforeValidate(orgValue,
+							ruleName) : orgValue;
+					if (isArray(args)) {
+						args = [value].concat(args);
+					} else {
+						args = [value, args];
+					}
+					var validateFunc = validateRuleManager.getValidateFunction(ruleName);
+					if (!validateFunc) {
+						fwLogger.warn(FW_LOG_NOT_DEFINED_RULE_NAME, ruleName);
+						break;
+					}
+
+					var ret = validateFunc.apply(this, args);
+
+					// validate関数呼び出し時の引数を格納しておく
+					var param = {};
+					var argNames = validateRuleManager.getValidateArgNames(ruleName);
+					if (argNames) {
+						for (var j = 0, len = argNames.length; j < len; j++) {
+							param[argNames[j]] = args[j + 1];
+						}
+					}
+
+					// 非同期の場合
+					if (isPromise(ret) && !isRejected(ret) && !isResolved(ret)) {
+						// pendingのプロミスが返ってきた場合
+						// 結果が返ってきたらvalidateイベントをあげるようにしておく
+						isAsyncProp = true;
+						propertyWaitingPromsies[prop] = propertyWaitingPromsies[prop] || [];
+						// プロミス自体にルール名と値と引数を覚えさせておく
+						propertyWaitingPromsies[prop].push(ret.promise({
+							ruleName: ruleName,
+							value: value,
+							param: param
+						}));
+					}
+
+					// 同期の場合
+					if (!ret || isPromise(ret) && isResolved(ret)) {
+						// validate関数がfalseを返したまたは、promiseを返したけどすでにreject済みの場合はvalidate失敗
+						// failureReasonの作成
+						failureReason = failureReason || {};
+						failureReason[prop] = this._createFailureReason(ruleName, value, param);
+						isInvalidProp = true;
+						// あるルールでinvalidなら他のルールはもう検証しない
+						break;
+					}
+				}
+				if (isAsyncProp) {
+					isAsync = true;
+					validatingProperties.push(prop);
+				} else {
+					(isInvalidProp ? invalidProperties : validProperties).push(prop);
+				}
+				properties.push(prop);
+			}
+			var isValid = !invalidProperties.length;
+			var validationResult = new ValidationResult({
+				validProperties: validProperties,
+				invalidProperties: invalidProperties,
+				validatingProperties: validatingProperties,
+				properties: properties,
+				failureReason: failureReason,
+				isAsync: isAsync,
+				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
+				isValid: isValid,
+				// 非同期でvalidateしているものがあって決まっていない時はisAllValidはnull
+				isAllValid: isAsync ? null : isValid
+			});
+
+			if (isAsync) {
+				var that = this;
+				// 非同期の場合、結果が返って気次第イベントをあげる
+				for ( var prop in propertyWaitingPromsies) {
+					var promises = propertyWaitingPromsies[prop];
+					var doneHandler = (function(_prop) {
+						return function() {
+							// 既にinvalidになっていたらもう何もしない
+							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
+								return;
+							}
+							validationResult.dispatchEvent({
+								type: EVENT_VALIDATE,
+								property: _prop,
+								value: obj[_prop], // validate対象のオブジェクトに指定された値
+								isValid: true
+							});
+						};
+					})(prop);
+					var failHandler = (function(_prop, _promises, _param) {
+						return function() {
+							// 一つでも失敗したらfailCallbackが実行される
+							// 既にinvalidになっていたらもう何もしない
+							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
+								return;
+							}
+							// どのルールのプロミスがrejectされたか
+							var ruleName, value;
+							for (var i = 0, l = _promises.length; i < l; i++) {
+								var p = _promises[i];
+								if (isRejected(p)) {
+									ruleName = p.ruleName;
+									value = p.value, // ruleNameでのバリデート用に変換された値
+									param = p.param;
+									break;
+								}
+							}
+							validationResult.dispatchEvent({
+								type: EVENT_VALIDATE,
+								property: _prop,
+								isValid: false,
+								failureReason: that._createFailureReason(ruleName, value, param,
+										arguments),
+							});
+						};
+					})(prop, promises);
+					// failハンドラでどのプロミスの失敗かを判定したいのでwaitForPromisesではなくwhenを使用している
+					$.when.apply($, promises).done(doneHandler).fail(failHandler);
+				}
+			}
+			return validationResult;
+		},
+
+		/**
+		 * ValidationResultに格納するfailureReasonオブジェクトを作成する
+		 *
+		 * @private
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param ruleName
+		 * @param value
+		 * @param param
+		 * @param rejectReason 非同期バリデートの場合、failハンドラに渡された引数リスト
+		 */
+		_createFailureReason: function(ruleName, value, param, failHandlerArgs) {
+			var ret = {
+				rule: ruleName,
+				value: value,
+				param: param
+			};
+			if (failHandlerArgs) {
+				ret.rejectReason = h5.u.obj.argsToArray(failHandlerArgs);
+			}
+			return ret;
 		},
 
 		/**
@@ -1326,37 +1323,7 @@
 			}
 			return value;
 		}
-	});
-
-	/**
-	 * ルール定義の追加
-	 * <p>
-	 * {@link Validator.addRule}で追加するルールはここで追加されたルール定義が使用されます。
-	 * </p>
-	 * <p>
-	 * 第1引数にはルール名を指定します。
-	 * </p>
-	 * <p>
-	 * 第2引数にはバリデート関数を指定します。 バリデート結果が正しい場合はtrueとなる値を返す関数を指定してください。 バリデート関数は第1引数にはバリデート対象の値、第2引数以降には{@link Validate.addRule}で指定するルールオブジェクトに記述されたパラメータが渡されます。
-	 * </p>
-	 * <p>
-	 * 第3引数にはバリデート関数に渡すパラメータのパラメータ名リストを指定します。パラメータ名は{@link ValidationResult.failureReason}で使用されます。
-	 * </p>
-	 * <p>
-	 * 第4引数は優先度指定です。複数ルールをバリデートする場合に、どのルールから順にバリデートを行うかを優先度で指定します。
-	 * 優先度は、数値が大きいものほど優先されます。同じ優先度の場合適用順序は不定です。 デフォルトで用意されているルールの優先度は、requireが51、その他は50で定義しています。
-	 * </p>
-	 *
-	 * @memberOf h5.validation
-	 * @param {string} ruleName ルール名
-	 * @param {Function} func バリデート関数
-	 * @param {string[]} [argNames] パラメータ名リスト
-	 * @param {number} [priority=0] 優先度
-	 */
-	function defineRule(ruleName, func, argNames, priority) {
-		// TODO 優先度は未実装
-		validateRuleManager.addValidateRule(ruleName, func, argNames, priority);
-	}
+	};
 
 	// デフォルトルールの追加
 	defineRule(DEFAULT_RULE_NAME_REQUIRE, rule.require, null, 51);
@@ -1376,14 +1343,5 @@
 	// =============================
 	// Expose to window
 	// =============================
-	/**
-	 * @namespace
-	 * @name validation
-	 * @memberOf h5
-	 */
-	h5.u.obj.expose('h5.validation', {
-		defineRule: defineRule,
-		createValidator: createValidator
-	});
 	h5.core.expose(FormValidationLogic);
 })();
