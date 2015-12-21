@@ -695,7 +695,7 @@
 		},
 
 		/**
-		 * 値の桁数の判定を行い、判定結果をtrueまたはfalseで返します
+		 * 値を数値表現文字列として扱い、桁数の判定を行い、判定結果をtrueまたはfalseで返します
 		 * <p>
 		 * 第2引数には整数部分の桁数の上限を設定します。
 		 * </p>
@@ -706,7 +706,7 @@
 		 * 値がnullまたはundefinedの場合はtrueを返します。
 		 * </p>
 		 * <p>
-		 * 値が数値型でない場合はfalseを返します。
+		 * 値が文字列型でない場合はfalseを返します。
 		 * </p>
 		 * <p>
 		 * 整数部分、小数部分いずれの桁数も境界値を含めます。
@@ -721,43 +721,37 @@
 			if (value == null) {
 				return true;
 			}
-			var typeValid = (isNumberValue(value, true) || value instanceof Number)
-					&& !isNaN(value) && value != Infinity && value != -Infinity;
+			var typeValid = isStringValue(value);
 			if (!typeValid) {
 				return false;
 			}
 
-			// 正の数で考える
-			var abs = value < 0 ? -value : value;
+			// 数値表現かどうか判定
+			// 先頭が+,-,数値の何れかで始まっていること。数値.数値または数値のみであること
+			if (!/^([+|-])?\d*(\.\d+)?$/.test(value)) {
+				return false;
+			}
 
+			// 整数部分判定
+			// 数値に変換して正の数で考える
+			var num = parseInt(value);
+			num = num < 0 ? -num : num;
 			if (integer != null) {
 				// 整数部分判定
-				if (abs >= Math.pow(10, integer)) {
+				if (num >= Math.pow(10, integer)) {
 					return false;
 				}
 			}
 
 			if (fruction != null) {
 				// 小数部分判定
-				// 小数部分を出すのに絶対値を使って演算して求めると誤差が出る(例：1.1-1の結果が0.10000000000000009)
-				// そのため、文字列にして判定する
-				var str = '' + abs;
-				if (str.indexOf('+') !== -1) {
-					// 1.1e+50のような数の場合、小数部分はなし
-					return true;
-				}
-				var pointMinus = str.indexOf('-');
-				if (pointMinus !== -1) {
-					// 1.1e-50のような数の場合、-の後の数値とfructionを比較
-					return str.slice(pointMinus + 1) <= fruction;
-				}
-				var pointIndex = str.indexOf('.');
+				var pointIndex = value.indexOf('.');
 				if (pointIndex === -1) {
 					// 小数点が無い場合はvalid
 					return true;
 				}
 				// 小数部分の桁数がfruction以下の長さかどうか返す
-				return str.slice(pointIndex + 1).length <= fruction;
+				return value.slice(pointIndex + 1).length <= fruction;
 			}
 			// integerもfructionもどちらもnullならvalid
 			return true;
@@ -1013,8 +1007,8 @@
 		 * </tr>
 		 * <tr>
 		 * <td>digits</td>
-		 * <td>[integer, fruction]</td>
-		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下であること</td>
+		 * <td>[string, fruction]</td>
+		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下の数値を表す文字列であること</td>
 		 * </tr>
 		 * <tr>
 		 * <td>pattern</td>
@@ -1313,7 +1307,6 @@
 		 */
 		_convertBeforeValidate: function(value, ruleName) {
 			switch (ruleName) {
-			case DEFAULT_RULE_NAME_DIGITS:
 			case DEFAULT_RULE_NAME_MAX:
 			case DEFAULT_RULE_NAME_MIN:
 				return parseFloat(value);
