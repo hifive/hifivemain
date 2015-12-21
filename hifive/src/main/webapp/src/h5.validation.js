@@ -1336,5 +1336,13 @@
 	// =============================
 	// Expose to window
 	// =============================
+	/**
+	 * @namespace
+	 * @name validation
+	 * @memberOf h5
+	 */
+	h5.u.obj.expose('h5.validation', {
+		defineRule: defineRule
+	});
 	h5.core.expose(FormValidationLogic);
 })();

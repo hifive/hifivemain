@@ -62,20 +62,19 @@
 	 *
 	 * @memberOf h5internal.validation
 	 * @private
-	 * @param {Object} reason
 	 * @param {string} name
+	 * @param {Object} reason
 	 * @param {Object} setting
 	 * @returns {string} メッセージ
 	 */
 	function createValidateErrorMessage(name, reason, setting) {
 		var displayName = (setting && setting.displayName) || name;
 		var msg = setting && setting.message;
-		var formatter = setting && setting.formatter;
 		var param = {
 			value: reason.value,
 			param: reason.param,
 			rule: reason.rule,
-			rejectReason: reason.rejectReason,
+			invalidReason: reason,
 			name: name,
 			displayName: displayName
 		};
@@ -83,9 +82,6 @@
 			// messageが指定されていればh5.u.str.formatでメッセージを作成
 			msg = h5.u.str.format(msg, param);
 			return msg;
-		} else if (isFunction(formatter)) {
-			// formatterが設定されている場合はパラメータを渡して関数呼び出しして生成
-			return formatter(param);
 		}
 
 		// 何も設定されていない場合はデフォルトメッセージ
@@ -120,8 +116,6 @@
 		_containerSetting: {},
 		// validationResultからメッセージを作るための設定
 		_setting: {},
-		// 追加設定
-		_addedSetting: null,
 
 		/**
 		 * メッセージ出力先の設定を適用する
@@ -141,72 +135,40 @@
 		 * メッセージを{@link ValidationResult}から出力する([appendMessageByValidationResult]{@link h5.ui.validation.appendMessageByValidationResult}を使用する)場合の設定を行うメソッド。
 		 * </p>
 		 * <p>
-		 * 以下のようなオブジェクトで指定します。
+		 * プロパティ毎の設定を以下のようなオブジェクトで指定します。既に設定済みのプロパティがある場合、設定は上書かれます。
 		 * </p>
 		 *
 		 * <pre class="sh_javascript"><code>
-		 * setMessageSetting({
+		 * addMessageSetting({
 		 * 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
 		 * 	userid: {
 		 * 		displayName: 'ユーザID', // 表示名
 		 * 		message: '{displayName}がルール{rule}に違反しています。', // メッセージ。プレースホルダを記述可能(後述)。
 		 * 	},
 		 * 	address: {
-		 * 		displayName: 'アドレス',
-		 * 		formatter: function(param) {
-		 * 			// フォーマッタは関数で記述。メッセージを生成して返すような関数を作成
-		 * 		switch (param.rule) {
-		 * 		case 'require':
-		 * 			return '必須です';
-		 * 		case 'pattern':
-		 * 			return param.value + 'は' + param.displayName + 'の値として不正です'
-		 * 		}
-		 * 	}
+		 * 		displayName: 'アドレス'
 		 * 	}
 		 * });
 		 * </code></pre>
 		 *
 		 * <p>
-		 * messageとformatterが両方記述されている場合は、messageに記述されたメッセージが優先して使用されます。
-		 * </p>
-		 * <p>
-		 * messageにはプレースホルダを記述できます。適用されるパラメータはformatterの引数に渡されるパラメータと同じで、以下のようなオブジェクトです。
-		 * </p>
-		 *
-		 * <pre class="sh_javascript"><code>
-		 * {
-		 * 	value: value, // バリデート対象の値
-		 * 	param: param, // バリデート時に渡された引数リスト
-		 * 	rule: rule, // バリデートルール名
-		 * 	rejectReason: rejectReason, // 非同期バリデートだった場合、failハンドラに渡された引数リスト
-		 * 	name: name, // バリデート対象のプロパティ名
-		 * 	displayName: displayName
-		 * // メッセージ定義に指定された表示名
-		 * }
-		 * </code></pre>
-		 *
-		 * @memberOf h5.ui.validation.MessageOutput
-		 * @param {Object} messageSetting プロパティ毎のメッセージ定義。{プロパティ名: {message:..., formatter:..,
-		 *            displayName:...}} のようなオブジェクト
-		 */
-		setMessageSetting: function(messageSetting) {
-			this._setting = messageSetting;
-		},
-
-		/**
-		 * メッセージ設定へ追加設定を行う
-		 * <p>
-		 * [setMessageSetting]{@link h5.ui.validation.MessageOutput.setMessageSetting}で設定したメッセージ設定に、追加で設定を行う。
+		 * message,displayName設定プロパティについては{@link h5.ui.FormController.setSetting}をご覧ください。
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutput
-		 * @param {string} name 追加設定を行うプロパティ名
-		 * @param {Object} messageObj メッセージ設定オブジェクト。{message:..., formatter:...,
-		 *            displayName:...}のようなオブジェクト
+		 * @param {Object} messageSetting プロパティ毎のメッセージ定義。{プロパティ名: {message:..., displayName:...}}
+		 *            のようなオブジェクト
 		 */
-		addMessageSetting: function(name, messageObj) {
-			this._addedSetting = this._addedSetting || {};
-			this._addedSetting[name] = messageObj;
+		addMessageSetting: function(messageSetting) {
+			if (!this._setting) {
+				this._setting = messageSetting;
+				return;
+			}
+			for ( var prop in messageSetting) {
+				var propSetting = this._setting[prop];
+				// 既にメッセージ定義が設定されているプロパティについては上書き
+				this._setting[prop] = propSetting;
+			}
 		},
 
 		/**
@@ -216,7 +178,7 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutput
-		 * @param {Object} messageSetting {プロパティ名: {message:..., formatter:..}}のようなオブジェクト
+		 * @param {Object} messageSetting {プロパティ名: {message:...}}のようなオブジェクト
 		 */
 		clearMessage: function(container) {
 			var container = container || this._containerSetting.container;
@@ -270,12 +232,12 @@
 		 * @returns {string} エラーメッセージ
 		 */
 		getMessageByValidationResult: function(validationResult, name) {
-			var failureReason = validationResult.failureReason[name];
-			if (!failureReason) {
+			var invalidReason = validationResult.invalidReason[name];
+			if (!invalidReason) {
 				return null;
 			}
-			return h5internal.validation.createValidateErrorMessage(name, failureReason, this
-					._getMessageSettingByName(name));
+			return h5internal.validation.createValidateErrorMessage(name, invalidReason,
+					this._setting[name]);
 		},
 
 		/**
@@ -298,7 +260,7 @@
 				if (names && $.inArray(name, names) === -1) {
 					continue;
 				}
-				var failureReason = validationResult.failureReason[name];
+				var invalidReason = validationResult.invalidReason[name];
 				var message = this.getMessageByValidationResult(validationResult, name);
 				this.appendMessage(message, container, wrapper);
 			}
@@ -306,9 +268,9 @@
 				// 非同期でまだ結果が返ってきていないものがある場合
 				validationResult.addEventListener('validate', this.own(function(ev) {
 					if (!ev.isValid && !names || $.inArray(ev.property, names) !== -1) {
-						var failureReason = ev.target.failureReason[ev.property];
+						var invalidReason = ev.target.invalidReason[ev.property];
 						var message = h5internal.validation.createValidateErrorMessage(ev.property,
-								failureReason, this._getMessageSettingByName(ev.property));
+								invalidReason, this._setting[ev.propety]);
 						this.appendMessage(message, container, wrapper);
 					}
 				}));
@@ -328,26 +290,6 @@
 			if (container) {
 				$(container).empty();
 			}
-		},
-
-		/**
-		 * あるプロパティ名に対応するメッセージ設定の取得
-		 *
-		 * @private
-		 * @memberOf h5.ui.validation.MessageOutput
-		 * @param {string} name
-		 */
-		_getMessageSettingByName: function(name) {
-			// message,formatterについては必ず追加設定(addMessageSettingで追加された設定)を優先
-			// 元の設定でmessageが指定されていて、追加設定でformatterが設定されている場合、
-			// 元の設定のmessageは使わずに追加設定のformatterが使われるようにする
-			var added = this._addedSetting && this._addedSetting[name];
-			var messageSetting = $.extend({}, this._setting[name], added);
-			if (added && (added.message != null || added.formatter != null)) {
-				messageSetting.message = added.message;
-				messageSetting.formatter = added.formatter;
-			}
-			return messageSetting;
 		}
 	};
 	h5.core.expose(controlelr);
@@ -360,6 +302,39 @@
 
 	/**
 	 * バリデートエラー箇所の要素にクラスを追加するための[FormController]{@link h5.ui.validation.FormController}プラグイン
+	 * <p>
+	 * styleプラグインには以下の設定項目があります。
+	 * </p>
+	 * <table><thead>
+	 * <tr>
+	 * <th>設定項目</th>
+	 * <th>型</th>
+	 * <th>説明</th>
+	 * <th>デフォルト値</th>
+	 * </tr>
+	 * </thead><tbody>
+	 * <tr>
+	 * <th>errorClassName</th>
+	 * <td>string</td>
+	 * <td>バリデートエラー時に適用するクラス名</td>
+	 * <td>なし</td>
+	 * </tr>
+	 * <tr>
+	 * <th>successClassName</th>
+	 * <td>string</td>
+	 * <td>バリデート成功時に適用するクラス名</td>
+	 * <td>なし</td>
+	 * </tr>
+	 * <tr>
+	 * <th>validatingClassName</th>
+	 * <td>string</td>
+	 * <td>非同期バリデートの結果待機時に適用するクラス名</td>
+	 * <td>なし</td>
+	 * </tr>
+	 * </tbody></table>
+	 * <p>
+	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
+	 * </p>
 	 *
 	 * @class
 	 * @name h5.ui.validation.Style
@@ -385,86 +360,14 @@
 		 */
 		_styleAppliedElements: {},
 
-		__construct: function(ctx) {
-			var setting = ctx.args && ctx.args.setting;
-			if (setting) {
-				this.setSetting(setting);
-			}
-		},
-
 		/**
 		 * プラグイン設定を行う
-		 * <p>
-		 * styleプラグインには以下の設定項目があります。
-		 * </p>
-		 * <table><thead>
-		 * <tr>
-		 * <th>設定項目</th>
-		 * <th>型</th>
-		 * <th>説明</th>
-		 * <th>デフォルト値</th>
-		 * </tr>
-		 * </thead><tbody>
-		 * <tr>
-		 * <th>off</th>
-		 * <td>boolean</td>
-		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
-		 * <td>false</td>
-		 * </tr>
-		 * <tr>
-		 * <th>errorClassName</th>
-		 * <td>string</td>
-		 * <td>バリデートエラー時に適用するクラス名</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * <tr>
-		 * <th>successClassName</th>
-		 * <td>string</td>
-		 * <td>バリデート成功時に適用するクラス名</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * <tr>
-		 * <th>validatingClassName</th>
-		 * <td>string</td>
-		 * <td>非同期バリデートの結果待機時に適用するクラス名</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * <tr>
-		 * <th>replaceElement</th>
-		 * <td>DOM|jQuery|string|function</td>
-		 * <td>クラス適用対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
-		 * <td>各プロパティのフォーム部品要素</td>
-		 * </tr>
-		 * </tbody></table>
-		 * <p>
-		 * 各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
-		 * </p>
 		 *
-		 * <pre class="sh_javascript"><code>
-		 * {
-		 * 	errorClassName: 'error', // バリデートエラー時に適用するクラス名
-		 * 	successClassName: 'success', // バリデート成功時に適用するクラス名
-		 * 	validatingClassName: 'validating', // 非同期バリデート待ちの場合に適用するクラス名
-		 * 	property: { // 各プロパティ固有の設定
-		 * 		userid: { // プルパティ名
-		 * 			errorClassName: 'id-error',
-		 * 			replaceElement: function(element) {
-		 * 				// クラス設定対象要素は親要素にする
-		 * 				return $(element).parent();
-		 * 			}
-		 * 		},
-		 * 		name: {
-		 * 			off: true
-		 * 		// nameプロパティについてプラグインによるクラス設定を無効
-		 * 		}
-		 * 	}
-		 * }
-		 * </code></pre>
-		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param {Object} setting styleプラグイン設定オブジェクト
 		 */
-		setSetting: function(setting) {
+		_setSetting: function(setting) {
 			this._setting = setting;
 		},
 
@@ -483,9 +386,8 @@
 			var properties = validationResult.properties;
 			for (var i = 0, l = properties.length; i < l; i++) {
 				var name = properties[i];
-				this
-						._setStyle(this.parentController._getElementByName(name), name,
-								validationResult);
+				this._setStyle(this.parentController._getElementByName(name), name,
+						validationResult);
 			}
 		},
 
@@ -528,8 +430,6 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.Style
-		 * @param globalSetting
-		 * @param setting
 		 */
 		reset: function() {
 			// このプラグインが触った要素全てからクラスを削除
@@ -615,6 +515,34 @@
 (function() {
 	/**
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
+	 * <p>
+	 * compositionプラグインには以下の設定項目があります。
+	 * </p>
+	 * <table><thead>
+	 * <tr>
+	 * <th>設定項目</th>
+	 * <th>型</th>
+	 * <th>説明</th>
+	 * <th>デフォルト値</th>
+	 * </tr>
+	 * </thead><tbody>
+	 * <tr>
+	 * <th>container</th>
+	 * <td>DOM|jQuery|string</td>
+	 * <td>メッセージ表示先となるコンテナ要素。</td>
+	 * <td>なし</td>
+	 * </tr>
+	 * <tr>
+	 * <th>wrapper</th>
+	 * <td>string</td>
+	 * <td>メッセージを出力する要素のタグ名またはタグ生成文字列。'li'や、'&lt;span
+	 * class="error-msg"&gt;'のような指定ができ、指定された文字列から生成した要素が各メッセージ要素になります。</td>
+	 * <td>なし(テキストノードとして表示)</td>
+	 * </tr>
+	 * </tbody></table>
+	 * <p>
+	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
+	 * </p>
 	 *
 	 * @class
 	 * @name h5.ui.validation.Composition
@@ -630,85 +558,14 @@
 		 */
 		_setting: {},
 
-		__construct: function(ctx) {
-			var setting = ctx.args && ctx.args.setting;
-			if (setting) {
-				this.setSetting(setting);
-			}
-		},
-
 		/**
 		 * プラグイン設定を行う
-		 * <p>
-		 * compositionプラグインには以下の設定項目があります。
-		 * </p>
-		 * <table><thead>
-		 * <tr>
-		 * <th>設定項目</th>
-		 * <th>型</th>
-		 * <th>説明</th>
-		 * <th>デフォルト値</th>
-		 * </tr>
-		 * </thead><tbody>
-		 * <tr>
-		 * <th>off</th>
-		 * <td>boolean</td>
-		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
-		 * <td>false</td>
-		 * </tr>
-		 * <tr>
-		 * <th>container</th>
-		 * <td>DOM|jQuery|string</td>
-		 * <td>メッセージ表示先となるコンテナ要素。</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * <tr>
-		 * <th>wrapper</th>
-		 * <td>string</td>
-		 * <td>メッセージを出力する要素のタグ名またはタグ生成文字列。'li'や、'&lt;span
-		 * class="error-msg"&gt;'のような指定ができ、指定された文字列から生成した要素が各メッセージ要素になります。</td>
-		 * <td>なし(テキストノードとして表示)</td>
-		 * </tr>
-		 * <tr>
-		 * <th>message</th>
-		 * <td>string</td>
-		 * <td>バリデートエラー時に表示するメッセージ。メッセージの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のmessageプロパティと同じ形式です。</td>
-		 * <td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
-		 * </tr>
-		 * <tr>
-		 * <th>formatter</th>
-		 * <td>function</td>
-		 * <td>バリデートエラー時に表示するメッセージフォーマッタ。フォーマッタの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のformatterプロパティと同じ形式です。</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * <tr>
-		 * <th>displayName</th>
-		 * <td>string</td>
-		 * <td>バリデーション対象のプロパティに対応する表示名</td>
-		 * <td>バリデーション対象のプロパティ名</td>
-		 * </tr>
-		 * </tbody></table>
-		 * <p>
-		 * 各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
-		 * </p>
 		 *
-		 * <pre class="sh_javascript"><code>
-		 * {
-		 * 	container: 'ul.composition',
-		 * 	wrapper: 'li',
-		 * 	property: { // 各プロパティ固有の設定
-		 * 		userid: { // プルパティ名
-		 * 			displayName: 'ユーザ名',
-		 * 			message: '{displayName}は必須です'
-		 * 		}
-		 * 	}
-		 * }
-		 * </code></pre>
-		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Composition
 		 * @param {Object} setting compositionプラグイン設定オブジェクト
 		 */
-		setSetting: function(setting) {
+		_setSetting: function(setting) {
 			this._setting = setting;
 			if (this.isInit) {
 				this._setChildSetting();
@@ -727,8 +584,6 @@
 		 * @private
 		 * @memberOf h5.ui.validation.Composition
 		 * @param {ValidationResult} validationResult
-		 * @param {Object} globalSetting
-		 * @param {Object} outputSetting
 		 */
 		_onValidate: function(validationResult) {
 			this._messageOutputController.clearMessage();
@@ -756,8 +611,6 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.Composition
-		 * @param globalSetting
-		 * @param setting
 		 */
 		reset: function() {
 			this._messageOutputController.clearValue();
@@ -787,7 +640,7 @@
 					formatter: property[p].formatter || setting.formatter,
 				};
 			}
-			this._messageOutputController.setMessageSetting(messageSetting);
+			this._messageOutputController.addMessageSetting(messageSetting);
 		}
 	};
 	h5.core.expose(controller);
@@ -797,6 +650,32 @@
 	var DEFAULT_PLACEMENT = 'top';
 	/**
 	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
+	 * <p>
+	 * baloonプラグインには以下の設定項目があります。
+	 * </p>
+	 * <table><thead>
+	 * <tr>
+	 * <th>設定項目</th>
+	 * <th>型</th>
+	 * <th>説明</th>
+	 * <th>デフォルト値</th>
+	 * </thead><tbody>
+	 * <tr>
+	 * <th>placement</th>
+	 * <td>string</td>
+	 * <td>バルーンを表示する位置。top,right,bottom,leftの何れかで指定。</td>
+	 * <td>top</td>
+	 * </tr>
+	 * <tr>
+	 * <th>container</th>
+	 * <td>DOM|jQuery|string</td>
+	 * <td>バルーン要素を配置するコンテナ。表示位置ではなくDOMツリー上で配置するときのバルーン要素の親要素となる要素を指定します。指定しない場合は対象要素の親要素。</td>
+	 * <td>なし</td>
+	 * </tr>
+	 * </tbody></table>
+	 * <p>
+	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
+	 * </p>
 	 *
 	 * @class
 	 * @name h5.ui.validation.ErrorBaloon
@@ -809,81 +688,12 @@
 
 		/**
 		 * プラグイン設定を行う
-		 * <p>
-		 * baloonプラグインには以下の設定項目があります。
-		 * </p>
-		 * <table><thead>
-		 * <tr>
-		 * <th>設定項目</th>
-		 * <th>型</th>
-		 * <th>説明</th>
-		 * <th>デフォルト値</th>
-		 * </tr>
-		 * </thead><tbody>
-		 * <tr>
-		 * <th>off</th>
-		 * <td>boolean</td>
-		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
-		 * <td>false</td>
-		 * </tr>
-		 * <tr>
-		 * <th>message</th>
-		 * <td>string</td>
-		 * <td>バリデートエラー時に表示するメッセージ。メッセージの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のmessageプロパティと同じ形式です。</td>
-		 * <td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
-		 * </tr>
-		 * <tr>
-		 * <th>formatter</th>
-		 * <td>function</td>
-		 * <td>バリデートエラー時に表示するメッセージフォーマッタ。フォーマッタの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のformatterプロパティと同じ形式です。</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * <tr>
-		 * <th>displayName</th>
-		 * <td>string</td>
-		 * <td>バリデーション対象のプロパティに対応する表示名</td>
-		 * <td>バリデーション対象のプロパティ名</td>
-		 * </tr>
-		 * <tr>
-		 * <th>replaceElement</th>
-		 * <td>DOM|jQuery|string|function</td>
-		 * <td>バルーン表示対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
-		 * <td>各プロパティのフォーム部品要素</td>
-		 * </tr>
-		 * <tr>
-		 * <th>placement</th>
-		 * <td>string</td>
-		 * <td>バルーンを表示する位置。top,right,bottom,leftの何れかで指定。</td>
-		 * <td>top</td>
-		 * </tr>
-		 * <tr>
-		 * <th>container</th>
-		 * <td>DOM|jQuery|string</td>
-		 * <td>バルーン要素を配置するコンテナ。表示位置ではなくDOMツリー上で配置するときのバルーン要素の親要素となる要素を指定します。指定しない場合は対象要素の親要素。</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * </tbody></table>
-		 * <p>
-		 * 各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
-		 * </p>
 		 *
-		 * <pre class="sh_javascript"><code>
-		 * {
-		 * 	placement: 'right',
-		 * 	container: 'body',
-		 * 	property: { // 各プロパティ固有の設定
-		 * 		userid: { // プルパティ名
-		 * 			displayName: 'ユーザ名',
-		 * 			message: '{displayName}は必須です'
-		 * 		}
-		 * 	}
-		 * }
-		 * </code></pre>
-		 *
+		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
 		 */
-		setSetting: function(setting) {
+		_setSetting: function(setting) {
 			this._setting = setting;
 			if (this.isInit) {
 				this._setChildSetting();
@@ -989,8 +799,6 @@
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
 		 * @param name
-		 * @param globalSetting
-		 * @param setting
 		 * @param {ValidationResult} validationResult
 		 * @param {string} type 要素で発生したイベントタイプ
 		 */
@@ -1041,9 +849,9 @@
 				}));
 				return;
 			}
-			var failureReason = validationResult.failureReason
-					&& validationResult.failureReason[name];
-			if (!failureReason) {
+			var invalidReason = validationResult.invalidReason
+					&& validationResult.invalidReason[name];
+			if (!invalidReason) {
 				// validateエラーがないときはhideして終了
 				this._hideBaloon();
 				return;
@@ -1121,7 +929,7 @@
 					formatter: property[p].formatter || setting.formatter,
 				};
 			}
-			this._messageOutputController.setMessageSetting(messageSetting);
+			this._messageOutputController.addMessageSetting(messageSetting);
 		}
 	};
 	h5.core.expose(controller);
@@ -1137,6 +945,9 @@
 	 * <p>
 	 * API仕様は{@link h5.ui.validation.ErrorBaloon}と同じです。
 	 * </p>
+	 * <p>
+	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
+	 * </p>
 	 *
 	 * @class
 	 * @name h5.ui.validation.BootstrapErrorBaloon
@@ -1150,6 +961,7 @@
 		 * 表示されているバルーンを削除します
 		 * </p>
 		 *
+		 * @private
 		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 */
 		_hideBaloon: function() {
@@ -1191,6 +1003,34 @@
 (function() {
 	/**
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
+	 * <p>
+	 * messageプラグインには以下の設定項目があります。
+	 * </p>
+	 * <table><thead>
+	 * <tr>
+	 * <th>設定項目</th>
+	 * <th>型</th>
+	 * <th>説明</th>
+	 * <th>デフォルト値</th>
+	 * </tr>
+	 * </thead><tbody>
+	 * <tr>
+	 * <th>appendMessage</th>
+	 * <td>function</td>
+	 * <td>メッセージ要素配置関数。メッセージ要素の配置を行う関数を指定します。第1引数にメッセージ要素(DOM)、第2引数にプロパティ名、第3引数にメッセージ追加対象要素が渡されます。指定しない場合は、メッセージ追加対象要素の後ろに追加します。</td>
+	 * <td>なし</td>
+	 * </tr>
+	 * <tr>
+	 * <th>wrapper</th>
+	 * <td>string</td>
+	 * <td>メッセージを出力する要素のタグ名またはタグ生成文字列。'li'や、'&lt;span
+	 * class="error-msg"&gt;'のような指定ができ、指定された文字列から生成した要素が各メッセージ要素になります。</td>
+	 * <td>なし(テキストノードとして表示)</td>
+	 * </tr>
+	 * </tbody></table>
+	 * <p>
+	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
+	 * </p>
 	 *
 	 * @class
 	 * @name h5.ui.validation.Message
@@ -1203,84 +1043,12 @@
 
 		/**
 		 * プラグイン設定を行う
-		 * <p>
-		 * messageプラグインには以下の設定項目があります。
-		 * </p>
-		 * <table><thead>
-		 * <tr>
-		 * <th>設定項目</th>
-		 * <th>型</th>
-		 * <th>説明</th>
-		 * <th>デフォルト値</th>
-		 * </tr>
-		 * </thead><tbody>
-		 * <tr>
-		 * <th>off</th>
-		 * <td>boolean</td>
-		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
-		 * <td>false</td>
-		 * </tr>
-		 * <tr>
-		 * <th>message</th>
-		 * <td>string</td>
-		 * <td>バリデートエラー時に表示するメッセージ。メッセージの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のmessageプロパティと同じ形式です。</td>
-		 * <td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
-		 * </tr>
-		 * <tr>
-		 * <th>formatter</th>
-		 * <td>function</td>
-		 * <td>バリデートエラー時に表示するメッセージフォーマッタ。フォーマッタの記述形式は{@link h5.ui.validation.MessageOutput.setMessage}のformatterプロパティと同じ形式です。</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * <tr>
-		 * <th>displayName</th>
-		 * <td>string</td>
-		 * <td>バリデーション対象のプロパティに対応する表示名</td>
-		 * <td>バリデーション対象のプロパティ名</td>
-		 * </tr>
-		 * <tr>
-		 * <th>replaceElement</th>
-		 * <td>DOM|jQuery|string|function</td>
-		 * <td>メッセージ追加対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素がクラス適用要素になります。</td>
-		 * <td>各プロパティのフォーム部品要素</td>
-		 * </tr>
-		 * <tr>
-		 * <th>appendMessage</th>
-		 * <td>function</td>
-		 * <td>メッセージ要素配置関数。メッセージ要素の配置を行う関数を指定します。第1引数にメッセージ要素(DOM)、第2引数にプロパティ名、第3引数にメッセージ追加対象要素が渡されます。指定しない場合は、メッセージ追加対象要素の後ろに追加します。</td>
-		 * <td>なし</td>
-		 * </tr>
-		 * <tr>
-		 * <th>wrapper</th>
-		 * <td>string</td>
-		 * <td>メッセージを出力する要素のタグ名またはタグ生成文字列。'li'や、'&lt;span
-		 * class="error-msg"&gt;'のような指定ができ、指定された文字列から生成した要素が各メッセージ要素になります。</td>
-		 * <td>なし(テキストノードとして表示)</td>
-		 * </tr>
-		 * </tbody></table>
-		 * <p>
-		 * 各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
-		 * </p>
 		 *
-		 * <pre class="sh_javascript"><code>
-		 * {
-		 * 	wrapper: '&lt;span class=&quot;error-msg&quot;&gt;',
-		 * 	appendMessage: function(element, name, target) {
-		 * 		$(target).closest('.wrapper').append(element);
-		 * 	},
-		 * 	property: { // 各プロパティ固有の設定
-		 * 		userid: { // プルパティ名
-		 * 			displayName: 'ユーザ名',
-		 * 			message: '{displayName}は必須です'
-		 * 		}
-		 * 	}
-		 * }
-		 * </code></pre>
-		 *
+		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 * @param {Object} setting messageプラグイン設定オブジェクト
 		 */
-		setSetting: function(setting) {
+		_setSetting: function(setting) {
 			this._setting = setting;
 			if (this.isInit) {
 				this._setChildSetting();
@@ -1341,14 +1109,14 @@
 			this._setMessage(element, name, validationResult, 'blur');
 		},
 		// FIXME どのタイミングで実行するかは設定で決める？
-		//		_onChange: function(element,name, globalSetting, setting, errorReason) {
-		//			this._setMessage(element,name, globalSetting, setting, errorReason);
+		//		_onChange: function(element, name, validationResult) {
+		//			this._setMessage(element, name, validationResult);
 		//		},
-		//		_onKeyup: function(element,name, globalSetting, setting, errorReason) {
-		//			this._setMessage(element,name, globalSetting, setting, errorReason);
+		//		_onKeyup: function(element, name, validationResult) {
+		//			this._setMessage(element, name, validationResult);
 		//		},
-		//		_onClick: function(element, name,globalSetting, setting, errorReason) {
-		//			this._setMessage(element, name,globalSetting, setting, errorReason);
+		//		_onClick: function(element, name, validationResult) {
+		//			this._setMessage(element, name, validationResult);
 		//		},
 
 		/**
@@ -1462,7 +1230,7 @@
 					formatter: property[p].formatter || setting.formatter,
 				};
 			}
-			this._messageOutputController.setMessageSetting(messageSetting);
+			this._messageOutputController.addMessageSetting(messageSetting);
 		}
 	};
 	h5.core.expose(controller);
@@ -1470,7 +1238,10 @@
 
 (function() {
 	/**
-	 * 非同期validate時にインジケータを出すプラグイン
+	 * 非同期validate中の項目にインジケータを出すプラグイン
+	 * <p>
+	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
+	 * </p>
 	 *
 	 * @class
 	 * @name h5.ui.validation.AsyncIndicator
@@ -1481,53 +1252,12 @@
 
 		/**
 		 * プラグイン設定を行う
-		 * <p>
-		 * asyncIndicatorプラグインには以下の設定項目があります。
-		 * </p>
-		 * <table><thead>
-		 * <tr>
-		 * <th>設定項目</th>
-		 * <th>型</th>
-		 * <th>説明</th>
-		 * <th>デフォルト値</th>
-		 * </tr>
-		 * </thead><tbody>
-		 * <tr>
-		 * <th>off</th>
-		 * <td>boolean</td>
-		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
-		 * <td>false</td>
-		 * </tr>
-		 * <tr>
-		 * <th>replaceElement</th>
-		 * <td>DOM|jQuery|string|function</td>
-		 * <td>インジケータ表示対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
-		 * <td>各プロパティのフォーム部品要素</td>
-		 * </tr>
-		 * </tbody></table>
-		 * <p>
-		 * 各設定項目について、共通設定とプロパティ毎の設定を記述できます。以下、記述例です。
-		 * </p>
 		 *
-		 * <pre class="sh_javascript"><code>
-		 * {
-		 * 	replaceElement: function(element) {
-		 * 		return $(element).prev();
-		 * 	},
-		 * 	property: { // 各プロパティ固有の設定
-		 * 		userid: { // プルパティ名
-		 * 			replaceElement: function(element) {
-		 * 				return $(element).next();
-		 * 			}
-		 * 		}
-		 * 	}
-		 * }
-		 * </code></pre>
-		 *
+		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param {Object} setting asyncIndicatorプラグイン設定オブジェクト
 		 */
-		setSetting: function(setting) {
+		_setSetting: function(setting) {
 			this._setting = setting;
 		},
 
@@ -1540,8 +1270,6 @@
 		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param {ValidationResult}
-		 * @param {Object} globalSetting
-		 * @param {Object} outputSetting
 		 */
 		_onValidate: function(result) {
 			var validatingProperties = result.validatingProperties;
@@ -1578,12 +1306,12 @@
 				this._hideIndicator(name);
 			}
 		},
-		//		_onBlur: function(element, name, globalSetting, setting, validationResult) {
-		//			this._showIndicator(validationResult, name, globalSetting, setting);
+		//		_onBlur: function(element, name, validationResult) {
+		//			this._showIndicator(element, name, validationResult);
 		//		},
 		// FIXME どのタイミングで実行するかは設定で決める？
-		//		_onChange: function(element, name, globalSetting, setting, validationResult) {
-		//			this._showIndicator(validationResult, name, globalSetting, setting);
+		//		_onChange: function(element, name, validationResult) {
+		//			this._showIndicator(element, name, validationResult);
 		//		},
 
 		/**
@@ -1604,8 +1332,8 @@
 				this._showIndicator(element, name, validationResult);
 			}
 		},
-		//		_onClick: function(element, name,globalSetting, setting, errorReason) {
-		//			this._setMessage(element, name,globalSetting, setting, errorReason);
+		//		_onClick: function(element, name, validationResult) {
+		//			this._setMessage(element, name, validationResult);
 		//		},
 
 		/**
@@ -1884,26 +1612,35 @@
 		/**
 		 * フォームコントローラの設定を行う
 		 * <p>
-		 * 第1引数には設定オブジェクトを指定します。設定オブジェクトは、以下のようなオブジェクトを指定してください
+		 * 第1引数にフォームコントローラの設定及び各プラグインの設定を行うオブジェクトを指定します。
 		 * </p>
+		 * <p>
+		 * 各プラグインの機能及びプラグイン名については、{@link h5.ui.FormController.addOutput}をご覧ください。
+		 * </p>
+		 * <p>
+		 * 指定する設定オブジェクトには各プラグイン毎の設定と、各プロパティ毎の設定を記述します。
+		 * </p>
+		 * <p>
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * {
-		 * 	output: { // 各プラグインの設定
-		 * 		baloon: {
-		 * 			placement: 'top'
+		 * 	output: { // 各プラグイン毎の設定
+		 * 		baloon: { // キー名にプラグイン名
+		 * 			placement: 'top' // 設定プロパティと値を記述
 		 * 		},
 		 * 		message: {...},
 		 * 		...
 		 * 	},
 		 * 	property: { // 各プロパティ毎の設定
-		 * 		name: {
-		 * 			displayName: '名前',
-		 * 			message: '必須です', // nameのエラーメッセージ
-		 * 			output: { // 各プロパティについて各プラグインの設定
+		 * 		name: { // キー名にプロパティ名
+		 * 			displayName: '名前', // 設定プロパティと値を記述
+		 * 			message: '必須です', // 設定プロパティと値を記述
+		 * 			output: { // 各プロパティについて各プラグイン固有の設定
 		 * 				baloon: {
-		 * 					message: '※{displayName}は必須です',
-		 * 					placement: 'left' // nameのbaloonはleftに表示
+		 * 					placement: 'left' // 設定プロパティと値を記述
+		 * 				},
+		 * 				message: {
+		 * 					message: '登録には{displayName}が必要です'  // 設定プロパティと値を記述
 		 * 				}
 		 * 			}
 		 * 		}
@@ -1912,8 +1649,133 @@
 		 * </code></pre>
 		 *
 		 * <p>
-		 * 各プラグインの設定については各プラグインのsetSettingのドキュメントを参照してください
+		 * 設定プロパティは
+		 * <ul>
+		 * <li>フォームコントローラで使用するもの
+		 * <li>各プラグインで使用するもの
+		 * <ul>
+		 * <li>プラグイン共通のもの
+		 * <li>プラグイン固有のもの
+		 * </ul>
+		 * </ul>
+		 * があります。
 		 * </p>
+		 * <h4>フォームコントローラで使用するもの</h4>
+		 * <table class="params"><thead>
+		 * <tr>
+		 * <th>設定プロパティ名</th>
+		 * <th>型</th>
+		 * <th>説明</th>
+		 * <th>デフォルト値</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <th>isArray</th>
+		 * <td>boolean</td>
+		 * <td>あるプロパティについて、値を必ず配列で取ってくる場合はtrueを設定します。isArrayを指定しない場合、name属性値が同じフォーム入力要素が複数あると値が配列になったりならなかったりする場合があります。
+		 * 例えば、name属性が同じcheckboxが複数チェックされている場合配列になりますが、1つしかチェックされていない場合は文字列になります。
+		 * どんな場合でも必ず配列で取得したい場合は、isArrayにtrueを設定してください。</td>
+		 * <td>false</td>
+		 * </tr>
+		 * <tr>
+		 * <th>targetElement</th>
+		 * <td>DOM|jQuery|string</td>
+		 * <td>あるプロパティについて対応する要素を指定します。この指定はフォーム部品ではなくただのdiv等を入力要素としてvalueFuncで値を取ってくるような場合に、エラー出力プラグインが対応する要素を取得するために指定します。</td>
+		 * <td>あるプロパティについて対応するフォーム入力部品要素</td>
+		 * </tr>
+		 * <tr>
+		 * <th>valueFunc</th>
+		 * <td>function</td>
+		 * <td>あるプロパティについて値を取得する関数を指定します。この指定はフォーム部品ではなくただのdiv等を入力要素としたような場合に、値を取得するための関数を設定します。第1引数にはFormControllerのルートエレメント、第1引数にはプロパティ名が渡されます。値を返す関数を設定してください。</td>
+		 * <td>なし</td>
+		 * </tr>
+		 * </tbody></table>
+		 * <h4>全プラグイン共通</h4>
+		 * <table class="params"><thead>
+		 * <tr>
+		 * <th>設定プロパティ名</th>
+		 * <th>型</th>
+		 * <th>説明</th>
+		 * <th>デフォルト値</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <th>off</th>
+		 * <td>boolean</td>
+		 * <td>プラグイン無効設定。無効にする場合はtrueを指定。</td>
+		 * <td>false</td>
+		 * </tr>
+		 * </tbody></table>
+		 * <h4>メッセージを表示するプラグイン(message, composition, baloonで共通)</h4>
+		 * <table class="params"><thead>
+		 * <tr>
+		 * <th>設定プロパティ名</th>
+		 * <th>型</th>
+		 * <th>説明</th>
+		 * <th>デフォルト値</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <th>displayName</th>
+		 * <td>string</td>
+		 * <td>バリデーション対象のプロパティに対応する表示名</td>
+		 * <td>バリデーション対象のプロパティ名。メッセージ生成パラメータ(後述)で使用されます。</td>
+		 * </tr>
+		 * <tr>
+		 * <th>message</th>
+		 * <td>string|function</td>
+		 * <td>
+		 * <p>
+		 * バリデートエラー時に表示するメッセージ文字列。またはメッセージ生成関数。
+		 * </p>
+		 * <p>
+		 * 文字列で指定する場合はプレースホルダの記述ができます。プレースホルダの場合に適用されるオブジェクト、
+		 * 及び関数指定の場合に第1引数に渡されるパラメータ(メッセージ生成パラメータ)は共通で、以下の通りです。
+		 * </p>
+		 *
+		 * <pre class="javascript_sh"><code>
+		 * {
+		 *     name: 'userid', // プロパティ名
+		 *     value: 'ab',     // 値
+		 *     displayName: 'ユーザーID', // 設定した表示名。未設定の場合はプロパティ名が入ります。
+		 *     violation: [{
+		 *       ruleName: 'min',
+		 *       ruleValue: {value: 4, inclusive:true},
+		 *       reason: (object)  //そのルールが非同期の場合。同期の場合は常にnull
+		 *     }, ... ]
+		 * }
+		 * </code></pre>
+		 *
+		 * </td>
+		 * <td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
+		 * </tr>
+		 * </tbody></table>
+		 * <h4>フォーム入力要素基準でエラー表示を行うプラグイン(style,message,baloon,asyncIndicatorで共通)</h4>
+		 * <table class="params"><thead>
+		 * <tr>
+		 * <th>設定プロパティ名</th>
+		 * <th>型</th>
+		 * <th>説明</th>
+		 * <th>デフォルト値</th>
+		 * </tr>
+		 * </thead><tbody>
+		 * <tr>
+		 * <th>replaceElement</th>
+		 * <td>DOM|jQuery|string|function</td>
+		 * <td>クラス適用対象要素をDOM,jQuery,セレクタの何れかで指定。関数を設定した場合は第1引数にデフォルトは各プロパティのフォーム部品要素が渡され、その関数が返す要素が対象要素になります。</td>
+		 * <td>各プロパティのフォーム入力部品要素</td>
+		 * </tr>
+		 * </tbody></table>
+		 * <p>
+		 * 各プラグイン固有の設定項目については、各プラグインのJSDocを参照してください。
+		 * </p>
+		 * <ul>
+		 * <li>{@link h5.ui.validation.AsyncIndicator}
+		 * <li>{@link h5.ui.validation.Composition}
+		 * <li>{@link h5.ui.validation.Message}
+		 * <li>{@link h5.ui.validation.BootstrapErrorBaloon}
+		 * <li>{@link h5.ui.validation.ErrorBaloon}
+		 * <ul>
 		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {Object} setting 設定オブジェクト
@@ -1924,7 +1786,7 @@
 			var currentPlugins = this._plugins;
 			for ( var pluginName in currentPlugins) {
 				var plugin = currentPlugins[pluginName];
-				plugin.setSetting && plugin.setSetting(this._margePluginSettings(pluginName));
+				plugin._setSetting && plugin._setSetting(this._margePluginSettings(pluginName));
 			}
 		},
 
@@ -1950,35 +1812,6 @@
 			}
 			return pluginSetting;
 		},
-
-		/**
-		 * 出力設定
-		 * <p>
-		 * 各プロパティ毎、各プラグイン毎の出力設定。このプロパティに設定オブジェクトを指定してください。
-		 * </p>
-		 * <p>
-		 * プロパティ名をキーにして設定を記述します。プラグインの設定は[globalSetting]{@link h5.ui.FormController.globalSetting}に適用された値が使用されますが、プロパティ毎に設定したい項目がある場合は、プロパティ毎の設定オブジェクトにプラグイン名をキーにプラグイン設定を記述してください。
-		 * </p>
-		 *
-		 * <pre class="sh_javascript"><code>
-		 * formController.outputSetting = {
-		 * 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
-		 * 	userid: {
-		 * 		displayName: 'ユーザID', // 表示名
-		 * 		message: '{displayName}がルール{rule}に違反しています。', // メッセージ
-		 * 		baloon:{
-		 * 			// プラグイン名をキーにしてプロパティ毎・プラグイン毎の設定を記述
-		 * 			placement: 'left'
-		 * 		}
-		 * 	},
-		 * 	address: {...}
-		 * };
-		 * </code></pre>
-		 *
-		 * @memberOf h5.ui.FormController
-		 * @type {Object}
-		 */
-		outputSetting: {},
 
 		/**
 		 * @memberOf h5.ui.FormController
@@ -2119,11 +1952,11 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.FormController
-		 * @param {string|string[]} properties プロパティ名またはその配列
+		 * @param {string|string[]} name プロパティ名またはその配列
 		 */
-		removeRule: function(properties) {
+		removeRule: function(name) {
 			this._validationLogic.removeRule();
-			this.validate(properties);
+			this.validate(name);
 		},
 
 		/**
@@ -2133,10 +1966,10 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.FormController
-		 * @param {string|string[]} name プロパティ名またはその配列
+		 * @param {string|string[]} names プロパティ名またはその配列
 		 */
-		enableRule: function(name) {
-			this._validationLogic.enableRule(name);
+		enableRule: function(names) {
+			this._validationLogic.enableRule(names);
 		},
 
 		/**
@@ -2146,10 +1979,10 @@
 		 * </p>
 		 *
 		 * @memberOf h5.ui.FormController
-		 * @param {string|string[]} name プロパティ名またはその配列
+		 * @param {string|string[]} names プロパティ名またはその配列
 		 */
-		disableRule: function(name) {
-			this._validationLogic.disableRule(name);
+		disableRule: function(names) {
+			this._validationLogic.disableRule(names);
 		},
 
 		/**
@@ -2171,18 +2004,13 @@
 		 * </p>
 		 *
 		 * <pre class="sh_html"><code>
-		 * &lt;!-- data-h5-input-group-nameにグループ名を指定。子要素がそのグループになる。 --&gt;
-		 * lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
+		 * &lt;!-- data-h5-input-group-containerにグループ名を指定。子要素がそのグループになる。 --&gt;
+		 * lt;div data-h5-input-group-container=&quot;birthday&quot;&gt;
 		 * 		&lt;displayName class=&quot;control-displayName&quot;&gt;生年月日&lt;/displayName&gt;
 		 * 		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;
 		 * 		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;
 		 * 		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;
 		 * 		&lt;/div&gt;
-		 * </code></pre>
-		 * <pre class="sh_html"><code>
-		 * 		&lt;!-- data-h5-input-group-nameにグループ名を指定。同じグループ名の要素がそのグループになる --&gt;
-		 * 		&lt;input name=&quot;zip1&quot; data-h5-input-group-name=&quot;zipcode&quot;/&gt;
-		 * 		&lt;input name=&quot;zip2&quot; data-h5-input-group-name=&quot;zipcode&quot;/&gt;
 		 * </code></pre>
 		 *
 		 * <p>
@@ -2204,11 +2032,11 @@
 		 * </code></pre>
 		 *
 		 * @memberOf h5.ui.FormController
-		 * @param {string|string[]} targetNames 指定した場合、指定したnameのものだけを集約
+		 * @param {string|string[]} names 指定した場合、指定したnameのものだけを集約
 		 * @returns {Object} フォーム部品集約オブジェクト
 		 */
-		getValue: function(targetNames) {
-			targetNames = targetNames && (!isArray(targetNames) ? [targetNames] : targetNames);
+		getValue: function(names) {
+			names = names && (!isArray(names) ? [names] : names);
 			var $elements = $(this._getElements());
 			var $groups = $(this._getInputGroupElements());
 			var propertySetting = this._setting && this._setting.property || {};
@@ -2227,17 +2055,17 @@
 				if (groupName) {
 					elementNames.push(groupName);
 					// グループコンテナに属するエレメントの場合
-					if (targetNames && $.inArray(name, targetNames) === -1
-							&& $.inArray(groupName, targetNames) === -1) {
-						// nameもgroupNameもtargetNamesに入っていなければ集約対象外
+					if (names && $.inArray(name, names) === -1
+							&& $.inArray(groupName, names) === -1) {
+						// nameもgroupNameもnamesに入っていなければ集約対象外
 						return;
 					}
 					// グループ単位でオブジェクトを作る
 					ret[groupName] = ret[groupName] || {};
 					currentGroup = ret[groupName];
-				} else if (targetNames && $.inArray(name, targetNames) === -1) {
+				} else if (names && $.inArray(name, names) === -1) {
 					// グループに属さないエレメントの場合
-					// targetNamesに含まれないnameのエレメントは集約対象外
+					// namesに含まれないnameのエレメントは集約対象外
 					return;
 				}
 				if (this.type === 'file') {
@@ -2263,7 +2091,7 @@
 					// valueFuncがundefinedを返した場合またはvalueがnullだった場合はそのプロパティは含めない
 					return;
 				}
-				if(propertySetting[name] && !!propertySetting[name].isArray){
+				if (propertySetting[name] && !!propertySetting[name].isArray) {
 					// isArray:trueが指定されていたら必ず配列
 					value = wrapInArray(value);
 				}
@@ -2285,8 +2113,7 @@
 			// セッティングに記述されているがinput要素の集約で集められないプロパティを追加
 			var otherProperties = [];
 			for ( var p in propertySetting) {
-				if ((!targetNames || $.inArray(p, targetNames) !== -1)
-						&& $.inArray(p, elementNames) === -1) {
+				if ((!names || $.inArray(p, names) !== -1) && $.inArray(p, elementNames) === -1) {
 					var valueFunc = propertySetting[p] && propertySetting[p].valueFunc;
 					var val = valueFunc && valueFunc(rootElement, p);
 					if (val !== undefined) {
@@ -2469,6 +2296,7 @@
 		/**
 		 * このコントローラが管理するフォームに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
 		 *
+		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param {string} name
 		 * @returns {DOM}
@@ -2716,8 +2544,6 @@
 		 */
 		_callPluginElementEvent: function(eventType, element, name, validationResult) {
 			var plugins = this._plugins;
-			var globalSetting = this.globalSetting;
-			var outputSetting = this.outputSetting;
 			for ( var pluginName in plugins) {
 				var plugin = plugins[pluginName];
 				if (plugin[eventType]) {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: ErrorBaloon</title>
+    <title>JSDoc: Namespace: validation</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -34,7 +34,7 @@
 	    </div>
 	</nav>
 	<div id="main">
-	    <h1 class="page-title">Class: ErrorBaloon</h1>
+	    <h1 class="page-title">Namespace: validation</h1>
 	    
 
 
@@ -45,7 +45,9 @@
 <header>
     
         <h2>
-        ErrorBaloon
+            <span class="ancestors"><a href="h5.html">h5</a>.</span>
+        
+        validation
         </h2>
         
     
@@ -56,56 +58,7 @@
     
         
 
-    
-
-    <h4 class="name" id="ErrorBaloon"><span class="type-signature"></span>new ErrorBaloon<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    validate時にエラーがあった時、エラーバルーンを表示するプラグイン
-<p>
-baloonプラグインには以下の設定項目があります。
-</p>
-<table><thead>
-<tr>
-<th>設定項目</th>
-<th>型</th>
-<th>説明</th>
-<th>デフォルト値</th>
-</thead><tbody>
-<tr>
-<th>placement</th>
-<td>string</td>
-<td>バルーンを表示する位置。top,right,bottom,leftの何れかで指定。</td>
-<td>top</td>
-</tr>
-<tr>
-<th>container</th>
-<td>DOM|jQuery|string</td>
-<td>バルーン要素を配置するコンテナ。表示位置ではなくDOMツリー上で配置するときのバルーン要素の親要素となる要素を指定します。指定しない場合は対象要素の親要素。</td>
-<td>なし</td>
-</tr>
-</tbody></table>
-<p>
-プラグインの設定方法は、<a href="h5.ui.FormController.html#.setSetting">h5.ui.FormController.setSetting</a>をご覧ください。
-</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
+        
 
 
 <dl class="details">
@@ -137,7 +90,7 @@ baloonプラグインには以下の設定項目があります。
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line651">line 651</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1339">line 1339</a>
     </li></ul></dd>
     
 
@@ -149,18 +102,7 @@ baloonプラグインには以下の設定項目があります。
 </dl>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+        
     
     </div>
 
@@ -169,6 +111,13 @@ baloonプラグインには以下の設定項目があります。
     
 
     
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="h5.validation.FormValidationLogic.html">FormValidationLogic</a></dt>
+            <dd></dd>
+        </dl>
+    
 
      
 
@@ -176,252 +125,6 @@ baloonプラグインには以下の設定項目があります。
 
     
 
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    <h4 class="name" id=".reset"><span class="type-signature">(static) </span>reset<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    プラグインのリセット
-<p>
-表示されているバルーンを削除します
-</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line776">line 776</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".setMessage"><span class="type-signature">(static) </span>setMessage<span class="signature">(name, messageObj)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    このプラグインが出力するメッセージの追加設定
-<p>
-プロパティ毎の出力メッセージ設定オブジェクトを設定します。
-</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>name</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>messageObj</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">message,formatterを持つオブジェクト</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line791">line 791</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
     
 
     
