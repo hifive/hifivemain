@@ -113,7 +113,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1804">line 1804</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1819">line 1819</a>
     </li></ul></dd>
     
 
@@ -173,8 +173,8 @@
 formController.outputSetting = {
 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
 	userid: {
-		label: 'ユーザID', // ラベル名
-		message: '{label}がルール{rule}に違反しています。', // メッセージ
+		displayName: 'ユーザID', // 表示名
+		message: '{displayName}がルール{rule}に違反しています。', // メッセージ
 		baloon:{
 			// プラグイン名をキーにしてプロパティ毎・プラグイン毎の設定を記述
 			placement: 'left'
@@ -230,7 +230,7 @@ formController.outputSetting = {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1966">line 1966</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1981">line 1981</a>
     </li></ul></dd>
     
 
@@ -251,6 +251,318 @@ formController.outputSetting = {
 
     
         <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="._getElementByName"><span class="type-signature">(static) </span>_getElementByName<span class="signature">(name)</span><span class="type-signature"> &rarr; {DOM}</span></h4>
+
+    
+
+
+
+<div class="description">
+    このコントローラが管理するフォームに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">DOM</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2476">line 2476</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".addOutput"><span class="type-signature">(static) </span>addOutput<span class="signature">(pluginNames)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    プラグインの有効化
+<p>
+フォームのバリデート時にバリデート結果を出力するプラグインを有効にします。以下のようなプラグインが用意されています。
+</p>
+<table><thead>
+<tr>
+<th>プラグイン名</tr>
+<th>説明</th>
+</thead><tbody>
+<tr>
+<td>composition</td>
+<td>フォーム全体バリデート時にバリデート失敗した項目全てについて指定した箇所にメッセージを出力する</td>
+</tr>
+<tr>
+<td>style</td>
+<td>バリデート時にバリデート結果によって要素にクラスを適用する</td>
+</tr>
+<tr>
+<td>message</td>
+<td>バリデート時にバリデート失敗した項目についてメッセージを表示する</td>
+</tr>
+<tr>
+<td>baloon</td>
+<td>バリデート時にバリデート失敗した項目についてバルーンメッセージを表示する</td>
+</tr>
+<tr>
+<td>asyncIndicator</td>
+<td>非同期バリデート中の項目についてインジケータを表示する</td>
+</tr>
+</tbody></table>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>pluginNames</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">プラグイン名またはその配列</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2081">line 2081</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         
             
@@ -362,7 +674,7 @@ formController.outputSetting = {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2096">line 2096</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2111">line 2111</a>
     </li></ul></dd>
     
 
@@ -391,7 +703,7 @@ formController.outputSetting = {
 
     
 
-    <h4 class="name" id=".clearAll"><span class="type-signature">(static) </span>clearAll<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".clearValue"><span class="type-signature">(static) </span>clearValue<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -444,7 +756,7 @@ formController.outputSetting = {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2364">line 2364</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2379">line 2379</a>
     </li></ul></dd>
     
 
@@ -581,170 +893,7 @@ formController.outputSetting = {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2141">line 2141</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".enableOutput"><span class="type-signature">(static) </span>enableOutput<span class="signature">(pluginNames)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    プラグインの有効化
-<p>
-フォームのバリデート時にバリデート結果を出力するプラグインを有効にします。以下のようなプラグインが用意されています。
-</p>
-<table><thead>
-<tr>
-<th>プラグイン名</tr>
-<th>説明</th>
-</thead><tbody>
-<tr>
-<td>composition</td>
-<td>フォーム全体バリデート時にバリデート失敗した項目全てについて指定した箇所にメッセージを出力する</td>
-</tr>
-<tr>
-<td>style</td>
-<td>バリデート時にバリデート結果によって要素にクラスを適用する</td>
-</tr>
-<tr>
-<td>message</td>
-<td>バリデート時にバリデート失敗した項目についてメッセージを表示する</td>
-</tr>
-<tr>
-<td>baloon</td>
-<td>バリデート時にバリデート失敗した項目についてバルーンメッセージを表示する</td>
-</tr>
-<tr>
-<td>asyncIndicator</td>
-<td>非同期バリデート中の項目についてインジケータを表示する</td>
-</tr>
-</tbody></table>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>pluginNames</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-|
-
-<span class="param-type">Array.&lt;string></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">プラグイン名またはその配列</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2066">line 2066</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2151">line 2151</a>
     </li></ul></dd>
     
 
@@ -881,460 +1030,7 @@ formController.outputSetting = {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2128">line 2128</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".gather"><span class="type-signature">(static) </span>gather<span class="signature">(targetNames)</span><span class="type-signature"> &rarr; {Object}</span></h4>
-
-    
-
-
-
-<div class="description">
-    このコントローラが管理するフォーム内のフォーム部品の値を集約したオブジェクトを生成する
-<p>
-フォーム部品を集約し、各部品の名前(name属性値)をキーに、その値を持つオブジェクトを返します。
-</p>
-<p>
-第1引数にtargetNamesを指定した場合、指定した名前に当てはまるフォーム部品だけが集約対象になります。
-</p>
-<p>
-例えばname属性が"userid"のinputがあり、その値が"0001"である場合は、{userid: "0001"}のようなオブジェクトを返します。
-</p>
-<p>
-また、グループ指定された要素の集約をすることができます。
-</p>
-<p>
-グループとは、以下のように指定することができます
-</p>
-
-<pre class="sh_html"><code>
-&lt;!-- data-h5-input-group-nameにグループ名を指定。子要素がそのグループになる。 --&gt;
-lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
-		&lt;label class=&quot;control-label&quot;&gt;生年月日&lt;/label&gt;
-		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;
-		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;
-		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;
-		&lt;/div&gt;
-</code></pre>
-<pre class="sh_html"><code>
-		&lt;!-- data-h5-input-group-nameにグループ名を指定。同じグループ名の要素がそのグループになる --&gt;
-		&lt;input name=&quot;zip1&quot; data-h5-input-group-name=&quot;zipcode&quot;/&gt;
-		&lt;input name=&quot;zip2&quot; data-h5-input-group-name=&quot;zipcode&quot;/&gt;
-</code></pre>
-
-<p>
-上記のような指定のされた要素は、グループ名をキーにグループに属する要素を集約したオブジェクトとして集約します。戻り値は以下のようになります。
-</p>
-
-<pre class="sh_javascript"><code>
-{
-	birthday: {
-		year: &quot;1999&quot;,
-		month: &quot;1&quot;,
-		month: &quot;2&quot;
-	},
-	zipcode: {
-		zip1: &quot;220&quot;,
-		zip2: &quot;0012&quot;
-	}
-}
-</code></pre>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>targetNames</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-|
-
-<span class="param-type">Array.&lt;string></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">指定した場合、指定したnameのものだけを集約</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    フォーム部品集約オブジェクト
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2200">line 2200</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".getElementByName"><span class="type-signature">(static) </span>getElementByName<span class="signature">(name)</span><span class="type-signature"> &rarr; {DOM}</span></h4>
-
-    
-
-
-
-<div class="description">
-    このコントローラが管理するフォームに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>name</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">DOM</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2456">line 2456</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".getElements"><span class="type-signature">(static) </span>getElements<span class="signature">()</span><span class="type-signature"> &rarr; {Array.&lt;DOM>}</span></h4>
-
-    
-
-
-
-<div class="description">
-    このコントローラが管理するフォームに属するフォーム部品全てを取得
-</div>
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Array.&lt;DOM></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2426">line 2426</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2138">line 2138</a>
     </li></ul></dd>
     
 
@@ -1483,7 +1179,7 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2483">line 2483</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2442">line 2442</a>
     </li></ul></dd>
     
 
@@ -1512,7 +1208,211 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
 
     
 
-    <h4 class="name" id=".removeRule"><span class="type-signature">(static) </span>removeRule<span class="signature">(properties, shouldValidate, onlyRemovedRule<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".getValue"><span class="type-signature">(static) </span>getValue<span class="signature">(targetNames)</span><span class="type-signature"> &rarr; {Object}</span></h4>
+
+    
+
+
+
+<div class="description">
+    このコントローラが管理するフォーム内のフォーム部品の値を集約したオブジェクトを生成する
+<p>
+フォーム部品を集約し、各部品の名前(name属性値)をキーに、その値を持つオブジェクトを返します。
+</p>
+<p>
+第1引数にtargetNamesを指定した場合、指定した名前に当てはまるフォーム部品だけが集約対象になります。
+</p>
+<p>
+例えばname属性が"userid"のinputがあり、その値が"0001"である場合は、{userid: "0001"}のようなオブジェクトを返します。
+</p>
+<p>
+また、グループ指定された要素の集約をすることができます。
+</p>
+<p>
+グループとは、以下のように指定することができます
+</p>
+
+<pre class="sh_html"><code>
+&lt;!-- data-h5-input-group-nameにグループ名を指定。子要素がそのグループになる。 --&gt;
+lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
+		&lt;displayName class=&quot;control-displayName&quot;&gt;生年月日&lt;/displayName&gt;
+		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;
+		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;
+		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;
+		&lt;/div&gt;
+</code></pre>
+<pre class="sh_html"><code>
+		&lt;!-- data-h5-input-group-nameにグループ名を指定。同じグループ名の要素がそのグループになる --&gt;
+		&lt;input name=&quot;zip1&quot; data-h5-input-group-name=&quot;zipcode&quot;/&gt;
+		&lt;input name=&quot;zip2&quot; data-h5-input-group-name=&quot;zipcode&quot;/&gt;
+</code></pre>
+
+<p>
+上記のような指定のされた要素は、グループ名をキーにグループに属する要素を集約したオブジェクトとして集約します。戻り値は以下のようになります。
+</p>
+
+<pre class="sh_javascript"><code>
+{
+	birthday: {
+		year: &quot;1999&quot;,
+		month: &quot;1&quot;,
+		month: &quot;2&quot;
+	},
+	zipcode: {
+		zip1: &quot;220&quot;,
+		zip2: &quot;0012&quot;
+	}
+}
+</code></pre>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>targetNames</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">指定した場合、指定したnameのものだけを集約</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    フォーム部品集約オブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2210">line 2210</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".removeRule"><span class="type-signature">(static) </span>removeRule<span class="signature">(properties)</span><span class="type-signature"></span></h4>
 
     
 
@@ -1546,11 +1446,7 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
-        
-        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -1578,96 +1474,10 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">プロパティ名またはその配列</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>shouldValidate</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">ルール削除した後にvalidateを行うかどうか</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>onlyRemovedRule</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last">shouldValidate=trueの場合に、追加されたルールのプロパティのみvalidateを行う場合はtrue</td>
         </tr>
 
     
@@ -1710,7 +1520,7 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2112">line 2112</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2124">line 2124</a>
     </li></ul></dd>
     
 
@@ -1792,141 +1602,7 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2390">line 2390</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".set"><span class="type-signature">(static) </span>set<span class="signature">(obj)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    このコントローラが管理するフォームに対して、値を集約したオブジェクトから値をセットする
-<p>
-各フォーム部品の名前と値を集約したオブジェクトを引数に取り、その値を各フォーム部品にセットします。
-</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>obj</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">フォーム部品の値を集約したオブジェクト</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2295">line 2295</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2405">line 2405</a>
     </li></ul></dd>
     
 
@@ -1978,11 +1654,11 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
 	},
 	property: { // 各プロパティ毎の設定
 		name: {
-			label: '名前',
+			displayName: '名前',
 			message: '必須です', // nameのエラーメッセージ
 			output: { // 各プロパティについて各プラグインの設定
 				baloon: {
-					message: '※{label}は必須です',
+					message: '※{displayName}は必須です',
 					placement: 'left' // nameのbaloonはleftに表示
 				}
 			}
@@ -2088,7 +1764,141 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1906">line 1906</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line1921">line 1921</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".setValue"><span class="type-signature">(static) </span>setValue<span class="signature">(obj)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    このコントローラが管理するフォームに対して、値を集約したオブジェクトから値をセットする
+<p>
+各フォーム部品の名前と値を集約したオブジェクトを引数に取り、その値を各フォーム部品にセットします。
+</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>obj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">フォーム部品の値を集約したオブジェクト</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2310">line 2310</a>
     </li></ul></dd>
     
 
@@ -2225,7 +2035,7 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2411">line 2411</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2426">line 2426</a>
     </li></ul></dd>
     
 
@@ -2267,7 +2077,7 @@ lt;div data-h5-input-group-name=&quot;birthday&quot;&gt;
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Fri Dec 18 2015 14:34:41 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Mon Dec 21 2015 16:24:21 GMT+0900 (JST)
 	</footer>
 </div>
 

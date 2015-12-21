@@ -244,7 +244,7 @@
             
 
             <td class="description last">メッセージ設定オブジェクト。{message:..., formatter:...,
-           label:...}のようなオブジェクト</td>
+           displayName:...}のようなオブジェクト</td>
         </tr>
 
     
@@ -568,7 +568,141 @@
 
     
 
-    <h4 class="name" id=".clearAll"><span class="type-signature">(static) </span>clearAll<span class="signature">(container<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".clearMessage"><span class="type-signature">(static) </span>clearMessage<span class="signature">(messageSetting)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    コンテナからメッセージを削除
+<p>
+第1引数を省略した場合は設定済みのデフォルト出力先からメッセージを削除します
+</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>messageSetting</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">{プロパティ名: {message:..., formatter:..}}のようなオブジェクト</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line221">line 221</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".clearValue"><span class="type-signature">(static) </span>clearValue<span class="signature">(container<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -689,140 +823,6 @@
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
         <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line325">line 325</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".clearMessage"><span class="type-signature">(static) </span>clearMessage<span class="signature">(messageSetting)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    コンテナからメッセージを削除
-<p>
-第1引数を省略した場合は設定済みのデフォルト出力先からメッセージを削除します
-</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>messageSetting</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">{プロパティ名: {message:..., formatter:..}}のようなオブジェクト</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line221">line 221</a>
     </li></ul></dd>
     
 
@@ -1255,18 +1255,18 @@
 setMessageSetting({
 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
 	userid: {
-		label: 'ユーザID', // ラベル名
-		message: '{label}がルール{rule}に違反しています。', // メッセージ。プレースホルダを記述可能(後述)。
+		displayName: 'ユーザID', // 表示名
+		message: '{displayName}がルール{rule}に違反しています。', // メッセージ。プレースホルダを記述可能(後述)。
 	},
 	address: {
-		label: 'アドレス',
+		displayName: 'アドレス',
 		formatter: function(param) {
 			// フォーマッタは関数で記述。メッセージを生成して返すような関数を作成
 		switch (param.rule) {
 		case 'require':
 			return '必須です';
 		case 'pattern':
-			return param.value + 'は' + param.label + 'の値として不正です'
+			return param.value + 'は' + param.displayName + 'の値として不正です'
 		}
 	}
 	}
@@ -1287,8 +1287,8 @@ messageにはプレースホルダを記述できます。適用されるパラ�
 	rule: rule, // バリデートルール名
 	rejectReason: rejectReason, // 非同期バリデートだった場合、failハンドラに渡された引数リスト
 	name: name, // バリデート対象のプロパティ名
-	label: label
-// メッセージ定義に指定されたラベル名
+	displayName: displayName
+// メッセージ定義に指定された表示名
 }
 </code></pre>
 </div>
@@ -1343,7 +1343,7 @@ messageにはプレースホルダを記述できます。適用されるパラ�
             
 
             <td class="description last">プロパティ毎のメッセージ定義。{プロパティ名: {message:..., formatter:..,
-           label:...}} のようなオブジェクト</td>
+           displayName:...}} のようなオブジェクト</td>
         </tr>
 
     
@@ -1428,7 +1428,7 @@ messageにはプレースホルダを記述できます。適用されるパラ�
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Fri Dec 18 2015 14:34:42 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Mon Dec 21 2015 16:24:22 GMT+0900 (JST)
 	</footer>
 </div>
 
