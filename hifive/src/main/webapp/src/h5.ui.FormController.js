@@ -108,10 +108,10 @@
 	 * メッセージ及びvalidate結果から作成したメッセージを出力するコントローラ
 	 *
 	 * @class
-	 * @name h5.ui.validation.MessageOutput
+	 * @name h5.ui.validation.MessageOutputController
 	 */
 	var controlelr = {
-		__name: 'h5.ui.validation.MessageOutput',
+		__name: 'h5.ui.validation.MessageOutputController',
 		// container,tagNameの設定
 		_containerSetting: {},
 		// validationResultからメッセージを作るための設定
@@ -120,7 +120,7 @@
 		/**
 		 * メッセージ出力先の設定を適用する
 		 *
-		 * @memberOf h5.ui.validation.MessageOutput
+		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {Object} containerSetting 出力先設定
 		 * @param {Object} containerSetting.container デフォルト出力先(コンテナ)要素
 		 * @param {Object} containerSetting.wrapper デフォルト出力タグ名。指定しない場合はメッセージはテキストノードとして生成されます
@@ -155,7 +155,7 @@
 		 * message,displayName設定プロパティについては{@link h5.ui.FormController.setSetting}をご覧ください。
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.MessageOutput
+		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {Object} messageSetting プロパティ毎のメッセージ定義。{プロパティ名: {message:..., displayName:...}}
 		 *            のようなオブジェクト
 		 */
@@ -177,7 +177,7 @@
 		 * 第1引数を省略した場合は設定済みのデフォルト出力先からメッセージを削除します
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.MessageOutput
+		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {Object} messageSetting {プロパティ名: {message:...}}のようなオブジェクト
 		 */
 		clearMessage: function(container) {
@@ -226,7 +226,7 @@
 		 * 指定されたプロパティがエラーでないばあいはnullを返します。
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.MessageOutput
+		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string} name 対象のプロパティ名
 		 * @returns {string} エラーメッセージ
@@ -246,7 +246,7 @@
 		 * {@link ValidationResult}が非同期バリデート待ちの場合は、結果が返ってきたタイミングでメッセージを表示します。
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.MessageOutput
+		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string|string[]} [names] 出力対象のプロパティ名。指定しない場合は全てが対象
 		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合はデフォルト出力先に出力します
@@ -281,7 +281,7 @@
 		/**
 		 * コンテナからメッセージをすべて削除
 		 *
-		 * @memberOf h5.ui.validation.MessageOutput
+		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {DOM|jQuery|string} [container] 中身を削除するコンテナ。指定しない場合はデフォルト出力先。
 		 */
 		clearValue: function(container) {
@@ -549,7 +549,7 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.Composition',
-		_messageOutputController: h5.ui.validation.MessageOutput,
+		_messageOutputController: h5.ui.validation.MessageOutputController,
 		/**
 		 * プラグイン設定
 		 *
@@ -683,7 +683,7 @@
 	var controller = {
 		__name: 'h5.ui.validation.ErrorBaloon',
 		_executedOnValidate: false,
-		_messageOutputController: h5.ui.validation.MessageOutput,
+		_messageOutputController: h5.ui.validation.MessageOutputController,
 		_setting: {},
 
 		/**
@@ -1039,7 +1039,7 @@
 		__name: 'h5.ui.validation.Message',
 		_executedOnValidate: false,
 		_messageElementMap: {},
-		_messageOutputController: h5.ui.validation.MessageOutput,
+		_messageOutputController: h5.ui.validation.MessageOutputController,
 
 		/**
 		 * プラグイン設定を行う
