@@ -113,21 +113,6 @@
 	var EVENT_SCENE_CHANGE_REQUEST = 'sceneChangeRequest';
 
 	/**
-	 * シーン間クライアントパラメーター用デフォルトプレフィクス
-	 */
-	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '';
-
-	/**
-	 * シーン間サーバーパラメーター用デフォルトプレフィクス
-	 */
-	var DEFAULT_SERVER_QUERY_STRING_PREFIX = '';
-
-	/**
-	 * シーン間パラメーター用デフォルトプレフィクス(FW用)
-	 */
-	var DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX = '_h5_';
-
-	/**
 	 * シリアライズプレフィクス
 	 */
 	var SERIALIZE_PREFIX = '2|';
@@ -155,14 +140,6 @@
 		GET: 'get',
 		POST: 'post'
 	};
-
-	/**
-	 * Router 遷移先URL最大長
-	 * &lt;p>
-	 * URL全体がこの値を超えた場合、開発字はエラー、運用時は警告ログを出力。 IEで2084の場合があり、これ以下で、ある程度のバッファを取った。
-	 * &lt;/p>
-	 */
-	var URL_MAX_LENGTH = 1800;
 
 	/**
 	 * 再表示不可画面用メッセージ
@@ -313,29 +290,19 @@
 	var isInited = false;
 
 	/**
-	 * シーン間クライアントパラメーター用デフォルトプレフィクス
+	 * シーン間パラメーター用デフォルトプレフィクス
 	 */
-	var clientQueryStringPrefix = DEFAULT_CLIENT_QUERY_STRING_PREFIX;
-
-	/**
-	 * シーン間サーバーパラメーター用デフォルトプレフィクス
-	 */
-	var serverQueryStringPrefix = DEFAULT_SERVER_QUERY_STRING_PREFIX;
+	var clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
 
 	/**
 	 * FW用シーン間パラメーター用デフォルトプレフィクス
 	 */
-	var clientFWQueryStringPrefix = DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX;
+	var clientFWQueryStringPrefix = h5.settings.scene.clientFWQueryStringPrefix;
 
 	/**
-	 * シーン間クライアントパラメーター用デフォルトプレフィクス正規表現用文字列
+	 * シーン間パラメーター用デフォルトプレフィクス正規表現用文字列
 	 */
 	var clientQueryStringPrefixForRegExp = null;
-
-	/**
-	 * シーン間サーバーパラメーター用デフォルトプレフィクス正規表現用文字列
-	 */
-	var serverQueryStringPrefixForRegExp = null;
 
 	/**
 	 * FW用シーン間パラメーター用デフォルトプレフィクス正規表現用文字列
@@ -345,7 +312,7 @@
 	/**
 	 * Router URL履歴保持方法指定
 	 */
-	var urlHistoryMode = URL_HISTORY_MODE.HISTORY;
+	var urlHistoryMode = h5.settings.scene.urlHistoryMode;
 
 	/**
 	 * Router URL履歴保持方法(判定後)
@@ -2203,8 +2170,7 @@
 	function deserialize(str) {
 		if (!deserialize._checkKeyRegExp) {
 			deserialize._checkKeyRegExp = new RegExp('^(' + clientQueryStringPrefixForRegExp + '|'
-					+ serverQueryStringPrefixForRegExp + '|' + clientFWQueryStringPrefixForRegExp
-					+ ')?(.+)');
+					+ clientFWQueryStringPrefixForRegExp + ')?(.+)');
 			deserialize._checkArrayRegExp = /^(.*)\[\]$/;
 		}
 		var obj = {};
@@ -2215,18 +2181,14 @@
 			var k = decodeURIComponent(pair[0]);
 			var v = decodeURIComponent(pair[1]);
 			var match = k.match(checkKeyRegExp);
-			if (!match)
+			if (!match) {
 				return;
+			}
 			var prefix = match[1] || '';
 			var name = match[2];
-			if (prefix === clientQueryStringPrefix) {
-				obj.args = obj.args || {};
-				obj.args[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
-			}
-			if (prefix === clientFWQueryStringPrefix) {
-				obj[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
-			}
-			if (prefix === serverQueryStringPrefix) {
+
+			if (!prefix) {
+				// prefixが無い場合はserverArgs
 				obj.serverArgs = obj.serverArgs || {};
 				var _match = name.match(checkArrayRegExp);
 				if (_match) {
@@ -2240,6 +2202,13 @@
 				} else {
 					obj.serverArgs[name] = v;
 				}
+			}
+
+			if (prefix === clientQueryStringPrefix) {
+				obj.args = obj.args || {};
+				obj.args[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
+			} else if (prefix === clientFWQueryStringPrefix) {
+				obj[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
 			}
 		}
 		$.each(str.split('&amp;'), callback);
@@ -2258,8 +2227,7 @@
 			return '';
 		if (!clearParam._regExp) {
 			clearParam._regExp = new RegExp('(^|&amp;)(?:' + clientQueryStringPrefixForRegExp + '|'
-					+ serverQueryStringPrefixForRegExp + '|' + clientFWQueryStringPrefixForRegExp
-					+ ')[^=]*=.*?(?=&amp;|$)', 'g');
+					+ clientFWQueryStringPrefixForRegExp + ')[^=]*=.*?(?=&amp;|$)', 'g');
 		}
 		var regExp = clearParam._regExp;
 		var urlHelper = new UrlHelper(str);
@@ -3160,68 +3128,13 @@
 		c.scene = new Scene(c);
 	});
 
-	// TODO autoInitがtrueの場合のみinit
-	// TODO(鈴木) 暫定。とりあえず設定を有効化しました
-	/**
-	 * シーン機能の設定
-	 * &lt;p>
-	 * 以下のプロパティの設定を行ってください。
-	 * &lt;/p>
-	 * &lt;dl>
-	 * &lt;dt>followTitle&lt;/dt>
-	 * &lt;dd>type:boolean&lt;/dd>
-	 * &lt;dd>メインシーンコンテナでブラウザタイトルの追従を行うか(デフォルトtrue)&lt;/dd>
-	 * &lt;dt>clientQueryStringPrefix&lt;/dt>
-	 * &lt;dd>type:string&lt;/dd>
-	 * &lt;dd>シーン遷移クライントパラメーター識別用プレフィクス。デフォルト空文字&lt;/dd>
-	 * &lt;dt>serverQueryStringPrefix&lt;/dt>
-	 * &lt;dd>type:string&lt;/dd>
-	 * &lt;dd>シーン遷移サーバーパラメーター識別用プレフィクス。デフォルト空文字&lt;/dd>
-	 * &lt;dt>clientFWQueryStringPrefix&lt;/dt>
-	 * &lt;dd>type:string&lt;/dd>
-	 * &lt;dd>シーン遷移パラメーター識別用プレフィクス(FW用)。デフォルト"_h5_"&lt;/dd>
-	 * &lt;dt>urlHistoryMode&lt;/dt>
-	 * &lt;dd>type:string&lt;/dd>
-	 * &lt;dd>メインシーンコンテナURL履歴保持方法({@link h5.scene.urlHistoryMode}参照)。デフォルトは"'history"&lt;/dd>
-	 * &lt;dt>urlMaxLength&lt;/dt>
-	 * &lt;dd>type:integer&lt;/dd>
-	 * &lt;dd>シーン遷移先URL最大長。デフォルト1800&lt;/dd>
-	 * &lt;dt>baseUrl&lt;/dt>
-	 * &lt;dd>type:string|null&lt;/dd>
-	 * &lt;dd>ベースURL。デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)&lt;/dd>
-	 * &lt;dt>autoInit&lt;/dt>
-	 * &lt;dd>type:boolean&lt;/dd>
-	 * &lt;dd>ページロード時にドキュメント全体を探索して、DATA属性によるコントローラーバインドとシーンコンテナ生成を行うかどうか。デフォルトfalse&lt;/dd>
-	 * &lt;/dl>
-	 *
-	 * @memberOf h5.settings
-	 * @name scene
-	 * @type {Object}
-	 */
-	h5.settings.scene = h5.settings.scene || {
-		// デフォルト設定を記述
-		followTitle: true,
-		clientQueryStringPrefix: DEFAULT_CLIENT_QUERY_STRING_PREFIX,
-		serverQueryStringPrefix: DEFAULT_SERVER_QUERY_STRING_PREFIX,
-		clientFWQueryStringPrefix: DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX,
-		urlHistoryMode: URL_HISTORY_MODE.HISTORY,
-		urlMaxLength: URL_MAX_LENGTH,
-		baseUrl: null,
-		autoInit: false
-	};
 	$(function() {
 
-		// シーン遷移クライアントパラメータ識別用プレフィクス
+		// シーン遷移パラメーター識別用プレフィクス
 		clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
 
 		//  正規表現用文字列作成
 		clientQueryStringPrefixForRegExp = clientQueryStringPrefix.replace(/\\/g, '\\\\');
-
-		// シーン遷移サーバーパラメータ識別用プレフィックス
-		serverQueryStringPrefix = h5.settings.scene.serverQueryStringPrefix;
-
-		//  正規表現用文字列作成
-		serverQueryStringPrefixForRegExp = serverQueryStringPrefix.replace(/\\/g, '\\\\');
 
 		// シーン遷移パラメーター識別用プレフィクス(FW用)
 		clientFWQueryStringPrefix = h5.settings.scene.clientFWQueryStringPrefix;
@@ -3339,7 +3252,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 18:43:04 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 20:44:37 GMT+0900 (JST)
 	</footer>
 </div>
 
