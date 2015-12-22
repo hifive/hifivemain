@@ -71,7 +71,7 @@
 	/**
 	 * シーン間パラメーター用デフォルトプレフィクス
 	 */
-	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '';
+	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '_c_';
 
 	/**
 	 * シーン間パラメーター用デフォルトプレフィクス(FW用)
@@ -2157,7 +2157,7 @@
 			var match = k.match(checkKeyRegExp);
 			if (!match)
 				return;
-			var prefix = match[1];
+			var prefix = match[1] || '';
 			var name = match[2];
 			if (prefix === clientQueryStringPrefix) {
 				obj.args = obj.args || {};
