@@ -284,7 +284,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line185">line 185</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line190">line 190</a>
     </li></ul></dd>
     
 
@@ -313,16 +313,22 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
 
     
 
-    <h4 class="name" id=".appendMessageByValidationResult"><span class="type-signature">(static) </span>appendMessageByValidationResult<span class="signature">(validationResult, names<span class="signature-attributes">opt</span>, container<span class="signature-attributes">opt</span>, wrapper<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".appendMessageByValidationResult"><span class="type-signature">(static) </span>appendMessageByValidationResult<span class="signature">(validationResult, names<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    <a href="ValidationResult.html">ValidationResult</a>からメッセージを作成して追加表示する
+    <a href="ValidationResult.html">ValidationResult</a>からメッセージを作成してコンテナに追加表示する
 <p>
 <a href="ValidationResult.html">ValidationResult</a>が非同期バリデート待ちの場合は、結果が返ってきたタイミングでメッセージを表示します。
+</p>
+<p>
+<a href="h5.ui.validation.MessageOutputController.html#.setContainer">setContainer</a>で設定済みコンテナにメッセージを出力します。コンテナ未設定の場合は何もしません。
+</p>
+<p>
+メッセージは<a href="h5.ui.validation.MessageOutputController.html#.setWrapper">setWrapper</a>で設定したラッパーで包んで出力します。ラッパー未設定の場合はテキストノードとしてしゅつりょくします。
 </p>
 </div>
 
@@ -425,78 +431,6 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
         </tr>
 
     
-
-        <tr>
-            
-                <td class="name"><code>container</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">DOM</span>
-|
-
-<span class="param-type">jQuery</span>
-|
-
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">表示先要素。指定しない場合は<a href="h5.ui.validation.MessageOutputController.html#.setContainer">setContainer</a>で設定した要素に出力します</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>wrapper</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">メッセージをラップするタグ名またはタグ生成文字列。指定しない場合は<a href="h5.ui.validation.MessageOutputController.html#.setWrapper">setWrapper</a>で設定したラッパーまたはテキストノードとして生成します</td>
-        </tr>
-
-    
     </tbody>
 </table>
 
@@ -536,7 +470,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line277">line 277</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line290">line 290</a>
     </li></ul></dd>
     
 
@@ -565,7 +499,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
 
     
 
-    <h4 class="name" id=".clearMessage"><span class="type-signature">(static) </span>clearMessage<span class="signature">(messageSetting)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".clearMessage"><span class="type-signature">(static) </span>clearMessage<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -574,7 +508,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
 <div class="description">
     コンテナからメッセージを削除
 <p>
-第1引数を省略した場合は設定済みのデフォルト出力先からメッセージを削除します
+<a href="h5.ui.validation.MessageOutputController.html#.setContainer">setContainer</a>で設定した出力先からメッセージを削除します。出力先未設定の場合は何もしません。
 </p>
 </div>
 
@@ -584,55 +518,6 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>messageSetting</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">{プロパティ名: {message:...}}のようなオブジェクト</td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -670,7 +555,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line205">line 205</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line209">line 209</a>
     </li></ul></dd>
     
 
@@ -711,7 +596,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
 第1引数に指定されたプロパティ名についてのエラーメッセージを作成して返します
 </p>
 <p>
-指定されたプロパティがエラーでないばあいはnullを返します。
+指定されたプロパティがエラーでない場合はnullを返します。
 </p>
 </div>
 
@@ -852,7 +737,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line256">line 256</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line265">line 265</a>
     </li></ul></dd>
     
 
@@ -888,7 +773,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
 
 
 <div class="description">
-    メッセージ出力先要素を設定する
+    メッセージ出力先要素をコンテナとして設定する
 </div>
 
 
@@ -1025,14 +910,19 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
 
 
 <div class="description">
-    メッセージをラップするタグまたはタグ生成文字列を設定する
+    メッセージ出力時にメッセージをラップする要素の設定
+<p>
+タグまたはタグ生成文字列をラッパーとして設定します。
+</p>
 <p>
 タグ名を指定した場合、指定されたタグで生成した要素でメッセージをラップします。
 </p>
 <p>
-また、'&lt;span class=&quot;hoge&quot;&gt;'のようなタグ生成文字列も設定でき、指定された文字列から作成した要素でメッセージをラップします。
+'&lt;span class=&quot;hoge&quot;&gt;'のようなタグ生成文字列も設定でき、指定された文字列から作成した要素でメッセージをラップします。
 </p>
-<p>{
+<p>
+ラッパーの指定がない場合は、このコントローラはメッセージをテキストノードとして出力します。
+</p>
 </div>
 
 
@@ -1127,7 +1017,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line151">line 151</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line156">line 156</a>
     </li></ul></dd>
     
 
@@ -1169,7 +1059,7 @@ message,displayName設定プロパティについては<a href="h5.ui.FormContro
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 12:29:18 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 13:53:35 GMT+0900 (JST)
 	</footer>
 </div>
 
