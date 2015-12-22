@@ -69,9 +69,14 @@
 	var EVENT_SCENE_CHANGE_REQUEST = 'sceneChangeRequest';
 
 	/**
-	 * シーン間パラメーター用デフォルトプレフィクス
+	 * シーン間クライアントパラメーター用デフォルトプレフィクス
 	 */
-	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '_c_';
+	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '';
+
+	/**
+	 * シーン間サーバーパラメーター用デフォルトプレフィクス
+	 */
+	var DEFAULT_SERVER_QUERY_STRING_PREFIX = '';
 
 	/**
 	 * シーン間パラメーター用デフォルトプレフィクス(FW用)
@@ -264,9 +269,14 @@
 	var isInited = false;
 
 	/**
-	 * シーン間パラメーター用デフォルトプレフィクス
+	 * シーン間クライアントパラメーター用デフォルトプレフィクス
 	 */
 	var clientQueryStringPrefix = DEFAULT_CLIENT_QUERY_STRING_PREFIX;
+
+	/**
+	 * シーン間サーバーパラメーター用デフォルトプレフィクス
+	 */
+	var serverQueryStringPrefix = DEFAULT_SERVER_QUERY_STRING_PREFIX;
 
 	/**
 	 * FW用シーン間パラメーター用デフォルトプレフィクス
@@ -274,9 +284,14 @@
 	var clientFWQueryStringPrefix = DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX;
 
 	/**
-	 * シーン間パラメーター用デフォルトプレフィクス正規表現用文字列
+	 * シーン間クライアントパラメーター用デフォルトプレフィクス正規表現用文字列
 	 */
 	var clientQueryStringPrefixForRegExp = null;
+
+	/**
+	 * シーン間サーバーパラメーター用デフォルトプレフィクス正規表現用文字列
+	 */
+	var serverQueryStringPrefixForRegExp = null;
 
 	/**
 	 * FW用シーン間パラメーター用デフォルトプレフィクス正規表現用文字列
@@ -2144,7 +2159,8 @@
 	function deserialize(str) {
 		if (!deserialize._checkKeyRegExp) {
 			deserialize._checkKeyRegExp = new RegExp('^(' + clientQueryStringPrefixForRegExp + '|'
-					+ clientFWQueryStringPrefixForRegExp + ')?(.+)');
+					+ serverQueryStringPrefixForRegExp + '|' + clientFWQueryStringPrefixForRegExp
+					+ ')?(.+)');
 			deserialize._checkArrayRegExp = /^(.*)\[\]$/;
 		}
 		var obj = {};
@@ -2162,9 +2178,11 @@
 			if (prefix === clientQueryStringPrefix) {
 				obj.args = obj.args || {};
 				obj.args[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
-			} else if (prefix === clientFWQueryStringPrefix) {
+			}
+			if (prefix === clientFWQueryStringPrefix) {
 				obj[name] = h5.u.obj.deserialize(SERIALIZE_PREFIX + v);
-			} else {
+			}
+			if (prefix === serverQueryStringPrefix) {
 				obj.serverArgs = obj.serverArgs || {};
 				var _match = name.match(checkArrayRegExp);
 				if (_match) {
@@ -2196,7 +2214,8 @@
 			return '';
 		if (!clearParam._regExp) {
 			clearParam._regExp = new RegExp('(^|&)(?:' + clientQueryStringPrefixForRegExp + '|'
-					+ clientFWQueryStringPrefixForRegExp + ')[^=]*=.*?(?=&|$)', 'g');
+					+ serverQueryStringPrefixForRegExp + '|' + clientFWQueryStringPrefixForRegExp
+					+ ')[^=]*=.*?(?=&|$)', 'g');
 		}
 		var regExp = clearParam._regExp;
 		var urlHelper = new UrlHelper(str);
@@ -3110,7 +3129,10 @@
 	 * <dd>メインシーンコンテナでブラウザタイトルの追従を行うか(デフォルトtrue)</dd>
 	 * <dt>clientQueryStringPrefix</dt>
 	 * <dd>type:string</dd>
-	 * <dd>シーン遷移パラメーター識別用プレフィクス。デフォルト空文字</dd>
+	 * <dd>シーン遷移クライントパラメーター識別用プレフィクス。デフォルト空文字</dd>
+	 * <dt>serverQueryStringPrefix</dt>
+	 * <dd>type:string</dd>
+	 * <dd>シーン遷移サーバーパラメーター識別用プレフィクス。デフォルト空文字</dd>
 	 * <dt>clientFWQueryStringPrefix</dt>
 	 * <dd>type:string</dd>
 	 * <dd>シーン遷移パラメーター識別用プレフィクス(FW用)。デフォルト"_h5_"</dd>
@@ -3136,6 +3158,7 @@
 		// デフォルト設定を記述
 		followTitle: true,
 		clientQueryStringPrefix: DEFAULT_CLIENT_QUERY_STRING_PREFIX,
+		serverQueryStringPrefix: DEFAULT_SERVER_QUERY_STRING_PREFIX,
 		clientFWQueryStringPrefix: DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX,
 		urlHistoryMode: URL_HISTORY_MODE.HISTORY,
 		urlMaxLength: URL_MAX_LENGTH,
@@ -3144,11 +3167,17 @@
 	};
 	$(function() {
 
-		// シーン遷移パラメーター識別用プレフィクス
+		// シーン遷移クライアントパラメータ識別用プレフィクス
 		clientQueryStringPrefix = h5.settings.scene.clientQueryStringPrefix;
 
 		//  正規表現用文字列作成
 		clientQueryStringPrefixForRegExp = clientQueryStringPrefix.replace(/\\/g, '\\\\');
+
+		// シーン遷移サーバーパラメータ識別用プレフィックス
+		serverQueryStringPrefix = h5.settings.scene.serverQueryStringPrefix;
+
+		//  正規表現用文字列作成
+		serverQueryStringPrefixForRegExp = serverQueryStringPrefix.replace(/\\/g, '\\\\');
 
 		// シーン遷移パラメーター識別用プレフィクス(FW用)
 		clientFWQueryStringPrefix = h5.settings.scene.clientFWQueryStringPrefix;
