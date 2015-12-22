@@ -71,12 +71,12 @@
 	/**
 	 * シーン間パラメーター用デフォルトプレフィクス
 	 */
-	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '_cl_';
+	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '';
 
 	/**
 	 * シーン間パラメーター用デフォルトプレフィクス(FW用)
 	 */
-	var DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX = '_clfw_';
+	var DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX = '_h5_';
 
 	/**
 	 * シリアライズプレフィクス
@@ -93,10 +93,10 @@
 	/**
 	 * シーン遷移タイプ
 	 */
-	var NAVIGATE_TYPE = {
+	var NAVIGATION_TYPE = {
 		NORMAL: 'normal',
 		ONCE: 'once',
-		EXCHANGE: 'exchange'
+		SILENT: 'silent'
 	};
 
 	/**
@@ -493,10 +493,6 @@
 	 * その場合、コントローラーがロード・バインドされたタイミングでresolveが実行されます。 シーンに対応するコントローラーを取得したい場合に利用してください。
 	 * </p>
 	 * <p>
-	 * メインシーンコンテナが未生成で、h5.settings.scene.autoCreateMainContainerにtrueが設定されている場合、
-	 * 所定の条件で対象要素および配下を走査し、最初の該当の要素でメインシーンコンテナを生成します。 条件の詳細については上述のリンクを参照してください
-	 * </p>
-	 * <p>
 	 * シーンコンテナ要素配下は、デフォルトで表示されるシーン配下のみを対象とします。(現版ではシーンコンテナの複数シーンは未対応)
 	 * このため、シーンコンテナ直下でないシーン要素は、シーンコンテナに所属していないとみなされ、その配下は処理対象とならないので注意が必要です。
 	 * </p>
@@ -529,7 +525,7 @@
 
 		// TODO(鈴木) メインシーンコンテナができていない場合のみ実行。
 		// この時点でメインシーンコンテナにはdata-h5-main-scene-container属性があるようにする。
-		if (!mainContainer && h5.settings.scene.autoCreateMainContainer) {
+		if (!mainContainer) {
 			var main = findWithSelf(root, '[' + DATA_H5_MAIN_CONTAINER + ']');
 			if (main.length === 0) {
 				main = findWithSelf(root, 'main');
@@ -1347,7 +1343,7 @@
 		 * @memberOf Router
 		 * @param {String} to 遷移先指定
 		 * @param {Object} [option]
-		 * @param {Boolean} [option.replace=false] 前の画面の履歴を残さずに遷移する場合にtrueを指定する。
+		 * @param {Boolean} [option.replaceHistory=false] 前の画面の履歴を残さずに遷移する場合にtrueを指定する。
 		 * @param {String} [option.mode] 動作モード指定
 		 */
 		navigate: function(to, option) {
@@ -1401,7 +1397,7 @@
 				if (this.compareUrl(result)) {
 					this._onChange();
 				} else {
-					if (option.replace) {
+					if (option.replaceHistory) {
 						location.replace('#' + result);
 					} else {
 						location.hash = result;
@@ -1416,7 +1412,7 @@
 				if (this.compareUrl(result)) {
 					this._onChange();
 				} else {
-					if (option.replace) {
+					if (option.replaceHistory) {
 						history.replaceState(null, null, result);
 					} else {
 						history.pushState(null, null, result);
@@ -1429,7 +1425,7 @@
 				if (this.compareUrl(result)) {
 					//TODO(鈴木) URLにHashが付いていても再表示する
 					location.reload();
-				} else if (option.replace) {
+				} else if (option.replaceHistory) {
 					location.replace(result);
 				} else {
 					location.href = result;
@@ -1994,11 +1990,9 @@
 							// 通常のシーンコンテナ内にmainとdata-main-containerはない前提。
 							var main = findWithSelf($dom, '[' + DATA_H5_MAIN_CONTAINER + ']');
 							// TODO(鈴木)
-							// 現状のフラグに基づいて遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
-							// さすがに遷移先HTMLでのフラグ状態までは見られない。。
-							if (h5.settings.scene.autoCreateMainContainer) {
-								if (main.length === 0)
-									main = findWithSelf($dom, 'main');
+							// 遷移先のHTMLからメインシーンコンテナに該当する部分を抽出。
+							if (main.length === 0) {
+								main = findWithSelf($dom, 'main');
 							}
 							if (main.length > 0) {
 								$dom = main.eq(0);
@@ -2530,16 +2524,16 @@
 		 *            </p>
 		 * @param {String} param.to 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
 		 * @param {Any}[param.args] デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
-		 * @param {string}[param.navigateType="normal"] メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。
+		 * @param {string}[param.navigationType="normal"] メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。
 		 *            <dl>
 		 *            <dt>"normal"</dt>
-		 *            <dd>URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。h5.scene.navigateType.NORMALと同値なのでこれを指定してもよいです。</dd>
+		 *            <dd>URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。h5.scene.navigationType.NORMALと同値なのでこれを指定してもよいです。</dd>
 		 *            <dt>"once"</dt>
-		 *            <dd>URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。ブラウザバック等で再表示はできなくなります(再表示不可のメッセージ画面(後述)を表示)。h5.scene.navigateType.ONCEと同値なのでこれを指定してもよいです。</dd>
-		 *            <dt>"exchange"</dt>
-		 *            <dd>URLは変化させずに遷移します。h5.scene.navigateType.EXCHANGEと同値なのでこれを指定してもよいです。</dd>
+		 *            <dd>URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。ブラウザバック等で再表示はできなくなります(再表示不可のメッセージ画面(後述)を表示)。h5.scene.navigationType.ONCEと同値なのでこれを指定してもよいです。</dd>
+		 *            <dt>"silent"</dt>
+		 *            <dd>URLは変化させずに遷移します。h5.scene.navigationType.SILENTと同値なのでこれを指定してもよいです。</dd>
 		 *            </dl>
-		 * @param {boolean}[param.replace=false] URLを置換しつつ遷移するか否か。置換して遷移する場合はtrueを設定します。
+		 * @param {boolean}[param.replaceHistory=false] URLを置換しつつ遷移するか否か。置換して遷移する場合はtrueを設定します。
 		 *            デフォルトはfalseです。trueで遷移した場合、元の画面のURLは履歴から削除されるため、ブラウザバックでは戻れなくなります。
 		 * @param {string} [param.method="get"]
 		 *            toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のHTTPメソッドを指定します。
@@ -2586,7 +2580,7 @@
 
 			var to = param.to;
 
-			if (this.isMain && param.navigateType !== NAVIGATE_TYPE.EXCHANGE) {
+			if (this.isMain && param.navigationType !== NAVIGATION_TYPE.SILENT) {
 
 				// TODO(鈴木) メインシーンコンテナで、URL変更を伴う場合
 
@@ -2605,13 +2599,13 @@
 					delete param.serverArgs;
 				}
 
-				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
+				if (param.navigationType === NAVIGATION_TYPE.ONCE || param.method === METHOD.POST) {
 					this._detour.args = h5.u.obj.deserialize(h5.u.obj.serialize(param.args));
 					delete param.args;
 				}
 
-				var replace = param.replace;
-				delete param.replace;
+				var replaceHistory = param.replaceHistory;
+				delete param.replaceHistory;
 
 				var url = convertParamToUrl(param);
 
@@ -2631,7 +2625,7 @@
 				//				}
 
 				this._router.navigate(url, {
-					replace: replace
+					replaceHistory: replaceHistory
 				});
 
 			} else {
@@ -2703,7 +2697,7 @@
 			var that = this;
 
 			var args = null;
-			if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
+			if (param.navigationType === NAVIGATION_TYPE.ONCE || param.method === METHOD.POST) {
 				if (!this._isNavigated) {
 					this._onNotReshowable(param);
 					return;
@@ -2919,7 +2913,7 @@
 
 				// TODO(鈴木) シーン遷移タイプが'once'(一回のみ)、またはAjaxメソッドタイプが'post'の場合、
 				// 再表示不可エラー画面を表示する。
-				if (param.navigateType === NAVIGATE_TYPE.ONCE || param.method === METHOD.POST) {
+				if (param.navigationType === NAVIGATION_TYPE.ONCE || param.method === METHOD.POST) {
 					this._onNotReshowable(param);
 					this._first = false;
 					return;
@@ -3115,40 +3109,22 @@
 	 * <dd>メインシーンコンテナでブラウザタイトルの追従を行うか(デフォルトtrue)</dd>
 	 * <dt>clientQueryStringPrefix</dt>
 	 * <dd>type:string</dd>
-	 * <dd>シーン遷移パラメーター識別用プレフィクス。デフォルト"_cl_"</dd>
+	 * <dd>シーン遷移パラメーター識別用プレフィクス。デフォルト空文字</dd>
 	 * <dt>clientFWQueryStringPrefix</dt>
 	 * <dd>type:string</dd>
-	 * <dd>シーン遷移パラメーター識別用プレフィクス(FW用)。デフォルト"_clfw_"</dd>
+	 * <dd>シーン遷移パラメーター識別用プレフィクス(FW用)。デフォルト"_h5_"</dd>
 	 * <dt>urlHistoryMode</dt>
 	 * <dd>type:string</dd>
 	 * <dd>メインシーンコンテナURL履歴保持方法({@link h5.scene.urlHistoryMode}参照)。デフォルトは"'history"</dd>
-	 * <dt>clientQueryStringPrefix</dt>
-	 * <dd>type:string</dd>
-	 * <dd>シーン遷移パラメーター識別用プレフィクス</dd>
-	 * <dt>clientFWQueryStringPrefix</dt>
-	 * <dd>type:string</dd>
-	 * <dd>シーン遷移パラメーター識別用プレフィクス(FW用)</dd>
 	 * <dt>urlMaxLength</dt>
 	 * <dd>type:integer</dd>
 	 * <dd>シーン遷移先URL最大長。デフォルト1800</dd>
-	 * <dt>notReshowable</dt>
-	 * <dd>type:Object</dd>
-	 * <dd>再表示不可画面コントローラ定義。再表示不可画面へ遷移した時にバインドするコントローラを任意に設定できます。デフォルトは再表示不可画面時のメッセージを表示するだけのコントローラです</dd>
-	 * <dt>notReshowableMessage</dt>
-	 * <dd>type:string</dd>
-	 * <dd>再表示不可画面時のメッセージ。デフォルトは"この画面は再表示できません。"
 	 * <dt>baseUrl</dt>
 	 * <dd>type:string|null</dd>
 	 * <dd>ベースURL。デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)</dd>
-	 * <dt>routes</dt>
-	 * <dd>type:object[]</dd>
-	 * <dd>ルーティングテーブル</dd>
 	 * <dt>autoInit</dt>
 	 * <dd>type:boolean</dd>
 	 * <dd>ページロード時にドキュメント全体を探索して、DATA属性によるコントローラーバインドとシーンコンテナ生成を行うかどうか。デフォルトfalse</dd>
-	 * <dt>autoCreateMainContainer</dt>
-	 * <dd>type:boolean</dd>
-	 * <dd>autoInitにtrueを設定した時のメインシーンコンテナ作成時の設定。mainタグ要素をメインシーンコンテナとして扱うかどうかを設定します。デフォルトはfalse</dd>
 	 * </dl>
 	 *
 	 * @memberOf h5.settings
@@ -3162,12 +3138,8 @@
 		clientFWQueryStringPrefix: DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX,
 		urlHistoryMode: URL_HISTORY_MODE.HISTORY,
 		urlMaxLength: URL_MAX_LENGTH,
-		notReshowable: NotReshowableController,
-		notReshowableMessage: NOT_RESHOWABLE_MESSAGE,
-		routes: null,
 		baseUrl: null,
-		autoInit: false,
-		autoCreateMainContainer: false
+		autoInit: false
 	};
 	$(function() {
 
@@ -3190,10 +3162,7 @@
 		urlMaxLength = parseInt(h5.settings.scene.urlMaxLength);
 
 		//  再表示不可画面
-		notReshowable = h5.settings.scene.notReshowable || NotReshowableController;
-
-		// 再表示不可画面メッセージ
-		notReshowableMessage = h5.settings.scene.notReshowableMessage;
+		notReshowable =  NotReshowableController;
 
 		// ベースURL
 		baseUrl = h5.settings.scene.baseUrl;
@@ -3279,7 +3248,7 @@
 		getMainSceneContainer: getMainSceneContainer,
 		getSceneContainers: getSceneContainers,
 		getSceneContainerByName: getSceneContainerByName,
-		navigateType: NAVIGATE_TYPE,
+		navigationType: NAVIGATION_TYPE,
 		method: METHOD,
 		urlHistoryMode: URL_HISTORY_MODE
 	});
