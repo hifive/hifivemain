@@ -82,13 +82,19 @@
 	/**
 	 * デフォルトエラーメッセージ
 	 */
-	var defaultIntvalidMessage = {
-		require: '{displayName}は必須項目です',
-		min: '{displayName}は{param.min}{param.inclusive?"以上の":"より大きい"}数値を入力してください。',
-		max: '{displayName}は{param.max}{param.inclusive?"以下":"未満"}の数値を入力してください。',
-		pattern: '{displayName}は正規表現{param.regexp}を満たす文字列を入力してください。',
-		digits: '{displayName}は整数部分{param.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
-		size: '{displayName}は{param.min}以上{param.max}以下の長さでなければいけません。',
+	var defaultInvalidMessage = {
+		required: '{displayName}は必須項目です',
+		min: function(param) {
+			return h5.u.str.format('{displayName}は{violation[0].ruleValue.min}{1}数値を入力してください。',
+					param, (param.violation[0].ruleValue.inclusive ? "以上の" : "より大きい"));
+		},
+		max: function(param) {
+			return h5.u.str.format('{displayName}は{violation[0].ruleValue.max}{1}数値を入力してください。',
+					param, (param.violation[0].ruleValue.inclusive ? "以下の" : "未満の"));
+		},
+		pattern: '{displayName}は正規表現{violation[0].ruleValue.regexp}を満たす文字列を入力してください。',
+		digits: '{displayName}は整数部分{violation[0].ruleValue.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
+		size: '{displayName}は{violation[0].ruleValue.min}以上{violation[0].ruleValue.max}以下の長さでなければいけません。',
 		future: '{displayName}は現在時刻より未来の時刻を入力してください。',
 		past: '{displayName}は現在時刻より過去の時刻を入力してください。',
 		nul: '{displayName}はnullでなければなりません。',
@@ -114,26 +120,28 @@
 	function createValidateErrorMessage(name, reason, setting) {
 		var displayName = (setting &amp;&amp; setting.displayName) || name;
 		var msg = setting &amp;&amp; setting.message;
-		var param = {
-			value: reason.value,
-			param: reason.param,
-			rule: reason.rule,
-			invalidReason: reason,
-			name: name,
+		var param = $.extend({}, reason, {
 			displayName: displayName
-		};
+		});
 		if (isString(msg)) {
 			// messageが指定されていればh5.u.str.formatでメッセージを作成
-			msg = h5.u.str.format(msg, param);
-			return msg;
+			return h5.u.str.format(msg, param);
+		} else if (isFunction(msg)) {
+			return msg(param);
 		}
 
 		// 何も設定されていない場合はデフォルトメッセージ
-		if (defaultIntvalidMessage[reason.rule]) {
-			return h5.u.str.format(defaultIntvalidMessage[reason.rule], param);
+		// デフォルトメッセージはviolationの一番最初のルールから作成する
+		var ruleName = reason.violation[0].ruleName;
+		var defaultMsg = defaultInvalidMessage[ruleName];
+		if (defaultMsg) {
+			if (isFunction(defaultMsg)) {
+				return defaultMsg(param);
+			}
+			return h5.u.str.format(defaultMsg, param);
 		}
 		// デフォルトにないルールの場合
-		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, name, reason.value, reason.rule);
+		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, name, reason.value, ruleName);
 	}
 
 	// =========================================================================
@@ -190,7 +198,7 @@
 		 * 		message: '{displayName}がルール{rule}に違反しています。', // メッセージ。プレースホルダを記述可能(後述)。
 		 * 	},
 		 * 	address: {
-		 * 		displayName: 'アドレス'
+		 * 		message: 'アドレスが不正です'
 		 * 	}
 		 * });
 		 * &lt;/code>&lt;/pre>
@@ -209,9 +217,8 @@
 				return;
 			}
 			for ( var prop in messageSetting) {
-				var propSetting = this._setting[prop];
 				// 既にメッセージ定義が設定されているプロパティについては上書き
-				this._setting[prop] = propSetting;
+				this._setting[prop] = messageSetting[prop];
 			}
 		},
 
@@ -641,11 +648,10 @@
 		 * &lt;/p>
 		 *
 		 * @memberOf h5.ui.validation.Composition
-		 * @param {string} name
-		 * @param {Object} messageObj message,formatterを持つオブジェクト
+		 * @param {Object} messageObj プロパティ名をキーに、messageとdisplayNameを定義したオブジェクトを持つメッセージ設定オブジェクト
 		 */
-		setMessage: function(name, messageObj) {
-			this._messageOutputController.addMessageSetting(name, messageObj);
+		setMessage: function(messageObj) {
+			this._messageOutputController.addMessageSetting(messageObj);
 		},
 
 		/**
@@ -829,11 +835,10 @@
 		 * &lt;/p>
 		 *
 		 * @memberOf h5.ui.validation.ErrorBaloon
-		 * @param {string} name
-		 * @param {Object} messageObj message,formatterを持つオブジェクト
+		 * @param {Object} messageObj プロパティ名をキーに、messageとdisplayNameを定義したオブジェクトを持つメッセージ設定オブジェクト
 		 */
-		setMessage: function(name, messageObj) {
-			this._messageOutputController.addMessageSetting(name, messageObj);
+		setMessage: function(messageObj) {
+			this._messageOutputController.addMessageSetting(messageObj);
 		},
 
 		/**
@@ -1186,11 +1191,10 @@
 		 * &lt;/p>
 		 *
 		 * @memberOf h5.ui.validation.Message
-		 * @param {string} name
-		 * @param {Object} messageObj message,formatterを持つオブジェクト
+		 * @param {Object} messageObj プロパティ名をキーに、messageとdisplayNameを定義したオブジェクトを持つメッセージ設定オブジェクト
 		 */
-		setMessage: function(name, messageObj) {
-			this._messageOutputController.addMessageSetting(name, messageObj);
+		setMessage: function(messageObj) {
+			this._messageOutputController.addMessageSetting(messageObj);
 		},
 
 		_setMessage: function(element, name, validationResult, type) {
@@ -1456,7 +1460,7 @@
 	var FW_LOG_ALREADY_ADDED = 'プラグイン"{0}"は登録済みです。';
 
 	// TODO formのvalidatorで不要な項目は要らない
-	var DATA_RULE_REQUIRED = 'require';
+	var DATA_RULE_REQUIRED = 'required';
 	var DATA_RULE_ASSERT_FALSE = 'assertFalse';
 	var DATA_RULE_ASSERT_TRUE = 'assertTrue';
 	var DATA_RULE_NULL = 'nul';
@@ -1494,7 +1498,7 @@
 
 	// デフォルトで用意しているvalidateルール生成関数
 	var defaultRuleCreators = {
-		requireRuleCreator: function(inputElement) {
+		requiredRuleCreator: function(inputElement) {
 			if ($(inputElement).data(DATA_RULE_REQUIRED) != null) {
 				return true;
 			}
@@ -1864,7 +1868,7 @@
 		__construct: function() {
 			// デフォルトルールの追加
 			// TODO formのvalidatorで不要な項目は要らない
-			this._addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requireRuleCreator);
+			this._addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requiredRuleCreator);
 			this
 					._addRuleCreator(DATA_RULE_ASSERT_FALSE,
 							defaultRuleCreators.assertFalseRuleCreator);
@@ -2641,7 +2645,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Mon Dec 21 2015 22:50:55 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 11:34:37 GMT+0900 (JST)
 	</footer>
 </div>
 

@@ -65,10 +65,7 @@
 
 
 <div class="description">
-    シーンコンテナクラス
-<p>
-実体はコントローラーです。 シーンコンテナを生成する場合はh5.scene.createSceneContainer()を使用してください。
-</p>
+    シーンコンテナクラス<p>実体はコントローラーです。 シーンコンテナを生成する場合はh5.scene.createSceneContainer()を使用してください。</p>
 </div>
 
 
@@ -114,7 +111,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2288">line 2288</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2282">line 2282</a>
     </li></ul></dd>
     
 
@@ -210,7 +207,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2308">line 2308</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2302">line 2302</a>
     </li></ul></dd>
     
 
@@ -312,7 +309,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2669">line 2669</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2663">line 2663</a>
     </li></ul></dd>
     
 
@@ -348,21 +345,7 @@
 
 
 <div class="description">
-    シーンコンテナ内のシーンを遷移します。
-<p>
-機能の詳細については以下を参照してください。
-</p>
-<ul>
-<li><a
-href="/conts/web/view/reference/scene-spec">リファレンス（仕様詳細)&gt;&gt;画面遷移制御・履歴管理(シーン機能)仕様
-[ver.1.2]</a>
-<ul>
-<li><a
-href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E907779FB2830B730FC30F3306E907779FB29">
-シーンコンテナ内の遷移(シーンの遷移)</a></li>
-</ul>
-</li>
-</ul>
+    シーンコンテナ内のシーンを遷移します。<p>機能の詳細については以下を参照してください。</p><ul><li><ahref="/conts/web/view/reference/scene-spec">リファレンス（仕様詳細)&gt;&gt;画面遷移制御・履歴管理(シーン機能)仕様[ver.1.2]</a><ul><li><ahref="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E907779FB2830B730FC30F3306E907779FB29">シーンコンテナ内の遷移(シーンの遷移)</a></li></ul></li></ul>
 </div>
 
 
@@ -417,11 +400,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
 
             
 
-            <td class="description last">遷移先文字列、または遷移用オプション。
-           <p>
-           遷移先文字列の場合は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>
-           遷移用オプションの場合は、以下のプロパティを持ちます。
-           </p>
+            <td class="description last">遷移先文字列、または遷移用オプション。           <p>           遷移先文字列の場合は、HTMLを返却するURLか、コントローラーの__name属性を指定します。<br>           遷移用オプションの場合は、以下のプロパティを持ちます。           </p>
                 <h6>Properties</h6>
                 
 
@@ -523,7 +502,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
 
         <tr>
             
-                <td class="name"><code>navigateType</code></td>
+                <td class="name"><code>navigationType</code></td>
             
 
             <td class="type">
@@ -555,22 +534,14 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
                 </td>
             
 
-            <td class="description last">メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。
-           <dl>
-           <dt>"normal"</dt>
-           <dd>URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。h5.scene.navigateType.NORMALと同値なのでこれを指定してもよいです。</dd>
-           <dt>"once"</dt>
-           <dd>URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。ブラウザバック等で再表示はできなくなります(再表示不可のメッセージ画面(後述)を表示)。h5.scene.navigateType.ONCEと同値なのでこれを指定してもよいです。</dd>
-           <dt>"exchange"</dt>
-           <dd>URLは変化させずに遷移します。h5.scene.navigateType.EXCHANGEと同値なのでこれを指定してもよいです。</dd>
-           </dl></td>
+            <td class="description last">メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。           <dl>           <dt>"normal"</dt>           <dd>URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。h5.scene.navigationType.NORMALと同値なのでこれを指定してもよいです。</dd>           <dt>"once"</dt>           <dd>URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。ブラウザバック等で再表示はできなくなります(再表示不可のメッセージ画面(後述)を表示)。h5.scene.navigationType.ONCEと同値なのでこれを指定してもよいです。</dd>           <dt>"silent"</dt>           <dd>URLは変化させずに遷移します。h5.scene.navigationType.SILENTと同値なのでこれを指定してもよいです。</dd>           </dl></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>replace</code></td>
+                <td class="name"><code>replaceHistory</code></td>
             
 
             <td class="type">
@@ -602,8 +573,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
                 </td>
             
 
-            <td class="description last">URLを置換しつつ遷移するか否か。置換して遷移する場合はtrueを設定します。
-           デフォルトはfalseです。trueで遷移した場合、元の画面のURLは履歴から削除されるため、ブラウザバックでは戻れなくなります。</td>
+            <td class="description last">URLを置換しつつ遷移するか否か。置換して遷移する場合はtrueを設定します。           デフォルトはfalseです。trueで遷移した場合、元の画面のURLは履歴から削除されるため、ブラウザバックでは戻れなくなります。</td>
         </tr>
 
     
@@ -642,14 +612,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
                 </td>
             
 
-            <td class="description last">toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のHTTPメソッドを指定します。
-           <dl>
-           <dt>"get"</dt>
-           <dd>GETメソッドで取得します(デフォルト)。h5.scene.method.GETと同値なのでこれを指定してもよいです。</dd>
-           <dt>"post"</dt>
-           <dd>POSTメソッドで取得します。h5.scene.method.POSTと同値なのでこれを指定してもよいです。</dd>
-           <dd>ブラウザバック等で再表示はできなくなります。</dd>
-           </dl></td>
+            <td class="description last">toの設定値がHTMLページのURLである場合に有効。AjaxでのHTMLデータ取得時のHTTPメソッドを指定します。           <dl>           <dt>"get"</dt>           <dd>GETメソッドで取得します(デフォルト)。h5.scene.method.GETと同値なのでこれを指定してもよいです。</dd>           <dt>"post"</dt>           <dd>POSTメソッドで取得します。h5.scene.method.POSTと同値なのでこれを指定してもよいです。</dd>           <dd>ブラウザバック等で再表示はできなくなります。</dd>           </dl></td>
         </tr>
 
     
@@ -758,7 +721,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2558">line 2558</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2552">line 2552</a>
     </li></ul></dd>
     
 
@@ -889,7 +852,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2656">line 2656</a>
+        <a href="src_h5.scene.js.html">src/h5.scene.js</a>, <a href="src_h5.scene.js.html#line2650">line 2650</a>
     </li></ul></dd>
     
 
@@ -931,7 +894,7 @@ href="/conts/web/view/reference/scene-spec#H30B730FC30F330B330F330C630CA5185306E
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Mon Dec 21 2015 22:50:59 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 11:34:41 GMT+0900 (JST)
 	</footer>
 </div>
 

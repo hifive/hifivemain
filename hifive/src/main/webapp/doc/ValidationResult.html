@@ -65,7 +65,7 @@
 
 
 <div class="description">
-    validation結果クラス<p>バリデート結果を保持するクラスです。<a href="h5.validation.FormValidationLogic.html#.validate">h5.validation.FormValidationLogic.validate</a>がこのクラスのインスタンスを返します。</p><p>このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ち、イベントリスナを登録することができます。</p><p>このクラスは非同期バリデートの完了を通知するために以下のイベントをあげます。</p><dl><dt>validate</dt><dd><p>非同期バリデートを行っているプロパティについて、どれか1つのバリデートが完了した。</p><p>以下のようなイベントオブジェクトを通知します。</p><pre class="sh_javascript"><code>{	type: 'validate'	property: // バリデートが完了したプロパティ名	value: // バリデート対象の値	isValid: // バリデート結果(true/false)	failureReason:	// 失敗時のみ。該当プロパティについてのバリデート失敗理由(<a href="ValidationResult.html#.failureReason">ValidationResult.failureReason</a>[property]}と同じ。)}</code></pre></dd><dt>validateComplete</dt><dd>非同期バリデートを行っているすべてのプロパティのバリデートが完了した。<p>以下のようなイベントオブジェクトを通知します。</p><pre class="sh_javascript"><code>{	type: 'validateComplete'}</code></pre></dd><dt>abort</dt><dd>非同期バリデートが中断された。<p>以下のようなイベントオブジェクトを通知します。</p><pre class="sh_javascript"><code>{	type: 'abort'}</code></pre></dd></dl>
+    validation結果クラス<p>バリデート結果を保持するクラスです。<a href="h5.validation.FormValidationLogic.html#.validate">h5.validation.FormValidationLogic.validate</a>がこのクラスのインスタンスを返します。</p><p>このクラスは<a href="EventDispatcher.html">EventDispatcher</a>のメソッドを持ち、イベントリスナを登録することができます。</p><p>このクラスは非同期バリデートの完了を通知するために以下のイベントをあげます。</p><dl><dt>validate</dt><dd><p>非同期バリデートを行っているプロパティについて、どれか1つのバリデート結果が出た。</p><p>以下のようなイベントオブジェクトを通知します。</p><pre class="sh_javascript"><code>{	type: 'validate'	name: // バリデートが完了したプロパティ名	value: // バリデート対象の値	isValid: // バリデート結果(true/false)	violation:	// 失敗時のみ。該当プロパティについてのバリデート失敗理由(<a href="ValidationResult.html#.invalidReason">ValidationResult.invalidReason</a>に。)}</code></pre></dd><dt>validateComplete</dt><dd>非同期バリデートを行っているすべてのプロパティのバリデートが完了した。<p>以下のようなイベントオブジェクトを通知します。</p><pre class="sh_javascript"><code>{	type: 'validateComplete'}</code></pre></dd><dt>abort</dt><dd>非同期バリデートが中断された。<p>以下のようなイベントオブジェクトを通知します。</p><pre class="sh_javascript"><code>{	type: 'abort'}</code></pre></dd></dl>
 </div>
 
 
@@ -119,7 +119,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line208">line 208</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line213">line 213</a>
     </li></ul></dd>
     
 
@@ -205,79 +205,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line405">line 405</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id=".failureReason"><span class="type-signature">(static) </span>failureReason<span class="type-signature"> :object</span></h4>
-
-
-
-
-<div class="description">
-    バリデート失敗理由<p>バリデート失敗の理由がここに格納されます。failureReasonは以下のようなオブジェクトです。</p><pre class="sh_javascript"><code>{  &quot;プロパティ名&quot;: {    rule: 'max'                // バリデートを行ったルール    value: 101,                // バリデート対象の値    param: {inclusive: 100},  // バリデート関数に渡されたパラメータ    rejectReason: // 非同期バリデートのみ。非同期バリデート関数が返したプロミスのfailハンドラに渡された引数リスト。  },  &quot;プロパティ名&quot;: {...},  &quot;プロパティ名&quot;: {...}}</code></pre>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">object</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line320">line 320</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line410">line 410</a>
     </li></ul></dd>
     
 
@@ -349,7 +277,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line354">line 354</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line359">line 359</a>
     </li></ul></dd>
     
 
@@ -421,7 +349,79 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line299">line 299</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line304">line 304</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".invalidReason"><span class="type-signature">(static) </span>invalidReason<span class="type-signature"> :object</span></h4>
+
+
+
+
+<div class="description">
+    バリデート失敗理由<p>バリデート失敗の理由がここに格納されます。invalidReasonは以下のようなオブジェクトです。</p><pre class="sh_javascript"><code>{  &quot;プロパティ名&quot;: {    rule: 'max'                // バリデートを行ったルール    value: 101,                // バリデート対象の値    param: {inclusive: 100},  // バリデート関数に渡されたパラメータ    rejectReason: // 非同期バリデートのみ。非同期バリデート関数が返したプロミスのfailハンドラに渡された引数リスト。  },  &quot;プロパティ名&quot;: {...},  &quot;プロパティ名&quot;: {...}}</code></pre>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line325">line 325</a>
     </li></ul></dd>
     
 
@@ -496,7 +496,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line372">line 372</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line377">line 377</a>
     </li></ul></dd>
     
 
@@ -568,7 +568,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line363">line 363</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line368">line 368</a>
     </li></ul></dd>
     
 
@@ -640,7 +640,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line278">line 278</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line283">line 283</a>
     </li></ul></dd>
     
 
@@ -712,7 +712,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line384">line 384</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line389">line 389</a>
     </li></ul></dd>
     
 
@@ -784,7 +784,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line308">line 308</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line313">line 313</a>
     </li></ul></dd>
     
 
@@ -856,7 +856,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line345">line 345</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line350">line 350</a>
     </li></ul></dd>
     
 
@@ -928,7 +928,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line290">line 290</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line295">line 295</a>
     </li></ul></dd>
     
 
@@ -1652,7 +1652,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Mon Dec 21 2015 22:50:59 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 11:34:41 GMT+0900 (JST)
 	</footer>
 </div>
 

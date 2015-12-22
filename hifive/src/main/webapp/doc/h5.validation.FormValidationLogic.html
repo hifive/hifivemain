@@ -113,7 +113,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line817">line 817</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line822">line 822</a>
     </li></ul></dd>
     
 
@@ -167,7 +167,7 @@
 
 
 <div class="description">
-    バリデートルールを追加する<p><a href="h5.validation.FormValidationLogic.html#.validate">h5.validation.FormValidationLogic.validate</a>でバリデートを行う際のバリデートルールを追加します。</p><p>バリデートルールは以下のようなオブジェクトで指定します。<pre class="sh_javascript"><code>var formValidator = h5.core.logic(h5.validation.FormValidationLogic);formValidator.addRule({	// 対象となるプロパティ名(userid)をキーにする	userid: {		// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。		require: true,		pattern: /&circ;[a-z|0-9]*$/,		size: [4, 10]	}});</code></pre>上記の場合、useridは指定が必須(require指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。</p><p>以下のようなルールが定義されています。</p><table><thead><tr><th>ルール名</th><th>パラメータ</th><th>定義</th></tr></thead><tbody><tr><td>require</td><td>なし</td><td>値がnull,undefined,空文字のいずれでもないこと</td></tr><tr><td>customFunc</td><td>func</td><td>funcには第1引数に値を取る関数を指定する。funcがtrueを返すこと。</td></tr><tr><td>assertNull</td><td>なし</td><td>値がnullまたはundefinedであること</td></tr><tr><td>assertNotNull</td><td>なし</td><td>値がnullまたはundefinedでないこと</td></tr><tr><td>assertFalse</td><td>なし</td><td>値がfalseであること</td></tr><tr><td>assertTrue</td><td>なし</td><td>値がtrueであること</td></tr><tr><td>max</td><td>[max, inclusive]</td><td>inclusiveは省略可能。値がmax未満の数値であること。またinclusiveにtrueを指定した場合は境界値にmaxも含める(値がmax以下であること)。</td></tr><tr><td>min</td><td>[mix, inclusive]</td><td>inclusiveは省略可能。値がminより大きい数値であること。またinclusiveにtrueを指定した場合は境界値にminも含める(値がmin以上であること)。</td></tr><tr><td>future</td><td>なし</td><td>値がDate型で現在時刻より未来であること。</td></tr><tr><td>past</td><td>なし</td><td>値がDate型で現在時刻より過去であること。</td></tr><tr><td>digits</td><td>[string, fruction]</td><td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下の数値を表す文字列であること</td></tr><tr><td>pattern</td><td>[regexp]</td><td>regexpには正規表現を指定。値がregexpを満たす文字列であること</td></tr><tr><td>size</td><td>[min, max]</td><td>値のサイズがmin以上max以下であること。ただし、値がプレーンオブジェクトの場合はプロパティの数、配列または文字列の場合はその長さをその値のサイズとする。</td></tr></tbody></table>
+    バリデートルールを追加する<p><a href="h5.validation.FormValidationLogic.html#.validate">h5.validation.FormValidationLogic.validate</a>でバリデートを行う際のバリデートルールを追加します。</p><p>バリデートルールは以下のようなオブジェクトで指定します。<pre class="sh_javascript"><code>var formValidator = h5.core.logic(h5.validation.FormValidationLogic);formValidator.addRule({	// 対象となるプロパティ名(userid)をキーにする	userid: {		// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。		required: true,		pattern: /&circ;[a-z|0-9]*$/,		size: [4, 10]	}});</code></pre>上記の場合、useridは指定が必須(required指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。</p><p>以下のようなルールが定義されています。</p><table><thead><tr><th>ルール名</th><th>パラメータ</th><th>定義</th></tr></thead><tbody><tr><td>required</td><td>なし</td><td>値がnull,undefined,空文字のいずれでもないこと</td></tr><tr><td>customFunc</td><td>func</td><td>funcには第1引数に値を取る関数を指定する。funcがtrueを返すこと。</td></tr><tr><td>assertNull</td><td>なし</td><td>値がnullまたはundefinedであること</td></tr><tr><td>assertNotNull</td><td>なし</td><td>値がnullまたはundefinedでないこと</td></tr><tr><td>assertFalse</td><td>なし</td><td>値がfalseであること</td></tr><tr><td>assertTrue</td><td>なし</td><td>値がtrueであること</td></tr><tr><td>max</td><td>[max, inclusive]</td><td>inclusiveは省略可能。値がmax未満の数値であること。またinclusiveにtrueを指定した場合は境界値にmaxも含める(値がmax以下であること)。</td></tr><tr><td>min</td><td>[mix, inclusive]</td><td>inclusiveは省略可能。値がminより大きい数値であること。またinclusiveにtrueを指定した場合は境界値にminも含める(値がmin以上であること)。</td></tr><tr><td>future</td><td>なし</td><td>値がDate型で現在時刻より未来であること。</td></tr><tr><td>past</td><td>なし</td><td>値がDate型で現在時刻より過去であること。</td></tr><tr><td>digits</td><td>[string, fruction]</td><td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下の数値を表す文字列であること</td></tr><tr><td>pattern</td><td>[regexp]</td><td>regexpには正規表現を指定。値がregexpを満たす文字列であること</td></tr><tr><td>size</td><td>[min, max]</td><td>値のサイズがmin以上max以下であること。ただし、値がプレーンオブジェクトの場合はプロパティの数、配列または文字列の場合はその長さをその値のサイズとする。</td></tr></tbody></table>
 </div>
 
 
@@ -262,7 +262,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1028">line 1028</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1033">line 1033</a>
     </li></ul></dd>
     
 
@@ -396,7 +396,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1066">line 1066</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1071">line 1071</a>
     </li></ul></dd>
     
 
@@ -530,7 +530,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1085">line 1085</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1090">line 1090</a>
     </li></ul></dd>
     
 
@@ -664,7 +664,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1048">line 1048</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line1053">line 1053</a>
     </li></ul></dd>
     
 
@@ -700,7 +700,7 @@
 
 
 <div class="description">
-    フォームの値を集約したオブジェクトのvalidateを行う<p>FormValidationロジックはバリデートルールごとにバリデート対象の値を適切な型に変換してからバリデートを行います。例えば、値が"1"という文字列であってもmaxルールで判定する場合は1という数値に対してバリデートを行います。</p><p>また、 グループとそのグループ内のプロパティについてのvalidateに対応しています。</p><p>グループとは、第1引数のオブジェクトの中に、オブジェクトを値として持つプロパティがある場合、それをグループと言います。そのグループ単位でのバリデートも行い、さらにグループ内のプロパティについてのバリデートを行います。</p><p>グループはネストすることはできません。</p><p>以下はbirthdayをグループとして扱いvalidateを行う場合の例です。</p><pre class="sh_javascript"><code>var formValidator = h5.core.logic(h5.validation.FormValidationLogic);formValidator.addRule({	birthday: {		customFunc: function(val) {			// 日付として正しいか判定する			!isNaN(new Date(val.year, val.month - 1, val.date).getTime());		}	},	year: {		require: true	},	month: {		require: true	},	day: {		require: true	}});formValidator.validate({	birthday: {		year: 1999,		month: 1,		date: 1	}});</code></pre><p>グループはそのグループ(birthday)のルールによるvalidateが行われる。</p><p>また、year,month,dayもそれぞれのルールに基づいてvalidateが行われる。</p>
+    フォームの値を集約したオブジェクトのvalidateを行う<p>FormValidationロジックはバリデートルールごとにバリデート対象の値を適切な型に変換してからバリデートを行います。例えば、値が"1"という文字列であってもmaxルールで判定する場合は1という数値に対してバリデートを行います。</p><p>また、 グループとそのグループ内のプロパティについてのvalidateに対応しています。</p><p>グループとは、第1引数のオブジェクトの中に、オブジェクトを値として持つプロパティがある場合、それをグループと言います。そのグループ単位でのバリデートも行い、さらにグループ内のプロパティについてのバリデートを行います。</p><p>グループはネストすることはできません。</p><p>以下はbirthdayをグループとして扱いvalidateを行う場合の例です。</p><pre class="sh_javascript"><code>var formValidator = h5.core.logic(h5.validation.FormValidationLogic);formValidator.addRule({	birthday: {		customFunc: function(val) {			// 日付として正しいか判定する			!isNaN(new Date(val.year, val.month - 1, val.date).getTime());		}	},	year: {		required: true	},	month: {		required: true	},	day: {		required: true	}});formValidator.validate({	birthday: {		year: 1999,		month: 1,		date: 1	}});</code></pre><p>グループはそのグループ(birthday)のルールによるvalidateが行われる。</p><p>また、year,month,dayもそれぞれのルールに基づいてvalidateが行われる。</p>
 </div>
 
 
@@ -863,7 +863,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line902">line 902</a>
+        <a href="src_h5.validation.js.html">src/h5.validation.js</a>, <a href="src_h5.validation.js.html#line907">line 907</a>
     </li></ul></dd>
     
 
@@ -905,7 +905,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Mon Dec 21 2015 22:50:58 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 11:34:40 GMT+0900 (JST)
 	</footer>
 </div>
 
