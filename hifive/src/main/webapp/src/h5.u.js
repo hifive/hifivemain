@@ -281,6 +281,22 @@
 		return str;
 	}
 
+	/**
+	 * 文字列中のダブルコーテーションをエスケープする
+	 *
+	 * @private
+	 * @param {String} str
+	 * @returns {String} エスケープ後の文字列
+	 */
+	function escapeDoubleQuotation(str) {
+		// オブジェクトまたは配列の場合、シリアライズした結果に対して、ダブルコーテーションもエスケープする。#459
+		// ダブルコーテーションを\"でエスケープし、エスケープで使用する\は\\にエスケープする。
+		// これはオブジェクトまたは配列のデシリアライズ時に$.parseJSONを使用していて、その際にダブルコーテーション及びバックスラッシュがアンエスケープされるためである。
+		// 例えば {'"':'"'} のようなキー名または値にダブルコーテーションを含むようなオブジェクトの場合、
+		// parseJSONはダブルコーテーションをエスケープするため、'{"\\"":"\\""}' のような文字列にしないとparseJSONで復元できない。
+		// '{"\"":"\""}' をparseJSONするとエラーになってしまう。
+		return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+	}
 
 	/**
 	 * 指定されたスクリプトファイルをロードして、スクリプト文字列を取得します。(loadScriptメソッド用)
@@ -501,7 +517,7 @@
 					promises.push(asyncFunc());
 
 					$.each(resources, function() {
-						var url = toAbsoluteUrl(this);
+						var url = toAbsoluteUrl(this.toString());
 
 						if (!force && url in addedJS) {
 							return true;
@@ -518,7 +534,7 @@
 					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
 
 					$.each(resources, function() {
-						var url = toAbsoluteUrl(this);
+						var url = toAbsoluteUrl(this.toString());
 
 						seq = thenCompat(seq, function() {
 							if (!force && url in addedJS) {
@@ -544,7 +560,7 @@
 					loadedScripts.push(null);
 
 					$.each(resources, function() {
-						var url = toAbsoluteUrl(this);
+						var url = toAbsoluteUrl(this.toString());
 
 						if (!force && (url in addedJS || url in loadedUrl)) {
 							return true;
@@ -599,7 +615,7 @@
 					var seq = thenCompat(getDeferred().resolve(), asyncFunc);
 
 					$.each(resources, function() {
-						var url = toAbsoluteUrl(this);
+						var url = toAbsoluteUrl(this.toString());
 
 						seq = thenCompat(seq, function() {
 							var df = getDeferred();
@@ -644,7 +660,7 @@
 			return retDf.promise();
 		} else {
 			$.each(resources, function() {
-				var url = toAbsoluteUrl(this);
+				var url = toAbsoluteUrl(this.toString());
 
 				if (!force && (url in addedJS || url in loadedUrl)) {
 					return true;
@@ -706,17 +722,74 @@
 
 	/**
 	 * 第一引数の文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第2引数以降に指定されたパラメータに置換します。
+	 * <p>
+	 * また、{0.name}のように記述すると第2引数のnameプロパティの値で置換を行います。"0."は引数の何番目かを指し、第2引数を0としてそれ以降の引数のプロパティの値を採ることもできます。
+	 * </p>
+	 * <p>
+	 * "0."は省略して単に{name}のように記述することもできます。また、{0.birthday.year}のように入れ子になっているプロパティを辿ることもできます。
+	 * </p>
+	 * <p>
+	 * "."の代わりに"[]"を使ってプロパティにアクセスすることもできます。以下、使用例です。
+	 * </p>
+	 * <p>
 	 *
-	 * <pre>
-	 * 例：
-	 * 		var myValue = 10;
-	 * 		h5.u.str.format('{0} is {1}', 'myValue', myValue);
-	 * </pre>
+	 * <pre class="sh_javascript"><code>
+	 * var myValue = 10;
+	 * h5.u.str.format('{0} is {1}', 'myValue', myValue);
+	 * </code></pre>
 	 *
 	 * 実行結果: myValue is 10
+	 * </p>
+	 * <p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * h5.u.str.format('{name} is at {address}', {
+	 * 	name: 'Taro',
+	 * 	address: 'Yokohama'
+	 * });
+	 * </code></pre>
+	 *
+	 * 実行結果: Taro is at Yokohama
+	 * </p>
+	 * <p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * h5.u.str.format('{0} is born on {1.birthday.year}.', 'Taro', {
+	 * 	birthday: {
+	 * 		year: 1990
+	 * 	}
+	 * });
+	 * </code></pre>
+	 *
+	 * 実行結果: Taro is born on 1990.
+	 * </p>
+	 * <p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * h5.u.str.format('{0.name} likes {0.hobby[0]}. {1.name} likes {1.hobby[0]}.', {
+	 * 	name: 'Taro',
+	 * 	hobby: ['Traveling', 'Shopping']
+	 * }, {
+	 * 	name: 'Hanako',
+	 * 	hobby: ['Chess']
+	 * });
+	 * </code></pre>
+	 *
+	 * 実行結果: Taro likes Traveling. Hanako likes Chess.
+	 * </p>
+	 * <p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * h5.u.str.format('{0.0},{0.1},{0.2},…(長さ{length})', [2, 3, 5, 7]);
+	 * // 以下と同じ
+	 * h5.u.str.format('{0[0]},{0[1]},{0[2]},…(長さ{0.length})', [2, 3, 5, 7]);
+	 * </code></pre>
+	 *
+	 * 実行結果: 2,3,5,…(長さ4)
+	 * </p>
 	 *
 	 * @param {String} str 文字列
-	 * @param {Any} var_args 可変長引数
+	 * @param {Any} var_args 可変長引数。ただし1つ目にオブジェクトまたは配列を指定した場合はその中身で置換
 	 * @returns {String} フォーマット済み文字列
 	 * @name format
 	 * @function
@@ -726,9 +799,21 @@
 		if (str == null) {
 			return '';
 		}
-		var args = arguments;
-		return str.replace(/\{(\d+)\}/g, function(m, c) {
-			var rep = args[parseInt(c, 10) + 1];
+		var args = argsToArray(arguments).slice(1);
+		return str.replace(/\{(.+?)\}/g, function(m, c) {
+			if (/^\d+$/.test(c)) {
+				// {0}のような数値のみの指定の場合は引数の値をそのまま返す
+				var rep = args[parseInt(c, 10)];
+				if (typeof rep === TYPE_OF_UNDEFINED) {
+					// undefinedなら"undefined"を返す
+					return TYPE_OF_UNDEFINED;
+				}
+				return rep;
+			}
+			// 数値じゃない場合はオブジェクトプロパティ指定扱い
+			// 数値.で始まっていなければ"0."が省略されていると見做す
+			var path = /^\d+[\.|\[]/.test(c) ? c : '0.' + c;
+			var rep = getByPath(path, args);
 			if (typeof rep === TYPE_OF_UNDEFINED) {
 				return TYPE_OF_UNDEFINED;
 			}
@@ -910,7 +995,7 @@
 					} else if ($.type(val[i]) === 'function') {
 						elm = typeToCode(TYPE_OF_UNDEFINED);
 					} else {
-						elm = (func(val[i])).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+						elm = escapeDoubleQuotation(func(val[i]));
 					}
 					ret += '"' + elm + '"';
 					if (i !== val.length - 1) {
@@ -923,14 +1008,13 @@
 						continue;
 					}
 					if ($.type(val[key]) !== 'function') {
-						hash += '"' + escape(key) + '":"'
-								+ (func(val[key])).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-								+ '",';
+						hash += '"' + escapeDoubleQuotation(escape(key)) + '":"'
+								+ escapeDoubleQuotation(func(val[key])) + '",';
 					}
 				}
 				if (hash) {
 					ret += ((val.length) ? ',' : '') + '"' + typeToCode('objElem') + '{'
-							+ hash.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+							+ escapeDoubleQuotation(hash);
 					ret = ret.replace(/,$/, '');
 					ret += '}"';
 				}
@@ -948,9 +1032,8 @@
 						if ($.type(val[key]) === 'function') {
 							continue;
 						}
-						ret += '"' + key + '":"'
-								+ (func(val[key])).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-								+ '",';
+						ret += '"' + escapeDoubleQuotation(escape(key)) + '":"'
+								+ escapeDoubleQuotation(func(val[key])) + '",';
 					}
 				}
 				ret = ret.replace(/,$/, '');
@@ -1108,27 +1191,27 @@
 					if (!isArray(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
-					for (var i = 0; i < obj.length; i++) {
+					var ret = [];
+					for (var i = 0, l = obj.length; i < l; i++) {
 						switch (codeToType(obj[i].substring(0, 1))) {
 						case 'undefElem':
-							delete obj[i];
+							// i番目に値を何も入れない場合と、
+							// i番目に値を入れてからdeleteする場合とで
+							// lengthが異なる場合がある。
+							// 最後の要素にundefが明示的に入れられている場合は後者のやりかたでデシリアライズする必要がある
+							ret[i] = undefined;
+							delete ret[i];
 							break;
 						case 'objElem':
 							var extendObj = func(typeToCode('object') + obj[i].substring(1));
-							var tempObj = [];
-							for (var i = 0, l = obj.length - 1; i < l; i++) {
-								tempObj[i] = obj[i];
-							}
-							obj = tempObj;
 							for ( var key in extendObj) {
-								obj[key] = extendObj[key];
+								ret[unescape(key)] = extendObj[key];
 							}
 							break;
 						default:
-							obj[i] = func(obj[i]);
+							ret[i] = func(obj[i]);
 						}
 					}
-					ret = obj;
 					break;
 				case 'object':
 					var obj;
@@ -1140,10 +1223,13 @@
 					if (!$.isPlainObject(obj)) {
 						throwFwError(ERR_CODE_DESERIALIZE_VALUE);
 					}
+					var ret = {};
 					for ( var key in obj) {
-						obj[key] = func(obj[key]);
+						// プロパティキーはエスケープしたものになっている
+						// 元のプロパティキー(エスケープ前)のものに変更して値を持たせる
+						var val = func(obj[key]);
+						ret[unescape(key)] = val;
 					}
-					ret = obj;
 					break;
 				case 'date':
 					ret = new Date(parseInt(ret, 10));
@@ -1211,6 +1297,32 @@
 
 	/**
 	 * 指定された名前空間に存在するオブジェクトを取得します。
+	 * <p>
+	 * 第1引数に名前空間文字列、第2引数にルートオブジェクトを指定します。第2引数を省略した場合はwindowオブジェクトをルートオブジェクトとして扱います。
+	 * </p>
+	 * <p>
+	 * 名前空間文字列はプロパティ名を"."区切りで記述子、ルートオブジェクトからのパスを記述します。また"."区切りの代わりに"[]"を使ってプロパティアクセスを表すことも可能です。
+	 * </p>
+	 *
+	 * <pre class="sh_javascript"><code>
+	 * var rootObj = {
+	 * 	a: {
+	 * 		b: {
+	 * 			c: [{
+	 * 				d: 'hoge'
+	 * 			}]
+	 * 		}
+	 * 	}
+	 * };
+	 * h5.u.obj.getByPath('a.b.c[0].d', rootObj);
+	 * // → hoge
+	 *
+	 * window.hoge = {
+	 * 	obj: rootObj
+	 * };
+	 * h5.u.obj.getByPath('hoge.obj.a.b.c[0].d');
+	 * // → hoge
+	 * </code></pre>
 	 *
 	 * @param {String} namespace 名前空間
 	 * @param {Object} [rootObj=window] 名前空間のルートとなるオブジェクト。デフォルトはwindowオブジェクト。
@@ -1223,6 +1335,15 @@
 		if (!isString(namespace)) {
 			throwFwError(ERR_CODE_NAMESPACE_INVALID, 'h5.u.obj.getByPath()');
 		}
+		// 'ary[0]'のような配列のindex参照の記法に対応するため、'.'記法に変換する
+		namespace = namespace.replace(/\[(\d+)\]/g, function(m, c, index) {
+			if (index) {
+				// 先頭以外の場合は'[]'を外して'.'を付けて返す
+				return '.' + c;
+			}
+			// 先頭の場合は'[]'を外すだけ
+			return c;
+		});
 
 		var names = namespace.split('.');
 		var idx = 0;

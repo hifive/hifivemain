@@ -27,6 +27,28 @@
 	// =============================
 	// Production
 	// =============================
+	/**
+	 * シーン間パラメーター用デフォルトプレフィクス
+	 */
+	var DEFAULT_CLIENT_QUERY_STRING_PREFIX = '';
+
+	/**
+	 * シーン間パラメーター用デフォルトプレフィクス(FW用)
+	 */
+	var DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX = '_h5_';
+
+	/**
+	 * Router 遷移先URL最大長
+	 * <p>
+	 * URL全体がこの値を超えた場合、開発字はエラー、運用時は警告ログを出力。 IEで2084の場合があり、これ以下で、ある程度のバッファを取った。
+	 * </p>
+	 */
+	var URL_MAX_LENGTH = 1800;
+
+	/**
+	 * シーンのデフォルトのヒストリーモード
+	 */
+	var DEFAULT_HISTORY_MODE = 'history';
 
 	// =============================
 	// Development Only
@@ -95,8 +117,7 @@
 		// jQuery1.9以降、GET,POSTの設定はtypeではなくmethodで指定することが推奨されているが、
 		// thisにはtypeにtoUpperCase()されたものが格納されている
 		var type = this.type;
-		if (type === 'POST'
-				|| !(stat === 0 || stat === ERROR_INTERNET_CANNOT_CONNECT)) {
+		if (type === 'POST' || !(stat === 0 || stat === ERROR_INTERNET_CANNOT_CONNECT)) {
 			return false;
 		}
 	}
@@ -311,7 +332,75 @@
 		 * @memberOf h5.settings
 		 * @type String
 		 */
-		trackstartTouchAction: 'none'
+		trackstartTouchAction: 'none',
+
+		/**
+		 * h5.resモジュールの設定
+		 * <p>
+		 * 以下のプロパティの設定を行ってください
+		 * </p>
+		 * <dl>
+		 * <dt>baseUrl</dt>
+		 * <dd>type:string|null</dd>
+		 * <dd>ベースURL。デフォルトはnullで、リソースパス解決時のブラウザのアドレスバーの（ファイル名部分を除いた）パスがカレントパスになります(空文字を指定した場合もnullと同じです)</dd>
+		 * <dt>resolveTimeout</dt>
+		 * <dd>type:integer</dd>
+		 * <dd>タイムアウト時間設定(ms)を設定。タイムアウトに設定された時間待機して、依存解決ができない場合、resolve()は失敗します。デフォルトは10000(10秒)です。</dd>
+		 * </dl>
+		 *
+		 * @memberOf h5.settings
+		 * @type Object
+		 */
+		res: {
+			baseUrl: null,
+			resolveTimeout: 10000
+		},
+
+		// TODO autoInitがtrueの場合のみinit
+		// TODO(鈴木) 暫定。とりあえず設定を有効化しました
+		/**
+		 * シーン機能の設定
+		 * <p>
+		 * 以下のプロパティの設定を行ってください。
+		 * </p>
+		 * <dl>
+		 * <dt>followTitle</dt>
+		 * <dd>type:boolean</dd>
+		 * <dd>メインシーンコンテナでブラウザタイトルの追従を行うか(デフォルトtrue)</dd>
+		 * <dt>clientQueryStringPrefix</dt>
+		 * <dd>type:string</dd>
+		 * <dd>シーン遷移パラメーター識別用プレフィクス。デフォルト空文字</dd>
+		 * <dt>clientFWQueryStringPrefix</dt>
+		 * <dd>type:string</dd>
+		 * <dd>シーン遷移パラメーター識別用プレフィクス(FW用)。デフォルト"_h5_"</dd>
+		 * <dt>urlHistoryMode</dt>
+		 * <dd>type:string</dd>
+		 * <dd>メインシーンコンテナURL履歴保持方法({@link h5.scene.urlHistoryMode}参照)。デフォルトは"'history"</dd>
+		 * <dt>urlMaxLength</dt>
+		 * <dd>type:integer</dd>
+		 * <dd>シーン遷移先URL最大長。デフォルト1800</dd>
+		 * <dt>baseUrl</dt>
+		 * <dd>type:string|null</dd>
+		 * <dd>ベースURL。デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)</dd>
+		 * <dt>autoInit</dt>
+		 * <dd>type:boolean</dd>
+		 * <dd>ページロード時にドキュメント全体を探索して、DATA属性によるコントローラーバインドとシーンコンテナ生成を行うかどうか。デフォルトfalse</dd>
+		 * </dl>
+		 *
+		 * @memberOf h5.settings
+		 * @name scene
+		 * @type {Object}
+		 */
+		scene: {
+			// デフォルト設定を記述
+			followTitle: true,
+			clientQueryStringPrefix: DEFAULT_CLIENT_QUERY_STRING_PREFIX,
+			clientFWQueryStringPrefix: DEFAULT_CLIENT_FW_QUERY_STRING_PREFIX,
+			urlHistoryMode: DEFAULT_HISTORY_MODE,
+			urlMaxLength: URL_MAX_LENGTH,
+			baseUrl: null,
+			autoInit: false
+		}
 	};
 
 	// h5preinitでglobalAspectsの設定をしている関係上、別ファイルではなく、ここに置いている。

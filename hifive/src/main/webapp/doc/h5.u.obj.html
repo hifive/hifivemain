@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Namespace: obj</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+
+    <script src="scripts/jquery.js"> </script>
+    <script src="scripts/extension.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+</head>
+
+<body>
+<div id="container">
+	<nav>
+		<div class="module-search-header">
+		   	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+			<div class="h5-searchBox">
+				<input type="text" placeholder="Search...">
+				<button class="clear">×</button>
+			</div>
+		</div>
+		<div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+		<div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+		<div class="module-list-wrapper hidden-mobile">
+		    <h3>Classes</h3><ul><li><a href="Binding.html">Binding</a></li><li><a href="CacheManager.html">CacheManager</a></li><li><a href="ConsoleLogTarget.html">ConsoleLogTarget</a></li><li><a href="Controller.html">Controller</a></li><li><a href="ControllerManager.html">ControllerManager</a></li><li><a href="DatabaseWrapper.html">DatabaseWrapper</a></li><li><a href="DataItem.html">DataItem</a></li><li><a href="DataModel.html">DataModel</a></li><li><a href="DataModelManager.html">DataModelManager</a></li><li><a href="Del.html">Del</a></li><li><a href="Dependency.html">Dependency</a></li><li><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></li><li><a href="h5.ui.FormController.html">h5.ui.FormController</a></li><li><a href="h5.ui.validation.AsyncIndicator.html">h5.ui.validation.AsyncIndicator</a></li><li><a href="h5.ui.validation.BootstrapErrorBaloon.html">h5.ui.validation.BootstrapErrorBaloon</a></li><li><a href="h5.ui.validation.Composition.html">h5.ui.validation.Composition</a></li><li><a href="h5.ui.validation.ErrorBaloon.html">h5.ui.validation.ErrorBaloon</a></li><li><a href="h5.ui.validation.Message.html">h5.ui.validation.Message</a></li><li><a href="h5.ui.validation.MessageOutputController.html">h5.ui.validation.MessageOutputController</a></li><li><a href="h5.ui.validation.Style.html">h5.ui.validation.Style</a></li><li><a href="h5.validation.FormValidationLogic.html">h5.validation.FormValidationLogic</a></li><li><a href="Indicator.html">Indicator</a></li><li><a href="Insert.html">Insert</a></li><li><a href="JqXHRWrapper.html">JqXHRWrapper</a></li><li><a href="Log.html">Log</a></li><li><a href="Logic.html">Logic</a></li><li><a href="Mixin.html">Mixin</a></li><li><a href="ObservableArray.html">ObservableArray</a></li><li><a href="ObservableItem.html">ObservableItem</a></li><li><a href="Query.html">Query</a></li><li><a href="QueryResult.html">QueryResult</a></li><li><a href="SceneContainerController.html">SceneContainerController</a></li><li><a href="Select.html">Select</a></li><li><a href="Sequence.html">Sequence</a></li><li><a href="Sql.html">Sql</a></li><li><a href="Statement.html">Statement</a></li><li><a href="TransactionalExecutor.html">TransactionalExecutor</a></li><li><a href="Update.html">Update</a></li><li><a href="ValidationResult.html">ValidationResult</a></li><li><a href="View.html">View</a></li><li><a href="WatchPositionPromise.html">WatchPositionPromise</a></li><li><a href="WebSqlDatabase.html">WebSqlDatabase</a></li></ul><h3>Namespaces</h3><ul><li><a href="h5.html">h5</a></li><li><a href="h5.api.html">h5.api</a></li><li><a href="h5.api.geo.html">h5.api.geo</a></li><li><a href="h5.api.sqldb.html">h5.api.sqldb</a></li><li><a href="h5.api.storage.html">h5.api.storage</a></li><li><a href="h5.api.storage.local.html">h5.api.storage.local</a></li><li><a href="h5.api.storage.session.html">h5.api.storage.session</a></li><li><a href="h5.async.html">h5.async</a></li><li><a href="h5.core.html">h5.core</a></li><li><a href="h5.core.data.html">h5.core.data</a></li><li><a href="h5.core.interceptor.html">h5.core.interceptor</a></li><li><a href="h5.core.view.html">h5.core.view</a></li><li><a href="h5.dev.api.geo.html">h5.dev.api.geo</a></li><li><a href="h5.env.html">h5.env</a></li><li><a href="h5.env.ua.html">h5.env.ua</a></li><li><a href="h5.log.html">h5.log</a></li><li><a href="h5.mixin.html">h5.mixin</a></li><li><a href="h5.res.html">h5.res</a></li><li><a href="h5.scene.html">h5.scene</a></li><li><a href="h5.settings.html">h5.settings</a></li><li><a href="h5.u.html">h5.u</a></li><li><a href="h5.u.obj.html">h5.u.obj</a></li><li><a href="h5.u.str.html">h5.u.str</a></li><li><a href="h5.ui.html">h5.ui</a></li><li><a href="h5.ui.components.BaloonController.html">h5.ui.components.BaloonController</a></li><li><a href="h5.ui.jqm.html">h5.ui.jqm</a></li><li><a href="h5.ui.jqm.manager.html">h5.ui.jqm.manager</a></li><li><a href="h5.validation.html">h5.validation</a></li></ul><h3>Mixins</h3><ul><li><a href="EventDispatcher.html">EventDispatcher</a></li></ul>
+	    </div>
+	</nav>
+	<div id="main">
+	    <h1 class="page-title">Namespace: obj</h1>
+	    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+            <span class="ancestors"><a href="h5.html">h5</a><a href="h5.u.html">.u</a>.</span>
+        
+        obj
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line1458">line 1458</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id=".argsToArray"><span class="type-signature">(static) </span>argsToArray<span class="signature">(args)</span><span class="type-signature"> &rarr; {Array.&lt;Any>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    argumentsを配列に変換します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Arguments</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Arguments</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    argumentsを変換した配列
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;Any></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line1285">line 1285</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".deserialize"><span class="type-signature">(static) </span>deserialize<span class="signature">(value)</span><span class="type-signature"> &rarr; {Any}</span></h4>
+
+    
+
+
+
+<div class="description">
+    型情報が付与された文字列をオブジェクトを復元します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">型情報が付与された文字列</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    復元されたオブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Any</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line1055">line 1055</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".expose"><span class="type-signature">(static) </span>expose<span class="signature">(namespace, obj)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    指定された名前空間に、オブジェクトの各プロパティをそれぞれ対応するキー名で公開（グローバルからたどれる状態に）します。<p><ul><li>指定された名前空間が既に存在する場合は、その名前空間に対してプロパティを追加します。</li><li>指定された名前空間にプロパティが存在する場合は、『上書きは行われず』例外が発生します。。</li></ul>実行例:<pre>expose('sample.namespace', {	funcA: function() {		return 'test';	},	value1: 10});</pre>実行結果:&nbsp;(window.は省略可)<br>alert(window.sample.namespace.funcA) -&gt; "test"と表示。<br>alert(window.sample.namespace.value1) -&gt; 10と表示。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>namespace</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">名前空間</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>obj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">グローバルに公開したいプロパティをもつオブジェクト</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line409">line 409</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".getByPath"><span class="type-signature">(static) </span>getByPath<span class="signature">(namespace, rootObj<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Any}</span></h4>
+
+    
+
+
+
+<div class="description">
+    指定された名前空間に存在するオブジェクトを取得します。<p>第1引数に名前空間文字列、第2引数にルートオブジェクトを指定します。第2引数を省略した場合はwindowオブジェクトをルートオブジェクトとして扱います。</p><p>名前空間文字列はプロパティ名を"."区切りで記述子、ルートオブジェクトからのパスを記述します。また"."区切りの代わりに"[]"を使ってプロパティアクセスを表すことも可能です。</p><pre class="sh_javascript"><code>var rootObj = {	a: {		b: {			c: [{				d: 'hoge'			}]		}	}};h5.u.obj.getByPath('a.b.c[0].d', rootObj);// → hogewindow.hoge = {	obj: rootObj};h5.u.obj.getByPath('hoge.obj.a.b.c[0].d');// → hoge</code></pre>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>namespace</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">名前空間</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rootObj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    window
+                
+                </td>
+            
+
+            <td class="description last">名前空間のルートとなるオブジェクト。デフォルトはwindowオブジェクト。</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    その名前空間に存在するオブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Any</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line1298">line 1298</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".isJQueryObject"><span class="type-signature">(static) </span>isJQueryObject<span class="signature">(obj)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+
+    
+
+
+
+<div class="description">
+    オブジェクトがjQueryオブジェクトかどうかを返します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>obj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">オブジェクト</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    jQueryオブジェクトかどうか
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line1269">line 1269</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".ns"><span class="type-signature">(static) </span>ns<span class="signature">(namespace)</span><span class="type-signature"> &rarr; {Object}</span></h4>
+
+    
+
+
+
+<div class="description">
+    ドット区切りで名前空間オブジェクトを生成します。（h5.u.obj.ns('sample.namespace')と呼ぶと、window.sample.namespaceとオブジェクトを生成します。）すでにオブジェクトが存在した場合は、それをそのまま使用します。 引数にString以外、または、識別子として不適切な文字列が渡された場合はエラーとします。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>namespace</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">名前空間</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    作成した名前空間オブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line354">line 354</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".serialize"><span class="type-signature">(static) </span>serialize<span class="signature">(value)</span><span class="type-signature"> &rarr; {String}</span></h4>
+
+    
+
+
+
+<div class="description">
+    オブジェクトを、型情報を付与した文字列に変換します。<p>このメソッドが判定可能な型は、以下のとおりです。<ul><li>string(文字列)<li>number(数値)<li>boolean(真偽値)<li>String(文字列のラッパークラス型)<li>Number(数値のラッパークラス型)<li>Boolean(真偽値のラッパークラス型)<li>array(配列)<li>object(プレーンオブジェクト [new Object() または {…} のリテラルで作られたオブジェクト])<li>Date(日付)<li>RegExp(正規表現)<li>undefined<li>null<li>NaN<li>Infinity<li>-Infinity</ul><p>このメソッドで文字列化したオブジェクトは<a href="#deserialize">deseriarize</a>メソッドで元に戻すことができます。</p><p>object型はプレーンオブジェクトとしてシリアライズします。 渡されたオブジェクトがプレーンオブジェクトで無い場合、そのprototypeやconstructorは無視します。</p><p>array型は連想配列として保持されているプロパティもシリアライズします。</p><p>循環参照を含むarray型およびobject型はシリアライズできません。例外をスローします。</p><p>内部に同一インスタンスを持つarray型またはobject型は、別インスタンスとしてシリアライズします。以下のようなarray型オブジェクトaにおいて、a[0]とa[1]が同一インスタンスであるという情報は保存しません。<pre>a = [];a[0] = a[1] = [];</pre></p><h4>注意</h4><p>function型のオブジェクトは<b>変換できません</b>。例外をスローします。array型にfunction型のオブジェクトが存在する場合は、undefinedとしてシリアライズします。object型または連想配列にfunction型のオブジェクトが存在する場合は、無視します。</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">オブジェクト</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    型情報を付与した文字列
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">String</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.u.js.html">src/h5.u.js</a>, <a href="src_h5.u.js.html#line842">line 842</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+	</div>
+
+	<br class="clear">
+
+	<footer>
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 20:54:06 GMT+0900 (JST)
+	</footer>
+</div>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

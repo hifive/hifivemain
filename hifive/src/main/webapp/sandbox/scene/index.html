@@ -1,0 +1,297 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+<script src="/hifive-res/ext/jquery/jquery-1.11.1.js"></script>
+
+<script src="../../archives/current/ejs-h5mod.js"></script>
+
+<link rel="stylesheet" href="../../archives/current/h5.css" />
+
+
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+	H5_TEST_ENV.buildType = 'src'; // 各ソースファイルを使用
+</script>
+<script src="../../test/loadScriptForTest.js"></script>
+
+<style>
+.tooltip {
+	border: 1px solid #ccc;
+	height: 500px;
+	width: 500px;
+	cursor: pointer;
+}
+
+.scene1 {
+	border: 2px solid #cc0;
+}
+
+.scene1.inAnimation {
+	border-style: dashed
+}
+
+.scene2 {
+	width: 300px;
+	border: 2px solid #eec;
+	background-color: #fff;
+	box-shadow: 5px 5px 5px 5px rgba(0, 0, 0, 0.4);
+}
+
+.arrowWrapper {
+	position: relative;
+	margin: auto;
+	width: 300px;
+	padding: 10px;
+	border: 1px solid #ccc;
+	text-align: center;
+}
+
+/* 吹き出しのスタイル定義(arrowbox.cssから) */
+/* 吹き出し(共通) */
+.h5arrowbox {
+	padding: 5px;
+	position: absolute;
+	background: #ffffee;
+	border: 1px solid #124;
+	display: none;
+}
+
+/* 吹き出し(上) */
+.h5arrowbox.up:after,.h5arrowbox.up:before {
+	top: 100%;
+	left: 50%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.h5arrowbox.up:after {
+	border-color: rgba(255, 255, 238, 0);
+	border-top-color: #ffffee;
+	border-width: 30px;
+	margin-left: -30px;
+}
+
+.h5arrowbox.up:before {
+	border-color: rgba(21, 34, 66, 0);
+	border-top-color: #152242;
+	border-width: 31px;
+	margin-left: -31px;
+}
+
+/** 吹き出し(下) **/
+.h5arrowbox.down:after,.h5arrowbox.down:before {
+	bottom: 100%;
+	left: 50%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.h5arrowbox.down:after {
+	border-color: rgba(255, 255, 238, 0);
+	border-bottom-color: #ffffee;
+	border-width: 30px;
+	margin-left: -30px;
+}
+
+.h5arrowbox.down:before {
+	border-color: rgba(21, 34, 66, 0);
+	border-bottom-color: #152242;
+	border-width: 31px;
+	margin-left: -31px;
+}
+
+/** 吹き出し(左) **/
+.h5arrowbox.left:after,.h5arrowbox.left:before {
+	left: 100%;
+	top: 50%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.h5arrowbox.left:after {
+	border-color: rgba(255, 255, 238, 0);
+	border-left-color: #ffffee;
+	border-width: 30px;
+	margin-top: -30px;
+}
+
+.h5arrowbox.left:before {
+	border-color: rgba(21, 34, 66, 0);
+	border-left-color: #152242;
+	border-width: 31px;
+	margin-top: -31px;
+}
+
+/** 吹き出し(右) **/
+.h5arrowbox.right:after,.h5arrowbox.right:before {
+	right: 100%;
+	top: 50%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.h5arrowbox.right:after {
+	border-color: rgba(255, 255, 238, 0);
+	border-right-color: #ffffee;
+	border-width: 30px;
+	margin-top: -30px;
+}
+
+.h5arrowbox.right:before {
+	border-color: rgba(21, 34, 66, 0);
+	border-right-color: #152242;
+	border-width: 31px;
+	margin-top: -31px;
+}
+
+/** ------------------ オーバレイ ------------------ **/
+.h5PopupOverlay {
+	position: absolute;
+	background-color: #000;
+	opacity: 0.6;
+	filter: alpha(opacity = 60);
+	height: 100%;
+	width: 100%;
+	border: none;
+	margin: 0px;
+	padding: 0px;
+	top: 0;
+	left: 0;
+	z-index: 9998;
+}
+</style>
+<script>
+	$(function() {
+		h5.core.controller('body', {
+			__name: 'sample',
+			__templates: 'tmplate/scene.ejs',
+			_scene1: null,
+			'.tooltip click': function(context, $el) {
+				var ev = context.event;
+				var x = ev.offsetX;
+				var y = ev.offsetY;
+				var scene = this._scene1 || h5.scene.createScene(this.view.get('scene1'));
+				this._scene1 = scene;
+				var position = {
+					top: y,
+					left: x
+				};
+				scene.setContent(this.view.get('code_x-y', position));
+				scene.show({
+					position: position,
+					rootElement: $el
+				});
+			},
+			'.scene1 click': function(context) {
+				context.event.stopPropagation();
+			},
+			'.arrowWrapper .btn click': function(context, $el) {
+				var direction = $el.data('direction');
+				var $target = this.$find('.arrowWrapper');
+				var sceneId = $el.data('h5scene-id');
+				var scene;
+				if (sceneId) {
+					scene = h5.scene.getSceneById(sceneId);
+				} else {
+					scene = h5.scene.createScene(this.view.get('arrow'), 'arrow');
+					sceneId = scene.id;
+					$el.data('h5scene-id', sceneId);
+				}
+
+				// 吹き出しの表示
+				scene.show({
+					target: $target,
+					direction: direction,
+					rootElement: this.rootElement
+				});
+			},
+			'.close-btn click': function(context, $el) {
+				var id = $el.parents('.h5scene').data('h5scene-id');
+				var scene = h5.scene.getSceneById(id);
+				scene.hide();
+			},
+			'.popup click': function(context, $el) {
+				var top = $el.data('top');
+				var left = $el.data('left');
+				var position = {
+					top: top,
+					left: left
+				};
+				var scene = h5.scene.createScene(this.view.get('scene2'));
+				scene.setContent(this.view.get('code_top-left', position));
+				scene.show({
+					modal: true,
+					position: position
+				});
+			},
+			'{window} resize': function() {
+				this._refresh();
+			},
+			'{window} orientationchange': function() {
+				this._refresh();
+			},
+			_refresh: function() {
+				// 現在表示されている吹き出しとscene2のシーンについて、animation:falseでリフレッシュする
+				$('.h5scene.h5arrowbox:not(.hidden)').add('.h5scene.scene2:not(.hidden)').each(
+						function() {
+							h5.scene.getSceneById($(this).data('h5scene-id')).reflesh({
+								animation: false
+							});
+						});
+			}
+		});
+	});
+</script>
+<title>h5.scene</title>
+</head>
+<body>
+	<div class="tooltip">
+		<p>クリックした場所にシーンを表示</p>
+	</div>
+	<div class="arrowWrapper">
+		<button class="btn" data-direction="up">上</button>
+		<button class="btn" data-direction="right">右</button>
+		<button class="btn" data-direction="down">下</button>
+		<button class="btn" data-direction="left">左</button>
+	</div>
+	<div class="modal">
+		<div class="sample-wrap">
+			<label>中央表示</label><br>
+			<button class="popup" data-top="middle" data-left="center">開く</button>
+		</div>
+		<div class="sample-wrap">
+			<label>上部真ん中</label><br>
+			<button class="popup" data-top="top" data-left="center">開く</button>
+		</div>
+		<div class="sample-wrap">
+			<label>右下</label><br>
+			<button class="popup" data-top="bottom" data-left="right">開く</button>
+		</div>
+		<div class="sample-wrap">
+			<label>上から30px、中央</label><br>
+			<button class="popup" data-top="30px" data-left="center">開く</button>
+		</div>
+	</div>
+</body>
+</html>

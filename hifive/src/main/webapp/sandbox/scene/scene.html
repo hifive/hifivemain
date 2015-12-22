@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+<script src="/hifive-res/ext/jquery/jquery-1.11.1.js"></script>
+
+<script src="../../archives/current/ejs-h5mod.js"></script>
+
+<link rel="stylesheet" href="../../archives/current/h5.css" />
+
+
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+	H5_TEST_ENV.buildType = 'src'; // 各ソースファイルを使用
+
+	// メインシーンにするかどうか設定
+	var isMain = true;
+</script>
+<script src="../../test/loadScriptForTest.js"></script>
+
+<link rel="stylesheet" href="sample.css" />
+<script src="sample.js"></script>
+<script type="text/ejs" id="nav">
+	<div >
+		<label>navigate</label>
+		<button class="navigate" data-target="sample.SampleSceneController">SampleSceneへ</button>
+		<button class="navigate" data-target="/hifive/sandbox/scene/scenes/scene1.html">scene1.htmlへ</button>
+		<button class="navigate" data-target="/hifive/sandbox/scene/scenes/scene2.html">scene2.htmlへ</button>
+	</div>
+</script>
+<title>h5.sceneサンプル</title>
+</head>
+<body>
+	<a href="/hifive/sandbox/scene/scene.html">isMain=false</a>
+	<a href="/hifive/sandbox/scene/scene.html?isMain=true">isMain=true</a>
+	<div id="hoge" class="container">
+		<div data-controller="hoge" data-h5-controller="SampleController" data-title="初期ページ">
+			<p>hoge</p>
+		</div>
+	</div>
+	<button class="reload">リロード</button>
+	<br>
+	<input type="text" name="title-test" style="width: 400px"
+		placeholder="タイトル指定動作確認用。ここに入力したタイトルになります">
+	<button class="setTitle">setTitle(title)</button>
+	<br>
+	<button class="getTitle">getTitle()</button>
+	<div class="container-methods"></div>
+</body>
+</html>

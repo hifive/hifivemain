@@ -1,0 +1,90 @@
+/*
+ * Copyright (C) 2012-2015 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * hifive
+ *   version ${version}
+#if (${gitCommitId})
+ *   gitCommitId : ${gitCommitId}
+#end
+ *   build at ${time}
+ *   (${moduleNames})
+ */
+(function($){
+
+	// =========================================================================
+	//
+	// Prelude
+	//
+	// =========================================================================
+
+	var savedH5 = undefined;
+
+	//h5存在チェック
+	if (window.h5) {
+		if (window.h5.env && (window.h5.env.version === '${version}')) {
+			// 既にロード済みのhifiveと同じバージョンをロードしようとした場合は何もしない
+			return;
+		}
+		//coexistのために既存のh5を退避
+		savedH5 = window.h5;
+	}
+
+	// h5空間を新規に作成。クロージャでくるんでいるので
+	// 以降の各モジュールが見るh5はここで定義された(新しい)h5になる
+	var h5 = {};
+
+	// =============================
+	// Expose to window
+	// =============================
+
+	window.h5 = h5;
+
+	h5.coexist = function() {
+		window.h5 = savedH5;
+		return h5;
+	};
+
+	h5.env = {
+		version: '${version}'
+	};
+
+	// =========================================================================
+	//
+	// Extenal Library
+	//
+	// =========================================================================
+
+#foreach($file in $ejss)
+${file}
+#end
+
+	// =========================================================================
+	//
+	// Modules
+	//
+	// =========================================================================
+
+
+#foreach($file in $files)
+${file}
+#end
+
+	/* del begin */
+	var fwLogger = h5.log.createLogger('h5');
+	fwLogger.info('開発版のhifive(ver.{0})の読み込みが完了しました。リリース時はMinify版（h5.js）を使用してください。', h5.env.version);
+	fwLogger.info('hifive内部で使用されるjQueryのバージョン：{0}', $.fn.jquery);
+	/* del end */
+
+})(jQuery);

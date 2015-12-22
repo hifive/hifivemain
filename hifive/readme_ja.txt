@@ -27,8 +27,8 @@ hifiveのコア部分の開発用です。
    hifive/build_for_js.xmlを右クリック -> 実行 -> Antビルド
 
   バージョンを入力(任意)すると
-  hifive/src/main/webapp/release/
-    ejs.js
+  hifive/src/main/webapp/archives/current/
+    ejs-h5mod.js
     h5.css
     h5.dev.js
     h5.js

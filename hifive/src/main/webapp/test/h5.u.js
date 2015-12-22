@@ -32,11 +32,6 @@ $(function() {
 	//=============================
 	// Variables
 	//=============================
-
-	// testutils
-	var deleteProperty = testutils.u.deleteProperty;
-	var clearController = testutils.u.clearController;
-
 	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR_U.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR_U = ERRCODE.h5.u;
 
@@ -48,6 +43,9 @@ $(function() {
 	//=============================
 	// Functions
 	//=============================
+	// testutils
+	var deleteProperty = testutils.u.deleteProperty;
+	var clearController = h5devtestutils.controller.clearController;
 
 	// =========================================================================
 	//
@@ -344,18 +342,59 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('文字列のフォーマット', 5, function() {
+	test('数値と可変長引数の指定', function() {
+		var format = h5.u.str.format;
 		var str = 'このテストは、{0}によって実行されています。{1}するはず、です。{0}いいですね。';
 		strictEqual(h5.u.str.format(str, 'qUnit', '成功'),
 				'このテストは、qUnitによって実行されています。成功するはず、です。qUnitいいですね。', '文字列がフォーマットされること。');
 
-		strictEqual('', h5.u.str.format(null, 1), 'nullを渡すと空文字列が返るか');
-		strictEqual('', h5.u.str.format(undefined), 'undefinedを渡すと空文字列が返るか');
-		strictEqual('nullが渡されました。', h5.u.str.format('{0}が渡されました。', null),
+		strictEqual(format(null, 1), '', 'nullを渡すと空文字列が返るか');
+		strictEqual(format(undefined), '', 'undefinedを渡すと空文字列が返るか');
+		strictEqual(h5.u.str.format('{0}が渡されました。', null), 'nullが渡されました。',
 				'パラメータとしてnullを渡すと"null"という文字列になっているか');
-		strictEqual('undefinedが渡されました。', h5.u.str.format('{0}が渡されました。', undefined),
+		strictEqual(h5.u.str.format('{0}が渡されました。', undefined), 'undefinedが渡されました。',
 				'パラメータとしてundefinedを渡すと"undefined"という文字列になっているか');
+
+		var ary = [2, 3, 5];
+		strictEqual(format('{0}', ary), ary.toString(), '配列を渡した場合にtoString()結果が返ってくること');
+		function A() {
+			this.toString = function() {
+				return 'A';
+			};
+		}
+		strictEqual(format('{0}', new A()), 'A', 'オブジェクトを渡した場合にtoString()結果が返ってくること');
 	});
+
+	test('オブジェクトのプロパティ',
+			function() {
+				var format = h5.u.str.format;
+				var obj1 = {
+					name: 'a',
+					id: 1,
+					u: undefined,
+					n: null
+				};
+				obj1[0] = '0をキーとする値';
+				var obj2 = {
+					hoge: 'h',
+					fuga: 'f',
+					obj1: obj1
+				};
+				var ary = ['A', 'B', 'C', 'D', obj2];
+				strictEqual(format('{0.name}{0.id}{1.hoge}{1.fuga}', obj1, obj2), 'a1hf',
+						'オブジェクトの中身を埋め込める');
+				strictEqual(format('{0.name}{0.id}{2}{1.hoge}{1.fuga}', obj1, obj2, '/'), 'a1/hf',
+						'インデックス指定とオブジェクトのプロパティ指定を混合できる');
+				strictEqual(format('{0.obj1.name}', obj2), 'a', 'オブジェクトの入れ子をたどれる');
+				strictEqual(format('{0[0]}/{0[1]}', ary), 'A/B', '配列のindexを指定できる');
+				strictEqual(format('{0.length}', ary), '' + ary.length, '配列のlengthプロパティを指定できる');
+				strictEqual(format('{0[4].obj1.name}', ary), 'a', '配列の中のオブジェクトをたどれる');
+				strictEqual(format('{name}{id}', obj1), 'a1', '0.は省略できる');
+				strictEqual(format('{0.n}', obj1), 'null', 'nullの値を持つプロパティは"null"');
+				strictEqual(format('{0.u}', obj1), 'undefined', 'undefinedの値を持つプロパティは"undefined"');
+				strictEqual(format('{0.a}', obj1), 'undefined', '存在しないプロパティは"undefined"');
+				strictEqual(format('{0.a.b}', obj1), 'undefined', '辿れないプロパティは"undefined"');
+			});
 
 	//=============================
 	// Definition
@@ -1020,6 +1059,25 @@ $(function() {
 		deepEqual(objs, undefined, '指定した名前空間に何も存在しないので、undefinedが取得できること。');
 	});
 
+	test(
+			'配列記法',
+			function() {
+				var root = {
+					obj: {
+						ary: [{
+							name: 'Taro'
+						}]
+					},
+					ary: ['A', 'B', ['AA']]
+				};
+				strictEqual(h5.u.obj.getByPath('ary[1]', root), 'B', '配列内の要素アクセスできること');
+				strictEqual(h5.u.obj.getByPath('ary[2][0]', root), 'AA',
+						'2重配列(ネストした配列)内の要素アクセスできること');
+				strictEqual(h5.u.obj.getByPath('obj.ary[0].name', root), 'Taro',
+						'オブジェクト内の配列内の要素にアクセスできること');
+				strictEqual(h5.u.obj.getByPath('[1]', root.ary), 'B', '配列index指定が先頭にある場合も値を取得できること');
+			});
+
 	//=============================
 	// Definition
 	//=============================
@@ -1427,6 +1485,26 @@ $(function() {
 			strictEqual(deserialized.hasOwnProperty(i), array.hasOwnProperty(i),
 					"シリアライズしてデシリアライズした配列のhasOwnProperty()の値が各要素で同じ。" + i);
 		}
+	});
+
+	test('プロパティキーに特殊文字を含むオブジェクトまたは連想配列をシリアライズ・デシリアライズできること', function() {
+		var prop = '"\'\\\n\r\b\f\t ';
+		var obj = {};
+		obj[prop] = 1;
+		var nested = {};
+		nested[prop] = 2;
+		obj[prop + '-nested'] = nested;
+		var ary = [];
+		ary[prop] = 2;
+		ary[prop + '-nested'] = nested;
+
+		var serialized = h5.u.obj.serialize(obj);
+		var deserialized = h5.u.obj.deserialize(serialized);
+		deepEqual(deserialized, obj, "シリアライズしてデシリアライズしたオブジェクトが元のオブジェクトと同じ");
+
+		serialized = h5.u.obj.serialize(ary);
+		deserialized = h5.u.obj.deserialize(serialized);
+		deepEqual(deserialized, ary, "シリアライズしてデシリアライズした配列が元の配列と同じ");
 	});
 
 	test('プロトタイプの中身はシリアライズ化されないこと', 1, function() {

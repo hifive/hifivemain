@@ -1,6 +1,6 @@
 @charset "utf-8";
 /*
- * Copyright (C) 2012-2014 NS Solutions Corporation
+ * Copyright (C) 2012-2015 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,28 @@
  *
  * hifive css
  *   version 0.0.1
- *   gitCommitId : 587bce5de3d2dcc2e2a7fd62e5c4cdc28074e6eb
- *   build at 2014/03/25 11:45:35.052 (+0900)
- *   (util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage)
+ *   gitCommitId : b238dad43561cef1f12773b192564f67541506bb
+ *   build at 2015/12/22 21:00:45.791 (+0900)
+ *   (scopedglobals,util,async,resource,controller,dataModel,view,modelWithBinding,validation,ui,api.geo,api.sqldb,api.storage,scene)
  */
-
-
 /* インジケータ オーバーレイDIV,メッセージDIV 共通設定 */
 .h5-indicator {
 	text-align: center;
 	padding: 5px 10px 5px 10px;
 	white-space: nowarp;
 	cursor: wait;
+}
+
+/* インジケータ オーバレイDIV */
+.h5-indicator.overlay {
+	height: 100%;
+	width: 100%;
+	border: none;
+	margin: 0px;
+	padding: 0px;
+	top: 0;
+	left: 0;
+	z-index: 1001;
 }
 
 /* インジケータメッセージDIV - スロバーSPAN */
@@ -114,7 +124,7 @@ div.a.throbber-line {
 }
 
 /** no-prefix (IE10) */
-@-keyframes rotateThrobber {
+@keyframes rotateThrobber {
     from {transform: rotate(0deg);}
     to {transform: rotate(360deg);}
 }
@@ -164,14 +174,6 @@ div.a.throbber-line {
 	background-color: #000;
 	opacity: 0.6;
 	filter: alpha(opacity=60);
-	height: 100%;
-	width: 100%;
-	border: none;
-	margin: 0px;
-	padding: 0px;
-	top: 0;
-	left: 0;
-	z-index: 1001;
 }
 
 /* メッセージDIV */

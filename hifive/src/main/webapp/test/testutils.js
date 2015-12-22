@@ -83,15 +83,17 @@
 	}
 
 	/**
-	 * バージョン文字列の大小を比較する関数(hifive[h5.ui.jqm.manager.js]から引用)
-	 * <p>
-	 * '1.11.0', '1.9.9'のような'.'区切りのバージョン文字列を比較して、第1引数の方が小さければ-1、同じなら0、第2引数の方が小さければ1 を返す。
-	 * </p>
+	 * 2つの数値の差が誤差範囲内に収まっているかどうかを返す
 	 *
-	 * @param {String} a バージョン文字列
-	 * @param {String} b バージョン文字列
-	 * @returns {Integer} 比較結果。aがbより小さいなら-1、同じなら0、aがbより大きいなら1 を返す
+	 * @param {Number} x
+	 * @param {Number} y
+	 * @param {Number} [tolerance=1] 誤差
+	 * @returns {Boolean} tolerance以下の差ならtrue
 	 */
+	function nearEqual(x, y, tolerance) {
+		return Math.abs(x - y) < (tolerance == null ? 1 : tolerance);
+	}
+
 	/**
 	 * バージョン文字列の大小を比較する関数
 	 * <p>
@@ -154,28 +156,45 @@
 	}
 
 	/**
-	 * コントローラがdisposeされているかどうかチェックします
+	 * 相対URLを絶対URLに変換します(h5scopeglobalsからコピペ)
 	 *
-	 * @param controller
-	 * @returns {Boolean}
+	 * @param {String} relativePath 相対URL
+	 * @returns {String} 絶対パス
 	 */
-	function isDisposed(controller) {
-		var ret = true;
-		for ( var p in controller) {
-			if (controller.hasOwnProperty(p) && controller[p] !== null) {
-				ret = false;
+	var toAbsoluteUrl = (function() {
+		var a = null;
+		var span = null;
+		var isHrefPropAbsoluteFlag = null;
+		function isHrefPropAbsolute() {
+			if (isHrefPropAbsoluteFlag === null) {
+				a.setAttribute('href', './');
+				isHrefPropAbsoluteFlag = a.href !== './';
 			}
+			return isHrefPropAbsoluteFlag;
 		}
-		return ret;
-	}
+		return function(relativePath) {
+			if (!a) {
+				// a.hrefを使わない場合でも、a.hrefが使えるかどうかの判定でa要素を使用するので、最初の呼び出し時に必ずa要素を作る
+				a = document.createElement('a');
+			}
+			if (isHrefPropAbsolute()) {
+				a.setAttribute('href', relativePath);
+				return a.href;
+			}
+			// a.hrefが絶対パスにならない場合はinnerHTMLを使う
+			if (!span) {
+				span = document.createElement('span');
+			}
+			span.innerHTML = '<a href="' + relativePath + '" />';
+			return span.firstChild.href;
+		};
+	})();
 
 	/**
-	 * #qunit-fixtur内にバインドされているコントローラをdisposeして、コントローラキャッシュ、ロジックキャッシュをクリアする
+	 * バインドされている全てのコントローラをdisposeして、コントローラキャッシュ、ロジックキャッシュをクリアする
 	 */
 	function clearController() {
-		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
-			deep: true
-		});
+		var controllers = h5.core.controllerManager.getAllControllers();
 		for (var i = controllers.length - 1; i >= 0; i--) {
 			controllers[i].dispose();
 		}
@@ -280,6 +299,37 @@
 		}
 		w.close();
 		return dfd.promise();
+	}
+
+	/**
+	 * リクエストパラメータをパースしてオブジェクトを返す
+	 *
+	 * @returns {Object}
+	 */
+	function parseRequestParameter() {
+		var paramsStr = window.location.search;
+		// リクエストパラメータからオブジェクトを生成する
+		var ret = {};
+		if (paramsStr === '') {
+			return ret;
+		}
+		var paramsArray = paramsStr.substring(1).split('&');
+
+		for (var i = 0, l = paramsArray.length; i < l; i++) {
+			var keyVal = paramsArray[i].split('=');
+			var namespace = keyVal[0];
+			var val = keyVal[1];
+			var names = namespace.split('.');
+			var cursor = ret;
+			for (var j = 0, len = names.length; j < len - 1; j++) {
+				if (cursor[names[j]] == null) { // nullまたはundefjnedだったら辿らない
+					cursor[names[j]] = {};
+				}
+				cursor = cursor[names[j]];
+			}
+			cursor[names[len - 1]] = val;
+		}
+		return ret;
 	}
 
 	// ----------- qunit -----------
@@ -422,11 +472,10 @@
 			dfd.reject();
 		}, maxWait);
 
-		// failMsgが指定されていたらメッセージを表示してテストを終了させるfailハンドラを追加する
+		// failMsgが指定されていたらメッセージを表示するfailハンドラを追加する
 		if (failMsg) {
 			dfd.fail(function() {
 				ok(false, failMsg);
-				start();
 			});
 		}
 		return dfd.promise();
@@ -436,7 +485,8 @@
 	 * @name testutils.async
 	 * @namespace
 	 */
-	h5.u.obj.expose('testutils', {
+	// testutilはh5読込前に定義するので、h5.core.exposeは使わずにwindowに直接配置
+	window.testutils = {
 		settings: settings,
 		consts: {
 			ERROR_INTERNET_CANNOT_CONNECT: 12029
@@ -447,14 +497,16 @@
 			closePopupWindow: closePopupWindow
 		},
 		u: {
-			isDisposed: isDisposed,
 			isRejected: isRejected,
 			isResolved: isResolved,
 			deleteProperty: deleteProperty,
 			compareVersion: compareVersion,
 			rgbToHex: rgbToHex,
+			nearEqual: nearEqual,
 			clearController: clearController,
-			cleanAllAspects: cleanAllAspects
+			cleanAllAspects: cleanAllAspects,
+			toAbsoluteUrl: toAbsoluteUrl,
+			parseRequestParameter: parseRequestParameter
 		},
 		qunit: {
 			abortTest: abortTest,
@@ -465,5 +517,5 @@
 		async: {
 			gate: gate
 		}
-	});
+	};
 })();

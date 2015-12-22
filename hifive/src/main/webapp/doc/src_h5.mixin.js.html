@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: src/h5.mixin.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+
+    <script src="scripts/jquery.js"> </script>
+    <script src="scripts/extension.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+</head>
+
+<body>
+<div id="container">
+	<nav>
+		<div class="module-search-header">
+		   	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+			<div class="h5-searchBox">
+				<input type="text" placeholder="Search...">
+				<button class="clear">×</button>
+			</div>
+		</div>
+		<div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+		<div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+		<div class="module-list-wrapper hidden-mobile">
+		    <h3>Classes</h3><ul><li><a href="Binding.html">Binding</a></li><li><a href="CacheManager.html">CacheManager</a></li><li><a href="ConsoleLogTarget.html">ConsoleLogTarget</a></li><li><a href="Controller.html">Controller</a></li><li><a href="ControllerManager.html">ControllerManager</a></li><li><a href="DatabaseWrapper.html">DatabaseWrapper</a></li><li><a href="DataItem.html">DataItem</a></li><li><a href="DataModel.html">DataModel</a></li><li><a href="DataModelManager.html">DataModelManager</a></li><li><a href="Del.html">Del</a></li><li><a href="Dependency.html">Dependency</a></li><li><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></li><li><a href="h5.ui.FormController.html">h5.ui.FormController</a></li><li><a href="h5.ui.validation.AsyncIndicator.html">h5.ui.validation.AsyncIndicator</a></li><li><a href="h5.ui.validation.BootstrapErrorBaloon.html">h5.ui.validation.BootstrapErrorBaloon</a></li><li><a href="h5.ui.validation.Composition.html">h5.ui.validation.Composition</a></li><li><a href="h5.ui.validation.ErrorBaloon.html">h5.ui.validation.ErrorBaloon</a></li><li><a href="h5.ui.validation.Message.html">h5.ui.validation.Message</a></li><li><a href="h5.ui.validation.MessageOutputController.html">h5.ui.validation.MessageOutputController</a></li><li><a href="h5.ui.validation.Style.html">h5.ui.validation.Style</a></li><li><a href="h5.validation.FormValidationLogic.html">h5.validation.FormValidationLogic</a></li><li><a href="Indicator.html">Indicator</a></li><li><a href="Insert.html">Insert</a></li><li><a href="JqXHRWrapper.html">JqXHRWrapper</a></li><li><a href="Log.html">Log</a></li><li><a href="Logic.html">Logic</a></li><li><a href="Mixin.html">Mixin</a></li><li><a href="ObservableArray.html">ObservableArray</a></li><li><a href="ObservableItem.html">ObservableItem</a></li><li><a href="Query.html">Query</a></li><li><a href="QueryResult.html">QueryResult</a></li><li><a href="SceneContainerController.html">SceneContainerController</a></li><li><a href="Select.html">Select</a></li><li><a href="Sequence.html">Sequence</a></li><li><a href="Sql.html">Sql</a></li><li><a href="Statement.html">Statement</a></li><li><a href="TransactionalExecutor.html">TransactionalExecutor</a></li><li><a href="Update.html">Update</a></li><li><a href="ValidationResult.html">ValidationResult</a></li><li><a href="View.html">View</a></li><li><a href="WatchPositionPromise.html">WatchPositionPromise</a></li><li><a href="WebSqlDatabase.html">WebSqlDatabase</a></li></ul><h3>Namespaces</h3><ul><li><a href="h5.html">h5</a></li><li><a href="h5.api.html">h5.api</a></li><li><a href="h5.api.geo.html">h5.api.geo</a></li><li><a href="h5.api.sqldb.html">h5.api.sqldb</a></li><li><a href="h5.api.storage.html">h5.api.storage</a></li><li><a href="h5.api.storage.local.html">h5.api.storage.local</a></li><li><a href="h5.api.storage.session.html">h5.api.storage.session</a></li><li><a href="h5.async.html">h5.async</a></li><li><a href="h5.core.html">h5.core</a></li><li><a href="h5.core.data.html">h5.core.data</a></li><li><a href="h5.core.interceptor.html">h5.core.interceptor</a></li><li><a href="h5.core.view.html">h5.core.view</a></li><li><a href="h5.dev.api.geo.html">h5.dev.api.geo</a></li><li><a href="h5.env.html">h5.env</a></li><li><a href="h5.env.ua.html">h5.env.ua</a></li><li><a href="h5.log.html">h5.log</a></li><li><a href="h5.mixin.html">h5.mixin</a></li><li><a href="h5.res.html">h5.res</a></li><li><a href="h5.scene.html">h5.scene</a></li><li><a href="h5.settings.html">h5.settings</a></li><li><a href="h5.u.html">h5.u</a></li><li><a href="h5.u.obj.html">h5.u.obj</a></li><li><a href="h5.u.str.html">h5.u.str</a></li><li><a href="h5.ui.html">h5.ui</a></li><li><a href="h5.ui.components.BaloonController.html">h5.ui.components.BaloonController</a></li><li><a href="h5.ui.jqm.html">h5.ui.jqm</a></li><li><a href="h5.ui.jqm.manager.html">h5.ui.jqm.manager</a></li><li><a href="h5.validation.html">h5.validation</a></li></ul><h3>Mixins</h3><ul><li><a href="EventDispatcher.html">EventDispatcher</a></li></ul>
+	    </div>
+	</nav>
+	<div id="main">
+	    <h1 class="page-title">Source: src/h5.mixin.js</h1>
+	    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Copyright (C) 2012-2014 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * hifive
+ */
+
+/* ------ h5.mixin ------ */
+(function() {
+	// =========================================================================
+	//
+	// Constants
+	//
+	// =========================================================================
+
+	// =============================
+	// Production
+	// =============================
+
+	// -------------------------------
+	// エラーコード
+	// -------------------------------
+	/** addEventListenerに不正な引数が渡された */
+	var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 16000;
+
+	// =============================
+	// Development Only
+	// =============================
+
+	/* del begin */
+	var errMsgMap = {};
+	errMsgMap[ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER] = 'addEventListenerには、イベント名(文字列)、イベントリスナ(関数)を渡す必要があります。';
+
+	// メッセージの登録
+	addFwErrorCodeMap(errMsgMap);
+	/* del end */
+
+	// =========================================================================
+	//
+	// Cache
+	//
+	// =========================================================================
+	// =========================================================================
+	//
+	// Privates
+	//
+	// =========================================================================
+	// =============================
+	// Variables
+	// =============================
+	// =============================
+	// Functions
+	// =============================
+	/**
+	 * 受け取ったオブジェクトをイベントオブジェクトにする
+	 *
+	 * @private
+	 * @param {Object} event 任意のオブジェクト
+	 * @param {Object} target event.targetになるオブジェクト
+	 * @returns {Object} イベントオブジェクト
+	 */
+	function setEventProperties(event, target) {
+		// ターゲットの追加
+		if (!event.target) {
+			event.target = target;
+		}
+		// タイムスタンプの追加
+		if (!event.timeStamp) {
+			event.timeStamp = new Date().getTime();
+		}
+
+		// isDefaultPreventedがないなら、isDefaultPrevented()とpreventDefault()を追加
+		if (!event.isDefaultPrevented) {
+			var _isDefaultPrevented = false;
+			event.isDefaultPrevented = function() {
+				return _isDefaultPrevented;
+			};
+			event.preventDefault = function() {
+				_isDefaultPrevented = true;
+			};
+		}
+
+		// isImmediatePropagationStoppedがないなら、isImmediatePropagationStopped()とstopImmediatePropagation()を追加
+		if (!event.isImmediatePropagationStopped) {
+			var _isImmediatePropagationStopped = false;
+			event.isImmediatePropagationStopped = function() {
+				return _isImmediatePropagationStopped;
+			};
+			event.stopImmediatePropagation = function() {
+				_isImmediatePropagationStopped = true;
+			};
+		}
+	}
+
+	// =========================================================================
+	//
+	// Body
+	//
+	// =========================================================================
+	/**
+	 * Mixinのコンストラクタ
+	 * &lt;p>
+	 * このクラスは自分でnewすることはありません。
+	 * h5.mixin.createMixin(moduleObject)を呼ぶと渡されたモジュールオブジェクトについてのMixinインスタンスを返します。
+	 * &lt;/p>
+	 * &lt;p>
+	 * 作製したインスタンスの&lt;a href="Mixin.html#mix">mix()&lt;/a>を呼ぶと、モジュールオブジェクトとmixの引数に渡されたオブジェクトをミックスインしたオブジェクトを返します。
+	 * &lt;/p>
+	 *
+	 * &lt;pre>&lt;code>
+	 * // set,getメソッドを持つモジュールオブジェクトのmixinを作成する例
+	 * var mixin = h5.mixin.createMixin({
+	 * 	set: function(p, v) {
+	 * 		this[p] = v;
+	 * 	},
+	 * 	get: function(p) {
+	 * 		return this[p];
+	 * 	}
+	 * });
+	 * var target = {
+	 * 	hoge: 'abc'
+	 * };
+	 * mixin.mix(target);
+	 * mixin.get('hoge'); // 'abc'が返る
+	 * &lt;/code>&lt;/pre>
+	 *
+	 * &lt;p>
+	 * &lt;a href="h5.mixin.html">h5.mixin&lt;/a>以下にこのクラスを実装したインスタンスを配置しています。
+	 * &lt;/p>
+	 *
+	 * @class Mixin
+	 */
+	/**
+	 * @private
+	 * @param moduleObject mixinする元となるモジュールオブジェクト
+	 */
+	function Mixin(moduleObject) {
+		// moduleObjectのプロパティキャッシュを作成
+		var props = {};
+		for ( var p in moduleObject) {
+			var v = moduleObject[p];
+			// hasOwnPropertyがtrueでなければコピーしない
+			// 関数、null、文字列リテラル、数値リテラル、真偽値リテラルのいずれかの場合のみコピー
+			if (moduleObject.hasOwnProperty(p)
+					&amp;&amp; (isFunction(v) || v === null || typeof v === 'string'
+							|| typeof v === 'number' || typeof v === 'boolean')) {
+				props[p] = v;
+			}
+		}
+
+		// mix, hasInterfaceはMixinのprototypeに持たせていて、それぞれインスタンスが持つ_mix, _hasInterfaceを呼んでいる
+		// _mix, _hasInterfaceはmoduleObjectのプロパティキャッシュを参照したいため、Mixinインスタンスごとに定義している
+		this._mix = function(target) {
+			for ( var p in props) {
+				// targetがもともと持っていたプロパティがあっても上書き
+				target[p] = props[p];
+			}
+		};
+
+		this._hasInterface = function(object) {
+			for ( var p in props) {
+				// プライベートなものはチェックしない
+				if (h5.u.str.startsWith(p, '_')) {
+					continue;
+				}
+				// hasOwnPropertyがtrueかどうかは判定せず、プロトタイプチェーン上にあってもよい
+				// undefinedでなければそのプロパティを持っていると判定する
+				if (typeof object[p] === TYPE_OF_UNDEFINED) {
+					return false;
+				}
+			}
+			return true;
+		};
+	}
+
+	$.extend(Mixin.prototype, {
+		/**
+		 * 引数に渡されたオブジェクトと、モジュールオブジェクトとのミックスインを作成します。
+		 * &lt;p>
+		 * 関数、null、文字列リテラル、数値リテラル、真偽値リテラルのいずれかの値を持つプロパティについてのみミックスインを行います。
+		 * &lt;/p>
+		 *
+		 * @memberOf Mixin
+		 * @prop {Object} target
+		 */
+		mix: function(target) {
+			return this._mix(target);
+		},
+		/**
+		 * 引数に渡されたオブジェクトが、モジュールオブジェクトを実装しているかどうか判定します。
+		 * &lt;p>
+		 * 関数、null、文字列リテラル、数値リテラル、真偽値リテラルのいずれかの値を持つモジュールオブジェクトのプロパティを、
+		 * 引数に渡されたobjectが全て持っているならtrue、そうでないならfalseを返します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * ただしモジュールオブジェクトで定義されたプライベートメンバ("_"始まり)のプロパティについてはチェックしません。
+		 * &lt;/p>
+		 *
+		 * @memberOf Mixin
+		 * @prop {Object} object
+		 * @returns {Boolean}
+		 */
+		hasInterface: function(object) {
+			return this._hasInterface(object);
+		}
+	});
+
+	function createMixin(moduleObject) {
+		return new Mixin(moduleObject);
+	}
+
+	//-------------------------------------------
+	//EventDispatcher
+	//-------------------------------------------
+	/**
+	 * イベントディスパッチャ
+	 * &lt;p>
+	 * イベントリスナを管理するクラスです。このクラスはnewできません。
+	 * &lt;/p>
+	 * &lt;p>
+	 * このモジュールをミックスインしたオブジェクトを作成したい場合は、&lt;a
+	 * href="h5.mixin.html#eventDispatcher">h5.mixin.eventDispatcher&lt;/a>の&lt;a
+	 * href="Mixin.html#mix">mix()&lt;/a>メソッドを使用してください。
+	 * &lt;/p>
+	 * &lt;p>
+	 * 以下のクラスがイベントディスパッチャのメソッドを持ちます。
+	 * &lt;ul>
+	 * &lt;li>&lt;a href="ObservableArray.html">ObservableArray&lt;/a>
+	 * &lt;li>&lt;a href="ObservableItem.html">ObservableItem&lt;/a>
+	 * &lt;li>&lt;a href="DataModelManager.html">DataModelManager&lt;/a>
+	 * &lt;li>&lt;a href="DataModel.html">DataModel&lt;/a>
+	 * &lt;li>&lt;a href="DataItem.html">DataItem&lt;/a>
+	 * &lt;/ul>
+	 * &lt;/p>
+	 *
+	 * @mixin
+	 * @name EventDispatcher
+	 */
+	var eventDispatcherModule = {
+		/**
+		 * イベントリスナが登録されているかどうかを返します
+		 * &lt;p>
+		 * 第一引数にイベント名、第二引数にイベントリスナを渡し、指定したイベントに指定したイベントリスナが登録済みかどうかを返します。
+		 * &lt;/p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf EventDispatcher
+		 * @param {String} type イベント名
+		 * @param {Function} listener イベントリスナ
+		 * @returns {Boolean} 第一引数のイベント名に第二引数のイベントリスナが登録されているかどうか
+		 */
+		hasEventListener: function(type, listener) {
+			if (!this._eventListeners) {
+				return false;
+			}
+			var l = this._eventListeners[type];
+			if (!l || !this._eventListeners.hasOwnProperty(type)) {
+				return false;
+			}
+
+			for (var i = 0, count = l.length; i &lt; count; i++) {
+				if (l[i] === listener) {
+					return true;
+				}
+			}
+			return false;
+		},
+
+		/**
+		 * イベントリスナを登録します。
+		 * &lt;p>
+		 * 第一引数にイベント名、第二引数にイベントリスナを渡し、イベントリスナを登録します。指定したイベントが起こった時にイベントリスナが実行されます。
+		 * &lt;/p>
+		 * &lt;p>
+		 * イベントリスナは、関数または&lt;a
+		 * href="http://www.w3.org/TR/DOM-Level-2-Events/events.html#Events-EventListener">EventListener&lt;/a>
+		 * インタフェースを実装するオブジェクト(handleEventプロパティに関数を持つオブジェクト)で指定できます。
+		 * &lt;p>
+		 * 指定したイベントに、指定したイベントリスナが既に登録されていた場合は何もしません。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 同一のイベントに対して複数回addEventListener()を呼び、複数のイベントリスナを登録した場合は、イベント発火時に登録した順番に実行されます。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 第３引数以降が指定されていても無視されます。
+		 * &lt;/p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf EventDispatcher
+		 * @param {String} type イベント名
+		 * @param {Function|Object} listener イベントリスナまたはhandleEventを持つイベントリスナオブジェクト
+		 */
+		addEventListener: function(type, listener) {
+			// 引数チェック
+			// typeは文字列で、第2引数まで指定されていることをチェックする
+			// listenerが関数またはイベントリスナオブジェクトかどうかは、実行時に判定し、関数でもイベントリスナオブジェクトでもない場合は実行しない
+			if (arguments.length &lt; 2 || !isString(type)) {
+				throwFwError(ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER);
+			}
+			if (listener == null || this.hasEventListener(type, listener)) {
+				// nullまたはundefinedが指定されている、または既に登録済みのイベントリスナなら何もしない
+				return;
+			}
+
+			if (!this._eventListeners) {
+				this._eventListeners = {};
+			}
+
+			if (!(this._eventListeners.hasOwnProperty(type))) {
+				this._eventListeners[type] = [];
+			}
+
+			this._eventListeners[type].push(listener);
+		},
+
+		/**
+		 * イベントリスナを削除します。
+		 * &lt;p>
+		 * 第一引数にイベント名、第二引数にイベントリスナを渡し、指定したイベントから指定したイベントリスナを削除します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 指定したイベント名に指定したイベントリスナが登録されていない場合は何もしません。
+		 * &lt;/p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf EventDispatcher
+		 * @param {String} type イベント名
+		 * @param {Function} listener イベントリスナ
+		 */
+		removeEventListener: function(type, listener) {
+			if (!this.hasEventListener(type, listener)) {
+				return;
+			}
+
+			var l = this._eventListeners[type];
+
+			for (var i = 0, count = l.length; i &lt; count; i++) {
+				if (l[i] === listener) {
+					l.splice(i, 1);
+					return;
+				}
+			}
+		},
+
+		/**
+		 * イベントをディスパッチします
+		 * &lt;p>
+		 * イベントオブジェクトを引数に取り、そのevent.typeに登録されているイベントリスナを実行します。
+		 * イベントオブジェクトにpreventDefault()関数を追加してイベントリスナの引数に渡して呼び出します。
+		 * &lt;/p>
+		 * &lt;p>
+		 * 戻り値は『イベントリスナ内でpreventDefault()が呼ばれたかどうか』を返します。
+		 * &lt;/p>
+		 *
+		 * @since 1.1.0
+		 * @memberOf EventDispatcher
+		 * @param {Object} event イベントオブジェクト
+		 * @returns {Boolean} イベントリスナ内でpreventDefault()が呼ばれたかどうか。
+		 */
+		dispatchEvent: function(event) {
+			if (!this._eventListeners) {
+				return;
+			}
+			var l = this._eventListeners[event.type];
+			if (!l) {
+				return;
+			}
+			// リスナをslice(0)して、dispatchEventを呼んだ瞬間にどのリスナが呼ばれるか確定させる
+			// (あるイベントのイベントリスナの中でadd/removeEventListenerされても、そのイベントが実行するイベントリスナには影響ない)
+			l = l.slice(0);
+
+			setEventProperties(event, this);
+
+			// リスナーを実行。stopImmediatePropagationが呼ばれていたらそこでループを終了する。
+			for (var i = 0, count = l.length; i &lt; count &amp;&amp; !event.isImmediatePropagationStopped(); i++) {
+				if (isFunction(l[i])) {
+					l[i].call(event.target, event);
+				} else if (l[i].handleEvent) {
+					// イベントリスナオブジェクトの場合はhandleEventを呼ぶ
+					// handleEvent内のコンテキストはイベントリスナオブジェクトなので、callは使わずにそのまま呼び出す
+					l[i].handleEvent(event);
+				}
+			}
+
+			return event.isDefaultPrevented();
+		}
+	};
+
+	// =============================
+	// Expose to window
+	// =============================
+
+	/**
+	 * @namespace h5.mixin
+	 */
+	h5.u.obj.expose('h5.mixin', {
+		/**
+		 * Mixinクラスを引数に渡されたモジュールオブジェクトから作成します。
+		 * &lt;p>
+		 * 作成したMixinクラスはモジュールオブジェクトとのmixinを行うクラスになります。 Mixinクラスについては&lt;a href="Mixin.html">こちら&lt;/a>をご覧ください。
+		 * &lt;/p>
+		 *
+		 * @since 1.1.10
+		 * @memberOf h5.mixin
+		 * @param {Object} moduleObject モジュールオブジェクト。mixinの元となるオブジェクト
+		 * @returns {Mixin} モジュールオブジェクトをもとに生成したMixinオブジェクト
+		 */
+		createMixin: createMixin,
+
+		/**
+		 * EventDispatcherのMixin
+		 * &lt;p>
+		 * EventDispatcherのMixinです。このクラスが持つmix()メソッドを呼ぶと、オブジェクトにEventDispatcherの機能が追加されます。
+		 * &lt;/p>
+		 * &lt;p>
+		 * Mixinクラスについては&lt;a href="Mixin.html">こちら&lt;/a>をご覧ください。
+		 * &lt;/p>
+		 * &lt;p>
+		 * EventDispatcherクラスについては&lt;a href="EventDispatcher.html">こちら&lt;/a>をご覧ください。
+		 * &lt;/p>
+		 *
+		 * @since 1.1.10
+		 * @memberOf h5.mixin
+		 * @type {Mixin}
+		 * @name eventDispatcher
+		 */
+		eventDispatcher: createMixin(eventDispatcherModule)
+	});
+})();</code></pre>
+        </article>
+    </section>
+
+
+
+
+	</div>
+
+	<br class="clear">
+
+	<footer>
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 20:54:04 GMT+0900 (JST)
+	</footer>
+</div>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

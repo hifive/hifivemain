@@ -30,11 +30,11 @@ This file describes how to build, release, and development hifive.
    context menu of "hifive/build_for_js.xml" -> Run As -> Ant Build
 
   Then input version......
-    hifive/src/main/webapp/release/
-     ejs.js
-     h5.css
-     h5.dev.js
-     h5.js
+    hifive/src/main/webapp/archives/current/
+      ejs-h5mod.js
+      h5.css
+      h5.dev.js
+      h5.js
    will be generated!!!!
 
 ------------------------------------------------------------

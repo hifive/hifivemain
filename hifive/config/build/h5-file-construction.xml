@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<h5-file-constraction xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="h5-file-constraction.xsd">
+
+	<module name="scopedglobals" description="" selectable="false">
+		<dependencies>
+		</dependencies>
+		<files>
+			<file name="h5scopedglobals.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="util" description="module.util.description">
+		<dependencies>
+			<dependency name="scopedglobals" />
+		</dependencies>
+		<files>
+			<file name="h5.u.js" />
+			<file name="h5.mixin.js" />
+			<file name="h5.log.js" />
+			<file name="h5.js" />
+			<file name="h5.env.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="async" description="module.async.description"
+		selectable="false">
+		<dependencies>
+			<dependency name="util" />
+		</dependencies>
+		<files>
+			<file name="h5.async.js" />
+			<file name="h5.ajax.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="resource" description="module.resource.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+		</dependencies>
+		<files>
+			<file name="h5.res.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="controller" description="module.controller.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+			<dependency name="resource" />
+		</dependencies>
+		<files>
+			<file name="h5.core.controller.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="dataModel" description="module.core.data.description">
+		<dependencies>
+			<dependency name="util" />
+		</dependencies>
+		<files>
+			<file name="h5.core.data_query.js" />
+			<file name="h5.core.data.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="modelWithBinding" description="module.data.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="view" />
+			<dependency name="dataModel" />
+		</dependencies>
+		<files>
+			<file name="h5.core.view_binding.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="view" description="module.view.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+		</dependencies>
+		<files>
+			<file name="h5.core.view.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="ui" description="module.ui.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+			<dependency name="controller" />
+			<dependency name="validation" />
+		</dependencies>
+		<files>
+			<file name="h5.ui.js" />
+			<file name="h5.ui.jqm.manager.js" />
+			<file name="h5.ui.FormController.js" />
+		</files>
+		<cssfiles>
+			<file name="h5.ui.indicator.css" />
+		</cssfiles>
+	</module>
+
+	<module name="api.geo" description="module.api.geo.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+		</dependencies>
+		<files>
+			<file name="h5.api.geo.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="api.sqldb" description="module.api.sqldb.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+		</dependencies>
+		<files>
+			<file name="h5.api.sqldb.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="api.storage" description="module.api.storage.description">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+		</dependencies>
+		<files>
+			<file name="h5.api.storage.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="scene" description="module.scene.description"
+		selectable="false">
+		<dependencies>
+		</dependencies>
+		<files>
+			<file name="h5.scene.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="validation" description="module.validation.description">
+		<dependencies>
+			<dependency name="util" />
+		</dependencies>
+		<files>
+			<file name="h5.validation.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+	<module name="dev" description="module.dev.description"
+		selectable="false">
+		<dependencies>
+			<dependency name="util" />
+			<dependency name="async" />
+			<dependency name="api.geo" />
+		</dependencies>
+		<files>
+			<file name="h5.dev.api.geo.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
+</h5-file-constraction>

@@ -40,10 +40,11 @@
 	 * var ERR_CODE_OUT_CATEGORY_IS_NONE = 10001;
 	 */
 
-	/**
+	/*
 	 * カテゴリが複数回指定されたときのエラーコード
+	 * 出力定義にマッチするかどうかは、カテゴリ名に加えてレベルしても判定するようになったので1.1.15で廃止 #410
+	 * var ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES = 10002;
 	 */
-	var ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES = 10002;
 
 	/**
 	 * ログレベルの指定が不正なときのエラーコード
@@ -95,7 +96,6 @@
 	 */
 	var errMsgMap = {};
 	errMsgMap[ERR_CODE_LOG_TARGET_TYPE] = 'ログターゲットのtypeには、オブジェクト、もしくは"console"のみ指定可能です。';
-	errMsgMap[ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES] = 'category"{0}"が複数回指定されています。';
 	errMsgMap[ERR_CODE_LEVEL_INVALID] = 'level"{0}"の指定は不正です。Number、もしくはtrace, info, debug, warn, error, noneを指定してください。';
 	errMsgMap[ERR_CODE_LOG_TARGETS_NAMED_MULTIPLE_TIMES] = 'ログターゲット"{0}"が複数回指定されています。';
 	errMsgMap[ERR_CODE_LOG_TARGETS_IS_NONE] = '"{0}"という名前のログターゲットはありません。';
@@ -492,8 +492,17 @@
 			level: 'debug',
 			targets: 'console'
 		};
-
 		/* del end */
+
+		// 設定オブジェクト
+		var settings = $.extend(true, {}, h5.settings.log);
+
+		// デフォルトアウトの設定
+		var dOut = settings.defaultOut;
+		if (!dOut) {
+			dOut = defaultOut;
+			settings.defaultOut = dOut;
+		}
 
 		function compileLogTarget(targets) {
 			if (!$.isPlainObject(targets)) {
@@ -526,23 +535,22 @@
 		}
 
 		var categoryCache = [];
-		function compileOutput(_logTarget, out, _dOut) {
-			var isDefault = _dOut == null;
+		function compileOutput(_logTarget, out, isDefault) {
 			if (!isDefault) {
+				// デフォルトアウトでない場合はcategoryの設定を行う
 				var category = out.category;
 				if (!isString(category) || $.trim(category).length === 0) {
 					throwFwError(ERR_CODE_OUT_CATEGORY_INVALID);
 				}
 				category = $.trim(category);
-				if ($.inArray(category, categoryCache) !== -1) {
-					throwFwError(ERR_CODE_CATEGORY_NAMED_MULTIPLE_TIMES, out.category);
-				}
 				out.compiledCategory = getRegex(category);
 				categoryCache.push(category);
 			}
+
+			// レベルのコンパイル(数値化)
 			var compiledLevel;
 			if (out.level == null) {
-				compiledLevel = stringToLevel(isDefault ? defaultOut.level : _dOut.level);
+				compiledLevel = stringToLevel(isDefault ? defaultOut.level : dOut.level);
 			} else {
 				compiledLevel = isString(out.level) ? stringToLevel($.trim(out.level)) : out.level;
 			}
@@ -551,9 +559,10 @@
 			}
 			out.compiledLevel = compiledLevel;
 
+			// ターゲットのコンパイル
 			var compiledTargets = [];
 			var targets = out.targets;
-			if (!isDefault || targets != null) {
+			if (targets != null) {
 				var targetNames = [];
 				// targetsの指定は文字列または配列またはnull,undefinedのみ
 				if (!(targets == null || isArray(targets) || (isString(targets) && $.trim(targets).length))) {
@@ -578,43 +587,25 @@
 					targetNames.push(targetName);
 					compiledTargets.push(l.compiledTarget);
 				}
-				if (!isDefault) {
-					var defaultTargets = _dOut.targets;
-					if (defaultTargets != null) {
-						defaultTargets = wrapInArray(defaultTargets);
-						for (var i = 0, len = defaultTargets.length; i < len; i++) {
-							var targetName = defaultTargets[i];
-							if ($.inArray(targetName, targetNames) === -1) {
-								compiledTargets.push(_dOut.compiledTargets[i]);
-								targetNames.push(targetName);
-							}
-						}
-					}
-				}
 			}
 			out.compiledTargets = compiledTargets;
 		}
 
-		var settings = $.extend(true, {}, h5.settings.log ? h5.settings.log : {
-			defaultOut: defaultOut
-		});
+		// ログターゲットをコンパイル
 		var logTarget = settings.target;
 		if (!logTarget) {
 			logTarget = {};
 			settings.target = logTarget;
 		}
 		compileLogTarget(logTarget);
-		var dOut = settings.defaultOut;
-		if (!dOut) {
-			dOut = defaultOut;
-			settings.defaultOut = dOut;
-		}
-		compileOutput(logTarget, dOut);
+
+		// 出力定義をコンパイル
+		compileOutput(logTarget, dOut, true);
 		var outs = settings.out;
 		if (outs) {
 			outs = wrapInArray(outs);
 			for (var i = 0, len = outs.length; i < len; i++) {
-				compileOutput(logTarget, outs[i], dOut);
+				compileOutput(logTarget, outs[i]);
 			}
 		}
 		// ここまでの処理でエラーが起きなかったら設定を適用する
@@ -759,32 +750,43 @@
 		 * </code></pre>
 		 */
 		_traceFunctionName: function(fn) {
+			var traces = [];
+			// エラーオブジェクトを生成してスタックトレースを取得
 			var e = new Error();
 			var errMsg = e.stack || e.stacktrace;
-			var traces = [];
-
-			// stackまたはstacktraceがある場合(IE,Safari以外)
 			if (errMsg) {
-				// トレースされたログのうち、トレースの基点から3メソッド分(_traceFunction、_log、
-				// debug|info|warn|error|trace)はログに出力しない。
-				var DROP_TRACE_COUNT = 3;
+				// stackまたはstacktraceがある場合(IE,Safari以外)
 
-				// Chrome, FireFox, Opera
+				// stackにはFW内部の関数も含まれるので、それを取り除く
+				// new Error()を呼んだ場合に関数呼び出し３つ分省略すればいいが、minifyするとnew演算子が省略される
+				// Chrome,FireFoxではnew演算子を省略するコンストラクト呼び出しがstackに入り、newを使った場合と結果が異なる
+				// Operaではnew演算子を省略しても結果は変わらない
+				// min版、dev版の互換とブラウザ互換をとるために、取り除く関数呼び出しはここの関数名を基点に数えて取り除く
+				var CURRENT_FUNCTION_REGEXP = /_traceFunctionName/;
+				// トレースされたログのうち、ここの関数から3メソッド分先までの関数呼び出しはログに出力しない。
+				// (_traceFunction, _log, debug|info|warn|error|trace の3つ。この関数+2の箇所でsliceする)
+				var DROP_TRACE_COUNT = 3;
 				traces = errMsg.replace(/\r\n/, '\n').replace(
 						/at\b|@|Error\b|\t|\[arguments not available\]/ig, '').replace(
 						/(http|https|file):.+[0-9]/g, '').replace(/ +/g, ' ').split('\n');
 
 				var ret = null;
-				traces = $.map(traces, function(value) {
+				var currentFunctionIndex = null;
+				traces = $.map(traces, function(value, index) {
 					if (value.length === 0) {
-						ret = null; // 不要なデータ(Chromeは配列の先頭, FireFoxは配列の末尾に存在する)
+						// 不要なデータはnullを返して削除(Chromeは配列の先頭, FireFoxは配列の末尾に存在する)
+						// ただしslice箇所が決定する前は削除しない(nullを返さないようにする)
+						return currentFunctionIndex == null ? '' : null;
 					} else if ($.trim(value) === '') {
 						ret = '{anonymous}'; // ログとして出力されたが関数名が無い
 					} else {
 						ret = $.trim(value);
 					}
+					if (currentFunctionIndex === null && CURRENT_FUNCTION_REGEXP.test(value)) {
+						currentFunctionIndex = index;
+					}
 					return ret;
-				}).slice(DROP_TRACE_COUNT);
+				}).slice(currentFunctionIndex + DROP_TRACE_COUNT);
 			} else {
 				// IE, Safari
 
@@ -794,7 +796,10 @@
 				// (例えばjQuery1.9.0は"use strict"宣言がされており、jQuery1.9.0内の関数を経由して呼ばれた関数は全てstrictモード扱いとなり、
 				// callerプロパティにアクセスできない)
 				// そのため、try-catchで囲んで、取得できなかった場合は{unable to trace}を出力する
-				for (var i = 0, l = this.maxStackSize, caller = fn; i < l; i++) {
+
+				// fnは、(debug|info|warn|error|trace)の何れかなので、その呼び出し元から辿る
+				var caller = fn.caller;
+				for (var i = 0, l = this.maxStackSize; i < l; i++) {
 					var funcName = getFunctionName(caller);
 					var argStr = parseArgs(caller.arguments);
 					var nextCaller;
@@ -805,17 +810,20 @@
 						traces.push('{unable to trace}');
 						break;
 					}
-					if (!funcName) {
-						if (!nextCaller) {
-							// nullの場合はルートからの呼び出し
-							traces.push('{root}(' + argStr + ')');
-						} else {
-							traces.push('{anonymous}(' + argStr + ')');
-							break;
-						}
+					if (funcName) {
+						// 関数名が取得できているときは関数名を表示
+						traces.push('{' + funcName + '}(' + argStr + ')');
+					} else if (nextCaller) {
+						// 関数名は取得できていなくても次の関数ができているなら{anonymous}として表示
+						traces.push('{anonymous}(' + argStr + ')');
+					} else {
+						// 次の関数が無い場合はルートからの呼び出し
+						traces.push('{root}(' + argStr + ')');
 					}
-					// 関数名が取得できているときは関数名を表示
-					traces.push('{' + funcName + '}(' + argStr + ')');
+					if (!nextCaller) {
+						// これ以上トレースできないので終了
+						break;
+					}
 					caller = nextCaller;
 				}
 			}
@@ -846,38 +854,48 @@
 			var outs = compiledLogSettings.out;
 			var defaultOut = compiledLogSettings.defaultOut;
 
-			var targetOut = null;
+			var targetOuts = [];
+			var terminated = false;
 			if (outs) {
 				outs = wrapInArray(outs);
 				for (var i = 0, len = outs.length; i < len; i++) {
 					var out = outs[i];
-					if (!out.compiledCategory.test(this.category)) {
-						continue;
+					if (out.compiledCategory.test(this.category)
+							&& (level >= out.compiledLevel && out.compiledLevel >= 0)) {
+						// カテゴリとレベル指定を満たした出力定義が出力対象
+						targetOuts.push(out);
+						if (out.terminate !== false) {
+							// terminate:falseが明示的に指定されていない場合、出力定義にマッチするかどうかの探索を打ち切る
+							terminated = true;
+							break;
+						}
 					}
-					targetOut = out;
-					break;
 				}
 			}
-			if (!targetOut) {
-				targetOut = defaultOut;
+			if (!targetOuts.length || !terminated) {
+				// いずれの出力定義の条件も満たさなかったまたは、何れかの条件を満たしたが、terminateしていない場合は、defaultOutも出力対象
+				targetOuts.push(defaultOut);
 			}
-			var levelThreshold = targetOut.compiledLevel;
-			var logTarget = targetOut.compiledTargets;
+			for (var i = 0, l = targetOuts.length; i < l; i++) {
+				var targetOut = targetOuts[i];
+				var levelThreshold = targetOut.compiledLevel;
+				var logTarget = targetOut.compiledTargets;
 
-			if (level < levelThreshold || levelThreshold < 0) {
-				return;
-			}
+				if (level < levelThreshold || levelThreshold < 0) {
+					return;
+				}
 
-			logObj.logger = this;
-			logObj.date = new Date();
-			logObj.levelString = this._levelToString(level);
+				logObj.logger = this;
+				logObj.date = new Date();
+				logObj.levelString = this._levelToString(level);
 
-			if (!logTarget || logTarget.length === 0) {
-				return;
-			}
+				if (!logTarget || logTarget.length === 0) {
+					return;
+				}
 
-			for (var i = 0, len = logTarget.length; i < len; i++) {
-				logTarget[i].log(logObj);
+				for (var j = 0, len = logTarget.length; j < len; j++) {
+					logTarget[j].log(logObj);
+				}
 			}
 		},
 

@@ -77,6 +77,7 @@ $(function() {
 				strictEqual(ret.isChrome, true, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -102,6 +103,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, true, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -127,6 +129,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, true, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -152,6 +155,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, true, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 				strictEqual(ret.isTablet, true, 'タブレットか');
@@ -177,6 +181,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -202,6 +207,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -227,6 +233,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -253,6 +260,7 @@ $(function() {
 				strictEqual(ret.isChrome, true, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -278,6 +286,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -303,6 +312,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, true, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -326,6 +336,7 @@ $(function() {
 		strictEqual(ret.isChrome, false, 'Chromeか');
 		strictEqual(ret.isSafari, false, 'Safariか');
 		strictEqual(ret.isOpera, true, 'Operaか');
+		strictEqual(ret.isEdge, false, 'Edgeか');
 		strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 		strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 		strictEqual(ret.isTablet, false, 'タブレットか');
@@ -351,6 +362,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, true, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -377,6 +389,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, true, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 				strictEqual(ret.isTablet, true, 'タブレットか');
@@ -403,6 +416,7 @@ $(function() {
 				strictEqual(ret.isChrome, false, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');
@@ -427,6 +441,7 @@ $(function() {
 		strictEqual(ret.isChrome, false, 'Chromeか');
 		strictEqual(ret.isSafari, false, 'Safariか');
 		strictEqual(ret.isOpera, true, 'Operaか');
+		strictEqual(ret.isEdge, false, 'Edgeか');
 		strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 		strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
 		strictEqual(ret.isTablet, false, 'タブレットか');
@@ -434,30 +449,32 @@ $(function() {
 		strictEqual(ret.isWebkit, false, 'Webkitか');
 	});
 
-
-	test('uaの確認(Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10)', function() {
-		var ua = 'Mozilla/4.0 (compatible; MSIE 6.0; X11; Linux i686; ja) Opera 10.10';
-		var ret = h5.env.__check(ua);
-		strictEqual(ret.osVersion, null, 'OSのバージョンは正しいか');
-		strictEqual(ret.osVersionFull, null, 'OSのフルバージョンは正しいか');
-		strictEqual(ret.browserVersion, 10, 'ブラウザのバージョンは正しいか');
-		strictEqual(ret.browserVersionFull, '10.10', 'ブラウザのフルバージョンは正しいか');
-		strictEqual(ret.isiPhone, false, 'iPhoneか');
-		strictEqual(ret.isiPad, false, 'iPadか');
-		strictEqual(ret.isiOS, false, 'iOSか');
-		strictEqual(ret.isAndroid, false, 'Androidか');
-		strictEqual(ret.isWindowsPhone, false, 'WindowsPhoneか');
-		strictEqual(ret.isIE, false, 'IEか');
-		strictEqual(ret.isFirefox, false, 'Firefoxか');
-		strictEqual(ret.isChrome, false, 'Chromeか');
-		strictEqual(ret.isSafari, false, 'Safariか');
-		strictEqual(ret.isOpera, true, 'Operaか');
-		strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
-		strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
-		strictEqual(ret.isTablet, false, 'タブレットか');
-		strictEqual(ret.isDesktop, true, 'デスクトップか');
-		strictEqual(ret.isWebkit, false, 'Webkitか');
-	});
+	test(
+			'uaの確認(Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.10240)',
+			function() {
+				var ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.10240';
+				var ret = h5.env.__check(ua);
+				strictEqual(ret.osVersion, null, 'OSのバージョンは正しいか');
+				strictEqual(ret.osVersionFull, null, 'OSのフルバージョンは正しいか');
+				strictEqual(ret.browserVersion, 12, 'ブラウザのバージョンは正しいか');
+				strictEqual(ret.browserVersionFull, '12.10240', 'ブラウザのフルバージョンは正しいか');
+				strictEqual(ret.isiPhone, false, 'iPhoneか');
+				strictEqual(ret.isiPad, false, 'iPadか');
+				strictEqual(ret.isiOS, false, 'iOSか');
+				strictEqual(ret.isAndroid, false, 'Androidか');
+				strictEqual(ret.isWindowsPhone, false, 'WindowsPhoneか');
+				strictEqual(ret.isIE, false, 'IEか');
+				strictEqual(ret.isFirefox, false, 'Firefoxか');
+				strictEqual(ret.isChrome, false, 'Chromeか');
+				strictEqual(ret.isSafari, false, 'Safariか');
+				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, true, 'Edgeか');
+				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
+				strictEqual(ret.isSmartPhone, false, 'スマートフォンか');
+				strictEqual(ret.isTablet, false, 'タブレットか');
+				strictEqual(ret.isDesktop, true, 'デスクトップか');
+				strictEqual(ret.isWebkit, false, 'Webkitか');
+			});
 
 	// https://developers.google.com/chrome/mobile/docs/user-agent
 	test(
@@ -479,6 +496,35 @@ $(function() {
 				strictEqual(ret.isChrome, true, 'Chromeか');
 				strictEqual(ret.isSafari, false, 'Safariか');
 				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
+				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
+				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
+				strictEqual(ret.isTablet, false, 'タブレットか');
+				strictEqual(ret.isDesktop, false, 'デスクトップか');
+				strictEqual(ret.isWebkit, true, 'Webkitか');
+			});
+
+	test(
+			'uaの確認(Android 4.0.1, Chrome for Android 16.0.912.75)',
+			function() {
+				// Galaxy Nexus
+				var ua = 'Mozilla/5.0 (Linux; U; Android 4.0.1; ja-jp; Galaxy Nexus Build/ITL41D) AppleWebKit/535.7 (KHTML, like Gecko) CrMo/16.0.912.75 Mobile Safari/535.7';
+				var ret = h5.env.__check(ua);
+				strictEqual(ret.osVersion, 4, 'OSのバージョンは正しいか');
+				strictEqual(ret.osVersionFull, '4.0.1', 'OSのフルバージョンは正しいか');
+				strictEqual(ret.browserVersion, 16, 'ブラウザのバージョンは正しいか');
+				strictEqual(ret.browserVersionFull, '16.0.912.75', 'ブラウザのフルバージョンは正しいか');
+				strictEqual(ret.isiPhone, false, 'iPhoneか');
+				strictEqual(ret.isiPad, false, 'iPadか');
+				strictEqual(ret.isiOS, false, 'iOSか');
+				strictEqual(ret.isAndroid, true, 'Androidか');
+				strictEqual(ret.isWindowsPhone, false, 'WindowsPhoneか');
+				strictEqual(ret.isIE, false, 'IEか');
+				strictEqual(ret.isFirefox, false, 'Firefoxか');
+				strictEqual(ret.isChrome, true, 'Chromeか');
+				strictEqual(ret.isSafari, false, 'Safariか');
+				strictEqual(ret.isOpera, false, 'Operaか');
+				strictEqual(ret.isEdge, false, 'Edgeか');
 				strictEqual(ret.isAndroidDefaultBrowser, false, 'Android標準ブラウザか');
 				strictEqual(ret.isSmartPhone, true, 'スマートフォンか');
 				strictEqual(ret.isTablet, false, 'タブレットか');

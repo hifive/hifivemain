@@ -193,11 +193,34 @@ function wrapInArray(value) {
  * @param {String} relativePath 相対URL
  * @returns {String} 絶対パス
  */
-function toAbsoluteUrl(relativePath) {
-	var e = document.createElement('span');
-	e.innerHTML = '<a href="' + relativePath + '" />';
-	return e.firstChild.href;
-}
+var toAbsoluteUrl = (function() {
+	var a = null;
+	var span = null;
+	var isHrefPropAbsoluteFlag = null;
+	function isHrefPropAbsolute() {
+		if (isHrefPropAbsoluteFlag === null) {
+			a.setAttribute('href', './');
+			isHrefPropAbsoluteFlag = a.href !== './';
+		}
+		return isHrefPropAbsoluteFlag;
+	}
+	return function(relativePath) {
+		if (!a) {
+			// a.hrefを使わない場合でも、a.hrefが使えるかどうかの判定でa要素を使用するので、最初の呼び出し時に必ずa要素を作る
+			a = document.createElement('a');
+		}
+		if (isHrefPropAbsolute()) {
+			a.setAttribute('href', relativePath);
+			return a.href;
+		}
+		// a.hrefが絶対パスにならない場合はinnerHTMLを使う
+		if (!span) {
+			span = document.createElement('span');
+		}
+		span.innerHTML = '<a href="' + relativePath + '" />';
+		return span.firstChild.href;
+	};
+})();
 
 /**
  * 引数が文字列かどうかを判定します。
@@ -256,6 +279,48 @@ function isValidNamespaceIdentifier(property) {
 	// 全角文字は考慮しない
 	return !!property.match(/^[A-Za-z_\$][\w|\$]*$/);
 }
+
+/**
+ * 文字列をHTMLにパースします
+ * <p>
+ * jQuery.parseHTMLがある(jQuery1.8以降)場合はjQuery.parseHTMLと同じです
+ * </p>
+ * <p>
+ * ない場合はjQuery1.8以降のparseHTMLと同様の動作を実装しています。
+ * </p>
+ *
+ * @private
+ * @param {String} data HTML文字列
+ * @param {Document} [context=document] createElementを行うDocumentオブジェクト。省略した場合はdocumentを使用します
+ * @param {Boolean} [keppScripts=false] script要素を生成するかどうか。デフォルトは生成しない(false)です
+ */
+parseHTML = $.parseHTML ? $.parseHTML : function(data, context, keepScripts) {
+	if (!data || !isString(data)) {
+		return null;
+	}
+	if (typeof context === 'boolean') {
+		// context指定が省略された場合(第2引数がboolean)なら第2引数をkeepScripts指定として扱う
+		keepScripts = context;
+		context = false;
+	}
+	context = context || document;
+
+	// タグで囲って、$()でパースできるようにする
+	data = '<div>' + data + '</div>';
+	var $ret = $(data, context);
+	if (!keepScripts) {
+		// script要素の除去
+		$ret.find('script').remove();
+	}
+	// タグで囲ってパースしたので、parentElementがダミーのものになっている
+	// そのためフラグメントを生成してparentElementがnullになるようにする
+	var ret = $ret[0].childNodes;
+	var fragment = context.createDocumentFragment();
+	for (var i = 0, l = ret.length; i < l; i++) {
+		fragment.appendChild(ret[i]);
+	}
+	return fragment.childNodes;
+};
 
 // =============================
 // ロガー・アスペクトで使用する共通処理
@@ -413,7 +478,7 @@ var isArray = Array.isArray || (function() {
 })();
 
 /**
- * 引数が配列かどうか判定
+ * 引数が関数かどうか判定
  *
  * @private
  * @param {Any} obj
@@ -435,6 +500,148 @@ var isFunction = (function() {
 })();
 
 /**
+ * 複数のプロミスを待機する機能と、待機中のプロミスを外す機能を提供するクラス
+ *
+ * @private
+ * @class
+ * @param promises
+ * @param doneCallback
+ * @param failCallback
+ * @param cfhIfFail
+ */
+function WaitingPromiseManager(promises, doneCallback, failCallback, cfhIfFail) {
+	// 高速化のため、長さ1または0の場合はforを使わずにチェックする
+	var length = promises ? promises.length : 0;
+	var isPromise = h5.async.isPromise;
+	var that = this;
+	var resolveArgs = null;
+	this._doneCallbackExecuter = function() {
+		that._resolved = true;
+		if (doneCallback) {
+			if (resolveArgs) {
+				// resolveArgsを生成している(=複数プロミス)の場合は各doneハンドラの引数を配列にしたものを第1引数に渡す
+				doneCallback.call(this, resolveArgs);
+			} else {
+				// 一つのpromiseにdoneハンドラを引っかけた場合はdoneハンドラの引数をそのままcallbackに渡す
+				doneCallback.apply(this, arguments);
+			}
+		}
+	};
+	this._failCallbackExecuter = function() {
+		that._rejected = true;
+		if (failCallback) {
+			failCallback.apply(this, arguments);
+		} else if (cfhIfFail && h5.settings.commonFailHandler) {
+			// failCallbackが渡されていなくてcfhIfFailがtrueでcommonFailHandlerが設定されていればcFHを呼ぶ
+			h5.settings.commonFailHandler.call(this, arguments);
+		}
+	};
+
+	// 高速化のため、長さ１またはプロミスを直接指定の場合はプロミス配列を作らない
+	if (length === 1 || isPromise(promises)) {
+		var promise = length === 1 ? promises[0] : promises;
+		if (!isPromise(promise)) {
+			// 長さ1で中身がプロミスでない場合はdoneCallback実行して終了
+			this._doneCallbackExecuter();
+			return;
+		}
+		// プロミス配列を作っていない場合のremoveをここで定義(プロトタイプのremoveを上書き)
+		this.remove = function(p) {
+			if (this._resolved || this._rejected) {
+				return;
+			}
+			if (promise === p) {
+				this._doneCallbackExecuter();
+			}
+		};
+		// 長さ1で、それがプロミスなら、そのプロミスにdoneとfailを引っかける
+		promise.done(this._doneCallbackExecuter);
+		promise.fail(this._failCallbackExecuter);
+		return;
+	}
+	// promisesの中のプロミスオブジェクトの数(プロミスでないものは無視)
+	// 引数に渡されたpromisesのうち、プロミスオブジェクトと判定したものを列挙
+	var monitoringPromises = [];
+	for (var i = 0, l = promises.length; i < l; i++) {
+		var p = promises[i];
+		if (isPromise(p)) {
+			monitoringPromises.push(p);
+		}
+	}
+
+	var promisesLength = monitoringPromises.length;
+	if (promisesLength === 0) {
+		// プロミスが一つもなかった場合は即doneCallbackを実行
+		this._resolved = true;
+		doneCallback && doneCallback();
+		return;
+	}
+	this._promises = monitoringPromises;
+
+	resolveArgs = [];
+	this._resolveArgs = [];
+	this._resolveCount = 0;
+	this._promisesLength = promisesLength;
+
+	// いずれかのpromiseが成功するたびに全て終わったかチェックする関数
+	function createCheckFunction(_promise) {
+		// いずれかのpromiseが成功するたびに全て終わったかチェックする関数
+		return function check(/* var_args */) {
+			if (that._rejected) {
+				// 既にいずれかがreject済みならなにもしない
+				return;
+			}
+			var arg = h5.u.obj.argsToArray(arguments);
+			// 引数無しならundefined、引数が一つならそのまま、引数が2つ以上なら配列を追加
+			// ($.when()と同じ)
+			var index = $.inArray(_promise, promises);
+			resolveArgs[index] = (arg.length < 2 ? arg[0] : arg);
+
+			if (++that._resolveCount === that._promisesLength) {
+				// 全てのpromiseが成功したので、doneCallbackを実行
+				that._doneCallbackExecuter();
+			}
+		};
+	}
+
+	for (var i = 0; i < promisesLength; i++) {
+		var targetPromise = monitoringPromises[i];
+		targetPromise.done(createCheckFunction(targetPromise)).fail(this._failCallbackExecuter);
+	}
+}
+WaitingPromiseManager.prototype = $.extend(WaitingPromiseManager.prototype, {
+	remove: function(promise) {
+		if (this._resolved || this._rejected) {
+			return;
+		}
+		if (promsie === this._promises) {
+			this._doneCallback && doneCallback();
+			this._resolved = true;
+			return;
+		}
+		var index = $.inArray(promise, this._promises);
+		if (index === -1) {
+			return;
+		}
+
+		// 待機中のpromisesからpromiseを外す
+		this._promises.splice(index, 1);
+		// 取り除くpromiseについてのresolveArgsを減らす
+		this._resolveArgs.splice(index, 1);
+		if (isResolved(promise)) {
+			// 既にresolve済みなら何もしない
+			return;
+		}
+		// キャッシュしてある待機中プロミスの個数を1減らす
+		this._promisesLength--;
+		if (that._resolveCount === this._promisesLength) {
+			// 現在resolve済みの個数と、1減らした後の待機中プロミス個数が同じならdoneハンドラ実行
+			this._doneCallbackExecuter();
+		}
+	}
+});
+
+/**
  * 複数のプロミスが完了するのを待機する
  * <p>
  * whenとは仕様が異なり、新しくdeferredは作らない。
@@ -442,78 +649,15 @@ var isFunction = (function() {
  *
  * @private
  * @param {Promise[]} promises
- * @param {Function} doneCallback doneコールバック。引数は渡されません。
+ * @param {Function} doneCallback doneコールバック
  * @param {Function} failCallback failコールバック
  * @param {Boolean} cfhIfFail 渡されたpromiseのいずれかが失敗した時にcFHを呼ぶかどうか。
  *            cFHを呼ぶときのthisは失敗したpromiseオブジェクト、引数は失敗したpromiseのfailに渡される引数
+ * @returns {WaitingPromiseManager}
  */
 function waitForPromises(promises, doneCallback, failCallback, cfhIfFail) {
-	// 高速化のため、長さ1または0の場合はforを使わずにチェックする
-	var length = promises ? promises.length : 0;
-	var isPromise = h5.async.isPromise;
-	if (length === 1) {
-		var promise = promises[0];
-		if (isPromise(promise)) {
-			// 長さ1で、それがプロミスなら、そのプロミスにdoneとfailを引っかける
-			promise.done(doneCallback);
-			if (failCallback) {
-				promise.fail(failCallback);
-			} else if (cfhIfFail && h5.settings.commonFailHandler) {
-				// failCallbackが無くて、cfhIfFail===trueかつcommonFailHandlerがある場合はcfhをfailハンドラにしておく
-				promise.fail(h5.settings.commonFailHandler);
-			}
-			return;
-		}
-		// 長さ1で中身がプロミスでない場合は長さ0として処理する
-		length = 0;
-	}
-	if (length === 0) {
-		doneCallback();
-		return;
-	}
+	return new WaitingPromiseManager(promises, doneCallback, failCallback, cfhIfFail);
 
-	// promisesの中のプロミスオブジェクトの数(プロミスでないものは無視)
-	// 引数に渡されたpromisesのうち、プロミスオブジェクトと判定したものを列挙
-	var monitorningPromises = [];
-	for (var i = 0, l = promises.length; i < l; i++) {
-		var promise = promises[i];
-		if (isPromise(promise)) {
-			monitorningPromises.push(promise);
-		}
-	}
-
-	var promisesLength = monitorningPromises.length;
-	if (promisesLength === 0) {
-		// プロミスが一つもなかった場合は即doneCallbackを実行
-		doneCallback && doneCallback();
-		return;
-	}
-
-	var resolveCount = 0;
-	var rejected = false;
-	/** いずれかのpromiseが成功するたびに全て終わったかチェック */
-	function check() {
-		if (!rejected && ++resolveCount === promisesLength) {
-			// 全てのpromiseが成功したので、doneCallbackを実行
-			doneCallback && doneCallback();
-		}
-	}
-	/** いずれかのpromiseが失敗した時に呼ばれるコールバック */
-	function fail(/* var_args */) {
-		rejected = true;
-		if (failCallback) {
-			failCallback.apply(this, arguments);
-			return;
-		}
-		if (cfhIfFail && h5.settings.commonFailHandler) {
-			// failCallbackが渡されていなくてcfhIfFailがtrueでcommonFailHandlerが設定されていればcFHを呼ぶ
-			h5.settings.commonFailHandler.call(this, arguments);
-		}
-	}
-
-	for (var i = 0; i < promisesLength; i++) {
-		monitorningPromises[i].done(check).fail(fail);
-	}
 }
 
 //TODO あるオブジェクト下に名前空間を作ってexposeするようなメソッドを作る

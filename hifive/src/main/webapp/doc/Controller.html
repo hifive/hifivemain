@@ -1,0 +1,4464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: Controller</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+
+    <script src="scripts/jquery.js"> </script>
+    <script src="scripts/extension.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+</head>
+
+<body>
+<div id="container">
+	<nav>
+		<div class="module-search-header">
+		   	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+			<div class="h5-searchBox">
+				<input type="text" placeholder="Search...">
+				<button class="clear">×</button>
+			</div>
+		</div>
+		<div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+		<div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+		<div class="module-list-wrapper hidden-mobile">
+		    <h3>Classes</h3><ul><li><a href="Binding.html">Binding</a></li><li><a href="CacheManager.html">CacheManager</a></li><li><a href="ConsoleLogTarget.html">ConsoleLogTarget</a></li><li><a href="Controller.html">Controller</a></li><li><a href="ControllerManager.html">ControllerManager</a></li><li><a href="DatabaseWrapper.html">DatabaseWrapper</a></li><li><a href="DataItem.html">DataItem</a></li><li><a href="DataModel.html">DataModel</a></li><li><a href="DataModelManager.html">DataModelManager</a></li><li><a href="Del.html">Del</a></li><li><a href="Dependency.html">Dependency</a></li><li><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></li><li><a href="h5.ui.FormController.html">h5.ui.FormController</a></li><li><a href="h5.ui.validation.AsyncIndicator.html">h5.ui.validation.AsyncIndicator</a></li><li><a href="h5.ui.validation.BootstrapErrorBaloon.html">h5.ui.validation.BootstrapErrorBaloon</a></li><li><a href="h5.ui.validation.Composition.html">h5.ui.validation.Composition</a></li><li><a href="h5.ui.validation.ErrorBaloon.html">h5.ui.validation.ErrorBaloon</a></li><li><a href="h5.ui.validation.Message.html">h5.ui.validation.Message</a></li><li><a href="h5.ui.validation.MessageOutputController.html">h5.ui.validation.MessageOutputController</a></li><li><a href="h5.ui.validation.Style.html">h5.ui.validation.Style</a></li><li><a href="h5.validation.FormValidationLogic.html">h5.validation.FormValidationLogic</a></li><li><a href="Indicator.html">Indicator</a></li><li><a href="Insert.html">Insert</a></li><li><a href="JqXHRWrapper.html">JqXHRWrapper</a></li><li><a href="Log.html">Log</a></li><li><a href="Logic.html">Logic</a></li><li><a href="Mixin.html">Mixin</a></li><li><a href="ObservableArray.html">ObservableArray</a></li><li><a href="ObservableItem.html">ObservableItem</a></li><li><a href="Query.html">Query</a></li><li><a href="QueryResult.html">QueryResult</a></li><li><a href="SceneContainerController.html">SceneContainerController</a></li><li><a href="Select.html">Select</a></li><li><a href="Sequence.html">Sequence</a></li><li><a href="Sql.html">Sql</a></li><li><a href="Statement.html">Statement</a></li><li><a href="TransactionalExecutor.html">TransactionalExecutor</a></li><li><a href="Update.html">Update</a></li><li><a href="ValidationResult.html">ValidationResult</a></li><li><a href="View.html">View</a></li><li><a href="WatchPositionPromise.html">WatchPositionPromise</a></li><li><a href="WebSqlDatabase.html">WebSqlDatabase</a></li></ul><h3>Namespaces</h3><ul><li><a href="h5.html">h5</a></li><li><a href="h5.api.html">h5.api</a></li><li><a href="h5.api.geo.html">h5.api.geo</a></li><li><a href="h5.api.sqldb.html">h5.api.sqldb</a></li><li><a href="h5.api.storage.html">h5.api.storage</a></li><li><a href="h5.api.storage.local.html">h5.api.storage.local</a></li><li><a href="h5.api.storage.session.html">h5.api.storage.session</a></li><li><a href="h5.async.html">h5.async</a></li><li><a href="h5.core.html">h5.core</a></li><li><a href="h5.core.data.html">h5.core.data</a></li><li><a href="h5.core.interceptor.html">h5.core.interceptor</a></li><li><a href="h5.core.view.html">h5.core.view</a></li><li><a href="h5.dev.api.geo.html">h5.dev.api.geo</a></li><li><a href="h5.env.html">h5.env</a></li><li><a href="h5.env.ua.html">h5.env.ua</a></li><li><a href="h5.log.html">h5.log</a></li><li><a href="h5.mixin.html">h5.mixin</a></li><li><a href="h5.res.html">h5.res</a></li><li><a href="h5.scene.html">h5.scene</a></li><li><a href="h5.settings.html">h5.settings</a></li><li><a href="h5.u.html">h5.u</a></li><li><a href="h5.u.obj.html">h5.u.obj</a></li><li><a href="h5.u.str.html">h5.u.str</a></li><li><a href="h5.ui.html">h5.ui</a></li><li><a href="h5.ui.components.BaloonController.html">h5.ui.components.BaloonController</a></li><li><a href="h5.ui.jqm.html">h5.ui.jqm</a></li><li><a href="h5.ui.jqm.manager.html">h5.ui.jqm.manager</a></li><li><a href="h5.validation.html">h5.validation</a></li></ul><h3>Mixins</h3><ul><li><a href="EventDispatcher.html">EventDispatcher</a></li></ul>
+	    </div>
+	</nav>
+	<div id="main">
+	    <h1 class="page-title">Class: Controller</h1>
+	    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        Controller
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+
+    <h4 class="name" id="Controller"><span class="type-signature"></span>new Controller<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    コントローラのコンストラクタ<p>このオブジェクトは自分でnewすることはありません。 コントローラ化して動作させる場合は<ahref="h5.core.html#controller">h5.core.controller()</a>を使用してください。</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3600">line 3600</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".__construct"><span class="type-signature">(static) </span>__construct<span class="type-signature"> :function</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクル __construct<p>コントローラ生成時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__constructに関数を記述することで動作する。指定はオプションであり、記述しなくてもよい。</p><p>コントローラ生成時のライフサイクルメソッドは<a href="Controller.html#.__construct">Controller.__construct</a>,<a href="Controller.html#.__init">Controller.__init</a>, <a href="Controller.html#.__postInit">Controller.__postInit</a>,<a href="Controller.html#.__ready">Controller.__ready</a>の順序で動作する。</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">function</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4165">line 4165</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle">リファレンス（仕様詳細） » コントローラのライフサイクルについて</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".__dispose"><span class="type-signature">(static) </span>__dispose<span class="type-signature"> :function</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクル __dispose<p>コントローラの破棄時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__disposeに関数を記述することで動作する。指定はオプションであり、記述しなくてもよい。</p><p>コントローラ破棄時のライフサイクルメソッドは<a href="Controller.html#.__unbind">Controller.__unbind</a>,<a href="Controller.html#.__dispose">Controller.__dispose</a>の順序で動作する。</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">function</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4248">line 4248</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle">リファレンス（仕様詳細） » コントローラのライフサイクルについて</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".__init"><span class="type-signature">(static) </span>__init<span class="type-signature"> :function</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクル __init<p>コントローラ生成時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__initに関数を記述することで動作する。指定はオプションであり、記述しなくてもよい。</p><p>コントローラ生成時のライフサイクルメソッドは<a href="Controller.html#.__construct">Controller.__construct</a>,<a href="Controller.html#.__init">Controller.__init</a>, <a href="Controller.html#.__postInit">Controller.__postInit</a>,<a href="Controller.html#.__ready">Controller.__ready</a>の順序で動作する。</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">function</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4182">line 4182</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle">リファレンス（仕様詳細） » コントローラのライフサイクルについて</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".__name"><span class="type-signature">(static) </span>__name<span class="type-signature"> :String</span></h4>
+
+
+
+
+<div class="description">
+    コントローラ名.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">String</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3206">line 3206</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".__postInit"><span class="type-signature">(static) </span>__postInit<span class="type-signature"> :function</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクル __postInit<p>コントローラ生成時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__postInitに関数を記述することで動作する。指定はオプションであり、記述しなくてもよい。</p><p>コントローラ生成時のライフサイクルメソッドは<a href="Controller.html#.__construct">Controller.__construct</a>,<a href="Controller.html#.__init">Controller.__init</a>, <a href="Controller.html#.__postInit">Controller.__postInit</a>,<a href="Controller.html#.__ready">Controller.__ready</a>の順序で動作する。</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">function</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4199">line 4199</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle">リファレンス（仕様詳細） » コントローラのライフサイクルについて</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".__ready"><span class="type-signature">(static) </span>__ready<span class="type-signature"> :function</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクル __ready<p>コントローラ生成時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__readyに関数を記述することで動作する。指定はオプションであり、記述しなくてもよい。</p><p>コントローラ生成時のライフサイクルメソッドは<a href="Controller.html#.__construct">Controller.__construct</a>,<a href="Controller.html#.__init">Controller.__init</a>, <a href="Controller.html#.__postInit">Controller.__postInit</a>,<a href="Controller.html#.__ready">Controller.__ready</a>の順序で動作する。</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">function</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4216">line 4216</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle">リファレンス（仕様詳細） » コントローラのライフサイクルについて</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".__templates"><span class="type-signature">(static) </span>__templates<span class="type-signature"> :String|Array.&lt;String></span></h4>
+
+
+
+
+<div class="description">
+    テンプレート.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Array.&lt;String></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3215">line 3215</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".__unbind"><span class="type-signature">(static) </span>__unbind<span class="type-signature"> :function</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクル __unbind<p>コントローラの破棄時に実行されるライフサイクルメソッドの一つ。コントローラ定義オブジェクトの__unbindに関数を記述することで動作する。指定はオプションであり、記述しなくてもよい。</p><p>コントローラ破棄時のライフサイクルメソッドは<a href="Controller.html#.__unbind">Controller.__unbind</a>,<a href="Controller.html#.__dispose">Controller.__dispose</a>の順序で動作する。</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">function</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4233">line 4233</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="http://www.htmlhifive.com/conts/web/view/reference/controller_lifecycle">リファレンス（仕様詳細） » コントローラのライフサイクルについて</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".initPromise"><span class="type-signature">(static) </span>initPromise<span class="type-signature"> :Promise</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクルイベント__initについてのPromiseオブジェクトを返します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3387">line 3387</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".isInit"><span class="type-signature">(static) </span>isInit<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクルイベント__initが終了したかどうかを返します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3287">line 3287</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".isPostInit"><span class="type-signature">(static) </span>isPostInit<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクルイベント__postInitが終了したかどうかを返します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3296">line 3296</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".isReady"><span class="type-signature">(static) </span>isReady<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクルイベント__readyが終了したかどうかを返します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3305">line 3305</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".log"><span class="type-signature">(static) </span>log<span class="type-signature"> :<a href="Log.html">Log</a></span></h4>
+
+
+
+
+<div class="description">
+    コントローラのロガーを返します。<p>コントローラ内のメソッドで<code>this.log.debug('debug message');</code>のように記述して使用します。ロガーの使い方の詳細は<ahref="Log.html">Log</a>をご覧ください。</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Log.html">Log</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3414">line 3414</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".parentController"><span class="type-signature">(static) </span>parentController<span class="type-signature"> :<a href="Controller.html">Controller</a></span></h4>
+
+
+
+
+<div class="description">
+    親子関係を持つコントローラの親コントローラを返します。親コントローラがいない場合、nullを返します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Controller.html">Controller</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3323">line 3323</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".postInitPromise"><span class="type-signature">(static) </span>postInitPromise<span class="type-signature"> :Promise</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクルイベント__postInitについてのPromiseオブジェクトを返します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3396">line 3396</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".preInitPromise"><span class="type-signature">(static) </span>preInitPromise<span class="type-signature"> :Promise</span></h4>
+
+
+
+
+<div class="description">
+    __templatesに指定したテンプレートファイルの読み込みに、成功または失敗したかの状態を持つPromiseオブジェクト。このオブジェクトが持つ以下の関数で、状態をチェックすることができます。<p><b>state()</b> <table border="1"><tr><td>戻り値</td><td>結果</td></tr><tr><td>"resolved"</td><td>読み込みに成功</td></tr><tr><td>"rejected"</td><td>読み込みに失敗</td></tr><tr><td>"pending"</td><td>読み込みが開始されていないまたは読み込み中</td></tr></table> 注意: jQuery1.7.x未満の場合、この関数は使用できません。<p><b>isResolved(), isRejected()</b> <table border="1"><tr><td>isResolved()の戻り値</td><td>isRejected()の戻り値</td><td>結果</td></tr><tr><td>true</td><td>false</td><td>読み込みに成功</td></tr><tr><td>false</td><td>true</td><td>読み込みに失敗</td></tr><tr><td>false</td><td>false</td><td>読み込みが開始されていないまたは読み込み中</td></tr></table><p>また、preInitPromise.done()に関数を設定すると読み込み成功時に、preInitPromise.fail()に関数を設定すると読み込み失敗時に、設定した関数を実行します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3332">line 3332</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".readyPromise"><span class="type-signature">(static) </span>readyPromise<span class="type-signature"> :Promise</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのライフサイクルイベント__readyについてのPromiseオブジェクトを返します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3405">line 3405</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".rootController"><span class="type-signature">(static) </span>rootController<span class="type-signature"> :<a href="Controller.html">Controller</a></span></h4>
+
+
+
+
+<div class="description">
+    親子関係を持つコントローラ群の一番祖先であるコントローラを返します。祖先がいない場合、自分自身を返します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Controller.html">Controller</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3314">line 3314</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".rootElement"><span class="type-signature">(static) </span>rootElement<span class="type-signature"> :Element</span></h4>
+
+
+
+
+<div class="description">
+    コントローラがバインドされた要素.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Element</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3224">line 3224</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".view"><span class="type-signature">(static) </span>view<span class="type-signature"> :<a href="View.html">View</a></span></h4>
+
+
+
+
+<div class="description">
+    ビュー操作に関するメソッドを格納しています。<p><a href="View.html">View</a>クラスと同様にテンプレートを扱うクラスですが、Controllerの持つViewは以下の点でViewクラスとは異なります。</p><ul><li>append/update/prependメソッドでのターゲット(出力先)について、コントローラのイベントハンドラと同様にコントローラのルートエレメントを起点に選択します。 また、グローバルセレクタも使用可能です。 </li><pre><code>// 例// thisはコントローラthis.view.append('.target', 'tmpId'); // コントローラのルートエレメント内のtargetクラス要素this.view.append('{.target}', 'tmpId'); // $('.target')と同じthis.view.append('{rootElement}', 'tmpId'); // コントローラのルートエレメント(this.rootElementと同じ)this.view.append('{document.body}', 'tmpId'); // body要素</code></pre><li>指定されたIDのテンプレートの探索を、親コントローラのView、h5.core.viewについても行います。</li><li>自分のコントローラ、親コントローラ、親コントローラの親コントローラ、…、ルートコントローラ、h5.core.view、の順番に探索して、最初に見つかったテンプレートを返します。</li><pre><code>// 例// parentControllerは子コントローラを持つコントローラvar parent = parentController.view;var child = parentController.childController;// viewにテンプレートを登録h5.core.view.register('a', 'a_coreView');h5.core.view.register('b', 'b_coreView');parent.view.register('a', 'a_parent');parent.view.register('d', 'd_parent');child.view.register('c', 'c_child');child.get('c'); // c_childchild.get('d'); // d_parentchild.get('a'); // a_parentchild.get('b'); // b_coreView</code></pre><li>bindメソッドはコメントビューを使用したバインドが可能です。</li><p>コメントビューの詳細については、<ahref="http://www.htmlhifive.com/conts/web/view/reference/inline-comment-templating">リファレンス（仕様詳細)&gt;&gt; コメントビュー</a>をご覧ください。</p></ul>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="View.html">View</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3427">line 3427</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="View.html">View</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id=".$find"><span class="type-signature">(static) </span>$find<span class="signature">(selector)</span><span class="type-signature"> &rarr; {jQuery}</span></h4>
+
+    
+
+
+
+<div class="description">
+    コントローラがバインドされた要素内から要素を選択します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>selector</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">セレクタ</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    セレクタにマッチするjQueryオブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">jQuery</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3637">line 3637</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".bind"><span class="type-signature">(static) </span>bind<span class="signature">(targetElement, param<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Controller.html">Controller</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    コントローラを要素へ再度バインドします。子コントローラでは使用できません。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>targetElement</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Element</span>
+|
+
+<span class="param-type">jQuery</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">バインド対象とする要素のセレクタ、DOMエレメント、もしくはjQueryオブジェクト.<br />           セレクタで指定したときにバインド対象となる要素が存在しない、もしくは2つ以上存在する場合、エラーとなります。</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>param</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">初期化パラメータ.<br />           初期化パラメータは __init, __readyの引数として渡されるオブジェクトの argsプロパティとして格納されます。</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    コントローラ.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Controller.html">Controller</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3760">line 3760</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".deferred"><span class="type-signature">(static) </span>deferred<span class="signature">()</span><span class="type-signature"> &rarr; {Deferred}</span></h4>
+
+    
+
+
+
+<div class="description">
+    Deferredオブジェクトを返します。
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Deferredオブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Deferred</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3649">line 3649</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".disableListeners"><span class="type-signature">(static) </span>disableListeners<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    コントローラに定義されているリスナーの実行を禁止します。
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3899">line 3899</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".dispose"><span class="type-signature">(static) </span>dispose<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+<div class="description">
+    コントローラのリソースをすべて削除します。<br /><a href="#unbind">Controller#unbind()</a> の処理を包含しています。
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Promiseオブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3804">line 3804</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".enableListeners"><span class="type-signature">(static) </span>enableListeners<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    コントローラに定義されているリスナーの実行を許可します。
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3889">line 3889</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".indicator"><span class="type-signature">(static) </span>indicator<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Indicator.html">Indicator</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    指定された要素に対して、インジケータ(メッセージ・画面ブロック・進捗)の表示や非表示を行うためのオブジェクトを取得します。<p><a href="h5.ui.html#indicator">h5.ui.indicator</a>と同様にインジケータオブジェクトを取得する関数ですが、ターゲットの指定方法について以下の点で<ahref="h5.ui.html#indicator">h5.ui.indicator</a>と異なります。<p><ul><li>第1引数にパラメータオブジェクトを渡してください。</li><pre><code>// thisはコントローラthis.indicator({	target: this.rootElement}); // OKthis.indicator(this.rootElement, option); // NG</code></pre><li>targetの指定は省略できます。省略した場合はコントローラのルートエレメントがインジケータの出力先になります。</li><li>targetにセレクタが渡された場合、要素の選択はコントローラのルートエレメントを起点にします。また、グローバルセレクタを使用できます。(コントローラのイベントハンドラ記述と同様です。)</li><pre><code>// thisはコントローラthis.indicator({target:'.target'}); // コントローラのルートエレメント内のtargetクラス要素this.indicator({target:'{.target}'}); // $('.target')と同じthis.indicator({target:'{rootElement}'); // コントローラのルートエレメント(this.rootElementと同じ)this.indicator({target:'{document.body}'); // body要素</code></pre></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    インジケータオブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Indicator.html">Indicator</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3878">line 3878</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="h5.ui.html#.indicator">h5.ui.indicator</a></li>
+        
+            <li><a href="Indicator.html">Indicator</a></li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".manageChild"><span class="type-signature">(static) </span>manageChild<span class="signature">(コントローラインスタンス)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    コントローラを子コントローラとして動的に追加します<p>追加されたコントローラは呼び出し元のコントローラの子コントローラとなります。</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>コントローラインスタンス</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Controller.html">Controller</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4067">line 4067</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".off"><span class="type-signature">(static) </span>off<span class="signature">(target, eventName, listener)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    イベントハンドラを動的にアンバインドします。<p>第1引数targetの指定にはコントローラのイベントハンドラ記述と同様の記述ができます。つまりセレクタの場合はルートエレメントを起点に選択します。またグローバルセレクタで指定することもできます。、</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>target</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">イベントハンドラのターゲット</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>eventName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">イベント名</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>listener</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">ハンドラ</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4017">line 4017</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".on"><span class="type-signature">(static) </span>on<span class="signature">(target, eventName, listener)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    イベントハンドラを動的にバインドします。<p>第1引数targetの指定にはコントローラのイベントハンドラ記述と同様の記述ができます。つまりセレクタの場合はルートエレメントを起点に選択します。またグローバルセレクタで指定することもできます。、</p><p>ここで追加したハンドラはコントローラのunbind時にアンバインドされます。</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>target</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">イベントハンドラのターゲット</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>eventName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">イベント名</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>listener</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">ハンドラ</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3980">line 3980</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".own"><span class="type-signature">(static) </span>own<span class="signature">(func)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+<div class="description">
+    指定された関数に対して、コンテキスト(this)をコントローラに変更して実行する関数を返します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>func</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">関数</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    コンテキスト(this)をコントローラに変更した関数
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3732">line 3732</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".ownWithOrg"><span class="type-signature">(static) </span>ownWithOrg<span class="signature">(func)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+<div class="description">
+    指定された関数に対して、コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えて実行する関数を返します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>func</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">関数</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    コンテキスト(this)をコントローラに変更し、元々のthisを第1引数に加えた関数
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3744">line 3744</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".throwCustomError"><span class="type-signature">(static) </span>throwCustomError<span class="signature">(customType, msgOrErrObj, var_args<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    指定された値をメッセージとして例外をスローします。<p>このメソッドでスローされたErrorオブジェクトのcustomTypeプロパティには、第一引数で指定した型情報が格納されます。<p>第二引数がオブジェクトまたは文字列によって、出力される内容が異なります。<p><b>文字列の場合</b><br>文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。<p><b>オブジェクトの場合</b><br>Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>customType</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">型情報</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>msgOrErrObj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">メッセージ文字列またはオブジェクト</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>var_args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Any</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">置換パラメータ(第一引数が文字列の場合のみ使用します)</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3945">line 3945</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".throwError"><span class="type-signature">(static) </span>throwError<span class="signature">(msgOrErrObj, var_args<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    指定された値をメッセージとして例外をスローします。<p>第一引数がオブジェクトまたは文字列によって、出力される内容が異なります。<p><b>文字列の場合</b><br>文字列に含まれる{0}、{1}、{2}...{n} (nは数字)を、第二引数以降に指定した値で置換し、それをメッセージ文字列とします。<p><b>オブジェクトの場合</b><br>Erorrオブジェクトのdetailプロパティに、このオブジェクトを設定します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msgOrErrObj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">メッセージ文字列またはオブジェクト</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>var_args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Any</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">置換パラメータ(第一引数が文字列の場合のみ使用します)</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3919">line 3919</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".trigger"><span class="type-signature">(static) </span>trigger<span class="signature">(event, parameter<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {jQueryEvent}</span></h4>
+
+    
+
+
+
+<div class="description">
+    ルート要素を起点に指定されたイベントを実行します。<p>第2引数に指定したparameterオブジェクトは、コントローラのイベントハンドラで受け取るcontext.evArgに格納されます。</p><p>parameterに配列を指定した場合は、context.evArgに渡した配列が格納されます。</p><p>戻り値は、jQueryEventオブジェクトを返します。</p><h5>長さ1の配列をparameterに指定した場合について</h5><p><pre class="sh_javascript"><code>trigger('click', ['a']);</code></pre>のように、１要素だけの配列を渡した場合は、配列ではなくその中身がcontext.evArgに格納されます。(jQuery.triggerと同様です。)</p><p>triggerで、渡した配列の長さに関わらず、渡したデータを配列としてハンドラで扱いたい場合は、以下のような方法を検討してください。。</p><ul><li> parameterをオブジェクトでラップする。<pre class="sh_javascript"><code>// triggerthis.trigger('hoge', {data: ary});// イベントハンドラ'{rootElement} hoge': function(context){  var ary = context.evArg.data;  for(var i = 0, l = ary.length; i &lt; l; i++){    // 配列に対する処理  }}</code></pre></li><li>イベントハンドラ側で、受け取ったデータが配列でなかったら配列でラップしてから扱う<pre class="sh_javascript"><code>// triggerthis.trigger('hoge', ary);// イベントハンドラ'{rootElement} hoge': function(context){  var ary = $.isArray(context.evArg) ? context.evArg: [context.evArg];  for(var i = 0, l = ary.length; i &lt; l; i++){    // 配列に対する処理  }}</code></pre></li></ul>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>event</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+|
+
+<span class="param-type">jQueryEvent</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">イベント名またはjQueryEventオブジェクト</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>parameter</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">パラメータ</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    event イベントオブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">jQueryEvent</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3715">line 3715</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".triggerIndicator"><span class="type-signature">(static) </span>triggerIndicator<span class="signature">(opt)</span><span class="type-signature"> &rarr; {<a href="Indicator.html">Indicator</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    インジケータの生成を上位コントローラまたはフレームワークに移譲します。<br>例えば、子コントローラにおいてインジケータのカバー範囲を親コントローラ全体（または画面全体）にしたい場合などに使用します。<br>このメソッドを実行すると、「triggerIndicator」という名前のイベントが発生します。また、イベント引数としてオプションパラメータを含んだオブジェクトが渡されます。<br>イベントがdocumentまで到達した場合、フレームワークが自動的にインジケータを生成します。<br>途中のコントローラでインジケータを生成した場合はevent.stopPropagation()を呼んでイベントの伝搬を停止し、イベント引数で渡されたオブジェクトの<code>indicator</code>プロパティに生成したインジケータインスタンスを代入してください。<br>indicatorプロパティの値がこのメソッドの戻り値となります。<br>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>opt</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">オプション
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">メッセージ</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>percent</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">進捗を0～100の値で指定する。</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>block</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">操作できないよう画面をブロックするか (true:する/false:しない)</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    インジケータオブジェクト
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Indicator.html">Indicator</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3828">line 3828</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".unbind"><span class="type-signature">(static) </span>unbind<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    コントローラのバインドを解除します。子コントローラでは使用できません。
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line3780">line 3780</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".unmanageChild"><span class="type-signature">(static) </span>unmanageChild<span class="signature">(コントローラインスタンス, andDispose<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+<div class="description">
+    子コントローラを動的に削除
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>コントローラインスタンス</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Controller.html">Controller</a></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>andDispose</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last">第1引数で指定されたコントローラをdisposeするかどうか。指定無しの場合はdisposeします。</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.controller.js.html">src/h5.core.controller.js</a>, <a href="src_h5.core.controller.js.html#line4107">line 4107</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+	</div>
+
+	<br class="clear">
+
+	<footer>
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 20:54:04 GMT+0900 (JST)
+	</footer>
+</div>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

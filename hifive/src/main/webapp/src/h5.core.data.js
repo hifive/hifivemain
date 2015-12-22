@@ -1816,7 +1816,7 @@
 			// 配列なら、配列の中身も変更されていないかチェックする(type:anyならチェックしない)
 			// type:[]の場合、oldValueは必ずObsArrayまたはundefined。
 			// newValue,oldValueともに配列(oldValueの場合はObsArray)かつ、長さが同じ場合にのみチェックする
-			if (isTypeArray(type) && oldValue && oldValue.equals(newValue, oldValue)) {
+			if (isTypeArray(type) && oldValue && oldValue.equals(newValue)) {
 				continue;
 			}
 
@@ -2331,7 +2331,7 @@
 	 * DataItem、ObservableItemのが持つObservableArrayのプロパティに対して、リスナを登録します
 	 *
 	 * @private
-	 * @param {DataItem||ObservableItem} item
+	 * @param {DataItem|ObservableItem} item
 	 * @param {String} propName プロパティ名
 	 * @param {ObservableArray} リスナ登録をするObservableArray
 	 * @param {DataModel} [model] モデル(DataItemの場合)
@@ -3485,7 +3485,16 @@
 				}
 			}
 			return ret;
-		}
+		},
+
+		/**
+		 * このデータモデルについてデータアイテムの検索を行うQueryクラスを作成して返します
+		 *
+		 * @since 1.2.0
+		 * @memberOf DataModel
+		 * @returns {Query} 検索を行うQueryクラスを返します
+		 */
+		createQuery: h5internal.data.createQuery
 	});
 
 	//------------------------------------------
@@ -3759,15 +3768,22 @@
 		 * @returns {Boolean} 判定結果
 		 */
 		equals: function(ary) {
-			var len = this.length;
-
-			// aryが配列でもObservableArrayでもないならfalse
-			//サイズが異なる場合もfalse
-			if (!(isArray(ary) || isObservableArray(ary)) || ary.length !== len) {
+			var isObservable = isObservableArray(ary);
+			if (!isObservable && !isArray(ary)) {
+				// ObservableArrayでもArrayでもないならfalseを返す
 				return false;
 			}
 
-			var target = isObservableArray(ary) ? ary._src : ary;
+			var target = isObservable ? ary._src : ary;
+			var len = this.length;
+			var targetLength = target.length;
+
+			// サイズが異なる場合はfalseを返す
+			// target(ネイティブの配列)のlengthと比較する。
+			// (iOS8.0で、ObsArrayのlengthとネイティブのArrayのlengthを比較すると比較結果がおかしくなることがある(#issue 404))
+			if (targetLength !== len) {
+				return false;
+			}
 
 			// 中身の比較
 			for (var i = 0; i < len; i++) {

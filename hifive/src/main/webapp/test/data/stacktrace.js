@@ -17,6 +17,9 @@
  */
 (function() {
 	var logger = h5.log.createLogger("テスト h5.u");
+	logger.info("-------------- スタックトレース グローバル領域(loadScriptで読み込む)から出力 ここから --------------");
 	logger.enableStackTrace = true;
 	logger.debug("スタックトレース - テスト");
+	logger.enableStackTrace = false;
+	logger.info("-------------- スタックトレース グローバル領域(loadScriptで読み込む)から出力 ここまで --------------");
 })();

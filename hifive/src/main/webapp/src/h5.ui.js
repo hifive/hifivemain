@@ -1111,7 +1111,8 @@
 	 * @private
 	 * @param {String|Object} target インジケータを表示する対象のDOM要素、jQueryオブジェクトまたはセレクタ
 	 * @param {Object} [option] オプション
-	 * @param {String} [option.message] スロバーの右側に表示する文字列 (デフォルト:未指定)
+	 * @param {Boolean} [showThrobber=true] スロバーを表示するかどうか。デフォルトは表示。
+	 * @param {String} [option.message] 表示する文字列 (デフォルト:未指定)
 	 * @param {Number} [option.percent] スロバーの中央に表示する数値。0～100で指定する (デフォルト:未指定)
 	 * @param {Boolean} [option.block] 画面を操作できないようオーバーレイ表示するか (true:する/false:しない) (デフォルト:true)
 	 * @param {Number} [option.fadeIn] インジケータをフェードで表示する場合、表示までの時間をミリ秒(ms)で指定する (デフォルト:フェードしない)
@@ -1150,7 +1151,8 @@
 			fadeIn: -1,
 			fadeOut: -1,
 			promises: null,
-			theme: 'a'
+			theme: 'a',
+			showThrobber: true
 		};
 		// スロバーのスタイル定義 (基本的にはCSSで記述する。ただし固定値はここで設定する)
 		// CSSAnimationsがサポートされているブラウザの場合、CSSのanimation-durationを使用するためroundTimeプロパティの値は使用しない
@@ -1211,6 +1213,8 @@
 		// スキン - IE6の場合selectタグがz-indexを無視するため、オーバーレイと同一階層にiframe要素を生成してselectタグを操作出来ないようにする
 		// http://www.programming-magic.com/20071107222415/
 		this._$skin = $();
+		// showが呼ばれた時にcontentを表示するかどうか。messageもスロバーもないなら表示しない
+		this._showContent = settings.showThrobber || settings.message;
 
 		// コンテンツ内の要素
 		var contentElem = h5.u.str.format(FORMAT_THROBBER_MESSAGE_AREA,
@@ -1303,6 +1307,7 @@
 				var _$content = this._$content.eq(i);
 				var _$skin = this._$skin.eq(i);
 				var _$overlay = this._$overlay.eq(i);
+				var settings = this._settings;
 
 				// position:absoluteの子要素を親要素からの相対位置で表示するため、親要素がposition:staticの場合はrelativeに変更する(親要素がbody(スクリーンロック)の場合は変更しない)
 				// また、IEのレイアウトバグを回避するためzoom:1を設定する
@@ -1318,16 +1323,22 @@
 					});
 				}
 				var doc = getDocumentOf(_$target[0]);
-				var throbber = isCanvasSupported ? new ThrobberCanvas(this._styles, doc)
-						: isVMLSupported ? new ThrobberVML(this._styles, doc) : null;
+				var throbber = null;
+				if (settings.showThrobber) {
+					throbber = isCanvasSupported ? new ThrobberCanvas(this._styles, doc)
+							: isVMLSupported ? new ThrobberVML(this._styles, doc) : null;
+				}
 
 				if (throbber) {
 					that._throbbers.push(throbber);
 					that.percent(this._settings.percent);
 					throbber.show(_$content.children('.' + CLASS_INDICATOR_THROBBER)[0]);
 				}
-
-				_$target.append(_$skin).append(_$overlay).append(_$content);
+				_$target.append(_$skin).append(_$overlay);
+				if (this._showContent) {
+					// _$contentはメッセージまたはスロバーがある場合のみ
+					_$target.append(_$content);
+				}
 			}
 
 			// Array.prototype.pushを使って、適用する要素を配列にまとめる
@@ -1553,6 +1564,13 @@
 				return this;
 			}
 
+			// スロバーが無くてメッセージが空文字ならcontentは表示しない
+			this._showContent = this._settings.showThrobber || !!message;
+			if (!this._showContent) {
+				this._$content.remove();
+			} else {
+				this._$target.append(this._$content);
+			}
 			this._$content.children('.' + CLASS_INDICATOR_MESSAGE).css('display', 'inline-block')
 					.text(message);
 			this._reposition();
@@ -1664,7 +1682,7 @@
 	 * </pre>
 	 *
 	 * <strong>パラメータにPromiseオブジェクトを指定して、done()/fail()の実行と同時にインジケータを除去する</strong><br>
-	 * resolve() または resolve() が実行されると、画面からインジケータを除去します。
+	 * resolve() または reject() が実行されると、画面からインジケータを除去します。
 	 *
 	 * <pre>
 	 * var df = $.Deferred();
@@ -1674,7 +1692,7 @@
 	 * }).show();
 	 *
 	 * setTimeout(function() {
-	 * 	df.resolve() // ここでイジケータが除去される
+	 * 	df.resolve(); // ここでインジケータが除去される
 	 * }, 2000);
 	 * </pre>
 	 *
@@ -1690,11 +1708,11 @@
 	 * }).show();
 	 *
 	 * setTimeout(function() {
-	 * 	df.resolve()
+	 * 	df.resolve();
 	 * }, 2000);
 	 *
 	 * setTimeout(function() {
-	 * 	df.resolve() // ここでイジケータが除去される
+	 * 	df.resolve(); // ここでインジケータが除去される
 	 * }, 4000);
 	 * </pre>
 	 *

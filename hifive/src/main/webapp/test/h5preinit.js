@@ -23,4 +23,5 @@ $(document).bind('h5preinit', function() {
 	};
 
 	h5.settings.aspects = [aspect];
+	h5.settings.scene.clientQueryStringPrefix = '_cltest_';
 });

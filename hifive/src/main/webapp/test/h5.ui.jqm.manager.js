@@ -31,7 +31,7 @@ $(function() {
 
 	// testutils
 	var compareVersion = testutils.u.compareVersion;
-	var isDisposed = testutils.u.isDisposed;
+	var isDisposed = h5devtestutils.controller.isDisposed;
 	var gate = testutils.async.gate;
 
 	// jQueryMobileを実際に読み込むことはせず、jQueryMobileをシミュレートする

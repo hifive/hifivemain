@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Namespace: settings</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+
+    <script src="scripts/jquery.js"> </script>
+    <script src="scripts/extension.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-custom.css">
+</head>
+
+<body>
+<div id="container">
+	<nav>
+		<div class="module-search-header">
+		   	<div class="h5-logo-wrapper"><a href="http://www.htmlhifive.com/conts/web/view/Main/WebHome" style="border-style:none;"><img class="h5-logo" src="../res/images/hifive_logo_apidoc.png"></a></div>
+			<div class="h5-searchBox">
+				<input type="text" placeholder="Search...">
+				<button class="clear">×</button>
+			</div>
+		</div>
+		<div class="module-nav show"><a href="" class="show-modules">一覧</a></div>
+		<div class="module-nav hide"><a href="" class="hide-modules">一覧</a></div>
+		<div class="module-list-wrapper hidden-mobile">
+		    <h3>Classes</h3><ul><li><a href="Binding.html">Binding</a></li><li><a href="CacheManager.html">CacheManager</a></li><li><a href="ConsoleLogTarget.html">ConsoleLogTarget</a></li><li><a href="Controller.html">Controller</a></li><li><a href="ControllerManager.html">ControllerManager</a></li><li><a href="DatabaseWrapper.html">DatabaseWrapper</a></li><li><a href="DataItem.html">DataItem</a></li><li><a href="DataModel.html">DataModel</a></li><li><a href="DataModelManager.html">DataModelManager</a></li><li><a href="Del.html">Del</a></li><li><a href="Dependency.html">Dependency</a></li><li><a href="GeodeticSystemEnum.html">GeodeticSystemEnum</a></li><li><a href="h5.ui.FormController.html">h5.ui.FormController</a></li><li><a href="h5.ui.validation.AsyncIndicator.html">h5.ui.validation.AsyncIndicator</a></li><li><a href="h5.ui.validation.BootstrapErrorBaloon.html">h5.ui.validation.BootstrapErrorBaloon</a></li><li><a href="h5.ui.validation.Composition.html">h5.ui.validation.Composition</a></li><li><a href="h5.ui.validation.ErrorBaloon.html">h5.ui.validation.ErrorBaloon</a></li><li><a href="h5.ui.validation.Message.html">h5.ui.validation.Message</a></li><li><a href="h5.ui.validation.MessageOutputController.html">h5.ui.validation.MessageOutputController</a></li><li><a href="h5.ui.validation.Style.html">h5.ui.validation.Style</a></li><li><a href="h5.validation.FormValidationLogic.html">h5.validation.FormValidationLogic</a></li><li><a href="Indicator.html">Indicator</a></li><li><a href="Insert.html">Insert</a></li><li><a href="JqXHRWrapper.html">JqXHRWrapper</a></li><li><a href="Log.html">Log</a></li><li><a href="Logic.html">Logic</a></li><li><a href="Mixin.html">Mixin</a></li><li><a href="ObservableArray.html">ObservableArray</a></li><li><a href="ObservableItem.html">ObservableItem</a></li><li><a href="Query.html">Query</a></li><li><a href="QueryResult.html">QueryResult</a></li><li><a href="SceneContainerController.html">SceneContainerController</a></li><li><a href="Select.html">Select</a></li><li><a href="Sequence.html">Sequence</a></li><li><a href="Sql.html">Sql</a></li><li><a href="Statement.html">Statement</a></li><li><a href="TransactionalExecutor.html">TransactionalExecutor</a></li><li><a href="Update.html">Update</a></li><li><a href="ValidationResult.html">ValidationResult</a></li><li><a href="View.html">View</a></li><li><a href="WatchPositionPromise.html">WatchPositionPromise</a></li><li><a href="WebSqlDatabase.html">WebSqlDatabase</a></li></ul><h3>Namespaces</h3><ul><li><a href="h5.html">h5</a></li><li><a href="h5.api.html">h5.api</a></li><li><a href="h5.api.geo.html">h5.api.geo</a></li><li><a href="h5.api.sqldb.html">h5.api.sqldb</a></li><li><a href="h5.api.storage.html">h5.api.storage</a></li><li><a href="h5.api.storage.local.html">h5.api.storage.local</a></li><li><a href="h5.api.storage.session.html">h5.api.storage.session</a></li><li><a href="h5.async.html">h5.async</a></li><li><a href="h5.core.html">h5.core</a></li><li><a href="h5.core.data.html">h5.core.data</a></li><li><a href="h5.core.interceptor.html">h5.core.interceptor</a></li><li><a href="h5.core.view.html">h5.core.view</a></li><li><a href="h5.dev.api.geo.html">h5.dev.api.geo</a></li><li><a href="h5.env.html">h5.env</a></li><li><a href="h5.env.ua.html">h5.env.ua</a></li><li><a href="h5.log.html">h5.log</a></li><li><a href="h5.mixin.html">h5.mixin</a></li><li><a href="h5.res.html">h5.res</a></li><li><a href="h5.scene.html">h5.scene</a></li><li><a href="h5.settings.html">h5.settings</a></li><li><a href="h5.u.html">h5.u</a></li><li><a href="h5.u.obj.html">h5.u.obj</a></li><li><a href="h5.u.str.html">h5.u.str</a></li><li><a href="h5.ui.html">h5.ui</a></li><li><a href="h5.ui.components.BaloonController.html">h5.ui.components.BaloonController</a></li><li><a href="h5.ui.jqm.html">h5.ui.jqm</a></li><li><a href="h5.ui.jqm.manager.html">h5.ui.jqm.manager</a></li><li><a href="h5.validation.html">h5.validation</a></li></ul><h3>Mixins</h3><ul><li><a href="EventDispatcher.html">EventDispatcher</a></li></ul>
+	    </div>
+	</nav>
+	<div id="main">
+	    <h1 class="page-title">Namespace: settings</h1>
+	    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+            <span class="ancestors"><a href="h5.html">h5</a>.</span>
+        
+        settings
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">設定を格納するh5.settingsオブジェクト</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line130">line 130</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".ajax"><span class="type-signature">(static) </span>ajax<span class="type-signature"> :Object</span></h4>
+
+
+
+
+<div class="description">
+    h5.ajaxの設定<br><p>このパラメータはオブジェクトで、以下のプロパティを持ちます</p><dl><dt>retryCount</dt><dd>一時的な通信エラーが発生した場合に通信をリトライする回数。デフォルトは0で、リトライを行いません。</dd><dt>retryInterval</dt><dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。<p>通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。デフォルトは500msです。同期(async:false)でh5.ajaxを呼んだ場合はretryIntervalは無視され、即座にリトライします。 (同期で呼んだ場合は必ず結果が同期で返ってきます。)</p></dd><dt>retryFilter</dt><dd> リトライ時に実行する関数を登録できます。<p>リトライが有効な場合、呼び出しが失敗した場合に呼ばれます。 (失敗か成功かは、jQuery.ajaxの結果に基づく。200番台、304番なら成功、それ以外は失敗。)</p><p>retryFilterに設定した関数がfalseを返した場合はリトライを中止し、それ以外を返した場合はリトライを継続します。(retryCountに設定した回数だけリトライをしたら、retryFilterの戻り値に関わらずリトライを中止します。)</p><p>デフォルトで設定してあるretryFilterは、「メソッドがGET、かつ、コネクションタイムアウトで失敗した場合のみリトライする」 ようになっています。</p><p>この挙動を変えたい場合は、以下のようにしてretryFilter関数を差し替えます。</p><code><pre>h5.settings.ajax.retryFilter = function(jqXHR, textStatus, thrownError) {	// この関数のthisはh5.ajax()呼び出し時のパラメータオブジェクトです。	// thisを見ると、メソッドがGETかPOSTか、等も分かります。	console.log('Ajax呼び出し失敗。textStatus = ' + textStatus);	return false; // 明示的にfalseを返した場合のみリトライを中止する}</pre></code> </dd></dl>h5preinitのタイミングで設定すると、ユーザコード内のh5.ajaxの呼び出し全てに反映されます。 <code><pre>$(document).bind('h5preinit', function() {	h5.settings.ajax = {		retryCount: 3,		retryInterval: 500,		retryFilter: function(){...}	};});</pre></code><p>また、h5.ajax()の呼び出しパラメータで指定すると、呼び出しごとに設定を変えることもできます。 指定しなかったパラメータは<code>h5.settings.ajax</code>のパラメータが使われます。</p><code><pre>h5.ajax({	url: 'hoge',	retryCount: 1});// この場合、retryCountだけ1になり、retryIntervalとretryFilterはsettingsのものが使われます。</pre></code>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>1.1.5</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line316">line 316</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".aspects"><span class="type-signature">(static) </span>aspects<span class="type-signature"> :Aspect|Array.&lt;Aspect></span></h4>
+
+
+
+
+<div class="description">
+    コントローラ、ロジックへのアスペクトを設定します。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Aspect</span>
+|
+
+<span class="param-type">Array.&lt;Aspect></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line210">line 210</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".commonFailHandler"><span class="type-signature">(static) </span>commonFailHandler<span class="type-signature"> :function</span></h4>
+
+
+
+
+<div class="description">
+    failコールバックの設定されていないDeferred/Promiseオブジェクトの共通のエラー処理<p>failコールバックが一つも設定されていないDeferredオブジェクトがrejectされたときにcommonFailHandlerに設定した関数が実行されます。<p><p>commonFailHandlerが実行されるDeferredオブジェクトは、h5.async.deferred()で作成したDeferredオブジェクトかhifive内部で生成されているDeferredオブジェクトだけです。jQuery.Deferred()で生成したDeferredオブジェクトは対象ではありません。</p><p>commonFailHandlerの引数と関数内のthisは通常のfailハンドラと同様で、それぞれ、rejectで渡された引数、rejectの呼ばれたDefferedオブジェクト、です。</p><h4>サンプル</h4><pre>// commonFailHandlerの登録h5.settings.commonFailHandler = function(e) {	alert(e);};// Deferredオブジェクトの生成var dfd1 = h5.async.deferred();var dfd2 = h5.async.deferred();var dfd3 = h5.async.deferred();dfd1.reject(1);// alert(1); が実行されるdfd2.fail(function() {});dfd2.reject(2);// failコールバックが登録されているので、commonFailHandlerは実行されないvar promise3 = dfd3.promise();promise3.fail(function() {});dfd3.reject(3);// promiseオブジェクトからfailコールバックを登録した場合も、commonFailHandlerは実行されないh5.ajax('hoge');// 'hoge'へのアクセスがエラーになる場合、commonFailHandlerが実行される。// エラーオブジェクトが引数に渡され、[object Object]がalertで表示される。// h5.ajax()の戻り値であるDeferredオブジェクトが内部で生成されており、// そのDeferredオブジェクトにfailハンドラが登録されていないためである。var d = h5.ajax('hoge');d.fail(function() {});// failハンドラが登録されているため、commonFailHandlerは実行されない</pre><h4>デフォルトの設定</h4><p>h5.settings.commonFailHandlerのデフォルト値はnullです。共通のエラー処理はデフォルトでは何も実行されません。commonFailHandlerでの処理を止めたい場合は、nullを代入して設定をクリアしてください。</p><pre>h5.settings.commonFailHandler = null;</pre>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">function</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line202">line 202</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".dynamicLoading"><span class="type-signature">(static) </span>dynamicLoading<span class="type-signature"> :Object</span></h4>
+
+
+
+
+<div class="description">
+    コントローラに記述されたテンプレートの読み込み等、動的リソース読み込み時の設定を行います。<br>このプロパティはオブジェクトで、<code>h5.settings.dynamicLoading.retryCount = 3;</code>のようにして設定します。<br>dynamicLoadingで指定できるプロパティ：<dl><dt>retryCount</dt><dd>一時的な通信エラーが発生した場合に通信をリトライする回数（デフォルト：3）</dd><dt>retryInterval</dt><dd>一時的な通信エラーが発生した場合に通信をリトライするまでの待ち秒数（ミリ秒）。通信エラーが発生した場合、ここで指定した秒数待ってからリクエストを送信します。（デフォルト：500）</dd></dl>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>1.1.4</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line248">line 248</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".listenerElementType"><span class="type-signature">(static) </span>listenerElementType<span class="type-signature"> :Number</span></h4>
+
+
+
+
+<div class="description">
+    コントローラのイベントリスナーのターゲット要素（第2引数）をどの形式で渡すかを設定します。<br><ul><li>1 (default) : jQueryオブジェクト<li>0 : ネイティブ形式（DOM要素そのもの）</ul>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>1.1.4</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line231">line 231</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".log"><span class="type-signature">(static) </span>log<span class="type-signature"> :Object</span></h4>
+
+
+
+
+<div class="description">
+    ログの設定を行います。
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line218">line 218</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".res"><span class="type-signature">(static) </span>res<span class="type-signature"> :Object</span></h4>
+
+
+
+
+<div class="description">
+    h5.resモジュールの設定<p>以下のプロパティの設定を行ってください</p><dl><dt>baseUrl</dt><dd>type:string|null</dd><dd>ベースURL。デフォルトはnullで、リソースパス解決時のブラウザのアドレスバーの（ファイル名部分を除いた）パスがカレントパスになります(空文字を指定した場合もnullと同じです)</dd><dt>resolveTimeout</dt><dd>type:integer</dd><dd>タイムアウト時間設定(ms)を設定。タイムアウトに設定された時間待機して、依存解決ができない場合、resolve()は失敗します。デフォルトは10000(10秒)です。</dd></dl>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line354">line 354</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".scene"><span class="type-signature">(static) </span>scene<span class="type-signature"> :Object</span></h4>
+
+
+
+
+<div class="description">
+    シーン機能の設定<p>以下のプロパティの設定を行ってください。</p><dl><dt>followTitle</dt><dd>type:boolean</dd><dd>メインシーンコンテナでブラウザタイトルの追従を行うか(デフォルトtrue)</dd><dt>clientQueryStringPrefix</dt><dd>type:string</dd><dd>シーン遷移パラメーター識別用プレフィクス。デフォルト空文字</dd><dt>clientFWQueryStringPrefix</dt><dd>type:string</dd><dd>シーン遷移パラメーター識別用プレフィクス(FW用)。デフォルト"_h5_"</dd><dt>urlHistoryMode</dt><dd>type:string</dd><dd>メインシーンコンテナURL履歴保持方法(<a href="h5.scene.html#.urlHistoryMode">h5.scene.urlHistoryMode</a>参照)。デフォルトは"'history"</dd><dt>urlMaxLength</dt><dd>type:integer</dd><dd>シーン遷移先URL最大長。デフォルト1800</dd><dt>baseUrl</dt><dd>type:string|null</dd><dd>ベースURL。デフォルトはnullで、hifiveを読み込んだページがカレントパスになります(空文字を指定した場合もnullと同じです)</dd><dt>autoInit</dt><dd>type:boolean</dd><dd>ページロード時にドキュメント全体を探索して、DATA属性によるコントローラーバインドとシーンコンテナ生成を行うかどうか。デフォルトfalse</dd></dl>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line361">line 361</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".trackstartTouchAction"><span class="type-signature">(static) </span>trackstartTouchAction<span class="type-signature"> :String</span></h4>
+
+
+
+
+<div class="description">
+    コントローラがh5trackstartイベントにバインドするときに、バインド対象のターゲットに設定するCSSプロパティ"touch-action"の値<p>デフォルトは"none"で、h5trackstartイベントがバインドされた要素はタッチ操作でスクロールされないようになります。</p><p>nullを設定した場合はtouch-actionへの値の設定は行いません。</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">String</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>1.1.10</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.js.html">src/h5.js</a>, <a href="src_h5.js.html#line335">line 335</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+	</div>
+
+	<br class="clear">
+
+	<footer>
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 20:54:06 GMT+0900 (JST)
+	</footer>
+</div>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

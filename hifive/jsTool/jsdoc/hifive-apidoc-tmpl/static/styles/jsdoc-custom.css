@@ -1,21 +1,11 @@
-@charset "utf-8";
-/*
- * Copyright (C) 2012-2014 NS Solutions Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * hifive css
- */
+nav {
+	float: left;
+	border-right: 1px solid #ccc;
+	border-left: none;
+	padding-left: 0;
+	width: 180px;
+}
+
 .summaryTable {
 	border-spacing: 0;
 	border: 0;
@@ -31,7 +21,6 @@
 }
 
 .summaryTable .name,.props .name,.name code {
-	color: #A35A00;
 	font-family: Consolas, 'Lucida Console', Monaco, monospace;
 	font-size: 100%;
 }
@@ -42,15 +31,10 @@
 	text-align: left;
 	vertical-align: top;
 	padding: 4px 6px;
-	display: table-cell;
 }
 
 .summaryTable td:last-child {
 	width: 70%;
-}
-
-.summaryTable td:first-child a {
-	color: #A35A00;
 }
 
 .summaryTable thead tr {
@@ -74,10 +58,6 @@
 	border-right: 1px solid #aaa;
 }
 
-.summaryTable th:last-child,.returnsTable th:last-child {
-	border-right: 1px solid #ddd;
-}
-
 #container {
 	width: 900px;
 }
@@ -88,12 +68,185 @@
 	width: 700px;
 }
 
-nav {
-	float: left; display : block;
-	margin-top: 5px;
+.h5-logo {
 	width: 180px;
-	border-right: 1px solid #ccc;
-	padding-left: 9px;
+	height: 75px;
+}
+
+.h5-searchBox {
+	position: relative;
+}
+
+.h5-searchBox input {
+	width: 172px;
+	margin: 0;
+	padding-right: 24px;
+	box-sizing: border-box;
+}
+
+.h5-searchBox .clear {
+	width: 24px;
+	position: absolute;
+	right: 8px;
+	top: 0;
+	bottom: 0;
+	line-height: 0;
+	box-sizing: border-box;
+	line-height: 0;
+}
+
+.hidden {
+	display: none !important;
+}
+
+/* preタグ記述がはみ出ないように */
+pre {
+	white-space: -moz-pre-wrap;
+	white-space: -webkit-pre-wrap;
+	white-space: -o-pre-wrap;
+	word-wrap: break-word;
+	white-space: pre-wrap;
+}
+
+.module-nav {
+	display: none;
+}
+
+.module-list-wrapper {
 	display: block;
-	font-size: small;
+}
+
+.sh_javascript,.sh_html{
+	tab-size: 2;
+}
+
+/* 900px以下 */
+@media screen and (max-width: 900px) {
+	body {
+		margin: 0;
+	}
+	/* メディアクエリ有効時のみ有効なhiddenクラス */
+	.hidden-mobile {
+		display: none !important;
+	}
+	nav {
+		height: 40px;
+		width: 100%;
+		border: none;
+		position: fixed;
+		background-color: #fff;
+		margin-top: 0;
+		overflow-y: visible;
+	}
+	.module-list-wrapper {
+		clear: both;
+	}
+	.h5-logo-wrapper {
+		float: left;
+		height: 40px;
+	}
+	.h5-logo {
+		width: 90px;
+		height: 38px;
+	}
+	.h5-searchBox {
+		display: none;
+		box-sizing: border-box;
+		width: 100%;
+	}
+	.h5-searchBox>* {
+		height: 32px;
+	}
+	.h5-searchBox input {
+		width: 100%;
+		margin-top: 6px;
+		box-sizing: border-box;
+	}
+	.h5-searchBox .clear {
+		margin-top: 6px;
+		right: 0;
+		top: 40px;
+		width: 42px;
+	}
+	#main {
+		margin-top: 40px;
+		width: 100%;
+		padding-left: 0;
+	}
+	#container {
+		clear: both;
+		width: 100%;
+	}
+	section {
+		padding: 2px
+	}
+	dd {
+		margin-left: 5px;
+	}
+	.description {
+		margin-left: -5px;
+	}
+	.module-list-wrapper {
+		overflow-y: auto;
+		padding-top: 70px;
+		overflow-y: hidden;
+	}
+	.show-module {
+		text-align: center;
+		display: block;
+		width: 100%;
+	}
+	.module-nav {
+		display: block;
+		top: 0px;
+		height: 23px width: 100%;
+		text-align: right;
+	}
+	.module-nav>* {
+		height: 35px;
+		line-height: 35px;
+		cursor: pointer;
+		border: 1px solid;
+		padding: 3px;
+		font-weight: bold;
+		padding: 2px 15px;
+		display: inline-block;
+		border-color: #2b833a;
+		text-decoration: none;
+	}
+	.module-nav .show-modules {
+		background-color: #2b833a;
+		color: #fff;
+	}
+	.module-nav .hide-modules {
+		background-color: #e1efde;
+		color: #fff;
+	}
+	.module-nav.show {
+		top: 10px;
+	}
+	.module-nav.hide {
+		display: none;
+		position: fixed;
+		right: 0;
+	}
+	.module-search-header {
+		width: 100%
+	}
+	nav.module-mode {
+		position: absolute;
+	}
+	.module-mode .module-search-header {
+		position: fixed;
+		background-color: #fff;
+	}
+	.module-mode .h5-searchBox {
+		display: block;
+	}
+	.module-mode .module-nav.show {
+		display: none;
+	}
+	.module-mode .module-nav.hide {
+		display: block;
+	}
 }

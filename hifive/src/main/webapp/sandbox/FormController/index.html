@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
+
+<!-- hifive -->
+<link href="../../srcCss/h5.ui.indicator.css" rel="stylesheet">
+<link href="../../srcCss/h5.ui.validation.css" rel="stylesheet">
+<script src="../../src/ejs/ejs-1.0.js"></script>
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+</script>
+<script src="loadScript.js"></script>
+
+<!-- QUnitのjsdump使用 -->
+<script type="text/javascript" src="../../test/lib/qunit/qunit.js"></script>
+
+<style>
+.hasError {
+	border: 2px solid #f00;
+}
+</style>
+<script>
+	$(function() {
+		h5.core.controller(document.body, {
+			__name: 'sample.PageController',
+			_objIndex: 0,
+			__meta: {
+				formController: {
+					rootElement: '#form1'
+				}
+			},
+			formController: h5.ui.FormController,
+			'.getValue click': function(ctx, $el) {
+				var ret = this.formController.getValue();
+				var $set = $('<button class="set">setValue(obj' + ++this._objIndex + ')</button>');
+				$el.after($set);
+				$set.data('obj', ret);
+			},
+			'.set click': function(ctx, $el) {
+				var obj = $el.data('obj');
+				this.formController.setValue(obj);
+			},
+			'.validate click': function(ctx) {
+				this._removeValidateError();
+				var result = this.formController.validate();
+				this.$find('.validateResult').text(QUnit.jsDump.parse(result));
+			},
+			'.clear click': function(ctx) {
+				ctx.event.preventDefault();
+				this.formController.clearAll();
+			},
+			'#form1 [submit]': function() {
+				this._removeValidateError();
+			},
+			_removeValidateError: function() {
+				this.$find('.hasError').removeClass('hasError');
+				this.$find('.errorMsg').remove();
+			},
+			_onError: function(element, property, reason) {
+				$(element).parent().addClass('hasError');
+				var $msg = $('<span class="errorMsg"></span>');
+				$msg.text(reason.message);
+				$(element).after($msg);
+			}
+		})
+	})
+</script>
+<style>
+form {
+	margin: 10px;
+	padding: 3px;
+	border: 1px solid #ccc;
+	padding: 3px;
+}
+</style>
+
+<title>FormController</title>
+</head>
+<body>
+	<div>
+		<h2>FormControllerのメソッド実行</h2>
+		<button class="getValue">getValue()</button>
+		<br>
+		<button class="validate">validate()</button>
+		<div>
+			<pre class="validateResult"></pre>
+		</div>
+		<ul class="globalError"></ul>
+	</div>
+	<form id="form1">
+		<p>FormControllerのバインド先(form1)</p>
+		<p>
+			<input class="form-controls" type="text" name="user" value=""
+				placeholder="必須" data-require />
+		</p>
+		<p>
+			<input class="form-controls" type="text" name="mail" value="no-name"
+				data-pattern=".+@.+" />
+		</p>
+		<p>
+			同じ名前 <label><input class="form-controls" type="text"
+				name="text2" value="a" /> </label><input type="text" name="text2" value="b"
+				data-require />
+		</p>
+		<p>
+			別のフォーム(form2)に属するinput<input class="form-controls" type="text"
+				form="form2" name="text3" value="form=form2のinput" data-require>
+		</p>
+		<p>
+			<input type="file" class="form-controls" name="file1" value="" /> <input
+				class="form-controls" type="file" name="file2" value="" multiple />
+			<input type="file" name="file2" value="" multiple />
+		</p>
+		<p>
+			<textarea class="form-controls" name="textarea1" data-require>fuga</textarea>
+		</p>
+		<p>
+			<select class="form-controls" name="select1" data-require>
+				<option value="1" selected>1</option>
+				<option value="2">2</option>
+			</select>
+		</p>
+		<p>
+			<select class="form-controls" name="select2" multiple size="3"
+				style="width: 120px" data-require>
+				<option value="1" selected>1</option>
+				<option value="2">2</option>
+				<option value="3" selected>3</option>
+			</select>
+		</p>
+		<div>
+			<label><input class="form-controls" type="radio"
+				name="radio1" value="ok" checked data-require>ok</label> <label><input
+				type="radio" name="radio1" value="ng" data-require>ng </label> <label><input
+				type="checkbox" name="check1" value="c1" checked data-require>c1</label>
+			<label><input class="form-controls" type="checkbox"
+				name="check1" value="c2" data-require>c2 </label>
+		</div>
+
+		<p>
+			同じ名前 <select class="form-controls" name="select3" multiple size="3"
+				style="width: 120px" data-require>
+				<option value="1">1</option>
+				<option value="2" selected>2</option>
+				<option value="3" selected>3</option>
+			</select> <select class="form-controls" name="select3" multiple size="3"
+				style="width: 120px" data-require>
+				<option value="3" selected>3</option>
+				<option value="4" selected>4</option>
+				<option value="5">5</option>
+			</select>
+		</p>
+		<p>
+			0以上10未満<input class="form-controls" type="text" form="form1"
+				name="num0to10" value="0" data-min="[0,true]" data-max="10">
+		</p>
+		<p>
+			8文字以上10文字以下<input class="form-controls" type="text" form="form1"
+				name="size8to10" data-size="[8,10]" value="12345678">
+		</p>
+		<input type="submit" value="送信" /> <input type="reset" value="リセット" />
+		<button class="clear">クリア</button>
+	</form>
+
+	<form id="form2">
+		<p>
+			別のフォーム(form2)内のinput<input class="form-controls" type="text"
+				name="text8" value="form2の中のinput">
+		</p>
+		<p>
+			form1に属するinput<input class="form-controls" type="text" form="form1"
+				name="text6" value="" placeholder="必須" data-require>
+		</p>
+	</form>
+</body>
+</html>

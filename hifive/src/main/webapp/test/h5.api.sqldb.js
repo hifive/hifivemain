@@ -120,7 +120,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Sql', {
+	module('[browser#ie:all|edge:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Sql', {
 		setup: setupFunc,
 		teardown: dropTable
 	});
@@ -480,7 +480,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Insert', {
+	module('[browser#ie:all|edge:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Insert', {
 		setup: setupFunc,
 		teardown: dropTable
 	});
@@ -1143,7 +1143,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Update', {
+	module('[browser#ie:all|edge:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Update', {
 		setup: setupFunc2,
 		teardown: dropTable
 	});
@@ -1711,7 +1711,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Del', {
+	module('[browser#ie:all|edge:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Del', {
 		setup: setupFunc2,
 		teardown: dropTable
 	});
@@ -2182,7 +2182,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Select', {
+	module('[browser#ie:all|edge:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Select', {
 		setup: setupFunc2,
 		teardown: dropTable
 	});
@@ -2715,7 +2715,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Transaction', {
+	module('[browser#ie:all|edge:all|ie-wp:all|ff:all]H5Api - Web SQL Database - Transaction', {
 		setup: setupFunc,
 		teardown: dropTable
 	});
@@ -3533,7 +3533,7 @@ $(function() {
 	// Definition
 	//=============================
 
-	module('[browser#ie:all|ie-wp:all|ff:all]H5Api - Web SQL Database', {
+	module('[browser#ie:all|edge:all|ie-wp:all|ff:all]H5Api - Web SQL Database', {
 		setup: setupFunc,
 		teardown: dropTable
 	});

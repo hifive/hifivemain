@@ -468,6 +468,7 @@ $(function() {
 		ok(doneCalled, 'thenで2つ目に登録したコールバックがpromiseを返していても、関係なく次のdoneコールバックが実行されること');
 
 		dfd = h5.async.deferred();
+		var failCalled, progressCalled;
 		dfd.then(null, function() {
 			var dfd = $.Deferred();
 			return dfd.promise();

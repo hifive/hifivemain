@@ -17,54 +17,41 @@
  */
 
 (function() {
-	// テスト環境オブジェクトの作成。
-	// リクエストパラメータから取得して生成
-	var paramsStr = window.location.search;
+
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+
+	// h5テスト方式識別
+	// 'src' … src/main/webapp/src 以下を対象
+	// 'dev' … archives/current/h5.dev.js を対象
+	// 'min' … archives/current/h5.js を対象
+	if (!H5_TEST_ENV.buildType)
+		H5_TEST_ENV.buildType = 'src';
+
+	// h5ソースファイルベースURL
+	if (!H5_TEST_ENV.srcBaseUrl)
+		H5_TEST_ENV.srcBaseUrl = '../';
 
 	// H5_TEST_ENVに格納するパラメータキーのプレフィックス
-	var PARAM_PREFIX = 'h5testenv.';
+	var H5TEST_NAMASPACE = 'h5testenv';
 
 	// H5_TEST_ENVとリクエストパラメータでマージするプロパティ
-	var MARGE_PROP_NAMES = ['ci', 'filter', 'geo', 'qunit'];
+	var MARGE_PROP_NAMES = ['ci', 'filter', 'geo', 'qunit', 'buildType'];
 
 	// リクエストパラメータからオブジェクトを生成する
-	var envByParam = {};
-	if (paramsStr !== "") {
-		var paramsArray = paramsStr.substring(1).split('&');
+	var requestParam = testutils.u.parseRequestParameter();
 
-		var l = paramsArray.length;
-		for (var i = 0; i < l; i++) {
-			var keyVal = paramsArray[i].split('=');
-			var namespace = keyVal[0];
-			// h5env.で始まるものについてだけ
-			if (namespace.indexOf(PARAM_PREFIX) != 0) {
-				continue;
-			}
-			var val = keyVal[1];
+	var envByParam = requestParam[H5TEST_NAMASPACE] || {};
 
-			var names = namespace.substring(PARAM_PREFIX.length).split('.');
-			var ret = envByParam;
-			for (var j = 0, len = names.length; j < len - 1; j++) {
-				if (ret[names[j]] == null) { // nullまたはundefjnedだったら辿らない
-					ret[names[j]] = {};
-				}
-				ret = ret[names[j]];
-			}
-			ret[names[len - 1]] = val;
-		}
-	}
-
-	// リクエストパラメータからH5_TEST_ENVを生成する
-	// H5_TEST_ENVが既に定義されていれば、リクエストパラメータ優先でマージする
-	if (window.H5_TEST_ENV) {
-		for (var i = 0, l = MARGE_PROP_NAMES.length; i < l; i++) {
-			var prop = MARGE_PROP_NAMES[i];
-			if (envByParam[prop]) {
+	// H5_TEST_ENVにリクエストパラメータ優先でマージする
+	for (var i = 0, l = MARGE_PROP_NAMES.length; i < l; i++) {
+		var prop = MARGE_PROP_NAMES[i];
+		if (envByParam[prop]) {
+			if (typeof (envByParam[prop]) === 'object') {
 				H5_TEST_ENV[prop] = $.extend(H5_TEST_ENV[prop], envByParam[prop]);
+			} else {
+				H5_TEST_ENV[prop] = envByParam[prop];
 			}
 		}
-	} else {
-		window.H5_TEST_ENV = envByParam;
 	}
 
 	// テスト環境を表示する
@@ -79,8 +66,6 @@
 			}, 0);
 		});
 	}
-
-
 
 	// 環境設定
 	// dummygeoが設定されていればnavigator.geolocationの持つメソッドをダミーで上書く(オリジナルはprototypeメソッドなので、メンバとして上書く)

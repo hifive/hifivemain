@@ -1,0 +1,56 @@
+<script type="text/ejs" id="scene1">
+<div class="scene1">
+	<h1>シーン１</h1>
+	<div class="content"></div>
+	<button class="close-btn">閉じる</button>
+</div>
+</script>
+
+<script type="text/ejs" id="scene2">
+<div class="scene2">
+	<h1>シーン２</h1>
+	<div class="content"></div>
+	<button class="close-btn">閉じる</button>
+</div>
+</script>
+
+<script type="text/ejs" id="arrow">
+	<div>
+		<div class="content">
+			<p>吹き出しサンプル</p>
+			<p>吹き出しサンプルです</p>
+			<button class="close-btn" style="float:right">OK</button>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="code_modal-middle-center">
+<pre><code>scene.show({
+	modal: true,
+	position: {
+		top: &#39;middle&#39;,
+		left: &#39;center&#39;
+	}
+});</code></pre>
+</script>
+
+<script type="text/ejs" id="code_x-y">
+<pre><code>scene.show({
+	modal: true,
+	position: {
+		top: [%= top %],
+		left: [%= left %]
+	},
+	rootElement: $el
+});</code></pre>
+</script>
+
+<script type="text/ejs" id="code_top-left">
+<pre><code>scene.show({
+	modal: true,
+	position: {
+		top: &#39;[%= top %]&#39;,
+		left: &#39;[%= left %]&#39;
+	}
+});</code></pre>
+</script>

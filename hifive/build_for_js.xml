@@ -10,6 +10,13 @@
 	<property name="lib.tool.dir" value="${basedir}/jstool" />
 	<property name="lib.project.dir" value="./lib" />
 
+	<property name="configBaseDir" value="${basedir}/config/build" />
+	<property name="constructionFile" value="h5-file-construction.xml"/>
+	<property name="jsTempFile" value="template/hifive-ui-js.vm" />
+	<property name="ejsTempFile" value="template/hifive-ui-ejs.vm" />
+	<property name="cssTempFile" value="template/hifive-ui-css.vm" />
+	<property name="minHeaderFile" value="template/min-header.vm" />
+
 	<path id="base.path">
 		<fileset dir="${lib.project.dir}" includes="**/*.jar" />
 	</path>
@@ -28,7 +35,7 @@
 		</delete>
 	</target>
 
-	<target name="getVersion" depends="cleanCurrent">
+	<target name="getVersion">
 		<input message="バージョン番号を入力してください。(ex. 1.0.1)" addproperty="versionNumber" />
 		<condition property="isCorrectNumber">
 			<matches pattern="[0-9]+\.[0-9]+\.[0-9]+" string="${versionNumber}" />
@@ -38,21 +45,26 @@
 	</target>
 
 
-	<target name="build" depends="prepare,getVersion,getGitHash">
+	<target name="build" depends="prepare,cleanCurrent,getVersion,getGitHash">
 		<buildService>
 			<buildParameter
 				tmpFiles="false"
-				ejsName="ejs-h5mod.js"
+				templateEngineName="ejs-h5mod.js"
 				cssName="h5.css"
 				releaseName="h5.js"
 				devName="h5.dev.js"
-				srcDir="src/main/webapp/src/"
-				cssSrcDir="src/main/webapp/srcCss/"
-				ejsSrcDir="src/main/webapp/src/ejs/"
-				dstDir="${releaseDir}/"
+				jsDir="src/main/webapp/src"
+				cssDir="src/main/webapp/srcCss"
+				templateEngineSrcDir="src/main/webapp/src/ejs"
+				dstDir="${releaseDir}"
 				version="${versionNumber}"
-				ejsVersion="1.0"
-				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
+				templateEngineVersion="1.0"
+				configBaseDir="${configBaseDir}"
+				jsTemplateFile="${jsTempFile}"
+				cssTemplateFile="${cssTempFile}"
+				minHeaderFile="${minHeaderFile}"
+				constructionFile="${constructionFile}"
+				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
@@ -61,29 +73,39 @@
 		<tstamp>
 			<format property="nightly.version"  pattern="yyyy-MM-dd_HH-mm-ss-SSS" />
 		</tstamp>
+		<touch file="${archivesDir}/current/NIGHTLY" />
 	</target>
 
-	<target name="build-nightly" depends="prepare,getNightlyVersion,getGitHash">
+	<target name="build-nightly" depends="prepare,cleanCurrent,getNightlyVersion,getGitHash">
 		<buildService>
 			<buildParameter
 				tmpFiles="false"
-				ejsName="ejs-h5mod.js"
+				templateEngineName="ejs-h5mod.js"
 				cssName="h5.css"
 				releaseName="h5.js"
 				devName="h5.dev.js"
-				srcDir="/src/main/webapp/src/"
-				cssSrcDir="/src/main/webapp/srcCss/"
-				ejsSrcDir="/src/main/webapp/src/ejs/"
-				dstDir="${releaseDir}/"
+				jsDir="/src/main/webapp/src"
+				cssDir="/src/main/webapp/srcCss"
+				templateEngineSrcDir="/src/main/webapp/src/ejs"
+				dstDir="${releaseDir}"
 				version="Nightly_${nightly.version}"
-				ejsVersion="1.0"
-				moduleNames="util,controller,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage" />
+				templateEngineVersion="1.0"
+				configBaseDir="${configBaseDir}"
+				jsTemplateFile="${jsTempFile}"
+				cssTemplateFile="${cssTempFile}"
+				minHeaderFile="${minHeaderFile}"
+				constructionFile="${constructionFile}"
+				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
 
 	<target name="jsdoc">
 		<delete dir="${webappdir}/doc" />
+		<mkdir dir="${webappdir}/doc" />
+		<copy todir="${webappdir}/doc">
+			<fileset dir="jstool/jsdoc/hifive-apidoc-tmpl/static"/>
+		</copy>
 		<exec executable="cmd" dir="jstool/jsdoc">
 			<arg line="/C jsdoc.bat" />
 		</exec>
