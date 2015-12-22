@@ -122,8 +122,8 @@ $(function() {
 		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
 		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
 		ok(bodyCtrl, 'body要素でdata-h5-controller指定をしたコントローラがバインドされていること');
-		strictEqual(bodyCtrl.rootElement, document.body,
-				'コントローラのバインド先はdata-h5-controller指定をした要素であること');
+		strictEqual(bodyCtrl.rootElement, document.body.children[0],
+				'body要素の場合メインシーンになるため、コントローラのバインド先はbody直下の要素になること');
 
 		// initは一度しか呼び出せないので、このケース以外でinit()の呼び出しはしない
 		// このケースで二度目のinit()を呼んでも何も起こらないことを確認している

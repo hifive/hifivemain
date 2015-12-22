@@ -191,12 +191,10 @@
 	})();
 
 	/**
-	 * #qunit-fixtur内にバインドされているコントローラをdisposeして、コントローラキャッシュ、ロジックキャッシュをクリアする
+	 * バインドされている全てのコントローラをdisposeして、コントローラキャッシュ、ロジックキャッシュをクリアする
 	 */
 	function clearController() {
-		var controllers = h5.core.controllerManager.getControllers('#qunit-fixture', {
-			deep: true
-		});
+		var controllers = h5.core.controllerManager.getAllControllers();
 		for (var i = controllers.length - 1; i >= 0; i--) {
 			controllers[i].dispose();
 		}
