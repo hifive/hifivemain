@@ -38,13 +38,19 @@
 	/**
 	 * デフォルトエラーメッセージ
 	 */
-	var defaultIntvalidMessage = {
-		require: '{displayName}は必須項目です',
-		min: '{displayName}は{param.min}{param.inclusive?"以上の":"より大きい"}数値を入力してください。',
-		max: '{displayName}は{param.max}{param.inclusive?"以下":"未満"}の数値を入力してください。',
-		pattern: '{displayName}は正規表現{param.regexp}を満たす文字列を入力してください。',
-		digits: '{displayName}は整数部分{param.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
-		size: '{displayName}は{param.min}以上{param.max}以下の長さでなければいけません。',
+	var defaultInvalidMessage = {
+		required: '{displayName}は必須項目です',
+		min: function(param) {
+			return h5.u.str.format('{displayName}は{violation[0].ruleValue.min}{1}数値を入力してください。',
+					param, (param.violation[0].ruleValue.inclusive ? "以上の" : "より大きい"));
+		},
+		max: function(param) {
+			return h5.u.str.format('{displayName}は{violation[0].ruleValue.max}{1}数値を入力してください。',
+					param, (param.violation[0].ruleValue.inclusive ? "以下の" : "未満の"));
+		},
+		pattern: '{displayName}は正規表現{violation[0].ruleValue.regexp}を満たす文字列を入力してください。',
+		digits: '{displayName}は整数部分{violation[0].ruleValue.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
+		size: '{displayName}は{violation[0].ruleValue.min}以上{violation[0].ruleValue.max}以下の長さでなければいけません。',
 		future: '{displayName}は現在時刻より未来の時刻を入力してください。',
 		past: '{displayName}は現在時刻より過去の時刻を入力してください。',
 		nul: '{displayName}はnullでなければなりません。',
@@ -70,26 +76,28 @@
 	function createValidateErrorMessage(name, reason, setting) {
 		var displayName = (setting && setting.displayName) || name;
 		var msg = setting && setting.message;
-		var param = {
-			value: reason.value,
-			param: reason.param,
-			rule: reason.rule,
-			invalidReason: reason,
-			name: name,
+		var param = $.extend({}, reason, {
 			displayName: displayName
-		};
+		});
 		if (isString(msg)) {
 			// messageが指定されていればh5.u.str.formatでメッセージを作成
-			msg = h5.u.str.format(msg, param);
-			return msg;
+			return h5.u.str.format(msg, param);
+		} else if (isFunction(msg)) {
+			return msg(param);
 		}
 
 		// 何も設定されていない場合はデフォルトメッセージ
-		if (defaultIntvalidMessage[reason.rule]) {
-			return h5.u.str.format(defaultIntvalidMessage[reason.rule], param);
+		// デフォルトメッセージはviolationの一番最初のルールから作成する
+		var ruleName = reason.violation[0].ruleName;
+		var defaultMsg = defaultInvalidMessage[ruleName];
+		if (defaultMsg) {
+			if (isFunction(defaultMsg)) {
+				return defaultMsg(param);
+			}
+			return h5.u.str.format(defaultMsg, param);
 		}
 		// デフォルトにないルールの場合
-		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, name, reason.value, reason.rule);
+		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, name, reason.value, ruleName);
 	}
 
 	// =========================================================================
@@ -112,21 +120,36 @@
 	 */
 	var controlelr = {
 		__name: 'h5.ui.validation.MessageOutputController',
-		// container,tagNameの設定
-		_containerSetting: {},
+		_container: null,
+		_wrapper: null,
 		// validationResultからメッセージを作るための設定
 		_setting: {},
 
 		/**
-		 * メッセージ出力先の設定を適用する
+		 * メッセージ出力先要素を設定する
 		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
-		 * @param {Object} containerSetting 出力先設定
-		 * @param {Object} containerSetting.container デフォルト出力先(コンテナ)要素
-		 * @param {Object} containerSetting.wrapper デフォルト出力タグ名。指定しない場合はメッセージはテキストノードとして生成されます
+		 * @param {DOM|jQuery|string} container デフォルト出力先(コンテナ)要素をDOM要素、jQueryオブジェクト、セレクタ文字列の何れかで指定
 		 */
-		setContainerSetting: function(containerSetting) {
-			this._containerSetting = containerSetting;
+		setContainer: function(container) {
+			this._container = container;
+		},
+
+		/**
+		 * メッセージをラップするタグまたはタグ生成文字列を設定する
+		 * <p>
+		 * タグ名を指定した場合、指定されたタグで生成した要素でメッセージをラップします。
+		 * </p>
+		 * <p>
+		 * また、'&lt;span class=&quot;hoge&quot;&gt;'のようなタグ生成文字列も設定でき、指定された文字列から作成した要素でメッセージをラップします。
+		 * </p>
+		 * <p>{
+		 *
+		 * @memberOf h5.ui.validation.MessageOutputController
+		 * @param {string} wrapper メッセージをラップするタグまたはタグ生成文字列
+		 */
+		setWrapper: function(wrapper) {
+			this._wrapper = wrapper;
 		},
 
 		/**
@@ -146,7 +169,7 @@
 		 * 		message: '{displayName}がルール{rule}に違反しています。', // メッセージ。プレースホルダを記述可能(後述)。
 		 * 	},
 		 * 	address: {
-		 * 		displayName: 'アドレス'
+		 * 		message: 'アドレスが不正です'
 		 * 	}
 		 * });
 		 * </code></pre>
@@ -165,9 +188,8 @@
 				return;
 			}
 			for ( var prop in messageSetting) {
-				var propSetting = this._setting[prop];
 				// 既にメッセージ定義が設定されているプロパティについては上書き
-				this._setting[prop] = propSetting;
+				this._setting[prop] = messageSetting[prop];
 			}
 		},
 
@@ -181,7 +203,7 @@
 		 * @param {Object} messageSetting {プロパティ名: {message:...}}のようなオブジェクト
 		 */
 		clearMessage: function(container) {
-			var container = container || this._containerSetting.container;
+			var container = container || this._container;
 			$(container).empty();
 		},
 
@@ -189,18 +211,18 @@
 		 * メッセージの追加表示
 		 *
 		 * @param {string} message メッセージ
-		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合はデフォルト出力先に出力します
-		 * @param {string} [wrapper] メッセージをラップするタグ名または要素生成文字列。指定しない場合はデフォルトタグ名を使用します
+		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合は{@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定した要素。
+		 * @param {string} [wrapper] メッセージをラップするタグ名または要素生成文字列。指定しない場合は{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーまたはテキストノードとして生成します。
 		 */
 		appendMessage: function(message, container, wrapper) {
 			// 未指定ならsettingに設定されたコンテナ
-			var container = container || this._containerSetting.container;
+			var container = container || this._container;
 			var $container = $(container);
 			if (!$container.length) {
 				return;
 			}
 
-			wrapper = wrapper || this._containerSetting.wrapper;
+			wrapper = wrapper || this._wrapper;
 			if (wrapper) {
 				if (h5.u.str.startsWith($.trim(wrapper), '<')) {
 					// '<span class="hoge">'のような指定ならその文字列でDOM生成
@@ -249,8 +271,8 @@
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string|string[]} [names] 出力対象のプロパティ名。指定しない場合は全てが対象
-		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合はデフォルト出力先に出力します
-		 * @param {string} [wrapper] メッセージをラップするタグ名またはタグ生成文字列。指定しない場合はデフォルトタグ名を使用します
+		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合は{@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定した要素に出力します
+		 * @param {string} [wrapper] メッセージをラップするタグ名またはタグ生成文字列。指定しない場合は{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーまたはテキストノードとして生成します
 		 */
 		appendMessageByValidationResult: function(validationResult, names, container, wrapper) {
 			var invalidProperties = validationResult.invalidProperties;
@@ -275,20 +297,6 @@
 					}
 				}));
 				return;
-			}
-		},
-
-		/**
-		 * コンテナからメッセージをすべて削除
-		 *
-		 * @memberOf h5.ui.validation.MessageOutputController
-		 * @param {DOM|jQuery|string} [container] 中身を削除するコンテナ。指定しない場合はデフォルト出力先。
-		 */
-		clearValue: function(container) {
-			// 未指定ならsettingに設定されたコンテナ
-			var container = container || this._containerSetting.container;
-			if (container) {
-				$(container).empty();
 			}
 		}
 	};
@@ -591,20 +599,6 @@
 		},
 
 		/**
-		 * このプラグインが出力するメッセージの追加設定
-		 * <p>
-		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
-		 * </p>
-		 *
-		 * @memberOf h5.ui.validation.Composition
-		 * @param {string} name
-		 * @param {Object} messageObj message,formatterを持つオブジェクト
-		 */
-		setMessage: function(name, messageObj) {
-			this._messageOutputController.addMessageSetting(name, messageObj);
-		},
-
-		/**
 		 * プラグインのリセット
 		 * <p>
 		 * メッセージを削除します
@@ -613,7 +607,7 @@
 		 * @memberOf h5.ui.validation.Composition
 		 */
 		reset: function() {
-			this._messageOutputController.clearValue();
+			this._messageOutputController.clearMessage();
 		},
 
 		/**
@@ -625,10 +619,8 @@
 		_setChildSetting: function() {
 			var setting = this._setting;
 			// 出力先の設定
-			this._messageOutputController.setContainerSetting({
-				container: setting.container,
-				wrapper: setting.wrapper
-			});
+			this._messageOutputController.setContainer(setting.container);
+			this._messageOutputController.setWrapper(setting.wrapper);
 
 			// 各プロパティ毎のメッセージ設定をする
 			var property = setting.property;
@@ -776,20 +768,6 @@
 		reset: function() {
 			this._hideBaloon();
 			this._executedOnValidate = false;
-		},
-
-		/**
-		 * このプラグインが出力するメッセージの追加設定
-		 * <p>
-		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
-		 * </p>
-		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
-		 * @param {string} name
-		 * @param {Object} messageObj message,formatterを持つオブジェクト
-		 */
-		setMessage: function(name, messageObj) {
-			this._messageOutputController.addMessageSetting(name, messageObj);
 		},
 
 		/**
@@ -1135,20 +1113,6 @@
 			this._executedOnValidate = false;
 		},
 
-		/**
-		 * このプラグインが出力するメッセージを設定する
-		 * <p>
-		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
-		 * </p>
-		 *
-		 * @memberOf h5.ui.validation.Message
-		 * @param {string} name
-		 * @param {Object} messageObj message,formatterを持つオブジェクト
-		 */
-		setMessage: function(name, messageObj) {
-			this._messageOutputController.addMessageSetting(name, messageObj);
-		},
-
 		_setMessage: function(element, name, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// _onValidateが１度も呼ばれていなければ何もしない
@@ -1412,7 +1376,7 @@
 	var FW_LOG_ALREADY_ADDED = 'プラグイン"{0}"は登録済みです。';
 
 	// TODO formのvalidatorで不要な項目は要らない
-	var DATA_RULE_REQUIRED = 'require';
+	var DATA_RULE_REQUIRED = 'required';
 	var DATA_RULE_ASSERT_FALSE = 'assertFalse';
 	var DATA_RULE_ASSERT_TRUE = 'assertTrue';
 	var DATA_RULE_NULL = 'nul';
@@ -1450,7 +1414,7 @@
 
 	// デフォルトで用意しているvalidateルール生成関数
 	var defaultRuleCreators = {
-		requireRuleCreator: function(inputElement) {
+		requiredRuleCreator: function(inputElement) {
 			if ($(inputElement).data(DATA_RULE_REQUIRED) != null) {
 				return true;
 			}
@@ -1820,7 +1784,7 @@
 		__construct: function() {
 			// デフォルトルールの追加
 			// TODO formのvalidatorで不要な項目は要らない
-			this._addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requireRuleCreator);
+			this._addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requiredRuleCreator);
 			this
 					._addRuleCreator(DATA_RULE_ASSERT_FALSE,
 							defaultRuleCreators.assertFalseRuleCreator);
