@@ -2524,7 +2524,8 @@
 		 *            </p>
 		 * @param {String} param.to 遷移先指定。HTMLを返却するURLか、コントローラーの__name属性を指定します。指定必須です。
 		 * @param {Any}[param.args] デフォルトシーンに対応するコントローラー生成時に渡されるパラメータを指定します。
-		 * @param {string}[param.navigationType="normal"] メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。
+		 * @param {string}[param.navigationType="normal"]
+		 *            メインシーンコンテナのみで有効。遷移時のパターンを指定します。以下の値が設定できます。
 		 *            <dl>
 		 *            <dt>"normal"</dt>
 		 *            <dd>URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。h5.scene.navigationType.NORMALと同値なのでこれを指定してもよいです。</dd>
@@ -3162,7 +3163,7 @@
 		urlMaxLength = parseInt(h5.settings.scene.urlMaxLength);
 
 		//  再表示不可画面
-		notReshowable =  NotReshowableController;
+		notReshowable = NotReshowableController;
 
 		// ベースURL
 		baseUrl = h5.settings.scene.baseUrl;
