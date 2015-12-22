@@ -20,13 +20,16 @@
 <script>
 	var requestParam = testutils.u.parseRequestParameter();
 	$.extend(H5_TEST_ENV, requestParam.h5testenv);
+	$(document).bind('h5preinit', function() {
+		h5.settings.scene.clientQueryStringPrefix = '_cltest_';
+	});
 </script>
 <script src="../../../archives/current/ejs-h5mod.js"></script>
 <script src="../../loadScriptForTest.js"></script>
 <script>
 	h5.settings.res.baseUrl = '../../';
 	$(function() {
-		h5.scene.scan();
+		h5.scene.init();
 	});
 </script>
 <body>

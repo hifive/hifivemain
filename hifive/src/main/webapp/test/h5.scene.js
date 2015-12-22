@@ -997,20 +997,6 @@ $(function() {
 								}).fail(start);
 			});
 
-	asyncTest('h5.settings.scene.autoCreateMainContainerフラグの確認', function() {
-		this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
-		var that = this;
-		gate({
-			func: createFuncForWaitPouupMainContainer(this.w),
-			failMsg: 'メインシーンコンテナが取得できませんでした'
-		}).done(
-				function() {
-					strictEqual(that.w.h5.settings.scene.autoCreateMainContainer, true, 'フラグの確認');
-					ok(that.w.$('body').is('[data-h5-main-scene-container]'),
-							'BODYタグがメインシーンコンテナとなっているかの確認');
-				}).always(start);
-	});
-
 	//	//=============================
 	//	// Definition
 	//	//=============================
