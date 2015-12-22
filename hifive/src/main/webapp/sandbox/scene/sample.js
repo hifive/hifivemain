@@ -24,7 +24,6 @@ $(function() {
 		__ready: function() {
 			this.view.append('.container-methods', 'nav');
 			var $container = $('#hoge');
-			var isMain = location.href.indexOf('?isMain=true') !== -1;
 			this.container = h5.scene.createSceneContainer($container, isMain);
 			this._orgLocation = location.href;
 		},
