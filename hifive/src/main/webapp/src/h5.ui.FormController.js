@@ -126,7 +126,7 @@
 		_setting: {},
 
 		/**
-		 * メッセージ出力先要素を設定する
+		 * メッセージ出力先要素をコンテナとして設定する
 		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {DOM|jQuery|string} container デフォルト出力先(コンテナ)要素をDOM要素、jQueryオブジェクト、セレクタ文字列の何れかで指定
@@ -136,14 +136,19 @@
 		},
 
 		/**
-		 * メッセージをラップするタグまたはタグ生成文字列を設定する
+		 * メッセージ出力時にメッセージをラップする要素の設定
+		 * <p>
+		 * タグまたはタグ生成文字列をラッパーとして設定します。
+		 * </p>
 		 * <p>
 		 * タグ名を指定した場合、指定されたタグで生成した要素でメッセージをラップします。
 		 * </p>
 		 * <p>
-		 * また、'&lt;span class=&quot;hoge&quot;&gt;'のようなタグ生成文字列も設定でき、指定された文字列から作成した要素でメッセージをラップします。
+		 * '&lt;span class=&quot;hoge&quot;&gt;'のようなタグ生成文字列も設定でき、指定された文字列から作成した要素でメッセージをラップします。
 		 * </p>
-		 * <p>{
+		 * <p>
+		 * ラッパーの指定がない場合は、このコントローラはメッセージをテキストノードとして出力します。
+		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {string} wrapper メッセージをラップするタグまたはタグ生成文字列
@@ -196,33 +201,37 @@
 		/**
 		 * コンテナからメッセージを削除
 		 * <p>
-		 * 第1引数を省略した場合は設定済みのデフォルト出力先からメッセージを削除します
+		 * {@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定した出力先からメッセージを削除します。出力先未設定の場合は何もしません。
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
-		 * @param {Object} messageSetting {プロパティ名: {message:...}}のようなオブジェクト
 		 */
-		clearMessage: function(container) {
-			var container = container || this._container;
-			$(container).empty();
+		clearMessage: function() {
+			if (this._container) {
+				$(this._container).empty();
+			}
 		},
 
 		/**
 		 * メッセージの追加表示
+		 * <p>
+		 * {@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定済みコンテナにメッセージを出力します。コンテナ未設定の場合は何もしません。
+		 * </p>
+		 * <p>
+		 * メッセージは{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーで包んで出力します。ラッパー未設定の場合はテキストノードとしてしゅつりょくします。
+		 * </p>
 		 *
 		 * @param {string} message メッセージ
-		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合は{@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定した要素。
-		 * @param {string} [wrapper] メッセージをラップするタグ名または要素生成文字列。指定しない場合は{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーまたはテキストノードとして生成します。
 		 */
-		appendMessage: function(message, container, wrapper) {
+		appendMessage: function(message) {
 			// 未指定ならsettingに設定されたコンテナ
-			var container = container || this._container;
+			var container = this._container;
 			var $container = $(container);
 			if (!$container.length) {
 				return;
 			}
 
-			wrapper = wrapper || this._wrapper;
+			var wrapper = this._wrapper;
 			if (wrapper) {
 				if (h5.u.str.startsWith($.trim(wrapper), '<')) {
 					// '<span class="hoge">'のような指定ならその文字列でDOM生成
@@ -245,7 +254,7 @@
 		 * 第1引数に指定されたプロパティ名についてのエラーメッセージを作成して返します
 		 * </p>
 		 * <p>
-		 * 指定されたプロパティがエラーでないばあいはnullを返します。
+		 * 指定されたプロパティがエラーでない場合はnullを返します。
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
@@ -263,18 +272,22 @@
 		},
 
 		/**
-		 * {@link ValidationResult}からメッセージを作成して追加表示する
+		 * {@link ValidationResult}からメッセージを作成してコンテナに追加表示する
 		 * <p>
 		 * {@link ValidationResult}が非同期バリデート待ちの場合は、結果が返ってきたタイミングでメッセージを表示します。
+		 * </p>
+		 * <p>
+		 * {@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定済みコンテナにメッセージを出力します。コンテナ未設定の場合は何もしません。
+		 * </p>
+		 * <p>
+		 * メッセージは{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーで包んで出力します。ラッパー未設定の場合はテキストノードとしてしゅつりょくします。
 		 * </p>
 		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string|string[]} [names] 出力対象のプロパティ名。指定しない場合は全てが対象
-		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合は{@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定した要素に出力します
-		 * @param {string} [wrapper] メッセージをラップするタグ名またはタグ生成文字列。指定しない場合は{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーまたはテキストノードとして生成します
 		 */
-		appendMessageByValidationResult: function(validationResult, names, container, wrapper) {
+		appendMessageByValidationResult: function(validationResult, names) {
 			var invalidProperties = validationResult.invalidProperties;
 			names = isString(names) ? [names] : names;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
@@ -282,18 +295,17 @@
 				if (names && $.inArray(name, names) === -1) {
 					continue;
 				}
-				var invalidReason = validationResult.invalidReason[name];
 				var message = this.getMessageByValidationResult(validationResult, name);
-				this.appendMessage(message, container, wrapper);
+				this.appendMessage(message);
 			}
 			if (validationResult.isAllValid === null) {
 				// 非同期でまだ結果が返ってきていないものがある場合
 				validationResult.addEventListener('validate', this.own(function(ev) {
 					if (!ev.isValid && !names || $.inArray(ev.property, names) !== -1) {
-						var invalidReason = ev.target.invalidReason[ev.property];
-						var message = h5internal.validation.createValidateErrorMessage(ev.property,
-								invalidReason, this._setting[ev.propety]);
-						this.appendMessage(message, container, wrapper);
+						var invalidReason = ev.target.invalidReason[ev.name];
+						var message = h5internal.validation.createValidateErrorMessage(ev.name,
+								invalidReason, this._setting[ev.name]);
+						this.appendMessage(message);
 					}
 				}));
 				return;
@@ -1159,9 +1171,8 @@
 				$errorMsg = $('<span class="message">');
 				this._messageElementMap[name] = $errorMsg;
 			}
-			this._messageOutputController.clearMessage($errorMsg);
-			this._messageOutputController.appendMessageByValidationResult(validationResult, name,
-					$errorMsg);
+			$errorMsg.html(this._messageOutputController.getMessageByValidationResult(
+					validationResult, name));
 			if (appendMessage) {
 				appendMessage($errorMsg[0], target, name);
 			} else if (target) {
@@ -1642,7 +1653,7 @@
 		 * <td>false</td>
 		 * </tr>
 		 * <tr>
-		 * <th>targetElement</th>
+		 * <th>srcElement</th>
 		 * <td>DOM|jQuery|string</td>
 		 * <td>あるプロパティについて対応する要素を指定します。この指定はフォーム部品ではなくただのdiv等を入力要素としてvalueFuncで値を取ってくるような場合に、エラー出力プラグインが対応する要素を取得するために指定します。</td>
 		 * <td>あるプロパティについて対応するフォーム入力部品要素</td>
@@ -2267,10 +2278,10 @@
 		 */
 		_getElementByName: function(name) {
 			// このメソッドはプラグインがvalidate結果から対応するエレメントを探す時に呼び出される
-			var targetElement = this._setting.property && this._setting.property[name]
-					&& this._setting.property[name].targetElement;
-			if (targetElement) {
-				return targetElement;
+			var srcElement = this._setting.property && this._setting.property[name]
+					&& this._setting.property[name].srcElement;
+			if (srcElement) {
+				return srcElement;
 			}
 			var $formCtrls = $(this._getElements());
 			var element = $formCtrls.filter('[name="' + name + '"]')[0];
