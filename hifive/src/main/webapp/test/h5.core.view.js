@@ -259,36 +259,6 @@
 		// Body
 		//=============================
 
-		test('画面に書かれた、scriptタグが含まれているテンプレートをロードする。', function() {
-			var template = h5.core.view.get('h5test-html-template4');
-			strictEqual(window.com.htmlhifive.test.sample2loaded, undefined,
-					'sample2.jsはロードされていないこと。');
-
-			$('#qunit-fixture').html(template);
-			strictEqual(window.com.htmlhifive.test.sample2loaded, 'sample2.js is loaded.',
-					'DOMツリーに追加した時にsample2.jsがロードされること。');
-			window.com.htmlhifive.test.sample2loaded = undefined;
-		});
-
-		asyncTest('ejsファイルに書かれた、scriptタグが含まれているテンプレートをロードする。', 2, function() {
-			h5.core.view.load('template/test10.ejs').done(
-					function() {
-						var template = h5.core.view.get('test10-1');
-						strictEqual(window.com.htmlhifive.test.sample3loaded, undefined,
-								'sample3.jsはロードされていないこと。');
-
-						$('#qunit-fixture').html(template);
-						strictEqual(window.com.htmlhifive.test.sample3loaded,
-								'sample3.js is loaded.', 'DOMツリーに追加した時にsample3.jsがロードされること。');
-						h5.core.view.clear('test10-1');
-						window.com.htmlhifive.test.sample3loaded = undefined;
-						start();
-					}).fail(function(e) {
-				ok(false, e.message);
-				start();
-			});
-		});
-
 		asyncTest('$.ajaxSetupでdataTypeに"json"が指定されているときに正しくテンプレートファイルをロードできること', 1, function() {
 			$.ajaxSetup({
 				dataType: 'json'
