@@ -30,7 +30,7 @@
 	/**
 	 * デフォルトで定義済みのルール名
 	 */
-	var DEFAULT_RULE_NAME_REQUIRE = 'require';
+	var DEFAULT_RULE_NAME_REQUIRED = 'required';
 	var DEFAULT_RULE_NAME_CUSTOM_FUNC = 'customFunc';
 	var DEFAULT_RULE_NAME_ASSERT_NULL = 'assertNull';
 	var DEFAULT_RULE_NAME_ASSERT_NOT_NULL = 'assertNotNull';
@@ -184,18 +184,23 @@
 		// thisはvalidationResult
 		// このハンドラがユーザが追加するハンドラより先に動作する前提(EventDispatcherがそういう実装)
 		// 非同期validateの結果をValidationResultに反映させる
-		var prop = ev.property;
+		var name = ev.name;
+
 		if (ev.isValid) {
-			this.validProperties.push(prop);
+			this.validProperties.push(name);
 			this.validCount++;
 		} else {
 			this.isValid = false;
-			this.invalidProperties.push(prop);
+			this.invalidProperties.push(name);
 			this.invalidCount++;
-			this.failureReason = this.failureReason || {};
-			this.failureReason[prop] = this.failureReason[prop] || ev.failureReason;
+			this.invalidReason = this.invalidReason || {};
+			this.invalidReason[name] = {
+				name: name,
+				value: ev.value,
+				violation: [ev.violation]
+			};
 		}
-		this.validatingProperties.splice(this.validatingProperties.indexOf(prop), 1);
+		this.validatingProperties.splice(this.validatingProperties.indexOf(name), 1);
 
 		if (this.validCount + this.invalidCount === this.properties.length) {
 			this.isAllValid = this.isValid;
@@ -220,7 +225,7 @@
 	 * <dt>validate</dt>
 	 * <dd>
 	 * <p>
-	 * 非同期バリデートを行っているプロパティについて、どれか1つのバリデートが完了した。
+	 * 非同期バリデートを行っているプロパティについて、どれか1つのバリデート結果が出た。
 	 * </p>
 	 * <p>
 	 * 以下のようなイベントオブジェクトを通知します。
@@ -229,11 +234,11 @@
 	 * <pre class="sh_javascript"><code>
 	 * {
 	 * 	type: 'validate'
-	 * 	property: // バリデートが完了したプロパティ名
+	 * 	name: // バリデートが完了したプロパティ名
 	 * 	value: // バリデート対象の値
 	 * 	isValid: // バリデート結果(true/false)
-	 * 	failureReason:
-	 * 	// 失敗時のみ。該当プロパティについてのバリデート失敗理由({@link ValidationResult.failureReason}[property]}と同じ。)
+	 * 	violation:
+	 * 	// 失敗時のみ。該当プロパティについてのバリデート失敗理由({@link ValidationResult}に格納されるinvalidReason[name].violationに格納されるルールごとの違反理由オブジェクト)
 	 * }
 	 * </code></pre>
 	 *
@@ -320,16 +325,19 @@
 		/**
 		 * バリデート失敗理由
 		 * <p>
-		 * バリデート失敗の理由がここに格納されます。failureReasonは以下のようなオブジェクトです。
+		 * バリデート失敗の理由がここに格納されます。invalidReasonは以下のようなオブジェクトです。
 		 * </p>
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * {
 		 *   &quot;プロパティ名&quot;: {
-		 *     rule: 'max'                // バリデートを行ったルール
+		 *     name: 'name',              // プロパティ名
 		 *     value: 101,                // バリデート対象の値
-		 *     param: {inclusive: 100},  // バリデート関数に渡されたパラメータ
-		 *     rejectReason: // 非同期バリデートのみ。非同期バリデート関数が返したプロミスのfailハンドラに渡された引数リスト。
+		 *     violation: [{              // 違反理由オブジェクトの配列
+		 *       ruleName: 'max',  // バリデートを行ったルール
+		 *       param: {max:100, inclusive: true},  // バリデート関数に渡されたパラメータ
+		 *       reason: // 非同期バリデートのみ。非同期バリデート関数が返したプロミスのfailハンドラに渡された引数リスト。同期の場合は常にnull
+		 *     }]
 		 *   },
 		 *   &quot;プロパティ名&quot;: {...},
 		 *   &quot;プロパティ名&quot;: {...}
@@ -337,10 +345,10 @@
 		 * </code></pre>
 		 *
 		 * @memberOf ValidationResult
-		 * @name failureReason
+		 * @name invalidReason
 		 * @type {object}
 		 */
-		this.failureReason = result.failureReason;
+		this.invalidReason = result.invalidReason;
 
 		/**
 		 * バリデート成功したプロパティ数
@@ -494,11 +502,11 @@
 	 * 第2引数にはバリデート関数を指定します。 バリデート結果が正しい場合はtrueとなる値を返す関数を指定してください。 バリデート関数は第1引数にはバリデート対象の値、第2引数以降には{@link Validate.addRule}で指定するルールオブジェクトに記述されたパラメータが渡されます。
 	 * </p>
 	 * <p>
-	 * 第3引数にはバリデート関数に渡すパラメータのパラメータ名リストを指定します。パラメータ名は{@link ValidationResult.failureReason}で使用されます。
+	 * 第3引数にはバリデート関数に渡すパラメータのパラメータ名リストを指定します。パラメータ名は{@link ValidationResult.invalidReason}で使用されます。
 	 * </p>
 	 * <p>
 	 * 第4引数は優先度指定です。複数ルールをバリデートする場合に、どのルールから順にバリデートを行うかを優先度で指定します。
-	 * 優先度は、数値が大きいものほど優先されます。同じ優先度の場合適用順序は不定です。 デフォルトで用意されているルールの優先度は、requireが51、その他は50で定義しています。
+	 * 優先度は、数値が大きいものほど優先されます。同じ優先度の場合適用順序は不定です。 デフォルトで用意されているルールの優先度は、requiredが51、その他は50で定義しています。
 	 * </p>
 	 *
 	 * @private
@@ -532,7 +540,7 @@
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
-		require: function(value) {
+		required: function(value) {
 			// nullでないかつ、空文字でもないこと
 			return value != null && value !== '';
 		},
@@ -869,13 +877,13 @@
 		 * 		}
 		 * 	},
 		 * 	year: {
-		 * 		require: true
+		 * 		required: true
 		 * 	},
 		 * 	month: {
-		 * 		require: true
+		 * 		required: true
 		 * 	},
 		 * 	day: {
-		 * 		require: true
+		 * 		required: true
 		 * 	}
 		 * });
 		 * formValidator.validate({
@@ -936,14 +944,14 @@
 		 * 	// 対象となるプロパティ名(userid)をキーにする
 		 * 	userid: {
 		 * 		// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。
-		 * 		require: true,
+		 * 		required: true,
 		 * 		pattern: /&circ;[a-z|0-9]*$/,
 		 * 		size: [4, 10]
 		 * 	}
 		 * });
 		 * </code></pre>
 		 *
-		 * 上記の場合、useridは指定が必須(require指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。
+		 * 上記の場合、useridは指定が必須(required指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。
 		 * </p>
 		 * <p>
 		 * 以下のようなルールが定義されています。
@@ -956,7 +964,7 @@
 		 * </tr>
 		 * </thead><tbody>
 		 * <tr>
-		 * <td>require</td>
+		 * <td>required</td>
 		 * <td>なし</td>
 		 * <td>値がnull,undefined,空文字のいずれでもないこと</td>
 		 * </tr>
@@ -1115,7 +1123,7 @@
 			var invalidProperties = [];
 			var properties = [];
 			var validatingProperties = [];
-			var failureReason = null;
+			var invalidReason = null;
 			var targetNames = names && (isArray(names) ? names : [names]);
 			var isAsync = false;
 			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
@@ -1140,14 +1148,15 @@
 				}
 				validateRuleManager.sortRuleByPriority(sortedRuleNames);
 
+				// ルールについてチェックする。あるルールでバリデートエラーが起きても、他のルールもチェックする。
 				for (var i = 0, l = sortedRuleNames.length; i < l; i++) {
 					var ruleName = sortedRuleNames[i];
 					var args = rule[ruleName];
 					if ((!obj.hasOwnProperty(prop) || args == null)
-							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRE && args)) {
+							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRED && args)) {
 						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
 						// また、argsがundefinedならそのルールはチェックしない
-						// ただし、require指定がある場合はチェックする
+						// ただし、required指定がある場合はチェックする
 						continue;
 					}
 					// 値の型変換
@@ -1167,11 +1176,11 @@
 					var ret = validateFunc.apply(this, args);
 
 					// validate関数呼び出し時の引数を格納しておく
-					var param = {};
+					var ruleValue = {};
 					var argNames = validateRuleManager.getValidateArgNames(ruleName);
 					if (argNames) {
 						for (var j = 0, len = argNames.length; j < len; j++) {
-							param[argNames[j]] = args[j + 1];
+							ruleValue[argNames[j]] = args[j + 1];
 						}
 					}
 
@@ -1185,19 +1194,25 @@
 						propertyWaitingPromsies[prop].push(ret.promise({
 							ruleName: ruleName,
 							value: value,
-							param: param
+							ruleValue: ruleValue
 						}));
 					}
 
 					// 同期の場合
 					if (!ret || isPromise(ret) && isResolved(ret)) {
 						// validate関数がfalseを返したまたは、promiseを返したけどすでにreject済みの場合はvalidate失敗
-						// failureReasonの作成
-						failureReason = failureReason || {};
-						failureReason[prop] = this._createFailureReason(ruleName, value, param);
+						// invalidReasonの作成
+						invalidReason = invalidReason || {};
+						if (!invalidReason[prop]) {
+							invalidReason[prop] = {
+								name: prop,
+								value: orgValue,
+								violation: []
+							};
+						}
+						invalidReason[prop].violation.push(this._createViolation(ruleName,
+								ruleValue));
 						isInvalidProp = true;
-						// あるルールでinvalidなら他のルールはもう検証しない
-						break;
 					}
 				}
 				if (isAsyncProp) {
@@ -1214,7 +1229,7 @@
 				invalidProperties: invalidProperties,
 				validatingProperties: validatingProperties,
 				properties: properties,
-				failureReason: failureReason,
+				invalidReason: invalidReason,
 				isAsync: isAsync,
 				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
 				isValid: isValid,
@@ -1229,42 +1244,40 @@
 					var promises = propertyWaitingPromsies[prop];
 					var doneHandler = (function(_prop) {
 						return function() {
-							// 既にinvalidになっていたらもう何もしない
-							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
-								return;
-							}
+							// あるプロパティについてのすべての非同期バリデートが終了したらvalidであることを通知
 							validationResult.dispatchEvent({
 								type: EVENT_VALIDATE,
-								property: _prop,
-								value: obj[_prop], // validate対象のオブジェクトに指定された値
-								isValid: true
+								name: _prop,
+								isValid: true,
+								// validate対象のオブジェクトに指定された値
+								value: obj[_prop]
 							});
 						};
 					})(prop);
 					var failHandler = (function(_prop, _promises, _param) {
 						return function() {
 							// 一つでも失敗したらfailCallbackが実行される
-							// 既にinvalidになっていたらもう何もしない
+							// 既にinvalidになっていたらイベントは上げずに、何もしない
 							if ($.inArray(_prop, validationResult.invalidProperties) !== -1) {
 								return;
 							}
 							// どのルールのプロミスがrejectされたか
-							var ruleName, value;
+							var ruleName, ruleValue, value;
 							for (var i = 0, l = _promises.length; i < l; i++) {
 								var p = _promises[i];
 								if (isRejected(p)) {
 									ruleName = p.ruleName;
-									value = p.value, // ruleNameでのバリデート用に変換された値
-									param = p.param;
+									ruleValue = p.ruleValue;
+									value = p.value;
 									break;
 								}
 							}
 							validationResult.dispatchEvent({
 								type: EVENT_VALIDATE,
-								property: _prop,
+								name: _prop,
 								isValid: false,
-								failureReason: that._createFailureReason(ruleName, value, param,
-										arguments),
+								value: value,
+								violation: that._createViolation(ruleName, ruleValue, arguments),
 							});
 						};
 					})(prop, promises);
@@ -1276,23 +1289,21 @@
 		},
 
 		/**
-		 * ValidationResultに格納するfailureReasonオブジェクトを作成する
+		 * ValidationResultに格納するinvalidReasonオブジェクトを作成する
 		 *
 		 * @private
 		 * @memberOf h5.validation.FormValidationLogic
 		 * @param ruleName
-		 * @param value
-		 * @param param
-		 * @param rejectReason 非同期バリデートの場合、failハンドラに渡された引数リスト
+		 * @param ruleValue
+		 * @param failHandlerArgs 非同期バリデートの場合、failハンドラに渡された引数リスト
 		 */
-		_createFailureReason: function(ruleName, value, param, failHandlerArgs) {
+		_createViolation: function(ruleName, ruleValue, failHandlerArgs) {
 			var ret = {
-				rule: ruleName,
-				value: value,
-				param: param
+				ruleName: ruleName,
+				ruleValue: ruleValue
 			};
 			if (failHandlerArgs) {
-				ret.rejectReason = h5.u.obj.argsToArray(failHandlerArgs);
+				ret.reason = h5.u.obj.argsToArray(failHandlerArgs);
 			}
 			return ret;
 		},
@@ -1319,7 +1330,7 @@
 	};
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_REQUIRE, rule.require, null, 51);
+	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 51);
 	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50);
