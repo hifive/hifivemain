@@ -107,10 +107,12 @@
 			<dependency name="util" />
 			<dependency name="async" />
 			<dependency name="controller" />
+			<dependency name="validation" />
 		</dependencies>
 		<files>
 			<file name="h5.ui.js" />
 			<file name="h5.ui.jqm.manager.js" />
+			<file name="h5.ui.FormController.js" />
 		</files>
 		<cssfiles>
 			<file name="h5.ui.indicator.css" />
