@@ -845,7 +845,7 @@
 		/**
 		 * @private
 		 */
-		_desableProperties: [],
+		_disableProperties: [],
 
 		/**
 		 * フォームの値を集約したオブジェクトのvalidateを行う
