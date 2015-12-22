@@ -164,21 +164,36 @@
 	 */
 	var controlelr = {
 		__name: 'h5.ui.validation.MessageOutputController',
-		// container,tagNameの設定
-		_containerSetting: {},
+		_container: null,
+		_wrapper: null,
 		// validationResultからメッセージを作るための設定
 		_setting: {},
 
 		/**
-		 * メッセージ出力先の設定を適用する
+		 * メッセージ出力先要素を設定する
 		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
-		 * @param {Object} containerSetting 出力先設定
-		 * @param {Object} containerSetting.container デフォルト出力先(コンテナ)要素
-		 * @param {Object} containerSetting.wrapper デフォルト出力タグ名。指定しない場合はメッセージはテキストノードとして生成されます
+		 * @param {DOM|jQuery|string} container デフォルト出力先(コンテナ)要素をDOM要素、jQueryオブジェクト、セレクタ文字列の何れかで指定
 		 */
-		setContainerSetting: function(containerSetting) {
-			this._containerSetting = containerSetting;
+		setContainer: function(container) {
+			this._container = container;
+		},
+
+		/**
+		 * メッセージをラップするタグまたはタグ生成文字列を設定する
+		 * &lt;p>
+		 * タグ名を指定した場合、指定されたタグで生成した要素でメッセージをラップします。
+		 * &lt;/p>
+		 * &lt;p>
+		 * また、'&amp;lt;span class=&amp;quot;hoge&amp;quot;&amp;gt;'のようなタグ生成文字列も設定でき、指定された文字列から作成した要素でメッセージをラップします。
+		 * &lt;/p>
+		 * &lt;p>{
+		 *
+		 * @memberOf h5.ui.validation.MessageOutputController
+		 * @param {string} wrapper メッセージをラップするタグまたはタグ生成文字列
+		 */
+		setWrapper: function(wrapper) {
+			this._wrapper = wrapper;
 		},
 
 		/**
@@ -232,7 +247,7 @@
 		 * @param {Object} messageSetting {プロパティ名: {message:...}}のようなオブジェクト
 		 */
 		clearMessage: function(container) {
-			var container = container || this._containerSetting.container;
+			var container = container || this._container;
 			$(container).empty();
 		},
 
@@ -240,18 +255,18 @@
 		 * メッセージの追加表示
 		 *
 		 * @param {string} message メッセージ
-		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合はデフォルト出力先に出力します
-		 * @param {string} [wrapper] メッセージをラップするタグ名または要素生成文字列。指定しない場合はデフォルトタグ名を使用します
+		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合は{@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定した要素。
+		 * @param {string} [wrapper] メッセージをラップするタグ名または要素生成文字列。指定しない場合は{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーまたはテキストノードとして生成します。
 		 */
 		appendMessage: function(message, container, wrapper) {
 			// 未指定ならsettingに設定されたコンテナ
-			var container = container || this._containerSetting.container;
+			var container = container || this._container;
 			var $container = $(container);
 			if (!$container.length) {
 				return;
 			}
 
-			wrapper = wrapper || this._containerSetting.wrapper;
+			wrapper = wrapper || this._wrapper;
 			if (wrapper) {
 				if (h5.u.str.startsWith($.trim(wrapper), '&lt;')) {
 					// '&lt;span class="hoge">'のような指定ならその文字列でDOM生成
@@ -300,8 +315,8 @@
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string|string[]} [names] 出力対象のプロパティ名。指定しない場合は全てが対象
-		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合はデフォルト出力先に出力します
-		 * @param {string} [wrapper] メッセージをラップするタグ名またはタグ生成文字列。指定しない場合はデフォルトタグ名を使用します
+		 * @param {DOM|jQuery|string} [container] 表示先要素。指定しない場合は{@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定した要素に出力します
+		 * @param {string} [wrapper] メッセージをラップするタグ名またはタグ生成文字列。指定しない場合は{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーまたはテキストノードとして生成します
 		 */
 		appendMessageByValidationResult: function(validationResult, names, container, wrapper) {
 			var invalidProperties = validationResult.invalidProperties;
@@ -326,20 +341,6 @@
 					}
 				}));
 				return;
-			}
-		},
-
-		/**
-		 * コンテナからメッセージをすべて削除
-		 *
-		 * @memberOf h5.ui.validation.MessageOutputController
-		 * @param {DOM|jQuery|string} [container] 中身を削除するコンテナ。指定しない場合はデフォルト出力先。
-		 */
-		clearValue: function(container) {
-			// 未指定ならsettingに設定されたコンテナ
-			var container = container || this._containerSetting.container;
-			if (container) {
-				$(container).empty();
 			}
 		}
 	};
@@ -642,19 +643,6 @@
 		},
 
 		/**
-		 * このプラグインが出力するメッセージの追加設定
-		 * &lt;p>
-		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
-		 * &lt;/p>
-		 *
-		 * @memberOf h5.ui.validation.Composition
-		 * @param {Object} messageObj プロパティ名をキーに、messageとdisplayNameを定義したオブジェクトを持つメッセージ設定オブジェクト
-		 */
-		setMessage: function(messageObj) {
-			this._messageOutputController.addMessageSetting(messageObj);
-		},
-
-		/**
 		 * プラグインのリセット
 		 * &lt;p>
 		 * メッセージを削除します
@@ -663,7 +651,7 @@
 		 * @memberOf h5.ui.validation.Composition
 		 */
 		reset: function() {
-			this._messageOutputController.clearValue();
+			this._messageOutputController.clearMessage();
 		},
 
 		/**
@@ -675,10 +663,8 @@
 		_setChildSetting: function() {
 			var setting = this._setting;
 			// 出力先の設定
-			this._messageOutputController.setContainerSetting({
-				container: setting.container,
-				wrapper: setting.wrapper
-			});
+			this._messageOutputController.setContainer(setting.container);
+			this._messageOutputController.setWrapper(setting.wrapper);
 
 			// 各プロパティ毎のメッセージ設定をする
 			var property = setting.property;
@@ -826,19 +812,6 @@
 		reset: function() {
 			this._hideBaloon();
 			this._executedOnValidate = false;
-		},
-
-		/**
-		 * このプラグインが出力するメッセージの追加設定
-		 * &lt;p>
-		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
-		 * &lt;/p>
-		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
-		 * @param {Object} messageObj プロパティ名をキーに、messageとdisplayNameを定義したオブジェクトを持つメッセージ設定オブジェクト
-		 */
-		setMessage: function(messageObj) {
-			this._messageOutputController.addMessageSetting(messageObj);
 		},
 
 		/**
@@ -1182,19 +1155,6 @@
 				$target &amp;&amp; $target.remove();
 			}
 			this._executedOnValidate = false;
-		},
-
-		/**
-		 * このプラグインが出力するメッセージを設定する
-		 * &lt;p>
-		 * プロパティ毎の出力メッセージ設定オブジェクトを設定します。
-		 * &lt;/p>
-		 *
-		 * @memberOf h5.ui.validation.Message
-		 * @param {Object} messageObj プロパティ名をキーに、messageとdisplayNameを定義したオブジェクトを持つメッセージ設定オブジェクト
-		 */
-		setMessage: function(messageObj) {
-			this._messageOutputController.addMessageSetting(messageObj);
 		},
 
 		_setMessage: function(element, name, validationResult, type) {
@@ -2645,7 +2605,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 11:34:37 GMT+0900 (JST)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Dec 22 2015 12:29:15 GMT+0900 (JST)
 	</footer>
 </div>
 
