@@ -1217,6 +1217,7 @@
 				properties.push(prop);
 			}
 			var isValid = !invalidProperties.length;
+			isValid = isValid && isAsync ? null : isValid;
 			var validationResult = new ValidationResult({
 				validProperties: validProperties,
 				invalidProperties: invalidProperties,
