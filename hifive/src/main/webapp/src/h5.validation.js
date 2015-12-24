@@ -1198,8 +1198,8 @@
 						}));
 					}
 
-					// 同期の場合
-					if (!ret || isPromise(ret) && isResolved(ret)) {
+					// 同期でエラーが返ってきた(falseまたはreject済みプロミスが返ってきた場合)
+					if (!ret || isPromise(ret) && isRejected(ret)) {
 						// validate関数がfalseを返したまたは、promiseを返したけどすでにreject済みの場合はvalidate失敗
 						// invalidReasonの作成
 						invalidReason = invalidReason || {};
@@ -1317,7 +1317,7 @@
 		 * @param {string} ruleName ルール名
 		 */
 		_convertBeforeValidate: function(value, ruleName) {
-			if(value == null){
+			if (value == null) {
 				// nullまたはundefinedの場合は型変換しない
 				return value;
 			}
