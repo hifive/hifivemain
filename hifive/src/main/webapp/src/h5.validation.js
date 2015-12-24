@@ -1317,6 +1317,10 @@
 		 * @param {string} ruleName ルール名
 		 */
 		_convertBeforeValidate: function(value, ruleName) {
+			if(value == null){
+				// nullまたはundefinedの場合は型変換しない
+				return value;
+			}
 			switch (ruleName) {
 			case DEFAULT_RULE_NAME_MAX:
 			case DEFAULT_RULE_NAME_MIN:
