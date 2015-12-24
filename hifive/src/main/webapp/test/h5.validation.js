@@ -50,66 +50,57 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('validator.validate', {
+	module('FormValidationLogic バリデーションルール', {
 		setup: function() {
-			this.validator = h5.validation.createValidator();
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
 		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	//	test('validateに渡す値がオブジェクトでない場合はエラー', function() {
-	//
-	//	});
 
-	test('require', function() {
+	test('required', function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				require: true
+				required: true
 			}
 		});
 		strictEqual(validator.validate({
-			p1: false,
-			p2: 0
-		}).isValid, true, 'require指定されているプロパティの値がfalseであるオブジェクトはvalid');
+			p1: 'a',
+			p2: 'a'
+		}).isValid, true, '"a"はvalid');
+		strictEqual(validator.validate({}).isValid, false, 'プロパティのないオブジェクトはinvalid');
 		strictEqual(validator.validate({
-			p2: 0
-		}).isValid, false, 'require指定されているプロパティのないオブジェクトはinvalid');
+			p1: null
+		}).isValid, false, 'nullはinvalid');
 		strictEqual(validator.validate({
-			p2: 0
-		}).isValid, false, 'require指定されているプロパティの値がnullであるオブジェクトはinvalid');
-		strictEqual(validator.validate({
-			p2: 0
-		}).isValid, false, 'require指定されているプロパティの値がundefinedであるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, false,
-				'require指定されているプロパティが定義されていないオブジェクトはinvalid');
+			p1: undefined
+		}).isValid, false, 'undefinedはinvalid');
 	});
 
-	test('assertFalse',
-			function() {
-				var validator = this.validator;
-				validator.addRule({
-					p1: {
-						assertFalse: true
-					}
-				});
-				strictEqual(validator.validate({
-					p1: false
-				}).isValid, true, 'assertFalse指定されているプロパティの値がfalseであるオブジェクトはvalid');
-				strictEqual(validator.validate({
-					p1: true
-				}).isValid, false, 'assertFalse指定されているプロパティの値がtrueであるオブジェクトはinvalid');
-				strictEqual(validator.validate({}).isValid, true,
-						'assertFalse指定されているプロパティがないオブジェクトはvalid');
-				strictEqual(validator.validate({
-					p1: null
-				}).isValid, true, 'nullならvalid');
-				strictEqual(validator.validate({
-					p1: undefined
-				}).isValid, true, 'undefinedならvalid');
-			});
+	test('assertFalse', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				assertFalse: true
+			}
+		});
+		strictEqual(validator.validate({
+			p1: false
+		}).isValid, true, 'falseはvalid');
+		strictEqual(validator.validate({
+			p1: true
+		}).isValid, false, 'trueはinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
+		strictEqual(validator.validate({
+			p1: null
+		}).isValid, true, 'nullはvalid');
+		strictEqual(validator.validate({
+			p1: undefined
+		}).isValid, true, 'undefinedはvalid');
+	});
 
 	test('assertTrue', function() {
 		var validator = this.validator;
@@ -119,18 +110,18 @@ $(function() {
 			}
 		});
 		strictEqual(validator.validate({
-			p1: true
-		}).isValid, true, 'assertTrue指定されているプロパティの値がtrueであるオブジェクトはvalid');
-		strictEqual(validator.validate({
 			p1: false
-		}).isValid, false, 'assertTrue指定されているプロパティの値がfalseであるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, true, 'assertTrue指定されているプロパティがないオブジェクトはvalid');
+		}).isValid, false, 'falseはinvalid');
+		strictEqual(validator.validate({
+			p1: true
+		}).isValid, true, 'trueはvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, true, 'nullならvalid');
+		}).isValid, true, 'nullはvalid');
 		strictEqual(validator.validate({
 			p1: undefined
-		}).isValid, true, 'undefinedならvalid');
+		}).isValid, true, 'undefinedはvalid');
 	});
 
 	test('max', function() {
@@ -141,11 +132,11 @@ $(function() {
 			}
 		});
 		strictEqual(validator.validate({
-			p1: 9
-		}).isValid, true, 'max:10指定されているプロパティの値が9であるオブジェクトはvalid');
+			p1: '9'
+		}).isValid, true, 'max:10指定 "9"はvalid');
 		strictEqual(validator.validate({
-			p1: 10
-		}).isValid, false, 'max:10指定されているプロパティの値が10であるオブジェクトはinvalid');
+			p1: '10'
+		}).isValid, false, 'max:10指定 "10"はinvalid');
 
 		validator.addRule({
 			p1: {
@@ -153,52 +144,52 @@ $(function() {
 			}
 		});
 		strictEqual(validator.validate({
-			p1: 9
-		}).isValid, true, 'max:[10,true]指定されているプロパティの値が9であるオブジェクトはvalid');
+			p1: '10'
+		}).isValid, true, 'max:[10,true]指定 "9"はvalid');
 		strictEqual(validator.validate({
-			p1: 10
-		}).isValid, true, 'max:[10,true]指定されているプロパティの値が10であるオブジェクトはvalid');
-		strictEqual(validator.validate({}).isValid, true, 'max指定されているプロパティがないオブジェクトはvalid');
+			p1: '11'
+		}).isValid, false, 'max:[10,true]指定 "11"はinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, true, 'nullならvalid');
+		}).isValid, true, 'nullはinvalid');
 		strictEqual(validator.validate({
 			p1: undefined
-		}).isValid, true, 'undefinedならvalid');
+		}).isValid, true, 'undefinedはvalid');
 	});
 
 	test('min', function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				min: 0
+				min: 10
 			}
 		});
 		strictEqual(validator.validate({
-			p1: 1
-		}).isValid, true, 'min:0指定されているプロパティの値が1であるオブジェクトはvalid');
+			p1: '11'
+		}).isValid, true, 'min:10指定 "11"はvalid');
 		strictEqual(validator.validate({
-			p1: 0
-		}).isValid, false, 'min:0指定されているプロパティの値が0であるオブジェクトはinvalid');
+			p1: '10'
+		}).isValid, false, 'min:10指定 "10"はinvalid');
 
 		validator.addRule({
 			p1: {
-				min: [0, true]
+				min: [10, true]
 			}
 		});
 		strictEqual(validator.validate({
-			p1: 1
-		}).isValid, true, 'min:[0,true]指定されているプロパティの値が1であるオブジェクトはvalid');
+			p1: '10'
+		}).isValid, true, 'min:[10,true]指定 "10"はvalid');
 		strictEqual(validator.validate({
-			p1: 0
-		}).isValid, true, 'min:[0,true]指定されているプロパティの値が1であるオブジェクトはvalid');
-		strictEqual(validator.validate({}).isValid, true, 'min指定されているプロパティがないオブジェクトはvalid');
+			p1: '9'
+		}).isValid, false, 'min:[10,true]指定 "9"はinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, true, 'nullならvalid');
+		}).isValid, true, 'nullはvalid');
 		strictEqual(validator.validate({
 			p1: undefined
-		}).isValid, true, 'undefinedならvalid');
+		}).isValid, true, 'undefinedはvalid');
 	});
 
 	test('digits', function() {
@@ -209,11 +200,11 @@ $(function() {
 			}
 		});
 		strictEqual(validator.validate({
-			p1: 99.9
-		}).isValid, true, 'digits:2指定されているプロパティの値が99.9であるオブジェクトはvalid');
+			p1: '99.9'
+		}).isValid, true, 'digits:2指定 "99.9"はvalid');
 		strictEqual(validator.validate({
-			p1: 100
-		}).isValid, false, 'digits:2指定されているプロパティの値が100であるオブジェクトはinvalid');
+			p1: "100"
+		}).isValid, false, 'digits:2指定 100はinvalid');
 
 		validator.addRule({
 			p1: {
@@ -221,14 +212,14 @@ $(function() {
 			}
 		});
 		strictEqual(validator.validate({
-			p1: 99.9
-		}).isValid, true, 'digits:[2,1]指定されているプロパティの値が99.9であるオブジェクトはvalid');
+			p1: "99.9"
+		}).isValid, true, 'digits:[2,1]指定 "99.9"はvalid');
 		strictEqual(validator.validate({
-			p1: 100
-		}).isValid, false, 'digits:[2,1]指定されているプロパティの値が100であるオブジェクトはinvalid');
+			p1: "100"
+		}).isValid, false, 'digits:[2,1]指定 "100"はinvalid');
 		strictEqual(validator.validate({
-			p1: 99.99
-		}).isValid, false, 'digits:[2,1]指定されているプロパティの値が99.99であるオブジェクトはinvalid');
+			p1: "99.99"
+		}).isValid, false, 'digits:[2,1]指定 "99.99"はinvalid');
 		strictEqual(validator.validate({}).isValid, true, 'digits指定されているプロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
@@ -251,13 +242,13 @@ $(function() {
 		});
 		strictEqual(validator.validate({
 			p1: future
-		}).isValid, true, 'future指定されているプロパティの値が現在時刻より未来のDate型であるオブジェクトはvalid');
+		}).isValid, true, '現在時刻より未来のDate型はvalid');
 		strictEqual(validator.validate({
 			p1: past
-		}).isValid, false, 'future指定されているプロパティの値が現在時刻より過去のDate型であるオブジェクトはinvalid');
+		}).isValid, false, '現在時刻より過去のDate型はinvalid');
 		strictEqual(validator.validate({
 			p1: current
-		}).isValid, false, 'future指定されているプロパティの値が現在時刻のDate型であるオブジェクトはinvalid');
+		}).isValid, false, '現在時刻のDate型はinvalid');
 		strictEqual(validator.validate({}).isValid, true, 'future指定されているプロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
@@ -280,11 +271,11 @@ $(function() {
 		});
 		strictEqual(validator.validate({
 			p1: past
-		}).isValid, true, 'past指定されているプロパティの値が現在時刻より過去のDate型であるオブジェクトはvalid');
+		}).isValid, true, '現在時刻より過去のDate型はvalid');
 		strictEqual(validator.validate({
 			p1: future
-		}).isValid, false, 'past指定されているプロパティの値が現在時刻より未来のDate型であるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, true, 'past指定されているプロパティがないオブジェクトはvalid');
+		}).isValid, false, '現在時刻より未来のDate型はinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
 		}).isValid, true, 'nullならvalid');
@@ -302,11 +293,11 @@ $(function() {
 		});
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, true, 'assertNull指定されているプロパティの値がnullであるオブジェクトはvalid');
+		}).isValid, true, 'nullはvalid');
 		strictEqual(validator.validate({
 			p1: ''
-		}).isValid, false, 'assertNull指定されているプロパティの値が空文字であるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, true, 'assertNull指定されているプロパティがないオブジェクトはvalid');
+		}).isValid, false, '空文字はinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: undefined
 		}).isValid, true, 'undefinedならvalid');
@@ -321,11 +312,11 @@ $(function() {
 		});
 		strictEqual(validator.validate({
 			p1: ''
-		}).isValid, true, 'assertNotNull指定されているプロパティの値が空文字であるオブジェクトはvalid');
+		}).isValid, true, '空文字はvalid');
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, false, 'assertNotNull指定されているプロパティの値がnullであるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, true, 'assertNotNull指定されているプロパティがないオブジェクトはvalid');
+		}).isValid, false, 'nullはinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: undefined
 		}).isValid, true, 'undefinedならvalid');
@@ -335,16 +326,16 @@ $(function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				pattern: /a/
+				pattern: /a.c/
 			}
 		});
 		strictEqual(validator.validate({
-			p1: 'ab'
-		}).isValid, true, 'pattern:/a/指定されているプロパティの値が\'ab\'であるオブジェクトはvalid');
+			p1: 'abc'
+		}).isValid, true, 'pattern:/a.c/指定 "abc"はvalid');
 		strictEqual(validator.validate({
-			p1: 'bc'
-		}).isValid, false, 'pattern:/a/指定されているプロパティの値\'bc\'であるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, true, 'pattern指定されているプロパティがないオブジェクトはvalid');
+			p1: 'bcc'
+		}).isValid, false, 'pattern:/a.c/指定 "bcc"はinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
 		}).isValid, true, 'nullならvalid');
@@ -362,17 +353,117 @@ $(function() {
 		});
 		strictEqual(validator.validate({
 			p1: 'abc'
-		}).isValid, true, 'size:[3,3]指定されているプロパティの値が\'abc\'であるオブジェクトはvalid');
+		}).isValid, true, 'size:[3,3]指定 "abc"はvalid');
+		strictEqual(validator.validate({
+			p1: 'ab'
+		}).isValid, false, 'size:[3,3]指定 "ab"はinvalid');
 		strictEqual(validator.validate({
 			p1: 'abcd'
-		}).isValid, false, 'size:[3,3]指定されているプロパティの値\'abcd\'であるオブジェクトはinvalid');
-		strictEqual(validator.validate({}).isValid, true, 'size指定されているプロパティがないオブジェクトはvalid');
+		}).isValid, false, 'size:[3,3]指定 "abcd"はinvalid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
 		strictEqual(validator.validate({
 			p1: null
 		}).isValid, true, 'nullならvalid');
 		strictEqual(validator.validate({
 			p1: undefined
 		}).isValid, true, 'undefinedならvalid');
+	});
+
+	test('customFunc(同期)', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				customFunc: function(v) {
+					return v === 'v';
+				}
+			}
+		});
+		strictEqual(validator.validate({
+			p1: 'v'
+		}).isValid, true, 'customFunc指定 valid');
+		strictEqual(validator.validate({
+			p1: 'a'
+		}).isValid, false, 'customFunc指定 invalid');
+		strictEqual(validator.validate({
+			p1: null
+		}).isValid, false, 'customFunc指定 invalid');
+		strictEqual(validator.validate({
+			p1: undefined
+		}).isValid, false, 'customFunc指定 valid');
+		strictEqual(validator.validate({}).isValid, true, 'プロパティがないオブジェクトはvalid');
+	});
+
+	asyncTest('customFunc(非同期)', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				customFunc: function(v) {
+					var dfd = $.Deferred();
+					var promise = dfd.promise();
+					setTimeout(function() {
+						if (v === 'v') {
+							dfd.resolve();
+						} else {
+							dfd.reject();
+						}
+					}, 0);
+					return promise;
+				}
+			},
+			p2: {
+				customFunc: function(v) {
+					var dfd = $.Deferred();
+					return v === 'v' ? dfd.resolve().promise() : dfd.reject().promise();
+				}
+			}
+		});
+		var testObjects = [{
+			obj: {
+				p1: 'v'
+			},
+			isValidExpect: true
+		}, {
+			obj: {
+				p1: 'a'
+			},
+			isValidExpect: false
+		}, {
+			obj: {
+				p1: null
+			},
+			isValidExpect: false
+		}, {
+			obj: {
+				p1: undefined
+			},
+			isValidExpect: false
+		}];
+		var validateTests = [];
+		var currentIndex = 0;
+		for (var i = 0, l = testObjects.length; i < l; i++) {
+			validateTests.push(function() {
+				var obj = testObjects[currentIndex].obj;
+				var expect = testObjects[currentIndex].isValidExpect;
+				var result = validator.validate(obj);
+				result.addEventListener('validate', function(ev) {
+					strictEqual(this.isValid, expect, ev.value + 'は' + ev.isValid);
+					currentIndex++;
+					if (validateTests[currentIndex]) {
+						validateTests[currentIndex]();
+					} else {
+						start();
+					}
+				});
+			});
+		}
+		strictEqual(validator.validate({}).isValid, true, 'プロパティ無しはtrue');
+		strictEqual(validator.validate({
+			p2: 'v'
+		}).isValid, true, 'customFuncがpromiseを返しても同期でresolveされていたら同期で結果が返ってきて、結果はtrue');
+		strictEqual(validator.validate({
+			p2: 'a'
+		}).isValid, false, 'customFuncがpromiseを返しても同期でrejectされていたら同期で結果が返ってきて、結果はfalse');
+		validateTests[0]();
 	});
 
 	test('複数ルールの指定', function() {
@@ -386,19 +477,19 @@ $(function() {
 			}
 		});
 		strictEqual(validator.validate({
-			p1: 1.1
+			p1: '1.1'
 		}).isValid, true, '全てのルールを満たすのでtrue');
 		strictEqual(validator.validate({
 			p1: null
 		}).isValid, false, 'assertNotNullを満たさないのでfalse');
 		strictEqual(validator.validate({
-			p1: 1.01
+			p1: '1.01'
 		}).isValid, false, 'digitsを満たさないのでfalse');
 		strictEqual(validator.validate({
-			p1: -1
+			p1: '-1'
 		}).isValid, false, 'minを満たさないのでfalse');
 		strictEqual(validator.validate({
-			p1: 2
+			p1: '2'
 		}).isValid, false, 'maxを満たさないのでfalse');
 	});
 
@@ -407,7 +498,7 @@ $(function() {
 	//=============================
 	module('ValidationResult', {
 		setup: function() {
-			this.validator = h5.validation.createValidator();
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
 		}
 	});
 
@@ -422,25 +513,25 @@ $(function() {
 		};
 		validator.addRule({
 			p1: {
-				require: true,
+				required: true,
 				min: 0,
 				max: [1.1, true],
 				digits: [1, 1]
 			},
 			p2: {
-				require: true,
+				required: true,
 				min: 0
 			},
 			p3: {
-				require: true,
+				required: true,
 				min: 0
 			},
 			p4: {
-				require: true,
+				required: true,
 				min: 0
 			},
 			p5: {
-				require: true,
+				required: true,
 				min: 0
 			}
 		});
@@ -472,12 +563,14 @@ $(function() {
 		strictEqual(result.isValid, true, 'isValidは全てのプロパティがvalidだったかどうか');
 	});
 
+	// TODO 非同期バリデートのテスト
+
 	//=============================
 	// Definition
 	//=============================
 	module('ルールの追加と削除', {
 		setup: function() {
-			this.validator = h5.validation.createValidator();
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
 		}
 	});
 
@@ -559,7 +652,7 @@ $(function() {
 	//=============================
 	module('ルールの無効化と有効化', {
 		setup: function() {
-			this.validator = h5.validation.createValidator();
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
 		}
 	});
 
@@ -590,10 +683,10 @@ $(function() {
 
 		validator.addRule({
 			q1: {
-				require: true,
+				required: true,
 			},
 			q2: {
-				require: true
+				required: true
 			}
 		});
 		validator.disableRule(['q1', 'q2']);
@@ -631,11 +724,104 @@ $(function() {
 	//=============================
 	module('ルールの定義', {
 		setup: function() {
-			this.validator = h5.validation.createValidator();
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
 		}
 	});
 
 	//=============================
 	// Body
 	//=============================
+	test('独自ルールによるバリデート', function() {
+		var validator = this.validator;
+		h5.validation.defineRule('hoge', function(v, arg1, arg2) {
+			return v === arg1 + arg2;
+		}, ['arg1', 'arg2']);
+
+		validator.addRule({
+			p1: {
+				hoge: [1, 2]
+			},
+			p2: {
+				hoge: ['ho', 'ge']
+			}
+		});
+		strictEqual(validator.validate({
+			p1: 3
+		}).isValid, true, '独自ルールによるバリデーションができていること');
+		strictEqual(validator.validate({
+			p1: 4
+		}).isValid, false, '独自ルールによるバリデーションができていること');
+
+		strictEqual(validator.validate({
+			p2: 'hoge'
+		}).isValid, true, '独自ルールによるバリデーションができていること');
+		strictEqual(validator.validate({
+			p2: 'fuga'
+		}).isValid, false, '独自ルールによるバリデーションができていること');
+	});
+
+	asyncTest('独自ルールによるバリデート(非同期)', function() {
+		var validator = this.validator;
+		h5.validation.defineRule('hoge', function(v, arg1, arg2) {
+			var isValid = v === arg1 + arg2;
+			var dfd = $.Deferred();
+			setTimeout(function() {
+				if (isValid) {
+					dfd.resolve();
+				} else {
+					dfd.reject();
+				}
+			}, 0);
+			return dfd.promise();
+		}, ['arg1', 'arg2']);
+
+		validator.addRule({
+			p1: {
+				hoge: [1, 2]
+			},
+			p2: {
+				hoge: ['ho', 'ge']
+			}
+		});
+		var testObjects = [{
+			obj: {
+				p1: 3
+			},
+			isValidExpect: true
+		}, {
+			obj: {
+				p1: 4
+			},
+			isValidExpect: false
+		}, {
+			obj: {
+				p2: 'hoge'
+			},
+			isValidExpect: true
+		}, {
+			obj: {
+				p2: 'fuga'
+			},
+			isValidExpect: false
+		}];
+		var validateTests = [];
+		var currentIndex = 0;
+		for (var i = 0, l = testObjects.length; i < l; i++) {
+			validateTests.push(function() {
+				var obj = testObjects[currentIndex].obj;
+				var expect = testObjects[currentIndex].isValidExpect;
+				var result = validator.validate(obj);
+				result.addEventListener('validate', function(ev) {
+					strictEqual(this.isValid, expect, ev.value + 'は' + ev.isValid);
+					currentIndex++;
+					if (validateTests[currentIndex]) {
+						validateTests[currentIndex]();
+					} else {
+						start();
+					}
+				});
+			});
+		}
+		validateTests[0]();
+	});
 });
