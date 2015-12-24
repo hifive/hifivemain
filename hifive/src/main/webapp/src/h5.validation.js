@@ -201,13 +201,6 @@
 			};
 		}
 		this.validatingProperties.splice(this.validatingProperties.indexOf(name), 1);
-
-		if (this.validCount + this.invalidCount === this.properties.length) {
-			this.isAllValid = this.isValid;
-			this.dispatchEvent({
-				type: EVENT_VALIDATE_COMPLETE
-			});
-		}
 	}
 
 	/**
@@ -1238,6 +1231,17 @@
 			});
 
 			if (isAsync) {
+				/*
+				 * validateが全て完了しているかチェックしてvalidateCompelteを上げる関数
+				 */
+				function checkValidateComplete(result) {
+					if (result.validCount + result.invalidCount === result.properties.length) {
+						result.isAllValid = result.isValid;
+						result.dispatchEvent({
+							type: EVENT_VALIDATE_COMPLETE
+						});
+					}
+				}
 				var that = this;
 				// 非同期の場合、結果が返って気次第イベントをあげる
 				for ( var prop in propertyWaitingPromsies) {
@@ -1252,6 +1256,7 @@
 								// validate対象のオブジェクトに指定された値
 								value: obj[_prop]
 							});
+							checkValidateComplete(validationResult);
 						};
 					})(prop);
 					var failHandler = (function(_prop, _promises, _param) {
@@ -1279,6 +1284,7 @@
 								value: value,
 								violation: that._createViolation(ruleName, ruleValue, arguments),
 							});
+							checkValidateComplete(validationResult);
 						};
 					})(prop, promises);
 					// failハンドラでどのプロミスの失敗かを判定したいのでwaitForPromisesではなくwhenを使用している
