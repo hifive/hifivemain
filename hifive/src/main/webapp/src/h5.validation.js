@@ -200,7 +200,10 @@
 				violation: [ev.violation]
 			};
 		}
-		this.validatingProperties.splice(this.validatingProperties.indexOf(name), 1);
+		this.validatingProperties.splice($.inArray(name, this.validatingProperties), 1);
+		if (!this.validatingProperties.length) {
+			this.isAllValid = this.isValid;
+		}
 	}
 
 	/**
@@ -1217,7 +1220,6 @@
 				properties.push(prop);
 			}
 			var isValid = !invalidProperties.length;
-			isValid = isValid && isAsync ? null : isValid;
 			var validationResult = new ValidationResult({
 				validProperties: validProperties,
 				invalidProperties: invalidProperties,
@@ -1227,8 +1229,8 @@
 				isAsync: isAsync,
 				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
 				isValid: isValid,
-				// 非同期でvalidateしているものがあって決まっていない時はisAllValidはnull
-				isAllValid: isAsync ? null : isValid
+				// 非同期でvalidateしているものがあって現時点でisValid=falseでない(=全部OKかどうか決まっていない)時はisAllValidはnull
+				isAllValid: isAsync && isValid ? null : false
 			});
 
 			if (isAsync) {
