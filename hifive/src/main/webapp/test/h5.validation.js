@@ -493,6 +493,33 @@ $(function() {
 		}).isValid, false, 'maxを満たさないのでfalse');
 	});
 
+	test('指定したプロパティのみのバリデート', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				required: true
+			},
+			p2: {
+				digits: 1
+			},
+			p3: {
+				max: 2
+			}
+		});
+		var result = validator.validate({
+			p2: '1',
+			p3: '3'
+		}, 'p2');
+		strictEqual(result.isValid, true, '指定したプロパティのみバリデートした結果が取得できる');
+		deepEqual(result.properties, ['p2'], 'propertiesに指定したプロパティのみ入っている');
+		result = validator.validate({
+			p2: '1',
+			p3: '1'
+		}, ['p2', 'p3']);
+		strictEqual(result.isValid, true, '指定したプロパティのみバリデートした結果が取得できる');
+		deepEqual(result.properties.sort(), ['p2', 'p3'], 'propertiesに指定したプロパティのみ入っている');
+	});
+
 	//=============================
 	// Definition
 	//=============================
