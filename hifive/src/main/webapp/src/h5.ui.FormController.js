@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2012-2014 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 (function() {
 	// =========================================================================
 	//
@@ -39,7 +55,7 @@
 	 * デフォルトエラーメッセージ
 	 */
 	var defaultInvalidMessage = {
-		required: '{displayName}は必須項目です',
+		require: '{displayName}は必須項目です',
 		min: function(param) {
 			return h5.u.str.format('{displayName}は{violation[0].ruleValue.min}{1}数値を入力してください。',
 					param, (param.violation[0].ruleValue.inclusive ? "以上の" : "より大きい"));
@@ -50,7 +66,20 @@
 		},
 		pattern: '{displayName}は正規表現{violation[0].ruleValue.regexp}を満たす文字列を入力してください。',
 		digits: '{displayName}は整数部分{violation[0].ruleValue.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
-		size: '{displayName}は{violation[0].ruleValue.min}以上{violation[0].ruleValue.max}以下の長さでなければいけません。',
+		size: function(param) {
+			var upperLimitMsg = '';
+			var lowerLimitMsg = '';
+			var min = param.violation[0].ruleValue.min;
+			var max = param.violation[0].ruleValue.max;
+			if (min != null) {
+				lowerLimitMsg = h5.u.str.format('{0}以上', min);
+			}
+			if (max != null) {
+				lowerLimitMsg = h5.u.str.format('{0}以下', max);
+			}
+			return h5.u.str.format('{displayName}は{1}{2}の長さでなければいけません。',
+					param, lowerLimitMsg, upperLimitMsg);
+		},
 		future: '{displayName}は現在時刻より未来の時刻を入力してください。',
 		past: '{displayName}は現在時刻より過去の時刻を入力してください。',
 		nul: '{displayName}はnullでなければなりません。',
@@ -65,7 +94,7 @@
 	// =============================
 	/**
 	 * メッセージ生成関数
-	 * 
+	 *
 	 * @memberOf h5internal.validation
 	 * @private
 	 * @param {string} name
@@ -114,7 +143,7 @@
 
 	/**
 	 * メッセージ及びvalidate結果から作成したメッセージを出力するコントローラ
-	 * 
+	 *
 	 * @class
 	 * @name h5.ui.validation.MessageOutputController
 	 */
@@ -127,7 +156,7 @@
 
 		/**
 		 * メッセージ出力先要素をコンテナとして設定する
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {DOM|jQuery|string} container デフォルト出力先(コンテナ)要素をDOM要素、jQueryオブジェクト、セレクタ文字列の何れかで指定
 		 */
@@ -149,7 +178,7 @@
 		 * <p>
 		 * ラッパーの指定がない場合は、このコントローラはメッセージをテキストノードとして出力します。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {string} wrapper メッセージをラップするタグまたはタグ生成文字列
 		 */
@@ -165,7 +194,7 @@
 		 * <p>
 		 * プロパティ毎の設定を以下のようなオブジェクトで指定します。既に設定済みのプロパティがある場合、設定は上書かれます。
 		 * </p>
-		 * 
+		 *
 		 * <pre class="sh_javascript"><code>
 		 * addMessageSetting({
 		 * 	// プロパティ名をキーにして、プロパティ毎のメッセージ定義を記述
@@ -178,11 +207,11 @@
 		 * 	}
 		 * });
 		 * </code></pre>
-		 * 
+		 *
 		 * <p>
 		 * message,displayName設定プロパティについては{@link h5.ui.FormController.setSetting}をご覧ください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {Object} messageSetting プロパティ毎のメッセージ定義。{プロパティ名: {message:..., displayName:...}}
 		 *            のようなオブジェクト
@@ -203,7 +232,7 @@
 		 * <p>
 		 * {@link h5.ui.validation.MessageOutputController.setContainer|setContainer}で設定した出力先からメッセージを削除します。出力先未設定の場合は何もしません。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 */
 		clearMessage: function() {
@@ -220,7 +249,7 @@
 		 * <p>
 		 * メッセージは{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーで包んで出力します。ラッパー未設定の場合はテキストノードとしてしゅつりょくします。
 		 * </p>
-		 * 
+		 *
 		 * @param {string} message メッセージ
 		 */
 		appendMessage: function(message) {
@@ -256,7 +285,7 @@
 		 * <p>
 		 * 指定されたプロパティがエラーでない場合はnullを返します。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string} name 対象のプロパティ名
@@ -282,7 +311,7 @@
 		 * <p>
 		 * メッセージは{@link h5.ui.validation.MessageOutputController.setWrapper|setWrapper}で設定したラッパーで包んで出力します。ラッパー未設定の場合はテキストノードとしてしゅつりょくします。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string|string[]} [names] 出力対象のプロパティ名。指定しない場合は全てが対象
@@ -355,7 +384,7 @@
 	 * <p>
 	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
 	 * </p>
-	 * 
+	 *
 	 * @class
 	 * @name h5.ui.validation.Style
 	 */
@@ -363,7 +392,7 @@
 		__name: 'h5.ui.validation.Style',
 		/**
 		 * プラグイン設定
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validaiton.Style
 		 */
@@ -374,7 +403,7 @@
 		 * <p>
 		 * キーにプロパティ名、値に要素を覚えておく
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 */
@@ -382,7 +411,7 @@
 
 		/**
 		 * プラグイン設定を行う
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param {Object} setting styleプラグイン設定オブジェクト
@@ -396,7 +425,7 @@
 		 * <p>
 		 * {@link ValidationResult}から、各要素にクラスを設定する
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param {ValidationResult} result
@@ -416,7 +445,7 @@
 		 * <p>
 		 * イベントの発生したフォーム部品のバリデート結果を適用
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param {DOM} element イベント発生要素
@@ -432,7 +461,7 @@
 		 * <p>
 		 * イベントの発生したフォーム部品のバリデート結果を適用
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param {DOM} element イベント発生要素
@@ -448,7 +477,7 @@
 		 * <p>
 		 * 全てのフォームコントロール部品からプラグインが追加したクラスを全て削除します
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.Style
 		 */
 		reset: function() {
@@ -463,7 +492,7 @@
 
 		/**
 		 * バリデート結果からクラスをセットする
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param element
@@ -507,7 +536,7 @@
 		 * <p>
 		 * 第1引数にerror,success,valiatingの何れかを取り、該当する状態のクラス名を設定する
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Style
 		 * @param state
@@ -563,7 +592,7 @@
 	 * <p>
 	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
 	 * </p>
-	 * 
+	 *
 	 * @class
 	 * @name h5.ui.validation.Composition
 	 */
@@ -572,7 +601,7 @@
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 		/**
 		 * プラグイン設定
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Composition
 		 */
@@ -580,7 +609,7 @@
 
 		/**
 		 * プラグイン設定を行う
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Composition
 		 * @param {Object} setting compositionプラグイン設定オブジェクト
@@ -600,7 +629,7 @@
 		 * <p>
 		 * バリデート結果からメッセージを生成して表示
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Composition
 		 * @param {ValidationResult} validationResult
@@ -615,7 +644,7 @@
 		 * <p>
 		 * メッセージを削除します
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.Composition
 		 */
 		reset: function() {
@@ -624,7 +653,7 @@
 
 		/**
 		 * メッセージ出力コントローラの設定
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Composition
 		 */
@@ -680,7 +709,7 @@
 	 * <p>
 	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
 	 * </p>
-	 * 
+	 *
 	 * @class
 	 * @name h5.ui.validation.ErrorBaloon
 	 */
@@ -692,7 +721,7 @@
 
 		/**
 		 * プラグイン設定を行う
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
@@ -712,7 +741,7 @@
 		 * <p>
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param {ValidationResult} result
@@ -726,7 +755,7 @@
 		 * <p>
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
@@ -742,7 +771,7 @@
 		 * <p>
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
@@ -758,7 +787,7 @@
 		 * <p>
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
@@ -774,7 +803,7 @@
 		 * <p>
 		 * 表示されているバルーンを削除します
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 */
 		reset: function() {
@@ -784,7 +813,7 @@
 
 		/**
 		 * バルーンをセット
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param element
@@ -854,7 +883,7 @@
 
 		/**
 		 * バルーンを表示
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param target
@@ -885,7 +914,7 @@
 
 		/**
 		 * バルーンを非表示
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 * @param target
@@ -902,7 +931,7 @@
 
 		/**
 		 * メッセージ出力コントローラの設定
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBaloon
 		 */
@@ -938,7 +967,7 @@
 	 * <p>
 	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
 	 * </p>
-	 * 
+	 *
 	 * @class
 	 * @name h5.ui.validation.BootstrapErrorBaloon
 	 */
@@ -950,7 +979,7 @@
 		 * <p>
 		 * 表示されているバルーンを削除します
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 */
@@ -961,7 +990,7 @@
 
 		/**
 		 * bootstrapのtooltipを使ってバルーンを表示
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
 		 * @param target
@@ -1021,7 +1050,7 @@
 	 * <p>
 	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
 	 * </p>
-	 * 
+	 *
 	 * @class
 	 * @name h5.ui.validation.Message
 	 */
@@ -1033,7 +1062,7 @@
 
 		/**
 		 * プラグイン設定を行う
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 * @param {Object} setting messageプラグイン設定オブジェクト
@@ -1053,7 +1082,7 @@
 		 * <p>
 		 * バリデート結果からメッセージの表示・非表示を行う
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 * @param {ValidationResult} result
@@ -1072,7 +1101,7 @@
 		 * <p>
 		 * バリデート結果からメッセージの表示・非表示を行う
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 * @param element
@@ -1088,7 +1117,7 @@
 		 * <p>
 		 * バリデート結果からバルーンの表示・非表示を行う
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 * @param element
@@ -1114,7 +1143,7 @@
 		 * <p>
 		 * 表示されているメッセージを削除します
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.Message
 		 */
 		reset: function() {
@@ -1188,7 +1217,7 @@
 
 		/**
 		 * メッセージ出力コントローラの設定
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.Message
 		 */
@@ -1217,7 +1246,7 @@
 	 * <p>
 	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
 	 * </p>
-	 * 
+	 *
 	 * @class
 	 * @name h5.ui.validation.AsyncIndicator
 	 */
@@ -1227,7 +1256,7 @@
 
 		/**
 		 * プラグイン設定を行う
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param {Object} setting asyncIndicatorプラグイン設定オブジェクト
@@ -1241,7 +1270,7 @@
 		 * <p>
 		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param {ValidationResult}
@@ -1265,7 +1294,7 @@
 		 * <p>
 		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param element
@@ -1294,7 +1323,7 @@
 		 * <p>
 		 * 非同期バリデートがある場合、該当要素に対してインジケータを表示する
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param element
@@ -1316,7 +1345,7 @@
 		 * <p>
 		 * 表示されているインジケータを削除します
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 */
 		reset: function() {
@@ -1328,7 +1357,7 @@
 
 		/**
 		 * インジケータの表示
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param {ValidationResult} validationResult
@@ -1367,7 +1396,7 @@
 
 		/**
 		 * インジケータの非表示
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.validation.AsyncIndicator
 		 * @param name
@@ -1387,7 +1416,7 @@
 	var FW_LOG_ALREADY_ADDED = 'プラグイン"{0}"は登録済みです。';
 
 	// TODO formのvalidatorで不要な項目は要らない
-	var DATA_RULE_REQUIRED = 'required';
+	var DATA_RULE_REQUIRE = 'require';
 	var DATA_RULE_ASSERT_FALSE = 'assertFalse';
 	var DATA_RULE_ASSERT_TRUE = 'assertTrue';
 	var DATA_RULE_NULL = 'nul';
@@ -1425,8 +1454,8 @@
 
 	// デフォルトで用意しているvalidateルール生成関数
 	var defaultRuleCreators = {
-		requiredRuleCreator: function(inputElement) {
-			if ($(inputElement).data(DATA_RULE_REQUIRED) != null) {
+		requireRuleCreator: function(inputElement) {
+			if ($(inputElement).data(DATA_RULE_REQUIRE) != null) {
 				return true;
 			}
 		},
@@ -1521,7 +1550,7 @@
 
 	/**
 	 * フォーム要素のバリデートを行うコントローラ
-	 * 
+	 *
 	 * @class
 	 * @name h5.ui.FormController
 	 */
@@ -1534,7 +1563,7 @@
 
 		/**
 		 * フォームバリデーションロジック
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 */
@@ -1545,7 +1574,7 @@
 		 * <p>
 		 * 待機中のバリデート結果を保持することで、同じプロパティに対して続けてバリデートが掛けられたときに待機中のものを中断して新しい結果を待つようにしている。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @private
 		 */
@@ -1553,7 +1582,7 @@
 
 		/**
 		 * 全体のvalidateを行ったときのvalidationResult
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 */
@@ -1564,7 +1593,7 @@
 		 * <p>
 		 * {@link h5.ui.FormController.setSetting}で設定した設定オブジェクト
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 */
@@ -1578,7 +1607,7 @@
 		 * <p>
 		 * プラグインを有効にする前に設定されたものも覚えて置き、有効化された時にそのプラグインの設定を使用する。
 		 * </p>
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 */
@@ -1596,7 +1625,7 @@
 		 * 指定する設定オブジェクトには各プラグイン毎の設定と、各プロパティ毎の設定を記述します。
 		 * </p>
 		 * <p>
-		 * 
+		 *
 		 * <pre class="sh_javascript"><code>
 		 * {
 		 * 	output: { // 各プラグイン毎の設定
@@ -1622,7 +1651,7 @@
 		 * 	}
 		 * }
 		 * </code></pre>
-		 * 
+		 *
 		 * <p>
 		 * 設定プロパティは
 		 * <ul>
@@ -1707,7 +1736,7 @@
 		 * 文字列で指定する場合はプレースホルダの記述ができます。プレースホルダの場合に適用されるオブジェクト、
 		 * 及び関数指定の場合に第1引数に渡されるパラメータ(メッセージ生成パラメータ)は共通で、以下の通りです。
 		 * </p>
-		 * 
+		 *
 		 * <pre class="javascript_sh"><code>
 		 * {
 		 *     name: 'userid', // プロパティ名
@@ -1720,7 +1749,7 @@
 		 *     }, ... ]
 		 * }
 		 * </code></pre>
-		 * 
+		 *
 		 * </td>
 		 * <td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
 		 * </tr>
@@ -1751,7 +1780,7 @@
 		 * <li>{@link h5.ui.validation.BootstrapErrorBaloon}
 		 * <li>{@link h5.ui.validation.ErrorBaloon}
 		 * <ul>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {Object} setting 設定オブジェクト
 		 */
@@ -1767,7 +1796,7 @@
 
 		/**
 		 * 設定オブジェクトから指定されたプラグインの設定だけ取り出す
-		 * 
+		 *
 		 * @private
 		 * @param pluginName
 		 */
@@ -1795,7 +1824,7 @@
 		__construct: function() {
 			// デフォルトルールの追加
 			// TODO formのvalidatorで不要な項目は要らない
-			this._addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requiredRuleCreator);
+			this._addRuleCreator(DATA_RULE_REQUIRE, defaultRuleCreators.requireRuleCreator);
 			this
 					._addRuleCreator(DATA_RULE_ASSERT_FALSE,
 							defaultRuleCreators.assertFalseRuleCreator);
@@ -1882,7 +1911,7 @@
 		 * <td>非同期バリデート中の項目についてインジケータを表示する</td>
 		 * </tr>
 		 * </tbody></table>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} pluginNames プラグイン名またはその配列
 		 */
@@ -1910,11 +1939,11 @@
 		/**
 		 * ルールの追加
 		 * <p>
-		 * バリデートルールを追加する。第1引数にはルールオブジェクトを指定します。ルールオブジェクトについては{@link Validator.addRule}と同じ形式で指定してください。
+		 * バリデートルールを追加する。第1引数にはルールオブジェクトを指定します。ルールオブジェクトについては{@link h5.validation.FormValidationLogic.addRule}と同じ形式で指定してください。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
-		 * @param {Object} ruleObj ルールオブジェクト(オブジェクトの形式は{@link Validator.addRule}参照)
+		 * @param {Object} ruleObj ルールオブジェクト(オブジェクトの形式は{@link h5.validation.FormValidationLogic.addRule}参照)
 		 */
 		addRule: function(ruleObj) {
 			this._validationLogic.addRule(ruleObj);
@@ -1925,7 +1954,7 @@
 		 * <p>
 		 * 第1引数に指定されたプロパティについてのバリデートルールを削除します
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} name プロパティ名またはその配列
 		 */
@@ -1939,7 +1968,7 @@
 		 * <p>
 		 * 第1引数に指定されたプロパティについてのバリデートを無効化します
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} names プロパティ名またはその配列
 		 */
@@ -1952,7 +1981,7 @@
 		 * <p>
 		 * 第1引数に指定されたプロパティについてのバリデートを無効化します
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} names プロパティ名またはその配列
 		 */
@@ -1977,7 +2006,7 @@
 		 * <p>
 		 * グループとは、以下のように指定することができます
 		 * </p>
-		 * 
+		 *
 		 * <pre class="sh_html"><code>
 		 * &lt;!-- data-h5-input-group-containerにグループ名を指定。子要素がそのグループになる。 --&gt;
 		 * lt;div data-h5-input-group-container=&quot;birthday&quot;&gt;
@@ -1987,11 +2016,11 @@
 		 * 		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;
 		 * 		&lt;/div&gt;
 		 * </code></pre>
-		 * 
+		 *
 		 * <p>
 		 * 上記のような指定のされた要素は、グループ名をキーにグループに属する要素を集約したオブジェクトとして集約します。戻り値は以下のようになります。
 		 * </p>
-		 * 
+		 *
 		 * <pre class="sh_javascript"><code>
 		 * {
 		 * 	birthday: {
@@ -2005,7 +2034,7 @@
 		 * 	}
 		 * }
 		 * </code></pre>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} names 指定した場合、指定したnameのものだけを集約
 		 * @returns {Object} フォーム部品集約オブジェクト
@@ -2105,7 +2134,7 @@
 		 * <p>
 		 * 各フォーム部品の名前と値を集約したオブジェクトを引数に取り、その値を各フォーム部品にセットします。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {Object} obj フォーム部品の値を集約したオブジェクト
 		 */
@@ -2175,7 +2204,7 @@
 
 		/**
 		 * フォーム部品の値をすべてクリアする
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 */
 		clearValue: function() {
@@ -2190,7 +2219,7 @@
 
 		/**
 		 * フォーム部品の値をすべてリセットする
-		 * 
+		 *
 		 * @memberOf h5.ui.FromController
 		 */
 		resetValue: function() {
@@ -2201,7 +2230,7 @@
 
 		/**
 		 * 各プラグインが出力しているバリデート結果表示をすべてリセットする
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 */
 		resetValidation: function() {
@@ -2221,7 +2250,7 @@
 		 * <p>
 		 * 第1引数にプロパティ名またはその配列を指定した場合、指定されたプロパティ名のみをバリデート対象にします。省略した場合は全てが対象になります。
 		 * </p>
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} names バリデート対象のプロパティ名またはプロパティ名の配列
 		 */
@@ -2236,7 +2265,7 @@
 
 		/**
 		 * プラグイン名からプラグインインスタンスを取得
-		 * 
+		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string} pluginName プラグイン名
 		 * @returns {Controller}
@@ -2270,7 +2299,7 @@
 
 		/**
 		 * このコントローラが管理するフォームに属するフォーム部品またはフォーム部品グループ要素の中で指定した名前に一致する要素を取得
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param {string} name
@@ -2298,7 +2327,7 @@
 
 		/**
 		 * このコントローラが管理するフォームに属するフォーム部品全てを取得
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @returns {DOM[]}
@@ -2328,7 +2357,7 @@
 
 		/**
 		 * このコントローラが管理するフォームに属するグループコンテナ要素(data-group-containerが指定されている要素)を取得
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @returns {DOM[]}
@@ -2348,7 +2377,7 @@
 
 		/**
 		 * バリデートルール生成関数の登録
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param key
@@ -2363,7 +2392,7 @@
 
 		/**
 		 * プラグインのリセット
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param {string} pluginName
@@ -2378,7 +2407,7 @@
 
 		/**
 		 * プラグインの追加(1.2.0では非公開)
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param pluginName
@@ -2389,16 +2418,15 @@
 				this.log.warn(FW_LOG_ALREADY_ADDED, pluginName);
 				return;
 			}
-			var c = h5.core.controller(this._bindedForm || this.rootElement, controller, {
-				setting: this._margePluginSettings(pluginName)
-			});
+			var c = h5.core.controller(this._bindedForm || this.rootElement, controller);
+			c._setSetting && c._setSetting(this._margePluginSettings(pluginName));
 			this.manageChild(c);
 			this._plugins[pluginName] = c;
 		},
 
 		/**
 		 * フォームのバリデートを行う
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param names
@@ -2497,7 +2525,7 @@
 
 		/**
 		 * プラグインのvalidateイベントの呼び出し
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 */
@@ -2513,7 +2541,7 @@
 
 		/**
 		 * プラグインのフォームコントロール要素についてのイベント呼び出し
-		 * 
+		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 */

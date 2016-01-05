@@ -30,7 +30,7 @@
 	/**
 	 * デフォルトで定義済みのルール名
 	 */
-	var DEFAULT_RULE_NAME_REQUIRED = 'required';
+	var DEFAULT_RULE_NAME_require = 'require';
 	var DEFAULT_RULE_NAME_CUSTOM_FUNC = 'customFunc';
 	var DEFAULT_RULE_NAME_ASSERT_NULL = 'assertNull';
 	var DEFAULT_RULE_NAME_ASSERT_NOT_NULL = 'assertNotNull';
@@ -502,7 +502,7 @@
 	 * </p>
 	 * <p>
 	 * 第4引数は優先度指定です。複数ルールをバリデートする場合に、どのルールから順にバリデートを行うかを優先度で指定します。
-	 * 優先度は、数値が大きいものほど優先されます。同じ優先度の場合適用順序は不定です。 デフォルトで用意されているルールの優先度は、requiredが51、その他は50で定義しています。
+	 * 優先度は、数値が大きいものほど優先されます。同じ優先度の場合適用順序は不定です。 デフォルトで用意されているルールの優先度は、requireが51、その他は50で定義しています。
 	 * </p>
 	 *
 	 * @private
@@ -536,7 +536,7 @@
 		 * @param {Any} value 判定する値
 		 * @returns {boolean}
 		 */
-		required: function(value) {
+		require: function(value) {
 			// nullでないかつ、空文字でもないこと
 			return value != null && value !== '';
 		},
@@ -873,13 +873,13 @@
 		 * 		}
 		 * 	},
 		 * 	year: {
-		 * 		required: true
+		 * 		require: true
 		 * 	},
 		 * 	month: {
-		 * 		required: true
+		 * 		require: true
 		 * 	},
 		 * 	day: {
-		 * 		required: true
+		 * 		require: true
 		 * 	}
 		 * });
 		 * formValidator.validate({
@@ -940,14 +940,14 @@
 		 * 	// 対象となるプロパティ名(userid)をキーにする
 		 * 	userid: {
 		 * 		// ルール名: 該当ルールのパラメータ。パラメータを取らないルールの場合はtrueを指定。複数のパラメータを取るルールの場合は配列指定。
-		 * 		required: true,
+		 * 		require: true,
 		 * 		pattern: /&circ;[a-z|0-9]*$/,
 		 * 		size: [4, 10]
 		 * 	}
 		 * });
 		 * </code></pre>
 		 *
-		 * 上記の場合、useridは指定が必須(required指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。
+		 * 上記の場合、useridは指定が必須(require指定)かつ/&circ;[a-z|0-9]*$/の正規表現を満たし(pattern指定)、4文字以上10字以下(size指定)のルールを追加しています。
 		 * </p>
 		 * <p>
 		 * 以下のようなルールが定義されています。
@@ -960,7 +960,7 @@
 		 * </tr>
 		 * </thead><tbody>
 		 * <tr>
-		 * <td>required</td>
+		 * <td>require</td>
 		 * <td>なし</td>
 		 * <td>値がnull,undefined,空文字のいずれでもないこと</td>
 		 * </tr>
@@ -1149,10 +1149,10 @@
 					var ruleName = sortedRuleNames[i];
 					var args = rule[ruleName];
 					if ((!obj.hasOwnProperty(prop) || args == null)
-							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRED && args)) {
+							&& !(ruleName === DEFAULT_RULE_NAME_require && args)) {
 						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
 						// また、argsがundefinedならそのルールはチェックしない
-						// ただし、required指定がある場合はチェックする
+						// ただし、require指定がある場合はチェックする
 						continue;
 					}
 					// 値の型変換
@@ -1343,7 +1343,7 @@
 	};
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 51);
+	defineRule(DEFAULT_RULE_NAME_require, rule.require, null, 51);
 	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50);
