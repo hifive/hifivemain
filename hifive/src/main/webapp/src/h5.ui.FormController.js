@@ -55,7 +55,7 @@
 	 * デフォルトエラーメッセージ
 	 */
 	var defaultInvalidMessage = {
-		require: '{displayName}は必須項目です',
+		required: '{displayName}は必須項目です',
 		min: function(param) {
 			return h5.u.str.format('{displayName}は{violation[0].ruleValue.min}{1}数値を入力してください。',
 					param, (param.violation[0].ruleValue.inclusive ? "以上の" : "より大きい"));
@@ -1416,7 +1416,7 @@
 	var FW_LOG_ALREADY_ADDED = 'プラグイン"{0}"は登録済みです。';
 
 	// TODO formのvalidatorで不要な項目は要らない
-	var DATA_RULE_REQUIRE = 'require';
+	var DATA_RULE_REQUIRED = 'required';
 	var DATA_RULE_ASSERT_FALSE = 'assertFalse';
 	var DATA_RULE_ASSERT_TRUE = 'assertTrue';
 	var DATA_RULE_NULL = 'nul';
@@ -1454,8 +1454,8 @@
 
 	// デフォルトで用意しているvalidateルール生成関数
 	var defaultRuleCreators = {
-		requireRuleCreator: function(inputElement) {
-			if ($(inputElement).data(DATA_RULE_REQUIRE) != null) {
+		requiredRuleCreator: function(inputElement) {
+			if ($(inputElement).data(DATA_RULE_REQUIRED) != null) {
 				return true;
 			}
 		},
@@ -1824,7 +1824,7 @@
 		__construct: function() {
 			// デフォルトルールの追加
 			// TODO formのvalidatorで不要な項目は要らない
-			this._addRuleCreator(DATA_RULE_REQUIRE, defaultRuleCreators.requireRuleCreator);
+			this._addRuleCreator(DATA_RULE_REQUIRED, defaultRuleCreators.requiredRuleCreator);
 			this
 					._addRuleCreator(DATA_RULE_ASSERT_FALSE,
 							defaultRuleCreators.assertFalseRuleCreator);

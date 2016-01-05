@@ -122,12 +122,12 @@
 										.own(logic.isCorrectMail));
 								this.formController.addRule({
 									userid: {
-										require: true,
+										required: true,
 										size: [3, 10],
 										customFunc: logic.own(logic.isExistUserid)
 									},
 									mail: {
-										require: true,
+										required: true,
 										customFunc: logic.own(logic.isExistMail),
 										isCorrectMail: true,
 									}
@@ -171,7 +171,7 @@
 										userid: {
 											message: function(param) {
 												switch (param.violation[0].ruleName) {
-												case 'require':
+												case 'required':
 													return '必須です';
 												case 'size':
 													var max = param.ruleValue.max;
@@ -200,7 +200,7 @@
 										mail: {
 											message: function(param) {
 												switch (param.violation[0].ruleName) {
-												case 'require':
+												case 'required':
 													return '必須です';
 												case 'customFunc':
 													var serverMessage = param.violation[0].reason[0];
@@ -245,7 +245,7 @@
 					<div class="form-group">
 						<label class="control-label"><span class="label-name">名前</span>(必須)</label>
 						<input name="name" type="text" class="form-control"
-							placeholder="名前" data-require />
+							placeholder="名前" data-required />
 					</div>
 					<!--  data-inputgroup-container指定 -->
 					<div class="form-group">
@@ -259,7 +259,7 @@
 							aria-hidden="true"></span></span>
 						<p>重複チェックのため非同期validateするサンプル。動作確認のため"hifive"を既存のIDとして、失敗扱いにしています。</p>
 						<input name="userid" type="text" class="form-control"
-							value="hifive" data-require data-size="[3,10]" />
+							value="hifive" data-required data-size="[3,10]" />
 					</div>
 
 					<div class="form-group">
@@ -273,7 +273,7 @@
 							aria-hidden="true"></span></span>
 						<p>非同期バリデートを複数行うサンプル。hifive@hfiive.comを失敗扱いにし、さらに、メールアドレスとして正しい正規表現かどうかも非同期でチェック。</p>
 						<input name="mail" type="text" class="form-control"
-							value="hifive@hifive.com" data-require />
+							value="hifive@hifive.com" data-required />
 					</div>
 
 					<div class="form-group">
