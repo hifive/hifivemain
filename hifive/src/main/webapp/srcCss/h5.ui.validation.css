@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-/* ‚«o‚µ(‹¤’Ê) */
+/* å¹ãå‡ºã—(å…±é€š) */
 .validation-baloon {
 	padding: 5px;
 	position: absolute;
@@ -23,7 +23,7 @@
 	display: none;
 }
 
-/* ‚«o‚µ(ã) */
+/* å¹ãå‡ºã—(ä¸Š) */
 .validation-baloon.top:after,.validation-baloon.top:before {
 	top: 100%;
 	left: 50%;
@@ -49,7 +49,7 @@
 	margin-left: -31px;
 }
 
-/** ‚«o‚µ(‰º) **/
+/** å¹ãå‡ºã—(ä¸‹) **/
 .validation-baloon.bottom:after,.validation-baloon.bottom:before {
 	bottom: 100%;
 	left: 50%;
@@ -75,7 +75,7 @@
 	margin-left: -31px;
 }
 
-/** ‚«o‚µ(¶) **/
+/** å¹ãå‡ºã—(å·¦) **/
 .validation-baloon.left:after,.validation-baloon.left:before {
 	left: 100%;
 	top: 50%;
@@ -101,7 +101,7 @@
 	margin-top: -31px;
 }
 
-/** ‚«o‚µ(‰E) **/
+/** å¹ãå‡ºã—(å³) **/
 .validation-baloon.right:after,.validation-baloon.right:before {
 	right: 100%;
 	top: 50%;
