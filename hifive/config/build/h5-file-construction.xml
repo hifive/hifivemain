@@ -116,6 +116,7 @@
 		</files>
 		<cssfiles>
 			<file name="h5.ui.indicator.css" />
+			<file name="h5.ui.validation.css" />
 		</cssfiles>
 	</module>
 
