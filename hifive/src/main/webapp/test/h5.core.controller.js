@@ -7538,7 +7538,7 @@ $(function() {
 		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
 	});
 
-	asyncTest('inheritParamオプションが未指定の場合、子コントローラには初期化パラメータは渡らないこと', function() {
+	asyncTest('inheritArgsオプションが未指定の場合、子コントローラには初期化パラメータは渡らないこと', function() {
 		var param = {
 			a: 1
 		};
@@ -7564,7 +7564,7 @@ $(function() {
 		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
 	});
 
-	asyncTest('inheritParamオプションがfalseの場合、子コントローラには初期化パラメータは渡らないこと', function() {
+	asyncTest('inheritArgsオプションがfalseの場合、子コントローラには初期化パラメータは渡らないこと', function() {
 		var param = {
 			a: 1
 		};
@@ -7587,7 +7587,7 @@ $(function() {
 			__name: 'root',
 			__meta: {
 				childController: {
-					inheritParam: false
+					inheritArgs: false
 				}
 			},
 			childController: cCtrl
@@ -7595,7 +7595,7 @@ $(function() {
 		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
 	});
 
-	asyncTest('inheritParamオプションがtrueの場合、子コントローラに初期化パラメータが渡されること', function() {
+	asyncTest('inheritArgsオプションがtrueの場合、子コントローラに初期化パラメータが渡されること', function() {
 		var param = {
 			a: 1
 		};
@@ -7618,7 +7618,7 @@ $(function() {
 			__name: 'root',
 			__meta: {
 				childController: {
-					inheritParam: true
+					inheritArgs: true
 				}
 			},
 			childController: cCtrl
@@ -7626,7 +7626,7 @@ $(function() {
 		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
 	});
 
-	asyncTest('inheritParamオプション指定が各子コントローラについて有効であること',
+	asyncTest('inheritArgsオプション指定が各子コントローラについて有効であること',
 			function() {
 				var param = {
 					a: 1
@@ -7636,16 +7636,16 @@ $(function() {
 					__construct: function(ctx) {
 						this.testExecutedDeferred = $.Deferred();
 						// 子コントローラの__construct実行時に親もルートも未設定で取得できない
-						// ので、setTimeoutでinheritParam指定があるコントローラかどうかチェックしている
-						setTimeout(this.own(this.inheritParamTest), 0, ctx);
+						// ので、setTimeoutでinheritArgs指定があるコントローラかどうかチェックしている
+						setTimeout(this.own(this.inheritArgsTest), 0, ctx);
 					},
-					inheritParamTest: function(ctx) {
+					inheritArgsTest: function(ctx) {
 						if (this.rootController.child1Controller === this) {
 							strictEqual(ctx.args, param,
-									'ルートでinheritParamが指定されている場合は子コントローラに初期化パラメータが渡される');
+									'ルートでinheritArgsが指定されている場合は子コントローラに初期化パラメータが渡される');
 						} else {
 							strictEqual(ctx.args, null,
-									'ルートでinheritParamが指定されていない場合は子コントローラに初期化パラメータは渡されない');
+									'ルートでinheritArgsが指定されていない場合は子コントローラに初期化パラメータは渡されない');
 						}
 						this.testExecutedDeferred.resolve();
 					},
@@ -7657,7 +7657,7 @@ $(function() {
 					__name: 'root',
 					__meta: {
 						child1Controller: {
-							inheritParam: true
+							inheritArgs: true
 						}
 					},
 					child1Controller: cCtrl,
@@ -7666,7 +7666,7 @@ $(function() {
 				h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
 			});
 
-	asyncTest('inheritParamオプション指定は__construct実行後に評価されること',
+	asyncTest('inheritArgsオプション指定は__construct実行後に評価されること',
 			function() {
 				var param = {
 					a: 1
@@ -7675,15 +7675,15 @@ $(function() {
 					__name: 'child',
 					__construct: function(ctx) {
 						this.testExecutedDeferred = $.Deferred();
-						setTimeout(this.own(this.inheritParamTest), 0, ctx);
+						setTimeout(this.own(this.inheritArgsTest), 0, ctx);
 					},
-					inheritParamTest: function(ctx) {
+					inheritArgsTest: function(ctx) {
 						if (this.rootController.child1Controller === this) {
 							strictEqual(ctx.args, param,
-									'ルートでinheritParamが指定されている場合は子コントローラに初期化パラメータが渡される');
+									'ルートでinheritArgsが指定されている場合は子コントローラに初期化パラメータが渡される');
 						} else {
 							strictEqual(ctx.args, null,
-									'ルートでinheritParamが指定されていない場合は子コントローラに初期化パラメータは渡されない');
+									'ルートでinheritArgsが指定されていない場合は子コントローラに初期化パラメータは渡されない');
 						}
 						this.testExecutedDeferred.resolve();
 					},
@@ -7698,7 +7698,7 @@ $(function() {
 					__construct: function() {
 						this.__meta = {
 							child1Controller: {
-								inheritParam: true
+								inheritArgs: true
 							}
 						};
 					}
@@ -7713,14 +7713,14 @@ $(function() {
 		var gcCtrl = {
 			__name: 'grandChild',
 			__construct: function(ctx) {
-				strictEqual(ctx.args, null, 'ルートでinheritParamが指定されていない場合は孫コントローラに初期化パラメータは渡されない');
+				strictEqual(ctx.args, null, 'ルートでinheritArgsが指定されていない場合は孫コントローラに初期化パラメータは渡されない');
 			}
 		};
 		var cCtrl = {
 			__name: 'child',
 			__meta: {
 				childController: {
-					inheritParam: true
+					inheritArgs: true
 				}
 			},
 			childController: gcCtrl
@@ -7732,7 +7732,7 @@ $(function() {
 		h5.core.controller(this.$controllerTarget, rCtrl, param).readyPromise.done(start);
 	});
 
-	asyncTest('子で初期化パラメータを引き継ぐ場合、孫が引き継ぐかどうかは子で設定しているinheritParamオプションに従うこと',
+	asyncTest('子で初期化パラメータを引き継ぐ場合、孫が引き継ぐかどうかは子で設定しているinheritArgsオプションに従うこと',
 			function() {
 				var param = {
 					a: 1
@@ -7741,15 +7741,15 @@ $(function() {
 					__name: 'grandChild',
 					__construct: function(ctx) {
 						this.testExecutedDeferred = $.Deferred();
-						setTimeout(this.own(this.inheritParamTest), 0, ctx);
+						setTimeout(this.own(this.inheritArgsTest), 0, ctx);
 					},
-					inheritParamTest: function(ctx) {
+					inheritArgsTest: function(ctx) {
 						if (this.parentController.child1Controller === this) {
 							strictEqual(ctx.args, param,
-									'子でinheritParamが指定されている場合は孫コントローラに初期化パラメータが渡される');
+									'子でinheritArgsが指定されている場合は孫コントローラに初期化パラメータが渡される');
 						} else {
 							strictEqual(ctx.args, null,
-									'子でinheritParamが指定されていない場合は孫コントローラに初期化パラメータは渡されない');
+									'子でinheritArgsが指定されていない場合は孫コントローラに初期化パラメータは渡されない');
 						}
 						this.testExecutedDeferred.resolve();
 					},
@@ -7761,7 +7761,7 @@ $(function() {
 					__name: 'child',
 					__meta: {
 						child1Controller: {
-							inheritParam: true
+							inheritArgs: true
 						}
 					},
 					child1Controller: gcCtrl,
@@ -7771,7 +7771,7 @@ $(function() {
 					__name: 'root',
 					__meta: {
 						childController: {
-							inheritParam: true
+							inheritArgs: true
 						}
 					},
 					childController: cCtrl
@@ -7830,7 +7830,7 @@ $(function() {
 			childController: cCtrl,
 			__meta: {
 				childController: {
-					inheritParam: true
+					inheritArgs: true
 				}
 			},
 			__defaultArgs: {

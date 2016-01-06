@@ -4748,7 +4748,7 @@
 			var childController = clonedControllerDef[prop];
 			// 子コントローラにパラメータを引き継ぐかどうか
 			var childArgs = null;
-			if (meta && meta[prop] && meta[prop].inheritParam) {
+			if (meta && meta[prop] && meta[prop].inheritArgs) {
 				childArgs = args;
 			}
 
