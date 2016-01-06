@@ -75,7 +75,7 @@
 				lowerLimitMsg = h5.u.str.format('{0}以上', min);
 			}
 			if (max != null) {
-				lowerLimitMsg = h5.u.str.format('{0}以下', max);
+				upperLimitMsg = h5.u.str.format('{0}以下', max);
 			}
 			return h5.u.str.format('{displayName}は{1}{2}の長さでなければいけません。',
 					param, lowerLimitMsg, upperLimitMsg);
