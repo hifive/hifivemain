@@ -7637,9 +7637,11 @@ $(function() {
 						this.testExecutedDeferred = $.Deferred();
 						// 子コントローラの__construct実行時に親もルートも未設定で取得できない
 						// ので、setTimeoutでinheritArgs指定があるコントローラかどうかチェックしている
-						setTimeout(this.own(this.inheritArgsTest), 0, ctx);
+						this._ctx = ctx;
+						setTimeout(this.own(this.inheritArgsTest), 0);
 					},
-					inheritArgsTest: function(ctx) {
+					inheritArgsTest: function() {
+						var ctx = this._ctx;
 						if (this.rootController.child1Controller === this) {
 							strictEqual(ctx.args, param,
 									'ルートでinheritArgsが指定されている場合は子コントローラに初期化パラメータが渡される');
@@ -7675,9 +7677,11 @@ $(function() {
 					__name: 'child',
 					__construct: function(ctx) {
 						this.testExecutedDeferred = $.Deferred();
-						setTimeout(this.own(this.inheritArgsTest), 0, ctx);
+						this._ctx = ctx;
+						setTimeout(this.own(this.inheritArgsTest), 0);
 					},
-					inheritArgsTest: function(ctx) {
+					inheritArgsTest: function() {
+						var ctx = this._ctx;
 						if (this.rootController.child1Controller === this) {
 							strictEqual(ctx.args, param,
 									'ルートでinheritArgsが指定されている場合は子コントローラに初期化パラメータが渡される');
@@ -7741,9 +7745,11 @@ $(function() {
 					__name: 'grandChild',
 					__construct: function(ctx) {
 						this.testExecutedDeferred = $.Deferred();
-						setTimeout(this.own(this.inheritArgsTest), 0, ctx);
+						this._ctx = ctx;
+						setTimeout(this.own(this.inheritArgsTest), 0);
 					},
-					inheritArgsTest: function(ctx) {
+					inheritArgsTest: function() {
+						var ctx = this._ctx;
 						if (this.parentController.child1Controller === this) {
 							strictEqual(ctx.args, param,
 									'子でinheritArgsが指定されている場合は孫コントローラに初期化パラメータが渡される');
