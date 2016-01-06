@@ -2389,11 +2389,9 @@
 			this.isMain = !!isMain;
 			this.followTitle = isMain && args.followTitle;
 
-			if (this.isMain) {
-				if (mainContainer) {
-					// すでにメインシーンコンテナが生成されている場合にエラー
-					throwFwError(ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED);
-				}
+			if (this.isMain && mainContainer) {
+				// すでにメインシーンコンテナが生成されている場合にエラー
+				throwFwError(ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED);
 			}
 
 			this._containerName = $(element).attr(DATA_H5_MAIN_CONTAINER)
@@ -2457,6 +2455,8 @@
 				// TODO(鈴木) Router処理停止
 				this._router.stop();
 				this._router = null;
+				// メインシーンコンテナインスタンス保持用変数をnullに更新
+				mainContainer = null;
 			}
 		},
 
