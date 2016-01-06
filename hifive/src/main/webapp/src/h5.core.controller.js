@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 NS Solutions Corporation
+ * Copyright (C) 2012-2016 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4748,7 +4748,7 @@
 			var childController = clonedControllerDef[prop];
 			// 子コントローラにパラメータを引き継ぐかどうか
 			var childArgs = null;
-			if (meta && meta[prop] && meta[prop].inheritParam) {
+			if (meta && meta[prop] && meta[prop].inheritArgs) {
 				childArgs = args;
 			}
 

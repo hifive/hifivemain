@@ -116,6 +116,7 @@
 		</files>
 		<cssfiles>
 			<file name="h5.ui.indicator.css" />
+			<file name="h5.ui.validation.css" />
 		</cssfiles>
 	</module>
 
@@ -155,9 +156,10 @@
 		</cssfiles>
 	</module>
 
-	<module name="scene" description="module.scene.description"
-		selectable="false">
+	<module name="scene" description="module.scene.description">
 		<dependencies>
+			<dependency name="ui" />
+			<dependency name="controller" />
 		</dependencies>
 		<files>
 			<file name="h5.scene.js" />

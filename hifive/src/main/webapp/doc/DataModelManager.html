@@ -122,7 +122,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2477">line 2477</a>
+        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2480">line 2480</a>
     </li></ul></dd>
     
 
@@ -164,78 +164,13 @@
 
         
             
-<h4 class="name" id=".createModel"><span class="type-signature">(static) </span>createModel<span class="type-signature"></span></h4>
-
-
-
-
-<div class="description">
-    データモデルを作成します。<p>引数にはデータモデルディスクリプタを渡します。</p>
-</div>
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-    <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>1.1.0</li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2576">line 2576</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
 <h4 class="name" id=".models"><span class="type-signature">(static) </span>models<span class="type-signature"> :Object</span></h4>
 
 
 
 
 <div class="description">
-    このデータモデルマネージャが管理するDataModelインスタンス。<p><a href="#createModel">createmodel()</a>で作成したモデルは、データモデルマネージャの管理下に置かれ、modelsから参照できます。</p><p>{モデル名: データモデルインスタンス, ...} の構造を持つオブジェクトです。</p>
+    このデータモデルマネージャが管理するDataModelインスタンス。<p><a href="#createModel">createModel()</a>で作成したモデルは、データモデルマネージャの管理下に置かれ、modelsから参照できます。</p><p>{モデル名: データモデルインスタンス, ...} の構造を持つオブジェクトです。</p>
 </div>
 
 
@@ -286,7 +221,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2499">line 2499</a>
+        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2502">line 2502</a>
     </li></ul></dd>
     
 
@@ -361,7 +296,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2515">line 2515</a>
+        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2518">line 2518</a>
     </li></ul></dd>
     
 
@@ -388,7 +323,7 @@
 
     
 
-    <h4 class="name" id=".beginUpdate"><span class="type-signature">(static) </span>beginUpdate<span class="signature">()</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    <h4 class="name" id=".beginUpdate"><span class="type-signature">(static) </span>beginUpdate<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -408,11 +343,243 @@
 
 
 
+
+
+
+
+<dl class="details">
+
+    
+
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>1.1.0</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2657">line 2657</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".createModel"><span class="type-signature">(static) </span>createModel<span class="signature">(descriptor)</span><span class="type-signature"> &rarr; {<a href="DataModel.html">DataModel</a>|Array.&lt;<a href="DataModel.html">DataModel</a>>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    データモデルを作成します。<p>引数にはデータモデルディスクリプタを渡します。</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>descriptor</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">Array.&lt;Object></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">データモデルディスクリプタまたはその配列
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">データモデル名。必須。</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>base</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">マネージャに属する別のデータモデルのschemaを継承する場合に指定します。『'@'+継承先データモデル名』で指定してください。</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>schema</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">スキーマを定義したオブジェクトを指定します。必須。</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    アップデートセッション中かどうか
+    データモデルを返します。ディスクリプタが配列で渡された場合はそれぞれについてのデータモデルを配列で返します。
 </div>
 
 
@@ -423,7 +590,10 @@
     </dt>
     <dd>
         
-<span class="param-type">Boolean</span>
+<span class="param-type"><a href="DataModel.html">DataModel</a></span>
+|
+
+<span class="param-type">Array.&lt;<a href="DataModel.html">DataModel</a>></span>
 
 
     </dd>
@@ -466,7 +636,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2653">line 2653</a>
+        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2581">line 2581</a>
     </li></ul></dd>
     
 
@@ -603,7 +773,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2588">line 2588</a>
+        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2593">line 2593</a>
     </li></ul></dd>
     
 
@@ -688,7 +858,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2670">line 2670</a>
+        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2674">line 2674</a>
     </li></ul></dd>
     
 
@@ -795,7 +965,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2613">line 2613</a>
+        <a href="src_h5.core.data.js.html">src/h5.core.data.js</a>, <a href="src_h5.core.data.js.html#line2618">line 2618</a>
     </li></ul></dd>
     
 
@@ -1521,7 +1691,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on 2015/12/22 (Tue)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on 2016/01/06 (Wed)
 	</footer>
 </div>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 NS Solutions Corporation
+ * Copyright (C) 2015-2016 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 	/**
 	 * デフォルトで定義済みのルール名
 	 */
-	var DEFAULT_RULE_NAME_REQUIRED = 'required';
+	var DEFAULT_RULE_NAME_required = 'required';
 	var DEFAULT_RULE_NAME_CUSTOM_FUNC = 'customFunc';
 	var DEFAULT_RULE_NAME_ASSERT_NULL = 'assertNull';
 	var DEFAULT_RULE_NAME_ASSERT_NOT_NULL = 'assertNotNull';
@@ -280,6 +280,9 @@
 		 * バリデーション結果
 		 * <p>
 		 * 現在完了しているバリデート全てについてバリデートが通ったかどうかをtrueまたはfalseで保持します。
+		 * </p>
+		 * <p>
+		 * 例えば非同期バリデートがあり、全てのバリデートが完了していない場合でもisValidには判定済みのものについてバリデートが通ったかどうかを保持します。
 		 * </p>
 		 *
 		 * @memberOf ValidationResult
@@ -1149,7 +1152,7 @@
 					var ruleName = sortedRuleNames[i];
 					var args = rule[ruleName];
 					if ((!obj.hasOwnProperty(prop) || args == null)
-							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRED && args)) {
+							&& !(ruleName === DEFAULT_RULE_NAME_required && args)) {
 						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
 						// また、argsがundefinedならそのルールはチェックしない
 						// ただし、required指定がある場合はチェックする
@@ -1343,7 +1346,7 @@
 	};
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 51);
+	defineRule(DEFAULT_RULE_NAME_required, rule.required, null, 51);
 	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50);
