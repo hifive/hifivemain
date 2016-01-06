@@ -1137,4 +1137,73 @@ $(function() {
 	//			strictEqual(moduleObj.executedMethodArg, 'ok', 'invokeで実行したメソッドに引数が渡されていること');
 	//		});
 	//	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]メインシーンコンテナをdispose', {
+		setup: function() {
+			this.originalTitle = document.title;
+			var $container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			$container.append($scene);
+			$('#qunit-fixture').append($container);
+			this.container = h5.scene.createSceneContainer($container, true);
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('メインシーンコンテナをdispose後に再生成できること', function() {
+		var container = this.container;
+		container.dispose().done(function() {
+			var $container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			$container.append($scene);
+			$('#qunit-fixture').append($container);
+			try {
+				h5.scene.createSceneContainer($container, true);
+				ok(true, 'メインシーンコンテナを再生成できること');
+			} catch (e) {
+				ok(false, 'メインシーンコンテナの再生成に失敗');
+			}
+		}).always(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]メインシーンコンテナを複数生成', {
+		setup: function() {
+			this.originalTitle = document.title;
+			var $container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			$container.append($scene);
+			$('#qunit-fixture').append($container);
+			this.container = h5.scene.createSceneContainer($container, true);
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('メインシーンコンテナを複数生成できないこと', function() {
+		var $newCcontainer = $('<div>');
+		var $scene = $('<div data-h5-scene>');
+		$newCcontainer.append($scene);
+		$('#qunit-fixture').append($newCcontainer);
+		try {
+			h5.scene.createSceneContainer($newCcontainer, true);
+		} catch (e) {
+			ok(true, 'メインシーンコンテナを複数生成すると例外を投げること');
+		}
+	});
+
 });
