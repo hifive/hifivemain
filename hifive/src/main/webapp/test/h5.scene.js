@@ -1334,4 +1334,38 @@ $(function() {
 				}).always(start);
 	});
 
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]createSceneContainer() シーン要素がdata-title属性を持っている', {
+		setup: function() {
+			this.originalTitle = document.title;
+			this.$container = $('<div>');
+			var $scene = $('<div data-h5-scene data-title="testDataTitle">');
+			this.$container.append($scene);
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			clearController();
+			document.title = this.originalTitle;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('メインシーンコンテナ', function() {
+		var container = h5.scene.createSceneContainer(this.$container, true);
+		var title = container.getTitle();
+		strictEqual(title, 'testDataTitle', 'タイトルに設定すること');
+		strictEqual(document.title, 'testDataTitle', 'document.titleに反映すること');
+	});
+
+	test('シーンコンテナ', function() {
+		var container = h5.scene.createSceneContainer(this.$container, false);
+		var title = container.getTitle();
+		strictEqual(title, 'testDataTitle', 'タイトルに設定すること');
+		strictEqual(document.title, this.originalTitle, 'document.titleに反映しないこと');
+	});
+
 });

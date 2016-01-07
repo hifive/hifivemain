@@ -2433,6 +2433,11 @@
 					that._currentController = controller;
 					that._transition.onChangeEnd(that.rootElement, null, controller.rootElement);
 					that._transition = null;
+					// タイトルの設定
+					var title = that._getTitleFromCurrentScene();
+					if (title != null) {
+						that.setTitle(title);
+					}
 				});
 			}
 		},
