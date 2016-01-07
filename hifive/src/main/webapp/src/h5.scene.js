@@ -2834,7 +2834,7 @@
 		 */
 		_getTitleFromCurrentScene: function() {
 			var elm = this._currentController.rootElement;
-			var dataTitle = $(elm).find('[data-' + DATA_SCENE_TITLE + ']').data(DATA_SCENE_TITLE);
+			var dataTitle = $(elm).data(DATA_SCENE_TITLE);
 			if (dataTitle != null) {
 				// data-title指定
 				return dataTitle;

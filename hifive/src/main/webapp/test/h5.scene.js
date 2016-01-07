@@ -1206,4 +1206,93 @@ $(function() {
 		}
 	});
 
+	//=============================
+	// Definition
+	//=============================
+	module(
+			'[jquery#-1.6.4;browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-title属性を持つこと',
+			{
+				setup: function() {
+					this.pathname = location.pathname;
+					this.url = 'scenedata/page/title/dataTitle.html';
+					this.originalTitle = document.title;
+					this.$container = $('<div>');
+					var $scene = $('<div data-h5-scene>');
+					this.$container.append($scene);
+					$('#qunit-fixture').append(this.$container);
+					this.container = h5.scene.createSceneContainer(this.$container, true);
+				},
+				teardown: function() {
+					clearController();
+					document.title = this.originalTitle;
+					history.pushState(null, null, this.pathname);
+				}
+			});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('タイトルに設定すること', function() {
+		var container = this.container;
+		container.navigate({
+			to: this.url
+		}).done(function() {
+			var title = container.getTitle();
+			strictEqual(title, 'changeTitle', 'シーン要素のdata-titleをgetTitle()で取得できること');
+		}).always(start);
+	});
+
+	asyncTest('document.titleへ反映すること', function() {
+		var container = this.container;
+		container.navigate({
+			to: this.url
+		}).done(function() {
+			strictEqual(document.title, 'changeTitle', 'シーン要素のdata-titleをdocument.titleに反映すること');
+		}).always(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-title属性を持つ', {
+		setup: function() {
+			this.url = 'scenedata/page/title/dataTitle.html';
+			this.originalTitle = document.title;
+			this.$container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			this.$container.append($scene);
+			$('#qunit-fixture').append(this.$container);
+			this.container = h5.scene.createSceneContainer(this.$container, false);
+		},
+		teardown: function() {
+			clearController();
+			document.title = this.originalTitle;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('タイトルに設定すること', function() {
+		var container = this.container;
+		container.navigate({
+			to: this.url
+		}).done(function() {
+			var title = container.getTitle();
+			strictEqual(title, 'changeTitle', 'シーン要素のdata-titleをgetTitle()で取得できること');
+		}).always(start);
+	});
+
+	asyncTest('document.titleへ反映しない', function() {
+		var container = this.container;
+		var that = this;
+		container.navigate({
+			to: this.url
+		}).done(
+				function() {
+					strictEqual(document.title, that.originalTitle,
+							'シーン要素のdata-titleをdocument.titleに反映しないこと');
+				}).always(start);
+	});
+
 });
