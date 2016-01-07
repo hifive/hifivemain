@@ -1174,6 +1174,45 @@ $(function() {
 		}).always(start);
 	});
 
+	asyncTest('dispose後にh5.scene.getMainSceneContainer()はnullを返すこと', function() {
+		var mainContainer = h5.scene.getMainSceneContainer();
+		ok(mainContainer != null , 'dispose前はh5.scene.getMainSceneContainer()で取得できること');
+		this.container.dispose().done(function() {
+			mainContainer = h5.scene.getMainSceneContainer();
+			ok(mainContainer == null, 'dispose後はh5.scene.getMainSceneContainer()がnullを返すこと');
+		}).always(start);
+	});
+
+	asyncTest('dispose後にh5.scene.getSceneContainerByName()はnullを返すこと', function() {
+		var mainContainer = h5.scene.getSceneContainerByName('data-h5-main-scene-container');
+		ok(mainContainer != null, 'dispose前はh5.scene.getSceneContainerByName()で取得できること');
+		this.container.dispose().done(function() {
+			mainContainer = h5.scene.getSceneContainerByName('data-h5-main-scene-container');
+			ok(mainContainer == null, 'dispose後はh5.scene.getSceneContainerByName()がnullを返すこと');
+		}).always(start);
+	});
+
+	asyncTest('dispose後にh5.scene.getSceneContainers()は空配列を返すこと', function() {
+		var mainContainer = h5.scene.getSceneContainers('[data-h5-main-scene-container]');
+		ok(mainContainer.length === 1, 'dispose前はh5.scene.getSceneContainers()で取得できること');
+		this.container.dispose().done(function() {
+			mainContainer = h5.scene.getSceneContainers('[data-h5-main-scene-container]');
+			ok(mainContainer.length === 0, 'dispose後はh5.scene.getSceneContainers()が空配列を返すこと');
+		}).always(start);
+	});
+
+	asyncTest('dispose後に再生成しh5.scene.getMainSceneContainer()で取得できること', function() {
+		this.container.dispose().done(function() {
+			var $container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			$container.append($scene);
+			$('#qunit-fixture').append($container);
+			h5.scene.createSceneContainer($container, true);
+			var container = h5.scene.getMainSceneContainer();
+			ok(container != null, 'メインシーンコンテナを取得できること');
+		}).always(start);
+	});
+
 	//=============================
 	// Definition
 	//=============================
