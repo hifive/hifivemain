@@ -75,7 +75,7 @@
 
 
 	/** シーンコンテナのタイトルデータ属性 */
-	var DATA_SCENE_TITLE = 'title';
+	var DATA_H5_SCENE_TITLE = 'h5-scene-title';
 
 	/** シーンコントローラのシーンタイトル定義プロパティ */
 	var CONTROLLER_SCENE_TITLE = 'sceneTitle';
@@ -2839,9 +2839,9 @@
 		 */
 		_getTitleFromCurrentScene: function() {
 			var elm = this._currentController.rootElement;
-			var dataTitle = $(elm).data(DATA_SCENE_TITLE);
+			var dataTitle = $(elm).data(DATA_H5_SCENE_TITLE);
 			if (dataTitle != null) {
-				// data-title指定
+				// data-h5-scene-title指定
 				return dataTitle;
 			}
 			// titleタグ

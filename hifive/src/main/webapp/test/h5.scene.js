@@ -1249,7 +1249,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			'[jquery#-1.6.4;browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-title属性を持つこと',
+			'[jquery#-1.6.4;browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-h5-scene-title属性を持つこと',
 			{
 				setup: function() {
 					this.pathname = location.pathname;
@@ -1277,7 +1277,7 @@ $(function() {
 			to: this.url
 		}).done(function() {
 			var title = container.getTitle();
-			strictEqual(title, 'changeTitle', 'シーン要素のdata-titleをgetTitle()で取得できること');
+			strictEqual(title, 'changeTitle', 'シーン要素のdata-h5-scene-titleをgetTitle()で取得できること');
 		}).always(start);
 	});
 
@@ -1286,14 +1286,14 @@ $(function() {
 		container.navigate({
 			to: this.url
 		}).done(function() {
-			strictEqual(document.title, 'changeTitle', 'シーン要素のdata-titleをdocument.titleに反映すること');
+			strictEqual(document.title, 'changeTitle', 'シーン要素のdata-h5-scene-titleをdocument.titleに反映すること');
 		}).always(start);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('[jquery#-1.6.4]シーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-title属性を持つ', {
+	module('[jquery#-1.6.4]シーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-h5-scene-title属性を持つ', {
 		setup: function() {
 			this.url = 'scenedata/page/title/dataTitle.html';
 			this.originalTitle = document.title;
@@ -1318,7 +1318,7 @@ $(function() {
 			to: this.url
 		}).done(function() {
 			var title = container.getTitle();
-			strictEqual(title, 'changeTitle', 'シーン要素のdata-titleをgetTitle()で取得できること');
+			strictEqual(title, 'changeTitle', 'シーン要素のdata-h5-scene-titleをgetTitle()で取得できること');
 		}).always(start);
 	});
 
@@ -1330,18 +1330,18 @@ $(function() {
 		}).done(
 				function() {
 					strictEqual(document.title, that.originalTitle,
-							'シーン要素のdata-titleをdocument.titleに反映しないこと');
+							'シーン要素のdata-h5-scene-titleをdocument.titleに反映しないこと');
 				}).always(start);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('[jquery#-1.6.4]createSceneContainer() シーン要素がdata-title属性を持っている', {
+	module('[jquery#-1.6.4]createSceneContainer() シーン要素がdata-h5-scene-title属性を持っている', {
 		setup: function() {
 			this.originalTitle = document.title;
 			this.$container = $('<div>');
-			var $scene = $('<div data-h5-scene data-title="testDataTitle">');
+			var $scene = $('<div data-h5-scene data-h5-scene-title="testDataTitle">');
 			this.$container.append($scene);
 			$('#qunit-fixture').append(this.$container);
 		},
