@@ -1175,30 +1175,32 @@ $(function() {
 	});
 
 	asyncTest('dispose後にh5.scene.getMainSceneContainer()はnullを返すこと', function() {
-		var mainContainer = h5.scene.getMainSceneContainer();
-		ok(mainContainer != null , 'dispose前はh5.scene.getMainSceneContainer()で取得できること');
-		this.container.dispose().done(function() {
-			mainContainer = h5.scene.getMainSceneContainer();
-			ok(mainContainer == null, 'dispose後はh5.scene.getMainSceneContainer()がnullを返すこと');
-		}).always(start);
+		this.container.dispose().done(
+				function() {
+					var mainContainer = h5.scene.getMainSceneContainer();
+					strictEqual(mainContainer, null,
+							'dispose後はh5.scene.getMainSceneContainer()がnullを返すこと');
+				}).always(start);
 	});
 
 	asyncTest('dispose後にh5.scene.getSceneContainerByName()はnullを返すこと', function() {
-		var mainContainer = h5.scene.getSceneContainerByName('data-h5-main-scene-container');
-		ok(mainContainer != null, 'dispose前はh5.scene.getSceneContainerByName()で取得できること');
-		this.container.dispose().done(function() {
-			mainContainer = h5.scene.getSceneContainerByName('data-h5-main-scene-container');
-			ok(mainContainer == null, 'dispose後はh5.scene.getSceneContainerByName()がnullを返すこと');
-		}).always(start);
+		this.container.dispose().done(
+				function() {
+					var mainContainer = h5.scene
+							.getSceneContainerByName('data-h5-main-scene-container');
+					strictEqual(mainContainer, null,
+							'dispose後はh5.scene.getSceneContainerByName()がnullを返すこと');
+				}).always(start);
 	});
 
 	asyncTest('dispose後にh5.scene.getSceneContainers()は空配列を返すこと', function() {
-		var mainContainer = h5.scene.getSceneContainers('[data-h5-main-scene-container]');
-		ok(mainContainer.length === 1, 'dispose前はh5.scene.getSceneContainers()で取得できること');
-		this.container.dispose().done(function() {
-			mainContainer = h5.scene.getSceneContainers('[data-h5-main-scene-container]');
-			ok(mainContainer.length === 0, 'dispose後はh5.scene.getSceneContainers()が空配列を返すこと');
-		}).always(start);
+		this.container.dispose().done(
+				function() {
+					var mainContainer = h5.scene
+							.getSceneContainers('[data-h5-main-scene-container]');
+					strictEqual(mainContainer.length, 0,
+							'dispose後はh5.scene.getSceneContainers()が空配列を返すこと');
+				}).always(start);
 	});
 
 	asyncTest('dispose後に再生成しh5.scene.getMainSceneContainer()で取得できること', function() {
@@ -1285,9 +1287,11 @@ $(function() {
 		var container = this.container;
 		container.navigate({
 			to: this.url
-		}).done(function() {
-			strictEqual(document.title, 'changeTitle', 'シーン要素のdata-h5-scene-titleをdocument.titleに反映すること');
-		}).always(start);
+		}).done(
+				function() {
+					strictEqual(document.title, 'changeTitle',
+							'シーン要素のdata-h5-scene-titleをdocument.titleに反映すること');
+				}).always(start);
 	});
 
 	//=============================
@@ -1358,14 +1362,16 @@ $(function() {
 		var container = h5.scene.createSceneContainer(this.$container, true);
 		var title = container.getTitle();
 		strictEqual(title, 'testDataTitle', 'メインシーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること');
-		strictEqual(document.title, 'testDataTitle', 'document.titleがdata-h5-scene-title属性値に反映されること');
+		strictEqual(document.title, 'testDataTitle',
+				'document.titleがdata-h5-scene-title属性値に反映されること');
 	});
 
 	test('シーンコンテナの場合 シーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること', function() {
 		var container = h5.scene.createSceneContainer(this.$container, false);
 		var title = container.getTitle();
 		strictEqual(title, 'testDataTitle', 'シーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること');
-		strictEqual(document.title, this.originalTitle, 'document.titleがdata-h5-scene-title属性値に反映されないこと');
+		strictEqual(document.title, this.originalTitle,
+				'document.titleがdata-h5-scene-title属性値に反映されないこと');
 	});
 
 });
