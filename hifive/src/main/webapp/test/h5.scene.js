@@ -1337,7 +1337,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('[jquery#-1.6.4]createSceneContainer() シーン要素がdata-h5-scene-title属性を持っている', {
+	module('[jquery#-1.6.4]createSceneContainer() data-h5-scene-title属性', {
 		setup: function() {
 			this.originalTitle = document.title;
 			this.$container = $('<div>');
@@ -1354,18 +1354,18 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('メインシーンコンテナ', function() {
+	test('メインシーンコンテナの場合 メインシーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること', function() {
 		var container = h5.scene.createSceneContainer(this.$container, true);
 		var title = container.getTitle();
-		strictEqual(title, 'testDataTitle', 'タイトルに設定すること');
-		strictEqual(document.title, 'testDataTitle', 'document.titleに反映すること');
+		strictEqual(title, 'testDataTitle', 'メインシーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること');
+		strictEqual(document.title, 'testDataTitle', 'document.titleがdata-h5-scene-title属性値に反映されること');
 	});
 
-	test('シーンコンテナ', function() {
+	test('シーンコンテナの場合 シーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること', function() {
 		var container = h5.scene.createSceneContainer(this.$container, false);
 		var title = container.getTitle();
-		strictEqual(title, 'testDataTitle', 'タイトルに設定すること');
-		strictEqual(document.title, this.originalTitle, 'document.titleに反映しないこと');
+		strictEqual(title, 'testDataTitle', 'シーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること');
+		strictEqual(document.title, this.originalTitle, 'document.titleがdata-h5-scene-title属性値に反映されないこと');
 	});
 
 });
