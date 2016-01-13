@@ -1716,6 +1716,7 @@
 	 * </p>
 	 *
 	 * @class
+	 * @name Scene
 	 */
 	/**
 	 * @private
@@ -1728,9 +1729,12 @@
 	$.extend(Scene.prototype, {
 		/**
 		 * シーン遷移イベントを発行します。
+		 * <p>
+		 * 第1引数には、{@link SceneContainerController.navigate}の引数と同じ形式でパラメータを指定してください。
+		 * </p>
 		 *
 		 * @param {String|Object} data
-		 * @memberOf ControllerScene
+		 * @memberOf Scene
 		 */
 		navigate: function(data) {
 			if (isDisposing(this.__controller)) {
@@ -1747,7 +1751,7 @@
 		 * </p>
 		 *
 		 * @returns {SceneContainerController} シーンコンテナ
-		 * @memberOf ControllerScene
+		 * @memberOf Scene
 		 */
 		getParentContainer: function() {
 			if (isDisposing(this.__controller)) {
@@ -3086,6 +3090,19 @@
 	// フック
 	h5internal.core.addControllerInstantiationHook(function(c) {
 		// TODO controllerがすでにsceneプロパティを持っていたらエラーでよいか
+		/**
+		 * シーン操作に関するモジュール
+		 * <p>
+		 * コントローラ化の際に、コントローラに"scene"プロパティが追加されます。
+		 * </p>
+		 * <p>
+		 * 使用方法については{@link Scene}をご覧ください。
+		 * </p>
+		 *
+		 * @memberOf Controller
+		 * @type Scene
+		 * @name scene
+		 */
 		c.scene = new Scene(c);
 	});
 
