@@ -77,8 +77,8 @@
 			if (max != null) {
 				upperLimitMsg = h5.u.str.format('{0}以下', max);
 			}
-			return h5.u.str.format('{displayName}は{1}{2}の長さでなければいけません。',
-					param, lowerLimitMsg, upperLimitMsg);
+			return h5.u.str.format('{displayName}は{1}{2}の長さでなければいけません。', param, lowerLimitMsg,
+					upperLimitMsg);
 		},
 		future: '{displayName}は現在時刻より未来の時刻を入力してください。',
 		past: '{displayName}は現在時刻より過去の時刻を入力してください。',
@@ -2253,6 +2253,7 @@
 		 *
 		 * @memberOf h5.ui.FormController
 		 * @param {string|string[]} names バリデート対象のプロパティ名またはプロパティ名の配列
+		 * @returns {ValidationResult}
 		 */
 		validate: function(names) {
 			// バリデート実行
