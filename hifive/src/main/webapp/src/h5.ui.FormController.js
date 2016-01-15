@@ -1302,7 +1302,7 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onFocus: function(element, name, validationResult) {
-			var validatingProperties = result.validatingProperties;
+			var validatingProperties = validationResult.validatingProperties;
 			if ($.inArray(name, validatingProperties)) {
 				var element = this.parentController._getElementByName(name);
 				this._showIndicator(element, name, validatingProperties[i]);
