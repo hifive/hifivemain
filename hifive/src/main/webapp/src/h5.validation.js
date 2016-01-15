@@ -417,7 +417,7 @@
 	 *
 	 * @memberOf ValidationResult
 	 * @name abort
-	 * @type function
+	 * @function
 	 */
 	ValidationResult.prototype.abort = function() {
 		this.removeEventListener(EVENT_VALIDATE, validateEventListener);
