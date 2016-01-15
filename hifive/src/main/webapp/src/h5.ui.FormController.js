@@ -1774,6 +1774,7 @@
 		 * 各プラグイン固有の設定項目については、各プラグインのJSDocを参照してください。
 		 * </p>
 		 * <ul>
+		 * <li>{@link h5.ui.validation.Style}
 		 * <li>{@link h5.ui.validation.AsyncIndicator}
 		 * <li>{@link h5.ui.validation.Composition}
 		 * <li>{@link h5.ui.validation.Message}
@@ -1887,8 +1888,9 @@
 		 * </p>
 		 * <table><thead>
 		 * <tr>
-		 * <th>プラグイン名</tr>
+		 * <th>プラグイン名</th>
 		 * <th>説明</th>
+		 * </tr>
 		 * </thead><tbody>
 		 * <tr>
 		 * <td>composition</td>
@@ -1905,6 +1907,10 @@
 		 * <tr>
 		 * <td>baloon</td>
 		 * <td>バリデート時にバリデート失敗した項目についてバルーンメッセージを表示する</td>
+		 * </tr>
+		 * <tr>
+		 * <td>bsBaloon</td>
+		 * <td>バリデート時にバリデート失敗した項目についてブートストラップでバルーンメッセージを表示する(bootstrap依存)</td>
 		 * </tr>
 		 * <tr>
 		 * <td>asyncIndicator</td>
