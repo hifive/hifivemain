@@ -82,8 +82,8 @@
 		},
 		future: '{displayName}は現在時刻より未来の時刻を入力してください。',
 		past: '{displayName}は現在時刻より過去の時刻を入力してください。',
-		nul: '{displayName}はnullでなければなりません。',
-		notNull: '{displayName}はnullでない値を設定してください。',
+		assertNull: '{displayName}はnullでなければなりません。',
+		assertNotNull: '{displayName}はnullでない値を設定してください。',
 		assertFalse: '{displayName}はfalseとなる値を入力してください。',
 		assertTrue: '{displayName}はtrueとなる値を入力してください。',
 		customFunc: '{displayName}は条件を満たしません'
