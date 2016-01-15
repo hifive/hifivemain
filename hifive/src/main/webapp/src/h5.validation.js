@@ -334,7 +334,7 @@
 		 *     value: 101,                // バリデート対象の値
 		 *     violation: [{              // 違反理由オブジェクトの配列
 		 *       ruleName: 'max',  // バリデートを行ったルール
-		 *       param: {max:100, inclusive: true},  // バリデート関数に渡されたパラメータ
+		 *       ruleValue: {max:100, inclusive: true},  // バリデート関数に渡されたパラメータ
 		 *       reason: // 非同期バリデートのみ。非同期バリデート関数が返したプロミスのfailハンドラに渡された引数リスト。同期の場合は常にnull
 		 *     }]
 		 *   },
@@ -417,6 +417,7 @@
 	 *
 	 * @memberOf ValidationResult
 	 * @name abort
+	 * @type function
 	 */
 	ValidationResult.prototype.abort = function() {
 		this.removeEventListener(EVENT_VALIDATE, validateEventListener);
