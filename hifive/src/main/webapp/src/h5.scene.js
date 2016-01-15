@@ -81,7 +81,21 @@
 	var CONTROLLER_SCENE_TITLE = 'sceneTitle';
 
 	/**
-	 * シーン遷移タイプ
+	 * シーン遷移時のパターン
+	 * <p>
+	 * シーン遷移時のnavigationTypeパラメータに指定する遷移時のパターンを表す定数です
+	 * </p>
+	 * <dl>
+	 * <dt>h5.scene.navigationType.NORMAL</dt>
+	 * <dd>"normal" … URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。</dd>
+	 * <dt>h5.scene.navigationType.ONCE</dt>
+	 * <dd>"once" … URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。</dd>
+	 * <dt>h5.scene.navigationType.SILENT</dt>
+	 * <dd>"silent" … URLは変化させずに遷移します。</dd>
+	 * </dl>
+	 *
+	 * @memberOf h5.scene
+	 * @name navigationType
 	 */
 	var NAVIGATION_TYPE = {
 		NORMAL: 'normal',
@@ -90,7 +104,19 @@
 	};
 
 	/**
-	 * Ajaxメソッド
+	 * シーン遷移時のHTMLデータ取得時のHTTPメソッド
+	 * <p>
+	 * シーン遷移時のmethodパラメータに指定するHTMLデータ取得時のHTTPメソッドを表す定数です
+	 * </p>
+	 * <dl>
+	 * <dt>h5.scene.method.GET</dt>
+	 * <dd>"get" … GETメソッドで取得します(デフォルト)。</dd>
+	 * <dt>h5.scene.method.ONCE</dt>
+	 * <dd>"post" … POSTメソッドで取得します。ブラウザバックなどで再表示はできなくなります。</dd>
+	 * </dl>
+	 *
+	 * @memberOf h5.scene
+	 * @name method
 	 */
 	var METHOD = {
 		GET: 'get',
@@ -1849,6 +1875,7 @@
 	/**
 	 * 別ウィンドウをオープンします。
 	 *
+	 * @private
 	 * @param url
 	 * @param name
 	 * @param features
@@ -3207,7 +3234,6 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.scene', {
-		openWindow: openWindow,
 		createSceneContainer: createSceneContainer,
 		init: init,
 		getMainSceneContainer: getMainSceneContainer,
