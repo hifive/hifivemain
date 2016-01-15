@@ -478,7 +478,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2210">line 2210</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2213">line 2213</a>
     </li></ul></dd>
     
 
@@ -895,7 +895,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2274">line 2274</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2277">line 2277</a>
     </li></ul></dd>
     
 
@@ -931,7 +931,7 @@
 
 
 <div class="description">
-    このコントローラが管理するフォーム内のフォーム部品の値を集約したオブジェクトを生成する<p>フォーム部品を集約し、各部品の名前(name属性値)をキーに、その値を持つオブジェクトを返します。</p><p>第1引数にtargetNamesを指定した場合、指定した名前に当てはまるフォーム部品だけが集約対象になります。</p><p>例えばname属性が"userid"のinputがあり、その値が"0001"である場合は、{userid: "0001"}のようなオブジェクトを返します。</p><p>また、グループ指定された要素の集約をすることができます。</p><p>グループとは、以下のように指定することができます</p><pre class="sh_html"><code>&lt;!-- data-h5-input-group-containerにグループ名を指定。子要素がそのグループになる。 --&gt;lt;div data-h5-input-group-container=&quot;birthday&quot;&gt;		&lt;displayName class=&quot;control-displayName&quot;&gt;生年月日&lt;/displayName&gt;		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;		&lt;/div&gt;</code></pre><p>上記のような指定のされた要素は、グループ名をキーにグループに属する要素を集約したオブジェクトとして集約します。戻り値は以下のようになります。</p><pre class="sh_javascript"><code>{	birthday: {		year: &quot;1999&quot;,		month: &quot;1&quot;,		month: &quot;2&quot;	},	zipcode: {		zip1: &quot;220&quot;,		zip2: &quot;0012&quot;	}}</code></pre>
+    このコントローラが管理するフォーム内のフォーム部品の値を集約したオブジェクトを生成する<p>フォーム部品を集約し、各部品の名前(name属性値)をキーに、その値を持つオブジェクトを返します。</p><p>第1引数を省略した場合、このコントローラのバインド対象のフォーム内全てのフォーム部品を集約対象とします。</p><p>第1引数にtargetNamesを指定した場合、指定した名前に当てはまるフォーム部品だけが集約対象になります。</p><p>例えばname属性が"userid"のinputがあり、その値が"0001"である場合は、{userid: "0001"}のようなオブジェクトを返します。</p><p>また、グループ指定された要素の集約をすることができます。</p><p>グループとは、以下のように指定することができます</p><pre class="sh_html"><code>&lt;!-- data-h5-input-group-containerにグループ名を指定。子要素がそのグループになる。 --&gt;lt;div data-h5-input-group-container=&quot;birthday&quot;&gt;		&lt;displayName class=&quot;control-displayName&quot;&gt;生年月日&lt;/displayName&gt;		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;		&lt;/div&gt;</code></pre><p>上記のような指定のされた要素は、グループ名をキーにグループに属する要素を集約したオブジェクトとして集約します。戻り値は以下のようになります。</p><pre class="sh_javascript"><code>{	birthday: {		year: &quot;1999&quot;,		month: &quot;1&quot;,		month: &quot;2&quot;	},	zipcode: {		zip1: &quot;220&quot;,		zip2: &quot;0012&quot;	}}</code></pre>
 </div>
 
 
@@ -1051,7 +1051,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2042">line 2042</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2045">line 2045</a>
     </li></ul></dd>
     
 
@@ -1267,7 +1267,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2236">line 2236</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2239">line 2239</a>
     </li></ul></dd>
     
 
@@ -1529,7 +1529,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2141">line 2141</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2144">line 2144</a>
     </li></ul></dd>
     
 
@@ -1681,7 +1681,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2258">line 2258</a>
+        <a href="src_h5.ui.FormController.js.html">src/h5.ui.FormController.js</a>, <a href="src_h5.ui.FormController.js.html#line2261">line 2261</a>
     </li></ul></dd>
     
 
@@ -1723,7 +1723,7 @@
 	<br class="clear">
 
 	<footer>
-	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on 2016/01/13 (Wed)
+	    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on 2016/01/15 (Fri)
 	</footer>
 </div>
 
