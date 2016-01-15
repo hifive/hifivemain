@@ -990,6 +990,63 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module('バリデートの中断', {
+		setup: function() {
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('Validation.abort()を呼ぶと以降validate,valdiateCompleteイベントはあがらない', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule
+		});
+		var dfd1 = h5.async.deferred();
+		var result = validator.validate({
+			p1: dfd1
+		});
+		var events = [];
+		result.addEventListener('validate', function(ev) {
+			events.push(ev);
+		});
+		result.addEventListener('validateComplete', function(ev) {
+			events.push(ev);
+		});
+		result.abort();
+		dfd1.resolve();
+		deepEqual(events, [], 'abort()を呼ぶとvalidateイベントもvalidateCompleteイベントも上がらない');
+	});
+
+	test('abortイベントハンドラが実行されること', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule
+		});
+		var dfd1 = h5.async.deferred();
+		var result = validator.validate({
+			p1: dfd1
+		});
+		var listner1Events = [];
+		result.addEventListener('abort', function(ev) {
+			listner1Events.push(ev);
+		});
+		var listner2Events = [];
+		result.addEventListener('abort', function(ev) {
+			listner2Events.push(ev);
+		});
+		result.abort();
+		strictEqual(listner1Events.length, 1, 'validateを中断するとabortイベントハンドラが動作すること');
+		strictEqual(listner2Events.length, 1, 'abortイベントハンドラが複数あっても動作すること');
+		result.abort();
+		strictEqual(listner1Events.length, 1, 'abort()を2回呼んでもabortイベントハンドラの動作は１度のみ');
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	module('ルールの追加と削除', {
 		setup: function() {
 			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
