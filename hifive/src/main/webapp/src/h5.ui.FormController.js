@@ -1965,7 +1965,7 @@
 		 * @param {string|string[]} name プロパティ名またはその配列
 		 */
 		removeRule: function(name) {
-			this._validationLogic.removeRule();
+			this._validationLogic.removeRule(name);
 			this.validate(name);
 		},
 
