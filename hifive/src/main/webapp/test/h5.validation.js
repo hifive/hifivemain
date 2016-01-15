@@ -37,6 +37,16 @@ $(function() {
 	// TODO テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
 	var ERR = ERRCODE.h5.env;
 
+	var requiredRule = {
+		required: true
+	};
+
+	var customAsyncRule = {
+		customFunc: function(value) {
+			return value.promise();
+		}
+	};
+
 	//=============================
 	// Functions
 	//=============================
@@ -532,264 +542,449 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('ValidationResultの中身',
+	test('properties',
 			function() {
 				var validator = this.validator;
-				var obj = {
-					p1: '1000',
-					p2: 1,
-					p3: 1
-				};
 				validator.addRule({
-					p1: {
-						required: true,
-						min: 0,
-						max: [1.1, true],
-						digits: [1, 1]
-					},
-					p2: {
-						required: true,
-						min: 0
-					},
-					p3: {
-						required: true,
-						min: 0
-					},
-					p4: {
-						required: true,
-						min: 0
-					},
-					p5: {
-						required: true,
-						min: 0
-					}
+					p1: customAsyncRule,
+					p2: requiredRule,
+					p3: requiredRule
 				});
-
-				var result = validator.validate(obj);
-				var invalidProperties = result.invalidProperties.sort();
-				var validProperties = result.validProperties.sort();
-				deepEqual(validProperties, ['p2', 'p3'], 'validPropertiesはinvalidなプロパティの配列');
-				strictEqual(result.validCount, 2, 'validCountはvalidだったプロパティの総数');
-				deepEqual(invalidProperties, ['p1', 'p4', 'p5'],
-						'invalidPropertiesはinvalidなプロパティの配列');
-				strictEqual(result.invalidCount, 3, 'invalidCountはinvalidだったプロパティの総数');
-				strictEqual(result.isValid, false, 'isValidは全てのプロパティがvalidだったかどうか');
-
-				var invalidReason = result.invalidReason;
-				ok(invalidReason, 'invalidReasonが取れること');
-				ok(invalidReason.p1, '失敗しているプロパティのinvalidReasonが取れる');
-				ok(invalidReason.p4, '失敗しているプロパティのinvalidReasonが取れる');
-				ok(invalidReason.p5, '失敗しているプロパティのinvalidReasonが取れる');
-				ok(!invalidReason.p2, '成功しているプロパティのinvalidReasonはない');
-				ok(!invalidReason.p3, '成功しているプロパティのinvalidReasonはない');
-
-				strictEqual(invalidReason.p1.name, 'p1', 'invalidReasonのname');
-				strictEqual(invalidReason.p1.value, '1000', 'invalidReasonのvalue');
-				var violation = invalidReason.p1.violation;
-				ok(violation, 'invalidReasonのviolationが取れる');
-				strictEqual(violation.length, 2, '違反したルールの数だけviolationがある');
-				var maxViolation = violation[0].ruleName ? violation[0] : violation[1];
-				strictEqual(maxViolation.ruleName, 'max', 'violationのruleName');
-				strictEqual(maxViolation.ruleValue.max, 1.1, 'violationのruleValueで指定した引数が取得できる');
-				strictEqual(maxViolation.ruleValue.inclusive, true,
-						'violationのruleValueで指定した引数が取得できる');
-
-				validator.addRule({
-					p1: null,
-					p2: null,
-					p3: null,
-					p4: null,
-					p5: null
+				var dfd1 = h5.async.deferred();
+				var result = validator.validate({
+					p1: dfd1,
+					p2: 1
 				});
-				result = validator.validate(obj);
-				var invalidProperties = result.invalidProperties.sort();
-				var validProperties = result.validProperties.sort();
-				deepEqual(validProperties, ['p1', 'p2', 'p3', 'p4', 'p5'],
-						'validPropertiesはvalidなプロパティの配列');
-				strictEqual(result.validCount, 5, 'validCountはvalidだったプロパティの総数');
-				deepEqual(invalidProperties, [], 'invalidPropertiesはinvalidなプロパティの配列');
-				strictEqual(result.invalidCount, 0, 'invalidCountはinvalidだったプロパティの総数');
-				strictEqual(result.isValid, true, 'isValidは全てのプロパティがvalidだったかどうか');
+				deepEqual(result.properties.slice(0).sort(), ['p1', 'p2', 'p3'],
+						'全てのバリデート対象のプロパティ名が入っている');
+				dfd1.reject();
+				deepEqual(result.properties.slice(0).sort(), ['p1', 'p2', 'p3'],
+						'非同期バリデートがあってもpropertiesの中身は変わらない');
+				var validator = h5.core.logic(h5.validation.FormValidationLogic);
+				result = validator.validate({
+					p1: dfd1,
+					p2: 1
+				});
+				deepEqual(result.validProperties, [], 'バリデートするプロパティが無い場合ropertiesは空配列');
 			});
 
-	asyncTest(
-			'非同期バリデート validateイベント',
-			function() {
-				var validator = this.validator;
-				function asyncFunc(v) {
-					var dfd = $.Deferred();
-					var promise = dfd.promise();
-					setTimeout(function() {
-						if (v === 'v') {
-							dfd.resolve();
-						} else {
-							dfd.reject();
-						}
-					}, 0);
-					return promise;
-				}
-				validator.addRule({
-					p1: {
-						customFunc: asyncFunc
-					},
-					p2: {
-						customFunc: asyncFunc
-					},
-					p3: {
-						required: true
-					}
-				});
-				var result1 = validator.validate({
-					p1: 'v',
-					p2: 'a'
-				});
-				strictEqual(result1.isAsync, true, 'isAsyncがtrue');
-				strictEqual(result1.isValid, false, '同期バリデートで結果がすでにバリデートエラーならisValidはfalse');
-				strictEqual(result1.isAllValid, false, '同期バリデートで結果がすでにバリデートエラーならisAllValidはfalse');
 
-				var result2 = validator.validate({
-					p1: 'v',
-					p2: 'a',
-					p3: 'a'
-				});
-				strictEqual(result2.isAsync, true, 'isAsyncがtrue');
-				strictEqual(result2.isValid, true, '同期バリデートの結果がバリデート成功ならisValidはtrue');
-				strictEqual(result2.isAllValid, null, '非同期バリデートが完了しないと結果が分からない場合はisAllValidはnull');
-
-				var validateEvents1 = {};
-				var validateEvents2 = {};
-				deepEqual(result1.validatingProperties.sort(), ['p1', 'p2'],
-						'validatingPropertiesに結果待ちのプロパティが格納されている');
-				deepEqual(result2.validatingProperties.sort(), ['p1', 'p2'],
-						'validatingPropertiesに結果待ちのプロパティが格納されている');
-				result1
-						.addEventListener(
-								'validate',
-								function(ev) {
-									validateEvents1[ev.name] = ev;
-									ok(this === result1, 'validateイベントのコンテキストはValidationResult');
-
-									if (ev.isValid) {
-										strictEqual(ev.name, 'p1', 'validateイベントからプロパティ名が取れる');
-										strictEqual(ev.value, 'v', 'validateイベントから値が取れる');
-										strictEqual(ev.isValid, true, 'validateイベントから結果が取れる');
-										strictEqual(ev.violation, undefined,
-												'isValid=trueの場合はviolationオブジェクトが無い');
-										strictEqual(ev.target, result1,
-												'イベントオブジェクトのtargetはValidationResult');
-										ok($.inArray(ev.name, result1.validatingProperties) === -1,
-												'validatingPropertiesから外されている');
-										ok($.inArray(ev.name, result1.validProperties) !== -1,
-												'validPropertiesに格納されている');
-										ok($.inArray(ev.name, result1.invalidProperties) === -1,
-												'invalidPropertiesに格納されていない');
-									} else {
-										strictEqual(ev.name, 'p2', 'validateイベントからプロパティ名が取れる');
-										strictEqual(ev.value, 'a', 'validateイベントから値が取れる');
-										strictEqual(ev.isValid, false, 'validateイベントから結果が取れる');
-										ok(ev.violation,
-												'isValid=falseの場合はviolationオブジェクトがイベントオブジェクトに格納されている');
-										strictEqual(ev.target, result1,
-												'イベントオブジェクトのtargetはValidationResult');
-										ok(result1.invalidReason.p2.violation[0], ev.violation,
-												'validateイベントオブジェクトから取れるviolationオブジェクトはValidationResultnoのviolationに格納されているものと同じであること');
-										ok($.inArray(ev.name, result1.validatingProperties) === -1,
-												'validatingPropertiesから外されている');
-										ok($.inArray(ev.name, result1.validProperties) === -1,
-												'validPropertiesに格納されていない');
-										ok($.inArray(ev.name, result1.invalidProperties) !== -1,
-												'invalidPropertiesに格納されている');
-									}
-								});
-				result2.addEventListener('validate', function(ev) {
-					validateEvents2[ev.name] = ev;
-					ok(this === result2, 'validateイベントのコンテキストはValidationResult');
-				});
-				result1.addEventListener('validateComplete', function(ev) {
-					var p1Event = validateEvents1.p1;
-					var p2Event = validateEvents1.p2;
-					ok(p1Event, 'プロパティ毎にvalidateイベントが起きる');
-					ok(p2Event, 'プロパティ毎にvalidateイベントが起きる');
-					start();
-				});
-			});
-
-	asyncTest('非同期バリデート validateCompleteイベント', function() {
+	test('validPropertiesとvalidCount', function() {
 		var validator = this.validator;
-		function asyncFunc(v) {
-			var dfd = $.Deferred();
-			var promise = dfd.promise();
-			setTimeout(function() {
-				if (v === 'v') {
-					dfd.resolve();
-				} else {
-					dfd.reject();
-				}
-			}, 0);
-			return promise;
-		}
 		validator.addRule({
-			p1: {
-				customFunc: asyncFunc
-			},
-			p2: {
-				customFunc: asyncFunc
-			},
-			p3: {
-				required: true
-			}
+			p1: requiredRule,
+			p2: requiredRule,
+			p3: requiredRule,
+			p4: requiredRule,
+			p5: requiredRule
 		});
 		var result = validator.validate({
-			p1: 'v',
-			p2: 'a'
+			p1: 1,
+			p3: 1
 		});
-
-		var validateEvents = {};
-		result.addEventListener('validateComplete', function(ev) {
-			ok(this === result, 'validateCompleteイベントのコンテキストはValidationResultであること');
-			strictEqual(this.validatingProperties.length, 0, 'validatingPropertiesは空配列であること');
-			deepEqual(this.invalidProperties.sort(), ['p2', 'p3'],
-					'invalidPropertiesにバリデートエラーのプロパティが入っている');
-			deepEqual(this.validProperties.sort(), ['p1'], 'validPropertiesにバリデート成功のプロパティが入っている');
-			start();
-		});
+		strictEqual(result.validCount, 2, 'validCountにはvalidなプロパティの数が入っている');
+		deepEqual(result.validProperties.splice(0).sort(), ['p1', 'p3'],
+				'validPropertiesはvalidなプロパティの配列である');
 	});
 
-	asyncTest('非同期バリデート 非同期バリデートで失敗する場合', function() {
+	test('invalidPropertiesとinvalidCount', function() {
 		var validator = this.validator;
-		function asyncFunc(v) {
-			var dfd = $.Deferred();
-			var promise = dfd.promise();
-			setTimeout(function() {
-				if (v === 'v') {
-					dfd.resolve();
-				} else {
-					dfd.reject();
-				}
-			}, 0);
-			return promise;
+		validator.addRule({
+			p1: requiredRule,
+			p2: requiredRule,
+			p3: requiredRule,
+			p4: requiredRule,
+			p5: requiredRule
+		});
+		var result = validator.validate({
+			p1: 1,
+			p3: 1
+		});
+		strictEqual(result.invalidCount, 3, 'invalidCountにはinvalidなプロパティの数が入っている');
+		deepEqual(result.invalidProperties.splice(0).sort(), ['p2', 'p4', 'p5'],
+				'invalidPropertiesはinvalidなプロパティの配列');
+	});
+
+	test('validatingProperties', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule,
+			p2: customAsyncRule,
+			p3: customAsyncRule
+		});
+		var dfd1 = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		var dfd3 = h5.async.deferred();
+		dfd2.resolve();
+		var result = validator.validate({
+			p1: dfd1,
+			p2: dfd2,
+			p3: dfd3
+		});
+		deepEqual(result.validatingProperties.slice(0).sort(), ['p1', 'p3'],
+				'バリデート結果待ちプロパティのみが格納されていること');
+		dfd1.reject();
+		deepEqual(result.validatingProperties, ['p3'], 'バリデート結果待ちプロパティのみが格納されていること');
+		dfd3.resolve();
+		deepEqual(result.validatingProperties, [], '全てのバリデートが終わったら空配列になること');
+	});
+
+	test('isAsync', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: requiredRule,
+		});
+
+		var result = validator.validate({});
+		strictEqual(result.isAsync, false, '同期バリデートの場合はisAsyncはfalse');
+
+		customAsyncRule.max = 1;
+		validator.addRule({
+			p1: requiredRule,
+			p2: customAsyncRule
+		});
+		var dfd1 = h5.async.deferred();
+		result = validator.validate({
+			p1: 1,
+			p2: dfd1
+		});
+		strictEqual(result.isAsync, true, '非同期でバリデートするルールが１つでもあればisAsyncはtrue');
+
+		var dfd2 = h5.async.deferred();
+		dfd2.resolve();
+		result = validator.validate({
+			p1: 1,
+			p2: dfd2
+		});
+		strictEqual(result.isAsync, false,
+				'バリデートルール関数が既にresolve()している結果確定済みのプロミスを返す場合は同期扱いとなり、isAsyncはfalse');
+
+		var dfd3 = h5.async.deferred();
+		dfd3.reject();
+		result = validator.validate({
+			p1: 1,
+			p2: dfd3
+		});
+		strictEqual(result.isAsync, false,
+				'バリデートルール関数が既にreject()している結果確定済みのプロミスを返す場合は同期扱いとなり、isAsyncはfalse');
+	});
+
+	test('isValidとisAllValid(同期バリデート)', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: requiredRule,
+			p2: requiredRule
+		});
+		var result = validator.validate({
+			p1: 1
+		});
+		strictEqual(result.isValid, false, '一つでもinvalidなプロパティがあればisValidはfalse');
+		strictEqual(result.isAllValid, false, '一つでもinvalidなプロパティがあればisAllValidはfalse');
+
+		result = validator.validate({
+			p1: 1,
+			p2: 1
+		});
+		strictEqual(result.isValid, true, '全てのプロパティがvalidであればisValidはtrue');
+		strictEqual(result.isAllValid, true, '全てのプロパティがvalidであればisAllValidはtrue');
+	});
+
+	test('isValidとisAllValid(非同期バリデート)', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule,
+			p2: customAsyncRule
+		});
+
+		var dfd1 = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		var result = validator.validate({
+			p1: dfd1,
+			p2: dfd2
+		});
+
+		strictEqual(result.isValid, true, '全てのプロパティについてまだ結果が出ていない時、isValidはtrue');
+		strictEqual(result.isAllValid, null, '全てのプロパティについてまだ結果が出ていない時、isAllValidはnull');
+		dfd1.reject();
+		strictEqual(result.isValid, false, '非同期バリデート中のプロパティの１つがinvalidになった時、isValidはfalse');
+		strictEqual(result.isAllValid, false, '非同期バリデート中のプロパティの１つがinvalidになった時、isAllValidはfalse');
+		dfd1.resolve();
+		strictEqual(result.isValid, false,
+				'既にisValidがfalseの場合、非同期バリデート中のプロパティがvalidになってもisValidはfalse');
+		strictEqual(result.isValid, false,
+				'既にisValidがfalseの場合、非同期バリデート中のプロパティがvalidになってもisAllValidはfalse');
+
+		var dfd3 = h5.async.deferred();
+		var dfd4 = h5.async.deferred();
+		result = validator.validate({
+			p1: dfd3,
+			p2: dfd4
+		});
+		strictEqual(result.isValid, true, '全てのプロパティについてまだ結果が出ていない時、isValidはtrue');
+		strictEqual(result.isAllValid, null, '全てのプロパティについてまだ結果が出ていない時、isAllValidはnull');
+		dfd3.resolve();
+		strictEqual(result.isValid, true,
+				'まだバリデート未完了のプロパティがあってもバリデート完了しているプロパティが全てvalidなら、isValidはtrue');
+		strictEqual(result.isAllValid, null,
+				'まだバリデート未完了のプロパティがある場合、完了済みのプロパティが全てvalidであってもisAllValidはnull');
+		dfd4.resolve();
+		strictEqual(result.isValid, true, '全ての非同期バリデートがvalidで終了した時、isValidはtrue');
+		strictEqual(result.isAllValid, true, '全ての非同期バリデートがvalidで終了した時、isAllValidはtrue');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ValidationResult invalidReason', {
+		setup: function() {
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
 		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('バリデート違反のプロパティについてのみ対応する違反オブジェクトが格納されていること', function() {
+		var validator = this.validator;
+		var maxRule = {
+			max: 1
+		};
+		validator.addRule({
+			p1: maxRule,
+			p2: maxRule,
+			p3: maxRule,
+			p4: maxRule,
+			p5: maxRule
+		});
+		var result = validator.validate({
+			p1: 1,
+			p2: 0,
+			p3: 0,
+			p4: 1,
+			p5: 1
+		});
+		var invalidReason = result.invalidReason;
+		ok(invalidReason, 'invalidReasonが取れること');
+		ok(invalidReason.p1, '失敗しているプロパティのinvalidReasonが取れる');
+		ok(invalidReason.p4, '失敗しているプロパティのinvalidReasonが取れる');
+		ok(invalidReason.p5, '失敗しているプロパティのinvalidReasonが取れる');
+		ok(!invalidReason.p2, '成功しているプロパティのinvalidReasonはない');
+		ok(!invalidReason.p3, '成功しているプロパティのinvalidReasonはない');
+	});
+
+	test('違反オブジェクトの中身', function() {
+		var validator = this.validator;
 		validator.addRule({
 			p1: {
-				customFunc: asyncFunc
-			},
-			p2: {
-				customFunc: asyncFunc
-			},
-			p3: {
-				required: true
+				required: true,
+				min: 0,
+				max: [1.1, true],
+				digits: [1, 2]
 			}
 		});
 		var result = validator.validate({
-			p1: 'v',
-			p2: 'a'
+			p1: '1000'
 		});
-		strictEqual(result.isAsync, true, 'isAsyncがtrue');
-		strictEqual(result.isValid, false, '同期バリデートで結果がすでにバリデートエラーならisValidはfalse');
+
+		var invalidReason = result.invalidReason;
+		strictEqual(invalidReason.p1.name, 'p1', 'nameはプロパティ名');
+		strictEqual(invalidReason.p1.value, '1000', 'valueはバリデート対象の値');
+		var violation = invalidReason.p1.violation;
+		ok(violation, 'invalidReasonのviolationが取れる');
+		strictEqual(violation.length, 2, '違反したルールの数だけviolationがある');
+		var maxViolation = violation[0].ruleName === 'max' ? violation[0] : violation[1];
+		strictEqual(maxViolation.ruleName, 'max', 'violationのruleNameには違反したルール名が入っている');
+		strictEqual(maxViolation.ruleValue.max, 1.1, 'violationのruleValueで指定した引数が取得できる');
+		strictEqual(maxViolation.ruleValue.inclusive, true, 'violationのruleValueで指定した引数が取得できる');
+		var digitsViolation = violation[0] == maxViolation ? violation[1] : violation[0];
+		strictEqual(digitsViolation.ruleName, 'digits', 'violationのruleNameには違反したルール名が入っている');
+		strictEqual(digitsViolation.ruleValue.integer, 1, 'violationのruleValueで指定した引数が取得できる');
+		strictEqual(digitsViolation.ruleValue.fruction, 2, 'violationのruleValueで指定した引数が取得できる');
+	});
+
+
+	test('非同期バリデート失敗時の違反オブジェクトのreason', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule
+		});
+		var dfd = h5.async.deferred();
+		var result = validator.validate({
+			p1: dfd
+		});
+		var reason1 = {};
+		var reason2 = {};
+		dfd.reject(reason1, reason2);
+		var violation = result.invalidReason.p1.violation[0]
+		strictEqual(violation && violation.ruleName, 'customFunc', 'customFuncのviolationが取得できる');
+		ok(violation.reason, 'reasonプロパティが取得できる');
+		strictEqual(violation.reason[0], reason1, 'reasonにrejectで渡した第1引数が入っている');
+		strictEqual(violation.reason[1], reason2, 'reasonにrejectで渡した第2引数が入っている');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ValidationResult validateイベント', {
+		setup: function() {
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('非同期バリデートが１つ完了するタイミングでvalidateイベントが上がること',
+			function() {
+				var validator = this.validator;
+				validator.addRule({
+					p1: customAsyncRule,
+					p2: customAsyncRule,
+					p3: customAsyncRule
+				});
+				var dfd1 = h5.async.deferred();
+				var dfd2 = h5.async.deferred();
+				var dfd3 = h5.async.deferred();
+				var result = validator.validate({
+					p1: dfd1,
+					p2: dfd2,
+					p3: dfd3
+				});
+				var validateEventObjects = [];
+				result.addEventListener('validate', function(ev) {
+					validateEventObjects.push(ev);
+				});
+				dfd1.resolve();
+				strictEqual(validateEventObjects.length, 1,
+						'非同期バリデートがvalidで結果を返したイミングでvalidateイベントハンドラが１度呼ばれる');
+				validateEventObjects = [];
+				dfd2.reject();
+				strictEqual(validateEventObjects.length, 1,
+						'非同期バリデートがinvalidで結果を返したイミングでvalidateイベントハンドラが１度呼ばれる');
+				validateEventObjects = [];
+				dfd3.resolve();
+				strictEqual(validateEventObjects.length, 1,
+						'最後の非同期バリデートが完了したタイミングでvalidateイベントハンドラが１度呼ばれる');
+			});
+
+	test('validateイベントハンドラの引数とthis(成功時)', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule
+		});
+		var dfd1 = h5.async.deferred();
+		var result = validator.validate({
+			p1: dfd1
+		});
+		result.addEventListener('validate',
+				function(ev) {
+					strictEqual(this, result, 'イベントハンドラのthisはValidationResult');
+					strictEqual(ev.target, result, 'イベントオブジェクトのtargetはValidationResult');
+					strictEqual(ev.value, dfd1, 'イベントオブジェクトのvalueから値が取れること');
+					strictEqual(ev.isValid, true, 'イベントオブジェクトのisValidはtrue');
+					strictEqual(ev.violation, undefined, 'イベントオブジェクトのviolationはundefined');
+
+					strictEqual(this.validCount, 1, 'validateイベントハンドラの時点でvalidCountが増えている');
+					strictEqual(this.validProperties[0], 'p1',
+							'validateイベントハンドラの時点でvalidPropertiesが増えている');
+					deepEqual(this.validatingProperties, [],
+							'validateイベントハンドラの時点でvalidatingPropeertiesが減っている');
+					deepEqual(this.invalidProperties, [], 'invalidPropertiesには格納されない');
+					deepEqual(this.invalidCount, 0, 'invalidCountは増えない');
+				});
+		dfd1.resolve();
+	});
+
+	test('validateイベントハンドラの引数とthis(失敗時)', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule
+		});
+		var dfd1 = h5.async.deferred();
+		var result = validator.validate({
+			p1: dfd1
+		});
+		result.addEventListener('validate', function(ev) {
+			strictEqual(this, result, 'イベントハンドラのthisはValidationResult');
+			strictEqual(ev.target, result, 'イベントオブジェクトのtargetはValidationResult');
+			strictEqual(ev.value, dfd1, 'イベントオブジェクトのvalueから値が取れること');
+			strictEqual(ev.isValid, false, 'イベントオブジェクトのisValidはfalse');
+			var violation = ev.violation
+			ok(violation, 'イベントオブジェクトのviolationが取得できる');
+			strictEqual(violation, this.invalidReason.p1.violation[0],
+					'イベントオブジェクトのviolationはValidationResultに格納されているものと同じ');
+
+			strictEqual(this.invalidCount, 1, 'validateイベントハンドラの時点でinvalidCountが増えている');
+			strictEqual(this.invalidProperties[0], 'p1',
+					'validateイベントハンドラの時点でinvalidPropertiesが増えている');
+			deepEqual(this.validatingProperties, [],
+					'validateイベントハンドラの時点でvalidatingPropeertiesが減っている');
+			deepEqual(this.validProperties, [], 'validPropertiesには格納されない');
+			deepEqual(this.validCount, 0, 'validCountは増えない');
+		});
+		dfd1.reject();
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ValidationResult validateCompleteイベント', {
+		setup: function() {
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('非同期バリデートが全て完了したタイミングでvalidateCompleteイベントが上がること', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule,
+			p2: customAsyncRule,
+			p3: customAsyncRule
+		});
+		var dfd1 = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		var dfd3 = h5.async.deferred();
+		var result = validator.validate({
+			p1: dfd1,
+			p2: dfd2,
+			p3: dfd3
+		});
+		var validateCompleteEventObjects = [];
+		var validateEventObjects = [];
+		result.addEventListener('validate', function(ev) {
+			validateEventObjects.push(ev);
+		});
 		result.addEventListener('validateComplete', function(ev) {
-			ok(true, 'validateCompleteイベントが上がること');
-			start();
+			validateCompleteEventObjects.push(ev);
+			ok(validateEventObjects.length === 3, 'validateCompleteハンドラはvalidateイベントハンドラの呼び出しより後');
 		});
+		dfd1.resolve();
+		dfd2.resolve();
+		strictEqual(validateCompleteEventObjects.length, 0,
+				'非同期バリデートがまだ残っている場合、validateCompleteイベントハンドラは呼ばれない');
+		dfd3.resolve();
+		strictEqual(validateCompleteEventObjects.length, 1,
+				'最後の非同期バリデートが完了したタイミングでvalidateCompleteイベントハンドラが１度呼ばれる');
+	});
+
+	test('validateCompleteイベントハンドラの引数とthis', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1: customAsyncRule
+		});
+		var dfd1 = h5.async.deferred();
+		var result = validator.validate({
+			p1: dfd1
+		});
+		result.addEventListener('validateComplete', function(ev) {
+			strictEqual(this, result, 'イベントハンドラのthisはValidationResult');
+			strictEqual(ev.target, result, 'イベントオブジェクトのtargetはValidationResult');
+			console.log(ev);
+		});
+		dfd1.resolve();
 	});
 
 	//=============================
@@ -846,7 +1041,7 @@ $(function() {
 		}).isValid, true, 'nullで上書けること');
 	});
 
-	test('removeRule', function() {
+	test('removeRuleでルールの削除', function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
@@ -886,7 +1081,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('disableRuleで無効にするプロパティの指定', function() {
+	test('disableRuleでルールの無効化', function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
@@ -920,7 +1115,7 @@ $(function() {
 		ok(validator.validate({}).isValid, '配列で無効化するプロパティを複数指定できること');
 	});
 
-	test('enableRule', function() {
+	test('enableRuleでルールの有効化', function() {
 		var validator = this.validator;
 		validator.addRule({
 			p1: {
