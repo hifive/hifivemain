@@ -201,7 +201,7 @@
 			};
 		}
 		this.validatingProperties.splice($.inArray(name, this.validatingProperties), 1);
-		if (!this.validatingProperties.length) {
+		if (!this.isValid || !this.validatingProperties.length) {
 			this.isAllValid = this.isValid;
 		}
 	}
@@ -1234,7 +1234,7 @@
 				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
 				isValid: isValid,
 				// 非同期でvalidateしているものがあって現時点でisValid=falseでない(=全部OKかどうか決まっていない)時はisAllValidはnull
-				isAllValid: isAsync && isValid ? null : false
+				isAllValid: isValid ? (isAsync ? null : true) : false
 			});
 
 			if (isAsync) {
