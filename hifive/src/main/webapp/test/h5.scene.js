@@ -1245,7 +1245,7 @@ $(function() {
 		$('#qunit-fixture').append($newCcontainer);
 		try {
 			h5.scene.createSceneContainer($newCcontainer, true);
-			ok(false,'例外がスローされなかったためテスト失敗');
+			ok(false, '例外がスローされなかったためテスト失敗');
 		} catch (e) {
 			strictEqual(e.code, ERR.ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED, e.message);
 		}
