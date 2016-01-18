@@ -26,6 +26,9 @@ $(function() {
 
 	var BUILD_TYPE_PARAM = 'h5testenv.buildType=' + H5_TEST_ENV.buildType;
 
+	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.scene;
+
 	// =========================================================================
 	//
 	// Privates
@@ -1242,8 +1245,9 @@ $(function() {
 		$('#qunit-fixture').append($newCcontainer);
 		try {
 			h5.scene.createSceneContainer($newCcontainer, true);
+			ok(false,'例外がスローされなかったためテスト失敗');
 		} catch (e) {
-			ok(true, 'メインシーンコンテナを複数生成すると例外を投げること');
+			strictEqual(e.code, ERR.ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED, e.message);
 		}
 	});
 
