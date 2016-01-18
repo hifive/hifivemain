@@ -243,7 +243,7 @@ $(function() {
 		var validator = this.validator;
 		var current = new Date();
 		var currentTime = current.getTime();
-		var future = new Date(currentTime + 100);
+		var future = new Date(currentTime + 60000);
 		var past = new Date(currentTime - 1);
 		validator.addRule({
 			p1: {
@@ -272,7 +272,7 @@ $(function() {
 		var validator = this.validator;
 		var current = new Date();
 		var currentTime = current.getTime();
-		var future = new Date(currentTime + 100);
+		var future = new Date(currentTime + 60000);
 		var past = new Date(currentTime - 1);
 		validator.addRule({
 			p1: {
