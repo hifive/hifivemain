@@ -1280,9 +1280,9 @@
 			var properties = result.properties;
 			for (var i = 0, l = properties.length; i < l; i++) {
 				var name = properties[i];
-				if ($.inArray(name, validatingProperties)) {
+				if ($.inArray(name, validatingProperties) !== -1) {
 					var element = this.parentController._getElementByName(name);
-					this._showIndicator(element, name, validatingProperties[i]);
+					this._showIndicator(element, name, result);
 				} else {
 					this._hideIndicator(name);
 				}
