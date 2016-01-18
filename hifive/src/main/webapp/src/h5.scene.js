@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 NS Solutions Corporation
+ * Copyright (C) 2014-2016 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,13 +75,27 @@
 
 
 	/** シーンコンテナのタイトルデータ属性 */
-	var DATA_SCENE_TITLE = 'title';
+	var DATA_H5_SCENE_TITLE = 'h5-scene-title';
 
 	/** シーンコントローラのシーンタイトル定義プロパティ */
 	var CONTROLLER_SCENE_TITLE = 'sceneTitle';
 
 	/**
-	 * シーン遷移タイプ
+	 * シーン遷移時のパターン
+	 * <p>
+	 * シーン遷移時のnavigationTypeパラメータに指定する遷移時のパターンを表す定数です
+	 * </p>
+	 * <dl>
+	 * <dt>h5.scene.navigationType.NORMAL</dt>
+	 * <dd>"normal" … URLに開発者指定のパラメーターを入れます(デフォルト)。ブラウザバック等でパラメーター含めて再表示可能です。</dd>
+	 * <dt>h5.scene.navigationType.ONCE</dt>
+	 * <dd>"once" … URLに開発者指定のパラメーターを入れません。フレームワーク用パラメーターのみとなります。</dd>
+	 * <dt>h5.scene.navigationType.SILENT</dt>
+	 * <dd>"silent" … URLは変化させずに遷移します。</dd>
+	 * </dl>
+	 *
+	 * @memberOf h5.scene
+	 * @name navigationType
 	 */
 	var NAVIGATION_TYPE = {
 		NORMAL: 'normal',
@@ -90,7 +104,19 @@
 	};
 
 	/**
-	 * Ajaxメソッド
+	 * シーン遷移時のHTMLデータ取得時のHTTPメソッド
+	 * <p>
+	 * シーン遷移時のmethodパラメータに指定するHTMLデータ取得時のHTTPメソッドを表す定数です
+	 * </p>
+	 * <dl>
+	 * <dt>h5.scene.method.GET</dt>
+	 * <dd>"get" … GETメソッドで取得します(デフォルト)。</dd>
+	 * <dt>h5.scene.method.ONCE</dt>
+	 * <dd>"post" … POSTメソッドで取得します。ブラウザバックなどで再表示はできなくなります。</dd>
+	 * </dl>
+	 *
+	 * @memberOf h5.scene
+	 * @name method
 	 */
 	var METHOD = {
 		GET: 'get',
@@ -1716,6 +1742,7 @@
 	 * </p>
 	 *
 	 * @class
+	 * @name Scene
 	 */
 	/**
 	 * @private
@@ -1728,9 +1755,12 @@
 	$.extend(Scene.prototype, {
 		/**
 		 * シーン遷移イベントを発行します。
+		 * <p>
+		 * 第1引数には、{@link SceneContainerController.navigate}の引数と同じ形式でパラメータを指定してください。
+		 * </p>
 		 *
 		 * @param {String|Object} data
-		 * @memberOf ControllerScene
+		 * @memberOf Scene
 		 */
 		navigate: function(data) {
 			if (isDisposing(this.__controller)) {
@@ -1747,7 +1777,7 @@
 		 * </p>
 		 *
 		 * @returns {SceneContainerController} シーンコンテナ
-		 * @memberOf ControllerScene
+		 * @memberOf Scene
 		 */
 		getParentContainer: function() {
 			if (isDisposing(this.__controller)) {
@@ -1845,6 +1875,7 @@
 	/**
 	 * 別ウィンドウをオープンします。
 	 *
+	 * @private
 	 * @param url
 	 * @param name
 	 * @param features
@@ -2389,11 +2420,9 @@
 			this.isMain = !!isMain;
 			this.followTitle = isMain && args.followTitle;
 
-			if (this.isMain) {
-				if (mainContainer) {
-					// すでにメインシーンコンテナが生成されている場合にエラー
-					throwFwError(ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED);
-				}
+			if (this.isMain && mainContainer) {
+				// すでにメインシーンコンテナが生成されている場合にエラー
+				throwFwError(ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED);
 			}
 
 			this._containerName = $(element).attr(DATA_H5_MAIN_CONTAINER)
@@ -2435,6 +2464,11 @@
 					that._currentController = controller;
 					that._transition.onChangeEnd(that.rootElement, null, controller.rootElement);
 					that._transition = null;
+					// タイトルの設定
+					var title = that._getTitleFromCurrentScene();
+					if (title != null) {
+						that.setTitle(title);
+					}
 				});
 			}
 		},
@@ -2457,6 +2491,8 @@
 				// TODO(鈴木) Router処理停止
 				this._router.stop();
 				this._router = null;
+				// メインシーンコンテナインスタンス保持用変数をnullに更新
+				mainContainer = null;
 			}
 		},
 
@@ -2834,9 +2870,9 @@
 		 */
 		_getTitleFromCurrentScene: function() {
 			var elm = this._currentController.rootElement;
-			var dataTitle = $(elm).find('[data-' + DATA_SCENE_TITLE + ']').data(DATA_SCENE_TITLE);
+			var dataTitle = $(elm).data(DATA_H5_SCENE_TITLE);
 			if (dataTitle != null) {
-				// data-title指定
+				// data-h5-scene-title指定
 				return dataTitle;
 			}
 			// titleタグ
@@ -3081,6 +3117,19 @@
 	// フック
 	h5internal.core.addControllerInstantiationHook(function(c) {
 		// TODO controllerがすでにsceneプロパティを持っていたらエラーでよいか
+		/**
+		 * シーン操作に関するモジュール
+		 * <p>
+		 * コントローラ化の際に、コントローラに"scene"プロパティが追加されます。
+		 * </p>
+		 * <p>
+		 * 使用方法については{@link Scene}をご覧ください。
+		 * </p>
+		 *
+		 * @memberOf Controller
+		 * @type Scene
+		 * @name scene
+		 */
 		c.scene = new Scene(c);
 	});
 
@@ -3185,7 +3234,6 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.scene', {
-		openWindow: openWindow,
 		createSceneContainer: createSceneContainer,
 		init: init,
 		getMainSceneContainer: getMainSceneContainer,

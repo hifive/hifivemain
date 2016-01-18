@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 NS Solutions Corporation
+ * Copyright (C) 2015-2016 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 	/**
 	 * デフォルトで定義済みのルール名
 	 */
-	var DEFAULT_RULE_NAME_REQUIRED = 'required';
+	var DEFAULT_RULE_NAME_required = 'required';
 	var DEFAULT_RULE_NAME_CUSTOM_FUNC = 'customFunc';
 	var DEFAULT_RULE_NAME_ASSERT_NULL = 'assertNull';
 	var DEFAULT_RULE_NAME_ASSERT_NOT_NULL = 'assertNotNull';
@@ -200,13 +200,9 @@
 				violation: [ev.violation]
 			};
 		}
-		this.validatingProperties.splice(this.validatingProperties.indexOf(name), 1);
-
-		if (this.validCount + this.invalidCount === this.properties.length) {
+		this.validatingProperties.splice($.inArray(name, this.validatingProperties), 1);
+		if (!this.isValid || !this.validatingProperties.length) {
 			this.isAllValid = this.isValid;
-			this.dispatchEvent({
-				type: EVENT_VALIDATE_COMPLETE
-			});
 		}
 	}
 
@@ -285,6 +281,9 @@
 		 * <p>
 		 * 現在完了しているバリデート全てについてバリデートが通ったかどうかをtrueまたはfalseで保持します。
 		 * </p>
+		 * <p>
+		 * 例えば非同期バリデートがあり、全てのバリデートが完了していない場合でもisValidには判定済みのものについてバリデートが通ったかどうかを保持します。
+		 * </p>
 		 *
 		 * @memberOf ValidationResult
 		 * @name isValid
@@ -335,7 +334,7 @@
 		 *     value: 101,                // バリデート対象の値
 		 *     violation: [{              // 違反理由オブジェクトの配列
 		 *       ruleName: 'max',  // バリデートを行ったルール
-		 *       param: {max:100, inclusive: true},  // バリデート関数に渡されたパラメータ
+		 *       ruleValue: {max:100, inclusive: true},  // バリデート関数に渡されたパラメータ
 		 *       reason: // 非同期バリデートのみ。非同期バリデート関数が返したプロミスのfailハンドラに渡された引数リスト。同期の場合は常にnull
 		 *     }]
 		 *   },
@@ -418,6 +417,7 @@
 	 *
 	 * @memberOf ValidationResult
 	 * @name abort
+	 * @function
 	 */
 	ValidationResult.prototype.abort = function() {
 		this.removeEventListener(EVENT_VALIDATE, validateEventListener);
@@ -1153,7 +1153,7 @@
 					var ruleName = sortedRuleNames[i];
 					var args = rule[ruleName];
 					if ((!obj.hasOwnProperty(prop) || args == null)
-							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRED && args)) {
+							&& !(ruleName === DEFAULT_RULE_NAME_required && args)) {
 						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
 						// また、argsがundefinedならそのルールはチェックしない
 						// ただし、required指定がある場合はチェックする
@@ -1198,8 +1198,8 @@
 						}));
 					}
 
-					// 同期の場合
-					if (!ret || isPromise(ret) && isResolved(ret)) {
+					// 同期でエラーが返ってきた(falseまたはreject済みプロミスが返ってきた場合)
+					if (!ret || isPromise(ret) && isRejected(ret)) {
 						// validate関数がfalseを返したまたは、promiseを返したけどすでにreject済みの場合はvalidate失敗
 						// invalidReasonの作成
 						invalidReason = invalidReason || {};
@@ -1233,11 +1233,22 @@
 				isAsync: isAsync,
 				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
 				isValid: isValid,
-				// 非同期でvalidateしているものがあって決まっていない時はisAllValidはnull
-				isAllValid: isAsync ? null : isValid
+				// 非同期でvalidateしているものがあって現時点でisValid=falseでない(=全部OKかどうか決まっていない)時はisAllValidはnull
+				isAllValid: isValid ? (isAsync ? null : true) : false
 			});
 
 			if (isAsync) {
+				/*
+				 * validateが全て完了しているかチェックしてvalidateCompelteを上げる関数
+				 */
+				function checkValidateComplete(result) {
+					if (result.validCount + result.invalidCount === result.properties.length) {
+						result.isAllValid = result.isValid;
+						result.dispatchEvent({
+							type: EVENT_VALIDATE_COMPLETE
+						});
+					}
+				}
 				var that = this;
 				// 非同期の場合、結果が返って気次第イベントをあげる
 				for ( var prop in propertyWaitingPromsies) {
@@ -1252,6 +1263,7 @@
 								// validate対象のオブジェクトに指定された値
 								value: obj[_prop]
 							});
+							checkValidateComplete(validationResult);
 						};
 					})(prop);
 					var failHandler = (function(_prop, _promises, _param) {
@@ -1279,6 +1291,7 @@
 								value: value,
 								violation: that._createViolation(ruleName, ruleValue, arguments),
 							});
+							checkValidateComplete(validationResult);
 						};
 					})(prop, promises);
 					// failハンドラでどのプロミスの失敗かを判定したいのでwaitForPromisesではなくwhenを使用している
@@ -1317,6 +1330,10 @@
 		 * @param {string} ruleName ルール名
 		 */
 		_convertBeforeValidate: function(value, ruleName) {
+			if (value == null) {
+				// nullまたはundefinedの場合は型変換しない
+				return value;
+			}
 			switch (ruleName) {
 			case DEFAULT_RULE_NAME_MAX:
 			case DEFAULT_RULE_NAME_MIN:
@@ -1330,7 +1347,7 @@
 	};
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 51);
+	defineRule(DEFAULT_RULE_NAME_required, rule.required, null, 51);
 	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 NS Solutions Corporation
+ * Copyright (C) 2014-2016 NS Solutions Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ $(function() {
 	var WAIT_TIME_FOR_OPEN_WINDOW = 100;
 
 	var BUILD_TYPE_PARAM = 'h5testenv.buildType=' + H5_TEST_ENV.buildType;
+
+	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
+	var ERR = ERRCODE.h5.scene;
 
 	// =========================================================================
 	//
@@ -1137,4 +1140,242 @@ $(function() {
 	//			strictEqual(moduleObj.executedMethodArg, 'ok', 'invokeで実行したメソッドに引数が渡されていること');
 	//		});
 	//	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]メインシーンコンテナをdispose', {
+		setup: function() {
+			this.originalTitle = document.title;
+			var $container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			$container.append($scene);
+			$('#qunit-fixture').append($container);
+			this.container = h5.scene.createSceneContainer($container, true);
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('メインシーンコンテナをdispose後に再生成できること', function() {
+		var container = this.container;
+		container.dispose().done(function() {
+			var $container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			$container.append($scene);
+			$('#qunit-fixture').append($container);
+			try {
+				h5.scene.createSceneContainer($container, true);
+				ok(true, 'メインシーンコンテナを再生成できること');
+			} catch (e) {
+				ok(false, 'メインシーンコンテナの再生成に失敗');
+			}
+		}).always(start);
+	});
+
+	asyncTest('dispose後にh5.scene.getMainSceneContainer()はnullを返すこと', function() {
+		this.container.dispose().done(
+				function() {
+					var mainContainer = h5.scene.getMainSceneContainer();
+					strictEqual(mainContainer, null,
+							'dispose後はh5.scene.getMainSceneContainer()がnullを返すこと');
+				}).always(start);
+	});
+
+	asyncTest('dispose後にh5.scene.getSceneContainerByName()はnullを返すこと', function() {
+		this.container.dispose().done(
+				function() {
+					var mainContainer = h5.scene
+							.getSceneContainerByName('data-h5-main-scene-container');
+					strictEqual(mainContainer, null,
+							'dispose後はh5.scene.getSceneContainerByName()がnullを返すこと');
+				}).always(start);
+	});
+
+	asyncTest('dispose後にh5.scene.getSceneContainers()は空配列を返すこと', function() {
+		this.container.dispose().done(
+				function() {
+					var mainContainer = h5.scene
+							.getSceneContainers('[data-h5-main-scene-container]');
+					strictEqual(mainContainer.length, 0,
+							'dispose後はh5.scene.getSceneContainers()が空配列を返すこと');
+				}).always(start);
+	});
+
+	asyncTest('dispose後に再生成しh5.scene.getMainSceneContainer()で取得できること', function() {
+		this.container.dispose().done(function() {
+			var $container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			$container.append($scene);
+			$('#qunit-fixture').append($container);
+			h5.scene.createSceneContainer($container, true);
+			var container = h5.scene.getMainSceneContainer();
+			ok(container != null, 'メインシーンコンテナを取得できること');
+		}).always(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]メインシーンコンテナを複数生成', {
+		setup: function() {
+			this.originalTitle = document.title;
+			var $container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			$container.append($scene);
+			$('#qunit-fixture').append($container);
+			this.container = h5.scene.createSceneContainer($container, true);
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('メインシーンコンテナを複数生成できないこと', function() {
+		var $newCcontainer = $('<div>');
+		var $scene = $('<div data-h5-scene>');
+		$newCcontainer.append($scene);
+		$('#qunit-fixture').append($newCcontainer);
+		try {
+			h5.scene.createSceneContainer($newCcontainer, true);
+			ok(false, '例外がスローされなかったためテスト失敗');
+		} catch (e) {
+			strictEqual(e.code, ERR.ERR_CODE_MAIN_CONTAINER_ALREADY_CREATED, e.message);
+		}
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module(
+			'[jquery#-1.6.4;browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-h5-scene-title属性を持つこと',
+			{
+				setup: function() {
+					this.pathname = location.pathname;
+					this.url = 'scenedata/page/title/dataTitle.html';
+					this.originalTitle = document.title;
+					this.$container = $('<div>');
+					var $scene = $('<div data-h5-scene>');
+					this.$container.append($scene);
+					$('#qunit-fixture').append(this.$container);
+					this.container = h5.scene.createSceneContainer(this.$container, true);
+				},
+				teardown: function() {
+					clearController();
+					document.title = this.originalTitle;
+					history.pushState(null, null, this.pathname);
+				}
+			});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('タイトルに設定すること', function() {
+		var container = this.container;
+		container.navigate({
+			to: this.url
+		}).done(function() {
+			var title = container.getTitle();
+			strictEqual(title, 'changeTitle', 'シーン要素のdata-h5-scene-titleをgetTitle()で取得できること');
+		}).always(start);
+	});
+
+	asyncTest('document.titleへ反映すること', function() {
+		var container = this.container;
+		container.navigate({
+			to: this.url
+		}).done(
+				function() {
+					strictEqual(document.title, 'changeTitle',
+							'シーン要素のdata-h5-scene-titleをdocument.titleに反映すること');
+				}).always(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-h5-scene-title属性を持つ', {
+		setup: function() {
+			this.url = 'scenedata/page/title/dataTitle.html';
+			this.originalTitle = document.title;
+			this.$container = $('<div>');
+			var $scene = $('<div data-h5-scene>');
+			this.$container.append($scene);
+			$('#qunit-fixture').append(this.$container);
+			this.container = h5.scene.createSceneContainer(this.$container, false);
+		},
+		teardown: function() {
+			clearController();
+			document.title = this.originalTitle;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('タイトルに設定すること', function() {
+		var container = this.container;
+		container.navigate({
+			to: this.url
+		}).done(function() {
+			var title = container.getTitle();
+			strictEqual(title, 'changeTitle', 'シーン要素のdata-h5-scene-titleをgetTitle()で取得できること');
+		}).always(start);
+	});
+
+	asyncTest('document.titleへ反映しない', function() {
+		var container = this.container;
+		var that = this;
+		container.navigate({
+			to: this.url
+		}).done(
+				function() {
+					strictEqual(document.title, that.originalTitle,
+							'シーン要素のdata-h5-scene-titleをdocument.titleに反映しないこと');
+				}).always(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]createSceneContainer() data-h5-scene-title属性', {
+		setup: function() {
+			this.originalTitle = document.title;
+			this.$container = $('<div>');
+			var $scene = $('<div data-h5-scene data-h5-scene-title="testDataTitle">');
+			this.$container.append($scene);
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			clearController();
+			document.title = this.originalTitle;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('メインシーンコンテナの場合 メインシーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container, true);
+		var title = container.getTitle();
+		strictEqual(title, 'testDataTitle', 'メインシーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること');
+		strictEqual(document.title, 'testDataTitle',
+				'document.titleがdata-h5-scene-title属性値に反映されること');
+	});
+
+	test('シーンコンテナの場合 シーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container, false);
+		var title = container.getTitle();
+		strictEqual(title, 'testDataTitle', 'シーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること');
+		strictEqual(document.title, this.originalTitle,
+				'document.titleがdata-h5-scene-title属性値に反映されないこと');
+	});
+
 });

@@ -104,7 +104,7 @@ form {
 		<p>FormControllerのバインド先(form1)</p>
 		<p>
 			<input class="form-controls" type="text" name="user" value=""
-				placeholder="必須" data-require />
+				placeholder="必須" data-required />
 		</p>
 		<p>
 			<input class="form-controls" type="text" name="mail" value="no-name"
@@ -113,11 +113,11 @@ form {
 		<p>
 			同じ名前 <label><input class="form-controls" type="text"
 				name="text2" value="a" /> </label><input type="text" name="text2" value="b"
-				data-require />
+				data-required />
 		</p>
 		<p>
 			別のフォーム(form2)に属するinput<input class="form-controls" type="text"
-				form="form2" name="text3" value="form=form2のinput" data-require>
+				form="form2" name="text3" value="form=form2のinput" data-required>
 		</p>
 		<p>
 			<input type="file" class="form-controls" name="file1" value="" /> <input
@@ -125,17 +125,17 @@ form {
 			<input type="file" name="file2" value="" multiple />
 		</p>
 		<p>
-			<textarea class="form-controls" name="textarea1" data-require>fuga</textarea>
+			<textarea class="form-controls" name="textarea1" data-required>fuga</textarea>
 		</p>
 		<p>
-			<select class="form-controls" name="select1" data-require>
+			<select class="form-controls" name="select1" data-required>
 				<option value="1" selected>1</option>
 				<option value="2">2</option>
 			</select>
 		</p>
 		<p>
 			<select class="form-controls" name="select2" multiple size="3"
-				style="width: 120px" data-require>
+				style="width: 120px" data-required>
 				<option value="1" selected>1</option>
 				<option value="2">2</option>
 				<option value="3" selected>3</option>
@@ -143,21 +143,21 @@ form {
 		</p>
 		<div>
 			<label><input class="form-controls" type="radio"
-				name="radio1" value="ok" checked data-require>ok</label> <label><input
-				type="radio" name="radio1" value="ng" data-require>ng </label> <label><input
-				type="checkbox" name="check1" value="c1" checked data-require>c1</label>
+				name="radio1" value="ok" checked data-required>ok</label> <label><input
+				type="radio" name="radio1" value="ng" data-required>ng </label> <label><input
+				type="checkbox" name="check1" value="c1" checked data-required>c1</label>
 			<label><input class="form-controls" type="checkbox"
-				name="check1" value="c2" data-require>c2 </label>
+				name="check1" value="c2" data-required>c2 </label>
 		</div>
 
 		<p>
 			同じ名前 <select class="form-controls" name="select3" multiple size="3"
-				style="width: 120px" data-require>
+				style="width: 120px" data-required>
 				<option value="1">1</option>
 				<option value="2" selected>2</option>
 				<option value="3" selected>3</option>
 			</select> <select class="form-controls" name="select3" multiple size="3"
-				style="width: 120px" data-require>
+				style="width: 120px" data-required>
 				<option value="3" selected>3</option>
 				<option value="4" selected>4</option>
 				<option value="5">5</option>
@@ -182,7 +182,7 @@ form {
 		</p>
 		<p>
 			form1に属するinput<input class="form-controls" type="text" form="form1"
-				name="text6" value="" placeholder="必須" data-require>
+				name="text6" value="" placeholder="必須" data-required>
 		</p>
 	</form>
 </body>
