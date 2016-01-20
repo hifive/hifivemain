@@ -30,7 +30,7 @@
 	/**
 	 * デフォルトで定義済みのルール名
 	 */
-	var DEFAULT_RULE_NAME_required = 'required';
+	var DEFAULT_RULE_NAME_REQUIRED = 'required';
 	var DEFAULT_RULE_NAME_CUSTOM_FUNC = 'customFunc';
 	var DEFAULT_RULE_NAME_ASSERT_NULL = 'assertNull';
 	var DEFAULT_RULE_NAME_ASSERT_NOT_NULL = 'assertNotNull';
@@ -1153,7 +1153,7 @@
 					var ruleName = sortedRuleNames[i];
 					var args = rule[ruleName];
 					if ((!obj.hasOwnProperty(prop) || args == null)
-							&& !(ruleName === DEFAULT_RULE_NAME_required && args)) {
+							&& !(ruleName === DEFAULT_RULE_NAME_REQUIRED && args)) {
 						// そもそもvalidate対象のオブジェクトにチェック対象のプロパティがない場合、チェックしない
 						// また、argsがundefinedならそのルールはチェックしない
 						// ただし、required指定がある場合はチェックする
@@ -1347,7 +1347,7 @@
 	};
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_required, rule.required, null, 51);
+	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 51);
 	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50);
 	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50);
