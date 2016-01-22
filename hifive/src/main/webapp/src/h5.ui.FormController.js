@@ -1307,9 +1307,9 @@
 		 */
 		_onFocus: function(element, name, validationResult) {
 			var validatingProperties = validationResult.validatingProperties;
-			if ($.inArray(name, validatingProperties)) {
+			if ($.inArray(name, validatingProperties) !== -1) {
 				var element = this.parentController._getElementByName(name);
-				this._showIndicator(element, name, validatingProperties[i]);
+				this._showIndicator(element, name, validationResult);
 			} else {
 				this._hideIndicator(name);
 			}
