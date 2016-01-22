@@ -902,7 +902,11 @@
 				}));
 				return;
 			}
-			var baloon = this._baloonController.create(message);
+			var option = {
+				target: target,
+				container: container
+			};
+			var baloon = this._baloonController.create(message, option);
 			// 吹き出しの表示
 			baloon.show({
 				target: target,

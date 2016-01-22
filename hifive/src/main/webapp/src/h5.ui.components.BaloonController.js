@@ -31,7 +31,11 @@
 		// display:noneで追加する
 		this._$arrowbox = $(arrowboxTmpl).css('display', 'none');
 		this.setContent(content);
-		$(document.body).append(this._$arrowbox);
+		// containerが指定されていればcontainerを親要素とする
+		// containerが指定されてなければtargetを親要素とする
+		// targetも指定されてなければbodyを親要素とする
+		var container = option && option.container || option.target.parentElement || document.body;
+		$(container).append(this._$arrowbox);
 		// Baloonインスタンスを要素に持たせる
 		this._$arrowbox.data('validation-baloon', this);
 
@@ -162,9 +166,7 @@
 		 * @param {String|DOM|jQuery} content 吹き出しの中身
 		 */
 		create: function(content, option) {
-			var container = option && option.container || document.body;
 			var $baloon = this.view.get('baloon');
-			$(container).append($baloon);
 
 			return new Baloon($baloon, content, option);
 		},
