@@ -19,14 +19,15 @@
 	'use strict';
 
 	h5.core.expose({
-		__name: 'scenedata.controller.ToController',
+		__name: 'scenedata.controller.SceneTitleAndDataTitleController',
 		__construct: function(context) {
 			this.args = context.args || {};
+			$(this.rootElement).append('<div data-h5-scene-title="changeTitle"></div>');
 		},
 		__init: function() {
 			var $message = $('<div class="message">');
 			$(this.rootElement).append($message);
-			$message.text(this.args.test || 'ToController');
+			$message.text(this.args.test || 'SceneTitleAndDataTitleController');
 		},
 		sceneTitle: 'changeTitleBySceneTitleProperty'
 	});
