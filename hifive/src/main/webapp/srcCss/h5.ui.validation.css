@@ -16,7 +16,7 @@
  *
  */
 /* 吹き出し(共通) */
-.validation-baloon {
+.validation-balloon {
 	padding: 5px;
 	position: absolute;
 	background: #ffffee;
@@ -25,7 +25,7 @@
 }
 
 /* 吹き出し(上) */
-.validation-baloon.top:after,.validation-baloon.top:before {
+.validation-balloon.top:after,.validation-balloon.top:before {
 	top: 100%;
 	left: 50%;
 	border: solid transparent;
@@ -36,14 +36,14 @@
 	pointer-events: none;
 }
 
-.validation-baloon.top:after {
+.validation-balloon.top:after {
 	border-color: rgba(255, 255, 238, 0);
 	border-top-color: #ffffee;
 	border-width: 30px;
 	margin-left: -30px;
 }
 
-.validation-baloon.top:before {
+.validation-balloon.top:before {
 	border-color: rgba(21, 34, 66, 0);
 	border-top-color: #152242;
 	border-width: 31px;
@@ -51,7 +51,7 @@
 }
 
 /** 吹き出し(下) **/
-.validation-baloon.bottom:after,.validation-baloon.bottom:before {
+.validation-balloon.bottom:after,.validation-balloon.bottom:before {
 	bottom: 100%;
 	left: 50%;
 	border: solid transparent;
@@ -62,14 +62,14 @@
 	pointer-events: none;
 }
 
-.validation-baloon.bottom:after {
+.validation-balloon.bottom:after {
 	border-color: rgba(255, 255, 238, 0);
 	border-bottom-color: #ffffee;
 	border-width: 30px;
 	margin-left: -30px;
 }
 
-.validation-baloon.bottom:before {
+.validation-balloon.bottom:before {
 	border-color: rgba(21, 34, 66, 0);
 	border-bottom-color: #152242;
 	border-width: 31px;
@@ -77,7 +77,7 @@
 }
 
 /** 吹き出し(左) **/
-.validation-baloon.left:after,.validation-baloon.left:before {
+.validation-balloon.left:after,.validation-balloon.left:before {
 	left: 100%;
 	top: 50%;
 	border: solid transparent;
@@ -88,14 +88,14 @@
 	pointer-events: none;
 }
 
-.validation-baloon.left:after {
+.validation-balloon.left:after {
 	border-color: rgba(255, 255, 238, 0);
 	border-left-color: #ffffee;
 	border-width: 30px;
 	margin-top: -30px;
 }
 
-.validation-baloon.left:before {
+.validation-balloon.left:before {
 	border-color: rgba(21, 34, 66, 0);
 	border-left-color: #152242;
 	border-width: 31px;
@@ -103,7 +103,7 @@
 }
 
 /** 吹き出し(右) **/
-.validation-baloon.right:after,.validation-baloon.right:before {
+.validation-balloon.right:after,.validation-balloon.right:before {
 	right: 100%;
 	top: 50%;
 	border: solid transparent;
@@ -114,14 +114,14 @@
 	pointer-events: none;
 }
 
-.validation-baloon.right:after {
+.validation-balloon.right:after {
 	border-color: rgba(255, 255, 238, 0);
 	border-right-color: #ffffee;
 	border-width: 30px;
 	margin-top: -30px;
 }
 
-.validation-baloon.right:before {
+.validation-balloon.right:before {
 	border-color: rgba(21, 34, 66, 0);
 	border-right-color: #152242;
 	border-width: 31px;
