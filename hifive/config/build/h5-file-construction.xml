@@ -112,6 +112,7 @@
 		<files>
 			<file name="h5.ui.js" />
 			<file name="h5.ui.jqm.manager.js" />
+			<file name="h5.ui.components.BalloonController.js" />
 			<file name="h5.ui.FormController.js" />
 		</files>
 		<cssfiles>
