@@ -722,10 +722,10 @@
 		 *
 		 * @param {Any} value 判定する値
 		 * @param {integer} integer 整数桁数の上限値
-		 * @param {integer} fruction 小数桁数の上限値
+		 * @param {integer} fraction 小数桁数の上限値
 		 * @returns {boolean}
 		 */
-		digits: function(value, integer, fruction) {
+		digits: function(value, integer, fraction) {
 			if (value == null) {
 				return true;
 			}
@@ -751,17 +751,17 @@
 				}
 			}
 
-			if (fruction != null) {
+			if (fraction != null) {
 				// 小数部分判定
 				var pointIndex = value.indexOf('.');
 				if (pointIndex === -1) {
 					// 小数点が無い場合はvalid
 					return true;
 				}
-				// 小数部分の桁数がfruction以下の長さかどうか返す
-				return value.slice(pointIndex + 1).length <= fruction;
+				// 小数部分の桁数がfraction以下の長さかどうか返す
+				return value.slice(pointIndex + 1).length <= fraction;
 			}
-			// integerもfructionもどちらもnullならvalid
+			// integerもfractionもどちらもnullならvalid
 			return true;
 		},
 
@@ -1015,8 +1015,8 @@
 		 * </tr>
 		 * <tr>
 		 * <td>digits</td>
-		 * <td>[string, fruction]</td>
-		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfruction桁数以下の数値を表す文字列であること</td>
+		 * <td>[string, fraction]</td>
+		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfraction桁数以下の数値を表す文字列であること</td>
 		 * </tr>
 		 * <tr>
 		 * <td>pattern</td>
@@ -1357,7 +1357,7 @@
 	defineRule(DEFAULT_RULE_NAME_MIN, rule.min, ['min', 'inclusive'], 50);
 	defineRule(DEFAULT_RULE_NAME_FUTURE, rule.future, null, 50);
 	defineRule(DEFAULT_RULE_NAME_PAST, rule.past, null, 50);
-	defineRule(DEFAULT_RULE_NAME_DIGITS, rule.digits, ['integer', 'fruction'], 50);
+	defineRule(DEFAULT_RULE_NAME_DIGITS, rule.digits, ['integer', 'fraction'], 50);
 	defineRule(DEFAULT_RULE_NAME_PATTERN, rule.pattern, ['regexp'], 50);
 	defineRule(DEFAULT_RULE_NAME_SIZE, rule.size, ['min', 'max'], 50);
 

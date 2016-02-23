@@ -65,7 +65,7 @@
 					param, (param.violation[0].ruleValue.inclusive ? "以下の" : "未満の"));
 		},
 		pattern: '{displayName}は正規表現{violation[0].ruleValue.regexp}を満たす文字列を入力してください。',
-		digits: '{displayName}は整数部分{violation[0].ruleValue.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
+		digits: '{displayName}は整数部分{violation[0].ruleValue.integer}桁、小数部分{fraction}桁以下の数値を入力してください。',
 		size: function(param) {
 			var upperLimitMsg = '';
 			var lowerLimitMsg = '';
