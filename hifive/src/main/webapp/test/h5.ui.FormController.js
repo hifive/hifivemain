@@ -1810,11 +1810,11 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('バリデート結果出力プラグイン baloon', {
+	module('バリデート結果出力プラグイン balloon', {
 		setup: function() {
 			stop();
 			this.errorMessage = 'errorMessage';
-			var html = '<form class="testForm"><div class="testBaloonContainer">';
+			var html = '<form class="testForm"><div class="testBalloonContainer">';
 			html += '<input class="inputA" name="a"></div></form>';
 			$('body').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
@@ -1831,29 +1831,29 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('baloonプラグインを有効化できること', function() {
+	test('balloonプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('baloon');
-		var pluginCtrl = formCtrl.getOutput('baloon');
-		strictEqual(pluginCtrl.__name, 'h5.ui.validation.ErrorBaloon', 'baloonプラグインを有効化できること');
+		formCtrl.addOutput('balloon');
+		var pluginCtrl = formCtrl.getOutput('balloon');
+		strictEqual(pluginCtrl.__name, 'h5.ui.validation.ErrorBalloon', 'balloonプラグインを有効化できること');
 	});
 
 	asyncTest('バリデートエラーがあってもバルーンが表示されないこと', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('baloon');
+		formCtrl.addOutput('balloon');
 		formCtrl.addRule({
 			a: {
 				required: true
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+		strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		start();
 	});
 
 	asyncTest('バルーンを表示する位置を文字列で指定できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('baloon');
+		formCtrl.addOutput('balloon');
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -1861,7 +1861,7 @@ $(function() {
 		});
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					placement: 'bottom'
 				}
 			}
@@ -1870,19 +1870,19 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
-			var baloonPos = $('.validation-baloon').position();
+			var balloonPos = $('.validation-balloon').position();
 			var inputPos = $('.inputA').position();
-			ok(baloonPos.top > inputPos.top, 'バルーンを表示する位置を文字列で指定できること');
+			ok(balloonPos.top > inputPos.top, 'バルーンを表示する位置を文字列で指定できること');
 		}).always(start);
 	});
 
 	asyncTest('バルーン要素を配置するコンテナを設定できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('baloon');
+		formCtrl.addOutput('balloon');
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -1890,8 +1890,8 @@ $(function() {
 		});
 		formCtrl.setSetting({
 			output: {
-				baloon: {
-					container: '.testBaloonContainer'
+				balloon: {
+					container: '.testBalloonContainer'
 				}
 			}
 		});
@@ -1899,19 +1899,19 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(
 				function() {
-					ok($('.validation-baloon').parent().hasClass('testBaloonContainer'),
+					ok($('.validation-balloon').parent().hasClass('testBalloonContainer'),
 							'バルーン要素を配置するコンテナを設定できること');
 				}).always(start);
 	});
 
 	asyncTest('バリデート結果表示をリセットできること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('baloon');
+		formCtrl.addOutput('balloon');
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -1921,24 +1921,24 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			formCtrl.resetValidation();
-			// TODO 要再考。baloonプラグインのバリデート結果のリセットはどういう意味を考える
-			strictEqual($('.validation-baloon').length, 0, 'バリデート結果表示をリセットできること');
+			// TODO 要再考。Balloonプラグインのバリデート結果のリセットはどういう意味を考える
+			strictEqual($('.validation-balloon').length, 0, 'バリデート結果表示をリセットできること');
 		}).always(start);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('baloonプラグイン 全体バリデートを行った場合', {
+	module('balloonプラグイン 全体バリデートを行った場合', {
 		setup: function() {
 			stop();
 			this.errorMessage = 'errorMessage';
-			var html = '<form class="testForm"><div class="testBaloonContainer">';
+			var html = '<form class="testForm"><div class="testBalloonContainer">';
 			html += '<input class="inputA" name="a"></div></form>';
 			$('body').append(html);
 			var formCtrl = this.formController = h5.core.controller('.testForm',
@@ -1949,7 +1949,7 @@ $(function() {
 						required: true
 					}
 				});
-				this.addOutput('baloon');
+				this.addOutput('balloon');
 				formCtrl.validate();
 				start();
 			});
@@ -1968,13 +1968,13 @@ $(function() {
 		formCtrl.validate();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
@@ -1982,11 +1982,11 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない'
 		}).done(function() {
-			strictEqual($('.validation-baloon').length, 1, 'バルーンが表示されること');
+			strictEqual($('.validation-balloon').length, 1, 'バルーンが表示されること');
 		}).always(start);
 	});
 
@@ -1994,19 +1994,19 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 		}).done(function() {
 			$('.inputA').blur();
 			gate({
 				func: function() {
-					return $('.validation-baloon').length === 0;
+					return $('.validation-balloon').length === 0;
 				},
 				failMsg: 'バルーンが非表示にならない',
 				maxWait: 1000
 			}).done(function() {
-				strictEqual($('.validation-baloon').length, 0, 'バルーンが非表示になること');
+				strictEqual($('.validation-balloon').length, 0, 'バルーンが非表示になること');
 			}).always(start);
 		}).fail(start);
 	});
@@ -2016,19 +2016,19 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 		}).done(function() {
 			$('.inputA').keyup();
 			gate({
 				func: function() {
-					return $('.validation-baloon').length === 1;
+					return $('.validation-balloon').length === 1;
 				},
 				failMsg: 'バルーンが表示されない',
 				maxWait: 1000
 			}).done(function() {
-				strictEqual($('.validation-baloon').length, 1, 'バルーンが表示されること');
+				strictEqual($('.validation-balloon').length, 1, 'バルーンが表示されること');
 			}).always(start);
 		}).fail(start);
 	});
@@ -2037,13 +2037,13 @@ $(function() {
 		$('.inputA').change();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
@@ -2052,20 +2052,20 @@ $(function() {
 		$('.inputA').click();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('baloonプラグイン 全体バリデートを行っていない場合', {
+	module('balloonプラグイン 全体バリデートを行っていない場合', {
 		setup: function() {
 			stop();
 			this.errorMessage = 'errorMessage';
@@ -2079,7 +2079,7 @@ $(function() {
 						required: true
 					}
 				});
-				this.addOutput('baloon');
+				this.addOutput('balloon');
 				start();
 			});
 		},
@@ -2096,13 +2096,13 @@ $(function() {
 		this.formController.validate();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
@@ -2110,13 +2110,13 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
@@ -2124,13 +2124,13 @@ $(function() {
 		$('.inputA').blur();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
@@ -2138,13 +2138,13 @@ $(function() {
 		$('.inputA').keyup();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
@@ -2152,13 +2152,13 @@ $(function() {
 		$('.inputA').change();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
@@ -2166,20 +2166,20 @@ $(function() {
 		$('.inputA').click();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
 			ok(false, 'バルーンが表示される');
 		}).fail(function() {
-			strictEqual($('.validation-baloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
 		}).always(start);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('baloonプラグイン バルーンを表示する位置を指定', {
+	module('balloonプラグイン バルーンを表示する位置を指定', {
 		setup: function() {
 			stop();
 			this.errorMessage = 'errorMessage';
@@ -2194,7 +2194,7 @@ $(function() {
 						required: true
 					}
 				});
-				this.addOutput('baloon');
+				this.addOutput('balloon');
 				start();
 			});
 		},
@@ -2211,7 +2211,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					placement: 'top'
 				}
 			}
@@ -2220,16 +2220,16 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length !== 0;
+				return $('.validation-balloon').length !== 0;
 			},
 			maxWait: 1000,
 			failMsg: 'バルーンが表示されない'
 		}).done(function() {
-			// FIXME #534 バルーン要素(validation-baloonクラス要素)が複数生成されている
-			// $('.validation-baloon)ではバルーンとして表示されない要素の方が取得できpositionが期待と異なっている
-			var baloonPos = $('.validation-baloon').position();
+			// FIXME #534 バルーン要素(validation-balloonクラス要素)が複数生成されている
+			// $('.validation-balloon)ではバルーンとして表示されない要素の方が取得できpositionが期待と異なっている
+			var balloonPos = $('.validation-balloon').position();
 			var inputPos = $('.inputA').position();
-			ok(baloonPos.top < inputPos.top, '対象要素の上に表示されること');
+			ok(balloonPos.top < inputPos.top, '対象要素の上に表示されること');
 		}).always(start);
 	});
 
@@ -2237,7 +2237,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					placement: 'bottom'
 				}
 			}
@@ -2246,14 +2246,14 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000,
 			failMsg: 'バルーンが表示されない'
 		}).done(function() {
-			var baloonPos = $('.validation-baloon').position();
+			var balloonPos = $('.validation-balloon').position();
 			var inputPos = $('.inputA').position();
-			ok(baloonPos.top > inputPos.top, '対象要素の下に表示されること');
+			ok(balloonPos.top > inputPos.top, '対象要素の下に表示されること');
 		}).always(start);
 	});
 
@@ -2261,7 +2261,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					placement: 'left'
 				}
 			}
@@ -2270,14 +2270,14 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000,
 			failMsg: 'バルーンが表示されない'
 		}).done(function() {
-			var baloonPos = $('.validation-baloon').position();
+			var balloonPos = $('.validation-balloon').position();
 			var inputPos = $('.inputA').position();
-			ok(baloonPos.left < inputPos.left, '対象要素の左に表示されること');
+			ok(balloonPos.left < inputPos.left, '対象要素の左に表示されること');
 		}).always(start);
 	});
 
@@ -2285,7 +2285,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					placement: 'bottom'
 				}
 			}
@@ -2294,14 +2294,14 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000,
 			failMsg: 'バルーンが表示されない'
 		}).done(function() {
-			var baloonPos = $('.validation-baloon').position();
+			var balloonPos = $('.validation-balloon').position();
 			var inputPos = $('.inputA').position();
-			ok(baloonPos.left > inputPos.left, '対象要素の右に表示されること');
+			ok(balloonPos.left > inputPos.left, '対象要素の右に表示されること');
 		}).always(start);
 	});
 
@@ -2311,21 +2311,21 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.validation-baloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000,
 			failMsg: 'バルーンが表示されない'
 		}).done(function() {
-			var baloonPos = $('.validation-baloon').position();
+			var balloonPos = $('.validation-balloon').position();
 			var inputPos = $('.inputA').position();
-			ok(baloonPos.top < inputPos.top, 'デフォルトは対象要素の上に表示されること');
+			ok(balloonPos.top < inputPos.top, 'デフォルトは対象要素の上に表示されること');
 		}).always(start);
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('バリデート結果出力プラグイン bsBaloon', {
+	module('バリデート結果出力プラグイン bsBalloon', {
 		setup: function() {
 			stop();
 			var cssFile = '/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css';
@@ -2335,7 +2335,7 @@ $(function() {
 			h5.res.dependsOn([cssFile, jsFile]).resolve().done(function(all, bsCss, bsJs) {
 				that.bsCss = bsCss;
 				that.bsJs = bsJs;
-				var html = '<form class="testForm"><div class="testBaloonContainer">';
+				var html = '<form class="testForm"><div class="testBalloonContainer">';
 				html += '<input class="inputA" name="a"></div></form>';
 				$('body').append(html);
 				that.formController = h5.core.controller('.testForm', h5.ui.FormController);
@@ -2355,17 +2355,17 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('bsBbaloonプラグインを有効化できること', function() {
+	test('bsBalloonプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBaloon');
-		var pluginCtrl = formCtrl.getOutput('bsBaloon');
-		strictEqual(pluginCtrl.__name, 'h5.ui.validation.BootstrapErrorBaloon',
-				'bsBaloonプラグインを有効化できること');
+		formCtrl.addOutput('bsBalloon');
+		var pluginCtrl = formCtrl.getOutput('bsBalloon');
+		strictEqual(pluginCtrl.__name, 'h5.ui.validation.BootstrapErrorBalloon',
+				'bsBalloonプラグインを有効化できること');
 	});
 
 	asyncTest('バリデートエラーがあってもBootstrapのバルーンが表示されないこと', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBaloon');
+		formCtrl.addOutput('bsBalloon');
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -2386,7 +2386,7 @@ $(function() {
 
 	asyncTest('Bootstrapのバルーンを表示する位置を文字列で指定できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBaloon');
+		formCtrl.addOutput('bsBalloon');
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -2394,7 +2394,7 @@ $(function() {
 		});
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					placement: 'bottom'
 				}
 			}
@@ -2407,15 +2407,15 @@ $(function() {
 			},
 			maxWait: 1000
 		}).done(function() {
-			var bsBaloonPos = $('.tooltip').position();
+			var bsBalloonPos = $('.tooltip').position();
 			var inputPos = $('.inputA').position();
-			ok(bsBaloonPos.top < inputPos.top, 'バルーンを表示する位置を文字列で指定できること');
+			ok(bsBalloonPos.top < inputPos.top, 'バルーンを表示する位置を文字列で指定できること');
 		}).always(start);
 	});
 
 	asyncTest('バルーン要素を配置するコンテナを設定できること)', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBaloon');
+		formCtrl.addOutput('bsBalloon');
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -2423,8 +2423,8 @@ $(function() {
 		});
 		formCtrl.setSetting({
 			output: {
-				baloon: {
-					container: '.testBaloonContainer'
+				balloon: {
+					container: '.testBalloonContainer'
 				}
 			}
 		});
@@ -2436,13 +2436,13 @@ $(function() {
 			},
 			maxWait: 1000
 		}).done(function() {
-			ok($('.tooltip').parent().hasClass('testBaloonContainer'), 'バルーン要素を配置するコンテナを設定できること');
+			ok($('.tooltip').parent().hasClass('testBalloonContainer'), 'バルーン要素を配置するコンテナを設定できること');
 		}).always(start);
 	});
 
 	asyncTest('バリデート結果表示をリセットできること)', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBaloon');
+		formCtrl.addOutput('bsBalloon');
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -2457,7 +2457,7 @@ $(function() {
 			maxWait: 1000
 		}).done(function() {
 			formCtrl.resetValidation();
-			// TODO 要再考。baloonプラグインのバリデート結果のリセットはどういう意味を考える
+			// TODO 要再考。balloonプラグインのバリデート結果のリセットはどういう意味を考える
 			strictEqual($('.tooltip').length, 0, 'バリデート結果表示をリセットできること');
 		}).always(start);
 	});
@@ -2465,7 +2465,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('bsBaloonプラグイン 全体バリデートを行った場合', {
+	module('bsBalloonプラグイン 全体バリデートを行った場合', {
 		setup: function() {
 			stop();
 			var cssFile = '/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css';
@@ -2476,7 +2476,7 @@ $(function() {
 					function(all, bsCss, bsJs) {
 						that.bsCss = bsCss;
 						that.bsJs = bsJs;
-						var html = '<form class="testForm"><div class="testBaloonContainer">';
+						var html = '<form class="testForm"><div class="testBalloonContainer">';
 						html += '<input class="inputA" name="a"></div></form>';
 						$('body').append(html);
 						var formCtrl = that.formController = h5.core.controller('.testForm',
@@ -2487,7 +2487,7 @@ $(function() {
 									required: true
 								}
 							});
-							this.addOutput('bsBaloon');
+							this.addOutput('bsBalloon');
 							this.validate();
 							start();
 						});
@@ -2604,7 +2604,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('bsBaloonプラグイン 全体バリデートを行っていない場合', {
+	module('bsBalloonプラグイン 全体バリデートを行っていない場合', {
 		setup: function() {
 			stop();
 			var cssFile = '/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css';
@@ -2615,7 +2615,7 @@ $(function() {
 					function(all, bsCss, bsJs) {
 						that.bsCss = bsCss;
 						that.bsJs = bsJs;
-						var html = '<form class="testForm"><div class="testBaloonContainer">';
+						var html = '<form class="testForm"><div class="testBalloonContainer">';
 						html += '<input class="inputA" name="a"></div></form>';
 						$('body').append(html);
 						var formCtrl = that.formController = h5.core.controller('.testForm',
@@ -2626,7 +2626,7 @@ $(function() {
 									required: true
 								}
 							});
-							this.addOutput('bsBaloon');
+							this.addOutput('bsBalloon');
 							start();
 						});
 					}).fail(start);
@@ -2734,7 +2734,7 @@ $(function() {
 		setup: function() {
 			stop();
 			this.errorMessage = 'errorMessage';
-			var html = '<form class="testForm"><div class="testBaloonContainer">';
+			var html = '<form class="testForm"><div class="testBalloonContainer">';
 			html += '<input class="inputA" name="a"></div></form>';
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
@@ -3155,7 +3155,7 @@ $(function() {
 						required: true
 					}
 				});
-				this.addOutput(['asyncIndicator', 'composition', 'message', 'baloon', 'bsBaloon',
+				this.addOutput(['asyncIndicator', 'composition', 'message', 'balloon', 'bsBalloon',
 						'style']);
 				this.setSetting({
 					output: {
@@ -3171,10 +3171,10 @@ $(function() {
 							wrapper: '<li class="testMessage">',
 							off: true
 						},
-						baloon: {
+						balloon: {
 							off: true
 						},
-						bsBaloon: {
+						bsBalloon: {
 							off: true
 						},
 						style: {
@@ -3226,14 +3226,14 @@ $(function() {
 		strictEqual($('.testMessage').length, 0, 'messageプラグインが無効になること');
 	});
 
-	test('baloonプラグインが無効になること', function() {
+	test('balloonプラグインが無効になること', function() {
 		this.formController.validate();
-		strictEqual($('.validation-baloon').length, 0, 'baloonプラグインが無効になること');
+		strictEqual($('.validation-balloon').length, 0, 'balloonプラグインが無効になること');
 	});
 
-	test('bsBaloonプラグインが無効になること', function() {
+	test('bsBalloonプラグインが無効になること', function() {
 		this.formController.validate();
-		strictEqual($('.tooltip').length, 0, 'bsBaloonプラグインが無効になること');
+		strictEqual($('.tooltip').length, 0, 'bsBalloonプラグインが無効になること');
 	});
 
 	test('styleプラグインが無効になること', function() {
@@ -3402,7 +3402,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('メッセージを表示するプラグインで共通の設定 baloonプラグイン', {
+	module('メッセージを表示するプラグインで共通の設定 balloonプラグイン', {
 		setup: function() {
 			stop();
 			var html = '<form class="testForm">';
@@ -3416,7 +3416,7 @@ $(function() {
 						required: true
 					}
 				});
-				this.addOutput('baloon');
+				this.addOutput('balloon');
 				start();
 			});
 		},
@@ -3433,13 +3433,13 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
-					displayName: 'baloon displayName'
+				balloon: {
+					displayName: 'balloon displayName'
 				}
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.validation-baloon').text(), 'baloon displayNameは必須項目です',
+		strictEqual($('.validation-balloon').text(), 'balloon displayNameは必須項目です',
 				'バリデーション対象のプロパティに対応する表示名 displayName を設定できること');
 	});
 
@@ -3448,13 +3448,13 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					message: errorMessage
 				}
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.validation-baloon').text(), errorMessage,
+		strictEqual($('.validation-balloon').text(), errorMessage,
 				'バリデートエラー時に表示するメッセージ文字列 message を設定できること');
 	});
 
@@ -3463,7 +3463,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					message: function(param) {
 						return errorMessage;
 					}
@@ -3471,7 +3471,7 @@ $(function() {
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.validation-baloon').text(), errorMessage,
+		strictEqual($('.validation-balloon').text(), errorMessage,
 				'バリデートエラー時に表示するメッセージ生成関数 message を設定できること');
 	});
 
@@ -3656,7 +3656,7 @@ $(function() {
 	// Definition
 	//=============================
 	module(
-			'フォーム入力要素基準でエラー表示を行うプラグインで共通の設定 baloonプラグイン',
+			'フォーム入力要素基準でエラー表示を行うプラグインで共通の設定 balloonプラグイン',
 			{
 				setup: function() {
 					stop();
@@ -3672,13 +3672,13 @@ $(function() {
 								required: true
 							}
 						});
-						this.addOutput('baloon');
+						this.addOutput('balloon');
 						start();
 					});
 				},
 				teardown: function() {
 					clearController();
-					$('.validation-baloon').remove();
+					$('.validation-balloon').remove();
 				}
 			});
 
@@ -3689,7 +3689,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					replaceElement: document.getElementsByClassName('replaceContainer')[0]
 				}
 			}
@@ -3698,13 +3698,13 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				$('.validation-baloon').length === 1;
+				$('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
 		}).done(
 				function() {
-					strictEqual($('.replaceContainer').next('.validation-baloon').length, 1,
+					strictEqual($('.replaceContainer').next('.validation-balloon').length, 1,
 							'クラス適用対象要素 replaceElement をDOMで設定できること');
 				}).always(start);
 	});
@@ -3713,7 +3713,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					replaceElement: $('.replaceContainer')
 				}
 			}
@@ -3722,13 +3722,13 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				$('.validation-baloon').length === 1;
+				$('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
 		}).done(
 				function() {
-					strictEqual($('.replaceContainer').next('.validation-baloon').length, 1,
+					strictEqual($('.replaceContainer').next('.validation-balloon').length, 1,
 							'クラス適用対象要素 replaceElement をjQueryで設定できること');
 				}).always(start);
 	});
@@ -3737,7 +3737,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					successClassName: 'successValidate',
 					replaceElement: '.replaceContainer'
 				}
@@ -3747,13 +3747,13 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				$('.validation-baloon').length === 1;
+				$('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
 		}).done(
 				function() {
-					strictEqual($('.replaceContainer').next('.validation-baloon').length, 1,
+					strictEqual($('.replaceContainer').next('.validation-balloon').length, 1,
 							'クラス適用対象要素 replaceElement をセレクタ文字列で設定できること');
 				}).always(start);
 	});
@@ -3762,7 +3762,7 @@ $(function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			output: {
-				baloon: {
+				balloon: {
 					successClassName: 'successValidate',
 					replaceElement: function() {
 						return $('.replaceContainer');
@@ -3774,13 +3774,13 @@ $(function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				$('.validation-baloon').length === 1;
+				$('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
 		}).done(
 				function() {
-					strictEqual($('.replaceContainer').next('.validation-baloon').length, 1,
+					strictEqual($('.replaceContainer').next('.validation-balloon').length, 1,
 							'クラス適用対象要素 replaceElement を関数でで設定できること');
 				}).always(start);
 
