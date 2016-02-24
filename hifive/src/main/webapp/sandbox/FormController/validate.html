@@ -44,8 +44,8 @@
 			formController: h5.ui.FormController,
 			__ready: function() {
 				// プラグインの有効化
-				this.formController.addOutput(['style', 'composition', 'bsBaloon', 'message',
-						'baloon']);
+				this.formController.addOutput(['style', 'composition', 'bsBalloon', 'message',
+						'balloon']);
 
 				// birthdayグループのルール追加
 				this.formController.addRule({
@@ -78,19 +78,19 @@
 							container: this.$find('.globalError'),
 							wrapper: 'li'
 						},
-						baloon: {
+						balloon: {
 							placement: 'bottom'
 						},
-						bsBaloon: {
+						bsBalloon: {
 							placement: 'top',
-							baloonContainer: 'body'
+							balloonContainer: 'body'
 						}
 					},
 					property: {
 						name: {
 							displayName: '名前',
 							output: {
-								bsBaloon: {
+								bsBalloon: {
 									message: function(param) {
 										return '※必須';
 									}
@@ -112,7 +112,7 @@
 							displayName: '生年月日',
 							message: '{displayName}が正しい日付ではありません',
 							output: {
-								bsBaloon: {
+								bsBalloon: {
 									off: true
 								}
 							}
@@ -129,7 +129,7 @@
 										return $el.closest('.form-inline');
 									}
 								},
-								baloon: {
+								balloon: {
 									off: true
 								}
 							}
@@ -141,7 +141,7 @@
 										return $el.closest('.form-inline');
 									}
 								},
-								baloon: {
+								balloon: {
 									off: true
 								}
 							}
@@ -151,7 +151,7 @@
 								replaceElement: function($el) {
 									return $el.closest('.form-inline');
 								},
-								baloon: {
+								balloon: {
 									off: true
 								}
 							}
@@ -187,7 +187,7 @@
 						agree: {
 							message: '利用規約への同意が必要です',
 							output: {
-								bsBaloon: {
+								bsBalloon: {
 									placement: 'right',
 									replaceElement: function($el) {
 										return $el.closest('label');
