@@ -510,7 +510,8 @@
 	/**
 	 * Queryクラス
 	 * <p>
-	 * {@link DataModel.createQuery}の戻り値がこのクラスのインスタンスです。
+	 * {@link DataModel.createQuery}の戻り値がこのクラスのインスタンスです。<br>
+	 * 参考：<a href="/conts/web/view/reference/data-model-query">リファレンス/データモデルのクエリ</a>
 	 * </p>
 	 *
 	 * @class
@@ -536,7 +537,8 @@
 
 	$.extend(Query.prototype, {
 		/**
-		 * 検索条件オブジェクトをセットします
+		 * 検索条件オブジェクトをセットします。<br>
+		 * 参考：<a href="/conts/web/view/reference/data-model-query">リファレンス/データモデルのクエリ</a>
 		 * <p>
 		 * 検索の実行({@link Query.execute})を実行した時に、ここで指定した検索条件オブジェクトに基づいて検索を実行します。
 		 * </p>
@@ -696,8 +698,8 @@
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * query.setOrderFunction(function(a, b) {
-		 * 	// 比較関数の引数はそれぞれデータアイテム。第1引数を先にする場合は正の値、第2引数を先にする場合は負の値を返す
-		 * 		return parseInt(b.get('id')) - parseInt(a.get('id'));
+		 * 	// 比較関数の引数はそれぞれデータアイテム。第1引数のオブジェクトを先にする場合は負の値、第2引数のオブジェクトを先にする場合は正の値を返す
+		 * 		return parseInt(a.get('age')) - parseInt(b.get('age'));
 		 * 	});
 		 * </code></pre>
 		 *
