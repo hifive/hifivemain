@@ -580,16 +580,11 @@
 		 * <p>
 		 * {@link Query.setCriteria}で設定した検索条件で検索し、結果を{@link QueryResult}で返します。
 		 * </p>
-		 * <p>
-		 * また、{@link Query.onQueryComplete}に設定したハンドラが呼ばれます。
-		 * </p>
 		 *
 		 * @memberOf Query
 		 * @returns {QueryResult}
 		 */
 		execute: function() {
-			// 新しくdeferredを作成
-			this._executeDfd = h5.async.deferred();
 			var result = [];
 			for ( var id in this._model.items) {
 				var item = this._model.items[id];
@@ -623,24 +618,7 @@
 					return 0;
 				});
 			}
-			this._executeDfd.resolveWith(this, [result]);
 			return new QueryResult(result);
-		},
-
-		/**
-		 * execute()による検索が完了した時に実行するハンドラを登録
-		 * <p>
-		 * ハンドラの引数には検索結果(ObserevableArray)が渡されます
-		 * </p>
-		 *
-		 * @memberOf Query
-		 * @param {Function} completeHandler
-		 * @returns {Query}
-		 */
-		onQueryComplete: function(completeHandler) {
-			// TODO executeが呼ばれる前にハンドラを設定された場合はどうするか
-			this._executeDfd.done(completeHandler);
-			return this;
 		},
 
 		// TODO Liveクエリの仕様は再検討する
