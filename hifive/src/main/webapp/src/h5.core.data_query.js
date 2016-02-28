@@ -413,7 +413,7 @@
 	 * </pre>
 	 *
 	 * @private
-	 * @param {Object} criteria
+	 * @param {Object} criteria 検索条件オブジェクト
 	 * @returns {Object} コンパイル済みcriteriaオブジェクト
 	 */
 	function compileCriteria(criteria) {
@@ -491,7 +491,7 @@
 	 */
 	/**
 	 * @private
-	 * @param {DataItem[]} result
+	 * @param {DataItem[]} result クエリ結果配列
 	 */
 	function QueryResult(result) {
 		/**
