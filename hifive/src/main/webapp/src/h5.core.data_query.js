@@ -698,8 +698,8 @@
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * query.setOrderFunction(function(a, b) {
-		 * 	// 比較関数の引数はそれぞれデータアイテム。第1引数のオブジェクトを先にする場合は負の値、第2引数のオブジェクトを先にする場合は正の値を返す
-		 * 		return parseInt(a.get('age')) - parseInt(b.get('age'));
+		 * 	// 比較関数の引数はそれぞれデータアイテム。第1引数のオブジェクトを先にする場合は負の値、第2引数のオブジェクトを先にする場合は正の値を返す。この場合、ageが小さい順（昇順）でソートされる。
+		 * 		return a.get('age') - b.get('age');
 		 * 	});
 		 * </code></pre>
 		 *
