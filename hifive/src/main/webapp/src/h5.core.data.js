@@ -3488,11 +3488,11 @@
 		},
 
 		/**
-		 * このデータモデルについてデータアイテムの検索を行うQueryクラスを作成して返します
+		 * このデータモデルについてデータアイテムの検索を行う{@link Query}インスタンスを作成して返します。
 		 *
 		 * @since 1.2.0
 		 * @memberOf DataModel
-		 * @returns {Query} 検索を行うQueryクラスを返します
+		 * @returns {Query} 検索を行うQueryインスタンスを返します
 		 */
 		createQuery: h5internal.data.createQuery
 	});
