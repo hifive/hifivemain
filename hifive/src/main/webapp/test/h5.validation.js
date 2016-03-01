@@ -799,7 +799,7 @@ $(function() {
 		var digitsViolation = violation[0] == maxViolation ? violation[1] : violation[0];
 		strictEqual(digitsViolation.ruleName, 'digits', 'violationのruleNameには違反したルール名が入っている');
 		strictEqual(digitsViolation.ruleValue.integer, 1, 'violationのruleValueで指定した引数が取得できる');
-		strictEqual(digitsViolation.ruleValue.fruction, 2, 'violationのruleValueで指定した引数が取得できる');
+		strictEqual(digitsViolation.ruleValue.fraction, 2, 'violationのruleValueで指定した引数が取得できる');
 	});
 
 
