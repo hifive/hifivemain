@@ -17,7 +17,7 @@
 (function() {
 	var fwLogger = h5.log.createLogger('h5.ui.components.BalloonController');
 
-	var MSG_CANNOT_CALL_METHOD_DISPOSED = fwLogger.info('dispose済みのBalloonは操作できません');
+	var MSG_CANNOT_CALL_METHOD_DISPOSED = 'dispose済みのBalloonは操作できません';
 
 	/** 吹き出し(三角の部分)の大きさ * */
 	var ARROW_SIZE = 34;
