@@ -55,7 +55,7 @@
 	// Development Only
 	// =============================
 	/* del begin */
-	var fwLogger = h5.log.createLogger('h5.core');
+	var fwLogger = h5.log.createLogger('h5.validation');
 
 	// ログメッセージ
 	var FW_LOG_NOT_DEFINED_RULE_NAME = '指定されたルール{0}は未定義です';
